@@ -316,14 +316,14 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3579645,	/* 3.579645 MHz */
-	{ 128 },
+	{ 30 },
 	{ vigilant_irq_handler }
 };
 
 static struct DACinterface dac_interface =
 {
 	1,
-	{ 255 }
+	{ 100 }
 };
 
 

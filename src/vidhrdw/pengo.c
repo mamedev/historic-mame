@@ -17,6 +17,7 @@
 
 
 static int gfx_bank;
+static int flipscreen;
 static int xoffsethack;
 
 static struct rectangle spritevisiblearea =
@@ -150,7 +151,7 @@ int pengo_vh_start(void)
 	gfx_bank = 0;
 	xoffsethack = 0;
 
-	return generic_vh_start();
+    return generic_vh_start();
 }
 
 int pacman_vh_start(void)
@@ -165,49 +166,26 @@ int pacman_vh_start(void)
 
 
 
-void pengo_updatehook0(int offset)
-{
-	int mx,my,sx,sy;
-
-
-	mx = offset % 32;
-	my = offset / 32;
-
-	if (my < 2)
-	{
-		if (mx < 2 || mx >= 30) return;	/* not visible */
-		sx = my + 34;
-		sy = mx - 2;
-	}
-	else if (my >= 30)
-	{
-		if (mx < 2 || mx >= 30) return;	/* not visible */
-		sx = my - 30;
-		sy = mx - 2;
-	}
-	else
-	{
-		sx = mx + 2;
-		sy = my - 2;
-	}
-
-	set_tile_attributes(0,				/* layer number */
-		sx + sy * 36,					/* x/y position */
-		0,videoram00[offset],	/* tile bank, code (global bank is handled later) */
-		videoram01[offset] & 0x1f,		/* color */
-		0,0,							/* flip x/y */
-		TILE_TRANSPARENCY_OPAQUE);		/* transparency */
-}
-
-
-
 void pengo_gfxbank_w(int offset,int data)
 {
 	/* the Pengo hardware can set independently the palette bank, color lookup */
 	/* table, and chars/sprites. However the game always set them together (and */
 	/* the only place where this is used is the intro screen) so I don't bother */
 	/* emulating the whole thing. */
-	gfx_bank = data & 1;
+	if (gfx_bank != (data & 1))
+	{
+		gfx_bank = data & 1;
+		memset(dirtybuffer,1,videoram_size);
+	}
+}
+
+void pengo_flipscreen_w(int offset,int data)
+{
+	if (flipscreen != (data & 1))
+	{
+		flipscreen = data & 1;
+		memset(dirtybuffer,1,videoram_size);
+	}
 }
 
 
@@ -223,66 +201,99 @@ void pengo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
+	for (offs = videoram_size - 1; offs > 0; offs--)
+	{
+		if (dirtybuffer[offs])
+		{
+			int mx,my,sx,sy;
 
-	set_tile_layer_attributes(0,bitmap,			/* layer number, bitmap */
-			0,0,								/* scroll x/y */
-			*flip_screen & 1,*flip_screen & 1,	/* flip x/y */
-			MAKE_TILE_BANK(1),MAKE_TILE_BANK(gfx_bank));	/* global attributes */
-	update_tile_layer(0,bitmap);
+			dirtybuffer[offs] = 0;
+            mx = offs % 32;
+			my = offs / 32;
 
+			if (my < 2)
+			{
+				if (mx < 2 || mx >= 30) continue; /* not visible */
+				sx = my + 34;
+				sy = mx - 2;
+			}
+			else if (my >= 30)
+			{
+				if (mx < 2 || mx >= 30) continue; /* not visible */
+				sx = my - 30;
+				sy = mx - 2;
+			}
+			else
+			{
+				sx = mx + 2;
+				sy = my - 2;
+			}
 
-	/* Draw the sprites. Note that it is important to draw them exactly in this */
+			if (flipscreen)
+			{
+				sx = 35 - sx;
+				sy = 27 - sy;
+			}
+
+			drawgfx(tmpbitmap,Machine->gfx[gfx_bank*2],
+					videoram[offs],
+					colorram[offs] & 0x1f,
+					flipscreen,flipscreen,
+					sx*8,sy*8,
+					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+        }
+	}
+
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
+    /* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */
 	for (offs = spriteram_size - 2;offs > 2*2;offs -= 2)
 	{
-		drawgfx(bitmap,Machine->gfx[gfx_bank],
+		int sx,sy;
+
+
+		sx = 272 - spriteram_2[offs + 1];
+		sy = spriteram_2[offs] - 31;
+
+		drawgfx(bitmap,Machine->gfx[gfx_bank*2+1],
 				spriteram[offs] >> 2,
 				spriteram[offs + 1] & 0x1f,
 				spriteram[offs] & 1,spriteram[offs] & 2,
-				272 - spriteram_2[offs + 1],spriteram_2[offs] - 31,
+				sx,sy,
 				&spritevisiblearea,TRANSPARENCY_COLOR,0);
 
-layer_mark_rectangle_dirty(Machine->layer[0],
-		272 - spriteram_2[offs + 1],272 - spriteram_2[offs + 1]+15,
-		spriteram_2[offs] - 31,spriteram_2[offs] - 31+15);
-
-		/* also plot the sprite with wraparound (tunnel in Crush Roller) */
-		drawgfx(bitmap,Machine->gfx[gfx_bank],
+        /* also plot the sprite with wraparound (tunnel in Crush Roller) */
+        drawgfx(bitmap,Machine->gfx[gfx_bank*2+1],
 				spriteram[offs] >> 2,
 				spriteram[offs + 1] & 0x1f,
 				spriteram[offs] & 1,spriteram[offs] & 2,
-				272-256 - spriteram_2[offs + 1],spriteram_2[offs] - 31,
+				sx - 256,sy,
 				&spritevisiblearea,TRANSPARENCY_COLOR,0);
-
-layer_mark_rectangle_dirty(Machine->layer[0],
-		272-256 - spriteram_2[offs + 1],272-256 - spriteram_2[offs + 1]+15,
-		spriteram_2[offs] - 31,spriteram_2[offs] - 31+15);
 	}
 	/* In the Pac Man based games (NOT Pengo) the first two sprites must be offset */
 	/* one pixel to the left to get a more correct placement */
 	for (offs = 2*2;offs >= 0;offs -= 2)
 	{
-		drawgfx(bitmap,Machine->gfx[gfx_bank],
+		int sx,sy;
+
+
+		sx = 272 - spriteram_2[offs + 1];
+		sy = spriteram_2[offs] - 31;
+
+        drawgfx(bitmap,Machine->gfx[gfx_bank*2+1],
 				spriteram[offs] >> 2,
 				spriteram[offs + 1] & 0x1f,
 				spriteram[offs] & 1,spriteram[offs] & 2,
-				272 - spriteram_2[offs + 1],spriteram_2[offs] - 31 + xoffsethack,
+				sx,sy,
 				&spritevisiblearea,TRANSPARENCY_COLOR,0);
 
-layer_mark_rectangle_dirty(Machine->layer[0],
-		272 - spriteram_2[offs + 1],272 - spriteram_2[offs + 1]+15,
-		spriteram_2[offs] - 31 + xoffsethack,spriteram_2[offs] - 31+15 + xoffsethack);
-
-		/* also plot the sprite with wraparound (tunnel in Crush Roller) */
-		drawgfx(bitmap,Machine->gfx[gfx_bank],
+        /* also plot the sprite with wraparound (tunnel in Crush Roller) */
+        drawgfx(bitmap,Machine->gfx[gfx_bank*2+1],
 				spriteram[offs] >> 2,
 				spriteram[offs + 1] & 0x1f,
 				spriteram[offs] & 2,spriteram[offs] & 1,
-				272-256 - spriteram_2[offs + 1],spriteram_2[offs] - 31 + xoffsethack,
+				sx - 256,sy,
 				&spritevisiblearea,TRANSPARENCY_COLOR,0);
-
-layer_mark_rectangle_dirty(Machine->layer[0],
-		272-256 - spriteram_2[offs + 1],272-256 - spriteram_2[offs + 1]+15,
-		spriteram_2[offs] - 31 + xoffsethack,spriteram_2[offs] - 31+15 + xoffsethack);
-	}
+    }
 }

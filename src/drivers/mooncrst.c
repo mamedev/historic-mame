@@ -708,7 +708,7 @@ static struct MachineDriver checkman_machine_driver =
 static struct DACinterface dac_interface =
 {
 	1,
-	{ 255 }
+	{ 100 }
 };
 
 static struct MachineDriver kingball_machine_driver =

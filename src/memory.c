@@ -36,9 +36,9 @@ static void mem_dump( void );
 	#define SHIFT3 8
 #else
 	#define BYTE_XOR_BE(a) (a)
-	#define BYTE_XOR_LE(a) ((a) ^ 1)
+	#define BYTE_XOR_LE(a) ( (char*) ((unsigned int) (a) ^ 1) )
 	#define BIG_DWORD_BE(x) (x)
-	#define BIG_DWORD_LE(x) (((x) >> 16) + ((x) << 16))
+	#define BIG_DWORD_LE(x) (((UINT32)(x) >> 16) + ((x) << 16))
 	/* GSL 980224 Shift values for bytes within a word, used by the misaligned word load/store code */
 	#define SHIFT0 24
 	#define SHIFT1 16

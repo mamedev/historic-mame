@@ -476,7 +476,7 @@ struct GameDriver exerion_driver =
 	__FILE__,
 	0,
 	"exerion",
-	"Exerion (Jaleco)",
+	"Exerion",
 	"1983",
 	"Jaleco",
 	"Brad Oliver\nJohn Butler\nValerio Verrando (high score save)\nGerald Vanderick (color info)",

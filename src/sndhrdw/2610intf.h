@@ -1,7 +1,14 @@
 #ifndef __2610INTF_H__
 #define __2610INTF_H__
 
-#include "ym2610.h"
+#include "fm.h"
+#ifdef BUILD_YM2610
+  void YM2610UpdateRequest(int chip);
+#else
+  #include "ym2610.h"
+#endif
+
+#define   MAX_2610    (2)
 
 struct YM2610interface{
 	int num;	/* total number of 8910 in the machine */

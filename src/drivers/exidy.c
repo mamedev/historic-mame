@@ -858,7 +858,7 @@ static struct CustomSound_interface targ_custom_interface =
 static struct DACinterface targ_DAC_interface =
 {
 	1,
-	{ 255, 255 }
+	{ 100 }
 };
 
 

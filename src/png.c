@@ -1,27 +1,26 @@
-#include "driver.h"
-#include <inflate.h>
+/*********************************************************************
 
-/* This reads a PNG file.
- *
- * If you want to make your own overlays here is how I did it: Create the overlay with some paint
- * program of your choice or scan an original. Save it in a paletted format e.g. GIF. Load this
- * with XV and save it as a PPM(raw) file. Then open the color editor and change the palette entries
- * according to their transparency to shades of gray (255 = opaque, 0 = fully transparent). Save
- * this picture as PGM(raw). You can also generate your alpha channel by hand but be warned that the
- * resulting PNG can have very many colors (up to number_of_different_transparencies*num_palette).
- * Now compile a utility named pngtopnm
- * (ftp://swrinde.nde.swri.edu/pub/png/applications/pnmtopng-2.37.1.tar.gz, netpbm is also needed)
- * and convert the PPM/PGM files to a PNG file:
- * pngtopnm -alpha my_overlay.pgm my_overlay.ppm > my_overlay.png
- * Backdrops don't need a tRNS chunk. If one is present it will be ignored.
- * This is by no means a complete PNG reader. It only supports paletted 8 or 4 bit images plus
- * an optional tRNS chunk.
- */
+  png.c
+
+  PNG reading functions.
+
+  07/15/1998 Created by Mathis Rosenhauer
+  10/02/1998 Code clean up and abstraction by Mike Balfour
+             and Mathis Rosenhauer
+
+  TODO : Add support for other color types and bit depths
+
+*********************************************************************/
+
+#include "driver.h"
+#include "inflate.h"
 
 /* These are the only two functions that should be needed */
+int png_read_artwork(const char *file_name, struct osd_bitmap **bitmap, unsigned char **palette, int *num_palette, unsigned char **trans, int *num_trans);
+
+/* obsolete */
 int png_read_backdrop(char *file_name, struct osd_bitmap **ovl_bitmap, unsigned char *palette, int *num_palette);
-int png_read_overlay(char *file_name, struct osd_bitmap **ovl_bitmap, unsigned char *palette, int *num_palette, unsigned char *trans, int *num_trans);
-/* ------- */
+
 
 extern unsigned int crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
 
@@ -45,10 +44,23 @@ extern unsigned int crc32 (unsigned int crc, const unsigned char *buf, unsigned 
 #define PNG_CN_tIME 0x74494D45L
 #define PNG_CN_sCAL 0x7343414CL
 
+#define PNG_PF_None     0   /* Prediction filters */
+#define PNG_PF_Sub      1
+#define PNG_PF_Up       2
+#define PNG_PF_Average  3
+#define PNG_PF_Paeth    4
+
 struct png_info {
-	unsigned int width;
-	unsigned int height;
+	unsigned int width, height;
+	unsigned int xoffset, yoffset;
+	unsigned int xres, yres;
+	double xscale, yscale;
+	double source_gamma;
+	unsigned int chromaticities[8];
+	int resolution_unit, offset_unit, scale_unit;
 	unsigned char bit_depth;
+	int significant_bits[4];
+	int background_color[4];
 	unsigned char color_type;
 	unsigned char compression_method;
 	unsigned char filter_method;
@@ -57,17 +69,22 @@ struct png_info {
 	unsigned char *palette;
 	unsigned int num_trans;
 	unsigned char *trans;
+	unsigned char *image;
+
+	/* The rest is private and should not be used
+	 * by the public functions
+	 */
+	unsigned char bpp;
 	unsigned int rowbytes;
 	unsigned char *zimage;
 	unsigned int zlength;
 	unsigned char *fimage;
-	unsigned char *image;
 };
 
 static void error (char *msg)
 {
 	if (errorlog)
-		fprintf(errorlog,"PNG - Error reading file: %s\n", msg);
+		fprintf(errorlog,"PNG - Error/Warning reading file: %s\n", msg);
 }
 
 /* read_uint is here so we don't have to deal with byte-ordering issues */
@@ -93,11 +110,10 @@ static unsigned int convert_uint (unsigned char *v)
 
 static int unfilter(struct png_info *p)
 {
-	int i;
+	unsigned int i, j, bpp, filter;
+	int prediction, pA, pB, pC, dA, dB, dC;
+	unsigned char *src, *dst;
 
-	/* FIX ME: this currently doesn't unfilter (it just removes the
-	 * filter byte).
-	 */
 	if((p->image = (unsigned char *)malloc (p->height*p->rowbytes))==NULL)
 	{
 		error("out of memory");
@@ -105,31 +121,56 @@ static int unfilter(struct png_info *p)
 		return 0;
 	}
 
+	src = p->fimage;
+	dst = p->image;
+	bpp = p->bpp;
+
 	for (i=0; i<p->height; i++)
-		memcpy (p->image+i*p->rowbytes, p->fimage+i*(p->rowbytes+1)+1, p->width);
+	{
+		filter = *src++;
+		if (!filter)
+		{
+			memcpy (dst, src, p->width);
+			src += p->rowbytes;
+			dst += p->rowbytes;
+		}
+		else
+			for (j=0; j<p->width; j++)
+			{
+				pA = (j<bpp) ? 0: *(dst - bpp);
+				pB = (i<bpp) ? 0: *(dst - p->rowbytes);
+				pC = ((j<bpp)||(i<bpp)) ? 0: *(dst - p->rowbytes - bpp);
+
+				switch (filter)
+				{
+				case PNG_PF_Sub:
+					prediction = pA;
+					break;
+				case PNG_PF_Up:
+					prediction = pB;
+					break;
+				case PNG_PF_Average:
+					prediction = ((pA + pB) / 2);
+					break;
+				case PNG_PF_Paeth:
+					prediction = pA + pB - pC;
+					dA = abs(prediction - pA);
+					dB = abs(prediction - pB);
+					dC = abs(prediction - pC);
+					if (dA <= dB && dA <= dC) prediction = pA;
+					else if (dB <= dC) prediction = pB;
+					else prediction = pC;
+					break;
+				default:
+					error ("unknown filter type");
+					prediction = 0;
+				}
+				*dst = 0xff & (*src + prediction);
+				dst++; src++;
+			}
+	}
 
 	return 1;
-}
-
-static void expand_buffer (unsigned char *inbuf, unsigned char *outbuf, int width, int height, int bit_depth)
-{
-	int i,j;
-
-	if (bit_depth == 4) /* expand 4 bit to 8 bit */
-	{
-		for (i=0; i<height; i++)
-		{
-			for(j=0; j<(width/2); j++)
-			{
-				*outbuf++=*inbuf>>4;
-				*outbuf++=*inbuf++ & 0x0f;
-			}
-			if (width % 2)
-				*outbuf++=*inbuf++>>4;
-		}
-	}
-	if (bit_depth == 8) /* we have already 8 bit so just copy */
-		memcpy (outbuf, inbuf, width*height);
 }
 
 static int verify_signature (void *fp)
@@ -152,24 +193,14 @@ static int verify_signature (void *fp)
 	return 1;
 }
 
-static unsigned int get_rowbytes (struct png_info *p)
-{
-	int nsample=1;
-
-	switch (p->color_type) {
-	case 0: nsample=1; break;
-	case 2: nsample=3; break;
-	case 3: nsample=1; break;
-	case 4: nsample=2; break;
-	case 6: nsample=4; break;
-	}
-
-	return ((p->width*p->bit_depth*nsample)/8 + ((p->width*p->bit_depth*nsample)%8?1:0));
-}
-
 static int inflate_image (struct png_info *p)
 {
-	p->rowbytes=get_rowbytes(p);
+	/* translates color_type to bytes per pixel */
+	const int samples[] = {1, 0, 3, 1, 2, 0, 4};
+
+	p->bpp = (samples[p->color_type]*p->bit_depth)/8;
+	p->rowbytes=(p->width*p->bit_depth*samples[p->color_type])/8
+		 + ((p->width*p->bit_depth*samples[p->color_type])%8?1:0);
 
 	if((p->fimage = (unsigned char *)malloc (p->height*(p->rowbytes+2)))==NULL)
 	{
@@ -178,7 +209,11 @@ static int inflate_image (struct png_info *p)
 		return 0;
 	}
 
-	if ( inflate_memory(p->zimage+2, p->zlength-2, p->fimage, p->height*(p->rowbytes+2) ) )
+
+	/* Note: We have to strip the first 2 bytes (Compression method/flags code and
+	   additional flags/check bits) and the last 4 bytes (check value) to
+	   make inflate_memory happy. */
+	if ( inflate_memory(p->zimage+2, p->zlength-6, p->fimage, p->height*(p->rowbytes+1) ) )
 	{
 		error ("error inflating compressed data");
 		free (p->zimage);
@@ -191,7 +226,7 @@ static int inflate_image (struct png_info *p)
 
 static int read_chunks(void *fp, struct png_info *p)
 {
-	int IEND_read=0, i;
+	unsigned int IEND_read=0, i;
 	unsigned int chunk_length, chunk_type, chunk_crc, crc;
 	unsigned int tot_idat=0, num_idat=0, l_idat[256];
 	unsigned char *chunk_data, *zimage, *idat[256], *temp;
@@ -244,11 +279,12 @@ static int read_chunks(void *fp, struct png_info *p)
 			p->interlace_method = *(chunk_data+12);
 			free (chunk_data);
 
-			if ((p->bit_depth != 8) && (p->bit_depth != 4))
+			if ((p->bit_depth != 8) && (p->bit_depth != 4) && (p->bit_depth != 2))
 			{
 				error ("unsupported bit depth (has to be 4 or 8)");
 				return 0;
 			}
+
 			if (p->color_type != 3)
 			{
 				error ("unsupported color type (has to be 3)");
@@ -264,17 +300,13 @@ static int read_chunks(void *fp, struct png_info *p)
 		case PNG_CN_PLTE:
 		{
 			p->num_palette=chunk_length/3;
-			memcpy (p->palette, chunk_data, chunk_length);
-			free (chunk_data);
+			p->palette=chunk_data;
 			break;
 		}
 		case PNG_CN_tRNS:
 		{
-			if (!p->trans) /* ignore tRNS chunk if no memory allocated */
-				break;
 			p->num_trans=chunk_length;
-			memcpy (p->trans, chunk_data, chunk_length);
-			free (chunk_data);
+			p->trans=chunk_data;
 			break;
 		}
 		case PNG_CN_IDAT:
@@ -319,16 +351,20 @@ static int read_chunks(void *fp, struct png_info *p)
 	return 1;
 }
 
-static int read_png(char *file_name, struct png_info *p)
+static int read_png(const char *file_name, struct png_info *p)
 {
 	void *png;
 
 	p->num_palette = 0;
 	p->num_trans = 0;
 
+#ifdef MESS
+	if (!(png = osd_fopen(Machine->gamedrv->name, file_name, OSD_FILETYPE_IMAGE, 0)))
+#else
 	if (!(png = osd_fopen(Machine->gamedrv->name, file_name, OSD_FILETYPE_ARTWORK, 0)))
+#endif
 	{
-		error("unable to open file");
+		error("unable to open overlay");
 		return 0;
 	}
 
@@ -355,97 +391,68 @@ static int read_png(char *file_name, struct png_info *p)
 	return 1;
 }
 
-
-int png_read_backdrop(char *file_name, struct osd_bitmap **ovl_bitmap, unsigned char *palette, int *num_palette)
+static void expand_buffer (unsigned char *inbuf, unsigned char *outbuf, int width, int height, int bit_depth)
 {
-	struct png_info p;
-	struct osd_bitmap *bitmap;
-	unsigned char *pixmap8, *tmp;
-	int orientation, i;
+	int i,j, k;
 
-	p.palette=palette;
-	p.trans=NULL;
-
-	if (!read_png(file_name, &p))
-		return 0;
-
-	if ((pixmap8 = (unsigned char *)malloc(p.width*p.height))==NULL)
+	switch (bit_depth)
 	{
-		error("out of memory");
-		free (p.fimage);
-		return 0;
-	}
-
-	expand_buffer (p.image, pixmap8, p.width, p.height, p.bit_depth);
-	free (p.image);
-
-	if (!(bitmap=osd_new_bitmap(p.width,p.height,8)))
-	{
-		error("unable to allocate memory for backdrop");
-		free (pixmap8);
-		return 0;
-	}
-
-	orientation = Machine->orientation;
-	if (orientation != ORIENTATION_DEFAULT)
-	{
-		int j, x, y, h, w;
-
-		tmp = pixmap8;
-		for (i=0; i<p.height; i++)
-			for (j=0; j<p.width; j++)
+	case 2: /* expand 2 bit to 8 bit */
+		for (i=0; i<height; i++)
+		{
+			for(j=0; j<(width/4); j++)
 			{
-				if (orientation & ORIENTATION_SWAP_XY)
-				{
-					x=i; y=j; w=p.height; h=p.width;
-				}
-				else
-				{
-					x=j; y=i; w=p.width; h=p.height;
-				}
-				if (orientation & ORIENTATION_FLIP_X)
-					x=w-x-1;
-				if (orientation & ORIENTATION_FLIP_Y)
-					y=h-y-1;
-
-				bitmap->line[y][x] = *tmp++;
+				for (k=3; k>=0; k--)
+					*outbuf++ = (*inbuf>>(k*2))&0x03;
+				inbuf++;
 			}
+			if (width % 4)
+				for (k=((width%4)-1); k>=0; k--)
+					*outbuf++ = (*inbuf>>(k*2))&0x03;
+		}
+		break;
+	case 4: /* expand 4 bit to 8 bit */
+		for (i=0; i<height; i++)
+		{
+			for(j=0; j<(width/2); j++)
+			{
+				*outbuf++=*inbuf>>4;
+				*outbuf++=*inbuf++ & 0x0f;
+			}
+			if (width % 2)
+				*outbuf++=*inbuf++>>4;
+		}
+		break;
+	case 8: /* we have already 8 bit so just copy */
+		memcpy (outbuf, inbuf, width*height);
+		break;
+	default:
+		error ("Unsupported bit depth");
+		break;
 	}
-	else
-	{
-		for (i=0; i<p.height; i++)
-			memcpy (bitmap->line[i], pixmap8+i*p.width, p.width);
-	}
-	free (pixmap8);
-	*ovl_bitmap = bitmap;
-	*num_palette = p.num_palette;
-	return 1;
 }
 
-int png_read_overlay(char *file_name, struct osd_bitmap **ovl_bitmap, unsigned char *palette, int *num_palette, unsigned char *trans, int *num_trans)
+static int png_read_bitmap(const char *file_name, struct osd_bitmap **bitmap, struct png_info *p)
 {
-	struct png_info p;
-	struct osd_bitmap *bitmap;
 	unsigned char *pixmap8, *tmp;
-	int orientation, i;
+	unsigned int orientation, i;
+	unsigned int j, x, y, h, w;
 
-	p.palette=palette;
-	p.trans=trans;
-
-	if (!read_png(file_name, &p))
+	if (!read_png(file_name, p))
 		return 0;
 
-	if ((pixmap8 = (unsigned char *)malloc(p.width*p.height))==NULL)
+	if ((pixmap8 = (unsigned char *)malloc(p->width*p->height))==NULL)
 	{
 		error("out of memory");
-		free (p.fimage);
+		free (p->fimage);
 		return 0;
 	}
 
-	expand_buffer (p.image, pixmap8, p.width, p.height, p.bit_depth);
-	free (p.image);
+	/* Convert to 8 bit */
+	expand_buffer (p->image, pixmap8, p->width, p->height, p->bit_depth);
+	free (p->image);
 
-	if (!(bitmap=osd_new_bitmap(p.width,p.height,8)))
+	if (!(*bitmap=osd_new_bitmap(p->width,p->height,8)))
 	{
 		error("unable to allocate memory for overlay");
 		free (pixmap8);
@@ -455,40 +462,57 @@ int png_read_overlay(char *file_name, struct osd_bitmap **ovl_bitmap, unsigned c
 	orientation = Machine->orientation;
 	if (orientation != ORIENTATION_DEFAULT)
 	{
-		int j, x, y, h, w;
-
 		tmp = pixmap8;
-		for (i=0; i<p.height; i++)
-			for (j=0; j<p.width; j++)
+		for (i=0; i<p->height; i++)
+			for (j=0; j<p->width; j++)
 			{
 				if (orientation & ORIENTATION_SWAP_XY)
 				{
-					x=i; y=j; w=p.height; h=p.width;
+					x=i; y=j; w=p->height; h=p->width;
 				}
 				else
 				{
-					x=j; y=i; w=p.width; h=p.height;
+					x=j; y=i; w=p->width; h=p->height;
 				}
 				if (orientation & ORIENTATION_FLIP_X)
 					x=w-x-1;
 				if (orientation & ORIENTATION_FLIP_Y)
 					y=h-y-1;
 
-				bitmap->line[y][x] = *tmp++;
+				(*bitmap)->line[y][x] = *tmp++;
 			}
 	}
 	else
 	{
-		for (i=0; i<p.height; i++)
-			memcpy (bitmap->line[i], pixmap8+i*p.width, p.width);
+		for (i=0; i<p->height; i++)
+			memcpy ((*bitmap)->line[i], pixmap8+i*p->width, p->width);
 	}
 	free (pixmap8);
-	*ovl_bitmap = bitmap;
-	*num_palette = p.num_palette;
-	*num_trans = p.num_trans;
 	return 1;
 }
 
+int png_read_artwork(const char *file_name, struct osd_bitmap **bitmap, unsigned char **palette, int *num_palette, unsigned char **trans, int *num_trans)
+{
+	struct png_info p;
 
+	if (!png_read_bitmap(file_name, bitmap, &p))
+		return 0;
 
+	*num_palette = p.num_palette;
+	*num_trans = p.num_trans;
+	*palette = p.palette;
+	*trans = p.trans;
 
+	return 1;
+}
+
+int png_read_backdrop(char *file_name, struct osd_bitmap **ovl_bitmap, unsigned char *palette, int *num_palette)
+{
+	unsigned char *trans, *ovl_palette;
+	int num_trans;
+
+	if (!png_read_artwork(file_name, ovl_bitmap, &ovl_palette, num_palette, &trans, &num_trans))
+		return 0;
+	memcpy (palette, ovl_palette, 3*(*num_palette));
+	return 1;
+}

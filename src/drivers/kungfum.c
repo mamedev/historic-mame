@@ -488,7 +488,83 @@ ROM_START( kungfum_rom )
 	ROM_LOAD( "a-3h-.bin",    0xe000, 0x2000, 0xd99fb995 )
 ROM_END
 
+ROM_START( kungfud_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "a-4e-d",       0x0000, 0x4000, 0xfc330a46 )
+	ROM_LOAD( "a-4d-d",       0x4000, 0x4000, 0x1b2fd32f )
+
+	ROM_REGION_DISPOSE(0x1e000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "g-4c-a.bin",   0x00000, 0x2000, 0x6b2cc9c8 )	/* characters */
+	ROM_LOAD( "g-4d-a.bin",   0x02000, 0x2000, 0xc648f558 )
+	ROM_LOAD( "g-4e-a.bin",   0x04000, 0x2000, 0xfbe9276e )
+	ROM_LOAD( "b-4k-.bin",    0x06000, 0x2000, 0x16fb5150 )	/* sprites */
+	ROM_LOAD( "b-4f-.bin",    0x08000, 0x2000, 0x67745a33 )
+	ROM_LOAD( "b-4l-.bin",    0x0a000, 0x2000, 0xbd1c2261 )
+	ROM_LOAD( "b-4h-.bin",    0x0c000, 0x2000, 0x8ac5ed3a )
+	ROM_LOAD( "b-3n-.bin",    0x0e000, 0x2000, 0x28a213aa )
+	ROM_LOAD( "b-4n-.bin",    0x10000, 0x2000, 0xd5228df3 )
+	ROM_LOAD( "b-4m-.bin",    0x12000, 0x2000, 0xb16de4f2 )
+	ROM_LOAD( "b-3m-.bin",    0x14000, 0x2000, 0xeba0d66b )
+	ROM_LOAD( "b-4c-.bin",    0x16000, 0x2000, 0x01298885 )
+	ROM_LOAD( "b-4e-.bin",    0x18000, 0x2000, 0xc77b87d4 )
+	ROM_LOAD( "b-4d-.bin",    0x1a000, 0x2000, 0x6a70615f )
+	ROM_LOAD( "b-4a-.bin",    0x1c000, 0x2000, 0x6189d626 )
+
+	ROM_REGION(0x0620)	/* color PROMs */
+	ROM_LOAD( "g-1j-.bin",    0x0000, 0x0100, 0x668e6bca )	/* character palette red component */
+	ROM_LOAD( "b-1m-.bin",    0x0100, 0x0100, 0x76c05a9c )	/* sprite palette red component */
+	ROM_LOAD( "g-1f-.bin",    0x0200, 0x0100, 0x964b6495 )	/* character palette green component */
+	ROM_LOAD( "b-1n-.bin",    0x0300, 0x0100, 0x23f06b99 )	/* sprite palette green component */
+	ROM_LOAD( "g-1h-.bin",    0x0400, 0x0100, 0x550563e1 )	/* character palette blue component */
+	ROM_LOAD( "b-1l-.bin",    0x0500, 0x0100, 0x35e45021 )	/* sprite palette blue component */
+	ROM_LOAD( "b-5f-.bin",    0x0600, 0x0020, 0x7a601c3d )	/* sprite height, one entry per 32 */
+														/*   sprites. Used at run time! */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
+	ROM_LOAD( "a-3e-.bin",    0xa000, 0x2000, 0x58e87ab0 )	/* samples (ADPCM 4-bit) */
+	ROM_LOAD( "a-3f-.bin",    0xc000, 0x2000, 0xc81e31ea )	/* samples (ADPCM 4-bit) */
+	ROM_LOAD( "a-3h-.bin",    0xe000, 0x2000, 0xd99fb995 )
+ROM_END
+
 ROM_START( kungfub_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "c5.5h",        0x0000, 0x4000, 0x5d8e791d )
+	ROM_LOAD( "c4.5k",        0x4000, 0x4000, 0x4000e2b8 )
+
+	ROM_REGION_DISPOSE(0x1e000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "g-4c-a.bin",   0x00000, 0x2000, 0x6b2cc9c8 )	/* characters */
+	ROM_LOAD( "g-4d-a.bin",   0x02000, 0x2000, 0xc648f558 )
+	ROM_LOAD( "g-4e-a.bin",   0x04000, 0x2000, 0xfbe9276e )
+	ROM_LOAD( "b-4k-.bin",    0x06000, 0x2000, 0x16fb5150 )	/* sprites */
+	ROM_LOAD( "b-4f-.bin",    0x08000, 0x2000, 0x67745a33 )
+	ROM_LOAD( "b-4l-.bin",    0x0a000, 0x2000, 0xbd1c2261 )
+	ROM_LOAD( "b-4h-.bin",    0x0c000, 0x2000, 0x8ac5ed3a )
+	ROM_LOAD( "b-3n-.bin",    0x0e000, 0x2000, 0x28a213aa )
+	ROM_LOAD( "b-4n-.bin",    0x10000, 0x2000, 0xd5228df3 )
+	ROM_LOAD( "b-4m-.bin",    0x12000, 0x2000, 0xb16de4f2 )
+	ROM_LOAD( "b-3m-.bin",    0x14000, 0x2000, 0xeba0d66b )
+	ROM_LOAD( "b-4c-.bin",    0x16000, 0x2000, 0x01298885 )
+	ROM_LOAD( "b-4e-.bin",    0x18000, 0x2000, 0xc77b87d4 )
+	ROM_LOAD( "b-4d-.bin",    0x1a000, 0x2000, 0x6a70615f )
+	ROM_LOAD( "b-4a-.bin",    0x1c000, 0x2000, 0x6189d626 )
+
+	ROM_REGION(0x0620)	/* color PROMs */
+	ROM_LOAD( "g-1j-.bin",    0x0000, 0x0100, 0x668e6bca )	/* character palette red component */
+	ROM_LOAD( "b-1m-.bin",    0x0100, 0x0100, 0x76c05a9c )	/* sprite palette red component */
+	ROM_LOAD( "g-1f-.bin",    0x0200, 0x0100, 0x964b6495 )	/* character palette green component */
+	ROM_LOAD( "b-1n-.bin",    0x0300, 0x0100, 0x23f06b99 )	/* sprite palette green component */
+	ROM_LOAD( "g-1h-.bin",    0x0400, 0x0100, 0x550563e1 )	/* character palette blue component */
+	ROM_LOAD( "b-1l-.bin",    0x0500, 0x0100, 0x35e45021 )	/* sprite palette blue component */
+	ROM_LOAD( "b-5f-.bin",    0x0600, 0x0020, 0x7a601c3d )	/* sprite height, one entry per 32 */
+														/*   sprites. Used at run time! */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
+	ROM_LOAD( "a-3e-.bin",    0xa000, 0x2000, 0x58e87ab0 )	/* samples (ADPCM 4-bit) */
+	ROM_LOAD( "a-3f-.bin",    0xc000, 0x2000, 0xc81e31ea )	/* samples (ADPCM 4-bit) */
+	ROM_LOAD( "a-3h-.bin",    0xe000, 0x2000, 0xd99fb995 )
+ROM_END
+
+ROM_START( kungfub2_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "kf4",          0x0000, 0x4000, 0x3f65313f )
 	ROM_LOAD( "kf5",          0x4000, 0x4000, 0x9ea325f3 )
@@ -597,12 +673,38 @@ struct GameDriver kungfum_driver =
 	hiload, hisave
 };
 
+struct GameDriver kungfud_driver =
+{
+	__FILE__,
+	&kungfum_driver,
+	"kungfud",
+	"Kung Fu Master (Data East)",
+	"1984",
+	"Irem (Data East license)",
+	"Mirko Buffoni\nNicola Salmoria\nIshmair\nPaul Swan\nAaron Giles (sound)\nMarco Cassili",
+	0,
+	&machine_driver,
+	0,
+
+	kungfud_rom,
+	0, 0,
+	0,
+	0,
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
 struct GameDriver kungfub_driver =
 {
 	__FILE__,
 	&kungfum_driver,
 	"kungfub",
-	"Kung Fu Master (bootleg)",
+	"Kung Fu Master (bootleg set 1)",
 	"1984",
 	"bootleg",
 	"Mirko Buffoni\nNicola Salmoria\nIshmair\nPaul Swan\nAaron Giles (sound)\nMarco Cassili",
@@ -611,6 +713,32 @@ struct GameDriver kungfub_driver =
 	0,
 
 	kungfub_rom,
+	0, 0,
+	0,
+	0,
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
+struct GameDriver kungfub2_driver =
+{
+	__FILE__,
+	&kungfum_driver,
+	"kungfub2",
+	"Kung Fu Master (bootleg set 2)",
+	"1984",
+	"bootleg",
+	"Mirko Buffoni\nNicola Salmoria\nIshmair\nPaul Swan\nAaron Giles (sound)\nMarco Cassili",
+	0,
+	&machine_driver,
+	0,
+
+	kungfub2_rom,
 	0, 0,
 	0,
 	0,

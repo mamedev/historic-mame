@@ -15,8 +15,6 @@ extern void M68KRESET(void);
 /* Interface routines to link Mame -> 68KEM */
 /********************************************/
 
-// regstruct regs; - now in assembler module
-
 void MC68000_Reset(void)
 {
 	memset(&regs,0,sizeof(regs));
@@ -24,10 +22,7 @@ void MC68000_Reset(void)
     regs.a[7] = regs.isp = get_long(0);
     regs.pc   = get_long(4) & 0xffffff;
     regs.sr_high = 0x27;
-
-#ifdef MAME_DEBUG
    	regs.sr = 0x2700;
-#endif
 
     M68KRESET();
 }
@@ -72,7 +67,7 @@ int  MC68000_Execute(int cycles)
 
 		M68KRUN();
     }
-	while (MC68000_ICount > 0);
+	while (MC68000_ICount >= 0);
 
 #else
 
@@ -83,14 +78,17 @@ int  MC68000_Execute(int cycles)
     return (cycles - MC68000_ICount);
 }
 
+
+static regstruct Myregs;
+
 void MC68000_SetRegs(MC68000_Regs *src)
 {
-	regs = src->regs;
+ 	regs = src->regs;
 }
 
 void MC68000_GetRegs(MC68000_Regs *dst)
 {
-	dst->regs = regs;
+  	dst->regs = regs;
 }
 
 void MC68000_Cause_Interrupt(int level)
@@ -108,3 +106,12 @@ int  MC68000_GetPC(void)
 {
     return regs.pc;
 }
+
+#ifdef MAME_DEBUG
+
+	/* Need cycle table, to make identical to C core */
+
+	#include "cycletbl.h"
+
+#endif
+

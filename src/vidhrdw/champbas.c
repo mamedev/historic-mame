@@ -11,6 +11,9 @@
 
 
 
+static int gfxbank;
+
+
 /***************************************************************************
 
   Convert the color PROMs into a more useable format.
@@ -66,13 +69,24 @@ void champbas_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 	/* color_prom now points to the beginning of the lookup table */
 
 	/* TODO: there are 32 colors in the palette, but we are suing only 16 */
+	/* the only difference between the two banks is color #14, grey instead of green */
 
 	/* character lookup table */
 	/* sprites use the same color lookup table as characters */
 	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = *(color_prom++);
+		COLOR(0,i) = (*(color_prom++) & 0x0f);
 }
 
+
+
+void champbas_gfxbank_w(int offset,int data)
+{
+	if (gfxbank != (data & 1))
+	{
+		gfxbank = data & 1;
+		memset(dirtybuffer,1,videoram_size);
+	}
+}
 
 
 /***************************************************************************
@@ -101,9 +115,9 @@ void champbas_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sx = 8 * (offs % 32);
 			sy = 8 * (offs / 32);
 
-			drawgfx(tmpbitmap,Machine->gfx[0],
+			drawgfx(tmpbitmap,Machine->gfx[0 + gfxbank],
 					videoram[offs],
-					colorram[offs]+32,
+					(colorram[offs] & 0x1f) + 32,
 					0,0,
 					sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
@@ -119,11 +133,11 @@ void champbas_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* order, to have the correct priorities. */
 	for (offs = spriteram_size - 2;offs >= 0;offs -= 2)
 	{
-		drawgfx(bitmap,Machine->gfx[1],
+		drawgfx(bitmap,Machine->gfx[2 + gfxbank],
 				spriteram[offs] >> 2,
 				spriteram[offs + 1],
 				spriteram[offs] & 1,spriteram[offs] & 2,
-				255 - spriteram_2[offs + 1],spriteram_2[offs] - 16,
+				((256+16 - spriteram_2[offs + 1]) & 0xff) - 16,spriteram_2[offs] - 16,
 				&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
 	}
 }

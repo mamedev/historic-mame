@@ -347,35 +347,23 @@ extern int opcode ;
 
 typedef struct
 {
-    LONG Icount; 			/* 0x0000 Cycles to Process */
-
     ULONG d[8];             /* 0x0004 8 Data registers */
 	CPTR  a[8];             /* 0x0024 8 Address registers */
 
     CPTR  usp;              /* 0x0044 Stack registers (They will overlap over reg_a7) */
     CPTR  isp;              /* 0x0048 */
 
-    ULONG statusflags;		/* 0x004C System registers */
+    ULONG sr_high;     		/* 0x004C System registers */
+    ULONG ccr;              /* 0x0050 CCR in Intel Format */
+    ULONG x_carry;			/* 0x0054 Extended Carry */
 
-    /* byte sr_high;       	   The system register (byte most meaningful from SR) */
-    /*                         T u S u u I I I */
+    ULONG pc;            	/* 0x0058 Program Counter */
 
-    /* word r;         		   The CCR register except de extended carry in */
-    /*                         INTEL format,  uuuuuVuuSZuuuuuC */
-    /*                                        5432109876543210 */
+    ULONG IRQ_level;        /* 0x005C IRQ level you want the MC68K process (0=None)  */
 
-    /* byte extended_carry;    The extended carry (X) -> uuuuuuuX */
-    /*                                                   76543210 */
+    /* Backward compatible with C emulator - Only set in Debug compile */
 
-    ULONG pc;            	/* 0x0050 Program Counter */
-
-    UBYTE IRQ_level;        /* IRQ level you want the MC68K process (0=None)  */
-    UBYTE vector;           /* Interruption vector (From 0 to 255)            */
-
-    /* Backward compatible with C emulator in case required */
-    /* Use MakeSR to fill with correct info */
-
-    UWORD  sr;
+    UWORD sr;
 
 #ifdef MAME_DEBUG
 
@@ -388,22 +376,6 @@ typedef struct
 #endif
 
 } regstruct;
-
-static __inline__ void MakeSR(void)
-{
-	/* Make Status Register compatible with C emulator */
-
-	extern regstruct regs;
-
-    regs.sr = ((regs.statusflags & 0xa7) << 8);
-
-    if (regs.statusflags & 0x0008000) regs.sr |= 8;     /* Negative */
-    if (regs.statusflags & 0x0004000) regs.sr |= 4;		/* Zero */
-    if (regs.statusflags & 0x0000100) regs.sr |= 1;		/* Carry */
-
-    if (regs.statusflags & 0x1000000) regs.sr |= 16;	/* Ex Carry */
-    if (regs.statusflags & 0x0080000) regs.sr |= 2;		/* Overflow */
-}
 
 #endif
 

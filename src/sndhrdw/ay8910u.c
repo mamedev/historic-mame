@@ -3,9 +3,9 @@
 	DATATYPE *buf1,*buf2,*buf3;
 	int outn;
 
-	buf1 = (DATATYPE *)buffer1;
-	buf2 = (DATATYPE *)buffer2;
-	buf3 = (DATATYPE *)buffer3;
+	buf1 = (DATATYPE *)buffer[0];
+	buf2 = (DATATYPE *)buffer[1];
+	buf3 = (DATATYPE *)buffer[2];
 
 
 	/* The 8910 has three outputs, each output is the mix of one of the three */

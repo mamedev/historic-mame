@@ -66,9 +66,9 @@ LIBS   = -lalleg $(DJDIR)/lib/audiodjf.a \
 	 obj/kangaroo.a obj/missile.a obj/ataribw.a obj/atarisy1.a \
 	 obj/atarisy2.a obj/atari.a obj/rockola.a obj/technos.a \
 	 obj/berzerk.a obj/gameplan.a obj/stratvox.a obj/zaccaria.a \
-	 obj/upl.a obj/neogeo.a obj/other.a
+	 obj/upl.a obj/tms.a obj/cinemar.a obj/neogeo.a obj/other.a
 OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
-         obj/cpuintrf.o obj/memory.o obj/timer.o obj/palette.o obj/gfxlayer.o \
+         obj/cpuintrf.o obj/memory.o obj/timer.o obj/palette.o \
          obj/inptport.o obj/cheat.o obj/unzip.o obj/inflate.o \
          obj/audit.o obj/crc32.o obj/png.o obj/artwork.o \
          obj/sndhrdw/adpcm.o \
@@ -433,6 +433,13 @@ obj/upl.a: \
          obj/vidhrdw/pkunwar.o obj/drivers/pkunwar.o \
          obj/vidhrdw/ninjakd2.o obj/drivers/ninjakd2.o
 
+obj/tms.a: \
+         obj/machine/exterm.o obj/vidhrdw/exterm.o obj/drivers/exterm.o \
+         obj/machine/smashtv.o obj/vidhrdw/smashtv.o obj/sndhrdw/smashtv.o obj/drivers/smashtv.o \
+
+obj/cinemar.a: \
+         obj/vidhrdw/jack.o obj/drivers/jack.o
+
 obj/neogeo.a: \
          obj/machine/neogeo.o obj/machine/pd4990a.o obj/vidhrdw/neogeo.o obj/drivers/neogeo.o
 
@@ -474,13 +481,13 @@ obj/other.a: \
          obj/machine/stactics.o obj/vidhrdw/stactics.o obj/drivers/stactics.o \
          obj/vidhrdw/goldstar.o obj/drivers/goldstar.o \
          obj/vidhrdw/vigilant.o obj/drivers/vigilant.o \
-         obj/machine/exterm.o obj/vidhrdw/exterm.o obj/drivers/exterm.o \
          obj/vidhrdw/cop01.o obj/drivers/cop01.o \
          obj/vidhrdw/terracre.o obj/drivers/terracre.o \
          obj/vidhrdw/sharkatt.o obj/drivers/sharkatt.o \
          obj/machine/turbo.o obj/vidhrdw/turbo.o obj/drivers/turbo.o \
          obj/vidhrdw/kingobox.o obj/drivers/kingobox.o \
          obj/vidhrdw/zerozone.o obj/drivers/zerozone.o \
+         obj/machine/exctsccr.o obj/vidhrdw/exctsccr.o obj/drivers/exctsccr.o \
 
 # dependencies
 obj/Z80/Z80.o:  Z80.c Z80.h Z80Codes.h Z80IO.h Z80DAA.h
@@ -528,6 +535,7 @@ clean:
 	del obj\M6805\*.o
 	del obj\M68000\*.o
 	del obj\M68000\*.oa
+	del obj\M68000\*.asm
 	del obj\M68000\*.exe
 	del obj\S2650\*.o
 	del obj\T11\*.o
@@ -554,6 +562,7 @@ cleandebug:
 	del obj\M6805\*.o
 	del obj\M68000\*.o
 	del obj\M68000\*.oa
+	del obj\M68000\*.asm
 	del obj\M68000\*.exe
 	del obj\S2650\*.o
 	del obj\T11\*.o

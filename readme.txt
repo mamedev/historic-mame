@@ -149,6 +149,9 @@ M6808 based on L.C. Benschop's 6809 Simulator V09.
 M68000 emulator taken from the System 16 Arcade Emulator by Thierry Lescot.
 8039 emulator by Mirko Buffoni, based on 8048 emulator by Dan Boris.
 T-11 emulator Copyright (C) Aaron Giles 1998
+TMS34010 emulator by Alex Pasadyn and Zsolt Vasvari.
+TMS9900 emulator by Andy Jones, based on original code by Ton Brouwer.
+
 TMS5220 emulator by Frank Palazzolo.
 AY-3-8910 emulation based on various code snippets by Ville Hallik,
   Michael Cuddy, Tatsuyuki Satoh, Fabrice Frances, Nicola Salmoria.
@@ -158,6 +161,9 @@ POKEY emulator by Ron Fries (rfries@aol.com).
 Many thanks to Eric Smith, Hedley Rainnie and Sean Trowbridge for information
    on the Pokey random number generator.
 NES sound hardware info by Jeremy Chadwick and Hedley Rainne.
+YM3812 and YM3526 emulation by Carl-Henrik Skårstedt.
+YM2610 emulation by Hiromitsu Shioya.
+
 Background art by Peter Hirschberg (PeterH@cronuscom.com).
 
 Allegro library by Shawn Hargreaves, 1994/97

@@ -1,10 +1,5 @@
 /***************************************************************************
 
-Note: This driver has been revised to use the sound driver.
-Sound ROMS sk4_ic51.bin and sk4_ic52.bin are loaded...but don't have
-the right checksums.
-Andrew Scott (ascott@utkux.utcc.utk.edu)
-
 Vanguard memory map (preliminary)
 
 0000-03ff RAM
@@ -24,7 +19,6 @@ write
 3100      Sound Port 0
 3101      Sound Port 1
 3103      bit 7 = flip screen
-          bit 4-6 = coin counter?
 3200      y scroll register
 3300      x scroll register
 
@@ -44,12 +38,13 @@ read:
 2107      IN2
 
 write
+2000-2001 To the HD46505S video controller
 2100      Sound Port 0
 2101      Sound Port 1
 2103      bit 7 = flip screen
-          bit 4-6 = coin counter?
-          bit 3 = char bank selector (Fantasy and Nibbler only, since
-                                       Vanguard has only 256 characters)
+          bit 4-6 = music 2
+          bit 3 = char bank selector
+          bit 0-2 = background color
 2200      y scroll register
 2300      x scroll register
 
@@ -80,8 +75,9 @@ b000	  Sound Port 0
 b001	  Sound Port 1
 b100	  ????
 b103	  bit 7 = flip screen
-          bit 4-6 = coin counter?
-		  bit 3 = char bank selector
+          bit 4-6 = music 2
+          bit 3 = char bank selector
+          bit 0-2 = background color
 b106	  ????
 b200	  y scroll register
 b300	  x scroll register
@@ -92,6 +88,7 @@ Interrupts: VBlank causes an IRQ. Coin insertion causes a NMI.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "vidhrdw/crtc6845.h"
 
 
 extern unsigned char *rockola_videoram2;
@@ -111,6 +108,9 @@ void rockola_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void rockola_sound0_w(int offset,int data);
 void rockola_sound1_w(int offset,int data);
+void fantasy_sound0_w(int offset,int data);
+void fantasy_sound1_w(int offset,int data);
+void fantasy_sound2_w(int offset,int data);
 int rockola_sh_start(void);
 void rockola_sh_update(void);
 
@@ -136,6 +136,8 @@ static struct MemoryWriteAddress satansat_writemem[] =
 	{ 0x0c00, 0x0fff, colorram_w, &colorram },
 	{ 0x1000, 0x1fff, rockola_characterram_w, &rockola_characterram },
 	{ 0x4000, 0x97ff, MWA_ROM },
+	{ 0x3000, 0x3000, crtc6845_address_w },
+	{ 0x3001, 0x3001, crtc6845_register_w },
 //	{ 0xb000, 0xb000, satansat_sound0_w },
 //	{ 0xb001, 0xb001, satansat_sound1_w },
 	{ 0xb002, 0xb002, satansat_b002_w },	/* flip screen & irq enable */
@@ -162,6 +164,8 @@ static struct MemoryWriteAddress vanguard_writemem[] =
 	{ 0x0800, 0x0bff, videoram_w, &videoram, &videoram_size },
 	{ 0x0c00, 0x0fff, colorram_w, &colorram },
 	{ 0x1000, 0x1fff, rockola_characterram_w, &rockola_characterram },
+	{ 0x3000, 0x3000, crtc6845_address_w },
+	{ 0x3001, 0x3001, crtc6845_register_w },
 	{ 0x3100, 0x3100, rockola_sound0_w },
 	{ 0x3101, 0x3101, rockola_sound1_w },
 	{ 0x3103, 0x3103, rockola_flipscreen_w },
@@ -190,9 +194,11 @@ static struct MemoryWriteAddress fantasy_writemem[] =
 	{ 0x0800, 0x0bff, videoram_w, &videoram, &videoram_size },
 	{ 0x0c00, 0x0fff, colorram_w, &colorram },
 	{ 0x1000, 0x1fff, rockola_characterram_w, &rockola_characterram },
-	{ 0x2100, 0x2100, rockola_sound0_w },
-	{ 0x2101, 0x2101, rockola_sound1_w },
-	{ 0x2103, 0x2103, rockola_flipscreen_w },
+	{ 0x2000, 0x2000, crtc6845_address_w },
+	{ 0x2001, 0x2001, crtc6845_register_w },
+	{ 0x2100, 0x2100, fantasy_sound0_w },
+	{ 0x2101, 0x2101, fantasy_sound1_w },
+	{ 0x2103, 0x2103, fantasy_sound2_w },	/* + flipscreen etc */
 	{ 0x2200, 0x2200, MWA_RAM, &rockola_scrolly },
 	{ 0x2300, 0x2300, MWA_RAM, &rockola_scrollx },
 	{ 0x3000, 0xbfff, MWA_ROM },
@@ -219,9 +225,11 @@ static struct MemoryWriteAddress pballoon_writemem[] =
 	{ 0x0c00, 0x0fff, colorram_w, &colorram },
 	{ 0x1000, 0x1fff, rockola_characterram_w, &rockola_characterram },
 	{ 0x3000, 0x9fff, MWA_ROM },
-	{ 0xb100, 0xb100, rockola_sound0_w },
-	{ 0xb101, 0xb101, rockola_sound1_w },
-	{ 0xb103, 0xb103, rockola_flipscreen_w },
+	{ 0xb000, 0xb000, crtc6845_address_w },
+	{ 0xb001, 0xb001, crtc6845_register_w },
+	{ 0xb100, 0xb100, fantasy_sound0_w },
+	{ 0xb101, 0xb101, fantasy_sound1_w },
+	{ 0xb103, 0xb103, fantasy_sound2_w },	/* + flipscreen etc */
 	{ 0xb200, 0xb200, MWA_RAM, &rockola_scrolly },
 	{ 0xb300, 0xb300, MWA_RAM, &rockola_scrollx },
 	{ -1 }	/* end of table */
@@ -246,7 +254,7 @@ static int rockola_interrupt(void)
 	if (cpu_getiloops() != 0)
 	{
 		/* user asks to insert coin: generate a NMI interrupt. */
-		if (readinputport(4) & 1)
+		if (readinputport(3) & 3)
 			return nmi_interrupt();
 		else return ignore_interrupt();
 	}
@@ -299,8 +307,7 @@ INPUT_PORTS_START( sasuke_input_ports )
 	PORT_DIPSETTING (   0x80, "On" )
 
     PORT_START  /* IN2 */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE,
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
     PORT_BIT( 0x0e, IP_ACTIVE_LOW, IPT_UNUSED )
     PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* connected to a counter - random number generator? */
 INPUT_PORTS_END
@@ -347,8 +354,7 @@ INPUT_PORTS_START( satansat_input_ports )
 	PORT_DIPSETTING (   0x80, "On" )
 
     PORT_START  /* IN2 */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE,
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
     PORT_BIT( 0x0e, IP_ACTIVE_LOW, IPT_UNUSED )
     PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* connected to a counter - random number generator? */
 INPUT_PORTS_END
@@ -407,22 +413,14 @@ INPUT_PORTS_START( vanguard_input_ports )
 	PORT_DIPSETTING(    0x80, "On" )
 
 	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_COIN2 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
-
-	PORT_START	/* FAKE */
-	/* The coin slots are not memory mapped. Coin insertion causes a NMI. */
-	/* This fake input port is used by the interrupt */
-	/* handler to be notified of coin insertions. We use IPF_IMPULSE to */
-	/* trigger exactly one interrupt, without having to check when the */
-	/* user releases the key. */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE, "Coin", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( fantasy_input_ports )
@@ -479,22 +477,14 @@ INPUT_PORTS_START( fantasy_input_ports )
 	PORT_DIPSETTING(    0x00, "Yes" )
 
 	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_COIN2 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
-
-	PORT_START	/* FAKE */
-	/* The coin slots are not memory mapped. Coin insertion causes a NMI. */
-	/* This fake input port is used by the interrupt */
-	/* handler to be notified of coin insertions. We use IPF_IMPULSE to */
-	/* trigger exactly one interrupt, without having to check when the */
-	/* user releases the key. */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE, "Coin", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( pballoon_input_ports )
@@ -551,22 +541,14 @@ INPUT_PORTS_START( pballoon_input_ports )
 	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_COIN2 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
-
-	PORT_START	/* FAKE */
-	/* The coin slots are not memory mapped. Coin insertion causes a NMI. */
-	/* This fake input port is used by the interrupt */
-	/* handler to be notified of coin insertions. We use IPF_IMPULSE to */
-	/* trigger exactly one interrupt, without having to check when the */
-	/* user releases the key. */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE, "Coin", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( nibbler_input_ports )
@@ -616,22 +598,14 @@ INPUT_PORTS_START( nibbler_input_ports )
 	PORT_DIPSETTING(    0x80, "Yes" )
 
 	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_COIN2 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
-
-	PORT_START	/* FAKE */
-	/* The coin slots are not memory mapped. Coin insertion causes a NMI. */
-	/* This fake input port is used by the interrupt */
-	/* handler to be notified of coin insertions. We use IPF_IMPULSE to */
-	/* trigger exactly one interrupt, without having to check when the */
-	/* user releases the key. */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE, "Coin", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
 INPUT_PORTS_END
 
 
@@ -863,7 +837,7 @@ ROM_START( satansat_rom )
 	ROM_LOAD( "ss6",          0x6800, 0x0800, 0x7fbd5d30 )
 	ROM_LOAD( "ss7",          0x7000, 0x0800, 0x93ea2df9 )
 	ROM_LOAD( "ss8",          0x7800, 0x0800, 0xe67ec873 )
-	ROM_RELOAD(       0xf800, 0x0800 ) /* for the reset/interrupt vectors */
+	ROM_RELOAD(               0xf800, 0x0800 ) /* for the reset/interrupt vectors */
 	ROM_LOAD( "ss9",          0x8000, 0x0800, 0x22c44650 )
 	ROM_LOAD( "ss10",         0x8800, 0x0800, 0x8f1b313a )
 	ROM_LOAD( "ss11",         0x9000, 0x0800, 0xe74f98e0 )
@@ -890,7 +864,7 @@ ROM_START( zarzon_rom )
 	ROM_LOAD( "zarz127.14",   0x6800, 0x0800, 0xbbd2cc0d )
 	ROM_LOAD( "zarz128.15",   0x7000, 0x0800, 0x93ea2df9 )
 	ROM_LOAD( "zarz129.16",   0x7800, 0x0800, 0xe67ec873 )
-	ROM_RELOAD(             0xf800, 0x0800 ) /* for the reset/interrupt vectors */
+	ROM_RELOAD(               0xf800, 0x0800 ) /* for the reset/interrupt vectors */
 	ROM_LOAD( "zarz130.22",   0x8000, 0x0800, 0x22c44650 )
 	ROM_LOAD( "zarz131.23",   0x8800, 0x0800, 0x7be20678 )
 	ROM_LOAD( "zarz132.24",   0x9000, 0x0800, 0x72b2cb76 )
@@ -966,6 +940,13 @@ static const char *vanguard_sample_names[] =
 	0
 };
 
+static const char *fantasy_sample_names[] =
+{
+	"*vanguard",
+	"explsion.sam",
+	0
+};
+
 ROM_START( fantasy_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ic12.cpu",     0x3000, 0x1000, 0x22cb2249 )
@@ -974,7 +955,7 @@ ROM_START( fantasy_rom )
 	ROM_LOAD( "ic09.cpu",     0x6000, 0x1000, 0x6ac1dbfc )
 	ROM_LOAD( "ic10.cpu",     0x7000, 0x1000, 0xc796a406 )
 	ROM_LOAD( "ic14.cpu",     0x8000, 0x1000, 0x6f1f0698 )
-	ROM_RELOAD(           0xf000, 0x1000 )	/* for the reset and interrupt vectors */
+	ROM_RELOAD(               0xf000, 0x1000 )	/* for the reset and interrupt vectors */
 	ROM_LOAD( "ic15.cpu",     0x9000, 0x1000, 0x5534d57e )
 	ROM_LOAD( "ic16.cpu",     0xa000, 0x1000, 0x6c2aeb6e )
 	ROM_LOAD( "ic17.cpu",     0xb000, 0x1000, 0xf6aa5de1 )
@@ -987,11 +968,11 @@ ROM_START( fantasy_rom )
 	ROM_LOAD( "fantasy.ic7",  0x0000, 0x0020, 0x361a5e99 ) /* foreground colors */
 	ROM_LOAD( "fantasy.ic6",  0x0020, 0x0020, 0x33d974f7 ) /* background colors */
 
-	ROM_REGION(0x1000)	/* space for the sound ROMs */
+	ROM_REGION(0x1800)	/* space for the sound ROMs */
 	ROM_LOAD( "ic51.cpu",     0x0000, 0x0800, 0x48094ec5 )
 	ROM_LOAD( "ic52.cpu",     0x0800, 0x0800, 0x1d0316e8 )
+	ROM_LOAD( "ic53.cpu",     0x1000, 0x0800, 0x49fd4ae8 )
 
-/*	ROM_LOAD( "ic53.cpu", 0x????, 0x0800 ) ?? */
 /*	ROM_LOAD( "ic07.dau", 0x????, 0x0800 ) ?? */
 /*	ROM_LOAD( "ic08.dau", 0x????, 0x0800 ) ?? */
 /*	ROM_LOAD( "ic11.dau", 0x????, 0x0800 ) ?? */
@@ -1017,12 +998,39 @@ ROM_START( pballoon_rom )
 	ROM_LOAD( "sk8_ic6.bin",  0x0020, 0x0020, 0xeabc6a00 ) /* background colors */
 
 	ROM_REGION(0x1800)  /* space for the sound ROMs */
-	ROM_LOAD( "sk7_ic51.bin", 0x0000, 0x0800, 0x0345f8b7 )  /* sound ROM 1 */
-	ROM_LOAD( "sk7_ic52.bin", 0x0800, 0x0800, 0x5d6d68ea )  /* sound ROM 2 */
-	ROM_LOAD( "sk7_ic53.bin", 0x1000, 0x0800, 0xa4c505cd )  /* sound ROM 3 */
+	ROM_LOAD( "sk7_ic51.bin", 0x0000, 0x0800, 0x0345f8b7 )
+	ROM_LOAD( "sk7_ic52.bin", 0x0800, 0x0800, 0x5d6d68ea )
+	ROM_LOAD( "sk7_ic53.bin", 0x1000, 0x0800, 0xa4c505cd )
 ROM_END
 
 ROM_START( nibbler_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "g960-52.12",   0x3000, 0x1000, 0xac6a802b )
+	ROM_LOAD( "g960-48.07",   0x4000, 0x1000, 0x35971364 )
+	ROM_LOAD( "g960-49.08",   0x5000, 0x1000, 0x6b33b806 )
+	ROM_LOAD( "g960-50.09",   0x6000, 0x1000, 0x91a4f98d )
+	ROM_LOAD( "g960-51.10",   0x7000, 0x1000, 0xa151d934 )
+	ROM_LOAD( "g960-53.14",   0x8000, 0x1000, 0x063f05cc )
+	ROM_RELOAD(               0xf000, 0x1000 )	/* for the reset and interrupt vectors */
+	ROM_LOAD( "g960-54.15",   0x9000, 0x1000, 0x7205fb8d )
+	ROM_LOAD( "g960-55.16",   0xa000, 0x1000, 0x4bb39815 )
+	ROM_LOAD( "g960-56.17",   0xb000, 0x1000, 0xed680f19 )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "g960-57.50",   0x0000, 0x1000, 0x01d4d0c2 )
+	ROM_LOAD( "g960-58.51",   0x1000, 0x1000, 0xfeff7faf )
+
+	ROM_REGION(0x0040)  /* color proms */
+	ROM_LOAD( "g70805.ic7",   0x0000, 0x0020, 0xa5709ff3 ) /* foreground colors */
+	ROM_LOAD( "g70804.ic6",   0x0020, 0x0020, 0xdacd592d ) /* background colors */
+
+	ROM_REGION(0x1800)  /* space for the sound ROMs */
+	ROM_LOAD( "g959-43.51",   0x0000, 0x0800, 0x0345f8b7 )
+	ROM_LOAD( "g959-44.52",   0x0800, 0x0800, 0x87d67dee )
+	ROM_LOAD( "g959-45.53",   0x1000, 0x0800, 0x33189917 )
+ROM_END
+
+ROM_START( nibblera_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ic12",         0x3000, 0x1000, 0x6dfa1be5 )
 	ROM_LOAD( "ic07",         0x4000, 0x1000, 0x808e1a03 )
@@ -1031,47 +1039,22 @@ ROM_START( nibbler_rom )
 	ROM_LOAD( "ic10",         0x7000, 0x1000, 0xa6b5abe5 )
 	ROM_LOAD( "ic14",         0x8000, 0x1000, 0x9f537185 )
 	ROM_RELOAD(       0xf000, 0x1000 )	/* for the reset and interrupt vectors */
-	ROM_LOAD( "ic15",         0x9000, 0x1000, 0x7205fb8d )
-	ROM_LOAD( "ic16",         0xa000, 0x1000, 0x4bb39815 )
-	ROM_LOAD( "ic17",         0xb000, 0x1000, 0xed680f19 )
-
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic50",         0x0000, 0x1000, 0x01d4d0c2 )
-	ROM_LOAD( "ic51",         0x1000, 0x1000, 0xfeff7faf )
-
-	ROM_REGION(0x0040)  /* color proms */
-	ROM_LOAD( "ic7",          0x0000, 0x0020, 0xa5709ff3 ) /* foreground colors */
-	ROM_LOAD( "ic6",          0x0020, 0x0020, 0xdacd592d ) /* background colors */
-
-	ROM_REGION(0x1000)	/* space for the sound ROMs */
-	ROM_LOAD( "g960-45.53",   0x0000, 0x0800, 0x33189917 )
-	ROM_LOAD( "ic52",         0x0800, 0x0800, 0x87d67dee )
-ROM_END
-
-ROM_START( nibblera_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "g960-52.12",   0x3000, 0x1000, 0xac6a802b )
-	ROM_LOAD( "g960-48.07",   0x4000, 0x1000, 0x35971364 )
-	ROM_LOAD( "g960-49.08",   0x5000, 0x1000, 0x6b33b806 )
-	ROM_LOAD( "g960-50.09",   0x6000, 0x1000, 0x91a4f98d )
-	ROM_LOAD( "g960-51.10",   0x7000, 0x1000, 0xa151d934 )
-	ROM_LOAD( "g960-53.14",   0x8000, 0x1000, 0x063f05cc )
-	ROM_RELOAD(       0xf000, 0x1000 )	/* for the reset and interrupt vectors */
 	ROM_LOAD( "g960-54.15",   0x9000, 0x1000, 0x7205fb8d )
 	ROM_LOAD( "g960-55.16",   0xa000, 0x1000, 0x4bb39815 )
 	ROM_LOAD( "g960-56.17",   0xb000, 0x1000, 0xed680f19 )
 
 	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "g960-57.50",   0x0000, 0x1000, 0x01d4d0c2 )
-	ROM_LOAD( "g960-58.51",   0x1000, 0x1000, 0x04b7e54f )
+	ROM_LOAD( "g960-58.51",   0x1000, 0x1000, 0xfeff7faf )
 
 	ROM_REGION(0x0040)  /* color proms */
-	ROM_LOAD( "ic7",          0x0000, 0x0020, 0xa5709ff3 ) /* foreground colors */
-	ROM_LOAD( "ic6",          0x0020, 0x0020, 0xdacd592d ) /* background colors */
+	ROM_LOAD( "g70805.ic7",   0x0000, 0x0020, 0xa5709ff3 ) /* foreground colors */
+	ROM_LOAD( "g70804.ic6",   0x0020, 0x0020, 0xdacd592d ) /* background colors */
 
-	ROM_REGION(0x1000)	/* space for the sound ROMs */
-	ROM_LOAD( "g960-45.53",   0x0000, 0x0800, 0x33189917 )
-	ROM_LOAD( "g960-44.52",   0x0800, 0x0800, 0x5b443702 )
+	ROM_REGION(0x1800)  /* space for the sound ROMs */
+	ROM_LOAD( "g959-43.51",   0x0000, 0x0800, 0x0345f8b7 )
+	ROM_LOAD( "g959-44.52",   0x0800, 0x0800, 0x87d67dee )
+	ROM_LOAD( "g959-45.53",   0x1000, 0x0800, 0x33189917 )
 ROM_END
 
 
@@ -1343,7 +1326,7 @@ struct GameDriver fantasy_driver =
 
 	fantasy_rom,
 	0, 0,
-	0,
+	fantasy_sample_names,
 	0,	/* sound_prom */
 
 	fantasy_input_ports,
@@ -1369,7 +1352,7 @@ struct GameDriver pballoon_driver =
 
 	pballoon_rom,
 	0, 0,
-	0,
+	fantasy_sample_names,
 	0,	/* sound_prom */
 
 	pballoon_input_ports,
@@ -1395,7 +1378,7 @@ struct GameDriver nibbler_driver =
 
 	nibbler_rom,
 	0, 0,
-	0,
+	fantasy_sample_names,
 	0,	/* sound_prom */
 
 	nibbler_input_ports,
@@ -1421,7 +1404,7 @@ struct GameDriver nibblera_driver =
 
 	nibblera_rom,
 	0, 0,
-	0,
+	fantasy_sample_names,
 	0,	/* sound_prom */
 
 	nibbler_input_ports,

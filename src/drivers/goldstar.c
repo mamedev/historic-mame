@@ -239,11 +239,31 @@ static struct GfxLayout tilelayout =
 };
 
 
+static struct GfxLayout tilelayoutbl =
+{
+	8,32,    /* 8*32 characters */
+	256,    /* 256 tiles */
+	4,      /* 4 bits per pixel */
+	{ 0, 2, 4, 6 },
+	{ 0, 1, 2*8+0, 2*8+1, 1*8+0, 1*8+1, 3*8+0, 3*8+1 },
+	{ 0*8, 4*8, 8*8, 12*8, 16*8, 20*8, 24*8, 28*8,
+			32*8, 36*8, 40*8, 44*8, 48*8, 52*8, 56*8, 60*8,
+			64*8, 68*8, 72*8, 76*8, 80*8, 84*8, 88*8, 92*8,
+			96*8, 100*8, 104*8, 108*8, 112*8, 116*8, 120*8, 124*8 },
+	128*8   /* every char takes 128 consecutive bytes */
+};
+
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0x00000, &charlayout,   0, 16 },
 	{ 1, 0x20000, &tilelayout, 128,  8 },
+	{ -1 } /* end of array */
+};
+static struct GfxDecodeInfo gfxdecodeinfobl[] =
+{
+	{ 1, 0x00000, &charlayout,   0, 16 },
+	{ 1, 0x20000, &tilelayoutbl, 128,  8 },
 	{ -1 } /* end of array */
 };
 
@@ -314,6 +334,50 @@ static struct MachineDriver machine_driver =
 };
 
 
+static struct MachineDriver goldstbl_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			4000000,	/* 4 Mhz ? */
+			0,
+			readmem,writemem,readport,0,
+			interrupt,1
+		},
+	},
+	60, 0,
+	1,
+	0,
+
+	/* video hardware */
+	64*8, 32*8, { 0*8, 64*8-1, 2*8, 30*8-1 },
+	gfxdecodeinfobl,
+	256, 256,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	goldstar_vh_start,
+	goldstar_vh_stop,
+	goldstar_vh_screenrefresh,
+
+	/* sound hardware */
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		},
+		{
+			SOUND_OKIM6295,
+			&okim6295_interface
+		}
+	}
+};
+
+
 
 /***************************************************************************
 
@@ -333,6 +397,18 @@ ROM_START( goldstar_rom )
 	ROM_LOAD( "gs1-snd.bin",  0x0000, 0x20000, 0x9d58960f )
 ROM_END
 
+
+ROM_START( goldstbl_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "gsb-cpu.bin",  0x0000, 0x10000, 0x82b238c3 )
+
+	ROM_REGION_DISPOSE(0x28000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gs2.bin",      0x00000, 0x20000, 0xa2d5b898 )
+	ROM_LOAD( "gsb-spr.bin",  0x20000, 0x08000, 0x52ecd4c7 )
+
+	ROM_REGION(0x20000) /* Audio ADPCM */
+	ROM_LOAD( "gs1-snd.bin",  0x0000, 0x20000, 0x9d58960f )
+ROM_END
 
 
 static void goldstar_decode(void)
@@ -401,6 +477,33 @@ struct GameDriver goldstar_driver =
 
 	goldstar_rom,
 	goldstar_decode, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	nvram_load, nvram_save
+};
+
+
+struct GameDriver goldstbl_driver =
+{
+	__FILE__,
+	&goldstar_driver,
+	"goldstbl",
+	"Golden Star (Blue version)",
+	"????",
+	"????",
+	"Mirko Buffoni\nNicola Salmoria",
+	0,
+	&goldstbl_machine_driver,
+	0,
+
+	goldstbl_rom,
+	0, 0,
 	0,
 	0,	/* sound_prom */
 

@@ -1,12 +1,7 @@
 #ifndef CPUINTRF_H
 #define CPUINTRF_H
 
-#ifdef linux_alpha
-#define CPU_CONTEXT_SIZE 440            /* sizeof(pointer) is larger there
-                                           than on 32bit, CPG */
-#else
-#define CPU_CONTEXT_SIZE 400		/* ASG 971105 */
-#endif
+#define CPU_CONTEXT_SIZE 1500            /* Maximum size that a CPU structre may be */
 
 #include "timer.h"
 #include "Z80/Z80.h"

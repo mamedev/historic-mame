@@ -440,7 +440,7 @@ static unsigned short deadeye_colortable[4*2] = {
 static struct DACinterface dac_interface =
 {
 	1,
-	{ 255 }
+	{ 100 }
 };
 
 static struct MachineDriver deadeye_machine_driver =

@@ -37,22 +37,3 @@ unsigned char KonamiDecode( unsigned char opcode, unsigned short address )
 
 	return opcode ^ xormask;
 }
-
-/* handle fake button for speed cheat */
-int konami_IN1_r(int offset)
-{
-	int res;
-	static int cheat = 0;
-	static int bits[] = { 0xee, 0xff, 0xbb, 0xaa };
-
-	res = readinputport(1);
-
-	if ((res & 0x80) == 0)
-	{
-		res |= 0x55;
-		res &= bits[cheat];
-		cheat = (++cheat)%4;
-	}
-	return res;
-}
-

@@ -500,7 +500,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct TMS5220interface tms5220_interface =
 {
     640000,     /* clock speed (80*samplerate) */
-    255,        /* volume */
+    100,        /* volume */
     0 /* irq handler */
 };
 
@@ -509,7 +509,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3579580,	/* 3.58 MHZ ? */
-	{ 255 },
+	{ 15 },
 	{ 0 }
 };
 

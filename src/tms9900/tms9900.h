@@ -5,7 +5,9 @@
 
 #define TMS9900_NONE  -1
 
+#ifndef FALSE
 #define FALSE 0
+#endif
 
 typedef struct
 {

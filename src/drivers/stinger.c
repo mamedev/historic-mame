@@ -356,6 +356,29 @@ ROM_END
 
 ROM_START( scion_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "sc1",          0x0000, 0x2000, 0x8dcad575 )
+	ROM_LOAD( "sc2",          0x2000, 0x2000, 0xf608e0ba )
+	ROM_LOAD( "sc3",          0x4000, 0x2000, 0x915289b9 )
+	ROM_LOAD( "4.9j",         0x6000, 0x2000, 0x0f40d002 )
+	ROM_LOAD( "5.10j",        0x8000, 0x2000, 0xdc4923b7 )
+
+	ROM_REGION_DISPOSE(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "7.10e",        0x0000, 0x2000, 0x223e0d2a )
+	ROM_LOAD( "8.12e",        0x2000, 0x2000, 0xd3e39b48 )
+	ROM_LOAD( "9.15e",        0x4000, 0x2000, 0x630861b5 )
+	ROM_LOAD( "10.10h",       0x6000, 0x2000, 0x0d2a0d1e )
+	ROM_LOAD( "11.12h",       0x8000, 0x2000, 0xdc6ef8ab )
+	ROM_LOAD( "12.15h",       0xa000, 0x2000, 0xc82c28bf )
+
+	ROM_REGION(0x0300)	/* color PROMs */
+	/* missing! */
+
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_LOAD( "sc6",         0x0000, 0x2000, 0x09f5f9c1 )
+ROM_END
+
+ROM_START( scionc_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "1.5j",         0x0000, 0x2000, 0x5aaf571e )
 	ROM_LOAD( "2.6j",         0x2000, 0x2000, 0xd5a66ac9 )
 	ROM_LOAD( "3.8j",         0x4000, 0x2000, 0x6e616f28 )
@@ -376,7 +399,6 @@ ROM_START( scion_rom )
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "6.9f",         0x0000, 0x2000, 0xa66a0ce6 )
 ROM_END
-
 
 
 static void stinger_decode(void)
@@ -417,9 +439,6 @@ static void stinger_decode(void)
 
 			/* decode the opcodes */
 			ROM[A] = src ^ xortable[row][col];
-
-			if (xortable[row][col] == 0xff)	/* table incomplete! (for development) */
-				ROM[A] = 0x00;
 		}
 	}
 }
@@ -458,7 +477,7 @@ struct GameDriver scion_driver =
 	"scion",
 	"Scion",
 	"1984",
-	"Seibu Denshi [Cinematronics license]",
+	"Seibu Denshi",
 	"Nicola Salmoria",
 	GAME_WRONG_COLORS,
 	&machine_driver,
@@ -475,3 +494,29 @@ struct GameDriver scion_driver =
 	ORIENTATION_DEFAULT,
 	0, 0
 };
+
+struct GameDriver scionc_driver =
+{
+	__FILE__,
+	&scion_driver,
+	"scionc",
+	"Scion",
+	"1984",
+	"Seibu Denshi [Cinematronics license]",
+	"Nicola Salmoria",
+	GAME_WRONG_COLORS,
+	&machine_driver,
+	0,
+
+	scionc_rom,
+	0, 0,
+	0,
+	0,
+
+	scion_input_ports,
+
+	0, 0, 0,	//	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+	0, 0
+};
+

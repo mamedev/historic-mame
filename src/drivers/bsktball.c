@@ -348,7 +348,7 @@ static unsigned short colortable[] =
 static struct DACinterface dac_interface =
 {
 	3,
-	{ 255, 255, 255 }
+	{ 100, 100, 100 }
 };
 
 

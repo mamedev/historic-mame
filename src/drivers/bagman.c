@@ -60,8 +60,8 @@ static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0x6000, 0x67ff, MRA_RAM },
-	{ 0x9000, 0x93ff, MRA_RAM },	/* video RAM */
-	{ 0x9800, 0x9bff, MRA_RAM },	/* color RAM + sprites */
+	{ 0x9000, 0x93ff, MRA_RAM },
+	{ 0x9800, 0x9bff, MRA_RAM },
 	{ 0xa000, 0xa000, bagman_pal16r6_r },
 	{ 0xa800, 0xa800, MRA_NOP },
 	{ 0xb000, 0xb000, input_port_2_r },	/* DSW */
@@ -83,6 +83,42 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9800, 0x981f, MWA_RAM, &spriteram, &spriteram_size },	/* hidden portion of color RAM */
 									/* here only to initialize the pointer, */
 	{ 0xa7ff, 0xa805, bagman_pal16r6_w },	/* PAL16r6 custom logic */
+														/* writes are handled by colorram_w */
+	{ 0x9c00, 0x9fff, MWA_NOP },	/* written to, but unused */
+	{ 0xa004, 0xa004, coin_counter_w },
+#if 0
+	{ 0xa007, 0xa007, MWA_NOP },	/* ???? */
+	{ 0xb000, 0xb000, MWA_NOP },	/* ???? */
+	{ 0xb800, 0xb800, MWA_NOP },	/* ???? */
+#endif
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryReadAddress pickin_readmem[] =
+{
+	{ 0x0000, 0x5fff, MRA_ROM },
+	{ 0x7000, 0x77ff, MRA_RAM },
+	{ 0x8800, 0x8bff, MRA_RAM },
+	{ 0x9800, 0x9bff, MRA_RAM },
+//	{ 0xa000, 0xa000, bagman_pal16r6_r },
+	{ 0xa800, 0xa800, MRA_NOP },
+//	{ 0xb000, 0xb000, input_port_2_r },	/* DSW */
+	{ 0xb800, 0xb800, MRA_NOP },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress pickin_writemem[] =
+{
+	{ 0x0000, 0x5fff, MWA_ROM },
+	{ 0x7000, 0x77ff, MWA_RAM },
+	{ 0x8800, 0x8bff, videoram_w, &videoram, &videoram_size },
+	{ 0x9800, 0x9bff, colorram_w, &colorram },
+	{ 0xa000, 0xa000, interrupt_enable_w },
+	{ 0xa001, 0xa002, bagman_flipscreen_w },
+	{ 0xa003, 0xa003, MWA_RAM, &bagman_video_enable },
+	{ 0x9800, 0x981f, MWA_RAM, &spriteram, &spriteram_size },	/* hidden portion of color RAM */
+									/* here only to initialize the pointer, */
+//	{ 0xa7ff, 0xa805, bagman_pal16r6_w },	/* PAL16r6 custom logic */
 														/* writes are handled by colorram_w */
 	{ 0x9c00, 0x9fff, MWA_NOP },	/* written to, but unused */
 	{ 0xa004, 0xa004, coin_counter_w },
@@ -205,6 +241,52 @@ INPUT_PORTS_START( sbagman_input_ports )
 	PORT_DIPSETTING(    0x00, "Cocktail" )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( pickin_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+
+	PORT_START	/* DSW */
+	PORT_DIPNAME( 0x03, 0x02, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "2" )
+	PORT_DIPSETTING(    0x02, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x04, 0x04, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x04, "1 Coin/1 Credit" )
+	PORT_DIPNAME( 0x18, 0x18, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x18, "Easy" )
+	PORT_DIPSETTING(    0x10, "Medium" )
+	PORT_DIPSETTING(    0x08, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x20, 0x20, "Language", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "English" )
+	PORT_DIPSETTING(    0x00, "French" )
+	PORT_DIPNAME( 0x40, 0x40, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "30000" )
+	PORT_DIPSETTING(    0x00, "40000" )
+	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+INPUT_PORTS_END
+
 
 
 static struct GfxLayout charlayout =
@@ -292,6 +374,45 @@ static struct MachineDriver machine_driver =
 		}
 	}
 };
+
+static struct MachineDriver pickin_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz (?) */
+			0,
+			pickin_readmem,pickin_writemem,readport,writeport,
+			interrupt,1
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* single CPU, no need for interleaving */
+	bagman_machine_init,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	gfxdecodeinfo,
+	64,64,
+	bagman_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	0,
+	generic_vh_start,
+	generic_vh_stop,
+	bagman_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
+};
+
 
 /***************************************************************************
 
@@ -437,6 +558,25 @@ ROM_START( sbagmans_rom )
 	ROM_REGION(0x2000)	/* data for the TMS5110 speech chip */
 	ROM_LOAD( "11.9r",        0x0000, 0x1000, 0x2e0057ff )
 	ROM_LOAD( "12.9t",        0x1000, 0x1000, 0xb2120edd )
+ROM_END
+
+ROM_START( pickin_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "9e",           0x0000, 0x1000, 0xefd0bd43 )
+	ROM_LOAD( "9f",           0x1000, 0x1000, 0xb5785a23 )
+	ROM_LOAD( "9j",           0x2000, 0x1000, 0x65ee9fd4 )
+	ROM_LOAD( "9k",           0x3000, 0x1000, 0x7b23350e )
+	ROM_LOAD( "9m",           0x4000, 0x1000, 0x935a7248 )
+	ROM_LOAD( "9n",           0x5000, 0x1000, 0x52485d1d )
+
+	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "1f",           0x0000, 0x1000, 0xc5e96ac6 )
+	ROM_LOAD( "1j",           0x1000, 0x1000, 0x41c4ac1c )
+	/* 2000-3fff empty for my convenience */
+
+	ROM_REGION(0x0040)	/* color PROMs */
+	ROM_LOAD( "6331-1.3p",    0x0000, 0x0020, 0xfac81668 )
+	ROM_LOAD( "6331-1.3r",    0x0020, 0x0020, 0x14ee1603 )
 ROM_END
 
 
@@ -613,4 +753,30 @@ struct GameDriver sbagmans_driver =
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
+};
+
+struct GameDriver pickin_driver =
+{
+	__FILE__,
+	0,
+	"pickin",
+	"Pickin'",
+	"1983",
+	"Valadon Automation",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nJarek Burczynski (additional code)",
+	0,
+	&pickin_machine_driver,
+	0,
+
+	pickin_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	pickin_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	0, 0
 };

@@ -12,7 +12,10 @@
 
 extern unsigned char No_FM;
 
-
+/* for stream system */
+static int streamR[MAX_2151];
+static int streamL[MAX_2151];
+static void *FMBuf[2];
 
 #define MIN_SLICE 44
 
@@ -70,12 +73,28 @@ static void TimerHandler(int n,int c,double timeSec)
 	}
 }
 
+/* update request from fm.c */
+void YM2151UpdateRequest(int chip)
+{
+	stream_update(streamR[chip],0); /* latch R-ch */
+	stream_update(streamL[chip],0); /* update R & L */
+}
 
+static void YM2151UpdateCallbackR(int chip,void *buffer,int length)
+{
+	FMBuf[1] = buffer;
+}
+
+/* update callback from stream.c */
+static void YM2151UpdateCallbackL(int chip,void *buffer,int length)
+{
+	FMBuf[0] = buffer;
+	OPMUpdateOne(chip,FMBuf,length);
+}
 
 int YM2151_sh_start(struct YM2151interface *interface,int mode)
 {
 	int i,j;
-/*	int rate = 22050; */
 	int rate = Machine->sample_rate;
 
 	if( rate == 0 ) rate = 1000;	/* kludge to prevent nasty crashes */
@@ -93,48 +112,30 @@ int YM2151_sh_start(struct YM2151interface *interface,int mode)
 	switch(FMMode)
 	{
 	case CHIP_YM2151_DAC:	/* Tatsuyuki's */
-		for (i = 0;i < MAX_2151;i++)
+		/* stream system initialize */
+		for (i = 0;i < intf->num;i++)
 		{
-			sample_posFM[i] = 0;
-			for( j = 0 ; j < YM2151_NUMBUF ; j++ )
-				bufferFM[i*YM2151_NUMBUF+j] = 0;
-		}
-		/* OPM initialize */
-		for (i = 0;i < intf->num*YM2151_NUMBUF;i++)
-		{
-			if ((bufferFM[i] = malloc((sample_bits/8)*buffer_len)) == 0)
-			{
-				while (--i >= 0) free(bufferFM[i]);
-				return 1;
-			}
-/*			for (j = 0;j < buffer_len ;j++) bufferFM[i][j] = FMOUT_0;*/
+			int vol;
+			char name[20];
+			sprintf(name,"YM2151 Right #%d",i);
+			streamR[i] = stream_init(name,rate,Machine->sample_bits,i,YM2151UpdateCallbackR);
+			sprintf(name,"YM2151 Left  #%d",i);
+			streamL[i] = stream_init(name,rate,Machine->sample_bits,i,YM2151UpdateCallbackL);
+			/* volume setup */
+			vol = intf->volume[i];
+			if( vol > 255 ) vol = 255;
+			stream_set_volume(streamR[i],vol);
+			stream_set_volume(streamL[i],vol);
 		}
 		/* Set Timer handler */
 		for (i = 0; i < intf->num; i++)
 			Timer[i][0] =Timer[i][1] = 0;
 		FMSetTimerHandler( TimerHandler , 0);
-		if (OPMInit(intf->num,intf->clock,emulation_rate,sample_bits,buffer_len,bufferFM) == 0)
+		if (OPMInit(intf->num,intf->clock,Machine->sample_rate,sample_bits) == 0)
 		{
-			int vol_max = 255;
-			int gain = 0xffff;
-
-			channel = get_play_channels(intf->num*YM2151_NUMBUF);
-			/* volume calcration */
-			for (i = 0; i < intf->num; i++)
-			{
-				if( vol_max < intf->volume[i] ) vol_max = intf->volume[i];
-			}
-			if( vol_max > 255 ) gain = gain * vol_max / 255;
-			/* gain set */
-/*			FMSetGain( gain );*/
-			for (i = 0; i < intf->num; i++)
-			{
-				volume[i] = intf->volume[i] * 0xffff / gain;
-			}
 			return 0;
 		}
 		/* error */
-		for (i = 0;i < intf->num *YM2151_NUMBUF;i++) free(bufferFM[i]);
 		return 1;
 	case CHIP_YM2151_ALT:	/* Jarek's */
 		for (i = 0;i < MAX_2151;i++)
@@ -176,11 +177,11 @@ void YM2151_sh_stop(void)
 		break;
 	case CHIP_YM2151_ALT:
 		YMShutdown();
+		for (i = 0;i < intf->num *YM2151_NUMBUF;i++) free(bufferFM[i]);
 		break;
 	case CHIP_YM2151_OPL:
 		return;
 	}
-	for (i = 0;i < intf->num *YM2151_NUMBUF;i++) free(bufferFM[i]);
 }
 
 INLINE void update_opm(int chip)
@@ -320,24 +321,6 @@ void YM2151_sh_update(void)
 		osd_ym2203_update();
 		return;
 	case CHIP_YM2151_DAC:
-		OPMUpdate();
-		for (i = 0;i < intf->num;i++)
-		{
-			if( sample_bits == 16 )
-			{
-				/* Left channel  */
-				osd_play_streamed_sample_16(channel+i*2   ,bufferFM[i*2 ],2*buffer_len,emulation_rate,volume[i]);
-				/* Right channel */
-				osd_play_streamed_sample_16(channel+i*2+1,bufferFM[i*2+1],2*buffer_len,emulation_rate,volume[i]);
-			}
-			else
-			{
-				/* Left channel  */
-				osd_play_streamed_sample(channel+i*2   ,bufferFM[i*2  ],buffer_len,emulation_rate,volume[i]);
-				/* Right channel */
-				osd_play_streamed_sample(channel+i*2+1 ,bufferFM[i*2+1],buffer_len,emulation_rate,volume[i]);
-			}
-		}
 		break;
 	case CHIP_YM2151_ALT:
 		YM2151Update();

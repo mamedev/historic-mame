@@ -15,7 +15,7 @@
   colors, the term "palette" refers to the colors available at any given time,
   not to the whole range of colors which can be produced by the hardware. The
   latter is referred to as "color space".
-  The term "pen" refers to one of the maximum of MAX_PENS colors that can be
+  The term "pen" refers to one of the maximum MAX_PENS colors that can be
   used to generate the display. PC users might want to think of them as the
   colors available in VGA, but be warned: the mapping of MAME pens to the VGA
   registers is not 1:1, so MAME's pen 10 will not necessarily be mapped to
@@ -81,14 +81,14 @@
 	 Colors can also be marked as "transparent".
      The return code of palette_recalc() tells the driver whether the lookup
      table has changed, and therefore whether a screen refresh is needed. Note
-     that his only applies to colors which were used in the previous frame:
+     that this only applies to colors which were used in the previous frame:
      that's why palette_recalc() must be called before ANY rendering takes
      place.
   4) 16-bit color. This should only be used for games which use more than
      MAX_PENS colors at a time. It is slower than the other modes, so it should
 	 be avoided whenever possible. Transparency support is limited.
      MachineDriver->video_attributes must contain both VIDEO_MODIFIES_PALETTE
-	 and VIDEO_SUPPPORTS_16BIT.
+	 and VIDEO_SUPPORTS_16BIT.
 
   The dynamic shrinking of the palette works this way: as colors are requested,
   they are associated to a pen. When a color is no longer needed, the pen is

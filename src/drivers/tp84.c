@@ -436,6 +436,35 @@ ROM_START( tp84_rom )
 	ROM_LOAD( "tp84s_6a.bin", 0x0000, 0x2000, 0xc44414da )
 ROM_END
 
+ROM_START( tp84a_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "tp84_7j.bin",  0x8000, 0x2000, 0x605f61c7 )
+	ROM_LOAD( "f05",          0xa000, 0x2000, 0xe97d5093 )
+	ROM_LOAD( "tp84_9j.bin",  0xc000, 0x2000, 0xdbd5333b )
+	ROM_LOAD( "f07",          0xe000, 0x2000, 0x8fbdb4ef )
+
+	ROM_REGION_DISPOSE(0xc000)	/* Temporary */
+	ROM_LOAD( "tp84_2j.bin",  0x0000, 0x2000, 0x05c7508f ) /* chars */
+	ROM_LOAD( "tp84_1j.bin",  0x2000, 0x2000, 0x498d90b7 )
+	ROM_LOAD( "tp84_12a.bin", 0x4000, 0x2000, 0xcd682f30 ) /* sprites */
+	ROM_LOAD( "tp84_13a.bin", 0x6000, 0x2000, 0x888d4bd6 )
+	ROM_LOAD( "tp84_14a.bin", 0x8000, 0x2000, 0x9a220b39 )
+	ROM_LOAD( "tp84_15a.bin", 0xa000, 0x2000, 0xfac98397 )
+
+	ROM_REGION(0x0500)	/* color/loookup proms */
+	ROM_LOAD( "tp84_2c.bin",  0x0000, 0x0100, 0xd737eaba ) /* palette red component */
+	ROM_LOAD( "tp84_2d.bin",  0x0100, 0x0100, 0x2f6a9a2a ) /* palette green component */
+	ROM_LOAD( "tp84_1e.bin",  0x0200, 0x0100, 0x2e21329b ) /* palette blue component */
+	ROM_LOAD( "tp84_1f.bin",  0x0300, 0x0100, 0x61d2d398 ) /* char lookup table */
+	ROM_LOAD( "tp84_16c.bin", 0x0400, 0x0100, 0x13c4e198 ) /* sprite lookup table */
+
+	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_LOAD( "tp84_10d.bin", 0xe000, 0x2000, 0x36462ff1 )
+
+	ROM_REGION(0x10000)	/* 64k for code of sound cpu Z80 */
+	ROM_LOAD( "tp84s_6a.bin", 0x0000, 0x2000, 0xc44414da )
+ROM_END
+
 
 
 static int hiload(void)
@@ -481,7 +510,7 @@ struct GameDriver tp84_driver =
 	__FILE__,
 	0,
 	"tp84",
-	"Time Pilot 84",
+	"Time Pilot 84 (set 1)",
 	"1984",
 	"Konami",
 	"Marc Lafontaine (MAME driver)\nJuan Carlos Lorente (high score)\nMarco Cassili",
@@ -504,3 +533,30 @@ struct GameDriver tp84_driver =
 	hiload, hisave
 };
 
+struct GameDriver tp84a_driver =
+{
+	__FILE__,
+	&tp84_driver,
+	"tp84a",
+	"Time Pilot 84 (set 2)",
+	"1984",
+	"Konami",
+	"Marc Lafontaine (MAME driver)\nJuan Carlos Lorente (high score)\nMarco Cassili",
+	0,
+	&machine_driver,	/* MachineDriver */
+	0,
+
+	tp84a_rom,			/* RomModule */
+	0, 0,				/* ROM decrypt routines */
+	0,					/* samplenames */
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2),	/* color prom */
+	0, 	          		/* palette */
+	0, 	          		/* color table */
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};

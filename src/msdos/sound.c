@@ -15,9 +15,6 @@ DECLARE_MIDI_DRIVER_LIST()
 #define NUMVOICES 16
 HAC hVoice[NUMVOICES];
 LPAUDIOWAVE lpWave[NUMVOICES];
-int Volumi[NUMVOICES];
-static int attenuation = 0;
-static float attenuation_mult = 1.0;
 unsigned char No_FM = 1;
 unsigned char No_OPL = 1;
 unsigned char RegistersYM[264*5];  /* MAX 5 YM-2203 */
@@ -221,6 +218,10 @@ int msdos_init_sound(void)
 			InitYM();     /* inits OPL in mode OPL3 and 4ops per channel,also reset YM2203 registers */
 		}
 	}
+
+
+	osd_set_mastervolume(0);	/* start at maximum volume */
+
 	return 0;
 }
 
@@ -268,6 +269,9 @@ static void playsample(int channel,signed char *data,int len,int freq,int volume
 {
 	if (Machine->sample_rate == 0 || channel >= NUMVOICES) return;
 
+	/* backwards compatibility with old 0-255 volume range */
+	if (volume > 100) volume = volume * 50 / 255;
+
 	if (lpWave[channel] && lpWave[channel]->dwLength != len)
 	{
 		AStopVoice(hVoice[channel]);
@@ -311,10 +315,8 @@ static void playsample(int channel,signed char *data,int len,int freq,int volume
 	APrimeVoice(hVoice[channel],lpWave[channel]);
 	/* need to cast to double because freq*nominal_sample_rate can exceed the size of an int */
 	ASetVoiceFrequency(hVoice[channel],(double)freq*nominal_sample_rate/Machine->sample_rate);
-	ASetVoiceVolume(hVoice[channel],attenuation_mult * volume / 4);
+	ASetVoiceVolume(hVoice[channel],volume * 64 / 100);
 	AStartVoice(hVoice[channel]);
-
-	Volumi[channel] = volume/4;
 }
 
 void osd_play_sample(int channel,signed char *data,int len,int freq,int volume,int loop)
@@ -334,6 +336,9 @@ static void playstreamedsample(int channel,signed char *data,int len,int freq,in
 	static int playing[NUMVOICES];
 	static int c[NUMVOICES];
 
+
+	/* backwards compatibility with old 0-255 volume range */
+	if (volume > 100) volume = volume * 50 / 255;
 
 	if (Machine->sample_rate == 0 || channel >= NUMVOICES) return;
 
@@ -401,9 +406,7 @@ static void playstreamedsample(int channel,signed char *data,int len,int freq,in
 		if (c[channel] == 3) c[channel] = 0;
 	}
 
-	ASetVoiceVolume(hVoice[channel],attenuation_mult * volume / 4);
-
-	Volumi[channel] = volume/4;
+	ASetVoiceVolume(hVoice[channel],volume * 64 / 100);
 }
 
 void osd_play_streamed_sample(int channel,signed char *data,int len,int freq,int volume)
@@ -422,12 +425,14 @@ void osd_adjust_sample(int channel,int freq,int volume)
 {
 	if (Machine->sample_rate == 0 || channel >= NUMVOICES) return;
 
-	Volumi[channel] = volume/4;
+	/* backwards compatibility with old 0-255 volume range */
+	if (volume > 100) volume = volume * 50 / 255;
+
 	/* need to cast to double because freq*nominal_sample_rate can exceed the size of an int */
 	if (freq != -1)
 		ASetVoiceFrequency(hVoice[channel],(double)freq*nominal_sample_rate/Machine->sample_rate);
 	if (volume != -1)
-		ASetVoiceVolume(hVoice[channel],attenuation_mult * volume / 4);
+		ASetVoiceVolume(hVoice[channel],volume * 64 / 100);
 }
 
 
@@ -477,22 +482,26 @@ void osd_ym2203_update(void)
 }
 
 
+
+static int attenuation = 0;
+static int master_volume = 256;
+
 /* attenuation in dB */
 void osd_set_mastervolume(int _attenuation)
 {
 	int channel;
+	float volume;
 
 
 	attenuation = _attenuation;
 
-	attenuation_mult = 1.0;
+	volume = 256.0;	/* range is 0-256 */
 	while (_attenuation++ < 0)
-		attenuation_mult /= 1.122018454;	/* = (10 ^ (1/20)) = 1dB */
+		volume /= 1.122018454;	/* = (10 ^ (1/20)) = 1dB */
 
-	for (channel = 0;channel < NUMVOICES;channel++)
-	{
-	  ASetVoiceVolume(hVoice[channel],attenuation_mult * Volumi[channel]);
-	}
+	master_volume = volume;
+
+	ASetAudioMixerValue(AUDIO_MIXER_MASTER_VOLUME,master_volume);
 }
 
 int osd_get_mastervolume(void)
@@ -507,15 +516,11 @@ void osd_sound_enable(int enable_it)
 
 	if (enable_it)
 	{
-		osd_set_mastervolume(orig_attenuation);
+		ASetAudioMixerValue(AUDIO_MIXER_MASTER_VOLUME,master_volume);
 	}
 	else
 	{
-		if (osd_get_mastervolume() != -40)
-		{
-			orig_attenuation = osd_get_mastervolume();
-			osd_set_mastervolume(-48);
-		}
+		ASetAudioMixerValue(AUDIO_MIXER_MASTER_VOLUME,0);
 	}
 }
 

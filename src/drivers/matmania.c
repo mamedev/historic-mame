@@ -330,27 +330,11 @@ static struct GfxDecodeInfo maniach_gfxdecodeinfo[] =
 };
 
 
-static unsigned char wrong_color_prom[] =
-{
-	/* prom 1 - char palette red and green components */
-	0x00,0x0F,0xAF,0xFF,0xA0,0xBA,0xF0,0xFF,0x00,0x4F,0xB4,0xF8,0xFF,0xD0,0xC4,0xFF,
-	0x00,0xFF,0xB4,0x0F,0x00,0xF8,0xD8,0xFF,0x00,0xDF,0x00,0xFF,0x0F,0x0B,0x00,0xFF,
-	/* prom 5 - tile palette red and green components */
-	0x00,0x0F,0xAF,0xFF,0xA0,0xBA,0xF0,0xFF,0x00,0xAF,0x39,0x7D,0x37,0x0F,0xFF,0xFF,
-	0x00,0xAF,0x39,0x7D,0x37,0xBA,0xA0,0xFF,0xDF,0xFF,0xAF,0x0B,0xA0,0xBA,0x00,0xFF,
-	/* prom 2 - char palette blue component */
-	0x0A,0x00,0x00,0x00,0x0E,0x0A,0x0F,0x0F,0x00,0x04,0x0F,0x08,0x00,0x00,0x0F,0x0F,
-	0x00,0x00,0x0E,0x00,0x00,0x0F,0x0F,0x0F,0x00,0x0A,0x00,0x00,0x00,0x00,0x0F,0x0F,
-	/* prom 16 - tile palette blue component */
-	0x0A,0x00,0x00,0x00,0x0E,0x0A,0x0F,0x0F,0x0A,0x08,0x0F,0x00,0x00,0x00,0x00,0x0F,
-	0x0A,0x08,0x0F,0x00,0x00,0x0A,0x0E,0x0F,0x0A,0x00,0x00,0x00,0x0E,0x0A,0x00,0x0F,
-};
-
 static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	1500000,	/* 1.5 MHz?????? */
-	{ 255, 255 },
+	{ 50, 50 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -360,7 +344,7 @@ static struct AY8910interface ay8910_interface =
 static struct DACinterface dac_interface =
 {
 	1,
-	{ 255, 255 }
+	{ 100 }
 };
 
 
@@ -591,6 +575,60 @@ ROM_START( maniach_rom )
 	ROM_LOAD( "mc-mw0.bin",   0x6e000, 0x4000, 0x135dce4c )
 
 	ROM_REGION(0x0080)	/* color proms */
+	ROM_LOAD( "prom.2",       0x0000, 0x0020, 0x32db2cf4 ) /* char palette red and green components */
+	ROM_LOAD( "prom.16",      0x0020, 0x0020, 0x18836d26 ) /* tile palette red and green components */
+	ROM_LOAD( "prom.3",       0x0040, 0x0020, 0xc7925311 ) /* char palette blue component */
+	ROM_LOAD( "prom.17",      0x0060, 0x0020, 0x41f51d49 ) /* tile palette blue component */
+
+	ROM_REGION(0x10000)	/* 64k for audio code */
+	ROM_LOAD( "mc-m50.bin",   0x4000, 0x4000, 0xba415d68 )
+	ROM_LOAD( "mc-m40.bin",   0x8000, 0x4000, 0x2a217ed0 )
+	ROM_LOAD( "mc-m30.bin",   0xc000, 0x4000, 0x95af1723 ) /* definitely 6502 code, for 1st CPU? */
+ROM_END
+
+ROM_START( maniach2_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "ic40-mb1",     0x04000, 0x4000, 0xb337a867 )
+	ROM_LOAD( "ic41-ma1",     0x08000, 0x4000, 0x85ec8279 )
+	ROM_LOAD( "ic42-m91",     0x0c000, 0x4000, 0xa14b86dd )
+
+	ROM_REGION_DISPOSE(0x72000)	/* temporary space for graphics (disposed after conversion) */
+	/* Character ROMs - 1024 chars, 3 bpp */
+	ROM_LOAD( "mc-m60.bin",   0x00000, 0x2000, 0x1cdbb117 )
+	ROM_LOAD( "mc-m70.bin",   0x02000, 0x2000, 0x553f0780 )
+	ROM_LOAD( "mc-m80.bin",   0x04000, 0x2000, 0x9392ecb7 )
+	/* tile set */
+	ROM_LOAD( "mc-m01.bin",   0x06000, 0x8000, 0xda558e4d )
+	ROM_LOAD( "mc-m10.bin",   0x0e000, 0x8000, 0x619a02f8 )
+	ROM_LOAD( "mc-m20.bin",   0x16000, 0x8000, 0xa617c6c1 )
+	/* sprites */
+	ROM_LOAD( "mc-mc0.bin",   0x1e000, 0x4000, 0x133d644f )
+	ROM_LOAD( "mc-md0.bin",   0x22000, 0x4000, 0xe387b036 )
+	ROM_LOAD( "mc-me0.bin",   0x26000, 0x4000, 0xb36b1283 )
+	ROM_LOAD( "mc-mf0.bin",   0x2a000, 0x4000, 0x2584d8a9 )
+	ROM_LOAD( "mc-mg0.bin",   0x2e000, 0x4000, 0xcf31a714 )
+	ROM_LOAD( "mc-mh0.bin",   0x32000, 0x4000, 0x6292d589 )
+	ROM_LOAD( "mc-mi0.bin",   0x36000, 0x4000, 0xee2e06e3 )
+	ROM_LOAD( "mc-mj0.bin",   0x3a000, 0x4000, 0x7e73895b )
+	ROM_LOAD( "mc-mk0.bin",   0x3e000, 0x4000, 0x66c8bf75 )
+	ROM_LOAD( "mc-ml0.bin",   0x42000, 0x4000, 0x88138a1d )
+	ROM_LOAD( "mc-mm0.bin",   0x46000, 0x4000, 0xa1a4260d )
+	ROM_LOAD( "mc-mn0.bin",   0x4a000, 0x4000, 0x6bc61b58 )
+	ROM_LOAD( "mc-mo0.bin",   0x4e000, 0x4000, 0xf96ef600 )
+	ROM_LOAD( "mc-mp0.bin",   0x52000, 0x4000, 0x1259618e )
+	ROM_LOAD( "mc-mq0.bin",   0x56000, 0x4000, 0x102a1666 )
+	ROM_LOAD( "mc-mr0.bin",   0x5a000, 0x4000, 0x1e854453 )
+	ROM_LOAD( "mc-ms0.bin",   0x5e000, 0x4000, 0x7bc9d878 )
+	ROM_LOAD( "mc-mt0.bin",   0x62000, 0x4000, 0x09cea985 )
+	ROM_LOAD( "mc-mu0.bin",   0x66000, 0x4000, 0x5421769e )
+	ROM_LOAD( "mc-mv0.bin",   0x6a000, 0x4000, 0x36fc3e2d )
+	ROM_LOAD( "mc-mw0.bin",   0x6e000, 0x4000, 0x135dce4c )
+
+	ROM_REGION(0x0080)	/* color proms */
+	ROM_LOAD( "prom.2",       0x0000, 0x0020, 0x32db2cf4 ) /* char palette red and green components */
+	ROM_LOAD( "prom.16",      0x0020, 0x0020, 0x18836d26 ) /* tile palette red and green components */
+	ROM_LOAD( "prom.3",       0x0040, 0x0020, 0xc7925311 ) /* char palette blue component */
+	ROM_LOAD( "prom.17",      0x0060, 0x0020, 0x41f51d49 ) /* tile palette blue component */
 
 	ROM_REGION(0x10000)	/* 64k for audio code */
 	ROM_LOAD( "mc-m50.bin",   0x4000, 0x4000, 0xba415d68 )
@@ -724,7 +762,7 @@ struct GameDriver maniach_driver =
 	__FILE__,
 	0,
 	"maniach",
-	"Mania Challenge",
+	"Mania Challenge (set 1)",
 	"1986",
 	"Technos (Taito America license)",
 	"Brad Oliver (MAME driver)\nTim Lindquist (color info)",
@@ -739,7 +777,33 @@ struct GameDriver maniach_driver =
 
 	matmania_input_ports,
 
-	wrong_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};
+
+struct GameDriver maniach2_driver =
+{
+	__FILE__,
+	&maniach_driver,
+	"maniach2",
+	"Mania Challenge (set 2)",
+	"1986",
+	"Technos (Taito America license)",
+	"Brad Oliver (MAME driver)\nTim Lindquist (color info)",
+	GAME_NOT_WORKING | GAME_WRONG_COLORS,
+	&maniach_machine_driver,
+	0,
+
+	maniach2_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	matmania_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	0, 0

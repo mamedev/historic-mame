@@ -15,7 +15,7 @@
   colors, the term "palette" refers to the colors available at any given time,
   not to the whole range of colors which can be produced by the hardware. The
   latter is referred to as "color space".
-  The term "pen" refers to one of the maximum of MAX_PENS colors that can be
+  The term "pen" refers to one of the maximum MAX_PENS colors that can be
   used to generate the display. PC users might want to think of them as the
   colors available in VGA, but be warned: the mapping of MAME pens to the VGA
   registers is not 1:1, so MAME's pen 10 will not necessarily be mapped to
@@ -81,14 +81,14 @@
 	 Colors can also be marked as "transparent".
      The return code of palette_recalc() tells the driver whether the lookup
      table has changed, and therefore whether a screen refresh is needed. Note
-     that his only applies to colors which were used in the previous frame:
+     that this only applies to colors which were used in the previous frame:
      that's why palette_recalc() must be called before ANY rendering takes
      place.
   4) 16-bit color. This should only be used for games which use more than
      MAX_PENS colors at a time. It is slower than the other modes, so it should
 	 be avoided whenever possible. Transparency support is limited.
      MachineDriver->video_attributes must contain both VIDEO_MODIFIES_PALETTE
-	 and VIDEO_SUPPPORTS_16BIT.
+	 and VIDEO_SUPPORTS_16BIT.
 
   The dynamic shrinking of the palette works this way: as colors are requested,
   they are associated to a pen. When a color is no longer needed, the pen is
@@ -115,7 +115,7 @@
 static unsigned char *game_palette;	/* RGB palette as set by the driver. */
 static unsigned short *game_colortable;	/* lookup table as set up by the driver */
 static unsigned char shrinked_palette[3 * 256];
-static unsigned short *shrinked_pens;
+unsigned short *shrinked_pens;
 static unsigned short *palette_map;	/* map indexes from game_palette to shrinked_palette */
 static unsigned short pen_usage_count[STATIC_MAX_PENS];
 /* arrays which keep track of colors actually used, to help in the palette shrinking. */
@@ -132,7 +132,6 @@ int palette_transparent_color;
 #define FIRST_AVAILABLE_PEN 2
 
 #define PALETTE_COLOR_NEEDS_REMAP 0x80
-#define PALETTE_COLOR_ALREADY_REMAPPED 0x40	/* flag used during palette compression */
 
 /* helper macro for 16-bit mode */
 #define rgbpenindex(r,g,b) ((Machine->scrbitmap->depth==16) ? ((((r)>>3)<<10)+(((g)>>3)<<5)+((b)>>3)) : ((((r)>>5)<<5)+(((g)>>5)<<2)+((b)>>6)))
@@ -512,82 +511,80 @@ if (errorlog) fprintf(errorlog,"Error: palette_change_color() called, but VIDEO_
 
 
 
+static unsigned char rgb2_to_pen[4][4][4];
+static unsigned char rgb3_to_pen[8][8][8];
+static unsigned char rgb4_to_pen[16][16][16];
+static unsigned char rgb5_to_pen[32][32][32];
+static unsigned char rgb6_to_pen[64][64][64];
+
+static void build_rgb_to_pen(void)
+{
+	int i,rr,gg,bb;
+
+	memset(rgb6_to_pen,DYNAMIC_MAX_PENS,sizeof(rgb6_to_pen));
+
+	rgb6_to_pen[0][0][0] = BLACK_PEN;
+
+	memset(rgb2_to_pen,BLACK_PEN,sizeof(rgb2_to_pen));
+	memset(rgb3_to_pen,DYNAMIC_MAX_PENS,sizeof(rgb3_to_pen));
+	memset(rgb4_to_pen,DYNAMIC_MAX_PENS,sizeof(rgb4_to_pen));
+	memset(rgb5_to_pen,DYNAMIC_MAX_PENS,sizeof(rgb5_to_pen));
+
+	for (i = 0;i < DYNAMIC_MAX_PENS;i++)
+	{
+		if (pen_usage_count[i] > 0)
+		{
+			rr = shrinked_palette[3*i + 0] >> 2;
+			gg = shrinked_palette[3*i + 1] >> 2;
+			bb = shrinked_palette[3*i + 2] >> 2;
+
+			if (rgb6_to_pen[rr][gg][bb] == DYNAMIC_MAX_PENS)
+			{
+				rgb6_to_pen[rr][gg][bb] = i;
+				rgb5_to_pen[rr >> 1][gg >> 1][bb >> 1] = i;
+				rgb4_to_pen[rr >> 2][gg >> 1][bb >> 2] = i;
+				rgb3_to_pen[rr >> 3][gg >> 1][bb >> 3] = i;
+				rgb2_to_pen[rr >> 4][gg >> 1][bb >> 4] = i;
+			}
+		}
+	}
+}
+
 static int compress_palette(void)
 {
-	int i,j,saved;
+	int i,j,saved,r,g,b;
 
 
 	saved = 0;
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		/* first step: reclaim unused pens */
-		/* This usually is fruitless */
-		if (palette_used_colors[i] == PALETTE_COLOR_UNUSED)
+		/* merge pens of the same color */
+		if (old_used_colors[i] == PALETTE_COLOR_USED)
 		{
-			if (old_used_colors[i] != PALETTE_COLOR_UNUSED)
-			{
-				pen_usage_count[palette_map[i]]--;
-				old_used_colors[i] = PALETTE_COLOR_UNUSED;
-				if (pen_usage_count[palette_map[i]] == 0)
-					saved++;
-			}
-		}
-		/* second step: release pens used by colors which */
-		/* need a remap.  */
-		else if (old_used_colors[i] == PALETTE_COLOR_NEEDS_REMAP)
-		{
-			just_remapped[i] = 1;
+			r = game_palette[3*i + 0] >> 2;
+			g = game_palette[3*i + 1] >> 2;
+			b = game_palette[3*i + 2] >> 2;
 
-			pen_usage_count[palette_map[i]]--;
-			if (pen_usage_count[palette_map[i]] == 0)
-				saved++;
-			old_used_colors[i] = PALETTE_COLOR_UNUSED;
-		}
-		/* third step: remap all blacks to BLACK_PEN */
-		else if (old_used_colors[i] == PALETTE_COLOR_USED)
-		{
-			if (palette_map[i] != BLACK_PEN &&
-					game_palette[3*i + 0] == 0 &&
-					game_palette[3*i + 1] == 0 &&
-					game_palette[3*i + 2] == 0)
-			{
-				just_remapped[i] = 1;
+			j = rgb6_to_pen[r][g][b];
 
-				pen_usage_count[palette_map[i]]--;
-				if (pen_usage_count[palette_map[i]] == 0)
-					saved++;
-				palette_map[i] = BLACK_PEN;
-				pen_usage_count[palette_map[i]]++;
-				Machine->pens[i] = shrinked_pens[palette_map[i]];
-			}
-			/* final step: merge pens of the same color */
-			else for (j = i+1;j < Machine->drv->total_colors;j++)
+			if (j != DYNAMIC_MAX_PENS)
 			{
-				if (old_used_colors[j] == PALETTE_COLOR_USED &&
-						palette_map[i] != palette_map[j] &&
-						game_palette[3*i + 0] == game_palette[3*j + 0] &&
-						game_palette[3*i + 1] == game_palette[3*j + 1] &&
-						game_palette[3*i + 2] == game_palette[3*j + 2])
+				if (palette_map[i] != j)
 				{
-					just_remapped[j] = 1;
+					just_remapped[i] = 1;
 
-					pen_usage_count[palette_map[j]]--;
-					if (pen_usage_count[palette_map[j]] == 0)
+					pen_usage_count[palette_map[i]]--;
+					if (pen_usage_count[palette_map[i]] == 0)
 						saved++;
-					palette_map[j] = palette_map[i];
-					pen_usage_count[palette_map[j]]++;
-					Machine->pens[j] = shrinked_pens[palette_map[j]];
-					/* mark the color so we won't waste time on it anymore */
-					old_used_colors[j] |= PALETTE_COLOR_ALREADY_REMAPPED;
+					palette_map[i] = j;
+					pen_usage_count[palette_map[i]]++;
+					Machine->pens[i] = shrinked_pens[palette_map[i]];
 				}
 			}
+			else rgb6_to_pen[r][g][b] = palette_map[i];
 		}
 	}
-
-	/* unmark the compressed colors */
-	for (i = 0;i < Machine->drv->total_colors;i++)
-		old_used_colors[i] &= ~PALETTE_COLOR_ALREADY_REMAPPED;
 
 if (errorlog)
 {
@@ -683,6 +680,7 @@ const unsigned char *palette_recalc(void)
 			{
 if (errorlog) fprintf(errorlog,"Need %d new pens; %d available. I'll reuse some pens.\n",need,avail);
 				reuse_pens = 1;
+				build_rgb_to_pen();
 			}
 		}
 
@@ -730,21 +728,15 @@ if (errorlog) fprintf(errorlog,"Need %d new pens; %d available. I'll reuse some 
 				{
 					if (reuse_pens && dont_reuse_this_pen == 0)
 					{
-						for (i = 0;i < DYNAMIC_MAX_PENS;i++)
+						i = rgb6_to_pen[r >> 2][g >> 2][b >> 2];
+						if (i != DYNAMIC_MAX_PENS)
 						{
-							if (pen_usage_count[i] > 0 &&
-									shrinked_palette[3*i + 0] == r &&
-									shrinked_palette[3*i + 1] == g &&
-									shrinked_palette[3*i + 2] == b)
-							{
-								did_remap = 1;
+							did_remap = 1;
 
-								palette_map[color] = i;
-								pen_usage_count[palette_map[color]]++;
-								Machine->pens[color] = shrinked_pens[palette_map[color]];
-								old_used_colors[color] = palette_used_colors[color];
-								break;
-							}
+							palette_map[color] = i;
+							pen_usage_count[palette_map[color]]++;
+							Machine->pens[color] = shrinked_pens[palette_map[color]];
+							old_used_colors[color] = palette_used_colors[color];
 						}
 					}
 
@@ -779,7 +771,11 @@ retry:
 									ran_out++;
 
 									/* from now on, try to reuse already allocated pens */
-									reuse_pens = 1;
+									if (reuse_pens == 0)
+									{
+										reuse_pens = 1;
+										build_rgb_to_pen();
+									}
 
 									if (compress_palette() > 0)
 									{
@@ -793,13 +789,27 @@ retry:
 
 								ran_out++;
 
-								/* use a random pen to make the error evident */
+								/* use a pen of similar color */
 								/* (but don't increment the pen usage count, since */
 								/* this color will remain COLOR_UNUSED until we can */
 								/* properly allocate it) */
 								did_remap = 1;
 								need_refresh = 1;	/* force a full redraw */
-								palette_map[color] = rand() % DYNAMIC_MAX_PENS;
+
+								palette_map[color] = rgb5_to_pen[r >> 3][g >> 3][b >> 3];
+								if (palette_map[color] == DYNAMIC_MAX_PENS)
+								{
+									palette_map[color] = rgb4_to_pen[r >> 4][g >> 4][b >> 4];
+									if (palette_map[color] == DYNAMIC_MAX_PENS)
+									{
+										palette_map[color] = rgb3_to_pen[r >> 5][g >> 5][b >> 5];
+										if (palette_map[color] == DYNAMIC_MAX_PENS)
+										{
+											palette_map[color] = rgb2_to_pen[r >> 6][g >> 6][b >> 6];
+										}
+									}
+								}
+
 								Machine->pens[color] = shrinked_pens[palette_map[color]];
 
 								continue;	/* go on with the loop, we might have some */
@@ -807,10 +817,33 @@ retry:
 							}
 						}
 
-						shrinked_palette[3*palette_map[color] + 0] = r;
-						shrinked_palette[3*palette_map[color] + 1] = g;
-						shrinked_palette[3*palette_map[color] + 2] = b;
-						osd_modify_pen(Machine->pens[color],r,g,b);
+						{
+							int rr,gg,bb;
+
+							i = palette_map[color];
+							rr = shrinked_palette[3*i + 0] >> 2;
+							gg = shrinked_palette[3*i + 1] >> 2;
+							bb = shrinked_palette[3*i + 2] >> 2;
+							if (rgb6_to_pen[rr][gg][bb] == i)
+								rgb6_to_pen[rr][gg][bb] = DYNAMIC_MAX_PENS;
+
+							shrinked_palette[3*i + 0] = r;
+							shrinked_palette[3*i + 1] = g;
+							shrinked_palette[3*i + 2] = b;
+							osd_modify_pen(Machine->pens[color],r,g,b);
+
+							r >>= 2;
+							g >>= 2;
+							b >>= 2;
+							if (rgb6_to_pen[r][g][b] == DYNAMIC_MAX_PENS)
+							{
+								rgb6_to_pen[r][g][b] = i;
+								rgb5_to_pen[r >> 1][g >> 1][b >> 1] = i;
+								rgb4_to_pen[r >> 2][g >> 1][b >> 2] = i;
+								rgb3_to_pen[r >> 3][g >> 1][b >> 3] = i;
+								rgb2_to_pen[r >> 4][g >> 1][b >> 4] = i;
+							}
+						}
 
 						old_used_colors[color] = palette_used_colors[color];
 					}
@@ -818,9 +851,16 @@ retry:
 			}
 		}
 
-if (errorlog && ran_out > 1)
-		fprintf(errorlog,"Error: no way to shrink the palette to 256 colors, left out %d colors.\n",ran_out-1);
+		if (ran_out > 1)
+		{
+#ifdef MAME_DEBUG
+			char buf[80];
 
+			sprintf(buf,"Error: Palette overflow -%d",ran_out-1);
+			usrintf_showmessage(buf);
+#endif
+if (errorlog) fprintf(errorlog,"Error: no way to shrink the palette to 256 colors, left out %d colors.\n",ran_out-1);
+		}
 
 		/* Reclaim unused pens; we do this AFTER allocating the new ones, to avoid */
 		/* using the same pen for two different colors in two consecutive frames, */

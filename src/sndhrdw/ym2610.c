@@ -504,7 +504,7 @@ INLINE int OPNB_ADPCM_CALC_CHB( ADPCM_CH *ch, char *nowpcmbuf, unsigned int rom_
 
 			if ( addr > rom_size ) {
 				if ( errorlog )
-					fprintf( errorlog, "YM2610: Attempting to play past Delta T rom size!\n" );
+					fprintf( errorlog, "YM2610: Attempting to play past adpcm rom size!\n" );
 				return 0;
 			}
 

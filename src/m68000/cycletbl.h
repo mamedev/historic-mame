@@ -24,7 +24,7 @@
 /* are accurate, so the table should work fine until it is updated.	*/
 /********************************************************************/
 
-static unsigned char cycletbl[65536] =
+unsigned char cycletbl[65536] =
 {
 	 8,  8,  8,  8,  8,  8,  8,  8, 12, 12, 12, 12, 12, 12, 12, 12,
 	16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
@@ -4124,7 +4124,7 @@ static unsigned char cycletbl[65536] =
 	34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34
 };
 
-static const unsigned char exception_cycles[48] =
+const unsigned char exception_cycles[48] =
 {
 	0, 0, 0, 0, 38, 42, 44, 38, 38, 0, 38, 38, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 46, 46, 46, 46, 46, 46, 46, 46,

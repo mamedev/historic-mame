@@ -19,8 +19,8 @@
 #include <math.h>
 
 #include "driver.h"
-#include "sndhrdw\astrocde.h"
-#include "z80\z80.h"
+#include "sndhrdw/astrocde.h"
+#include "z80/z80.h"
 
 #ifdef SIGNED_SAMPLES
   #define AUDIO_CONV(A) ((A))

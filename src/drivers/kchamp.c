@@ -431,22 +431,23 @@ static void msmint( int data ) {
 	}
 }
 
-static struct AY8910interface ay8910_interface = {
-        2, /* 2 chips */
-        1500000,     /* 12 Mhz / 8 = 1.5 Mhz */
-        { 128, 128 },
-        { 0 },
-        { 0 },
-        { 0 },
-        { 0 }
+static struct AY8910interface ay8910_interface =
+{
+	2, /* 2 chips */
+	1500000,     /* 12 Mhz / 8 = 1.5 Mhz */
+	{ 50, 50 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
 };
 
 static struct MSM5205interface msm_interface =
 {
-        1,              /* 1 chips */
-        3906,           /* 12Mhz / 16 / 2 / 96 = 3906.25Hz playback */
-        &msmint,        /* irq */
-        { 255 }
+	1,              /* 1 chips */
+	3906,           /* 12Mhz / 16 / 2 / 96 = 3906.25Hz playback */
+	&msmint,        /* irq */
+	{ 100 }
 };
 
 /********************
@@ -464,7 +465,7 @@ static int sound_int( void ) {
 static struct DACinterface dac_interface =
 {
 	1,
-	{ 255, 255 }
+	{ 100 }
 };
 
 

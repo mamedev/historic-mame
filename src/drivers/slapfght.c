@@ -187,7 +187,7 @@ b73	checks lives. If zero, writes 0 to port 04 then jp 0000h.
 extern unsigned char *slapfight_videoram;
 extern unsigned char *slapfight_colorram;
 extern int slapfight_videoram_size;
-extern unsigned char *slapfight_scrollx_lo,*slapfight_scrollx_hi;
+extern unsigned char *slapfight_scrollx_lo,*slapfight_scrollx_hi,*slapfight_scrolly;
 void slapfight_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void slapfight_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
@@ -259,6 +259,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xe000, 0xe7ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xe800, 0xe800, MWA_RAM, &slapfight_scrollx_lo },
 	{ 0xe801, 0xe801, MWA_RAM, &slapfight_scrollx_hi },
+	{ 0xe802, 0xe802, MWA_RAM, &slapfight_scrolly },
 	{ 0xf000, 0xf7ff, MWA_RAM, &slapfight_videoram, &slapfight_videoram_size },
 	{ 0xf800, 0xffff, MWA_RAM, &slapfight_colorram },
 	{ -1 } /* end of table */
@@ -274,6 +275,7 @@ static struct MemoryWriteAddress slapbtuk_writemem[] =
 	{ 0xd800, 0xdfff, colorram_w, &colorram },
 	{ 0xe000, 0xe7ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xe800, 0xe800, MWA_RAM, &slapfight_scrollx_hi },
+	{ 0xe802, 0xe802, MWA_RAM, &slapfight_scrolly },
 	{ 0xe803, 0xe803, MWA_RAM, &slapfight_scrollx_lo },
 	{ 0xf000, 0xf7ff, MWA_RAM, &slapfight_videoram, &slapfight_videoram_size },
 	{ 0xf800, 0xffff, MWA_RAM, &slapfight_colorram },
@@ -1097,6 +1099,61 @@ void	*f;
 
 
 
+/* High scores are at location C0DB - C123 ( 70+3 bytes )               */
+/*  1 * 3 bytes for the highest score (divided by ten and BCD)	*/
+/* 10 * 3 bytes for score		  (divided by ten and BCD)	*/
+/* 10 * 3 bytes for initials							*/
+/* 10 * 1 byte for level reached		 				*/
+static int tigerh_hiload(void)
+{
+        unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+        if (memcmp(&RAM[0xc0db],"\x00\x20\x00\x00\x20\x00",6) == 0)
+        {
+                void  *f;
+
+                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+                {
+                        osd_fread(f, &RAM[0xc0db], 73);
+                        RAM[0xc15f] = RAM[0xc0db] & 0x0f;
+                        RAM[0xc15e] = RAM[0xc0db] >> 4;
+                        RAM[0xc15d] = RAM[0xc0dc] & 0x0f;
+                        RAM[0xc15c] = RAM[0xc0dc] >> 4;
+                        RAM[0xc15b] = RAM[0xc0dd] & 0x0f;
+                        RAM[0xc15a] = RAM[0xc0dd] >> 4;
+
+                        /* The minimum hiscore is 20000 */
+                        if (RAM[0xc15a] == 0)
+                        {
+                                RAM[0xc15a] = 0x2d;
+                                if (RAM[0xc15b] == 0) RAM[0xc15b] = 0x2d;
+                        }
+                        osd_fclose(f);
+                }
+
+                return 1;       /* hi scores loaded */
+        }
+        else
+                return 0;       /* high scores not loaded yet */
+}
+
+
+
+static void tigerh_hisave(void)
+{
+        void *f;
+        unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+        {
+                osd_fwrite(f,&RAM[0xc0db],73);
+                osd_fclose(f);
+        }
+
+}
+
+
+
 /* High scores are at location C0D2 - C11A ( 70+3 bytes )		*/
 /*  1 * 3 bytes for the highest score (divided by ten and BCD)	*/
 /* 10 * 3 bytes for score		  (divided by ten and BCD)	*/
@@ -1195,7 +1252,7 @@ struct GameDriver tigerh_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_270,
 
-	0, 0
+	tigerh_hiload, tigerh_hisave
 };
 
 struct GameDriver tigerh2_driver =
@@ -1221,7 +1278,7 @@ struct GameDriver tigerh2_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_270,
 
-	0, 0
+	tigerh_hiload, tigerh_hisave
 };
 
 struct GameDriver tigerhb1_driver =
@@ -1247,7 +1304,7 @@ struct GameDriver tigerhb1_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_270,
 
-	0, 0
+	tigerh_hiload, tigerh_hisave
 };
 
 struct GameDriver tigerhb2_driver =
@@ -1273,7 +1330,7 @@ struct GameDriver tigerhb2_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_270,
 
-	0, 0
+	tigerh_hiload, tigerh_hisave
 };
 
 struct GameDriver slapfigh_driver =

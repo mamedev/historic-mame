@@ -58,6 +58,15 @@ struct RomModule
 #define ROM_LOAD_WIDE(name,offset,length,crc) { name, offset, length | ROMFLAG_WIDE, crc },
 #define ROM_LOAD_WIDE_SWAP(name,offset,length,crc) { name, offset, length | ROMFLAG_WIDE | ROMFLAG_SWAP, crc },
 
+/* Use THESE ones for graphics data */
+#ifdef LSB_FIRST
+#define ROM_LOAD_GFX_EVEN  ROM_LOAD_ODD
+#define ROM_LOAD_GFX_ODD   ROM_LOAD_EVEN
+#else
+#define ROM_LOAD_GFX_EVEN  ROM_LOAD_EVEN
+#define ROM_LOAD_GFX_ODD   ROM_LOAD_ODD
+#endif
+
 /* end of table */
 #define ROM_END { 0, 0, 0, 0 } };
 

@@ -311,7 +311,7 @@ static struct YM2203interface ym2203_interface =
 {
 	1,			/* 1 chip */
 	3000000,	/* 3 MHz ???? */
-	{ YM2203_VOL(255,100), YM2203_VOL(255,100) },
+	{ YM2203_VOL(80,40), YM2203_VOL(80,40) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -321,7 +321,7 @@ static struct YM2203interface ym2203_interface =
 static struct DACinterface dac_interface =
 {
 	2,	/* 2 channels */
-	{ 255, 255 }
+	{ 100, 100 }
 };
 
 int terracre_interrupt(void)

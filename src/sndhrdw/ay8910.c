@@ -25,7 +25,7 @@
 
 struct AY8910
 {
-	int Channel[3];
+	int Channel;
 	int SampleRate;
 	int (*PortAread)(int offset);
 	int (*PortBread)(int offset);
@@ -223,9 +223,7 @@ void AYWriteReg(int chip, int r, int v)
 		if (r == AY_ESHAPE || PSG->Regs[r] != v)
 		{
 			/* update the output buffer before changing the register */
-			stream_update(PSG->Channel[0]);
-			stream_update(PSG->Channel[1]);
-			stream_update(PSG->Channel[2]);
+			stream_update(PSG->Channel,0);
 		}
 	}
 
@@ -303,7 +301,7 @@ void AY8910_write_port_4_w(int offset,int data) { AY8910Write(4,1,data); }
 
 
 
-static void doupdate_8(int chip,void *buffer1,void *buffer2,void *buffer3,int length)
+static void AY8910Update_8(int chip,void **buffer,int length)
 {
 #define DATATYPE unsigned char
 #define DATACONV(A) ((A) / (STEP * 256))
@@ -312,35 +310,13 @@ static void doupdate_8(int chip,void *buffer1,void *buffer2,void *buffer3,int le
 #undef DATACONV
 }
 
-static void doupdate_16(int chip,void *buffer1,void *buffer2,void *buffer3,int length)
+static void AY8910Update_16(int chip,void **buffer,int length)
 {
 #define DATATYPE unsigned short
 #define DATACONV(A) ((A) / STEP)
 #include "ay8910u.c"
 #undef DATATYPE
 #undef DATACONV
-}
-
-static void AY8910Update_8(int chip_and_channel,void *buffer,int length)
-{
-	static void *buf[3];
-
-
-	/* we rely on the fact that the three channels are always updated in a row */
-	buf[chip_and_channel % 3] = buffer;
-	if (chip_and_channel % 3 == 2)
-		doupdate_8(chip_and_channel / 3,buf[0],buf[1],buf[2],length);
-}
-
-static void AY8910Update_16(int chip_and_channel,void *buffer,int length)
-{
-	static void *buf[3];
-
-
-	/* we rely on the fact that the three channels are always updated in a row */
-	buf[chip_and_channel % 3] = buffer;
-	if (chip_and_channel % 3 == 2)
-		doupdate_16(chip_and_channel / 3,buf[0],buf[1],buf[2],length);
 }
 
 
@@ -380,9 +356,9 @@ void AY8910_set_volume(int chip,int volume,int gain)
 	double out;
 
 
-	stream_set_volume(PSG->Channel[0],volume);
-	stream_set_volume(PSG->Channel[1],volume);
-	stream_set_volume(PSG->Channel[2],volume);
+	stream_set_volume(PSG->Channel,volume);
+	stream_set_volume(PSG->Channel+1,volume);
+	stream_set_volume(PSG->Channel+2,volume);
 
 	gain &= 0xff;
 
@@ -432,6 +408,8 @@ static int AY8910_init(int chip,const char *chipname,int clock,int sample_rate,i
 {
 	int i;
 	struct AY8910 *PSG = &AYPSG[chip];
+	char buf[3][40];
+	const char *name[3];
 
 
 	memset(PSG,0,sizeof(struct AY8910));
@@ -442,17 +420,16 @@ static int AY8910_init(int chip,const char *chipname,int clock,int sample_rate,i
 	PSG->PortBwrite = portBwrite;
 	for (i = 0;i < 3;i++)
 	{
-		char name[40];
-
-
-		sprintf(name,"%s #%d Ch %c",chipname,chip,'A'+i);
-		PSG->Channel[i] = stream_init(
-				name,sample_rate,sample_bits,
-				3*chip+i,(sample_bits == 16) ? AY8910Update_16 : AY8910Update_8);
-
-		if (PSG->Channel[i] == -1)
-			return 1;
+		name[i] = buf[i];
+		sprintf(buf[i],"%s #%d Ch %c",chipname,chip,'A'+i);
 	}
+	PSG->Channel = stream_init_multi(3,
+			name,sample_rate,sample_bits,
+			chip,(sample_bits == 16) ? AY8910Update_16 : AY8910Update_8);
+
+	if (PSG->Channel == -1)
+		return 1;
+
 	AY8910_set_clock(chip,clock);
 	AY8910_set_volume(chip,255,0);
 	AY8910_reset(chip);

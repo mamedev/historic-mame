@@ -1879,6 +1879,25 @@ ROM_START( pool_rom )
 	ROM_LOAD( "hustler.7",    0x0800, 0x0800, 0x3db57351 )
 ROM_END
 
+ROM_START( billiard_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "1",            0x0000, 0x1000, 0xe39204ff )
+	ROM_LOAD( "2",            0x1000, 0x1000, 0xdc6752ec )
+	ROM_LOAD( "3",            0x2000, 0x1000, 0x23092f67 )
+	/* 3000-3fff space for diagnostics ROM */
+
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "hustler.5",    0x0000, 0x0800, 0x0bdfad0e )
+	ROM_LOAD( "hustler.4",    0x0800, 0x0800, 0x8e062177 )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "hustler.clr",  0x0000, 0x0020, 0xaa1f7f5e )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "hustler.6",    0x0000, 0x0800, 0x7a946544 )
+	ROM_LOAD( "hustler.7",    0x0800, 0x0800, 0x3db57351 )
+ROM_END
+
 
 
 static int bit(int i,int n)
@@ -2746,6 +2765,32 @@ struct GameDriver pool_driver =
 
 	pool_rom,
 	hustler_decode, 0,
+	0,
+	0,	/* sound_prom */
+
+	hustler_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
+};
+
+struct GameDriver billiard_driver =
+{
+	__FILE__,
+	&hustler_driver,
+	"billiard",
+	"The Billiards",
+	"1981",
+	"bootleg",
+	"Nicola Salmoria",
+	0,
+	&hustler_machine_driver,
+	0,
+
+	billiard_rom,
+	0, 0,
 	0,
 	0,	/* sound_prom */
 

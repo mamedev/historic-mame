@@ -450,6 +450,48 @@ ROM_START( jack_rom )
 	ROM_LOAD( "jgk.j9",       0x0000, 0x1000, 0xc2dc1e00 )
 ROM_END
 
+ROM_START( jacka_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "jack8",        0x0000, 0x1000, 0x632151d2 )
+	ROM_LOAD( "jack6",        0x1000, 0x1000, 0xf94f80d9 )
+	ROM_LOAD( "jack7",        0x2000, 0x1000, 0xc830ff1e )
+	ROM_LOAD( "jack5",        0x3000, 0x1000, 0x8dea17e7 )
+	ROM_LOAD( "jgk.j3",       0xc000, 0x1000, 0x605514a8 )
+	ROM_LOAD( "jgk.j4",       0xd000, 0x1000, 0xbce489b7 )
+	ROM_LOAD( "jgk.j2",       0xe000, 0x1000, 0xdb21bd55 )
+	ROM_LOAD( "jack1",        0xf000, 0x1000, 0x7e75ea3d )
+
+	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "jack12",       0x0000, 0x1000, 0x80320647 )
+	ROM_LOAD( "jgk.j13",      0x1000, 0x1000, 0x6aec2c8d )
+	ROM_LOAD( "jgk.j11",      0x2000, 0x1000, 0xfd14c525 )
+	ROM_LOAD( "jgk.j10",      0x3000, 0x1000, 0xeab890b2 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "jgk.j9",       0x0000, 0x1000, 0xc2dc1e00 )
+ROM_END
+
+ROM_START( treahunt_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "thunt-1.f2",       0x0000, 0x1000, 0x0b35858c )
+	ROM_LOAD( "thunt-2.f3",       0x1000, 0x1000, 0x67305a51 )
+	ROM_LOAD( "thunt-3.4f",       0x2000, 0x1000, 0xd7a969c3 )
+	ROM_LOAD( "thunt-4.6f",       0x3000, 0x1000, 0x2483f14d )
+	ROM_LOAD( "thunt-5.7f",       0xc000, 0x1000, 0xc69d5e21 )
+	ROM_LOAD( "thunt-6.7e",       0xd000, 0x1000, 0x11bf3d49 )
+	ROM_LOAD( "thunt-7.6e",       0xe000, 0x1000, 0x7c2d6279 )
+	ROM_LOAD( "thunt-8.4e",       0xf000, 0x1000, 0xf73b86fb )
+
+	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "thunt-13.a4",      0x0000, 0x1000, 0xe03f1f09 )
+	ROM_LOAD( "thunt-12.a3",      0x1000, 0x1000, 0xda4ee9eb )
+	ROM_LOAD( "thunt-10.a1",      0x2000, 0x1000, 0x51ec7934 )
+	ROM_LOAD( "thunt-11.a2",      0x3000, 0x1000, 0xf9781143 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "thunt-9.4a",       0x0000, 0x1000, 0xc2dc1e00 )
+ROM_END
+
 ROM_START( zzyzzyxx_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "zzyzzyxx.a",   0x0000, 0x1000, 0xa9102e34 )
@@ -493,6 +535,108 @@ ROM_START( brix_rom )
 	ROM_LOAD( "zzyzzyxx.i",   0x0000, 0x1000, 0xc7742460 )
 	ROM_LOAD( "zzyzzyxx.j",   0x1000, 0x1000, 0x72166ccd )
 ROM_END
+
+ROM_START( sucasino_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "1",       0x0000, 0x1000, 0xe116e979 )
+	ROM_LOAD( "2",       0x1000, 0x1000, 0x2a2635f5 )
+	ROM_LOAD( "3",       0x2000, 0x1000, 0x69864d90 )
+	ROM_LOAD( "4",       0x3000, 0x1000, 0x174c9373 )
+	ROM_LOAD( "5",       0xc000, 0x1000, 0x115bcb1e )
+	ROM_LOAD( "6",       0xd000, 0x1000, 0x434caa17 )
+	ROM_LOAD( "7",       0xe000, 0x1000, 0x67c68b82 )
+	ROM_LOAD( "8",       0xf000, 0x1000, 0xf5b63006 )
+
+	ROM_REGION_DISPOSE(0x4000) /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "11",      0x0000, 0x1000, 0xf92c4c5b )
+	/* 1000-1fff empty */
+	ROM_LOAD( "10",      0x2000, 0x1000, 0x3b0783ce )
+	/* 3000-3fff empty */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "9",       0x0000, 0x1000, 0x67cf8aec )
+ROM_END
+
+
+
+static void treahunt_decode(void)
+{
+	int A;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	int data;
+
+	/* Thanks to Mike Balfour for helping out with the decryption */
+	for (A = 0; A < 0x1000; A++)
+	{
+		data = RAM[A];
+
+		/* unencrypted = !D7 D2 D5 D1 D3 D6 D4 !D0 */
+		ROM[A] = (~data & 0x81) |
+				 ((data & 0x02) << 3) |
+				 ((data & 0x04) << 4) |
+				  (data & 0x28) |
+				 ((data & 0x10) >> 3) |
+				 ((data & 0x40) >> 4);
+	}
+	for (A = 0x1000; A < 0x2000; A++)
+	{
+		data = RAM[A];
+		if ((A & 0x04) == 0)
+		/* unencrypted = !D7 D2 D5 D1 D3 D6 D4 !D0 */
+			ROM[A] = (~data & 0x81) |
+				 ((data & 0x02) << 3) |
+				 ((data & 0x04) << 4) |
+				  (data & 0x28) |
+				 ((data & 0x10) >> 3) |
+				 ((data & 0x40) >> 4);
+		else
+		/* unencrypted = D0 D2 D5 D1 D3 D6 D4 D7 */
+			ROM[A] =
+				 ((data & 0x01) << 7) |
+				 ((data & 0x02) << 3) |
+				 ((data & 0x04) << 4) |
+				  (data & 0x28) |
+				 ((data & 0x10) >> 3) |
+				 ((data & 0x40) >> 4) |
+				 ((data & 0x80) >> 7);
+	}
+	for (A = 0x2000; A < 0x3000; A++)
+	{
+		data = RAM[A];
+
+		/* unencrypted = !D7 D2 D5 D1 D3 D6 D4 !D0 */
+		ROM[A] = (~data & 0x81) |
+				 ((data & 0x02) << 3) |
+				 ((data & 0x04) << 4) |
+				  (data & 0x28) |
+				 ((data & 0x10) >> 3) |
+				 ((data & 0x40) >> 4);
+	}
+	for (A = 0x3000; A < 0x10000; A++)
+	{
+		data = RAM[A];
+		if ((A & 0x04) == 0)
+		/* unencrypted = !D0 D2 D5 D1 D3 D6 D4 !D7 */
+			ROM[A] =
+				 ((~data & 0x01) << 7) |
+				 ((data & 0x02) << 3) |
+				 ((data & 0x04) << 4) |
+				  (data & 0x28) |
+				 ((data & 0x10) >> 3) |
+				 ((data & 0x40) >> 4) |
+				 ((~data & 0x80) >> 7);
+		else
+		/* unencrypted = D0 D2 D5 D1 D3 D6 D4 D7 */
+			ROM[A] =
+				 ((data & 0x01) << 7) |
+				 ((data & 0x02) << 3) |
+				 ((data & 0x04) << 4) |
+				  (data & 0x28) |
+				 ((data & 0x10) >> 3) |
+				 ((data & 0x40) >> 4) |
+				 ((data & 0x80) >> 7);
+	}
+}
 
 
 
@@ -577,7 +721,7 @@ struct GameDriver jack_driver =
 	__FILE__,
 	0,
 	"jack",
-	"Jack the Giantkiller",
+	"Jack the Giantkiller (set 1)",
 	"1982",
 	"Cinematronics",
 	"Brad Oliver",
@@ -595,6 +739,57 @@ struct GameDriver jack_driver =
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
+	hiload, hisave
+};
+
+struct GameDriver jacka_driver =
+{
+	__FILE__,
+	&jack_driver,
+	"jacka",
+	"Jack the Giantkiller (set 2)",
+	"1982",
+	"Cinematronics",
+	"Brad Oliver",
+	0,
+	&machine_driver,
+	0,
+
+	jacka_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+
+struct GameDriver treahunt_driver =
+{
+	__FILE__,
+	0,
+	"treahunt",
+	"Treasure Hunt",
+	"????",
+	"?????",
+	"Brad Oliver\nMike Balfour",
+	GAME_NOT_WORKING,
+	&machine_driver,
+	0,
+
+	treahunt_rom,
+	0, treahunt_decode,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_90,
 	hiload, hisave
 };
 
@@ -648,4 +843,29 @@ struct GameDriver brix_driver =
 	ORIENTATION_ROTATE_90,
 
 	zzyzzyxx_hiload, zzyzzyxx_hisave
+};
+
+struct GameDriver sucasino_driver =
+{
+	__FILE__,
+	0,
+	"sucasino",
+	"Super Casino",
+	"1982",
+	"Data Amusement",
+	"Brad Oliver",
+	0,
+	&machine_driver,
+	0,
+
+	sucasino_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_90,
+	0, 0
 };

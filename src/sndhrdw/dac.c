@@ -22,7 +22,7 @@ void DAC_data_w(int num,int data)
 {
 	/* update the output buffer before changing the registers */
 	if (latch[num] != data)
-		stream_update(channel[num]);
+		stream_update(channel[num],0);
 
 	latch[num] = data;
 }

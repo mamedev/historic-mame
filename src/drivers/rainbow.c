@@ -9,15 +9,19 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+unsigned char *rastan_ram;
+extern unsigned char *rastan_videoram1,*rastan_videoram3;
+extern int rastan_videoram_size;
 extern unsigned char *rastan_spriteram;
 extern unsigned char *rastan_scrollx;
 extern unsigned char *rastan_scrolly;
 
-void rastan_updatehook0(int offset);
-void rastan_updatehook1(int offset);
-
 void rastan_spriteram_w(int offset,int data);
-int  rastan_spriteram_r(int offset);
+int rastan_spriteram_r(int offset);
+void rastan_videoram1_w(int offset,int data);
+int rastan_videoram1_r(int offset);
+void rastan_videoram3_w(int offset,int data);
+int rastan_videoram3_r(int offset);
 
 void rastan_scrollY_w(int offset,int data);
 void rastan_scrollX_w(int offset,int data);
@@ -53,6 +57,9 @@ void rainbow_c_chip_w(int offset, int data);
 int  rainbow_c_chip_r(int offset);
 void rainbow_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
+int  rastan_vh_start(void);
+void rastan_vh_stop(void);
+
 /* Jumping Extras */
 
 void jumping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -67,9 +74,9 @@ static struct MemoryReadAddress rainbow_readmem[] =
     { 0x3B0000, 0x3B0003, input_port_1_r },
 	{ 0x3e0000, 0x3e0003, rastan_sound_r },
     { 0x800000, 0x80ffff, rainbow_c_chip_r },
-	{ 0xc00000, 0xc03fff, videoram10_word_r },
+	{ 0xc00000, 0xc03fff, rastan_videoram1_r },
 	{ 0xc04000, 0xc07fff, MRA_BANK2 },
-	{ 0xc08000, 0xc0bfff, videoram00_word_r },
+	{ 0xc08000, 0xc0bfff, rastan_videoram3_r },
 	{ 0xc0c000, 0xc0ffff, MRA_BANK3 },
 	{ 0xd00000, 0xd0ffff, MRA_BANK4, &rastan_spriteram },
 	{ -1 }  /* end of table */
@@ -81,9 +88,9 @@ static struct MemoryWriteAddress rainbow_writemem[] =
 	{ 0x10c000, 0x10ffff, MWA_BANK1 },
 	{ 0x200000, 0x20ffff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
     { 0x800000, 0x80ffff, rainbow_c_chip_w },
-	{ 0xc00000, 0xc03fff, videoram10_word_w, &videoram10 },
+	{ 0xc00000, 0xc03fff, rastan_videoram1_w, &rastan_videoram1, &rastan_videoram_size },
 	{ 0xc04000, 0xc07fff, MWA_BANK2 },
-	{ 0xc08000, 0xc0bfff, videoram00_word_w, &videoram00 },
+	{ 0xc08000, 0xc0bfff, rastan_videoram3_w, &rastan_videoram3 },
 	{ 0xc0c000, 0xc0ffff, MWA_BANK3 },
 	{ 0xc20000, 0xc20003, rastan_scrollY_w, &rastan_scrolly },  /* scroll Y  1st.w plane1  2nd.w plane2 */
 	{ 0xc40000, 0xc40003, rastan_scrollX_w, &rastan_scrollx },  /* scroll X  1st.w plane1  2nd.w plane2 */
@@ -104,9 +111,9 @@ static struct MemoryReadAddress jumping_readmem[] =
 	{ 0x400006, 0x400007, rastan_sound_r },			/* What Chip ? */
     { 0x401000, 0x401001, input_port_3_r },
     { 0x401002, 0x401003, input_port_4_r },
-	{ 0xc00000, 0xc03fff, videoram10_word_r },
+	{ 0xc00000, 0xc03fff, rastan_videoram1_r },
 	{ 0xc04000, 0xc07fff, MRA_BANK2 },
-	{ 0xc08000, 0xc0bfff, videoram00_word_r },
+	{ 0xc08000, 0xc0bfff, rastan_videoram3_r },
 	{ 0xc0c000, 0xc0ffff, MRA_BANK3 },
 	{ 0x440000, 0x4407ff, MRA_BANK4, &rastan_spriteram },
 	{ -1 }  /* end of table */
@@ -117,9 +124,9 @@ static struct MemoryWriteAddress jumping_writemem[] =
 	{ 0x000000, 0x08ffff, MWA_ROM },
 	{ 0x10c000, 0x10ffff, MWA_BANK1 },
 	{ 0x200000, 0x20ffff, paletteram_xxxxBBBBGGGGRRRR_word_w, &paletteram },
-	{ 0xc00000, 0xc03fff, videoram10_word_w, &videoram10 },
+	{ 0xc00000, 0xc03fff, rastan_videoram1_w, &rastan_videoram1, &rastan_videoram_size },
 	{ 0xc04000, 0xc07fff, MWA_BANK2 },
-	{ 0xc08000, 0xc0bfff, videoram00_word_w, &videoram00 },
+	{ 0xc08000, 0xc0bfff, rastan_videoram3_w, &rastan_videoram3 },
 	{ 0xc0c000, 0xc0ffff, MWA_BANK3 },
     { 0x430000, 0x430003, rastan_scrollY_w, &rastan_scrolly },  /* scroll Y  1st.w plane1  2nd.w plane2 */
    	{ 0xc40000, 0xc40003, rastan_scrollX_w, &rastan_scrollx },  /* scroll X  1st.w plane1  2nd.w plane2 */
@@ -318,6 +325,17 @@ INPUT_PORTS_START( jumping_input_ports )
 INPUT_PORTS_END
 
 
+static struct GfxLayout spritelayout1 =
+{
+	8,8,	/* 8*8 sprites */
+	16384,	/* 16384 sprites */
+	4,	/* 4 bits per pixel */
+	{ 0, 1, 2, 3 },
+    { 8, 12, 0, 4, 24, 28, 16, 20 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
+	32*8	/* every sprite takes 16 consecutive bytes */
+};
+
 static struct GfxLayout spritelayout2 =
 {
 	16,16,	/* 16*16 sprites */
@@ -349,92 +367,12 @@ static struct GfxLayout spritelayout3 =
 
 static struct GfxDecodeInfo rainbowe_gfxdecodeinfo[] =
 {
+	{ 1, 0x000000, &spritelayout1, 0, 0x80 },	/* sprites 8x8 */
 	{ 1, 0x080000, &spritelayout2, 0, 0x80 },	/* sprites 16x16 */
 	{ 1, 0x100000, &spritelayout3, 0, 0x80 },/* sprites 16x16 (What For ?) */
 	{ -1 } 										/* end of array */
 };
 
-
-static struct GfxTileLayout tilelayout =
-{
-	16384,	/* 16384 sprites */
-	4,	/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },
-    { 8, 12, 0, 4, 24, 28, 16, 20 },
-	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
-	32*8	/* every sprite takes 16 consecutive bytes */
-};
-
-static struct GfxTileDecodeInfo gfxtiledecodeinfo0[] =
-{
-	{ 1, 0x00000, &tilelayout, 0, 128, 0x00000001 },	/* foreground tiles */
-	{ -1 } /* end of array */
-};
-
-static struct GfxTileDecodeInfo gfxtiledecodeinfo1[] =
-{
-	{ 1, 0x00000, &tilelayout, 0, 128, 0 },	/* background tiles */
-	{ -1 } /* end of array */
-};
-
-
-static struct MachineLayer machine_layers[MAX_LAYERS] =
-{
-	{
-		LAYER_TILE,
-		64*8,64*8,
-		gfxtiledecodeinfo0,
-		0,
-		rastan_updatehook0,0,0,0
-	},
-	{
-		LAYER_TILE,
-		64*8,64*8,
-		gfxtiledecodeinfo1,
-		0,
-		rastan_updatehook1,0,0,0
-	}
-};
-
-static struct GfxTileLayout jumping_tilelayout =
-{
-	16384,	/* 16384 sprites */
-	4,		/* 4 bits per pixel */
-	{ 0, 0x20000*8, 0x40000*8, 0x60000*8 },
-    { 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8		/* every sprite takes 8 consecutive bytes */
-};
-
-static struct GfxTileDecodeInfo jumping_gfxtiledecodeinfo0[] =
-{
-	{ 1, 0x00000, &jumping_tilelayout, 0, 128, 0x00008000 },	/* foreground tiles */
-	{ -1 } /* end of array */
-};
-
-static struct GfxTileDecodeInfo jumping_gfxtiledecodeinfo1[] =
-{
-	{ 1, 0x00000, &jumping_tilelayout, 0, 128, 0 },	/* background tiles */
-	{ -1 } /* end of array */
-};
-
-static struct MachineLayer jumping_machine_layers[MAX_LAYERS] =
-{
-	{
-		LAYER_TILE,
-		64*8,64*8,
-		jumping_gfxtiledecodeinfo0,
-		0,
-		rastan_updatehook0,0,0,0
-	},
-	{
-		LAYER_TILE,
-		64*8,64*8,
-		jumping_gfxtiledecodeinfo1,
-		0,
-		rastan_updatehook1,0,0,0
-	}
-};
 
 /* There are 5120 sprites, as indeed there are in Rainbow Island */
 /* However, it looks like the hardware will only ever select up  */
@@ -442,6 +380,17 @@ static struct MachineLayer jumping_machine_layers[MAX_LAYERS] =
 /*                                                               */
 /* Incidentally, sprite roms need all bits reversing, as colours */
 /* are mapped back to front from the pattern used by Rainbow!    */
+
+static struct GfxLayout jumping_tilelayout =
+{
+	8,8,	/* 8*8 sprites */
+	16384,	/* 16384 sprites */
+	4,		/* 4 bits per pixel */
+	{ 0, 0x20000*8, 0x40000*8, 0x60000*8 },
+    { 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8		/* every sprite takes 8 consecutive bytes */
+};
 
 static struct GfxLayout jumping_spritelayout =
 {
@@ -456,6 +405,7 @@ static struct GfxLayout jumping_spritelayout =
 
 static struct GfxDecodeInfo jumping_gfxdecodeinfo[] =
 {
+	{ 1, 0x000000, &jumping_tilelayout, 0, 0x80 },	/* sprites 8x8 */
 	{ 1, 0x080000, &jumping_spritelayout, 0, 0x80 },	/* sprites 16x16 */
 	{ -1 } 										/* end of array */
 };
@@ -483,9 +433,9 @@ static struct MachineDriver machine_driver =
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	machine_layers,
-	generic_vh_start,
-	generic_vh_stop,
+	0,
+	rastan_vh_start,
+	rastan_vh_stop,
 	rainbow_vh_screenrefresh,
 
 	/* sound hardware */
@@ -518,9 +468,9 @@ static struct MachineDriver jumping_machine_driver =
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	jumping_machine_layers,
-	generic_vh_start,
-	generic_vh_stop,
+	0,
+	rastan_vh_start,
+	rastan_vh_stop,
 	jumping_vh_screenrefresh,
 
 	/* sound hardware */

@@ -566,17 +566,17 @@ ROM_START( brkthru_rom )
 	/* we do a lot of scatter loading here, to place the data in a format */
 	/* which can be decoded by MAME's standard functions */
 	ROM_LOAD( "brkthru.7",    0x02000, 0x4000, 0x920cc56a )	/* bitplanes 1,2 for bank 1,2 */
-	ROM_CONTINUE(           0x0a000, 0x4000 )		/* bitplanes 1,2 for bank 3,4 */
+	ROM_CONTINUE(             0x0a000, 0x4000 )		/* bitplanes 1,2 for bank 3,4 */
 	ROM_LOAD( "brkthru.6",    0x12000, 0x4000, 0xfd3cee40 )	/* bitplanes 1,2 for bank 5,6 */
-	ROM_CONTINUE(           0x1a000, 0x4000 )		/* bitplanes 1,2 for bank 7,8 */
+	ROM_CONTINUE(             0x1a000, 0x4000 )		/* bitplanes 1,2 for bank 7,8 */
 	ROM_LOAD( "brkthru.8",    0x06000, 0x1000, 0xf67ee64e )	/* bitplane 3 for bank 1,2 */
-	ROM_CONTINUE(           0x08000, 0x1000 )
-	ROM_CONTINUE(           0x0e000, 0x1000 )		/* bitplane 3 for bank 3,4 */
-	ROM_CONTINUE(           0x10000, 0x1000 )
-	ROM_CONTINUE(           0x16000, 0x1000 )		/* bitplane 3 for bank 5,6 */
-	ROM_CONTINUE(           0x18000, 0x1000 )
-	ROM_CONTINUE(           0x1e000, 0x1000 )		/* bitplane 3 for bank 7,8 */
-	ROM_CONTINUE(           0x20000, 0x1000 )
+	ROM_CONTINUE(             0x08000, 0x1000 )
+	ROM_CONTINUE(             0x0e000, 0x1000 )		/* bitplane 3 for bank 3,4 */
+	ROM_CONTINUE(             0x10000, 0x1000 )
+	ROM_CONTINUE(             0x16000, 0x1000 )		/* bitplane 3 for bank 5,6 */
+	ROM_CONTINUE(             0x18000, 0x1000 )
+	ROM_CONTINUE(             0x1e000, 0x1000 )		/* bitplane 3 for bank 7,8 */
+	ROM_CONTINUE(             0x20000, 0x1000 )
 	/* sprites */
 	ROM_LOAD( "brkthru.9",    0x22000, 0x8000, 0xf54e50a7 )
 	ROM_LOAD( "brkthru.10",   0x2a000, 0x8000, 0xfd156945 )
@@ -603,17 +603,17 @@ ROM_START( darwin_rom )
 	/* we do a lot of scatter loading here, to place the data in a format */
 	/* which can be decoded by MAME's standard functions */
 	ROM_LOAD( "darw_03.rom",  0x02000, 0x4000, 0x57d0350d )   /* bitplanes 1,2 for bank 1,2 */
-	ROM_CONTINUE(           0x0a000, 0x4000 )		/* bitplanes 1,2 for bank 3,4 */
+	ROM_CONTINUE(             0x0a000, 0x4000 )		/* bitplanes 1,2 for bank 3,4 */
 	ROM_LOAD( "darw_02.rom",  0x12000, 0x4000, 0x559a71ab )   /* bitplanes 1,2 for bank 5,6 */
-	ROM_CONTINUE(           0x1a000, 0x4000 )		/* bitplanes 1,2 for bank 7,8 */
+	ROM_CONTINUE(             0x1a000, 0x4000 )		/* bitplanes 1,2 for bank 7,8 */
 	ROM_LOAD( "darw_01.rom",  0x06000, 0x1000, 0x15a16973 )   /* bitplane 3 for bank 1,2 */
-	ROM_CONTINUE(           0x08000, 0x1000 )
-	ROM_CONTINUE(           0x0e000, 0x1000 )		/* bitplane 3 for bank 3,4 */
-	ROM_CONTINUE(           0x10000, 0x1000 )
-	ROM_CONTINUE(           0x16000, 0x1000 )		/* bitplane 3 for bank 5,6 */
-	ROM_CONTINUE(           0x18000, 0x1000 )
-	ROM_CONTINUE(           0x1e000, 0x1000 )		/* bitplane 3 for bank 7,8 */
-	ROM_CONTINUE(           0x20000, 0x1000 )
+	ROM_CONTINUE(             0x08000, 0x1000 )
+	ROM_CONTINUE(             0x0e000, 0x1000 )		/* bitplane 3 for bank 3,4 */
+	ROM_CONTINUE(             0x10000, 0x1000 )
+	ROM_CONTINUE(             0x16000, 0x1000 )		/* bitplane 3 for bank 5,6 */
+	ROM_CONTINUE(             0x18000, 0x1000 )
+	ROM_CONTINUE(             0x1e000, 0x1000 )		/* bitplane 3 for bank 7,8 */
+	ROM_CONTINUE(             0x20000, 0x1000 )
 	/* sprites */
 	ROM_LOAD( "darw_10.rom",  0x22000, 0x8000, 0x487a014c )
 	ROM_LOAD( "darw_11.rom",  0x2a000, 0x8000, 0x548ce2d1 )

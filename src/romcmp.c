@@ -47,6 +47,7 @@ void checkintegrity(const struct fileinfo *file,int side)
 {
 	int i;
 	int mask0,mask1;
+	int addrbit;
 
 
 	if (file->buf == 0) return;
@@ -58,6 +59,7 @@ void checkintegrity(const struct fileinfo *file,int side)
 	{
 		mask0 |= file->buf[i];
 		mask1 &= file->buf[i];
+		if (mask0 == 0xff && mask1 == 0x00) break;
 	}
 
 	if (mask0 != 0xff || mask1 != 0x00)
@@ -85,24 +87,98 @@ void checkintegrity(const struct fileinfo *file,int side)
 		if (allfixed) return;
 	}
 
-	for (i = 0;i < file->size/2;i++)
+	addrbit = 1;
+	mask0 = 0;
+	while (addrbit <= file->size/2)
 	{
-		if (file->buf[i] != file->buf[file->size/2 + i]) break;
-	}
-
-	if (i == file->size/2)
-		printf("%-23s %-23s FIRST AND SECOND HALF IDENTICAL\n",side ? "" : file->name,side ? file->name : "",mask0);
-	else
-	{
-		for (i = 0;i < file->size/4;i++)
+		for (i = 0;i < file->size;i++)
 		{
-			if (file->buf[file->size/2 + 2*i+1] != 0xff) break;
-			if (file->buf[2*i+1] != file->buf[file->size/2 + 2*i]) break;
+			if (file->buf[i] != file->buf[i ^ addrbit]) break;
 		}
 
-		if (i == file->size/4)
-			printf("%-23s %-23s BAD NEOGEO DUMP - CUT 2ND HALF\n",side ? "" : file->name,side ? file->name : "",mask0);
+		if (i == file->size)
+			mask0 |= addrbit;
+
+		addrbit <<= 1;
 	}
+
+	if (mask0)
+	{
+		if (mask0 == file->size/2)
+			printf("%-23s %-23s FIRST AND SECOND HALF IDENTICAL\n",side ? "" : file->name,side ? file->name : "");
+		else
+			printf("%-23s %-23s BAD ADDRESS LINES (mask=%06x)\n",side ? "" : file->name,side ? file->name : "",mask0);
+		return;
+	}
+
+	mask0 = 0x000000;
+	mask1 = file->size-1;
+	for (i = 0;i < file->size;i++)
+	{
+		if (file->buf[i] != 0xff)
+		{
+			mask0 |= i;
+			mask1 &= i;
+			if (mask0 == file->size-1 && mask1 == 0x00) break;
+		}
+	}
+
+	if (mask0 != file->size-1 || mask1 != 0x00)
+	{
+		printf("%-23s %-23s ",side ? "" : file->name,side ? file->name : "");
+		for (i = 0;i < 24;i++)
+		{
+			if (file->size <= (1<<(23-i))) printf(" ");
+			else if ((mask0 & 0x800000) == 0) printf("1");
+			else if (mask1 & 0x800000) printf("0");
+			else printf("x");
+			mask0 <<= 1;
+			mask1 <<= 1;
+		}
+		printf(" = 0xFF\n");
+
+		return;
+	}
+
+
+	mask0 = 0x000000;
+	mask1 = file->size-1;
+	for (i = 0;i < file->size;i++)
+	{
+		if (file->buf[i] != 0x00)
+		{
+			mask0 |= i;
+			mask1 &= i;
+			if (mask0 == file->size-1 && mask1 == 0x00) break;
+		}
+	}
+
+	if (mask0 != file->size-1 || mask1 != 0x00)
+	{
+		printf("%-23s %-23s ",side ? "" : file->name,side ? file->name : "");
+		for (i = 0;i < 24;i++)
+		{
+			if (file->size <= (1<<(23-i))) printf(" ");
+			else if ((mask0 & 0x800000) == 0) printf("1");
+			else if (mask1 & 0x800000) printf("0");
+			else printf("x");
+			mask0 <<= 1;
+			mask1 <<= 1;
+		}
+		printf(" = 0x00\n");
+
+		return;
+	}
+
+
+	for (i = 0;i < file->size/4;i++)
+	{
+		if (file->buf[file->size/2 + 2*i+1] != 0xff) break;
+		if (file->buf[2*i+1] != file->buf[file->size/2 + 2*i]) break;
+	}
+
+	if (i == file->size/4)
+		printf("%-23s %-23s BAD NEOGEO DUMP - CUT 2ND HALF\n",side ? "" : file->name,side ? file->name : "",mask0);
 }
 
 

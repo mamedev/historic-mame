@@ -1133,7 +1133,7 @@ int huft_free(struct huft *t)
  * Support for inflate data
  ***************************************************************************/
 
-#include <inflate.h>
+#include "inflate.h"
 
 /* Inflate corrupt flag */
 static int	inflate_corrupt_flag = 0;	/* flag is set when corruption is detected during inflate */
@@ -1290,6 +1290,7 @@ int inflate_memory(const unsigned char* in_data, unsigned in_size, unsigned char
 		return -1;
 	if (inflate_input_buffer_mac!=inflate_input_buffer_max)
 		return -1;
+
 	if (result || inflate_corrupt_flag)
 		return -1;
 

@@ -444,7 +444,7 @@ static struct MachineDriver machine_driver =
 			superman_interrupt,1
 		},
 		{
-			CPU_Z80 | CPU_AUDIO_CPU,
+			CPU_Z80,
 			4000000,	/* 4 MHz ??? */
 			2,
 			sound_readmem, sound_writemem,0,0,

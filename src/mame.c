@@ -1,7 +1,7 @@
 #include "driver.h"
 
 
-char mameversion[] = "0.34 BETA 6 ("__DATE__")";
+char mameversion[] = "0.34 BETA 7 ("__DATE__")";
 
 static struct RunningMachine machine;
 struct RunningMachine *Machine = &machine;
@@ -222,6 +222,7 @@ void shutdown_machine(void)
 	{
 		free(Machine->memory_region[i]);
 		Machine->memory_region[i] = 0;
+		Machine->memory_region_length[i] = 0;
 	}
 
 	/* free the memory allocated for input ports definition */
@@ -244,8 +245,6 @@ static void vh_close(void)
 	freegfx(Machine->uifont);
 	Machine->uifont = 0;
 	osd_close_display();
-	free_tile_layer(Machine->dirtylayer);
-	Machine->dirtylayer = 0;
 	palette_stop();
 }
 
@@ -284,28 +283,6 @@ static int vh_open(void)
 			Machine->gfx[i]->total_colors = drv->gfxdecodeinfo[i].total_color_codes;
 		}
 	}
-
-
-	/* if the GfxLayer system is enabled, create the dirty map needed by the */
-	/* OS dependant code to selectively refresh the screen. */
-	if (Machine->drv->layer)
-	{
-		static struct MachineLayer ml =
-		{
-			LAYER_TILE,
-			0,0,	/* width and height, filled in later */
-			/* all other fields are 0 */
-		};
-
-		ml.width = drv->screen_width;
-		ml.height = drv->screen_height;
-		if ((Machine->dirtylayer = create_tile_layer(&ml)) == 0)
-		{
-			vh_close();
-			return 1;
-		}
-	}
-	else Machine->dirtylayer = 0;
 
 
 	/* create the display bitmap, and allocate the palette */

@@ -30,7 +30,6 @@ void trackfld_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 void trackfld_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int trackfld_vh_start(void);
 void trackfld_vh_stop(void);
-int konami_IN1_r(int offset);
 
 void hyperspt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -56,6 +55,24 @@ void trackfld_init_machine(void)
 {
 	/* Set optimization flags for M6809 */
 	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
+}
+
+/* handle fake button for speed cheat */
+static int konami_IN1_r(int offset)
+{
+	int res;
+	static int cheat = 0;
+	static int bits[] = { 0xee, 0xff, 0xbb, 0xaa };
+
+	res = readinputport(1);
+
+	if ((res & 0x80) == 0)
+	{
+		res |= 0x55;
+		res &= bits[cheat];
+		cheat = (++cheat)%4;
+	}
+	return res;
 }
 
 
@@ -448,6 +465,35 @@ ROM_START( trackfld_rom )
 	ROM_LOAD( "c9_d15.bin",   0x0000, 0x2000, 0xf546a56b )
 ROM_END
 
+ROM_START( trackflc_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "f01.1a",       0x6000, 0x2000, 0x4e32b360 )
+	ROM_LOAD( "f02.2a",       0x8000, 0x2000, 0x4e7ebf07 )
+	ROM_LOAD( "l03.3a",       0xA000, 0x2000, 0xfef4c0ea )
+	ROM_LOAD( "f04.4a",       0xC000, 0x2000, 0x73940f2d )
+	ROM_LOAD( "f05.5a",       0xE000, 0x2000, 0x363fd761 )
+
+	ROM_REGION_DISPOSE(0xe000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "h16_e12.bin",  0x0000, 0x2000, 0x50075768 )
+	ROM_LOAD( "h15_e11.bin",  0x2000, 0x2000, 0xdda9e29f )
+	ROM_LOAD( "h14_e10.bin",  0x4000, 0x2000, 0xc2166a5c )
+	ROM_LOAD( "c11_d06.bin",  0x6000, 0x2000, 0x82e2185a )
+	ROM_LOAD( "c12_d07.bin",  0x8000, 0x2000, 0x800ff1f1 )
+	ROM_LOAD( "c13_d08.bin",  0xa000, 0x2000, 0xd9faf183 )
+	ROM_LOAD( "c14_d09.bin",  0xc000, 0x2000, 0x5886c802 )
+
+	ROM_REGION(0x0220)    /* color/lookup proms */
+	ROM_LOAD( "tfprom.1",     0x0000, 0x0020, 0xd55f30b5 ) /* palette */
+	ROM_LOAD( "tfprom.3",     0x0020, 0x0100, 0xd2ba4d32 ) /* sprite lookup table */
+	ROM_LOAD( "tfprom.2",     0x0120, 0x0100, 0x053e5861 ) /* char lookup table */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "c2_d13.bin",   0x0000, 0x2000, 0x95bf79b6 )
+
+	ROM_REGION(0x10000)	/*  64k for speech rom    */
+	ROM_LOAD( "c9_d15.bin",   0x0000, 0x2000, 0xf546a56b )
+ROM_END
+
 ROM_START( hyprolym_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "hyprolym.a01", 0x6000, 0x2000, 0x82257fb7 )
@@ -628,6 +674,33 @@ struct GameDriver trackfld_driver =
 	0,
 
 	trackfld_rom,
+	0, trackfld_decode,
+	trackfld_sample_names,
+
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
+struct GameDriver trackflc_driver =
+{
+	__FILE__,
+	&trackfld_driver,
+	"trackflc",
+	"Track & Field (Centuri)",
+	"1983",
+	"Konami (Centuri license)",
+	"Chris Hardy (MAME driver)\nTim Lindquist (color info)\nTatsuyuki Satoh(speech sound)",
+	0,
+	&machine_driver,
+	0,
+
+	trackflc_rom,
 	0, trackfld_decode,
 	trackfld_sample_names,
 

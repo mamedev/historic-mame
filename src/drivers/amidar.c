@@ -54,9 +54,11 @@ interrupt mode 1 triggered by the main CPU
 
 
 
+extern unsigned char *amidar_attributesram;
 void amidar_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void amidar_updatehook00(int offset);
-void amidar_updatehook01(int offset);
+void amidar_flipx_w(int offset,int data);
+void amidar_flipy_w(int offset,int data);
+void amidar_attributes_w(int offset,int data);
 void amidar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int scramble_portB_r(int offset);
@@ -92,13 +94,13 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x4fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x9000, 0x93ff, videoram00_w, &videoram00 },
-	{ 0x9800, 0x983f, videoram01_w, &videoram01 },
+	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
+	{ 0x9800, 0x983f, amidar_attributes_w, &amidar_attributesram },
 	{ 0x9840, 0x985f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x9860, 0x987f, MWA_NOP },
 	{ 0xa008, 0xa008, interrupt_enable_w },
-	{ 0xa010, 0xa010, MWA_RAM, &flip_screen_x },
-	{ 0xa018, 0xa018, MWA_RAM, &flip_screen_y },
+	{ 0xa010, 0xa010, amidar_flipx_w },
+	{ 0xa018, 0xa018, amidar_flipy_w },
 	{ 0xa030, 0xa030, amidar_coina_w },
 	{ 0xa038, 0xa038, amidar_coinb_w },
 	{ 0xb800, 0xb800, soundlatch_w },
@@ -443,6 +445,18 @@ INPUT_PORTS_START( k600_input_ports )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
 
+
+
+static struct GfxLayout charlayout =
+{
+	8,8,	/* 8*8 characters */
+	256,	/* 256 characters */
+	2,	/* 2 bits per pixel */
+	{ 0, 256*8*8 },	/* the two bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8	/* every char takes 8 consecutive bytes */
+};
 static struct GfxLayout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
@@ -458,39 +472,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
+	{ 1, 0x0000, &charlayout,     0, 8 },
 	{ 1, 0x0000, &spritelayout,   0, 8 },
 	{ -1 } /* end of array */
-};
-
-
-
-static struct GfxTileLayout tilelayout =
-{
-	256,	/* 256 characters */
-	2,	/* 2 bits per pixel */
-	{ 0, 256*8*8 },	/* the two bitplanes are separated */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every char takes 8 consecutive bytes */
-};
-
-static struct GfxTileDecodeInfo gfxtiledecodeinfo[] =
-{
-	{ 1, 0x0000, &tilelayout, 0, 8, 0 },
-	{ -1 } /* end of array */
-};
-
-
-
-static struct MachineLayer machine_layers[MAX_LAYERS] =
-{
-	{
-		LAYER_TILE,
-		32*8,32*8,
-		gfxtiledecodeinfo,
-		0,
-		amidar_updatehook00,amidar_updatehook01,0,0
-	}
 };
 
 
@@ -538,7 +522,7 @@ static struct MachineDriver machine_driver =
 	amidar_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-	machine_layers,
+	0,
 	generic_vh_start,
 	generic_vh_stop,
 	amidar_vh_screenrefresh,

@@ -10,7 +10,6 @@
 #include "vidhrdw/generic.h"
 
 
-
 static struct rectangle spritevisiblearea =
 {
 	1*8, 31*8-1,
@@ -18,21 +17,11 @@ static struct rectangle spritevisiblearea =
 };
 
 
-
 /***************************************************************************
+  qwakprot_paletteram_w
 
-  Millipede doesn't have a color PROM, it uses RAM.
-  The RAM seems to be conncted to the video output this way:
-
-  bit 7 red
-        red
-        red
-        green
-        green
-        blue
-        blue
-  bit 0 blue
-
+  This might seem a little odd, but it really seems as though the palette
+  is writing as GGGRRRBB.  This is just a guess, and has not been confirmed.
 ***************************************************************************/
 void qwakprot_paletteram_w(int offset,int data)
 {
@@ -43,21 +32,21 @@ void qwakprot_paletteram_w(int offset,int data)
 	paletteram[offset] = data;
 
 	/* red component */
-	bit0 = (~data >> 5) & 0x01;
-	bit1 = (~data >> 6) & 0x01;
-	bit2 = (~data >> 7) & 0x01;
+	bit0 = (~data >> 2) & 0x01;
+	bit1 = (~data >> 3) & 0x01;
+	bit2 = (~data >> 4) & 0x01;
 	r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
 	/* green component */
-	bit0 = 0;
-	bit1 = (~data >> 3) & 0x01;
-	bit2 = (~data >> 4) & 0x01;
+	bit0 = (~data >> 5) & 0x01;
+	bit1 = (~data >> 6) & 0x01;
+	bit2 = (~data >> 7) & 0x01;
 	g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
 	/* blue component */
-	bit0 = (~data >> 0) & 0x01;
-	bit1 = (~data >> 1) & 0x01;
-	bit2 = (~data >> 2) & 0x01;
+	bit0 = 0;
+	bit1 = (~data >> 0) & 0x01;
+	bit2 = (~data >> 1) & 0x01;
 	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
 	palette_change_color(offset,r,g,b);

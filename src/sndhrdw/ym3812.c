@@ -195,7 +195,7 @@
 #include <stdio.h>
 #include <math.h>
 
-#ifndef macintosh
+#if !defined(macintosh) || !defined(ACORN)
 #include <malloc.h>
 #include <memory.h>
 #endif
@@ -212,7 +212,7 @@
 
 // These numbers define attack and decay/sustain rates
 #define cATTMUL 0.11597
-#define cDECMUL 0.6311
+#define cDECMUL 0.6311*2
 
 #ifndef PI
 #define PI 3.141592654f
@@ -246,7 +246,6 @@ int ym3812_Multi[] = { 1,2,4,6,8,10,12,14,16,18,20,20,24,24,30,30 };
 * FUNCTION
 * NOTES
 ****************************************************************************************/
-short	*ym3812_aSinTable0;
 short	ym3812_aSinTable[4][SINTABLE_SIZE];
 
 /*$DEADSERIOUSCLAN$*********************************************************************
@@ -305,8 +304,6 @@ ym3812* ym3812_Init( int nReplayFrq, int nClock, int f16Bit )
 	pOPL->nReplayFrq = nReplayFrq;
 	pOPL->nYM3812Clk = nClock;
 	pOPL->nYM3812DivClk = nClock/72;
-	pOPL->vTimer1IntCnt = 0;
-	pOPL->vTimer2IntCnt = 0;
 	pOPL->SetTimer = NULL;
 	pOPL->nSubDivide = 1;
 
@@ -327,7 +324,6 @@ ym3812* ym3812_Init( int nReplayFrq, int nClock, int f16Bit )
 		ym3812_aSinTable[2][l] = abs(ym3812_aSinTable[0][l]);
 		ym3812_aSinTable[3][l] = ~(l&(SINTABLE_SIZE/4)) ? ym3812_aSinTable[0][l] : 0;
 	}
-	ym3812_aSinTable0=ym3812_aSinTable[0];	// Easier access..
 
 	// Calculate attack and decay time (release is same as decay)
 	for( l=1 ; l<16 ; l++ )
@@ -421,74 +417,6 @@ ym3812* ym3812_DeInit( ym3812 *pOPL )
 	return pOPL;
 }
 
-/*$DEADSERIOUSCLAN$*********************************************************************
-* ROUTINE
-*  ym3812_CheckTimer1Int( ym3812 *pOPL )
-* FUNCTION
-*  Check if it is time for an ym3812 Timer A interrupt
-* NOTES
-****************************************************************************************/
-int ym3812_CheckTimer1Int( ym3812 *pOPL )
-{
-	if( ((~pOPL->nTimerCtrl)&ym3812_TCMASK1) && (pOPL->nTimerCtrl&ym3812_TCST1) )
-	{
-		if( pOPL->vTimer1IntCnt>pOPL->vTimer1 )
-		{
-			pOPL->nStatus |= ym3812_STIRQ | ym3812_STFLAG1;
-			pOPL->vTimer1IntCnt -= pOPL->vTimer1;
-			if( pOPL->vTimer1IntCnt > 0.250f ) pOPL->vTimer1IntCnt = 0.0f;	// Avoid incremental overflow of counter
-			return cTRUE;
-		}
-	}
-	return cFALSE;
-}
-
-/*$DEADSERIOUSCLAN$*********************************************************************
-* ROUTINE
-*  ym3812_CheckTimer2Int( ym3812 *pOPL )
-* FUNCTION
-*  Check if it is time for an ym3812 Timer A interrupt
-* NOTES
-****************************************************************************************/
-int ym3812_CheckTimer2Int( ym3812 *pOPL )
-{
-	if( ((~pOPL->nTimerCtrl)&ym3812_TCMASK2) && (pOPL->nTimerCtrl&ym3812_TCST2) )
-	{
-		if( pOPL->vTimer2IntCnt>pOPL->vTimer2 )
-		{
-			pOPL->nStatus |= ym3812_STIRQ | ym3812_STFLAG2;
-			pOPL->vTimer2IntCnt -= pOPL->vTimer2;
-			if( pOPL->vTimer2IntCnt > 0.250f ) pOPL->vTimer2IntCnt = 0.0f;	// Avoid incremental overflow of counter
-			return cTRUE;
-		}
-	}
-	return cFALSE;
-}
-
-/*$DEADSERIOUS$*******************************************************************
-* ROUTINE
-*	void ym3812_UpdateTimers( float vTime )
-* AUTHOR
-*		Carl-Henrik Skårstedt
-* FUNCTION/NOTES
-*	Call this with the time that has passed from previous UpdateTimers.
-*	Do not use this function externally if you have opted to update timers
-*	in the main update routine (ym3812_AUTOMATIC).
-**********************************************************************************/
-
-void ym3812_UpdateTimers( ym3812 *pOPL, float vTime )
-{
-	if( pOPL->nTimerCtrl & ym3812_TCST1 )
-	{
-		pOPL->vTimer1IntCnt += vTime;
-	}
-
-	if( pOPL->nTimerCtrl & ym3812_TCST2 )
-	{
-		pOPL->vTimer2IntCnt += vTime;
-	}
-}
-
 /*$DEADSERIOUS$*******************************************************************
 * ROUTINE
 *	void ym3812_TimerOverflow( pOPL, int nTimer )
@@ -524,17 +452,6 @@ int ym3812_TimerEvent( ym3812 *pOPL, int nTimer )
 			}
 	}
 	return cFALSE;	// Bad timer
-}
-
-/*$DEADSERIOUSCLAN$*********************************************************************
-* ROUTINE
-*  void ym3812_SetBuffer( ym3812 *pOPL, unsigned char *pBuffer )
-* FUNCTION
-* NOTES
-****************************************************************************************/
-void ym3812_SetBuffer( ym3812 *pOPL, char *pBuffer )
-{
-	pOPL->pBuffer = pBuffer;
 }
 
 /*$DEADSERIOUSCLAN$*********************************************************************
@@ -654,7 +571,6 @@ void ym3812_WriteReg( ym3812 *pOPL, unsigned char nData)
 			if( (nData&(~nTemp)) & ym3812_TCST1 )
 			{			// Start new timer if START TIMER1 was set this write.
 				if(pOPL->SetTimer!=NULL) (*pOPL->SetTimer)( 1, pOPL->vTimer1, pOPL, cFALSE );
-				pOPL->vTimer1IntCnt = 0.0f; // Set timer to 0
 			}
 			else if( ((~nData)&nTemp) & ym3812_TCST1 )
 			{			// Remove existing timer if START TIMER1 was cleared this write.
@@ -663,7 +579,6 @@ void ym3812_WriteReg( ym3812 *pOPL, unsigned char nData)
 			if( (nData&(~nTemp)) & ym3812_TCST2 )
 			{			// Start new timer if START TIMER2 was set this write.
 				if(pOPL->SetTimer!=NULL) (*pOPL->SetTimer)( 2, pOPL->vTimer2, pOPL, cFALSE );
-				pOPL->vTimer2IntCnt = 0.0f; // Set timer to 0
 			}
 			else if( ((~nData)&nTemp) & ym3812_TCST2 )
 			{			// Remove existing timer if START TIMER2 was cleared this write.
@@ -714,7 +629,7 @@ void ym3812_WriteReg( ym3812 *pOPL, unsigned char nData)
 				else
 				{
 					nData &= 7;
-					pOPL->nFeedback[nCh] = SINTABLE_SHIFT-SINTABLE_SIZESHIFT+7-nData+3;
+					pOPL->nFeedback[nCh] = SINTABLE_SHIFT-SINTABLE_SIZESHIFT+7-nData+14;
 				}
 				return;
 		}
@@ -963,7 +878,7 @@ void ym3812_Update_stream( ym3812* pOPL, void *pBuffer_in, int nLength )
 						nOffs += (pOPL->nSinValue[nSlot])>>(pOPL->nFeedback[l]);// Add feedback offset
 					}
 					nOffs &= SINTABLE_SIZE-1;
-					pOPL->nSinValue[nSlot] = ym3812_aSinTable0[nOffs];			// Set old sample value
+					pOPL->nSinValue[nSlot] = nCurrVol[nSlot]*ym3812_aSinTable[pOPL->nWave[nSlot]][nOffs];			// Set old sample value
 
 					if( pOPL->fConnection[l] )									// Connect or Parallell?
 					{
@@ -973,7 +888,7 @@ void ym3812_Update_stream( ym3812* pOPL, void *pBuffer_in, int nLength )
 					else
 					{
 						Value += nCurrVol[nSlot2]*ym3812_aSinTable[pOPL->nWave[nSlot2]][(nOffs2 +
-							((nCurrVol[nSlot]*ym3812_aSinTable0[nOffs])>>(14))) & (SINTABLE_SIZE-1)];
+							((nCurrVol[nSlot]*ym3812_aSinTable[pOPL->nWave[nSlot]][nOffs])>>(14))) & (SINTABLE_SIZE-1)];
 					}
 					pOPL->nCurrPos[nSlot] += nCurrAdd[nSlot];					// Increase sintable offset Slot A
 					pOPL->nCurrPos[nSlot2] += nCurrAdd[nSlot2]; 				// Increase sintable offset Slot B

@@ -6,21 +6,13 @@
 
 extern unsigned char No_FM;
 
-static int emulation_rateFM;
-static int buffer_lenFM;
-static int sample_bits;
+static int stream[MAX_2203];
 
 static struct YM2203interface *intf;
 
 static int FMMode;
 #define CHIP_YM2203_DAC 2
 #define CHIP_YM2203_OPL 3   /* YM2203 with OPL chip */
-
-static FMSAMPLE *bufferFM[MAX_2203];
-
-static int volumeFM[MAX_2203];
-
-static int channelFM;
 
 static void *Timer[MAX_2203][2];
 static void (*timer_callback)(int param);
@@ -87,6 +79,19 @@ static void timer_callback_2203(int param)
 	}
 #endif
 }
+/* update request from fm.c */
+void YM2203UpdateRequest(int chip)
+{
+	stream_update(stream[chip],0);
+}
+
+#if 0
+/* update callback from stream.c */
+static void YM2203UpdateCallback(int chip,void *buffer,int length)
+{
+	YM2203UpdateOne(chip,buffer,length);
+}
+#endif
 
 int YM2203_sh_start(struct YM2203interface *interface)
 {
@@ -100,38 +105,30 @@ int YM2203_sh_start(struct YM2203interface *interface)
 	else        FMMode = CHIP_YM2203_OPL;
 
 	intf = interface;
-	buffer_lenFM = rate / Machine->drv->frames_per_second;
-	emulation_rateFM = buffer_lenFM * Machine->drv->frames_per_second;
-	sample_bits = Machine->sample_bits;
 
-	/* OPN buffer initialize */
-	for (i = 0;i < intf->num;i++)
-	{
-		if ((bufferFM[i] = malloc((sample_bits/8)*buffer_lenFM)) == 0)
-		{
-			while (--i >= 0) free(bufferFM[i]);
-			AY8910_sh_stop();
-			return 1;
-		}
-	}
 	/* Timer Handler set */
 	timer_callback = timer_callback_2203;
 	FMTimerInit();
-	/* Initialize FM emurator */
-	if (YM2203Init(intf->num,intf->clock,emulation_rateFM,sample_bits,buffer_lenFM,bufferFM) == 0)
+	/* stream system initialize */
+	for (i = 0;i < intf->num;i++)
 	{
-		channelFM = get_play_channels( intf->num );
+		int volume;
+		char name[20];
+		sprintf(name,"YM2203 #%d FM",i);
+		stream[i] = stream_init(name,Machine->sample_rate,Machine->sample_bits,i,YM2203UpdateOne/*YM2203UpdateCallback*/);
 		/* volume setup */
-		for (i = 0;i < intf->num;i++)
-		{
-			volumeFM[i] = intf->volume[i]>>16; /* high 16 bit */
-			if( volumeFM[i] > 255 ) volumeFM[i] = 255;
-		}
+		volume = intf->volume[i]>>16; /* high 16 bit */
+		if( volume > 255 ) volume = 255;
+		stream_set_volume(stream[i],volume);
+	}
+	/* Initialize FM emurator */
+	if (YM2203Init(intf->num,intf->clock,Machine->sample_rate,Machine->sample_bits) == 0)
+	{
 		/* Ready */
 		return 0;
 	}
 	/* error */
-	for (i = 0;i < intf->num;i++) free(bufferFM[i]);
+	/* stream close */
 	AY8910_sh_stop();
 	return 1;
 }
@@ -144,9 +141,6 @@ void YM2203_sh_stop(void)
 ///////	if( FMMode == CHIP_YM2203_DAC )
 	{
 		YM2203Shutdown();
-		for (i = 0;i < intf->num;i++){
-			free(bufferFM[i]);
-		}
 	}
 }
 
@@ -272,25 +266,8 @@ void YM2203_write_port_4_w(int offset,int data)
 
 void YM2203_sh_update(void)
 {
-	int i;
-
 	if (Machine->sample_rate == 0 ) return;
 
-	if( FMMode == CHIP_YM2203_DAC ){	/* DIGITAL sound emurator */
-		/* OPN DAC */
-		YM2203Update();
-		for (i = 0;i < intf->num;i++)
-		{
-			if( sample_bits == 16 )
-			{
-				osd_play_streamed_sample_16(channelFM+i,bufferFM[i],2*buffer_lenFM,emulation_rateFM,volumeFM[i]);
-			}
-			else
-			{
-				osd_play_streamed_sample(channelFM+i,bufferFM[i],buffer_lenFM,emulation_rateFM,volumeFM[i]);
-			}
-		}
-	}else{
+	if( FMMode == CHIP_YM2203_OPL )
 		osd_ym2203_update();
-	}
 }

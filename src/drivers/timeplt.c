@@ -374,6 +374,27 @@ ROM_START( timeplt_rom )
 	ROM_LOAD( "tm7",          0x0000, 0x1000, 0xd66da813 )
 ROM_END
 
+ROM_START( timepltc_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "cd1y",         0x0000, 0x2000, 0x83ec72c2 )
+	ROM_LOAD( "cd2y",         0x2000, 0x2000, 0x0dcf5287 )
+	ROM_LOAD( "cd3y",         0x4000, 0x2000, 0xc789b912 )
+
+	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "tm6",          0x0000, 0x2000, 0xc2507f40 )
+	ROM_LOAD( "tm4",          0x2000, 0x2000, 0x7e437c3e )
+	ROM_LOAD( "tm5",          0x4000, 0x2000, 0xe8ca87b9 )
+
+	ROM_REGION(0x0240)	/* color proms */
+	ROM_LOAD( "timeplt.b4",   0x0000, 0x0020, 0x34c91839 ) /* palette */
+	ROM_LOAD( "timeplt.b5",   0x0020, 0x0020, 0x463b2b07 ) /* palette */
+	ROM_LOAD( "timeplt.e9",   0x0040, 0x0100, 0x4bbb2150 ) /* sprite lookup table */
+	ROM_LOAD( "timeplt.e12",  0x0140, 0x0100, 0xf7b7663e ) /* char lookup table */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "tm7",          0x0000, 0x1000, 0xd66da813 )
+ROM_END
+
 ROM_START( spaceplt_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "sp1",          0x0000, 0x2000, 0xac8ca3ae )
@@ -454,6 +475,32 @@ struct GameDriver timeplt_driver =
 	0,
 
 	timeplt_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	hiload, hisave
+};
+
+struct GameDriver timepltc_driver =
+{
+	__FILE__,
+	&timeplt_driver,
+	"timepltc",
+	"Time Pilot (Centuri)",
+	"1982",
+	"Konami (Centuri license)",
+	"Nicola Salmoria (MAME driver)\nAlan J McCormick (color info)\nPaul Swan (color info)\nMike Cuddy (clouds info)\nEdward Massey (clouds info)\nMarco Cassili",
+	0,
+	&machine_driver,
+	0,
+
+	timepltc_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

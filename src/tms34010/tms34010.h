@@ -12,12 +12,21 @@
 
 #include "osd_cpu.h"
 
-/* TMS34010 Registers */
+/* TMS34010 State */
 typedef struct
 {
 	UINT32 op;
 	UINT32 pc;
 	UINT32 st;        /* Only here so we can display it in the debug window */
+	union		  				/* The register files are interleaved, so */
+	{							/* that the SP occupies the same location in both */
+			INT32 Bregs[241];	/* Only every 16th entry is actually used */
+		struct
+		{
+			INT32 unused[225];
+			INT32 Aregs[16];
+		} a;
+	} regs;
 	UINT32 nflag;
 	UINT32 cflag;
 	UINT32 notzflag;  /* So we can just do an assignment to set it */
@@ -28,8 +37,6 @@ typedef struct
 	UINT32 fe1flag;
 	UINT32 fw[2];
 	UINT32 fw_inc[2];  /* Same as fw[], except when fw = 0, fw_inc = 32 */
-	 INT32 Aregs[16];
-	 INT32 Bregs[16];
 	UINT32 IOregs[32];
 	void (*F0_write) (UINT32 bitaddr, UINT32 data);
 	void (*F1_write) (UINT32 bitaddr, UINT32 data);
@@ -48,6 +55,8 @@ typedef struct
 	UINT16* shiftreg;
 	void (*to_shiftreg)  (UINT32 address, UINT16* shiftreg);
     void (*from_shiftreg)(UINT32 address, UINT16* shiftreg);
+	UINT8* stackbase;
+	UINT32 stackoffs;
 } TMS34010_Regs;
 
 /* average instruction time in cycles */
@@ -80,6 +89,9 @@ void TMS34010_HSTCTLH_w (int offset, int data);
 void TMS34010_set_shiftreg_functions(int cpu,
 									 void (*to_shiftreg  )(UINT32, UINT16*),
 									 void (*from_shiftreg)(UINT32, UINT16*));
+
+/* Sets functions to read/write shift register */
+void TMS34010_set_stack_base(int cpu, UINT8* stackbase, UINT32 stackoffs);
 
 /* Writes to the 34010 io */
 void TMS34010_io_register_w(int offset, int data);

@@ -74,9 +74,6 @@ void gyruss_filter0_w(int offset,int data);
 void gyruss_filter1_w(int offset,int data);
 void gyruss_sh_irqtrigger_w(int offset,int data);
 void gyruss_i8039_irq_w(int offset,int data);
-void gyruss_i8039_command_w(int offset,int data);
-int gyruss_i8039_command_r(int offset);
-void gyruss_dac_w(int offset, int data);
 
 
 
@@ -172,6 +169,7 @@ static struct MemoryReadAddress i8039_readmem[] =
 
 static struct MemoryWriteAddress i8039_writemem[] =
 {
+	{ 0x0000, 0x0fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 

@@ -17,10 +17,6 @@ extern "C" {
 #define ym3812_Sign16(n) (n^0x8000)
 #endif
 
-// This specifies whether the update routine updates the timers. Remove define if not automatic timers
-
-//#define ym3812_AUTOMATIC
-
 // This frequency is from Yamaha 2413 documentation
 
 #define ym3812_StdClock 3579545
@@ -54,8 +50,6 @@ typedef struct ym3812_s {
 	double			vTimer1;			// Timer 1 (80 microseconds)
 	double			vTimer2;			// Timer 2 (320 microseconds)
 	int				nTimerCtrl;			// Timer control...
-	float			vTimer1IntCnt;		// Counts up each update and down each Z80 int. In milliseconds.
-	float			vTimer2IntCnt;		// Counter for timer B
 	int				nYM3812Clk;			// The input clock rate for the chip
 	int				nYM3812DivClk;		// The clock frequency divided by 72...
 
@@ -99,7 +93,6 @@ typedef struct ym3812_s {
 	int				nSubDivide;			// Number of times to subdivide the sample buffer generation
 	int				f16Bit;				// True if 16 bit samples.
 	int				aVolumes[256];		// Volume conversion table
-	char			*pBuffer;			// A sample buffer to update
 	signed char		*pDrum[5];			// Pointer to samples (11025 Hz)
 	int				nDrumSize[5];		// Size of samples
 	int				nDrumOffs[5];		// Current (playing) offset of samples
@@ -122,10 +115,6 @@ extern int ym3812_ReadStatus( ym3812 *pOPL );
 extern int	ym3812_ReadReg( ym3812 *pOPL );
 extern void ym3812_SetReg( ym3812 *pOPL, unsigned char nReg );
 extern void ym3812_WriteReg( ym3812 *pOPL, unsigned char nData);
-extern void ym3812_SetBuffer( ym3812 *pOPL, char *pBuffer );
-extern int ym3812_CheckTimer1Int( ym3812 *pOPL );
-extern int ym3812_CheckTimer2Int( ym3812 *pOPL );
-extern void ym3812_UpdateTimers( ym3812 *pOPL, float vTime );
 extern int ym3812_TimerEvent( ym3812 *pOPL, int nTimer );
 
 #ifdef __cplusplus

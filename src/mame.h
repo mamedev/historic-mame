@@ -11,17 +11,12 @@ extern FILE *errorlog;
 #define MAX_GFX_ELEMENTS 32
 #define MAX_MEMORY_REGIONS 10
 
-#define MAX_LAYERS 4	/* MAX_LAYERS is the maximum number of gfx layers */
-						/* which we can handle. Currently, 4 is enough. */
-
 struct RunningMachine
 {
 	unsigned char *memory_region[MAX_MEMORY_REGIONS];
 	unsigned int memory_region_length[MAX_MEMORY_REGIONS];	/* some drivers might find this useful */
 	struct GfxElement *gfx[MAX_GFX_ELEMENTS];	/* graphic sets (chars, sprites) */
 	struct osd_bitmap *scrbitmap;	/* bitmap to draw into */
-	struct GfxLayer *dirtylayer;	/* for GfxLayer games: keep track of dirty portions of scrbitmap */
-	struct GfxLayer *layer[MAX_LAYERS];
 	unsigned short *pens;	/* remapped palette pen numbers. When you write */
 							/* directly to a bitmap, never use absolute values, */
 							/* use this array to get the pen number. For example, */

@@ -418,21 +418,22 @@ void cpu_run(void)
 	/* determine which CPUs need a context switch */
 	for (i = 0; i < totalcpu; i++)
 	{
+		int j;
+
+		/* Save if there is another CPU of the same type */
+		cpu[i].save_context = 0;
+
+		for (j = 0; j < totalcpu; j++)
+			if (i != j && (Machine->drv->cpu[i].cpu_type & ~CPU_FLAGS_MASK) == (Machine->drv->cpu[j].cpu_type & ~CPU_FLAGS_MASK))
+				cpu[i].save_context = 1;
+
 		#ifdef MAME_DEBUG
 
-			/* with the debugger, we need to save the contexts */
-			cpu[i].save_context = 1;
-
-		#else
-			int j;
-
-
-			/* otherwise, we only need to save if there is another CPU of the same type */
-			cpu[i].save_context = 0;
-
-			for (j = 0; j < totalcpu; j++)
-				if (i != j && (Machine->drv->cpu[i].cpu_type & ~CPU_FLAGS_MASK) == (Machine->drv->cpu[j].cpu_type & ~CPU_FLAGS_MASK))
-					cpu[i].save_context = 1;
+		/* or if we're running with the debugger */
+		{
+			extern int mame_debug;
+			cpu[i].save_context |= mame_debug;
+		}
 
 		#endif
 	}

@@ -32,10 +32,48 @@
 
 /* -------------------- Timer Interface ---------------------*/
 #ifndef INTERNAL_TIMER
-#define SELF_UPDATE
-/* Return :  the position of buffer present      */
-/* note : The return value should be FMBufSize or less. */
-#define FMUpdatePos() cpu_scalebyfcount(FMBufSize)
+
+/* update request callback */
+
+#ifdef BUILD_YM2203
+static inline void YM2203UpdateReq(int chip)
+{
+	YM2203UpdateRequest(chip); /* in psgintf.c */
+}
+#endif
+#ifdef BUILD_YM2608
+static inline void YM2608UpdateReq(int chip)
+{
+#if 0
+	YM2608UpdateRequest(chip); /* in 2608intf.c */
+#endif
+}
+#endif
+#ifdef BUILD_YM2610
+static inline void YM2610UpdateReq(int chip)
+{
+	YM2610UpdateRequest(chip); /* in 2610intf.c */
+}
+#endif
+
+
+#ifdef BUILD_YM2612
+static inline void YM2612UpdateReq(int chip)
+{
+#if 0
+	YM2612UpdateRequest(chip); /* in 2612intf.c */
+#endif
+}
+#endif
+
+#ifdef BUILD_YM2151
+static inline void YM2151UpdateReq(int chip)
+{
+	YM2151UpdateRequest(chip); /* in 2151intf.c */
+}
+#endif /* BUILD_YM2151 */
+
+
 
 #endif
 

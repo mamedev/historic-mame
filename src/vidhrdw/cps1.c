@@ -166,13 +166,26 @@ void cps1_dump_video(void)
 
 INLINE void cps1_get_video_base(void)
 {
+        static unsigned char *cps1_obj_old;
+        static unsigned char *cps1_other_old;
+
 	/* Re-calculate the VIDEO RAM base */
-	cps1_scroll1=cps1_base(CPS1_SCROLL1_BASE);
+        cps1_scroll1=cps1_base(CPS1_SCROLL1_BASE);
 	cps1_scroll2=cps1_base(CPS1_SCROLL2_BASE);
 	cps1_scroll3=cps1_base(CPS1_SCROLL3_BASE);
-	cps1_obj    =cps1_base(CPS1_OBJ_BASE);
+        cps1_obj=cps1_obj_old;
+        cps1_obj_old=cps1_base(CPS1_OBJ_BASE);
 	cps1_palette=cps1_base(CPS1_PALETTE_BASE);
-        cps1_other=cps1_base(CPS1_OTHER_BASE);
+        cps1_other=cps1_other_old;
+        cps1_other_old=cps1_base(CPS1_OTHER_BASE);
+
+	/* Get scroll values */
+        scroll1x=cps1_port(CPS1_SCROLL1_SCROLLX);
+        scroll1y=cps1_port(CPS1_SCROLL1_SCROLLY);
+        scroll2x=cps1_port(CPS1_SCROLL2_SCROLLX);
+        scroll2y=cps1_port(CPS1_SCROLL2_SCROLLY);
+        scroll3x=cps1_port(CPS1_SCROLL3_SCROLLX);
+        scroll3y=cps1_port(CPS1_SCROLL3_SCROLLY);
 }
 
 /***************************************************************************
@@ -193,7 +206,9 @@ int cps1_vh_start(void)
 	memset(cps1_gfxram, 0, cps1_gfxram_size);   /* Clear GFX RAM */
 	memset(cps1_output, 0, cps1_output_size);   /* Clear output ports */
 
-	cps1_get_video_base();   /* Calculate base pointers */
+        /* Set up old base */
+        cps1_get_video_base();   /* Calculate base pointers */
+        cps1_get_video_base();   /* Calculate old base pointers */
 
 	if (!cps1_game_config)
 	{
@@ -465,14 +480,15 @@ INLINE void cps1_render_sprites(struct osd_bitmap *bitmap)
 		int y=READ_WORD(&cps1_obj[i+2]);
 		if (x && y )
 		{
-			int code=READ_WORD(&cps1_obj[i+4]);
+                        unsigned int code=READ_WORD(&cps1_obj[i+4]);
 			int colour=READ_WORD(&cps1_obj[i+6]);
 			int col=colour&0x1f;
 
 			x-=0x40;
-			if (code >= base_obj && !(colour & 0x8000))
+                        if (code >= base_obj && !(colour & 0x8000))
 			{
 				code -= base_obj;
+
 				bank=1;
 				if (gng_obj_kludge && code >= 0x01000)
 				{
@@ -498,7 +514,7 @@ INLINE void cps1_render_sprites(struct osd_bitmap *bitmap)
 							{
 								for (nxs=0; nxs<nx; nxs++)
 								{
-									drawgfx(bitmap,Machine->gfx[bank],
+                                                                        drawgfx(bitmap,Machine->gfx[bank],
 										code+(nx-1)-nxs+0x10*(ny-1-nys),
 										col&0x1f,
 										1,1,
@@ -513,7 +529,7 @@ INLINE void cps1_render_sprites(struct osd_bitmap *bitmap)
 							{
 								for (nxs=0; nxs<nx; nxs++)
 								{
-									drawgfx(bitmap,Machine->gfx[bank],
+                                                                        drawgfx(bitmap,Machine->gfx[bank],
 										code+nxs+0x10*(ny-1-nys),
 										col&0x1f,
 										0,1,
@@ -531,7 +547,7 @@ INLINE void cps1_render_sprites(struct osd_bitmap *bitmap)
 							{
 								for (nxs=0; nxs<nx; nxs++)
 								{
-									drawgfx(bitmap,Machine->gfx[bank],
+                                                                        drawgfx(bitmap,Machine->gfx[bank],
 										code+(nx-1)-nxs+0x10*nys,
 										col&0x1f,
 										1,0,
@@ -546,7 +562,7 @@ INLINE void cps1_render_sprites(struct osd_bitmap *bitmap)
 							{
 								for (nxs=0; nxs<nx; nxs++)
 								{
-									drawgfx(bitmap,Machine->gfx[bank],
+                                                                        drawgfx(bitmap,Machine->gfx[bank],
 										code+nxs+0x10*nys,
 										col&0x1f,
 										0,0,
@@ -560,7 +576,7 @@ INLINE void cps1_render_sprites(struct osd_bitmap *bitmap)
 				else
 				{
 					/* Simple case... 1 sprite */
-					drawgfx(bitmap,Machine->gfx[bank],
+                                        drawgfx(bitmap,Machine->gfx[bank],
 						   code,
 						   col&0x1f,
 						   colour&0x20,colour&0x40,
@@ -1276,7 +1292,7 @@ INLINE void cps1_palette_scroll2_distort(unsigned short *base)
 
 	for (sx=0; sx<0x32/2+1; sx++)
 	{
-                int other=0x600;
+                int other=ny*0x20;  /* scroll2y * 2 */
 
 		for (sy=0; sy<0x09*2; sy++)
 		{
@@ -1298,8 +1314,10 @@ INLINE void cps1_palette_scroll2_distort(unsigned short *base)
 
 				base[colour&0x1f] |= Machine->gfx[2]->pen_usage[code % elements];
 			}
+                        other+=32;
+                        other&=0x1fff;
 		}
-                other+=32;
+
 	}
 }
 
@@ -1318,7 +1336,7 @@ INLINE void cps1_render_scroll2_distort(struct osd_bitmap *bitmap, int priority)
 
 	for (sx=0; sx<0x32/2+1; sx++)
 	{
-                int other=0x600;
+                int other=ny*0x20;  /* scroll2y * 2 */
 		for (sy=0; sy<0x09*2; sy++)
 		{
 			int offsy, offsx, offs, colour, code;
@@ -1374,8 +1392,10 @@ INLINE void cps1_render_scroll2_distort(struct osd_bitmap *bitmap, int priority)
 						TRANSPARENCY_PEN,15);
 				}
 			}
+                        other+=32;
+                        other&=0x1fff;
 		}
-                other+=32;
+
 	}
 }
 
@@ -1537,14 +1557,6 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* Get video memory base registers */
 	cps1_get_video_base();
 
-	/* Get scroll values */
-	scroll1x=cps1_port(CPS1_SCROLL1_SCROLLX);
-	scroll1y=cps1_port(CPS1_SCROLL1_SCROLLY);
-	scroll2x=cps1_port(CPS1_SCROLL2_SCROLLX);
-	scroll2y=cps1_port(CPS1_SCROLL2_SCROLLY);
-	scroll3x=cps1_port(CPS1_SCROLL3_SCROLLX);
-	scroll3y=cps1_port(CPS1_SCROLL3_SCROLLY);
-
         distort_scroll2=0;
 	/*
 	 Welcome to kludgesville... I have no idea how this is supposed
@@ -1663,10 +1675,11 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			scrl3on=layercontrol&0x08;
 
 			/* Scroll 2 / 3 priority */
-			scroll2priority=(layercontrol&0x040);
+                        scroll2priority=(layercontrol&0x040);
 			break;
 
 		case 10:
+                        /* KOD Captain Commando */
 			layercontrolport=0x60;
 			layercontrol=READ_WORD(&cps1_output[layercontrolport]);
 			/* Layers on / off */
@@ -1684,8 +1697,8 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			layercontrol=READ_WORD(&cps1_output[layercontrolport]);
 			/* Layers on / off */
 			scrl1on=1;
-	    scrl2on=layercontrol&0x04;
-	    scrl3on=layercontrol&0x08;
+                        scrl2on=layercontrol&0x04;
+                        scrl3on=layercontrol&0x08;
 			/* Scroll 2 / 3 priority */
 			scroll2priority=(layercontrol&0x040);
 			break;
@@ -1851,6 +1864,13 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 	}
 
+        if (distort_scroll2 && scroll1priority && scrl1on)
+	{
+                /* Street fighter 2 scroll 1 never has priority over
+                sprites */
+		cps1_render_scroll1(bitmap);
+	}
+
 	cps1_render_sprites(bitmap);
 
 	if (scroll2priority)
@@ -1891,7 +1911,7 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 	}
 
-	if (scroll1priority && scrl1on)
+        if (!distort_scroll2 && scroll1priority && scrl1on)
 	{
 		cps1_render_scroll1(bitmap);
 	}

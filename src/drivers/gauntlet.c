@@ -369,7 +369,7 @@ static struct POKEYinterface pokey_interface =
 {
 	1,	/* 1 chip */
 	1789790,	/* 1.5 MHz??? */
-	128,
+	20,
 	POKEY_DEFAULT_GAIN,
 	NO_CLIP,
 	/* The 8 pot handlers */
@@ -388,9 +388,9 @@ static struct POKEYinterface pokey_interface =
 
 static struct TMS5220interface tms5220_interface =
 {
-    640000,     /* clock speed (80*samplerate) */
-    255,        /* volume */
-    0           /* irq handler */
+	640000,     /* clock speed (80*samplerate) */
+	100,        /* volume */
+	0           /* irq handler */
 };
 
 
@@ -398,7 +398,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3579580,	/* seems to be the standard */
-	{ 255 },
+	{ 30 },
 	{ 0 }
 };
 

@@ -281,13 +281,22 @@ ROM_START( gundealr_rom )
 ROM_END
 
 
+ROM_START( gundeala_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+        ROM_LOAD( "gundeala.1",   0x0000, 0x10000, 0xd87e24f1 )
+
+	ROM_REGION_DISPOSE(0x30000)	/* temporary space for graphics (disposed after conversion) */
+        ROM_LOAD( "gundeala.3",   0x00000, 0x10000, 0x836cf1a3 )
+        ROM_LOAD( "gundeala.2",   0x10000, 0x20000, 0x4b5fb53c )
+ROM_END
+
 
 struct GameDriver gundealr_driver =
 {
 	__FILE__,
 	0,
 	"gundealr",
-	"Gun Dealer",
+	"Gun Dealer (set 1)",
 	"1990",
 	"Dooyong",
 	"Nicola Salmoria",
@@ -296,6 +305,32 @@ struct GameDriver gundealr_driver =
 	0,
 
 	gundealr_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	0, 0
+};
+
+struct GameDriver gundeala_driver =
+{
+	__FILE__,
+	&gundealr_driver,
+	"gundeala",
+	"Gun Dealer (set 2)",
+	"????",
+	"Dooyong",
+	"Nicola Salmoria",
+	0,
+	&machine_driver,
+	0,
+
+	gundeala_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

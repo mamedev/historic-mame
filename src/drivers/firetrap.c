@@ -428,7 +428,7 @@ ROM_START( firetrap_rom )
 	ROM_LOAD( "di00.bin",     0x18000, 0x8000, 0xd0dad7de )
 
 	ROM_REGION_DISPOSE(0x62000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "di03.bin",     0x00000, 0x2000, 0x0378a2d2 )	/* characters */
+	ROM_LOAD( "di03.bin",     0x00000, 0x2000, 0x46721930 )	/* characters */
 	ROM_LOAD( "di06.bin",     0x02000, 0x8000, 0x441d9154 )	/* tiles */
 	ROM_LOAD( "di07.bin",     0x0a000, 0x8000, 0xef0a7e23 )
 	ROM_LOAD( "di04.bin",     0x12000, 0x8000, 0x8e6e7eec )

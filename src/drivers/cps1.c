@@ -23,6 +23,8 @@
 
 #include "cps1.h"       /* External CPS1 defintions */
 
+
+
 /* Please include this credit for the CPS1 driver */
 #define CPS1_CREDITS(X) X "\n\n"\
                          "Paul Leaman (Capcom System 1 driver)\n"\
@@ -101,14 +103,22 @@ static struct MemoryWriteAddress sound_writemem[] =
 *
 ********************************************************************/
 
+int cps1_input2_r(int offset)
+{
+      int buttons=readinputport(6);
+      return buttons << 8 | buttons;
+}
+
 static struct MemoryReadAddress cps1_readmem[] =
 {
         { 0x000000, 0x17ffff, MRA_ROM },     /* 68000 ROM */
         { 0xff0000, 0xffffff, MRA_BANK2 },   /* RAM */
         { 0x900000, 0x92ffff, MRA_BANK5 },
         { 0x800000, 0x800003, cps1_player_input_r}, /* Player input ports */
+        { 0x800010, 0x800013, cps1_player_input_r}, /* ?? */
         { 0x800018, 0x80001f, cps1_input_r}, /* Input ports */
         { 0x860000, 0x8603ff, MRA_BANK3 },   /* EEPROM */
+        { 0x800176, 0x800177, cps1_input2_r}, /* Extra input ports */
         { 0x800100, 0x8001ff, MRA_BANK4 },   /* Output ports */
         { -1 }  /* end of table */
 };
@@ -240,78 +250,6 @@ static struct GfxLayout LAYOUT =                                   \
 };
 
 
-/********************************************************************
-
-                   Alternative Graphics Layout macros
-
-********************************************************************/
-
-#define TILE_LAYOUT2(LAYOUT, TILES, SEP, BITSEP) \
-static struct GfxLayout LAYOUT =        \
-{                                        \
-        16,16,    /* 16*16 tiles */             \
-        TILES,    /* ???? tiles */        \
-        4,       /* 4 bits per pixel */     \
-    { 3*BITSEP, 2*BITSEP, BITSEP, 0,  },     \
-        { SEP+0, SEP+1,SEP+2, SEP+3,SEP+4,SEP+5,SEP+6,SEP+7,\
-        0,1,2,3,4,5,6,7, },\
-        {0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,\
-         8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8  },\
-        16*8    /* every sprite takes 16*8 consecutive bytes */\
-};
-
-#define CHAR_LAYOUT2(LAYOUT, CHARS, PLANE_SEP) \
-static struct GfxLayout LAYOUT = \
-{                                 \
-        8,8,   /* 8*8 tiles */     \
-        CHARS,  /* ???? characters */    \
-        4,       /* 4 bits per pixel */   \
-        {3*PLANE_SEP,2*PLANE_SEP,PLANE_SEP,0},   \
-        { 0,1,2,3,4,5,6,7, },                  \
-        { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, },    \
-        8*8    /* every sprite takes 8*8 consecutive bytes */ \
-};
-
-#define SPRITE_SEP2_2 0x40000*8
-#define SPRITE_LAYOUT2(LAYOUT, SPRITES) \
-static struct GfxLayout LAYOUT = \
-{                                               \
-        16,16,   /* 16*16 sprites */             \
-        SPRITES,  /* ???? sprites */            \
-        4,       /* 4 bits per pixel */            \
-        {0x100000*8, 0x180000*8, 0,0x80000*8 },        \
-        {0,1,2,3,4,5,6,7,\
-          SPRITE_SEP2_2+0,SPRITE_SEP2_2+1,SPRITE_SEP2_2+2,SPRITE_SEP2_2+3, \
-          SPRITE_SEP2_2+4,SPRITE_SEP2_2+5,SPRITE_SEP2_2+6,SPRITE_SEP2_2+7,  \
-           },\
-        { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, \
-           8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8, }, \
-        16*8    /* every sprite takes 32*8*2 consecutive bytes */ \
-};
-
-#define TILE32_LAYOUT2(LAYOUT, TILES, SEP, PLANE_SEP) \
-static struct GfxLayout LAYOUT =                                  \
-{                                                                 \
-        32,32,   /* 32*32 tiles */                                \
-        TILES,   /* ????  tiles */                                \
-        4,       /* 4 bits per pixel */                           \
-        {2*PLANE_SEP,3*PLANE_SEP,0*PLANE_SEP, 1*PLANE_SEP},       \
-        {                                                         \
-           0,1,2,3,4,5,6,7,\
-           SEP+0, SEP+1, SEP+ 2, SEP+ 3, SEP+ 4, SEP+ 5, SEP+ 6, SEP+ 7, \
-           8,9,10,11,12,13,14,15,                  \
-           SEP+8, SEP+9, SEP+10, SEP+11, SEP+12, SEP+13, SEP+14, SEP+15, \
-        },                                                        \
-        {                                                         \
-           0*16, 1*16,  2*16,    3*16,  4*16,  5*16,  6*16,  7*16,\
-           8*16, 9*16,  10*16,  11*16, 12*16, 13*16, 14*16, 15*16,\
-           16*16, 17*16, 18*16, 19*16, 20*16, 21*16, 22*16, 23*16,\
-           24*16, 25*16, 26*16, 27*16, 28*16, 29*16, 30*16, 31*16,\
-        },                                                        \
-        16*32 /* every sprite takes 32*8*4 consecutive bytes */\
-};
-
-
 
 /********************************************************************
 
@@ -345,10 +283,13 @@ static struct CPS1config cps1_config_table[]=
   {"nemo",         0,     0,0x2400,0x0d00, 8, 0x4020,0x2400,0x0d00,0x4e,0x0405},
   {"nemoj",        0,     0,0x2400,0x0d00, 8, 0x4020,0x2400,0x0d00,0x4e,0x0405},
   {"dwj",          0,     0,0x2000,     0, 9, 0x6020,0x2000,0x0000,0,0},
-  {"mercs",        0,0x2600,0x0600,0x8e6c, 9, 0x0020,0x0600,0x8e6c,0x60,0x0402, 1},
+  {"mercs",        0,0x2600,0x0600,0x0780, 9, 0x0020,0x0600,0x8e6c,0x60,0x0402},
+  {"mercsu",       0,0x2600,0x0600,0x0780, 9, 0x0020,0x0600,0x8e6c,0x60,0x0402},
+  {"mercsj",       0,0x2600,0x0600,0x0780, 9, 0x0020,0x0600,0x8e6c,0x60,0x0402},
   {"unsquad",      0,     0,0x2000,     0, 0, 0x0020,0x0000,0x0000,0x00,0x0000},
   {"area88",       0,     0,0x2000,     0, 0, 0x0020,0x0000,0x0000,0x00,0x0000},
   {"captcomm",     0,     0,0x6800,0x1400,10,     -1,0x6800,0x1400,0x72,0x0800},
+  {"cawing",  0x5000,     0,0x2c00,0x0600,11, 0x5020,0x2c00,0x0600,0x00,0x0000},
   {"cawingj", 0x5000,     0,0x2c00,0x0600,11, 0x5020,0x2c00,0x0600,0x00,0x0000},
   {"pnickj",       0,0x0800,0x0800,0x0c00, 0,     -1,    -1,    -1,0x00,0x0000},
   {"sf2",          0,     0,0x2800,0x0400,12, 0x4020,0x2800,0x0400,0x48,0x0407},
@@ -380,12 +321,7 @@ static int cps1_sh_init(const char *gamename)
         }
         cps1_game_config=pCFG;
 
-        if (pCFG->space_scroll1 != -1)
-        {
-                pCFG->space_scroll1 &= 0xfff;
-        }
-
-        if (strcmp(gamename, "cawingj")==0)
+        if (strcmp(gamename, "cawing")==0 || strcmp(gamename, "cawingj")==0)
         {
                 /* Quick hack (NOP out CPSB test) */
                 if (errorlog)
@@ -395,7 +331,7 @@ static int cps1_sh_init(const char *gamename)
                 WRITE_WORD(&RAM[0x04ca], 0x4e71);
                 WRITE_WORD(&RAM[0x04cc], 0x4e71);
         }
-        else if (strcmp(gamename, "mercs")==0)
+        else if (strcmp(gamename, "mercs")==0 || strcmp(gamename, "mercsu")==0 || strcmp(gamename, "mercsj")==0)
         {
                 /*
                 Quick hack (NOP out CPSB test)
@@ -473,10 +409,10 @@ static int cps1_hiload (void)
 
 INPUT_PORTS_START( input_ports_strider )
         PORT_START      /* IN0 */
-        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-        PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-        PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-        PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+        PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+        PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
+        PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
         PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
         PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
         PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START3 )
@@ -541,7 +477,7 @@ INPUT_PORTS_START( input_ports_strider )
         PORT_DIPNAME( 0x04, 0x04, "Freeze Screen", IP_KEY_NONE )
         PORT_DIPSETTING(    0x00, "On" )
         PORT_DIPSETTING(    0x04, "Off")
-        PORT_DIPNAME( 0x08, 0x00, "Free Play", IP_KEY_NONE )
+        PORT_DIPNAME( 0x08, 0x08, "Free Play", IP_KEY_NONE )
         PORT_DIPSETTING(    0x00, "On" )
         PORT_DIPSETTING(    0x08, "Off")
         PORT_DIPNAME( 0x10, 0x10, "Video Flip", IP_KEY_NONE )
@@ -839,17 +775,17 @@ INPUT_PORTS_START( input_ports_willow )
 
 INPUT_PORTS_END
 
-
-CHAR_LAYOUT(charlayout_willow, 4096, 0x100000*8)
-TILE32_LAYOUT(tile32layout_willow, 1024,    0x080000*8, 0x100000*8)
-TILE_LAYOUT2(tilelayout_willow, 2*4096,     0x080000*8, 0x020000*8)
+CHAR_LAYOUT(charlayout_willow, 4096, 0x200000*8)
+TILE32_LAYOUT(tile32layout_willow, 1024,    0x100000*8, 0x200000*8)
+SPRITE_LAYOUT(spritelayout_willow, 0x2600,    0x100000*8, 0x200000*8)
+SPRITE_LAYOUT(tilelayout_willow, 2*4096,    0x100000*8, 0x200000*8)
 
 static struct GfxDecodeInfo gfxdecodeinfo_willow[] =
 {
         /*   start    pointer                 start   number of colours */
-        { 1, 0x0f0000, &charlayout_willow,    32*16,                  32 },
-        { 1, 0x000000, &spritelayout_strider, 0,                      32 },
-        { 1, 0x200000, &tilelayout_willow,    32*16+32*16,            32 },
+        { 1, 0x170000, &charlayout_willow,    32*16,                  32 },
+        { 1, 0x000000, &spritelayout_willow, 0,                      32 },
+        { 1, 0x080000, &tilelayout_willow,    32*16+32*16,            32 },
         { 1, 0x050000, &tile32layout_willow,  32*16+32*16+32*16,      32 },
         { -1 } /* end of array */
 };
@@ -868,19 +804,23 @@ ROM_START( willow_rom )
         ROM_LOAD_ODD ( "wlu_36.rom",   0x40000, 0x20000, 0x36100209 )
         ROM_LOAD_WIDE_SWAP( "wl_32.rom",    0x80000, 0x80000, 0xdfd9f643 ) /* Tile map */
 
-        ROM_REGION(0x300000)     /* temporary space for graphics (disposed after conversion) */
-        ROM_LOAD( "wl_gfx1.rom",  0x000000, 0x80000, 0xc6f2abce )
-        ROM_LOAD( "wl_gfx5.rom",  0x080000, 0x80000, 0xafa74b73 )
-        ROM_LOAD( "wl_gfx3.rom",  0x100000, 0x80000, 0x4aa4c6d3 )
-        ROM_LOAD( "wl_gfx7.rom",  0x180000, 0x80000, 0x12a0dc0b )
-        ROM_LOAD( "wl_20.rom",    0x200000, 0x20000, 0x84992350 )
-        ROM_LOAD( "wl_10.rom",    0x220000, 0x20000, 0xb87b5a36 )
-        ROM_LOAD( "wl_22.rom",    0x240000, 0x20000, 0xfd3f89f0 )
-        ROM_LOAD( "wl_12.rom",    0x260000, 0x20000, 0x7da49d69 )
-        ROM_LOAD( "wl_24.rom",    0x280000, 0x20000, 0x6f0adee5 )
-        ROM_LOAD( "wl_14.rom",    0x2a0000, 0x20000, 0x9cf3027d )
-        ROM_LOAD( "wl_26.rom",    0x2c0000, 0x20000, 0xf09c8ecf )
-        ROM_LOAD( "wl_16.rom",    0x2e0000, 0x20000, 0xe35407aa )
+        ROM_REGION(0x400000)     /* temporary space for graphics (disposed after conversion) */
+
+        ROM_LOAD         ( "wl_gfx1.rom",  0x000000, 0x80000, 0xc6f2abce )
+        ROM_LOAD_GFX_EVEN( "wl_20.rom",    0x080000, 0x20000, 0x84992350 )
+        ROM_LOAD_GFX_ODD ( "wl_10.rom",    0x080000, 0x20000, 0xb87b5a36 )
+
+        ROM_LOAD         ( "wl_gfx5.rom",  0x100000, 0x80000, 0xafa74b73 )
+        ROM_LOAD_GFX_EVEN( "wl_24.rom",    0x180000, 0x20000, 0x6f0adee5 )
+        ROM_LOAD_GFX_ODD ( "wl_14.rom",    0x180000, 0x20000, 0x9cf3027d )
+
+        ROM_LOAD         ( "wl_gfx3.rom",  0x200000, 0x80000, 0x4aa4c6d3 )
+        ROM_LOAD_GFX_EVEN( "wl_22.rom",    0x280000, 0x20000, 0xfd3f89f0 )
+        ROM_LOAD_GFX_ODD ( "wl_12.rom",    0x280000, 0x20000, 0x7da49d69 )
+
+        ROM_LOAD         ( "wl_gfx7.rom",  0x300000, 0x80000, 0x12a0dc0b )
+        ROM_LOAD_GFX_EVEN( "wl_26.rom",    0x380000, 0x20000, 0xf09c8ecf )
+        ROM_LOAD_GFX_ODD ( "wl_16.rom",    0x380000, 0x20000, 0xe35407aa )
 
         ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
         ROM_LOAD( "wl_09.rom",    0x00000, 0x08000, 0xf6b3d060 )
@@ -899,19 +839,22 @@ ROM_START( willowj_rom )
         ROM_LOAD_ODD ( "wl43.bin",     0x40000, 0x20000, 0xd0dddc9e )
         ROM_LOAD_WIDE_SWAP( "wl_32.rom",    0x80000, 0x80000, 0xdfd9f643 ) /* Tile map */
 
-        ROM_REGION(0x300000)     /* temporary space for graphics (disposed after conversion) */
-        ROM_LOAD( "wl_gfx1.rom",  0x000000, 0x80000, 0xc6f2abce )
-        ROM_LOAD( "wl_gfx5.rom",  0x080000, 0x80000, 0xafa74b73 )
-        ROM_LOAD( "wl_gfx3.rom",  0x100000, 0x80000, 0x4aa4c6d3 )
-        ROM_LOAD( "wl_gfx7.rom",  0x180000, 0x80000, 0x12a0dc0b )
-        ROM_LOAD( "wl_20.rom",    0x200000, 0x20000, 0x84992350 )
-        ROM_LOAD( "wl_10.rom",    0x220000, 0x20000, 0xb87b5a36 )
-        ROM_LOAD( "wl_22.rom",    0x240000, 0x20000, 0xfd3f89f0 )
-        ROM_LOAD( "wl_12.rom",    0x260000, 0x20000, 0x7da49d69 )
-        ROM_LOAD( "wl_24.rom",    0x280000, 0x20000, 0x6f0adee5 )
-        ROM_LOAD( "wl_14.rom",    0x2a0000, 0x20000, 0x9cf3027d )
-        ROM_LOAD( "wl_26.rom",    0x2c0000, 0x20000, 0xf09c8ecf )
-        ROM_LOAD( "wl_16.rom",    0x2e0000, 0x20000, 0xe35407aa )
+        ROM_REGION(0x400000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_LOAD         ( "wl_gfx1.rom",  0x000000, 0x80000, 0xc6f2abce )
+        ROM_LOAD_GFX_EVEN( "wl_20.rom",    0x080000, 0x20000, 0x84992350 )
+        ROM_LOAD_GFX_ODD ( "wl_10.rom",    0x080000, 0x20000, 0xb87b5a36 )
+
+        ROM_LOAD         ( "wl_gfx5.rom",  0x100000, 0x80000, 0xafa74b73 )
+        ROM_LOAD_GFX_EVEN( "wl_24.rom",    0x180000, 0x20000, 0x6f0adee5 )
+        ROM_LOAD_GFX_ODD ( "wl_14.rom",    0x180000, 0x20000, 0x9cf3027d )
+
+        ROM_LOAD         ( "wl_gfx3.rom",  0x200000, 0x80000, 0x4aa4c6d3 )
+        ROM_LOAD_GFX_EVEN( "wl_22.rom",    0x280000, 0x20000, 0xfd3f89f0 )
+        ROM_LOAD_GFX_ODD ( "wl_12.rom",    0x280000, 0x20000, 0x7da49d69 )
+
+        ROM_LOAD         ( "wl_gfx7.rom",  0x300000, 0x80000, 0x12a0dc0b )
+        ROM_LOAD_GFX_EVEN( "wl_26.rom",    0x380000, 0x20000, 0xf09c8ecf )
+        ROM_LOAD_GFX_ODD ( "wl_16.rom",    0x380000, 0x20000, 0xe35407aa )
 
         ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
         ROM_LOAD( "wl_09.rom",    0x00000, 0x08000, 0xf6b3d060 )
@@ -1140,22 +1083,22 @@ ROM_START( ffightj_rom )
         ROM_LOAD_WIDE_SWAP( "ff32-32m.bin", 0x80000, 0x80000, 0xc747696e ) /* Tile map */
 
         ROM_REGION(0x500000)     /* temporary space for graphics (disposed after conversion) */
-        ROM_LOAD_EVEN( "ff17.bin",     0x000000, 0x20000, 0x2dc18cf4 )
-        ROM_LOAD_ODD ( "ff24.bin",     0x000000, 0x20000, 0xa1ab607a )
-        ROM_LOAD_EVEN( "ff18.bin",     0x040000, 0x20000, 0xb19ede59 )
-        ROM_LOAD_ODD ( "ff25.bin",     0x040000, 0x20000, 0x6e8181ea )
-        ROM_LOAD_EVEN( "ff01.bin",     0x080000, 0x20000, 0x815b1797 )
-        ROM_LOAD_ODD ( "ff09.bin",     0x080000, 0x20000, 0x5b116d0d )
-        ROM_LOAD_EVEN( "ff02.bin",     0x0c0000, 0x20000, 0x5d91f694 )
-        ROM_LOAD_ODD ( "ff10.bin",     0x0c0000, 0x20000, 0x624a924a )
-        ROM_LOAD_EVEN( "ff32.bin",     0x100000, 0x20000, 0xc8bc4a57 )
-        ROM_LOAD_ODD ( "ff38.bin",     0x100000, 0x20000, 0x6535a57f )
-        ROM_LOAD_EVEN( "ff33.bin",     0x140000, 0x20000, 0x7369fa07 )
-        ROM_LOAD_ODD ( "ff39.bin",     0x140000, 0x20000, 0x9416b477 )
-        ROM_LOAD_EVEN( "ff05.bin",     0x180000, 0x20000, 0xd0fcd4b5 )
-        ROM_LOAD_ODD ( "ff13.bin",     0x180000, 0x20000, 0x8721a7da )
-        ROM_LOAD_EVEN( "ff06.bin",     0x1c0000, 0x20000, 0x1c18f042 )
-        ROM_LOAD_ODD ( "ff14.bin",     0x1c0000, 0x20000, 0x0a2e9101 )
+        ROM_LOAD_GFX_EVEN( "ff24.bin",     0x000000, 0x20000, 0xa1ab607a )
+        ROM_LOAD_GFX_ODD ( "ff17.bin",     0x000000, 0x20000, 0x2dc18cf4 )
+        ROM_LOAD_GFX_EVEN( "ff25.bin",     0x040000, 0x20000, 0x6e8181ea )
+        ROM_LOAD_GFX_ODD ( "ff18.bin",     0x040000, 0x20000, 0xb19ede59 )
+        ROM_LOAD_GFX_EVEN( "ff09.bin",     0x080000, 0x20000, 0x5b116d0d )
+        ROM_LOAD_GFX_ODD ( "ff01.bin",     0x080000, 0x20000, 0x815b1797 )
+        ROM_LOAD_GFX_EVEN( "ff10.bin",     0x0c0000, 0x20000, 0x624a924a )
+        ROM_LOAD_GFX_ODD ( "ff02.bin",     0x0c0000, 0x20000, 0x5d91f694 )
+        ROM_LOAD_GFX_EVEN( "ff38.bin",     0x100000, 0x20000, 0x6535a57f )
+        ROM_LOAD_GFX_ODD ( "ff32.bin",     0x100000, 0x20000, 0xc8bc4a57 )
+        ROM_LOAD_GFX_EVEN( "ff39.bin",     0x140000, 0x20000, 0x9416b477 )
+        ROM_LOAD_GFX_ODD ( "ff33.bin",     0x140000, 0x20000, 0x7369fa07 )
+        ROM_LOAD_GFX_EVEN( "ff13.bin",     0x180000, 0x20000, 0x8721a7da )
+        ROM_LOAD_GFX_ODD ( "ff05.bin",     0x180000, 0x20000, 0xd0fcd4b5 )
+        ROM_LOAD_GFX_EVEN( "ff14.bin",     0x1c0000, 0x20000, 0x0a2e9101 )
+        ROM_LOAD_GFX_ODD ( "ff06.bin",     0x1c0000, 0x20000, 0x1c18f042 )
 
         ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
         ROM_LOAD( "ff09-09.bin",  0x00000, 0x10000, 0xb8367eb5 )
@@ -1388,7 +1331,7 @@ struct GameDriver unsquad_driver =
         __FILE__,
         0,
         "unsquad",
-        "UN Squadron (US)",
+        "UN Squadron / Area 88 (US)",
         "1989",
         "Capcom",
         CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
@@ -1413,7 +1356,7 @@ struct GameDriver area88_driver =
         __FILE__,
         &unsquad_driver,
         "area88",
-        "Area 88",
+        "UN Squadron / Area 88 (Japan)",
         "1989",
         "Capcom",
         CPS1_CREDITS("Santeri Saarimaa (Game Driver)\nMarco Cassili (dip switches)"),
@@ -1622,7 +1565,7 @@ struct GameDriver mtwins_driver =
         __FILE__,
         0,
         "mtwins",
-        "Mega Twins (World)",
+        "Mega Twins / Chiki Chiki Boys (World)",
         "1990",
         "Capcom",
         CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
@@ -1647,7 +1590,7 @@ struct GameDriver chikij_driver =
         __FILE__,
         &mtwins_driver,
         "chikij",
-        "Chiki Chiki Boys (Japan)",
+        "Mega Twins / Chiki Chiki Boys (Japan)",
         "1990",
         "Capcom",
         CPS1_CREDITS("Marco Cassili (Game Driver)"),
@@ -2286,46 +2229,46 @@ ROM_START( dwj_rom )
         ROM_LOAD_ODD ( "41.bin",       0xc0000, 0x20000, 0x1aae69a4 )
 
         ROM_REGION(0x400000)     /* temporary space for graphics (disposed after conversion) */
-        ROM_LOAD_EVEN( "17.bin",       0x000000, 0x20000, 0x2e2f8320 )
-        ROM_LOAD_ODD ( "24.bin",       0x000000, 0x20000, 0xc6909b6f )
-        ROM_LOAD_EVEN( "18.bin",       0x040000, 0x20000, 0x1833f932 )
-        ROM_LOAD_ODD ( "25.bin",       0x040000, 0x20000, 0x152ea74a )
+        ROM_LOAD_GFX_EVEN( "24.bin",       0x000000, 0x20000, 0xc6909b6f )
+        ROM_LOAD_GFX_ODD ( "17.bin",       0x000000, 0x20000, 0x2e2f8320 )
+        ROM_LOAD_GFX_EVEN( "25.bin",       0x040000, 0x20000, 0x152ea74a )
+        ROM_LOAD_GFX_ODD ( "18.bin",       0x040000, 0x20000, 0x1833f932 )
 
-        ROM_LOAD_EVEN( "01.bin",       0x080000, 0x20000, 0x187b2886 )
-        ROM_LOAD_ODD ( "09.bin",       0x080000, 0x20000, 0xc3e83c69 )
-        ROM_LOAD_EVEN( "02.bin",       0x0c0000, 0x20000, 0xcc83c02f )
-        ROM_LOAD_ODD ( "10.bin",       0x0c0000, 0x20000, 0xff28f8d0 )
+        ROM_LOAD_GFX_EVEN( "09.bin",       0x080000, 0x20000, 0xc3e83c69 )
+        ROM_LOAD_GFX_ODD ( "01.bin",       0x080000, 0x20000, 0x187b2886 )
+        ROM_LOAD_GFX_EVEN( "10.bin",       0x0c0000, 0x20000, 0xff28f8d0 )
+        ROM_LOAD_GFX_ODD ( "02.bin",       0x0c0000, 0x20000, 0xcc83c02f )
 
-        ROM_LOAD_EVEN( "32.bin",       0x100000, 0x20000, 0x21a0a453 )
-        ROM_LOAD_ODD ( "38.bin",       0x100000, 0x20000, 0xcd7923ed )
-        ROM_LOAD_EVEN( "33.bin",       0x140000, 0x20000, 0x89de1533 )
-        ROM_LOAD_ODD ( "39.bin",       0x140000, 0x20000, 0xbc09b360 )
+        ROM_LOAD_GFX_EVEN( "38.bin",       0x100000, 0x20000, 0xcd7923ed )
+        ROM_LOAD_GFX_ODD ( "32.bin",       0x100000, 0x20000, 0x21a0a453 )
+        ROM_LOAD_GFX_EVEN( "39.bin",       0x140000, 0x20000, 0xbc09b360 )
+        ROM_LOAD_GFX_ODD ( "33.bin",       0x140000, 0x20000, 0x89de1533 )
 
-        ROM_LOAD_EVEN( "05.bin",       0x180000, 0x20000, 0x339378b8 )
-        ROM_LOAD_ODD ( "13.bin",       0x180000, 0x20000, 0x0273d87d )
-        ROM_LOAD_EVEN( "06.bin",       0x1c0000, 0x20000, 0x6f9edd75 )
-        ROM_LOAD_ODD ( "14.bin",       0x1c0000, 0x20000, 0x18fb232c )
+        ROM_LOAD_GFX_EVEN( "13.bin",       0x180000, 0x20000, 0x0273d87d )
+        ROM_LOAD_GFX_ODD ( "05.bin",       0x180000, 0x20000, 0x339378b8 )
+        ROM_LOAD_GFX_EVEN( "14.bin",       0x1c0000, 0x20000, 0x18fb232c )
+        ROM_LOAD_GFX_ODD ( "06.bin",       0x1c0000, 0x20000, 0x6f9edd75 )
 
         /* TILES */
-        ROM_LOAD_EVEN( "19.bin",       0x200000, 0x20000, 0x7114e5c6 )
-        ROM_LOAD_ODD ( "26.bin",       0x200000, 0x20000, 0x07fc714b )
-        ROM_LOAD_EVEN( "20.bin",       0x240000, 0x20000, 0x002796dc )
-        ROM_LOAD_ODD ( "27.bin",       0x240000, 0x20000, 0xa27e81fa )
+        ROM_LOAD_GFX_EVEN( "26.bin",       0x200000, 0x20000, 0x07fc714b )
+        ROM_LOAD_GFX_ODD ( "19.bin",       0x200000, 0x20000, 0x7114e5c6 )
+        ROM_LOAD_GFX_EVEN( "27.bin",       0x240000, 0x20000, 0xa27e81fa )
+        ROM_LOAD_GFX_ODD ( "20.bin",       0x240000, 0x20000, 0x002796dc )
 
-        ROM_LOAD_EVEN( "03.bin",       0x280000, 0x20000, 0x7bf51337 )
-        ROM_LOAD_ODD ( "11.bin",       0x280000, 0x20000, 0x29eaf490 )
-        ROM_LOAD_EVEN( "04.bin",       0x2c0000, 0x20000, 0x4951bc0f )
-        ROM_LOAD_ODD ( "12.bin",       0x2c0000, 0x20000, 0x38652339 )
+        ROM_LOAD_GFX_EVEN( "11.bin",       0x280000, 0x20000, 0x29eaf490 )
+        ROM_LOAD_GFX_ODD ( "03.bin",       0x280000, 0x20000, 0x7bf51337 )
+        ROM_LOAD_GFX_EVEN( "12.bin",       0x2c0000, 0x20000, 0x38652339 )
+        ROM_LOAD_GFX_ODD ( "04.bin",       0x2c0000, 0x20000, 0x4951bc0f )
 
-        ROM_LOAD_EVEN( "21.bin",       0x300000, 0x20000, 0x523f462a )
-        ROM_LOAD_ODD ( "28.bin",       0x300000, 0x20000, 0xaf62bf07 )
-        ROM_LOAD_EVEN( "22.bin",       0x340000, 0x20000, 0x52145369 )
-        ROM_LOAD_ODD ( "29.bin",       0x340000, 0x20000, 0x6b41f82d )
+        ROM_LOAD_GFX_EVEN( "28.bin",       0x300000, 0x20000, 0xaf62bf07 )
+        ROM_LOAD_GFX_ODD ( "21.bin",       0x300000, 0x20000, 0x523f462a )
+        ROM_LOAD_GFX_EVEN( "29.bin",       0x340000, 0x20000, 0x6b41f82d )
+        ROM_LOAD_GFX_ODD ( "22.bin",       0x340000, 0x20000, 0x52145369 )
 
-        ROM_LOAD_EVEN( "07.bin",       0x380000, 0x20000, 0xe04af054 )
-        ROM_LOAD_ODD ( "15.bin",       0x380000, 0x20000, 0xd36cdb91 )
-        ROM_LOAD_EVEN( "08.bin",       0x3c0000, 0x20000, 0xb475d4e9 )
-        ROM_LOAD_ODD ( "16.bin",       0x3c0000, 0x20000, 0x381608ae )
+        ROM_LOAD_GFX_EVEN( "15.bin",       0x380000, 0x20000, 0xd36cdb91 )
+        ROM_LOAD_GFX_ODD ( "07.bin",       0x380000, 0x20000, 0xe04af054 )
+        ROM_LOAD_GFX_EVEN( "16.bin",       0x3c0000, 0x20000, 0x381608ae )
+        ROM_LOAD_GFX_ODD ( "08.bin",       0x3c0000, 0x20000, 0xb475d4e9 )
 
         ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
         ROM_LOAD( "23.bin",       0x000000, 0x08000, 0xb3b79d4f )
@@ -2342,7 +2285,7 @@ struct GameDriver dwj_driver =
         __FILE__,
         0,
         "dwj",
-        "Dynasty Wars (Japan)",
+        "Dynasty Wars / Tenchi o Kurau (Japan)",
         "1989",
         "Capcom",
         CPS1_CREDITS("Paul Leaman"),
@@ -2598,80 +2541,135 @@ struct GameDriver mswordj_driver =
 
 /********************************************************************
 
-                                                  MERCS
-
-    There has to be one doesn't there. The graphics are all over the
-    place.
+                            MERCS
 
 ********************************************************************/
 
+/* TODO: map port for third player, coin 3 (not service) and start 3 */
+
 INPUT_PORTS_START( input_ports_mercs )
-        PORT_START      /* IN0 */
-        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-        PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-        PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
-        PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-        PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
-        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
-        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 ) /* Service Coin */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-        PORT_START      /* DSWA */
-        PORT_DIPNAME( 0xff, 0x00, "DIP A", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "Off" )
-        PORT_DIPSETTING(    0xff, "On" )
+	PORT_START      /* DSWA */
+	PORT_DIPNAME( 0x07, 0x07, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x01, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x02, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x07, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x06, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x05, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x04, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x03, "1 Coin/6 Credits" )
+	PORT_DIPNAME( 0x38, 0x38, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "0" )
+	PORT_DIPSETTING(    0x08, "1" )
+	PORT_DIPSETTING(    0x10, "2" )
+	PORT_DIPSETTING(    0x38, "3" )
+	PORT_DIPSETTING(    0x30, "4" )
+	PORT_DIPSETTING(    0x28, "5" )
+	PORT_DIPSETTING(    0x20, "6" )
+	PORT_DIPSETTING(    0x18, "7" )
+	PORT_DIPNAME( 0x40, 0x40, "Force 2 Coins/1 Credit", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 
-        PORT_START      /* DSWB */
-        PORT_DIPNAME( 0xff, 0x00, "DIP B", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "Off" )
-        PORT_DIPSETTING(    0xff, "On" )
+	PORT_START      /* DSWB */
+	PORT_DIPNAME( 0x07, 0x04, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x07, "Easiest" )
+	PORT_DIPSETTING(    0x06, "Very Easy" )
+	PORT_DIPSETTING(    0x05, "Easy" )
+	PORT_DIPSETTING(    0x04, "Normal" )
+	PORT_DIPSETTING(    0x03, "Difficult" )
+	PORT_DIPSETTING(    0x02, "Very Difficult" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x08, 0x08, "Coin Slots", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x08, "3" )
+	PORT_DIPNAME( 0x10, 0x10, "Players Allowed", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x10, "3" )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 
-        PORT_START      /* DSWC */
-        PORT_DIPNAME( 0xf7, 0xf7, "DIP C", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "Off" )
-        PORT_DIPSETTING(    0xf7, "On" )
+	PORT_START      /* DSWC */
+	PORT_DIPNAME( 0x07, 0x07, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "0" )
+	PORT_DIPSETTING(    0x01, "1" )
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x05, "5" )
+	PORT_DIPSETTING(    0x06, "6" )
+	PORT_DIPSETTING(    0x07, "7" )
+	PORT_DIPNAME( 0x08, 0x08, "Freeze", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x10, 0x10, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x00, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "No" )
+	PORT_DIPSETTING(    0x00, "Yes" )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 
-        PORT_DIPNAME( 0x08, 0x08, "Screen Stop", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x08, "Off" )
-        PORT_DIPSETTING(    0x00, "On" )
+	PORT_START      /* Player 1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-        PORT_START      /* Player 1 */
-        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
-        PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER1 )
-        PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER1 )
-        PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER1 )
-        PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-        PORT_START      /* Player 2 */
-        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-        PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
-        PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
-        PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
-        PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START      /* Player 2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-
-CHAR_LAYOUT(charlayout_mercs,     4096-1024, 0x100000*8)
-SPRITE_LAYOUT(spritelayout_mercs, 4*4096,   0x080000*8, 0x100000*8)
-TILE_LAYOUT2(spritelayout2_mercs, 4096,     0x080000*8, 0x020000*8)
-
-SPRITE_LAYOUT(tilelayout_mercs,   4096*2,    0x080000*8, 0x100000*8)
-TILE32_LAYOUT(tilelayout32_mercs, 1024,      0x080000*8, 0x100000*8)
+CHAR_LAYOUT(charlayout_mercs,     4096-1024, 0x200000*8)
+SPRITE_LAYOUT(spritelayout_mercs, 4*4096,    0x100000*8, 0x200000*8)
+/* Tiles are split... there's a huge hole that wastes loads of memory */
+SPRITE_LAYOUT(tilelayout_mercs,   4096*5+2048,    0x100000*8, 0x200000*8)
+TILE32_LAYOUT(tilelayout32_mercs, 4096+128,      0x100000*8, 0x200000*8)
 
 static struct GfxDecodeInfo gfxdecodeinfo_mercs[] =
 {
         /*   start    pointer          colour start   number of colours */
         { 1, 0x000000, &charlayout_mercs,    32*16,                  32 },
-        { 1, 0x060000, &spritelayout_mercs,  0,                      32 },
+        { 1, 0x04c000, &spritelayout_mercs,  0,                      32 },
         { 1, 0x00c000, &tilelayout_mercs,    32*16+32*16,            32 },
         { 1, 0x03c000, &tilelayout32_mercs,  32*16+32*16+32*16,      32 },
-        { 1, 0x200000, &spritelayout2_mercs, 0,                      32 },
         { -1 } /* end of array */
 };
 
@@ -2682,64 +2680,187 @@ MACHINE_DRIVER(
         CPS1_DEFAULT_CPU_SPEED)
 
 ROM_START( mercs_rom )
+	ROM_REGION(0x100000)      /* 68000 code */
 
+	ROM_LOAD_EVEN( "so2_30e.rom",  0x00000, 0x20000, 0xe17f9bf7 )
+	ROM_LOAD_ODD ( "so2_35e.rom",  0x00000, 0x20000, 0x78e63575 )
+	ROM_LOAD_EVEN( "so2_31e.rom",  0x40000, 0x20000, 0x51204d36 )
+	ROM_LOAD_ODD ( "so2_36e.rom",  0x40000, 0x20000, 0x9cfba8b4 )
+	ROM_LOAD_WIDE_SWAP( "so2_32.rom",   0x80000, 0x80000, 0x2eb5cf0c )
 
-        ROM_REGION(0x100000)      /* 68000 code */
+	ROM_REGION(0x400000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD         ( "so2_gfx2.rom", 0x000000, 0x80000, 0x597c2875 )
+	ROM_LOAD_GFX_EVEN( "so2_20.rom",   0x080000, 0x20000, 0x8ca751a3 )
+	ROM_LOAD_GFX_ODD ( "so2_10.rom",   0x080000, 0x20000, 0xe9f569fd )
 
-        ROM_LOAD_EVEN( "so2_30e.rom",  0x00000, 0x20000, 0xea03645d )
-        ROM_LOAD_ODD ( "so2_35e.rom",  0x00000, 0x20000, 0x09345484 )
-        ROM_LOAD_EVEN( "so2_31e.rom",  0x40000, 0x20000, 0xb7d2fc06 )
-        ROM_LOAD_ODD ( "so2_36e.rom",  0x40000, 0x20000, 0xd504b112 )
-        ROM_LOAD_WIDE_SWAP( "so2_32.rom",   0x80000, 0x80000, 0xec9b7bc3 )
+	ROM_LOAD         ( "so2_gfx6.rom", 0x100000, 0x80000, 0xaa6102af )
+	ROM_LOAD_GFX_EVEN( "so2_24.rom",   0x180000, 0x20000, 0x3f254efe )
+	ROM_LOAD_GFX_ODD ( "so2_14.rom",   0x180000, 0x20000, 0xf5a8905e )
 
-        ROM_REGION(0x300000)     /* temporary space for graphics (disposed after conversion) */
-        ROM_LOAD( "so2_gfx2.rom", 0x000000, 0x80000, 0x744239f8 )
-        ROM_LOAD( "so2_gfx6.rom", 0x080000, 0x80000, 0xf8aa4dd2 )
-        ROM_LOAD( "so2_gfx4.rom", 0x100000, 0x80000, 0x5a44f5e4 )
-        ROM_LOAD( "so2_gfx8.rom", 0x180000, 0x80000, 0xcf205c1e )
+	ROM_LOAD         ( "so2_gfx4.rom", 0x200000, 0x80000, 0x912a9ca0 )
+	ROM_LOAD_GFX_EVEN( "so2_22.rom",    0x280000, 0x20000, 0xfce9a377 )
+	ROM_LOAD_GFX_ODD ( "so2_12.rom",    0x280000, 0x20000, 0xb7df8a06 )
 
-        ROM_LOAD( "so2_20.rom",   0x200000, 0x20000, 0x27a13e35 )
-        ROM_LOAD( "so2_10.rom",   0x220000, 0x20000, 0x9e7e0d9a )
-        ROM_LOAD( "so2_22.rom",   0x240000, 0x20000, 0xd0afa7ab )
-        ROM_LOAD( "so2_12.rom",   0x260000, 0x20000, 0x7a0d5f5d )
-        ROM_LOAD( "so2_24.rom",   0x280000, 0x20000, 0x9b6d03ab )
-        ROM_LOAD( "so2_14.rom",   0x2a0000, 0x20000, 0x0fedfdc3 )
-        ROM_LOAD( "so2_26.rom",   0x2c0000, 0x20000, 0xa3cd9f0d )
-        ROM_LOAD( "so2_16.rom",   0x2e0000, 0x20000, 0xadc6ff22 )
+	ROM_LOAD         ( "so2_gfx8.rom", 0x300000, 0x80000, 0x839e6869 )
+	ROM_LOAD_GFX_EVEN( "so2_26.rom",    0x380000, 0x20000, 0xf3aa5a4a )
+	ROM_LOAD_GFX_ODD ( "so2_16.rom",    0x380000, 0x20000, 0xb43cd1a8 )
 
-        ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
-        ROM_LOAD( "so2_09.rom",   0x00000, 0x10000, 0xa7999e1d )
-        ROM_RELOAD(             0x08000, 0x10000 )
+	ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "so2_09.rom",   0x00000, 0x10000, 0xd09d7c7a )
+	ROM_RELOAD(             0x08000, 0x10000 )
 
-        ROM_REGION(0x40000) /* Samples */
-        ROM_LOAD( "so2_18.rom",   0x00000, 0x20000, 0xbab28eee )
-        ROM_LOAD( "so2_19.rom",   0x20000, 0x20000, 0x40e3af89 )
+	ROM_REGION(0x40000) /* Samples */
+	ROM_LOAD( "so2_18.rom",   0x00000, 0x20000, 0xbbea1643 )
+	ROM_LOAD( "so2_19.rom",   0x20000, 0x20000, 0xac58aa71 )
 ROM_END
+
+ROM_START( mercsu_rom )
+	ROM_REGION(0x100000)      /* 68000 code */
+
+	ROM_LOAD_EVEN( "so2_30e.rom",  0x00000, 0x20000, 0xe17f9bf7 )
+	ROM_LOAD_ODD ( "s02-35",       0x00000, 0x20000, 0x4477df61 )
+	ROM_LOAD_EVEN( "so2_31e.rom",  0x40000, 0x20000, 0x51204d36 )
+	ROM_LOAD_ODD ( "so2_36e.rom",  0x40000, 0x20000, 0x9cfba8b4 )
+	ROM_LOAD_WIDE_SWAP( "so2_32.rom",   0x80000, 0x80000, 0x2eb5cf0c )
+
+	ROM_REGION(0x400000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD         ( "so2_gfx2.rom", 0x000000, 0x80000, 0x597c2875 )
+	ROM_LOAD_GFX_EVEN( "so2_20.rom",   0x080000, 0x20000, 0x8ca751a3 )
+	ROM_LOAD_GFX_ODD ( "so2_10.rom",   0x080000, 0x20000, 0xe9f569fd )
+
+	ROM_LOAD         ( "so2_gfx6.rom", 0x100000, 0x80000, 0xaa6102af )
+	ROM_LOAD_GFX_EVEN( "so2_24.rom",   0x180000, 0x20000, 0x3f254efe )
+	ROM_LOAD_GFX_ODD ( "so2_14.rom",   0x180000, 0x20000, 0xf5a8905e )
+
+	ROM_LOAD         ( "so2_gfx4.rom", 0x200000, 0x80000, 0x912a9ca0 )
+	ROM_LOAD_GFX_EVEN( "so2_22.rom",    0x280000, 0x20000, 0xfce9a377 )
+	ROM_LOAD_GFX_ODD ( "so2_12.rom",    0x280000, 0x20000, 0xb7df8a06 )
+
+	ROM_LOAD         ( "so2_gfx8.rom", 0x300000, 0x80000, 0x839e6869 )
+	ROM_LOAD_GFX_EVEN( "so2_26.rom",    0x380000, 0x20000, 0xf3aa5a4a )
+	ROM_LOAD_GFX_ODD ( "so2_16.rom",    0x380000, 0x20000, 0xb43cd1a8 )
+
+	ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "so2_09.rom",   0x00000, 0x10000, 0xd09d7c7a )
+	ROM_RELOAD(             0x08000, 0x10000 )
+
+	ROM_REGION(0x40000) /* Samples */
+	ROM_LOAD( "so2_18.rom",   0x00000, 0x20000, 0xbbea1643 )
+	ROM_LOAD( "so2_19.rom",   0x20000, 0x20000, 0xac58aa71 )
+ROM_END
+
+ROM_START( mercsj_rom )
+	ROM_REGION(0x100000)      /* 68000 code */
+
+	ROM_LOAD_EVEN( "so2_30e.rom",  0x00000, 0x20000, 0xe17f9bf7 )
+	ROM_LOAD_ODD ( "so2_42.bin",   0x00000, 0x20000, 0x2c3884c6 )
+	ROM_LOAD_EVEN( "so2_31e.rom",  0x40000, 0x20000, 0x51204d36 )
+	ROM_LOAD_ODD ( "so2_36e.rom",  0x40000, 0x20000, 0x9cfba8b4 )
+	ROM_LOAD_WIDE_SWAP( "so2_32.rom",   0x80000, 0x80000, 0x2eb5cf0c )
+
+	ROM_REGION(0x400000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD         ( "so2_gfx2.rom", 0x000000, 0x80000, 0x597c2875 )
+	ROM_LOAD_GFX_EVEN( "so2_20.rom",   0x080000, 0x20000, 0x8ca751a3 )
+	ROM_LOAD_GFX_ODD ( "so2_10.rom",   0x080000, 0x20000, 0xe9f569fd )
+
+	ROM_LOAD         ( "so2_gfx6.rom", 0x100000, 0x80000, 0xaa6102af )
+	ROM_LOAD_GFX_EVEN( "so2_24.rom",   0x180000, 0x20000, 0x3f254efe )
+	ROM_LOAD_GFX_ODD ( "so2_14.rom",   0x180000, 0x20000, 0xf5a8905e )
+
+	ROM_LOAD         ( "so2_gfx4.rom", 0x200000, 0x80000, 0x912a9ca0 )
+	ROM_LOAD_GFX_EVEN( "so2_22.rom",    0x280000, 0x20000, 0xfce9a377 )
+	ROM_LOAD_GFX_ODD ( "so2_12.rom",    0x280000, 0x20000, 0xb7df8a06 )
+
+	ROM_LOAD         ( "so2_gfx8.rom", 0x300000, 0x80000, 0x839e6869 )
+	ROM_LOAD_GFX_EVEN( "so2_26.rom",    0x380000, 0x20000, 0xf3aa5a4a )
+	ROM_LOAD_GFX_ODD ( "so2_16.rom",    0x380000, 0x20000, 0xb43cd1a8 )
+
+	ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "so2_09.rom",   0x00000, 0x10000, 0xd09d7c7a )
+	ROM_RELOAD(             0x08000, 0x10000 )
+
+	ROM_REGION(0x40000) /* Samples */
+	ROM_LOAD( "so2_18.rom",   0x00000, 0x20000, 0xbbea1643 )
+	ROM_LOAD( "so2_19.rom",   0x20000, 0x20000, 0xac58aa71 )
+ROM_END
+
+
 
 struct GameDriver mercs_driver =
 {
-        __FILE__,
-        0,
-        "mercs",
-        "Mercs",
-        "1990",
-        "Capcom",
-        CPS1_CREDITS("Paul Leaman\n"),
-        GAME_NOT_WORKING,
-        &mercs_machine_driver,
-                0,
+	__FILE__,
+	0,
+	"mercs",
+	"Mercs / Senjo no Ohkami II (World)",
+	"1990",
+	"Capcom",
+	CPS1_CREDITS("Paul Leaman\n"),
+	0,
+	&mercs_machine_driver,
+	0,
 
-        mercs_rom,
-        0,
-        0,0,
-        0,      /* sound_prom */
+	mercs_rom,
+	0,
+	0,0,
+	0,      /* sound_prom */
 
-        input_ports_mercs,
-        NULL, 0, 0,
+	input_ports_mercs,
+	NULL, 0, 0,
 
-        ORIENTATION_ROTATE_270,
-        cps1_hiload, cps1_hisave
+	ORIENTATION_ROTATE_270,
+	cps1_hiload, cps1_hisave
 };
+
+struct GameDriver mercsu_driver =
+{
+	__FILE__,
+	&mercs_driver,
+	"mercsu",
+	"Mercs / Senjo no Ohkami II (US)",
+	"1990",
+	"Capcom",
+	CPS1_CREDITS("Paul Leaman\n"),
+	0,
+	&mercs_machine_driver,
+	0,
+
+	mercsu_rom,
+	0,
+	0,0,
+	0,      /* sound_prom */
+
+	input_ports_mercs,
+	NULL, 0, 0,
+
+	ORIENTATION_ROTATE_270,
+	cps1_hiload, cps1_hisave
+};
+
+struct GameDriver mercsj_driver =
+{
+	__FILE__,
+	&mercs_driver,
+	"mercsj",
+	"Mercs / Senjo no Ohkami II (Japan)",
+	"1990",
+	"Capcom",
+	CPS1_CREDITS("Paul Leaman\n"),
+	0,
+	&mercs_machine_driver,
+	0,
+
+	mercsj_rom,
+	0,
+	0,0,
+	0,      /* sound_prom */
+
+	input_ports_mercs,
+	NULL, 0, 0,
+
+	ORIENTATION_ROTATE_270,
+	cps1_hiload, cps1_hisave
+};
+
 
 /********************************************************************
 
@@ -2862,18 +2983,18 @@ character set. There are two copies resident in memory.
 
 */
 
-CHAR_LAYOUT2(charlayout_pnickj, 4096, 0x80000*8)
-SPRITE_LAYOUT2(spritelayout_pnickj, 0x2800)
-SPRITE_LAYOUT2(tilelayout_pnickj,   0x2800)
-TILE32_LAYOUT2(tilelayout32_pnickj, 512,  0x40000*8, 0x80000*8 )
+CHAR_LAYOUT(charlayout_pnickj, 4096, 0x100000*8)
+SPRITE_LAYOUT(spritelayout_pnickj, 0x2800, 0x80000*8, 0x100000*8)
+SPRITE_LAYOUT(tilelayout_pnickj,   0x2800, 0x80000*8, 0x100000*8)
+TILE32_LAYOUT(tilelayout32_pnickj, 512, 0x80000*8, 0x100000*8 )
 
 static struct GfxDecodeInfo gfxdecodeinfo_pnickj[] =
 {
         /*   start    pointer          colour start   number of colours */
         { 1, 0x000000, &charlayout_pnickj,    32*16,                  32 },
-        { 1, 0x008000, &spritelayout_pnickj,  0,                      32 },
-        { 1, 0x008000, &tilelayout_pnickj,    32*16+32*16,            32 },
-        { 1, 0x030000, &tilelayout32_pnickj,  32*16+32*16+32*16,      32 },
+        { 1, 0x010000, &spritelayout_pnickj,  0,                      32 },
+        { 1, 0x010000, &tilelayout_pnickj,    32*16+32*16,            32 },
+        { 1, 0x060000, &tilelayout32_pnickj,  32*16+32*16+32*16,      32 },
         { -1 } /* end of array */
 };
 
@@ -2890,25 +3011,29 @@ ROM_START( pnickj_rom )
         ROM_LOAD_ODD( "pnij42.bin",   0x00000, 0x20000, 0xc085dfaf )
 
         ROM_REGION(0x200000)     /* temporary space for graphics (disposed after conversion) */
-        ROM_LOAD( "pnij01.bin",   0x000000, 0x20000, 0x01a0f311 )
-        ROM_LOAD( "pnij02.bin",   0x020000, 0x20000, 0x0e21fc33 )
-        ROM_LOAD( "pnij18.bin",   0x040000, 0x20000, 0xf17a0e56 )
-        ROM_LOAD( "pnij19.bin",   0x060000, 0x20000, 0xaf08b230 )
 
-        ROM_LOAD( "pnij09.bin",   0x080000, 0x20000, 0x48177b0a )
-        ROM_LOAD( "pnij10.bin",   0x0a0000, 0x20000, 0xc2acc171 )
-        ROM_LOAD( "pnij26.bin",   0x0c0000, 0x20000, 0xe2af981e )
-        ROM_LOAD( "pnij27.bin",   0x0e0000, 0x20000, 0x83d5cb0e )
+        ROM_LOAD_GFX_EVEN( "pnij26.bin",   0x000000, 0x20000, 0xe2af981e )
+        ROM_LOAD_GFX_ODD ( "pnij18.bin",   0x000000, 0x20000, 0xf17a0e56 )
+        ROM_LOAD_GFX_EVEN( "pnij27.bin",   0x040000, 0x20000, 0x83d5cb0e )
+        ROM_LOAD_GFX_ODD ( "pnij19.bin",   0x040000, 0x20000, 0xaf08b230 )
 
-        ROM_LOAD( "pnij05.bin",   0x100000, 0x20000, 0x8c515dc0 )
-        ROM_LOAD( "pnij06.bin",   0x120000, 0x20000, 0x79f4bfe3 )
-        ROM_LOAD( "pnij32.bin",   0x140000, 0x20000, 0x84560bef )
-        ROM_LOAD( "pnij33.bin",   0x160000, 0x20000, 0x3ed2c680 )
+        ROM_LOAD_GFX_EVEN( "pnij09.bin",   0x080000, 0x20000, 0x48177b0a )
+        ROM_LOAD_GFX_ODD ( "pnij01.bin",   0x080000, 0x20000, 0x01a0f311 )
+        ROM_LOAD_GFX_EVEN( "pnij10.bin",   0x0c0000, 0x20000, 0xc2acc171 )
+        ROM_LOAD_GFX_ODD ( "pnij02.bin",   0x0c0000, 0x20000, 0x0e21fc33 )
 
-        ROM_LOAD( "pnij13.bin",   0x180000, 0x20000, 0x406451b0 )
-        ROM_LOAD( "pnij14.bin",   0x1a0000, 0x20000, 0x7fe59b19 )
-        ROM_LOAD( "pnij38.bin",   0x1c0000, 0x20000, 0xeb75bd8c )
-        ROM_LOAD( "pnij39.bin",   0x1e0000, 0x20000, 0x70fbe579 )
+        ROM_LOAD_GFX_EVEN( "pnij38.bin",   0x100000, 0x20000, 0xeb75bd8c )
+        ROM_LOAD_GFX_ODD ( "pnij32.bin",   0x100000, 0x20000, 0x84560bef )
+        ROM_LOAD_GFX_EVEN( "pnij39.bin",   0x140000, 0x20000, 0x70fbe579 )
+        ROM_LOAD_GFX_ODD ( "pnij33.bin",   0x140000, 0x20000, 0x3ed2c680 )
+
+        ROM_LOAD_GFX_EVEN( "pnij13.bin",   0x180000, 0x20000, 0x406451b0 )
+        ROM_LOAD_GFX_ODD ( "pnij05.bin",   0x180000, 0x20000, 0x8c515dc0 )
+        ROM_LOAD_GFX_EVEN( "pnij14.bin",   0x1c0000, 0x20000, 0x7fe59b19 )
+        ROM_LOAD_GFX_ODD ( "pnij06.bin",   0x1c0000, 0x20000, 0x79f4bfe3 )
+
+
+
 
         ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
         ROM_LOAD( "pnij17.bin",   0x00000, 0x10000, 0xe86f787a )
@@ -2950,7 +3075,7 @@ struct GameDriver pnickj_driver =
 
                           Knights of the Round
 
- Input ports don't work at all. Sprites a little messed up.
+ Input ports don't work at all.
 
 ********************************************************************/
 
@@ -2959,12 +3084,12 @@ INPUT_PORTS_START( input_ports_knights )
         PORT_START      /* IN0 */
         PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
         PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-        PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 ) /* service */
+        PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE ) /* service */
         PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
         PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
         PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
-        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE ) /* TEST */
+        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START3 )
 
         PORT_START      /* DSWA */
         PORT_DIPNAME( 0x07, 0x07, "Coin A", IP_KEY_NONE )
@@ -3060,19 +3185,8 @@ INPUT_PORTS_START( input_ports_knights )
         PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER3 )
         PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
         PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
-        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-        PORT_START      /* Player 4 */
-        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER4 )
-        PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER4 )
-        PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER4 )
-        PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER4 )
-        PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )
-        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )
-        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
+        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 )
+        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START3 )
 INPUT_PORTS_END
 
 
@@ -3149,8 +3263,6 @@ struct GameDriver knights_driver =
 /********************************************************************
 
                           GHOULS AND GHOSTS
-
-  Sprites are split across 2 different graphics layouts.
 
 ********************************************************************/
 
@@ -3261,29 +3373,10 @@ PORT_START      /* IN0 */
 INPUT_PORTS_END
 
 
-#define SPRITE_SEP (0x040000*8)
-static struct GfxLayout spritelayout2_ghouls =
-{
-        16,16,  /* 16*16 sprites */
-        4096,   /* 4096  sprites ???? */
-        4,      /* 4 bits per pixel */
-        { 1*0x010000*8, 2*0x010000*8, 3*0x010000*8, 0*0x010000*8 },
-        {
-           0,1,2,3,4,5,6,7,
-           SPRITE_SEP+0, SPRITE_SEP+1, SPRITE_SEP+2, SPRITE_SEP+3,
-           SPRITE_SEP+4, SPRITE_SEP+5, SPRITE_SEP+6, SPRITE_SEP+7
-        },
-        {
-           0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-           8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8,
-        },
-        16*8    /* every sprite takes 16*8 consecutive bytes */
-};
-
-CHAR_LAYOUT(charlayout_ghouls,     4096*2,   0x100000*8)
-SPRITE_LAYOUT(spritelayout_ghouls, 4096,     0x080000*8, 0x100000*8 )
-SPRITE_LAYOUT(tilelayout_ghouls,   4096*2,   0x080000*8, 0x100000*8 )
-TILE32_LAYOUT2(tilelayout32_ghouls, 1024,    0x040000*8, 0x10000*8 )
+CHAR_LAYOUT(charlayout_ghouls,     4096*2,   0x200000*8)
+SPRITE_LAYOUT(spritelayout_ghouls, 4096,     0x100000*8, 0x200000*8 )
+SPRITE_LAYOUT(tilelayout_ghouls,   4096*2,   0x100000*8, 0x200000*8 )
+TILE32_LAYOUT(tilelayout32_ghouls, 1024,     0x100000*8, 0x200000*8 )
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
@@ -3291,8 +3384,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
         { 1, 0x030000, &charlayout_ghouls,      32*16,                   32 },
         { 1, 0x000000, &spritelayout_ghouls,    0,                       32 },
         { 1, 0x040000, &tilelayout_ghouls,      32*16+32*16,             32 },
-        { 1, 0x280000, &tilelayout32_ghouls,    32*16+32*16+32*16,       32 },
-        { 1, 0x200000, &spritelayout2_ghouls,   0,                       32 },
+        { 1, 0x0a0000, &tilelayout32_ghouls,    32*16+32*16+32*16,       32 },
+        { 1, 0x080000, &spritelayout_ghouls,    0,                       32 },
         { -1 } /* end of array */
 };
 
@@ -3310,31 +3403,33 @@ ROM_START( ghouls_rom )
         ROM_LOAD_ODD ( "ghl28.bin",    0x40000, 0x20000, 0x03d3e714 ) /* 68000 code */
         ROM_LOAD_WIDE( "ghl17.bin",    0x80000, 0x80000, 0x3ea1b0f2 ) /* Tile map */
 
-        ROM_REGION(0x300000)     /* temporary space for graphics (disposed after conversion) */
-        ROM_LOAD( "ghl6.bin",     0x000000, 0x80000, 0x4ba90b59 ) /* Sprites / tiles */
-        ROM_LOAD( "ghl5.bin",     0x080000, 0x80000, 0x0ba9c0b0 )
-        ROM_LOAD( "ghl8.bin",     0x100000, 0x80000, 0x4bdee9de )
-        ROM_LOAD( "ghl7.bin",     0x180000, 0x80000, 0x5d760ab9 )
+        ROM_REGION(0x400000)     /* temporary space for graphics (disposed after conversion) */
 
-        ROM_LOAD( "ghl10.bin",    0x200000, 0x10000, 0xbcc0f28c ) /* Sprite set 2 */
-        ROM_LOAD( "ghl23.bin",    0x210000, 0x10000, 0x8426144b )
-        ROM_LOAD( "ghl14.bin",    0x220000, 0x10000, 0x20f85c03 )
-        ROM_LOAD( "ghl19.bin",    0x230000, 0x10000, 0x2a40166a )
-        ROM_LOAD( "ghl12.bin",    0x240000, 0x10000, 0xda088d61 )
-        ROM_LOAD( "ghl25.bin",    0x250000, 0x10000, 0x29f79c78 )
-        ROM_LOAD( "ghl16.bin",    0x260000, 0x10000, 0xf187ba1c )
-        ROM_LOAD( "ghl21.bin",    0x270000, 0x10000, 0x17e11df0 )
+        ROM_LOAD     ( "ghl6.bin",     0x000000, 0x80000, 0x4ba90b59 ) /* Sprites / tiles */
+        ROM_LOAD_GFX_EVEN( "ghl12.bin",    0x080000, 0x10000, 0xda088d61 )
+        ROM_LOAD_GFX_ODD ( "ghl21.bin",    0x080000, 0x10000, 0x17e11df0 )
+        ROM_LOAD_GFX_EVEN( "ghl11.bin",    0x0a0000, 0x10000, 0x37c9b6c6 ) /* Plane x */
+        ROM_LOAD_GFX_ODD ( "ghl20.bin",    0x0a0000, 0x10000, 0x2f1345b4 ) /* Plane x */
 
-        /* 32 * 32 tiles - left half */
-        ROM_LOAD( "ghl18.bin",    0x280000, 0x10000, 0xd34e271a ) /* Plane x */
-        ROM_LOAD( "ghl09.bin",    0x290000, 0x10000, 0xae24bb19 ) /* Plane x */
-        ROM_LOAD( "ghl22.bin",    0x2a0000, 0x10000, 0x7e69e2e6 ) /* Plane x */
-        ROM_LOAD( "ghl13.bin",    0x2b0000, 0x10000, 0x3f70dd37 ) /* Plane x */
-        /* 32 * 32 tiles - right half */
-        ROM_LOAD( "ghl20.bin",    0x2c0000, 0x10000, 0x2f1345b4 ) /* Plane x */
-        ROM_LOAD( "ghl11.bin",    0x2d0000, 0x10000, 0x37c9b6c6 ) /* Plane x */
-        ROM_LOAD( "ghl24.bin",    0x2e0000, 0x10000, 0x889aac05 ) /* Plane x */
-        ROM_LOAD( "ghl15.bin",    0x2f0000, 0x10000, 0x3c2a212a ) /* Plane x */
+
+        ROM_LOAD     ( "ghl5.bin",     0x100000, 0x80000, 0x0ba9c0b0 )
+        ROM_LOAD_GFX_EVEN( "ghl10.bin",    0x180000, 0x10000, 0xbcc0f28c )
+        ROM_LOAD_GFX_ODD ( "ghl19.bin",    0x180000, 0x10000, 0x2a40166a )
+        ROM_LOAD_GFX_EVEN( "ghl09.bin",    0x1a0000, 0x10000, 0xae24bb19 )
+        ROM_LOAD_GFX_ODD ( "ghl18.bin",    0x1a0000, 0x10000, 0xd34e271a )
+
+
+        ROM_LOAD     ( "ghl8.bin",     0x200000, 0x80000, 0x4bdee9de )
+        ROM_LOAD_GFX_EVEN( "ghl16.bin",    0x280000, 0x10000, 0xf187ba1c )
+        ROM_LOAD_GFX_ODD ( "ghl25.bin",    0x280000, 0x10000, 0x29f79c78 )
+        ROM_LOAD_GFX_EVEN( "ghl15.bin",    0x2a0000, 0x10000, 0x3c2a212a ) /* Plane x */
+        ROM_LOAD_GFX_ODD ( "ghl24.bin",    0x2a0000, 0x10000, 0x889aac05 ) /* Plane x */
+
+        ROM_LOAD     ( "ghl7.bin",     0x300000, 0x80000, 0x5d760ab9 )
+        ROM_LOAD_GFX_EVEN( "ghl14.bin",    0x380000, 0x10000, 0x20f85c03 )
+        ROM_LOAD_GFX_ODD ( "ghl23.bin",    0x380000, 0x10000, 0x8426144b )
+        ROM_LOAD_GFX_EVEN( "ghl13.bin",    0x3a0000, 0x10000, 0x3f70dd37 ) /* Plane x */
+        ROM_LOAD_GFX_ODD ( "ghl22.bin",    0x3a0000, 0x10000, 0x7e69e2e6 ) /* Plane x */
 
         ROM_REGION(0x18000) /* 64k for the audio CPU */
         ROM_LOAD( "ghl26.bin",    0x000000, 0x08000, 0x3692f6e5 )
@@ -3349,29 +3444,33 @@ ROM_START( ghoulsj_rom )
         ROM_LOAD_ODD ( "ghlj28.bin",   0x40000, 0x20000, 0x6af0b391 ) /* 68000 code */
         ROM_LOAD_WIDE( "ghl17.bin",    0x80000, 0x80000, 0x3ea1b0f2 ) /* Tile map */
 
-        ROM_REGION(0x300000)     /* temporary space for graphics (disposed after conversion) */
-        ROM_LOAD( "ghl6.bin",     0x000000, 0x80000, 0x4ba90b59 ) /* Sprites / tiles */
-        ROM_LOAD( "ghl5.bin",     0x080000, 0x80000, 0x0ba9c0b0 )
-        ROM_LOAD( "ghl8.bin",     0x100000, 0x80000, 0x4bdee9de )
-        ROM_LOAD( "ghl7.bin",     0x180000, 0x80000, 0x5d760ab9 )
-        ROM_LOAD( "ghl10.bin",    0x200000, 0x10000, 0xbcc0f28c ) /* Sprite set 2 */
-        ROM_LOAD( "ghl23.bin",    0x210000, 0x10000, 0x8426144b )
-        ROM_LOAD( "ghl14.bin",    0x220000, 0x10000, 0x20f85c03 )
-        ROM_LOAD( "ghl19.bin",    0x230000, 0x10000, 0x2a40166a )
-        ROM_LOAD( "ghl12.bin",    0x240000, 0x10000, 0xda088d61 )
-        ROM_LOAD( "ghl25.bin",    0x250000, 0x10000, 0x29f79c78 )
-        ROM_LOAD( "ghl16.bin",    0x260000, 0x10000, 0xf187ba1c )
-        ROM_LOAD( "ghl21.bin",    0x270000, 0x10000, 0x17e11df0 )
-        /* 32 * 32 tiles - left half */
-        ROM_LOAD( "ghl18.bin",    0x280000, 0x10000, 0xd34e271a ) /* Plane x */
-        ROM_LOAD( "ghl09.bin",    0x290000, 0x10000, 0xae24bb19 ) /* Plane x */
-        ROM_LOAD( "ghl22.bin",    0x2a0000, 0x10000, 0x7e69e2e6 ) /* Plane x */
-        ROM_LOAD( "ghl13.bin",    0x2b0000, 0x10000, 0x3f70dd37 ) /* Plane x */
-        /* 32 * 32 tiles - right half */
-        ROM_LOAD( "ghl20.bin",    0x2c0000, 0x10000, 0x2f1345b4 ) /* Plane x */
-        ROM_LOAD( "ghl11.bin",    0x2d0000, 0x10000, 0x37c9b6c6 ) /* Plane x */
-        ROM_LOAD( "ghl24.bin",    0x2e0000, 0x10000, 0x889aac05 ) /* Plane x */
-        ROM_LOAD( "ghl15.bin",    0x2f0000, 0x10000, 0x3c2a212a ) /* Plane x */
+        ROM_REGION(0x400000)     /* temporary space for graphics (disposed after conversion) */
+
+        ROM_LOAD         ( "ghl6.bin",     0x000000, 0x80000, 0x4ba90b59 ) /* Sprites / tiles */
+        ROM_LOAD_GFX_EVEN( "ghl12.bin",    0x080000, 0x10000, 0xda088d61 )
+        ROM_LOAD_GFX_ODD ( "ghl21.bin",    0x080000, 0x10000, 0x17e11df0 )
+        ROM_LOAD_GFX_EVEN( "ghl11.bin",    0x0a0000, 0x10000, 0x37c9b6c6 ) /* Plane x */
+        ROM_LOAD_GFX_ODD ( "ghl20.bin",    0x0a0000, 0x10000, 0x2f1345b4 ) /* Plane x */
+
+
+        ROM_LOAD         ( "ghl5.bin",     0x100000, 0x80000, 0x0ba9c0b0 )
+        ROM_LOAD_GFX_EVEN( "ghl10.bin",    0x180000, 0x10000, 0xbcc0f28c )
+        ROM_LOAD_GFX_ODD ( "ghl19.bin",    0x180000, 0x10000, 0x2a40166a )
+        ROM_LOAD_GFX_EVEN( "ghl09.bin",    0x1a0000, 0x10000, 0xae24bb19 )
+        ROM_LOAD_GFX_ODD ( "ghl18.bin",    0x1a0000, 0x10000, 0xd34e271a )
+
+
+        ROM_LOAD         ( "ghl8.bin",     0x200000, 0x80000, 0x4bdee9de )
+        ROM_LOAD_GFX_EVEN( "ghl16.bin",    0x280000, 0x10000, 0xf187ba1c )
+        ROM_LOAD_GFX_ODD ( "ghl25.bin",    0x280000, 0x10000, 0x29f79c78 )
+        ROM_LOAD_GFX_EVEN( "ghl15.bin",    0x2a0000, 0x10000, 0x3c2a212a ) /* Plane x */
+        ROM_LOAD_GFX_ODD ( "ghl24.bin",    0x2a0000, 0x10000, 0x889aac05 ) /* Plane x */
+
+        ROM_LOAD         ( "ghl7.bin",     0x300000, 0x80000, 0x5d760ab9 )
+        ROM_LOAD_GFX_EVEN( "ghl14.bin",    0x380000, 0x10000, 0x20f85c03 )
+        ROM_LOAD_GFX_ODD ( "ghl23.bin",    0x380000, 0x10000, 0x8426144b )
+        ROM_LOAD_GFX_EVEN( "ghl13.bin",    0x3a0000, 0x10000, 0x3f70dd37 ) /* Plane x */
+        ROM_LOAD_GFX_ODD ( "ghl22.bin",    0x3a0000, 0x10000, 0x7e69e2e6 ) /* Plane x */
 
         ROM_REGION(0x18000) /* 64k for the audio CPU */
         ROM_LOAD( "ghl26.bin",    0x000000, 0x08000, 0x3692f6e5 )
@@ -3544,38 +3643,72 @@ INPUT_PORTS_START( input_ports_cawing )
         PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
         PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
+        PORT_START      /* Extra buttons */
+        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
+        PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1 )
+        PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1 )
+        PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+        PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
+        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER2 )
+        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER2 )
+        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
 INPUT_PORTS_END
 
 
-CHAR_LAYOUT2  (charlayout_cawingj,   2048,   0x80000*8)
-SPRITE_LAYOUT2(spritelayout_cawingj, 0x4000)
-SPRITE_LAYOUT2(tilelayout_cawingj,   0x2400)
-TILE32_LAYOUT2(tilelayout32_cawingj, 0x400,  0x40000*8, 0x80000*8)
+CHAR_LAYOUT  (charlayout_cawing,   2048,   0x100000*8)
+SPRITE_LAYOUT(spritelayout_cawing, 0x4000, 0x80000*8, 0x100000*8)
+SPRITE_LAYOUT(tilelayout_cawing,   0x1400, 0x80000*8, 0x100000*8)
+TILE32_LAYOUT(tilelayout32_cawing, 0x400,  0x80000*8, 0x100000*8)
 
-static struct GfxDecodeInfo gfxdecodeinfo_cawingj[] =
+static struct GfxDecodeInfo gfxdecodeinfo_cawing[] =
 {
         /*   start    pointer          colour start   number of colours */
-        { 1, 0x028000, &charlayout_cawingj,    32*16,                  32 },
-        { 1, 0x000000, &spritelayout_cawingj,  0,                      32 },
-        { 1, 0x02c000, &tilelayout_cawingj,    32*16+32*16,            32 },
-        { 1, 0x018000, &tilelayout32_cawingj,  32*16+32*16+32*16,      32 },
+        { 1, 0x050000, &charlayout_cawing,    32*16,                  32 },
+        { 1, 0x000000, &spritelayout_cawing,  0,                      32 },
+        { 1, 0x058000, &tilelayout_cawing,    32*16+32*16,            32 },
+        { 1, 0x030000, &tilelayout32_cawing,  32*16+32*16+32*16,      32 },
         { -1 } /* end of array */
 };
 
-
 MACHINE_DRIVER(
-        cawingj_machine_driver,
+        cawing_machine_driver,
         cps1_interrupt2,
-        gfxdecodeinfo_cawingj,
+        gfxdecodeinfo_cawing,
         CPS1_DEFAULT_CPU_SPEED)
+
+ROM_START( cawing_rom )
+        ROM_REGION(0x100000)      /* 68000 code */
+
+        ROM_LOAD_EVEN( "cae_30a.bin",  0x00000, 0x20000, 0x91fceacd )
+        ROM_LOAD_ODD ( "cae_35a.rom",  0x00000, 0x20000, 0x3ef03083 )
+        ROM_LOAD_EVEN( "cae_31a.bin",  0x40000, 0x20000, 0xe5b75caf )
+        ROM_LOAD_ODD ( "cae_36a.bin",  0x40000, 0x20000, 0xc73fd713 )
+
+        ROM_LOAD_WIDE_SWAP( "ca_32.rom", 0x80000, 0x80000, 0x0c4837d4 )
+
+        ROM_REGION(0x200000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_LOAD( "ca_gfx1.rom",  0x000000, 0x80000, 0x4d0620fd )
+        ROM_LOAD( "ca_gfx5.rom",  0x080000, 0x80000, 0x66d4cc37 )
+        ROM_LOAD( "ca_gfx3.rom",  0x100000, 0x80000, 0x0b0341c3 )
+        ROM_LOAD( "ca_gfx7.rom",  0x180000, 0x80000, 0xb6f896f2 )
+
+        ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
+        ROM_LOAD( "ca_9.rom",     0x00000, 0x08000, 0x96fe7485 )
+        ROM_CONTINUE(             0x10000, 0x08000 )
+
+        ROM_REGION(0x40000) /* Samples */
+        ROM_LOAD ( "ca_18.rom",    0x00000, 0x20000, 0x4a613a2c )
+        ROM_LOAD ( "ca_19.rom",    0x20000, 0x20000, 0x74584493 )
+ROM_END
 
 ROM_START( cawingj_rom )
         ROM_REGION(0x100000)      /* 68000 code */
 
-        ROM_LOAD_EVEN( "caj36a.bin",   0x00000, 0x20000, 0x91fceacd )
+        ROM_LOAD_EVEN( "cae_30a.bin",  0x00000, 0x20000, 0x91fceacd )
         ROM_LOAD_ODD ( "caj42a.bin",   0x00000, 0x20000, 0x039f8362 )
-        ROM_LOAD_EVEN( "caj37a.bin",   0x40000, 0x20000, 0xe5b75caf )
-        ROM_LOAD_ODD ( "caj43a.bin",   0x40000, 0x20000, 0xc73fd713 )
+        ROM_LOAD_EVEN( "cae_31a.bin",  0x40000, 0x20000, 0xe5b75caf )
+        ROM_LOAD_ODD ( "cae_36a.bin",  0x40000, 0x20000, 0xc73fd713 )
 
         ROM_LOAD_EVEN( "caj34.bin",    0x80000, 0x20000, 0x51ea57f4 )
         ROM_LOAD_ODD ( "caj40.bin",    0x80000, 0x20000, 0x2ab71ae1 )
@@ -3583,60 +3716,85 @@ ROM_START( cawingj_rom )
         ROM_LOAD_ODD ( "caj41.bin",    0xc0000, 0x20000, 0x3a43b538 )
 
         ROM_REGION(0x200000)     /* temporary space for graphics (disposed after conversion) */
-        ROM_LOAD( "caj09.bin",    0x000000, 0x20000, 0x41b0f9a6 ) /* Plane 2 */
-        ROM_LOAD( "caj10.bin",    0x020000, 0x20000, 0xbf8a5f52 )
-        ROM_LOAD( "caj24.bin",    0x040000, 0x20000, 0xe356aad7 )
-        ROM_LOAD( "caj25.bin",    0x060000, 0x20000, 0xcdd0204d )
+        ROM_LOAD_GFX_EVEN( "caj24.bin",    0x000000, 0x20000, 0xe356aad7 )
+        ROM_LOAD_GFX_ODD ( "caj17.bin",    0x000000, 0x20000, 0x540f2fd8 )
+        ROM_LOAD_GFX_EVEN( "caj25.bin",    0x040000, 0x20000, 0xcdd0204d )
+        ROM_LOAD_GFX_ODD ( "caj18.bin",    0x040000, 0x20000, 0x29c1d4b1 )
 
-        ROM_LOAD( "caj01.bin",    0x080000, 0x20000, 0x1002d0b8 )  /* Plane 1 */
-        ROM_LOAD( "caj02.bin",    0x0a0000, 0x20000, 0x125b018d )
-        ROM_LOAD( "caj17.bin",    0x0c0000, 0x20000, 0x540f2fd8 )
-        ROM_LOAD( "caj18.bin",    0x0e0000, 0x20000, 0x29c1d4b1 )
+        ROM_LOAD_GFX_EVEN( "caj09.bin",    0x080000, 0x20000, 0x41b0f9a6 ) /* Plane 2 */
+        ROM_LOAD_GFX_ODD ( "caj01.bin",    0x080000, 0x20000, 0x1002d0b8 )  /* Plane 1 */
+        ROM_LOAD_GFX_EVEN( "caj10.bin",    0x0c0000, 0x20000, 0xbf8a5f52 )
+        ROM_LOAD_GFX_ODD ( "caj02.bin",    0x0c0000, 0x20000, 0x125b018d )
 
-        ROM_LOAD( "caj13.bin",    0x100000, 0x20000, 0x6f3948b2 ) /* Plane 4 */
-        ROM_LOAD( "caj14.bin",    0x120000, 0x20000, 0x8458e7d7 )
-        ROM_LOAD( "caj38.bin",    0x140000, 0x20000, 0x2464d4ab )
-        ROM_LOAD( "caj39.bin",    0x160000, 0x20000, 0xeea23b67 )
+        ROM_LOAD_GFX_EVEN( "caj38.bin",    0x100000, 0x20000, 0x2464d4ab )
+        ROM_LOAD_GFX_ODD ( "caj32.bin",    0x100000, 0x20000, 0x9b5836b3 )
+        ROM_LOAD_GFX_EVEN( "caj39.bin",    0x140000, 0x20000, 0xeea23b67 )
+        ROM_LOAD_GFX_ODD ( "caj33.bin",    0x140000, 0x20000, 0xdde3891f )
 
-        ROM_LOAD( "caj05.bin",    0x180000, 0x20000, 0x207373d7 ) /* Plane 3 */
-        ROM_LOAD( "caj06.bin",    0x1a0000, 0x20000, 0xcf80e164 )
-        ROM_LOAD( "caj32.bin",    0x1c0000, 0x20000, 0x9b5836b3 )
-        ROM_LOAD( "caj33.bin",    0x1e0000, 0x20000, 0xdde3891f )
-
+        ROM_LOAD_GFX_EVEN( "caj13.bin",    0x180000, 0x20000, 0x6f3948b2 ) /* Plane 4 */
+        ROM_LOAD_GFX_ODD ( "caj05.bin",    0x180000, 0x20000, 0x207373d7 ) /* Plane 3 */
+        ROM_LOAD_GFX_EVEN( "caj14.bin",    0x1c0000, 0x20000, 0x8458e7d7 )
+        ROM_LOAD_GFX_ODD ( "caj06.bin",    0x1c0000, 0x20000, 0xcf80e164 )
 
         ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
-        ROM_LOAD( "caj-s.bin",    0x00000, 0x08000, 0x96fe7485 )
+        ROM_LOAD( "ca_9.rom",     0x00000, 0x08000, 0x96fe7485 )
         ROM_CONTINUE(             0x10000, 0x08000 )
 
         ROM_REGION(0x40000) /* Samples */
-        ROM_LOAD ( "caj30.bin",    0x00000, 0x20000, 0x4a613a2c )
-        ROM_LOAD ( "caj31.bin",    0x20000, 0x20000, 0x74584493 )
+        ROM_LOAD ( "ca_18.rom",    0x00000, 0x20000, 0x4a613a2c )
+        ROM_LOAD ( "ca_19.rom",    0x20000, 0x20000, 0x74584493 )
 ROM_END
+
+struct GameDriver cawing_driver =
+{
+	__FILE__,
+	0,
+	"cawing",
+	"Carrier Air Wing / U.S. Navy (World)",
+	"1990",
+	"Capcom",
+	CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
+	GAME_NOT_WORKING,
+	&cawing_machine_driver,
+	0,
+
+	cawing_rom,
+	0,
+	0,0,
+	0,      /* sound_prom */
+
+	input_ports_cawing,
+	NULL, 0, 0,
+
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
+};
 
 struct GameDriver cawingj_driver =
 {
-        __FILE__,
-        0,
-        "cawingj",
-        "Carrier Air Wing (Japan)",
-        "1990",
-        "Capcom",
-        CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
-        GAME_NOT_WORKING,
-        &cawingj_machine_driver,
-                0,
+	__FILE__,
+	&cawing_driver,
+	"cawingj",
+	"Carrier Air Wing / U.S. Navy (Japan)",
+	"1990",
+	"Capcom",
+	CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
+	GAME_NOT_WORKING,
+	&cawing_machine_driver,
+	0,
 
-        cawingj_rom,
-        0,
-        0,0,
-        0,      /* sound_prom */
+	cawingj_rom,
+	0,
+	0,0,
+	0,      /* sound_prom */
 
-        input_ports_cawing,
-        NULL, 0, 0,
+	input_ports_cawing,
+	NULL, 0, 0,
 
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
+
 
 /********************************************************************
 
@@ -3649,11 +3807,11 @@ INPUT_PORTS_START( input_ports_sf2 )
         PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
         PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
         PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
-        PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+        PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN  )
         PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
         PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
-        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE )
+        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN  )
 
          PORT_START      /* DSWA */
         PORT_DIPNAME( 0x07, 0x07, "Coin A", IP_KEY_NONE )
@@ -3750,10 +3908,21 @@ INPUT_PORTS_START( input_ports_sf2 )
         PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
         PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
         PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+
+        PORT_START      /* Extra buttons */
+        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
+        PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1 )
+        PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1 )
+        PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+        PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
+        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER2 )
+        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER2 )
+        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 CHAR_LAYOUT(charlayout_sf2, 4096, 0x300000*8)
-SPRITE_LAYOUT(spritelayout_sf2, 4096*10-2048, 0x180000*8, 0x300000*8)
+SPRITE_LAYOUT(spritelayout_sf2, 4096*9+1024, 0x180000*8, 0x300000*8)
 TILE32_LAYOUT(tile32layout_sf2, 1024,    0x180000*8, 0x300000*8)
 SPRITE_LAYOUT(tilelayout_sf2, 4096*2-2048,     0x180000*8, 0x300000*8 )
 
@@ -3838,46 +4007,45 @@ struct GameDriver sf2_driver =
 
 
 ROM_START( sf2j_rom )
-	ROM_REGION(0x180000)      /* 68000 code */
-	ROM_LOAD_EVEN( "SF2J30.BIN",    0x00000, 0x20000, 0x79022b31 )
-	ROM_LOAD_ODD ( "SF2J37.BIN",    0x00000, 0x20000, 0x516776ec )
-	ROM_LOAD_EVEN( "SF2J31.BIN",    0x40000, 0x20000, 0xfe15cb39 )
-	ROM_LOAD_ODD ( "SF2J38.BIN",    0x40000, 0x20000, 0x38614d70 )
+        ROM_REGION(0x180000)      /* 68000 code */
+        ROM_LOAD_EVEN( "SF2J30.BIN",    0x00000, 0x20000, 0x79022b31 )
+        ROM_LOAD_ODD ( "SF2J37.BIN",    0x00000, 0x20000, 0x516776ec )
+        ROM_LOAD_EVEN( "SF2J31.BIN",    0x40000, 0x20000, 0xfe15cb39 )
+        ROM_LOAD_ODD ( "SF2J38.BIN",    0x40000, 0x20000, 0x38614d70 )
 
-	ROM_LOAD_EVEN( "SF2J28.BIN",    0x80000, 0x20000, 0xd283187a )
-	ROM_LOAD_ODD ( "SF2J35.BIN",    0x80000, 0x20000, 0xd28158e4 )
-	ROM_LOAD_EVEN( "SF2_29B.ROM",    0xc0000, 0x20000, 0xbb4af315 )
-	ROM_LOAD_ODD ( "SF2_36B.ROM",    0xc0000, 0x20000, 0xc02a13eb )
+        ROM_LOAD_EVEN( "SF2J28.BIN",    0x80000, 0x20000, 0xd283187a )
+        ROM_LOAD_ODD ( "SF2J35.BIN",    0x80000, 0x20000, 0xd28158e4 )
+        ROM_LOAD_EVEN( "SF2_29B.ROM",   0xc0000, 0x20000, 0xbb4af315 )
+        ROM_LOAD_ODD ( "SF2_36B.ROM",   0xc0000, 0x20000, 0xc02a13eb )
 
-	ROM_REGION(0x600000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION(0x600000)     /* temporary space for graphics (disposed after conversion) */
 
-		/* Plane 1+2 */
-	ROM_LOAD( "SF2GFX01.ROM",       0x000000, 0x80000, 0xba529b4f ) /* sprites (left half)*/
-	ROM_LOAD( "SF2GFX10.ROM",       0x080000, 0x80000, 0x14b84312 ) /* sprites */
-	ROM_LOAD( "SF2GFX20.ROM",       0x100000, 0x80000, 0xc1befaa8 ) /* sprites */
+                /* Plane 1+2 */
+        ROM_LOAD( "SF2GFX01.ROM",       0x000000, 0x80000, 0xba529b4f ) /* sprites (left half)*/
+        ROM_LOAD( "SF2GFX10.ROM",       0x080000, 0x80000, 0x14b84312 ) /* sprites */
+        ROM_LOAD( "SF2GFX20.ROM",       0x100000, 0x80000, 0xc1befaa8 ) /* sprites */
 
-	ROM_LOAD( "SF2GFX02.ROM",       0x180000, 0x80000, 0x22c9cc8e ) /* sprites (right half) */
-	ROM_LOAD( "SF2GFX11.ROM",       0x200000, 0x80000, 0x2c7e2229 ) /* sprites */
-	ROM_LOAD( "SF2GFX21.ROM",       0x280000, 0x80000, 0x994bfa58 ) /* sprites */
+        ROM_LOAD( "SF2GFX02.ROM",       0x180000, 0x80000, 0x22c9cc8e ) /* sprites (right half) */
+        ROM_LOAD( "SF2GFX11.ROM",       0x200000, 0x80000, 0x2c7e2229 ) /* sprites */
+        ROM_LOAD( "SF2GFX21.ROM",       0x280000, 0x80000, 0x994bfa58 ) /* sprites */
 
-	/* Plane 3+4 */
-	ROM_LOAD( "SF2GFX03.ROM",       0x300000, 0x80000, 0x4b1b33a8 ) /* sprites */
-	ROM_LOAD( "SF2GFX12.ROM",       0x380000, 0x80000, 0x5e9cd89a ) /* sprites */
-	ROM_LOAD( "SF2GFX22.ROM",       0x400000, 0x80000, 0x0627c831 ) /* sprites */
+        /* Plane 3+4 */
+        ROM_LOAD( "SF2GFX03.ROM",       0x300000, 0x80000, 0x4b1b33a8 ) /* sprites */
+        ROM_LOAD( "SF2GFX12.ROM",       0x380000, 0x80000, 0x5e9cd89a ) /* sprites */
+        ROM_LOAD( "SF2GFX22.ROM",       0x400000, 0x80000, 0x0627c831 ) /* sprites */
 
-	ROM_LOAD( "SF2GFX04.ROM",       0x480000, 0x80000, 0x57213be8 ) /* sprites */
-	ROM_LOAD( "SF2GFX13.ROM",       0x500000, 0x80000, 0xb5548f17 ) /* sprites */
-	ROM_LOAD( "SF2GFX23.ROM",       0x580000, 0x80000, 0x3e66ad9d ) /* sprites */
+        ROM_LOAD( "SF2GFX04.ROM",       0x480000, 0x80000, 0x57213be8 ) /* sprites */
+        ROM_LOAD( "SF2GFX13.ROM",       0x500000, 0x80000, 0xb5548f17 ) /* sprites */
+        ROM_LOAD( "SF2GFX23.ROM",       0x580000, 0x80000, 0x3e66ad9d ) /* sprites */
 
-	ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
-	ROM_LOAD( "SF2_09.ROM",   0x00000, 0x08000, 0xa4823a1b )
-	ROM_CONTINUE(           0x10000, 0x08000 )
+        ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
+        ROM_LOAD( "SF2_09.ROM",   0x00000, 0x08000, 0xa4823a1b )
+        ROM_CONTINUE(          0x10000, 0x08000 )
 
-	ROM_REGION(0x40000) /* Samples */
-	ROM_LOAD ( "SF2_18.ROM",       0x00000, 0x20000, 0x7f162009 )
-	ROM_LOAD ( "SF2_19.ROM",       0x20000, 0x20000, 0xbeade53f )
+        ROM_REGION(0x40000) /* Samples */
+        ROM_LOAD ( "SF2_18.ROM",       0x00000, 0x20000, 0x7f162009 )
+        ROM_LOAD ( "SF2_19.ROM",       0x20000, 0x20000, 0xbeade53f )
 ROM_END
-
 
 struct GameDriver sf2j_driver =
 {
@@ -3899,6 +4067,7 @@ struct GameDriver sf2j_driver =
         ORIENTATION_DEFAULT,
         cps1_hiload, cps1_hisave
 };
+
 
 ROM_START( sf2t_rom )
         ROM_REGION(0x180000)      /* 68000 code */
@@ -4125,9 +4294,10 @@ struct GameDriver sf2cej_driver =
 
 ROM_START( sf2rb_rom )
         ROM_REGION(0x180000)      /* 68000 code */
-        ROM_LOAD_WIDE_SWAP( "sfd__23.ROM",  0x000000, 0x80000, 0x89a1fc38 )
-        ROM_LOAD_WIDE_SWAP( "sfd__22.ROM",  0x080000, 0x80000, 0xaea6e035 )
-        ROM_LOAD_WIDE_SWAP( "sf2.21",       0x100000, 0x80000, 0xfd200288 )
+
+        ROM_LOAD_WIDE( "sf2d__23.ROM",   0x000000, 0x80000, 0x450532b0 )
+        ROM_LOAD_WIDE( "sf2d__22.ROM",   0x080000, 0x80000, 0xfe9d9cf5 )
+        ROM_LOAD_WIDE( "sf2cej.21",     0x100000, 0x80000, 0xfcb8fe8f )
 
         ROM_REGION(0x600000)     /* temporary space for graphics (disposed after conversion) */
                 /* Plane 1+2 */
@@ -4161,7 +4331,7 @@ ROM_END
 struct GameDriver sf2rb_driver =
 {
         __FILE__,
-        &sf2t_driver,
+        &sf2cej_driver,
         "sf2rb",
         "Street Fighter 2 (Rainbow Edition)",
         "1991",
@@ -4772,7 +4942,7 @@ INPUT_PORTS_START( input_ports_kod )
         PORT_START      /* IN0 */
         PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
         PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-        PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 ) /* Service Coin, not player 3 */
+        PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE ) /* Service Coin, not player 3 */
         PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
         PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
         PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
@@ -4872,6 +5042,17 @@ INPUT_PORTS_START( input_ports_kod )
         PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
         PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
         PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+        PORT_START      /* Player 3 */
+        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 )
+        PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER3 )
+        PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER3 )
+        PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER3 )
+        PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
+        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
+        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 )
+        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START3 )
+
 INPUT_PORTS_END
 
 CHAR_LAYOUT(charlayout_kod, 4096*2-2048,     0x200000*8)
@@ -5188,5 +5369,3 @@ struct GameDriver varth_driver =
         ORIENTATION_ROTATE_270,
         cps1_hiload, cps1_hisave
 };
-
-

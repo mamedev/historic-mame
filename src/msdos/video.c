@@ -46,14 +46,6 @@ void osd_profiler_display(void);
 
 
 /* HJB 10/07/98 specialized update_screen functions */
-/* dirty mode 2 (GfxLayer) */
-static void update_screen_dirty2_vga(void);
-static void update_screen_dirty2_vesa_16bpp_double_scanlines(void);
-static void update_screen_dirty2_vesa_16bpp_double_noscanlines(void);
-static void update_screen_dirty2_vesa_16bpp_single(void);
-static void update_screen_dirty2_vesa_8bpp_double_scanlines(void);
-static void update_screen_dirty2_vesa_8bpp_double_noscanlines(void);
-static void update_screen_dirty2_vesa_8bpp_single(void);
 /* dirty mode 1 (VIDEO_SUPPORTS_DIRTY) */
 static void update_screen_dirty1_vga(void);
 static void update_screen_dirty1_vesa_16bpp_double_scanlines(void);
@@ -245,9 +237,6 @@ void osd_clearbitmap(struct osd_bitmap *bitmap)
 	if (bitmap == scrbitmap)
 	{
 		osd_mark_dirty (0,0,bitmap->width-1,bitmap->height-1,1);
-
-		/* signal the layer system that the screen needs a complete refresh */
-		layer_mark_full_screen_dirty();
 	}
 }
 
@@ -266,11 +255,7 @@ void osd_free_bitmap(struct osd_bitmap *bitmap)
 
 void osd_mark_dirty(int _x1, int _y1, int _x2, int _y2, int ui)
 {
-	if (use_dirty == 2)	/* GfxLayer dirty handling */
-	{
-		layer_mark_rectangle_dirty_norotate(Machine->dirtylayer,_x1,_x2,_y1,_y2);
-	}
-	else if (use_dirty)
+	if (use_dirty)
 	{
 		int x, y;
 
@@ -295,14 +280,7 @@ void osd_mark_dirty(int _x1, int _y1, int _x2, int _y2, int ui)
 
 static void init_dirty(char dirty)
 {
-	if (use_dirty == 2)
-	{
-		layer_mark_all_dirty(Machine->dirtylayer,dirty ? MARK_ALL_DIRTY : MARK_ALL_CLEAN);
-	}
-	else
-	{
-		memset(dirty_new, dirty, MAX_GFX_WIDTH/16 * MAX_GFX_HEIGHT/16);
-	}
+	memset(dirty_new, dirty, MAX_GFX_WIDTH/16 * MAX_GFX_HEIGHT/16);
 }
 
 static inline void swap_dirty(void)
@@ -622,9 +600,6 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 	else
 		use_dirty = 0;
 
-	/* if driver uses the GfxLayer system, use different dirty support */
-	if (Machine->drv->layer) use_dirty = 2;
-
 	select_display_mode();
 
 	if (vector_game)
@@ -663,45 +638,7 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 		adjust_display (vis.min_x, vis.min_y, vis.max_x, vis.max_y);
 	}
 
-	/* select the specialized update_screen function now */
-	if (use_dirty == 2) /* uses GfxLayer system ? */
-	{
-		if (gfx_mode == GFX_VGA)
-		{
-			update_screen = update_screen_dirty2_vga;
-			if (errorlog) fprintf (errorlog, "update_screen_dirty2_vga\n");
-		}
-		else
-		if (scrbitmap->depth == 16) {
-			if (doubling) {
-				if (scanlines) {
-					update_screen = update_screen_dirty2_vesa_16bpp_double_scanlines;
-					if (errorlog) fprintf (errorlog, "update_screen_dirty2_vesa_16bpp_double_scanlines\n");
-				} else {
-					update_screen = update_screen_dirty2_vesa_16bpp_double_noscanlines;
-					if (errorlog) fprintf (errorlog, "update_screen_dirty2_vesa_16bpp_double_noscanlines\n");
-                }
-			} else {
-				update_screen = update_screen_dirty2_vesa_16bpp_single;
-				if (errorlog) fprintf (errorlog, "update_screen_dirty2_vesa_16bpp_single\n");
-            }
-		} else {
-			if (doubling) {
-				if (scanlines) {
-					update_screen = update_screen_dirty2_vesa_8bpp_double_scanlines;
-					if (errorlog) fprintf (errorlog, "update_screen_dirty2_vesa_8bpp_double_scanlines\n");
-				} else {
-                    update_screen = update_screen_dirty2_vesa_8bpp_double_noscanlines;
-					if (errorlog) fprintf (errorlog, "update_screen_dirty2_vesa_8bpp_double_noscanlines\n");
-				}
-			} else {
-				update_screen = update_screen_dirty2_vesa_8bpp_single;
-				if (errorlog) fprintf (errorlog, "update_screen_dirty2_vesa_8bpp_single\n");
-            }
-		}
-	}
-	else
-	if (use_dirty == 1) /* supports dirty ? */
+	if (use_dirty) /* supports dirty ? */
 	{
 		if (gfx_mode == GFX_VGA)
 		{
@@ -1257,193 +1194,6 @@ inline void double_pixels16(unsigned long *lb, short seg,
 	"ax", "bx", "cx", "dx", "si", "di", "cc", "memory");
 }
 
-
-void update_screen_dirty2_vga(void)
-{
-	int width,width4,y,columns4;
-	unsigned long *lb, address;
-
-	width4 = (scrbitmap->line[1] - scrbitmap->line[0]) / 4;
-	columns4 = gfx_display_columns/4;
-	address = 0xa0000 + gfx_xoffset + gfx_yoffset * gfx_width;
-	lb = (unsigned long *)(scrbitmap->line[skiplines] + skipcolumns);
-	for (y = 0; y < gfx_display_lines; y++)
-	{
-		if (Machine->dirtylayer->dirtyline[(y+skiplines) >> 3] != 0)
-			_dosmemputl(lb,columns4,address);
-
-		lb+=width4;
-		address+=gfx_width;
-	}
-}
-
-void update_screen_dirty2_vesa_16bpp_double_scanlines(void)
-{
-	short dest_seg;
-	int y, vesa_line, width4, columns4, skipcol2;
-	unsigned long *lb, address;
-	int xoffs;
-
-	dest_seg = screen->seg;
-	vesa_line = gfx_yoffset;
-	width4 = (scrbitmap->line[1] - scrbitmap->line[0]) / 4;
-	xoffs = 2 * gfx_xoffset;
-	columns4 = gfx_display_columns/2;
-	skipcol2 = skipcolumns*2;
-	lb = (unsigned long *)(scrbitmap->line[skiplines] + skipcol2 );
-	for (y = 0; y < gfx_display_lines; y++)
-	{
-		if (Machine->dirtylayer->dirtyline[(y+skiplines) >> 3] != 0)
-		{
-			address = bmp_write_line (screen, vesa_line) + xoffs;
-			double_pixels16(lb,dest_seg,address,columns4);
-		}
-
-		vesa_line += 2;
-		lb+=width4;
-	}
-}
-
-void update_screen_dirty2_vesa_16bpp_double_noscanlines(void)
-{
-	short dest_seg;
-	int y, vesa_line, width4, columns4, skipcol2;
-	unsigned long *lb, address;
-	int xoffs;
-
-	dest_seg = screen->seg;
-	vesa_line = gfx_yoffset;
-	width4 = (scrbitmap->line[1] - scrbitmap->line[0]) / 4;
-	xoffs = 2 * gfx_xoffset;
-	columns4 = gfx_display_columns/2;
-	skipcol2 = skipcolumns*2;
-	lb = (unsigned long *)(scrbitmap->line[skiplines] + skipcol2 );
-	for (y = 0; y < gfx_display_lines; y++)
-	{
-		if (Machine->dirtylayer->dirtyline[(y+skiplines) >> 3] != 0)
-		{
-			address = bmp_write_line (screen, vesa_line) + xoffs;
-			double_pixels16(lb,dest_seg,address,columns4);
-			address = bmp_write_line (screen, vesa_line+1) + xoffs;
-			double_pixels16(lb,dest_seg,address,columns4);
-		}
-
-		vesa_line += 2;
-		lb+=width4;
-	}
-}
-
-void update_screen_dirty2_vesa_16bpp_single(void)
-{
-	short src_seg, dest_seg;
-	int y, vesa_line, width4, columns4, skipcol2;
-	unsigned long *lb, address;
-	int xoffs;
-
-	src_seg = _my_ds();
-	dest_seg = screen->seg;
-	vesa_line = gfx_yoffset;
-	width4 = (scrbitmap->line[1] - scrbitmap->line[0]) / 4;
-	xoffs = 2 * gfx_xoffset;
-	columns4 = gfx_display_columns/2;
-	skipcol2 = skipcolumns*2;
-	lb = (unsigned long *)(scrbitmap->line[skiplines] + skipcol2 );
-	for (y = 0; y < gfx_display_lines; y++)
-	{
-		if (Machine->dirtylayer->dirtyline[(y+skiplines) >> 3] != 0)
-		{
-			address = bmp_write_line (screen, vesa_line) + xoffs;
-			_movedatal(src_seg,(unsigned long)lb,dest_seg,address,columns4);
-		}
-
-		vesa_line++;
-		lb+=width4;
-	}
-}
-
-void update_screen_dirty2_vesa_8bpp_double_scanlines(void)
-{
-	short dest_seg;
-	int y, vesa_line, width4, columns4, skipcol2;
-	unsigned long *lb, address;
-	int xoffs;
-
-	dest_seg = screen->seg;
-	vesa_line = gfx_yoffset;
-	width4 = (scrbitmap->line[1] - scrbitmap->line[0]) / 4;
-	xoffs = gfx_xoffset;
-	columns4 = gfx_display_columns/4;
-	skipcol2 = skipcolumns;
-	lb = (unsigned long *)(scrbitmap->line[skiplines] + skipcol2 );
-	for (y = 0; y < gfx_display_lines; y++)
-	{
-		if (Machine->dirtylayer->dirtyline[(y+skiplines) >> 3] != 0)
-		{
-			address = bmp_write_line (screen, vesa_line) + xoffs;
-			double_pixels(lb,dest_seg,address,columns4);
-		}
-
-		vesa_line += 2;
-		lb+=width4;
-	}
-}
-
-void update_screen_dirty2_vesa_8bpp_double_noscanlines(void)
-{
-	short dest_seg;
-	int y, vesa_line, width4, columns4, skipcol2;
-	unsigned long *lb, address;
-	int xoffs;
-
-	dest_seg = screen->seg;
-	vesa_line = gfx_yoffset;
-	width4 = (scrbitmap->line[1] - scrbitmap->line[0]) / 4;
-	xoffs = gfx_xoffset;
-	columns4 = gfx_display_columns/4;
-	skipcol2 = skipcolumns;
-	lb = (unsigned long *)(scrbitmap->line[skiplines] + skipcol2 );
-	for (y = 0; y < gfx_display_lines; y++)
-	{
-		if (Machine->dirtylayer->dirtyline[(y+skiplines) >> 3] != 0)
-		{
-			address = bmp_write_line (screen, vesa_line) + xoffs;
-			double_pixels(lb,dest_seg,address,columns4);
-			address = bmp_write_line (screen, vesa_line+1) + xoffs;
-			double_pixels(lb,dest_seg,address,columns4);
-		}
-
-		vesa_line += 2;
-		lb+=width4;
-	}
-}
-
-void update_screen_dirty2_vesa_8bpp_single(void)
-{
-	short src_seg, dest_seg;
-	int y, vesa_line, width4, columns4, skipcol2;
-	unsigned long *lb, address;
-	int xoffs;
-
-	src_seg = _my_ds();
-	dest_seg = screen->seg;
-	vesa_line = gfx_yoffset;
-	width4 = (scrbitmap->line[1] - scrbitmap->line[0]) / 4;
-	xoffs = gfx_xoffset;
-	columns4 = gfx_display_columns/4;
-	skipcol2 = skipcolumns;
-	lb = (unsigned long *)(scrbitmap->line[skiplines] + skipcol2 );
-	for (y = 0; y < gfx_display_lines; y++)
-	{
-		if (Machine->dirtylayer->dirtyline[(y+skiplines) >> 3] != 0)
-		{
-			address = bmp_write_line (screen, vesa_line) + xoffs;
-			_movedatal(src_seg,(unsigned long)lb,dest_seg,address,columns4);
-		}
-
-		vesa_line++;
-		lb+=width4;
-	}
-}
 
 void update_screen_dirty1_vga(void)
 {

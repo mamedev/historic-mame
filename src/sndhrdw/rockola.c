@@ -1,6 +1,9 @@
 /* from Andrew Scott (ascott@utkux.utcc.utk.edu) */
 #include "driver.h"
 
+void rockola_flipscreen_w(int offset,int data);
+
+
 static int NoSound0=1;
 static int Sound0Offset;
 static int Sound0Base;
@@ -9,6 +12,10 @@ static int NoSound1=1;
 static int Sound1Offset;
 static int Sound1Base;
 static int oldSound1Base;
+static int NoSound2=1;
+static int Sound2Offset;
+static int Sound2Base;
+static int oldSound2Base;
 static unsigned char LastPort1;
 static unsigned char LastPort2;
 
@@ -27,16 +34,21 @@ static unsigned char waveform[32] =
 int rockola_sh_start(void)
 {
 	NoSound0=1;
-	Sound0Offset=0x0000;
-	Sound0Base=Sound0Offset;
+	Sound0Offset=0;
+	Sound0Base=0x0000;
 	oldSound0Base=Sound0Base;
 	NoSound1=1;
-	Sound1Offset=0x0800;
-	Sound1Base=Sound1Offset;
+	Sound1Offset=0;
+	Sound1Base=0x0800;
 	oldSound1Base=Sound1Base;
+	NoSound2=1;
+	Sound2Offset=0;
+	Sound2Base=0x1000;
+	oldSound2Base=Sound2Base;
 
 	osd_play_sample(0, (signed char*)waveform, 32, 1000, 0, 1);
 	osd_play_sample(1, (signed char*)waveform, 32, 1000, 0, 1);
+	osd_play_sample(2, (signed char*)waveform, 32, 1000, 0, 1);
 
 	return 0;
 }
@@ -53,24 +65,24 @@ void rockola_sh_update(void)
 
 	/* play musical tones according to tunes stored in ROM */
 
-	if (!NoSound0 && Machine->memory_region[SOUND_MEMORY_REGION][Sound0Offset]!=0xff)
-		osd_adjust_sample(0, (32000 / (256-Machine->memory_region[SOUND_MEMORY_REGION][Sound0Offset])) * 16, 128);
+	if (!NoSound0 && Machine->memory_region[SOUND_MEMORY_REGION][Sound0Base+Sound0Offset]!=0xff)
+		osd_adjust_sample(0, (32000 / (256-Machine->memory_region[SOUND_MEMORY_REGION][Sound0Base+Sound0Offset])) * 16, 128);
 	else
 		osd_adjust_sample(0, 1000, 0);
-	Sound0Offset++;
 
-	if (!NoSound1 && Machine->memory_region[SOUND_MEMORY_REGION][Sound1Offset]!=0xff)
-		osd_adjust_sample(1, (32000 / (256-Machine->memory_region[SOUND_MEMORY_REGION][Sound1Offset])) * 16, 128);
+	if (!NoSound1 && Machine->memory_region[SOUND_MEMORY_REGION][Sound1Base+Sound1Offset]!=0xff)
+		osd_adjust_sample(1, (32000 / (256-Machine->memory_region[SOUND_MEMORY_REGION][Sound1Base+Sound1Offset])) * 16, 128);
 	else
 		osd_adjust_sample(1, 1000, 0);
-	Sound1Offset++;
 
-	/* check for overflow */
-	if (Sound0Offset > Sound0Base + 255)
-		Sound0Offset = Sound0Base;
+	if (!NoSound2 && Machine->memory_region[SOUND_MEMORY_REGION][Sound2Base+Sound2Offset]!=0xff)
+		osd_adjust_sample(2, (32000 / (256-Machine->memory_region[SOUND_MEMORY_REGION][Sound2Base+Sound2Offset])) * 16, 128);
+	else
+		osd_adjust_sample(2, 1000, 0);
 
-	if (Sound1Offset > Sound1Base + 255)
-		Sound1Offset = Sound1Base;
+	Sound0Offset = (Sound0Offset + 1) & 0xff;
+	Sound1Offset = (Sound1Offset + 1) & 0xff;
+	Sound2Offset = (Sound2Offset + 1) & 0xff;
 }
 
 void rockola_sound0_w(int offset,int data)
@@ -81,31 +93,31 @@ void rockola_sound0_w(int offset,int data)
 	if (Sound0Base != oldSound0Base)
 	{
 		oldSound0Base = Sound0Base;
-		Sound0Offset = Sound0Base;
+		Sound0Offset = 0;
 	}
 
 	/* play noise samples requested by sound command byte */
 	if (Machine->samples!=0 && Machine->samples->sample[0]!=0)
 	{
 		if (data & 0x20 && !(LastPort1 & 0x20))
-			osd_play_sample(4,Machine->samples->sample[0]->data,
+			osd_play_sample(5,Machine->samples->sample[0]->data,
 			                  Machine->samples->sample[0]->length,
 			                  Machine->samples->sample[0]->smpfreq,
 			                  Machine->samples->sample[0]->volume,0);
 		else if (!(data & 0x20) && LastPort1 & 0x20)
-			osd_stop_sample(4);
+			osd_stop_sample(5);
 
 		if (data & 0x40 && !(LastPort1 & 0x40))
-			osd_play_sample(2,Machine->samples->sample[0]->data,
+			osd_play_sample(3,Machine->samples->sample[0]->data,
 			                  Machine->samples->sample[0]->length,
 			                  Machine->samples->sample[0]->smpfreq,
 			                  Machine->samples->sample[0]->volume,0);
 		else if (!(data & 0x20) && LastPort1 & 0x20)
-			osd_stop_sample(2);
+			osd_stop_sample(3);
 
 		if (data & 0x80 && !(LastPort1 & 0x80))
 		{
-			osd_play_sample(3,Machine->samples->sample[1]->data,
+			osd_play_sample(4,Machine->samples->sample[1]->data,
 			                  Machine->samples->sample[1]->length,
 			                  Machine->samples->sample[1]->smpfreq,
 			                  Machine->samples->sample[1]->volume,0);
@@ -132,7 +144,7 @@ void rockola_sound1_w(int offset,int data)
 	if (Sound1Base != oldSound1Base)
 	{
 		oldSound1Base = Sound1Base;
-		Sound1Offset = Sound1Base;
+		Sound1Offset = 0;
 	}
 
 	if (data & 0x08)
@@ -145,4 +157,65 @@ void rockola_sound1_w(int offset,int data)
 	}
 
 	LastPort2 = data;
+}
+
+
+
+void fantasy_sound0_w(int offset,int data)
+{
+	/* select musical tune in ROM based on sound command byte */
+	Sound0Base = 0x0000 + ((data & 0x07) << 8);
+
+	/* play noise samples requested by sound command byte */
+	if (Machine->samples!=0 && Machine->samples->sample[0]!=0)
+	{
+		if (data & 0x80 && !(LastPort1 & 0x80))
+		{
+			osd_play_sample(3,Machine->samples->sample[0]->data,
+			                  Machine->samples->sample[0]->length,
+			                  Machine->samples->sample[0]->smpfreq,
+			                  Machine->samples->sample[0]->volume,0);
+		}
+	}
+
+	if (data & 0x08)
+		NoSound0=0;
+	else
+	{
+		Sound0Offset = Sound0Base;
+		NoSound0=1;
+	}
+
+	if (data & 0x10)
+		NoSound2=0;
+	else
+	{
+		NoSound2=1;
+		Sound2Offset = 0;
+	}
+
+	LastPort1 = data;
+}
+
+void fantasy_sound1_w(int offset,int data)
+{
+	/* select tune in ROM based on sound command byte */
+	Sound1Base = 0x0800 + ((data & 0x07) << 8);
+
+	if (data & 0x08)
+		NoSound1=0;
+	else
+	{
+		NoSound1=1;
+		Sound1Offset = 0;
+	}
+}
+
+void fantasy_sound2_w(int offset,int data)
+{
+	rockola_flipscreen_w(offset,data);
+
+	/* select tune in ROM based on sound command byte */
+//	Sound2Base = 0x1000 + ((data & 0x70) << 4);
+	Sound2Base = 0x1000 + ((data & 0x10) << 5) + ((data & 0x20) << 5) + ((data & 0x40) << 2);
 }

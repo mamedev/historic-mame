@@ -20,7 +20,7 @@
 #include "ym3812.h"
 
 /* Main emulated vs non-emulated switch */
-/* default : Use non-emulated YM3812 */
+/* default : Use emulated YM3812 */
 int use_emulated_ym3812 = 1;
 
 /* Emulated YM3812 variables and defines */
@@ -295,7 +295,7 @@ void emu_YM3812_control_port_0_w( int offset, int data ) {
 }
 
 void emu_YM3812_write_port_0_w( int offset, int data ) {
-//	stream_update( ym_channel );	// Update the buffer before writing new regs
+//	stream_update( ym_channel, 0 );	// Update the buffer before writing new regs
 	ym3812_WriteReg( ym, data );
 }
 

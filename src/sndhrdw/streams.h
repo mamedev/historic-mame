@@ -11,7 +11,9 @@ void streams_sh_update(void);
 
 int stream_init(const char *name,int sample_rate,int sample_bits,
 		int param,void (*callback)(int param,void *buffer,int length));
-void stream_update(int channel);
+int stream_init_multi(int channels,const char **name,int sample_rate,int sample_bits,
+		int param,void (*callback)(int param,void **buffer,int length));
+void stream_update(int channel,int min_interval);	/* min_interval is in usec */
 void stream_set_volume(int channel,int volume);
 int stream_get_volume(int channel);
 const char *stream_get_name(int channel);

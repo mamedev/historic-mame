@@ -62,7 +62,8 @@ void cps1_dump_driver(void)
 
 int cps1_input_r(int offset)
 {
-       return (readinputport (offset/2) << 8);
+       int control=readinputport (offset/2);
+       return (control<<8) | control;
 }
 
 int cps1_player_input_r(int offset)
@@ -91,7 +92,8 @@ int cps1_interrupt2(void)
 
 int cps1_interrupt3(void)
 {
-	DEBUG_DUMP_DRV();
-	return 2;
+       DEBUG_DUMP_DRV();
+       return 2;
 }
+
 

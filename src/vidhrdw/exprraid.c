@@ -107,7 +107,7 @@ void exprraid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		code = spriteram[offs+3] + ( ( spriteram[offs+1] & 0xe0 ) << 3 );
 
-		sx = ((240 - spriteram[offs+2] + 8) & 0xff) - 8;
+		sx = ((248 - spriteram[offs+2]) & 0xff) - 8;
 		sy = spriteram[offs];
 		color = (spriteram[offs+1] & 0x03) + ((spriteram[offs+1] & 0x08) >> 1);
 		flipx = ( spriteram[offs+1] & 0x04 );

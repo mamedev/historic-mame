@@ -59,10 +59,10 @@
 
 static unsigned char *eeprom;
 static int eeprom_size;
+static int code_rom_size;
+unsigned char *exterm_code_rom;
 
 extern unsigned char *exterm_master_speedup, *exterm_slave_speedup;
-extern unsigned char *exterm_code_rom;
-extern int exterm_code_rom_size;
 extern unsigned char *exterm_master_videoram, *exterm_slave_videoram;
 
 /* Functions in vidhrdw/exterm.c */
@@ -70,9 +70,7 @@ void exterm_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 int  exterm_vh_start(void);
 void exterm_vh_stop (void);
 int  exterm_master_videoram_r(int offset);
-void exterm_master_videoram_w(int offset, int data);
 int  exterm_slave_videoram_r(int offset);
-void exterm_slave_videoram_w(int offset, int data);
 void exterm_paletteram_w(int offset, int data);
 void exterm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -97,7 +95,7 @@ int  exterm_sound_ym2151_speedup_r(int offset);
 
 static struct MemoryReadAddress master_readmem[] =
 {
-	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_master_videoram_r },
+	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_master_videoram_r, &exterm_master_videoram },
 	{ TOBYTE(0x00c800e0), TOBYTE(0x00c800ef), exterm_master_speedup_r, &exterm_master_speedup },
 	{ TOBYTE(0x00c00000), TOBYTE(0x00ffffff), MRA_BANK1 },
 	{ TOBYTE(0x01000000), TOBYTE(0x0100000f), MRA_NOP }, /* Off by one bug in RAM test, prevent log entry */
@@ -111,13 +109,14 @@ static struct MemoryReadAddress master_readmem[] =
 	{ TOBYTE(0x03000000), TOBYTE(0x03ffffff), exterm_coderom_r },
 	{ TOBYTE(0x3f000000), TOBYTE(0x3fffffff), exterm_coderom_r },
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), TMS34010_io_register_r },
-	{ TOBYTE(0xff000000), TOBYTE(0xffffffff), MRA_BANK3, &exterm_code_rom, &exterm_code_rom_size },
+	{ TOBYTE(0xff000000), TOBYTE(0xffffffff), MRA_BANK3, &exterm_code_rom, &code_rom_size },
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress master_writemem[] =
 {
-	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_master_videoram_w, &exterm_master_videoram },
+  /*{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_master_videoram_16_w },	 OR		*/
+  /*{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_master_videoram_8_w },				*/
 	{ TOBYTE(0x00c00000), TOBYTE(0x00ffffff), MWA_BANK1 },
 	{ TOBYTE(0x01000000), TOBYTE(0x010fffff), TMS34010_HSTADRL_w },
 	{ TOBYTE(0x01100000), TOBYTE(0x011fffff), TMS34010_HSTADRH_w },
@@ -135,7 +134,7 @@ static struct MemoryWriteAddress master_writemem[] =
 
 static struct MemoryReadAddress slave_readmem[] =
 {
-	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_r },
+	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_r, &exterm_slave_videoram },
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), TMS34010_io_register_r },
 	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MRA_BANK4 },
 	{ -1 }  /* end of table */
@@ -143,7 +142,8 @@ static struct MemoryReadAddress slave_readmem[] =
 
 static struct MemoryWriteAddress slave_writemem[] =
 {
-	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_w, &exterm_slave_videoram },
+  /*{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_16_w },      OR		*/
+  /*{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_8_w },       OR		*/
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), TMS34010_io_register_w },
 	{ TOBYTE(0xfffffb90), TOBYTE(0xfffffb90), exterm_slave_speedup_w, &exterm_slave_speedup },
 	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MWA_BANK4 },
@@ -181,7 +181,7 @@ static struct MemoryReadAddress sound_ym2151_readmem[] =
 static struct MemoryWriteAddress sound_ym2151_writemem[] =
 {
 	{ 0x0000, 0x07ff, MWA_RAM },
-        { 0x4000, 0x4000, exterm_ym2151_w },
+	{ 0x4000, 0x4000, exterm_ym2151_w },
 	{ 0x6000, 0x6000, gottlieb_nmi_rate_w },
 	{ 0xa000, 0xa000, exterm_sound_control_w },
 	{ -1 }  /* end of table */
@@ -252,6 +252,18 @@ INPUT_PORTS_START( exterm_input_ports )
 INPUT_PORTS_END
 
 
+static void machine_init(void)
+{
+	static int copied = 0;
+
+	if (!copied)
+	{
+		memcpy (exterm_code_rom, Machine->memory_region[Machine->drv->cpu[0].memory_region],code_rom_size);
+		copied = 1;
+	}
+}
+
+
 static struct DACinterface dac_interface =
 {
 	2, 			/* 2 channels on 1 chip */
@@ -304,7 +316,7 @@ static struct MachineDriver machine_driver =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
-	exterm_init_machine,
+	machine_init,
 
 	/* video hardware, the reason for 263 is that the VCOUNT register is
 	   supposed to go from 0 to the value in VEND-1, which is 263 */
@@ -410,6 +422,13 @@ ROM_START( exterm_rom )
 ROM_END
 
 
+void driver_init(void)
+{
+	TMS34010_set_stack_base(0, cpu_bankbase[1], TOBYTE(0x00c00000));
+	TMS34010_set_stack_base(1, cpu_bankbase[4], TOBYTE(0xff800000));
+}
+
+
 struct GameDriver exterm_driver =
 {
 	__FILE__,
@@ -421,7 +440,7 @@ struct GameDriver exterm_driver =
 	"Zsolt Vasvari\nAlex Pasadyn",
 	0,
 	&machine_driver,
-	0,
+	driver_init,
 
 	exterm_rom,
 	0, 0,

@@ -12,7 +12,7 @@
 unsigned char *slapfight_videoram;
 unsigned char *slapfight_colorram;
 int slapfight_videoram_size;
-unsigned char *slapfight_scrollx_lo,*slapfight_scrollx_hi;
+unsigned char *slapfight_scrollx_lo,*slapfight_scrollx_hi,*slapfight_scrolly;
 
 
 /***************************************************************************
@@ -105,7 +105,7 @@ void slapfight_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 		scrollx = -(*slapfight_scrollx_lo + 256 * *slapfight_scrollx_hi);
-		scrolly = 16;
+		scrolly = -*slapfight_scrolly;
 		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 

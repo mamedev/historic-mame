@@ -1143,7 +1143,7 @@ INPUT_PORTS_END
 static struct DACinterface dac_interface =
 {
 	1,
-	{ 255 }
+	{ 100 }
 };
 
 
@@ -3172,17 +3172,17 @@ struct GameDriver defndjeu_driver =
 
 ROM_START( defcmnd_rom )
 	ROM_REGION(0x15000)
-    ROM_LOAD( "defcmnda.1", 0x0d000, 0x1000, 0x68effc1d )
-    ROM_LOAD( "defcmnda.2", 0x0e000, 0x1000, 0x1126adc9 )
-    ROM_LOAD( "defcmnda.3", 0x0f000, 0x1000, 0x7340209d )
+    ROM_LOAD( "defcmnda.1",   0x0d000, 0x1000, 0x68effc1d )
+    ROM_LOAD( "defcmnda.2",   0x0e000, 0x1000, 0x1126adc9 )
+    ROM_LOAD( "defcmnda.3",   0x0f000, 0x1000, 0x7340209d )
 	/* bank 0 is the place for CMOS ram */
-    ROM_LOAD( "defcmnda.10", 0x10000, 0x0800, 0x3dddae75 )
-    ROM_LOAD( "defcmnda.7", 0x10800, 0x0800, 0x3f1e7cf8 )
-    ROM_LOAD( "defcmnda.9", 0x11000, 0x0800, 0x8882e1ff )
-    ROM_LOAD( "defcmnda.6", 0x11800, 0x0800, 0xd068f0c5 )
-    ROM_LOAD( "defcmnda.8", 0x12000, 0x0800, 0xfef4cb77 )
-    ROM_LOAD( "defcmnda.5", 0x12800, 0x0800, 0x49b50b40 )
-    ROM_LOAD( "defcmnda.4", 0x13000, 0x0800, 0x43d42a1b )
+    ROM_LOAD( "defcmnda.10",  0x10000, 0x0800, 0x3dddae75 )
+    ROM_LOAD( "defcmnda.7",   0x10800, 0x0800, 0x3f1e7cf8 )
+    ROM_LOAD( "defcmnda.9",   0x11000, 0x0800, 0x8882e1ff )
+    ROM_LOAD( "defcmnda.6",   0x11800, 0x0800, 0xd068f0c5 )
+    ROM_LOAD( "defcmnda.8",   0x12000, 0x0800, 0xfef4cb77 )
+    ROM_LOAD( "defcmnda.5",   0x12800, 0x0800, 0x49b50b40 )
+    ROM_LOAD( "defcmnda.4",   0x13000, 0x0800, 0x43d42a1b )
 
 	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
@@ -3190,6 +3190,28 @@ ROM_START( defcmnd_rom )
 
 	ROM_REGION(0x10000)     /* 64k for the sound CPU */
     ROM_LOAD( "defcmnda.snd", 0xf800, 0x0800, 0xf122d9c9 )
+ROM_END
+
+ROM_START( defence_rom )
+	ROM_REGION(0x15000)
+    ROM_LOAD( "1",            0x0d000, 0x1000, 0xebc93622 )
+    ROM_LOAD( "2",            0x0e000, 0x1000, 0x2a4f4f44 )
+    ROM_LOAD( "3",            0x0f000, 0x1000, 0xa4112f91 )
+	/* bank 0 is the place for CMOS ram */
+    ROM_LOAD( "0",            0x10000, 0x0800, 0x7a1e5998 )
+    ROM_LOAD( "7",            0x10800, 0x0800, 0x4c2616a3 )
+    ROM_LOAD( "9",            0x11000, 0x0800, 0x7b146003 )
+    ROM_LOAD( "6",            0x11800, 0x0800, 0x6d748030 )
+    ROM_LOAD( "8",            0x12000, 0x0800, 0x52d5438b )
+    ROM_LOAD( "5",            0x12800, 0x0800, 0x4a270340 )
+    ROM_LOAD( "4",            0x13000, 0x0800, 0xe13f457c )
+
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x10000)     /* 64k for the sound CPU */
+    ROM_LOAD( "12",           0xf800, 0x0800, 0xf122d9c9 )
 ROM_END
 
 
@@ -3208,6 +3230,32 @@ struct GameDriver defcmnd_driver =
 
     defcmnd_rom,                   /* RomModule * */
     0, 0,            /* ROM decrypt routines */
+	0,                              /* samplenames */
+	0,      /* sound_prom */
+
+	defender_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	defender_cmos_load, defender_cmos_save
+};
+
+struct GameDriver defence_driver =
+{
+	__FILE__,
+	&defender_driver,
+	"defence",
+	"Defence Command",
+	"1980",
+	"bootleg",
+	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
+	0,
+	&defender_machine_driver,       /* MachineDriver * */
+	0,
+
+	defence_rom,                   /* RomModule * */
+	0, 0,                           /* ROM decrypt routines */
 	0,                              /* samplenames */
 	0,      /* sound_prom */
 

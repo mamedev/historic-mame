@@ -395,7 +395,38 @@ ROM_START( exprraid_rom )
     ROM_LOAD( "cz02",    0x8000, 0x8000, 0x552e6112 )
 ROM_END
 
-ROM_START( exprraib_rom )
+ROM_START( wexpress_rom )
+    ROM_REGION(0x34000)     /* 64k for code */
+	ROM_LOAD( "2",       0x4000, 0x4000, 0xea5e5a8f )
+    ROM_LOAD( "1",       0x8000, 0x8000, 0xa7daae12 )
+
+    ROM_REGION_DISPOSE(0x54000)     /* temporary space for graphics (disposed after conversion) */
+    ROM_LOAD( "cz07",    0x00000, 0x4000, 0x686bac23 )	/* characters */
+	ROM_LOAD( "cz09",    0x04000, 0x8000, 0x1ed250d1 )	/* sprites */
+	ROM_LOAD( "cz08",    0x0c000, 0x8000, 0x2293fc61 )
+	ROM_LOAD( "cz13",    0x14000, 0x8000, 0x7c3bfd00 )
+	ROM_LOAD( "cz12",    0x1c000, 0x8000, 0xea2294c8 )
+	ROM_LOAD( "cz11",    0x24000, 0x8000, 0xb7418335 )
+	ROM_LOAD( "cz10",    0x2c000, 0x8000, 0x2f611978 )
+	ROM_LOAD( "4",       0x34000, 0x8000, 0xf2e93ff0 )	/* tiles */
+/* Save 0x34000-0x43fff to expand the previous so we can decode the thing */
+	ROM_LOAD( "cz05",    0x44000, 0x8000, 0xc44570bf )	/* tiles */
+	ROM_LOAD( "6",       0x4c000, 0x8000, 0xc3a56de5 )	/* tiles */
+
+	ROM_REGION(0x0400) /* color PROMs */
+    ROM_LOAD( "cz17.prm", 0x0000, 0x0100, 0xda31dfbc ) /* red */
+    ROM_LOAD( "cz16.prm", 0x0100, 0x0100, 0x51f25b4c ) /* green */
+    ROM_LOAD( "cz15.prm", 0x0200, 0x0100, 0xa6168d7f ) /* blue */
+    ROM_LOAD( "cz14.prm", 0x0300, 0x0100, 0x52aad300 ) /* ??? */
+
+    ROM_REGION(0x8000)     /* 32k for tile maps */
+	ROM_LOAD( "3",        0x0000, 0x8000, 0x242e3e64 )
+
+    ROM_REGION(0x10000)     /* 64k for the sub cpu */
+    ROM_LOAD( "cz02",    0x8000, 0x8000, 0x552e6112 )
+ROM_END
+
+ROM_START( wexpresb_rom )
     ROM_REGION(0x34000)     /* 64k for code */
 	ROM_LOAD( "wexpress.3", 0x4000, 0x4000, 0xb4dd0fa4 )
     ROM_LOAD( "wexpress.1", 0x8000, 0x8000, 0xe8466596 )
@@ -408,10 +439,10 @@ ROM_START( exprraib_rom )
 	ROM_LOAD( "cz12",    0x1c000, 0x8000, 0xea2294c8 )
 	ROM_LOAD( "cz11",    0x24000, 0x8000, 0xb7418335 )
 	ROM_LOAD( "cz10",    0x2c000, 0x8000, 0x2f611978 )
-	ROM_LOAD( "cz04",    0x34000, 0x8000, 0x643a1bd3 )	/* tiles */
+	ROM_LOAD( "4",       0x34000, 0x8000, 0xf2e93ff0 )	/* tiles */
 /* Save 0x34000-0x43fff to expand the previous so we can decode the thing */
 	ROM_LOAD( "cz05",    0x44000, 0x8000, 0xc44570bf )	/* tiles */
-	ROM_LOAD( "cz06",    0x4c000, 0x8000, 0xb9bb448b )	/* tiles */
+	ROM_LOAD( "6",       0x4c000, 0x8000, 0xc3a56de5 )	/* tiles */
 
 	ROM_REGION(0x0400) /* color PROMs */
     ROM_LOAD( "cz17.prm", 0x0000, 0x0100, 0xda31dfbc ) /* red */
@@ -420,7 +451,7 @@ ROM_START( exprraib_rom )
     ROM_LOAD( "cz14.prm", 0x0300, 0x0100, 0x52aad300 ) /* ??? */
 
     ROM_REGION(0x8000)     /* 32k for tile maps */
-	ROM_LOAD( "cz03",    0x0000, 0x8000, 0x6ce11971 )
+	ROM_LOAD( "3",        0x0000, 0x8000, 0x242e3e64 )
 
     ROM_REGION(0x10000)     /* 64k for the sub cpu */
     ROM_LOAD( "cz02",    0x8000, 0x8000, 0x552e6112 )
@@ -448,20 +479,11 @@ static void exprraid_gfx_expand( void ) {
 	}
 }
 
-static void exprraid_decode_rom( void ) {
-
+static void wexpress_decode_rom( void )
+{
 	unsigned char *RAM = Machine->memory_region[0];
 	int i;
 
-	/* decode vectors */
-	RAM[0xfffa] = RAM[0xfff7];
-	RAM[0xfffb] = RAM[0xfff6];
-
-	RAM[0xfffc] = RAM[0xfff1];
-	RAM[0xfffd] = RAM[0xfff0];
-
-	RAM[0xfffe] = RAM[0xfff3];
-	RAM[0xffff] = RAM[0xfff2];
 
 	/* HACK!: Implement custom opcode as regular with a mapped io read */
 	for ( i = 0; i < 0x10000; i++ ) {
@@ -474,6 +496,26 @@ static void exprraid_decode_rom( void ) {
 		} else
 			ROM[i] = RAM[i];
 	}
+}
+
+static void exprraid_decode_rom( void )
+{
+	unsigned char *RAM = Machine->memory_region[0];
+	int i;
+
+
+	/* decode vectors */
+	RAM[0xfffa] = RAM[0xfff7];
+	RAM[0xfffb] = RAM[0xfff6];
+
+	RAM[0xfffc] = RAM[0xfff1];
+	RAM[0xfffd] = RAM[0xfff0];
+
+	RAM[0xfffe] = RAM[0xfff3];
+	RAM[0xffff] = RAM[0xfff2];
+
+	/* HACK!: Implement custom opcode as regular with a mapped io read */
+	wexpress_decode_rom();
 }
 
 struct GameDriver exprraid_driver =
@@ -502,12 +544,38 @@ struct GameDriver exprraid_driver =
 	0, 0
 };
 
-struct GameDriver exprraib_driver =
+struct GameDriver wexpress_driver =
 {
 	__FILE__,
 	&exprraid_driver,
-	"exprraib",
-	"Express Raider (bootleg)",
+	"wexpress",
+	"Western Express",
+	"1986",
+	"Data East Corporation",
+	"Ernesto Corvi\nNicola Salmoria",
+	0,
+	&machine_driver,
+	0,
+
+	wexpress_rom,
+	exprraid_gfx_expand, wexpress_decode_rom,
+	0,
+	0,      /* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};
+
+struct GameDriver wexpresb_driver =
+{
+	__FILE__,
+	&exprraid_driver,
+	"wexpresb",
+	"Western Express (bootleg)",
 	"1986",
 	"bootleg",
 	"Ernesto Corvi\nNicola Salmoria",
@@ -515,7 +583,7 @@ struct GameDriver exprraib_driver =
 	&machine_driver,
 	0,
 
-	exprraib_rom,
+	wexpresb_rom,
 	exprraid_gfx_expand, 0,
 	0,
 	0,      /* sound_prom */

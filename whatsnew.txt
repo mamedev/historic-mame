@@ -1,3 +1,77 @@
+0.34 BETA 7
+
+New ROM sets supported (in no particular order):
+------------------------------------------------
+
+Several Williams/Midway TMS34010 games. WARNING: these are VERY slow. You'll
+  need a powerful machine to run them at a decent speed. [Alex Pasadyn,
+  Zsolt Vasvari, Kurt Mahan]
+  The games are:
+    Smash Tv
+    Total Carnage
+    Mortal Kombat
+    Narc
+    Strike Force
+    Trog (prototype and release versions)
+    Hi Impact Football
+    Super Hi Impact
+    Terminator 2 (not playable)
+    Mortal Kombat II (not working)
+    NBA Jam (not working)
+Exciting Soccer (two sets merged) [Ernesto Corvi, Jarek Parchanski]
+Mercs (3 sets merged) [Paul Leaman]
+Super Casino [Thierry Lescot]
+Pickin' [Nicola Salmoria]
+Treasure Hunt (not working due to encryption) [Brad Oliver, Mike Balfour]
+Jump Shot (not working due to encryption) [Nicola Salmoria]
+Sidearms (US) (merged) [Nicola Salmoria]
+Defence Command [Nicola Salmoria]
+Vastar (set 2) (merged) (also contains the color PROMs) [Nicola Salmoria]
+Mania Challenge (set 2) (merged) (also contains the color PROMs) [Nicola Salmoria]
+Scion (Seibu Denshi) (merged) [Thierry Lescot]
+Road Fighter (set 2) (merged) [Nicola Salmoria]
+Time Pilot (Centuri) (merged) [Nicola Salmoria]
+Time Pilot 84 (set 2) (merged) [Nicola Salmoria]
+Track & Field (Centuri) [Nicola Salmoria]
+Kung Fu Master (2 new sets merged) [Nicola Salmoria]
+Western Express (merged with Express Raider) [Nicola Salmoria]
+The Billiards (merged with Video Hustler) [Nicola Salmoria]
+Gun Dealer (set 2) [Gerald Vanderick]
+Jack the Giant Killer (set 2) (merged) [Thierry Lescot]
+Carrier Air Wing (World) (merged) [Nicola Salmoria]
+Golden Star (blue version) (merged) [Mirko Buffoni]
+
+
+These drivers have improved GRAPHICS:
+-------------------------------------
+
+- Fixed bad graphics in Champion Baseball. [Nicola Salmoria]
+
+- Accurate colors in Qwak. [Mike Balfour]
+
+
+These drivers have new or improved SOUND:
+-----------------------------------------
+
+- Added some more sound effects to Juno First. The shoot sound is still
+  missing. [Nicola Salmoria]
+
+
+These drivers have HIGH SCORE support:
+--------------------------------------
+
+- Tiger Heli. [Juan Carlos Lorente]
+
+
+Source:
+-------
+
+- [DOS] Now using a beta version of the SEAL audio library which will improve
+  the dynamic range. This change isn't complete yet. [Nicola Salmoria]
+
+
+==========================================================================
+
 0.34 BETA 6
 
 Note about the x86 asm 68000 core: several bugs have been fixed (most notably,
@@ -192,103 +266,6 @@ errors.
 
 The Neorage team will support all fixes to the bad roms and make sure their
 emulator is compatible.  Most fixed romsets will work on Neorage already.
-
-If you wish to fix your romsets here is the last of bad roms:
-
-ALPHAM2.ZIP
-N082001A.478                                    FIRST AND SECOND HALF IDENTICAL
-
-AOF2.ZIP
-AOF2_P1.ROM                                     FIRST AND SECOND HALF IDENTICAL
-AOF2_V3.ROM                                     FIRST AND SECOND HALF IDENTICAL
-
-BLAZSTAR.ZIP
-BSTAR_P2.ROM                                    BAD NEOGEO DUMP - CUT 2ND HALF
-
-BSTARS.ZIP
-N042001A.478                                    FIRST AND SECOND HALF IDENTICAL
-N138001A.478                                    FIRST AND SECOND HALF IDENTICAL
-
-BSTARS2.ZIP
-STAR2_M1.ROM                                    FIRST AND SECOND HALF IDENTICAL
-
-CYBERLIP.ZIP
-N062001A.478                                    FIRST AND SECOND HALF IDENTICAL
-
-CYBRLIPA.ZIP
-CYBL_M1.ROM                                     FIRST AND SECOND HALF IDENTICAL
-
-FATFURY3.ZIP
-FURY3_P2.ROM                                    BAD NEOGEO DUMP - CUT 2ND HALF
-
-GALAXYFG.ZIP
-GALFI_C7.ROM                                    FIRST AND SECOND HALF IDENTICAL
-GALFI_C8.ROM                                    FIRST AND SECOND HALF IDENTICAL
-GALFI_V3.ROM                                    FIRST AND SECOND HALF IDENTICAL
-
-GOALX3.ZIP
-GOAL!_C3.ROM                                    BAD NEOGEO DUMP - CUT 2ND HALF
-GOAL!_C4.ROM                                    BAD NEOGEO DUMP - CUT 2ND HALF
-
-GPILOTS.ZIP
-N058001A.478                                    FIRST AND SECOND HALF IDENTICAL
-
-JOYJOY.ZIP
-N022001A.478                                    FIRST AND SECOND HALF IDENTICAL
-
-KABUKIKL.ZIP
-KLASH_V4.ROM                                    FIRST AND SECOND HALF IDENTICAL
-
-KOF95.ZIP
-KOF95_C5.ROM                                    BAD NEOGEO DUMP - CUT 2ND HALF
-KOF95_C6.ROM                                    BAD NEOGEO DUMP - CUT 2ND HALF
-
-KOF96M.ZIP
-KOF96_P1.ROM                                    FIRST AND SECOND HALF IDENTICAL
-
-LBOWLING.ZIP
-N050001A.478                                    FIRST AND SECOND HALF IDENTICAL
-
-MAGLORD.ZIP
-MAGL_M1.ROM                                     FIRST AND SECOND HALF IDENTICAL
-
-NCOMBAT.ZIP
-N046001A.478                                    FIRST AND SECOND HALF IDENTICAL
-
-PULSTAR.ZIP
-PSTAR_C7.ROM                                    BAD NEOGEO DUMP - CUT 2ND HALF
-PSTAR_C8.ROM                                    BAD NEOGEO DUMP - CUT 2ND HALF
-PSTAR_P1.ROM                                    FIRST AND SECOND HALF IDENTICAL
-PSTAR_P2.ROM                                    BAD NEOGEO DUMP - CUT 2ND HALF
-
-RIDHERO.ZIP
-N046001A.478                                    FIRST AND SECOND HALF IDENTICAL
-
-SAMSHO4.ZIP
-SAMS4_V3.ROM                                    BAD NEOGEO DUMP - CUT 2ND HALF
-
-SHOCKTRO.ZIP
-SHOCK_P1.ROM                                    FIRST AND SECOND HALF IDENTICAL
-
-SONICWI2.ZIP
-AFIG2_V2.ROM                                    FIRST AND SECOND HALF IDENTICAL
-
-STRHOOPS.ZIP
-SHOOP_C1.ROM                                    BAD NEOGEO DUMP - CUT 2ND HALF
-SHOOP_C2.ROM                                    BAD NEOGEO DUMP - CUT 2ND HALF
-SHOOP_C3.ROM                                    BAD NEOGEO DUMP - CUT 2ND HALF
-SHOOP_C4.ROM                                    BAD NEOGEO DUMP - CUT 2ND HALF
-SHOOP_V1.ROM                                    BAD NEOGEO DUMP - CUT 2ND HALF
-
-SUPERSPY.ZIP
-N138001A.478                                    FIRST AND SECOND HALF IDENTICAL
-
-TPGOLF.ZIP
-TOPG_M1.ROM                                     FIRST AND SECOND HALF IDENTICAL
-
-TWINSPRI.ZIP
-SPRIT_P1.ROM                                    BAD NEOGEO DUMP - CUT 2ND HALF
-SPRIT_V2.ROM                                    BAD NEOGEO DUMP - CUT 2ND HALF
 
 
 ==========================================================================

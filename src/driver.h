@@ -4,7 +4,6 @@
 
 #include "common.h"
 #include "palette.h"
-#include "gfxlayer.h"
 #include "mame.h"
 #include "cpuintrf.h"
 #include "memory.h"
@@ -274,8 +273,8 @@ struct MachineDriver
 	void (*vh_convert_color_prom)(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 	int video_attributes;	/* ASG 081897 */
-	struct MachineLayer *layer;	/* make sure the array has MAX_LAYERS elements */
-								/* order is front to back: layer[0] is the frontmost layer, */
+	int unused;	/* obsolete */
+
 	int (*vh_start)(void);
 	void (*vh_stop)(void);
 	void (*vh_update)(struct osd_bitmap *bitmap,int full_refresh);

@@ -12,6 +12,12 @@
  * Brian Verre     Cycle timings  (timings taken from this table)
  *
  *---------------------------------------------------------------
+ * History (so we know what bugs have been fixed)
+ *
+ * 02.11.98 MJC - cmpm bug, overwriting first value
+ * 04.11.98 MJC - Debug timing - same as C core
+ *                save PC on calls to C memory routines
+ *---------------------------------------------------------------
  * Known Problems / Bugs
  *
  * 68000
@@ -63,7 +69,7 @@
 
 /* Register Location Offsets */
 
-#define ICOUNT      "ICOUNT"
+#define ICOUNT      "_MC68000_ICount"
 #define REG_DAT     "R_D0"
 #define REG_DAT_EBX "[R_D0+ebx*4]"
 #define REG_ADD     "R_A0"
@@ -86,17 +92,13 @@ int  FlagProcess    = 0;
 int  CheckInterrupt = 0;
 int  Opcount        = 0;
 int  TimingCycles   = 0;
-int  UpdatePC       = 0;
-
-enum { OCLEAR, ONORMAL, OIGNORE };
-
 
 unsigned char *codebuf;
 
 /* Registers normally saved around C routines anyway */
 /* GCC (dos) seems to preserve EBX,EDI,ESI and EBP   */
 
-static char SavedRegs[7] = "-B--SDB";
+static char SavedRegs[] = "-B--SDB";
 
 /* Jump Table */
 
@@ -186,7 +188,6 @@ char *GenerateLabel(int ID,int Type)
     {
 		CheckInterrupt=0;			/* No need to check for Interrupts */
 		TimingCycles=0;				/* No timing info for this command */
-        UpdatePC=TRUE;              /* Update PC on call to C */
 		Opcount++;					/* for screen display */
 
  		memset (codebuf,0,64);		/* Get code example */
@@ -225,7 +226,7 @@ void Align(void)
 
 void CopyX(void)
 {
-	/* Copy bit 0 from X flag store into Carry */
+	/* Copy bit 1 from X flag store into Carry */
 
     fprintf(fp, "\t\t bt    dword [%s],0\n",REG_X);
 }
@@ -325,28 +326,43 @@ void Completed(void)
 		fprintf(fp, "\t\t pop   EDX\n");
 
         if (FlagProcess == 2)
-			fprintf(fp, "\t\t mov   [%s],edx\n",REG_X);
+			fprintf(fp, "\t\t mov   [%s],dl\n",REG_X);
 
         FlagProcess = 0;
     }
 
     /* Perform fetch cycle here */
 
-   	if (TimingCycles > 0)
-	{
-   		if (TimingCycles > 127)
-	   		fprintf(fp, "\t\t sub   dword [%s],%d\n",ICOUNT,TimingCycles);
-	    else
-		    fprintf(fp, "\t\t sub   dword [%s],byte %d\n",ICOUNT,TimingCycles);
-    }
-    else
-    {
+	#ifndef MAME_DEBUG
+
+    	/* Use assembler timing routines */
+
+   	    if (TimingCycles > 0)
+	    {
+   		    if (TimingCycles > 127)
+	   		    fprintf(fp, "\t\t sub   dword [%s],%d\n",ICOUNT,TimingCycles);
+	        else
+		        fprintf(fp, "\t\t sub   dword [%s],byte %d\n",ICOUNT,TimingCycles);
+        }
+        else
+        {
+    	    fprintf(fp, "\t\t or    dword [%s],0\n",ICOUNT);
+        }
+
+    #else
+
+    	/* Just check the count */
+
     	fprintf(fp, "\t\t or    dword [%s],0\n",ICOUNT);
-    }
+
+    #endif
+
 	fprintf(fp, "\t\t js    near MainExit\n\n");
 
 
 	#ifdef MAME_DEBUG
+
+    	/* Check for Debug Active */
 
 	    fprintf(fp, "\n\t\t or  dword [_mame_debug],0\n");
     	fprintf(fp, "\t\t jnz   near MainExit\n\n");
@@ -362,7 +378,18 @@ void Completed(void)
     }
 
 	fprintf(fp, "\t\t xor   ecx,ecx\t\t; Avoid Stall (P2)\n");
-    fprintf(fp, "\t\t mov   cx,[esi+ebp]\n\n");
+    fprintf(fp, "\t\t mov   cx,[ebp+esi]\n\n");
+
+	#ifdef MAME_DEBUG
+
+    	/* C timing system */
+
+        fprintf(fp, "\t\t xor   eax,eax\n");
+        fprintf(fp, "\t\t mov   al,byte [_cycletbl+ecx]\n");
+        fprintf(fp, "\t\t sub   dword [%s],eax\n",ICOUNT);
+
+    #endif
+
    	fprintf(fp, "\t\t add   esi,byte 2\n\n");
 	fprintf(fp, "\t\t jmp   [OPCODETABLE+ecx*4]\n");
 }
@@ -399,7 +426,6 @@ void SetFlags(char Size,int Sreg,int Testreg,int SetX,int Delayed)
 
     /* Test does not update register    */
 	/* so cannot generate partial stall */
-    /* but may be slower than OR!       */
 
     if (Testreg) fprintf(fp, "\t\t test  %s,%s\n",Regname,Regname);
 
@@ -417,60 +443,8 @@ void SetFlags(char Size,int Sreg,int Testreg,int SetX,int Delayed)
    	{
 		fprintf(fp, "\t\t pop   EDX\n");
 
-	    if (SetX) fprintf(fp, "\t\t mov   [%s],edx\n",REG_X);
+	    if (SetX) fprintf(fp, "\t\t mov   [%s],dl\n",REG_X);
    	}
-}
-
-
-/* Set flags
- *
- * Warning - Destroys AH
- *
- * Overflow : OCLEAR  = Clear overflow
- *            OIGNORE = Ignore overflow
- *            ONORMAL = Use Overflow Flag
- *
- */
-
-void UpdateFlags(char Size,int Sreg,int Testreg,int SetX,int Overflow)
-{
-	char* Regname="";
-
-    switch(Size)
-	{
-        case 66:
-        	Regname = regnamesshort[Sreg];
-            break;
-
-        case 87:
-        	Regname = regnamesword[Sreg];
-            break;
-
-        case 76:
-        	Regname = regnameslong[Sreg];
-            break;
-    }
-
-    /* Test does not update register    */
-	/* so cannot generate partial stall */
-    /* but may be slower than OR!       */
-
-    if (Testreg) fprintf(fp, "\t\t test  %s,%s\n",Regname,Regname);
-
-    fprintf(fp, "\t\t lahf\n");
-
-    if (Overflow == OCLEAR)
-    	fprintf(fp, "\t\t xor   edx,edx\n");
-
-    fprintf(fp, "\t\t mov   dl,ah\n");
-
-    if (Overflow == ONORMAL)
-    {
-    	fprintf(fp, "\t\t jno  short $+5\n");
-        fprintf(fp, "\t\t or   dh,8\n");
-    }
-
-    if (SetX) fprintf(fp, "\t\t mov   byte [%s],ah\n",REG_X);
 }
 
 /************************************/
@@ -536,14 +510,6 @@ void Exception(int Number, int BaseCode)
     {
    	    fprintf(fp, "\t\t sub   esi,byte 2\n");
         fprintf(fp, "\t\t mov   al,%d\n",Number);
-    }
-
-    /* Pass PC across to C */
-
-    if (UpdatePC)
-    {
-		fprintf(fp, "\t\t mov   [%s],esi\t\t; Save PC\n",REG_PC);
-        UpdatePC=FALSE;
     }
 
     fprintf(fp, "\t\t call  Exception\n\n");
@@ -659,13 +625,10 @@ void Memory_Read(char Size,int AReg,char *Flags,int Mask)
 
 	CheckInterrupt = 1;			/* Interrupt flag can now be changed */
 
-    /* Pass PC across to C */
+    /* Save PC */
 
-    if (UpdatePC)
-    {
-		fprintf(fp, "\t\t mov   [%s],esi\t\t; Save PC\n",REG_PC);
-        UpdatePC=FALSE;
-    }
+  	fprintf(fp, "\t\t mov   [%s],ESI\n",REG_PC);
+
 
     /* Check for special mask condition */
 
@@ -765,15 +728,12 @@ void Memory_Write(char Size,int AReg,int DReg,char *Flags,int Mask)
 	int Count;
     int SavedReg = -1;
 
-    /* Pass PC across to C */
-
-    if (UpdatePC)
-    {
-		fprintf(fp, "\t\t mov   [%s],esi\t\t; Save PC\n",REG_PC);
-        UpdatePC=FALSE;
-    }
-
 	CheckInterrupt = 1;			/* Interrupt flag can now be changed */
+
+    /* Save PC */
+
+  	fprintf(fp, "\t\t mov   [%s],ESI\n",REG_PC);
+
 
     /* Check for special mask condition */
 
@@ -883,17 +843,17 @@ void Memory_Fetch(char Size,int Dreg,int Extend)
   	fprintf(fp, "\t\t mov   %s,dword [_OP_RAM]\n",regnameslong[Dreg]);
 
     if ((Extend == TRUE) & (Size == 'W'))
-	    fprintf(fp, "\t\t movsx %s,word [esi+%s]\n",regnameslong[Dreg],regnameslong[Dreg]);
+	    fprintf(fp, "\t\t movsx %s,word [%s+esi]\n",regnameslong[Dreg],regnameslong[Dreg]);
     else
-	    fprintf(fp, "\t\t mov   %s,dword [esi+%s]\n",regnameslong[Dreg],regnameslong[Dreg]);
+	    fprintf(fp, "\t\t mov   %s,dword [%s+esi]\n",regnameslong[Dreg],regnameslong[Dreg]);
 #else
 
 	/* This version OP_ROM must be = OP_RAM */
 
     if ((Extend == TRUE) & (Size == 'W'))
-	    fprintf(fp, "\t\t movsx %s,word [esi+ebp]\n",regnameslong[Dreg]);
+	    fprintf(fp, "\t\t movsx %s,word [ebp+esi]\n",regnameslong[Dreg]);
     else
-	    fprintf(fp, "\t\t mov   %s,dword [esi+ebp]\n",regnameslong[Dreg]);
+	    fprintf(fp, "\t\t mov   %s,dword [ebp+esi]\n",regnameslong[Dreg]);
 
 #endif
 
@@ -1041,11 +1001,14 @@ void EffectiveAddressCalculate(int mode,char Size,int Rreg,int SaveEDX)
  * (modes 5 to 10) EDI  = Address of data read (masked with FFFFFF)
  */
 
-void EffectiveAddressRead(int mode,char Size,int Rreg,int Dreg,char *Flags,int SaveEDX)
+void EffectiveAddressRead(int mode,char Size,int Rreg,int Dreg,const char *flags,int SaveEDX)
 {
     char* Regname="";
     int   MaskMode;
-    char  OriginalD;
+	char Flags[8];
+
+
+	strcpy(Flags,flags);
 
     /* Which Masking to Use */
 
@@ -1053,10 +1016,6 @@ void EffectiveAddressRead(int mode,char Size,int Rreg,int Dreg,char *Flags,int S
     	MaskMode = 2;
     else
     	MaskMode = 1;
-
-    /* Save original save EDX Flag */
-
-    OriginalD = Flags[3];
 
     if (SaveEDX)
     	Flags[3] = 'D';
@@ -1211,8 +1170,6 @@ void EffectiveAddressRead(int mode,char Size,int Rreg,int Dreg,char *Flags,int S
         };
         break;
     }
-
-    Flags[3] = OriginalD;
 }
 
 /*
@@ -1223,12 +1180,14 @@ void EffectiveAddressRead(int mode,char Size,int Rreg,int Dreg,char *Flags,int S
  * Writes from EAX
  */
 
-void EffectiveAddressWrite(int mode,char Size,int Rreg,int CalcAddress,char *Flags,int SaveEDX)
+void EffectiveAddressWrite(int mode,char Size,int Rreg,int CalcAddress,const char *flags,int SaveEDX)
 {
     int   MaskMode;
-    char  OriginalD;
     char* Regname="";
+	char Flags[8];
 
+
+	strcpy(Flags,flags);
 
     /* Which Masking to Use ? */
 
@@ -1241,10 +1200,6 @@ void EffectiveAddressWrite(int mode,char Size,int Rreg,int CalcAddress,char *Fla
     }
     else
     	MaskMode = 0;
-
-    /* Save original save EDX Flag */
-
-    OriginalD = Flags[3];
 
     if (SaveEDX)
     	Flags[3] = 'D';
@@ -1372,8 +1327,6 @@ void EffectiveAddressWrite(int mode,char Size,int Rreg,int CalcAddress,char *Fla
 
         WriteCCR(Size);
     }
-
-    Flags[3] = OriginalD;
 }
 
 /* Condition Decode Routines */
@@ -1533,7 +1486,7 @@ char *ConditionDecode(int mode, int Condition)
            break;
 
       case 12:   /* GE */
-           fprintf(fp, "\t\t or    edx,200h\n");
+               fprintf(fp, "\t\t or    edx,200h\n");
       	   fprintf(fp, "\t\t push  edx\n");
       	   fprintf(fp, "\t\t popf\n");
            if (Condition)
@@ -1682,15 +1635,13 @@ void ConditionCheck(int mode, char *SetWhat)
            break;
 
       case 12:   /* GE */
-           fprintf(fp, "\t\t or    edx,200h\n");
       	   fprintf(fp, "\t\t push  edx\n");
-           fprintf(fp, "\t\t sti\n");
+      	   fprintf(fp, "\t\t popf\n");
    	       fprintf(fp, "\t\t setge %s\n",SetWhat);
            fprintf(fp, "\t\t neg   byte %s\n",SetWhat);
            break;
 
       case 13:   /* LT */
-           fprintf(fp, "\t\t or    edx,200h\n");
       	   fprintf(fp, "\t\t push  edx\n");
       	   fprintf(fp, "\t\t popf\n");
    	       fprintf(fp, "\t\t setl  %s\n",SetWhat);
@@ -1698,7 +1649,6 @@ void ConditionCheck(int mode, char *SetWhat)
            break;
 
       case 14:   /* GT */
-           fprintf(fp, "\t\t or    edx,200h\n");
       	   fprintf(fp, "\t\t push  edx\n");
       	   fprintf(fp, "\t\t popf\n");
    	       fprintf(fp, "\t\t setg  %s\n",SetWhat);
@@ -1706,7 +1656,6 @@ void ConditionCheck(int mode, char *SetWhat)
            break;
 
       case 15:   /* LE */
-           fprintf(fp, "\t\t or    edx,200h\n");
       	   fprintf(fp, "\t\t push  edx\n");
       	   fprintf(fp, "\t\t popf\n");
    	       fprintf(fp, "\t\t setle %s\n",SetWhat);
@@ -2076,7 +2025,7 @@ void dump_bit_static(int type, int mode, int dreg )
             fprintf(fp,"\t\t mov   ecx,eax\n");
 
             if (mode != 0)
-				EffectiveAddressRead(Dest,Size,EBX,EAX,"--CDSDB",TRUE);
+				EffectiveAddressRead(Dest,Size,EBX,EAX,"-BCDSDB",TRUE);
 
 			/* All commands copy existing bit to Zero Flag */
 
@@ -2408,7 +2357,7 @@ void moveinstructions(void)
 
 	/* Register transfers first */
 
-    movereg();
+//  movereg();
 
     /* For Byte */
 
@@ -3039,7 +2988,7 @@ void dumpx( int start, int reg, int type, char * Op, int dir, int leng, int mode
 		BaseCode |= sreg ;
 
     Dest = EAtoAMN(Opcode, FALSE);
-    SaveEDX = (Dest == 1);
+    SaveEDX = (Dest == 1) || (type == 3);
 
 	if ( allow[Dest&0xf] != '-' )
 	{
@@ -3123,7 +3072,12 @@ void dumpx( int start, int reg, int type, char * Op, int dir, int leng, int mode
 		    else
 		    {
 			    fprintf(fp, "\t\t %s   %s,[%s+ECX*4]\n", Op, Regname ,REG_DAT ) ;
-			    SetFlags(Size,EAX,FALSE,FALSE,TRUE);
+
+                if ( type == 4)
+			    	SetFlags(Size,EAX,FALSE,TRUE,TRUE);
+                else
+			    	SetFlags(Size,EAX,FALSE,FALSE,TRUE);
+
 			    EffectiveAddressWrite(Dest,Size,EBX,FALSE,"---DS-B",FALSE);
 		    }
 		    Completed();
@@ -3216,7 +3170,7 @@ void mul(void)
 	int dreg, type, mode, sreg ;
 	int Opcode, BaseCode ;
 	int Dest ;
-	char * allow = "0-23456789ab-----" ;
+	char allow[] = "0-23456789ab-----" ;
 
 	for ( dreg = 0 ; dreg < 8 ; dreg++ )
 	for ( type = 0 ; type < 2 ; type++ )
@@ -3285,7 +3239,7 @@ void not(void)
 	char * Regname="" ;
 	char * RegnameECX ;
 
-	char * allow = "0-2345678-------" ;
+	char allow[] = "0-2345678-------" ;
 
 	for ( type = 0 ; type < 4 ; type++ )
 	for ( leng = 0 ; leng < 3 ; leng++ )
@@ -3510,7 +3464,7 @@ void LoadEffectiveAddress(void)
 	int	Opcode, BaseCode ;
 	int	sreg,mode,dreg ;
 	int	Dest ;
-	char * allow = "--2--56789a-----" ;
+	char allow[] = "--2--56789a-----" ;
 
 	for ( sreg = 0 ; sreg < 8 ; sreg++ )
 	for ( mode = 0 ; mode < 8 ; mode++ )
@@ -3562,7 +3516,7 @@ void nbcd(void)
 {
 	int	Opcode, BaseCode ;
 	int	sreg,mode,Dest ;
-	char * allow = "0-23456789ab----" ;
+	char allow[] = "0-23456789ab----" ;
 
 	for ( mode = 0 ; mode < 8 ; mode++ )
 	for ( sreg = 0 ; sreg < 8 ; sreg++ )
@@ -3608,7 +3562,7 @@ void tas(void)
 {
 	int	Opcode, BaseCode ;
 	int	sreg,mode,Dest ;
-	char * allow = "0-2345678-------" ;
+	char allow[] = "0-2345678-------" ;
 
 	for ( mode = 0 ; mode < 8 ; mode++ )
 	for ( sreg = 0 ; sreg < 8 ; sreg++ )
@@ -3654,7 +3608,7 @@ void PushEffectiveAddress(void)
 	int	Opcode, BaseCode ;
 	int	sreg,mode,dreg ;
 	int	Dest ;
-	char * allow = "--2--56789a-----" ;
+	char allow[] = "--2--56789a-----" ;
 
 	for ( mode = 0 ; mode < 8 ; mode++ )
 	for ( dreg = 0 ; dreg < 8 ; dreg++ )
@@ -3710,7 +3664,7 @@ void tst(void)
 	char * Regname ;
 	char * RegnameECX ;
 
-	char * allow = "0-2345678-------" ;
+	char allow[] = "0-2345678-------" ;
 
 	for ( leng = 0 ; leng < 3 ; leng++ )
 	for ( mode = 0 ; mode < 8 ; mode++ )
@@ -4334,7 +4288,7 @@ void jmp_jsr(void)
 	int	Opcode, BaseCode ;
 	int	dreg,mode,type ;
 	int	Dest ;
-	char * allow = "--2--56789a-----" ;
+	char allow[] = "--2--56789a-----" ;
 
 	for ( type = 0 ; type < 2 ; type++ )
 	for ( mode = 0 ; mode < 8 ; mode++ )
@@ -4390,7 +4344,7 @@ void cmpm(void)
 	int	regx,leng,regy ;
 	char Size=' ' ;
 	char * Regname="" ;
-	char * RegnameECX="" ;
+	char * RegnameEBX="" ;
 
 	for ( regx = 0 ; regx < 8 ; regx++ )
 	for ( leng = 0 ; leng < 3 ; leng++ )
@@ -4402,18 +4356,18 @@ void cmpm(void)
     	{
             case 0:
                	Size = 'B';
-                Regname = regnamesshort[0];
-                RegnameECX = regnamesshort[ECX];
+                Regname = regnamesshort[EAX];
+                RegnameEBX = regnamesshort[EBX];
                 break;
             case 1:
                 Size = 'W';
-                Regname = regnamesword[0];
-                RegnameECX = regnamesword[ECX];
+                Regname = regnamesword[EAX];
+                RegnameEBX = regnamesword[EBX];
                 break;
             case 2:
                 Size = 'L';
-                Regname = regnameslong[0];
-                RegnameECX = regnameslong[ECX];
+                Regname = regnameslong[EAX];
+                RegnameEBX = regnameslong[EBX];
                 break;
         }
 
@@ -4429,10 +4383,10 @@ void cmpm(void)
 			fprintf(fp, "\t\t shr   ecx, byte 9\n");
 			fprintf(fp, "\t\t and   ecx, byte 7\n");
 
-			EffectiveAddressRead(3,Size,EBX,EAX,"--C-S-B",FALSE);
-			EffectiveAddressRead(3,Size,ECX,ECX,"----S-B",FALSE);
+			EffectiveAddressRead(3,Size,EBX,EBX,"--C-S-B",FALSE);
+			EffectiveAddressRead(3,Size,ECX,EAX,"-B--S-B",FALSE);
 
-			fprintf(fp, "\t\t cmp   %s,%s\n",RegnameECX,Regname);
+			fprintf(fp, "\t\t cmp   %s,%s\n",Regname,RegnameEBX);
 			SetFlags(Size,EAX,FALSE,FALSE,FALSE);
 			Completed();
 		}
@@ -4611,7 +4565,7 @@ void movesr(void)
 	int Opcode, BaseCode ;
 	int type, mode, sreg ;
 	int Dest ;
-	char * allow = "0-2345678-------" ;
+	char allow[] = "0-2345678-------" ;
     char Size;
 	char *Label;
 
@@ -4668,14 +4622,16 @@ void movesr(void)
 					fprintf(fp, "\t\t and   ecx,byte 7\n");
 				}
 
+
+				/* Always read/write word 2 bytes */
 				if (type < 2)
 				{
 					ReadCCR(Size,EBX);
-			        EffectiveAddressWrite(Dest & 15,Size,ECX,TRUE,"---DS-B",TRUE);
+					EffectiveAddressWrite(Dest & 15,'W',ECX,TRUE,"---DS-B",TRUE);
 				}
 				else
 				{
-	                EffectiveAddressRead(Dest & 15,Size,ECX,EAX,"----S-B",FALSE);
+					EffectiveAddressRead(Dest & 15,'W',ECX,EAX,"----S-B",FALSE);
 					WriteCCR(Size);
 				}
 				Completed();
@@ -4834,7 +4790,7 @@ void rol_ror(void)
 
 			fprintf(fp, "\t\t setc  ch\n");
 			SetFlags(Size,EAX,TRUE,FALSE,FALSE);
-//			fprintf(fp, "\t\t and   dl,254\n");	/* Test clears carry */
+			fprintf(fp, "\t\t and   dl,254\n");
 			fprintf(fp, "\t\t or    dl,ch\n");
 
 			EffectiveAddressWrite(0,Size,EBX,EAX,"--C-S-B",TRUE);
@@ -4842,22 +4798,14 @@ void rol_ror(void)
 			/* if shift count is zero clear carry */
 
 			Label = GenerateLabel(0,1);
-
-			if ( ir != 0 )
-			{
-				fprintf(fp, "\t\t or    cl,cl\n");
-				fprintf(fp, "\t\t jz    short %s\n",Label);
-            }
-
+			fprintf(fp, "\t\t or    cl,cl\n");
+			fprintf(fp, "\t\t jz    %s\n",Label);
 			Completed();
 
-			if ( ir != 0 )
-			{
-				Align();
-				fprintf(fp, "%s:\n",Label);
-				fprintf(fp, "\t\t and   dl,254\t\t;clear C flag\n");
-				Completed();
-            }
+			Align();
+			fprintf(fp, "%s:\n",Label);
+			fprintf(fp, "\t\t and   dl,254\t\t;clear C flag\n");
+			Completed();
 		}
 
 		OpcodeArray[Opcode] = BaseCode ;
@@ -4872,7 +4820,7 @@ void rol_ror_ea(void)
 	char * Label ;
 	char * Regname ;
 	char * RegnameECX ;
-	char * allow = "--2345678-------" ;
+	char allow[] = "--2345678-------" ;
 
 	for ( dr = 0 ; dr < 2 ; dr++ )
 	for ( mode = 0 ; mode < 8 ; mode++ )
@@ -4999,26 +4947,18 @@ void lsl_lsr(void)
 			EffectiveAddressWrite(0,Size,EBX,EAX,"--CDS-B",TRUE);
 
 			/* if shift count is zero clear carry */
-            /* Cannot happen on immediate shift!  */
 
 			Label = GenerateLabel(0,1);
+			fprintf(fp, "\t\t or    cl,cl\n");
+			fprintf(fp, "\t\t jz    %s\n",Label);
 
-            if (ir != 0)
-            {
-				fprintf(fp, "\t\t or    cl,cl\n");
-				fprintf(fp, "\t\t jz    %s\n",Label);
-            }
-
-			fprintf(fp, "\t\t mov   [%s],edx\n",REG_X);
+			fprintf(fp, "\t\t mov   [%s],dl\n",REG_X);
 			Completed();
 
-            if (ir != 0)
-            {
-				Align();
-				fprintf(fp, "%s:\n",Label);
-				fprintf(fp, "\t\t and   dl,254\t\t;clear C flag\n");
-				Completed();
-            }
+			Align();
+			fprintf(fp, "%s:\n",Label);
+			fprintf(fp, "\t\t and   dl,254\t\t;clear C flag\n");
+			Completed();
 		}
 
 		OpcodeArray[Opcode] = BaseCode ;
@@ -5033,7 +4973,7 @@ void lsl_lsr_ea(void)
 	char * Label ;
 	char * Regname ;
 	char * RegnameECX ;
-	char * allow = "--2345678-------" ;
+	char allow[] = "--2345678-------" ;
 
 	for ( dr = 0 ; dr < 2 ; dr++ )
 	for ( mode = 0 ; mode < 8 ; mode++ )
@@ -5155,38 +5095,29 @@ void roxl_roxr(void)
 
 			fprintf(fp, "\t\t setc  ch\n");
 			SetFlags(Size,EAX,TRUE,FALSE,FALSE);
-// 			fprintf(fp, "\t\t and   dl,254\n");		/* Should already be cleared */
+			fprintf(fp, "\t\t and   dl,254\n");
 			fprintf(fp, "\t\t or    dl,ch\n");
 
 			EffectiveAddressWrite(0,Size,EBX,EAX,"--CDS-B",TRUE);
 
 			/* if shift count is zero clear carry */
-            /* Cannot happen on Immediate version */
 
 			Label = GenerateLabel(0,1);
-
-			if ( ir != 0 )
-			{
-				fprintf(fp, "\t\t or    cl,cl\n");
-				fprintf(fp, "\t\t jz    %s\n",Label);
-            }
-
-			fprintf(fp, "\t\t mov   [%s],edx\n",REG_X);
+			fprintf(fp, "\t\t or    cl,cl\n");
+			fprintf(fp, "\t\t jz    %s\n",Label);
+			fprintf(fp, "\t\t mov   [%s],dl\n",REG_X);
 			Completed();
 
-			if ( ir != 0 )
-			{
-				Align();
-				fprintf(fp, "%s:\n",Label);
+			Align();
+			fprintf(fp, "%s:\n",Label);
 
-				/* copy X onto C when shift is zero */
+			/* copy X onto C when shift is zero */
 
-				fprintf(fp, "\t\t and   dl,254\t\t;clear C flag\n");
-				fprintf(fp, "\t\t mov   cl,byte [%s]\n",REG_X);
-				fprintf(fp, "\t\t and   cl,1\n");
-				fprintf(fp, "\t\t or    dl,cl\n");
-				Completed();
-            }
+			fprintf(fp, "\t\t and   dl,254\t\t;clear C flag\n");
+			fprintf(fp, "\t\t mov   cl,byte [%s]\n",REG_X);
+			fprintf(fp, "\t\t and   cl,1\n");
+			fprintf(fp, "\t\t or    dl,cl\n");
+			Completed();
 		}
 
 		OpcodeArray[Opcode] = BaseCode ;
@@ -5201,7 +5132,7 @@ void roxl_roxr_ea(void)
 	char * Label ;
 	char * Regname ;
 	char * RegnameECX ;
-	char * allow = "--2345678-------" ;
+	char allow[] = "--2345678-------" ;
 
 	for ( dr = 0 ; dr < 2 ; dr++ )
 	for ( mode = 0 ; mode < 8 ; mode++ )
@@ -5244,7 +5175,7 @@ void roxl_roxr_ea(void)
 
 				EffectiveAddressWrite(Dest&0xf,'W',ECX,EAX,"---DS-B",TRUE);
 
-				fprintf(fp, "\t\t mov   [%s],edx\n",REG_X);
+				fprintf(fp, "\t\t mov   [%s],dl\n",REG_X);
 				Completed();
 			}
 
@@ -5330,28 +5261,17 @@ void asl_asr(void)
 			EffectiveAddressWrite(0,Size,EBX,EAX,"--CDS-B",TRUE);
 
 			/* if shift count is zero clear carry */
-            /* cannot happen on immediate version */
 
 			Label = GenerateLabel(0,1);
-
-			if ( ir != 0 )
-			{
-				fprintf(fp, "\t\t or    cl,cl\n");
-				fprintf(fp, "\t\t jz    %s\n",Label);
-            }
-
+			fprintf(fp, "\t\t or    cl,cl\n");
+			fprintf(fp, "\t\t jz    %s\n",Label);
 			fprintf(fp, "\t\t mov   [%s],dl\n",REG_X);
 			Completed();
 
-
-			if ( ir != 0 )
-			{
-				Align();
-				fprintf(fp, "%s:\n",Label);
-				fprintf(fp, "\t\t and   dl,254\t\t;clear C flag\n");
-				fprintf(fp, "\t\t mov   [%s],dl\n",REG_X);         	/* ? */
-				Completed();
-            }
+			Align();
+			fprintf(fp, "%s:\n",Label);
+			fprintf(fp, "\t\t and   dl,254\t\t;clear C flag\n");
+			Completed();
 		}
 
 		OpcodeArray[Opcode] = BaseCode ;
@@ -5366,7 +5286,7 @@ void asl_asr_ea(void)
 	char * Label ;
 	char * Regname ;
 	char * RegnameECX ;
-	char * allow = "--2345678-------" ;
+	char allow[] = "--2345678-------" ;
 
 	for ( dr = 0 ; dr < 2 ; dr++ )
 	for ( mode = 0 ; mode < 8 ; mode++ )
@@ -5418,7 +5338,7 @@ void divides(void)
 	int dreg, type, mode, sreg ;
 	int Opcode, BaseCode ;
 	int Dest ;
-	char * allow = "0-23456789ab-----" ;
+	char allow[] = "0-23456789ab-----" ;
 	char * Label ;
 	char TrapLabel[16];
 	int Cycles;
@@ -5580,6 +5500,7 @@ void CodeSegmentBegin(void)
     fprintf(fp, "\t\t BITS 32\n\n");
     fprintf(fp, "\t\t GLOBAL _M68KRUN\n");
     fprintf(fp, "\t\t GLOBAL _M68KRESET\n");
+    fprintf(fp, "\t\t GLOBAL _MC68000_ICount\n");
     fprintf(fp, "\t\t GLOBAL _regs\n");
 
     fprintf(fp, "\t\t EXTERN _cpu_readmem24\n");
@@ -5597,6 +5518,14 @@ void CodeSegmentBegin(void)
 
     fprintf(fp, "\t\t EXTERN _OP_ROM\n");
     fprintf(fp, "\t\t EXTERN _OP_RAM\n");
+
+	#ifdef MAME_DEBUG
+
+    	/* C timing table */
+
+        fprintf(fp, "\t\t EXTERN _cycletbl\n");
+
+    #endif
 
     fprintf(fp, "\t\t EXTERN _previouspc\n");
     fprintf(fp, "\t\t EXTERN _ophw\n");
@@ -5634,9 +5563,10 @@ void CodeSegmentBegin(void)
 
 /* Emulation Entry Point */
 
+	Align();
+
 	fprintf(fp, "_M68KRUN:\n");
 	fprintf(fp, "\t\t pusha\n");
-
 	fprintf(fp, "\t\t mov   esi,[%s]\n",REG_PC);
     fprintf(fp, "\t\t mov   edx,[%s]\n",REG_CCR);
     fprintf(fp, "\t\t mov   ebp,dword [_OP_ROM]\n");
@@ -5648,7 +5578,18 @@ void CodeSegmentBegin(void)
     fprintf(fp, "IntCont:\n");
 
     fprintf(fp, "\t\t xor   ecx,ecx\t\t; Avoid Stall (P2)\n");
-    fprintf(fp, "\t\t mov   cx,[esi+ebp]\n\n");
+    fprintf(fp, "\t\t mov   cx,[ebp+esi]\n\n");
+
+	#ifdef MAME_DEBUG
+
+    	/* C timing system */
+
+        fprintf(fp, "\t\t xor   eax,eax\n");
+        fprintf(fp, "\t\t mov   al,byte [_cycletbl+ecx]\n");
+        fprintf(fp, "\t\t sub   dword [%s],eax\n",ICOUNT);
+
+    #endif
+
     fprintf(fp, "\t\t add   esi,byte 2\n\n");
     fprintf(fp, "\t\t jmp   [OPCODETABLE+ecx*4]\n");
 
@@ -5787,9 +5728,9 @@ void CodeSegmentEnd(void)
 
     fprintf(fp, "\n\n; Register Structure\n\n");
 
-    fprintf(fp, "_regs\n");
-    fprintf(fp, "ICOUNT\t DD 0\n\n");
+    fprintf(fp, "_MC68000_ICount\t DD 0\n\n");
 
+    fprintf(fp, "_regs\n");
     fprintf(fp, "R_D0\t DD 0\t\t\t ; Data Registers\n");
     fprintf(fp, "R_D1\t DD 0\n");
     fprintf(fp, "R_D2\t DD 0\n");

@@ -679,7 +679,7 @@ static unsigned char hunchy_color_prom[] =
 static struct DACinterface dkong_dac_interface =
 {
 	1,
-	{ 255, 255 }
+	{ 100 }
 };
 
 static struct Samplesinterface dkong_samples_interface =
@@ -964,15 +964,15 @@ ROM_END
 ROM_START( dkongjr_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "dkj.5b",       0x0000, 0x1000, 0xdea28158 )
-	ROM_CONTINUE(        0x3000, 0x1000 )
+	ROM_CONTINUE(             0x3000, 0x1000 )
 	ROM_LOAD( "dkj.5c",       0x2000, 0x0800, 0x6fb5faf6 )
-	ROM_CONTINUE(        0x4800, 0x0800 )
-	ROM_CONTINUE(        0x1000, 0x0800 )
-	ROM_CONTINUE(        0x5800, 0x0800 )
+	ROM_CONTINUE(             0x4800, 0x0800 )
+	ROM_CONTINUE(             0x1000, 0x0800 )
+	ROM_CONTINUE(             0x5800, 0x0800 )
 	ROM_LOAD( "dkj.5e",       0x4000, 0x0800, 0xd042b6a8 )
-	ROM_CONTINUE(        0x2800, 0x0800 )
-	ROM_CONTINUE(        0x5000, 0x0800 )
-	ROM_CONTINUE(        0x1800, 0x0800 )
+	ROM_CONTINUE(             0x2800, 0x0800 )
+	ROM_CONTINUE(             0x5000, 0x0800 )
+	ROM_CONTINUE(             0x1800, 0x0800 )
 
 	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "dkj.3n",       0x0000, 0x1000, 0x8d51aca9 )
@@ -994,15 +994,15 @@ ROM_END
 ROM_START( dkngjrjp_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "dkjr1",        0x0000, 0x1000, 0xec7e097f )
-	ROM_CONTINUE(       0x3000, 0x1000 )
+	ROM_CONTINUE(             0x3000, 0x1000 )
 	ROM_LOAD( "dkjr2",        0x2000, 0x0800, 0xc0a18f0d )
-	ROM_CONTINUE(       0x4800, 0x0800 )
-	ROM_CONTINUE(       0x1000, 0x0800 )
-	ROM_CONTINUE(       0x5800, 0x0800 )
+	ROM_CONTINUE(             0x4800, 0x0800 )
+	ROM_CONTINUE(             0x1000, 0x0800 )
+	ROM_CONTINUE(             0x5800, 0x0800 )
 	ROM_LOAD( "dkjr3",        0x4000, 0x0800, 0xa81dd00c )
-	ROM_CONTINUE(       0x2800, 0x0800 )
-	ROM_CONTINUE(       0x5000, 0x0800 )
-	ROM_CONTINUE(       0x1800, 0x0800 )
+	ROM_CONTINUE(             0x2800, 0x0800 )
+	ROM_CONTINUE(             0x5000, 0x0800 )
+	ROM_CONTINUE(             0x1800, 0x0800 )
 
 	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "dkjr9",        0x0000, 0x1000, 0xa95c4c63 )
@@ -1024,15 +1024,15 @@ ROM_END
 ROM_START( dkjrjp_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "dkjp.5b",      0x0000, 0x1000, 0x7b48870b )
-	ROM_CONTINUE(         0x3000, 0x1000 )
+	ROM_CONTINUE(             0x3000, 0x1000 )
 	ROM_LOAD( "dkjp.5c",      0x2000, 0x0800, 0x12391665 )
-	ROM_CONTINUE(         0x4800, 0x0800 )
-	ROM_CONTINUE(         0x1000, 0x0800 )
-	ROM_CONTINUE(         0x5800, 0x0800 )
+	ROM_CONTINUE(             0x4800, 0x0800 )
+	ROM_CONTINUE(             0x1000, 0x0800 )
+	ROM_CONTINUE(             0x5800, 0x0800 )
 	ROM_LOAD( "dkjp.5e",      0x4000, 0x0800, 0x6c9f9103 )
-	ROM_CONTINUE(         0x2800, 0x0800 )
-	ROM_CONTINUE(         0x5000, 0x0800 )
-	ROM_CONTINUE(         0x1800, 0x0800 )
+	ROM_CONTINUE(             0x2800, 0x0800 )
+	ROM_CONTINUE(             0x5000, 0x0800 )
+	ROM_CONTINUE(             0x1800, 0x0800 )
 
 	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "dkj.3n",       0x0000, 0x1000, 0x8d51aca9 )
@@ -1054,15 +1054,15 @@ ROM_END
 ROM_START( dkjrbl_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "djr1-c.5b",    0x0000, 0x1000, 0xffe9e1a5 )
-	ROM_CONTINUE(          0x3000, 0x1000 )
+	ROM_CONTINUE(             0x3000, 0x1000 )
 	ROM_LOAD( "djr1-c.5c",    0x2000, 0x0800, 0x982e30e8 )
-	ROM_CONTINUE(          0x4800, 0x0800 )
-	ROM_CONTINUE(          0x1000, 0x0800 )
-	ROM_CONTINUE(          0x5800, 0x0800 )
+	ROM_CONTINUE(             0x4800, 0x0800 )
+	ROM_CONTINUE(             0x1000, 0x0800 )
+	ROM_CONTINUE(             0x5800, 0x0800 )
 	ROM_LOAD( "djr1-c.5e",    0x4000, 0x0800, 0x24c3d325 )
-	ROM_CONTINUE(          0x2800, 0x0800 )
-	ROM_CONTINUE(          0x5000, 0x0800 )
-	ROM_CONTINUE(          0x1800, 0x0800 )
+	ROM_CONTINUE(             0x2800, 0x0800 )
+	ROM_CONTINUE(             0x5000, 0x0800 )
+	ROM_CONTINUE(             0x1800, 0x0800 )
 	ROM_LOAD( "djr1-c.5a",    0x8000, 0x1000, 0xbb5f5180 )
 
 	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
@@ -1134,6 +1134,51 @@ ROM_START( hunchy_rom )
 	ROM_REGION(0x10000)     /* 64k for the audio CPU */
 	ROM_LOAD( "5b_snd.bin",   0x0000, 0x0800, 0x0 )
 ROM_END
+
+ROM_START( herocast_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	/* the loading addresses are most likely wrong */
+	/* the ROMs are probably not conriguous. */
+	/* For example there's a table which suddenly stops at */
+	/* 1dff and resumes at 3e00 */
+	ROM_LOAD( "red-dot.rgt",  0x0000, 0x2000, 0x9c4af229 )	/* encrypted */
+	ROM_LOAD( "wht-dot.lft",  0x2000, 0x2000, 0xc10f9235 )	/* encrypted */
+	/* space for diagnostic ROM */
+	ROM_LOAD( "2532.3f",      0x4000, 0x1000, 0x553b89bb )	/* ??? contains unencrypted */
+													/* code mapped at 3000 */
+
+	ROM_REGION_DISPOSE(0x3000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "pnk.3n",       0x0000, 0x0800, 0x574dfd7a )
+	ROM_LOAD( "blk.3p",       0x0800, 0x0800, 0x16f7c040 )
+	ROM_LOAD( "gold.7c",      0x1000, 0x0800, 0x5f5282ed )
+	ROM_LOAD( "orange.7d",    0x1800, 0x0800, 0x075d99f5 )
+	ROM_LOAD( "yellow.7e",    0x2000, 0x0800, 0xf6272e96 )
+	ROM_LOAD( "violet.7f",    0x2800, 0x0800, 0xca020685 )
+
+	ROM_REGION(0x300)	/* color/lookup proms */
+	ROM_LOAD( "82s126.2e",    0x0000, 0x0100, 0x463dc7ad )	/* palette low 4 bits (inverted) */
+	ROM_LOAD( "82s126.2f",    0x0100, 0x0100, 0x47ba0042 )	/* palette high 4 bits (inverted) */
+	ROM_LOAD( "82s126.2n",    0x0200, 0x0100, 0x37aece4b )	/* character color codes on a per-column basis */
+
+	ROM_REGION(0x1000)	/* sound */
+	ROM_LOAD( "silver.3h",    0x0000, 0x0800, 0x67863ce9 )
+ROM_END
+
+static void herocast_decode(void)
+{
+	int A;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	/* swap data lines D3 and D4, this fixes the text but nothing more. */
+	for (A = 0;A < 0x4000;A++)
+	{
+		int v;
+
+		v = RAM[A];
+		RAM[A] = (v & 0xe7) | ((v & 0x10) >> 1) | ((v & 0x08) << 1);
+	}
+}
 
 
 
@@ -1474,12 +1519,38 @@ struct GameDriver hunchy_driver =
 	"????",
 	"?????",
 	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)",
-	0,
+	GAME_NOT_WORKING,
 	&dkongjr_machine_driver,
 	0,
 
 	hunchy_rom,
 	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	dkong_input_ports,
+
+	hunchy_color_prom, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
+};
+
+struct GameDriver herocast_driver =
+{
+	__FILE__,
+	0,
+	"herocast",
+	"herocast",
+	"1984",
+	"Seatongrove (Crown license)",
+	"Nicola Salmoria",
+	GAME_NOT_WORKING,
+	&dkong_machine_driver,
+	0,
+
+	herocast_rom,
+	herocast_decode, 0,
 	0,
 	0,      /* sound_prom */
 

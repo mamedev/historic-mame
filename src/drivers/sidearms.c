@@ -12,6 +12,8 @@
   however the board only has two. The ROM is related to the missing star
   background. At one point, the code jumps to A000, outside of the ROM
   address space.
+  This ROM could be something entirely different from Z80 code. In another
+  set, it consists of only the second half of the one we have here.
 
 ***************************************************************************/
 
@@ -224,7 +226,7 @@ INPUT_PORTS_END
 static struct GfxLayout charlayout =
 {
 	8,8,	/* 8*8 characters */
-	2048,	/* 2048 characters */
+	1024,	/* 1024 characters */
 	2,	/* 2 bits per pixel */
 	{ 4, 0 },
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3 },
@@ -360,7 +362,44 @@ ROM_START( sidearms_rom )
 	ROM_LOAD( "a_12e.rom",    0x18000, 0x08000, 0x81d0ece7 )	/* 2+3 */
 
 	ROM_REGION_DISPOSE(0x88000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "a_10j.rom",    0x00000, 0x8000, 0x35c3dbc5 )	/* characters */
+	ROM_LOAD( "a_10j.rom",    0x00000, 0x4000, 0x651fef75 )	/* characters */
+	ROM_LOAD( "b_13d.rom",    0x08000, 0x8000, 0x3c59afe1 )	/* tiles */
+	ROM_LOAD( "b_13e.rom",    0x10000, 0x8000, 0x64bc3b77 )
+	ROM_LOAD( "b_13f.rom",    0x18000, 0x8000, 0xe6bcea6f )
+	ROM_LOAD( "b_13g.rom",    0x20000, 0x8000, 0xc71a3053 )
+	ROM_LOAD( "b_14d.rom",    0x28000, 0x8000, 0x826e8a97 )
+	ROM_LOAD( "b_14e.rom",    0x30000, 0x8000, 0x6cfc02a4 )
+	ROM_LOAD( "b_14f.rom",    0x38000, 0x8000, 0x9b9f6730 )
+	ROM_LOAD( "b_14g.rom",    0x40000, 0x8000, 0xef6af630 )
+	ROM_LOAD( "b_11b.rom",    0x48000, 0x8000, 0xeb6f278c )	/* sprites */
+	ROM_LOAD( "b_13b.rom",    0x50000, 0x8000, 0xe91b4014 )
+	ROM_LOAD( "b_11a.rom",    0x58000, 0x8000, 0x2822c522 )
+	ROM_LOAD( "b_13a.rom",    0x60000, 0x8000, 0x3e8a9f75 )
+	ROM_LOAD( "b_12b.rom",    0x68000, 0x8000, 0x86e43eda )
+	ROM_LOAD( "b_14b.rom",    0x70000, 0x8000, 0x076e92d1 )
+	ROM_LOAD( "b_12a.rom",    0x78000, 0x8000, 0xce107f3c )
+	ROM_LOAD( "b_14a.rom",    0x80000, 0x8000, 0xdba06076 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "a_04k.rom",    0x0000, 0x8000, 0x34efe2d2 )
+
+	ROM_REGION(0x08000)	/* 32k tile map */
+	ROM_LOAD( "b_03d.rom",    0x0000, 0x8000, 0x6f348008 )
+
+#ifdef THIRD_CPU
+	ROM_REGION(0x10000)	/* 64k for CPU */
+	ROM_LOAD( "b_11j.rom",    0x0000, 0x8000, 0x0 )
+#endif
+ROM_END
+
+ROM_START( sidearmr_rom )
+	ROM_REGION(0x20000)	/* 64k for code + banked ROMs images */
+	ROM_LOAD( "03",           0x00000, 0x08000, 0x9a799c45 )	/* CODE */
+	ROM_LOAD( "a_14e.rom",    0x10000, 0x08000, 0x4925ed03 )	/* 0+1 */
+	ROM_LOAD( "a_12e.rom",    0x18000, 0x08000, 0x81d0ece7 )	/* 2+3 */
+
+	ROM_REGION_DISPOSE(0x88000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "a_10j.rom",    0x00000, 0x4000, 0x651fef75 )	/* characters */
 	ROM_LOAD( "b_13d.rom",    0x08000, 0x8000, 0x3c59afe1 )	/* tiles */
 	ROM_LOAD( "b_13e.rom",    0x10000, 0x8000, 0x64bc3b77 )
 	ROM_LOAD( "b_13f.rom",    0x18000, 0x8000, 0xe6bcea6f )
@@ -397,7 +436,7 @@ ROM_START( sidearjp_rom )
 	ROM_LOAD( "a_12e.rom",    0x18000, 0x08000, 0x81d0ece7 )	/* 2+3 */
 
 	ROM_REGION_DISPOSE(0x88000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "a_10j.rom",    0x00000, 0x8000, 0x35c3dbc5 )	/* characters */
+	ROM_LOAD( "a_10j.rom",    0x00000, 0x4000, 0x651fef75 )	/* characters */
 	ROM_LOAD( "b_13d.rom",    0x08000, 0x8000, 0x3c59afe1 )	/* tiles */
 	ROM_LOAD( "b_13e.rom",    0x10000, 0x8000, 0x64bc3b77 )
 	ROM_LOAD( "b_13f.rom",    0x18000, 0x8000, 0xe6bcea6f )
@@ -475,7 +514,7 @@ struct GameDriver sidearms_driver =
 	__FILE__,
 	0,
 	"sidearms",
-	"Sidearms (US)",
+	"Sidearms (World)",
 	"1986",
 	"Capcom",
 	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)\nGerrit Van Goethem (high score save)",
@@ -484,6 +523,31 @@ struct GameDriver sidearms_driver =
 	0,
 
 	sidearms_rom,
+	0,0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+	hiload, hisave
+};
+
+struct GameDriver sidearmr_driver =
+{
+	__FILE__,
+	&sidearms_driver,
+	"sidearmr",
+	"Sidearms (US)",
+	"1986",
+	"Capcom (Romstar license)",
+	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)\nGerrit Van Goethem (high score save)",
+	0,
+	&sidearms_machine_driver,
+	0,
+
+	sidearmr_rom,
 	0,0,
 	0,
 	0,	/* sound_prom */

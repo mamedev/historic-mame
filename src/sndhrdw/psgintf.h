@@ -38,6 +38,8 @@ int YM2203_sh_start(struct YM2203interface *interface);
 void YM2203_sh_stop(void);
 void YM2203_sh_update(void);
 
+void YM2203UpdateRequest(int chip);
+
 /*-------------------- YM2608 -------------------- */
 #define YM2608interface AY8910interface
 

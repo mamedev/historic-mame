@@ -77,8 +77,8 @@ void pacman_init_machine(void);
 int pacman_interrupt(void);
 
 void pacman_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void pengo_updatehook0(int offset);
 int pacman_vh_start(void);
+void pengo_flipscreen_w(int offset,int data);
 void pengo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 extern unsigned char *pengo_soundregs;
@@ -224,21 +224,21 @@ static struct MemoryReadAddress maketrax_readmem[] =
 static struct MemoryWriteAddress maketrax_writemem[] =
 {
 	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x43ff, videoram00_w, &videoram00 },
-	{ 0x4400, 0x47ff, videoram01_w, &videoram01 },
+	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
+	{ 0x4400, 0x47ff, colorram_w, &colorram },
 	{ 0x4c00, 0x4fef, MWA_RAM },
 	{ 0x4ff0, 0x4fff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x5000, 0x5000, interrupt_enable_w },
 	{ 0x5001, 0x5001, pengo_sound_enable_w },
 	{ 0x5002, 0x5002, MWA_NOP },
-	{ 0x5003, 0x5003, MWA_RAM, &flip_screen },
+	{ 0x5003, 0x5003, pengo_flipscreen_w },
 	{ 0x5007, 0x5007, MWA_NOP }, /* ??? */
 	{ 0x5040, 0x505f, pengo_sound_w, &pengo_soundregs },
 	{ 0x5060, 0x506f, MWA_RAM, &spriteram_2 },
 	{ 0x50c0, 0x50c0, MWA_NOP },
 	{ 0x8000, 0x9fff, MWA_ROM },    /* Ms. Pac Man only */
-	{ 0xc000, 0xc3ff, videoram00_w }, /* mirror address for video ram, */
-	{ 0xc400, 0xc7ef, videoram01_w }, /* used to display HIGH SCORE and CREDITS */
+	{ 0xc000, 0xc3ff, videoram_w }, /* mirror address for video ram, */
+	{ 0xc400, 0xc7ef, colorram_w }, /* used to display HIGH SCORE and CREDITS */
 	{ -1 }  /* end of table */
 };
 
@@ -298,6 +298,17 @@ INPUT_PORTS_END
 
 
 
+static struct GfxLayout tilelayout =
+{
+	8,8,	/* 8*8 characters */
+    256,    /* 256 characters */
+    2,      /* 2 bits per pixel */
+    { 0, 4 },        /* the two bitplanes for 4 pixels are packed into one byte */
+    { 8*8+0, 8*8+1, 8*8+2, 8*8+3, 0, 1, 2, 3 }, /* bits are packed in groups of four */
+    { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+    16*8    /* every char takes 16 bytes */
+};
+
 static struct GfxLayout spritelayout =
 {
 	16,16,  /* 16*16 sprites */
@@ -313,41 +324,10 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x1000, &spritelayout, 0, 32 },
-	{ -1 } /* end of array */
+	{ 1, 0x0000, &tilelayout,	0, 32 },
+    { 1, 0x1000, &spritelayout, 0, 32 },
+    { -1 } /* end of array */
 };
-
-
-
-static struct GfxTileLayout tilelayout =
-{
-	256,    /* 256 characters */
-	2,      /* 2 bits per pixel */
-	{ 0, 4 },        /* the two bitplanes for 4 pixels are packed into one byte */
-	{ 8*8+0, 8*8+1, 8*8+2, 8*8+3, 0, 1, 2, 3 },	/* bits are packed in groups of four */
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	16*8    /* every char takes 16 bytes */
-};
-
-static struct GfxTileDecodeInfo gfxtiledecodeinfo[] =
-{
-	{ 1, 0x0000, &tilelayout, 0, 32, 0 },
-	{ -1 } /* end of array */
-};
-
-
-
-static struct MachineLayer machine_layers[MAX_LAYERS] =
-{
-	{
-		LAYER_TILE,
-		36*8,28*8,
-		gfxtiledecodeinfo,
-		0,
-		pengo_updatehook0,pengo_updatehook0,0,0
-	}
-};
-
 
 
 static struct namco_interface namco_interface =
@@ -383,8 +363,8 @@ static struct MachineDriver maketrax_machine_driver =
 	16, 4*32,
 	pacman_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER,
-	machine_layers,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	0,
 	pacman_vh_start,
 	generic_vh_stop,
 	pengo_vh_screenrefresh,

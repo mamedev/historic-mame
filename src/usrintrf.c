@@ -208,7 +208,7 @@ struct GfxElement *builduifont(void)
 	trueorientation = Machine->orientation;
 	Machine->orientation = ORIENTATION_DEFAULT;
 
-	if (Machine->uiwidth >= 420)
+	if (Machine->uiwidth >= 420 && Machine->uiheight >= 420)
 		font = decodegfx(fontdata6x8,&fontlayout12x16);
 	else
 		font = decodegfx(fontdata6x8,&fontlayout6x8);
@@ -637,7 +637,7 @@ static void displaymessagewindow(const char *text)
 
 static void showcharset(void)
 {
-	int i,key,cpx,cpy;
+	int i,cpx,cpy;
 	struct DisplayText dt[2];
 	char buf[80];
 	int bank,color,line, maxline;
@@ -686,50 +686,52 @@ static void showcharset(void)
 		dt[1].text = 0;
 		displaytext(dt,0,1);
 
-		key = osd_read_keyrepeat(1);
-
-		switch (key)
+		if (osd_key_pressed_memory_repeat(OSD_KEY_RIGHT,8))
 		{
-			case OSD_KEY_RIGHT:
-				if (bank+1 < MAX_GFX_ELEMENTS && Machine->gfx[bank + 1])
-				{
-					bank++;
-					line = 0;
-				}
-				break;
-
-			case OSD_KEY_LEFT:
-				if (bank > 0)
-				{
-					bank--;
-					line = 0;
-				}
-				break;
-
-			case OSD_KEY_PGDN:
-				if (line < maxline-1) line++;
-				break;
-
-			case OSD_KEY_PGUP:
-				if (line > 0) line--;
-				break;
-
-			case OSD_KEY_UP:
-				if (color < Machine->drv->gfxdecodeinfo[bank].total_color_codes - 1)
-					color++;
-				break;
-
-			case OSD_KEY_DOWN:
-				if (color > 0) color--;
-				break;
-
-			case OSD_KEY_SNAPSHOT:
-				osd_save_snapshot();
-				break;
+			if (bank+1 < MAX_GFX_ELEMENTS && Machine->gfx[bank + 1])
+			{
+				bank++;
+				line = 0;
+			}
 		}
-	} while (key != OSD_KEY_SHOW_GFX && key != OSD_KEY_FAST_EXIT && key != OSD_KEY_ESC);
 
-	while (osd_key_pressed(key)) ;	/* wait for key release */
+		if (osd_key_pressed_memory_repeat(OSD_KEY_LEFT,8))
+		{
+			if (bank > 0)
+			{
+				bank--;
+				line = 0;
+			}
+		}
+
+		if (osd_key_pressed_memory_repeat(OSD_KEY_PGDN,4))
+		{
+			if (line < maxline-1) line++;
+		}
+
+		if (osd_key_pressed_memory_repeat(OSD_KEY_PGUP,4))
+		{
+			if (line > 0) line--;
+		}
+
+		if (osd_key_pressed_memory_repeat(OSD_KEY_UP,6))
+		{
+			if (color < Machine->drv->gfxdecodeinfo[bank].total_color_codes - 1)
+				color++;
+		}
+
+		if (osd_key_pressed_memory_repeat(OSD_KEY_DOWN,6))
+		{
+			if (color > 0) color--;
+		}
+
+		if (osd_key_pressed_memory(OSD_KEY_SNAPSHOT))
+		{
+			osd_save_snapshot();
+		}
+	} while (!osd_key_pressed_memory(OSD_KEY_SHOW_GFX) &&
+			!osd_key_pressed_memory(OSD_KEY_CANCEL) &&
+			!osd_key_pressed_memory(OSD_KEY_FAST_EXIT));
 
 	/* clear the screen before returning */
 	osd_clearbitmap(Machine->scrbitmap);
@@ -894,7 +896,7 @@ static int setdipswitches(int selected)
 		if (sel == total - 1) sel = -1;
 	}
 
-	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT))
+	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
 		sel = -1;
 
 	if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
@@ -1000,7 +1002,7 @@ static int setkeysettings(int selected)
 		else sel |= 0x100;	/* we'll ask for a key */
 	}
 
-	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT))
+	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
 		sel = -1;
 
 	if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
@@ -1077,7 +1079,7 @@ static int setjoysettings(int selected)
 		displaymenu(menu_item,menu_subitem,sel & 0xff,3);
 
 		/* Check all possible joystick values for switch or button press */
-		if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT))
+		if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
 		{
 			sel &= 0xff;
 			entry[sel]->joystick = IP_JOY_DEFAULT;
@@ -1136,7 +1138,7 @@ static int setjoysettings(int selected)
 		else sel |= 0x100;	/* we'll ask for a joy */
 	}
 
-	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT))
+	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
 		sel = -1;
 
 	if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
@@ -1309,7 +1311,7 @@ static int settraksettings(int selected)
 				/* Check all possible joystick values for switch or button press */
 				newjoy = -1;
 
-				if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT))
+				if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
 				{
 					sel &= 0xff;
 					newjoy = 0;//IP_JOY_DEFAULT;
@@ -1467,7 +1469,7 @@ static int settraksettings(int selected)
 		else if ((sel % ENTRIES) <= 3) sel |= 0x100;	/* we'll ask for a key/joy */
 	}
 
-	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT))
+	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
 		sel = -1;
 
 	if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
@@ -1533,6 +1535,7 @@ static int mame_stats(int selected)
 	displaymessagewindow(buf);
 
 	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT)
+			|| osd_key_pressed_memory (OSD_KEY_CANCEL)
 			|| osd_key_pressed_memory(OSD_KEY_ENTER)
 			|| osd_key_pressed_memory(OSD_KEY_LEFT)
 			|| osd_key_pressed_memory(OSD_KEY_RIGHT)
@@ -1574,6 +1577,7 @@ int showcopyright(void)
 	key = osd_read_key(1);
 	while (osd_key_pressed(key)) ;	/* wait for key release */
 	if (key == OSD_KEY_FAST_EXIT ||
+		key == OSD_KEY_CANCEL ||
 		key == OSD_KEY_ESC)
 		return 1;
 #endif
@@ -1598,6 +1602,7 @@ static int displaycredits(int selected)
 	displaymessagewindow(buf);
 
 	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT)
+			|| osd_key_pressed_memory (OSD_KEY_CANCEL)
 			|| osd_key_pressed_memory(OSD_KEY_ENTER)
 			|| osd_key_pressed_memory(OSD_KEY_LEFT)
 			|| osd_key_pressed_memory(OSD_KEY_RIGHT)
@@ -1642,7 +1647,7 @@ static int displaygameinfo(int selected)
 		"68000",
 		"T-11",
 		"S2650",
-		"TMS34010"
+		"TMS34010",
 		"TMS9900"
 	};
 	static char *soundnames[] =
@@ -1745,6 +1750,7 @@ static int displaygameinfo(int selected)
 	displaymessagewindow(buf);
 
 	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT)
+			|| osd_key_pressed_memory (OSD_KEY_CANCEL)
 			|| osd_key_pressed_memory(OSD_KEY_ENTER)
 			|| osd_key_pressed_memory(OSD_KEY_LEFT)
 			|| osd_key_pressed_memory(OSD_KEY_RIGHT)
@@ -1768,6 +1774,7 @@ int showgamewarnings(void)
 {
 	int i;
 	int key;
+	int counter;
 	char buf[2048];
 	struct DisplayText dt[3];
 
@@ -1826,6 +1833,7 @@ int showgamewarnings(void)
 		{
 			key = osd_read_key(1);
 			if (key == OSD_KEY_ESC ||
+				key == OSD_KEY_CANCEL ||
 				key == OSD_KEY_FAST_EXIT)
 			{
 				while (osd_key_pressed(key)) ;	/* wait for key release */
@@ -1840,7 +1848,10 @@ int showgamewarnings(void)
 
 	osd_clearbitmap(Machine->scrbitmap);
 
-	while (displaygameinfo(1) == 1)
+	/* don't stay on screen for more than 10 seconds */
+	counter = 10 * Machine->drv->frames_per_second;
+
+	while (displaygameinfo(1) == 1 && --counter > 0)
 		osd_update_display();
 	osd_update_display();
 
@@ -1852,7 +1863,9 @@ int showgamewarnings(void)
 
 
 
-enum { UI_SWITCH = 0, UI_KEY, UI_JOY, UI_ANALOG, UI_STATS, UI_CREDITS, UI_GAMEINFO, UI_CHEAT, UI_EXIT };
+enum { UI_SWITCH = 0,UI_KEY, UI_JOY,UI_ANALOG,
+		UI_STATS,UI_CREDITS,UI_GAMEINFO,
+		UI_CHEAT,UI_RESET,UI_EXIT };
 
 #define MAX_SETUPMENU_ITEMS 20
 static const char *menu_item[MAX_SETUPMENU_ITEMS];
@@ -1899,6 +1912,7 @@ static void setup_menu_init(void)
 		menu_item[menu_total] = "Cheat"; menu_action[menu_total++] = UI_CHEAT;
 	}
 
+	menu_item[menu_total] = "Reset Game"; menu_action[menu_total++] = UI_RESET;
 	menu_item[menu_total] = "Return to Game"; menu_action[menu_total++] = UI_EXIT;
 	menu_item[menu_total] = 0; /* terminate array */
 }
@@ -2034,6 +2048,10 @@ sel = sel & 0xff;
 				need_to_clear_bitmap = 1;
 				break;
 
+			case UI_RESET:
+				machine_reset();
+				break;
+
 			case UI_EXIT:
 				menu_lastselected = 0;
 				sel = -1;
@@ -2042,6 +2060,7 @@ sel = sel & 0xff;
 	}
 
 	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) ||
+			osd_key_pressed_memory(OSD_KEY_CANCEL) ||
 			osd_key_pressed_memory(OSD_KEY_CONFIGURE))
 	{
 		menu_lastselected = sel;
@@ -2065,7 +2084,7 @@ sel = sel & 0xff;
 
 *********************************************************************/
 
-void displayosd(const char *text,int percentage)
+static void displayosd(const char *text,int percentage)
 {
 	struct DisplayText dt[2];
 	int i,avail;
@@ -2104,7 +2123,7 @@ static void onscrd_volume(int increment,int arg)
 	if (increment)
 	{
 		attenuation = osd_get_mastervolume();
-		attenuation += 1 * increment;
+		attenuation += increment;
 		if (attenuation > 0) attenuation = 0;
 		if (attenuation < -32) attenuation = -32;
 		osd_set_mastervolume(attenuation);
@@ -2121,14 +2140,17 @@ static void onscrd_streamvol(int increment,int arg)
 	int volume,ch;
 	int doallstreams = 0;
 
+
 	if (osd_key_pressed(OSD_KEY_LSHIFT) || osd_key_pressed(OSD_KEY_RSHIFT))
 		doallstreams = 1;
+	if (!osd_key_pressed(OSD_KEY_LCONTROL) && !osd_key_pressed(OSD_KEY_RCONTROL))
+		increment *= 5;
 
 	if (increment)
 	{
 		volume = stream_get_volume(arg);
-		volume += 10 * increment;
-		if (volume > 255) volume = 255;
+		volume += increment;
+		if (volume > 100) volume = 100;
 		if (volume < 0) volume = 0;
 
 		if (doallstreams)
@@ -2142,10 +2164,10 @@ static void onscrd_streamvol(int increment,int arg)
 	volume = stream_get_volume(arg);
 
 	if (doallstreams)
-		sprintf(buf,"ALL CHANNELS Volume %3d%%",volume*100/255);
+		sprintf(buf,"ALL CHANNELS Volume %3d%%",volume);
 	else
-		sprintf(buf,"%s Volume %3d%%",stream_get_name(arg),volume*100/255);
-	displayosd(buf,100 * volume / 255);
+		sprintf(buf,"%s Volume %3d%%",stream_get_name(arg),volume);
+	displayosd(buf,volume);
 }
 
 static void onscrd_brightness(int increment,int arg)
@@ -2268,18 +2290,63 @@ static int on_screen_display(int selected)
 *********************************************************************/
 
 
+static char messagetext[80];
+static int messagecounter;
+
+static void displaymessage(void)
+{
+	struct DisplayText dt[2];
+	int i,avail;
+
+
+	if (messagecounter > 0)
+	{
+		avail = strlen(messagetext)+2;
+
+		drawbox((Machine->uiwidth - Machine->uifont->width * avail) / 2,
+				Machine->uiheight - 3*Machine->uifont->height,
+				avail * Machine->uifont->width,
+				2*Machine->uifont->height);
+
+		dt[0].text = messagetext;
+		dt[0].color = DT_COLOR_WHITE;
+		dt[0].x = (Machine->uiwidth - Machine->uifont->width * strlen(messagetext)) / 2;
+		dt[0].y = Machine->uiheight - 5*Machine->uifont->height/2;
+		dt[1].text = 0;	/* terminate array */
+		displaytext(dt,0,0);
+
+		if (--messagecounter == 0)
+			/* tell updatescreen() to clean after us */
+			need_to_clear_bitmap = 1;
+	}
+}
+
+void usrintf_showmessage(const char *text)
+{
+	strcpy(messagetext,text);
+	messagecounter = 2 * Machine->drv->frames_per_second;
+}
+
+
+
 
 static int setup_selected;
 static int osd_selected;
 
 int handle_user_interface(void)
 {
+	/* if the user pressed F12, save the screen to a file */
+	if (osd_key_pressed_memory(OSD_KEY_SNAPSHOT))
+		osd_save_snapshot();
+
 	/* This call is for the cheat, it must be called at least each frames */
 	if (nocheat == 0) DoCheat();
 
+	if (osd_key_pressed_memory (OSD_KEY_FAST_EXIT)) return 1;
+
 	/* if the user pressed ESC, stop the emulation */
 	/* but don't quit if the setup menu is on screen */
-	if (setup_selected == 0 && osd_key_pressed_memory(OSD_KEY_FAST_EXIT))
+	if (setup_selected == 0 && osd_key_pressed_memory(OSD_KEY_CANCEL))
 		return 1;
 
 	if (setup_selected == 0 && osd_key_pressed_memory(OSD_KEY_CONFIGURE))
@@ -2318,7 +2385,7 @@ int handle_user_interface(void)
 		int pressed;
 
 
-		osd_selected = 0;	/* disable on screen display, since we are going */
+//		osd_selected = 0;	/* disable on screen display, since we are going */
 							/* to change parameters affected by it */
 
 		osd_sound_enable(0);
@@ -2333,15 +2400,34 @@ int handle_user_interface(void)
 			(*Machine->drv->vh_update)(Machine->scrbitmap,1);
 			osd_profiler(OSD_PROFILE_END);
 
-			if (setup_selected == 0 && osd_key_pressed_memory(OSD_KEY_FAST_EXIT))
+			if (osd_key_pressed_memory (OSD_KEY_FAST_EXIT)) return 1;
+
+			if (setup_selected == 0 && osd_key_pressed_memory(OSD_KEY_CANCEL))
 				return 1;
 
 			if (setup_selected == 0 && osd_key_pressed_memory(OSD_KEY_CONFIGURE))
 			{
-				setup_menu_init();
 				setup_selected = -1;
+				if (osd_selected != 0)
+				{
+					osd_selected = 0;	/* disable on screen display */
+					/* tell updatescreen() to clean after us */
+					need_to_clear_bitmap = 1;
+				}
 			}
 			if (setup_selected != 0) setup_selected = setup_menu(setup_selected);
+
+			if (osd_selected == 0 && osd_key_pressed_memory(OSD_KEY_ON_SCREEN_DISPLAY))
+			{
+				osd_selected = -1;
+				if (setup_selected != 0)
+				{
+					setup_selected = 0;	/* disable setup menu */
+					/* tell updatescreen() to clean after us */
+					need_to_clear_bitmap = 1;
+				}
+			}
+			if (osd_selected != 0) osd_selected = on_screen_display(osd_selected);
 
 			osd_update_display();
 			osd_update_audio();
@@ -2352,6 +2438,9 @@ int handle_user_interface(void)
 		osd_sound_enable(1);
 		osd_set_brightness(orig_brt);
 	}
+
+
+	displaymessage();	/* show popup message if any */
 
 
 	/* if the user pressed F4, show the character set */
@@ -2366,11 +2455,6 @@ int handle_user_interface(void)
 
 		osd_sound_enable(1);
 	}
-
-
-	/* if the user pressed F12, save the screen to a file */
-	if (osd_key_pressed_memory(OSD_KEY_SNAPSHOT))
-		osd_save_snapshot();
 
 	return 0;
 }

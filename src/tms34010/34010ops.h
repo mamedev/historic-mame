@@ -6,12 +6,6 @@
 	This is a private include file. Drivers should NOT include it, but
 	use TMS34010.h instead.
 	
-	System dependencies:	long must be at least 32 bits
-	                        word must be 16 bit UINT32
-							byte must be 8 bit UINT32
-							arrays up to 65536 bytes must be supported
-							machine must be twos complement
-
 *****************************************************************************/
 
 #ifndef _34010OPS_H
@@ -20,9 +14,7 @@
 #include "osd_cpu.h"
 #include "memory.h"
 
-/****************************************************************************/
-/* sizeof(char)=1, sizeof(short)=2, sizeof(long)>=4                         */
-/****************************************************************************/
+#define SIGN(val) ((val)&0x80000000)
 
 #define INVALID_PIX_ADDRESS  0xffffffe0  /* This is the reset vector, this should be ok */
 
@@ -42,16 +34,18 @@
 /****************************************************************************/
 /* Read a byte from given memory location                                   */
 /****************************************************************************/
-#define TMS34010_RDMEM(A) ((unsigned)cpu_readmem29(A))
-#define TMS34010_RDMEM_WORD(A) ((unsigned)cpu_readmem29_word(A))
+#define TMS34010_RDMEM(A)       ((unsigned)cpu_readmem29      (A))
+#define TMS34010_RDMEM_WORD(A)  ((unsigned)cpu_readmem29_word (A))
 #define TMS34010_RDMEM_DWORD(A) ((unsigned)cpu_readmem29_dword(A))
 
 /****************************************************************************/
 /* Write a byte to given memory location                                    */
 /****************************************************************************/
-#define TMS34010_WRMEM(A,V) (cpu_writemem29(A,(V)&0xff))
-#define TMS34010_WRMEM_WORD(A,V) (cpu_writemem29_word(A,(V)&0xffff))
+#define TMS34010_WRMEM(A,V) (cpu_writemem29(A,V))
+#define TMS34010_WRMEM_WORD(A,V) (cpu_writemem29_word(A,V))
 #define TMS34010_WRMEM_DWORD(A,V) (cpu_writemem29_dword(A,V))
+
+#define STACKPTR(ADDR)	state.stackbase + TOBYTE((UINT32)(ADDR))
 
 /****************************************************************************/
 /* I/O constants and function prototypes 									*/
@@ -91,73 +85,196 @@
 #define PBH (IOREG(REG_CONTROL) & 0x0100)
 #define PBV (IOREG(REG_CONTROL) & 0x0200)
 
-#define COPY_ASP   (BREG(15) = AREG(15))
-#define COPY_BSP   (AREG(15) = BREG(15))
+#define WFIELDMAC(MASK,MAX) 														\
+	UINT32 shift = bitaddr&0x0f;     												\
+	UINT32 old;				   														\
+	bitaddr = (TOBYTE(bitaddr&0xfffffff0));											\
+																					\
+	if (shift >= MAX)																\
+	{																				\
+		old = ((UINT32) TMS34010_RDMEM_DWORD(bitaddr)&~((MASK)<<shift)); 			\
+		TMS34010_WRMEM_DWORD(bitaddr,((data&(MASK))<<shift)|old);					\
+	}																				\
+	else																			\
+	{																				\
+		old = ((UINT32) TMS34010_RDMEM_WORD (bitaddr)&~((MASK)<<shift)); 			\
+		TMS34010_WRMEM_WORD (bitaddr,((data&(MASK))<<shift)|old);			   		\
+	}
 
-void WFIELD_01(UINT32 bitaddr, UINT32 data);
-void WFIELD_02(UINT32 bitaddr, UINT32 data);
-void WFIELD_03(UINT32 bitaddr, UINT32 data);
-void WFIELD_04(UINT32 bitaddr, UINT32 data);
-void WFIELD_05(UINT32 bitaddr, UINT32 data);
-void WFIELD_06(UINT32 bitaddr, UINT32 data);
-void WFIELD_07(UINT32 bitaddr, UINT32 data);
-void WFIELD_08(UINT32 bitaddr, UINT32 data);
-void WFIELD_09(UINT32 bitaddr, UINT32 data);
-void WFIELD_10(UINT32 bitaddr, UINT32 data);
-void WFIELD_11(UINT32 bitaddr, UINT32 data);
-void WFIELD_12(UINT32 bitaddr, UINT32 data);
-void WFIELD_13(UINT32 bitaddr, UINT32 data);
-void WFIELD_14(UINT32 bitaddr, UINT32 data);
-void WFIELD_15(UINT32 bitaddr, UINT32 data);
-void WFIELD_16(UINT32 bitaddr, UINT32 data);
-void WFIELD_17(UINT32 bitaddr, UINT32 data);
-void WFIELD_18(UINT32 bitaddr, UINT32 data);
-void WFIELD_19(UINT32 bitaddr, UINT32 data);
-void WFIELD_20(UINT32 bitaddr, UINT32 data);
-void WFIELD_21(UINT32 bitaddr, UINT32 data);
-void WFIELD_22(UINT32 bitaddr, UINT32 data);
-void WFIELD_23(UINT32 bitaddr, UINT32 data);
-void WFIELD_24(UINT32 bitaddr, UINT32 data);
-void WFIELD_25(UINT32 bitaddr, UINT32 data);
-void WFIELD_26(UINT32 bitaddr, UINT32 data);
-void WFIELD_27(UINT32 bitaddr, UINT32 data);
-void WFIELD_28(UINT32 bitaddr, UINT32 data);
-void WFIELD_29(UINT32 bitaddr, UINT32 data);
-void WFIELD_30(UINT32 bitaddr, UINT32 data);
-void WFIELD_31(UINT32 bitaddr, UINT32 data);
-void WFIELD_32(UINT32 bitaddr, UINT32 data);
+#define RFIELDMAC_Z(MASK,MAX)									\
+	UINT32 shift = bitaddr&0x0f;							    \
+	bitaddr = TOBYTE(bitaddr&0xfffffff0);						\
+																\
+	if (shift >= MAX)											\
+	{															\
+		return ((TMS34010_RDMEM_DWORD(bitaddr)>>shift)&(MASK));	\
+	}															\
+	else														\
+	{															\
+		return ((TMS34010_RDMEM_WORD (bitaddr)>>shift)&(MASK));	\
+	}
 
-int RFIELD_01(UINT32 bitaddr);
-int RFIELD_02(UINT32 bitaddr);
-int RFIELD_03(UINT32 bitaddr);
-int RFIELD_04(UINT32 bitaddr);
-int RFIELD_05(UINT32 bitaddr);
-int RFIELD_06(UINT32 bitaddr);
-int RFIELD_07(UINT32 bitaddr);
-int RFIELD_08(UINT32 bitaddr);
-int RFIELD_09(UINT32 bitaddr);
-int RFIELD_10(UINT32 bitaddr);
-int RFIELD_11(UINT32 bitaddr);
-int RFIELD_12(UINT32 bitaddr);
-int RFIELD_13(UINT32 bitaddr);
-int RFIELD_14(UINT32 bitaddr);
-int RFIELD_15(UINT32 bitaddr);
-int RFIELD_16(UINT32 bitaddr);
-int RFIELD_17(UINT32 bitaddr);
-int RFIELD_18(UINT32 bitaddr);
-int RFIELD_19(UINT32 bitaddr);
-int RFIELD_20(UINT32 bitaddr);
-int RFIELD_21(UINT32 bitaddr);
-int RFIELD_22(UINT32 bitaddr);
-int RFIELD_23(UINT32 bitaddr);
-int RFIELD_24(UINT32 bitaddr);
-int RFIELD_25(UINT32 bitaddr);
-int RFIELD_26(UINT32 bitaddr);
-int RFIELD_27(UINT32 bitaddr);
-int RFIELD_28(UINT32 bitaddr);
-int RFIELD_29(UINT32 bitaddr);
-int RFIELD_30(UINT32 bitaddr);
-int RFIELD_31(UINT32 bitaddr);
-int RFIELD_32(UINT32 bitaddr);
+#define RFIELDMAC_S(MASK,MAX)									\
+	UINT32 ret;													\
+	UINT32 shift = bitaddr&0x0f;							    \
+	bitaddr = TOBYTE(bitaddr&0xfffffff0);						\
+																\
+	if (shift >= MAX)											\
+	{															\
+		ret = ((TMS34010_RDMEM_DWORD(bitaddr)>>shift)&(MASK));	\
+	}															\
+	else														\
+	{															\
+		ret = ((TMS34010_RDMEM_WORD (bitaddr)>>shift)&(MASK));	\
+	}
+
+#define WFIELDMAC_8												\
+	if (bitaddr&0x07)											\
+	{															\
+		WFIELDMAC(0xff,9);										\
+	}															\
+	else														\
+	{															\
+		TMS34010_WRMEM(TOBYTE(bitaddr),data);					\
+	}
+
+#define RFIELDMAC_Z_8											\
+	if (bitaddr&0x07)											\
+	{															\
+		RFIELDMAC_Z(0xff,9);									\
+	}															\
+	else														\
+	{															\
+		return TMS34010_RDMEM(TOBYTE(bitaddr));					\
+	}
+
+#define WFIELDMAC_32											\
+	if (bitaddr&0x0f)											\
+	{															\
+		UINT32 shift = bitaddr&0x0f;							\
+		UINT32 old;												\
+		UINT32 hiword;											\
+		bitaddr &= 0xfffffff0;									\
+		old =    ((UINT32) TMS34010_RDMEM_DWORD (TOBYTE(bitaddr     ))&(0xffffffff>>(0x20-shift)));	\
+		hiword = ((UINT32) TMS34010_RDMEM_DWORD (TOBYTE(bitaddr+0x20))&(0xffffffff<<shift));		\
+		TMS34010_WRMEM_DWORD(TOBYTE(bitaddr     ),(data<<      shift) |old);						\
+		TMS34010_WRMEM_DWORD(TOBYTE(bitaddr+0x20),(data>>(0x20-shift))|hiword);						\
+	}															\
+	else														\
+	{															\
+		TMS34010_WRMEM_DWORD(TOBYTE(bitaddr),data);				\
+	}
+
+#define RFIELDMAC_32											\
+	if (bitaddr&0x0f)											\
+	{															\
+		UINT32 shift = bitaddr&0x0f;							\
+		bitaddr &= 0xfffffff0;									\
+		return (((UINT32)TMS34010_RDMEM_DWORD (TOBYTE(bitaddr     ))>>      shift) |	\
+			            (TMS34010_RDMEM_DWORD (TOBYTE(bitaddr+0x20))<<(0x20-shift)));	\
+	}															\
+	else														\
+	{															\
+		return TMS34010_RDMEM_DWORD(TOBYTE(bitaddr));			\
+	}
+
+
+void wfield_01(UINT32 bitaddr, UINT32 data);
+void wfield_02(UINT32 bitaddr, UINT32 data);
+void wfield_03(UINT32 bitaddr, UINT32 data);
+void wfield_04(UINT32 bitaddr, UINT32 data);
+void wfield_05(UINT32 bitaddr, UINT32 data);
+void wfield_06(UINT32 bitaddr, UINT32 data);
+void wfield_07(UINT32 bitaddr, UINT32 data);
+void wfield_08(UINT32 bitaddr, UINT32 data);
+void wfield_09(UINT32 bitaddr, UINT32 data);
+void wfield_10(UINT32 bitaddr, UINT32 data);
+void wfield_11(UINT32 bitaddr, UINT32 data);
+void wfield_12(UINT32 bitaddr, UINT32 data);
+void wfield_13(UINT32 bitaddr, UINT32 data);
+void wfield_14(UINT32 bitaddr, UINT32 data);
+void wfield_15(UINT32 bitaddr, UINT32 data);
+void wfield_16(UINT32 bitaddr, UINT32 data);
+void wfield_17(UINT32 bitaddr, UINT32 data);
+void wfield_18(UINT32 bitaddr, UINT32 data);
+void wfield_19(UINT32 bitaddr, UINT32 data);
+void wfield_20(UINT32 bitaddr, UINT32 data);
+void wfield_21(UINT32 bitaddr, UINT32 data);
+void wfield_22(UINT32 bitaddr, UINT32 data);
+void wfield_23(UINT32 bitaddr, UINT32 data);
+void wfield_24(UINT32 bitaddr, UINT32 data);
+void wfield_25(UINT32 bitaddr, UINT32 data);
+void wfield_26(UINT32 bitaddr, UINT32 data);
+void wfield_27(UINT32 bitaddr, UINT32 data);
+void wfield_28(UINT32 bitaddr, UINT32 data);
+void wfield_29(UINT32 bitaddr, UINT32 data);
+void wfield_30(UINT32 bitaddr, UINT32 data);
+void wfield_31(UINT32 bitaddr, UINT32 data);
+void wfield_32(UINT32 bitaddr, UINT32 data);
+
+INT32 rfield_s_01(UINT32 bitaddr);
+INT32 rfield_s_02(UINT32 bitaddr);
+INT32 rfield_s_03(UINT32 bitaddr);
+INT32 rfield_s_04(UINT32 bitaddr);
+INT32 rfield_s_05(UINT32 bitaddr);
+INT32 rfield_s_06(UINT32 bitaddr);
+INT32 rfield_s_07(UINT32 bitaddr);
+INT32 rfield_s_08(UINT32 bitaddr);
+INT32 rfield_s_09(UINT32 bitaddr);
+INT32 rfield_s_10(UINT32 bitaddr);
+INT32 rfield_s_11(UINT32 bitaddr);
+INT32 rfield_s_12(UINT32 bitaddr);
+INT32 rfield_s_13(UINT32 bitaddr);
+INT32 rfield_s_14(UINT32 bitaddr);
+INT32 rfield_s_15(UINT32 bitaddr);
+INT32 rfield_s_16(UINT32 bitaddr);
+INT32 rfield_s_17(UINT32 bitaddr);
+INT32 rfield_s_18(UINT32 bitaddr);
+INT32 rfield_s_19(UINT32 bitaddr);
+INT32 rfield_s_20(UINT32 bitaddr);
+INT32 rfield_s_21(UINT32 bitaddr);
+INT32 rfield_s_22(UINT32 bitaddr);
+INT32 rfield_s_23(UINT32 bitaddr);
+INT32 rfield_s_24(UINT32 bitaddr);
+INT32 rfield_s_25(UINT32 bitaddr);
+INT32 rfield_s_26(UINT32 bitaddr);
+INT32 rfield_s_27(UINT32 bitaddr);
+INT32 rfield_s_28(UINT32 bitaddr);
+INT32 rfield_s_29(UINT32 bitaddr);
+INT32 rfield_s_30(UINT32 bitaddr);
+INT32 rfield_s_31(UINT32 bitaddr);
+INT32 rfield_32(UINT32 bitaddr);
+
+INT32 rfield_z_01(UINT32 bitaddr);
+INT32 rfield_z_02(UINT32 bitaddr);
+INT32 rfield_z_03(UINT32 bitaddr);
+INT32 rfield_z_04(UINT32 bitaddr);
+INT32 rfield_z_05(UINT32 bitaddr);
+INT32 rfield_z_06(UINT32 bitaddr);
+INT32 rfield_z_07(UINT32 bitaddr);
+INT32 rfield_z_08(UINT32 bitaddr);
+INT32 rfield_z_09(UINT32 bitaddr);
+INT32 rfield_z_10(UINT32 bitaddr);
+INT32 rfield_z_11(UINT32 bitaddr);
+INT32 rfield_z_12(UINT32 bitaddr);
+INT32 rfield_z_13(UINT32 bitaddr);
+INT32 rfield_z_14(UINT32 bitaddr);
+INT32 rfield_z_15(UINT32 bitaddr);
+INT32 rfield_z_16(UINT32 bitaddr);
+INT32 rfield_z_17(UINT32 bitaddr);
+INT32 rfield_z_18(UINT32 bitaddr);
+INT32 rfield_z_19(UINT32 bitaddr);
+INT32 rfield_z_20(UINT32 bitaddr);
+INT32 rfield_z_21(UINT32 bitaddr);
+INT32 rfield_z_22(UINT32 bitaddr);
+INT32 rfield_z_23(UINT32 bitaddr);
+INT32 rfield_z_24(UINT32 bitaddr);
+INT32 rfield_z_25(UINT32 bitaddr);
+INT32 rfield_z_26(UINT32 bitaddr);
+INT32 rfield_z_27(UINT32 bitaddr);
+INT32 rfield_z_28(UINT32 bitaddr);
+INT32 rfield_z_29(UINT32 bitaddr);
+INT32 rfield_z_30(UINT32 bitaddr);
+INT32 rfield_z_31(UINT32 bitaddr);
 
 #endif /* _34010OPS_H */

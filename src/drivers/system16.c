@@ -1282,7 +1282,7 @@ ROM_START( aurail_rom )
 	ROM_LOAD( "aurail.b13", 0x1e0000, 0x020000, 0x551df422 )
 
 	ROM_REGION( 0x10000 ) /* sound CPU */
-	ROM_LOAD( "aurail.a10", 0x0000, 0x8000, 0xb5183fb9 )
+	ROM_LOAD( "13448",      0x0000, 0x8000, 0xb5183fb9 )
 ROM_END
 
 /***************************************************************************/
@@ -3104,6 +3104,7 @@ ROM_START( timscanr_rom )
 
 	ROM_REGION( 0x10000 ) /* sound CPU */
 	ROM_LOAD( "ts10562.bin", 0x0000, 0x8000, 0x3f5028bf )
+/*	ROM_LOAD( "ts10563.bin", 0x8000, 0x8000, 0x9db7eddf ) banked sound ROM? */
 ROM_END
 
 /***************************************************************************/

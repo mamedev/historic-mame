@@ -215,7 +215,7 @@ static struct YM2203interface ym2203_interface =
 {
 	1,			/* 1 chip */
 	1500000,	/* 1.5 MHz ??? */
-	{ YM2203_VOL(255,255) },
+	{ YM2203_VOL(100,100) },
 	{ ticket_dispenser_r },
 	{ 0 },
 	{ 0 },
@@ -226,7 +226,7 @@ static struct YM2203interface ym2203_interface =
 static struct DACinterface dac_interface =
 {
 	1,
-	{ 128 }
+	{ 100 }
 };
 
 

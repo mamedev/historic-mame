@@ -147,22 +147,23 @@ struct osd_bitmap
  * there were some clashes with Allegro's scancodes (see above)
  */
 #define OSD_KEY_FAST_EXIT			128
-#define OSD_KEY_RESET_MACHINE		129
-#define OSD_KEY_PAUSE				130
-#define OSD_KEY_UNPAUSE 			131
-#define OSD_KEY_CONFIGURE			132
-#define OSD_KEY_ON_SCREEN_DISPLAY	133
-#define OSD_KEY_SHOW_GFX			134
-#define OSD_KEY_JOY_CALIBRATE		135
-#define OSD_KEY_FRAMESKIP			136
-#define OSD_KEY_THROTTLE			137
-#define OSD_KEY_SHOW_FPS			138
-#define OSD_KEY_SHOW_PROFILE		139
-#define OSD_KEY_SNAPSHOT			140
-#define OSD_KEY_CHEAT_TOGGLE		141
-#define OSD_KEY_DEBUGGER			142
+#define OSD_KEY_CANCEL				129
+#define OSD_KEY_RESET_MACHINE		130
+#define OSD_KEY_PAUSE				131
+#define OSD_KEY_UNPAUSE 			132
+#define OSD_KEY_CONFIGURE			133
+#define OSD_KEY_ON_SCREEN_DISPLAY	134
+#define OSD_KEY_SHOW_GFX			135
+#define OSD_KEY_JOY_CALIBRATE		136
+#define OSD_KEY_FRAMESKIP			137
+#define OSD_KEY_THROTTLE			138
+#define OSD_KEY_SHOW_FPS			139
+#define OSD_KEY_SHOW_PROFILE		140
+#define OSD_KEY_SNAPSHOT			141
+#define OSD_KEY_CHEAT_TOGGLE		142
+#define OSD_KEY_DEBUGGER			143
 
-#define OSD_MAX_PSEUDO				142
+#define OSD_MAX_PSEUDO				143
 
 #define OSD_JOY_LEFT    1
 #define OSD_JOY_RIGHT   2

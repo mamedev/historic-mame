@@ -1,22 +1,9 @@
 #include "driver.h"
 
+extern unsigned char *exterm_code_rom;
 unsigned char *exterm_master_speedup, *exterm_slave_speedup;
-unsigned char *exterm_code_rom;
-int exterm_code_rom_size;
 
 static int aimpos1, aimpos2;
-
-
-void exterm_init_machine(void)
-{
-	static int copied = 0;
-
-	if (!copied)
-	{
-		memcpy (exterm_code_rom, Machine->memory_region[Machine->drv->cpu[0].memory_region],exterm_code_rom_size);
-		copied = 1;
-	}
-}
 
 
 int exterm_coderom_r(int offset)

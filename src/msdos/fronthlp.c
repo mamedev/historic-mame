@@ -455,108 +455,111 @@ int frontend_help (int argc, char **argv)
 
             while (drivers[i])
 			{
-                /* Dummy structs to fetch the information from */
+				if (!strwildcmp(gamename, drivers[i]->name))
+				{
+					/* Dummy structs to fetch the information from */
 
-                const struct MachineDriver *x_driver = drivers[i]->drv;
-                const struct MachineCPU *x_cpu = x_driver->cpu;
-                const struct MachineSound *x_sound = x_driver->sound;
+					const struct MachineDriver *x_driver = drivers[i]->drv;
+					const struct MachineCPU *x_cpu = x_driver->cpu;
+					const struct MachineSound *x_sound = x_driver->sound;
 
-                /* First, the rom name */
+					/* First, the rom name */
 
-                printf("%-8s  ",drivers[i]->name);
+					printf("%-8s  ",drivers[i]->name);
 
-                /* source file (skip the leading "src/drivers/" */
+					/* source file (skip the leading "src/drivers/" */
 
-                printf("%-10s  ",&drivers[i]->source_file[12]);
+					printf("%-10s  ",&drivers[i]->source_file[12]);
 
-                /* Then, cpus */
+					/* Then, cpus */
 
-                for(j=0;j<MAX_CPU-1;j++) /* Increase to table to 4, when a game with 4 cpus will appear */
-                {
-                    switch(x_cpu[j].cpu_type & (~CPU_FLAGS_MASK | CPU_AUDIO_CPU))
-		    {
-						case 0:         printf("        "); break;
-						case CPU_Z80:   printf("Z80     "); break;
-						case CPU_8085A: printf("I8085   "); break;
-						case CPU_M6502: printf("M6502   "); break;
-						case CPU_I86:   printf("I86     "); break;
-						case CPU_I8039: printf("I8039   "); break;
-						case CPU_M6803: printf("M6808   "); break;
-						case CPU_M6805: printf("M6805   "); break;
-						case CPU_M6809: printf("M6809   "); break;
-						case CPU_M68000:printf("M68000  "); break;
-						case CPU_T11   :printf("T-11    "); break;
-						case CPU_S2650 :printf("S2650   "); break;
-						case CPU_TMS34010 :printf("TMS34010"); break;
-						case CPU_TMS9900:printf("TMS9900"); break;
+					for(j=0;j<MAX_CPU-1;j++) /* Increase to table to 4, when a game with 4 cpus will appear */
+					{
+						switch(x_cpu[j].cpu_type & (~CPU_FLAGS_MASK | CPU_AUDIO_CPU))
+				{
+							case 0:         printf("        "); break;
+							case CPU_Z80:   printf("Z80     "); break;
+							case CPU_8085A: printf("I8085   "); break;
+							case CPU_M6502: printf("M6502   "); break;
+							case CPU_I86:   printf("I86     "); break;
+							case CPU_I8039: printf("I8039   "); break;
+							case CPU_M6803: printf("M6808   "); break;
+							case CPU_M6805: printf("M6805   "); break;
+							case CPU_M6809: printf("M6809   "); break;
+							case CPU_M68000:printf("M68000  "); break;
+							case CPU_T11   :printf("T-11    "); break;
+							case CPU_S2650 :printf("S2650   "); break;
+							case CPU_TMS34010 :printf("TMS34010"); break;
+							case CPU_TMS9900:printf("TMS9900"); break;
 
-						case CPU_Z80   |CPU_AUDIO_CPU: printf("[Z80]   "); break; /* Brackets mean that the cpu is only needed for sound. In cpu flags, 0x8000 means it */
-						case CPU_8085A |CPU_AUDIO_CPU: printf("[I8085] "); break;
-						case CPU_M6502 |CPU_AUDIO_CPU: printf("[M6502] "); break;
-						case CPU_I86   |CPU_AUDIO_CPU: printf("[I86]   "); break;
-						case CPU_I8039 |CPU_AUDIO_CPU: printf("[I8039] "); break;
-						case CPU_M6803 |CPU_AUDIO_CPU: printf("[M6808] "); break;
-						case CPU_M6805 |CPU_AUDIO_CPU: printf("[M6805] "); break;
-						case CPU_M6809 |CPU_AUDIO_CPU: printf("[M6809] "); break;
-						case CPU_M68000|CPU_AUDIO_CPU: printf("[M68000]"); break;
-						case CPU_T11   |CPU_AUDIO_CPU: printf("[T-11]  "); break;
-						case CPU_S2650 |CPU_AUDIO_CPU: printf("[S2650] "); break;
-						case CPU_TMS34010 |CPU_AUDIO_CPU: printf("[TMS34010] "); break;
-						case CPU_TMS9900|CPU_AUDIO_CPU: printf("[TMS9900] "); break;
-                    }
-                }
+							case CPU_Z80   |CPU_AUDIO_CPU: printf("[Z80]   "); break; /* Brackets mean that the cpu is only needed for sound. In cpu flags, 0x8000 means it */
+							case CPU_8085A |CPU_AUDIO_CPU: printf("[I8085] "); break;
+							case CPU_M6502 |CPU_AUDIO_CPU: printf("[M6502] "); break;
+							case CPU_I86   |CPU_AUDIO_CPU: printf("[I86]   "); break;
+							case CPU_I8039 |CPU_AUDIO_CPU: printf("[I8039] "); break;
+							case CPU_M6803 |CPU_AUDIO_CPU: printf("[M6808] "); break;
+							case CPU_M6805 |CPU_AUDIO_CPU: printf("[M6805] "); break;
+							case CPU_M6809 |CPU_AUDIO_CPU: printf("[M6809] "); break;
+							case CPU_M68000|CPU_AUDIO_CPU: printf("[M68000]"); break;
+							case CPU_T11   |CPU_AUDIO_CPU: printf("[T-11]  "); break;
+							case CPU_S2650 |CPU_AUDIO_CPU: printf("[S2650] "); break;
+							case CPU_TMS34010 |CPU_AUDIO_CPU: printf("[TMS34010] "); break;
+							case CPU_TMS9900|CPU_AUDIO_CPU: printf("[TMS9900] "); break;
+						}
+					}
 
-                for(j=0;j<MAX_CPU-1;j++) /* Increase to table to 4, when a game with 4 cpus will appear */
-                {
+					for(j=0;j<MAX_CPU-1;j++) /* Increase to table to 4, when a game with 4 cpus will appear */
+					{
 
-                    /* Dummy int to hold the number of specific sound chip.
-                       In every multiple-chip interface, number of chips
-                       is defined as the first variable, and it is integer. */
+						/* Dummy int to hold the number of specific sound chip.
+						   In every multiple-chip interface, number of chips
+						   is defined as the first variable, and it is integer. */
 
-                    int *x_num = x_sound[j].sound_interface;
+						int *x_num = x_sound[j].sound_interface;
 
-                    switch(x_sound[j].sound_type)
-				    {
-                        case 0: printf("          "); break; /* These don't have a number of chips, only one possible */
-                        case SOUND_CUSTOM:  printf("Custom    "); break;
-                        case SOUND_SAMPLES: printf("Samples   "); break;
-                        case SOUND_NAMCO:   printf("Namco     "); break;
-                        case SOUND_TMS5220: printf("TMS5520   "); break;
-                        case SOUND_VLM5030: printf("VLM5030   "); break;
+						switch(x_sound[j].sound_type)
+						{
+							case 0: printf("          "); break; /* These don't have a number of chips, only one possible */
+							case SOUND_CUSTOM:  printf("Custom    "); break;
+							case SOUND_SAMPLES: printf("Samples   "); break;
+							case SOUND_NAMCO:   printf("Namco     "); break;
+							case SOUND_TMS5220: printf("TMS5520   "); break;
+							case SOUND_VLM5030: printf("VLM5030   "); break;
 
-                        default:
+							default:
 
-                                /* Let's print out the number of the chips */
+									/* Let's print out the number of the chips */
 
-                                printf("%dx",*x_num);
+									printf("%dx",*x_num);
 
-                                /* Then the chip's name */
+									/* Then the chip's name */
 
-                                switch(x_sound[j].sound_type)
-                                {
-									case SOUND_DAC:        printf("DAC     "); break;
-									case SOUND_AY8910:     printf("AY-8910 "); break;
-									case SOUND_YM2203:     printf("YM-2203 "); break;
-									case SOUND_YM2151:     printf("YM-2151 "); break;
-									case SOUND_YM2151_ALT: printf("YM-2151a"); break;
-									case SOUND_YM2413:     printf("YM-2413 "); break;
-									case SOUND_YM2610:     printf("YM-2610 "); break;
-									case SOUND_YM3812:     printf("YM-3812 "); break;
-									case SOUND_SN76496:    printf("SN76496 "); break;
-									case SOUND_POKEY:      printf("Pokey   "); break;
-									case SOUND_NES:        printf("NES     "); break;
-									case SOUND_ADPCM:      printf("ADPCM   "); break;
-									case SOUND_OKIM6295:   printf("OKI6295 "); break;
-									case SOUND_MSM5205:    printf("MSM5205 "); break;
-									case SOUND_ASTROCADE:  printf("ASTRCADE"); break;
-                                }
-                                break;
-                    }
-                }
+									switch(x_sound[j].sound_type)
+									{
+										case SOUND_DAC:        printf("DAC     "); break;
+										case SOUND_AY8910:     printf("AY-8910 "); break;
+										case SOUND_YM2203:     printf("YM-2203 "); break;
+										case SOUND_YM2151:     printf("YM-2151 "); break;
+										case SOUND_YM2151_ALT: printf("YM-2151a"); break;
+										case SOUND_YM2413:     printf("YM-2413 "); break;
+										case SOUND_YM2610:     printf("YM-2610 "); break;
+										case SOUND_YM3812:     printf("YM-3812 "); break;
+										case SOUND_SN76496:    printf("SN76496 "); break;
+										case SOUND_POKEY:      printf("Pokey   "); break;
+										case SOUND_NES:        printf("NES     "); break;
+										case SOUND_ADPCM:      printf("ADPCM   "); break;
+										case SOUND_OKIM6295:   printf("OKI6295 "); break;
+										case SOUND_MSM5205:    printf("MSM5205 "); break;
+										case SOUND_ASTROCADE:  printf("ASTRCADE"); break;
+									}
+									break;
+						}
+					}
 
-                /* Lastly, the name of the game and a \newline */
+					/* Lastly, the name of the game and a \newline */
 
-                printf("%s\n",drivers[i]->description);
+					printf("%s\n",drivers[i]->description);
+				}
                 i++;
             }
 	    return 0;
@@ -724,10 +727,10 @@ int frontend_help (int argc, char **argv)
 			}
 
 			if (res == NOTFOUND)
-				printf ("not found\n");
+				printf ("not found\n\n");
 			else if (res == INCORRECT)
 			{
-				printf ("incorrect\n");
+				printf ("incorrect\n\n");
 				incorrect++;
 			}
 			else

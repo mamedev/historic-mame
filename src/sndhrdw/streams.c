@@ -2,6 +2,7 @@
 #include <math.h>
 
 
+static int stream_joined_channels[MAX_STREAM_CHANNELS];
 static char stream_name[MAX_STREAM_CHANNELS][40];
 static void *stream_buffer[MAX_STREAM_CHANNELS];
 static int stream_buffer_len[MAX_STREAM_CHANNELS];
@@ -9,8 +10,10 @@ static int stream_sample_rate[MAX_STREAM_CHANNELS];
 static int stream_sample_bits[MAX_STREAM_CHANNELS];
 static int stream_volume[MAX_STREAM_CHANNELS];
 static int stream_buffer_pos[MAX_STREAM_CHANNELS];
+static int stream_sample_length[MAX_STREAM_CHANNELS];	/* in usec */
 static int stream_param[MAX_STREAM_CHANNELS];
 static void (*stream_callback[MAX_STREAM_CHANNELS])(int param,void *buffer,int length);
+static void (*stream_callback_multi[MAX_STREAM_CHANNELS])(int param,void **buffer,int length);
 
 static int memory[MAX_STREAM_CHANNELS];
 static int r1[MAX_STREAM_CHANNELS];
@@ -103,6 +106,7 @@ int streams_sh_start(void)
 
 	for (i = 0;i < MAX_STREAM_CHANNELS;i++)
 	{
+		stream_joined_channels[i] = 1;
 		stream_buffer[i] = 0;
 	}
 
@@ -125,18 +129,17 @@ void streams_sh_stop(void)
 
 void streams_sh_update(void)
 {
-	int channel;
+	int channel,i;
 
 
 	if (Machine->sample_rate == 0) return;
 
 	/* update all the output buffers */
-	for (channel = 0;channel < MAX_STREAM_CHANNELS;channel++)
+	for (channel = 0;channel < MAX_STREAM_CHANNELS;channel += stream_joined_channels[channel])
 	{
 		if (stream_buffer[channel])
 		{
 			int newpos;
-			void *buf;
 			int buflen;
 
 
@@ -144,37 +147,84 @@ void streams_sh_update(void)
 
 			buflen = newpos - stream_buffer_pos[channel];
 
-			if (buflen > 0)
+			if (stream_joined_channels[channel] > 1)
 			{
+				void *buf[MAX_STREAM_CHANNELS];
+
+
+				if (buflen > 0)
+				{
+					if (stream_sample_bits[channel] == 16)
+					{
+						for (i = 0;i < stream_joined_channels[channel];i++)
+							buf[i] = &((short *)stream_buffer[channel+i])[stream_buffer_pos[channel+i]];
+					}
+					else
+					{
+						for (i = 0;i < stream_joined_channels[channel];i++)
+							buf[i] = &((char *)stream_buffer[channel+i])[stream_buffer_pos[channel+i]];
+					}
+
+					(*stream_callback_multi[channel])(stream_param[channel],buf,buflen);
+				}
+
+				for (i = 0;i < stream_joined_channels[channel];i++)
+					stream_buffer_pos[channel+i] = 0;
+
 				if (stream_sample_bits[channel] == 16)
-					buf = &((short *)stream_buffer[channel])[stream_buffer_pos[channel]];
+				{
+					for (i = 0;i < stream_joined_channels[channel];i++)
+						apply_RC_filter_16(channel+i,stream_buffer[channel+i],stream_buffer_len[channel+i],stream_sample_rate[channel+i]);
+				}
 				else
-					buf = &((char *)stream_buffer[channel])[stream_buffer_pos[channel]];
-
-				(*stream_callback[channel])(stream_param[channel],buf,buflen);
+				{
+					for (i = 0;i < stream_joined_channels[channel];i++)
+						apply_RC_filter_8(channel+i,stream_buffer[channel+i],stream_buffer_len[channel+i],stream_sample_rate[channel+i]);
+				}
 			}
-
-			stream_buffer_pos[channel] = 0;
-
-			if (stream_sample_bits[channel] == 16)
-				apply_RC_filter_16(channel,stream_buffer[channel],stream_buffer_len[channel],stream_sample_rate[channel]);
 			else
-				apply_RC_filter_8(channel,stream_buffer[channel],stream_buffer_len[channel],stream_sample_rate[channel]);
+			{
+				if (buflen > 0)
+				{
+					void *buf;
+
+
+					if (stream_sample_bits[channel] == 16)
+						buf = &((short *)stream_buffer[channel])[stream_buffer_pos[channel]];
+					else
+						buf = &((char *)stream_buffer[channel])[stream_buffer_pos[channel]];
+
+					(*stream_callback[channel])(stream_param[channel],buf,buflen);
+				}
+
+				stream_buffer_pos[channel] = 0;
+
+				if (stream_sample_bits[channel] == 16)
+					apply_RC_filter_16(channel,stream_buffer[channel],stream_buffer_len[channel],stream_sample_rate[channel]);
+				else
+					apply_RC_filter_8(channel,stream_buffer[channel],stream_buffer_len[channel],stream_sample_rate[channel]);
+			}
 		}
 	}
 
-	for (channel = 0;channel < MAX_STREAM_CHANNELS;channel++)
+	for (channel = 0;channel < MAX_STREAM_CHANNELS;channel += stream_joined_channels[channel])
 	{
 		if (stream_buffer[channel])
 		{
 			if (stream_sample_bits[channel] == 16)
-				osd_play_streamed_sample_16(channel,
-						stream_buffer[channel],2*stream_buffer_len[channel],
-						stream_sample_rate[channel],stream_volume[channel]);
+			{
+				for (i = 0;i < stream_joined_channels[channel];i++)
+					osd_play_streamed_sample_16(channel+i,
+							stream_buffer[channel+i],2*stream_buffer_len[channel+i],
+							stream_sample_rate[channel+i],stream_volume[channel+i]);
+			}
 			else
-				osd_play_streamed_sample(channel,
-						stream_buffer[channel],stream_buffer_len[channel],
-						stream_sample_rate[channel],stream_volume[channel]);
+			{
+				for (i = 0;i < stream_joined_channels[channel];i++)
+					osd_play_streamed_sample(channel+i,
+							stream_buffer[channel+i],stream_buffer_len[channel+i],
+							stream_sample_rate[channel+i],stream_volume[channel+i]);
+			}
 		}
 	}
 }
@@ -188,6 +238,8 @@ int stream_init(const char *name,int sample_rate,int sample_bits,
 
 	channel = get_play_channels(1);
 
+	stream_joined_channels[channel] = 1;
+
 	strcpy(stream_name[channel],name);
 
 	stream_buffer_len[channel] = sample_rate / Machine->drv->frames_per_second;
@@ -199,8 +251,12 @@ int stream_init(const char *name,int sample_rate,int sample_bits,
 
 	stream_sample_rate[channel] = sample_rate;
 	stream_sample_bits[channel] = sample_bits;
-	stream_volume[channel] = 255;
+	stream_volume[channel] = 100;
 	stream_buffer_pos[channel] = 0;
+	if (sample_rate)
+		stream_sample_length[channel] = 1000000 / sample_rate;
+	else
+		stream_sample_length[channel] = 0;
 	stream_param[channel] = param;
 	stream_callback[channel] = callback;
 
@@ -208,10 +264,48 @@ int stream_init(const char *name,int sample_rate,int sample_bits,
 }
 
 
-void stream_update(int channel)
+int stream_init_multi(int channels,const char **name,int sample_rate,int sample_bits,
+		int param,void (*callback)(int param,void **buffer,int length))
+{
+	int channel,i;
+
+
+	channel = get_play_channels(channels);
+
+	stream_joined_channels[channel] = channels;
+
+	for (i = 0;i < channels;i++)
+	{
+		strcpy(stream_name[channel+i],name[i]);
+
+		stream_buffer_len[channel+i] = sample_rate / Machine->drv->frames_per_second;
+		/* adjust sample rate to make it a multiple of buffer_len */
+		sample_rate = stream_buffer_len[channel+i] * Machine->drv->frames_per_second;
+
+		if ((stream_buffer[channel+i] = malloc((sample_bits/8)*stream_buffer_len[channel+i])) == 0)
+			return -1;
+
+		stream_sample_rate[channel+i] = sample_rate;
+		stream_sample_bits[channel+i] = sample_bits;
+		stream_volume[channel+i] = 100;
+		stream_buffer_pos[channel+i] = 0;
+		if (sample_rate)
+			stream_sample_length[channel+i] = 1000000 / sample_rate;
+		else
+			stream_sample_length[channel+i] = 0;
+	}
+
+	stream_param[channel] = param;
+	stream_callback_multi[channel] = callback;
+
+	return channel;
+}
+
+
+/* min_interval is in usec */
+void stream_update(int channel,int min_interval)
 {
 	int newpos;
-	void *buf;
 	int buflen;
 
 
@@ -223,24 +317,57 @@ void stream_update(int channel)
 
 	buflen = newpos - stream_buffer_pos[channel];
 
-	if (buflen > 0)
+	if (buflen * stream_sample_length[channel] > min_interval)
 	{
-		if (stream_sample_bits[channel] == 16)
-			buf = &((short *)stream_buffer[channel])[stream_buffer_pos[channel]];
+		if (stream_joined_channels[channel] > 1)
+		{
+			void *buf[MAX_STREAM_CHANNELS];
+			int i;
+
+
+			if (stream_sample_bits[channel] == 16)
+			{
+				for (i = 0;i < stream_joined_channels[channel];i++)
+					buf[i] = &((short *)stream_buffer[channel+i])[stream_buffer_pos[channel+i]];
+			}
+			else
+			{
+				for (i = 0;i < stream_joined_channels[channel];i++)
+					buf[i] = &((char *)stream_buffer[channel+i])[stream_buffer_pos[channel+i]];
+			}
+
+			osd_profiler(OSD_PROFILE_SOUND);
+			(*stream_callback_multi[channel])(stream_param[channel],buf,buflen);
+			osd_profiler(OSD_PROFILE_END);
+
+			for (i = 0;i < stream_joined_channels[channel];i++)
+				stream_buffer_pos[channel+i] += buflen;
+		}
 		else
-			buf = &((char *)stream_buffer[channel])[stream_buffer_pos[channel]];
+		{
+			void *buf;
 
-		osd_profiler(OSD_PROFILE_SOUND);
-		(*stream_callback[channel])(stream_param[channel],buf,buflen);
-		osd_profiler(OSD_PROFILE_END);
 
-		stream_buffer_pos[channel] += buflen;
+			if (stream_sample_bits[channel] == 16)
+				buf = &((short *)stream_buffer[channel])[stream_buffer_pos[channel]];
+			else
+				buf = &((char *)stream_buffer[channel])[stream_buffer_pos[channel]];
+
+			osd_profiler(OSD_PROFILE_SOUND);
+			(*stream_callback[channel])(stream_param[channel],buf,buflen);
+			osd_profiler(OSD_PROFILE_END);
+
+			stream_buffer_pos[channel] += buflen;
+		}
 	}
 }
 
 
 void stream_set_volume(int channel,int volume)
 {
+	/* backwards compatibility with old 0-255 volume range */
+	if (volume > 100) volume = volume * 50 / 255;
+
 	stream_volume[channel] = volume;
 }
 

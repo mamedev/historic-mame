@@ -5,6 +5,8 @@ static unsigned char *biosbank;
 unsigned char *neogeo_ram;
 unsigned char *neogeo_sram;
 
+int neogeo_game_fix=-1;
+
 extern int neogeo_irq2;
 
 extern void install_mem_read_handler(int cpu, int start, int end, int (*handler)(int));
@@ -16,12 +18,6 @@ void neogeo_init_machine (void)
 	/* Reset variables & RAM */
 	neogeo_irq2=0;
 	memset (neogeo_ram, 0, 0x10000);
-
-	/* Credits are stored in the SRAM in case of power failures, we don't really
-		want this behaviour in Mame, so zero credit entry on bootup.  Without
-        this a game will go straight to intro screen on bootup if credits are
-        in the system */
-	WRITE_WORD(&neogeo_sram[0x34],0x0000);
 }
 
 /* This function is only called once per game. */
@@ -29,6 +25,19 @@ void neogeo_onetime_init_machine(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
     void *f;
+	extern struct YM2610interface neogeo_ym2610_interface;
+
+
+	if (Machine->memory_region[7])
+	{
+if (errorlog) fprintf(errorlog,"using memory region 7 for Delta T samples\n");
+		neogeo_ym2610_interface.pcmroma[0] = 7;
+	}
+	else
+	{
+if (errorlog) fprintf(errorlog,"using memory region 6 for Delta T samples\n");
+		neogeo_ym2610_interface.pcmroma[0] = 6;
+	}
 
     /* Allocate ram banks */
 	neogeo_ram = malloc (0x10000);
@@ -41,7 +50,14 @@ void neogeo_onetime_init_machine(void)
 
 	/* Set the 2nd ROM bank */
     RAM = Machine->memory_region[0];
-	cpu_setbank (4, &RAM[0x100000]);
+	if (Machine->memory_region_length[0] > 0x100000)
+	{
+		cpu_setbank (4, &RAM[0x100000]);
+	}
+	else
+	{
+		cpu_setbank (4, &RAM[0]);
+	}
 
 	/* Allocate and point to the memcard - bank 5 */
  //	memcard = calloc (0x1000, 1);
@@ -62,29 +78,6 @@ void neogeo_onetime_init_machine(void)
     WRITE_WORD(&RAM[0x11b00],0x4ef9);
     WRITE_WORD(&RAM[0x11b02],0x00c1);
     WRITE_WORD(&RAM[0x11b04],0x1b6a);
-
-    /* Load the SRAM settings for this game */
-	memset (neogeo_sram, 0, 0x10000);
-	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
-	if (f)
-	{
-		osd_fread (f, neogeo_sram, 0x2000);
-		osd_fclose (f);
-	}
-    else {
-        /* If we have no SRAM settings we need to set up machine defaults */
-		WRITE_WORD(&neogeo_sram[0x3a],0x0101); /* Coin slot 1: 1 coin 1 credit */
-		WRITE_WORD(&neogeo_sram[0x3c],0x0102); /* Coin slot 2: 1 coin 2 credits */
-        /* Without above two settings, coin inputs won't work at all! */
-
-		WRITE_WORD(&neogeo_sram[0x3e],0x0101); /* Service switch parameters? */
-
-		WRITE_WORD(&neogeo_sram[0x40],0x0103); /* Unknown */
-
-		WRITE_WORD(&neogeo_sram[0x42],0x0000); /* Game start only when credited */
-		WRITE_WORD(&neogeo_sram[0x44],0x303b); /* Game start compulsion is 1st byte */
-		WRITE_WORD(&neogeo_sram[0x46],0x0000); /* Attract mode sound set per game */
-    }
 
 	/* Install custom memory handlers */
 	neogeo_custom_memory();
@@ -185,7 +178,7 @@ static int cycle_v3_sr(int offset)
 }
 
 /*
- *	Also sound revision no 3.0 weird :-).
+ *	Also sound revision no 3.0, but different types.
  */
 static int sidkicks_cycle_sr(int offset)
 {
@@ -198,7 +191,25 @@ static int sidkicks_cycle_sr(int offset)
 	return RAM[0xfef3];
 }
 
-static int pbobble_cycle_sr(int offset)
+static int artfight_cycle_sr(int offset)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+
+	if (cpu_getpc()==0x0143) {
+		cpu_spinuntil_int();
+		return RAM[0xfef3];
+	}
+	return RAM[0xfef3];
+}
+
+/*
+ *	Sound V2.0
+ *
+ *	Used by puzzle Bobble and Goal Goal Goal
+ *
+ */
+
+static int cycle_v2_sr(int offset)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
 
@@ -209,15 +220,50 @@ static int pbobble_cycle_sr(int offset)
 	return RAM[0xfeef];
 }
 
-static int joyjoy_cycle_sr(int offset)
+static int vwpoint_cycle_sr(int offset)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
 
-	if (cpu_getpc()==0x0156) {
+	if (cpu_getpc()==0x0143) {
 		cpu_spinuntil_int();
-		return RAM[0xfeef];
+		return RAM[0xfe46];
 	}
-	return RAM[0x0156];
+	return RAM[0xfe46];
+}
+
+/*
+ *	Sound revision no 1.5, and some 2.0 versions,
+ *	are not fit for speedups, it results in sound drops !
+ *	Games that use this one are : Ghost Pilots, Joy Joy, Nam 1975
+ */
+
+/*
+static int cycle_v15_sr(int offset)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+
+	if (cpu_getpc()==0x013D) {
+		cpu_spinuntil_int();
+		return RAM[0xfe46];
+	}
+	return RAM[0xfe46];
+}
+*/
+
+/*
+ *	Magician Lord uses a different sound core from all other
+ *	Neo Geo Games.
+ */
+
+static int maglord_cycle_sr(int offset)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+
+	if (cpu_getpc()==0xd487) {
+		cpu_spinuntil_int();
+		return RAM[0xfb91];
+	}
+	return RAM[0xfb91];
 }
 
 /******************************************************************************/
@@ -232,7 +278,7 @@ static void neogeo_custom_memory(void)
 
     /* Individual games can go here... */
 
-#if 0
+#if 1
 	if (!strcmp(Machine->gamedrv->name,"puzzledp")) install_mem_read_handler(0, 0x100000, 0x100001, puzzledp_cycle_r);
 //	if (!strcmp(Machine->gamedrv->name,"samsho4")) install_mem_read_handler(0, 0x10830c, 0x10830d, samsho4_cycle_r);
 //	if (!strcmp(Machine->gamedrv->name,"karnov_r")) install_mem_read_handler(0, 0x103466, 0x103467, karnov_r_cycle_r);
@@ -245,11 +291,29 @@ static void neogeo_custom_memory(void)
 	/* AVDB cpu spins based on sound processor status */
 	if (!strcmp(Machine->gamedrv->name,"puzzledp")) install_mem_read_handler(1, 0xfeb1, 0xfeb1, cycle_v3_sr);
 	if (!strcmp(Machine->gamedrv->name,"ssideki2")) install_mem_read_handler(1, 0xfeb1, 0xfeb1, cycle_v3_sr);
+
 	if (!strcmp(Machine->gamedrv->name,"sidkicks")) install_mem_read_handler(1, 0xfef3, 0xfef3, sidkicks_cycle_sr);
-	if (!strcmp(Machine->gamedrv->name,"pbobble")) install_mem_read_handler(1, 0xfeef, 0xfeef, pbobble_cycle_sr);
-	if (!strcmp(Machine->gamedrv->name,"joyjoy")) install_mem_read_handler(1, 0xfe75, 0xfe75, joyjoy_cycle_sr);
+	if (!strcmp(Machine->gamedrv->name,"artfight")) install_mem_read_handler(1, 0xfef3, 0xfef3, artfight_cycle_sr);
 
+	if (!strcmp(Machine->gamedrv->name,"pbobble")) install_mem_read_handler(1, 0xfeef, 0xfeef, cycle_v2_sr);
+	if (!strcmp(Machine->gamedrv->name,"goalx3")) install_mem_read_handler(1, 0xfeef, 0xfeef, cycle_v2_sr);
+	if (!strcmp(Machine->gamedrv->name,"fatfury1")) install_mem_read_handler(1, 0xfeef, 0xfeef, cycle_v2_sr);
+	if (!strcmp(Machine->gamedrv->name,"mutnat")) install_mem_read_handler(1, 0xfeef, 0xfeef, cycle_v2_sr);
+
+	if (!strcmp(Machine->gamedrv->name,"maglord")) install_mem_read_handler(1, 0xfb91, 0xfb91, maglord_cycle_sr);
+	if (!strcmp(Machine->gamedrv->name,"vwpoint")) install_mem_read_handler(1, 0xfe46, 0xfe46, vwpoint_cycle_sr);
+
+//	if (!strcmp(Machine->gamedrv->name,"joyjoy")) install_mem_read_handler(1, 0xfe46, 0xfe46, cycle_v15_sr);
+//	if (!strcmp(Machine->gamedrv->name,"nam_1975")) install_mem_read_handler(1, 0xfe46, 0xfe46, cycle_v15_sr);
+//	if (!strcmp(Machine->gamedrv->name,"gpilots")) install_mem_read_handler(1, 0xfe46, 0xfe46, cycle_v15_sr);
+
+	/* kludges */
+	if (!strcmp(Machine->gamedrv->name,"blazstar")) neogeo_game_fix=0;
+	if (!strcmp(Machine->gamedrv->name,"gowcaizr")) neogeo_game_fix=1;
+	if (!strcmp(Machine->gamedrv->name,"realbou2")) neogeo_game_fix=2;
+	if (!strcmp(Machine->gamedrv->name,"samsho3")) neogeo_game_fix=3;
+	if (!strcmp(Machine->gamedrv->name,"overtop")) neogeo_game_fix=4;
+	if (!strcmp(Machine->gamedrv->name,"kof97")) neogeo_game_fix=5;
+	if (!strcmp(Machine->gamedrv->name,"miexchng")) neogeo_game_fix=6;
+	if (!strcmp(Machine->gamedrv->name,"gururin")) neogeo_game_fix=7;
 }
-
-/******************************************************************************/
-

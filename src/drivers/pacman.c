@@ -60,7 +60,7 @@ int pacman_interrupt(void);
 
 int pacman_vh_start(void);
 void pacman_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void pengo_updatehook0(int offset);
+void pengo_flipscreen_w(int offset,int data);
 void pengo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 extern unsigned char *pengo_soundregs;
@@ -89,14 +89,14 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x43ff, videoram00_w, &videoram00 },
-	{ 0x4400, 0x47ff, videoram01_w, &videoram01 },
+	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
+	{ 0x4400, 0x47ff, colorram_w, &colorram },
 	{ 0x4c00, 0x4fef, MWA_RAM },
 	{ 0x4ff0, 0x4fff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x5000, 0x5000, interrupt_enable_w },
 	{ 0x5001, 0x5001, pengo_sound_enable_w },
 	{ 0x5002, 0x5002, MWA_NOP },
-	{ 0x5003, 0x5003, MWA_RAM, &flip_screen },
+	{ 0x5003, 0x5003, pengo_flipscreen_w },
  	{ 0x5004, 0x5005, osd_led_w },
  	{ 0x5006, 0x5006, MWA_NOP },
  	{ 0x5007, 0x5007, coin_counter_w },
@@ -104,9 +104,9 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5060, 0x506f, MWA_RAM, &spriteram_2 },
 	{ 0x50c0, 0x50c0, watchdog_reset_w },
 	{ 0x8000, 0xbfff, MWA_ROM },	/* Ms. Pac Man / Ponpoko only */
-	{ 0xc000, 0xc3ff, videoram00_w },	/* mirror address for video ram, */
-	{ 0xc400, 0xc7ef, videoram01_w },	/* used to display HIGH SCORE and CREDITS */
-	{ 0xffff, 0xffff, MWA_NOP },		/* Eyes writes to this location to simplify code */
+	{ 0xc000, 0xc3ff, videoram_w }, /* mirror address for video ram, */
+	{ 0xc400, 0xc7ef, colorram_w }, /* used to display HIGH SCORE and CREDITS */
+	{ 0xffff, 0xffff, MWA_NOP },	/* Eyes writes to this location to simplify code */
 	{ -1 }	/* end of table */
 };
 
@@ -547,6 +547,18 @@ INPUT_PORTS_START( theglob_input_ports )
 INPUT_PORTS_END
 
 
+static struct GfxLayout tilelayout =
+{
+	8,8,	/* 8*8 characters */
+    256,    /* 256 characters */
+    2,  /* 2 bits per pixel */
+    { 0, 4 },   /* the two bitplanes for 4 pixels are packed into one byte */
+    { 8*8+0, 8*8+1, 8*8+2, 8*8+3, 0, 1, 2, 3 }, /* bits are packed in groups of four */
+    { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+    16*8    /* every char takes 16 bytes */
+};
+
+
 static struct GfxLayout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
@@ -563,41 +575,10 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
+	{ 1, 0x0000, &tilelayout,	0, 32 },
 	{ 1, 0x1000, &spritelayout, 0, 32 },
 	{ -1 } /* end of array */
 };
-
-
-static struct GfxTileLayout tilelayout =
-{
-	256,	/* 256 characters */
-	2,	/* 2 bits per pixel */
-	{ 0, 4 },	/* the two bitplanes for 4 pixels are packed into one byte */
-	{ 8*8+0, 8*8+1, 8*8+2, 8*8+3, 0, 1, 2, 3 },	/* bits are packed in groups of four */
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	16*8	/* every char takes 16 bytes */
-};
-
-
-static struct GfxTileDecodeInfo gfxtiledecodeinfo[] =
-{
-	{ 1, 0x0000, &tilelayout,   0, 32, 0 },
-	{ -1 } /* end of array */
-};
-
-
-
-static struct MachineLayer machine_layers[MAX_LAYERS] =
-{
-	{
-		LAYER_TILE,
-		36*8,28*8,
-		gfxtiledecodeinfo,
-		0,
-		pengo_updatehook0,pengo_updatehook0,0,0
-	}
-};
-
 
 
 static struct namco_interface namco_interface =
@@ -633,8 +614,8 @@ static struct MachineDriver machine_driver =
 	16, 4*32,
 	pacman_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER,
-	machine_layers,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	0,
 	pacman_vh_start,
 	generic_vh_stop,
 	pengo_vh_screenrefresh,
@@ -673,7 +654,7 @@ static struct MachineDriver theglob_machine_driver =
 	pacman_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
-	machine_layers,
+	0,
 	pacman_vh_start,
 	generic_vh_stop,
 	pengo_vh_screenrefresh,
@@ -910,20 +891,20 @@ ROM_END
 
 ROM_START( crush_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "cr1",          0x0000, 0x0800, 0xf276592e )
-	ROM_LOAD( "cr5",          0x0800, 0x0800, 0x3d302abe )
-	ROM_LOAD( "cr2",          0x1000, 0x0800, 0x25f42e70 )
-	ROM_LOAD( "cr6",          0x1800, 0x0800, 0x98279cbe )
-	ROM_LOAD( "cr3",          0x2000, 0x0800, 0x8377b4cb )
-	ROM_LOAD( "cr7",          0x2800, 0x0800, 0xd8e76c8c )
-	ROM_LOAD( "cr4",          0x3000, 0x0800, 0x90b28fa3 )
-	ROM_LOAD( "cr8",          0x3800, 0x0800, 0x10854e1b )
+	ROM_LOAD( "tp1",          0x0000, 0x0800, 0xf276592e )
+	ROM_LOAD( "tp5a",         0x0800, 0x0800, 0x3d302abe )
+	ROM_LOAD( "tp2",          0x1000, 0x0800, 0x25f42e70 )
+	ROM_LOAD( "tp6",          0x1800, 0x0800, 0x98279cbe )
+	ROM_LOAD( "tp3",          0x2000, 0x0800, 0x8377b4cb )
+	ROM_LOAD( "tp7",          0x2800, 0x0800, 0xd8e76c8c )
+	ROM_LOAD( "tp4",          0x3000, 0x0800, 0x90b28fa3 )
+	ROM_LOAD( "tp8",          0x3800, 0x0800, 0x10854e1b )
 
 	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "cra",          0x0000, 0x0800, 0xce1e3a28 )
-	ROM_LOAD( "crc",          0x0800, 0x0800, 0xe129d76a )
-	ROM_LOAD( "crb",          0x1000, 0x0800, 0xd1899f05 )
-	ROM_LOAD( "crd",          0x1800, 0x0800, 0x0e9879b7 )
+	ROM_LOAD( "tpa",          0x0000, 0x0800, 0xc7617198 )
+	ROM_LOAD( "tpc",          0x0800, 0x0800, 0xe129d76a )
+	ROM_LOAD( "tpb",          0x1000, 0x0800, 0xd1899f05 )
+	ROM_LOAD( "tpd",          0x1800, 0x0800, 0xd35d1caf )
 
 	ROM_REGION(0x0120)	/* color PROMs */
 	ROM_LOAD( "crush.7f",     0x0000, 0x0020, 0x2fc650bd )
@@ -1053,6 +1034,26 @@ ROM_START( beastf_rom )
 	ROM_LOAD( "pacman.spr",   0x0000, 0x0100, 0xa9cc86bf )
 ROM_END
 
+ROM_START( jumpshot_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "6e",           0x0000, 0x1000, 0xf00def9a )
+	ROM_LOAD( "6f",           0x1000, 0x1000, 0xf70deae2 )
+	ROM_LOAD( "6h",           0x2000, 0x1000, 0x894d6f68 )
+	ROM_LOAD( "6j",           0x3000, 0x1000, 0xf15a108a )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5e",           0x0000, 0x1000, 0xd9fa90f5 )
+	ROM_LOAD( "5f",           0x1000, 0x1000, 0x2ec711c1 )
+
+	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_LOAD( "prom.7f",      0x0000, 0x0020, 0x872b42f3 )
+	ROM_LOAD( "prom.4a",      0x0020, 0x0100, 0x0399f39f )
+
+	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_LOAD( "prom.1m",      0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "prom.3m",      0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+ROM_END
+
 
 
 static void ponpoko_decode(void)
@@ -1155,12 +1156,12 @@ static void copytoscreen(int mem, int len, int screen, int direction)
 	if (hi)
 	{
 		sprintf(buf,"%8d",hi);
-		if (buf[2] != ' ') videoram00_w(screen + direction*0, buf[2]-'0');
-		if (buf[3] != ' ') videoram00_w(screen + direction*1, buf[3]-'0');
-		if (buf[4] != ' ') videoram00_w(screen + direction*2, buf[4]-'0');
-		if (buf[5] != ' ') videoram00_w(screen + direction*3, buf[5]-'0');
-		if (buf[6] != ' ') videoram00_w(screen + direction*4, buf[6]-'0');
-		                   videoram00_w(screen + direction*5, buf[7]-'0');
+		if (buf[2] != ' ') videoram_w(screen + direction*0, buf[2]-'0');
+		if (buf[3] != ' ') videoram_w(screen + direction*1, buf[3]-'0');
+		if (buf[4] != ' ') videoram_w(screen + direction*2, buf[4]-'0');
+		if (buf[5] != ' ') videoram_w(screen + direction*3, buf[5]-'0');
+		if (buf[6] != ' ') videoram_w(screen + direction*4, buf[6]-'0');
+		                   videoram_w(screen + direction*5, buf[7]-'0');
 	}
 }
 
@@ -1865,4 +1866,31 @@ struct GameDriver beastf_driver =
 	ORIENTATION_ROTATE_90,
 
 	theglob_hiload,theglob_hisave
+};
+
+/* not working, encrypted */
+struct GameDriver jumpshot_driver =
+{
+	__FILE__,
+	0,
+	"jumpshot",
+	"Jump Shot",
+	"????",
+	"?????",
+	BASE_CREDITS,
+	GAME_NOT_WORKING,
+	&machine_driver,
+	0,
+
+	jumpshot_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	pacman_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
 };

@@ -7,15 +7,18 @@
 #include "vidhrdw/generic.h"
 
 unsigned char *rastan_ram;
+extern unsigned char *rastan_videoram1,*rastan_videoram3;
+extern int rastan_videoram_size;
 extern unsigned char *rastan_spriteram;
 extern unsigned char *rastan_scrollx;
 extern unsigned char *rastan_scrolly;
 
-void rastan_updatehook0(int offset);
-void rastan_updatehook1(int offset);
-
 void rastan_spriteram_w(int offset,int data);
 int rastan_spriteram_r(int offset);
+void rastan_videoram1_w(int offset,int data);
+int rastan_videoram1_r(int offset);
+void rastan_videoram3_w(int offset,int data);
+int rastan_videoram3_r(int offset);
 
 void rastan_scrollY_w(int offset,int data);
 void rastan_scrollX_w(int offset,int data);
@@ -27,6 +30,9 @@ int rastan_s_interrupt(void);
 
 void rastan_background_w(int offset,int data);
 void rastan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+
+int  rastan_vh_start(void);
+void rastan_vh_stop(void);
 
 int rastan_input_r (int offset);
 
@@ -71,11 +77,11 @@ static struct MemoryReadAddress rastan_readmem[] =
 	{ 0x200000, 0x20ffff, paletteram_word_r },
 	{ 0x3e0000, 0x3e0003, rastan_sound_r },
 	{ 0x390000, 0x39000f, rastan_input_r },
-	{ 0xc00000, 0xc03fff, videoram10_word_r },
+	{ 0xc00000, 0xc03fff, rastan_videoram1_r },
 	{ 0xc04000, 0xc07fff, MRA_BANK2 },
-	{ 0xc08000, 0xc0bfff, videoram00_word_r },
+	{ 0xc08000, 0xc0bfff, rastan_videoram3_r },
 	{ 0xc0c000, 0xc0ffff, MRA_BANK3 },
-	{ 0xd00000, 0xd0ffff, MRA_BANK4, &rastan_spriteram },
+	{ 0xd00000, 0xd0ffff, MRA_BANK4 },
 	{ -1 }  /* end of table */
 };
 
@@ -89,14 +95,14 @@ static struct MemoryWriteAddress rastan_writemem[] =
 	{ 0x380000, 0x380003, rastan_videocontrol_w },	/* sprite palette bank, coin counters, other unknowns */
 	{ 0x3c0000, 0x3c0003, MWA_NOP },     /*0000,0020,0063,0992,1753 (very often) watchdog? */
 	{ 0x3e0000, 0x3e0003, rastan_sound_w },
-	{ 0xc00000, 0xc03fff, videoram10_word_w, &videoram10 },
+	{ 0xc00000, 0xc03fff, rastan_videoram1_w, &rastan_videoram1, &rastan_videoram_size },
 	{ 0xc04000, 0xc07fff, MWA_BANK2 },
-	{ 0xc08000, 0xc0bfff, videoram00_word_w, &videoram00 },
+	{ 0xc08000, 0xc0bfff, rastan_videoram3_w, &rastan_videoram3 },
 	{ 0xc0c000, 0xc0ffff, MWA_BANK3 },
 	{ 0xc20000, 0xc20003, rastan_scrollY_w, &rastan_scrolly },  /* scroll Y  1st.w plane1  2nd.w plane2 */
 	{ 0xc40000, 0xc40003, rastan_scrollX_w, &rastan_scrollx },  /* scroll X  1st.w plane1  2nd.w plane2 */
 //	{ 0xc50000, 0xc50003, MWA_NOP },     /* 0 only (rarely)*/
-	{ 0xd00000, 0xd0ffff, MWA_BANK4 },
+	{ 0xd00000, 0xd0ffff, MWA_BANK4, &rastan_spriteram },
 	{ -1 }  /* end of table */
 };
 
@@ -289,7 +295,18 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout spritelayout =
+static struct GfxLayout spritelayout1 =
+{
+	8,8,	/* 8*8 sprites */
+	16384,	/* 16384 sprites */
+	4,	/* 4 bits per pixel */
+	{ 0, 1, 2, 3 },
+	{ 0, 4, 0x40000*8+0 ,0x40000*8+4, 8+0, 8+4, 0x40000*8+8+0, 0x40000*8+8+4 },
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
+	16*8	/* every sprite takes 16 consecutive bytes */
+};
+
+static struct GfxLayout spritelayout2 =
 {
 	16,16,	/* 16*16 sprites */
 	4096,	/* 4096 sprites */
@@ -308,51 +325,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x80000, &spritelayout,  0, 0x80 },	/* sprites 16x16*/
+	{ 1, 0x00000, &spritelayout1,  0, 0x80 },	/* sprites 8x8*/
+	{ 1, 0x80000, &spritelayout2,  0, 0x80 },	/* sprites 16x16*/
 	{ -1 } /* end of array */
-};
-
-
-
-static struct GfxTileLayout tilelayout =
-{
-	16384,	/* 16384 sprites */
-	4,	/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },
-    { 0, 4, 0x40000*8+0 ,0x40000*8+4, 8+0, 8+4, 0x40000*8+8+0, 0x40000*8+8+4 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	16*8	/* every sprite takes 16 consecutive bytes */
-};
-
-static struct GfxTileDecodeInfo gfxtiledecodeinfo0[] =
-{
-	{ 1, 0x00000, &tilelayout, 0, 128, 0x00000001 },	/* foreground tiles */
-	{ -1 } /* end of array */
-};
-
-static struct GfxTileDecodeInfo gfxtiledecodeinfo1[] =
-{
-	{ 1, 0x00000, &tilelayout, 0, 128, 0 },	/* background tiles */
-	{ -1 } /* end of array */
-};
-
-
-static struct MachineLayer machine_layers[MAX_LAYERS] =
-{
-	{
-		LAYER_TILE,
-		64*8,64*8,
-		gfxtiledecodeinfo0,
-		0,
-		rastan_updatehook0,0,0,0
-	},
-	{
-		LAYER_TILE,
-		64*8,64*8,
-		gfxtiledecodeinfo1,
-		0,
-		rastan_updatehook1,0,0,0
-	}
 };
 
 
@@ -388,7 +363,7 @@ static struct MachineDriver machine_driver =
 			rastan_interrupt,1
 		},
 		{
-			CPU_Z80 | CPU_AUDIO_CPU,
+			CPU_Z80,
 			4000000,	/* 4 Mhz */
 			2,
 			rastan_s_readmem,rastan_s_writemem,0,0,
@@ -406,9 +381,9 @@ static struct MachineDriver machine_driver =
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	machine_layers,
-	generic_vh_start,
-	generic_vh_stop,
+	0,
+	rastan_vh_start,
+	rastan_vh_stop,
 	rastan_vh_screenrefresh,
 
 	/* sound hardware */

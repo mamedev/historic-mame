@@ -159,7 +159,7 @@ static struct GfxLayout charlayout =
 	8,8,	/* 8*8 characters */
 	128,	/* 128 characters */
 	4,	/* 4 bits per pixel */
-	{ 0, 0x1000*8, 0x2000*8, 0x3000*8 },	/* the four bitplanes are separated */
+	{ 0x3000*8, 0x2000*8, 0x1000*8, 0 },	/* the four bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	16*8	/* every char takes 8 consecutive bytes, then skip 8 */
@@ -170,7 +170,7 @@ static struct GfxLayout spritelayout =
 	8,16,	/* 16*8 sprites */
 	128,	/* 128 sprites */
 	4,	/* 4 bits per pixel */
-	{ 0, 0x1000*8, 0x2000*8, 0x3000*8 },	/* the four bitplanes are separated */
+	{ 0x3000*8, 0x2000*8, 0x1000*8, 0 },	/* the four bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
@@ -205,7 +205,6 @@ static struct POKEYinterface pokey_interface =
 	{ 0, 0 },
 	{ 0, 0 },
 	/* The allpot handler */
-//	{ input_port_4_r, input_port_5_r },
 	{ 0, 0 },
 };
 
@@ -229,8 +228,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	32, 32,
-//	256, 256,   /* palette size, colortable size */
+	16, 16,
 	0,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
@@ -327,7 +325,7 @@ struct GameDriver qwakprot_driver =
 	"1982",
 	"Atari",
 	"Mike Balfour",
-	GAME_WRONG_COLORS,
+	0,
 	&machine_driver,
 	0,
 

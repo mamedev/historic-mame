@@ -352,12 +352,16 @@ WWW.SPIES.COM contains DIP switch settings.
 
 
 
+extern unsigned char *c1942_backgroundram;
+extern int c1942_backgroundram_size;
 extern unsigned char *c1942_scroll;
 extern unsigned char *c1942_palette_bank;
+int c1942_vh_start(void);
+void c1942_vh_stop(void);
 void c1942_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void c1942_background_w(int offset,int data);
+void c1942_palette_bank_w(int offset,int data);
 void c1942_flipscreen_w(int offset,int data);
-void c1942_updatehook0(int offset);
-void c1942_updatehook1(int offset);
 void c1942_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
@@ -401,13 +405,13 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc800, 0xc800, soundlatch_w },
 	{ 0xc802, 0xc803, MWA_RAM, &c1942_scroll },
-	{ 0xc804, 0xc804, MWA_RAM, &flip_screen },
-	{ 0xc805, 0xc805, MWA_RAM, &c1942_palette_bank },
+	{ 0xc804, 0xc804, c1942_flipscreen_w },
+	{ 0xc805, 0xc805, c1942_palette_bank_w, &c1942_palette_bank },
 	{ 0xc806, 0xc806, c1942_bankswitch_w },
 	{ 0xcc00, 0xcc7f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xd000, 0xd3ff, videoram00_w, &videoram00 },
-	{ 0xd400, 0xd7ff, videoram01_w, &videoram01 },
-	{ 0xd800, 0xdbff, videoram10_w, &videoram10 },
+	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
+	{ 0xd400, 0xd7ff, colorram_w, &colorram },
+	{ 0xd800, 0xdbff, c1942_background_w, &c1942_backgroundram, &c1942_backgroundram_size },
 	{ 0xe000, 0xefff, MWA_RAM },
 	{ -1 }	/* end of table */
 };
@@ -563,67 +567,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct GfxTileLayout tilelayout0 =
-{
-	512,	/* 512 characters */
-	2,	/* 2 bits per pixel */
-	{ 4, 0 },
-	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	16*8	/* every char takes 16 consecutive bytes */
-};
-
-static struct GfxTileDecodeInfo gfxtiledecodeinfo0[] =
-{
-	{ 1, 0x00000, &tilelayout0, 0, 64, 0x00000001 },	/* foreground tiles */
-	{ -1 } /* end of array */
-};
-
-static struct GfxTileLayout tilelayout1 =
-{
-	512*4,	/* 512 tiles */
-	3,	/* 3 bits per pixel */
-	{ 0, 512*32*8, 2*512*32*8 },	/* the bitplanes are separated */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every tile takes 32 consecutive bytes */
-};
-
-static struct GfxTileCompose gfxtilecompose1 =
-{
-	2,2,	/* 16x16 tiles */
-	4,		/* multiply code by 4 to obtain the base tile code */
-	{ 0, 2 },
-	{ 0, 1 },
-};
-
-static struct GfxTileDecodeInfo gfxtiledecodeinfo1[] =
-{
-	{ 1, 0x02000, &tilelayout1, 64*4, 4*32, 0 },	/* background tiles */
-	{ -1 } /* end of array */
-};
-
-
-static struct MachineLayer machine_layers[MAX_LAYERS] =
-{
-	{
-		LAYER_TILE,
-		32*8,32*8,
-		gfxtiledecodeinfo0,
-		0,
-		c1942_updatehook0,c1942_updatehook0,0,0
-	},
-	{
-		LAYER_TILE,
-		32*16,16*16,
-		gfxtiledecodeinfo1,
-		&gfxtilecompose1,
-		c1942_updatehook1,0,0,0
-	}
-};
-
-
-
 static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
@@ -667,9 +610,9 @@ static struct MachineDriver machine_driver =
 	c1942_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
-	machine_layers,
-	generic_vh_start,
-	generic_vh_stop,
+	0,
+	c1942_vh_start,
+	c1942_vh_stop,
 	c1942_vh_screenrefresh,
 
 	/* sound hardware */

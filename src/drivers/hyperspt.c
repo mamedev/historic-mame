@@ -18,7 +18,6 @@ int hyperspt_vh_start(void);
 void hyperspt_vh_stop(void);
 void hyperspt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void roadf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-int konami_IN1_r(int offset);
 
 extern unsigned char *konami_dac;
 void konami_sh_irqtrigger_w(int offset,int data);
@@ -41,6 +40,25 @@ void hyperspt_init_machine(void)
 	/* Set optimization flags for M6809 */
 	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
 }
+
+/* handle fake button for speed cheat */
+static int konami_IN1_r(int offset)
+{
+	int res;
+	static int cheat = 0;
+	static int bits[] = { 0xee, 0xff, 0xbb, 0xaa };
+
+	res = readinputport(1);
+
+	if ((res & 0x80) == 0)
+	{
+		res |= 0x55;
+		res &= bits[cheat];
+		cheat = (++cheat)%4;
+	}
+	return res;
+}
+
 
 
 static struct MemoryReadAddress hyperspt_readmem[] =
@@ -565,6 +583,32 @@ ROM_START( roadf_rom )
 	ROM_LOAD( "a17_d10.bin",  0x0000, 0x2000, 0xc33c927e )
 ROM_END
 
+ROM_START( roadf2_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "5g",           0x4000, 0x2000, 0xd8070d30 )
+	ROM_LOAD( "6g",           0x6000, 0x2000, 0x8b661672 )
+	ROM_LOAD( "8g",           0x8000, 0x2000, 0x714929e8 )
+	ROM_LOAD( "11g",          0xA000, 0x2000, 0x0f2c6b94 )
+	ROM_LOAD( "g13_f05.bin",  0xC000, 0x2000, 0x0ad4d796 )
+	ROM_LOAD( "g15_f06.bin",  0xE000, 0x2000, 0xfa42e0ed )
+
+	ROM_REGION_DISPOSE(0x14000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "a14_e26.bin",  0x00000, 0x4000, 0xf5c738e2 )
+	ROM_LOAD( "a12_d24.bin",  0x04000, 0x2000, 0x2d82c930 )
+	ROM_LOAD( "c14_e22.bin",  0x06000, 0x4000, 0xfbcfbeb9 )
+	ROM_LOAD( "c12_d20.bin",  0x0a000, 0x2000, 0x5e0cf994 )
+	ROM_LOAD( "j19_e14.bin",  0x0c000, 0x4000, 0x16d2bcff )
+	ROM_LOAD( "g19_e18.bin",  0x10000, 0x4000, 0x490685ff )
+
+	ROM_REGION(0x220)	/* color/lookup proms */
+	ROM_LOAD( "c03_c27.bin",  0x0000, 0x0020, 0x45d5e352 )
+	ROM_LOAD( "j12_c28.bin",  0x0020, 0x0100, 0x2955e01f )
+	ROM_LOAD( "a09_c29.bin",  0x0120, 0x0100, 0x5b3b5f2a )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "a17_d10.bin",  0x0000, 0x2000, 0xc33c927e )
+ROM_END
+
 
 
 static void hyperspt_decode(void)
@@ -700,7 +744,7 @@ struct GameDriver roadf_driver =
 	__FILE__,
 	0,
 	"roadf",
-	"Road Fighter",
+	"Road Fighter (set 1)",
 	"1984",
 	"Konami",
 	"Chris Hardy (Hyper Sports driver)\nNicola Salmoria\nPaul Swan (color info)",
@@ -709,6 +753,32 @@ struct GameDriver roadf_driver =
 	0,
 
 	roadf_rom,
+	0, hyperspt_decode,
+	0,
+	0,	/* sound_prom */
+
+	roadf_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
+};
+
+struct GameDriver roadf2_driver =
+{
+	__FILE__,
+	&roadf_driver,
+	"roadf2",
+	"Road Fighter (set 2)",
+	"1984",
+	"Konami",
+	"Chris Hardy (Hyper Sports driver)\nNicola Salmoria\nPaul Swan (color info)",
+	0,
+	&roadf_machine_driver,
+	0,
+
+	roadf2_rom,
 	0, hyperspt_decode,
 	0,
 	0,	/* sound_prom */

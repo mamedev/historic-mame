@@ -58,12 +58,15 @@ void rockola_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 		color_prom++;
 	}
 
+
+	backcolor = 0;	/* background color can be changed by the game */
+
 	for (i = 0;i < TOTAL_COLORS(0);i++)
 		COLOR(0,i) = i;
 
 	for (i = 0;i < TOTAL_COLORS(1);i++)
 	{
-		if (i % 4 == 0) COLOR(1,i) = 0x20;
+		if (i % 4 == 0) COLOR(1,i) = 4 * backcolor + 0x20;
 		else COLOR(1,i) = i + 0x20;
 	}
 }
@@ -127,18 +130,35 @@ void rockola_characterram_w(int offset,int data)
 
 void rockola_flipscreen_w(int offset,int data)
 {
-	if (flipscreen != (data & 0x80))
+	/* bits 0-2 select background color */
+	if (backcolor != (data & 7))
 	{
-		flipscreen = data & 0x80;
+		int i;
+
+
+		backcolor = data & 7;
+
+		for (i = 0;i < 32;i += 4)
+			Machine->gfx[1]->colortable[i] = Machine->pens[4 * backcolor + 0x20];
+
 		memset(dirtybuffer,1,videoram_size);
 	}
 
+	/* bit 3 selects char bank */
 	if (charbank != ((~data & 0x08) >> 3))
 	{
 		charbank = (~data & 0x08) >> 3;
 		memset(dirtybuffer,1,videoram_size);
 	}
+
+	/* bit 7 flips screen */
+	if (flipscreen != (data & 0x80))
+	{
+		flipscreen = data & 0x80;
+		memset(dirtybuffer,1,videoram_size);
+	}
 }
+
 
 void satansat_b002_w(int offset,int data)
 {
@@ -159,7 +179,6 @@ void satansat_b002_w(int offset,int data)
 
 
 
-/* Zarzon (not the others) can change the background color */
 void satansat_backcolor_w(int offset, int data)
 {
 	/* bits 0-1 select background color. Other bits unused. */
@@ -310,7 +329,7 @@ void satansat_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			drawgfx(tmpbitmap,Machine->gfx[1],
 					videoram[offs],
-					(colorram[offs] & 0x0C) >> 2,
+					(colorram[offs] & 0x0c) >> 2,
 					flipscreen,flipscreen,
 					8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);

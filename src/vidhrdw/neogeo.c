@@ -72,6 +72,7 @@ static int fix_bank;
 
 extern unsigned char *neogeo_sram,*neogeo_ram;
 extern unsigned int neogeo_frame_counter;
+extern int neogeo_game_fix;
 
 static void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
@@ -152,16 +153,6 @@ void neogeo_paletteram_w(int offset,int data)
 
 void neogeo_vh_stop(void)
 {
-    void *f;
-
-    /* Save the SRAM settings */
-	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
-	if (f && neogeo_sram)
-	{
-		osd_fwrite (f, neogeo_sram, 0x2000);
-		osd_fclose (f);
-	}
-
    	if (pal_bank1) free (pal_bank1);
 	if (pal_bank2) free (pal_bank2);
 	if (vidram) free (vidram);
@@ -213,6 +204,11 @@ static const unsigned char *neogeo_palette(void)
  	int colmask[256];
     unsigned int *pen_usage; /* Save some struct derefs */
 
+	int sx =0,sy =0,oy =0,zx = 1, rzy = 1;
+    int tileno,tileatr,t1,t2,t3;
+    char fullmode=0;
+    int ddax=16,dday=256,rzx=15,yskip=0;
+
 	memset(palette_used_colors,PALETTE_COLOR_UNUSED,4096);
 
 	/* character foreground */
@@ -239,40 +235,137 @@ static const unsigned char *neogeo_palette(void)
     pen_usage= Machine->gfx[2]->pen_usage;
     pal_base = Machine->drv->gfxdecodeinfo[2].color_codes_start;
 	for (color = 0;color < 256;color++) colmask[color] = 0;
-	for (count=0;count<0x300;count+=2) {
-		int t1 = READ_WORD( &vidram[0x10400 + count] );
+    for (count=0;count<0x300;count+=2) {
+		t3 = READ_WORD( &vidram[0x10000 + count] );
+		t1 = READ_WORD( &vidram[0x10400 + count] );
+		t2 = READ_WORD( &vidram[0x10800 + count] );
 
-		if (!(t1 & 0x40)) {
-			int zy = READ_WORD( &vidram[0x10000 + count] )&0xff;
+		if(neogeo_game_fix==7 && t1==0x147f) continue;				// Gururin Bodge fix
+
+        /* If this bit is set this new column is placed next to last one */
+		if (t1 & 0x40) {
+			sx += rzx;
+			if ( sx >= 0x1F0 )
+				sx -= 0x200;
+
+            /* Get new zoom for this column */
+			if(neogeo_game_fix!=7 || (t3!=0 && t3!=0x147f))			// Gururin Bodge fix
+			    zx = (t3 >> 8) & 0x0f;
+			sy = oy;
+		} else {	/* nope it is a new block */
+        	/* Sprite scaling */
+			zx = (t3 >> 8) & 0x0f;
+			rzy = t3 & 0xff;
+
+			if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))			// Gururin Bodge fix
+			{
+				zx=0xf;
+				rzy=0xff;
+			}
+
+			sx = (t2 >> 7);
+			if ( sx >= 0x1F0 )
+				sx -= 0x200;
+
+			sy = 0x1F0 - (t1 >> 7);
+			oy = sy;
+
+            /* Number of tiles in this strip */
             my = (t1 & 0x3f);
-           	if(zy==0) zy=1;
-           	my=((my*256)+15)/zy;
-		   	if(my>0x20) my=0x20;
-        }
+			if(t1&0x20) fullmode=1;
+			else fullmode=0;
 
-		if (!my) continue;
+		  	if(my==0x21) my=0x20;
+			else if(rzy!=0xff && my!=0)	{
+				if(rzy==0) rzy=1;
+				my=((my*256)+15)/rzy;
+			}
+
+            if(my>0x20) my=0x20;
+
+            ddax=16;		/* setup x zoom */
+		}
+
+		/* No point doing anything if tile strip is 0 */
+		if (my==0) continue;
+
+		/* Process x zoom */
+		if(zx!=15) {
+			rzx=0;
+			for(i=0;i<16;i++) {
+				ddax-=zx+1;
+				if(ddax<=0) {
+					ddax+=15+1;
+					rzx++;
+				}
+			}
+		}
+		else rzx=16;
+
+		if(sx>311) continue;
+
+		/* Setup y zoom */
+		if(rzy==255)
+			yskip=16;
+		else
+			dday=256;
+
 		offs = count<<6;
 
-		for (y=0;y < my;y++) {
-			code  = READ_WORD(&vidram[offs]);
+        /* my holds the number of tiles in each vertical multisprite block */
+        for (y=0; y < my ;y++) {
+			tileno  = READ_WORD(&vidram[offs]);
             offs+=2;
-			color = READ_WORD(&vidram[offs]);
+			tileatr = READ_WORD(&vidram[offs]);
             offs+=2;
 
-			if ((color>>8)==0) continue; /* See below, zoomed fix */
+            if (high_tile && tileatr&0x10) tileno+=0x10000;
+			if (vhigh_tile && tileatr&0x20) tileno+=0x20000;
+			if (vvhigh_tile && tileatr&0x40) tileno+=0x40000;
 
-            if (high_tile && color&0x10) code+=0x10000;
-			if (vhigh_tile && color&0x20) code+=0x20000;
-			if (vvhigh_tile && color&0x40) code+=0x40000;
+            if (tileatr&0x8) tileno=(tileno&~7)+((tileno+neogeo_frame_counter)&7);
+            else if (tileatr&0x4) tileno=(tileno&~3)+((tileno+neogeo_frame_counter)&3);
 
-			if (color&0x8) code+=neogeo_frame_counter%0x8;
-			else if (color&0x4) code+=neogeo_frame_counter%0x4;
+            /* Moved to here from bottom of loop, fixes white line in TWS96 and others */
+			if(!fullmode) {
+	   			if ( sy > 0x1F0 )
+	   				sy = sy - 0x200;
+			} else {
+				if(rzy >=0x80) {
+					if (sy > 0x1f0 - (0xff-rzy)*2)
+						sy=sy-0x200+(0xff-rzy)*2;
+				} else {
+					if(y==0x10)
+						sy-=rzy*2;
+				}
+			}
 
-			color=color>>8;
-            colmask[color] |= pen_usage[code];
+            if(rzy!=255) {
+            	yskip=0;
+                for(i=0;i<16;i++) {
+                    dday-=rzy+1;
+                    if(dday<=0) {
+                    	dday+=256;
+                    	yskip++;
+                    }
+                }
+            }
 
-		}
-    }
+			if ( (tileatr>>8) != 0) // crap below zoomed sprite fix??
+			if (sy<224)                // tidy this up later...
+			{
+				tileatr=tileatr>>8;
+		        colmask[tileatr] |= pen_usage[tileno];
+			}
+
+			sy +=yskip;
+
+
+
+		}  /* for y */
+	}  /* for count */
+
+
 
 	for (color = 0;color < 256;color++)
 	{
@@ -302,12 +395,12 @@ int vidram_offset_r(int offset)
 
 int vidram_data_r (int offset)
 {
-	return (READ_WORD(&vidram[where]));
+	return (READ_WORD(&vidram[where & 0x1ffff]));
 }
 
 void vidram_data_w(int offset,int data)
 {
-	WRITE_WORD(&vidram[where],data);
+	WRITE_WORD(&vidram[where & 0x1ffff],data);
 	where += modulo;
 }
 
@@ -686,7 +779,7 @@ void neogeo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
     /* Do compressed palette stuff */
     neogeo_palette();
-	fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+	fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
 
 #ifdef NEO_DEBUG
 if (!dotiles) { 					/* debug */
@@ -698,6 +791,8 @@ if (!dotiles) { 					/* debug */
 		t1 = READ_WORD( &vidram[0x10400 + count] );
 		t2 = READ_WORD( &vidram[0x10800 + count] );
 
+if(neogeo_game_fix==7 && t1==0x147f) continue;                // Gururin Bodge kludge
+
         /* If this bit is set this new column is placed next to last one */
 		if (t1 & 0x40) {
 			sx += rzx;
@@ -705,12 +800,18 @@ if (!dotiles) { 					/* debug */
 				sx -= 0x200;
 
             /* Get new zoom for this column */
-            zx = (t3 >> 8) & 0x0f;
+if(neogeo_game_fix!=7 || (t3!=0 && t3!=0x147f))         // Gururin Bodge fix
+	            zx = (t3 >> 8) & 0x0f;
 			sy = oy;
 		} else {	/* nope it is a new block */
         	/* Sprite scaling */
 			zx = (t3 >> 8) & 0x0f;
 			rzy = t3 & 0xff;
+if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))         // Gururin Bodge fix
+{
+	zx=0xf;
+	rzy=0xff;
+}
 
 			sx = (t2 >> 7);
 			if ( sx >= 0x1F0 )
@@ -775,8 +876,8 @@ if (!dotiles) { 					/* debug */
 			if (vhigh_tile && tileatr&0x20) tileno+=0x20000;
 			if (vvhigh_tile && tileatr&0x40) tileno+=0x40000;
 
-            if (tileatr&0x8) tileno+=neogeo_frame_counter%0x8;
-            else if (tileatr&0x4) tileno+=neogeo_frame_counter%0x4;
+            if (tileatr&0x8) tileno=(tileno&~7)+((tileno+neogeo_frame_counter)&7);
+            else if (tileatr&0x4) tileno=(tileno&~3)+((tileno+neogeo_frame_counter)&3);
 
             /* Moved to here from bottom of loop, fixes white line in TWS96 and others */
 			if(!fullmode)
@@ -786,8 +887,18 @@ if (!dotiles) { 					/* debug */
 			}
 			else
 			{
-				if (sy > 0x1f0 - (0xff-rzy)*2)
-					sy=sy-0x200+(0xff-rzy)*2;
+				if(rzy >=0x80)
+				{
+					if (sy > 0x1f0 - (0xff-rzy)*2)
+						sy=sy-0x200+(0xff-rzy)*2;
+				}
+				else
+				{
+					if(y==0x10)
+					{
+						sy-=rzy*2;
+					}
+				}
 			}
 
             if(rzy!=255)

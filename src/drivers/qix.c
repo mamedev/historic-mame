@@ -486,7 +486,7 @@ INPUT_PORTS_END
 static struct DACinterface dac_interface =
 {
 	1,
-	{ 255 }
+	{ 100 }
 };
 
 

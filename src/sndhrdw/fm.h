@@ -10,6 +10,7 @@
 
 #define BUILD_OPN    1		/* build YM2203 or YM2608 or YM2612 emurator */
 #define BUILD_YM2203 1		/* build YM2203(OPN) emurator */
+#define BUILD_YM2610 1		/* build YM2610(OPNB)emurator */
 #if 0
 #define BUILD_YM2608 1		/* build YM2608(OPNA)emurator */
 #define BUILD_YM2612 1		/* build YM2612 emurator */
@@ -17,10 +18,34 @@
 
 #define BUILD_YM2151 1		/* build YM2151(OPM) emurator */
 
-#define YM2151_NUMBUF 2    /* stereo separate L and R ch */
+/* stereo mixing / separate */
+//#define FM_STEREO_MIX
+/* ADPCM mixing / separate */
+#define  OPNB_ADPCM_MIX
+
+#define YM2203_NUMBUF 1
+
+#ifdef FM_STEREO_MIX
+  #define YM2151_NUMBUF 1
+  #define YM2608_NUMBUF 1
+  #define YM2612_NUMBUF 1
+ #ifdef OPNB_ADPCM_MIX
+  #define   YM2610_NUMBUF  (1+1+1)
+ #else
+  #define   YM2610_NUMBUF  (1+1+3)
+ #endif
+#else
+  #define YM2151_NUMBUF 2    /* FM L+R */
+  #define YM2608_NUMBUF 2    /* FM L+R+ADPCM+RYTHM */
+  #define YM2612_NUMBUF 2    /* FM L+R */
+ #ifdef OPNB_ADPCM_MIX
+  #define   YM2610_NUMBUF  (2+2+2)
+ #else
+  #define   YM2610_NUMBUF  (2+2+6)
+ #endif
+#endif
 
 /* For YM2151/YM2608/YM2612 option */
-//#define FM_STEREO_MIX		/* stereo mixing / separate */
 
 typedef void FMSAMPLE;
 
@@ -55,7 +80,6 @@ unsigned char OPNReadStatus(int n);
 #ifdef BUILD_YM2203
 /* -------------------- YM2203(OPN) Interface -------------------- */
 
-#define YM2203_NUMBUF 1
 /*
 ** Initialize YM2203 emulator(s).
 **
@@ -65,7 +89,7 @@ unsigned char OPNReadStatus(int n);
 ** 'bufsiz' is the size of the buffer
 ** return    0 = success
 */
-int YM2203Init(int num, int clock, int rate, int bitsize , int bufsiz , FMSAMPLE **buffer );
+int YM2203Init(int num, int clock, int rate, int bitsize );
 
 /*
 ** shutdown the YM2203 emulators .. make sure that no sound system stuff
@@ -78,9 +102,8 @@ void YM2203Shutdown(void);
 */
 void YM2203ResetChip(int num);
 
-/*
-*/
-void YM2203Update(void);
+void YM2203UpdateOne(int num, FMSAMPLE *buffer, int length);
+
 /*
 ** return : InterruptLevel
 */
@@ -92,37 +115,50 @@ unsigned char YM2203Read(int n,int a);
 */
 int YM2203TimerOver(int n, int c);
 
-
-/* ----- get pointer sound buffer ----- */
-FMSAMPLE *OPNBuffer(int n);
-/* ----- set sound buffer ----- */
-int YM2203SetBuffer(int n, FMSAMPLE *buf );
+/*int YM2203SetBuffer(int n, FMSAMPLE *buf );*/
 
 #endif /* BUILD_YM2203 */
 
 #ifdef BUILD_YM2608
 /* -------------------- YM2608(OPNA) Interface -------------------- */
-int YM2608Init(int num, int clock, int rate, int bitsize , int bufsiz , FMSAMPLE **buffer );
+
+int YM2608Init(int num, int clock, int rate, int bitsize );
 void YM2608Shutdown(void);
 void YM2608ResetChip(int num);
-void YM2608Update(void);
+void YM2608UpdateOne(int num, FMSAMPLE **buffer, int length);
+
 int YM2608Write(int n, int a,int v);
 unsigned char YM2608Read(int n,int a);
 int YM2608TimerOver(int n, int c );
-FMSAMPLE *YM2608Buffer(int n);
-int YM2608SetBuffer(int n, FMSAMPLE **buf );
+/*int YM2608SetBuffer(int n, FMSAMPLE **buf );*/
 #endif /* BUILD_YM2608 */
 
+#ifdef BUILD_YM2610
+/* -------------------- YM2610(OPNB) Interface -------------------- */
+
+#define   MAX_2610    (2)
+
+int YM2610Init(int num, int clock, int rate,  int bitsize, int *pcmroma, int *pcmromb );
+void YM2610Shutdown(void);
+void YM2610ResetChip(int num);
+void YM2610UpdateOne(int num, FMSAMPLE **buffer, int length);
+
+int YM2610Write(int n, int a,int v);
+unsigned char YM2610Read(int n,int a);
+int YM2610TimerOver(int n, int c );
+/*int YM2610SetBuffer(int n, FMSAMPLE **buf );*/
+#endif /* BUILD_YM2610 */
+
 #ifdef BUILD_YM2612
-int YM2612Init(int num, int clock, int rate, int bitsize , int bufsiz , FMSAMPLE **buffer );
+int YM2612Init(int num, int clock, int rate, int bitsize );
 void YM2612Shutdown(void);
 void YM2612ResetChip(int num);
-void YM2612Update(void);
+void YM2612UpdateOne(int num, FMSAMPLE **buffer, int length);
 int YM2612Write(int n, int a,int v);
 unsigned char YM2612Read(int n,int a);
 int YM2612TimerOver(int n, int c );
 FMSAMPLE *YM2612Buffer(int n);
-int YM2612SetBuffer(int n, FMSAMPLE **buf );
+/*int YM2612SetBuffer(int n, FMSAMPLE **buf );*/
 
 #endif /* BUILD_YM2612 */
 
@@ -136,17 +172,17 @@ int YM2612SetBuffer(int n, FMSAMPLE **buf );
 ** 'bitsize' is sampling bits (8 or 16)
 ** 'bufsiz' is the size of the buffer
 */
-int OPMInit(int num, int clock, int rate, int bitsize, int bufsiz , FMSAMPLE **buffer );
+int OPMInit(int num, int clock, int rate, int bitsize);
 void OPMShutdown(void);
 void OPMResetChip(int num);
-void OPMUpdate(void);
-void OPMUpdateOne(int num , int endp );
+
+void OPMUpdateOne(int num, FMSAMPLE **buffer, int length );
 void OPMWriteReg(int n, int r, int v);
 unsigned char OPMReadStatus(int n );
 /* ----- get pointer sound buffer ----- */
 FMSAMPLE *OPMBuffer(int n,int c );
 /* ----- set sound buffer ----- */
-int OPMSetBuffer(int n, FMSAMPLE **buf );
+/*int OPMSetBuffer(int n, FMSAMPLE **buf );*/
 /* ---- set user interrupt handler ----- */
 void OPMSetIrqHandler(int n, void (*handler)(void) );
 

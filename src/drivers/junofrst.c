@@ -80,6 +80,7 @@ Blitter source graphics
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "M6809/m6809.h"
+#include "I8039/I8039.h"
 
 
 extern unsigned char *tutankhm_scrollx;
@@ -152,6 +153,11 @@ void junofrst_sh_irqtrigger_w(int offset,int data)
 	last = data;
 }
 
+void junofrst_i8039_irq_w(int offset,int data)
+{
+	cpu_cause_interrupt(2,I8039_EXT_INT);
+}
+
 
 
 static struct MemoryReadAddress readmem[] =
@@ -191,7 +197,7 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct MemoryReadAddress sound_readmem[] =
 {
-	{ 0x0000, 0x1fff, MRA_ROM },
+	{ 0x0000, 0x0fff, MRA_ROM },
 	{ 0x2000, 0x23ff, MRA_RAM },
 	{ 0x3000, 0x3000, soundlatch_r },
 	{ 0x4001, 0x4001, AY8910_read_port_0_r },
@@ -200,15 +206,41 @@ static struct MemoryReadAddress sound_readmem[] =
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
-	{ 0x0000, 0x1fff, MWA_ROM },
+	{ 0x0000, 0x0fff, MWA_ROM },
 	{ 0x2000, 0x23ff, MWA_RAM },
 	{ 0x4000, 0x4000, AY8910_control_port_0_w },
 	{ 0x4002, 0x4002, AY8910_write_port_0_w },
-//	{ 0x5000, 0x5000,  },	/* shoot noise modulation? */
-//	{ 0x6000, 0x6000,  },	/* shoot noise modulation? */
+	{ 0x5000, 0x5000, soundlatch2_w },
+	{ 0x6000, 0x6000, junofrst_i8039_irq_w },
 	{ -1 }	/* end of table */
 };
 
+
+static struct MemoryReadAddress i8039_readmem[] =
+{
+	{ 0x0000, 0x0fff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress i8039_writemem[] =
+{
+	{ 0x0000, 0x0fff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct IOReadPort i8039_readport[] =
+{
+	{ 0x00, 0xff, soundlatch2_r },
+	{ 0x111,0x111, IORP_NOP },
+	{ -1 }
+};
+
+static struct IOWritePort i8039_writeport[] =
+{
+	{ I8039_p1, I8039_p1, DAC_data_w },
+	{ I8039_p2, I8039_p2, IOWP_NOP },
+	{ -1 }	/* end of table */
+};
 
 
 INPUT_PORTS_START( input_ports )
@@ -318,6 +350,11 @@ static struct AY8910interface ay8910_interface =
 	{ 0 }	/* port B - shoot noise? */
 };
 
+static struct DACinterface dac_interface =
+{
+	1,
+	{ 0x10ff }
+};
 
 
 static struct MachineDriver machine_driver =
@@ -337,6 +374,13 @@ static struct MachineDriver machine_driver =
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
+		},
+		{
+			CPU_I8039 | CPU_AUDIO_CPU,
+			8000000/15,	/* 8Mhz crystal???? */
+			3,	/* memory region #3 */
+			i8039_readmem,i8039_writemem,i8039_readport,i8039_writeport,
+			ignore_interrupt,1
 		}
 	},
 	30, DEFAULT_30HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -362,6 +406,10 @@ static struct MachineDriver machine_driver =
 		{
 			SOUND_AY8910,
 			&ay8910_interface
+		},
+		{
+			SOUND_DAC,
+			&dac_interface
 		}
 	}
 };
@@ -391,7 +439,9 @@ ROM_START( junofrst_rom )
 
 	ROM_REGION( 0x10000 ) /* 64k for Z80 sound CPU code */
 	ROM_LOAD( "jfs1_j3.bin",  0x0000, 0x1000, 0x235a2893 )
-	ROM_LOAD( "jfs2_p4.bin",  0x1000, 0x1000, 0xd0fa5d5f )
+
+	ROM_REGION(0x1000)	/* 8039 */
+	ROM_LOAD( "jfs2_p4.bin",  0x0000, 0x1000, 0xd0fa5d5f )
 ROM_END
 
 

@@ -17,7 +17,7 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw\generic.h"
+#include "vidhrdw/generic.h"
 
 extern int  pang_vh_start(void);
 extern void pang_vh_stop(void);

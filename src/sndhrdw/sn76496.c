@@ -84,7 +84,7 @@ osd_on_screen_display("PITCH",base/100);
 #endif
 
 	/* update the output buffer before changing the registers */
-	stream_update(R->Channel);
+	stream_update(R->Channel,0);
 
 	if (data & 0x80)
 	{

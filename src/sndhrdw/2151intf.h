@@ -26,4 +26,5 @@ int YM2151_sh_start(struct YM2151interface *interface,int mode);
 void YM2151_sh_stop(void);
 void YM2151_sh_update(void);
 
+void YM2151UpdateRequest(int chip);
 #endif
