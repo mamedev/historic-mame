@@ -1151,7 +1151,7 @@ unsigned m6800_dasm(char *buffer, unsigned pc)
 /****************************************************************************
  * M6801 almost (fully?) equal to the M6803
  ****************************************************************************/
-#if HAS_M6801
+#if (HAS_M6801)
 void m6801_reset(void *param)
 {
 	m6800_reset(param);
@@ -1214,7 +1214,7 @@ unsigned m6801_dasm(char *buffer, unsigned pc)
 /****************************************************************************
  * M6802 almost (fully?) equal to the M6800
  ****************************************************************************/
-#if HAS_M6802
+#if (HAS_M6802)
 void m6802_reset(void *param)
 {
 	m6800_reset(param);
@@ -1276,7 +1276,7 @@ unsigned m6802_dasm(char *buffer, unsigned pc)
 /****************************************************************************
  * M6803 almost (fully?) equal to the M6801
  ****************************************************************************/
-#if HAS_M6803
+#if (HAS_M6803)
 void m6803_reset(void *param)
 {
 	m6800_reset(param);
@@ -1289,7 +1289,7 @@ void m6803_exit(void) { m6800_exit(); }
 /****************************************************************************
  * Execute cycles CPU cycles. Return number of cycles really executed
  ****************************************************************************/
-#if HAS_M6803||HAS_M6801
+#if (HAS_M6803||HAS_M6801)
 int m6803_execute(int cycles)
 {
 	UINT8 ireg;
@@ -1583,7 +1583,7 @@ getout:
 }
 #endif
 
-#if HAS_M6803
+#if (HAS_M6803)
 unsigned m6803_get_context(void *dst) { return m6800_get_context(dst); }
 void m6803_set_context(void *src) { m6800_set_context(src); }
 unsigned m6803_get_pc(void) { return m6800_get_pc(); }
@@ -1637,7 +1637,7 @@ unsigned m6803_dasm(char *buffer, unsigned pc)
 /****************************************************************************
  * M6808 almost (fully?) equal to the M6800
  ****************************************************************************/
-#if HAS_M6808
+#if (HAS_M6808)
 void m6808_reset(void *param)
 {
 	m6800_reset(param);
@@ -1698,7 +1698,7 @@ unsigned m6808_dasm(char *buffer, unsigned pc)
 /****************************************************************************
  * HD63701 similiar to the M6800
  ****************************************************************************/
-#if HAS_HD63701
+#if (HAS_HD63701)
 void hd63701_reset(void *param)
 {
 	m6800_reset(param);
@@ -2077,7 +2077,7 @@ unsigned hd63701_dasm(char *buffer, unsigned pc)
  * NSC-8105 similiar to the M6800, but the opcodes are scrambled and there
  * is at least one new opcode ($fc)
  ****************************************************************************/
-#if HAS_NSC8105
+#if (HAS_NSC8105)
 void nsc8105_reset(void *param)
 {
 	m6800_reset(param);

@@ -95,31 +95,31 @@ static WRITE_HANDLER( protection_w )
 	int map;
 
 	map = maplist
-		[cpu_readmem24(0xffc006)]
-		[(cpu_readmem24(0xffc003)<<1) + (cpu_readmem24_word(0xffc004)>>8)];
+		[cpu_readmem24bew(0xffc006)]
+		[(cpu_readmem24bew(0xffc003)<<1) + (cpu_readmem24bew_word(0xffc004)>>8)];
 
-	switch(cpu_readmem24(0xffc684)) {
+	switch(cpu_readmem24bew(0xffc684)) {
 	case 1:
 		{
 			int base;
 
 			base = 0x1b6e8+0x300e*map;
 
-			cpu_writemem24_dword(0xffc01c, 0x16bfc+0x270*map);
-			cpu_writemem24_dword(0xffc020, base+0x80);
-			cpu_writemem24_dword(0xffc024, base);
-			cpu_writemem24_dword(0xffc028, base+0x86);
-			cpu_writemem24_dword(0xffc02c, base+0x8e);
-			cpu_writemem24_dword(0xffc030, base+0x20e);
-			cpu_writemem24_dword(0xffc034, base+0x30e);
-			cpu_writemem24_dword(0xffc038, base+0x38e);
-			cpu_writemem24_dword(0xffc03c, base+0x40e);
-			cpu_writemem24_dword(0xffc040, base+0x80e);
-			cpu_writemem24_dword(0xffc044, base+0xc0e);
-			cpu_writemem24_dword(0xffc048, base+0x180e);
-			cpu_writemem24_dword(0xffc04c, base+0x240e);
-			cpu_writemem24_dword(0xffc050, 0x19548+0x60*map);
-			cpu_writemem24_dword(0xffc054, 0x19578+0x60*map);
+			cpu_writemem24bew_dword(0xffc01c, 0x16bfc+0x270*map);
+			cpu_writemem24bew_dword(0xffc020, base+0x80);
+			cpu_writemem24bew_dword(0xffc024, base);
+			cpu_writemem24bew_dword(0xffc028, base+0x86);
+			cpu_writemem24bew_dword(0xffc02c, base+0x8e);
+			cpu_writemem24bew_dword(0xffc030, base+0x20e);
+			cpu_writemem24bew_dword(0xffc034, base+0x30e);
+			cpu_writemem24bew_dword(0xffc038, base+0x38e);
+			cpu_writemem24bew_dword(0xffc03c, base+0x40e);
+			cpu_writemem24bew_dword(0xffc040, base+0x80e);
+			cpu_writemem24bew_dword(0xffc044, base+0xc0e);
+			cpu_writemem24bew_dword(0xffc048, base+0x180e);
+			cpu_writemem24bew_dword(0xffc04c, base+0x240e);
+			cpu_writemem24bew_dword(0xffc050, 0x19548+0x60*map);
+			cpu_writemem24bew_dword(0xffc054, 0x19578+0x60*map);
 			break;
 		}
 	case 2:
@@ -134,10 +134,10 @@ static WRITE_HANDLER( protection_w )
 			int d1 = delta1[map] + 0xc0;
 			int d2 = delta2[map];
 
-			cpu_writemem24_word(0xffc680, d1);
-			cpu_writemem24_word(0xffc682, d2);
-			cpu_writemem24_word(0xffc00c, 0xc0);
-			cpu_writemem24_word(0xffc00e, 0);
+			cpu_writemem24bew_word(0xffc680, d1);
+			cpu_writemem24bew_word(0xffc682, d2);
+			cpu_writemem24bew_word(0xffc00c, 0xc0);
+			cpu_writemem24bew_word(0xffc00e, 0);
 
 			sf1_deltaxm_w(0, d1);
 			sf1_deltaxb_w(0, d2);
@@ -145,12 +145,12 @@ static WRITE_HANDLER( protection_w )
 		}
 	case 4:
 		{
-			int pos = cpu_readmem24(0xffc010);
+			int pos = cpu_readmem24bew(0xffc010);
 			pos = (pos+1) & 3;
-			cpu_writemem24(0xffc010, pos);
+			cpu_writemem24bew(0xffc010, pos);
 			if(!pos) {
-				int d1 = cpu_readmem24_word(0xffc682);
-				int off = cpu_readmem24_word(0xffc00e);
+				int d1 = cpu_readmem24bew_word(0xffc682);
+				int off = cpu_readmem24bew_word(0xffc00e);
 				if(off!=512) {
 					off++;
 					d1++;
@@ -158,8 +158,8 @@ static WRITE_HANDLER( protection_w )
 					off = 0;
 					d1 -= 512;
 				}
-				cpu_writemem24_word(0xffc682, d1);
-				cpu_writemem24_word(0xffc00e, off);
+				cpu_writemem24bew_word(0xffc682, d1);
+				cpu_writemem24bew_word(0xffc00e, off);
 				sf1_deltaxb_w(0, d1);
 			}
 			break;
@@ -167,7 +167,7 @@ static WRITE_HANDLER( protection_w )
 	default:
 		{
 			logerror("Write protection at %06x (%04x)\n", cpu_get_pc(), data&0xffff);
-			logerror("*** Unknown protection %d\n", cpu_readmem24(0xffc684));
+			logerror("*** Unknown protection %d\n", cpu_readmem24bew(0xffc684));
 			break;
 		}
 	}

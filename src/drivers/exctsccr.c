@@ -571,7 +571,7 @@ ROM_END
 
 
 
-GAMEX( 1983, exctsccr, 0,        exctsccr, exctsccr, 0, ROT90, "Alpha Denshi Co", "Exciting Soccer", GAME_NO_COCKTAIL )
-GAMEX( 1983, exctscca, exctsccr, exctsccr, exctsccr, 0, ROT90, "Alpha Denshi Co", "Exciting Soccer (alternate music)", GAME_NO_COCKTAIL )
+GAMEX( 1983, exctsccr, 0,        exctsccr, exctsccr, 0, ROT90, "Alpha Denshi Co.", "Exciting Soccer", GAME_NO_COCKTAIL )
+GAMEX( 1983, exctscca, exctsccr, exctsccr, exctsccr, 0, ROT90, "Alpha Denshi Co.", "Exciting Soccer (alternate music)", GAME_NO_COCKTAIL )
 GAMEX( 1984, exctsccb, exctsccr, exctsccb, exctsccr, 0, ROT90, "bootleg", "Exciting Soccer (bootleg)", GAME_NO_COCKTAIL )
-GAMEX( 1983, exctscc2, exctsccr, exctsccr, exctsccr, 0, ROT90, "Alpha Denshi Co", "Exciting Soccer II", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1984, exctscc2, exctsccr, exctsccr, exctsccr, 0, ROT90, "Alpha Denshi Co.", "Exciting Soccer II", GAME_NOT_WORKING | GAME_NO_COCKTAIL )

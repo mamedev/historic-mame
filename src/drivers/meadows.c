@@ -109,7 +109,6 @@
 /*************************************************************/
 int deadeye_vh_start(void);
 int gypsyjug_vh_start(void);
-void meadows_vh_stop(void);
 void meadows_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( meadows_videoram_w );
 WRITE_HANDLER( meadows_sprite_w );
@@ -415,7 +414,7 @@ static unsigned char palette[] =
 	0xff,0xff,0xff, /* WHITE */
 };
 
-#define ARTWORK_COLORS 254
+#define ARTWORK_COLORS (2 + 32768)
 
 static unsigned short colortable[ARTWORK_COLORS] =
 {
@@ -476,7 +475,7 @@ static struct MachineDriver machine_driver_deadeye =
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
     0,
 	deadeye_vh_start,
-	meadows_vh_stop,
+	generic_vh_stop,
 	meadows_vh_screenrefresh,
 
 	/* sound hardware */
@@ -525,7 +524,7 @@ static struct MachineDriver machine_driver_gypsyjug =
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
     0,
 	gypsyjug_vh_start,
-	meadows_vh_stop,
+	generic_vh_stop,
 	meadows_vh_screenrefresh,
 
 	/* sound hardware */

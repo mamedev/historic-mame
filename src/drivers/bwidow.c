@@ -636,14 +636,14 @@ static struct MachineDriver machine_driver_bwidow =
 	/* video hardware */
 	400, 300, { 0, 480, 0, 440 },
 	0,
-	256, 256,
+	256, 0,
 	avg_init_palette_multi,
 
 	VIDEO_TYPE_VECTOR,
 	0,
 	avg_start,
 	avg_stop,
-	avg_screenrefresh,
+	vector_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -673,14 +673,14 @@ static struct MachineDriver machine_driver_gravitar =
 	/* video hardware */
 	400, 300, { 0, 420, 0, 400 },
 	0,
-	256, 256,
+	256, 0,
 	avg_init_palette_multi,
 
 	VIDEO_TYPE_VECTOR,
 	0,
 	avg_start,
 	avg_stop,
-	avg_screenrefresh,
+	vector_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -712,14 +712,14 @@ static struct MachineDriver machine_driver_spacduel =
 	/* video hardware */
 	400, 300, { 0, 540, 0, 400 },
 	0,
-	256, 256,
+	256, 0,
 	avg_init_palette_multi,
 
 	VIDEO_TYPE_VECTOR,
 	0,
 	avg_start,
 	avg_stop,
-	avg_screenrefresh,
+	vector_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,

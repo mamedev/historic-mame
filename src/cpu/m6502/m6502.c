@@ -87,21 +87,21 @@ static m6502_Regs m6502;
  ***************************************************************/
 #include "t6502.c"
 
-#if HAS_M6510
+#if (HAS_M6510)
 #include "t6510.c"
 #endif
 
 #include "opsc02.h"
 
-#if HAS_M65C02
+#if (HAS_M65C02)
 #include "t65c02.c"
 #endif
 
-#if HAS_M65SC02
+#if (HAS_M65SC02)
 #include "t65sc02.c"
 #endif
 
-#if HAS_N2A03
+#if (HAS_N2A03)
 #include "tn2a03.c"
 #endif
 
@@ -374,17 +374,17 @@ void m6502_state_load(void *file)
 	/* insn is set at restore since it's a pointer */
 	switch (m6502.subtype)
 	{
-#if HAS_M65C02
+#if (HAS_M65C02)
 		case SUBTYPE_65C02:
 			m6502.insn = insn65c02;
 			break;
 #endif
-#if HAS_M65SC02
+#if (HAS_M65SC02)
 		case SUBTYPE_65SC02:
 			m6502.insn = insn65sc02;
 			break;
 #endif
-#if HAS_M6510
+#if (HAS_M6510)
 		case SUBTYPE_6510:
 			m6502.insn = insn6510;
 			break;
@@ -468,7 +468,7 @@ unsigned m6502_dasm(char *buffer, unsigned pc)
 /****************************************************************************
  * 65C02 section
  ****************************************************************************/
-#if HAS_M65C02
+#if (HAS_M65C02)
 
 /* Layout of the registers in the debugger */
 static UINT8 m65c02_reg_layout[] = {
@@ -620,7 +620,7 @@ unsigned m65c02_dasm(char *buffer, unsigned pc)
 /****************************************************************************
  * 65SC02 section
  ****************************************************************************/
-#if HAS_M65SC02
+#if (HAS_M65SC02)
 /* Layout of the registers in the debugger */
 static UINT8 m65sc02_reg_layout[] = {
 	M65SC02_A,M65SC02_X,M65SC02_Y,M65SC02_S,M65SC02_PC,M65SC02_P, -1,
@@ -689,7 +689,7 @@ unsigned m65sc02_dasm(char *buffer, unsigned pc)
 /****************************************************************************
  * 2A03 section
  ****************************************************************************/
-#if HAS_N2A03
+#if (HAS_N2A03)
 /* Layout of the registers in the debugger */
 static UINT8 n2a03_reg_layout[] = {
 	N2A03_A,N2A03_X,N2A03_Y,N2A03_S,N2A03_PC,N2A03_P, -1,
@@ -761,7 +761,7 @@ unsigned n2a03_dasm(char *buffer, unsigned pc)
 /****************************************************************************
  * 6510 section
  ****************************************************************************/
-#if HAS_M6510
+#if (HAS_M6510)
 /* Layout of the registers in the debugger */
 static UINT8 m6510_reg_layout[] = {
 	M6510_A,M6510_X,M6510_Y,M6510_S,M6510_PC,M6510_P, -1,

@@ -1,51 +1,9 @@
 /***************************************************************************
 
-  vidhrdw/atarisy1.c
+	Atari System 1 hardware
 
-  Functions to emulate the video hardware of the machine.
+****************************************************************************/
 
-****************************************************************************
-
-	Playfield encoding
-	------------------
-		1 16-bit word is used
-
-		Word 1:
-			Bit  15    = horizontal flip
-			Bits  0-14 = image index
-
-
-	Motion Object encoding
-	----------------------
-		4 16-bit words are used
-
-		Word 1:
-			Bit  15    = horizontal flip
-			Bits  5-13 = Y position
-			Bits  0-3  = height in tiles
-
-		Word 2:
-			Bits  0-15 = image index
-
-		Word 3:
-			Bit  15    = special playfield priority
-			Bits  5-13 = X position
-			Bits  0-3  = width in tiles
-
-		Word 4:
-			Bits  0-5  = link to the next image to display
-
-
-	Alpha layer encoding
-	--------------------
-		1 16-bit word is used
-
-		Word 1:
-			Bit  13    = transparent/opaque
-			Bits 10-12 = palette
-			Bits  0-9  = image index
-
-***************************************************************************/
 
 #include "driver.h"
 #include "machine/atarigen.h"

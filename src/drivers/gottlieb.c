@@ -177,6 +177,13 @@ WRITE_HANDLER( gottlieb_nmi_rate_w );
 WRITE_HANDLER( gottlieb_cause_dac_nmi_w );
 
 
+static void init_machine(void)
+{
+	UINT8 *ram = memory_region(REGION_CPU1);
+	cpu_setbank(1, &ram[0x8000]);
+	cpu_setbank(2, &ram[0x0000]);
+}
+
 
 static int track[2];
 
@@ -344,66 +351,88 @@ static void nvram_handler(void *file,int read_or_write)
 
 static struct MemoryReadAddress reactor_readmem[] =
 {
-	{ 0x0000, 0x1fff, MRA_RAM },
-	{ 0x3000, 0x33ff, MRA_RAM },
-	{ 0x4000, 0x4fff, MRA_RAM },
-	{ 0x7000, 0x7000, input_port_0_r },	/* DSW */
-	{ 0x7001, 0x7001, input_port_1_r },	/* buttons */
-	{ 0x7002, 0x7002, gottlieb_track_0_r },	/* trackball H */
-	{ 0x7003, 0x7003, gottlieb_track_1_r },	/* trackball V */
-	{ 0x7004, 0x7004, input_port_4_r },	/* joystick */
-	{ 0x8000, 0xffff, MRA_ROM },
+	{ 0x00000, 0x01fff, MRA_RAM },
+	{ 0x03000, 0x033ff, MRA_RAM },
+	{ 0x04000, 0x04fff, MRA_RAM },
+	{ 0x07000, 0x07000, input_port_0_r },	/* DSW */
+	{ 0x07001, 0x07001, input_port_1_r },	/* buttons */
+	{ 0x07002, 0x07002, gottlieb_track_0_r },	/* trackball H */
+	{ 0x07003, 0x07003, gottlieb_track_1_r },	/* trackball V */
+	{ 0x07004, 0x07004, input_port_4_r },	/* joystick */
+	{ 0x08000, 0x0ffff, MRA_ROM },
+	/* map the ROM into Fxxxx so we can boot */
+	{ 0xf8000, 0xfffff, MRA_BANK1 },
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress reactor_writemem[] =
 {
-	{ 0x0000, 0x1fff, MWA_RAM },
-	{ 0x2000, 0x20ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x3000, 0x33ff, videoram_w, &videoram, &videoram_size },
-	{ 0x3400, 0x37ff, videoram_w },	/* mirror address, some games write to it */
-	{ 0x4000, 0x4fff, gottlieb_characterram_w, &gottlieb_characterram },
-	{ 0x6000, 0x601f, gottlieb_paletteram_w, &paletteram },
-	{ 0x7000, 0x7000, watchdog_reset_w },
-	{ 0x7001, 0x7001, gottlieb_track_reset_w },
-	{ 0x7002, 0x7002, gottlieb_sh_w }, /* sound/speech command */
-	{ 0x7003, 0x7003, reactor_output_w },       /* OUT1 */
-	{ 0x8000, 0xffff, MWA_ROM },
+	{ 0x00000, 0x01fff, MWA_RAM },
+	{ 0x02000, 0x020ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x03000, 0x033ff, videoram_w, &videoram, &videoram_size },
+	{ 0x03400, 0x037ff, videoram_w },	/* mirror address, some games write to it */
+	{ 0x04000, 0x04fff, gottlieb_characterram_w, &gottlieb_characterram },
+	{ 0x06000, 0x0601f, gottlieb_paletteram_w, &paletteram },
+	{ 0x07000, 0x07000, watchdog_reset_w },
+	{ 0x07001, 0x07001, gottlieb_track_reset_w },
+	{ 0x07002, 0x07002, gottlieb_sh_w }, /* sound/speech command */
+	{ 0x07003, 0x07003, reactor_output_w },       /* OUT1 */
+	{ 0x08000, 0x0ffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryReadAddress gottlieb_readmem[] =
 {
-	{ 0x0000, 0x0fff, MRA_RAM },
-	{ 0x1000, 0x1fff, MRA_RAM },	/* or ROM */
-	{ 0x2000, 0x2fff, MRA_RAM },	/* or ROM */
-	{ 0x3800, 0x3bff, MRA_RAM },
-	{ 0x4000, 0x4fff, MRA_RAM },
-	{ 0x5800, 0x5800, input_port_0_r },	/* DSW */
-	{ 0x5801, 0x5801, input_port_1_r },	/* buttons */
-	{ 0x5802, 0x5802, gottlieb_track_0_r },	/* trackball H */
-	{ 0x5803, 0x5803, gottlieb_track_1_r },	/* trackball V */
-	{ 0x5804, 0x5804, input_port_4_r },	/* joystick */
-	{ 0x5805, 0x5807, gottlieb_laserdisc_status_r },
-	{ 0x6000, 0xffff, MRA_ROM },
+	{ 0x00000, 0x00fff, MRA_RAM },
+	{ 0x01000, 0x01fff, MRA_RAM },	/* or ROM */
+	{ 0x02000, 0x02fff, MRA_RAM },	/* or ROM */
+	{ 0x03800, 0x03bff, MRA_RAM },
+	{ 0x04000, 0x04fff, MRA_RAM },
+	{ 0x05800, 0x05800, input_port_0_r },	/* DSW */
+	{ 0x05801, 0x05801, input_port_1_r },	/* buttons */
+	{ 0x05802, 0x05802, gottlieb_track_0_r },	/* trackball H */
+	{ 0x05803, 0x05803, gottlieb_track_1_r },	/* trackball V */
+	{ 0x05804, 0x05804, input_port_4_r },	/* joystick */
+	{ 0x05805, 0x05807, gottlieb_laserdisc_status_r },
+	{ 0x06000, 0x0ffff, MRA_ROM },
+	/* Us vs Them and Q*bert Qubes use the Exxxx address space */
+	{ 0xe5800, 0xe5800, input_port_0_r },	/* DSW */
+	{ 0xe5801, 0xe5801, input_port_1_r },	/* buttons */
+	{ 0xe5802, 0xe5802, gottlieb_track_0_r },	/* trackball H */
+	{ 0xe5803, 0xe5803, gottlieb_track_1_r },	/* trackball V */
+	{ 0xe5804, 0xe5804, input_port_4_r },	/* joystick */
+	{ 0xe5805, 0xe5807, gottlieb_laserdisc_status_r },
+	{ 0xe0000, 0xeffff, MRA_BANK2 },
+	/* map the ROM into Fxxxx so we can boot */
+	{ 0xf8000, 0xfffff, MRA_BANK1 },
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress gottlieb_writemem[] =
 {
-	{ 0x0000, 0x0fff, MWA_RAM, &nvram, &nvram_size },
-	{ 0x1000, 0x1fff, MWA_RAM },	/* ROM in Krull */
-	{ 0x2000, 0x2fff, MWA_RAM },	/* ROM in Krull and 3 Stooges */
-	{ 0x3000, 0x30ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x3800, 0x3bff, videoram_w, &videoram, &videoram_size },
-	{ 0x3c00, 0x3fff, videoram_w },	/* mirror address, some games write to it */
-	{ 0x4000, 0x4fff, gottlieb_characterram_w, &gottlieb_characterram },
-	{ 0x5000, 0x501f, gottlieb_paletteram_w, &paletteram },
-	{ 0x5800, 0x5800, watchdog_reset_w },
-	{ 0x5801, 0x5801, gottlieb_track_reset_w },
-	{ 0x5802, 0x5802, gottlieb_sh_w }, /* sound/speech command */
-	{ 0x5803, 0x5803, gottlieb_video_outputs_w },       /* OUT1 */
-	{ 0x6000, 0xffff, MWA_ROM },
+	{ 0x00000, 0x00fff, MWA_RAM, &nvram, &nvram_size },
+	{ 0x01000, 0x01fff, MWA_RAM },	/* ROM in Krull */
+	{ 0x02000, 0x02fff, MWA_RAM },	/* ROM in Krull and 3 Stooges */
+	{ 0x03000, 0x030ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x03800, 0x03bff, videoram_w, &videoram, &videoram_size },
+	{ 0x03c00, 0x03fff, videoram_w },	/* mirror address, some games write to it */
+	{ 0x04000, 0x04fff, gottlieb_characterram_w, &gottlieb_characterram },
+	{ 0x05000, 0x0501f, gottlieb_paletteram_w, &paletteram },
+	{ 0x05800, 0x05800, watchdog_reset_w },
+	{ 0x05801, 0x05801, gottlieb_track_reset_w },
+	{ 0x05802, 0x05802, gottlieb_sh_w }, /* sound/speech command */
+	{ 0x05803, 0x05803, gottlieb_video_outputs_w },       /* OUT1 */
+	{ 0x06000, 0x0ffff, MWA_ROM },
+	/* Q*bert Qubes uses the Exxxx address space */
+	{ 0xe0000, 0xe37ff, MWA_BANK2 },
+	{ 0xe3800, 0xe3bff, videoram_w },
+	{ 0xe3c00, 0xe3fff, videoram_w },	/* mirror address, some games write to it */
+	{ 0xe4000, 0xe4fff, gottlieb_characterram_w },
+	{ 0xe5000, 0xe501f, gottlieb_paletteram_w },
+	{ 0xe5800, 0xe5800, watchdog_reset_w },
+	{ 0xe5801, 0xe5801, gottlieb_track_reset_w },
+	{ 0xe5802, 0xe5802, gottlieb_sh_w }, /* sound/speech command */
+	{ 0xe5803, 0xe5803, gottlieb_video_outputs_w },       /* OUT1 */
 	{ -1 }  /* end of table */
 };
 
@@ -411,57 +440,71 @@ static struct MemoryWriteAddress gottlieb_writemem[] =
 /* same as above, different video_outputs plus laser disc control outputs */
 static struct MemoryWriteAddress usvsthem_writemem[] =
 {
-	{ 0x0000, 0x0fff, MWA_RAM, &nvram, &nvram_size },
-	{ 0x1000, 0x1fff, MWA_RAM },	/* ROM in Krull */
-	{ 0x2000, 0x2fff, MWA_RAM },	/* ROM in Krull and 3 Stooges */
-	{ 0x3000, 0x30ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x3800, 0x3bff, videoram_w, &videoram, &videoram_size },
-	{ 0x3c00, 0x3fff, videoram_w },	/* mirror address, some games write to it */
-	{ 0x4000, 0x4fff, gottlieb_characterram_w, &gottlieb_characterram },
-	{ 0x5000, 0x501f, gottlieb_paletteram_w, &paletteram },
-	{ 0x5800, 0x5800, watchdog_reset_w },
-	{ 0x5801, 0x5801, gottlieb_track_reset_w },
-	{ 0x5802, 0x5802, gottlieb_sh_w }, /* sound/speech command */
-	{ 0x5803, 0x5803, usvsthem_video_outputs_w },       /* OUT1 */
-	{ 0x5805, 0x5805, gottlieb_laserdisc_command_w },	/* command for the player */
-	{ 0x5806, 0x5806, gottlieb_laserdisc_mpx_w },
-	{ 0x6000, 0xffff, MWA_ROM },
+	{ 0x00000, 0x00fff, MWA_RAM, &nvram, &nvram_size },
+	{ 0x01000, 0x01fff, MWA_RAM },	/* ROM in Krull */
+	{ 0x02000, 0x02fff, MWA_RAM },	/* ROM in Krull and 3 Stooges */
+	{ 0x03000, 0x030ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x03800, 0x03bff, videoram_w, &videoram, &videoram_size },
+	{ 0x03c00, 0x03fff, videoram_w },	/* mirror address, some games write to it */
+	{ 0x04000, 0x04fff, gottlieb_characterram_w, &gottlieb_characterram },
+	{ 0x05000, 0x0501f, gottlieb_paletteram_w, &paletteram },
+	{ 0x05800, 0x05800, watchdog_reset_w },
+	{ 0x05801, 0x05801, gottlieb_track_reset_w },
+	{ 0x05802, 0x05802, gottlieb_sh_w }, /* sound/speech command */
+	{ 0x05803, 0x05803, usvsthem_video_outputs_w },       /* OUT1 */
+	{ 0x05805, 0x05805, gottlieb_laserdisc_command_w },	/* command for the player */
+	{ 0x05806, 0x05806, gottlieb_laserdisc_mpx_w },
+	{ 0x06000, 0x0ffff, MWA_ROM },
+	/* Us vs Them uses the Exxxx address space */
+	{ 0xe0000, 0xe37ff, MWA_BANK2 },
+	{ 0xe3800, 0xe3bff, videoram_w },
+	{ 0xe3c00, 0xe3fff, videoram_w },	/* mirror address, some games write to it */
+	{ 0xe4000, 0xe4fff, gottlieb_characterram_w },
+	{ 0xe5000, 0xe501f, gottlieb_paletteram_w },
+	{ 0xe5800, 0xe5800, watchdog_reset_w },
+	{ 0xe5801, 0xe5801, gottlieb_track_reset_w },
+	{ 0xe5802, 0xe5802, gottlieb_sh_w }, /* sound/speech command */
+	{ 0xe5803, 0xe5803, usvsthem_video_outputs_w },       /* OUT1 */
+	{ 0xe5805, 0xe5805, gottlieb_laserdisc_command_w },	/* command for the player */
+	{ 0xe5806, 0xe5806, gottlieb_laserdisc_mpx_w },
 	{ -1 }  /* end of table */
 };
 
 /* same as above, different IN4 */
 static struct MemoryReadAddress stooges_readmem[] =
 {
-	{ 0x0000, 0x0fff, MRA_RAM },
-	{ 0x1000, 0x1fff, MRA_RAM },
-	{ 0x2000, 0x2fff, MRA_ROM },
-	{ 0x3800, 0x3bff, MRA_RAM },
-	{ 0x4000, 0x4fff, MRA_RAM },
-	{ 0x5800, 0x5800, input_port_0_r },	/* DSW */
-	{ 0x5801, 0x5801, input_port_1_r },	/* buttons */
-	{ 0x5802, 0x5802, gottlieb_track_0_r },	/* trackball H */
-	{ 0x5803, 0x5803, gottlieb_track_1_r },	/* trackball V */
-	{ 0x5804, 0x5804, stooges_IN4_r },	/* joystick */
-	{ 0x6000, 0xffff, MRA_ROM },
+	{ 0x00000, 0x00fff, MRA_RAM },
+	{ 0x01000, 0x01fff, MRA_RAM },
+	{ 0x02000, 0x02fff, MRA_ROM },
+	{ 0x03800, 0x03bff, MRA_RAM },
+	{ 0x04000, 0x04fff, MRA_RAM },
+	{ 0x05800, 0x05800, input_port_0_r },	/* DSW */
+	{ 0x05801, 0x05801, input_port_1_r },	/* buttons */
+	{ 0x05802, 0x05802, gottlieb_track_0_r },	/* trackball H */
+	{ 0x05803, 0x05803, gottlieb_track_1_r },	/* trackball V */
+	{ 0x05804, 0x05804, stooges_IN4_r },	/* joystick */
+	{ 0x06000, 0x0ffff, MRA_ROM },
+	/* map the ROM into Fxxxx so we can boot */
+	{ 0xf8000, 0xfffff, MRA_BANK1 },
 	{ -1 }  /* end of table */
 };
 
 /* same as above, different video_outputs */
 static struct MemoryWriteAddress stooges_writemem[] =
 {
-	{ 0x0000, 0x0fff, MWA_RAM, &nvram, &nvram_size },
-	{ 0x1000, 0x1fff, MWA_RAM },
-	{ 0x2000, 0x2fff, MWA_ROM },
-	{ 0x3000, 0x30ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x3800, 0x3bff, videoram_w, &videoram, &videoram_size },
-	{ 0x3c00, 0x3fff, videoram_w },	/* mirror address, some games write to it */
-	{ 0x4000, 0x4fff, gottlieb_characterram_w, &gottlieb_characterram },
-	{ 0x5000, 0x501f, gottlieb_paletteram_w, &paletteram },
-	{ 0x5800, 0x5800, watchdog_reset_w },
-	{ 0x5801, 0x5801, gottlieb_track_reset_w },
-	{ 0x5802, 0x5802, gottlieb_sh_w }, /* sound/speech command */
-	{ 0x5803, 0x5803, stooges_output_w },       /* OUT1 */
-	{ 0x6000, 0xffff, MWA_ROM },
+	{ 0x00000, 0x00fff, MWA_RAM, &nvram, &nvram_size },
+	{ 0x01000, 0x01fff, MWA_RAM },
+	{ 0x02000, 0x02fff, MWA_ROM },
+	{ 0x03000, 0x030ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x03800, 0x03bff, videoram_w, &videoram, &videoram_size },
+	{ 0x03c00, 0x03fff, videoram_w },	/* mirror address, some games write to it */
+	{ 0x04000, 0x04fff, gottlieb_characterram_w, &gottlieb_characterram },
+	{ 0x05000, 0x0501f, gottlieb_paletteram_w, &paletteram },
+	{ 0x05800, 0x05800, watchdog_reset_w },
+	{ 0x05801, 0x05801, gottlieb_track_reset_w },
+	{ 0x05802, 0x05802, gottlieb_sh_w }, /* sound/speech command */
+	{ 0x05803, 0x05803, stooges_output_w },       /* OUT1 */
+	{ 0x06000, 0x0ffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
 
@@ -1358,7 +1401,7 @@ static struct MachineDriver machine_driver_##GAMENAME =             \
 	},                                                          	\
 	61, 1018,	/* frames per second, vblank duration */			\
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */ \
-	0,						                                    	\
+	init_machine,			                                    	\
 																	\
 	/* video hardware */                                        	\
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },						\
@@ -1416,7 +1459,7 @@ static struct MachineDriver machine_driver_##GAMENAME =				\
 	},																\
 	61, 1018,	/* frames per second, vblank duration */			\
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */ \
-	0,																\
+	init_machine,													\
 																	\
 	/* video hardware */											\
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },						\
@@ -1447,14 +1490,15 @@ static struct MachineDriver machine_driver_##GAMENAME =				\
 }
 
 /* games using the revision 1 sound board */
-MACHINE_DRIVER_SOUND_1(reactor,reactor_readmem,reactor_writemem,charRAM_gfxdecodeinfo,0);
-MACHINE_DRIVER_SOUND_1(gottlieb,gottlieb_readmem,gottlieb_writemem,charROM_gfxdecodeinfo,nvram_handler);
-MACHINE_DRIVER_SOUND_1(qbertqub,gottlieb_readmem,gottlieb_writemem,qbertqub_gfxdecodeinfo,nvram_handler);
-MACHINE_DRIVER_SOUND_1(krull,gottlieb_readmem,gottlieb_writemem,charRAM_gfxdecodeinfo,nvram_handler);
+MACHINE_DRIVER_SOUND_1(reactor,  reactor_readmem, reactor_writemem, charRAM_gfxdecodeinfo, 0);
+MACHINE_DRIVER_SOUND_1(gottlieb, gottlieb_readmem,gottlieb_writemem,charROM_gfxdecodeinfo, nvram_handler);
+MACHINE_DRIVER_SOUND_1(qbertqub, gottlieb_readmem,gottlieb_writemem,qbertqub_gfxdecodeinfo,nvram_handler);
+MACHINE_DRIVER_SOUND_1(krull,    gottlieb_readmem,gottlieb_writemem,charRAM_gfxdecodeinfo, nvram_handler);
 /* games using the revision 2 sound board */
-MACHINE_DRIVER_SOUND_2(mach3,gottlieb_readmem,usvsthem_writemem,charROM_gfxdecodeinfo,nvram_handler);
-MACHINE_DRIVER_SOUND_2(usvsthem,gottlieb_readmem,usvsthem_writemem,qbertqub_gfxdecodeinfo,nvram_handler);
-MACHINE_DRIVER_SOUND_2(stooges,stooges_readmem,stooges_writemem,charRAM_gfxdecodeinfo,nvram_handler);
+MACHINE_DRIVER_SOUND_2(mach3,    gottlieb_readmem,usvsthem_writemem,charROM_gfxdecodeinfo, nvram_handler);
+MACHINE_DRIVER_SOUND_2(usvsthem, gottlieb_readmem,usvsthem_writemem,qbertqub_gfxdecodeinfo,nvram_handler);
+MACHINE_DRIVER_SOUND_2(stooges,  stooges_readmem, stooges_writemem, charRAM_gfxdecodeinfo, nvram_handler);
+MACHINE_DRIVER_SOUND_2(gottlieb2,gottlieb_readmem,gottlieb_writemem,charROM_gfxdecodeinfo, nvram_handler);
 
 
 /***************************************************************************
@@ -1594,7 +1638,10 @@ ROM_START( screwloo )
 	ROM_LOAD( "rom0",         0xe000, 0x2000, 0x6447fe54 )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
-	ROM_LOAD( "sound",        0xf000, 0x1000, 0x00000000 )
+	ROM_LOAD( "drom1",        0xe000, 0x2000, 0xae965ade )
+
+	ROM_REGION( 0x10000, REGION_CPU3 )	/* 64k for second sound cpu */
+	ROM_LOAD( "yrom1",        0xe000, 0x2000, 0x3719b0b5 )
 
 	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "bg0",          0x0000, 0x1000, 0x1fd5b649 )	/* chars */
@@ -1798,11 +1845,11 @@ GAME( 1983, mplanets, 0,     gottlieb, mplanets, 0,        ROT270, "Gottlieb", "
 GAME( 1982, qbert,    0,     gottlieb, qbert,    qbert,    ROT270, "Gottlieb", "Q*bert (US)" )
 GAME( 1982, qbertjp,  qbert, gottlieb, qbert,    qbert,    ROT270, "Gottlieb (Konami license)", "Q*bert (Japan)" )
 GAMEX(1982, insector, 0,     gottlieb, insector, 0,        ROT0,   "Gottlieb", "Insector (prototype)", GAME_NO_SOUND )
-GAMEX(1983, screwloo, 0,     gottlieb, screwloo, 0,        ROT0,   "Mylstar", "Screw Loose (prototype)", GAME_NO_SOUND )
-GAME( 1983, sqbert,   0,     gottlieb, qbert,    qbert,    ROT270, "Mylstar", "Faster, Harder, More Challenging Q*bert (prototype)" )
-GAME( 1983, qbertqub, 0,     qbertqub, qbertqub, qbert,    ROT270, "Mylstar", "Q*bert's Qubes" )
 GAME( 1983, krull,    0,     krull,    krull,    0,        ROT270, "Gottlieb", "Krull" )
+GAME( 1983, sqbert,   0,     gottlieb, qbert,    qbert,    ROT270, "Mylstar", "Faster, Harder, More Challenging Q*bert (prototype)" )
 GAMEX(1983, mach3,    0,     mach3,    mach3,    gottlieb, ROT0,   "Mylstar", "M.A.C.H. 3", GAME_NOT_WORKING )
 GAMEX(????, usvsthem, 0,     usvsthem, usvsthem, gottlieb, ROT0,   "Mylstar", "Us vs. Them", GAME_NOT_WORKING )
 GAMEX(1984, 3stooges, 0,     stooges,  3stooges, gottlieb, ROT0,   "Mylstar", "Three Stooges", GAME_IMPERFECT_SOUND )
+GAME( 1983, qbertqub, 0,     qbertqub, qbertqub, qbert,    ROT270, "Mylstar", "Q*bert's Qubes" )
+GAME( 1983, screwloo, 0,     gottlieb2,screwloo, 0,        ROT0,   "Mylstar", "Screw Loose (prototype)" )
 GAME( 1984, curvebal, 0,     gottlieb, curvebal, 0,        ROT270, "Mylstar", "Curve Ball" )

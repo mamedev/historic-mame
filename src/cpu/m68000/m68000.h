@@ -60,7 +60,7 @@ extern unsigned m68000_dasm(char *buffer, unsigned pc);
 /****************************************************************************
  * M68010 section
  ****************************************************************************/
-#if HAS_M68010
+#if (HAS_M68010)
 #define MC68010_INT_NONE                MC68000_INT_NONE
 #define MC68010_IRQ_1					MC68000_IRQ_1
 #define MC68010_IRQ_2					MC68000_IRQ_2
@@ -94,7 +94,7 @@ extern unsigned m68010_dasm(char *buffer, unsigned pc);
 /****************************************************************************
  * M68EC020 section
  ****************************************************************************/
-#if HAS_M68EC020
+#if (HAS_M68EC020)
 #define MC68EC020_INT_NONE				MC68000_INT_NONE
 #define MC68EC020_IRQ_1					MC68000_IRQ_1
 #define MC68EC020_IRQ_2					MC68000_IRQ_2
@@ -128,7 +128,7 @@ extern unsigned m68ec020_dasm(char *buffer, unsigned pc);
 /****************************************************************************
  * M68020 section
  ****************************************************************************/
-#if HAS_M68020
+#if (HAS_M68020)
 #define MC68020_INT_NONE				MC68000_INT_NONE
 #define MC68020_IRQ_1					MC68000_IRQ_1
 #define MC68020_IRQ_2					MC68000_IRQ_2

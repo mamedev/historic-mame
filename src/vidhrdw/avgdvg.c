@@ -77,9 +77,6 @@ int vector_updates; /* avgdvg_go_w()'s per Mame frame, should be 1 */
 static int vg_step = 0;    /* single step the vector generator */
 static int total_length;   /* length of all lines drawn in a frame */
 
-/* Use backdrop if present MLR OCT0598 */
-static struct artwork *backdrop = NULL;
-
 #define MAXSTACK 8 	/* Tempest needs more than 4     BW 210797 */
 
 /* AVG commands */
@@ -932,15 +929,16 @@ void avg_init_palette (int paltype, unsigned char *palette, unsigned short *colo
 		/* Monochrome Aqua colors (Asteroids Deluxe,Red Baron) .ac JAN2498 */
 		case  VEC_PAL_ASTDELUX:
 			/* Use backdrop if present MLR OCT0598 */
-			if ((backdrop=artwork_load("astdelux.png", 32, Machine->drv->total_colors-32))!=NULL)
+			backdrop_load("astdelux.png", 32, Machine->drv->total_colors-32);
+			if (artwork_backdrop!=NULL)
 			{
 				shade_fill (palette, GREEN|BLUE, 8, 23, 1, 254);
 				/* Some more anti-aliasing colors. */
 				shade_fill (palette, GREEN|BLUE, 24, 31, 1, 254);
 				for (i=0; i<8; i++)
 					palette[(24+i)*3]=80;
-				memcpy (palette+3*backdrop->start_pen, backdrop->orig_palette,
-					3*backdrop->num_pens_used);
+				memcpy (palette+3*artwork_backdrop->start_pen, artwork_backdrop->orig_palette,
+					3*artwork_backdrop->num_pens_used);
 			}
 			else
 				shade_fill (palette, GREEN|BLUE, 8, 128+8, 1, 254);
@@ -958,8 +956,9 @@ void avg_init_palette (int paltype, unsigned char *palette, unsigned short *colo
 			shade_fill (palette, GREEN, 24, 31, 1, 254);
 			shade_fill (palette, WHITE, 32, 47, 1, 254);
 			/* Use backdrop if present MLR OCT0598 */
-			if ((backdrop=artwork_load("bzone.png", 48, Machine->drv->total_colors-48))!=NULL)
-				memcpy (palette+3*backdrop->start_pen, backdrop->orig_palette, 3*backdrop->num_pens_used);
+			backdrop_load("bzone.png", 48, Machine->drv->total_colors-48);
+			if (artwork_backdrop!=NULL)
+				memcpy (palette+3*artwork_backdrop->start_pen, artwork_backdrop->orig_palette, 3*artwork_backdrop->num_pens_used);
 			break;
 
 		/* Colored games (Major Havoc, Star Wars, Tempest) .ac JAN2498 */
@@ -1089,28 +1088,12 @@ level # - green
 
 ***************************************************************************/
 
-void avg_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-	if (backdrop)
-		vector_vh_update_backdrop(bitmap, backdrop, full_refresh);
-	else
-		vector_vh_update(bitmap,full_refresh);
-}
-
-void dvg_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-	if (backdrop)
-		vector_vh_update_backdrop(bitmap, backdrop, full_refresh);
-	else
-		vector_vh_update(bitmap,full_refresh);
-}
-
 int dvg_start(void)
 {
-	if (backdrop)
+	if (artwork_backdrop)
 	{
-		backdrop_refresh(backdrop);
-		backdrop_refresh_tables (backdrop);
+		backdrop_refresh(artwork_backdrop);
+		backdrop_refresh_tables (artwork_backdrop);
 	}
 
 	return avgdvg_init (USE_DVG);
@@ -1138,10 +1121,10 @@ int avg_start_mhavoc(void)
 
 int avg_start_bzone(void)
 {
-	if (backdrop)
+	if (artwork_backdrop)
 	{
-		backdrop_refresh(backdrop);
-		backdrop_refresh_tables (backdrop);
+		backdrop_refresh(artwork_backdrop);
+		backdrop_refresh_tables (artwork_backdrop);
 	}
 
 	return avgdvg_init (USE_AVG_BZONE);
@@ -1163,9 +1146,6 @@ void avg_stop(void)
 	vector_clear_list();
 
 	vector_vh_stop();
-
-	if (backdrop) artwork_free(backdrop);
-	backdrop = NULL;
 }
 
 void dvg_stop(void)
@@ -1174,8 +1154,5 @@ void dvg_stop(void)
 	vector_clear_list();
 
 	vector_vh_stop();
-
-	if (backdrop) artwork_free(backdrop);
-	backdrop = NULL;
 }
 

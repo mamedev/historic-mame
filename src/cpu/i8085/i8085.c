@@ -1581,7 +1581,7 @@ unsigned i8085_dasm(char *buffer, unsigned pc)
 /**************************************************************************
  * 8080 section
  **************************************************************************/
-#if HAS_8080
+#if (HAS_8080)
 /* Layout of the registers in the debugger */
 static UINT8 i8080_reg_layout[] = {
 	I8080_AF, I8080_BC, I8080_DE, I8080_HL, I8080_SP, I8080_PC, -1,

@@ -343,13 +343,13 @@ static READ_HANDLER( punkshot_kludge_r )
 
 static READ_HANDLER( ssriders_kludge_r )
 {
-    int data = cpu_readmem24_word(0x105a0a);
+    int data = cpu_readmem24bew_word(0x105a0a);
 
     logerror("%06x: read 1c0800 (D7=%02x 105a0a=%02x)\n",cpu_get_pc(),cpu_get_reg(M68K_D7),data);
 
     if (data == 0x075c) data = 0x0064;
 
-    if ( cpu_readmem24_word(cpu_get_pc()) == 0x45f9 )
+    if ( cpu_readmem24bew_word(cpu_get_pc()) == 0x45f9 )
 	{
         data = -( ( cpu_get_reg(M68K_D7) & 0xff ) + 32 );
         data = ( ( data / 8 ) & 0x1f ) * 0x40;
@@ -804,9 +804,9 @@ WRITE_HANDLER( tmnt2_1c0800_w )
         CellVar -= 0x104000;
 		src = &memory_region(REGION_CPU1)[CellSrc];
 
-		cpu_writemem24_word(dst+0x00,0x8000 | ((READ_WORD(src+2) & 0xfc00) >> 2));	/* size, flip xy */
-        cpu_writemem24_word(dst+0x04,READ_WORD(src+0));	/* code */
-        cpu_writemem24_word(dst+0x18,(READ_WORD(src+2) & 0x3ff) ^		/* color, mirror, priority */
+		cpu_writemem24bew_word(dst+0x00,0x8000 | ((READ_WORD(src+2) & 0xfc00) >> 2));	/* size, flip xy */
+        cpu_writemem24bew_word(dst+0x04,READ_WORD(src+0));	/* code */
+        cpu_writemem24bew_word(dst+0x18,(READ_WORD(src+2) & 0x3ff) ^		/* color, mirror, priority */
 				(READ_WORD( &sunset_104000[CellVar + 0x00] ) & 0x0060));
 
 		/* base color modifier */
@@ -816,24 +816,24 @@ WRITE_HANDLER( tmnt2_1c0800_w )
 		/* Also, the bosses don't blink when they are about to die - don't know */
 		/* if this is correct or not. */
 //		if (READ_WORD( &sunset_104000[CellVar + 0x2a] ) & 0x001f)
-//			cpu_writemem24_word(dst+0x18,(cpu_readmem24_word(dst+0x18) & 0xffe0) |
+//			cpu_writemem24bew_word(dst+0x18,(cpu_readmem24bew_word(dst+0x18) & 0xffe0) |
 //					(READ_WORD( &sunset_104000[CellVar + 0x2a] ) & 0x001f));
 
 		x = READ_WORD(src+4);
 		if (READ_WORD( &sunset_104000[CellVar + 0x00] ) & 0x4000)
 		{
 			/* flip x */
-			cpu_writemem24_word(dst+0x00,cpu_readmem24_word(dst+0x00) ^ 0x1000);
+			cpu_writemem24bew_word(dst+0x00,cpu_readmem24bew_word(dst+0x00) ^ 0x1000);
 			x = -x;
 		}
 		x += READ_WORD( &sunset_104000[CellVar + 0x0C] );
-		cpu_writemem24_word(dst+0x0c,x);
+		cpu_writemem24bew_word(dst+0x0c,x);
 		y = READ_WORD(src+6);
 		y += READ_WORD( &sunset_104000[CellVar + 0x0E] );
 		/* don't do second offset for shadows */
 		if ((READ_WORD(&tmnt2_1c0800[0x10]) & 0x00ff) != 0x01)
 			y += READ_WORD( &sunset_104000[CellVar + 0x10] );
-		cpu_writemem24_word(dst+0x08,y);
+		cpu_writemem24bew_word(dst+0x08,y);
 #if 0
 logerror("copy command %04x sprite %08x data %08x: %04x%04x %04x%04x  modifiers %08x:%04x%04x %04x%04x %04x%04x %04x%04x %04x%04x %04x%04x %04x%04x %04x%04x %04x%04x %04x%04x %04x%04x %04x%04x\n",
 	READ_WORD( &tmnt2_1c0800[0x10] ),

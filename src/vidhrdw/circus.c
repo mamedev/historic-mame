@@ -15,17 +15,14 @@
 
 static int clown_x=0,clown_y=0,clown_z=0;
 
-static struct artwork *overlay;
-
 /* The first entry defines the color with which the bitmap is filled initially */
 /* The array is terminated with an entry with negative coordinates. */
 /* At least two entries are needed. */
 static const struct artwork_element circus_ol[]={
-	{{	0, 256,   0, 256}, 0xff, 0xff, 0xff,   0xff},	/* white */
-	{{  0, 256,  20,  36}, 0x20, 0x20, 0xff,   0xff},	/* blue */
-	{{  0, 256,  36,  48}, 0x20, 0xff, 0x20,   0xff},	/* green */
-	{{  0, 256,  48,  64}, 0xff, 0xff, 0x20,   0xff},	/* yellow */
-	{{ -1,  -1,  -1,  -1},    0,    0,    0,      0}
+	{{  0, 255,  20,  35}, 0x20, 0x20, 0xff,   OVERLAY_DEFAULT_OPACITY},	/* blue */
+	{{  0, 255,  36,  47}, 0x20, 0xff, 0x20,   OVERLAY_DEFAULT_OPACITY},	/* green */
+	{{  0, 255,  48,  63}, 0xff, 0xff, 0x20,   OVERLAY_DEFAULT_OPACITY},	/* yellow */
+	{{ -1,  -1,  -1,  -1},    0,    0,    0,   0}
 };
 
 
@@ -39,21 +36,9 @@ int circus_vh_start(void)
 	if (generic_vh_start()!=0)
 		return 1;
 
-	if ((overlay = artwork_create(circus_ol, start_pen, Machine->drv->total_colors-start_pen))==NULL)
-		return 1;
+	overlay_create(circus_ol, start_pen, Machine->drv->total_colors-start_pen);
 
 	return 0;
-}
-
-/***************************************************************************
-***************************************************************************/
-
-void circus_vh_stop(void)
-{
-	if (overlay)
-		artwork_free(overlay);
-
-	generic_vh_stop();
 }
 
 /***************************************************************************
@@ -170,15 +155,9 @@ void circus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 	int sx,sy;
 
-	if (palette_recalc())
+	if (palette_recalc() || full_refresh)
 	{
 		memset(dirtybuffer,1,videoram_size);
-		overlay_remap(overlay);
-	}
-
-	if (full_refresh)
-	{
-		memset(dirtybuffer, 1, videoram_size);
 	}
 
 	/* for every character in the Video RAM,        */
@@ -216,7 +195,6 @@ void circus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
     draw_line (bitmap,0,193,17,193,0);
     draw_line (bitmap,231,193,248,193,0);
 
-    /* Draw the clown in white and afterwards compensate for the overlay */
 	drawgfx(bitmap,Machine->gfx[1],
 			clown_z,
 			0,
@@ -245,8 +223,6 @@ void circus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			}
 		}
 	}
-
-	overlay_draw(bitmap,overlay);
 }
 
 

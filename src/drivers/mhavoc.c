@@ -479,14 +479,14 @@ static struct MachineDriver machine_driver_mhavoc =
 	/* video hardware */
 	400, 300, { 0, 300, 0, 260 },
 	0,
-	256,256,
+	256,0,
 	avg_init_palette_multi,
 
 	VIDEO_TYPE_VECTOR,
 	0,
 	avg_start_mhavoc,
 	avg_stop,
-	avg_screenrefresh,
+	vector_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,

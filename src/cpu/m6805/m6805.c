@@ -295,6 +295,7 @@ static void Interrupt(void)
 	/* pending_interrupts until the interrupt is taken, no matter what the */
 	/* external IRQ pin does. */
 
+#if (HAS_HD63705)
 	if( (m6805.pending_interrupts & (1<<HD63705_INT_NMI)) != 0)
 	{
 		PUSHWORD(m6805.pc);
@@ -313,9 +314,15 @@ static void Interrupt(void)
 
 	}
 	else if( (m6805.pending_interrupts & (M6805_INT_IRQ|HD63705_INT_MASK)) != 0 && (CC & IFLAG) == 0 )
+#else
+	if( (m6805.pending_interrupts & M6805_INT_IRQ) != 0 && (CC & IFLAG) == 0 )
+#endif
 	{
         /* standard IRQ */
-		if(SUBTYPE!=SUBTYPE_HD63705) PC |= 0xf800;
+#if (HAS_HD63705)
+		if(SUBTYPE!=SUBTYPE_HD63705)
+#endif
+			PC |= 0xf800;
 		PUSHWORD(m6805.pc);
 		PUSHBYTE(m6805.x);
 		PUSHBYTE(m6805.a);
@@ -326,6 +333,7 @@ static void Interrupt(void)
 			(*m6805.irq_callback)(0);
 
 
+#if (HAS_HD63705)
 		if(SUBTYPE==SUBTYPE_HD63705)
 		{
 			/* Need to add emulation of other interrupt sources here KW-2/4/99 */
@@ -373,6 +381,7 @@ static void Interrupt(void)
 			}
 		}
 		else
+#endif
 		{
 			m6805.pending_interrupts &= ~M6805_INT_IRQ;
 			RM16( AMASK - 5, &pPC );
@@ -908,7 +917,7 @@ unsigned m6805_dasm(char *buffer, unsigned pc)
 /****************************************************************************
  * M68705 section
  ****************************************************************************/
-#if HAS_M68705
+#if (HAS_M68705)
 static UINT8 m68705_reg_layout[] = {
 	M68705_PC, M68705_S, M68705_CC, M68705_A, M68705_X, M68705_IRQ_STATE, 0
 };
@@ -970,7 +979,7 @@ unsigned m68705_dasm(char *buffer, unsigned pc)
 /****************************************************************************
  * HD63705 section
  ****************************************************************************/
-#if HAS_HD63705
+#if (HAS_HD63705)
 static UINT8 hd63705_reg_layout[] = {
 	HD63705_PC, HD63705_S, HD63705_CC, HD63705_A, HD63705_X, -1,-1,
 	HD63705_NMI_STATE, HD63705_IRQ1_STATE, HD63705_IRQ2_STATE, HD63705_ADCONV_STATE,0

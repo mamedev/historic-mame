@@ -1,55 +1,9 @@
 /***************************************************************************
 
-  vidhrdw/atarisy2.c
+	Atari System 2 hardware
 
-  Functions to emulate the video hardware of the machine.
+****************************************************************************/
 
-****************************************************************************
-
-	Playfield encoding
-	------------------
-		1 16-bit word is used
-
-		Word 1:
-			Bit  14-15 = image priority
-			Bits 11-13 = palette of the image
-			Bit  10    = index of which bank to use
-			Bits  0-9  = index of the image
-
-
-	Motion Object encoding
-	----------------------
-		4 16-bit words are used
-
-		Word 1:
-			Bits  6-14 = vertical position
-			Bits  0-2  = upper 3 bits of the image index
-
-		Word 2:
-			Bit  15    = hold X position from last MO
-			Bit  14    = horizontal flip
-			Bits 11-13 = size of the image (1..8)
-			Bits  0-10 = index of the image
-
-		Word 3:
- 			Bits  6-15 = horizontal position
-
-		Word 4:
-			Bits 14-15 = image priority
-			Bits 12-13 = palette of the image
-			Bits  3-10 = link to the next motion object
-
-
-	Alpha layer encoding
-	--------------------
-		1 16-bit word is used
-
-		Word 1:
-			Bit  12-15 = color
-			Bit  11    = horizontal flip
-			Bits  0-10 = index of the character
-
-***************************************************************************/
 
 #include "driver.h"
 #include "machine/atarigen.h"
@@ -102,7 +56,6 @@ struct pf_overrender_data
  *
  *************************************/
 
-UINT16 atarisys2_mo_mask;
 UINT8 *atarisys2_slapstic;
 
 
@@ -590,7 +543,7 @@ static void mo_render_callback(const UINT16 *data, const struct rectangle *clip,
 	int hold = data[1] & 0x8000;
 	int hflip = data[1] & 0x4000;
 	int vsize = ((data[1] >> 11) & 7) + 1;
-	int code = ((data[1] & 0x7ff) + ((data[0] & 7) << 11)) & atarisys2_mo_mask;
+	int code = (data[1] & 0x7ff) + ((data[0] & 7) << 11);
 	int xpos = (data[2] >> 6);
 	int color = (data[3] >> 12) & 3;
 	int priority = (data[3] >> 13) & 6;

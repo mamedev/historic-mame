@@ -64,27 +64,50 @@
  *	ARR logical and, rotate right
  ***************************************************************/
 #define ARR 													\
-	if (P&F_D) { \
-		int lo, hi, t; \
-		tmp &= A; \
-		t = tmp; \
-        hi = tmp &0xf0; \
-		lo = tmp &0x0f; \
-		if (P&F_C) { tmp=(tmp>>1)|0x80; P |= F_N; } \
-        else { tmp>>=1; P&=~F_N; } \
-		if (tmp) P&=~F_Z; \
-        else P|=F_Z; \
-		if ((t^tmp)&0x40) P|=F_V; \
-		else P&=~F_V; \
-		if (lo+(lo&1)>5) { tmp= (tmp&0xf0)|((tmp+6)&0xf); } \
-		if (hi+(hi&0x10)>0x50) { P |= F_C; tmp= (tmp+0x60)&0xff; } \
-		else { P&=~F_C; } \
-	} else { \
-		tmp &= A; \
-		ROR; \
-        P &=~(F_V|F_C); \
-		if (tmp&0x40) P|=F_C; \
-		if ( ((tmp&0x60)==0x20)||((tmp&0x60)==0x40) ) P|=F_V; \
+	if( P & F_D )												\
+	{															\
+		int lo, hi, t;											\
+		tmp &= A;												\
+		t = tmp;												\
+		hi = tmp &0xf0; 										\
+		lo = tmp &0x0f; 										\
+		if( P & F_C )											\
+		{														\
+			tmp = (tmp >> 1) | 0x80;							\
+			P |= F_N;											\
+		}														\
+		else													\
+		{														\
+			tmp >>= 1;											\
+			P &= ~F_N;											\
+		}														\
+		if( tmp )												\
+			P &= ~F_Z;											\
+		else													\
+            P |= F_Z;                                           \
+		if( (t^tmp) & 0x40 )									\
+			P|=F_V; 											\
+		else													\
+			P &= ~F_V;											\
+		if( lo + (lo & 0x01) > 0x05 )							\
+			tmp = (tmp & 0xf0) | ((tmp+6) & 0xf);				\
+		if( hi + (hi & 0x10) > 0x50 )							\
+		{														\
+			P |= F_C;											\
+			tmp = (tmp+0x60) & 0xff;							\
+		}														\
+		else													\
+			P &= ~F_C;											\
+	}															\
+	else														\
+	{															\
+		tmp &= A;												\
+		ROR;													\
+		P &=~(F_V|F_C); 										\
+		if( tmp & 0x40 )										\
+			P|=F_C; 											\
+		if( (tmp & 0x60) == 0x20 || (tmp & 0x60) == 0x40 )		\
+			P|=F_V; 											\
 	}
 
 /* 6510 ********************************************************
@@ -202,7 +225,7 @@
  * logical and result with memory [PC+1] + 1
  ***************************************************************/
 #define SSH 													\
-    S = A & X; \
+	S = A & X;													\
     tmp = S & (EAH+1)
 #if 0
 	tmp = S = A & X;											\
@@ -234,6 +257,6 @@
  ***************************************************************/
 #define KIL 													\
 	PCW--;														\
-	logerror("M6510 KILL opcode %04x: %02x\n",     \
+	logerror("M6510 KILL opcode %04x: %02x\n",                  \
 				PCW, cpu_readop(PCW))
 

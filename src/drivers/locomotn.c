@@ -555,7 +555,7 @@ ROM_START( jungler )
 	/* 1000-1fff empty for my convenience */
 
 	ROM_REGION( 0x0100, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "82s129.10g",   0x0000, 0x0100, 0x2ef89356 ) /* dots */
+	ROM_LOAD( "82s129.10g",   0x0000, 0x0100, 0xc59c51b7 ) /* dots */
 
 	ROM_REGION( 0x0160, REGION_PROMS )
 	ROM_LOAD( "18s030.8b",    0x0000, 0x0020, 0x55a7e6d1 ) /* palette */
@@ -580,7 +580,7 @@ ROM_START( junglers )
 	/* 1000-1fff empty for my convenience */
 
 	ROM_REGION( 0x0100, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "82s129.10g",   0x0000, 0x0100, 0x2ef89356 ) /* dots */
+	ROM_LOAD( "82s129.10g",   0x0000, 0x0100, 0xc59c51b7 ) /* dots */
 
 	ROM_REGION( 0x0160, REGION_PROMS )
 	ROM_LOAD( "18s030.8b",    0x0000, 0x0020, 0x55a7e6d1 ) /* palette */

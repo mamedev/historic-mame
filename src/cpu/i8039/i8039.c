@@ -919,7 +919,7 @@ unsigned i8039_dasm(char *buffer, unsigned pc)
 /**************************************************************************
  * I8035 section
  **************************************************************************/
-#if HAS_I8035
+#if (HAS_I8035)
 /* Layout of the registers in the debugger */
 static UINT8 i8035_reg_layout[] = {
 	I8035_PC, I8035_SP, I8035_PSW, I8035_A, I8035_IRQ_STATE, -1,
@@ -976,7 +976,7 @@ unsigned i8035_dasm(char *buffer, unsigned pc)
 /**************************************************************************
  * I8048 section
  **************************************************************************/
-#if HAS_I8048
+#if (HAS_I8048)
 /* Layout of the registers in the debugger */
 static UINT8 i8048_reg_layout[] = {
 	I8048_PC, I8048_SP, I8048_PSW, I8048_A, I8048_IRQ_STATE, -1,
@@ -1031,7 +1031,7 @@ unsigned i8048_dasm(char *buffer, unsigned pc)
 /**************************************************************************
  * N7751 section
  **************************************************************************/
-#if HAS_N7751
+#if (HAS_N7751)
 /* Layout of the registers in the debugger */
 static UINT8 n7751_reg_layout[] = {
 	N7751_PC, N7751_SP, N7751_PSW, N7751_A, N7751_IRQ_STATE, -1,

@@ -37,7 +37,7 @@ static int lights_changed[NUM_LIGHTS];
 
 void llander_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
-	int width, height, i;
+	int width, height, i, nextcol;
 
 	avg_init_palette_white(palette,colortable,color_prom);
 
@@ -45,12 +45,18 @@ void llander_init_colors (unsigned char *palette, unsigned short *colortable,con
 	width = Machine->scrbitmap->width;
 	height = 0.16 * width;
 
-	if ((llander_panel = artwork_load_size("llander.png", 24, 230, width, height))!=NULL)
+	nextcol = 24;
+
+	artwork_load_size(&llander_panel, "llander.png", nextcol, Machine->drv->total_colors-nextcol, width, height);
+	if (llander_panel != NULL)
 	{
-		if ((llander_lit_panel = artwork_load_size("llander1.png", 24 + llander_panel->num_pens_used, 230 - llander_panel->num_pens_used, width, height))==NULL)
+		if (Machine->scrbitmap->depth == 8)
+			nextcol += llander_panel->num_pens_used;
+
+		artwork_load_size(&llander_lit_panel, "llander1.png", nextcol, Machine->drv->total_colors-nextcol, width, height);
+		if (llander_lit_panel == NULL)
 		{
-			artwork_free (llander_panel);
-			llander_panel = NULL;
+			artwork_free (&llander_panel);
 			return ;
 		}
 	}
@@ -91,12 +97,10 @@ void llander_stop(void)
 	dvg_stop();
 
 	if (llander_panel != NULL)
-		artwork_free(llander_panel);
-	llander_panel = NULL;
+		artwork_free(&llander_panel);
 
 	if (llander_lit_panel != NULL)
-		artwork_free(llander_lit_panel);
-	llander_lit_panel = NULL;
+		artwork_free(&llander_lit_panel);
 
 }
 
@@ -109,7 +113,7 @@ void llander_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	if (llander_panel == NULL)
 	{
-		dvg_screenrefresh(bitmap,full_refresh);
+		vector_vh_screenrefresh(bitmap,full_refresh);
 		return;
 	}
 
@@ -121,7 +125,7 @@ void llander_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	vector_bitmap._private = bitmap->_private;
 	vector_bitmap.line = bitmap->line;
 
-	dvg_screenrefresh(&vector_bitmap,full_refresh);
+	vector_vh_screenrefresh(&vector_bitmap,full_refresh);
 
 	if (full_refresh)
 	{

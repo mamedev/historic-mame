@@ -68,20 +68,33 @@ struct rectangle
 };
 
 
+enum
+{
+	TRANSPARENCY_NONE,			/* opaque with remapping */
+	TRANSPARENCY_NONE_RAW,		/* opaque with no remapping */
+	TRANSPARENCY_PEN,			/* single pen transparency with remapping */
+	TRANSPARENCY_PEN_RAW,		/* single pen transparency with no remapping */
+	TRANSPARENCY_PENS,			/* multiple pen transparency with remapping */
+	TRANSPARENCY_PENS_RAW,		/* multiple pen transparency with no remapping */
+	TRANSPARENCY_COLOR,			/* single remapped pen transparency with remapping */
+	TRANSPARENCY_THROUGH,		/* destination pixel overdraw with remapping */
+	TRANSPARENCY_THROUGH_RAW,	/* destination pixel overdraw with no remapping */
+	TRANSPARENCY_PEN_TABLE,		/* special pen remapping modes (see DRAWMODE_xxx below) */
+	TRANSPARENCY_BLEND,			/* blend two bitmaps, shifting the source and ORing to the dest with remapping */
+	TRANSPARENCY_BLEND_RAW,		/* blend two bitmaps, shifting the source and ORing to the dest with no remapping */
 
-#define TRANSPARENCY_NONE 0
-#define TRANSPARENCY_PEN 1
-#define TRANSPARENCY_PENS 4
-#define TRANSPARENCY_COLOR 2
-#define TRANSPARENCY_THROUGH 3
-#define TRANSPARENCY_PEN_TABLE 5
+	TRANSPARENCY_MODES			/* total number of modes; must be last */
+};
 
 /* drawing mode case TRANSPARENCY_PEN_TABLE */
 extern UINT8 gfx_drawmode_table[256];
-#define DRAWMODE_NONE		0
-#define DRAWMODE_SOURCE		1
-#define DRAWMODE_SHADOW		2
-#define DRAWMODE_HIGHLIGHT	3
+enum
+{
+	DRAWMODE_NONE,
+	DRAWMODE_SOURCE,
+	DRAWMODE_SHADOW,
+	DRAWMODE_HIGHLIGHT
+};
 
 
 typedef void (*plot_pixel_proc)(struct osd_bitmap *bitmap,int x,int y,int pen);
@@ -106,9 +119,14 @@ void pdrawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 		UINT32 priority_mask);
 void copybitmap(struct osd_bitmap *dest,struct osd_bitmap *src,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color);
+void copybitmap_remap(struct osd_bitmap *dest,struct osd_bitmap *src,int flipx,int flipy,int sx,int sy,
+		const struct rectangle *clip,int transparency,int transparent_color);
 void copybitmapzoom(struct osd_bitmap *dest,struct osd_bitmap *src,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,int scalex,int scaley);
 void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
+		int rows,const int *rowscroll,int cols,const int *colscroll,
+		const struct rectangle *clip,int transparency,int transparent_color);
+void copyscrollbitmap_remap(struct osd_bitmap *dest,struct osd_bitmap *src,
 		int rows,const int *rowscroll,int cols,const int *colscroll,
 		const struct rectangle *clip,int transparency,int transparent_color);
 void fillbitmap(struct osd_bitmap *dest,int pen,const struct rectangle *clip);

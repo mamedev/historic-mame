@@ -379,14 +379,14 @@ static struct MachineDriver machine_driver_tempest =
 	/* video hardware */
 	300, 400, { 0, 550, 0, 580 },
 	0,
-	256,256,
+	256,0,
 	avg_init_palette_multi,
 
 	VIDEO_TYPE_VECTOR,
 	0,
 	avg_start_tempest,
 	avg_stop,
-	avg_screenrefresh,
+	vector_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,

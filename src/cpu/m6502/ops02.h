@@ -1,6 +1,6 @@
 /*****************************************************************************
  *
- *	 m6502ops.h
+ *	 ops02.h
  *	 Addressing mode and opcode macros for 6502,65c02,65sc02,6510,n2a03 CPUs
  *
  *	 Copyright (c) 1998,1999,2000 Juergen Buchmueller, all rights reserved.
@@ -69,6 +69,8 @@ extern	MHELE	*cur_mrhard;
 extern	UINT8	*RAM;
 #endif
 
+#define CHANGE_PC change_pc16(PCD)
+
 /***************************************************************
  *	RDOP	read an opcode
  ***************************************************************/
@@ -114,7 +116,7 @@ extern	UINT8	*RAM;
 		EAW = PCW + (signed char)tmp;							\
 		m6502_ICount -= (PCH == EAH) ? 3 : 4;					\
 		PCD = EAD;												\
-		change_pc16(PCD);										\
+		CHANGE_PC;												\
 	}															\
 	else														\
 	{															\
@@ -169,15 +171,6 @@ extern	UINT8	*RAM;
 #define EA_ABY													\
 	EA_ABS; 													\
 	EAW += Y
-
-/***************************************************************
- *	EA = zero page indirect (65c02 pre indexed w/o X)
- ***************************************************************/
-#define EA_ZPI													\
-	ZPL = RDOPARG();											\
-	EAL = RDMEM(ZPD);											\
-	ZPL++;														\
-	EAH = RDMEM(ZPD)
 
 /***************************************************************
  *	EA = zero page + X indirect (pre indexed)
@@ -265,13 +258,13 @@ extern	UINT8	*RAM;
 	int lo = (A & 0x0f) + (tmp & 0x0f) + c; 					\
 	int hi = (A & 0xf0) + (tmp & 0xf0); 						\
 		P &= ~(F_V | F_C|F_N|F_Z);								\
-        if (!((lo+hi)&0xff)) P|=F_Z; \
+		if (!((lo+hi)&0xff)) P|=F_Z;							\
 		if (lo > 0x09)											\
 		{														\
 			hi += 0x10; 										\
 			lo += 0x06; 										\
 		}														\
-		if (hi&0x80) P|=F_N; \
+		if (hi&0x80) P|=F_N;									\
 		if (~(A^tmp) & (A^hi) & F_N)							\
 			P |= F_V;											\
 		if (hi > 0x90)											\
@@ -282,8 +275,8 @@ extern	UINT8	*RAM;
 	}															\
 	else														\
 	{															\
-	int c = (P & F_C);											\
-	int sum = A + tmp + c;										\
+		int c = (P & F_C);										\
+		int sum = A + tmp + c;									\
 		P &= ~(F_V | F_C);										\
 		if (~(A^tmp) & (A^sum) & F_N)							\
 			P |= F_V;											\
@@ -291,7 +284,7 @@ extern	UINT8	*RAM;
 			P |= F_C;											\
 		A = (UINT8) sum;										\
 		SET_NZ(A); \
-	}
+	}															
 
 /* 6502 ********************************************************
  *	AND Logical and
@@ -357,10 +350,10 @@ extern	UINT8	*RAM;
 	PUSH(PCH);													\
 	PUSH(PCL);													\
 	PUSH(P | F_B);												\
-	P = (P | F_I);										\
+	P = (P | F_I);												\
 	PCL = RDMEM(M6502_IRQ_VEC); 								\
 	PCH = RDMEM(M6502_IRQ_VEC+1);								\
-	change_pc16(PCD)
+	CHANGE_PC
 
 /* 6502 ********************************************************
  * BVC	Branch if overflow clear
@@ -389,7 +382,7 @@ extern	UINT8	*RAM;
  ***************************************************************/
 #define CLI 													\
 	if ((m6502.irq_state != CLEAR_LINE) && (P & F_I)) { 		\
-		LOG(( "M6502#%d CLI sets after_cli\n",cpu_getactivecpu())); \
+		logerror("M6502#%d CLI sets after_cli\n",cpu_getactivecpu()); \
 		m6502.after_cli = 1;									\
 	}															\
 	P &= ~F_I
@@ -459,8 +452,7 @@ extern	UINT8	*RAM;
  *	ILL Illegal opcode
  ***************************************************************/
 #define ILL 													\
-	logerror("M6502 illegal opcode %04x: %02x\n",  \
-			(PCW-1)&0xffff, cpu_readop((PCW-1)&0xffff))
+	logerror("M6502 illegal opcode %04x: %02x\n",(PCW-1)&0xffff, cpu_readop((PCW-1)&0xffff))
 
 /* 6502 ********************************************************
  *	INC Increment memory
@@ -491,7 +483,7 @@ extern	UINT8	*RAM;
 	if( EAD == PPC && !m6502.pending_irq && !m6502.after_cli )	\
 		if( m6502_ICount > 0 ) m6502_ICount = 0;				\
 	PCD = EAD;													\
-	change_pc16(PCD)
+	CHANGE_PC
 
 /* 6502 ********************************************************
  *	JSR Jump to subroutine
@@ -504,7 +496,7 @@ extern	UINT8	*RAM;
 	PUSH(PCL);													\
 	EAH = RDOPARG();											\
 	PCD = EAD;													\
-	change_pc16(PCD)
+	CHANGE_PC
 
 /* 6502 ********************************************************
  *	LDA Load accumulator
@@ -575,7 +567,7 @@ extern	UINT8	*RAM;
 	if ( P & F_I ) {											\
 		PULL(P);												\
 		if ((m6502.irq_state != CLEAR_LINE) && !(P & F_I)) {	\
-			LOG(( "M6502#%d PLP sets after_cli\n",cpu_getactivecpu())); \
+			LOG(("M6502#%d PLP sets after_cli\n",cpu_getactivecpu())); \
 			m6502.after_cli = 1;								\
 		}														\
 	} else {													\
@@ -612,13 +604,13 @@ extern	UINT8	*RAM;
 	PULL(P);													\
 	PULL(PCL);													\
 	PULL(PCH);													\
-	P |= F_T|F_B;													\
+	P |= F_T | F_B; 											\
 	if( (m6502.irq_state != CLEAR_LINE) && !(P & F_I) ) 		\
 	{															\
-		LOG(( "M6502#%d RTI sets after_cli\n",cpu_getactivecpu())); \
+		LOG(("M6502#%d RTI sets after_cli\n",cpu_getactivecpu())); \
 		m6502.after_cli = 1;									\
 	}															\
-	change_pc16(PCD)
+	CHANGE_PC
 
 /* 6502 ********************************************************
  *	RTS Return from subroutine
@@ -628,7 +620,7 @@ extern	UINT8	*RAM;
 	PULL(PCL);													\
 	PULL(PCH);													\
 	PCW++;														\
-	change_pc16(PCD)
+	CHANGE_PC
 
 /* 6502 ********************************************************
  *	SBC Subtract with carry
@@ -636,34 +628,40 @@ extern	UINT8	*RAM;
 #define SBC 													\
 	if (P & F_D)												\
 	{															\
-	int c = (P & F_C) ^ F_C;									\
-	int sum = A - tmp - c;										\
-	int lo = (A & 0x0f) - (tmp & 0x0f) - c; 					\
-	int hi = (A & 0xf0) - (tmp & 0xf0); 						\
-		if (lo & 0x10) { lo-=6; hi--; }\
+		int c = (P & F_C) ^ F_C;								\
+		int sum = A - tmp - c;									\
+		int lo = (A & 0x0f) - (tmp & 0x0f) - c; 				\
+		int hi = (A & 0xf0) - (tmp & 0xf0); 					\
+		if (lo & 0x10)											\
+		{														\
+			lo -= 6;											\
+			hi--;												\
+		}														\
 		P &= ~(F_V | F_C|F_Z|F_N);								\
-		if ((A^tmp) & (A^sum) & F_N)							\
+		if( (A^tmp) & (A^sum) & F_N )							\
 			P |= F_V;											\
-		if (hi & 0x0100)										\
+		if( hi & 0x0100 )										\
 			hi -= 0x60; 										\
-		if ((sum & 0xff00) == 0)								\
+		if( (sum & 0xff00) == 0 )								\
 			P |= F_C;											\
-        if (!((A-tmp-c)&0xff)) P|=F_Z; \
-        if ((A-tmp-c)&0x80) P|=F_N; \
+		if( !((A-tmp-c) & 0xff) )								\
+			P |= F_Z;											\
+		if( (A-tmp-c) & 0x80 )									\
+			P |= F_N;											\
 		A = (lo & 0x0f) | (hi & 0xf0);							\
 	}															\
 	else														\
 	{															\
-	int c = (P & F_C) ^ F_C;									\
-	int sum = A - tmp - c;										\
+		int c = (P & F_C) ^ F_C;								\
+		int sum = A - tmp - c;									\
 		P &= ~(F_V | F_C);										\
-		if ((A^tmp) & (A^sum) & F_N)							\
+		if( (A^tmp) & (A^sum) & F_N )							\
 			P |= F_V;											\
-		if ((sum & 0xff00) == 0)								\
+		if( (sum & 0xff00) == 0 )								\
 			P |= F_C;											\
 		A = (UINT8) sum;										\
-		SET_NZ(A); \
-	}
+		SET_NZ(A);												\
+	}															
 
 /* 6502 ********************************************************
  *	SEC Set carry flag

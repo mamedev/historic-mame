@@ -43,14 +43,38 @@
 #if (HAS_8080 || HAS_8085A)
 #include "cpu/i8085/i8085.h"
 #endif
-#if (HAS_M6502 || HAS_M65C02 || HAS_M6510)
+#if (HAS_M6502 || HAS_M65C02 || HAS_M65SC02 || HAS_M6510 || HAS_M6510T || HAS_M7501 || HAS_M8502 || HAS_N2A03)
 #include "cpu/m6502/m6502.h"
+#endif
+#if (HAS_M4510)
+#include "cpu/m6502/m4510.h"
+#endif
+#if (HAS_M65CE02)
+#include "cpu/m6502/m65ce02.h"
+#endif
+#if (HAS_M6509)
+#include "cpu/m6502/m6509.h"
 #endif
 #if (HAS_H6280)
 #include "cpu/h6280/h6280.h"
 #endif
 #if (HAS_I86)
-#include "cpu/i86/i86intrf.h"
+#include "cpu/i86/i86intf.h"
+#endif
+#if (HAS_I88)
+#include "cpu/i86/i88intf.h"
+#endif
+#if (HAS_I186)
+#include "cpu/i86/i186intf.h"
+#endif
+#if (HAS_I188)
+#include "cpu/i86/i188intf.h"
+#endif
+#if (HAS_I286)
+#include "cpu/i86/i286intf.h"
+#endif
+#if (HAS_V20 || HAS_V30 || HAS_V33)
+#include "cpu/nec/necintrf.h"
 #endif
 #if (HAS_I8035 || HAS_I8039 || HAS_I8048 || HAS_N7751)
 #include "cpu/i8039/i8039.h"
@@ -121,7 +145,6 @@ int debug_key_delay = 0;
  * Limits
  ****************************************************************************/
 #define MAX_DATA	512 		/* Maximum memory size in bytes of a dump window */
-#define MAX_REGS	64			/* Maximum number of registers for a CPU */
 #define MAX_MEM 	2			/* You can't redefine this... too easy */
 
 #define MAX_LOOPS	64			/* Maximum loop addresses recognized by trace */
@@ -443,6 +466,8 @@ typedef struct {
     INT32   count;                  /* number of registers */
     INT32   nibble;                 /* edit nibble */
     INT32   changed;
+	INT32	top;
+	INT32	base;
 }	s_regs;
 
 /****************************************************************************
@@ -2188,7 +2213,7 @@ static void dump_regs( void )
 	const char *name = cpu_name(), *flags = cpu_flags();
     int w = win_get_w(win);
 	int h = win_get_h(win);
-    int i, j, l;
+	int i, j, l, x, y;
 	UINT8 color;
 	const INT8 *reg = (INT8*)cpu_reg_layout();
 
@@ -2205,6 +2230,8 @@ static void dump_regs( void )
 		}
 	}
 
+    x = 0;
+	y = 0;
     win_set_curpos( win, 0, 0 );
     sprintf( title, "CPU #%d %-8s Flags:%s  Cycles:%6u", activecpu, name, flags, cpu_geticount() );
 	l = strlen(title);
@@ -2226,8 +2253,10 @@ static void dump_regs( void )
 			if( l + 4 < w )
 				sprintf( title, "CPU #%d %-8s\tFlags:%s", activecpu, name, flags );
             win_set_title( win, title );
-			win_printf( win, "Cycles:%6u\n", cpu_geticount() );
-			if( --h <= 0) return;
+			if( y < h )
+			{
+				win_printf( win, "Cycles:%6u\n", cpu_geticount() );
+			}
 		}
 		else
 		{
@@ -2238,14 +2267,16 @@ static void dump_regs( void )
 				if( l + 4 < w )
 					sprintf( title, "CPU #%d %-8s\tCyc:%6u", activecpu, name, cpu_geticount() );
 				win_set_title( win, title );
-				if( strlen(cpu_flags()) + 8 < w )
-					win_printf( win, "Flags: %s\n", flags );
-				else
-				if( strlen(cpu_flags()) + 2 < w )
-					win_printf( win, "F:%s\n", flags );
-				else
-                    win_printf( win, "%s\n", flags );
-                if( --h <= 0) return;
+				if( y < h )
+				{
+					if( strlen(cpu_flags()) + 8 < w )
+						win_printf( win, "Flags: %s\n", flags );
+					else
+					if( strlen(cpu_flags()) + 2 < w )
+						win_printf( win, "F:%s\n", flags );
+					else
+						win_printf( win, "%s\n", flags );
+				}
             }
 			else
 			{
@@ -2253,6 +2284,8 @@ static void dump_regs( void )
 				sprintf( title, "CPU #%d %-8s", activecpu, name );
 				l = strlen(title);
 				win_set_title( win, title );
+				if( y < h )
+				{
 				if( strlen(cpu_flags()) + 8 < w )
 					win_printf( win, "Flags: %s\n", flags );
 				else
@@ -2260,20 +2293,27 @@ static void dump_regs( void )
 					win_printf( win, "F:%s\n", flags );
 				else
 					win_printf( win, "%s\n", flags );
-				if( --h <= 0) return;
+				}
+				y++;
 				win_printf( win, "Cycles:%6u\n", cpu_geticount() );
-				if( --h <= 0) return;
 			}
+			y++;
 		}
 	}
+	regs->top = y;
+	y = 0;
 
     for( i = 0, j = 0; *reg; i++, reg++ )
 	{
 		if( *reg == -1 )
 		{
-			win_erase_eol( win, ' ' );
-			win_putc( win, '\n');
-			if( --h <= 0 ) return;
+			if( y >= regs->base && y < regs->base + h - regs->top )
+			{
+				win_erase_eol( win, ' ' );
+				win_putc( win, '\n');
+			}
+			x = 0;
+			y++;
 		}
 		else
 		{
@@ -2298,8 +2338,8 @@ static void dump_regs( void )
 			{
 				char *p;
 				/* Get the cursor position */
-				pedit->x = win_get_cx(win);
-				pedit->y = win_get_cy(win);
+				pedit->x = x;
+				pedit->y = y + regs->base;
 				strncpy( regs->name[j], name, sizeof(regs->name[j]) - 1 );
 				if( strlen(name) >= regs->max_width )
 					regs->max_width = strlen(name) + 1;
@@ -2337,20 +2377,28 @@ static void dump_regs( void )
 					pedit->n = 0;
 				}
 			}
+			if( y >= regs->base && y < regs->base + h - regs->top )
+			{
+				win_printf( win, "%s", name );
 
-			win_printf( win, "%s", name );
-
-			win_set_color( win, cur_col[E_REGS] );
-            /* If no row break follows, advance to the next tab stop */
-			if( reg[1] != -1 )
-				win_printf( win, "%*s", regs->max_width - pedit->w - pedit->n, "" );
+				win_set_color( win, cur_col[E_REGS] );
+				/* If no row break follows, advance to the next tab stop */
+				if( reg[1] != -1 )
+					win_printf( win, "%*s", regs->max_width - pedit->w - pedit->n, "" );
+			}
+			x += strlen( name ) + regs->max_width - pedit->w - pedit->n;
             pedit++;
 			val++;
 			old++;
 			j++;
 		}
 	}
-	win_erase_eol( win, ' ' );
+	while( y >= regs->base && y < regs->base + h - regs->top )
+	{
+		win_erase_eol( win, ' ' );
+		win_putc( win, '\n' );
+		y++;
+	}
 
 	/* Set the total count of registers */
 	regs->count = j;
@@ -2654,7 +2702,18 @@ static void edit_regs( void )
 	/* Eventually update the cmdline window caption */
     edit_cmds_info();
 
-    win_set_curpos( win, pedit[regs->idx].x + pedit[regs->idx].n + regs->nibble, pedit[regs->idx].y );
+	if( regs->base > pedit[ regs->idx ].y )
+	{
+		regs->base = pedit[ regs->idx ].y;
+		dump_regs();
+	}
+	else
+	if( pedit[ regs->idx ].y >= regs->base + win_get_h( win ) - regs->top )
+	{
+		regs->base = pedit[ regs->idx ].y - win_get_h( win ) + regs->top + 1;
+        dump_regs();
+    }
+	win_set_curpos( win, pedit[regs->idx].x + pedit[regs->idx].n + regs->nibble, pedit[regs->idx].y - regs->base + regs->top );
 	osd_set_screen_curpos( win_get_cx_abs(win), win_get_cy_abs(win) );
 
     i = keyboard_read_sync();
@@ -4735,8 +4794,8 @@ static void cmd_view_screen( void )
 	/* Let memory changes eventually do something to the video */
 	do
 	{
-		(*Machine->drv->vh_update)(Machine->scrbitmap,1);
-		osd_update_video_and_audio();
+		draw_screen(1);
+		update_video_and_audio();
 	} while (keyboard_read_async() == KEYCODE_NONE);
 
 	osd_set_screen_size( w, h );
@@ -5117,7 +5176,7 @@ void MAME_Debug(void)
 			osd_sound_enable(0);
 			do
 			{
-				osd_update_video_and_audio();	/* give time to the sound hardware to apply the volume change */
+				update_video_and_audio();	/* give time to the sound hardware to apply the volume change */
 			} while( (clock() - curr) < (CLOCKS_PER_SEC / 15) );
 		}
 

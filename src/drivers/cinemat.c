@@ -864,7 +864,7 @@ void init_warrior(void)
 	cinemat_select_artwork (CCPU_MONITOR_BILEV, 0, 1, 0);
 }
 
-CINEMA_MACHINE (warrior, 0, 0, 1024, 780, 0, &warrior_samples_interface)
+CINEMA_MACHINE (warrior, 0, 0, 1024, 780, SOUND_SAMPLES, &warrior_samples_interface)
 
 
 

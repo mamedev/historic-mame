@@ -50,91 +50,92 @@ extern unsigned char *copsnrob_cary;
 extern unsigned char *copsnrob_trucky;
 
 READ_HANDLER( copsnrob_gun_position_r );
-extern void copsnrob_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+int copsnrob_vh_start(void);
+void copsnrob_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static struct MemoryReadAddress readmem[] =
 {
-        { 0x0000, 0x01ff, MRA_RAM },
-        { 0x0800, 0x08ff, MRA_RAM },
-        { 0x0b00, 0x0bff, MRA_RAM },
-        { 0x0c00, 0x0fff, MRA_RAM },
-        { 0x1000, 0x1000, input_port_0_r },
-        { 0x1002, 0x100e, copsnrob_gun_position_r},
-        { 0x1012, 0x1012, input_port_3_r },
-        { 0x1016, 0x1016, input_port_1_r },
-        { 0x101a, 0x101a, input_port_2_r },
-        { 0x1200, 0x1fff, MRA_ROM },
-        { 0xfff8, 0xffff, MRA_ROM },
-        { -1 }  /* end of table */
+	{ 0x0000, 0x01ff, MRA_RAM },
+	{ 0x0800, 0x08ff, MRA_RAM },
+	{ 0x0b00, 0x0bff, MRA_RAM },
+	{ 0x0c00, 0x0fff, MRA_RAM },
+	{ 0x1000, 0x1000, input_port_0_r },
+	{ 0x1002, 0x100e, copsnrob_gun_position_r},
+	{ 0x1012, 0x1012, input_port_3_r },
+	{ 0x1016, 0x1016, input_port_1_r },
+	{ 0x101a, 0x101a, input_port_2_r },
+	{ 0x1200, 0x1fff, MRA_ROM },
+	{ 0xfff8, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
-        { 0x0000, 0x01ff, MWA_RAM },
-        { 0x0500, 0x0503, MWA_RAM },
-        { 0x0504, 0x0507, MWA_NOP },  // ???
-        { 0x0600, 0x0600, MWA_RAM, &copsnrob_trucky },
-        { 0x0700, 0x07ff, MWA_RAM },
-        { 0x0800, 0x08ff, MWA_RAM, &copsnrob_bulletsram },
-        { 0x0900, 0x0903, MWA_RAM, &copsnrob_carimage },
-        { 0x0a00, 0x0a03, MWA_RAM, &copsnrob_cary },
-        { 0x0b00, 0x0bff, MWA_RAM },
-        { 0x0c00, 0x0fff, videoram_w, &videoram, &videoram_size },
-        { 0x1000, 0x1003, MWA_NOP },
-        { 0x1200, 0x1fff, MWA_ROM },
-        { 0xfff8, 0xffff, MWA_ROM },
-        { -1 }  /* end of table */
+	{ 0x0000, 0x01ff, MWA_RAM },
+	{ 0x0500, 0x0503, MWA_RAM },
+	{ 0x0504, 0x0507, MWA_NOP },  // ???
+	{ 0x0600, 0x0600, MWA_RAM, &copsnrob_trucky },
+	{ 0x0700, 0x07ff, MWA_RAM },
+	{ 0x0800, 0x08ff, MWA_RAM, &copsnrob_bulletsram },
+	{ 0x0900, 0x0903, MWA_RAM, &copsnrob_carimage },
+	{ 0x0a00, 0x0a03, MWA_RAM, &copsnrob_cary },
+	{ 0x0b00, 0x0bff, MWA_RAM },
+	{ 0x0c00, 0x0fff, videoram_w, &videoram, &videoram_size },
+	{ 0x1000, 0x1003, MWA_NOP },
+	{ 0x1200, 0x1fff, MWA_ROM },
+	{ 0xfff8, 0xffff, MWA_ROM },
+	{ -1 }  /* end of table */
 };
 
 
 INPUT_PORTS_START( copsnrob )
-        PORT_START      /* IN0 */
-        PORT_BIT( 0xFF, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_VBLANK )
 
-        PORT_START      /* IN1 */
-        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
-        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
-        PORT_START      /* IN2 */
-        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
-        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
-        PORT_START      /* DIP1 */
-        PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
-        PORT_DIPSETTING(    0x03, "1 Coin/1 Player" )
-        PORT_DIPSETTING(    0x02, "1 Coin/2 Players" )
-        PORT_DIPSETTING(    0x01, "1 Coin/Game" )
-        PORT_DIPSETTING(    0x00, "2 Coins/1 Player" )
-        PORT_DIPNAME( 0x0C, 0x00, "Time Limit" )
-        PORT_DIPSETTING(    0x0C, "1min" )
-        PORT_DIPSETTING(    0x08, "1min 45sec" )
-        PORT_DIPSETTING(    0x04, "2min 20sec" )
-        PORT_DIPSETTING(    0x00, "3min" )
-        PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4)
-        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3)
-        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2)
-        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1)
+	PORT_START      /* DIP1 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x03, "1 Coin/1 Player" )
+	PORT_DIPSETTING(    0x02, "1 Coin/2 Players" )
+	PORT_DIPSETTING(    0x01, "1 Coin/Game" )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Player" )
+	PORT_DIPNAME( 0x0c, 0x00, "Time Limit" )
+	PORT_DIPSETTING(    0x0c, "1min" )
+	PORT_DIPSETTING(    0x08, "1min 45sec" )
+	PORT_DIPSETTING(    0x04, "2min 20sec" )
+	PORT_DIPSETTING(    0x00, "3min" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1)
 
-        /* These input ports are fake */
-        PORT_START      /* IN3 */
-        PORT_BIT( 0x01, IP_ACTIVE_HIGH,IPT_JOYSTICK_UP   | IPF_PLAYER1 | IPF_4WAY )
-        PORT_BIT( 0x02, IP_ACTIVE_HIGH,IPT_JOYSTICK_DOWN | IPF_PLAYER1 | IPF_4WAY )
-        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	/* These input ports are fake */
+	PORT_START      /* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH,IPT_JOYSTICK_UP   | IPF_PLAYER1 | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH,IPT_JOYSTICK_DOWN | IPF_PLAYER1 | IPF_4WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
 
-        PORT_START      /* IN4 */
-        PORT_BIT( 0x01, IP_ACTIVE_HIGH,IPT_JOYSTICK_UP   | IPF_PLAYER2 | IPF_4WAY )
-        PORT_BIT( 0x02, IP_ACTIVE_HIGH,IPT_JOYSTICK_DOWN | IPF_PLAYER2 | IPF_4WAY )
-        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_START      /* IN4 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH,IPT_JOYSTICK_UP   | IPF_PLAYER2 | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH,IPT_JOYSTICK_DOWN | IPF_PLAYER2 | IPF_4WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 
-        PORT_START      /* IN5 */
-        PORT_BIT( 0x01, IP_ACTIVE_HIGH,IPT_JOYSTICK_UP   | IPF_PLAYER3 | IPF_4WAY )
-        PORT_BIT( 0x02, IP_ACTIVE_HIGH,IPT_JOYSTICK_DOWN | IPF_PLAYER3 | IPF_4WAY )
-        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
+	PORT_START      /* IN5 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH,IPT_JOYSTICK_UP   | IPF_PLAYER3 | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH,IPT_JOYSTICK_DOWN | IPF_PLAYER3 | IPF_4WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
 
-        PORT_START      /* IN6 */
-        PORT_BIT( 0x01, IP_ACTIVE_HIGH,IPT_JOYSTICK_UP   | IPF_PLAYER4 | IPF_4WAY )
-        PORT_BIT( 0x02, IP_ACTIVE_HIGH,IPT_JOYSTICK_DOWN | IPF_PLAYER4 | IPF_4WAY )
-        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )
+	PORT_START      /* IN6 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH,IPT_JOYSTICK_UP   | IPF_PLAYER4 | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH,IPT_JOYSTICK_DOWN | IPF_PLAYER4 | IPF_4WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )
 INPUT_PORTS_END
 
 
@@ -184,24 +185,20 @@ static struct GfxLayout trucklayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,  0, 3 },
-	{ REGION_GFX2, 0, &carlayout,   0, 3 },
-	{ REGION_GFX3, 0, &trucklayout, 0, 3 },
+	{ REGION_GFX1, 0, &charlayout,  0, 1 },
+	{ REGION_GFX2, 0, &carlayout,   0, 1 },
+	{ REGION_GFX3, 0, &trucklayout, 0, 1 },
 	{ -1 } /* end of array */
 };
 
 static unsigned char palette[] =
 {
-	0x00,0x00,0x00, /* Black */
-	0x40,0x40,0xc0, /* Blue */
-	0xf0,0xf0,0x30, /* Yellow */
-	0xbd,0x9b,0x13, /* Amber */
+	0x00,0x00,0x00, /* black */
+	0xff,0xff,0xff  /* white */
 };
 static unsigned short colortable[] =
 {
-	0x00, 0x01,
-	0x00, 0x02,
-	0x00, 0x03
+	0x00, 0x01
 };
 static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
 {
@@ -226,15 +223,15 @@ static struct MachineDriver machine_driver_copsnrob =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 26*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
+	2+32768, 2,
 	init_palette,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-	generic_vh_start,
-	generic_vh_stop,
+	copsnrob_vh_start,
+	0,
 	copsnrob_vh_screenrefresh,
 
 	/* sound hardware */

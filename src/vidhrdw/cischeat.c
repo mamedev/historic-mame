@@ -873,7 +873,7 @@ if ( (debugsprites) && ( ((attr & 0x0300)>>8) != (debugsprites-1) ) ) 	{ continu
 
 			sprintf(buf, "A:%04X",attr);
 			sprintf(buf1,"Z:%04X",xzoom);
-			displaytext(dt,0,0);
+			displaytext(Machine->scrbitmap,dt,0,0);
 		}
 #endif
 

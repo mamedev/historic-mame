@@ -36,6 +36,7 @@
 #include "driver.h"
 #include "osdepend.h"
 #include "vector.h"
+#include "artwork.h"
 
 #define VCLEAN  0
 #define VDIRTY  1
@@ -914,7 +915,7 @@ static void vector_restore_artwork (struct osd_bitmap *bitmap, struct artwork *a
   then merged with the backdrop.
  *********************************************************************/
 
-void vector_vh_update_backdrop(struct osd_bitmap *bitmap, struct artwork *a, int full_refresh)
+static void vector_vh_update_backdrop(struct osd_bitmap *bitmap, struct artwork *a, int full_refresh)
 {
 	int i, x, y;
 	unsigned int coords;
@@ -957,198 +958,12 @@ void vector_vh_update_backdrop(struct osd_bitmap *bitmap, struct artwork *a, int
 		}
 }
 
-/*********************************************************************
-  vector_vh_update_overlay
-
-  This draws a vector screen with overlay.
-
-  First the overlay art is restored. Then the new vector screen
-  is recalculated with vector_vh_update. Changed pixels are
-  then merged with the overlay.
- *********************************************************************/
-void vector_vh_update_overlay(struct osd_bitmap *bitmap, struct artwork *a, int full_refresh)
+void vector_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int i, x, y, pen;
-	unsigned int coords;
-	UINT8 r, g, b;
-	int v, vn, alpha;
-
-	struct osd_bitmap *ob = a->orig_artwork;
-	struct osd_bitmap *vb = a->vector_bitmap;
-	int npt = a->num_pens_trans;
-	int start_pen = a->start_pen;
-	unsigned char *bright = a->brightness;
-	unsigned char *tab = a->pTable;
-
-	vector_restore_artwork(bitmap, a, full_refresh);
-	vector_vh_update(vb, full_refresh);
-
-	/* Now we alpha blend the overlay with the vector bitmap.
-	 * (just the modified pixels) */
-
-	if (bitmap->depth == 8)
-	{
-		for (i = p_index - 1; i >= 0; i--)
-		{
-			coords = pixel[i];
-			x = coords >> 16;
-			y = coords & 0x0000ffff;
-			pen = vector_rp(ob, x, y);
-
-			if (pen < npt)
-				vector_pp (bitmap, x, y, pens[tab[pen * 256 + bright[vector_rp(vb, x, y)]]]);
-		}
-	}
+	if (artwork_backdrop)
+		vector_vh_update_backdrop(bitmap, artwork_backdrop, full_refresh);
 	else
-	{
-		for (i = p_index - 1; i >= 0; i--)
-		{
-			coords = pixel[i];
-			x = coords >> 16;
-			y = coords & 0x0000ffff;
-			pen = vector_rp(ob, x, y);
-			alpha = vector_rp(a->alpha, x, y);
-
-			if (alpha < 255)
-			{
-				osd_get_pen (Machine->pens[pen + start_pen], &r, &g, &b);
-				v = vn = MAX(1, MAX(r, MAX(g, b)));
-				vn = (vn * alpha) / 255;
-				vn += ((255 - vn) * bright[vector_rp(vb, x, y)]) / 255;
-				r = (r * vn) / v;
-				g = (g * vn) / v;
-				b = (b * vn) / v;
-
-				vector_pp (bitmap, x, y, Machine->pens[(((r & 0xf8) << 7) | ((g & 0xf8) << 2) | (b >> 3)) + start_pen]);
-			}
-		}
-	}
-}
-/*********************************************************************
-  vector_vh_update_artwork
-
-  This draws a vector screen with overlay and backdrop.
-
-  First the overlay art is restored. Then the new vector screen
-  is recalculated with vector_vh_update. The changed pixels are
-  then merged with the overlay and backdrop.
- *********************************************************************/
-void vector_vh_update_artwork(struct osd_bitmap *bitmap, struct artwork *overlay, struct artwork *backdrop,  int full_refresh)
-{
-	int i, x, y, pen;
-	unsigned int coords;
-	UINT8 r, g, b;
-	int v, vn, alpha;
-
-	struct osd_bitmap *oab = overlay->artwork;
-	struct osd_bitmap *oob = overlay->orig_artwork;
-	struct osd_bitmap *ovb = overlay->vector_bitmap;
-	struct osd_bitmap *bab = backdrop->artwork;
-	int npt = overlay->num_pens_trans;
-	int start_pen = overlay->start_pen;
-	unsigned char *bright = overlay->brightness;
-	unsigned char *tab = overlay->pTable;
-
-	if (pixel && !full_refresh)
-	{
-		if (bitmap->depth == 8)
-		{
-			for (i=p_index-1; i>=0; i--)
-			{
-				x = pixel[i] >> 16;
-				y = pixel[i] & 0x0000ffff;
-				if (vector_rp(oob, x, y) < npt)
-					vector_pp (bitmap, x, y, vector_rp(bab, x, y));
-				else
-					vector_pp (bitmap, x, y, vector_rp(oab, x, y));
-			}
-		}
-		else
-		{
-			for (i=p_index-1; i>=0; i--)
-			{
-				x = pixel[i] >> 16;
-				y = pixel[i] & 0x0000ffff;
-				alpha = vector_rp(overlay->alpha, x, y);
-				if (alpha < 255)
-					vector_pp (bitmap, x, y, vector_rp(bab, x, y));
-				else
-					vector_pp (bitmap, x, y, vector_rp(oab, x, y));
-			}
-		}
-	}
-	/* When this is called for the first time we have to copy the whole bitmap. */
-	/* We don't care for different levels of transparency, just opaque or not. */
-	else
-	{
-		if (bitmap->depth == 8)
-		{
-			for (y = 0; y < bitmap->height; y++)
-				for (x = 0; x < bitmap->width; x++)
-					if (vector_rp(oob, x, y) < npt)
-						vector_pp (bitmap, x, y, vector_rp(bab, x, y));
-					else
-						vector_pp (bitmap, x, y, vector_rp(oab, x, y));
-
-			osd_mark_dirty (0, 0, bitmap->width, bitmap->height, 0);
-		}
-		else
-		{
-			for (y = 0; y < bitmap->height; y++)
-				for (x = 0; x < bitmap->width; x++)
-				{
-					alpha = vector_rp(overlay->alpha, x, y);
-					if (alpha < 255)
-						vector_pp (bitmap, x, y, vector_rp(bab, x, y));
-					else
-						vector_pp (bitmap, x, y, vector_rp(oab, x, y));
-				}
-			osd_mark_dirty (0, 0, bitmap->width, bitmap->height, 0);
-		}
-	}
-
-	vector_vh_update(ovb, full_refresh);
-
-	/* Now we alpha blend the overlay with the vector bitmap.
-	 * (just the modified pixels) */
-
-	if (bitmap->depth == 8)
-	{
-		for (i = p_index - 1; i >= 0; i--)
-		{
-			coords = pixel[i];
-			x = coords >> 16;
-			y = coords & 0x0000ffff;
-			pen = vector_rp(oob, x, y);
-
-			if (pen < npt)
-				vector_pp (bitmap, x, y, pens[tab[pen * 256 + bright[vector_rp(ovb, x, y)]]]);
-		}
-	}
-	else
-	{
-		for (i = p_index - 1; i >= 0; i--)
-		{
-			coords = pixel[i];
-			x = coords >> 16;
-			y = coords & 0x0000ffff;
-			pen = vector_rp(oob, x, y);
-			alpha = vector_rp(overlay->alpha, x, y);
-
-			if (alpha < 255)
-			{
-				osd_get_pen (Machine->pens[pen + start_pen], &r, &g, &b);
-				v = vn = MAX(1, MAX(r, MAX(g, b)));
-				vn = (vn * alpha) / 255;
-				vn += ((255 - vn) * bright[vector_rp(ovb, x, y)]) / 255;
-				r = (r * vn) / v;
-				g = (g * vn) / v;
-				b = (b * vn) / v;
-
-				vector_pp (bitmap, x, y, Machine->pens[(((r & 0xf8) << 7) | ((g & 0xf8) << 2) | (b >> 3)) + start_pen]);
-			}
-		}
-	}
+		vector_vh_update(bitmap, full_refresh);
 }
 
 #endif /* if !(defined xgl) && !(defined xfx) && !(defined svgafx) */

@@ -158,7 +158,7 @@ int YM2151_sh_start(const struct MachineSound *msound)
 }
 #endif
 #if (HAS_YM2151_ALT)
-int YM2151_ALT_sh_start(const struct MachineSound *msound)
+int YM2151_sh_start(const struct MachineSound *msound)
 {
 	return my_YM2151_sh_start(msound,1);
 }

@@ -34,6 +34,7 @@
 #include "machine/74123.h"
 
 void invaders_flipscreen_w(int data);
+void sheriff_flipscreen_w(int data);
 void invaders_screen_red_w(int data);
 
 static WRITE_HANDLER( invad2ct_sh_port1_w );
@@ -43,6 +44,9 @@ static WRITE_HANDLER( invad2ct_sh_port7_w );
 
 static WRITE_HANDLER( sheriff_sh_port4_w );
 static WRITE_HANDLER( sheriff_sh_port5_w );
+static WRITE_HANDLER( sheriff_sh_port6_w );
+
+static WRITE_HANDLER( helifire_sh_port6_w );
 
 static WRITE_HANDLER( ballbomb_sh_port3_w );
 static WRITE_HANDLER( ballbomb_sh_port5_w );
@@ -54,6 +58,8 @@ READ_HANDLER( boothill_port_1_r );
 
 READ_HANDLER( gunfight_port_0_r );
 READ_HANDLER( gunfight_port_1_r );
+
+READ_HANDLER( seawolf_port_1_r );
 
 WRITE_HANDLER( desertgu_controller_select_w );
 READ_HANDLER( desertgu_port_1_r );
@@ -422,13 +428,13 @@ static WRITE_HANDLER( polaris_sh_port6_w )
 struct DACinterface sheriff_dac_interface =
 {
 	1,
-	{ 25 }
+	{ 50 }
 };
 
 struct SN76477interface sheriff_sn76477_interface =
 {
 	1,	/* 1 chip */
-	{ 25 },  /* mixing level   pin description		 */
+	{ 50 },  /* mixing level   pin description		 */
 	{ RES_K( 36)   },		/*	4  noise_res		 */
 	{ RES_K(100)   },		/*	5  filter_res		 */
 	{ CAP_U(0.001) },		/*	6  filter_cap		 */
@@ -482,6 +488,7 @@ void init_machine_sheriff(void)
 {
 	install_port_write_handler(0, 0x04, 0x04, sheriff_sh_port4_w);
 	install_port_write_handler(0, 0x05, 0x05, sheriff_sh_port5_w);
+	install_port_write_handler(0, 0x06, 0x06, sheriff_sh_port6_w);
 
 	TTL74123_config(0, &sheriff_74123_0_intf);
 	TTL74123_config(1, &sheriff_74123_1_intf);
@@ -538,6 +545,12 @@ static WRITE_HANDLER( sheriff_sh_port5_w )
 	cpu_set_irq_line(1, I8035_EXT_INT, ((sheriff_p1 & 0x70) == 0x70) ? ASSERT_LINE : CLEAR_LINE);
 }
 
+static WRITE_HANDLER( sheriff_sh_port6_w )
+{
+	sheriff_flipscreen_w(data & 0x20);
+}
+
+
 READ_HANDLER( sheriff_sh_t0_r )
 {
 	return sheriff_t0;
@@ -563,6 +576,35 @@ WRITE_HANDLER( sheriff_sh_p2_w )
 	sheriff_p2 = data;
 
 	DAC_data_w(0, sheriff_p2 & 0x80 ? 0xff : 0x00);
+}
+
+
+/*******************************************************/
+/*                                                     */
+/* Nintendo "HeliFire"		                           */
+/*                                                     */
+/*******************************************************/
+
+void init_machine_helifire(void)
+{
+	install_port_write_handler(0, 0x06, 0x06, helifire_sh_port6_w);
+}
+
+static WRITE_HANDLER( helifire_sh_port6_w )
+{
+	sheriff_flipscreen_w(data & 0x20);
+}
+
+
+/*******************************************************/
+/*                                                     */
+/* Midway "Sea Wolf"                                   */
+/*                                                     */
+/*******************************************************/
+
+void init_machine_seawolf(void)
+{
+	install_port_read_handler (0, 0x01, 0x01, seawolf_port_1_r);
 }
 
 

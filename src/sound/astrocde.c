@@ -294,7 +294,7 @@ void astrocade_sound_w(int num, int offset, int data)
 
 			bvalue = (cpu_get_reg(Z80_BC) >> 8) & 0x0F;
 
-			astrocade_sound_w(num, bvalue-1, data);
+			astrocade_sound_w(num, bvalue, data);
 
 		break;
 	}

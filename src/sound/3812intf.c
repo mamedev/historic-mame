@@ -262,7 +262,7 @@ static void IRQHandler(int n,int irq)
 static void YM3812UpdateHandler(int n, INT16 *buf, int length)
 {	YM3812UpdateOne(F3812[n],buf,length); }
 
-#if HAS_Y8950
+#if (HAS_Y8950)
 static void Y8950UpdateHandler(int n, INT16 *buf, int length)
 {	Y8950UpdateOne(F3812[n],buf,length); }
 
@@ -330,7 +330,7 @@ static int emu_YM3812_sh_start(const struct MachineSound *msound)
 		if(F3812[i] == NULL) return 1;
 		/* stream setup */
 		sprintf(name,"%s #%d",sound_name(msound),i);
-#if HAS_Y8950
+#if (HAS_Y8950)
 		/* ADPCM ROM DATA */
 		if(chiptype == OPL_TYPE_Y8950)
 		{
@@ -491,7 +491,7 @@ int YM3526_sh_start(const struct MachineSound *msound)
 /**********************************************************************************************
 	Begin of Y8950 interface stubs block
  **********************************************************************************************/
-#if HAS_Y8950
+#if (HAS_Y8950)
 int Y8950_sh_start(const struct MachineSound *msound)
 {
 	chiptype = OPL_TYPE_Y8950;

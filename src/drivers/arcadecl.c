@@ -1,8 +1,67 @@
 /***************************************************************************
 
-	Arcade Classics (Prototype)
+	Atari Arcade Classics hardware (prototypes)
 
     driver by Aaron Giles
+
+	Games supported:
+		* Arcade Classics (1992)
+		* Sparkz (1982)
+
+	Known bugs:
+		* none at this time
+
+****************************************************************************
+
+	Memory map
+
+****************************************************************************
+
+	========================================================================
+	MAIN CPU
+	========================================================================
+	000000-0FFFFF   R     xxxxxxxx xxxxxxxx   Program ROM
+	200000-21FFFF   R/W   xxxxxxxx xxxxxxxx   Playfield RAM (512x256 pixels)
+	                R/W   xxxxxxxx --------      (Left pixel)
+	                R/W   -------- xxxxxxxx      (Right pixel)
+	3C0000-3C01FF   R/W   xxxxxxxx xxxxxxxx   Playfield palette RAM (256 entries)
+	                R/W   x------- --------      (RGB 1 LSB)
+	                R/W   -xxxxx-- --------      (Red 5 MSB)
+	                R/W   ------xx xxx-----      (Green 5 MSB)
+	                R/W   -------- ---xxxxx      (Blue 5 MSB)
+	3C0200-3C03FF   R/W   xxxxxxxx xxxxxxxx   Motion object palette RAM (256 entries)
+	3C0400-3C07FF   R/W   xxxxxxxx xxxxxxxx   Extra palette RAM (512 entries)
+	3E0000-3E07FF   R/W   xxxxxxxx xxxxxxxx   Motion object RAM (256 entries x 4 words)
+	                R/W   -------- xxxxxxxx      (0: Link to next object)
+	                R/W   x------- --------      (1: Horizontal flip)
+	                R/W   -xxxxxxx xxxxxxxx      (1: Tile index)
+	                R/W   xxxxxxxx x-------      (2: X position)
+	                R/W   -------- ----xxxx      (2: Palette select)
+	                R/W   xxxxxxxx x-------      (3: Y position)
+	                R/W   -------- -xxx----      (3: Number of X tiles - 1)
+	                R/W   -------- -----xxx      (3: Number of Y tiles - 1)
+	3E0800-3EFFFF   R/W   xxxxxxxx xxxxxxxx   Extra sprite RAM
+	640000          R     xxxxxxxx --------   Input port 1
+	640002          R     xxxxxxxx --------   Input port 2
+	640010          R     -------- xx------   Status port
+	                R     -------- x-------      (VBLANK)
+	                R     -------- -x------      (Self test)
+	640012          R     -------- --xx--xx   Coin inputs
+	                R     -------- --xx----      (Service coins)
+	                R     -------- ------xx      (Coin switches)
+	640020-640027   R     -------- xxxxxxxx   Analog inputs
+	640040            W   -------- x--xxxxx   Sound control
+	                  W   -------- x-------      (ADPCM bank select)
+	                  W   -------- ---xxxxx      (Volume)
+	640060            W   -------- --------   EEPROM enable
+	641000-641FFF   R/W   -------- xxxxxxxx   EEPROM
+	642000-642001   R/W   xxxxxxxx --------   MSM6295 communications
+	646000            W   -------- --------   32V IRQ acknowledge
+	647000            W   -------- --------   Watchdog reset
+	========================================================================
+	Interrupts:
+		IRQ4 = 32V
+	========================================================================
 
 ****************************************************************************/
 
@@ -71,7 +130,7 @@ static void init_machine(void)
 
 /*************************************
  *
- *	MSM5295 I/O
+ *	MSM6295 I/O
  *
  *************************************/
 
@@ -137,7 +196,6 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x640026, 0x640027, input_port_7_r },
 	{ 0x641000, 0x641fff, atarigen_eeprom_r },
 	{ 0x642000, 0x642001, adpcm_r },
-
 	{ -1 }  /* end of table */
 };
 
@@ -226,10 +284,10 @@ INPUT_PORTS_START( sparkz )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
-	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1 )
-	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1 )
-	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1 )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 )
 
 	PORT_START	/* 640002 */
 	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -237,29 +295,29 @@ INPUT_PORTS_START( sparkz )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
-	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
-	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
-	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
 
 	PORT_START	/* 640010 */
-	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_SERVICE( 0x0040, IP_ACTIVE_LOW )
-	PORT_BIT(  0x0080, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT(  0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 640012 */
-	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT(  0x000c, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_SERVICE )
-	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_SERVICE )
-	PORT_BIT(  0xffc0, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x000c, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_SERVICE )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_SERVICE )
+	PORT_BIT( 0xffc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 640020 */
 	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -284,19 +342,19 @@ INPUT_PORTS_END
 
 static struct GfxLayout molayout =
 {
-	8,8,	/* 8*8 sprites */
-	16384,	/* 16384 of them */
-	4,		/* 4 bits per pixel */
+	8,8,
+	RGN_FRAC(1,1),
+	4,
 	{ 0, 1, 2, 3 },
 	{ 0, 4, 8, 12, 16, 20, 24, 28 },
 	{ 0*8, 4*8, 8*8, 12*8, 16*8, 20*8, 24*8, 28*8 },
-	32*8	/* every sprite takes 32 consecutive bytes */
+	32*8
 };
 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &molayout,  256, 16 },		/* motion objects */
+	{ REGION_GFX1, 0, &molayout,  256, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -310,7 +368,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct OKIM6295interface okim6295_interface =
 {
-	1,					/* 1 chip */
+	1,
 	{ ATARI_CLOCK_14MHz/4/3/165 },	/* not verified -- assumed from Rampart */
 	{ REGION_SOUND1 },
 	{ 100 }
@@ -335,7 +393,7 @@ static struct MachineDriver machine_driver_arcadecl =
 			atarigen_video_int_gen,1
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,
 	init_machine,
 
@@ -365,7 +423,6 @@ static struct MachineDriver machine_driver_arcadecl =
 
 
 
-
 /*************************************
  *
  *	ROM definition(s)
@@ -380,7 +437,7 @@ ROM_START( arcadecl )
 	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "atcl_mob",   0x00000, 0x80000, 0x0e9b3930 )
 
-	ROM_REGION( 0x80000, REGION_SOUND1 )	/* ADPCM data */
+	ROM_REGION( 0x80000, REGION_SOUND1 )
 	ROM_LOAD( "adpcm",      0x00000, 0x80000, 0x03ca7f03 )
 ROM_END
 
@@ -390,10 +447,10 @@ ROM_START( sparkz )
 	ROM_LOAD_EVEN( "sparkzpg.0", 0x00000, 0x80000, 0xa75c331c )
 	ROM_LOAD_ODD ( "sparkzpg.1", 0x00000, 0x80000, 0x1af1fc04 )
 
-	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	/* empty */
 
-	ROM_REGION( 0x80000, REGION_SOUND1 )	/* ADPCM data */
+	ROM_REGION( 0x80000, REGION_SOUND1 )
 	ROM_LOAD( "sparkzsn",      0x00000, 0x80000, 0x87097ce2 )
 ROM_END
 

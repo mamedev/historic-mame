@@ -619,14 +619,14 @@ static struct MachineDriver machine_driver_asteroid =
 	/* video hardware */
 	400, 300, { 0, 1040, 70, 950 },
 	0,
-	256, 256,
+	256+32768, 0,
 	avg_init_palette_white,
 
 	VIDEO_TYPE_VECTOR,
 	0,
 	dvg_start,
 	dvg_stop,
-	dvg_screenrefresh,
+	vector_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -656,14 +656,14 @@ static struct MachineDriver machine_driver_asteroib =
 	/* video hardware */
 	400, 300, { 0, 1040, 70, 950 },
 	0,
-	256, 256,
+	256+32768, 0,
 	avg_init_palette_white,
 
 	VIDEO_TYPE_VECTOR,
 	0,
 	dvg_start,
 	dvg_stop,
-	dvg_screenrefresh,
+	vector_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -719,14 +719,14 @@ static struct MachineDriver machine_driver_astdelux =
 	/* video hardware */
 	400, 300, { 0, 1040, 70, 950 },
 	0,
-	256, 256,
+	256+32768, 0,
 	avg_init_palette_astdelux,
 
 	VIDEO_TYPE_VECTOR,
 	0,
 	dvg_start,
 	dvg_stop,
-	dvg_screenrefresh,
+	vector_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -771,7 +771,7 @@ static struct MachineDriver machine_driver_llander =
 	/* video hardware */
 	400, 300, { 0, 1050, 0, 900 },
 	0,
-	256, 256,
+	256+32768, 0,
 	llander_init_colors,
 
 	VIDEO_TYPE_VECTOR,

@@ -15,6 +15,11 @@
 #include "i86.h"
 #include "i86intf.h"
 
+
+/* All pre-i286 CPUs have a 1MB address space */
+#define AMASK	0xfffff
+
+
 static UINT8 i86_reg_layout[] =
 {
 	I86_AX, I86_BX, I86_DS, I86_ES, I86_SS, I86_FLAGS, I86_CS, I86_VECTOR, -1,
@@ -43,22 +48,25 @@ i86basicregs;
 typedef struct
 {
 	i86basicregs regs;
-	int amask;						   /* address mask */
-	UINT16 ip;
-	UINT16 flags;
+	UINT32 pc;
+	UINT32 prevpc;
 	UINT32 base[4];
 	UINT16 sregs[4];
+	UINT16 flags;
 	int (*irq_callback) (int irqline);
-	int AuxVal, OverVal, SignVal, ZeroVal, CarryVal, ParityVal;		/* 0 or non-0 valued flags */
-	UINT8 TF, IF, DF;				   /* 0 or 1 valued flags */
+	int AuxVal, OverVal, SignVal, ZeroVal, CarryVal, DirVal;		/* 0 or non-0 valued flags */
+	UINT8 ParityVal;
+	UINT8 TF, IF;				   /* 0 or 1 valued flags */
 	UINT8 MF;						   /* V30 mode flag */
 	UINT8 int_vector;
-	UINT8 pending_irq;
 	INT8 nmi_state;
 	INT8 irq_state;
+	int extra_cycles;       /* extra cycles for interrupts */
 }
 i86_Regs;
 
+
+#include "i86time.c"
 
 /***************************************************************************/
 /* cpu state                                                               */
@@ -72,11 +80,10 @@ static char seg_prefix;				   /* prefix segment indicator */
 
 static UINT8 parity_table[256];
 
+static struct i86_timing cycles;
+
 /* The interrupt number of a pending external interrupt pending NMI is 2.	*/
 /* For INTR interrupts, the level is caught on the bus during an INTA cycle */
-
-#define INT_IRQ 0x01
-#define NMI_IRQ 0x02
 
 #define PREFIX(name) i86##name
 #define PREFIX86(name) i86##name
@@ -99,15 +106,11 @@ void i86_reset(void *param)
 
 	memset(&I, 0, sizeof (I));
 
-	/* If a reset parameter is given, take it as pointer to an address mask */
-	if (param)
-		I.amask = *(unsigned *) param;
-	else
-		I.amask = 0x00ffff;
-	I.sregs[CS] = 0xffff;
-	I.base[CS] = I.sregs[CS] << 4;
+	I.sregs[CS] = 0xf000;
+	I.base[CS] = SegBase(CS);
+	I.pc = 0xffff0 & AMASK;
 
-	change_pc20((I.base[CS] + I.ip) & I.amask);
+	change_pc20(I.pc);
 
 	for (i = 0; i < 256; i++)
 	{
@@ -151,32 +154,28 @@ void i86_set_context(void *src)
 {
 	if (src)
 	{
-		I = *(i86_Regs *) src;
+		I = *(i86_Regs *)src;
 		I.base[CS] = SegBase(CS);
 		I.base[DS] = SegBase(DS);
 		I.base[ES] = SegBase(ES);
 		I.base[SS] = SegBase(SS);
-		change_pc20((I.base[CS] + I.ip) & I.amask);
+		change_pc20(I.pc);
 	}
 }
 
 unsigned i86_get_pc(void)
 {
-	return (I.base[CS] + (WORD) I.ip) & I.amask;
+	return I.pc;
 }
 
 void i86_set_pc(unsigned val)
 {
-	if (val - I.base[CS] < 0x10000)
-	{
-		I.ip = val - I.base[CS];
-	}
-	else
+	if (val - I.base[CS] >= 0x10000)
 	{
 		I.base[CS] = val & 0xffff0;
 		I.sregs[CS] = I.base[CS] >> 4;
-		I.ip = val & 0x0000f;
 	}
+	I.pc = val;
 }
 
 unsigned i86_get_sp(void)
@@ -202,7 +201,7 @@ unsigned i86_get_reg(int regnum)
 {
 	switch (regnum)
 	{
-	case I86_IP:		return I.ip;
+	case I86_IP:		return I.pc - I.base[CS];
 	case I86_SP:		return I.regs.w[SP];
 	case I86_FLAGS: 	CompressFlags(); return I.flags;
 	case I86_AX:		return I.regs.w[AX];
@@ -217,17 +216,16 @@ unsigned i86_get_reg(int regnum)
 	case I86_SS:		return I.sregs[SS];
 	case I86_DS:		return I.sregs[DS];
 	case I86_VECTOR:	return I.int_vector;
-	case I86_PENDING:	return I.pending_irq;
+	case I86_PENDING:	return I.irq_state;
 	case I86_NMI_STATE: return I.nmi_state;
 	case I86_IRQ_STATE: return I.irq_state;
-	case REG_PREVIOUSPC:
-		return 0;		/* not supported */
+	case REG_PREVIOUSPC:return I.prevpc;
 	default:
 		if (regnum <= REG_SP_CONTENTS)
 		{
-			unsigned offset = ((I.base[SS] + I.regs.w[SP]) & I.amask) + 2 * (REG_SP_CONTENTS - regnum);
+			unsigned offset = ((I.base[SS] + I.regs.w[SP]) & AMASK) + 2 * (REG_SP_CONTENTS - regnum);
 
-			if (offset < I.amask)
+			if (offset < AMASK)
 				return cpu_readmem20(offset) | (cpu_readmem20(offset + 1) << 8);
 		}
 	}
@@ -238,7 +236,7 @@ void i86_set_reg(int regnum, unsigned val)
 {
 	switch (regnum)
 	{
-	case I86_IP:		I.ip = val; 				break;
+	case I86_IP:		I.pc = I.base[CS] + val;	break;
 	case I86_SP:		I.regs.w[SP] = val; 		break;
 	case I86_FLAGS: 	I.flags = val;	ExpandFlags(val); break;
 	case I86_AX:		I.regs.w[AX] = val; 		break;
@@ -248,20 +246,20 @@ void i86_set_reg(int regnum, unsigned val)
 	case I86_BP:		I.regs.w[BP] = val; 		break;
 	case I86_SI:		I.regs.w[SI] = val; 		break;
 	case I86_DI:		I.regs.w[DI] = val; 		break;
-	case I86_ES:		I.sregs[ES] = val;			break;
-	case I86_CS:		I.sregs[CS] = val;			break;
-	case I86_SS:		I.sregs[SS] = val;			break;
-	case I86_DS:		I.sregs[DS] = val;			break;
+	case I86_ES:		I.sregs[ES] = val;	I.base[ES] = SegBase(ES);	break;
+	case I86_CS:		I.sregs[CS] = val;	I.base[CS] = SegBase(CS);	break;
+	case I86_SS:		I.sregs[SS] = val;	I.base[SS] = SegBase(SS);	break;
+	case I86_DS:		I.sregs[DS] = val;	I.base[DS] = SegBase(DS);	break;
 	case I86_VECTOR:	I.int_vector = val; 		break;
-	case I86_PENDING:	I.pending_irq = val;		break;
+	case I86_PENDING:								break;
 	case I86_NMI_STATE: i86_set_nmi_line(val);		break;
 	case I86_IRQ_STATE: i86_set_irq_line(0, val);	break;
 	default:
 		if (regnum <= REG_SP_CONTENTS)
 		{
-			unsigned offset = ((I.base[SS] + I.regs.w[SP]) & I.amask) + 2 * (REG_SP_CONTENTS - regnum);
+			unsigned offset = ((I.base[SS] + I.regs.w[SP]) & AMASK) + 2 * (REG_SP_CONTENTS - regnum);
 
-			if (offset < I.amask - 1)
+			if (offset < AMASK - 1)
 			{
 				cpu_writemem20(offset, val & 0xff);
 				cpu_writemem20(offset + 1, (val >> 8) & 0xff);
@@ -275,19 +273,19 @@ void i86_set_nmi_line(int state)
 	if (I.nmi_state == state)
 		return;
 	I.nmi_state = state;
+
+	/* on a rising edge, signal the NMI */
 	if (state != CLEAR_LINE)
-	{
-		I.pending_irq |= NMI_IRQ;
-	}
+		PREFIX(_interrupt)(I86_NMI_INT);
 }
 
 void i86_set_irq_line(int irqline, int state)
 {
 	I.irq_state = state;
-	if (state == CLEAR_LINE)
-		I.pending_irq &= ~INT_IRQ;
-	else
-		I.pending_irq |= INT_IRQ;
+
+	/* if the IF is set, signal an interrupt */
+	if (state != CLEAR_LINE && I.IF)
+		PREFIX(_interrupt)(-1);
 }
 
 void i86_set_irq_callback(int (*callback) (int))
@@ -295,29 +293,38 @@ void i86_set_irq_callback(int (*callback) (int))
 	I.irq_callback = callback;
 }
 
-int i86_execute(int cycles)
+int i86_execute(int num_cycles)
 {
-	i86_ICount = cycles;			   /* ASG 971222 cycles_per_run; */
+	/* copy over the cycle counts if they're not correct */
+	if (cycles.id != 8086)
+		cycles = i86_cycles;
+
+	/* adjust for any interrupts that came in */
+	i86_ICount = num_cycles;
+	i86_ICount -= I.extra_cycles;
+	I.extra_cycles = 0;
+
+	/* run until we're out */
 	while (i86_ICount > 0)
 	{
 //#define VERBOSE_DEBUG
 #ifdef VERBOSE_DEBUG
 		logerror("[%04x:%04x]=%02x\tF:%04x\tAX=%04x\tBX=%04x\tCX=%04x\tDX=%04x %d%d%d%d%d%d%d%d%d\n",
-				I.sregs[CS], I.ip, GetMemB(CS,I.ip), I.flags, I.regs.w[AX], I.regs.w[BX], I.regs.w[CX], I.regs.w[DX], I.AuxVal ? 1 : 0, I.OverVal ? 1 : 0,
-				I.SignVal ? 1 : 0, I.ZeroVal ? 1 : 0, I.CarryVal ? 1 : 0, I.ParityVal ? 1 : 0, I.TF, I.IF, I.DF);
+				I.sregs[CS], I.pc - I.base[CS], ReadByte(I.pc), I.flags, I.regs.w[AX], I.regs.w[BX], I.regs.w[CX], I.regs.w[DX], I.AuxVal ? 1 : 0, I.OverVal ? 1 : 0,
+				I.SignVal ? 1 : 0, I.ZeroVal ? 1 : 0, I.CarryVal ? 1 : 0, I.ParityVal ? 1 : 0, I.TF, I.IF, I.DirVal < 0 ? 1 : 0);
 #endif
-
-		if ((I.pending_irq && I.IF) || (I.pending_irq & NMI_IRQ))
-			PREFIX(_external_int) ();  /* HJB 12/15/98 */
-
 		CALL_MAME_DEBUG;
 
 		seg_prefix = FALSE;
-
+		I.prevpc = I.pc;
 		TABLE86;
-
 	}
-	return cycles - i86_ICount;
+
+	/* adjust for any interrupts that came in */
+	i86_ICount -= I.extra_cycles;
+	I.extra_cycles = 0;
+
+	return num_cycles - i86_ICount;
 }
 
 /****************************************************************************
@@ -336,7 +343,7 @@ const char *i86_info(void *context, int regnum)
 
 	switch (regnum)
 	{
-	case CPU_INFO_REG + I86_IP: 		sprintf(buffer[which], "IP: %04X", r->ip);          break;
+	case CPU_INFO_REG + I86_IP: 		sprintf(buffer[which], "IP: %04X", r->pc - r->base[CS]); break;
 	case CPU_INFO_REG + I86_SP: 		sprintf(buffer[which], "SP: %04X", r->regs.w[SP]);  break;
 	case CPU_INFO_REG + I86_FLAGS:		sprintf(buffer[which], "F:%04X", r->flags);         break;
 	case CPU_INFO_REG + I86_AX: 		sprintf(buffer[which], "AX:%04X", r->regs.w[AX]);   break;
@@ -351,7 +358,7 @@ const char *i86_info(void *context, int regnum)
 	case CPU_INFO_REG + I86_SS: 		sprintf(buffer[which], "SS:%04X", r->sregs[SS]);    break;
 	case CPU_INFO_REG + I86_DS: 		sprintf(buffer[which], "DS:%04X", r->sregs[DS]);    break;
 	case CPU_INFO_REG + I86_VECTOR: 	sprintf(buffer[which], "V:%02X", r->int_vector);    break;
-	case CPU_INFO_REG + I86_PENDING:	sprintf(buffer[which], "P:%X", r->pending_irq);     break;
+	case CPU_INFO_REG + I86_PENDING:	sprintf(buffer[which], "P:%X", r->irq_state);       break;
 	case CPU_INFO_REG + I86_NMI_STATE:	sprintf(buffer[which], "NMI:%X", r->nmi_state);     break;
 	case CPU_INFO_REG + I86_IRQ_STATE:	sprintf(buffer[which], "IRQ:%X", r->irq_state);     break;
 	case CPU_INFO_FLAGS:
@@ -395,7 +402,7 @@ unsigned i86_dasm(char *buffer, unsigned pc)
 #endif
 }
 
-#if HAS_I88
+#if (HAS_I88)
 /****************************************************************************
  * Return a formatted string for a register
  ****************************************************************************/
@@ -410,7 +417,7 @@ const char *i88_info(void *context, int regnum)
 }
 #endif
 
-#if HAS_I186 || HAS_I188
+#if (HAS_I186 || HAS_I188)
 
 #include "i186intf.h"
 
@@ -426,31 +433,39 @@ const char *i88_info(void *context, int regnum)
 #include "instr186.c"
 #undef I186
 
-int i186_execute(int cycles)
+int i186_execute(int num_cycles)
 {
-	i86_ICount = cycles;			   /* ASG 971222 cycles_per_run; */
+	/* copy over the cycle counts if they're not correct */
+	if (cycles.id != 80186)
+		cycles = i186_cycles;
+
+	/* adjust for any interrupts that came in */
+	i86_ICount = num_cycles;
+	i86_ICount -= I.extra_cycles;
+	I.extra_cycles = 0;
+
+	/* run until we're out */
 	while (i86_ICount > 0)
 	{
-
 #ifdef VERBOSE_DEBUG
-		printf("[%04x:%04x]=%02x\tAX=%04x\tBX=%04x\tCX=%04x\tDX=%04x\n", I.sregs[CS], I.ip, GetMemB(CS, I.ip), I.regs.w[AX],
+		printf("[%04x:%04x]=%02x\tAX=%04x\tBX=%04x\tCX=%04x\tDX=%04x\n", I.sregs[CS], I.pc, ReadByte(I.pc), I.regs.w[AX],
 			   I.regs.w[BX], I.regs.w[CX], I.regs.w[DX]);
 #endif
-
-		if ((I.pending_irq && I.IF) || (I.pending_irq & NMI_IRQ))
-			i86_external_int();		   /* HJB 12/15/98 */
-
 		CALL_MAME_DEBUG;
 
 		seg_prefix = FALSE;
-
+		I.prevpc = I.pc;
 		TABLE186;
-
 	}
-	return cycles - i86_ICount;
+
+	/* adjust for any interrupts that came in */
+	i86_ICount -= I.extra_cycles;
+	I.extra_cycles = 0;
+
+	return num_cycles - i86_ICount;
 }
 
-#if HAS_I188
+#if (HAS_I188)
 /****************************************************************************
  * Return a formatted string for a register
  ****************************************************************************/
@@ -465,7 +480,7 @@ const char *i188_info(void *context, int regnum)
 }
 #endif
 
-#if HAS_I186
+#if (HAS_I186)
 /****************************************************************************
  * Return a formatted string for a register
  ****************************************************************************/
@@ -495,7 +510,7 @@ unsigned i186_dasm(char *buffer, unsigned pc)
 #if defined(INCLUDE_V20) && (HAS_V20 || HAS_V30 || HAS_V33)
 
 #include "v30.h"
-#include "v30intrf.h"
+#include "v30intf.h"
 
 /* compile the opcode emulating instruction new with v20 timing value */
 /* MF flag -> opcode must be compiled new */
@@ -548,11 +563,11 @@ static void v30_interrupt(unsigned int_num, BOOLEAN md_flag)
 	dest_seg = ReadWord(int_num * 4 + 2);
 
 	PUSH(I.sregs[CS]);
-	PUSH(I.ip);
-	I.ip = (WORD) dest_off;
+	PUSH(I.pc - I.base[CS]);
 	I.sregs[CS] = (WORD) dest_seg;
 	I.base[CS] = SegBase(CS);
-	change_pc20((I.base[CS] + I.ip));
+	I.pc = (I.base[CS] + dest_off) & AMASK;
+	change_pc20(I.pc);
 /*	logerror("=%06x\n",cpu_get_pc()); */
 }
 
@@ -562,21 +577,6 @@ void v30_trap(void)
 	v30_interrupt(1, 0);
 }
 
-
-static void v30_external_int(void)
-{
-	if (I.pending_irq & NMI_IRQ)
-	{
-		v30_interrupt(I86_NMI_INT, 0);
-		I.pending_irq &= ~NMI_IRQ;
-	}
-	else if (I.pending_irq)
-	{
-		/* the actual vector is retrieved after pushing flags */
-		/* and clearing the IF */
-		v30_interrupt(-1, 0);
-	}
-}
 
 #include "instr86.c"
 #include "instr186.c"
@@ -589,28 +589,36 @@ void v30_reset(void *param)
 	SetMD(1);
 }
 
-int v30_execute(int cycles)
+int v30_execute(int num_cycles)
 {
-	i86_ICount = cycles;			   /* ASG 971222 cycles_per_run; */
+	/* copy over the cycle counts if they're not correct */
+	if (cycles.id != 30)
+		cycles = v30_cycles;
+
+	/* adjust for any interrupts that came in */
+	i86_ICount = num_cycles;
+	i86_ICount -= I.extra_cycles;
+	I.extra_cycles = 0;
+
+	/* run until we're out */
 	while (i86_ICount > 0)
 	{
-
 #ifdef VERBOSE_DEBUG
-		printf("[%04x:%04x]=%02x\tAX=%04x\tBX=%04x\tCX=%04x\tDX=%04x\n", I.sregs[CS], I.ip, GetMemB(CS, I.ip), I.regs.w[AX],
+		printf("[%04x:%04x]=%02x\tAX=%04x\tBX=%04x\tCX=%04x\tDX=%04x\n", I.sregs[CS], I.pc, ReadByte(I.pc), I.regs.w[AX],
 			   I.regs.w[BX], I.regs.w[CX], I.regs.w[DX]);
 #endif
-
-		if ((I.pending_irq && I.IF) || (I.pending_irq & NMI_IRQ))
-			PREFIX(_external_int) ();  /* HJB 12/15/98 */
-
 		CALL_MAME_DEBUG;
 
 		seg_prefix = FALSE;
-
+		I.prevpc = I.pc;
 		TABLEV30;
-
 	}
-	return cycles - i86_ICount;
+
+	/* adjust for any interrupts that came in */
+	i86_ICount -= I.extra_cycles;
+	I.extra_cycles = 0;
+
+	return num_cycles - i86_ICount;
 }
 
 /****************************************************************************
@@ -648,7 +656,7 @@ const char *v30_info(void *context, int regnum)
 	return i86_info(context, regnum);
 }
 
-#if HAS_V20
+#if (HAS_V20)
 /****************************************************************************
  * Return a formatted string for a register
  ****************************************************************************/
@@ -663,7 +671,7 @@ const char *v20_info(void *context, int regnum)
 }
 #endif
 
-#if HAS_V33
+#if (HAS_V33)
 /****************************************************************************
  * Return a formatted string for a register
  ****************************************************************************/

@@ -82,7 +82,7 @@ logerror("Profiler error: FILO buffer underflow\n");
 	}
 }
 
-void profiler_show(void)
+void profiler_show(struct osd_bitmap *bitmap)
 {
 	int i,j;
 	unsigned int total,normalize;
@@ -156,7 +156,7 @@ void profiler_show(void)
 			else
 				sprintf(buf,"%s%3d%%",names[i],
 						(computed * 100 + total/2) / total);
-			ui_text(buf,0,(line++)*Machine->uifontheight);
+			ui_text(bitmap,buf,0,(line++)*Machine->uifontheight);
 		}
 	}
 
@@ -166,7 +166,7 @@ void profiler_show(void)
 			computed += profile.cpu_context_switches[j];
 	}
 	sprintf(buf,"CPU switches%4d",computed / MEMORY);
-	ui_text(buf,0,(line++)*Machine->uifontheight);
+	ui_text(bitmap,buf,0,(line++)*Machine->uifontheight);
 
 	/* reset the counters */
 	memory = (memory + 1) % MEMORY;

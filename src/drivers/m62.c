@@ -428,7 +428,7 @@ static struct IOWritePort kidniki_writeport[] =
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 ) \
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 ) \
 	/* service coin must be active for 19 frames to be consistently recognized */ \
-	PORT_BIT_IMPULSE( 0x04, IP_ACTIVE_LOW, IPT_COIN3, 19 ) \
+	PORT_BIT_IMPULSE( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1, 19 ) \
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 ) \
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 
@@ -558,14 +558,14 @@ INPUT_PORTS_START( battroad )
 	IN2_PORT
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x03, 0x03, "Energy Decrease" )
+	PORT_DIPNAME( 0x03, 0x03, "Fuel Decrease" )
 	PORT_DIPSETTING(    0x03, "Slow" )
 	PORT_DIPSETTING(    0x02, "Medium" )
 	PORT_DIPSETTING(    0x01, "Fast" )
 	PORT_DIPSETTING(    0x00, "Fastest" )
-	PORT_DIPNAME( 0x04, 0x04, "Unknown" )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x04, "Easy" )
+	PORT_DIPSETTING(    0x00, "Hard" )
 	PORT_DIPNAME( 0x08, 0x08, "Unknown" )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -609,7 +609,7 @@ INPUT_PORTS_START( ldrun )
 	IN2_PORT
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x03, 0x03, "Timer Speed" )
+	PORT_DIPNAME( 0x03, 0x03, "Timer" )
 	PORT_DIPSETTING(    0x03, "Slow" )
 	PORT_DIPSETTING(    0x02, "Medium" )
 	PORT_DIPSETTING(    0x01, "Fast" )
@@ -660,7 +660,7 @@ INPUT_PORTS_START( ldrun2 )
 	IN2_PORT
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x01, "Timer Speed" )
+	PORT_DIPNAME( 0x01, 0x01, "Timer" )
 	PORT_DIPSETTING(    0x01, "Slow" )
 	PORT_DIPSETTING(    0x00, "Fast" )
 	PORT_DIPNAME( 0x02, 0x02, "Game Speed" )
@@ -712,7 +712,7 @@ INPUT_PORTS_START( ldrun3 )
 	IN2_PORT
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x01, "Timer Speed" )
+	PORT_DIPNAME( 0x01, 0x01, "Timer" )
 	PORT_DIPSETTING(    0x01, "Slow" )
 	PORT_DIPSETTING(    0x00, "Fast" )
 	PORT_DIPNAME( 0x02, 0x02, "Game Speed" )
@@ -764,7 +764,7 @@ INPUT_PORTS_START( ldrun4 )
 	IN2_PORT
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x01, "Timer Speed" )
+	PORT_DIPNAME( 0x01, 0x01, "Timer" )
 	PORT_DIPSETTING(    0x01, "Slow" )
 	PORT_DIPSETTING(    0x00, "Fast" )
 	PORT_DIPNAME( 0x02, 0x02, "2 Players Game" )

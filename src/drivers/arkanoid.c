@@ -140,12 +140,12 @@ INPUT_PORTS_START( arkanoid )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* input from the 68705, some bootlegs need it to be 1 */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* input from the 68705 */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SPECIAL )	/* input from the 68705, some bootlegs need it to be 1 */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* input from the 68705 */
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -171,8 +171,8 @@ INPUT_PORTS_START( arkanoid )
 	PORT_DIPSETTING(    0x08, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x10, "20000 60000" )
-	PORT_DIPSETTING(    0x00, "20000" )
+	PORT_DIPSETTING(    0x10, "20K 60K and every 60K" )
+	PORT_DIPSETTING(    0x00, "20000 only" )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x20, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
@@ -191,12 +191,12 @@ INPUT_PORTS_START( arknoidj )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* input from the 68705, some bootlegs need it to be 1 */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* input from the 68705 */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SPECIAL )	/* input from the 68705, some bootlegs need it to be 1 */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* input from the 68705 */
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -222,8 +222,8 @@ INPUT_PORTS_START( arknoidj )
 	PORT_DIPSETTING(    0x08, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x10, "20000 60000" )
-	PORT_DIPSETTING(    0x00, "20000?" )
+	PORT_DIPSETTING(    0x10, "20K 60K and every 60K" )
+	PORT_DIPSETTING(    0x00, "20000 only" )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x20, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
@@ -235,6 +235,54 @@ INPUT_PORTS_START( arknoidj )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
+/* Is the same as arkanoij, but the Coinage and Bonus_Life dips are different */
+INPUT_PORTS_START( arkatayt )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SPECIAL )	/* input from the 68705, some bootlegs need it to be 1 */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* input from the 68705 */
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0xf8, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN2 - spinner (multiplexed for player 1 and 2) */
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL, 30, 15, 0, 0)
+
+	PORT_START      /* IN3 - spinner Player 2  */
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_COCKTAIL, 30, 15, 0, 0)
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x01, 0x00, "Allow Continue" )
+	PORT_DIPSETTING(    0x01, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x08, "Easy" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x10, "60K 100K and every 60K" )
+	PORT_DIPSETTING(    0x00, "60000 only" )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x20, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
+INPUT_PORTS_END
 
 
 static struct GfxLayout charlayout =
@@ -523,7 +571,7 @@ GAME( 1986, arknoidu, arkanoid, arkanoid, arkanoid, 0, ROT90, "Taito America Cor
 GAME( 1986, arknoidj, arkanoid, arkanoid, arknoidj, 0, ROT90, "Taito Corporation", "Arkanoid (Japan)" )
 GAMEX(1986, arkbl2,   arkanoid, arkanoid, arknoidj, 0, ROT90, "bootleg", "Arkanoid (Japanese bootleg Set 2)", GAME_NOT_WORKING )
 GAMEX(1986, arkbl3,   arkanoid, bootleg,  arknoidj, 0, ROT90, "bootleg", "Arkanoid (Japanese bootleg Set 3)", GAME_NOT_WORKING )
-GAME( 1986, arkatayt, arkanoid, bootleg,  arknoidj, 0, ROT90, "bootleg", "Arkanoid (Tayto bootleg, Japanese)" )
+GAME( 1986, arkatayt, arkanoid, bootleg,  arkatayt, 0, ROT90, "bootleg", "Arkanoid (Tayto bootleg, Japanese)" )
 GAMEX(1986, arkblock, arkanoid, bootleg,  arknoidj, 0, ROT90, "bootleg", "Block (bootleg, Japanese)", GAME_NOT_WORKING )
 GAME( 1986, arkbloc2, arkanoid, bootleg,  arknoidj, 0, ROT90, "bootleg", "Block (Game Corporation bootleg)" )
 GAME( 1986, arkangc,  arkanoid, bootleg,  arknoidj, 0, ROT90, "bootleg", "Arkanoid (Game Corporation bootleg)" )

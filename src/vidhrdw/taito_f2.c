@@ -10,11 +10,11 @@ size_t f2_foregroundram_size;
 unsigned char *f2_textram;
 size_t f2_textram_size;
 unsigned char *taitof2_characterram;
-unsigned char *char_dirty;	/* 256 chars */
+static unsigned char *char_dirty;	/* 256 chars */
 size_t f2_characterram_size;
-unsigned char *text_dirty;
-unsigned char *bg_dirty;
-unsigned char *fg_dirty;
+static unsigned char *text_dirty;
+static unsigned char *bg_dirty;
+static unsigned char *fg_dirty;
 size_t f2_paletteram_size;
 
 static struct osd_bitmap *tmpbitmap2;

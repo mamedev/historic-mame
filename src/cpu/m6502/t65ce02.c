@@ -20,7 +20,11 @@
  *****************************************************************************/
 
 #undef	OP
+#ifdef M4510
+#define OP(nn) INLINE void m4510_##nn(void)
+#else
 #define OP(nn) INLINE void m65ce02_##nn(void)
+#endif
 
 /*****************************************************************************
  *****************************************************************************
@@ -68,7 +72,7 @@ OP(f1) { int tmp; m65ce02_ICount-=5; RD_IDY; SBC;		  } /* 5 SBC IDY */
 OP(02) {		  m65ce02_ICount-=2;		 CLE;		  } /* ? CLE */
 OP(22) {		  m65ce02_ICount-=5;		 JSR_IND;	  } /* ? JSR IND */
 OP(42) {		  m65ce02_ICount-=2;		 NEG;		  } /* 2 NEG */
-OP(62) { int tmp; m65ce02_ICount-=2;RD_IMM;  RTS_IMM;	  } /* ? RTS IMM */
+OP(62) { int tmp; m65ce02_ICount-=2; RD_IMM;  RTS_IMM;	  } /* ? RTS IMM */
 OP(82) { int tmp; m65ce02_ICount-=5; RD_INSY; STA;		  } /* 5 STA INSY */
 OP(a2) { int tmp; m65ce02_ICount-=2; RD_IMM; LDX;		  } /* 2 LDX IMM */
 OP(c2) { int tmp; m65ce02_ICount-=2; RD_IMM; CPZ;		  } /* 2 CPZ IMM */
@@ -256,7 +260,16 @@ OP(ec) { int tmp; m65ce02_ICount-=4; RD_ABS; CPX;		  } /* 4 CPX ABS */
 
 OP(1c) { int tmp; m65ce02_ICount-=4; RD_ABS; TRB; WB_EA;  } /* 4 TRB ABS */
 OP(3c) { int tmp; m65ce02_ICount-=4; RD_ABX; BIT;		  } /* 4 BIT ABX */
+#ifdef M4510
 OP(5c) {		  m65ce02_ICount-=2;		 MAP;		  } /* ? MAP */
+#else
+/* maybe memory management not in 
+  but I think it is in, and the additional address pins are
+  not available */
+/* preliminary databook says reserved */
+/* nop with 3 byte argument */
+OP(5c) {		  m65ce02_ICount-=2;		 MAP;		  } /* ? MAP */
+#endif
 OP(7c) { int tmp; m65ce02_ICount-=2; EA_IAX; JMP;		  } /* 6 JMP IAX */
 OP(9c) { int tmp; m65ce02_ICount-=4;		 STZ_65CE02; WR_ABS; } /* 4 STZ ABS */
 OP(bc) { int tmp; m65ce02_ICount-=4; RD_ABX; LDY;		  } /* 4 LDY ABX */
@@ -317,6 +330,42 @@ OP(bf) { int tmp; m65ce02_ICount-=5; RD_ZPG; BBS(3);	  } /* 5 BBS3 ZPG */
 OP(df) { int tmp; m65ce02_ICount-=5; RD_ZPG; BBS(5);	  } /* 5 BBS5 ZPG */
 OP(ff) { int tmp; m65ce02_ICount-=5; RD_ZPG; BBS(7);	  } /* 5 BBS7 ZPG */
 
+#ifdef M4510
+static void (*insn4510[0x100])(void) = {
+	m4510_00,m4510_01,m4510_02,m4510_03,m4510_04,m4510_05,m4510_06,m4510_07,
+	m4510_08,m4510_09,m4510_0a,m4510_0b,m4510_0c,m4510_0d,m4510_0e,m4510_0f,
+	m4510_10,m4510_11,m4510_12,m4510_13,m4510_14,m4510_15,m4510_16,m4510_17,
+	m4510_18,m4510_19,m4510_1a,m4510_1b,m4510_1c,m4510_1d,m4510_1e,m4510_1f,
+	m4510_20,m4510_21,m4510_22,m4510_23,m4510_24,m4510_25,m4510_26,m4510_27,
+	m4510_28,m4510_29,m4510_2a,m4510_2b,m4510_2c,m4510_2d,m4510_2e,m4510_2f,
+	m4510_30,m4510_31,m4510_32,m4510_33,m4510_34,m4510_35,m4510_36,m4510_37,
+	m4510_38,m4510_39,m4510_3a,m4510_3b,m4510_3c,m4510_3d,m4510_3e,m4510_3f,
+	m4510_40,m4510_41,m4510_42,m4510_43,m4510_44,m4510_45,m4510_46,m4510_47,
+	m4510_48,m4510_49,m4510_4a,m4510_4b,m4510_4c,m4510_4d,m4510_4e,m4510_4f,
+	m4510_50,m4510_51,m4510_52,m4510_53,m4510_54,m4510_55,m4510_56,m4510_57,
+	m4510_58,m4510_59,m4510_5a,m4510_5b,m4510_5c,m4510_5d,m4510_5e,m4510_5f,
+	m4510_60,m4510_61,m4510_62,m4510_63,m4510_64,m4510_65,m4510_66,m4510_67,
+	m4510_68,m4510_69,m4510_6a,m4510_6b,m4510_6c,m4510_6d,m4510_6e,m4510_6f,
+	m4510_70,m4510_71,m4510_72,m4510_73,m4510_74,m4510_75,m4510_76,m4510_77,
+	m4510_78,m4510_79,m4510_7a,m4510_7b,m4510_7c,m4510_7d,m4510_7e,m4510_7f,
+	m4510_80,m4510_81,m4510_82,m4510_83,m4510_84,m4510_85,m4510_86,m4510_87,
+	m4510_88,m4510_89,m4510_8a,m4510_8b,m4510_8c,m4510_8d,m4510_8e,m4510_8f,
+	m4510_90,m4510_91,m4510_92,m4510_93,m4510_94,m4510_95,m4510_96,m4510_97,
+	m4510_98,m4510_99,m4510_9a,m4510_9b,m4510_9c,m4510_9d,m4510_9e,m4510_9f,
+	m4510_a0,m4510_a1,m4510_a2,m4510_a3,m4510_a4,m4510_a5,m4510_a6,m4510_a7,
+	m4510_a8,m4510_a9,m4510_aa,m4510_ab,m4510_ac,m4510_ad,m4510_ae,m4510_af,
+	m4510_b0,m4510_b1,m4510_b2,m4510_b3,m4510_b4,m4510_b5,m4510_b6,m4510_b7,
+	m4510_b8,m4510_b9,m4510_ba,m4510_bb,m4510_bc,m4510_bd,m4510_be,m4510_bf,
+	m4510_c0,m4510_c1,m4510_c2,m4510_c3,m4510_c4,m4510_c5,m4510_c6,m4510_c7,
+	m4510_c8,m4510_c9,m4510_ca,m4510_cb,m4510_cc,m4510_cd,m4510_ce,m4510_cf,
+	m4510_d0,m4510_d1,m4510_d2,m4510_d3,m4510_d4,m4510_d5,m4510_d6,m4510_d7,
+	m4510_d8,m4510_d9,m4510_da,m4510_db,m4510_dc,m4510_dd,m4510_de,m4510_df,
+	m4510_e0,m4510_e1,m4510_e2,m4510_e3,m4510_e4,m4510_e5,m4510_e6,m4510_e7,
+	m4510_e8,m4510_e9,m4510_ea,m4510_eb,m4510_ec,m4510_ed,m4510_ee,m4510_ef,
+	m4510_f0,m4510_f1,m4510_f2,m4510_f3,m4510_f4,m4510_f5,m4510_f6,m4510_f7,
+	m4510_f8,m4510_f9,m4510_fa,m4510_fb,m4510_fc,m4510_fd,m4510_fe,m4510_ff
+};
+#else
 static void (*insn65ce02[0x100])(void) = {
 	m65ce02_00,m65ce02_01,m65ce02_02,m65ce02_03,m65ce02_04,m65ce02_05,m65ce02_06,m65ce02_07,
 	m65ce02_08,m65ce02_09,m65ce02_0a,m65ce02_0b,m65ce02_0c,m65ce02_0d,m65ce02_0e,m65ce02_0f,
@@ -351,5 +400,5 @@ static void (*insn65ce02[0x100])(void) = {
 	m65ce02_f0,m65ce02_f1,m65ce02_f2,m65ce02_f3,m65ce02_f4,m65ce02_f5,m65ce02_f6,m65ce02_f7,
 	m65ce02_f8,m65ce02_f9,m65ce02_fa,m65ce02_fb,m65ce02_fc,m65ce02_fd,m65ce02_fe,m65ce02_ff
 };
-
+#endif
 

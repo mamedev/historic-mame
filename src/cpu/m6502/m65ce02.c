@@ -1,7 +1,7 @@
 /*****************************************************************************
  *
  *	 m65ce02.c
- *	 Portable 65ce02 emulator V1.0beta2
+ *	 Portable 65ce02 emulator V1.0beta3
  *
  *	 Copyright (c) 2000 Peter Trauner, all rights reserved
  *   documentation preliminary databook
@@ -25,10 +25,9 @@
 /* 4. February 2000 PeT jsr (absolut) jsr (absolut,x) inw dew */
 /* 17.February 2000 PeT phw */
 /* 16.March 2000 PeT fixed some instructions accordingly to databook */
+/* 7. May 2000 PeT splittet into m65ce02 and m4510 */
 
 /*
-  chapter3.txt lines about 5400
-  descripe some rom entries
 
 * neg is now simple 2er komplement negation with set of N and Z
 
@@ -36,130 +35,6 @@
 
 * tys txs not interruptable, not implemented
 
-* map
-  jmp/jsr bank lda # ldy #0 ldx #$e0 or bank&0xf ldy #$f0 or bank&0xf
-
-
-   sequences in c65
-
-   0xc800 (interface code) (system init)
-   lda #$00
-   ldx #$e3
-   ldy #$00
-   ldz #$b3
-   map
-   see
-   (the values in the register are not used in the following code)
-	i think, map configures memory management!
-	e flag set maybe means not the c64 compatible mode
-
-   irq handler
-   pha phx phy phz tsy tsx phy phx ldy #$05 lda ($01,x),y
-	the new lda sta (byte indexed stack), indirect, indexed )
-*	 is more (stack byte indexed), indirect, indexed)
-
-   switch to c64 mode
-   lda #$00 sta $d609 sta $d031 sta $d030 sta $d031 tax tay taz map
-   jsr ($fff6) jsr $(fffc)
-
-   map in monitor and call it
-   lda #$a0 ldx #$82 ldy #$00 ldz #$b3 map ... jmp $6000
-
-   get dos
-   ... lda #$00 ldx #$11 ldy #$80 ldz #$31 map
-
-   remove dos
-   ... lda #$00 ldx #$00 ldy #$00 ldz #$b3 map
-
-
-
-12. $FF6E JSRFAR  ;gosub in another bank
-13. $FF71 JMPFAR  ;goto another bank
-
-		 Preparation:
-
-			   Registers:  none
-
-			   Memory:	   system map, also:
-						   $02 --> bank (0-FF)
-						   $03 --> PC_high
-						   $04 --> PC_low
-						   $05 --> .S (status)
-						   $06 --> .A
-						   $07 --> .X
-						   $08 --> .Y
-						   $09 --> .Z
-
-			   Flags:	   none
-
-			   Calls:	   none
-
-		 Results:
-
-			   Registers:  none
-
-			   Memory:	   as per call, also:
-						   $05 --> .S (status)
-						   $06 --> .A
-						   $07 --> .X
-						   $08 --> .Y
-						   $09 --> .Z
-
-			   Flags:	   none
-
-The  two  routines,  JSRFAR  and  JMPFAR, enable code executing in the
-system bank of memory to call (or JMP to) a routine in any other bank.
-In	the case of JSRFAR, the called routine must restore the system map
-before executing a return.
-jsr entry:
-0380: 20 9E 03 jsr	$039E
-0383: 08	   php
-0384: 48	   pha
-0385: DA	   phx
-0386: 5A	   phy
-0387: DB	   phz
-0388: 08	   php
-0389: 20 C4 03 jsr	$03C4
-038C: 68	   pla
-038D: 85 05    sta	$05
-038F: FB	   plz
-0390: 64 09    stz	$09
-0392: 7A	   ply
-0393: 84 08    sty	$08
-0395: FA	   plx
-0396: 86 07    stx	$07
-0398: 68	   pla
-0399: 85 06    sta	$06
-039B: 28	   plp
-039C: EA	   nop
-039D: 60	   rts
-039E: FC 03 00 phw	$0003
-03A1: A5 05    lda	$05
-03A3: 48	   pha
-03A4: A5 02    lda	$02
-03A6: 10 05    bpl	$03AD
-03A8: 20 C4 03 jsr	$03C4
-03AB: 80 0C    bra	$03B9
-03AD: 29 0F    and	#$0F
-03AF: 09 E0    ora	#$E0
-03B1: AA	   tax
-03B2: 09 F0    ora	#$F0
-03B4: 4B	   taz
-03B5: A9 00    lda	#$00
-03B7: A8	   tay
-03B8: 5C	   map
-03B9: A5 06    lda	$06
-03BB: A6 07    ldx	$07
-03BD: A4 08    ldy	$08
-03BF: AB 09 00 ldz	$0009
-03C2: EA	   nop
-03C3: 40	   rti
-03C4: A9 00    lda	#$00
-03C6: A2 E3    ldx	#$E3
-03C8: A0 00    ldy	#$00
-03CA: A3 B3    ldz	#$B3
-03CC: 5C	   map
-03CD: 60	   rts
 */
 
 #include <stdio.h>
@@ -172,7 +47,6 @@ jsr entry:
 #include "opsc02.h"
 #include "opsce02.h"
 
-
 #define VERBOSE 0
 
 #if VERBOSE
@@ -183,9 +57,11 @@ jsr entry:
 
 /* Layout of the registers in the debugger */
 static UINT8 m65ce02_reg_layout[] = {
-	M65CE02_A,M65CE02_X,M65CE02_Y,M65CE02_Z,M65CE02_S,M65CE02_PC,-1,
+	M65CE02_A,M65CE02_X,M65CE02_Y,M65CE02_Z,M65CE02_S,M65CE02_PC,
+	M65CE02_P, 
+	-1,
 	M65CE02_EA,M65CE02_ZP,M65CE02_NMI_STATE,M65CE02_IRQ_STATE, M65CE02_B,
-	M65CE02_P, 0
+	0
 };
 
 /* Layout of the debugger windows x,y,w,h */
@@ -198,7 +74,6 @@ static UINT8 m65ce02_win_layout[] = {
 };
 
 typedef struct {
-	UINT8	subtype;		/* currently selected cpu sub type */
 	void	(**insn)(void); /* pointer to the function pointer table */
 	PAIR	ppc;			/* previous program counter */
 	PAIR	pc; 			/* program counter */
@@ -227,12 +102,10 @@ static m65ce02_Regs m65ce02;
  * include the opcode macros, functions and tables
  ***************************************************************/
 
-static void (*c65_map)(int a, int x, int y, int z);
 #include "t65ce02.c"
 
 void m65ce02_reset (void *param)
 {
-	c65_map=(void(*)(int a, int x, int y, int z))param;
 	m65ce02.insn = insn65ce02;
 
 	/* wipe out the rest of the m65ce02 structure */
@@ -270,7 +143,7 @@ void m65ce02_set_context (void *src)
 	if( src )
 	{
 		m65ce02 = *(m65ce02_Regs*)src;
-		change_pc(PCD);
+		change_pc16(PCD);
 	}
 }
 
@@ -282,7 +155,7 @@ unsigned m65ce02_get_pc (void)
 void m65ce02_set_pc (unsigned val)
 {
 	PCW = val;
-	change_pc(PCD);
+	change_pc16(PCD);
 }
 
 unsigned m65ce02_get_sp (void)
@@ -390,7 +263,7 @@ int m65ce02_execute(int cycles)
 			m65ce02_take_irq();
 
 		op = RDOP();
-		(*m65ce02.insn[op])();
+		(*insn65ce02[op])();
 
 		/* check if the I flag was just reset (interrupts enabled) */
 		if( m65ce02.after_cli )
@@ -422,7 +295,7 @@ void m65ce02_set_nmi_line(int state)
 	m65ce02.nmi_state = state;
 	if( state != CLEAR_LINE )
 	{
-		LOG(( "M65ce02#%d set_nmi_line(ASSERT)\n", cpu_getactivecpu()));
+		LOG(("M65ce02#%d set_nmi_line(ASSERT)\n", cpu_getactivecpu()));
 		EAD = M65CE02_NMI_VEC;
 		m65ce02_ICount -= 7;
 		PUSH(PCH);
@@ -441,7 +314,7 @@ void m65ce02_set_irq_line(int irqline, int state)
 	m65ce02.irq_state = state;
 	if( state != CLEAR_LINE )
 	{
-		LOG(( "M65ce02#%d set_irq_line(ASSERT)\n", cpu_getactivecpu()));
+		LOG(("M65ce02#%d set_irq_line(ASSERT)\n", cpu_getactivecpu()));
 		m65ce02.pending_irq = 1;
 	}
 }
@@ -540,7 +413,7 @@ const char *m65ce02_info(void *context, int regnum)
 	return buffer[which];
 }
 
-unsigned m65ce02_dasm(char *buffer, unsigned pc)
+unsigned int m65ce02_dasm(char *buffer, unsigned pc)
 {
 #ifdef MAME_DEBUG
 	return Dasm65ce02( buffer, pc );

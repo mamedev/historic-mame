@@ -1,7 +1,7 @@
 /*****************************************************************************
  *
  *	 z80.c
- *	 Portable Z80 emulator V2.7
+ *	 Portable Z80 emulator V2.8
  *
  *	 Copyright (C) 1998,1999,2000 Juergen Buchmueller, all rights reserved.
  *
@@ -17,7 +17,11 @@
  *     terms of its usage and license at any time, including retroactively
  *   - This entire notice must remain in the source code.
  *
- *	 Changes in 2.7:
+ *	 Changes in 2.8:
+ *	 - OUTI/OUTD/OTIR/OTDR also pre-decrement the B register now.
+ *	   This was wrong because of a bug fix on the wrong side
+ *	   (astrocade sound driver).
+ *   Changes in 2.7:
  *	  - removed z80_vm specific code, it's not needed (and never was).
  *   Changes in 2.6:
  *	  - BUSY_LOOP_HACKS needed to call change_pc16() earlier, before
@@ -1681,7 +1685,7 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
 #if Z80_EXACT
 #define INI {													\
 	UINT8 io = IN(_BC); 										\
-	_B--;														\
+    _B--;                                                       \
 	WM( _HL, io );												\
 	_HL++;														\
 	_F = SZ[_B];												\
@@ -1695,7 +1699,7 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
 }
 #else
 #define INI {													\
-	_B--;														\
+    _B--;                                                       \
 	WM( _HL, IN(_BC) ); 										\
 	_HL++;														\
 	_F = (_B) ? NF : NF | ZF;									\
@@ -1708,8 +1712,8 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
 #if Z80_EXACT
 #define OUTI {													\
 	UINT8 io = RM(_HL); 										\
-	OUT( _BC, io ); 											\
     _B--;                                                       \
+	OUT( _BC, io ); 											\
 	_HL++;														\
 	_F = SZ[_B];												\
 	if( io & SF ) _F |= NF; 									\
@@ -1722,8 +1726,8 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
 }
 #else
 #define OUTI {													\
+    _B--;                                                       \
     OUT( _BC, RM(_HL) );                                        \
-	_B--;														\
     _HL++;                                                      \
     _F = (_B) ? NF : NF | ZF;                                   \
 }
@@ -1808,8 +1812,8 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
 #if Z80_EXACT
 #define OUTD {													\
 	UINT8 io = RM(_HL); 										\
+    _B--;                                                       \
 	OUT( _BC, io ); 											\
-	_B--;														\
 	_HL--;														\
 	_F = SZ[_B];												\
     if( io & SF ) _F |= NF;                                     \
@@ -1822,8 +1826,8 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
 }
 #else
 #define OUTD {                                                  \
+    _B--;                                                       \
     OUT( _BC, RM(_HL) );                                        \
-	_B--;														\
 	_HL--;														\
 	_F = (_B) ? NF : NF | ZF;									\
 }
@@ -4567,7 +4571,7 @@ const char *z80_info(void *context, int regnum)
 			break;
 		case CPU_INFO_NAME: return "Z80";
         case CPU_INFO_FAMILY: return "Zilog Z80";
-		case CPU_INFO_VERSION: return "2.7";
+		case CPU_INFO_VERSION: return "2.8";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (C) 1998,1999 Juergen Buchmueller, all rights reserved.";
 		case CPU_INFO_REG_LAYOUT: return (const char *)z80_reg_layout;

@@ -24,26 +24,29 @@ struct artwork
 {
 	/* Publically accessible */
 	struct osd_bitmap *artwork;
+	struct osd_bitmap *artwork1;
 	struct osd_bitmap *alpha;
-
-	/* Private - don't touch! */
-	struct osd_bitmap *orig_artwork;	/* needed for palette recalcs */
-	struct osd_bitmap *vector_bitmap;	/* needed to buffer the vector image in vg with overlays */
-	unsigned char *orig_palette;		/* needed for restoring the colors after special effects? */
+	struct osd_bitmap *orig_artwork;   /* needed for palette recalcs */
+	struct osd_bitmap *vector_bitmap;  /* needed to buffer the vector image in vg with overlays */
+	UINT8 *orig_palette;               /* needed for restoring the colors after special effects? */
 	int num_pens_used;
-	unsigned char *transparency;
+	UINT8 *transparency;
 	int num_pens_trans;
 	int start_pen;
-	unsigned char *brightness;              /* brightness of each palette entry */
-	unsigned char *pTable;                  /* Conversion table usually used for mixing colors */
+	UINT8 *brightness;                 /* brightness of each palette entry */
+	UINT64 *rgb;
+	UINT8 *pTable;                     /* Conversion table usually used for mixing colors */
 };
 
 
 struct artwork_element
 {
 	struct rectangle box;
-	unsigned char red,green,blue,alpha;
+	UINT8 red,green,blue;
+	UINT16 alpha;   /* 0x00-0xff or OVERLAY_DEFAULT_OPACITY */
 };
+
+#define OVERLAY_DEFAULT_OPACITY         0xffff
 
 #ifndef MIN
 #define MIN(x,y) ((x)<(y)?(x):(y))
@@ -52,14 +55,20 @@ struct artwork_element
 #define MAX(x,y) ((x)>(y)?(x):(y))
 #endif
 
+extern struct artwork *artwork_backdrop;
+extern struct artwork *artwork_overlay;
+extern struct osd_bitmap *overlay_real_scrbitmap;
+
 /*********************************************************************
   functions that apply to backdrops AND overlays
 *********************************************************************/
-struct artwork *artwork_load(const char *filename, unsigned int start_pen, unsigned int max_pens);
-struct artwork *artwork_load_size(const char *filename, unsigned int start_pen, unsigned int max_pens, int width, int height);
-struct artwork *artwork_create(const struct artwork_element *ae, unsigned int start_pen, unsigned int max_pens);
+void overlay_load(const char *filename, unsigned int start_pen, unsigned int max_pens);
+void overlay_create(const struct artwork_element *ae, unsigned int start_pen, unsigned int max_pens);
+void backdrop_load(const char *filename, unsigned int start_pen, unsigned int max_pens);
+void artwork_load(struct artwork **a,const char *filename, unsigned int start_pen, unsigned int max_pens);
+void artwork_load_size(struct artwork **a,const char *filename, unsigned int start_pen, unsigned int max_pens, int width, int height);
 void artwork_elements_scale(struct artwork_element *ae, int width, int height);
-void artwork_free(struct artwork *a);
+void artwork_free(struct artwork **a);
 
 /*********************************************************************
   functions that are backdrop-specific
@@ -77,9 +86,7 @@ void drawgfx_backdrop(struct osd_bitmap *dest,const struct GfxElement *gfx,
 /*********************************************************************
   functions that are overlay-specific
 *********************************************************************/
-int overlay_set_palette (struct artwork *a, unsigned char *palette, int num_shades);
-void overlay_remap(struct artwork *a);
-void overlay_draw(struct osd_bitmap *dest,const struct artwork *overlay);
+int overlay_set_palette (unsigned char *palette, int num_shades);
 
 #endif
 

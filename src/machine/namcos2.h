@@ -298,3 +298,6 @@ READ_HANDLER( namcos2_mcu_analog_port_r );
 WRITE_HANDLER( namcos2_mcu_port_d_w );
 READ_HANDLER( namcos2_mcu_port_d_r );
 
+READ_HANDLER( namcos2_input_port_0_r );
+READ_HANDLER( namcos2_input_port_10_r );
+READ_HANDLER( namcos2_input_port_12_r );

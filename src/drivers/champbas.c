@@ -1,9 +1,14 @@
 /***************************************************************************
 
-Championship Baseball memory map (preliminary)
-the hardware is similar to Pengo
+Championship Baseball
 
 driver by Nicola Salmoria
+
+TODO:
+champbbj and champbb2 don't work due to protection - a custom mcu probably.
+The protection involves locations a006-a007 and 6000-63ff.  It pulls
+addresses to routines from there.
+
 
 0000-5fff ROM
 7800-7fff ROM (Champion Baseball 2 only)
@@ -292,6 +297,28 @@ ROM_START( champbas )
 	ROM_LOAD( "champbb.pr1",  0x0020, 0x100, 0x872dd450 ) /* look-up table */
 ROM_END
 
+ROM_START( champbbj )
+	ROM_REGION( 0x10000, REGION_CPU1 ) /* 64k for code */
+	ROM_LOAD( "11.2e",      0x0000, 0x2000, 0xe2dfc166 )
+	ROM_LOAD( "12.2g",      0x2000, 0x2000, 0x7b4e5faa )
+	ROM_LOAD( "13.2h",      0x4000, 0x2000, 0xb201e31f )
+
+	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for the speech CPU */
+	ROM_LOAD( "16.2k",      0x0000, 0x2000, 0x24c482ee )
+	ROM_LOAD( "17.2l",      0x2000, 0x2000, 0xf10b148b )
+	ROM_LOAD( "18.2n",      0x4000, 0x2000, 0x2dc484dd )
+
+	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "14.5e",      0x0000, 0x2000, 0x1b8202b3 )
+
+	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "15.5g",      0x0000, 0x2000, 0xa67c0c40 )
+
+	ROM_REGION( 0x0120, REGION_PROMS )
+	ROM_LOAD( "1e.bpr",    0x0000, 0x0020, 0xf5ce825e ) /* palette */
+	ROM_LOAD( "5k.bpr",    0x0020, 0x0100, 0x2e481ffa ) /* look-up table */
+ROM_END
+
 ROM_START( champbb2 )
 	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "epr5932",      0x0000, 0x2000, 0x528e3c78 )
@@ -317,8 +344,6 @@ ROM_END
 
 
 
-GAME( 1983, champbas, 0, champbas, champbas, 0, ROT0, "Sega", "Champion Baseball" )
-
-/* Champion Baseball 2 doesn't work - don't know why */
-GAMEX(1983, champbb2, 0, champbas, champbas, 0, ROT0, "Sega / Alpha Denshi", "Champion Baseball II", GAME_NOT_WORKING )
-
+GAME( 1983, champbas, 0,        champbas, champbas, 0, ROT0, "Sega", "Champion Baseball" )
+GAMEX(1983, champbbj, champbas, champbas, champbas, 0, ROT0, "Alpha Denshi Co.", "Champion Baseball (Japan)", GAME_NOT_WORKING )
+GAMEX(1983, champbb2, 0,        champbas, champbas, 0, ROT0, "Sega", "Champion Baseball II", GAME_NOT_WORKING )

@@ -44,7 +44,7 @@ addresses take place.
 #include "m6509.h"
 
 #include "ops02.h"
-#include "ops02ill.h"
+#include "ill02.h"
 #include "ops09.h"
 
 #define CORE_M6509

@@ -2,11 +2,13 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include "ui_text.h" /* LBO 042400 */
+#include "artwork.h"
 
 static struct RunningMachine machine;
 struct RunningMachine *Machine = &machine;
 static const struct GameDriver *gamedrv;
 static const struct MachineDriver *drv;
+static struct osd_bitmap *real_scrbitmap;
 
 /* Variables to hold the status of various game options */
 struct GameOptions	options;
@@ -30,6 +32,11 @@ extern int spriteram_size,spriteram_2_size;
 int init_machine(void);
 void shutdown_machine(void);
 int run_machine(void);
+
+void overlay_free(void);
+void backdrop_free(void);
+void overlay_remap(void);
+void overlay_draw(struct osd_bitmap *dest,struct osd_bitmap *source);
 
 
 #ifdef MAME_DEBUG
@@ -709,10 +716,10 @@ int updatescreen(void)
 		profiler_mark(PROFILER_VIDEO);
 		if (need_to_clear_bitmap)
 		{
-			osd_clearbitmap(Machine->scrbitmap);
+			osd_clearbitmap(real_scrbitmap);
 			need_to_clear_bitmap = 0;
 		}
-		(*drv->vh_update)(Machine->scrbitmap,bitmap_dirty);  /* update screen */
+		draw_screen(bitmap_dirty);	/* update screen */
 		bitmap_dirty = 0;
 		profiler_mark(PROFILER_END);
 	}
@@ -720,15 +727,50 @@ int updatescreen(void)
 	/* the user interface must be called between vh_update() and osd_update_video_and_audio(), */
 	/* to allow it to overlay things on the game display. We must call it even */
 	/* if the frame is skipped, to keep a consistent timing. */
-	if (handle_user_interface())
+	if (handle_user_interface(real_scrbitmap))
 		/* quit if the user asked to */
 		return 1;
 
-	osd_update_video_and_audio();
+	update_video_and_audio();
 
 	if (drv->vh_eof_callback) (*drv->vh_eof_callback)();
 
 	return 0;
+}
+
+
+/***************************************************************************
+
+  Draw screen with overlays and backdrops (not yet)
+
+***************************************************************************/
+
+void draw_screen(int _bitmap_dirty)
+{
+	if (_bitmap_dirty)  overlay_remap();
+
+	(*Machine->drv->vh_update)(Machine->scrbitmap,_bitmap_dirty);  /* update screen */
+
+	if (artwork_overlay)
+	{
+		overlay_draw(overlay_real_scrbitmap, Machine->scrbitmap);
+	}
+}
+
+
+/***************************************************************************
+
+  Calls OSD layer handling overlays and backdrops (not yet)
+
+***************************************************************************/
+void update_video_and_audio(void)
+{
+	struct osd_bitmap *save = Machine->scrbitmap;
+	Machine->scrbitmap = real_scrbitmap;
+
+	osd_update_video_and_audio();
+
+	Machine->scrbitmap = save;
 }
 
 
@@ -754,6 +796,8 @@ int run_machine(void)
 			{
 				int	region;
 
+				real_scrbitmap = artwork_overlay ? overlay_real_scrbitmap : Machine->scrbitmap;
+
 				/* free memory regions allocated with REGIONFLAG_DISPOSE (typically gfx roms) */
 				for (region = 0; region < MAX_MEMORY_REGIONS; region++)
 				{
@@ -773,10 +817,10 @@ int run_machine(void)
 				{
 					/* if there is no saved config, it must be first time we run this game, */
 					/* so show the disclaimer. */
-					if (showcopyright()) goto userquit;
+					if (showcopyright(real_scrbitmap)) goto userquit;
 				}
 
-				if (showgamewarnings() == 0)  /* show info about incorrect behaviour (wrong colors etc.) */
+				if (showgamewarnings(real_scrbitmap) == 0)  /* show info about incorrect behaviour (wrong colors etc.) */
 				{
 					/* shut down the leds (work around Allegro hanging bug in the DOS port) */
 					osd_led_w(0,1);
@@ -828,6 +872,8 @@ userquit:
 				/* some 68000 games will not work */
 				sound_stop();
 				if (drv->vh_stop) (*drv->vh_stop)();
+				overlay_free();
+				backdrop_free();
 
 				res = 0;
 			}
@@ -874,14 +920,4 @@ int mame_highscore_enabled(void)
 #endif /* MAME_NET */
 
 	return 1;
-}
-
-
-void CLIB_DECL logerror(const char *text,...)
-{
-	va_list arg;
-	va_start(arg,text);
-	if (options.errorlog)
-		vfprintf(options.errorlog,text,arg);
-	va_end(arg);
 }

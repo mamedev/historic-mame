@@ -65,9 +65,9 @@ Any comments/updates/bug reports to:
 #ifdef MAME_DEBUG
 #include "host.h"
 
-#include "i86intrf.h"
-#if HAS_I286
-#include "i286intr.h"
+#include "i86intf.h"
+#if (HAS_I286)
+#include "i286intf.h"
 #endif
 
 /* Little endian uint read */
@@ -167,6 +167,7 @@ static int addr32bit=0;
 
 /* watch out for aad && aam with odd operands */
 
+static char *(*opmap1)[256];
 static char *op86map1[256] = {
 /* 0 */
   "add %Eb,%Gb",      "add %Ev,%Gv",     "add %Gb,%Eb",    "add %Gv,%Ev",
@@ -350,7 +351,7 @@ static char *opv30map1[256] = {
   "add %Eb,%Gb",      "add %Ev,%Gv",     "add %Gb,%Eb",    "add %Gv,%Ev",
   "add al,%Ib",       "add %eax,%Iv",    "push es",        "pop es",
   "or %Eb,%Gb",       "or %Ev,%Gv",      "or %Gb,%Eb",     "or %Gv,%Ev",
-  "or al,%Ib",        "or %eax,%Iv",     "push cs",        "%2"/*?*/,
+  "or al,%Ib",        "or %eax,%Iv",     "push cs",        "%2 "/*?*/,
 /* 1 */
   "adc %Eb,%Gb",      "adc %Ev,%Gv",     "adc %Gb,%Eb",    "adc %Gv,%Ev",
   "adc al,%Ib",       "adc %eax,%Iv",    "push ss",        "pop ss",
@@ -434,14 +435,13 @@ static char *opv30map1[256] = {
   "cld",              "std",             "%g3",            "%g4"
 };
 
-
-#if HAS_I286
+#if (HAS_I286)
 static char *op286map1[256] = {
 /* 0 */
   "add %Eb,%Gb",      "add %Ev,%Gv",     "add %Gb,%Eb",    "add %Gv,%Ev",
   "add al,%Ib",       "add %eax,%Iv",    "push es",        "pop es",
   "or %Eb,%Gb",       "or %Ev,%Gv",      "or %Gb,%Eb",     "or %Gv,%Ev",
-  "or al,%Ib",        "or %eax,%Iv",     "push cs",        NULL,
+  "or al,%Ib",        "or %eax,%Iv",     "push cs",        "%2 ",
 /* 1 */
   "adc %Eb,%Gb",      "adc %Ev,%Gv",     "adc %Gb,%Eb",    "adc %Gv,%Ev",
   "adc al,%Ib",       "adc %eax,%Iv",    "push ss",        "pop ss",
@@ -468,7 +468,7 @@ static char *op286map1[256] = {
   "pop %eax",         "pop %ecx",        "pop %edx",       "pop %ebx",
   "pop %esp",         "pop %ebp",        "pop %esi",       "pop %edi",
 /* 6 */
-  "pusha%d ",         "popa%d ",         "bound %Gv,%Ma",  NULL,
+  "pusha%d ",         "popa%d ",         "bound %Gv,%Ma",  "arpl %Ew,%Rw",
   NULL,               NULL,              NULL,             NULL,
   "push %Iv",         "imul %Gv,%Ev,%Iv","push %Ix",       "imul %Gv,%Ev,%Ib",
   "insb",             "ins%ew",          "outsb",          "outs%ew",
@@ -526,7 +526,7 @@ static char *op286map1[256] = {
 };
 #endif
 
-static char *opmap1[256] = {
+static char *op386map1[256] = {
 /* 0 */
   "add %Eb,%Gb",      "add %Ev,%Gv",     "add %Gb,%Eb",    "add %Gv,%Ev",
   "add al,%Ib",       "add %eax,%Iv",    "push es",        "pop es",
@@ -1349,7 +1349,7 @@ static void percent(char type, char subtype)
             prefix = subtype;
             c = getbyte();
             wordop = c & 1;
-            ua_str(opmap1[c]);
+            ua_str((*opmap1)[c]);
             break;
        case ':':
             if (prefix)
@@ -1358,7 +1358,7 @@ static void percent(char type, char subtype)
        case ' ':
             c = getbyte();
             wordop = c & 1;
-            ua_str(opmap1[c]);
+            ua_str((*opmap1)[c]);
             break;
        }
        break;
@@ -1369,14 +1369,14 @@ static void percent(char type, char subtype)
             addrsize = 48 - addrsize;
             c = getbyte();
             wordop = c & 1;
-            ua_str(opmap1[c]);
+            ua_str((*opmap1)[c]);
 /*            ua_str(opmap1[getbyte()]); */
             break;
        case 'o':
             opsize = 48 - opsize;
             c = getbyte();
             wordop = c & 1;
-            ua_str(opmap1[c]);
+            ua_str((*opmap1)[c]);
 /*            ua_str(opmap1[getbyte()]); */
             break;
        }
@@ -1442,6 +1442,7 @@ unsigned DasmI86(char* buffer, unsigned pc)
 	wordop = c & 1;
 	must_do_size = 1;
 	invalid_opcode = 0;
+	opmap1=&op86map1;
 	ua_str(op86map1[c]);
 
   	if (invalid_opcode) {
@@ -1480,6 +1481,7 @@ unsigned DasmI186(char* buffer, unsigned pc)
 	wordop = c & 1;
 	must_do_size = 1;
 	invalid_opcode = 0;
+	opmap1=&op186map1;
 	ua_str(op186map1[c]);
 
   	if (invalid_opcode) {
@@ -1518,6 +1520,7 @@ unsigned DasmV30(char* buffer, unsigned pc)
 	wordop = c & 1;
 	must_do_size = 1;
 	invalid_opcode = 0;
+	opmap1=&opv30map1;
 	ua_str(opv30map1[c]);
 
   	if (invalid_opcode) {
@@ -1531,7 +1534,7 @@ unsigned DasmV30(char* buffer, unsigned pc)
 	return instruction_offset-pc;
 }
 
-#if HAS_I286
+#if (HAS_I286)
 unsigned DasmI286(char* buffer, unsigned pc)
 {
   	unsigned c;
@@ -1557,6 +1560,7 @@ unsigned DasmI286(char* buffer, unsigned pc)
 	wordop = c & 1;
 	must_do_size = 1;
 	invalid_opcode = 0;
+	opmap1=&op286map1;
 	ua_str(op286map1[c]);
 
   	if (invalid_opcode) {
@@ -1597,7 +1601,8 @@ unsigned DasmI386(char* buffer, unsigned pc)
 	wordop = c & 1;
 	must_do_size = 1;
 	invalid_opcode = 0;
-	ua_str(opmap1[c]);
+	opmap1=&op386map1;
+	ua_str(op386map1[c]);
 
   	if (invalid_opcode) {
 		/* restart output buffer */

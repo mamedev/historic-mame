@@ -41,8 +41,6 @@ WRITE_HANDLER( tempest_colorram_w );
 WRITE_HANDLER( mhavoc_colorram_w );
 WRITE_HANDLER( quantum_colorram_w );
 
-void dvg_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void avg_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int dvg_start(void);
 int avg_start(void);
 int avg_start_tempest(void);

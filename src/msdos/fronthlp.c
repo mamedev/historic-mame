@@ -738,7 +738,9 @@ int frontend_help (int argc, char **argv)
 		case LIST_GAMELISTFOOTER: /* GAMELIST.TXT */
 			printf("+----------------------------------+-------+-------+-------+-------+----------+\n\n");
 			printf("(1) There are variants of the game (usually bootlegs) that work correctly\n");
+#if (HAS_SAMPLES)
 			printf("(2) Needs samples provided separately\n");
+#endif
 			return 0;
 			break;
 
@@ -814,6 +816,7 @@ int frontend_help (int argc, char **argv)
 
 					{
 						const char **samplenames = 0;
+#if (HAS_SAMPLES)
 						for (j = 0;drivers[i]->drv->sound[j].sound_type && j < MAX_SOUND; j++)
 						{
 							if (drivers[i]->drv->sound[j].sound_type == SOUND_SAMPLES)
@@ -822,6 +825,7 @@ int frontend_help (int argc, char **argv)
 								break;
 							}
 						}
+#endif
 						if (drivers[i]->flags & GAME_NO_SOUND)
 							printf("|   No  ");
 						else if (drivers[i]->flags & GAME_IMPERFECT_SOUND)

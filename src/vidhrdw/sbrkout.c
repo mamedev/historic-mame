@@ -15,18 +15,16 @@
 unsigned char *sbrkout_horiz_ram;
 unsigned char *sbrkout_vert_ram;
 
-static struct artwork *overlay;
-
 /* The first entry defines the color with which the bitmap is filled initially */
 /* The array is terminated with an entry with negative coordinates. */
 /* At least two entries are needed. */
-static const struct artwork_element sbrkout_ol[]={
-	{{	0, 256,   0, 256}, 0xFF, 0xFF, 0xFF,   0xFF},	/* white */
-	{{208, 248,   8, 218}, 0x00, 0x00, 0xFF,   0xFF},	/* blue */
-	{{176, 208,   8, 218}, 0xFF, 0x80, 0x00,   0xFF},	/* orange */
-	{{144, 176,   8, 218}, 0x00, 0xFF, 0x00,   0xFF},	/* green */
-	{{ 96, 144,   8, 218}, 0xFF, 0xFF, 0x00,   0xFF},	/* yellow */
-	{{ 16,	24,   8, 218}, 0x00, 0x00, 0xFF,   0xFF},	/* blue */
+static const struct artwork_element sbrkout_ol[] =
+{
+	{{208, 247,   8, 217}, 0x20, 0x20, 0xff,   OVERLAY_DEFAULT_OPACITY},	/* blue */
+	{{176, 207,   8, 217}, 0xff, 0x80, 0x10,   OVERLAY_DEFAULT_OPACITY},	/* orange */
+	{{144, 175,   8, 217}, 0x20, 0xff, 0x20,   OVERLAY_DEFAULT_OPACITY},	/* green */
+	{{ 96, 143,   8, 217}, 0xff, 0xff, 0x20,   OVERLAY_DEFAULT_OPACITY},	/* yellow */
+	{{ 16,	23,   8, 217}, 0x20, 0x20, 0xff,   OVERLAY_DEFAULT_OPACITY},	/* blue */
 	{{-1,-1,-1,-1},0,0,0,0}
 };
 
@@ -41,21 +39,9 @@ int sbrkout_vh_start(void)
 	if (generic_vh_start()!=0)
 		return 1;
 
-	if ((overlay = artwork_create(sbrkout_ol, start_pen, Machine->drv->total_colors-start_pen))==NULL)
-		return 1;
+	overlay_create(sbrkout_ol, start_pen, Machine->drv->total_colors-start_pen);
 
 	return 0;
-}
-
-/***************************************************************************
-***************************************************************************/
-
-void sbrkout_vh_stop(void)
-{
-	if (overlay)
-		artwork_free(overlay);
-
-	generic_vh_stop();
 }
 
 /***************************************************************************
@@ -71,10 +57,9 @@ void sbrkout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int ball;
 
 
-	if (palette_recalc())
+	if (palette_recalc() || full_refresh)
 	{
 		memset(dirtybuffer,1,videoram_size);
-		overlay_remap(overlay);
 	}
 
 	/* for every character in the Video RAM, check if it has been modified */
@@ -83,13 +68,12 @@ void sbrkout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		if (dirtybuffer[offs])
 		{
-			int charcode;
-			int sx,sy;
-			int color;
+			int code,sx,sy,color;
+
 
 			dirtybuffer[offs]=0;
 
-			charcode = videoram[offs] & 0x3F;
+			code = videoram[offs] & 0x3f;
 
 			sx = 8*(offs % 32);
 			sy = 8*(offs / 32);
@@ -98,7 +82,7 @@ void sbrkout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			color = ((videoram[offs] & 0x80)>>7);
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
-					charcode, color,
+					code, color,
 					0,0,sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
@@ -110,19 +94,18 @@ void sbrkout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* Draw each one of our three balls */
 	for (ball=2;ball>=0;ball--)
 	{
-		int sx,sy;
-		int picture;
+		int sx,sy,code;
 
-		sx=31*8-sbrkout_horiz_ram[ball*2];
-		sy=30*8-sbrkout_vert_ram[ball*2];
-		picture=((sbrkout_vert_ram[ball*2+1] & 0x80) >> 7);
+
+		sx = 31*8-sbrkout_horiz_ram[ball*2];
+		sy = 30*8-sbrkout_vert_ram[ball*2];
+
+		code = ((sbrkout_vert_ram[ball*2+1] & 0x80) >> 7);
 
 		drawgfx(bitmap,Machine->gfx[1],
-				picture,1,
+				code,1,
 				0,0,sx,sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
-
-	overlay_draw(bitmap,overlay);
 }
 

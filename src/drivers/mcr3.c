@@ -108,7 +108,6 @@ void mcrmono_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void dotron_change_light(int light);
 int dotron_vh_start(void);
-void dotron_vh_stop(void);
 void dotron_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void spyhunt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -1200,13 +1199,13 @@ static struct MachineDriver machine_driver_dotron =
 	/* video hardware */
 	800, 600, { 0, 800-1, 0, 600-1 },
 	gfxdecodeinfo,
-	254, 4*16,		/* The extra colors are for the backdrop */
+	4*16+32768, 4*16,		/* The extra colors are for the backdrop */
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_DIRTY | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	dotron_vh_start,
-	dotron_vh_stop,
+	generic_vh_stop,
 	dotron_vh_screenrefresh,
 
 	/* sound hardware */

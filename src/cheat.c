@@ -241,8 +241,8 @@ int he_did_cheat;
 
 /* Local routines */
 static INT32 DisplayHelpFile (INT32 selected);
-static INT32 EditCheatMenu (INT32 selected, UINT8 cheatnum);
-static INT32 CommentMenu (INT32 selected, int cheat_index);
+static INT32 EditCheatMenu (struct osd_bitmap *bitmap, INT32 selected, UINT8 cheatnum);
+static INT32 CommentMenu (struct osd_bitmap *bitmap, INT32 selected, int cheat_index);
 
 /* Local variables */
 /* static int	search_started = 0; */
@@ -1423,7 +1423,7 @@ void EditCheat(int CheatNo)
 }
 
 
-INT32 EnableDisableCheatMenu (INT32 selected)
+INT32 EnableDisableCheatMenu (struct osd_bitmap *bitmap, INT32 selected)
 {
 	int sel;
 	static INT8 submenu_choice;
@@ -1440,7 +1440,7 @@ INT32 EnableDisableCheatMenu (INT32 selected)
 	/* If a submenu has been selected, go there */
 	if (submenu_choice)
 	{
-		submenu_choice = CommentMenu (submenu_choice, tag[sel]);
+		submenu_choice = CommentMenu (bitmap, submenu_choice, tag[sel]);
 		if (submenu_choice == -1)
 		{
 			submenu_choice = 0;
@@ -1484,7 +1484,7 @@ INT32 EnableDisableCheatMenu (INT32 selected)
 	menu_subitem[total++] = NULL;
 	menu_item[total] = 0;	/* terminate array */
 
-	ui_displaymenu(menu_item,menu_subitem,0,sel,0);
+	ui_displaymenu(bitmap,menu_item,menu_subitem,0,sel,0);
 
 	if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
 		sel = (sel + 1) % total;
@@ -1542,7 +1542,7 @@ INT32 EnableDisableCheatMenu (INT32 selected)
 	return sel + 1;
 }
 
-static INT32 CommentMenu (INT32 selected, int cheat_index)
+static INT32 CommentMenu (struct osd_bitmap *bitmap, INT32 selected, int cheat_index)
 {
 	char buf[2048];
 	char buf2[256];
@@ -1573,7 +1573,7 @@ static INT32 CommentMenu (INT32 selected, int cheat_index)
 	strcat(buf," ");
 	strcat(buf,ui_getstring (UI_righthilight));
 
-	ui_displaymessagewindow(buf);
+	ui_displaymessagewindow(bitmap, buf);
 
 	if (input_ui_pressed(IPT_UI_SELECT))
 		sel = -1;
@@ -1593,7 +1593,7 @@ static INT32 CommentMenu (INT32 selected, int cheat_index)
 	return sel + 1;
 }
 
-INT32 AddEditCheatMenu (INT32 selected)
+INT32 AddEditCheatMenu (struct osd_bitmap *bitmap, INT32 selected)
 {
 	int sel;
 	static INT8 submenu_choice;
@@ -1620,7 +1620,7 @@ INT32 AddEditCheatMenu (INT32 selected)
 	/* If a submenu has been selected, go there */
 	if (submenu_choice)
 	{
-		submenu_choice = EditCheatMenu (submenu_choice, tag[sel]);
+		submenu_choice = EditCheatMenu (bitmap, submenu_choice, tag[sel]);
 		if (submenu_choice == -1)
 		{
 			submenu_choice = 0;
@@ -1635,7 +1635,7 @@ INT32 AddEditCheatMenu (INT32 selected)
 	menu_item[total] = NULL; /* TODO: add help string */
 	menu_item[total+1] = 0;	/* terminate array */
 
-	ui_displaymenu(menu_item,0,0,sel,0);
+	ui_displaymenu(bitmap,menu_item,0,0,sel,0);
 
 	if (code_pressed_memory_repeat (KEYCODE_INSERT, 8))
 	{
@@ -1700,7 +1700,7 @@ INT32 AddEditCheatMenu (INT32 selected)
 	return sel + 1;
 }
 
-static INT32 EditCheatMenu (INT32 selected, UINT8 cheat_num)
+static INT32 EditCheatMenu (struct osd_bitmap *bitmap, INT32 selected, UINT8 cheat_num)
 {
 	int sel;
 	int total, total2;
@@ -1788,7 +1788,7 @@ static INT32 EditCheatMenu (INT32 selected, UINT8 cheat_num)
 		menu_subitem[total2] = NULL;
 	}
 
-	ui_displaymenu(menu_item,menu_subitem,flag,sel,arrowize);
+	ui_displaymenu(bitmap,menu_item,menu_subitem,flag,sel,arrowize);
 
 	if (code_pressed_memory_repeat (KEYCODE_INSERT, 8))
 	{
@@ -2040,7 +2040,7 @@ int FindFreeWatch (void)
 	return -1;
 }
 
-void DisplayWatches (void)
+void DisplayWatches (struct osd_bitmap *bitmap)
 {
 	int i;
 	char buf[256];
@@ -2095,12 +2095,12 @@ void DisplayWatches (void)
 					break;
 			}
 
-			ui_text (buf, watches[i].x, watches[i].y);
+			ui_text (bitmap, buf, watches[i].x, watches[i].y);
 		}
 	}
 }
 
-INT32 ConfigureWatch (INT32 selected, UINT8 watchnum)
+INT32 ConfigureWatch (struct osd_bitmap *bitmap, INT32 selected, UINT8 watchnum)
 {
 #ifdef NUM_ENTRIES
 #undef NUM_ENTRIES
@@ -2195,7 +2195,7 @@ INT32 ConfigureWatch (INT32 selected, UINT8 watchnum)
 
 	menu_subitem[total2] = NULL;
 
-	ui_displaymenu(menu_item,menu_subitem,flag,sel,arrowize);
+	ui_displaymenu(bitmap,menu_item,menu_subitem,flag,sel,arrowize);
 
 	if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
 	{
@@ -2399,7 +2399,7 @@ INT32 ConfigureWatch (INT32 selected, UINT8 watchnum)
 	return sel + 1;
 }
 
-INT32 ChooseWatch (INT32 selected)
+INT32 ChooseWatch (struct osd_bitmap *bitmap, INT32 selected)
 {
 	int sel;
 	static INT8 submenu_choice;
@@ -2415,7 +2415,7 @@ INT32 ChooseWatch (INT32 selected)
 	/* If a submenu has been selected, go there */
 	if (submenu_choice)
 	{
-		submenu_choice = ConfigureWatch (submenu_choice, sel);
+		submenu_choice = ConfigureWatch (bitmap, submenu_choice, sel);
 
 		if (submenu_choice == -1)
 		{
@@ -2455,7 +2455,7 @@ INT32 ChooseWatch (INT32 selected)
 	menu_item[total++] = ui_getstring (UI_returntoprior);
 	menu_item[total] = 0;	/* terminate array */
 
-	ui_displaymenu(menu_item,0,0,sel,0);
+	ui_displaymenu(bitmap,menu_item,0,0,sel,0);
 
 	if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
 		sel = (sel + 1) % total;
@@ -2509,7 +2509,7 @@ static INT32 DisplayHelpFile (INT32 selected)
 #pragma mark -
 #endif
 
-INT32 cheat_menu(INT32 selected)
+INT32 cheat_menu(struct osd_bitmap *bitmap, INT32 selected)
 {
 #ifdef MENU_return
 #undef MENU_return
@@ -2529,10 +2529,10 @@ INT32 cheat_menu(INT32 selected)
 		switch (sel)
 		{
 			case 0:
-				submenu_choice = EnableDisableCheatMenu (submenu_choice);
+				submenu_choice = EnableDisableCheatMenu (bitmap, submenu_choice);
 				break;
 			case 1:
-				submenu_choice = AddEditCheatMenu (submenu_choice);
+				submenu_choice = AddEditCheatMenu (bitmap, submenu_choice);
 				break;
 			case 2:
 				submenu_choice = StartSearch (submenu_choice);
@@ -2547,7 +2547,7 @@ INT32 cheat_menu(INT32 selected)
 				submenu_choice = RestoreSearch (submenu_choice);
 				break;
 			case 6:
-				submenu_choice = ChooseWatch (submenu_choice);
+				submenu_choice = ChooseWatch (bitmap, submenu_choice);
 				break;
 			case 7:
 				submenu_choice = DisplayHelpFile (submenu_choice);
@@ -2576,7 +2576,7 @@ INT32 cheat_menu(INT32 selected)
 	menu_item[total++] = ui_getstring (UI_returntomain);
 	menu_item[total] = 0;
 
-	ui_displaymenu(menu_item,0,0,sel,0);
+	ui_displaymenu(bitmap,menu_item,0,0,sel,0);
 
 	if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
 		sel = (sel + 1) % total;
@@ -2646,9 +2646,9 @@ void StopCheat(void)
 #endif
 }
 
-void DoCheat(void)
+void DoCheat(struct osd_bitmap *bitmap)
 {
-	DisplayWatches ();
+	DisplayWatches (bitmap);
 
 	if ((CheatEnabled) && (ActiveCheatTotal))
 	{

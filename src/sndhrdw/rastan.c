@@ -77,7 +77,6 @@ void Interrupt_Controller(void)
 	}
 }
 
-
 READ_HANDLER( rastan_a001_r )
 {
 
@@ -121,7 +120,6 @@ READ_HANDLER( rastan_a001_r )
 
 	return pom;
 }
-
 
 WRITE_HANDLER( rastan_a000_w )
 {
@@ -206,10 +204,24 @@ WRITE_HANDLER( rastan_sound_port_w )
 {
 	int pom;
 
-	pom = (data >> 2 ) & 0x01;
-	m_transmit = 1 + (1 - pom); /* one or two bytes long transmission */
-	m_lasthalf = 0;
-	m_tr_mode = m_transmit;
+	if ((data&0xff) != 0x01)
+	{
+		pom = (data >> 2 ) & 0x01;
+		m_transmit = 1 + (1 - pom); /* one or two bytes long transmission */
+		m_lasthalf = 0;
+		m_tr_mode = m_transmit;
+	}
+	else
+	{
+		if (m_transmit == 1)
+		{
+			/*logerror("single-doubled (first was=%02x)\n",m_lasthalf);*/
+		}
+		else
+		{
+			logerror("rastan_sound_port_w() - unknown innerworking\n");
+		}
+	}
 }
 
 WRITE_HANDLER( rastan_sound_comm_w )
@@ -234,7 +246,6 @@ WRITE_HANDLER( rastan_sound_comm_w )
 				soundcommand = m_lasthalf + (data << 4);
 				SlaveContrStat |= 1; /* report data pending for slave */
 				NMI_req = 1;
-
 #ifdef REPORT_DATA_FLOW
 				logerror("Main sent double %02x (PC = %08x) \n",m_lasthalf+(data<<4), cpu_get_pc() );
 #endif
@@ -255,8 +266,6 @@ WRITE_HANDLER( rastan_sound_comm_w )
 		}
 	}
 }
-
-
 
 READ_HANDLER( rastan_sound_comm_r )
 {
@@ -284,8 +293,6 @@ READ_HANDLER( rastan_sound_comm_r )
 		return SlaveContrStat;
 	}
 }
-
-
 
 WRITE_HANDLER( rastan_sound_w )
 {

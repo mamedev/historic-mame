@@ -682,17 +682,17 @@ static struct MemoryReadAddress readmem_mcu[] ={
 	/* input ports and dips are mapped here */
 
 	{ 0x0000, 0x0000, MRA_NOP },			// Keep logging quiet
-	{ 0x0001, 0x0001, input_port_0_r },
+	{ 0x0001, 0x0001, namcos2_input_port_0_r },
 	{ 0x0002, 0x0002, input_port_1_r },
 	{ 0x0003, 0x0003, namcos2_mcu_port_d_r },
-	{ 0x0007, 0x0007, input_port_10_r },
+	{ 0x0007, 0x0007, namcos2_input_port_10_r },
 	{ 0x0010, 0x0010, namcos2_mcu_analog_ctrl_r },
 	{ 0x0011, 0x0011, namcos2_mcu_analog_port_r },
 	{ 0x0008, 0x003f, MRA_RAM },			// Fill in register to stop logging
 	{ 0x0040, 0x01bf, MRA_RAM },
 	{ 0x01c0, 0x1fff, MRA_ROM },
 	{ 0x2000, 0x2000, input_port_11_r },
-	{ 0x3000, 0x3000, input_port_12_r },
+	{ 0x3000, 0x3000, namcos2_input_port_12_r },
 	{ 0x3001, 0x3001, input_port_13_r },
 	{ 0x3002, 0x3002, input_port_14_r },
 	{ 0x3003, 0x3003, input_port_15_r },
@@ -871,8 +871,16 @@ INPUT_PORTS_START( assault )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_START	 /* 63B05Z0 - $3002 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_START	 /* 63B05Z0 - $3003 */
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+//	PORT_START	 /* 63B05Z0 - $3003 */
+//	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* fake port15 for single joystick control */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_CHEAT )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_CHEAT )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_CHEAT )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_CHEAT )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_CHEAT )
+	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( driving )

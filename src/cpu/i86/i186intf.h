@@ -16,7 +16,7 @@
 /* Public functions */
 #define i186_reset i86_reset
 #define i186_exit i86_exit
-extern int i186_execute(int cycles);
+extern int i186_execute(int cyclecount);
 #define i186_get_context i86_get_context
 #define i186_set_context i86_set_context
 #define i186_get_pc i86_get_pc

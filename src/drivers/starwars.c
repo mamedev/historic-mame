@@ -534,14 +534,14 @@ static struct MachineDriver machine_driver_starwars =
 	/* video hardware */
 	400, 300, { 0, 250, 0, 280 },
 	0,
-	256,256, /* Number of colours, length of colour lookup table */
+	256,0, /* Number of colours, length of colour lookup table */
 	avg_init_palette_swars,
 
 	VIDEO_TYPE_VECTOR,
 	0,							/* Handler to initialise video handware */
 	avg_start_starwars,			/* Start video hardware */
 	avg_stop,					/* Stop video hardware */
-	avg_screenrefresh,			/* Do a screen refresh */
+	vector_vh_screenrefresh,	/* Do a screen refresh */
 
 	/* sound hardware */
 	0,0,0,0,
@@ -588,14 +588,14 @@ static struct MachineDriver machine_driver_esb =
 	/* video hardware */
 	400, 300, { 0, 250, 0, 280 },
 	0,
-	256,256, /* Number of colours, length of colour lookup table */
+	256,0, /* Number of colours, length of colour lookup table */
 	avg_init_palette_swars,
 
 	VIDEO_TYPE_VECTOR,
 	0,							/* Handler to initialise video handware */
 	avg_start_starwars,			/* Start video hardware */
 	avg_stop,					/* Stop video hardware */
-	avg_screenrefresh,			/* Do a screen refresh */
+	vector_vh_screenrefresh,	/* Do a screen refresh */
 
 	/* sound hardware */
 	0,0,0,0,

@@ -67,7 +67,6 @@ struct ImageFile {
 /* The host platform should fill these fields with the preferences specified in the GUI */
 /* or on the commandline. */
 struct GameOptions {
-	FILE *errorlog;
 	void *record;
 	void *playback;
 	void *language_file; /* LBO 042400 */
@@ -103,9 +102,9 @@ extern struct RunningMachine *Machine;
 
 int run_game (int game);
 int updatescreen(void);
+void draw_screen(int bitmap_dirty);
+void update_video_and_audio(void);
 /* osd_fopen() must use this to know if high score files can be used */
 int mame_highscore_enabled(void);
-
-void CLIB_DECL logerror(const char *text,...);
 
 #endif

@@ -15,7 +15,7 @@
 #define HOLD_LINE       2       /* hold interrupt line until enable is true */
 #define PULSE_LINE		3		/* pulse interrupt line for one instruction */
 
-#define MAX_REGS		64		/* maximum number of register of any CPU */
+#define MAX_REGS		128 	/* maximum number of register of any CPU */
 
 /* Values passed to the cpu_info function of a core to retrieve information */
 enum {
@@ -99,6 +99,9 @@ enum {
 #endif
 #ifndef HAS_N2A03
 #define HAS_N2A03		0
+#endif
+#ifndef HAS_M4510
+#define HAS_M4510		0
 #endif
 #ifndef HAS_H6280
 #define HAS_H6280		0
@@ -231,6 +234,9 @@ enum {
 #endif
 #ifndef HAS_ADSP2100
 #define HAS_ADSP2100	0
+#endif
+#ifndef HAS_MIPS
+#define HAS_MIPS		0
 #endif
 
 /* ASG 971222 -- added this generic structure */

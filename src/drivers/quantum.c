@@ -175,14 +175,14 @@ static struct MachineDriver machine_driver_quantum =
 	/* video hardware */
 	300, 400, { 0, 600, 0, 900 },
 	0,
-	256, 256,
+	256, 0,
 	avg_init_palette_multi,
 
 	VIDEO_TYPE_VECTOR,
 	0,
 	avg_start_quantum,
 	avg_stop,
-	avg_screenrefresh,
+	vector_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,

@@ -106,7 +106,7 @@ unsigned m68000_get_reg(int regnum)
 			{
 				unsigned offset = m68k_peek_isp() + 4 * (REG_SP_CONTENTS - regnum);
 				if( offset < 0xfffffd )
-					return cpu_readmem24_dword( offset );
+					return cpu_readmem24bew_dword( offset );
 			}
     }
     return 0;
@@ -145,7 +145,7 @@ void m68000_set_reg(int regnum, unsigned val)
 			{
 				unsigned offset = m68k_peek_isp() + 4 * (REG_SP_CONTENTS - regnum);
 				if( offset < 0xfffffd )
-					cpu_writemem24_dword( offset, val );
+					cpu_writemem24bew_dword( offset, val );
 			}
     }
 }
@@ -275,7 +275,7 @@ unsigned m68000_dasm(char *buffer, unsigned pc)
 /****************************************************************************
  * M68010 section
  ****************************************************************************/
-#if HAS_M68010
+#if (HAS_M68010)
 void m68010_reset(void *param) { m68000_reset(param); }
 void m68010_exit(void) { m68000_exit(); }
 int  m68010_execute(int cycles) { return m68000_execute(cycles); }
@@ -314,7 +314,7 @@ unsigned m68010_dasm(char *buffer, unsigned pc)
 /****************************************************************************
  * M680EC20 section
  ****************************************************************************/
-#if HAS_M68EC020
+#if (HAS_M68EC020)
 void m68ec020_reset(void *param) { m68k_set_cpu_mode(M68K_CPU_MODE_68EC020); m68000_reset(param); }
 void m68ec020_exit(void) { m68000_exit(); }
 int  m68ec020_execute(int cycles) { return m68000_execute(cycles); }
@@ -353,7 +353,7 @@ unsigned m68ec020_dasm(char *buffer, unsigned pc)
 /****************************************************************************
  * M68020 section
  ****************************************************************************/
-#if HAS_M68020
+#if (HAS_M68020)
 void m68020_reset(void *param) { m68k_set_cpu_mode(M68K_CPU_MODE_68020); m68000_reset(param); }
 void m68020_exit(void) { m68000_exit(); }
 int  m68020_execute(int cycles) { return m68000_execute(cycles); }

@@ -44,7 +44,7 @@ extern unsigned m6809_dasm(char *buffer, unsigned pc);
 /****************************************************************************/
 /* For now the 6309 is using the functions of the 6809						*/
 /****************************************************************************/
-#if HAS_HD6309
+#if (HAS_HD6309)
 #define M6309_A 				M6809_A
 #define M6309_B 				M6809_B
 #define M6309_PC				M6809_PC

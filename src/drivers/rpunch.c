@@ -242,18 +242,18 @@ WRITE_HANDLER(upd_data_w)
 
 static READ_HANDLER(mirror_r)
 {
-	return cpu_readmem24_word(offset & 0xfffff);
+	return cpu_readmem24bew_word(offset & 0xfffff);
 }
 
 
 static WRITE_HANDLER(mirror_w)
 {
 	if (!(data & 0xffff0000))
-		cpu_writemem24_word(offset & 0xfffff, data);
+		cpu_writemem24bew_word(offset & 0xfffff, data);
 	else if (!(data & 0xff000000))
-		cpu_writemem24(offset & 0xfffff, (data >> 8) & 0xff);
+		cpu_writemem24bew(offset & 0xfffff, (data >> 8) & 0xff);
 	else
-		cpu_writemem24((offset & 0xfffff) + 1, data & 0xff);
+		cpu_writemem24bew((offset & 0xfffff) + 1, data & 0xff);
 }
 
 

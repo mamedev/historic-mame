@@ -4,7 +4,7 @@
 #include "memory.h"
 #include "osd_cpu.h"
 
-#include "i86intrf.h"
+#include "i86intf.h"
 
 #define V30_INT_NONE I86_INT_NONE
 #define V30_NMI_INT I86_NMI_INT

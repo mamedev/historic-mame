@@ -126,7 +126,7 @@ READ_HANDLER( thunderj_video_control_r )
 
 	/* Use these lines to detect when things go south:
 
-	if (cpu_readmem24_word(0x163482) > 0xfff)
+	if (cpu_readmem24bew_word(0x163482) > 0xfff)
 		printf("You're screwed!");*/
 
 	return atarigen_video_control_r(offset);

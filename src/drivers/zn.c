@@ -25,6 +25,7 @@ Notes:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "cpu/mips/mips.h"
 #include "cpu/z80/z80.h"
 
 static int qcode;
@@ -34,8 +35,11 @@ static int queue_len;
 
 WRITE_HANDLER( qsound_queue_w )
 {
-    queue_data = data;
-    queue_len = 2;
+    if( cpu_getstatus( 1 ) != 0 )
+    {
+        queue_data = data;
+        queue_len = 2;
+    }
 }
 
 static int zn_vh_start( void )
@@ -79,21 +83,40 @@ static void zn_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
 
     if( refresh )
     {
-        struct DisplayText dt[ 3 ];
-        char *instructions = "SELECT WITH RIGHT&LEFT/UP&DN";
-        char text1[ 256 ];
-        sprintf( text1, "QSOUND CODE=%02x/%02x", qcode >> 8, qcode & 0xff );
-        dt[ 0 ].text = text1;
-        dt[ 0 ].color = UI_COLOR_INVERSE;
-        dt[ 0 ].x = ( Machine->uiwidth - Machine->uifontwidth * strlen( text1 ) ) / 2;
-        dt[ 0 ].y = 8*23;
-        dt[ 1 ].text = instructions;
-        dt[ 1 ].color = UI_COLOR_NORMAL;
-        dt[ 1 ].x = ( Machine->uiwidth - Machine->uifontwidth * strlen( instructions ) ) / 2;
-        dt[ 1 ].y = dt[ 0 ].y + 2 * Machine->uifontheight;
+            struct DisplayText dt[ 4 ];
+            char text1[ 256 ];
+            char text2[ 256 ];
+            char text3[ 256 ];
 
-        dt[ 2 ].text = 0; /* terminate array */
-        displaytext( dt, 0, 0 );
+            strcpy( text1, Machine->gamedrv->description );
+            if( strlen( text1 ) > Machine->uiwidth / Machine->uifontwidth )
+            {
+                text1[ Machine->uiwidth / Machine->uifontwidth ] = 0;
+            }
+            sprintf( text2, "QSOUND CODE=%02x/%02x", qcode >> 8, qcode & 0xff );
+            if( strlen( text2 ) > Machine->uiwidth / Machine->uifontwidth )
+            {
+                text2[ Machine->uiwidth / Machine->uifontwidth ] = 0;
+            }
+            strcpy( text3, "SELECT WITH RIGHT&LEFT/UP&DN" );
+            if( strlen( text3 ) > Machine->uiwidth / Machine->uifontwidth )
+            {
+                text3[ Machine->uiwidth / Machine->uifontwidth ] = 0;
+            }
+            dt[ 0 ].text = text1;
+            dt[ 0 ].color = UI_COLOR_NORMAL;
+            dt[ 0 ].x = ( Machine->uiwidth - Machine->uifontwidth * strlen( dt[ 0 ].text ) ) / 2;
+            dt[ 0 ].y = Machine->uiheight - Machine->uifontheight * 5;
+            dt[ 1 ].text = text2;
+            dt[ 1 ].color = UI_COLOR_NORMAL;
+            dt[ 1 ].x = ( Machine->uiwidth - Machine->uifontwidth * strlen( dt[ 1 ].text ) ) / 2;
+            dt[ 1 ].y = Machine->uiheight - Machine->uifontheight * 3;
+            dt[ 2 ].text = text3;
+            dt[ 2 ].color = UI_COLOR_NORMAL;
+            dt[ 2 ].x = ( Machine->uiwidth - Machine->uifontwidth * strlen( dt[ 2 ].text ) ) / 2;
+            dt[ 2 ].y = Machine->uiheight - Machine->uifontheight * 1;
+            dt[ 3 ].text = 0; /* terminate array */
+            displaytext( Machine->scrbitmap, dt, 0, 0 );
     }
 }
 
@@ -143,7 +166,7 @@ static struct GfxDecodeInfo zn_gfxdecodeinfo[] =
 
 static struct MemoryReadAddress zn_readmem[] =
 {
-    { 0x000000, 0x307ffff, MRA_ROM },
+    { 0xbfc00000, 0xc2c80000, MRA_BANK2 },
     { -1 }  /* end of table */
 };
 
@@ -171,8 +194,10 @@ int zn_interrupt( void )
 
 static void zn_init_machine( void )
 {
-    /* stop CPU1 as it's not really a z80. */
+    /* stop CPU1 as it doesn't do anything useful yet. */
     timer_suspendcpu( 0, 1, SUSPEND_REASON_DISABLE );
+    /* but give it some memory so it can reset. */
+    cpu_setbank( 2, memory_region( REGION_CPU1 ) );
 
     qcode = 0x0400;
     qcode_last = -1;
@@ -185,10 +210,10 @@ static struct MachineDriver machine_driver_zn =
     /* basic machine hardware */
     {
         {
-            CPU_Z80, /* CPU_MIPSR3000 ?? */
+			CPU_MIPS,
             33000000, /* 33mhz ?? */
             zn_readmem, zn_writemem, 0, 0,
-            0, 1  /* ??? interrupts per frame */
+			ignore_interrupt, 1  /* ??? interrupts per frame */
         },
         {
             CPU_Z80 | CPU_AUDIO_CPU,
@@ -269,188 +294,188 @@ INPUT_PORTS_END
 #define CODE_SIZE ( 0x3080000 )
 
 ROM_START( rvschool )
-    ROM_REGION( CODE_SIZE, REGION_CPU1 )      /* MIPS R3000 */
-    ROM_LOAD( "jst-04a", 0x0000000, 0x080000, 0x034b1011 )
-    ROM_LOAD( "jst-05m", 0x0080000, 0x400000, 0x723372b8 )
-    ROM_LOAD( "jst-06m", 0x0480000, 0x400000, 0x4248988e )
-    ROM_LOAD( "jst-07m", 0x0880000, 0x400000, 0xc84c5a16 )
-    ROM_LOAD( "jst-08m", 0x0C80000, 0x400000, 0x791b57f3 )
-    ROM_LOAD( "jst-09m", 0x1080000, 0x400000, 0x6df42048 )
-    ROM_LOAD( "jst-10m", 0x1480000, 0x400000, 0xd7e22769 )
-    ROM_LOAD( "jst-11m", 0x1880000, 0x400000, 0x0a033ac5 )
-    ROM_LOAD( "jst-12m", 0x1c80000, 0x400000, 0x43bd2ddd )
-    ROM_LOAD( "jst-13m", 0x2080000, 0x400000, 0x6b443235 )
+    ROM_REGION( CODE_SIZE, REGION_CPU1 )
+    ROM_LOAD_WIDE_SWAP( "jst-04a", 0x0000000, 0x080000, 0x034b1011 )
+    ROM_LOAD_WIDE_SWAP( "jst-05m", 0x0080000, 0x400000, 0x723372b8 )
+    ROM_LOAD_WIDE_SWAP( "jst-06m", 0x0480000, 0x400000, 0x4248988e )
+    ROM_LOAD_WIDE_SWAP( "jst-07m", 0x0880000, 0x400000, 0xc84c5a16 )
+    ROM_LOAD_WIDE_SWAP( "jst-08m", 0x0c80000, 0x400000, 0x791b57f3 )
+    ROM_LOAD_WIDE_SWAP( "jst-09m", 0x1080000, 0x400000, 0x6df42048 )
+    ROM_LOAD_WIDE_SWAP( "jst-10m", 0x1480000, 0x400000, 0xd7e22769 )
+    ROM_LOAD_WIDE_SWAP( "jst-11m", 0x1880000, 0x400000, 0x0a033ac5 )
+    ROM_LOAD_WIDE_SWAP( "jst-12m", 0x1c80000, 0x400000, 0x43bd2ddd )
+    ROM_LOAD_WIDE_SWAP( "jst-13m", 0x2080000, 0x400000, 0x6b443235 )
 
     ROM_REGION( 0x50000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "jst-02",  0x00000, 0x08000, 0x7809e2c3 )
     ROM_CONTINUE(        0x10000, 0x18000 )
     ROM_LOAD( "jst-03",  0x28000, 0x20000, 0x860ff24d )
 
-    ROM_REGION( 0x400000, REGION_SOUND1 ) /* Q Sound Samples */
+    ROM_REGION( 0x400000, REGION_SOUND1 | REGIONFLAG_SOUNDONLY ) /* Q Sound Samples */
     ROM_LOAD( "jst-01m", 0x0000000, 0x400000, 0x9a7c98f9 )
 ROM_END
 
 ROM_START( jgakuen )
-    ROM_REGION( CODE_SIZE, REGION_CPU1 )      /* MIPS R3000 */
-    ROM_LOAD( "jst-04j",  0x000000, 0x80000, 0x28b8000a )
-    ROM_LOAD( "jst-05m", 0x0080000, 0x400000, 0x723372b8 )
-    ROM_LOAD( "jst-06m", 0x0480000, 0x400000, 0x4248988e )
-    ROM_LOAD( "jst-07m", 0x0880000, 0x400000, 0xc84c5a16 )
-    ROM_LOAD( "jst-08m", 0x0C80000, 0x400000, 0x791b57f3 )
-    ROM_LOAD( "jst-09m", 0x1080000, 0x400000, 0x6df42048 )
-    ROM_LOAD( "jst-10m", 0x1480000, 0x400000, 0xd7e22769 )
-    ROM_LOAD( "jst-11m", 0x1880000, 0x400000, 0x0a033ac5 )
-    ROM_LOAD( "jst-12m", 0x1c80000, 0x400000, 0x43bd2ddd )
-    ROM_LOAD( "jst-13m", 0x2080000, 0x400000, 0x6b443235 )
+    ROM_REGION( CODE_SIZE, REGION_CPU1 )
+    ROM_LOAD_WIDE_SWAP( "jst-04j", 0x0000000, 0x080000, 0x28b8000a )
+    ROM_LOAD_WIDE_SWAP( "jst-05m", 0x0080000, 0x400000, 0x723372b8 )
+    ROM_LOAD_WIDE_SWAP( "jst-06m", 0x0480000, 0x400000, 0x4248988e )
+    ROM_LOAD_WIDE_SWAP( "jst-07m", 0x0880000, 0x400000, 0xc84c5a16 )
+    ROM_LOAD_WIDE_SWAP( "jst-08m", 0x0c80000, 0x400000, 0x791b57f3 )
+    ROM_LOAD_WIDE_SWAP( "jst-09m", 0x1080000, 0x400000, 0x6df42048 )
+    ROM_LOAD_WIDE_SWAP( "jst-10m", 0x1480000, 0x400000, 0xd7e22769 )
+    ROM_LOAD_WIDE_SWAP( "jst-11m", 0x1880000, 0x400000, 0x0a033ac5 )
+    ROM_LOAD_WIDE_SWAP( "jst-12m", 0x1c80000, 0x400000, 0x43bd2ddd )
+    ROM_LOAD_WIDE_SWAP( "jst-13m", 0x2080000, 0x400000, 0x6b443235 )
 
     ROM_REGION( 0x50000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "jst-02",  0x00000, 0x08000, 0x7809e2c3 )
     ROM_CONTINUE(        0x10000, 0x18000 )
     ROM_LOAD( "jst-03",  0x28000, 0x20000, 0x860ff24d )
 
-    ROM_REGION( 0x400000, REGION_SOUND1 ) /* Q Sound Samples */
+    ROM_REGION( 0x400000, REGION_SOUND1 | REGIONFLAG_SOUNDONLY ) /* Q Sound Samples */
     ROM_LOAD( "jst-01m", 0x0000000, 0x400000, 0x9a7c98f9 )
 ROM_END
 
 ROM_START( sfex )
-    ROM_REGION( CODE_SIZE, REGION_CPU1 )      /* MIPS R3000 */
-    ROM_LOAD( "sfe-04a", 0x0000000, 0x080000, 0x08247bd4 )
-    ROM_LOAD( "sfe-05m", 0x0080000, 0x400000, 0xeab781fe )
-    ROM_LOAD( "sfe-06m", 0x0480000, 0x400000, 0x999de60c )
-    ROM_LOAD( "sfe-07m", 0x0880000, 0x400000, 0x76117b0a )
-    ROM_LOAD( "sfe-08m", 0x0C80000, 0x400000, 0xa36bbec5 )
-    ROM_LOAD( "sfe-09m", 0x1080000, 0x400000, 0x62c424cc )
-    ROM_LOAD( "sfe-10m", 0x1480000, 0x400000, 0x83791a8b )
+    ROM_REGION( CODE_SIZE, REGION_CPU1 )
+    ROM_LOAD_WIDE_SWAP( "sfe-04a", 0x0000000, 0x080000, 0x08247bd4 )
+    ROM_LOAD_WIDE_SWAP( "sfe-05m", 0x0080000, 0x400000, 0xeab781fe )
+    ROM_LOAD_WIDE_SWAP( "sfe-06m", 0x0480000, 0x400000, 0x999de60c )
+    ROM_LOAD_WIDE_SWAP( "sfe-07m", 0x0880000, 0x400000, 0x76117b0a )
+    ROM_LOAD_WIDE_SWAP( "sfe-08m", 0x0c80000, 0x400000, 0xa36bbec5 )
+    ROM_LOAD_WIDE_SWAP( "sfe-09m", 0x1080000, 0x400000, 0x62c424cc )
+    ROM_LOAD_WIDE_SWAP( "sfe-10m", 0x1480000, 0x400000, 0x83791a8b )
 
     ROM_REGION( 0x50000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "sfe-02",  0x00000, 0x08000, 0x1908475c )
     ROM_CONTINUE(        0x10000, 0x18000 )
     ROM_LOAD( "sfe-03",  0x28000, 0x20000, 0x95c1e2e0 )
 
-    ROM_REGION( 0x400000, REGION_SOUND1 ) /* Q Sound Samples */
+    ROM_REGION( 0x400000, REGION_SOUND1 | REGIONFLAG_SOUNDONLY ) /* Q Sound Samples */
     ROM_LOAD( "sfe-01m", 0x0000000, 0x400000, 0xf5afff0d )
 ROM_END
 
 ROM_START( sfexj )
-    ROM_REGION( CODE_SIZE, REGION_CPU1 )      /* MIPS R3000 */
-    ROM_LOAD( "sfe-04j", 0x0000000, 0x080000, 0xea100607 )
-    ROM_LOAD( "sfe-05m", 0x0080000, 0x400000, 0xeab781fe )
-    ROM_LOAD( "sfe-06m", 0x0480000, 0x400000, 0x999de60c )
-    ROM_LOAD( "sfe-07m", 0x0880000, 0x400000, 0x76117b0a )
-    ROM_LOAD( "sfe-08m", 0x0C80000, 0x400000, 0xa36bbec5 )
-    ROM_LOAD( "sfe-09m", 0x1080000, 0x400000, 0x62c424cc )
-    ROM_LOAD( "sfe-10m", 0x1480000, 0x400000, 0x83791a8b )
+    ROM_REGION( CODE_SIZE, REGION_CPU1 )
+    ROM_LOAD_WIDE_SWAP( "sfe-04j", 0x0000000, 0x080000, 0xea100607 )
+    ROM_LOAD_WIDE_SWAP( "sfe-05m", 0x0080000, 0x400000, 0xeab781fe )
+    ROM_LOAD_WIDE_SWAP( "sfe-06m", 0x0480000, 0x400000, 0x999de60c )
+    ROM_LOAD_WIDE_SWAP( "sfe-07m", 0x0880000, 0x400000, 0x76117b0a )
+    ROM_LOAD_WIDE_SWAP( "sfe-08m", 0x0c80000, 0x400000, 0xa36bbec5 )
+    ROM_LOAD_WIDE_SWAP( "sfe-09m", 0x1080000, 0x400000, 0x62c424cc )
+    ROM_LOAD_WIDE_SWAP( "sfe-10m", 0x1480000, 0x400000, 0x83791a8b )
 
     ROM_REGION( 0x50000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "sfe-02",  0x00000, 0x08000, 0x1908475c )
     ROM_CONTINUE(        0x10000, 0x18000 )
     ROM_LOAD( "sfe-03",  0x28000, 0x20000, 0x95c1e2e0 )
 
-    ROM_REGION( 0x400000, REGION_SOUND1 ) /* Q Sound Samples */
+    ROM_REGION( 0x400000, REGION_SOUND1 | REGIONFLAG_SOUNDONLY ) /* Q Sound Samples */
     ROM_LOAD( "sfe-01m", 0x0000000, 0x400000, 0xf5afff0d )
 ROM_END
 
 ROM_START( sfexp )
-    ROM_REGION( CODE_SIZE, REGION_CPU1 )      /* MIPS R3000 */
-    ROM_LOAD( "sfp-04e", 0x0000000, 0x080000, 0x305e4ec0 )
-    ROM_LOAD( "sfp-05",  0x0080000, 0x400000, 0xac7dcc5e )
-    ROM_LOAD( "sfp-06",  0x0480000, 0x400000, 0x1d504758 )
-    ROM_LOAD( "sfp-07",  0x0880000, 0x400000, 0x0f585f30 )
-    ROM_LOAD( "sfp-08",  0x0C80000, 0x400000, 0x65eabc61 )
-    ROM_LOAD( "sfp-09",  0x1080000, 0x400000, 0x15f8b71e )
-    ROM_LOAD( "sfp-10",  0x1480000, 0x400000, 0xc1ecf652 )
+    ROM_REGION( CODE_SIZE, REGION_CPU1 )
+    ROM_LOAD_WIDE_SWAP( "sfp-04e", 0x0000000, 0x080000, 0x305e4ec0 )
+    ROM_LOAD_WIDE_SWAP( "sfp-05",  0x0080000, 0x400000, 0xac7dcc5e )
+    ROM_LOAD_WIDE_SWAP( "sfp-06",  0x0480000, 0x400000, 0x1d504758 )
+    ROM_LOAD_WIDE_SWAP( "sfp-07",  0x0880000, 0x400000, 0x0f585f30 )
+    ROM_LOAD_WIDE_SWAP( "sfp-08",  0x0c80000, 0x400000, 0x65eabc61 )
+    ROM_LOAD_WIDE_SWAP( "sfp-09",  0x1080000, 0x400000, 0x15f8b71e )
+    ROM_LOAD_WIDE_SWAP( "sfp-10",  0x1480000, 0x400000, 0xc1ecf652 )
 
     ROM_REGION( 0x50000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "sfe-02",  0x00000, 0x08000, 0x1908475c )
     ROM_CONTINUE(        0x10000, 0x18000 )
     ROM_LOAD( "sfe-03",  0x28000, 0x20000, 0x95c1e2e0 )
 
-    ROM_REGION( 0x400000, REGION_SOUND1 ) /* Q Sound Samples */
+    ROM_REGION( 0x400000, REGION_SOUND1 | REGIONFLAG_SOUNDONLY ) /* Q Sound Samples */
     ROM_LOAD( "sfe-01m", 0x0000000, 0x400000, 0xf5afff0d )
 ROM_END
 
 ROM_START( sfexpj )
-    ROM_REGION( CODE_SIZE, REGION_CPU1 )      /* MIPS R3000 */
-    ROM_LOAD( "sfp-04j", 0x0000000, 0x080000, 0x18d043f5 )
-    ROM_LOAD( "sfp-05",  0x0080000, 0x400000, 0xac7dcc5e )
-    ROM_LOAD( "sfp-06",  0x0480000, 0x400000, 0x1d504758 )
-    ROM_LOAD( "sfp-07",  0x0880000, 0x400000, 0x0f585f30 )
-    ROM_LOAD( "sfp-08",  0x0C80000, 0x400000, 0x65eabc61 )
-    ROM_LOAD( "sfp-09",  0x1080000, 0x400000, 0x15f8b71e )
-    ROM_LOAD( "sfp-10",  0x1480000, 0x400000, 0xc1ecf652 )
+    ROM_REGION( CODE_SIZE, REGION_CPU1 )
+    ROM_LOAD_WIDE_SWAP( "sfp-04j", 0x0000000, 0x080000, 0x18d043f5 )
+    ROM_LOAD_WIDE_SWAP( "sfp-05",  0x0080000, 0x400000, 0xac7dcc5e )
+    ROM_LOAD_WIDE_SWAP( "sfp-06",  0x0480000, 0x400000, 0x1d504758 )
+    ROM_LOAD_WIDE_SWAP( "sfp-07",  0x0880000, 0x400000, 0x0f585f30 )
+    ROM_LOAD_WIDE_SWAP( "sfp-08",  0x0c80000, 0x400000, 0x65eabc61 )
+    ROM_LOAD_WIDE_SWAP( "sfp-09",  0x1080000, 0x400000, 0x15f8b71e )
+    ROM_LOAD_WIDE_SWAP( "sfp-10",  0x1480000, 0x400000, 0xc1ecf652 )
 
     ROM_REGION( 0x50000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "sfe-02",  0x00000, 0x08000, 0x1908475c )
     ROM_CONTINUE(        0x10000, 0x18000 )
     ROM_LOAD( "sfe-03",  0x28000, 0x20000, 0x95c1e2e0 )
 
-    ROM_REGION( 0x400000, REGION_SOUND1 ) /* Q Sound Samples */
+    ROM_REGION( 0x400000, REGION_SOUND1 | REGIONFLAG_SOUNDONLY ) /* Q Sound Samples */
     ROM_LOAD( "sfe-01m", 0x0000000, 0x400000, 0xf5afff0d )
 ROM_END
 
 ROM_START( sfex2 )
-    ROM_REGION( CODE_SIZE, REGION_CPU1 )      /* MIPS R3000 */
-    ROM_LOAD( "ex2j-04", 0x0000000, 0x080000, 0x5d603586 )
-    ROM_LOAD( "ex2-05m", 0x0080000, 0x800000, 0x78726b17 )
-    ROM_LOAD( "ex2-06m", 0x0880000, 0x800000, 0xbe1075ed )
-    ROM_LOAD( "ex2-07m", 0x1080000, 0x800000, 0x6496c6ed )
-    ROM_LOAD( "ex2-08m", 0x1880000, 0x800000, 0x3194132e )
-    ROM_LOAD( "ex2-09m", 0x2080000, 0x400000, 0x075ae585 )
+    ROM_REGION( CODE_SIZE, REGION_CPU1 )
+    ROM_LOAD_WIDE_SWAP( "ex2j-04", 0x0000000, 0x080000, 0x5d603586 )
+    ROM_LOAD_WIDE_SWAP( "ex2-05m", 0x0080000, 0x800000, 0x78726b17 )
+    ROM_LOAD_WIDE_SWAP( "ex2-06m", 0x0880000, 0x800000, 0xbe1075ed )
+    ROM_LOAD_WIDE_SWAP( "ex2-07m", 0x1080000, 0x800000, 0x6496c6ed )
+    ROM_LOAD_WIDE_SWAP( "ex2-08m", 0x1880000, 0x800000, 0x3194132e )
+    ROM_LOAD_WIDE_SWAP( "ex2-09m", 0x2080000, 0x400000, 0x075ae585 )
 
     ROM_REGION( 0x50000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "ex2-02",  0x00000, 0x08000, 0x9489875e )
     ROM_CONTINUE(        0x10000, 0x18000 )
 
-    ROM_REGION( 0x400000, REGION_SOUND1 ) /* Q Sound Samples */
+    ROM_REGION( 0x400000, REGION_SOUND1 | REGIONFLAG_SOUNDONLY ) /* Q Sound Samples */
     ROM_LOAD( "ex2-01m", 0x0000000, 0x400000, 0x14a5bb0e )
 ROM_END
 
 ROM_START( sfex2p )
-    ROM_REGION( CODE_SIZE, REGION_CPU1 )      /* MIPS R3000 */
-    ROM_LOAD( "sf2p-04", 0x0000000, 0x080000, 0xc6d0aea3 )
-    ROM_LOAD( "sf2p-05", 0x0080000, 0x800000, 0x4ee3110f )
-    ROM_LOAD( "sf2p-06", 0x0880000, 0x800000, 0x4cd53a45 )
-    ROM_LOAD( "sf2p-07", 0x1080000, 0x800000, 0x11207c2a )
-    ROM_LOAD( "sf2p-08", 0x1880000, 0x800000, 0x3560c2cc )
-    ROM_LOAD( "sf2p-09", 0x2080000, 0x800000, 0x344aa227 )
-    ROM_LOAD( "sf2p-10", 0x2880000, 0x800000, 0x2eef5931 )
+    ROM_REGION( CODE_SIZE, REGION_CPU1 )
+    ROM_LOAD_WIDE_SWAP( "sf2p-04", 0x0000000, 0x080000, 0xc6d0aea3 )
+    ROM_LOAD_WIDE_SWAP( "sf2p-05", 0x0080000, 0x800000, 0x4ee3110f )
+    ROM_LOAD_WIDE_SWAP( "sf2p-06", 0x0880000, 0x800000, 0x4cd53a45 )
+    ROM_LOAD_WIDE_SWAP( "sf2p-07", 0x1080000, 0x800000, 0x11207c2a )
+    ROM_LOAD_WIDE_SWAP( "sf2p-08", 0x1880000, 0x800000, 0x3560c2cc )
+    ROM_LOAD_WIDE_SWAP( "sf2p-09", 0x2080000, 0x800000, 0x344aa227 )
+    ROM_LOAD_WIDE_SWAP( "sf2p-10", 0x2880000, 0x800000, 0x2eef5931 )
 
     ROM_REGION( 0x50000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "sf2p-02", 0x00000, 0x08000, 0x3705de5e )
     ROM_CONTINUE(        0x10000, 0x18000 )
     ROM_LOAD( "sf2p-03", 0x28000, 0x20000, 0x6ae828f6 )
 
-    ROM_REGION( 0x400000, REGION_SOUND1 ) /* Q Sound Samples */
+    ROM_REGION( 0x400000, REGION_SOUND1 | REGIONFLAG_SOUNDONLY ) /* Q Sound Samples */
     ROM_LOAD( "ex2-01m", 0x0000000, 0x400000, 0x14a5bb0e )
 ROM_END
 
 ROM_START( tgmj )
-    ROM_REGION( CODE_SIZE, REGION_CPU1 )      /* MIPS R3000 */
-    ROM_LOAD( "ate-04j", 0x0000000, 0x080000, 0xbb4bbb96 )
-    ROM_LOAD( "ate-05",  0x0080000, 0x400000, 0x50977f5a )
-    ROM_LOAD( "ate-06",  0x0480000, 0x400000, 0x05973f16 )
+    ROM_REGION( CODE_SIZE, REGION_CPU1 )
+    ROM_LOAD_WIDE_SWAP( "ate-04j", 0x0000000, 0x080000, 0xbb4bbb96 )
+    ROM_LOAD_WIDE_SWAP( "ate-05",  0x0080000, 0x400000, 0x50977f5a )
+    ROM_LOAD_WIDE_SWAP( "ate-06",  0x0480000, 0x400000, 0x05973f16 )
 
     ROM_REGION( 0x50000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "ate-02",  0x00000, 0x08000, 0xf4f6e82f )
     ROM_CONTINUE(        0x10000, 0x18000 )
 
-    ROM_REGION( 0x400000, REGION_SOUND1 ) /* Q Sound Samples */
+    ROM_REGION( 0x400000, REGION_SOUND1 | REGIONFLAG_SOUNDONLY ) /* Q Sound Samples */
     ROM_LOAD( "ate-01",  0x0000000, 0x400000, 0xa21c6521 )
 ROM_END
 
 ROM_START( ts2j )
-    ROM_REGION( CODE_SIZE, REGION_CPU1 )      /* MIPS R3000 */
-    ROM_LOAD( "ts2j-04", 0x0000000, 0x080000, 0x4aba8c5e )
-    ROM_LOAD( "ts2-05",  0x0080000, 0x400000, 0x7f4228e2 )
-    ROM_LOAD( "ts2-06m", 0x0480000, 0x400000, 0xcd7e0a27 )
-    ROM_LOAD( "ts2-08m", 0x0880000, 0x400000, 0xb1f7f115 )
-    ROM_LOAD( "ts2-10",  0x0C80000, 0x200000, 0xad90679a )
+    ROM_REGION( CODE_SIZE, REGION_CPU1 )
+    ROM_LOAD_WIDE_SWAP( "ts2j-04", 0x0000000, 0x080000, 0x4aba8c5e )
+    ROM_LOAD_WIDE_SWAP( "ts2-05",  0x0080000, 0x400000, 0x7f4228e2 )
+    ROM_LOAD_WIDE_SWAP( "ts2-06m", 0x0480000, 0x400000, 0xcd7e0a27 )
+    ROM_LOAD_WIDE_SWAP( "ts2-08m", 0x0880000, 0x400000, 0xb1f7f115 )
+    ROM_LOAD_WIDE_SWAP( "ts2-10",  0x0c80000, 0x200000, 0xad90679a )
 
     ROM_REGION( 0x50000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "ts2-02",  0x00000, 0x08000, 0x2f45c461 )
     ROM_CONTINUE(        0x10000, 0x18000 )
 
-    ROM_REGION( 0x400000, REGION_SOUND1 ) /* Q Sound Samples */
+    ROM_REGION( 0x400000, REGION_SOUND1 | REGIONFLAG_SOUNDONLY ) /* Q Sound Samples */
     ROM_LOAD( "ts2-01",  0x0000000, 0x400000, 0xd7a505e0 )
 ROM_END
 

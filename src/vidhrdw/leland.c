@@ -1,415 +1,493 @@
 /***************************************************************************
 
-  vidhrdw.c
+	Cinemat/Leland driver
 
-  Functions to emulate the video hardware of the machine.
+	Leland video hardware
+	driver by Aaron Giles and Paul Leaman
 
 ***************************************************************************/
+
+#ifndef INCLUDE_DRAW_CORE
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
 #include "osdepend.h"
 
-#define VRAM_HIGH 0x08000
 
-//#define NOISY_VIDEO
-/* Filter by video port */
-//#define NOISE_FILTER (offset==0x0b)
-/* Filter by video address (Filters out all slave COMMS) */
-#define NOISE_FILTER (leland_video_addr[num] < 0x7800)
+/* constants */
+#define VRAM_LO 	0x00000
+#define VRAM_HI 	0x08000
+#define VRAM_SIZE	0x10000
 
-//#define NOISE_FILTER (leland_video_addr[num] >= 0x7800)
-
-
-/* DAC */
-//#define NOISE_FILTER ((leland_video_addr[num] & 0x7f) >= 0x50)
-
-/* No filter */
-//#define NOISE_FILTER
-
-
-//#define VIDEO_FIDDLE
-
+#define QRAM_SIZE	0x10000
 
 #define VIDEO_WIDTH  0x28
 #define VIDEO_HEIGHT 0x1e
 
-static int leland_video_addr[2];
-static int leland_video_plane_count[2];
-static int leland_vram_low_data[2];
 
-/* Callback bank handler */
-extern void (*leland_update_master_bank)(void);
-
-/* Video RAM (internal to gfx chip ???) */
-unsigned char *leland_video_ram;
-const int leland_video_ram_size=0x10000;
-static struct osd_bitmap *screen_bitmap;
-
-/* Scroll background registers */
-static int leland_bk_xlow;
-static int leland_bk_xhigh;
-static int leland_bk_ylow;
-static int leland_bk_yhigh;
-
-/* Data latches */
-//static int leland_vram_high_data;
+/* debugging */
+#define LOG_COMM	0
 
 
-/* Background graphics */
-static struct osd_bitmap *background_bitmap;
 
-void leland_draw_bkchar(int x, int y, int ch)
+struct vram_state_data
 {
-    unsigned char *bm;
-    unsigned char *sd;
-    int ny;
-    sd= Machine->gfx[0]->gfxdata + ch * Machine->gfx[0]->char_modulo;
-    for (ny = 0;ny < 8;ny++)
+	UINT16	addr;
+	UINT8	plane;
+	UINT8	latch[2];
+};
+
+struct scroll_position
+{
+	UINT16 	scanline;
+	UINT16 	x, y;
+	UINT8 	gfxbank;
+};
+
+
+/* video RAM */
+UINT8 *leland_video_ram;
+UINT8 *ataxx_qram;
+UINT8 leland_last_scanline_int;
+
+/* video RAM bitmap drawing */
+static struct vram_state_data vram_state[2];
+static UINT8 sync_next_write;
+
+/* partial screen updating */
+static UINT8 *video_ram_copy;
+static int next_update_scanline;
+
+/* scroll background registers */
+static UINT16 xscroll;
+static UINT16 yscroll;
+static UINT8 gfxbank;
+static UINT8 scroll_index;
+static struct scroll_position scroll_pos[VIDEO_HEIGHT];
+
+static UINT32 *ataxx_pen_usage;
+
+
+/* sound routines */
+extern UINT8 leland_dac_control;
+
+extern void leland_dac_update(int indx, UINT8 *base);
+
+/* bitmap blending routines */
+static void draw_bitmap_8(struct osd_bitmap *bitmap);
+static void draw_bitmap_16(struct osd_bitmap *bitmap);
+
+
+
+/*************************************
+ *
+ *	Start video hardware
+ *
+ *************************************/
+
+int leland_vh_start(void)
+{
+	void leland_vh_stop(void);
+
+	/* allocate memory */
+    leland_video_ram = malloc(VRAM_SIZE);
+    video_ram_copy = malloc(VRAM_SIZE);
+
+	/* error cases */
+    if (!leland_video_ram || !video_ram_copy)
     {
-        bm=background_bitmap->line[8*y+ny] + 8*x;
-        bm[0]=sd[0];
-        bm[1]=sd[1];
-        bm[2]=sd[2];
-        bm[3]=sd[3];
-        bm[4]=sd[4];
-        bm[5]=sd[5];
-        bm[6]=sd[6];
-        bm[7]=sd[7];
-        sd+=8;
-    }
+    	leland_vh_stop();
+		return 1;
+	}
+
+	/* reset videoram */
+    memset(leland_video_ram, 0, VRAM_SIZE);
+    memset(video_ram_copy, 0, VRAM_SIZE);
+
+	/* reset scrolling */
+	scroll_index = 0;
+	memset(scroll_pos, 0, sizeof(scroll_pos));
+
+	return 0;
 }
 
-/* Graphics control register (driven by AY8910 port A) */
-static int leland_gfx_control;
-READ_HANDLER( leland_sound_port_r )
-{
-    return leland_gfx_control;
-}
 
-WRITE_HANDLER( leland_sound_port_w )
+int ataxx_vh_start(void)
 {
-    leland_gfx_control=data;
-    if (leland_update_master_bank)
+	void ataxx_vh_stop(void);
+
+	const struct GfxElement *gfx = Machine->gfx[0];
+	UINT32 usage[2];
+	int i, x, y;
+
+	/* first do the standard stuff */
+	if (leland_vh_start())
+		return 1;
+
+	/* allocate memory */
+	ataxx_qram = malloc(QRAM_SIZE);
+	ataxx_pen_usage = malloc(gfx->total_elements * 2 * sizeof(UINT32));
+
+	/* error cases */
+    if (!ataxx_qram || !ataxx_pen_usage)
     {
-        /* Update master bank */
-        leland_update_master_bank();
-    }
+    	ataxx_vh_stop();
+		return 1;
+	}
+
+	/* build up color usage */
+	for (i = 0; i < gfx->total_elements; i++)
+	{
+		UINT8 *src = gfx->gfxdata + i * gfx->char_modulo;
+
+		usage[0] = usage[1] = 0;
+		for (y = 0; y < gfx->height; y++)
+		{
+			for (x = 0; x < gfx->width; x++)
+			{
+				int color = src[x];
+				usage[color >> 5] |= 1 << (color & 31);
+			}
+			src += gfx->line_modulo;
+		}
+		ataxx_pen_usage[i * 2 + 0] = usage[0];
+		ataxx_pen_usage[i * 2 + 1] = usage[1];
+	}
+
+	/* reset QRAM */
+	memset(ataxx_qram, 0, QRAM_SIZE);
+	return 0;
 }
 
-/* Scroll ports */
-WRITE_HANDLER( leland_bk_xlow_w )
+
+
+/*************************************
+ *
+ *	Stop video hardware
+ *
+ *************************************/
+
+void leland_vh_stop(void)
 {
-        leland_bk_xlow=data;
+	if (leland_video_ram)
+		free(leland_video_ram);
+	leland_video_ram = NULL;
+
+	if (video_ram_copy)
+		free(video_ram_copy);
+	video_ram_copy = NULL;
 }
 
-WRITE_HANDLER( leland_bk_xhigh_w )
+
+void ataxx_vh_stop(void)
 {
-        leland_bk_xhigh=data;
+	leland_vh_stop();
+
+	if (ataxx_qram)
+		free(ataxx_qram);
+	ataxx_qram = NULL;
+
+	if (ataxx_pen_usage)
+		free(ataxx_pen_usage);
+	ataxx_pen_usage = NULL;
 }
 
-WRITE_HANDLER( leland_bk_ylow_w )
-{
-        leland_bk_ylow=data;
-}
 
-WRITE_HANDLER( leland_bk_yhigh_w )
-{
-        leland_bk_yhigh=data;
-}
+
+/*************************************
+ *
+ *	Scrolling and banking
+ *
+ *************************************/
 
 WRITE_HANDLER( leland_gfx_port_w )
 {
+	int scanline = leland_last_scanline_int;
+	struct scroll_position *scroll;
+
+	/* treat anything during the VBLANK as scanline 0 */
+	if (scanline > Machine->drv->visible_area.max_y)
+		scanline = 0;
+
+	/* adjust the proper scroll value */
     switch (offset)
     {
-        case 0: /* 0x?a */
-                AY8910_control_port_0_w(0, data);
-                break;
-        case 1: /* 0x?b */
-                AY8910_write_port_0_w(0, data);
-                break;
-        case 2: /* 0x?c */
-                leland_bk_xlow_w(0, data);
-                break;
-        case 3: /* 0x?d */
-                leland_bk_xhigh_w(0,data);
-                break;
-        case 4: /* 0x?e */
-                leland_bk_ylow_w(0,data);
-                break;
-        case 5: /* 0x?f */
-                leland_bk_yhigh_w(0, data);
-                break;
-        default:
-				logerror("CPU #%d %04x Warning: Unknown video port %02x write (%02x)\n",
-						cpu_getactivecpu(),cpu_get_pc(), offset,
-						data);
-    }
+    	case -1:
+    		gfxbank = data;
+    		break;
+		case 0:
+			xscroll = (xscroll & 0xff00) | (data & 0x00ff);
+			break;
+		case 1:
+			xscroll = (xscroll & 0x00ff) | ((data << 8) & 0xff00);
+			break;
+		case 2:
+			yscroll = (yscroll & 0xff00) | (data & 0x00ff);
+			break;
+		case 3:
+			yscroll = (yscroll & 0x00ff) | ((data << 8) & 0xff00);
+			break;
+	}
+
+	/* update if necessary */
+	scroll = &scroll_pos[scroll_index];
+	if (xscroll != scroll->x || yscroll != scroll->y || gfxbank != scroll->gfxbank)
+	{
+		/* determine which entry to use */
+		if (scroll->scanline != scanline && scroll_index < VIDEO_HEIGHT - 1)
+			scroll++, scroll_index++;
+
+		/* fill in the data */
+		scroll->scanline = scanline;
+		scroll->x = xscroll;
+		scroll->y = yscroll;
+		scroll->gfxbank = gfxbank;
+	}
 }
 
 
-/* Word video address */
+
+/*************************************
+ *
+ *	Video address setting
+ *
+ *************************************/
 
 void leland_video_addr_w(int offset, int data, int num)
 {
+	struct vram_state_data *state = vram_state + num;
+
 	if (!offset)
     {
-        leland_video_addr[num]=(leland_video_addr[num]&0xff00)|data;
+		state->addr = (state->addr & 0x7f00) | (data & 0x00ff);
+		state->plane = 0;
     }
 	else
 	{
-        leland_video_addr[num]=(leland_video_addr[num]&0x00ff)|(data<<8);
+		state->addr = ((data << 8) & 0x7f00) | (state->addr & 0x00ff);
+		state->plane = 0;
 	}
 
-    /* Mask out irrelevant high bit */
-    leland_video_addr[num]&=0x7fff;
-
-    /* Reset the video plane count */
-    leland_video_plane_count[num]=0;
+	if (num == 0)
+		sync_next_write = (state->addr >= 0x7800);
 }
 
 
-int leland_vram_low_r(int num)
+
+/*************************************
+ *
+ *	Flush data from VRAM into our copy
+ *
+ *************************************/
+
+static void update_for_scanline(int scanline)
 {
-    int addr=leland_video_addr[num];
-    return leland_video_ram[addr];
-}
+	int i;
 
-int leland_vram_high_r(int num)
-{
-    int addr=leland_video_addr[num];
-    return leland_video_ram[addr+VRAM_HIGH];
-}
+	/* skip if we're behind the times */
+	if (scanline <= next_update_scanline)
+		return;
 
-void leland_vram_low_w(int data, int num)
-{
-    int addr=leland_video_addr[num];
-    leland_video_ram[addr]=data;
-    leland_vram_low_data[num]=data;  /* Set data latch */
-}
+	/* update all scanlines */
+	for (i = next_update_scanline; i < scanline; i++)
+	{
+		memcpy(&video_ram_copy[i * 128 + VRAM_LO], &leland_video_ram[i * 128 + VRAM_LO], 0x51);
+		memcpy(&video_ram_copy[i * 128 + VRAM_HI], &leland_video_ram[i * 128 + VRAM_HI], 0x51);
+	}
 
-void leland_vram_high_w(int data, int num)
-{
-    int addr=leland_video_addr[num];
-    leland_video_ram[addr+VRAM_HIGH]=data;
-}
-
-void leland_vram_all_w(int data, int num)
-{
-    int addr=leland_video_addr[num];
-    leland_video_ram[addr+0x00000]=data;
-    leland_video_ram[addr+0x00001]=data;
-    leland_video_ram[addr+VRAM_HIGH]=data;
-    leland_video_ram[addr+VRAM_HIGH+1]=data;
-}
-
-void leland_vram_fill_w(int data, int num)
-{
-    int i;
-    for (i=leland_video_addr[num]&0x7f; i<0x80; i++)
-    {
-        leland_vram_high_w(data, num);
-        leland_vram_low_w(data, num);
-        leland_video_addr[num]++;
-    }
-}
-
-void leland_vram_planar_w(int data, int num)
-{
-    int addr=leland_video_addr[num];
-    addr+=(leland_video_plane_count[num]&0x01)*VRAM_HIGH;
-    addr+=(leland_video_plane_count[num])>>1;
-    leland_video_ram[addr]=data;
-    leland_video_plane_count[num]++;
-
-//	logerror("WRITE [%04x]=%02x\n", addr, data);
-}
-
-void leland_vram_planar_masked_w(int data, int num)
-{
-    int addr=leland_video_addr[num];
-    addr+=(leland_video_plane_count[num]&0x01)*VRAM_HIGH;
-    addr+=(leland_video_plane_count[num])>>1;
-
-#if 0
-    /*
-    Used to draw sprites with transparency. Some self test
-    text does not draw correctly if this is enabled.
-    */
-    if (data&0xf0)
-    {
-        leland_video_ram[addr] &= 0x0f;
-    }
-    if (data&0x0f)
-    {
-        leland_video_ram[addr] &= 0xf0;
-    }
-    leland_video_ram[addr]|=data;
-#else
-    leland_video_ram[addr]=data;
-#endif
-
-    leland_video_plane_count[num]++;
+	/* set the new last update */
+	next_update_scanline = scanline;
 }
 
 
-int leland_vram_planar_r(int num)
-{
-    int ret;
-    int addr=leland_video_addr[num];
-    addr+=(leland_video_plane_count[num]&0x01)*VRAM_HIGH;
-    addr+=(leland_video_plane_count[num])>>1;
-    ret= leland_video_ram[addr];
-    leland_video_plane_count[num]++;
 
-//	logerror("READ [%04x] (%02x)\n", addr, ret);
-
-    return ret;
-}
-
-int leland_vram_plane_r(int num)
-{
-    int ret;
-    int addr=leland_video_addr[num];
-    addr+=(leland_video_plane_count[num]&0x01)*VRAM_HIGH;
-    addr+=(leland_video_plane_count[num])>>1;
-    ret= leland_video_ram[addr];
-    return ret;
-}
-
+/*************************************
+ *
+ *	Common video RAM read
+ *
+ *************************************/
 
 int leland_vram_port_r(int offset, int num)
 {
+	struct vram_state_data *state = vram_state + num;
+	int addr = state->addr;
+	int plane = state->plane;
+	int inc = (offset >> 3) & 1;
     int ret;
 
-    switch (offset)
+    switch (offset & 7)
     {
-        case 0x03:
-            ret=leland_vram_plane_r(num);
-            leland_video_plane_count[num]=0;
+        case 3:	/* read hi/lo (alternating) */
+        	ret = leland_video_ram[addr + plane * VRAM_HI];
+        	addr += inc & plane;
+        	plane ^= 1;
             break;
 
-        case 0x05:
-            ret=leland_vram_high_r(num);
+        case 5:	/* read hi */
+		    ret = leland_video_ram[addr + VRAM_HI];
+		    addr += inc;
             break;
 
-        case 0x06:
-            ret=leland_vram_low_r(num);
-            break;
-
-        case 0x0b:
-            ret=leland_vram_planar_r(num);
-            break;
-
-        case 0x0d:
-            ret=leland_vram_high_r(num);
-            leland_video_addr[num]++;
-            break;
-
-        case 0x0e:
-            ret=leland_vram_low_r(num);
-            leland_video_addr[num]++;
+        case 6:	/* read lo */
+		    ret = leland_video_ram[addr + VRAM_LO];
+		    addr += inc;
             break;
 
         default:
-			logerror("CPU #%d %04x Warning: Unknown video port %02x read (address=%04x)\n",
-					cpu_getactivecpu(),cpu_get_pc(), offset,
-					leland_video_addr[num]);
-            return 0;
+            logerror("CPU #%d %04x Warning: Unknown video port %02x read (address=%04x)\n",
+                        cpu_getactivecpu(),cpu_get_pc(), offset, addr);
+            ret = 0;
+            break;
     }
+    state->addr = addr & 0x7fff;
+    state->plane = plane;
 
-#ifdef NOISY_VIDEO
-    if (NOISE_FILTER)
-    {
-        logerror("CPU #%d %04x video port %02x read (address=%04x value=%02x)\n",
-                   cpu_getactivecpu(),cpu_get_pc(), offset,
-                   leland_video_addr[num], ret);
-    }
-#endif
+	if (LOG_COMM && addr >= 0x7800)
+		logerror("%04X:%s comm read %04X = %02X\n", cpu_getpreviouspc(), num ? "slave" : "master", addr, ret);
 
     return ret;
 }
 
+
+
+/*************************************
+ *
+ *	Common video RAM write
+ *
+ *************************************/
+
 void leland_vram_port_w(int offset, int data, int num)
 {
-    switch (offset)
+	struct vram_state_data *state = vram_state + num;
+	int addr = state->addr;
+	int plane = state->plane;
+	int inc = (offset >> 3) & 1;
+	int trans = (offset >> 4) & num;
+
+	/* if we're writing "behind the beam", make sure we've cached what was there */
+	if (addr < 0x7800)
+	{
+		int cur_scanline = cpu_getscanline();
+		int mod_scanline = addr / 0x80;
+
+		if (cur_scanline != next_update_scanline && mod_scanline < cur_scanline)
+			update_for_scanline(cur_scanline);
+	}
+
+	if (LOG_COMM && addr >= 0x7800)
+		logerror("%04X:%s comm write %04X = %02X\n", cpu_getpreviouspc(), num ? "slave" : "master", addr, data);
+
+	/* based on the low 3 bits of the offset, update the destination */
+    switch (offset & 7)
     {
-        case 0x01:
-            leland_vram_fill_w(data, num);
+        case 1:	/* write hi = data, lo = latch */
+        	leland_video_ram[addr + VRAM_HI] = data;
+        	leland_video_ram[addr + VRAM_LO] = state->latch[0];
+        	addr += inc;
+        	break;
+
+        case 2:	/* write hi = latch, lo = data */
+        	leland_video_ram[addr + VRAM_HI] = state->latch[1];
+        	leland_video_ram[addr + VRAM_LO] = data;
+        	addr += inc;
+        	break;
+
+        case 3:	/* write hi/lo = data (alternating) */
+        	if (trans)
+        	{
+        		if (!(data & 0xf0)) data |= leland_video_ram[addr + plane * VRAM_HI] & 0xf0;
+        		if (!(data & 0x0f)) data |= leland_video_ram[addr + plane * VRAM_HI] & 0x0f;
+        	}
+       		leland_video_ram[addr + plane * VRAM_HI] = data;
+        	addr += inc & plane;
+        	plane ^= 1;
             break;
 
-        case 0x05:
-            leland_vram_high_w(data, num);
+        case 5:	/* write hi = data */
+        	state->latch[1] = data;
+        	if (trans)
+        	{
+        		if (!(data & 0xf0)) data |= leland_video_ram[addr + VRAM_HI] & 0xf0;
+        		if (!(data & 0x0f)) data |= leland_video_ram[addr + VRAM_HI] & 0x0f;
+        	}
+		    leland_video_ram[addr + VRAM_HI] = data;
+		    addr += inc;
             break;
 
-        case 0x06:
-            leland_vram_low_w(data, num);
-            break;
-
-        case 0x09:
-            leland_vram_high_w(data, num);
-            leland_vram_low_w(leland_vram_low_data[num], num);
-            leland_video_addr[num]++;
-            break;
-
-        case 0x0a:
-            leland_vram_low_w(data, num);
-            leland_vram_high_w(data, num);
-            leland_video_addr[num]++;
-            break;
-
-        case 0x0b:
-            leland_vram_planar_w(data,num);
-            break;
-
-        case 0x0e: /* Low write with latch */
-            leland_vram_low_w(data, num);
-            leland_video_addr[num]++;
-            break;
-
-        case 0x0d: /* High write with latch */
-            leland_vram_high_w(data, num);
-            leland_video_addr[num]++;
-            break;
-
-        case 0x15:
-            /* Used by Alley master to draw the pins knocked over display */
-            leland_vram_high_w(data, num);
-            break;
-
-        case 0x16:
-            /* Used by Alley master to draw the pins knocked over display */
-            leland_vram_low_w(data, num);
-            break;
-
-        case 0x1b:
-            leland_vram_planar_masked_w(data, num);
+        case 6:	/* write lo = data */
+        	state->latch[0] = data;
+        	if (trans)
+        	{
+        		if (!(data & 0xf0)) data |= leland_video_ram[addr + VRAM_LO] & 0xf0;
+        		if (!(data & 0x0f)) data |= leland_video_ram[addr + VRAM_LO] & 0x0f;
+        	}
+		    leland_video_ram[addr + VRAM_LO] = data;
+		    addr += inc;
             break;
 
         default:
-			logerror("CPU #%d %04x Warning: Unknown video port %02x write (address=%04x value=%02x)\n",
-					cpu_getactivecpu(),cpu_get_pc(), offset,
-					leland_video_addr[num], data);
-            return;
+            logerror("CPU #%d %04x Warning: Unknown video port %02x write (address=%04x value=%02x)\n",
+                        cpu_getactivecpu(),cpu_get_pc(), offset, addr);
+            break;
     }
 
+    /* update the address and plane */
+    state->addr = addr & 0x7fff;
+    state->plane = plane;
+}
 
-#ifdef NOISY_VIDEO
-    if (NOISE_FILTER)
-    {
-        logerror("CPU #%d %04x video port %02x write (address=%04x value=%02x)\n",
-                   cpu_getactivecpu(),cpu_get_pc(), offset,
-                   leland_video_addr[num], data);
-    }
-#endif
 
+
+/*************************************
+ *
+ *	Master video RAM read/write
+ *
+ *************************************/
+
+WRITE_HANDLER( leland_master_video_addr_w )
+{
+    leland_video_addr_w(offset, data, 0);
+}
+
+
+static void leland_delayed_mvram_w(int param)
+{
+	int num = (param >> 16) & 1;
+	int offset = (param >> 8) & 0xff;
+	int data = param & 0xff;
+	leland_vram_port_w(offset, data, num);
 }
 
 
 WRITE_HANDLER( leland_mvram_port_w )
 {
-    leland_vram_port_w(offset, data, 0);
+	if (sync_next_write)
+	{
+		timer_set(TIME_NOW, 0x00000 | (offset << 8) | data, leland_delayed_mvram_w);
+		sync_next_write = 0;
+	}
+	else
+	    leland_vram_port_w(offset, data, 0);
+}
+
+
+READ_HANDLER( leland_mvram_port_r )
+{
+    return leland_vram_port_r(offset, 0);
+}
+
+
+
+/*************************************
+ *
+ *	Slave video RAM read/write
+ *
+ *************************************/
+
+WRITE_HANDLER( leland_slave_video_addr_w )
+{
+    leland_video_addr_w(offset, data, 1);
 }
 
 WRITE_HANDLER( leland_svram_port_w )
@@ -417,607 +495,361 @@ WRITE_HANDLER( leland_svram_port_w )
     leland_vram_port_w(offset, data, 1);
 }
 
-READ_HANDLER( leland_mvram_port_r )
-{
-    return leland_vram_port_r(offset, 0);
-}
-
 READ_HANDLER( leland_svram_port_r )
 {
     return leland_vram_port_r(offset, 1);
 }
 
-WRITE_HANDLER( leland_master_video_addr_w )
-{
-    leland_video_addr_w(offset, data, 0);
-}
 
-WRITE_HANDLER( leland_slave_video_addr_w )
-{
-    leland_video_addr_w(offset, data, 1);
-}
 
-/***************************************************************************
-
-  Start the video hardware emulation.
-
-***************************************************************************/
-
-int leland_vh_start(void)
-{
-    screen_bitmap = osd_create_bitmap(VIDEO_WIDTH*8, VIDEO_HEIGHT*8);
-	if (!screen_bitmap)
-	{
-		return 1;
-	}
-    fillbitmap(screen_bitmap,palette_transparent_pen,NULL);
-
-    leland_video_ram=malloc(leland_video_ram_size);
-    if (!leland_video_ram)
-	{
-		return 1;
-	}
-    memset(leland_video_ram, 0, leland_video_ram_size);
-
-	return 0;
-}
-
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void leland_vh_stop(void)
-{
-	if (screen_bitmap)
-	{
-		osd_free_bitmap(screen_bitmap);
-	}
-    if (leland_video_ram)
-	{
-        free(leland_video_ram);
-	}
-}
-
-
-/***************************************************************************
-
-    Merge background and foreground bitmaps.
-
-***************************************************************************/
-
-void leland_draw_bitmap(
-    struct osd_bitmap *bitmap,
-    struct osd_bitmap *bkbitmap,
-    int scrollx,
-    int scrolly)
-{
-    int x,y, offs, data, j, value;
-    /* Render the bitmap. */
-    for (y=0; y<VIDEO_HEIGHT*8; y++)
-    {
-        for (x=0; x<VIDEO_WIDTH; x++)
-        {
-            int r=0;
-            int bitmapvalue, bkvalue;
-            offs=y*0x80+x*2;
-
-            data =((unsigned long)leland_video_ram[0x00000+offs])<<(3*8);
-            data|=((unsigned long)leland_video_ram[VRAM_HIGH+offs])<<(2*8);
-            data|=((unsigned long)leland_video_ram[0x00001+offs])<<(1*8);
-            data|=((unsigned long)leland_video_ram[VRAM_HIGH+1+offs]);
-
-            for (j=32-4; j>=0; j-=4)
-            {
-                value=(data>>j)&0x0f;
-                if (bkbitmap)
-                {
-                    /*
-                    Merge the two bitmaps. The palette index is obtained
-                    by combining the foreground and background graphics.
-                    TODO:
-                    - Support scrolling
-                    */
-                    if (Machine->orientation & ORIENTATION_SWAP_XY)
-                    {
-                        int line=VIDEO_WIDTH*8-1-(x*8+r);
-                        bkvalue=bkbitmap->line[line+scrollx][y+scrolly];
-                        bitmapvalue=Machine->pens[value*0x40+bkvalue];
-                        screen_bitmap->line[line][y]=bitmapvalue;
-                    }
-                    else
-                    {
-                        bkvalue=bkbitmap->line[y+scrolly][x*8+r+scrollx];
-                        bitmapvalue=Machine->pens[value*0x40+bkvalue];
-                        screen_bitmap->line[y][x*8+r]=bitmapvalue;
-                    }
-                }
-                else
-                {
-                    /* Legacy code */
-                    if (!value)
-                    {
-                        bitmapvalue=palette_transparent_pen;
-                    }
-                    else
-                    {
-                        bitmapvalue=Machine->pens[value*0x40];
-                    }
-                    if (Machine->orientation & ORIENTATION_SWAP_XY)
-                    {
-                        int line=VIDEO_WIDTH*8-1-(x*8+r);
-                        screen_bitmap->line[line][y]=bitmapvalue;
-                    }
-                    else
-                    {
-                        screen_bitmap->line[y][x*8+r]=bitmapvalue;
-                    }
-                }
-                r++;
-            }
-        }
-    }
-    copybitmap(bitmap,screen_bitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
-
-#ifdef MAME_DEBUG
-    if (keyboard_pressed(KEYCODE_F))
-	{
-		FILE *fp=fopen("VIDEOR.DMP", "w+b");
-		if (fp)
-		{
-            fwrite(leland_video_ram, leland_video_ram_size, 1, fp);
-			fclose(fp);
-		}
-	}
-#endif
-}
-
-
-/***************************************************************************
-
-    Shared video refresh funciton
-
-***************************************************************************/
-
-void leland_screenrefresh(struct osd_bitmap *bitmap,int full_refresh, int bkcharbank)
-{
-#define Z 1
-	int x,y, offs, colour;
-    int scrollx, scrolly, xfine, yfine;
-    int bkprombank;
-    int ypos;
-    int sx;
-    unsigned char *BKGND = memory_region(REGION_USER1);
-
-    /* PROM high bank */
-    bkprombank=((leland_gfx_control>>3)&0x01)*0x2000;
-
-    scrollx=leland_bk_xlow+256*leland_bk_xhigh;
-    xfine=scrollx&0x07;
-    sx=scrollx/8;
-    scrolly=leland_bk_ylow+(256*leland_bk_yhigh);
-    yfine=scrolly&0x07;
-    ypos=scrolly/8;
-
-    /* Build the palette */
-	palette_recalc();
-
-    /*
-    Render the background graphics
-    TODO: rewrite this completely using the proper video combining technique.
-    */
-    for (y=0; y<VIDEO_HEIGHT+1; y++)
-    {
-                for (x=0; x<VIDEO_WIDTH+1; x++)
-                {
-                        int code;
-                        offs =(ypos&0x1f)*0x100;
-                        offs+=((ypos>>5) & 0x07)*0x4000;
-                        offs+=bkprombank;
-                        offs+=((sx+x)&0xff);
-                        offs&=0x1ffff;
-                        code=BKGND[offs];
-
-                        code+=(((ypos>>6)&0x03)*0x100);
-                        code+=bkcharbank;
-
-                        colour=(code&0xe0)>>5;
-                        drawgfx(bitmap,Machine->gfx[0],
-                                        code,
-                                        colour,
-                                        0,0,
-                                        8*x-xfine,8*y-yfine,
-                                        &Machine->drv->visible_area,
-                                        TRANSPARENCY_NONE ,0);
-                }
-                ypos++;
-    }
-
-    /* Merge the two bitmaps together */
-    leland_draw_bitmap(bitmap, 0, 0, 0);
-}
-
-void leland_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-    int bkcharbank=((leland_gfx_control>>4)&0x01)*0x0400;
-    leland_screenrefresh(bitmap, full_refresh, bkcharbank);
-}
-
-void pigout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-    /*
-    Some games have more background graphics and employ an
-    extra bank bit. These are the games with 0x8000 sized character
-    sets.
-    */
-    int bkcharbank=((leland_gfx_control>>4)&0x03)*0x0400;
-    leland_screenrefresh(bitmap, full_refresh, bkcharbank);
-}
-
-/***************************************************************************
-
-    SOUND
-
-    2 Onboard DACs driven from the video RAM
-
-***************************************************************************/
-
-static INT16 *buffer1,*buffer2;
-static int channel;
-const int buffer_len = 256;
-
-int leland_sh_start(const struct MachineSound *msound)
-{
-	int vol[2];
-
-	/* allocate the buffers */
-	buffer1 = malloc(sizeof(INT16)*buffer_len);
-	buffer2 = malloc(sizeof(INT16)*buffer_len);
-	if (buffer1 == 0 || buffer2 == 0)
-	{
-		free(buffer1);
-		free(buffer2);
-		return 1;
-	}
-	memset(buffer1,0,sizeof(INT16)*buffer_len);
-	memset(buffer2,0,sizeof(INT16)*buffer_len);
-
-	/* request a sound channel */
-	vol[0] = vol[1] = 25;
-	channel = mixer_allocate_channels(2,vol);
-	mixer_set_name(channel+0,"streamed DAC #0");
-	mixer_set_name(channel+1,"streamed DAC #1");
-	return 0;
-}
-
-void leland_sh_stop (void)
-{
-	free(buffer1);
-	free(buffer2);
-	buffer1 = buffer2 = 0;
-}
-
-void leland_sh_update(void)
-{
-    /* 8MHZ 8 bit DAC sound stored in program ROMS */
-    int dacpos;
-    int dac1on, dac2on;
-	INT16 *buf;
-
-    if (Machine->sample_rate == 0) return;
-
-    dac1on=(~leland_gfx_control)&0x01;
-    dac2on=(~leland_gfx_control)&0x02;
-
-    if (dac1on)
-    {
-		buf = buffer1;
-
-        for (dacpos = 0x50;dacpos < 0x8000;dacpos += 0x80)
-			*(buf++) = leland_video_ram[dacpos]<<7;
-	}
-	else memset(buffer1,0,sizeof(INT16)*buffer_len);
-
-    if (dac2on)
-    {
-		buf = buffer2;
-
-        for (dacpos = 0x50;dacpos < 0x8000;dacpos += 0x80)
-			*(buf++) = leland_video_ram[dacpos+VRAM_HIGH]<<7;
-	}
-	else memset(buffer2,0,sizeof(INT16)*buffer_len);
-
-	mixer_play_streamed_sample_16(channel+0,buffer1,sizeof(INT16)*buffer_len,buffer_len * Machine->drv->frames_per_second);
-	mixer_play_streamed_sample_16(channel+1,buffer2,sizeof(INT16)*buffer_len,buffer_len * Machine->drv->frames_per_second);
-}
-
-/***************************************************************************
-
-  Ataxx
-
-  Different from other Leland games.
-  1) 12 bit palette instead of 8 bit palette.
-  2) RAM based background (called quadrant RAM in the self test)
-  3) Background characters are 6 bits per pixel with no funny banking.
-
-***************************************************************************/
-
-unsigned char * ataxx_tram;         /* Temporay RAM (TRAM) */
-size_t ataxx_tram_size;
-const int ataxx_qram_size=0x8000;   /* 2 banks of 0x4000 */
-unsigned char * ataxx_qram1;        /* Background RAM # 1 - chars */
-unsigned char * ataxx_qram2;        /* Background RAM # 2 - attrib */
-unsigned char * ataxx_qram1dirty;    /* Dirty characters */
-unsigned char * ataxx_qram2dirty;    /* Dirty characters */
-
-int ataxx_vram_port_r(int offset, int num)
-{
-    int ret;
-    switch (offset)
-    {
-        case 0x06:
-            ret=leland_vram_plane_r(num);
-            break;
-
-        case 0x07:
-            ret=leland_vram_planar_r(num);
-            break;
-
-        case 0x0a:
-            ret=leland_vram_high_r(num);
-            break;
-
-        case 0x0b:
-            ret=leland_vram_high_r(num);
-            leland_video_addr[num]++;
-            break;
-
-        case 0x0c:
-            ret=leland_vram_low_r(num);
-            break;
-
-        default:
-			logerror("CPU #%d %04x Warning: Unknown video port %02x read (address=%04x)\n",
-					cpu_getactivecpu(),cpu_get_pc(), offset,
-					leland_video_addr[num]);
-            return 0;
-    }
-
-#ifdef NOISY_VIDEO
-    if (offset != 0x07)
-    {
-        logerror("CPU #%d %04x video port %02x read (address=%04x value=%02x)\n",
-                   cpu_getactivecpu(),cpu_get_pc(), offset,
-                   leland_video_addr[num], ret);
-    }
-#endif
-
-    return ret;
-}
-
-void ataxx_vram_port_w(int offset, int data, int num)
-{
-    switch (offset)
-    {
-        case 0x03:
-            leland_vram_high_w(data, num);
-            leland_vram_low_w(leland_vram_low_data[num], num);
-            leland_video_addr[num]++;
-            break;
-
-        case 0x05:
-            leland_vram_low_w(data, num);
-            leland_vram_high_w(data, num);
-            leland_video_addr[num]++;
-            break;
-
-        case 0x07:
-            leland_vram_planar_w(data, num);
-            break;
-
-        case 0x0a:
-            leland_vram_high_w(data, num);
-            break;
-
-        case 0x0b: /* High write with latch */
-            leland_vram_high_w(data, num);
-            leland_video_addr[num]++;
-            break;
-
-        case 0x0c:
-            leland_vram_low_w(data, num);
-            break;
-
-        case 0x17:
-            leland_vram_planar_masked_w(data, num);
-            break;
-
-        case 0x1b:
-            // Not sure about this one
-            leland_vram_planar_w(0, num);
-            leland_vram_planar_w(data, num);
-            break;
-
-        default:
-			logerror("CPU #%d %04x Warning: Unknown video port %02x write (address=%04x value=%02x)\n",
-					cpu_getactivecpu(),cpu_get_pc(), offset,
-					leland_video_addr[num], data);
-            return;
-    }
-
-#ifdef NOISY_VIDEO
-    if (offset != 0x07)
-    {
-        logerror("CPU #%d %04x video port %02x write (address=%04x value=%02x)\n",
-                   cpu_getactivecpu(),cpu_get_pc(), offset,
-                   leland_video_addr[num], data);
-    }
-#endif
-}
+/*************************************
+ *
+ *	Ataxx master video RAM read/write
+ *
+ *************************************/
 
 WRITE_HANDLER( ataxx_mvram_port_w )
 {
-    ataxx_vram_port_w(offset, data, 0);
+	offset = ((offset >> 1) & 0x07) | ((offset << 3) & 0x08) | (offset & 0x10);
+	if (sync_next_write)
+	{
+		timer_set(TIME_NOW, 0x00000 | (offset << 8) | data, leland_delayed_mvram_w);
+		sync_next_write = 0;
+	}
+	else
+		leland_vram_port_w(offset, data, 0);
 }
+
 
 WRITE_HANDLER( ataxx_svram_port_w )
 {
-    ataxx_vram_port_w(offset, data, 1);
+	offset = ((offset >> 1) & 0x07) | ((offset << 3) & 0x08) | (offset & 0x10);
+	leland_vram_port_w(offset, data, 1);
 }
+
+
+
+/*************************************
+ *
+ *	Ataxx slave video RAM read/write
+ *
+ *************************************/
 
 READ_HANDLER( ataxx_mvram_port_r )
 {
-    return ataxx_vram_port_r(offset, 0);
+	offset = ((offset >> 1) & 0x07) | ((offset << 3) & 0x08) | (offset & 0x10);
+    return leland_vram_port_r(offset, 0);
 }
+
 
 READ_HANDLER( ataxx_svram_port_r )
 {
-    return ataxx_vram_port_r(offset, 1);
+	offset = ((offset >> 1) & 0x07) | ((offset << 3) & 0x08) | (offset & 0x10);
+    return leland_vram_port_r(offset, 1);
 }
 
-int ataxx_vh_start(void)
+
+
+/*************************************
+ *
+ *	End-of-frame routine
+ *
+ *************************************/
+
+static void scanline_reset(int param)
 {
-    if (leland_vh_start())
-    {
-        return 1;
-    }
+	/* flush the remaining scanlines */
+	update_for_scanline(256);
+	next_update_scanline = 0;
 
-    /*
-    This background bitmap technique needs to be moved to
-    the generic leland driver (when the bitmap renderer supports
-    scrolling)
-    */
-    background_bitmap = osd_create_bitmap(0x800+0x100, 0x400+0x100);
-    if (!background_bitmap)
-	{
-		return 1;
-	}
-    fillbitmap(background_bitmap,Machine->pens[0], NULL);
-
-    ataxx_qram1=malloc(ataxx_qram_size);
-    if (!ataxx_qram1)
-    {
-        return 1;
-    }
-    memset(ataxx_qram1, 0, ataxx_qram_size);
-
-    ataxx_qram2=malloc(ataxx_qram_size);
-    if (!ataxx_qram2)
-    {
-        return 1;
-    }
-    memset(ataxx_qram2, 0, ataxx_qram_size);
-
-    ataxx_qram1dirty=malloc(ataxx_qram_size);
-    if (!ataxx_qram1dirty)
-    {
-        return 1;
-    }
-    memset(ataxx_qram1dirty, 0xff, ataxx_qram_size);
-
-    ataxx_qram2dirty=malloc(ataxx_qram_size);
-    if (!ataxx_qram2dirty)
-    {
-        return 1;
-    }
-    memset(ataxx_qram2dirty, 0xff, ataxx_qram_size);
-
-	return 0;
+	/* update the DACs if they're on */
+	if (!(leland_dac_control & 0x01))
+		leland_dac_update(0, &video_ram_copy[VRAM_LO + 0x50]);
+	if (!(leland_dac_control & 0x02))
+		leland_dac_update(1, &video_ram_copy[VRAM_HI + 0x50]);
+	leland_dac_control = 3;
 }
 
-void ataxx_vh_stop(void)
+
+void leland_vh_eof(void)
 {
-    leland_vh_stop();
+	/* reset scrolling */
+	scroll_index = 0;
+	scroll_pos[0].scanline = 0;
+	scroll_pos[0].x = xscroll;
+	scroll_pos[0].y = yscroll;
+	scroll_pos[0].gfxbank = gfxbank;
 
-    if (background_bitmap)
-    {
-        osd_free_bitmap(background_bitmap);
-    }
-    if (ataxx_qram1)
-	{
-        free(ataxx_qram1);
-	}
-    if (ataxx_qram2)
-	{
-        free(ataxx_qram2);
-	}
-    if (ataxx_qram1dirty)
-	{
-        free(ataxx_qram1dirty);
-	}
-    if (ataxx_qram2dirty)
-	{
-        free(ataxx_qram2dirty);
-	}
+	/* update anything remaining */
+	update_for_scanline(VIDEO_HEIGHT * 8);
 
+	/* set a timer to go off at the top of the frame */
+	timer_set(cpu_getscanlinetime(0), 0, scanline_reset);
 }
+
+
+
+/*************************************
+ *
+ *	ROM-based refresh routine
+ *
+ *************************************/
+
+void leland_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+{
+	const UINT8 *background_prom = memory_region(REGION_USER1);
+	const struct GfxElement *gfx = Machine->gfx[0];
+	int total_elements = gfx->total_elements;
+	UINT8 background_usage[8];
+	int x, y, chunk;
+
+	/* update anything remaining */
+	update_for_scanline(VIDEO_HEIGHT * 8);
+
+	/* loop over scrolling chunks */
+	/* it's okay to do this before the palette calc because */
+	/* these values are raw indexes, not pens */
+	memset(background_usage, 0, sizeof(background_usage));
+	for (chunk = 0; chunk <= scroll_index; chunk++)
+	{
+		int char_bank = ((scroll_pos[chunk].gfxbank >> 4) & 0x03) * 0x0400;
+		int prom_bank = ((scroll_pos[chunk].gfxbank >> 3) & 0x01) * 0x2000;
+
+		/* determine scrolling parameters */
+		int xfine = scroll_pos[chunk].x % 8;
+		int yfine = scroll_pos[chunk].y % 8;
+		int xcoarse = scroll_pos[chunk].x / 8;
+		int ycoarse = scroll_pos[chunk].y / 8;
+		struct rectangle clip;
+
+		/* make a clipper */
+		clip = Machine->drv->visible_area;
+		if (chunk != 0)
+			clip.min_y = scroll_pos[chunk].scanline;
+		if (chunk != scroll_index)
+			clip.max_y = scroll_pos[chunk + 1].scanline - 1;
+
+		/* draw what's visible to the main bitmap */
+		for (y = clip.min_y / 8; y < clip.max_y / 8 + 2; y++)
+		{
+			int ysum = ycoarse + y;
+			for (x = 0; x < VIDEO_WIDTH + 1; x++)
+			{
+				int xsum = xcoarse + x;
+				int offs = ((xsum << 0) & 0x000ff) |
+				           ((ysum << 8) & 0x01f00) |
+				           prom_bank |
+				           ((ysum << 9) & 0x1c000);
+				int code = background_prom[offs] |
+				           ((ysum << 2) & 0x300) |
+				           char_bank;
+				int color = (code >> 5) & 7;
+
+				/* draw to the bitmap */
+				drawgfx(bitmap, gfx,
+						code, 8 * color, 0, 0,
+						8 * x - xfine, 8 * y - yfine,
+						&clip, TRANSPARENCY_NONE_RAW, 0);
+
+				/* update color usage */
+				background_usage[color] |= gfx->pen_usage[code & (total_elements - 1)];
+			}
+		}
+	}
+
+	/* build the palette */
+	palette_init_used_colors();
+	for (y = 0; y < 8; y++)
+	{
+		UINT8 usage = background_usage[y];
+		for (x = 0; x < 8; x++)
+			if (usage & (1 << x))
+			{
+				int p;
+				for (p = 0; p < 16; p++)
+					palette_used_colors[p * 64 + y * 8 + x] = PALETTE_COLOR_USED;
+			}
+	}
+	palette_recalc();
+
+	/* Merge the two bitmaps together */
+	if (bitmap->depth == 8)
+		draw_bitmap_8(bitmap);
+	else
+		draw_bitmap_16(bitmap);
+}
+
+
+
+/*************************************
+ *
+ *	RAM-based refresh routine
+ *
+ *************************************/
 
 void ataxx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-    int x, y, offs, scrollx, scrolly;
+	const struct GfxElement *gfx = Machine->gfx[0];
+	int total_elements = gfx->total_elements;
+	UINT32 background_usage[2];
+	int x, y, chunk;
 
-    /* Build the palette */
+	/* update anything remaining */
+	update_for_scanline(VIDEO_HEIGHT * 8);
+
+	/* loop over scrolling chunks */
+	/* it's okay to do this before the palette calc because */
+	/* these values are raw indexes, not pens */
+	memset(background_usage, 0, sizeof(background_usage));
+	for (chunk = 0; chunk <= scroll_index; chunk++)
+	{
+		/* determine scrolling parameters */
+		int xfine = scroll_pos[chunk].x % 8;
+		int yfine = scroll_pos[chunk].y % 8;
+		int xcoarse = scroll_pos[chunk].x / 8;
+		int ycoarse = scroll_pos[chunk].y / 8;
+		struct rectangle clip;
+
+		/* make a clipper */
+		clip = Machine->drv->visible_area;
+		if (chunk != 0)
+			clip.min_y = scroll_pos[chunk].scanline;
+		if (chunk != scroll_index)
+			clip.max_y = scroll_pos[chunk + 1].scanline - 1;
+
+		/* draw what's visible to the main bitmap */
+		for (y = clip.min_y / 8; y < clip.max_y / 8 + 2; y++)
+		{
+			int ysum = ycoarse + y;
+			for (x = 0; x < VIDEO_WIDTH + 1; x++)
+			{
+				int xsum = xcoarse + x;
+				int offs = ((ysum & 0x40) << 9) + ((ysum & 0x3f) << 8) + (xsum & 0xff);
+				int code = ataxx_qram[offs] | ((ataxx_qram[offs + 0x4000] & 0x3f) << 8);
+
+				/* draw to the bitmap */
+				drawgfx(bitmap, gfx,
+						code, 0, 0, 0,
+						8 * x - xfine, 8 * y - yfine,
+						&clip, TRANSPARENCY_NONE_RAW, 0);
+
+				/* update color usage */
+				background_usage[0] |= ataxx_pen_usage[(code & (total_elements - 1)) * 2 + 0];
+				background_usage[1] |= ataxx_pen_usage[(code & (total_elements - 1)) * 2 + 1];
+			}
+		}
+	}
+
+	/* build the palette */
+	palette_init_used_colors();
+	for (y = 0; y < 2; y++)
+	{
+		UINT32 usage = background_usage[y];
+		for (x = 0; x < 32; x++)
+			if (usage & (1 << x))
+			{
+				int p;
+				for (p = 0; p < 16; p++)
+					palette_used_colors[p * 64 + y * 32 + x] = PALETTE_COLOR_USED;
+			}
+	}
 	palette_recalc();
 
-    /* Scroll position */
-    scrollx=(leland_bk_xlow+256*leland_bk_xhigh) & 0x7ff;
-    scrolly=(leland_bk_ylow+256*leland_bk_yhigh) & 0x3ff;
-
-    /* Build quadrants ( backgrounds ) */
-    for (y=0; y<0x80; y++)
-    {
-        for (x=0; x<0x100; x++)
-        {
-            int code, attr;
-            offs=(y*0x0100)+x;
-            offs&=0x7fff;
-            code=ataxx_qram1[offs];
-            attr=ataxx_qram2[offs];
-            if (
-                code != ataxx_qram1dirty[offs] ||
-                attr != ataxx_qram2dirty[offs]
-               )
-            {
-                /*
-                There are no palette issues with the dirty handling
-                of the background RAM
-                */
-                ataxx_qram1dirty[offs]=code;
-                ataxx_qram2dirty[offs]=attr;
-                code+=(attr&0x3f)*256;
-                leland_draw_bkchar(x, y, code);
-            }
-        }
-    }
-    /* Merge the foreground and background layers */
-    leland_draw_bitmap(bitmap, background_bitmap, scrollx, scrolly);
-
-#if 0
-    if (keyboard_pressed(KEYCODE_B))
-    {
-        FILE *fp;
-        fp=fopen("TRAM.DMP", "w+b");
-        if (fp)
-        {
-            fwrite(ataxx_tram, ataxx_tram_size, 1, fp);
-            fclose(fp);
-        }
-        fp=fopen("QRAM1.DMP", "w+b");
-        if (fp)
-        {
-            fwrite(ataxx_qram1, ataxx_qram_size, 1, fp);
-            fclose(fp);
-        }
-        fp=fopen("QRAM2.DMP", "w+b");
-        if (fp)
-        {
-            fwrite(ataxx_qram2, ataxx_qram_size, 1, fp);
-            fclose(fp);
-        }
-    }
-#endif
+	/* Merge the two bitmaps together */
+	if (bitmap->depth == 8)
+		draw_bitmap_8(bitmap);
+	else
+		draw_bitmap_16(bitmap);
 }
 
 
+
+/*************************************
+ *
+ *	Depth-specific refresh
+ *
+ *************************************/
+
+#define ADJUST_FOR_ORIENTATION(orientation, bitmap, dst, x, y, xadv)	\
+	if (orientation)													\
+	{																	\
+		int dy = bitmap->line[1] - bitmap->line[0];						\
+		int tx = x, ty = y, temp;										\
+		if (orientation & ORIENTATION_SWAP_XY)							\
+		{																\
+			temp = tx; tx = ty; ty = temp;								\
+			xadv = dy / (bitmap->depth / 8);							\
+		}																\
+		if (orientation & ORIENTATION_FLIP_X)							\
+		{																\
+			tx = bitmap->width - 1 - tx;								\
+			if (!(orientation & ORIENTATION_SWAP_XY)) xadv = -xadv;		\
+		}																\
+		if (orientation & ORIENTATION_FLIP_Y)							\
+		{																\
+			ty = bitmap->height - 1 - ty;								\
+			if ((orientation & ORIENTATION_SWAP_XY)) xadv = -xadv;		\
+		}																\
+		/* can't lookup line because it may be negative! */				\
+		dst = (TYPE *)(bitmap->line[0] + dy * ty) + tx;					\
+	}
+
+#define INCLUDE_DRAW_CORE
+
+#define DRAW_FUNC draw_bitmap_8
+#define TYPE UINT8
+#include "leland.c"
+#undef TYPE
+#undef DRAW_FUNC
+
+#define DRAW_FUNC draw_bitmap_16
+#define TYPE UINT16
+#include "leland.c"
+#undef TYPE
+#undef DRAW_FUNC
+
+
+#else
+
+
+/*************************************
+ *
+ *	Bitmap blending routine
+ *
+ *************************************/
+
+void DRAW_FUNC(struct osd_bitmap *bitmap)
+{
+	const UINT16 *pens = &Machine->pens[0];
+	int orientation = Machine->orientation;
+	int x, y;
+
+	/* draw any non-transparent scanlines from the VRAM directly */
+	for (y = Machine->drv->visible_area.min_y; y <= Machine->drv->visible_area.max_y; y++)
+	{
+		UINT8 *srclo = &video_ram_copy[y * 128 + VRAM_LO];
+		UINT8 *srchi = &video_ram_copy[y * 128 + VRAM_HI];
+		TYPE *dst = (TYPE *)bitmap->line[y];
+		int xadv = 1;
+
+		/* adjust in case we're oddly oriented */
+		ADJUST_FOR_ORIENTATION(orientation, bitmap, dst, 0, y, xadv);
+
+		/* redraw the scanline */
+		for (x = 0; x < VIDEO_WIDTH*2; x++)
+		{
+			UINT16 data = (*srclo++ << 8) | *srchi++;
+
+			*dst = pens[*dst | ((data & 0xf000) >> 6)];
+			dst += xadv;
+			*dst = pens[*dst | ((data & 0x0f00) >> 2)];
+			dst += xadv;
+			*dst = pens[*dst | ((data & 0x00f0) << 2)];
+			dst += xadv;
+			*dst = pens[*dst | ((data & 0x000f) << 6)];
+			dst += xadv;
+		}
+	}
+}
+
+#endif

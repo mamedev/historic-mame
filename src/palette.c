@@ -110,6 +110,7 @@
 ******************************************************************************/
 
 #include "driver.h"
+#include "artwork.h"
 
 
 #define VERBOSE 0
@@ -153,6 +154,8 @@ int palette_transparent_color;
 
 unsigned short *palette_shadow_table;
 unsigned short *palette_highlight_table;
+
+void overlay_remap(void);
 
 
 
@@ -1288,19 +1291,29 @@ for (color = 0;color < Machine->drv->total_colors;color++)
 
 const unsigned char *palette_recalc(void)
 {
-	/* if we are not dynamically reducing the palette, return immediately. */
-	if (palette_used_colors == 0)
-		return 0;
-	switch (use_16bit)
+	const unsigned char* ret = NULL;
+
+	/* if we are not dynamically reducing the palette, return NULL. */
+	if (palette_used_colors != 0)
 	{
-		case NO_16BIT:
-		default:
-			return palette_recalc_8();
-		case STATIC_16BIT:
-			return palette_recalc_16_static();
-		case PALETTIZED_16BIT:
-			return palette_recalc_16_palettized();
+		switch (use_16bit)
+		{
+			case NO_16BIT:
+			default:
+				ret = palette_recalc_8();
+				break;
+			case STATIC_16BIT:
+				ret = palette_recalc_16_static();
+				break;
+			case PALETTIZED_16BIT:
+				ret = palette_recalc_16_palettized();
+				break;
+		}
 	}
+
+	if (ret) overlay_remap();
+
+	return ret;
 }
 
 

@@ -24,37 +24,35 @@ static int cinemat_screenh;
 static struct artwork_element *cinemat_simple_overlay;
 
 static int color_display;
-static struct artwork *backdrop;
-static struct artwork *overlay;
 static struct artwork *spacewar_panel;
 static struct artwork *spacewar_pressed_panel;
 
 struct artwork_element starcas_overlay[]=
 {
-	{{0, 400-1, 0, 300-1}, 0, 6, 25, 64},
-	{{ 200, 49, 150, -1},33, 0, 16, 64},
-	{{ 200, 38, 150, -1},32, 15, 0, 64},
-	{{ 200, 29, 150, -1},30, 33, 0, 64},
+	{{ 0, 400-1, 0, 300-1},0x00,  61,  0xff, OVERLAY_DEFAULT_OPACITY},
+	{{ 200, 49, 150, -2},  0xff, 0x20, 0x20, OVERLAY_DEFAULT_OPACITY},
+	{{ 200, 29, 150, -2},  0xff, 0xff, 0xff, OVERLAY_DEFAULT_OPACITY}, /* punch hole in outer circle */
+	{{ 200, 38, 150, -1},  0xe0, 0xff, 0x00, OVERLAY_DEFAULT_OPACITY},
 	{{-1,-1,-1,-1},0,0,0,0}
 };
 
 struct artwork_element tailg_overlay[]=
 {
-	{{0, 400-1, 0, 300-1}, 0, 64, 64, 32},
+	{{0, 400-1, 0, 300-1}, 0, 64, 64, OVERLAY_DEFAULT_OPACITY},
 	{{-1,-1,-1,-1},0,0,0,0}
 };
 
 struct artwork_element sundance_overlay[]=
 {
-	{{0, 400-1, 0, 300-1}, 32, 32, 0, 32},
+	{{0, 400-1, 0, 300-1}, 0xff, 0xff, 0x20, OVERLAY_DEFAULT_OPACITY},
 	{{-1,-1,-1,-1},0,0,0,0}
 };
 
 struct artwork_element solarq_overlay[]=
 {
-	{{0, 400-1, 0, 300-1}, 0, 6, 25, 64},
-	{{ 0,  399, 0,    29},31, 0, 12, 64},
-	{{ 200, 12, 150,  -1},31, 31, 0, 64},
+	{{0, 400-1, 30, 300-1},0x20, 0x20, 0xff, OVERLAY_DEFAULT_OPACITY},
+	{{ 0,  399, 0,    29}, 0xff, 0x20, 0x20, OVERLAY_DEFAULT_OPACITY},
+	{{ 200, 12, 150,  -2}, 0xff, 0xff, 0x20, OVERLAY_DEFAULT_OPACITY},
 	{{-1,-1,-1,-1},0,0,0,0}
 };
 
@@ -113,9 +111,6 @@ void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,con
 	int trcl2[] = { 1,2,0,1,0,2 };
 	int trcl3[] = { 2,1,1,0,2,0 };
 
-	overlay = NULL;
-	backdrop = NULL;
-
 	/* initialize the first 8 colors with the basic colors */
 	for (i = 0; i < 8; i++)
 	{
@@ -137,32 +132,34 @@ void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,con
 			if (cinemat_backdrop_req)
 			{
                 sprintf (filename, "%sb.png", Machine->gamedrv->name );
-				if ((backdrop=artwork_load(filename, nextcol, Machine->drv->total_colors-nextcol))!=NULL)
+				backdrop_load(filename, nextcol, Machine->drv->total_colors-nextcol);
+				if (artwork_backdrop!=NULL)
                 {
-					memcpy (palette+3*backdrop->start_pen, backdrop->orig_palette, 3*backdrop->num_pens_used);
+					memcpy (palette+3*artwork_backdrop->start_pen, artwork_backdrop->orig_palette, 3*artwork_backdrop->num_pens_used);
 					if (Machine->scrbitmap->depth == 8)
-						nextcol += backdrop->num_pens_used;
+						nextcol += artwork_backdrop->num_pens_used;
                 }
 			}
 			/* Attempt to load overlay if requested */
 			if (cinemat_overlay_req)
 			{
-                sprintf (filename, "%so.png", Machine->gamedrv->name );
-				/* Attempt to load artwork from file */
-				overlay=artwork_load(filename, nextcol, Machine->drv->total_colors-nextcol);
-
-				if ((overlay==NULL) && (cinemat_simple_overlay != NULL))
+				if (cinemat_simple_overlay != NULL)
 				{
-					/* no overlay file found - use simple artwork */
+					/* use simple overlay */
 					artwork_elements_scale(cinemat_simple_overlay,
 										   Machine->scrbitmap->width,
 										   Machine->scrbitmap->height);
-					overlay=artwork_create(cinemat_simple_overlay, nextcol,
-										   Machine->drv->total_colors-nextcol);
+					overlay_create(cinemat_simple_overlay, nextcol,Machine->drv->total_colors-nextcol);
+				}
+				else
+				{
+					/* load overlay from file */
+	                sprintf (filename, "%so.png", Machine->gamedrv->name );
+					overlay_load(filename, nextcol, Machine->drv->total_colors-nextcol);
 				}
 
-				if ((overlay != 0) && ((Machine->scrbitmap->depth == 8) || (backdrop == 0)))
-					overlay_set_palette (overlay, palette, (Machine->drv->total_colors > 256 ? 256 : Machine->drv->total_colors) - nextcol);
+				if ((Machine->scrbitmap->depth == 8) || (artwork_backdrop == 0))
+					overlay_set_palette (palette, (Machine->drv->total_colors > 256 ? 256 : Machine->drv->total_colors) - nextcol);
 			}
 			break;
 
@@ -223,15 +220,16 @@ void spacewar_init_colors (unsigned char *palette, unsigned short *colortable,co
 
 	nextcol = 24;
 
-	if ((spacewar_panel = artwork_load_size("spacewr1.png", nextcol, Machine->drv->total_colors - nextcol, width, height))!=NULL)
+	artwork_load_size(&spacewar_panel, "spacewr1.png", nextcol, Machine->drv->total_colors - nextcol, width, height);
+	if (spacewar_panel != NULL)
 	{
 		if (Machine->scrbitmap->depth == 8)
 			nextcol += spacewar_panel->num_pens_used;
 
-		if ((spacewar_pressed_panel = artwork_load_size("spacewr2.png", nextcol, Machine->drv->total_colors - nextcol, width, height))==NULL)
+		artwork_load_size(&spacewar_pressed_panel, "spacewr2.png", nextcol, Machine->drv->total_colors - nextcol, width, height);
+		if (spacewar_pressed_panel == NULL)
 		{
-			artwork_free (spacewar_panel);
-			spacewar_panel = NULL;
+			artwork_free (&spacewar_panel);
 			return ;
 		}
 	}
@@ -256,13 +254,12 @@ int cinemat_vh_start (void)
 {
 	vector_set_shift (VEC_SHIFT);
 
-	if (backdrop)
+	if (artwork_backdrop)
 	{
-		backdrop_refresh (backdrop);
-		backdrop_refresh_tables (backdrop);
+		backdrop_refresh (artwork_backdrop);
+		backdrop_refresh_tables (artwork_backdrop);
 	}
 
-	if (overlay) overlay_remap (overlay);
 	cinemat_screenh = Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y;
 	return vector_vh_start();
 }
@@ -279,33 +276,23 @@ int spacewar_vh_start (void)
 
 void cinemat_vh_stop (void)
 {
-	if (backdrop) artwork_free (backdrop);
-	if (overlay) artwork_free (overlay);
 	vector_vh_stop();
 }
 
 void spacewar_vh_stop (void)
 {
 	if (spacewar_panel != NULL)
-		artwork_free(spacewar_panel);
-	spacewar_panel = NULL;
+		artwork_free(&spacewar_panel);
 
 	if (spacewar_pressed_panel != NULL)
-		artwork_free(spacewar_pressed_panel);
-	spacewar_pressed_panel = NULL;
+		artwork_free(&spacewar_pressed_panel);
+
 	vector_vh_stop();
 }
 
 void cinemat_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 {
-    if (backdrop && overlay)
-        vector_vh_update_artwork(bitmap, overlay, backdrop, full_refresh);
-        else if (overlay)
-        vector_vh_update_overlay(bitmap, overlay, full_refresh);
-    else if (backdrop)
-        vector_vh_update_backdrop(bitmap, backdrop, full_refresh);
-    else
-        vector_vh_update(bitmap, full_refresh);
+    vector_vh_screenrefresh(bitmap, full_refresh);
     vector_clear_list ();
 }
 
@@ -321,7 +308,7 @@ void spacewar_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 
 	if (spacewar_panel == NULL)
 	{
-        vector_vh_update(bitmap, full_refresh);
+        vector_vh_screenrefresh(bitmap, full_refresh);
         vector_clear_list ();
 		return;
 	}
@@ -334,7 +321,7 @@ void spacewar_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 	vector_bitmap._private = bitmap->_private;
 	vector_bitmap.line = bitmap->line;
 
-	vector_vh_update(&vector_bitmap,full_refresh);
+	vector_vh_screenrefresh(&vector_bitmap,full_refresh);
     vector_clear_list ();
 
 	if (full_refresh)

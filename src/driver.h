@@ -87,6 +87,9 @@ enum
 #if (HAS_N2A03)
 	CPU_N2A03,
 #endif
+#if (HAS_M4510)
+	CPU_M4510,
+#endif
 #if (HAS_H6280)
 	CPU_H6280,
 #endif
@@ -225,7 +228,10 @@ enum
 #if (HAS_ADSP2100)
 	CPU_ADSP2100,
 #endif
-	CPU_COUNT
+#if (HAS_MIPS)
+	CPU_MIPS,
+#endif
+    CPU_COUNT
 };
 
 /* set this if the CPU is used as a slave for audio. It will not be emulated if */

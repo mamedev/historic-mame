@@ -27,6 +27,9 @@
 #if (HAS_M6502 || HAS_M65C02 || HAS_M65SC02 || HAS_M6510 || HAS_M6510T || HAS_M7501 || HAS_M8502 || HAS_N2A03)
 #include "cpu/m6502/m6502.h"
 #endif
+#if (HAS_M4510)
+#include "cpu/m6502/m4510.h"
+#endif
 #if (HAS_M65CE02)
 #include "cpu/m6502/m65ce02.h"
 #endif
@@ -99,6 +102,9 @@
 #endif
 #if (HAS_ADSP2100)
 #include "cpu/adsp2100/adsp2100.h"
+#endif
+#if (HAS_MIPS)
+#include "cpu/mips/mips.h"
 #endif
 
 /* these are triggers sent to the timer system for various interrupt events */
@@ -361,6 +367,9 @@ struct cpu_interface cpuintf[] =
 #if (HAS_N2A03)
 	CPU0(N2A03,    n2a03,	 1,  0,1.00,N2A03_INT_NONE,    N2A03_INT_IRQ,  N2A03_INT_NMI,  16,	  0,16,LE,1, 3,16	),
 #endif
+#if (HAS_M4510)
+	CPU0(M4510,    m4510,	 1,  0,1.00,M4510_INT_NONE,    M4510_INT_IRQ,  M4510_INT_NMI,  20,	  0,20,LE,1, 3,20	),
+#endif
 #if (HAS_H6280)
 	CPU0(H6280,    h6280,	 3,  0,1.00,H6280_INT_NONE,    -1,			   H6280_INT_NMI,  21,	  0,21,LE,1, 3,21	),
 #endif
@@ -440,16 +449,16 @@ struct cpu_interface cpuintf[] =
 	CPU0(KONAMI,   konami,	 2,  0,1.00,KONAMI_INT_NONE,   KONAMI_INT_IRQ, KONAMI_INT_NMI, 16,	  0,16,BE,1, 4,16	),
 #endif
 #if (HAS_M68000)
-	CPU0(M68000,   m68000,	 8, -1,1.00,MC68000_INT_NONE,  -1,			   -1,			   24,	  0,24,BE,2,10,24	),
+	CPU0(M68000,   m68000,	 8, -1,1.00,MC68000_INT_NONE,  -1,			   -1,			   24bew, 0,24,BE,2,10,24BEW),
 #endif
 #if (HAS_M68010)
-	CPU0(M68010,   m68010,	 8, -1,1.00,MC68010_INT_NONE,  -1,			   -1,			   24,	  0,24,BE,2,10,24	),
+	CPU0(M68010,   m68010,	 8, -1,1.00,MC68010_INT_NONE,  -1,			   -1,			   24bew, 0,24,BE,2,10,24BEW),
 #endif
 #if (HAS_M68EC020)
-	CPU0(M68EC020, m68ec020, 8, -1,1.00,MC68EC020_INT_NONE,-1,			   -1,			   24,	  0,24,BE,2,10,24	),
+	CPU0(M68EC020, m68ec020, 8, -1,1.00,MC68EC020_INT_NONE,-1,			   -1,			   24bew, 0,24,BE,2,10,24BEW),
 #endif
 #if (HAS_M68020)
-	CPU0(M68020,   m68020,	 8, -1,1.00,MC68020_INT_NONE,  -1,			   -1,			   24,	  0,24,BE,2,10,24	),
+	CPU0(M68020,   m68020,	 8, -1,1.00,MC68020_INT_NONE,  -1,			   -1,			   24bew, 0,24,BE,2,10,24BEW),
 #endif
 #if (HAS_T11)
 	CPU0(T11,	   t11, 	 4,  0,1.00,T11_INT_NONE,	   -1,			   -1,			   16lew, 0,16,LE,2, 6,16LEW),
@@ -500,6 +509,9 @@ struct cpu_interface cpuintf[] =
 /* IMO we should rename all *_ICount to *_icount - ie. no mixed case */
 #define adsp2100_ICount adsp2100_icount
 	CPU0(ADSP2100, adsp2100, 4,  0,1.00,ADSP2100_INT_NONE, -1,			   -1,			   16lew,-1,14,LE,2, 4,16LEW),
+#endif
+#if (HAS_MIPS)
+	CPU0(MIPS,	   mips,	 8, -1,1.00,MIPS_INT_NONE,	   MIPS_INT_NONE,  MIPS_INT_NONE,  32lew, 0,32,LE,4, 4,32LEW),
 #endif
 };
 
@@ -1655,6 +1667,9 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 #if (HAS_N2A03)
 			case CPU_N2A03: 			irq_line = 0; LOG(("N2A03 IRQ\n")); break;
 #endif
+#if (HAS_M4510)
+			case CPU_M4510: 			irq_line = 0; LOG(("M4510 IRQ\n")); break;
+#endif
 #if (HAS_H6280)
 			case CPU_H6280:
 				switch (num)
@@ -1827,7 +1842,7 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 				num = MC68000_INT_ACK_AUTOVECTOR;
 				break;
 #endif
-#if HAS_T11
+#if (HAS_T11)
 			case CPU_T11:
 				switch (num)
 				{
@@ -1839,10 +1854,10 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 				}
 				break;
 #endif
-#if HAS_S2650
+#if (HAS_S2650)
 			case CPU_S2650: 			irq_line = 0; LOG(("S2650 IRQ\n")); break;
 #endif
-#if HAS_TMS34010
+#if (HAS_TMS34010)
 			case CPU_TMS34010:
 				switch (num)
 				{
@@ -1852,7 +1867,7 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 				}
 				break;
 #endif
-/*#if HAS_TMS9900
+/*#if (HAS_TMS9900)
 			case CPU_TMS9900:	irq_line = 0; LOG(("TMS9900 IRQ\n")); break;
 #endif*/
 #if (HAS_TMS9900) || (HAS_TMS9940) || (HAS_TMS9980) || (HAS_TMS9985) \
@@ -1885,7 +1900,7 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 				irq_line = 0;
 				break;
 #endif
-#if HAS_Z8000
+#if (HAS_Z8000)
 			case CPU_Z8000:
 				switch (num)
 				{
@@ -1895,7 +1910,7 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 				}
 				break;
 #endif
-#if HAS_TMS320C10
+#if (HAS_TMS320C10)
 			case CPU_TMS320C10:
 				switch (num)
 				{
@@ -1905,7 +1920,7 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 				}
 				break;
 #endif
-#if HAS_ADSP2100
+#if (HAS_ADSP2100)
 			case CPU_ADSP2100:
 				switch (num)
 				{

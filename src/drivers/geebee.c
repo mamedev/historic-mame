@@ -85,7 +85,6 @@ extern int geebee_vh_start(void);
 extern int navalone_vh_start(void);
 extern int kaitei_vh_start(void);
 extern int sos_vh_start(void);
-extern void geebee_vh_stop(void);
 extern void geebee_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
 /* from sndhrdw/geebee.c */
@@ -418,7 +417,7 @@ static struct GfxLayout charlayout_1k =
 
 static struct GfxDecodeInfo gfxdecodeinfo_1k[] =
 {
-	{ REGION_CPU1, 0x3000, &charlayout_1k, 0, 5*4 },
+	{ REGION_CPU1, 0x3000, &charlayout_1k, 0, 4 },
 	{-1}							   /* end of array */
 };
 
@@ -437,7 +436,7 @@ static struct GfxLayout charlayout_2k =
 
 static struct GfxDecodeInfo gfxdecodeinfo_2k[] =
 {
-	{ REGION_CPU1, 0x3000, &charlayout_2k, 0, 5*4 },
+	{ REGION_CPU1, 0x3000, &charlayout_2k, 0, 4 },
 	{-1}							   /* end of array */
 };
 
@@ -466,13 +465,13 @@ static struct MachineDriver machine_driver_geebee =
 	/* video hardware */
 	34*8, 32*8, { 0*8, 34*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo_1k,  /* gfxdecodeinfo */
-	15, 5 * 4 * 2,
+	3+32768, 4*2,		/* extra colors for the overlay */
     geebee_init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	geebee_vh_start,
-	geebee_vh_stop,
+	generic_vh_stop,
 	geebee_vh_screenrefresh,
 
 	/* sound hardware */
@@ -504,13 +503,13 @@ static struct MachineDriver machine_driver_navalone =
 	/* video hardware */
 	34*8, 32*8, { 0*8, 34*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo_2k,  /* gfxdecodeinfo */
-	15, 5 * 4 * 2,
+	3+32768, 4*2,		/* extra colors for the overlay */
     navalone_init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	navalone_vh_start,
-	geebee_vh_stop,
+	generic_vh_stop,
 	geebee_vh_screenrefresh,
 
 	/* sound hardware */
@@ -543,13 +542,13 @@ static struct MachineDriver machine_driver_kaitei =
 	/* video hardware */
 	34*8, 32*8, { 0*8, 34*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo_2k,  /* gfxdecodeinfo */
-	15, 5 * 4 * 2,
+	3+32768, 4*2,		/* extra colors for the overlay */
 	navalone_init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	kaitei_vh_start,
-	geebee_vh_stop,
+	generic_vh_stop,
 	geebee_vh_screenrefresh,
 
 	/* sound hardware */
@@ -580,13 +579,13 @@ static struct MachineDriver machine_driver_sos =
 	/* video hardware */
 	34*8, 32*8, { 0*8, 34*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo_2k,  /* gfxdecodeinfo */
-	15, 5 * 4 * 2,
+	3+32768, 4*2,		/* extra colors for the overlay */
 	navalone_init_palette,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	sos_vh_start,
-	geebee_vh_stop,
+	generic_vh_stop,
 	geebee_vh_screenrefresh,
 
 	/* sound hardware */

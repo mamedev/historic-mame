@@ -27,30 +27,25 @@ static  int sprite_horz[SPR_COUNT];     /* x position */
 static  int sprite_vert[SPR_COUNT];     /* y position */
 static  int sprite_index[SPR_COUNT];    /* index 0x00..0x0f, prom 0x10, flip horz 0x20 */
 
-static struct artwork *overlay;
 static struct artwork_element deadeye_artwork[] = {
-	{{0,			 SCR_HORZ*8,	 0, 	 SCR_VERT*8},	 255,255,255, 255},
-	{{0,			 SCR_HORZ*8-1,	 0, 	 4*8-1},		  32,192, 64, 160},
-	{{0,			 SCR_HORZ*8-1,	 4*8,	 8*8-1},		  64, 64,192, 160},
-	{{0,			 SCR_HORZ*8-1,	 8*8,	 11*8-1},		 192,160, 32, 160},
-	{{0,			 1*8-1, 		 11*8,	 26*8-1},		 192,160, 32, 160},
-	{{SCR_HORZ*8-8,  SCR_HORZ*8-1,	 11*8,	 26*8-1},		 192,160, 32, 160},
-	{{8,			 SCR_HORZ*8-8-1, 11*8,	 26*8-1},		 192,192,192, 160},
-	{{0,			 SCR_HORZ*8-1,	 26*8,	 SCR_VERT*8-1},   64, 64,192, 160},
+	{{0,			 SCR_HORZ*8-1,	 0, 	 4*8-1},		  32,192, 64, OVERLAY_DEFAULT_OPACITY},
+	{{0,			 SCR_HORZ*8-1,	 4*8,	 8*8-1},		  64, 64,192, OVERLAY_DEFAULT_OPACITY},
+	{{0,			 SCR_HORZ*8-1,	 8*8,	 11*8-1},		 192,160, 32, OVERLAY_DEFAULT_OPACITY},
+	{{0,			 1*8-1, 		 11*8,	 26*8-1},		 192,160, 32, OVERLAY_DEFAULT_OPACITY},
+	{{SCR_HORZ*8-8,  SCR_HORZ*8-1,	 11*8,	 26*8-1},		 192,160, 32, OVERLAY_DEFAULT_OPACITY},
+	{{0,			 SCR_HORZ*8-1,	 26*8,	 SCR_VERT*8-1},   64, 64,192, OVERLAY_DEFAULT_OPACITY},
 	{{-1,-1,-1,-1},0,0,0,0},
 };
 
 static struct artwork_element gypsyjug_artwork[] = {
-	{{0,			 SCR_HORZ*8,	 0, 	 SCR_VERT*8},	 255,255,255, 255},
-	{{0,			 SCR_HORZ*8-1,	 0, 	 4*8-1},		  32,192, 64, 160},
-	{{0,			 SCR_HORZ*8-1,	 4*8,	 8*8-1},		  64, 64,192, 160},
-	{{0,			 SCR_HORZ*8-1,	 4*8,	 5*8-1},		  32,192, 64, 160},
-	{{0,			 SCR_HORZ*8-1,	 5*8,	 8*8-1},		  64, 64,192, 160},
-	{{0,			 SCR_HORZ*8-1,	 8*8,	 11*8-1},		 192,160, 32, 160},
-	{{0,			 1*8-1, 		 11*8,	 26*8-1},		 192,160, 32, 160},
-	{{SCR_HORZ*8-8,  SCR_HORZ*8-1,	 11*8,	 26*8-1},		 192,160, 32, 160},
-	{{8,			 SCR_HORZ*8-8-1, 11*8,	 26*8-1},		 192,192,192, 160},
-	{{0,			 SCR_HORZ*8-1,	 26*8,	 SCR_VERT*8-1},  192,160, 32, 160},
+	{{0,			 SCR_HORZ*8-1,	 0, 	 4*8-1},		  32,192, 64, OVERLAY_DEFAULT_OPACITY},
+	{{0,			 SCR_HORZ*8-1,	 4*8,	 8*8-1},		  64, 64,192, OVERLAY_DEFAULT_OPACITY},
+	{{0,			 SCR_HORZ*8-1,	 4*8,	 5*8-1},		  32,192, 64, OVERLAY_DEFAULT_OPACITY},
+	{{0,			 SCR_HORZ*8-1,	 5*8,	 8*8-1},		  64, 64,192, OVERLAY_DEFAULT_OPACITY},
+	{{0,			 SCR_HORZ*8-1,	 8*8,	 11*8-1},		 192,160, 32, OVERLAY_DEFAULT_OPACITY},
+	{{0,			 1*8-1, 		 11*8,	 26*8-1},		 192,160, 32, OVERLAY_DEFAULT_OPACITY},
+	{{SCR_HORZ*8-8,  SCR_HORZ*8-1,	 11*8,	 26*8-1},		 192,160, 32, OVERLAY_DEFAULT_OPACITY},
+	{{0,			 SCR_HORZ*8-1,	 26*8,	 SCR_VERT*8-1},  192,160, 32, OVERLAY_DEFAULT_OPACITY},
 	{{-1,-1,-1,-1},0,0,0,0},
 };
 
@@ -60,28 +55,21 @@ static struct artwork_element gypsyjug_artwork[] = {
 int deadeye_vh_start(void)
 {
 	if( generic_vh_start() ) return 1;
-	overlay = artwork_create(deadeye_artwork, 2, Machine->drv->total_colors - 2);
-    if( !overlay ) return 1;
+
+	overlay_create(deadeye_artwork, 2, Machine->drv->total_colors - 2);
+
     return 0;
 }
 
 int gypsyjug_vh_start(void)
 {
 	if( generic_vh_start() ) return 1;
-	overlay = artwork_create(gypsyjug_artwork, 2, Machine->drv->total_colors - 2);
-    if( !overlay ) return 1;
+
+	overlay_create(gypsyjug_artwork, 2, Machine->drv->total_colors - 2);
+
     return 0;
 }
 
-/*************************************************************/
-/* video handler stop                                        */
-/*************************************************************/
-void meadows_vh_stop(void)
-{
-	if( overlay )
-		artwork_free(overlay);
-    generic_vh_stop();
-}
 
 /*************************************************************/
 /* draw dirty sprites                                        */
@@ -133,7 +121,6 @@ void meadows_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	if (palette_recalc() || full_refresh)
 	{
-		overlay_remap(overlay);
 		memset(dirtybuffer,1,SCR_VERT * SCR_HORZ);
 	}
 
@@ -157,8 +144,6 @@ void meadows_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 	/* now draw the sprites */
 	meadows_draw_sprites(bitmap);
-
-	overlay_draw(bitmap,overlay);
 }
 
 /*************************************************************/

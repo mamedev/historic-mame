@@ -261,9 +261,9 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 	spriteram = taitol_rambanks + 0x7000;
 	spriteram_size = 0x3f0;
 
-	for (offs = 0;offs < spriteram_size;offs += 8)
+	for (offs = spriteram_size-8;offs >= 0;offs -= 8)
 	{
-		int code,color,pri,sx,sy,flipx,flipy;
+		int code,color,sx,sy,flipx,flipy;
 
 		color = spriteram[offs + 2] & 0x0f;
 		code = spriteram[offs] | (spriteram[offs + 1] << 8);
@@ -271,14 +271,13 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 		sy = spriteram[offs + 6] | (spriteram[offs + 7] << 8);
 		flipx = spriteram[offs + 3] & 0x01;
 		flipy = spriteram[offs + 3] & 0x02;
-		pri = (color & 0x08) ? (0xf0|0xcc) : 0xf0;
 
-		pdrawgfx(bitmap,Machine->gfx[1],
+		drawgfx(bitmap,Machine->gfx[1],
 				code,
 				color,
 				flipx,flipy,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0,pri);
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -292,11 +291,9 @@ void taitol_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	tilemap_render(ALL_TILEMAPS);
 
-	fillbitmap(priority_bitmap,0,NULL);
-
-	tilemap_draw(bitmap,bg19_tilemap,1<<16);
-	tilemap_draw(bitmap,bg18_tilemap,2<<16);
-	tilemap_draw(bitmap,ch1a_tilemap,4<<16);
+	tilemap_draw(bitmap,bg19_tilemap,0);
+	tilemap_draw(bitmap,bg18_tilemap,0);
+	tilemap_draw(bitmap,ch1a_tilemap,0);
 
 	draw_sprites(bitmap);
 }

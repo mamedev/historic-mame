@@ -522,15 +522,15 @@ const int displacement = 0;
 	{
 		int x,y;
 
-		x = rallyx_radarx[offs] + ((~rallyx_radarattr[offs] & 0x08) << 5) + 1;
-		y = 238 - rallyx_radary[offs];
+		x = rallyx_radarx[offs] + ((~rallyx_radarattr[offs] & 0x08) << 5);
+		y = 237 - rallyx_radary[offs];
 
 		drawgfx(bitmap,Machine->gfx[2],
 				(rallyx_radarattr[offs] & 0x07) ^ 0x07,
 				0,
 				flipscreen,flipscreen,
 				x,y,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,3);
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }
 

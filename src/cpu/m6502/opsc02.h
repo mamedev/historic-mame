@@ -46,15 +46,15 @@
  *	EA = indirect plus x (only used by 65c02 JMP)
  ***************************************************************/
 #define EA_IAX													\
-	EA_ABS; 													\
-    if (EAL + X > 0xff) /* assumption; probably wrong ? */      \
-        m6502_ICount--;                                         \
-    EAW += X;                                                   \
-	tmp = RDMEM(EAD);											\
-	if (EAL==0xff) m6502_ICount++;								\
-	EAD++;														\
-	EAH = RDMEM(EAD);											\
-	EAL = tmp
+	 EA_ABS;													\
+	 if (EAL + X > 0xff) /* assumption; probably wrong ? */ 	\
+		 m6502_ICount--;										\
+	 EAW += X;													\
+	 tmp = RDMEM(EAD);											\
+	 if (EAL==0xff) m6502_ICount++; 							\
+	 EAD++; 													\
+	 EAH = RDMEM(EAD);											\
+	 EAL = tmp
 
 #define RD_ZPI	EA_ZPI; tmp = RDMEM(EAD)
 
@@ -76,31 +76,31 @@
 #define ADC 													\
 	if (P & F_D)												\
 	{															\
-	int c = (P & F_C);											\
-	int lo = (A & 0x0f) + (tmp & 0x0f) + c; 					\
-	int hi = (A & 0xf0) + (tmp & 0xf0); 						\
+		int c = (P & F_C);										\
+		int lo = (A & 0x0f) + (tmp & 0x0f) + c; 				\
+		int hi = (A & 0xf0) + (tmp & 0xf0); 					\
 		P &= ~(F_V | F_C);										\
-		if (lo > 0x09)											\
+		if( lo > 0x09 ) 										\
 		{														\
 			hi += 0x10; 										\
 			lo += 0x06; 										\
 		}														\
-		if (~(A^tmp) & (A^hi) & F_N)							\
+		if( ~(A^tmp) & (A^hi) & F_N )							\
 			P |= F_V;											\
-		if (hi > 0x90)											\
+		if( hi > 0x90 ) 										\
 			hi += 0x60; 										\
-		if (hi & 0xff00)										\
+		if( hi & 0xff00 )										\
 			P |= F_C;											\
 		A = (lo & 0x0f) + (hi & 0xf0);							\
 	}															\
 	else														\
 	{															\
-	int c = (P & F_C);											\
-	int sum = A + tmp + c;										\
+		int c = (P & F_C);										\
+		int sum = A + tmp + c;									\
 		P &= ~(F_V | F_C);										\
-		if (~(A^tmp) & (A^sum) & F_N)							\
+		if( ~(A^tmp) & (A^sum) & F_N )							\
 			P |= F_V;											\
-		if (sum & 0xff00)										\
+		if( sum & 0xff00 )										\
 			P |= F_C;											\
 		A = (UINT8) sum;										\
 	}															\
@@ -114,31 +114,31 @@
 #define SBC 													\
 	if (P & F_D)												\
 	{															\
-	int c = (P & F_C) ^ F_C;									\
-	int sum = A - tmp - c;										\
-	int lo = (A & 0x0f) - (tmp & 0x0f) - c; 					\
-	int hi = (A & 0xf0) - (tmp & 0xf0); 						\
+		int c = (P & F_C) ^ F_C;								\
+		int sum = A - tmp - c;									\
+		int lo = (A & 0x0f) - (tmp & 0x0f) - c; 				\
+		int hi = (A & 0xf0) - (tmp & 0xf0); 					\
 		P &= ~(F_V | F_C);										\
-		if ((A^tmp) & (A^sum) & F_N)							\
+		if( (A^tmp) & (A^sum) & F_N )							\
 			P |= F_V;											\
-		if (lo & 0xf0)											\
+		if( lo & 0xf0 ) 										\
 			lo -= 6;											\
-		if (lo & 0x80)											\
+		if( lo & 0x80 ) 										\
 			hi -= 0x10; 										\
-		if (hi & 0x0f00)										\
+		if( hi & 0x0f00 )										\
 			hi -= 0x60; 										\
-		if ((sum & 0xff00) == 0)								\
+		if( (sum & 0xff00) == 0 )								\
 			P |= F_C;											\
 		A = (lo & 0x0f) + (hi & 0xf0);							\
 	}															\
 	else														\
 	{															\
-	int c = (P & F_C) ^ F_C;									\
-	int sum = A - tmp - c;										\
+		int c = (P & F_C) ^ F_C;								\
+		int sum = A - tmp - c;									\
 		P &= ~(F_V | F_C);										\
-		if ((A^tmp) & (A^sum) & F_N)							\
+		if( (A^tmp) & (A^sum) & F_N )							\
 			P |= F_V;											\
-		if ((sum & 0xff00) == 0)								\
+		if( (sum & 0xff00) == 0 )								\
 			P |= F_C;											\
 		A = (UINT8) sum;										\
 	}															\
@@ -170,7 +170,7 @@
 	P = (P | F_I) & ~F_D;										\
 	PCL = RDMEM(M6502_IRQ_VEC); 								\
 	PCH = RDMEM(M6502_IRQ_VEC+1);								\
-	change_pc16(PCD)
+	CHANGE_PC
 
 
 /* 65C02 *******************************************************
@@ -211,7 +211,7 @@
  ***************************************************************/
 #define PLY 													\
 	PULL(Y); \
-    SET_NZ(Y)
+	SET_NZ(Y)
 
 /* 65C02 *******************************************************
  *	RMB Reset memory bit
@@ -246,8 +246,14 @@
 	tmp |= A
 
 
+/***************************************************************
+ ***************************************************************
+ *			Macros to emulate the N2A03 opcodes
+ ***************************************************************
+ ***************************************************************/
 
-/* 2203 ********************************************************
+
+/* N2A03 *******************************************************
  *	ADC Add with carry - no decimal mode
  ***************************************************************/
 #define ADC_NES 												\
@@ -255,15 +261,15 @@
 		int c = (P & F_C);										\
 		int sum = A + tmp + c;									\
 		P &= ~(F_V | F_C);										\
-		if (~(A^tmp) & (A^sum) & F_N)							\
+		if( ~(A^tmp) & (A^sum) & F_N )							\
 			P |= F_V;											\
-		if (sum & 0xff00)										\
+		if( sum & 0xff00 )										\
 			P |= F_C;											\
 		A = (UINT8) sum;										\
 	}															\
 	SET_NZ(A)
 
-/* 2203 ********************************************************
+/* N2A03 *******************************************************
  *	SBC Subtract with carry - no decimal mode
  ***************************************************************/
 #define SBC_NES 												\
@@ -271,14 +277,20 @@
 		int c = (P & F_C) ^ F_C;								\
 		int sum = A - tmp - c;									\
 		P &= ~(F_V | F_C);										\
-		if ((A^tmp) & (A^sum) & F_N)							\
+		if( (A^tmp) & (A^sum) & F_N )							\
 			P |= F_V;											\
-		if ((sum & 0xff00) == 0)								\
+		if( (sum & 0xff00) == 0 )								\
 			P |= F_C;											\
 		A = (UINT8) sum;										\
 	}															\
 	SET_NZ(A)
 
+
+/***************************************************************
+ ***************************************************************
+ *			Macros to emulate the 65sc02 opcodes
+ ***************************************************************
+ ***************************************************************/
 
 
 /* 65sc02 ********************************************************
@@ -289,8 +301,7 @@
 	PUSH(PCH);													\
 	PUSH(PCL);													\
 	EAH = RDOPARG();											\
-	EAW = PCW + (short)(EAW-1); 								\
+	EAW = PCW + (INT16)(EAW-1); 								\
 	PCD = EAD;													\
-	change_pc16(PCD)
-
+	CHANGE_PC
 

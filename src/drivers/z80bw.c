@@ -107,9 +107,9 @@ INPUT_PORTS_START( astinvad )
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x00, "10000" )
-	PORT_DIPSETTING(    0x02, "20000" )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x02, "10000" )
+	PORT_DIPSETTING(    0x00, "20000" )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
@@ -129,6 +129,47 @@ INPUT_PORTS_START( astinvad )
 	PORT_BIT( 0xfe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( kamikaze )
+	PORT_START	/* FAKE - select cabinet type */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_BIT( 0xfe, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x00, "6" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x88, 0x88, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x88, "5000" )
+	PORT_DIPSETTING(    0x80, "10000" )
+	PORT_DIPSETTING(    0x08, "15000" )
+	PORT_DIPSETTING(    0x00, "20000" )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER2 )
+
+	PORT_START      /* IN2 */
+	PORT_DIPNAME( 0x01, 0x00, "Freeze" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_BIT( 0xfe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+INPUT_PORTS_END
 
 static struct MachineDriver machine_driver_astinvad = /* LT */
 {
@@ -358,5 +399,5 @@ ROM_END
 
 
 GAME( 1980, astinvad, 0,        astinvad, astinvad, astinvad, ROT270, "Stern", "Astro Invader" )
-GAME( 1979, kamikaze, astinvad, astinvad, astinvad, astinvad, ROT270, "Leijac Corporation", "Kamikaze" )
+GAME( 1979, kamikaze, astinvad, astinvad, kamikaze, astinvad, ROT270, "Leijac Corporation", "Kamikaze" )
 GAMEX(1980, spaceint, 0,        spaceint, spaceint, spaceint, ROT0,   "Shoei", "Space Intruder", GAME_WRONG_COLORS | GAME_NO_SOUND )

@@ -1917,6 +1917,8 @@ void YM2608UpdateOne(int num, INT16 **buffer, int length)
 
 	/* setup DELTA-T unit */
 	YM_DELTAT_DECODE_PRESET(DELTAT);
+	DELTAT->arrivedFlag = 0;	/* ASG */
+	DELTAT->flagMask = 1;	/* ASG */
 
 	/* set bufer */
 	bufL = buffer[0];
@@ -1992,6 +1994,8 @@ void YM2608UpdateOne(int num, INT16 **buffer, int length)
 		INTERNAL_TIMER_A( State , cch[2] )
 	}
 	INTERNAL_TIMER_B(State,length)
+	if (DELTAT->arrivedFlag) FM_STATUS_SET(State, 0x04);	/* ASG */
+
 #if FM_LFO_SUPPORT
 	OPN->LFOCnt = LFOCnt;
 #endif
@@ -2123,7 +2127,7 @@ void YM2608ResetChip(int num)
 	/* DELTA-T unit */
 	DELTAT->freqbase = OPN->ST.freqbase;
 	DELTAT->output_pointer = out_ch;
-	DELTAT->portshift = 8;		/* allways 8bits shift */
+	DELTAT->portshift = 5;		/* allways 5bits shift */ /* ASG */
 	DELTAT->output_range = DELTAT_MIXING_LEVEL<<TL_BITS;
 	YM_DELTAT_ADPCM_Reset(DELTAT,OUTD_CENTER);
 }

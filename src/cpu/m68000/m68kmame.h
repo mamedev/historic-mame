@@ -30,9 +30,9 @@
 #include "cpuintrf.h"
 #include "memory.h"
 #include "mamedbg.h"
-#define m68k_read_memory_8(address)          cpu_readmem24(address)
-#define m68k_read_memory_16(address)         cpu_readmem24_word(address)
-#define m68k_read_memory_32(address)         cpu_readmem24_dword(address)
+#define m68k_read_memory_8(address) 		 cpu_readmem24bew(address)
+#define m68k_read_memory_16(address)		 cpu_readmem24bew_word(address)
+#define m68k_read_memory_32(address)		 cpu_readmem24bew_dword(address)
 
 #define m68k_read_immediate_8(address)       (cpu_readop16((address)-1)&0xff)
 #define m68k_read_immediate_16(address)      cpu_readop16(address)
@@ -40,9 +40,9 @@
 
 #define m68k_read_instruction(address)       cpu_readop16(address)
 
-#define m68k_write_memory_8(address, value)  cpu_writemem24(address, value)
-#define m68k_write_memory_16(address, value) cpu_writemem24_word(address, value)
-#define m68k_write_memory_32(address, value) cpu_writemem24_dword(address, value)
+#define m68k_write_memory_8(address, value)  cpu_writemem24bew(address, value)
+#define m68k_write_memory_16(address, value) cpu_writemem24bew_word(address, value)
+#define m68k_write_memory_32(address, value) cpu_writemem24bew_dword(address, value)
 
 
 /* Logging stuff.  You may want to turn on logging of emulated instructions. */

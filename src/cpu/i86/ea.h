@@ -1,5 +1,5 @@
 static unsigned EA;
-static unsigned EO; /* HJB 12/13/98 effective offset of the address (before segment is added) */
+static UINT16 EO; /* HJB 12/13/98 effective offset of the address (before segment is added) */
 
 static unsigned EA_000(void) { i86_ICount-=7; EO=(WORD)(I.regs.w[BX]+I.regs.w[SI]); EA=DefaultBase(DS)+EO; return EA; }
 static unsigned EA_001(void) { i86_ICount-=8; EO=(WORD)(I.regs.w[BX]+I.regs.w[DI]); EA=DefaultBase(DS)+EO; return EA; }

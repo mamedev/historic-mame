@@ -126,6 +126,17 @@ WRITE_HANDLER( pipedrm_videoram_w )
 }
 
 
+WRITE_HANDLER( hatris_videoram_w )
+{
+	int which = (~pipedrm_video_control >> 1) & 1;
+	if (local_videoram[which][offset] != data)
+	{
+		local_videoram[which][offset] = data;
+		background_dirty[which][offset & 0xfff] = 1;
+	}
+}
+
+
 WRITE_HANDLER( pipedrm_scroll_regs_w )
 {
 	scroll_regs[offset] = data;
@@ -139,6 +150,13 @@ READ_HANDLER( pipedrm_videoram_r )
 }
 
 
+READ_HANDLER( hatris_videoram_r )
+{
+	int which = (~pipedrm_video_control >> 1) & 1;
+	return local_videoram[which][offset];
+}
+
+
 
 /*************************************
  *
@@ -148,7 +166,10 @@ READ_HANDLER( pipedrm_videoram_r )
 
 static void mark_background_colors(void)
 {
-	UINT16 used_colors[64];
+	int mask1 = Machine->gfx[0]->total_elements - 1;
+	int mask2 = Machine->gfx[1]->total_elements - 1;
+	int colormask = Machine->gfx[0]->total_colors - 1;
+	UINT16 used_colors[128];
 	int code, color, offs;
 
 	/* reset all color codes */
@@ -158,18 +179,18 @@ static void mark_background_colors(void)
 	for (offs = 0; offs < 64*64; offs++)
 	{
 		/* consider background 0 */
-		color = local_videoram[0][offs] & 0x3f;
+		color = local_videoram[0][offs] & colormask;
 		code = (local_videoram[0][offs + 0x1000] << 8) | local_videoram[0][offs + 0x2000];
-		used_colors[color] |= Machine->gfx[0]->pen_usage[code];
+		used_colors[color] |= Machine->gfx[0]->pen_usage[code & mask1];
 
 		/* consider background 1 */
-		color = local_videoram[1][offs] & 0x3f;
+		color = local_videoram[1][offs] & colormask;
 		code = (local_videoram[1][offs + 0x1000] << 8) | local_videoram[1][offs + 0x2000];
-		used_colors[color] |= Machine->gfx[1]->pen_usage[code] & 0x7fff;
+		used_colors[color] |= Machine->gfx[1]->pen_usage[code & mask2] & 0x7fff;
 	}
 
 	/* fill in the final table */
-	for (offs = 0; offs < 64; offs++)
+	for (offs = 0; offs <= colormask; offs++)
 	{
 		UINT16 used = used_colors[offs];
 		if (used)
@@ -342,15 +363,16 @@ static void draw_sprites(struct osd_bitmap *bitmap, int draw_priority)
  *
  *************************************/
 
-void pipedrm_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+static void common_screenrefresh(int full_refresh)
 {
 	UINT16 saved_pens[64];
-	int offs, x, y;
+	int offs;
 
 	/* update the palette usage */
 	palette_init_used_colors();
 	mark_background_colors();
-	mark_sprite_palette();
+	if (Machine->gfx[2])
+		mark_sprite_palette();
 
 	/* handle full refresh */
 	if (palette_recalc() || full_refresh)
@@ -363,7 +385,7 @@ void pipedrm_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	for (offs = 0; offs < 64*64; offs++)
 		if (background_dirty[0][offs])
 		{
-			int color = local_videoram[0][offs] & 0x3f;
+			int color = local_videoram[0][offs];
 			int code = (local_videoram[0][offs + 0x1000] << 8) | local_videoram[0][offs + 0x2000];
 			int sx = offs % 64;
 			int sy = offs / 64;
@@ -382,7 +404,7 @@ void pipedrm_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	for (offs = 0; offs < 64*64; offs++)
 		if (background_dirty[1][offs])
 		{
-			int color = local_videoram[1][offs] & 0x3f;
+			int color = local_videoram[1][offs];
 			int code = (local_videoram[1][offs + 0x1000] << 8) | local_videoram[1][offs + 0x2000];
 			int sx = offs % 64;
 			int sy = offs / 64;
@@ -394,17 +416,47 @@ void pipedrm_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	for (offs = 0; offs < 64; offs++)
 		Machine->gfx[0]->colortable[offs * 16 + 15] = saved_pens[offs];
 
+}
+
+
+void pipedrm_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+{
+	int x, y;
+
+	common_screenrefresh(full_refresh);
+
 	/* draw the lower background */
-	x = -(scroll_regs[0] | ((pipedrm_video_control & 0x10) << 4)) - 9;
+	x = 0;
 	y = -scroll_regs[1] - 7;
 	copyscrollbitmap(bitmap, background[0], 1, &x, 1, &y, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
 
 	/* draw the upper background */
-	x = -(scroll_regs[0] | ((pipedrm_video_control & 0x20) << 3)) - 9;
+	x = 0;
 	y = -scroll_regs[3] - 7;
 	copyscrollbitmap(bitmap, background[1], 1, &x, 1, &y, &Machine->drv->visible_area, TRANSPARENCY_PEN, palette_transparent_pen);
 
 	/* draw all the sprites (priority doesn't seem to matter) */
-	draw_sprites(bitmap, 0);
-	draw_sprites(bitmap, 1);
+	if (Machine->gfx[2])
+	{
+		draw_sprites(bitmap, 0);
+		draw_sprites(bitmap, 1);
+	}
+}
+
+
+void hatris_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+{
+	int x, y;
+
+	common_screenrefresh(full_refresh);
+
+	/* draw the lower background */
+	x = 0;
+	y = -scroll_regs[3] - 7;
+	copyscrollbitmap(bitmap, background[0], 1, &x, 1, &y, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+
+	/* draw the upper background */
+	x = 0;
+	y = -scroll_regs[1] - 7;
+	copyscrollbitmap(bitmap, background[1], 1, &x, 1, &y, &Machine->drv->visible_area, TRANSPARENCY_PEN, palette_transparent_pen);
 }

@@ -29,6 +29,7 @@ extern size_t vectorram_size;
 int  vector_vh_start (void);
 void vector_vh_stop (void);
 void vector_vh_update(struct osd_bitmap *bitmap,int full_refresh);
+void vector_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void vector_clear_list (void);
 void vector_draw_to (int x2, int y2, int col, int intensity, int dirty);
 void vector_add_point (int x, int y, int color, int intensity);
@@ -38,10 +39,6 @@ void vector_set_intensity(float _intensity);
 float vector_get_intensity(void);
 void vector_set_gamma(float _gamma);
 float vector_get_gamma(void);
-
-void vector_vh_update_backdrop(struct osd_bitmap *bitmap, struct artwork *a, int full_refresh);
-void vector_vh_update_overlay(struct osd_bitmap *bitmap, struct artwork *a, int full_refresh);
-void vector_vh_update_artwork(struct osd_bitmap *bitmap, struct artwork *o, struct artwork *b,  int full_refresh);
 
 #endif
 

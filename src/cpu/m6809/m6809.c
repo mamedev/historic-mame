@@ -1308,7 +1308,7 @@ INLINE void fetch_effective_address( void )
 /****************************************************************************
  * M6309 section
  ****************************************************************************/
-#if HAS_HD6309
+#if (HAS_HD6309)
 static UINT8 hd6309_reg_layout[] = {
 	M6309_PC, M6309_S, M6309_CC, M6309_A, M6309_B, M6309_X, -1,
 	M6309_Y, M6309_U, M6309_DP, M6309_NMI_STATE, M6309_IRQ_STATE, M6309_FIRQ_STATE, 0

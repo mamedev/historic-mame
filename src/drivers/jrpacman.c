@@ -317,14 +317,14 @@ ROM_START( jrpacman )
 	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "jrp2e.bin",    0x0000, 0x2000, 0x73477193 )
 
-	ROM_REGION( 0x0140, REGION_PROMS )
-	ROM_LOAD( "jrpacman.9e",  0x0000, 0x0020, 0x90012b3f ) /* palette low bits */
-	ROM_LOAD( "jrpacman.9f",  0x0020, 0x0020, 0x8300178e ) /* palette high bits */
-	ROM_LOAD( "jrpacman.9p",  0x0040, 0x0100, 0x9f6ea9d8 ) /* color lookup table */
+	ROM_REGION( 0x0300, REGION_PROMS )
+	ROM_LOAD( "jrprom.9e",    0x0000, 0x0100, 0x029d35c4 ) /* palette low bits */
+	ROM_LOAD( "jrprom.9f",    0x0100, 0x0100, 0xeee34a79 ) /* palette high bits */
+	ROM_LOAD( "jrprom.9p",    0x0200, 0x0100, 0x9f6ea9d8 ) /* color lookup table */
 
-	ROM_REGION( 0x0100, REGION_SOUND1 )	/* sound prom */
-	/* I don't know if this is correct. I'm using the Pac Man one. */
-	ROM_LOAD( "pacman.spr",   0x0000, 0x0100, BADCRC( 0xa9cc86bf ) )
+	ROM_REGION( 0x0200, REGION_SOUND1 )	/* sound prom */
+	ROM_LOAD( "jrprom.7p",    0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "jrprom.5s",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 

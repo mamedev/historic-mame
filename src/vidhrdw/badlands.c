@@ -1,40 +1,9 @@
 /***************************************************************************
 
-  vidhrdw/badlands.c
-
-  Functions to emulate the video hardware of the machine.
-
-****************************************************************************
-
-	Playfield encoding
-	------------------
-		1 16-bit word is used
-
-		Word 1:
-			Bits 13-15 = palette
-			Bits  0-12 = image number
-
-
-	Motion Object encoding
-	----------------------
-		4 16-bit words are used
-
-		Word 1:
-			Bits  0-11 = image index
-
-		Word 2:
-			Bits  7-15 = vertical position
-			Bits  0-3  = vertical size of the object, in tiles
-
-		Word 3:
-			Unused
-
-		Word 4:
-			Bits  6-15 = horizontal position
-			Bit   3    = priority
-			Bits  0-2  = motion object palette
+	Atari Bad Lands hardware
 
 ***************************************************************************/
+
 
 #include "driver.h"
 #include "machine/atarigen.h"

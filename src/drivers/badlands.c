@@ -1,8 +1,93 @@
 /***************************************************************************
 
-	Badlands
+	Atari Bad Lands hardware
 
     driver by Aaron Giles
+
+	Games supported:
+		* Bad Lands (1989)
+
+	Known bugs:
+		* none at this time
+
+****************************************************************************
+
+	Memory map
+
+****************************************************************************
+
+	========================================================================
+	MAIN CPU
+	========================================================================
+	000000-03FFFF   R     xxxxxxxx xxxxxxxx   Program ROM
+	FC0000          R     -------x --------   Sound command buffer full
+	FC0000            W   -------- --------   Sound CPU reset
+	FD0000-FD1FFF   R/W   -------- xxxxxxxx   EEPROM
+	FE0000            W   -------- --------   Watchdog reset
+	FE2000            W   -------- --------   VBLANK IRQ acknowledge
+	FE4000          R     -------- xxxx----   Switch inputs
+	                R     -------- x-------      (Self test)
+	                R     -------- -x------      (VBLANK)
+	                R     -------- --x-----      (Player 2 button)
+	                R     -------- ---x----      (Player 1 button)
+	FE6000          R     -------- xxxxxxxx   Player 1 steering
+	FE6002          R     -------- xxxxxxxx   Player 2 steering
+	FE6004          R     -------- xxxxxxxx   Player 1 pedal
+	FE6006          R     -------- xxxxxxxx   Player 2 pedal
+	FE8000            W   xxxxxxxx --------   Sound command write
+	FEA000          R     xxxxxxxx --------   Sound response read
+	FEC000            W   -------- -------x   Playfield tile bank select
+	FEE000            W   -------- --------   EEPROM enable
+	FFC000-FFC0FF   R/W   xxxxxxxx xxxxxxxx   Playfield palette RAM (128 entries)
+	                R/W   x------- --------      (RGB 1 LSB)
+	                R/W   -xxxxx-- --------      (Red 5 MSB)
+	                R/W   ------xx xxx-----      (Green 5 MSB)
+	                R/W   -------- ---xxxxx      (Blue 5 MSB)
+	FFC100-FFC1FF   R/W   xxxxxxxx xxxxxxxx   Motion object palette RAM (128 entries)
+	FFC200-FFC3FF   R/W   xxxxxxxx xxxxxxxx   Extra palette RAM (256 entries)
+	FFE000-FFEFFF   R/W   xxxxxxxx xxxxxxxx   Playfield RAM (64x32 tiles)
+	                R/W   xxx----- --------      (Palette select)
+	                R/W   ---x---- --------      (Tile bank select)
+	                R/W   ----xxxx xxxxxxxx      (Tile index)
+	FFF000-FFFFFF   R/W   xxxxxxxx xxxxxxxx   Motion object RAM (32 entries x 4 words)
+	                R/W   ----xxxx xxxxxxxx      (0: Tile index)
+	                R/W   xxxxxxxx x-------      (1: Y position)
+	                R/W   -------- ----xxxx      (1: Number of Y tiles - 1)
+	                R/W   xxxxxxxx x-------      (3: X position)
+	                R/W   -------- ----x---      (3: Priority)
+	                R/W   -------- -----xxx      (3: Palette select)
+	========================================================================
+	Interrupts:
+		IRQ1 = VBLANK
+		IRQ2 = sound CPU communications
+	========================================================================
+
+
+	========================================================================
+	SOUND CPU (based on JSA II, but implemented onboard)
+	========================================================================
+	0000-1FFF   R/W   xxxxxxxx   Program RAM
+	2000-2001   R/W   xxxxxxxx   YM2151 communications
+	2802        R     xxxxxxxx   Sound command read
+	2804        R     xxxx--xx   Status input
+	            R     x-------      (Self test)
+	            R     -x------      (Sound command buffer full)
+	            R     --x-----      (Sound response buffer full)
+	            R     ---x----      (Self test)
+	            R     ------xx      (Coin inputs)
+	2806        R/W   --------   IRQ acknowledge
+	2A02          W   xxxxxxxx   Sound response write
+	2A04          W   xxxx---x   Sound control
+	              W   xx------      (ROM bank select)
+	              W   --xx----      (Coin counters)
+	              W   -------x      (YM2151 reset)
+	3000-3FFF   R     xxxxxxxx   Banked ROM
+	4000-FFFF   R     xxxxxxxx   Program ROM
+	========================================================================
+	Interrupts:
+		IRQ = timed interrupt ORed with YM2151 interrupt
+		NMI = latch on sound command
+	========================================================================
 
 ****************************************************************************/
 
@@ -329,10 +414,10 @@ INPUT_PORTS_START( badlands )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )	/* output buffer full */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )		/* input buffer full */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )	/* self test */
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* self test */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* response buffer full */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SPECIAL )	/* command buffer full */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* self test */
 
 	PORT_START      /* fake for pedals */
 	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
@@ -350,25 +435,25 @@ INPUT_PORTS_END
 
 static struct GfxLayout pflayout =
 {
-	8,8,	/* 8*8 chars */
-	12288,	/* 12288 chars */
-	4,		/* 4 bits per pixel */
+	8,8,
+	RGN_FRAC(1,1),
+	4,
 	{ 0, 1, 2, 3 },
 	{ 0, 4, 8, 12, 16, 20, 24, 28 },
 	{ 0*8, 4*8, 8*8, 12*8, 16*8, 20*8, 24*8, 28*8 },
-	32*8	/* every char takes 32 consecutive bytes */
+	32*8
 };
 
 
 static struct GfxLayout molayout =
 {
-	16,8,	/* 16*8 chars */
-	3072,	/* 3072 chars */
-	4,		/* 4 bits per pixel */
+	16,8,
+	RGN_FRAC(1,1),
+	4,
 	{ 0, 1, 2, 3 },
 	{ 0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60 },
 	{ 0*8, 8*8, 16*8, 24*8, 32*8, 40*8, 48*8, 56*8 },
-	64*8	/* every char takes 32 consecutive bytes */
+	64*8
 };
 
 
@@ -389,7 +474,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct YM2151interface ym2151_interface =
 {
-	1,			/* 1 chip */
+	1,
 	ATARI_CLOCK_14MHz/4,
 	{ YM3012_VOL(30,MIXER_PAN_CENTER,30,MIXER_PAN_CENTER) },
 	{ 0 }
@@ -420,7 +505,7 @@ static struct MachineDriver machine_driver_badlands =
 			ignore_interrupt,1
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,
 	init_machine,
 

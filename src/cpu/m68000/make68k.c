@@ -127,17 +127,17 @@
 char 		*codebuf;
 int 		DisOp;
 
-#define cpu_readmem24(addr) 		(0)
-#define cpu_readmem24_word(addr)	(DisOp)
-#define cpu_readmem24_dword(addr) 	(0x123456)	/* Only used for Addresses */
+#define cpu_readmem24bew(addr)		   (0)
+#define cpu_readmem24bew_word(addr)    (DisOp)
+#define cpu_readmem24bew_dword(addr)   (0x123456)  /* Only used for Addresses */
 
 #define MEMORY_H	/* so memory.h will not be included... */
 #include "d68k.c"
 #undef MEMORY_H
 
-#undef cpu_readmem24
-#undef cpu_readmem24_word
-#undef cpu_readmem24_dword
+#undef cpu_readmem24bew
+#undef cpu_readmem24bew_word
+#undef cpu_readmem24bew_dword
 
 #include "cpuintrf.h"
 
@@ -189,23 +189,23 @@ int 		DisOp;
 #define REG_SFC             "R_SFC"
 #define REG_DFC             "R_DFC"
 
-#define FASTCALL_CPU_READMEM24        "@cpu_readmem24@4"
-#define FASTCALL_CPU_READMEM24_WORD   "@cpu_readmem24_word@4"
-#define FASTCALL_CPU_READMEM24_DWORD  "@cpu_readmem24_dword@4"
-#define FASTCALL_CPU_WRITEMEM24       "@cpu_writemem24@8"
-#define FASTCALL_CPU_WRITEMEM24_WORD  "@cpu_writemem24_word@8"
-#define FASTCALL_CPU_WRITEMEM24_DWORD "@cpu_writemem24_dword@8"
-#define FASTCALL_CPU_SETOPBASE24      "@cpu_setOPbase24@4"
-#define FASTCALL_FIRST_REG            "ecx"
-#define FASTCALL_SECOND_REG           "edx"
+#define FASTCALL_CPU_READMEM24BEW		 "@cpu_readmem24bew@4"
+#define FASTCALL_CPU_READMEM24BEW_WORD	 "@cpu_readmem24bew_word@4"
+#define FASTCALL_CPU_READMEM24BEW_DWORD  "@cpu_readmem24bew_dword@4"
+#define FASTCALL_CPU_WRITEMEM24BEW		 "@cpu_writemem24bew@8"
+#define FASTCALL_CPU_WRITEMEM24BEW_WORD  "@cpu_writemem24bew_word@8"
+#define FASTCALL_CPU_WRITEMEM24BEW_DWORD "@cpu_writemem24bew_dword@8"
+#define FASTCALL_CPU_SETOPBASE24BEW 	 "@cpu_setOPbase24bew@4"
+#define FASTCALL_FIRST_REG				 "ecx"
+#define FASTCALL_SECOND_REG 			 "edx"
 
-#define CPU_READMEM24                 "_cpu_readmem24"
-#define CPU_READMEM24_WORD            "_cpu_readmem24_word"
-#define CPU_READMEM24_DWORD           "_cpu_readmem24_dword"
-#define CPU_WRITEMEM24                "_cpu_writemem24"
-#define CPU_WRITEMEM24_WORD           "_cpu_writemem24_word"
-#define CPU_WRITEMEM24_DWORD          "_cpu_writemem24_dword"
-#define CPU_SETOPBASE24               "_cpu_setOPbase24"
+#define CPU_READMEM24BEW				 "_cpu_readmem24bew"
+#define CPU_READMEM24BEW_WORD			 "_cpu_readmem24bew_word"
+#define CPU_READMEM24BEW_DWORD			 "_cpu_readmem24bew_dword"
+#define CPU_WRITEMEM24BEW				 "_cpu_writemem24bew"
+#define CPU_WRITEMEM24BEW_WORD			 "_cpu_writemem24bew_word"
+#define CPU_WRITEMEM24BEW_DWORD 		 "_cpu_writemem24bew_dword"
+#define CPU_SETOPBASE24BEW				 "_cpu_setOPbase24bew"
 
 /*
  * Global Variables
@@ -257,21 +257,21 @@ static char* regnamesshort[] =
 { "AL","BL","CL","DL" };
 
 #ifdef FASTCALL
-char *name_cpu_readmem24 = FASTCALL_CPU_READMEM24;
-char *name_cpu_readmem24_word = FASTCALL_CPU_READMEM24_WORD;
-char *name_cpu_readmem24_dword = FASTCALL_CPU_READMEM24_DWORD;
-char *name_cpu_writemem24 = FASTCALL_CPU_WRITEMEM24;
-char *name_cpu_writemem24_word = FASTCALL_CPU_WRITEMEM24_WORD;
-char *name_cpu_writemem24_dword = FASTCALL_CPU_WRITEMEM24_DWORD;
-char *name_cpu_setOPbase24 = FASTCALL_CPU_SETOPBASE24;
+char *name_cpu_readmem24bew = FASTCALL_CPU_READMEM24BEW;
+char *name_cpu_readmem24bew_word = FASTCALL_CPU_READMEM24BEW_WORD;
+char *name_cpu_readmem24bew_dword = FASTCALL_CPU_READMEM24BEW_DWORD;
+char *name_cpu_writemem24bew = FASTCALL_CPU_WRITEMEM24BEW;
+char *name_cpu_writemem24bew_word = FASTCALL_CPU_WRITEMEM24BEW_WORD;
+char *name_cpu_writemem24bew_dword = FASTCALL_CPU_WRITEMEM24BEW_DWORD;
+char *name_cpu_setOPbase24bew = FASTCALL_CPU_SETOPBASE24BEW;
 #else
-char *name_cpu_readmem24 = CPU_READMEM24;
-char *name_cpu_readmem24_word = CPU_READMEM24_WORD;
-char *name_cpu_readmem24_dword = CPU_READMEM24_DWORD;
-char *name_cpu_writemem24 = CPU_WRITEMEM24;
-char *name_cpu_writemem24_word = CPU_WRITEMEM24_WORD;
-char *name_cpu_writemem24_dword = CPU_WRITEMEM24_DWORD;
-char *name_cpu_setOPbase24 = CPU_SETOPBASE24;
+char *name_cpu_readmem24bew = CPU_READMEM24BEW;
+char *name_cpu_readmem24bew_word = CPU_READMEM24BEW_WORD;
+char *name_cpu_readmem24bew_dword = CPU_READMEM24BEW_DWORD;
+char *name_cpu_writemem24bew = CPU_WRITEMEM24BEW;
+char *name_cpu_writemem24bew_word = CPU_WRITEMEM24BEW_WORD;
+char *name_cpu_writemem24bew_dword = CPU_WRITEMEM24BEW_DWORD;
+char *name_cpu_setOPbase24bew = CPU_SETOPBASE24BEW;
 #endif
 
 /*********************************/
@@ -476,7 +476,7 @@ void MemoryBanking(int BaseCode)
     fprintf(fp, "\t\t push  esi\n");
 #endif
 
-	fprintf(fp, "\t\t call  %s\n",name_cpu_setOPbase24);
+	fprintf(fp, "\t\t call  %s\n",name_cpu_setOPbase24bew);
 
 #ifndef FASTCALL
     fprintf(fp, "\t\t add   esp,byte 4\n");
@@ -921,15 +921,15 @@ void Memory_Read(char Size,int AReg,char *Flags,int Mask)
     switch(Size)
     {
     	case 66 :
-			fprintf(fp, "\t\t call  %s\n",name_cpu_readmem24);
+			fprintf(fp, "\t\t call  %s\n",name_cpu_readmem24bew);
             break;
 
         case 87 :
-			fprintf(fp, "\t\t call  %s\n",name_cpu_readmem24_word);
+			fprintf(fp, "\t\t call  %s\n",name_cpu_readmem24bew_word);
             break;
 
         case 76 :
-			fprintf(fp, "\t\t call  %s\n",name_cpu_readmem24_dword);
+			fprintf(fp, "\t\t call  %s\n",name_cpu_readmem24bew_dword);
             break;
     }
 
@@ -1052,15 +1052,15 @@ void Memory_Write(char Size,int AReg,int DReg,char *Flags,int Mask)
     switch(Size)
     {
     	case 66 :
-			fprintf(fp, "\t\t call  %s\n",name_cpu_writemem24);
+			fprintf(fp, "\t\t call  %s\n",name_cpu_writemem24bew);
             break;
 
         case 87 :
-			fprintf(fp, "\t\t call  %s\n",name_cpu_writemem24_word);
+			fprintf(fp, "\t\t call  %s\n",name_cpu_writemem24bew_word);
             break;
 
         case 76 :
-			fprintf(fp, "\t\t call  %s\n",name_cpu_writemem24_dword);
+			fprintf(fp, "\t\t call  %s\n",name_cpu_writemem24bew_dword);
             break;
     }
 
@@ -6656,14 +6656,14 @@ void CodeSegmentBegin(void)
     fprintf(fp, "\t\t GLOBAL _regs\n");
 #endif
 
-    fprintf(fp, "\t\t EXTERN %s\n",name_cpu_readmem24);
-    fprintf(fp, "\t\t EXTERN %s\n",name_cpu_readmem24_word);
-    fprintf(fp, "\t\t EXTERN %s\n\n",name_cpu_readmem24_dword);
+	fprintf(fp, "\t\t EXTERN %s\n",name_cpu_readmem24bew);
+	fprintf(fp, "\t\t EXTERN %s\n",name_cpu_readmem24bew_word);
+	fprintf(fp, "\t\t EXTERN %s\n\n",name_cpu_readmem24bew_dword);
 
-    fprintf(fp, "\t\t EXTERN %s\n",name_cpu_writemem24);
-    fprintf(fp, "\t\t EXTERN %s\n",name_cpu_writemem24_word);
-    fprintf(fp, "\t\t EXTERN %s\n",name_cpu_writemem24_dword);
-	fprintf(fp, "\t\t EXTERN %s\n\n",name_cpu_setOPbase24);
+	fprintf(fp, "\t\t EXTERN %s\n",name_cpu_writemem24bew);
+	fprintf(fp, "\t\t EXTERN %s\n",name_cpu_writemem24bew_word);
+	fprintf(fp, "\t\t EXTERN %s\n",name_cpu_writemem24bew_dword);
+	fprintf(fp, "\t\t EXTERN %s\n\n",name_cpu_setOPbase24bew);
 
     fprintf(fp, "; Vars Mame declares / needs access to\n\n");
 

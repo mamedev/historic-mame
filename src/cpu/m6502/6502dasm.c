@@ -23,19 +23,22 @@
 /* 3. February 2000 PeT bbr bbs displayment */
 /* 4. February 2000 PeT ply inw dew */
 /* 4. February 2000 PeT fixed relative word operand */
+/* 9. May 2000 PeT added m4510 */
 
 #include <stdio.h>
 #ifdef MAME_DEBUG
 #include "driver.h"
 #include "mamedbg.h"
 #include "m6502.h"
-#if HAS_M65CE02
+#if (HAS_M65CE02)
 #include "m65ce02.h"
 #endif
-#if HAS_M6509
+#if (HAS_M6509)
 #include "m6509.h"
 #endif
-
+#if (HAS_M4510)
+#include "m4510.h"
+#endif
 
 #define OPCODE(A)  cpu_readop(A)
 #define ARGBYTE(A) cpu_readop_arg(A)
@@ -410,7 +413,7 @@ static const UINT8 op6510[256][3] = {
 	{top,iw2,VAL},{sbc,abx,MRD},{inc,abx,MRW},{isc,abx,MRW}
 };
 
-#if HAS_M65CE02
+#if (HAS_M65CE02)
 static const UINT8 op65ce02[256][3] = {
 	{brk,imm,VAL},{ora,idx,MRD},{cle,imp,0	},{see,imp,0  },/* 00 */
 	{tsb,zpg,0	},{ora,zpg,ZRD},{asl,zpg,ZRW},{rmb,zpg,ZRW},
@@ -496,21 +499,21 @@ unsigned Dasm6502(char *buffer, unsigned pc)
 
 	switch ( m6502_get_reg(M6502_SUBTYPE) )
 	{
-#if HAS_M65C02
+#if (HAS_M65C02)
 		case SUBTYPE_65C02:
 			opc = op65c02[op][0];
 			arg = op65c02[op][1];
 			access = op65c02[op][2];
 			break;
 #endif
-#if HAS_M65SC02
+#if (HAS_M65SC02)
 		case SUBTYPE_65SC02:
 			opc = op65sc02[op][0];
 			arg = op65sc02[op][1];
 			access = op65sc02[op][2];
 			break;
 #endif
-#if HAS_M6510
+#if (HAS_M6510)
 		case SUBTYPE_6510:
 			opc = op6510[op][0];
 			arg = op6510[op][1];
@@ -659,13 +662,16 @@ unsigned Dasm6502(char *buffer, unsigned pc)
 }
 
 
-#if HAS_M65CE02 || HAS_M6509 || HAS_M6510
+#if (HAS_M65CE02 || HAS_M6509 || HAS_M6510 || HAS_M4510)
 
+#if (HAS_65CE02 || HAS_M6510)
 static int m6502_get_argword(int addr)
 {
 	return cpu_readop_arg(addr)+(cpu_readop_arg((addr+1)&0xffff) << 8);
 }
+#endif
 
+#if (HAS_M6509 || HAS_M4510)
 static int m6509_get_argword(int addr)
 {
 	if ((addr&0xffff)==0xffff)
@@ -673,6 +679,7 @@ static int m6509_get_argword(int addr)
 	else
 		return cpu_readop_arg(addr)+(cpu_readop_arg(addr+1) << 8);
 }
+#endif
 
 typedef struct {
 	const UINT8 *opcode;
@@ -680,7 +687,6 @@ typedef struct {
 	mem_read_handler readmem;
 	int(*argword)(int addr);
 } CPU_TYPE;
-
 
 #if 0
 static CPU_TYPE type_m6502 = {
@@ -692,7 +698,7 @@ static CPU_TYPE type_m6510 = {
 	(const UINT8*)op6510, m6502_get_reg, cpu_readmem16, m6502_get_argword
 };
 #endif
-#if HAS_M6509
+#if (HAS_M6509)
 static CPU_TYPE type_m6509 = {
 	(const UINT8*)op6510, m6509_get_reg, cpu_readmem20, m6509_get_argword
 };
@@ -705,9 +711,19 @@ static CPU_TYPE type_m65sc02 = {
 	(const UINT8*)op65sc02, m6502_get_reg, cpu_readmem16, m6502_get_argword
 };
 #endif
-#if HAS_M65CE02
+#if (HAS_M65CE02)
 static CPU_TYPE type_m65ce02 = {
 	(const UINT8*)op65ce02, m65ce02_get_reg, cpu_readmem16, m6502_get_argword
+};
+#endif
+#if (HAS_M4510)
+static READ_HANDLER(m4510_readmem)
+{
+	return cpu_readmem20( m4510_get_reg(M4510_MEM0+(offset>>13))+offset );
+}
+
+static CPU_TYPE type_m4510 = {
+	(const UINT8*)op65ce02, m4510_get_reg, m4510_readmem, m6509_get_argword
 };
 #endif
 
@@ -907,7 +923,7 @@ unsigned int Dasm6502Helper(CPU_TYPE *this, char *buffer, unsigned pc)
 }
 #endif
 
-#if HAS_M65CE02
+#if (HAS_M65CE02)
 /*****************************************************************************
  * Disassemble a single opcode starting at pc
  *****************************************************************************/
@@ -917,7 +933,7 @@ unsigned int Dasm65ce02(char *buffer, unsigned pc)
 }
 #endif
 
-#if HAS_M6509
+#if (HAS_M6509)
 /*****************************************************************************
  * Disassemble a single opcode starting at pc
  *****************************************************************************/
@@ -927,13 +943,23 @@ unsigned int Dasm6509(char *buffer, unsigned pc)
 }
 #endif
 
-#if HAS_M6510
+#if (HAS_M6510)
 /*****************************************************************************
  * Disassemble a single opcode starting at pc
  *****************************************************************************/
 unsigned int Dasm6510(char *buffer, unsigned pc)
 {
 	return Dasm6502Helper(&type_m6510, buffer, pc);
+}
+#endif
+
+#if (HAS_M4510)
+/*****************************************************************************
+ * Disassemble a single opcode starting at pc
+ *****************************************************************************/
+unsigned int Dasm4510(char *buffer, unsigned pc)
+{
+	return Dasm6502Helper(&type_m4510, buffer, pc);
 }
 #endif
 

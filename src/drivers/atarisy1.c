@@ -1,111 +1,125 @@
 /***************************************************************************
 
-Atari System 1 Memory Map
--------------------------
+	Atari System 1 hardware
 
-driver by Aaron Giles
+	driver by Aaron Giles
+
+	Games supported:
+		* Marble Madness (1984) [3 sets]
+		* Peter Packrat (1984)
+		* Indiana Jones & the Temple of Doom (1985) [4 sets]
+		* Road Runner (1985)
+		* Road Blasters (1987)
+
+	Known bugs:
+		* none at this time
+
+****************************************************************************
+
+	Memory map
+
+****************************************************************************
+
+	========================================================================
+	MAIN CPU
+	========================================================================
+	000000-07FFFF   R     xxxxxxxx xxxxxxxx   Program ROM
+	080000-087FFF   R     xxxxxxxx xxxxxxxx   Slapstic-protected ROM
+	2E0000          R     -------- x-------   Sprite interrupt state
+	400000-401FFF   R/W   xxxxxxxx xxxxxxxx   Program RAM
+	800000            W   -------x xxxxxxxx   Playfield X scroll
+	820000            W   -------x xxxxxxxx   Playfield Y scroll
+	840000            W   -------- xxxxxxxx   Playfield priority color mask
+	860000            W   -------- xxxxxxxx   Audio/video control
+	                  W   -------- x-------      (Sound CPU reset)
+	                  W   -------- -x------      (Trackball test)
+	                  W   -------- --xxx---      (Motion object RAM bank select)
+	                  W   -------- -----x--      (Playfield tile bank select)
+	                  W   -------- ------x-      (Trackball resolution & test LED)
+	                  W   -------- -------x      (Alphanumerics tile bank select)
+	880000            W   -------- --------   Watchdog reset
+	8A0000            W   -------- --------   VBLANK IRQ acknowledge
+	8C0000            W   -------- --------   EEPROM enable
+	900000-9FFFFF   R/W   xxxxxxxx xxxxxxxx   Catridge external RAM/ROM
+	A00000-A01FFF   R/W   xxxxxxxx xxxxxxxx   Playfield RAM (64x64 tiles)
+	                R/W   x------- --------      (Horizontal flip)
+	                R/W   -xxxxxxx --------      (Tile ROM & palette select)
+	                R/W   -------- xxxxxxxx      (Tile index, 8 LSB)
+	A02000-A02FFF   R/W   xxxxxxxx xxxxxxxx   Motion object RAM (8 banks x 64 entries x 4 words)
+	                R/W   x------- --------      (0: X flip)
+	                R/W   --xxxxxx xxx-----      (0: Y position)
+	                R/W   -------- ----xxxx      (0: Number of Y tiles - 1)
+	                R/W   xxxxxxxx --------      (64: Tile ROM & palette select)
+	                R/W   -------- xxxxxxxx      (64: Tile index, 8 LSB)
+	                R/W   --xxxxxx xxx-----      (128: X position)
+	                R/W   -------- ----xxxx      (128: Number of X tiles - 1)
+	                R/W   -------- --xxxxxx      (192: Link to the next object)
+	A03000-A03FFF   R/W   --xxxxxx xxxxxxxx   Alphanumerics RAM
+	                R/W   --x----- --------      (Opaque/transparent)
+	                R/W   ---xxx-- --------      (Palette index)
+	                R/W   ------xx xxxxxxxx      (Tile index)
+	B00000-B001FF   R/W   xxxxxxxx xxxxxxxx   Alphanumerics palette RAM (256 entries)
+	                R/W   xxxx---- --------      (Intensity)
+	                R/W   ----xxxx --------      (Red)
+	                R/W   -------- xxxx----      (Green)
+	                R/W   -------- ----xxxx      (Blue)
+	B00200-B003FF   R/W   xxxxxxxx xxxxxxxx   Motion object palette RAM (256 entries)
+	B00400-B005FF   R/W   xxxxxxxx xxxxxxxx   Playfield palette RAM (256 entries)
+	B00600-B007FF   R/W   xxxxxxxx xxxxxxxx   Translucency palette RAM (256 entries)
+	F00000-F00FFF   R/W   -------- xxxxxxxx   EEPROM
+	F20000-F20007   R     -------- xxxxxxxx   Analog inputs
+	F40000-F4001F   R     -------- xxxxxxxx   Joystick inputs
+	F40000-F4001F     W   -------- --------   Joystick IRQ enable
+	F60000          R     -------- xxxxxxxx   Switch inputs
+	                R     -------- x-------      (Command buffer full)
+	                R     -------- -x------      (Self test)
+	                R     -------- --x-xxxx      (Game-specific switches)
+	                R     -------- ---x----      (VBLANK)
+	FC0000          R     -------- xxxxxxxx   Sound response read
+	FE0000            W   -------- xxxxxxxx   Sound command write
+	========================================================================
+	Interrupts:
+		IRQ2 = joystick interrupt
+		IRQ3 = sprite-based interrupt
+		IRQ4 = VBLANK
+		IRQ6 = sound CPU communications
+	========================================================================
 
 
-SYSTEM 1 68010 MEMORY MAP
+	========================================================================
+	SOUND CPU
+	========================================================================
+	0000-0FFF   R/W   xxxxxxxx   Program RAM
+	1000-100F   R/W   xxxxxxxx   M6522
+	1000-1FFF   R/W   xxxxxxxx   Catridge external RAM/ROM
+	1800-1801   R/W   xxxxxxxx   YM2151 communications
+	1810        R     xxxxxxxx   Sound command read
+	1810          W   xxxxxxxx   Sound response write
+	1820        R     x--xxxxx   Sound status/input read
+	            R     x-------      (Self-test)
+	            R     ---x----      (Response buffer full)
+	            R     ----x---      (Command buffer full)
+	            R     -----x--      (Service coin)
+	            R     ------x-      (Left coin)
+	            R     -------x      (Right coin)
+	1824-1825     W   -------x   LED control
+	1826          W   -------x   Right coin counter
+	1827          W   -------x   Left coin counter
+	1870-187F   R/W   xxxxxxxx   POKEY communications
+	4000-FFFF   R     xxxxxxxx   Program ROM
+	========================================================================
+	Interrupts:
+		IRQ = YM2151 interrupt
+		NMI = latch on sound command
+	========================================================================
 
-Function                           Address        R/W  DATA
--------------------------------------------------------------
-Program ROM                        000000-087FFF  R    D0-D15
-
-Program RAM                        400000-401FFF  R/W  D0-D15
-
-Playfield Horizontal Scroll        800000,800001  W    D0-D8
-Playfield Vertical Scroll          820000,820001  W    D0-D8
-Playfield Special Priority Color   840000,840001  R    D0-D7
-
-Sound Processor Reset (Low Reset)  860000         W    D7
-Trak-Ball Test                                    W    D6
-Motion Object Parameter Buffer Select             W    D5-D3
-Playfield ROM Bank Select                         W    D2
-Trak-Ball Resolution and Test LED                 W    D1
-Alphanumerics ROM Bank Select                     W    D0
-
-Watchdog (128 msec. timeout)       880000         W    xx
-VBlank Acknowledge                 8A0000         W    xx
-Unlock EEPROM                      8C0000         W    xx
-
-Cartridge External                 900000-9FFFFF  R/W  D0-D15
-
-Playfield RAM                      A00000-A01FFF  R/W  D0-D15
-Motion Object Vertical Position    A02000-A0207F  R/W  D0-D15
-                                   A02200-A0227F  R/W  D0-D15
-                                   A02E00-A02E7F  R/W  D0-D15
-Motion Object Picture              A02080-A020FF  R/W  D0-D15
-                                   A02280-A022FF  R/W  D0-D15
-                                   A02E80-A02EFF  R/W  D0-D15
-Motion Object Horizontal Position  A02100-A02170  R/W  D0-D15
-                                   A02300-A02370  R/W  D0-D15
-                                   A02F00-A02F70  R/W  D0-D15
-Motion Object Link                 A02180-A021FF  R/W  D0-D15
-                                   A02380-A023FF  R/W  D0-D15
-                                   A02F80-A02FFF  R/W  D0-D15
-Alphanumerics RAM                  A03000-A03FFF  R/W  D0-D15
-
-Color RAM Alpha                    B00000-B001FF  R/W  D0-D15
-Color RAM Motion Object            B00200-B003FF  R/W  D0-D15
-Color RAM Playfield                B00400-B005FF  R/W  D0-D15
-Color RAM Translucent              B00600-B0061F  R/W  D0-D15
-
-EEPROM                             F00001-F00FFF  R/W  D7-D0
-Trak-Ball                          F20000-F20006  R    D7-D0
-Analog Joystick                    F40000-F4000E  R    D7-D0
-Analog Joystick IRQ Disable        F40010         R    D7
-
-Output Buffer Full (@FE0000)       F60000         R    D7
-Self-Test                                         R    D6
-Switch Input                                      R    D5
-Vertical Blank                                    R    D4
-Switch Input                                      R    D3
-Switch Input                                      R    D2
-Switch Input                                      R    D1
-Switch Input                                      R    D0
-
-Read Sound Processor (6502)        FC0000         R    D0-D7
-Write Sound Processor (6502)       FE0000         W    D0-D7
-
-
-NOTE: All addresses can be accessed in byte or word mode.
-
-
-SYSTEM 1 6502 MEMORY MAP
-
-Function                                  Address     R/W  Data
----------------------------------------------------------------
-Program RAM                               0000-0FFF   R/W  D0-D7
-Cartridge External                        1000-1FFF   R/W  D0-D7
-
-Music                                     1800-1801   R/W  D0-D7
-Read 68010 Port (Input Buffer)            1810        R    D0-D7
-Write 68010 Port (Outbut Buffer)          1810        W    D0-D7
-
-Self-Test (Active Low)                    1820        R    D7
-Output Buffer Full (@1000) (Active High)              R    D4
-Data Available (@ 1010) (Active High)                 R    D3
-Auxilliary Coin Switch                                R    D2
-Left Coin Switch                                      R    D1
-Right Coin Switch                                     R    D0
-
-Music Reset (Low Reset)                   1820        W    D0
-LED 1                                     1824        W    D0
-LED 2                                     1825        W    D0
-Coin Counter Right (Active High)          1826        W    D0
-Coin Counter Left (Active High)           1827        W    D0
-
-Effects                                   1870-187F   R/W  D0-D7
-
-Program ROM (48K bytes)                   4000-FFFF   R    D0-D7
 ****************************************************************************/
-
 
 
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "vidhrdw/generic.h"
+
 
 extern UINT8 *atarisys1_bankselect;
 extern UINT8 *atarisys1_prioritycolor;
@@ -323,7 +337,7 @@ static READ_HANDLER( trakball_r )
 
 static READ_HANDLER( input_r )
 {
-	int temp = input_port_5_r(offset);
+	int temp = input_port_4_r(offset);
 	if (atarigen_cpu_to_sound_ready) temp ^= 0x0080;
 	return temp;
 }
@@ -331,11 +345,11 @@ static READ_HANDLER( input_r )
 
 static READ_HANDLER( switch_6502_r )
 {
-	int temp = input_port_4_r(offset);
+	int temp = input_port_5_r(offset);
 
 	if (atarigen_cpu_to_sound_ready) temp ^= 0x08;
 	if (atarigen_sound_to_cpu_ready) temp ^= 0x10;
-	if (!(input_port_5_r(offset) & 0x0040)) temp ^= 0x80;
+	if (!(input_port_4_r(offset) & 0x0040)) temp ^= 0x80;
 
 	return temp;
 }
@@ -610,26 +624,19 @@ static struct MemoryWriteAddress sound_writemem[] =
  *************************************/
 
 INPUT_PORTS_START( marble )
-	PORT_START      /* IN0 */
+	PORT_START  /* F20000 */
     PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_REVERSE | IPF_PLAYER1, 30, 30, 0, 0 )
 
-	PORT_START      /* IN1 */
+	PORT_START  /* F20002 */
     PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER1, 30, 30, 0, 0 )
 
-	PORT_START      /* IN2 */
+	PORT_START  /* F20004 */
     PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_REVERSE | IPF_PLAYER2, 30, 30, 0, 0 )
 
-	PORT_START      /* IN3 */
+	PORT_START  /* F20006 */
     PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER2, 30, 30, 0, 0 )
 
-	PORT_START	/* IN4 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x78, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START	/* DSW */
+	PORT_START	/* F60000 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -637,36 +644,38 @@ INPUT_PORTS_START( marble )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_SERVICE( 0x0040, IP_ACTIVE_LOW )
-	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_SPECIAL )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* 1820 (sound) */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_SPECIAL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_SPECIAL )
+	PORT_BIT( 0x60, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START( peterpak )
-	PORT_START	/* IN0 */
+	PORT_START	/* F40000 */
 	PORT_BIT( 0x0f, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
 
-	PORT_START	/* IN1 */
+	PORT_START	/* n/a */
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-	PORT_START	/* IN2 */
+	PORT_START	/* n/a */
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-	PORT_START	/* IN3 */
+	PORT_START	/* n/a */
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-	PORT_START	/* IN4 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x78, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START	/* DSW */
+	PORT_START	/* F60000 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START2 )
@@ -675,36 +684,38 @@ INPUT_PORTS_START( peterpak )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_SERVICE( 0x0040, IP_ACTIVE_LOW )
-	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_SPECIAL )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* 1820 (sound) */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_SPECIAL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_SPECIAL )
+	PORT_BIT( 0x60, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START( indytemp )
-	PORT_START	/* IN0 */
+	PORT_START	/* F40000 */
 	PORT_BIT( 0x0f, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
 
-	PORT_START	/* IN1 */
+	PORT_START	/* n/a */
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-	PORT_START	/* IN2 */
+	PORT_START	/* n/a */
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-	PORT_START	/* IN3 */
+	PORT_START	/* n/a */
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-	PORT_START	/* IN4 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x78, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START	/* DSW */
+	PORT_START	/* F60000 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START2 )
@@ -713,32 +724,34 @@ INPUT_PORTS_START( indytemp )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_SERVICE( 0x0040, IP_ACTIVE_LOW )
-	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_SPECIAL )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* 1820 (sound) */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_SPECIAL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_SPECIAL )
+	PORT_BIT( 0x60, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START( roadrunn )
-	PORT_START	/* IN0 */
+	PORT_START	/* F40000 */
 	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 100, 10, 0x10, 0xf0 )
 
-	PORT_START	/* IN1 */
+	PORT_START	/* F40002 */
 	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_PLAYER1, 100, 10, 0x10, 0xf0 )
 
-	PORT_START	/* IN2 */
+	PORT_START	/* n/a */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN3 */
+	PORT_START	/* n/a */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN4 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x78, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START	/* DSW */
+	PORT_START	/* F60000 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START2 )
@@ -747,32 +760,34 @@ INPUT_PORTS_START( roadrunn )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_SERVICE( 0x0040, IP_ACTIVE_LOW )
-	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_SPECIAL )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* 1820 (sound) */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_SPECIAL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_SPECIAL )
+	PORT_BIT( 0x60, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START( roadblst )
-	PORT_START	/* IN0 */
+	PORT_START	/* F20000 */
 	PORT_ANALOG( 0xff, 0x40, IPT_DIAL | IPF_REVERSE, 25, 10, 0x00, 0x7f )
 
-	PORT_START	/* IN1 */
+	PORT_START	/* F40000 */
 	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL, 100, 64, 0x00, 0xff )
 
-	PORT_START	/* IN2 */
+	PORT_START	/* n/a */
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-	PORT_START	/* IN3 */
+	PORT_START	/* n/a */
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-	PORT_START	/* IN4 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x78, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START	/* DSW */
+	PORT_START	/* F60000 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON3 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -780,8 +795,17 @@ INPUT_PORTS_START( roadblst )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_SERVICE( 0x0040, IP_ACTIVE_LOW )
-	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_SPECIAL )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* 1820 (sound) */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_SPECIAL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_SPECIAL )
+	PORT_BIT( 0x60, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )
 INPUT_PORTS_END
 
 
@@ -794,13 +818,13 @@ INPUT_PORTS_END
 
 static struct GfxLayout anlayout =
 {
-	8,8,	/* 8*8 chars */
-	512,	/* 512 chars */
-	2,		/* 2 bits per pixel */
+	8,8,
+	RGN_FRAC(1,1),
+	2,
 	{ 0, 4 },
 	{ 0, 1, 2, 3, 8, 9, 10, 11 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	8*16	/* every char takes 16 consecutive bytes */
+	8*16
 };
 
 
@@ -864,10 +888,10 @@ static struct MachineDriver machine_driver_atarisy1 =
 			CPU_M6502,
 			ATARI_CLOCK_14MHz/8,
 			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1	/* IRQ generated by the YM2151 */
+			ignore_interrupt,1
 		},
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,
 	init_machine,
 
@@ -975,7 +999,6 @@ static void init_marble(void)
 	install_mem_write_handler(0, 0x400014, 0x400015, marble_speedcheck_w);
 
 	/* display messages */
-/*	atarigen_show_slapstic_message(); -- no known slapstic problems - yet! */
 	atarigen_show_sound_message();
 
 	rom_decode();
@@ -994,7 +1017,6 @@ static void init_peterpak(void)
 	atarigen_init_6502_speedup(1, 0x8101, 0x8119);
 
 	/* display messages */
-/*	atarigen_show_slapstic_message(); -- no known slapstic problems - yet! */
 	atarigen_show_sound_message();
 
 	rom_decode();
@@ -1016,7 +1038,6 @@ static void init_indytemp(void)
 	atarigen_init_6502_speedup(1, 0x410b, 0x4123);
 
 	/* display messages */
-/*	atarigen_show_slapstic_message(); -- no known slapstic problems - yet! */
 	atarigen_show_sound_message();
 
 	rom_decode();
@@ -1035,7 +1056,6 @@ static void init_roadrunn(void)
 	atarigen_init_6502_speedup(1, 0x8106, 0x811e);
 
 	/* display messages */
-/*	atarigen_show_slapstic_message(); -- no known slapstic problems - yet! */
 	atarigen_show_sound_message();
 
 	rom_decode();
@@ -1054,7 +1074,6 @@ static void init_roadblst(void)
 	atarigen_init_6502_speedup(1, 0x410b, 0x4123);
 
 	/* display messages */
-/*	atarigen_show_slapstic_message(); -- no known slapstic problems - yet! */
 	atarigen_show_sound_message();
 
 	roadblst_rom_decode();

@@ -1,36 +1,12 @@
 /***************************************************************************
 
-  vidhrdw/arcadecl.c
-
-  Functions to emulate the video hardware of the machine.
-
-****************************************************************************
-
-	Motion Object encoding
-	----------------------
-		4 16-bit words are used
-
-		Word 1:
-			Bits  0-7  = link to the next motion object
-
-		Word 2:
-			Bit   15   = horizontal flip
-			Bits  0-11 = image index
-
-		Word 3:
-			Bits  7-15 = horizontal position
-			Bits  0-3  = motion object palette
-
-		Word 4:
-			Bits  7-15 = vertical position
-			Bits  4-6  = horizontal size of the object, in tiles
-			Bits  0-2  = vertical size of the object, in tiles
-
+	Atari Arcade Classics hardware (prototypes)
 
 	Note: this video hardware has some similarities to Shuuz & company
 	The sprite offset registers are stored to 3EFF80
 
-***************************************************************************/
+****************************************************************************/
+
 
 #include "driver.h"
 #include "machine/atarigen.h"
@@ -97,6 +73,7 @@ int arcadecl_vh_start(void)
 	if (!color_usage)
 		return 1;
 	color_usage[0] = XDIM * YDIM;
+	memset(atarigen_playfieldram, 0, 0x20000);
 
 	/* initialize the playfield */
 	if (atarigen_pf_init(&pf_desc))

@@ -50,7 +50,7 @@ unsigned m6800_dasm(char *buffer, unsigned pc);
 /****************************************************************************
  * For now make the 6801 using the m6800 variables and functions
  ****************************************************************************/
-#if HAS_M6801
+#if (HAS_M6801)
 #define M6801_A 					M6800_A
 #define M6801_B 					M6800_B
 #define M6801_PC					M6800_PC
@@ -91,7 +91,7 @@ unsigned m6801_dasm(char *buffer, unsigned pc);
 /****************************************************************************
  * For now make the 6802 using the m6800 variables and functions
  ****************************************************************************/
-#if HAS_M6802
+#if (HAS_M6802)
 #define M6802_A 					M6800_A
 #define M6802_B 					M6800_B
 #define M6802_PC					M6800_PC
@@ -132,7 +132,7 @@ unsigned m6802_dasm(char *buffer, unsigned pc);
 /****************************************************************************
  * For now make the 6803 using the m6800 variables and functions
  ****************************************************************************/
-#if HAS_M6803
+#if (HAS_M6803)
 #define M6803_A 					M6800_A
 #define M6803_B 					M6800_B
 #define M6803_PC					M6800_PC
@@ -188,7 +188,7 @@ WRITE_HANDLER( m6803_internal_registers_w );
 /****************************************************************************
  * For now make the 6808 using the m6800 variables and functions
  ****************************************************************************/
-#if HAS_M6808
+#if (HAS_M6808)
 #define M6808_A 					M6800_A
 #define M6808_B 					M6800_B
 #define M6808_PC					M6800_PC
@@ -229,7 +229,7 @@ unsigned m6808_dasm(char *buffer, unsigned pc);
 /****************************************************************************
  * For now make the HD63701 using the m6800 variables and functions
  ****************************************************************************/
-#if HAS_HD63701
+#if (HAS_HD63701)
 #define HD63701_A					 M6800_A
 #define HD63701_B					 M6800_B
 #define HD63701_PC					 M6800_PC
@@ -284,7 +284,7 @@ WRITE_HANDLER( hd63701_internal_registers_w );
 /****************************************************************************
  * For now make the NSC8105 using the m6800 variables and functions
  ****************************************************************************/
-#if HAS_NSC8105
+#if (HAS_NSC8105)
 #define NSC8105_A					 M6800_A
 #define NSC8105_B					 M6800_B
 #define NSC8105_PC					 M6800_PC

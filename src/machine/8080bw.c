@@ -144,7 +144,7 @@ READ_HANDLER( spcenctr_port_1_r )
 }
 
 
-READ_HANDLER( seawolf_port_0_r )
+READ_HANDLER( seawolf_port_1_r )
 {
 	return (input_port_0_r(0) & 0xe0) + graybit6_controller_table[input_port_0_r(0) & 0x1f];
 }
@@ -154,7 +154,7 @@ static int desertgu_controller_select;
 
 READ_HANDLER( desertgu_port_1_r )
 {
-	return readinputport(desertgu_controller_select ? 1 : 2);
+	return readinputport(desertgu_controller_select ? 0 : 2);
 }
 
 WRITE_HANDLER( desertgu_controller_select_w )

@@ -525,7 +525,7 @@ static WRITE_HANDLER( blitter_w )
 			for ( ; size > 0 ; size--)
 			{
 				/* maybe slower than a memcpy but safer (and errors are logged) */
-				cpu_writemem24_word(dest,cpu_readmem24_word(src));
+				cpu_writemem24bew_word(dest,cpu_readmem24bew_word(src));
 				src += 2;		dest += 2;
 			}
 //			src  += srcdisp;	dest += destdisp;
@@ -538,11 +538,11 @@ static WRITE_HANDLER( blitter_w )
 			int j;
 
 				/* Read offset of source from the list of blits */
-				int addr = src + cpu_readmem24_word( list + 2 );
+				int addr = src + cpu_readmem24bew_word( list + 2 );
 
 				for (j = size; j > 0; j--)
 				{
-					cpu_writemem24_word(dest,cpu_readmem24_word(addr));
+					cpu_writemem24bew_word(dest,cpu_readmem24bew_word(addr));
 					dest += 2;	addr += 2;
 				}
 				dest += 16-size*2;	/* hack for the blit to Sprites RAM */
@@ -550,7 +550,7 @@ static WRITE_HANDLER( blitter_w )
 			}
 
 			/* hack for the blit to Sprites RAM - Sprite list end-marker */
-			cpu_writemem24_word(dest,0xFFFF);
+			cpu_writemem24bew_word(dest,0xFFFF);
 		}
 	} /* end blit */
 }

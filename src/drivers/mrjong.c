@@ -228,7 +228,7 @@ ROM_START( crazyblk )
 
 	ROM_REGION( 0x0120, REGION_PROMS )	/* color */
 	ROM_LOAD( "clr.j7", 0x0000, 0x0020, 0xee1cf1d5 )
-	ROM_LOAD( "clr.g5", 0x0020, 0x0100, 0x00000000 )
+	ROM_LOAD( "clr.g5", 0x0020, 0x0100, 0xbcb1e2e3 )
 ROM_END
 
 

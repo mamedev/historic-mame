@@ -31,16 +31,16 @@
 #define FAST_MEMORY 0
 
 #define SUBTYPE_6502	0
-#if HAS_M65C02
+#if (HAS_M65C02)
 #define SUBTYPE_65C02	1
 #endif
-#if HAS_M6510
+#if (HAS_M6510)
 #define SUBTYPE_6510	2
 #endif
-#if HAS_N2A03
+#if (HAS_N2A03)
 #define SUBTYPE_2A03	3
 #endif
-#if HAS_M65SC02
+#if (HAS_M65SC02)
 #define SUBTYPE_65SC02	4
 #endif
 
@@ -86,7 +86,7 @@ extern unsigned m6502_dasm(char *buffer, unsigned pc);
 /****************************************************************************
  * The 65C02
  ****************************************************************************/
-#if HAS_M65C02
+#if (HAS_M65C02)
 #define M65C02_A						M6502_A
 #define M65C02_X						M6502_X
 #define M65C02_Y						M6502_Y
@@ -131,7 +131,7 @@ extern unsigned m65c02_dasm(char *buffer, unsigned pc);
 /****************************************************************************
  * The 65SC02
  ****************************************************************************/
-#if HAS_M65SC02
+#if (HAS_M65SC02)
 #define M65SC02_A						M6502_A
 #define M65SC02_X						M6502_X
 #define M65SC02_Y						M6502_Y
@@ -176,7 +176,7 @@ extern unsigned m65sc02_dasm(char *buffer, unsigned pc);
 /****************************************************************************
  * The 6510
  ****************************************************************************/
-#if HAS_M6510
+#if (HAS_M6510)
 #define M6510_A 						M6502_A
 #define M6510_X 						M6502_X
 #define M6510_Y 						M6502_Y
@@ -353,7 +353,7 @@ extern const char *m8502_info(void *context, int regnum);
 /****************************************************************************
  * The 2A03 (NES 6502 without decimal mode ADC/SBC)
  ****************************************************************************/
-#if HAS_N2A03
+#if (HAS_N2A03)
 #define N2A03_A 						M6502_A
 #define N2A03_X 						M6502_X
 #define N2A03_Y 						M6502_Y

@@ -58,7 +58,7 @@ OP(31) { int tmp; m6509_ICount -= 5; RD_IDY; AND;		  } /* 5 AND IDY */
 OP(51) { int tmp; m6509_ICount -= 5; RD_IDY; EOR;		  } /* 5 EOR IDY */
 OP(71) { int tmp; m6509_ICount -= 5; RD_IDY; ADC;		  } /* 5 ADC IDY */
 OP(91) { int tmp; m6509_ICount -= 6;		 STA; WR_IDY_6509; } /* 6 STA IDY */
-OP(b1) { int tmp; m6509_ICount -= 5; RD_IDY_6509; LDA;		  } /* 5 LDA IDY */
+OP(b1) { int tmp; m6509_ICount -= 5; RD_IDY_6509; LDA;	  } /* 5 LDA IDY */
 OP(d1) { int tmp; m6509_ICount -= 5; RD_IDY; CMP;		  } /* 5 CMP IDY */
 OP(f1) { int tmp; m6509_ICount -= 5; RD_IDY; SBC;		  } /* 5 SBC IDY */
 
@@ -80,19 +80,19 @@ OP(b2) {		  m6502_ICount -= 2;		 KIL;		  } /* 2 KIL */
 OP(d2) {		  m6502_ICount -= 2;		 KIL;		  } /* 2 KIL */
 OP(f2) {		  m6502_ICount -= 2;		 KIL;		  } /* 2 KIL */
 
-OP(03) { int tmp; m6502_ICount -= 7; RD_IDX; SLO; WB_EA;  } /* 6 SLO IDX */
-OP(23) { int tmp; m6502_ICount -= 7; RD_IDX; RLA; WB_EA;  } /* 6 RLA IDX */
-OP(43) { int tmp; m6502_ICount -= 7; RD_IDX; SRE; WB_EA;  } /* 6 SRE IDX */
-OP(63) { int tmp; m6502_ICount -= 7; RD_IDX; RRA; WB_EA;  } /* 6 RRA IDX */
+OP(03) { int tmp; m6502_ICount -= 7; RD_IDX; SLO; WB_EA;  } /* 7 SLO IDX */
+OP(23) { int tmp; m6502_ICount -= 7; RD_IDX; RLA; WB_EA;  } /* 7 RLA IDX */
+OP(43) { int tmp; m6502_ICount -= 7; RD_IDX; SRE; WB_EA;  } /* 7 SRE IDX */
+OP(63) { int tmp; m6502_ICount -= 7; RD_IDX; RRA; WB_EA;  } /* 7 RRA IDX */
 OP(83) { int tmp; m6502_ICount -= 6;		 SAX; WR_IDX; } /* 6 SAX IDX */
 OP(a3) { int tmp; m6502_ICount -= 6; RD_IDX; LAX;		  } /* 6 LAX IDX */
 OP(c3) { int tmp; m6502_ICount -= 7; RD_IDX; DCP; WB_EA;  } /* 7 DCP IDX */
 OP(e3) { int tmp; m6502_ICount -= 7; RD_IDX; ISB; WB_EA;  } /* 7 ISB IDX */
 
-OP(13) { int tmp; m6502_ICount -= 6; RD_IDY; SLO; WB_EA;  } /* 5 SLO IDY */
-OP(33) { int tmp; m6502_ICount -= 6; RD_IDY; RLA; WB_EA;  } /* 5 RLA IDY */
-OP(53) { int tmp; m6502_ICount -= 6; RD_IDY; SRE; WB_EA;  } /* 5 SRE IDY */
-OP(73) { int tmp; m6502_ICount -= 6; RD_IDY; RRA; WB_EA;  } /* 5 RRA IDY */
+OP(13) { int tmp; m6502_ICount -= 6; RD_IDY; SLO; WB_EA;  } /* 6 SLO IDY */
+OP(33) { int tmp; m6502_ICount -= 6; RD_IDY; RLA; WB_EA;  } /* 6 RLA IDY */
+OP(53) { int tmp; m6502_ICount -= 6; RD_IDY; SRE; WB_EA;  } /* 6 SRE IDY */
+OP(73) { int tmp; m6502_ICount -= 6; RD_IDY; RRA; WB_EA;  } /* 6 RRA IDY */
 OP(93) { int tmp; m6502_ICount -= 5; EA_IDY; SAH; WB_EA;  } /* 5 SAH IDY */
 OP(b3) { int tmp; m6502_ICount -= 5; RD_IDY; LAX;		  } /* 5 LAX IDY */
 OP(d3) { int tmp; m6502_ICount -= 6; RD_IDY; DCP; WB_EA;  } /* 6 DCP IDY */

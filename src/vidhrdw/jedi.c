@@ -85,29 +85,41 @@ WRITE_HANDLER( jedi_paletteram_w )
 ***************************************************************************/
 int jedi_vh_start(void)
 {
-	if (generic_vh_start() != 0)
+	if ((dirtybuffer = malloc(videoram_size)) == 0)
+	{
 		return 1;
+	}
+	memset(dirtybuffer,1,videoram_size);
+
+	if ((tmpbitmap = osd_new_bitmap(Machine->drv->screen_width,Machine->drv->screen_height,8)) == 0)
+	{
+		free(dirtybuffer);
+		return 1;
+	}
 
 	if ((dirtybuffer2 = malloc(jedi_backgroundram_size)) == 0)
 	{
-		generic_vh_stop();
+		osd_free_bitmap(tmpbitmap);
+		free(dirtybuffer);
 		return 1;
 	}
 	memset(dirtybuffer2,1,jedi_backgroundram_size);
 
-	if ((tmpbitmap2 = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap2 = osd_new_bitmap(Machine->drv->screen_width,Machine->drv->screen_height,8)) == 0)
 	{
+		osd_free_bitmap(tmpbitmap);
+		free(dirtybuffer);
 		free(dirtybuffer2);
-		generic_vh_stop();
 		return 1;
 	}
 
 	/* the background area is 512x512 */
-	if ((tmpbitmap3 = osd_create_bitmap(512,512)) == 0)
+	if ((tmpbitmap3 = osd_new_bitmap(512,512,8)) == 0)
 	{
+		osd_free_bitmap(tmpbitmap);
 		osd_free_bitmap(tmpbitmap2);
+		free(dirtybuffer);
 		free(dirtybuffer2);
-		generic_vh_stop();
 		return 1;
 	}
 
@@ -121,10 +133,11 @@ int jedi_vh_start(void)
 ***************************************************************************/
 void jedi_vh_stop(void)
 {
-	osd_free_bitmap(tmpbitmap3);
+	osd_free_bitmap(tmpbitmap);
 	osd_free_bitmap(tmpbitmap2);
+	osd_free_bitmap(tmpbitmap3);
+	free(dirtybuffer);
 	free(dirtybuffer2);
-	generic_vh_stop();
 }
 
 
@@ -151,7 +164,6 @@ WRITE_HANDLER( jedi_backgroundram_w )
 void jedi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
-	static unsigned short colortable[16] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
 
 
 	if (palette_recalc())
@@ -167,15 +179,6 @@ void jedi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* 1024 colors palette is appropriately set up by the program to "emulate" a */
 	/* priority system, but it can also be used to display completely different */
 	/* colors (see the palette test in service mode) */
-
-	/* To emulate that, we set Machine->drv->color_table_len to 0, so when we */
-	/* draw the graphics using drawgfx() we'll just copy the pen values 0-15, */
-	/* without doing a palette lookup. After drawing into three temporary */
-	/* bitmaps, we do a final composition step mapping the 10-bit combined value */
-	/* to the correct palette entry. */
-
-	Machine->gfx[0]->colortable = Machine->gfx[1]->colortable =
-			Machine->gfx[2]->colortable = colortable;
 
     /* foreground */
     for (offs = videoram_size - 1;offs >= 0;offs--)
@@ -195,7 +198,7 @@ void jedi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					0,
 					0,0,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->drv->visible_area,TRANSPARENCY_NONE_RAW,0);
 		}
     }
 
@@ -219,10 +222,11 @@ void jedi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			c = c | ((b & 0x02) << 9);
 
 			drawgfx(tmpbitmap3,Machine->gfx[1],
-					c,0,
+					c,
+					0,
 					b & 0x04,0,
 					16*sx,16*sy,
-					0,TRANSPARENCY_NONE,0);
+					0,TRANSPARENCY_NONE_RAW,0);
 		}
 	}
 
@@ -250,7 +254,7 @@ void jedi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				0,
 				(spriteram[offs+0x40] & 0x10),(spriteram[offs+0x40] & 0x20),
 				(spriteram[offs+0x100]) | (b << 8),240-spriteram[offs+0x80],
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->drv->visible_area,TRANSPARENCY_PEN_RAW,0);
 
 		if (spriteram[offs+0x40] & 0x08)	/* double height */
 			drawgfx(tmpbitmap2,Machine->gfx[2],
@@ -258,35 +262,54 @@ void jedi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					0,
 					(spriteram[offs+0x40] & 0x10),(spriteram[offs+0x40] & 0x20),
 					(spriteram[offs+0x100]) | (b << 8),240-spriteram[offs+0x80]-16,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->drv->visible_area,TRANSPARENCY_PEN_RAW,0);
     }
-
-
-	Machine->gfx[0]->colortable = Machine->gfx[1]->colortable =
-			Machine->gfx[2]->colortable = 0;
 
 
 	/* compose the three layers */
 	{
 		int x,y;
+		UINT8 *s1,*s2,*s3;
 
 
-		for (y = 0;y < bitmap->height;y++)
+		if (bitmap->depth == 16)
 		{
-			unsigned char *d,*s1,*s2,*s3;
-
-
-			d = bitmap->line[y];
-			s1 = tmpbitmap->line[y];
-			s2 = tmpbitmap2->line[y];
-			s3 = tmpbitmap3->line[(y + jedi_vscroll) & 0x1ff];
-
-			for (x = 0;x < bitmap->width;x++)
+			for (y = 0;y < bitmap->height;y++)
 			{
-				*(d++) = Machine->pens[
-						(*(s1++) << 8) |
-						(*(s2++) << 4) |
-						s3[(x + jedi_hscroll) & 0x1ff]];
+				UINT16 *d;
+
+				d = (UINT16 *)bitmap->line[y];
+				s1 = tmpbitmap->line[y];
+				s2 = tmpbitmap2->line[y];
+				s3 = tmpbitmap3->line[(y + jedi_vscroll) & 0x1ff];
+
+				for (x = 0;x < bitmap->width;x++)
+				{
+					*(d++) = Machine->pens[
+							(*(s1++) << 8) |
+							(*(s2++) << 4) |
+							s3[(x + jedi_hscroll) & 0x1ff]];
+				}
+			}
+		}
+		else
+		{
+			for (y = 0;y < bitmap->height;y++)
+			{
+				UINT8 *d;
+
+				d = bitmap->line[y];
+				s1 = tmpbitmap->line[y];
+				s2 = tmpbitmap2->line[y];
+				s3 = tmpbitmap3->line[(y + jedi_vscroll) & 0x1ff];
+
+				for (x = 0;x < bitmap->width;x++)
+				{
+					*(d++) = Machine->pens[
+							(*(s1++) << 8) |
+							(*(s2++) << 4) |
+							s3[(x + jedi_hscroll) & 0x1ff]];
+				}
 			}
 		}
 	}

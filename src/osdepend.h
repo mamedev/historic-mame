@@ -343,4 +343,6 @@ void osd_dir_close(void *dir);
 #endif
 
 
+void CLIB_DECL logerror(const char *text,...);
+
 #endif

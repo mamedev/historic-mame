@@ -317,7 +317,7 @@ void cps2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
     dt[1].y = dt[0].y+2*Machine->uifontheight;
 
     dt[2].text = 0; /* terminate array */
-	displaytext(dt,0,0);
+	displaytext(Machine->scrbitmap,dt,0,0);
     }
 }
 

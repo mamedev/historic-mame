@@ -1720,7 +1720,7 @@ static int build_rle_tables(void)
 	rle_table[2] = rle_table[3] = &base[0x200];
 	rle_table[4] = rle_table[6] = &base[0x300];
 	rle_table[5] = rle_table[7] = &base[0x400];
-	
+
 	/* set the bpps */
 	rle_bpp[0] = 4;
 	rle_bpp[1] = rle_bpp[2] = rle_bpp[3] = 5;
@@ -3221,8 +3221,8 @@ void atarigen_update_messages(void)
 		/* draw a row of spaces at the top and bottom */
 		for (i = 0; i < maxwidth; i++)
 		{
-			ui_text(" ", x + i * Machine->uifontwidth, y);
-			ui_text(" ", x + i * Machine->uifontwidth, y + (lines + 1) * Machine->uifontheight);
+			ui_text(Machine->scrbitmap, " ", x + i * Machine->uifontwidth, y);
+			ui_text(Machine->scrbitmap, " ", x + i * Machine->uifontwidth, y + (lines + 1) * Machine->uifontheight);
 		}
 		y += Machine->uifontheight;
 
@@ -3234,11 +3234,11 @@ void atarigen_update_messages(void)
 
 			for (j = 0; j < dx; j += Machine->uifontwidth)
 			{
-				ui_text(" ", x + j, y);
-				ui_text(" ", x + (maxwidth - 1) * Machine->uifontwidth - j, y);
+				ui_text(Machine->scrbitmap, " ", x + j, y);
+				ui_text(Machine->scrbitmap, " ", x + (maxwidth - 1) * Machine->uifontwidth - j, y);
 			}
 
-			ui_text(message_text[i], x + dx, y);
+			ui_text(Machine->scrbitmap, message_text[i], x + dx, y);
 			y += Machine->uifontheight;
 		}
 
@@ -3246,7 +3246,8 @@ void atarigen_update_messages(void)
 		message_countdown--;
 
 		/* if a coin is inserted, make the message go away */
-		if (keyboard_pressed(KEYCODE_3) || keyboard_pressed(KEYCODE_4))
+		if (keyboard_pressed(KEYCODE_5) || keyboard_pressed(KEYCODE_6) ||
+		    keyboard_pressed(KEYCODE_7) || keyboard_pressed(KEYCODE_8))
 			message_countdown = 0;
 	}
 	else

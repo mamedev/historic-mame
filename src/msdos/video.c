@@ -2192,11 +2192,11 @@ void osd_update_video_and_audio(void)
 			divdr = 100 * FRAMESKIP_LEVELS;
 			fps = (Machine->drv->frames_per_second * (FRAMESKIP_LEVELS - frameskip) * speed + (divdr / 2)) / divdr;
 			sprintf(buf,"%s%2d%4d%%%4d/%d fps",autoframeskip?"auto":"fskp",frameskip,speed,fps,(int)(Machine->drv->frames_per_second+0.5));
-			ui_text(buf,Machine->uiwidth-strlen(buf)*Machine->uifontwidth,0);
+			ui_text(scrbitmap,buf,Machine->uiwidth-strlen(buf)*Machine->uifontwidth,0);
 			if (vector_game)
 			{
 				sprintf(buf," %d vector updates",vups);
-				ui_text(buf,Machine->uiwidth-strlen(buf)*Machine->uifontwidth,Machine->uifontheight);
+				ui_text(scrbitmap,buf,Machine->uiwidth-strlen(buf)*Machine->uifontwidth,Machine->uifontheight);
 			}
 		}
 

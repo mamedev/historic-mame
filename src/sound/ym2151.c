@@ -29,10 +29,10 @@
 typedef struct{
 	unsigned int phase;		/*accumulated operator phase*/
 	unsigned int freq;		/*operator frequency*/
-	signed   int DTfreq;	/*operator detune frequency*/
+	signed   int DT1v;		/*operator DT1 phase inc/decrement*/
 
 	unsigned int MUL;		/*phase multiply*/
-	unsigned int DT1;		/*DT1|MUL * 32  */
+	unsigned int DT1;		/*DT1 * 32      */
 	unsigned int DT2;		/*DT2 index     */
 
 	signed   int *connect;	/*operator output 'direction'*/
@@ -44,7 +44,6 @@ typedef struct{
 	signed   int FB0;		/*previous output value*/
 	unsigned int KC;		/*operator KC (copied to all operators)*/
 	unsigned int KCindex;	/*speedup*/
-	unsigned int KF;		/*operator KF (copied to all operators)*/
 	unsigned int PMS;		/*channel PMS*/
 	unsigned int AMS;		/*channel AMS*/
 /*End of channel specific data*/
@@ -68,8 +67,9 @@ typedef struct{
 	unsigned int D2R;		/*Sustain rate  */
 	unsigned int RR;		/*Release rate  */
 
-	signed   int LFOpm;		/*phase modulation from LFO*/
-	signed   int a_vol;		/*used for attack phase calculations*/
+	unsigned int reserved0;	/**/
+	signed   int reserved1;	/**/
+	signed   int reserved2;	/**/
 
 } OscilRec;
 
@@ -91,9 +91,15 @@ typedef struct
 	unsigned int test;		/*TEST register*/
 
 	unsigned int CT;		/*output control pins (bit7 CT2, bit6 CT1)*/
-	unsigned int noise;		/*noise register (bit 7 - noise enable, bits 4-0 - noise freq*/
 
-	unsigned int IRQenable;	/*IRQ enable for timer B (bit 3) and timer A (bit 2)*/
+	unsigned int noise;		/*noise register (bit 7 - noise enable, bits 4-0 - noise period*/
+	unsigned int noiseRNG;	/*17 bit noise shift register*/
+	unsigned int noise_p;	/*noise 'phase'*/
+	unsigned int noise_f;	/*noise period*/
+
+	unsigned int CSMreq;	/*CSM KEYON/KEYOFF sequence request*/
+
+	unsigned int IRQenable;	/*IRQ enable for timer B (bit 3) and timer A (bit 2); bit 7 - CSM mode (keyon to all slots, everytime timer A overflows)*/
 	unsigned int status;	/*chip status (BUSY, IRQ Flags)*/
 
 #ifdef USE_MAME_TIMERS
@@ -115,7 +121,7 @@ typedef struct
 	/*
 	*   Frequency-deltas to get the closest frequency possible.
 	*   There're 11 octaves because of DT2 (max 950 cents over base frequency)
-	*   and LFO phase modulation (max 700 cents below AND over base frequency)
+	*   and LFO phase modulation (max 800 cents below AND over base frequency)
 	*   Summary:   octave  explanation
 	*              0       note code - LFO PM
 	*              1       note code
@@ -129,23 +135,22 @@ typedef struct
 	*              9       note code + DT2 + LFO PM
 	*              10      note code + DT2 + LFO PM
 	*/
-	unsigned int freq[11*12*64];/*11 octaves, 12 semitones, 64 'cents'*/
+	unsigned int freq[11*768];/*11 octaves, 768 'cents' per octave*/
 
 	/*
 	*   Frequency deltas for DT1. These deltas alter operator frequency
 	*   after it has been taken from frequency-deltas table.
 	*/
-	signed   int DT1freq[8*16*32];		/*8 DT1 levels,16 MUL lelvels, 32 KC values*/
+	signed   int DT1freq[8*32];		/*8 DT1 levels, 32 KC values*/
+	unsigned int EG_tab [32+64+32];	/*Envelope Generator deltas (32 + 64 rates + 32 RKS)*/
+	unsigned int LFOfreq[256];		/*LFO frequency deltas*/
+	unsigned int noise_tab[32];		/*17bit Noise Generator periods*/
 
-	unsigned int EG_tab[32+64+32];		/*envelope deltas (32 + 64 rates + 32 RKS)*/
-
-	unsigned int LFOfreq[256];			/*frequency deltas for LFO*/
-
-	void (*irqhandler)(int irq);				/*IRQ function handler*/
+	void (*irqhandler)(int irq);	/*IRQ function handler*/
 	mem_write_handler porthandler;	/*port write function handler*/
 
-	unsigned int clock;			/*chip clock in Hz (passed from 2151intf.c)*/
-	unsigned int sampfreq;		/*sampling frequency in Hz (passed from 2151intf.c)*/
+	unsigned int clock;				/*chip clock in Hz (passed from 2151intf.c)*/
+	unsigned int sampfreq;			/*sampling frequency in Hz (passed from 2151intf.c)*/
 
 } YM2151;
 
@@ -185,6 +190,7 @@ typedef struct
 #define LFO_LEN			(1<<LFO_BITS)
 #define LFO_MASK		(LFO_LEN-1)
 
+
 #if (SAMPLE_BITS==16)
 	#define FINAL_SH	(0)
 	#define MAXOUT		(+32767)
@@ -217,12 +223,6 @@ static unsigned int lfo_md_tab[128];
 static unsigned int D1L_tab[16];
 
 /*
- * translate from key code KC (OCT2 OCT1 OCT0 N3 N2 N1 N0) to
- * index in frequency-deltas table. (9 octaves * 16 note codes)
-*/
-static unsigned int KC_TO_INDEX[9*16];
-
-/*
  *   DT2 defines offset in cents from base note
  *
  *   This table defines offset in frequency-deltas table.
@@ -240,6 +240,7 @@ static unsigned int DT2_tab[4] = { 0, 384, 500, 608 };
  *   This table is converted while initialization...
  *   Detune table in YM2151 User's Manual is wrong (checked against the real chip)
 */
+
 static unsigned char DT1_tab[4*32] = { /* 4*32 DT1 values */
 /* DT1=0 */
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -257,6 +258,59 @@ static unsigned char DT1_tab[4*32] = { /* 4*32 DT1 values */
   2, 2, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 6, 6, 7,
   8, 8, 9,10,11,12,13,14,16,17,19,20,22,22,22,22
 };
+
+static unsigned short phaseinc_rom[768]={
+1299,1300,1301,1302,1303,1304,1305,1306,1308,1309,1310,1311,1313,1314,1315,1316,
+1318,1319,1320,1321,1322,1323,1324,1325,1327,1328,1329,1330,1332,1333,1334,1335,
+1337,1338,1339,1340,1341,1342,1343,1344,1346,1347,1348,1349,1351,1352,1353,1354,
+1356,1357,1358,1359,1361,1362,1363,1364,1366,1367,1368,1369,1371,1372,1373,1374,
+1376,1377,1378,1379,1381,1382,1383,1384,1386,1387,1388,1389,1391,1392,1393,1394,
+1396,1397,1398,1399,1401,1402,1403,1404,1406,1407,1408,1409,1411,1412,1413,1414,
+1416,1417,1418,1419,1421,1422,1423,1424,1426,1427,1429,1430,1431,1432,1434,1435,
+1437,1438,1439,1440,1442,1443,1444,1445,1447,1448,1449,1450,1452,1453,1454,1455,
+1458,1459,1460,1461,1463,1464,1465,1466,1468,1469,1471,1472,1473,1474,1476,1477,
+1479,1480,1481,1482,1484,1485,1486,1487,1489,1490,1492,1493,1494,1495,1497,1498,
+1501,1502,1503,1504,1506,1507,1509,1510,1512,1513,1514,1515,1517,1518,1520,1521,
+1523,1524,1525,1526,1528,1529,1531,1532,1534,1535,1536,1537,1539,1540,1542,1543,
+1545,1546,1547,1548,1550,1551,1553,1554,1556,1557,1558,1559,1561,1562,1564,1565,
+1567,1568,1569,1570,1572,1573,1575,1576,1578,1579,1580,1581,1583,1584,1586,1587,
+1590,1591,1592,1593,1595,1596,1598,1599,1601,1602,1604,1605,1607,1608,1609,1610,
+1613,1614,1615,1616,1618,1619,1621,1622,1624,1625,1627,1628,1630,1631,1632,1633,
+1637,1638,1639,1640,1642,1643,1645,1646,1648,1649,1651,1652,1654,1655,1656,1657,
+1660,1661,1663,1664,1666,1667,1669,1670,1672,1673,1675,1676,1678,1679,1681,1682,
+1685,1686,1688,1689,1691,1692,1694,1695,1697,1698,1700,1701,1703,1704,1706,1707,
+1709,1710,1712,1713,1715,1716,1718,1719,1721,1722,1724,1725,1727,1728,1730,1731,
+1734,1735,1737,1738,1740,1741,1743,1744,1746,1748,1749,1751,1752,1754,1755,1757,
+1759,1760,1762,1763,1765,1766,1768,1769,1771,1773,1774,1776,1777,1779,1780,1782,
+1785,1786,1788,1789,1791,1793,1794,1796,1798,1799,1801,1802,1804,1806,1807,1809,
+1811,1812,1814,1815,1817,1819,1820,1822,1824,1825,1827,1828,1830,1832,1833,1835,
+1837,1838,1840,1841,1843,1845,1846,1848,1850,1851,1853,1854,1856,1858,1859,1861,
+1864,1865,1867,1868,1870,1872,1873,1875,1877,1879,1880,1882,1884,1885,1887,1888,
+1891,1892,1894,1895,1897,1899,1900,1902,1904,1906,1907,1909,1911,1912,1914,1915,
+1918,1919,1921,1923,1925,1926,1928,1930,1932,1933,1935,1937,1939,1940,1942,1944,
+1946,1947,1949,1951,1953,1954,1956,1958,1960,1961,1963,1965,1967,1968,1970,1972,
+1975,1976,1978,1980,1982,1983,1985,1987,1989,1990,1992,1994,1996,1997,1999,2001,
+2003,2004,2006,2008,2010,2011,2013,2015,2017,2019,2021,2022,2024,2026,2028,2029,
+2032,2033,2035,2037,2039,2041,2043,2044,2047,2048,2050,2052,2054,2056,2058,2059,
+2062,2063,2065,2067,2069,2071,2073,2074,2077,2078,2080,2082,2084,2086,2088,2089,
+2092,2093,2095,2097,2099,2101,2103,2104,2107,2108,2110,2112,2114,2116,2118,2119,
+2122,2123,2125,2127,2129,2131,2133,2134,2137,2139,2141,2142,2145,2146,2148,2150,
+2153,2154,2156,2158,2160,2162,2164,2165,2168,2170,2172,2173,2176,2177,2179,2181,
+2185,2186,2188,2190,2192,2194,2196,2197,2200,2202,2204,2205,2208,2209,2211,2213,
+2216,2218,2220,2222,2223,2226,2227,2230,2232,2234,2236,2238,2239,2242,2243,2246,
+2249,2251,2253,2255,2256,2259,2260,2263,2265,2267,2269,2271,2272,2275,2276,2279,
+2281,2283,2285,2287,2288,2291,2292,2295,2297,2299,2301,2303,2304,2307,2308,2311,
+2315,2317,2319,2321,2322,2325,2326,2329,2331,2333,2335,2337,2338,2341,2342,2345,
+2348,2350,2352,2354,2355,2358,2359,2362,2364,2366,2368,2370,2371,2374,2375,2378,
+2382,2384,2386,2388,2389,2392,2393,2396,2398,2400,2402,2404,2407,2410,2411,2414,
+2417,2419,2421,2423,2424,2427,2428,2431,2433,2435,2437,2439,2442,2445,2446,2449,
+2452,2454,2456,2458,2459,2462,2463,2466,2468,2470,2472,2474,2477,2480,2481,2484,
+2488,2490,2492,2494,2495,2498,2499,2502,2504,2506,2508,2510,2513,2516,2517,2520,
+2524,2526,2528,2530,2531,2534,2535,2538,2540,2542,2544,2546,2549,2552,2553,2556,
+2561,2563,2565,2567,2568,2571,2572,2575,2577,2579,2581,2583,2586,2589,2590,2593
+};
+
+
 
 
 static YM2151 * YMPSG = NULL;	/* array of YM2151's */
@@ -317,10 +371,11 @@ static void init_tables(void)
 			TL_TAB[ x*2+1 + i*2*TL_RES_LEN ] = -TL_TAB[ x*2+0 + i*2*TL_RES_LEN ];
 		}
 	#if 0
-		logerror("tl %04i", x);
-		for (i=0; i<13; i++)
-			logerror(", [%02i] %4i", i*2, TL_TAB[ x*2+1 + i*2*TL_RES_LEN ]);
-		logerror("\n");
+			logerror("tl %04i", x);
+			for (i=0; i<13; i++)
+				logerror(", [%02i] %4x", i*2, TL_TAB[ x*2 /*+1*/ + i*2*TL_RES_LEN ]);
+			logerror("\n");
+		}
 	#endif
 	}
 	/*logerror("TL_TAB_LEN = %i (%i bytes)\n",TL_TAB_LEN, (int)sizeof(TL_TAB));*/
@@ -347,7 +402,7 @@ static void init_tables(void)
 			n = n>>1;
 
 		sin_tab[ i ] = n*2 + (m>=0.0? 0: 1 );
-		/*logerror("sin offs %04i= %i\n", i, sin_tab[i]);*/
+		/*logerror("sin [%4i]= %4i (TL_TAB value=%5i)\n", i, sin_tab[i],TL_TAB[sin_tab[i]]);*/
 	}
 
 	/*logerror("ENV_QUIET= %08x\n",ENV_QUIET );*/
@@ -486,23 +541,12 @@ static void init_tables(void)
 	    }
 	}
 
-
 	/* calculate D1L_tab table */
 	for (i=0; i<16; i++)
 	{
-		m = (i<15?i:i+16) * (4.0/ENV_STEP);   /*every 3 'dB' except for all bits = 1 = 45dB+48dB*/
+		m = (i!=15 ? i : i+16) * (4.0/ENV_STEP);   /*every 3 'dB' except for all bits = 1 = 45dB+48dB*/
 		D1L_tab[i] = m * (1<<ENV_SH);
-		/*logerror("D1L_tab[%04x]=%08x\n",i,D1L_tab[i] );*/
-	}
-
-	/* calculate KC_TO_INDEX table */
-	x=0;
-	for (i=0; i<8*16; i++)
-	{
-		KC_TO_INDEX[i]=((i>>4)*12*64) + x*64 + 12*64;
-		if ((i&0x03) != 0x03) x++;	/* change note code */
-		if ((i&0x0f) == 0x0f) x=0;	/* new octave */
-		/*logerror("KC_TO_INDEX[%02i] Note=%02i\n",i,KC_TO_INDEX[i]);*/
+		/*logerror("D1L_tab[%02x]=%08x\n",i,D1L_tab[i] );*/
 	}
 
 #ifdef SAVE_SAMPLE
@@ -520,7 +564,6 @@ sample[7]=fopen("samp7.raw","wb");
 #endif
 }
 
-
 static void init_chip_tables(YM2151 *chip)
 {
 	int i,j;
@@ -529,68 +572,102 @@ static void init_chip_tables(YM2151 *chip)
 	double scaler;	/* formula below is true for chip clock=3579545 */
 	/* so we need to scale its output accordingly to the chip clock */
 
-	scaler= (double)chip->clock / 3579545.0;
+	/*scaler = (double)chip->clock / 3579545.0;*/
+	scaler = ( (double)chip->clock / 64.0 ) / ( (double)chip->sampfreq );
+#if 0
+	logerror("scaler    = %20.15f\n", scaler);
+	logerror("scalerold = %20.15f\n", (double)chip->clock / 3579545.0 );
+#endif
 
 	/*this loop calculates Hertz values for notes from c-0 to b-7*/
 	/*including 64 'cents' (100/64 that is 1.5625 of real cent) per note*/
 	/* i*100/64/1200 is equal to i/768 */
 
-	mult = (1<<FREQ_SH);
-	for (i=0; i<1*12*64; i++)
+	/* real chip works with 10 bits fixed point values (10.10)*/
+	mult = (1<<(FREQ_SH-10)); /* -10 because phaseinc_rom table values are already in 10.10 format */
+
+	for (i=0; i<768; i++)
 	{
 		/* 3.4375 Hz is note A; C# is 4 semitones higher */
-		Hz = scaler * 3.4375 * pow (2, (i+4*64) / 768.0 );
-
+		Hz = 1000;
+#if 0
+/* Hz is close, but not perfect */
+		//Hz = scaler * 3.4375 * pow (2, (i + 4 * 64 ) / 768.0 );
 		/* calculate phase increment */
 		phaseinc = (Hz*SIN_LEN) / (double)chip->sampfreq;
+#endif
 
-		chip->freq[i] = phaseinc*mult;
-		for (j=1; j<11; j++)
+		phaseinc = phaseinc_rom[i];	/*real chip phase increment*/
+		phaseinc *= scaler;			/*adjust*/
+
+
+		/*octave 2 - reference octave*/
+		chip->freq[ 768+2*768+i ] = ((int)(phaseinc*mult)) & 0xffffffc0; /*adjust to X.10 fixed point*/
+
+		/*octave 0 and octave 1*/
+		for (j=0; j<2; j++)
 		{
-			chip->freq[i+j*12*64] = chip->freq[i]*(1<<j);
+			chip->freq[768 + j*768 + i] = (chip->freq[ 768+2*768+i ] >> (2-j) ) & 0xffffffc0; /*adjust to X.10 fixed point*/
 		}
+
+		/*octave 3 to 7*/
+		for (j=3; j<8; j++)
+		{
+			chip->freq[768 + j*768 + i] = chip->freq[ 768+2*768+i ] << (j-2);
+		}
+
 	#if 0
-		pom = (double)chip->freq[i] / mult;
-		pom = pom * (double)chip->sampfreq / (double)SIN_LEN;
-		logerror("freq[%04i][%08x]= real %20.15f Hz  emul %20.15f Hz\n", i, chip->freq[i], Hz, pom);
+			pom = (double)chip->freq[ 768+2*768+i ] / ((double)(1<<FREQ_SH));
+			pom = pom * (double)chip->sampfreq / (double)SIN_LEN;
+			logerror("1freq[%4i][%08x]= real %20.15f Hz  emul %20.15f Hz\n", i, chip->freq[ 768+2*768+i ], Hz, pom);
 	#endif
 	}
+
+	/*octave -1 (all equal to: oct 0, KC 00, KF 00) */
+	for (i=0; i<768; i++)
+	{
+		chip->freq[ 0*768 + i ] = chip->freq[1*768+0];
+	}
+
+	/*octave 8 and 9 (all equal to: oct 7, _KC_14_, _KF_63_) */
+	for (j=8; j<10; j++)
+	{
+		for (i=0; i<768; i++)
+		{
+			chip->freq[768+ j*768 + i ] = chip->freq[768 + 8*768 -1];
+		}
+	}
+
+	#if 0
+		for (i=0; i<11*768; i++)
+		{
+			pom = (double)chip->freq[i] / ((double)(1<<FREQ_SH));
+			pom = pom * (double)chip->sampfreq / (double)SIN_LEN;
+			logerror("freq[%4i][%08x]= emul %20.15f Hz\n", i, chip->freq[i], pom);
+		}
+	#endif
 
 	mult = (1<<FREQ_SH);
 	for (j=0; j<4; j++)
 	{
 		for (i=0; i<32; i++)
 		{
-			int x, y, mul;
+			Hz = ( (double)DT1_tab[j*32+i] * ((double)chip->clock/64.0) ) / (double)(1<<20);
 
-			Hz = ( (double)DT1_tab[j*32+i] * ((double)chip->clock/8.0) ) / (double)(1<<24);
-			/*Important note:
-			**  The frequency calculated above is HALF of the frequency found in the Manual.
-			**  This is intentional as Manual gives the frequencies for MUL = 1, not MUL = 0.5
-			*/
 			/*calculate phase increment*/
 			phaseinc = (Hz*SIN_LEN) / (double)chip->sampfreq;
 
 			/*positive and negative values*/
-			chip->DT1freq[ (j+0)*16*32 + i ] = phaseinc * mult;
-			chip->DT1freq[ (j+4)*16*32 + i ] = -chip->DT1freq[ (j+0)*16*32 + i ];
+			chip->DT1freq[ (j+0)*32 + i ] = phaseinc * mult;
+			chip->DT1freq[ (j+4)*32 + i ] = -chip->DT1freq[ (j+0)*32 + i ];
 
-			for (mul=1; mul<16; mul++)
-			{
-				x = (j+0)*16*32 + mul*32;
-				y = (j+4)*16*32 + mul*32;
-				/*positive and negative values*/
-				chip->DT1freq[ x + i ] = phaseinc * mult * (mul*2);
-				chip->DT1freq[ y + i ] = -chip->DT1freq[ x + i ];
-			}
 		#if 0
-			for (mul=0; mul<16; mul++)
 			{
-				x = j*16*32 + mul*32 + i;
+				int x = j*32 + i;
 				pom = (double)chip->DT1freq[x] / mult;
 				pom = pom * (double)chip->sampfreq / (double)SIN_LEN;
-				logerror("DT1(%03i)[%02i %02i mul=%02i][%08x]= real %19.15f Hz  emul %19.15f Hz\n",
-						 x, j, i, mul, chip->DT1freq[x], Hz*((mul>0)?mul*2:1), pom);
+				logerror("DT1(%03i)[%02i %02i][%08x]= real %19.15f Hz  emul %19.15f Hz\n",
+						 x, j, i, chip->DT1freq[x], Hz, pom);
 			}
 		#endif
 		}
@@ -654,6 +731,18 @@ static void init_chip_tables(YM2151 *chip)
 		#else
 			chip->TimerB[i] = pom * (double)chip->sampfreq * mult;  /*number of samples that timer period takes (fixed point) */
 		#endif
+	}
+
+	/* calculate noise periods table */
+	scaler = ( (double)chip->clock / 64.0 ) / ( (double)chip->sampfreq );
+	for (i=0; i<32; i++)
+	{
+		j = (i!=31 ? i : 30);   /*period 30 and 31 are the same*/
+		j = 32-j;
+		j = (65536.0 / (double)(j*32.0));	/*number of samples per one shift of the shift register*/
+		/*chip->noise_tab[i] = j * 64;*/	/*number of chip clock cycles per one shift*/
+		chip->noise_tab[i] = j * 64 * scaler;
+		/*logerror("noise_tab[%02x]=%08x\n", i, chip->noise_tab[i]);*/
 	}
 
 }
@@ -759,6 +848,8 @@ static void timer_callback_a (int n)
 		chip->status |= 1;
 		if ((!oldstate) && (chip->irqhandler)) (*chip->irqhandler)(1);
 	}
+	if (chip->IRQenable & 0x80)
+		chip->CSMreq = 2;	/*request KEYON/KEYOFF sequence*/
 }
 static void timer_callback_b (int n)
 {
@@ -935,6 +1026,7 @@ void YM2151WriteReg(int n, int r, int v)
 	}
 #endif
 
+
 	switch(r & 0xe0){
 	case 0x00:
 		switch(r){
@@ -947,14 +1039,12 @@ void YM2151WriteReg(int n, int r, int v)
 			envelope_KONKOFF(&chip->Oscils[ v&7 ], v );
 			break;
 
-		case 0x0f: /*noise mode enable, noise freq*/
+		case 0x0f: /*noise mode enable, noise period*/
 			chip->noise = v;
-			/*if ((v&0x80)) printf("YM2151 noise (%02x)\n",v);*/
+			chip->noise_f = chip->noise_tab[ v & 0x1f ];
 			#if 0
 			if (v){
-				char t[80];
-				sprintf(t,"YM2151 noise mode = %02x",v);
-				usrintf_showmessage(t);
+				usrintf_showmessage("YM2151 noise mode = %02x",v);
 				logerror("YM2151 noise (%02x)\n",v);
 			}
 			#endif
@@ -973,9 +1063,8 @@ void YM2151WriteReg(int n, int r, int v)
 			break;
 
 		case 0x14: /*CSM, irq flag reset, irq enable, timer start/stop*/
-			/*if ((v&0x80)) printf("\nYM2151 CSM MODE ON\n");*/
 
-			chip->IRQenable = v;	/*bit 3-timer B, bit 2-timer A*/
+			chip->IRQenable = v;	/*bit 3-timer B, bit 2-timer A, bit 7 - CSM */
 
 			if (v&0x20)	/*reset timer B irq flag*/
 			{
@@ -1001,7 +1090,7 @@ void YM2151WriteReg(int n, int r, int v)
 						chip->TimBTimer = timer_set (chip->TimerBTime[ chip->TimBIndex ], n, timer_callback_b);
 						chip->TimBOldIndex = chip->TimBIndex;
 					}
-					#if 0
+					#if 1
 					else
 					{
 						/*check if timer value has changed since last start and update if necessary*/
@@ -1040,7 +1129,7 @@ void YM2151WriteReg(int n, int r, int v)
 						chip->TimATimer = timer_set (chip->TimerATime[ chip->TimAIndex ], n, timer_callback_a);
 						chip->TimAOldIndex = chip->TimAIndex;
 					}
-					#if 0
+					#if 1
 					else
 					{
 						/*check if timer value has changed since last start and update if necessary*/
@@ -1106,32 +1195,36 @@ void YM2151WriteReg(int n, int r, int v)
 
 		case 0x08: /*Key Code*/
 			v &= 0x7f;
-			/*v++;*/
 			if (v != op->KC)
 			{
-				unsigned int kc,kc_channel;
+				unsigned int kc, kc_channel;
 
-				kc = KC_TO_INDEX[v];
-				(op+0)->KC = v;
-				(op+0)->KCindex = kc;
-				(op+8)->KC = v;
-				(op+8)->KCindex = kc;
+				kc_channel = (v - (v>>2))*64;
+				kc_channel += 768;
+				kc_channel |= (op->KCindex & 63);
+
+				(op+ 0)->KC = v;
+				(op+ 0)->KCindex = kc_channel;
+				(op+ 8)->KC = v;
+				(op+ 8)->KCindex = kc_channel;
 				(op+16)->KC = v;
-				(op+16)->KCindex = kc;
+				(op+16)->KCindex = kc_channel;
 				(op+24)->KC = v;
-				(op+24)->KCindex = kc;
+				(op+24)->KCindex = kc_channel;
 
-				kc_channel = op->KCindex + op->KF;
 				kc = v>>2;
 
-				(op+0)->freq = chip->freq[ kc_channel + (op+0)->DT2 ] * (op+0)->MUL;
-				(op+0)->DTfreq = chip->DT1freq[ (op+0)->DT1 + kc ];
-				(op+8)->freq = chip->freq[ kc_channel + (op+8)->DT2 ] * (op+8)->MUL;
-				(op+8)->DTfreq = chip->DT1freq[ (op+8)->DT1 + kc ];
-				(op+16)->freq = chip->freq[ kc_channel + (op+16)->DT2 ] * (op+16)->MUL;
-				(op+16)->DTfreq = chip->DT1freq[ (op+16)->DT1 + kc ];
-				(op+24)->freq = chip->freq[ kc_channel + (op+24)->DT2 ] * (op+24)->MUL;
-				(op+24)->DTfreq = chip->DT1freq[ (op+24)->DT1 + kc ];
+				(op+ 0)->DT1v = chip->DT1freq[ (op+ 0)->DT1 + kc ];
+				(op+ 0)->freq = ( (chip->freq[ kc_channel + (op+ 0)->DT2 ] + (op+ 0)->DT1v) * (op+ 0)->MUL ) >> 1;
+
+				(op+ 8)->DT1v = chip->DT1freq[ (op+ 8)->DT1 + kc ];
+				(op+ 8)->freq = ( (chip->freq[ kc_channel + (op+ 8)->DT2 ] + (op+ 8)->DT1v) * (op+ 8)->MUL ) >> 1;
+
+				(op+16)->DT1v = chip->DT1freq[ (op+16)->DT1 + kc ];
+				(op+16)->freq = ( (chip->freq[ kc_channel + (op+16)->DT2 ] + (op+16)->DT1v) * (op+16)->MUL ) >> 1;
+
+				(op+24)->DT1v = chip->DT1freq[ (op+24)->DT1 + kc ];
+				(op+24)->freq = ( (chip->freq[ kc_channel + (op+24)->DT2 ] + (op+24)->DT1v) * (op+24)->MUL ) >> 1;
 
 				refresh_EG( chip, op );
 			}
@@ -1139,21 +1232,22 @@ void YM2151WriteReg(int n, int r, int v)
 
 		case 0x10: /*Key Fraction*/
 			v >>= 2;
-			if (v != op->KF)
+			if (v !=  (op->KCindex & 63))
 			{
 				unsigned int kc_channel;
 
-				(op+0)->KF = v;
-				(op+8)->KF = v;
-				(op+16)->KF = v;
-				(op+24)->KF = v;
+				kc_channel = v;
+				kc_channel |= (op->KCindex & ~63);
 
-				kc_channel = op->KCindex + op->KF;
+				(op+ 0)->KCindex = kc_channel;
+				(op+ 8)->KCindex = kc_channel;
+				(op+16)->KCindex = kc_channel;
+				(op+24)->KCindex = kc_channel;
 
-				(op+0)->freq = chip->freq[ kc_channel + (op+0)->DT2 ] * (op+0)->MUL;
-				(op+8)->freq = chip->freq[ kc_channel + (op+8)->DT2 ] * (op+8)->MUL;
-				(op+16)->freq = chip->freq[ kc_channel + (op+16)->DT2 ] * (op+16)->MUL;
-				(op+24)->freq = chip->freq[ kc_channel + (op+24)->DT2 ] * (op+24)->MUL;
+				(op+ 0)->freq = ( (chip->freq[ kc_channel + (op+ 0)->DT2 ] + (op+ 0)->DT1v) * (op+ 0)->MUL ) >> 1;
+				(op+ 8)->freq = ( (chip->freq[ kc_channel + (op+ 8)->DT2 ] + (op+ 8)->DT1v) * (op+ 8)->MUL ) >> 1;
+				(op+16)->freq = ( (chip->freq[ kc_channel + (op+16)->DT2 ] + (op+16)->DT1v) * (op+16)->MUL ) >> 1;
+				(op+24)->freq = ( (chip->freq[ kc_channel + (op+24)->DT2 ] + (op+24)->DT1v) * (op+24)->MUL ) >> 1;
 			}
 			break;
 
@@ -1168,18 +1262,15 @@ void YM2151WriteReg(int n, int r, int v)
 		{
 			unsigned int oldDT1 = op->DT1;
 			unsigned int oldMUL = op->MUL;
-			op->DT1 = (v&0x7f)<<5;
+			op->DT1 = (v&0x70)<<1;
 			op->MUL = (v&0x0f) ? (v&0x0f)<<1: 1;
 			if (oldDT1 != op->DT1)
 			{
-				op->DTfreq = chip->DT1freq[ op->DT1 + (op->KC>>2) ];
+				op->DT1v = chip->DT1freq[ op->DT1 + (op->KC>>2) ];
 			}
-			if (oldMUL != op->MUL)
+			if ( (oldDT1 != op->DT1) || (oldMUL != op->MUL) )
 			{
-				unsigned int kc_channel;
-
-				kc_channel = op->KCindex + op->KF;
-				op->freq = chip->freq[ kc_channel + op->DT2 ] * op->MUL;
+				op->freq = ( (chip->freq[ op->KCindex + op->DT2 ] + op->DT1v) * op->MUL ) >> 1;
 			}
 		}
 		break;
@@ -1224,10 +1315,7 @@ void YM2151WriteReg(int n, int r, int v)
 			op->DT2 = DT2_tab[ v>>6 ];
 			if (op->DT2 != oldDT2)
 			{
-				unsigned int kc_channel;
-
-				kc_channel = op->KCindex + op->KF;
-				op->freq = chip->freq[ kc_channel + op->DT2 ] * op->MUL;
+				op->freq = ( (chip->freq[ op->KCindex + op->DT2 ] + op->DT1v) * op->MUL ) >> 1;
 			}
 		}
 		op->D2R = (v&0x1f) ? 32 + ((v&0x1f)<<1) : 0;
@@ -1277,6 +1365,9 @@ int YM2151Init(int num, int clock, int rate)
 
 	YMPSG = (YM2151 *)malloc(sizeof(YM2151) * YMNumChips);
 	if (YMPSG == NULL) return (1);
+
+	memset(YMPSG, 0, sizeof(YM2151) * YMNumChips);
+
 #if 0
 	TL_TAB = (signed int *)malloc(sizeof(signed int) * TL_TAB_LEN );
 	if (TL_TAB == NULL)
@@ -1296,6 +1387,14 @@ int YM2151Init(int num, int clock, int rate)
 		YMPSG[i].irqhandler = NULL;					/*interrupt handler */
 		YMPSG[i].porthandler = NULL;				/*port write handler*/
 		init_chip_tables(&YMPSG[i]);
+#ifdef USE_MAME_TIMERS
+/*this must be done _before_ a call to YM2151ResetChip() */
+		YMPSG[i].TimATimer = 0;
+		YMPSG[i].TimBTimer = 0;
+#else
+		YMPSG[i].TimA      = 0;
+		YMPSG[i].TimB      = 0;
+#endif
 		YM2151ResetChip(i);
 		/*logerror("YM2151[init] clock=%i sampfreq=%i\n", YMPSG[i].clock, YMPSG[i].sampfreq);*/
 	}
@@ -1305,7 +1404,7 @@ int YM2151Init(int num, int clock, int rate)
 	if (cymfile)
 		cymfiletimer = timer_pulse ( TIME_IN_HZ(110), 0, cymfile_callback); /*110 Hz pulse timer*/
 	else
-    		logerror("Could not create file 2151_.cym\n");
+		logerror("Could not create file 2151_.cym\n");
 #endif
 
 	return(0);
@@ -1324,6 +1423,7 @@ void YM2151Shutdown()
 		TL_TAB=NULL;
 	}
 #endif
+
 
 #ifdef LOG_CYM_FILE
 	fclose(cymfile);
@@ -1367,7 +1467,7 @@ void YM2151ResetChip(int num)
 	chip->LFOphase = 0;
 	chip->LFOfrq   = 0;
 	chip->LFOwave  = 0;
-	chip->PMD = lfo_md_tab[ 0 ]+512;
+	chip->PMD = lfo_md_tab[ 0 ] + 512;
 	chip->AMD = lfo_md_tab[ 0 ];
 	chip->LFA = 0;
 	chip->LFP = 0;
@@ -1377,7 +1477,9 @@ void YM2151ResetChip(int num)
 	chip->IRQenable = 0;
 #ifdef USE_MAME_TIMERS
 	/* ASG 980324 -- reset the timers before writing to the registers */
+	if (chip->TimATimer) timer_remove (chip->TimATimer);
 	chip->TimATimer = 0;
+	if (chip->TimBTimer) timer_remove (chip->TimBTimer);
 	chip->TimBTimer = 0;
 #else
 	chip->TimA      = 0;
@@ -1391,6 +1493,11 @@ void YM2151ResetChip(int num)
 	chip->TimBOldIndex = 0;
 
 	chip->noise     = 0;
+	chip->noiseRNG  = 0;
+	chip->noise_p   = 0;
+	chip->noise_f   = chip->noise_tab[0];
+
+	chip->CSMreq	= 0;
 
 	chip->status    = 0;
 
@@ -1434,7 +1541,7 @@ unsigned int phase, lfx;
 
 INLINE void calc_lfo_pm(OscilRec *op)
 {
-signed int mod_ind,pom;
+signed int mod_ind, pom;
 
 	mod_ind = PSG->LFP; /* -128..+127 (8bits signed)*/
 	if (op->PMS < 6)
@@ -1446,21 +1553,21 @@ signed int mod_ind,pom;
 	{
 		unsigned int kc_channel;
 
-		kc_channel = op->KCindex + op->KF + mod_ind;
+		kc_channel = op->KCindex + mod_ind;
 
-		pom = PSG->freq[ kc_channel + op->DT2 ] * op->MUL;
+		pom = ( (PSG->freq[ kc_channel + op->DT2 ] + op->DT1v) * op->MUL ) >> 1;
 		op->phase += (pom - op->freq);
 
 		op+=8;
-		pom = PSG->freq[ kc_channel + op->DT2 ] * op->MUL;
+		pom = ( (PSG->freq[ kc_channel + op->DT2 ] + op->DT1v) * op->MUL ) >> 1;
 		op->phase += (pom - op->freq);
 
 		op+=8;
-		pom = PSG->freq[ kc_channel + op->DT2 ] * op->MUL;
+		pom = ( (PSG->freq[ kc_channel + op->DT2 ] + op->DT1v) * op->MUL ) >> 1;
 		op->phase += (pom - op->freq);
 
 		op+=8;
-		pom = PSG->freq[ kc_channel + op->DT2 ] * op->MUL;
+		pom = ( (PSG->freq[ kc_channel + op->DT2 ] + op->DT1v) * op->MUL ) >> 1;
 		op->phase += (pom - op->freq);
 	}
 }
@@ -1489,7 +1596,7 @@ INLINE signed int op_calc1(OscilRec * OP, unsigned int env, signed int pm)
 
 	p = (env<<3) + sin_tab[ (i>>FREQ_SH) & SIN_MASK];
 
-/*logerror(" (p&255=%i p>>8=%i) out= %i\n", p&255,p>>8, TL_TAB[p&255]>>(p>>8) );*/
+/*logerror("(p&255=%i p>>8=%i) out= %i\n", p&255,p>>8, TL_TAB[p&255]>>(p>>8) );*/
 
 	if (p >= TL_TAB_LEN)
 		return 0;
@@ -1553,25 +1660,146 @@ unsigned int AM;
 		chanout[chan] += op_calc(OP, env, c2);
 
 }
+INLINE void chan7_calc(void)
+{
+OscilRec *OP;
+unsigned int env;
+unsigned int AM;
+
+	chanout[7]= c1 = m2 = c2 = 0;
+	AM = 0;
+
+	OP = &PSG->Oscils[7]; /*M1*/
+
+	if (OP->AMS)
+		AM = PSG->LFA << (OP->AMS-1);
+
+	if (OP->PMS)
+		calc_lfo_pm(OP);
+
+	env = volume_calc(OP);
+	{
+		signed int out;
+
+		out = OP->FB0 + OP->FB;
+		OP->FB0 = OP->FB;
+
+		if (!OP->connect)
+			/* algorithm 5 */
+			c1 = m2 = c2 = OP->FB0;
+		else
+			/* other algorithms */
+			*OP->connect = OP->FB0;
+
+		OP->FB = 0;
+
+		if (env < ENV_QUIET)
+			OP->FB = op_calc1(OP, env, (out<<OP->FeedBack) );
+	}
+
+	OP += 16; /*C1*/
+	env = volume_calc(OP);
+	if (env < ENV_QUIET)
+		*OP->connect += op_calc(OP, env, c1);
+
+	OP -= 8;  /*M2*/
+	env = volume_calc(OP);
+	if (env < ENV_QUIET)
+		*OP->connect += op_calc(OP, env, m2);
+
+	OP += 16; /*C2*/
+	env = volume_calc(OP);
+
+	if (PSG->noise & 0x80)
+	{
+		unsigned int noiseout;
+
+		noiseout = 0;
+		if (env < 0x3ff)
+			noiseout = (env ^ 0x3ff) * 2; /*range of the YM2151 noise output is -2044 to 2040*/
+		chanout[7] += ((PSG->noiseRNG&0x10000) ? noiseout: -noiseout); /*bit 16 -> output*/
+	}
+	else
+	{
+		if (env < ENV_QUIET)
+			chanout[7] += op_calc(OP, env, c2);
+	}
+
+}
 
 INLINE void advance(void)
 {
 OscilRec *op;
 int i;
 
-    if (!(PSG->test&2))
-        PSG->LFOphase += PSG->LFOfrq;
+	if (!(PSG->test&2))
+		PSG->LFOphase += PSG->LFOfrq;
 
-    op = &PSG->Oscils[0]; /*CH0 M1*/
-    i = 32;
-    do
-    {
-        op->phase += op->freq;
-        op->phase += op->DTfreq;
-
-	switch(op->state)
+	/* The Noise Generator of the YM2151 is 17-bit shift register.
+	** Input to the bit16 is negated (bit0 XOR bit3) (EXNOR).
+	** Output of the register is negated (bit0 XOR bit3).
+	** Simply use bit16 as the noise output.
+	*/
+	PSG->noise_p += PSG->noise_f;
+	i = (PSG->noise_p>>16);		/*number of events (shifts of the shift register)*/
+	PSG->noise_p &= 0xffff;
+	while (i)
 	{
-	case EG_ATT:	/*attack phase*/
+		unsigned int j;
+		j = ( (PSG->noiseRNG ^ (PSG->noiseRNG>>3) ) & 1) ^ 1;
+		PSG->noiseRNG = (j<<16) | (PSG->noiseRNG>>1);
+		i--;
+	}
+
+	/* In real it seems that CSM keyon line is ORed with the KO line inside of the chip.
+	** This causes it to only work when KO is off, ie. 0
+	** Below is my implementation only.
+	*/
+	if (PSG->CSMreq) /*CSM KEYON/KEYOFF seqeunce request*/
+	{
+		if (PSG->CSMreq==2)	/*KEYON*/
+		{
+			op = &PSG->Oscils[0]; /*CH 0 M1*/
+			i = 32;
+			do
+			{
+				if (op->key==0) /*_ONLY_ when KEY is OFF (checked)*/
+				{
+					op->phase = 0;
+					op->state = EG_ATT;
+				}
+				op++;
+				i--;
+			}while (i);
+			PSG->CSMreq = 1;
+		}
+		else					/*KEYOFF*/
+		{
+			op = &PSG->Oscils[0]; /*CH 0 M1*/
+			i = 32;
+			do
+			{
+				if (op->key==0) /*_ONLY_ when KEY is OFF (checked)*/
+				{
+					if (op->state>EG_REL)
+						op->state = EG_REL;
+				}
+				op++;
+				i--;
+			}while (i);
+			PSG->CSMreq = 0;
+		}
+	}
+
+	op = &PSG->Oscils[0]; /*CH0 M1*/
+	i = 32;
+	do
+	{
+		op->phase += op->freq;
+
+		switch(op->state)
+		{
+		case EG_ATT:	/*attack phase*/
 		{
 			signed int step;
 
@@ -1602,35 +1830,36 @@ int i;
 		}
 		break;
 
-	case EG_DEC:	/*decay phase*/
-		if ( (op->volume += op->delta_D1R) >= op->D1L )
-		{
-			op->volume = op->D1L; /*this is not quite correct (checked)*/
-			op->state = EG_SUS;
-		}
+		case EG_DEC:	/*decay phase*/
+			if ( (op->volume += op->delta_D1R) >= op->D1L )
+			{
+				op->volume = op->D1L; /*this is not quite correct (checked)*/
+				op->state = EG_SUS;
+			}
 		break;
 
-	case EG_SUS:	/*sustain phase*/
-		if ( (op->volume += op->delta_D2R) > MAX_ATT_INDEX )
-		{
-			op->state = EG_OFF;
-			op->volume = MAX_ATT_INDEX;
-		}
+		case EG_SUS:	/*sustain phase*/
+			if ( (op->volume += op->delta_D2R) > MAX_ATT_INDEX )
+			{
+				op->state = EG_OFF;
+				op->volume = MAX_ATT_INDEX;
+			}
 		break;
 
-	case EG_REL:	/*release phase*/
-		if ( (op->volume += op->delta_RR) > MAX_ATT_INDEX )
-		{
-			op->state = EG_OFF;
-			op->volume = MAX_ATT_INDEX;
-		}
+		case EG_REL:	/*release phase*/
+			if ( (op->volume += op->delta_RR) > MAX_ATT_INDEX )
+			{
+				op->state = EG_OFF;
+				op->volume = MAX_ATT_INDEX;
+			}
 		break;
-	}
-	op++;
-	i--;
-    }while (i);
+		}
+		op++;
+		i--;
+	}while (i);
 }
 
+#if 0
 INLINE signed int acc_calc(signed int value)
 {
 	if (value>=0)
@@ -1665,15 +1894,35 @@ INLINE signed int acc_calc(signed int value)
 	return (value & 0xffffffc0);
 
 }
+#endif
 
-#ifdef SAVE_SEPARATE_CHANNELS
-  #define SAVE_SINGLE_CHANNEL(j) \
-  {	signed int pom= -(chanout[j] & PSG->PAN[j*2]); \
-	if (pom > 32767) pom = 32767; else if (pom < -32768) pom = -32768; \
-	fputc((unsigned short)pom&0xff,sample[j]); \
-	fputc(((unsigned short)pom>>8)&0xff,sample[j]);  }
-#else
-  #define SAVE_SINGLE_CHANNEL(j)
+/*first macro saves left and right channels to mono file*/
+/*second macro saves left and right channels to stereo file*/
+#if 0	/*MONO*/
+	#ifdef SAVE_SEPARATE_CHANNELS
+	  #define SAVE_SINGLE_CHANNEL(j) \
+	  {	signed int pom= -(chanout[j] & PSG->PAN[j*2]); \
+		if (pom > 32767) pom = 32767; else if (pom < -32768) pom = -32768; \
+		fputc((unsigned short)pom&0xff,sample[j]); \
+		fputc(((unsigned short)pom>>8)&0xff,sample[j]);  }
+	#else
+	  #define SAVE_SINGLE_CHANNEL(j)
+	#endif
+#else	/*STEREO*/
+	#ifdef SAVE_SEPARATE_CHANNELS
+	  #define SAVE_SINGLE_CHANNEL(j) \
+	  {	signed int pom = -(chanout[j] & PSG->PAN[j*2]); \
+		if (pom > 32767) pom = 32767; else if (pom < -32768) pom = -32768; \
+		fputc((unsigned short)pom&0xff,sample[j]); \
+		fputc(((unsigned short)pom>>8)&0xff,sample[j]); \
+		pom = -(chanout[j] & PSG->PAN[j*2+1]); \
+		if (pom > 32767) pom = 32767; else if (pom < -32768) pom = -32768; \
+		fputc((unsigned short)pom&0xff,sample[j]); \
+		fputc(((unsigned short)pom>>8)&0xff,sample[j]); \
+	  }
+	#else
+	  #define SAVE_SINGLE_CHANNEL(j)
+	#endif
 #endif
 
 /*first macro saves left and right channels to mono file*/
@@ -1733,21 +1982,6 @@ void YM2151UpdateOne(int num, INT16 **buffers, int length)
 	#ifdef USE_MAME_TIMERS
 		/* ASG 980324 - handled by real timers now */
 	#else
-	/* calculate timers */
-	if (PSG->TimA)
-	{
-		PSG->TimAVal -= ( length << TIMER_SH );
-		if (PSG->TimAVal <= 0)
-		{
-			PSG->TimAVal += PSG->TimerA[ PSG->TimAIndex ];
-			if (PSG->IRQenable & 0x04)
-			{
-				int oldstate = PSG->status & 3;
-				PSG->status |= 1;
-				if ((!oldstate) && (PSG->irqhandler)) (*PSG->irqhandler)(1);
-			}
-		}
-	}
 	if (PSG->TimB)
 	{
 		PSG->TimBVal -= ( length << TIMER_SH );
@@ -1781,7 +2015,7 @@ void YM2151UpdateOne(int num, INT16 **buffers, int length)
 		SAVE_SINGLE_CHANNEL(5)
 		chan_calc(6);
 		SAVE_SINGLE_CHANNEL(6)
-		chan_calc(7);
+		chan7_calc();
 		SAVE_SINGLE_CHANNEL(7)
 
 		SAVE_ALL_CHANNELS
@@ -1812,9 +2046,30 @@ void YM2151UpdateOne(int num, INT16 **buffers, int length)
 		((SAMP*)bufL)[i] = (SAMP)outl;
 		((SAMP*)bufR)[i] = (SAMP)outr;
 
+		#ifdef USE_MAME_TIMERS
+		/* ASG 980324 - handled by real timers now */
+		#else
+		/* calculate timer A */
+		if (PSG->TimA)
+		{
+			PSG->TimAVal -= ( 1 << TIMER_SH );
+			if (PSG->TimAVal <= 0)
+			{
+				PSG->TimAVal += PSG->TimerA[ PSG->TimAIndex ];
+				if (PSG->IRQenable & 0x04)
+				{
+					int oldstate = PSG->status & 3;
+					PSG->status |= 1;
+					if ((!oldstate) && (PSG->irqhandler)) (*PSG->irqhandler)(1);
+				}
+				if (PSG->IRQenable & 0x80)
+					PSG->CSMreq = 2; /*request KEYON/KEYOFF sequence*/
+			}
+		}
+		#endif
+
 		lfo_calc();
 		advance();
-
 	}
 }
 

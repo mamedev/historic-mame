@@ -523,14 +523,14 @@ static struct MachineDriver machine_driver_bzone =
 	/* video hardware */
 	400, 300, { 0, 580, 0, 400 },
 	0,
-	256, 256,
+	256+32768, 0,
 	avg_init_palette_bzone,
 
 	VIDEO_TYPE_VECTOR,
 	0,
 	avg_start_bzone,
 	avg_stop,
-	avg_screenrefresh,
+	vector_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -592,14 +592,14 @@ static struct MachineDriver machine_driver_redbaron =
 	/* video hardware */
 	400, 300, { 0, 520, 0, 400 },
 	0,
-	256, 256,
+	256, 0,
 	avg_init_palette_aqua,
 
 	VIDEO_TYPE_VECTOR,
 	0,
 	avg_start_redbaron,
 	avg_stop,
-	avg_screenrefresh,
+	vector_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,

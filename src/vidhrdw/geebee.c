@@ -12,8 +12,8 @@
  *
  ****************************************************************************/
 
-#include <signal.h>
 #include "driver.h"
+#include "artwork.h"
 #include "vidhrdw/generic.h"
 
 /* from machine/geebee.c */
@@ -33,87 +33,66 @@ char geebee_msg[32+1];
 int geebee_cnt;
 #endif
 
-#define SCR_HORZ 34
-#define SCR_VERT 32
-
-#define WHITE	0
-#define PINK1	1
-#define PINK2	2
-#define ORANGE	3
-#define BLUE	4
 
 static unsigned char palette[] =
 {
-	0x00,0x00,0x00, 0xff,0xff,0xff, 0x7f,0x7f,0x7f, /* BLACK, WHITE, GREY  */
-	0x10,0x00,0x18, 0xa0,0x00,0xe0, 0x50,0x00,0x70, /* PINK #1 dark, bright, dim */
-	0x14,0x00,0x18, 0xe0,0x00,0xf0, 0x70,0x00,0x78, /* PINK #2 dark, bright, dim  */
-	0x14,0x10,0x00, 0xff,0xd0,0x00, 0x80,0x68,0x00, /* ORANGE dark, bright, dim  */
-	0x00,0x00,0x20, 0x00,0x00,0xff, 0x00,0x00,0x80, /* BLUE dark, bright, dim  */
+	0x00,0x00,0x00, /* black */
+	0xff,0xff,0xff, /* white */
+	0x7f,0x7f,0x7f  /* grey  */
 };
 
-static unsigned short geebee_colortable[] = {
-	 0, 1,	0, 2,  1, 0,  2, 0,
-	 3, 4,	3, 5,  4, 3,  5, 3,
-	 6, 7,	6, 8,  7, 6,  8, 6,
-	 9,10,	9,11, 10, 9, 11, 9,
-	12,13, 12,14, 13,12, 14,12
-};
-
-static unsigned short navalone_colortable[] = {
-	 0, 1,	0, 2,  0, 1,  0, 2,
-	 3, 4,	3, 5,  3, 4,  3, 5,
-	 6, 7,	6, 8,  6, 7,  6, 8,
-	 9,10,	9,11,  9,10,  9,11,
-	12,13, 12,14, 12,13, 12,14
-};
-
-static UINT8 *overlay;
-
-void setcolor(int _x0, int _x1, int _y0, int _y1, int color)
+static unsigned short geebee_colortable[] =
 {
-	int x, y;
+	 0, 1,
+	 0, 2,
+	 1, 0,
+	 2, 0
+};
 
-	if( !overlay )
-	{
-		overlay = (UINT8 *)malloc(_y1 * _x1);
-		if( !overlay )
-			raise(SIGABRT);
-		_y1--;
-		_x1--;
-	}
-
-    for( x = _x0; x <= _x1; x++ )
-		for( y = _y0; y <= _y1; y++ )
-			overlay[y*SCR_HORZ*8+x] = color;
-}
-
-INLINE UINT16 getcolor(int x, int y)
+static unsigned short navalone_colortable[] =
 {
-	return overlay[y*SCR_HORZ*8+x];
-}
+	 0, 1,
+	 0, 2,
+	 0, 1,
+	 0, 2
+};
+
+
+#define PINK1	0xa0,0x00,0xe0,OVERLAY_DEFAULT_OPACITY
+#define PINK2 	0xe0,0x00,0xf0,OVERLAY_DEFAULT_OPACITY
+#define ORANGE	0xff,0xd0,0x00,OVERLAY_DEFAULT_OPACITY
+#define BLUE	0x00,0x00,0xff,OVERLAY_DEFAULT_OPACITY
+
+#define	END  {{ -1, -1, -1, -1}, 0,0,0,0}
+
+static const struct artwork_element geebee_overlay[]=
+{
+	{{  1*8,  4*8-1,    0,32*8-1 }, PINK2  },
+	{{  4*8,  5*8-1,    0, 6*8-1 }, PINK1  },
+	{{  4*8,  5*8-1, 26*8,32*8-1 }, PINK1  },
+	{{  4*8,  5*8-1,  6*8,26*8-1 }, ORANGE },
+	{{  5*8, 28*8-1,    0, 3*8-1 }, PINK1  },
+	{{  5*8, 28*8-1, 29*8,32*8-1 }, PINK1  },
+	{{  5*8, 28*8-1,  3*8, 6*8-1 }, BLUE   },
+	{{  5*8, 28*8-1, 26*8,29*8-1 }, BLUE   },
+	{{ 12*8, 13*8-1, 15*8,17*8-1 }, BLUE   },
+	{{ 21*8, 23*8-1, 12*8,14*8-1 }, BLUE   },
+	{{ 21*8, 23*8-1, 18*8,20*8-1 }, BLUE   },
+	{{ 28*8, 29*8-1,    0,32*8-1 }, PINK2  },
+	{{ 29*8, 32*8-1,    0,32*8-1 }, PINK1  },
+	END
+};
 
 int geebee_vh_start(void)
 {
 	if( generic_vh_start() )
 		return 1;
 
-	setcolor( 0,  SCR_HORZ*8,0,   SCR_VERT*8,  WHITE);
-	/* Use an overlay only in Upright mode */
+	/* use an overlay only in upright mode */
+
 	if( (readinputport(2) & 0x01) == 0 )
 	{
-		setcolor( 1*8,	4*8-1,	  0,32*8-1, PINK2);
-		setcolor( 4*8,	5*8-1,	  0, 6*8-1, PINK1);
-		setcolor( 4*8,	5*8-1, 26*8,32*8-1, PINK1);
-		setcolor( 4*8,	5*8-1,	6*8,26*8-1, ORANGE);
-		setcolor( 5*8, 28*8-1,	  0, 3*8-1, PINK1);
-		setcolor( 5*8, 28*8-1, 29*8,32*8-1, PINK1);
-		setcolor( 5*8, 28*8-1,	3*8, 6*8-1, BLUE);
-		setcolor( 5*8, 28*8-1, 26*8,29*8-1, BLUE);
-		setcolor(12*8, 13*8-1, 15*8,17*8-1, BLUE);
-		setcolor(21*8, 23*8-1, 12*8,14*8-1, BLUE);
-		setcolor(21*8, 23*8-1, 18*8,20*8-1, BLUE);
-		setcolor(28*8, 29*8-1,	  0,32*8-1, PINK2);
-		setcolor(29*8, 32*8-1,	  0,32*8-1, PINK1);
+		overlay_create(geebee_overlay, 3, Machine->drv->total_colors-3);
 	}
 
 	return 0;
@@ -124,7 +103,6 @@ int navalone_vh_start(void)
 	if( generic_vh_start() )
 		return 1;
 
-	setcolor( 0,  SCR_HORZ*8,0,   SCR_VERT*8,  WHITE);
     /* overlay? */
 
 	return 0;
@@ -135,7 +113,6 @@ int sos_vh_start(void)
 	if( generic_vh_start() )
 		return 1;
 
-	setcolor( 0,  SCR_HORZ*8,0,   SCR_VERT*8,  WHITE);
     /* overlay? */
 
 	return 0;
@@ -146,7 +123,6 @@ int kaitei_vh_start(void)
 	if( generic_vh_start() )
 	return 1;
 
-	setcolor( 0,  SCR_HORZ*8,0,   SCR_VERT*8,  WHITE);
     /* overlay? */
 
 	return 0;
@@ -166,19 +142,12 @@ void navalone_init_palette(unsigned char *sys_palette, unsigned short *sys_color
 	memcpy(sys_colortable, navalone_colortable, sizeof (navalone_colortable));
 }
 
-void geebee_vh_stop(void)
-{
-	if( overlay )
-		free(overlay);
-	overlay = NULL;
-	generic_vh_stop();
-}
 
 INLINE void geebee_plot(struct osd_bitmap *bitmap, int x, int y)
 {
 	struct rectangle r = Machine->drv->visible_area;
 	if (x >= r.min_x && x <= r.max_x && y >= r.min_y && y <= r.max_y)
-		plot_pixel(bitmap,x,y,Machine->pens[3*getcolor(x,y)+1]);
+		plot_pixel(bitmap,x,y,Machine->pens[1]);
 }
 
 INLINE void mark_dirty(int x, int y)
@@ -211,105 +180,64 @@ void geebee_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 #ifdef MAME_DEBUG
 	if( geebee_cnt > 0 )
 	{
-		ui_text(geebee_msg, Machine->drv->visible_area.min_y, Machine->drv->visible_area.max_x - 8);
+		ui_text(Machine->scrbitmap, geebee_msg, Machine->drv->visible_area.min_y, Machine->drv->visible_area.max_x - 8);
 		if( --geebee_cnt == 0 )
 			full_refresh = 1;
     }
 #endif
 
-	if ( full_refresh )
+	if (palette_recalc() || full_refresh )
         memset(dirtybuffer, 1, videoram_size);
 
-	if( geebee_inv )
+	for( offs = 0; offs < videoram_size; offs++ )
 	{
-		for( offs = 0; offs < videoram_size; offs++ )
+		if( dirtybuffer[offs] )
 		{
-			if( dirtybuffer[offs] )
+			int mx,my,sx,sy,code,color;
+
+			dirtybuffer[offs] = 0;
+
+			mx = offs % 32;
+			my = offs / 32;
+
+			if (my == 0)
 			{
-				int mx,my,sx,sy,code,color;
-
-				dirtybuffer[offs] = 0;
-				mx = offs % 32;
-				my = offs / 32;
-
-				if (my == 0)
-				{
-					sx = 8*0;
-					sy = 8*mx;
-				}
-				else if (my == 1)
-				{
-					sx = 8*33;
-					sy = 8*mx;
-				}
-				else
-				{
-					sx = 8*(mx+1);
-					sy = 8*my;
-				}
-
-				code = videoram[offs];
-				color = ((geebee_bgw & 1) << 1) | ((code & 0x80) >> 7);
-				drawgfx(
-					bitmap,Machine->gfx[0],code,4*getcolor(sx,sy)+color,1,1,sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+				sx = 8*33;
+				sy = 8*mx;
 			}
-		}
-	}
-	else
-	{
-		for( offs = 0; offs < videoram_size; offs++ )
-		{
-			if( dirtybuffer[offs] )
+			else if (my == 1)
 			{
-				int mx,my,sx,sy,code,color;
-
-				dirtybuffer[offs] = 0;
-				mx = offs % 32;
-				my = offs / 32;
-
-				if (my == 0)
-				{
-					sx = 8*33;
-					sy = 8*mx;
-				}
-				else if (my == 1)
-				{
-					sx = 8*0;
-					sy = 8*mx;
-				}
-				else
-				{
-					sx = 8*(mx+1);
-					sy = 8*my;
-				}
-
-				code = videoram[offs];
-				color = ((geebee_bgw & 1) << 1) | ((code & 0x80) >> 7);
-				drawgfx(
-					bitmap,Machine->gfx[0],code,4*getcolor(sx,sy)+color,0,0,sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+				sx = 0;
+				sy = 8*mx;
 			}
+			else
+			{
+				sx = 8*(mx+1);
+				sy = 8*my;
+			}
+
+			if (geebee_inv)
+			{
+				sx = 33*8 - sx;
+				sy = 31*8 - sy;
+			}
+
+			code = videoram[offs];
+			color = ((geebee_bgw & 1) << 1) | ((code & 0x80) >> 7);
+			drawgfx(bitmap,Machine->gfx[0],
+					code,color,
+					geebee_inv,geebee_inv,sx,sy,
+					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 
 	if( geebee_ball_on )
 	{
 		int x, y;
-		if( geebee_inv )
-		{
-			mark_dirty(geebee_ball_h-9,geebee_ball_v-2);
-			for( y = 0; y < 4; y++ )
-				for( x = 0; x < 4; x++ )
-					geebee_plot(bitmap,geebee_ball_h+x-9,geebee_ball_v+y-2);
-		}
-		else
-		{
-			mark_dirty(geebee_ball_h+5,geebee_ball_v-2);
-			for( y = 0; y < 4; y++ )
-				for( x = 0; x < 4; x++ )
-					geebee_plot(bitmap,geebee_ball_h+x+5,geebee_ball_v+y-2);
-		}
+
+		mark_dirty(geebee_ball_h+5,geebee_ball_v-2);
+		for( y = 0; y < 4; y++ )
+			for( x = 0; x < 4; x++ )
+				geebee_plot(bitmap,geebee_ball_h+x+5,geebee_ball_v+y-2);
 	}
 }
-

@@ -1,11 +1,11 @@
 /*****************************************************************************/
 /* host dependent types                                                      */
 
-#define BIGCASE
+/*#define BIGCASE*/
 
 #include "osd_cpu.h"
 
-typedef char BOOLEAN;
+typedef UINT8 BOOLEAN;
 
 typedef UINT8 BYTE;
 typedef UINT16 WORD;

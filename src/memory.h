@@ -2,7 +2,7 @@
 #define MEMORY_H
 
 #include "osd_cpu.h"
-#include <sys/types.h>
+#include <stddef.h>
 
 
 #define MAX_BANKS		16
@@ -21,11 +21,11 @@ typedef offs_t (*opbase_handler)(offs_t address);
 
 #ifdef DJGPP
 #define READ_HANDLER(name)		data_t name(offs_t __attribute__ ((unused)) offset)
-#define WRITE_HANDLER(name)		void name(offs_t __attribute__ ((unused)) offset,data_t __attribute__ ((unused)) data)
+#define WRITE_HANDLER(name) 	void name(offs_t __attribute__ ((unused)) offset,data_t __attribute__ ((unused)) data)
 #define OPBASE_HANDLER(name)	offs_t name(offs_t __attribute__ ((unused)) address)
 #else
 #define READ_HANDLER(name)		data_t name(offs_t offset)
-#define WRITE_HANDLER(name)		void name(offs_t offset,data_t data)
+#define WRITE_HANDLER(name) 	void name(offs_t offset,data_t data)
 #define OPBASE_HANDLER(name)	offs_t name(offs_t address)
 #endif
 
@@ -50,7 +50,7 @@ struct MemoryReadAddress
 	mem_read_handler handler;				/* see special values below */
 };
 
-#define MRA_NOP   0							/* don't care, return 0 */
+#define MRA_NOP   0 						/* don't care, return 0 */
 #define MRA_RAM   ((mem_read_handler)-1)	/* plain RAM location (return its contents) */
 #define MRA_ROM   ((mem_read_handler)-2)	/* plain ROM location (return its contents) */
 #define MRA_BANK1 ((mem_read_handler)-10)	/* bank memory */
@@ -79,8 +79,8 @@ struct MemoryWriteAddress
 };
 
 #define MWA_NOP 0							/* do nothing */
-#define MWA_RAM ((mem_write_handler)-1)		/* plain RAM location (store the value) */
-#define MWA_ROM ((mem_write_handler)-2)		/* plain ROM location (do nothing) */
+#define MWA_RAM ((mem_write_handler)-1) 	/* plain RAM location (store the value) */
+#define MWA_ROM ((mem_write_handler)-2) 	/* plain ROM location (do nothing) */
 /*
    If the CPU opcodes are encrypted, they are fetched from a different memory space.
    In such a case, if the program dynamically creates code in RAM and executes it,
@@ -96,13 +96,13 @@ struct MemoryWriteAddress
 #define MWA_BANK7 ((mem_write_handler)-16)	/* bank memory */
 #define MWA_BANK8 ((mem_write_handler)-17)	/* bank memory */
 #define MWA_BANK9 ((mem_write_handler)-18)	/* bank memory */
-#define MWA_BANK10 ((mem_write_handler)-19)	/* bank memory */
-#define MWA_BANK11 ((mem_write_handler)-20)	/* bank memory */
-#define MWA_BANK12 ((mem_write_handler)-21)	/* bank memory */
-#define MWA_BANK13 ((mem_write_handler)-22)	/* bank memory */
-#define MWA_BANK14 ((mem_write_handler)-23)	/* bank memory */
-#define MWA_BANK15 ((mem_write_handler)-24)	/* bank memory */
-#define MWA_BANK16 ((mem_write_handler)-25)	/* bank memory */
+#define MWA_BANK10 ((mem_write_handler)-19) /* bank memory */
+#define MWA_BANK11 ((mem_write_handler)-20) /* bank memory */
+#define MWA_BANK12 ((mem_write_handler)-21) /* bank memory */
+#define MWA_BANK13 ((mem_write_handler)-22) /* bank memory */
+#define MWA_BANK14 ((mem_write_handler)-23) /* bank memory */
+#define MWA_BANK15 ((mem_write_handler)-24) /* bank memory */
+#define MWA_BANK16 ((mem_write_handler)-25) /* bank memory */
 
 
 
@@ -174,11 +174,11 @@ constants for each address space type we support.
 /* 16 bits address (little endian word access) */
 #define ABITS1_16LEW	12
 #define ABITS2_16LEW	3
-#define ABITS_MIN_16LEW	1			/* minimum memory block is 2 bytes */
+#define ABITS_MIN_16LEW 1			/* minimum memory block is 2 bytes */
 /* 16 bits address (big endian word access) */
 #define ABITS1_16BEW	12
 #define ABITS2_16BEW	3
-#define ABITS_MIN_16BEW	1			/* minimum memory block is 2 bytes */
+#define ABITS_MIN_16BEW 1			/* minimum memory block is 2 bytes */
 /* 20 bits address */
 #define ABITS1_20		12
 #define ABITS2_20		8
@@ -187,10 +187,14 @@ constants for each address space type we support.
 #define ABITS1_21		13
 #define ABITS2_21		8
 #define ABITS_MIN_21	0			/* minimum memory block is 1 byte */
-/* 24 bits address (word access) */
-#define ABITS1_24		15
+/* 24 bits address (word access - byte granularity) */
+#define ABITS1_24		16
 #define ABITS2_24		8
-#define ABITS_MIN_24	1			/* minimum memory block is 2 bytes */
+#define ABITS_MIN_24	0			/* minimum memory block is 1 byte */
+/* 24 bits address (big endian - word access) */
+#define ABITS1_24BEW	15
+#define ABITS2_24BEW	8
+#define ABITS_MIN_24BEW 1			/* minimum memory block is 2 bytes */
 /* 29 bits address (dword access) */
 #define ABITS1_29		19
 #define ABITS2_29		8
@@ -199,8 +203,12 @@ constants for each address space type we support.
 #define ABITS1_32		23
 #define ABITS2_32		8
 #define ABITS_MIN_32	1			/* minimum memory block is 2 bytes */
+/* 32 bits address (little endian dword access) */
+#define ABITS1_32LEW	23
+#define ABITS2_32LEW	8
+#define ABITS_MIN_32LEW 1			/* minimum memory block is 2 bytes */
 /* mask bits */
-#define MHMASK(abits)    (0xffffffff >> (32 - abits))
+#define MHMASK(abits)	 (0xffffffff >> (32 - abits))
 
 
 /***************************************************************************
@@ -228,16 +236,16 @@ extern unsigned char *cpu_bankbase[];	/* array of bank bases */
 ***************************************************************************/
 
 /* ----- 16-bit memory accessing ----- */
-#define READ_WORD(a)          (*(UINT16 *)(a))
-#define WRITE_WORD(a,d)       (*(UINT16 *)(a) = (d))
-#define COMBINE_WORD(w,d)     (((w) & ((d) >> 16)) | ((d) & 0xffff))
+#define READ_WORD(a)		  (*(UINT16 *)(a))
+#define WRITE_WORD(a,d) 	  (*(UINT16 *)(a) = (d))
+#define COMBINE_WORD(w,d)	  (((w) & ((d) >> 16)) | ((d) & 0xffff))
 #define COMBINE_WORD_MEM(a,d) (WRITE_WORD((a), (READ_WORD(a) & ((d) >> 16)) | (d)))
 
 /* ----- opcode reading ----- */
-#define cpu_readop(A) 		(OP_ROM[A])
-#define cpu_readop16(A)		READ_WORD(&OP_ROM[A])
-#define cpu_readop_arg(A)	(OP_RAM[A])
-#define cpu_readop_arg16(A)	READ_WORD(&OP_RAM[A])
+#define cpu_readop(A)		(OP_ROM[A])
+#define cpu_readop16(A) 	READ_WORD(&OP_ROM[A])
+#define cpu_readop_arg(A)   (OP_RAM[A])
+#define cpu_readop_arg16(A) READ_WORD(&OP_RAM[A])
 
 /* ----- bank switching for CPU cores ----- */
 #define change_pc_generic(pc,abits2,abitsmin,shift,setop)	\
@@ -246,22 +254,24 @@ extern unsigned char *cpu_bankbase[];	/* array of bank bases */
 		setop(pc);											\
 }
 #define change_pc(pc)		change_pc_generic(pc, ABITS2_16, ABITS_MIN_16, 0, cpu_setOPbase16)
-#define change_pc16(pc)		change_pc_generic(pc, ABITS2_16, ABITS_MIN_16, 0, cpu_setOPbase16)
+#define change_pc16(pc) 	change_pc_generic(pc, ABITS2_16, ABITS_MIN_16, 0, cpu_setOPbase16)
 #define change_pc16bew(pc)	change_pc_generic(pc, ABITS2_16BEW, ABITS_MIN_16BEW, 0, cpu_setOPbase16bew)
 #define change_pc16lew(pc)	change_pc_generic(pc, ABITS2_16LEW, ABITS_MIN_16LEW, 0, cpu_setOPbase16lew)
-#define change_pc20(pc)		change_pc_generic(pc, ABITS2_20, ABITS_MIN_20, 0, cpu_setOPbase20)
-#define change_pc21(pc)		change_pc_generic(pc, ABITS2_21, ABITS_MIN_21, 0, cpu_setOPbase21)
-#define change_pc24(pc)		change_pc_generic(pc, ABITS2_24, ABITS_MIN_24, 0, cpu_setOPbase24)
-#define change_pc29(pc)		change_pc_generic(pc, ABITS2_29, ABITS_MIN_29, 3, cpu_setOPbase29)
-#define change_pc32(pc)		change_pc_generic(pc, ABITS2_32, ABITS_MIN_32, 0, cpu_setOPbase32)
+#define change_pc20(pc) 	change_pc_generic(pc, ABITS2_20, ABITS_MIN_20, 0, cpu_setOPbase20)
+#define change_pc21(pc) 	change_pc_generic(pc, ABITS2_21, ABITS_MIN_21, 0, cpu_setOPbase21)
+#define change_pc24(pc) 	change_pc_generic(pc, ABITS2_24, ABITS_MIN_24, 0, cpu_setOPbase24)
+#define change_pc24bew(pc)	change_pc_generic(pc, ABITS2_24BEW, ABITS_MIN_24BEW, 0, cpu_setOPbase24bew)
+#define change_pc29(pc) 	change_pc_generic(pc, ABITS2_29, ABITS_MIN_29, 3, cpu_setOPbase29)
+#define change_pc32(pc) 	change_pc_generic(pc, ABITS2_32, ABITS_MIN_32, 0, cpu_setOPbase32)
+#define change_pc32lew(pc)	change_pc_generic(pc, ABITS2_32LEW, ABITS_MIN_32LEW, 0, cpu_setOPbase32lew)
 
 /* ----- for use OPbaseOverride driver, request override callback to next cpu_setOPbase ----- */
-#define catch_nextBranch() 	(ophw = 0xff)
+#define catch_nextBranch()	(ophw = 0xff)
 
 /* -----  bank switching macro ----- */
-#define cpu_setbank(bank, base)							\
+#define cpu_setbank(bank, base) 						\
 {														\
-	if (bank >= 1 && bank <= MAX_BANKS)					\
+	if (bank >= 1 && bank <= MAX_BANKS) 				\
 	{													\
 		cpu_bankbase[bank] = (UINT8 *)(base);			\
 		if (ophw == bank)								\
@@ -293,14 +303,18 @@ READ_HANDLER(cpu_readmem16lew_word);
 READ_HANDLER(cpu_readmem20);
 READ_HANDLER(cpu_readmem21);
 READ_HANDLER(cpu_readmem24);
-READ_HANDLER(cpu_readmem24_word);
-READ_HANDLER(cpu_readmem24_dword);
+READ_HANDLER(cpu_readmem24bew);
+READ_HANDLER(cpu_readmem24bew_word);
+READ_HANDLER(cpu_readmem24bew_dword);
 READ_HANDLER(cpu_readmem29);
 READ_HANDLER(cpu_readmem29_word);
 READ_HANDLER(cpu_readmem29_dword);
 READ_HANDLER(cpu_readmem32);
 READ_HANDLER(cpu_readmem32_word);
 READ_HANDLER(cpu_readmem32_dword);
+READ_HANDLER(cpu_readmem32lew);
+READ_HANDLER(cpu_readmem32lew_word);
+READ_HANDLER(cpu_readmem32lew_dword);
 
 /* ----- memory write functions ----- */
 WRITE_HANDLER(cpu_writemem16);
@@ -311,14 +325,18 @@ WRITE_HANDLER(cpu_writemem16lew_word);
 WRITE_HANDLER(cpu_writemem20);
 WRITE_HANDLER(cpu_writemem21);
 WRITE_HANDLER(cpu_writemem24);
-WRITE_HANDLER(cpu_writemem24_word);
-WRITE_HANDLER(cpu_writemem24_dword);
+WRITE_HANDLER(cpu_writemem24bew);
+WRITE_HANDLER(cpu_writemem24bew_word);
+WRITE_HANDLER(cpu_writemem24bew_dword);
 WRITE_HANDLER(cpu_writemem29);
 WRITE_HANDLER(cpu_writemem29_word);
 WRITE_HANDLER(cpu_writemem29_dword);
 WRITE_HANDLER(cpu_writemem32);
 WRITE_HANDLER(cpu_writemem32_word);
 WRITE_HANDLER(cpu_writemem32_dword);
+WRITE_HANDLER(cpu_writemem32lew);
+WRITE_HANDLER(cpu_writemem32lew_word);
+WRITE_HANDLER(cpu_writemem32lew_dword);
 
 /* ----- port I/O functions ----- */
 int cpu_readport(int port);
@@ -341,8 +359,10 @@ void cpu_setOPbase16lew(int pc);
 void cpu_setOPbase20(int pc);
 void cpu_setOPbase21(int pc);
 void cpu_setOPbase24(int pc);
+void cpu_setOPbase24bew(int pc);
 void cpu_setOPbase29(int pc);
 void cpu_setOPbase32(int pc);
+void cpu_setOPbase32lew(int pc);
 void cpu_setOPbaseoverride(int cpu, opbase_handler function);
 
 /* ----- harder-to-explain functions ---- */
@@ -360,3 +380,4 @@ without going through the readmem/writemem accessors (e.g., blitters). */
 unsigned char *findmemorychunk(int cpu, int offset, int *chunkstart, int *chunkend);
 
 #endif
+

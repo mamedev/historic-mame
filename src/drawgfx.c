@@ -25,49 +25,51 @@ UINT8 gfx_drawmode_table[256];
 plot_pixel_proc plot_pixel;
 read_pixel_proc read_pixel;
 
+static UINT8 is_raw[TRANSPARENCY_MODES];
+
 
 #ifdef ALIGN_INTS /* GSL 980108 read/write nonaligned dword routine for ARM processor etc */
 
-INLINE int read_dword(void *address)
+INLINE UINT32 read_dword(void *address)
 {
 	if ((long)address & 3)
 	{
 #ifdef LSB_FIRST  /* little endian version */
-  		return ( *((unsigned char *)address) +
-				(*((unsigned char *)address+1) << 8)  +
-				(*((unsigned char *)address+2) << 16) +
-				(*((unsigned char *)address+3) << 24) );
+  		return ( *((UINT8 *)address) +
+				(*((UINT8 *)address+1) << 8)  +
+				(*((UINT8 *)address+2) << 16) +
+				(*((UINT8 *)address+3) << 24) );
 #else             /* big endian version */
-  		return ( *((unsigned char *)address+3) +
-				(*((unsigned char *)address+2) << 8)  +
-				(*((unsigned char *)address+1) << 16) +
-				(*((unsigned char *)address)   << 24) );
+  		return ( *((UINT8 *)address+3) +
+				(*((UINT8 *)address+2) << 8)  +
+				(*((UINT8 *)address+1) << 16) +
+				(*((UINT8 *)address)   << 24) );
 #endif
 	}
 	else
-		return *(int *)address;
+		return *(UINT32 *)address;
 }
 
 
-INLINE void write_dword(void *address, int data)
+INLINE void write_dword(void *address, UINT32 data)
 {
   	if ((long)address & 3)
 	{
 #ifdef LSB_FIRST
-    		*((unsigned char *)address) =    data;
-    		*((unsigned char *)address+1) = (data >> 8);
-    		*((unsigned char *)address+2) = (data >> 16);
-    		*((unsigned char *)address+3) = (data >> 24);
+    		*((UINT8 *)address) =    data;
+    		*((UINT8 *)address+1) = (data >> 8);
+    		*((UINT8 *)address+2) = (data >> 16);
+    		*((UINT8 *)address+3) = (data >> 24);
 #else
-    		*((unsigned char *)address+3) =  data;
-    		*((unsigned char *)address+2) = (data >> 8);
-    		*((unsigned char *)address+1) = (data >> 16);
-    		*((unsigned char *)address)   = (data >> 24);
+    		*((UINT8 *)address+3) =  data;
+    		*((UINT8 *)address+2) = (data >> 8);
+    		*((UINT8 *)address+1) = (data >> 16);
+    		*((UINT8 *)address)   = (data >> 24);
 #endif
 		return;
   	}
   	else
-		*(int *)address = data;
+		*(UINT32 *)address = data;
 }
 #else
 #define read_dword(address) *(int *)address
@@ -76,16 +78,16 @@ INLINE void write_dword(void *address, int data)
 
 
 
-INLINE int readbit(const unsigned char *src,int bitnum)
+INLINE int readbit(const UINT8 *src,int bitnum)
 {
 	return (src[bitnum / 8] >> (7 - bitnum % 8)) & 1;
 }
 
 
-void decodechar(struct GfxElement *gfx,int num,const unsigned char *src,const struct GfxLayout *gl)
+void decodechar(struct GfxElement *gfx,int num,const UINT8 *src,const struct GfxLayout *gl)
 {
 	int plane,x,y;
-	unsigned char *dp;
+	UINT8 *dp;
 	int offs;
 
 
@@ -151,7 +153,7 @@ void decodechar(struct GfxElement *gfx,int num,const unsigned char *src,const st
 }
 
 
-struct GfxElement *decodegfx(const unsigned char *src,const struct GfxLayout *gl)
+struct GfxElement *decodegfx(const UINT8 *src,const struct GfxLayout *gl)
 {
 	int c;
 	struct GfxElement *gfx;
@@ -174,7 +176,7 @@ struct GfxElement *decodegfx(const unsigned char *src,const struct GfxLayout *gl
 
 	gfx->line_modulo = gfx->width;
 	gfx->char_modulo = gfx->line_modulo * gfx->height;
-	if ((gfx->gfxdata = malloc(gl->total * gfx->char_modulo * sizeof(unsigned char))) == 0)
+	if ((gfx->gfxdata = malloc(gl->total * gfx->char_modulo * sizeof(UINT8))) == 0)
 	{
 		free(gfx);
 		return 0;
@@ -208,7 +210,7 @@ void freegfx(struct GfxElement *gfx)
 
 
 
-INLINE void blockmove_transpen_noremap8(
+INLINE void blockmove_NtoN_transpen_noremap8(
 		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
 		UINT8 *dstdata,int dstmodulo,
 		int transpen)
@@ -258,7 +260,7 @@ INLINE void blockmove_transpen_noremap8(
 			}
 			dstdata += 4;
 		}
-		srcdata = (unsigned char *)sd4;
+		srcdata = (UINT8 *)sd4;
 		while (dstdata < end)
 		{
 			int col;
@@ -274,7 +276,7 @@ INLINE void blockmove_transpen_noremap8(
 	}
 }
 
-INLINE void blockmove_transpen_noremap_flipx8(
+INLINE void blockmove_NtoN_transpen_noremap_flipx8(
 		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
 		UINT8 *dstdata,int dstmodulo,
 		int transpen)
@@ -319,7 +321,7 @@ INLINE void blockmove_transpen_noremap_flipx8(
 			}
 			dstdata += 4;
 		}
-		srcdata = (unsigned char *)sd4;
+		srcdata = (UINT8 *)sd4;
 		while (dstdata < end)
 		{
 			int col;
@@ -337,7 +339,7 @@ INLINE void blockmove_transpen_noremap_flipx8(
 }
 
 
-INLINE void blockmove_transpen_noremap16(
+INLINE void blockmove_NtoN_transpen_noremap16(
 		const UINT16 *srcdata,int srcwidth,int srcheight,int srcmodulo,
 		UINT16 *dstdata,int dstmodulo,
 		int transpen)
@@ -365,7 +367,7 @@ INLINE void blockmove_transpen_noremap16(
 	}
 }
 
-INLINE void blockmove_transpen_noremap_flipx16(
+INLINE void blockmove_NtoN_transpen_noremap_flipx16(
 		const UINT16 *srcdata,int srcwidth,int srcheight,int srcmodulo,
 		UINT16 *dstdata,int dstmodulo,
 		int transpen)
@@ -454,14 +456,15 @@ INLINE void common_drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 		usrintf_showmessage("drawgfx() gfx == 0");
 		return;
 	}
-	if (!gfx->colortable)
+	if (!gfx->colortable && !is_raw[transparency])
 	{
 		usrintf_showmessage("drawgfx() gfx->colortable == 0");
 		return;
 	}
 
 	code %= gfx->total_elements;
-	color %= gfx->total_colors;
+	if (!is_raw[transparency])
+		color %= gfx->total_colors;
 
 	if (gfx->pen_usage && (transparency == TRANSPARENCY_PEN || transparency == TRANSPARENCY_PENS))
 	{
@@ -577,6 +580,21 @@ void pdrawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 
 ***************************************************************************/
 void copybitmap(struct osd_bitmap *dest,struct osd_bitmap *src,int flipx,int flipy,int sx,int sy,
+		const struct rectangle *clip,int transparency,int transparent_color)
+{
+	/* translate to proper transparency here */
+	if (transparency == TRANSPARENCY_NONE)
+		transparency = TRANSPARENCY_NONE_RAW;
+	else if (transparency == TRANSPARENCY_PEN || transparency == TRANSPARENCY_COLOR)
+		transparency = TRANSPARENCY_PEN_RAW;
+	else if (transparency == TRANSPARENCY_THROUGH)
+		transparency = TRANSPARENCY_THROUGH_RAW;
+
+	copybitmap_remap(dest,src,flipx,flipy,sx,sy,clip,transparency,transparent_color);
+}
+
+
+void copybitmap_remap(struct osd_bitmap *dest,struct osd_bitmap *src,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color)
 {
 	struct rectangle myclip;
@@ -806,8 +824,8 @@ void copybitmapzoom(struct osd_bitmap *dest_bmp,struct osd_bitmap *source_bmp,in
 				case TRANSPARENCY_NONE:
 					for( y=sy; y<ey; y++ )
 					{
-						unsigned char *source = source_bmp->line[(y_index>>16)];
-						unsigned char *dest = dest_bmp->line[y];
+						UINT8 *source = source_bmp->line[(y_index>>16)];
+						UINT8 *dest = dest_bmp->line[y];
 
 						int x, x_index = x_index_base;
 						for( x=sx; x<ex; x++ )
@@ -824,8 +842,8 @@ void copybitmapzoom(struct osd_bitmap *dest_bmp,struct osd_bitmap *source_bmp,in
 				case TRANSPARENCY_COLOR:
 					for( y=sy; y<ey; y++ )
 					{
-						unsigned char *source = source_bmp->line[(y_index>>16)];
-						unsigned char *dest = dest_bmp->line[y];
+						UINT8 *source = source_bmp->line[(y_index>>16)];
+						UINT8 *dest = dest_bmp->line[y];
 
 						int x, x_index = x_index_base;
 						for( x=sx; x<ex; x++ )
@@ -918,8 +936,8 @@ usrintf_showmessage("copybitmapzoom() TRANSPARENCY_THROUGH");
 				case TRANSPARENCY_NONE:
 					for( y=sy; y<ey; y++ )
 					{
-						unsigned short *source = (unsigned short *)source_bmp->line[(y_index>>16)];
-						unsigned short *dest = (unsigned short *)dest_bmp->line[y];
+						UINT16 *source = (UINT16 *)source_bmp->line[(y_index>>16)];
+						UINT16 *dest = (UINT16 *)dest_bmp->line[y];
 
 						int x, x_index = x_index_base;
 						for( x=sx; x<ex; x++ )
@@ -936,8 +954,8 @@ usrintf_showmessage("copybitmapzoom() TRANSPARENCY_THROUGH");
 				case TRANSPARENCY_COLOR:
 					for( y=sy; y<ey; y++ )
 					{
-						unsigned short *source = (unsigned short *)source_bmp->line[(y_index>>16)];
-						unsigned short *dest = (unsigned short *)dest_bmp->line[y];
+						UINT16 *source = (UINT16 *)source_bmp->line[(y_index>>16)];
+						UINT16 *dest = (UINT16 *)dest_bmp->line[y];
 
 						int x, x_index = x_index_base;
 						for( x=sx; x<ex; x++ )
@@ -974,6 +992,21 @@ usrintf_showmessage("copybitmapzoom() TRANSPARENCY_THROUGH");
 
 ***************************************************************************/
 void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
+		int rows,const int *rowscroll,int cols,const int *colscroll,
+		const struct rectangle *clip,int transparency,int transparent_color)
+{
+	/* translate to proper transparency here */
+	if (transparency == TRANSPARENCY_NONE)
+		transparency = TRANSPARENCY_NONE_RAW;
+	else if (transparency == TRANSPARENCY_PEN || transparency == TRANSPARENCY_COLOR)
+		transparency = TRANSPARENCY_PEN_RAW;
+	else if (transparency == TRANSPARENCY_THROUGH)
+		transparency = TRANSPARENCY_THROUGH_RAW;
+
+	copyscrollbitmap_remap(dest,src,rows,rowscroll,cols,colscroll,clip,transparency,transparent_color);
+}
+
+void copyscrollbitmap_remap(struct osd_bitmap *dest,struct osd_bitmap *src,
 		int rows,const int *rowscroll,int cols,const int *colscroll,
 		const struct rectangle *clip,int transparency,int transparent_color)
 {
@@ -1270,7 +1303,7 @@ void fillbitmap(struct osd_bitmap *dest,int pen,const struct rectangle *clip)
 		}
 		else
 		{
-			unsigned short *sp = (unsigned short *)dest->line[sy];
+			UINT16 *sp = (UINT16 *)dest->line[sy];
 			int x;
 
 			for (x = sx;x <= ex;x++)
@@ -1409,7 +1442,7 @@ INLINE void common_drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElem
 	{
 		if( gfx && gfx->colortable )
 		{
-			const unsigned short *pal = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)]; /* ASG 980209 */
+			const UINT16 *pal = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)]; /* ASG 980209 */
 			int source_base = (code % gfx->total_elements) * gfx->height;
 
 			int sprite_screen_height = (scaley*gfx->height+0x8000)>>16;
@@ -1483,9 +1516,9 @@ INLINE void common_drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElem
 					{
 						for( y=sy; y<ey; y++ )
 						{
-							unsigned char *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
-							unsigned char *dest = dest_bmp->line[y];
-							unsigned char *pri = pri_buffer->line[y];
+							UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+							UINT8 *dest = dest_bmp->line[y];
+							UINT8 *pri = pri_buffer->line[y];
 
 							int x, x_index = x_index_base;
 							for( x=sx; x<ex; x++ )
@@ -1507,8 +1540,8 @@ INLINE void common_drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElem
 					{
 						for( y=sy; y<ey; y++ )
 						{
-							unsigned char *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
-							unsigned char *dest = dest_bmp->line[y];
+							UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+							UINT8 *dest = dest_bmp->line[y];
 
 							int x, x_index = x_index_base;
 							for( x=sx; x<ex; x++ )
@@ -1530,9 +1563,9 @@ INLINE void common_drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElem
 					{
 						for( y=sy; y<ey; y++ )
 						{
-							unsigned char *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
-							unsigned char *dest = dest_bmp->line[y];
-							unsigned char *pri = pri_buffer->line[y];
+							UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+							UINT8 *dest = dest_bmp->line[y];
+							UINT8 *pri = pri_buffer->line[y];
 
 							int x, x_index = x_index_base;
 							for( x=sx; x<ex; x++ )
@@ -1554,8 +1587,8 @@ INLINE void common_drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElem
 					{
 						for( y=sy; y<ey; y++ )
 						{
-							unsigned char *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
-							unsigned char *dest = dest_bmp->line[y];
+							UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+							UINT8 *dest = dest_bmp->line[y];
 
 							int x, x_index = x_index_base;
 							for( x=sx; x<ex; x++ )
@@ -1578,9 +1611,9 @@ INLINE void common_drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElem
 					{
 						for( y=sy; y<ey; y++ )
 						{
-							unsigned char *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
-							unsigned char *dest = dest_bmp->line[y];
-							unsigned char *pri = pri_buffer->line[y];
+							UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+							UINT8 *dest = dest_bmp->line[y];
+							UINT8 *pri = pri_buffer->line[y];
 
 							int x, x_index = x_index_base;
 							for( x=sx; x<ex; x++ )
@@ -1602,8 +1635,8 @@ INLINE void common_drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElem
 					{
 						for( y=sy; y<ey; y++ )
 						{
-							unsigned char *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
-							unsigned char *dest = dest_bmp->line[y];
+							UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+							UINT8 *dest = dest_bmp->line[y];
 
 							int x, x_index = x_index_base;
 							for( x=sx; x<ex; x++ )
@@ -1627,7 +1660,7 @@ INLINE void common_drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElem
 	{
 		if( gfx && gfx->colortable )
 		{
-			const unsigned short *pal = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)]; /* ASG 980209 */
+			const UINT16 *pal = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)]; /* ASG 980209 */
 			int source_base = (code % gfx->total_elements) * gfx->height;
 
 			int sprite_screen_height = (scaley*gfx->height+0x8000)>>16;
@@ -1701,9 +1734,9 @@ INLINE void common_drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElem
 					{
 						for( y=sy; y<ey; y++ )
 						{
-							unsigned char *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
-							unsigned short *dest = (unsigned short *)dest_bmp->line[y];
-							unsigned char *pri = pri_buffer->line[y];
+							UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+							UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+							UINT8 *pri = pri_buffer->line[y];
 
 							int x, x_index = x_index_base;
 							for( x=sx; x<ex; x++ )
@@ -1725,8 +1758,8 @@ INLINE void common_drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElem
 					{
 						for( y=sy; y<ey; y++ )
 						{
-							unsigned char *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
-							unsigned short *dest = (unsigned short *)dest_bmp->line[y];
+							UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+							UINT16 *dest = (UINT16 *)dest_bmp->line[y];
 
 							int x, x_index = x_index_base;
 							for( x=sx; x<ex; x++ )
@@ -1748,9 +1781,9 @@ INLINE void common_drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElem
 					{
 						for( y=sy; y<ey; y++ )
 						{
-							unsigned char *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
-							unsigned short *dest = (unsigned short *)dest_bmp->line[y];
-							unsigned char *pri = pri_buffer->line[y];
+							UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+							UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+							UINT8 *pri = pri_buffer->line[y];
 
 							int x, x_index = x_index_base;
 							for( x=sx; x<ex; x++ )
@@ -1772,8 +1805,8 @@ INLINE void common_drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElem
 					{
 						for( y=sy; y<ey; y++ )
 						{
-							unsigned char *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
-							unsigned short *dest = (unsigned short *)dest_bmp->line[y];
+							UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+							UINT16 *dest = (UINT16 *)dest_bmp->line[y];
 
 							int x, x_index = x_index_base;
 							for( x=sx; x<ex; x++ )
@@ -1796,9 +1829,9 @@ INLINE void common_drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElem
 					{
 						for( y=sy; y<ey; y++ )
 						{
-							unsigned char *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
-							unsigned short *dest = (unsigned short *)dest_bmp->line[y];
-							unsigned char *pri = pri_buffer->line[y];
+							UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+							UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+							UINT8 *pri = pri_buffer->line[y];
 
 							int x, x_index = x_index_base;
 							for( x=sx; x<ex; x++ )
@@ -1820,8 +1853,8 @@ INLINE void common_drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElem
 					{
 						for( y=sy; y<ey; y++ )
 						{
-							unsigned char *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
-							unsigned short *dest = (unsigned short *)dest_bmp->line[y];
+							UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+							UINT16 *dest = (UINT16 *)dest_bmp->line[y];
 
 							int x, x_index = x_index_base;
 							for( x=sx; x<ex; x++ )
@@ -1882,23 +1915,23 @@ static void pp_8_d_fx_s(struct osd_bitmap *b,int x,int y,int p)  { int newy = b-
 static void pp_8_d_fy_s(struct osd_bitmap *b,int x,int y,int p)  { int newx = b->height-1-x; b->line[newx][y] = p; osd_mark_dirty (y,newx,y,newx,0); }
 static void pp_8_d_fxy_s(struct osd_bitmap *b,int x,int y,int p)  { int newx = b->height-1-x; int newy = b->width-1-y; b->line[newx][newy] = p; osd_mark_dirty (newy,newx,newy,newx,0); }
 
-static void pp_16_nd(struct osd_bitmap *b,int x,int y,int p)  { ((unsigned short *)b->line[y])[x] = p; }
-static void pp_16_nd_fx(struct osd_bitmap *b,int x,int y,int p)  { ((unsigned short *)b->line[y])[b->width-1-x] = p; }
-static void pp_16_nd_fy(struct osd_bitmap *b,int x,int y,int p)  { ((unsigned short *)b->line[b->height-1-y])[x] = p; }
-static void pp_16_nd_fxy(struct osd_bitmap *b,int x,int y,int p)  { ((unsigned short *)b->line[b->height-1-y])[b->width-1-x] = p; }
-static void pp_16_nd_s(struct osd_bitmap *b,int x,int y,int p)  { ((unsigned short *)b->line[x])[y] = p; }
-static void pp_16_nd_fx_s(struct osd_bitmap *b,int x,int y,int p)  { ((unsigned short *)b->line[x])[b->width-1-y] = p; }
-static void pp_16_nd_fy_s(struct osd_bitmap *b,int x,int y,int p)  { ((unsigned short *)b->line[b->height-1-x])[y] = p; }
-static void pp_16_nd_fxy_s(struct osd_bitmap *b,int x,int y,int p)  { ((unsigned short *)b->line[b->height-1-x])[b->width-1-y] = p; }
+static void pp_16_nd(struct osd_bitmap *b,int x,int y,int p)  { ((UINT16 *)b->line[y])[x] = p; }
+static void pp_16_nd_fx(struct osd_bitmap *b,int x,int y,int p)  { ((UINT16 *)b->line[y])[b->width-1-x] = p; }
+static void pp_16_nd_fy(struct osd_bitmap *b,int x,int y,int p)  { ((UINT16 *)b->line[b->height-1-y])[x] = p; }
+static void pp_16_nd_fxy(struct osd_bitmap *b,int x,int y,int p)  { ((UINT16 *)b->line[b->height-1-y])[b->width-1-x] = p; }
+static void pp_16_nd_s(struct osd_bitmap *b,int x,int y,int p)  { ((UINT16 *)b->line[x])[y] = p; }
+static void pp_16_nd_fx_s(struct osd_bitmap *b,int x,int y,int p)  { ((UINT16 *)b->line[x])[b->width-1-y] = p; }
+static void pp_16_nd_fy_s(struct osd_bitmap *b,int x,int y,int p)  { ((UINT16 *)b->line[b->height-1-x])[y] = p; }
+static void pp_16_nd_fxy_s(struct osd_bitmap *b,int x,int y,int p)  { ((UINT16 *)b->line[b->height-1-x])[b->width-1-y] = p; }
 
-static void pp_16_d(struct osd_bitmap *b,int x,int y,int p)  { ((unsigned short *)b->line[y])[x] = p; osd_mark_dirty (x,y,x,y,0); }
-static void pp_16_d_fx(struct osd_bitmap *b,int x,int y,int p)  { int newx = b->width-1-x;  ((unsigned short *)b->line[y])[newx] = p; osd_mark_dirty (newx,y,newx,y,0); }
-static void pp_16_d_fy(struct osd_bitmap *b,int x,int y,int p)  { int newy = b->height-1-y; ((unsigned short *)b->line[newy])[x] = p; osd_mark_dirty (x,newy,x,newy,0); }
-static void pp_16_d_fxy(struct osd_bitmap *b,int x,int y,int p)  { int newx = b->width-1-x; int newy = b->height-1-y; ((unsigned short *)b->line[newy])[newx] = p; osd_mark_dirty (newx,newy,newx,newy,0); }
-static void pp_16_d_s(struct osd_bitmap *b,int x,int y,int p)  { ((unsigned short *)b->line[x])[y] = p; osd_mark_dirty (y,x,y,x,0); }
-static void pp_16_d_fx_s(struct osd_bitmap *b,int x,int y,int p)  { int newy = b->width-1-y; ((unsigned short *)b->line[x])[newy] = p; osd_mark_dirty (newy,x,newy,x,0); }
-static void pp_16_d_fy_s(struct osd_bitmap *b,int x,int y,int p)  { int newx = b->height-1-x; ((unsigned short *)b->line[newx])[y] = p; osd_mark_dirty (y,newx,y,newx,0); }
-static void pp_16_d_fxy_s(struct osd_bitmap *b,int x,int y,int p)  { int newx = b->height-1-x; int newy = b->width-1-y; ((unsigned short *)b->line[newx])[newy] = p; osd_mark_dirty (newy,newx,newy,newx,0); }
+static void pp_16_d(struct osd_bitmap *b,int x,int y,int p)  { ((UINT16 *)b->line[y])[x] = p; osd_mark_dirty (x,y,x,y,0); }
+static void pp_16_d_fx(struct osd_bitmap *b,int x,int y,int p)  { int newx = b->width-1-x;  ((UINT16 *)b->line[y])[newx] = p; osd_mark_dirty (newx,y,newx,y,0); }
+static void pp_16_d_fy(struct osd_bitmap *b,int x,int y,int p)  { int newy = b->height-1-y; ((UINT16 *)b->line[newy])[x] = p; osd_mark_dirty (x,newy,x,newy,0); }
+static void pp_16_d_fxy(struct osd_bitmap *b,int x,int y,int p)  { int newx = b->width-1-x; int newy = b->height-1-y; ((UINT16 *)b->line[newy])[newx] = p; osd_mark_dirty (newx,newy,newx,newy,0); }
+static void pp_16_d_s(struct osd_bitmap *b,int x,int y,int p)  { ((UINT16 *)b->line[x])[y] = p; osd_mark_dirty (y,x,y,x,0); }
+static void pp_16_d_fx_s(struct osd_bitmap *b,int x,int y,int p)  { int newy = b->width-1-y; ((UINT16 *)b->line[x])[newy] = p; osd_mark_dirty (newy,x,newy,x,0); }
+static void pp_16_d_fy_s(struct osd_bitmap *b,int x,int y,int p)  { int newx = b->height-1-x; ((UINT16 *)b->line[newx])[y] = p; osd_mark_dirty (y,newx,y,newx,0); }
+static void pp_16_d_fxy_s(struct osd_bitmap *b,int x,int y,int p)  { int newx = b->height-1-x; int newy = b->width-1-y; ((UINT16 *)b->line[newx])[newy] = p; osd_mark_dirty (newy,newx,newy,newx,0); }
 
 
 static int rp_8(struct osd_bitmap *b,int x,int y)  { return b->line[y][x]; }
@@ -1910,14 +1943,14 @@ static int rp_8_fx_s(struct osd_bitmap *b,int x,int y)  { return b->line[x][b->w
 static int rp_8_fy_s(struct osd_bitmap *b,int x,int y)  { return b->line[b->height-1-x][y]; }
 static int rp_8_fxy_s(struct osd_bitmap *b,int x,int y)  { return b->line[b->height-1-x][b->width-1-y]; }
 
-static int rp_16(struct osd_bitmap *b,int x,int y)  { return ((unsigned short *)b->line[y])[x]; }
-static int rp_16_fx(struct osd_bitmap *b,int x,int y)  { return ((unsigned short *)b->line[y])[b->width-1-x]; }
-static int rp_16_fy(struct osd_bitmap *b,int x,int y)  { return ((unsigned short *)b->line[b->height-1-y])[x]; }
-static int rp_16_fxy(struct osd_bitmap *b,int x,int y)  { return ((unsigned short *)b->line[b->height-1-y])[b->width-1-x]; }
-static int rp_16_s(struct osd_bitmap *b,int x,int y)  { return ((unsigned short *)b->line[x])[y]; }
-static int rp_16_fx_s(struct osd_bitmap *b,int x,int y)  { return ((unsigned short *)b->line[x])[b->width-1-y]; }
-static int rp_16_fy_s(struct osd_bitmap *b,int x,int y)  { return ((unsigned short *)b->line[b->height-1-x])[y]; }
-static int rp_16_fxy_s(struct osd_bitmap *b,int x,int y)  { return ((unsigned short *)b->line[b->height-1-x])[b->width-1-y]; }
+static int rp_16(struct osd_bitmap *b,int x,int y)  { return ((UINT16 *)b->line[y])[x]; }
+static int rp_16_fx(struct osd_bitmap *b,int x,int y)  { return ((UINT16 *)b->line[y])[b->width-1-x]; }
+static int rp_16_fy(struct osd_bitmap *b,int x,int y)  { return ((UINT16 *)b->line[b->height-1-y])[x]; }
+static int rp_16_fxy(struct osd_bitmap *b,int x,int y)  { return ((UINT16 *)b->line[b->height-1-y])[b->width-1-x]; }
+static int rp_16_s(struct osd_bitmap *b,int x,int y)  { return ((UINT16 *)b->line[x])[y]; }
+static int rp_16_fx_s(struct osd_bitmap *b,int x,int y)  { return ((UINT16 *)b->line[x])[b->width-1-y]; }
+static int rp_16_fy_s(struct osd_bitmap *b,int x,int y)  { return ((UINT16 *)b->line[b->height-1-x])[y]; }
+static int rp_16_fxy_s(struct osd_bitmap *b,int x,int y)  { return ((UINT16 *)b->line[b->height-1-x])[b->width-1-y]; }
 
 
 static plot_pixel_proc pps_8_nd[] =
@@ -1966,6 +1999,13 @@ void set_pixel_functions(void)
 		else
 			plot_pixel = pps_16_nd[Machine->orientation];
 	}
+
+	/* while we're here, fill in the raw drawing mode table as well */
+	is_raw[TRANSPARENCY_NONE_RAW]    = 1;
+	is_raw[TRANSPARENCY_PEN_RAW]     = 1;
+	is_raw[TRANSPARENCY_PENS_RAW]    = 1;
+	is_raw[TRANSPARENCY_THROUGH_RAW] = 1;
+	is_raw[TRANSPARENCY_BLEND_RAW]   = 1;
 }
 
 #else /* DECLARE */
@@ -1975,10 +2015,10 @@ void set_pixel_functions(void)
 /* don't put this file in the makefile, it is #included by common.c to */
 /* generate 8-bit and 16-bit versions                                  */
 
-DECLARE(blockmove_opaque,(
+DECLARE(blockmove_8toN_opaque,(
 		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
 		DATA_TYPE *dstdata,int dstmodulo,
-		const unsigned short *paldata),
+		const UINT16 *paldata),
 {
 	DATA_TYPE *end;
 
@@ -2010,10 +2050,10 @@ DECLARE(blockmove_opaque,(
 	}
 })
 
-DECLARE(blockmove_opaque_flipx,(
+DECLARE(blockmove_8toN_opaque_flipx,(
 		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
 		DATA_TYPE *dstdata,int dstmodulo,
-		const unsigned short *paldata),
+		const UINT16 *paldata),
 {
 	DATA_TYPE *end;
 
@@ -2046,10 +2086,10 @@ DECLARE(blockmove_opaque_flipx,(
 	}
 })
 
-DECLARE(blockmove_opaque_pri,(
+DECLARE(blockmove_8toN_opaque_pri,(
 		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
 		DATA_TYPE *dstdata,int dstmodulo,
-		const unsigned short *paldata,UINT8 *pridata,UINT32 pmask),
+		const UINT16 *paldata,UINT8 *pridata,UINT32 pmask),
 {
 	DATA_TYPE *end;
 
@@ -2093,10 +2133,10 @@ DECLARE(blockmove_opaque_pri,(
 	}
 })
 
-DECLARE(blockmove_opaque_pri_flipx,(
+DECLARE(blockmove_8toN_opaque_pri_flipx,(
 		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
 		DATA_TYPE *dstdata,int dstmodulo,
-		const unsigned short *paldata,UINT8 *pridata,UINT32 pmask),
+		const UINT16 *paldata,UINT8 *pridata,UINT32 pmask),
 {
 	DATA_TYPE *end;
 
@@ -2142,10 +2182,81 @@ DECLARE(blockmove_opaque_pri_flipx,(
 })
 
 
-DECLARE(blockmove_transpen,(
+DECLARE(blockmove_8toN_opaque_raw,(
 		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
 		DATA_TYPE *dstdata,int dstmodulo,
-		const unsigned short *paldata,int transpen),
+		unsigned int colorbase),
+{
+	DATA_TYPE *end;
+
+	srcmodulo -= srcwidth;
+	dstmodulo -= srcwidth;
+
+	while (srcheight)
+	{
+		end = dstdata + srcwidth;
+		while (dstdata <= end - 8)
+		{
+			dstdata[0] = colorbase + srcdata[0];
+			dstdata[1] = colorbase + srcdata[1];
+			dstdata[2] = colorbase + srcdata[2];
+			dstdata[3] = colorbase + srcdata[3];
+			dstdata[4] = colorbase + srcdata[4];
+			dstdata[5] = colorbase + srcdata[5];
+			dstdata[6] = colorbase + srcdata[6];
+			dstdata[7] = colorbase + srcdata[7];
+			dstdata += 8;
+			srcdata += 8;
+		}
+		while (dstdata < end)
+			*(dstdata++) = colorbase + *(srcdata++);
+
+		srcdata += srcmodulo;
+		dstdata += dstmodulo;
+		srcheight--;
+	}
+})
+
+DECLARE(blockmove_8toN_opaque_raw_flipx,(
+		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
+		DATA_TYPE *dstdata,int dstmodulo,
+		unsigned int colorbase),
+{
+	DATA_TYPE *end;
+
+	srcmodulo += srcwidth;
+	dstmodulo -= srcwidth;
+	//srcdata += srcwidth-1;
+
+	while (srcheight)
+	{
+		end = dstdata + srcwidth;
+		while (dstdata <= end - 8)
+		{
+			srcdata -= 8;
+			dstdata[0] = colorbase + srcdata[8];
+			dstdata[1] = colorbase + srcdata[7];
+			dstdata[2] = colorbase + srcdata[6];
+			dstdata[3] = colorbase + srcdata[5];
+			dstdata[4] = colorbase + srcdata[4];
+			dstdata[5] = colorbase + srcdata[3];
+			dstdata[6] = colorbase + srcdata[2];
+			dstdata[7] = colorbase + srcdata[1];
+			dstdata += 8;
+		}
+		while (dstdata < end)
+			*(dstdata++) = colorbase + *(srcdata--);
+
+		srcdata += srcmodulo;
+		dstdata += dstmodulo;
+		srcheight--;
+	}
+})
+
+DECLARE(blockmove_8toN_transpen,(
+		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
+		DATA_TYPE *dstdata,int dstmodulo,
+		const UINT16 *paldata,int transpen),
 {
 	DATA_TYPE *end;
 	int trans4;
@@ -2184,7 +2295,7 @@ DECLARE(blockmove_transpen,(
 			}
 			dstdata += 4;
 		}
-		srcdata = (unsigned char *)sd4;
+		srcdata = (UINT8 *)sd4;
 		while (dstdata < end)
 		{
 			int col;
@@ -2200,10 +2311,10 @@ DECLARE(blockmove_transpen,(
 	}
 })
 
-DECLARE(blockmove_transpen_flipx,(
+DECLARE(blockmove_8toN_transpen_flipx,(
 		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
 		DATA_TYPE *dstdata,int dstmodulo,
-		const unsigned short *paldata,int transpen),
+		const UINT16 *paldata,int transpen),
 {
 	DATA_TYPE *end;
 	int trans4;
@@ -2245,7 +2356,7 @@ DECLARE(blockmove_transpen_flipx,(
 			}
 			dstdata += 4;
 		}
-		srcdata = (unsigned char *)sd4;
+		srcdata = (UINT8 *)sd4;
 		while (dstdata < end)
 		{
 			int col;
@@ -2262,10 +2373,10 @@ DECLARE(blockmove_transpen_flipx,(
 	}
 })
 
-DECLARE(blockmove_transpen_pri,(
+DECLARE(blockmove_8toN_transpen_pri,(
 		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
 		DATA_TYPE *dstdata,int dstmodulo,
-		const unsigned short *paldata,int transpen,UINT8 *pridata,UINT32 pmask),
+		const UINT16 *paldata,int transpen,UINT8 *pridata,UINT32 pmask),
 {
 	DATA_TYPE *end;
 	int trans4;
@@ -2333,7 +2444,7 @@ DECLARE(blockmove_transpen_pri,(
 			dstdata += 4;
 			pridata += 4;
 		}
-		srcdata = (unsigned char *)sd4;
+		srcdata = (UINT8 *)sd4;
 		while (dstdata < end)
 		{
 			int col;
@@ -2356,10 +2467,10 @@ DECLARE(blockmove_transpen_pri,(
 	}
 })
 
-DECLARE(blockmove_transpen_pri_flipx,(
+DECLARE(blockmove_8toN_transpen_pri_flipx,(
 		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
 		DATA_TYPE *dstdata,int dstmodulo,
-		const unsigned short *paldata,int transpen,UINT8 *pridata,UINT32 pmask),
+		const UINT16 *paldata,int transpen,UINT8 *pridata,UINT32 pmask),
 {
 	DATA_TYPE *end;
 	int trans4;
@@ -2430,7 +2541,7 @@ DECLARE(blockmove_transpen_pri_flipx,(
 			dstdata += 4;
 			pridata += 4;
 		}
-		srcdata = (unsigned char *)sd4;
+		srcdata = (UINT8 *)sd4;
 		while (dstdata < end)
 		{
 			int col;
@@ -2454,13 +2565,132 @@ DECLARE(blockmove_transpen_pri_flipx,(
 	}
 })
 
+DECLARE(blockmove_8toN_transpen_raw,(
+		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
+		DATA_TYPE *dstdata,int dstmodulo,
+		unsigned int colorbase,int transpen),
+{
+	DATA_TYPE *end;
+	int trans4;
+	UINT32 *sd4;
+
+	srcmodulo -= srcwidth;
+	dstmodulo -= srcwidth;
+
+	trans4 = transpen * 0x01010101;
+
+	while (srcheight)
+	{
+		end = dstdata + srcwidth;
+		while (((long)srcdata & 3) && dstdata < end)	/* longword align */
+		{
+			int col;
+
+			col = *(srcdata++);
+			if (col != transpen) *dstdata = colorbase + col;
+			dstdata++;
+		}
+		sd4 = (UINT32 *)srcdata;
+		while (dstdata <= end - 4)
+		{
+			UINT32 col4;
+
+			if ((col4 = *(sd4++)) != trans4)
+			{
+				UINT32 xod4;
+
+				xod4 = col4 ^ trans4;
+				if (xod4 & 0x000000ff) dstdata[BL0] = colorbase + ((col4) & 0xff);
+				if (xod4 & 0x0000ff00) dstdata[BL1] = colorbase + ((col4 >>  8) & 0xff);
+				if (xod4 & 0x00ff0000) dstdata[BL2] = colorbase + ((col4 >> 16) & 0xff);
+				if (xod4 & 0xff000000) dstdata[BL3] = colorbase + (col4 >> 24);
+			}
+			dstdata += 4;
+		}
+		srcdata = (UINT8 *)sd4;
+		while (dstdata < end)
+		{
+			int col;
+
+			col = *(srcdata++);
+			if (col != transpen) *dstdata = colorbase + col;
+			dstdata++;
+		}
+
+		srcdata += srcmodulo;
+		dstdata += dstmodulo;
+		srcheight--;
+	}
+})
+
+DECLARE(blockmove_8toN_transpen_raw_flipx,(
+		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
+		DATA_TYPE *dstdata,int dstmodulo,
+		unsigned int colorbase, int transpen),
+{
+	DATA_TYPE *end;
+	int trans4;
+	UINT32 *sd4;
+
+	srcmodulo += srcwidth;
+	dstmodulo -= srcwidth;
+	//srcdata += srcwidth-1;
+	srcdata -= 3;
+
+	trans4 = transpen * 0x01010101;
+
+	while (srcheight)
+	{
+		end = dstdata + srcwidth;
+		while (((long)srcdata & 3) && dstdata < end)	/* longword align */
+		{
+			int col;
+
+			col = srcdata[3];
+			srcdata--;
+			if (col != transpen) *dstdata = colorbase + col;
+			dstdata++;
+		}
+		sd4 = (UINT32 *)srcdata;
+		while (dstdata <= end - 4)
+		{
+			UINT32 col4;
+
+			if ((col4 = *(sd4--)) != trans4)
+			{
+				UINT32 xod4;
+
+				xod4 = col4 ^ trans4;
+				if (xod4 & 0xff000000) dstdata[BL0] = colorbase + (col4 >> 24);
+				if (xod4 & 0x00ff0000) dstdata[BL1] = colorbase + ((col4 >> 16) & 0xff);
+				if (xod4 & 0x0000ff00) dstdata[BL2] = colorbase + ((col4 >>  8) & 0xff);
+				if (xod4 & 0x000000ff) dstdata[BL3] = colorbase + (col4 & 0xff);
+			}
+			dstdata += 4;
+		}
+		srcdata = (UINT8 *)sd4;
+		while (dstdata < end)
+		{
+			int col;
+
+			col = srcdata[3];
+			srcdata--;
+			if (col != transpen) *dstdata = colorbase + col;
+			dstdata++;
+		}
+
+		srcdata += srcmodulo;
+		dstdata += dstmodulo;
+		srcheight--;
+	}
+})
 
 #define PEN_IS_OPAQUE ((1<<col)&transmask) == 0
 
-DECLARE(blockmove_transmask,(
+DECLARE(blockmove_8toN_transmask,(
 		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
 		DATA_TYPE *dstdata,int dstmodulo,
-		const unsigned short *paldata,int transmask),
+		const UINT16 *paldata,int transmask),
 {
 	DATA_TYPE *end;
 	UINT32 *sd4;
@@ -2496,7 +2726,7 @@ DECLARE(blockmove_transmask,(
 			if (PEN_IS_OPAQUE) dstdata[BL3] = paldata[col];
 			dstdata += 4;
 		}
-		srcdata = (unsigned char *)sd4;
+		srcdata = (UINT8 *)sd4;
 		while (dstdata < end)
 		{
 			int col;
@@ -2512,10 +2742,10 @@ DECLARE(blockmove_transmask,(
 	}
 })
 
-DECLARE(blockmove_transmask_flipx,(
+DECLARE(blockmove_8toN_transmask_flipx,(
 		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
 		DATA_TYPE *dstdata,int dstmodulo,
-		const unsigned short *paldata,int transmask),
+		const UINT16 *paldata,int transmask),
 {
 	DATA_TYPE *end;
 	UINT32 *sd4;
@@ -2554,7 +2784,7 @@ DECLARE(blockmove_transmask_flipx,(
 			if (PEN_IS_OPAQUE) dstdata[BL3] = paldata[col];
 			dstdata += 4;
 		}
-		srcdata = (unsigned char *)sd4;
+		srcdata = (UINT8 *)sd4;
 		while (dstdata < end)
 		{
 			int col;
@@ -2571,10 +2801,10 @@ DECLARE(blockmove_transmask_flipx,(
 	}
 })
 
-DECLARE(blockmove_transmask_pri,(
+DECLARE(blockmove_8toN_transmask_pri,(
 		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
 		DATA_TYPE *dstdata,int dstmodulo,
-		const unsigned short *paldata,int transmask,UINT8 *pridata,UINT32 pmask),
+		const UINT16 *paldata,int transmask,UINT8 *pridata,UINT32 pmask),
 {
 	DATA_TYPE *end;
 	UINT32 *sd4;
@@ -2639,7 +2869,7 @@ DECLARE(blockmove_transmask_pri,(
 			dstdata += 4;
 			pridata += 4;
 		}
-		srcdata = (unsigned char *)sd4;
+		srcdata = (UINT8 *)sd4;
 		while (dstdata < end)
 		{
 			int col;
@@ -2662,10 +2892,10 @@ DECLARE(blockmove_transmask_pri,(
 	}
 })
 
-DECLARE(blockmove_transmask_pri_flipx,(
+DECLARE(blockmove_8toN_transmask_pri_flipx,(
 		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
 		DATA_TYPE *dstdata,int dstmodulo,
-		const unsigned short *paldata,int transmask,UINT8 *pridata,UINT32 pmask),
+		const UINT16 *paldata,int transmask,UINT8 *pridata,UINT32 pmask),
 {
 	DATA_TYPE *end;
 	UINT32 *sd4;
@@ -2733,7 +2963,7 @@ DECLARE(blockmove_transmask_pri_flipx,(
 			dstdata += 4;
 			pridata += 4;
 		}
-		srcdata = (unsigned char *)sd4;
+		srcdata = (UINT8 *)sd4;
 		while (dstdata < end)
 		{
 			int col;
@@ -2757,14 +2987,128 @@ DECLARE(blockmove_transmask_pri_flipx,(
 	}
 })
 
-
-DECLARE(blockmove_transcolor,(
+DECLARE(blockmove_8toN_transmask_raw,(
 		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
 		DATA_TYPE *dstdata,int dstmodulo,
-		const unsigned short *paldata,int transcolor),
+		unsigned int colorbase,int transmask),
 {
 	DATA_TYPE *end;
-	const unsigned short *lookupdata = Machine->game_colortable + (paldata - Machine->remapped_colortable);
+	UINT32 *sd4;
+
+	srcmodulo -= srcwidth;
+	dstmodulo -= srcwidth;
+
+	while (srcheight)
+	{
+		end = dstdata + srcwidth;
+		while (((long)srcdata & 3) && dstdata < end)	/* longword align */
+		{
+			int col;
+
+			col = *(srcdata++);
+			if (PEN_IS_OPAQUE) *dstdata = colorbase + col;
+			dstdata++;
+		}
+		sd4 = (UINT32 *)srcdata;
+		while (dstdata <= end - 4)
+		{
+			int col;
+			UINT32 col4;
+
+			col4 = *(sd4++);
+			col = (col4 >>  0) & 0xff;
+			if (PEN_IS_OPAQUE) dstdata[BL0] = colorbase + col;
+			col = (col4 >>  8) & 0xff;
+			if (PEN_IS_OPAQUE) dstdata[BL1] = colorbase + col;
+			col = (col4 >> 16) & 0xff;
+			if (PEN_IS_OPAQUE) dstdata[BL2] = colorbase + col;
+			col = (col4 >> 24) & 0xff;
+			if (PEN_IS_OPAQUE) dstdata[BL3] = colorbase + col;
+			dstdata += 4;
+		}
+		srcdata = (UINT8 *)sd4;
+		while (dstdata < end)
+		{
+			int col;
+
+			col = *(srcdata++);
+			if (PEN_IS_OPAQUE) *dstdata = colorbase + col;
+			dstdata++;
+		}
+
+		srcdata += srcmodulo;
+		dstdata += dstmodulo;
+		srcheight--;
+	}
+})
+
+DECLARE(blockmove_8toN_transmask_raw_flipx,(
+		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
+		DATA_TYPE *dstdata,int dstmodulo,
+		unsigned int colorbase,int transmask),
+{
+	DATA_TYPE *end;
+	UINT32 *sd4;
+
+	srcmodulo += srcwidth;
+	dstmodulo -= srcwidth;
+	//srcdata += srcwidth-1;
+	srcdata -= 3;
+
+	while (srcheight)
+	{
+		end = dstdata + srcwidth;
+		while (((long)srcdata & 3) && dstdata < end)	/* longword align */
+		{
+			int col;
+
+			col = srcdata[3];
+			srcdata--;
+			if (PEN_IS_OPAQUE) *dstdata = colorbase + col;
+			dstdata++;
+		}
+		sd4 = (UINT32 *)srcdata;
+		while (dstdata <= end - 4)
+		{
+			int col;
+			UINT32 col4;
+
+			col4 = *(sd4--);
+			col = (col4 >> 24) & 0xff;
+			if (PEN_IS_OPAQUE) dstdata[BL0] = colorbase + col;
+			col = (col4 >> 16) & 0xff;
+			if (PEN_IS_OPAQUE) dstdata[BL1] = colorbase + col;
+			col = (col4 >>  8) & 0xff;
+			if (PEN_IS_OPAQUE) dstdata[BL2] = colorbase + col;
+			col = (col4 >>  0) & 0xff;
+			if (PEN_IS_OPAQUE) dstdata[BL3] = colorbase + col;
+			dstdata += 4;
+		}
+		srcdata = (UINT8 *)sd4;
+		while (dstdata < end)
+		{
+			int col;
+
+			col = srcdata[3];
+			srcdata--;
+			if (PEN_IS_OPAQUE) *dstdata = colorbase + col;
+			dstdata++;
+		}
+
+		srcdata += srcmodulo;
+		dstdata += dstmodulo;
+		srcheight--;
+	}
+})
+
+
+DECLARE(blockmove_8toN_transcolor,(
+		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
+		DATA_TYPE *dstdata,int dstmodulo,
+		const UINT16 *paldata,int transcolor),
+{
+	DATA_TYPE *end;
+	const UINT16 *lookupdata = Machine->game_colortable + (paldata - Machine->remapped_colortable);
 
 	srcmodulo -= srcwidth;
 	dstmodulo -= srcwidth;
@@ -2785,13 +3129,13 @@ DECLARE(blockmove_transcolor,(
 	}
 })
 
-DECLARE(blockmove_transcolor_flipx,(
+DECLARE(blockmove_8toN_transcolor_flipx,(
 		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
 		DATA_TYPE *dstdata,int dstmodulo,
-		const unsigned short *paldata,int transcolor),
+		const UINT16 *paldata,int transcolor),
 {
 	DATA_TYPE *end;
-	const unsigned short *lookupdata = Machine->game_colortable + (paldata - Machine->remapped_colortable);
+	const UINT16 *lookupdata = Machine->game_colortable + (paldata - Machine->remapped_colortable);
 
 	srcmodulo += srcwidth;
 	dstmodulo -= srcwidth;
@@ -2813,13 +3157,13 @@ DECLARE(blockmove_transcolor_flipx,(
 	}
 })
 
-DECLARE(blockmove_transcolor_pri,(
+DECLARE(blockmove_8toN_transcolor_pri,(
 		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
 		DATA_TYPE *dstdata,int dstmodulo,
-		const unsigned short *paldata,int transcolor,UINT8 *pridata,UINT32 pmask),
+		const UINT16 *paldata,int transcolor,UINT8 *pridata,UINT32 pmask),
 {
 	DATA_TYPE *end;
-	const unsigned short *lookupdata = Machine->game_colortable + (paldata - Machine->remapped_colortable);
+	const UINT16 *lookupdata = Machine->game_colortable + (paldata - Machine->remapped_colortable);
 
 	pmask |= (1<<31);
 
@@ -2849,13 +3193,13 @@ DECLARE(blockmove_transcolor_pri,(
 	}
 })
 
-DECLARE(blockmove_transcolor_pri_flipx,(
+DECLARE(blockmove_8toN_transcolor_pri_flipx,(
 		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
 		DATA_TYPE *dstdata,int dstmodulo,
-		const unsigned short *paldata,int transcolor,UINT8 *pridata,UINT32 pmask),
+		const UINT16 *paldata,int transcolor,UINT8 *pridata,UINT32 pmask),
 {
 	DATA_TYPE *end;
-	const unsigned short *lookupdata = Machine->game_colortable + (paldata - Machine->remapped_colortable);
+	const UINT16 *lookupdata = Machine->game_colortable + (paldata - Machine->remapped_colortable);
 
 	pmask |= (1<<31);
 
@@ -2887,10 +3231,10 @@ DECLARE(blockmove_transcolor_pri_flipx,(
 })
 
 
-DECLARE(blockmove_transthrough,(
+DECLARE(blockmove_8toN_transthrough,(
 		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
 		DATA_TYPE *dstdata,int dstmodulo,
-		const unsigned short *paldata,int transcolor),
+		const UINT16 *paldata,int transcolor),
 {
 	DATA_TYPE *end;
 
@@ -2913,10 +3257,10 @@ DECLARE(blockmove_transthrough,(
 	}
 })
 
-DECLARE(blockmove_transthrough_flipx,(
+DECLARE(blockmove_8toN_transthrough_flipx,(
 		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
 		DATA_TYPE *dstdata,int dstmodulo,
-		const unsigned short *paldata,int transcolor),
+		const UINT16 *paldata,int transcolor),
 {
 	DATA_TYPE *end;
 
@@ -2940,10 +3284,63 @@ DECLARE(blockmove_transthrough_flipx,(
 	}
 })
 
-DECLARE(blockmove_pen_table,(
+DECLARE(blockmove_8toN_transthrough_raw,(
 		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
 		DATA_TYPE *dstdata,int dstmodulo,
-		const unsigned short *paldata,int transcolor),
+		unsigned int colorbase,int transcolor),
+{
+	DATA_TYPE *end;
+
+	srcmodulo -= srcwidth;
+	dstmodulo -= srcwidth;
+
+	while (srcheight)
+	{
+		end = dstdata + srcwidth;
+		while (dstdata < end)
+		{
+			if (*dstdata == transcolor) *dstdata = colorbase + *srcdata;
+			srcdata++;
+			dstdata++;
+		}
+
+		srcdata += srcmodulo;
+		dstdata += dstmodulo;
+		srcheight--;
+	}
+})
+
+DECLARE(blockmove_8toN_transthrough_raw_flipx,(
+		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
+		DATA_TYPE *dstdata,int dstmodulo,
+		unsigned int colorbase,int transcolor),
+{
+	DATA_TYPE *end;
+
+	srcmodulo += srcwidth;
+	dstmodulo -= srcwidth;
+	//srcdata += srcwidth-1;
+
+	while (srcheight)
+	{
+		end = dstdata + srcwidth;
+		while (dstdata < end)
+		{
+			if (*dstdata == transcolor) *dstdata = colorbase + *srcdata;
+			srcdata--;
+			dstdata++;
+		}
+
+		srcdata += srcmodulo;
+		dstdata += dstmodulo;
+		srcheight--;
+	}
+})
+
+DECLARE(blockmove_8toN_pen_table,(
+		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
+		DATA_TYPE *dstdata,int dstmodulo,
+		const UINT16 *paldata,int transcolor),
 {
 	DATA_TYPE *end;
 
@@ -2982,10 +3379,10 @@ DECLARE(blockmove_pen_table,(
 	}
 })
 
-DECLARE(blockmove_pen_table_flipx,(
+DECLARE(blockmove_8toN_pen_table_flipx,(
 		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
 		DATA_TYPE *dstdata,int dstmodulo,
-		const unsigned short *paldata,int transcolor),
+		const UINT16 *paldata,int transcolor),
 {
 	DATA_TYPE *end;
 
@@ -3025,7 +3422,7 @@ DECLARE(blockmove_pen_table_flipx,(
 	}
 })
 
-DECLARE(blockmove_opaque_noremap,(
+DECLARE(blockmove_NtoN_opaque_noremap,(
 		const DATA_TYPE *srcdata,int srcwidth,int srcheight,int srcmodulo,
 		DATA_TYPE *dstdata,int dstmodulo),
 {
@@ -3038,7 +3435,7 @@ DECLARE(blockmove_opaque_noremap,(
 	}
 })
 
-DECLARE(blockmove_opaque_noremap_flipx,(
+DECLARE(blockmove_NtoN_opaque_noremap_flipx,(
 		const DATA_TYPE *srcdata,int srcwidth,int srcheight,int srcmodulo,
 		DATA_TYPE *dstdata,int dstmodulo),
 {
@@ -3073,8 +3470,79 @@ DECLARE(blockmove_opaque_noremap_flipx,(
 	}
 })
 
+DECLARE(blockmove_NtoN_opaque_remap,(
+		const DATA_TYPE *srcdata,int srcwidth,int srcheight,int srcmodulo,
+		DATA_TYPE *dstdata,int dstmodulo,
+		const UINT16 *paldata),
+{
+	DATA_TYPE *end;
 
-DECLARE(blockmove_transthrough_noremap,(
+	srcmodulo -= srcwidth;
+	dstmodulo -= srcwidth;
+
+	while (srcheight)
+	{
+		end = dstdata + srcwidth;
+		while (dstdata <= end - 8)
+		{
+			dstdata[0] = paldata[srcdata[0]];
+			dstdata[1] = paldata[srcdata[1]];
+			dstdata[2] = paldata[srcdata[2]];
+			dstdata[3] = paldata[srcdata[3]];
+			dstdata[4] = paldata[srcdata[4]];
+			dstdata[5] = paldata[srcdata[5]];
+			dstdata[6] = paldata[srcdata[6]];
+			dstdata[7] = paldata[srcdata[7]];
+			dstdata += 8;
+			srcdata += 8;
+		}
+		while (dstdata < end)
+			*(dstdata++) = paldata[*(srcdata++)];
+
+		srcdata += srcmodulo;
+		dstdata += dstmodulo;
+		srcheight--;
+	}
+})
+
+DECLARE(blockmove_NtoN_opaque_remap_flipx,(
+		const DATA_TYPE *srcdata,int srcwidth,int srcheight,int srcmodulo,
+		DATA_TYPE *dstdata,int dstmodulo,
+		const UINT16 *paldata),
+{
+	DATA_TYPE *end;
+
+	srcmodulo += srcwidth;
+	dstmodulo -= srcwidth;
+	//srcdata += srcwidth-1;
+
+	while (srcheight)
+	{
+		end = dstdata + srcwidth;
+		while (dstdata <= end - 8)
+		{
+			srcdata -= 8;
+			dstdata[0] = paldata[srcdata[8]];
+			dstdata[1] = paldata[srcdata[7]];
+			dstdata[2] = paldata[srcdata[6]];
+			dstdata[3] = paldata[srcdata[5]];
+			dstdata[4] = paldata[srcdata[4]];
+			dstdata[5] = paldata[srcdata[3]];
+			dstdata[6] = paldata[srcdata[2]];
+			dstdata[7] = paldata[srcdata[1]];
+			dstdata += 8;
+		}
+		while (dstdata < end)
+			*(dstdata++) = paldata[*(srcdata--)];
+
+		srcdata += srcmodulo;
+		dstdata += dstmodulo;
+		srcheight--;
+	}
+})
+
+
+DECLARE(blockmove_NtoN_transthrough_noremap,(
 		const DATA_TYPE *srcdata,int srcwidth,int srcheight,int srcmodulo,
 		DATA_TYPE *dstdata,int dstmodulo,
 		int transcolor),
@@ -3100,7 +3568,7 @@ DECLARE(blockmove_transthrough_noremap,(
 	}
 })
 
-DECLARE(blockmove_transthrough_noremap_flipx,(
+DECLARE(blockmove_NtoN_transthrough_noremap_flipx,(
 		const DATA_TYPE *srcdata,int srcwidth,int srcheight,int srcmodulo,
 		DATA_TYPE *dstdata,int dstmodulo,
 		int transcolor),
@@ -3126,6 +3594,155 @@ DECLARE(blockmove_transthrough_noremap_flipx,(
 		srcheight--;
 	}
 })
+
+DECLARE(blockmove_NtoN_blend_noremap,(
+		const DATA_TYPE *srcdata,int srcwidth,int srcheight,int srcmodulo,
+		DATA_TYPE *dstdata,int dstmodulo,
+		int srcshift),
+{
+	DATA_TYPE *end;
+
+	srcmodulo -= srcwidth;
+	dstmodulo -= srcwidth;
+
+	while (srcheight)
+	{
+		end = dstdata + srcwidth;
+		while (dstdata <= end - 8)
+		{
+			dstdata[0] |= srcdata[0] << srcshift;
+			dstdata[1] |= srcdata[1] << srcshift;
+			dstdata[2] |= srcdata[2] << srcshift;
+			dstdata[3] |= srcdata[3] << srcshift;
+			dstdata[4] |= srcdata[4] << srcshift;
+			dstdata[5] |= srcdata[5] << srcshift;
+			dstdata[6] |= srcdata[6] << srcshift;
+			dstdata[7] |= srcdata[7] << srcshift;
+			dstdata += 8;
+			srcdata += 8;
+		}
+		while (dstdata < end)
+			*(dstdata++) |= *(srcdata++) << srcshift;
+
+		srcdata += srcmodulo;
+		dstdata += dstmodulo;
+		srcheight--;
+	}
+})
+
+DECLARE(blockmove_NtoN_blend_noremap_flipx,(
+		const DATA_TYPE *srcdata,int srcwidth,int srcheight,int srcmodulo,
+		DATA_TYPE *dstdata,int dstmodulo,
+		int srcshift),
+{
+	DATA_TYPE *end;
+
+	srcmodulo += srcwidth;
+	dstmodulo -= srcwidth;
+	//srcdata += srcwidth-1;
+
+	while (srcheight)
+	{
+		end = dstdata + srcwidth;
+		while (dstdata <= end - 8)
+		{
+			srcdata -= 8;
+			dstdata[0] |= srcdata[8] << srcshift;
+			dstdata[1] |= srcdata[7] << srcshift;
+			dstdata[2] |= srcdata[6] << srcshift;
+			dstdata[3] |= srcdata[5] << srcshift;
+			dstdata[4] |= srcdata[4] << srcshift;
+			dstdata[5] |= srcdata[3] << srcshift;
+			dstdata[6] |= srcdata[2] << srcshift;
+			dstdata[7] |= srcdata[1] << srcshift;
+			dstdata += 8;
+		}
+		while (dstdata < end)
+			*(dstdata++) |= *(srcdata--) << srcshift;
+
+		srcdata += srcmodulo;
+		dstdata += dstmodulo;
+		srcheight--;
+	}
+})
+
+DECLARE(blockmove_NtoN_blend_remap,(
+		const DATA_TYPE *srcdata,int srcwidth,int srcheight,int srcmodulo,
+		DATA_TYPE *dstdata,int dstmodulo,
+		const UINT16 *paldata,int srcshift),
+{
+	DATA_TYPE *end;
+
+	srcmodulo -= srcwidth;
+	dstmodulo -= srcwidth;
+
+	while (srcheight)
+	{
+		end = dstdata + srcwidth;
+		while (dstdata <= end - 8)
+		{
+			dstdata[0] = paldata[dstdata[0] | (srcdata[0] << srcshift)];
+			dstdata[1] = paldata[dstdata[1] | (srcdata[1] << srcshift)];
+			dstdata[2] = paldata[dstdata[2] | (srcdata[2] << srcshift)];
+			dstdata[3] = paldata[dstdata[3] | (srcdata[3] << srcshift)];
+			dstdata[4] = paldata[dstdata[4] | (srcdata[4] << srcshift)];
+			dstdata[5] = paldata[dstdata[5] | (srcdata[5] << srcshift)];
+			dstdata[6] = paldata[dstdata[6] | (srcdata[6] << srcshift)];
+			dstdata[7] = paldata[dstdata[7] | (srcdata[7] << srcshift)];
+			dstdata += 8;
+			srcdata += 8;
+		}
+		while (dstdata < end)
+		{
+			*dstdata = paldata[*dstdata | (*(srcdata++) << srcshift)];
+			dstdata++;
+		}
+
+		srcdata += srcmodulo;
+		dstdata += dstmodulo;
+		srcheight--;
+	}
+})
+
+DECLARE(blockmove_NtoN_blend_remap_flipx,(
+		const DATA_TYPE *srcdata,int srcwidth,int srcheight,int srcmodulo,
+		DATA_TYPE *dstdata,int dstmodulo,
+		const UINT16 *paldata,int srcshift),
+{
+	DATA_TYPE *end;
+
+	srcmodulo += srcwidth;
+	dstmodulo -= srcwidth;
+	//srcdata += srcwidth-1;
+
+	while (srcheight)
+	{
+		end = dstdata + srcwidth;
+		while (dstdata <= end - 8)
+		{
+			srcdata -= 8;
+			dstdata[0] = paldata[dstdata[0] | (srcdata[8] << srcshift)];
+			dstdata[1] = paldata[dstdata[1] | (srcdata[7] << srcshift)];
+			dstdata[2] = paldata[dstdata[2] | (srcdata[6] << srcshift)];
+			dstdata[3] = paldata[dstdata[3] | (srcdata[5] << srcshift)];
+			dstdata[4] = paldata[dstdata[4] | (srcdata[4] << srcshift)];
+			dstdata[5] = paldata[dstdata[5] | (srcdata[3] << srcshift)];
+			dstdata[6] = paldata[dstdata[6] | (srcdata[2] << srcshift)];
+			dstdata[7] = paldata[dstdata[7] | (srcdata[1] << srcshift)];
+			dstdata += 8;
+		}
+		while (dstdata < end)
+		{
+			*dstdata = paldata[*dstdata | (*(srcdata--) << srcshift)];
+			dstdata++;
+		}
+
+		srcdata += srcmodulo;
+		dstdata += dstmodulo;
+		srcheight--;
+	}
+})
+
 
 DECLARE(drawgfx_core,(
 		struct osd_bitmap *dest,const struct GfxElement *gfx,
@@ -3166,7 +3783,7 @@ DECLARE(drawgfx_core,(
 		int sm = gfx->line_modulo;								/* source modulo */
 		DATA_TYPE *dd = ((DATA_TYPE *)dest->line[sy]) + sx;		/* dest data */
 		int dm = ((DATA_TYPE *)dest->line[1])-((DATA_TYPE *)dest->line[0]);	/* dest modulo */
-		const unsigned short *paldata = &gfx->colortable[gfx->color_granularity * color];
+		const UINT16 *paldata = &gfx->colortable[gfx->color_granularity * color];
 		UINT8 *pribuf = (pri_buffer) ? pri_buffer->line[sy] + sx : NULL;
 
 		if (flipx)
@@ -3192,46 +3809,85 @@ DECLARE(drawgfx_core,(
 		{
 			case TRANSPARENCY_NONE:
 				if (pribuf)
-					BLOCKMOVE(opaque_pri,flipx,(sd,sw,sh,sm,dd,dm,paldata,pribuf,pri_mask));
+					BLOCKMOVE(8toN_opaque_pri,flipx,(sd,sw,sh,sm,dd,dm,paldata,pribuf,pri_mask));
 				else
-					BLOCKMOVE(opaque,flipx,(sd,sw,sh,sm,dd,dm,paldata));
+					BLOCKMOVE(8toN_opaque,flipx,(sd,sw,sh,sm,dd,dm,paldata));
 				break;
 
 			case TRANSPARENCY_PEN:
 				if (pribuf)
-					BLOCKMOVE(transpen_pri,flipx,(sd,sw,sh,sm,dd,dm,paldata,transparent_color,pribuf,pri_mask));
+					BLOCKMOVE(8toN_transpen_pri,flipx,(sd,sw,sh,sm,dd,dm,paldata,transparent_color,pribuf,pri_mask));
 				else
-					BLOCKMOVE(transpen,flipx,(sd,sw,sh,sm,dd,dm,paldata,transparent_color));
+					BLOCKMOVE(8toN_transpen,flipx,(sd,sw,sh,sm,dd,dm,paldata,transparent_color));
 				break;
 
 			case TRANSPARENCY_PENS:
 				if (pribuf)
-					BLOCKMOVE(transmask_pri,flipx,(sd,sw,sh,sm,dd,dm,paldata,transparent_color,pribuf,pri_mask));
+					BLOCKMOVE(8toN_transmask_pri,flipx,(sd,sw,sh,sm,dd,dm,paldata,transparent_color,pribuf,pri_mask));
 				else
-					BLOCKMOVE(transmask,flipx,(sd,sw,sh,sm,dd,dm,paldata,transparent_color));
+					BLOCKMOVE(8toN_transmask,flipx,(sd,sw,sh,sm,dd,dm,paldata,transparent_color));
 				break;
 
 			case TRANSPARENCY_COLOR:
 				if (pribuf)
-					BLOCKMOVE(transcolor_pri,flipx,(sd,sw,sh,sm,dd,dm,paldata,transparent_color,pribuf,pri_mask));
+					BLOCKMOVE(8toN_transcolor_pri,flipx,(sd,sw,sh,sm,dd,dm,paldata,transparent_color,pribuf,pri_mask));
 				else
-					BLOCKMOVE(transcolor,flipx,(sd,sw,sh,sm,dd,dm,paldata,transparent_color));
+					BLOCKMOVE(8toN_transcolor,flipx,(sd,sw,sh,sm,dd,dm,paldata,transparent_color));
 				break;
 
 			case TRANSPARENCY_THROUGH:
 				if (pribuf)
 usrintf_showmessage("pdrawgfx TRANS_THROUGH not supported");
-//					BLOCKMOVE(transthrough,flipx,(sd,sw,sh,sm,dd,dm,paldata,transparent_color));
+//					BLOCKMOVE(8toN_transthrough,flipx,(sd,sw,sh,sm,dd,dm,paldata,transparent_color));
 				else
-					BLOCKMOVE(transthrough,flipx,(sd,sw,sh,sm,dd,dm,paldata,transparent_color));
+					BLOCKMOVE(8toN_transthrough,flipx,(sd,sw,sh,sm,dd,dm,paldata,transparent_color));
 				break;
 
 			case TRANSPARENCY_PEN_TABLE:
 				if (pribuf)
 usrintf_showmessage("pdrawgfx TRANS_PEN_TABLE not supported");
-//					BLOCKMOVE(pen_table,flipx,(sd,sw,sh,sm,dd,dm,paldata,transparent_color));
+//					BLOCKMOVE(8toN_pen_table,flipx,(sd,sw,sh,sm,dd,dm,paldata,transparent_color));
 				else
-					BLOCKMOVE(pen_table,flipx,(sd,sw,sh,sm,dd,dm,paldata,transparent_color));
+					BLOCKMOVE(8toN_pen_table,flipx,(sd,sw,sh,sm,dd,dm,paldata,transparent_color));
+				break;
+
+			case TRANSPARENCY_NONE_RAW:
+				if (pribuf)
+usrintf_showmessage("pdrawgfx TRANS_NONE_RAW not supported");
+//					BLOCKMOVE(8toN_opaque_pri_raw,flipx,(sd,sw,sh,sm,dd,dm,paldata,pribuf,pri_mask));
+				else
+					BLOCKMOVE(8toN_opaque_raw,flipx,(sd,sw,sh,sm,dd,dm,color));
+				break;
+
+			case TRANSPARENCY_PEN_RAW:
+				if (pribuf)
+usrintf_showmessage("pdrawgfx TRANS_PEN_RAW not supported");
+//					BLOCKMOVE(8toN_transpen_pri_raw,flipx,(sd,sw,sh,sm,dd,dm,paldata,pribuf,pri_mask));
+				else
+					BLOCKMOVE(8toN_transpen_raw,flipx,(sd,sw,sh,sm,dd,dm,color,transparent_color));
+				break;
+
+			case TRANSPARENCY_PENS_RAW:
+				if (pribuf)
+usrintf_showmessage("pdrawgfx TRANS_PENS_RAW not supported");
+//					BLOCKMOVE(8toN_transmask_pri_raw,flipx,(sd,sw,sh,sm,dd,dm,paldata,pribuf,pri_mask));
+				else
+					BLOCKMOVE(8toN_transmask_raw,flipx,(sd,sw,sh,sm,dd,dm,color,transparent_color));
+				break;
+
+			case TRANSPARENCY_THROUGH_RAW:
+				if (pribuf)
+usrintf_showmessage("pdrawgfx TRANS_PEN_RAW not supported");
+//					BLOCKMOVE(8toN_transpen_pri_raw,flipx,(sd,sw,sh,sm,dd,dm,paldata,pribuf,pri_mask));
+				else
+					BLOCKMOVE(8toN_transthrough_raw,flipx,(sd,sw,sh,sm,dd,dm,color,transparent_color));
+				break;
+
+			default:
+				if (pribuf)
+					usrintf_showmessage("pdrawgfx pen mode not supported");
+				else
+					usrintf_showmessage("drawgfx pen mode not supported");
 				break;
 		}
 	}
@@ -3296,16 +3952,31 @@ DECLARE(copybitmap_core,(
 		switch (transparency)
 		{
 			case TRANSPARENCY_NONE:
-				BLOCKMOVE(opaque_noremap,flipx,(sd,sw,sh,sm,dd,dm));
+				BLOCKMOVE(NtoN_opaque_remap,flipx,(sd,sw,sh,sm,dd,dm,Machine->pens));
 				break;
 
-			case TRANSPARENCY_PEN:
-			case TRANSPARENCY_COLOR:
-				BLOCKMOVE(transpen_noremap,flipx,(sd,sw,sh,sm,dd,dm,transparent_color));
+			case TRANSPARENCY_NONE_RAW:
+				BLOCKMOVE(NtoN_opaque_noremap,flipx,(sd,sw,sh,sm,dd,dm));
 				break;
 
-			case TRANSPARENCY_THROUGH:
-				BLOCKMOVE(transthrough_noremap,flipx,(sd,sw,sh,sm,dd,dm,transparent_color));
+			case TRANSPARENCY_PEN_RAW:
+				BLOCKMOVE(NtoN_transpen_noremap,flipx,(sd,sw,sh,sm,dd,dm,transparent_color));
+				break;
+
+			case TRANSPARENCY_THROUGH_RAW:
+				BLOCKMOVE(NtoN_transthrough_noremap,flipx,(sd,sw,sh,sm,dd,dm,transparent_color));
+				break;
+
+			case TRANSPARENCY_BLEND:
+				BLOCKMOVE(NtoN_blend_remap,flipx,(sd,sw,sh,sm,dd,dm,Machine->pens,transparent_color));
+				break;
+
+			case TRANSPARENCY_BLEND_RAW:
+				BLOCKMOVE(NtoN_blend_noremap,flipx,(sd,sw,sh,sm,dd,dm,transparent_color));
+				break;
+
+			default:
+				usrintf_showmessage("copybitmap pen mode not supported");
 				break;
 		}
 	}

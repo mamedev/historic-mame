@@ -135,8 +135,8 @@ int YM2608_sh_start(const struct MachineSound *msound)
 		}
 		stream[i] = stream_init_multi(YM2608_NUMBUF,name,vol,rate,i,YM2608UpdateOne);
 		/* setup adpcm buffers */
-		pcmbufa[i]  = NULL;
-		pcmsizea[i] = 0;
+		pcmbufa[i]  = (void *)(memory_region(intf->pcmrom[i]));
+		pcmsizea[i] = memory_region_length(intf->pcmrom[i]);
 	}
 
 	/* rythm rom build */

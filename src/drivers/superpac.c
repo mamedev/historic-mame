@@ -522,6 +522,30 @@ ROM_START( pacnpal )
 	ROM_LOAD( "papi3.cpu",    0x0000, 0x0100, 0x83c31a98 )
 ROM_END
 
+ROM_START( pacnpal2 )
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "pap1_3.1d",    0xa000, 0x2000, 0xd7ec2719 )
+	ROM_LOAD( "pap1_2.1c",    0xc000, 0x2000, 0x0245396e )
+	ROM_LOAD( "pap1_1.1b",    0xe000, 0x2000, 0x7f046b58 )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_LOAD( "pap14.cpu",    0xf000, 0x1000, 0x330e20de )
+
+	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pap16.cpu",    0x0000, 0x1000, 0xa36b96cb )
+
+	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pap15.vid",    0x0000, 0x2000, 0xfb6f56e3 )
+
+	ROM_REGION( 0x0220, REGION_PROMS )
+	ROM_LOAD( "papi6.vid",    0x0000, 0x0020, 0x52634b41 ) /* palette */
+	ROM_LOAD( "papi5.vid",    0x0020, 0x0100, 0xac46203c ) /* chars */
+	ROM_LOAD( "papi4.vid",    0x0120, 0x0100, 0x686bde84 ) /* sprites */
+
+	ROM_REGION( 0x0100, REGION_SOUND1 )	/* sound prom */
+	ROM_LOAD( "papi3.cpu",    0x0000, 0x0100, 0x83c31a98 )
+ROM_END
+
 ROM_START( pacnchmp )
 	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "pap3.1d",      0xa000, 0x2000, 0x20a07d3d )
@@ -551,4 +575,5 @@ ROM_END
 GAME( 1982, superpac, 0,        superpac, superpac, 0, ROT90, "Namco", "Super Pac-Man" )
 GAME( 1982, superpcm, superpac, superpac, superpac, 0, ROT90, "[Namco] (Bally Midway license)", "Super Pac-Man (Midway)" )
 GAME( 1983, pacnpal,  0,        pacnpal,  pacnpal,  0, ROT90, "Namco", "Pac & Pal" )
+GAME( 1983, pacnpal2, pacnpal,  pacnpal,  pacnpal,  0, ROT90, "Namco", "Pac & Pal (older)" )
 GAMEX(1983, pacnchmp, pacnpal,  pacnpal,  pacnpal,  0, ROT90, "Namco", "Pac-Man & Chomp Chomp", GAME_IMPERFECT_COLORS )
