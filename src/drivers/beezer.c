@@ -119,10 +119,10 @@ static const struct MachineDriver machine_driver_beezer =
 	/* video hardware */
 	256, 384, { 0, 256-1, 16, 303 },
 	0,
-	16,16,
+	16, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	0,
 	0,

@@ -336,7 +336,7 @@ static const struct MachineDriver machine_driver_gbusters =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	gbusters_vh_start,
 	gbusters_vh_stop,

@@ -33,13 +33,13 @@ static void update_color(int offset)
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
 
-	palette_change_color(offset,r,g,b);
+	palette_set_color(offset,r,g,b);
 
 	/* the text layer might use the other 512 entries in the palette RAM */
 	/* (which are all set to 0x07ff = white). I don't know, so I just set */
 	/* it to white. */
-	palette_change_color(512,0x00,0x00,0x00);
-	palette_change_color(513,0xff,0xff,0xff);
+	palette_set_color(512,0x00,0x00,0x00);
+	palette_set_color(513,0xff,0xff,0xff);
 }
 
 WRITE_HANDLER( gladiatr_paletteram_rg_w )

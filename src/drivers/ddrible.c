@@ -371,7 +371,7 @@ static const struct MachineDriver machine_driver_ddribble =
 	64, 64 + 256,
 	ddrible_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	ddrible_vh_start,
 	0,

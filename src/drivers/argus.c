@@ -833,10 +833,10 @@ static const struct MachineDriver machine_driver_argus =
 	/* video hardware */
 	32*16, 32*16, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	argus_gfxdecodeinfo,
-	56*16, 56*16,
+	896, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	argus_vh_start,
 	argus_vh_stop,
@@ -877,10 +877,10 @@ static const struct MachineDriver machine_driver_valtric =
 	/* video hardware */
 	32*16, 32*16, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	valtric_gfxdecodeinfo,
-	48*16, 48*16,
+	768, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	valtric_vh_start,
 	0,
@@ -921,10 +921,10 @@ static const struct MachineDriver machine_driver_butasan =
 	/* video hardware */
 	32*16, 32*16, { 0*8, 32*8-1, 1*8, 31*8-1 },
 	butasan_gfxdecodeinfo,
-	48*16, 48*16,
+	768, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	butasan_vh_start,
 	butasan_vh_stop,

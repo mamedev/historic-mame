@@ -232,7 +232,7 @@ static void nab1_install_palette( void )
 
 			for( byte_offset=0; byte_offset<4; byte_offset++ )
 			{
-				palette_change_color( pen++, r>>24, g>>24, b>>24 );
+				palette_set_color( pen++, r>>24, g>>24, b>>24 );
 				r<<=8; g<<=8; b<<=8;
 			}
 		}

@@ -197,7 +197,7 @@ extern size_t slapfight_videoram_size;
 extern unsigned char *slapfight_scrollx_lo,*slapfight_scrollx_hi,*slapfight_scrolly;
 void slapfight_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void perfrman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void slapfight_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void slapfight_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 int slapfight_vh_start (void);
 int perfrman_vh_start (void);
 WRITE_HANDLER( slapfight_flipscreen_w );
@@ -792,7 +792,7 @@ static struct MachineDriver machine_driver_perfrman =
 	/* video hardware */
 	64*8, 32*8, { 1*8, 34*8-1, 2*8, 32*8-1 },
 	perfrman_gfxdecodeinfo,
-	256, 256,
+	256, 0,
 	slapfight_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
@@ -835,7 +835,7 @@ static const struct MachineDriver machine_driver_tigerh =
 	/* video hardware */
 	64*8, 32*8, { 1*8, 36*8-1, 2*8, 32*8-1 },
 	gfxdecodeinfo,
-	256, 256,
+	256, 0,
 	slapfight_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
@@ -881,7 +881,7 @@ static const struct MachineDriver machine_driver_slapfigh =
 	/* video hardware */
 	64*8, 32*8, { 1*8, 36*8-1, 2*8, 32*8-1 },
 	gfxdecodeinfo,
-	256, 256,
+	256, 0,
 	slapfight_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
@@ -928,7 +928,7 @@ static const struct MachineDriver machine_driver_slapbtuk =
 	/* video hardware */
 	64*8, 32*8, { 1*8, 36*8-1, 2*8, 32*8-1 },
 	gfxdecodeinfo,
-	256, 256,
+	256, 0,
 	slapfight_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,

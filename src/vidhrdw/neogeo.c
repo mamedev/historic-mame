@@ -235,7 +235,7 @@ static void swap_palettes(void)
 		g = (g << 3) | (g >> 2);
 		b = (b << 3) | (b >> 2);
 
-		palette_change_color(i, r, g, b);
+		palette_set_color(i, r, g, b);
 	}
 
 	palette_swap_pending = 0;
@@ -287,7 +287,7 @@ WRITE16_HANDLER( neogeo_paletteram16_w )
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
 
-	palette_change_color(offset, r, g, b);
+	palette_set_color(offset, r, g, b);
 }
 
 /******************************************************************************/

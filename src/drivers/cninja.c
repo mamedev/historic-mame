@@ -823,7 +823,7 @@ static const struct MachineDriver machine_driver_cninja =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	cninja_vh_start,
 	0,
@@ -875,7 +875,7 @@ static const struct MachineDriver machine_driver_stoneage =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	stoneage_vh_start,
 	0,
@@ -923,7 +923,7 @@ static const struct MachineDriver machine_driver_edrandy =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	edrandy_vh_start,
 	0,
@@ -975,7 +975,7 @@ static struct MachineDriver machine_driver_robocop2 =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	robocop2_vh_start,
 	0,

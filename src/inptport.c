@@ -138,9 +138,6 @@ struct ipd inputport_defaults[] =
 	{ IPT_UI_THROTTLE,          "Throttle",				SEQ_DEF_1(KEYCODE_F10) },
 	{ IPT_UI_SHOW_FPS,          "Show FPS",				SEQ_DEF_5(KEYCODE_F11, CODE_NOT, KEYCODE_LCONTROL, CODE_NOT, KEYCODE_LSHIFT) },
 	{ IPT_UI_SHOW_PROFILER,     "Show Profiler",		SEQ_DEF_2(KEYCODE_F11, KEYCODE_LSHIFT) },
-#ifdef MAME_DEBUG
-	{ IPT_UI_SHOW_COLORS,       "Show Colors",			SEQ_DEF_2(KEYCODE_F11, KEYCODE_LCONTROL) },
-#endif
 #ifdef MESS
 	{ IPT_UI_TOGGLE_UI,         "UI Toggle",			SEQ_DEF_1(KEYCODE_SCRLOCK) },
 #endif

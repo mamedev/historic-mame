@@ -1473,7 +1473,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	256, 0, \
 	0, \
 \
-	VIDEO_TYPE_RASTER  | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
+	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
 	0, \
 	pstadium_vh_start, \
 	pstadium_vh_stop, \
@@ -1515,7 +1515,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	256, 0, \
 	0, \
 \
-	VIDEO_TYPE_RASTER  | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
+	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
 	0, \
 	pstadium_vh_start, \
 	pstadium_vh_stop, \
@@ -1557,7 +1557,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	256, 0, \
 	0, \
 \
-	VIDEO_TYPE_RASTER  | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
+	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
 	0, \
 	pstadium_vh_start, \
 	pstadium_vh_stop, \

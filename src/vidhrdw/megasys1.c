@@ -805,7 +805,7 @@ static struct priority priorities[] =
 	pens.
 */
 
-void megasys1_convert_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *prom)
+void megasys1_convert_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *prom)
 {
 	int pri_code, offset, i, order;
 

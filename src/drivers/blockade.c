@@ -693,9 +693,22 @@ ROM_START( hustle )
     ROM_LOAD( "3160021.u43", 0x0200, 0x0200, 0xb5083128 )
 ROM_END
 
+ROM_START( mineswpr )
+    ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
+    /* Note: These are being loaded into a bogus location, */
+    /*       They are nibble wide rom images which will be */
+    /*       merged and loaded into the proper place by    */
+    /*       blockade_rom_init()                           */
+    ROM_LOAD( "mineswee.h0p", 0x1000, 0x0400, 0x5850a4ba )
+    ROM_LOAD( "mineswee.l0p", 0x1400, 0x0400, 0x05961379 )
 
+    ROM_REGION( 0x400, REGION_GFX1, ROMREGION_DISPOSE )
+    ROM_LOAD( "mineswee.ums", 0x0000, 0x0200, 0x0e1c5c37 )
+    ROM_LOAD( "mineswee.uls", 0x0200, 0x0200, 0x3a4f66e1 )
+ROM_END
 
 GAMEX( 1976, blockade, 0, blockade, blockade, blockade, ROT0, "Gremlin", "Blockade", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
 GAMEX( 1976, comotion, 0, comotion, comotion, comotion, ROT0, "Gremlin", "Comotion", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
 GAMEX( 1978, blasto,   0, blasto,   blasto,   comotion, ROT0, "Gremlin", "Blasto", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
 GAMEX( 1977, hustle,   0, hustle,   hustle,   comotion, ROT0, "Gremlin", "Hustle", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
+GAMEX( 1977, mineswpr, 0, blasto,   blockade, blockade, ROT0, "Amutech", "Minesweeper", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )

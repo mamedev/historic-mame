@@ -231,7 +231,7 @@ static const struct MachineDriver machine_driver_sbrkout =
 	ARTWORK_COLORS,ARTWORK_COLORS,		/* Declare extra colors for the overlay */
 	init_palette,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	sbrkout_vh_start,
 	generic_vh_stop,

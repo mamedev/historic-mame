@@ -272,7 +272,7 @@ WRITE_HANDLER( qix_paletteram_w )
 	blue = table[(bits << 2) | intensity];
 
 	/* update the palette */
-	palette_change_color(offset, red, green, blue);
+	palette_set_color(offset, red, green, blue);
 }
 
 

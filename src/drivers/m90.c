@@ -666,7 +666,7 @@ static struct MachineDriver machine_driver_m90 =
 	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	m90_vh_start,
 	0,
@@ -715,7 +715,7 @@ static struct MachineDriver machine_driver_bombrman =
 	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	m90_vh_start,
 	0,
@@ -764,7 +764,7 @@ static struct MachineDriver machine_driver_bbmanw =
 	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	m90_vh_start,
 	0,
@@ -813,7 +813,7 @@ static struct MachineDriver machine_driver_bootleg =
 	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	m90_vh_start,
 	0,

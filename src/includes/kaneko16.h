@@ -40,7 +40,7 @@ WRITE16_HANDLER( kaneko16_bg15_select_w );
 READ16_HANDLER ( kaneko16_bg15_reg_r );
 WRITE16_HANDLER( kaneko16_bg15_reg_w );
 
-void berlwall_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void berlwall_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 
 
 /* Priorities: */

@@ -428,7 +428,7 @@ static const struct MachineDriver machine_driver_##NAME =							\
 	1024 + 32768, 1024,														\
 	galpanic_init_palette,													\
 																			\
-	VIDEO_TYPE_RASTER ,								\
+	VIDEO_TYPE_RASTER,								\
 	0,																		\
 	generic_bitmapped_vh_start,												\
 	generic_bitmapped_vh_stop,												\

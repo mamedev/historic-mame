@@ -294,9 +294,10 @@ static const struct MachineDriver machine_driver_blmbycar =
 	/* video hardware */
 	0x180, 0x100, { 0, 0x180-1, 0, 0x100-1 },
 	blmbycar_gfxdecodeinfo,
-	0x300, 0x300,
+	0x300, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	blmbycar_vh_start,
 	0,

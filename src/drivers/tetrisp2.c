@@ -480,9 +480,9 @@ static const struct MachineDriver machine_driver_tetrisp2 =
 	/* video hardware */
 	0x140, 0xe0, { 0, 0x140-1, 0, 0xe0-1 },
 	tetrisp2_gfxdecodeinfo,
-	0x8000, 0x8000,
+	0x8000, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	tetrisp2_vh_start,
 	0,

@@ -10,6 +10,7 @@
 #include "drawgfx.h"
 #include "palette.h"
 #include "cpuintrf.h"
+#include "cpuexec.h"
 #include "sndintrf.h"
 #include "input.h"
 #include "inptport.h"

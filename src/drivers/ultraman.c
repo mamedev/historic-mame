@@ -304,7 +304,7 @@ static const struct MachineDriver machine_driver_ultraman =
 	8192, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	ultraman_vh_start,
 	ultraman_vh_stop,

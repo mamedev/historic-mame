@@ -47,13 +47,10 @@ void llander_init_colors (unsigned char *palette, unsigned short *colortable,con
 
 	nextcol = 24;
 
-	artwork_load_size(&llander_panel, "llander.png", nextcol, Machine->drv->total_colors-nextcol, width, height);
+	artwork_load_size(&llander_panel, "llander.png", nextcol, width, height);
 	if (llander_panel != NULL)
 	{
-		if (Machine->scrbitmap->depth == 8)
-			nextcol += llander_panel->num_pens_used;
-
-		artwork_load_size(&llander_lit_panel, "llander1.png", nextcol, Machine->drv->total_colors-nextcol, width, height);
+		artwork_load_size(&llander_lit_panel, "llander1.png", nextcol, width, height);
 		if (llander_lit_panel == NULL)
 		{
 			artwork_free (&llander_panel);
@@ -65,11 +62,6 @@ void llander_init_colors (unsigned char *palette, unsigned short *colortable,con
 
 	for (i = 0; i < 16; i++)
 		palette[3*(i+8)]=palette[3*(i+8)+1]=palette[3*(i+8)+2]= (255*i)/15;
-
-	memcpy (palette+3*llander_panel->start_pen, llander_panel->orig_palette,
-			3*llander_panel->num_pens_used);
-	memcpy (palette+3*llander_lit_panel->start_pen, llander_lit_panel->orig_palette,
-			3*llander_lit_panel->num_pens_used);
 }
 
 int llander_start(void)
@@ -87,8 +79,6 @@ int llander_start(void)
 		lights[i] = 0;
 		lights_changed[i] = 1;
 	}
-	if (llander_panel) backdrop_refresh(llander_panel);
-	if (llander_lit_panel) backdrop_refresh(llander_lit_panel);
 	return 0;
 }
 

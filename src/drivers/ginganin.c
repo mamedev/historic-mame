@@ -399,9 +399,10 @@ static const struct MachineDriver machine_driver_ginganin =
 	/* video hardware */
 	256, 256, { 0, 255, 0 + 16 , 255 - 16 },
 	gfxdecodeinfo,
-	256 * 4, 256 * 4,
+	1024, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	ginganin_vh_start,
 	0,

@@ -239,7 +239,7 @@ static const struct MachineDriver machine_driver_dcon =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	dcon_vh_start,
 	0,

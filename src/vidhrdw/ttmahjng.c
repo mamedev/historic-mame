@@ -264,5 +264,5 @@ static void modify_pen(int pen, int colorindex)
 	g = ((color & 2) ? 0xff : 0x00);
 	r = ((color & 4) ? 0xff : 0x00);
 
-	palette_change_color(pen,r,g,b);
+	palette_set_color(pen,r,g,b);
 }

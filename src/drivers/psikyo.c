@@ -754,7 +754,7 @@ struct YM2610interface gunbird_ym2610_interface =
 	{ sound_irq },	/* irq */
 	{ REGION_SOUND1 },	/* delta_t */
 	{ REGION_SOUND2 },	/* adpcm */
-	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) }
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
 };
 
 static const struct MachineDriver machine_driver_gunbird =
@@ -781,9 +781,10 @@ static const struct MachineDriver machine_driver_gunbird =
 	/* video hardware */
 	320, 256, { 0, 320-1, 0, 256-32-1 },
 	sngkace_gfxdecodeinfo,
-	0x1000, 0x1000,
+	0x1000, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	psikyo_vh_start,
 	0,
@@ -820,7 +821,7 @@ struct YM2610interface sngkace_ym2610_interface =
 	{ sound_irq },	/* irq */
 	{ REGION_SOUND1 },	/* delta_t */
 	{ REGION_SOUND1 },	/* adpcm */
-	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) }
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
 };
 
 static const struct MachineDriver machine_driver_sngkace =
@@ -847,9 +848,10 @@ static const struct MachineDriver machine_driver_sngkace =
 	/* video hardware */
 	320, 256, { 0, 320-1, 0, 256-32-1 },
 	sngkace_gfxdecodeinfo,
-	0x1000, 0x1000,
+	0x1000, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	psikyo_vh_start,
 	0,
@@ -883,7 +885,7 @@ struct YM2610interface s1945_ym2610_interface =
 	{ sound_irq },	/* irq */
 	{ REGION_SOUND1 },	/* delta_t */
 	{ REGION_SOUND1 },	/* adpcm */
-	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) }
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
 };
 
 static const struct MachineDriver machine_driver_s1945 =
@@ -913,9 +915,10 @@ static const struct MachineDriver machine_driver_s1945 =
 	/* video hardware */
 	320, 256, { 0, 320-1, 0, 256-32-1 },
 	sngkace_gfxdecodeinfo,
-	0x1000, 0x1000,
+	0x1000, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	psikyo_vh_start,
 	0,

@@ -132,7 +132,7 @@ int	segae_vdp_start( UINT8 chip )
 	/*- Black the Palette -*/
 
 	for (temp=0;temp<32;temp++)
-		palette_change_color(temp + 32*chip, 0, 0, 0);
+		palette_set_color(temp + 32*chip, 0, 0, 0);
 
 	/* Save State Stuff (based on vidhrdw/taitoic.c) */
 
@@ -249,7 +249,7 @@ void segae_vdp_data_w ( UINT8 chip, UINT8 data )
 			g = (segae_vdp_cram[chip][segae_vdp_accessaddr[chip]] & 0x0c) << 4;
 			b = (segae_vdp_cram[chip][segae_vdp_accessaddr[chip]] & 0x30) << 2;
 
-			palette_change_color(segae_vdp_accessaddr[chip] + 32*chip, r, g, b);
+			palette_set_color(segae_vdp_accessaddr[chip] + 32*chip, r, g, b);
 		}
 
 		segae_vdp_accessaddr[chip] += 1;

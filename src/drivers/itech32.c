@@ -1207,10 +1207,10 @@ static struct MachineDriver machine_driver_##NAME =								\
 	/* video hardware */														\
 	384, 240, { 0, 383, 0, YMAX },												\
 	0,																			\
-	COLORS,COLORS,																\
+	COLORS, 0,																	\
 	0,																			\
 																				\
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,	\
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,	\
 	0,																			\
 	itech32_vh_start,															\
 	itech32_vh_stop,															\

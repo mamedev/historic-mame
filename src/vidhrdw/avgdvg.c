@@ -940,19 +940,8 @@ void avg_init_palette (int paltype, unsigned char *palette, unsigned short *colo
 		/* Monochrome Aqua colors (Asteroids Deluxe,Red Baron) .ac JAN2498 */
 		case  VEC_PAL_ASTDELUX:
 			/* Use backdrop if present MLR OCT0598 */
-			backdrop_load("astdelux.png", 32, Machine->drv->total_colors-32);
-			if (artwork_backdrop!=NULL)
-			{
-				shade_fill (palette, GREEN|BLUE, 8, 23, 1, 254);
-				/* Some more anti-aliasing colors. */
-				shade_fill (palette, GREEN|BLUE, 24, 31, 1, 254);
-				for (i=0; i<8; i++)
-					palette[(24+i)*3]=80;
-				memcpy (palette+3*artwork_backdrop->start_pen, artwork_backdrop->orig_palette,
-					3*artwork_backdrop->num_pens_used);
-			}
-			else
-				shade_fill (palette, GREEN|BLUE, 8, 128+8, 1, 254);
+			backdrop_load("astdelux.png", 256);
+			shade_fill (palette, GREEN|BLUE, 8, 128+8, 1, 254);
 			colorram[1] =  3; /* for Asteroids */
 			break;
 
@@ -967,9 +956,7 @@ void avg_init_palette (int paltype, unsigned char *palette, unsigned short *colo
 			shade_fill (palette, GREEN, 24, 31, 1, 254);
 			shade_fill (palette, WHITE, 32, 47, 1, 254);
 			/* Use backdrop if present MLR OCT0598 */
-			backdrop_load("bzone.png", 48, Machine->drv->total_colors-48);
-			if (artwork_backdrop!=NULL)
-				memcpy (palette+3*artwork_backdrop->start_pen, artwork_backdrop->orig_palette, 3*artwork_backdrop->num_pens_used);
+			backdrop_load("bzone.png", 256);
 			break;
 
 		/* Colored games (Major Havoc, Star Wars, Tempest) .ac JAN2498 */

@@ -42,6 +42,7 @@ static int m107_control[0x20];
 static unsigned char *m107_spriteram;
 unsigned char *m107_vram_data;
 int m107_raster_irq_position,m107_sprite_list;
+int m107_spritesystem;
 
 static int pf1_vram_ptr,pf2_vram_ptr,pf3_vram_ptr,pf4_vram_ptr;
 static int pf1_enable,pf2_enable,pf3_enable,pf4_enable;
@@ -275,7 +276,7 @@ static void m107_drawsprites(struct osd_bitmap *bitmap, const struct rectangle *
 	int offs;
 
 	for (offs = 0x1000-8;offs >= 0;offs -= 8) {
-		int x,y,sprite,colour,fx,fy,x_multi,y_multi,i,j,s_ptr;
+		int x,y,sprite,colour,fx,fy,y_multi,i,s_ptr;
 
 		if (((m107_spriteram[offs+4]&0x80)==0x80) && pri==0) continue;
 		if (((m107_spriteram[offs+4]&0x80)==0x00) && pri==1) continue;
@@ -296,16 +297,12 @@ static void m107_drawsprites(struct osd_bitmap *bitmap, const struct rectangle *
 		fx=m107_spriteram[offs+5]&1;
 		fy=m107_spriteram[offs+5]&2;
 		y_multi=(m107_spriteram[offs+1]>>3)&0x3;
-		x_multi=(m107_spriteram[offs+1]>>3)&0x3;
 
-		/* This game doesn't seem to use X-multi */
-		y_multi=1 << y_multi; /* 1, 2, 4 or 8 */
-		x_multi=1;// << x_multi; /* 1, 2, 4 or 8 */
-
-		if (fx && x_multi>1) x+=16;
-		for (j=0; j<x_multi; j++)
+		if (m107_spritesystem == 0)
 		{
-			s_ptr=8 * j;
+			y_multi=1 << y_multi; /* 1, 2, 4 or 8 */
+
+			s_ptr = 0;
 			if (!fy) s_ptr+=y_multi-1;
 
 			for (i=0; i<y_multi; i++)
@@ -318,7 +315,40 @@ static void m107_drawsprites(struct osd_bitmap *bitmap, const struct rectangle *
 						clip,TRANSPARENCY_PEN,0);
 				if (fy) s_ptr++; else s_ptr--;
 			}
-			if (fx) x-=16; else x+=16;
+		}
+		else
+		{
+			UINT8 *rom = memory_region(REGION_USER1);
+			int rom_offs = sprite*8;
+
+			if (rom[rom_offs+1] || rom[rom_offs+3] || rom[rom_offs+5] || rom[rom_offs+7])
+			{
+				while (rom_offs < 0x40000)	/* safety check */
+				{
+					int xdisp = rom[rom_offs+6]+256*rom[rom_offs+7];
+					int ydisp = rom[rom_offs+2]+256*rom[rom_offs+3];
+					int ffx=fx^(rom[rom_offs+1]&1);
+					int ffy=fy^(rom[rom_offs+1]&2);
+					sprite=rom[rom_offs+4]+256*rom[rom_offs+5];
+					y_multi=1<<((rom[rom_offs+3]>>1)&0x3);
+					if (fx) xdisp = -xdisp;
+					if (fy) ydisp = -ydisp - (16*y_multi-1);
+					if (!ffy) sprite+=y_multi-1;
+					for (i=0; i<y_multi; i++)
+					{
+						drawgfx(bitmap,Machine->gfx[1],
+								sprite+(ffy?i:-i),
+								colour,
+								ffx,ffy,
+								(x+xdisp)&0x1ff,(y-ydisp-16*i)&0x1ff,
+								clip,TRANSPARENCY_PEN,0);
+					}
+
+					if (rom[rom_offs+1]&0x80) break;	/* end of block */
+
+ 					rom_offs += 8;
+				}
+			}
 		}
 	}
 }

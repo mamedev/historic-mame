@@ -1031,7 +1031,7 @@ static MEMORY_READ16_START( mgcrystl_readmem )
 	{ 0x400000, 0x40001f, kaneko16_YM2149_0_r		},	// Sound
 	{ 0x400200, 0x40021f, kaneko16_YM2149_1_r		},
 	{ 0x400400, 0x400401, OKIM6295_status_0_lsb_r	},
-	{ 0x500000, 0x503fff, MRA16_RAM					},	// Palette
+	{ 0x500000, 0x500fff, MRA16_RAM					},	// Palette
 	{ 0x600000, 0x603fff, MRA16_RAM					},	// Layers 0
 	{ 0x680000, 0x683fff, MRA16_RAM					},	// Layers 1
 	{ 0x700000, 0x701fff, MRA16_RAM					},	// Sprites
@@ -1050,7 +1050,7 @@ static MEMORY_WRITE16_START( mgcrystl_writemem )
 	{ 0x400000, 0x40001f, kaneko16_YM2149_0_w								},	// Sound
 	{ 0x400200, 0x40021f, kaneko16_YM2149_1_w								},
 	{ 0x400400, 0x400401, OKIM6295_data_0_lsb_w								},
-	{ 0x500000, 0x503fff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16	},	// Palette
+	{ 0x500000, 0x500fff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16	},	// Palette
 	{ 0x600000, 0x600fff, kaneko16_vram_1_w, &kaneko16_vram_1				},	// Layers 0
 	{ 0x601000, 0x601fff, kaneko16_vram_0_w, &kaneko16_vram_0				},	//
 	{ 0x602000, 0x603fff, MWA16_RAM											},	//
@@ -2183,9 +2183,10 @@ static const struct MachineDriver machine_driver_berlwall =
 	/* video hardware */
 	256, 256, { 0, 256-1, 16, 240-1},
 	kaneko16_gfx_1x4bit_1x4bit,
-	0x1000 / 2 + 32768, 0x1000 / 2,	/* 32768 static colors for the bg */
+	2048 + 32768, 0,	/* 32768 static colors for the bg */
 	berlwall_init_palette,
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_AFTER_VBLANK,	// mangled sprites otherwise
+
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK,	// mangled sprites otherwise
 	0,
 	berlwall_vh_start,
 	berlwall_vh_stop,
@@ -2221,9 +2222,10 @@ static struct MachineDriver machine_driver_bakubrkr =
 	/* video hardware */
 	256, 256, { 0, 256-1, 16, 240-1},
 	kaneko16_gfx_1x4bit_2x4bit,
-	0x1000 / 2, 0x1000 / 2,
+	2048, 0,
 	0,
-	VIDEO_TYPE_RASTER   | VIDEO_UPDATE_AFTER_VBLANK,	// mangled sprites otherwise
+
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK,	// mangled sprites otherwise
 	0,
 	kaneko16_vh_start_2xVIEW2,
 	kaneko16_vh_stop,
@@ -2278,9 +2280,10 @@ static struct MachineDriver machine_driver_blazeon =
 	/* video hardware */
 	320, 240, { 0, 320-1, 0, 240-1 -8},
 	kaneko16_gfx_1x4bit_1x4bit,
-	0x1000 / 2, 0x1000 / 2,
+	2048, 0,
 	0,
-	VIDEO_TYPE_RASTER   | VIDEO_UPDATE_AFTER_VBLANK,
+
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK,
 	0,
 	kaneko16_vh_start_1xVIEW2,
 	kaneko16_vh_stop,
@@ -2325,9 +2328,10 @@ static const struct MachineDriver machine_driver_gtmr =
 	/* video hardware */
 	320, 240, { 0, 320-1, 0, 240-1 },
 	kaneko16_gfx_1x8bit_2x4bit,
-	0x10000 / 2, 0x10000 / 2,
+	32768, 0,
 	0,
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_AFTER_VBLANK,
+
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK,
 	0,
 	kaneko16_vh_start_2xVIEW2,
 	kaneko16_vh_stop,
@@ -2362,9 +2366,10 @@ static const struct MachineDriver machine_driver_mgcrystl =
 	/* video hardware */
 	256, 256, { 0, 256-1, 0+16, 256-16-1},
 	kaneko16_gfx_1x4bit_2x4bit,
-	0x4000 / 2, 0x4000 / 2,
+	2048, 0,
 	0,
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_AFTER_VBLANK,
+
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK,
 	0,
 	kaneko16_vh_start_2xVIEW2,
 	kaneko16_vh_stop,
@@ -2429,9 +2434,10 @@ static const struct MachineDriver machine_driver_sandscrp =
 	/* video hardware */
 	256, 256, { 0, 256-1, 0+16, 256-16-1 },
 	sandscrp_gfxdecodeinfo,
-	0x800, 0x800,
+	2048, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	sandscrp_eof_callback,
 	sandscrp_vh_start_1xVIEW2,
 	kaneko16_vh_stop,
@@ -2491,9 +2497,10 @@ static const struct MachineDriver machine_driver_shogwarr =
 	/* video hardware */
 	320, 240, { 0, 320-1, 0, 240-1 },
 	kaneko16_gfx_1x4bit_1x4bit,
-	0x1000 / 2, 0x1000 / 2,
+	2048, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	kaneko16_vh_start_1xVIEW2,
 	kaneko16_vh_stop,

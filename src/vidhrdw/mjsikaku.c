@@ -43,27 +43,29 @@ static void crystal2_gfxdraw(void);
 
 
 ******************************************************************************/
-void mjsikaku_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
+void mjsikaku_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 
 	/* initialize 444 RGB lookup */
 	for (i = 0; i < 4096; i++)
 	{
-		int r, g, b;
+		int r,g,b;
 
 		// xxxxbbbb_ggggrrrr
 		r = ((i >> 0) & 0x0f);
 		g = ((i >> 4) & 0x0f);
 		b = ((i >> 8) & 0x0f);
 
-		(*palette++) = ((r << 4) | r);
-		(*palette++) = ((g << 4) | g);
-		(*palette++) = ((b << 4) | b);
+		r = ((r << 4) | r);
+		g = ((g << 4) | g);
+		b = ((b << 4) | b);
+
+		palette_set_color(i,r,g,b);
 	}
 }
 
-void seiha_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
+void seiha_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 
@@ -77,37 +79,41 @@ void seiha_init_palette(unsigned char *palette, unsigned short *colortable, cons
 		g = ((i >>  6) & 0x1f);
 		b = ((i >> 11) & 0x1f);
 
-		(*palette++) = ((r << 2) | (r >> 3));
-		(*palette++) = ((g << 3) | (g >> 2));
-		(*palette++) = ((b << 3) | (b >> 2));
+		r = ((r << 2) | (r >> 4));
+		g = ((g << 3) | (g >> 2));
+		b = ((b << 3) | (b >> 2));
+
+		palette_set_color(i,r,g,b);
 	}
 }
 
-void crystal2_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
+void crystal2_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 
 	/* initialize 332 RGB lookup */
 	for (i = 0; i < 256; i++)
 	{
-		int bit0, bit1, bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 		// xxxxxxxx_bbgggrrr
 		/* red component */
 		bit0 = ((i >> 0) & 0x01);
 		bit1 = ((i >> 1) & 0x01);
 		bit2 = ((i >> 2) & 0x01);
-		(*palette++) = (0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2);
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
 		bit0 = ((i >> 3) & 0x01);
 		bit1 = ((i >> 4) & 0x01);
 		bit2 = ((i >> 5) & 0x01);
-		(*palette++) = (0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2);
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
 		bit0 = 0;
 		bit1 = ((i >> 6) & 0x01);
 		bit2 = ((i >> 7) & 0x01);
-		(*palette++) = (0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2);
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		palette_set_color(i,r,g,b);
 	}
 }
 

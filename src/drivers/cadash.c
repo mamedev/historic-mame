@@ -463,7 +463,7 @@ static struct MachineDriver machine_driver_cadash =
 	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	cadash_eof_callback,
 	cadash_vh_start,
 	cadash_vh_stop,

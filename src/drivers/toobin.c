@@ -276,7 +276,7 @@ static const struct MachineDriver machine_driver_toobin =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	toobin_vh_start,
 	toobin_vh_stop,

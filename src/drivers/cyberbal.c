@@ -605,10 +605,10 @@ static const struct MachineDriver machine_driver_cyberbal =
 	/* video hardware */
 	42*16, 30*8, { 0*16, 42*16-1, 0*8, 30*8-1 },
 	gfxdecodeinfo_interleaved,
-	4096, 4096,
+	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK |
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK |
 			VIDEO_PIXEL_ASPECT_RATIO_1_2,
 	0,
 	cyberbal_vh_start,
@@ -654,7 +654,7 @@ static const struct MachineDriver machine_driver_cyberb2p =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK |
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK |
 			VIDEO_PIXEL_ASPECT_RATIO_1_2,
 	0,
 	cyberb2p_vh_start,

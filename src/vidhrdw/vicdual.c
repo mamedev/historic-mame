@@ -37,7 +37,7 @@ static int palette_bank;
   bit 0 -- Unused
 
 ***************************************************************************/
-void vicdual_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+void vicdual_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 	/* for b&w games we'll use the Head On PROM */
@@ -53,30 +53,32 @@ void vicdual_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 	for (i = 0;i < Machine->drv->total_colors / 2;i++)
 	{
-		int bit;
+		int bit,r,g,b;
 
 
 		/* background red component */
-		bit = (*color_prom >> 3) & 0x01;
-		*(palette++) = 0xff * bit;
+		bit = (color_prom[i] >> 3) & 0x01;
+		r = 0xff * bit;
 		/* background green component */
-		bit = (*color_prom >> 1) & 0x01;
-		*(palette++) = 0xff * bit;
+		bit = (color_prom[i] >> 1) & 0x01;
+		g = 0xff * bit;
 		/* background blue component */
-		bit = (*color_prom >> 2) & 0x01;
-		*(palette++) = 0xff * bit;
+		bit = (color_prom[i] >> 2) & 0x01;
+		b = 0xff * bit;
+
+		palette_set_color(2*i,r,g,b);
 
 		/* foreground red component */
-		bit = (*color_prom >> 7) & 0x01;
-		*(palette++) = 0xff * bit;
+		bit = (color_prom[i] >> 7) & 0x01;
+		r = 0xff * bit;
 		/* foreground green component */
-		bit = (*color_prom >> 5) & 0x01;
-		*(palette++) = 0xff * bit;
+		bit = (color_prom[i] >> 5) & 0x01;
+		g = 0xff * bit;
 		/* foreground blue component */
-		bit = (*color_prom >> 6) & 0x01;
-		*(palette++) = 0xff * bit;
+		bit = (color_prom[i] >> 6) & 0x01;
+		b = 0xff * bit;
 
-		color_prom++;
+		palette_set_color(2*i+1,r,g,b);
 	}
 
 	palette_bank = 0;

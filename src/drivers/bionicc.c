@@ -358,7 +358,7 @@ static const struct MachineDriver machine_driver_bionicc =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM,
 	bionicc_eof_callback,
 	bionicc_vh_start,
 	0,

@@ -257,7 +257,7 @@ static const struct MachineDriver machine_driver_labyrunr =
 	128, 2*8*16*16,
 	labyrunr_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	labyrunr_vh_start,
 	0,

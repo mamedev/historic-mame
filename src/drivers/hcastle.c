@@ -322,7 +322,7 @@ static const struct MachineDriver machine_driver_hcastle =
 	128, 2*8*16*16,
 	hcastle_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	hcastle_vh_start,
 	0,

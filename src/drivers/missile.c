@@ -374,7 +374,7 @@ static const struct MachineDriver machine_driver_missile =
 	8, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
 	0,
 	missile_vh_start,
 	missile_vh_stop,

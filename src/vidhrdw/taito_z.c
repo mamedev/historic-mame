@@ -1507,8 +1507,6 @@ void dblaxle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	TC0480SCP_tilemap_update();
 
-	TC0480SCP_mark_transparent_colors(layer[0]);
-
 	priority = TC0480SCP_get_bg_priority();
 
 	layer[0] = (priority &0xf000) >> 12;	/* tells us which bg layer is bottom */

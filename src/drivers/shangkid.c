@@ -55,7 +55,7 @@ Games by Nihon Game/Culture Brain:
 #include "cpu/z80/z80.h"
 
 /* from vidhrdw/shangkid.c */
-extern void shangkid_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom);
+extern void shangkid_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 extern int shangkid_vh_start( void );
 extern void shangkid_vh_stop( void );
 extern void shangkid_screenrefresh( struct osd_bitmap *bitmap, int fullfresh );
@@ -390,7 +390,7 @@ static struct MachineDriver machine_driver_##NAME = { \
 	0, /* init machine */ \
 	40*8, 28*8, { 16, 319-16, 0, 223 }, \
 	NAME##_gfxdecodeinfo, \
-	256,256, \
+	256, 0, \
 	shangkid_vh_convert_color_prom, \
 	VIDEO_TYPE_RASTER, \
 	0, \
@@ -458,8 +458,8 @@ static struct MachineDriver machine_driver_dynamski = {
 	0, /* init machine */
 	256+32, 256, { 0, 255+32, 16, 255-16 },
 	dynamski_gfxdecodeinfo,
-	256,256,
-	0,//vh_convert_color_prom,
+	256, 0,
+	0,
 	VIDEO_TYPE_RASTER,
 	0,
 	0,//vh_start,
@@ -685,8 +685,8 @@ ROM_START( chinhero )
 	ROM_LOAD( "v_ic36_r",	0x000,0x100,0x16ae1692 ) /* red */
 	ROM_LOAD( "v_ic35_g",	0x100,0x100,0xb3d0a074 ) /* green */
 	ROM_LOAD( "v_ic27_b",	0x200,0x100,0x353a2d11 ) /* blue */
-	ROM_LOAD( "v_ic28_m",	0x300,0x100,0x7ca273c1 ) /* intensity? */
 
+	ROM_LOAD( "v_ic28_m",	0x300,0x100,0x7ca273c1 ) /* unknown */
 	ROM_LOAD( "v_ic69",		0x400,0x200,0x410d6f86 ) /* zoom */
 	ROM_LOAD( "v_ic108",	0x600,0x200,0xd33c02ae ) /* zoom */
 
@@ -749,8 +749,8 @@ ROM_START( shangkid )
 	ROM_LOAD( "cr31ic36.bin",	0x000, 256,0x9439590b )		/* 82S129 - red */
 	ROM_LOAD( "cr30ic35.bin",	0x100, 256,0x324e295e )		/* 82S129 - green */
 	ROM_LOAD( "cr28ic27.bin",	0x200, 256,0x375cba96 )		/* 82S129 - blue */
-	ROM_LOAD( "cr29ic28.bin",	0x300, 256,0x7ca273c1 )		/* 82S129 - intensity? */
 
+	ROM_LOAD( "cr29ic28.bin",	0x300, 256,0x7ca273c1 )		/* 82S129 - unknown */
 	ROM_LOAD( "cr32ic69.bin",	0x400, 512,0x410d6f86 )		/* 82S147 - sprite-related (zoom?) */
 	ROM_LOAD( "cr33-108.bin",	0x600, 512,0xd33c02ae )		/* 82S147 - sprite-related (zoom?) */
 
@@ -790,7 +790,7 @@ ROM_START( dynamski )
 	ROM_LOAD( "dynskic.15g",	0x300, 256,0 /*0x025996b1*/ )
 ROM_END
 
-/*           rom       parent  machine   inp       init	    vidflags */
-GAMEX( 1984, dynamski, 0,      dynamski, dynamski, dynamski,	ROT90,	"Taiyo",	"Dynamic Ski", GAME_WRONG_COLORS | GAME_NO_COCKTAIL )
-GAME(  1984, chinhero, 0,	   chinhero, chinhero, chinhero,	ROT90,	"Taiyo",	"Chinese Hero" )
-GAMEX( 1985, shangkid, 0,      shangkid, shangkid, shangkid,	0,		"Taiyo (Data East license)",	"Shanghai Kid", GAME_NO_COCKTAIL )
+
+GAMEX( 1984, dynamski, 0, dynamski, dynamski, dynamski,	ROT90, "Taiyo", "Dynamic Ski", GAME_WRONG_COLORS | GAME_NO_COCKTAIL )
+GAME(  1984, chinhero, 0, chinhero, chinhero, chinhero,	ROT90, "Taiyo", "Chinese Hero" )
+GAMEX( 1985, shangkid, 0, shangkid, shangkid, shangkid,	0,     "Taiyo (Data East license)", "Shanghai Kid", GAME_NO_COCKTAIL )

@@ -3502,7 +3502,7 @@ static const struct MachineDriver machine_driver_##DRVNAME =				\
 	4096, 0,																\
 	0,																		\
 																			\
-	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN,	\
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,	\
 	cps1_eof_callback,														\
 	cps1_vh_start,															\
 	cps1_vh_stop,															\
@@ -3543,7 +3543,7 @@ static const struct MachineDriver machine_driver_qsound =
 	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN,
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
 	cps1_eof_callback,
 	cps1_vh_start,
 	cps1_vh_stop,

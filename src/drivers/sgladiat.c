@@ -11,7 +11,7 @@
 	cocktail support is missing
 */
 
-extern void aso_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+extern void aso_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 extern int sgladiat_vh_start( void );
 extern void sgladiat_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh );
 extern void snk_vh_stop( void );
@@ -273,7 +273,7 @@ static const struct MachineDriver machine_driver_sgladiat =
 	36*8, 28*8, { 0*8+16, 36*8-1-16, 1*8, 28*8-1 },
 
 	tnk3_gfxdecodeinfo,
-	1024,1024,
+	1024, 0,
 	aso_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,

@@ -111,7 +111,7 @@ static READ16_HANDLER( zwackery_6840_r )
 	/* It expects D1 to end up between 0 and 5; in order to */
 	/* make this happen, we must assume that reads from the */
 	/* 6840 take 14 additional cycles                       */
-	*cpuintf[Machine->drv->cpu[0].cpu_type & ~CPU_FLAGS_MASK].icount -= 14;
+	activecpu_adjust_icount(-14);
 	return mcr68_6840_upper_r(offset,0);
 }
 
@@ -964,10 +964,10 @@ static const struct MachineDriver machine_driver_zwackery =
 	/* video hardware */
 	32*16, 30*16, { 0, 32*16-1, 0, 30*16-1 },
 	zwackery_gfxdecodeinfo,
-	4096, 4096,
+	4096, 0,
 	zwackery_convert_color_prom,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -1002,10 +1002,10 @@ static const struct MachineDriver machine_driver_##NAME =		\
 	/* video hardware */								\
 	32*16, 30*16, { 0, 32*16-1, 0, 30*16-1 },			\
 	gfxdecodeinfo,										\
-	8*16, 8*16,											\
+	64, 0,												\
 	0,													\
 														\
-	VIDEO_TYPE_RASTER ,			\
+	VIDEO_TYPE_RASTER,									\
 	0,													\
 	generic_vh_start,									\
 	generic_vh_stop,									\

@@ -18,7 +18,7 @@ TODO:
 
 extern unsigned char *suprloco_videoram;
 
-void suprloco_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void suprloco_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 int  suprloco_vh_start(void);
 void suprloco_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( suprloco_videoram_w );
@@ -212,7 +212,7 @@ static const struct MachineDriver machine_driver_suprloco =
 	32*8, 32*8,				/* screen_width, screen_height */
 	{ 1*8, 31*8-1, 0*8, 28*8-1 },			/* struct rectangle visible_area */
 	gfxdecodeinfo,				/* GfxDecodeInfo */
-	768, 768,
+	512+256, 0,
 	suprloco_vh_convert_color_prom,		/* convert color prom routine */
 
 	VIDEO_TYPE_RASTER,

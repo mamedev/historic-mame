@@ -300,7 +300,7 @@ static struct MachineDriver machine_driver_asterix =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS | VIDEO_NEEDS_6BITS_PER_GUN,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,
 	asterix_vh_start,
 	asterix_vh_stop,

@@ -700,7 +700,7 @@ static const struct MachineDriver machine_driver_wolfu =
 	32768, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	wms_wolfu_vh_start,
 	wms_tunit_vh_stop,

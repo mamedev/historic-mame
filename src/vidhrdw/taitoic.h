@@ -25,6 +25,9 @@ void PC080SN_set_trans_pen(int chip,int tilemap_num,int pen);
 void PC080SN_tilemap_update(void);
 void PC080SN_tilemap_draw(struct osd_bitmap *bitmap,int chip,int layer,int flags,UINT32 priority);
 
+/* For Topspeed */
+void PC080SN_tilemap_draw_special(struct osd_bitmap *bitmap,int chip,int layer,int flags,UINT32 priority,data16_t *ram);
+
 /***************************************************************************/
 
 int TC0080VCO_vh_start(int gfxnum,int has_fg0,int bg_xoffs,int bg_yoffs,int bg_flip_yoffs);
@@ -129,7 +132,6 @@ WRITE32_HANDLER( TC0480SCP_long_w );
 READ32_HANDLER ( TC0480SCP_ctrl_long_r );
 WRITE32_HANDLER( TC0480SCP_ctrl_long_w );
 
-void TC0480SCP_mark_transparent_colors(int opaque_layer);
 void TC0480SCP_tilemap_update(void);
 void TC0480SCP_tilemap_draw(struct osd_bitmap *bitmap,int layer,int flags,UINT32 priority);
 

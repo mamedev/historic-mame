@@ -254,7 +254,7 @@ static const struct MachineDriver machine_driver_bigkarnk =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	bigkarnk_vh_start,
 	gaelco_vh_stop,
@@ -517,7 +517,7 @@ static const struct MachineDriver machine_driver_maniacsq =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	maniacsq_vh_start,
 	gaelco_vh_stop,

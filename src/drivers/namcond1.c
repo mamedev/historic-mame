@@ -198,9 +198,9 @@ static struct MachineDriver machine_driver_namcond1 =
 	288, 224,             // maximum display resolution (512x512 in theory)
 	{ 0, 287, 0, 223 },   // default visible area
 	gfxdecodeinfo,
-	256,256,
+	256, 0,
 	0,
-	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN,
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,			                /* Video initialisation    */
 	ygv608_vh_start,	            /* Video start             */
 	ygv608_vh_stop,	            /* Video stop              */

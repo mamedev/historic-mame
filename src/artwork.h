@@ -25,7 +25,6 @@ extern "C" {
 
 struct artwork_info
 {
-	/* Publically accessible */
 	struct osd_bitmap *artwork;
 	struct osd_bitmap *artwork1;
 	struct osd_bitmap *alpha;
@@ -35,7 +34,6 @@ struct artwork_info
 	UINT8 *transparency;
 	int num_pens_trans;
 	int start_pen;
-	UINT8 *brightness;                 /* brightness of each palette entry */
 	UINT32 *rgb;
 };
 
@@ -69,23 +67,19 @@ extern struct osd_bitmap *artwork_real_scrbitmap;
 /*********************************************************************
   functions that apply to backdrops AND overlays
 *********************************************************************/
-void overlay_load(const char *filename, unsigned int start_pen, unsigned int max_pens);
-void overlay_create(const struct artwork_element *ae, unsigned int start_pen, unsigned int max_pens);
-void backdrop_load(const char *filename, unsigned int start_pen, unsigned int max_pens);
-void backdrop_refresh(struct artwork_info *a);
-void artwork_load(struct artwork_info **a,const char *filename, unsigned int start_pen, unsigned int max_pens);
-void artwork_load_size(struct artwork_info **a,const char *filename, unsigned int start_pen, unsigned int max_pens, int width, int height);
+void overlay_load(const char *filename, unsigned int start_pen);
+void overlay_create(const struct artwork_element *ae, unsigned int start_pen);
+void backdrop_load(const char *filename, unsigned int start_pen);
+//void backdrop_refresh(struct artwork_info *a);
+void artwork_load(struct artwork_info **a,const char *filename, unsigned int start_pen);
+void artwork_load_size(struct artwork_info **a,const char *filename, unsigned int start_pen, int width, int height);
 void artwork_elements_scale(struct artwork_element *ae, int width, int height);
 void artwork_free(struct artwork_info **a);
 int artwork_get_size_info(const char *file_name, struct artwork_size_info *a);
-void artwork_copy_palette (UINT8 *palette, struct artwork_info *a);
 
 /* called by mame.c */
 void artwork_kill(void);
 void artwork_draw(struct osd_bitmap *dest,struct osd_bitmap *source, int full_refresh);
-/* called by palette.c */
-void artwork_remap(void);
-
 
 #ifdef __cplusplus
 }

@@ -106,7 +106,7 @@ WRITE_HANDLER( system1_paletteram_w )
 		b = (val << 5) | (val << 2) | (val >> 1);
 	}
 
-	palette_change_color(offset,r,g,b);
+	palette_set_color(offset,r,g,b);
 }
 
 

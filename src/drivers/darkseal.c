@@ -333,7 +333,7 @@ static const struct MachineDriver machine_driver_darkseal =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	darkseal_vh_start,
 	0,

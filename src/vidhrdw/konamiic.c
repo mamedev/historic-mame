@@ -6,9 +6,9 @@ TODO:
 - It seems shadows can both affect underlying sprites and not. This is currently
   hardcoded in the drivers; there might be a control bit somewhere.
   Games requiring shadows to affect sprites behind them:
-  - Surprise Attack the former (dark glass walls in level 3)
+  - Surprise Attack (dark glass walls in level 3)
   - 88 Games (angle indicator in the long jump event).
-  - Susnet Riders (bull's eye in the saloon cutscene)
+  - Sunset Riders (bull's eye in the saloon cutscene)
   Games requiring shadows to NOT affect sprites behind them:
   - Asterix (Asterix's shadow would be over his feet otherwise)
   - X-Men is dubious, see enemies halfway through level 1 coming from above with
@@ -111,18 +111,18 @@ Premier Soccer      GX101*1993   68000 052109 051962 053245 053244 053251       
 Hexion              GX122*1992     Z80                                           052591 (protection) 053252(*)
 Entapous /          GX123+1993   68000 054157 054156 055673 053246               053252(*) 054000 055555
   Gaiapolis
-Mystic Warrior      GX128+1993   68000 054157 054156 055673 053246               054338 054539(x2) 053252(*) 055555
+Mystic Warrior      GX128+1993   68000 054157 054156 055673 053246               054338 053252(*) 055555 054539(x2) (sound)
 Cowboys of Moo Mesa GX151+1993   68000 054157 054156 053247 053246               053252(*) 054338 053990
-Violent Storm       GX168+1993   68000 054157 054156 055673 053246               054338 054539(x2) 055550 055555
+Violent Storm       GX168+1993   68000 054157 054156 055673 053246               054338 055550 055555 054539(x2) (sound)
 Bucky 'O Hare       GX173+1992   68000 054157 054156 053247 053246 053251        054338 054539 (sound)
 Potrio              GX174 1992
-Lethal Enforcers    GX191+1992    6309 054157(x2) 054156 053245 053244(x2)       054000 054539 (sound) 054906
+Lethal Enforcers    GX191+1992    6309 054157(x2) 054156 053245 053244(x2)       054000 054906 054539 (sound)
 Metamorphic Force   GX224+1993
-Martial Champion    GX234+1993   68000 054157 054156 055673 053246               053252(*) 054338 054539 055555 053990 054986 054573
-Run and Gun         GX247+1993   68000               055673 053246               053253(x2) 054539(x2) 053252(*) 053936 (3D)
+Martial Champion    GX234+1993   68000 054157 054156 055673 053246               053252(*) 054338 055555 053990 054986 054573 054539 (sound)
+Run and Gun         GX247+1993   68000               055673 053246               053253(x2) 053252(*) 053936 (3D) 054539(x2) (sound)
 Quiz Gakumon no     GX248*1993   68000 052109 051962 053245 053244 053251        053990 051550 - same board as TMNT2
   Susume
-Polygonet CommandersGX305+1993   68020                                           056230?063936?054539?054986?
+Polygonet CommandersGX305+1993   68020                                           056230?063936?054986?054539?
 
 Tail to Nose             *1989   68000          V-System                         051316 (zoom/rotation)
 Blazing Tornado          *1991   68000            Metro                          053936 (3D)

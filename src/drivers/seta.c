@@ -3666,7 +3666,8 @@ static struct MachineDriver machine_driver_atehate =
 	tndrcade_gfxdecodeinfo,
 	512, 0,	/* sprites only */
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	0,	/* no need for a vh_start: no tilemaps */
 	0,
@@ -3714,7 +3715,8 @@ static const struct MachineDriver machine_driver_blandia =
 	blandia_gfxdecodeinfo,
 	16*32+16*32+16*32, 16*32+64*32+64*32,	/* sprites, layer1, layer2 */
 	blandia_vh_init_palette,				/* layers 1&2 are 6 planes deep */
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	seta_buffer_sprites,	/* Blandia uses sprite buffering */
 	seta_vh_start_2_layers,
 	0,
@@ -3751,7 +3753,8 @@ static struct MachineDriver machine_driver_blockcar =
 	tndrcade_gfxdecodeinfo,
 	512, 0,	/* sprites only */
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	0,	/* no need for a vh_start: no tilemaps */
 	0,
@@ -3816,7 +3819,8 @@ static const struct MachineDriver machine_driver_calibr50 =
 	downtown_gfxdecodeinfo,
 	512, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 //	seta_vh_start_1_layer,
 	seta_vh_start_1_layer_offset_0x02,	// a little offset
@@ -3862,7 +3866,8 @@ static const struct MachineDriver machine_driver_downtown =
 	downtown_gfxdecodeinfo,
 	512, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	seta_vh_start_1_layer,
 	0,
@@ -3906,7 +3911,8 @@ static const struct MachineDriver machine_driver_drgnunit =
 	downtown_gfxdecodeinfo,
 	512, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	seta_buffer_sprites,	/* qzkklogy uses sprite buffering */
 //	seta_vh_start_1_layer,
 	seta_vh_start_1_layer_offset_0x02,	// a little offset
@@ -3942,9 +3948,10 @@ static const struct MachineDriver machine_driver_eightfrc =
 	/* video hardware */
 	400, 256-16-8, { 16, 400-1, 0, 256-1 -16-16},
 	msgundam_gfxdecodeinfo,
-	512 * 3, 512 * 3,	/* sprites, layer1, layer2 */
+	512 * 3, 0,	/* sprites, layer1, layer2 */
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	seta_vh_start_2_layers,
 	0,
@@ -3986,7 +3993,8 @@ static const struct MachineDriver machine_driver_extdwnhl =
 	zingzip_gfxdecodeinfo,
 	16*32+16*32+16*32, 16*32+16*32+64*32,	/* sprites, layer2, layer1 */
 	zingzip_vh_init_palette,				/* layer 1 gfx is 6 planes deep */
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	seta_vh_start_2_layers_offset_0x02,
 	0,
@@ -4027,7 +4035,8 @@ static const struct MachineDriver machine_driver_gundhara =
 	jjsquawk_gfxdecodeinfo,
 	16*32+16*32+16*32, 16*32+64*32+64*32,	/* sprites, layer2, layer1 */
 	gundhara_vh_init_palette,				/* layers are 6 planes deep (but have only 4 palettes) */
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	seta_vh_start_2_layers,
 	0,
@@ -4068,7 +4077,8 @@ static const struct MachineDriver machine_driver_jjsquawk =
 	jjsquawk_gfxdecodeinfo,
 	16*32+16*32+16*32, 16*32+64*32+64*32,	/* sprites, layer2, layer1 */
 	jjsquawk_vh_init_palette,				/* layers are 6 planes deep */
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	seta_vh_start_2_layers,
 	0,
@@ -4105,7 +4115,8 @@ static struct MachineDriver machine_driver_krzybowl =
 	tndrcade_gfxdecodeinfo,
 	512, 0,	/* sprites only */
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	0,	/* no need for a vh_start: no tilemaps */
 	0,
@@ -4150,7 +4161,8 @@ static const struct MachineDriver machine_driver_metafox =
 	downtown_gfxdecodeinfo,
 	512, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	seta_vh_start_1_layer,
 	0,
@@ -4189,9 +4201,10 @@ static const struct MachineDriver machine_driver_msgundam =
 	/* video hardware */
 	400, 256 -16, { 16, 400-1, 0, 256-1 -16},
 	msgundam_gfxdecodeinfo,
-	512 * 3, 512 * 3,	/* sprites, layer2, layer1 */
+	512 * 3, 0,	/* sprites, layer2, layer1 */
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	seta_buffer_sprites,	/* msgundam uses sprite buffering */
 	seta_vh_start_2_layers,
 	0,
@@ -4227,9 +4240,10 @@ static struct MachineDriver machine_driver_oisipuzl =
 	/* video hardware */
 	400, 256 -16-8, { 16, 320+16-1, 0, 256-1 -16-16},
 	msgundam_gfxdecodeinfo,
-	512 * 3, 512 * 3,	/* sprites, layer2, layer1 */
+	512 * 3, 0,	/* sprites, layer2, layer1 */
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 //	seta_vh_start_2_layers,
 	oisipuzl_vh_start_2_layers,	// flip is inverted for the tilemaps
@@ -4268,7 +4282,8 @@ static struct MachineDriver machine_driver_kiwame =
 	tndrcade_gfxdecodeinfo,
 	512, 0,	/* sprites only */
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	0,	/* no need for a vh_start: no tilemaps */
 	0,
@@ -4306,9 +4321,10 @@ static const struct MachineDriver machine_driver_rezon =
 	/* video hardware */
 	400, 256 -16, { 16, 400-1, 0, 256-1 -16},
 	msgundam_gfxdecodeinfo,
-	512 * 3, 512 * 3,	/* sprites, layer1, layer2 */
+	512 * 3, 0,	/* sprites, layer1, layer2 */
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	seta_vh_start_2_layers,
 	0,
@@ -4348,7 +4364,8 @@ static struct MachineDriver machine_driver_thunderl =
 	tndrcade_gfxdecodeinfo,
 	512, 0,	/* sprites only */
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	0,	/* no need for a vh_start: no tilemaps */
 	0,
@@ -4428,7 +4445,8 @@ static const struct MachineDriver machine_driver_tndrcade =
 	tndrcade_gfxdecodeinfo,
 	512, 0,	/* sprites only */
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	0,	/* no need for a vh_start: no tilemaps */
 	0,
@@ -4483,7 +4501,8 @@ static const struct MachineDriver machine_driver_twineagl =
 	downtown_gfxdecodeinfo,
 	512, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	seta_vh_start_1_layer,
 	0,
@@ -4532,7 +4551,8 @@ static const struct MachineDriver machine_driver_usclssic =
 	usclssic_gfxdecodeinfo,
 	16*32, 16*32 + 64*32,		/* sprites, layer */
 	usclssic_vh_init_palette,	/* layer is 6 planes deep */
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	seta_vh_start_1_layer,
 	0,
@@ -4611,9 +4631,10 @@ static const struct MachineDriver machine_driver_wrofaero =
 	/* video hardware */
 	400, 256 -16, { 16, 400-1, 0, 256-1 -16},
 	msgundam_gfxdecodeinfo,
-	512 * 3, 512 * 3,	/* sprites, layer1, layer2 */
+	512 * 3, 0,	/* sprites, layer1, layer2 */
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	seta_vh_start_2_layers,
 	0,
@@ -4657,7 +4678,8 @@ static const struct MachineDriver machine_driver_zingzip =
 	zingzip_gfxdecodeinfo,
 	16*32+16*32+16*32, 16*32+16*32+64*32,	/* sprites, layer2, layer1 */
 	zingzip_vh_init_palette,				/* layer 1 gfx is 6 planes deep */
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	seta_vh_start_2_layers,
 	0,

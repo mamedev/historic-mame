@@ -213,17 +213,17 @@ WRITE16_HANDLER( bigrun_paletteram16_w )
 	int b = ((word >> 0) & 0xF0 ) | ((word << 2) & 0x08);
 
 	// Scroll 0
-	if ( (offset >= 0x0e00/2) && (offset <= 0x0fff/2) ) { palette_change_color(0x000 + offset - 0x0e00/2, r,g,b ); return;}
+	if ( (offset >= 0x0e00/2) && (offset <= 0x0fff/2) ) { palette_set_color(0x000 + offset - 0x0e00/2, r,g,b ); return;}
 	// Scroll 1
-	if ( (offset >= 0x1600/2) && (offset <= 0x17ff/2) ) { palette_change_color(0x100 + offset - 0x1600/2, r,g,b ); return;}
+	if ( (offset >= 0x1600/2) && (offset <= 0x17ff/2) ) { palette_set_color(0x100 + offset - 0x1600/2, r,g,b ); return;}
 	// Road 0
-	if ( (offset >= 0x1800/2) && (offset <= 0x1fff/2) ) { palette_change_color(0x200 + offset - 0x1800/2, r,g,b ); return;}
+	if ( (offset >= 0x1800/2) && (offset <= 0x1fff/2) ) { palette_set_color(0x200 + offset - 0x1800/2, r,g,b ); return;}
 	// Road 1
-	if ( (offset >= 0x2000/2) && (offset <= 0x27ff/2) ) { palette_change_color(0x600 + offset - 0x2000/2, r,g,b ); return;}
+	if ( (offset >= 0x2000/2) && (offset <= 0x27ff/2) ) { palette_set_color(0x600 + offset - 0x2000/2, r,g,b ); return;}
 	// Sprites
-	if ( (offset >= 0x2800/2) && (offset <= 0x2fff/2) ) { palette_change_color(0xa00 + offset - 0x2800/2, r,g,b ); return;}
+	if ( (offset >= 0x2800/2) && (offset <= 0x2fff/2) ) { palette_set_color(0xa00 + offset - 0x2800/2, r,g,b ); return;}
 	// Scroll 2
-	if ( (offset >= 0x3600/2) && (offset <= 0x37ff/2) ) { palette_change_color(0xe00 + offset - 0x3600/2, r,g,b ); return;}
+	if ( (offset >= 0x3600/2) && (offset <= 0x37ff/2) ) { palette_set_color(0xe00 + offset - 0x3600/2, r,g,b ); return;}
 }
 
 static MEMORY_READ16_START( bigrun_readmem )
@@ -285,17 +285,17 @@ WRITE16_HANDLER( cischeat_paletteram16_w )
 	int b = ((word >> 0) & 0xF0 ) | ((word << 2) & 0x08);
 
 	// Scroll 0
-	if ( (offset >= 0x1c00/2) && (offset <= 0x1fff/2) ) { palette_change_color(0x000 + offset - 0x1c00/2, r,g,b ); return;}
+	if ( (offset >= 0x1c00/2) && (offset <= 0x1fff/2) ) { palette_set_color(0x000 + offset - 0x1c00/2, r,g,b ); return;}
 	// Scroll 1
-	if ( (offset >= 0x2c00/2) && (offset <= 0x2fff/2) ) { palette_change_color(0x200 + offset - 0x2c00/2, r,g,b ); return;}
+	if ( (offset >= 0x2c00/2) && (offset <= 0x2fff/2) ) { palette_set_color(0x200 + offset - 0x2c00/2, r,g,b ); return;}
 	// Scroll 2
-	if ( (offset >= 0x6c00/2) && (offset <= 0x6fff/2) ) { palette_change_color(0x400 + offset - 0x6c00/2, r,g,b ); return;}
+	if ( (offset >= 0x6c00/2) && (offset <= 0x6fff/2) ) { palette_set_color(0x400 + offset - 0x6c00/2, r,g,b ); return;}
 	// Road 0
-	if ( (offset >= 0x3800/2) && (offset <= 0x3fff/2) ) { palette_change_color(0x600 + offset - 0x3800/2, r,g,b ); return;}
+	if ( (offset >= 0x3800/2) && (offset <= 0x3fff/2) ) { palette_set_color(0x600 + offset - 0x3800/2, r,g,b ); return;}
 	// Road 1
-	if ( (offset >= 0x4800/2) && (offset <= 0x4fff/2) ) { palette_change_color(0xa00 + offset - 0x4800/2, r,g,b ); return;}
+	if ( (offset >= 0x4800/2) && (offset <= 0x4fff/2) ) { palette_set_color(0xa00 + offset - 0x4800/2, r,g,b ); return;}
 	// Sprites
-	if ( (offset >= 0x5000/2) && (offset <= 0x5fff/2) ) { palette_change_color(0xe00 + offset - 0x5000/2, r,g,b ); return;}
+	if ( (offset >= 0x5000/2) && (offset <= 0x5fff/2) ) { palette_set_color(0xe00 + offset - 0x5000/2, r,g,b ); return;}
 }
 
 static MEMORY_READ16_START( cischeat_readmem )
@@ -353,17 +353,17 @@ WRITE16_HANDLER( f1gpstar_paletteram16_w )
 	int b = ((word >> 0) & 0xF0 ) | ((word << 2) & 0x08);
 
 	// Scroll 0
-	if ( (offset >= 0x1e00/2) && (offset <= 0x1fff/2) ) { palette_change_color(0x000 + offset - 0x1e00/2, r,g,b ); return;}
+	if ( (offset >= 0x1e00/2) && (offset <= 0x1fff/2) ) { palette_set_color(0x000 + offset - 0x1e00/2, r,g,b ); return;}
 	// Scroll 1
-	if ( (offset >= 0x2e00/2) && (offset <= 0x2fff/2) ) { palette_change_color(0x100 + offset - 0x2e00/2, r,g,b ); return;}
+	if ( (offset >= 0x2e00/2) && (offset <= 0x2fff/2) ) { palette_set_color(0x100 + offset - 0x2e00/2, r,g,b ); return;}
 	// Scroll 2
-	if ( (offset >= 0x6e00/2) && (offset <= 0x6fff/2) ) { palette_change_color(0x200 + offset - 0x6e00/2, r,g,b ); return;}
+	if ( (offset >= 0x6e00/2) && (offset <= 0x6fff/2) ) { palette_set_color(0x200 + offset - 0x6e00/2, r,g,b ); return;}
 	// Road 0
-	if ( (offset >= 0x3800/2) && (offset <= 0x3fff/2) ) { palette_change_color(0x300 + offset - 0x3800/2, r,g,b ); return;}
+	if ( (offset >= 0x3800/2) && (offset <= 0x3fff/2) ) { palette_set_color(0x300 + offset - 0x3800/2, r,g,b ); return;}
 	// Road 1
-	if ( (offset >= 0x4800/2) && (offset <= 0x4fff/2) ) { palette_change_color(0x700 + offset - 0x4800/2, r,g,b ); return;}
+	if ( (offset >= 0x4800/2) && (offset <= 0x4fff/2) ) { palette_set_color(0x700 + offset - 0x4800/2, r,g,b ); return;}
 	// Sprites
-	if ( (offset >= 0x5000/2) && (offset <= 0x5fff/2) ) { palette_change_color(0xb00 + offset - 0x5000/2, r,g,b ); return;}
+	if ( (offset >= 0x5000/2) && (offset <= 0x5fff/2) ) { palette_set_color(0xb00 + offset - 0x5000/2, r,g,b ); return;}
 }
 
 /*	F1 GP Star tests:
@@ -424,11 +424,11 @@ WRITE16_HANDLER( scudhamm_paletteram16_w )
 	int b = ((newword >> 0) & 0xF0 ) | ((newword << 2) & 0x08);
 
 	// Scroll 0
-	if ( (offset >= 0x1e00/2) && (offset <= 0x1fff/2) ) { palette_change_color(0x000 + offset - 0x1e00/2, r,g,b ); return;}
+	if ( (offset >= 0x1e00/2) && (offset <= 0x1fff/2) ) { palette_set_color(0x000 + offset - 0x1e00/2, r,g,b ); return;}
 	// Scroll 2
-	if ( (offset >= 0x4e00/2) && (offset <= 0x4fff/2) ) { palette_change_color(0x100 + offset - 0x4e00/2, r,g,b ); return;}
+	if ( (offset >= 0x4e00/2) && (offset <= 0x4fff/2) ) { palette_set_color(0x100 + offset - 0x4e00/2, r,g,b ); return;}
 	// Sprites
-	if ( (offset >= 0x3000/2) && (offset <= 0x3fff/2) ) { palette_change_color(0x200 + offset - 0x3000/2, r,g,b ); return;}
+	if ( (offset >= 0x3000/2) && (offset <= 0x3fff/2) ) { palette_set_color(0x200 + offset - 0x3000/2, r,g,b ); return;}
 }
 
 
@@ -1450,11 +1450,10 @@ static const struct MachineDriver machine_driver_##_shortname_ = \
 	256, 256,_visible_area_, \
 \
 	_shortname_##_gfxdecodeinfo, \
-	_colors_num_,_colors_num_, \
+	_colors_num_, 0, \
 	0, \
 \
-	VIDEO_TYPE_RASTER          | \
-	VIDEO_UPDATE_AFTER_VBLANK | VIDEO_HAS_SHADOWS,       \
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_HAS_SHADOWS,       \
 	0, \
 	_shortname_##_vh_start, \
 	0, \
@@ -1542,10 +1541,9 @@ static const struct MachineDriver machine_driver_scudhamm =
 	/* video hardware */
 	256, 256,{ 0, 256-1, 0 +16, 256-1 -16},
 	gfxdecodeinfo_scudhamm,
-	16*16+16*16+128*16, 16*16+16*16+128*16,
+	16*16+16*16+128*16, 0,
 	0,
-	VIDEO_TYPE_RASTER          |
-	VIDEO_UPDATE_AFTER_VBLANK | VIDEO_HAS_SHADOWS,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_HAS_SHADOWS,
 	0,
 	f1gpstar_vh_start,	// 16 color codes, shadows
 	0,

@@ -627,14 +627,6 @@ void slapshot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	TC0480SCP_tilemap_update();
 
-	{
-//		int i;
-
-		/* fix TC0480SCP transparency, but this could compromise the background color */
-//		for (i = 0;i < Machine->drv->total_colors;i += 16)
-//			palette_used_colors[i] = PALETTE_COLOR_TRANSPARENT;
-	}
-
 	priority = TC0480SCP_get_bg_priority();
 
 	layer[0] = (priority &0xf000) >> 12;	/* tells us which bg layer is bottom */

@@ -5324,6 +5324,7 @@ DECLARE(drawgfx_core,(
 		/* optimizations for 1:1 mapping */
 //		if (Machine->drv->color_table_len == 0 && gfx != Machine->uifont)
 		if (Machine->drv->color_table_len == 0 &&
+				!(Machine->drv->video_attributes & VIDEO_RGB_DIRECT) &&
 				paldata >= Machine->remapped_colortable && paldata < Machine->remapped_colortable + Machine->drv->total_colors)
 		{
 			switch (transparency)

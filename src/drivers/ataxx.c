@@ -980,7 +980,7 @@ static const struct MachineDriver machine_driver_ataxx =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	leland_vh_eof,
 	ataxx_vh_start,
 	ataxx_vh_stop,
@@ -1031,7 +1031,7 @@ static const struct MachineDriver machine_driver_wsf =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	leland_vh_eof,
 	ataxx_vh_start,
 	ataxx_vh_stop,

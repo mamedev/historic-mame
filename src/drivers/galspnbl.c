@@ -355,7 +355,7 @@ static const struct MachineDriver machine_driver_hotpinbl =
 	1024 + 32768, 1024,
 	galspnbl_init_palette,
 
-	VIDEO_TYPE_RASTER  | VIDEO_PIXEL_ASPECT_RATIO_1_2,
+	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2,
 	0,
 	generic_bitmapped_vh_start,
 	generic_bitmapped_vh_stop,

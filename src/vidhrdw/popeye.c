@@ -228,7 +228,7 @@ static void set_background_palette(int bank)
 		bit2 = ((*color_prom ^ invertmask) >> 7) & 0x01;
 		b = 0x1c * bit0 + 0x31 * bit1 + 0x47 * bit2;
 
-		palette_change_color(i,r,g,b);
+		palette_set_color(i,r,g,b);
 
 		color_prom++;
 	}

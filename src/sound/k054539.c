@@ -186,7 +186,7 @@ static void K054539_update(int chip, INT16 **buffer, int length)
 			}
 			case 0x4: { // 16bit pcm lsb first
 				int i;
-				cur_pos >>= 1;
+				pdelta <<= 1;
 
 				for(i=0; i<length; i++) {
 					cur_pfrac += delta;
@@ -195,11 +195,11 @@ static void K054539_update(int chip, INT16 **buffer, int length)
 						cur_pos += pdelta;
 
 						cur_pval = cur_val;
-						cur_val = (INT16)(samples[cur_pos<<1] | samples[(cur_pos<<1)|1]<<8);
+						cur_val = (INT16)(samples[cur_pos] | samples[cur_pos+1]<<8);
 						if(cur_val == (INT16)0x8000) {
 							if(base2[1] & 1) {
-								cur_pos = ((base1[0x08] | (base1[0x09] << 8) | (base1[0x0a] << 16)) & rom_mask) >> 1;
-								cur_val = (INT16)(samples[cur_pos<<1] | samples[(cur_pos<<1)|1]<<8);
+								cur_pos = (base1[0x08] | (base1[0x09] << 8) | (base1[0x0a] << 16)) & rom_mask;
+								cur_val = (INT16)(samples[cur_pos] | samples[cur_pos+1]<<8);
 								if(cur_val != (INT16)0x8000)
 									continue;
 							}
@@ -211,7 +211,6 @@ static void K054539_update(int chip, INT16 **buffer, int length)
 					UPDATE_CHANNELS;
 				}
 			end_channel_4:
-				cur_pos <<= 1;
 				break;
 			}
 			case 0x8: { // 4bit dpcm

@@ -19,7 +19,7 @@ i8751 protection simluation and other fixes by Bryan McPhail, 15/10/00.
 #include "cpu/m6502/m6502.h"
 
 /* from vidhrdw */
-void sidepckt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void sidepckt_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 int sidepckt_vh_start(void);
 void sidepckt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -329,7 +329,7 @@ static const struct MachineDriver machine_driver_sidepckt =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256, 256,
+	256, 0,
 	sidepckt_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -377,7 +377,7 @@ static const struct MachineDriver machine_driver_sidepctj =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256, 256,
+	256, 0,
 	sidepckt_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,

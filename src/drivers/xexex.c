@@ -195,7 +195,7 @@ static WRITE16_HANDLER( sound_cmd2_w )
 
 static WRITE16_HANDLER( sound_irq_w )
 {
-	cpu_set_irq_line(1, Z80_IRQ_INT, HOLD_LINE);
+	cpu_set_irq_line(1, 0, HOLD_LINE);
 }
 
 static READ16_HANDLER( sound_status_r )
@@ -380,7 +380,7 @@ static const struct MachineDriver machine_driver_xexex =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT,
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT,
 	0,
 	xexex_vh_start,
 	xexex_vh_stop,

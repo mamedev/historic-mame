@@ -1420,7 +1420,7 @@ static const struct MachineDriver machine_driver_dfeveron =
 	dfeveron_gfxdecodeinfo,
 	0x800, 0x8000,	/* $8000 palette entries for consistency with the other games */
 	dfeveron_vh_init_palette,
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	cave_vh_start_16_16_0,
 	cave_vh_stop,
@@ -1459,7 +1459,7 @@ static const struct MachineDriver machine_driver_ddonpach =
 	ddonpach_gfxdecodeinfo,
 	0x8000, 0x8000 + 0x40*16,	// $400 extra entries for layers 1&2
 	ddonpach_vh_init_palette,
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	cave_vh_start_16_16_8,
 	cave_vh_stop,
@@ -1498,7 +1498,7 @@ static const struct MachineDriver machine_driver_donpachi =
 	donpachi_gfxdecodeinfo,
 	0x800, 0x8000,	/* $8000 palette entries for consistency with the other games */
 	dfeveron_vh_init_palette,
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	cave_vh_start_16_16_8,
 	cave_vh_stop,
@@ -1535,9 +1535,9 @@ static const struct MachineDriver machine_driver_esprade =
 	/* video hardware */
 	320, 240, { 0, 320-1, 0, 240-1 },
 	esprade_gfxdecodeinfo,
-	0x8000, 0x8000,
+	0x8000, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	cave_vh_start_16_16_16,
 	cave_vh_stop,
@@ -1574,9 +1574,9 @@ static const struct MachineDriver machine_driver_guwange =
 	/* video hardware */
 	320, 240, { 0, 320-1, 0, 240-1 },
 	esprade_gfxdecodeinfo,
-	0x8000, 0x8000,
+	0x8000, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	cave_vh_start_16_16_16,
 	cave_vh_stop,
@@ -1621,7 +1621,7 @@ static const struct MachineDriver machine_driver_hotdogst =
 	hotdogst_gfxdecodeinfo,
 	0x800, 0x8000,	/* $8000 palette entries for consistency with the other games */
 	dfeveron_vh_init_palette,
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	cave_vh_start_16_16_16,
 	cave_vh_stop,
@@ -1720,7 +1720,7 @@ static const struct MachineDriver machine_driver_sailormn =
 	sailormn_gfxdecodeinfo,
 	0x2000, 0x8000,	/* $8000 palette entries for consistency with the other games */
 	dfeveron_vh_init_palette,	// 4 bit sprites
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	sailormn_vh_start_16_16_8,	/* Layer 2 has a banked ROM and a peculiar layout */
 	cave_vh_stop,
@@ -1758,9 +1758,9 @@ static const struct MachineDriver machine_driver_uopoko =
 	/* video hardware */
 	320, 240, { 0, 320-1, 0, 240-1 },
 	uopoko_gfxdecodeinfo,
-	0x8000, 0x8000,
+	0x8000, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	cave_vh_start_16_0_0,
 	cave_vh_stop,

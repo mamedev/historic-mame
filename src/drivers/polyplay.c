@@ -291,8 +291,8 @@ static struct GfxLayout charlayout_3_bit =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0, 0xe800, &charlayout_1_bit, 0, 2 },
-	{ 0, 0xec00, &charlayout_3_bit, 2, 8 },
+	{ 0, 0xe800, &charlayout_1_bit, 0, 1 },
+	{ 0, 0xec00, &charlayout_3_bit, 2, 1 },
 	{ -1 }	/* end of array */
 };
 
@@ -319,7 +319,7 @@ static const struct MachineDriver machine_driver_##NAME =	\
 	/* video hardware */							\
 	64*8, 32*8, { 0*8, 64*8-1, 0*8, 32*8-1 },		\
 	gfxdecodeinfo,									\
-	64, 64,											\
+	10, 0,											\
 	polyplay_init_palette,					        \
 													\
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,			\
@@ -329,7 +329,7 @@ static const struct MachineDriver machine_driver_##NAME =	\
 	polyplay_vh_screenrefresh,						\
 													\
 	/* sound hardware */							\
-	0,0,0,0,											\
+	0,0,0,0,										\
 	{							                    \
 		{						                    \
 			SOUND_CUSTOM,		                    \

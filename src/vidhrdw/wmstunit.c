@@ -46,6 +46,9 @@ extern size_t	wms_gfx_rom_size;
 static data16_t	wms_control;
 static UINT8	wms_using_34020;
 
+/* palette-related variables */
+static UINT32 *	pen_map;
+
 /* videoram-related variables */
 static UINT32 	gfxbank_offset[2];
 static UINT16 *	local_videoram;
@@ -101,15 +104,22 @@ void wms_tunit_vh_stop(void);
 
 int wms_tunit_vh_start(void)
 {
+	int i;
+
 	/* allocate memory */
 	local_videoram = malloc(0x100000);
+	pen_map = malloc(65536 * sizeof(pen_map[0]));
 
 	/* handle failure */
-	if (!local_videoram)
+	if (!local_videoram || !pen_map)
 	{
 		wms_tunit_vh_stop();
 		return 1;
 	}
+
+	/* initialize pen map */
+	for (i = 0; i < 0x10000; i++)
+		pen_map[i] = i & 0x7fff;
 
 	/* reset all the globals */
 	gfxbank_offset[0] = 0x000000;
@@ -150,6 +160,10 @@ int wms_revx_vh_start(void)
 
 void wms_tunit_vh_stop(void)
 {
+	if (pen_map)
+		free(pen_map);
+	pen_map = NULL;
+
 	if (local_videoram)
 		free(local_videoram);
 	local_videoram = NULL;
@@ -343,7 +357,7 @@ WRITE16_HANDLER( wms_tunit_paletteram_w )
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
 
-	palette_change_color(offset, r, g, b);
+	palette_set_color(offset, r, g, b);
 }
 
 
@@ -907,7 +921,7 @@ void wms_tunit_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	/* loop over rows */
 	for (v = Machine->visible_area.min_y; v <= Machine->visible_area.max_y; v++)
 	{
-		draw_scanline16(bitmap, xoffs, v, width, &local_videoram[offset], Machine->pens, -1);
+		draw_scanline16(bitmap, xoffs, v, width, &local_videoram[offset], pen_map, -1);
 		offset = (offset + 512) & 0x3ffff;
 	}
 }

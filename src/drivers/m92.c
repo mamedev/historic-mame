@@ -1223,7 +1223,7 @@ static struct MachineDriver machine_driver_raster =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	m92_vh_start,
 	0,
@@ -1271,7 +1271,7 @@ static struct MachineDriver machine_driver_majtitl2 =
 	2048, 0,	/* twice the colors of the other games */
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	majtitl2_vh_start,
 	majtitl2_vh_stop,
@@ -1319,7 +1319,7 @@ static struct MachineDriver machine_driver_nonraster =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	m92_vh_start,
 	0,
@@ -1367,7 +1367,7 @@ static struct MachineDriver machine_driver_lethalth =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	m92_vh_start,
 	0,
@@ -1415,7 +1415,7 @@ static struct MachineDriver machine_driver_psoldier =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	m92_vh_start,
 	0,

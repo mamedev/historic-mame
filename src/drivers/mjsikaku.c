@@ -85,9 +85,9 @@ Memo:
 #define	SIGNED_DAC	0		// 0:unsigned DAC, 1:signed DAC
 
 
-void mjsikaku_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
-void seiha_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
-void crystal2_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
+void mjsikaku_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
+void seiha_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
+void crystal2_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 void mjsikaku_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 int mjsikaku_vh_start(void);
 int secolove_vh_start(void);
@@ -1621,7 +1621,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	/* video hardware */ \
 	512, 256, { 0, 512-1, 15, 239-1 }, \
 	0, \
-	4096, 4096, \
+	4096, 0, \
 	mjsikaku_init_palette, \
 \
 	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
@@ -1663,7 +1663,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	/* video hardware */ \
 	512, 256, { 0, 512-1, 15, 239-1 }, \
 	0, \
-	4096, 4096, \
+	4096, 0, \
 	mjsikaku_init_palette, \
 \
 	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
@@ -1705,10 +1705,10 @@ static struct MachineDriver machine_driver_##_name_ = \
 	/* video hardware */ \
 	512, 256, { 0, 512-1, 15, 239-1 }, \
 	0, \
-	65536, 65536, \
+	65536, 0, \
 	seiha_init_palette, \
 \
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
+	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2 | VIDEO_NEEDS_6BITS_PER_GUN, \
 	0, \
 	bijokkoy_vh_start, \
 	mjsikaku_vh_stop, \
@@ -1747,10 +1747,10 @@ static struct MachineDriver machine_driver_##_name_ = \
 	/* video hardware */ \
 	512, 256, { 0, 512-1, 15, 239-1 }, \
 	0, \
-	65536, 65536, \
+	65536, 0, \
 	seiha_init_palette, \
 \
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
+	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2 | VIDEO_NEEDS_6BITS_PER_GUN, \
 	0, \
 	seiha_vh_start, \
 	mjsikaku_vh_stop, \
@@ -1789,7 +1789,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	/* video hardware */ \
 	512, 256, { 0, 512-1, 15, 239-1 }, \
 	0, \
-	256, 256, \
+	256, 0, \
 	crystal2_init_palette, \
 \
 	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
@@ -1831,7 +1831,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	/* video hardware */ \
 	512, 256, { 0, 512-1, 15, 239-1 }, \
 	0, \
-	4096, 4096, \
+	4096, 0, \
 	mjsikaku_init_palette, \
 \
 	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
@@ -1873,7 +1873,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	/* video hardware */ \
 	512, 256, { 0, 512-1, 15, 239-1 }, \
 	0, \
-	4096, 4096, \
+	4096, 0, \
 	mjsikaku_init_palette, \
 \
 	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \

@@ -349,7 +349,7 @@ WRITE16_HANDLER( timekill_paletteram_w )
 	g = paletteram16[offset & ~1] >> 8;
 	b = paletteram16[offset |  1] >> 8;
 
-	palette_change_color(offset / 2, r, g, b);
+	palette_set_color(offset / 2, r, g, b);
 }
 
 
@@ -366,7 +366,7 @@ WRITE16_HANDLER( bloodstm_paletteram_w )
 	g = paletteram16[offset & ~1] >> 8;
 	b = paletteram16[offset |  1] & 0xff;
 
-	palette_change_color(offset / 2, r, g, b);
+	palette_set_color(offset / 2, r, g, b);
 }
 
 
@@ -380,7 +380,7 @@ WRITE32_HANDLER( itech020_paletteram_w )
 	g = (paletteram32[offset] >> 8) & 0xff;
 	b = paletteram32[offset] & 0xff;
 
-	palette_change_color(offset, r, g, b);
+	palette_set_color(offset, r, g, b);
 }
 
 

@@ -333,10 +333,10 @@ static const struct MachineDriver machine_driver_bombjack =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	128, 128,
+	128, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	bombjack_vh_start,
 	generic_vh_stop,

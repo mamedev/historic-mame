@@ -185,10 +185,10 @@ WRITE_HANDLER( pacland_bankswitch_w )
 
 			color_prom++;
 
-			palette_change_color(i,r,g,b);
+			palette_set_color(i,r,g,b);
 		}
 	}
-	palette_change_color(0x7f,8,8,8);	/* make color 0x7f unique so we can use it for transparency */
+	palette_set_color(0x7f,8,8,8);	/* make color 0x7f unique so we can use it for transparency */
 }
 
 

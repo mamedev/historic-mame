@@ -106,7 +106,7 @@ WRITE16_HANDLER( suna16_paletteram16_w )
 	r = (data >>  0) & 0x1F;
 	g = (data >>  5) & 0x1F;
 	b = (data >> 10) & 0x1F;
-	palette_change_color( offset + (color_bank ? 0x100 : 0),(r<<3)|(r>>2),(g<<3)|(g>>2),(b<<3)|(b>>2));
+	palette_set_color( offset + (color_bank ? 0x100 : 0),(r<<3)|(r>>2),(g<<3)|(g>>2),(b<<3)|(b>>2));
 }
 
 

@@ -2361,7 +2361,7 @@ static struct YM2610interface ym2610_interface_rsaga2 =
 {
 	1,	/* 1 chip */
 	8000000,	/* 8 MHz */
-	{ 30 },
+	{ 25 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -2369,14 +2369,14 @@ static struct YM2610interface ym2610_interface_rsaga2 =
 	{ irqhandler },
 	{ REGION_SOUND1 },
 	{ REGION_SOUND2 },
-	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) }
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
 };
 
 static struct YM2610interface ym2610_interface_crimec =
 {
 	1,	/* 1 chip */
 	8000000,	/* 8 MHz */
-	{ 30 },
+	{ 25 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -2384,7 +2384,7 @@ static struct YM2610interface ym2610_interface_crimec =
 	{ irqhandler },
 	{ REGION_SOUND1 },
 	{ REGION_SOUND1 },
-	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) }
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
 };
 
 static struct YM2203interface ym2203_interface =
@@ -2479,7 +2479,7 @@ static const struct MachineDriver machine_driver_rastsag2 =
 	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	taitob_eof_callback,
 	taitob_vh_start_color_order0,
 	taitob_vh_stop,
@@ -2523,7 +2523,7 @@ static const struct MachineDriver machine_driver_ashura =
 	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	taitob_eof_callback,
 	taitob_vh_start_color_order0,
 	taitob_vh_stop,
@@ -2567,7 +2567,7 @@ static const struct MachineDriver machine_driver_crimec =
 	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	taitob_eof_callback,
 	taitob_vh_start_color_order1,
 	taitob_vh_stop,
@@ -2611,7 +2611,7 @@ static const struct MachineDriver machine_driver_tetrist =
 	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	taitob_eof_callback,
 	taitob_vh_start_color_order0,
 	taitob_vh_stop,
@@ -2656,7 +2656,7 @@ static const struct MachineDriver machine_driver_hitice =
 	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	taitob_eof_callback,
 	hitice_vh_start,
 	taitob_vh_stop,
@@ -2704,7 +2704,7 @@ static const struct MachineDriver machine_driver_rambo3 =
 	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	taitob_eof_callback,
 	taitob_vh_start_color_order0,
 	taitob_vh_stop,
@@ -2748,7 +2748,7 @@ static const struct MachineDriver machine_driver_rambo3a =
 	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	taitob_eof_callback,
 	taitob_vh_start_color_order2,
 	taitob_vh_stop,
@@ -2793,7 +2793,7 @@ static const struct MachineDriver machine_driver_pbobble =
 	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	taitob_eof_callback,
 	taitob_vh_start_color_order1,
 	taitob_vh_stop,
@@ -2840,7 +2840,7 @@ static const struct MachineDriver machine_driver_spacedx =
 	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	taitob_eof_callback,
 	taitob_vh_start_color_order1,
 	taitob_vh_stop,
@@ -2888,7 +2888,7 @@ static const struct MachineDriver machine_driver_qzshowby =
 	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	taitob_eof_callback,
 	taitob_vh_start_color_order1,
 	taitob_vh_stop,
@@ -2935,7 +2935,7 @@ static const struct MachineDriver machine_driver_viofight =
 	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	taitob_eof_callback,
 	taitob_vh_start_color_order2,
 	taitob_vh_stop,
@@ -2991,7 +2991,7 @@ static const struct MachineDriver machine_driver_masterw =
 	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	taitob_eof_callback,
 	taitob_vh_start_color_order2,
 	taitob_vh_stop,
@@ -3035,7 +3035,7 @@ static const struct MachineDriver machine_driver_silentd =
 	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	taitob_eof_callback,
 	taitob_vh_start_color_order2,
 	taitob_vh_stop,
@@ -3079,7 +3079,7 @@ static const struct MachineDriver machine_driver_selfeena =
 	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	taitob_eof_callback,
 	taitob_vh_start_color_order2,
 	taitob_vh_stop,
@@ -3133,7 +3133,7 @@ static const struct MachineDriver machine_driver_ryujin =
 	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	taitob_eof_callback,
 	taitob_vh_start_color_order2,
 	taitob_vh_stop,
@@ -3185,7 +3185,7 @@ static const struct MachineDriver machine_driver_sbm =
 	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	taitob_eof_callback,
 	taitob_vh_start_color_order0,
 	taitob_vh_stop,

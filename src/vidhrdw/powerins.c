@@ -94,7 +94,7 @@ WRITE16_HANDLER( powerins_paletteram16_w )
 	int g = ((newword >> 4) & 0xF0 ) | ((newword << 1) & 0x08);
 	int b = ((newword >> 0) & 0xF0 ) | ((newword << 2) & 0x08);
 
-	palette_change_color( offset, r,g,b );
+	palette_set_color( offset, r,g,b );
 }
 
 

@@ -9,6 +9,8 @@
 ** Written by Tatsuyuki Satoh
 **
 ** History:
+** 05-08-2001 Jarek Burczynski:
+**  - now_step is initialized with 0 at the start of play.
 ** 12-06-2001 Jarek Burczynski:
 **  - corrected end of sample bug in YM_DELTAT_ADPCM_CALC.
 **    Checked on real YM2610 chip - address register is 24 bits wide.
@@ -17,7 +19,7 @@
 ** TO DO:
 **		Check size of the address register on the other chips....
 **
-** Version 0.37d
+** Version 0.37e
 **
 ** sound chips that have this unit
 **
@@ -77,8 +79,8 @@ void YM_DELTAT_ADPCM_Write(YM_DELTAT *DELTAT,int r,int v)
 			/**** start ADPCM ****/
 			DELTAT->volume_w_step = (double)DELTAT->volume * DELTAT->step / (1<<YM_DELTAT_SHIFT);
 			DELTAT->now_addr = (DELTAT->start)<<1;
-			DELTAT->now_step = (1<<YM_DELTAT_SHIFT)-DELTAT->step;
-			DELTAT->adpcmx   = 0;
+			DELTAT->now_step = 0;
+			DELTAT->acc      = 0;
 			DELTAT->adpcml   = 0;
 			DELTAT->adpcmd   = YM_DELTAT_DELTA_DEF;
 			DELTAT->next_leveling=0;
@@ -88,22 +90,19 @@ void YM_DELTAT_ADPCM_Write(YM_DELTAT *DELTAT,int r,int v)
 				DELTAT->portstate = 0x00;
 			}
 			/**** PCM memory check & limit check ****/
-			if(DELTAT->memory == 0){			// Check memory Mapped
+			if(DELTAT->memory == 0){			/* Check memory Mapped */
 				LOG(LOG_ERR,("YM Delta-T ADPCM rom not mapped\n"));
 				DELTAT->portstate = 0x00;
-				//logerror("DELTAT memory 0\n");
 			}else{
 				if( DELTAT->end >= DELTAT->memory_size )
-				{		// Check End in Range
+				{		/* Check End in Range */
 					LOG(LOG_ERR,("YM Delta-T ADPCM end out of range: $%08x\n",DELTAT->end));
 					DELTAT->end = DELTAT->memory_size - 1;
-					//logerror("DELTAT end over\n");
 				}
 				if( DELTAT->start >= DELTAT->memory_size )
-				{		// Check Start in Range
+				{		/* Check Start in Range */
 					LOG(LOG_ERR,("YM Delta-T ADPCM start out of range: $%08x\n",DELTAT->start));
 					DELTAT->portstate = 0x00;
-					//logerror("DELTAT start under\n");
 				}
 			}
 		} else if( v&0x01 ){
@@ -116,11 +115,13 @@ void YM_DELTAT_ADPCM_Write(YM_DELTAT *DELTAT,int r,int v)
 	case 0x02:	/* Start Address L */
 	case 0x03:	/* Start Address H */
 		DELTAT->start  = (DELTAT->reg[0x3]*0x0100 | DELTAT->reg[0x2]) << DELTAT->portshift;
+			/*logerror("DELTAT start: 02=%2x 03=%2x addr=%8x\n",DELTAT->reg[0x2], DELTAT->reg[0x3],DELTAT->start );*/
 		break;
 	case 0x04:	/* Stop Address L */
 	case 0x05:	/* Stop Address H */
 		DELTAT->end    = (DELTAT->reg[0x5]*0x0100 | DELTAT->reg[0x4]) << DELTAT->portshift;
 		DELTAT->end   += (1<<DELTAT->portshift) - 1;
+			/*logerror("DELTAT end  : 04=%2x 05=%2x addr=%8x\n",DELTAT->reg[0x4], DELTAT->reg[0x5],DELTAT->end   );*/
 		break;
 	case 0x06:	/* Prescale L (PCM and Recoard frq) */
 	case 0x07:	/* Proscale H */
@@ -129,19 +130,26 @@ void YM_DELTAT_ADPCM_Write(YM_DELTAT *DELTAT,int r,int v)
 	case 0x09:	/* DELTA-N L (ADPCM Playback Prescaler) */
 	case 0x0a:	/* DELTA-N H */
 		DELTAT->delta  = (DELTAT->reg[0xa]*0x0100 | DELTAT->reg[0x9]);
-		DELTAT->step     = (UINT32)((double)(DELTAT->delta*(1<<(YM_DELTAT_SHIFT-16)))*(DELTAT->freqbase));
+			/*logerror("DELTAT deltan:09=%2x 0a=%2x\n",DELTAT->reg[0x9], DELTAT->reg[0xa]);*/
+		DELTAT->step     = (UINT32)( (double)(DELTAT->delta /* *(1<<(YM_DELTAT_SHIFT-16)) */ ) * (DELTAT->freqbase) );
 		DELTAT->volume_w_step = (double)DELTAT->volume * DELTAT->step / (1<<YM_DELTAT_SHIFT);
 		break;
 	case 0x0b:	/* Level control (volume , voltage flat) */
 		{
 			INT32 oldvol = DELTAT->volume;
-			DELTAT->volume = (v&0xff)*(DELTAT->output_range/256) / YM_DELTAT_DECODE_RANGE;
+			DELTAT->volume = (v&0xff) * (DELTAT->output_range/256) / YM_DELTAT_DECODE_RANGE;
+//								v	  *		((1<<16)>>8)		>>	15;
+//						thus:	v	  *		(1<<8)				>>	15;
+//						thus: output_range must be (1 << (15+8)) at least
+//								v     *		((1<<23)>>8)		>>	15;
+//								v	  *		(1<<15)				>>	15;
+			/*logerror("DELTAT vol = %2x\n",v&0xff);*/
 			if( oldvol != 0 )
 			{
-				DELTAT->adpcml      = (int)((double)DELTAT->adpcml      / (double)oldvol * (double)DELTAT->volume);
-				DELTAT->sample_step = (int)((double)DELTAT->sample_step / (double)oldvol * (double)DELTAT->volume);
+				DELTAT->adpcml        = (int)((double)DELTAT->adpcml        / (double)oldvol * (double)DELTAT->volume);
+				DELTAT->resample_step = (int)((double)DELTAT->resample_step / (double)oldvol * (double)DELTAT->volume);
 			}
-			DELTAT->volume_w_step = (int)((double)DELTAT->volume * (double)DELTAT->step / (double)(1<<YM_DELTAT_SHIFT));
+			DELTAT->volume_w_step = (double)DELTAT->volume * DELTAT->step / (1<<YM_DELTAT_SHIFT);
 		}
 		break;
 	}
@@ -158,7 +166,7 @@ void YM_DELTAT_ADPCM_Reset(YM_DELTAT *DELTAT,int pan)
 	DELTAT->volume    = 0;
 	DELTAT->pan       = &DELTAT->output_pointer[pan];
 	/* DELTAT->flagMask  = 0; */
-	DELTAT->adpcmx    = 0;
+	DELTAT->acc       = 0;
 	DELTAT->adpcmd    = 127;
 	DELTAT->adpcml    = 0;
 	DELTAT->volume_w_step = 0;
@@ -171,7 +179,7 @@ void YM_DELTAT_postload(YM_DELTAT *DELTAT,UINT8 *regs)
 {
 	int r;
 
-	/* to keep adpcml and sample_step */
+	/* to keep adpcml and resample_step */
 	DELTAT->volume = 0;
 	/* update */
 	for(r=1;r<16;r++)
@@ -186,11 +194,11 @@ void YM_DELTAT_savestate(const char *statename,int num,YM_DELTAT *DELTAT)
 	state_save_register_UINT8 (statename, num, "DeltaT.portstate" , &DELTAT->portstate , 1);
 	state_save_register_UINT32(statename, num, "DeltaT.address"   , &DELTAT->now_addr  , 1);
 	state_save_register_UINT32(statename, num, "DeltaT.step"      , &DELTAT->now_step  , 1);
-	state_save_register_INT32 (statename, num, "DeltaT.adpcmx"    , &DELTAT->adpcmx    , 1);
+	state_save_register_INT32 (statename, num, "DeltaT.acc"       , &DELTAT->acc    , 1);
 	state_save_register_INT32 (statename, num, "DeltaT.adpcmd"    , &DELTAT->adpcmd    , 1);
 	state_save_register_INT32 (statename, num, "DeltaT.adpcml"    , &DELTAT->adpcml    , 1);
 	state_save_register_INT32 (statename, num, "DeltaT.next_leveling", &DELTAT->next_leveling , 1);
-	state_save_register_INT32 (statename, num, "DeltaT.sample_step", &DELTAT->sample_step , 1);
+	state_save_register_INT32 (statename, num, "DeltaT.resample_step", &DELTAT->resample_step , 1);
 }
 #else /* YM_INLINE_BLOCK */
 
@@ -219,9 +227,8 @@ INLINE void YM_DELTAT_ADPCM_CALC(YM_DELTAT *DELTAT)
 {
 	UINT32 step;
 	int data;
-	INT32 old_m;
+	INT32 prev_acc;
 	INT32 now_leveling;
-	INT32 delta_next;
 
 	DELTAT->now_step += DELTAT->step;
 	if ( DELTAT->now_step >= (1<<YM_DELTAT_SHIFT) )
@@ -233,7 +240,7 @@ INLINE void YM_DELTAT_ADPCM_CALC(YM_DELTAT *DELTAT)
 				if( DELTAT->portstate&0x10 ){
 					/**** repeat start ****/
 					DELTAT->now_addr = DELTAT->start<<1;
-					DELTAT->adpcmx   = 0;
+					DELTAT->acc      = 0;
 					DELTAT->adpcmd   = YM_DELTAT_DELTA_DEF;
 					DELTAT->next_leveling = 0;
 				}else{
@@ -260,33 +267,37 @@ INLINE void YM_DELTAT_ADPCM_CALC(YM_DELTAT *DELTAT)
 			/* Side effect: we should take the size of the mapped ROM into account */
 			DELTAT->now_addr &= ( (1<<(24+1))-1);
 
-			/* shift Measurement value */
-			old_m      = DELTAT->adpcmx;
+			/* store accumulator value */
+			prev_acc     = DELTAT->acc;
 			/* Forecast to next Forecast */
-			DELTAT->adpcmx += (ym_deltat_decode_tableB1[data] * DELTAT->adpcmd / 8);
-			YM_DELTAT_Limit(DELTAT->adpcmx,YM_DELTAT_DECODE_MAX, YM_DELTAT_DECODE_MIN);
+			DELTAT->acc += (ym_deltat_decode_tableB1[data] * DELTAT->adpcmd / 8);
+			YM_DELTAT_Limit(DELTAT->acc,YM_DELTAT_DECODE_MAX, YM_DELTAT_DECODE_MIN);
 			/* delta to next delta */
 			DELTAT->adpcmd = (DELTAT->adpcmd * ym_deltat_decode_tableB2[data] ) / 64;
 			YM_DELTAT_Limit(DELTAT->adpcmd,YM_DELTAT_DELTA_MAX, YM_DELTAT_DELTA_MIN );
-			/* shift leveling value */
-			delta_next        = DELTAT->adpcmx - old_m;
+			/* calulate new leveling value */
 			now_leveling      = DELTAT->next_leveling;
-			DELTAT->next_leveling = old_m + (delta_next / 2);
+			DELTAT->next_leveling = prev_acc + ((DELTAT->acc - prev_acc) / 2 );
+
 		}while(--step);
+
 /* #define YM_DELTAT_CUT_RE_SAMPLING */
 #ifdef YM_DELTAT_CUT_RE_SAMPLING
 		DELTAT->adpcml  = DELTAT->next_leveling * DELTAT->volume;
-		DELTAT->adpcml  = DELTAT->adpcmx * DELTAT->volume;
+		DELTAT->adpcml  = DELTAT->acc * DELTAT->volume;
 	}
 #else
-		/* delta step of re-sampling */
-		DELTAT->sample_step = (DELTAT->next_leveling - now_leveling) * DELTAT->volume_w_step;
+		/* delta step of resampling */
+		DELTAT->resample_step = (DELTAT->next_leveling - now_leveling) * DELTAT->volume_w_step;
+//		DELTAT->resample_step = (DELTAT->next_leveling - now_leveling) *
+//							((double)DELTAT->volume * DELTAT->step / (1<<YM_DELTAT_SHIFT));
+
 		/* output of start point */
 		DELTAT->adpcml  = now_leveling * DELTAT->volume;
 		/* adjust to now */
-		DELTAT->adpcml += (int)((double)DELTAT->sample_step * ((double)DELTAT->now_step/(double)DELTAT->step));
+		DELTAT->adpcml += (int)((double)DELTAT->resample_step * ((double)DELTAT->now_step/(double)DELTAT->step));
 	}
-	DELTAT->adpcml += DELTAT->sample_step;
+	DELTAT->adpcml += DELTAT->resample_step;
 #endif
 	/* output for work of output channels (outd[OPNxxxx])*/
 	*(DELTAT->pan) += DELTAT->adpcml;

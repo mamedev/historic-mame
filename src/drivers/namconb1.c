@@ -442,7 +442,7 @@ static struct MachineDriver machine_driver_namconb1 =
 	{ 0*8, NAMCONB1_COLS*8-1, 0*8, NAMCONB1_ROWS*8-1 },
 
 	gfxdecodeinfo,
-	0x2000, 0x2000,
+	0x2000, 0,
 	0,
 	VIDEO_TYPE_RASTER,
 	0,

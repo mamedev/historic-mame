@@ -11,8 +11,8 @@ extern unsigned char inthunt_decryption_table[];
 extern unsigned char gussun_decryption_table[];
 extern unsigned char leagueman_decryption_table[];
 extern unsigned char psoldier_decryption_table[];
-extern unsigned char shisen2_decryption_table[];
 extern unsigned char dsoccr94_decryption_table[];
+extern unsigned char shisen2_decryption_table[];
 
 extern unsigned char test_decryption_table[];
 

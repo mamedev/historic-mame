@@ -306,7 +306,7 @@ INLINE void set_palette_entry(int entry, UINT16 value)
 	g = (g << 2) | (g >> 4);
 	b = (b << 2) | (b >> 4);
 
-	palette_change_color(entry, r, g, b);
+	palette_set_color(entry, r, g, b);
 }
 
 

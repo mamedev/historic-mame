@@ -291,7 +291,7 @@ static const struct MachineDriver machine_driver_rockrage =
 	64, 64 + 2*16*16,
 	rockrage_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	rockrage_vh_start,
 	rockrage_vh_stop,

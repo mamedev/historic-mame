@@ -363,12 +363,6 @@ static WRITE32_HANDLER( sound_reset_w )
  *
  *************************************/
 
-static WRITE32_HANDLER( watchdog_reset32_w )
-{
-	watchdog_reset_w(0,0);
-}
-
-
 static WRITE32_HANDLER( coin_count_w )
 {
 	coin_counter_w(0, !offset);
@@ -497,7 +491,7 @@ static const struct MachineDriver machine_driver_beathead =
 	/* video hardware */
 	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
 	0,
-	0x8000,0x8000,
+	0x8000, 0,
 	0,
 
 	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,

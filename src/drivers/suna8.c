@@ -1638,7 +1638,8 @@ static const struct MachineDriver machine_driver_hardhead =
 	suna8_gfxdecodeinfo,
 	256, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	suna8_vh_start_textdim12,
 	0,
@@ -1700,7 +1701,8 @@ static const struct MachineDriver machine_driver_rranger =
 	suna8_gfxdecodeinfo,
 	256, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	suna8_vh_start_textdim8,
 	0,
@@ -1785,9 +1787,10 @@ interrupt, 1	// nmi breaks ramtest but is needed!
 	/* video hardware */
 	256, 256, { 0, 256-1, 0+16, 256-16-1 },
 	suna8_gfxdecodeinfo,
-256*2, 256*2,
+	512, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	suna8_vh_start_textdim0,
 	0,
@@ -1852,9 +1855,10 @@ static const struct MachineDriver machine_driver_hardhea2 =
 	/* video hardware */
 	256, 256, { 0, 256-1, 0+16, 256-16-1 },
 	suna8_gfxdecodeinfo,
-	256, 256,
+	256, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	suna8_vh_start_textdim0,
 	0,
@@ -1923,7 +1927,8 @@ static const struct MachineDriver machine_driver_starfigh =
 	suna8_gfxdecodeinfo,
 	256, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	suna8_vh_start_textdim0,
 	0,

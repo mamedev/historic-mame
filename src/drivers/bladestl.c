@@ -475,7 +475,7 @@ static const struct MachineDriver machine_driver_bladestl =
 	48, 48 + 16*16,
 	bladestl_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	bladestl_vh_start,
 	bladestl_vh_stop,

@@ -561,7 +561,7 @@ struct YM2610interface ym2610_interface =
 	{ irqhandler },
 	{ 0 },
 	{ REGION_SOUND1 },
-	{ YM3012_VOL(50, MIXER_PAN_LEFT, 50, MIXER_PAN_RIGHT) }
+	{ YM3012_VOL(100, MIXER_PAN_LEFT, 100, MIXER_PAN_RIGHT) }
 };
 
 

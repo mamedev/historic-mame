@@ -259,7 +259,7 @@ WRITE_HANDLER( exidy_color_w )
 		int b = ((exidy_color_latch[0] >> i) & 0x01) * 0xff;
 		int g = ((exidy_color_latch[1] >> i) & 0x01) * 0xff;
 		int r = ((exidy_color_latch[2] >> i) & 0x01) * 0xff;
-		palette_change_color(i, r, g, b);
+		palette_set_color(i, r, g, b);
 	}
 }
 

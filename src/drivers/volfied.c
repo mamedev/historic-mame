@@ -252,7 +252,7 @@ static struct MachineDriver machine_driver_volfied =
 	8192, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	volfied_vh_start,
 	volfied_vh_stop,

@@ -332,7 +332,7 @@ static const struct MachineDriver machine_driver_88games =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	k88games_vh_start,
 	k88games_vh_stop,

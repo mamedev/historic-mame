@@ -26,12 +26,13 @@ WRITE_HANDLER( dynduke_paletteram_w )
 	g = (g << 4) | g;
 	b = (b << 4) | b;
 
-	palette_change_color(offset/2,r,g,b);
+	palette_set_color(offset/2,r,g,b);
 
 	/* This is a kludge to handle 5bpp graphics but 4bpp palette data */
+	/* the 5th bit is actually transparency, so I should use TILEMAP_BITMASK */
 	if (offset<1024) {
-		palette_change_color(((offset&0x1f)/2) | (offset&0xffe0) | 2048,r,g,b);
-		palette_change_color(((offset&0x1f)/2) | (offset&0xffe0) | 2048 | 16,r,g,b);
+		palette_set_color(((offset&0x1f)/2) | (offset&0xffe0) | 2048,r,g,b);
+		palette_set_color(((offset&0x1f)/2) | (offset&0xffe0) | 2048 | 16,r,g,b);
 	}
 }
 

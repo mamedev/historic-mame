@@ -427,9 +427,10 @@ static const struct MachineDriver machine_driver_grdnstrm =
 	/* video hardware */
 	256, 256, { 0, 256-1, 0+16, 256-16-1 },
 	grdnstrm_gfxdecodeinfo,
-	256 * 3, 256 * 3 + 16*256,
+	768, 768 + 16*256,
 	grdnstrm_vh_init_palette,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	afega_vh_start,
 	0,
@@ -466,9 +467,10 @@ static const struct MachineDriver machine_driver_stagger1 =
 	/* video hardware */
 	256, 256, { 0, 256-1, 0+16, 256-16-1 },
 	stagger1_gfxdecodeinfo,
-	256 * 3, 256 * 3,
+	768, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	afega_vh_start,
 	0,

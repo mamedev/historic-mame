@@ -599,7 +599,7 @@ static const struct MachineDriver machine_driver_##NAME =				\
 	1024, 0,													\
 	0,															\
 																\
-	VIDEO_TYPE_RASTER ,					\
+	VIDEO_TYPE_RASTER,					\
 	0,															\
 	tecmo_vh_start,												\
 	0,															\

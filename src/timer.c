@@ -80,8 +80,8 @@ double sec_to_cycles[MAX_CPU];
 /* list of per-CPU timer data */
 static cpu_entry cpudata[MAX_CPU+1];
 static cpu_entry *lastcpu;
-static cpu_entry *activecpu;
-static cpu_entry *last_activecpu;
+static cpu_entry *active_cpu;
+static cpu_entry *last_active_cpu;
 
 /* list of active timers */
 static timer_entry timers[MAX_TIMERS];
@@ -106,8 +106,8 @@ static void verbose_print(char *s, ...);
  */
 INLINE double getabsolutetime(void)
 {
-	if (activecpu && (*activecpu->icount + activecpu->lost) > 0)
-		return base_time - ((double)(*activecpu->icount + activecpu->lost) * activecpu->cycles_to_sec);
+	if (active_cpu && (*active_cpu->icount + active_cpu->lost) > 0)
+		return base_time - ((double)(*active_cpu->icount + active_cpu->lost) * active_cpu->cycles_to_sec);
 	else
 		return base_time;
 }
@@ -124,19 +124,19 @@ INLINE void timer_adjust(timer_entry *timer, double time, double period)
 	if (period == TIME_NOW)
 		newicount = 0;
 	else
-		newicount = (int)((timer->expire - time) * activecpu->sec_to_cycles) + 1;
+		newicount = (int)((timer->expire - time) * active_cpu->sec_to_cycles) + 1;
 
 	/* determine if we're scheduled to run more cycles */
-	diff = *activecpu->icount - newicount;
+	diff = *active_cpu->icount - newicount;
 
 	/* if so, set the new icount and compute the amount of "lost" time */
 	if (diff > 0)
 	{
-		activecpu->lost += diff;
-		if (activecpu->burn)
-			(*activecpu->burn)(diff);  /* let the CPU burn the cycles */
+		active_cpu->lost += diff;
+		if (active_cpu->burn)
+			(*active_cpu->burn)(diff);  /* let the CPU burn the cycles */
 		else
-			*activecpu->icount = newicount;  /* CPU doesn't care */
+			*active_cpu->icount = newicount;  /* CPU doesn't care */
 	}
 }
 
@@ -241,18 +241,20 @@ void timer_init(void)
 
 	/* reset the CPU timers */
 	memset(cpudata, 0, sizeof(cpudata));
-	activecpu = NULL;
-	last_activecpu = lastcpu;
+	active_cpu = NULL;
+	last_active_cpu = lastcpu;
 
 	/* compute the cycle times */
 	for (cpu = cpudata, i = 0; cpu <= lastcpu; cpu++, i++)
 	{
+		int cputype = Machine->drv->cpu[i].cpu_type & ~CPU_FLAGS_MASK;
+
 		/* make a pointer to this CPU's interface functions */
-		cpu->icount = cpuintf[Machine->drv->cpu[i].cpu_type & ~CPU_FLAGS_MASK].icount;
-		cpu->burn = cpuintf[Machine->drv->cpu[i].cpu_type & ~CPU_FLAGS_MASK].burn;
+		cpu->icount = cputype_get_interface(cputype)->icount;
+		cpu->burn = cputype_get_interface(cputype)->burn;
 
 		/* get the CPU's overclocking factor */
-		cpu->overclock = cpuintf[Machine->drv->cpu[i].cpu_type & ~CPU_FLAGS_MASK].overclock;
+		cpu->overclock = cputype_get_interface(cputype)->overclock;
 
         /* everyone is active but suspended by the reset line until further notice */
 		cpu->suspended = SUSPEND_REASON_RESET;
@@ -311,7 +313,7 @@ void *timer_pulse(double period, int param, void (*callback)(int))
 	timer_list_insert(timer);
 
 	/* if we're supposed to fire before the end of this cycle, adjust the counter */
-	if (activecpu && timer->expire < base_time)
+	if (active_cpu && timer->expire < base_time)
 		timer_adjust(timer, time, period);
 
 	#if VERBOSE
@@ -348,7 +350,7 @@ void *timer_set(double duration, int param, void (*callback)(int))
 	timer_list_insert(timer);
 
 	/* if we're supposed to fire before the end of this cycle, adjust the counter */
-	if (activecpu && timer->expire < base_time)
+	if (active_cpu && timer->expire < base_time)
 		timer_adjust(timer, time, duration);
 
 	#if VERBOSE
@@ -377,7 +379,7 @@ void timer_reset(void *which, double duration)
 	timer_list_insert(timer);
 
 	/* if we're supposed to fire before the end of this cycle, adjust the counter */
-	if (activecpu && timer->expire < base_time)
+	if (active_cpu && timer->expire < base_time)
 		timer_adjust(timer, time, duration);
 
 	/* if this is the callback timer, mark it modified */
@@ -544,7 +546,7 @@ int timer_schedule_cpu(int *cpu, int *cycles)
 	}
 
 	/* reset scheduling so it starts with CPU 0 */
-	last_activecpu = lastcpu;
+	last_active_cpu = lastcpu;
 
 #ifdef MAME_DEBUG
 {
@@ -604,7 +606,7 @@ void timer_update_cpu(int cpunum, int ran)
 
 	/* now stop counting cycles */
 	base_time = cpu->time;
-	activecpu = NULL;
+	active_cpu = NULL;
 }
 
 
@@ -630,7 +632,7 @@ void timer_suspendcpu(int cpunum, int suspend, int reason)
 	cpu->nocount = 0;
 
 	/* if this is the active CPU and we're halting, stop immediately */
-	if (activecpu && cpu == activecpu && !old && cpu->suspended)
+	if (active_cpu && cpu == active_cpu && !old && cpu->suspended)
 	{
 		#if VERBOSE
 			verbose_print("T=%.6g: Reset ICount\n", getabsolutetime() + global_offset);
@@ -752,16 +754,16 @@ void timer_trigger(int trigger)
 	cpu_entry *cpu;
 
 	/* cause an immediate resynchronization */
-	if (activecpu)
+	if (active_cpu)
 	{
-		int left = *activecpu->icount;
+		int left = *active_cpu->icount;
 		if (left > 0)
 		{
-			activecpu->lost += left;
-			if (activecpu->burn)
-				(*activecpu->burn)(left); /* let the CPU burn the cycles */
+			active_cpu->lost += left;
+			if (active_cpu->burn)
+				(*active_cpu->burn)(left); /* let the CPU burn the cycles */
 			else
-				*activecpu->icount = 0; /* CPU doesn't care */
+				*active_cpu->icount = 0; /* CPU doesn't care */
 		}
 	}
 
@@ -786,7 +788,7 @@ void timer_trigger(int trigger)
  */
 static int pick_cpu(int *cpunum, int *cycles, double end)
 {
-	cpu_entry *cpu = last_activecpu;
+	cpu_entry *cpu = last_active_cpu;
 
 	/* look for a CPU that isn't suspended and hasn't run its full timeslice yet */
 	do
@@ -811,7 +813,7 @@ static int pick_cpu(int *cpunum, int *cycles, double end)
 		else if (cpu->time < end)
 		{
 			/* mark the CPU active, and remember the CPU number locally */
-			activecpu = last_activecpu = cpu;
+			active_cpu = last_active_cpu = cpu;
 
 			/* return the number of cycles to execute and the CPU number */
 			*cpunum = cpu->index;
@@ -831,7 +833,7 @@ static int pick_cpu(int *cpunum, int *cycles, double end)
 			}
 		}
 	}
-	while (cpu != last_activecpu);
+	while (cpu != last_active_cpu);
 
 	/* ASG 990225 - bump all suspended CPU times after the slice has finished */
 	for (cpu = cpudata; cpu <= lastcpu; cpu++)

@@ -945,8 +945,8 @@ static void region_post_process(struct rom_load_data *romdata, const struct RomM
 		int cputype = Machine->drv->cpu[type - REGION_CPU1].cpu_type & ~CPU_FLAGS_MASK;
 		if (cputype != 0)
 		{
-			datawidth = cpuintf[cputype].databus_width / 8;
-			littleendian = (cpuintf[cputype].endianess == CPU_IS_LE);
+			datawidth = cputype_databus_width(cputype) / 8;
+			littleendian = (cputype_endianess(cputype) == CPU_IS_LE);
 			debugload("+ CPU region #%d: datawidth=%d little=%d\n", type - REGION_CPU1, datawidth, littleendian);
 		}
 	}

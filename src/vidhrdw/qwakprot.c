@@ -49,7 +49,7 @@ WRITE_HANDLER( qwakprot_paletteram_w )
 	bit2 = (~data >> 1) & 0x01;
 	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-	palette_change_color(offset,r,g,b);
+	palette_set_color(offset,r,g,b);
 }
 
 

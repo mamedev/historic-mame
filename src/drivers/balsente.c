@@ -2610,7 +2610,7 @@ static const struct MachineDriver machine_driver_balsente =
 	1024,0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	balsente_vh_start,
 	balsente_vh_stop,

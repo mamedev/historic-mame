@@ -145,7 +145,7 @@ WRITE_HANDLER( fastfred_background_color_w )
 
 	convert_color(data, &r, &g, &b);
 
-	palette_change_color(0,r,g,b);
+	palette_set_color(0,r,g,b);
 }
 
 

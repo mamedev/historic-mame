@@ -1775,7 +1775,7 @@ static const struct MachineDriver machine_driver_leland =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	leland_vh_eof,
 	leland_vh_start,
 	leland_vh_stop,
@@ -1827,7 +1827,7 @@ static const struct MachineDriver machine_driver_redline =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	leland_vh_eof,
 	leland_vh_start,
 	leland_vh_stop,
@@ -1879,7 +1879,7 @@ static const struct MachineDriver machine_driver_quarterb =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	leland_vh_eof,
 	leland_vh_start,
 	leland_vh_stop,
@@ -1931,7 +1931,7 @@ static const struct MachineDriver machine_driver_lelandi =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	leland_vh_eof,
 	leland_vh_start,
 	leland_vh_stop,

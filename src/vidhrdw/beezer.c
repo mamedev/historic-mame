@@ -13,7 +13,7 @@ int beezer_interrupt (void)
 		cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
 	else
 		cpu_set_irq_line(0, M6809_FIRQ_LINE, CLEAR_LINE);
-	return M6809_INT_NONE;
+	return ignore_interrupt();
 }
 
 void beezer_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
@@ -62,7 +62,7 @@ WRITE_HANDLER( beezer_map_w )
 	bit1 = (data >> 7) & 0x01;
 	b = 0x5f * bit0 + 0xa0 * bit1;
 
-	palette_change_color(offset, r, g, b);
+	palette_set_color(offset, r, g, b);
 }
 
 WRITE_HANDLER( beezer_ram_w )

@@ -856,7 +856,7 @@ GAME( 1981, roundup,  0,        thepit,   roundup,  0, ROT90, "Amenip/Centuri", 
 GAME( 1981, fitter,   roundup,  thepit,   fitter,   0, ROT90, "Taito", "Fitter" )
 GAME( 1982, thepit,   0,        thepit,   thepit,   0, ROT90, "Centuri", "The Pit" )
 GAME( 1982, portman,  0,        intrepid, portman,  0, ROT90, "Nova Games Ltd.", "Port Man" )
-GAME( 1982, funnymou, 0,        suprmous, suprmous, 0, ROT90, "Chu Co. Ltd", "Funny Mouse" )
+GAME( 1982, funnymou, 0,        suprmous, suprmous, 0, ROT90, "Chuo Co. Ltd", "Funny Mouse" )
 GAME( 1982, suprmous, funnymou, suprmous, suprmous, 0, ROT90, "Taito", "Super Mouse" )
 GAME( 1982, machomou, 0,        suprmous, suprmous, 0, ROT90, "Techstar", "Macho Mouse" )
 GAME( 1983, intrepid, 0,        intrepid, intrepid, 0, ROT90, "Nova Games Ltd.", "Intrepid (set 1)" )

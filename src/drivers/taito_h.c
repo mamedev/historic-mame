@@ -111,7 +111,7 @@ static struct YM2610interface syvalion_ym2610_interface =
 {
 	1,	/* 1 chip */
 	8000000,	/* 4 MHz */
-	{ 30 },
+	{ 25 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -119,14 +119,14 @@ static struct YM2610interface syvalion_ym2610_interface =
 	{ irqhandler },
 	{ REGION_SOUND1 },
 	{ REGION_SOUND2 },
-	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) }
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
 };
 
 static struct YM2610interface dleague_ym2610_interface =
 {
 	1,	/* 1 chip */
 	8000000,	/* 4 MHz */
-	{ 30 },
+	{ 25 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -134,7 +134,7 @@ static struct YM2610interface dleague_ym2610_interface =
 	{ irqhandler },
 	{ REGION_SOUND1 },
 	{ REGION_SOUND1 },
-	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) }
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
 };
 
 
@@ -612,10 +612,10 @@ static const struct MachineDriver machine_driver_syvalion =
 	/* video hardware */
 	64*16, 64*16, { 0*16, 32*16-1, 3*16, 28*16-1 },
 	syvalion_gfxdecodeinfo,
-	33*16, 33*16,
+	33*16, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	syvalion_vh_start,
 	syvalion_vh_stop,
@@ -654,10 +654,10 @@ static const struct MachineDriver machine_driver_recordbr =
 	/* video hardware */
 	64*16, 64*16, { 1*16, 21*16-1, 2*16, 17*16-1 },
 	recordbr_gfxdecodeinfo,
-	32*16, 32*16,
+	32*16, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	recordbr_vh_start,
 	syvalion_vh_stop,
@@ -696,10 +696,10 @@ static const struct MachineDriver machine_driver_dleague =
 	/* video hardware */
 	64*16, 64*16, { 1*16, 21*16-1, 2*16, 17*16-1 },
 	dleague_gfxdecodeinfo,
-	33*16, 33*16,
+	33*16, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	dleague_vh_start,
 	syvalion_vh_stop,

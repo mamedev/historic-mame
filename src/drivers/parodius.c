@@ -346,7 +346,7 @@ static const struct MachineDriver machine_driver_parodius =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	parodius_vh_start,
 	parodius_vh_stop,

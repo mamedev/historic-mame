@@ -285,7 +285,7 @@ static struct OKIM6295interface okim6295_interface2 =
 {
 	1,          /* 1 chip */
 	{ 7757 },   /* 8000Hz frequency */
-	{ 2 },      /* memory region 3 */
+	{ REGION_SOUND1 },	/* memory region */
 	{ 70 }
 };
 
@@ -338,7 +338,7 @@ static const struct MachineDriver machine_driver_tumblepop =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	tumblep_vh_start,
 	0,
@@ -380,7 +380,7 @@ static const struct MachineDriver machine_driver_tumblepb =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	tumblep_vh_start,
 	0,

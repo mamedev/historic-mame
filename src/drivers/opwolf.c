@@ -513,7 +513,7 @@ static struct MachineDriver machine_driver_opwolf =
 	8192, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	opwolf_eof_callback,
 	opwolf_vh_start,
 	rastan_vh_stop,
@@ -566,7 +566,7 @@ static struct MachineDriver machine_driver_opwolfb =
 	8192, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	opwolf_eof_callback,
 	opwolf_vh_start,
 	rastan_vh_stop,

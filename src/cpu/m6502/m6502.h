@@ -58,13 +58,10 @@ enum {
 	M6502_SUBTYPE
 };
 
-#define M6502_INT_NONE	0
-#define M6502_INT_IRQ	1
-#define M6502_INT_NMI	2
 /* use cpu_set_irq_line(cpu, M6502_SET_OVERFLOW, level)
    to change level of the so input line
    positiv edge sets overflow flag */
-#define M6502_SET_OVERFLOW 3
+#define M6502_SET_OVERFLOW 1
 
 #define M6502_NMI_VEC	0xfffa
 #define M6502_RST_VEC	0xfffc
@@ -104,10 +101,6 @@ extern unsigned m6502_dasm(char *buffer, unsigned pc);
 #define M6510_ZP						M6502_ZP
 #define M6510_NMI_STATE 				M6502_NMI_STATE
 #define M6510_IRQ_STATE 				M6502_IRQ_STATE
-
-#define M6510_INT_NONE					M6502_INT_NONE
-#define M6510_INT_IRQ					M6502_INT_IRQ
-#define M6510_INT_NMI					M6502_INT_NMI
 
 #define M6510_NMI_VEC					M6502_NMI_VEC
 #define M6510_RST_VEC					M6502_RST_VEC
@@ -151,10 +144,6 @@ extern unsigned int Dasm6510( char *dst, unsigned pc );
 #define M6510T_NMI_STATE				M6502_NMI_STATE
 #define M6510T_IRQ_STATE				M6502_IRQ_STATE
 
-#define M6510T_INT_NONE 				M6502_INT_NONE
-#define M6510T_INT_IRQ					M6502_INT_IRQ
-#define M6510T_INT_NMI					M6502_INT_NMI
-
 #define M6510T_NMI_VEC					M6502_NMI_VEC
 #define M6510T_RST_VEC					M6502_RST_VEC
 #define M6510T_IRQ_VEC					M6502_IRQ_VEC
@@ -193,10 +182,6 @@ extern const char *m6510t_info(void *context, int regnum);
 #define M7501_ZP						M6502_ZP
 #define M7501_NMI_STATE 				M6502_NMI_STATE
 #define M7501_IRQ_STATE 				M6502_IRQ_STATE
-
-#define M7501_INT_NONE					M6502_INT_NONE
-#define M7501_INT_IRQ					M6502_INT_IRQ
-#define M7501_INT_NMI					M6502_INT_NMI
 
 #define M7501_NMI_VEC					M6502_NMI_VEC
 #define M7501_RST_VEC					M6502_RST_VEC
@@ -237,9 +222,6 @@ extern const char *m7501_info(void *context, int regnum);
 #define M8502_NMI_STATE 				M6502_NMI_STATE
 #define M8502_IRQ_STATE 				M6502_IRQ_STATE
 
-#define M8502_INT_NONE					M6502_INT_NONE
-#define M8502_INT_IRQ					M6502_INT_IRQ
-#define M8502_INT_NMI					M6502_INT_NMI
 
 #define M8502_NMI_VEC					M6502_NMI_VEC
 #define M8502_RST_VEC					M6502_RST_VEC
@@ -283,10 +265,6 @@ extern const char *m8502_info(void *context, int regnum);
 #define N2A03_ZP						M6502_ZP
 #define N2A03_NMI_STATE 				M6502_NMI_STATE
 #define N2A03_IRQ_STATE 				M6502_IRQ_STATE
-
-#define N2A03_INT_NONE					M6502_INT_NONE
-#define N2A03_INT_IRQ					M6502_INT_IRQ
-#define N2A03_INT_NMI					M6502_INT_NMI
 
 #define N2A03_NMI_VEC					M6502_NMI_VEC
 #define N2A03_RST_VEC					M6502_RST_VEC
@@ -338,10 +316,6 @@ extern void n2a03_irq(void);
 #define M65C02_NMI_STATE				M6502_NMI_STATE
 #define M65C02_IRQ_STATE				M6502_IRQ_STATE
 
-#define M65C02_INT_NONE 				M6502_INT_NONE
-#define M65C02_INT_IRQ					M6502_INT_IRQ
-#define M65C02_INT_NMI					M6502_INT_NMI
-
 #define M65C02_NMI_VEC					M6502_NMI_VEC
 #define M65C02_RST_VEC					M6502_RST_VEC
 #define M65C02_IRQ_VEC					M6502_IRQ_VEC
@@ -381,10 +355,6 @@ extern unsigned m65c02_dasm(char *buffer, unsigned pc);
 #define M65SC02_ZP						M6502_ZP
 #define M65SC02_NMI_STATE				M6502_NMI_STATE
 #define M65SC02_IRQ_STATE				M6502_IRQ_STATE
-
-#define M65SC02_INT_NONE				M6502_INT_NONE
-#define M65SC02_INT_IRQ 				M6502_INT_IRQ
-#define M65SC02_INT_NMI 				M6502_INT_NMI
 
 #define M65SC02_NMI_VEC 				M6502_NMI_VEC
 #define M65SC02_RST_VEC 				M6502_RST_VEC

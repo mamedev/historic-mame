@@ -134,7 +134,7 @@ void capbowl_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 				int g = *src >> 4;
 				int b = *src++ & 0x0f;
 
-				palette_change_color(y * 16 + x, (r << 4) | r, (g << 4) | g, (b << 4) | b);
+				palette_set_color(y * 16 + x, (r << 4) | r, (g << 4) | g, (b << 4) | b);
 			}
 		}
 

@@ -547,7 +547,7 @@ static const struct MachineDriver machine_driver_darwin =
 	256,8+8*8+16*8,
 	brkthru_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	brkthru_vh_start,
 	brkthru_vh_stop,

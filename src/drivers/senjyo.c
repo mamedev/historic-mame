@@ -589,10 +589,10 @@ static const struct MachineDriver machine_driver_senjyo =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	402, 402,
+	400+2, 0,	/* 400 real palette + 2 for the radar */
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	senjyo_vh_start,
 	senjyo_vh_stop,

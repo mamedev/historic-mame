@@ -67,7 +67,7 @@ WRITE16_HANDLER( unico16_palette_w )
 	COMBINE_DATA(&paletteram16[offset]);
 	data1 = paletteram16[offset & ~1];
 	data2 = paletteram16[offset |  1];
-	palette_change_color( offset/2,
+	palette_set_color( offset/2,
 		 (data1 >> 8) & 0xFC,
 		 (data1 >> 0) & 0xFC,
 		 (data2 >> 8) & 0xFC	);

@@ -12,7 +12,7 @@ Bugs: Usage of the other sprite banks is unknown.
 #include "vidhrdw/generic.h"
 
 int holeland_vh_start( void );
-void holeland_vh_convert_color_prom( unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom );
+void holeland_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 void holeland_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh );
 
 WRITE_HANDLER( holeland_videoram_w );
@@ -207,7 +207,7 @@ static struct MachineDriver machine_driver_holeland =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256, 256,
+	256, 0,
 	holeland_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,

@@ -568,7 +568,7 @@ static const struct MachineDriver machine_driver_cabal =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	cabal_vh_start,
 	0,
@@ -611,7 +611,7 @@ static const struct MachineDriver machine_driver_cabalbl =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	cabal_vh_start,
 	0,

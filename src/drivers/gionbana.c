@@ -1752,7 +1752,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	256, 0, \
 	0, \
 \
-	VIDEO_TYPE_RASTER  | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
+	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
 	0, \
 	gionbana_vh_start, \
 	gionbana_vh_stop, \
@@ -1794,7 +1794,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	256, 0, \
 	0, \
 \
-	VIDEO_TYPE_RASTER  | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
+	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
 	0, \
 	hanamomo_vh_start, \
 	hanamomo_vh_stop, \
@@ -1836,7 +1836,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	256, 0, \
 	0, \
 \
-	VIDEO_TYPE_RASTER  | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
+	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
 	0, \
 	hanamomo_vh_start, \
 	hanamomo_vh_stop, \
@@ -1878,7 +1878,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	256, 0, \
 	0, \
 \
-	VIDEO_TYPE_RASTER  | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
+	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
 	0, \
 	hanamomo_vh_start, \
 	hanamomo_vh_stop, \
@@ -1920,7 +1920,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	256, 0, \
 	0, \
 \
-	VIDEO_TYPE_RASTER  | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
+	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
 	0, \
 	gionbana_vh_start, \
 	gionbana_vh_stop, \
@@ -1962,7 +1962,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	256, 0, \
 	0, \
 \
-	VIDEO_TYPE_RASTER  | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
+	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
 	0, \
 	hanamomo_vh_start, \
 	hanamomo_vh_stop, \

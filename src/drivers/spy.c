@@ -308,7 +308,7 @@ static const struct MachineDriver machine_driver_spy =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	spy_vh_start,
 	spy_vh_stop,

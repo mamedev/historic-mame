@@ -421,7 +421,7 @@ static const struct MachineDriver machine_driver_gradius3 =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	gradius3_vh_start,
 	gradius3_vh_stop,

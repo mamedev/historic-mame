@@ -423,7 +423,7 @@ static const struct MachineDriver machine_driver_supbtime =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	supbtime_vh_start,
 	0,
@@ -471,7 +471,7 @@ static const struct MachineDriver machine_driver_chinatwn =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	supbtime_vh_start,
 	0,

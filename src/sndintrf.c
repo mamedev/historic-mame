@@ -446,7 +446,7 @@ struct snd_interface sndintf[] =
 		AY8910_sh_start,
 		0,
 		0,
-		0
+		AY8910_sh_reset
 	},
 #endif
 #if (HAS_YM2203)

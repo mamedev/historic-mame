@@ -255,7 +255,7 @@ static const struct MachineDriver machine_driver_blockhl =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	blockhl_vh_start,
 	blockhl_vh_stop,

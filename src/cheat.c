@@ -621,14 +621,10 @@ static struct watch_struct	watches[MAX_WATCHES];
 static int					is_watch_active;		/* true if at least one watchpoint is active */
 static int					is_watch_visible;		/* we can toggle the visibility for all on or off */
 
-/* in hiscore.c */
-int computer_readmem_byte(int cpu, int addr);
-void computer_writemem_byte(int cpu, int addr, int value);
-
 /* Some macros to simplify the code */
-#define READ_CHEAT				computer_readmem_byte(subcheat->cpu, subcheat->address)
-#define WRITE_CHEAT				computer_writemem_byte(subcheat->cpu, subcheat->address, subcheat->data)
-#define COMPARE_CHEAT			(computer_readmem_byte(subcheat->cpu, subcheat->address) != subcheat->data)
+#define READ_CHEAT				cpunum_read_byte(subcheat->cpu, subcheat->address)
+#define WRITE_CHEAT				cpunum_write_byte(subcheat->cpu, subcheat->address, subcheat->data)
+#define COMPARE_CHEAT			(cpunum_read_byte(subcheat->cpu, subcheat->address) != subcheat->data)
 #define CPU_AUDIO_OFF(index)	((Machine->drv->cpu[index].cpu_type & CPU_AUDIO_CPU) && (Machine->sample_rate == 0))
 
 /* Local prototypes */
@@ -3596,7 +3592,7 @@ static void backup_ram(struct ExtMemory * table, int cpu)
 		int i;
 
 		for(i=0; i <= ext->end - ext->start; i++)
-			ext->data[i] = computer_readmem_byte(cpu, i+ext->start);
+			ext->data[i] = cpunum_read_byte(cpu, i+ext->start);
 	}
 }
 
@@ -3991,7 +3987,7 @@ INT32 StartSearch(struct osd_bitmap *bitmap, INT32 selected)
 							{
 								if(ext->data[j] != 0)
 								{
-									if(computer_readmem_byte(searchCPU, j+ext->start) != searchValue)
+									if(cpunum_read_byte(searchCPU, j+ext->start) != searchValue)
 										ext->data[j] = 0;
 									else
 										count++;
@@ -4007,8 +4003,8 @@ INT32 StartSearch(struct osd_bitmap *bitmap, INT32 selected)
 							{
 								if(ext->data[j] != 0)
 								{
-									if(	(computer_readmem_byte(searchCPU, j+ext->start) != searchValue) &&
-										(computer_readmem_byte(searchCPU, j+ext->start) != (searchValue - 1)))
+									if(	(cpunum_read_byte(searchCPU, j+ext->start) != searchValue) &&
+										(cpunum_read_byte(searchCPU, j+ext->start) != (searchValue - 1)))
 										ext->data[j] = 0;
 									else
 										count++;
@@ -4227,7 +4223,7 @@ INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
 							{
 								if(ext->data[j] != 0)
 								{
-									if(computer_readmem_byte(searchCPU, j+ext->start) != searchValue)
+									if(cpunum_read_byte(searchCPU, j+ext->start) != searchValue)
 									{
 										ext->data[j] = 0;
 									}
@@ -4247,8 +4243,8 @@ INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
 							{
 								if(ext->data[j] != 0)
 								{
-									if(	(computer_readmem_byte(searchCPU, j+ext->start) != searchValue) &&
-										(computer_readmem_byte(searchCPU, j+ext->start) != (searchValue - 1)))
+									if(	(cpunum_read_byte(searchCPU, j+ext->start) != searchValue) &&
+										(cpunum_read_byte(searchCPU, j+ext->start) != (searchValue - 1)))
 									{
 										ext->data[j] = 0;
 									}
@@ -4276,7 +4272,7 @@ INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
 								{
 									if(ext->data[j] != 0)
 									{
-										if(computer_readmem_byte(searchCPU, j+ext->start) != save->data[j])
+										if(cpunum_read_byte(searchCPU, j+ext->start) != save->data[j])
 											ext->data[j] = 0;
 										else
 											count++;
@@ -4292,7 +4288,7 @@ INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
 								{
 									if(ext->data[j] != 0)
 									{
-										if(computer_readmem_byte(searchCPU, j+ext->start) >= save->data[j])
+										if(cpunum_read_byte(searchCPU, j+ext->start) >= save->data[j])
 											ext->data[j] = 0;
 										else
 											count++;
@@ -4308,7 +4304,7 @@ INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
 								{
 									if(ext->data[j] != 0)
 									{
-										if(computer_readmem_byte(searchCPU, j+ext->start) <= save->data[j])
+										if(cpunum_read_byte(searchCPU, j+ext->start) <= save->data[j])
 											ext->data[j] = 0;
 										else
 											count++;
@@ -4324,7 +4320,7 @@ INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
 								{
 									if(ext->data[j] != 0)
 									{
-										if(computer_readmem_byte(searchCPU, j+ext->start) > save->data[j])
+										if(cpunum_read_byte(searchCPU, j+ext->start) > save->data[j])
 											ext->data[j] = 0;
 										else
 											count++;
@@ -4340,7 +4336,7 @@ INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
 								{
 									if(ext->data[j] != 0)
 									{
-										if(computer_readmem_byte(searchCPU, j+ext->start) < save->data[j])
+										if(cpunum_read_byte(searchCPU, j+ext->start) < save->data[j])
 											ext->data[j] = 0;
 										else
 											count++;
@@ -4356,7 +4352,7 @@ INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
 								{
 									if(ext->data[j] != 0)
 									{
-										if(computer_readmem_byte(searchCPU, j+ext->start) == save->data[j])
+										if(cpunum_read_byte(searchCPU, j+ext->start) == save->data[j])
 											ext->data[j] = 0;
 										else
 											count++;
@@ -4372,7 +4368,7 @@ INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
 								{
 									if(ext->data[j] != 0)
 									{
-										INT32	data = computer_readmem_byte(searchCPU, j+ext->start);
+										INT32	data = cpunum_read_byte(searchCPU, j+ext->start);
 
 										if(	(data != save->data[j]) && (data + 1 != save->data[j]))
 											ext->data[j] = 0;
@@ -4400,7 +4396,7 @@ INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
 
 								data += searchTime;
 
-								if(computer_readmem_byte(searchCPU, j+ext->start) != data)
+								if(cpunum_read_byte(searchCPU, j+ext->start) != data)
 									ext->data[j] = 0;
 								else
 									count++;
@@ -4423,7 +4419,7 @@ INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
 						{
 							if(ext->data[j])
 							{
-								ext->data[j] &= (computer_readmem_byte(searchCPU, j+ext->start) ^ (save->data[j] ^ xorValue));
+								ext->data[j] &= (cpunum_read_byte(searchCPU, j+ext->start) ^ (save->data[j] ^ xorValue));
 
 								if(ext->data[j])
 									count++;
@@ -4446,7 +4442,7 @@ INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
 							{
 								if(ext->data[j] != 0)
 								{
-									if(computer_readmem_byte(searchCPU, j+ext->start) != save->data[j])
+									if(cpunum_read_byte(searchCPU, j+ext->start) != save->data[j])
 										ext->data[j] = 0;
 									else
 										count++;
@@ -4463,7 +4459,7 @@ INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
 							{
 								if(ext->data[j] != 0)
 								{
-									if(computer_readmem_byte(searchCPU, j+ext->start) == save->data[j])
+									if(cpunum_read_byte(searchCPU, j+ext->start) == save->data[j])
 										ext->data[j] = 0;
 									else
 										count++;
@@ -4762,7 +4758,7 @@ static void ConvertWatchToCheat(int idx)
 	{
 		address =	watches[idx].address;
 		cpu =		watches[idx].cpu;
-		data =		computer_readmem_byte(cpu, address);
+		data =		cpunum_read_byte(cpu, address);
 
 		cheat_insert_new(LoadedCheatTotal);
 
@@ -4881,36 +4877,36 @@ void DisplayWatches(struct osd_bitmap * bitmap)
 				default:
 				case kWatchDisplayType_Hex:
 					/* Display the first byte */
-					sprintf(buf, "%.2X", computer_readmem_byte(watches[i].cpu, watches[i].address));
+					sprintf(buf, "%.2X", cpunum_read_byte(watches[i].cpu, watches[i].address));
 
 					/* If this is for more than one byte, display the rest */
 					for(j = 1; j < watches[i].num_bytes; j++)
 					{
-						sprintf(buf2, " %.2X", computer_readmem_byte(watches[i].cpu, watches[i].address + j));
+						sprintf(buf2, " %.2X", cpunum_read_byte(watches[i].cpu, watches[i].address + j));
 						strcat(buf, buf2);
 					}
 					break;
 
 				case kWatchDisplayType_Decimal:
 					/* Display the first byte */
-					sprintf(buf, "%.3d", computer_readmem_byte(watches[i].cpu, watches[i].address));
+					sprintf(buf, "%.3d", cpunum_read_byte(watches[i].cpu, watches[i].address));
 
 					/* If this is for more than one byte, display the rest */
 					for(j = 1; j < watches[i].num_bytes; j++)
 					{
-						sprintf(buf2, " %.3d", computer_readmem_byte(watches[i].cpu, watches[i].address + j));
+						sprintf(buf2, " %.3d", cpunum_read_byte(watches[i].cpu, watches[i].address + j));
 						strcat(buf, buf2);
 					}
 					break;
 
 				case kWatchDisplayType_Binary:
 					/* Display the first byte */
-					PrintBinary(buf, computer_readmem_byte(watches[i].cpu, watches[i].address));
+					PrintBinary(buf, cpunum_read_byte(watches[i].cpu, watches[i].address));
 
 					/* If this is for more than one byte, display the rest */
 					for(j = 1; j < watches[i].num_bytes; j++)
 					{
-						PrintBinary(buf2, computer_readmem_byte(watches[i].cpu, watches[i].address + j));
+						PrintBinary(buf2, cpunum_read_byte(watches[i].cpu, watches[i].address + j));
 
 						strcat(buf, " ");
 						strcat(buf, buf2);
@@ -6218,35 +6214,35 @@ void DoCheat(struct osd_bitmap *bitmap)
 
 						/* 20-24: set bits */
 						case kCheatSpecial_SetBit:
-							computer_writemem_byte(subcheat->cpu, subcheat->address, READ_CHEAT | subcheat->data);
+							cpunum_write_byte(subcheat->cpu, subcheat->address, READ_CHEAT | subcheat->data);
 							break;
 
 						case kCheatSpecial_SetBitRemove:
-							computer_writemem_byte(subcheat->cpu, subcheat->address, READ_CHEAT | subcheat->data);
+							cpunum_write_byte(subcheat->cpu, subcheat->address, READ_CHEAT | subcheat->data);
 							subcheat->flags |= kSubcheatFlagDone;
 							break;
 
 						case kCheatSpecial_SetBit1:
 						case kCheatSpecial_SetBit2:
 						case kCheatSpecial_SetBit5:
-							computer_writemem_byte(subcheat->cpu, subcheat->address, READ_CHEAT | subcheat->data);
+							cpunum_write_byte(subcheat->cpu, subcheat->address, READ_CHEAT | subcheat->data);
 							subcheat->frame_count = subcheat->frames_til_trigger;
 							break;
 
 						/* 40-44: reset bits */
 						case kCheatSpecial_ResetBit:
-							computer_writemem_byte(subcheat->cpu, subcheat->address, READ_CHEAT & ~subcheat->data);
+							cpunum_write_byte(subcheat->cpu, subcheat->address, READ_CHEAT & ~subcheat->data);
 							break;
 
 						case kCheatSpecial_ResetBitRemove:
-							computer_writemem_byte(subcheat->cpu, subcheat->address, READ_CHEAT & ~subcheat->data);
+							cpunum_write_byte(subcheat->cpu, subcheat->address, READ_CHEAT & ~subcheat->data);
 							subcheat->flags |= kSubcheatFlagDone;
 							break;
 
 						case kCheatSpecial_ResetBit1:
 						case kCheatSpecial_ResetBit2:
 						case kCheatSpecial_ResetBit5:
-							computer_writemem_byte(subcheat->cpu, subcheat->address, READ_CHEAT & ~subcheat->data);
+							cpunum_write_byte(subcheat->cpu, subcheat->address, READ_CHEAT & ~subcheat->data);
 							subcheat->frame_count = subcheat->frames_til_trigger;
 							break;
 

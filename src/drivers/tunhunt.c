@@ -234,7 +234,7 @@ static void update_palette( void )
 		green	= APPLY_SHADE(green,shade);
 		blue	= APPLY_SHADE(blue,shade);
 
-		palette_change_color( i,red,green,blue );
+		palette_set_color( i,red,green,blue );
 	}
 }
 
@@ -671,7 +671,7 @@ static struct MachineDriver machine_driver_tunhunt =
 	gfxdecodeinfo,
 	16,16, /* number of colors, colortable size */
 	tunhunt_vh_convert_color_prom,
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	tunhunt_vh_start,
 	tunhunt_vh_stop,

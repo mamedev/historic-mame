@@ -148,8 +148,9 @@ $(OBJ)/epos.a: \
 $(OBJ)/nichibut.a: \
 	$(OBJ)/vidhrdw/cclimber.o $(OBJ)/sndhrdw/cclimber.o $(OBJ)/drivers/cclimber.o \
 	$(OBJ)/drivers/yamato.o \
-	$(OBJ)/vidhrdw/seicross.o $(OBJ)/sndhrdw/wiping.o $(OBJ)/drivers/seicross.o \
-	$(OBJ)/vidhrdw/wiping.o $(OBJ)/drivers/wiping.o \
+	$(OBJ)/vidhrdw/seicross.o $(OBJ)/drivers/seicross.o \
+	$(OBJ)/vidhrdw/wiping.o $(OBJ)/sndhrdw/wiping.o $(OBJ)/drivers/wiping.o \
+	$(OBJ)/vidhrdw/clshroad.o $(OBJ)/drivers/clshroad.o \
 	$(OBJ)/vidhrdw/tubep.o $(OBJ)/drivers/tubep.o \
 	$(OBJ)/vidhrdw/magmax.o $(OBJ)/drivers/magmax.o \
 	$(OBJ)/vidhrdw/cop01.o $(OBJ)/drivers/cop01.o \
@@ -641,6 +642,7 @@ $(OBJ)/cinemav.a: \
 
 $(OBJ)/thepit.a: \
 	$(OBJ)/vidhrdw/thepit.o $(OBJ)/drivers/thepit.o \
+	$(OBJ)/vidhrdw/timelimt.o $(OBJ)/drivers/timelimt.o \
 
 $(OBJ)/valadon.a: \
 	$(OBJ)/machine/bagman.o $(OBJ)/vidhrdw/bagman.o $(OBJ)/drivers/bagman.o \
@@ -762,7 +764,7 @@ $(OBJ)/metro.a: \
 	$(OBJ)/vidhrdw/metro.o $(OBJ)/drivers/metro.o \
 
 $(OBJ)/venture.a: \
-	$(OBJ)/vidhrdw/meteor.o $(OBJ)/drivers/meteor.o \
+	$(OBJ)/vidhrdw/spcforce.o $(OBJ)/drivers/spcforce.o \
 	$(OBJ)/drivers/looping.o \
 
 $(OBJ)/yunsung.a: \
@@ -793,7 +795,6 @@ $(OBJ)/other.a: \
 	$(OBJ)/machine/spiders.o $(OBJ)/vidhrdw/crtc6845.o $(OBJ)/vidhrdw/spiders.o $(OBJ)/drivers/spiders.o \
 	$(OBJ)/machine/stactics.o $(OBJ)/vidhrdw/stactics.o $(OBJ)/drivers/stactics.o \
 	$(OBJ)/vidhrdw/kingobox.o $(OBJ)/drivers/kingobox.o \
-	$(OBJ)/vidhrdw/clshroad.o $(OBJ)/drivers/clshroad.o \
 	$(OBJ)/vidhrdw/ambush.o $(OBJ)/drivers/ambush.o \
 	$(OBJ)/vidhrdw/starcrus.o $(OBJ)/drivers/starcrus.o \
 	$(OBJ)/drivers/dlair.o \

@@ -162,7 +162,7 @@ WRITE_HANDLER( fromance_paletteram_w )
 	r = (r << 3) | (r >> 2);
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
-	palette_change_color(offset / 2, r, g, b);
+	palette_set_color(offset / 2, r, g, b);
 }
 
 

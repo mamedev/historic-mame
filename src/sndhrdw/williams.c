@@ -1443,7 +1443,7 @@ static READ_HANDLER( counter_value_r )
 
 		/* more than 3 hits in a row and we optimize */
 		if (counter.hotspot_hit_count > 3)
-			*cpuintf[Machine->drv->cpu[williams_cpunum].cpu_type & ~CPU_FLAGS_MASK].icount -= 50;
+			activecpu_adjust_icount(-50);
 	}
 
 	return counter.value[offset];

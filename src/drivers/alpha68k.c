@@ -1362,7 +1362,7 @@ static const struct MachineDriver machine_driver_kouyakyu =
  // 	64*8, 64*8, { 0*8, 64*8-1, 2*8, 64*8-1 },
 
 	kouyakyu_gfxdecodeinfo,
-	256, 256,
+	256, 0,
 	0,
 
 	VIDEO_TYPE_RASTER,
@@ -1547,10 +1547,10 @@ static const struct MachineDriver machine_driver_alpha68k_II =
   	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 
 	alpha68k_II_gfxdecodeinfo,
-	2048, 2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	alpha68k_vh_start,
 	0,
@@ -1600,10 +1600,10 @@ static const struct MachineDriver machine_driver_alpha68k_V =
   	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 
 	alpha68k_V_gfxdecodeinfo,
-	4096, 4096,
+	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	alpha68k_vh_start,
 	0,
@@ -1653,10 +1653,10 @@ static const struct MachineDriver machine_driver_alpha68k_V_sb =
   	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 
 	alpha68k_V_gfxdecodeinfo,
-	4096, 4096,
+	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	alpha68k_vh_start,
 	0,

@@ -1,12 +1,8 @@
 /***************************************************************************
 
-	NAMCO sound driver.
+	Wiping sound driver (quick hack of the Namco sound driver)
 
-	This driver handles the three known types of NAMCO wavetable sounds:
-
-		- 3-voice mono (Pac-Man, Pengo, Dig Dug, etc)
-		- 8-voice mono (Mappy, Dig Dug 2, etc)
-		- 8-voice stereo (System 1)
+	used by wiping.c and clshroad.c
 
 ***************************************************************************/
 

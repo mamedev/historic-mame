@@ -1,6 +1,6 @@
 /***************************************************************************
 
-Time Pilot 84 Memory Map (preliminary)
+Time Pilot 84  (c) 1984 Konami
 
 driver by Marc Lafontaine
 
@@ -92,10 +92,12 @@ extern unsigned char *tp84_scrolly;
 WRITE_HANDLER( tp84_videoram2_w );
 WRITE_HANDLER( tp84_colorram2_w );
 WRITE_HANDLER( tp84_col0_w );
+READ_HANDLER( tp84_scanline_r );
 void tp84_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int tp84_vh_start(void);
 void tp84_vh_stop(void);
 void tp84_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+int tp84_6809_interrupt(void);
 
 
 static unsigned char *sharedram;
@@ -108,36 +110,6 @@ static READ_HANDLER( sharedram_r )
 static WRITE_HANDLER( sharedram_w )
 {
 	sharedram[offset] = data;
-}
-
-
-/* JB 970829 - just give it what it wants
-	F104: LDX   $6400
-	F107: LDU   $6402
-	F10A: LDA   $640B
-	F10D: BEQ   $F13B
-	F13B: LDX   $6404
-	F13E: LDU   $6406
-	F141: LDA   $640C
-	F144: BEQ   $F171
-	F171: LDA   $2000	; read beam
-	F174: ADDA  #$20
-	F176: BCC   $F104
-*/
-static READ_HANDLER( tp84_beam_r )
-{
-//	return cpu_getscanline();
-	return 255; /* always return beam position 255 */ /* JB 970829 */
-}
-
-/* JB 970829 - catch a busy loop for CPU 1
-	E0ED: LDA   #$01
-	E0EF: STA   $4000
-	E0F2: BRA   $E0ED
-*/
-static WRITE_HANDLER( tp84_catchloop_w )
-{
-	if( cpu_get_pc()==0xe0f2 ) cpu_spinuntil_int();
 }
 
 
@@ -211,15 +183,14 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x4800, 0x4bff, colorram_w, &colorram },
 	{ 0x4c00, 0x4fff, tp84_colorram2_w, &tp84_colorram2 },
 	{ 0x5000, 0x57ff, sharedram_w, &sharedram },
-	{ 0x5000, 0x5177, MWA_RAM, &spriteram, &spriteram_size },	/* FAKE (see below) */
 	{ 0x8000, 0xffff, MWA_ROM },
 MEMORY_END
 
 
 /* CPU 2 read addresses */
 static MEMORY_READ_START( readmem_cpu2 )
-	{ 0x0000, 0x0000, MRA_RAM },
-	{ 0x2000, 0x2000, tp84_beam_r }, /* beam position */
+//	{ 0x0000, 0x0000, MRA_RAM },
+	{ 0x2000, 0x2000, tp84_scanline_r }, /* beam position */
 	{ 0x6000, 0x67ff, MRA_RAM },
 	{ 0x8000, 0x87ff, sharedram_r },
 	{ 0xe000, 0xffff, MRA_ROM },
@@ -227,10 +198,10 @@ MEMORY_END
 
 /* CPU 2 write addresses */
 static MEMORY_WRITE_START( writemem_cpu2 )
-	{ 0x0000, 0x0000, MWA_RAM }, /* Watch dog ?*/
-	{ 0x4000, 0x4000, tp84_catchloop_w }, /* IRQ enable */ /* JB 970829 */
-	{ 0x6000, 0x67ff, MWA_RAM },
-//	{ 0x67a0, 0x67ff, MWA_RAM, &spriteram, &spriteram_size },	/* REAL (multiplexed) */
+//	{ 0x0000, 0x0000, MWA_RAM }, /* Watch dog ?*/
+	{ 0x4000, 0x4000, interrupt_enable_w }, /* IRQ enable */
+	{ 0x6000, 0x679f, MWA_RAM },
+	{ 0x67a0, 0x67ff, MWA_RAM, &spriteram, &spriteram_size },	/* REAL (multiplexed) */
 	{ 0x8000, 0x87ff, sharedram_w },
 	{ 0xe000, 0xffff, MWA_ROM },
 MEMORY_END
@@ -349,25 +320,25 @@ INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 characters */
-	1024,	/* 1024 characters */
-	2,	/* 2 bits per pixel */
-	{ 4, 0 },	/* the two bitplanes for 4 pixels are packed into one byte */
-	{  0, 1, 2, 3, 8*8+0, 8*8+1, 8*8+2, 8*8+3 },	/* bits are packed in groups of four */
+	8,8,
+	RGN_FRAC(1,1),
+	2,
+	{ 4, 0 },
+	{  0, 1, 2, 3, 8*8+0, 8*8+1, 8*8+2, 8*8+3 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	16*8	/* every char takes 16 bytes */
+	16*8
 };
 static struct GfxLayout spritelayout =
 {
-	16,16,	/* 16*16 sprites */
-	256,	/* 256 sprites */
-	4,	/* 4 bits per pixel */
-	{ 256*64*8+4, 256*64*8+0, 4 ,0 },
+	16,16,
+	RGN_FRAC(1,2),
+	4,
+	{ RGN_FRAC(1,2)+4, RGN_FRAC(1,2)+0, 4 ,0 },
 	{ 0, 1, 2, 3, 8*8+0, 8*8+1, 8*8+2, 8*8+3,
 			16*8+0, 16*8+1, 16*8+2, 16*8+3, 24*8+0, 24*8+1, 24*8+2, 24*8+3 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			32*8, 33*8, 34*8, 35*8, 36*8, 37*8, 38*8, 39*8 },
-	64*8	/* every sprite takes 64 bytes */
+	64*8
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
@@ -402,7 +373,7 @@ static const struct MachineDriver machine_driver_tp84 =
 			CPU_M6809,
 			1500000,	/* ??? */
 			readmem_cpu2,writemem_cpu2,0,0,
-			interrupt,1
+			tp84_6809_interrupt,256
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,

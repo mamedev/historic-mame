@@ -9,7 +9,7 @@
  *	Online help is available by pressing F1 (context sensitive!)
  *
  *	TODO:
- *	- Add stack view using cpu_get_reg(REG_SP_CONTENTS+offset)
+ *	- Add stack view using activecpu_get_reg(REG_SP_CONTENTS+offset)
  *	- Add more display modes for the memory windows (binary? octal? decimal?)
  *
  ****************************************************************************/
@@ -34,18 +34,18 @@
  * Externals (define in the header files)
  ****************************************************************************/
 /* Long(er) function names, short macro names... */
-#define ABITS	cpu_address_bits()
-#define AMASK	cpu_address_mask()
-#define ASHIFT	cpu_address_shift()
-#define ALIGN	cpu_align_unit()
-#define INSTL	cpu_max_inst_len()
-#define ENDIAN	cpu_endianess()
+#define ABITS	activecpu_address_bits()
+#define AMASK	activecpu_address_mask()
+#define ASHIFT	activecpu_address_shift()
+#define ALIGN	activecpu_align_unit()
+#define INSTL	activecpu_max_inst_len()
+#define ENDIAN	activecpu_endianess()
 
-#define RDMEM(a)	(*cpuintf[cputype].memory_read)(a)
-#define WRMEM(a,v)	(*cpuintf[cputype].memory_write)(a,v)
-#define RDINT(a)	(*cpuintf[cputype].internal_read)(a)
-#define WRINT(a,v)	(*cpuintf[cputype].internal_write)(a,v)
-#define PGM_MEMORY	cpuintf[cputype].pgm_memory_base
+#define RDMEM(a)	(*cputype_get_interface(cputype)->memory_read)(a)
+#define WRMEM(a,v)	(*cputype_get_interface(cputype)->memory_write)(a,v)
+#define RDINT(a)	(*cputype_get_interface(cputype)->internal_read)(a)
+#define WRINT(a,v)	(*cputype_get_interface(cputype)->internal_write)(a,v)
+#define PGM_MEMORY	cputype_get_interface(cputype)->pgm_memory_base
 
 /****************************************************************************
  * Globals
@@ -108,9 +108,9 @@ enum {
  ****************************************************************************/
 static int first_time = 1;
 
-static int activecpu = INVALID;
-static int previous_activecpu = INVALID;
-static int totalcpu = 0;
+static int active_cpu = INVALID;
+static int previous_active_cpu = INVALID;
+static int total_cpu = 0;
 static int cputype = 0;
 
 static int dbg_fast = 0;
@@ -476,13 +476,13 @@ typedef struct {
 static	s_dbg	dbg[MAX_CPU];
 
 /* Covenience macros... keep the code readable */
-#define DBG 	dbg[activecpu]
-#define DBGREGS dbg[activecpu].regs
-#define DBGDASM dbg[activecpu].dasm
-#define DBGMEM	dbg[activecpu].mem
+#define DBG 	dbg[active_cpu]
+#define DBGREGS dbg[active_cpu].regs
+#define DBGDASM dbg[active_cpu].dasm
+#define DBGMEM	dbg[active_cpu].mem
 #define TRACE	dbg[tracecpu].trace
 
-#define CMD 	dbg[activecpu].cmdline
+#define CMD 	dbg[active_cpu].cmdline
 
 /****************************************************************************
  * Graphics output using debug_bitmap
@@ -1050,7 +1050,7 @@ INLINE unsigned order( unsigned offset, unsigned size )
 	return offset;
 }
 
-/* adjust an offset by shifting it left cpu_address_shift() times */
+/* adjust an offset by shifting it left activecpu_address_shift() times */
 INLINE unsigned lshift( unsigned offset )
 {
 	switch( ASHIFT )
@@ -1061,7 +1061,7 @@ INLINE unsigned lshift( unsigned offset )
 	return offset;
 }
 
-/* adjust an offset by shifting it right cpu_address_shift() times */
+/* adjust an offset by shifting it right activecpu_address_shift() times */
 INLINE unsigned rshift( unsigned offset )
 {
 	switch( ASHIFT )
@@ -1563,7 +1563,7 @@ static unsigned get_register_or_value( char **parg, int *size )
 	if( regnum > 0 )
 	{
 		if( size ) *size = l;
-		return cpu_get_reg( regnum );
+		return activecpu_get_reg( regnum );
 	}
 	/* default to hex value */
 	return xtou( parg, size );
@@ -1581,11 +1581,11 @@ static void trace_init( const char *filename, UINT8 *regs )
 	if( trace_on )
 		return;
 
-	for( tracecpu = 0; tracecpu < totalcpu; tracecpu++ )
+	for( tracecpu = 0; tracecpu < total_cpu; tracecpu++ )
 	{
 		sprintf( name, "%s.%d", filename, tracecpu );
 		TRACE.file = fopen(name,"w");
-		if( tracecpu == activecpu )
+		if( tracecpu == active_cpu )
 			memcpy( TRACE.regs, regs, MAX_REGS );
 		else
 			TRACE.regs[0] = 0;
@@ -1593,7 +1593,7 @@ static void trace_init( const char *filename, UINT8 *regs )
 		TRACE.loops = 0;
 		memset(TRACE.last_pc, 0xff, sizeof(TRACE.last_pc));
 	}
-	tracecpu = activecpu;
+	tracecpu = active_cpu;
 	trace_on = 1;
 }
 
@@ -1606,7 +1606,7 @@ void trace_done(void)
 	if( !trace_on )
 		return;
 
-	for( tracecpu = 0; tracecpu < totalcpu; tracecpu++ )
+	for( tracecpu = 0; tracecpu < total_cpu; tracecpu++ )
 	{
 		if( TRACE.file )
 			fclose( TRACE.file );
@@ -1622,7 +1622,7 @@ void trace_done(void)
  **************************************************************************/
 static void trace_select( void )
 {
-	if( tracecpu == activecpu )
+	if( tracecpu == active_cpu )
 		return;
 	if( trace_on && TRACE.file )
 	{
@@ -1636,8 +1636,8 @@ static void trace_select( void )
 		fprintf(TRACE.file,"\n=============== End of iteration #%d ===============\n\n",TRACE.iters++);
 		fflush(TRACE.file);
 	}
-	if( activecpu < totalcpu )
-		tracecpu = activecpu;
+	if( active_cpu < total_cpu )
+		tracecpu = active_cpu;
 }
 
 /**************************************************************************
@@ -1653,7 +1653,7 @@ static void trace_output( void )
 
 	if( trace_on && TRACE.file )
 	{
-		unsigned pc = cpu_get_pc();
+		unsigned pc = activecpu_get_pc();
 		unsigned addr_width = (ABITS + 3) / 4;
 		int count, i;
 
@@ -1677,10 +1677,10 @@ static void trace_output( void )
 			if( TRACE.regs[0] )
 			{
 				for( i = 0; i < MAX_REGS && TRACE.regs[i]; i++ )
-					dst += sprintf( dst, "%s ", cpu_dump_reg(TRACE.regs[i]) );
+					dst += sprintf( dst, "%s ", activecpu_dump_reg(TRACE.regs[i]) );
 			}
 			dst += sprintf( dst, "%0*X: ", addr_width, pc );
-			cpu_dasm( dst, pc );
+			activecpu_dasm( dst, pc );
 			strcat( dst, "\n" );
 			fprintf( TRACE.file, "%s", buffer );
 			memmove(
@@ -1694,13 +1694,13 @@ static void trace_output( void )
 
 /**************************************************************************
  * hit_brk_exec
- * Return non zero if execution breakpoint for the activecpu,
- * the temporary breakpoint or the break on 'activecpu' was hit
+ * Return non zero if execution breakpoint for the active_cpu,
+ * the temporary breakpoint or the break on 'active_cpu' was hit
  **************************************************************************/
 static int hit_brk_exec(void)
 {
 	static char dbg_info[63+1];
-	UINT32 pc = cpu_get_pc();
+	UINT32 pc = activecpu_get_pc();
 
 	if( DBG.brk_temp != INVALID && DBG.brk_temp == pc )
 	{
@@ -1730,7 +1730,7 @@ static int hit_brk_exec(void)
 
 /**************************************************************************
  * hit_brk_data
- * Return non zero if the data watchpoint for the activecpu
+ * Return non zero if the data watchpoint for the active_cpu
  * was hit (ie. monitored data changed)
  **************************************************************************/
 static int hit_brk_data(void)
@@ -1775,7 +1775,7 @@ static int hit_brk_regs(void)
 
 	if( DBG.brk_regs == INVALID ) return 0;
 
-	data = cpu_get_reg(DBG.brk_regs);
+	data = activecpu_get_reg(DBG.brk_regs);
 
 	if( DBG.brk_regs_oldval != data )
 	{
@@ -1841,13 +1841,13 @@ static const char *name_rom( const char *type, int regnum, unsigned *base, unsig
 
 /**************************************************************************
  * name_rdmem
- * Find a descriptive name for the given memory read region of activecpu
+ * Find a descriptive name for the given memory read region of active_cpu
  **************************************************************************/
 static const char *name_rdmem( unsigned base )
 {
 	static char buffer[16][79+1];
 	static int which = 0;
-	const struct MachineCPU *cpu = &Machine->drv->cpu[activecpu];
+	const struct MachineCPU *cpu = &Machine->drv->cpu[active_cpu];
 	const struct Memory_ReadAddress *mr = cpu->memory_read;
 	int ram_cnt = 1, nop_cnt = 1;
 	const char *name;
@@ -1886,7 +1886,7 @@ static const char *name_rdmem( unsigned base )
 					sprintf(dst, "RAM%d+%04X", ram_cnt, lshift(offset) );
 					break;
 				case (FPTR)MRA_ROM:
-					name = name_rom("ROM", REGION_CPU1+activecpu, &base, mr->start );
+					name = name_rom("ROM", REGION_CPU1+active_cpu, &base, mr->start );
 					sprintf(dst, "%s+%04X", name, lshift(base) );
 					break;
 				case (FPTR)MRA_BANK1: case (FPTR)MRA_BANK2:
@@ -1966,13 +1966,13 @@ static const char *name_rdmem( unsigned base )
 
 /**************************************************************************
  * name_wrmem
- * Find a descriptive name for the given memory write region of activecpu
+ * Find a descriptive name for the given memory write region of active_cpu
  **************************************************************************/
 static const char *name_wrmem( unsigned base )
 {
 	static char buffer[16][79+1];
 	static int which = 0;
-	const struct MachineCPU *cpu = &Machine->drv->cpu[activecpu];
+	const struct MachineCPU *cpu = &Machine->drv->cpu[active_cpu];
 	const struct Memory_WriteAddress *mw = cpu->memory_write;
 	int ram_cnt = 1, nop_cnt = 1;
 	const char *name;
@@ -2012,11 +2012,11 @@ static const char *name_wrmem( unsigned base )
 					sprintf(dst, "RAM%d+%04X", ram_cnt, lshift(base - mw->start) );
 					break;
 				case (FPTR)MWA_ROM:
-					name = name_rom("ROM", REGION_CPU1+activecpu, &base, mw->start );
+					name = name_rom("ROM", REGION_CPU1+active_cpu, &base, mw->start );
 					sprintf(dst, "%s+%04X", name, lshift(base) );
 					break;
 				case (FPTR)MWA_RAMROM:
-					name = name_rom("RAMROM", REGION_CPU1+activecpu, &base, mw->start);
+					name = name_rom("RAMROM", REGION_CPU1+active_cpu, &base, mw->start);
 					sprintf(dst, "%s+%04X", name, lshift(base) );
 					break;
 				case (FPTR)MWA_BANK1: case (FPTR)MWA_BANK2:
@@ -2048,7 +2048,7 @@ static const char *name_wrmem( unsigned base )
 
 /**************************************************************************
  * name_memory
- * Find a descriptive name for the given memory region of activecpu
+ * Find a descriptive name for the given memory region of active_cpu
  **************************************************************************/
 static const char *name_memory( unsigned base )
 {
@@ -2158,7 +2158,7 @@ static void dbg_open_windows( void )
 	aw = w - 80;
 	ah = h - 25;
 
-	for( i = 0; i < totalcpu; i++ )
+	for( i = 0; i < total_cpu; i++ )
 	{
 		const UINT8 *win_layout = (UINT8*)cpunum_win_layout(i);
 		struct rectangle regs, dasm, mem1, mem2, cmds;
@@ -2317,7 +2317,7 @@ static void dbg_close_windows( void )
 {
 	int i;
 
-	for( i = 0; i < totalcpu; i++ )
+	for( i = 0; i < total_cpu; i++ )
 	{
 		win_close( WIN_REGS(i) );
 		win_close( WIN_DASM(i) );
@@ -2337,7 +2337,7 @@ static unsigned dasm_line( unsigned pc, int times )
 	static char buffer[127+1];
 
 	while( times-- > 0 )
-		pc += cpu_dasm( buffer, pc );
+		pc += activecpu_dasm( buffer, pc );
 	pc = lshift( rshift(pc) & AMASK );
 
 	return pc;
@@ -2354,18 +2354,18 @@ static unsigned dasm_line( unsigned pc, int times )
 static void dump_regs( void )
 {
 	char title[80+1];
-	UINT32 win = WIN_REGS(activecpu);
+	UINT32 win = WIN_REGS(active_cpu);
 	s_regs *regs = &DBGREGS;
 	s_edit *pedit = regs->edit;
 	UINT32 *old = regs->backup;
 	UINT32 *val = regs->newval;
 	UINT32 width;
-	const char *name = cpu_name(), *flags = cpu_flags();
+	const char *name = activecpu_name(), *flags = activecpu_flags();
 	int w = win_get_w(win);
 	int h = win_get_h(win);
 	int i, j, l, x, y;
 	UINT8 color;
-	const INT8 *reg = (INT8*)cpu_reg_layout();
+	const INT8 *reg = (INT8*)activecpu_reg_layout();
 
 	/* Called the very first time: find max_width */
 	if( regs->count == 0 )
@@ -2374,7 +2374,7 @@ static void dump_regs( void )
 		{
 			if( reg[i] == -1 )
 				continue;		/* skip row breaks */
-			width = strlen( cpu_dump_reg(reg[i]) );
+			width = strlen( activecpu_dump_reg(reg[i]) );
 			if( width >= regs->max_width )
 				regs->max_width = width + 1;
 		}
@@ -2383,47 +2383,47 @@ static void dump_regs( void )
 	x = 0;
 	y = 0;
 	win_set_curpos( win, 0, 0 );
-	sprintf( title, "CPU #%d %-8s Flags:%s  Cycles:%6u", activecpu, name, flags, cpu_geticount() );
+	sprintf( title, "CPU #%d %-8s Flags:%s  Cycles:%6u", active_cpu, name, flags, activecpu_get_icount() );
 	l = strlen(title);
 	if( l + 2 < w )
 	{
 		/* Everything should fit into the caption */
 		if( l + 4 < w )
 			/* We can even separate the cycles to the right corner */
-			sprintf( title, "CPU #%d %-8s Flags:%s\tCycles:%6u", activecpu, name, flags, cpu_geticount() );
+			sprintf( title, "CPU #%d %-8s Flags:%s\tCycles:%6u", active_cpu, name, flags, activecpu_get_icount() );
 		win_set_title( win, title );
 	}
 	else
 	{
 		/* At least CPU # and flags should fit into the caption */
-		sprintf( title, "CPU #%d %-8s Flags:%s", activecpu, name, flags );
+		sprintf( title, "CPU #%d %-8s Flags:%s", active_cpu, name, flags );
 		l = strlen(title);
 		if( l + 2 < w )
 		{
 			if( l + 4 < w )
-				sprintf( title, "CPU #%d %-8s\tFlags:%s", activecpu, name, flags );
+				sprintf( title, "CPU #%d %-8s\tFlags:%s", active_cpu, name, flags );
 			win_set_title( win, title );
 			if( y < h )
 			{
-				win_printf( win, "Cycles:%6u\n", cpu_geticount() );
+				win_printf( win, "Cycles:%6u\n", activecpu_get_icount() );
 			}
 			y++;
 		}
 		else
 		{
-			sprintf( title, "CPU #%d %-8s Cyc:%6u", activecpu, name, cpu_geticount() );
+			sprintf( title, "CPU #%d %-8s Cyc:%6u", active_cpu, name, activecpu_get_icount() );
 			l = strlen(title);
 			if( l + 2 < w )
 			{
 				if( l + 4 < w )
-					sprintf( title, "CPU #%d %-8s\tCyc:%6u", activecpu, name, cpu_geticount() );
+					sprintf( title, "CPU #%d %-8s\tCyc:%6u", active_cpu, name, activecpu_get_icount() );
 				win_set_title( win, title );
 				if( y < h )
 				{
-					if( strlen(cpu_flags()) + 8 < w )
+					if( strlen(activecpu_flags()) + 8 < w )
 						win_printf( win, "Flags: %s\n", flags );
 					else
-					if( strlen(cpu_flags()) + 2 < w )
+					if( strlen(activecpu_flags()) + 2 < w )
 						win_printf( win, "F:%s\n", flags );
 					else
 						win_printf( win, "%s\n", flags );
@@ -2433,15 +2433,15 @@ static void dump_regs( void )
 			else
 			{
 				/* Only CPU # and name fit into the caption */
-				sprintf( title, "CPU #%d %-8s", activecpu, name );
+				sprintf( title, "CPU #%d %-8s", active_cpu, name );
 				l = strlen(title);
 				win_set_title( win, title );
 				if( y < h )
 				{
-				if( strlen(cpu_flags()) + 8 < w )
+				if( strlen(activecpu_flags()) + 8 < w )
 					win_printf( win, "Flags: %s\n", flags );
 				else
-				if( strlen(cpu_flags()) + 2 < w )
+				if( strlen(activecpu_flags()) + 2 < w )
 					win_printf( win, "F:%s\n", flags );
 				else
 					win_printf( win, "%s\n", flags );
@@ -2449,7 +2449,7 @@ static void dump_regs( void )
 				y++;
 				if( y < h )
 				{
-					win_printf( win, "Cycles:%6u\n", cpu_geticount() );
+					win_printf( win, "Cycles:%6u\n", activecpu_get_icount() );
 				}
 				y++;
 			}
@@ -2472,12 +2472,12 @@ static void dump_regs( void )
 		}
 		else
 		{
-			name = cpu_dump_reg(*reg);
+			name = activecpu_dump_reg(*reg);
 			if( *name == '\0' )
 				continue;
 
 			regs->id[j] = *reg;
-			*val = cpu_get_reg(regs->id[j]);
+			*val = activecpu_get_reg(regs->id[j]);
 			color = cur_col[E_REGS];
 			if( DBG.brk_regs == *reg )
 				color = cur_col[E_BRK_REGS];
@@ -2570,7 +2570,7 @@ static void dump_regs( void )
  **************************************************************************/
 static unsigned dump_dasm( unsigned pc )
 {
-	UINT32 win = WIN_DASM(activecpu);
+	UINT32 win = WIN_DASM(active_cpu);
 	int w = win_get_w(win);
 	int h = win_get_h(win);
 	int x, y, l, line_pc_cpu = INVALID, line_pc_cur = INVALID;
@@ -2605,7 +2605,7 @@ static unsigned dump_dasm( unsigned pc )
 
 			DBGDASM.dst_ea_value = INVALID;
 			DBGDASM.src_ea_value = INVALID;
-			pc_next = pc + cpu_dasm( dasm, pc );
+			pc_next = pc + activecpu_dasm( dasm, pc );
 
 			if( DBGDASM.pc_cur == pc )
 				win_set_title( win, "%s", get_ea_info(pc) );
@@ -2688,11 +2688,11 @@ static unsigned dump_dasm( unsigned pc )
  * dump_mem_hex
  * Update a memory window using the cpu_readmemXXX function
  * Changed values are displayed using foreground color cur_col[E_CHANGES]
- * The new values are stored into mem->newval[] of the activecpu
+ * The new values are stored into mem->newval[] of the active_cpu
  **************************************************************************/
 static void dump_mem_hex( int which, unsigned len_addr, unsigned len_data )
 {
-	UINT32 win = WIN_MEM(activecpu,which);
+	UINT32 win = WIN_MEM(active_cpu,which);
 	s_edit *pedit = DBGMEM[which].edit;
 	int w = win_get_w(win);
 	int h = win_get_h(win);
@@ -2840,9 +2840,9 @@ static void dump_mem( int which, int set_title )
 	if( set_title )
 	{
 		if( DBGMEM[which].internal )
-			win_set_title( WIN_MEM(activecpu,which), "CPU internal" );
+			win_set_title( WIN_MEM(active_cpu,which), "CPU internal" );
 		else
-			win_set_title( WIN_MEM(activecpu,which), name_memory(DBGMEM[which].base + DBGMEM[which].pgm_memory_base) );
+			win_set_title( WIN_MEM(active_cpu,which), name_memory(DBGMEM[which].base + DBGMEM[which].pgm_memory_base) );
 	}
 
 	switch( DBGMEM[which].mode )
@@ -2859,7 +2859,7 @@ static void dump_mem( int which, int set_title )
  **************************************************************************/
 static void edit_regs( void )
 {
-	UINT32 win = WIN_REGS(activecpu);
+	UINT32 win = WIN_REGS(active_cpu);
 	s_regs *regs = &DBGREGS;
 	s_edit *pedit = regs->edit;
 	unsigned shift, mask, val;
@@ -2901,8 +2901,8 @@ static void edit_regs( void )
 			if( val > 9 ) val -= 7;
 			val <<= shift;
 			/* now modify the register */
-			cpu_set_reg( regs->id[regs->idx],
-				( cpu_get_reg( regs->id[regs->idx] ) & mask ) | val );
+			activecpu_set_reg( regs->id[regs->idx],
+				( activecpu_get_reg( regs->id[regs->idx] ) & mask ) | val );
 			dump_regs();
 			i = KEYCODE_RIGHT;	/* advance to next nibble */
 		}
@@ -2996,7 +2996,7 @@ static void edit_regs( void )
  **************************************************************************/
 static void edit_dasm(void)
 {
-	UINT32 win = WIN_DASM(activecpu);
+	UINT32 win = WIN_DASM(active_cpu);
 	const char *k;
 	int i, update_window = 0;
 
@@ -3055,7 +3055,7 @@ static void edit_dasm(void)
  **************************************************************************/
 static void edit_mem( int which )
 {
-	UINT32 win = WIN_MEM(activecpu,which);
+	UINT32 win = WIN_MEM(active_cpu,which);
 	s_edit *pedit = DBGMEM[which].edit;
 	const char *k;
 	unsigned shift, mask, val;
@@ -3101,7 +3101,7 @@ static void edit_mem( int which )
 			/* now modify the register */
 			if( DBGMEM[which].internal )
 			{
-				if( cpuintf[cputype].internal_write )
+				if( cputype_get_interface(cputype)->internal_write )
 					WRINT( DBGMEM[which].address, ( RDINT( DBGMEM[which].address ) & mask ) | val );
 			}
 			else
@@ -3203,7 +3203,7 @@ static void edit_mem( int which )
 		break;
 
 	case KEYCODE_I: /* internal memory */
-		if( cpuintf[cputype].internal_read )
+		if( cputype_get_interface(cputype)->internal_read )
 		{
 			DBGMEM[which].internal ^= 1;
 			/* Reset cursor coordinates and sizes of the edit info */
@@ -3252,7 +3252,7 @@ static int edit_cmds_info( void )
 				l = strlen(commands[i].name);
 			if( strncmp( cmd, commands[i].name, l ) == 0 && !isalnum(cmd[l]) )
 			{
-				win_set_title( WIN_CMDS(activecpu), "Command: %s %s%s",
+				win_set_title( WIN_CMDS(active_cpu), "Command: %s %s%s",
 					commands[i].name, commands[i].args, hist_info );
 				return i;
 			}
@@ -3263,7 +3263,7 @@ static int edit_cmds_info( void )
 					l = strlen(commands[i].alias);
 				if( strncmp( cmd, commands[i].alias, l ) == 0 && !isalnum(cmd[l]) )
 				{
-					win_set_title( WIN_CMDS(activecpu), "Command: %s %s (aka %s)%s",
+					win_set_title( WIN_CMDS(active_cpu), "Command: %s %s (aka %s)%s",
 						commands[i].alias, commands[i].args, commands[i].name, hist_info );
 					return i;
 				}
@@ -3272,12 +3272,12 @@ static int edit_cmds_info( void )
 	}
 	if( dbg_info_once )
 	{
-		win_set_title( WIN_CMDS(activecpu), "%s%s", dbg_info_once, hist_info );
+		win_set_title( WIN_CMDS(active_cpu), "%s%s", dbg_info_once, hist_info );
 		dbg_info_once = NULL;
 	}
 	else
 	{
-		win_set_title( WIN_CMDS(activecpu), "Command (press F1 for help)%s", hist_info );
+		win_set_title( WIN_CMDS(active_cpu), "Command (press F1 for help)%s", hist_info );
 	}
 	return INVALID;
 }
@@ -3324,7 +3324,7 @@ static int edit_cmds_parse( char *cmdline )
 static void edit_cmds_append( const char *src )
 {
 	char *cmdline = DBG.cmdline;
-	UINT32 win = WIN_CMDS(activecpu);
+	UINT32 win = WIN_CMDS(active_cpu);
 	if( strlen(cmdline) < 80 )
 	{
 		strcat(cmdline, src);
@@ -3334,7 +3334,7 @@ static void edit_cmds_append( const char *src )
 
 void edit_cmds_reset( void )
 {
-	unsigned win = WIN_CMDS(activecpu);
+	unsigned win = WIN_CMDS(active_cpu);
 	DBG.cmdline[0] = '\0';
 	win_set_color( win, cur_col[E_CMDS] );
 	win_set_curpos( win, 0, 0 );
@@ -3349,7 +3349,7 @@ void edit_cmds_reset( void )
 static void edit_cmds(void)
 {
 	char *cmdline = DBG.cmdline;
-	UINT32 win = WIN_CMDS(activecpu);
+	UINT32 win = WIN_CMDS(active_cpu);
 	const char *k;
 	int i, l, cmd;
 
@@ -3476,19 +3476,19 @@ static void cmd_help( void )
 		break;
 	case EDIT_REGS:
 		title = "MAME debugger CPU registers help";
-		dst += sprintf( dst, "%s [%s] Version %s", cpu_name(), cpu_core_family(), cpu_core_version() ) + 1;
-		dst += sprintf( dst, "Address bits   : %d [%08X]", cpu_address_bits(), cpu_address_mask() ) + 1;
-		dst += sprintf( dst, "Code align unit: %d byte(s)", cpu_align_unit() ) + 1;
+		dst += sprintf( dst, "%s [%s] Version %s", activecpu_name(), activecpu_core_family(), activecpu_core_version() ) + 1;
+		dst += sprintf( dst, "Address bits   : %d [%08X]", activecpu_address_bits(), activecpu_address_mask() ) + 1;
+		dst += sprintf( dst, "Code align unit: %d byte(s)", activecpu_align_unit() ) + 1;
 		dst += sprintf( dst, "This CPU is    : %s endian", (ENDIAN == CPU_IS_LE) ? "little" : "big") + 1;
-		dst += sprintf( dst, "Source file    : %s", cpu_core_file() ) + 1;
-		dst += sprintf( dst, "Internal read  : %s", cpuintf[cputype].internal_read ? "yes" : "no" ) + 1;
-		dst += sprintf( dst, "Internal write : %s", cpuintf[cputype].internal_write ? "yes" : "no" ) + 1;
-		dst += sprintf( dst, "Program / Data : %s", cpuintf[cputype].pgm_memory_base ? "yes" : "no" ) + 1;
-		dst += sprintf( dst, "%s", cpu_core_credits() ) + 1;
+		dst += sprintf( dst, "Source file    : %s", activecpu_core_file() ) + 1;
+		dst += sprintf( dst, "Internal read  : %s", cputype_get_interface(cputype)->internal_read ? "yes" : "no" ) + 1;
+		dst += sprintf( dst, "Internal write : %s", cputype_get_interface(cputype)->internal_write ? "yes" : "no" ) + 1;
+		dst += sprintf( dst, "Program / Data : %s", cputype_get_interface(cputype)->pgm_memory_base ? "yes" : "no" ) + 1;
+		dst += sprintf( dst, "%s", activecpu_core_credits() ) + 1;
 		break;
 	case EDIT_DASM:
 		title = "MAME debugger disassembly help";
-		dst += sprintf( dst, "%s [%s]", cpu_name(), cpu_core_family() ) + 1;
+		dst += sprintf( dst, "%s [%s]", activecpu_name(), activecpu_core_family() ) + 1;
 		break;
 	case EDIT_MEM1:
 	case EDIT_MEM2:
@@ -3687,7 +3687,7 @@ static void cmd_brk_regs_set( void )
 	DBG.brk_regs = get_register_id( &cmd, &length );
 	if( DBG.brk_regs > 0 )
 	{
-		DBG.brk_regs_oldval = cpu_get_reg(DBG.brk_regs);
+		DBG.brk_regs_oldval = activecpu_get_reg(DBG.brk_regs);
 		data = get_register_or_value( &cmd, &length );
 		if( length )
 		{
@@ -3918,7 +3918,7 @@ static void cmd_dasm_to_file( void )
 	{
 		unsigned p = rshift(pc);
 		unsigned s;
-		size = cpu_dasm( buffer, pc );
+		size = activecpu_dasm( buffer, pc );
 		s = rshift(size);
 
 		fprintf(file, "%0*X: ", width, pc );
@@ -4442,13 +4442,13 @@ static void cmd_set_ignore( void )
 	int i, length, already_ignored;
 
 	cpunum = xtou( &cmd, &length );
-	if( cpunum < totalcpu )
+	if( cpunum < total_cpu )
 	{
 		if( !dbg[cpunum].ignore )
 		{
-			for( i = 0, already_ignored = 0; i < totalcpu; i++ )
+			for( i = 0, already_ignored = 0; i < total_cpu; i++ )
 				if(dbg[i].ignore) ++already_ignored;
-			if( already_ignored + 1 >= totalcpu )
+			if( already_ignored + 1 >= total_cpu )
 			{
 				win_msgbox( cur_col[E_ERROR], "Ignore CPU",
 					"No, I won't do that! ;-)\nIgnoring all CPUs is a bad idea.");
@@ -4456,14 +4456,14 @@ static void cmd_set_ignore( void )
 				return;
 			}
 			dbg[cpunum].ignore = 1;
-			if( cpunum == activecpu )
+			if( cpunum == active_cpu )
 				cmd_focus_next_cpu();
 		}
 	}
 	else
 	{
 		win_msgbox( cur_col[E_ERROR], "Ignore CPU",
-			"The selected CPU# is too high.\nOnly %d CPUs (0..%d) are used", totalcpu, totalcpu-1);
+			"The selected CPU# is too high.\nOnly %d CPUs (0..%d) are used", total_cpu, total_cpu-1);
 	}
 
 	edit_cmds_reset();
@@ -4480,14 +4480,14 @@ static void cmd_set_observe( void )
 	int length;
 
 	cpunum = xtou( &cmd, &length );
-	if( cpunum < totalcpu )
+	if( cpunum < total_cpu )
 	{
 		dbg[cpunum].ignore = 0;
 	}
 	else
 	{
 		win_msgbox( cur_col[E_ERROR], "Observe CPU",
-			"The selected CPU# is too high.\nOnly %d CPUs (0..%d) are used", totalcpu, totalcpu-1);
+			"The selected CPU# is too high.\nOnly %d CPUs (0..%d) are used", total_cpu, total_cpu-1);
 	}
 
 	edit_cmds_reset();
@@ -4531,7 +4531,7 @@ static void cmd_replace_register( void )
 		address = get_register_or_value( &cmd, &length );
 		if( length )
 		{
-			cpu_set_reg( regnum, address );
+			activecpu_set_reg( regnum, address );
 			if( regnum > 1 )
 				dump_regs();
 			else
@@ -4719,7 +4719,7 @@ static void cmd_dasm_page_up( void )
 	if( DBGDASM.pc_top > 0 )
 	{
 		unsigned dasm_pc_row[50];	/* needs to be > max windows height */
-		unsigned h = win_get_h(WIN_DASM(activecpu));
+		unsigned h = win_get_h(WIN_DASM(active_cpu));
 		unsigned dasm_pc_tmp = lshift((rshift(DBGDASM.pc_top) - h * INSTL) & AMASK);
 
 		if( dasm_pc_tmp > DBGDASM.pc_top )
@@ -4761,7 +4761,7 @@ static void cmd_dasm_page_up( void )
  **************************************************************************/
 static void cmd_dasm_page_down( void )
 {
-	unsigned h = win_get_h(WIN_DASM(activecpu));
+	unsigned h = win_get_h(WIN_DASM(active_cpu));
 
 	DBGDASM.pc_top = dasm_line( DBGDASM.pc_top, h );
 	DBGDASM.pc_cur = dasm_line( DBGDASM.pc_cur, h );
@@ -4786,7 +4786,7 @@ static void cmd_dasm_home( void )
  **************************************************************************/
 static void cmd_dasm_end( void )
 {
-	unsigned h = win_get_h(WIN_DASM(activecpu));
+	unsigned h = win_get_h(WIN_DASM(active_cpu));
 	unsigned tmp_address = lshift(AMASK - h * INSTL + 1);
 	unsigned end_address;
 	for( ; ; )
@@ -4959,9 +4959,9 @@ static void cmd_run_to_cursor( void )
  **************************************************************************/
 static void cmd_focus_next_cpu( void )
 {
-	if( totalcpu > 1 )
+	if( total_cpu > 1 )
 	{
-		win_set_title(WIN_CMDS(activecpu), "CPU #%d yield", activecpu);
+		win_set_title(WIN_CMDS(active_cpu), "CPU #%d yield", active_cpu);
 		cpu_yield();
 		dbg_update = 1;
 		dbg_step = 1;
@@ -5012,7 +5012,7 @@ static void cmd_step_over( void )
 {
 	/* Set next PC to the instruction after the cursor line */
 	DBG.next_pc = dasm_line( DBGDASM.pc_cur, 1 );
-	DBG.prev_sp = cpu_get_sp();
+	DBG.prev_sp = activecpu_get_sp();
 	dbg_step = 1;
 	edit_cmds_reset();
 }
@@ -5108,7 +5108,7 @@ static void cmd_set_mem_squeezed( void )
 static void cmd_set_dasm_opcodes( void )
 {
 	char *cmd = CMD;
-	UINT32 win = WIN_DASM(activecpu);
+	UINT32 win = WIN_DASM(active_cpu);
 	UINT32 w = win_get_w( win );
 	UINT32 dw = (INSTL / ALIGN) * (ALIGN * 2 + 1);
 	int state;
@@ -5140,9 +5140,9 @@ static void mame_debug_reset_statics( void )
 	/* Reset the statics */
 	memset( &dbg, 0, sizeof(dbg) );
 
-	activecpu = INVALID;
-	previous_activecpu = INVALID;
-	totalcpu = 0;
+	active_cpu = INVALID;
+	previous_active_cpu = INVALID;
+	total_cpu = 0;
 	cputype = 0;
 
 	dbg_fast = 0;
@@ -5171,9 +5171,9 @@ void mame_debug_init(void)
 	mame_debug_reset_statics();
 	osd_debugger_focus(1);
 
-	totalcpu = cpu_gettotalcpu();
+	total_cpu = cpu_gettotalcpu();
 
-	for( activecpu = 0; activecpu < totalcpu; activecpu++ )
+	for( active_cpu = 0; active_cpu < total_cpu; active_cpu++ )
 	{
 		DBG.window = EDIT_CMDS;
 		DBG.brk_exec = INVALID;
@@ -5189,7 +5189,7 @@ void mame_debug_init(void)
 		DBG.brk_temp = INVALID;
 		DBGMEM[0].base = 0x0000;
 		DBGMEM[1].base = 1 << (ABITS / 2);
-		switch( cpunum_align_unit(activecpu) )
+		switch( cpunum_align_unit(active_cpu) )
 		{
 			case 1: DBGMEM[0].mode = DBGMEM[1].mode = MODE_HEX_UINT8;  break;
 			case 2: DBGMEM[0].mode = DBGMEM[1].mode = MODE_HEX_UINT16; break;
@@ -5229,10 +5229,10 @@ void mame_debug_init(void)
 		}
 		fclose(file);
 	}
-	for( activecpu = 0; activecpu < totalcpu; activecpu++ )
+	for( active_cpu = 0; active_cpu < total_cpu; active_cpu++ )
 	{
 		/* See if there is an existing startup file <game>.cf<cpunum> */
-		sprintf( filename, "%s.cf%d", Machine->gamedrv->name, activecpu );
+		sprintf( filename, "%s.cf%d", Machine->gamedrv->name, active_cpu );
 		file = fopen( filename, "r" );
 		if( file )
 		{
@@ -5295,12 +5295,12 @@ void MAME_Debug(void)
 		dbg_fast = 0;
 	}
 
-	activecpu = cpu_getactivecpu();
+	active_cpu = cpu_getactivecpu();
 
 	/* If this CPU shall be ignored, just return */
 	if( DBG.ignore ) return;
 
-	cputype = Machine->drv->cpu[activecpu].cpu_type & ~CPU_FLAGS_MASK;
+	cputype = Machine->drv->cpu[active_cpu].cpu_type & ~CPU_FLAGS_MASK;
 
 	if( trace_on )
 	{
@@ -5315,7 +5315,7 @@ void MAME_Debug(void)
 		/* See if we went into a function.
 		   A 'return' will cause the CPU's stack pointer to be
 		   greater than the previous stack pointer */
-		if( cpu_get_pc() != DBG.next_pc && cpu_get_sp() < DBG.prev_sp )
+		if( activecpu_get_pc() != DBG.next_pc && activecpu_get_sp() < DBG.prev_sp )
 		{
 			/* if so, set the temporary breakpoint on the return PC */
 			DBG.brk_temp = DBG.next_pc;
@@ -5350,7 +5350,7 @@ void MAME_Debug(void)
 
 	if( dbg_step )
 	{
-		DBGDASM.pc_cur = cpu_get_pc();
+		DBGDASM.pc_cur = activecpu_get_pc();
 		dbg_step = 0;
 	}
 
@@ -5382,27 +5382,27 @@ void MAME_Debug(void)
 
 		if( dbg_update )
 		{
-			if( activecpu != previous_activecpu )
+			if( active_cpu != previous_active_cpu )
 			{
-				if( previous_activecpu != INVALID )
+				if( previous_active_cpu != INVALID )
 				{
-					win_hide( WIN_REGS(previous_activecpu) );
-					win_hide( WIN_DASM(previous_activecpu) );
-					win_hide( WIN_MEM1(previous_activecpu) );
-					win_hide( WIN_MEM2(previous_activecpu) );
-					win_hide( WIN_CMDS(previous_activecpu) );
+					win_hide( WIN_REGS(previous_active_cpu) );
+					win_hide( WIN_DASM(previous_active_cpu) );
+					win_hide( WIN_MEM1(previous_active_cpu) );
+					win_hide( WIN_MEM2(previous_active_cpu) );
+					win_hide( WIN_CMDS(previous_active_cpu) );
 				}
-				win_show( WIN_REGS(activecpu) );
-				win_show( WIN_DASM(activecpu) );
-				win_show( WIN_MEM1(activecpu) );
-				win_show( WIN_MEM2(activecpu) );
-				win_show( WIN_CMDS(activecpu) );
+				win_show( WIN_REGS(active_cpu) );
+				win_show( WIN_DASM(active_cpu) );
+				win_show( WIN_MEM1(active_cpu) );
+				win_show( WIN_MEM2(active_cpu) );
+				win_show( WIN_CMDS(active_cpu) );
 			}
 
 			dump_regs();
 			dump_mem( 0, DBG.window != EDIT_MEM1 );
 			dump_mem( 1, DBG.window != EDIT_MEM2 );
-			DBGDASM.pc_cpu = cpu_get_pc();
+			DBGDASM.pc_cpu = activecpu_get_pc();
 			/* Check if pc_cpu is outside of our disassembly window */
 			if( DBGDASM.pc_cpu < DBGDASM.pc_top || DBGDASM.pc_cpu >= DBGDASM.pc_end )
 				DBGDASM.pc_top = DBGDASM.pc_cpu;

@@ -306,7 +306,7 @@ static const struct MachineDriver machine_driver_raiden =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	raiden_eof_callback,
 	raiden_vh_start,
 	0,
@@ -349,7 +349,7 @@ static const struct MachineDriver machine_driver_raidena =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	raiden_eof_callback,
 	raidena_vh_start,
 	0,

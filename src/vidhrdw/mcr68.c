@@ -43,7 +43,7 @@ WRITE16_HANDLER( mcr68_paletteram_w )
 	g = (g << 5) | (g << 2) | (g >> 1);
 	b = (b << 5) | (b << 2) | (b >> 1);
 
-	palette_change_color(offset, r, g, b);
+	palette_set_color(offset, r, g, b);
 }
 
 
@@ -231,7 +231,7 @@ WRITE16_HANDLER( zwackery_paletteram_w )
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
 
-	palette_change_color(offset, r, g, b);
+	palette_set_color(offset, r, g, b);
 }
 
 

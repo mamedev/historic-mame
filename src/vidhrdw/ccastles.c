@@ -74,7 +74,7 @@ WRITE_HANDLER( ccastles_paletteram_w )
 	bit2 = (b >> 2) & 0x01;
 	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-	palette_change_color(offset & 0x1f,r,g,b);
+	palette_set_color(offset & 0x1f,r,g,b);
 }
 
 

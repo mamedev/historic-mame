@@ -48,13 +48,13 @@ DATA     OP| C2| C2| C2| C2| C2| C2| C2| C2| M1| M1| M1| M1| M1| M1| M1| M1| M2|
 
 YM2151 Test register (0x01):
 
-		+----------+-----+------+-----+-----+-----+------+------+-------+
-		| bit no.  |  7  |   6  |  5  |  4  |  3  |   2  |   1  |    0  |
-		+----------+-----+------+-----+-----+-----+------+------+-------+
-		| hex val. | 80  |  40  | 20  | 10  | 08  |  04  |  02  |   01  |
-		+----------+-----+------+-----+-----+-----+------+------+-------+
-		|          |LS/MS| RIen | HEG | NEG | HPG | uLFO | HLFO | u_clk |
-		+----------+-----+------+-----+-----+-----+------+------+-------+
+	+----------+-----+------+-----+-----+------+------+------+-------+
+	| bit no.  |  7  |   6  |  5  |  4  |   3  |   2  |   1  |    0  |
+	+----------+-----+------+-----+-----+------+------+------+-------+
+	| hex val. | 80  |  40  | 20  | 10  |  08  |  04  |  02  |   01  |
+	+----------+-----+------+-----+-----+------+------+------+-------+
+	|          |LS/MS| RIen | HEG | NEG | HPGL | uLFO | HLFO | u_clk |
+	+----------+-----+------+-----+-----+------+------+------+-------+
 
 
 bit 6 - RIen (Read Internal data Enable)
@@ -114,9 +114,10 @@ bit 4 - NEG (Negate output data)
 
 
 
-bit 3 - HPG (Halt Phase Generator)
+bit 3 - HPGL (Halt Phase Generator AND LFO amplitude modulation)
 
-	When 1 - Phase Generator is halted.
+	When 1 - Phase Generator is halted. Also amplitude modulation
+		(from LFO to Envelope Generator) is halted.
 
 	You can use this bit to analyse Envelope Generator work.
 	As it was in the case of HEG bit you need to know _EXACTLY_ when to set this bit.

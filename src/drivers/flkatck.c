@@ -308,7 +308,7 @@ static const struct MachineDriver machine_driver_flkatck =
 	gfxdecodeinfo,
 	512, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	flkatck_vh_start,
 	0,

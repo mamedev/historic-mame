@@ -123,7 +123,7 @@ int toaplan1_interrupt(void)
 	{
 		return MC68000_IRQ_4;
 	}
-	return MC68000_INT_NONE;
+	return ignore_interrupt();
 }
 
 WRITE16_HANDLER( toaplan1_int_enable_w )

@@ -129,7 +129,7 @@ WRITE_HANDLER( lasso_backcolor_w )
 	b = 0x4f * bit0 + 0xa8 * bit1;
 
 	for( i=0; i<0x40; i+=4 ) /* stuff into color#0 of each palette */
-		palette_change_color( i,r,g,b );
+		palette_set_color( i,r,g,b );
 }
 
 

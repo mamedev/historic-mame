@@ -76,31 +76,31 @@ unsigned char *dec8_pf0_data,*dec8_pf1_data,*dec8_row;
   bit 0 -- 2.2kohm resistor  -- BLUE
 
 ***************************************************************************/
-void ghostb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+void ghostb_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2,bit3;
+		int bit0,bit1,bit2,bit3,r,g,b;
 
-		bit0 = (color_prom[0] >> 0) & 0x01;
-		bit1 = (color_prom[0] >> 1) & 0x01;
-		bit2 = (color_prom[0] >> 2) & 0x01;
-		bit3 = (color_prom[0] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		bit0 = (color_prom[0] >> 4) & 0x01;
-		bit1 = (color_prom[0] >> 5) & 0x01;
-		bit2 = (color_prom[0] >> 6) & 0x01;
-		bit3 = (color_prom[0] >> 7) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
-		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
-		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
-		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[i] >> 0) & 0x01;
+		bit1 = (color_prom[i] >> 1) & 0x01;
+		bit2 = (color_prom[i] >> 2) & 0x01;
+		bit3 = (color_prom[i] >> 3) & 0x01;
+		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[i] >> 4) & 0x01;
+		bit1 = (color_prom[i] >> 5) & 0x01;
+		bit2 = (color_prom[i] >> 6) & 0x01;
+		bit3 = (color_prom[i] >> 7) & 0x01;
+		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[i + Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[i + Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[i + Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[i + Machine->drv->total_colors] >> 3) & 0x01;
+		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-		color_prom++;
+		palette_set_color(i,r,g,b);
 	}
 }
 

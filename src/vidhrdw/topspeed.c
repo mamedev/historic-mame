@@ -3,35 +3,15 @@
 #include "vidhrdw/taitoic.h"
 
 data16_t *topspeed_spritemap;
-
-struct tempsprite
-{
-	int gfx;
-	int code,color;
-	int flipx,flipy;
-	int x,y;
-	int zoomx,zoomy;
-	int primask;
-};
-static struct tempsprite *spritelist;
+data16_t *topspeed_raster_ctrl;
 
 /***************************************************************************/
 
 int topspeed_vh_start (void)
 {
-	/* Up to $1000/8 big sprites, requires 0x200 * sizeof(*spritelist)
-	   Multiply this by 128 to give room for the number of small sprites,
-	   which are what actually get put in the structure. */
-
-	spritelist = malloc(0x10000 * sizeof(*spritelist));
-	if (!spritelist)
-		return 1;
-
 	/* (chips, gfxnum, x_offs, y_offs, y_invert, opaque, dblwidth) */
 	if (PC080SN_vh_start(2,1,0,8,0,0,0))
 	{
-		free(spritelist);
-		spritelist = 0;
 		return 1;
 	}
 
@@ -40,72 +20,83 @@ int topspeed_vh_start (void)
 
 void topspeed_vh_stop(void)
 {
-	free(spritelist);
-	spritelist = 0;
-
 	PC080SN_vh_stop();
 }
 
 
-void topspeed_draw_sprites(struct osd_bitmap *bitmap,int *primasks,int y_offs)
+/********************************************************************************
+                                     SPRITES
+
+	Layout 8 bytes per sprite
+	-------------------------
+
+	+0x00   xxxxxxx. ........   Zoom Y
+	        .......x xxxxxxxx   Y
+
+	+0x02   x....... ........   Flip Y
+	        ........ .xxxxxxx   Zoom X
+
+	+0x04   x....... ........   Priority
+	        .x...... ........   Flip X
+	        ..x..... ........   Unknown
+	        .......x xxxxxxxx   X
+
+	+0x06   xxxxxxxx ........   Color
+	        ........ xxxxxxxx   Tile number
+
+********************************************************************************/
+
+void topspeed_draw_sprites(struct osd_bitmap *bitmap)
 {
 	int offs,map_offset,x,y,curx,cury,sprite_chunk;
 	data16_t *spritemap = topspeed_spritemap;
 	UINT16 data,tilenum,code,color;
-	UINT8 sprites_flipscreen = 0;
 	UINT8 flipx,flipy,priority,bad_chunks;
 	UINT8 j,k,px,py,zx,zy,zoomx,zoomy;
-	struct tempsprite *sprite_ptr = spritelist;
+	int primasks[2] = {0xff00,0xfffc};	/* Sprites are over bottom layer or under top layer */
 
-	for (offs = (spriteram_size/2)-4;offs >=0;offs -= 4)
+	for (offs = 0;offs <(spriteram_size/2);offs += 4)
 	{
-		data = spriteram16[offs+0];
-		zoomy = (data & 0xfe00) >> 9;
-		y = data & 0x1ff;
-
-		data = spriteram16[offs+1];
-		flipy = (data & 0x8000) >> 15;
-		zoomx = (data & 0x7f);
-
 		data = spriteram16[offs+2];
-		priority = (data & 0x8000) >> 15;
+
+		tilenum = spriteram16[offs+3] & 0xff;
+		color = (spriteram16[offs+3] & 0xff00) >> 8;
 		flipx = (data & 0x4000) >> 14;
-//		unknown = (data & 0x2000) >> 13;
+		flipy = (spriteram16[offs+1] & 0x8000) >> 15;
 		x = data & 0x1ff;
+		y = spriteram16[offs] & 0x1ff;
+		zoomx = (spriteram16[offs+1]& 0x7f);
+		zoomy = (spriteram16[offs] & 0xfe00) >> 9;
+		priority = (data & 0x8000) >> 15;
+//		unknown = (data & 0x2000) >> 13;
 
-		data = spriteram16[offs+3];
-		color = (data & 0xff00) >> 8;
-		tilenum = data & 0xff;
-
-		if (!tilenum) continue;
+//		if (!tilenum) continue;	// what marks a dead sprite?
 
 		map_offset = tilenum << 7;
 
 		zoomx += 1;
 		zoomy += 1;
 
-		y += y_offs;
-		y += (128-zoomy);
+		y += 3 + (128-zoomy);
 
 		/* treat coords as signed */
-		if (x>0x140) x -= 0x200;
-		if (y>0x140) y -= 0x200;
+		if (x > 0x140) x -= 0x200;
+		if (y > 0x140) y -= 0x200;
 
 		bad_chunks = 0;
 
-		for (sprite_chunk=0;sprite_chunk<128;sprite_chunk++)
+		for (sprite_chunk = 0;sprite_chunk < 128;sprite_chunk++)
 		{
 			k = sprite_chunk % 8;   /* 8 sprite chunks per row */
 			j = sprite_chunk / 8;   /* 16 rows */
 
-			px = k;
-			py = j;
-			if (flipx)  px = 7-k;	/* pick tiles back to front for x and y flips */
-			if (flipy)  py = 15-j;
+			/* pick tiles back to front for x and y flips */
+			px = (flipx) ? (7-k) : (k);
+			py = (flipy) ? (15-j) : (j);
 
 			code = spritemap[map_offset + (py<<3) + px];
 
-			if (code>0x7fff)
+			if (code & 0x8000)
 			{
 				bad_chunks += 1;
 				continue;
@@ -114,66 +105,24 @@ void topspeed_draw_sprites(struct osd_bitmap *bitmap,int *primasks,int y_offs)
 			curx = x + ((k*zoomx)/8);
 			cury = y + ((j*zoomy)/16);
 
-			zx= x + (((k+1)*zoomx)/8) - curx;
-			zy= y + (((j+1)*zoomy)/16) - cury;
+			zx = x + (((k+1)*zoomx)/8) - curx;
+			zy = y + (((j+1)*zoomy)/16) - cury;
 
-			if (sprites_flipscreen)
-			{
-				/* -zx/y is there to fix zoomed sprite coords in screenflip.
-				   drawgfxzoom does not know to draw from flip-side of sprites when
-				   screen is flipped; so we must correct the coords ourselves. */
-
-				curx = 320 - curx - zx;
-				cury = 256 - cury - zy;
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			sprite_ptr->code = code;
-			sprite_ptr->color = color;
-			sprite_ptr->flipx = flipx;
-			sprite_ptr->flipy = flipy;
-			sprite_ptr->x = curx;
-			sprite_ptr->y = cury;
-			sprite_ptr->zoomx = zx << 12;
-			sprite_ptr->zoomy = zy << 13;
-
-			if (primasks)
-			{
-				sprite_ptr->primask = primasks[priority];
-				sprite_ptr++;
-			}
-			else
-			{
-				drawgfxzoom(bitmap,Machine->gfx[0],
-						sprite_ptr->code,
-						sprite_ptr->color,
-						sprite_ptr->flipx,sprite_ptr->flipy,
-						sprite_ptr->x,sprite_ptr->y,
-						&Machine->visible_area,TRANSPARENCY_PEN,0,
-						sprite_ptr->zoomx,sprite_ptr->zoomy);
-			}
+			pdrawgfxzoom(bitmap,Machine->gfx[0],
+					code,
+					color,
+					flipx,flipy,
+					curx,cury,
+					&Machine->visible_area,TRANSPARENCY_PEN,0,
+					zx<<12,zy<<13,
+					primasks[priority]);
 		}
 
 		if (bad_chunks)
 logerror("Sprite number %04x had %02x invalid chunks\n",tilenum,bad_chunks);
 	}
-
-	/* this happens only if primsks != NULL */
-	while (sprite_ptr != spritelist)
-	{
-		sprite_ptr--;
-
-		pdrawgfxzoom(bitmap,Machine->gfx[0],
-				sprite_ptr->code,
-				sprite_ptr->color,
-				sprite_ptr->flipx,sprite_ptr->flipy,
-				sprite_ptr->x,sprite_ptr->y,
-				&Machine->visible_area,TRANSPARENCY_PEN,0,
-				sprite_ptr->zoomx,sprite_ptr->zoomy,
-				sprite_ptr->primask);
-	}
 }
+
 
 /***************************************************************************/
 
@@ -242,12 +191,12 @@ void topspeed_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 #ifdef MAME_DEBUG
 	if (dislayer[2]==0)
 #endif
-	PC080SN_tilemap_draw(bitmap,1,layer[1],0,2);
+	PC080SN_tilemap_draw_special(bitmap,1,layer[1],0,2,topspeed_raster_ctrl);
 
 #ifdef MAME_DEBUG
 	if (dislayer[1]==0)
 #endif
- 	PC080SN_tilemap_draw(bitmap,0,layer[2],0,4);
+ 	PC080SN_tilemap_draw_special(bitmap,0,layer[2],0,4,topspeed_raster_ctrl + 0x100);
 
 #ifdef MAME_DEBUG
 	if (dislayer[0]==0)
@@ -257,13 +206,8 @@ void topspeed_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 #ifdef MAME_DEBUG
 	if (dislayer[4]==0)
 #endif
-	/* Sprites are either over bottom layer or under top layer */
-	/* sprite/sprite priority is from position in list, sprite/
-	   tile from a control bit, hence we must use pdrawgfx */
-	{
-		int primasks[2] = {0xff00,0xfffc};
-		topspeed_draw_sprites(bitmap,primasks,3);
-	}
+
+	topspeed_draw_sprites(bitmap);
 }
 
 

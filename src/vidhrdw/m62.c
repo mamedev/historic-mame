@@ -248,6 +248,11 @@ int spelunkr_vh_start(void)
 	return irem_vh_start(512,512);
 }
 
+int youjyudn_vh_start(void)
+{
+	return irem_vh_start(512,256);
+}
+
 
 
 WRITE_HANDLER( irem_flipscreen_w )
@@ -289,8 +294,10 @@ WRITE_HANDLER( kungfum_scroll_high_w )
 	irem_background_hscroll_w(1,data);
 }
 
-WRITE_HANDLER( irem_background_vscroll_w ){
-	switch( offset ){
+WRITE_HANDLER( irem_background_vscroll_w )
+{
+	switch( offset )
+	{
 		case 0:
 		irem_background_vscroll = (irem_background_vscroll&0xff00)|data;
 		break;
@@ -301,8 +308,10 @@ WRITE_HANDLER( irem_background_vscroll_w ){
 	}
 }
 
-WRITE_HANDLER( battroad_scroll_w ){
-	switch( offset ){
+WRITE_HANDLER( battroad_scroll_w )
+{
+	switch( offset )
+	{
 		case 0:
 		irem_background_vscroll_w(0, data);
 		break;
@@ -339,6 +348,11 @@ WRITE_HANDLER( kidniki_text_vscroll_w )
 		kidniki_text_vscroll = (kidniki_text_vscroll & 0xff) | (data << 8);
 		break;
 	}
+}
+
+WRITE_HANDLER( youjyudn_scroll_w )
+{
+	irem_background_hscroll_w(offset^1,data);
 }
 
 WRITE_HANDLER( kidniki_background_bank_w )
@@ -396,7 +410,6 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 {
 	int offs;
 
-	/* sprites must be drawn in this order to get correct priority */
 	for (offs = 0;offs < spriteram_size;offs += 8)
 	{
 		int i,incr,code,col,flipx,flipy,sx,sy;
@@ -455,7 +468,6 @@ static void draw_priority_sprites(struct osd_bitmap *bitmap, int prioritylayer)
 {
 	int offs;
 
-	/* sprites must be drawn in this order to get correct priority */
 	for (offs = 0;offs < spriteram_size;offs += 8)
 	{
 		int i,incr,code,col,flipx,flipy,sx,sy;
@@ -991,6 +1003,36 @@ static void spelunk2_draw_background(struct osd_bitmap *bitmap)
 	}
 }
 
+static void youjyudn_draw_background(struct osd_bitmap *bitmap,int priority)
+{
+	int offs;
+
+
+	priority <<= 4;
+
+	for (offs = videoram_size - 2;offs >= 0;offs -= 2)
+	{
+		if ((videoram[offs + 1] & 0x10) == priority)
+		{
+			int sx,sy;
+			sx = (offs/2) % 64;
+			sy = (offs/2) / 64;
+
+			if (flipscreen)
+			{
+				sx = 63 - sx;
+				sy = 15 - sy;
+			}
+
+			drawgfx(bitmap,Machine->gfx[0],
+					videoram[offs] + ((videoram[offs + 1] & 0x60) << 3),
+					videoram[offs + 1] & 0x1f,
+					flipscreen,flipscreen,
+					(8*sx - (irem_background_hscroll-2))&0x1ff,16*sy,
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
+		}
+	}
+}
 
 
 
@@ -1085,6 +1127,33 @@ static void spelunkr_draw_text(struct osd_bitmap *bitmap)
 	}
 }
 
+static void youjyudn_draw_text(struct osd_bitmap *bitmap)
+{
+	int offs;
+
+
+	for (offs = irem_textram_size - 2;offs >= 0;offs -= 2)
+	{
+		int sx,sy;
+
+
+		sx = (offs/2) % 32;
+		sy = (offs/2) / 32;
+
+		if (flipscreen)
+		{
+			sx = 31 - sx;
+			sy = 31 - sy;
+		}
+
+		drawgfx(bitmap,Machine->gfx[2],
+				irem_textram[offs] + ((irem_textram[offs + 1] & 0xc0) << 2),
+				irem_textram[offs + 1] & 0x0f,
+				flipscreen,flipscreen,
+				12*sx + 64,8*sy,
+				&Machine->visible_area,TRANSPARENCY_PEN, 0);
+	}
+}
 
 
 void kungfum_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
@@ -1142,4 +1211,12 @@ void spelunk2_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
 	spelunk2_draw_background(bitmap);
 	draw_sprites(bitmap);
 	spelunkr_draw_text(bitmap);
+}
+
+void youjyudn_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
+{
+	youjyudn_draw_background(bitmap,0);
+	draw_sprites(bitmap);
+	youjyudn_draw_background(bitmap,1);
+	youjyudn_draw_text(bitmap);
 }

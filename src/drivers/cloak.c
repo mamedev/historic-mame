@@ -333,11 +333,11 @@ static const struct MachineDriver machine_driver_cloak =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 3*8, 32*8-1 },
 	gfxdecodeinfo,
-	64, 64,
+	64, 0,
 	0,
 
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	cloak_vh_start,
 	cloak_vh_stop,

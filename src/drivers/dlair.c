@@ -235,7 +235,7 @@ static const struct MachineDriver machine_driver_dlair =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	8,8,
+	8, 0,
 	0,
 
 	VIDEO_TYPE_RASTER,

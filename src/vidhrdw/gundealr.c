@@ -115,7 +115,7 @@ WRITE_HANDLER( gundealr_paletteram_w )
 	g = 0x11 * g;
 	b = 0x11 * b;
 
-	palette_change_color(offset / 2,r,g,b);
+	palette_set_color(offset / 2,r,g,b);
 }
 
 WRITE_HANDLER( gundealr_fg_scroll_w )

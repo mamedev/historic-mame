@@ -443,7 +443,7 @@ static const struct MachineDriver machine_driver_gng =
 	256, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	gng_eof_callback,
 	gng_vh_start,
 	0,

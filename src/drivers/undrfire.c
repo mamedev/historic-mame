@@ -173,7 +173,7 @@ static WRITE32_HANDLER( color_ram_w )
 		g = (a &0xff00) >> 8;
 		b = (a &0xff);
 
-		palette_change_color(offset,r,g,b);
+		palette_set_color(offset,r,g,b);
 	}
 }
 
@@ -628,10 +628,10 @@ static struct MachineDriver machine_driver_undrfire =
 	40*8, 32*8, { 0, 40*8-1, 3*8, 32*8-1 },
 
 	undrfire_gfxdecodeinfo,
-	16384, 16384,
+	16384, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN,
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,
 	undrfire_vh_start,
 	undrfire_vh_stop,

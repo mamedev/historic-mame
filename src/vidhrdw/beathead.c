@@ -150,7 +150,7 @@ WRITE32_HANDLER( beathead_palette_w )
 	g = (g << 2) | (g >> 4);
 	b = (b << 2) | (b >> 4);
 
-	palette_change_color(offset, r, g, b);
+	palette_set_color(offset, r, g, b);
 }
 
 

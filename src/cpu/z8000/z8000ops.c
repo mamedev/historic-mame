@@ -44,12 +44,10 @@ INLINE void CHANGE_FCW(UINT16 fcw)
 			NSP = tmp;
         }
     }
-#if NEW_INTERRUPT_SYSTEM
     if (!(FCW & F_NVIE) && (fcw & F_NVIE) && (Z.irq_state[0] != CLEAR_LINE))
 		IRQ_REQ |= Z8000_NVI;
 	if (!(FCW & F_VIE) && (fcw & F_VIE) && (Z.irq_state[1] != CLEAR_LINE))
 		IRQ_REQ |= Z8000_VI;
-#endif
     FCW = fcw;  /* set new FCW */
 }
 

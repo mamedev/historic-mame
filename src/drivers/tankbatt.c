@@ -101,7 +101,11 @@ WRITE_HANDLER( tankbatt_interrupt_enable_w )
 {
 	tankbatt_nmi_enable = !data;
 	tankbatt_sound_enable = !data;
-	if (data != 0) cpu_clear_pending_interrupts(0);
+	if (data != 0)
+	{
+		cpu_set_irq_line(0, 0, CLEAR_LINE);
+		cpu_set_nmi_line(0, CLEAR_LINE);
+	}
 	/* hack - turn off the engine noise if the normal game nmi's are disabled */
 	if (data) sample_stop (2);
 //	interrupt_enable_w (offset, !data);
@@ -110,7 +114,11 @@ WRITE_HANDLER( tankbatt_interrupt_enable_w )
 WRITE_HANDLER( tankbatt_demo_interrupt_enable_w )
 {
 	tankbatt_nmi_enable = data;
-	if (data != 0) cpu_clear_pending_interrupts(0);
+	if (data != 0)
+	{
+		cpu_set_irq_line(0, 0, CLEAR_LINE);
+		cpu_set_nmi_line(0, CLEAR_LINE);
+	}
 //	interrupt_enable_w (offset, data);
 }
 

@@ -351,7 +351,7 @@ static const struct MachineDriver machine_driver_xmen =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	xmen_vh_start,
 	xmen_vh_stop,

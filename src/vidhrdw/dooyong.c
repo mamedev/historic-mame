@@ -323,14 +323,21 @@ static void draw_sprites(struct osd_bitmap *bitmap,int pollux_extensions)
 
 		if (pollux_extensions)
 		{
+			/* gulfstrm, pollux, bluehawk */
 			code |= ((buffered_spriteram[offs+0x1c] & 0x01) << 11);
-			height = (buffered_spriteram[offs+0x1c] & 0x70) >> 4;
-			code &= ~height;
-			if (pollux_extensions == 2)
+
+			if (pollux_extensions >= 2)
 			{
-				sy += 6 - ((~buffered_spriteram[offs+0x1c] & 0x02) << 7);
-				flipx = buffered_spriteram[offs+0x1c] & 0x08;
-				flipy = buffered_spriteram[offs+0x1c] & 0x04;
+				/* pollux, bluehawk */
+				height = (buffered_spriteram[offs+0x1c] & 0x70) >> 4;
+				code &= ~height;
+				if (pollux_extensions == 3)
+				{
+					/* bluehawk */
+					sy += 6 - ((~buffered_spriteram[offs+0x1c] & 0x02) << 7);
+					flipx = buffered_spriteram[offs+0x1c] & 0x08;
+					flipy = buffered_spriteram[offs+0x1c] & 0x04;
+				}
 			}
 		}
 
@@ -408,11 +415,19 @@ void lastday_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	draw_tx(bitmap,-1);
 }
 
-void pollux_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void gulfstrm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	draw_layer(bitmap,2,lastday_bgscroll,memory_region(REGION_GFX5),TRANSPARENCY_NONE);
 	draw_layer(bitmap,3,lastday_fgscroll,memory_region(REGION_GFX6),TRANSPARENCY_PEN);
 	draw_sprites(bitmap,1);
+	draw_tx(bitmap,-1);
+}
+
+void pollux_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	draw_layer(bitmap,2,lastday_bgscroll,memory_region(REGION_GFX5),TRANSPARENCY_NONE);
+	draw_layer(bitmap,3,lastday_fgscroll,memory_region(REGION_GFX6),TRANSPARENCY_PEN);
+	draw_sprites(bitmap,2);
 	draw_tx(bitmap,0);
 }
 
@@ -420,7 +435,7 @@ void bluehawk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	bluehawk_draw_layer(bitmap,2,lastday_bgscroll,memory_region(REGION_GFX3)+0x78000,TRANSPARENCY_NONE);
 	bluehawk_draw_layer(bitmap,3,lastday_fgscroll,memory_region(REGION_GFX4)+0x78000,TRANSPARENCY_PEN);
-	draw_sprites(bitmap,2);
+	draw_sprites(bitmap,3);
 	bluehawk_draw_layer2(bitmap,4,bluehawk_fg2scroll,memory_region(REGION_GFX5)+0x38000,TRANSPARENCY_PEN);
 	bluehawk_draw_tx(bitmap);
 }

@@ -297,7 +297,7 @@ static const struct MachineDriver machine_driver_blktiger =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	blktiger_eof_callback,
 	blktiger_vh_start,
 	blktiger_vh_stop,

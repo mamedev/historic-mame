@@ -881,7 +881,7 @@ static const struct MachineDriver machine_driver_sf1 =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	sf1_vh_start,
 	0,
@@ -936,7 +936,7 @@ static const struct MachineDriver machine_driver_sf1us =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	sf1_vh_start,
 	0,
@@ -991,7 +991,7 @@ static const struct MachineDriver machine_driver_sf1jp =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	sf1_vh_start,
 	0,

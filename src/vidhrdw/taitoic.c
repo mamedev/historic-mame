@@ -483,6 +483,8 @@ Newer version of the I/O chip ?
 #include "state.h"
 #include "taitoic.h"
 
+#define TOPSPEED_ROAD_COLORS
+
 
 /* These scanline drawing routines lifted from Taito F3: optimise / merge ? */
 
@@ -560,13 +562,12 @@ static int PC080SN_chips;
 static data16_t PC080SN_ctrl[PC080SN_MAX_CHIPS][8];
 
 static data16_t *PC080SN_ram[PC080SN_MAX_CHIPS],
-				*PC080SN_bg_ram[PC080SN_MAX_CHIPS],
-				*PC080SN_fg_ram[PC080SN_MAX_CHIPS],
-				*PC080SN_bgscroll_ram[PC080SN_MAX_CHIPS],
-				*PC080SN_fgscroll_ram[PC080SN_MAX_CHIPS];
+				*PC080SN_bg_ram[PC080SN_MAX_CHIPS][2],
+				*PC080SN_bgscroll_ram[PC080SN_MAX_CHIPS][2];
 
-static int PC080SN_bgscrollx[PC080SN_MAX_CHIPS],PC080SN_bgscrolly[PC080SN_MAX_CHIPS],
-		PC080SN_fgscrollx[PC080SN_MAX_CHIPS],PC080SN_fgscrolly[PC080SN_MAX_CHIPS];
+static int PC080SN_bgscrollx[PC080SN_MAX_CHIPS][2],PC080SN_bgscrolly[PC080SN_MAX_CHIPS][2];
+static int PC080SN_xoffs,PC080SN_yoffs;
+
 static struct tilemap *PC080SN_tilemap[PC080SN_MAX_CHIPS][2];
 static int PC080SN_bg_gfx[PC080SN_MAX_CHIPS];
 static int PC080SN_yinvert,PC080SN_dblwidth;
@@ -617,22 +618,22 @@ INLINE void common_get_PC080SN_fg_tile_info(data16_t *ram,int gfxnum,int tile_in
 
 static void PC080SN_get_bg_tile_info_0(int tile_index)
 {
-	common_get_PC080SN_bg_tile_info(PC080SN_bg_ram[0],PC080SN_bg_gfx[0],tile_index);
+	common_get_PC080SN_bg_tile_info(PC080SN_bg_ram[0][0],PC080SN_bg_gfx[0],tile_index);
 }
 
 static void PC080SN_get_fg_tile_info_0(int tile_index)
 {
-	common_get_PC080SN_fg_tile_info(PC080SN_fg_ram[0],PC080SN_bg_gfx[0],tile_index);
+	common_get_PC080SN_fg_tile_info(PC080SN_bg_ram[0][1],PC080SN_bg_gfx[0],tile_index);
 }
 
 static void PC080SN_get_bg_tile_info_1(int tile_index)
 {
-	common_get_PC080SN_bg_tile_info(PC080SN_bg_ram[1],PC080SN_bg_gfx[1],tile_index);
+	common_get_PC080SN_bg_tile_info(PC080SN_bg_ram[1][0],PC080SN_bg_gfx[1],tile_index);
 }
 
 static void PC080SN_get_fg_tile_info_1(int tile_index)
 {
-	common_get_PC080SN_fg_tile_info(PC080SN_fg_ram[1],PC080SN_bg_gfx[1],tile_index);
+	common_get_PC080SN_fg_tile_info(PC080SN_bg_ram[1][1],PC080SN_bg_gfx[1],tile_index);
 }
 
 void (*PC080SN_get_tile_info[PC080SN_MAX_CHIPS][2])(int tile_index) =
@@ -645,10 +646,10 @@ static void PC080SN_restore_scroll(int chip)
 {
 	int flip;
 
-	PC080SN_bgscrollx[chip] = -PC080SN_ctrl[chip][0];
-	PC080SN_fgscrollx[chip] = -PC080SN_ctrl[chip][1];
-	PC080SN_bgscrolly[chip] = -PC080SN_ctrl[chip][2];
-	PC080SN_fgscrolly[chip] = -PC080SN_ctrl[chip][3];
+	PC080SN_bgscrollx[chip][0] = -PC080SN_ctrl[chip][0];
+	PC080SN_bgscrollx[chip][1] = -PC080SN_ctrl[chip][1];
+	PC080SN_bgscrolly[chip][0] = -PC080SN_ctrl[chip][2];
+	PC080SN_bgscrolly[chip][1] = -PC080SN_ctrl[chip][3];
 
 	flip = (PC080SN_ctrl[chip][4] & 0x01) ? (TILEMAP_FLIPX | TILEMAP_FLIPY) : 0;
 	tilemap_set_flip(PC080SN_tilemap[chip][0],flip);
@@ -671,6 +672,8 @@ void (*PC080SN_restore_scrl[PC080SN_MAX_CHIPS])(void) =
 };
 
 
+/* opaque parameter is no longer supported and will be removed */
+
 int PC080SN_vh_start(int chips,int gfxnum,int x_offset,int y_offset,int y_invert,
 				int opaque,int dblwidth)
 {
@@ -681,32 +684,22 @@ int PC080SN_vh_start(int chips,int gfxnum,int x_offset,int y_offset,int y_invert
 
 	PC080SN_yinvert = y_invert;
 	PC080SN_dblwidth = dblwidth;
+	PC080SN_xoffs = x_offset;
+	PC080SN_yoffs = y_offset;
 
 	for (i = 0;i < chips;i++)
 	{
-		int a,b,xd,yd;
-
-		/* Rainbow Islands *has* to have an opaque back tilemap, or the
-		   background color is always black */
-
-		a = TILEMAP_TRANSPARENT;
-		b = TILEMAP_TRANSPARENT;
-
-		if (opaque==1)
-			a = TILEMAP_OPAQUE;
-
-		if (opaque==2)
-			b = TILEMAP_OPAQUE;
+		int xd,yd;
 
 		if (!PC080SN_dblwidth)	/* standard tilemaps */
 		{
-			PC080SN_tilemap[i][0] = tilemap_create(PC080SN_get_tile_info[i][0],tilemap_scan_rows,a,8,8,64,64);
-			PC080SN_tilemap[i][1] = tilemap_create(PC080SN_get_tile_info[i][1],tilemap_scan_rows,b,8,8,64,64);
+			PC080SN_tilemap[i][0] = tilemap_create(PC080SN_get_tile_info[i][0],tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
+			PC080SN_tilemap[i][1] = tilemap_create(PC080SN_get_tile_info[i][1],tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
 		}
 		else	/* double width tilemaps */
 		{
-			PC080SN_tilemap[i][0] = tilemap_create(PC080SN_get_tile_info[i][0],tilemap_scan_rows,a,8,8,128,64);
-			PC080SN_tilemap[i][1] = tilemap_create(PC080SN_get_tile_info[i][1],tilemap_scan_rows,b,8,8,128,64);
+			PC080SN_tilemap[i][0] = tilemap_create(PC080SN_get_tile_info[i][0],tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,128,64);
+			PC080SN_tilemap[i][1] = tilemap_create(PC080SN_get_tile_info[i][1],tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,128,64);
 		}
 
 		PC080SN_ram[i] = malloc(PC080SN_RAM_SIZE);
@@ -718,10 +711,10 @@ int PC080SN_vh_start(int chips,int gfxnum,int x_offset,int y_offset,int y_invert
 			return 1;
 		}
 
-		PC080SN_bg_ram[i]       = PC080SN_ram[i] + 0x0000;
-		PC080SN_bgscroll_ram[i] = PC080SN_ram[i] + 0x2000;
-		PC080SN_fg_ram[i]       = PC080SN_ram[i] + 0x4000;
-		PC080SN_fgscroll_ram[i] = PC080SN_ram[i] + 0x6000;
+		PC080SN_bg_ram[i][0]       = PC080SN_ram[i] + 0x0000 /2;
+		PC080SN_bg_ram[i][1]       = PC080SN_ram[i] + 0x8000 /2;
+		PC080SN_bgscroll_ram[i][0] = PC080SN_ram[i] + 0x4000 /2;
+		PC080SN_bgscroll_ram[i][1] = PC080SN_ram[i] + 0xc000 /2;
 		memset(PC080SN_ram[i],0,PC080SN_RAM_SIZE);
 
 		{
@@ -823,11 +816,11 @@ static void PC080SN_xscroll_word_w(int chip,offs_t offset,data16_t data,UINT32 m
 	switch (offset)
 	{
 		case 0x00:
-			PC080SN_bgscrollx[chip] = -data;
+			PC080SN_bgscrollx[chip][0] = -data;
 			break;
 
 		case 0x01:
-			PC080SN_fgscrollx[chip] = -data;
+			PC080SN_bgscrollx[chip][1] = -data;
 			break;
 	}
 }
@@ -843,11 +836,11 @@ static void PC080SN_yscroll_word_w(int chip,offs_t offset,data16_t data,UINT32 m
 	switch (offset)
 	{
 		case 0x00:
-			PC080SN_bgscrolly[chip] = -data;
+			PC080SN_bgscrolly[chip][0] = -data;
 			break;
 
 		case 0x01:
-			PC080SN_fgscrolly[chip] = -data;
+			PC080SN_bgscrolly[chip][1] = -data;
 			break;
 	}
 }
@@ -927,41 +920,190 @@ void PC080SN_tilemap_update(void)
 
 	for (chip = 0;chip < PC080SN_chips;chip++)
 	{
-		tilemap_set_scrolly(PC080SN_tilemap[chip][0],0,PC080SN_bgscrolly[chip]);
-		tilemap_set_scrolly(PC080SN_tilemap[chip][1],0,PC080SN_fgscrolly[chip]);
+		tilemap_set_scrolly(PC080SN_tilemap[chip][0],0,PC080SN_bgscrolly[chip][0]);
+		tilemap_set_scrolly(PC080SN_tilemap[chip][1],0,PC080SN_bgscrolly[chip][1]);
 
 		if (!PC080SN_dblwidth)
 		{
 			for (j = 0;j < 256;j++)
 				tilemap_set_scrollx(PC080SN_tilemap[chip][0],
-						(j + PC080SN_bgscrolly[chip]) & 0x1ff,
-						PC080SN_bgscrollx[chip] - PC080SN_bgscroll_ram[chip][j]);
+						(j + PC080SN_bgscrolly[chip][0]) & 0x1ff,
+						PC080SN_bgscrollx[chip][0] - PC080SN_bgscroll_ram[chip][0][j]);
 			for (j = 0;j < 256;j++)
 				tilemap_set_scrollx(PC080SN_tilemap[chip][1],
-						(j + PC080SN_fgscrolly[chip]) & 0x1ff,
-						PC080SN_fgscrollx[chip] - PC080SN_fgscroll_ram[chip][j]);
+						(j + PC080SN_bgscrolly[chip][1]) & 0x1ff,
+						PC080SN_bgscrollx[chip][1] - PC080SN_bgscroll_ram[chip][1][j]);
 		}
 		else
 		{
-			tilemap_set_scrollx(PC080SN_tilemap[chip][0],0,PC080SN_bgscrollx[chip]);
-			tilemap_set_scrollx(PC080SN_tilemap[chip][1],0,PC080SN_fgscrollx[chip]);
+			tilemap_set_scrollx(PC080SN_tilemap[chip][0],0,PC080SN_bgscrollx[chip][0]);
+			tilemap_set_scrollx(PC080SN_tilemap[chip][1],0,PC080SN_bgscrollx[chip][1]);
 		}
 	}
 }
 
-void PC080SN_tilemap_draw(struct osd_bitmap *bitmap,int chip,int layer,int flags,UINT32 priority)
+
+UINT16 topspeed_get_road_pixel_color(UINT16 pixel,UINT16 color)
 {
-	switch (layer)
+	UINT16 road_body_color,off_road_color,pixel_type;
+
+	/* Color changes based on screenshots from game flyer */
+	pixel_type = (pixel % 0x10);
+	road_body_color = (pixel &0x7ff0) + 4;
+	off_road_color = road_body_color + 1;
+
+	if ((color &0xffe0) == 0xffe0)
 	{
-		case 0:
-			tilemap_draw(bitmap,PC080SN_tilemap[chip][0],flags,priority);
-			break;
-		case 1:
-			tilemap_draw(bitmap,PC080SN_tilemap[chip][1],flags,priority);
-			break;
+		pixel += 10;	/* Tunnel colors */
+		road_body_color += 10;
+		off_road_color  += 10;
 	}
+	else
+	{
+		/* Unsure which way round these bits go */
+		if (color &0x10)	road_body_color += 5;
+		if (color &0x02)	off_road_color  += 5;
+	}
+
+	switch (pixel_type)
+	{
+		case 0x01:		/* Center lines */
+		{
+			if (color &0x08)	pixel = road_body_color;
+			break;
+		}
+		case 0x02:		/* Road edge (inner) */
+		{
+			if (color &0x08)	pixel = road_body_color;
+			break;
+		}
+		case 0x03:		/* Road edge (outer) */
+		{
+			if (color &0x04)	pixel = road_body_color;
+			break;
+		}
+		case 0x04:		/* Road body */
+		{
+			pixel = road_body_color;
+			break;
+		}
+		case 0x05:		/* Off road */
+			pixel = off_road_color;
+		default:
+		{}
+	}
+	return pixel;
 }
 
+
+static void topspeed_custom_draw(struct osd_bitmap *bitmap,int chip,int layer,int flags,
+							UINT32 priority,data16_t *color_ctrl_ram)
+{
+	UINT16 *dst16,*src16;
+	UINT8 *tsrc;
+	UINT16 scanline[1024];	/* won't be called by a wide-screen game, but just in case... */
+
+	struct osd_bitmap *srcbitmap = tilemap_get_pixmap(PC080SN_tilemap[chip][layer]);
+	struct osd_bitmap *transbitmap = tilemap_get_transparency_bitmap(PC080SN_tilemap[chip][layer]);
+
+	UINT16 a,color;
+	int sx,x_index;
+	int i,y,y_index,src_y_index,row_index;
+
+	int flip = 0;
+	int rot=Machine->orientation;
+	int machine_flip = 0;	/* for  ROT 180 ? */
+
+	int min_x = Machine->visible_area.min_x;
+	int max_x = Machine->visible_area.max_x;
+	int min_y = Machine->visible_area.min_y;
+	int max_y = Machine->visible_area.max_y;
+	int screen_width = max_x - min_x + 1;
+	int width_mask = 0x1ff;	/* underlying tilemap */
+
+	if (!flip)
+	{
+		sx =       PC080SN_bgscrollx[chip][layer] + 16 - PC080SN_xoffs;
+		y_index =  PC080SN_bgscrolly[chip][layer] + min_y - PC080SN_yoffs;
+	}
+	else	// never used
+	{
+		sx = 0;
+		y_index = 0;
+	}
+
+	if (!machine_flip) y = min_y; else y = max_y;
+
+	do
+	{
+		src_y_index = y_index &0x1ff;	/* tilemaps are 512 px up/down */
+		row_index = (src_y_index - PC080SN_bgscrolly[chip][layer]) &0x1ff;
+		color = color_ctrl_ram[(row_index + PC080SN_yoffs - 2) &0xff];
+
+		if ((rot &ORIENTATION_FLIP_X)==0)
+		{
+			x_index = sx - (PC080SN_bgscroll_ram[chip][layer][row_index]);
+		}
+		else	/* Orientation flip X */
+		{
+			x_index = sx + (PC080SN_bgscroll_ram[chip][layer][row_index]);
+		}
+
+		src16 = (UINT16 *)srcbitmap->line[src_y_index];
+		tsrc  = (UINT8 *)transbitmap->line[src_y_index];
+		dst16 = scanline;
+
+		if (flags & TILEMAP_IGNORE_TRANSPARENCY)
+		{
+			for (i=0; i<screen_width; i++)
+			{
+				a = src16[x_index & width_mask];
+#ifdef TOPSPEED_ROAD_COLORS
+				a = topspeed_get_road_pixel_color(a,color);
+#endif
+				*dst16++ = a;
+				x_index++;
+			}
+		}
+		else
+		{
+			for (i=0; i<screen_width; i++)
+			{
+				if (tsrc[x_index & width_mask])
+				{
+					a = src16[x_index & width_mask];
+#ifdef TOPSPEED_ROAD_COLORS
+					a = topspeed_get_road_pixel_color(a,color);
+#endif
+					*dst16++ = a;
+				}
+				else
+					*dst16++ = 0x8000;
+				x_index++;
+			}
+		}
+
+		if (flags & TILEMAP_IGNORE_TRANSPARENCY)
+			bryan_drawscanline(bitmap,0,y,screen_width,scanline,0,rot,priority);
+		else
+			bryan_drawscanline(bitmap,0,y,screen_width,scanline,1,rot,priority);
+
+		y_index++;
+		if (!machine_flip) y++; else y--;
+	}
+	while ( (!machine_flip && y <= max_y) || (machine_flip && y >= min_y) );
+}
+
+
+void PC080SN_tilemap_draw(struct osd_bitmap *bitmap,int chip,int layer,int flags,UINT32 priority)
+{
+	tilemap_draw(bitmap,PC080SN_tilemap[chip][layer],flags,priority);
+}
+
+void PC080SN_tilemap_draw_special(struct osd_bitmap *bitmap,int chip,int layer,int flags,UINT32 priority,data16_t *ram)
+{
+	topspeed_custom_draw(bitmap,chip,layer,flags,priority,ram);
+}
 
 
 
@@ -3311,11 +3453,6 @@ static void TC0480SCP_ctrl_word_write(offs_t offset,data16_t data,UINT32 mem_mas
 	}
 }
 
-/* This routine is no longer needed, it should be DELETED together with the 2/3 calls to it */
-
-void TC0480SCP_mark_transparent_colors(int opaque_layer)
-{
-}
 
 
 WRITE16_HANDLER( TC0480SCP_ctrl_word_w )
@@ -3911,7 +4048,7 @@ void TC0110PCR_restore_colors(int chip)
 			}
 		}
 
-		palette_change_color( i + (chip << 12),r,g,b);
+		palette_set_color( i + (chip << 12),r,g,b);
 	}
 }
 
@@ -4053,7 +4190,7 @@ WRITE16_HANDLER( TC0110PCR_word_w )
 			g = (g << 3) | (g >> 2);
 			b = (b << 3) | (b >> 2);
 
-			palette_change_color(TC0110PCR_addr[0],r,g,b);
+			palette_set_color(TC0110PCR_addr[0],r,g,b);
 			break;
 		}
 
@@ -4086,7 +4223,7 @@ WRITE16_HANDLER( TC0110PCR_step1_word_w )
 			g = (g << 3) | (g >> 2);
 			b = (b << 3) | (b >> 2);
 
-			palette_change_color(TC0110PCR_addr[0],r,g,b);
+			palette_set_color(TC0110PCR_addr[0],r,g,b);
 			break;
 		}
 
@@ -4120,7 +4257,7 @@ WRITE16_HANDLER( TC0110PCR_step1_word_1_w )
 			b = (b << 3) | (b >> 2);
 
 			/* change a color in the second color area (4096-8191) */
-			palette_change_color(TC0110PCR_addr[1] + 4096,r,g,b);
+			palette_set_color(TC0110PCR_addr[1] + 4096,r,g,b);
 			break;
 		}
 
@@ -4154,7 +4291,7 @@ WRITE16_HANDLER( TC0110PCR_step1_word_2_w )
 			b = (b << 3) | (b >> 2);
 
 			/* change a color in the second color area (8192-12288) */
-			palette_change_color(TC0110PCR_addr[2] + 8192,r,g,b);
+			palette_set_color(TC0110PCR_addr[2] + 8192,r,g,b);
 			break;
 		}
 
@@ -4189,7 +4326,7 @@ WRITE16_HANDLER( TC0110PCR_step1_rbswap_word_w )
 			g = (g << 3) | (g >> 2);
 			b = (b << 3) | (b >> 2);
 
-			palette_change_color(TC0110PCR_addr[0],r,g,b);
+			palette_set_color(TC0110PCR_addr[0],r,g,b);
 			break;
 		}
 
@@ -4224,7 +4361,7 @@ WRITE16_HANDLER( TC0110PCR_step1_4bpg_word_w )
 			g = (g << 4) | g;
 			b = (b << 4) | b;
 
-			palette_change_color(TC0110PCR_addr[0],r,g,b);
+			palette_set_color(TC0110PCR_addr[0],r,g,b);
 			break;
 		}
 

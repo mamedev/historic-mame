@@ -170,7 +170,7 @@ WRITE_HANDLER( liberatr_colorram_w )
 		offset ^= 0x0f;
 	}
 
-	palette_change_color(offset,r,g,b);
+	palette_set_color(offset,r,g,b);
 }
 
 

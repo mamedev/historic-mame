@@ -69,7 +69,7 @@ WRITE_HANDLER( bagman_pal16r6_w );
 extern unsigned char *bagman_video_enable;
 WRITE_HANDLER( bagman_flipscreen_w );
 void bagman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void bagman_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
+void bagman_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable, const unsigned char *color_prom);
 
 
 
@@ -533,7 +533,7 @@ static const struct MachineDriver machine_driver_bagman =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	64,64,
+	64, 0,
 	bagman_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -574,7 +574,7 @@ static const struct MachineDriver machine_driver_pickin =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	pickin_gfxdecodeinfo,
-	64,64,
+	64, 0,
 	bagman_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,

@@ -128,8 +128,6 @@ void sega_init_colors (unsigned char *palette, unsigned short *colortable,const 
 		palette[3*i  ] = 85 * ((i>>5)&0x3);
 		palette[3*i+1] = 85 * ((i>>3)&0x3);
 		palette[3*i+2] = 85 * ((i>>1)&0x3);
-		/* Set the color table */
-		colortable[i] = i;
 	}
 	/*
 	 * Fill in the holes with good anti-aliasing colors.  This is a very good
@@ -151,7 +149,6 @@ void sega_init_colors (unsigned char *palette, unsigned short *colortable,const 
 				palette[3*i  ] = (255*r) / 6;
 				palette[3*i+1] = (255*g) / 6;
 				palette[3*i+2] = (255*b) / 6;
-				colortable[i]  = i;
 				if (i < 128)
 					i+=2;
 				else

@@ -130,7 +130,7 @@ logerror("Large palette ? %03x (%04x)\n", addr, cpu_get_pc());
 	else
 	{
 		//		r = g = b = ((addr & 0x1e) != 0)*255;
-		palette_change_color(addr/2, r, g, b);
+		palette_set_color(addr/2, r, g, b);
 	}
 }
 
@@ -255,7 +255,7 @@ static void horshoes_init(void)
 static int vbl_interrupt(void)
 {
 	/* kludge to make plgirls boot */
-	if (cpunum_get_reg(0,Z80_IM) != 2) return Z80_IGNORE_INT;
+	if (cpunum_get_reg(0,Z80_IM) != 2) return ignore_interrupt();
 
 	// What is really generating interrupts 0 and 1 is still to be found
 
@@ -266,7 +266,7 @@ static int vbl_interrupt(void)
 	if (cpu_getiloops() == 0 && (irq_enable & 4))
 		return irq_adr_table[2];
 
-	return Z80_IGNORE_INT;
+	return ignore_interrupt();
 }
 
 static WRITE_HANDLER( irq_adr_w )
@@ -2018,7 +2018,7 @@ static struct YM2610interface ym2610_interface =
 {
 	1,	/* 1 chip */
 	8000000,	/* 8 MHz */
-	{ 30 },
+	{ 25 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -2026,7 +2026,7 @@ static struct YM2610interface ym2610_interface =
 	{ irqhandler },
 	{ REGION_SOUND1 },
 	{ REGION_SOUND1 },
-	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) }
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
 };
 
 static struct YM2203interface ym2203_interface_double =
@@ -2086,7 +2086,7 @@ static const struct MachineDriver machine_driver_##name =		\
 	256, 0,													\
 	0,														\
 															\
-	VIDEO_TYPE_RASTER ,				\
+	VIDEO_TYPE_RASTER,										\
 	taitol_eof_callback,									\
 	taitol_vh_start,										\
 	0,														\
@@ -2133,7 +2133,7 @@ static const struct MachineDriver machine_driver_##name =		\
 	256, 0,													\
 	0,														\
 															\
-	VIDEO_TYPE_RASTER ,				\
+	VIDEO_TYPE_RASTER,										\
 	taitol_eof_callback,									\
 	taitol_vh_start,										\
 	0,														\
@@ -2184,7 +2184,7 @@ static const struct MachineDriver machine_driver_##name =		\
 	256, 0,													\
 	0,														\
 															\
-	VIDEO_TYPE_RASTER ,				\
+	VIDEO_TYPE_RASTER,										\
 	taitol_eof_callback,									\
 	taitol_vh_start,										\
 	0,														\
@@ -2225,7 +2225,7 @@ static const struct MachineDriver machine_driver_##name =		\
 	256, 0,													\
 	0,														\
 															\
-	VIDEO_TYPE_RASTER ,				\
+	VIDEO_TYPE_RASTER,										\
 	taitol_eof_callback,									\
 	taitol_vh_start,										\
 	0,														\
@@ -2260,7 +2260,7 @@ static const struct MachineDriver machine_driver_##name =	\
 	256, 0,												\
 	0,													\
 														\
-	VIDEO_TYPE_RASTER ,			\
+	VIDEO_TYPE_RASTER,									\
 	taitol_eof_callback,								\
 	taitol_vh_start,									\
 	0,													\

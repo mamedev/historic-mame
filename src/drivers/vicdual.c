@@ -1066,7 +1066,7 @@ static const struct MachineDriver machine_driver_##NAME =	\
 	/* video hardware */							\
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },		\
 	gfxdecodeinfo,									\
-	64, 64,											\
+	64, 0,											\
 	vicdual_vh_convert_color_prom,					\
 													\
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,			\
@@ -1132,7 +1132,7 @@ static const struct MachineDriver machine_driver_carnival =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	64, 64,
+	64, 0,
 	vicdual_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
@@ -1682,7 +1682,7 @@ GAMEX(1979, headon2,  0,        3ports,   headon2,  nosamples, ROT0,   "Sega", "
 GAME( 1979, invho2,   0,        invinco4, invho2,   invho2,    ROT270, "Sega", "Invinco / Head On 2" )
 GAMEX(1980, samurai,  0,        4ports,   samurai,  samurai,   ROT270, "Sega", "Samurai (Sega)", GAME_NO_SOUND )
 GAME( 1979, invinco,  0,        invinco3, invinco,  invinco,   ROT270, "Sega", "Invinco" )
-GAME( 1979, invds,    0,        invinco4,   invds,    invds,     ROT270, "Sega", "Invinco / Deep Scan" )
+GAME( 1979, invds,    0,        invinco4, invds,    invds,     ROT270, "Sega", "Invinco / Deep Scan" )
 GAMEX(1980, tranqgun, 0,        4ports,   tranqgun, nosamples, ROT270, "Sega", "Tranquilizer Gun", GAME_NO_SOUND )
 GAMEX(1980, spacetrk, 0,        4ports,   spacetrk, nosamples, ROT270, "Sega", "Space Trek (upright)", GAME_NO_SOUND )
 GAMEX(1980, sptrekct, spacetrk, 4ports,   sptrekct, nosamples, ROT270, "Sega", "Space Trek (cocktail)", GAME_NO_SOUND )

@@ -447,7 +447,7 @@ static WRITE16_HANDLER( palette_w )
 	b |= b >> 5;
 
 	/* set the color */
-	palette_change_color(offset + 0x0000, r, g, b);
+	palette_set_color(offset + 0x0000, r, g, b);
 }
 
 
@@ -1480,9 +1480,10 @@ static struct MachineDriver machine_driver_segac =
 	/* video hardware */
 	336,224, { 8, 327, 0, 223 },
 	NULL,
-	0x800, 0x800,
+	2048, 0,
 	NULL,
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS,
+
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS,
 
 	segac2_vh_eof,
 	segac2_vh_start,
@@ -1516,10 +1517,10 @@ static struct MachineDriver machine_driver_segac2 =
 	/* video hardware */
 	336,224, { 8, 327, 0, 223 },
 	NULL,
-	0x800, 0x800,
+	2048, 0,
 	NULL,
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS,
 
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS,
 	segac2_vh_eof,
 	segac2_vh_start,
 	segac2_vh_stop,

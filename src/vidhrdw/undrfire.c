@@ -52,7 +52,7 @@ int undrfire_vh_start (void)
 	}
 
 	for (i=0; i<16384; i++) /* Fix later - some weird colours in places */
-		palette_change_color(i,0,0,0);
+		palette_set_color(i,0,0,0);
 	return 0;
 }
 
@@ -318,8 +318,6 @@ void undrfire_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	pivlayer[0] = TC0100SCN_bottomlayer(0);
 	pivlayer[1] = pivlayer[0]^1;
 	pivlayer[2] = 2;
-
-	TC0480SCP_mark_transparent_colors(layer[0]);
 
 	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */

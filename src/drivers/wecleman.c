@@ -1286,7 +1286,7 @@ static const struct MachineDriver machine_driver_wecleman =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	wecleman_vh_start,
 	wecleman_vh_stop,
@@ -1354,7 +1354,7 @@ static const struct MachineDriver machine_driver_hotchase =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	hotchase_vh_start,
 	hotchase_vh_stop,

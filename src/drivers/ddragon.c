@@ -470,7 +470,7 @@ static int ddragon_interrupt(void)
 {
     cpu_set_irq_line(0, 1, HOLD_LINE); /* hold the FIRQ line */
     cpu_set_nmi_line(0, PULSE_LINE); /* pulse the NMI line */
-    return M6809_INT_NONE;
+    return ignore_interrupt();
 }
 
 
@@ -505,9 +505,9 @@ static const struct MachineDriver machine_driver_ddragon =
 	/* video hardware */
 	32*8, 32*8,{ 1*8, 31*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	384, 384,
+	384, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	ddragon_vh_start,
 	0,
@@ -557,9 +557,9 @@ static const struct MachineDriver machine_driver_ddragonb =
 	/* video hardware */
 	32*8, 32*8,{ 1*8, 31*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	384, 384,
+	384, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	ddragon_vh_start,
 	0,
@@ -609,10 +609,10 @@ static const struct MachineDriver machine_driver_ddragon2 =
 	/* video hardware */
 	32*8, 32*8,{ 1*8, 31*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	384, 384,
+	384, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	ddragon_vh_start,
 	0,

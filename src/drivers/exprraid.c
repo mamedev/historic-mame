@@ -67,7 +67,7 @@ sign is intact, however Credit is spelt incorrectly.
 /* from vidhrdw */
 extern unsigned char *exprraid_bgcontrol;
 void exprraid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void exprraid_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void exprraid_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 
 
 /*****************************************************************************************/
@@ -345,7 +345,7 @@ static const struct MachineDriver machine_driver_exprraid =
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 1*8, 31*8-1 },
 	gfxdecodeinfo,
-	256, 256,
+	256, 0,
 	exprraid_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,

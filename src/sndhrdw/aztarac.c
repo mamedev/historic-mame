@@ -52,9 +52,9 @@ int aztarac_snd_timed_irq (void)
     sound_status ^= 0x10;
 
     if (sound_status & 0x10)
-        return Z80_IRQ_INT;
+        return interrupt();
     else
-        return Z80_IGNORE_INT;
+        return ignore_interrupt();
 }
 
 

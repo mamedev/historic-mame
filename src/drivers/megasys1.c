@@ -136,7 +136,7 @@ static data16_t ip_select, ip_select_values[5];
 
 /* Functions defined in vidhrdw: */
 
-void megasys1_convert_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *prom);
+void megasys1_convert_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *prom);
 int  megasys1_vh_start(void);
 void megasys1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -656,9 +656,9 @@ static const struct MachineDriver machine_driver_system_##_type_ = \
 	/* video hardware */ \
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 }, \
 	gfxdecodeinfo_ABC, \
-	1024, 1024, \
+	1024, 0, \
 	megasys1_convert_prom, \
-	VIDEO_TYPE_RASTER , \
+	VIDEO_TYPE_RASTER, \
 	0, \
 	megasys1_vh_start, \
 	0, \
@@ -704,9 +704,9 @@ static const struct MachineDriver machine_driver_jitsupro =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo_ABC,
-	1024, 1024,
+	1024, 0,
 	megasys1_convert_prom,
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	megasys1_vh_start,
 	0,
@@ -755,9 +755,9 @@ static const struct MachineDriver machine_driver_system_D =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo_ABC,
-	1024, 1024,
+	1024, 0,
 	megasys1_convert_prom,
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	megasys1_vh_start,
 	0,
@@ -823,9 +823,9 @@ static const struct MachineDriver machine_driver_system_Z =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo_Z,
-	256*3, 256*3,
+	768, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	megasys1_vh_start,
 	0,

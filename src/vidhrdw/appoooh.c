@@ -57,7 +57,7 @@ void appoooh_vh_convert_color_prom(unsigned char *obsolete,unsigned short *color
 		bit2 = (*color_prom >> 7) & 0x01;
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-		palette_change_color(i,r,g,b);
+		palette_set_color(i,r,g,b);
 
 		color_prom++;
 	}

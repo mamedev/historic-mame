@@ -293,7 +293,7 @@ WRITE16_HANDLER( cninja_palette_24bit_w )
 	g = (paletteram16[offset+1] >> 8) & 0xff;
 	r = (paletteram16[offset+1] >> 0) & 0xff;
 
-	palette_change_color(offset/2,r,g,b);
+	palette_set_color(offset/2,r,g,b);
 }
 
 /******************************************************************************/

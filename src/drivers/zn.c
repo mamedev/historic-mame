@@ -239,11 +239,10 @@ static const struct MachineDriver machine_driver_znqs =
 	/* video hardware */
 	0x30*8+32*2, 0x1c*8+32*3, { 32, 32+0x30*8-1, 32+16, 32+16+0x1c*8-1 },
 	znqs_gfxdecodeinfo,
-	4096,
-	4096,
+	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	znqs_vh_start,
 	znqs_vh_stop,
@@ -599,20 +598,9 @@ void zn_init_palette(unsigned char *palette, unsigned short *colortable,const un
 		n_g = ( n_colour >> 5 ) & 0x1f;
 		n_b = ( n_colour >> 10 ) & 0x1f;
 
-		if( Machine->scrbitmap->depth == 16 )
-		{
-			*( palette++ ) = ( n_r * 0xff ) / 0x1f;
-			*( palette++ ) = ( n_g * 0xff ) / 0x1f;
-			*( palette++ ) = ( n_b * 0xff ) / 0x1f;
-		}
-		else
-		{
-			*( palette++ ) = ( ( n_r & 0x1c ) << 3 ) | ( n_r & 0x1c ) | ( ( n_r & 0x1c ) >> 3 );
-			*( palette++ ) = ( ( n_g & 0x1c ) << 3 ) | ( n_g & 0x1c ) | ( ( n_g & 0x1c ) >> 3 );
-			*( palette++ ) = ( ( n_b & 0x18 ) << 3 ) | ( ( n_b & 0x18 ) << 1 ) | ( ( n_b & 0x18 ) >> 1 ) | ( ( n_b & 0x18 ) >> 3 );
-		}
-
-		colortable[ n_colour ] = n_colour;
+		*( palette++ ) = ( n_r * 0xff ) / 0x1f;
+		*( palette++ ) = ( n_g * 0xff ) / 0x1f;
+		*( palette++ ) = ( n_b * 0xff ) / 0x1f;
 	}
 }
 
@@ -869,7 +857,7 @@ static const struct MachineDriver machine_driver_zn =
 	/* video hardware */
 	256, 240, { 0, 255, 0, 239 },
 	0,
-	65536,65536,
+	65536, 0,
 	zn_init_palette,
 
 	VIDEO_TYPE_RASTER,

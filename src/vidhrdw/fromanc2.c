@@ -54,7 +54,7 @@ WRITE16_HANDLER( fromanc2_paletteram_0_w )
 	b = ((b << 3) | (b >> 2));
 
 	color = (((offset & 0x0700) << 1) + (offset & 0x00ff));
-	palette_change_color((0x000 + color), r, g, b);
+	palette_set_color((0x000 + color), r, g, b);
 }
 
 WRITE16_HANDLER( fromanc2_paletteram_1_w )
@@ -74,7 +74,7 @@ WRITE16_HANDLER( fromanc2_paletteram_1_w )
 	b = ((b << 3) | (b >> 2));
 
 	color = (((offset & 0x0700) << 1) + (offset & 0x00ff));
-	palette_change_color((0x100 + color), r, g, b);
+	palette_set_color((0x100 + color), r, g, b);
 }
 
 READ16_HANDLER( fromancr_paletteram_0_r )
@@ -104,7 +104,7 @@ WRITE16_HANDLER( fromancr_paletteram_0_w )
 	b = ((b << 3) | (b >> 2));
 
 	color = (((offset & 0x0700) << 1) + (offset & 0x00ff));
-	palette_change_color((0x000 + color), r, g, b);
+	palette_set_color((0x000 + color), r, g, b);
 }
 
 WRITE16_HANDLER( fromancr_paletteram_1_w )
@@ -124,7 +124,7 @@ WRITE16_HANDLER( fromancr_paletteram_1_w )
 	b = ((b << 3) | (b >> 2));
 
 	color = (((offset & 0x0700) << 1) + (offset & 0x00ff));
-	palette_change_color((0x100 + color), r, g, b);
+	palette_set_color((0x100 + color), r, g, b);
 }
 
 /******************************************************************************

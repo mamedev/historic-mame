@@ -1029,7 +1029,7 @@ static struct YM2610interface ym2610_interface =
 	{ irqhandler },
 	{ REGION_SOUND1 },
 	{ REGION_SOUND2 },
-	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) }
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
 };
 
 
@@ -1062,7 +1062,7 @@ static const struct MachineDriver machine_driver_pspikes =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	pspikes_vh_start,
 	0,
@@ -1106,7 +1106,7 @@ static const struct MachineDriver machine_driver_karatblz =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	karatblz_vh_start,
 	0,
@@ -1150,7 +1150,7 @@ static const struct MachineDriver machine_driver_spinlbrk =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	spinlbrk_vh_start,
 	0,
@@ -1194,7 +1194,7 @@ static const struct MachineDriver machine_driver_turbofrc =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	turbofrc_vh_start,
 	0,
@@ -1239,7 +1239,7 @@ static const struct MachineDriver machine_driver_aerofgtb =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	turbofrc_vh_start,
 	0,
@@ -1284,7 +1284,7 @@ static const struct MachineDriver machine_driver_aerofgt =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	turbofrc_vh_start,
 	0,

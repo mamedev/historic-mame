@@ -87,7 +87,7 @@ WRITE_HANDLER( yunsung8_videoram_w )
 		g = (color >>  5) & 0x1f;
 		b = (color >> 10) & 0x1f;
 
-		palette_change_color(offset/2 + (bank ? 0x400:0), (r << 3)|(r >> 2), (g << 3)|(g >> 2), (b << 3)|(b >> 2));
+		palette_set_color(offset/2 + (bank ? 0x400:0), (r << 3)|(r >> 2), (g << 3)|(g >> 2), (b << 3)|(b >> 2));
 	}
 	else
 	{

@@ -93,42 +93,40 @@ WRITE_HANDLER( skyfox_vregs_w )
 
 ***************************************************************************/
 
-void skyfox_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+void skyfox_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 
 	for (i = 0;i < 256;i++)
 	{
-		int bit0,bit1,bit2,bit3;
+		int bit0,bit1,bit2,bit3,r,g,b;
 
 		/* red component */
-		bit0 = (color_prom[256*0] >> 0) & 0x01;
-		bit1 = (color_prom[256*0] >> 1) & 0x01;
-		bit2 = (color_prom[256*0] >> 2) & 0x01;
-		bit3 = (color_prom[256*0] >> 3) & 0x01;
-		*(palette++) =  0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[i] >> 0) & 0x01;
+		bit1 = (color_prom[i] >> 1) & 0x01;
+		bit2 = (color_prom[i] >> 2) & 0x01;
+		bit3 = (color_prom[i] >> 3) & 0x01;
+		r =  0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 		/* green component */
-		bit0 = (color_prom[256*1] >> 0) & 0x01;
-		bit1 = (color_prom[256*1] >> 1) & 0x01;
-		bit2 = (color_prom[256*1] >> 2) & 0x01;
-		bit3 = (color_prom[256*1] >> 3) & 0x01;
-		*(palette++) =  0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[i + 256] >> 0) & 0x01;
+		bit1 = (color_prom[i + 256] >> 1) & 0x01;
+		bit2 = (color_prom[i + 256] >> 2) & 0x01;
+		bit3 = (color_prom[i + 256] >> 3) & 0x01;
+		g =  0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 		/* blue component */
-		bit0 = (color_prom[256*2] >> 0) & 0x01;
-		bit1 = (color_prom[256*2] >> 1) & 0x01;
-		bit2 = (color_prom[256*2] >> 2) & 0x01;
-		bit3 = (color_prom[256*2] >> 3) & 0x01;
-		*(palette++) =  0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[i + 2*256] >> 0) & 0x01;
+		bit1 = (color_prom[i + 2*256] >> 1) & 0x01;
+		bit2 = (color_prom[i + 2*256] >> 2) & 0x01;
+		bit3 = (color_prom[i + 2*256] >> 3) & 0x01;
+		b =  0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-		color_prom++;
+		palette_set_color(i,r,g,b);
 	}
 
 	/* Grey scale for the background??? */
 	for (i = 0; i < 256; i++)
 	{
-		(*palette++) = i;
-		(*palette++) = i;
-		(*palette++) = i;
+		palette_set_color(i+256,i,i,i);
 	}
 }
 

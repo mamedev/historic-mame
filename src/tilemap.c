@@ -14,7 +14,7 @@
 		yscroll + scrolling rows, but not both types of scrolling simultaneously.
 */
 
-#ifndef DECLARE
+#if !defined(DECLARE) && !defined(TRANSP)
 
 #include "driver.h"
 #include "tilemap.h"
@@ -125,14 +125,16 @@ static void pio( void *dest, const void *source, int count, UINT8 *pri, UINT32 p
 static void pit( void *dest, const void *source, const UINT8 *pMask, int mask, int value, int count, UINT8 *pri, UINT32 pcode );
 
 static void pdo16( UINT16 *dest, const UINT16 *source, int count, UINT8 *pri, UINT32 pcode );
-static void pbo16( UINT16 *dest, const UINT16 *source, int count, UINT8 *pri, UINT32 pcode );
-static void pdo32( UINT32 *dest, const UINT32 *source, int count, UINT8 *pri, UINT32 pcode );
-static void pbo32( UINT32 *dest, const UINT32 *source, int count, UINT8 *pri, UINT32 pcode );
+static void pdo15( UINT16 *dest, const UINT16 *source, int count, UINT8 *pri, UINT32 pcode );
+static void pbo15( UINT16 *dest, const UINT16 *source, int count, UINT8 *pri, UINT32 pcode );
+static void pdo32( UINT32 *dest, const UINT16 *source, int count, UINT8 *pri, UINT32 pcode );
+static void pbo32( UINT32 *dest, const UINT16 *source, int count, UINT8 *pri, UINT32 pcode );
 
 static void pdt16( UINT16 *dest, const UINT16 *source, const UINT8 *pMask, int mask, int value, int count, UINT8 *pri, UINT32 pcode );
-static void pbt16( UINT16 *dest, const UINT16 *source, const UINT8 *pMask, int mask, int value, int count, UINT8 *pri, UINT32 pcode );
-static void pdt32( UINT32 *dest, const UINT32 *source, const UINT8 *pMask, int mask, int value, int count, UINT8 *pri, UINT32 pcode );
-static void pbt32( UINT32 *dest, const UINT32 *source, const UINT8 *pMask, int mask, int value, int count, UINT8 *pri, UINT32 pcode );
+static void pdt15( UINT16 *dest, const UINT16 *source, const UINT8 *pMask, int mask, int value, int count, UINT8 *pri, UINT32 pcode );
+static void pbt15( UINT16 *dest, const UINT16 *source, const UINT8 *pMask, int mask, int value, int count, UINT8 *pri, UINT32 pcode );
+static void pdt32( UINT32 *dest, const UINT16 *source, const UINT8 *pMask, int mask, int value, int count, UINT8 *pri, UINT32 pcode );
+static void pbt32( UINT32 *dest, const UINT16 *source, const UINT8 *pMask, int mask, int value, int count, UINT8 *pri, UINT32 pcode );
 
 static void install_draw_handlers( struct tilemap *tilemap );
 static void tilemap_reset(void);
@@ -364,12 +366,24 @@ static void pdo16( UINT16 *dest, const UINT16 *source, int count, UINT8 *pri, UI
 	}
 }
 
-static void pdo32( UINT32 *dest, const UINT32 *source, int count, UINT8 *pri, UINT32 pcode )
+static void pdo15( UINT16 *dest, const UINT16 *source, int count, UINT8 *pri, UINT32 pcode )
 {
 	int i;
-	memcpy( dest,source,count*sizeof(UINT32) );
+	UINT32 *clut = Machine->remapped_colortable;
 	for( i=0; i<count; i++ )
 	{
+		dest[i] = clut[source[i]];
+		pri[i] |= pcode;
+	}
+}
+
+static void pdo32( UINT32 *dest, const UINT16 *source, int count, UINT8 *pri, UINT32 pcode )
+{
+	int i;
+	UINT32 *clut = Machine->remapped_colortable;
+	for( i=0; i<count; i++ )
+	{
+		dest[i] = clut[source[i]];
 		pri[i] |= pcode;
 	}
 }
@@ -389,14 +403,29 @@ static void pdt16( UINT16 *dest, const UINT16 *source, const UINT8 *pMask, int m
 	}
 }
 
-static void pdt32( UINT32 *dest, const UINT32 *source, const UINT8 *pMask, int mask, int value, int count, UINT8 *pri, UINT32 pcode )
+static void pdt15( UINT16 *dest, const UINT16 *source, const UINT8 *pMask, int mask, int value, int count, UINT8 *pri, UINT32 pcode )
 {
 	int i;
+	UINT32 *clut = Machine->remapped_colortable;
 	for( i=0; i<count; i++ )
 	{
 		if( (pMask[i]&mask)==value )
 		{
-			dest[i] = source[i];
+			dest[i] = clut[source[i]];
+			pri[i] |= pcode;
+		}
+	}
+}
+
+static void pdt32( UINT32 *dest, const UINT16 *source, const UINT8 *pMask, int mask, int value, int count, UINT8 *pri, UINT32 pcode )
+{
+	int i;
+	UINT32 *clut = Machine->remapped_colortable;
+	for( i=0; i<count; i++ )
+	{
+		if( (pMask[i]&mask)==value )
+		{
+			dest[i] = clut[source[i]];
 			pri[i] |= pcode;
 		}
 	}
@@ -404,49 +433,53 @@ static void pdt32( UINT32 *dest, const UINT32 *source, const UINT8 *pMask, int m
 
 /***********************************************************************************/
 
-static void pbo16( UINT16 *dest, const UINT16 *source, int count, UINT8 *pri, UINT32 pcode )
+static void pbo15( UINT16 *dest, const UINT16 *source, int count, UINT8 *pri, UINT32 pcode )
 {
 	int i;
+	UINT32 *clut = Machine->remapped_colortable;
 	for( i=0; i<count; i++ )
 	{
-		dest[i] = alpha_blend16(dest[i], source[i]);
+		dest[i] = alpha_blend16(dest[i], clut[source[i]]);
 		pri[i] |= pcode;
 	}
 }
 
-static void pbo32( UINT32 *dest, const UINT32 *source, int count, UINT8 *pri, UINT32 pcode )
+static void pbo32( UINT32 *dest, const UINT16 *source, int count, UINT8 *pri, UINT32 pcode )
 {
 	int i;
+	UINT32 *clut = Machine->remapped_colortable;
 	for( i=0; i<count; i++ )
 	{
-		dest[i] = alpha_blend32(dest[i], source[i]);
+		dest[i] = alpha_blend32(dest[i], clut[source[i]]);
 		pri[i] |= pcode;
 	}
 }
 
 /***********************************************************************************/
 
-static void pbt16( UINT16 *dest, const UINT16 *source, const UINT8 *pMask, int mask, int value, int count, UINT8 *pri, UINT32 pcode )
+static void pbt15( UINT16 *dest, const UINT16 *source, const UINT8 *pMask, int mask, int value, int count, UINT8 *pri, UINT32 pcode )
 {
 	int i;
+	UINT32 *clut = Machine->remapped_colortable;
 	for( i=0; i<count; i++ )
 	{
 		if( (pMask[i]&mask)==value )
 		{
-			dest[i] = alpha_blend16(dest[i], source[i]);
+			dest[i] = alpha_blend16(dest[i], clut[source[i]]);
 			pri[i] |= pcode;
 		}
 	}
 }
 
-static void pbt32( UINT32 *dest, const UINT32 *source, const UINT8 *pMask, int mask, int value, int count, UINT8 *pri, UINT32 pcode )
+static void pbt32( UINT32 *dest, const UINT16 *source, const UINT8 *pMask, int mask, int value, int count, UINT8 *pri, UINT32 pcode )
 {
 	int i;
+	UINT32 *clut = Machine->remapped_colortable;
 	for( i=0; i<count; i++ )
 	{
 		if( (pMask[i]&mask)==value )
 		{
-			dest[i] = alpha_blend32(dest[i], source[i]);
+			dest[i] = alpha_blend32(dest[i], clut[source[i]]);
 			pri[i] |= pcode;
 		}
 	}
@@ -456,14 +489,22 @@ static void pbt32( UINT32 *dest, const UINT32 *source, const UINT8 *pMask, int m
 
 #define DEPTH 16
 #define DATA_TYPE UINT16
-#define TRANSTYPE( function,body ) static UINT8 function##16BPP ( struct tilemap *tilemap, UINT32 x0, UINT32 y0, UINT32 flags ) body
 #define DECLARE(function,args,body) static void function##16BPP args body
 #include "tilemap.c"
 
 #define DEPTH 32
 #define DATA_TYPE UINT32
-#define TRANSTYPE( function,body ) static UINT8 function##32BPP ( struct tilemap *tilemap, UINT32 x0, UINT32 y0, UINT32 flags ) body
 #define DECLARE(function,args,body) static void function##32BPP args body
+#include "tilemap.c"
+
+#define PAL_INIT const UINT32 *pPalData = tile_info.pal_data
+#define PAL_GET(pen) pPalData[pen]
+#define TRANSP(f) f ## _ind
+#include "tilemap.c"
+
+#define PAL_INIT int palBase = tile_info.pal_data - Machine->remapped_colortable
+#define PAL_GET(pen) (palBase + (pen))
+#define TRANSP(f) f ## _raw
 #include "tilemap.c"
 
 /*********************************************************************************/
@@ -472,63 +513,45 @@ static void install_draw_handlers( struct tilemap *tilemap )
 {
 	tilemap->draw = NULL;
 
+	if( Machine->game_colortable )
+	{
+		if( tilemap->type & TILEMAP_BITMASK )
+			tilemap->draw_tile = HandleTransparencyBitmask_ind;
+		else if( tilemap->type & TILEMAP_SPLIT_PENBIT )
+			tilemap->draw_tile = HandleTransparencyPenBit_ind;
+		else if( tilemap->type & TILEMAP_SPLIT )
+			tilemap->draw_tile = HandleTransparencyPens_ind;
+		else if( tilemap->type==TILEMAP_TRANSPARENT )
+			tilemap->draw_tile = HandleTransparencyPen_ind;
+		else if( tilemap->type==TILEMAP_TRANSPARENT_COLOR )
+			tilemap->draw_tile = HandleTransparencyColor_ind;
+		else
+			tilemap->draw_tile = HandleTransparencyNone_ind;
+	}
+	else
+	{
+		if( tilemap->type & TILEMAP_BITMASK )
+			tilemap->draw_tile = HandleTransparencyBitmask_raw;
+		else if( tilemap->type & TILEMAP_SPLIT_PENBIT )
+			tilemap->draw_tile = HandleTransparencyPenBit_raw;
+		else if( tilemap->type & TILEMAP_SPLIT )
+			tilemap->draw_tile = HandleTransparencyPens_raw;
+		else if( tilemap->type==TILEMAP_TRANSPARENT )
+			tilemap->draw_tile = HandleTransparencyPen_raw;
+		else if( tilemap->type==TILEMAP_TRANSPARENT_COLOR )
+			tilemap->draw_tile = HandleTransparencyColor_raw;
+		else
+			tilemap->draw_tile = HandleTransparencyNone_raw;
+	}
 	switch( Machine->scrbitmap->depth )
 	{
 	case 32:
 		tilemap->draw			= draw32BPP;
-		if( tilemap->type & TILEMAP_BITMASK )
-		{
-			tilemap->draw_tile = HandleTransparencyBitmask32BPP;
-		}
-		else if( tilemap->type & TILEMAP_SPLIT_PENBIT )
-		{
-			tilemap->draw_tile = HandleTransparencyPenBit32BPP;
-		}
-		else if( tilemap->type & TILEMAP_SPLIT )
-		{
-			tilemap->draw_tile = HandleTransparencyPens32BPP;
-		}
-		else if( tilemap->type==TILEMAP_TRANSPARENT )
-		{
-			tilemap->draw_tile = HandleTransparencyPen32BPP;
-		}
-		else if( tilemap->type==TILEMAP_TRANSPARENT_COLOR )
-		{
-			tilemap->draw_tile = HandleTransparencyColor32BPP;
-		}
-		else
-		{
-			tilemap->draw_tile = HandleTransparencyNone32BPP;
-		}
 		break;
 
 	case 15:
 	case 16:
 		tilemap->draw			= draw16BPP;
-		if( tilemap->type & TILEMAP_BITMASK )
-		{
-			tilemap->draw_tile = HandleTransparencyBitmask16BPP;
-		}
-		else if( tilemap->type & TILEMAP_SPLIT_PENBIT )
-		{
-			tilemap->draw_tile = HandleTransparencyPenBit16BPP;
-		}
-		else if( tilemap->type & TILEMAP_SPLIT )
-		{
-			tilemap->draw_tile = HandleTransparencyPens16BPP;
-		}
-		else if( tilemap->type==TILEMAP_TRANSPARENT )
-		{
-			tilemap->draw_tile = HandleTransparencyPen16BPP;
-		}
-		else if( tilemap->type==TILEMAP_TRANSPARENT_COLOR )
-		{
-			tilemap->draw_tile = HandleTransparencyColor16BPP;
-		}
-		else
-		{
-			tilemap->draw_tile = HandleTransparencyNone16BPP;
-		}
 		break;
 
 	default:
@@ -625,7 +648,7 @@ struct tilemap *tilemap_create(
 		tilemap->transparency_data = malloc( num_tiles );
 		tilemap->transparency_data_row = malloc( sizeof(UINT8 *)*num_rows );
 
-		tilemap->pixmap = osd_alloc_bitmap( tilemap->cached_width, tilemap->cached_height, Machine->scrbitmap->depth );
+		tilemap->pixmap = osd_alloc_bitmap( tilemap->cached_width, tilemap->cached_height, 16 );
 		tilemap->transparency_bitmap = osd_alloc_bitmap( tilemap->cached_width, tilemap->cached_height, 8 );
 
 		if( tilemap->rowscroll && tilemap->colscroll &&
@@ -635,21 +658,7 @@ struct tilemap *tilemap_create(
 			tilemap->transparency_bitmap &&
 			(mappings_create( tilemap )==0) )
 		{
-			tilemap->pixmap_pitch_line = ((UINT8 *)tilemap->pixmap->line[1]) - ((UINT8 *)tilemap->pixmap->line[0]);
-			switch( Machine->scrbitmap->depth )
-			{
-			case 32:
-				tilemap->pixmap_pitch_line /= 4;
-				break;
-
-			case 15:
-			case 16:
-				tilemap->pixmap_pitch_line /= 2;
-				break;
-
-			default:
-				exit(1);
-			}
+			tilemap->pixmap_pitch_line = (((UINT8 *)tilemap->pixmap->line[1]) - ((UINT8 *)tilemap->pixmap->line[0]))/2;
 			tilemap->pixmap_pitch_row = tilemap->pixmap_pitch_line*tile_height;
 
 			tilemap->transparency_bitmap_pitch_line = ((UINT8 *)tilemap->transparency_bitmap->line[1])-((UINT8 *)tilemap->transparency_bitmap->line[0]);
@@ -1093,17 +1102,22 @@ profiler_mark(PROFILER_TILEMAP_DRAW);
 				break;
 
 			case 15:
-			case 16:
 				if( flags&TILEMAP_ALPHA )
 				{
-					blit.draw_masked = (blitmask_t)pbt16;
-					blit.draw_opaque = (blitopaque_t)pbo16;
+					blit.draw_masked = (blitmask_t)pbt15;
+					blit.draw_opaque = (blitopaque_t)pbo15;
 				}
 				else
 				{
-					blit.draw_masked = (blitmask_t)pdt16;
-					blit.draw_opaque = (blitopaque_t)pdo16;
+					blit.draw_masked = (blitmask_t)pdt15;
+					blit.draw_opaque = (blitopaque_t)pdo15;
 				}
+				blit.screen_bitmap_pitch_line /= 2;
+				break;
+
+			case 16:
+				blit.draw_masked = (blitmask_t)pdt16;
+				blit.draw_opaque = (blitopaque_t)pdo16;
 				blit.screen_bitmap_pitch_line /= 2;
 				break;
 
@@ -1356,7 +1370,9 @@ profiler_mark(PROFILER_END);
 
 /***********************************************************************************/
 
-#else // DECLARE
+#endif // !DECLARE && !TRANSP
+
+#ifdef DECLARE
 
 DECLARE(copyrozbitmap_core,(struct osd_bitmap *bitmap,struct tilemap *tilemap,
 		UINT32 startx,UINT32 starty,int incxx,int incxy,int incyx,int incyy,int wraparound,
@@ -1379,7 +1395,7 @@ DECLARE(copyrozbitmap_core,(struct osd_bitmap *bitmap,struct tilemap *tilemap,
 	const int heightshifted = srcbitmap->height << 16;
 	DATA_TYPE *dest;
 	UINT8 *pri;
-	const DATA_TYPE *src;
+	const UINT16 *src;
 	const UINT8 *pMask;
 
 	if (clip)
@@ -1471,7 +1487,7 @@ DECLARE(copyrozbitmap_core,(struct osd_bitmap *bitmap,struct tilemap *tilemap,
 						dest = ((DATA_TYPE *)bitmap->line[sy]) + sx;
 
 						pri = ((UINT8 *)priority_bitmap->line[sy]) + sx;
-						src = (DATA_TYPE *)srcbitmap->line[cy];
+						src = (UINT16 *)srcbitmap->line[cy];
 						pMask = (UINT8 *)transparency_bitmap->line[cy];
 
 						while (x <= ex && cx < srcbitmap->width)
@@ -1512,7 +1528,7 @@ DECLARE(copyrozbitmap_core,(struct osd_bitmap *bitmap,struct tilemap *tilemap,
 						dest = ((DATA_TYPE *)bitmap->line[sy]) + sx;
 
 						pri = ((UINT8 *)priority_bitmap->line[sy]) + sx;
-						src = (DATA_TYPE *)srcbitmap->line[cy];
+						src = (UINT16 *)srcbitmap->line[cy];
 						pMask = (UINT8 *)transparency_bitmap->line[cy];
 						while (x <= ex && cx < widthshifted)
 						{
@@ -1549,7 +1565,7 @@ DECLARE(copyrozbitmap_core,(struct osd_bitmap *bitmap,struct tilemap *tilemap,
 				{
 					if( (((UINT8 *)transparency_bitmap->line[(cy>>16)&ymask])[(cx>>16)&xmask]&mask) == value )
 					{
-						*dest = ((DATA_TYPE *)srcbitmap->line[(cy >> 16) & ymask])[(cx >> 16) & xmask];
+						*dest = ((UINT16 *)srcbitmap->line[(cy >> 16) & ymask])[(cx >> 16) & xmask];
 						*pri |= priority;
 					}
 					cx += incxx;
@@ -1578,7 +1594,7 @@ DECLARE(copyrozbitmap_core,(struct osd_bitmap *bitmap,struct tilemap *tilemap,
 					{
 						if( (((UINT8 *)transparency_bitmap->line[cy>>16])[cx>>16]&mask)==value )
 						{
-							*dest = ((DATA_TYPE *)srcbitmap->line[cy >> 16])[cx >> 16];
+							*dest = ((UINT16 *)srcbitmap->line[cy >> 16])[cx >> 16];
 							*pri |= priority;
 						}
 					}
@@ -1612,7 +1628,7 @@ DECLARE( draw, (struct tilemap *tilemap, int xpos, int ypos, int mask, int value
 	DATA_TYPE *dest_next;
 	int dy;
 	int count;
-	const DATA_TYPE *source0;
+	const UINT16 *source0;
 	DATA_TYPE *dest0;
 	UINT8 *pmap0;
 	int i;
@@ -1626,8 +1642,8 @@ DECLARE( draw, (struct tilemap *tilemap, int xpos, int ypos, int mask, int value
 	int y_next;
 	UINT8 *priority_bitmap_baseaddr;
 	UINT8 *priority_bitmap_next;
-	const DATA_TYPE *source_baseaddr;
-	const DATA_TYPE *source_next;
+	const UINT16 *source_baseaddr;
+	const UINT16 *source_next;
 	const UINT8 *mask0;
 	const UINT8 *mask_baseaddr;
 	const UINT8 *mask_next;
@@ -1652,7 +1668,7 @@ DECLARE( draw, (struct tilemap *tilemap, int xpos, int ypos, int mask, int value
 		x2 -= xpos;
 		y2 -= ypos;
 
-		source_baseaddr = (DATA_TYPE *)tilemap->pixmap->line[y1];
+		source_baseaddr = (UINT16 *)tilemap->pixmap->line[y1];
 		mask_baseaddr = tilemap->transparency_bitmap->line[y1];
 
 		c1 = x1/tilemap->cached_tile_width; /* round down */
@@ -1771,10 +1787,15 @@ DECLARE( draw, (struct tilemap *tilemap, int xpos, int ypos, int mask, int value
 	} /* not totally clipped */
 })
 
+#undef DATA_TYPE
+#undef DEPTH
+#undef DECLARE
+#endif /* DECLARE */
+
+#ifdef TRANSP
 /*************************************************************************************************/
 
 /* Each of the following routines draws pixmap and transarency data for a single tile.
- * The TRANSTYPE macro supplies paramaters: tilemap,x0,y0.
  *
  * This function returns a per-tile code.  Each bit of this code is 0 if the corresponding
  * bit is zero in every byte of transparency data in the tile, or 1 if that bit is not
@@ -1784,14 +1805,14 @@ DECLARE( draw, (struct tilemap *tilemap, int xpos, int ypos, int mask, int value
  * in that tile have the same masked transparency value.
  */
 
-TRANSTYPE( HandleTransparencyBitmask,
+static UINT8 TRANSP(HandleTransparencyBitmask)(struct tilemap *tilemap, UINT32 x0, UINT32 y0, UINT32 flags)
 {
 	UINT32 tile_width = tilemap->cached_tile_width;
 	UINT32 tile_height = tilemap->cached_tile_height;
 	struct osd_bitmap *pixmap = tilemap->pixmap;
 	struct osd_bitmap *transparency_bitmap = tilemap->transparency_bitmap;
 	int pitch = tile_width + tile_info.skip;
-	const UINT32 *pPalData = tile_info.pal_data;
+	PAL_INIT;
 	UINT32 *pPenToPixel = tilemap->pPenToPixel[flags&(TILE_SWAPXY|TILE_FLIPY|TILE_FLIPX)];
 	const UINT8 *pPenData = tile_info.pen_data;
 	const UINT8 *pSource;
@@ -1825,7 +1846,7 @@ TRANSTYPE( HandleTransparencyBitmask,
 				yx = *pPenToPixel++;
 				x = x0+(yx%MAX_TILESIZE);
 				y = y0+(yx/MAX_TILESIZE);
-				*(x+(DATA_TYPE *)pixmap->line[y]) = pPalData[pen];
+				*(x+(UINT16 *)pixmap->line[y]) = PAL_GET(pen);
 				if( (pBitmask[bitoffs/8]&(0x80>>(bitoffs&7))) == 0 )
 				{
 					((UINT8 *)transparency_bitmap->line[y])[x] = code_transparent;
@@ -1842,7 +1863,7 @@ TRANSTYPE( HandleTransparencyBitmask,
 				yx = *pPenToPixel++;
 				x = x0+(yx%MAX_TILESIZE);
 				y = y0+(yx/MAX_TILESIZE);
-				*(x+(DATA_TYPE *)pixmap->line[y]) = pPalData[pen];
+				*(x+(UINT16 *)pixmap->line[y]) = PAL_GET(pen);
 				if( (pBitmask[bitoffs/8]&(0x80>>(bitoffs&7))) == 0 )
 				{
 					((UINT8 *)transparency_bitmap->line[y])[x] = code_transparent;
@@ -1869,7 +1890,7 @@ TRANSTYPE( HandleTransparencyBitmask,
 				yx = *pPenToPixel++;
 				x = x0+(yx%MAX_TILESIZE);
 				y = y0+(yx/MAX_TILESIZE);
-				*(x+(DATA_TYPE *)pixmap->line[y]) = pPalData[pen];
+				*(x+(UINT16 *)pixmap->line[y]) = PAL_GET(pen);
 				if( (pBitmask[bitoffs/8]&(0x80>>(bitoffs&7))) == 0 )
 				{
 					((UINT8 *)transparency_bitmap->line[y])[x] = code_transparent;
@@ -1886,16 +1907,16 @@ TRANSTYPE( HandleTransparencyBitmask,
 		}
 	}
 	return (bWhollyOpaque || bWhollyTransparent)?0:TILE_FLAG_FG_OPAQUE;
-})
+}
 
-TRANSTYPE( HandleTransparencyColor,
+static UINT8 TRANSP(HandleTransparencyColor)(struct tilemap *tilemap, UINT32 x0, UINT32 y0, UINT32 flags)
 {
 	UINT32 tile_width = tilemap->cached_tile_width;
 	UINT32 tile_height = tilemap->cached_tile_height;
 	struct osd_bitmap *pixmap = tilemap->pixmap;
 	struct osd_bitmap *transparency_bitmap = tilemap->transparency_bitmap;
 	int pitch = tile_width + tile_info.skip;
-	const UINT32 *pPalData = tile_info.pal_data;
+	PAL_INIT;
 	UINT32 *pPenToPixel = tilemap->pPenToPixel[flags&(TILE_SWAPXY|TILE_FLIPY|TILE_FLIPX)];
 	const UINT8 *pPenData = tile_info.pen_data;
 	const UINT8 *pSource;
@@ -1909,7 +1930,6 @@ TRANSTYPE( HandleTransparencyColor,
 	UINT32 y;
 	UINT32 pen;
 	UINT32 transparent_color = tilemap->transparent_pen;
-	UINT16 *clut = Machine->game_colortable + (pPalData - Machine->remapped_colortable);
 	int bWhollyOpaque;
 	int bWhollyTransparent;
 
@@ -1929,8 +1949,8 @@ TRANSTYPE( HandleTransparencyColor,
 				yx = *pPenToPixel++;
 				x = x0+(yx%MAX_TILESIZE);
 				y = y0+(yx/MAX_TILESIZE);
-				*(x+(DATA_TYPE *)pixmap->line[y]) = pPalData[pen];
-				if( clut[pen]==transparent_color )
+				*(x+(UINT16 *)pixmap->line[y]) = PAL_GET(pen);
+				if( PAL_GET(pen)==transparent_color )
 				{
 					((UINT8 *)transparency_bitmap->line[y])[x] = code_transparent;
 					bWhollyOpaque = 0;
@@ -1945,8 +1965,8 @@ TRANSTYPE( HandleTransparencyColor,
 				yx = *pPenToPixel++;
 				x = x0+(yx%MAX_TILESIZE);
 				y = y0+(yx/MAX_TILESIZE);
-				*(x+(DATA_TYPE *)pixmap->line[y]) = pPalData[pen];
-				if( clut[pen]==transparent_color )
+				*(x+(UINT16 *)pixmap->line[y]) = PAL_GET(pen);
+				if( PAL_GET(pen)==transparent_color )
 				{
 					((UINT8 *)transparency_bitmap->line[y])[x] = code_transparent;
 					bWhollyOpaque = 0;
@@ -1971,8 +1991,8 @@ TRANSTYPE( HandleTransparencyColor,
 				yx = *pPenToPixel++;
 				x = x0+(yx%MAX_TILESIZE);
 				y = y0+(yx/MAX_TILESIZE);
-				*(x+(DATA_TYPE *)pixmap->line[y]) = pPalData[pen];
-				if( clut[pen]==transparent_color )
+				*(x+(UINT16 *)pixmap->line[y]) = PAL_GET(pen);
+				if( PAL_GET(pen)==transparent_color )
 				{
 					((UINT8 *)transparency_bitmap->line[y])[x] = code_transparent;
 					bWhollyOpaque = 0;
@@ -1987,16 +2007,16 @@ TRANSTYPE( HandleTransparencyColor,
 		}
 	}
 	return (bWhollyOpaque || bWhollyTransparent)?0:TILE_FLAG_FG_OPAQUE;
-})
+}
 
-TRANSTYPE( HandleTransparencyPen,
+static UINT8 TRANSP(HandleTransparencyPen)(struct tilemap *tilemap, UINT32 x0, UINT32 y0, UINT32 flags)
 {
 	UINT32 tile_width = tilemap->cached_tile_width;
 	UINT32 tile_height = tilemap->cached_tile_height;
 	struct osd_bitmap *pixmap = tilemap->pixmap;
 	struct osd_bitmap *transparency_bitmap = tilemap->transparency_bitmap;
 	int pitch = tile_width + tile_info.skip;
-	const UINT32 *pPalData = tile_info.pal_data;
+	PAL_INIT;
 	UINT32 *pPenToPixel = tilemap->pPenToPixel[flags&(TILE_SWAPXY|TILE_FLIPY|TILE_FLIPX)];
 	const UINT8 *pPenData = tile_info.pen_data;
 	const UINT8 *pSource;
@@ -2034,7 +2054,7 @@ TRANSTYPE( HandleTransparencyPen,
 				yx = *pPenToPixel++;
 				x = x0+(yx%MAX_TILESIZE);
 				y = y0+(yx/MAX_TILESIZE);
-				*(x+(DATA_TYPE *)pixmap->line[y]) = pPalData[pen];
+				*(x+(UINT16 *)pixmap->line[y]) = PAL_GET(pen);
 				if( pen==transparent_pen )
 				{
 					((UINT8 *)transparency_bitmap->line[y])[x] = code_transparent;
@@ -2050,7 +2070,7 @@ TRANSTYPE( HandleTransparencyPen,
 				yx = *pPenToPixel++;
 				x = x0+(yx%MAX_TILESIZE);
 				y = y0+(yx/MAX_TILESIZE);
-				*(x+(DATA_TYPE *)pixmap->line[y]) = pPalData[pen];
+				*(x+(UINT16 *)pixmap->line[y]) = PAL_GET(pen);
 				((UINT8 *)transparency_bitmap->line[y])[x] = (pen==transparent_pen)?code_transparent:code_opaque;
 			}
 			pPenData += pitch/2;
@@ -2067,7 +2087,7 @@ TRANSTYPE( HandleTransparencyPen,
 				yx = *pPenToPixel++;
 				x = x0+(yx%MAX_TILESIZE);
 				y = y0+(yx/MAX_TILESIZE);
-				*(x+(DATA_TYPE *)pixmap->line[y]) = pPalData[pen];
+				*(x+(UINT16 *)pixmap->line[y]) = PAL_GET(pen);
 				if( pen==transparent_pen )
 				{
 					((UINT8 *)transparency_bitmap->line[y])[x] = code_transparent;
@@ -2085,16 +2105,16 @@ TRANSTYPE( HandleTransparencyPen,
 	}
 
 	return (bWhollyOpaque || bWhollyTransparent)?0:TILE_FLAG_FG_OPAQUE;
-})
+}
 
-TRANSTYPE( HandleTransparencyPenBit,
+static UINT8 TRANSP(HandleTransparencyPenBit)(struct tilemap *tilemap, UINT32 x0, UINT32 y0, UINT32 flags)
 {
 	UINT32 tile_width = tilemap->cached_tile_width;
 	UINT32 tile_height = tilemap->cached_tile_height;
 	struct osd_bitmap *pixmap = tilemap->pixmap;
 	struct osd_bitmap *transparency_bitmap = tilemap->transparency_bitmap;
 	int pitch = tile_width + tile_info.skip;
-	const UINT32 *pPalData = tile_info.pal_data;
+	PAL_INIT;
 	UINT32 *pPenToPixel = tilemap->pPenToPixel[flags&(TILE_SWAPXY|TILE_FLIPY|TILE_FLIPX)];
 	const UINT8 *pPenData = tile_info.pen_data;
 	const UINT8 *pSource;
@@ -2125,7 +2145,7 @@ TRANSTYPE( HandleTransparencyPenBit,
 				yx = *pPenToPixel++;
 				x = x0+(yx%MAX_TILESIZE);
 				y = y0+(yx/MAX_TILESIZE);
-				*(x+(DATA_TYPE *)pixmap->line[y]) = pPalData[pen];
+				*(x+(UINT16 *)pixmap->line[y]) = PAL_GET(pen);
 				code = ((pen&penbit)==penbit)?code_front:code_back;
 				and_flags &= code;
 				or_flags |= code;
@@ -2135,7 +2155,7 @@ TRANSTYPE( HandleTransparencyPenBit,
 				yx = *pPenToPixel++;
 				x = x0+(yx%MAX_TILESIZE);
 				y = y0+(yx/MAX_TILESIZE);
-				*(x+(DATA_TYPE *)pixmap->line[y]) = pPalData[pen];
+				*(x+(UINT16 *)pixmap->line[y]) = PAL_GET(pen);
 				code = ((pen&penbit)==penbit)?code_front:code_back;
 				and_flags &= code;
 				or_flags |= code;
@@ -2155,7 +2175,7 @@ TRANSTYPE( HandleTransparencyPenBit,
 				yx = *pPenToPixel++;
 				x = x0+(yx%MAX_TILESIZE);
 				y = y0+(yx/MAX_TILESIZE);
-				*(x+(DATA_TYPE *)pixmap->line[y]) = pPalData[pen];
+				*(x+(UINT16 *)pixmap->line[y]) = PAL_GET(pen);
 				code = ((pen&penbit)==penbit)?code_front:code_back;
 				and_flags &= code;
 				or_flags |= code;
@@ -2165,16 +2185,16 @@ TRANSTYPE( HandleTransparencyPenBit,
 		}
 	}
 	return or_flags ^ and_flags;
-})
+}
 
-TRANSTYPE( HandleTransparencyPens,
+static UINT8 TRANSP(HandleTransparencyPens)(struct tilemap *tilemap, UINT32 x0, UINT32 y0, UINT32 flags)
 {
 	UINT32 tile_width = tilemap->cached_tile_width;
 	UINT32 tile_height = tilemap->cached_tile_height;
 	struct osd_bitmap *pixmap = tilemap->pixmap;
 	struct osd_bitmap *transparency_bitmap = tilemap->transparency_bitmap;
 	int pitch = tile_width + tile_info.skip;
-	const UINT32 *pPalData = tile_info.pal_data;
+	PAL_INIT;
 	UINT32 *pPenToPixel = tilemap->pPenToPixel[flags&(TILE_SWAPXY|TILE_FLIPY|TILE_FLIPX)];
 	const UINT8 *pPenData = tile_info.pen_data;
 	const UINT8 *pSource;
@@ -2205,7 +2225,7 @@ TRANSTYPE( HandleTransparencyPens,
 				yx = *pPenToPixel++;
 				x = x0+(yx%MAX_TILESIZE);
 				y = y0+(yx/MAX_TILESIZE);
-				*(x+(DATA_TYPE *)pixmap->line[y]) = pPalData[pen];
+				*(x+(UINT16 *)pixmap->line[y]) = PAL_GET(pen);
 				code = code_transparent;
 				if( !((1<<pen)&fgmask) ) code |= TILE_FLAG_FG_OPAQUE;
 				if( !((1<<pen)&bgmask) ) code |= TILE_FLAG_BG_OPAQUE;
@@ -2217,7 +2237,7 @@ TRANSTYPE( HandleTransparencyPens,
 				yx = *pPenToPixel++;
 				x = x0+(yx%MAX_TILESIZE);
 				y = y0+(yx/MAX_TILESIZE);
-				*(x+(DATA_TYPE *)pixmap->line[y]) = pPalData[pen];
+				*(x+(UINT16 *)pixmap->line[y]) = PAL_GET(pen);
 				code = code_transparent;
 				if( !((1<<pen)&fgmask) ) code |= TILE_FLAG_FG_OPAQUE;
 				if( !((1<<pen)&bgmask) ) code |= TILE_FLAG_BG_OPAQUE;
@@ -2239,7 +2259,7 @@ TRANSTYPE( HandleTransparencyPens,
 				yx = *pPenToPixel++;
 				x = x0+(yx%MAX_TILESIZE);
 				y = y0+(yx/MAX_TILESIZE);
-				*(x+(DATA_TYPE *)pixmap->line[y]) = pPalData[pen];
+				*(x+(UINT16 *)pixmap->line[y]) = PAL_GET(pen);
 				code = code_transparent;
 				if( !((1<<pen)&fgmask) ) code |= TILE_FLAG_FG_OPAQUE;
 				if( !((1<<pen)&bgmask) ) code |= TILE_FLAG_BG_OPAQUE;
@@ -2251,16 +2271,16 @@ TRANSTYPE( HandleTransparencyPens,
 		}
 	}
 	return and_flags ^ or_flags;
-})
+}
 
-TRANSTYPE( HandleTransparencyNone,
+static UINT8 TRANSP(HandleTransparencyNone)(struct tilemap *tilemap, UINT32 x0, UINT32 y0, UINT32 flags)
 {
 	UINT32 tile_width = tilemap->cached_tile_width;
 	UINT32 tile_height = tilemap->cached_tile_height;
 	struct osd_bitmap *pixmap = tilemap->pixmap;
 	struct osd_bitmap *transparency_bitmap = tilemap->transparency_bitmap;
 	int pitch = tile_width + tile_info.skip;
-	const UINT32 *pPalData = tile_info.pal_data;
+	PAL_INIT;
 	UINT32 *pPenToPixel = tilemap->pPenToPixel[flags&(TILE_SWAPXY|TILE_FLIPY|TILE_FLIPX)];
 	const UINT8 *pPenData = tile_info.pen_data;
 	const UINT8 *pSource;
@@ -2286,14 +2306,14 @@ TRANSTYPE( HandleTransparencyNone,
 				yx = *pPenToPixel++;
 				x = x0+(yx%MAX_TILESIZE);
 				y = y0+(yx/MAX_TILESIZE);
-				*(x+(DATA_TYPE *)pixmap->line[y]) = pPalData[pen];
+				*(x+(UINT16 *)pixmap->line[y]) = PAL_GET(pen);
 				((UINT8 *)transparency_bitmap->line[y])[x] = code_opaque;
 
 				pen = data>>4;
 				yx = *pPenToPixel++;
 				x = x0+(yx%MAX_TILESIZE);
 				y = y0+(yx/MAX_TILESIZE);
-				*(x+(DATA_TYPE *)pixmap->line[y]) = pPalData[pen];
+				*(x+(UINT16 *)pixmap->line[y]) = PAL_GET(pen);
 				((UINT8 *)transparency_bitmap->line[y])[x] = code_opaque;
 			}
 			pPenData += pitch/2;
@@ -2310,18 +2330,17 @@ TRANSTYPE( HandleTransparencyNone,
 				yx = *pPenToPixel++;
 				x = x0+(yx%MAX_TILESIZE);
 				y = y0+(yx/MAX_TILESIZE);
-				*(x+(DATA_TYPE *)pixmap->line[y]) = pPalData[pen];
+				*(x+(UINT16 *)pixmap->line[y]) = PAL_GET(pen);
 				((UINT8 *)transparency_bitmap->line[y])[x] = code_opaque;
 			}
 			pPenData += pitch;
 		}
 	}
 	return 0;
-})
+}
 
-#undef DATA_TYPE
-#undef DEPTH
-#undef DECLARE
-#undef TRANSTYPE
+#undef TRANSP
+#undef PAL_INIT
+#undef PAL_GET
+#endif // TRANSP
 
-#endif /* DECLARE */

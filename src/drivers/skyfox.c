@@ -26,7 +26,7 @@ extern int skyfox_bg_pos, skyfox_bg_ctrl;
 READ_HANDLER( skyfox_vregs_r );
 WRITE_HANDLER( skyfox_vregs_w );
 
-void skyfox_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void skyfox_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 
 void skyfox_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -290,11 +290,12 @@ static const struct MachineDriver machine_driver_skyfox =
 	/* video hardware */
 	512, 256, { 0+0x60, 320-1+0x60, 0+16, 256-1-16 },	// from $30*2 to $CC*2+8
 	skyfox_gfxdecodeinfo,
-	256+256, 256,		/* 256 static colors (+256 for the background??) */
+	256+256, 0,		/* 256 static colors (+256 for the background??) */
 	skyfox_vh_convert_color_prom,
+
 	VIDEO_TYPE_RASTER,
 	0,
-	0,	/* No need for a vh_start function for now */
+	0,
 	0,
 	skyfox_vh_screenrefresh,
 

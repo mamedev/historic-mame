@@ -67,7 +67,7 @@ WRITE16_HANDLER( tetrisp2_palette_w )
 		int r = (data >>  1) & 0x1f;
 		int g = (data >>  6) & 0x1f;
 		int b = (data >> 11) & 0x1f;
-		palette_change_color(offset/2,(r << 3) | (r >> 2),(g << 3) | (g >> 2),(b << 3) | (b >> 2));
+		palette_set_color(offset/2,(r << 3) | (r >> 2),(g << 3) | (g >> 2),(b << 3) | (b >> 2));
 	}
 }
 

@@ -895,9 +895,10 @@ static const struct MachineDriver machine_driver_aburner =
 	aburner_init_machine,
 	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
 	sys16_gfxdecodeinfo,
-	0x2010,0x2010,
+	0x2010, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	sys16_aburner_vh_start,
 	sys16_aburner_vh_stop,

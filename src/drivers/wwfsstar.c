@@ -308,7 +308,7 @@ static int wwfsstar_interrupt(void) {
 		 return MC68000_IRQ_6;
 	}
 
-	return MC68000_INT_NONE;
+	return ignore_interrupt();
 }
 
 /*******************************************************************************
@@ -370,10 +370,10 @@ static const struct MachineDriver machine_driver_wwfsstar =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	24*16, 24*16,
+	384, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	wwfsstar_vh_start,
 	0,

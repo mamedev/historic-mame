@@ -1514,7 +1514,7 @@ static const struct MachineDriver machine_driver_tnzs =
 	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	0,
 	0,
@@ -1564,7 +1564,7 @@ static const struct MachineDriver machine_driver_tnzsb =
 	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	0,
 	0,
@@ -1608,7 +1608,7 @@ static const struct MachineDriver machine_driver_insectx =
 	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	0,
 	0,

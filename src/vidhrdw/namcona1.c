@@ -23,7 +23,9 @@ static int tilemap_palette_bank[NAMCO_MAX_TILEMAPS];
 
 static void tilemap_get_info(int tile_index,const data16_t *tilemap_videoram,int tilemap_color)
 {
+#ifdef LSB_FIRST
 	data16_t *source;
+#endif
 	static UINT8 mask_data[8];
 
 	int data = tilemap_videoram[tile_index];
@@ -91,10 +93,10 @@ WRITE16_HANDLER( namcona1_paletteram_w )
 	g = (g<<3)|(g>>2);
 	b = (b<<3)|(b>>2);
 
-	palette_change_color( offset, r,g,b );
+	palette_set_color( offset, r,g,b );
 
 	/* shadow */
-	palette_change_color( offset+0x1000, r/2,g/2,b/2 );
+	palette_set_color( offset+0x1000, r/2,g/2,b/2 );
 }
 
 /*************************************************************************/
@@ -233,11 +235,11 @@ int namcona1_vh_start( void )
 		if( gfx0 && gfx1 )
 		{
 			gfx0->colortable = Machine->remapped_colortable;
-			gfx0->total_colors = Machine->drv->color_table_len/256;
+			gfx0->total_colors = Machine->drv->total_colors/256;
 			Machine->gfx[0] = gfx0;
 
 			gfx1->colortable = Machine->remapped_colortable;
-			gfx1->total_colors = Machine->drv->color_table_len/2;
+			gfx1->total_colors = Machine->drv->total_colors/2;
 			Machine->gfx[1] = gfx1;
 
 			return 0;

@@ -650,7 +650,7 @@ static const struct MachineDriver machine_driver_scontra =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	scontra_vh_start,
 	scontra_vh_stop,
@@ -696,7 +696,7 @@ static const struct MachineDriver machine_driver_thunderx =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	scontra_vh_start,
 	scontra_vh_stop,

@@ -627,7 +627,7 @@ static const struct MachineDriver machine_driver_mcr2 =
 	64, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	mcr12_vh_start,
 	mcr12_vh_stop,
@@ -665,7 +665,7 @@ static const struct MachineDriver machine_driver_journey =
 	64, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	generic_vh_start,
 	generic_vh_stop,

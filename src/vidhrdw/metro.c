@@ -159,7 +159,7 @@ WRITE16_HANDLER( metro_paletteram_w )
 	g = (data >> 11) & 0x1f;
 
 	/* We need the ^0xff because we had to invert the pens in the gfx */
-	palette_change_color(offset^0xff,(r << 3) | (r >> 2),(g << 3) | (g >> 2),(b << 3) | (b >> 2));
+	palette_set_color(offset^0xff,(r << 3) | (r >> 2),(g << 3) | (g >> 2),(b << 3) | (b >> 2));
 }
 
 

@@ -350,7 +350,7 @@ WRITE16_HANDLER( wms_yunit_paletteram_w )
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
 
-	palette_change_color(offset & palette_mask, r, g, b);
+	palette_set_color(offset & palette_mask, r, g, b);
 }
 
 

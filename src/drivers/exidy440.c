@@ -1116,7 +1116,7 @@ static const struct MachineDriver machine_driver_exidy440 =
 	256,0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	exidy440_vh_start,
 	exidy440_vh_stop,

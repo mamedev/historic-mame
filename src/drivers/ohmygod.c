@@ -389,7 +389,7 @@ static const struct MachineDriver machine_driver_ohmygod =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	ohmygod_vh_start,
 	0,

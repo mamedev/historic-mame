@@ -537,14 +537,14 @@ WRITE16_HANDLER( sys16_paletteram_w ){
 		}
 
 #ifndef TRANSPARENT_SHADOWS
-		palette_change_color( offset,
+		palette_set_color( offset,
 				(r << 3) | (r >> 2), /* 5 bits red */
 				(g << 2) | (g >> 4), /* 6 bits green */
 				(b << 3) | (b >> 2) /* 5 bits blue */
 			);
 #else
 		if (Machine->scrbitmap->depth == 8){ /* 8 bit shadows */
-			palette_change_color( offset,
+			palette_set_color( offset,
 					(r << 3) | (r >> 3), /* 5 bits red */
 					(g << 2) | (g >> 4), /* 6 bits green */
 					(b << 3) | (b >> 3) /* 5 bits blue */
@@ -555,14 +555,14 @@ WRITE16_HANDLER( sys16_paletteram_w ){
 			g=(g << 2) | (g >> 4); /* 6 bits green */
 			b=(b << 3) | (b >> 2); /* 5 bits blue */
 
-			palette_change_color( offset,r,g,b);
+			palette_set_color( offset,r,g,b);
 
 			/* shadow color */
 			r= r * 160 / 256;
 			g= g * 160 / 256;
 			b= b * 160 / 256;
 
-			palette_change_color( offset+Machine->drv->total_colors/2,r,g,b);
+			palette_set_color( offset+Machine->drv->total_colors/2,r,g,b);
 		}
 #endif
 	}
@@ -917,7 +917,7 @@ int sys16_vh_start( void ){
 		/* initialize all entries to black - needed for Golden Axe*/
 		int i;
 		for( i=0; i<Machine->drv->total_colors; i++ ){
-			palette_change_color( i, 0,0,0 );
+			palette_set_color( i, 0,0,0 );
 		}
 #ifdef TRANSPARENT_SHADOWS
 		if (Machine->scrbitmap->depth == 8) /* 8 bit shadows */
@@ -927,7 +927,7 @@ int sys16_vh_start( void ){
 			{
 				color=j * 160 / (sys16_MaxShadowColors-1);
 				color=color | 0x04;
-				palette_change_color(i, color, color, color);
+				palette_set_color(i, color, color, color);
 			}
 		}
 		if(sys16_MaxShadowColors==32)

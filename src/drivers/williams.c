@@ -1332,7 +1332,7 @@ static const struct MachineDriver machine_driver_defender =
 	16, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
 	0,
 	williams_vh_start,
 	williams_vh_stop,
@@ -1379,7 +1379,7 @@ static const struct MachineDriver machine_driver_williams =
 	16, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
 	0,
 	williams_vh_start,
 	williams_vh_stop,
@@ -1426,7 +1426,7 @@ static const struct MachineDriver machine_driver_sinistar =
 	16, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
 	0,
 	williams_vh_start,
 	williams_vh_stop,
@@ -1477,7 +1477,7 @@ static const struct MachineDriver machine_driver_blaster =
 	16+240, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	blaster_vh_start,
 	williams_vh_stop,
@@ -1524,7 +1524,7 @@ static const struct MachineDriver machine_driver_williams2 =
 	16+8*16, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	williams2_vh_start,
 	williams2_vh_stop,
@@ -1572,7 +1572,7 @@ static const struct MachineDriver machine_driver_joust2 =
 	16+8*16, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	williams2_vh_start,
 	williams2_vh_stop,

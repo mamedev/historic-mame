@@ -8,21 +8,20 @@
 #include "vidhrdw/generic.h"
 
 int  goindol_vh_start(void);
-void goindol_vh_stop(void);
 WRITE_HANDLER( goindol_fg_videoram_w );
 WRITE_HANDLER( goindol_bg_videoram_w );
 void goindol_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void goindol_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void goindol_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 
-extern unsigned char	*goindol_fg_scrollx;
-extern unsigned char	*goindol_fg_scrolly;
-extern unsigned char 	*goindol_fg_videoram;
-extern unsigned char 	*goindol_bg_videoram;
-extern unsigned char 	*spriteram_1;
-extern unsigned char 	*spriteram_2;
+extern data8_t *goindol_fg_scrollx;
+extern data8_t *goindol_fg_scrolly;
+extern data8_t *goindol_fg_videoram;
+extern data8_t *goindol_bg_videoram;
+extern data8_t *spriteram_1;
+extern data8_t *spriteram_2;
 extern size_t goindol_fg_videoram_size;
 extern size_t goindol_bg_videoram_size;
-extern int 	 	goindol_char_bank;
+extern int goindol_char_bank;
 
 
 WRITE_HANDLER( goindol_bankswitch_w )
@@ -33,7 +32,11 @@ WRITE_HANDLER( goindol_bankswitch_w )
 	bankaddress = 0x10000 + ((data & 3) * 0x4000);
 	cpu_setbank(1,&RAM[bankaddress]);
 
-	goindol_char_bank = data & 0x10;
+	if (goindol_char_bank != ((data & 0x10) >> 4))
+	{
+		goindol_char_bank = (data & 0x10) >> 4;
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
 }
 
 
@@ -56,8 +59,8 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xc810, 0xc810, goindol_bankswitch_w },
-	{ 0xc820, 0xd820, MWA_RAM, &goindol_fg_scrollx },
-	{ 0xc830, 0xd830, MWA_RAM, &goindol_fg_scrolly },
+	{ 0xc820, 0xd820, MWA_RAM, &goindol_fg_scrolly },
+	{ 0xc830, 0xd830, MWA_RAM, &goindol_fg_scrollx },
 	{ 0xc800, 0xc800, soundlatch_w },
 	{ 0xd000, 0xd03f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xd040, 0xd7ff, MWA_RAM },
@@ -82,7 +85,6 @@ MEMORY_END
 
 
 INPUT_PORTS_START( goindol )
-
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -154,12 +156,9 @@ INPUT_PORTS_START( goindol )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
 INPUT_PORTS_END
 
-
 INPUT_PORTS_START( homo )
-
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -231,18 +230,18 @@ INPUT_PORTS_START( homo )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
 INPUT_PORTS_END
+
 
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 characters   */
-	4096,	/* 1024 characters  */
-	3,	/* 2 bits per pixel */
-	{  0, 0x8000*8, 0x10000*8 },
+	8,8,
+	RGN_FRAC(1,3),
+	3,
+	{  RGN_FRAC(0,3), RGN_FRAC(1,3), RGN_FRAC(2,3) },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0, 8, 16, 24, 32, 40, 48, 56 },
-	8*8	/* every char takes 8 consecutive bytes */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
@@ -290,13 +289,13 @@ static const struct MachineDriver machine_driver_goindol =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256,32*8+32*8,
+	256, 0,
 	goindol_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
 	goindol_vh_start,
-	goindol_vh_stop,
+	0,
 	goindol_vh_screenrefresh,
 
 	/* sound hardware */
@@ -407,5 +406,5 @@ void init_homo(void)
 
 
 
-GAME( 1987, goindol, 0,       goindol, goindol, goindol, ROT90, "Sun a Electronics", "Goindol" )
-GAME( 1987, homo,    goindol, goindol, homo,    homo,    ROT90, "bootleg", "Homo" )
+GAMEX( 1987, goindol, 0,       goindol, goindol, goindol, ROT90, "Sun a Electronics", "Goindol", GAME_NO_COCKTAIL )
+GAMEX( 1987, homo,    goindol, goindol, homo,    homo,    ROT90, "bootleg", "Homo", GAME_NO_COCKTAIL )

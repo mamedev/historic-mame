@@ -266,7 +266,7 @@ static const struct MachineDriver machine_driver_prehisle =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	prehisle_vh_start,
 	prehisle_vh_stop,

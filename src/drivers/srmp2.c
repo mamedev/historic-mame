@@ -1139,7 +1139,7 @@ static struct MachineDriver machine_driver_srmp3 =
 	/* video hardware */
 	400, 256-16, { 16, 400-1, 8, 256-1-24 },
 	srmp3_gfxdecodeinfo,
-	512, 512,						/* sprites only */
+	512, 0,	/* sprites only */
 	srmp3_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -1178,7 +1178,7 @@ static struct MachineDriver machine_driver_mjyuugi =
 	512, 0,						/* sprites only */
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	0,								/* no need for a vh_start: no tilemaps */
 	0,

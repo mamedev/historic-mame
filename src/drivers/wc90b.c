@@ -204,6 +204,8 @@ static MEMORY_WRITE_START( sound_writemem )
 	{ 0xec01, 0xec01, YM2203_write_port_1_w },
 MEMORY_END
 
+
+
 INPUT_PORTS_START( wc90b )
 	PORT_START	/* IN0 bit 0-5 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -280,6 +282,8 @@ INPUT_PORTS_START( wc90b )
 	PORT_DIPSETTING(    0x00, "English" )
 	PORT_DIPSETTING(    0x80, "Japanese" )
 INPUT_PORTS_END
+
+
 
 static struct GfxLayout charlayout =
 {
@@ -393,10 +397,10 @@ static const struct MachineDriver machine_driver_wc90b =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	4*16*16, 4*16*16,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	wc90b_vh_start,
 	0,

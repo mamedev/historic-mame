@@ -19,6 +19,8 @@
 #define STEP 0x8000
 
 
+static int num;
+
 struct AY8910
 {
 	int Channel;
@@ -29,6 +31,7 @@ struct AY8910
 	mem_write_handler PortBwrite;
 	int register_latch;
 	unsigned char Regs[16];
+	int lastEnable;
 	unsigned int UpdateStep;
 	int PeriodA,PeriodB,PeriodC,PeriodN,PeriodE;
 	int CountA,CountB,CountC,CountN,CountE;
@@ -120,6 +123,25 @@ void _AYWriteReg(int n, int r, int v)
 		PSG->CountN += PSG->PeriodN - old;
 		if (PSG->CountN <= 0) PSG->CountN = 1;
 		break;
+	case AY_ENABLE:
+		if ((PSG->lastEnable == -1) ||
+		    ((PSG->lastEnable & 0x40) != (PSG->Regs[AY_ENABLE] & 0x40)))
+		{
+			/* write out 0xff if port set to input */
+			if (PSG->PortAwrite)
+				(*PSG->PortAwrite)(0, (PSG->Regs[AY_ENABLE] & 0x40) ? PSG->Regs[AY_PORTA] : 0xff);
+		}
+
+		if ((PSG->lastEnable == -1) ||
+		    ((PSG->lastEnable & 0x80) != (PSG->Regs[AY_ENABLE] & 0x80)))
+		{
+			/* write out 0xff if port set to input */
+			if (PSG->PortBwrite)
+				(*PSG->PortBwrite)(0, (PSG->Regs[AY_ENABLE] & 0x80) ? PSG->Regs[AY_PORTB] : 0xff);
+		}
+
+		PSG->lastEnable = PSG->Regs[AY_ENABLE];
+		break;
 	case AY_AVOL:
 		PSG->Regs[AY_AVOL] &= 0x1f;
 		PSG->EnvelopeA = PSG->Regs[AY_AVOL] & 0x10;
@@ -192,16 +214,30 @@ void _AYWriteReg(int n, int r, int v)
 		if (PSG->EnvelopeC) PSG->VolC = PSG->VolE;
 		break;
 	case AY_PORTA:
-		if ((PSG->Regs[AY_ENABLE] & 0x40) == 0)
-logerror("warning: write to 8910 #%d Port A set as input\n",n);
-if (PSG->PortAwrite) (*PSG->PortAwrite)(0,v);
-else logerror("PC %04x: warning - write %02x to 8910 #%d Port A\n",cpu_get_pc(),v,n);
+		if (PSG->Regs[AY_ENABLE] & 0x40)
+		{
+			if (PSG->PortAwrite)
+				(*PSG->PortAwrite)(0, PSG->Regs[AY_PORTA]);
+			else
+				logerror("PC %04x: warning - write %02x to 8910 #%d Port A\n",cpu_get_pc(),PSG->Regs[AY_PORTA],n);
+		}
+		else
+		{
+			logerror("warning: write to 8910 #%d Port A set as input - ignored\n",n);
+		}
 		break;
 	case AY_PORTB:
-		if ((PSG->Regs[AY_ENABLE] & 0x80) == 0)
-logerror("warning: write to 8910 #%d Port B set as input\n",n);
-if (PSG->PortBwrite) (*PSG->PortBwrite)(0,v);
-else logerror("PC %04x: warning - write %02x to 8910 #%d Port B\n",cpu_get_pc(),v,n);
+		if (PSG->Regs[AY_ENABLE] & 0x80)
+		{
+			if (PSG->PortBwrite)
+				(*PSG->PortBwrite)(0, PSG->Regs[AY_PORTB]);
+			else
+				logerror("PC %04x: warning - write %02x to 8910 #%d Port B\n",cpu_get_pc(),PSG->Regs[AY_PORTB],n);
+		}
+		else
+		{
+			logerror("warning: write to 8910 #%d Port B set as input - ignored\n",n);
+		}
 		break;
 	}
 }
@@ -656,10 +692,19 @@ void AY8910_reset(int chip)
 	PSG->OutputB = 0;
 	PSG->OutputC = 0;
 	PSG->OutputN = 0xff;
+	PSG->lastEnable = -1;	/* force a write */
 	for (i = 0;i < AY_PORTA;i++)
 		_AYWriteReg(chip,i,0);	/* AYWriteReg() uses the timer system; we cannot */
 								/* call it at this time because the timer system */
 								/* has not been initialized. */
+}
+
+void AY8910_sh_reset(void)
+{
+	int i;
+
+	for (i = 0;i < num;i++)
+		AY8910_reset(i);
 }
 
 static int AY8910_init(const struct MachineSound *msound,int chip,
@@ -692,7 +737,6 @@ static int AY8910_init(const struct MachineSound *msound,int chip,
 		return 1;
 
 	AY8910_set_clock(chip,clock);
-	AY8910_reset(chip);
 
 	return 0;
 }
@@ -705,7 +749,9 @@ int AY8910_sh_start(const struct MachineSound *msound)
 	const struct AY8910interface *intf = msound->sound_interface;
 
 
-	for (chip = 0;chip < intf->num;chip++)
+	num = intf->num;
+
+	for (chip = 0;chip < num;chip++)
 	{
 		if (AY8910_init(msound,chip,intf->baseclock,
 				intf->mixing_level[chip] & 0xffff,

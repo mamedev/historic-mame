@@ -729,7 +729,7 @@ static struct YM2610interface ym2610_interface =
 {
 	1,	/* 1 chip */
 	8000000,	/* 8 MHz */
-	{ 30 },
+	{ 25 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -737,7 +737,7 @@ static struct YM2610interface ym2610_interface =
 	{ irq_handler },
 	{ REGION_SOUND1 },	/* Delta-T */
 	{ REGION_SOUND1 },	/* ADPCM */
-	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) }
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
 };
 
 
@@ -788,10 +788,10 @@ static struct MachineDriver machine_driver_bonzeadv =
 	/* video hardware */
 	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
 	gfxdecodeinfo,
-	4096, 4096,
+	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	asuka_vh_start,
 	asuka_vh_stop,
@@ -831,10 +831,10 @@ static struct MachineDriver machine_driver_asuka =
 	/* video hardware */
 	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
 	gfxdecodeinfo,
-	4096, 4096,
+	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	asuka_vh_start,
 	asuka_vh_stop,
@@ -878,10 +878,10 @@ static struct MachineDriver machine_driver_galmedes =
 	/* video hardware */
 	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
 	gfxdecodeinfo,
-	4096, 4096,	/* only Mofflott uses full palette space */
+	4096, 0,	/* only Mofflott uses full palette space */
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	galmedes_vh_start,
 	asuka_vh_stop,
@@ -925,10 +925,10 @@ static struct MachineDriver machine_driver_eto =
 	/* video hardware */
 	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
 	gfxdecodeinfo,
-	4096, 4096,
+	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	galmedes_vh_start,
 	asuka_vh_stop,

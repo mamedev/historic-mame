@@ -91,7 +91,7 @@ PORT_END
 /* Note: the CPU speed is somewhat arbitrary as the cycle timings in
    the core are incomplete. */
 #define CINEMA_MACHINE(driver, minx, miny, maxx, maxy, samples, sample_interface) 	\
-static const struct MachineDriver machine_driver_##driver = 								\
+static const struct MachineDriver machine_driver_##driver = 						\
 { 																					\
 	/* basic machine hardware */ 													\
 	{ 																				\
@@ -110,7 +110,7 @@ static const struct MachineDriver machine_driver_##driver = 								\
 	400, 300, { minx, maxx, miny, maxy }, 											\
 	0, 																				\
 	256 + 32768, 256, 																\
- 	cinemat_init_colors, 															\
+	cinemat_init_colors, 															\
 																					\
 	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,										\
 	0, 																				\

@@ -1051,7 +1051,7 @@ int cps_vh_start(void)
 	memset(cps1_old_palette, 0x00, cps1_palette_size);
 	for (i = 0;i < cps1_palette_entries*16;i++)
 	{
-		palette_change_color(i,0,0,0);
+		palette_set_color(i,0,0,0);
 	}
 
     cps1_buffered_obj = malloc (cps1_obj_size);
@@ -1172,7 +1172,7 @@ void cps1_build_palette(void)
 		   green = ((palette>>4)&0x0f) * bright * 0x11 / 0x1f;
 		   blue  = ((palette>>0)&0x0f) * bright * 0x11 / 0x1f;
 
-		   palette_change_color (offset, red, green, blue);
+		   palette_set_color (offset, red, green, blue);
 		   cps1_old_palette[offset] = palette;
 		}
 	}

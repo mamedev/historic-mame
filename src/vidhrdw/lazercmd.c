@@ -104,7 +104,7 @@ int lazercmd_vh_start(void)
 
 	if (input_port_2_r(0) & 0x80)
 	{
-		overlay_create(overlay, 3, Machine->drv->total_colors-3);
+		overlay_create(overlay, 3);
 	}
 
 	return 0;

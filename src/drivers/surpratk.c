@@ -259,7 +259,7 @@ static const struct MachineDriver machine_driver_surpratk =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	surpratk_vh_start,
 	surpratk_vh_stop,

@@ -1,8 +1,8 @@
-/*******************************************************************************
+/*****************************************************************************
 *
 *   Yamaha YM2151 driver
 *
-*******************************************************************************/
+******************************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,7 +25,7 @@
 	#endif
 #endif
 #ifdef USE_MAME_TIMERS
-	/* #define LOG_CYM_FILE */
+	/*#define LOG_CYM_FILE*/
 	#ifdef LOG_CYM_FILE
 		FILE * cymfile = NULL;
 		void * cymfiletimer = 0;
@@ -87,10 +87,10 @@ typedef struct
 
 	UINT32		lfo_phase;				/* accumulated LFO phase          */
 	UINT32		lfo_freq;				/* LFO frequency count            */
-	UINT32		lfo_wave;				/* LFO waveform (0-saw, 1-square, 2-triangle, 3-random noise) */
-	UINT32		pmd;					/* LFO Phase Modulation Depth     */
+	UINT32		lfo_wsel;				/* LFO waveform (0-saw, 1-square, 2-triangle, 3-random noise) */
 	UINT32		amd;					/* LFO Amplitude Modulation Depth */
 	UINT32		lfa;					/* LFO current AM output          */
+	INT32		pmd;					/* LFO Phase Modulation Depth     */
 	INT32		lfp;					/* LFO current PM output          */
 
 	UINT32		test;					/* TEST register */
@@ -162,12 +162,9 @@ typedef struct
 } YM2151;
 
 
-/*
-*	Shifts below are subject to change when sampling frequency changes...
-*/
 #define FREQ_SH			16  /* 16.16 fixed point (frequency calculations) */
 #define ENV_SH			16  /* 16.16 fixed point (envelope calculations)  */
-#define LFO_SH			23  /*  9.23 fixed point (LFO calculations)       */
+#define LFO_SH			24  /*  8.24 fixed point (LFO calculations)       */
 #define TIMER_SH		16  /* 16.16 fixed point (timers calculations)    */
 
 #define FREQ_MASK		((1<<FREQ_SH)-1)
@@ -193,7 +190,7 @@ typedef struct
 
 #define TL_RES_LEN		(256) /* 8 bits addressing (real chip) */
 
-#define LFO_BITS		9
+#define LFO_BITS		8
 #define LFO_LEN			(1<<LFO_BITS)
 #define LFO_MASK		(LFO_LEN-1)
 
@@ -221,10 +218,7 @@ static signed int tl_tab[TL_TAB_LEN];
 static unsigned int sin_tab[SIN_LEN];
 
 /* four AM/PM LFO waveforms (8 in total) */
-static unsigned int lfo_tab[LFO_LEN*4*2];
-
-/* LFO amplitude modulation depth table (128 levels) */
-static unsigned int lfo_md_tab[128];
+static signed char lfo_wave[LFO_LEN*4*2];
 
 /* translate from D1L to volume index (16 D1L levels) */
 static unsigned int d1l_tab[16];
@@ -243,10 +237,10 @@ static unsigned int dt2_tab[4] = { 0, 384, 500, 608 };
 
 /*	DT1 defines offset in Hertz from base note
 *	This table is converted while initialization...
-*	Detune table in YM2151 User's Manual is wrong (checked against the real chip)
+*	Detune table shown in YM2151 User's Manual is wrong (checked against the real chip)
 */
 
-static unsigned char dt1_tab[4*32] = { /* 4*32 DT1 values */
+static UINT8 dt1_tab[4*32] = { /* 4*32 DT1 values */
 /* DT1=0 */
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -350,8 +344,7 @@ static FILE *sample[9];
 
 static void init_tables(void)
 {
-	signed int i,x;
-	signed int n;
+	signed int i,x,n;
 	double o,m;
 
 	for (x=0; x<TL_RES_LEN; x++)
@@ -412,11 +405,10 @@ static void init_tables(void)
 		sin_tab[ i ] = n*2 + (m>=0.0? 0: 1 );
 		/*logerror("sin [%4i]= %4i (tl_tab value=%5i)\n", i, sin_tab[i],tl_tab[sin_tab[i]]);*/
 	}
-
 	/*logerror("ENV_QUIET= %08x\n",ENV_QUIET );*/
 
 
-	/* calculate LFO AM waveforms */
+	/* calculate LFO AM waveforms (verified on real chip, except for noise algorithm which is impossible to analyse)*/
 	for (x=0; x<4; x++)
 	{
 	    for (i=0; i<LFO_LEN; i++)
@@ -424,71 +416,29 @@ static void init_tables(void)
 		switch (x)
 		{
 		case 0:	/* saw (255 down to 0) */
-			m = 255 - (i/2);
+			n = 255 - i;
 			break;
 		case 1: /* square (255,0) */
-			if (i<256)
-				m = 255;
+			if (i<128)
+				n = 255;
 			else
-				m = 0;
+				n = 0;
 			break;
-		case 2: /* triangle (255 down to 0, up to 255) */
-			if (i<256)
-				m = 255 - i;
+		case 2: /* triangle (255 down to 1 step 2; 0 up to 254 step 2) */
+			if (i<128)
+				n = 255 - (i*2);
 			else
-				m = i - 256;
+				n = (i*2) - 256;
 			break;
 		case 3: /* random (range 0 to 255) */
-			m = ((int)rand()) & 255;
+			n = ((int)rand()) & 255;
 			break;
 		}
-		/* we reach m = zero here !!!*/
 
-		if (m>0.0)
-			o = 8*log(255.0/m)/log(2);			/* convert to 'decibels' */
-		else
-		{
-			if (m<0.0)
-				o = 8*log(-255.0/m)/log(2);		/* convert to 'decibels' */
-			else
-				o = 8*log(255.0/0.01)/log(2);	/* small number */
-		}
-
-		o = o / (ENV_STEP/4);
-
-		n = (int)(2.0*o);
-		if (n&1)		/* round to closest */
-			n = (n>>1)+1;
-		else
-			n = n>>1;
-
-		lfo_tab[ x*LFO_LEN*2 + i*2 ] = n*2 + (m>=0.0? 0: 1 );
-		/*logerror("lfo am waveofs[%i] %04i = %i\n", x, i*2, lfo_tab[ x*LFO_LEN*2 + i*2 ] );*/
+		lfo_wave[ x*LFO_LEN*2 + i*2 ] = n;
+		/*logerror("lfo am waveofs[%i] %04i = %4i\n", x, i*2, (UINT8)lfo_wave[ x*LFO_LEN*2 + i*2 ] );*/
 	    }
 	}
-	for (i=0; i<128; i++)
-	{
-		m = i*2;	/* m=0,2,4,6,8,10,..,252,254 */
-
-		/* we reach m = zero here !!!*/
-
-		if (m>0.0)
-			o = 8*log(8192.0/m)/log(2);		/* convert to 'decibels' */
-		else
-			o = 8*log(8192.0/0.01)/log(2);	/* small number (m=0)*/
-
-		o = o / (ENV_STEP/4);
-
-		n = (int)(2.0*o);
-		if (n&1)							/* round to closest */
-			n = (n>>1)+1;
-		else
-			n = n>>1;
-
-		lfo_md_tab[ i ] = n*2;
-		/*logerror("lfo_md_tab[%i](%i) = ofs %i shr by %i\n", i, i*2, (lfo_md_tab[i]>>1)&255, lfo_md_tab[i]>>9 );*/
-	}
-
 	/* calculate LFO PM waveforms*/
 	for (x=0; x<4; x++)
 	{
@@ -497,78 +447,59 @@ static void init_tables(void)
 		switch (x)
 		{
 		case 0:	/* saw (0 to 127, -128 to -1) */
-			if (i<256)
-				m = (i/2);
+			if (i<128)
+				n = i;
 			else
-				m = (i/2)-256;
+				n = i-256;
 			break;
 		case 1: /* square (127,-128) */
-			if (i<256)
-				m = 127;
-			else
-				m = -128;
-			break;
-		case 2: /* triangle (0 to 127,127 to -128,-127 to 0) */
 			if (i<128)
-				m = i; /*0 to 127*/
+				n = 127;
+			else
+				n = -128;
+			break;
+		case 2: /* triangle (0 to 126, 127 to -127, -128 to -2) */
+			if (i<64)
+				n = i*2;					/* 0 to 126 */
 			else
 			{
-				if (i<384)
-					m = 255 - i; /* 127 down to -128 */
+				if (i<192)
+					n = 127 - (i-64)*2;		/* 127 down to -127 */
 				else
-					m = i - 511; /* -127 to 0 */
+					n = (i-192)*2 - 128;	/* -128 up to -2 */
 			}
 			break;
 		case 3: /* random (range -128 to 127) */
-			m = ((int)rand()) & 255;
-			m -=128;
+			n = ((int)rand()) & 255;
+			n -=128;
 			break;
 		}
-		/* we reach m = zero here !!!*/
 
-		if (m>0.0)
-			o = 8*log(127.0/m)/log(2);			/* convert to 'decibels' */
-		else
-		{
-			if (m<0.0)
-				o = 8*log(-128.0/m)/log(2);		/* convert to 'decibels' */
-			else
-				o = 8*log(127.0/0.01)/log(2);	/* small number */
-		}
-
-		o = o / (ENV_STEP/4);
-
-		n = (int)(2.0*o);
-		if (n&1)								/* round to closest */
-			n = (n>>1)+1;
-		else
-			n = n>>1;
-
-		lfo_tab[ x*LFO_LEN*2 + i*2 + 1 ] = n*2 + (m>=0.0? 0: 1 );
-		/*logerror("lfo pm waveofs[%i] %04i = %i\n", x, i*2+1, lfo_tab[ x*LFO_LEN*2 + i*2 + 1 ] );*/
+		lfo_wave[ x*LFO_LEN*2 + i*2 + 1 ] = n ;
+		/*logerror("lfo pm waveofs[%i] %04i = %4i\n", x, i*2+1, lfo_wave[ x*LFO_LEN*2 + i*2 + 1 ] );*/
 	    }
 	}
 
 	/* calculate d1l_tab table */
 	for (i=0; i<16; i++)
 	{
-		m = (i!=15 ? i : i+16) * (4.0/ENV_STEP);   /* every 3 'dB' except for all bits = 1 = 45dB+48dB */
+		m = (i!=15 ? i : i+16) * (4.0/ENV_STEP);   /* every 3 'dB' except for all bits = 1 = 45+48 'dB' */
 		d1l_tab[i] = m * (1<<ENV_SH);
 		/*logerror("d1l_tab[%02x]=%08x\n",i,d1l_tab[i] );*/
 	}
 
 #ifdef SAVE_SAMPLE
-	sample[8]=fopen("sampsum.raw","ab");
+	sample[8]=fopen("sampsum.pcm","ab");
 #endif
 #ifdef SAVE_SEPARATE_CHANNELS
-	sample[0]=fopen("samp0.raw","wb");
-	sample[1]=fopen("samp1.raw","wb");
-	sample[2]=fopen("samp2.raw","wb");
-	sample[3]=fopen("samp3.raw","wb");
-	sample[4]=fopen("samp4.raw","wb");
-	sample[5]=fopen("samp5.raw","wb");
-	sample[6]=fopen("samp6.raw","wb");
-	sample[7]=fopen("samp7.raw","wb");
+	sample[0]=fopen("samp0.pcm","wb");
+	sample[1]=fopen("samp1.pcm","wb");
+	sample[2]=fopen("samp2.pcm","wb");
+	sample[3]=fopen("samp3.pcm","wb");
+	sample[4]=fopen("samp4.pcm","wb");
+	sample[5]=fopen("samp5.pcm","wb");
+	sample[6]=fopen("samp6.pcm","wb");
+	sample[7]=fopen("samp7.pcm","wb");
 #endif
 }
 
@@ -751,7 +682,6 @@ static void init_chip_tables(YM2151 *chip)
 		chip->noise_tab[i] = j * 64 * scaler;
 		/*logerror("noise_tab[%02x]=%08x\n", i, chip->noise_tab[i]);*/
 	}
-
 }
 
 
@@ -1007,7 +937,6 @@ INLINE void refresh_EG( YM2151 *chip, YM2151Operator * op)
 	op->delta_d1r = chip->eg_tab[op->d1r + v];
 	op->delta_d2r = chip->eg_tab[op->d2r + v];
 	op->delta_rr  = chip->eg_tab[op->rr  + v];
-
 }
 
 
@@ -1052,12 +981,6 @@ void YM2151WriteReg(int n, int r, int v)
 		case 0x0f:	/* noise mode enable, noise period */
 			chip->noise = v;
 			chip->noise_f = chip->noise_tab[ v & 0x1f ];
-			#if 0
-			if (v){
-				usrintf_showmessage("YM2151 noise mode = %02x",v);
-				logerror("YM2151 noise (%02x)\n",v);
-			}
-			#endif
 			break;
 
 		case 0x10:	/* timer A hi */
@@ -1176,14 +1099,14 @@ void YM2151WriteReg(int n, int r, int v)
 
 		case 0x19:	/* PMD (bit 7==1) or AMD (bit 7==0) */
 			if (v&0x80)
-				chip->pmd = lfo_md_tab[v&0x7f] + 512;
+				chip->pmd = v & 0x7f;
 			else
-				chip->amd = lfo_md_tab[v&0x7f];
+				chip->amd = v & 0x7f;
 			break;
 
 		case 0x1b:	/* CT2, CT1, LFO waveform */
 			chip->ct = v;
-			chip->lfo_wave = (v & 3) * LFO_LEN*2;
+			chip->lfo_wsel = (v & 3) * LFO_LEN*2;
 			if (chip->porthandler) (*chip->porthandler)(0 , (chip->ct) >> 6 );
 			break;
 
@@ -1198,8 +1121,8 @@ void YM2151WriteReg(int n, int r, int v)
 		switch(r & 0x18){
 		case 0x00:	/* RL enable, Feedback, Connection */
 			op->fb_shift = ((v>>3)&7) ? ((v>>3)&7)+6:0;
-			chip->pan[ (r&7)*2    ] = (v & 0x40) ? 0xffffffff : 0x0;
-			chip->pan[ (r&7)*2 +1 ] = (v & 0x80) ? 0xffffffff : 0x0;
+			chip->pan[ (r&7)*2    ] = (v & 0x40) ? ~0 : 0;
+			chip->pan[ (r&7)*2 +1 ] = (v & 0x80) ? ~0 : 0;
 			chip->connect[r&7] = v&7;
 			set_connect(op, v&7, r&7);
 			break;
@@ -1264,7 +1187,7 @@ void YM2151WriteReg(int n, int r, int v)
 
 		case 0x18:	/* PMS, AMS */
 			op->pms = (v>>4) & 7;
-			op->ams = v & 3;
+			op->ams = (v & 3);
 			break;
 		}
 		break;
@@ -1316,7 +1239,7 @@ void YM2151WriteReg(int n, int r, int v)
 		break;
 
 	case 0xa0:		/* LFO AM enable, D1R */
-		op->AMmask = (v&0x80) ? 0xffffffff : 0;
+		op->AMmask = (v&0x80) ? ~0 : 0;
 		op->d1r    = (v&0x1f) ? 32 + ((v&0x1f)<<1) : 0;
 		op->delta_d1r = chip->eg_tab[op->d1r + (op->kc>>op->ks) ];
 		break;
@@ -1361,10 +1284,10 @@ int YM2151ReadStatus( int n )
 
 
 
+#ifdef USE_MAME_TIMERS
 /*
 *	state save support for MAME
 */
-
 static void ym2151_postload_refresh(void)
 {
 	int i,j;
@@ -1382,7 +1305,6 @@ static void ym2151_state_save_register( int numchips )
 {
 	int i,j;
 	char buf1[20];
-
 
 	for (i=0; i<numchips; i++)
 	{
@@ -1433,14 +1355,14 @@ static void ym2151_state_save_register( int numchips )
 
 		sprintf(buf1,"YM2151.registers");
 
-		state_save_register_UINT32  (buf1, i, "pan"     , &YMPSG[i].pan[0], 16);
+		state_save_register_UINT32  (buf1, i, "pan"      , &YMPSG[i].pan[0], 16);
 
 		state_save_register_UINT32  (buf1, i, "lfo_phas", &YMPSG[i].lfo_phase,1);
 		state_save_register_UINT32  (buf1, i, "lfo_freq", &YMPSG[i].lfo_freq, 1);
-		state_save_register_UINT32  (buf1, i, "lfo_wave", &YMPSG[i].lfo_wave, 1);
-		state_save_register_UINT32  (buf1, i, "pmd"     , &YMPSG[i].pmd, 1);
+		state_save_register_UINT32  (buf1, i, "lfo_wsel", &YMPSG[i].lfo_wsel, 1);
 		state_save_register_UINT32  (buf1, i, "amd"     , &YMPSG[i].amd, 1);
 		state_save_register_UINT32  (buf1, i, "lfa"     , &YMPSG[i].lfa, 1);
+		state_save_register_INT32   (buf1, i, "pmd"     , &YMPSG[i].pmd, 1);
 		state_save_register_INT32   (buf1, i, "lfp"     , &YMPSG[i].lfp, 1);
 
 		state_save_register_UINT32  (buf1, i, "test"    , &YMPSG[i].test,1);
@@ -1465,7 +1387,11 @@ static void ym2151_state_save_register( int numchips )
 
 	state_save_register_func_postload(ym2151_postload_refresh);
 }
-
+#else
+static void ym2151_state_save_register( int numchips )
+{
+}
+#endif
 
 
 /*
@@ -1475,7 +1401,6 @@ static void ym2151_state_save_register( int numchips )
 *	'clock' is the chip clock in Hz
 *	'rate' is sampling rate
 */
-
 int YM2151Init(int num, int clock, int rate)
 {
 	int i;
@@ -1578,9 +1503,8 @@ void YM2151Shutdown()
 
 
 /*
-*	reset all chip registers.
+*	Reset chip number 'n'.
 */
-
 void YM2151ResetChip(int num)
 {
 	int i;
@@ -1596,9 +1520,9 @@ void YM2151ResetChip(int num)
 
 	chip->lfo_phase = 0;
 	chip->lfo_freq  = 0;
-	chip->lfo_wave  = 0;
-	chip->pmd = lfo_md_tab[ 0 ] + 512;
-	chip->amd = lfo_md_tab[ 0 ];
+	chip->lfo_wsel  = 0;
+	chip->pmd = 0;
+	chip->amd = 0;
 	chip->lfa = 0;
 	chip->lfp = 0;
 
@@ -1639,71 +1563,6 @@ void YM2151ResetChip(int num)
 
 
 
-INLINE void lfo_calc(void)
-{
-	UINT32 phase;
-	UINT32 lfx;
-
-
-	if (PSG->test&2)
-	{
-		PSG->lfo_phase = 0;
-		phase = PSG->lfo_wave;
-	}
-	else
-	{
-		phase = (PSG->lfo_phase>>LFO_SH) & LFO_MASK;
-		phase = phase*2 + PSG->lfo_wave;
-	}
-
-	lfx = lfo_tab[phase] + PSG->amd;
-	PSG->lfa = 0;
-	if (lfx < TL_TAB_LEN)
-		PSG->lfa = tl_tab[ lfx ];
-
-	lfx = lfo_tab[phase+1] + PSG->pmd;
-	PSG->lfp = 0;
-	if (lfx < TL_TAB_LEN)
-		PSG->lfp = tl_tab[ lfx ];
-}
-
-
-INLINE void calc_lfo_pm(YM2151Operator *op)
-{
-	INT32 mod_ind;
-	INT32 pom;
-
-
-	mod_ind = PSG->lfp;		/* -128..+127 (8bits signed) */
-	if (op->pms < 6)
-		mod_ind >>= (6 - op->pms);
-	else
-		mod_ind <<= (op->pms - 5);
-
-	if (mod_ind)
-	{
-		UINT32 kc_channel;
-
-		kc_channel = op->kc_i + mod_ind;
-
-		pom = ( (PSG->freq[ kc_channel + op->dt2 ] + op->dt1) * op->mul ) >> 1;
-		op->phase += (pom - op->freq);
-
-		op+=8;
-		pom = ( (PSG->freq[ kc_channel + op->dt2 ] + op->dt1) * op->mul ) >> 1;
-		op->phase += (pom - op->freq);
-
-		op+=8;
-		pom = ( (PSG->freq[ kc_channel + op->dt2 ] + op->dt1) * op->mul ) >> 1;
-		op->phase += (pom - op->freq);
-
-		op+=8;
-		pom = ( (PSG->freq[ kc_channel + op->dt2 ] + op->dt1) * op->mul ) >> 1;
-		op->phase += (pom - op->freq);
-	}
-}
-
-
 INLINE signed int op_calc(YM2151Operator * OP, unsigned int env, signed int pm)
 {
 	UINT32 p;
@@ -1739,7 +1598,7 @@ INLINE signed int op_calc1(YM2151Operator * OP, unsigned int env, signed int pm)
 
 
 
-#define volume_calc(OP) (OP->tl + (((unsigned int)OP->volume)>>ENV_SH) + (AM & OP->AMmask))
+#define volume_calc(OP) (OP->tl + (((UINT32)OP->volume)>>ENV_SH) + (AM & OP->AMmask))
 
 INLINE void chan_calc(unsigned int chan)
 {
@@ -1755,9 +1614,6 @@ INLINE void chan_calc(unsigned int chan)
 
 	if (op->ams)
 		AM = PSG->lfa << (op->ams-1);
-
-	if (op->pms)
-		calc_lfo_pm(op);
 
 	env = volume_calc(op);
 	{
@@ -1793,8 +1649,8 @@ INLINE void chan_calc(unsigned int chan)
 	env = volume_calc(op);
 	if (env < ENV_QUIET)
 		chanout[chan] += op_calc(op, env, c2);
-
 }
+
 INLINE void chan7_calc(void)
 {
 	YM2151Operator *op;
@@ -1809,9 +1665,6 @@ INLINE void chan7_calc(void)
 
 	if (op->ams)
 		AM = PSG->lfa << (op->ams-1);
-
-	if (op->pms)
-		calc_lfo_pm(op);
 
 	env = volume_calc(op);
 	{
@@ -1860,81 +1713,19 @@ INLINE void chan7_calc(void)
 		if (env < ENV_QUIET)
 			chanout[7] += op_calc(op, env, c2);
 	}
-
 }
 
-INLINE void advance(void)
+INLINE void advance_eg(void)
 {
 	YM2151Operator *op;
 	int i;
 
 
-	if (!(PSG->test&2))
-		PSG->lfo_phase += PSG->lfo_freq;
-
-	/*	The Noise Generator of the YM2151 is 17-bit shift register.
-	*	Input to the bit16 is negated (bit0 XOR bit3) (EXNOR).
-	*	Output of the register is negated (bit0 XOR bit3).
-	*	Simply use bit16 as the noise output.
-	*/
-	PSG->noise_p += PSG->noise_f;
-	i = (PSG->noise_p>>16);		/* number of events (shifts of the shift register) */
-	PSG->noise_p &= 0xffff;
-	while (i)
-	{
-		UINT32 j;
-		j = ( (PSG->noise_rng ^ (PSG->noise_rng>>3) ) & 1) ^ 1;
-		PSG->noise_rng = (j<<16) | (PSG->noise_rng>>1);
-		i--;
-	}
-
-
-	/*	In real it seems that CSM keyon line is ORed with the KO line inside of the chip.
-	*	This causes it to only work when KO is off, ie. 0
-	*	Below is my implementation only.
-	*/
-	if (PSG->csm_req)	/* CSM KEYON/KEYOFF seqeunce request */
-	{
-		if (PSG->csm_req==2)			/* KEY ON */
-		{
-			op = &PSG->oper[0];	/* CH 0 M1 */
-			i = 32;
-			do
-			{
-				if (op->key==0)		/* _ONLY_ when KEY is OFF (checked) */
-				{
-					op->phase = 0;
-					op->state = EG_ATT;
-				}
-				op++;
-				i--;
-			}while (i);
-			PSG->csm_req = 1;
-		}
-		else						/* KEY OFF */
-		{
-			op = &PSG->oper[0];	/* CH 0 M1 */
-			i = 32;
-			do
-			{
-				if (op->key==0)		/* _ONLY_ when KEY is OFF (checked) */
-				{
-					if (op->state>EG_REL)
-						op->state = EG_REL;
-				}
-				op++;
-				i--;
-			}while (i);
-			PSG->csm_req = 0;
-		}
-	}
-
+	/* envelope generator */
 	op = &PSG->oper[0];	/* CH 0 M1 */
 	i = 32;
 	do
 	{
-		op->phase += op->freq;
-
 		switch(op->state)
 		{
 		case EG_ATT:		/* attack phase */
@@ -1994,6 +1785,125 @@ INLINE void advance(void)
 	}while (i);
 }
 
+
+INLINE void advance(void)
+{
+	YM2151Operator *op;
+	int i;
+
+
+	/* LFO */
+	if (PSG->test&2)
+		PSG->lfo_phase = 0;
+	else
+		PSG->lfo_phase += PSG->lfo_freq;
+	{
+		UINT32 phase = ((PSG->lfo_phase>>LFO_SH) & LFO_MASK) * 2 + PSG->lfo_wsel;
+		PSG->lfa = (UINT8)(lfo_wave[phase  ]) * PSG->amd / 128;
+		PSG->lfp =  (INT8)(lfo_wave[phase+1]) * PSG->pmd / 128;
+	}
+
+
+	/*	The Noise Generator of the YM2151 is 17-bit shift register.
+	*	Input to the bit16 is negated (bit0 XOR bit3) (EXNOR).
+	*	Output of the register is negated (bit0 XOR bit3).
+	*	Simply use bit16 as the noise output.
+	*/
+	PSG->noise_p += PSG->noise_f;
+	i = (PSG->noise_p>>16);		/* number of events (shifts of the shift register) */
+	PSG->noise_p &= 0xffff;
+	while (i)
+	{
+		UINT32 j;
+		j = ( (PSG->noise_rng ^ (PSG->noise_rng>>3) ) & 1) ^ 1;
+		PSG->noise_rng = (j<<16) | (PSG->noise_rng>>1);
+		i--;
+	}
+
+
+	/*	CSM keyon line seems to be ORed with the KO line inside of the chip.
+	*	The result is that it only works when KO is off, ie. 0
+	*	Below is my implementation only.
+	*/
+	if (PSG->csm_req)	/* CSM KEYON/KEYOFF seqeunce request */
+	{
+		if (PSG->csm_req==2)			/* KEY ON */
+		{
+			op = &PSG->oper[0];	/* CH 0 M1 */
+			i = 32;
+			do
+			{
+				if (op->key==0)		/* _ONLY_ when KEY is OFF (checked) */
+				{
+					op->phase = 0;
+					op->state = EG_ATT;
+				}
+				op++;
+				i--;
+			}while (i);
+			PSG->csm_req = 1;
+		}
+		else						/* KEY OFF */
+		{
+			op = &PSG->oper[0];	/* CH 0 M1 */
+			i = 32;
+			do
+			{
+				if (op->key==0)		/* _ONLY_ when KEY is OFF (checked) */
+				{
+					if (op->state>EG_REL)
+						op->state = EG_REL;
+				}
+				op++;
+				i--;
+			}while (i);
+			PSG->csm_req = 0;
+		}
+	}
+
+
+	/* phase generator */
+	op = &PSG->oper[0];	/* CH 0 M1 */
+	i = 8;
+	do
+	{
+		if (op->pms)	/* only when phase modulation from LFO is enabled for this channel */
+		{
+			INT32 mod_ind = PSG->lfp;		/* -128..+127 (8bits signed) */
+			if (op->pms < 6)
+				mod_ind >>= (6 - op->pms);
+			else
+				mod_ind <<= (op->pms - 5);
+
+			if (mod_ind)
+			{
+				UINT32 kc_channel =	op->kc_i + mod_ind;
+				(op+ 0)->phase += ( (PSG->freq[ kc_channel + (op+ 0)->dt2 ] + (op+ 0)->dt1) * (op+ 0)->mul ) >> 1;
+				(op+ 8)->phase += ( (PSG->freq[ kc_channel + (op+ 8)->dt2 ] + (op+ 8)->dt1) * (op+ 8)->mul ) >> 1;
+				(op+16)->phase += ( (PSG->freq[ kc_channel + (op+16)->dt2 ] + (op+16)->dt1) * (op+16)->mul ) >> 1;
+				(op+24)->phase += ( (PSG->freq[ kc_channel + (op+24)->dt2 ] + (op+24)->dt1) * (op+24)->mul ) >> 1;
+			}
+			else		/* phase modulation from LFO is equal to zero */
+			{
+				(op+ 0)->phase += (op+ 0)->freq;
+				(op+ 8)->phase += (op+ 8)->freq;
+				(op+16)->phase += (op+16)->freq;
+				(op+24)->phase += (op+24)->freq;
+			}
+		}
+		else			/* phase modulation from LFO is disabled */
+		{
+			(op+ 0)->phase += (op+ 0)->freq;
+			(op+ 8)->phase += (op+ 8)->freq;
+			(op+16)->phase += (op+16)->freq;
+			(op+24)->phase += (op+24)->freq;
+		}
+
+		op++;
+		i--;
+	}while (i);
+}
+
 #if 0
 INLINE signed int acc_calc(signed int value)
 {
@@ -2027,7 +1937,6 @@ INLINE signed int acc_calc(signed int value)
 	if (value > -0x4000)
 		return (value & 0xffffffe0);
 	return (value & 0xffffffc0);
-
 }
 #endif
 
@@ -2066,8 +1975,6 @@ INLINE signed int acc_calc(signed int value)
 	#ifdef SAVE_SAMPLE
 	  #define SAVE_ALL_CHANNELS \
 	  {	signed int pom = outr; \
-		pom >>= FINAL_SH; \
-		if (pom > 32767) pom = 32767; else if (pom < -32768) pom = -32768; \
 		/*pom = acc_calc(pom);*/ \
 		/*fprintf(sample[8]," %i\n",pom);*/ \
 		fputc((unsigned short)pom&0xff,sample[8]); \
@@ -2080,13 +1987,9 @@ INLINE signed int acc_calc(signed int value)
 	#ifdef SAVE_SAMPLE
 	  #define SAVE_ALL_CHANNELS \
 	  {	signed int pom = outl; \
-		pom >>= FINAL_SH; \
-		if (pom > 32767) pom = 32767; else if (pom < -32768) pom = -32768; \
 		fputc((unsigned short)pom&0xff,sample[8]); \
 		fputc(((unsigned short)pom>>8)&0xff,sample[8]); \
 		pom = outr; \
-		pom >>= FINAL_SH; \
-		if (pom > 32767) pom = 32767; else if (pom < -32768) pom = -32768; \
 		fputc((unsigned short)pom&0xff,sample[8]); \
 		fputc(((unsigned short)pom>>8)&0xff,sample[8]); \
 	  }
@@ -2134,6 +2037,7 @@ void YM2151UpdateOne(int num, INT16 **buffers, int length)
 
 	for (i=0; i<length; i++)
 	{
+		advance_eg();
 
 		chan_calc(0);
 		SAVE_SINGLE_CHANNEL(0)
@@ -2152,7 +2056,6 @@ void YM2151UpdateOne(int num, INT16 **buffers, int length)
 		chan7_calc();
 		SAVE_SINGLE_CHANNEL(7)
 
-		SAVE_ALL_CHANNELS
 
 		outl = chanout[0] & PSG->pan[0];
 		outr = chanout[0] & PSG->pan[1];
@@ -2180,6 +2083,8 @@ void YM2151UpdateOne(int num, INT16 **buffers, int length)
 		((SAMP*)bufL)[i] = (SAMP)outl;
 		((SAMP*)bufR)[i] = (SAMP)outr;
 
+		SAVE_ALL_CHANNELS
+
 #ifdef USE_MAME_TIMERS
 		/* ASG 980324 - handled by real timers now */
 #else
@@ -2201,8 +2106,6 @@ void YM2151UpdateOne(int num, INT16 **buffers, int length)
 			}
 		}
 #endif
-
-		lfo_calc();
 		advance();
 	}
 }
@@ -2216,4 +2119,3 @@ void YM2151SetPortWriteHandler(int n, mem_write_handler handler)
 {
 	YMPSG[n].porthandler = handler;
 }
-

@@ -107,7 +107,7 @@ static WRITE16_HANDLER( color_ram_word_w )
 		g = (color_ram[offset] &0xff00) >> 8;
 		b = (color_ram[offset] &0xff);
 
-		palette_change_color(offset/2,r,g,b);
+		palette_set_color(offset/2,r,g,b);
 	}
 }
 
@@ -393,7 +393,7 @@ static struct YM2610interface ym2610_interface =
 {
 	1,	/* 1 chip */
 	16000000/2,	/* 8 MHz ?? */
-	{ 30 },
+	{ 25 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -401,7 +401,7 @@ static struct YM2610interface ym2610_interface =
 	{ irqhandler },
 	{ REGION_SOUND2 },	/* Delta-T */
 	{ REGION_SOUND1 },	/* ADPCM */
-	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) }
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
 };
 
 
@@ -436,7 +436,7 @@ static struct MachineDriver machine_driver_slapshot =
 	8192, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN,
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
 	taito_no_buffer_eof_callback,
 	slapshot_vh_start,
 	slapshot_vh_stop,

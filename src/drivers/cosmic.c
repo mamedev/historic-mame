@@ -310,10 +310,10 @@ static int cosmicg_interrupt(void)
 		{
 #if COSMICG_USES_TMS9980
 			/* on tms9980, a 6 on the interrupt bus means level 4 interrupt */
-			cpu_0_irq_line_vector_w(0, 6);
+			cpu_irq_line_vector_w(0, 0, 6);
 #else
 			/* tms9900 is more straightforward */
-			cpu_0_irq_line_vector_w(0, 4);
+			cpu_irq_line_vector_w(0, 0, 4);
 #endif
 			cpu_set_irq_line(0, 0, ASSERT_LINE);
 		}

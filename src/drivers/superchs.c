@@ -119,7 +119,7 @@ static WRITE32_HANDLER( superchs_palette_w )
 	g = (a &0xff00) >> 8;
 	b = (a &0xff);
 
-	palette_change_color(offset,r,g,b);
+	palette_set_color(offset,r,g,b);
 }
 
 static READ32_HANDLER( superchs_input_r )
@@ -499,7 +499,7 @@ static struct MachineDriver machine_driver_superchs =
 	8192, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN,
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,
 	superchs_vh_start,
 	superchs_vh_stop,

@@ -225,7 +225,7 @@ WRITE_HANDLER( exidy440_paletteram_w )
 		word = (local_paletteram[offset] << 8) + local_paletteram[offset + 1];
 
 		/* extract the 5-5-5 RGB colors */
-		palette_change_color(offset / 2, ((word >> 10) & 31) << 3, ((word >> 5) & 31) << 3, (word & 31) << 3);
+		palette_set_color(offset / 2, ((word >> 10) & 31) << 3, ((word >> 5) & 31) << 3, (word & 31) << 3);
 	}
 }
 
@@ -297,7 +297,7 @@ WRITE_HANDLER( exidy440_control_w )
 		{
 			/* extract a word and the 5-5-5 RGB components */
 			int word = (local_paletteram[offset] << 8) + local_paletteram[offset + 1];
-			palette_change_color(i, ((word >> 10) & 31) << 3, ((word >> 5) & 31) << 3, (word & 31) << 3);
+			palette_set_color(i, ((word >> 10) & 31) << 3, ((word >> 5) & 31) << 3, (word & 31) << 3);
 		}
 	}
 }
@@ -337,7 +337,7 @@ int exidy440_vblank_interrupt(void)
 	if (!exidy440_topsecret)
 		timer_set(TIME_IN_USEC(Machine->drv->vblank_duration - 50), 0, exidy440_update_callback);
 
-	return 0;
+	return ignore_interrupt();
 }
 
 

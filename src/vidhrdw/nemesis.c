@@ -99,7 +99,7 @@ WRITE16_HANDLER( nemesis_palette_word_w )
 	b = MULTIPLIER;
 	b = pow (b/255.0, 2)*255;
 
-	palette_change_color(offset,r,g,b);
+	palette_set_color(offset,r,g,b);
 }
 
 WRITE16_HANDLER( salamander_palette_word_w )
@@ -119,7 +119,7 @@ WRITE16_HANDLER( salamander_palette_word_w )
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
 
-	palette_change_color(offset / 2,r,g,b);
+	palette_set_color(offset / 2,r,g,b);
 }
 
 READ16_HANDLER( nemesis_videoram1b_word_r )

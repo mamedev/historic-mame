@@ -500,7 +500,7 @@ static const struct MachineDriver machine_driver_exterm =
 	4096+32768,0,
     exterm_init_palette,
 
-    VIDEO_TYPE_RASTER ,
+    VIDEO_TYPE_RASTER,
 	0,
 	exterm_vh_start,
 	exterm_vh_stop,

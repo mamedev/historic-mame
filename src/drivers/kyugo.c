@@ -32,7 +32,7 @@ extern unsigned char *kyugo_back_scrollX;
 WRITE_HANDLER( kyugo_gfxctrl_w );
 WRITE_HANDLER( kyugo_flipscreen_w );
 void kyugo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void kyugo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void kyugo_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 
 
 static unsigned char *shared_ram;
@@ -605,7 +605,7 @@ static const struct MachineDriver machine_driver_##name =											\
 	/* video hardware */																	\
 	64*8, 32*8, { 0*8, 36*8-1, 2*8, 30*8-1 },												\
 	gfxdecodeinfo,																			\
-	256, 256,																				\
+	256, 0,																					\
 	kyugo_vh_convert_color_prom,															\
 																							\
 	VIDEO_TYPE_RASTER,																		\

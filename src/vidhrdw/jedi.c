@@ -93,7 +93,7 @@ int jedi_vh_start(void)
 	}
 
 	/* reserve color 1024 for black (disabled display) */
-	palette_change_color(1024, 0, 0, 0);
+	palette_set_color(1024, 0, 0, 0);
 	return 0;
 }
 
@@ -159,7 +159,7 @@ WRITE_HANDLER( jedi_paletteram_w )
 	bits = (color >> 0) & 7;
 	b = 5 * bits * intensity;
 
-	palette_change_color(offset & 0x3ff, r, g, b);
+	palette_set_color(offset & 0x3ff, r, g, b);
 }
 
 

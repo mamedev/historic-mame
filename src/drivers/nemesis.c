@@ -2029,7 +2029,7 @@ static const struct MachineDriver machine_driver_nemesis =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	nemesis_vh_start,
 	nemesis_vh_stop,
@@ -2081,7 +2081,7 @@ static const struct MachineDriver machine_driver_konamigt =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	nemesis_vh_start,
 	nemesis_vh_stop,
@@ -2129,7 +2129,7 @@ static const struct MachineDriver machine_driver_salamand =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	nemesis_vh_start,
 	nemesis_vh_stop,
@@ -2181,7 +2181,7 @@ static const struct MachineDriver machine_driver_blkpnthr =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	nemesis_vh_start,
 	nemesis_vh_stop,
@@ -2229,7 +2229,7 @@ static const struct MachineDriver machine_driver_citybomb =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	nemesis_vh_start,
 	nemesis_vh_stop,
@@ -2281,7 +2281,7 @@ static const struct MachineDriver machine_driver_nyanpani =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	nemesis_vh_start,
 	nemesis_vh_stop,
@@ -2333,7 +2333,7 @@ static const struct MachineDriver machine_driver_gx400 =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	nemesis_vh_start,
 	nemesis_vh_stop,
@@ -2385,7 +2385,7 @@ static const struct MachineDriver machine_driver_twinbee_gx400 =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	nemesis_vh_start,
 	nemesis_vh_stop,
@@ -2437,7 +2437,7 @@ static const struct MachineDriver machine_driver_rf2_gx400 =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	nemesis_vh_start,
 	nemesis_vh_stop,

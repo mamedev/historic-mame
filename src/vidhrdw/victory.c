@@ -230,7 +230,7 @@ WRITE_HANDLER( victory_paletteram_w )
 	blue  = (blue << 5)  | (blue << 2)  | (blue >> 1);
 
 	/* set the color */
-	palette_change_color(offset & 0x3f, red, green, blue);
+	palette_set_color(offset & 0x3f, red, green, blue);
 }
 
 

@@ -28,7 +28,7 @@ unsigned char *copsnrob_truckram;
 
 int copsnrob_vh_start(void)
 {
-	overlay_create(copsnrob_overlay, 2, Machine->drv->total_colors - 2);
+	overlay_create(copsnrob_overlay, 2);
 
     return 0;
 }

@@ -217,7 +217,7 @@ static const struct MachineDriver machine_driver_blockout =
 	513, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	blockout_vh_start,
 	blockout_vh_stop,

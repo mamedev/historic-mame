@@ -552,7 +552,7 @@ static const struct MachineDriver machine_driver_rainbow =
 	8192, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	rainbow_vh_start,
 	rastan_vh_stop,
@@ -596,7 +596,7 @@ static const struct MachineDriver machine_driver_jumping =
 	8192, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	jumping_vh_start,
 	rastan_vh_stop,

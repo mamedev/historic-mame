@@ -45,6 +45,34 @@ TODO:
 - No samples in Pound for Pound, I haven't checked why; there are a lot of unknown
   I/O writes.
 
+- the sprite chip triggers IRQ1 when it has finished copying the sprite RAM to its
+  private buffer. This isn't implemented (all games have an empty IRQ1 handler).
+  The cpu board also has support for IRQ3 and IRQ4, coming from the external
+  connectors, but I don't think they are used by any game.
+
+IRQ controller
+--------------
+The initialization consists of one write to port 0x40 and multiple writes
+(2 or 3) to port 0x42. The first value written to 0x42 is the IRQ vector base.
+Kengo probably has a different controller.
+
+Game      irqbase 0x40  0x42
+----      ------- ----  ----------
+rtype       0x20   17    20 0F
+bchopper     "     "     "
+nspirit      "     "     "
+loht         "     "     "
+rtype2       "     "     "
+airduel      "     "     "
+gallop       "     "     "
+imgfight    0x20   17    20 0F 06
+majtitle     "     "     "
+poundfor    0x20   17    20 0F 0A
+xmultipl    0x08   13    08 0F FA
+dbreed       "     "     "
+hharry       "     "     "
+kengo       0x18   --------------
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -57,12 +85,13 @@ TODO:
 extern unsigned char *m72_videoram1,*m72_videoram2,*majtitle_rowscrollram;
 void m72_init_machine(void);
 void xmultipl_init_machine(void);
-void poundfor_init_machine(void);
+void kengo_init_machine(void);
 int m72_interrupt(void);
 int m72_vh_start(void);
 int rtype2_vh_start(void);
 int majtitle_vh_start(void);
 int hharry_vh_start(void);
+int poundfor_vh_start(void);
 void m72_vh_stop(void);
 READ_HANDLER( m72_palette1_r );
 READ_HANDLER( m72_palette2_r );
@@ -77,9 +106,7 @@ WRITE_HANDLER( m72_scrollx1_w );
 WRITE_HANDLER( m72_scrollx2_w );
 WRITE_HANDLER( m72_scrolly1_w );
 WRITE_HANDLER( m72_scrolly2_w );
-WRITE_HANDLER( m72_spritectrl_w );
-WRITE_HANDLER( hharry_spritectrl_w );
-WRITE_HANDLER( hharryu_spritectrl_w );
+WRITE_HANDLER( m72_dmaon_w );
 WRITE_HANDLER( m72_port02_w );
 WRITE_HANDLER( rtype2_port02_w );
 WRITE_HANDLER( majtitle_gfx_ctrl_w );
@@ -551,7 +578,7 @@ MEMORY_END
 static MEMORY_WRITE_START( rtype2_writemem )
 	{ 0x00000, 0x7ffff, MWA_ROM },
 	{ 0xb0000, 0xb0001, m72_irq_line_w },
-	{ 0xbc000, 0xbc001, m72_spritectrl_w },
+	{ 0xbc000, 0xbc001, m72_dmaon_w },
 	{ 0xc0000, 0xc03ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xc8000, 0xc8bff, m72_palette1_w, &paletteram },
 	{ 0xd0000, 0xd3fff, m72_videoram1_w, &m72_videoram1 },
@@ -584,7 +611,7 @@ static MEMORY_WRITE_START( majtitle_writemem )
 	{ 0xd0000, 0xd3fff, MWA_RAM },	/* work RAM */
 	{ 0xe0000, 0xe0001, m72_irq_line_w },
 	{ 0xe4000, 0xe4001, MWA_RAM },	/* playfield enable? 1 during screen transitions, 0 otherwise */
-	{ 0xec000, 0xec001, hharryu_spritectrl_w },
+	{ 0xec000, 0xec001, m72_dmaon_w },
 MEMORY_END
 
 static MEMORY_READ_START( hharry_readmem )
@@ -623,7 +650,7 @@ static MEMORY_WRITE_START( hharryu_writemem )
 	{ 0xa0000, 0xa0bff, m72_palette1_w, &paletteram },
 	{ 0xa8000, 0xa8bff, m72_palette2_w, &paletteram_2 },
 	{ 0xb0000, 0xb0001, m72_irq_line_w },
-	{ 0xbc000, 0xbc001, hharryu_spritectrl_w },
+	{ 0xbc000, 0xbc001, m72_dmaon_w },
 	{ 0xb0ffe, 0xb0fff, MWA_RAM },	/* leftover from protection?? */
 	{ 0xc0000, 0xc03ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xd0000, 0xd3fff, m72_videoram1_w, &m72_videoram1 },
@@ -647,7 +674,7 @@ static MEMORY_WRITE_START( kengo_writemem )
 	{ 0xa8000, 0xa8bff, m72_palette2_w, &paletteram_2 },
 	{ 0xb0000, 0xb0001, m72_irq_line_w },
 { 0xb4000, 0xb4001, MWA_NOP },	/* ??? */
-	{ 0xbc000, 0xbc001, hharryu_spritectrl_w },
+	{ 0xbc000, 0xbc001, m72_dmaon_w },
 	{ 0xc0000, 0xc03ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x80000, 0x83fff, m72_videoram1_w, &m72_videoram1 },
 	{ 0x84000, 0x87fff, m72_videoram2_w, &m72_videoram2 },
@@ -675,8 +702,9 @@ PORT_END
 static PORT_WRITE_START( writeport )
 	{ 0x00, 0x01, m72_sound_command_w },
 	{ 0x02, 0x03, m72_port02_w },	/* coin counters, reset sound cpu, other stuff? */
-	{ 0x04, 0x05, m72_spritectrl_w },
+	{ 0x04, 0x05, m72_dmaon_w },
 	{ 0x06, 0x07, m72_irq_line_w },
+	{ 0x40, 0x43, MWA_NOP }, /* Interrupt controller, only written to at bootup */
 	{ 0x80, 0x81, m72_scrolly1_w },
 	{ 0x82, 0x83, m72_scrollx1_w },
 	{ 0x84, 0x85, m72_scrolly2_w },
@@ -687,8 +715,9 @@ PORT_END
 static PORT_WRITE_START( xmultipl_writeport )
 	{ 0x00, 0x01, m72_sound_command_w },
 	{ 0x02, 0x03, m72_port02_w },	/* coin counters, reset sound cpu, other stuff? */
-	{ 0x04, 0x04, hharry_spritectrl_w },
+	{ 0x04, 0x05, m72_dmaon_w },
 	{ 0x06, 0x07, m72_irq_line_w },
+	{ 0x40, 0x43, MWA_NOP }, /* Interrupt controller, only written to at bootup */
 	{ 0x80, 0x81, m72_scrolly1_w },
 	{ 0x82, 0x83, m72_scrollx1_w },
 	{ 0x84, 0x85, m72_scrolly2_w },
@@ -699,6 +728,7 @@ PORT_END
 static PORT_WRITE_START( rtype2_writeport )
 	{ 0x00, 0x01, m72_sound_command_w },
 	{ 0x02, 0x03, rtype2_port02_w },
+	{ 0x40, 0x43, MWA_NOP }, /* Interrupt controller, only written to at bootup */
 	{ 0x80, 0x81, m72_scrolly1_w },
 	{ 0x82, 0x83, m72_scrollx1_w },
 	{ 0x84, 0x85, m72_scrolly2_w },
@@ -708,6 +738,7 @@ PORT_END
 static PORT_WRITE_START( majtitle_writeport )
 	{ 0x00, 0x01, m72_sound_command_w },
 	{ 0x02, 0x03, rtype2_port02_w },
+	{ 0x40, 0x43, MWA_NOP }, /* Interrupt controller, only written to at bootup */
 	{ 0x80, 0x81, m72_scrolly1_w },
 	{ 0x82, 0x83, m72_scrollx1_w },
 	{ 0x84, 0x85, m72_scrolly2_w },
@@ -718,8 +749,9 @@ PORT_END
 static PORT_WRITE_START( hharry_writeport )
 	{ 0x00, 0x01, m72_sound_command_w },
 	{ 0x02, 0x03, rtype2_port02_w },	/* coin counters, reset sound cpu, other stuff? */
-	{ 0x04, 0x04, hharry_spritectrl_w },
+	{ 0x04, 0x05, m72_dmaon_w },
 	{ 0x06, 0x07, m72_irq_line_w },
+	{ 0x40, 0x43, MWA_NOP }, /* Interrupt controller, only written to at bootup */
 	{ 0x80, 0x81, m72_scrolly1_w },
 	{ 0x82, 0x83, m72_scrollx1_w },
 	{ 0x84, 0x85, m72_scrolly2_w },
@@ -733,7 +765,7 @@ static PORT_WRITE_START( kengo_writeport )
 	{ 0x82, 0x83, m72_scrollx1_w },
 	{ 0x84, 0x85, m72_scrolly2_w },
 	{ 0x86, 0x87, m72_scrollx2_w },
-{ 0x8c, 0x8f, MWA_NOP },	/* ??? */
+//{ 0x8c, 0x8f, MWA_NOP },	/* ??? */
 PORT_END
 
 
@@ -854,8 +886,8 @@ INPUT_PORTS_START( rtype )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE ) /* 0x20 is another test mode */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )	/* sprite DMA complete */
 
 	PORT_START
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -926,8 +958,8 @@ INPUT_PORTS_START( rtypep )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE ) /* 0x20 is another test mode */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )	/* sprite DMA complete */
 
 	PORT_START
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -997,8 +1029,8 @@ INPUT_PORTS_START( bchopper )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE ) /* 0x20 is another test mode */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )	/* sprite DMA complete */
 
 	PORT_START
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1068,8 +1100,8 @@ INPUT_PORTS_START( nspirit )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE ) /* 0x20 is another test mode */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )	/* sprite DMA complete */
 
 	PORT_START
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1138,8 +1170,8 @@ INPUT_PORTS_START( imgfight )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE ) /* 0x20 is another test mode */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )	/* sprite DMA complete */
 
 	PORT_START
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1208,8 +1240,8 @@ INPUT_PORTS_START( loht )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE ) /* 0x20 is another test mode */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )	/* sprite DMA complete */
 
 	PORT_START
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1278,8 +1310,8 @@ INPUT_PORTS_START( xmultipl )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE ) /* 0x20 is another test mode */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )	/* sprite DMA complete */
 
 	PORT_START
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1348,8 +1380,8 @@ INPUT_PORTS_START( dbreed )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE ) /* 0x20 is another test mode */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )	/* sprite DMA complete */
 
 	PORT_START
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1418,8 +1450,8 @@ INPUT_PORTS_START( rtype2 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE ) /* 0x20 is another test mode */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )	/* sprite DMA complete */
 
 	PORT_START
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1487,8 +1519,8 @@ INPUT_PORTS_START( hharry )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE ) /* 0x20 is another test mode */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )	/* sprite DMA complete */
 
 	PORT_START
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1569,8 +1601,8 @@ INPUT_PORTS_START( poundfor )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE ) /* 0x20 is another test mode */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )	/* sprite DMA complete */
 
 	PORT_START
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1669,8 +1701,8 @@ INPUT_PORTS_START( airduel )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE ) /* 0x20 is another test mode */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )	/* sprite DMA complete */
 
 	PORT_START
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1755,8 +1787,8 @@ INPUT_PORTS_START( gallop )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE ) /* 0x20 is another test mode */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )	/* sprite DMA complete */
 
 	PORT_START
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1840,8 +1872,8 @@ INPUT_PORTS_START( kengo )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE ) /* 0x20 is another test mode */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )	/* sprite DMA complete */
 
 	PORT_START
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1932,22 +1964,22 @@ static struct GfxLayout spritelayout =
 static struct GfxDecodeInfo m72_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &spritelayout,    0, 16 },
-	{ REGION_GFX2, 0, &tilelayout,    512, 16 },
-	{ REGION_GFX3, 0, &tilelayout,    512, 16 },
+	{ REGION_GFX2, 0, &tilelayout,    256, 16 },
+	{ REGION_GFX3, 0, &tilelayout,    256, 16 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo rtype2_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &spritelayout,     0, 16 },
-	{ REGION_GFX2, 0, &tilelayout,     512, 16 },
+	{ REGION_GFX2, 0, &tilelayout,     256, 16 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo majtitle_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &spritelayout,     0, 16 },
-	{ REGION_GFX2, 0, &tilelayout,     512, 16 },
+	{ REGION_GFX2, 0, &tilelayout,     256, 16 },
 	{ REGION_GFX3, 0, &spritelayout,     0, 16 },
 	{ -1 } /* end of array */
 };
@@ -1977,7 +2009,7 @@ static const struct MachineDriver machine_driver_rtype =
 	{
 		{
 			CPU_V30,
-			16000000,	/* ?? */
+			32000000/2,	/* 16 MHz external freq (8MHz internal) */
 			rtype_readmem,rtype_writemem,readport,writeport,
 			m72_interrupt,256
 		},
@@ -1996,10 +2028,10 @@ static const struct MachineDriver machine_driver_rtype =
 	/* video hardware */
 	512, 512, { 8*8, (64-8)*8-1, 16*8, (64-16)*8-1 },
 	m72_gfxdecodeinfo,
-	1024, 0,
+	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	m72_eof_callback,
 	m72_vh_start,
 	m72_vh_stop,
@@ -2021,7 +2053,7 @@ static const struct MachineDriver machine_driver_m72 =
 	{
 		{
 			CPU_V30,
-			16000000,	/* ?? */
+			32000000/2,	/* 16 MHz external freq (8MHz internal) */
 			m72_readmem,m72_writemem,readport,writeport,
 			m72_interrupt,256
 		},
@@ -2040,10 +2072,10 @@ static const struct MachineDriver machine_driver_m72 =
 	/* video hardware */
 	512, 512, { 8*8, (64-8)*8-1, 16*8, (64-16)*8-1 },
 	m72_gfxdecodeinfo,
-	1024, 0,
+	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	m72_eof_callback,
 	m72_vh_start,
 	m72_vh_stop,
@@ -2069,7 +2101,7 @@ static const struct MachineDriver machine_driver_dkgenm72 =
 	{
 		{
 			CPU_V30,
-			16000000,	/* ?? */
+			32000000/2,	/* 16 MHz external freq (8MHz internal) */
 			m72_readmem,m72_writemem,readport,xmultipl_writeport,
 			m72_interrupt,256
 		},
@@ -2088,10 +2120,10 @@ static const struct MachineDriver machine_driver_dkgenm72 =
 	/* video hardware */
 	512, 512, { 8*8, (64-8)*8-1, 16*8, (64-16)*8-1 },
 	m72_gfxdecodeinfo,
-	1024, 0,
+	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	m72_eof_callback,
 	m72_vh_start,
 	m72_vh_stop,
@@ -2117,7 +2149,7 @@ static const struct MachineDriver machine_driver_xmultipl =
 	{
 		{
 			CPU_V30,
-			16000000,	/* ?? */
+			32000000/2,	/* 16 MHz external freq (8MHz internal) */
 			xmultipl_readmem,xmultipl_writemem,readport,xmultipl_writeport,
 			m72_interrupt,256
 		},
@@ -2136,10 +2168,10 @@ static const struct MachineDriver machine_driver_xmultipl =
 	/* video hardware */
 	512, 512, { 8*8, (64-8)*8-1, 16*8, (64-16)*8-1 },
 	m72_gfxdecodeinfo,
-	1024, 0,
+	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	m72_eof_callback,
 	m72_vh_start,
 	m72_vh_stop,
@@ -2165,7 +2197,7 @@ static const struct MachineDriver machine_driver_dbreed =
 	{
 		{
 			CPU_V30,
-			16000000,	/* ?? */
+			32000000/2,	/* 16 MHz external freq (8MHz internal) */
 			dbreed_readmem,dbreed_writemem,readport,xmultipl_writeport,
 			m72_interrupt,256
 		},
@@ -2184,10 +2216,10 @@ static const struct MachineDriver machine_driver_dbreed =
 	/* video hardware */
 	512, 512, { 8*8, (64-8)*8-1, 16*8, (64-16)*8-1 },
 	m72_gfxdecodeinfo,
-	1024, 0,
+	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	m72_eof_callback,
 	m72_vh_start,
 	m72_vh_stop,
@@ -2213,7 +2245,7 @@ static const struct MachineDriver machine_driver_rtype2 =
 	{
 		{
 			CPU_V30,
-			16000000,	/* ?? */
+			32000000/2,	/* 16 MHz external freq (8MHz internal) */
 			rtype2_readmem,rtype2_writemem,readport,rtype2_writeport,
 			m72_interrupt,256
 		},
@@ -2232,10 +2264,10 @@ static const struct MachineDriver machine_driver_rtype2 =
 	/* video hardware */
 	512, 512, { 8*8, (64-8)*8-1, 16*8, (64-16)*8-1 },
 	rtype2_gfxdecodeinfo,
-	1024, 0,
+	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	m72_eof_callback,
 	rtype2_vh_start,
 	m72_vh_stop,
@@ -2261,7 +2293,7 @@ static const struct MachineDriver machine_driver_majtitle =
 	{
 		{
 			CPU_V30,
-			16000000,	/* ?? */
+			32000000/2,	/* 16 MHz external freq (8MHz internal) */
 			majtitle_readmem,majtitle_writemem,readport,majtitle_writeport,
 			m72_interrupt,256
 		},
@@ -2280,10 +2312,10 @@ static const struct MachineDriver machine_driver_majtitle =
 	/* video hardware */
 	512, 512, { 8*8, (64-8)*8-1, 16*8, (64-16)*8-1 },
 	majtitle_gfxdecodeinfo,
-	1024, 0,
+	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	m72_eof_callback,
 	majtitle_vh_start,
 	m72_vh_stop,
@@ -2309,7 +2341,7 @@ static const struct MachineDriver machine_driver_hharry =
 	{
 		{
 			CPU_V30,
-			16000000,	/* ?? */
+			32000000/2,	/* 16 MHz external freq (8MHz internal) */
 			hharry_readmem,hharry_writemem,readport,hharry_writeport,
 			m72_interrupt,256
 		},
@@ -2328,10 +2360,10 @@ static const struct MachineDriver machine_driver_hharry =
 	/* video hardware */
 	512, 512, { 8*8, (64-8)*8-1, 16*8, (64-16)*8-1 },
 	rtype2_gfxdecodeinfo,
-	1024, 0,
+	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	m72_eof_callback,
 	hharry_vh_start,
 	m72_vh_stop,
@@ -2357,7 +2389,7 @@ static const struct MachineDriver machine_driver_hharryu =
 	{
 		{
 			CPU_V30,
-			16000000,	/* ?? */
+			32000000/2,	/* 16 MHz external freq (8MHz internal) */
 			hharryu_readmem,hharryu_writemem,readport,rtype2_writeport,
 			m72_interrupt,256
 		},
@@ -2376,10 +2408,10 @@ static const struct MachineDriver machine_driver_hharryu =
 	/* video hardware */
 	512, 512, { 8*8, (64-8)*8-1, 16*8, (64-16)*8-1 },
 	rtype2_gfxdecodeinfo,
-	1024, 0,
+	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	m72_eof_callback,
 	rtype2_vh_start,
 	m72_vh_stop,
@@ -2405,7 +2437,7 @@ static const struct MachineDriver machine_driver_poundfor =
 	{
 		{
 			CPU_V30,
-			16000000,	/* ?? */
+			32000000/2,	/* 16 MHz external freq (8MHz internal) */
 			rtype2_readmem,rtype2_writemem,poundfor_readport,rtype2_writeport,
 			m72_interrupt,256
 		},
@@ -2419,17 +2451,17 @@ static const struct MachineDriver machine_driver_poundfor =
 	},
 	55, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	poundfor_init_machine,
+	m72_init_machine,
 
 	/* video hardware */
 	512, 512, { 8*8, (64-8)*8-1, 16*8, (64-16)*8-1 },
 	rtype2_gfxdecodeinfo,
-	1024, 0,
+	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	m72_eof_callback,
-	rtype2_vh_start,
+	poundfor_vh_start,
 	m72_vh_stop,
 	m72_vh_screenrefresh,
 
@@ -2453,7 +2485,7 @@ static const struct MachineDriver machine_driver_kengo =
 	{
 		{
 			CPU_V30,
-			16000000,	/* ?? */
+			32000000/2,	/* 16 MHz external freq (8MHz internal) */
 			kengo_readmem,kengo_writemem,readport,kengo_writeport,
 			m72_interrupt,256
 		},
@@ -2467,17 +2499,17 @@ static const struct MachineDriver machine_driver_kengo =
 	},
 	55, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	poundfor_init_machine,
+	kengo_init_machine,
 
 	/* video hardware */
 	512, 512, { 8*8, (64-8)*8-1, 16*8, (64-16)*8-1 },
 	rtype2_gfxdecodeinfo,
-	1024, 0,
+	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	m72_eof_callback,
-	rtype2_vh_start,
+	poundfor_vh_start,
 	m72_vh_stop,
 	m72_vh_screenrefresh,
 

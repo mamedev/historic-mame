@@ -441,7 +441,7 @@ static void argus_change_palette(int color, int data)
 	g = (g << 4) | g;
 	b = (b << 4) | b;
 
-	palette_change_color(color, r, g, b);
+	palette_set_color(color, r, g, b);
 }
 
 static void argus_change_bg_palette(int color, int data)
@@ -473,7 +473,7 @@ static void argus_change_bg_palette(int color, int data)
 	g = (g << 4) | g;
 	b = (b << 4) | b;
 
-	palette_change_color(color, r, g, b);
+	palette_set_color(color, r, g, b);
 }
 
 

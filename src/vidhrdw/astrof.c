@@ -68,7 +68,7 @@ static void modify_palette(void)
 
 		col_index++;
 
-		palette_change_color(i,r,g,b);
+		palette_set_color(i,r,g,b);
 	}
 }
 

@@ -407,7 +407,7 @@ static const struct MachineDriver machine_driver_bloodbro =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	bloodbro_vh_start,
 	0,
@@ -443,7 +443,7 @@ static const struct MachineDriver machine_driver_weststry =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	bloodbro_vh_start,
 	0,

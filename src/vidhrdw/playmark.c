@@ -177,7 +177,7 @@ WRITE16_HANDLER( bigtwin_paletteram_w )
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
 
-	palette_change_color(offset,r,g,b);
+	palette_set_color(offset,r,g,b);
 }
 
 WRITE16_HANDLER( bigtwin_bgvideoram_w )
@@ -271,7 +271,7 @@ static void draw_sprites(struct osd_bitmap *bitmap,int codeshift)
 
 void bigtwin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	palette_change_color(256,0,0,0);	/* keep the background black */
+	palette_set_color(256,0,0,0);	/* keep the background black */
 
 	copyscrollbitmap(bitmap,bgbitmap,1,&bgscrollx,1,&bgscrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	tilemap_draw(bitmap,fg_tilemap,0,0);

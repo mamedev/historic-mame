@@ -547,7 +547,7 @@ void slikshot_extra_draw(struct osd_bitmap *bitmap)
 	int newshoot;
 
 	/* make sure color 256 is white for our crosshair */
-	palette_change_color(256, 0xff, 0xff, 0xff);
+	palette_set_color(256, 0xff, 0xff, 0xff);
 
 	/* compute the updated values */
 	curvx = vx;

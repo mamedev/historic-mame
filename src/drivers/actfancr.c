@@ -434,10 +434,10 @@ static const struct MachineDriver machine_driver_actfancr =
 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	actfan_gfxdecodeinfo,
-	768, 768,
+	768, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM | VIDEO_UPDATE_AFTER_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM | VIDEO_UPDATE_AFTER_VBLANK,
 	0,
 	actfancr_vh_start,
 	0,
@@ -486,10 +486,10 @@ static const struct MachineDriver machine_driver_triothep =
 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	triothep_gfxdecodeinfo,
-	768, 768,
+	768, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM | VIDEO_UPDATE_AFTER_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM | VIDEO_UPDATE_AFTER_VBLANK,
 	0,
 	triothep_vh_start,
 	0,

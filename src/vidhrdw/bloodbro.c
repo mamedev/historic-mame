@@ -165,7 +165,7 @@ static void bloodbro_draw_sprites( struct osd_bitmap *bitmap)
    -------X XXXXXXXX
 */
 
-static void weststry_draw_sprites( struct osd_bitmap *bitmap, int priority)
+static void weststry_draw_sprites( struct osd_bitmap *bitmap)
 {
 	int offs;
 
@@ -208,6 +208,8 @@ void bloodbro_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 	tilemap_set_scrollx(fg_tilemap,0,bloodbro_scroll[0x12]);
 	tilemap_set_scrolly(fg_tilemap,0,bloodbro_scroll[0x13]);
 
+	fillbitmap(priority_bitmap,0,NULL);
+
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	tilemap_draw(bitmap,fg_tilemap,0,1);
 	bloodbro_draw_sprites(bitmap);
@@ -221,8 +223,10 @@ void weststry_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 //	tilemap_set_scrollx(fg_tilemap,0,bloodbro_scroll[0x12]);
 //	tilemap_set_scrolly(fg_tilemap,0,bloodbro_scroll[0x13]);
 
+	fillbitmap(priority_bitmap,0,NULL);
+
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	tilemap_draw(bitmap,fg_tilemap,0,1);
-	weststry_draw_sprites(bitmap,1);
+	weststry_draw_sprites(bitmap);
 	tilemap_draw(bitmap,tx_tilemap,0,0);
 }

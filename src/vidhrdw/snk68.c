@@ -142,7 +142,7 @@ WRITE16_HANDLER( pow_paletteram16_word_w )
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
 
-	palette_change_color(offset,r,g,b);
+	palette_set_color(offset,r,g,b);
 }
 
 WRITE16_HANDLER( pow_video16_w )

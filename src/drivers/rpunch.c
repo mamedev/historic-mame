@@ -652,7 +652,7 @@ static const struct MachineDriver machine_driver_rpunch =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	rpunch_vh_start,
 	rpunch_vh_stop,

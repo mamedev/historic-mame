@@ -472,9 +472,10 @@ static const struct MachineDriver machine_driver_yunsung8 =
 	/* video hardware */
 	512, 256, { 0+64, 512-64-1, 0+8, 256-8-1 },
 	yunsung8_gfxdecodeinfo,
-	0x800, 0x800,
+	2048, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	yunsung8_vh_start,
 	0,

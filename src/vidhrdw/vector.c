@@ -172,7 +172,7 @@ static UINT16 find_pen(unsigned char r,unsigned char g,unsigned char b)
 		{
 			unsigned char r1,g1,b1;
 
-			osd_get_pen(pens[i],&r1,&g1,&b1);
+			palette_get_color(i,&r1,&g1,&b1);
 			if((x=(long)(abs(r1-r)+1)) > ii) continue;
 			if((y=(long)(abs(g1-g)+1)) > ii) continue;
 			if((z=(long)(abs(b1-b)+1)) > ii) continue;
@@ -304,7 +304,7 @@ int vector_vh_start (void)
 		for (j = 0; j < total_colors; j++)               /* color */
 		{
 			UINT8 r1,g1,b1,pen,n;
-			osd_get_pen(pens[j],&r1,&g1,&b1);
+			palette_get_color(j,&r1,&g1,&b1);
 			pen = find_pen( (r1*(i+1))>>8, (g1*(i+1))>>8, (b1*(i+1))>>8 );
 			for (n = 0; n < h; n++ )
 			{
@@ -318,10 +318,10 @@ int vector_vh_start (void)
 	{
 		unsigned char rgb1[3],rgb2[3];
 
-		osd_get_pen(pens[i],&rgb1[0],&rgb1[1],&rgb1[2]);
+		palette_get_color(i,&rgb1[0],&rgb1[1],&rgb1[2]);
 		for( j = 0; j <= i ;j++ )               /* color2 */
 		{
-			osd_get_pen(pens[j],&rgb2[0],&rgb2[1],&rgb2[2]);
+			palette_get_color(j,&rgb2[0],&rgb2[1],&rgb2[2]);
 
 			for (k = 0; k < 3; k++)
 			if (translucency) /* add gun values */

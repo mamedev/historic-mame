@@ -11,9 +11,6 @@ enum {
 	M6800_PC=1, M6800_S, M6800_A, M6800_B, M6800_X, M6800_CC,
 	M6800_WAI_STATE, M6800_NMI_STATE, M6800_IRQ_STATE };
 
-#define M6800_INT_NONE  0           /* No interrupt required */
-#define M6800_INT_IRQ	1			/* Standard IRQ interrupt */
-#define M6800_INT_NMI	2			/* NMI interrupt		  */
 #define M6800_WAI		8			/* set when WAI is waiting for an interrupt */
 #define M6800_SLP		0x10		/* HD63701 only */
 
@@ -60,9 +57,6 @@ unsigned m6800_dasm(char *buffer, unsigned pc);
 #define M6801_NMI_STATE 			M6800_NMI_STATE
 #define M6801_IRQ_STATE 			M6800_IRQ_STATE
 
-#define M6801_INT_NONE              M6800_INT_NONE
-#define M6801_INT_IRQ				M6800_INT_IRQ
-#define M6801_INT_NMI				M6800_INT_NMI
 #define M6801_WAI					M6800_WAI
 #define M6801_IRQ_LINE				M6800_IRQ_LINE
 
@@ -100,9 +94,6 @@ unsigned m6801_dasm(char *buffer, unsigned pc);
 #define M6802_NMI_STATE 			M6800_NMI_STATE
 #define M6802_IRQ_STATE 			M6800_IRQ_STATE
 
-#define M6802_INT_NONE              M6800_INT_NONE
-#define M6802_INT_IRQ				M6800_INT_IRQ
-#define M6802_INT_NMI				M6800_INT_NMI
 #define M6802_WAI					M6800_WAI
 #define M6802_IRQ_LINE				M6800_IRQ_LINE
 
@@ -140,9 +131,6 @@ unsigned m6802_dasm(char *buffer, unsigned pc);
 #define M6803_NMI_STATE 			M6800_NMI_STATE
 #define M6803_IRQ_STATE 			M6800_IRQ_STATE
 
-#define M6803_INT_NONE              M6800_INT_NONE
-#define M6803_INT_IRQ				M6800_INT_IRQ
-#define M6803_INT_NMI				M6800_INT_NMI
 #define M6803_WAI					M6800_WAI
 #define M6803_IRQ_LINE				M6800_IRQ_LINE
 #define M6803_TIN_LINE				M6800_TIN_LINE
@@ -195,9 +183,6 @@ WRITE_HANDLER( m6803_internal_registers_w );
 #define M6808_NMI_STATE 			M6800_NMI_STATE
 #define M6808_IRQ_STATE 			M6800_IRQ_STATE
 
-#define M6808_INT_NONE              M6800_INT_NONE
-#define M6808_INT_IRQ               M6800_INT_IRQ
-#define M6808_INT_NMI               M6800_INT_NMI
 #define M6808_WAI                   M6800_WAI
 #define M6808_IRQ_LINE              M6800_IRQ_LINE
 
@@ -235,9 +220,6 @@ unsigned m6808_dasm(char *buffer, unsigned pc);
 #define HD63701_NMI_STATE			 M6800_NMI_STATE
 #define HD63701_IRQ_STATE			 M6800_IRQ_STATE
 
-#define HD63701_INT_NONE             M6800_INT_NONE
-#define HD63701_INT_IRQ 			 M6800_INT_IRQ
-#define HD63701_INT_NMI 			 M6800_INT_NMI
 #define HD63701_WAI 				 M6800_WAI
 #define HD63701_SLP 				 M6800_SLP
 #define HD63701_IRQ_LINE			 M6800_IRQ_LINE
@@ -289,9 +271,6 @@ WRITE_HANDLER( hd63701_internal_registers_w );
 #define NSC8105_NMI_STATE			 M6800_NMI_STATE
 #define NSC8105_IRQ_STATE			 M6800_IRQ_STATE
 
-#define NSC8105_INT_NONE             M6800_INT_NONE
-#define NSC8105_INT_IRQ 			 M6800_INT_IRQ
-#define NSC8105_INT_NMI 			 M6800_INT_NMI
 #define NSC8105_WAI 				 M6800_WAI
 #define NSC8105_IRQ_LINE			 M6800_IRQ_LINE
 #define NSC8105_TIN_LINE			 M6800_TIN_LINE

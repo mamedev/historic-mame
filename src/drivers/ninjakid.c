@@ -206,10 +206,10 @@ static const struct MachineDriver machine_driver_ninjakid =
     /* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 4*8, (32-4)*8-1 },
     ninjakid_gfxdecodeinfo,
-    512+256,512+256,
+    768, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
     0,
 	ninjakid_vh_start,
 	0,

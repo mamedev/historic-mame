@@ -548,7 +548,7 @@ static const struct MachineDriver machine_driver_sidearms =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	sidearms_vh_start,
 	sidearms_vh_stop,
@@ -591,7 +591,7 @@ static const struct MachineDriver machine_driver_turtship =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	sidearms_vh_start,
 	sidearms_vh_stop,

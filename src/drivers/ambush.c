@@ -40,7 +40,7 @@ TODO:
 extern unsigned char *ambush_scrollram;
 extern unsigned char *ambush_colorbank;
 
-void ambush_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void ambush_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 void ambush_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
@@ -161,8 +161,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x0000, &charlayout,   0, 128 },	/* I'm only using the first 64 colors */
-	{ REGION_GFX1, 0x0000, &spritelayout, 0, 128 },
+	{ REGION_GFX1, 0x0000, &charlayout,   0, 64 },
+	{ REGION_GFX1, 0x0000, &spritelayout, 0, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -197,7 +197,7 @@ static const struct MachineDriver machine_driver_ambush =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-3 },  /* The -3 makes the cocktail mode perfect */
 	gfxdecodeinfo,
-	512, 512,
+	256, 0,
 	ambush_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -236,8 +236,8 @@ ROM_START( ambush )
 
 	ROM_REGION( 0x0400, REGION_PROMS, 0 )
 	ROM_LOAD( "a.bpr",        0x0000, 0x0100, 0x5f27f511 )  /* color PROMs */
+
 	ROM_LOAD( "b.bpr",        0x0100, 0x0100, 0x1b03fd3b )	/* How is this selected, */
-															/* or is it even a color PROM? */
 	ROM_LOAD( "13.bpr",		  0x0200, 0x0100, 0x547e970f )  /* I'm not sure what these do. */
 	ROM_LOAD( "14.bpr",		  0x0300, 0x0100, 0x622a8ce7 )  /* They don't look like color PROMs */
 ROM_END

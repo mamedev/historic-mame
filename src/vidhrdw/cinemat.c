@@ -132,13 +132,7 @@ void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,con
 			if (cinemat_backdrop_req)
 			{
                 sprintf (filename, "%sb.png", Machine->gamedrv->name );
-				backdrop_load(filename, nextcol, Machine->drv->total_colors-nextcol);
-				if (artwork_backdrop!=NULL)
-                {
-					memcpy (palette+3*artwork_backdrop->start_pen, artwork_backdrop->orig_palette, 3*artwork_backdrop->num_pens_used);
-					if (Machine->scrbitmap->depth == 8)
-						nextcol += artwork_backdrop->num_pens_used;
-                }
+				backdrop_load(filename, nextcol);
 			}
 			/* Attempt to load overlay if requested */
 			if (cinemat_overlay_req)
@@ -149,17 +143,14 @@ void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,con
 					artwork_elements_scale(cinemat_simple_overlay,
 										   Machine->scrbitmap->width,
 										   Machine->scrbitmap->height);
-					overlay_create(cinemat_simple_overlay, nextcol,Machine->drv->total_colors-nextcol);
+					overlay_create(cinemat_simple_overlay, nextcol);
 				}
 				else
 				{
 					/* load overlay from file */
 	                sprintf (filename, "%so.png", Machine->gamedrv->name );
-					overlay_load(filename, nextcol, Machine->drv->total_colors-nextcol);
+					overlay_load(filename, nextcol);
 				}
-
-				if (artwork_overlay != NULL)
-					artwork_copy_palette (palette, artwork_overlay);
 			}
 			break;
 
@@ -220,28 +211,16 @@ void spacewar_init_colors (unsigned char *palette, unsigned short *colortable,co
 
 	nextcol = 24;
 
-	artwork_load_size(&spacewar_panel, "spacewr1.png", nextcol, Machine->drv->total_colors - nextcol, width, height);
+	artwork_load_size(&spacewar_panel, "spacewr1.png", nextcol, width, height);
 	if (spacewar_panel != NULL)
 	{
-		if (Machine->scrbitmap->depth == 8)
-			nextcol += spacewar_panel->num_pens_used;
-
-		artwork_load_size(&spacewar_pressed_panel, "spacewr2.png", nextcol, Machine->drv->total_colors - nextcol, width, height);
+		artwork_load_size(&spacewar_pressed_panel, "spacewr2.png", nextcol, width, height);
 		if (spacewar_pressed_panel == NULL)
 		{
 			artwork_free (&spacewar_panel);
 			return ;
 		}
 	}
-	else
-		return;
-
-	memcpy (palette+3*spacewar_panel->start_pen, spacewar_panel->orig_palette,
-			3*spacewar_panel->num_pens_used);
-
-	if (Machine->scrbitmap->depth == 8)
-		memcpy (palette+3*spacewar_pressed_panel->start_pen, spacewar_pressed_panel->orig_palette,
-				3*spacewar_pressed_panel->num_pens_used);
 }
 
 /***************************************************************************
@@ -260,8 +239,6 @@ int cinemat_vh_start (void)
 int spacewar_vh_start (void)
 {
 	vector_set_shift (VEC_SHIFT);
-	if (spacewar_panel) backdrop_refresh(spacewar_panel);
-	if (spacewar_pressed_panel) backdrop_refresh(spacewar_pressed_panel);
 	cinemat_screenh = Machine->visible_area.max_y - Machine->visible_area.min_y;
 	return vector_vh_start();
 }

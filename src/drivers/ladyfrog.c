@@ -102,7 +102,7 @@ static const struct MachineDriver machine_driver_ladyfrog =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	0,
 	0,

@@ -4,18 +4,19 @@ Dooyong games
 
 driver by Nicola Salmoria
 
-The Last Day  Z80     Z80 2xYM2203
-Pollux        Z80     Z80 2xYM2203
-Blue Hawk     Z80     Z80 YM2151 OKI6295
-Sadari        Z80     Z80 YM2151 OKI6295
-Primella      Z80     Z80 YM2151 OKI6295
-R-Shark       68000   Z80 YM2151 OKI6295
+The Last Day   Z80     Z80 2xYM2203
+Gulf Storm     Z80     Z80 2xYM2203
+Pollux         Z80     Z80 2xYM2203
+Blue Hawk      Z80     Z80 YM2151 OKI6295
+Sadari         Z80     Z80 YM2151 OKI6295
+Gun Dealer '94 Z80     Z80 YM2151 OKI6295
+R-Shark        68000   Z80 YM2151 OKI6295
 
 These games all run on different but similar hardware. A common thing that they
 all have is tilemaps hardcoded in ROM.
 
 TODO:
-- video driver is not optimized at all; should do palette marking and remove 16BIT
+- video driver is not optimized at all
 - port A of both of the YM2203 is constantly read and stored in memory -
   function unknown
 - some of the sound programs often write to the ROM area - is this just a bug, or
@@ -24,6 +25,9 @@ Last Day:
 - sprite/fg priority is not understood (tanks, boats should pass below bridges)
 - when you insert a coin, the demo sprites continue to move in the background.
   Maybe the whole background and sprites are supposed to be disabled.
+Gulf Storm:
+- sprite/fg priority is not understood
+- there seem to be some invisible enemies around the first bridge
 Blue Hawk:
 - sprite/fg priority is not understood
 Primella:
@@ -47,6 +51,7 @@ WRITE_HANDLER( pollux_ctrl_w );
 WRITE_HANDLER( primella_ctrl_w );
 WRITE16_HANDLER( rshark_ctrl_w );
 void lastday_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void gulfstrm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void pollux_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void bluehawk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void primella_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -329,6 +334,85 @@ INPUT_PORTS_START( lastday )
 	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( gulfstrm )
+	PORT_START
+	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0xc2, 0xc2, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x42, DEF_STR( 2C_1C ) )
+//	PORT_DIPSETTING(    0xc0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0xc2, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x82, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
+
+	PORT_START
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x08, "Easy" )
+	PORT_DIPSETTING(    0x0c, "Normal" )
+	PORT_DIPSETTING(    0x04, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_VBLANK )	/* ??? */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( pollux )
@@ -837,11 +921,54 @@ static const struct MachineDriver machine_driver_lastday =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	dooyong_eof_callback,
 	0,
 	0,
 	lastday_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2203,
+			&ym2203_interface
+		}
+	}
+};
+
+static const struct MachineDriver machine_driver_gulfstrm =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			8000000,	/* ??? */
+			pollux_readmem,pollux_writemem,0,0,
+			interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			4000000,	/* ??? */
+			lastday_sound_readmem,lastday_sound_writemem,0,0,
+			ignore_interrupt,0	/* IRQs are caused by the YM2203 */
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
+
+	/* video hardware */
+	64*8, 32*8, { 8*8, (64-8)*8-1, 1*8, 31*8-1 },
+	lastday_gfxdecodeinfo,
+	1024, 0,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
+	dooyong_eof_callback,
+	0,
+	0,
+	gulfstrm_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -880,7 +1007,7 @@ static const struct MachineDriver machine_driver_pollux =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	dooyong_eof_callback,
 	0,
 	0,
@@ -923,7 +1050,7 @@ static const struct MachineDriver machine_driver_bluehawk =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	dooyong_eof_callback,
 	0,
 	0,
@@ -970,7 +1097,7 @@ static const struct MachineDriver machine_driver_primella =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	dooyong_eof_callback,
 	0,
 	0,
@@ -1023,7 +1150,7 @@ static const struct MachineDriver machine_driver_rshark =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	rshark_eof_callback,
 	0,
 	0,
@@ -1119,6 +1246,80 @@ ROM_START( lastdaya )
 	ROM_LOAD16_BYTE( "lday13.bin",   0x00001, 0x10000, 0x6bdbd887 )
 ROM_END
 
+ROM_START( gulfstrm )
+	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 64k for code + 128k for banks */
+	ROM_LOAD( "1.l4",         0x00000, 0x20000, 0x59e0478b )
+	ROM_RELOAD(               0x10000, 0x20000 )				/* banked at 0x8000-0xbfff */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* sound */
+	ROM_LOAD( "3.c5",         0x00000, 0x10000, 0xc029b015 )
+
+	ROM_REGION( 0x8000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
+	ROM_LOAD( "2.s4",         0x0000, 0x8000, 0xc2d65a25 )	/* empty */
+	ROM_CONTINUE(             0x0000, 0x8000 )
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
+	ROM_LOAD16_BYTE( "14.b1",        0x00000, 0x20000, 0x67bdf73d )
+	ROM_LOAD16_BYTE( "16.c1",        0x00001, 0x20000, 0x7770a76f )
+	ROM_LOAD16_BYTE( "15.b1",        0x40000, 0x20000, 0x84803f7e )
+	ROM_LOAD16_BYTE( "17.e1",        0x40001, 0x20000, 0x94706500 )
+
+	ROM_REGION( 0x80000, REGION_GFX3, ROMREGION_DISPOSE )	/* tiles */
+	ROM_LOAD16_BYTE( "4.d8",         0x00000, 0x20000, 0x858fdbb6 )
+	ROM_LOAD16_BYTE( "5.b9",         0x00001, 0x20000, 0xc0a552e8 )
+	ROM_LOAD16_BYTE( "6.d8",         0x40000, 0x20000, 0x20eedda3 )
+	ROM_LOAD16_BYTE( "7.d9",         0x40001, 0x20000, 0x294f8c40 )
+
+	ROM_REGION( 0x40000, REGION_GFX4, ROMREGION_DISPOSE )	/* tiles */
+	ROM_LOAD16_BYTE( "12.r8",        0x00000, 0x20000, 0xec3ad3e7 )
+	ROM_LOAD16_BYTE( "13.r9",        0x00001, 0x20000, 0xc64090cb )
+
+	ROM_REGION( 0x20000, REGION_GFX5, 0 )	/* background tilemaps */
+	ROM_LOAD16_BYTE( "8.e8",         0x00000, 0x10000, 0x8d7f4693 )
+	ROM_LOAD16_BYTE( "9.e9",         0x00001, 0x10000, 0x34d440c4 )
+
+	ROM_REGION( 0x20000, REGION_GFX6, 0 )	/* fg tilemaps */
+	ROM_LOAD16_BYTE( "10.n8",        0x00000, 0x10000, 0xb4f15bf4 )
+	ROM_LOAD16_BYTE( "11.n9",        0x00001, 0x10000, 0x7dfe4a9c )
+ROM_END
+
+ROM_START( gulfstr2 )
+	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 64k for code + 128k for banks */
+	ROM_LOAD( "18.1",         0x00000, 0x20000, 0xd38e2667 )
+	ROM_RELOAD(               0x10000, 0x20000 )				/* banked at 0x8000-0xbfff */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* sound */
+	ROM_LOAD( "3.c5",         0x00000, 0x10000, 0xc029b015 )
+
+	ROM_REGION( 0x8000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
+	ROM_LOAD( "2.bin",        0x0000, 0x8000, 0xcb555d96 )	/* empty */
+	ROM_CONTINUE(             0x0000, 0x8000 )
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
+	ROM_LOAD16_BYTE( "14.b1",        0x00000, 0x20000, 0x67bdf73d )
+	ROM_LOAD16_BYTE( "16.c1",        0x00001, 0x20000, 0x7770a76f )
+	ROM_LOAD16_BYTE( "15.b1",        0x40000, 0x20000, 0x84803f7e )
+	ROM_LOAD16_BYTE( "17.e1",        0x40001, 0x20000, 0x94706500 )
+
+	ROM_REGION( 0x80000, REGION_GFX3, ROMREGION_DISPOSE )	/* tiles */
+	ROM_LOAD16_BYTE( "4.d8",         0x00000, 0x20000, 0x858fdbb6 )
+	ROM_LOAD16_BYTE( "5.b9",         0x00001, 0x20000, 0xc0a552e8 )
+	ROM_LOAD16_BYTE( "6.d8",         0x40000, 0x20000, 0x20eedda3 )
+	ROM_LOAD16_BYTE( "7.d9",         0x40001, 0x20000, 0x294f8c40 )
+
+	ROM_REGION( 0x40000, REGION_GFX4, ROMREGION_DISPOSE )	/* tiles */
+	ROM_LOAD16_BYTE( "12.bin",       0x00000, 0x20000, 0x3e3d3b57 )
+	ROM_LOAD16_BYTE( "13.bin",       0x00001, 0x20000, 0x66fcce80 )
+
+	ROM_REGION( 0x20000, REGION_GFX5, 0 )	/* background tilemaps */
+	ROM_LOAD16_BYTE( "8.e8",         0x00000, 0x10000, 0x8d7f4693 )
+	ROM_LOAD16_BYTE( "9.e9",         0x00001, 0x10000, 0x34d440c4 )
+
+	ROM_REGION( 0x20000, REGION_GFX6, 0 )	/* fg tilemaps */
+	ROM_LOAD16_BYTE( "10.bin",       0x00000, 0x10000, 0x08149140 )
+	ROM_LOAD16_BYTE( "11.bin",       0x00001, 0x10000, 0x2ed7545b )
+ROM_END
+
 ROM_START( pollux )
 	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 64k for code + 128k for banks */
 	ROM_LOAD( "pollux2.bin",  0x00000, 0x10000, 0x45e10d4e )
@@ -1179,6 +1380,34 @@ ROM_START( bluehawk )
 	ROM_LOAD( "rom4",         0x00000, 0x20000, 0xf7318919 )
 ROM_END
 
+ROM_START( bluehawn )
+	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 64k for code + 128k for banks */
+	ROM_LOAD( "rom19",        0x00000, 0x20000, 0x24149246 )	// ROM2
+	ROM_RELOAD(               0x10000, 0x20000 )	/* banked at 0x8000-0xbfff */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* sound */
+	ROM_LOAD( "rom1",         0x00000, 0x10000, 0xeef22920 )
+
+	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
+	ROM_LOAD( "rom3ntc",      0x00000, 0x10000, 0x31eb221a )
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
+	ROM_LOAD16_WORD_SWAP( "dy-bh-m3",     0x00000, 0x80000, 0x8809d157 )	// ROM7+ROM8+ROM13+ROM14
+
+	ROM_REGION( 0x80000, REGION_GFX3, 0 )	/* tiles + tilemaps (together!) */
+	ROM_LOAD16_WORD_SWAP( "dy-bh-m1",     0x00000, 0x80000, 0x51816b2c )	// ROM9+ROM10+ROM15+ROM16
+
+	ROM_REGION( 0x80000, REGION_GFX4, 0 )	/* tiles + tilemaps (together!) */
+	ROM_LOAD16_WORD_SWAP( "dy-bh-m2",     0x00000, 0x80000, 0xf9daace6 )	// ROM11+ROM12+ROM17+ROM18
+
+	ROM_REGION( 0x40000, REGION_GFX5, 0 )	/* tiles + tilemaps (together!) */
+	ROM_LOAD16_BYTE( "rom6",         0x00000, 0x20000, 0xe6bd9daa )
+	ROM_LOAD16_BYTE( "rom5",         0x00001, 0x20000, 0x5c654dc6 )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* OKI6295 samples */
+	ROM_LOAD( "rom4",         0x00000, 0x20000, 0xf7318919 )
+ROM_END
+
 ROM_START( sadari )
 	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 64k for code + 128k for banks */
 	ROM_LOAD( "1.3d",         0x00000, 0x20000, 0xbd953217 )
@@ -1208,16 +1437,49 @@ ROM_START( sadari )
 	ROM_LOAD( "8.10r",        0x00000, 0x20000, 0x9c29a093 )
 ROM_END
 
+ROM_START( gundl94 )
+	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 64k for code + 128k for banks */
+	ROM_LOAD( "gd94_001.d3",  0x00000, 0x20000, 0x3a5cc045 )
+	ROM_RELOAD(               0x10000, 0x20000 )				/* banked at 0x8000-0xbfff */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* sound */
+	ROM_LOAD( "gd94_003.r6",  0x0000, 0x10000, 0xea41c4ad )
+
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
+	ROM_LOAD( "gd94_002.c5",  0x0000, 0x20000, 0x8575e64b )
+
+	/* no sprites */
+
+	ROM_REGION( 0x40000, REGION_GFX2, 0 )	/* tiles + tilemaps (together!) */
+	ROM_LOAD16_BYTE( "gd94_009.n9",  0x00000, 0x20000, 0x40eabf55 )
+	ROM_LOAD16_BYTE( "gd94_004.n7",  0x00001, 0x20000, 0x0654abb9 )
+
+	ROM_REGION( 0x40000, REGION_GFX3, 0 )	/* tiles + tilemaps (together!) */
+	ROM_LOAD16_BYTE( "gd94_012.g9",  0x00000, 0x20000, 0x117c693c )
+	ROM_LOAD16_BYTE( "gd94_007.g7",  0x00001, 0x20000, 0x96a72c6d )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* OKI6295 samples */
+	ROM_LOAD( "gd94_008.r9",  0x00000, 0x20000, 0xf92e5803 )
+
+	ROM_REGION( 0x30000, REGION_CPU3, 0 )	/* extra z80 rom? this doesn't seem to belong to this game! */
+	ROM_LOAD( "gd94_011.j9",  0x00000, 0x20000, 0xd8ad0208 )
+	ROM_RELOAD(               0x10000, 0x20000 )				/* banked at 0x8000-0xbfff */
+
+	ROM_REGION( 0x40000, REGION_GFX4, ROMREGION_DISPOSE )	/* more tiles? they don't seem to belong to this game! */
+	ROM_LOAD16_BYTE( "gd94_006.j7",  0x00000, 0x20000, 0x1d9536fe )
+	ROM_LOAD16_BYTE( "gd94_010.l7",  0x00001, 0x20000, 0x4b74857f )
+ROM_END
+
 ROM_START( primella )
 	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 64k for code + 128k for banks */
 	ROM_LOAD( "1_d3.bin",     0x00000, 0x20000, 0x82fea4e0 )
 	ROM_RELOAD(               0x10000, 0x20000 )				/* banked at 0x8000-0xbfff */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* sound */
-	ROM_LOAD( "3_r6.bin",     0x0000, 0x10000, 0xea41c4ad )
+	ROM_LOAD( "gd94_003.r6",  0x0000, 0x10000, 0xea41c4ad )
 
 	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
-	ROM_LOAD( "2_c5.bin",     0x0000, 0x20000, 0x8575e64b )
+	ROM_LOAD( "gd94_002.c5",  0x0000, 0x20000, 0x8575e64b )
 
 	/* no sprites */
 
@@ -1230,7 +1492,7 @@ ROM_START( primella )
 	ROM_LOAD16_BYTE( "5_g7.bin",     0x00001, 0x20000, 0x058ecac6 )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* OKI6295 samples */
-	ROM_LOAD( "6_r9.bin",     0x00000, 0x20000, 0xf92e5803 )
+	ROM_LOAD( "gd94_008.r9",  0x00000, 0x20000, 0xf92e5803 )	/* 6_r9 */
 ROM_END
 
 ROM_START( rshark )
@@ -1278,10 +1540,14 @@ ROM_END
 
 /* The differences between the two lastday sets are only in the sound program
    and graphics. The main program is the same. */
-GAME( 1990, lastday,  0,       lastday,  lastday,  0, ROT270, "Dooyong", "The Last Day (set 1)" )
-GAME( 1990, lastdaya, lastday, lastday,  lastday,  0, ROT270, "Dooyong", "The Last Day (set 2)" )
-GAME( 1991, pollux,   0,       pollux,   pollux,   0, ROT270, "Dooyong", "Pollux" )
-GAME( 1993, bluehawk, 0,       bluehawk, bluehawk, 0, ROT270, "Dooyong", "Blue Hawk" )
-GAME( 1993, sadari,   0,       primella, primella, 0, ROT0,   "[Dooyong] (NTC license)", "Sadari" )
-GAME( 1994, primella, 0,       primella, primella, 0, ROT0,   "[Dooyong] (NTC license)", "Primella" )
-GAME( 1995, rshark,   0,       rshark,   rshark,   0, ROT270, "Dooyong", "R-Shark" )
+GAMEX(1990, lastday,  0,        lastday,  lastday,  0, ROT270, "Dooyong", "The Last Day (set 1)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1990, lastdaya, lastday,  lastday,  lastday,  0, ROT270, "Dooyong", "The Last Day (set 2)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, gulfstrm, 0,        gulfstrm, gulfstrm, 0, ROT270, "Dooyong", "Gulf Storm", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, gulfstr2, gulfstrm, gulfstrm, gulfstrm, 0, ROT270, "Dooyong (Media Shoji license)", "Gulf Storm (Media Shoji)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1991, pollux,   0,        pollux,   pollux,   0, ROT270, "Dooyong", "Pollux" )
+GAMEX(1993, bluehawk, 0,        bluehawk, bluehawk, 0, ROT270, "Dooyong", "Blue Hawk", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1993, bluehawn, bluehawk, bluehawk, bluehawk, 0, ROT270, "[Dooyong] (NTC license)", "Blue Hawk (NTC)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1993, sadari,   0,        primella, primella, 0, ROT0,   "[Dooyong] (NTC license)", "Sadari" )
+GAME( 1994, gundl94,  0,        primella, primella, 0, ROT0,   "Dooyong", "Gun Dealer '94" )
+GAME( 1994, primella, gundl94,  primella, primella, 0, ROT0,   "[Dooyong] (NTC license)", "Primella" )
+GAMEX(1995, rshark,   0,        rshark,   rshark,   0, ROT270, "Dooyong", "R-Shark", GAME_IMPERFECT_GRAPHICS )

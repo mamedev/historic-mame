@@ -326,12 +326,12 @@ static const struct MachineDriver machine_driver_starfire =
     init_machine,
 
 	/* video hardware */
-    256,256,
-    { 0, 256-1, 32, 256-1 },
+    256, 256, { 0, 256-1, 32, 256-1 },
     0,
-    64,64,0,
+    64, 0,
+	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
     starfire_vh_start,
     starfire_vh_stop,

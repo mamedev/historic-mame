@@ -108,6 +108,8 @@ static WRITE_HANDLER( wc90_sound_command_w )
 	cpu_cause_interrupt(2,Z80_NMI_INT);
 }
 
+
+
 static MEMORY_READ_START( wc90_readmem1 )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x9fff, MRA_RAM }, /* Main RAM */
@@ -177,8 +179,8 @@ MEMORY_END
 static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xf000, 0xf7ff, MRA_RAM },
-        { 0xf800, 0xf800, YM2608_status_port_0_A_r },
-        { 0xf802, 0xf802, YM2608_status_port_0_B_r },
+	{ 0xf800, 0xf800, YM2608_status_port_0_A_r },
+	{ 0xf802, 0xf802, YM2608_status_port_0_B_r },
 	{ 0xfc00, 0xfc00, MRA_NOP }, /* ??? adpcm ??? */
 	{ 0xfc10, 0xfc10, soundlatch_r },
 MEMORY_END
@@ -186,11 +188,13 @@ MEMORY_END
 static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xf000, 0xf7ff, MWA_RAM },
-        { 0xf800, 0xf800, YM2608_control_port_0_A_w },
-        { 0xf801, 0xf801, YM2608_data_port_0_A_w },
-        { 0xf802, 0xf802, YM2608_control_port_0_B_w },
-        { 0xf803, 0xf803, YM2608_data_port_0_B_w },
+	{ 0xf800, 0xf800, YM2608_control_port_0_A_w },
+	{ 0xf801, 0xf801, YM2608_data_port_0_A_w },
+	{ 0xf802, 0xf802, YM2608_control_port_0_B_w },
+	{ 0xf803, 0xf803, YM2608_data_port_0_B_w },
 MEMORY_END
+
+
 
 INPUT_PORTS_START( wc90 )
 	PORT_START	/* IN0 bit 0-5 */
@@ -376,10 +380,10 @@ static const struct MachineDriver machine_driver_wc90 =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	4*16*16, 4*16*16,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	wc90_vh_start,
 	0,

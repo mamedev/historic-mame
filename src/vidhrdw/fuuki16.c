@@ -5,14 +5,6 @@
 					driver by	Luca Elia (l.elia@tin.it)
 
 
-Note:	if MAME_DEBUG is defined, pressing Z with:
-
-		Q / W / R / T		Shows Layer 0 / 1 / 2 / 3
-		A					Shows Sprites
-
-		Keys can be used together!
-
-
 	[ 4 Scrolling Layers ]
 
 							[ Layer 0 ]		[ Layer 1 ]		[ Layers 2&3 ]
@@ -289,23 +281,17 @@ if (keyboard_pressed(KEYCODE_X))
 ***************************************************************************/
 
 
-static void fuuki16_draw_layer(struct osd_bitmap *bitmap, int ctrl, int i, int flag, int pri)
+static void fuuki16_draw_layer(struct osd_bitmap *bitmap, int i, int flag, int pri)
 {
 	switch( i )
 	{
-		case 0:	if (ctrl & 0x01)	{	tilemap_draw(bitmap,tilemap_0,flag,pri);	return;	}
-				break;
-		case 1:	if (ctrl & 0x02)	{	tilemap_draw(bitmap,tilemap_1,flag,pri);	return;	}
-				break;
-		case 2:	if (ctrl & 0x04)	{	tilemap_draw(bitmap,tilemap_3,flag,pri);	}
-				if (ctrl & 0x08)	{	tilemap_draw(bitmap,tilemap_2,flag,pri);	}
-				if ((ctrl & 0x04) || (ctrl & 0x08))	return;
-				break;
-	}
-	if (flag == TILEMAP_IGNORE_TRANSPARENCY)
-	{
-		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
-		fillbitmap(priority_bitmap,0,NULL);
+		case 0:	tilemap_draw(bitmap,tilemap_0,flag,pri);
+				return;
+		case 1:	tilemap_draw(bitmap,tilemap_1,flag,pri);
+				return;
+		case 2:	tilemap_draw(bitmap,tilemap_3,flag,pri);
+				tilemap_draw(bitmap,tilemap_2,flag,pri);
+				return;
 	}
 }
 
@@ -317,8 +303,6 @@ void fuuki16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	data16_t scrollx_offs,   scrolly_offs;
 
 	int background, middleground, foreground;
-
-	int layers_ctrl = -1;
 
 	flip_screen_set(fuuki16_vregs[0x1e/2] & 1);
 
@@ -345,26 +329,6 @@ void fuuki16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrollx(tilemap_3, 0, layer2_scrollx + 0x10);
 	tilemap_set_scrolly(tilemap_3, 0, layer2_scrolly);
 
-#ifdef MAME_DEBUG
-if ( keyboard_pressed(KEYCODE_Z) || keyboard_pressed(KEYCODE_X) )
-{
-	int msk = 0;
-	if (keyboard_pressed(KEYCODE_Q))	msk |= 0x01;
-	if (keyboard_pressed(KEYCODE_W))	msk |= 0x02;
-	if (keyboard_pressed(KEYCODE_E))	msk |= 0x04;
-	if (keyboard_pressed(KEYCODE_R))	msk |= 0x08;
-	if (keyboard_pressed(KEYCODE_A))	msk |= 0x10;
-	if (msk != 0) layers_ctrl &= msk;
-
-#if 1
-{	char buf[10];
-	sprintf(buf,"%04X %04X %04X",
-		fuuki16_unknown[0],fuuki16_unknown[1],*fuuki16_priority);
-	usrintf_showmessage(buf);	}
-#endif
-}
-#endif
-
 	background   = 0;
 	foreground   = 1;
 	middleground = 2;
@@ -373,14 +337,16 @@ if ( keyboard_pressed(KEYCODE_Z) || keyboard_pressed(KEYCODE_X) )
 	/* swap mg with fg */
 	if (*fuuki16_priority & 2)	{ int t = foreground;	foreground = middleground;	middleground = t;	}
 
+	fillbitmap(priority_bitmap,0,NULL);
+
 	/* The backmost tilemap decides the background color(s) but sprites can
 	   go below the opaque pixels of that tilemap. We thus need to mark the
 	   transparent pixels of this layer with a different priority value */
-	fuuki16_draw_layer(bitmap, layers_ctrl, background,  TILEMAP_IGNORE_TRANSPARENCY, 0);
+	fuuki16_draw_layer(bitmap, background,  TILEMAP_IGNORE_TRANSPARENCY, 0);
 
-	fuuki16_draw_layer(bitmap, layers_ctrl, background,  0, 1);
-	fuuki16_draw_layer(bitmap, layers_ctrl, foreground,  0, 2);
-	fuuki16_draw_layer(bitmap, layers_ctrl, middleground,0, 2);
+	fuuki16_draw_layer(bitmap, background,  0, 1);
+	fuuki16_draw_layer(bitmap, foreground,  0, 2);
+	fuuki16_draw_layer(bitmap, middleground,0, 2);
 
-	if (layers_ctrl & 0x10)	fuuki16_draw_sprites(bitmap);
+	fuuki16_draw_sprites(bitmap);
 }

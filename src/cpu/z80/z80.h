@@ -22,10 +22,6 @@ enum {
 
 extern int z80_ICount;              /* T-state count                        */
 
-#define Z80_IGNORE_INT  -1          /* Ignore interrupt                     */
-#define Z80_NMI_INT 	-2			/* Execute NMI							*/
-#define Z80_IRQ_INT 	-1000		/* Execute IRQ							*/
-
 extern void z80_init(void);
 extern void z80_reset (void *param);
 extern void z80_exit (void);

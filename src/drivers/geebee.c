@@ -456,7 +456,7 @@ static const struct MachineDriver machine_driver_geebee =
 	3+32768, 4*2,		/* extra colors for the overlay */
     geebee_init_palette,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	geebee_vh_start,
 	generic_vh_stop,
@@ -494,7 +494,7 @@ static const struct MachineDriver machine_driver_navalone =
 	3+32768, 4*2,		/* extra colors for the overlay */
     navalone_init_palette,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	navalone_vh_start,
 	generic_vh_stop,
@@ -533,7 +533,7 @@ static const struct MachineDriver machine_driver_kaitei =
 	3+32768, 4*2,		/* extra colors for the overlay */
 	navalone_init_palette,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	kaitei_vh_start,
 	generic_vh_stop,
@@ -570,7 +570,7 @@ static const struct MachineDriver machine_driver_sos =
 	3+32768, 4*2,		/* extra colors for the overlay */
 	navalone_init_palette,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	sos_vh_start,
 	generic_vh_stop,

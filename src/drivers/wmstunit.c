@@ -492,7 +492,7 @@ static const struct MachineDriver machine_driver_tunit_adpcm =
 	32768, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	wms_tunit_vh_start,
 	wms_tunit_vh_stop,
@@ -530,7 +530,7 @@ static const struct MachineDriver machine_driver_tunit_dcs =
 	32768, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	wms_tunit_vh_start,
 	wms_tunit_vh_stop,

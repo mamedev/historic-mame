@@ -323,7 +323,7 @@ static struct MachineDriver machine_driver_pushman =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	pushman_vh_start,
 	0,

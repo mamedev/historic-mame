@@ -208,7 +208,7 @@ INPUT_PORTS_END
 
 
 #define MACHINE_DRIVER(GAMENAME, NUMCOLORS) 								   \
-static const struct MachineDriver machine_driver_##GAMENAME =						   \
+static const struct MachineDriver machine_driver_##GAMENAME =				   \
 {																			   \
 	/* basic machine hardware */											   \
 	{																		   \
@@ -219,19 +219,18 @@ static const struct MachineDriver machine_driver_##GAMENAME =						   \
 			astrof_interrupt,1												   \
 		}																	   \
 	},																		   \
-	60, 3400,	/* frames per second, vblank duration */				       \
+	60, 3400,	/* frames per second, vblank duration */					   \
 	1,	/* single CPU, no need for interleaving */							   \
 	0,																		   \
 																			   \
 	/* video hardware */													   \
-	256, 256,                               /* screen_width, screen_height */  \
-	{ 8, 256-1-8, 8, 256-1-8 },             /* struct rectangle visible_area */\
+	256, 256, { 8, 256-1-8, 8, 256-1-8 },									   \
 																			   \
 	0,	/* no gfxdecodeinfo - bitmapped display */							   \
 	NUMCOLORS, 0,															   \
 	astrof_vh_convert_color_prom,											   \
 																			   \
-	VIDEO_TYPE_RASTER ,								   \
+	VIDEO_TYPE_RASTER,														   \
 	0,																		   \
 	astrof_vh_start,														   \
 	astrof_vh_stop,															   \

@@ -49,75 +49,38 @@ static void print( struct osd_bitmap *bitmap, int num, int row ){
 		0,TRANSPARENCY_NONE,0);
 }
 
-void snk_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom){
+void snk_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom){
 	int i;
 	int num_colors = 1024;
-	for( i=0; i<num_colors; i++ ){
-		int bit0,bit1,bit2,bit3;
+	for( i=0; i<num_colors; i++ )
+	{
+		int bit0,bit1,bit2,bit3,r,g,b;
 
-		colortable[i] = i;
+		bit0 = (color_prom[i] >> 0) & 0x01;
+		bit1 = (color_prom[i] >> 1) & 0x01;
+		bit2 = (color_prom[i] >> 2) & 0x01;
+		bit3 = (color_prom[i] >> 3) & 0x01;
+		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-		bit0 = (color_prom[0] >> 0) & 0x01;
-		bit1 = (color_prom[0] >> 1) & 0x01;
-		bit2 = (color_prom[0] >> 2) & 0x01;
-		bit3 = (color_prom[0] >> 3) & 0x01;
-		*palette++ = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[i + num_colors] >> 0) & 0x01;
+		bit1 = (color_prom[i + num_colors] >> 1) & 0x01;
+		bit2 = (color_prom[i + num_colors] >> 2) & 0x01;
+		bit3 = (color_prom[i + num_colors] >> 3) & 0x01;
+		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-		bit0 = (color_prom[num_colors] >> 0) & 0x01;
-		bit1 = (color_prom[num_colors] >> 1) & 0x01;
-		bit2 = (color_prom[num_colors] >> 2) & 0x01;
-		bit3 = (color_prom[num_colors] >> 3) & 0x01;
-		*palette++ = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[i + 2*num_colors] >> 0) & 0x01;
+		bit1 = (color_prom[i + 2*num_colors] >> 1) & 0x01;
+		bit2 = (color_prom[i + 2*num_colors] >> 2) & 0x01;
+		bit3 = (color_prom[i + 2*num_colors] >> 3) & 0x01;
+		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-		bit0 = (color_prom[2*num_colors] >> 0) & 0x01;
-		bit1 = (color_prom[2*num_colors] >> 1) & 0x01;
-		bit2 = (color_prom[2*num_colors] >> 2) & 0x01;
-		bit3 = (color_prom[2*num_colors] >> 3) & 0x01;
-		*palette++ = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-		color_prom++;
+		palette_set_color(i,r,g,b);
 	}
 }
 
-void snk_vh_create_shadow_colours(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom){
-	/* im not really sure this is the best way to go about this */
+void snk_3bpp_shadow_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom){
 	int i;
-	int num_colors = 1024;
-
-	palette += num_colors * 3;
-
-	for( i=0; i<num_colors; i++ ){
-		int bit0,bit1,bit2,bit3;
-
-		colortable[i] = i;
-
-		bit0 = (color_prom[0] >> 0) & 0x01;
-		bit1 = (color_prom[0] >> 1) & 0x01;
-		bit2 = (color_prom[0] >> 2) & 0x01;
-		bit3 = (color_prom[0] >> 3) & 0x01;
-		*palette++ = (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3) >> 1 ;
-
-		bit0 = (color_prom[num_colors] >> 0) & 0x01;
-		bit1 = (color_prom[num_colors] >> 1) & 0x01;
-		bit2 = (color_prom[num_colors] >> 2) & 0x01;
-		bit3 = (color_prom[num_colors] >> 3) & 0x01;
-		*palette++ = (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3) >> 1;
-
-		bit0 = (color_prom[2*num_colors] >> 0) & 0x01;
-		bit1 = (color_prom[2*num_colors] >> 1) & 0x01;
-		bit2 = (color_prom[2*num_colors] >> 2) & 0x01;
-		bit3 = (color_prom[2*num_colors] >> 3) & 0x01;
-		*palette++ = (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3) >> 1;
-
-		color_prom++;
-	}
-}
-
-void snk_3bpp_shadow_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom){
-	int i;
-	snk_vh_convert_color_prom( palette, colortable, color_prom);
-	/* Create the Half-Bright Colours */
-	snk_vh_create_shadow_colours( palette, colortable, color_prom);
+	snk_vh_convert_color_prom(obsolete, colortable, color_prom);
 
 	if (!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
 	usrintf_showmessage("driver should use VIDEO_HAS_SHADOWS");
@@ -131,13 +94,9 @@ void snk_3bpp_shadow_vh_convert_color_prom(unsigned char *palette, unsigned shor
 
 }
 
-void snk_4bpp_shadow_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom){
+void snk_4bpp_shadow_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom){
 	int i;
-	snk_vh_convert_color_prom( palette, colortable, color_prom);
-	/* Create the Half-Bright Colours */
-	snk_vh_create_shadow_colours( palette, colortable, color_prom);
-
-	/* nased on  vidhrdw/konamiic.c */
+	snk_vh_convert_color_prom(obsolete, colortable, color_prom);
 
 	if (!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
 	usrintf_showmessage("driver should use VIDEO_HAS_SHADOWS");

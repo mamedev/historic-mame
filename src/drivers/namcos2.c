@@ -1142,9 +1142,9 @@ static const struct MachineDriver machine_driver_default =
 	/* video hardware */
 	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	VIRTUAL_PALETTE_BANKS*256, VIRTUAL_PALETTE_BANKS*256,	/* virtual palette (physical palette has 8192 colors) */
+	VIRTUAL_PALETTE_BANKS*256, 0,	/* virtual palette (physical palette has 8192 colors) */
 	0,
-	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN,
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
 
 	0,
 	namcos2_vh_start,
@@ -1210,9 +1210,9 @@ static const struct MachineDriver machine_driver_driving =
 	/* video hardware */
 	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	VIRTUAL_PALETTE_BANKS*256, VIRTUAL_PALETTE_BANKS*256,	/* virtual palette (physical palette has 8192 colors) */
+	VIRTUAL_PALETTE_BANKS*256, 0,	/* virtual palette (physical palette has 8192 colors) */
 	0,
-	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN,
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
 
 	0,
 	namcos2_vh_start,
@@ -1278,9 +1278,9 @@ static const struct MachineDriver machine_driver_metlhawk =
 	/* video hardware */
 	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	VIRTUAL_PALETTE_BANKS*256, VIRTUAL_PALETTE_BANKS*256,	/* virtual palette (physical palette has 8192 colors) */
+	VIRTUAL_PALETTE_BANKS*256, 0,	/* virtual palette (physical palette has 8192 colors) */
 	0,
-	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN,
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
 
 	0,
 	namcos2_vh_start,

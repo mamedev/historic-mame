@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "artwork.h"
 #include "state.h"
 
 #define VERBOSE 0
@@ -217,7 +216,7 @@ int palette_init(void)
 
 			/* refresh the palette to support shadows in PROM games */
 			for (i = 0;i < Machine->drv->total_colors;i++)
-				palette_change_color(i,game_palette[3*i + 0],game_palette[3*i + 1],game_palette[3*i + 2]);
+				palette_set_color(i,game_palette[3*i + 0],game_palette[3*i + 1],game_palette[3*i + 2]);
 		}
 		break;
 
@@ -279,7 +278,7 @@ int palette_init(void)
 
 
 
-INLINE void palette_change_color_15_direct(int color,UINT8 red,UINT8 green,UINT8 blue)
+INLINE void palette_set_color_15_direct(int color,UINT8 red,UINT8 green,UINT8 blue)
 {
 	if (	actual_palette[3*color + 0] == red &&
 			actual_palette[3*color + 1] == green &&
@@ -304,7 +303,7 @@ static void palette_reset_15_direct(void)
 				(game_palette[3*color + 2]>>3) * (direct_rgb_components[2] / 0x1f);
 }
 
-INLINE void palette_change_color_32_direct(int color,UINT8 red,UINT8 green,UINT8 blue)
+INLINE void palette_set_color_32_direct(int color,UINT8 red,UINT8 green,UINT8 blue)
 {
 	if (	actual_palette[3*color + 0] == red &&
 			actual_palette[3*color + 1] == green &&
@@ -329,7 +328,7 @@ static void palette_reset_32_direct(void)
 				game_palette[3*color + 2] * (direct_rgb_components[2] / 0xff);
 }
 
-INLINE void palette_change_color_16_palettized(int color,UINT8 red,UINT8 green,UINT8 blue)
+INLINE void palette_set_color_16_palettized(int color,UINT8 red,UINT8 green,UINT8 blue)
 {
 	if (	actual_palette[3*color + 0] == red &&
 			actual_palette[3*color + 1] == green &&
@@ -375,11 +374,11 @@ INLINE void adjust_shadow(UINT8 *r,UINT8 *g,UINT8 *b,double factor)
 	*b = *b * factor + 0.5;
 }
 
-void palette_change_color(int color,UINT8 r,UINT8 g,UINT8 b)
+void palette_set_color(int color,UINT8 r,UINT8 g,UINT8 b)
 {
 	if (color >= total_colors)
 	{
-logerror("error: palette_change_color() called with color %d, but only %d allocated.\n",color,total_colors);
+logerror("error: palette_set_color() called with color %d, but only %d allocated.\n",color,total_colors);
 		return;
 	}
 
@@ -397,13 +396,13 @@ logerror("error: palette_change_color() called with color %d, but only %d alloca
 	switch (colormode)
 	{
 		case PALETTIZED_16BIT:
-			palette_change_color_16_palettized(color,r,g,b);
+			palette_set_color_16_palettized(color,r,g,b);
 			break;
 		case DIRECT_15BIT:
-			palette_change_color_15_direct(color,r,g,b);
+			palette_set_color_15_direct(color,r,g,b);
 			break;
 		case DIRECT_32BIT:
-			palette_change_color_32_direct(color,r,g,b);
+			palette_set_color_32_direct(color,r,g,b);
 			break;
 	}
 
@@ -417,7 +416,7 @@ logerror("error: palette_change_color() called with color %d, but only %d alloca
 			adjust_shadow(&nr,&ng,&nb,shadow_factor);
 
 			color += Machine->drv->total_colors;	/* carry this change over to highlight handling */
-			palette_change_color(color,nr,ng,nb);
+			palette_set_color(color,nr,ng,nb);
 		}
 
 		/* automatically create brighter shade for highlight handling */
@@ -428,9 +427,16 @@ logerror("error: palette_change_color() called with color %d, but only %d alloca
 			adjust_shadow(&nr,&ng,&nb,highlight_factor);
 
 			color += Machine->drv->total_colors;
-			palette_change_color(color,nr,ng,nb);
+			palette_set_color(color,nr,ng,nb);
 		}
 	}
+}
+
+void palette_get_color(int color,UINT8 *r,UINT8 *g,UINT8 *b)
+{
+	*r = game_palette[3*color + 0];
+	*g = game_palette[3*color + 1];
+	*b = game_palette[3*color + 2];
 }
 
 void palette_set_brightness(int color,double bright)
@@ -439,7 +445,7 @@ void palette_set_brightness(int color,double bright)
 	{
 		brightness[color] = bright;
 
-		palette_change_color(color,game_palette[3*color + 0],game_palette[3*color + 1],game_palette[3*color + 2]);
+		palette_set_color(color,game_palette[3*color + 0],game_palette[3*color + 1],game_palette[3*color + 2]);
 	}
 }
 
@@ -454,7 +460,7 @@ void palette_set_shadow_factor(double factor)
 		if (palette_initialized)
 		{
 			for (i = 0;i < Machine->drv->total_colors;i++)
-				palette_change_color(i,game_palette[3*i + 0],game_palette[3*i + 1],game_palette[3*i + 2]);
+				palette_set_color(i,game_palette[3*i + 0],game_palette[3*i + 1],game_palette[3*i + 2]);
 		}
 	}
 }
@@ -468,7 +474,7 @@ void palette_set_highlight_factor(double factor)
 		highlight_factor = factor;
 
 		for (i = 0;i < Machine->drv->total_colors;i++)
-			palette_change_color(i,game_palette[3*i + 0],game_palette[3*i + 1],game_palette[3*i + 2]);
+			palette_set_color(i,game_palette[3*i + 0],game_palette[3*i + 1],game_palette[3*i + 2]);
 	}
 }
 
@@ -535,7 +541,7 @@ WRITE_HANDLER( paletteram_RRRGGGBB_w )
 	bit2 = (data >> 1) & 0x01;
 	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-	palette_change_color(offset,r,g,b);
+	palette_set_color(offset,r,g,b);
 }
 
 WRITE_HANDLER( paletteram_BBBGGGRR_w )
@@ -560,7 +566,7 @@ WRITE_HANDLER( paletteram_BBBGGGRR_w )
 	bit1 = (data >> 1) & 0x01;
 	r = 0x55 * bit0 + 0xaa * bit1;
 
-	palette_change_color(offset,r,g,b);
+	palette_set_color(offset,r,g,b);
 }
 
 WRITE_HANDLER( paletteram_BBGGGRRR_w )
@@ -587,7 +593,7 @@ WRITE_HANDLER( paletteram_BBGGGRRR_w )
 	bit2 = (data >> 7) & 0x01;
 	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-	palette_change_color(offset,r,g,b);
+	palette_set_color(offset,r,g,b);
 }
 
 
@@ -612,7 +618,7 @@ WRITE_HANDLER( paletteram_IIBBGGRR_w )
 	if (b) b |= i;
 	b *= 0x11;
 
-	palette_change_color(offset,r,g,b);
+	palette_set_color(offset,r,g,b);
 }
 
 
@@ -631,7 +637,7 @@ WRITE_HANDLER( paletteram_BBGGRRII_w )
 	/* blue component */
 	b = (((data >> 4) & 0x0c) | i) * 0x11;
 
-	palette_change_color(offset,r,g,b);
+	palette_set_color(offset,r,g,b);
 }
 
 
@@ -648,7 +654,7 @@ INLINE void changecolor_xxxxBBBBGGGGRRRR(int color,int data)
 	g = (g << 4) | g;
 	b = (b << 4) | b;
 
-	palette_change_color(color,r,g,b);
+	palette_set_color(color,r,g,b);
 }
 
 WRITE_HANDLER( paletteram_xxxxBBBBGGGGRRRR_w )
@@ -695,7 +701,7 @@ INLINE void changecolor_xxxxBBBBRRRRGGGG(int color,int data)
 	g = (g << 4) | g;
 	b = (b << 4) | b;
 
-	palette_change_color(color,r,g,b);
+	palette_set_color(color,r,g,b);
 }
 
 WRITE_HANDLER( paletteram_xxxxBBBBRRRRGGGG_w )
@@ -736,7 +742,7 @@ INLINE void changecolor_xxxxRRRRBBBBGGGG(int color,int data)
 	g = (g << 4) | g;
 	b = (b << 4) | b;
 
-	palette_change_color(color,r,g,b);
+	palette_set_color(color,r,g,b);
 }
 
 WRITE_HANDLER( paletteram_xxxxRRRRBBBBGGGG_split1_w )
@@ -765,7 +771,7 @@ INLINE void changecolor_xxxxRRRRGGGGBBBB(int color,int data)
 	g = (g << 4) | g;
 	b = (b << 4) | b;
 
-	palette_change_color(color,r,g,b);
+	palette_set_color(color,r,g,b);
 }
 
 WRITE_HANDLER( paletteram_xxxxRRRRGGGGBBBB_w )
@@ -800,7 +806,7 @@ INLINE void changecolor_RRRRGGGGBBBBxxxx(int color,int data)
 	g = (g << 4) | g;
 	b = (b << 4) | b;
 
-	palette_change_color(color,r,g,b);
+	palette_set_color(color,r,g,b);
 }
 
 WRITE_HANDLER( paletteram_RRRRGGGGBBBBxxxx_swap_w )
@@ -841,7 +847,7 @@ INLINE void changecolor_BBBBGGGGRRRRxxxx(int color,int data)
 	g = (g << 4) | g;
 	b = (b << 4) | b;
 
-	palette_change_color(color,r,g,b);
+	palette_set_color(color,r,g,b);
 }
 
 WRITE_HANDLER( paletteram_BBBBGGGGRRRRxxxx_swap_w )
@@ -882,7 +888,7 @@ INLINE void changecolor_xBBBBBGGGGGRRRRR(int color,int data)
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
 
-	palette_change_color(color,r,g,b);
+	palette_set_color(color,r,g,b);
 }
 
 WRITE_HANDLER( paletteram_xBBBBBGGGGGRRRRR_w )
@@ -917,7 +923,7 @@ INLINE void changecolor_xRRRRRGGGGGBBBBB(int color,int data)
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
 
-	palette_change_color(color,r,g,b);
+	palette_set_color(color,r,g,b);
 }
 
 WRITE_HANDLER( paletteram_xRRRRRGGGGGBBBBB_w )
@@ -946,7 +952,7 @@ INLINE void changecolor_xGGGGGRRRRRBBBBB(int color,int data)
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
 
-	palette_change_color(color,r,g,b);
+	palette_set_color(color,r,g,b);
 }
 
 WRITE16_HANDLER( paletteram16_xGGGGGRRRRRBBBBB_word_w )
@@ -969,7 +975,7 @@ INLINE void changecolor_RRRRRGGGGGBBBBBx(int color,int data)
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
 
-	palette_change_color(color,r,g,b);
+	palette_set_color(color,r,g,b);
 }
 
 WRITE_HANDLER( paletteram_RRRRRGGGGGBBBBBx_w )
@@ -998,7 +1004,7 @@ INLINE void changecolor_IIIIRRRRGGGGBBBB(int color,int data)
 	g = ((data >> 4) & 15) * i;
 	b = ((data >> 0) & 15) * i;
 
-	palette_change_color(color,r,g,b);
+	palette_set_color(color,r,g,b);
 
 	if (!(Machine->drv->video_attributes & VIDEO_NEEDS_6BITS_PER_GUN))
 		usrintf_showmessage("driver should use VIDEO_NEEDS_6BITS_PER_GUN flag");
@@ -1024,7 +1030,7 @@ INLINE void changecolor_RRRRGGGGBBBBIIII(int color,int data)
 	g = ((data >>  8) & 15) * i;
 	b = ((data >>  4) & 15) * i;
 
-	palette_change_color(color,r,g,b);
+	palette_set_color(color,r,g,b);
 
 	if (!(Machine->drv->video_attributes & VIDEO_NEEDS_6BITS_PER_GUN))
 		usrintf_showmessage("driver should use VIDEO_NEEDS_6BITS_PER_GUN flag");
@@ -1053,7 +1059,7 @@ WRITE16_HANDLER( paletteram16_xrgb_word_w )
 	g = data1 >> 8;
 	b = data1 & 0xff;
 
-	palette_change_color(offset>>1, r, g, b);
+	palette_set_color(offset>>1, r, g, b);
 
 	if (!(Machine->drv->video_attributes & VIDEO_NEEDS_6BITS_PER_GUN))
 		usrintf_showmessage("driver should use VIDEO_NEEDS_6BITS_PER_GUN flag");
@@ -1071,7 +1077,7 @@ INLINE void changecolor_RRRRGGGGBBBBRGBx(int color,int data)
 	g = (g<<3) | (g>>2);
 	b = (b<<3) | (b>>2);
 
-	palette_change_color(color,r,g,b);
+	palette_set_color(color,r,g,b);
 }
 
 WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBRGBx_word_w )

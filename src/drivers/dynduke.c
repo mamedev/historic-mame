@@ -198,7 +198,7 @@ static struct GfxLayout bg_layout =
 {
 	16,16,
 	0x2000,
-	5,
+	5,	/* actually 4, 5th bit is transparency */
 	{ 0x100000*8+4, 0x80000*8+4,0x80000*8,4,0 },
 	{
 		0,1,2,3,8,9,10,11,
@@ -280,10 +280,10 @@ static const struct MachineDriver machine_driver_dynduke =
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 
 	dynduke_gfxdecodeinfo,
-	2048+1024, 2048+1024,
+	2048+1024, 0,	/* 2048 real palette, 1024 for transparency kludge */
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	dynduke_eof_callback,
 	dynduke_vh_start,
 	0,

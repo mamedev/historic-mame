@@ -714,7 +714,7 @@ WRITE16_HANDLER( paletteram16_SBGRBBBBGGGGRRRR_word_w )
 	/* This effect can be turned on/off actually ... */
 	if (newword & 0x8000)	{ r /= 2;	 g /= 2;	 b /= 2; }
 
-	palette_change_color( offset,	 (r * 0xFF) / 0x1F,
+	palette_set_color( offset,	 (r * 0xFF) / 0x1F,
 									 (g * 0xFF) / 0x1F,
 									 (b * 0xFF) / 0x1F	 );
 }

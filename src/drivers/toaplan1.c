@@ -1378,7 +1378,7 @@ static const struct MachineDriver machine_driver_rallybik =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
 	rallybik_eof_callback,
 	rallybik_vh_start,
 	rallybik_vh_stop,
@@ -1421,7 +1421,7 @@ static const struct MachineDriver machine_driver_truxton =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	toaplan1_eof_callback,
 	toaplan1_vh_start,
 	toaplan1_vh_stop,
@@ -1464,7 +1464,7 @@ static const struct MachineDriver machine_driver_hellfire =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	toaplan1_eof_callback,
 	toaplan1_vh_start,
 	toaplan1_vh_stop,
@@ -1507,7 +1507,7 @@ static const struct MachineDriver machine_driver_zerowing =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	toaplan1_eof_callback,
 	toaplan1_vh_start,
 	toaplan1_vh_stop,
@@ -1556,7 +1556,7 @@ static const struct MachineDriver machine_driver_demonwld =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	toaplan1_eof_callback,
 	toaplan1_vh_start,
 	toaplan1_vh_stop,
@@ -1593,7 +1593,7 @@ static const struct MachineDriver machine_driver_samesame =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	samesame_eof_callback,
 	toaplan1_vh_start,
 	toaplan1_vh_stop,
@@ -1636,7 +1636,7 @@ static const struct MachineDriver machine_driver_outzone =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	toaplan1_eof_callback,
 	toaplan1_vh_start,
 	toaplan1_vh_stop,
@@ -1673,7 +1673,7 @@ static const struct MachineDriver machine_driver_vimana =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	toaplan1_eof_callback,
 	toaplan1_vh_start,
 	toaplan1_vh_stop,

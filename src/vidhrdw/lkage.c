@@ -170,7 +170,7 @@ void lkage_set_palette_row( int virtual_row, int logical_row, int len )
 	{
 		unsigned char greenblue = *source++;
 		unsigned char red = *source++;
-		palette_change_color( indx++,
+		palette_set_color( indx++,
 			(red&0xf)*0x11,
 			(greenblue>>4)*0x11,
 			(greenblue&0xf)*0x11

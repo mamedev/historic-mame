@@ -421,7 +421,7 @@ WRITE_HANDLER( exidy440_sound_volume_w )
 int exidy440_sound_interrupt(void)
 {
 	cpu_set_irq_line(1, 0, ASSERT_LINE);
-	return 0;
+	return ignore_interrupt();
 }
 
 

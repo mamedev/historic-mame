@@ -177,9 +177,9 @@ static const struct MachineDriver GAMENAME = \
 	INITMACHINE, \
 	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 }, \
 	sys16_gfxdecodeinfo, \
-	2048*ShadowColorsMultiplier,2048*ShadowColorsMultiplier, \
+	2048*ShadowColorsMultiplier, 0, \
 	0, \
-	VIDEO_TYPE_RASTER , \
+	VIDEO_TYPE_RASTER, \
 	0, \
 	sys16_vh_start, \
 	sys16_vh_stop, \
@@ -215,9 +215,9 @@ static const struct MachineDriver GAMENAME = \
 	INITMACHINE, \
 	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 }, \
 	sys16_gfxdecodeinfo, \
-	2048*ShadowColorsMultiplier,2048*ShadowColorsMultiplier, \
+	2048*ShadowColorsMultiplier, 0, \
 	0, \
-	VIDEO_TYPE_RASTER , \
+	VIDEO_TYPE_RASTER, \
 	0, \
 	sys16_vh_start, \
 	sys16_vh_stop, \
@@ -263,9 +263,9 @@ static const struct MachineDriver GAMENAME = \
 	INITMACHINE, \
 	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 }, \
 	sys16_gfxdecodeinfo, \
-	2048*ShadowColorsMultiplier,2048*ShadowColorsMultiplier, \
+	2048*ShadowColorsMultiplier, 0, \
 	0, \
-	VIDEO_TYPE_RASTER , \
+	VIDEO_TYPE_RASTER, \
 	0, \
 	sys16_vh_start, \
 	sys16_vh_stop, \
@@ -1244,9 +1244,9 @@ static const struct MachineDriver machine_driver_atomicp =
 	atomicp_init_machine,
 	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
 	sys16_gfxdecodeinfo,
-	2048*ShadowColorsMultiplier,2048*ShadowColorsMultiplier,
+	2048*ShadowColorsMultiplier, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	sys16_vh_start,
 	sys16_vh_stop,

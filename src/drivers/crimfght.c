@@ -413,7 +413,7 @@ static const struct MachineDriver machine_driver_crimfght =
 	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	crimfght_vh_start,
 	crimfght_vh_stop,

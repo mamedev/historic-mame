@@ -69,14 +69,14 @@ static const struct artwork_element invaders_overlay[]=
 	END
 };
 
-//static const struct artwork_element invdpt2m_overlay[]=
-//{
-//	{{  16,  71,   0, 255}, GREEN  },
-//	{{   0,  15,  16, 133}, GREEN  },
-//	{{  72, 191,   0, 255}, YELLOW },
-//	{{ 192, 223,   0, 255}, RED    },
-//	END
-//};
+/*static const struct artwork_element invdpt2m_overlay[]= */
+/*{ */
+/*	{{  16,  71,   0, 255}, GREEN  }, */
+/*	{{   0,  15,  16, 133}, GREEN  }, */
+/*	{{  72, 191,   0, 255}, YELLOW }, */
+/*	{{ 192, 223,   0, 255}, RED    }, */
+/*	END */
+/*}; */
 
 static const struct artwork_element invrvnge_overlay[]=
 {
@@ -120,8 +120,8 @@ void init_invaders(void)
 void init_invaddlx(void)
 {
 	init_8080bw();
-	//init_overlay = invdpt2m_overlay;
-	//overlay_type = 1;
+	/*init_overlay = invdpt2m_overlay; */
+	/*overlay_type = 1; */
 }
 
 void init_invrvnge(void)
@@ -237,11 +237,11 @@ void init_phantom2(void)
 
 void init_boothill(void)
 {
-//	extern struct GameDriver driver_boothill;
+/*	extern struct GameDriver driver_boothill; */
 
 	init_8080bw();
-//	init_artwork = driver_boothill.name;
-//	artwork_type = FILE_BACKDROP;
+/*	init_artwork = driver_boothill.name; */
+/*	artwork_type = FILE_BACKDROP; */
 }
 
 int invaders_vh_start(void)
@@ -250,24 +250,21 @@ int invaders_vh_start(void)
 	if (artwork_type != NO_ARTWORK)
 	{
 		int start_pen;
-		int max_pens;
-
 
 		start_pen = 2;
-		max_pens = Machine->drv->total_colors-start_pen;
 
 		switch (artwork_type)
 		{
 		case SIMPLE_OVERLAY:
-			overlay_create((const struct artwork_element *)init_artwork, start_pen, max_pens);
+			overlay_create((const struct artwork_element *)init_artwork, start_pen);
 			break;
 		case FILE_OVERLAY:
-			overlay_load((const char *)init_artwork, start_pen, max_pens);
+			overlay_load((const char *)init_artwork, start_pen);
 			break;
 		case SIMPLE_BACKDROP:
 			break;
 		case FILE_BACKDROP:
-			backdrop_load((const char *)init_artwork, start_pen, max_pens);
+			backdrop_load((const char *)init_artwork, start_pen);
 			break;
 		default:
 			logerror("Unknown artwork type.\n");

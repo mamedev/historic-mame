@@ -483,9 +483,10 @@ static const struct MachineDriver machine_driver_sharkatt =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 24*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
-	16, 16,
+	16, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	thief_vh_start,
 	thief_vh_stop,
@@ -523,10 +524,10 @@ static const struct MachineDriver machine_driver_thief =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
 	0,
-	16, 16,
+	16, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	thief_vh_start,
 	thief_vh_stop,
@@ -564,10 +565,10 @@ static const struct MachineDriver machine_driver_natodef =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
 	0,
-	16, 16,
+	16, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	thief_vh_start,
 	thief_vh_stop,

@@ -304,7 +304,7 @@ static const struct MachineDriver machine_driver_ajax =
 	0,	/* gfx decoded by konamiic.c */
 	2048, 0,
 	0,
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	ajax_vh_start,
 	ajax_vh_stop,

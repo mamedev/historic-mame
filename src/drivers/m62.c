@@ -61,6 +61,7 @@ void spelunk2_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 int ldrun_vh_start( void );
 int kidniki_vh_start( void );
 int spelunkr_vh_start( void );
+int youjyudn_vh_start( void );
 WRITE_HANDLER( irem_flipscreen_w );
 WRITE_HANDLER( kungfum_scroll_low_w );
 WRITE_HANDLER( kungfum_scroll_high_w );
@@ -69,6 +70,7 @@ WRITE_HANDLER( ldrun4_hscroll_w );
 WRITE_HANDLER( irem_background_hscroll_w );
 WRITE_HANDLER( irem_background_vscroll_w );
 WRITE_HANDLER( battroad_scroll_w );
+WRITE_HANDLER( youjyudn_scroll_w );
 WRITE_HANDLER( kidniki_text_vscroll_w );
 WRITE_HANDLER( kidniki_background_bank_w );
 WRITE_HANDLER( spelunkr_palbank_w );
@@ -81,6 +83,7 @@ void lotlot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void kidniki_vh_screenrefresh(struct osd_bitmap *bitmap,int fullrefresh);
 void spelunkr_vh_screenrefresh(struct osd_bitmap *bitmap,int fullrefresh);
 void spelunk2_vh_screenrefresh(struct osd_bitmap *bitmap,int fullrefresh);
+void youjyudn_vh_screenrefresh(struct osd_bitmap *bitmap,int fullrefresh);
 
 extern unsigned char *irem_textram;
 extern size_t irem_textram_size;
@@ -201,6 +204,15 @@ WRITE_HANDLER( spelunk2_bankswitch_w )
 	cpu_setbank(2,&RAM[0x10000 + 0x0400 *  (data & 0x3c)]);
 }
 
+static WRITE_HANDLER( youjyudn_bankswitch_w )
+{
+	int bankaddress;
+	unsigned char *RAM = memory_region(REGION_CPU1);
+
+
+	bankaddress = 0x10000 + (data & 0x01) * 0x4000;
+	cpu_setbank(1,&RAM[bankaddress]);
+}
 
 
 
@@ -351,6 +363,22 @@ static MEMORY_WRITE_START( spelunk2_writemem )
 	{ 0xe000, 0xefff, MWA_RAM },
 MEMORY_END
 
+static MEMORY_READ_START( youjyudn_readmem )
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0xbfff, MRA_BANK1 },
+	{ 0xc800, 0xcfff, MRA_RAM },
+	{ 0xd000, 0xd7ff, MRA_RAM },
+	{ 0xe000, 0xefff, MRA_RAM },
+MEMORY_END
+
+static MEMORY_WRITE_START( youjyudn_writemem )
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xc0ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0xc800, 0xcfff, MWA_RAM, &irem_textram, &irem_textram_size },
+	{ 0xd000, 0xd7ff, videoram_w, &videoram, &videoram_size },
+	{ 0xe000, 0xefff, MWA_RAM },
+MEMORY_END
+
 
 static PORT_READ_START( ldrun_readport )
 	{ 0x00, 0x00, input_port_0_r },   /* coin */
@@ -407,6 +435,13 @@ static PORT_WRITE_START( kidniki_writeport )
 	{ 0x82, 0x83, kidniki_text_vscroll_w },
 	{ 0x84, 0x84, kidniki_background_bank_w },
 	{ 0x85, 0x85, kidniki_bankswitch_w },
+PORT_END
+
+static PORT_WRITE_START( youjyudn_writeport )
+	{ 0x00, 0x00, irem_sound_cmd_w },
+	{ 0x01, 0x01, irem_flipscreen_w },	/* + coin counters */
+	{ 0x80, 0x81, youjyudn_scroll_w },
+	{ 0x83, 0x83, youjyudn_bankswitch_w },
 PORT_END
 
 
@@ -1010,6 +1045,56 @@ INPUT_PORTS_START( spelunk2 )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( youjyudn )
+	PORT_START	/* IN0 */
+	IN0_PORT
+
+	PORT_START	/* IN1 */
+	IN1_PORT
+
+	PORT_START	/* IN2 */
+	IN2_PORT
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	COINAGE2_DSW
+
+	PORT_START	/* DSW2 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Cocktail ) )
+/* This activates a different coin mode. Look at the dip switch setting schematic */
+	PORT_DIPNAME( 0x04, 0x04, "Coin Mode" )
+	PORT_DIPSETTING(    0x04, "Mode 1" )
+	PORT_DIPSETTING(    0x00, "Mode 2" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x08, "20000 60000" )
+	PORT_DIPSETTING(    0x00, "40000 80000" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	/* In freeze mode, press 2 to stop and 1 to restart */
+	PORT_BITX   ( 0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Freeze", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+INPUT_PORTS_END
 
 
 #define TILELAYOUT(NUM) static struct GfxLayout tilelayout_##NUM =  \
@@ -1076,72 +1161,58 @@ static struct GfxLayout spelunk2_charlayout =
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
-#define SPRITELAYOUT(NUM) static struct GfxLayout spritelayout_##NUM =         \
-{                                                                              \
-	16,16,	/* 16*16 sprites */                                                \
-	NUM,	/* NUM sprites */                                                  \
-	3,	/* 3 bits per pixel */                                                 \
-	{ 2*NUM*32*8, NUM*32*8, 0 },                                               \
-	{ 0, 1, 2, 3, 4, 5, 6, 7,                                                  \
-			16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7 },  \
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,                                  \
-			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },                    \
-	32*8	/* every sprite takes 32 consecutive bytes */                      \
-}
+static struct GfxLayout youjyudn_tilelayout =
+{
+	8,16,
+	RGN_FRAC(1,3),
+	3,
+	{ RGN_FRAC(2,3), RGN_FRAC(1,3), RGN_FRAC(0,3) },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
+	16*8
+};
 
-SPRITELAYOUT(256);
-SPRITELAYOUT(512);
-SPRITELAYOUT(1024);
-SPRITELAYOUT(2048);
+static struct GfxLayout spritelayout =
+{
+	16,16,
+	RGN_FRAC(1,3),
+	3,
+	{ RGN_FRAC(2,3), RGN_FRAC(1,3), RGN_FRAC(0,3) },
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
+			16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
+	32*8
+};
 
 
 static struct GfxDecodeInfo kungfum_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout_1024,       0, 32 },	/* use colors   0-255 */
-	{ REGION_GFX2, 0, &spritelayout_1024,  32*8, 32 },	/* use colors 256-511 */
+	{ REGION_GFX2, 0, &spritelayout,        256, 32 },	/* use colors 256-511 */
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo battroad_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout_1024,       0, 32 },	/* use colors   0-255 */
-	{ REGION_GFX2, 0, &spritelayout_512,	256, 32 },	/* use colors 256-511 */
+	{ REGION_GFX2, 0, &spritelayout,        256, 32 },	/* use colors 256-511 */
 	{ REGION_GFX3, 0, &battroad_charlayout,	512, 32 },	/* use colors 512-543 */
-	{ -1 } /* end of array */
-};
-
-static struct GfxDecodeInfo ldrun_gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0, &tilelayout_1024,      0, 32 },	/* use colors   0-255 */
-	{ REGION_GFX2, 0, &spritelayout_256,   256, 32 },	/* use colors 256-511 */
-	{ -1 } /* end of array */
-};
-
-static struct GfxDecodeInfo ldrun2_gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0, &tilelayout_1024,      0, 32 },	/* use colors   0-255 */
-	{ REGION_GFX2, 0, &spritelayout_512,   256, 32 },	/* use colors 256-511 */
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo ldrun3_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout_2048,      0, 32 },	/* use colors   0-255 */
-	{ REGION_GFX2, 0, &spritelayout_512,   256, 32 },	/* use colors 256-511 */
-	{ -1 } /* end of array */
-};
-
-static struct GfxDecodeInfo ldrun4_gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0, &tilelayout_2048,      0, 32 },	/* use colors   0-255 */
-	{ REGION_GFX2, 0, &spritelayout_1024,  256, 32 },	/* use colors 256-511 */
+	{ REGION_GFX2, 0, &spritelayout,       256, 32 },	/* use colors 256-511 */
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo lotlot_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &lotlot_charlayout,    0, 32 },	/* use colors   0-255 */
-	{ REGION_GFX2, 0, &spritelayout_256,   256, 32 },	/* use colors 256-511 */
+	{ REGION_GFX2, 0, &spritelayout,       256, 32 },	/* use colors 256-511 */
 	{ REGION_GFX3, 0, &lotlot_charlayout,  512, 32 },	/* use colors 512-767 */
 	{ -1 } /* end of array */
 };
@@ -1149,7 +1220,7 @@ static struct GfxDecodeInfo lotlot_gfxdecodeinfo[] =
 static struct GfxDecodeInfo kidniki_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout_4096,      0, 32 },	/* use colors   0-255 */
-	{ REGION_GFX2, 0, &spritelayout_2048,  256, 32 },	/* use colors 256-511 */
+	{ REGION_GFX2, 0, &spritelayout,       256, 32 },	/* use colors 256-511 */
 	{ REGION_GFX3, 0, &kidniki_charlayout,   0, 32 },	/* use colors   0-255 */
 	{ -1 } /* end of array */
 };
@@ -1157,7 +1228,7 @@ static struct GfxDecodeInfo kidniki_gfxdecodeinfo[] =
 static struct GfxDecodeInfo spelunkr_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout_4096,	     0, 32 },	/* use colors   0-255 */
-	{ REGION_GFX2, 0, &spritelayout_1024,  256, 32 },	/* use colors 256-511 */
+	{ REGION_GFX2, 0, &spritelayout,       256, 32 },	/* use colors 256-511 */
 	{ REGION_GFX3, 0, &spelunk2_charlayout,  0, 32 },	/* use colors   0-255 */
 	{ -1 } /* end of array */
 };
@@ -1165,23 +1236,31 @@ static struct GfxDecodeInfo spelunkr_gfxdecodeinfo[] =
 static struct GfxDecodeInfo spelunk2_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout_4096,	     0, 64 },	/* use colors   0-511 */
-	{ REGION_GFX2, 0, &spritelayout_1024,  512, 32 },	/* use colors 512-767 */
+	{ REGION_GFX2, 0, &spritelayout,       512, 32 },	/* use colors 512-767 */
 	{ REGION_GFX3, 0, &spelunk2_charlayout,  0, 64 },	/* use colors   0-511 */
+	{ -1 } /* end of array */
+};
+
+static struct GfxDecodeInfo youjyudn_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &youjyudn_tilelayout,  0, 32 },	/* use colors   0-255 */
+	{ REGION_GFX2, 0, &spritelayout,       256, 32 },	/* use colors 256-511 */
+	{ REGION_GFX3, 0, &kidniki_charlayout, 128, 16 },	/* use colors 128-255 */
 	{ -1 } /* end of array */
 };
 
 
 
-#define MACHINE_DRIVER(GAMENAME,READPORT,CLOCK,PIXELS_PER_LINE,COLORS,CONVERTCOLOR)          \
+#define MACHINE_DRIVER(GAMENAME,READPORT,WRITEPORT,CLOCK,PIXELS_PER_LINE,GFXDECODE,COLORS,CONVERTCOLOR) \
                                                                                              \
-static const struct MachineDriver machine_driver_##GAMENAME =                                      \
+static const struct MachineDriver machine_driver_##GAMENAME =                                \
 {                                                                                            \
 	/* basic machine hardware */                                                             \
 	{                                                                                        \
 		{                                                                                    \
 			CPU_Z80,                                                                         \
 			CLOCK/6,                                                                         \
-			GAMENAME##_readmem,GAMENAME##_writemem,READPORT##_readport,GAMENAME##_writeport, \
+			GAMENAME##_readmem,GAMENAME##_writemem,READPORT##_readport,WRITEPORT##_writeport, \
 			interrupt,1                                                                      \
 		},                                                                                   \
 		IREM_AUDIO_CPU                                                                       \
@@ -1192,8 +1271,8 @@ static const struct MachineDriver machine_driver_##GAMENAME =                   
                                                                                              \
 	/* video hardware */                                                                     \
 	64*8, 32*8, { (64*8-PIXELS_PER_LINE)/2, 64*8-(64*8-PIXELS_PER_LINE)/2-1, 0*8, 32*8-1 },  \
-	GAMENAME##_gfxdecodeinfo,                                                                \
-	COLORS, COLORS,                                                                          \
+	GFXDECODE##_gfxdecodeinfo,                                                               \
+	COLORS, 0,                                                                               \
 	CONVERTCOLOR##_vh_convert_color_prom,                                                    \
                                                                                              \
 	VIDEO_TYPE_RASTER,                                                                       \
@@ -1210,10 +1289,6 @@ static const struct MachineDriver machine_driver_##GAMENAME =                   
 }
 
 #define kungfum_readmem ldrun_readmem
-#define kungfum_writeport ldrun_writeport
-#define lotlot_writeport ldrun_writeport
-#define spelunkr_writeport ldrun_writeport
-#define spelunk2_writeport ldrun_writeport
 #define	kungfum_vh_start kidniki_vh_start
 #define	battroad_vh_start kidniki_vh_start
 #define	ldrun2_vh_start ldrun_vh_start
@@ -1224,16 +1299,19 @@ static const struct MachineDriver machine_driver_##GAMENAME =                   
 #define	ldrun2_vh_screenrefresh ldrun_vh_screenrefresh
 #define	ldrun3_vh_screenrefresh ldrun_vh_screenrefresh
 
-MACHINE_DRIVER(kungfum,  ldrun,  18432000, 256, 512, irem);
-MACHINE_DRIVER(battroad, ldrun,  18432000, 256, 544, battroad);
-MACHINE_DRIVER(ldrun,    ldrun,  24000000, 384, 512, irem);
-MACHINE_DRIVER(ldrun2,   ldrun2, 24000000, 384, 512, irem);
-MACHINE_DRIVER(ldrun3,   ldrun,  24000000, 384, 512, irem);
-MACHINE_DRIVER(ldrun4,   ldrun,  24000000, 384, 512, irem);
-MACHINE_DRIVER(lotlot,   ldrun,  24000000, 384, 768, irem);
-MACHINE_DRIVER(kidniki,  ldrun,  24000000, 384, 512, irem);
-MACHINE_DRIVER(spelunkr, ldrun,  24000000, 384, 512, irem);
-MACHINE_DRIVER(spelunk2, ldrun,  24000000, 384, 768, spelunk2);
+
+/*              GAMENAME READPORT WRITEPORT CLOCK    WIDTH GFXDECODE COLS PALETTE */
+MACHINE_DRIVER( kungfum,  ldrun,  ldrun,    18432000, 256, kungfum,  512, irem );
+MACHINE_DRIVER( battroad, ldrun,  battroad, 18432000, 256, battroad, 544, battroad );
+MACHINE_DRIVER( ldrun,    ldrun,  ldrun,    24000000, 384, kungfum,  512, irem );
+MACHINE_DRIVER( ldrun2,   ldrun2, ldrun2,   24000000, 384, kungfum,  512, irem );
+MACHINE_DRIVER( ldrun3,   ldrun,  ldrun3,   24000000, 384, ldrun3,   512, irem );
+MACHINE_DRIVER( ldrun4,   ldrun,  ldrun4,   24000000, 384, ldrun3,   512, irem );
+MACHINE_DRIVER( lotlot,   ldrun,  ldrun,    24000000, 384, lotlot,   768, irem );
+MACHINE_DRIVER( kidniki,  ldrun,  kidniki,  24000000, 384, kidniki,  512, irem );
+MACHINE_DRIVER( spelunkr, ldrun,  ldrun,    24000000, 384, spelunkr, 512, irem );
+MACHINE_DRIVER( spelunk2, ldrun,  ldrun,    24000000, 384, spelunk2, 768, spelunk2 );
+MACHINE_DRIVER( youjyudn, ldrun,  youjyudn, 18432000, 256, youjyudn, 512, irem );
 
 
 
@@ -1867,9 +1945,9 @@ ROM_START( spelunkr )
 	ROM_REGION( 0x0920, REGION_PROMS, 0 )
 	ROM_LOAD( "sprm.2k",      0x0000, 0x0100, 0xfd8fa991 )	/* character palette red component */
 	ROM_LOAD( "sprb.1m",      0x0100, 0x0100, 0x8d8cccad )	/* sprite palette red component */
-	ROM_LOAD( "sprm.2j",      0x0200, 0x0100, 0x0e3890b4 )	/* character palette blue component */
+	ROM_LOAD( "sprm.2j",      0x0200, 0x0100, 0x0e3890b4 )	/* character palette green component */
 	ROM_LOAD( "sprb.1n",      0x0300, 0x0100, 0xc40e1cb2 )	/* sprite palette green component */
-	ROM_LOAD( "sprm.2h",      0x0400, 0x0100, 0x0478082b )	/* character palette green component */
+	ROM_LOAD( "sprm.2h",      0x0400, 0x0100, 0x0478082b )	/* character palette blue component */
 	ROM_LOAD( "sprb.1l",      0x0500, 0x0100, 0x3ec46248 )	/* sprite palette blue component */
 	ROM_LOAD( "sprb.5p",      0x0600, 0x0020, 0x746c6238 )	/* sprite height, one entry per 32 */
 	                                                        /* sprites. Used at run time! */
@@ -1933,9 +2011,9 @@ ROM_START( spelnkrj )
 	ROM_REGION( 0x0920, REGION_PROMS, 0 )
 	ROM_LOAD( "sprm.2k",      0x0000, 0x0100, 0xfd8fa991 )	/* character palette red component */
 	ROM_LOAD( "sprb.1m",      0x0100, 0x0100, 0x8d8cccad )	/* sprite palette red component */
-	ROM_LOAD( "sprm.2j",      0x0200, 0x0100, 0x0e3890b4 )	/* character palette blue component */
+	ROM_LOAD( "sprm.2j",      0x0200, 0x0100, 0x0e3890b4 )	/* character palette green component */
 	ROM_LOAD( "sprb.1n",      0x0300, 0x0100, 0xc40e1cb2 )	/* sprite palette green component */
-	ROM_LOAD( "sprm.2h",      0x0400, 0x0100, 0x0478082b )	/* character palette green component */
+	ROM_LOAD( "sprm.2h",      0x0400, 0x0100, 0x0478082b )	/* character palette blue component */
 	ROM_LOAD( "sprb.1l",      0x0500, 0x0100, 0x3ec46248 )	/* sprite palette blue component */
 	ROM_LOAD( "sprb.5p",      0x0600, 0x0020, 0x746c6238 )	/* sprite height, one entry per 32 */
 	                                                        /* sprites. Used at run time! */
@@ -2007,22 +2085,67 @@ ROM_START( spelunk2 )
 	ROM_LOAD( "sp2-b.6f",     0x0920, 0x0100, 0x34d88d3c )	/* video timing - common to the other games */
 ROM_END
 
+ROM_START( youjyudn )
+	ROM_REGION( 0x18000, REGION_CPU1, 0 )	/* main CPU */
+	ROM_LOAD( "yju_a4eb.bin", 0x00000, 0x4000, 0x0d356bdc )
+	ROM_LOAD( "yju_a4db.bin", 0x04000, 0x4000, 0xc169be13 )
+	ROM_LOAD( "yju_p4cb.0",   0x10000, 0x4000, 0x60baf3b1 )	/* banked at 8000-bfff */
+	ROM_LOAD( "yju_p4eb.1",   0x14000, 0x4000, 0x8d0521f8 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* sound CPU */
+	ROM_LOAD( "yju_a3fb.bin", 0xc000, 0x04000, 0xe15c8030 ) /* 6803 code */
+
+	ROM_REGION( 0x0c000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "yju_p3bb.0",   0x00000, 0x4000, 0xc017913c )	/* tiles (first half empty) */
+	ROM_CONTINUE(             0x00000, 0x4000 )
+	ROM_LOAD( "yju_p1bb.1",   0x04000, 0x4000, 0x94627523 )
+	ROM_CONTINUE(             0x04000, 0x4000 )
+	ROM_LOAD( "yju_p1cb.2",   0x08000, 0x4000, 0x6a378c56 )
+	ROM_CONTINUE(             0x08000, 0x4000 )
+
+	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "yju_b4ka.00",  0x00000, 0x4000, 0x1bbb864a )	/* sprites */
+	ROM_LOAD( "yju_b4fa.01",  0x04000, 0x4000, 0x14b4dd24 )
+	ROM_LOAD( "yju_b3na.10",  0x08000, 0x4000, 0x68879321 )
+	ROM_LOAD( "yju_b4na.11",  0x0c000, 0x4000, 0x2860a68b )
+	ROM_LOAD( "yju_b4ca.20",  0x10000, 0x4000, 0xab365829 )
+	ROM_LOAD( "yju_b4ea.21",  0x14000, 0x4000, 0xb36c31e4 )
+
+	ROM_REGION( 0x0c000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "yju_p4lb.2",   0x00000, 0x4000, 0x87878d9b )	/* chars */
+	ROM_LOAD( "yju_p4mb.1",   0x04000, 0x4000, 0x1e1a0d09 )
+	ROM_LOAD( "yju_p4pb.0",   0x08000, 0x4000, 0xb4ab520b )
+
+	ROM_REGION( 0x0920, REGION_PROMS, 0 )
+	ROM_LOAD( "yju_p2jb.bpr", 0x0000, 0x0100, 0xa4483631 )	/* character palette red component */
+	ROM_LOAD( "yju_b1ma.r",   0x0100, 0x0100, 0xa8340e13 )	/* sprite palette red component */
+	ROM_LOAD( "yju_p2kb.bpr", 0x0200, 0x0100, 0x85481103 )	/* character palette green component */
+	ROM_LOAD( "yju_b1na.g",   0x0300, 0x0100, 0xf5b4bc41 )	/* sprite palette green component */
+	ROM_LOAD( "yju_p2hb.bpr", 0x0400, 0x0100, 0xa6fd355c )	/* character palette blue component */
+	ROM_LOAD( "yju_b1la.b",   0x0500, 0x0100, 0x45e10491 )	/* sprite palette blue component */
+	ROM_LOAD( "yju_b-5p.bpr", 0x0600, 0x0020, 0x2095e6a3 )	/* sprite height, one entry per 32 */
+	                                                        /* sprites. Used at run time! */
+	ROM_LOAD( "yju_p-8d.bpr", 0x0620, 0x0200, 0x6cef0fbd )	/* unknown */
+	ROM_LOAD( "yju_b-6f.bpr", 0x0820, 0x0100, 0x82c20d12 )	/* video timing - same as kungfum */
+ROM_END
 
 
-GAME( 1984, kungfum,  0,        kungfum,  kungfum,  0, ROT0,  "Irem", "Kung-Fu Master" )
-GAME( 1984, kungfud,  kungfum,  kungfum,  kungfum,  0, ROT0,  "Irem (Data East license)", "Kung-Fu Master (Data East)" )
-GAME( 1984, spartanx, kungfum,  kungfum,  kungfum,  0, ROT0,  "Irem", "Spartan X (Japan)" )
-GAME( 1984, kungfub,  kungfum,  kungfum,  kungfum,  0, ROT0,  "bootleg", "Kung-Fu Master (bootleg set 1)" )
-GAME( 1984, kungfub2, kungfum,  kungfum,  kungfum,  0, ROT0,  "bootleg", "Kung-Fu Master (bootleg set 2)" )
-GAME( 1984, battroad, 0,        battroad, battroad, 0, ROT90, "Irem", "The Battle-Road" )
-GAME( 1984, ldrun,    0,        ldrun,    ldrun,    0, ROT0,  "Irem (licensed from Broderbund)", "Lode Runner (set 1)" )
-GAME( 1984, ldruna,   ldrun,    ldrun,    ldrun,    0, ROT0,  "Irem (licensed from Broderbund)", "Lode Runner (set 2)" )
-GAME( 1984, ldrun2,   0,        ldrun2,   ldrun2,   0, ROT0,  "Irem (licensed from Broderbund)", "Lode Runner II - The Bungeling Strikes Back" )	/* Japanese version is called Bangeringu Teikoku No Gyakushuu */
-GAME( 1985, ldrun3,   0,        ldrun3,   ldrun3,   0, ROT0,  "Irem (licensed from Broderbund)", "Lode Runner III - Majin No Fukkatsu" )
-GAME( 1986, ldrun4,   0,        ldrun4,   ldrun4,   0, ROT0,  "Irem (licensed from Broderbund)", "Lode Runner IV - Teikoku Karano Dasshutsu" )
-GAME( 1985, lotlot,   0,        lotlot,   lotlot,   0, ROT0,  "Irem (licensed from Tokuma Shoten)", "Lot Lot" )
-GAMEX(1986, kidniki,  0,        kidniki,  kidniki,  0, ROT0,  "Irem (Data East USA license)", "Kid Niki - Radical Ninja (US)", GAME_IMPERFECT_SOUND )
-GAMEX(1986, yanchamr, kidniki,  kidniki,  kidniki,  0, ROT0,  "Irem", "Kaiketsu Yanchamaru (Japan)", GAME_IMPERFECT_SOUND )
-GAME( 1985, spelunkr, 0,        spelunkr, spelunkr, 0, ROT0,  "Irem (licensed from Broderbund)", "Spelunker" )
-GAME( 1985, spelnkrj, spelunkr, spelunkr, spelunkr, 0, ROT0,  "Irem (licensed from Broderbund)", "Spelunker (Japan)" )
-GAME( 1986, spelunk2, 0,        spelunk2, spelunk2, 0, ROT0,  "Irem (licensed from Broderbund)", "Spelunker II" )
+
+GAME( 1984, kungfum,  0,        kungfum,  kungfum,  0, ROT0,   "Irem", "Kung-Fu Master" )
+GAME( 1984, kungfud,  kungfum,  kungfum,  kungfum,  0, ROT0,   "Irem (Data East license)", "Kung-Fu Master (Data East)" )
+GAME( 1984, spartanx, kungfum,  kungfum,  kungfum,  0, ROT0,   "Irem", "Spartan X (Japan)" )
+GAME( 1984, kungfub,  kungfum,  kungfum,  kungfum,  0, ROT0,   "bootleg", "Kung-Fu Master (bootleg set 1)" )
+GAME( 1984, kungfub2, kungfum,  kungfum,  kungfum,  0, ROT0,   "bootleg", "Kung-Fu Master (bootleg set 2)" )
+GAME( 1984, battroad, 0,        battroad, battroad, 0, ROT90,  "Irem", "The Battle-Road" )
+GAME( 1984, ldrun,    0,        ldrun,    ldrun,    0, ROT0,   "Irem (licensed from Broderbund)", "Lode Runner (set 1)" )
+GAME( 1984, ldruna,   ldrun,    ldrun,    ldrun,    0, ROT0,   "Irem (licensed from Broderbund)", "Lode Runner (set 2)" )
+GAME( 1984, ldrun2,   0,        ldrun2,   ldrun2,   0, ROT0,   "Irem (licensed from Broderbund)", "Lode Runner II - The Bungeling Strikes Back" )	/* Japanese version is called Bangeringu Teikoku No Gyakushuu */
+GAME( 1985, ldrun3,   0,        ldrun3,   ldrun3,   0, ROT0,   "Irem (licensed from Broderbund)", "Lode Runner III - Majin No Fukkatsu" )
+GAME( 1986, ldrun4,   0,        ldrun4,   ldrun4,   0, ROT0,   "Irem (licensed from Broderbund)", "Lode Runner IV - Teikoku Karano Dasshutsu" )
+GAME( 1985, lotlot,   0,        lotlot,   lotlot,   0, ROT0,   "Irem (licensed from Tokuma Shoten)", "Lot Lot" )
+GAMEX(1986, kidniki,  0,        kidniki,  kidniki,  0, ROT0,   "Irem (Data East USA license)", "Kid Niki - Radical Ninja (US)", GAME_IMPERFECT_SOUND )
+GAMEX(1986, yanchamr, kidniki,  kidniki,  kidniki,  0, ROT0,   "Irem", "Kaiketsu Yanchamaru (Japan)", GAME_IMPERFECT_SOUND )
+GAME( 1985, spelunkr, 0,        spelunkr, spelunkr, 0, ROT0,   "Irem (licensed from Broderbund)", "Spelunker" )
+GAME( 1985, spelnkrj, spelunkr, spelunkr, spelunkr, 0, ROT0,   "Irem (licensed from Broderbund)", "Spelunker (Japan)" )
+GAME( 1986, spelunk2, 0,        spelunk2, spelunk2, 0, ROT0,   "Irem (licensed from Broderbund)", "Spelunker II" )
+GAME( 1986, youjyudn, 0,        youjyudn, youjyudn, 0, ROT270, "Irem", "Youjyuden (Japan)" )

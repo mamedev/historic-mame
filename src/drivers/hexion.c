@@ -19,7 +19,7 @@ Notes:
 #include "driver.h"
 
 
-void hexion_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void hexion_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 int hexion_vh_start(void);
 void hexion_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -251,7 +251,7 @@ static const struct MachineDriver machine_driver_hexion =
 	/* video hardware */
 	64*8, 32*8, { 0*8, 64*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	256,256,
+	256, 0,
 	hexion_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2,

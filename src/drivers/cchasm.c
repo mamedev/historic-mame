@@ -168,7 +168,7 @@ static const struct MachineDriver machine_driver_cchasm =
 	/* video hardware */
 	400, 300, { 0, 1024-1, 0, 768-1 },
 	0,
-	256, 256,
+	256, 0,
 	cchasm_init_colors,
 
 	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,

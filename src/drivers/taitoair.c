@@ -160,7 +160,7 @@ cpu #0 (PC=0001941E): unmapped word write to 0098000E = 0000 & FFFF
 cpu #0 (PC=00001EA4): unmapped word write to 00140000 = 0005 & 00FF
 cpu #0 (PC=00001EBC): unmapped word write to 00830000 = A6E7 & FFFF
 
- 
+
 ****************************************************************************/
 
 #include "driver.h"
@@ -191,7 +191,7 @@ static WRITE16_HANDLER( airsys_paletteram16_w )	/* xxBBBBxRRRRxGGGG */
 	g = (g << 4) | g;
 	b = (b << 4) | b;
 
-	palette_change_color(offset,r,g,b);
+	palette_set_color(offset,r,g,b);
 }
 
 
@@ -524,7 +524,7 @@ static struct YM2610interface airsys_ym2610_interface =
 {
 	1,	/* 1 chip */
 	8000000,	/* 4 MHz */
-	{ 30 },
+	{ 25 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -532,7 +532,7 @@ static struct YM2610interface airsys_ym2610_interface =
 	{ irqhandler },
 	{ REGION_SOUND2 },
 	{ REGION_SOUND1 },
-	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) }
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
 };
 
 
@@ -563,10 +563,10 @@ static const struct MachineDriver machine_driver_airsys =
 	/* video hardware */
 	64*16, 64*16, { 0*16, 32*16-1, 3*16, 28*16-1 },
 	airsys_gfxdecodeinfo,
-	512*16, 512*16,
+	512*16, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	recordbr_vh_start,
 	syvalion_vh_stop,

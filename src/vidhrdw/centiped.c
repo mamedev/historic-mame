@@ -84,7 +84,7 @@ static void setcolor(int pen,int data)
 		else if (g) g = 0xc0;
 	}
 
-	palette_change_color(pen,r,g,b);
+	palette_set_color(pen,r,g,b);
 }
 
 WRITE_HANDLER( centiped_paletteram_w )

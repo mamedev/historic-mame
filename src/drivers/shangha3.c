@@ -534,7 +534,7 @@ static const struct MachineDriver machine_driver_shangha3 =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	shangha3_vh_start,
 	shangha3_vh_stop,
@@ -582,7 +582,7 @@ static const struct MachineDriver machine_driver_heberpop =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	shangha3_vh_start,
 	shangha3_vh_stop,
@@ -630,7 +630,7 @@ static const struct MachineDriver machine_driver_blocken =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	shangha3_vh_start,
 	shangha3_vh_stop,

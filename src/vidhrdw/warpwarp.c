@@ -65,7 +65,7 @@ void warpwarp_init_palette(unsigned char *obsolete,unsigned short *colortable,co
 		bit2 = (i >> 7) & 0x01;
 		b = 0x1f * bit0 + 0x3c * bit1 + 0xa4 * bit2;
 
-		palette_change_color(i,r,g,b);
+		palette_set_color(i,r,g,b);
 	}
 
 	for (i = 0;i < TOTAL_COLORS(0);i += 2)

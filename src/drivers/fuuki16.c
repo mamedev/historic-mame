@@ -567,7 +567,7 @@ static const struct MachineDriver machine_driver_fuuki16 =
 	fuuki16_gfxdecodeinfo,
 	0x400*4, 0x400*4 + 0x40*256,	/* For the 8 bit layer */
 	fuuki16_vh_init_palette,
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	fuuki16_vh_start,
 	0,

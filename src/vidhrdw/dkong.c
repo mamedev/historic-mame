@@ -190,8 +190,8 @@ WRITE_HANDLER( radarscp_grid_color_w )
 	r = ((~data >> 0) & 0x01) * 0xff;
 	g = ((~data >> 1) & 0x01) * 0xff;
 	b = ((~data >> 2) & 0x01) * 0xff;
-//	palette_change_color(257,r,g,b);
-	palette_change_color(257,0x00,0x00,0xff);
+//	palette_set_color(257,r,g,b);
+	palette_set_color(257,0x00,0x00,0xff);
 }
 
 WRITE_HANDLER( dkong_flipscreen_w )
@@ -343,7 +343,7 @@ static void draw_grid(struct osd_bitmap *bitmap)
 
 void radarscp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	palette_change_color(256,0xff,0x00,0x00);	/* stars */
+	palette_set_color(256,0xff,0x00,0x00);	/* stars */
 
 	if (full_refresh)
 		memset(dirtybuffer,1,videoram_size);

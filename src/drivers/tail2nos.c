@@ -298,7 +298,7 @@ static const struct MachineDriver machine_driver_tail2nos =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	tail2nos_vh_start,
 	tail2nos_vh_stop,

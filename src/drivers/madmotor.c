@@ -331,7 +331,7 @@ static const struct MachineDriver machine_driver_madmotor =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	madmotor_vh_start,
 	0,

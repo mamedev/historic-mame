@@ -44,7 +44,7 @@ extern unsigned char *marineb_column_scroll;
 extern int marineb_active_low_flipscreen;
 
 void espial_init_machine(void);
-void espial_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void espial_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 
 WRITE_HANDLER( marineb_palbank0_w );
 WRITE_HANDLER( marineb_palbank1_w );
@@ -584,7 +584,7 @@ static const struct MachineDriver machine_driver_##NAME =					\
 	/* video hardware */											\
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },						\
 	NAME##_gfxdecodeinfo,											\
-	256,256,														\
+	256, 0,															\
 	espial_vh_convert_color_prom,									\
 	VIDEO_TYPE_RASTER,												\
 	0,																\
@@ -629,7 +629,7 @@ static const struct MachineDriver machine_driver_bcruzm12 =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	wanted_gfxdecodeinfo,
-	256,256,
+	256, 0,
 	espial_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,

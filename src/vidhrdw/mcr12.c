@@ -112,7 +112,7 @@ static WRITE_HANDLER( mcr2_paletteram_w )
 	g = (g << 5) | (g << 2) | (g >> 1);
 	b = (b << 5) | (b << 2) | (b >> 1);
 
-	palette_change_color(offset / 2, r, g, b);
+	palette_set_color(offset / 2, r, g, b);
 }
 
 

@@ -423,7 +423,7 @@ static const struct MachineDriver machine_driver_funkyjet =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	funkyjet_vh_start,
 	0,
@@ -465,7 +465,7 @@ static const struct MachineDriver machine_driver_funkyjtb =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	funkyjet_vh_start,
 	0,

@@ -465,7 +465,7 @@ static struct YM2610interface ym2610_interface =
 {
 	1,	/* 1 chip */
 	16000000/2,	/* 8 MHz ?? */
-	{ 30 },
+	{ 25 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -473,7 +473,7 @@ static struct YM2610interface ym2610_interface =
 	{ irqhandler },
 	{ REGION_SOUND2 },	/* Delta-T */
 	{ REGION_SOUND1 },	/* ADPCM */
-	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) }
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
 };
 
 
@@ -528,10 +528,10 @@ static struct MachineDriver machine_driver_darius2d =
 	80*8, 32*8, { 0*8, 80*8-1, 3*8, 32*8-1 },
 
 	warriorb_gfxdecodeinfo,
-	4096*2, 4096*2,
+	4096*2, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_DUAL_MONITOR | VIDEO_ASPECT_RATIO(8,3),
+	VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR | VIDEO_ASPECT_RATIO(8,3),
 	0,
 	darius2d_vh_start,
 	warriorb_vh_stop,
@@ -575,10 +575,10 @@ static struct MachineDriver machine_driver_warriorb =
 	80*8, 32*8, { 0*8, 80*8-1, 2*8, 32*8-1 },
 
 	warriorb_gfxdecodeinfo,
-	4096*2, 4096*2,
+	4096*2, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_DUAL_MONITOR | VIDEO_ASPECT_RATIO(8,3),
+	VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR | VIDEO_ASPECT_RATIO(8,3),
 	0,
 	warriorb_vh_start,
 	warriorb_vh_stop,

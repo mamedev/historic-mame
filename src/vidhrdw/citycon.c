@@ -166,7 +166,7 @@ INLINE void changecolor_RRRRGGGGBBBBxxxx(int color,int indx)
 	g = (g << 4) | g;
 	b = (b << 4) | b;
 
-	palette_change_color(color,r,g,b);
+	palette_set_color(color,r,g,b);
 }
 
 void citycon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)

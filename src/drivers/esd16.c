@@ -335,9 +335,10 @@ static const struct MachineDriver machine_driver_multchmp =
 	/* video hardware */
 	0x140, 0x100, { 0, 0x140-1, 0+8, 0x100-8-1 },
 	esd16_gfxdecodeinfo,
-	256*3, 256*3,
+	768, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	esd16_vh_start,
 	0,

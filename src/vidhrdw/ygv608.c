@@ -1112,7 +1112,7 @@ WRITE16_HANDLER( ygv608_w )
 			if (++p3_state == 3)
 			{
 				p3_state = 0;
-				palette_change_color(ygv608.regs.s.cc,
+				palette_set_color(ygv608.regs.s.cc,
 			    	ygv608.colour_palette[ygv608.regs.s.cc][0] << 2,
 			    	ygv608.colour_palette[ygv608.regs.s.cc][1] << 2,
 			    	ygv608.colour_palette[ygv608.regs.s.cc][2] << 2 );

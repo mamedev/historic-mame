@@ -106,7 +106,7 @@ WRITE_HANDLER( missile_w )
 		g = 0xff * ((~data >> 2) & 1);
 		b = 0xff * ((~data >> 1) & 1);
 
-		palette_change_color(offset - 0x4b00,r,g,b);
+		palette_set_color(offset - 0x4b00,r,g,b);
 
 		return;
 	}

@@ -14,26 +14,23 @@ static int video_off;
 extern unsigned char *spriteram,*spriteram_2;
 extern size_t spriteram_size;
 
-static int irq1,irq2;
+static int irqbase;
 
 void m72_init_machine(void)
 {
-	irq1 = 0x20;
-	irq2 = 0x22;
+	irqbase = 0x20;
 	m72_init_sound();
 }
 
 void xmultipl_init_machine(void)
 {
-	irq1 = 0x08;
-	irq2 = 0x0a;
+	irqbase = 0x08;
 	m72_init_sound();
 }
 
-void poundfor_init_machine(void)
+void kengo_init_machine(void)
 {
-	irq1 = 0x18;
-	irq2 = 0x1a;
+	irqbase = 0x18;
 	m72_init_sound();
 }
 
@@ -44,7 +41,7 @@ int m72_interrupt(void)
 	if (line == 255)	/* vblank */
 	{
 		rastersplit = 0;
-		return irq1;
+		return irqbase+0;
 	}
 	else
 	{
@@ -59,7 +56,7 @@ int m72_interrupt(void)
 		   multiple times, by changing the interrupt line register in the
 		   interrupt handler).
 		 */
-		return irq2;
+		return irqbase+2;
 	}
 }
 
@@ -212,6 +209,16 @@ int rtype2_vh_start(void)
 	return 0;
 }
 
+int poundfor_vh_start(void)
+{
+	int res = rtype2_vh_start();
+
+	xadjust = -6;
+
+	return res;
+}
+
+
 /* Major Title has a larger background RAM, and rowscroll */
 int majtitle_vh_start(void)
 {
@@ -282,12 +289,24 @@ void m72_vh_stop(void)
 
 READ_HANDLER( m72_palette1_r )
 {
-	return paletteram[offset];
+	/* only D0-D4 are connected */
+	if (offset & 1) return 0xff;
+
+	/* A9 isn't connected, so 0x200-0x3ff mirrors 0x000-0x1ff etc. */
+	offset &= ~0x200;
+
+	return paletteram[offset] | 0xe0;	/* only D0-D4 are connected */
 }
 
 READ_HANDLER( m72_palette2_r )
 {
-	return paletteram_2[offset];
+	/* only D0-D4 are connected */
+	if (offset & 1) return 0xff;
+
+	/* A9 isn't connected, so 0x200-0x3ff mirrors 0x000-0x1ff etc. */
+	offset &= ~0x200;
+
+	return paletteram_2[offset] | 0xe0;	/* only D0-D4 are connected */
 }
 
 INLINE void changecolor(int color,int r,int g,int b)
@@ -296,14 +315,19 @@ INLINE void changecolor(int color,int r,int g,int b)
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
 
-	palette_change_color(color,r,g,b);
+	palette_set_color(color,r,g,b);
 }
 
 WRITE_HANDLER( m72_palette1_w )
 {
-	paletteram[offset] = data;
+	/* only D0-D4 are connected */
 	if (offset & 1) return;
-	offset &= 0x3ff;
+
+	/* A9 isn't connected, so 0x200-0x3ff mirrors 0x000-0x1ff etc. */
+	offset &= ~0x200;
+
+	paletteram[offset] = data;
+	offset &= 0x1ff;
 	changecolor(offset / 2,
 			paletteram[offset + 0x000],
 			paletteram[offset + 0x400],
@@ -312,10 +336,15 @@ WRITE_HANDLER( m72_palette1_w )
 
 WRITE_HANDLER( m72_palette2_w )
 {
-	paletteram_2[offset] = data;
+	/* only D0-D4 are connected */
 	if (offset & 1) return;
-	offset &= 0x3ff;
-	changecolor(offset / 2 + 512,
+
+	/* A9 isn't connected, so 0x200-0x3ff mirrors 0x000-0x1ff etc. */
+	offset &= ~0x200;
+
+	paletteram_2[offset] = data;
+	offset &= 0x1ff;
+	changecolor(offset / 2 + 256,
 			paletteram_2[offset + 0x000],
 			paletteram_2[offset + 0x400],
 			paletteram_2[offset + 0x800]);
@@ -399,38 +428,11 @@ WRITE_HANDLER( m72_scrolly2_w )
 		scrolly2[i] = scrolly2[rastersplit];
 }
 
-WRITE_HANDLER( m72_spritectrl_w )
+WRITE_HANDLER( m72_dmaon_w )
 {
-//logerror("%04x: write %02x to sprite ctrl+%d\n",cpu_get_pc(),data,offset);
-	/* TODO: this is ok for R-Type, but might be wrong for others */
-	if (offset == 1)
-	{
-		memcpy(m72_spriteram,spriteram,spriteram_size);
-		if (data & 0x40) memset(spriteram,0,spriteram_size);
-		/* bit 7 is used by bchopper, nspirit, imgfight, loht, gallop - meaning unknown */
-		/* rtype2 uses bits 4,5,6 and 7 - of course it could be a different chip */
-	}
-}
-
-WRITE_HANDLER( hharry_spritectrl_w )
-{
-//logerror("%04x: write %02x to sprite ctrl+%d\n",cpu_get_pc(),data,offset);
 	if (offset == 0)
 	{
 		memcpy(m72_spriteram,spriteram,spriteram_size);
-		memset(spriteram,0,spriteram_size);
-	}
-}
-
-WRITE_HANDLER( hharryu_spritectrl_w )
-{
-//logerror("%04x: write %02x to sprite ctrl+%d\n",cpu_get_pc(),data,offset);
-	if (offset == 1)
-	{
-		memcpy(m72_spriteram,spriteram,spriteram_size);
-		if (data & 0x80) memset(spriteram,0,spriteram_size);
-		/* hharryu uses bits 2,3,4,5,6 and 7 - of course it could be a different chip */
-		/* majtitle uses bits 2,3,5,6 and 7 - of course it could be a different chip */
 	}
 }
 
@@ -460,7 +462,7 @@ WRITE_HANDLER( m72_port02_w )
 	else
 		cpu_set_reset_line(1,ASSERT_LINE);
 
-	/* other bits unknown */
+	/* bit 5 = "bank"? */
 }
 
 WRITE_HANDLER( rtype2_port02_w )
@@ -470,7 +472,7 @@ WRITE_HANDLER( rtype2_port02_w )
 		if (data) logerror("write %02x to port 03\n",data);
 		return;
 	}
-	if (data & 0xf0) logerror("write %02x to port 02\n",data);
+	if (data & 0xe0) logerror("write %02x to port 02\n",data);
 
 	/* bits 0/1 are coin counters */
 	coin_counter_w(0,data & 0x01);
@@ -509,7 +511,8 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 {
 	int offs;
 
-	for (offs = 0;offs < spriteram_size;offs += 8)
+	offs = 0;
+	while (offs < spriteram_size)
 	{
 		int code,color,sx,sy,flipx,flipy,w,h,x,y;
 
@@ -552,6 +555,8 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 						&Machine->visible_area,TRANSPARENCY_PEN,0);
 			}
 		}
+
+		offs += w*8;
 	}
 }
 
@@ -652,9 +657,6 @@ void m72_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		return;
 	}
 
-	tilemap_set_clip(fg_tilemap,NULL);
-	tilemap_set_clip(bg_tilemap,NULL);
-
 	draw_bg(bitmap,TILEMAP_BACK);
 	draw_fg(bitmap,TILEMAP_BACK);
 	draw_sprites(bitmap);
@@ -672,8 +674,6 @@ void majtitle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 		return;
 	}
-
-	tilemap_set_clip(fg_tilemap,NULL);
 
 	if (majtitle_rowscroll)
 	{

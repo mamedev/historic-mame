@@ -57,7 +57,7 @@ static void stuff_palette( int source_index, int dest_index, int num_colors )
 		bit3 = (color_prom[0x400] >> 1) & 0x01;
 		blue = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-		palette_change_color( dest_index++, red, green, blue );
+		palette_set_color( dest_index++, red, green, blue );
 		color_prom++;
 	}
 }

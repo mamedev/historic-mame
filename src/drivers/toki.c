@@ -451,7 +451,7 @@ static struct MSM5205interface msm5205_interface =
 	1,					/* 1 chip			  */
 	384000, 			/* 384KHz			  */
 	{ toki_adpcm_int },/* interrupt function */
-	{ MSM5205_S96_4B},	/* 4KHz 			  */
+	{ MSM5205_S96_4B },	/* 4KHz 			  */
 	{ 60 }
 };
 
@@ -478,9 +478,9 @@ static const struct MachineDriver machine_driver_toki =
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
 
 	toki_gfxdecodeinfo,
-	4*256, 4*256,
+	1024, 0,
 	0,
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	toki_eof_callback,
 	toki_vh_start,
 	0,
@@ -518,9 +518,9 @@ static const struct MachineDriver machine_driver_tokib =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
 	tokib_gfxdecodeinfo,
-	4*256, 4*256,
+	1024, 0,
 	0,
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	toki_eof_callback,
 	toki_vh_start,
 	0,

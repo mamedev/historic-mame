@@ -781,7 +781,7 @@ static const struct MachineDriver machine_driver_spacfury =
 	/* video hardware */
 	400, 300, { 512, 1536, 552, 1464 },
 	0,
-	256,256,
+	256, 0,
 	sega_init_colors,
 
 	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
@@ -883,7 +883,7 @@ static const struct MachineDriver machine_driver_zektor =
 	/* video hardware */
 	400, 300, { 512, 1536, 624, 1432 },
 	0,
-	256,256,
+	256, 0,
 	sega_init_colors,
 
 	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
@@ -980,7 +980,7 @@ static const struct MachineDriver machine_driver_tacscan =
 	/* video hardware */
 	400, 300, { 496, 1552, 592, 1456 },
 	0,
-	256,256,
+	256, 0,
 	sega_init_colors,
 
 	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
@@ -1056,7 +1056,7 @@ static const struct MachineDriver machine_driver_elim2 =
 	/* video hardware */
 	400, 300, { 512, 1536, 600, 1440 },
 	0,
-	256,256,
+	256, 0,
 	sega_init_colors,
 
 	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
@@ -1101,7 +1101,7 @@ static const struct MachineDriver machine_driver_elim4 =
 	/* video hardware */
 	400, 300, { 512, 1536, 600, 1440 },
 	0,
-	256,256,
+	256, 0,
 	sega_init_colors,
 
 	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,
@@ -1216,7 +1216,7 @@ static const struct MachineDriver machine_driver_startrek =
 	/* video hardware */
 	400, 300, { 512, 1536, 616, 1464 },
 	0,
-	256,256,
+	256, 0,
 	sega_init_colors,
 
 	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,

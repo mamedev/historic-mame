@@ -358,7 +358,7 @@ static const struct MachineDriver machine_driver_kangaroo =
 	24,0,
 	kangaroo_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	kangaroo_vh_start,
 	kangaroo_vh_stop,

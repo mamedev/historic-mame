@@ -458,7 +458,7 @@ static const struct MachineDriver machine_driver_buggychl =
 	128+128, 128,
 	buggychl_init_palette,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	buggychl_vh_start,
 	buggychl_vh_stop,

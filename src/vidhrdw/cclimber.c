@@ -254,7 +254,7 @@ WRITE_HANDLER( swimmer_bgcolor_w )
 	bit2 = (data >> 2) & 0x01;
 	b = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 
-	palette_change_color(BGPEN,r,g,b);
+	palette_set_color(BGPEN,r,g,b);
 }
 
 

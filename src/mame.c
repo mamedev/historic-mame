@@ -32,16 +32,17 @@ static int leds_status;
 struct auto_link
 {
 	struct auto_link *next;
+	int tag;
 	UINT32 cookie;
 };
 
 static struct auto_link *first_auto_link;
+static int auto_malloc_tag = 0;
 
 
 int init_machine(void);
 void shutdown_machine(void);
 int run_machine(void);
-static void auto_free_all(void);
 
 /* in usrintrf.c */
 void switch_ui_orientation(void);
@@ -102,10 +103,11 @@ static int validitychecks(void)
 		}
 
 #if 0
-		if (drivers[i]->drv->color_table_len == drivers[i]->drv->total_colors &&
+//		if (drivers[i]->drv->color_table_len == drivers[i]->drv->total_colors &&
+		if (drivers[i]->drv->color_table_len && drivers[i]->drv->total_colors &&
 				drivers[i]->drv->vh_init_palette == 0)
 		{
-			printf("%s could use color_table_len = 0\n",drivers[i]->name);
+			printf("%s: %s could use color_table_len = 0\n",drivers[i]->source_file,drivers[i]->name);
 			error = 1;
 		}
 #endif
@@ -470,12 +472,12 @@ int run_game(int game)
 {
 	int err;
 
+	auto_malloc_start();
 
 #ifdef MAME_DEBUG
 	/* validity checks */
 	if (validitychecks()) return 1;
 #endif
-
 
 	/* copy some settings into easier-to-handle variables */
 	record	   = options.record;
@@ -597,6 +599,7 @@ int run_game(int game)
 
 	if (osd_init() == 0)
 	{
+		auto_malloc_start();
 		if (init_machine() == 0)
 		{
 			if (run_machine() == 0)
@@ -615,9 +618,7 @@ int run_game(int game)
 			printf("Unable to initialize machine emulation\n");
 		}
 
-		/* free all auto-deallocated memory */
-		auto_free_all();
-
+		auto_malloc_stop();
 		osd_exit();
 	}
 	else if (!bailing)
@@ -626,6 +627,7 @@ int run_game(int game)
 		printf ("Unable to initialize system\n");
 	}
 
+	auto_malloc_stop();
 	return err;
 }
 
@@ -743,6 +745,9 @@ void shutdown_machine(void)
 	/* free the memory allocated for ROM and RAM */
 	for (i = 0;i < MAX_MEMORY_REGIONS;i++)
 		free_memory_region(i);
+
+	/* reset the CPU system */
+	cpu_exit();
 
 	/* free the memory allocated for input ports definition */
 	input_port_free(Machine->input_ports);
@@ -1138,10 +1143,7 @@ int run_machine(void)
 				int region;
 
 				if (artwork_overlay || artwork_backdrop)
-				{
 					real_scrbitmap = artwork_real_scrbitmap;
-					artwork_remap();
-				}
 				else
 					real_scrbitmap = Machine->scrbitmap;
 
@@ -1265,6 +1267,13 @@ void set_led_status(int num,int on)
 }
 
 
+
+/*************************************
+ *
+ *	Allocate memory to be auto-freed
+ *
+ *************************************/
+
 void *auto_malloc(size_t size)
 {
 	struct auto_link *result;
@@ -1276,6 +1285,7 @@ void *auto_malloc(size_t size)
 
 	/* fill in the link */
 	result->next = first_auto_link;
+	result->tag = auto_malloc_tag;
 	result->cookie = 0xbaadf00d;
 	first_auto_link = result;
 
@@ -1284,13 +1294,33 @@ void *auto_malloc(size_t size)
 }
 
 
-static void auto_free_all(void)
+
+/*************************************
+ *
+ *	Track a new set of memory
+ *
+ *************************************/
+
+void auto_malloc_start(void)
+{
+	auto_malloc_tag++;
+}
+
+
+
+/*************************************
+ *
+ *	Free the current set of memory
+ *
+ *************************************/
+
+void auto_malloc_stop(void)
 {
 	struct auto_link *link, *next;
 
 	/* follow the links */
 	link = first_auto_link;
-	while (link)
+	while (link && link->tag == auto_malloc_tag)
 	{
 		/* validate the cookie and stop if it's bad */
 		if (link->cookie != 0xbaadf00d)
@@ -1308,5 +1338,8 @@ static void auto_free_all(void)
 	}
 
 	/* reset the link */
-	first_auto_link = NULL;
+	first_auto_link = link;
+
+	/* decrement the tag counter */
+	auto_malloc_tag--;
 }

@@ -920,7 +920,7 @@ static struct YM2610interface ym2610_interface =
 {
 	1,	/* 1 chip */
 	8000000,	/* 8 MHz ?????? */
-	{ 30 },
+	{ 25 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -928,14 +928,14 @@ static struct YM2610interface ym2610_interface =
 	{ irqhandler },
 	{ REGION_SOUND1 },
 	{ REGION_SOUND1 },
-	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) }
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
 };
 
 static struct YM2610interface ballbros_ym2610_interface =
 {
 	1,	/* 1 chip */
 	8000000,	/* 8 MHz ?????? */
-	{ 30 },
+	{ 25 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -943,7 +943,7 @@ static struct YM2610interface ballbros_ym2610_interface =
 	{ irqhandler },
 	{ REGION_SOUND1 },
 	{ REGION_SOUND2 },
-	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) }
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
 };
 
 static struct YM2151interface ym2151_interface =
@@ -986,7 +986,7 @@ static const struct MachineDriver machine_driver_superman =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	superman_vh_start,
 	superman_vh_stop,
@@ -1030,7 +1030,7 @@ static struct MachineDriver machine_driver_daisenpu =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	superman_vh_start,
 	superman_vh_stop,
@@ -1074,7 +1074,7 @@ static struct MachineDriver machine_driver_gigandes =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	superman_vh_start,
 	superman_vh_stop,
@@ -1118,7 +1118,7 @@ static struct MachineDriver machine_driver_ballbros =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	ballbros_vh_start,
 	superman_vh_stop,

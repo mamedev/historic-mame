@@ -298,7 +298,7 @@ static const struct MachineDriver machine_driver_srumbler =
 	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	srumbler_eof_callback,
 	srumbler_vh_start,
 	0,

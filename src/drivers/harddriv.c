@@ -849,10 +849,10 @@ static struct MachineDriver machine_driver_harddriv =
 	/* video hardware */
 	512, 384, { 0, 511, 0, 383 },
 	0,
-	256*4,256*4,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
 	harddriv_vh_eof,
 	harddriv_vh_start,
 	harddriv_vh_stop,
@@ -926,10 +926,10 @@ static struct MachineDriver machine_driver_racedriv =
 	/* video hardware */
 	512, 288, { 0, 511, 0, 287 },
 	0,
-	256*4,256*4,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	harddriv_vh_eof,
 	harddriv_vh_start,
 	harddriv_vh_stop,
@@ -977,10 +977,10 @@ static struct MachineDriver machine_driver_stunrun =
 	/* video hardware */
 	512, 240, { 0, 511, 0, 239 },
 	0,
-	256*4,256*4,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	harddriv_vh_eof,
 	harddriv_vh_start,
 	harddriv_vh_stop,
@@ -1033,10 +1033,10 @@ static struct MachineDriver machine_driver_steeltal =
 	/* video hardware */
 	512, 288, { 0, 511, 0, 287 },
 	0,
-	256*4,256*4,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	harddriv_vh_eof,
 	harddriv_vh_start,
 	harddriv_vh_stop,

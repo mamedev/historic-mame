@@ -938,7 +938,7 @@ static const struct MachineDriver machine_driver_radarscp =
 	256+2, 64*4,	/* two extra colors for stars and radar grid */
 	dkong_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	dkong_vh_start,
 	generic_vh_stop,

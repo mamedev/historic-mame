@@ -640,7 +640,7 @@ static void fill_palette_bank(int virtual,int physical)
 		r = namcos2_68k_palette_ram[offset | 0x0000] & 0x00ff;
 		g = namcos2_68k_palette_ram[offset | 0x0800] & 0x00ff;
 		b = namcos2_68k_palette_ram[offset | 0x1000] & 0x00ff;
-		palette_change_color(pen + virtual*256,r,g,b);
+		palette_set_color(pen + virtual*256,r,g,b);
 		offset++;
 	}
 }

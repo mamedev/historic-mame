@@ -160,7 +160,7 @@ WRITE_HANDLER( brickzn_banked_paletteram_w )
 	r = (r << 4) | r;
 	g = (g << 4) | g;
 	b = (b << 4) | b;
-	palette_change_color(offset/2,r,g,b);
+	palette_set_color(offset/2,r,g,b);
 }
 
 

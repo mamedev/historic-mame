@@ -428,7 +428,7 @@ static const struct MachineDriver machine_driver_vendetta =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	vendetta_vh_start,
 	vendetta_vh_stop,

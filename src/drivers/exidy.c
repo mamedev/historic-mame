@@ -904,7 +904,7 @@ static const struct MachineDriver machine_driver_mtrap =
 	PALETTE_LEN, COLORTABLE_LEN,
 	exidy_vh_init_palette,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	exidy_vh_eof,
 	exidy_vh_start,
 	exidy_vh_stop,
@@ -946,7 +946,7 @@ static const struct MachineDriver machine_driver_venture =
 	PALETTE_LEN, COLORTABLE_LEN,
 	exidy_vh_init_palette,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	exidy_vh_eof,
 	exidy_vh_start,
 	exidy_vh_stop,
@@ -987,7 +987,7 @@ static const struct MachineDriver machine_driver_pepper2 =
 	PALETTE_LEN, COLORTABLE_LEN,
 	exidy_vh_init_palette,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	exidy_vh_eof,
 	exidy_vh_start,
 	exidy_vh_stop,
@@ -1029,7 +1029,7 @@ static const struct MachineDriver machine_driver_fax =
 	PALETTE_LEN, COLORTABLE_LEN,
 	exidy_vh_init_palette,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	exidy_vh_eof,
 	exidy_vh_start,
 	exidy_vh_stop,

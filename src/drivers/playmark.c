@@ -488,7 +488,7 @@ static const struct MachineDriver machine_driver_bigtwin =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	bigtwin_vh_start,
 	bigtwin_vh_stop,
@@ -525,7 +525,7 @@ static const struct MachineDriver machine_driver_wbeachvl =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	wbeachvl_vh_start,
 	0,

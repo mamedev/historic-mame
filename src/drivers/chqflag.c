@@ -385,7 +385,7 @@ static const struct MachineDriver machine_driver_chqflag =
 	0,	/* gfx decoded by konamiic.c */
 	1024, 0,
 	0,
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	chqflag_vh_start,
 	chqflag_vh_stop,

@@ -309,7 +309,7 @@ static const struct MachineDriver machine_driver_simpsons =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	simpsons_vh_start,
 	simpsons_vh_stop,

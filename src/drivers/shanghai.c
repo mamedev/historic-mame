@@ -1060,7 +1060,7 @@ static const struct MachineDriver machine_driver_shangha2 =
 	256,0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	shanghai_vh_start,
 	shanghai_vh_stop,

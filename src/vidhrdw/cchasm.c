@@ -133,7 +133,7 @@ void cchasm_init_colors (unsigned char *palette, unsigned short *colortable,cons
             {
                 palette[3*i  ] = (255 * r) / 7;
                 palette[3*i+1] = (255 * g) / 7;
-                palette[3*i+2] = (255 * b) /3;
+                palette[3*i+2] = (255 * b) / 3;
 				i++;
 			}
 }

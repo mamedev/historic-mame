@@ -152,7 +152,7 @@ static WRITE16_HANDLER( twin16_paletteram_word_w )
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
 
-	palette_change_color(offset / 2,r,g,b);
+	palette_set_color(offset / 2,r,g,b);
 }
 
 
@@ -166,12 +166,12 @@ static WRITE16_HANDLER( sound_command_w )
 
 static int CPUA_interrupt( void )
 {
-	return CPUA_IRQ_ENABLE?MC68000_IRQ_5:MC68000_INT_NONE;
+	return CPUA_IRQ_ENABLE?MC68000_IRQ_5:ignore_interrupt();
 }
 
 static int CPUB_interrupt( void )
 {
-	return CPUB_IRQ_ENABLE?MC68000_IRQ_5:MC68000_INT_NONE;
+	return CPUB_IRQ_ENABLE?MC68000_IRQ_5:ignore_interrupt();
 }
 
 static READ16_HANDLER( twin16_sprite_status_r )
@@ -1113,10 +1113,10 @@ static const struct MachineDriver machine_driver_##NAME =	\
 	/* video hardware */	\
 	320, 256, { 0, 319, 0+16, 255-16 },	\
 	gfxdecodeinfo,	\
-	0x400,0x400,	\
+	0x400, 0,	\
 	0,	\
 	\
-	VIDEO_TYPE_RASTER ,	\
+	VIDEO_TYPE_RASTER,	\
 	0,	\
 	twin16_vh_start,	\
 	twin16_vh_stop,	\
@@ -1173,10 +1173,10 @@ static const struct MachineDriver machine_driver_heavysync =
 	/* video hardware */
 	320, 256, { 0, 319, 0+16, 255-16 },
 	gfxdecodeinfo,
-	0x400,0x400,
+	0x400, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	twin16_vh_start,
 	twin16_vh_stop,
@@ -1223,10 +1223,10 @@ static const struct MachineDriver machine_driver_fround =
 	/* video hardware */
 	320, 256, { 0, 319, 0+16, 255-16 },
 	gfxdecodeinfo,
-	0x400,0x400,
+	0x400, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	twin16_vh_start,
 	twin16_vh_stop,

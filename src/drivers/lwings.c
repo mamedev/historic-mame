@@ -860,7 +860,7 @@ static const struct MachineDriver machine_driver_lwings =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	lwings_eof_callback,
 	lwings_vh_start,
 	0,
@@ -910,7 +910,7 @@ static const struct MachineDriver machine_driver_trojan =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	lwings_eof_callback,
 	trojan_vh_start,
 	0,
@@ -964,7 +964,7 @@ static const struct MachineDriver machine_driver_avengers =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	lwings_eof_callback,
 	avengers_vh_start,
 	0,

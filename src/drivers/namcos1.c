@@ -829,11 +829,10 @@ static const struct MachineDriver machine_driver_ns1 =
 	/* video hardware */
 	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	128*16+6*256+6*256+1,	/* sprites, tiles, shadowed tiles, background */
-		128*16+6*256+1,
+	128*16+6*256+6*256+1, 0,	/* virtual palette */
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN,
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,
 	namcos1_vh_start,
 	namcos1_vh_stop,
@@ -895,11 +894,10 @@ static const struct MachineDriver machine_driver_quester =
 	/* video hardware */
 	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	128*16+6*256+6*256+1,	/* sprites, tiles, shadowed tiles, background */
-		128*16+6*256+1,
+	128*16+6*256+6*256+1, 0,	/* virtual palette */
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,
 	namcos1_vh_start,
 	namcos1_vh_stop,
@@ -961,11 +959,10 @@ static const struct MachineDriver machine_driver_faceoff =
 	/* video hardware */
 	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	128*16+6*256+6*256+1,	/* sprites, tiles, shadowed tiles, background */
-		128*16+6*256+1,
+	128*16+6*256+6*256+1, 0,	/* virtual palette */
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,
 	namcos1_vh_start,
 	namcos1_vh_stop,

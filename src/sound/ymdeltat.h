@@ -23,16 +23,16 @@ typedef struct deltat_adpcm_state {
 	UINT32 delta;			/* delta scale			*/
 	INT32 volume;			/* current volume		*/
 	INT32 *pan;				/* pan : &output_pointer[pan] */
-	INT32 adpcmx;			/* shift Measurement value */
+	INT32 acc;				/* shift Measurement value */
 	INT32 adpcmd;			/* next Forecast		*/
 	INT32 adpcml;			/* current value		*/
 	/* leveling and re-sampling state for DELTA-T */
-	INT32 volume_w_step;   /* volume with step rate */
-	INT32 next_leveling;   /* leveling value        */
-	INT32 sample_step;     /* step of re-sampling   */
+	INT32 volume_w_step;    /* volume with step rate */
+	INT32 next_leveling;    /* leveling value        */
+	INT32 resample_step;    /* step of re-sampling   */
 	/* external flag controll (for YM2610) */
 	UINT8 flagMask;			/* arrived flag mask	*/
-	UINT8 *arrivedFlagPtr; /* pointer of arrived end address flag */
+	UINT8 *arrivedFlagPtr;  /* pointer of arrived end address flag */
 }YM_DELTAT;
 
 /* static state */

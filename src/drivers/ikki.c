@@ -247,7 +247,7 @@ static const struct MachineDriver machine_driver_ikki =
 	256+1,1024,
 	ikki_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	generic_vh_start,
 	generic_vh_stop,

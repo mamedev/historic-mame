@@ -1641,7 +1641,7 @@ static const struct MachineDriver machine_driver_system1 =
 	1536, 1536,
 	system1_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	system1_vh_start,
 	system1_vh_stop,
@@ -1686,7 +1686,7 @@ static const struct MachineDriver machine_driver_small =
 	1536, 1536,
 	system1_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	system1_vh_start,
 	system1_vh_stop,
@@ -1730,7 +1730,7 @@ static const struct MachineDriver machine_driver_hvymetal =
 	1536, 1536,
 	system1_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	system1_vh_start,
 	system1_vh_stop,
@@ -1774,7 +1774,7 @@ static const struct MachineDriver machine_driver_chplft =
 	1536, 1536,
 	system1_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	system1_vh_start,
 	system1_vh_stop,
@@ -1818,7 +1818,7 @@ static const struct MachineDriver machine_driver_brain =
 	1536, 1536,
 	system1_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	system1_vh_start,
 	system1_vh_stop,
@@ -1862,7 +1862,7 @@ static const struct MachineDriver machine_driver_wbml =
 	1536, 1536,
 	system1_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	system1_vh_start,
 	system1_vh_stop,

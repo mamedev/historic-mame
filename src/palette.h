@@ -60,7 +60,7 @@
      again.
   2) Dynamic palette. Use this for games which use RAM for color generation.
      The palette can be dynamically modified by the driver using the function
-     palette_change_color().
+     palette_set_color().
   3) Direct mapped 16-bit or 32-bit color. This should only be used in special
      cases, e.g. to support alpha blending.
      MachineDriver->video_attributes must contain VIDEO_RGB_DIRECT.
@@ -78,7 +78,8 @@ int palette_start(void);
 void palette_stop(void);
 int palette_init(void);
 
-void palette_change_color(int color,UINT8 red,UINT8 green,UINT8 blue);
+void palette_set_color(int color,UINT8 r,UINT8 g,UINT8 b);
+void palette_get_color(int color,UINT8 *r,UINT8 *g,UINT8 *b);
 
 
 extern UINT16 *palette_shadow_table;

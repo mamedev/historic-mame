@@ -102,7 +102,7 @@ int berzerk_interrupt(void)
 		{
 			berzerk_irq_end_of_screen = 1;
 		}
-		return irq_enabled ? 0xfc : Z80_IGNORE_INT;
+		return irq_enabled ? 0xfc : ignore_interrupt();
 
 	case 1:
 	case 2:
@@ -118,7 +118,7 @@ int berzerk_interrupt(void)
 		{
 			berzerk_irq_end_of_screen = 0;
 		}
-		return nmi_enabled ? Z80_NMI_INT : Z80_IGNORE_INT;
+		return nmi_enabled ? Z80_NMI_INT : ignore_interrupt();
 	}
 }
 

@@ -1201,7 +1201,7 @@ WRITE16_HANDLER( atarigen_666_paletteram_w )
 	g = (g << 2) | (g >> 4);
 	b = (b << 2) | (b >> 4);
 
-	palette_change_color(offset, r, g, b);
+	palette_set_color(offset, r, g, b);
 }
 
 
@@ -1229,7 +1229,7 @@ WRITE16_HANDLER( atarigen_expanded_666_paletteram_w )
 		g = (g << 2) | (g >> 4);
 		b = (b << 2) | (b >> 4);
 
-		palette_change_color(palentry & 0x1ff, r, g, b);
+		palette_set_color(palentry & 0x1ff, r, g, b);
 	}
 }
 
@@ -1256,7 +1256,7 @@ WRITE32_HANDLER( atarigen_666_paletteram32_w )
 		g = (g << 2) | (g >> 4);
 		b = (b << 2) | (b >> 4);
 
-		palette_change_color(offset * 2, r, g, b);
+		palette_set_color(offset * 2, r, g, b);
 	}
 
 	if (ACCESSING_LSW32)
@@ -1271,7 +1271,7 @@ WRITE32_HANDLER( atarigen_666_paletteram32_w )
 		g = (g << 2) | (g >> 4);
 		b = (b << 2) | (b >> 4);
 
-		palette_change_color(offset * 2 + 1, r, g, b);
+		palette_set_color(offset * 2 + 1, r, g, b);
 	}
 }
 

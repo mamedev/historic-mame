@@ -443,7 +443,7 @@ static const struct MachineDriver machine_driver_overdriv =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	overdriv_vh_start,
 	overdriv_vh_stop,

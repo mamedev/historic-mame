@@ -41,7 +41,7 @@ on a very small daughterboard).
 
 extern unsigned char *seicross_row_scroll;
 WRITE_HANDLER( seicross_colorram_w );
-void seicross_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void seicross_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 void seicross_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
@@ -456,7 +456,7 @@ static const struct MachineDriver machine_driver_##NAME =										\
 	/* video hardware */																\
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },											\
 	gfxdecodeinfo,																		\
-	64, 64,																				\
+	64, 0,																				\
 	seicross_vh_convert_color_prom,														\
 																						\
 	VIDEO_TYPE_RASTER,																	\

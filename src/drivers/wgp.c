@@ -853,7 +853,7 @@ static struct YM2610interface ym2610_interface =
 {
 	1,	/* 1 chip */
 	16000000/2,	/* 8 MHz ?? */
-	{ 30 },
+	{ 25 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -861,7 +861,7 @@ static struct YM2610interface ym2610_interface =
 	{ irqhandler },
 	{ REGION_SOUND2 },	/* Delta-T */
 	{ REGION_SOUND1 },	/* ADPCM */
-	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) }
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
 };
 
 
@@ -904,7 +904,7 @@ static struct MachineDriver machine_driver_wgp =
 	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	wgp_vh_start,
 	wgp_vh_stop,
@@ -953,7 +953,7 @@ static struct MachineDriver machine_driver_wgp2 =
 	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	wgp2_vh_start,
 	wgp_vh_stop,

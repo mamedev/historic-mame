@@ -426,7 +426,7 @@ static void williams2_modify_color(int color, int offset)
 	UINT8 g = ((entry_lo >> 4) & 15) * i;
 	UINT8 r = ((entry_lo >> 0) & 15) * i;
 
-	palette_change_color(color, r, g, b);
+	palette_set_color(color, r, g, b);
 }
 
 
@@ -603,7 +603,7 @@ WRITE_HANDLER( blaster_palette_0_w )
 		r = (r << 5) | (r << 2) | (r >> 1);
 		g = (g << 5) | (g << 2) | (g >> 1);
 		b = (b << 6) | (b << 4) | (b << 2) | b;
-		palette_change_color(16 + offset - Machine->visible_area.min_y, r, g, b);
+		palette_set_color(16 + offset - Machine->visible_area.min_y, r, g, b);
 	}
 }
 

@@ -1,5 +1,5 @@
 /*
-  File: fm.h -- header file for software emuration for FM sound genelator
+  File: fm.h -- header file for software emulation for FM sound generator
 
 */
 #ifndef _H_FM_FM_
@@ -17,13 +17,11 @@
 /* select stereo output buffer : 1=mixing / 0=separate */
 #define FM_STEREO_MIX 0
 /* select bit size of output : 8 or 16 */
-#define FM_OUTPUT_BIT 16
+#define FM_SAMPLE_BITS 16
 /* select timer system internal or external */
 #define FM_INTERNAL_TIMER 0
 
 /* --- speedup optimize --- */
-/* support LFO unit */
-#define FM_LFO_SUPPORT 1
 /* support OPN SSG type envelope mode */
 #define FM_SEG_SUPPORT 0
 /* busy flag enulation , The definition of FM_GET_TIME_NOW() is necessary. */
@@ -105,11 +103,11 @@ typedef signed int		INT32;   /* signed 32bit   */
   #define YM2612_NUMBUF 2    /* FM L+R */
 #endif
 
-#if (FM_OUTPUT_BIT==16)
+#if (FM_SAMPLE_BITS==16)
 typedef INT16 FMSAMPLE;
 typedef unsigned long FMSAMPLE_MIX;
 #endif
-#if (FM_OUTPUT_BIT==8)
+#if (FM_SAMPLE_BITS==8)
 typedef unsigned char  FMSAMPLE;
 typedef unsigned short FMSAMPLE_MIX;
 #endif

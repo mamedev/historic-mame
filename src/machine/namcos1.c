@@ -606,14 +606,14 @@ static WRITE_HANDLER( unknown_w ) {
 }
 
 /* Main bankswitching routine */
-WRITE_HANDLER( namcos1_bankswitch_w ) {
+void namcos1_bankswitch(int cpu, offs_t offset, data8_t data)
+{
 	static int chip = 0;
 	mem_read_handler handler_r;
 	mem_write_handler handler_w;
 	offs_t offs;
 
 	if ( offset & 1 ) {
-		int cpu = cpu_getactivecpu();
 		int bank = (cpu*8) + ( ( offset >> 9 ) & 0x07 );
 		chip &= 0x0300;
 		chip |= ( data & 0xff );
@@ -654,20 +654,20 @@ WRITE_HANDLER( namcos1_bankswitch_w ) {
 	}
 }
 
+WRITE_HANDLER( namcos1_bankswitch_w ) {
+	namcos1_bankswitch(cpu_getactivecpu(), offset, data);
+}
+
 /* Sub cpu set start bank port */
 WRITE_HANDLER( namcos1_subcpu_bank_w )
 {
-	int oldcpu = cpu_getactivecpu();
-
 	//logerror("cpu1 bank selected %02x=%02x\n",offset,data);
 	namcos1_cpu1_banklatch = (namcos1_cpu1_banklatch&0x300)|data;
 	/* Prepare code for Cpu 1 */
-	cpu_setactivecpu( 1 );
-	namcos1_bankswitch_w( 0x0e00, namcos1_cpu1_banklatch>>8  );
-	namcos1_bankswitch_w( 0x0e01, namcos1_cpu1_banklatch&0xff);
+	namcos1_bankswitch( 1, 0x0e00, namcos1_cpu1_banklatch>>8  );
+	namcos1_bankswitch( 1, 0x0e01, namcos1_cpu1_banklatch&0xff);
 	/* cpu_set_reset_line(1,PULSE_LINE); */
 
-	cpu_setactivecpu( oldcpu );
 }
 
 /*******************************************************************************
@@ -858,7 +858,6 @@ static void namcos1_build_banks(mem_read_handler key_r,mem_write_handler key_w)
 
 void init_namcos1( void ) {
 
-	int oldcpu = cpu_getactivecpu();
 	int bank;
 
 	/* Point all of our bankhandlers to the error handlers */
@@ -870,19 +869,14 @@ void init_namcos1( void ) {
 	}
 
 	/* Prepare code for Cpu 0 */
-	cpu_setactivecpu( 0 );
-	namcos1_bankswitch_w( 0x0e00, 0x03 ); /* bank7 = 0x3ff(PRG7) */
-	namcos1_bankswitch_w( 0x0e01, 0xff );
+	namcos1_bankswitch(0, 0x0e00, 0x03 ); /* bank7 = 0x3ff(PRG7) */
+	namcos1_bankswitch(0, 0x0e01, 0xff );
 
 	/* Prepare code for Cpu 1 */
-	cpu_setactivecpu( 1 );
-	namcos1_bankswitch_w( 0x0e00, 0x03);
-	namcos1_bankswitch_w( 0x0e01, 0xff);
+	namcos1_bankswitch(1, 0x0e00, 0x03);
+	namcos1_bankswitch(1, 0x0e01, 0xff);
 
 	namcos1_cpu1_banklatch = 0x03ff;
-
-	/* reset starting Cpu */
-	cpu_setactivecpu( oldcpu );
 
 	/* Point mcu & sound shared RAM to destination */
 	{

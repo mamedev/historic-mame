@@ -371,10 +371,10 @@ static int batrider_sound_interrupt(void)	/* Batrider uses NMI for sound cpu */
 	if (batrider_z80nmi_enabled)
 	{
 		batrider_z80nmi_enabled = 0;
-		return Z80_NMI_INT;
+		return nmi_interrupt();
 	}
 	else
-		return Z80_IGNORE_INT;
+		return ignore_interrupt();
 }
 
 
@@ -3112,7 +3112,7 @@ static const struct MachineDriver machine_driver_tekipaki =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_0_eof_callback,
 	toaplan2_0_vh_start,
 	toaplan2_0_vh_stop,
@@ -3157,7 +3157,7 @@ static const struct MachineDriver machine_driver_ghox =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_0_eof_callback,
 	toaplan2_0_vh_start,
 	toaplan2_0_vh_stop,
@@ -3202,7 +3202,7 @@ static const struct MachineDriver machine_driver_dogyuun =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_1_eof_callback,
 	toaplan2_1_vh_start,
 	toaplan2_1_vh_stop,
@@ -3251,7 +3251,7 @@ static const struct MachineDriver machine_driver_kbash =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_0_eof_callback,
 	toaplan2_0_vh_start,
 	toaplan2_0_vh_stop,
@@ -3292,7 +3292,7 @@ static const struct MachineDriver machine_driver_truxton2 =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_0_eof_callback,
 	truxton2_0_vh_start,
 	toaplan2_0_vh_stop,
@@ -3339,7 +3339,7 @@ static const struct MachineDriver machine_driver_pipibibs =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_0_eof_callback,
 	toaplan2_0_vh_start,
 	toaplan2_0_vh_stop,
@@ -3382,7 +3382,7 @@ static const struct MachineDriver machine_driver_whoopee =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_0_eof_callback,
 	toaplan2_0_vh_start,
 	toaplan2_0_vh_stop,
@@ -3425,7 +3425,7 @@ static const struct MachineDriver machine_driver_pipibibi =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_0_eof_callback,
 	toaplan2_0_vh_start,
 	toaplan2_0_vh_stop,
@@ -3470,7 +3470,7 @@ static const struct MachineDriver machine_driver_fixeight =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_0_eof_callback,
 	truxton2_0_vh_start,
 	toaplan2_0_vh_stop,
@@ -3520,7 +3520,7 @@ static const struct MachineDriver machine_driver_vfive =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_0_eof_callback,
 	toaplan2_0_vh_start,
 	toaplan2_0_vh_stop,
@@ -3565,7 +3565,7 @@ static const struct MachineDriver machine_driver_batsugun =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_1_eof_callback,
 	toaplan2_1_vh_start,
 	toaplan2_1_vh_stop,
@@ -3606,7 +3606,7 @@ static const struct MachineDriver machine_driver_snowbro2 =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_0_eof_callback,
 	toaplan2_0_vh_start,
 	toaplan2_0_vh_stop,
@@ -3653,7 +3653,7 @@ static const struct MachineDriver machine_driver_mahoudai =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_0_eof_callback,
 	truxton2_0_vh_start,
 	toaplan2_0_vh_stop,
@@ -3700,7 +3700,7 @@ static const struct MachineDriver machine_driver_shippumd =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_0_eof_callback,
 	truxton2_0_vh_start,
 	toaplan2_0_vh_stop,
@@ -3747,7 +3747,7 @@ static const struct MachineDriver machine_driver_battleg =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_0_eof_callback,
 	truxton2_0_vh_start,
 	toaplan2_0_vh_stop,
@@ -3794,7 +3794,7 @@ static const struct MachineDriver machine_driver_batrider =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	batrider_0_eof_callback,
 	batrider_0_vh_start,
 	toaplan2_0_vh_stop,

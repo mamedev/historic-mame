@@ -916,7 +916,7 @@ INPUT_PORTS_START( mach3 )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Lives", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_BITX(    0x80, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Lives", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
@@ -1447,7 +1447,7 @@ static const struct MachineDriver machine_driver_##GAMENAME =             \
 	/* video hardware */                                        	\
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },						\
 	GFX,                                                        	\
-	16, 16,		                                                	\
+	16, 0,		                                                	\
 	0,									                           	\
 																	\
 	VIDEO_TYPE_RASTER,												\
@@ -1505,7 +1505,7 @@ static const struct MachineDriver machine_driver_##GAMENAME =				\
 	/* video hardware */											\
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },						\
 	GFX,															\
-	16, 16,															\
+	16, 0,															\
 	0,																\
 																	\
 	VIDEO_TYPE_RASTER,												\

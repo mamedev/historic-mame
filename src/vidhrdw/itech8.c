@@ -172,7 +172,7 @@ WRITE_HANDLER( itech8_palette_data_w )
 	palette_data[palette_index++] = data;
 	if (palette_index == 3)
 	{
-		palette_change_color(palette_addr++, palette_data[0] << 2, palette_data[1] << 2, palette_data[2] << 2);
+		palette_set_color(palette_addr++, palette_data[0] << 2, palette_data[1] << 2, palette_data[2] << 2);
 		palette_index = 0;
 	}
 }

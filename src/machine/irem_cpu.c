@@ -25,6 +25,7 @@
 	Hook							Nanao?	D80001 ?
 
 	R-Type Leo						Irem 	D800001A1
+	Fire Barrel						?		? (same as R-Type Leo)
 
 	In The Hunt						Irem 	D8000011A1 020
 
@@ -36,9 +37,7 @@
 
 	Perfect Soldiers						D8000022A1
 
-	Fire Barrel						?		?
-
-	Dream Soccer '94				?		?
+	Dream Soccer '94				Irem	D8000023A1 026
 
 
 	Emulation by Bryan McPhail, mish@tendril.co.uk, thanks to Chris Hardy too!
@@ -254,8 +253,10 @@ unsigned char hook_decryption_table[256] = {
 
 unsigned char rtypeleo_decryption_table[256] = {
 	0x5d,xxxx,0xc6,xxxx,xxxx,xxxx,0x2a,0x3a, xxxx,xxxx,xxxx,0x86,xxxx,0x22,xxxx,0xf3, /* 00 */
-	xxxx,xxxx,xxxx,xxxx,xxxx,0x38,xxxx,0x42, 0x04,xxxx,xxxx,0x1f,xxxx,xxxx,xxxx,0x58, /* 10 */
-	0x57,0x2e,xxxx,xxxx,0x53,xxxx,0xb9,xxxx, xxxx,xxxx,xxxx,xxxx,0x20,0x55,xxxx,xxxx, /* 20 */
+	xxxx,xxxx,xxxx,xxxx,xxxx,0x38,0x01,0x42, 0x04,xxxx,xxxx,0x1f,xxxx,xxxx,xxxx,0x58, /* 10 */
+//								  ^^^^
+	0x57,0x2e,xxxx,xxxx,0x53,xxxx,0xb9,xxxx, xxxx,xxxx,xxxx,xxxx,0x20,0x55,xxxx,0x3d, /* 20 */
+//																				^^^^
 	0xa0,xxxx,xxxx,0x0c,0x03,xxxx,0x83,xxxx, xxxx,xxxx,0x8a,xxxx,xxxx,0xaa,xxxx,xxxx, /* 30 */
 	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,0x41,0x0a,0x26,0x8b,0x56,0x5e,xxxx, /* 40 */
 	xxxx,0x74,xxxx,xxxx,xxxx,xxxx,0x06,xxxx, xxxx,0x89,0x5b,0xc7,0x43,xxxx,xxxx,xxxx, /* 50 */
@@ -268,10 +269,12 @@ unsigned char rtypeleo_decryption_table[256] = {
 	xxxx,xxxx,0xb5,xxxx,0x08,0xa2,0xbf,0xbb, 0x1e,0x9c,xxxx,0x73,xxxx,0xd0,xxxx,xxxx, /* C0 */
 	xxxx,xxxx,xxxx,xxxx,0x81,xxxx,0x79,xxxx, xxxx,0x24,0x23,xxxx,xxxx,0xb0,0x07,0xff, /* D0 */
 	xxxx,0xba,0xf6,0x51,xxxx,xxxx,xxxx,0xfe, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,0xe9,xxxx, /* E0 */
-	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,0xe8,0xd2, xxxx,0x18,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* F0 */
+	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,0xe8,0xd2, xxxx,0x18,xxxx,xxxx,xxxx,0xd1,xxxx,xxxx, /* F0 */
+//																	  ^^^^
 };
 // 0xf9 (0x18) opcode is right but arguments could be swapped
 // 0x80 (0x2b) not sure, could be 0x1b
+// 0x16 (0x01) guess (wrong?)
 
 
 unsigned char inthunt_decryption_table[256] = {
@@ -364,6 +367,30 @@ unsigned char psoldier_decryption_table[256] = {
 // 0x1a (0x01) guess (wrong?)
 
 
+unsigned char dsoccr94_decryption_table[256] = {
+	xxxx,0xd1,xxxx,xxxx,xxxx,0x79,0x2e,xxxx, xxxx,xxxx,0x5a,0x0f,xxxx,xxxx,0x43,xxxx, /* 00 */
+	xxxx,xxxx,0xe8,0x50,xxxx,xxxx,xxxx,0xa0, 0x5d,0x22,xxxx,xxxx,0xb2,0x3a,xxxx,xxxx, /* 10 */
+	0xf6,0x8a,0x41,xxxx,xxxx,0x81,xxxx,xxxx, xxxx,xxxx,0x2b,0x58,xxxx,xxxx,xxxx,0xc6, /* 20 */
+	xxxx,xxxx,0xb9,xxxx,xxxx,0x2a,xxxx,0x3c, xxxx,0x80,0x26,xxxx,0xb0,xxxx,0x47,xxxx, /* 30 */
+	xxxx,xxxx,0x0a,0x55,xxxx,xxxx,xxxx,0x88, xxxx,xxxx,0x87,xxxx,xxxx,0xb4,0x0c,xxxx, /* 40 */
+	0x73,0x53,xxxx,xxxx,0x3b,0x1f,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* 50 */
+	0x01,xxxx,xxxx,xxxx,xxxx,0x1e,xxxx,xxxx, 0xc3,xxxx,0xa3,0x74,xxxx,0x32,0x42,0x75, /* 60 */
+	0xfc,xxxx,0xb8,xxxx,0x33,xxxx,0x5e,xxxx, xxxx,0xaa,xxxx,xxxx,0x04,xxxx,0x9c,0xba, /* 70 */
+	xxxx,xxxx,0x24,0x89,xxxx,xxxx,0xea,xxxx, 0x23,xxxx,xxxx,xxxx,0xbb,xxxx,xxxx,0xc7, /* 80 */
+	xxxx,0x8e,xxxx,0x52,xxxx,0x18,xxxx,0x72, xxxx,xxxx,xxxx,xxxx,0xb6,xxxx,xxxx,xxxx, /* 90 */
+	0xfa,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, 0xb1,xxxx,xxxx,xxxx,xxxx,0x57,0x78,0xa2, /* A0 */
+	xxxx,0x3d,0x51,xxxx,xxxx,0xbf,0x46,0x2c, xxxx,xxxx,0xfb,xxxx,xxxx,xxxx,xxxx,0x38, /* B0 */
+	0x56,xxxx,0xcf,xxxx,0x08,xxxx,xxxx,xxxx, 0x5b,0x07,xxxx,xxxx,xxxx,0x20,0x9d,xxxx, /* C0 */
+	0x03,xxxx,xxxx,xxxx,xxxx,xxxx,0xbc,0x86, 0x59,xxxx,0x02,xxxx,0xff,0xd2,0x8b,xxxx, /* D0 */
+	xxxx,0xd0,xxxx,xxxx,xxxx,xxxx,xxxx,0xe9, 0x06,xxxx,0x5f,0xf3,xxxx,0xb5,xxxx,xxxx, /* E0 */
+	0xeb,xxxx,xxxx,xxxx,xxxx,xxxx,0x83,xxxx, 0x36,xxxx,xxxx,xxxx,xxxx,0xbd,0xfe,xxxx, /* F0 */
+};
+
+// 0x95 (0x18) opcode is right but arguments could be swapped
+// 0x2a (0x2b) not sure, could be 0x1b
+// 0x60 (0x01) guess (wrong?)
+
+
 unsigned char shisen2_decryption_table[256] = {
 	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, 0xea,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* 00 */
 	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* 10 */
@@ -377,27 +404,7 @@ unsigned char shisen2_decryption_table[256] = {
 	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* 90 */
 	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* A0 */
 	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* B0 */
-	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,0x0f,xxxx, /* C0 */
-	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* D0 */
-	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* E0 */
-	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* F0 */
-};
-
-
-unsigned char dsoccr94_decryption_table[256] = {
-	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* 00 */
-	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* 10 */
-	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* 20 */
-	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* 30 */
-	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* 40 */
-	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* 50 */
-	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* 60 */
-	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* 70 */
-	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* 80 */
-	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* 90 */
-	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* A0 */
-	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* B0 */
-	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* C0 */
+	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,0xfa,0x0f,xxxx, /* C0 */
 	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* D0 */
 	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* E0 */
 	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* F0 */

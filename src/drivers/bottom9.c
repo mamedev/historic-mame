@@ -424,7 +424,7 @@ static const struct MachineDriver machine_driver_bottom9 =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	bottom9_vh_start,
 	bottom9_vh_stop,

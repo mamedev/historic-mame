@@ -241,15 +241,6 @@ void superchs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	layer[3] = (priority &0x000f) >>  0;	/* tells us which is top */
 	layer[4] = 4;   /* text layer always over bg layers */
 
-	TC0480SCP_mark_transparent_colors(layer[0]);
-
-	/* Background colour is messed up - the lowest tilemap should be drawn opaquely
-		but we have to mark pen 0 as transparent for custom layers to be drawn
-		transparently.
-
-		The 'Winners don't use drugs' screen should have solid blue background.
-	*/
-
 	fillbitmap(priority_bitmap,0,NULL);
 
 	/* We have to assume 2nd to bottom layer is always underneath

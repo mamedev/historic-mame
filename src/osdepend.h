@@ -14,9 +14,9 @@ extern "C" {
 #endif
 
 #ifdef __LP64__
-#define FPTR long   /* 64bit: sizeof(void *) is sizeof(long)  */
+#define FPTR unsigned long   /* 64bit: sizeof(void *) is sizeof(long)  */
 #else
-#define FPTR int
+#define FPTR unsigned int
 #endif
 
 
@@ -114,7 +114,6 @@ int osd_allocate_colors(unsigned int totalcolors,
 		const UINT8 *palette,UINT32 *rgb_components,
 		const UINT8 *debug_palette,UINT32 *debug_pens);
 void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned char blue);
-void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char *blue);
 
 void osd_mark_dirty(int xmin,int ymin,int xmax,int ymax);
 

@@ -822,7 +822,7 @@ static const struct MachineDriver machine_driver_ikari3 =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	ikari3_vh_start,
 	0,
@@ -871,7 +871,7 @@ static const struct MachineDriver machine_driver_pow =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	pow_vh_start,
 	0,
@@ -920,7 +920,7 @@ static const struct MachineDriver machine_driver_searchar =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	searchar_vh_start,
 	0,
@@ -969,7 +969,7 @@ static const struct MachineDriver machine_driver_streetsm =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	pow_vh_start,
 	0,

@@ -630,7 +630,7 @@ static const struct MachineDriver machine_driver_bssoccer =
 	suna16_gfxdecodeinfo,
 	512, 0,		/* 2 banks of 256 colors */
 	0,
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	suna16_vh_start,
 	suna16_vh_stop,
@@ -701,7 +701,7 @@ static const struct MachineDriver machine_driver_uballoon =
 	suna16_gfxdecodeinfo,
 	512, 0,		/* 2 banks of 256 colors */
 	0,
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	suna16_vh_start,
 	suna16_vh_stop,

@@ -235,7 +235,7 @@ static int gsword_snd_interrupt(void)
 		gsword_nmi_count = 0;
 		return Z80_NMI_INT;
 	}
-	return Z80_IGNORE_INT;
+	return ignore_interrupt();
 }
 
 static WRITE_HANDLER( gsword_nmi_set_w )

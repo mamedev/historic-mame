@@ -278,10 +278,10 @@ static const struct MachineDriver machine_driver_speedbal =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	768, 768,
+	768, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	speedbal_vh_start,
 	speedbal_vh_stop,

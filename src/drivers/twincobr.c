@@ -239,7 +239,7 @@ static int twincobr_interrupt(void)
 		twincobr_intenable = 0;
 		return MC68000_IRQ_4;
 	}
-	else return MC68000_INT_NONE;
+	else return ignore_interrupt();
 }
 
 static MEMORY_READ16_START( readmem )
@@ -710,10 +710,10 @@ static const struct MachineDriver machine_driver_twincobr =
 	/* video hardware */
 	64*8, 32*8, { 0*8, 40*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	1792, 1792,
-	0,	/* No color PROM decode */
+	1792, 0,
+	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
 	toaplan0_eof_callback,
 	toaplan0_vh_start,
 	toaplan0_vh_stop,

@@ -735,7 +735,7 @@ static const struct MachineDriver machine_driver_zunit =
 	8192, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	wms_zunit_vh_eof,
 	wms_zunit_vh_start,
 	wms_yunit_vh_stop,
@@ -781,7 +781,7 @@ static const struct MachineDriver machine_driver_yunit_cvsd_4bit =
 	256, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	wms_yunit_vh_eof,
 	wms_yunit_4bit_vh_start,
 	wms_yunit_vh_stop,
@@ -820,7 +820,7 @@ static const struct MachineDriver machine_driver_yunit_cvsd_6bit =
 	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	wms_yunit_vh_eof,
 	wms_yunit_6bit_vh_start,
 	wms_yunit_vh_stop,
@@ -859,7 +859,7 @@ static const struct MachineDriver machine_driver_yunit_adpcm =
 	4096, 0,
     0,
 
-    VIDEO_TYPE_RASTER ,
+    VIDEO_TYPE_RASTER,
 	wms_yunit_vh_eof,
 	wms_yunit_6bit_vh_start,
 	wms_yunit_vh_stop,

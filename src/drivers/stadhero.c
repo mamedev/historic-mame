@@ -326,7 +326,7 @@ static const struct MachineDriver machine_driver_stadhero =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	stadhero_vh_start,
 	0,

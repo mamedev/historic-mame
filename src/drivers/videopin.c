@@ -122,7 +122,7 @@ static struct GfxLayout videopin_charlayout =
 	64, 	/* 64 characters */
 	1,		/* 1 bit per pixel */
 	{ 0 },	/* no separation in 1 bpp */
-//	{ 56, 48, 40, 32, 24, 16, 8, 0 },
+/*	{ 56, 48, 40, 32, 24, 16, 8, 0 }, */
 	{  4, 5, 6, 7, 0x200*8 + 4, 0x200*8 + 5, 0x200*8 + 6, 0x200*8 + 7},
     { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8 /* every char takes 8 consecutive bytes */
@@ -148,8 +148,8 @@ static struct GfxDecodeInfo videopin_gfxdecodeinfo[] =
 
 static unsigned char videopin_palette[] =
 {
-	0x00,0x00,0x00, // BLACK (transparent)
-	0xff,0xff,0xff  // WHITE
+	0x00,0x00,0x00, /* BLACK (transparent) */
+	0xff,0xff,0xff  /* WHITE */
 };
 
 
@@ -163,13 +163,8 @@ static void init_palette(unsigned char *game_palette, unsigned short *game_color
 	memcpy(game_palette,videopin_palette,sizeof(videopin_palette));
 	memcpy(game_colortable,videopin_colortable,sizeof(videopin_colortable));
 
-	// Get Artwork
-	artwork_load(&videopin_backdrop, "videopin.png", 2, Machine->drv->total_colors - 2);
-	if (videopin_backdrop)
-	{
-		memcpy (game_palette+3*videopin_backdrop->start_pen, videopin_backdrop->orig_palette,
-				3*videopin_backdrop->num_pens_used);
-	}
+	/* Get Artwork */
+	artwork_load(&videopin_backdrop, "videopin.png", 2);
 }
 
 /*
@@ -187,7 +182,7 @@ static const struct MachineDriver machine_driver_videopin =
 	{
 		{
 			CPU_M6502,
-			//12096000/8,
+			/*12096000/8, */
 			750000, 	   /* 12000000/16 = 12MHz/16 = 750 KHz not sure about the frequency ??? */
 			videopin_readmem,videopin_writemem,0,0,
 			videopin_interrupt,8
@@ -199,9 +194,9 @@ static const struct MachineDriver machine_driver_videopin =
 
 	/* video hardware */
 	45*8, 39*8, { 0*8, 45*8-1, 0*8, 39*8-1 }, /* 360x312 */
-	//48*8, 32*8, { 0*8, 48*8-1, 0*8, 32*8-1 }, /* 384x256 */
+	/*48*8, 32*8, { 0*8, 48*8-1, 0*8, 32*8-1 },    384x256    */
 	videopin_gfxdecodeinfo,
-	256, 2, /* Game is black & white, extra 254 colors for the backdrop */
+	256+32768, 2, /* Game is black & white, extra 254 colors for the backdrop */
 	init_palette,
 
 	VIDEO_TYPE_RASTER,
@@ -214,8 +209,8 @@ static const struct MachineDriver machine_driver_videopin =
 	0,0,0,0,
 	{
 		{
-			//SOUND_DAC,
-			//&dac_interface
+			/*SOUND_DAC, */
+			/*&dac_interface */
 			0,0 /* No sound yet */
 		}
 	}
@@ -232,23 +227,23 @@ static const struct MachineDriver machine_driver_videopin =
 
 ROM_START( videopin )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64Kb code roms, the ROMs are nibble-wide */
-    ROM_LOAD_NIB_LOW ( "34242-01.e0", 0x2000, 0x0400, 0xc6a83795 ) //ROM0
-	ROM_LOAD_NIB_HIGH( "34237-01.k0", 0x2000, 0x0400, 0x9b5ef087 ) //ROM0
-	ROM_LOAD_NIB_LOW ( "34243-01.d0", 0x2400, 0x0400, 0xdc87d023 ) //ROM4
-	ROM_LOAD_NIB_HIGH( "34238-01.j0", 0x2400, 0x0400, 0x280d9e67 ) //ROM4
-	ROM_LOAD_NIB_LOW ( "34250-01.h1", 0x2800, 0x0400, 0x26fdd5a3 ) //ROM1
-	ROM_LOAD_NIB_HIGH( "34249-01.h1", 0x2800, 0x0400, 0x923b3609 ) //ROM1
-	ROM_LOAD_NIB_LOW ( "34244-01.c0", 0x2c00, 0x0400, 0x4c12a4b1 ) //ROM5
-	ROM_LOAD_NIB_HIGH( "34240-01.h0", 0x2c00, 0x0400, 0xd487eff5 ) //ROM5
-	ROM_LOAD_NIB_LOW ( "34252-01.e1", 0x3000, 0x0400, 0x4858d87a ) //ROM2
-	ROM_LOAD_NIB_HIGH( "34247-01.k1", 0x3000, 0x0400, 0xd3083368 ) //ROM2
-	ROM_LOAD_NIB_LOW ( "34246-01.a0", 0x3400, 0x0400, 0x39ff2d49 ) //ROM6
-	ROM_LOAD_NIB_HIGH( "34239-01.h0", 0x3400, 0x0400, 0x692de455 ) //ROM6
-	ROM_LOAD_NIB_LOW ( "34251-01.f1", 0x3800, 0x0400, 0x5d416efc ) //ROM3
-	ROM_LOAD_NIB_HIGH( "34248-01.j1", 0x3800, 0x0400, 0x9f120e95 ) //ROM3
-	ROM_LOAD_NIB_LOW ( "34245-01.b0", 0x3c00, 0x0400, 0xda02c194 ) //ROM7
+    ROM_LOAD_NIB_LOW ( "34242-01.e0", 0x2000, 0x0400, 0xc6a83795 ) /*ROM0 */
+	ROM_LOAD_NIB_HIGH( "34237-01.k0", 0x2000, 0x0400, 0x9b5ef087 ) /*ROM0 */
+	ROM_LOAD_NIB_LOW ( "34243-01.d0", 0x2400, 0x0400, 0xdc87d023 ) /*ROM4 */
+	ROM_LOAD_NIB_HIGH( "34238-01.j0", 0x2400, 0x0400, 0x280d9e67 ) /*ROM4 */
+	ROM_LOAD_NIB_LOW ( "34250-01.h1", 0x2800, 0x0400, 0x26fdd5a3 ) /*ROM1 */
+	ROM_LOAD_NIB_HIGH( "34249-01.h1", 0x2800, 0x0400, 0x923b3609 ) /*ROM1 */
+	ROM_LOAD_NIB_LOW ( "34244-01.c0", 0x2c00, 0x0400, 0x4c12a4b1 ) /*ROM5 */
+	ROM_LOAD_NIB_HIGH( "34240-01.h0", 0x2c00, 0x0400, 0xd487eff5 ) /*ROM5 */
+	ROM_LOAD_NIB_LOW ( "34252-01.e1", 0x3000, 0x0400, 0x4858d87a ) /*ROM2 */
+	ROM_LOAD_NIB_HIGH( "34247-01.k1", 0x3000, 0x0400, 0xd3083368 ) /*ROM2 */
+	ROM_LOAD_NIB_LOW ( "34246-01.a0", 0x3400, 0x0400, 0x39ff2d49 ) /*ROM6 */
+	ROM_LOAD_NIB_HIGH( "34239-01.h0", 0x3400, 0x0400, 0x692de455 ) /*ROM6 */
+	ROM_LOAD_NIB_LOW ( "34251-01.f1", 0x3800, 0x0400, 0x5d416efc ) /*ROM3 */
+	ROM_LOAD_NIB_HIGH( "34248-01.j1", 0x3800, 0x0400, 0x9f120e95 ) /*ROM3 */
+	ROM_LOAD_NIB_LOW ( "34245-01.b0", 0x3c00, 0x0400, 0xda02c194 ) /*ROM7 */
 	ROM_RELOAD(                       0xfc00, 0x0400 ) /* for 6502 vectors */
-	ROM_LOAD_NIB_HIGH( "34241-01.f0", 0x3c00, 0x0400, 0x5bfb83da ) //ROM7
+	ROM_LOAD_NIB_HIGH( "34241-01.f0", 0x3c00, 0x0400, 0x5bfb83da ) /*ROM7 */
 	ROM_RELOAD(                       0xfc00, 0x0400 ) /* for 6502 vectors */
 
 	ROM_REGION(0x520, REGION_GFX1, ROMREGION_DISPOSE )	  /* 1k for graphics: temporary space for graphics (disposed after conversion) */

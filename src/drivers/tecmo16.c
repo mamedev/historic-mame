@@ -382,7 +382,7 @@ static const struct MachineDriver machine_driver_fstarfrc =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	fstarfrc_vh_start,
 	0,
@@ -431,7 +431,7 @@ static const struct MachineDriver machine_driver_ginkun =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	ginkun_vh_start,
 	0,

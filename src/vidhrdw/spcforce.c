@@ -10,8 +10,13 @@
 #include "vidhrdw/generic.h"
 
 
-unsigned char *meteor_scrollram;
+unsigned char *spcforce_scrollram;
 
+
+WRITE_HANDLER( spcforce_flip_screen_w )
+{
+	flip_screen_set(~data & 0x01);
+}
 
 /***************************************************************************
 
@@ -20,7 +25,7 @@ unsigned char *meteor_scrollram;
   the main emulation engine.
 
 ***************************************************************************/
-void meteor_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void spcforce_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
@@ -35,17 +40,22 @@ void meteor_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		int code,sx,sy,col;
 
 
-		sy = 8 * (offs / 32) -  (meteor_scrollram[offs]       & 0x0f);
-		sx = 8 * (offs % 32) + ((meteor_scrollram[offs] >> 4) & 0x0f);
+		sy = 8 * (offs / 32) -  (spcforce_scrollram[offs]       & 0x0f);
+		sx = 8 * (offs % 32) + ((spcforce_scrollram[offs] >> 4) & 0x0f);
 
 		code = videoram[offs] + ((colorram[offs] & 0x01) << 8);
 		col  = (~colorram[offs] >> 4) & 0x07;
 
+		if (flip_screen)
+		{
+			sx = 248 - sx;
+			sy = 248 - sy;
+		}
+
 		drawgfx(bitmap,Machine->gfx[0],
-				code,
-				col,
-				0,0,
-				sx,sy,
+				code, col,
+				flip_screen, flip_screen,
+				sx, sy,
 				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

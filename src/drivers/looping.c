@@ -179,14 +179,14 @@ WRITE_HANDLER( looping_intack )
 {
 	if (data==0)
 	{
-		cpu_0_irq_line_vector_w(0, 4);
+		cpu_irq_line_vector_w(0, 0, 4);
 		cpu_set_irq_line(0, 0, CLEAR_LINE);
 	}
 }
 
 int looping_interrupt( void )
 {
-	cpu_0_irq_line_vector_w(0, 4);
+	cpu_irq_line_vector_w(0, 0, 4);
 	cpu_set_irq_line(0, 0, ASSERT_LINE);
 	return ignore_interrupt();
 }
@@ -196,7 +196,7 @@ int looping_interrupt( void )
 WRITE_HANDLER( looping_soundlatch_w )
 {
 	soundlatch_w(offset, data);
-	cpu_1_irq_line_vector_w(0, 4);
+	cpu_irq_line_vector_w(1, 0, 4);
 	cpu_set_irq_line(1, 0, ASSERT_LINE);
 }
 
@@ -204,14 +204,14 @@ WRITE_HANDLER( looping_souint_clr )
 {
 	if (data==0)
 	{
-		cpu_1_irq_line_vector_w(0, 4);
+		cpu_irq_line_vector_w(1, 0, 4);
 		cpu_set_irq_line(1, 0, CLEAR_LINE);
 	}
 }
 
 void looping_spcint(int state)
 {
-	cpu_1_irq_line_vector_w(0, 6);
+	cpu_irq_line_vector_w(1, 0, 6);
 	cpu_set_irq_line(1, 0, state);
 }
 

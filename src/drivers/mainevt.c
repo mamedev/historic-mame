@@ -644,7 +644,7 @@ static const struct MachineDriver machine_driver_mainevt =
 	256, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	mainevt_vh_start,
 	mainevt_vh_stop,
@@ -691,7 +691,7 @@ static const struct MachineDriver machine_driver_devstors =
 	256, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	dv_vh_start,
 	mainevt_vh_stop,

@@ -72,7 +72,7 @@ void timeplt_vh_convert_color_prom(unsigned char *obsolete,unsigned short *color
 		bit4 = (color_prom[i] >> 7) & 0x01;
 		b = 0x19 * bit0 + 0x24 * bit1 + 0x35 * bit2 + 0x40 * bit3 + 0x4d * bit4;
 
-		palette_change_color(i,r,g,b);
+		palette_set_color(i,r,g,b);
 	}
 
 	color_prom += 2*Machine->drv->total_colors;
@@ -119,8 +119,8 @@ void timeplt_vh_stop(void)
 {
 	free(sprite_mux_buffer);
 	free(sprite_mux_buffer_2);
-	sprite_mux_buffer = 0;
-	sprite_mux_buffer_2 = 0;
+	sprite_mux_buffer = NULL;
+	sprite_mux_buffer_2 = NULL;
 }
 
 int timeplt_vh_start(void)

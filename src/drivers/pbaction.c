@@ -296,7 +296,7 @@ static const struct MachineDriver machine_driver_pbaction =
 	256, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	pbaction_vh_start,
 	pbaction_vh_stop,

@@ -62,10 +62,10 @@ Credits (in alphabetical order)
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 
-extern void snk_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-extern void aso_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-extern void snk_3bpp_shadow_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-extern void snk_4bpp_shadow_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+extern void snk_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
+extern void aso_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
+extern void snk_3bpp_shadow_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
+extern void snk_4bpp_shadow_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 
 extern int snk_vh_start( void );
 extern void snk_vh_stop( void );
@@ -815,7 +815,7 @@ static const struct MachineDriver machine_driver_tnk3 =
 	36*8, 28*8, { 0*8, 36*8-1, 1*8, 28*8-1 },
 
 	tnk3_gfxdecodeinfo,
-	1024,1024,
+	1024, 0,
 	aso_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -866,7 +866,7 @@ static const struct MachineDriver machine_driver_athena =
 	36*8, 28*8, { 0*8, 36*8-1, 1*8, 28*8-1 },
 
 	athena_gfxdecodeinfo,
-	1024,1024,
+	1024, 0,
 	aso_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -915,7 +915,7 @@ static const struct MachineDriver machine_driver_ikari =
 	36*8, 28*8, { 0*8, 36*8-1, 1*8, 28*8-1 },
 
 	ikari_gfxdecodeinfo,
-	1024,1024,
+	1024, 0,
 	snk_3bpp_shadow_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
@@ -965,7 +965,7 @@ static const struct MachineDriver machine_driver_victroad =
 	36*8, 28*8, { 0*8, 36*8-1, 1*8, 28*8-1 },
 
 	ikari_gfxdecodeinfo,
-	1024,1024,
+	1024, 0,
 	snk_3bpp_shadow_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
@@ -1013,7 +1013,7 @@ static const struct MachineDriver machine_driver_gwar =
 	/* video hardware */
 	384, 240, { 16, 383,0, 239-16 },
 	gwar_gfxdecodeinfo,
-	1024,1024,
+	1024, 0,
 	snk_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -1062,7 +1062,7 @@ static const struct MachineDriver machine_driver_bermudat =
 	/* video hardware */
 	384, 240, { 16, 383,0, 239-16 },
 	bermudat_gfxdecodeinfo,
-	1024,1024,
+	1024, 0,
 	snk_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -1110,7 +1110,7 @@ static const struct MachineDriver machine_driver_psychos =
 	/* video hardware */
 	384, 240, { 0, 383, 0, 239-16 },
 	psychos_gfxdecodeinfo,
-	1024,1024,
+	1024, 0,
 	snk_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -1158,7 +1158,7 @@ static const struct MachineDriver machine_driver_chopper1 =
 	/* video hardware */
 	384, 240, { 0, 383, 0, 239-16 },
 	psychos_gfxdecodeinfo,
-	1024,1024,
+	1024, 0,
 	snk_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -1212,7 +1212,7 @@ static const struct MachineDriver machine_driver_tdfever =
 	/* video hardware */
 	384,240, { 0, 383, 0, 239-16 },
 	tdfever_gfxdecodeinfo,
-	1024,1024,
+	1024, 0,
 	snk_4bpp_shadow_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
@@ -1265,7 +1265,7 @@ static const struct MachineDriver machine_driver_ftsoccer =
 	/* video hardware */
 	384,240, { 0, 383, 0, 239-16 },
 	tdfever_gfxdecodeinfo,
-	1024,1024,
+	1024, 0,
 	snk_4bpp_shadow_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,

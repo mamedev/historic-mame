@@ -249,7 +249,7 @@ static const struct MachineDriver machine_driver_markham =
 	256,1024,
 	markham_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	generic_vh_start,
 	generic_vh_stop,

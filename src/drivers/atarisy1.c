@@ -866,7 +866,7 @@ static const struct MachineDriver machine_driver_atarisy1 =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_NEEDS_6BITS_PER_GUN,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,
 	atarisys1_vh_start,
 	atarisys1_vh_stop,

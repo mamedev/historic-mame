@@ -1277,50 +1277,6 @@ static void showcharset(struct osd_bitmap *bitmap)
 }
 
 
-#ifdef MAME_DEBUG
-static void showtotalcolors(struct osd_bitmap *bitmap)
-{
-	char *used;
-	int i,l,x,y,total;
-	unsigned char r,g,b;
-	char buf[40];
-
-
-	used = malloc(64*64*64);
-	if (!used) return;
-
-	for (i = 0;i < 64*64*64;i++)
-		used[i] = 0;
-
-	for (y = 0;y < bitmap->height;y++)
-	{
-		for (x = 0;x < bitmap->width;x++)
-		{
-			osd_get_pen(read_pixel(bitmap,x,y),&r,&g,&b);
-			r >>= 2;
-			g >>= 2;
-			b >>= 2;
-			used[64*64*r+64*g+b] = 1;
-		}
-	}
-
-	total = 0;
-	for (i = 0;i < 64*64*64;i++)
-		if (used[i]) total++;
-
-	switch_ui_orientation();
-
-	sprintf(buf,"%5d colors",total);
-	l = strlen(buf);
-	for (i = 0;i < l;i++)
-		drawgfx(bitmap,Machine->uifont,buf[i],total>256?UI_COLOR_INVERSE:UI_COLOR_NORMAL,0,0,Machine->uixmin+i*Machine->uifontwidth,Machine->uiymin,0,TRANSPARENCY_NONE,0);
-
-	switch_true_orientation();
-
-	free(used);
-}
-#endif
-
 
 static int setdipswitches(struct osd_bitmap *bitmap,int selected)
 {
@@ -3462,9 +3418,6 @@ int handle_user_interface(struct osd_bitmap *bitmap)
 {
 	static int show_profiler;
 	int request_loadsave = LOADSAVE_NONE;
-#ifdef MAME_DEBUG
-	static int show_total_colors;
-#endif
 
 #ifdef MESS
 if (Machine->gamedrv->flags & GAME_COMPUTER)
@@ -3766,15 +3719,6 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 			schedule_full_refresh();
 		}
 	}
-#ifdef MAME_DEBUG
-	if (input_ui_pressed(IPT_UI_SHOW_COLORS))
-	{
-		show_total_colors ^= 1;
-		if (show_total_colors == 0)
-			schedule_full_refresh();
-	}
-	if (show_total_colors) showtotalcolors(bitmap);
-#endif
 
 	if (show_profiler) profiler_show(bitmap);
 

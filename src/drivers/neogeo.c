@@ -1050,7 +1050,7 @@ struct YM2610interface neogeo_ym2610_interface =
 	{ neogeo_sound_irq },
 	{ REGION_SOUND2 },
 	{ REGION_SOUND1 },
-	{ YM3012_VOL(75,MIXER_PAN_LEFT,75,MIXER_PAN_RIGHT) }
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
 };
 
 /******************************************************************************/
@@ -1082,7 +1082,7 @@ static const struct MachineDriver machine_driver_neogeo =
 	/* please don't put VIDEO_SUPPRTS_16BIT in all games. It is stupid, because */
 	/* most games don't need it. Only put it in games that use more than 256 colors */
 	/* at the same time (and let the MAME team know about it) */
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	neogeo_mvs_vh_start,
 	neogeo_vh_stop,
@@ -1124,7 +1124,7 @@ static const struct MachineDriver machine_driver_raster =
 	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_RGB_DIRECT,
+	VIDEO_TYPE_RASTER | VIDEO_RGB_DIRECT,
 	0,
 	neogeo_mvs_vh_start,
 	neogeo_vh_stop,
@@ -1166,7 +1166,7 @@ static const struct MachineDriver machine_driver_raster_busy =
 	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_RGB_DIRECT,
+	VIDEO_TYPE_RASTER | VIDEO_RGB_DIRECT,
 	0,
 	neogeo_mvs_vh_start,
 	neogeo_vh_stop,

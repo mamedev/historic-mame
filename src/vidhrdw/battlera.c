@@ -74,7 +74,7 @@ WRITE_HANDLER( battlera_palette_w )
 	r = ((pal_word >> 3) & 7) << 5;
 	g = ((pal_word >> 6) & 7) << 5;
 	b = ((pal_word >> 0) & 7) << 5;
-	palette_change_color(offset/2, r, g, b);
+	palette_set_color(offset/2, r, g, b);
 }
 
 /******************************************************************************/

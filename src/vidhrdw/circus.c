@@ -36,7 +36,7 @@ int circus_vh_start(void)
 	if (generic_vh_start()!=0)
 		return 1;
 
-	overlay_create(circus_ol, start_pen, Machine->drv->total_colors-start_pen);
+	overlay_create(circus_ol, start_pen);
 
 	return 0;
 }

@@ -88,7 +88,7 @@ static int ddragon3_cpu_interrupt(void) { /* 6:0x177e - 5:0x176a */
 	else {
 		return MC68000_IRQ_5; /* Input Ports */
 	}
-	return MC68000_INT_NONE;
+	return ignore_interrupt();
 }
 
 static data16_t reg[8];
@@ -583,10 +583,10 @@ static const struct MachineDriver machine_driver_ddragon3 =
 	320, 240, { 0, 319, 8, 239 },
 
 	ddragon3_gfxdecodeinfo,
-	768,768,
+	768, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	ddragon3_vh_start,
 	0,
@@ -630,10 +630,10 @@ static const struct MachineDriver machine_driver_ddrago3b =
 	320, 240, { 0, 319, 8, 239 },
 
 	ddragon3_gfxdecodeinfo,
-	768,768,
+	768, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	ddragon3_vh_start,
 	0,
@@ -677,10 +677,10 @@ static const struct MachineDriver machine_driver_ctribe =
 	320, 240, { 0, 319, 8, 239 },
 
 	ddragon3_gfxdecodeinfo,
-	768,768,
+	768, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	ddragon3_vh_start,
 	0,

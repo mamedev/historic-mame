@@ -260,6 +260,8 @@ const struct GameDriver *drivers[] =
 	DRIVER( sectrzon )	/* (c) 1984 + Alice */
 	DRIVER( wiping )	/* (c) 1982 */
 	DRIVER( rugrats )	/* (c) 1983 */
+TESTDRIVER( firebatl )	/* (c) 1984 Taito */
+	DRIVER( clshroad )	/* (c) 1986 Woodplace Inc. */
 TESTDRIVER( tubep )		/* (c) 1984 + Fujitek */
 TESTDRIVER( rjammer )	/* (c) 1984 + Alice */
 	DRIVER( magmax )	/* (c) 1985 */
@@ -964,7 +966,7 @@ TESTDRIVER( greenber )
 	/* M62 */
 	DRIVER( kungfum )	/* (c) 1984 */
 	DRIVER( kungfud )	/* (c) 1984 + Data East license */
-	DRIVER( spartanx )	/* (c) 1984 */
+	DRIVER( spartanx )	/* (c) 1984 (Japan) */
 	DRIVER( kungfub )	/* bootleg */
 	DRIVER( kungfub2 )	/* bootleg */
 	DRIVER( battroad )	/* (c) 1984 */
@@ -979,6 +981,7 @@ TESTDRIVER( greenber )
 	DRIVER( spelunkr )	/* (c) 1985 licensed from Broderbund */
 	DRIVER( spelnkrj )	/* (c) 1985 licensed from Broderbund */
 	DRIVER( spelunk2 )	/* (c) 1986 licensed from Broderbund */
+	DRIVER( youjyudn )	/* (c) 1986 (Japan) */
 
 	DRIVER( vigilant )	/* (c) 1988 (World) */
 	DRIVER( vigilntu )	/* (c) 1988 (US) */
@@ -1049,7 +1052,7 @@ TESTDRIVER( riskchal )
 TESTDRIVER( gussun )
 TESTDRIVER( shisen2 )
 	/* M107 */
-TESTDRIVER( firebarr )	/* (c) 1993 Irem (Japan) */
+	DRIVER( firebarr )	/* (c) 1993 Irem (Japan) */
 	DRIVER( dsoccr94 )	/* (c) 1994 Irem (Data East Corporation license) */
 
 	/* Gottlieb/Mylstar games (Gottlieb became Mylstar in 1983) */
@@ -2013,6 +2016,7 @@ TESTDRIVER( doapp )		/*  Dead Or Alive ++ (JAPAN) */
 	DRIVER( comotion )	/* 5-7 [1977 Gremlin] */
 	DRIVER( hustle )	/* 16-21 [1977 Gremlin] */
 	DRIVER( blasto )	/* [1978 Gremlin] */
+	DRIVER( mineswpr )	/* [1977 Amutech] */
 
 	/* Gremlin/Sega "VIC dual game board" games */
 	/* the numbers listed are the range of ROM part numbers */
@@ -2104,7 +2108,7 @@ TESTDRIVER( doapp )		/*  Dead Or Alive ++ (JAPAN) */
 	DRIVER( myhero )	/* 834-5755 (c) 1985 (S1) */
 	DRIVER( myheroj )	/* 834-5755 (c) 1985 Coreland / Sega (S1) */
 	DRIVER( myherok )	/* 834-5755 (c) 1985 Coreland / Sega (S1) */
-	DRIVER( shtngmst )	/* 834-5719/5720 (c) 1985 (S2) */
+TESTDRIVER( shtngmst )	/* 834-5719/5720 (c) 1985 (S2) */
 	DRIVER( chplft )	/* 834-5795 (c) 1985, (c) 1982 Dan Gorlin (S2) */
 	DRIVER( chplftb )	/* 834-5795 (c) 1985, (c) 1982 Dan Gorlin (S2) */
 	DRIVER( chplftbl )	/* bootleg (S2) */
@@ -2117,8 +2121,8 @@ TESTDRIVER( doapp )		/*  Dead Or Alive ++ (JAPAN) */
 	DRIVER( wboy3 )		/* 834-5984 (c) 1986 + Escape license (S1) */
 	DRIVER( wboyu )		/* 834-5753 (? maybe a conversion) (c) 1986 + Escape license (S1) */
 	DRIVER( wbdeluxe )	/* (c) 1986 + Escape license (S1) */
-	DRIVER( gardia )	/* 834-6119 (S2?) */
-	DRIVER( gardiab )	/* bootleg */
+TESTDRIVER( gardia )	/* 834-6119 (S2?) */
+TESTDRIVER( gardiab )	/* bootleg */
 	DRIVER( blockgal )	/* 834-6303 (S1) */
 	DRIVER( blckgalb )	/* bootleg */
 	DRIVER( tokisens )	/* (c) 1987 (from a bootleg board) (S2) */
@@ -2126,8 +2130,8 @@ TESTDRIVER( doapp )		/*  Dead Or Alive ++ (JAPAN) */
 	DRIVER( wbmlj )		/* (c) 1987 Sega/Westone (S2) */
 	DRIVER( wbmlj2 )	/* (c) 1987 Sega/Westone (S2) */
 	DRIVER( wbmlju )	/* bootleg? (S2) */
-	DRIVER( dakkochn )	/* 836-6483? (S2) */
-	DRIVER( ufosensi )	/* 834-6659 (S2) */
+TESTDRIVER( dakkochn )	/* 836-6483? (S2) */
+TESTDRIVER( ufosensi )	/* 834-6659 (S2) */
 /*
 other System 1 / System 2 games:
 
@@ -2413,8 +2417,9 @@ TESTDRIVER ( czeroize ) /* ?? (c) 198? */
 	DRIVER( triothep )	/* (c) 1989 Data East Corporation (Japan) */
 
 	/* Data East 8-bit games */
-	DRIVER( lastmiss )	/* (c) 1986 Data East USA (US) */
-	DRIVER( lastmss2 )	/* (c) 1986 Data East USA (US) */
+	DRIVER( lastmisn )	/* (c) 1986 Data East USA (US) */
+	DRIVER( lastmsno )	/* (c) 1986 Data East USA (US) */
+	DRIVER( lastmsnj )	/* (c) 1986 Data East Corporation (Japan) */
 	DRIVER( shackled )	/* (c) 1986 Data East USA (US) */
 	DRIVER( breywood )	/* (c) 1986 Data East Corporation (Japan) */
 	DRIVER( csilver )	/* (c) 1987 Data East Corporation (Japan) */
@@ -3114,7 +3119,7 @@ TESTDRIVER( goldmedb )	/* Alpha-68K96II bootleg */
 	/* Alpha Denshi games */
 	DRIVER( champbas )	/* (c) 1983 Sega */
 	DRIVER( champbbj )	/* (c) 1983 Alpha Denshi Co. */
-	DRIVER( champbb2 )	/* (c) 1983 Sega */
+TESTDRIVER( champbb2 )	/* (c) 1983 Sega */
 	DRIVER( exctsccr )	/* (c) 1983 Alpha Denshi Co. */
 	DRIVER( exctscca )	/* (c) 1983 Alpha Denshi Co. */
 	DRIVER( exctsccb )	/* bootleg */
@@ -3318,9 +3323,10 @@ TESTDRIVER( hachamf )	/* (c) 1991 NMK */
 	DRIVER( intrepid )	/* (c) 1983 Nova Games Ltd. */
 	DRIVER( intrepi2 )	/* (c) 1983 Nova Games Ltd. */
 	DRIVER( portman )	/* (c) 1982 Nova Games Ltd. */
-	DRIVER( funnymou )	/* (c) 1982 Chu Co. Ltd. */
+	DRIVER( funnymou )	/* (c) 1982 Chuo Co. Ltd */
 	DRIVER( suprmous )	/* (c) 1982 Taito */
 	DRIVER( machomou )	/* (c) 1982 Techstar */
+	DRIVER( timelimt )	/* (c) 1983 Chuo Co. Ltd */
 
 	/* Valadon Automation games */
 	DRIVER( bagman )	/* (c) 1982 */
@@ -3377,7 +3383,7 @@ TESTDRIVER( hachamf )	/* (c) 1991 NMK */
 	DRIVER( exerion )	/* (c) 1983 Jaleco */
 	DRIVER( exeriont )	/* (c) 1983 Jaleco + Taito America license */
 	DRIVER( exerionb )	/* bootleg */
-	DRIVER( formatz )	/* (c) 1984 Jaleco */
+TESTDRIVER( formatz )	/* (c) 1984 Jaleco */
 	DRIVER( aeroboto )	/* (c) 1984 Williams */
 	DRIVER( citycon )	/* (c) 1985 Jaleco */
 	DRIVER( citycona )	/* (c) 1985 Jaleco */
@@ -3643,9 +3649,13 @@ TESTDRIVER( brickzn3 )
 	DRIVER( wiseguy )	/* (c) 1990 Dooyong */
 	DRIVER( lastday )	/* (c) 1990 Dooyong */
 	DRIVER( lastdaya )	/* (c) 1990 Dooyong */
+	DRIVER( gulfstrm )	/* (c) 1991 Dooyong */
+	DRIVER( gulfstr2 )	/* (c) 1991 Dooyong + distributed by Media Shoji */
 	DRIVER( pollux )	/* (c) 1991 Dooyong */
 	DRIVER( bluehawk )	/* (c) 1993 Dooyong */
+	DRIVER( bluehawn )	/* (c) 1993 NTC */
 	DRIVER( sadari )	/* (c) 1993 NTC */
+	DRIVER( gundl94 )	/* (c) 1994 Dooyong */
 	DRIVER( primella )	/* (c) 1994 NTC */
 	DRIVER( rshark )	/* (c) 1995 Dooyong */
 
@@ -3707,6 +3717,8 @@ TESTDRIVER( ladyfrog )
 	DRIVER( blzntrnd )	/* (c) 1994 Human Amusement */
 
 	/* Venture Line games */
+	DRIVER( spcforce )	/* (c) 1980 Venture Line */
+	DRIVER( spcforc2 )	/* bootleg */
 	DRIVER( meteor )	/* (c) 1981 Venture Line */
 	DRIVER( looping )	/* (c) 1982 Venture Line + licensed from Video Games */
 	DRIVER( loopinga )	/* (c) 1982 Venture Line + licensed from Video Games */
@@ -3757,7 +3769,6 @@ TESTDRIVER( ladyfrog )
 	DRIVER( ringking )	/* (c) 1985 Data East USA */
 	DRIVER( ringkin2 )	/* (c) 1985 Data East USA */
 	DRIVER( ringkin3 )	/* (c) 1985 Data East USA */
-	DRIVER( clshroad )	/* (c) 1986 Woodplace Inc. */
 	DRIVER( ambush )	/* (c) 1983 Nippon Amuse Co-Ltd */
 	DRIVER( starcrus )	/* [1977 Ramtek] */
 	DRIVER( homo )		/* bootleg */

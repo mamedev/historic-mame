@@ -44,37 +44,37 @@ static int lnc_sound_interrupt_enabled = 0;
     bit 0 -- 47 kohm resistor  -- RED (inverted)
 
 ***************************************************************************/
-void btime_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+void btime_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
 {
-    int i;
+	int i;
 
 
-    /* Burger Time doesn't have a color PROM, but Hamburge has. */
-    /* This function is also used by Eggs. */
-    if (color_prom == 0) return;
+	/* Burger Time doesn't have a color PROM, but Hamburge has. */
+	/* This function is also used by Eggs. */
+	if (color_prom == 0) return;
 
-    for (i = 0;i < Machine->drv->total_colors;i++)
-    {
-        int bit0,bit1,bit2;
+	for (i = 0;i < Machine->drv->total_colors;i++)
+	{
+		int bit0,bit1,bit2,r,g,b;
 
-        /* red component */
-        bit0 = (*color_prom >> 0) & 0x01;
-        bit1 = (*color_prom >> 1) & 0x01;
-        bit2 = (*color_prom >> 2) & 0x01;
-        *(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-        /* green component */
-        bit0 = (*color_prom >> 3) & 0x01;
-        bit1 = (*color_prom >> 4) & 0x01;
-        bit2 = (*color_prom >> 5) & 0x01;
-        *(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-        /* blue component */
-        bit0 = 0;
-        bit1 = (*color_prom >> 6) & 0x01;
-        bit2 = (*color_prom >> 7) & 0x01;
-        *(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* red component */
+		bit0 = (color_prom[i] >> 0) & 0x01;
+		bit1 = (color_prom[i] >> 1) & 0x01;
+		bit2 = (color_prom[i] >> 2) & 0x01;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* green component */
+		bit0 = (color_prom[i] >> 3) & 0x01;
+		bit1 = (color_prom[i] >> 4) & 0x01;
+		bit2 = (color_prom[i] >> 5) & 0x01;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* blue component */
+		bit0 = 0;
+		bit1 = (color_prom[i] >> 6) & 0x01;
+		bit2 = (color_prom[i] >> 7) & 0x01;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-        color_prom++;
-    }
+		palette_set_color(i,r,g,b);
+	}
 }
 
 /***************************************************************************
@@ -93,33 +93,33 @@ void btime_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
     bit 0 -- 15 kohm resistor  -- BLUE
 
 ***************************************************************************/
-void lnc_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+void lnc_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
 {
-    int i;
+	int i;
 
 
-    for (i = 0;i < Machine->drv->total_colors;i++)
-    {
-        int bit0,bit1,bit2;
+	for (i = 0;i < Machine->drv->total_colors;i++)
+	{
+		int bit0,bit1,bit2,r,g,b;
 
-        /* red component */
-        bit0 = (*color_prom >> 7) & 0x01;
-        bit1 = (*color_prom >> 6) & 0x01;
-        bit2 = (*color_prom >> 5) & 0x01;
-        *(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-        /* green component */
-        bit0 = (*color_prom >> 4) & 0x01;
-        bit1 = (*color_prom >> 3) & 0x01;
-        bit2 = (*color_prom >> 2) & 0x01;
-        *(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-        /* blue component */
-        bit0 = 0;
-        bit1 = (*color_prom >> 1) & 0x01;
-        bit2 = (*color_prom >> 0) & 0x01;
-        *(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* red component */
+		bit0 = (color_prom[i] >> 7) & 0x01;
+		bit1 = (color_prom[i] >> 6) & 0x01;
+		bit2 = (color_prom[i] >> 5) & 0x01;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* green component */
+		bit0 = (color_prom[i] >> 4) & 0x01;
+		bit1 = (color_prom[i] >> 3) & 0x01;
+		bit2 = (color_prom[i] >> 2) & 0x01;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* blue component */
+		bit0 = 0;
+		bit1 = (color_prom[i] >> 1) & 0x01;
+		bit2 = (color_prom[i] >> 0) & 0x01;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-        color_prom++;
-    }
+		palette_set_color(i,r,g,b);
+	}
 }
 
 

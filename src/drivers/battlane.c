@@ -329,10 +329,10 @@ static const struct MachineDriver machine_driver_battlane =
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 1*8, 31*8-1 },       /* not sure */
 	gfxdecodeinfo,
-	64, 64,
+	64, 0,
 	NULL,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0 ,
 	battlane_vh_start,
 	battlane_vh_stop,

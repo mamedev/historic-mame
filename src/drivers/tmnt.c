@@ -2406,7 +2406,7 @@ static const struct MachineDriver machine_driver_mia =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	mia_vh_start,
 	punkshot_vh_stop,
@@ -2453,7 +2453,7 @@ static const struct MachineDriver machine_driver_tmnt =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	tmnt_vh_start,
 	punkshot_vh_stop,
@@ -2514,7 +2514,7 @@ static const struct MachineDriver machine_driver_punkshot =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	punkshot_vh_start,
 	punkshot_vh_stop,
@@ -2561,7 +2561,7 @@ static const struct MachineDriver machine_driver_lgtnfght =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	lgtnfght_vh_start,
 	lgtnfght_vh_stop,
@@ -2609,7 +2609,7 @@ static const struct MachineDriver machine_driver_detatwin =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	detatwin_vh_start,
 	detatwin_vh_stop,
@@ -2677,7 +2677,7 @@ static const struct MachineDriver machine_driver_glfgreat =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	glfgreat_vh_start,
 	glfgreat_vh_stop,
@@ -2725,7 +2725,7 @@ static const struct MachineDriver machine_driver_tmnt2 =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	lgtnfght_vh_start,
 	lgtnfght_vh_stop,
@@ -2775,7 +2775,7 @@ static const struct MachineDriver machine_driver_ssriders =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	lgtnfght_vh_start,
 	lgtnfght_vh_stop,
@@ -2825,7 +2825,7 @@ static const struct MachineDriver machine_driver_thndrx2 =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	thndrx2_vh_start,
 	thndrx2_vh_stop,
@@ -2891,7 +2891,7 @@ static const struct MachineDriver machine_driver_prmrsocr =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	prmrsocr_vh_start,
 	prmrsocr_vh_stop,

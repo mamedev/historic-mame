@@ -478,7 +478,7 @@ INLINE void gsp_palette_change(int offset)
 	int red = (hdgsp_paletteram_lo[offset] >> 8) & 0xff;
 	int green = hdgsp_paletteram_lo[offset] & 0xff;
 	int blue = hdgsp_paletteram_hi[offset] & 0xff;
-	palette_change_color(offset, red, green, blue);
+	palette_set_color(offset, red, green, blue);
 }
 
 

@@ -355,10 +355,10 @@ static const struct MachineDriver machine_driver_xxmissio =
 	64*8, 32*8, { 0*8, 64*8-1, 4*8, 28*8-1 },
 
 	gfxdecodeinfo,
-	768,768,
+	768, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_PIXEL_ASPECT_RATIO_1_2,
+	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2,
 	0,
 	generic_vh_start,
 	generic_vh_stop,

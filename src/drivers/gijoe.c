@@ -294,7 +294,7 @@ static struct MachineDriver machine_driver_gijoe =
 	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS | VIDEO_NEEDS_6BITS_PER_GUN,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,
 	gijoe_vh_start,
 	gijoe_vh_stop,

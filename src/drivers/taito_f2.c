@@ -4701,7 +4701,7 @@ static struct YM2610interface ym2610_interface =
 {
 	1,	/* 1 chip */
 	16000000/2,	/* 8 MHz */
-	{ 30 },
+	{ 25 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -4709,7 +4709,7 @@ static struct YM2610interface ym2610_interface =
 	{ irq_handler },
 	{ REGION_SOUND2 },	/* Delta-T */
 	{ REGION_SOUND1 },	/* ADPCM */
-	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) }
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
 };
 
 
@@ -4781,7 +4781,7 @@ static const struct MachineDriver machine_driver_##NAME =									\
 	MAXCOLS, 0,																		\
 	0,																				\
 																					\
-	VIDEO_TYPE_RASTER ,										\
+	VIDEO_TYPE_RASTER,										\
 	taitof2_##EOF##_eof_callback,													\
 	taitof2_##VHSTART##_vh_start,													\
 	taitof2_vh_stop,																\
@@ -4863,7 +4863,7 @@ static const struct MachineDriver machine_driver_camltrua =
 	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	taitof2_no_buffer_eof_callback,
 	taitof2_dondokod_vh_start,
 	taitof2_vh_stop,
@@ -4907,7 +4907,7 @@ static const struct MachineDriver machine_driver_driveout =									\
 	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	taitof2_no_buffer_eof_callback,
 	taitof2_driftout_vh_start,
 	taitof2_vh_stop,

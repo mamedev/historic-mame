@@ -832,7 +832,7 @@ static const struct MachineDriver machine_driver_tokio =
 	256, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	0,
 	0,

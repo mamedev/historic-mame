@@ -433,10 +433,10 @@ static const struct MachineDriver machine_driver_vigilant =
 	/* video hardware */
 	64*8, 32*8, { 16*8, (64-16)*8-1, 0*8, 32*8-1 },
 	vigilant_gfxdecodeinfo,
-	512+32, 512+32,
+	512+32, 0,	/* 512 real palette, 32 virtual palette */
 	0, /* no color prom */
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	vigilant_vh_start,
 	vigilant_vh_stop,
@@ -484,7 +484,7 @@ static const struct MachineDriver machine_driver_kikcubic =
 	256, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	vigilant_vh_start,
 	vigilant_vh_stop,

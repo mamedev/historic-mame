@@ -31,43 +31,41 @@ static int control;
   I'm not sure about the resistor values, I'm using the Galaxian ones.
 
 ***************************************************************************/
-void suprloco_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+void suprloco_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 
 
 	for (i = 0;i < 512;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 		/* red component */
-		bit0 = (*color_prom >> 0) & 0x01;
-		bit1 = (*color_prom >> 1) & 0x01;
-		bit2 = (*color_prom >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		bit0 = (color_prom[i] >> 0) & 0x01;
+		bit1 = (color_prom[i] >> 1) & 0x01;
+		bit2 = (color_prom[i] >> 2) & 0x01;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
-		bit0 = (*color_prom >> 3) & 0x01;
-		bit1 = (*color_prom >> 4) & 0x01;
-		bit2 = (*color_prom >> 5) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		bit0 = (color_prom[i] >> 3) & 0x01;
+		bit1 = (color_prom[i] >> 4) & 0x01;
+		bit2 = (color_prom[i] >> 5) & 0x01;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
 		bit0 = 0;
-		bit1 = (*color_prom >> 6) & 0x01;
-		bit2 = (*color_prom >> 7) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		bit1 = (color_prom[i] >> 6) & 0x01;
+		bit2 = (color_prom[i] >> 7) & 0x01;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-		color_prom++;
-	}
+		palette_set_color(i,r,g,b);
 
-	/* generate a second bank of sprite palette with red changed to purple */
-	for (i = 0;i < 256;i++)
-	{
-		palette[3*i+0] = palette[3*i+0-256*3];
-		palette[3*i+1] = palette[3*i+1-256*3];
-		if ((i & 0x0f) == 0x09)
-			palette[3*i+2] = 0xff;
-		else
-			palette[3*i+2] = palette[3*i+2-256*3];
+		/* hack: generate a second bank of sprite palette with red changed to purple */
+		if (i >= 256)
+		{
+			if ((i & 0x0f) == 0x09)
+				palette_set_color(i+256,r,g,0xff);
+			else
+				palette_set_color(i+256,r,g,b);
+		}
 	}
 }
 

@@ -54,7 +54,7 @@ WRITE16_HANDLER( blmbycar_palette_w )
 	g = (data >> 0) & 0xF;
 	r = (data >> 4) & 0xF;
 	b = (data >> 8) & 0xF;
-	palette_change_color( offset, r * 0x11, g * 0x11, b * 0x11 );
+	palette_set_color( offset, r * 0x11, g * 0x11, b * 0x11 );
 }
 
 

@@ -712,7 +712,7 @@ INPUT_PORTS_END
 		}
 
 	}
-	return Z80_IGNORE_INT;
+	return ignore_interrupt();
 }
 
 /*******************************************************************************
@@ -752,9 +752,10 @@ static const struct MachineDriver machine_driver_segae =
 	/* video hardware */
 	256, 192, { 0, 256-1, 0, 192-1 },
 	0,
-	64,64,
+	64, 0,
 	NULL,
-	VIDEO_TYPE_RASTER ,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	segae_vh_start,
 	segae_vh_stop,

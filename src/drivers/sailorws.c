@@ -558,7 +558,7 @@ static int ctc0_trg1(void)
 {
 	z80ctc_0_trg1_w(0, 1);
 	z80ctc_0_trg1_w(0, 0);
-	return Z80_IGNORE_INT;
+	return ignore_interrupt();
 }
 
 static z80ctc_interface ctc_intf =
@@ -3644,7 +3644,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	256, 0, \
 	0, \
 \
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
 	0, \
 	sailorws_vh_start, \
 	sailorws_vh_stop, \
@@ -3697,7 +3697,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	256, 0, \
 	0, \
 \
-	VIDEO_TYPE_RASTER  | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
+	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
 	0, \
 	mjkoiura_vh_start, \
 	mjkoiura_vh_stop, \
@@ -3750,7 +3750,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	512, 0, \
 	0, \
 \
-	VIDEO_TYPE_RASTER  | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
+	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
 	0, \
 	mscoutm_vh_start, \
 	mscoutm_vh_stop, \

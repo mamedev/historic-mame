@@ -15,13 +15,10 @@
 unsigned char *polyplay_characterram;
 static unsigned char dirtycharacter[256];
 
-static int palette_bank;
 
 
 void polyplay_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
-	int i;
-
 	static unsigned char polyplay_palette[] =
 	{
 		0x00,0x00,0x00,
@@ -38,22 +35,7 @@ void polyplay_init_palette(unsigned char *palette, unsigned short *colortable,co
 	};
 
 
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-
-		/* red component */
-		*(palette++) = polyplay_palette[3*i];
-
-		/* green component */
-		*(palette++) = polyplay_palette[3*i+1];
-
-		/* blue component */
-		*(palette++) = polyplay_palette[3*i+2];
-
-	}
-
-	palette_bank = 0;
-
+	memcpy(palette,polyplay_palette,sizeof(polyplay_palette));
 }
 
 
@@ -109,7 +91,7 @@ void polyplay_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 				drawgfx(bitmap,Machine->gfx[0],
 						charcode,
-						0x0,
+						0,
 						0,0,
 						8*sx,8*sy,
 						&Machine->visible_area,TRANSPARENCY_NONE,0);
@@ -131,7 +113,7 @@ void polyplay_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 				drawgfx(bitmap,Machine->gfx[1],
 						charcode,
-						0x0,
+						0,
 						0,0,
 						8*sx,8*sy,
 						&Machine->visible_area,TRANSPARENCY_NONE,0);

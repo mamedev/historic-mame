@@ -16,8 +16,7 @@
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
 
-/* From dec8.c - rename it to dec8_color prom later.. used by many games.. */
-void ghostb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void pcktgal_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 void pcktgal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( pcktgal_flipscreen_w );
 
@@ -283,8 +282,8 @@ static const struct MachineDriver machine_driver_pcktgal =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	512, 512,
-	ghostb_vh_convert_color_prom,
+	512, 0,
+	pcktgal_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -336,8 +335,8 @@ static const struct MachineDriver machine_driver_bootleg =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	bootleg_gfxdecodeinfo,
-	512, 512,
-	ghostb_vh_convert_color_prom,
+	512, 0,
+	pcktgal_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,

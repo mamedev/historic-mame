@@ -116,7 +116,7 @@ static int xainA_interrupt(void)
 		cpu_set_nmi_line(0,PULSE_LINE);
 	else
 		cpu_set_irq_line(0,M6809_FIRQ_LINE,ASSERT_LINE);
-	return M6809_INT_NONE;
+	return ignore_interrupt();
 }
 
 
@@ -360,7 +360,7 @@ static const struct MachineDriver machine_driver_xsleena =
 	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	xain_vh_start,
 	0,

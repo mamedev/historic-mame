@@ -41,7 +41,7 @@ To do:
 #include "cpu/m6809/m6809.h"
 #include "cpu/m6502/m6502.h"
 
-void ghostb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void ghostb_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 void cobracom_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 void ghostb_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 void srdarwin_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
@@ -305,7 +305,8 @@ static WRITE_HANDLER( lastmiss_i8751_w )
 	/* Coins are controlled by the i8751 */
  	if ((readinputport(2)&3)==3 && !latch) latch=1;
  	if ((readinputport(2)&3)!=3 && latch) {coin++; latch=0;snd=0x400;i8751_return=0x400;return;}
-	if (i8751_value==0x007b) i8751_return=0x0184; //???
+	if (i8751_value==0x007a) i8751_return=0x0185; /* Japan ID code */
+	if (i8751_value==0x007b) i8751_return=0x0184; /* USA ID code */
 	if (i8751_value==0x0001) {coin=snd=0;}//???
 	if (i8751_value==0x0000) {i8751_return=0x0184;}//???
 	if (i8751_value==0x0401) i8751_return=0x0184; //???
@@ -2040,10 +2041,10 @@ static const struct MachineDriver machine_driver_cobracom =
 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	cobracom_gfxdecodeinfo,
-	256,256,
+	256, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	cobracom_vh_start,
 	0,
@@ -2089,7 +2090,7 @@ static const struct MachineDriver machine_driver_ghostb =
   	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	ghostb_gfxdecodeinfo,
-	1024,1024,
+	1024, 0,
 	ghostb_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
@@ -2138,10 +2139,10 @@ static const struct MachineDriver machine_driver_srdarwin =
   	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	srdarwin_gfxdecodeinfo,
-	144,144,
+	144, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	srdarwin_vh_start,
 	0,
@@ -2187,10 +2188,10 @@ static const struct MachineDriver machine_driver_gondo =
 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	gondo_gfxdecodeinfo,
-	1024,1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	dec8_eof_callback,
 	gondo_vh_start,
 	0,
@@ -2245,7 +2246,7 @@ static const struct MachineDriver machine_driver_oscar =
 	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	oscar_vh_start,
 	0,
@@ -2297,10 +2298,10 @@ static const struct MachineDriver machine_driver_lastmiss =
   	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	shackled_gfxdecodeinfo,
-	1024,1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	lastmiss_vh_start,
 	0,
@@ -2352,10 +2353,10 @@ static const struct MachineDriver machine_driver_shackled =
 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	shackled_gfxdecodeinfo,
-	1024,1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	shackled_vh_start,
 	0,
@@ -2407,10 +2408,10 @@ static const struct MachineDriver machine_driver_csilver =
 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	shackled_gfxdecodeinfo,
-	1024,1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	lastmiss_vh_start,
 	0,
@@ -2460,10 +2461,10 @@ static const struct MachineDriver machine_driver_garyoret =
 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	gondo_gfxdecodeinfo,
-	1024,1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_BUFFERS_SPRITERAM,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	dec8_eof_callback,
 	garyoret_vh_start,
 	0,
@@ -2909,70 +2910,103 @@ ROM_START( oscarj )
 	ROM_LOAD( "ed02", 0x60000, 0x10000, 0x7ddc5651 )
 ROM_END
 
-ROM_START( lastmiss )
+ROM_START( lastmisn )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )
-	ROM_LOAD( "dl03-6",      0x08000, 0x08000, 0x47751a5e ) /* Rev 6 roms */
-	ROM_LOAD( "lm_dl04.rom", 0x10000, 0x10000, 0x7dea1552 )
+	ROM_LOAD( "dl03-6.13h",  0x08000, 0x08000, 0x47751a5e ) /* Rev 6 roms */
+	ROM_LOAD( "lm_dl04.7h",  0x10000, 0x10000, 0x7dea1552 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* CPU 2, 1st 16k is empty */
-	ROM_LOAD( "lm_dl02.rom", 0x0000, 0x10000, 0xec9b5daf )
+	ROM_LOAD( "lm_dl02.18h", 0x0000, 0x10000, 0xec9b5daf )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64K for sound CPU */
-	ROM_LOAD( "lm_dl05.rom", 0x8000, 0x8000, 0x1a5df8c0 )
+	ROM_LOAD( "dl05-.5h",    0x8000, 0x8000, 0x1a5df8c0 )
 
 	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )	/* characters */
-	ROM_LOAD( "lm_dl01.rom", 0x00000, 0x2000, 0xf3787a5d )
+	ROM_LOAD( "dl01-.2a",    0x00000, 0x2000, 0xf3787a5d )
 	ROM_CONTINUE(		     0x06000, 0x2000 )
 	ROM_CONTINUE(		 	 0x04000, 0x2000 )
 	ROM_CONTINUE(		 	 0x02000, 0x2000 )
 
 	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
-	ROM_LOAD( "lm_dl11.rom", 0x00000, 0x08000, 0x36579d3b )
-	ROM_LOAD( "lm_dl12.rom", 0x20000, 0x08000, 0x2ba6737e )
-	ROM_LOAD( "lm_dl13.rom", 0x40000, 0x08000, 0x39a7dc93 )
-	ROM_LOAD( "lm_dl10.rom", 0x60000, 0x08000, 0xfe275ea8 )
+	ROM_LOAD( "dl11-.13f",   0x00000, 0x08000, 0x36579d3b )
+	ROM_LOAD( "dl12-.9f",    0x20000, 0x08000, 0x2ba6737e )
+	ROM_LOAD( "dl13-.8f",    0x40000, 0x08000, 0x39a7dc93 )
+	ROM_LOAD( "dl10-.16f",   0x60000, 0x08000, 0xfe275ea8 )
 
 	ROM_REGION( 0x80000, REGION_GFX3, ROMREGION_DISPOSE )	/* tiles */
-	ROM_LOAD( "lm_dl09.rom", 0x00000, 0x10000, 0x6a5a0c5d )
-	ROM_LOAD( "lm_dl08.rom", 0x20000, 0x10000, 0x3b38cfce )
-	ROM_LOAD( "lm_dl07.rom", 0x40000, 0x10000, 0x1b60604d )
-	ROM_LOAD( "lm_dl06.rom", 0x60000, 0x10000, 0xc43c26a7 )
+	ROM_LOAD( "dl09-.12k",   0x00000, 0x10000, 0x6a5a0c5d )
+	ROM_LOAD( "dl08-.14k",   0x20000, 0x10000, 0x3b38cfce )
+	ROM_LOAD( "dl07-.15k",   0x40000, 0x10000, 0x1b60604d )
+	ROM_LOAD( "dl06-.17k",   0x60000, 0x10000, 0xc43c26a7 )
 
 	ROM_REGION( 256, REGION_PROMS, 0 )
-	ROM_LOAD( "mb7052.9c", 0x00000,  0x100,  0x2e55aa12 )	/* Priority (Not yet used) */
+	ROM_LOAD( "dl-14.9c",    0x00000,  0x100,  0x2e55aa12 )	/* Priority (Not yet used) */
 ROM_END
 
-ROM_START( lastmss2 )
+ROM_START( lastmsno )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )
-	ROM_LOAD( "lm_dl03.rom", 0x08000, 0x08000, 0x357f5f6b ) /* Rev 5 roms */
-	ROM_LOAD( "lm_dl04.rom", 0x10000, 0x10000, 0x7dea1552 )
+	ROM_LOAD( "lm_dl03.13h", 0x08000, 0x08000, 0x357f5f6b ) /* Rev 5 roms */
+	ROM_LOAD( "lm_dl04.7h",  0x10000, 0x10000, 0x7dea1552 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* CPU 2, 1st 16k is empty */
-	ROM_LOAD( "lm_dl02.rom", 0x0000, 0x10000, 0xec9b5daf )
+	ROM_LOAD( "lm_dl02.18h", 0x0000, 0x10000, 0xec9b5daf )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64K for sound CPU */
-	ROM_LOAD( "lm_dl05.rom", 0x8000, 0x8000, 0x1a5df8c0 )
+	ROM_LOAD( "dl05-.5h",    0x8000, 0x8000, 0x1a5df8c0 )
 
 	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )	/* characters */
-	ROM_LOAD( "lm_dl01.rom", 0x00000, 0x2000, 0xf3787a5d )
+	ROM_LOAD( "dl01-.2a",    0x00000, 0x2000, 0xf3787a5d )
 	ROM_CONTINUE(		     0x06000, 0x2000 )
 	ROM_CONTINUE(		 	 0x04000, 0x2000 )
 	ROM_CONTINUE(		 	 0x02000, 0x2000 )
 
 	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
-	ROM_LOAD( "lm_dl11.rom", 0x00000, 0x08000, 0x36579d3b )
-	ROM_LOAD( "lm_dl12.rom", 0x20000, 0x08000, 0x2ba6737e )
-	ROM_LOAD( "lm_dl13.rom", 0x40000, 0x08000, 0x39a7dc93 )
-	ROM_LOAD( "lm_dl10.rom", 0x60000, 0x08000, 0xfe275ea8 )
+	ROM_LOAD( "dl11-.13f",   0x00000, 0x08000, 0x36579d3b )
+	ROM_LOAD( "dl12-.9f",    0x20000, 0x08000, 0x2ba6737e )
+	ROM_LOAD( "dl13-.8f",    0x40000, 0x08000, 0x39a7dc93 )
+	ROM_LOAD( "dl10-.16f",   0x60000, 0x08000, 0xfe275ea8 )
 
 	ROM_REGION( 0x80000, REGION_GFX3, ROMREGION_DISPOSE )	/* tiles */
-	ROM_LOAD( "lm_dl09.rom", 0x00000, 0x10000, 0x6a5a0c5d )
-	ROM_LOAD( "lm_dl08.rom", 0x20000, 0x10000, 0x3b38cfce )
-	ROM_LOAD( "lm_dl07.rom", 0x40000, 0x10000, 0x1b60604d )
-	ROM_LOAD( "lm_dl06.rom", 0x60000, 0x10000, 0xc43c26a7 )
+	ROM_LOAD( "dl09-.12k",   0x00000, 0x10000, 0x6a5a0c5d )
+	ROM_LOAD( "dl08-.14k",   0x20000, 0x10000, 0x3b38cfce )
+	ROM_LOAD( "dl07-.15k",   0x40000, 0x10000, 0x1b60604d )
+	ROM_LOAD( "dl06-.17k",   0x60000, 0x10000, 0xc43c26a7 )
 
 	ROM_REGION( 256, REGION_PROMS, 0 )
-	ROM_LOAD( "mb7052.9c", 0x00000,  0x100,  0x2e55aa12 )	/* Priority (Not yet used) */
+	ROM_LOAD( "dl-14.9c",    0x00000,  0x100,  0x2e55aa12 )	/* Priority (Not yet used) */
+ROM_END
+
+ROM_START( lastmsnj )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )
+	ROM_LOAD( "dl03-.13h",   0x08000, 0x08000, 0x4be5e7e1 )
+	ROM_LOAD( "dl04-.7h",    0x10000, 0x10000, 0xf026adf9 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* CPU 2, 1st 16k is empty */
+	ROM_LOAD( "dl02-.18h",   0x0000, 0x10000, 0xd0de2b5d )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64K for sound CPU */
+	ROM_LOAD( "dl05-.5h",    0x8000, 0x8000, 0x1a5df8c0 )
+
+	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )	/* characters */
+	ROM_LOAD( "dl01-.2a",    0x00000, 0x2000, 0xf3787a5d )
+	ROM_CONTINUE(		     0x06000, 0x2000 )
+	ROM_CONTINUE(		 	 0x04000, 0x2000 )
+	ROM_CONTINUE(		 	 0x02000, 0x2000 )
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
+	ROM_LOAD( "dl11-.13f",   0x00000, 0x08000, 0x36579d3b )
+	ROM_LOAD( "dl12-.9f",    0x20000, 0x08000, 0x2ba6737e )
+	ROM_LOAD( "dl13-.8f",    0x40000, 0x08000, 0x39a7dc93 )
+	ROM_LOAD( "dl10-.16f",   0x60000, 0x08000, 0xfe275ea8 )
+
+	ROM_REGION( 0x80000, REGION_GFX3, ROMREGION_DISPOSE )	/* tiles */
+	ROM_LOAD( "dl09-.12k",   0x00000, 0x10000, 0x6a5a0c5d )
+	ROM_LOAD( "dl08-.14k",   0x20000, 0x10000, 0x3b38cfce )
+	ROM_LOAD( "dl07-.15k",   0x40000, 0x10000, 0x1b60604d )
+	ROM_LOAD( "dl06-.17k",   0x60000, 0x10000, 0xc43c26a7 )
+
+	ROM_REGION( 256, REGION_PROMS, 0 )
+	ROM_LOAD( "dl-14.9c",    0x00000,  0x100,  0x2e55aa12 )	/* Priority (Not yet used) */
 ROM_END
 
 ROM_START( shackled )
@@ -3173,8 +3207,9 @@ GAME(1988, oscar,    0,        oscar,    oscar,    deco222, ROT0,   "Data East U
 GAME(1987, oscarj,   oscar,    oscar,    oscar,    deco222, ROT0,   "Data East Corporation", "Psycho-Nics Oscar (Japan revision 2)" )
 GAME(1987, oscarj1,  oscar,    oscar,    oscar,    deco222, ROT0,   "Data East Corporation", "Psycho-Nics Oscar (Japan revision 1)" )
 GAME(1987, oscarj0,  oscar,    oscar,    oscar,    deco222, ROT0,   "Data East Corporation", "Psycho-Nics Oscar (Japan revision 0)" )
-GAME(1986, lastmiss, 0,        lastmiss, lastmiss, 0,       ROT270, "Data East USA", "Last Mission (US revision 6)" )
-GAME(1986, lastmss2, lastmiss, lastmiss, lastmiss, 0,       ROT270, "Data East USA", "Last Mission (US revision 5)" )
+GAME(1986, lastmisn, 0,        lastmiss, lastmiss, 0,       ROT270, "Data East USA", "Last Mission (US revision 6)" )
+GAME(1986, lastmsno, lastmisn, lastmiss, lastmiss, 0,       ROT270, "Data East USA", "Last Mission (US revision 5)" )
+GAME(1986, lastmsnj, lastmisn, lastmiss, lastmiss, 0,       ROT270, "Data East Corporation", "Last Mission (Japan)" )
 GAME(1986, shackled, 0,        shackled, shackled, 0,       ROT0,   "Data East USA", "Shackled (US)" )
 GAME(1986, breywood, shackled, shackled, shackled, 0,       ROT0,   "Data East Corporation", "Breywood (Japan revision 2)" )
 GAME(1987, csilver,  0,        csilver,  csilver,  0,       ROT0,   "Data East Corporation", "Captain Silver (Japan)" )

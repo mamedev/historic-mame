@@ -738,11 +738,21 @@ int osd_allocate_colors(unsigned int totalcolors, const UINT8 *palette, UINT32 *
 		current_palette[3 * i + 0] = current_palette[3 * i + 1] = current_palette[3 * i + 2] = 0;
 
 	// reserve color totalcolors+1 for the user interface text */
-	current_palette[(totalcolors+1)*3+0] = current_palette[(totalcolors+1)*3+1] = current_palette[(totalcolors+1)*3+2] = 0xff;
-	Machine->uifont->colortable[0] = totalcolors;
-	Machine->uifont->colortable[1] = totalcolors + 1;
-	Machine->uifont->colortable[2] = totalcolors + 1;
-	Machine->uifont->colortable[3] = totalcolors;
+	if (totalcolors < 65535)
+	{
+		current_palette[(totalcolors+1)*3+0] = current_palette[(totalcolors+1)*3+1] = current_palette[(totalcolors+1)*3+2] = 0xff;
+		Machine->uifont->colortable[0] = totalcolors;
+		Machine->uifont->colortable[1] = totalcolors + 1;
+		Machine->uifont->colortable[2] = totalcolors + 1;
+		Machine->uifont->colortable[3] = totalcolors;
+	}
+	else
+	{
+		Machine->uifont->colortable[0] = 0;
+		Machine->uifont->colortable[1] = 65535;
+		Machine->uifont->colortable[2] = 65535;
+		Machine->uifont->colortable[3] = 0;
+	}
 
 	// initialize the current palette with the input palette
 	for (i = 0; i < totalcolors; i++)
@@ -789,30 +799,6 @@ void osd_modify_pen(int pen, unsigned char red, unsigned char green, unsigned ch
 		// mark the color and palette dirty
 		dirtycolor[pen] = 1;
 		dirtypalette = 1;
-	}
-}
-
-
-
-//============================================================
-//	osd_get_pen
-//============================================================
-
-void osd_get_pen(int pen, unsigned char *red, unsigned char *green, unsigned char *blue)
-{
-	// modifiable cases
-	if (current_palette)
-	{
-		*red	= current_palette[3 * pen + 0];
-		*green	= current_palette[3 * pen + 1];
-		*blue	= current_palette[3 * pen + 2];
-	}
-	// 16bpp non-modifiable case
-	else
-	{
-		*red	= win_red16(pen);
-		*green 	= win_green16(pen);
-		*blue	= win_blue16(pen);
 	}
 }
 

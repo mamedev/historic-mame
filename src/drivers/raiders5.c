@@ -277,10 +277,10 @@ static const struct MachineDriver machine_driver_raiders5 =
 	32*8, 32*8, { 0*8, 32*8-1, 4*8, 28*8-1 },
 
 	gfxdecodeinfo,
-	512+256,512+256,
+	768, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	generic_vh_start,
 	generic_vh_stop,

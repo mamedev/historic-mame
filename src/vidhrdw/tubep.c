@@ -10,7 +10,7 @@
 #include "vidhrdw/generic.h"
 
 
-static data8_t *tubep_textram;
+data8_t *tubep_textram;
 static data8_t *dirtybuff;
 
 /***************************************************************************

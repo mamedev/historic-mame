@@ -2208,7 +2208,7 @@ static const struct MachineDriver machine_driver_urashima =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	nmk_eof_callback,
 	macross_vh_start,
 	nmk_vh_stop,
@@ -2245,7 +2245,7 @@ static const struct MachineDriver machine_driver_vandyke =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	nmk_eof_callback,
 	macross_vh_start,
 	nmk_vh_stop,
@@ -2289,7 +2289,7 @@ static const struct MachineDriver machine_driver_tharrier =
 	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	nmk_eof_callback,
 	macross_vh_start,
 	nmk_vh_stop,
@@ -2336,7 +2336,7 @@ static const struct MachineDriver machine_driver_mustang =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	nmk_eof_callback,
 	macross_vh_start,
 	nmk_vh_stop,
@@ -2377,7 +2377,7 @@ static const struct MachineDriver machine_driver_acrobatm =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	nmk_eof_callback,
 	macross_vh_start,
 	nmk_vh_stop,
@@ -2415,7 +2415,7 @@ static const struct MachineDriver machine_driver_bioship =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	nmk_eof_callback,
 	bioship_vh_start,
 	nmk_vh_stop,
@@ -2453,7 +2453,7 @@ static const struct MachineDriver machine_driver_tdragon =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	nmk_eof_callback,
 	macross_vh_start,
 	nmk_vh_stop,
@@ -2490,7 +2490,7 @@ static const struct MachineDriver machine_driver_strahl =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	nmk_eof_callback,
 	strahl_vh_start,
 	nmk_vh_stop,
@@ -2528,7 +2528,7 @@ static const struct MachineDriver machine_driver_hachamf =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	nmk_eof_callback,
 	macross_vh_start,
 	nmk_vh_stop,
@@ -2566,7 +2566,7 @@ static const struct MachineDriver machine_driver_macross =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	nmk_eof_callback,
 	macross_vh_start,
 	nmk_vh_stop,
@@ -2604,7 +2604,7 @@ static const struct MachineDriver machine_driver_gunnail =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	nmk_eof_callback,
 	gunnail_vh_start,
 	nmk_vh_stop,
@@ -2647,7 +2647,7 @@ static const struct MachineDriver machine_driver_macross2 =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	nmk_eof_callback,
 	macross2_vh_start,
 	nmk_vh_stop,
@@ -2688,7 +2688,7 @@ static const struct MachineDriver machine_driver_bjtwin =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	nmk_eof_callback,
 	bjtwin_vh_start,
 	nmk_vh_stop,
@@ -3520,8 +3520,8 @@ GAMEX( 1990, vandyke,  0,       vandyke,  vandyke,  0,        ROT270, "UPL",				
 GAMEX( 1991, blkheart, 0,       macross,  vandyke,  0,        ROT0,   "UPL",							"Black Heart", GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 1991, blkhearj, blkheart,macross,  vandyke,  0,        ROT0,   "UPL",							"Black Heart (Japan)", GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 1991, acrobatm, 0,       acrobatm, strahl,   acrobatm, ROT270, "UPL (Taito license)",			"Acrobat Mission", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1992, strahl,   0,       strahl,   strahl,   strahl,   ROT0,   "UPL",							"Strahl (Japan set 1)", GAME_NO_SOUND )
-GAMEX( 1992, strahla,  strahl,  strahl,   strahl,   strahl,   ROT0,   "UPL",							"Strahl (Japan set 2)", GAME_NO_SOUND )
+GAMEX( 1992, strahl,   0,       strahl,   strahl,   strahl,   ROT0,   "UPL",							"Koutetsu Yousai Strahl (Japan set 1)", GAME_NO_SOUND )
+GAMEX( 1992, strahla,  strahl,  strahl,   strahl,   strahl,   ROT0,   "UPL",							"Koutetsu Yousai Strahl (Japan set 2)", GAME_NO_SOUND )
 GAMEX( 1991, tdragon,  0,       tdragon,  tdragon,  tdragon,  ROT270, "NMK / Tecmo",					"Thunder Dragon", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 1991, tdragonb, tdragon, tdragon,  tdragon,  tdragonb, ROT270, "NMK / Tecmo",					"Thunder Dragon (Bootleg)", GAME_NO_SOUND )
 GAMEX( 1991, hachamf,  0,       hachamf,  hachamf,  hachamf,  ROT0,   "NMK",							"Hacha Mecha Fighter", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )

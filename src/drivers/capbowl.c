@@ -368,10 +368,10 @@ static const struct MachineDriver machine_driver_##NAME =	\
 	/* video hardware */									\
 	360, 256, { 0, 359, 0, VISIBLE_Y },						\
 	0,														\
-	16*256,16*256,											\
+	4096, 0,												\
 	0,														\
 															\
-	VIDEO_TYPE_RASTER ,				\
+	VIDEO_TYPE_RASTER,				\
 	0,														\
 	capbowl_vh_start,										\
 	capbowl_vh_stop,										\

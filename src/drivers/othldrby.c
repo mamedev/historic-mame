@@ -273,7 +273,7 @@ static const struct MachineDriver machine_driver_othldrby =
 	0x800, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	othldrby_eof_callback,
 	othldrby_vh_start,
 	othldrby_vh_stop,

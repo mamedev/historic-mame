@@ -1155,7 +1155,7 @@ static const struct MachineDriver machine_driver_mcr3 =
 	64, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -1184,12 +1184,12 @@ static const struct MachineDriver machine_driver_dotron =
 	mcr_init_machine,
 
 	/* video hardware */
-	640, 600, { 0, 640-1, 0, 600-1 },
+	684, 642, { 0, 684-1, 0, 642-1 },
 	gfxdecodeinfo,
-	64+32768, 64,		/* The extra colors are for the backdrop */
+	64+32768, 0,		/* The extra colors are for the backdrop */
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	dotron_vh_start,
 	dotron_vh_stop,
@@ -1223,7 +1223,7 @@ static const struct MachineDriver machine_driver_destderb =
 	64, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -1257,7 +1257,7 @@ static const struct MachineDriver machine_driver_sarge =
 	64, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -1290,7 +1290,7 @@ static const struct MachineDriver machine_driver_rampage =
 	64, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -1329,7 +1329,7 @@ static const struct MachineDriver machine_driver_powerdrv =
 	64, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -1363,7 +1363,7 @@ static const struct MachineDriver machine_driver_spyhunt =
 	64+4, 0,
 	spyhunt_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_ASPECT_RATIO(62,45),
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_ASPECT_RATIO(62,45),
 	0,
 	spyhunt_vh_start,
 	spyhunt_vh_stop,
@@ -1397,7 +1397,7 @@ static const struct MachineDriver machine_driver_turbotag =
 	64+4, 0,
 	spyhunt_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	spyhunt_vh_start,
 	spyhunt_vh_stop,
@@ -1430,7 +1430,7 @@ static const struct MachineDriver machine_driver_crater =
 	64+4, 0,
 	spyhunt_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER  | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	spyhunt_vh_start,
 	spyhunt_vh_stop,

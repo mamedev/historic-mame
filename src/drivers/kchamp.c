@@ -389,7 +389,7 @@ static int kc_interrupt( void ) {
 	if ( nmi_enable )
 		return Z80_NMI_INT;
 
-	return Z80_IGNORE_INT;
+	return ignore_interrupt();
 }
 
 static void msmint( int data ) {
@@ -439,7 +439,7 @@ static int sound_int( void ) {
 	if ( sound_nmi_enable )
 		return Z80_NMI_INT;
 
-	return Z80_IGNORE_INT;
+	return ignore_interrupt();
 }
 
 static struct DACinterface dac_interface =

@@ -25,7 +25,7 @@ extern UINT8 *mnchmobl_sprite_xpos;
 extern UINT8 *mnchmobl_sprite_attr;
 extern UINT8 *mnchmobl_sprite_tile;
 
-void mnchmobl_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void mnchmobl_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 int mnchmobl_vh_start( void );
 void mnchmobl_vh_stop( void );
 WRITE_HANDLER( mnchmobl_palette_bank_w );
@@ -312,7 +312,7 @@ static const struct MachineDriver machine_driver_munchmo =
 	/* video hardware */
 	256+32+32, 256, { 0, 255+32+32,0, 255-16 },
 	gfxdecodeinfo,
-	256,256,
+	256, 0,
 	mnchmobl_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,

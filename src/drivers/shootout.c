@@ -40,7 +40,7 @@ int shootout_vh_start( void );
 void shootout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void shootouj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void btime_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void shootout_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 
 /*******************************************************************************/
 
@@ -315,8 +315,8 @@ static const struct MachineDriver machine_driver_shootout =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 	gfxdecodeinfo,
-	256,256,
-	btime_vh_convert_color_prom,
+	256, 0,
+	shootout_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -352,8 +352,8 @@ static const struct MachineDriver machine_driver_shootouj =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 	gfxdecodeinfo,
-	256,256,
-	btime_vh_convert_color_prom,
+	256, 0,
+	shootout_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,

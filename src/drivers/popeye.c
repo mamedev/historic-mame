@@ -382,7 +382,7 @@ static const struct MachineDriver machine_driver_popeye =
 	16+16+256, 16*2+64*4,
 	popeye_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	popeye_vh_start,
 	popeye_vh_stop,
@@ -419,7 +419,7 @@ static const struct MachineDriver machine_driver_popeyebl =
 	16+16+256, 16*2+64*4,
 	popeyebl_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	popeye_vh_start,
 	popeye_vh_stop,

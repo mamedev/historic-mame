@@ -335,7 +335,7 @@ static const struct MachineDriver machine_driver_flstory =
     512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
     0,
 	flstory_vh_start,
 	flstory_vh_stop,

@@ -92,7 +92,7 @@ int geebee_vh_start(void)
 
 	if( (readinputport(2) & 0x01) == 0 )
 	{
-		overlay_create(geebee_overlay, 3, Machine->drv->total_colors-3);
+		overlay_create(geebee_overlay, 3);
 	}
 
 	return 0;

@@ -232,11 +232,11 @@ void kaneko16_vh_stop(void)
 
 /* Berlwall has an additional hi-color background */
 
-void berlwall_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+void berlwall_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 
-	palette += 2048 * 3;	/* first 2048 colors are dynamic */
+	/* first 2048 colors are dynamic */
 
 	/* initialize 555 RGB lookup */
 	for (i = 0; i < 32768; i++)
@@ -247,9 +247,11 @@ void berlwall_init_palette(unsigned char *palette, unsigned short *colortable,co
 		g = (i >> 10) & 0x1f;
 		b = (i >>  0) & 0x1f;
 
-		(*palette++) = (r << 3) | (r >> 2);
-		(*palette++) = (g << 3) | (g >> 2);
-		(*palette++) = (b << 3) | (b >> 2);
+		r = (r << 3) | (r >> 2);
+		g = (g << 3) | (g >> 2);
+		b = (b << 3) | (b >> 2);
+
+		palette_set_color(2048 + i,r,g,b);
 	}
 }
 

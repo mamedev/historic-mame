@@ -251,10 +251,10 @@ static const struct MachineDriver machine_driver_cloud9 =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 32*8-1 },
 	gfxdecodeinfo,
-	64, 64,
+	64, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	generic_bitmapped_vh_start,
 	generic_bitmapped_vh_stop,

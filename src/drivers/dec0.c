@@ -904,7 +904,7 @@ static const struct MachineDriver machine_driver_hbarrel =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN,
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,
 	dec0_vh_start,
 	dec0_vh_stop,
@@ -956,7 +956,7 @@ static const struct MachineDriver machine_driver_baddudes =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN,
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,
 	dec0_vh_start,
 	dec0_vh_stop,
@@ -1008,7 +1008,7 @@ static const struct MachineDriver machine_driver_birdtry =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN,
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,
 	dec0_vh_start,
 	dec0_vh_stop,
@@ -1066,7 +1066,7 @@ static const struct MachineDriver machine_driver_robocop =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN,
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,
 	dec0_vh_start,
 	dec0_vh_stop,
@@ -1118,7 +1118,7 @@ static const struct MachineDriver machine_driver_robocopb =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN,
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,
 	dec0_vh_start,
 	dec0_vh_stop,
@@ -1176,7 +1176,7 @@ static const struct MachineDriver machine_driver_hippodrm =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN,
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,
 	dec0_vh_start,
 	dec0_vh_stop,
@@ -1228,7 +1228,7 @@ static const struct MachineDriver machine_driver_slyspy =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	dec0_nodma_vh_start,
 	dec0_nodma_vh_stop,
@@ -1280,7 +1280,7 @@ static const struct MachineDriver machine_driver_midres =
 	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	dec0_nodma_vh_start,
 	dec0_nodma_vh_stop,

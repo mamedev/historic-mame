@@ -62,7 +62,7 @@ WRITE16_HANDLER( afega_palette_w )
 	b = ((data & 0x00F0) >> 0) + ((data & 0x0002) << 2);
 	g = ((data & 0x0F00) >> 4) + ((data & 0x0004) << 1);
 	r = ((data & 0xF000) >> 8) + ((data & 0x0008) << 0);
-	palette_change_color( offset, r , g , b );
+	palette_set_color( offset, r , g , b );
 }
 
 /* This game uses 8 bit tiles, so it ignores the color codes and just

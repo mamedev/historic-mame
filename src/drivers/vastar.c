@@ -66,21 +66,16 @@ write:
 
 
 
-extern unsigned char *vastar_bg1videoram;
-extern unsigned char *vastar_bg2videoram;
-extern unsigned char *vastar_fgvideoram;
-extern unsigned char *vastar_sprite_priority;
-extern unsigned char *vastar_bg1_scroll;
-extern unsigned char *vastar_bg2_scroll;
+extern data8_t *vastar_bg1videoram,*vastar_bg2videoram,*vastar_fgvideoram;
+extern data8_t *vastar_bg1_scroll,*vastar_bg2_scroll;
+extern data8_t *vastar_sprite_priority;
 
 WRITE_HANDLER( vastar_bg1videoram_w );
 WRITE_HANDLER( vastar_bg2videoram_w );
 WRITE_HANDLER( vastar_fgvideoram_w );
 READ_HANDLER( vastar_bg1videoram_r );
 READ_HANDLER( vastar_bg2videoram_r );
-WRITE_HANDLER( vastar_bg1_scroll_w );
-WRITE_HANDLER( vastar_bg2_scroll_w );
-void vastar_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void vastar_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 int vastar_vh_start(void);
 void vastar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -139,8 +134,6 @@ static MEMORY_WRITE_START( writemem )
 	{ 0xa000, 0xafff, vastar_bg2videoram_w },				/* mirror address */
 	{ 0xb000, 0xbfff, vastar_bg1videoram_w },  				/* mirror address */
 	{ 0xc000, 0xc000, MWA_RAM, &vastar_sprite_priority },	/* sprite/BG priority */
-	{ 0xc7c0, 0xc7df, vastar_bg1_scroll_w, &vastar_bg1_scroll },
-	{ 0xc7e0, 0xc7ff, vastar_bg2_scroll_w, &vastar_bg2_scroll },
 	{ 0xc400, 0xcfff, vastar_fgvideoram_w, &vastar_fgvideoram },
 	{ 0xe000, 0xe000, watchdog_reset_w },
 	{ 0xf000, 0xf0ff, vastar_sharedram_w, &vastar_sharedram },
@@ -148,6 +141,8 @@ static MEMORY_WRITE_START( writemem )
 
 	/* in hidden portions of video RAM: */
 	{ 0xc400, 0xc43f, MWA_RAM, &spriteram, &spriteram_size },	/* actually c410-c41f and c430-c43f */
+	{ 0xc7c0, 0xc7df, MWA_RAM, &vastar_bg1_scroll },
+	{ 0xc7e0, 0xc7ff, MWA_RAM, &vastar_bg2_scroll },
 	{ 0xc800, 0xc83f, MWA_RAM, &spriteram_2 },	/* actually c810-c81f and c830-c83f */
 	{ 0xcc00, 0xcc3f, MWA_RAM, &spriteram_3 },	/* actually cc10-cc1f and cc30-cc3f */
 MEMORY_END
@@ -356,7 +351,7 @@ static const struct MachineDriver machine_driver_vastar =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256, 256,
+	256, 0,
 	vastar_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,

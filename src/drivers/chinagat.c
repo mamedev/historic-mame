@@ -532,7 +532,7 @@ static int chinagat_interrupt(void)
 {
 	cpu_set_irq_line(0, 1, HOLD_LINE);	/* hold the FIRQ line */
 	cpu_set_nmi_line(0, PULSE_LINE);	/* pulse the NMI line */
-	return M6809_INT_NONE;
+	return ignore_interrupt();
 }
 
 /* This is only on the second bootleg board */
@@ -577,9 +577,9 @@ static struct MachineDriver machine_driver_chinagat =
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	384, 384,
+	384, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	chinagat_vh_start,
 	0,
@@ -634,9 +634,9 @@ static struct MachineDriver machine_driver_saiyugb1 =
 	/* video hardware */
 	32*8, 32*8,{ 1*8, 31*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	384, 384,
+	384, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	chinagat_vh_start,
 	0,
@@ -685,9 +685,9 @@ static struct MachineDriver machine_driver_saiyugb2 =
 	/* video hardware */
 	32*8, 32*8,{ 1*8, 31*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	384, 384,
+	384, 0,
 	0,
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	chinagat_vh_start,
 	0,

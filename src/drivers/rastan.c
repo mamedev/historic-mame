@@ -356,7 +356,7 @@ static const struct MachineDriver machine_driver_rastan =
 	8192, 0,
 	0,
 
-	VIDEO_TYPE_RASTER ,
+	VIDEO_TYPE_RASTER,
 	0,
 	rastan_vh_start,
 	rastan_vh_stop,

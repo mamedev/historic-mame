@@ -85,7 +85,7 @@ void psychic5_paletteram_w(int color_offs, int offset, int data)
 	bit3 = (val >> 3) & 0x01;
 	b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-	palette_change_color((offset / 2)-color_offs,r,g,b);
+	palette_set_color((offset / 2)-color_offs,r,g,b);
 }
 
 void set_background_palette_intensity(void)
@@ -138,9 +138,9 @@ void set_background_palette_intensity(void)
 			val = (unsigned char)(0.299*r + 0.587*g + 0.114*b);
 
  			if (ix==2)		/* purple background enable */
-			 palette_change_color(256+i,val*0.6,0,val*0.8);
+			 palette_set_color(256+i,val*0.6,0,val*0.8);
 			else			/* grey bg */
-			 palette_change_color(256+i,val,val,val);
+			 palette_set_color(256+i,val,val,val);
 		}
 		else
 		{
@@ -153,7 +153,7 @@ void set_background_palette_intensity(void)
 	 		  	g = (g>>4) * ig;
  			  	b = (b>>4) * ib;
 			}
-			palette_change_color(256+i,r,g,b);
+			palette_set_color(256+i,r,g,b);
 		}
 	}
 }

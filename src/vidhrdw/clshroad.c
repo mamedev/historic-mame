@@ -4,16 +4,6 @@
 
 					driver by	Luca Elia (l.elia@tin.it)
 
-Note:	if MAME_DEBUG is defined, pressing Z with:
-
-		Q			shows layer 0 A
-		W			shows layer 0 B
-		E			shows layer 1
-		A			shows the sprites
-
-		Keys can be used together!
-
-
 	[ 2 Horizontally Scrolling Layers ]
 
 		Size :	512 x 256
@@ -56,14 +46,58 @@ WRITE_HANDLER( clshroad_vram_0_w );
 WRITE_HANDLER( clshroad_vram_1_w );
 WRITE_HANDLER( clshroad_flipscreen_w );
 
-void clshroad_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-{
-}
 
 WRITE_HANDLER( clshroad_flipscreen_w )
 {
 	flip_screen_set( data & 1 );
 }
+
+
+void firebatl_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+{
+	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
+
+
+#if 1
+	for (i = 0;i < 256;i++)
+	{
+		int bit0,bit1,bit2,bit3,r,g,b;
+
+
+		/* red component */
+		bit0 = (color_prom[i] >> 0) & 0x01;
+		bit1 = (color_prom[i] >> 1) & 0x01;
+		bit2 = (color_prom[i] >> 2) & 0x01;
+		bit3 = (color_prom[i] >> 3) & 0x01;
+		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		/* green component */
+		bit0 = (color_prom[i + 256] >> 0) & 0x01;
+		bit1 = (color_prom[i + 256] >> 1) & 0x01;
+		bit2 = (color_prom[i + 256] >> 2) & 0x01;
+		bit3 = (color_prom[i + 256] >> 3) & 0x01;
+		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		/* blue component */
+		bit0 = (color_prom[i + 2*256] >> 0) & 0x01;
+		bit1 = (color_prom[i + 2*256] >> 1) & 0x01;
+		bit2 = (color_prom[i + 2*256] >> 2) & 0x01;
+		bit3 = (color_prom[i + 2*256] >> 3) & 0x01;
+		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+		palette_set_color(i,r,g,b);
+	}
+#endif
+
+	color_prom += 3*256;
+	/* color_prom now points to the beginning of the lookup table */
+
+
+	for (i = 0;i < TOTAL_COLORS(2);i++)
+		COLOR(2,i) = ((color_prom[i] & 0x0f) << 4) + (color_prom[i+256] & 0x0f);
+}
+
+
 
 /***************************************************************************
 
@@ -158,6 +192,17 @@ static UINT32 tilemap_scan_rows_extra( UINT32 col, UINT32 row, UINT32 num_cols, 
 	return (col-2) + row * 0x20;
 }
 
+static void get_tile_info_fb1( int tile_index )
+{
+	data8_t code	=	clshroad_vram_1[ tile_index + 0x000 ];
+	data8_t color	=	clshroad_vram_1[ tile_index + 0x400 ];
+	SET_TILE_INFO(
+			2,
+			code,
+			color & 0x3f,
+			0)
+}
+
 static void get_tile_info_1( int tile_index )
 {
 	data8_t code	=	clshroad_vram_1[ tile_index + 0x000 ];
@@ -179,19 +224,45 @@ WRITE_HANDLER( clshroad_vram_1_w )
 }
 
 
+int firebatl_vh_start(void)
+{
+	/* These 2 use the graphics and scroll value */
+	tilemap_0a = tilemap_create(get_tile_info_0a,tilemap_scan_rows,TILEMAP_OPAQUE,     16,16,0x20,0x10);
+	tilemap_0b = tilemap_create(get_tile_info_0b,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,0x20,0x10);
+	/* Text (No scrolling) */
+	tilemap_1  = tilemap_create(get_tile_info_fb1,tilemap_scan_rows_extra,TILEMAP_TRANSPARENT_COLOR,8,8,0x24,0x20);
+
+	if (!tilemap_0a || !tilemap_0b || !tilemap_1)
+		return 1;
+
+	tilemap_set_scroll_rows( tilemap_0a, 1);
+	tilemap_set_scroll_rows( tilemap_0b, 1);
+	tilemap_set_scroll_rows( tilemap_1,  1);
+
+	tilemap_set_scroll_cols( tilemap_0a, 1);
+	tilemap_set_scroll_cols( tilemap_0b, 1);
+	tilemap_set_scroll_cols( tilemap_1,  1);
+
+	tilemap_set_scrolldx( tilemap_0a, -0x30, -0xb5);
+	tilemap_set_scrolldx( tilemap_0b, -0x30, -0xb5);
+
+	tilemap_set_transparent_pen( tilemap_0a, 0 );
+	tilemap_set_transparent_pen( tilemap_0b, 0 );
+	tilemap_set_transparent_pen( tilemap_1,  0x0f );
+
+	return 0;
+}
+
 int clshroad_vh_start(void)
 {
 	/* These 2 use the graphics and scroll value */
-	tilemap_0a	=	tilemap_create(	get_tile_info_0a, tilemap_scan_rows,
-									TILEMAP_OPAQUE,			16,16,	0x20, 0x10 );
-	tilemap_0b	=	tilemap_create(	get_tile_info_0b, tilemap_scan_rows,
-									TILEMAP_TRANSPARENT,	16,16,	0x20, 0x10 );
-
+	tilemap_0a = tilemap_create(get_tile_info_0a,tilemap_scan_rows,TILEMAP_OPAQUE,     16,16,0x20,0x10);
+	tilemap_0b = tilemap_create(get_tile_info_0b,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,0x20,0x10);
 	/* Text (No scrolling) */
-	tilemap_1	=	tilemap_create(	get_tile_info_1, tilemap_scan_rows_extra,
-									TILEMAP_TRANSPARENT,	8,8,	0x20+4, 0x20 );
+	tilemap_1  = tilemap_create(get_tile_info_1,tilemap_scan_rows_extra,TILEMAP_TRANSPARENT,8,8,0x24,0x20);
 
-	if (!tilemap_0a || !tilemap_0b || !tilemap_1)	return 1;
+	if (!tilemap_0a || !tilemap_0b || !tilemap_1)
+		return 1;
 
 	tilemap_set_scroll_rows( tilemap_0a, 1);
 	tilemap_set_scroll_rows( tilemap_0b, 1);
@@ -210,7 +281,6 @@ int clshroad_vh_start(void)
 
 	return 0;
 }
-
 
 
 /***************************************************************************
@@ -244,15 +314,10 @@ Offset:		Format:		Value:
 static void draw_sprites(struct osd_bitmap *bitmap)
 {
 	int i;
-	int max_y = Machine->drv->screen_height - 1;
-
-	int priority = clshroad_vregs[ 2 ];
-
-	if (~priority & 8)	return;
 
 	for (i = 0; i < spriteram_size ; i += 8)
 	{
-		int y		=	 spriteram[i+1];
+		int y		=	 240 - spriteram[i+1];
 		int code	=	(spriteram[i+3] & 0x3f) + (spriteram[i+2] << 6);
 		int x		=	 spriteram[i+5]         + (spriteram[i+6] << 8);
 		int attr	=	 spriteram[i+7];
@@ -261,13 +326,18 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 		int flipy	=	0;
 
 		x -= 0x4a/2;
-		if (flip_screen)	{ y = max_y - y - 16;	flipx = !flipx;	flipy = !flipy;	}
+		if (flip_screen)
+		{
+			y = 240 - y;
+			flipx = !flipx;
+			flipy = !flipy;
+		}
 
 		drawgfx(bitmap,Machine->gfx[0],
 				code,
 				attr & 0x0f,
-				flipx, flipy,
-				x, 0x0f0 - y,
+				flipx,flipy,
+				x,y,
 				&Machine->visible_area,TRANSPARENCY_PEN,0 );
 	}
 }
@@ -283,35 +353,15 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 
 void clshroad_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int layers_ctrl = -1;
 	int scrollx  = clshroad_vregs[ 0 ] + (clshroad_vregs[ 1 ] << 8);
-	int priority = clshroad_vregs[ 2 ];
+//	int priority = clshroad_vregs[ 2 ];
 
 	/* Only horizontal scrolling (these 2 layers use the same value) */
 	tilemap_set_scrollx(tilemap_0a, 0, scrollx);
 	tilemap_set_scrollx(tilemap_0b, 0, scrollx);
 
-#ifdef MAME_DEBUG
-if (keyboard_pressed(KEYCODE_Z))
-{
-	int msk = 0;
-	if (keyboard_pressed(KEYCODE_Q))	msk |= 1;
-	if (keyboard_pressed(KEYCODE_W))	msk |= 2;
-	if (keyboard_pressed(KEYCODE_E))	msk |= 4;
-	if (keyboard_pressed(KEYCODE_A))	msk |= 8;
-	if (msk != 0) layers_ctrl &= msk;
-	usrintf_showmessage("Pri: %02X", priority);
-}
-#endif
-
-	if (layers_ctrl & 1)	tilemap_draw(bitmap,tilemap_0a,0,0);	// Opaque
-	else					fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
-
-	if (layers_ctrl & 2)	tilemap_draw(bitmap,tilemap_0b,0,0);
-
-	if ( (layers_ctrl & 8) && (priority & 1) )	draw_sprites(bitmap);
-
-	if (layers_ctrl & 4)	tilemap_draw(bitmap,tilemap_1,0,0);
-
-	if ( (layers_ctrl & 8) && (~priority & 1) )	draw_sprites(bitmap);
+	tilemap_draw(bitmap,tilemap_0a,0,0);	// Opaque
+	tilemap_draw(bitmap,tilemap_0b,0,0);
+	draw_sprites(bitmap);
+	tilemap_draw(bitmap,tilemap_1,0,0);
 }

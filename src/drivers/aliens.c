@@ -290,7 +290,7 @@ static const struct MachineDriver machine_driver_aliens =
 	512, 0,
 	0,
 
-	VIDEO_TYPE_RASTER  | VIDEO_HAS_SHADOWS,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	aliens_vh_start,
 	aliens_vh_stop,

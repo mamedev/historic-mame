@@ -21,6 +21,12 @@ unsigned char *tp84_scrolly;
 
 int col0;
 
+/*
+sprites are multiplexed, so we have to buffer the spriteram
+scanline by scanline.
+*/
+static unsigned char *sprite_mux_buffer;
+static int scanline;
 
 
 
@@ -155,6 +161,16 @@ int tp84_vh_start(void)
 		return 1;
 	}
 
+	sprite_mux_buffer = malloc(256 * spriteram_size);
+
+	if (!sprite_mux_buffer)
+	{
+		free(dirtybuffer2);
+		bitmap_free(tmpbitmap2);
+		generic_vh_stop();
+		return 1;
+	}
+
 	return 0;
 }
 
@@ -167,6 +183,8 @@ int tp84_vh_start(void)
 ***************************************************************************/
 void tp84_vh_stop(void)
 {
+	free(sprite_mux_buffer);
+	sprite_mux_buffer = NULL;
 	free(dirtybuffer2);
 	bitmap_free(tmpbitmap2);
 	generic_vh_stop();
@@ -214,13 +232,63 @@ WRITE_HANDLER( tp84_col0_w )
 
 
 
+/* Return the current video scan line */
+READ_HANDLER( tp84_scanline_r )
+{
+	return scanline;
+}
+
+
 /***************************************************************************
 
-	Draw the game screen in the given osd_bitmap.
-	Do NOT call osd_update_display() from this function, it will be called by
-	the main emulation engine.
+  Display refresh
 
 ***************************************************************************/
+
+static void draw_sprites(struct osd_bitmap *bitmap)
+{
+	const struct GfxElement *gfx = Machine->gfx[1];
+	struct rectangle clip = Machine->visible_area;
+	int offs;
+	int line;
+	int coloffset = ((col0&0x07) << 4);
+
+	for (line = 0;line < 256;line++)
+	{
+		if (line >= Machine->visible_area.min_y && line <= Machine->visible_area.max_y)
+		{
+			unsigned char *sr;
+
+			sr = sprite_mux_buffer + line * spriteram_size;
+			clip.min_y = clip.max_y = line;
+
+			for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
+			{
+				int code,color,sx,sy,flipx,flipy;
+
+				sx = sr[offs];
+				sy = 240 - sr[offs + 3];
+
+				if (sy > line-16 && sy <= line)
+				{
+					code = sr[offs + 1];
+					color = (sr[offs + 2] & 0x0f) + coloffset;
+					flipx = ~sr[offs + 2] & 0x40;
+					flipy = sr[offs + 2] & 0x80;
+
+					drawgfx(bitmap,gfx,
+							code,
+							color,
+							flipx,flipy,
+							sx,sy,
+							&clip,TRANSPARENCY_COLOR,0);
+				}
+			}
+		}
+	}
+}
+
+
 void tp84_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
@@ -282,28 +350,22 @@ void tp84_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
-	/* Draw the sprites. */
-	coloffset = ((col0&0x07) << 4);
-	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
-	{
-		int sx,sy,flipx,flipy;
-
-
-		sx = spriteram[offs + 0];
-		sy = 240-spriteram[offs + 3];
-		flipx = !(spriteram[offs + 2] & 0x40);
-		flipy = spriteram[offs + 2] & 0x80;
-
-		drawgfx(bitmap,Machine->gfx[1],
-				spriteram[offs + 1],
-				(spriteram[offs + 2] & 0x0f) + coloffset,
-				flipx,flipy,
-				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_COLOR,0);
-	}
-
+	draw_sprites(bitmap);
 
 	/* Copy the frontmost playfield. */
 	copybitmap(bitmap,tmpbitmap2,0,0,0,0,&topvisiblearea,TRANSPARENCY_NONE,0);
 	copybitmap(bitmap,tmpbitmap2,0,0,0,0,&bottomvisiblearea,TRANSPARENCY_NONE,0);
+}
+
+
+int tp84_6809_interrupt(void)
+{
+	scanline = 255 - cpu_getiloops();
+
+	memcpy(sprite_mux_buffer + scanline * spriteram_size,spriteram,spriteram_size);
+
+	if (scanline == 255)
+		return interrupt();
+	else
+		return ignore_interrupt();
 }
