@@ -128,10 +128,20 @@ void K053245_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 #define K055673_LAYOUT_LE2 2
 #define K055673_LAYOUT_GX6 3
 
-int K055673_vh_start(int gfx_memory_region, int alt_layout, int dx, int dy, 
+int K055673_vh_start(int gfx_memory_region, int alt_layout, int dx, int dy,
 		void (*callback)(int *code,int *color,int *priority));
 READ16_HANDLER( K055673_rom_word_r );
 READ16_HANDLER( K055673_GX6bpp_rom_word_r );
+
+/*
+Callback procedures for non-standard shadows:
+
+1) translate shadow code to the correct 2-bit form (0=off, 1-3=style)
+2) shift shadow code left by K053247_SHDSHIFT and add the K053247_CUSTOMSHADOW flag
+3) combine the result with sprite color
+*/
+#define K053247_CUSTOMSHADOW	0x20000000
+#define K053247_SHDSHIFT		20
 
 int K053247_vh_start(int gfx_memory_region,int dx,int dy,int plane0,int plane1,int plane2,int plane3,
 		void (*callback)(int *code,int *color,int *priority_mask));
@@ -147,6 +157,7 @@ void K053247_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 int K053247_read_register(int regnum);
 void K053247_set_SpriteOffset(int offsx, int offsy);
 void K053247_wraparound_enable(int status);
+void K053247_set_z_rejection(int zcode);
 void K053247_export_config(data16_t **ram, struct GfxElement **gfx, void **callback, int *dx, int *dy);
 
 READ_HANDLER( K053246_r );
@@ -333,8 +344,8 @@ int K055555_get_palette_index(int idx);
 #define K55_SHAD1_PRI		37	// shadow/highlight 1 priority
 #define K55_SHAD2_PRI		38	// shadow/highlight 2 priority
 #define K55_SHAD3_PRI		39	// shadow/highlight 3 priority
-#define K55_SHD_ON			40	// shadow/highlight 
-#define K55_SHD_PRI_SEL		41	// shadow/highlight 
+#define K55_SHD_ON			40	// shadow/highlight
+#define K55_SHD_PRI_SEL		41	// shadow/highlight
 
 #define K55_VBRI			42	// VRAM layer brightness enable
 #define K55_OSBRI			43	// obj/sub brightness enable, part 1
@@ -362,11 +373,11 @@ int K054338_vh_start(void);
 WRITE16_HANDLER( K054338_word_w ); // "CLCT" registers
 WRITE32_HANDLER( K054338_long_w );
 int K054338_read_register(int reg);
-void K054338_fill_solid_bg(struct mame_bitmap *bitmap); // solid backcolor fill
-void K054338_fill_backcolor(struct mame_bitmap *bitmap, int mode); // unified fill, 0=solid, 1=gradient
-void K054338_update_all_shadows(void);
-void K054338_invert_alpha(int invert);
-int  K054338_set_alpha_level(int pblend);
+void K054338_update_all_shadows(void);								// called at the beginning of VIDEO_UPDATE()
+void K054338_fill_solid_bg(struct mame_bitmap *bitmap);				// solid backcolor fill
+void K054338_fill_backcolor(struct mame_bitmap *bitmap, int mode);	// unified fill, 0=solid, 1=gradient
+int  K054338_set_alpha_level(int pblend);							// blend style 0-2
+void K054338_invert_alpha(int invert);								// 0=0x00(invis)-0x1f(solid), 1=0x1f(invis)-0x00(solod)
 void K054338_export_config(int **shdRGB);
 
 #define K338_REG_BGC_R		0
@@ -417,6 +428,7 @@ READ16_HANDLER( K056832_word_r );		// VACSET
 READ16_HANDLER( K056832_b_word_r );		// VSCCS  (board dependent)
 READ16_HANDLER( K053246_reg_word_r );	// OBJSET1
 READ16_HANDLER( K053247_reg_word_r );	// OBJSET2
+READ16_HANDLER( K053251_lsb_r );		// PCU1
 READ16_HANDLER( K053251_msb_r );		// PCU1
 READ16_HANDLER( K055555_word_r );		// PCU2
 READ16_HANDLER( K054338_word_r );		// CLTC

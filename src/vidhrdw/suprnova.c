@@ -766,7 +766,8 @@ VIDEO_UPDATE(skns)
 		/* needed until we have the per tile priorities sorted out */
 		if (!strcmp(Machine->gamedrv->name,"vblokbrk") ||
 			!strcmp(Machine->gamedrv->name,"sarukani") ||
-			!strcmp(Machine->gamedrv->name,"sengekis"))
+			!strcmp(Machine->gamedrv->name,"sengekis") ||
+			!strcmp(Machine->gamedrv->name,"sengekij"))
 		{
 			supernova_pri_b = 0;
 			supernova_pri_a = 1;

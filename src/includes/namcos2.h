@@ -119,6 +119,7 @@ extern data16_t *namcos2_sprite_ram;
 WRITE16_HANDLER( namcos2_sprite_ram_w );
 READ16_HANDLER( namcos2_sprite_ram_r );
 
+READ16_HANDLER( namcos2_flap_prot_r );
 
 /**************************************************************/
 /*	EEPROM memory function handlers 						  */
@@ -183,13 +184,13 @@ WRITE16_HANDLER( namcos2_68k_key_w );
 /**************************************************************/
 
 #define NAMCOS2_C148_0			0		/* 0x1c0000 */
-#define NAMCOS2_C148_1			1
-#define NAMCOS2_C148_2			2
-#define NAMCOS2_C148_CPUIRQ 	3
+#define NAMCOS2_C148_1			1		/* 0x1c2000 */
+#define NAMCOS2_C148_2			2		/* 0x1c4000 */
+#define NAMCOS2_C148_CPUIRQ 	3		/* 0x1c6000 */
 #define NAMCOS2_C148_EXIRQ		4		/* 0x1c8000 */
-#define NAMCOS2_C148_POSIRQ 	5
-#define NAMCOS2_C148_SERIRQ 	6
-#define NAMCOS2_C148_VBLANKIRQ	7
+#define NAMCOS2_C148_POSIRQ 	5		/* 0x1ca000 */
+#define NAMCOS2_C148_SERIRQ 	6		/* 0x1cc000 */
+#define NAMCOS2_C148_VBLANKIRQ	7		/* 0x1ce000 */
 
 extern data16_t namcos2_68k_master_C148[];
 extern data16_t namcos2_68k_slave_C148[];

@@ -23,9 +23,8 @@ void matrix_RotX( double M[4][4], double thx_sin, double thx_cos );
 void matrix_RotY( double M[4][4], double thy_sin, double thy_cos );
 void matrix_RotZ( double M[4][4], double thz_sin, double thz_cos );
 
-extern unsigned texel( unsigned x, unsigned y ); /* defined in vidhrdw/namcos22.c */
+int namcos3d_Init( int width, int height, void *pTilemapROM, void *pTextureROM );
 
-int namcos3d_Init( int width, int height );
 void namcos3d_Start( struct mame_bitmap *pBitmap );
 
 

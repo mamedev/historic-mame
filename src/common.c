@@ -949,6 +949,51 @@ void CLIB_DECL debugload(const char *string, ...)
 
 
 /*-------------------------------------------------
+	determine_bios_rom - determine system_bios
+	from SystemBios structure and options.bios
+-------------------------------------------------*/
+
+int determine_bios_rom(const struct SystemBios *bios)
+{
+	const struct SystemBios *firstbios = bios;
+
+	/* set to default */
+	int bios_no = 0;
+
+	/* Not system_bios_0 and options.bios is set  */
+	if(bios && (options.bios != NULL))
+	{
+		/* Allow '-bios n' to still be used */
+		while(!BIOSENTRY_ISEND(bios))
+		{
+			char bios_number[3];
+			sprintf(bios_number, "%d", bios->value);
+
+			if(!strcmp(bios_number, options.bios))
+				bios_no = bios->value;
+
+			bios++;
+		}
+
+		bios = firstbios;
+
+		/* Test for bios short names */
+		while(!BIOSENTRY_ISEND(bios))
+		{
+			if(!strcmp(bios->_name, options.bios))
+				bios_no = bios->value;
+
+			bios++;
+		}
+	}
+
+	debugload("Using System BIOS: %d\n", bios_no);
+
+	return bios_no;
+}
+
+
+/*-------------------------------------------------
 	count_roms - counts the total number of ROMs
 	that will need to be loaded
 -------------------------------------------------*/
@@ -958,10 +1003,14 @@ static int count_roms(const struct RomModule *romp)
 	const struct RomModule *region, *rom;
 	int count = 0;
 
+	/* determine the correct biosset to load based on options.bios string */
+	int this_bios = determine_bios_rom(Machine->gamedrv->bios);
+
 	/* loop over regions, then over files */
 	for (region = romp; region; region = rom_next_region(region))
 		for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
-			count++;
+			if (!ROM_GETBIOSFLAGS(romp) || (ROM_GETBIOSFLAGS(romp) == (this_bios+1))) /* alternate bios sets */
+				count++;
 
 	/* return the total count */
 	return count;
@@ -1703,51 +1752,6 @@ static int process_disk_entries(struct rom_load_data *romdata, const struct RomM
 	/* error case */
 fatalerror:
 	return 0;
-}
-
-
-/*-------------------------------------------------
-	determine_bios_rom - determine system_bios
-	from SystemBios structure and options.bios
--------------------------------------------------*/
-
-int determine_bios_rom(const struct SystemBios *bios)
-{
-	const struct SystemBios *firstbios = bios;
-
-	/* set to default */
-	int bios_no = 0;
-
-	/* Not system_bios_0 and options.bios is set  */
-	if(bios && (options.bios != NULL))
-	{
-		/* Allow -bios n to still be used */
-		while(!BIOSENTRY_ISEND(bios))
-		{
-			char bios_number[3];
-			sprintf(bios_number, "%d", bios->value);
-
-			if(!strcmp(bios_number, options.bios))
-				bios_no = bios->value;
-
-			bios++;
-		}
-
-		bios = firstbios;
-
-		/* Test for bios short names */
-		while(!BIOSENTRY_ISEND(bios))
-		{
-			if(!strcmp(bios->_name, options.bios))
-				bios_no = bios->value;
-
-			bios++;
-		}
-	}
-
-	debugload("Using System BIOS: %d\n", bios_no);
-
-	return bios_no;
 }
 
 

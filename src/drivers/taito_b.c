@@ -1229,11 +1229,11 @@ INPUT_PORTS_START( crimec )
 	PORT_DIPSETTING(    0x20, "2" )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x00, "4" )
-	PORT_DIPNAME( 0xc0, 0x40, "Allow Continue" )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0xc0, "5 Times" )
-	PORT_DIPSETTING(    0x00, "8 Times" )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0xc0, "Allow Continue" )
+	PORT_DIPSETTING( 0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x40, "5 Times" )
+	PORT_DIPSETTING( 0x80, "8 Times" )
+	PORT_DIPSETTING( 0xc0, DEF_STR( On ) )
 
 	PORT_START      /* IN0 */
 	TAITO_B_PLAYERS_INPUT( IPF_PLAYER1 )
@@ -1269,11 +1269,11 @@ INPUT_PORTS_START( crimecj )
 	PORT_DIPSETTING(    0x20, "2" )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x00, "4" )
-	PORT_DIPNAME( 0xc0, 0x40, "Allow Continue" )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0xc0, "5 Times" )
-	PORT_DIPSETTING(    0x00, "8 Times" )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0xc0, "Allow Continue" )
+	PORT_DIPSETTING( 0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x40, "5 Times" )
+	PORT_DIPSETTING( 0x80, "8 Times" )
+	PORT_DIPSETTING( 0xc0, DEF_STR( On ) )
 
 	PORT_START      /* IN0 */
 	TAITO_B_PLAYERS_INPUT( IPF_PLAYER1 )
@@ -1309,11 +1309,12 @@ INPUT_PORTS_START( crimecu )
 	PORT_DIPSETTING(    0x20, "2" )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x00, "4" )
-	PORT_DIPNAME( 0xc0, 0x40, "Allow Continue" )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0xc0, "5 Times" )
-	PORT_DIPSETTING(    0x00, "8 Times" )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0xc0, "Allow Continue" )
+	PORT_DIPSETTING( 0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x40, "5 Times" )
+	PORT_DIPSETTING( 0x80, "8 Times" )
+	PORT_DIPSETTING( 0xc0, DEF_STR( On ) )
+
 
 	PORT_START      /* IN0 */
 	TAITO_B_PLAYERS_INPUT( IPF_PLAYER1 )
@@ -1986,9 +1987,9 @@ INPUT_PORTS_START( viofight )
 	TAITO_B_SYSTEM_INPUT
 INPUT_PORTS_END
 
-INPUT_PORTS_START( silentd )
+INPUT_PORTS_START( silentd )	/* World Version */
 	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )	/* Listed as "NOT USED" in the manual and only shown as "OFF" */
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
@@ -2003,42 +2004,51 @@ INPUT_PORTS_START( silentd )
 	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+
+/* These next two are listed as Unused for "Oversea Versions"
+	For the USA version use this description:
+
+  Buy-In Pricing	Same As Play Pricing	OFF	OFF (Defualt)
+					1 Coin  = Continue		ON	OFF
+					2 Coins = Contniue		OFF	ON
+					3 Coins = Continue		ON	ON
+ */
+
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
 
 	PORT_START /* DSW B */
 	TAITO_DIFFICULTY_8
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_BITX(   0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x08, 0x08, "Power-Up Bonus" )	/* Manual States "Power-Up at Stage Clear" */
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x10, 0x10, "Regain Power" )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
 
-/* These bits are tied together... Maybe "Credits" should be "Coin Slots"???  You can play
-	the game with 2, 3, or 4 players and the last option maybe a linked 4 players.
+/*  Manual Shows "1 Coin Slot (Shared)" and "4 Coin Slot (1 Per Player)"
+
+	You can play the game with 2, 3, or 4 players and the last option is a linked 4 players.
 	Using bit6 and bit7&8 you end up with 1, 2 or 4 seperate "Credits" on the demo screens.
 	Using bits7&8 you can have 2-4 players as shown at the top of the game screens.
-	I have no clue about the rest of them.  I cannot seem to find a way to disable the
-	continue option.  I've set all other bits to off, then all to on and it makes no
-	difference.  Also Coin B doesn't seem to be affected by the dip settings.
+
 */
 
-	PORT_DIPNAME( 0x20, 0x20, "Credits" )	/* Only shows 4 seperate credits with 4p/1m below */
+	PORT_DIPNAME( 0x20, 0x20, "Credits" )			/* Only shows 4 seperate credits with 4p/1m below */
 	PORT_DIPSETTING(    0x20, "Combined" )
-	PORT_DIPSETTING(    0x00, "Seperate" )	/* When multiple credits show, Coin B will affect p2 credits */
+	PORT_DIPSETTING(    0x00, "Seperate" )			/* When multiple credits show, Coin B will affect p2 credits */
 	PORT_DIPNAME( 0xc0, 0x80, "Cabinet Style" )
 	PORT_DIPSETTING(    0xc0, "3 Players")
 	PORT_DIPSETTING(    0x80, "2 Players")
-	PORT_DIPSETTING(    0x40, "4 Players/1 Machine??") /* with bit6, shows 4 seperate credits */
-	PORT_DIPSETTING(    0x00, "4 Players/2 Machines??")	/* with bit6 shows 2 seperate credits */
+	PORT_DIPSETTING(    0x40, "4 Players/1 Machine")	/* with bit6, shows 4 seperate credits */
+	PORT_DIPSETTING(    0x00, "4 Players/2 Machines")	/* with bit6 shows 2 seperate credits */
 
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
@@ -2103,7 +2113,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( silentdj )
 	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )	/* Listed as "NOT USED" in the manual and only shown as "OFF" */
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
@@ -2117,23 +2127,23 @@ INPUT_PORTS_START( silentdj )
 
 	PORT_START /* DSW B */
 	TAITO_DIFFICULTY_8
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_BITX(   0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x08, 0x08, "Power-Up Bonus" )	/* Manual States "Power-Up at Stage Clear" */
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x10, 0x10, "Regain Power" )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_DIPNAME( 0x20, 0x20, "Credits" )	/* Only shows 4 seperate credits with 4p/1m below */
+	PORT_DIPNAME( 0x20, 0x20, "Credits" )			/* Only shows 4 seperate credits with 4p/1m below */
 	PORT_DIPSETTING(    0x20, "Combined" )
-	PORT_DIPSETTING(    0x00, "Seperate" )	/* When multiple credits show, Coin B will affect p2 credits */
+	PORT_DIPSETTING(    0x00, "Seperate" )			/* When multiple credits show, Coin B will affect p2 credits */
 	PORT_DIPNAME( 0xc0, 0x80, "Cabinet Style" )
 	PORT_DIPSETTING(    0xc0, "3 Players")
 	PORT_DIPSETTING(    0x80, "2 Players")
-	PORT_DIPSETTING(    0x40, "4 Players/1 Machine??") /* with bit6, shows 4 seperate credits */
-	PORT_DIPSETTING(    0x00, "4 Players/2 Machines??")	/* with bit6 shows 2 seperate credits */
+	PORT_DIPSETTING(    0x40, "4 Players/1 Machine")	/* with bit6, shows 4 seperate credits */
+	PORT_DIPSETTING(    0x00, "4 Players/2 Machines")	/* with bit6 shows 2 seperate credits */
 
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )

@@ -5,9 +5,9 @@
 
 
 data8_t *homedata_vreg;	/* pointer to RAM associated with 0x7ffx */
-
+data8_t reikaids_which;
 int homedata_visible_page;
-
+int homedata_priority;
 static int homedata_flipscreen;
 
 static data8_t	reikaids_gfx_bank[2];
@@ -625,17 +625,16 @@ WRITE_HANDLER( pteacher_videoram_w )
 
 WRITE_HANDLER( reikaids_gfx_bank_w )
 {
-	static int which;
 
 //logerror( "%04x: [setbank %02x]\n",activecpu_get_pc(),data);
 
-	if (reikaids_gfx_bank[which] != data)
+	if (reikaids_gfx_bank[reikaids_which] != data)
 	{
-		reikaids_gfx_bank[which] = data;
+		reikaids_gfx_bank[reikaids_which] = data;
 		tilemap_mark_all_tiles_dirty( ALL_TILEMAPS );
 	}
 
-	which ^= 1;
+	reikaids_which ^= 1;
 }
 
 WRITE_HANDLER( pteacher_gfx_bank_w )
@@ -759,11 +758,11 @@ VIDEO_UPDATE( mrokumei )
 	tilemap_draw(bitmap, cliprect, tilemap[homedata_visible_page][0], 0, 0);
 	tilemap_draw(bitmap, cliprect, tilemap[homedata_visible_page][1], 0, 0);
 }
-
+/*
 VIDEO_UPDATE( reikaids )
 {
 	int flags;
-	static int pritable[8][4] =	/* table of priorities derived from the PROM */
+	static int pritable[8][4] =
 	{
 		{ 3,1,0,2 },
 		{ 1,3,0,2 },
@@ -791,6 +790,52 @@ VIDEO_UPDATE( reikaids )
 	for (i = 0;i < 4;i++)
 		tilemap_draw(bitmap, cliprect, tilemap[homedata_visible_page][pritable[pri][3-i]], 0, 0);
 }
+
+*/
+VIDEO_UPDATE( reikaids )
+{
+	int flags;
+	static int pritable[2][8][4] =	/* table of priorities derived from the PROM */
+	{
+	{
+		{ 3,1,0,2 },
+		{ 1,3,0,2 },
+		{ 0,3,1,2 },
+		{ 0,1,3,2 },
+		{ 3,0,1,2 },
+		{ 1,0,3,2 },
+		{ 2,3,1,0 },	// (bg color should be taken from 1)
+		{ 3,1,2,0 }	// (bg color should be taken from 1)
+	},
+	{
+		{2,3,0,1},
+		{2,0,3,1},
+		{3,0,2,1},
+		{0,3,2,1},
+		{3,0,1,2},
+		{2,1,3,0},
+		{0,2,3,1},
+		{3,2,0,1}
+	},
+	};
+
+	int pri,i;
+
+	flags = (homedata_vreg[1] & 0x80) ? (TILE_FLIPX | TILE_FLIPY) : 0;
+	if (flags != homedata_flipscreen)
+	{
+		homedata_flipscreen = flags;
+		tilemap_mark_all_tiles_dirty( ALL_TILEMAPS );
+	}
+
+
+	fillbitmap(bitmap,get_black_pen(),cliprect);
+
+	pri = (blitter_bank & 0x70) >> 4;
+	for (i = 0;i < 4;i++)
+		tilemap_draw(bitmap, cliprect, tilemap[homedata_visible_page][pritable[homedata_priority][pri][3-i]], 0, 0);
+}
+
 
 VIDEO_UPDATE( pteacher )
 {

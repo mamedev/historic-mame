@@ -692,12 +692,10 @@ drawing functions
 
 */
 
-#if NEW_DRAWSPRITE
-
 //* AT050703: minor clean-up's
 INLINE void system32_get_sprite_info ( struct mame_bitmap *bitmap, const struct rectangle *cliprect ) {
 	/* get attributes */
-	int mixerinput, sprite_palette_mask, sprite_priority_levels;
+	int mixerinput, sprite_palette_mask, sprite_priority_levels, sys32sprite_priority_lookup;
 
 	sys32sprite_indirect_palette		= (spritedata_source[0]&0x2000) >> 13;
 	sys32sprite_indirect_interleave		= (spritedata_source[0]&0x1000) >> 12;
@@ -744,8 +742,7 @@ INLINE void system32_get_sprite_info ( struct mame_bitmap *bitmap, const struct 
 	sys32sprite_rom_offset				= (spritedata_source[6]&0xffff) >> 0;
 
 	sprite_palette_mask=(1<<(system32_mixerShift+4))-1;
-	sprite_priority_levels=(1<<((6-system32_mixerShift)*2))-1;
-	if (sprite_priority_levels<3) sprite_priority_levels=3;
+	sprite_priority_levels=system32_mixerregs[sys32sprite_monitor_select][0x4d/2]&2?15:3;
 	mixerinput = (spritedata_source[7] >> (system32_mixerShift + 8)) & 0xf;
 	sys32sprite_palette = (spritedata_source[7] >> 4) & sprite_palette_mask;
 	sys32sprite_palette += (system32_mixerregs[sys32sprite_monitor_select][mixerinput] & 0x30)<<2;
@@ -769,212 +766,65 @@ INLINE void system32_get_sprite_info ( struct mame_bitmap *bitmap, const struct 
 		}
 		else /* indirect mode where the display list contains an offset to the table */
 		{
-			sys32sprite_table = sys32_spriteram16 + ((spritedata_source[7] & 0x1fff)*8);
+			sys32sprite_table = sys32_spriteram16 + ((spritedata_source[7] & ((1<<(8+system32_mixerShift))-1))*8);
 		}
-		sys32sprite_priority = system32_mixerregs[sys32sprite_monitor_select][((sys32sprite_table[0]>>(system32_mixerShift+10-multi32*2)))&sprite_priority_levels]&0xf;
+		if (sys32sprite_table[0]==0xffff) sys32sprite_priority_lookup=1;
+		else sys32sprite_priority_lookup = (sys32sprite_table[0]>>(8+system32_mixerShift))&0xf;
 	}
 	else {
 		/* If all of the palette bits are set, the sprite is a shadow.  This is a secondary
 		   method to define sprite shadows alongside the sys32sprite_is_shadow bit.
 		   Direct palette shadow sprites use the upper 16 values in the sprite priority lookup table. */
 		if (sprite_palette_mask==((spritedata_source[7]>>4)&sprite_palette_mask)) sys32sprite_is_shadow=1;
-		sys32sprite_priority = system32_mixerregs[sys32sprite_monitor_select][((spritedata_source[7]>>(system32_mixerShift+8))+sys32sprite_is_shadow*16)&sprite_priority_levels]&0xf;
-		if (sys32sprite_is_shadow && (!strcmp(Machine->gamedrv->name,"f1en")) ) sys32sprite_is_shadow=0;  // f1en turns this flag on the car sprites?
+		sys32sprite_priority_lookup = (spritedata_source[7]>>(system32_mixerShift+8))&0xf;
 	}
 
-	{
-		if (sys32sprite_use_yoffset) sys32sprite_ypos += jump_y;
-		if (sys32sprite_use_xoffset) sys32sprite_xpos += jump_x;
+	sys32sprite_priority = system32_mixerregs[sys32sprite_monitor_select][sys32sprite_priority_lookup&sprite_priority_levels]&0xf;
+	if (sys32sprite_is_shadow && ((!strcmp(Machine->gamedrv->name,"f1en")) || (!strcmp(Machine->gamedrv->name,"f1lap")))) sys32sprite_is_shadow=0;  // f1en turns this flag on the car sprites?
 
-		/* adjust positions according to offsets if used (radm, radr, alien3, darkedge etc.) */
+	if (sys32sprite_use_yoffset) sys32sprite_ypos += jump_y;
+	if (sys32sprite_use_xoffset) sys32sprite_xpos += jump_x;
 
-		/* adjust sprite positions based on alignment, pretty much straight from modeler */
-		switch (sys32sprite_xalign) {
-		case 0: // centerX
-		case 3:
-			sys32sprite_xpos -= (sys32sprite_screen_width-1) / 2; // this is trusted again spiderman truck door
-			break;
-		case 1: // rightX
-			sys32sprite_xpos -= sys32sprite_screen_width - 1;
-			break;
-		case 2: // leftX
-			break;
-		}
+	/* adjust positions according to offsets if used (radm, radr, alien3, darkedge etc.) */
 
-		switch (sys32sprite_yalign) {
-		case 0: // centerY
-		case 3:
-			sys32sprite_ypos -= (sys32sprite_screen_height-1) / 2; // this is trusted against alien3 energy bars
-			break;
-		case 1: // bottomY
-			sys32sprite_ypos -= sys32sprite_screen_height - 1;
-			break;
-		case 2: // topY
-			break;
-		}
-
-		sys32sprite_xpos &= 0x0fff;
-		sys32sprite_ypos &= 0x0fff;
-
-		/* sprite positions are signed */
-		if (sys32sprite_ypos & 0x0800) sys32sprite_ypos -= 0x1000;
-		if (sys32sprite_xpos & 0x0800) sys32sprite_xpos -= 0x1000;
-
-		/* Inefficient sprite priority hack to get things working for now.  Will change to arrays later.
-		   Currently, draw_sprite is a lot more processor intensive and has a greater need for optimisation. */
-		if (priloop==sys32sprite_priority)
-			if (!multi32 || (multi32 && (readinputport(0xf)&(sys32sprite_monitor_select+1))>>sys32sprite_monitor_select))
-				system32_draw_sprite ( bitmap, cliprect );
+	/* adjust sprite positions based on alignment, pretty much straight from modeler */
+	switch (sys32sprite_xalign) {
+	case 0: // centerX
+	case 3:
+		sys32sprite_xpos -= (sys32sprite_screen_width-1) / 2; // this is trusted again spiderman truck door
+		break;
+	case 1: // rightX
+		sys32sprite_xpos -= sys32sprite_screen_width - 1;
+		break;
+	case 2: // leftX
+		break;
 	}
+
+	switch (sys32sprite_yalign) {
+	case 0: // centerY
+	case 3:
+		sys32sprite_ypos -= (sys32sprite_screen_height-1) / 2; // this is trusted against alien3 energy bars
+		break;
+	case 1: // bottomY
+		sys32sprite_ypos -= sys32sprite_screen_height - 1;
+		break;
+	case 2: // topY
+		break;
+	}
+
+	sys32sprite_xpos &= 0x0fff;
+	sys32sprite_ypos &= 0x0fff;
+
+	/* sprite positions are signed */
+	if (sys32sprite_ypos & 0x0800) sys32sprite_ypos -= 0x1000;
+	if (sys32sprite_xpos & 0x0800) sys32sprite_xpos -= 0x1000;
+
+	/* Inefficient sprite priority hack to get things working for now.  Will change to arrays later.
+		Currently, draw_sprite is a lot more processor intensive and has a greater need for optimisation. */
+	if (priloop==sys32sprite_priority)
+		if (!multi32 || (multi32 && (readinputport(0xf)&(sys32sprite_monitor_select+1))>>sys32sprite_monitor_select))
+			system32_draw_sprite ( bitmap, cliprect );
 }
-
-#else
-
-void system32_get_sprite_info ( struct mame_bitmap *bitmap, const struct rectangle *cliprect ) {
-	/* get attributes */
-	int disabled = 0;
-	int mixerinput, sprite_palette_mask, sprite_priority_levels;
-
-	sys32sprite_indirect_palette		= (spritedata_source[0]&0x2000) >> 13;
-	sys32sprite_indirect_interleave		= (spritedata_source[0]&0x1000) >> 12;
-	sys32sprite_is_shadow				= (spritedata_source[0]&0x0800) >> 11;
-	sys32sprite_rambasedgfx				= (spritedata_source[0]&0x0400) >> 10;
-	sys32sprite_8bpp					= (spritedata_source[0]&0x0200) >> 9;
-	sys32sprite_draw_colour_f			= (spritedata_source[0]&0x0100) >> 8;
-	sys32sprite_yflip					= (spritedata_source[0]&0x0080) >> 7;
-	sys32sprite_xflip					= (spritedata_source[0]&0x0040) >> 6;
-	sys32sprite_use_yoffset				= (spritedata_source[0]&0x0020) >> 5;
-	sys32sprite_use_xoffset				= (spritedata_source[0]&0x0010) >> 4;
-	sys32sprite_yalign					= (spritedata_source[0]&0x000c) >> 2;
-	sys32sprite_xalign					= (spritedata_source[0]&0x0003) >> 0;
-
-	sys32sprite_rom_height				= (spritedata_source[1]&0xff00) >> 8;
-	sys32sprite_rom_width				= (spritedata_source[1]&0x00ff) >> 0;
-
-	sys32sprite_rom_bank_low			= (spritedata_source[2]&0xf000) >> 12;
-	sys32sprite_unknown_1				= (spritedata_source[2]&0x0800) >> 11;
-	sys32sprite_unknown_2				= (spritedata_source[2]&0x0400) >> 10;
-	sys32sprite_screen_height			= (spritedata_source[2]&0x03ff) >> 0;
-
-	if (multi32) {
-		sys32sprite_rom_bank_high			= (spritedata_source[3]&0x8000) >> 15;
-		sys32sprite_unknown_3				= (spritedata_source[3]&0x4000) >> 14;
-		sys32sprite_rom_bank_mid			= (spritedata_source[3]&0x2000) >> 13;
-		sys32sprite_unknown_4				= (spritedata_source[3]&0x1000) >> 12;
-		sys32sprite_monitor_select			= (spritedata_source[3]&0x0800) >> 11;
-	}
-	else {
-		sys32sprite_unknown_3				= (spritedata_source[3]&0x8000) >> 15;
-		sys32sprite_rom_bank_high			= (spritedata_source[3]&0x4000) >> 14;
-		sys32sprite_unknown_4				= (spritedata_source[3]&0x2000) >> 13;
-		sys32sprite_unknown_5				= (spritedata_source[3]&0x1000) >> 12;
-		sys32sprite_rom_bank_mid			= (spritedata_source[3]&0x0800) >> 11;
-		sys32sprite_monitor_select			= 0;
-	}
-	sys32sprite_screen_width			= (spritedata_source[3]&0x07ff) >> 0;
-
-	sys32sprite_ypos					= (spritedata_source[4]&0xffff) >> 0;
-
-	sys32sprite_xpos					= (spritedata_source[5]&0xffff) >> 0;
-
-	sys32sprite_rom_offset				= (spritedata_source[6]&0xffff) >> 0;
-
-	sprite_palette_mask=(1<<(system32_mixerShift+4))-1;
-	sprite_priority_levels=(1<<((6-system32_mixerShift)*2))-1;
-	if (sprite_priority_levels<3) sprite_priority_levels=3;
-	mixerinput = (spritedata_source[7] >> (system32_mixerShift + 8)) & 0xf;
-	sys32sprite_palette = (spritedata_source[7] >> 4) & sprite_palette_mask;
-	sys32sprite_palette += (system32_mixerregs[sys32sprite_monitor_select][mixerinput] & 0x30)<<2;
-
-	/* process attributes */
-
-	sys32sprite_rom_width = sys32sprite_rom_width << 2;
-	sys32sprite_rom_offset = sys32sprite_rom_offset | (sys32sprite_rom_bank_low << 16) | (sys32sprite_rom_bank_mid << 20) | (sys32sprite_rom_bank_high << 21);
-	sys32sprite_rom_offset = sys32sprite_rom_offset << 2;
-
-	if (sys32sprite_screen_width == 0) disabled = 1;
-	if (sys32sprite_screen_height == 0) disabled = 1;
-	if (sys32sprite_rom_height == 0) disabled = 1;
-	if (sys32sprite_rom_width == 0) disabled = 1;
-
-	/* Determine the sprites palette and priority.  The actual priority of the sprite is found by looking up
-	   the sprite priority table in the mixer registers.  The lookup value is found by reading the first colour
-	   in the sprites palette in the case of indirect sprites.  For direct sprites, the lookup value is found by
-	   reading the sprite priority data.
-	*/
-	if (sys32sprite_indirect_palette) {
-		if (sys32sprite_indirect_interleave) /* indirect mode where the table is included in the display list */
-		{
-			sys32sprite_table = spritedata_source+8;
-			spritenum+=2;
-		}
-		else /* indirect mode where the display list contains an offset to the table */
-		{
-			sys32sprite_table = sys32_spriteram16 + ((spritedata_source[7] & 0x1fff)*8);
-		}
-		sys32sprite_priority = system32_mixerregs[sys32sprite_monitor_select][((sys32sprite_table[0]>>(system32_mixerShift+10-multi32*2)))&sprite_priority_levels]&0xf;
-	}
-	else {
-		/* If all of the palette bits are set, the sprite is a shadow.  This is a secondary
-		   method to define sprite shadows alongside the sys32sprite_is_shadow bit.
-		   Direct palette shadow sprites use the upper 16 values in the sprite priority lookup table. */
-		if (sprite_palette_mask==((spritedata_source[7]>>4)&sprite_palette_mask)) sys32sprite_is_shadow=1;
-		sys32sprite_priority = system32_mixerregs[sys32sprite_monitor_select][((spritedata_source[7]>>(system32_mixerShift+8))+sys32sprite_is_shadow*16)&sprite_priority_levels]&0xf;
-		if (sys32sprite_is_shadow && (!strcmp(Machine->gamedrv->name,"f1en")) ) sys32sprite_is_shadow=0;  // f1en turns this flag on the car sprites?
-	}
-
-	if (!disabled)
-	{
-
-		sys32sprite_y_zoom = (sys32sprite_rom_height << 16) / (sys32sprite_screen_height);
-		sys32sprite_x_zoom = (sys32sprite_rom_width << 16) / (sys32sprite_screen_width);
-
-		if (sys32sprite_use_yoffset) sys32sprite_ypos += jump_y;
-		if (sys32sprite_use_xoffset) sys32sprite_xpos += jump_x;
-
-		/* adjust positions according to offsets if used (radm, radr, alien3, darkedge etc.) */
-
-		/* adjust sprite positions based on alignment, pretty much straight from modeler */
-		switch (sys32sprite_xalign) {
-		case 0: // centerX
-		case 3:
-			sys32sprite_xpos -= (sys32sprite_screen_width-1) / 2; // this is trusted again spiderman truck door
-			break;
-		case 1: // rightX
-			sys32sprite_xpos -= sys32sprite_screen_width - 1;
-			break;
-		case 2: // leftX
-			break;
-		}
-
-		switch (sys32sprite_yalign) {
-		case 0: // centerY
-		case 3:
-			sys32sprite_ypos -= (sys32sprite_screen_height-1) / 2; // this is trusted against alien3 energy bars
-			break;
-		case 1: // bottomY
-			sys32sprite_ypos -= sys32sprite_screen_height - 1;
-			break;
-		case 2: // topY
-			break;
-		}
-
-		sys32sprite_xpos &= 0x0fff;
-		sys32sprite_ypos &= 0x0fff;
-
-		/* sprite positions are signed */
-		if (sys32sprite_ypos & 0x0800) sys32sprite_ypos -= 0x1000;
-		if (sys32sprite_xpos & 0x0800) sys32sprite_xpos -= 0x1000;
-
-		/* Inefficient sprite priority hack to get things working for now.  Will change to arrays later.
-		   Currently, draw_sprite is a lot more processor intensive and has a greater need for optimisation. */
-		if (priloop==sys32sprite_priority)
-			if (!multi32 || (multi32 && (readinputport(0xf)&(sys32sprite_monitor_select+1))>>sys32sprite_monitor_select))
-				system32_draw_sprite ( bitmap, cliprect );
-	}
-}
-
-#endif
 
 /* Sprite RAM
 
@@ -1099,7 +949,12 @@ which is mapped at 0xc0000e
 
 	00 | rR-- -b--  ---- ----    |  b = tile bank low bit ( | 0x2000 ), not multi-32  r = screen resolution R also resolution?
 	02 | ---- ----  ---- dddd    |  d = tilemap disable registers
-	04 |
+	04 | bbbb bbbb  ???? SsRr       S = layer 3 rowselect enable
+									s = layer 2 rowselect enable
+									R = layer 3 rowscroll enable
+									r = layer 2 rowscroll enable
+									b = table bases
+									jpark sets one of the ?
 	06 |
 	08 |
 	0a |
@@ -1121,14 +976,14 @@ which is mapped at 0xc0000e
 	2a | scroll x for tilemap 3
 	2c |
 	2e | scroll y for tilemap 3
-	30 |
-	32 |
-	34 |
-	36 |
-	38 |
-	3a |
-	3c |
-	3e |
+	30 | scroll x offset tilemap 0
+	32 | scroll y offset tilemap 0
+	34 | scroll x offset tilemap 1
+	36 | scroll y offset tilemap 1
+	38 | scroll x offset tilemap 2
+	3a | scroll y offset tilemap 2
+	3c | scroll x offset tilemap 3
+	3e | scroll y offset tilemap 3
 	40 | pages 0 + 1 of tilemap 0
 	42 | pages 2 + 3 of tilemap 0
 	44 | pages 0 + 1 of tilemap 1
@@ -1172,31 +1027,30 @@ which is mapped at 0xc0000e
 1a ---- ---- ---- pppp  p = Sprite shadow? Priority Table
 1c ---- ---- ---- pppp  p = Sprite shadow? Priority Table
 1e ---- ---- ---- pppp  p = Sprite shadow? Priority Table
-20 ---- ---- ---- pppp  Text layer - priority ignored
-22 ---- ssss bbbb pppp  (Tilemap Palette Base + Shifting, b = bank, s = shift p = priority 0)
+20 ---- ---- ssss ssss  s = Mixershift?
+22 ---- ssss bbbb pppp  Tilemap Palette Base + Shifting, b = bank, s = shift p = priority 0
 24 ---- ssss bbbb pppp  p = priority 1
 26 ---- ssss bbbb pppp  p = priority 2
 28 ---- ssss bbbb pppp  p = priority 3
-2a
-2c
-2e
-30
+2a ---- ---- ---- f---  f = tilemap flip x 0
+2c ---- ---- ---- f---  f = tilemap flip x 1
+2e ---- ---- ---- f---  f = tilemap flip x 2
+30 ---- ---- ---- f---  f = tilemap flip x 3
 32 ---e ---- ---e ----  e = alpha enable 0
 34 ---e ---- ---e ----  e = alpha enable 1
 36 ---e ---- ---e ----  e = alpha enable 2
 38 ---e ---- ---e ----  e = alpha enable 3
 3a
 3c
-3e
+3e ---- ---- ---- ---w  w = tilemap wrap disable?
 40 bbbb bbbb bbbb bbbb  b = brightness (red)
 42 bbbb bbbb bbbb bbbb  b = brightness (green)
 44 bbbb bbbb bbbb bbbb  b = brightness (blue)
 46 bbbb bbbb bbbb bbbb  b = brightness? (layer?) 2?     or r ? (jpark)
 48 bbbb bbbb bbbb bbbb  b = brightness? (layer?) 3?     or g ? (jpark)
 4a bbbb bbbb bbbb bbbb  b = brightness? (layer?)        or b ? (jpark)
-4c
+4c ---- ---- ---- --l-   l = number of sprite layers?16:4
 4e bbbb bbbb ---- ----   b = alpha blend amount?
-4f
 
 */
 
@@ -1232,9 +1086,6 @@ void system32_draw_text_layer ( struct mame_bitmap *bitmap, const struct rectang
 	 b = address of tile gfx data (used by radmobile / radrally ingame, jpark)
 
 	 */
-
-//	data8_t *txtile_gfxregion = memory_region(REGION_GFX3);
-//	data16_t* tx_tilemapbase = sys32_videoram + ((0x10000+tmaddress*0x1000) /2);
 
 	for (y = 0; y < 32 ; y++) {
 		for (x = 0; x < 64 ; x++) {
@@ -1430,7 +1281,6 @@ void system32_draw_bg_layer ( struct mame_bitmap *bitmap, const struct rectangle
 	int trans = 0;
 	int alphaamount = 0;
 	int rowscroll=0, rowselect=0;
-	int football_games = 0;
 	int monitor = multi32?layer%2:0;
 	int monitor_res = 0;
 	struct rectangle clip;
@@ -1440,10 +1290,6 @@ void system32_draw_bg_layer ( struct mame_bitmap *bitmap, const struct rectangle
 		alphaamount = 255-((((system32_mixerregs[monitor][0x4e/2])>>8) & 7) <<5); //umm this is almost certainly wrong
 		alpha_set_level(alphaamount);
 	}
-
-	// game specific hack for the football games
-	if ((!strcmp(Machine->gamedrv->name,"svf")) || (!strcmp(Machine->gamedrv->name,"svs")) || (!strcmp(Machine->gamedrv->name,"jleague")))
-		football_games = 1;
 
 	/* rowselect / rowscroll
 
@@ -1459,17 +1305,6 @@ void system32_draw_bg_layer ( struct mame_bitmap *bitmap, const struct rectangle
 	jurassic park enables rowscroll on one of the levels in the attract but its hard to see what for
 
 	*/
-
-	//sys32_videoram[0x01FF04/2]
-	// ---- ---- | ---- ----
-	// bbbb bbbb | ???? SsRr
-
-	// S = layer 3 rowselect enable
-	// s = layer 2 rowselect enable
-	// R = layer 3 rowscroll enable
-	// r = layer 2 rowscroll enable
-	// b = table bases
-	// jpark sets one of the ?
 
 	if (layer == 2) {
 		rowscroll = (sys32_videoram[0x01FF04/2] & 0x0001);
@@ -1506,9 +1341,8 @@ void system32_draw_bg_layer ( struct mame_bitmap *bitmap, const struct rectangle
 
 		tableaddress = (tableaddress * 0x200);
 
-		if (football_games) {
-			/* one layer has to be flipped, I'm pretty sure there must be a register for this */
-			if (layer == 2) tilemap_set_flip(system32_layer_tilemap[layer], TILEMAP_FLIPX); // theres probably a bit to do this somewhere
+		if ((system32_mixerregs[monitor][(0x32+layer*2)/2]&8)>>3) {
+			if (layer==2) tilemap_set_flip(system32_layer_tilemap[layer], TILEMAP_FLIPX);
 		}
 
 		for (line = 0; line < 224;line++) {
@@ -1521,7 +1355,7 @@ void system32_draw_bg_layer ( struct mame_bitmap *bitmap, const struct rectangle
 			if (rowselect) yscroll+=(sys32_videoram[((tableaddress+0x400+(layer-2)*0x200)/2)+line])-line;
 
 
-			if (football_games) {
+			if ((system32_mixerregs[monitor][(0x32+layer*2)/2]&8)>>3) {
 				/* disable wrap on this tilemap, should be done on the other too but its less important
 				   this is a bit messy because mame has no core functionality for this without resorting
 				   to tilemap_draw_roz which I can't do because of RGB_DIRECT, it might be wrong anyway,
@@ -1536,15 +1370,19 @@ void system32_draw_bg_layer ( struct mame_bitmap *bitmap, const struct rectangle
 				}
 			}
 			// Multi32: Shift layer 3's rowscroll left one screen so that it lines up
-			tilemap_set_scrollx(system32_layer_tilemap[layer],0, (xscroll & 0x3ff)-monitor*monitor_res);
-			tilemap_set_scrolly(system32_layer_tilemap[layer],0, yscroll & 0x1ff);
+			tilemap_set_scrollx(system32_layer_tilemap[layer],0, (xscroll & 0x3ff));
+			tilemap_set_scrolly(system32_layer_tilemap[layer],0, (yscroll & 0x1ff));
+			tilemap_set_scrolldx(system32_layer_tilemap[layer], (sys32_videoram[(0x01FF30+layer*4)/2]&0x00ff)+monitor*monitor_res, -(sys32_videoram[(0x01FF30+layer*4)/2]&0x00ff)-monitor*monitor_res);
+			tilemap_set_scrolldy(system32_layer_tilemap[layer], sys32_videoram[(0x01FF32+layer*4)/2]&0x00ff, -sys32_videoram[(0x01FF32+layer*4)/2]&0x00ff);
 			tilemap_draw(bitmap,&clip,system32_layer_tilemap[layer],trans,0);
 		}
 	}
 	else {
 		// Multi32: Shift layer 3's rowscroll left one screen so that it lines up
-		tilemap_set_scrollx(system32_layer_tilemap[layer],0,((sys32_videoram[(0x01FF12+8*layer)/2]) & 0x3ff)-monitor*monitor_res);
-		tilemap_set_scrolly(system32_layer_tilemap[layer],0,(sys32_videoram[(0x01FF16+8*layer)/2]) & 0x1ff);
+		tilemap_set_scrollx(system32_layer_tilemap[layer],0,((sys32_videoram[(0x01FF12+8*layer)/2]) & 0x3ff));
+		tilemap_set_scrolly(system32_layer_tilemap[layer],0,((sys32_videoram[(0x01FF16+8*layer)/2]) & 0x1ff));
+		tilemap_set_scrolldx(system32_layer_tilemap[layer], (sys32_videoram[(0x01FF30+layer*4)/2]&0x00ff)+monitor*monitor_res, -(sys32_videoram[(0x01FF30+layer*4)/2]&0x00ff)-monitor*monitor_res);
+		tilemap_set_scrolldy(system32_layer_tilemap[layer], sys32_videoram[(0x01FF32+layer*4)/2]&0x00ff, -sys32_videoram[(0x01FF32+layer*4)/2]&0x00ff);
 		tilemap_draw(bitmap,&clip,system32_layer_tilemap[layer],trans,0);
 	}
 }
@@ -1698,6 +1536,8 @@ VIDEO_UPDATE( system32 ) {
 		monitor_display_width=1;
 		monitor_vertical_offset=1;
 	}
+
+	fillbitmap(bitmap, 0, 0);
 
 	if (system32_screen_mode && system32_allow_high_resolution) {
 		set_visible_area(52*monitor_display_start*8, 52*8*monitor_display_width-1, 0, 28*8*monitor_vertical_offset-1);

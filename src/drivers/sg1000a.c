@@ -119,7 +119,7 @@ INPUT_PORTS_START( chboxing )
 	  PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
     PORT_START
-    PORT_DIPNAME( 0x80, 0x80, "Language" )
+    PORT_DIPNAME( 0x80, 0x00, "Language" )
 		PORT_DIPSETTING(    0x80, "Japanese" )
 		PORT_DIPSETTING(    0x00, "English" )
 		PORT_DIPNAME( 0x40, 0x00, DEF_STR( Demo_Sounds ) )

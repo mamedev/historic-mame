@@ -1,10 +1,25 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+static struct tilemap *bg_tilemap;
 
+WRITE_HANDLER( higemaru_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
-static int flipscreen;
-
+WRITE_HANDLER( higemaru_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
 /***************************************************************************
 
@@ -55,8 +70,6 @@ PALETTE_INIT( higemaru )
 		COLOR(1,i) = (*(color_prom++) & 0x0f) + 0x10;
 }
 
-
-
 WRITE_HANDLER( higemaru_c800_w )
 {
 	if (data & 0x7c) logerror("c800 = %02x\n",data);
@@ -66,60 +79,39 @@ WRITE_HANDLER( higemaru_c800_w )
 	coin_counter_w(1,data & 1);
 
 	/* bit 7 flips screen */
-	if (flipscreen != (data & 0x80))
+	if (flip_screen != (data & 0x80))
 	{
-		flipscreen = data & 0x80;
-		memset(dirtybuffer,1,videoram_size);
+		flip_screen_set(data & 0x80);
+		tilemap_mark_all_tiles_dirty(bg_tilemap);
 	}
 }
 
+static void get_bg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index] + ((colorram[tile_index] & 0x80) << 1);
+	int color = colorram[tile_index] & 0x1f;
 
+	SET_TILE_INFO(0, code, color, 0)
+}
 
-/***************************************************************************
+VIDEO_START( higemaru )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+	if ( !bg_tilemap )
+		return 1;
 
-***************************************************************************/
-VIDEO_UPDATE( higemaru )
+	return 0;
+}
+
+static void higemaru_draw_sprites( struct mame_bitmap *bitmap )
 {
 	int offs;
 
-	/* draw the frontmost playfield. They are characters, but draw them as sprites */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy;
-
-			dirtybuffer[offs] = 0;
-			sx = offs % 32;
-			sy = offs / 32;
-			if (flipscreen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-			}
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + ((colorram[offs] & 0x80) << 1),
-					colorram[offs] & 0x1f,
-					flipscreen,flipscreen,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-	/* copy the background graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-
-
-	/* Draw the sprites. */
 	for (offs = spriteram_size - 16;offs >= 0;offs -= 16)
 	{
 		int code,col,sx,sy,flipx,flipy;
-
 
 		code = spriteram[offs] & 0x7f;
 		col = spriteram[offs + 4] & 0x0f;
@@ -127,7 +119,7 @@ VIDEO_UPDATE( higemaru )
 		sy = spriteram[offs + 8];
 		flipx = spriteram[offs + 4] & 0x10;
 		flipy = spriteram[offs + 4] & 0x20;
-		if (flipscreen)
+		if (flip_screen)
 		{
 			sx = 240 - sx;
 			sy = 240 - sy;
@@ -150,4 +142,10 @@ VIDEO_UPDATE( higemaru )
 				sx - 256,sy,
 				&Machine->visible_area,TRANSPARENCY_PEN,15);
 	}
+}
+
+VIDEO_UPDATE( higemaru )
+{
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	higemaru_draw_sprites(bitmap);
 }

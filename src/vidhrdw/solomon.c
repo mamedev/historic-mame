@@ -1,176 +1,127 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "state.h"
 
+UINT8 *solomon_videoram2;
+UINT8 *solomon_colorram2;
 
-unsigned char *solomon_bgvideoram;
-unsigned char *solomon_bgcolorram;
+static struct tilemap *bg_tilemap, *fg_tilemap;
 
-static struct mame_bitmap *tmpbitmap2;
-static unsigned char *dirtybuffer2;
-static int flipscreen;
-
-
-
-static void solomon_dirty_all(void)
+WRITE_HANDLER( solomon_videoram_w )
 {
-	memset(dirtybuffer2,1,videoram_size);
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
 }
 
+WRITE_HANDLER( solomon_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
+}
 
-/***************************************************************************
+WRITE_HANDLER( solomon_videoram2_w )
+{
+	if (solomon_videoram2[offset] != data)
+	{
+		solomon_videoram2[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
-  Start the video hardware emulation.
+WRITE_HANDLER( solomon_colorram2_w )
+{
+	if (solomon_colorram2[offset] != data)
+	{
+		solomon_colorram2[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
-***************************************************************************/
+WRITE_HANDLER( solomon_flipscreen_w )
+{
+	if (flip_screen != (data & 0x01))
+	{
+		flip_screen_set(data & 0x01);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
+}
+
+static void get_bg_tile_info(int tile_index)
+{
+	int attr = solomon_colorram2[tile_index];
+	int code = solomon_videoram2[tile_index] + 256 * (attr & 0x07);
+	int color = ((attr & 0x70) >> 4);
+	int flags = ((attr & 0x80) ? TILE_FLIPX : 0) | ((attr & 0x08) ? TILE_FLIPY : 0);
+
+	SET_TILE_INFO(1, code, color, flags)
+}
+
+static void get_fg_tile_info(int tile_index)
+{
+	int attr = colorram[tile_index];
+	int code = videoram[tile_index] + 256 * (attr & 0x07);
+	int color = (attr & 0x70) >> 4;
+
+	SET_TILE_INFO(0, code, color, 0)
+}
+
 VIDEO_START( solomon )
 {
-	if (video_start_generic() != 0)
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
 		return 1;
 
-	if ((tmpbitmap2 = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, 
+		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
+
+	if ( !fg_tilemap )
 		return 1;
 
-	if ((dirtybuffer2 = auto_malloc(videoram_size)) == 0)
-		return 1;
-	memset(dirtybuffer2,1,videoram_size);
-
-	state_save_register_int ("video", 0, "flipscreen", &flipscreen);
-	state_save_register_func_postload (solomon_dirty_all);
+	tilemap_set_transparent_pen(fg_tilemap, 0);
 
 	return 0;
 }
 
-
-
-WRITE_HANDLER( solomon_bgvideoram_w )
-{
-	if (solomon_bgvideoram[offset] != data)
-	{
-		dirtybuffer2[offset] = 1;
-
-		solomon_bgvideoram[offset] = data;
-	}
-}
-
-WRITE_HANDLER( solomon_bgcolorram_w )
-{
-	if (solomon_bgcolorram[offset] != data)
-	{
-		dirtybuffer2[offset] = 1;
-
-		solomon_bgcolorram[offset] = data;
-	}
-}
-
-
-
-WRITE_HANDLER( solomon_flipscreen_w )
-{
-	if (flipscreen != (data & 1))
-	{
-		flipscreen = data & 1;
-		memset(dirtybuffer,1,videoram_size);
-		memset(dirtybuffer2,1,videoram_size);
-	}
-}
-
-
-
-/***************************************************************************
-
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
-VIDEO_UPDATE( solomon )
+static void solomon_draw_sprites( struct mame_bitmap *bitmap )
 {
 	int offs;
 
-
-	for (offs = 0;offs < videoram_size;offs++)
+	for (offs = spriteram_size - 4; offs >= 0; offs -= 4)
 	{
-		if (dirtybuffer2[offs])
-		{
-			int sx,sy,flipx,flipy;
+		int code = spriteram[offs] + 16 * (spriteram[offs + 1] & 0x10);
+		int color = (spriteram[offs + 1] & 0x0e) >> 1;
+		int flipx = spriteram[offs + 1] & 0x40;
+		int flipy =	spriteram[offs + 1] & 0x80;
+		int sx = spriteram[offs + 3];
+		int sy = 241 - spriteram[offs + 2];
 
-
-			dirtybuffer2[offs] = 0;
-			sx = offs % 32;
-			sy = offs / 32;
-			flipx = solomon_bgcolorram[offs] & 0x80;
-			flipy = solomon_bgcolorram[offs] & 0x08;
-			if (flipscreen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			drawgfx(tmpbitmap2,Machine->gfx[1],
-					solomon_bgvideoram[offs] + 256 * (solomon_bgcolorram[offs] & 0x07),
-					((solomon_bgcolorram[offs] & 0x70) >> 4),
-					flipx,flipy,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-
-	/* draw the frontmost playfield */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-//		if (dirtybuffer[offs])
-		{
-			int sx,sy;
-
-
-			dirtybuffer[offs] = 0;
-			sx = offs % 32;
-			sy = offs / 32;
-			if (flipscreen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-			}
-
-			drawgfx(bitmap,Machine->gfx[0],
-					videoram[offs] + 256 * (colorram[offs] & 0x07),
-					(colorram[offs] & 0x70) >> 4,
-					flipscreen,flipscreen,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
-		}
-	}
-
-
-	/* draw sprites */
-	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
-	{
-		int sx,sy,flipx,flipy;
-
-
-		sx = spriteram[offs+3];
-		sy = 241-spriteram[offs+2];
-		flipx = spriteram[offs+1] & 0x40;
-		flipy =	spriteram[offs+1] & 0x80;
-		if (flipscreen & 1)
+		if (flip_screen)
 		{
 			sx = 240 - sx;
-			sy = 240 - sy;
+			sy = 242 - sy;
 			flipx = !flipx;
 			flipy = !flipy;
 		}
 
-		drawgfx(bitmap,Machine->gfx[2],
-				spriteram[offs] + 16*(spriteram[offs+1] & 0x10),
-				(spriteram[offs + 1] & 0x0e) >> 1,
-				flipx,flipy,
-				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+		drawgfx(bitmap, Machine->gfx[2],
+			code, color,
+			flipx, flipy,
+			sx, sy,
+			&Machine->visible_area,
+			TRANSPARENCY_PEN, 0);
 	}
+}
+
+VIDEO_UPDATE( solomon )
+{
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, 0, 0);
+	solomon_draw_sprites(bitmap);
 }

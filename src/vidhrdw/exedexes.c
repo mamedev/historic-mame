@@ -9,18 +9,17 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+UINT8 *exedexes_bg_scroll;
 
-
-unsigned char *exedexes_bg_scroll;
-
-unsigned char *exedexes_nbg_yscroll;
-unsigned char *exedexes_nbg_xscroll;
+UINT8 *exedexes_nbg_yscroll;
+UINT8 *exedexes_nbg_xscroll;
 
 static int chon,objon,sc1on,sc2on;
 
 #define TileMap(offs) (memory_region(REGION_GFX5)[offs])
 #define BackTileMap(offs) (memory_region(REGION_GFX5)[offs+0x4000])
 
+static struct tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
 
 /***************************************************************************
 
@@ -93,12 +92,32 @@ PALETTE_INIT( exedexes )
 	}
 }
 
+WRITE_HANDLER( exedexes_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(tx_tilemap, offset);
+	}
+}
+
+WRITE_HANDLER( exedexes_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(tx_tilemap, offset);
+	}
+}
 
 WRITE_HANDLER( exedexes_c804_w )
 {
 	/* bits 0 and 1 are coin counters */
-	coin_counter_w(0,data & 0x01);
-	coin_counter_w(1,data & 0x02);
+	coin_counter_w(0, data & 0x01);
+	coin_counter_w(1, data & 0x02);
+
+	coin_lockout_w(0, data & 0x04);
+	coin_lockout_w(1, data & 0x08);
 
 	/* bit 7 is text enable */
 	chon = data & 0x80;
@@ -121,12 +140,76 @@ WRITE_HANDLER( exedexes_gfxctrl_w )
 }
 
 
+static void get_bg_tile_info(int tile_index)
+{
+	UINT8 *tilerom = memory_region(REGION_GFX5);
 
+	int attr = tilerom[tile_index];
+	int code = attr & 0x3f;
+	int color = tilerom[tile_index + (8 * 8)];
+	int flags = ((attr & 0x40) ? TILE_FLIPX : 0) | ((attr & 0x80) ? TILE_FLIPY : 0);
 
-static void draw_sprites(struct mame_bitmap *bitmap,int priority)
+	SET_TILE_INFO(1, code, color, flags)
+}
+
+static void get_fg_tile_info(int tile_index)
+{
+	int code = memory_region(REGION_GFX5)[tile_index];
+
+	SET_TILE_INFO(2, code, 0, 0)
+}
+
+static void get_tx_tile_info(int tile_index)
+{
+	int code = videoram[tile_index] + 2 * (colorram[tile_index] & 0x80);
+	int color = colorram[tile_index] & 0x3f;
+
+	SET_TILE_INFO(0, code, color, 0)
+}
+
+static UINT32 exedexes_bg_tilemap_scan( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+{
+	/* logical (col,row) -> memory offset */
+	return ((col * 32 & 0xe0) >> 5) + ((row * 32 & 0xe0) >> 2) + ((col * 32 & 0x3f00) >> 1) + 0x4000;
+}
+
+static UINT32 exedexes_fg_tilemap_scan( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+{
+	/* logical (col,row) -> memory offset */
+	return ((col * 16 & 0xf0) >> 4) + (row * 16 & 0xf0) + (col * 16 & 0x700) + ((row * 16 & 0x700) << 3);
+}
+
+VIDEO_START( exedexes )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, exedexes_bg_tilemap_scan, 
+		TILEMAP_OPAQUE, 32, 32, 64, 64);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	fg_tilemap = tilemap_create(get_fg_tile_info, exedexes_fg_tilemap_scan, 
+		TILEMAP_TRANSPARENT, 16, 16, 128, 128);
+
+	if ( !fg_tilemap )
+		return 1;
+
+	tx_tilemap = tilemap_create(get_tx_tile_info, tilemap_scan_rows, 
+		TILEMAP_TRANSPARENT_COLOR, 8, 8, 32, 32);
+
+	if ( !tx_tilemap )
+		return 1;
+
+	tilemap_set_transparent_pen(fg_tilemap, 0);
+	tilemap_set_transparent_pen(tx_tilemap, 207);
+
+	return 0;
+}
+
+static void exedexes_draw_sprites(struct mame_bitmap *bitmap, int priority)
 {
 	int offs;
 
+	if (!objon) return;
 
 	priority = priority ? 0x40 : 0x00;
 
@@ -153,90 +236,32 @@ static void draw_sprites(struct mame_bitmap *bitmap,int priority)
 	}
 }
 
-
 VIDEO_UPDATE( exedexes )
 {
-	int offs,sx,sy;
-
-
 	if (sc2on)
 	{
-/* TODO: this is very slow, have to optimize it using a temporary bitmap */
-		/* draw the background graphics */
-		/* back layer */
-		for(sy = 0;sy <= 8;sy++)
-		{
-			for(sx = 0;sx < 8;sx++)
-			{
-				int xo,yo,tile;
-
-
-				xo = sx*32;
-				yo = ((exedexes_bg_scroll[1])<<8)+exedexes_bg_scroll[0] + sy*32;
-
-				tile = ((yo & 0xe0) >> 5) + ((xo & 0xe0) >> 2) + ((yo & 0x3f00) >> 1);
-
-				drawgfx(bitmap,Machine->gfx[1],
-						BackTileMap(tile) & 0x3f,
-						BackTileMap(tile+8*8),
-						BackTileMap(tile) & 0x40,BackTileMap(tile) & 0x80,
-						sy*32-(yo&0x1F),sx*32,
-						&Machine->visible_area,TRANSPARENCY_NONE,0);
-			}
-		}
+		tilemap_set_scrollx(bg_tilemap, 0, ((exedexes_bg_scroll[1]) << 8) + exedexes_bg_scroll[0]);
+		tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
 	}
-	else fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	else
+	{
+		fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
+	}
 
-
-	if (objon)
-		draw_sprites(bitmap,1);
-
+	exedexes_draw_sprites(bitmap, 1);
 
 	if (sc1on)
 	{
-		/* front layer */
-		for(sy = 0;sy <= 16;sy++)
-		{
-			for(sx = 0;sx < 16;sx++)
-			{
-				int xo,yo,tile;
-
-
-				xo = ((exedexes_nbg_xscroll[1])<<8)+exedexes_nbg_xscroll[0] + sx*16;
-				yo = ((exedexes_nbg_yscroll[1])<<8)+exedexes_nbg_yscroll[0] + sy*16;
-
-				tile = ((yo & 0xf0) >> 4) + (xo & 0xF0) + (yo & 0x700) + ((xo & 0x700) << 3);
-
-				drawgfx(bitmap,Machine->gfx[2],
-					TileMap(tile),
-					0,
-					0,0,
-					sy*16-(yo&0xF),sx*16-(xo&0xF),
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
-			}
-		}
+		tilemap_set_scrollx(fg_tilemap, 0, ((exedexes_nbg_yscroll[1]) << 8) + exedexes_nbg_yscroll[0]);
+		tilemap_set_scrolly(fg_tilemap, 0, ((exedexes_nbg_xscroll[1]) << 8) + exedexes_nbg_xscroll[0]);
+		tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, 0, 0);
 	}
-
-
-	if (objon)
-		draw_sprites(bitmap,0);
-
+	
+	exedexes_draw_sprites(bitmap, 0);
 
 	if (chon)
 	{
-		/* draw the frontmost playfield. They are characters, but draw them as sprites */
-		for (offs = videoram_size - 1;offs >= 0;offs--)
-		{
-			sx = offs % 32;
-			sy = offs / 32;
-
-			drawgfx(bitmap,Machine->gfx[0],
-					videoram[offs] + 2 * (colorram[offs] & 0x80),
-					colorram[offs] & 0x3f,
-					0,0,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_COLOR,207);
-		}
+		tilemap_draw(bitmap, &Machine->visible_area, tx_tilemap, 0, 0);
 	}
 }
 

@@ -9,10 +9,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
-unsigned char *sonson_scrollx;
-
-
+static struct tilemap *bg_tilemap;
 
 /***************************************************************************
 
@@ -89,66 +86,97 @@ PALETTE_INIT( sonson )
 		COLOR(1,i) = (*(color_prom++) & 0x0f) + 0x10;
 }
 
+WRITE_HANDLER( sonson_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
+WRITE_HANDLER( sonson_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
-/***************************************************************************
+WRITE_HANDLER( sonson_scroll_w )
+{
+	int row;
 
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+	for (row = 5; row < 32; row++)
+	{
+		tilemap_set_scrollx(bg_tilemap, row, data);
+	}
+}
 
-***************************************************************************/
-VIDEO_UPDATE( sonson )
+WRITE_HANDLER( sonson_flipscreen_w )
+{
+	if (flip_screen != (~data & 0x01))
+	{
+		flip_screen_set(~data & 0x01);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
+}
+
+static void get_bg_tile_info(int tile_index)
+{
+	int attr = colorram[tile_index];
+	int code = videoram[tile_index] + 256 * (attr & 0x03);
+	int color = attr >> 2;
+	
+	SET_TILE_INFO(0, code, color, 0)
+}
+
+VIDEO_START( sonson )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	tilemap_set_scroll_rows(bg_tilemap, 32);
+
+	return 0;
+}
+
+static void sonson_draw_sprites( struct mame_bitmap *bitmap )
 {
 	int offs;
 
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
+	for (offs = spriteram_size - 4; offs >= 0; offs -= 4)
 	{
-		if (dirtybuffer[offs])
+		int code = spriteram[offs + 2] + ((spriteram[offs + 1] & 0x20) << 3);
+		int color = spriteram[offs + 1] & 0x1f;
+		int flipx = ~spriteram[offs + 1] & 0x40;
+		int flipy = ~spriteram[offs + 1] & 0x80;
+		int sx = spriteram[offs + 3]; 
+		int sy = spriteram[offs + 0];
+
+		if (flip_screen)
 		{
-			int sx,sy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + 256 * (colorram[offs] & 3),
-					colorram[offs] >> 2,
-					0,0,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
+			sx = 240 - sx;
+			sy = 240 - sy;
+			flipx = !flipx;
+			flipy = !flipy;
 		}
+
+		drawgfx(bitmap, Machine->gfx[1],
+			code, color,
+			flipx, flipy,
+			sx, sy,
+			&Machine->visible_area,
+			TRANSPARENCY_PEN, 0);
 	}
+}
 
-
-	/* copy the background graphics */
-	{
-		int i,scroll[32];
-
-
-		for (i = 0;i < 5;i++)
-			scroll[i] = 0;
-		for (i = 5;i < 32;i++)
-			scroll[i] = -(*sonson_scrollx);
-
-		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-
-	/* draw the sprites */
-	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
-	{
-		drawgfx(bitmap,Machine->gfx[1],
-				spriteram[offs + 2] + ((spriteram[offs + 1] & 0x20) << 3),
-				spriteram[offs + 1] & 0x1f,
-				~spriteram[offs + 1] & 0x40,~spriteram[offs + 1] & 0x80,
-				spriteram[offs + 3],spriteram[offs + 0],
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
-	}
+VIDEO_UPDATE( sonson )
+{
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	sonson_draw_sprites(bitmap);
 }

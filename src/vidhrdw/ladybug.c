@@ -9,11 +9,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
-
-static int flipscreen;
-
-
+static struct tilemap *bg_tilemap;
 
 /***************************************************************************
 
@@ -36,7 +32,6 @@ static int flipscreen;
 PALETTE_INIT( ladybug )
 {
 	int i;
-
 
 	for (i = 0;i < 32;i++)
 	{
@@ -86,88 +81,63 @@ PALETTE_INIT( ladybug )
 	}
 }
 
-
-
-WRITE_HANDLER( ladybug_flipscreen_w )
+WRITE_HANDLER( ladybug_videoram_w )
 {
-	if (flipscreen != (data & 1))
+	if (videoram[offset] != data)
 	{
-		flipscreen = data & 1;
-		memset(dirtybuffer,1,videoram_size);
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 }
 
-
-
-/***************************************************************************
-
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
-VIDEO_UPDATE( ladybug )
+WRITE_HANDLER( ladybug_colorram_w )
 {
-	int i,offs;
-
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
+	if (colorram[offset] != data)
 	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy;
+		colorram[offset] = data;
 
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-
-			if (flipscreen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-			}
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + 32 * (colorram[offs] & 8),
-					colorram[offs],
-					flipscreen,flipscreen,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
+}
 
-
-	/* copy the temporary bitmap to the screen */
+WRITE_HANDLER( ladybug_flipscreen_w )
+{
+	if (flip_screen != (data & 0x01))
 	{
-		int scroll[32];
-		int sx,sy;
-
-
-		for (offs = 0;offs < 32;offs++)
-		{
-			sx = offs % 4;
-			sy = offs / 4;
-
-			if (flipscreen)
-				scroll[31-offs] = -videoram[32 * sx + sy];
-			else
-				scroll[offs] = -videoram[32 * sx + sy];
-		}
-
-		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+		flip_screen_set(data & 0x01);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	}
+}
 
+static void get_bg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index] + 32 * (colorram[tile_index] & 0x08);
+	int color = colorram[tile_index] & 0x07;
 
-	/* Draw the sprites. Note that it is important to draw them exactly in this */
-	/* order, to have the correct priorities. */
-	/* sprites in the columns 15, 1 and 0 are outside of the visible area */
+	SET_TILE_INFO(0, code, color, 0)
+}
+
+VIDEO_START( ladybug )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	tilemap_set_scroll_rows(bg_tilemap, 32);
+
+	return 0;
+}
+
+static void ladybug_draw_sprites( struct mame_bitmap *bitmap )
+{
+	int offs;
+
 	for (offs = spriteram_size - 2*0x40;offs >= 2*0x40;offs -= 0x40)
 	{
-		i = 0;
+		int i = 0;
+
 		while (i < 0x40 && spriteram[offs + i] != 0)
 			i += 4;
 
@@ -209,4 +179,23 @@ VIDEO_UPDATE( ladybug )
 			}
 		}
 	}
+}
+
+VIDEO_UPDATE( ladybug )
+{
+	int offs;
+
+	for (offs = 0; offs < 32; offs++)
+	{
+		int sx = offs % 4;
+		int sy = offs / 4;
+
+		if (flip_screen)
+			tilemap_set_scrollx(bg_tilemap, offs, -videoram[32 * sx + sy]);
+		else
+			tilemap_set_scrollx(bg_tilemap, offs, videoram[32 * sx + sy]);
+	}
+
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	ladybug_draw_sprites(bitmap);
 }

@@ -3,6 +3,149 @@
 
 static UINT32 *zbuffer;
 
+static data16_t *mpTextureTileMap16;
+static data8_t *mpTextureTileMapAttr;
+static data8_t *mpTextureTileData;
+
+data8_t mXYAttrToPixel[16][16][16];
+
+static void InitXYAttrToPixel( void )
+{
+	unsigned attr,x,y,ix,iy,temp;
+	for( attr=0; attr<16; attr++ )
+	{
+		for( y=0; y<16; y++ )
+		{
+			for( x=0; x<16; x++ )
+			{
+				ix = x; iy = y;
+				if( attr&4 ) ix = 15-ix;
+				if( attr&2 ) iy = 15-iy;
+				if( attr&8 ){ temp = ix; ix = iy; iy = temp; }
+				mXYAttrToPixel[attr][x][y] = (iy<<4)|ix;
+			}
+		}
+	}
+}
+
+int
+namcos3d_Init( int width, int height, void *pTilemapROM, void *pTextureROM )
+{
+	zbuffer = auto_malloc( width*height*sizeof(UINT32) );
+	if( zbuffer )
+	{
+		if( pTilemapROM && pTextureROM )
+		{
+			InitXYAttrToPixel();
+			mpTextureTileMapAttr = 0x200000 + (data8_t *)pTilemapROM;
+			mpTextureTileMap16 = pTilemapROM;
+			#ifndef LSB_FIRST
+			/* if not little endian, swap each word */
+			{
+				unsigned i;
+				for( i=0; i<0x200000/2; i++ )
+				{
+					data16_t data = mpTextureTileMap16[i];
+					mpTextureTileMap16[i] = (data>>8)|(data<<8);
+				}
+			}
+			#endif
+			mpTextureTileData = pTextureROM;
+		}
+		/*DumpTexelBMP();*/
+		return 0;
+	}
+	return -1;
+}
+
+static unsigned texel( unsigned x, unsigned y )
+{
+	unsigned attr,offs;
+
+	x &= 0xfff;  /* 256 columns, 16 pixels per tile */
+	y &= 0xffff; /* (0x200000/0x200)*0x10 = 0x10000 */
+	offs = (x>>4)|((y>>4)<<8);
+	attr = mpTextureTileMapAttr[offs>>1];
+	if( offs&1 ) attr &= 0xf; else attr >>= 4;
+	return mpTextureTileData[(mpTextureTileMap16[offs]<<8)|mXYAttrToPixel[attr][x&0xf][y&0xf]];
+} /* texel */
+
+#if 0
+#define BMP_H (0x8000)
+#define BMP_W (0x1000)
+static void
+DumpTexelBMP( void )
+{
+	const unsigned char header[] =
+	{
+		0x42,0x4d,
+		0x36,0x04,0x02,0x00, // file size in bytes
+		0x00,0x00,0x00,0x00, // reserved
+		0x36,0x04,0x00,0x00, // offset frolm file start to bmp data
+
+		0x28,0x00,0x00,0x00, // sizeof(BITMAPINFOHEADER)
+		(BMP_W&0xff),((BMP_W>>8)&0xff),((BMP_W>>16)&0xff),((BMP_W>>24)&0xff), // image width in pixels
+		(BMP_H&0xff),((BMP_H>>8)&0xff),((BMP_H>>16)&0xff),((BMP_H>>24)&0xff), // image height in pixels
+		0x01,0x00, // biPlanes
+		0x08,0x00, // bits per pixel
+		0x00,0x00,0x00,0x00, // compression type
+		0x00,0x00,0x00,0x00, // sizeof(image data); zero is valid if no compression
+		0xc4,0x0e,0x00,0x00, // horiz pixels per meter
+		0xc4,0x0e,0x00,0x00, // vert pixels per meter
+		0x00,0x00,0x00,0x00, // number of colors (0 means to calculate using bpp)
+		0x00,0x00,0x00,0x00  // number of "important" colors (zero means "all")
+	};
+	FILE *f;
+	f = fopen( "texel.bmp", "wb" );
+	if( f )
+	{
+		int x,y,i;
+		for( i=0; i<sizeof(header); i++ )
+		{
+			fputc( header[i], f );
+		}
+
+		for( i=0; i<256; i+=4 )
+		{
+			fputc( (i*1)&0xff,f ); // blue
+			fputc( (i*3)&0xff,f ); // green
+			fputc( (i*9)&0xff,f ); // red
+			fputc( 0x00, f );
+		}
+		for( i=0; i<256; i+=4 )
+		{
+			fputc( i,f ); // blue
+			fputc( 0,f ); // green
+			fputc( 0,f ); // red
+			fputc( 0x00, f );
+		}
+		for( i=0; i<256; i+=4 )
+		{
+			fputc( 0,f ); // blue
+			fputc( i,f ); // green
+			fputc( 0,f ); // red
+			fputc( 0x00, f );
+		}
+		for( i=0; i<256; i+=4 )
+		{
+			fputc( 0,f ); // blue
+			fputc( 0,f ); // green
+			fputc( i,f ); // red
+			fputc( 0x00, f );
+		}
+
+		for( y=0; y<BMP_H; y++ )
+		{
+			for( x=0; x<BMP_W; x++ )
+			{
+				fputc( texel(x,BMP_H-1-y), f );
+			}
+		}
+	}
+	fclose(f);
+} /* DumpTexelBMP */
+#endif
+
 void
 matrix_NamcoRot( double M[4][4], const struct RotParam *pParam )
 {
@@ -43,14 +186,6 @@ matrix_NamcoRot( double M[4][4], const struct RotParam *pParam )
 		break;
 	}
 } /* matrix_NamcoRot */
-
-int
-namcos3d_Init( int width, int height )
-{
-	zbuffer = auto_malloc( width*height*sizeof(UINT32) );
-	if( zbuffer ) return 0;
-	return -1;
-}
 
 void
 namcos3d_Start( struct mame_bitmap *pBitmap )
@@ -212,7 +347,6 @@ BlitTri( struct mame_bitmap *pBitmap, const struct VerTex v[3], unsigned color, 
 	}
 
 } /* BlitTri */
-
 
 static void
 BlitFlatSpan(

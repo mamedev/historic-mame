@@ -66,14 +66,10 @@ TODO
 
 - What do the rest of the ports in the range c0-ce do?
 
-- Convert to tilemaps
-
 Tricky Doc
 ----------
 
 Addition by Reip
-
-Proms need dumping
 
 ***************************************************************************/
 
@@ -81,37 +77,38 @@ Proms need dumping
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 
+extern UINT8 *tecfri_videoram;
+extern UINT8 *tecfri_colorram;
+extern UINT8 *tecfri_videoram2;
+extern UINT8 *tecfri_colorram2;
 
-unsigned char *sauro_videoram2;
-unsigned char *sauro_colorram2;
+extern WRITE_HANDLER( tecfri_videoram_w );
+extern WRITE_HANDLER( tecfri_colorram_w );
+extern WRITE_HANDLER( tecfri_videoram2_w );
+extern WRITE_HANDLER( tecfri_colorram2_w );
+extern WRITE_HANDLER( tecfri_scroll_bg_w );
+extern WRITE_HANDLER( flip_screen_w );
+extern WRITE_HANDLER( sauro_scroll_fg_w );
+extern WRITE_HANDLER( trckydoc_spriteram_mirror_w );
 
-VIDEO_UPDATE( sauro );
-VIDEO_START ( trckydoc );
-VIDEO_UPDATE( trckydoc );
-WRITE_HANDLER( trckydoc_bg_scroll_w );
-WRITE_HANDLER( trckydoc_bg_videoram_w );
-WRITE_HANDLER( trckydoc_bg_colorram_w );
-WRITE_HANDLER( trckydoc_spriteram_mirror_w );
+extern VIDEO_START( sauro );
+extern VIDEO_START( trckydoc );
 
-WRITE_HANDLER( sauro_scroll1_w );
-WRITE_HANDLER( sauro_scroll2_w );
+extern VIDEO_UPDATE( sauro );
+extern VIDEO_UPDATE( trckydoc );
+
 
 static WRITE_HANDLER( sauro_sound_command_w )
 {
 	data |= 0x80;
-	soundlatch_w(offset,data);
+	soundlatch_w(offset, data);
 }
 
 static READ_HANDLER( sauro_sound_command_r )
 {
 	int ret	= soundlatch_r(offset);
-	soundlatch_clear_w(offset,0);
+	soundlatch_clear_w(offset, 0);
 	return ret;
-}
-
-static WRITE_HANDLER( flip_screen_w )
-{
-	flip_screen_set(data);
 }
 
 static WRITE_HANDLER( sauro_coin1_w )
@@ -136,10 +133,10 @@ static MEMORY_WRITE_START( sauro_writemem )
 	{ 0x0000, 0xdfff, MWA_ROM },
 	{ 0xe000, 0xe7ff, MWA_RAM },
 	{ 0xe800, 0xebff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xf000, 0xf3ff, videoram_w, &videoram, &videoram_size },
-	{ 0xf400, 0xf7ff, colorram_w, &colorram },
-	{ 0xf800, 0xfbff, MWA_RAM, &sauro_videoram2 },
-	{ 0xfc00, 0xffff, MWA_RAM, &sauro_colorram2 },
+	{ 0xf000, 0xf3ff, tecfri_videoram_w, &tecfri_videoram },
+	{ 0xf400, 0xf7ff, tecfri_colorram_w, &tecfri_colorram },
+	{ 0xf800, 0xfbff, tecfri_videoram2_w, &tecfri_videoram2 },
+	{ 0xfc00, 0xffff, tecfri_colorram2_w, &tecfri_colorram2 },
 MEMORY_END
 
 static PORT_READ_START( sauro_readport )
@@ -150,8 +147,8 @@ static PORT_READ_START( sauro_readport )
 PORT_END
 
 static PORT_WRITE_START( sauro_writeport )
-	{ 0xa0, 0xa0, sauro_scroll1_w, },
-	{ 0xa1, 0xa1, sauro_scroll2_w, },
+	{ 0xa0, 0xa0, tecfri_scroll_bg_w, },
+	{ 0xa1, 0xa1, sauro_scroll_fg_w, },
 	{ 0x80, 0x80, sauro_sound_command_w, },
 	{ 0xc0, 0xc0, flip_screen_w, },
 	{ 0xc1, 0xc2, MWA_NOP },
@@ -191,12 +188,12 @@ static MEMORY_WRITE_START( trckydoc_writemem )
 	{ 0x0000, 0xdfff, MWA_ROM },
 	{ 0xe000, 0xe7ff, MWA_RAM },
 	{ 0xe800, 0xebff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xec00, 0xefff, trckydoc_spriteram_mirror_w}, // it clears sprites from the screen by writing here to set some of the attributes
-	{ 0xf000, 0xf3ff, trckydoc_bg_videoram_w, &videoram },
-	{ 0xf400, 0xf7ff, trckydoc_bg_colorram_w, &colorram },
+	{ 0xec00, 0xefff, trckydoc_spriteram_mirror_w }, // it clears sprites from the screen by writing here to set some of the attributes
+	{ 0xf000, 0xf3ff, tecfri_videoram_w, &tecfri_videoram },
+	{ 0xf400, 0xf7ff, tecfri_colorram_w, &tecfri_colorram },
 	{ 0xf820, 0xf820, YM3812_control_port_0_w },
 	{ 0xf821, 0xf821, YM3812_write_port_0_w },
-	{ 0xf830, 0xf830, trckydoc_bg_scroll_w },
+	{ 0xf830, 0xf830, tecfri_scroll_bg_w },
 	{ 0xf838, 0xf838, MWA_NOP },
 	{ 0xf839, 0xf839, flip_screen_w },
 	{ 0xf83a, 0xf83a, sauro_coin1_w },
@@ -205,26 +202,26 @@ static MEMORY_WRITE_START( trckydoc_writemem )
 	{ 0xf83f, 0xf83f, MWA_NOP },
 MEMORY_END
 
-INPUT_PORTS_START( sauro )
+INPUT_PORTS_START( tecfri )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY  )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY  )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY  )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL)
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_COCKTAIL | IPF_8WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL | IPF_8WAY  )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_COCKTAIL | IPF_8WAY  )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_COCKTAIL | IPF_8WAY  )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_COCKTAIL | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_COCKTAIL | IPF_8WAY )
 
 	PORT_START
 	PORT_SERVICE( 0x01, IP_ACTIVE_HIGH )
@@ -285,10 +282,24 @@ static struct GfxLayout charlayout =
     8*8*4     /* every char takes 32 consecutive bytes */
 };
 
-static struct GfxLayout spritelayout =
+static struct GfxLayout trckydoc_spritelayout =
 {
 	16,16,	/* 16*16 sprites */
-    RGN_FRAC(1,1),
+    512,	/* 512 sprites */
+    4,      /* 4 bits per pixel */
+    { 0,1,2,3 },  /* The 4 planes are packed together */
+    { 1*4, 0*4, 3*4, 2*4, 5*4, 4*4, 7*4, 6*4, 9*4, 8*4, 11*4, 10*4, 13*4, 12*4, 15*4, 14*4},
+    { RGN_FRAC(3,4)+0*4*16, RGN_FRAC(2,4)+0*4*16, RGN_FRAC(1,4)+0*4*16, RGN_FRAC(0,4)+0*4*16,
+      RGN_FRAC(3,4)+1*4*16, RGN_FRAC(2,4)+1*4*16, RGN_FRAC(1,4)+1*4*16, RGN_FRAC(0,4)+1*4*16,
+      RGN_FRAC(3,4)+2*4*16, RGN_FRAC(2,4)+2*4*16, RGN_FRAC(1,4)+2*4*16, RGN_FRAC(0,4)+2*4*16,
+      RGN_FRAC(3,4)+3*4*16, RGN_FRAC(2,4)+3*4*16, RGN_FRAC(1,4)+3*4*16, RGN_FRAC(0,4)+3*4*16, },
+    16*16     /* every sprite takes 32 consecutive bytes */
+};
+
+static struct GfxLayout sauro_spritelayout =
+{
+	16,16,	/* 16*16 sprites */
+    1024,	/* 1024 sprites */
     4,      /* 4 bits per pixel */
     { 0,1,2,3 },  /* The 4 planes are packed together */
     { 1*4, 0*4, 3*4, 2*4, 5*4, 4*4, 7*4, 6*4, 9*4, 8*4, 11*4, 10*4, 13*4, 12*4, 15*4, 14*4},
@@ -301,23 +312,23 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo sauro_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout  , 0, 64 },
-	{ REGION_GFX2, 0, &charlayout  , 0, 64 },
-	{ REGION_GFX3, 0, &spritelayout, 0, 64 },
+	{ REGION_GFX1, 0, &charlayout, 0, 64 },
+	{ REGION_GFX2, 0, &charlayout, 0, 64 },
+	{ REGION_GFX3, 0, &sauro_spritelayout, 0, 64 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo trckydoc_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,   0, 64 },
-	{ REGION_GFX2, 0, &spritelayout, 0, 64 },
+	{ REGION_GFX1, 0, &charlayout, 0, 64 },
+	{ REGION_GFX2, 0, &trckydoc_spritelayout, 0, 64 },
 	{ -1 } /* end of array */
 };
 
-static INTERRUPT_GEN( sauron_interrupt )
+static INTERRUPT_GEN( sauro_interrupt )
 {
-	cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
-	cpu_set_irq_line(1,0,HOLD_LINE);
+	cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
+	cpu_set_irq_line(1, 0, HOLD_LINE);
 }
 
 static struct YM3526interface ym3812_interface =
@@ -327,61 +338,53 @@ static struct YM3526interface ym3812_interface =
 	{ 100 } 	/* volume */
 };
 
-
-static MACHINE_DRIVER_START( sauro )
-
+static MACHINE_DRIVER_START( tecfri )
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 4000000)        /* 4 MHz??? */
-	MDRV_CPU_MEMORY(sauro_readmem,sauro_writemem)
-	MDRV_CPU_PORTS(sauro_readport,sauro_writeport)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
-
-	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 4 MHz??? */
-	MDRV_CPU_MEMORY(sauro_sound_readmem,sauro_sound_writemem)
-	MDRV_CPU_VBLANK_INT(sauron_interrupt,8) /* ?? */
+	MDRV_CPU_ADD_TAG("main", Z80, 4000000)        // 4 MHz???
+	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(5000)  /* frames per second, vblank duration (otherwise sprites lag) */
+	MDRV_VBLANK_DURATION(5000)  // frames per second, vblank duration (otherwise sprites lag)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(1*8, 31*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(sauro_gfxdecodeinfo)
+	MDRV_SCREEN_SIZE(32 * 8, 32 * 8)
+	MDRV_VISIBLE_AREA(1 * 8, 31 * 8 - 1, 2 * 8, 30 * 8 - 1)
 	MDRV_PALETTE_LENGTH(1024)
-
 	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
-	MDRV_VIDEO_START(generic)
-	MDRV_VIDEO_UPDATE(sauro)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(YM3812, ym3812_interface)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( trckydoc )
+	MDRV_IMPORT_FROM(tecfri)
 
-	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 4000000)        /* 4 MHz??? */
-	MDRV_CPU_MEMORY(trckydoc_readmem,trckydoc_writemem )
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(trckydoc_readmem, trckydoc_writemem )
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(5000)  /* frames per second, vblank duration (otherwise sprites lag) */
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(1*8, 31*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(trckydoc_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(1024)
 
-	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
 	MDRV_VIDEO_START(trckydoc)
 	MDRV_VIDEO_UPDATE(trckydoc)
+MACHINE_DRIVER_END
 
-	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+static MACHINE_DRIVER_START( sauro )
+	MDRV_IMPORT_FROM(tecfri)
+
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(sauro_readmem, sauro_writemem)
+	MDRV_CPU_PORTS(sauro_readport, sauro_writeport)
+
+	MDRV_CPU_ADD(Z80, 4000000)	// 4 MHz?
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sauro_sound_readmem, sauro_sound_writemem)
+	MDRV_CPU_VBLANK_INT(sauro_interrupt, 8) // ?
+
+	MDRV_GFXDECODE(sauro_gfxdecodeinfo)
+
+	MDRV_VIDEO_START(sauro)
+	MDRV_VIDEO_UPDATE(sauro)
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -399,12 +402,12 @@ ROM_START( sauro )
 	ROM_LOAD( "sauro-3.bin",     0x00000, 0x8000, CRC(0d501e1b) SHA1(20a56ff30d4fa5d2f483a449703b49153839f6bc) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "sauro-4.bin",     0x00000, 0x8000, CRC(9b617cda) SHA1(ce26b84ad5ecd6185ae218520e9972645bbf09ad) )
-	ROM_LOAD( "sauro-5.bin",     0x08000, 0x8000, CRC(a6e2640d) SHA1(346ffcf62e27ce8134f4e5e0dbcf11f110e19e04) )
-
-	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "sauro-6.bin",     0x00000, 0x8000, CRC(4b77cb0f) SHA1(7b9cb2dca561d81390106c1a5c0533dcecaf6f1a) )
 	ROM_LOAD( "sauro-7.bin",     0x08000, 0x8000, CRC(187da060) SHA1(1df156e58379bb39acade02aabab6ff1cb7cc288) )
+
+	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "sauro-4.bin",     0x00000, 0x8000, CRC(9b617cda) SHA1(ce26b84ad5ecd6185ae218520e9972645bbf09ad) )
+	ROM_LOAD( "sauro-5.bin",     0x08000, 0x8000, CRC(a6e2640d) SHA1(346ffcf62e27ce8134f4e5e0dbcf11f110e19e04) )
 
 	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "sauro-8.bin",     0x00000, 0x8000, CRC(e08b5d5e) SHA1(eaaeaa08b19c034ab2a2140f887edffca5f441b9) )
@@ -433,24 +436,25 @@ ROM_START( trckydoc )
 	ROM_LOAD( "trckydoc.c1",    0x08000, 0x4000, CRC(1d25574b) SHA1(924e4376a7fe6cdfff0fa6045aaa3f7c0633d275) )
 	ROM_LOAD( "trckydoc.a1",    0x0c000, 0x4000, CRC(436c59ba) SHA1(2aa9c155c432a3c81420520c53bb944dcc613a94) )
 
-	ROM_REGION( 0x0c00, REGION_PROMS, 0 )
-	/* proms were missing, 3 is a guess */
-	ROM_LOAD( "r",    0x0000, 0x0400, NO_DUMP )
-	ROM_LOAD( "g",    0x0400, 0x0400, NO_DUMP )
-	ROM_LOAD( "b",    0x0800, 0x0400, NO_DUMP )
+	ROM_REGION( 0x0c00, REGION_PROMS, 0 ) // colour proms
+	ROM_LOAD( "tdclr3.prm",    0x0000, 0x0100, CRC(671d0140) SHA1(7d5fcd9589c46590b0a240cac428f993201bec2a) )
+	ROM_LOAD( "tdclr2.prm",    0x0400, 0x0100, CRC(874f9050) SHA1(db40d68f5166657fce0eadcd82143112b0388894) )
+	ROM_LOAD( "tdclr1.prm",    0x0800, 0x0100, CRC(57f127b0) SHA1(3d2b18a7a31933579f06d92fa0cc3f0e1fe8b98a) )
+
+	ROM_REGION( 0x0200, REGION_USER1, 0 ) // unknown
+	ROM_LOAD( "tdprm.prm",    0x0000, 0x0200,  CRC(5261bc11) SHA1(1cc7a9a7376e65f4587b75ef9382049458656372) )
 ROM_END
 
-static DRIVER_INIT( sauro )
+static DRIVER_INIT( tecfri )
 {
 	/* This game doesn't like all memory to be initialized to zero, it won't
 	   initialize the high scores */
 
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 
 	memset(&RAM[0xe000], 0, 0x100);
 	RAM[0xe000] = 1;
 }
 
-
-GAMEX( 1987, sauro,    0,     sauro,    sauro, sauro, ROT0, "Tecfri",  "Sauro", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
-GAMEX( 1987, trckydoc, 0,     trckydoc, sauro, sauro, ROT0, "Tecfri",  "Tricky Doc", GAME_WRONG_COLORS )
+GAMEX( 1987, sauro,    0, sauro,    tecfri, tecfri, ROT0, "Tecfri", "Sauro", GAME_IMPERFECT_SOUND )
+GAME ( 1987, trckydoc, 0, trckydoc, tecfri, tecfri, ROT0, "Tecfri", "Tricky Doc" )

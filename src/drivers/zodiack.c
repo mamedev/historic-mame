@@ -21,25 +21,26 @@ TODO:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
-extern unsigned char *zodiack_videoram2;
-extern unsigned char *zodiack_attributesram;
-extern unsigned char *zodiack_bulletsram;
+extern UINT8 *zodiack_videoram2;
+extern UINT8 *zodiack_attributesram;
+extern UINT8 *zodiack_bulletsram;
 extern size_t zodiack_bulletsram_size;
+
+extern WRITE_HANDLER( zodiack_videoram_w );
+extern WRITE_HANDLER( zodiack_videoram2_w );
+extern WRITE_HANDLER( zodiack_attributes_w );
+extern WRITE_HANDLER( zodiack_flipscreen_w );
+
+extern PALETTE_INIT( zodiack );
+extern VIDEO_START( zodiack );
+extern VIDEO_UPDATE( zodiack );
 
 int percuss_hardware;
 
-PALETTE_INIT( zodiack );
-VIDEO_UPDATE( zodiack );
-VIDEO_UPDATE( zodiack );
-WRITE_HANDLER( zodiack_attributes_w );
-WRITE_HANDLER( zodiac_flipscreen_w );
-WRITE_HANDLER( zodiac_control_w );
-
-MACHINE_INIT( espial );
-WRITE_HANDLER( zodiac_master_interrupt_enable_w );
-INTERRUPT_GEN( zodiac_master_interrupt );
-WRITE_HANDLER( zodiac_master_soundlatch_w );
+extern MACHINE_INIT( espial );
+extern WRITE_HANDLER( zodiac_master_interrupt_enable_w );
+extern INTERRUPT_GEN( zodiac_master_interrupt );
+extern WRITE_HANDLER( zodiac_master_soundlatch_w );
 
 
 static MACHINE_INIT( zodiack )
@@ -54,6 +55,14 @@ static MACHINE_INIT( percuss )
 	machine_init_espial();
 }
 
+static WRITE_HANDLER( zodiack_control_w )
+{
+	/* Bit 0-1 - coin counters */
+	coin_counter_w(0, data & 0x02);
+	coin_counter_w(1, data & 0x01);
+
+	/* Bit 2 - ???? */
+}
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x4fff, MRA_ROM },
@@ -74,17 +83,17 @@ MEMORY_END
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x4fff, MWA_ROM },
 	{ 0x5800, 0x5fff, MWA_RAM },
-	{ 0x6081, 0x6081, zodiac_control_w },
+	{ 0x6081, 0x6081, zodiack_control_w },
 	{ 0x6090, 0x6090, zodiac_master_soundlatch_w },
 	{ 0x7000, 0x7000, watchdog_reset_w },
 	{ 0x7100, 0x7100, zodiac_master_interrupt_enable_w },
-	{ 0x7200, 0x7200, zodiac_flipscreen_w },
+	{ 0x7200, 0x7200, zodiack_flipscreen_w },
 	{ 0x9000, 0x903f, zodiack_attributes_w, &zodiack_attributesram },
 	{ 0x9040, 0x905f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x9060, 0x907f, MWA_RAM, &zodiack_bulletsram, &zodiack_bulletsram_size },
 	{ 0x9080, 0x93ff, MWA_RAM },
-	{ 0xa000, 0xa3ff, videoram_w, &videoram, &videoram_size },
-	{ 0xb000, 0xb3ff, MWA_RAM, &zodiack_videoram2 },
+	{ 0xa000, 0xa3ff, zodiack_videoram_w, &videoram, &videoram_size },
+	{ 0xb000, 0xb3ff, zodiack_videoram2_w, &zodiack_videoram2 },
 	{ 0xc000, 0xcfff, MWA_ROM },
 MEMORY_END
 
@@ -517,7 +526,7 @@ static MACHINE_DRIVER_START( zodiack )
 	MDRV_COLORTABLE_LENGTH(4*8+2*8+2*1)
 
 	MDRV_PALETTE_INIT(zodiack)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(zodiack)
 	MDRV_VIDEO_UPDATE(zodiack)
 
 	/* sound hardware */

@@ -11,19 +11,7 @@
 
 static int gfx_bank;
 
-WRITE_HANDLER( exctsccr_gfx_bank_w ) {
-	gfx_bank = data & 1;
-}
-
-static void exctsccr_fm_callback( int param ) {
-	cpu_set_irq_line_and_vector( 1, 0, HOLD_LINE, 0xff );
-}
-
-VIDEO_START( exctsccr ) {
-	timer_pulse( TIME_IN_HZ( 75.0 ), 0, exctsccr_fm_callback ); /* updates fm */
-
-	return video_start_generic();
-}
+static struct tilemap *bg_tilemap;
 
 /***************************************************************************
 
@@ -109,9 +97,71 @@ PALETTE_INIT( exctsccr )
 
 }
 
-static void exctsccr_drawsprites( struct mame_bitmap *bitmap ) {
+static void exctsccr_fm_callback( int param )
+{
+	cpu_set_irq_line_and_vector( 1, 0, HOLD_LINE, 0xff );
+}
+
+WRITE_HANDLER( exctsccr_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
+
+WRITE_HANDLER( exctsccr_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
+
+WRITE_HANDLER( exctsccr_gfx_bank_w )
+{
+	if (gfx_bank != (data & 0x01))
+	{
+		gfx_bank = data & 0x01;
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
+}
+
+WRITE_HANDLER( exctsccr_flipscreen_w )
+{
+	if (flip_screen != data)
+	{
+		flip_screen_set(data);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
+}
+
+static void get_bg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index];
+	int color = colorram[tile_index] & 0x1f;
+
+	SET_TILE_INFO(gfx_bank, code, color, 0)
+}
+
+VIDEO_START( exctsccr )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	timer_pulse( TIME_IN_HZ( 75.0 ), 0, exctsccr_fm_callback ); /* updates fm */
+
+	return 0;
+}
+
+static void exctsccr_draw_sprites( struct mame_bitmap *bitmap ) {
 	int offs;
-	unsigned char *OBJ1, *OBJ2;
+	UINT8 *OBJ1, *OBJ2;
 
 	OBJ1 = videoram;
 	OBJ2 = &(spriteram[0x20]);
@@ -201,43 +251,8 @@ static void exctsccr_drawsprites( struct mame_bitmap *bitmap ) {
 	}
 }
 
-/***************************************************************************
-
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
-VIDEO_UPDATE( exctsccr ) {
-	int offs;
-
-	/* background chars */
-	for (offs = 0;offs < ( videoram_size - 0x10 );offs++) {
-
-		if ( dirtybuffer[offs] ) {
-			int sx,sy,code;
-
-			dirtybuffer[offs] = 0;
-
-			sx = 8 * (offs % 32);
-			sy = 8 * (offs / 32);
-
-			code = videoram[offs];
-
-			drawgfx(tmpbitmap,Machine->gfx[gfx_bank],
-					code,
-					( colorram[offs] ) & 0x1f,
-					0, 0,
-					sx,sy,
-					&Machine->visible_area,
-					TRANSPARENCY_NONE,0);
-		}
-	}
-
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-
-	/* draw sprites */
-	exctsccr_drawsprites( bitmap );
-
+VIDEO_UPDATE( exctsccr )
+{
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	exctsccr_draw_sprites( bitmap );
 }

@@ -31,15 +31,20 @@ TODO: Emulated sound
 #include "vidhrdw/generic.h"
 
 
-extern unsigned char *gotya_scroll;
-extern unsigned char *gotya_foregroundram;
+extern UINT8 *gotya_scroll;
+extern UINT8 *gotya_videoram2;
 
-PALETTE_INIT( gotya );
-VIDEO_START( gotya );
-VIDEO_UPDATE( gotya );
-WRITE_HANDLER( gotya_video_control_w );
+extern WRITE_HANDLER( gotya_videoram_w );
+extern WRITE_HANDLER( gotya_colorram_w );
+extern WRITE_HANDLER( gotya_videoram2_w );
 
-WRITE_HANDLER( gotya_soundlatch_w );
+extern PALETTE_INIT( gotya );
+extern VIDEO_START( gotya );
+extern VIDEO_UPDATE( gotya );
+
+extern WRITE_HANDLER( gotya_video_control_w );
+
+extern WRITE_HANDLER( gotya_soundlatch_w );
 
 
 static MEMORY_READ_START( readmem )
@@ -58,9 +63,9 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x6005, 0x6005, gotya_soundlatch_w },
 	{ 0x6006, 0x6006, MWA_RAM, &gotya_scroll },
 	{ 0x6007, 0x6007, watchdog_reset_w },
-	{ 0xc000, 0xc7ff, videoram_w, &videoram, &videoram_size },
-	{ 0xc800, 0xcfff, colorram_w, &colorram },
-	{ 0xd000, 0xd3df, MWA_RAM, &gotya_foregroundram },
+	{ 0xc000, 0xc7ff, gotya_videoram_w, &videoram },
+	{ 0xc800, 0xcfff, gotya_colorram_w, &colorram },
+	{ 0xd000, 0xd3df, MWA_RAM, &gotya_videoram2 },
 	{ 0xd3e0, 0xd3ff, MWA_RAM, &spriteram },
 MEMORY_END
 

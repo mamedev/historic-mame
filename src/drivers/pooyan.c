@@ -67,9 +67,13 @@ standard NMI at 0x66
 #include "sndhrdw/timeplt.h"
 
 
-WRITE_HANDLER( pooyan_flipscreen_w );
-PALETTE_INIT( pooyan );
-VIDEO_UPDATE( pooyan );
+extern WRITE_HANDLER( pooyan_videoram_w );
+extern WRITE_HANDLER( pooyan_colorram_w );
+extern WRITE_HANDLER( pooyan_flipscreen_w );
+
+extern PALETTE_INIT( pooyan );
+extern VIDEO_START( pooyan );
+extern VIDEO_UPDATE( pooyan );
 
 
 static MEMORY_READ_START( readmem )
@@ -84,8 +88,8 @@ MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x83ff, colorram_w, &colorram },
-	{ 0x8400, 0x87ff, videoram_w, &videoram, &videoram_size },
+	{ 0x8000, 0x83ff, pooyan_colorram_w, &colorram },
+	{ 0x8400, 0x87ff, pooyan_videoram_w, &videoram },
 	{ 0x8800, 0x8fff, MWA_RAM },
 	{ 0x9010, 0x903f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x9410, 0x943f, MWA_RAM, &spriteram_2 },
@@ -101,7 +105,7 @@ INPUT_PORTS_START( pooyan )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -249,7 +253,7 @@ static MACHINE_DRIVER_START( pooyan )
 	MDRV_COLORTABLE_LENGTH(16*16+16*16)
 
 	MDRV_PALETTE_INIT(pooyan)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(pooyan)
 	MDRV_VIDEO_UPDATE(pooyan)
 
 	/* sound hardware */

@@ -541,23 +541,43 @@ static void expand_32x32x5bpp(void)
 /* This function expands the sprite colour data (in the A Roms) from 3 pixels
    in each word to a byte per pixel making it easier to use */
 
+data8_t *pgm_sprite_a_region;
+size_t	pgm_sprite_a_region_allocate;
+
 static void expand_colourdata(void)
 {
 	data8_t *src    = memory_region       ( REGION_GFX3 );
-	data8_t *dst    = memory_region       ( REGION_GFX4 );
 	size_t  srcsize = memory_region_length( REGION_GFX3 );
 	int cnt;
+	size_t	needed = srcsize / 2 * 3;
 
-		for (cnt = 0 ; cnt < srcsize/2 ; cnt++)
-		{
-			data16_t colpack;
+	/* work out how much ram we need to allocate to expand the sprites into
+	   and be able to mask the offset */
+	pgm_sprite_a_region_allocate = 1;
+	while (pgm_sprite_a_region_allocate < needed)
+		pgm_sprite_a_region_allocate = pgm_sprite_a_region_allocate <<1;
 
-			colpack = ((src[cnt*2]) | (src[cnt*2+1] << 8));
+	pgm_sprite_a_region = auto_malloc (pgm_sprite_a_region_allocate);
 
-			dst[cnt*3+0] = (colpack >> 0 ) & 0x1f;
-			dst[cnt*3+1] = (colpack >> 5 ) & 0x1f;
-			dst[cnt*3+2] = (colpack >> 10) & 0x1f;
-		}
+
+	for (cnt = 0 ; cnt < srcsize/2 ; cnt++)
+	{
+		data16_t colpack;
+
+		colpack = ((src[cnt*2]) | (src[cnt*2+1] << 8));
+		pgm_sprite_a_region[cnt*3+0] = (colpack >> 0 ) & 0x1f;
+		pgm_sprite_a_region[cnt*3+1] = (colpack >> 5 ) & 0x1f;
+		pgm_sprite_a_region[cnt*3+2] = (colpack >> 10) & 0x1f;
+	}
+}
+
+static void pgm_basic_init(void)
+{
+	unsigned char *ROM = memory_region(REGION_CPU1);
+	cpu_setbank(1,&ROM[0x100000]);
+
+	expand_32x32x5bpp();
+	expand_colourdata();
 }
 
 /* Oriental Legend INIT */
@@ -570,11 +590,7 @@ READ16_HANDLER ( orlegend_speedup )
 
 static DRIVER_INIT( orlegend )
 {
-	unsigned char *ROM = memory_region(REGION_CPU1);
-	cpu_setbank(1,&ROM[0x100000]);
-
-	expand_32x32x5bpp();
-	expand_colourdata();
+	pgm_basic_init();
 
 	install_mem_read16_handler (0, 0xC0400e, 0xC0400f, pgm_asic3_r);
 	install_mem_write16_handler(0, 0xC04000, 0xC04001, pgm_asic3_reg_w);
@@ -586,8 +602,7 @@ static DRIVER_INIT( dragwld2 )
 {
 	data16_t *mem16 = (data16_t *)memory_region(REGION_CPU1);
 
-	expand_32x32x5bpp();
-	expand_colourdata();
+	pgm_basic_init();
 
  	pgm_dw2_decrypt();
 
@@ -617,11 +632,7 @@ out there).
 
 static DRIVER_INIT( kov )
 {
-	unsigned char *ROM = memory_region(REGION_CPU1);
-	cpu_setbank(1,&ROM[0x100000]);
-
-	expand_32x32x5bpp();
-	expand_colourdata();
+	pgm_basic_init();
 
 	install_mem_read16_handler(0, 0x500000, 0x500003, ASIC28_r16);
 	install_mem_write16_handler(0, 0x500000, 0x500003, ASIC28_w16);
@@ -635,11 +646,7 @@ static DRIVER_INIT( kov )
 
 static DRIVER_INIT( kovsh )
 {
-	unsigned char *ROM = memory_region(REGION_CPU1);
-	cpu_setbank(1,&ROM[0x100000]);
-
-	expand_32x32x5bpp();
-	expand_colourdata();
+	pgm_basic_init();
 
 	install_mem_read16_handler(0, 0x500000, 0x500003, ASIC28_r16);
 	install_mem_write16_handler(0, 0x500000, 0x500003, ASIC28_w16);
@@ -653,11 +660,7 @@ static DRIVER_INIT( kovsh )
 
 static DRIVER_INIT( djlzz )
 {
-	unsigned char *ROM = memory_region(REGION_CPU1);
-	cpu_setbank(1,&ROM[0x100000]);
-
-	expand_32x32x5bpp();
-	expand_colourdata();
+	pgm_basic_init();
 
 	install_mem_read16_handler(0, 0x500000, 0x500003, ASIC28_r16);
 	install_mem_write16_handler(0, 0x500000, 0x500003, ASIC28_w16);
@@ -707,12 +710,7 @@ ROM_START( orlegend )
 	ROM_LOAD( "a0104.rom",    0x1000000, 0x400000, CRC(5f8abb56) SHA1(6c1ddc0309862a141aa0c0f63b641aec9257aaee) )
 	ROM_LOAD( "a0105.rom",    0x1400000, 0x400000, CRC(a17a7147) SHA1(44eeb43c6b0ebb829559a20ae357383fbdeecd82) )
 
-	/* 0x1800000/2*3 = 0x2400000
-		round this up to 0x4000000 so we can mask .. waste of ram?  */
-	ROM_REGION( 0x4000000, REGION_GFX4, 0 ) /* Sprite Colour Data */
-	/* Sprite Colour Data is Unpacked Here */
-
-	ROM_REGION( 0x1000000, REGION_GFX5, 0 ) /* Sprite Masks + Colour Indexes */
+	ROM_REGION( 0x1000000, REGION_GFX4, 0 ) /* Sprite Masks + Colour Indexes */
 	ROM_LOAD( "b0100.rom",    0x0000000, 0x400000, CRC(69d2e48c) SHA1(5b5f759007264c07b3b39be8e03a713698e1fc2a) )
 	ROM_LOAD( "b0101.rom",    0x0400000, 0x400000, CRC(0d587bf3) SHA1(5347828b0a6e4ddd7a263663d2c2604407e4d49c) )
 	ROM_LOAD( "b0102.rom",    0x0800000, 0x400000, CRC(43823c1e) SHA1(e10a1a9a81b51b11044934ff702e35d8d7ab1b08) )
@@ -742,12 +740,7 @@ ROM_START( orlegnde )
 	ROM_LOAD( "a0104.rom",    0x1000000, 0x400000, CRC(5f8abb56) SHA1(6c1ddc0309862a141aa0c0f63b641aec9257aaee) )
 	ROM_LOAD( "a0105.rom",    0x1400000, 0x400000, CRC(a17a7147) SHA1(44eeb43c6b0ebb829559a20ae357383fbdeecd82) )
 
-	/* 0x1800000/2*3 = 0x2400000
-		round this up to 0x4000000 so we can mask .. waste of ram?  */
-	ROM_REGION( 0x4000000, REGION_GFX4, 0 ) /* Sprite Colour Data */
-	/* Sprite Colour Data is Unpacked Here */
-
-	ROM_REGION( 0x1000000, REGION_GFX5, 0 ) /* Sprite Masks + Colour Indexes */
+	ROM_REGION( 0x1000000, REGION_GFX4, 0 ) /* Sprite Masks + Colour Indexes */
 	ROM_LOAD( "b0100.rom",    0x0000000, 0x400000, CRC(69d2e48c) SHA1(5b5f759007264c07b3b39be8e03a713698e1fc2a) )
 	ROM_LOAD( "b0101.rom",    0x0400000, 0x400000, CRC(0d587bf3) SHA1(5347828b0a6e4ddd7a263663d2c2604407e4d49c) )
 	ROM_LOAD( "b0102.rom",    0x0800000, 0x400000, CRC(43823c1e) SHA1(e10a1a9a81b51b11044934ff702e35d8d7ab1b08) )
@@ -777,12 +770,7 @@ ROM_START( orlegndc )
 	ROM_LOAD( "a0104.rom",    0x1000000, 0x400000, CRC(5f8abb56) SHA1(6c1ddc0309862a141aa0c0f63b641aec9257aaee) )
 	ROM_LOAD( "a0105.rom",    0x1400000, 0x400000, CRC(a17a7147) SHA1(44eeb43c6b0ebb829559a20ae357383fbdeecd82) )
 
-	/* 0x1800000/2*3 = 0x2400000
-		round this up to 0x4000000 so we can mask .. waste of ram?  */
-	ROM_REGION( 0x4000000, REGION_GFX4, 0 ) /* Sprite Colour Data */
-	/* Sprite Colour Data is Unpacked Here */
-
-	ROM_REGION( 0x1000000, REGION_GFX5, 0 ) /* Sprite Masks + Colour Indexes */
+	ROM_REGION( 0x1000000, REGION_GFX4, 0 ) /* Sprite Masks + Colour Indexes */
 	ROM_LOAD( "b0100.rom",    0x0000000, 0x400000, CRC(69d2e48c) SHA1(5b5f759007264c07b3b39be8e03a713698e1fc2a) )
 	ROM_LOAD( "b0101.rom",    0x0400000, 0x400000, CRC(0d587bf3) SHA1(5347828b0a6e4ddd7a263663d2c2604407e4d49c) )
 	ROM_LOAD( "b0102.rom",    0x0800000, 0x400000, CRC(43823c1e) SHA1(e10a1a9a81b51b11044934ff702e35d8d7ab1b08) )
@@ -807,10 +795,7 @@ ROM_START( dragwld2 )
 	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_DISPOSE ) /* Sprite Colour Data */
 	ROM_LOAD( "pgma0200.u5",    0x0000000, 0x400000, CRC(13b95069) SHA1(4888b06002afb18eab81c010e9362629045767af) )
 
-	ROM_REGION( 0x800000, REGION_GFX4, 0 ) /* Sprite Colour Data */
-	/* Sprite Colour Data is Unpacked Here */
-
-	ROM_REGION( 0x400000, REGION_GFX5, 0 ) /* Sprite Masks + Colour Indexes */
+	ROM_REGION( 0x400000, REGION_GFX4, 0 ) /* Sprite Masks + Colour Indexes */
 	ROM_LOAD( "pgmb0200.u9",    0x0000000, 0x400000, CRC(932d0f13) SHA1(4b8e008f9c617cb2b95effeb81abc065b30e5c86) )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
@@ -829,16 +814,13 @@ ROM_START( kov )
 	ROM_REGION( 0xc00000/5*8, REGION_GFX2, ROMREGION_DISPOSE ) /* Region for 32x32 BG Tiles */
 	/* 32x32 Tile Data is put here for easier Decoding */
 
-	ROM_REGION( 0x1c00000, REGION_GFX3, 0 ) /* Sprite Colour Data */
+	ROM_REGION( 0x1c00000, REGION_GFX3, ROMREGION_DISPOSE ) /* Sprite Colour Data */
 	ROM_LOAD( "a0600.rom",    0x0000000, 0x0800000, CRC(d8167834) SHA1(fa55a99629d03b2ea253392352f70d2c8639a991) ) // FIXED BITS (xxxxxxxx1xxxxxxx)
 	ROM_LOAD( "a0601.rom",    0x0800000, 0x0800000, CRC(ff7a4373) SHA1(7def9fca7513ad5a117da230bebd2e3c78679041) ) // FIXED BITS (xxxxxxxx1xxxxxxx)
 	ROM_LOAD( "a0602.rom",    0x1000000, 0x0800000, CRC(e7a32959) SHA1(3d0ed684dc5b269238890836b2ce7ef46aa5265b) ) // FIXED BITS (xxxxxxxx1xxxxxxx)
 	ROM_LOAD( "a0603.rom",    0x1800000, 0x0400000, CRC(ec31abda) SHA1(ee526655369bae63b0ef0730e9768b765c9950fc) )
 
-	ROM_REGION( 0x4000000, REGION_GFX4, 0 ) /* Sprite Colour Data */
-	/* Sprite Colour Data is Unpacked Here */
-
-	ROM_REGION( 0x1000000, REGION_GFX5, 0 ) /* Sprite Masks + Colour Indexes */
+	ROM_REGION( 0x1000000, REGION_GFX4, 0 ) /* Sprite Masks + Colour Indexes */
 	ROM_LOAD( "b0600.rom",    0x0000000, 0x0800000, CRC(7d3cd059) SHA1(00cf994b63337e0e4ebe96453daf45f24192af1c) )
 	ROM_LOAD( "b0601.rom",    0x0800000, 0x0400000, CRC(a0bb1c2f) SHA1(0542348c6e27779e0a98de16f04f9c18158f2b28) )
 
@@ -859,16 +841,13 @@ ROM_START( kov115 )
 	ROM_REGION( 0xc00000/5*8, REGION_GFX2, ROMREGION_DISPOSE ) /* Region for 32x32 BG Tiles */
 	/* 32x32 Tile Data is put here for easier Decoding */
 
-	ROM_REGION( 0x1c00000, REGION_GFX3, 0 ) /* Sprite Colour Data */
+	ROM_REGION( 0x1c00000, REGION_GFX3, ROMREGION_DISPOSE ) /* Sprite Colour Data */
 	ROM_LOAD( "a0600.rom",    0x0000000, 0x0800000, CRC(d8167834) SHA1(fa55a99629d03b2ea253392352f70d2c8639a991) ) // FIXED BITS (xxxxxxxx1xxxxxxx)
 	ROM_LOAD( "a0601.rom",    0x0800000, 0x0800000, CRC(ff7a4373) SHA1(7def9fca7513ad5a117da230bebd2e3c78679041) ) // FIXED BITS (xxxxxxxx1xxxxxxx)
 	ROM_LOAD( "a0602.rom",    0x1000000, 0x0800000, CRC(e7a32959) SHA1(3d0ed684dc5b269238890836b2ce7ef46aa5265b) ) // FIXED BITS (xxxxxxxx1xxxxxxx)
 	ROM_LOAD( "a0603.rom",    0x1800000, 0x0400000, CRC(ec31abda) SHA1(ee526655369bae63b0ef0730e9768b765c9950fc) )
 
-	ROM_REGION( 0x4000000, REGION_GFX4, 0 ) /* Sprite Colour Data */
-	/* Sprite Colour Data is Unpacked Here */
-
-	ROM_REGION( 0x1000000, REGION_GFX5, 0 ) /* Sprite Masks + Colour Indexes */
+	ROM_REGION( 0x1000000, REGION_GFX4, 0 ) /* Sprite Masks + Colour Indexes */
 	ROM_LOAD( "b0600.rom",    0x0000000, 0x0800000, CRC(7d3cd059) SHA1(00cf994b63337e0e4ebe96453daf45f24192af1c) )
 	ROM_LOAD( "b0601.rom",    0x0800000, 0x0400000, CRC(a0bb1c2f) SHA1(0542348c6e27779e0a98de16f04f9c18158f2b28) )
 
@@ -889,16 +868,13 @@ ROM_START( kovplus )
 	ROM_REGION( 0xc00000/5*8, REGION_GFX2, ROMREGION_DISPOSE ) /* Region for 32x32 BG Tiles */
 	/* 32x32 Tile Data is put here for easier Decoding */
 
-	ROM_REGION( 0x1c00000, REGION_GFX3, 0 ) /* Sprite Colour Data */
+	ROM_REGION( 0x1c00000, REGION_GFX3, ROMREGION_DISPOSE ) /* Sprite Colour Data */
 	ROM_LOAD( "a0600.rom",    0x0000000, 0x0800000, CRC(d8167834) SHA1(fa55a99629d03b2ea253392352f70d2c8639a991) ) // FIXED BITS (xxxxxxxx1xxxxxxx)
 	ROM_LOAD( "a0601.rom",    0x0800000, 0x0800000, CRC(ff7a4373) SHA1(7def9fca7513ad5a117da230bebd2e3c78679041) ) // FIXED BITS (xxxxxxxx1xxxxxxx)
 	ROM_LOAD( "a0602.rom",    0x1000000, 0x0800000, CRC(e7a32959) SHA1(3d0ed684dc5b269238890836b2ce7ef46aa5265b) ) // FIXED BITS (xxxxxxxx1xxxxxxx)
 	ROM_LOAD( "a0603.rom",    0x1800000, 0x0400000, CRC(ec31abda) SHA1(ee526655369bae63b0ef0730e9768b765c9950fc) )
 
-	ROM_REGION( 0x4000000, REGION_GFX4, 0 ) /* Sprite Colour Data */
-	/* Sprite Colour Data is Unpacked Here */
-
-	ROM_REGION( 0x1000000, REGION_GFX5, 0 ) /* Sprite Masks + Colour Indexes */
+	ROM_REGION( 0x1000000, REGION_GFX4, 0 ) /* Sprite Masks + Colour Indexes */
 	ROM_LOAD( "b0600.rom",    0x0000000, 0x0800000, CRC(7d3cd059) SHA1(00cf994b63337e0e4ebe96453daf45f24192af1c) )
 	ROM_LOAD( "b0601.rom",    0x0800000, 0x0400000, CRC(a0bb1c2f) SHA1(0542348c6e27779e0a98de16f04f9c18158f2b28) )
 
@@ -920,16 +896,13 @@ ROM_START( kovsh )
 	/* 32x32 Tile Data is put here for easier Decoding */
 
 	/* all roms below need checking to see if they're the same on this board */
-	ROM_REGION( 0x1c00000, REGION_GFX3, 0 ) /* Sprite Colour Data */
+	ROM_REGION( 0x1c00000, REGION_GFX3, ROMREGION_DISPOSE ) /* Sprite Colour Data */
 	ROM_LOAD( "a0600.rom",    0x0000000, 0x0800000, CRC(d8167834) SHA1(fa55a99629d03b2ea253392352f70d2c8639a991) ) // FIXED BITS (xxxxxxxx1xxxxxxx)
 	ROM_LOAD( "a0601.rom",    0x0800000, 0x0800000, CRC(ff7a4373) SHA1(7def9fca7513ad5a117da230bebd2e3c78679041) ) // FIXED BITS (xxxxxxxx1xxxxxxx)
 	ROM_LOAD( "a0602.rom",    0x1000000, 0x0800000, CRC(e7a32959) SHA1(3d0ed684dc5b269238890836b2ce7ef46aa5265b) ) // FIXED BITS (xxxxxxxx1xxxxxxx)
 	ROM_LOAD( "a0603.rom",    0x1800000, 0x0400000, CRC(ec31abda) SHA1(ee526655369bae63b0ef0730e9768b765c9950fc) )
 
-	ROM_REGION( 0x4000000, REGION_GFX4, 0 ) /* Sprite Colour Data */
-	/* Sprite Colour Data is Unpacked Here */
-
-	ROM_REGION( 0x1000000, REGION_GFX5, 0 ) /* Sprite Masks + Colour Indexes */
+	ROM_REGION( 0x1000000, REGION_GFX4, 0 ) /* Sprite Masks + Colour Indexes */
 	ROM_LOAD( "b0600.rom",    0x0000000, 0x0800000, CRC(7d3cd059) SHA1(00cf994b63337e0e4ebe96453daf45f24192af1c) )
 	ROM_LOAD( "b0601.rom",    0x0800000, 0x0400000, CRC(a0bb1c2f) SHA1(0542348c6e27779e0a98de16f04f9c18158f2b28) )
 
@@ -951,17 +924,14 @@ ROM_START( photoy2k )
 	/* 32x32 Tile Data is put here for easier Decoding */
 
 	/* all roms below need checking to see if they're the same on this board */
-	ROM_REGION( 0x1080000, REGION_GFX3, 0 ) /* Sprite Colour Data */
+	ROM_REGION( 0x1080000, REGION_GFX3, ROMREGION_DISPOSE ) /* Sprite Colour Data */
 	ROM_LOAD( "a0700.l",    0x0000000, 0x0400000, CRC(26a9ae9c) SHA1(c977c89db6fdf47ee260ff687b80375caeab975c) ) // FIXED BITS (xxxxxxxx1xxxxxxx)
 	ROM_LOAD( "a0700.h",    0x0400000, 0x0400000, CRC(79bc1fc1) SHA1(a09472a9b75704c1d31ab828f92c2a5007b2b4ed) ) // FIXED BITS (xxxxxxxx1xxxxxxx)
 	ROM_LOAD( "a0701.l",    0x0800000, 0x0400000, CRC(23607f81) SHA1(8b6dbcdce9b131370693847ed9771aa04b62711c) ) // FIXED BITS (xxxxxxxx1xxxxxxx)
 	ROM_LOAD( "a0701.h",    0x0c00000, 0x0400000, CRC(5f2efd37) SHA1(9a5bd9751691bc085b0751b9fa8ede9eb97b1248) )
 	ROM_LOAD( "a0702.rom",  0x1000000, 0x0080000, CRC(42239e1b) SHA1(2b6d20958abf8a67ce525d5c8964b6d225ccaeda) )
 
-	ROM_REGION( 0x2000000, REGION_GFX4, 0 ) /* Sprite Colour Data */
-	/* Sprite Colour Data is Unpacked Here */
-
-	ROM_REGION( 0x1000000, REGION_GFX5, 0 ) /* Sprite Masks + Colour Indexes */
+	ROM_REGION( 0x1000000, REGION_GFX4, 0 ) /* Sprite Masks + Colour Indexes */
 	ROM_LOAD( "b0700.l",    0x0000000, 0x0400000, CRC(af096904) SHA1(8e86b36cc44720ece68022e409279bf9144341ba) ) // FIXED BITS (xxxxxxxx1xxxxxxx)
 	ROM_LOAD( "b0700.h",    0x0400000, 0x0400000, CRC(6d53de26) SHA1(f3f93fd2f87adb815834ba0242b94073fbb5e333) ) // FIXED BITS (xxxxxxxx1xxxxxxx)
 	ROM_LOAD( "cgv101.rom", 0x0800000, 0x0020000, CRC(da02ec3e) SHA1(7ee21d748c9b932f53e790a9040167f904fecefc) )
@@ -986,14 +956,11 @@ ROM_START( ddp2 )
 	ROM_REGION( 0xc00000/5*8, REGION_GFX2, ROMREGION_DISPOSE ) /* Region for 32x32 BG Tiles */
 	/* 32x32 Tile Data is put here for easier Decoding */
 
-	ROM_REGION( 0x1000000, REGION_GFX3, 0 ) /* Sprite Colour Data */
+	ROM_REGION( 0x1000000, REGION_GFX3, ROMREGION_DISPOSE ) /* Sprite Colour Data */
 	ROM_LOAD( "a1300.u1",    0x0000000, 0x0800000, CRC(fc87a405) ) // FIXED BITS (xxxxxxxx1xxxxxxx)
 	ROM_LOAD( "a1301.u2",    0x0800000, 0x0800000, CRC(0c8520da) ) // FIXED BITS (xxxxxxxx1xxxxxxx)
 
-	ROM_REGION( 0x2000000, REGION_GFX4, 0 ) /* Sprite Colour Data */
-	/* Sprite Colour Data is Unpacked Here */
-
-	ROM_REGION( 0x0800000, REGION_GFX5, 0 ) /* Sprite Masks + Colour Indexes */
+	ROM_REGION( 0x0800000, REGION_GFX4, 0 ) /* Sprite Masks + Colour Indexes */
 	ROM_LOAD( "b1300.u7",    0x0000000, 0x0800000, CRC(ef646604) )
 
 	ROM_REGION( 0x600000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
@@ -1016,17 +983,14 @@ ROM_START( kov2plus )
 	ROM_REGION( 0xc00000/5*8, REGION_GFX2, ROMREGION_DISPOSE ) /* Region for 32x32 BG Tiles */
 	/* 32x32 Tile Data is put here for easier Decoding */
 
-	ROM_REGION( 0x2200000, REGION_GFX3, 0 ) /* Sprite Colour Data */
+	ROM_REGION( 0x2200000, REGION_GFX3, ROMREGION_DISPOSE ) /* Sprite Colour Data */
 	ROM_LOAD( "a1200.rom",    0x0000000, 0x0800000, CRC(ceeb81d8) )
 	ROM_LOAD( "a1201.rom",    0x0800000, 0x0800000, CRC(21063ca7) )
 	ROM_LOAD( "a1202.rom",    0x1000000, 0x0800000, CRC(4bb92fae) )
 	ROM_LOAD( "a1203.rom",    0x1800000, 0x0800000, CRC(e73cb627) )
 	ROM_LOAD( "a1204.rom",    0x2000000, 0x0200000, CRC(14b4b5bb) )
 
-	ROM_REGION( 0x4000000, REGION_GFX4, 0 ) /* Sprite Colour Data */
-	/* Sprite Colour Data is Unpacked Here */
-
-	ROM_REGION( 0x0800000, REGION_GFX5, 0 ) /* Sprite Masks + Colour Indexes */
+	ROM_REGION( 0x0800000, REGION_GFX4, 0 ) /* Sprite Masks + Colour Indexes */
 	ROM_LOAD( "b1200.rom",    0x0000000, 0x0800000, CRC(bed7d994) )
 
 	ROM_REGION( 0xa00000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */

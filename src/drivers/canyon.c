@@ -35,9 +35,11 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "canyon.h"
 
+extern WRITE_HANDLER( canyon_videoram_w );
 
+extern VIDEO_START( canyon );
+extern VIDEO_UPDATE( canyon );
 
 /*************************************
  *
@@ -171,7 +173,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x0680, 0x0683, canyon_led_w },
 	{ 0x0700, 0x0703, canyon_attract_w },
 	{ 0x0bd0, 0x0bdf, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x0800, 0x0bff, videoram_w, &videoram, &videoram_size }, /* DISPLAY */
+	{ 0x0800, 0x0bff, canyon_videoram_w, &videoram }, /* DISPLAY */
 	{ 0x2000, 0x27ff, MWA_NOP }, /* PROM1 */
 	{ 0x2800, 0x2fff, MWA_NOP }, /* PROM2 */
 	{ 0x3000, 0x37ff, MWA_NOP }, /* PROM3 */
@@ -494,7 +496,7 @@ static MACHINE_DRIVER_START( canyon )
 	MDRV_COLORTABLE_LENGTH(sizeof(colortable_source) / sizeof(colortable_source[0]))
 
 	MDRV_PALETTE_INIT(canyon)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(canyon)
 	MDRV_VIDEO_UPDATE(canyon)
 
 	/* sound hardware */

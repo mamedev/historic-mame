@@ -67,10 +67,13 @@ IO ports and memory map changes. Dip switches differ too.
 
 
 /* from vidhrdw */
+extern WRITE_HANDLER( kchamp_videoram_w );
+extern WRITE_HANDLER( kchamp_colorram_w );
+
 extern PALETTE_INIT( kchamp );
-extern VIDEO_UPDATE( kchamp );
 extern VIDEO_START( kchampvs );
 extern VIDEO_START( kchamp1p );
+extern VIDEO_UPDATE( kchamp );
 
 
 static int nmi_enable = 0;
@@ -79,9 +82,9 @@ static int sound_nmi_enable = 0;
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xcfff, MRA_RAM },
-	{ 0xd000, 0xd3ff, videoram_r },
-	{ 0xd400, 0xd7ff, colorram_r },
-	{ 0xd800, 0xd8ff, spriteram_r },
+	{ 0xd000, 0xd3ff, MRA_RAM },
+	{ 0xd400, 0xd7ff, MRA_RAM },
+	{ 0xd800, 0xd8ff, MRA_RAM },
 	{ 0xd900, 0xdfff, MRA_RAM },
 	{ 0xe000, 0xffff, MRA_ROM },
 MEMORY_END
@@ -89,8 +92,8 @@ MEMORY_END
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_RAM },
-	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
-	{ 0xd400, 0xd7ff, colorram_w, &colorram },
+	{ 0xd000, 0xd3ff, kchamp_videoram_w, &videoram },
+	{ 0xd400, 0xd7ff, kchamp_colorram_w, &colorram },
 	{ 0xd800, 0xd8ff, spriteram_w, &spriteram, &spriteram_size },
 	{ 0xd900, 0xdfff, MWA_RAM },
 	{ 0xe000, 0xffff, MWA_ROM },
@@ -167,17 +170,17 @@ PORT_END
 static MEMORY_READ_START( kc_readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xe3ff, videoram_r },
-	{ 0xe400, 0xe7ff, colorram_r },
-	{ 0xea00, 0xeaff, spriteram_r },
+	{ 0xe000, 0xe3ff, MRA_RAM },
+	{ 0xe400, 0xe7ff, MRA_RAM },
+	{ 0xea00, 0xeaff, MRA_RAM },
 	{ 0xeb00, 0xffff, MRA_RAM },
 MEMORY_END
 
 static MEMORY_WRITE_START( kc_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe3ff, videoram_w, &videoram, &videoram_size },
-	{ 0xe400, 0xe7ff, colorram_w, &colorram },
+	{ 0xe000, 0xe3ff, kchamp_videoram_w, &videoram },
+	{ 0xe400, 0xe7ff, kchamp_colorram_w, &colorram },
 	{ 0xea00, 0xeaff, spriteram_w, &spriteram, &spriteram_size },
 	{ 0xeb00, 0xffff, MWA_RAM },
 MEMORY_END

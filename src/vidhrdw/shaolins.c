@@ -9,11 +9,10 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+extern UINT8 shaolins_nmi_enable;
 
-unsigned char *shaolins_scroll;
 static int palettebank;
-
-
+static struct tilemap *bg_tilemap;
 
 /***************************************************************************
 
@@ -95,75 +94,113 @@ PALETTE_INIT( shaolins )
 	}
 }
 
-
-
-WRITE_HANDLER( shaolins_palettebank_w )
+WRITE_HANDLER( shaolins_videoram_w )
 {
-	if (palettebank != (data & 7))
+	if (videoram[offset] != data)
 	{
-		palettebank = data & 7;
-		memset(dirtybuffer,1,videoram_size);
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 }
 
+WRITE_HANDLER( shaolins_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
+WRITE_HANDLER( shaolins_palettebank_w )
+{
+	if (palettebank != (data & 0x07))
+	{
+		palettebank = data & 0x07;
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
+}
 
-/***************************************************************************
+WRITE_HANDLER( shaolins_scroll_w )
+{
+	int col;
 
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+	for (col = 4; col < 32; col++)
+	{
+		tilemap_set_scrolly(bg_tilemap, col, data + 1);
+	}
+}
 
-***************************************************************************/
-VIDEO_UPDATE( shaolins )
+WRITE_HANDLER( shaolins_nmi_w )
+{
+	shaolins_nmi_enable = data;
+
+	if (flip_screen != (data & 0x01))
+	{
+		flip_screen_set(data & 0x01);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
+}
+
+static void get_bg_tile_info(int tile_index)
+{
+	int attr = colorram[tile_index];
+	int code = videoram[tile_index] + ((attr & 0x40) << 2);
+	int color = (attr & 0x0f) + 16 * palettebank;
+	int flags = (attr & 0x20) ? TILE_FLIPY : 0;
+
+	SET_TILE_INFO(0, code, color, flags)
+}
+
+VIDEO_START( shaolins )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	tilemap_set_scroll_cols(bg_tilemap, 32);
+
+	return 0;
+}
+
+static void shaolins_draw_sprites( struct mame_bitmap *bitmap )
 {
 	int offs;
-	int sx,sy;
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = 0;offs < videoram_size;offs++)
-	{
-		if (dirtybuffer[offs])
-		{
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + ((colorram[offs] & 0x40) << 2),
-					(colorram[offs] & 0x0f) + 16 * palettebank,
-					0,colorram[offs] & 0x20,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the temporary bitmap to the screen */
-	{
-		int scroll[32], i;
-
-		for (i = 0;i < 4;i++)
-			scroll[i] = 0;
-		for (i = 4;i < 32;i++)
-			scroll[i] = -*shaolins_scroll-1;
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
 
 	for (offs = spriteram_size-32; offs >= 0; offs-=32 ) /* max 24 sprites */
 	{
-		if (spriteram[offs] && spriteram[offs+6]) /* stop rogue sprites on high score screen */
+		if (spriteram[offs] && spriteram[offs + 6]) /* stop rogue sprites on high score screen */
 		{
-			drawgfx(bitmap,Machine->gfx[1],
-					spriteram[offs+8],
-					(spriteram[offs+9] & 0x0f) + 16 * palettebank,
-					!(spriteram[offs+9] & 0x40),(spriteram[offs+9] & 0x80),
-					240-spriteram[offs+6],248-spriteram[offs+4],
-					&Machine->visible_area,TRANSPARENCY_COLOR,0);
-					/* transparency_color, otherwise sprites in test mode are not visible */
+			int code = spriteram[offs + 8];
+			int color = (spriteram[offs + 9] & 0x0f) + 16 * palettebank;
+			int flipx = !(spriteram[offs + 9] & 0x40);
+			int flipy = spriteram[offs + 9] & 0x80;
+			int sx = 240 - spriteram[offs + 6];
+			int sy = 248 - spriteram[offs + 4];
+
+			if (flip_screen)
+			{
+				sx = 240 - sx;
+				sy = 248 - sy;
+				flipx = !flipx;
+				flipy = !flipy;
+			}
+
+			drawgfx(bitmap, Machine->gfx[1],
+				code, color,
+				flipx, flipy,
+				sx, sy,
+				&Machine->visible_area,
+				TRANSPARENCY_COLOR, 0);
+				/* transparency_color, otherwise sprites in test mode are not visible */
 		}
 	}
+}
+
+VIDEO_UPDATE( shaolins )
+{
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	shaolins_draw_sprites(bitmap);
 }

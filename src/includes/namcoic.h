@@ -91,7 +91,7 @@ C102 - Controls CPU access to ROZ Memory Area.
 
 /* for palXOR, supply either 0x0 (normal) or 0xf (palette mapping reversed) */
 void namco_obj_init( int gfxbank, int palXOR, int (*code2tile)( int code ) );
-void namco_obj_draw( struct mame_bitmap *bitmap, int pri );
+void namco_obj_draw( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri );
 
 WRITE16_HANDLER( namco_obj16_w );
 READ16_HANDLER( namco_obj16_r );
@@ -129,8 +129,7 @@ WRITE32_HANDLER( namco_rozvideoram32_w );
 /* C45 Land (Road) Emulation */
 
 int namco_road_init( int gfxbank );
-void namco_road_update( void );
-void namco_road_draw( struct mame_bitmap *bitmap, int pri );
+void namco_road_draw( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri );
 
 READ16_HANDLER( namco_road16_r );
 WRITE16_HANDLER( namco_road16_w );

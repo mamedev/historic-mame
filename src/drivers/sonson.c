@@ -22,8 +22,8 @@ read:
 
 write:
 3000      horizontal scroll
-3008      ? one of these two should be
-3018      ? the watchdog reset
+3008      watchdog reset
+3018      flipscreen (inverted)
 3010      command for the audio CPU
 3019      trigger FIRQ on audio CPU
 
@@ -41,25 +41,28 @@ write:
 4000      8910 #2 control
 4001      8910 #2 write
 
+TODO:
+
+- Fix Service Mode Output Test: press p1/p2 shot to insert coin
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
 
+extern WRITE_HANDLER( sonson_videoram_w );
+extern WRITE_HANDLER( sonson_colorram_w );
+extern WRITE_HANDLER( sonson_scroll_w );
+extern WRITE_HANDLER( sonson_flipscreen_w );
 
-
-extern unsigned char *sonson_scrollx;
-
-PALETTE_INIT( sonson );
-VIDEO_UPDATE( sonson );
-
-
+extern PALETTE_INIT( sonson );
+extern VIDEO_START( sonson );
+extern VIDEO_UPDATE( sonson );
 
 WRITE_HANDLER( sonson_sh_irqtrigger_w )
 {
 	static int last;
-
 
 	if (last == 0 && data == 1)
 	{
@@ -84,13 +87,13 @@ MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x0fff, MWA_RAM },
-	{ 0x1000, 0x13ff, videoram_w, &videoram, &videoram_size },
-	{ 0x1400, 0x17ff, colorram_w, &colorram },
+	{ 0x1000, 0x13ff, sonson_videoram_w, &videoram, &videoram_size },
+	{ 0x1400, 0x17ff, sonson_colorram_w, &colorram },
 	{ 0x2020, 0x207f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x3000, 0x3000, MWA_RAM, &sonson_scrollx },
-{ 0x3008, 0x3008, MWA_NOP },
+	{ 0x3000, 0x3000, sonson_scroll_w },
+	{ 0x3008, 0x3008, MWA_NOP },
 	{ 0x3010, 0x3010, soundlatch_w },
-{ 0x3018, 0x3018, MWA_NOP },
+	{ 0x3018, 0x3018, sonson_flipscreen_w },
 	{ 0x3019, 0x3019, sonson_sh_irqtrigger_w },
 	{ 0x4000, 0xffff, MWA_ROM },
 MEMORY_END
@@ -168,9 +171,7 @@ INPUT_PORTS_START( sonson )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )	/* maybe flip screen */
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
@@ -268,7 +269,7 @@ static MACHINE_DRIVER_START( sonson )
 	MDRV_COLORTABLE_LENGTH(64*4+32*8)
 
 	MDRV_PALETTE_INIT(sonson)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(sonson)
 	MDRV_VIDEO_UPDATE(sonson)
 
 	/* sound hardware */
@@ -345,5 +346,5 @@ ROM_START( sonsonj )
 ROM_END
 
 
-GAMEX( 1984, sonson,  0,      sonson, sonson, 0, ROT0, "Capcom", "Son Son", GAME_NO_COCKTAIL )
-GAMEX( 1984, sonsonj, sonson, sonson, sonson, 0, ROT0, "Capcom", "Son Son (Japan)", GAME_NO_COCKTAIL )
+GAME( 1984, sonson,  0,      sonson, sonson, 0, ROT0, "Capcom", "Son Son" )
+GAME( 1984, sonsonj, sonson, sonson, sonson, 0, ROT0, "Capcom", "Son Son (Japan)" )

@@ -1,36 +1,36 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+static struct tilemap *bg_tilemap;
+
+WRITE_HANDLER( blockade_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
+
+static void get_bg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index];
+
+	SET_TILE_INFO(0, code, 0, 0)
+}
+
+VIDEO_START( blockade )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	return 0;
+}
 
 VIDEO_UPDATE( blockade )
 {
-	int offs;
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy;
-			int charcode;
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-
-			charcode = videoram[offs];
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					charcode,
-					0,
-					0,0,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
-		}
-	}
-
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
 }

@@ -23,7 +23,7 @@ struct Y8950interface
 	int mixing_level[MAX_8950];
 	void (*handler[MAX_8950])(int linestate);
 
-	int rom_region[MAX_8950]; /* delta-T ADPCM ROM region */
+	int rom_region[MAX_8950]; /* delta-T ADPCM ROM/RAM region */
 
 	mem_read_handler keyboardread[MAX_8950];
 	mem_write_handler keyboardwrite[MAX_8950];

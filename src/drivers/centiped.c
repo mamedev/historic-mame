@@ -320,7 +320,7 @@
 #include "vidhrdw/generic.h"
 #include "machine/atari_vg.h"
 #include "centiped.h"
-
+#include "machine/random.h"
 
 
 static int oldpos[4];
@@ -454,7 +454,7 @@ static WRITE_HANDLER( led_w )
 
 static READ_HANDLER( centipdb_rand_r )
 {
-	return rand() % 0xff;
+	return mame_rand() % 0xff;
 }
 
 

@@ -593,7 +593,7 @@ const struct cpu_interface cpuintrf[] =
 	CPU3(ADSP2115, adsp2115, 4,  0,1.00,16,17lew, -1,15,LE,2, 4 ),
 #endif
 #if (HAS_PSXCPU)
-	CPU0(PSXCPU,   mips,	 8, -1,1.00,16,32lew,  0,32,LE,4, 4	),
+	CPU0(PSXCPU,   mips,	 1,  0,1.00,32,32ledw, 0,32,LE,4, 4 ),
 #endif
 #if (HAS_ASAP)
 	#define asap_ICount asap_icount

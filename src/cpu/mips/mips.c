@@ -16,6 +16,13 @@
 #include "mamedbg.h"
 #include "mips.h"
 
+#if 0
+#include "usrintrf.h"
+#define GTELOG( a ) logerror( "%08x: GTE: %08x " a "\n", mipscpu.pc, mipscpu.op ); usrintf_showmessage_secs( 1, "GTE" );
+#else
+#define GTELOG( a )
+#endif
+
 #define EXC_INT ( 0 )
 #define EXC_ADEL ( 4 )
 #define EXC_ADES ( 5 )
@@ -58,18 +65,6 @@
 #define CAUSE_CE2 ( 2L << 28 )
 #define CAUSE_BD ( 1L << 31 )
 
-INLINE UINT32 read_dword(offs_t address)
-{
-	return ((cpu_readmem32lew_word(address) << 16) | cpu_readmem32lew_word(address+2));
-}
-
-INLINE void write_dword(offs_t address,UINT32 data)
-{
-	cpu_writemem32lew_word(address,data >> 16);
-	cpu_writemem32lew_word(address+2,data & 0xffff);
-}
-
-/* there are more registers but the debugger interface is limited to 127 */
 static UINT8 mips_reg_layout[] =
 {
 	MIPS_PC, -1,
@@ -108,7 +103,45 @@ static UINT8 mips_reg_layout[] =
 	MIPS_CP0R24, MIPS_CP0R25, -1,
 	MIPS_CP0R26, MIPS_CP0R27, -1,
 	MIPS_CP0R28, MIPS_CP0R29, -1,
-	MIPS_CP0R30, MIPS_CP0R31, 0
+	MIPS_CP0R30, MIPS_CP0R31, -1,
+	-1,
+	MIPS_CP2DR0, MIPS_CP2DR1, -1,
+	MIPS_CP2DR2, MIPS_CP2DR3, -1,
+	MIPS_CP2DR4, MIPS_CP2DR5, -1,
+	MIPS_CP2DR6, MIPS_CP2DR7, -1,
+	MIPS_CP2DR8, MIPS_CP2DR9, -1,
+	MIPS_CP2DR10, MIPS_CP2DR11, -1,
+	MIPS_CP2DR12, MIPS_CP2DR13, -1,
+	MIPS_CP2DR14, MIPS_CP2DR15, -1,
+	MIPS_CP2DR16, MIPS_CP2DR17, -1,
+	MIPS_CP2DR18, MIPS_CP2DR19, -1,
+	MIPS_CP2DR20, MIPS_CP2DR21, -1,
+	MIPS_CP2DR22, MIPS_CP2DR23, -1,
+	MIPS_CP2DR24, MIPS_CP2DR25, -1,
+	MIPS_CP2DR26, MIPS_CP2DR27, -1,
+	MIPS_CP2DR28, MIPS_CP2DR29, -1,
+	MIPS_CP2DR30, MIPS_CP2DR31, -1,
+	-1,
+	MIPS_CP2CR0, MIPS_CP2CR1, -1,
+	MIPS_CP2CR2, MIPS_CP2CR3, -1,
+	MIPS_CP2CR4, MIPS_CP2CR5, -1,
+	MIPS_CP2CR6, MIPS_CP2CR7, -1,
+	MIPS_CP2CR8, MIPS_CP2CR9, -1,
+	MIPS_CP2CR10, MIPS_CP2CR11, -1,
+	MIPS_CP2CR12, MIPS_CP2CR13, -1,
+	MIPS_CP2CR14, MIPS_CP2CR15, -1,
+	MIPS_CP2CR16, MIPS_CP2CR17, -1,
+	MIPS_CP2CR18, MIPS_CP2CR19, -1,
+	MIPS_CP2CR20, MIPS_CP2CR21, -1,
+	MIPS_CP2CR22, MIPS_CP2CR23, -1,
+	MIPS_CP2CR24, MIPS_CP2CR25, -1,
+#if 0
+/* the debugger interface is limited to 127 & the kludge no longer works */
+	MIPS_CP2CR26, MIPS_CP2CR27, -1,
+	MIPS_CP2CR28, MIPS_CP2CR29, -1,
+	MIPS_CP2CR30, MIPS_CP2CR31,
+#endif
+	0
 };
 
 static UINT8 mips_win_layout[] = {
@@ -129,6 +162,8 @@ typedef struct
 	UINT32 lo;
 	UINT32 r[ 32 ];
 	UINT32 cp0r[ 32 ];
+	PAIR cp2cr[ 32 ];
+	PAIR cp2dr[ 32 ];
 	int (*irq_callback)(int irqline);
 } mips_cpu_context;
 
@@ -172,6 +207,11 @@ static UINT32 mips_mtc0_writemask[]=
 	0x00000000
 };
 
+static UINT32 getcp2dr( int n_reg );
+static void setcp2dr( int n_reg, UINT32 n_value );
+static UINT32 getcp2cr( int n_reg );
+static void setcp2cr( int n_reg, UINT32 n_value );
+static void docop2( int gteop );
 static void mips_exception( int exception );
 
 void mips_stop( void )
@@ -215,11 +255,19 @@ INLINE void mips_delayed_branch( UINT32 adr )
 	}
 }
 
+INLINE void mips_set_pc( unsigned val )
+{
+	mipscpu.pc = val;
+	change_pc32ledw( val );
+	mipscpu.delaypc = 0;
+	mipscpu.delay = 0;
+}
+
 INLINE void mips_advance_pc( void )
 {
 	if( mipscpu.delay )
 	{
-		mips_set_reg( REG_PC, mipscpu.delaypc );
+		mips_set_pc( mipscpu.delaypc );
 	}
 	else
 	{
@@ -242,11 +290,11 @@ static void mips_exception( int exception )
 	}
 	if( mipscpu.cp0r[ CP0_SR ] & SR_BEV )
 	{
-		mips_set_reg( REG_PC, 0xbfc00180 );
+		mips_set_pc( 0xbfc00180 );
 	}
 	else
 	{
-		mips_set_reg( REG_PC, 0x80000080 );
+		mips_set_pc( 0x80000080 );
 	}
 }
 
@@ -259,7 +307,7 @@ void mips_reset( void *param )
 	mips_set_cp0r( CP0_SR, ( mipscpu.cp0r[ CP0_SR ] & ~( SR_TS | SR_SWC | SR_KUC | SR_IEC ) ) | SR_BEV );
 	mips_set_cp0r( CP0_RANDOM, 63 ); /* todo: */
 	mips_set_cp0r( CP0_PRID, 0x00000200 ); /* todo: */
-	mips_set_reg( REG_PC, 0xbfc00000 );
+	mips_set_pc( 0xbfc00000 );
 }
 
 void mips_exit( void )
@@ -273,7 +321,7 @@ int mips_execute( int cycles )
 	{
 		CALL_MAME_DEBUG;
 
-		mipscpu.op = mips_readop32( mipscpu.pc );
+		mipscpu.op = cpu_readop32( mipscpu.pc );
 		switch( INS_OP( mipscpu.op ) )
 		{
 		case OP_SPECIAL:
@@ -858,36 +906,56 @@ int mips_execute( int cycles )
 				switch( INS_RS( mipscpu.op ) )
 				{
 				case RS_MFC:
-					/* todo: */
-					mips_stop();
+					GTELOG( "MFC2" );
+					if( INS_RT( mipscpu.op ) != 0 )
+					{
+						mipscpu.r[ INS_RT( mipscpu.op ) ] = getcp2dr( INS_RD( mipscpu.op ) );
+					}
+					else
+					{
+						getcp2dr( INS_RD( mipscpu.op ) );
+					}
 					mips_advance_pc();
 					break;
 				case RS_CFC:
-					/* todo: */
-					mips_stop();
+					GTELOG( "CFC2" );
+					if( INS_RT( mipscpu.op ) != 0 )
+					{
+						mipscpu.r[ INS_RT( mipscpu.op ) ] = getcp2cr( INS_RD( mipscpu.op ) );
+					}
+					else
+					{
+						getcp2cr( INS_RD( mipscpu.op ) );
+					}
 					mips_advance_pc();
 					break;
 				case RS_MTC:
-					/* todo: */
-					mips_stop();
+					GTELOG( "MTC2" );
+					setcp2dr( INS_RD( mipscpu.op ), mipscpu.r[ INS_RT( mipscpu.op ) ] );
 					mips_advance_pc();
 					break;
 				case RS_CTC:
-					/* todo: */
-					mips_stop();
+					GTELOG( "CTC2" );
+					setcp2cr( INS_RD( mipscpu.op ), mipscpu.r[ INS_RT( mipscpu.op ) ] );
 					mips_advance_pc();
 					break;
 				case RS_BC:
-					mips_stop();
 					switch( INS_RT( mipscpu.op ) )
 					{
 					case RT_BCF:
 						/* todo: */
+						GTELOG( "BCF2" );
 						mips_stop();
 						mips_advance_pc();
 						break;
 					case RT_BCT:
 						/* todo: */
+						GTELOG( "BCT2" );
+						mips_stop();
+						mips_advance_pc();
+						break;
+					default:
+						logerror( "%08x: unknown gpu op %08x\n", mipscpu.pc, mipscpu.op );
 						mips_stop();
 						mips_advance_pc();
 						break;
@@ -897,12 +965,11 @@ int mips_execute( int cycles )
 					switch( INS_CO( mipscpu.op ) )
 					{
 					case 1:
-						/* todo: */
-						mips_stop();
+						docop2( INS_COFUN( mipscpu.op ) );
 						mips_advance_pc();
 						break;
 					default:
-						/* todo: */
+						logerror( "%08x: unknown gte op %08x\n", mipscpu.pc, mipscpu.op );
 						mips_stop();
 						mips_advance_pc();
 						break;
@@ -931,11 +998,11 @@ int mips_execute( int cycles )
 				{
 					if( INS_RT( mipscpu.op ) != 0 )
 					{
-						mipscpu.r[ INS_RT( mipscpu.op ) ] = MIPS_BYTE_EXTEND( cpu_readmem32lew( adr ^ 3 ) );
+						mipscpu.r[ INS_RT( mipscpu.op ) ] = MIPS_BYTE_EXTEND( cpu_readmem32ledw( adr ^ 3 ) );
 					}
 					else
 					{
-						cpu_readmem32lew( adr ^ 3 );
+						cpu_readmem32ledw( adr ^ 3 );
 					}
 					mips_advance_pc();
 				}
@@ -953,11 +1020,11 @@ int mips_execute( int cycles )
 				{
 					if( INS_RT( mipscpu.op ) != 0 )
 					{
-						mipscpu.r[ INS_RT( mipscpu.op ) ] = MIPS_BYTE_EXTEND( cpu_readmem32lew( adr ) );
+						mipscpu.r[ INS_RT( mipscpu.op ) ] = MIPS_BYTE_EXTEND( cpu_readmem32ledw( adr ) );
 					}
 					else
 					{
-						cpu_readmem32lew( adr );
+						cpu_readmem32ledw( adr );
 					}
 					mips_advance_pc();
 				}
@@ -983,11 +1050,11 @@ int mips_execute( int cycles )
 				{
 					if( INS_RT( mipscpu.op ) != 0 )
 					{
-						mipscpu.r[ INS_RT( mipscpu.op ) ] = MIPS_WORD_EXTEND( cpu_readmem32lew_word( adr ^ 2 ) );
+						mipscpu.r[ INS_RT( mipscpu.op ) ] = MIPS_WORD_EXTEND( cpu_readmem32ledw_word( adr ^ 2 ) );
 					}
 					else
 					{
-						cpu_readmem32lew_word( adr ^ 2 );
+						cpu_readmem32ledw_word( adr ^ 2 );
 					}
 					mips_advance_pc();
 				}
@@ -1005,11 +1072,11 @@ int mips_execute( int cycles )
 				{
 					if( INS_RT( mipscpu.op ) != 0 )
 					{
-						mipscpu.r[ INS_RT( mipscpu.op ) ] = MIPS_WORD_EXTEND( cpu_readmem32lew_word( adr ) );
+						mipscpu.r[ INS_RT( mipscpu.op ) ] = MIPS_WORD_EXTEND( cpu_readmem32ledw_word( adr ) );
 					}
 					else
 					{
-						cpu_readmem32lew_word( adr );
+						cpu_readmem32ledw_word( adr );
 					}
 					mips_advance_pc();
 				}
@@ -1038,16 +1105,16 @@ int mips_execute( int cycles )
 						switch( adr & 3 )
 						{
 						case 0:
-							mipscpu.r[ INS_RT( mipscpu.op ) ] = ( mipscpu.r[ INS_RT( mipscpu.op ) ] & 0x00ffffff ) | ( (UINT32)cpu_readmem32lew( adr + 3 ) << 24 );
+							mipscpu.r[ INS_RT( mipscpu.op ) ] = ( mipscpu.r[ INS_RT( mipscpu.op ) ] & 0x00ffffff ) | ( (UINT32)cpu_readmem32ledw( adr + 3 ) << 24 );
 							break;
 						case 1:
-							mipscpu.r[ INS_RT( mipscpu.op ) ] = ( mipscpu.r[ INS_RT( mipscpu.op ) ] & 0x0000ffff ) | ( (UINT32)cpu_readmem32lew_word( adr + 1 ) << 16 );
+							mipscpu.r[ INS_RT( mipscpu.op ) ] = ( mipscpu.r[ INS_RT( mipscpu.op ) ] & 0x0000ffff ) | ( (UINT32)cpu_readmem32ledw_word( adr + 1 ) << 16 );
 							break;
 						case 2:
-							mipscpu.r[ INS_RT( mipscpu.op ) ] = ( mipscpu.r[ INS_RT( mipscpu.op ) ] & 0x000000ff ) | ( (UINT32)cpu_readmem32lew( adr - 1 ) << 8 ) | ( (UINT32)cpu_readmem32lew_word( adr ) << 16 );
+							mipscpu.r[ INS_RT( mipscpu.op ) ] = ( mipscpu.r[ INS_RT( mipscpu.op ) ] & 0x000000ff ) | ( (UINT32)cpu_readmem32ledw( adr - 1 ) << 8 ) | ( (UINT32)cpu_readmem32ledw_word( adr ) << 16 );
 							break;
 						case 3:
-							mipscpu.r[ INS_RT( mipscpu.op ) ] = read_dword( adr - 3 );
+							mipscpu.r[ INS_RT( mipscpu.op ) ] = cpu_readmem32ledw_dword( adr - 3 );
 							break;
 						}
 					}
@@ -1056,17 +1123,17 @@ int mips_execute( int cycles )
 						switch( adr & 3 )
 						{
 						case 0:
-							cpu_readmem32lew( adr + 3 );
+							cpu_readmem32ledw( adr + 3 );
 							break;
 						case 1:
-							cpu_readmem32lew_word( adr + 1 );
+							cpu_readmem32ledw_word( adr + 1 );
 							break;
 						case 2:
-							cpu_readmem32lew( adr - 1 );
-							cpu_readmem32lew_word( adr );
+							cpu_readmem32ledw( adr - 1 );
+							cpu_readmem32ledw_word( adr );
 							break;
 						case 3:
-							read_dword( adr - 3 );
+							cpu_readmem32ledw_dword( adr - 3 );
 							break;
 						}
 					}
@@ -1089,16 +1156,16 @@ int mips_execute( int cycles )
 						switch( adr & 3 )
 						{
 						case 0:
-							mipscpu.r[ INS_RT( mipscpu.op ) ] = ( mipscpu.r[ INS_RT( mipscpu.op ) ] & 0x00ffffff ) | ( (UINT32)cpu_readmem32lew( adr ) << 24 );
+							mipscpu.r[ INS_RT( mipscpu.op ) ] = ( mipscpu.r[ INS_RT( mipscpu.op ) ] & 0x00ffffff ) | ( (UINT32)cpu_readmem32ledw( adr ) << 24 );
 							break;
 						case 1:
-							mipscpu.r[ INS_RT( mipscpu.op ) ] = ( mipscpu.r[ INS_RT( mipscpu.op ) ] & 0x0000ffff ) | ( (UINT32)cpu_readmem32lew_word( adr - 1 ) << 16 );
+							mipscpu.r[ INS_RT( mipscpu.op ) ] = ( mipscpu.r[ INS_RT( mipscpu.op ) ] & 0x0000ffff ) | ( (UINT32)cpu_readmem32ledw_word( adr - 1 ) << 16 );
 							break;
 						case 2:
-							mipscpu.r[ INS_RT( mipscpu.op ) ] = ( mipscpu.r[ INS_RT( mipscpu.op ) ] & 0x000000ff ) | ( (UINT32)cpu_readmem32lew_word( adr - 2 ) << 8 ) | ( (UINT32)cpu_readmem32lew( adr ) << 24 );
+							mipscpu.r[ INS_RT( mipscpu.op ) ] = ( mipscpu.r[ INS_RT( mipscpu.op ) ] & 0x000000ff ) | ( (UINT32)cpu_readmem32ledw_word( adr - 2 ) << 8 ) | ( (UINT32)cpu_readmem32ledw( adr ) << 24 );
 							break;
 						case 3:
-							mipscpu.r[ INS_RT( mipscpu.op ) ] = read_dword( adr - 3 );
+							mipscpu.r[ INS_RT( mipscpu.op ) ] = cpu_readmem32ledw_dword( adr - 3 );
 							break;
 						}
 					}
@@ -1107,17 +1174,17 @@ int mips_execute( int cycles )
 						switch( adr & 3 )
 						{
 						case 0:
-							cpu_readmem32lew( adr );
+							cpu_readmem32ledw( adr );
 							break;
 						case 1:
-							cpu_readmem32lew_word( adr - 1 );
+							cpu_readmem32ledw_word( adr - 1 );
 							break;
 						case 2:
-							cpu_readmem32lew_word( adr - 2 );
-							cpu_readmem32lew( adr );
+							cpu_readmem32ledw_word( adr - 2 );
+							cpu_readmem32ledw( adr );
 							break;
 						case 3:
-							read_dword( adr - 3 );
+							cpu_readmem32ledw_dword( adr - 3 );
 							break;
 						}
 					}
@@ -1145,11 +1212,11 @@ int mips_execute( int cycles )
 				{
 					if( INS_RT( mipscpu.op ) != 0 )
 					{
-						mipscpu.r[ INS_RT( mipscpu.op ) ] = read_dword( adr );
+						mipscpu.r[ INS_RT( mipscpu.op ) ] = cpu_readmem32ledw_dword( adr );
 					}
 					else
 					{
-						read_dword( adr );
+						cpu_readmem32ledw_dword( adr );
 					}
 					mips_advance_pc();
 				}
@@ -1175,11 +1242,11 @@ int mips_execute( int cycles )
 				{
 					if( INS_RT( mipscpu.op ) != 0 )
 					{
-						mipscpu.r[ INS_RT( mipscpu.op ) ] = cpu_readmem32lew( adr ^ 3 );
+						mipscpu.r[ INS_RT( mipscpu.op ) ] = cpu_readmem32ledw( adr ^ 3 );
 					}
 					else
 					{
-						cpu_readmem32lew( adr ^ 3 );
+						cpu_readmem32ledw( adr ^ 3 );
 					}
 					mips_advance_pc();
 				}
@@ -1197,11 +1264,11 @@ int mips_execute( int cycles )
 				{
 					if( INS_RT( mipscpu.op ) != 0 )
 					{
-						mipscpu.r[ INS_RT( mipscpu.op ) ] = cpu_readmem32lew( adr );
+						mipscpu.r[ INS_RT( mipscpu.op ) ] = cpu_readmem32ledw( adr );
 					}
 					else
 					{
-						cpu_readmem32lew( adr );
+						cpu_readmem32ledw( adr );
 					}
 					mips_advance_pc();
 				}
@@ -1227,11 +1294,11 @@ int mips_execute( int cycles )
 				{
 					if( INS_RT( mipscpu.op ) != 0 )
 					{
-						mipscpu.r[ INS_RT( mipscpu.op ) ] = cpu_readmem32lew_word( adr ^ 2 );
+						mipscpu.r[ INS_RT( mipscpu.op ) ] = cpu_readmem32ledw_word( adr ^ 2 );
 					}
 					else
 					{
-						cpu_readmem32lew_word( adr ^ 2 );
+						cpu_readmem32ledw_word( adr ^ 2 );
 					}
 					mips_advance_pc();
 				}
@@ -1249,11 +1316,11 @@ int mips_execute( int cycles )
 				{
 					if( INS_RT( mipscpu.op ) != 0 )
 					{
-						mipscpu.r[ INS_RT( mipscpu.op ) ] = cpu_readmem32lew_word( adr );
+						mipscpu.r[ INS_RT( mipscpu.op ) ] = cpu_readmem32ledw_word( adr );
 					}
 					else
 					{
-						cpu_readmem32lew_word( adr );
+						cpu_readmem32ledw_word( adr );
 					}
 					mips_advance_pc();
 				}
@@ -1282,16 +1349,16 @@ int mips_execute( int cycles )
 						switch( adr & 3 )
 						{
 						case 0:
-							mipscpu.r[ INS_RT( mipscpu.op ) ] = read_dword( adr );
+							mipscpu.r[ INS_RT( mipscpu.op ) ] = cpu_readmem32ledw_dword( adr );
 							break;
 						case 1:
-							mipscpu.r[ INS_RT( mipscpu.op ) ] = ( mipscpu.r[ INS_RT( mipscpu.op ) ] & 0xff000000 ) | cpu_readmem32lew_word( adr - 1 ) | ( (UINT32)cpu_readmem32lew( adr + 1 ) << 16 );
+							mipscpu.r[ INS_RT( mipscpu.op ) ] = ( mipscpu.r[ INS_RT( mipscpu.op ) ] & 0xff000000 ) | cpu_readmem32ledw_word( adr - 1 ) | ( (UINT32)cpu_readmem32ledw( adr + 1 ) << 16 );
 							break;
 						case 2:
-							mipscpu.r[ INS_RT( mipscpu.op ) ] = ( mipscpu.r[ INS_RT( mipscpu.op ) ] & 0xffff0000 ) | cpu_readmem32lew_word( adr - 2 );
+							mipscpu.r[ INS_RT( mipscpu.op ) ] = ( mipscpu.r[ INS_RT( mipscpu.op ) ] & 0xffff0000 ) | cpu_readmem32ledw_word( adr - 2 );
 							break;
 						case 3:
-							mipscpu.r[ INS_RT( mipscpu.op ) ] = ( mipscpu.r[ INS_RT( mipscpu.op ) ] & 0xffffff00 ) | cpu_readmem32lew( adr - 3 );
+							mipscpu.r[ INS_RT( mipscpu.op ) ] = ( mipscpu.r[ INS_RT( mipscpu.op ) ] & 0xffffff00 ) | cpu_readmem32ledw( adr - 3 );
 							break;
 						}
 					}
@@ -1300,17 +1367,17 @@ int mips_execute( int cycles )
 						switch( adr & 3 )
 						{
 						case 0:
-							read_dword( adr );
+							cpu_readmem32ledw_dword( adr );
 							break;
 						case 1:
-							cpu_readmem32lew_word( adr - 1 );
-							cpu_readmem32lew( adr + 1 );
+							cpu_readmem32ledw_word( adr - 1 );
+							cpu_readmem32ledw( adr + 1 );
 							break;
 						case 2:
-							cpu_readmem32lew_word( adr - 2 );
+							cpu_readmem32ledw_word( adr - 2 );
 							break;
 						case 3:
-							cpu_readmem32lew( adr - 3 );
+							cpu_readmem32ledw( adr - 3 );
 							break;
 						}
 					}
@@ -1333,16 +1400,16 @@ int mips_execute( int cycles )
 						switch( adr & 3 )
 						{
 						case 0:
-							mipscpu.r[ INS_RT( mipscpu.op ) ] = read_dword( adr );
+							mipscpu.r[ INS_RT( mipscpu.op ) ] = cpu_readmem32ledw_dword( adr );
 							break;
 						case 1:
-							mipscpu.r[ INS_RT( mipscpu.op ) ] = ( mipscpu.r[ INS_RT( mipscpu.op ) ] & 0xff000000 ) | cpu_readmem32lew( adr ) | ( (UINT32)cpu_readmem32lew_word( adr + 1 ) << 8 );
+							mipscpu.r[ INS_RT( mipscpu.op ) ] = ( mipscpu.r[ INS_RT( mipscpu.op ) ] & 0xff000000 ) | cpu_readmem32ledw( adr ) | ( (UINT32)cpu_readmem32ledw_word( adr + 1 ) << 8 );
 							break;
 						case 2:
-							mipscpu.r[ INS_RT( mipscpu.op ) ] = ( mipscpu.r[ INS_RT( mipscpu.op ) ] & 0xffff0000 ) | cpu_readmem32lew_word( adr );
+							mipscpu.r[ INS_RT( mipscpu.op ) ] = ( mipscpu.r[ INS_RT( mipscpu.op ) ] & 0xffff0000 ) | cpu_readmem32ledw_word( adr );
 							break;
 						case 3:
-							mipscpu.r[ INS_RT( mipscpu.op ) ] = ( mipscpu.r[ INS_RT( mipscpu.op ) ] & 0xffffff00 ) | cpu_readmem32lew( adr );
+							mipscpu.r[ INS_RT( mipscpu.op ) ] = ( mipscpu.r[ INS_RT( mipscpu.op ) ] & 0xffffff00 ) | cpu_readmem32ledw( adr );
 							break;
 						}
 					}
@@ -1351,17 +1418,17 @@ int mips_execute( int cycles )
 						switch( adr & 3 )
 						{
 						case 0:
-							read_dword( adr );
+							cpu_readmem32ledw_dword( adr );
 							break;
 						case 1:
-							cpu_readmem32lew( adr );
-							cpu_readmem32lew_word( adr + 1 );
+							cpu_readmem32ledw( adr );
+							cpu_readmem32ledw_word( adr + 1 );
 							break;
 						case 2:
-							cpu_readmem32lew_word( adr );
+							cpu_readmem32ledw_word( adr );
 							break;
 						case 3:
-							cpu_readmem32lew( adr );
+							cpu_readmem32ledw( adr );
 							break;
 						}
 					}
@@ -1387,7 +1454,7 @@ int mips_execute( int cycles )
 				}
 				else
 				{
-					cpu_writemem32lew( adr ^ 3, mipscpu.r[ INS_RT( mipscpu.op ) ] );
+					cpu_writemem32ledw( adr ^ 3, mipscpu.r[ INS_RT( mipscpu.op ) ] );
 					mips_advance_pc();
 				}
 			}
@@ -1402,7 +1469,7 @@ int mips_execute( int cycles )
 				}
 				else
 				{
-					cpu_writemem32lew( adr, mipscpu.r[ INS_RT( mipscpu.op ) ] );
+					cpu_writemem32ledw( adr, mipscpu.r[ INS_RT( mipscpu.op ) ] );
 					mips_advance_pc();
 				}
 			}
@@ -1425,7 +1492,7 @@ int mips_execute( int cycles )
 				}
 				else
 				{
-					cpu_writemem32lew_word( adr ^ 2, mipscpu.r[ INS_RT( mipscpu.op ) ] );
+					cpu_writemem32ledw_word( adr ^ 2, mipscpu.r[ INS_RT( mipscpu.op ) ] );
 					mips_advance_pc();
 				}
 			}
@@ -1440,7 +1507,7 @@ int mips_execute( int cycles )
 				}
 				else
 				{
-					cpu_writemem32lew_word( adr, mipscpu.r[ INS_RT( mipscpu.op ) ] );
+					cpu_writemem32ledw_word( adr, mipscpu.r[ INS_RT( mipscpu.op ) ] );
 					mips_advance_pc();
 				}
 			}
@@ -1466,17 +1533,17 @@ int mips_execute( int cycles )
 					switch( adr & 3 )
 					{
 					case 0:
-						cpu_writemem32lew( adr + 3, mipscpu.r[ INS_RT( mipscpu.op ) ] >> 24 );
+						cpu_writemem32ledw( adr + 3, mipscpu.r[ INS_RT( mipscpu.op ) ] >> 24 );
 						break;
 					case 1:
-						cpu_writemem32lew_word( adr + 1, mipscpu.r[ INS_RT( mipscpu.op ) ] >> 16 );
+						cpu_writemem32ledw_word( adr + 1, mipscpu.r[ INS_RT( mipscpu.op ) ] >> 16 );
 						break;
 					case 2:
-						cpu_writemem32lew( adr - 1, mipscpu.r[ INS_RT( mipscpu.op ) ] >> 8 );
-						cpu_writemem32lew_word( adr, mipscpu.r[ INS_RT( mipscpu.op ) ] >> 16 );
+						cpu_writemem32ledw( adr - 1, mipscpu.r[ INS_RT( mipscpu.op ) ] >> 8 );
+						cpu_writemem32ledw_word( adr, mipscpu.r[ INS_RT( mipscpu.op ) ] >> 16 );
 						break;
 					case 3:
-						write_dword( adr - 3, mipscpu.r[ INS_RT( mipscpu.op ) ] );
+						cpu_writemem32ledw_dword( adr - 3, mipscpu.r[ INS_RT( mipscpu.op ) ] );
 						break;
 					}
 					mips_advance_pc();
@@ -1496,17 +1563,17 @@ int mips_execute( int cycles )
 					switch( adr & 3 )
 					{
 					case 0:
-						cpu_writemem32lew( adr, mipscpu.r[ INS_RT( mipscpu.op ) ] >> 24 );
+						cpu_writemem32ledw( adr, mipscpu.r[ INS_RT( mipscpu.op ) ] >> 24 );
 						break;
 					case 1:
-						cpu_writemem32lew_word( adr - 1, mipscpu.r[ INS_RT( mipscpu.op ) ] >> 16 );
+						cpu_writemem32ledw_word( adr - 1, mipscpu.r[ INS_RT( mipscpu.op ) ] >> 16 );
 						break;
 					case 2:
-						cpu_writemem32lew_word( adr - 2, mipscpu.r[ INS_RT( mipscpu.op ) ] >> 8 );
-						cpu_writemem32lew( adr, mipscpu.r[ INS_RT( mipscpu.op ) ] >> 24 );
+						cpu_writemem32ledw_word( adr - 2, mipscpu.r[ INS_RT( mipscpu.op ) ] >> 8 );
+						cpu_writemem32ledw( adr, mipscpu.r[ INS_RT( mipscpu.op ) ] >> 24 );
 						break;
 					case 3:
-						write_dword( adr - 3, mipscpu.r[ INS_RT( mipscpu.op ) ] );
+						cpu_writemem32ledw_dword( adr - 3, mipscpu.r[ INS_RT( mipscpu.op ) ] );
 						break;
 					}
 					mips_advance_pc();
@@ -1536,7 +1603,7 @@ int mips_execute( int cycles )
 				}
 				else
 				{
-					write_dword( adr, mipscpu.r[ INS_RT( mipscpu.op ) ] );
+					cpu_writemem32ledw_dword( adr, mipscpu.r[ INS_RT( mipscpu.op ) ] );
 					mips_advance_pc();
 				}
 			}
@@ -1562,17 +1629,17 @@ int mips_execute( int cycles )
 					switch( adr & 3 )
 					{
 					case 0:
-						write_dword( adr, mipscpu.r[ INS_RT( mipscpu.op ) ] );
+						cpu_writemem32ledw_dword( adr, mipscpu.r[ INS_RT( mipscpu.op ) ] );
 						break;
 					case 1:
-						cpu_writemem32lew_word( adr - 1, mipscpu.r[ INS_RT( mipscpu.op ) ] );
-						cpu_writemem32lew( adr + 1, mipscpu.r[ INS_RT( mipscpu.op ) ] >> 16 );
+						cpu_writemem32ledw_word( adr - 1, mipscpu.r[ INS_RT( mipscpu.op ) ] );
+						cpu_writemem32ledw( adr + 1, mipscpu.r[ INS_RT( mipscpu.op ) ] >> 16 );
 						break;
 					case 2:
-						cpu_writemem32lew_word( adr - 2, mipscpu.r[ INS_RT( mipscpu.op ) ] );
+						cpu_writemem32ledw_word( adr - 2, mipscpu.r[ INS_RT( mipscpu.op ) ] );
 						break;
 					case 3:
-						cpu_writemem32lew( adr - 3, mipscpu.r[ INS_RT( mipscpu.op ) ] );
+						cpu_writemem32ledw( adr - 3, mipscpu.r[ INS_RT( mipscpu.op ) ] );
 						break;
 					}
 					mips_advance_pc();
@@ -1592,17 +1659,17 @@ int mips_execute( int cycles )
 					switch( adr & 3 )
 					{
 					case 0:
-						write_dword( adr, mipscpu.r[ INS_RT( mipscpu.op ) ] );
+						cpu_writemem32ledw_dword( adr, mipscpu.r[ INS_RT( mipscpu.op ) ] );
 						break;
 					case 1:
-						cpu_writemem32lew( adr, mipscpu.r[ INS_RT( mipscpu.op ) ] );
-						cpu_writemem32lew_word( adr + 1, mipscpu.r[ INS_RT( mipscpu.op ) ] >> 8 );
+						cpu_writemem32ledw( adr, mipscpu.r[ INS_RT( mipscpu.op ) ] );
+						cpu_writemem32ledw_word( adr + 1, mipscpu.r[ INS_RT( mipscpu.op ) ] >> 8 );
 						break;
 					case 2:
-						cpu_writemem32lew_word( adr, mipscpu.r[ INS_RT( mipscpu.op ) ] );
+						cpu_writemem32ledw_word( adr, mipscpu.r[ INS_RT( mipscpu.op ) ] );
 						break;
 					case 3:
-						cpu_writemem32lew( adr, mipscpu.r[ INS_RT( mipscpu.op ) ] );
+						cpu_writemem32ledw( adr, mipscpu.r[ INS_RT( mipscpu.op ) ] );
 						break;
 					}
 					mips_advance_pc();
@@ -1615,8 +1682,27 @@ int mips_execute( int cycles )
 			mips_advance_pc();
 			break;
 		case OP_LWC2:
-			/* todo: */
-			mips_stop();
+			GTELOG( "LWC2" );
+			if( ( mipscpu.cp0r[ CP0_SR ] & SR_CU2 ) == 0 )
+			{
+				mips_exception( EXC_CPU );
+				mips_set_cp0r( CP0_CAUSE, ( mipscpu.cp0r[ CP0_CAUSE ] & ~CAUSE_CE ) | CAUSE_CE2 );
+			}
+			else
+			{
+				UINT32 adr;
+				adr = mipscpu.r[ INS_RS( mipscpu.op ) ] + MIPS_WORD_EXTEND( INS_IMMEDIATE( mipscpu.op ) );
+				if( ( adr & ( ( ( mipscpu.cp0r[ CP0_SR ] & SR_KUC ) << 30 ) | 3 ) ) != 0 )
+				{
+					mips_exception( EXC_ADEL );
+					mips_set_cp0r( CP0_BADVADDR, adr );
+				}
+				else
+				{
+					setcp2dr( INS_RT( mipscpu.op ), cpu_readmem32ledw_dword( adr ) );
+					mips_advance_pc();
+				}
+			}
 			mips_advance_pc();
 			break;
 		case OP_SWC1:
@@ -1625,8 +1711,27 @@ int mips_execute( int cycles )
 			mips_advance_pc();
 			break;
 		case OP_SWC2:
-			/* todo: */
-			mips_stop();
+			GTELOG( "SWC2" );
+			if( ( mipscpu.cp0r[ CP0_SR ] & SR_CU2 ) == 0 )
+			{
+				mips_exception( EXC_CPU );
+				mips_set_cp0r( CP0_CAUSE, ( mipscpu.cp0r[ CP0_CAUSE ] & ~CAUSE_CE ) | CAUSE_CE2 );
+			}
+			else
+			{
+				UINT32 adr;
+				adr = mipscpu.r[ INS_RS( mipscpu.op ) ] + MIPS_WORD_EXTEND( INS_IMMEDIATE( mipscpu.op ) );
+				if( ( adr & ( ( ( mipscpu.cp0r[ CP0_SR ] & SR_KUC ) << 30 ) | 3 ) ) != 0 )
+				{
+					mips_exception( EXC_ADES );
+					mips_set_cp0r( CP0_BADVADDR, adr );
+				}
+				else
+				{
+					cpu_writemem32ledw_dword( adr, getcp2dr( INS_RT( mipscpu.op ) ) );
+					mips_advance_pc();
+				}
+			}
 			mips_advance_pc();
 			break;
 		default:
@@ -1654,7 +1759,7 @@ void mips_set_context( void *src )
 	if( src )
 	{
 		mipscpu = *(mips_cpu_context *)src;
-		change_pc32lew( mipscpu.pc );
+		change_pc32ledw( mipscpu.pc );
 	}
 }
 
@@ -1662,8 +1767,13 @@ unsigned mips_get_reg( int regnum )
 {
 	switch( regnum )
 	{
-	case REG_PC:
+	case REG_PC:		return mipscpu.pc;
 	case MIPS_PC:		return mipscpu.pc;
+	case REG_SP:
+		/* because there is no hardware stack and the pipeline causes the cpu to execute the
+		instruction after a subroutine call before the subroutine is executed there is little
+		chance of cmd_step_over() in mamedbg.c working. */
+						return 0;
 	case MIPS_DELAYPC:	return mipscpu.delaypc;
 	case MIPS_DELAY:	return mipscpu.delay;
 	case MIPS_HI:		return mipscpu.hi;
@@ -1732,6 +1842,70 @@ unsigned mips_get_reg( int regnum )
 	case MIPS_CP0R29:	return mipscpu.cp0r[ 29 ];
 	case MIPS_CP0R30:	return mipscpu.cp0r[ 30 ];
 	case MIPS_CP0R31:	return mipscpu.cp0r[ 31 ];
+	case MIPS_CP2DR0:	return mipscpu.cp2dr[ 0 ].d;
+	case MIPS_CP2DR1:	return mipscpu.cp2dr[ 1 ].d;
+	case MIPS_CP2DR2:	return mipscpu.cp2dr[ 2 ].d;
+	case MIPS_CP2DR3:	return mipscpu.cp2dr[ 3 ].d;
+	case MIPS_CP2DR4:	return mipscpu.cp2dr[ 4 ].d;
+	case MIPS_CP2DR5:	return mipscpu.cp2dr[ 5 ].d;
+	case MIPS_CP2DR6:	return mipscpu.cp2dr[ 6 ].d;
+	case MIPS_CP2DR7:	return mipscpu.cp2dr[ 7 ].d;
+	case MIPS_CP2DR8:	return mipscpu.cp2dr[ 8 ].d;
+	case MIPS_CP2DR9:	return mipscpu.cp2dr[ 9 ].d;
+	case MIPS_CP2DR10:	return mipscpu.cp2dr[ 10 ].d;
+	case MIPS_CP2DR11:	return mipscpu.cp2dr[ 11 ].d;
+	case MIPS_CP2DR12:	return mipscpu.cp2dr[ 12 ].d;
+	case MIPS_CP2DR13:	return mipscpu.cp2dr[ 13 ].d;
+	case MIPS_CP2DR14:	return mipscpu.cp2dr[ 14 ].d;
+	case MIPS_CP2DR15:	return mipscpu.cp2dr[ 15 ].d;
+	case MIPS_CP2DR16:	return mipscpu.cp2dr[ 16 ].d;
+	case MIPS_CP2DR17:	return mipscpu.cp2dr[ 17 ].d;
+	case MIPS_CP2DR18:	return mipscpu.cp2dr[ 18 ].d;
+	case MIPS_CP2DR19:	return mipscpu.cp2dr[ 19 ].d;
+	case MIPS_CP2DR20:	return mipscpu.cp2dr[ 20 ].d;
+	case MIPS_CP2DR21:	return mipscpu.cp2dr[ 21 ].d;
+	case MIPS_CP2DR22:	return mipscpu.cp2dr[ 22 ].d;
+	case MIPS_CP2DR23:	return mipscpu.cp2dr[ 23 ].d;
+	case MIPS_CP2DR24:	return mipscpu.cp2dr[ 24 ].d;
+	case MIPS_CP2DR25:	return mipscpu.cp2dr[ 25 ].d;
+	case MIPS_CP2DR26:	return mipscpu.cp2dr[ 26 ].d;
+	case MIPS_CP2DR27:	return mipscpu.cp2dr[ 27 ].d;
+	case MIPS_CP2DR28:	return mipscpu.cp2dr[ 28 ].d;
+	case MIPS_CP2DR29:	return mipscpu.cp2dr[ 29 ].d;
+	case MIPS_CP2DR30:	return mipscpu.cp2dr[ 30 ].d;
+	case MIPS_CP2DR31:	return mipscpu.cp2dr[ 31 ].d;
+	case MIPS_CP2CR0:	return mipscpu.cp2cr[ 0 ].d;
+	case MIPS_CP2CR1:	return mipscpu.cp2cr[ 1 ].d;
+	case MIPS_CP2CR2:	return mipscpu.cp2cr[ 2 ].d;
+	case MIPS_CP2CR3:	return mipscpu.cp2cr[ 3 ].d;
+	case MIPS_CP2CR4:	return mipscpu.cp2cr[ 4 ].d;
+	case MIPS_CP2CR5:	return mipscpu.cp2cr[ 5 ].d;
+	case MIPS_CP2CR6:	return mipscpu.cp2cr[ 6 ].d;
+	case MIPS_CP2CR7:	return mipscpu.cp2cr[ 7 ].d;
+	case MIPS_CP2CR8:	return mipscpu.cp2cr[ 8 ].d;
+	case MIPS_CP2CR9:	return mipscpu.cp2cr[ 9 ].d;
+	case MIPS_CP2CR10:	return mipscpu.cp2cr[ 10 ].d;
+	case MIPS_CP2CR11:	return mipscpu.cp2cr[ 11 ].d;
+	case MIPS_CP2CR12:	return mipscpu.cp2cr[ 12 ].d;
+	case MIPS_CP2CR13:	return mipscpu.cp2cr[ 13 ].d;
+	case MIPS_CP2CR14:	return mipscpu.cp2cr[ 14 ].d;
+	case MIPS_CP2CR15:	return mipscpu.cp2cr[ 15 ].d;
+	case MIPS_CP2CR16:	return mipscpu.cp2cr[ 16 ].d;
+	case MIPS_CP2CR17:	return mipscpu.cp2cr[ 17 ].d;
+	case MIPS_CP2CR18:	return mipscpu.cp2cr[ 18 ].d;
+	case MIPS_CP2CR19:	return mipscpu.cp2cr[ 19 ].d;
+	case MIPS_CP2CR20:	return mipscpu.cp2cr[ 20 ].d;
+	case MIPS_CP2CR21:	return mipscpu.cp2cr[ 21 ].d;
+	case MIPS_CP2CR22:	return mipscpu.cp2cr[ 22 ].d;
+	case MIPS_CP2CR23:	return mipscpu.cp2cr[ 23 ].d;
+	case MIPS_CP2CR24:	return mipscpu.cp2cr[ 24 ].d;
+	case MIPS_CP2CR25:	return mipscpu.cp2cr[ 25 ].d;
+	case MIPS_CP2CR26:	return mipscpu.cp2cr[ 26 ].d;
+	case MIPS_CP2CR27:	return mipscpu.cp2cr[ 27 ].d;
+	case MIPS_CP2CR28:	return mipscpu.cp2cr[ 28 ].d;
+	case MIPS_CP2CR29:	return mipscpu.cp2cr[ 29 ].d;
+	case MIPS_CP2CR30:	return mipscpu.cp2cr[ 30 ].d;
+	case MIPS_CP2CR31:	return mipscpu.cp2cr[ 31 ].d;
 	}
 	return 0;
 }
@@ -1740,82 +1914,147 @@ void mips_set_reg( int regnum, unsigned val )
 {
 	switch( regnum )
 	{
-	case REG_PC:
-	case MIPS_PC:
-		mipscpu.pc = val;
-		change_pc32lew( val );
-		mipscpu.delaypc = 0;
-		mipscpu.delay = 0;
-		break;
-	case MIPS_DELAYPC:	mipscpu.delaypc = val;	break;
-	case MIPS_DELAY:	mipscpu.delay = val & 1; break;
-	case MIPS_HI:		mipscpu.hi = val;		break;
-	case MIPS_LO:		mipscpu.lo = val;		break;
-	case MIPS_R0:		mipscpu.r[ 0 ] = val;	break;
-	case MIPS_R1:		mipscpu.r[ 1 ] = val;	break;
-	case MIPS_R2:		mipscpu.r[ 2 ] = val;	break;
-	case MIPS_R3:		mipscpu.r[ 3 ] = val;	break;
-	case MIPS_R4:		mipscpu.r[ 4 ] = val;	break;
-	case MIPS_R5:		mipscpu.r[ 5 ] = val;	break;
-	case MIPS_R6:		mipscpu.r[ 6 ] = val;	break;
-	case MIPS_R7:		mipscpu.r[ 7 ] = val;	break;
-	case MIPS_R8:		mipscpu.r[ 8 ] = val;	break;
-	case MIPS_R9:		mipscpu.r[ 9 ] = val;	break;
-	case MIPS_R10:		mipscpu.r[ 10 ] = val;	break;
-	case MIPS_R11:		mipscpu.r[ 11 ] = val;	break;
-	case MIPS_R12:		mipscpu.r[ 12 ] = val;	break;
-	case MIPS_R13:		mipscpu.r[ 13 ] = val;	break;
-	case MIPS_R14:		mipscpu.r[ 14 ] = val;	break;
-	case MIPS_R15:		mipscpu.r[ 15 ] = val;	break;
-	case MIPS_R16:		mipscpu.r[ 16 ] = val;	break;
-	case MIPS_R17:		mipscpu.r[ 17 ] = val;	break;
-	case MIPS_R18:		mipscpu.r[ 18 ] = val;	break;
-	case MIPS_R19:		mipscpu.r[ 19 ] = val;	break;
-	case MIPS_R20:		mipscpu.r[ 20 ] = val;	break;
-	case MIPS_R21:		mipscpu.r[ 21 ] = val;	break;
-	case MIPS_R22:		mipscpu.r[ 22 ] = val;	break;
-	case MIPS_R23:		mipscpu.r[ 23 ] = val;	break;
-	case MIPS_R24:		mipscpu.r[ 24 ] = val;	break;
-	case MIPS_R25:		mipscpu.r[ 25 ] = val;	break;
-	case MIPS_R26:		mipscpu.r[ 26 ] = val;	break;
-	case MIPS_R27:		mipscpu.r[ 27 ] = val;	break;
-	case MIPS_R28:		mipscpu.r[ 28 ] = val;	break;
-	case MIPS_R29:		mipscpu.r[ 29 ] = val;	break;
-	case MIPS_R30:		mipscpu.r[ 30 ] = val;	break;
-	case MIPS_R31:		mipscpu.r[ 31 ] = val;	break;
-	case MIPS_CP0R0:	mips_set_cp0r( 0, val );	break;
-	case MIPS_CP0R1:	mips_set_cp0r( 1, val );	break;
-	case MIPS_CP0R2:	mips_set_cp0r( 2, val );	break;
-	case MIPS_CP0R3:	mips_set_cp0r( 3, val );	break;
-	case MIPS_CP0R4:	mips_set_cp0r( 4, val );	break;
-	case MIPS_CP0R5:	mips_set_cp0r( 5, val );	break;
-	case MIPS_CP0R6:	mips_set_cp0r( 6, val );	break;
-	case MIPS_CP0R7:	mips_set_cp0r( 7, val );	break;
-	case MIPS_CP0R8:	mips_set_cp0r( 8, val );	break;
-	case MIPS_CP0R9:	mips_set_cp0r( 9, val );	break;
-	case MIPS_CP0R10:	mips_set_cp0r( 10, val );	break;
-	case MIPS_CP0R11:	mips_set_cp0r( 11, val );	break;
-	case MIPS_CP0R12:	mips_set_cp0r( 12, val );	break;
-	case MIPS_CP0R13:	mips_set_cp0r( 13, val );	break;
-	case MIPS_CP0R14:	mips_set_cp0r( 14, val );	break;
-	case MIPS_CP0R15:	mips_set_cp0r( 15, val );	break;
-	case MIPS_CP0R16:	mips_set_cp0r( 16, val );	break;
-	case MIPS_CP0R17:	mips_set_cp0r( 17, val );	break;
-	case MIPS_CP0R18:	mips_set_cp0r( 18, val );	break;
-	case MIPS_CP0R19:	mips_set_cp0r( 19, val );	break;
-	case MIPS_CP0R20:	mips_set_cp0r( 20, val );	break;
-	case MIPS_CP0R21:	mips_set_cp0r( 21, val );	break;
-	case MIPS_CP0R22:	mips_set_cp0r( 22, val );	break;
-	case MIPS_CP0R23:	mips_set_cp0r( 23, val );	break;
-	case MIPS_CP0R24:	mips_set_cp0r( 24, val );	break;
-	case MIPS_CP0R25:	mips_set_cp0r( 25, val );	break;
-	case MIPS_CP0R26:	mips_set_cp0r( 26, val );	break;
-	case MIPS_CP0R27:	mips_set_cp0r( 27, val );	break;
-	case MIPS_CP0R28:	mips_set_cp0r( 28, val );	break;
-	case MIPS_CP0R29:	mips_set_cp0r( 29, val );	break;
-	case MIPS_CP0R30:	mips_set_cp0r( 30, val );	break;
-	case MIPS_CP0R31:	mips_set_cp0r( 31, val );	break;
+	case REG_PC:		mips_set_pc( val );				break;
+	case MIPS_PC:		mips_set_pc( val );				break;
+	case REG_SP:		/* no stack */					break;
+	case MIPS_DELAYPC:	mipscpu.delaypc = val;			break;
+	case MIPS_DELAY:	mipscpu.delay = val & 1;		break;
+	case MIPS_HI:		mipscpu.hi = val;				break;
+	case MIPS_LO:		mipscpu.lo = val;				break;
+	case MIPS_R0:		mipscpu.r[ 0 ] = val;			break;
+	case MIPS_R1:		mipscpu.r[ 1 ] = val;			break;
+	case MIPS_R2:		mipscpu.r[ 2 ] = val;			break;
+	case MIPS_R3:		mipscpu.r[ 3 ] = val;			break;
+	case MIPS_R4:		mipscpu.r[ 4 ] = val;			break;
+	case MIPS_R5:		mipscpu.r[ 5 ] = val;			break;
+	case MIPS_R6:		mipscpu.r[ 6 ] = val;			break;
+	case MIPS_R7:		mipscpu.r[ 7 ] = val;			break;
+	case MIPS_R8:		mipscpu.r[ 8 ] = val;			break;
+	case MIPS_R9:		mipscpu.r[ 9 ] = val;			break;
+	case MIPS_R10:		mipscpu.r[ 10 ] = val;			break;
+	case MIPS_R11:		mipscpu.r[ 11 ] = val;			break;
+	case MIPS_R12:		mipscpu.r[ 12 ] = val;			break;
+	case MIPS_R13:		mipscpu.r[ 13 ] = val;			break;
+	case MIPS_R14:		mipscpu.r[ 14 ] = val;			break;
+	case MIPS_R15:		mipscpu.r[ 15 ] = val;			break;
+	case MIPS_R16:		mipscpu.r[ 16 ] = val;			break;
+	case MIPS_R17:		mipscpu.r[ 17 ] = val;			break;
+	case MIPS_R18:		mipscpu.r[ 18 ] = val;			break;
+	case MIPS_R19:		mipscpu.r[ 19 ] = val;			break;
+	case MIPS_R20:		mipscpu.r[ 20 ] = val;			break;
+	case MIPS_R21:		mipscpu.r[ 21 ] = val;			break;
+	case MIPS_R22:		mipscpu.r[ 22 ] = val;			break;
+	case MIPS_R23:		mipscpu.r[ 23 ] = val;			break;
+	case MIPS_R24:		mipscpu.r[ 24 ] = val;			break;
+	case MIPS_R25:		mipscpu.r[ 25 ] = val;			break;
+	case MIPS_R26:		mipscpu.r[ 26 ] = val;			break;
+	case MIPS_R27:		mipscpu.r[ 27 ] = val;			break;
+	case MIPS_R28:		mipscpu.r[ 28 ] = val;			break;
+	case MIPS_R29:		mipscpu.r[ 29 ] = val;			break;
+	case MIPS_R30:		mipscpu.r[ 30 ] = val;			break;
+	case MIPS_R31:		mipscpu.r[ 31 ] = val;			break;
+	case MIPS_CP0R0:	mips_set_cp0r( 0, val );		break;
+	case MIPS_CP0R1:	mips_set_cp0r( 1, val );		break;
+	case MIPS_CP0R2:	mips_set_cp0r( 2, val );		break;
+	case MIPS_CP0R3:	mips_set_cp0r( 3, val );		break;
+	case MIPS_CP0R4:	mips_set_cp0r( 4, val );		break;
+	case MIPS_CP0R5:	mips_set_cp0r( 5, val );		break;
+	case MIPS_CP0R6:	mips_set_cp0r( 6, val );		break;
+	case MIPS_CP0R7:	mips_set_cp0r( 7, val );		break;
+	case MIPS_CP0R8:	mips_set_cp0r( 8, val );		break;
+	case MIPS_CP0R9:	mips_set_cp0r( 9, val );		break;
+	case MIPS_CP0R10:	mips_set_cp0r( 10, val );		break;
+	case MIPS_CP0R11:	mips_set_cp0r( 11, val );		break;
+	case MIPS_CP0R12:	mips_set_cp0r( 12, val );		break;
+	case MIPS_CP0R13:	mips_set_cp0r( 13, val );		break;
+	case MIPS_CP0R14:	mips_set_cp0r( 14, val );		break;
+	case MIPS_CP0R15:	mips_set_cp0r( 15, val );		break;
+	case MIPS_CP0R16:	mips_set_cp0r( 16, val );		break;
+	case MIPS_CP0R17:	mips_set_cp0r( 17, val );		break;
+	case MIPS_CP0R18:	mips_set_cp0r( 18, val );		break;
+	case MIPS_CP0R19:	mips_set_cp0r( 19, val );		break;
+	case MIPS_CP0R20:	mips_set_cp0r( 20, val );		break;
+	case MIPS_CP0R21:	mips_set_cp0r( 21, val );		break;
+	case MIPS_CP0R22:	mips_set_cp0r( 22, val );		break;
+	case MIPS_CP0R23:	mips_set_cp0r( 23, val );		break;
+	case MIPS_CP0R24:	mips_set_cp0r( 24, val );		break;
+	case MIPS_CP0R25:	mips_set_cp0r( 25, val );		break;
+	case MIPS_CP0R26:	mips_set_cp0r( 26, val );		break;
+	case MIPS_CP0R27:	mips_set_cp0r( 27, val );		break;
+	case MIPS_CP0R28:	mips_set_cp0r( 28, val );		break;
+	case MIPS_CP0R29:	mips_set_cp0r( 29, val );		break;
+	case MIPS_CP0R30:	mips_set_cp0r( 30, val );		break;
+	case MIPS_CP0R31:	mips_set_cp0r( 31, val );		break;
+	case MIPS_CP2DR0:	mipscpu.cp2dr[ 0 ].d = val;		break;
+	case MIPS_CP2DR1:	mipscpu.cp2dr[ 1 ].d = val;		break;
+	case MIPS_CP2DR2:	mipscpu.cp2dr[ 2 ].d = val;		break;
+	case MIPS_CP2DR3:	mipscpu.cp2dr[ 3 ].d = val;		break;
+	case MIPS_CP2DR4:	mipscpu.cp2dr[ 4 ].d = val;		break;
+	case MIPS_CP2DR5:	mipscpu.cp2dr[ 5 ].d = val;		break;
+	case MIPS_CP2DR6:	mipscpu.cp2dr[ 6 ].d = val;		break;
+	case MIPS_CP2DR7:	mipscpu.cp2dr[ 7 ].d = val;		break;
+	case MIPS_CP2DR8:	mipscpu.cp2dr[ 8 ].d = val;		break;
+	case MIPS_CP2DR9:	mipscpu.cp2dr[ 9 ].d = val;		break;
+	case MIPS_CP2DR10:	mipscpu.cp2dr[ 10 ].d = val;	break;
+	case MIPS_CP2DR11:	mipscpu.cp2dr[ 11 ].d = val;	break;
+	case MIPS_CP2DR12:	mipscpu.cp2dr[ 12 ].d = val;	break;
+	case MIPS_CP2DR13:	mipscpu.cp2dr[ 13 ].d = val;	break;
+	case MIPS_CP2DR14:	mipscpu.cp2dr[ 14 ].d = val;	break;
+	case MIPS_CP2DR15:	mipscpu.cp2dr[ 15 ].d = val;	break;
+	case MIPS_CP2DR16:	mipscpu.cp2dr[ 16 ].d = val;	break;
+	case MIPS_CP2DR17:	mipscpu.cp2dr[ 17 ].d = val;	break;
+	case MIPS_CP2DR18:	mipscpu.cp2dr[ 18 ].d = val;	break;
+	case MIPS_CP2DR19:	mipscpu.cp2dr[ 19 ].d = val;	break;
+	case MIPS_CP2DR20:	mipscpu.cp2dr[ 20 ].d = val;	break;
+	case MIPS_CP2DR21:	mipscpu.cp2dr[ 21 ].d = val;	break;
+	case MIPS_CP2DR22:	mipscpu.cp2dr[ 22 ].d = val;	break;
+	case MIPS_CP2DR23:	mipscpu.cp2dr[ 23 ].d = val;	break;
+	case MIPS_CP2DR24:	mipscpu.cp2dr[ 24 ].d = val;	break;
+	case MIPS_CP2DR25:	mipscpu.cp2dr[ 25 ].d = val;	break;
+	case MIPS_CP2DR26:	mipscpu.cp2dr[ 26 ].d = val;	break;
+	case MIPS_CP2DR27:	mipscpu.cp2dr[ 27 ].d = val;	break;
+	case MIPS_CP2DR28:	mipscpu.cp2dr[ 28 ].d = val;	break;
+	case MIPS_CP2DR29:	mipscpu.cp2dr[ 29 ].d = val;	break;
+	case MIPS_CP2DR30:	mipscpu.cp2dr[ 30 ].d = val;	break;
+	case MIPS_CP2DR31:	mipscpu.cp2dr[ 31 ].d = val;	break;
+	case MIPS_CP2CR0:	mipscpu.cp2cr[ 0 ].d = val;		break;
+	case MIPS_CP2CR1:	mipscpu.cp2cr[ 1 ].d = val;		break;
+	case MIPS_CP2CR2:	mipscpu.cp2cr[ 2 ].d = val;		break;
+	case MIPS_CP2CR3:	mipscpu.cp2cr[ 3 ].d = val;		break;
+	case MIPS_CP2CR4:	mipscpu.cp2cr[ 4 ].d = val;		break;
+	case MIPS_CP2CR5:	mipscpu.cp2cr[ 5 ].d = val;		break;
+	case MIPS_CP2CR6:	mipscpu.cp2cr[ 6 ].d = val;		break;
+	case MIPS_CP2CR7:	mipscpu.cp2cr[ 7 ].d = val;		break;
+	case MIPS_CP2CR8:	mipscpu.cp2cr[ 8 ].d = val;		break;
+	case MIPS_CP2CR9:	mipscpu.cp2cr[ 9 ].d = val;		break;
+	case MIPS_CP2CR10:	mipscpu.cp2cr[ 10 ].d = val;	break;
+	case MIPS_CP2CR11:	mipscpu.cp2cr[ 11 ].d = val;	break;
+	case MIPS_CP2CR12:	mipscpu.cp2cr[ 12 ].d = val;	break;
+	case MIPS_CP2CR13:	mipscpu.cp2cr[ 13 ].d = val;	break;
+	case MIPS_CP2CR14:	mipscpu.cp2cr[ 14 ].d = val;	break;
+	case MIPS_CP2CR15:	mipscpu.cp2cr[ 15 ].d = val;	break;
+	case MIPS_CP2CR16:	mipscpu.cp2cr[ 16 ].d = val;	break;
+	case MIPS_CP2CR17:	mipscpu.cp2cr[ 17 ].d = val;	break;
+	case MIPS_CP2CR18:	mipscpu.cp2cr[ 18 ].d = val;	break;
+	case MIPS_CP2CR19:	mipscpu.cp2cr[ 19 ].d = val;	break;
+	case MIPS_CP2CR20:	mipscpu.cp2cr[ 20 ].d = val;	break;
+	case MIPS_CP2CR21:	mipscpu.cp2cr[ 21 ].d = val;	break;
+	case MIPS_CP2CR22:	mipscpu.cp2cr[ 22 ].d = val;	break;
+	case MIPS_CP2CR23:	mipscpu.cp2cr[ 23 ].d = val;	break;
+	case MIPS_CP2CR24:	mipscpu.cp2cr[ 24 ].d = val;	break;
+	case MIPS_CP2CR25:	mipscpu.cp2cr[ 25 ].d = val;	break;
+	case MIPS_CP2CR26:	mipscpu.cp2cr[ 26 ].d = val;	break;
+	case MIPS_CP2CR27:	mipscpu.cp2cr[ 27 ].d = val;	break;
+	case MIPS_CP2CR28:	mipscpu.cp2cr[ 28 ].d = val;	break;
+	case MIPS_CP2CR29:	mipscpu.cp2cr[ 29 ].d = val;	break;
+	case MIPS_CP2CR30:	mipscpu.cp2cr[ 30 ].d = val;	break;
+	case MIPS_CP2CR31:	mipscpu.cp2cr[ 31 ].d = val;	break;
 	}
+}
+
+void mips_set_nmi_line( int state )
+{
+	/* no nmi */
 }
 
 void mips_set_irq_line( int irqline, int state )
@@ -1882,7 +2121,8 @@ const char *mips_info( void *context, int regnum )
 	static int which = 0;
 	mips_cpu_context *r = context;
 
-	which = (which+1) % 64;
+	which++;
+	which %= 64;
 	buffer[ which ][ 0 ] = '\0';
 	if( !context )
 	{
@@ -1890,6 +2130,8 @@ const char *mips_info( void *context, int regnum )
 		mips_get_context( &tmp );
 		r = &tmp;
 	}
+
+	regnum = (int)(unsigned char)regnum; /* kludge */
 
 	switch( regnum )
 	{
@@ -1962,12 +2204,76 @@ const char *mips_info( void *context, int regnum )
 	case CPU_INFO_REG + MIPS_CP0R29:	sprintf( buffer[ which ], "cp0r29  :%08x", r->cp0r[ 29 ] );		break;
 	case CPU_INFO_REG + MIPS_CP0R30:	sprintf( buffer[ which ], "cp0r30  :%08x", r->cp0r[ 30 ] );		break;
 	case CPU_INFO_REG + MIPS_CP0R31:	sprintf( buffer[ which ], "cp0r31  :%08x", r->cp0r[ 31 ] );		break;
+	case CPU_INFO_REG + MIPS_CP2DR0:	sprintf( buffer[ which ], "vxy0    :%08x", r->cp2dr[ 0 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2DR1:	sprintf( buffer[ which ], "vz0     :%08x", r->cp2dr[ 1 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2DR2:	sprintf( buffer[ which ], "vxy1    :%08x", r->cp2dr[ 2 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2DR3:	sprintf( buffer[ which ], "vz1     :%08x", r->cp2dr[ 3 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2DR4:	sprintf( buffer[ which ], "vxy2    :%08x", r->cp2dr[ 4 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2DR5:	sprintf( buffer[ which ], "vz2     :%08x", r->cp2dr[ 5 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2DR6:	sprintf( buffer[ which ], "rgb     :%08x", r->cp2dr[ 6 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2DR7:	sprintf( buffer[ which ], "otz     :%08x", r->cp2dr[ 7 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2DR8:	sprintf( buffer[ which ], "ir0     :%08x", r->cp2dr[ 8 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2DR9:	sprintf( buffer[ which ], "ir1     :%08x", r->cp2dr[ 9 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2DR10:	sprintf( buffer[ which ], "ir2     :%08x", r->cp2dr[ 10 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2DR11:	sprintf( buffer[ which ], "ir3     :%08x", r->cp2dr[ 11 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2DR12:	sprintf( buffer[ which ], "sxy0    :%08x", r->cp2dr[ 12 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2DR13:	sprintf( buffer[ which ], "sxy1    :%08x", r->cp2dr[ 13 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2DR14:	sprintf( buffer[ which ], "sxy2    :%08x", r->cp2dr[ 14 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2DR15:	sprintf( buffer[ which ], "sxyp    :%08x", r->cp2dr[ 15 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2DR16:	sprintf( buffer[ which ], "sz0     :%08x", r->cp2dr[ 16 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2DR17:	sprintf( buffer[ which ], "sz1     :%08x", r->cp2dr[ 17 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2DR18:	sprintf( buffer[ which ], "sz2     :%08x", r->cp2dr[ 18 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2DR19:	sprintf( buffer[ which ], "sz3     :%08x", r->cp2dr[ 19 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2DR20:	sprintf( buffer[ which ], "rgb0    :%08x", r->cp2dr[ 20 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2DR21:	sprintf( buffer[ which ], "rgb1    :%08x", r->cp2dr[ 21 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2DR22:	sprintf( buffer[ which ], "rgb2    :%08x", r->cp2dr[ 22 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2DR23:	sprintf( buffer[ which ], "res1    :%08x", r->cp2dr[ 23 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2DR24:	sprintf( buffer[ which ], "mac0    :%08x", r->cp2dr[ 24 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2DR25:	sprintf( buffer[ which ], "mac1    :%08x", r->cp2dr[ 25 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2DR26:	sprintf( buffer[ which ], "mac2    :%08x", r->cp2dr[ 26 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2DR27:	sprintf( buffer[ which ], "mac3    :%08x", r->cp2dr[ 27 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2DR28:	sprintf( buffer[ which ], "irgb    :%08x", r->cp2dr[ 28 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2DR29:	sprintf( buffer[ which ], "orgb    :%08x", r->cp2dr[ 29 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2DR30:	sprintf( buffer[ which ], "lzcs    :%08x", r->cp2dr[ 30 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2DR31:	sprintf( buffer[ which ], "lzcr    :%08x", r->cp2dr[ 31 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2CR0:	sprintf( buffer[ which ], "r11r12  :%08x", r->cp2cr[ 0 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2CR1:	sprintf( buffer[ which ], "r13r21  :%08x", r->cp2cr[ 1 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2CR2:	sprintf( buffer[ which ], "r22r23  :%08x", r->cp2cr[ 2 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2CR3:	sprintf( buffer[ which ], "r31r32  :%08x", r->cp2cr[ 3 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2CR4:	sprintf( buffer[ which ], "r33     :%08x", r->cp2cr[ 4 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2CR5:	sprintf( buffer[ which ], "trx     :%08x", r->cp2cr[ 5 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2CR6:	sprintf( buffer[ which ], "try     :%08x", r->cp2cr[ 6 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2CR7:	sprintf( buffer[ which ], "trz     :%08x", r->cp2cr[ 7 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2CR8:	sprintf( buffer[ which ], "l11l12  :%08x", r->cp2cr[ 8 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2CR9:	sprintf( buffer[ which ], "l13l21  :%08x", r->cp2cr[ 9 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2CR10:	sprintf( buffer[ which ], "l22l23  :%08x", r->cp2cr[ 10 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2CR11:	sprintf( buffer[ which ], "l31l32  :%08x", r->cp2cr[ 11 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2CR12:	sprintf( buffer[ which ], "l33     :%08x", r->cp2cr[ 12 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2CR13:	sprintf( buffer[ which ], "rbk     :%08x", r->cp2cr[ 13 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2CR14:	sprintf( buffer[ which ], "gbk     :%08x", r->cp2cr[ 14 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2CR15:	sprintf( buffer[ which ], "bbk     :%08x", r->cp2cr[ 15 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2CR16:	sprintf( buffer[ which ], "lr1lr2  :%08x", r->cp2cr[ 16 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2CR17:	sprintf( buffer[ which ], "lr31g1  :%08x", r->cp2cr[ 17 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2CR18:	sprintf( buffer[ which ], "lg2lg3  :%08x", r->cp2cr[ 18 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2CR19:	sprintf( buffer[ which ], "lb1lb2  :%08x", r->cp2cr[ 19 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2CR20:	sprintf( buffer[ which ], "lb3     :%08x", r->cp2cr[ 20 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2CR21:	sprintf( buffer[ which ], "rfc     :%08x", r->cp2cr[ 21 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2CR22:	sprintf( buffer[ which ], "gfc     :%08x", r->cp2cr[ 22 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2CR23:	sprintf( buffer[ which ], "bfc     :%08x", r->cp2cr[ 23 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2CR24:	sprintf( buffer[ which ], "ofx     :%08x", r->cp2cr[ 24 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2CR25:	sprintf( buffer[ which ], "ofy     :%08x", r->cp2cr[ 25 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2CR26:	sprintf( buffer[ which ], "h       :%08x", r->cp2cr[ 26 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2CR27:	sprintf( buffer[ which ], "dqa     :%08x", r->cp2cr[ 27 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2CR28:	sprintf( buffer[ which ], "dqb     :%08x", r->cp2cr[ 28 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2CR29:	sprintf( buffer[ which ], "zsf3    :%08x", r->cp2cr[ 29 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2CR30:	sprintf( buffer[ which ], "zsf4    :%08x", r->cp2cr[ 30 ].d );	break;
+	case CPU_INFO_REG + MIPS_CP2CR31:	sprintf( buffer[ which ], "flag    :%08x", r->cp2cr[ 31 ].d );	break;
 	case CPU_INFO_FLAGS:		return "";
 	case CPU_INFO_NAME:			return "PSX CPU";
 	case CPU_INFO_FAMILY:		return "mipscpu";
-	case CPU_INFO_VERSION:		return "1.1";
+	case CPU_INFO_VERSION:		return "1.2";
 	case CPU_INFO_FILE:			return __FILE__;
-	case CPU_INFO_CREDITS:		return "Copyright 2000 smf";
+	case CPU_INFO_CREDITS:		return "Copyright 2003 smf";
 	case CPU_INFO_REG_LAYOUT:	return (const char*)mips_reg_layout;
 	case CPU_INFO_WIN_LAYOUT:	return (const char*)mips_win_layout;
 	}
@@ -1977,13 +2283,254 @@ const char *mips_info( void *context, int regnum )
 unsigned mips_dasm( char *buffer, UINT32 pc )
 {
 	unsigned ret;
-	change_pc32lew( pc );
+	change_pc32ledw( pc );
 #ifdef MAME_DEBUG
 	ret = DasmMIPS( buffer, pc );
 #else
-	sprintf( buffer, "$%08x", mips_readop32( pc ) );
+	sprintf( buffer, "$%08x", cpu_readop32( pc ) );
 	ret = 4;
 #endif
 	change_pc32lew( mipscpu.pc );
 	return ret;
+}
+
+/* preliminary gte code */
+
+#define VXY0 ( mipscpu.cp2dr[ 0 ].d )
+#define VX0  ( mipscpu.cp2dr[ 0 ].w.l )
+#define VY0  ( mipscpu.cp2dr[ 0 ].w.h )
+#define VZ0	 ( mipscpu.cp2dr[ 1 ].w.l )
+#define VXY1 ( mipscpu.cp2dr[ 2 ].d )
+#define VX1  ( mipscpu.cp2dr[ 2 ].w.l )
+#define VY1  ( mipscpu.cp2dr[ 2 ].w.h )
+#define VZ1  ( mipscpu.cp2dr[ 3 ].w.l )
+#define VXY2 ( mipscpu.cp2dr[ 4 ].d )
+#define VX2  ( mipscpu.cp2dr[ 4 ].w.l )
+#define VY2  ( mipscpu.cp2dr[ 4 ].w.h )
+#define VZ2  ( mipscpu.cp2dr[ 5 ].w.l )
+#define RGB  ( mipscpu.cp2dr[ 6 ].d )
+#define R    ( mipscpu.cp2dr[ 6 ].b.l )
+#define G    ( mipscpu.cp2dr[ 6 ].b.h )
+#define B    ( mipscpu.cp2dr[ 6 ].b.h2 )
+#define CODE ( mipscpu.cp2dr[ 6 ].b.h3 )
+#define OTZ  ( mipscpu.cp2dr[ 7 ].w.l )
+#define IR0  ( mipscpu.cp2dr[ 8 ].d )
+#define IR1  ( mipscpu.cp2dr[ 9 ].d )
+#define IR2  ( mipscpu.cp2dr[ 10 ].d )
+#define IR3  ( mipscpu.cp2dr[ 11 ].d )
+#define SXY0 ( mipscpu.cp2dr[ 12 ].d )
+#define SX0  ( mipscpu.cp2dr[ 12 ].w.l )
+#define SY0  ( mipscpu.cp2dr[ 12 ].w.h )
+#define SXY1 ( mipscpu.cp2dr[ 13 ].d )
+#define SX1  ( mipscpu.cp2dr[ 13 ].w.l )
+#define SY1  ( mipscpu.cp2dr[ 13 ].w.h )
+#define SXY2 ( mipscpu.cp2dr[ 14 ].d )
+#define SX2  ( mipscpu.cp2dr[ 14 ].w.l )
+#define SY2  ( mipscpu.cp2dr[ 14 ].w.h )
+#define SXYP ( mipscpu.cp2dr[ 15 ].d )
+#define SXP  ( mipscpu.cp2dr[ 15 ].w.l )
+#define SYP  ( mipscpu.cp2dr[ 15 ].w.h )
+#define SZ0  ( mipscpu.cp2dr[ 16 ].w.l )
+#define SZ1  ( mipscpu.cp2dr[ 17 ].w.l )
+#define SZ2  ( mipscpu.cp2dr[ 18 ].w.l )
+#define SZ3  ( mipscpu.cp2dr[ 19 ].w.l )
+#define RGB0 ( mipscpu.cp2dr[ 20 ].d )
+#define R0   ( mipscpu.cp2dr[ 20 ].b.l )
+#define G0   ( mipscpu.cp2dr[ 20 ].b.h )
+#define B0   ( mipscpu.cp2dr[ 20 ].b.h2 )
+#define CD0  ( mipscpu.cp2dr[ 20 ].b.h3 )
+#define RGB1 ( mipscpu.cp2dr[ 21 ].d )
+#define R1   ( mipscpu.cp2dr[ 21 ].b.l )
+#define G1   ( mipscpu.cp2dr[ 21 ].b.h )
+#define B1   ( mipscpu.cp2dr[ 21 ].b.h2 )
+#define CD1  ( mipscpu.cp2dr[ 21 ].b.h3 )
+#define RGB2 ( mipscpu.cp2dr[ 22 ].d )
+#define R2   ( mipscpu.cp2dr[ 22 ].b.l )
+#define G2   ( mipscpu.cp2dr[ 22 ].b.h )
+#define B2   ( mipscpu.cp2dr[ 22 ].b.h2 )
+#define CD2  ( mipscpu.cp2dr[ 22 ].b.h3 )
+#define RES1 ( mipscpu.cp2dr[ 23 ].d )
+#define MAC0 ( mipscpu.cp2dr[ 24 ].d )
+#define MAC1 ( mipscpu.cp2dr[ 25 ].d )
+#define MAC2 ( mipscpu.cp2dr[ 26 ].d )
+#define MAC3 ( mipscpu.cp2dr[ 27 ].d )
+#define IRGB ( mipscpu.cp2dr[ 28 ].d )
+#define ORGB ( mipscpu.cp2dr[ 29 ].d )
+#define LZCS ( mipscpu.cp2dr[ 30 ].d )
+#define LZCR ( mipscpu.cp2dr[ 31 ].d )
+
+#define R11 ( mipscpu.cp2cr[ 0 ].w.l )
+#define R12 ( mipscpu.cp2cr[ 0 ].w.h )
+#define D1  ( mipscpu.cp2cr[ 0 ].d )
+#define R13 ( mipscpu.cp2cr[ 1 ].w.l )
+#define R21 ( mipscpu.cp2cr[ 1 ].w.h )
+#define R22 ( mipscpu.cp2cr[ 2 ].w.l )
+#define R23 ( mipscpu.cp2cr[ 2 ].w.h )
+#define D2  ( mipscpu.cp2cr[ 2 ].d )
+#define R31 ( mipscpu.cp2cr[ 3 ].w.l )
+#define R32 ( mipscpu.cp2cr[ 3 ].w.h )
+#define R33 ( mipscpu.cp2cr[ 4 ].w.l )
+#define D3  ( mipscpu.cp2cr[ 4 ].d )
+#define TRX ( mipscpu.cp2cr[ 5 ].d )
+#define TRY ( mipscpu.cp2cr[ 6 ].d )
+#define TRZ ( mipscpu.cp2cr[ 7 ].d )
+#define L11 ( mipscpu.cp2cr[ 8 ].w.l )
+#define L12 ( mipscpu.cp2cr[ 8 ].w.h )
+#define L13 ( mipscpu.cp2cr[ 9 ].w.l )
+#define L21 ( mipscpu.cp2cr[ 9 ].w.h )
+#define L22 ( mipscpu.cp2cr[ 10 ].w.l )
+#define L23 ( mipscpu.cp2cr[ 10 ].w.h )
+#define L31 ( mipscpu.cp2cr[ 11 ].w.l )
+#define L32 ( mipscpu.cp2cr[ 11 ].w.h )
+#define L33 ( mipscpu.cp2cr[ 12 ].w.l )
+#define RBK ( mipscpu.cp2cr[ 13 ].d )
+#define GBK ( mipscpu.cp2cr[ 14 ].d )
+#define BBK ( mipscpu.cp2cr[ 15 ].d )
+#define LR1 ( mipscpu.cp2cr[ 16 ].w.l )
+#define LR2 ( mipscpu.cp2cr[ 16 ].w.h )
+#define LR3 ( mipscpu.cp2cr[ 17 ].w.l )
+#define LG1 ( mipscpu.cp2cr[ 17 ].w.h )
+#define LG2 ( mipscpu.cp2cr[ 18 ].w.l )
+#define LG3 ( mipscpu.cp2cr[ 18 ].w.h )
+#define LB1 ( mipscpu.cp2cr[ 19 ].w.l )
+#define LB2 ( mipscpu.cp2cr[ 19 ].w.h )
+#define LB3 ( mipscpu.cp2cr[ 20 ].w.l )
+#define RFC ( mipscpu.cp2cr[ 21 ].d )
+#define GFC ( mipscpu.cp2cr[ 22 ].d )
+#define BFC ( mipscpu.cp2cr[ 23 ].d )
+#define OFX ( mipscpu.cp2cr[ 24 ].d )
+#define OFY ( mipscpu.cp2cr[ 25 ].d )
+#define H   ( mipscpu.cp2cr[ 26 ].w.l )
+#define DQA ( mipscpu.cp2cr[ 27 ].w.l )
+#define DQB ( mipscpu.cp2cr[ 28 ].w.l )
+#define ZSF3 ( mipscpu.cp2cr[ 29 ].w.l )
+#define ZSF4 ( mipscpu.cp2cr[ 30 ].w.l )
+#define FLAG ( mipscpu.cp2cr[ 31 ].d )
+
+static UINT32 getcp2dr( int n_reg )
+{
+	if( n_reg == 1 || n_reg == 3 || n_reg == 5 || n_reg == 8 || n_reg == 9 || n_reg == 10 || n_reg == 11 )
+	{
+		mipscpu.cp2dr[ n_reg ].d = (long)(short)mipscpu.cp2dr[ n_reg ].d;
+	}
+	else if( n_reg == 17 || n_reg == 18 || n_reg == 19 )
+	{
+		mipscpu.cp2dr[ n_reg ].d = (unsigned long)(unsigned short)mipscpu.cp2dr[ n_reg ].d;
+	}
+	else if( n_reg == 29 )
+	{
+		IRGB = ( ( IR1 >> 9 ) & 0x1f ) | ( ( IR2 >> 2 ) & 0x3e0 ) | ( ( IR3 << 3 ) & 0x7c00 );
+	}
+	return mipscpu.cp2dr[ n_reg ].d;
+}
+
+static void setcp2dr( int n_reg, UINT32 n_value )
+{
+	mipscpu.cp2dr[ n_reg ].d = n_value;
+
+	if( n_reg == 15 )
+	{
+		SXY0 = SXY1;
+		SXY1 = SXY2;
+		SXY2 = SXYP;
+	}
+	else if( n_reg == 28 )
+	{
+		IR1 = ( IRGB & 0x1f ) << 4;
+		IR2 = ( IRGB & 0x3e0 ) >> 1;
+		IR3 = ( IRGB & 0x7c00 ) >> 6;
+	}
+	else if( n_reg == 30 )
+	{
+		UINT32 n_lzcs = LZCS;
+		UINT32 n_lzcr = 0;
+
+		if( ( n_lzcs & 0x80000000 ) != 0 )
+		{
+			n_lzcs = ~n_lzcs;
+		}
+		while( ( n_lzcs & 0x80000000 ) == 0 )
+		{
+			n_lzcr++;
+			n_lzcs <<= 1;
+		}
+ 		LZCR = n_lzcr;
+	}
+}
+
+static UINT32 getcp2cr( int n_reg )
+{
+	return mipscpu.cp2cr[ n_reg ].d;
+}
+
+static void setcp2cr( int n_reg, UINT32 n_value )
+{
+	mipscpu.cp2cr[ n_reg ].d = n_value;
+}
+
+inline INT32 LIM( INT32 n_value, INT32 n_min, INT32 n_max, int n_bit )
+{
+	if( n_value < n_min )
+	{
+		FLAG |= ( 1 << n_bit );
+		return n_min;
+	}
+	else if( n_value > n_max )
+	{
+		FLAG |= ( 1 << n_bit );
+		return n_max;
+	}
+	return n_value;
+}
+
+#define GTEMULT( a, b ) ( (INT32)(INT16)( a ) * (INT16)( b ) )
+#define NORM_1_3_12( a ) ( (INT32)( a ) / 4096 )
+
+#define A1( a ) ( a )
+#define A2( a ) ( a )
+#define A3( a ) ( a )
+#define	Lm_B1( a ) LIM( ( a ), -32768, 32767, 24 )
+#define	Lm_B2( a ) LIM( ( a ), -32768, 32767, 23 )
+#define	Lm_B3( a ) LIM( ( a ), -32768, 32767, 22 )
+#define F( a ) ( a )
+
+static void docop2( int gteop )
+{
+	switch( gteop )
+	{
+	case 0x1400006:
+		GTELOG( "NCLIP" );
+		MAC0 = F( NORM_1_3_12( GTEMULT( SX0, SY1 ) + GTEMULT( SX1, SY2 ) + GTEMULT( SX2, SY0 ) - GTEMULT( SX0, SY2 ) - GTEMULT( SX1, SY0 ) - GTEMULT( SX2, SY1 ) ) );
+		break;
+	case 0x0486012:
+		GTELOG( "RTV0" );
+		MAC1 = A1( NORM_1_3_12( GTEMULT( R11, VX0 ) + GTEMULT( R12, VY0 ) + GTEMULT( R13, VZ0 ) ) );
+		MAC2 = A2( NORM_1_3_12( GTEMULT( R21, VX0 ) + GTEMULT( R22, VY0 ) + GTEMULT( R23, VZ0 ) ) );
+		MAC3 = A3( NORM_1_3_12( GTEMULT( R31, VX0 ) + GTEMULT( R32, VY0 ) + GTEMULT( R33, VZ0 ) ) );
+		FLAG = 0;
+		IR1 = Lm_B1( MAC1 );
+		IR2 = Lm_B2( MAC2 );
+		IR3 = Lm_B3( MAC3 );
+		break;
+	case 0x0280030:
+		GTELOG( "RTPT" );
+		/* very wrong */
+		SX0 = TRX + VX0;
+		SY0 = TRY + VY0;
+		SZ0 = TRZ + VZ0;
+		SX1 = TRX + VX1;
+		SY1 = TRY + VY1;
+		SZ1 = TRZ + VZ1;
+		SX2 = TRX + VX2;
+		SY2 = TRY + VY2;
+		SZ2 = TRZ + VZ2;
+		SXP = SX2;
+		SYP = SY2;
+		SZ3 = SZ2;
+		break;
+	default:
+		logerror( "%08x: GTE unknown op %08x\n", mipscpu.pc, mipscpu.op );
+		mips_stop();
+		break;
+	}
 }

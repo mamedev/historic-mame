@@ -335,9 +335,8 @@ int Y8950_sh_start(const struct MachineSound *msound)
 
 		/* ADPCM ROM data */
 		Y8950SetDeltaTMemory(i,
-							(void *)(memory_region(intf_8950->rom_region[i])),
-									memory_region_length(intf_8950->rom_region[i])
-							);
+			(void *)(memory_region(intf_8950->rom_region[i])),
+				memory_region_length(intf_8950->rom_region[i]) );
 
 		stream_8950[i] = stream_init(name,vol,rate,i,Y8950UpdateOne);
 
@@ -397,4 +396,3 @@ READ_HANDLER( Y8950_read_port_1_r ) {
 }
 
 #endif
-

@@ -9,11 +9,9 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+UINT8 *hyperspt_scroll;
 
-unsigned char *hyperspt_scroll;
-static int flipscreen;
-
-
+static struct tilemap *bg_tilemap;
 
 /***************************************************************************
 
@@ -43,7 +41,6 @@ PALETTE_INIT( hyperspt )
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
 		int bit0,bit1,bit2,r,g,b;
-
 
 		/* red component */
 		bit0 = (*color_prom >> 0) & 0x01;
@@ -77,238 +74,132 @@ PALETTE_INIT( hyperspt )
 		COLOR(0,i) = (*(color_prom++) & 0x0f) + 0x10;
 }
 
+WRITE_HANDLER( hyperspt_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
+WRITE_HANDLER( hyperspt_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
-/***************************************************************************
+WRITE_HANDLER( hyperspt_flipscreen_w )
+{
+	if (flip_screen != (data & 0x01))
+	{
+		flip_screen_set(data & 0x01);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
+}
 
-  Start the video hardware emulation.
+static void get_bg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index] + ((colorram[tile_index] & 0x80) << 1) + ((colorram[tile_index] & 0x40) << 3);
+	int color = colorram[tile_index] & 0x0f;
+	int flags = ((colorram[tile_index] & 0x10) ? TILE_FLIPX : 0) | ((colorram[tile_index] & 0x20) ? TILE_FLIPY : 0);
 
-***************************************************************************/
+	SET_TILE_INFO(0, code, color, flags)
+}
+
 VIDEO_START( hyperspt )
 {
-	if ((dirtybuffer = auto_malloc(videoram_size)) == 0)
-		return 1;
-	memset(dirtybuffer,1,videoram_size);
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 64, 32);
 
-	/* Hyper Sports has a virtual screen twice as large as the visible screen */
-	if ((tmpbitmap = auto_bitmap_alloc(2 * Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ( !bg_tilemap )
 		return 1;
+
+	tilemap_set_scroll_rows(bg_tilemap, 32);
 
 	return 0;
 }
 
-
-
-WRITE_HANDLER( hyperspt_flipscreen_w )
-{
-	if (flipscreen != (data & 1))
-	{
-		flipscreen = data & 1;
-		memset(dirtybuffer,1,videoram_size);
-	}
-}
-
-
-
-/***************************************************************************
-
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
-VIDEO_UPDATE( hyperspt )
+static void hyperspt_draw_sprites( struct mame_bitmap *bitmap )
 {
 	int offs;
 
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy,flipx,flipy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 64;
-			sy = offs / 64;
-			flipx = colorram[offs] & 0x10;
-			flipy = colorram[offs] & 0x20;
-			if (flipscreen)
-			{
-				sx = 63 - sx;
-				sy = 31 - sy;
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + ((colorram[offs] & 0x80) << 1) + ((colorram[offs] & 0x40) << 3),
-					colorram[offs] & 0x0f,
-					flipx,flipy,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the temporary bitmap to the screen */
-	{
-		int scroll[32];
-
-
-		if (flipscreen)
-		{
-			for (offs = 0;offs < 32;offs++)
-				scroll[31-offs] = 256 - (hyperspt_scroll[2*offs] + 256 * (hyperspt_scroll[2*offs+1] & 1));
-		}
-		else
-		{
-			for (offs = 0;offs < 32;offs++)
-				scroll[offs] = -(hyperspt_scroll[2*offs] + 256 * (hyperspt_scroll[2*offs+1] & 1));
-		}
-
-		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-
-	}
-
-
-	/* Draw the sprites. */
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
-		int sx,sy,flipx,flipy;
+		int sx = spriteram[offs + 3];
+		int sy = 240 - spriteram[offs + 1];
+		int flipx = ~spriteram[offs] & 0x40;
+		int flipy = spriteram[offs] & 0x80;
 
-
-		sx = spriteram[offs + 3];
-		sy = 240 - spriteram[offs + 1];
-		flipx = ~spriteram[offs] & 0x40;
-		flipy = spriteram[offs] & 0x80;
-		if (flipscreen)
+		if (flip_screen)
 		{
 			sy = 240 - sy;
 			flipy = !flipy;
 		}
 
-		/* Note that this adjustement must be done AFTER handling flipscreen, thus */
+		/* Note that this adjustment must be done AFTER handling flip_screen, thus */
 		/* proving that this is a hardware related "feature" */
+
 		sy += 1;
 
 		drawgfx(bitmap,Machine->gfx[1],
-				spriteram[offs + 2] + 8 * (spriteram[offs] & 0x20),
-				spriteram[offs] & 0x0f,
-				flipx,flipy,
-				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_COLOR,0);
+			spriteram[offs + 2] + 8 * (spriteram[offs] & 0x20),
+			spriteram[offs] & 0x0f,
+			flipx, flipy,
+			sx, sy,
+			&Machine->visible_area,
+			TRANSPARENCY_COLOR, 0);
 
 		/* redraw with wraparound */
+
 		drawgfx(bitmap,Machine->gfx[1],
-				spriteram[offs + 2] + 8 * (spriteram[offs] & 0x20),
-				spriteram[offs] & 0x0f,
-				flipx,flipy,
-				sx-256,sy,
-				&Machine->visible_area,TRANSPARENCY_COLOR,0);
+			spriteram[offs + 2] + 8 * (spriteram[offs] & 0x20),
+			spriteram[offs] & 0x0f,
+			flipx, flipy,
+			sx - 256, sy,
+			&Machine->visible_area,
+			TRANSPARENCY_COLOR, 0);
 	}
 }
 
-
-
-/* Only difference with Hyper Sports is the way tiles are selected (1536 tiles */
-/* instad of 1024). Plus, it has 256 sprites instead of 512. */
-VIDEO_UPDATE( roadf )
+VIDEO_UPDATE( hyperspt )
 {
-	int offs;
+	int row;
 
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
+	for (row = 0; row < 32; row++)
 	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy,flipx,flipy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 64;
-			sy = offs / 64;
-			flipx = colorram[offs] & 0x10;
-			flipy = 0;	/* no vertical flip */
-			if (flipscreen)
-			{
-				sx = 63 - sx;
-				sy = 31 - sy;
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + ((colorram[offs] & 0x80) << 1) + ((colorram[offs] & 0x60) << 4),
-					colorram[offs] & 0x0f,
-					flipx,flipy,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
+		int scrollx = hyperspt_scroll[row * 2] + (hyperspt_scroll[(row * 2) + 1] & 0x01) * 256;
+		if (flip_screen) scrollx = -scrollx;
+		tilemap_set_scrollx(bg_tilemap, row, scrollx);
 	}
 
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	hyperspt_draw_sprites(bitmap);
+}
 
-	/* copy the temporary bitmap to the screen */
-	{
-		int scroll[32];
+/* Road Fighter */
 
+static void roadf_get_bg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index] + ((colorram[tile_index] & 0x80) << 1) + ((colorram[tile_index] & 0x60) << 4);
+	int color = colorram[tile_index] & 0x0f;
+	int flags = (colorram[tile_index] & 0x10) ? TILE_FLIPX : 0;
 
-		if (flipscreen)
-		{
-			for (offs = 0;offs < 32;offs++)
-				scroll[31-offs] = 256 - (hyperspt_scroll[2*offs] + 256 * (hyperspt_scroll[2*offs+1] & 1));
-		}
-		else
-		{
-			for (offs = 0;offs < 32;offs++)
-				scroll[offs] = -(hyperspt_scroll[2*offs] + 256 * (hyperspt_scroll[2*offs+1] & 1));
-		}
+	SET_TILE_INFO(0, code, color, flags)
+}
 
-		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+VIDEO_START( roadf )
+{
+	bg_tilemap = tilemap_create(roadf_get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 64, 32);
 
-	}
+	if ( !bg_tilemap )
+		return 1;
 
+	tilemap_set_scroll_rows(bg_tilemap, 32);
 
-	/* Draw the sprites. */
-	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
-	{
-		int sx,sy,flipx,flipy;
-
-
-		sx = spriteram[offs + 3];
-		sy = 240 - spriteram[offs + 1];
-		flipx = ~spriteram[offs] & 0x40;
-		flipy = spriteram[offs] & 0x80;
-		if (flipscreen)
-		{
-			sy = 240 - sy;
-			flipy = !flipy;
-		}
-
-		/* Note that this adjustement must be done AFTER handling flipscreen, thus */
-		/* proving that this is a hardware related "feature" */
-		sy += 1;
-
-		drawgfx(bitmap,Machine->gfx[1],
-				spriteram[offs + 2] + 8 * (spriteram[offs] & 0x20),
-				spriteram[offs] & 0x0f,
-				flipx,flipy,
-				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_COLOR,0);
-
-		/* redraw with wraparound (actually not needed in Road Fighter) */
-		drawgfx(bitmap,Machine->gfx[1],
-				spriteram[offs + 2] + 8 * (spriteram[offs] & 0x20),
-				spriteram[offs] & 0x0f,
-				flipx,flipy,
-				sx-256,sy,
-				&Machine->visible_area,TRANSPARENCY_COLOR,0);
-	}
+	return 0;
 }

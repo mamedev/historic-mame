@@ -172,29 +172,32 @@ static int p[8] = { 255,255,255,255,255,255,255,255 };
 static int t[2] = { 1,1 };
 
 
-WRITE_HANDLER( radarscp_grid_enable_w );
-WRITE_HANDLER( radarscp_grid_color_w );
-WRITE_HANDLER( dkong_flipscreen_w );
-WRITE_HANDLER( dkongjr_gfxbank_w );
-WRITE_HANDLER( dkong3_gfxbank_w );
-WRITE_HANDLER( dkong_palettebank_w );
-PALETTE_INIT( dkong );
-PALETTE_INIT( dkong3 );
-VIDEO_START( dkong );
-VIDEO_UPDATE( radarscp );
-VIDEO_UPDATE( dkong );
+extern WRITE_HANDLER( radarscp_grid_enable_w );
+extern WRITE_HANDLER( radarscp_grid_color_w );
+extern WRITE_HANDLER( dkong_flipscreen_w );
+extern WRITE_HANDLER( dkongjr_gfxbank_w );
+extern WRITE_HANDLER( dkong3_gfxbank_w );
+extern WRITE_HANDLER( dkong_palettebank_w );
 
-WRITE_HANDLER( dkong_sh_w );
-WRITE_HANDLER( dkongjr_sh_death_w );
-WRITE_HANDLER( dkongjr_sh_drop_w );
-WRITE_HANDLER( dkongjr_sh_roar_w );
-WRITE_HANDLER( dkongjr_sh_jump_w );
-WRITE_HANDLER( dkongjr_sh_walk_w );
-WRITE_HANDLER( dkongjr_sh_climb_w );
-WRITE_HANDLER( dkongjr_sh_land_w );
-WRITE_HANDLER( dkongjr_sh_snapjaw_w );
+extern WRITE_HANDLER( dkong_videoram_w );
 
-WRITE_HANDLER( dkong_sh1_w );
+extern PALETTE_INIT( dkong );
+extern PALETTE_INIT( dkong3 );
+extern VIDEO_START( dkong );
+extern VIDEO_UPDATE( radarscp );
+extern VIDEO_UPDATE( dkong );
+
+extern WRITE_HANDLER( dkong_sh_w );
+extern WRITE_HANDLER( dkongjr_sh_death_w );
+extern WRITE_HANDLER( dkongjr_sh_drop_w );
+extern WRITE_HANDLER( dkongjr_sh_roar_w );
+extern WRITE_HANDLER( dkongjr_sh_jump_w );
+extern WRITE_HANDLER( dkongjr_sh_walk_w );
+extern WRITE_HANDLER( dkongjr_sh_climb_w );
+extern WRITE_HANDLER( dkongjr_sh_land_w );
+extern WRITE_HANDLER( dkongjr_sh_snapjaw_w );
+
+extern WRITE_HANDLER( dkong_sh1_w );
 
 #define ACTIVELOW_PORT_BIT(P,A,D)   ((P & (~(1 << A))) | ((D ^ 1) << A))
 
@@ -218,7 +221,7 @@ static READ_HANDLER( dkong_sh_t0_r )   { return t[0]; }
 static READ_HANDLER( dkong_sh_t1_r )   { return t[1]; }
 static READ_HANDLER( dkong_sh_tune_r )
 {
-	unsigned char *SND = memory_region(REGION_CPU2);
+	UINT8 *SND = memory_region(REGION_CPU2);
 	if (page & 0x40)
 	{
 		switch (offset)
@@ -292,7 +295,7 @@ static MEMORY_WRITE_START( radarscp_writemem )
 	{ 0x6900, 0x6a7f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x6a80, 0x6fff, MWA_RAM },
 	{ 0x7000, 0x73ff, MWA_RAM },    /* ???? */
-	{ 0x7400, 0x77ff, videoram_w, &videoram, &videoram_size },
+	{ 0x7400, 0x77ff, dkong_videoram_w, &videoram },
 	{ 0x7800, 0x7803, MWA_RAM },	/* ???? */
 	{ 0x7808, 0x7808, MWA_RAM },	/* ???? */
 	{ 0x7c00, 0x7c00, dkong_sh_tuneselect_w },
@@ -316,7 +319,7 @@ static MEMORY_WRITE_START( dkong_writemem )
 	{ 0x6900, 0x6a7f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x6a80, 0x6fff, MWA_RAM },
 	{ 0x7000, 0x73ff, MWA_RAM },    /* ???? */
-	{ 0x7400, 0x77ff, videoram_w, &videoram, &videoram_size },
+	{ 0x7400, 0x77ff, dkong_videoram_w, &videoram },
 	{ 0x7800, 0x7803, MWA_RAM },	/* ???? */
 	{ 0x7808, 0x7808, MWA_RAM },	/* ???? */
 	{ 0x7c00, 0x7c00, dkong_sh_tuneselect_w },
@@ -361,7 +364,7 @@ static MEMORY_WRITE_START( hunchbkd_writemem )
 	{ 0x1585, 0x1585, MWA_RAM },			/* written a lot - every int */
 	{ 0x1586, 0x1587, dkong_palettebank_w },
 	{ 0x1600, 0x17ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x1800, 0x1bff, videoram_w, &videoram, &videoram_size },
+	{ 0x1800, 0x1bff, dkong_videoram_w, &videoram },
 	{ 0x1C00, 0x1fff, MWA_RAM },
 	{ 0x2000, 0x2fff, MWA_ROM },
 	{ 0x3000, 0x3fff, hunchbks_mirror_w },
@@ -453,7 +456,7 @@ static MEMORY_WRITE_START( dkongjr_writemem )
 	{ 0x6000, 0x68ff, MWA_RAM },
 	{ 0x6900, 0x6a7f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x6a80, 0x6fff, MWA_RAM },
-	{ 0x7400, 0x77ff, videoram_w, &videoram, &videoram_size },
+	{ 0x7400, 0x77ff, dkong_videoram_w, &videoram },
 	{ 0x7800, 0x7803, MWA_RAM },	/* ???? */
 	{ 0x7808, 0x7808, MWA_RAM },	/* ???? */
 	{ 0x7c00, 0x7c00, dkongjr_sh_tuneselect_w },
@@ -499,7 +502,7 @@ static MEMORY_WRITE_START( dkong3_writemem )
 	{ 0x6000, 0x68ff, MWA_RAM },
 	{ 0x6900, 0x6a7f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x6a80, 0x6fff, MWA_RAM },
-	{ 0x7400, 0x77ff, videoram_w, &videoram, &videoram_size },
+	{ 0x7400, 0x77ff, dkong_videoram_w, &videoram },
 	{ 0x7c00, 0x7c00, soundlatch_w },
 	{ 0x7c80, 0x7c80, soundlatch2_w },
 	{ 0x7d00, 0x7d00, soundlatch3_w },
@@ -1760,7 +1763,7 @@ static DRIVER_INIT( herodk )
 
 static DRIVER_INIT( radarscp )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 
 
 	/* TODO: Radarscope does a check on bit 6 of 7d00 which prevent it from working. */

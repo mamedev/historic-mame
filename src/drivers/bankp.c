@@ -37,15 +37,19 @@ write:
 #include "vidhrdw/generic.h"
 
 
-extern unsigned char *bankp_videoram2;
-extern unsigned char *bankp_colorram2;
-PALETTE_INIT( bankp );
-WRITE_HANDLER( bankp_videoram2_w );
-WRITE_HANDLER( bankp_colorram2_w );
-WRITE_HANDLER( bankp_scroll_w );
-WRITE_HANDLER( bankp_out_w );
-VIDEO_START( bankp );
-VIDEO_UPDATE( bankp );
+extern UINT8 *bankp_videoram2;
+extern UINT8 *bankp_colorram2;
+
+extern WRITE_HANDLER( bankp_videoram_w );
+extern WRITE_HANDLER( bankp_colorram_w );
+extern WRITE_HANDLER( bankp_videoram2_w );
+extern WRITE_HANDLER( bankp_colorram2_w );
+extern WRITE_HANDLER( bankp_scroll_w );
+extern WRITE_HANDLER( bankp_out_w );
+
+extern PALETTE_INIT( bankp );
+extern VIDEO_START( bankp );
+extern VIDEO_UPDATE( bankp );
 
 
 
@@ -58,8 +62,8 @@ MEMORY_END
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xdfff, MWA_ROM },
 	{ 0xe000, 0xe7ff, MWA_RAM },
-	{ 0xf000, 0xf3ff, videoram_w, &videoram, &videoram_size },
-	{ 0xf400, 0xf7ff, colorram_w, &colorram },
+	{ 0xf000, 0xf3ff, bankp_videoram_w, &videoram },
+	{ 0xf400, 0xf7ff, bankp_colorram_w, &colorram },
 	{ 0xf800, 0xfbff, bankp_videoram2_w, &bankp_videoram2 },
 	{ 0xfc00, 0xffff, bankp_colorram2_w, &bankp_colorram2 },
 MEMORY_END
@@ -235,7 +239,6 @@ ROM_START( bankp )
 	ROM_LOAD( "pr6178.clr",   0x0020, 0x100, CRC(0acca001) SHA1(54c354d825a24a9085867b114a2cd6835baebe55) ) 	/* charset #1 lookup table */
 	ROM_LOAD( "pr6179.clr",   0x0120, 0x100, CRC(e53bafdb) SHA1(7a414f6db5476dd7d0217e5b846ed931381eda02) ) 	/* charset #2 lookup table */
 ROM_END
-
 
 
 GAME( 1984, bankp, 0, bankp, bankp, 0, ROT0, "[Sanritsu] Sega", "Bank Panic" )

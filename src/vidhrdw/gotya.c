@@ -1,12 +1,12 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
-unsigned char *gotya_scroll;
-unsigned char *gotya_foregroundram;
+UINT8 *gotya_scroll;
+UINT8 *gotya_videoram2;
 
 static int scroll_bit_8;
 
+static struct tilemap *bg_tilemap;
 
 /***************************************************************************
 
@@ -18,32 +18,40 @@ static int scroll_bit_8;
 PALETTE_INIT( gotya )
 {
 	int i;
+
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
-
-	for (i = 0;i < Machine->drv->total_colors;i++)
+	for (i = 0; i < Machine->drv->total_colors; i++)
 	{
-		int bit0,bit1,bit2,r,g,b;
-
+		int bit0, bit1, bit2, r, g, b;
 
 		/* red component */
+
 		bit0 = (*color_prom >> 0) & 0x01;
 		bit1 = (*color_prom >> 1) & 0x01;
 		bit2 = (*color_prom >> 2) & 0x01;
+
 		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
 		/* green component */
+
 		bit0 = (*color_prom >> 3) & 0x01;
 		bit1 = (*color_prom >> 4) & 0x01;
 		bit2 = (*color_prom >> 5) & 0x01;
+
 		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
 		/* blue component */
+
 		bit0 = 0;
 		bit1 = (*color_prom >> 6) & 0x01;
 		bit2 = (*color_prom >> 7) & 0x01;
+
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(i, r, g, b);
+
 		color_prom++;
 	}
 
@@ -52,10 +60,30 @@ PALETTE_INIT( gotya )
 
 	/* character lookup table */
 	/* sprites use the same color lookup table as characters */
-	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = *(color_prom++) & 0x07;
+
+	for (i = 0; i < TOTAL_COLORS(0); i++)
+	{
+		COLOR(0, i) = *(color_prom++) & 0x07;
+	}
 }
 
+WRITE_HANDLER( gotya_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
+
+WRITE_HANDLER( gotya_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
 WRITE_HANDLER( gotya_video_control_w )
 {
@@ -65,25 +93,33 @@ WRITE_HANDLER( gotya_video_control_w )
 
 	scroll_bit_8 = data & 0x01;
 
-	flip_screen_set(data & 0x02);
+	if (flip_screen != (data & 0x02))
+	{
+		flip_screen_set(data & 0x02);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
 }
 
+static void get_bg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index];
+	int color = colorram[tile_index] & 0x0f;
+
+	SET_TILE_INFO(0, code, color, 0)
+}
 
 VIDEO_START( gotya )
 {
-	if ((dirtybuffer = auto_malloc(videoram_size)) == 0)
-		return 1;
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows_flip_xy,
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
-	/* the background area is twice as wide as the screen (actually twice as tall, */
-	/* because this is a vertical game) */
-	if ((tmpbitmap = auto_bitmap_alloc(2*256,Machine->drv->screen_height)) == 0)
+	if ( !bg_tilemap )
 		return 1;
 
 	return 0;
 }
 
-
-static void draw_status_row(struct mame_bitmap *bitmap, int sx, int col)
+static void gotya_draw_status_row( struct mame_bitmap *bitmap, int sx, int col )
 {
 	int row;
 
@@ -92,7 +128,7 @@ static void draw_status_row(struct mame_bitmap *bitmap, int sx, int col)
 		sx = 35 - sx;
 	}
 
-	for (row = 29;row >= 0;row--)
+	for (row = 29; row >= 0; row--)
 	{
 		int sy;
 
@@ -106,82 +142,25 @@ static void draw_status_row(struct mame_bitmap *bitmap, int sx, int col)
 		}
 
 		drawgfx(bitmap,Machine->gfx[0],
-				gotya_foregroundram[row * 32 + col],
-				gotya_foregroundram[row * 32 + col + 0x10] & 0x0f,
-				flip_screen, flip_screen,
-				8*sx,8*sy,
-				&Machine->visible_area,TRANSPARENCY_NONE,0);
+			gotya_videoram2[row * 32 + col],
+			gotya_videoram2[row * 32 + col + 0x10] & 0x0f,
+			flip_screen_x, flip_screen_y,
+			8 * sx, 8 * sy,
+			&Machine->visible_area,
+			TRANSPARENCY_NONE, 0);
 	}
 }
 
-
-VIDEO_UPDATE( gotya )
+static void gotya_draw_sprites( struct mame_bitmap *bitmap )
 {
 	int offs;
 
-
-	if (get_vh_global_attribute_changed())
-	{
-		memset(dirtybuffer,1,videoram_size);
-	}
-
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-    for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-	        int sx,sy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = 31 - (offs % 32);
-			sy = 31 - ((offs & 0x03ff) / 32);
-
-			if (flip_screen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-			}
-
-			if (offs < 0x0400)
-			{
-				sx = sx + 32;
-			}
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs],
-					colorram[offs] & 0x0f,
-					flip_screen,flip_screen,
-					8*sx, 8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-    }
-
-
-	/* copy the background graphics */
-	{
-		int scroll;
-
-
-		scroll = *gotya_scroll + (scroll_bit_8 * 256) + 16;
-
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scroll,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-
-	/* draw the sprites */
 	for (offs = 2; offs < 0x0e; offs += 2)
 	{
-		int code,col,sx,sy;
-
-
-		code = spriteram[offs + 0x01] >> 2;
-		col  = spriteram[offs + 0x11] & 0x0f;
-		sx   = 256 - spriteram[offs + 0x10] + (spriteram[offs + 0x01] & 0x01) * 256;
-		sy   =       spriteram[offs + 0x00];
+		int code = spriteram[offs + 0x01] >> 2;
+		int color = spriteram[offs + 0x11] & 0x0f;
+		int sx = 256 - spriteram[offs + 0x10] + (spriteram[offs + 0x01] & 0x01) * 256;
+		int sy = spriteram[offs + 0x00];
 
 		if (flip_screen)
 		{
@@ -189,18 +168,28 @@ VIDEO_UPDATE( gotya )
 		}
 
 		drawgfx(bitmap,Machine->gfx[1],
-				code,col,
-				flip_screen,flip_screen,
-				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+			code, color,
+			flip_screen_x, flip_screen_y,
+			sx, sy,
+			&Machine->visible_area,
+			TRANSPARENCY_PEN, 0);
 	}
+}
 
+static void gotya_draw_status( struct mame_bitmap *bitmap )
+{
+	gotya_draw_status_row(bitmap, 0,  1);
+	gotya_draw_status_row(bitmap, 1,  0);
+	gotya_draw_status_row(bitmap, 2,  2);	/* these two are blank, but I dont' know if the data comes */
+	gotya_draw_status_row(bitmap, 33, 13);	/* from RAM or 'hardcoded' into the hardware. Likely the latter */
+	gotya_draw_status_row(bitmap, 35, 14);
+	gotya_draw_status_row(bitmap, 34, 15);
+}
 
-	/* draw the status lines */
-	draw_status_row(bitmap, 0,  1);
-	draw_status_row(bitmap, 1,  0);
-	draw_status_row(bitmap, 2,  2);		/* these two are blank, but I dont' know if the data comes */
-	draw_status_row(bitmap, 33, 13);	/* from RAM or 'hardcoded' into the hardware. Likely the latter */
-	draw_status_row(bitmap, 35, 14);
-	draw_status_row(bitmap, 34, 15);
+VIDEO_UPDATE( gotya )
+{
+	tilemap_set_scrollx(bg_tilemap, 0, -(*gotya_scroll + (scroll_bit_8 * 256)) - 2 * 8);
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	gotya_draw_sprites(bitmap);
+	gotya_draw_status(bitmap);
 }

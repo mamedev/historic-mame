@@ -32,21 +32,27 @@ interrupts:
 There is no vblank interrupt. The vblank status is read from IN1.
 Coin insertion in left slot generates a NMI, in right slot an IRQ.
 
+TODO:
+- Coin lockouts are missing. The game only accepts 9 coins, so there has to be
+  a lockout call somewhere.
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
 
+extern READ_HANDLER( ladybug_IN0_r );
+extern READ_HANDLER( ladybug_IN1_r );
+extern INTERRUPT_GEN( ladybug_interrupt );
 
-READ_HANDLER( ladybug_IN0_r );
-READ_HANDLER( ladybug_IN1_r );
-INTERRUPT_GEN( ladybug_interrupt );
+extern WRITE_HANDLER( ladybug_videoram_w );
+extern WRITE_HANDLER( ladybug_colorram_w );
+extern WRITE_HANDLER( ladybug_flipscreen_w );
 
-PALETTE_INIT( ladybug );
-WRITE_HANDLER( ladybug_flipscreen_w );
-VIDEO_UPDATE( ladybug );
-
+extern PALETTE_INIT( ladybug );
+extern VIDEO_START( ladybug );
+extern VIDEO_UPDATE( ladybug );
 
 
 static MEMORY_READ_START( readmem )
@@ -68,11 +74,9 @@ static MEMORY_WRITE_START( writemem )
 	{ 0xa000, 0xa000, ladybug_flipscreen_w },
 	{ 0xb000, 0xbfff, SN76496_0_w },
 	{ 0xc000, 0xcfff, SN76496_1_w },
-	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
-	{ 0xd400, 0xd7ff, colorram_w, &colorram },
+	{ 0xd000, 0xd3ff, ladybug_videoram_w, &videoram },
+	{ 0xd400, 0xd7ff, ladybug_colorram_w, &colorram },
 MEMORY_END
-
-
 
 /***************************************************************************
 
@@ -524,7 +528,7 @@ static MACHINE_DRIVER_START( ladybug )
 	MDRV_COLORTABLE_LENGTH(4*24)
 
 	MDRV_PALETTE_INIT(ladybug)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(ladybug)
 	MDRV_VIDEO_UPDATE(ladybug)
 
 	/* sound hardware */
@@ -692,9 +696,9 @@ DRIVER_INIT( dorodon )
 	/* Decode the opcodes */
 
 	offs_t i;
-	data8_t *rom = memory_region(REGION_CPU1);
+	UINT8 *rom = memory_region(REGION_CPU1);
 	offs_t diff = memory_region_length(REGION_CPU1) / 2;
-	data8_t *table = memory_region(REGION_USER1);
+	UINT8 *table = memory_region(REGION_USER1);
 
 	memory_set_opcode_base(0,rom+diff);
 
@@ -704,10 +708,9 @@ DRIVER_INIT( dorodon )
 	}
 }
 
-
+GAME( 1981, cavenger, 0,       ladybug, cavenger, 0,       ROT0,   "Universal", "Cosmic Avenger" )
 GAME( 1981, ladybug,  0,       ladybug, ladybug,  0,       ROT270, "Universal", "Lady Bug" )
 GAME( 1981, ladybugb, ladybug, ladybug, ladybug,  0,       ROT270, "bootleg",   "Lady Bug (bootleg)" )
-GAME( 1981?,snapjack, 0,       ladybug, snapjack, 0,       ROT0,   "Universal", "Snap Jack" )
-GAME( 1981, cavenger, 0,       ladybug, cavenger, 0,       ROT0,   "Universal", "Cosmic Avenger" )
-GAME( 1982?,dorodon,  0,       ladybug, dorodon,  dorodon, ROT270, "Falcon",    "Dorodon (set 1)" )
-GAME( 1982?,dorodon2, dorodon, ladybug, dorodon,  dorodon, ROT270, "Falcon",    "Dorodon (set 2)" )
+GAME( 1982, dorodon,  0,       ladybug, dorodon,  dorodon, ROT270, "Falcon",    "Dorodon (set 1)" )
+GAME( 1982, dorodon2, dorodon, ladybug, dorodon,  dorodon, ROT270, "Falcon",    "Dorodon (set 2)" )
+GAME( 1982, snapjack, 0,       ladybug, snapjack, 0,       ROT0,   "Universal", "Snap Jack" )

@@ -20,14 +20,14 @@ MAIN BOARD:
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
 
+extern WRITE_HANDLER( mikie_videoram_w );
+extern WRITE_HANDLER( mikie_colorram_w );
+extern WRITE_HANDLER( mikie_palettebank_w );
+extern WRITE_HANDLER( mikie_flipscreen_w );
 
-
-WRITE_HANDLER( mikie_palettebank_w );
-WRITE_HANDLER( mikie_flipscreen_w );
-PALETTE_INIT( mikie );
-VIDEO_UPDATE( mikie );
-
-
+extern PALETTE_INIT( mikie );
+extern VIDEO_START( mikie );
+extern VIDEO_UPDATE( mikie );
 
 static READ_HANDLER( mikie_sh_timer_r )
 {
@@ -85,8 +85,8 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x2400, 0x2400, soundlatch_w },
 	{ 0x2800, 0x288f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x2890, 0x37ff, MWA_RAM },
-	{ 0x3800, 0x3bff, colorram_w, &colorram },
-	{ 0x3c00, 0x3fff, videoram_w, &videoram, &videoram_size },
+	{ 0x3800, 0x3bff, mikie_colorram_w, &colorram },
+	{ 0x3c00, 0x3fff, mikie_videoram_w, &videoram },
 	{ 0x6000, 0xffff, MWA_ROM },
 MEMORY_END
 
@@ -279,7 +279,7 @@ static MACHINE_DRIVER_START( mikie )
 	MDRV_COLORTABLE_LENGTH(16*8*16+16*8*16)
 
 	MDRV_PALETTE_INIT(mikie)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(mikie)
 	MDRV_VIDEO_UPDATE(mikie)
 
 	/* sound hardware */

@@ -88,6 +88,8 @@ static int single_step;
 static int showfps;
 static int showfpstemp;
 
+static int show_profiler;
+
 UINT8 ui_dirty;
 
 
@@ -2814,7 +2816,7 @@ static int displayhistory (struct mame_bitmap *bitmap, int selected)
 	static char *buf = 0;
 	int maxcols,maxrows;
 	int sel;
-
+	int bufsize = 256 * 1024; // 256KB of history.dat buffer, enough for everything
 
 	sel = selected - 1;
 
@@ -2827,15 +2829,12 @@ static int displayhistory (struct mame_bitmap *bitmap, int selected)
 	if (!buf)
 	{
 		/* allocate a buffer for the text */
-		#ifndef MESS
-		buf = malloc (8192);
-		#else
-		buf = malloc (200*1024);
-		#endif
+		buf = malloc (bufsize);
+
 		if (buf)
 		{
 			/* try to load entry */
-			if (load_driver_history (Machine->gamedrv, buf, 200*1024) == 0)
+			if (load_driver_history (Machine->gamedrv, buf, bufsize) == 0)
 			{
 				scroll = 0;
 				wordwrap_text_buffer (buf, maxcols);
@@ -2883,6 +2882,17 @@ static int displayhistory (struct mame_bitmap *bitmap, int selected)
 		{
 			if (scroll == 0) scroll = 2;	/* 1 would be the same as 0, but with arrow on top */
 			else scroll++;
+		}
+
+		if (input_ui_pressed_repeat(IPT_UI_PAN_UP, 4))
+		{
+			scroll -= maxrows - 2;
+			if (scroll < 0) scroll = 0;
+		}
+
+		if (input_ui_pressed_repeat(IPT_UI_PAN_DOWN, 4))
+		{
+			scroll += maxrows - 2;
 		}
 
 		if (input_ui_pressed(IPT_UI_SELECT))
@@ -3873,8 +3883,46 @@ void ui_show_fps_temp(double seconds)
 		showfpstemp = (int)(seconds * Machine->drv->frames_per_second);
 }
 
+void ui_show_fps_set(int show)
+{
+	if (show)
+	{
+		showfps = 1;
+	}
+	else
+	{
+		showfps = 0;
+		showfpstemp = 0;
+		schedule_full_refresh();
+	}
+}
 
-static void display_fps(struct mame_bitmap *bitmap)
+int ui_show_fps_get(void)
+{
+	return showfps || showfpstemp;
+}
+
+void ui_show_profiler_set(int show)
+{
+	if (show)
+	{
+		show_profiler = 1;
+		profiler_start();
+	}
+	else
+	{
+		show_profiler = 0;
+		profiler_stop();
+		schedule_full_refresh();
+	}
+}
+
+int ui_show_profiler_get(void)
+{
+	return show_profiler;
+}
+
+void ui_display_fps(struct mame_bitmap *bitmap)
 {
 	const char *text, *end;
 	char textbuf[256];
@@ -3923,8 +3971,6 @@ static void display_fps(struct mame_bitmap *bitmap)
 
 int handle_user_interface(struct mame_bitmap *bitmap)
 {
-	static int show_profiler;
-
 #ifdef MESS
 	extern int mess_pause_for_ui;
 #endif
@@ -4127,14 +4173,7 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 
 	if (input_ui_pressed(IPT_UI_SHOW_PROFILER))
 	{
-		show_profiler ^= 1;
-		if (show_profiler)
-			profiler_start();
-		else
-		{
-			profiler_stop();
-			schedule_full_refresh();
-		}
+		ui_show_profiler_set(!ui_show_profiler_get());
 	}
 
 	if (show_profiler) profiler_show(bitmap);
@@ -4143,20 +4182,8 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 	/* show FPS display? */
 	if (input_ui_pressed(IPT_UI_SHOW_FPS))
 	{
-		/* if we're temporarily on, turn it off immediately */
-		if (showfpstemp)
-		{
-			showfpstemp = 0;
-			schedule_full_refresh();
-		}
-
-		/* otherwise, just toggle; force a refresh if going off */
-		else
-		{
-			showfps ^= 1;
-			if (!showfps)
-				schedule_full_refresh();
-		}
+		/* toggle fps */
+		ui_show_fps_set(!ui_show_fps_get());
 	}
 
 
@@ -4177,7 +4204,7 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 	}
 
 	/* add the FPS counter */
-	display_fps(bitmap);
+	ui_display_fps(bitmap);
 
 	return 0;
 }

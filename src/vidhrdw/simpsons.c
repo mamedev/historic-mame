@@ -74,13 +74,33 @@ static WRITE_HANDLER( simpsons_K052109_w )
 
 static READ_HANDLER( simpsons_K053247_r )
 {
-	if (offset < 0x1000) return K053247_r(offset);
+	int offs;
+
+	if (offset < 0x1000)
+	{
+		offs = offset >> 1;
+
+		if (offset & 1)
+			return(spriteram16[offs] & 0xff);
+		else
+			return(spriteram16[offs] >> 8);
+	}
 	else return simpsons_xtraram[offset - 0x1000];
 }
 
 static WRITE_HANDLER( simpsons_K053247_w )
 {
-	if (offset < 0x1000) K053247_w(offset,data);
+	int offs;
+
+	if (offset < 0x1000)
+	{
+		offs = offset >> 1;
+
+		if (offset & 1)
+			spriteram16[offs] = (spriteram16[offs] & 0xff00) | data;
+		else
+			spriteram16[offs] = (spriteram16[offs] & 0x00ff) | (data<<8);
+	}
 	else simpsons_xtraram[offset - 0x1000] = data;
 }
 

@@ -12,12 +12,14 @@
 #include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
 
-static int bg_colorbase,sprite_colorbase;
+static int sprite_colorbase;
 static int layer_colorbase[4], layerpri[3];
-static int moo_scrolld[2][4][2] = {
- 	{{-23, 0 }, {-27, 0}, {-29, 0}, {-31, 0}},
- 	{{-23-4, 0 }, {-27, 0}, {-29, 0}, {-31, 0}}
-};
+static int alpha_enabled;
+
+void moo_set_alpha(int on)
+{
+	alpha_enabled = on;
+}
 
 static void moo_sprite_callback(int *code, int *color, int *priority_mask)
 {
@@ -33,19 +35,50 @@ static void moo_sprite_callback(int *code, int *color, int *priority_mask)
 
 static void moo_tile_callback(int layer, int *code, int *color)
 {
-	tile_info.flags = TILE_FLIPYX((*color) & 3);
-	*color = layer_colorbase[layer] | ((*color & 0xf0) >> 4);
+	*color = layer_colorbase[layer] | (*color>>2 & 0x0f);
 }
 
 VIDEO_START(moo)
 {
-	K053251_vh_start();
+	int offsx, offsy;
 
-	K054157_vh_start(REGION_GFX1, 0, moo_scrolld, NORMAL_PLANE_ORDER, moo_tile_callback);
-	if (K053247_vh_start(REGION_GFX2, -24, 23, NORMAL_PLANE_ORDER, moo_sprite_callback))
+	if (Machine->color_depth != 32) return 1; // ensure correct bpp to avoid crashing in-game
+
+	alpha_enabled = 0;
+
+	K053251_vh_start();
+	K054338_vh_start();
+
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_4, 1, NULL, moo_tile_callback)) return 1;
+
+	if (!strcmp(Machine->gamedrv->name, "bucky") || !strcmp(Machine->gamedrv->name, "buckyua"))
 	{
-		return 1;
+		// Bucky doesn't chain tilemaps
+		K056832_set_LayerAssociation(0);
+
+		K056832_set_LayerOffset(0, -2, 0);
+		K056832_set_LayerOffset(1,  2, 0);
+		K056832_set_LayerOffset(2,  4, 0);
+		K056832_set_LayerOffset(3,  6, 0);
+
+		offsx = -48;
+		offsy =  23;
 	}
+	else
+	{
+		// other than the intro showing one blank line alignment is good through the game
+		K056832_set_LayerOffset(0, -2+1, 0);
+		K056832_set_LayerOffset(1,  2+1, 0);
+		K056832_set_LayerOffset(2,  4+1, 0);
+		K056832_set_LayerOffset(3,  6+1, 0);
+
+		offsx = -48+1;
+		offsy =  23;
+	}
+
+	if (K053247_vh_start(REGION_GFX2, offsx, offsy, NORMAL_PLANE_ORDER, moo_sprite_callback)) return 1;
+
+	K054338_invert_alpha(0);
 
 	return 0;
 }
@@ -68,16 +101,39 @@ static void sortlayers(int *layer,int *pri)
 
 VIDEO_UPDATE(moo)
 {
+	const int K053251_CI[4] = { K053251_CI1, K053251_CI2, K053251_CI3, K053251_CI4 };
 	int layers[3];
+	int bg_colorbase, new_colorbase, plane, dirty, alpha;
 
 	bg_colorbase       = K053251_get_palette_index(K053251_CI1);
 	sprite_colorbase   = K053251_get_palette_index(K053251_CI0);
 	layer_colorbase[0] = 0x70;
-	layer_colorbase[1] = K053251_get_palette_index(K053251_CI2);
-	layer_colorbase[2] = K053251_get_palette_index(K053251_CI3);
-	layer_colorbase[3] = K053251_get_palette_index(K053251_CI4);
 
-	K054157_tilemap_update();
+	if (K056832_get_LayerAssociation())
+	{
+		for (plane=1; plane<4; plane++)
+		{
+			new_colorbase = K053251_get_palette_index(K053251_CI[plane]);
+			if (layer_colorbase[plane] != new_colorbase)
+			{
+				layer_colorbase[plane] = new_colorbase;
+				K056832_mark_plane_dirty(plane);
+			}
+		}
+	}
+	else
+	{
+		for (dirty=0, plane=1; plane<4; plane++)
+		{
+			new_colorbase = K053251_get_palette_index(K053251_CI[plane]);
+			if (layer_colorbase[plane] != new_colorbase)
+			{
+				layer_colorbase[plane] = new_colorbase;
+				dirty = 1;
+			}
+		}
+		if (dirty) K056832_MarkAllTilemapsDirty();
+	}
 
 	layers[0] = 1;
 	layerpri[0] = K053251_get_priority(K053251_CI2);
@@ -88,14 +144,26 @@ VIDEO_UPDATE(moo)
 
 	sortlayers(layers, layerpri);
 
+	K054338_update_all_shadows();
+	K054338_fill_backcolor(bitmap, 0);
+
 	fillbitmap(priority_bitmap,0,cliprect);
-	fillbitmap(bitmap,Machine->pens[16 * bg_colorbase],cliprect);
+
 	if (layerpri[0] < K053251_get_priority(K053251_CI1))	/* bucky hides back layer behind background */
-		K054157_tilemap_draw(bitmap, cliprect, layers[0], 0, 1);
-	K054157_tilemap_draw(bitmap, cliprect, layers[1], 0, 2);
-	K054157_tilemap_draw(bitmap, cliprect, layers[2], 0, 4);
+		K056832_tilemap_draw(bitmap, cliprect, layers[0], 0, 1);
+
+	K056832_tilemap_draw(bitmap, cliprect, layers[1], 0, 2);
+
+	// Enabling alpha improves fog and fading in Moo but causes other things to disappear.
+	// There is probably a control bit somewhere to turn off alpha blending.
+	alpha_enabled = K054338_read_register(K338_REG_CONTROL) & K338_CTL_MIXPRI; // DUMMY
+
+	alpha = (alpha_enabled) ? K054338_set_alpha_level(1) : 255;
+
+	if (alpha > 0)
+		K056832_tilemap_draw(bitmap, cliprect, layers[2], (alpha >= 255) ? 0 : TILEMAP_ALPHA, 4);
 
 	K053247_sprites_draw(bitmap,cliprect);
 
-	K054157_tilemap_draw(bitmap, cliprect, 0, 0, 0);
+	K056832_tilemap_draw(bitmap, cliprect, 0, 0, 0);
 }

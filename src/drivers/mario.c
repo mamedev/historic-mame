@@ -75,22 +75,22 @@ write:
 static int p[8] = { 0,0xf0,0,0,0,0,0,0 };
 static int t[2] = { 0,0 };
 
+extern WRITE_HANDLER( mario_videoram_w );
+extern WRITE_HANDLER( mario_gfxbank_w );
+extern WRITE_HANDLER( mario_palettebank_w );
+extern WRITE_HANDLER( mario_scroll_w );
 
-extern unsigned char *mario_scrolly;
-
-WRITE_HANDLER( mario_gfxbank_w );
-WRITE_HANDLER( mario_palettebank_w );
-VIDEO_START( mario );
-PALETTE_INIT( mario );
-VIDEO_UPDATE( mario );
+extern PALETTE_INIT( mario );
+extern VIDEO_START( mario );
+extern VIDEO_UPDATE( mario );
 
 /*
  *  from sndhrdw/mario.c
  */
-WRITE_HANDLER( mario_sh_w );
-WRITE_HANDLER( mario_sh1_w );
-WRITE_HANDLER( mario_sh2_w );
-WRITE_HANDLER( mario_sh3_w );
+extern WRITE_HANDLER( mario_sh_w );
+extern WRITE_HANDLER( mario_sh1_w );
+extern WRITE_HANDLER( mario_sh2_w );
+extern WRITE_HANDLER( mario_sh3_w );
 
 
 #define ACTIVELOW_PORT_BIT(P,A,D)   ((P & (~(1 << A))) | ((D ^ 1) << A))
@@ -151,10 +151,10 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x6000, 0x68ff, MWA_RAM },
 	{ 0x6a80, 0x6fff, MWA_RAM },
 	{ 0x6900, 0x6a7f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x7400, 0x77ff, videoram_w, &videoram, &videoram_size },
+	{ 0x7400, 0x77ff, mario_videoram_w, &videoram },
 	{ 0x7c00, 0x7c00, mario_sh1_w }, /* Mario run sample */
 	{ 0x7c80, 0x7c80, mario_sh2_w }, /* Luigi run sample */
-	{ 0x7d00, 0x7d00, MWA_RAM, &mario_scrolly },
+	{ 0x7d00, 0x7d00, mario_scroll_w },
 	{ 0x7e80, 0x7e80, mario_gfxbank_w },
 	{ 0x7e83, 0x7e83, mario_palettebank_w },
 	{ 0x7e84, 0x7e84, interrupt_enable_w },
@@ -175,8 +175,8 @@ static MEMORY_WRITE_START( masao_writemem )
 	{ 0x6000, 0x68ff, MWA_RAM },
 	{ 0x6a80, 0x6fff, MWA_RAM },
 	{ 0x6900, 0x6a7f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x7400, 0x77ff, videoram_w, &videoram, &videoram_size },
-	{ 0x7d00, 0x7d00, MWA_RAM, &mario_scrolly },
+	{ 0x7400, 0x77ff, mario_videoram_w, &videoram },
+	{ 0x7d00, 0x7d00, mario_scroll_w },
 	{ 0x7e00, 0x7e00, soundlatch_w },
 	{ 0x7e80, 0x7e80, mario_gfxbank_w },
 	{ 0x7e83, 0x7e83, mario_palettebank_w },
@@ -420,7 +420,7 @@ static MACHINE_DRIVER_START( mario )
 	MDRV_COLORTABLE_LENGTH(16*4+32*8)
 
 	MDRV_PALETTE_INIT(mario)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(mario)
 	MDRV_VIDEO_UPDATE(mario)
 
 	/* sound hardware */
@@ -452,7 +452,7 @@ static MACHINE_DRIVER_START( masao )
 	MDRV_COLORTABLE_LENGTH(16*4+32*8)
 
 	MDRV_PALETTE_INIT(mario)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(mario)
 	MDRV_VIDEO_UPDATE(mario)
 
 	/* sound hardware */

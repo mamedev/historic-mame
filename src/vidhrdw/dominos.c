@@ -6,39 +6,42 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "dominos.h"
 
-unsigned char *dominos_sound_ram;
+UINT8 *dominos_sound_ram;
 
+static struct tilemap *bg_tilemap;
+
+WRITE_HANDLER( dominos_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
+
+static void get_bg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index] & 0x3f;
+	int color = (videoram[tile_index] & 0x80) >> 7;
+
+	SET_TILE_INFO(0, code, color, 0)
+}
+
+VIDEO_START( dominos )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	return 0;
+}
 
 VIDEO_UPDATE( dominos )
 {
-	int offs;
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int charcode;
-			int sx,sy;
-
-			dirtybuffer[offs]=0;
-
-			charcode = videoram[offs] & 0x3F;
-
-			sx = 8 * (offs % 32);
-			sy = 8 * (offs / 32);
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					charcode, (videoram[offs] & 0x80)>>7,
-					0,0,sx,sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
-		}
-	}
-
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
 
 	/* The video circuitry updates our sound registers. */
 	discrete_sound_w(0, dominos_sound_ram[0] % 16);	// Freq

@@ -11,8 +11,28 @@
 #include "res_net.h"
 
 
-unsigned char *bagman_video_enable;
-static int flipscreen[2];
+UINT8 *bagman_video_enable;
+
+static struct tilemap *bg_tilemap;
+
+
+WRITE_HANDLER( bagman_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
+
+WRITE_HANDLER( bagman_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
 /***************************************************************************
 
@@ -47,9 +67,9 @@ PALETTE_INIT( bagman )
 			2,	resistances_b,	weights_b,	470,	0);
 
 
-	for (i = 0;i < Machine->drv->total_colors;i++)
+	for (i = 0; i < Machine->drv->total_colors; i++)
 	{
-		int bit0,bit1,bit2,r,g,b;
+		int bit0, bit1, bit2, r, g, b;
 
 		/* red component */
 		bit0 = (color_prom[i] >> 0) & 0x01;
@@ -70,77 +90,39 @@ PALETTE_INIT( bagman )
 	}
 }
 
-
-
-
-
 WRITE_HANDLER( bagman_flipscreen_w )
 {
-	if ((data & 1) != flipscreen[offset])
+	if (flip_screen != (data & 0x01))
 	{
-		flipscreen[offset] = data & 1;
-		memset(dirtybuffer,1,videoram_size);
+		flip_screen_set(data & 0x01);
+		tilemap_mark_all_tiles_dirty(bg_tilemap);
 	}
 }
 
+static void get_bg_tile_info(int tile_index)
+{
+	int gfxbank = (Machine->gfx[2] && (colorram[tile_index] & 0x10)) ? 2 : 0;
+	int code = videoram[tile_index] + 8 * (colorram[tile_index] & 0x20);
+	int color = colorram[tile_index] & 0x0f;
 
+	SET_TILE_INFO(gfxbank, code, color, 0)
+}
 
-/***************************************************************************
+VIDEO_START( bagman )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+	if ( !bg_tilemap )
+		return 1;
 
-***************************************************************************/
-VIDEO_UPDATE( bagman )
+	return 0;
+}
+
+static void bagman_draw_sprites( struct mame_bitmap *bitmap )
 {
 	int offs;
 
-
-	if (*bagman_video_enable == 0)
-	{
-		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
-
-		return;
-	}
-
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy;
-			int bank;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 32;
-			if (flipscreen[0]) sx = 31 - sx;
-			sy = offs / 32;
-			if (flipscreen[1]) sy = 31 - sy;
-
-			/* Pickin' doesn't have the second char bank */
-			bank = 0;
-			if (Machine->gfx[2] && (colorram[offs] & 0x10)) bank = 2;
-
-			drawgfx(tmpbitmap,Machine->gfx[bank],
-					videoram[offs] + 8 * (colorram[offs] & 0x20),
-					colorram[offs] & 0x0f,
-					flipscreen[0],flipscreen[1],
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-
-
-	/* Draw the sprites. */
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
 		int sx,sy,flipx,flipy;
@@ -150,12 +132,12 @@ VIDEO_UPDATE( bagman )
 		sy = 240 - spriteram[offs + 2];
 		flipx = spriteram[offs] & 0x40;
 		flipy = spriteram[offs] & 0x80;
-		if (flipscreen[0])
+		if (flip_screen_x)
 		{
 			sx = 240 - sx +1;	/* compensate misplacement */
 			flipx = !flipx;
 		}
-		if (flipscreen[1])
+		if (flip_screen_y)
 		{
 			sy = 240 - sy;
 			flipy = !flipy;
@@ -169,4 +151,20 @@ VIDEO_UPDATE( bagman )
 					sx,sy+1,	/* compensate misplacement */
 					&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
+}
+
+/***************************************************************************
+
+  Draw the game screen in the given mame_bitmap.
+  Do NOT call osd_update_display() from this function, it will be called by
+  the main emulation engine.
+
+***************************************************************************/
+VIDEO_UPDATE( bagman )
+{
+	if (*bagman_video_enable == 0)
+		return;
+
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	bagman_draw_sprites(bitmap);
 }

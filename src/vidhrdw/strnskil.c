@@ -10,7 +10,10 @@ Video hardware driver by Uki
 
 #include "vidhrdw/generic.h"
 
-static UINT8 strnskil_flipscreen, strnskil_xscroll[2], strnskil_scrl_ctrl;
+static UINT8 strnskil_scrl_ctrl;
+static UINT8 strnskil_xscroll[2];
+
+static struct tilemap *bg_tilemap;
 
 PALETTE_INIT( strnskil )
 {
@@ -40,6 +43,15 @@ PALETTE_INIT( strnskil )
 
 }
 
+WRITE_HANDLER( strnskil_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset / 2);
+	}
+}
+
 WRITE_HANDLER( strnskil_scroll_x_w )
 {
 	strnskil_xscroll[offset] = data;
@@ -48,99 +60,96 @@ WRITE_HANDLER( strnskil_scroll_x_w )
 WRITE_HANDLER( strnskil_scrl_ctrl_w )
 {
 	strnskil_scrl_ctrl = data >> 5;
-	strnskil_flipscreen = (data >> 3) & 1;
+
+	if (flip_screen != (data & 0x08))
+	{
+		flip_screen_set(data & 0x08);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
+}
+
+static void get_bg_tile_info(int tile_index)
+{
+	int attr = videoram[tile_index * 2];
+	int code = videoram[(tile_index * 2) + 1] + ((attr & 0x60) << 3);
+	int color = (attr & 0x1f) | ((attr & 0x80) >> 2);
+
+	SET_TILE_INFO(0, code, color, 0)
+}
+
+VIDEO_START( strnskil )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_cols, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	tilemap_set_scroll_rows(bg_tilemap, 32);
+
+	return 0;
+}
+
+static void strnskil_draw_sprites( struct mame_bitmap *bitmap )
+{
+	int offs;
+
+	for (offs = 0x60; offs < 0x100; offs += 4)
+	{
+		int code = spriteram[offs + 1];
+		int color = spriteram[offs + 2] & 0x3f;
+		int flipx = flip_screen_x;
+		int flipy = flip_screen_y;
+
+		int sx = spriteram[offs + 3];
+		int sy = spriteram[offs];
+		int px, py;
+
+		if (flip_screen)
+		{
+			px = 240 - sx + 0; /* +2 or +0 ? */
+			py = sy;
+		}
+		else
+		{
+			px = sx - 2;
+			py = 240 - sy;
+		}
+
+		sx = sx & 0xff;
+
+		if (sx > 248)
+			sx = sx - 256;
+
+		drawgfx(bitmap, Machine->gfx[1],
+			code, color,
+			flipx, flipy,
+			px, py,
+			&Machine->visible_area,
+			TRANSPARENCY_COLOR, 0);
+	}
 }
 
 VIDEO_UPDATE( strnskil )
 {
+	int row;
 
-	int offs,chr,col,x,y,px,py,fx,fy,bank,d ;
-	data8_t *SCROLLX = memory_region( REGION_USER1 );
-
-	/* draw bg layer */
-
-	for (offs=0; offs<(videoram_size/2); offs++)
+	for (row = 0; row < 32; row++)
 	{
-		int sx,sy;
-
-		sx = offs / 32;
-		sy = offs % 32;
-
-		py = sy*8;
-		px = sx*8;
-
-		if (strnskil_scrl_ctrl != 7)
+		if (strnskil_scrl_ctrl != 0x07)
 		{
-			d = SCROLLX[ strnskil_scrl_ctrl*32 + sy ];
-			switch (d)
+			switch (memory_region(REGION_USER1)[strnskil_scrl_ctrl * 32 + row])
 			{
-				case 2:
-					px = (sx*8 + ~strnskil_xscroll[1]) & 0xff;
-					break;
-				case 4:
-					px = (sx*8 + ~strnskil_xscroll[0]) & 0xff;
-					break;
+			case 2:
+				tilemap_set_scrollx(bg_tilemap, row, -~strnskil_xscroll[1]);
+				break;
+			case 4:
+				tilemap_set_scrollx(bg_tilemap, row, -~strnskil_xscroll[0]);
+				break;
 			}
 		}
-
-		if (strnskil_flipscreen != 0)
-		{
-			px = 248-px;
-			py = 248-py;
-		}
-
-		col = videoram[offs*2];
-		fx = strnskil_flipscreen;
-		fy = strnskil_flipscreen;
-		bank = (col & 0x60) << 3;
-		col = ((col & 0x1f)<<0) | ((col & 0x80) >> 2);
-
-		drawgfx(bitmap,Machine->gfx[0],
-			videoram[offs*2+1] + bank,
-			col,
-			fx,fy,
-			px,py,
-			&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
-/* draw sprites */
-
-	/* c060 - c0ff */
-	for (offs=0x60; offs<0x100; offs +=4)
-	{
-		chr = spriteram[offs+1];
-		col = spriteram[offs+2];
-
-		fx = strnskil_flipscreen;
-		fy = strnskil_flipscreen;
-
-		x = spriteram[offs+3];
-		y = spriteram[offs+0];
-
-		col &= 0x3f ;
-
-		if (strnskil_flipscreen==0)
-		{
-			px = x-2;
-			py = 240-y;
-		}
-		else
-		{
-			px = 240-x  +0; /* +2 or +0 ? */
-			py = y;
-		}
-
-		px = px & 0xff;
-
-		if (px>248)
-			px = px-256;
-
-		drawgfx(bitmap,Machine->gfx[1],
-			chr,
-			col,
-			fx,fy,
-			px,py,
-			&Machine->visible_area,TRANSPARENCY_COLOR,0);
-	}
-
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	strnskil_draw_sprites(bitmap);
 }

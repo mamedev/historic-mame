@@ -11,6 +11,61 @@ are almost certainly not bad its a mystery.
 
 this hardware comes above hell on the great list of hellish things as far as emulation goes anyway ;-)
 
+Preliminary Memory map:
+0x00000000, 0x0007ffff  BIOS ROM
+0x00080000, 0x000fffff  Unused
+0x00100000, 0x00100080  SMPC
+0x00100080, 0x0017ffff  Unused
+0x00180000, 0x0018ffff  Back Up Ram
+0x00190000, 0x001fffff  Unused
+0x00200000, 0x002fffff  Work Ram-L
+0x00300000, 0x00ffffff  Unused
+0x01000000, 0x01000003  MINIT
+0x01000004, 0x017fffff  Unused
+0x01800000, 0x01800003  SINIT
+0x01800004, 0x01ffffff  Unused
+0x02000000, 0x03ffffff  A-BUS CS0
+0x04000000, 0x04ffffff  A-BUS CS1
+0x05000000, 0x057fffff  A-BUS DUMMY
+0x05800000, 0x058fffff  A-BUS CS2
+0x05900000, 0x059fffff  Unused
+0x05a00000, 0x05b00ee3  Sound Region
+0x05b00ee4, 0x05bfffff  Unused
+0x05c00000, 0x05cbffff  VDP 1
+0x05cc0000, 0x05cfffff  Unused
+0x05d00000, 0x05d00017  VDP 1 regs
+0x05d00018, 0x05dfffff  Unused
+0x05e00000, 0x05e7ffff  VDP2
+0x05e80000, 0x05efffff  VDP2 Extra RAM,accessible thru the VRAMSZ register
+0x05f00000, 0x05f00fff  VDP2 color RAM
+0x05f01000, 0x05f7ffff  Unused
+0x05f80000  0x05f8011f  VDP2 regs
+0x05f80120, 0x05fdffff  Unused
+0x05fe0000, 0x05fe00cf  SCU regs
+0x05fe00d0, 0x05ffffff  Unused
+0x06000000, 0x060fffff  Work Ram H
+0x06100000, 0x07ffffff  Unused
+
+*the unused locations aren't known if they are really unused or not,needs verification...
+
+Notes:
+\-When entering into C.R.T. test,the program hangs at the following sub-routine:
+
+42a0: MOV.B @R1,R0 ;byte movement of memory location [R1] to R0.R1 is equal to 20400007
+				   ;(calculated on the previous opcode).
+42a2: TST #$03,R0  ;Test bit 1-0(0x3) with R0
+42a4: BF $000042a0 ;if R0 has bit 1 or 0 activated,jump to 42a0
+
+This causes an endless loop to this sub-routine.
+
+
+Version Log:
+25/06/2003(Angelo Salese)
+\-Added proper Color RAM format & CRMD emulation.
+\-Fixed current cell display used,adding colors and flipx/y support to it.
+\-Added some extra SMPC commands,and commented the rest.
+\-Added dates & manufacturers to the various games.
+
 */
 
 #include "driver.h"
@@ -23,9 +78,21 @@ static data32_t* stv_workram_h;
 static data32_t* stv_scu;
 static data32_t* stv_vram;
 static data32_t* stv_cram;
+static data32_t* stv_vdp2_regs;
 
 static char stv_8x8x4_dirty[0x4000];
 
+/*SMPC stuff*/
+static unsigned char nmi_enabled;/*for NMI enable,dunno where it could be used...*/
+/*SCU stuff*/
+
+/*VDP1 stuff*/
+
+/*VDP2 stuff*/
+static unsigned char 	CRMD,/*Color Mode*/
+						xxON,/*Screen display enable bit*/
+					    CHCTLN0;/*Character Control Register for N0*/
+static int			    PNCN0;/*Pattern Name Control Register for N0*/
 
 VIDEO_START(stv)
 {
@@ -36,19 +103,15 @@ VIDEO_START(stv)
 /* a complete hack just to display the text graphics used in the test mode */
 VIDEO_UPDATE(stv)
 {
-
 //	int i;
 	data8_t *txtile_gfxregion = memory_region(REGION_GFX1);
-
 
 //	for (i = 0; i < 0x2000; i++)
 //		decodechar(Machine->gfx[1], i, (data8_t*)txtile_gfxregion, Machine->drv->gfxdecodeinfo[1].gfxlayout);
 
-
 	if ( keyboard_pressed_memory(KEYCODE_W) ) stv_dump_ram();
 
 	// bios text
-
 	{
 		int x,y;
 
@@ -58,16 +121,48 @@ VIDEO_UPDATE(stv)
 				int address;
 				int data1;
 				int data2;
+				int flipx1;
+				int flipx2;
+				int flipy1;
+				int flipy2;
+				int color1;
+				int color2;
 
 				address = 0x62000/4;
 
 				address += (x + y*32);
 
-				data1=(stv_vram[address] & 0x00ff0000) >> 16;
-				data2=(stv_vram[address] & 0x000000ff) >> 0;
+#if 0
+				if(!(xxON & 8))
+					usrintf_showmessage("Warning: N0 currently disabled");
+				if(CHCTLN0 & 1)
+					usrintf_showmessage("Warning: 2 H x 2 V currently used");
+#endif
+
+/*N0*/
+/*Character Size                   : 1 h x 1 v*/
+/*Character Color count            : 16 colors*/
+/*Character number supplement mode : mode 0   */
+				data1=(stv_vram[address] & 0x03ff0000) >> 16;
+				data2=(stv_vram[address] & 0x000003ff) >> 0;
+				flipy1=(stv_vram[address] & 0x08000000) >> 27;
+				flipy2=(stv_vram[address] & 0x00000800) >> 11;
+				flipx1=(stv_vram[address] & 0x04000000) >> 26;
+				flipx2=(stv_vram[address] & 0x00000400) >> 10;
+				color1=(stv_vram[address] & 0xf0000000) >> 28;
+				color2=(stv_vram[address] & 0x0000f000) >> 12;
+				/*Needs better VDP2 regs support to avoid these kludges...*/
 				data1+= 0x3000;
 				data2+= 0x3000;
+				color1+=0x40;
+				color2+=0x40;
 
+/*Doesn't work???*/
+/*				data1+= ((PNCN0 & 0x001f) >> 0)*0x400;
+				data2+= ((PNCN0 & 0x001f) >> 0)*0x400;
+				color1+=((PNCN0 & 0x00e0) >> 5)*0x10;
+				color2+=((PNCN0 & 0x00e0) >> 5)*0x10;
+*/
 				if (stv_8x8x4_dirty[data1])
 				{
 					stv_8x8x4_dirty[data1] = 0;
@@ -80,16 +175,12 @@ VIDEO_UPDATE(stv)
 					decodechar(Machine->gfx[0], data2, (data8_t*)txtile_gfxregion, Machine->drv->gfxdecodeinfo[0].gfxlayout);
 				}
 
-				drawgfx(bitmap,Machine->gfx[0],data1,0x20,0,0,x*16,y*8,cliprect,TRANSPARENCY_NONE,0);
-				drawgfx(bitmap,Machine->gfx[0],data2,0x20,0,0,x*16+8,y*8,cliprect,TRANSPARENCY_NONE,0);
-
-
-
+				drawgfx(bitmap,Machine->gfx[0],data1,color1,flipx1,flipy1,x*16,y*8,cliprect,TRANSPARENCY_NONE,0);
+				drawgfx(bitmap,Machine->gfx[0],data2,color2,flipx2,flipy2,x*16+8,y*8,cliprect,TRANSPARENCY_NONE,0);
 
 			}
 
 		}
-
 
 	}
 /* // stv logo
@@ -121,53 +212,18 @@ VIDEO_UPDATE(stv)
 		}
 
 
-	}
-*/
+	}*/
+
 }
 
 /* SMPC
  System Manager and Peripheral Control
 
 */
-
-
-	/* 0x00000000, 0x0007ffff  BIOS ROM */
-														/* 0x00080000, 0x000fffff  Unused?  */
-	/* 0x00100000, 0x0010007f  SMPC     */
-														/* 0x00100080, 0x0017ffff  Unused?  */
-	/* 0x00180000, 0x0018ffff  Back Up Ram? */
-														/* 0x00190000, 0x001fffff  Unused?  */
-	/* 0x00200000, 0x002fffff  Work Ram-L */
-														/* 0x00300000, 0x00ffffff  Unused?  */
-	/* 0x01000000, 0x01000003  MINIT */
-														/* 0x01000004, 0x017fffff  Unused?  */
-	/* 0x01800000, 0x01800003  SINIT */
-														/* 0x01800004, 0x01ffffff  Unused? */
-	/* 0x02000000  0x03ffffff  A-BUS CS0 */
-	/* 0x04000000, 0x04ffffff  A-BUS CS1 */
-	/* 0x05000000, 0x057fffff  A-BUS DUMMY */
-	/* 0x05800000, 0x058fffff  A-BUS CS2 */
-														/* 0x05900000, 0x059fffff  Unused? */
-	/* 0x05a00000, 0x05b00ee3  Sound Region */
-														/* 0x05b00ee4  0x05bfffff  Unused? */
-	/* 0x05c00000, 0x05cbffff  VDP 1 */
-														/* 0x05cc0000, 0x05cfffff  Unused? */
-	/* 0x05d00000, 0x05d00017  VDP 1 */
-														/* 0x05d00018, 0x05dfffff  Unused? */
-	/* 0x05e00000, 0x05e7ffff  VDP2 */
-														/* 0x05e80000, 0x05efffff  Unused? */
-	/* 0x05f00000, 0x05f00fff  VDP2 */
-														/* 0x05f01000, 0x05f7ffff  Unused? */
-	/* 0x05f80000  0x05f8011f  VDP2 */
-														/* 0x05f80120  0x05fdffff  Unused? */
-	/* 0x05fe0000, 0x05fe00cf  SCU */
-														/* 0x05fe00d0  0x05ffffff  Unused? */
-	/* 0x06000000, 0x060fffff  Work Ram H */
-														/* 0x06100000, 0x07ffffff  Unused? */
 /* SMPC Addresses
 
 00
-01 -w  Input Register 0
+01 -w  Input Register 0 (IREG)
 02
 03 -w  Input Register 1
 04
@@ -197,9 +253,9 @@ VIDEO_UPDATE(stv)
 1c
 1d
 1e
-1f -w  Command Register
+1f -w  Command Register (COMREG)
 20
-21 r-  Output Register 0
+21 r-  Output Register 0 (OREG)
 22
 23 r-  Output Register 1
 24
@@ -283,29 +339,24 @@ VIDEO_UPDATE(stv)
 72
 73
 74
-75
+75 rw PDR1
 76
-77
+77 rw PDR2
 78
-79
+79 -w DDR1
 7a
-7b
+7b -w DDR2
 7c
-7d
+7d -w IOSEL2/1
 7e
-7f
-
+7f -w EXLE2/1
 */
-
 
 static UINT8 stv_SMPC_r8 (int offset)
 {
 //	logerror ("8-bit SMPC Read from Offset %02x Returns %02x\n", offset, smpc_ram[offset]);
-
 	if (offset == 0x77)
-	{
 		return readinputport(0);
-	}
 
 	return smpc_ram[offset];
 }
@@ -319,10 +370,30 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 	{
 		switch (data)
 		{
+			case 0x00:
+				logerror ("SMPC: Master ON\n");
+				smpc_ram[0x5f]=0x00;
+				break;
+			//in theory 0x01 is for Master OFF,but obviously is not used.
+			case 0x02:
+				logerror ("SMPC: Slave ON\n");
+				smpc_ram[0x5f]=0x02;
+				break;
 			case 0x03:
 				logerror ("SMPC: Slave OFF\n");
 				smpc_ram[0x5f]=0x03;
 				break;
+			case 0x06:
+				logerror ("SMPC: Sound ON\n");
+				smpc_ram[0x5f]=0x06;
+				break;
+			case 0x07:
+				logerror ("SMPC: Sound OFF\n");
+				smpc_ram[0x5f]=0x07;
+				break;
+			/*CD (SH-1) ON/OFF,guess that's needed for Sports Fishing games...*/
+			//case 0x08:
+			//case 0x09:
 			case 0x0d:
 				logerror ("SMPC: System Reset\n");
 				smpc_ram[0x5f]=0x0d;
@@ -333,21 +404,58 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 				smpc_ram[0x5f]=0x0e;
 				cpu_set_nmi_line(0,PULSE_LINE); // ff said this causes nmi, should we set a timer then nmi?
 				break;
-			case 0x1a:
-				logerror ("SMPC: Nmi DISABLE\n");
-				smpc_ram[0x5f]=0x1a;
+			case 0x0f:
+				logerror ("SMPC: Change Clock to 320\n");
+				smpc_ram[0x5f]=0x0f;
+				cpu_set_nmi_line(0,PULSE_LINE); // ff said this causes nmi, should we set a timer then nmi?
 				break;
-		//	default:
+			/*"Interrupt Back"*/
+			case 0x10:
+				logerror ("SMPC: Status Acquire\n");
+				smpc_ram[0x5f]=0x10;
+				/*This is for RTC,cartridge code and similar stuff...*/
+			break;
+			/* RTC write*/
+			case 0x16:
+				logerror("SMPC: RTC write\n");
+				smpc_ram[0x2f] = smpc_ram[0x0d];
+				smpc_ram[0x2d] = smpc_ram[0x0b];
+				smpc_ram[0x2b] = smpc_ram[0x09];
+				smpc_ram[0x29] = smpc_ram[0x07];
+				smpc_ram[0x27] = smpc_ram[0x05];
+				smpc_ram[0x25] = smpc_ram[0x03];
+				smpc_ram[0x23] = smpc_ram[0x01];
+				smpc_ram[0x5f]=0x16;
+			break;
+			/* SMPC memory setting*/
+			case 0x17:
+				logerror ("SMPC: memory setting\n");
+				smpc_ram[0x5f]=0x17;
+			break;
+			case 0x18:
+				logerror ("SMPC: NMI request\n");
+				smpc_ram[0x5f]=0x18;
+				/*NMI is unconditionally requested*/
+				cpu_set_nmi_line(0,PULSE_LINE);
+				break;
+			case 0x19:
+				logerror ("SMPC: NMI Enable\n");
+				smpc_ram[0x5f]=0x19;
+				nmi_enabled = 1;
+				break;
+			case 0x1a:
+				logerror ("SMPC: NMI Disable\n");
+				smpc_ram[0x5f]=0x1a;
+				nmi_enabled = 0;
+				break;
+			//default:
 			//	logerror ("SMPC: Unhandled Command %02x\n",data);
 		}
 
 		// we've processed the command, clear status flag
 		smpc_ram[0x63] = 0x00;
-
+		/*We have to simulate the timing of each command somehow...*/
 	}
-
-
-
 }
 
 
@@ -389,17 +497,43 @@ static WRITE32_HANDLER ( stv_SMPC_w32 )
 static READ32_HANDLER ( stv_vdp2_regs_r32 )
 {
 //	if (offset!=1) logerror ("VDP2: Read from Registers, Offset %04x\n",offset);
-	// this is vblank status etc.  fake for now
-	if (offset == 1){
-		static int i = 0x00000000;
-		i ^= 0xffffffff;
-
-		return i;
+	switch(offset)
+	{
+		case 1:
+		/*Screen Status Register*/
+		/*VBLANK & HBLANK(bit 3 & 2 of high word),fake for now*/
+			stv_vdp2_regs[offset] ^= 0x000c0000;
+		break;
+		case 3:
+		/*(V)RAM Control Register*/
+		/*Color RAM Mode (bit 13 & 12) (CRMD1 & CRMD0) */
+			CRMD = ((stv_vdp2_regs[offset] & 0x00003000) >> 12);
+		break;
 	}
-	return 0;
+	return stv_vdp2_regs[offset];
 }
 
+static WRITE32_HANDLER ( stv_vdp2_regs_w32 )
+{
+	COMBINE_DATA(&stv_vdp2_regs[offset]);
 
+	/*This is just for debugging ATM.*/
+	switch(offset)
+	{
+		case 8:
+		/*Screen Display enable bit*/
+		 	xxON = ((stv_vdp2_regs[offset] & 0x003f0000) >> 16);
+		break;
+		case 10:
+		/*Character Control Register*/
+			CHCTLN0 = ((stv_vdp2_regs[offset] & 0x007f0000) >> 16);
+		break;
+		case 12:
+		/*Pattern Name Control Register*/
+			PNCN0 = ((stv_vdp2_regs[offset] & 0xffff0000) >> 16);
+		break;
+	}
+}
 
 static void stv_dump_ram()
 {
@@ -479,6 +613,68 @@ READ32_HANDLER (read_cart)
 	return 0xff;
 }
 */
+
+READ32_HANDLER( stv_palette_r )
+{
+	return stv_cram[offset];
+}
+
+/*
+One of the features of Sega ST-V is that the Color RAM could use two+one
+different formats of Paletteram:
+(1)Mode 0:RGB up to 5 bits per color,for 1024 possible combinations.16-bit format.
+(2)Mode 1:Same as mode 0 but with 2048 possible combinations.
+(3)Mode 2:RGB up to 8 bits per color,for 1024 possible combinations.32-bit format.
+Notice that if it's currently using the mode 0/1,the first three bits (aka bits 0,1 and 2)
+aren't used in output data(they are filled with 0).
+The MSB in any mode is known to be used as "Color Calculation"(transparency).
+*/
+
+WRITE32_HANDLER( stv_palette_w )
+{
+	int r,g,b;
+	COMBINE_DATA(&stv_cram[offset]);
+
+	switch(CRMD)
+	{
+		/*Mode 2/3*/
+		case 2:
+		case 3:
+			b = ((stv_cram[offset] & 0x00ff0000) >> 16);
+			g = ((stv_cram[offset] & 0x0000ff00) >> 8);
+			r = ((stv_cram[offset] & 0x000000ff) >> 0);
+			palette_set_color(offset,r,g,b);
+		break;
+		/*Mode 0/1*/
+		default:
+			b = ((stv_cram[offset] & 0x00007c00) >> 10);
+			g = ((stv_cram[offset] & 0x000003e0) >> 5);
+			r = ((stv_cram[offset] & 0x0000001f) >> 0);
+			b*=0x8;
+			g*=0x8;
+			r*=0x8;
+			palette_set_color((offset*2)+1,r,g,b);
+			b = ((stv_cram[offset] & 0x7c000000) >> 26);
+			g = ((stv_cram[offset] & 0x03e00000) >> 21);
+			r = ((stv_cram[offset] & 0x001f0000) >> 16);
+			b*=0x8;
+			g*=0x8;
+			r*=0x8;
+			palette_set_color(offset*2,r,g,b);
+		break;
+	}
+}
+
+READ32_HANDLER( stv_scu_r32 )
+{
+	return stv_scu[offset];
+}
+
+WRITE32_HANDLER( stv_scu_w32 )
+{
+	COMBINE_DATA(&stv_scu[offset]);
+}
+
 static MEMORY_READ32_START( stv_readmem )
 	{ 0x00000000, 0x0007ffff, MRA32_ROM }, // bios
 
@@ -502,12 +698,23 @@ static MEMORY_READ32_START( stv_readmem )
 	{ 0x05c00000, 0x05cbffff, MRA32_RAM },
 	{ 0x05d00000, 0x05d0001f, MRA32_RAM },
 
-	/* VDP2 */
+	/* VDP2 when VRAMSZ is 0*/
+	/*0x5e00000-0x5e1ffff A0*/
+	/*0x5e20000-0x5e3ffff A1*/
+	/*0x5e40000-0x5e5ffff B0*/
+	/*0x5e60000-0x5e7ffff B1*/
+	/* VDP2 when VRAMSZ is 1*/
+	/*0x5e00000-0x5e3ffff A0*/
+	/*0x5e40000-0x5e7ffff A1*/
+	/*0x5e80000-0x5ecffff B0*/
+	/*0x5ed0000-0x5efffff B1*/
 	{ 0x05e00000, 0x05e7ffff, MRA32_RAM }, /* VRAM */
-	{ 0x05f00000, 0x05f0ffff, MRA32_RAM }, /* CRAM */
+	{ 0x05f00000, 0x05f0ffff, stv_palette_r }, /* CRAM */
 	{ 0x05f80000, 0x05fbffff, stv_vdp2_regs_r32 }, /* REGS */
+	{ 0x05fe0000, 0x05fe00cf, stv_scu_r32 },
 
 	{ 0x06000000, 0x060fffff, MRA32_RAM },
+	{ 0x06100000, 0x07ffffff, MRA32_NOP },
 MEMORY_END
 
 static MEMORY_WRITE32_START( stv_writemem )
@@ -531,12 +738,13 @@ static MEMORY_WRITE32_START( stv_writemem )
 
 	/* VDP2 */
 	{ 0x05e00000, 0x05e7ffff, stv_vram_w, &stv_vram }, /* VRAM */
-	{ 0x05f00000, 0x05f0ffff, MWA32_RAM, &stv_cram }, /* CRAM */
-	{ 0x05f80000, 0x05fbffff, MWA32_RAM }, /* REGS */
+	{ 0x05f00000, 0x05f0ffff, stv_palette_w, &stv_cram }, /* CRAM */
+	{ 0x05f80000, 0x05fbffff, stv_vdp2_regs_w32 ,&stv_vdp2_regs }, /* REGS */
 
-	{ 0x05fe0000, 0x05fe00cf, MWA32_RAM, &stv_scu },
+	{ 0x05fe0000, 0x05fe00cf, stv_scu_w32, &stv_scu },
 
 	{ 0x06000000, 0x060fffff, MWA32_RAM, &stv_workram_h },
+	{ 0x06100000, 0x07ffffff, MWA32_NOP },
 MEMORY_END
 
 #define STV_PLAYER_INPUTS(_n_, _b1_, _b2_, _b3_, _b4_) \
@@ -622,6 +830,11 @@ DRIVER_INIT ( stv )
 
 	smpc_ram = auto_malloc (0x80);
 
+	nmi_enabled = 0;
+}
+
+static MACHINE_INIT( stv )
+{
 }
 
 static struct GfxLayout tiles8x8x4_layout =
@@ -655,7 +868,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-
 static MACHINE_DRIVER_START( stv )
 
 	/* basic machine hardware */
@@ -665,6 +877,8 @@ static MACHINE_DRIVER_START( stv )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(stv)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -760,7 +974,7 @@ ROM_START( colmns97 )
 
 	ROM_REGION32_BE( 0xc00000, REGION_USER1, 0 ) /* SH2 code */
 	/* it tests .13 at 0x000000 - 0x1fffff but reports as bad even if we put the rom there */
-	ROM_LOAD( "fpr19553.13",                0x000000, 0x100000, CRC(d4fb6a5e) SHA1(bd3cfb4f451b6c9612e42af5ddcbffa14f057329) ) // ic13 bad?!
+	ROM_LOAD( "fpr19553.13",    0x000000, 0x100000, CRC(d4fb6a5e) SHA1(bd3cfb4f451b6c9612e42af5ddcbffa14f057329) ) // ic13 bad?!
 	ROM_LOAD16_WORD_SWAP( "mpr19554.2",     0x400000, 0x400000, CRC(5a3ebcac) SHA1(46e3d1cf515a7ff8a8f97e5050b29dbbeb5060c0) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr19555.3",     0x800000, 0x400000, CRC(74f6e6b8) SHA1(8080860550eb770e04447e344fb337748a249761) ) // good
 
@@ -1473,53 +1687,53 @@ ROM_START( batmanfr )
 	ROM_LOAD( "snd3.u51",   0x600000, 0x200000, CRC(31af26ae) )
 ROM_END
 
-GAMEX( 1996, stvbios,  0,        stv, stv,  stv,  ROT0, "Sega", "ST-V Bios", NOT_A_DRIVER )
+GAMEX( 1996, stvbios,  0,        stv, stv,  stv,  ROT0, "Sega",    "ST-V Bios", NOT_A_DRIVER )
 
-GAMEX( 199?, astrass,   stvbios, stv, stv,  stv,  ROT0, "Sega", "Astro SuperStars", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, bakubaku,  stvbios, stv, stv,  stv,  ROT0, "Sega", "Baku Baku Animal", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1996, colmns97,  stvbios, stv, stv,  stv,  ROT0, "Sega", "Columns 97", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, cotton2,   stvbios, stv, stv,  stv,  ROT0, "Sega", "Cotton 2", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, cottonbm,  stvbios, stv, stv,  stv,  ROT0, "Sega", "Cotton Boomerang", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, decathlt,  stvbios, stv, stv,  stv,  ROT0, "Sega", "Decathlete", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, diehard,   stvbios, stv, stv,  stv,  ROT0, "Sega", "Die Hard Arcade (US)", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, dnmtdeka,  diehard, stv, stv,  stv,  ROT0, "Sega", "Dynamite Deka (Japan)", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, ejihon,    stvbios, stv, stv,  stv,  ROT0, "Sega", "Ejihon", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, elandore,  stvbios, stv, stv,  stv,  ROT0, "Sega", "Elandoree", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, ffreveng,  stvbios, stv, stv,  stv,  ROT0, "Sega", "Final Fight Revenge", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, fhboxers,  stvbios, stv, stv,  stv,  ROT0, "Sega", "Funky Head Boxers", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, findlove,  stvbios, stv, stv,  stv,  ROT0, "Sega", "Find Love", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, finlarch,  stvbios, stv, stv,  stv,  ROT0, "Sega", "Final Arch", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, gaxeduel,  stvbios, stv, stv,  stv,  ROT0, "Sega", "Golden Axe - The Duel", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, grdforce,  stvbios, stv, stv,  stv,  ROT0, "Sega", "Guardian Force", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, groovef,   stvbios, stv, stv,  stv,  ROT0, "Sega", "Power Instinct 3 - Groove On Fight", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, hanagumi,  stvbios, stv, stv,  stv,  ROT0, "Sega", "Hanagumi Taisen Columns - Sakura Wars", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, introdon,  stvbios, stv, stv,  stv,  ROT0, "Sega", "Intro Don Don", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, kiwames,   stvbios, stv, stv,  stv,  ROT0, "Sega", "Pro Mahjong Kiwame S", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, maruchan,  stvbios, stv, stv,  stv,  ROT0, "Sega", "Maru-Chan de Goo!", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, myfairld,  stvbios, stv, stv,  stv,  ROT0, "Sega", "Virtual Mahjong 2 - My Fair Lady", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, othellos,  stvbios, stv, stv,  stv,  ROT0, "Sega", "Othello Shiyouyo", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, pblbeach,  stvbios, stv, stv,  stv,  ROT0, "Sega", "Pebble Beach - The Great Shot", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, prikura,   stvbios, stv, stv,  stv,  ROT0, "Sega", "Purikura Sakusen", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, puyosun,   stvbios, stv, stv,  stv,  ROT0, "Sega", "Puyo Puyo Sun", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, rsgun,     stvbios, stv, stv,  stv,  ROT0, "Sega", "Radiant Silvergun", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, sandor,    stvbios, stv, stv,  stv,  ROT0, "Sega", "Sando-R", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, sassisu,   stvbios, stv, stv,  stv,  ROT0, "Sega", "Taisen Tanto-R 'Sasshissu!'", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, seabass,   stvbios, stv, stv,  stv,  ROT0, "Sega", "Sea Bass Fishing", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, shanhigw,  stvbios, stv, stv,  stv,  ROT0, "Sega", "Shanghai - The Great Wall", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, shienryu,  stvbios, stv, stv,  stv,  ROT0, "Sega", "Shienryu", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, sleague,   stvbios, stv, stv,  stv,  ROT0, "Sega", "Super Major League (US)", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, sokyugrt,  stvbios, stv, stv,  stv,  ROT0, "Sega", "Soukyugurentai/Terra Diver", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, sss,       stvbios, stv, stv,  stv,  ROT0, "Sega", "Steep Slope Sliders", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, suikoenb,  stvbios, stv, stv,  stv,  ROT0, "Sega", "Suikoenbu", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, twcup98,   stvbios, stv, stv,  stv,  ROT0, "Sega", "Tecmo World Cup '98", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, vfkids,    stvbios, stv, stv,  stv,  ROT0, "Sega", "Virtua Fighter Kids", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, vfremix,   stvbios, stv, stv,  stv,  ROT0, "Sega", "Virtua Fighter Remix", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, vmahjong,  stvbios, stv, stv,  stv,  ROT0, "Sega", "Virtual Mahjong", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1997, winterht,  stvbios, stv, stv,  stv,  ROT0, "Sega", "Winter Heat", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1997, znpwfv,    stvbios, stv, stv,  stv,  ROT0, "Sega", "Zen Nippon Pro-Wrestling Featuring Virtua", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1998, astrass,   stvbios, stv, stv,  stv,  ROT0, "Sunsoft", 	"Astra SuperStars", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1996, bakubaku,  stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Baku Baku Animal", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1996, colmns97,  stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Columns 97", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1997, cotton2,   stvbios, stv, stv,  stv,  ROT0, "Success", 	"Cotton 2", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1998, cottonbm,  stvbios, stv, stv,  stv,  ROT0, "Success", 	"Cotton Boomerang", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1995, decathlt,  stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Decathlete", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1996, diehard,   stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Die Hard Arcade (US)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1996, dnmtdeka,  diehard, stv, stv,  stv,  ROT0, "Sega", 	"Dynamite Deka (Japan)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1995, ejihon,    stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Ejihon Tantei Jimusyo", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1998, elandore,  stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Fighting Dragon Legend Elan Doree", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1999, ffreveng,  stvbios, stv, stv,  stv,  ROT0, "Capcom", 	"Final Fight Revenge", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1995, fhboxers,  stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Funky Head Boxers", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1996, findlove,  stvbios, stv, stv,  stv,  ROT0, "Daiki",	"Find Love", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1995, finlarch,  stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Final Arch (Japan)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1994, gaxeduel,  stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Golden Axe - The Duel", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1998, grdforce,  stvbios, stv, stv,  stv,  ROT0, "Success", 	"Guardian Force", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1996, groovef,   stvbios, stv, stv,  stv,  ROT0, "Atlus", 	"Power Instinct 3 - Groove On Fight", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1998, hanagumi,  stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Hanagumi Taisen Columns - Sakura Wars", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1996, introdon,  stvbios, stv, stv,  stv,  ROT0, "Sunsoft / Success", "Karaoke Quiz Intro Don Don!", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1995, kiwames,   stvbios, stv, stv,  stv,  ROT0, "Athena", 	"Pro Mahjong Kiwame S", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1997, maruchan,  stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Maru-Chan de Goo!", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1998, myfairld,  stvbios, stv, stv,  stv,  ROT0, "Micronet", "Virtual Mahjong 2 - My Fair Lady", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1998, othellos,  stvbios, stv, stv,  stv,  ROT0, "Tsukuda Original",	"Othello Shiyouyo", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1995, pblbeach,  stvbios, stv, stv,  stv,  ROT0, "T&E Soft", "Pebble Beach - The Great Shot", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1996, prikura,   stvbios, stv, stv,  stv,  ROT0, "Atlus", 	"Purikura Daisakusen", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1996, puyosun,   stvbios, stv, stv,  stv,  ROT0, "Compile",	"Puyo Puyo Sun", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1998, rsgun,     stvbios, stv, stv,  stv,  ROT0, "Treasure", "Radiant Silvergun", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1995, sandor,    stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Sando-R", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1996, sassisu,   stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Taisen Tanto-R 'Sasshissu!'", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1998, seabass,   stvbios, stv, stv,  stv,  ROT0, "A Wave inc. (Able license)", "Sea Bass Fishing", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1995, shanhigw,  stvbios, stv, stv,  stv,  ROT0, "Sunsoft / Activision", "Shanghai - The Great Wall", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1997, shienryu,  stvbios, stv, stv,  stv,  ROT0, "Warashi", 	"Shienryu", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1995, sleague,   stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Super Major League (US)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1996, sokyugrt,  stvbios, stv, stv,  stv,  ROT0, "Raizing", 	"Soukyugurentai / Terra Diver", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1998, sss,       stvbios, stv, stv,  stv,  ROT0, "Victor / Cave / Capcom", "Steep Slope Sliders", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1995, suikoenb,  stvbios, stv, stv,  stv,  ROT0, "Data East","Suikoenbu", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1998, twcup98,   stvbios, stv, stv,  stv,  ROT0, "Tecmo", 	"Tecmo World Cup '98", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1996, vfkids,    stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Virtua Fighter Kids", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1995, vfremix,   stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Virtua Fighter Remix", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1997, vmahjong,  stvbios, stv, stv,  stv,  ROT0, "Micronet", "Virtual Mahjong", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1997, winterht,  stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Winter Heat", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1997, znpwfv,    stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Zen Nippon Pro-Wrestling Featuring Virtua", GAME_NO_SOUND | GAME_NOT_WORKING )
 
 GAMEX( 1999, danchih,   stvbios, stv, stv,  stv,  ROT0, "Altron (distributed by Tecmo)", "Danchi de Hanafuda", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1995, mausuke,   stvbios, stv, stv,  stv,  ROT0, "Data East", "Mausuke no Ojama the World", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 199?, batmanfr,  stvbios, stv, stv,  stv,  ROT0, "Acclaim", "Batman Forever", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1995, mausuke,   stvbios, stv, stv,  stv,  ROT0, "Data East","Mausuke no Ojama the World", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1996, batmanfr,  stvbios, stv, stv,  stv,  ROT0, "Acclaim", 	"Batman Forever", GAME_NO_SOUND | GAME_NOT_WORKING )
 
-/* there are probably a bunch of other games (some fishing games with cd-rom etc.) */
+/* there are probably a bunch of other games (some fishing games with cd-rom,Print Club 2 etc.) */

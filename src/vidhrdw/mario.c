@@ -9,11 +9,9 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+static int gfx_bank, palette_bank;
 
-
-static int gfx_bank,palette_bank;
-
-unsigned char *mario_scrolly;
+static struct tilemap *bg_tilemap;
 
 /***************************************************************************
 
@@ -88,76 +86,61 @@ PALETTE_INIT( mario )
 		COLOR(1,i) = i;
 }
 
-
+WRITE_HANDLER( mario_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
 WRITE_HANDLER( mario_gfxbank_w )
 {
-	if (gfx_bank != (data & 1))
+	if (gfx_bank != (data & 0x01))
 	{
-		memset(dirtybuffer,1,videoram_size);
-		gfx_bank = data & 1;
+		gfx_bank = data & 0x01;
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	}
 }
-
-
 
 WRITE_HANDLER( mario_palettebank_w )
 {
-	if (palette_bank != (data & 1))
+	if (palette_bank != (data & 0x01))
 	{
-		memset(dirtybuffer,1,videoram_size);
-		palette_bank = data & 1;
+		palette_bank = data & 0x01;
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	}
 }
 
+WRITE_HANDLER( mario_scroll_w )
+{
+	tilemap_set_scrollx(bg_tilemap, 0, data + 17);
+}
 
+static void get_bg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index] + 256 * gfx_bank;
+	int color = (videoram[tile_index] >> 5) + 8 * palette_bank;
 
-/***************************************************************************
+	SET_TILE_INFO(0, code, color, 0)
+}
 
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+VIDEO_START( mario )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
-***************************************************************************/
-VIDEO_UPDATE( mario )
+	if ( !bg_tilemap )
+		return 1;
+
+	return 0;
+}
+
+static void mario_draw_sprites( struct mame_bitmap *bitmap )
 {
 	int offs;
 
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + 256 * gfx_bank,
-					(videoram[offs] >> 5) + 8 * palette_bank,
-					0,0,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the temporary bitmap to the screen */
-	{
-		int scrolly;
-
-		/* I'm not positive the scroll direction is right */
-		scrolly = -*mario_scrolly - 17;
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-	/* Draw the sprites. */
 	for (offs = 0;offs < spriteram_size;offs += 4)
 	{
 		if (spriteram[offs])
@@ -170,4 +153,10 @@ VIDEO_UPDATE( mario )
 					&Machine->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
+}
+
+VIDEO_UPDATE( mario )
+{
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	mario_draw_sprites(bitmap);
 }

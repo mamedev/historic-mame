@@ -20,32 +20,34 @@ MAIN BOARD:
 #include "cpu/m6809/m6809.h"
 
 
-void konami1_decode(void);
+extern void konami1_decode(void);
 
+extern UINT8 *sbasketb_scroll;
+extern UINT8 *sbasketb_palettebank;
+extern UINT8 *sbasketb_spriteram_select;
 
-extern unsigned char *sbasketb_scroll;
-extern unsigned char *sbasketb_palettebank;
-extern unsigned char *sbasketb_spriteram_select;
-PALETTE_INIT( sbasketb );
-VIDEO_UPDATE( sbasketb );
+extern WRITE_HANDLER( sbasketb_videoram_w );
+extern WRITE_HANDLER( sbasketb_colorram_w );
+extern WRITE_HANDLER( sbasketb_flipscreen_w );
+extern WRITE_HANDLER( sbasketb_scroll_w );
+
+extern PALETTE_INIT( sbasketb );
+extern VIDEO_START( sbasketb );
+extern VIDEO_UPDATE( sbasketb );
 
 extern struct VLM5030interface konami_vlm5030_interface;
 extern struct SN76496interface konami_sn76496_interface;
 extern struct DACinterface konami_dac_interface;
-WRITE_HANDLER( konami_SN76496_latch_w );
-WRITE_HANDLER( konami_SN76496_0_w );
-WRITE_HANDLER( hyperspt_sound_w );
-READ_HANDLER( hyperspt_sh_timer_r );
+
+extern WRITE_HANDLER( konami_SN76496_latch_w );
+extern WRITE_HANDLER( konami_SN76496_0_w );
+extern WRITE_HANDLER( hyperspt_sound_w );
+extern READ_HANDLER( hyperspt_sh_timer_r );
 
 
 WRITE_HANDLER( sbasketb_sh_irqtrigger_w )
 {
 	cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
-}
-
-static WRITE_HANDLER( flip_screen_w )
-{
-	flip_screen_set(data);
 }
 
 static WRITE_HANDLER( sbasketb_coin_counter_w )
@@ -68,19 +70,19 @@ MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x2000, 0x2fff, MWA_RAM },
-	{ 0x3000, 0x33ff, colorram_w, &colorram },
-	{ 0x3400, 0x37ff, videoram_w, &videoram, &videoram_size },
+	{ 0x3000, 0x33ff, sbasketb_colorram_w, &colorram },
+	{ 0x3400, 0x37ff, sbasketb_videoram_w, &videoram },
 	{ 0x3800, 0x39ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x3a00, 0x3bff, MWA_RAM },           /* Probably unused, but initialized */
 	{ 0x3c00, 0x3c00, watchdog_reset_w },
 	{ 0x3c20, 0x3c20, MWA_RAM, &sbasketb_palettebank },
-	{ 0x3c80, 0x3c80, flip_screen_w },
+	{ 0x3c80, 0x3c80, sbasketb_flipscreen_w },
 	{ 0x3c81, 0x3c81, interrupt_enable_w },
 	{ 0x3c83, 0x3c84, sbasketb_coin_counter_w },
 	{ 0x3c85, 0x3c85, MWA_RAM, &sbasketb_spriteram_select },
 	{ 0x3d00, 0x3d00, soundlatch_w },
 	{ 0x3d80, 0x3d80, sbasketb_sh_irqtrigger_w },
-	{ 0x3f80, 0x3f80, MWA_RAM, &sbasketb_scroll },
+	{ 0x3f80, 0x3f80, sbasketb_scroll_w },
 MEMORY_END
 
 static MEMORY_READ_START( sound_readmem )
@@ -262,7 +264,7 @@ static MACHINE_DRIVER_START( sbasketb )
 	MDRV_COLORTABLE_LENGTH(16*16+16*16*16)
 
 	MDRV_PALETTE_INIT(sbasketb)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(sbasketb)
 	MDRV_VIDEO_UPDATE(sbasketb)
 
 	/* sound hardware */

@@ -8,11 +8,10 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "cpu/m6809/m6809.h"
 
+int nmi_enable;
 
-static int nmi_enable;
-
+static struct tilemap *bg_tilemap;
 
 /***************************************************************************
 
@@ -63,96 +62,74 @@ PALETTE_INIT( yiear )
 	}
 }
 
+WRITE_HANDLER( yiear_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset / 2);
+	}
+}
 
 WRITE_HANDLER( yiear_control_w )
 {
 	/* bit 0 flips screen */
-	flip_screen_set(data & 1);
+
+	if (flip_screen != (data & 0x01))
+	{
+		flip_screen_set(data & 0x01);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
 
 	/* bit 1 is NMI enable */
+
 	nmi_enable = data & 0x02;
 
 	/* bit 2 is IRQ enable */
+
 	interrupt_enable_w(0, data & 0x04);
 
 	/* bits 3 and 4 are coin counters */
-	coin_counter_w(0, (data >> 3) & 0x01);
-	coin_counter_w(1, (data >> 4) & 0x01);
+
+	coin_counter_w(0, data & 0x08);
+	coin_counter_w(1, data & 0x10);
 }
 
-
-INTERRUPT_GEN( yiear_nmi_interrupt )
+static void get_bg_tile_info(int tile_index)
 {
-	/* can't use nmi_line_pulse() because interrupt_enable_w() effects it */
-	if (nmi_enable) cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+	int offs = tile_index * 2;
+	int attr = videoram[offs];
+	int code = videoram[offs + 1] | ((attr & 0x10) << 4);
+//	int color = (attr & 0xf0) >> 4;
+	int flags = ((attr & 0x80) ? TILE_FLIPX : 0) | ((attr & 0x40) ? TILE_FLIPY : 0);
+
+	SET_TILE_INFO(0, code, 0, flags)
 }
 
+VIDEO_START( yiear )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
-/***************************************************************************
+	if ( !bg_tilemap )
+		return 1;
 
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+	return 0;
+}
 
-***************************************************************************/
-VIDEO_UPDATE( yiear )
+static void yiear_draw_sprites( struct mame_bitmap *bitmap )
 {
 	int offs;
 
-
-	if (get_vh_global_attribute_changed())
-	{
-		memset(dirtybuffer,1,videoram_size);
-	}
-
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 2;offs >= 0;offs -= 2)
-	{
-		if (dirtybuffer[offs] || dirtybuffer[offs + 1])
-		{
-			int sx,sy,flipx,flipy;
-
-
-			dirtybuffer[offs] = dirtybuffer[offs + 1] = 0;
-
-			sx = (offs/2) % 32;
-			sy = (offs/2) / 32;
-			flipx = videoram[offs] & 0x80;
-			flipy = videoram[offs] & 0x40;
-			if (flip_screen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-				videoram[offs + 1] | ((videoram[offs] & 0x10) << 4),
-				0,
-				flipx,flipy,
-				8*sx,8*sy,
-				0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the temporary bitmap to the screen */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-
-
-	/* draw sprites */
 	for (offs = spriteram_size - 2;offs >= 0;offs -= 2)
 	{
-		int sx,sy,flipx,flipy;
-
-
-		sy    =  240 - spriteram[offs + 1];
-		sx    =  spriteram_2[offs];
-		flipx = ~spriteram[offs] & 0x40;
-		flipy =  spriteram[offs] & 0x80;
+		int attr = spriteram[offs];
+		int code = spriteram_2[offs + 1] + 256 * (attr & 0x01);
+		int color = 0;
+		int flipx = ~attr & 0x40;
+		int flipy = attr & 0x80;
+		int sy = 240 - spriteram[offs + 1];
+		int sx = spriteram_2[offs];
 
 		if (flip_screen)
 		{
@@ -165,11 +142,17 @@ VIDEO_UPDATE( yiear )
 			sy++;	/* fix title screen & garbage at the bottom of the screen */
 		}
 
-		drawgfx(bitmap,Machine->gfx[1],
-			spriteram_2[offs + 1] + 256 * (spriteram[offs] & 1),
-			0,
-			flipx,flipy,
-			sx,sy,
-			&Machine->visible_area,TRANSPARENCY_PEN,0);
+		drawgfx(bitmap, Machine->gfx[1],
+			code, color,
+			flipx, flipy,
+			sx, sy,
+			&Machine->visible_area,
+			TRANSPARENCY_PEN, 0);
 	}
+}
+
+VIDEO_UPDATE( yiear )
+{
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	yiear_draw_sprites(bitmap);
 }

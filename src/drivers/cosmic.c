@@ -4,6 +4,7 @@ Universal board numbers (found on the schematics)
 
 Cosmic Guerilla - 7907A
 Cosmic Alien    - 7910
+Magical Spot	- 8013
 Magical Spot II - 8013
 Devil Zone      - 8022
 
@@ -1322,6 +1323,29 @@ ROM_START( cosmicg )
 	ROM_LOAD( "cosmicg9.bin", 0x0000, 0x0400, CRC(689c2c96) SHA1(ddfdc3fd29c56fdebd3b1c3443a7c39f567d5355) )
 ROM_END
 
+/* rom 9 not dumped according to readme? */
+ROM_START( magspot )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "ms1.bin",	  0x0000, 0x0800, CRC(59e9019d) SHA1(3c64ae956ec4eed988018b89c986ad8f6f065fe0) )
+	ROM_LOAD( "ms2.bin",	  0x0800, 0x0800, CRC(98b913b1) SHA1(2ce86f5069e2664e2ea44bda567ca26432fd59f7) )
+	ROM_LOAD( "ms3.bin",	  0x1000, 0x0800, CRC(ea58c124) SHA1(7551c14ed9563e3aed7220cc03f7bca4029b3a4e) )
+	ROM_LOAD( "ms5.bin",	  0x1800, 0x0800, CRC(4302a658) SHA1(9590be8db27b7122c87cfb27f8e09c2ecbf6fbd0) )
+	ROM_LOAD( "ms4.bin",	  0x2000, 0x0800, CRC(088582ab) SHA1(ad2d86184b4a6ee74464d1df40f4e841434c46c8) )
+	ROM_LOAD( "ms6.bin",	  0x2800, 0x0800, CRC(e6bf492c) SHA1(ada3a33c54b6c02f3fb9590181fceefafdc429bc) )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )	/* sprites */
+	ROM_LOAD( "ms8.bin",	  0x0000, 0x0800, CRC(9e1d63a2) SHA1(d8642e515871da44880e105e6891c4b25222744f) )
+	ROM_LOAD( "ms7.bin",	  0x0800, 0x0800, CRC(1ab338d3) SHA1(4e3bf93f94119fd10c40953245cec735db8417fb) )
+
+	// from magspot2 - verify its the same on this
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "ms.d9",        0x0000, 0x0020, BAD_DUMP CRC(36e2aa2a) SHA1(4813b013cb8260157858e3adc7323efc6654e170) )
+
+	// from magspot2 - verify its the same on this
+	ROM_REGION( 0x0400, REGION_USER1, 0 ) /* color map */
+	ROM_LOAD( "ms.e2",        0x0000, 0x0400, BAD_DUMP CRC(89f23ebd) SHA1(a56bda82f8be8e541a50d2a411ada89a6d9c0373) )
+ROM_END
+
 ROM_START( magspot2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "ms.e3",        0x0000, 0x0800, CRC(c0085ade) SHA1(ab60ba7c0e45ea2576d935135e930e2fdf165867) )
@@ -1492,6 +1516,7 @@ GAME( 1980, panic2,   panic,   panic,    panic,    0,       ROT270, "Universal",
 GAME( 1980, panic3,   panic,   panic,    panic,    0,       ROT270, "Universal", "Space Panic (set 3)" )
 GAME( 1980, panich,   panic,   panic,    panic,    0,       ROT270, "Universal", "Space Panic (harder)" )
 GAME( 1980, panicger, panic,   panic,    panic,    0,       ROT270, "Universal (ADP Automaten license)", "Space Panic (German)" )
+GAMEX(1980, magspot,  0,	   magspot2, magspot2, 0,       ROT270, "Universal", "Magical Spot", GAME_IMPERFECT_SOUND )
 GAMEX(1980, magspot2, 0,       magspot2, magspot2, 0,       ROT270, "Universal", "Magical Spot II", GAME_IMPERFECT_SOUND )
 GAMEX(1980, devzone,  0,       devzone,  devzone,  devzone, ROT270, "Universal", "Devil Zone", GAME_IMPERFECT_SOUND )
 GAMEX(1980, devzone2, devzone, devzone,  devzone2, devzone, ROT270, "Universal", "Devil Zone (easier)", GAME_IMPERFECT_SOUND )

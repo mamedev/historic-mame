@@ -54,9 +54,11 @@ To Do:
 
 ***************************************************************************/
 
+static int time_vblank_irq = 2000;
 static UINT8 vblank_irq;
 static UINT8 sound_irq;
 static UINT8 unknown_irq;
+static UINT8 agallet_vblank_irq;
 
 /* Update the IRQ state based on all possible causes */
 static void update_irq_state(void)
@@ -67,33 +69,29 @@ static void update_irq_state(void)
 		cpu_set_irq_line(0, 1, CLEAR_LINE);
 }
 
-/* Called once/frame to generate the VBLANK interrupt */
-static INTERRUPT_GEN( cave_interrupt )
+static void cave_vblank_start(int param)
 {
 	vblank_irq = 1;
 	update_irq_state();
+	cave_get_sprite_info();
+	agallet_vblank_irq = 1;
 }
 
-static INTERRUPT_GEN( mazinger_interrupt )
+static void cave_vblank_end(int param)
 {
-	unknown_irq = 1;
-	cave_interrupt();
-}
-
-static INTERRUPT_GEN( metmqstr_interrupt )
-{
-	switch( cpu_getiloops() )
+	if(cave_kludge == 3)	/* mazinger metmqstr */
 	{
-		case 0:		// VBlank
-			vblank_irq = 1;
-			update_irq_state();
-			break;
-		default:
-		case 1:		// Sprites?
-			unknown_irq = 1;
-			update_irq_state();
-			break;
+		unknown_irq = 1;
+		update_irq_state();
 	}
+	agallet_vblank_irq = 0;
+}
+
+/* Called once/frame to generate the VBLANK interrupt */
+static INTERRUPT_GEN( cave_interrupt )
+{
+	timer_set(TIME_IN_USEC(17376-time_vblank_irq), 0, cave_vblank_start);
+	timer_set(TIME_IN_USEC(17376-time_vblank_irq + 2000), 0, cave_vblank_end);
 }
 
 /* Called by the YMZ280B to set the IRQ state */
@@ -132,22 +130,16 @@ static READ16_HANDLER( cave_irq_cause_r )
 
 	update_irq_state();
 
-	return result;
-}
-
-/* Is ddonpach different? This is probably wrong but it works */
-
-static READ16_HANDLER( ddonpach_irq_cause_r )
-{
-	int result = 0x0007;
-
-	if (vblank_irq)		result ^= 0x01;
-//	if (unknown_irq)	result ^= 0x02;
-
-	if (offset == 0/2)	vblank_irq = 0;
-//	if (offset == 4/2)	unknown_irq = 0;
-
-	update_irq_state();
+/*
+	sailormn and agallet wait for bit 2 of $b80001 to go 1 -> 0.
+	It must happen once per frame as agallet uses this to show
+	the copyright notice screen for ~8.5s
+*/
+	if (offset == 0)
+	{
+		result &= ~4;
+		result |= (agallet_vblank_irq?0:4);
+	}
 
 	return result;
 }
@@ -280,6 +272,7 @@ static data8_t cave_default_eeprom_type7[48] =	{0xff,0xff,0xff,0xff,0xff,0xff,0x
 
 static data8_t *cave_default_eeprom;
 static int cave_default_eeprom_length;
+static int cave_region_byte;
 
 READ16_HANDLER( cave_input1_r )
 {
@@ -465,7 +458,7 @@ static MEMORY_READ16_START( ddonpach_readmem )
 /**/{ 0x500000, 0x507fff, MRA16_RAM				},	// Layer 0
 /**/{ 0x600000, 0x607fff, MRA16_RAM				},	// Layer 1
 /**/{ 0x700000, 0x70ffff, MRA16_RAM				},	// Layer 2
-	{ 0x800000, 0x800007, ddonpach_irq_cause_r	},	// IRQ Cause
+	{ 0x800000, 0x800007, cave_irq_cause_r		},	// IRQ Cause
 /**/{ 0x900000, 0x900005, MRA16_RAM				},	// Layer 0 Control
 /**/{ 0xa00000, 0xa00005, MRA16_RAM				},	// Layer 1 Control
 /**/{ 0xb00000, 0xb00005, MRA16_RAM				},	// Layer 2 Control
@@ -889,33 +882,12 @@ static READ16_HANDLER( sailormn_input0_r )
 	return readinputport(0);
 }
 
-/*
-	sailormn and agallet wait for bit 2 of $b80001 to go 1 -> 0.
-	It must happen once per frame as agallet uses this to show
-	the copyright notice screen for ~8.5s
-*/
-static READ16_HANDLER( sailormn_irq_cause_r )
-{
-	data16_t irq_cause = cave_irq_cause_r(offset,mem_mask);
-
-	if (offset == 0)
-	{
-		irq_cause &= ~4;
-		irq_cause |= (cpu_getvblank()?0:4);
-	}
-
-	return irq_cause;
-}
-
 static READ16_HANDLER( agallet_irq_cause_r )
 {
 	data16_t irq_cause = cave_irq_cause_r(offset,mem_mask);
 
 	if (offset == 0)
 	{
-		irq_cause &= ~4;
-		irq_cause |= (cpu_getvblank()?0:4);
-
 // Speed hack for agallet
 		if ((activecpu_get_pc() == 0xcdca) && (irq_cause & 4))
 			cpu_spinuntil_int();
@@ -945,7 +917,7 @@ static MEMORY_READ16_START( sailormn_readmem )
 /**/{ 0xa00000, 0xa00005, MRA16_RAM				},	// Layer 0 Control
 /**/{ 0xa80000, 0xa80005, MRA16_RAM				},	// Layer 1 Control
 /**/{ 0xb00000, 0xb00005, MRA16_RAM				},	// Layer 2 Control
-	{ 0xb80000, 0xb80007, sailormn_irq_cause_r	},	// IRQ Cause (bit 2 tested!)
+	{ 0xb80000, 0xb80007, cave_irq_cause_r		},	// IRQ Cause (bit 2 tested!)
 	{ 0xb8006c, 0xb8006d, soundflags_ack_r		},	// Communication
 	{ 0xb8006e, 0xb8006f, soundlatch_ack_r		},	// From Sound CPU
 MEMORY_END
@@ -1389,6 +1361,102 @@ INPUT_PORTS_START( cave )
 	PORT_BIT(  0x8000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 INPUT_PORTS_END
 
+/* Mazinger Z (has region stored in Eeprom) */
+INPUT_PORTS_START( mazinger )
+	PORT_START	// IN0 - Player 1
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN	 | IPF_PLAYER1 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER1 )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER1 )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER1 )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_START1  )
+
+	PORT_BIT_IMPULSE(  0x0100, IP_ACTIVE_LOW, IPT_COIN1, 6)
+	PORT_BITX( 0x0200, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )	// sw? exit service mode
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )	// sw? enter & exit service mode
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN1 - Player 2
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN	 | IPF_PLAYER2 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER2 )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_START2  )
+
+	PORT_BIT_IMPULSE(  0x0100, IP_ACTIVE_LOW, IPT_COIN2, 6)
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW,  IPT_SERVICE1)
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0800, IP_ACTIVE_HIGH, IPT_SPECIAL )	// eeprom bit
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+
+	PORT_START	// Eeprom Region
+	PORT_DIPNAME( 0xff, 0x31, "Region" )
+	PORT_DIPSETTING(    0x30, "Japan" )
+	PORT_DIPSETTING(    0x31, "World" )
+INPUT_PORTS_END
+
+/* Sailor Moon / Air Gallet (has region stored in Eeprom) */
+INPUT_PORTS_START( sailormn )
+	PORT_START	// IN0 - Player 1
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN	 | IPF_PLAYER1 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER1 )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER1 )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER1 )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_START1  )
+
+	PORT_BIT_IMPULSE(  0x0100, IP_ACTIVE_LOW, IPT_COIN1, 6)
+	PORT_BITX( 0x0200, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )	// sw? exit service mode
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )	// sw? enter & exit service mode
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN1 - Player 2
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN	 | IPF_PLAYER2 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER2 )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_START2  )
+
+	PORT_BIT_IMPULSE(  0x0100, IP_ACTIVE_LOW, IPT_COIN2, 6)
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW,  IPT_SERVICE1)
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0800, IP_ACTIVE_HIGH, IPT_SPECIAL )	// eeprom bit
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+
+	PORT_START	// Eeprom Region
+	PORT_DIPNAME( 0xff, 0x02, "Region" )
+	PORT_DIPSETTING(    0x00, "Japan" )
+	PORT_DIPSETTING(    0x01, "USA" )
+	PORT_DIPSETTING(    0x02, "Europe" )
+	PORT_DIPSETTING(    0x03, "Hong Kong" )
+	PORT_DIPSETTING(    0x04, "Taiwan" )
+	PORT_DIPSETTING(    0x05, "Korea" )
+INPUT_PORTS_END
+
 /* Different layout */
 INPUT_PORTS_START( guwange )
 	PORT_START	// IN0 - Player 1 & 2
@@ -1702,6 +1770,11 @@ static struct GfxDecodeInfo uopoko_gfxdecodeinfo[] =
 MACHINE_INIT( cave )
 {
 	soundbuf.len = 0;
+
+	/* modify the eeprom on a reset with the desired region for the games that have the
+	   region factory set in eeprom */
+	if (cave_region_byte >= 0)
+		EEPROM_get_data_pointer(0)[cave_region_byte] =  readinputport(2);
 }
 
 /* start with the watchdog armed */
@@ -1771,7 +1844,7 @@ static struct YM2203interface ym2203_intf_4MHz =
 {
 	1,
 	4000000,	/* ? */
-	{ YM2203_VOL(25,25) },
+	{ YM2203_VOL(80,20) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -2001,7 +2074,7 @@ static MACHINE_DRIVER_START( mazinger )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
 	MDRV_CPU_MEMORY(mazinger_readmem,mazinger_writemem)
-	MDRV_CPU_VBLANK_INT(mazinger_interrupt,1)
+	MDRV_CPU_VBLANK_INT(cave_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 //	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	// Bidirectional communication
@@ -2042,7 +2115,7 @@ static MACHINE_DRIVER_START( metmqstr )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,32000000 / 2)
 	MDRV_CPU_MEMORY(metmqstr_readmem,metmqstr_writemem)
-	MDRV_CPU_VBLANK_INT(metmqstr_interrupt,2)
+	MDRV_CPU_VBLANK_INT(cave_interrupt,1)
 
 	MDRV_CPU_ADD(Z80,32000000 / 4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
@@ -2084,9 +2157,11 @@ MACHINE_DRIVER_END
 static struct OKIM6295interface okim6295_intf_pwrinst2 =
 {
 	2,
-	{ 16000000 / 8 / 132,		16000000 / 8 / 132	},
+//	{ 16000000 / 8 / 132,		16000000 / 8 / 132	},
+	{ 18000,					18000				},
 	{ REGION_SOUND1, 			REGION_SOUND2		},
-	{ 0, 	/*<-wrong */		50					}
+//	{ 0, 	/*<-wrong */		50					}
+	{ 50,						50					}
 };
 
 static struct YM2203interface ym2203_intf_pwrinst2 =
@@ -2154,8 +2229,8 @@ static MACHINE_DRIVER_START( sailormn )
 	MDRV_CPU_PORTS(sailormn_sound_readport,sailormn_sound_writeport)
 
 	MDRV_FRAMES_PER_SECOND(15625/271.5)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)	// we use cpu_getvblank
-	MDRV_INTERLEAVE(10)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+//	MDRV_INTERLEAVE(10)
 
 	MDRV_MACHINE_INIT(cave)
 	MDRV_NVRAM_HANDLER(cave)
@@ -3148,8 +3223,12 @@ DRIVER_INIT( agallet )
 
 	cave_default_eeprom = cave_default_eeprom_type7;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type7);
+	cave_region_byte = 0x1f;
+
 	unpack_sprites();
 	cave_spritetype = 0;	// "normal" sprites
+	cave_kludge = 0;
+	time_vblank_irq = 100;
 
 //	Speed Hack
 	install_mem_read16_handler(0, 0xb80000, 0xb80001, agallet_irq_cause_r);
@@ -3159,24 +3238,36 @@ DRIVER_INIT( dfeveron )
 {
 	cave_default_eeprom = cave_default_eeprom_type1;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type1);
+	cave_region_byte = -1;
+
 	unpack_sprites();
 	cave_spritetype = 0;	// "normal" sprites
+	cave_kludge = 2;
+	time_vblank_irq = 100;
 }
 
 DRIVER_INIT( ddonpach )
 {
 	cave_default_eeprom = cave_default_eeprom_type2;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type2);
+	cave_region_byte = -1;
+
 	ddonpach_unpack_sprites();
 	cave_spritetype = 1;	// "different" sprites (no zooming?)
+	cave_kludge = 0;
+	time_vblank_irq = 90;
 }
 
 DRIVER_INIT( esprade )
 {
 	cave_default_eeprom = cave_default_eeprom_type2;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type2);
+	cave_region_byte = -1;
+
 	esprade_unpack_sprites();
 	cave_spritetype = 0;	// "normal" sprites
+	cave_kludge = 0;
+	time_vblank_irq = 2000;	/**/
 
 #if 0		//ROM PATCH
 	{
@@ -3190,16 +3281,24 @@ DRIVER_INIT( guwange )
 {
 	cave_default_eeprom = cave_default_eeprom_type1;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type1);
+	cave_region_byte = -1;
+
 	esprade_unpack_sprites();
 	cave_spritetype = 0;	// "normal" sprites
+	cave_kludge = 0;
+	time_vblank_irq = 2000;	/**/
 }
 
 DRIVER_INIT( hotdogst )
 {
 	cave_default_eeprom = cave_default_eeprom_type4;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type4);
+	cave_region_byte = -1;
+
 	unpack_sprites();
 	cave_spritetype = 2;	// "normal" sprites with different position handling
+	cave_kludge = 0;
+	time_vblank_irq = 2000;	/**/
 }
 
 DRIVER_INIT( mazinger )
@@ -3220,8 +3319,12 @@ DRIVER_INIT( mazinger )
 
 	cave_default_eeprom = cave_default_eeprom_type5;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type5);
+	cave_region_byte = 0x05;
+
 	unpack_sprites();
 	cave_spritetype = 2;	// "normal" sprites with different position handling
+	cave_kludge = 3;
+	time_vblank_irq = 2100;
 
 	/* setup extra ROM */
 	cpu_setbank(1,memory_region(REGION_USER1));
@@ -3232,8 +3335,12 @@ DRIVER_INIT( metmqstr )
 {
 	cave_default_eeprom = 0;
 	cave_default_eeprom_length = 0;
+	cave_region_byte = -1;
+
 	unpack_sprites();
 	cave_spritetype = 2;	// "normal" sprites with different position handling
+	cave_kludge = 3;
+	time_vblank_irq = 17376;
 }
 
 
@@ -3241,11 +3348,14 @@ DRIVER_INIT( pwrinst2 )
 {
 	cave_default_eeprom = 0;
 	cave_default_eeprom_length = 0;
+	cave_region_byte = -1;
 
 //	To do: Decrypt sprites
 
 	unpack_sprites();
 	cave_spritetype = 1;	// "different" sprites (no zooming?)
+	cave_kludge = 0;
+	time_vblank_irq = 2000;	/**/
 }
 
 DRIVER_INIT( sailormn )
@@ -3268,16 +3378,24 @@ DRIVER_INIT( sailormn )
 
 	cave_default_eeprom = cave_default_eeprom_type6;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type6);
+	cave_region_byte = 0x11;
+
 	unpack_sprites();
 	cave_spritetype = 2;	// "normal" sprites with different position handling
+	cave_kludge = 1;
+	time_vblank_irq = 2000;
 }
 
 DRIVER_INIT( uopoko )
 {
 	cave_default_eeprom = cave_default_eeprom_type3;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type4);
+	cave_region_byte = -1;
+
 	unpack_sprites();
 	cave_spritetype = 0;	// "normal" sprites
+	cave_kludge = 2;
+	time_vblank_irq = 2000;	/**/
 }
 
 
@@ -3289,14 +3407,14 @@ DRIVER_INIT( uopoko )
 
 ***************************************************************************/
 
-GAME( 1994, mazinger, 0,        mazinger, cave,     mazinger, ROT90,  "Banpresto/Dynamic Pl. Toei Animation", "Mazinger Z"                 )
+GAME( 1994, mazinger, 0,        mazinger, mazinger, mazinger, ROT90,  "Banpresto/Dynamic Pl. Toei Animation", "Mazinger Z"                 ) // region in eeprom
 GAME( 1995, donpachi, 0,        donpachi, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DonPachi (US)"              )
 GAME( 1995, donpachj, donpachi, donpachi, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DonPachi (Japan)"           )
 GAME( 1995, donpachk, donpachi, donpachi, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DonPachi (Korea)"           )
 GAME( 1995, metmqstr, 0,        metmqstr, metmqstr, metmqstr, ROT0,   "Banpresto/Pandorabox",                 "Metamoqester"               )
-GAME( 1995, sailormn, 0,        sailormn, cave,     sailormn, ROT0,   "Banpresto",                            "Pretty Soldier Sailor Moon (95/03/22B)" )
-GAME( 1995, sailormo, sailormn, sailormn, cave,     sailormn, ROT0,   "Banpresto",                            "Pretty Soldier Sailor Moon (95/03/22)" )
-GAME( 1996, agallet,  0,        sailormn, cave,     agallet,  ROT270, "Banpresto / Gazelle",                  "Air Gallet (Taiwan)"        )
+GAME( 1995, sailormn, 0,        sailormn, sailormn, sailormn, ROT0,   "Banpresto",                            "Pretty Soldier Sailor Moon (95/03/22B)" ) // region in eeprom
+GAME( 1995, sailormo, sailormn, sailormn, sailormn, sailormn, ROT0,   "Banpresto",                            "Pretty Soldier Sailor Moon (95/03/22)" ) // region in eeprom
+GAME( 1996, agallet,  0,        sailormn, sailormn, agallet,  ROT270, "Banpresto / Gazelle",                  "Air Gallet"        ) // board was taiwan, region in eeprom
 GAME( 1996, hotdogst, 0,        hotdogst, cave,     hotdogst, ROT90,  "Marble",                               "Hotdog Storm"               )
 GAME( 1997, ddonpach, 0,        ddonpach, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DoDonPachi (International)" )
 GAME( 1997, ddonpchj, ddonpach, ddonpach, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DoDonPachi (Japan)"         )

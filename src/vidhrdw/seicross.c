@@ -9,12 +9,9 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+UINT8 *seicross_row_scroll;
 
-
-unsigned char *seicross_row_scroll;
-
-
-
+static struct tilemap *bg_tilemap;
 
 /***************************************************************************
 
@@ -60,7 +57,14 @@ PALETTE_INIT( seicross )
 	}
 }
 
-
+WRITE_HANDLER( seicross_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
 WRITE_HANDLER( seicross_colorram_w )
 {
@@ -71,68 +75,43 @@ WRITE_HANDLER( seicross_colorram_w )
 		/* region. */
 		offset &= 0xffdf;
 
-		dirtybuffer[offset] = 1;
-		dirtybuffer[offset + 0x20] = 1;
-
 		colorram[offset] = data;
 		colorram[offset + 0x20] = data;
+
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+		tilemap_mark_tile_dirty(bg_tilemap, offset + 0x20);
 	}
 }
 
-
-
-
-/***************************************************************************
-
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
-VIDEO_UPDATE( seicross )
+static void get_bg_tile_info(int tile_index)
 {
-	int offs,x;
+	int code = videoram[tile_index] + ((colorram[tile_index] & 0x10) << 4);
+	int color = colorram[tile_index] & 0x0f;
+	int flags = ((colorram[tile_index] & 0x40) ? TILE_FLIPX : 0) | ((colorram[tile_index] & 0x80) ? TILE_FLIPY : 0);
 
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
+	SET_TILE_INFO(0, code, color, flags)
+}
 
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy;
+VIDEO_START( seicross )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
+	if ( !bg_tilemap )
+		return 1;
 
-			dirtybuffer[offs] = 0;
+	tilemap_set_scroll_cols(bg_tilemap, 32);
 
-			sx = offs % 32;
-			sy = offs / 32;
+	return 0;
+}
 
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + ((colorram[offs] & 0x10) << 4),
-					colorram[offs] & 0x0f,
-					colorram[offs] & 0x40,colorram[offs] & 0x80,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
+static void seicross_draw_sprites( struct mame_bitmap *bitmap )
+{
+	int offs;
 
-
-	/* copy the temporary bitmap to the screen */
-	{
-		int scroll[32];
-
-
-		for (offs = 0;offs < 32;offs++)
-			scroll[offs] = -seicross_row_scroll[offs];
-
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-	/* draw sprites */
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
-		x=spriteram[offs + 3];
+		int x = spriteram[offs + 3];
 		drawgfx(bitmap,Machine->gfx[1],
 				(spriteram[offs] & 0x3f) + ((spriteram[offs + 1] & 0x10) << 2) + 128,
 				spriteram[offs + 1] & 0x0f,
@@ -150,7 +129,7 @@ VIDEO_UPDATE( seicross )
 
 	for (offs = spriteram_2_size - 4;offs >= 0;offs -= 4)
 	{
-		x=spriteram_2[offs + 3];
+		int x = spriteram_2[offs + 3];
 		drawgfx(bitmap,Machine->gfx[1],
 				(spriteram_2[offs] & 0x3f) + ((spriteram_2[offs + 1] & 0x10) << 2),
 				spriteram_2[offs + 1] & 0x0f,
@@ -165,4 +144,17 @@ VIDEO_UPDATE( seicross )
 					x-256,240-spriteram_2[offs + 2],
 					&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
+}
+
+VIDEO_UPDATE( seicross )
+{
+	int col;
+
+	for (col = 0; col < 32; col++)
+	{
+		tilemap_set_scrolly(bg_tilemap, col, seicross_row_scroll[col]);
+	}
+
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	seicross_draw_sprites(bitmap);
 }

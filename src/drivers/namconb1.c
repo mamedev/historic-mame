@@ -292,6 +292,7 @@ GFX:                Custom 145     ( 80 pin PQFP)
 #include "namconb1.h"
 #include "namcos2.h"
 #include "namcoic.h"
+#include "machine/random.h"
 
 #define NB1_NVMEM_SIZE (0x800)
 static data32_t *nvmem32;
@@ -406,7 +407,7 @@ static READ32_HANDLER( custom_key_r )
 	old_count = count;
 	do
 	{
-		count = rand();
+		count = mame_rand();
 	} while( count==old_count );
 
 	switch( namcos2_gametype )

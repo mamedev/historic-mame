@@ -39,10 +39,46 @@ enum
 	MIPS_CP0R24, MIPS_CP0R25,
 	MIPS_CP0R26, MIPS_CP0R27,
 	MIPS_CP0R28, MIPS_CP0R29,
-	MIPS_CP0R30, MIPS_CP0R31
+	MIPS_CP0R30, MIPS_CP0R31,
+	MIPS_CP2DR0, MIPS_CP2DR1,
+	MIPS_CP2DR2, MIPS_CP2DR3,
+	MIPS_CP2DR4, MIPS_CP2DR5,
+	MIPS_CP2DR6, MIPS_CP2DR7,
+	MIPS_CP2DR8, MIPS_CP2DR9,
+	MIPS_CP2DR10, MIPS_CP2DR11,
+	MIPS_CP2DR12, MIPS_CP2DR13,
+	MIPS_CP2DR14, MIPS_CP2DR15,
+	MIPS_CP2DR16, MIPS_CP2DR17,
+	MIPS_CP2DR18, MIPS_CP2DR19,
+	MIPS_CP2DR20, MIPS_CP2DR21,
+	MIPS_CP2DR22, MIPS_CP2DR23,
+	MIPS_CP2DR24, MIPS_CP2DR25,
+	MIPS_CP2DR26, MIPS_CP2DR27,
+	MIPS_CP2DR28, MIPS_CP2DR29,
+	MIPS_CP2DR30, MIPS_CP2DR31,
+	MIPS_CP2CR0, MIPS_CP2CR1,
+	MIPS_CP2CR2, MIPS_CP2CR3,
+	MIPS_CP2CR4, MIPS_CP2CR5,
+	MIPS_CP2CR6, MIPS_CP2CR7,
+	MIPS_CP2CR8, MIPS_CP2CR9,
+	MIPS_CP2CR10, MIPS_CP2CR11,
+	MIPS_CP2CR12, MIPS_CP2CR13,
+	MIPS_CP2CR14, MIPS_CP2CR15,
+	MIPS_CP2CR16, MIPS_CP2CR17,
+	MIPS_CP2CR18, MIPS_CP2CR19,
+	MIPS_CP2CR20, MIPS_CP2CR21,
+	MIPS_CP2CR22, MIPS_CP2CR23,
+	MIPS_CP2CR24, MIPS_CP2CR25,
+	f1, f2, f3, f4,
+	f5, f6, f7, f8,
+	MIPS_CP2CR26, MIPS_CP2CR27,
+	MIPS_CP2CR28, MIPS_CP2CR29,
+	MIPS_CP2CR30, MIPS_CP2CR31
 };
 
 extern int mips_ICount;
+
+#define MIPS_INT_NONE	( -1 )
 
 #define MIPS_IRQ0	( 0 )
 #define MIPS_IRQ1	( 1 )
@@ -160,15 +196,6 @@ extern int mips_ICount;
 /* OP_COP0 */
 #define CF_RFE ( 16 )
 
-#ifdef LSB_FIRST
-#define MIPS_READ_LONG(a)		(*(UINT32 *)(a))
-#define MIPS_WRITE_LONG(a,d) 	(*(UINT32 *)(a) = (d))
-#else
-#define MIPS_READ_LONG(a)		((*(UINT16 *)(a+2))<<16)|(*(UINT16 *)(a))
-#define MIPS_WRITE_LONG(a,d)	*(UINT16 *)(a+2) = d>>16; *(UINT16 *)(a) = d & 0xffff
-#endif
-
-#define mips_readop32(A)	MIPS_READ_LONG(&OP_ROM[A])
 extern void mips_stop(void);
 
 extern void mips_init(void);
@@ -179,6 +206,7 @@ extern unsigned mips_get_context(void *dst);
 extern void mips_set_context(void *src);
 extern unsigned mips_get_reg(int regnum);
 extern void mips_set_reg(int regnum, unsigned val);
+extern void mips_set_nmi_line(int linestate);
 extern void mips_set_irq_line(int irqline, int linestate);
 extern void mips_set_irq_callback(int (*callback)(int irqline));
 extern const char *mips_info(void *context, int regnum);
@@ -190,15 +218,21 @@ extern unsigned DasmMIPS(char *buff, unsigned _pc);
 
 #if HAS_PSXCPU
 
-#define psxcpu_ICount                   mips_ICount
+#define psxcpu_ICount mips_ICount
 
+#define psxcpu_init mips_init
 #define psxcpu_reset mips_reset
 #define psxcpu_exit mips_exit
 #define psxcpu_execute mips_execute
 #define psxcpu_get_context mips_get_context
 #define psxcpu_set_context mips_set_context
+#define psxcpu_get_pc mips_get_pc
+#define psxcpu_set_pc mips_set_pc
+#define psxcpu_get_sp mips_get_sp
+#define psxcpu_set_sp mips_set_sp
 #define psxcpu_get_reg mips_get_reg
 #define psxcpu_set_reg mips_set_reg
+#define psxcpu_set_nmi_line mips_set_nmi_line
 #define psxcpu_set_irq_line mips_set_irq_line
 #define psxcpu_set_irq_callback mips_set_irq_callback
 #define psxcpu_state_save mips_state_save

@@ -9,22 +9,64 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
-unsigned char *zodiack_videoram2;
-unsigned char *zodiack_attributesram;
-unsigned char *zodiack_bulletsram;
+UINT8 *zodiack_videoram2;
+UINT8 *zodiack_attributesram;
+UINT8 *zodiack_bulletsram;
 size_t zodiack_bulletsram_size;
 
 extern int percuss_hardware;
 
-static int flipscreen;
+static struct tilemap *bg_tilemap, *fg_tilemap;
+
+WRITE_HANDLER( zodiack_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
+}
+
+WRITE_HANDLER( zodiack_videoram2_w )
+{
+	if (zodiack_videoram2[offset] != data)
+	{
+		zodiack_videoram2[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
+
+WRITE_HANDLER( zodiack_attributes_w )
+{
+	if ((offset & 1) && zodiack_attributesram[offset] != data)
+	{
+		int i;
+
+		for (i = offset / 2;i < videoram_size; i += 32)
+		{
+			tilemap_mark_tile_dirty(bg_tilemap, i);
+			tilemap_mark_tile_dirty(fg_tilemap, i);
+		}
+	}
+
+	zodiack_attributesram[offset] = data;
+}
+
+WRITE_HANDLER( zodiack_flipscreen_w )
+{
+	if (flip_screen != (!data))
+	{
+		flip_screen_set(!data);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
+}
 
 PALETTE_INIT( zodiack )
 {
 	int i;
+
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
-
 
 	/* first, the character/sprite palette */
 	for (i = 0;i < Machine->drv->total_colors-1; i++)
@@ -32,28 +74,37 @@ PALETTE_INIT( zodiack )
 		int bit0,bit1,bit2,r,g,b;
 
 		/* red component */
+
 		bit0 = (*color_prom >> 0) & 0x01;
 		bit1 = (*color_prom >> 1) & 0x01;
 		bit2 = (*color_prom >> 2) & 0x01;
+
 		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
 		/* green component */
+
 		bit0 = (*color_prom >> 3) & 0x01;
 		bit1 = (*color_prom >> 4) & 0x01;
 		bit2 = (*color_prom >> 5) & 0x01;
+
 		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
 		/* blue component */
+
 		bit0 = 0;
 		bit1 = (*color_prom >> 6) & 0x01;
 		bit2 = (*color_prom >> 7) & 0x01;
+
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
 		palette_set_color(i,r,g,b);
+
 		color_prom++;
 	}
 
 	/* white for bullets */
-	palette_set_color(Machine->drv->total_colors-1,0xff,0xff,0xff);
 
+	palette_set_color(Machine->drv->total_colors-1,0xff,0xff,0xff);
 
 	for (i = 0;i < TOTAL_COLORS(0);i+=2)
 	{
@@ -71,188 +122,111 @@ PALETTE_INIT( zodiack )
 	COLOR(2, 1) = 48;
 }
 
-
-WRITE_HANDLER( zodiack_attributes_w )
+static void get_bg_tile_info(int tile_index)
 {
-	if ((offset & 1) && zodiack_attributesram[offset] != data)
-	{
-		int i;
+	int code = zodiack_videoram2[tile_index];
+	int color = (zodiack_attributesram[2 * (tile_index % 32) + 1] >> 4) & 0x07;
 
-
-		for (i = offset / 2;i < videoram_size;i += 32)
-			dirtybuffer[i] = 1;
-	}
-
-	zodiack_attributesram[offset] = data;
+	SET_TILE_INFO(0, code, color, 0)
 }
 
-
-WRITE_HANDLER( zodiac_flipscreen_w )
+static void get_fg_tile_info(int tile_index)
 {
-	if (flipscreen != (!data))
-	{
-		flipscreen = !data;
+	int code = videoram[tile_index];
+	int color = zodiack_attributesram[2 * (tile_index % 32) + 1] & 0x07;
 
-		memset(dirtybuffer, 1, videoram_size);
-	}
+	SET_TILE_INFO(3, code, color, 0)
 }
 
-
-WRITE_HANDLER( zodiac_control_w )
+VIDEO_START( zodiack )
 {
-	/* Bit 0-1 - coin counters */
-	coin_counter_w(0, data & 0x02);
-	coin_counter_w(1, data & 0x01);
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
-	/* Bit 2 - ???? */
+	if ( !bg_tilemap )
+		return 1;
+
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, 
+		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
+
+	if ( !fg_tilemap )
+		return 1;
+
+	tilemap_set_transparent_pen(fg_tilemap, 0);
+	tilemap_set_scroll_cols(fg_tilemap, 32);
+
+	return 0;
 }
 
-/***************************************************************************
-
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
-
-VIDEO_UPDATE( zodiack )
+static void zodiack_draw_bullets( struct mame_bitmap *bitmap )
 {
 	int offs;
 
-
-	/* draw the background characters */
-	for (offs = 0; offs < videoram_size; offs++)
+	for (offs = 0; offs < zodiack_bulletsram_size; offs += 4)
 	{
-		int code,sx,sy,col;
-
-
-		if (!dirtybuffer[offs])  continue;
-
-		dirtybuffer[offs] = 0;
-
-
-		sy = offs / 32;
-		sx = offs % 32;
-
-		col = zodiack_attributesram[2 * sx + 1] & 0x07;
-
-		if (flipscreen)
-		{
-			sx = 31 - sx;
-			sy = 31 - sy;
-		}
-
-		code = videoram[offs];
-
-		drawgfx(tmpbitmap,Machine->gfx[3],
-				code,
-				col,
-				flipscreen, flipscreen,
-				8*sx, 8*sy,
-				0,TRANSPARENCY_NONE,0);
-	}
-
-
-	/* draw the foreground characters */
-	for (offs = 0; offs < videoram_size; offs++)
-	{
-		int code,sx,sy,col;
-
-
-		sy = offs / 32;
-		sx = offs % 32;
-
-		col = (zodiack_attributesram[2 * sx + 1] >> 4) & 0x07;
-
-		if (flipscreen)
-		{
-			sy = 31 - sy;
-			sx = 31 - sx;
-		}
-
-		code = zodiack_videoram2[offs];
-
-		drawgfx(bitmap,Machine->gfx[0],
-				code,
-				col,
-				flipscreen, flipscreen,
-				8*sx, 8*sy,
-				&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-
-	/* copy the temporary bitmap to the screen */
-	{
-		int i, scroll[32];
-
-
-		if (flipscreen)
-		{
-			for (i = 0;i < 32;i++)
-			{
-				scroll[31-i] = zodiack_attributesram[2 * i];
-			}
-		}
-		else
-		{
-			for (i = 0;i < 32;i++)
-			{
-				scroll[i] = -zodiack_attributesram[2 * i];
-			}
-		}
-
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->visible_area,TRANSPARENCY_COLOR,0);
-	}
-
-
-	/* draw the bullets */
-	for (offs = 0;offs < zodiack_bulletsram_size;offs += 4)
-	{
-		int x,y;
-
+		int x, y;
 
 		x = zodiack_bulletsram[offs + 3] + Machine->drv->gfxdecodeinfo[2].gfxlayout->width;
 		y = 255 - zodiack_bulletsram[offs + 1];
 
-		if (flipscreen && percuss_hardware)
+		if (flip_screen && percuss_hardware)
 		{
 			y = 255 - y;
 		}
 
-		drawgfx(bitmap,Machine->gfx[2],
-				0,	/* this is just a dot, generated by the hardware */
-				0,
-				0,0,
-				x,y,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+		drawgfx(
+			bitmap,
+			Machine->gfx[2],
+			0,	/* this is just a dot, generated by the hardware */
+			0,
+			0,0,
+			x,y,
+			&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
+}
 
+static void zodiack_draw_sprites( struct mame_bitmap *bitmap )
+{
+	int offs;
 
-	/* draw the sprites */
-	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
+	for (offs = spriteram_size - 4; offs >= 0; offs -= 4)
 	{
-		int flipx,flipy,sx,sy,spritecode;
-
+		int flipx, flipy, sx, sy, spritecode;
 
 		sx = 240 - spriteram[offs + 3];
 		sy = 240 - spriteram[offs];
 		flipx = !(spriteram[offs + 1] & 0x40);
-		flipy =   spriteram[offs + 1] & 0x80;
+		flipy = spriteram[offs + 1] & 0x80;
 		spritecode = spriteram[offs + 1] & 0x3f;
 
-		if (flipscreen && percuss_hardware)
+		if (flip_screen && percuss_hardware)
 		{
 			sy = 240 - sy;
 			flipy = !flipy;
 		}
 
-		drawgfx(bitmap,Machine->gfx[1],
-				spritecode,
-				spriteram[offs + 2] & 0x07,
-				flipx,flipy,
-				sx,sy,
-				//flipscreen[0] ? &spritevisibleareaflipx : &spritevisiblearea,TRANSPARENCY_PEN,0);
-				//&spritevisiblearea,TRANSPARENCY_PEN,0);
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+		drawgfx(bitmap, Machine->gfx[1],
+			spritecode,
+			spriteram[offs + 2] & 0x07,
+			flipx, flipy,
+			sx, sy,
+			//flip_screen[0] ? &spritevisibleareaflipx : &spritevisiblearea,TRANSPARENCY_PEN,0);
+			//&spritevisiblearea,TRANSPARENCY_PEN,0);
+			&Machine->visible_area, TRANSPARENCY_PEN, 0);
 	}
+}
+
+VIDEO_UPDATE( zodiack )
+{
+	int i;
+
+	for (i = 0; i < 32; i++)
+	{
+		tilemap_set_scrolly(fg_tilemap, i, zodiack_attributesram[i * 2]);
+	}
+
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, 0, 0);
+	zodiack_draw_bullets(bitmap);
+	zodiack_draw_sprites(bitmap);
 }

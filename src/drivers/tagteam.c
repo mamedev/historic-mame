@@ -28,22 +28,19 @@ TODO:
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
 
-PALETTE_INIT( tagteam );
+extern WRITE_HANDLER( tagteam_videoram_w );
+extern WRITE_HANDLER( tagteam_colorram_w );
+extern READ_HANDLER( tagteam_mirrorvideoram_r );
+extern WRITE_HANDLER( tagteam_mirrorvideoram_w );
+extern READ_HANDLER( tagteam_mirrorcolorram_r );
+extern WRITE_HANDLER( tagteam_mirrorcolorram_w );
+extern WRITE_HANDLER( tagteam_video_control_w );
+extern WRITE_HANDLER( tagteam_control_w );
+extern WRITE_HANDLER( tagteam_flipscreen_w );
 
-READ_HANDLER( tagteam_mirrorvideoram_r );
-WRITE_HANDLER( tagteam_mirrorvideoram_w );
-READ_HANDLER( tagteam_mirrorcolorram_r );
-WRITE_HANDLER( tagteam_mirrorcolorram_w );
-WRITE_HANDLER( tagteam_video_control_w );
-WRITE_HANDLER( tagteam_control_w );
-
-VIDEO_START( tagteam );
-VIDEO_UPDATE( tagteam );
-
-static WRITE_HANDLER( flip_screen_w )
-{
-	flip_screen_set(data & 1);
-}
+extern PALETTE_INIT( tagteam );
+extern VIDEO_START( tagteam );
+extern VIDEO_UPDATE( tagteam );
 
 static WRITE_HANDLER( sound_command_w )
 {
@@ -66,14 +63,14 @@ MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x2000, 0x2000, flip_screen_w },
+	{ 0x2000, 0x2000, tagteam_flipscreen_w },
 	{ 0x2001, 0x2001, tagteam_control_w },
 	{ 0x2002, 0x2002, sound_command_w },
 //	{ 0x2003, 0x2003, MWA_NOP }, /* Appears to increment when you're out of the ring */
 	{ 0x4000, 0x43ff, tagteam_mirrorvideoram_w },
 	{ 0x4400, 0x47ff, tagteam_mirrorcolorram_w },
-	{ 0x4800, 0x4bff, videoram_w, &videoram, &videoram_size },
-	{ 0x4c00, 0x4fff, colorram_w, &colorram },
+	{ 0x4800, 0x4bff, tagteam_videoram_w, &videoram },
+	{ 0x4c00, 0x4fff, tagteam_colorram_w, &colorram },
 	{ 0x8000, 0xffff, MWA_ROM },
 MEMORY_END
 
@@ -326,7 +323,7 @@ static MACHINE_DRIVER_START( tagteam )
 	MDRV_COLORTABLE_LENGTH(32)
 
 	MDRV_PALETTE_INIT(tagteam)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(tagteam)
 	MDRV_VIDEO_UPDATE(tagteam)
 
 	/* sound hardware */

@@ -1,6 +1,6 @@
 //============================================================
 //
-//	win32.c - Win32 main program
+//	winmain.c - Win32 main program
 //
 //============================================================
 
@@ -9,6 +9,7 @@
 #include <windows.h>
 #include <winnt.h>
 #include <mmsystem.h>
+#include <shellapi.h>
 
 // standard includes
 #include <time.h>
@@ -103,6 +104,73 @@ int main(int argc, char **argv)
 	int game_index;
 	char *ext;
 	int res = 0;
+
+#if 1
+ #ifndef WINUI
+	STARTUPINFO startup_info = { sizeof(STARTUPINFO) };
+	GetStartupInfo(&startup_info);
+
+	// try to determine if MAME was simply double-clicked
+	if (argc <= 1 &&
+		startup_info.dwFlags &&
+		!(startup_info.dwFlags & STARTF_USESTDHANDLES))
+	{
+		char message_text[1024] = "";
+		int button;
+		FILE* fp;
+
+  #ifndef MESS
+   #define APPLICATION "M.A.M.E."
+		sprintf(message_text, APPLICATION " v%s - Multiple Arcade Machine Emulator\n"
+							  "Copyright (C) 1997-2003 by Nicola Salmoria and the MAME Team\n"
+							  "\n"
+							  APPLICATION " is a console application, you should launch it from a command prompt.\n"
+							  "\n"
+							  "Usage:\tMAME gamename [options]\n"
+							  "\n"
+							  "\tMAME -list\t\tfor a brief list of supported games\n"
+							  "\tMAME -listfull\t\tfor a full list of supported games\n"
+							  "\tMAME -showusage\t\tfor a brief list of options\n"
+							  "\tMAME -showconfig\t\tfor a list of configuration options\n"
+							  "\tMAME -createconfig\tto create a mame.ini\n"
+							  "\n"
+							  "Please consult the documentation for more information.\n"
+							  "\n"
+							  "Would you like to open the documentation now?"
+							  , build_version);
+  #else
+   #define APPLICATION "M.E.S.S."
+		sprintf(message_text, APPLICATION " is a console application, you should launch it from a command prompt.\n"
+							  "\n"
+							  "Please consult the documentation for more information.\n"
+							  "\n"
+							  "Would you like to open the documentation now?");
+  #endif
+
+		// pop up a messagebox with some information
+		button = MessageBox(NULL, message_text, APPLICATION " usage information...", MB_YESNO | MB_ICONASTERISK);
+
+		if (button == IDYES)
+		{
+			// check if windows.txt exists
+			fp = fopen("docs\\windows.txt", "r");
+			if (fp) {
+				fclose(fp);
+
+				// if so, open it with the default application
+				ShellExecute(NULL, "open", "docs\\windows.txt", NULL, NULL, SW_SHOWNORMAL);
+			}
+			else
+			{
+				// if not, inform the user
+				MessageBox(NULL, "Couldn't find the documentation.", "Error...", MB_OK | MB_ICONERROR);
+			}
+		}
+		return 1;
+	}
+  #undef APPLICATION
+ #endif
+#endif
 
 	// parse the map file, if present
 	strcpy(mapfile_name, argv[0]);

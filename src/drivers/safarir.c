@@ -33,6 +33,7 @@ Video board
 
 TODO:
 
+- colors (8 colors originally, see game flyer screen shots)
 - SN76477 sound
 
 ****************************************************************************/
@@ -41,10 +42,10 @@ TODO:
 #include "vidhrdw/generic.h"
 
 
-unsigned char *safarir_ram1, *safarir_ram2;
+UINT8 *safarir_ram1, *safarir_ram2;
 size_t safarir_ram_size;
 
-static unsigned char *safarir_ram;
+static UINT8 *safarir_ram;
 
 static struct tilemap *bg_tilemap, *fg_tilemap;
 
@@ -92,7 +93,7 @@ static void get_bg_tile_info(int tile_index)
 static void get_fg_tile_info(int tile_index)
 {
 	int code = safarir_ram[tile_index];
-	int flags = (tile_index & 0x1f) ? 0 : TILE_IGNORE_TRANSPARENCY;
+	int flags = ((tile_index & 0x1d) && (tile_index & 0x1e)) ? 0 : TILE_IGNORE_TRANSPARENCY;
 
 	SET_TILE_INFO(1, code & 0x7f, code >> 7, flags)
 }
@@ -117,7 +118,7 @@ VIDEO_START( safarir )
 }
 
 VIDEO_UPDATE( safarir )
-{	
+{
 	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
 	tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, 0, 0);
 }
@@ -127,13 +128,24 @@ static unsigned short colortable_source[] =
 {
 	0x00, 0x01,
 	0x00, 0x02,
+	0x00, 0x03,
+	0x00, 0x04,
+	0x00, 0x05,
+	0x00, 0x06,
+	0x00, 0x07,
 };
 
 static PALETTE_INIT( safarir )
 {
-	palette_set_color(0, 0x00, 0x00, 0x00); /* black */
-	palette_set_color(1, 0x80, 0x80, 0x80); /* gray */
-	palette_set_color(2, 0xff, 0xff, 0xff); /* white */
+	palette_set_color(0, 0x00, 0x00, 0x00);
+	palette_set_color(1, 0x80, 0x80, 0x80);
+	palette_set_color(2, 0xff, 0xff, 0xff);
+	
+	palette_set_color(3, 0x00, 0x00, 0x00);
+	palette_set_color(4, 0x00, 0x00, 0x00);
+	palette_set_color(5, 0x00, 0x00, 0x00);
+	palette_set_color(6, 0x00, 0x00, 0x00);
+	palette_set_color(7, 0x00, 0x00, 0x00);
 
 	memcpy(colortable, colortable_source, sizeof(colortable_source));
 }
@@ -246,10 +258,10 @@ static MACHINE_DRIVER_START( safarir )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 30*8-1, 0*8, 28*8-1)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 26*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(3)
-	MDRV_COLORTABLE_LENGTH(2*2)
+	MDRV_PALETTE_LENGTH(8)
+	MDRV_COLORTABLE_LENGTH(2*7)
 
 	MDRV_PALETTE_INIT(safarir)
 	MDRV_VIDEO_START(safarir)
@@ -288,4 +300,4 @@ DRIVER_INIT( safarir )
 }
 
 
-GAMEX( 1979, safarir, 0, safarir, safarir, safarir, ROT90, "SNK", "Safari Rally (Japan)", GAME_NO_SOUND | GAME_IMPERFECT_COLORS )
+GAMEX( 1979, safarir, 0, safarir, safarir, safarir, ROT90, "SNK", "Safari Rally (Japan)", GAME_NO_SOUND | GAME_WRONG_COLORS )

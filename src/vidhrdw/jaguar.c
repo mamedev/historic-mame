@@ -631,23 +631,26 @@ WRITE16_HANDLER( jaguar_tom_regs_w )
 {
 	int scanline;
 
-	COMBINE_DATA(&gpu_regs[offset]);
-
-	switch (offset)
+	if (offset < GPU_REGS)
 	{
-		case VI:
-			scanline = (gpu_regs[VI] - gpu_regs[VBE]) / 2;
-			timer_adjust(vi_timer, cpu_getscanlinetime(scanline), scanline, 0);
-			break;
+		COMBINE_DATA(&gpu_regs[offset]);
 
-		case INT1:
-			cpu_irq_state &= ~(gpu_regs[INT1] >> 8);
-			update_cpu_irq();
-			break;
+		switch (offset)
+		{
+			case VI:
+				scanline = (gpu_regs[VI] - gpu_regs[VBE]) / 2;
+				timer_adjust(vi_timer, cpu_getscanlinetime(scanline), scanline, 0);
+				break;
 
-		case VMODE:
-			jaguar_set_palette(gpu_regs[VMODE]);
-			break;
+			case INT1:
+				cpu_irq_state &= ~(gpu_regs[INT1] >> 8);
+				update_cpu_irq();
+				break;
+
+			case VMODE:
+				jaguar_set_palette(gpu_regs[VMODE]);
+				break;
+		}
 	}
 
 	if (offset != INT2 && offset != VI)

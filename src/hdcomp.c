@@ -13,7 +13,14 @@
 #include <windows.h>
 #endif
 
+/* Older versions of Platform SDK don't define these */
+#ifndef INVALID_FILE_ATTRIBUTES
+#define INVALID_FILE_ATTRIBUTES 0xffffffff
+#endif
 
+#ifndef INVALID_SET_FILE_POINTER
+#define INVALID_SET_FILE_POINTER 0xffffffff
+#endif
 
 /***************************************************************************
 	PROTOTYPES
@@ -264,7 +271,7 @@ static void do_extract(int argc, char *argv[])
 	totalsectors = header.cylinders * header.heads * header.sectors;
 
 	/* allocate memory to hold a block */
-	block = malloc(header.blocksize * HARD_DISK_SECTOR_SIZE);
+	block = malloc(header.blocksize * header.seclen);
 	if (!block)
 	{
 		printf("Out of memory allocating block buffer!\n");
@@ -302,10 +309,10 @@ static void do_extract(int argc, char *argv[])
 
 		/* determine how much to write */
 		bytestowrite = (sectornum + header.blocksize > totalsectors) ? (totalsectors - sectornum) : header.blocksize;
-		bytestowrite *= HARD_DISK_SECTOR_SIZE;
+		bytestowrite *= header.seclen;
 
 		/* write the block to the file */
-		byteswritten = (*hdcomp_interface.write)(outfile, (UINT64)sectornum * (UINT64)HARD_DISK_SECTOR_SIZE, bytestowrite, block);
+		byteswritten = (*hdcomp_interface.write)(outfile, (UINT64)sectornum * (UINT64)header.seclen, bytestowrite, block);
 		if (byteswritten != bytestowrite)
 		{
 			printf("Error writing sectors %d-%d to output file: %s\n", sectornum, sectornum + header.blocksize - 1, error_string(hard_disk_get_last_error()));
@@ -699,20 +706,24 @@ static void hdcomp_close(void *file)
 
 static UINT32 hdcomp_read(void *file, UINT64 offset, UINT32 count, void *buffer)
 {
+	const struct hard_disk_header *header;
+
 	/* if it's the special disk handle, read from it */
 	if (file == inputdisk)
 	{
-		if (offset % HARD_DISK_SECTOR_SIZE != 0)
+		header = hard_disk_get_header(file);
+
+		if (offset % header->seclen != 0)
 		{
 			printf("Error: hdcomp read from non-aligned offset %08X%08X\n", (UINT32)(offset >> 32), (UINT32)offset);
 			return 0;
 		}
-		if (count % HARD_DISK_SECTOR_SIZE != 0)
+		if (count % header->seclen != 0)
 		{
 			printf("Error: hdcomp read non-aligned amount %08X\n", count);
 			return 0;
 		}
-		return HARD_DISK_SECTOR_SIZE * hard_disk_read(inputdisk, offset / HARD_DISK_SECTOR_SIZE, count / HARD_DISK_SECTOR_SIZE, buffer);
+		return header->seclen * hard_disk_read(inputdisk, offset / header->seclen, count / header->seclen, buffer);
 	}
 
 	/* otherwise, do it normally */

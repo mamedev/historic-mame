@@ -1807,10 +1807,10 @@ static MACHINE_INIT( bodyslam ){
 // timer in the code and this seems to work ok.
 static void bodyslam_irq_timer(void)
 {
-	int flag=(*(UINT16 *)(&sys16_workingram[0x200]))>>8;
-	int tick=(*(UINT16 *)(&sys16_workingram[0x200]))&0xff;
-	int sec=(*(UINT16 *)(&sys16_workingram[0x202]))>>8;
-	int min=(*(UINT16 *)(&sys16_workingram[0x202]))&0xff;
+	int flag=(*(UINT16 *)(&sys16_workingram[0x200/2]))>>8;
+	int tick=(*(UINT16 *)(&sys16_workingram[0x200/2]))&0xff;
+	int sec=(*(UINT16 *)(&sys16_workingram[0x202/2]))>>8;
+	int min=(*(UINT16 *)(&sys16_workingram[0x202/2]))&0xff;
 
 	if(tick == 0 && sec == 0 && min == 0)
 		flag=1;
@@ -6031,7 +6031,7 @@ PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )

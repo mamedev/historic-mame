@@ -9,15 +9,11 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+UINT8 *sbasketb_scroll;
+UINT8 *sbasketb_palettebank;
+UINT8 *sbasketb_spriteram_select;
 
-
-unsigned char *sbasketb_scroll;
-unsigned char *sbasketb_palettebank;
-unsigned char *sbasketb_spriteram_select;
-
-static struct rectangle scroll_area = { 0*8, 32*8-1, 0*8, 32*8-1 };
-
-
+static struct tilemap *bg_tilemap;
 
 /***************************************************************************
 
@@ -87,113 +83,102 @@ PALETTE_INIT( sbasketb )
 	}
 }
 
-
-/***************************************************************************
-
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
-VIDEO_UPDATE( sbasketb )
+WRITE_HANDLER( sbasketb_videoram_w )
 {
-	int offs,i;
-	int sx,sy,code,color,flipx,flipy;
-
-
-	if (get_vh_global_attribute_changed())
+	if (videoram[offset] != data)
 	{
-		memset(dirtybuffer,1,videoram_size);
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
+}
 
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
+WRITE_HANDLER( sbasketb_colorram_w )
+{
+	if (colorram[offset] != data)
 	{
-		if (dirtybuffer[offs])
-		{
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-
-			code  = videoram[offs] + ((colorram[offs] & 0x20) << 3);
-			color = colorram[offs] & 0x0f;
-			flipx = colorram[offs] & 0x40;
-			flipy = colorram[offs] & 0x80;
-
-			if (flip_screen)
-			{
-				flipx = !flipx;
-				flipy = !flipy;
-
-				sx = 31 - sx;
-				sy = 31 - sy;
-			}
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					code, color,
-					flipx, flipy,
-					8*sx,8*sy,
-					&scroll_area,TRANSPARENCY_NONE,0);
-		}
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
+}
 
-
-	/* copy the temporary bitmap to the screen */
+WRITE_HANDLER( sbasketb_flipscreen_w )
+{
+	if (flip_screen != data)
 	{
-		int scroll[32];
-
-		if (!flip_screen)
-		{
-			for (i = 0;i < 6;i++)
-				scroll[i] = 0;
-
-			for (i = 6;i < 32;i++)
-				scroll[i] = -*sbasketb_scroll - 1;
-		}
-		else
-		{
-			for (i = 26;i < 32;i++)
-				scroll[i] = 0;
-
-			for (i = 0;i < 26;i++)
-				scroll[i] = *sbasketb_scroll + 1;
-		}
-
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
+		flip_screen_set(data);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	}
+}
 
-	/* Draw the sprites */
-	offs = (*sbasketb_spriteram_select & 0x01) * 0x100;
+WRITE_HANDLER( sbasketb_scroll_w )
+{
+	int col;
+
+	for (col = 6; col < 32; col++)
+	{
+		tilemap_set_scrolly(bg_tilemap, col, data);
+	}
+}
+
+static void get_bg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index] + ((colorram[tile_index] & 0x20) << 3);
+	int color = colorram[tile_index] & 0x0f;
+	int flags = ((colorram[tile_index] & 0x40) ? TILE_FLIPX : 0) | ((colorram[tile_index] & 0x80) ? TILE_FLIPY : 0);
+
+	SET_TILE_INFO(0, code, color, flags)
+}
+
+VIDEO_START( sbasketb )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	tilemap_set_scroll_cols(bg_tilemap, 32);
+
+	return 0;
+}
+
+static void sbasketb_draw_sprites( struct mame_bitmap *bitmap )
+{
+	int offs = (*sbasketb_spriteram_select & 0x01) * 0x100;
+	int i;
 
 	for (i = 0; i < 64; i++, offs += 4)
 	{
-		sx = spriteram[offs + 2];
-		sy = spriteram[offs + 3];
+		int sx = spriteram[offs + 2];
+		int sy = spriteram[offs + 3];
 
 		if (sx || sy)
 		{
-			code  =  spriteram[offs + 0] | ((spriteram[offs + 1] & 0x20) << 3);
-			color = (spriteram[offs + 1] & 0x0f) + 16 * *sbasketb_palettebank;
-			flipx =  spriteram[offs + 1] & 0x40;
-			flipy =  spriteram[offs + 1] & 0x80;
+			int code  =  spriteram[offs + 0] | ((spriteram[offs + 1] & 0x20) << 3);
+			int color = (spriteram[offs + 1] & 0x0f) + 16 * *sbasketb_palettebank;
+			int flipx =  spriteram[offs + 1] & 0x40;
+			int flipy =  spriteram[offs + 1] & 0x80;
 
 			if (flip_screen)
 			{
-				flipx = !flipx;
-				flipy = !flipy;
-
 				sx = 240 - sx;
 				sy = 240 - sy;
+				flipx = !flipx;
+				flipy = !flipy;
 			}
 
 			drawgfx(bitmap,Machine->gfx[1],
-					code, color,
-					flipx, flipy,
-					sx, sy,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+				code, color,
+				flipx, flipy,
+				sx, sy,
+				&Machine->visible_area,
+				TRANSPARENCY_PEN, 0);
 		}
 	}
+}
+
+VIDEO_UPDATE( sbasketb )
+{
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	sbasketb_draw_sprites(bitmap);
 }

@@ -303,8 +303,9 @@ Notes & Todo:
 #define N2A03_DEFAULTCLOCK (21477272.724 / 12)
 
 /* from vidhrdw */
-extern VIDEO_START( playch10 );
+extern WRITE_HANDLER( playch10_videoram_w );
 extern PALETTE_INIT( playch10 );
+extern VIDEO_START( playch10 );
 extern VIDEO_UPDATE( playch10 );
 
 /* from machine */
@@ -323,24 +324,25 @@ extern DRIVER_INIT( pcgboard_type2 ); /* g-board games with 4 screen mirror */
 extern DRIVER_INIT( pchboard );	/* h-board games */
 extern DRIVER_INIT( pciboard );	/* i-board games */
 extern DRIVER_INIT( pckboard );	/* k-board games */
-READ_HANDLER( pc10_port_0_r );
-READ_HANDLER( pc10_instrom_r );
-READ_HANDLER( pc10_prot_r );
-READ_HANDLER( pc10_detectclr_r );
-READ_HANDLER( pc10_in0_r );
-READ_HANDLER( pc10_in1_r );
-WRITE_HANDLER( pc10_SDCS_w );
-WRITE_HANDLER( pc10_CNTRLMASK_w );
-WRITE_HANDLER( pc10_DISPMASK_w );
-WRITE_HANDLER( pc10_SOUNDMASK_w );
-WRITE_HANDLER( pc10_NMIENABLE_w );
-WRITE_HANDLER( pc10_DOGDI_w );
-WRITE_HANDLER( pc10_GAMERES_w );
-WRITE_HANDLER( pc10_GAMESTOP_w );
-WRITE_HANDLER( pc10_PPURES_w );
-WRITE_HANDLER( pc10_prot_w );
-WRITE_HANDLER( pc10_CARTSEL_w );
-WRITE_HANDLER( pc10_in0_w );
+extern READ_HANDLER( pc10_port_0_r );
+extern READ_HANDLER( pc10_instrom_r );
+extern READ_HANDLER( pc10_prot_r );
+extern READ_HANDLER( pc10_detectclr_r );
+extern READ_HANDLER( pc10_in0_r );
+extern READ_HANDLER( pc10_in1_r );
+extern WRITE_HANDLER( pc10_SDCS_w );
+extern WRITE_HANDLER( pc10_CNTRLMASK_w );
+extern WRITE_HANDLER( pc10_DISPMASK_w );
+extern WRITE_HANDLER( pc10_SOUNDMASK_w );
+extern WRITE_HANDLER( pc10_NMIENABLE_w );
+extern WRITE_HANDLER( pc10_DOGDI_w );
+extern WRITE_HANDLER( pc10_GAMERES_w );
+extern WRITE_HANDLER( pc10_GAMESTOP_w );
+extern WRITE_HANDLER( pc10_PPURES_w );
+extern WRITE_HANDLER( pc10_prot_w );
+extern WRITE_HANDLER( pc10_CARTSEL_w );
+extern WRITE_HANDLER( pc10_in0_w );
+
 extern int pc10_sdcs;
 extern int pc10_nmi_enable;
 extern int pc10_dog_di;
@@ -370,13 +372,6 @@ static WRITE_HANDLER( ram_8w_w )
 		ram_8w[offset] = data;
 	else
 		ram_8w[offset & 0x3ff] = data;
-}
-
-
-static WRITE_HANDLER( video_w ) {
-	/* only write to videoram when allowed */
-	if ( pc10_sdcs )
-		videoram_w( offset, data );
 }
 
 static READ_HANDLER( mirror_ram_r )
@@ -415,7 +410,7 @@ static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },	/* 8V */
 	{ 0x8800, 0x8fff, ram_8w_r },	/* 8W */
-	{ 0x9000, 0x97ff, videoram_r },
+	{ 0x9000, 0x97ff, MRA_RAM },
 	{ 0xc000, 0xdfff, MRA_ROM },
 	{ 0xe000, 0xffff, pc10_prot_r },
 MEMORY_END
@@ -424,7 +419,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM }, /* 8V */
 	{ 0x8800, 0x8fff, ram_8w_w, &ram_8w }, /* 8W */
-	{ 0x9000, 0x97ff, video_w, &videoram, &videoram_size },
+	{ 0x9000, 0x97ff, playch10_videoram_w, &videoram },
 	{ 0xc000, 0xdfff, MWA_ROM },
 	{ 0xe000, 0xffff, pc10_prot_w },
 MEMORY_END
@@ -478,9 +473,9 @@ MEMORY_END
 
 INPUT_PORTS_START( playch10 )
     PORT_START	/* These are the BIOS buttons */
-    PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE2, "Channel Select", KEYCODE_9, IP_JOY_NONE )	/* CHSelect 		*/
-    PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_SERVICE3, "Enter", KEYCODE_0, IP_JOY_NONE )				/* Enter button 	*/
-    PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_SERVICE4, "Reset", KEYCODE_MINUS, IP_JOY_NONE ) 		/* Reset button 	*/
+    PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE2, "Channel Select", KEYCODE_0, JOYCODE_NONE )	/* CHSelect 		*/
+    PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_SERVICE3, "Enter", KEYCODE_MINUS, JOYCODE_NONE )				/* Enter button 	*/
+    PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_SERVICE4, "Reset", KEYCODE_EQUALS, JOYCODE_NONE ) 		/* Reset button 	*/
     PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )												/* INT Detect		*/
     PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )												/* N/C				*/
     PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )													/* Coin 2			*/
@@ -580,8 +575,8 @@ INPUT_PORTS_START( playch10 )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON2 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )	/* select button - masked */
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )	/* start button - masked */
+	PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_START1, "Select", KEYCODE_1, JOYCODE_NONE )/* select button - masked */
+	PORT_BITX( 0x08, IP_ACTIVE_HIGH, IPT_START2, "Start", KEYCODE_2, JOYCODE_NONE )	/* start button - masked */
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
@@ -648,15 +643,14 @@ static struct DACinterface nes_dac_interface =
 
 
 static MACHINE_DRIVER_START( playch10 )
-
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 8000000 / 2)        /* 8 MHz / 2 */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
-	MDRV_CPU_VBLANK_INT(playch10_interrupt,1)
+	MDRV_CPU_MEMORY(readmem, writemem)
+	MDRV_CPU_PORTS(readport, writeport)
+	MDRV_CPU_VBLANK_INT(playch10_interrupt, 1)
 
 	MDRV_CPU_ADD(N2A03, N2A03_DEFAULTCLOCK)
-	MDRV_CPU_MEMORY(cart_readmem,cart_writemem)
+	MDRV_CPU_MEMORY(cart_readmem, cart_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(( ( ( 1.0 / 60.0 ) * 1000000.0 ) / 262 ) * ( 262 - 239 ))
@@ -681,14 +675,10 @@ static MACHINE_DRIVER_START( playch10 )
 	MDRV_SOUND_ADD(DAC, nes_dac_interface)
 MACHINE_DRIVER_END
 
-
 static MACHINE_DRIVER_START( playchnv )
-
-	/* basic machine hardware */
 	MDRV_IMPORT_FROM(playch10)
 	MDRV_NVRAM_HANDLER(playch10)
 MACHINE_DRIVER_END
-
 
 
 /***************************************************************************
@@ -1564,7 +1554,7 @@ ROM_END
 /* A dummy driver, so that the bios can be debugged, and to serve as */
 /* parent for the other drivers, so that we do not have to include */
 /* them in every zip file */
-GAMEX( 1986, playch10, 0, playch10, playch10, 0, ROT0, "Nintendo of America", "Playchoice-10", NOT_A_DRIVER )
+GAMEX( 1986, playch10, 0, playch10, playch10, 0, ROT0, "Nintendo of America", "PlayChoice-10", NOT_A_DRIVER )
 
 /******************************************************************************/
 
@@ -1578,9 +1568,9 @@ GAME( 1984, pc_bfght,playch10, playch10, playch10, playch10, ROT0, "Nintendo", "
 GAME( 1984, pc_ebike,playch10, playch10, playch10, playch10, ROT0, "Nintendo", "PlayChoice-10: Excite Bike" )
 GAME( 1984, pc_golf ,playch10, playch10, playch10, playch10, ROT0, "Nintendo", "PlayChoice-10: Golf" )
 GAME( 1984, pc_kngfu,playch10, playch10, playch10, playch10, ROT0, "Irem (Nintendo license)", "PlayChoice-10: Kung Fu" )
-GAME( 1985, pc_1942, playch10, playch10, playch10, pc_hrz,   ROT0, "Capcom", "PlayChoice-10: 1942" )
 GAME( 1985, pc_smb,	 playch10, playch10, playch10, playch10, ROT0, "Nintendo", "PlayChoice-10: Super Mario Bros." )
-GAME( 1986, pc_vball,playch10, playch10, playch10, playch10, ROT0, "Nintendo", "PlayChoice-10: Volley ball" )
+GAME( 1986, pc_vball,playch10, playch10, playch10, playch10, ROT0, "Nintendo", "PlayChoice-10: Volley Ball" )
+GAMEX(1987, pc_1942, playch10, playch10, playch10, pc_hrz,   ROT0, "Capcom", "PlayChoice-10: 1942", GAME_IMPERFECT_GRAPHICS )
 
 /* Gun Games */
 GAME( 1984, pc_duckh,playch10, playch10, playch10, pc_gun,   ROT0, "Nintendo", "PlayChoice-10: Duck Hunt" )
@@ -1589,7 +1579,7 @@ GAME( 1984, pc_wgnmn,playch10, playch10, playch10, pc_gun,   ROT0, "Nintendo", "
 
 /* A-Board Games */
 GAME( 1986, pc_grdus,playch10, playch10, playch10, pcaboard, ROT0, "Konami", "PlayChoice-10: Gradius" ) // date: 860917
-GAME( 1986, pc_grdue,pc_grdus, playch10, playch10, pcaboard, ROT0, "Konami", "PlayChoice-10: Gradius (Early version)" ) // date: 860219
+GAME( 1986, pc_grdue,pc_grdus, playch10, playch10, pcaboard, ROT0, "Konami", "PlayChoice-10: Gradius (older)" ) // date: 860219
 GAME( 1987, pc_tkfld,playch10, playch10, playch10, pcaboard, ROT0, "Konami (Nintendo of America license)", "PlayChoice-10: Track & Field" )
 
 /* B-Board Games */
@@ -1613,6 +1603,8 @@ GAMEX(1987, pc_miket,playch10, playchnv, playch10, pceboard, ROT0, "Nintendo", "
 
 /* F-Board Games */
 GAME( 1987, pc_rcpam,playch10, playch10, playch10, pcfboard, ROT0, "Rare", "PlayChoice-10: RC Pro Am" )
+GAME( 1987, pc_rrngr,playch10, playch10, playch10, pcfboard, ROT0, "Capcom USA (Nintendo of America license)", "PlayChoice-10: Chip'n Dale - Rescue Rangers" )
+GAME( 1988, pc_ddrgn,playch10, playch10, playch10, pcfboard, ROT0, "Technos", "PlayChoice-10: Double Dragon" )
 GAME( 1989, pc_ngaid,playch10, playch10, playch10, pcfboard, ROT0, "Tecmo (Nintendo of America license)", "PlayChoice-10: Ninja Gaiden" )
 GAME( 1989, pc_tmnt ,playch10, playch10, playch10, pcfboard, ROT0, "Konami (Nintendo of America license)", "PlayChoice-10: Teenage Mutant Ninja Turtles" )
 GAME( 1989, pc_ftqst,playch10, playch10, playch10, pcfboard, ROT0, "Sunsoft (Nintendo of America license)", "PlayChoice-10: Uncle Fester's Quest - The Addams Family" )
@@ -1620,15 +1612,13 @@ GAME( 1989, pc_bstar,playch10, playch10, playch10, pcfboard, ROT0, "SNK (Nintend
 GAME( 1989, pc_tbowl,playch10, playch10, playch10, pcfboard, ROT0, "Tecmo (Nintendo of America license)", "PlayChoice-10: Tecmo Bowl" )
 GAME( 1990, pc_drmro,playch10, playch10, playch10, pcfboard, ROT0, "Nintendo", "PlayChoice-10: Dr. Mario" )
 GAME( 1990, pc_ynoid,playch10, playch10, playch10, pcfboard, ROT0, "Capcom USA (Nintendo of America license)", "PlayChoice-10: Yo! Noid" )
-GAME( 19??, pc_rrngr,playch10, playch10, playch10, pcfboard, ROT0, "Capcom USA (Nintendo of America license)", "PlayChoice-10: Rescue Rangers" )
-GAME( 19??, pc_ddrgn,playch10, playch10, playch10, pcfboard, ROT0, "Technos?", "PlayChoice-10: Double Dragon" )
 
 /* G-Board Games */
 GAME( 1988, pc_smb2 ,playch10, playch10, playch10, pcgboard, ROT0, "Nintendo", "PlayChoice-10: Super Mario Bros. 2" )
 GAME( 1988, pc_smb3, playch10, playch10, playch10, pcgboard, ROT0, "Nintendo", "PlayChoice-10: Super Mario Bros. 3" )
 GAME( 1990, pc_mman3,playch10, playch10, playch10, pcgboard, ROT0, "Capcom USA (Nintendo of America license)", "PlayChoice-10: Mega Man 3" )
 GAME( 1990, pc_suprc,playch10, playch10, playch10, pcgboard, ROT0, "Konami (Nintendo of America license)", "PlayChoice-10: Super C" )
-GAME( 1990, pc_tmnt2,playch10, playch10, playch10, pcgboard, ROT0, "Konami (Nintendo of America license)", "PlayChoice-10: Teenage mutant Ninja Turtles 2" )
+GAME( 1990, pc_tmnt2,playch10, playch10, playch10, pcgboard, ROT0, "Konami (Nintendo of America license)", "PlayChoice-10: Teenage Mutant Ninja Turtles II" )
 GAME( 1990, pc_wcup ,playch10, playch10, playch10, pcgboard, ROT0, "Technos (Nintendo license)", "PlayChoice-10: Nintendo World Cup" )
 GAME( 1990, pc_ngai2,playch10, playch10, playch10, pcgboard, ROT0, "Tecmo (Nintendo of America license)", "PlayChoice-10: Ninja Gaiden 2" )
 GAME( 1991, pc_ngai3,playch10, playch10, playch10, pcgboard, ROT0, "Tecmo (Nintendo of America license)", "PlayChoice-10: Ninja Gaiden 3" )
@@ -1639,7 +1629,7 @@ GAME( 1990, pc_radr2,playch10, playch10, playch10, pcgboard_type2, ROT0, "Square
 GAME( 1985, pc_gntlt,playch10, playch10, playch10, pcgboard_type2, ROT0, "Atari/Tengen (Nintendo of America license)", "PlayChoice-10: Gauntlet" )
 
 /* H-Board Games */
-GAMEX( 1988, pc_pinbt,playch10, playch10, playch10, pchboard, ROT0, "Rare (Nintendo of America license)", "PlayChoice-10: PinBot", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1988, pc_pinbt,playch10, playch10, playch10, pchboard, ROT0, "Rare (Nintendo of America license)", "PlayChoice-10: PinBot", GAME_IMPERFECT_GRAPHICS )
 
 /* i-Board Games */
 GAME( 1989, pc_cshwk,playch10, playch10, playch10, pciboard, ROT0, "Rare (Nintendo of America license)", "PlayChoice-10: Captain Sky Hawk" )

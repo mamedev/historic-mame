@@ -9,12 +9,10 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+UINT8 *trackfld_scroll;
+UINT8 *trackfld_scroll2;
 
-unsigned char *trackfld_scroll;
-unsigned char *trackfld_scroll2;
-
-static int mastkin_kludge;
-
+static struct tilemap *bg_tilemap;
 
 /***************************************************************************
 
@@ -79,158 +77,108 @@ PALETTE_INIT( trackfld )
 		COLOR(0,i) = (*(color_prom++) & 0x0f) + 0x10;
 }
 
+WRITE_HANDLER( trackfld_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
+WRITE_HANDLER( trackfld_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
-/***************************************************************************
+WRITE_HANDLER( trackfld_flipscreen_w )
+{
+	if (flip_screen != data)
+	{
+		flip_screen_set(data);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
+}
 
-  Start the video hardware emulation.
+static void get_bg_tile_info(int tile_index)
+{
+	int attr = colorram[tile_index];
+	int code = videoram[tile_index] + 4 * (attr & 0xc0);
+	int color = attr & 0x0f;
+	int flags = ((attr & 0x10) ? TILE_FLIPX : 0) | ((attr & 0x20) ? TILE_FLIPY : 0);
 
-***************************************************************************/
+	SET_TILE_INFO(0, code, color, flags)
+}
+
 VIDEO_START( trackfld )
 {
-	if ((dirtybuffer = auto_malloc(videoram_size)) == 0)
-		return 1;
-	memset(dirtybuffer,1,videoram_size);
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 64, 32);
 
-	/* TracknField has a virtual screen twice as large as the visible screen */
-	if ((tmpbitmap = auto_bitmap_alloc(2 * Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ( !bg_tilemap )
 		return 1;
 
-	mastkin_kludge = 0;
+	tilemap_set_scroll_rows(bg_tilemap, 32);
 
 	return 0;
 }
 
-VIDEO_START( mastkin )
-{
-	int res;
-
-	res = video_start_trackfld();
-
-	mastkin_kludge = 1;
-
-	return res;
-}
-
-
-/***************************************************************************
-
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
-VIDEO_UPDATE( trackfld )
+static void trackfld_draw_sprites( struct mame_bitmap *bitmap )
 {
 	int offs;
 
-
-	if (get_vh_global_attribute_changed())
+	for (offs = spriteram_size - 2; offs >= 0; offs -= 2)
 	{
-		memset(dirtybuffer,1,videoram_size);
-	}
+		int attr = spriteram_2[offs];
+		int code = spriteram[offs + 1];
+		int color = attr & 0x0f;
+		int flipx = ~attr & 0x40;
+		int flipy = attr & 0x80;
+		int sx = spriteram[offs] - 1;
+		int sy = 240 - spriteram_2[offs + 1];
 
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy,flipx,flipy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 64;
-			sy = offs / 64;
-			flipx = colorram[offs] & 0x10;
-			flipy = colorram[offs] & 0x20;
-			if (flip_screen)
-			{
-				sx = 63 - sx;
-				sy = 31 - sy;
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + 4 * (colorram[offs] & 0xc0),
-					colorram[offs] & 0x0f,
-					flipx,flipy,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the temporary bitmap to the screen */
-	{
-		int scroll[32];
-
-
-		if (flip_screen)
-		{
-			if (mastkin_kludge)
-			{
-				for (offs = 0;offs < 32;offs++)
-					scroll[31-offs] = 256 + (trackfld_scroll[offs] + 256 * (trackfld_scroll2[offs] & 1));
-			}
-			else
-			{
-				for (offs = 0;offs < 32;offs++)
-					scroll[31-offs] = 256 - (trackfld_scroll[offs] + 256 * (trackfld_scroll2[offs] & 1));
-			}
-		}
-		else
-		{
-			for (offs = 0;offs < 32;offs++)
-				scroll[offs] = -(trackfld_scroll[offs] + 256 * (trackfld_scroll2[offs] & 1));
-		}
-
-		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-
-	/* Draw the sprites. */
-	for (offs = spriteram_size - 2;offs >= 0;offs -= 2)
-	{
-		int sx,sy,flipx,flipy;
-
-
-		sx = spriteram[offs] - 1;
-		sy = 240 - spriteram_2[offs + 1];
-		flipx = ~spriteram_2[offs] & 0x40;
-		flipy = spriteram_2[offs] & 0x80;
 		if (flip_screen)
 		{
 			sy = 240 - sy;
 			flipy = !flipy;
-
-			if (mastkin_kludge)
-			{
-				sx = (240 - sx) & 0xff;
-				flipx = !flipx;
-			}
 		}
 
 		/* Note that this adjustement must be done AFTER handling flip screen, thus */
 		/* proving that this is a hardware related "feature" */
 		sy += 1;
 
-		drawgfx(bitmap,Machine->gfx[1],
-				spriteram[offs + 1],
-				spriteram_2[offs] & 0x0f,
-				flipx,flipy,
-				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_COLOR,0);
+		drawgfx(bitmap, Machine->gfx[1],
+			code, color,
+			flipx, flipy,
+			sx, sy,
+			&Machine->visible_area,
+			TRANSPARENCY_COLOR, 0);
 
 		/* redraw with wraparound */
 		drawgfx(bitmap,Machine->gfx[1],
-				spriteram[offs + 1],
-				spriteram_2[offs] & 0x0f,
-				flipx,flipy,
-				sx-256,sy,
-				&Machine->visible_area,TRANSPARENCY_COLOR,0);
+			code, color,
+			flipx, flipy,
+			sx - 256, sy,
+			&Machine->visible_area,
+			TRANSPARENCY_COLOR, 0);
 	}
+}
+
+VIDEO_UPDATE( trackfld )
+{
+	int row, scrollx;
+
+	for (row = 0; row < 32; row++)
+	{
+		scrollx = trackfld_scroll[row] + 256 * (trackfld_scroll2[row] & 0x01);
+		if (flip_screen) scrollx = -scrollx;
+		tilemap_set_scrollx(bg_tilemap, row, scrollx);
+	}
+
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	trackfld_draw_sprites(bitmap);
 }

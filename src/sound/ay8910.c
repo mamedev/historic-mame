@@ -576,7 +576,7 @@ static void AY8910Update(int chip,INT16 **buffer,int length)
 				/* bit0, relying on the fact that after two shifts of the */
 				/* register, what now is bit2 will become bit0, and will */
 				/* invert, if necessary, bit15, which previously was bit17. */
-				if (PSG->RNG & 1) PSG->RNG ^= 0x28000;
+				if (PSG->RNG & 1) PSG->RNG ^= 0x24000;
 				PSG->RNG >>= 1;
 				PSG->CountN += PSG->PeriodN;
 			}

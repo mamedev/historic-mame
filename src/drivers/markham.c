@@ -11,15 +11,18 @@ Markham (c) 1983 Sun Electronics
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-PALETTE_INIT( markham );
-VIDEO_UPDATE( markham );
+extern WRITE_HANDLER( markham_videoram_w );
+extern WRITE_HANDLER( markham_scroll_x_w );
+extern WRITE_HANDLER( markham_flipscreen_w );
+
+extern PALETTE_INIT( markham );
+extern VIDEO_START( markham );
+extern VIDEO_UPDATE( markham );
 
 static UINT8 *markham_sharedram;
 
 /****************************************************************************/
 
-WRITE_HANDLER( markham_scroll_x_w );
-WRITE_HANDLER( markham_flipscreen_w );
 
 WRITE_HANDLER( markham_sharedram_w )
 {
@@ -62,7 +65,7 @@ static MEMORY_WRITE_START( writemem1 )
 
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xc800, 0xcfff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xd000, 0xd7ff, videoram_w, &videoram, &videoram_size },
+	{ 0xd000, 0xd7ff, markham_videoram_w, &videoram },
 	{ 0xd800, 0xdfff, markham_sharedram_w },
 
 	{ 0xe008, 0xe008, MWA_NOP }, /* coin counter? */
@@ -246,7 +249,7 @@ static MACHINE_DRIVER_START( markham )
 	MDRV_COLORTABLE_LENGTH(1024)
 
 	MDRV_PALETTE_INIT(markham)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(markham)
 	MDRV_VIDEO_UPDATE(markham)
 
 	/* sound hardware */

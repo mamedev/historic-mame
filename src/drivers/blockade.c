@@ -30,19 +30,15 @@ Notes:  Support is complete with the exception of the square wave generator
 
 ****************************************************************************/
 
-
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
 /* #define BLOCKADE_LOG 1 */
 
-/* in vidhrdw */
-VIDEO_UPDATE( blockade );
+extern WRITE_HANDLER( blockade_videoram_w );
 
-WRITE_HANDLER( blockade_coin_latch_w );
-WRITE_HANDLER( blockade_sound_freq_w );
-WRITE_HANDLER( blockade_env_on_w );
-WRITE_HANDLER( blockade_env_off_w );
+extern VIDEO_START( blockade );
+extern VIDEO_UPDATE( blockade );
 
 /* These are used to simulate coin latch circuitry */
 
@@ -51,7 +47,7 @@ static int just_been_reset;
 
 DRIVER_INIT( blockade )
 {
-	unsigned char *rom = memory_region(REGION_CPU1);
+	UINT8 *rom = memory_region(REGION_CPU1);
 	int i;
 
 	/* Merge nibble-wide roms together,
@@ -69,7 +65,7 @@ DRIVER_INIT( blockade )
 
 DRIVER_INIT( comotion )
 {
-	unsigned char *rom = memory_region(REGION_CPU1);
+	UINT8 *rom = memory_region(REGION_CPU1);
 	int i;
 
 	/* Merge nibble-wide roms together,
@@ -186,27 +182,17 @@ WRITE_HANDLER( blockade_env_off_w )
     return;
 }
 
-static WRITE_HANDLER( blockade_videoram_w )
-{
-	videoram_w(offset, data);
-	if (input_port_3_r(0) & 0x80)
-	{
-		logerror("blockade_videoram_w: scanline %d\n", cpu_getscanline());
-		cpu_spinuntil_int();
-	}
-}
-
 static MEMORY_READ_START( readmem )
     { 0x0000, 0x07ff, MRA_ROM },
     { 0x4000, 0x47ff, MRA_ROM },  /* same image */
-    { 0xe000, 0xe3ff, videoram_r },
+    { 0xe000, 0xe3ff, MRA_RAM },
     { 0xff00, 0xffff, MRA_RAM },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
     { 0x0000, 0x07ff, MWA_ROM },
     { 0x4000, 0x47ff, MWA_ROM },  /* same image */
-    { 0xe000, 0xe3ff, blockade_videoram_w, &videoram, &videoram_size },
+    { 0xe000, 0xe3ff, blockade_videoram_w, &videoram },
     { 0xff00, 0xffff, MWA_RAM },
 MEMORY_END
 
@@ -443,6 +429,7 @@ static PALETTE_INIT( green )
 	palette_set_color(0,0x00,0x00,0x00); /* BLACK */
 	palette_set_color(1,0x00,0xff,0x00); /* GREEN */     /* overlay (Blockade) */
 }
+
 static PALETTE_INIT( yellow )
 {
 	palette_set_color(0,0x00,0x00,0x00); /* BLACK */
@@ -492,7 +479,7 @@ static MACHINE_DRIVER_START( blockade )
 	MDRV_COLORTABLE_LENGTH(2)
 
 	MDRV_PALETTE_INIT(green)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(blockade)
 	MDRV_VIDEO_UPDATE(blockade)
 
 	/* sound hardware */
@@ -500,84 +487,20 @@ static MACHINE_DRIVER_START( blockade )
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( comotion )
-
-	/* basic machine hardware */
-	MDRV_CPU_ADD(8080, 2079000)
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
-	MDRV_CPU_VBLANK_INT(blockade_interrupt,1)
-
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 28*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
-	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(2)
-	MDRV_COLORTABLE_LENGTH(2)
-
+	MDRV_IMPORT_FROM(blockade)
 	MDRV_PALETTE_INIT(bw)
-	MDRV_VIDEO_START(generic)
-	MDRV_VIDEO_UPDATE(blockade)
-
-	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, samples_interface)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( blasto )
-
-	/* basic machine hardware */
-	MDRV_CPU_ADD(8080, 2079000)
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
-	MDRV_CPU_VBLANK_INT(blockade_interrupt,1)
-
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 28*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
+	MDRV_IMPORT_FROM(blockade)
 	MDRV_GFXDECODE(blasto_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(2)
-	MDRV_COLORTABLE_LENGTH(2)
-
 	MDRV_PALETTE_INIT(bw)
-	MDRV_VIDEO_START(generic)
-	MDRV_VIDEO_UPDATE(blockade)
-
-	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, samples_interface)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( hustle )
-
-	/* basic machine hardware */
-	MDRV_CPU_ADD(8080, 2079000)
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
-	MDRV_CPU_VBLANK_INT(blockade_interrupt,1)
-
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-
-    /* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 28*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
+	MDRV_IMPORT_FROM(blockade)
 	MDRV_GFXDECODE(blasto_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(2)
-	MDRV_COLORTABLE_LENGTH(2)
-
 	MDRV_PALETTE_INIT(yellow)
-	MDRV_VIDEO_START(generic)
-	MDRV_VIDEO_UPDATE(blockade)
-
-    /* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, samples_interface)
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -662,8 +585,8 @@ ROM_START( mineswpr )
     ROM_LOAD( "mineswee.uls", 0x0200, 0x0200, CRC(3a4f66e1) SHA1(bd7f6c51d568a79fb06414b2a6ef245d0d983c3e) )
 ROM_END
 
-GAMEX( 1976, blockade, 0, blockade, blockade, blockade, ROT0, "Gremlin", "Blockade", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
-GAMEX( 1976, comotion, 0, comotion, comotion, comotion, ROT0, "Gremlin", "Comotion", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
-GAMEX( 1978, blasto,   0, blasto,   blasto,   comotion, ROT0, "Gremlin", "Blasto", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
-GAMEX( 1977, hustle,   0, hustle,   hustle,   comotion, ROT0, "Gremlin", "Hustle", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
-GAMEX( 1977, mineswpr, 0, blasto,   blockade, blockade, ROT0, "Amutech", "Minesweeper", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
+GAMEX( 1976, blockade, 0, blockade, blockade, blockade, ROT0, "Gremlin", "Blockade", GAME_IMPERFECT_SOUND )
+GAMEX( 1976, comotion, 0, comotion, comotion, comotion, ROT0, "Gremlin", "Comotion", GAME_IMPERFECT_SOUND )
+GAMEX( 1978, blasto,   0, blasto,   blasto,   comotion, ROT0, "Gremlin", "Blasto", GAME_IMPERFECT_SOUND )
+GAMEX( 1977, hustle,   0, hustle,   hustle,   comotion, ROT0, "Gremlin", "Hustle", GAME_IMPERFECT_SOUND )
+GAMEX( 1977, mineswpr, 0, blasto,   blockade, blockade, ROT0, "Amutech", "Minesweeper", GAME_IMPERFECT_SOUND )

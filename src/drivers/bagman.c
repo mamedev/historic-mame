@@ -61,21 +61,25 @@ I/O C  ;AY-3-8910 Data Read Reg.
 #include "sound/tms5110.h"
 
 
-READ_HANDLER( bagman_pal16r6_r );
-MACHINE_INIT( bagman );
-WRITE_HANDLER( bagman_pal16r6_w );
+extern READ_HANDLER( bagman_pal16r6_r );
+extern MACHINE_INIT( bagman );
+extern WRITE_HANDLER( bagman_pal16r6_w );
 
 
-extern unsigned char *bagman_video_enable;
-WRITE_HANDLER( bagman_flipscreen_w );
-VIDEO_UPDATE( bagman );
-PALETTE_INIT( bagman );
+extern UINT8 *bagman_video_enable;
 
+extern WRITE_HANDLER( bagman_videoram_w );
+extern WRITE_HANDLER( bagman_colorram_w );
+extern WRITE_HANDLER( bagman_flipscreen_w );
+
+extern PALETTE_INIT( bagman );
+extern VIDEO_START( bagman );
+extern VIDEO_UPDATE( bagman );
 
 
 static int speech_rom_address = 0;
 
-static unsigned char ls259_buf[8] = {0,0,0,0,0,0,0,0};
+static UINT8 ls259_buf[8] = {0,0,0,0,0,0,0,0};
 
 
 static void start_talking (void)
@@ -122,9 +126,9 @@ static void reset_talking (void)
 
 int bagman_speech_rom_read_bit(void)
 {
-unsigned char *ROM = memory_region(REGION_SOUND1);
-int bit_no = (ls259_buf[0]<<2) | (ls259_buf[1]<<1) | (ls259_buf[2]<<0);
-int byte = 0;
+	UINT8 *ROM = memory_region(REGION_SOUND1);
+	int bit_no = (ls259_buf[0]<<2) | (ls259_buf[1]<<1) | (ls259_buf[2]<<0);
+	int byte = 0;
 
 #if 0
 	if ( (ls259_buf[4] == 0) &&  (ls259_buf[5] == 0) )
@@ -199,8 +203,8 @@ MEMORY_END
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0x6000, 0x67ff, MWA_RAM },
-	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
-	{ 0x9800, 0x9bff, colorram_w, &colorram },
+	{ 0x9000, 0x93ff, bagman_videoram_w, &videoram },
+	{ 0x9800, 0x9bff, bagman_colorram_w, &colorram },
 	{ 0xa000, 0xa000, interrupt_enable_w },
 	{ 0xa001, 0xa002, bagman_flipscreen_w },
 	{ 0xa003, 0xa003, MWA_RAM, &bagman_video_enable },
@@ -231,8 +235,8 @@ MEMORY_END
 static MEMORY_WRITE_START( pickin_writemem )
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0x7000, 0x77ff, MWA_RAM },
-	{ 0x8800, 0x8bff, videoram_w, &videoram, &videoram_size },
-	{ 0x9800, 0x9bff, colorram_w, &colorram },
+	{ 0x8800, 0x8bff, bagman_videoram_w, &videoram },
+	{ 0x9800, 0x9bff, bagman_colorram_w, &colorram },
 	{ 0xa000, 0xa000, interrupt_enable_w },
 	{ 0xa001, 0xa002, bagman_flipscreen_w },
 	{ 0xa003, 0xa003, MWA_RAM, &bagman_video_enable },
@@ -537,7 +541,7 @@ static MACHINE_DRIVER_START( bagman )
 	MDRV_PALETTE_LENGTH(64)
 
 	MDRV_PALETTE_INIT(bagman)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(bagman)
 	MDRV_VIDEO_UPDATE(bagman)
 
 	/* sound hardware */
@@ -566,7 +570,7 @@ static MACHINE_DRIVER_START( pickin )
 	MDRV_PALETTE_LENGTH(64)
 
 	MDRV_PALETTE_INIT(bagman)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(bagman)
 	MDRV_VIDEO_UPDATE(bagman)
 
 	/* sound hardware */

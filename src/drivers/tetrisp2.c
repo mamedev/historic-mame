@@ -42,7 +42,9 @@ UINT16 rocknms_sub_systemregs[0x10];
 UINT16 rockn_protectdata;
 UINT16 rockn_adpcmbank;
 UINT16 rockn_soundvolume;
-UINT32 rockn_timer_ctr, rockn_timer_sub_ctr;
+
+static void *rockn_timer_l4;
+static void *rockn_timer_sub_l4;
 
 /* Variables defined in vidhrdw: */
 
@@ -100,11 +102,31 @@ static WRITE16_HANDLER( tetrisp2_systemregs_w )
 	}
 }
 
+#define ROCKN_TIMER_BASE 500000
+
+static WRITE16_HANDLER( rockn_systemregs_w )
+{
+	if (ACCESSING_LSB)
+	{
+		tetrisp2_systemregs[offset] = data;
+		if (offset == 0x0c)
+		{
+			double timer = TIME_IN_NSEC(ROCKN_TIMER_BASE) * (4096 - data);
+			timer_adjust(rockn_timer_l4, timer, 0, timer);
+		}
+	}
+}
+
 static WRITE16_HANDLER( rocknms_sub_systemregs_w )
 {
 	if (ACCESSING_LSB)
 	{
 		rocknms_sub_systemregs[offset] = data;
+		if (offset == 0x0c)
+		{
+			double timer = TIME_IN_NSEC(ROCKN_TIMER_BASE) * (4096 - data);
+			timer_adjust(rockn_timer_sub_l4, timer, 0, timer);
+		}
 	}
 }
 
@@ -402,7 +424,7 @@ static MEMORY_WRITE16_START( rockn1_writemem )
 	{ 0xb40010, 0xb4001b, MWA16_RAM, &tetrisp2_scroll_bg			},	// Background Scrolling
 	{ 0xb4003e, 0xb4003f, MWA16_NOP									},	// scr_size
 	{ 0xb60000, 0xb6002f, MWA16_RAM, &tetrisp2_rotregs				},	// Rotation Registers
-	{ 0xba0000, 0xba001f, tetrisp2_systemregs_w						},	// system param
+	{ 0xba0000, 0xba001f, rockn_systemregs_w						},	// system param
 	{ 0xba001a, 0xba001b, MWA16_NOP									},	// Lev 4 irq ack
 	{ 0xba001e, 0xba001f, MWA16_NOP									},	// Lev 2 irq ack
 MEMORY_END
@@ -454,7 +476,7 @@ static MEMORY_WRITE16_START( rockn2_writemem )
 	{ 0xb40010, 0xb4001b, MWA16_RAM, &tetrisp2_scroll_bg			},	// Background Scrolling
 	{ 0xb4003e, 0xb4003f, MWA16_NOP									},	// scr_size
 	{ 0xb60000, 0xb6002f, MWA16_RAM, &tetrisp2_rotregs				},	// Rotation Registers
-	{ 0xba0000, 0xba001f, tetrisp2_systemregs_w						},	// system param
+	{ 0xba0000, 0xba001f, rockn_systemregs_w						},	// system param
 	{ 0xba001a, 0xba001b, MWA16_NOP									},	// Lev 4 irq ack
 	{ 0xba001e, 0xba001f, MWA16_NOP									},	// Lev 2 irq ack
 MEMORY_END
@@ -507,7 +529,7 @@ static MEMORY_WRITE16_START( rocknms_main_writemem )
 	{ 0xb40010, 0xb4001b, MWA16_RAM, &tetrisp2_scroll_bg			},	// Background Scrolling
 	{ 0xb4003e, 0xb4003f, MWA16_NOP									},	// scr_size
 	{ 0xb60000, 0xb6002f, MWA16_RAM, &tetrisp2_rotregs				},	// Rotation Registers
-	{ 0xba0000, 0xba001f, tetrisp2_systemregs_w						},	// system param
+	{ 0xba0000, 0xba001f, rockn_systemregs_w						},	// system param
 	{ 0xba001a, 0xba001b, MWA16_NOP									},	// Lev 4 irq ack
 	{ 0xba001e, 0xba001f, MWA16_NOP									},	// Lev 2 irq ack
 MEMORY_END
@@ -1024,44 +1046,12 @@ static struct YMZ280Binterface ymz280b_intf =
 
 void rockn_timer_level4_callback(int param)
 {
-	static UINT16 rockn_timer_old = 0;
-	UINT16 rockn_timer;
-	int timer;
-
-	rockn_timer = tetrisp2_systemregs[0x0c];
-
-	if (rockn_timer != rockn_timer_old)
-	{
-		rockn_timer_old = rockn_timer;
-		rockn_timer_ctr = 0;
-	}
-
-	rockn_timer_ctr++;
-
-	timer = (200 + (4094 - rockn_timer) * 100);
-
-	if (!(rockn_timer_ctr % timer)) cpu_set_irq_line(0, 4, HOLD_LINE);
+	cpu_set_irq_line(0, 4, HOLD_LINE);
 }
 
 void rockn_timer_sub_level4_callback(int param)
 {
-	static UINT16 rockn_timer_sub_old = 0;
-	UINT16 rockn_timer_sub;
-	int timer;
-
-	rockn_timer_sub = rocknms_sub_systemregs[0x0c];
-
-	if (rockn_timer_sub != rockn_timer_sub_old)
-	{
-		rockn_timer_sub_old = rockn_timer_sub;
-		rockn_timer_sub_ctr = 0;
-	}
-
-	rockn_timer_sub_ctr++;
-
-	timer = (200 + (4094 - rockn_timer_sub) * 100);
-
-	if (!(rockn_timer_sub_ctr % timer)) cpu_set_irq_line(1, 4, HOLD_LINE);
+	cpu_set_irq_line(1, 4, HOLD_LINE);
 }
 
 void rockn_timer_level1_callback(int param)
@@ -1076,9 +1066,8 @@ void rockn_timer_sub_level1_callback(int param)
 
 DRIVER_INIT( rockn_timer )
 {
-	rockn_timer_ctr = 0;
 	timer_pulse(TIME_IN_MSEC(32), 0, rockn_timer_level1_callback);
-	timer_pulse(TIME_IN_USEC(5), 0, rockn_timer_level4_callback);
+	rockn_timer_l4 = timer_alloc(rockn_timer_level4_callback);
 }
 
 DRIVER_INIT( rockn1 )
@@ -1097,9 +1086,8 @@ DRIVER_INIT( rocknms )
 {
 	init_rockn_timer();
 
-	rockn_timer_sub_ctr = 0;
 	timer_pulse(TIME_IN_MSEC(32), 0, rockn_timer_sub_level1_callback);
-	timer_pulse(TIME_IN_USEC(5), 0, rockn_timer_sub_level4_callback);
+	rockn_timer_sub_l4 = timer_alloc(rockn_timer_sub_level4_callback);
 
 	rockn_protectdata = 3;
 }
@@ -1211,10 +1199,10 @@ static MACHINE_DRIVER_START( rocknms )
 	MDRV_NVRAM_HANDLER(tetrisp2)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_DUAL_MONITOR)
-	MDRV_ASPECT_RATIO(8, 3)
-	MDRV_SCREEN_SIZE(0x140, 0xe0*2)
-	MDRV_VISIBLE_AREA(0, 0x140-1, 0, 0xe0*2-1)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_DUAL_MONITOR | VIDEO_RGB_DIRECT)
+	MDRV_ASPECT_RATIO(4, 7)
+	MDRV_SCREEN_SIZE(0x140, 0xe0+0x140)
+	MDRV_VISIBLE_AREA(0, 0x140-1, 0, 0xe0+0x140-1)
 	MDRV_GFXDECODE(rocknms_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(0x10000)
 
@@ -1410,13 +1398,13 @@ ROM_START( rockn2 )
 	ROM_LOAD16_WORD( "spr.img", 0x000000, 0x3e0000, BAD_DUMP CRC(13de1054) SHA1(6efc94a0893c1748fe52bc273fd04be1628abea6)  )
 
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* 16x16x8 (Background) */
-	ROM_LOAD16_WORD( "scr.bin", 0x000000, 0x200000, BAD_DUMP CRC(9f35b2cf) SHA1(b56152101dfb7a1dea21a9179585c48e2acd1076)  )
+	ROM_LOAD16_WORD( "scr.bin", 0x000000, 0x1a7400, BAD_DUMP CRC(9f35b2cf) SHA1(b56152101dfb7a1dea21a9179585c48e2acd1076)  )
 
 	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* 16x16x8 (Rotation) */
-	ROM_LOAD( "rot.bin", 0x000000, 0x200000, BAD_DUMP CRC(4d9989ff) SHA1(50c5c319bdd4dc5077399f8187b79c4ed3218c14)  )
+	ROM_LOAD( "rot.bin", 0x000000, 0x130e00, BAD_DUMP CRC(4d9989ff) SHA1(50c5c319bdd4dc5077399f8187b79c4ed3218c14)  )
 
 	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE )	/* 8x8x8 (Foreground) */
-	ROM_LOAD( "asc.bin", 0x000000, 0x080000, BAD_DUMP CRC(6e724e73) SHA1(0c7e8dde3abb4da72ddaa69141a4ce37bafa566f)  )
+	ROM_LOAD( "asc.bin", 0x000000, 0x019c00, BAD_DUMP CRC(6e724e73) SHA1(0c7e8dde3abb4da72ddaa69141a4ce37bafa566f)  )
 
 	ROM_REGION( 0x7000000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "snd25.bin", 0x0000000, 0x0400000, BAD_DUMP CRC(4e9611a3) SHA1(2a9b1d5afc0ea9a3285f9fc6b49a1c3abd8cd2a5)  ) // COMMON AREA
@@ -1545,17 +1533,17 @@ ROM_START( rocknms )
 	ROM_LOAD( "asc_m.bin", 0x000000, 0x080000, BAD_DUMP CRC(a4717579) SHA1(cf28c0f19713ebf9f8fd5d55d654c1cd2e8cd73d)  )
 
 	ROM_REGION( 0x0800000, REGION_GFX5, ROMREGION_DISPOSE )	/* 8x8x8 (Sprites) */
-	ROM_LOAD32_WORD( "spr_s.im1", 0x000000, 0x400000, BAD_DUMP CRC(eea4699c) SHA1(9cceb9dd6ae1db326fd6754a7ff20013dd163b1c)  )
-	ROM_LOAD32_WORD( "spr_s.im2", 0x000002, 0x400000, BAD_DUMP CRC(2c02a1ec) SHA1(77daaa644c54353ef8f58d47bde49af0424c9c88)  )
+	ROM_LOAD32_WORD( "spr_s.im1", 0x000000, 0x340000, BAD_DUMP CRC(eea4699c) SHA1(9cceb9dd6ae1db326fd6754a7ff20013dd163b1c)  )
+	ROM_LOAD32_WORD( "spr_s.im2", 0x000002, 0x340000, BAD_DUMP CRC(2c02a1ec) SHA1(77daaa644c54353ef8f58d47bde49af0424c9c88)  )
 
 	ROM_REGION( 0x200000, REGION_GFX6, ROMREGION_DISPOSE )	/* 16x16x8 (Background) */
-	ROM_LOAD16_WORD( "scr_s.bin", 0x000000, 0x200000, BAD_DUMP CRC(a00dfdaa) SHA1(37543516f00c9aea88a6a7ebd3bb777c69796b9c)  )
+	ROM_LOAD16_WORD( "scr_s.bin", 0x000000, 0x0ac900, BAD_DUMP CRC(a00dfdaa) SHA1(37543516f00c9aea88a6a7ebd3bb777c69796b9c)  )
 
 	ROM_REGION( 0x200000, REGION_GFX7, ROMREGION_DISPOSE )	/* 16x16x8 (Rotation) */
-	ROM_LOAD( "rot_s.bin", 0x000000, 0x200000, BAD_DUMP CRC(c76eff18) SHA1(0b38b5ad6a45fd237aefa4a070815e6698deb31b)  )
+	ROM_LOAD( "rot_s.bin", 0x000000,  0x148300, BAD_DUMP CRC(c76eff18) SHA1(0b38b5ad6a45fd237aefa4a070815e6698deb31b)  )
 
 	ROM_REGION( 0x080000, REGION_GFX8, ROMREGION_DISPOSE )	/* 8x8x8 (Foreground) */
-	ROM_LOAD( "asc_s.bin", 0x000000, 0x080000, BAD_DUMP CRC(26a8bcaa) SHA1(7de2815c772204937a3e634f93a27933bfce12cd)  )
+	ROM_LOAD( "asc_s.bin", 0x000000, 0x02c700, BAD_DUMP CRC(26a8bcaa) SHA1(7de2815c772204937a3e634f93a27933bfce12cd)  )
 
 	ROM_REGION( 0x7000000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "rtdx001.bin", 0x0000000, 0x0400000, BAD_DUMP CRC(8bafae71) SHA1(db74accd4bc1bfeb4a3341a0fd572b81287f1278)  ) // COMMON AREA
@@ -1584,6 +1572,35 @@ ROM_START( rocknms )
 ROM_END
 
 
+/***************************************************************************/
+
+#define ROCKNMS_MONITOR 0
+
+#if (ROCKNMS_MONITOR == 1)
+static MACHINE_DRIVER_START( rocknmt1 )
+	MDRV_IMPORT_FROM(rocknms)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_ASPECT_RATIO(4, 3)
+	MDRV_SCREEN_SIZE(0x140, 0xe0)
+	MDRV_VISIBLE_AREA(0, 0x140-1, 0, 0xe0-1)
+	MDRV_GFXDECODE(tetrisp2_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x8000)
+	MDRV_VIDEO_UPDATE(rockntread)
+MACHINE_DRIVER_END
+#endif
+
+#if (ROCKNMS_MONITOR == 2)
+VIDEO_UPDATE( rocknmt2 );
+static MACHINE_DRIVER_START( rocknmt2 )
+	MDRV_IMPORT_FROM(rocknms)
+	MDRV_ASPECT_RATIO(7, 4)
+	MDRV_SCREEN_SIZE(0x140+0xe0, 0x140)
+	MDRV_VISIBLE_AREA(0, 0x140+0xe0-1, 0, 0x140-1)
+	MDRV_VIDEO_UPDATE(rocknmt2)
+MACHINE_DRIVER_END
+#endif
+
+
 /***************************************************************************
 
 
@@ -1597,6 +1614,16 @@ GAME( 1997, teplus2j, tetrisp2, tetrisp2, teplus2j, 0,       ROT0,   "Jaleco / T
 
 GAME( 1999, rockn1,   0,        rockn1,   rockn1,   rockn1,  ROT270, "Jaleco", "Rock'n Tread 1 (Japan)" )
 GAME( 1999, rockn2,   0,        rockn2,   rockn1,   rockn2,  ROT270, "Jaleco", "Rock'n Tread 2 (Japan)" )
-GAMEX(1999, rocknms,  0,        rocknms,  rocknms,  rocknms, ROT270, "Jaleco", "Rock'n MegaSession (Japan)", GAME_IMPERFECT_GRAPHICS )
+
+#if (ROCKNMS_MONITOR == 0)
+GAMEX(1999, rocknms,  0,        rocknms,  rocknms,  rocknms, ROT0,   "Jaleco", "Rock'n MegaSession (Japan)", GAME_IMPERFECT_GRAPHICS )
+#endif
+#if (ROCKNMS_MONITOR == 1)
+GAMEX(1999, rocknms,  0,        rocknmt1, rocknms,  rocknms, ROT270, "Jaleco", "Rock'n MegaSession (Japan)", GAME_IMPERFECT_GRAPHICS )
+#endif
+#if (ROCKNMS_MONITOR == 2)
+GAMEX(1999, rocknms,  0,        rocknmt2, rocknms,  rocknms, ROT0,   "Jaleco", "Rock'n MegaSession (Japan)", GAME_IMPERFECT_GRAPHICS )
+#endif
+
 GAME( 1999, rockn3,   0,        rockn2,   rockn1,   rockn3,  ROT270, "Jaleco", "Rock'n 3 (Japan)" )
 GAME( 2000, rockn4,   0,        rockn2,   rockn1,   rockn3,  ROT270, "Jaleco (PCCWJ)", "Rock'n 4 (Japan prototype version)" )

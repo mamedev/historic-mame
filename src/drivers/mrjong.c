@@ -50,25 +50,29 @@ Developers:
 #include "vidhrdw/generic.h"
 
 
-PALETTE_INIT( mrjong );
-VIDEO_UPDATE( mrjong );
-WRITE_HANDLER( mrjong_flipscreen_w );
+extern WRITE_HANDLER( mrjong_videoram_w );
+extern WRITE_HANDLER( mrjong_colorram_w );
+extern WRITE_HANDLER( mrjong_flipscreen_w );
+
+extern PALETTE_INIT( mrjong );
+extern VIDEO_START( mrjong );
+extern VIDEO_UPDATE( mrjong );
 
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0xa000, 0xa7ff, MRA_RAM },
-	{ 0xe000, 0xe3ff, videoram_r },
-	{ 0xe400, 0xe7ff, colorram_r },
+	{ 0xe000, 0xe3ff, MRA_RAM },
+	{ 0xe400, 0xe7ff, MRA_RAM },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0xa000, 0xa7ff, MWA_RAM },
-	{ 0xe000, 0xe3ff, videoram_w, &videoram, &videoram_size },
-	{ 0xe400, 0xe7ff, colorram_w, &colorram },
+	{ 0xe000, 0xe3ff, mrjong_videoram_w, &videoram },
+	{ 0xe400, 0xe7ff, mrjong_colorram_w, &colorram },
 	{ 0xe000, 0xe03f, MWA_RAM, &spriteram, &spriteram_size},	/* here to initialize the pointer */
 MEMORY_END
 
@@ -204,7 +208,7 @@ static MACHINE_DRIVER_START( mrjong )
 	MDRV_COLORTABLE_LENGTH(4*32)
 
 	MDRV_PALETTE_INIT(mrjong)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(mrjong)
 	MDRV_VIDEO_UPDATE(mrjong)
 
 	/* sound hardware */

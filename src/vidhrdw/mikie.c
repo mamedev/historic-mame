@@ -9,11 +9,9 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+static int palettebank;
 
-
-static int palettebank,flipscreen;
-
-
+static struct tilemap *bg_tilemap;
 
 /***************************************************************************
 
@@ -92,96 +90,93 @@ PALETTE_INIT( mikie )
 	}
 }
 
+WRITE_HANDLER( mikie_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
+WRITE_HANDLER( mikie_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
 WRITE_HANDLER( mikie_palettebank_w )
 {
-	if (palettebank != (data & 7))
+	if (palettebank != (data & 0x07))
 	{
-		palettebank = data & 7;
-		memset(dirtybuffer,1,videoram_size);
+		palettebank = data & 0x07;
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	}
 }
 
 WRITE_HANDLER( mikie_flipscreen_w )
 {
-	if (flipscreen != (data & 1))
+	if (flip_screen != (data & 0x01))
 	{
-		flipscreen = data & 1;
-		memset(dirtybuffer,1,videoram_size);
+		flip_screen_set(data & 0x01);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	}
 }
 
+static void get_bg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index] + ((colorram[tile_index] & 0x20) << 3);
+	int color = (colorram[tile_index] & 0x0f) + 16 * palettebank;
+	int flags = ((colorram[tile_index] & 0x40) ? TILE_FLIPX : 0) | ((colorram[tile_index] & 0x80) ? TILE_FLIPY : 0);
 
+	SET_TILE_INFO(0, code, color, flags)
+}
 
-/***************************************************************************
+VIDEO_START( mikie )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+	if ( !bg_tilemap )
+		return 1;
 
-***************************************************************************/
-VIDEO_UPDATE( mikie )
+	return 0;
+}
+
+static void mikie_draw_sprites( struct mame_bitmap *bitmap )
 {
 	int offs;
 
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		int sx,sy,flipx,flipy;
-
-		if (dirtybuffer[offs])
-		{
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-			flipx = colorram[offs] & 0x40;
-			flipy = colorram[offs] & 0x80;
-			if (flipscreen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + ((colorram[offs] & 0x20) << 3),
-					(colorram[offs] & 0x0f) + 16 * palettebank,
-					flipx,flipy,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-
-
-	/* Draw the sprites. */
 	for (offs = 0;offs < spriteram_size;offs += 4)
 	{
-		int sx,sy,flipx,flipy;
+		int gfxbank = (spriteram[offs+2] & 0x40) ? 2 : 1;
+		int code = (spriteram[offs + 2] & 0x3f) + ((spriteram[offs + 2] & 0x80) >> 1) + ((spriteram[offs] & 0x40) << 1);
+		int color = (spriteram[offs] & 0x0f) + 16 * palettebank;
+		int sx = spriteram[offs + 3];
+		int sy = 244 - spriteram[offs + 1];
+		int flipx = ~spriteram[offs] & 0x10;
+		int flipy = spriteram[offs] & 0x20;
 
-		sx = spriteram[offs + 3];
-		sy = 244 - spriteram[offs + 1];
-		flipx = ~spriteram[offs] & 0x10;
-		flipy = spriteram[offs] & 0x20;
-		if (flipscreen)
+		if (flip_screen)
 		{
 			sy = 242 - sy;
 			flipy = !flipy;
 		}
 
-		drawgfx(bitmap,Machine->gfx[(spriteram[offs+2] & 0x40) ? 2 : 1],
-				(spriteram[offs + 2] & 0x3f) + ((spriteram[offs + 2] & 0x80) >> 1)
-						+ ((spriteram[offs] & 0x40) << 1),
-				(spriteram[offs] & 0x0f) + 16 * palettebank,
-				flipx,flipy,
-				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+		drawgfx(bitmap, Machine->gfx[gfxbank],
+			code, color,
+			flipx,flipy,
+			sx,sy,
+			&Machine->visible_area,
+			TRANSPARENCY_PEN, 0);
 	}
+}
+
+VIDEO_UPDATE( mikie )
+{
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	mikie_draw_sprites(bitmap);
 }

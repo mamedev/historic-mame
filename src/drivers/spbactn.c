@@ -79,11 +79,9 @@ TODO : (also check the notes from the galspnbl.c driver)
   - coin insertion is not recognized consistenly.
   - sprite/tile priority is sometimes wrong (see 1st table when ball in bumpers).
   - lots of unknown writes, what are they meant to do
-  - graphical errors (unknown bits on some tiles, some kind of alpha blending
-    effects?)
   - verify some of the code which is from the other drivers such as sprite
     drawing as priorities are questionable in places
-  - a lot of palette colours aren't even being used at the moment
+  - add support for blended sprites.
 
 Unmapped writes (P.O.S.T.)
 
@@ -337,9 +335,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &fgtilelayout,   0xa00, 16  },
-	{ REGION_GFX2, 0, &bgtilelayout,   0xb00, 16  },
-	{ REGION_GFX3, 0, &spritelayout,   0x800, 16  },
+	{ REGION_GFX1, 0, &fgtilelayout,   0x0200, 16384  },
+	{ REGION_GFX2, 0, &bgtilelayout,   0x0300, 16384  },
+	{ REGION_GFX3, 0, &spritelayout,   0x0000, 16384  },
 	{ -1 } /* end of array */
 };
 
@@ -378,7 +376,7 @@ static MACHINE_DRIVER_START( spbactn )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
 	MDRV_SCREEN_SIZE(64*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 64*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)

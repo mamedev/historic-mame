@@ -9,17 +9,13 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+UINT8 *bankp_videoram2;
+UINT8 *bankp_colorram2;
 
-
-unsigned char *bankp_videoram2;
-unsigned char *bankp_colorram2;
-static unsigned char *dirtybuffer2;
-static struct mame_bitmap *tmpbitmap2;
 static int scroll_x;
-static int flipscreen;
 static int priority;
 
-
+static struct tilemap *bg_tilemap, *fg_tilemap;
 
 /***************************************************************************
 
@@ -91,67 +87,51 @@ PALETTE_INIT( bankp )
 	/* the bottom half of the PROM seems to be not used */
 }
 
-
-
-/***************************************************************************
-
-  Start the video hardware emulation.
-
-***************************************************************************/
-VIDEO_START( bankp )
-{
-	if (video_start_generic() != 0)
-		return 1;
-
-	if ((dirtybuffer2 = auto_malloc(videoram_size)) == 0)
-		return 1;
-
-	memset(dirtybuffer2,1,videoram_size);
-
-	if ((tmpbitmap2 = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-		return 1;
-
-	return 0;
-}
-
-
-
 WRITE_HANDLER( bankp_scroll_w )
 {
 	scroll_x = data;
 }
 
+WRITE_HANDLER( bankp_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
+}
 
+WRITE_HANDLER( bankp_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
+}
 
 WRITE_HANDLER( bankp_videoram2_w )
 {
 	if (bankp_videoram2[offset] != data)
 	{
-		dirtybuffer2[offset] = 1;
-
 		bankp_videoram2[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 }
-
-
 
 WRITE_HANDLER( bankp_colorram2_w )
 {
 	if (bankp_colorram2[offset] != data)
 	{
-		dirtybuffer2[offset] = 1;
-
 		bankp_colorram2[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 }
-
-
 
 WRITE_HANDLER( bankp_out_w )
 {
 	/* bits 0-1 are playfield priority */
-	/* TODO: understand how this works, currently the only thing I do is */
-	/* invert the layer order when priority == 2 */
+	/* TODO: understand how this works */
 	priority = data & 0x03;
 
 	/* bits 2-3 unknown (2 is used) */
@@ -160,104 +140,84 @@ WRITE_HANDLER( bankp_out_w )
 	interrupt_enable_w(0,(data & 0x10)>>4);
 
 	/* bit 5 controls screen flip */
-	if ((data & 0x20) != flipscreen)
+	if (flip_screen != (data & 0x20))
 	{
-		flipscreen = data & 0x20;
-		memset(dirtybuffer,1,videoram_size);
-		memset(dirtybuffer2,1,videoram_size);
+		flip_screen_set(data & 0x20);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	}
 
 	/* bits 6-7 unknown */
 }
 
+static void get_bg_tile_info(int tile_index)
+{
+	int code = bankp_videoram2[tile_index] + 256 * (bankp_colorram2[tile_index] & 0x07);
+	int color = bankp_colorram2[tile_index] >> 4;
+	int flags = (bankp_colorram2[tile_index] & 0x08) ? TILE_FLIPX : 0;
 
+	SET_TILE_INFO(1, code, color, flags)
+}
 
-/***************************************************************************
+static void get_fg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index] + 256 * ((colorram[tile_index] & 3) >> 0);
+	int color = colorram[tile_index] >> 3;
+	int flags = (colorram[tile_index] & 0x04) ? TILE_FLIPX : 0;
 
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+	SET_TILE_INFO(0, code, color, flags)
+}
 
-***************************************************************************/
+VIDEO_START( bankp )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_TRANSPARENT_COLOR, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, 
+		TILEMAP_TRANSPARENT_COLOR, 8, 8, 32, 32);
+
+	if ( !fg_tilemap )
+		return 1;
+
+	tilemap_set_transparent_pen(bg_tilemap, 0);
+	tilemap_set_transparent_pen(fg_tilemap, 0);
+
+	return 0;
+}
+
 VIDEO_UPDATE( bankp )
 {
-	int offs;
+	/* The tilemap has to be shifted to the left in flip screen mode
+		because the visible tilemap data is not centered in video memory */
 
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
+	if (flip_screen)
 	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy,flipx;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-			flipx = colorram[offs] & 0x04;
-			if (flipscreen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-				flipx = !flipx;
-			}
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + 256 * ((colorram[offs] & 3) >> 0),
-					colorram[offs] >> 3,
-					flipx,flipscreen,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-
-		if (dirtybuffer2[offs])
-		{
-			int sx,sy,flipx;
-
-
-			dirtybuffer2[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-			flipx = bankp_colorram2[offs] & 0x08;
-			if (flipscreen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-				flipx = !flipx;
-			}
-
-			drawgfx(tmpbitmap2,Machine->gfx[1],
-					bankp_videoram2[offs] + 256 * (bankp_colorram2[offs] & 0x07),
-					bankp_colorram2[offs] >> 4,
-					flipx,flipscreen,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-
-
-	/* copy the temporary bitmaps to the screen */
+		tilemap_set_scrollx(fg_tilemap, 0, -scroll_x - 16);
+		tilemap_set_scrollx(bg_tilemap, 0, -16);
+	} 
+	else
 	{
-		int scroll;
+		tilemap_set_scrollx(fg_tilemap, 0, scroll_x);
+		tilemap_set_scrollx(bg_tilemap, 0, 0);
+	}	
 
-
-		scroll = -scroll_x;
-
-		if (priority == 2)
-		{
-			copyscrollbitmap(bitmap,tmpbitmap,1,&scroll,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-			copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->visible_area,TRANSPARENCY_COLOR,0);
-		}
-		else
-		{
-			copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-			copyscrollbitmap(bitmap,tmpbitmap,1,&scroll,0,0,&Machine->visible_area,TRANSPARENCY_COLOR,0);
-		}
+	switch (priority)
+	{
+	case 0:
+		tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, TILEMAP_IGNORE_TRANSPARENCY, 0); // just a guess
+		break;
+	case 1:
+		tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, TILEMAP_IGNORE_TRANSPARENCY, 0);
+		tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, 0, 0);
+		break;
+	case 2:
+		tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, TILEMAP_IGNORE_TRANSPARENCY, 0);
+		tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+		break;
+	case 3:
+		tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, TILEMAP_IGNORE_TRANSPARENCY, 0); // just a guess
+		break;
 	}
 }

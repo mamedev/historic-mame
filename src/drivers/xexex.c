@@ -1,6 +1,6 @@
 #define XE_DEBUG 0
 #define XE_SKIPIDLE 1
-#define XE_DMADELAY 256
+#define XE_DMADELAY (256)
 
 /***************************************************************************
 
@@ -13,35 +13,33 @@ Change Log
 (ATXXXX03)
 
 Hooked up missing memory handler, emulated object DMA, revised IRQ,
-rewrote the K053250(LVC) effect generator, ported tilemaps to the
-more complete K056832 emulation(I have no intention to rewrite the
-K054157 which is a complete subset of the K056832), corrected
-a few K054539 PCM chip misbehaviors, etc.
+rewrote the K053250(LVC) effect generator, ported tilemaps to use the
+K056832 emulation(the K054157 is a complete subset of the K056832),
+corrected a few K054539 PCM chip misbehaviors, etc.
 
 
 The following bugs appear to be fixed:
 
 General:
 
-- game doesn't slow down
+- game doesn't slow down like the arcade
 	IRQ 5 is the "OBJDMA end interrupt" and shouldn't be triggered
 	if DMA didn't complete within the frame.
 
-	* may not be 100% correct but close to that on the Gamest video.
-	Xexex is 384x256 which suggests an 8Mhz dotclock so DMA delay can
-	range up to 256.0us. Increase XE_DMADELAY if emulation runs faster
-	than the original or overclock CPU 0 if you prefer faster gameplay.
+	* game speed may not be 100% correct but close to that on the
+	Gamest video especially in stage 6. Xexex is 384x256 which suggests
+	an 8Mhz horizontal dotclock and DMA delay can range up to 32.0us(clear)
+	+ 256.0us(transfer). Increase XE_DMADELAY if emulation runs faster
+	than the original or use cheat to overclock CPU 0 if you prefer faster
+	gameplay.
 
 - sprite lag, dithering, flicking (DMA)
-
 - line effects go out of sync (K053250 also does DMA)
-
 - inconsistent reverb (maths bug)
-
 - lasers don't change color (IRQ masking)
-- xexex057gre_1 (delayed sfx, missing speech, Xexexj only: random 1up note)
+- xexex057gre_1 (delayed sfx, missing speech, Xexexj only: random 1-up note)
 - xexex057gre_2 (reversed stereo)
-- xexex065gre (coin up problems)
+- xexex065gre (coin up problems, IRQ order)
 
 - L1: xexex067gre (tilemap boundary), misaligned bosses (swapXY)
 - L2: xexex061gre (K054157 offset)
@@ -53,10 +51,13 @@ General:
 
 Unresolved Issues:
 
-- the random 1up sound still pops up in world version (filtered temporarily)
-- mono/stereo softdip has no effect (xexex057gre_3, external logic)
-- ending graphics has wrong priority (pdrawgfx core issue, takes planning)
-- the K053250 occationally shows a one-frame glitch (probably timing related)
+- random 1-up notes still pop up in the world version (filtered temporarily)
+- mono/stereo softdip has no effect (xexex057gre_3, external mixing?)
+- K053250 shows a one-frame glitch at stage 1 boss (DMA timing?)
+- stage 3 intro missing alpha effect (known K054338 deficiency)
+- the stage 4 boss(tentacles) sometimes appears darker (palette update timing?)
+- the furthest layer in stage 5 shakes when scrolling up or down (needs verification)
+- Elaine's end-game graphics has wrong masking effect (known non-zoomed pdrawgfx issue)
 
 ***************************************************************************/
 
@@ -71,7 +72,7 @@ Unresolved Issues:
 
 VIDEO_START( xexex );
 VIDEO_UPDATE( xexex );
-extern void xexex_set_alpha(int);
+void xexex_set_alpha(int on);
 
 MACHINE_INIT( xexex );
 
@@ -113,7 +114,7 @@ static NVRAM_HANDLER( xexex )
 }
 
 
-#if 0 // old code (for reference only)
+#if 0 // (for reference; do not remove)
 
 /* the interface with the 053247 is weird. The chip can address only 0x1000 bytes */
 /* of RAM, but they put 0x8000 there. The CPU can access them all. Address lines */
@@ -147,31 +148,33 @@ static void xexex_objdma(int limiter)
 {
 	static int frame = -1;
 
-	int ecx, edx;
-	data16_t *esi, *edi;
+	int counter, num_inactive;
+	data16_t *src, *dst;
 
-	ecx = frame;
+	counter = frame;
 	frame = cpu_getcurrentframe();
-	if (limiter && ecx == frame) return; // make sure we only do DMA transfer once per frame
+	if (limiter && counter == frame) return; // make sure we only do DMA transfer once per frame
 
-	K053247_export_config(&edi, (struct GfxElement**)&esi, (void**)&esi, &ecx, &ecx);
-	esi = spriteram16;
-	edx = ecx = 256;
-	do {
-		if (*esi & 0x8000)
+	K053247_export_config(&dst, (struct GfxElement**)&src, (void**)&src, &counter, &counter);
+	src = spriteram16;
+	num_inactive = counter = 256;
+
+	do
+	{
+		if (*src & 0x8000)
 		{
-			edi[0] = esi[0x0];  edi[1] = esi[0x2];
-			edi[2] = esi[0x4];  edi[3] = esi[0x6];
-			edi[4] = esi[0x8];  edi[5] = esi[0xa];
-			edi[6] = esi[0xc];  edi[7] = esi[0xe];
-			edi += 8;
-			edx--;
+			dst[0] = src[0x0];  dst[1] = src[0x2];
+			dst[2] = src[0x4];  dst[3] = src[0x6];
+			dst[4] = src[0x8];  dst[5] = src[0xa];
+			dst[6] = src[0xc];  dst[7] = src[0xe];
+			dst += 8;
+			num_inactive--;
 		}
-		esi += 0x40;
+		src += 0x40;
 	}
-	while (--ecx);
+	while (--counter);
 
-	if (edx) do { *edi = 0; edi += 8; } while (--edx);
+	if (num_inactive) do { *dst = 0; dst += 8; } while (--num_inactive);
 }
 
 static READ16_HANDLER( spriteram16_mirror_r )
@@ -220,7 +223,7 @@ static void parse_control2(void)
 	/* bit 1  is cs (active low) */
 	/* bit 2  is clock (active high) */
 	/* bit 5  is enable irq 6 */
-	/* bit 6  is enable irq 5 (can't verify)*/
+	/* bit 6  is enable irq 5 */
 	/* bit 11 is watchdog */
 
 	EEPROM_write_bit(cur_control2 & 0x01);
@@ -230,7 +233,7 @@ static void parse_control2(void)
 	/* bit 8 = enable sprite ROM reading */
 	K053246_set_OBJCHA_line((cur_control2 & 0x0100) ? ASSERT_LINE : CLEAR_LINE);
 
-	/* bit 9 = disable alpha channel on K054157 plane 0 */
+	/* bit 9 = disable alpha channel on K054157 plane 0 (under investigation) */
 	xexex_set_alpha(!(cur_control2 & 0x200));
 }
 
@@ -303,14 +306,15 @@ static void ym_set_mixing(double left, double right)
 
 static void dmaend_callback(int data)
 {
-	if (!(cur_control2 & 0x0040)) return;
+	if (cur_control2 & 0x0040)
+	{
+		// foul-proof (CPU0 could be deactivated while we wait)
+		if (suspension_active) { suspension_active = 0; cpu_trigger(resume_trigger); }
 
-	// foul-proof (CPU0 could be deactivated while we wait)
-	if (suspension_active) { suspension_active = 0; cpu_trigger(resume_trigger); }
-
-	// IRQ 5 is the "object DMA end interrupt" and shouldn't be triggered
-	// if object data isn't ready for DMA within the frame.
-	cpu_set_irq_line(0, 5, HOLD_LINE);
+		// IRQ 5 is the "object DMA end interrupt" and shouldn't be triggered
+		// if object data isn't ready for DMA within the frame.
+		cpu_set_irq_line(0, 5, HOLD_LINE);
+	}
 }
 
 static INTERRUPT_GEN( xexex_interrupt )
@@ -321,20 +325,24 @@ static INTERRUPT_GEN( xexex_interrupt )
 	{
 		case 0:
 			// IRQ 6 is for test mode only
-			if (cur_control2 & 0x0020) cpu_set_irq_line(0, 6, HOLD_LINE);
+			if (cur_control2 & 0x0020)
+				cpu_set_irq_line(0, 6, HOLD_LINE);
 		break;
 
 		case 1:
-			// IRQ 4 is the primary VBLANK interrupt
-			cpu_set_irq_line(0, 4, HOLD_LINE);
-
-			// OBJDMA starts at the beginning of VBLANK
 			if (K053246_is_IRQ_enabled())
 			{
-				// dump sprite data and schedule DMA end interrupt
+				// OBJDMA starts at the beginning of V-blank
 				xexex_objdma(0);
+
+				// schedule DMA end interrupt
 				timer_adjust(dmadelay_timer, TIME_IN_USEC(XE_DMADELAY), 0, 0);
 			}
+
+			// IRQ 4 is the V-blank interrupt. It controls color, sound and
+			// vital game logics that shouldn't be interfered by frame-drop.
+			if (cur_control2 & 0x0800)
+				cpu_set_irq_line(0, 4, HOLD_LINE);
 		break;
 	}
 }
@@ -343,7 +351,7 @@ static INTERRUPT_GEN( xexex_interrupt )
 static MEMORY_READ16_START( readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM },
 #if XE_SKIPIDLE
-	{ 0x080014, 0x080015, xexex_waitskip_r },
+	{ 0x080014, 0x080015, xexex_waitskip_r },		// helps sound CPU by giving back control as early as possible
 #endif
 	{ 0x080000, 0x08ffff, MRA16_RAM },
 	{ 0x090000, 0x097fff, MRA16_RAM },				// K053247 sprite RAM
@@ -368,7 +376,9 @@ static MEMORY_READ16_START( readmem )
 	{ 0x0c0000, 0x0c003f, K056832_word_r },
 	{ 0x0c2000, 0x0c2007, K053246_reg_word_r },
 	{ 0x0ca000, 0x0ca01f, K054338_word_r },
+	{ 0x0cc000, 0x0cc01f, K053251_lsb_r },
 	{ 0x0d0000, 0x0d001f, K053252_word_r },
+	{ 0x0d8000, 0x0d8007, K056832_b_word_r },
 #endif
 MEMORY_END
 
@@ -388,7 +398,7 @@ static MEMORY_WRITE16_START( writemem )
 	{ 0x0d600c, 0x0d600d, sound_cmd1_w },
 	{ 0x0d600e, 0x0d600f, sound_cmd2_w },
 	{ 0x0d6000, 0x0d601f, MWA16_RAM },					// sound regs fall through
-	{ 0x0d8000, 0x0d8007, MWA16_NOP },					// VSCCS
+	{ 0x0d8000, 0x0d8007, K056832_b_word_w },			// VSCCS regs
 	{ 0x0de000, 0x0de001, control2_w },
 	{ 0x100000, 0x17ffff, MWA16_ROM },
 	{ 0x180000, 0x181fff, K056832_ram_word_w }, 		// tilemap RAM
@@ -481,7 +491,10 @@ static MACHINE_DRIVER_START( xexex )
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(xexex_interrupt,2)
 
-	MDRV_CPU_ADD(Z80, 8000000)	// 8MHz (PCB only shows one 32MHz xtal, reference: www.system16.com)
+	// 8MHz (PCB shows one 32MHz/18.432MHz xtal, reference: www.system16.com)
+	// more likely 32MHz since 18.432MHz yields 4.608MHz(too slow) or 9.216MHz(too fast) with integer divisors
+	MDRV_CPU_ADD(Z80, 8000000)
+
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 

@@ -10,11 +10,20 @@
 #include "vidhrdw/generic.h"
 
 
-static int gfx_bank,palette_bank;
+static int gfx_bank, palette_bank;
 static int grid_on;
-static const unsigned char *color_codes;
+static const UINT8 *color_codes;
 
+static struct tilemap *bg_tilemap;
 
+WRITE_HANDLER( dkong_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
 /***************************************************************************
 
@@ -142,26 +151,45 @@ PALETTE_INIT( dkong3 )
 	color_codes = color_prom;	/* we'll need it later */
 }
 
+static void get_bg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index] + 256 * gfx_bank;
+	int color = (color_codes[tile_index % 32 + 32 * (tile_index / 32 / 4)] & 0x0f) + 0x10 * palette_bank;
 
+	SET_TILE_INFO(0, code, color, 0)
+}
 
 VIDEO_START( dkong )
 {
 	gfx_bank = 0;
 	palette_bank = 0;
 
-	return video_start_generic();
-}
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
+	if ( !bg_tilemap )
+		return 1;
+
+	return 0;
+}
 
 
 WRITE_HANDLER( dkongjr_gfxbank_w )
 {
-	set_vh_global_attribute(&gfx_bank, data & 1);
+	if (gfx_bank != (data & 0x01))
+	{
+		gfx_bank = data & 0x01;
+		tilemap_mark_all_tiles_dirty(bg_tilemap);
+	}
 }
 
 WRITE_HANDLER( dkong3_gfxbank_w )
 {
-	set_vh_global_attribute(&gfx_bank, ~data & 1);
+	if (gfx_bank != (~data & 0x01))
+	{
+		gfx_bank = ~data & 0x01;
+		tilemap_mark_all_tiles_dirty(bg_tilemap);
+	}
 }
 
 
@@ -170,19 +198,23 @@ WRITE_HANDLER( dkong_palettebank_w )
 {
 	int newbank;
 
-
 	newbank = palette_bank;
+
 	if (data & 1)
 		newbank |= 1 << offset;
 	else
 		newbank &= ~(1 << offset);
 
-	set_vh_global_attribute(&palette_bank, newbank);
+	if (palette_bank != newbank)
+	{
+		palette_bank = newbank;
+		tilemap_mark_all_tiles_dirty(bg_tilemap);
+	}
 }
 
 WRITE_HANDLER( radarscp_grid_enable_w )
 {
-	grid_on = data & 1;
+	grid_on = data & 0x01;
 }
 
 WRITE_HANDLER( radarscp_grid_color_w )
@@ -198,7 +230,7 @@ WRITE_HANDLER( radarscp_grid_color_w )
 
 WRITE_HANDLER( dkong_flipscreen_w )
 {
-	flip_screen_set(~data & 1);
+	flip_screen_set(~data & 0x01);
 }
 
 /***************************************************************************
@@ -208,48 +240,6 @@ WRITE_HANDLER( dkong_flipscreen_w )
   the main emulation engine.
 
 ***************************************************************************/
-
-static void draw_tiles(struct mame_bitmap *bitmap)
-{
-	int offs;
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy;
-			int charcode,color;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-
-			charcode = videoram[offs] + 256 * gfx_bank;
-			/* retrieve the character color from the PROM */
-			color = (color_codes[offs % 32 + 32 * (offs / 32 / 4)] & 0x0f) + 0x10 * palette_bank;
-
-			if (flip_screen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-			}
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					charcode,color,
-					flip_screen,flip_screen,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-}
 
 static void draw_sprites(struct mame_bitmap *bitmap)
 {
@@ -314,7 +304,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 
 static void draw_grid(struct mame_bitmap *bitmap)
 {
-	const unsigned char *table = memory_region(REGION_GFX3);
+	const UINT8 *table = memory_region(REGION_GFX3);
 	int x,y,counter;
 
 	counter = flip_screen ? 0x000 : 0x400;
@@ -347,19 +337,13 @@ VIDEO_UPDATE( radarscp )
 {
 	palette_set_color(256,0xff,0x00,0x00);	/* stars */
 
-	if (get_vh_global_attribute_changed())
-		memset(dirtybuffer,1,videoram_size);
-
-	draw_tiles(bitmap);
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
 	draw_grid(bitmap);
 	draw_sprites(bitmap);
 }
 
 VIDEO_UPDATE( dkong )
 {
-	if (get_vh_global_attribute_changed())
-		memset(dirtybuffer,1,videoram_size);
-
-	draw_tiles(bitmap);
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
 	draw_sprites(bitmap);
 }

@@ -9,12 +9,12 @@ driver by Nicola Salmoria
 #include "vidhrdw/generic.h"
 #include "sndhrdw/m72.h"
 
-/* in vidhrdw/sichuan2.c */
-WRITE_HANDLER( sichuan2_bankswitch_w );
-WRITE_HANDLER( sichuan2_paletteram_w );
-VIDEO_UPDATE( sichuan2 );
+extern WRITE_HANDLER( sichuan2_videoram_w );
+extern WRITE_HANDLER( sichuan2_bankswitch_w );
+extern WRITE_HANDLER( sichuan2_paletteram_w );
 
-
+extern VIDEO_START( sichuan2 );
+extern VIDEO_UPDATE( sichuan2 );
 
 static READ_HANDLER( sichuan2_dsw1_r )
 {
@@ -39,8 +39,8 @@ static WRITE_HANDLER( sichuan2_coin_w )
 {
 	if ((data & 0xf9) != 0x01) logerror("coin ctrl = %02x\n",data);
 
-	coin_counter_w(0,data & 2);
-	coin_counter_w(1,data & 4);
+	coin_counter_w(0, data & 0x02);
+	coin_counter_w(1, data & 0x04);
 }
 
 
@@ -55,7 +55,7 @@ MEMORY_END
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc800, 0xcaff, sichuan2_paletteram_w, &paletteram },
-	{ 0xd000, 0xdfff, videoram_w, &videoram, &videoram_size },
+	{ 0xd000, 0xdfff, sichuan2_videoram_w, &videoram },
 	{ 0xe000, 0xffff, MWA_RAM },
 MEMORY_END
 
@@ -125,7 +125,7 @@ INPUT_PORTS_START( shisen )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -264,7 +264,7 @@ static MACHINE_DRIVER_START( shisen )
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(256)
 
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(sichuan2)
 	MDRV_VIDEO_UPDATE(sichuan2)
 
 	/* sound hardware */

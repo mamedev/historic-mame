@@ -13,16 +13,19 @@ Notes:
 #include "vidhrdw/generic.h"
 
 
+extern UINT8 *exedexes_bg_scroll;
+extern UINT8 *exedexes_nbg_yscroll;
+extern UINT8 *exedexes_nbg_xscroll;
 
-WRITE_HANDLER( exedexes_c804_w );
-WRITE_HANDLER( exedexes_gfxctrl_w );
+extern WRITE_HANDLER( exedexes_videoram_w );
+extern WRITE_HANDLER( exedexes_colorram_w );
+extern WRITE_HANDLER( exedexes_c804_w );
+extern WRITE_HANDLER( exedexes_gfxctrl_w );
 
-extern unsigned char *exedexes_bg_scroll;
-extern unsigned char *exedexes_nbg_yscroll;
-extern unsigned char *exedexes_nbg_xscroll;
-PALETTE_INIT( exedexes );
-VIDEO_UPDATE( exedexes );
-VIDEO_EOF( exedexes );
+extern PALETTE_INIT( exedexes );
+extern VIDEO_START( exedexes );
+extern VIDEO_UPDATE( exedexes );
+extern VIDEO_EOF( exedexes );
 
 
 
@@ -53,8 +56,8 @@ static MEMORY_WRITE_START( writemem )
 	{ 0xc800, 0xc800, soundlatch_w },
 	{ 0xc804, 0xc804, exedexes_c804_w },	/* coin counters + text layer enable */
 	{ 0xc806, 0xc806, MWA_NOP }, /* Watchdog ?? */
-	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
-	{ 0xd400, 0xd7ff, colorram_w, &colorram },
+	{ 0xd000, 0xd3ff, exedexes_videoram_w, &videoram },
+	{ 0xd400, 0xd7ff, exedexes_colorram_w, &colorram },
 	{ 0xd800, 0xd801, MWA_RAM, &exedexes_nbg_yscroll },
 	{ 0xd802, 0xd803, MWA_RAM, &exedexes_nbg_xscroll },
 	{ 0xd804, 0xd805, MWA_RAM, &exedexes_bg_scroll },
@@ -261,7 +264,7 @@ static MACHINE_DRIVER_START( exedexes )
 	MDRV_COLORTABLE_LENGTH(64*4+64*4+16*16+16*16)
 
 	MDRV_PALETTE_INIT(exedexes)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(exedexes)
 	MDRV_VIDEO_EOF(exedexes)
 	MDRV_VIDEO_UPDATE(exedexes)
 

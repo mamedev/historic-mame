@@ -1,11 +1,12 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+extern WRITE_HANDLER( pingpong_videoram_w );
+extern WRITE_HANDLER( pingpong_colorram_w );
 
-VIDEO_UPDATE( pingpong );
-PALETTE_INIT( pingpong );
-
-
+extern PALETTE_INIT( pingpong );
+extern VIDEO_START( pingpong );
+extern VIDEO_UPDATE( pingpong );
 
 static int intenable;
 
@@ -47,8 +48,8 @@ MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x83ff, colorram_w, &colorram },
-	{ 0x8400, 0x87ff, videoram_w, &videoram, &videoram_size },
+	{ 0x8000, 0x83ff, pingpong_colorram_w, &colorram },
+	{ 0x8400, 0x87ff, pingpong_videoram_w, &videoram },
 	{ 0x9000, 0x9002, MWA_RAM },
 	{ 0x9003, 0x9052, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x9053, 0x97ff, MWA_RAM },
@@ -62,12 +63,8 @@ MEMORY_END
 
 INPUT_PORTS_START( pingpong )
 	PORT_START	/* IN0 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
@@ -130,21 +127,11 @@ INPUT_PORTS_START( pingpong )
 	PORT_DIPSETTING(    0x02, "Normal" )
 	PORT_DIPSETTING(    0x04, "Difficult" )
 	PORT_DIPSETTING(    0x00, "Very Difficult" )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 
@@ -211,7 +198,7 @@ static MACHINE_DRIVER_START( pingpong )
 	MDRV_COLORTABLE_LENGTH(64*4+64*4)
 
 	MDRV_PALETTE_INIT(pingpong)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(pingpong)
 	MDRV_VIDEO_UPDATE(pingpong)
 
 	/* sound hardware */

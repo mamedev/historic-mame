@@ -14,12 +14,58 @@ Namco System II
 #include "cpu/m6805/m6805.h"
 #include "namcos2.h"
 #include "vidhrdw/generic.h"
+#include "machine/random.h"
 
 data16_t *namcos2_68k_master_ram;
 data16_t *namcos2_68k_slave_ram;
-data16_t *namcos2_68k_mystery_ram;
 
 int namcos2_gametype;
+
+static unsigned mFinalLapProtCount;
+
+READ16_HANDLER( namcos2_flap_prot_r )
+{
+	const data16_t table0[8] = { 0x0000,0x0040,0x0440,0x2440,0x2480,0xa080,0x8081,0x8041 };
+	const data16_t table1[8] = { 0x0040,0x0060,0x0060,0x0860,0x0864,0x08e4,0x08e5,0x08a5 };
+	data16_t data;
+
+	switch( offset )
+	{
+	case 0:
+		data = 0x0101;
+		break;
+
+	case 1:
+		data = 0x3e55;
+		break;
+
+	case 2:
+		data = table1[mFinalLapProtCount&7];
+		data = (data&0xff00)>>8;
+		break;
+
+	case 3:
+		data = table1[mFinalLapProtCount&7];
+		mFinalLapProtCount++;
+		data = data&0x00ff;
+		break;
+
+	case 0x3fffc/2:
+		data = table0[mFinalLapProtCount&7];
+		data = data&0xff00;
+		break;
+
+	case 0x3fffe/2:
+		data = table0[mFinalLapProtCount&7];
+		mFinalLapProtCount++;
+		data = (data&0x00ff)<<8;
+		break;
+
+	default:
+		data = 0;
+	}
+	return data;
+}
 
 /*************************************************************/
 /* Perform basic machine initialisation 					 */
@@ -28,30 +74,22 @@ int namcos2_gametype;
 MACHINE_INIT( namcos2 ){
 	int loop;
 
+	mFinalLapProtCount = 0;
+
 	/* Initialise the bank select in the sound CPU */
 	namcos2_sound_bankselect_w(0,0); /* Page in bank 0 */
 
 	/* Place CPU2 & CPU3 into the reset condition */
-//	namcos2_68k_master_C148_w(0x1e2000-0x1c0000,0);
-//	namcos2_68k_master_C148_w(0x1e4000-0x1c0000,0);
 	cpu_set_reset_line(NAMCOS2_CPU3, ASSERT_LINE);
 	cpu_set_reset_line(NAMCOS2_CPU2, ASSERT_LINE);
 	cpu_set_reset_line(NAMCOS2_CPU4, ASSERT_LINE);
 
 	/* Initialise interrupt handlers */
-	for(loop=0;loop<20;loop++){
+	for(loop=0;loop<20;loop++)
+	{
 		namcos2_68k_master_C148[loop]=0;
 		namcos2_68k_slave_C148[loop]=0;
 	}
-
-	/* Initialise the video control registers */
-//	for(loop=0;loop<0x20;loop++) namcos2_68k_vram_ctrl_w(loop,0);
-
-	/* Initialise ROZ */
-//	for(loop=0;loop<0x8;loop++) namcos2_68k_roz_ctrl_w(loop,0);
-
-	/* Initialise the Roadway generator */
-//	for(loop=0;loop<0x10;loop+=2) namcos2_68k_road_ctrl_w(loop,0);
 }
 
 /*************************************************************/
@@ -103,39 +141,32 @@ data16_t  namcos2_68k_serial_comms_ctrl[0x8];
 data16_t *namcos2_68k_serial_comms_ram;
 
 READ16_HANDLER( namcos2_68k_serial_comms_ram_r ){
-//	logerror("Serial Comms read  Addr=%08x\n",offset);
 	return namcos2_68k_serial_comms_ram[offset];
 }
 
 WRITE16_HANDLER( namcos2_68k_serial_comms_ram_w ){
 	COMBINE_DATA( &namcos2_68k_serial_comms_ram[offset] );
-//	logerror( "Serial Comms write Addr=%08x, Data=%04x\n",offset,data );
 }
-
 
 READ16_HANDLER( namcos2_68k_serial_comms_ctrl_r )
 {
 	data16_t retval = namcos2_68k_serial_comms_ctrl[offset];
 
 	switch(offset){
-		case 0x00:
-			retval |= 0x0004; 	/* Set READY? status bit */
-			break;
-		default:
-			break;
-	}
-//	logerror("Serial Comms read  Addr=%08x\n",offset);
+	case 0x00:
+		retval |= 0x0004; 	/* Set READY? status bit */
+		break;
 
+	default:
+		break;
+	}
 	return retval;
 }
 
 WRITE16_HANDLER( namcos2_68k_serial_comms_ctrl_w )
 {
 	COMBINE_DATA( &namcos2_68k_serial_comms_ctrl[offset] );
-//	logerror("Serial Comms write Addr=%08x, Data=%04x\n",offset,data);
 }
-
-
 
 /*************************************************************/
 /* 68000 Shared protection/random key generator 			 */
@@ -174,162 +205,170 @@ sws93		1993	334			$014e
 static int sendval = 0;
 READ16_HANDLER( namcos2_68k_key_r )
 {
-//      logerror("%06x: key_r 0xd0000%x\n",activecpu_get_pc(),2*offset);
-        switch (namcos2_gametype)
-        {
-        case NAMCOS2_ORDYNE:
-			switch(offset)
-			{
-			case 2: return 0x1001;
-			case 3: return 0x1;
-			case 4: return 0x110;
-			case 5: return 0x10;
-			case 6: return 0xB0;
-			case 7: return 0xB0;
-			}
-        break;
+	switch (namcos2_gametype)
+	{
+	case NAMCOS2_ORDYNE:
+		switch(offset)
+		{
+		case 2: return 0x1001;
+		case 3: return 0x1;
+		case 4: return 0x110;
+		case 5: return 0x10;
+		case 6: return 0xB0;
+		case 7: return 0xB0;
+		}
+		break;
 
-        case NAMCOS2_STEEL_GUNNER_2:
-			switch( offset )
-			{
-				case 4: return 0x15a;
-			}
-	        break;
+	case NAMCOS2_STEEL_GUNNER_2:
+		switch( offset )
+		{
+			case 4: return 0x15a;
+		}
+	    break;
 
-        case NAMCOS2_MIRAI_NINJA:
-			switch(offset)
-			{
-			case 7: return 0xB1;
-			}
-        break;
-        case NAMCOS2_PHELIOS:
-			switch(offset)
-			{
-			case 0: return 0xF0;
-			case 1: return 0xFF0;
-			case 2: return 0xB2;
-			case 3: return 0xB2;
-			case 4: return 0xF;
-			case 5: return 0xF00F;
-			case 7: return 0xB2;
-			}
-        break;
-        case NAMCOS2_DIRT_FOX_JP:
-			switch(offset)
-			{
-			case 1: return 0xB4;
-			}
-        break;
-        case NAMCOS2_FINEST_HOUR:
-			switch(offset)
-			{
-			case 7: return 0xBC;
-			}
-        break;
-        case NAMCOS2_BURNING_FORCE:
-			switch(offset)
-			{
-			case 1: return 0xBD;
-			case 7: return 0xBD;
-			}
-        break;
-        case NAMCOS2_MARVEL_LAND:
-			switch(offset)
-			{
-			case 0: return 0x10;
-			case 1: return 0x110;
-			case 4: return 0xBE;
-			case 6: return 0x1001;
-			case 7: return (sendval==1)?0xBE:1;
-			}
-        break;
-        case NAMCOS2_DRAGON_SABER:
-			switch(offset)
-			{
-			case 2: return 0xC0;
-			}
-        break;
-        case NAMCOS2_ROLLING_THUNDER_2:
-			switch(offset)
-			{
-			case 4:
-			if (sendval == 1) {
-			        return 0x13F;
-			        sendval = 0;
+	case NAMCOS2_MIRAI_NINJA:
+		switch(offset)
+		{
+		case 7: return 0xB1;
+		}
+	    break;
+
+	case NAMCOS2_PHELIOS:
+		switch(offset)
+		{
+		case 0: return 0xF0;
+		case 1: return 0xFF0;
+		case 2: return 0xB2;
+		case 3: return 0xB2;
+		case 4: return 0xF;
+		case 5: return 0xF00F;
+		case 7: return 0xB2;
+		}
+	    break;
+
+	case NAMCOS2_DIRT_FOX_JP:
+		switch(offset)
+		{
+		case 1: return 0xB4;
+		}
+		break;
+
+	case NAMCOS2_FINEST_HOUR:
+		switch(offset)
+		{
+		case 7: return 0xBC;
+		}
+	    break;
+
+	case NAMCOS2_BURNING_FORCE:
+		switch(offset)
+		{
+		case 1: return 0xBD;
+		case 7: return 0xBD;
+		}
+		break;
+
+	case NAMCOS2_MARVEL_LAND:
+		switch(offset)
+		{
+		case 0: return 0x10;
+		case 1: return 0x110;
+		case 4: return 0xBE;
+		case 6: return 0x1001;
+		case 7: return (sendval==1)?0xBE:1;
+		}
+	    break;
+
+	case NAMCOS2_DRAGON_SABER:
+		switch(offset)
+		{
+		case 2: return 0xC0;
+		}
+		break;
+
+	case NAMCOS2_ROLLING_THUNDER_2:
+		switch(offset)
+		{
+		case 4:
+			if( sendval == 1 ){
+		        sendval = 0;
+		        return 0x13F;
 			}
 			break;
-			case 7:
-			if (sendval == 1) {
-			        return 0x13F;
-			        sendval = 0;
+		case 7:
+			if( sendval == 1 ){
+			    sendval = 0;
+			    return 0x13F;
 			}
 			break;
-			case 2: return 0;
-			}
-        break;
-        case NAMCOS2_COSMO_GANG:
-			switch(offset)
-			{
-			case 3: return 0x14A;
-			}
-        break;
-        case NAMCOS2_SUPER_WSTADIUM_92:
-			switch(offset)
-			{
-			case 3: return 0x14B;
-			}
-        break;
-        case NAMCOS2_SUPER_WSTADIUM_92T:
-			switch(offset)
-			{
-			case 3: return 0x14C;
-			}
-        break;
-        case NAMCOS2_SUPER_WSTADIUM_93:
-			switch(offset)
-			{
-			case 3: return 0x14E;
-			}
-        break;
-        case NAMCOS2_SUZUKA_8_HOURS_2:
-			switch(offset)
-			{
-			case 3: return 0x14D;
-			case 2: return 0;
-			}
-        break;
-        case NAMCOS2_GOLLY_GHOST:
-        	switch(offset)
-        	{
-			case 0: return 2;
-			case 1: return 2;
-			case 2: return 0;
-			case 4: return 0x143;
-			}
-        break;
-        }
-		return rand()&0xffff;
+		case 2: return 0;
+		}
+		break;
+
+	case NAMCOS2_COSMO_GANG:
+		switch(offset)
+		{
+		case 3: return 0x14A;
+		}
+		break;
+
+	case NAMCOS2_SUPER_WSTADIUM_92:
+		switch(offset)
+		{
+		case 3: return 0x14B;
+		}
+		break;
+
+	case NAMCOS2_SUPER_WSTADIUM_92T:
+		switch(offset)
+		{
+		case 3: return 0x14C;
+		}
+		break;
+
+	case NAMCOS2_SUPER_WSTADIUM_93:
+		switch(offset)
+		{
+		case 3: return 0x14E;
+		}
+		break;
+
+	case NAMCOS2_SUZUKA_8_HOURS_2:
+		switch(offset)
+		{
+		case 3: return 0x14D;
+		case 2: return 0;
+		}
+		break;
+
+	case NAMCOS2_GOLLY_GHOST:
+		switch(offset)
+		{
+		case 0: return 2;
+		case 1: return 2;
+		case 2: return 0;
+		case 4: return 0x143;
+		}
+		break;
+	}
+	return mame_rand()&0xffff;
 }
 
 WRITE16_HANDLER( namcos2_68k_key_w )
 {
-//    logerror("%06x: key_w 0xd0000%x %x\n",activecpu_get_pc(),2*offset,data);
-    if ((namcos2_gametype == NAMCOS2_MARVEL_LAND) && (offset == 5)) {
-        if (data == 0x615E)
-            sendval = 1;
-    }
-    if ((namcos2_gametype == NAMCOS2_ROLLING_THUNDER_2) && (offset == 4)) {
-        if (data == 0x13EC)
-            sendval = 1;
-    }
-    if ((namcos2_gametype == NAMCOS2_ROLLING_THUNDER_2) && (offset == 7)) {
-        if (data == 0x13EC)
-            sendval = 1;
-    }
-    if ((namcos2_gametype == NAMCOS2_MARVEL_LAND) && (offset == 6)) {
-        if (data == 0x1001)
-            sendval = 0;
-    }
+	if ((namcos2_gametype == NAMCOS2_MARVEL_LAND) && (offset == 5))
+	{
+		if (data == 0x615E) sendval = 1;
+	}
+	if ((namcos2_gametype == NAMCOS2_ROLLING_THUNDER_2) && (offset == 4)) {
+		if (data == 0x13EC) sendval = 1;
+	}
+	if ((namcos2_gametype == NAMCOS2_ROLLING_THUNDER_2) && (offset == 7)) {
+		if (data == 0x13EC) sendval = 1;
+	}
+	if ((namcos2_gametype == NAMCOS2_MARVEL_LAND) && (offset == 6)) {
+		if (data == 0x1001) sendval = 0;
+	}
 }
 
 /*************************************************************/
@@ -343,179 +382,226 @@ WRITE16_HANDLER( namcos2_68k_key_w )
 data16_t  namcos2_68k_master_C148[0x20];
 data16_t  namcos2_68k_slave_C148[0x20];
 
-WRITE16_HANDLER( namcos2_68k_master_C148_w ){
-	offset*=2;
-	offset+=0x1c0000;
-	offset&=0x1fe000;
+static data16_t
+ReadC148( int cpu, offs_t offset )
+{
+	offs_t addr = ((offset*2)+0x1c0000)&0x1fe000;
+	data16_t *pC148Reg;
+	if( cpu == CPU_SLAVE )
+	{
+		pC148Reg = namcos2_68k_slave_C148;
+	}
+	else /* cpu == CPU_MASTER */
+	{
+		pC148Reg = namcos2_68k_master_C148;
+	}
 
-	data&=0x0007;
-	namcos2_68k_master_C148[(offset>>13)&0x1f]=data;
+	switch( addr )
+	{
+	case 0x1d8000: /* ack EXIRQ */
+		cpu_set_irq_line(cpu, pC148Reg[NAMCOS2_C148_EXIRQ], CLEAR_LINE);
+		break;
 
-	switch(offset){
-		case 0x1d4000:
-			/* Trigger Master to Slave interrupt */
-//			cpu_set_irq_line(CPU_SLAVE, namcos2_68k_slave_C148[NAMCOS2_C148_CPUIRQ], ASSERT_LINE);
-			break;
-		case 0x1d6000:
-			/* Clear Slave to Master*/
-//			cpu_set_irq_line(CPU_MASTER, namcos2_68k_master_C148[NAMCOS2_C148_CPUIRQ], CLEAR_LINE);
-			break;
-		case 0x1de000:
-			cpu_set_irq_line(CPU_MASTER, namcos2_68k_master_C148[NAMCOS2_C148_VBLANKIRQ], CLEAR_LINE);
-			break;
-		case 0x1da000:
-			cpu_set_irq_line(CPU_MASTER, namcos2_68k_master_C148[NAMCOS2_C148_POSIRQ], CLEAR_LINE);
-			break;
+	case 0x1da000: /* ack POSIRQ */
+		cpu_set_irq_line(cpu, pC148Reg[NAMCOS2_C148_POSIRQ], CLEAR_LINE);
+		break;
 
-		case 0x1e2000:				/* Reset register CPU3 */
+	case 0x1dc000: /* ack NAMCOS2_C148_SERIRQ */
+		cpu_set_irq_line(cpu, pC148Reg[NAMCOS2_C148_SERIRQ], CLEAR_LINE);
+		break;
+
+	case 0x1de000: /* ack VBLANK */
+		cpu_set_irq_line(cpu, pC148Reg[NAMCOS2_C148_VBLANKIRQ], CLEAR_LINE);
+		break;
+
+	case 0x1e0000: /* EEPROM Status Register */
+		return ~0; /* Only BIT0 used: 1=EEPROM READY 0=EEPROM BUSY */
+
+	default:
+		break;
+	}
+	return pC148Reg[(addr>>13)&0x1f];
+}
+
+static void
+WriteC148( int cpu, offs_t offset, data16_t data )
+{
+	offs_t addr = ((offset*2)+0x1c0000)&0x1fe000;
+	int altCPU;
+	data16_t *pC148Reg;
+	if( cpu == CPU_SLAVE )
+	{
+		altCPU = CPU_MASTER;
+		pC148Reg = namcos2_68k_slave_C148;
+	}
+	else /* cpu == CPU_MASTER */
+	{
+		altCPU = CPU_SLAVE;
+		pC148Reg = namcos2_68k_master_C148;
+	}
+
+	pC148Reg[(addr>>13)&0x1f] = data&0x0007;
+
+	switch(addr){
+	case 0x1c6000: /* Master/Slave IRQ level */
+	case 0x1c8000: /* EXIRQ level */
+	case 0x1ca000: /* POSIRQ level */
+	case 0x1cc000: /* SCIRQ level */
+	case 0x1ce000: /* VBLANK level */
+		break;
+
+	case 0x1d4000: /* trigger master/slave interrupt */
+		if( cpu == CPU_MASTER )
+		{
+			cpu_set_irq_line(altCPU, namcos2_68k_slave_C148[NAMCOS2_C148_CPUIRQ], ASSERT_LINE);
+		}
+		else /* cpu == CPU_SLAVE */
+		{
+			cpu_set_irq_line(altCPU, namcos2_68k_master_C148[NAMCOS2_C148_CPUIRQ], ASSERT_LINE);
+		}
+		break;
+
+	case 0x1d6000: /* ack master/slave interrupt */
+	case 0x1d8000: /* ack EXIRQ */
+	case 0x1da000: /* ack POSIRQ */
+	case 0x1dc000: /* ack SCIRQ */
+	case 0x1de000: /* ack VBLANK */
+		(void)ReadC148( cpu, offset );
+		break;
+
+	case 0x1e2000: /* Sound CPU Reset control */
+		if( cpu == CPU_MASTER )
+		{
+			if(data&0x01)
 			{
-				data&=0x01;
-				if(data&0x01)
-				{
-					/* Resume execution */
-					cpu_set_reset_line (NAMCOS2_CPU3, CLEAR_LINE);
-					cpu_yield();
-				}
-				else
-				{
-					/* Suspend execution */
-					cpu_set_reset_line(NAMCOS2_CPU3, ASSERT_LINE);
-				}
+				/* Resume execution */
+				cpu_set_reset_line (NAMCOS2_CPU3, CLEAR_LINE);
+				cpu_yield();
 			}
-			break;
-		case 0x1e4000:				/* Reset register CPU2 & CPU4 */
+			else
 			{
-				data&=0x01;
-				if(data&0x01)
-				{
-					/* Resume execution */
-					cpu_set_reset_line(NAMCOS2_CPU2, CLEAR_LINE);
-					cpu_set_reset_line(NAMCOS2_CPU4, CLEAR_LINE);
-					/* Give the new CPU an immediate slice of the action */
-					cpu_yield();
-				}
-				else
-				{
-					/* Suspend execution */
-					cpu_set_reset_line(NAMCOS2_CPU2, ASSERT_LINE);
-					cpu_set_reset_line(NAMCOS2_CPU4, ASSERT_LINE);
-				}
+				/* Suspend execution */
+				cpu_set_reset_line(NAMCOS2_CPU3, ASSERT_LINE);
 			}
-			break;
-		case 0x1e6000:					/* Watchdog reset */
-			/* watchdog_reset_w(0,0); */
-			break;
-		default:
-			break;
+		}
+		else
+		{ /* HACK! */
+			cpu_set_irq_line(
+				CPU_SLAVE,
+				namcos2_68k_master_C148[NAMCOS2_C148_POSIRQ],
+				HOLD_LINE);
+		}
+		break;
+
+	case 0x1e4000: /* Alt 68000 & IO CPU Reset */
+		if( cpu == CPU_MASTER )
+		{
+			if(data&0x01)
+			{
+				/* Resume execution */
+				cpu_set_reset_line(altCPU, CLEAR_LINE);
+				cpu_set_reset_line(NAMCOS2_CPU4, CLEAR_LINE);
+				/* Give the new CPU an immediate slice of the action */
+				cpu_yield();
+			}
+			else
+			{
+				/* Suspend execution */
+				cpu_set_reset_line(altCPU, ASSERT_LINE);
+				cpu_set_reset_line(NAMCOS2_CPU4, ASSERT_LINE);
+			}
+		}
+		break;
+
+	case 0x1e6000: /* Watchdog reset kicker */
+		/* watchdog_reset_w(0,0); */
+		break;
+
+	default:
+		break;
 	}
 }
 
-READ16_HANDLER( namcos2_68k_master_C148_r ){
-	offset*=2;
-	offset+=0x1c0000;
-	offset&=0x1fe000;
 
-	switch(offset){
-		case 0x1d6000:
-			/* Clear Slave to Master*/
-//			cpu_set_irq_line(CPU_MASTER, namcos2_68k_master_C148[NAMCOS2_C148_CPUIRQ], CLEAR_LINE);
-			break;
-		case 0x1de000:
-			cpu_set_irq_line(CPU_MASTER, namcos2_68k_master_C148[NAMCOS2_C148_VBLANKIRQ], CLEAR_LINE);
-			break;
-		case 0x1da000:
-			cpu_set_irq_line(CPU_MASTER, namcos2_68k_master_C148[NAMCOS2_C148_POSIRQ], CLEAR_LINE);
-			break;
-		case 0x1e0000:					/* EEPROM Status register*/
-			return ~0;				/* Only BIT0 used: 1=EEPROM READY 0=EEPROM BUSY */
-			break;
-		case 0x1e6000:					/* Watchdog reset */
-			/* watchdog_reset_w(0,0); */
-			break;
-		default:
-			break;
+WRITE16_HANDLER( namcos2_68k_master_C148_w ){
+	WriteC148( CPU_MASTER, offset, data );
+}
+
+READ16_HANDLER( namcos2_68k_master_C148_r ){
+	return ReadC148( CPU_MASTER, offset );
+}
+
+void namcos2_68k_master_posirq( int scanline ){
+	force_partial_update(scanline);
+	cpu_set_irq_line(CPU_MASTER , namcos2_68k_master_C148[NAMCOS2_C148_POSIRQ] , ASSERT_LINE);
+}
+
+static int
+GetPosIRQScanline( void )
+{
+	int scanline;
+	switch( namcos2_gametype )
+	{
+		case NAMCOS2_FOUR_TRAX:
+		scanline = 160;
+		break;
+
+		case NAMCOS2_SUZUKA_8_HOURS_2:
+		case NAMCOS2_SUZUKA_8_HOURS:
+		scanline = 56;
+		break;
+
+		case NAMCOS2_LUCKY_AND_WILD:
+		scanline = 40;
+		break;
+
+		case NAMCOS2_FINEST_HOUR:
+		scanline = 192;
+		break;
+
+		case NAMCOS2_BURNING_FORCE:
+		scanline = 24; /* ? */
+		break;
+
+		default: /* Final Lap */
+		scanline = 64;
+		break;
 	}
-	return namcos2_68k_master_C148[(offset>>13)&0x1f];
+	return scanline;
 }
 
 INTERRUPT_GEN( namcos2_68k_master_vblank )
 {
-	/* If the POS interrupt is running then set it at half way thru the frame */
-	if(namcos2_68k_master_C148[NAMCOS2_C148_POSIRQ]){
-		timer_set(TIME_IN_NSEC(LINE_LENGTH*100), 0, namcos2_68k_master_posirq);
+	if(namcos2_68k_master_C148[NAMCOS2_C148_POSIRQ])
+	{
+		int scanline = GetPosIRQScanline();
+		timer_set( cpu_getscanlinetime(scanline), scanline, namcos2_68k_master_posirq );
 	}
-
-	/* Assert the VBLANK interrupt */
-	cpu_set_irq_line(cpu_getactivecpu(), namcos2_68k_master_C148[NAMCOS2_C148_VBLANKIRQ], HOLD_LINE);
-}
-
-void namcos2_68k_master_posirq( int moog ){
-	cpu_set_irq_line(CPU_MASTER, namcos2_68k_master_C148[NAMCOS2_C148_POSIRQ], ASSERT_LINE);
-	cpu_set_irq_line(CPU_SLAVE , namcos2_68k_slave_C148[NAMCOS2_C148_POSIRQ] , ASSERT_LINE);
+	cpu_set_irq_line( CPU_MASTER, namcos2_68k_master_C148[NAMCOS2_C148_VBLANKIRQ], HOLD_LINE);
 }
 
 WRITE16_HANDLER( namcos2_68k_slave_C148_w ){
-	offset*=2;
-	offset+=0x1c0000;
-	offset&=0x1fe000;
-
-	data&=0x0007;
-	namcos2_68k_slave_C148[(offset>>13)&0x1f]=data;
-
-	switch(offset)
-	{
-		case 0x1d4000:
-			/* Trigger Slave to Master interrupt */
-//			cpu_set_irq_line(CPU_MASTER, namcos2_68k_master_C148[NAMCOS2_C148_CPUIRQ], ASSERT_LINE);
-			break;
-		case 0x1d6000:
-			/* Clear Master to Slave */
-//			cpu_set_irq_line(CPU_SLAVE, namcos2_68k_slave_C148[NAMCOS2_C148_CPUIRQ], CLEAR_LINE);
-			break;
-		case 0x1de000:
-			cpu_set_irq_line(CPU_SLAVE, namcos2_68k_slave_C148[NAMCOS2_C148_VBLANKIRQ], CLEAR_LINE);
-			break;
-		case 0x1da000:
-			cpu_set_irq_line(CPU_SLAVE, namcos2_68k_slave_C148[NAMCOS2_C148_POSIRQ], CLEAR_LINE);
-			break;
-		case 0x1e6000:					/* Watchdog reset */
-			/* watchdog_reset_w(0,0); */
-			break;
-		default:
-			break;
-	}
+	WriteC148( CPU_SLAVE, offset, data );
 }
-
 
 READ16_HANDLER( namcos2_68k_slave_C148_r )
 {
-	offset*=2;
-	offset+=0x1c0000;
-	offset&=0x1fe000;
+	return ReadC148( CPU_SLAVE, offset );
+}
 
-	switch(offset)
-	{
-		case 0x1d6000:
-			/* Clear Master to Slave */
-//			cpu_set_irq_line(CPU_SLAVE, namcos2_68k_slave_C148[NAMCOS2_C148_CPUIRQ], CLEAR_LINE);
-			break;
-		case 0x1de000:
-			cpu_set_irq_line(CPU_SLAVE, namcos2_68k_slave_C148[NAMCOS2_C148_VBLANKIRQ], CLEAR_LINE);
-			break;
-		case 0x1da000:
-			cpu_set_irq_line(CPU_SLAVE, namcos2_68k_slave_C148[NAMCOS2_C148_POSIRQ], CLEAR_LINE);
-			break;
-		case 0x1e6000:					/* Watchdog reset */
-			/* watchdog_reset_w(0,0); */
-			break;
-		default:
-			break;
-	}
-	return namcos2_68k_slave_C148[(offset>>13)&0x1f];
+void namcos2_68k_slave_posirq( int scanline )
+{
+	force_partial_update(scanline);
+	cpu_set_irq_line(CPU_SLAVE , namcos2_68k_slave_C148[NAMCOS2_C148_POSIRQ] , ASSERT_LINE);
 }
 
 INTERRUPT_GEN( namcos2_68k_slave_vblank ){
-	cpu_set_irq_line(cpu_getactivecpu(), namcos2_68k_slave_C148[NAMCOS2_C148_VBLANKIRQ], HOLD_LINE);
+	if(namcos2_68k_slave_C148[NAMCOS2_C148_POSIRQ])
+	{
+		int scanline = GetPosIRQScanline();
+		timer_set( cpu_getscanlinetime(scanline), scanline, namcos2_68k_slave_posirq );
+	}
+	cpu_set_irq_line( CPU_SLAVE, namcos2_68k_slave_C148[NAMCOS2_C148_VBLANKIRQ], HOLD_LINE);
 }
 
 /**************************************************************/

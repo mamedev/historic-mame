@@ -286,7 +286,7 @@ struct f3_line_inf
 	int alpha_level[256];
 	int pri[256];
 	int spri[256];
-	UINT8 sprite_alpha[256];
+	UINT16 sprite_alpha[256];
 
 	/* use for draw_scanlines */
 	UINT16 *src[256],*src_s[256],*src_e[256];
@@ -938,6 +938,8 @@ static int deb_loop=0;
 static int deb_alpha_cnt=0;
 #endif	//DEBUG_F3
 
+static UINT8 add_sat[256][256];
+
 static const UINT8 *alpha_s_1_1;
 static const UINT8 *alpha_s_1_2;
 static const UINT8 *alpha_s_1_4;
@@ -963,9 +965,9 @@ static const UINT8 *alpha_s_3b_0;
 static const UINT8 *alpha_s_3b_1;
 static const UINT8 *alpha_s_3b_2;
 
-static int dval;
-static int pval;
-static int tval;
+static UINT32 dval;
+static UINT8 pval;
+static UINT8 tval;
 static UINT8 pdest_2a = 0x10;
 static UINT8 pdest_2b = 0x20;
 static int tr_2a = 0;
@@ -975,46 +977,9 @@ static UINT8 pdest_3b = 0x80;
 static int tr_3a = 0;
 static int tr_3b = 1;
 
-static int (*dpix_n[8])(UINT32 s_pix);
-static int (*dpix_sn[4])(UINT32 s_pix);
-static int (*dpix_sp[9])(UINT32 s_pix);
-static int (*dpix_lp[4])(UINT32 s_pix);
-static void (*f3_alpha_blend_s)( const UINT8 *alphas, UINT32 s );
-static void (*f3_alpha_blend_d)( const UINT8 *alphas, UINT32 s );
-static void (*f3_alpha_blend_d_lmt)( const UINT8 *alphas, UINT32 s );
-static void (*f3_alpha_blend_d_nml)( const UINT8 *alphas, UINT32 s );
-
-/*============================================================================*/
-
-static void f3_alpha_blend32_s( const UINT8 *alphas, UINT32 s )
-{
-	dval = alphas[s & 0xff] | (alphas[(s>>8) & 0xff]<<8) | (alphas[(s>>16) & 0xff]<<16);
-}
-
-static void f3_alpha_blend32_d_lmt( const UINT8 *alphas, UINT32 s )
-{
-	int d=dval;
-	if(d)
-	{
-		int c1,c2,c3;
-		c1=alphas[s & 0xff]+(d & 0xff);
-		if(c1&~0xff) c1=0xff;
-
-		c2=alphas[(s>>8) & 0xff]+((d>>8) & 0xff);
-		if(c2&~0xff) c2=0xff;
-
-		c3=alphas[(s>>16) & 0xff]+((d>>16) & 0xff);
-		if(c3&~0xff) c3=0xff;
-
-		dval = c1 | (c2<<8) | (c3<<16);
-	}
-	else dval = alphas[s & 0xff] | (alphas[(s>>8) & 0xff]<<8) | (alphas[(s>>16) & 0xff]<<16);
-}
-
-static void f3_alpha_blend32_d_nml( const UINT8 *alphas, UINT32 s )
-{
-	dval += alphas[s & 0xff] | (alphas[(s>>8) & 0xff] << 8) | (alphas[(s>>16) & 0xff] << 16);
-}
+static int (*dpix_n[8][16])(UINT32 s_pix);
+static int (**dpix_lp[4])(UINT32 s_pix);
+static int (**dpix_sp[9])(UINT32 s_pix);
 
 /*============================================================================*/
 
@@ -1027,12 +992,6 @@ static void f3_alpha_blend32_d_nml( const UINT8 *alphas, UINT32 s )
 
 INLINE void f3_alpha_set_level(void)
 {
-	if(f3_alpha_level_2as+f3_alpha_level_2ad>255 || f3_alpha_level_2bs+f3_alpha_level_2bd>255 ||
-		f3_alpha_level_3as+f3_alpha_level_3ad>255 || f3_alpha_level_3bs+f3_alpha_level_3bd>255   )
-		f3_alpha_blend_d = f3_alpha_blend_d_lmt;
-	else
-		f3_alpha_blend_d = f3_alpha_blend_d_nml;
-
 //	SET_ALPHA_LEVEL(alpha_s_1_1, f3_alpha_level_2ad)
 	SET_ALPHA_LEVEL(alpha_s_1_1, 255-f3_alpha_level_2as)
 //	SET_ALPHA_LEVEL(alpha_s_1_2, f3_alpha_level_2bd)
@@ -1068,211 +1027,248 @@ INLINE void f3_alpha_set_level(void)
 
 /*============================================================================*/
 
-INLINE void f3_alpha_blend_1_1( UINT32 s ){f3_alpha_blend_d(alpha_s_1_1,s);}
-INLINE void f3_alpha_blend_1_2( UINT32 s ){f3_alpha_blend_d(alpha_s_1_2,s);}
-INLINE void f3_alpha_blend_1_4( UINT32 s ){f3_alpha_blend_d(alpha_s_1_4,s);}
-INLINE void f3_alpha_blend_1_5( UINT32 s ){f3_alpha_blend_d(alpha_s_1_5,s);}
-INLINE void f3_alpha_blend_1_6( UINT32 s ){f3_alpha_blend_d(alpha_s_1_6,s);}
-INLINE void f3_alpha_blend_1_8( UINT32 s ){f3_alpha_blend_d(alpha_s_1_8,s);}
-INLINE void f3_alpha_blend_1_9( UINT32 s ){f3_alpha_blend_d(alpha_s_1_9,s);}
-INLINE void f3_alpha_blend_1_a( UINT32 s ){f3_alpha_blend_d(alpha_s_1_a,s);}
+#ifdef LSB_FIRST
+#define COLOR1 0
+#define COLOR2 1
+#define COLOR3 2
+#else
+#define COLOR1 3
+#define COLOR2 2
+#define COLOR3 1
+#endif
 
-INLINE void f3_alpha_blend_2a_0( UINT32 s ){f3_alpha_blend_s(alpha_s_2a_0,s);}
-INLINE void f3_alpha_blend_2a_4( UINT32 s ){f3_alpha_blend_d(alpha_s_2a_4,s);}
-INLINE void f3_alpha_blend_2a_8( UINT32 s ){f3_alpha_blend_d(alpha_s_2a_8,s);}
+INLINE void f3_alpha_blend32_s( const UINT8 *alphas, UINT32 s )
+{
+	UINT8 *sc = (UINT8 *)&s;
+	UINT8 *dc = (UINT8 *)&dval;
+	dc[COLOR1] = alphas[sc[COLOR1]];
+	dc[COLOR2] = alphas[sc[COLOR2]];
+	dc[COLOR3] = alphas[sc[COLOR3]];
+}
 
-INLINE void f3_alpha_blend_2b_0( UINT32 s ){f3_alpha_blend_s(alpha_s_2b_0,s);}
-INLINE void f3_alpha_blend_2b_4( UINT32 s ){f3_alpha_blend_d(alpha_s_2b_4,s);}
-INLINE void f3_alpha_blend_2b_8( UINT32 s ){f3_alpha_blend_d(alpha_s_2b_8,s);}
-
-INLINE void f3_alpha_blend_3a_0( UINT32 s ){f3_alpha_blend_s(alpha_s_3a_0,s);}
-INLINE void f3_alpha_blend_3a_1( UINT32 s ){f3_alpha_blend_d(alpha_s_3a_1,s);}
-INLINE void f3_alpha_blend_3a_2( UINT32 s ){f3_alpha_blend_d(alpha_s_3a_2,s);}
-
-INLINE void f3_alpha_blend_3b_0( UINT32 s ){f3_alpha_blend_s(alpha_s_3b_0,s);}
-INLINE void f3_alpha_blend_3b_1( UINT32 s ){f3_alpha_blend_d(alpha_s_3b_1,s);}
-INLINE void f3_alpha_blend_3b_2( UINT32 s ){f3_alpha_blend_d(alpha_s_3b_2,s);}
+INLINE void f3_alpha_blend32_d( const UINT8 *alphas, UINT32 s )
+{
+	UINT8 *sc = (UINT8 *)&s;
+	UINT8 *dc = (UINT8 *)&dval;
+	dc[COLOR1] = add_sat[dc[COLOR1]][alphas[sc[COLOR1]]];
+	dc[COLOR2] = add_sat[dc[COLOR2]][alphas[sc[COLOR2]]];
+	dc[COLOR3] = add_sat[dc[COLOR3]][alphas[sc[COLOR3]]];
+}
 
 /*============================================================================*/
 
-static int dpix_1(UINT32 s_pix)
+INLINE void f3_alpha_blend_1_1( UINT32 s ){f3_alpha_blend32_d(alpha_s_1_1,s);}
+INLINE void f3_alpha_blend_1_2( UINT32 s ){f3_alpha_blend32_d(alpha_s_1_2,s);}
+INLINE void f3_alpha_blend_1_4( UINT32 s ){f3_alpha_blend32_d(alpha_s_1_4,s);}
+INLINE void f3_alpha_blend_1_5( UINT32 s ){f3_alpha_blend32_d(alpha_s_1_5,s);}
+INLINE void f3_alpha_blend_1_6( UINT32 s ){f3_alpha_blend32_d(alpha_s_1_6,s);}
+INLINE void f3_alpha_blend_1_8( UINT32 s ){f3_alpha_blend32_d(alpha_s_1_8,s);}
+INLINE void f3_alpha_blend_1_9( UINT32 s ){f3_alpha_blend32_d(alpha_s_1_9,s);}
+INLINE void f3_alpha_blend_1_a( UINT32 s ){f3_alpha_blend32_d(alpha_s_1_a,s);}
+
+INLINE void f3_alpha_blend_2a_0( UINT32 s ){f3_alpha_blend32_s(alpha_s_2a_0,s);}
+INLINE void f3_alpha_blend_2a_4( UINT32 s ){f3_alpha_blend32_d(alpha_s_2a_4,s);}
+INLINE void f3_alpha_blend_2a_8( UINT32 s ){f3_alpha_blend32_d(alpha_s_2a_8,s);}
+
+INLINE void f3_alpha_blend_2b_0( UINT32 s ){f3_alpha_blend32_s(alpha_s_2b_0,s);}
+INLINE void f3_alpha_blend_2b_4( UINT32 s ){f3_alpha_blend32_d(alpha_s_2b_4,s);}
+INLINE void f3_alpha_blend_2b_8( UINT32 s ){f3_alpha_blend32_d(alpha_s_2b_8,s);}
+
+INLINE void f3_alpha_blend_3a_0( UINT32 s ){f3_alpha_blend32_s(alpha_s_3a_0,s);}
+INLINE void f3_alpha_blend_3a_1( UINT32 s ){f3_alpha_blend32_d(alpha_s_3a_1,s);}
+INLINE void f3_alpha_blend_3a_2( UINT32 s ){f3_alpha_blend32_d(alpha_s_3a_2,s);}
+
+INLINE void f3_alpha_blend_3b_0( UINT32 s ){f3_alpha_blend32_s(alpha_s_3b_0,s);}
+INLINE void f3_alpha_blend_3b_1( UINT32 s ){f3_alpha_blend32_d(alpha_s_3b_1,s);}
+INLINE void f3_alpha_blend_3b_2( UINT32 s ){f3_alpha_blend32_d(alpha_s_3b_2,s);}
+
+/*============================================================================*/
+
+static int dpix_1_noalpha(UINT32 s_pix) {dval = s_pix; return 1;}
+static int dpix_ret1(UINT32 s_pix) {return 1;}
+static int dpix_ret0(UINT32 s_pix) {return 0;}
+static int dpix_1_1(UINT32 s_pix) {if(s_pix) f3_alpha_blend_1_1(s_pix); return 1;}
+static int dpix_1_2(UINT32 s_pix) {if(s_pix) f3_alpha_blend_1_2(s_pix); return 1;}
+static int dpix_1_4(UINT32 s_pix) {if(s_pix) f3_alpha_blend_1_4(s_pix); return 1;}
+static int dpix_1_5(UINT32 s_pix) {if(s_pix) f3_alpha_blend_1_5(s_pix); return 1;}
+static int dpix_1_6(UINT32 s_pix) {if(s_pix) f3_alpha_blend_1_6(s_pix); return 1;}
+static int dpix_1_8(UINT32 s_pix) {if(s_pix) f3_alpha_blend_1_8(s_pix); return 1;}
+static int dpix_1_9(UINT32 s_pix) {if(s_pix) f3_alpha_blend_1_9(s_pix); return 1;}
+static int dpix_1_a(UINT32 s_pix) {if(s_pix) f3_alpha_blend_1_a(s_pix); return 1;}
+
+static int dpix_2a_0(UINT32 s_pix)
 {
-	if(s_pix)
-	{
-		UINT8 p1 = pval&0xf0;
-		if(!p1)			dval = s_pix;
-		else if(p1==0x10)	f3_alpha_blend_1_1(s_pix);
-		else if(p1==0x20)	f3_alpha_blend_1_2(s_pix);
-		else if(p1==0x40)	f3_alpha_blend_1_4(s_pix);
-		else if(p1==0x50)	f3_alpha_blend_1_5(s_pix);
-		else if(p1==0x60)	f3_alpha_blend_1_6(s_pix);
-		else if(p1==0x80)	f3_alpha_blend_1_8(s_pix);
-		else if(p1==0x90)	f3_alpha_blend_1_9(s_pix);
-		else if(p1==0xa0)	f3_alpha_blend_1_a(s_pix);
-	}
-	else if(!(pval&0xf0)) dval = s_pix;
+	if(s_pix) f3_alpha_blend_2a_0(s_pix);
+	else	  dval = 0;
+	if(pdest_2a) {pval |= pdest_2a;return 0;}
+	return 1;
+}
+static int dpix_2a_4(UINT32 s_pix)
+{
+	if(s_pix) f3_alpha_blend_2a_4(s_pix);
+	if(pdest_2a) {pval |= pdest_2a;return 0;}
+	return 1;
+}
+static int dpix_2a_8(UINT32 s_pix)
+{
+	if(s_pix) f3_alpha_blend_2a_8(s_pix);
+	if(pdest_2a) {pval |= pdest_2a;return 0;}
 	return 1;
 }
 
-static int dpix_2a(UINT32 s_pix)
+static int dpix_3a_0(UINT32 s_pix)
 {
-	UINT8 p1 = pval&0xf0;
-	if(s_pix)
-	{
-		if(!p1)				{f3_alpha_blend_2a_0(s_pix);if(pdest_2a) pval |= pdest_2a;else return 1;}
-		else if(p1==0x40)	{f3_alpha_blend_2a_4(s_pix);if(pdest_2a) pval |= pdest_2a;else return 1;}
-		else if(p1==0x80)	{f3_alpha_blend_2a_8(s_pix);if(pdest_2a) pval |= pdest_2a;else return 1;}
-	}
-	else
-	{
-		if(!p1)				{dval = s_pix;if(pdest_2a) pval |= pdest_2a;else return 1;}
-		else if(p1==0x40)	{if(pdest_2a) pval |= pdest_2a;else return 1;}
-		else if(p1==0x80)	{if(pdest_2a) pval |= pdest_2a;else return 1;}
-	}
-	return 0;
+	if(s_pix) f3_alpha_blend_3a_0(s_pix);
+	else	  dval = 0;
+	if(pdest_3a) {pval |= pdest_3a;return 0;}
+	return 1;
+}
+static int dpix_3a_1(UINT32 s_pix)
+{
+	if(s_pix) f3_alpha_blend_3a_1(s_pix);
+	if(pdest_3a) {pval |= pdest_3a;return 0;}
+	return 1;
+}
+static int dpix_3a_2(UINT32 s_pix)
+{
+	if(s_pix) f3_alpha_blend_3a_2(s_pix);
+	if(pdest_3a) {pval |= pdest_3a;return 0;}
+	return 1;
 }
 
-static int dpix_3a(UINT32 s_pix)
+static int dpix_2b_0(UINT32 s_pix)
 {
-	UINT8 p1 = pval&0xf0;
-	if(s_pix)
-	{
-		if(!p1)				{f3_alpha_blend_3a_0(s_pix);if(pdest_3a) pval |= pdest_3a;else return 1;}
-		else if(p1==0x10)	{f3_alpha_blend_3a_1(s_pix);if(pdest_3a) pval |= pdest_3a;else return 1;}
-		else if(p1==0x20)	{f3_alpha_blend_3a_2(s_pix);if(pdest_3a) pval |= pdest_3a;else return 1;}
-	}
-	else
-	{
-		if(!p1)				{dval = s_pix;if(pdest_3a) pval |= pdest_3a;else return 1;}
-		else if(p1==0x10)	{if(pdest_3a) pval |= pdest_3a;else return 1;}
-		else if(p1==0x20)	{if(pdest_3a) pval |= pdest_3a;else return 1;}
-	}
-	return 0;
+	if(s_pix) f3_alpha_blend_2b_0(s_pix);
+	else	  dval = 0;
+	if(pdest_2b) {pval |= pdest_2b;return 0;}
+	return 1;
+}
+static int dpix_2b_4(UINT32 s_pix)
+{
+	if(s_pix) f3_alpha_blend_2b_4(s_pix);
+	if(pdest_2b) {pval |= pdest_2b;return 0;}
+	return 1;
+}
+static int dpix_2b_8(UINT32 s_pix)
+{
+	if(s_pix) f3_alpha_blend_2b_8(s_pix);
+	if(pdest_2b) {pval |= pdest_2b;return 0;}
+	return 1;
 }
 
-static int dpix_2b(UINT32 s_pix)
+static int dpix_3b_0(UINT32 s_pix)
 {
-	UINT8 p1 = pval&0xf0;
-	if(s_pix)
-	{
-		if(!p1)				{f3_alpha_blend_2b_0(s_pix);if(pdest_2b) pval |= pdest_2b;else return 1;}
-		else if(p1==0x40)	{f3_alpha_blend_2b_4(s_pix);if(pdest_2b) pval |= pdest_2b;else return 1;}
-		else if(p1==0x80)	{f3_alpha_blend_2b_8(s_pix);if(pdest_2b) pval |= pdest_2b;else return 1;}
-	}
-	else
-	{
-		if(!p1)				{dval = s_pix;if(pdest_2b) pval |= pdest_2b;else return 1;}
-		else if(p1==0x40)	{if(pdest_2b) pval |= pdest_2b;else return 1;}
-		else if(p1==0x80)	{if(pdest_2b) pval |= pdest_2b;else return 1;}
-	}
-	return 0;
+	if(s_pix) f3_alpha_blend_3b_0(s_pix);
+	else	  dval = 0;
+	if(pdest_3b) {pval |= pdest_3b;return 0;}
+	return 1;
+}
+static int dpix_3b_1(UINT32 s_pix)
+{
+	if(s_pix) f3_alpha_blend_3b_1(s_pix);
+	if(pdest_3b) {pval |= pdest_3b;return 0;}
+	return 1;
+}
+static int dpix_3b_2(UINT32 s_pix)
+{
+	if(s_pix) f3_alpha_blend_3b_2(s_pix);
+	if(pdest_3b) {pval |= pdest_3b;return 0;}
+	return 1;
 }
 
-static int dpix_3b(UINT32 s_pix)
-{
-	UINT8 p1 = pval&0xf0;
-	if(s_pix)
-	{
-		if(!p1)				{f3_alpha_blend_3b_0(s_pix);if(pdest_3b) pval |= pdest_3b;else return 1;}
-		else if(p1==0x10)	{f3_alpha_blend_3b_1(s_pix);if(pdest_3b) pval |= pdest_3b;else return 1;}
-		else if(p1==0x20)	{f3_alpha_blend_3b_2(s_pix);if(pdest_3b) pval |= pdest_3b;else return 1;}
-	}
-	else
-	{
-		if(!p1)				{dval = s_pix;if(pdest_3b) pval |= pdest_3b;else return 1;}
-		else if(p1==0x10)	{if(pdest_3b) pval |= pdest_3b;else return 1;}
-		else if(p1==0x20)	{if(pdest_3b) pval |= pdest_3b;else return 1;}
-	}
-	return 0;
-}
-
-static int dpix_2(UINT32 s_pix)
+static int dpix_2_0(UINT32 s_pix)
 {
 	UINT8 tr2=tval&1;
 	if(s_pix)
 	{
-		if(tr2==tr_2b)
-		{
-			UINT8 p1 = pval&0xf0;
-			if(!p1)				{f3_alpha_blend_2b_0(s_pix);if(pdest_2b) pval |= pdest_2b;else return 1;}
-			else if(p1==0x40)	{f3_alpha_blend_2b_4(s_pix);if(pdest_2b) pval |= pdest_2b;else return 1;}
-			else if(p1==0x80)	{f3_alpha_blend_2b_8(s_pix);if(pdest_2b) pval |= pdest_2b;else return 1;}
-		}
-		else if(tr2==tr_2a)
-		{
-			UINT8 p1 = pval&0xf0;
-			if(!p1)				{f3_alpha_blend_2a_0(s_pix);if(pdest_2a) pval |= pdest_2a;else return 1;}
-			else if(p1==0x40)	{f3_alpha_blend_2a_4(s_pix);if(pdest_2a) pval |= pdest_2a;else return 1;}
-			else if(p1==0x80)	{f3_alpha_blend_2a_8(s_pix);if(pdest_2a) pval |= pdest_2a;else return 1;}
-		}
+		if(tr2==tr_2b)		{f3_alpha_blend_2b_0(s_pix);if(pdest_2b) pval |= pdest_2b;else return 1;}
+		else if(tr2==tr_2a)	{f3_alpha_blend_2a_0(s_pix);if(pdest_2a) pval |= pdest_2a;else return 1;}
 	}
 	else
 	{
-		if(tr2==tr_2b)
-		{
-			UINT8 p1 = pval&0xf0;
-			if(!p1)				{dval = s_pix;if(pdest_2b) pval |= pdest_2b;else return 1;}
-			else if(p1==0x40)	{if(pdest_2b) pval |= pdest_2b;else return 1;}
-			else if(p1==0x80)	{if(pdest_2b) pval |= pdest_2b;else return 1;}
-		}
-		else if(tr2==tr_2a)
-		{
-			UINT8 p1 = pval&0xf0;
-			if(!p1)				{dval = s_pix;if(pdest_2a) pval |= pdest_2a;else return 1;}
-			else if(p1==0x40)	{if(pdest_2a) pval |= pdest_2a;else return 1;}
-			else if(p1==0x80)	{if(pdest_2a) pval |= pdest_2a;else return 1;}
-		}
+		if(tr2==tr_2b)		{dval = 0;if(pdest_2b) pval |= pdest_2b;else return 1;}
+		else if(tr2==tr_2a)	{dval = 0;if(pdest_2a) pval |= pdest_2a;else return 1;}
 	}
 	return 0;
 }
-
-static int dpix_3(UINT32 s_pix)
+static int dpix_2_4(UINT32 s_pix)
 {
 	UINT8 tr2=tval&1;
 	if(s_pix)
 	{
-		if(tr2==tr_3b)
-		{
-			UINT8 p1 = pval&0xf0;
-			if(!p1)				{f3_alpha_blend_3b_0(s_pix);if(pdest_3b) pval |= pdest_3b;else return 1;}
-			else if(p1==0x10)	{f3_alpha_blend_3b_1(s_pix);if(pdest_3b) pval |= pdest_3b;else return 1;}
-			else if(p1==0x20)	{f3_alpha_blend_3b_2(s_pix);if(pdest_3b) pval |= pdest_3b;else return 1;}
-		}
-		else if(tr2==tr_3a)
-		{
-			UINT8 p1 = pval&0xf0;
-			if(!p1)				{f3_alpha_blend_3a_0(s_pix);if(pdest_3a) pval |= pdest_3a;else return 1;}
-			else if(p1==0x10)	{f3_alpha_blend_3a_1(s_pix);if(pdest_3a) pval |= pdest_3a;else return 1;}
-			else if(p1==0x20)	{f3_alpha_blend_3a_2(s_pix);if(pdest_3a) pval |= pdest_3a;else return 1;}
-		}
+		if(tr2==tr_2b)		{f3_alpha_blend_2b_4(s_pix);if(pdest_2b) pval |= pdest_2b;else return 1;}
+		else if(tr2==tr_2a)	{f3_alpha_blend_2a_4(s_pix);if(pdest_2a) pval |= pdest_2a;else return 1;}
 	}
 	else
 	{
-		if(tr2==tr_3b)
-		{
-			UINT8 p1 = pval&0xf0;
-			if(!p1)				{dval = s_pix;if(pdest_3b) pval |= pdest_3b;else return 1;}
-			else if(p1==0x10)	{if(pdest_3b) pval |= pdest_3b;else return 1;}
-			else if(p1==0x20)	{if(pdest_3b) pval |= pdest_3b;else return 1;}
-		}
-		else if(tr2==tr_3a)
-		{
-			UINT8 p1 = pval&0xf0;
-			if(!p1)				{dval = s_pix;if(pdest_3a) pval |= pdest_3a;else return 1;}
-			else if(p1==0x10)	{if(pdest_3a) pval |= pdest_3a;else return 1;}
-			else if(p1==0x20)	{if(pdest_3a) pval |= pdest_3a;else return 1;}
-		}
+		if(tr2==tr_2b)		{if(pdest_2b) pval |= pdest_2b;else return 1;}
+		else if(tr2==tr_2a)	{if(pdest_2a) pval |= pdest_2a;else return 1;}
+	}
+	return 0;
+}
+static int dpix_2_8(UINT32 s_pix)
+{
+	UINT8 tr2=tval&1;
+	if(s_pix)
+	{
+		if(tr2==tr_2b)		{f3_alpha_blend_2b_8(s_pix);if(pdest_2b) pval |= pdest_2b;else return 1;}
+		else if(tr2==tr_2a)	{f3_alpha_blend_2a_8(s_pix);if(pdest_2a) pval |= pdest_2a;else return 1;}
+	}
+	else
+	{
+		if(tr2==tr_2b)		{if(pdest_2b) pval |= pdest_2b;else return 1;}
+		else if(tr2==tr_2a)	{if(pdest_2a) pval |= pdest_2a;else return 1;}
 	}
 	return 0;
 }
 
-static int dpix_1_noalpha(UINT32 s_pix)
+static int dpix_3_0(UINT32 s_pix)
 {
-	dval = s_pix;
-	return 1;
+	UINT8 tr2=tval&1;
+	if(s_pix)
+	{
+		if(tr2==tr_3b)		{f3_alpha_blend_3b_0(s_pix);if(pdest_3b) pval |= pdest_3b;else return 1;}
+		else if(tr2==tr_3a)	{f3_alpha_blend_3a_0(s_pix);if(pdest_3a) pval |= pdest_3a;else return 1;}
+	}
+	else
+	{
+		if(tr2==tr_3b)		{dval = 0;if(pdest_3b) pval |= pdest_3b;else return 1;}
+		else if(tr2==tr_3a)	{dval = 0;if(pdest_3a) pval |= pdest_3a;else return 1;}
+	}
+	return 0;
+}
+static int dpix_3_1(UINT32 s_pix)
+{
+	UINT8 tr2=tval&1;
+	if(s_pix)
+	{
+		if(tr2==tr_3b)		{f3_alpha_blend_3b_1(s_pix);if(pdest_3b) pval |= pdest_3b;else return 1;}
+		else if(tr2==tr_3a)	{f3_alpha_blend_3a_1(s_pix);if(pdest_3a) pval |= pdest_3a;else return 1;}
+	}
+	else
+	{
+		if(tr2==tr_3b)		{if(pdest_3b) pval |= pdest_3b;else return 1;}
+		else if(tr2==tr_3a)	{if(pdest_3a) pval |= pdest_3a;else return 1;}
+	}
+	return 0;
+}
+static int dpix_3_2(UINT32 s_pix)
+{
+	UINT8 tr2=tval&1;
+	if(s_pix)
+	{
+		if(tr2==tr_3b)		{f3_alpha_blend_3b_2(s_pix);if(pdest_3b) pval |= pdest_3b;else return 1;}
+		else if(tr2==tr_3a)	{f3_alpha_blend_3a_2(s_pix);if(pdest_3a) pval |= pdest_3a;else return 1;}
+	}
+	else
+	{
+		if(tr2==tr_3b)		{if(pdest_3b) pval |= pdest_3b;else return 1;}
+		else if(tr2==tr_3a)	{if(pdest_3a) pval |= pdest_3a;else return 1;}
+	}
+	return 0;
 }
 
-static void dpix_1_sprite(UINT32 s_pix)
+INLINE void dpix_1_sprite(UINT32 s_pix)
 {
 	if(s_pix)
 	{
@@ -1306,23 +1302,147 @@ INLINE void dpix_bg(UINT32 bgcolor)
 
 static void init_alpha_blend_func(void)
 {
-	dpix_n[0]=dpix_1_noalpha;
-	dpix_n[1]=dpix_1;
-	dpix_n[2]=dpix_2a;
-	dpix_n[3]=dpix_3a;
-	dpix_n[4]=dpix_2b;
-	dpix_n[5]=dpix_3b;
-	dpix_n[6]=dpix_2;
-	dpix_n[7]=dpix_3;
+	int i,j;
 
-	dpix_sn[0]=0;
-	dpix_sn[1]=dpix_2a;
-	dpix_sn[2]=dpix_3a;
-	dpix_sn[3]=0;
+	dpix_n[0][0x0]=dpix_1_noalpha;
+	dpix_n[0][0x1]=dpix_1_noalpha;
+	dpix_n[0][0x2]=dpix_1_noalpha;
+	dpix_n[0][0x3]=dpix_1_noalpha;
+	dpix_n[0][0x4]=dpix_1_noalpha;
+	dpix_n[0][0x5]=dpix_1_noalpha;
+	dpix_n[0][0x6]=dpix_1_noalpha;
+	dpix_n[0][0x7]=dpix_1_noalpha;
+	dpix_n[0][0x8]=dpix_1_noalpha;
+	dpix_n[0][0x9]=dpix_1_noalpha;
+	dpix_n[0][0xa]=dpix_1_noalpha;
+	dpix_n[0][0xb]=dpix_1_noalpha;
+	dpix_n[0][0xc]=dpix_1_noalpha;
+	dpix_n[0][0xd]=dpix_1_noalpha;
+	dpix_n[0][0xe]=dpix_1_noalpha;
+	dpix_n[0][0xf]=dpix_1_noalpha;
 
-	f3_alpha_blend_s = f3_alpha_blend32_s;
-	f3_alpha_blend_d_lmt = f3_alpha_blend32_d_lmt;
-	f3_alpha_blend_d_nml = f3_alpha_blend32_d_nml;
+	dpix_n[1][0x0]=dpix_1_noalpha;
+	dpix_n[1][0x1]=dpix_1_1;
+	dpix_n[1][0x2]=dpix_1_2;
+	dpix_n[1][0x3]=dpix_ret1;
+	dpix_n[1][0x4]=dpix_1_4;
+	dpix_n[1][0x5]=dpix_1_5;
+	dpix_n[1][0x6]=dpix_1_6;
+	dpix_n[1][0x7]=dpix_ret1;
+	dpix_n[1][0x8]=dpix_1_8;
+	dpix_n[1][0x9]=dpix_1_9;
+	dpix_n[1][0xa]=dpix_1_a;
+	dpix_n[1][0xb]=dpix_ret1;
+	dpix_n[1][0xc]=dpix_ret1;
+	dpix_n[1][0xd]=dpix_ret1;
+	dpix_n[1][0xe]=dpix_ret1;
+	dpix_n[1][0xf]=dpix_ret1;
+
+	dpix_n[2][0x0]=dpix_2a_0;
+	dpix_n[2][0x1]=dpix_ret0;
+	dpix_n[2][0x2]=dpix_ret0;
+	dpix_n[2][0x3]=dpix_ret0;
+	dpix_n[2][0x4]=dpix_2a_4;
+	dpix_n[2][0x5]=dpix_ret0;
+	dpix_n[2][0x6]=dpix_ret0;
+	dpix_n[2][0x7]=dpix_ret0;
+	dpix_n[2][0x8]=dpix_2a_8;
+	dpix_n[2][0x9]=dpix_ret0;
+	dpix_n[2][0xa]=dpix_ret0;
+	dpix_n[2][0xb]=dpix_ret0;
+	dpix_n[2][0xc]=dpix_ret0;
+	dpix_n[2][0xd]=dpix_ret0;
+	dpix_n[2][0xe]=dpix_ret0;
+	dpix_n[2][0xf]=dpix_ret0;
+
+	dpix_n[3][0x0]=dpix_3a_0;
+	dpix_n[3][0x1]=dpix_3a_1;
+	dpix_n[3][0x2]=dpix_3a_2;
+	dpix_n[3][0x3]=dpix_ret0;
+	dpix_n[3][0x4]=dpix_ret0;
+	dpix_n[3][0x5]=dpix_ret0;
+	dpix_n[3][0x6]=dpix_ret0;
+	dpix_n[3][0x7]=dpix_ret0;
+	dpix_n[3][0x8]=dpix_ret0;
+	dpix_n[3][0x9]=dpix_ret0;
+	dpix_n[3][0xa]=dpix_ret0;
+	dpix_n[3][0xb]=dpix_ret0;
+	dpix_n[3][0xc]=dpix_ret0;
+	dpix_n[3][0xd]=dpix_ret0;
+	dpix_n[3][0xe]=dpix_ret0;
+	dpix_n[3][0xf]=dpix_ret0;
+
+	dpix_n[4][0x0]=dpix_2b_0;
+	dpix_n[4][0x1]=dpix_ret0;
+	dpix_n[4][0x2]=dpix_ret0;
+	dpix_n[4][0x3]=dpix_ret0;
+	dpix_n[4][0x4]=dpix_2b_4;
+	dpix_n[4][0x5]=dpix_ret0;
+	dpix_n[4][0x6]=dpix_ret0;
+	dpix_n[4][0x7]=dpix_ret0;
+	dpix_n[4][0x8]=dpix_2b_8;
+	dpix_n[4][0x9]=dpix_ret0;
+	dpix_n[4][0xa]=dpix_ret0;
+	dpix_n[4][0xb]=dpix_ret0;
+	dpix_n[4][0xc]=dpix_ret0;
+	dpix_n[4][0xd]=dpix_ret0;
+	dpix_n[4][0xe]=dpix_ret0;
+	dpix_n[4][0xf]=dpix_ret0;
+
+	dpix_n[5][0x0]=dpix_3b_0;
+	dpix_n[5][0x1]=dpix_3b_1;
+	dpix_n[5][0x2]=dpix_3b_2;
+	dpix_n[5][0x3]=dpix_ret0;
+	dpix_n[5][0x4]=dpix_ret0;
+	dpix_n[5][0x5]=dpix_ret0;
+	dpix_n[5][0x6]=dpix_ret0;
+	dpix_n[5][0x7]=dpix_ret0;
+	dpix_n[5][0x8]=dpix_ret0;
+	dpix_n[5][0x9]=dpix_ret0;
+	dpix_n[5][0xa]=dpix_ret0;
+	dpix_n[5][0xb]=dpix_ret0;
+	dpix_n[5][0xc]=dpix_ret0;
+	dpix_n[5][0xd]=dpix_ret0;
+	dpix_n[5][0xe]=dpix_ret0;
+	dpix_n[5][0xf]=dpix_ret0;
+
+	dpix_n[6][0x0]=dpix_2_0;
+	dpix_n[6][0x1]=dpix_ret0;
+	dpix_n[6][0x2]=dpix_ret0;
+	dpix_n[6][0x3]=dpix_ret0;
+	dpix_n[6][0x4]=dpix_2_4;
+	dpix_n[6][0x5]=dpix_ret0;
+	dpix_n[6][0x6]=dpix_ret0;
+	dpix_n[6][0x7]=dpix_ret0;
+	dpix_n[6][0x8]=dpix_2_8;
+	dpix_n[6][0x9]=dpix_ret0;
+	dpix_n[6][0xa]=dpix_ret0;
+	dpix_n[6][0xb]=dpix_ret0;
+	dpix_n[6][0xc]=dpix_ret0;
+	dpix_n[6][0xd]=dpix_ret0;
+	dpix_n[6][0xe]=dpix_ret0;
+	dpix_n[6][0xf]=dpix_ret0;
+
+	dpix_n[7][0x0]=dpix_3_0;
+	dpix_n[7][0x1]=dpix_3_1;
+	dpix_n[7][0x2]=dpix_3_2;
+	dpix_n[7][0x3]=dpix_ret0;
+	dpix_n[7][0x4]=dpix_ret0;
+	dpix_n[7][0x5]=dpix_ret0;
+	dpix_n[7][0x6]=dpix_ret0;
+	dpix_n[7][0x7]=dpix_ret0;
+	dpix_n[7][0x8]=dpix_ret0;
+	dpix_n[7][0x9]=dpix_ret0;
+	dpix_n[7][0xa]=dpix_ret0;
+	dpix_n[7][0xb]=dpix_ret0;
+	dpix_n[7][0xc]=dpix_ret0;
+	dpix_n[7][0xd]=dpix_ret0;
+	dpix_n[7][0xe]=dpix_ret0;
+	dpix_n[7][0xf]=dpix_ret0;
+
+	for(i=0;i<256;i++)
+		for(j=0;j<256;j++)
+			add_sat[i][j] = (i + j < 256) ? i + j : 255;
 }
 
 /******************************************************************************/
@@ -1438,58 +1558,53 @@ INLINE void f3_drawscanlines(
 					{
 						case 0: if((sprite_pri=sprite[0]&pval))
 								{
-									int (*dpix_sprite)(UINT32 s_pix);
 									if(sprite_noalp_0) break;
-									if(!(dpix_sprite=dpix_sp[sprite_pri])) break;
-									if(dpix_sprite(*dsti)) {*dsti=dval;break;}
+									if(!dpix_sp[sprite_pri]) break;
+									if(dpix_sp[sprite_pri][pval>>4](*dsti)) {*dsti=dval;break;}
 								}
-								{tval=*tsrc0;if(tval&0xf0) if(dpix_lp[0](clut[*src0])) {*dsti=dval;break;}}
+								{tval=*tsrc0;if(tval&0xf0) if(dpix_lp[0][pval>>4](clut[*src0])) {*dsti=dval;break;}}
 						case 1: if((sprite_pri=sprite[1]&pval))
 								{
-									int (*dpix_sprite)(UINT32 s_pix);
 									if(sprite_noalp_1) break;
-									if(!(dpix_sprite=dpix_sp[sprite_pri]))
+									if(!dpix_sp[sprite_pri])
 									{
 										if(!(pval&0xf0)) break;
 										else {dpix_1_sprite(*dsti);*dsti=dval;break;}
 									}
-									if(dpix_sprite(*dsti)) {*dsti=dval;break;}
+									if(dpix_sp[sprite_pri][pval>>4](*dsti)) {*dsti=dval;break;}
 								}
-								{tval=*tsrc1;if(tval&0xf0) if(dpix_lp[1](clut[*src1])) {*dsti=dval;break;}}
+								{tval=*tsrc1;if(tval&0xf0) if(dpix_lp[1][pval>>4](clut[*src1])) {*dsti=dval;break;}}
 						case 2: if((sprite_pri=sprite[2]&pval))
 								{
-									int (*dpix_sprite)(UINT32 s_pix);
 									if(sprite_noalp_2) break;
-									if(!(dpix_sprite=dpix_sp[sprite_pri]))
+									if(!dpix_sp[sprite_pri])
 									{
 										if(!(pval&0xf0)) break;
 										else {dpix_1_sprite(*dsti);*dsti=dval;break;}
 									}
-									if(dpix_sprite(*dsti)) {*dsti=dval;break;}
+									if(dpix_sp[sprite_pri][pval>>4](*dsti)) {*dsti=dval;break;}
 								}
-								{tval=*tsrc2;if(tval&0xf0) if(dpix_lp[2](clut[*src2])) {*dsti=dval;break;}}
+								{tval=*tsrc2;if(tval&0xf0) if(dpix_lp[2][pval>>4](clut[*src2])) {*dsti=dval;break;}}
 						case 3: if((sprite_pri=sprite[3]&pval))
 								{
-									int (*dpix_sprite)(UINT32 s_pix);
 									if(sprite_noalp_3) break;
-									if(!(dpix_sprite=dpix_sp[sprite_pri]))
+									if(!dpix_sp[sprite_pri])
 									{
 										if(!(pval&0xf0)) break;
 										else {dpix_1_sprite(*dsti);*dsti=dval;break;}
 									}
-									if(dpix_sprite(*dsti)) {*dsti=dval;break;}
+									if(dpix_sp[sprite_pri][pval>>4](*dsti)) {*dsti=dval;break;}
 								}
-								{tval=*tsrc3;if(tval&0xf0) if(dpix_lp[3](clut[*src3])) {*dsti=dval;break;}}
+								{tval=*tsrc3;if(tval&0xf0) if(dpix_lp[3][pval>>4](clut[*src3])) {*dsti=dval;break;}}
 						case 4: if((sprite_pri=sprite[4]&pval))
 								{
-									int (*dpix_sprite)(UINT32 s_pix);
 									if(sprite_noalp_4) break;
-									if(!(dpix_sprite=dpix_sp[sprite_pri]))
+									if(!dpix_sp[sprite_pri])
 									{
 										if(!(pval&0xf0)) break;
 										else {dpix_1_sprite(*dsti);*dsti=dval;break;}
 									}
-									if(dpix_sprite(*dsti)) {*dsti=dval;break;}
+									if(dpix_sp[sprite_pri][pval>>4](*dsti)) {*dsti=dval;break;}
 								}
 								if(!bgcolor) {if(!(pval&0xf0)) {*dsti=0;break;}}
 								else dpix_bg(bgcolor);
@@ -1674,7 +1789,7 @@ static void get_line_ram_info(struct tilemap *tilemap,int sx,int sy,int pos,data
 	int alpha_level=0;
 	int bit_select0=0x10000<<pos;
 	int bit_select1=1<<pos;
-	UINT8 sprite_alpha=0;
+	UINT16 sprite_alpha=0;
 
 	int _colscroll[256];
 	UINT32 _x_offset[256];
@@ -1912,7 +2027,7 @@ deb_alpha_cnt=0;
 		static int alpha_level_last=-1;
 		int pos;
 		int pri[4],alpha_mode[4],alpha_mode_flag[4],alpha_level;
-		UINT8 sprite_alpha;
+		UINT16 sprite_alpha;
 		UINT8 sprite_alpha_check;
 		UINT8 sprite_alpha_all_2a;
 		int spri;
@@ -2000,7 +2115,7 @@ deb_loop++;
 			alpha_mode[1]>1 ||
 			alpha_mode[2]>1 ||
 			alpha_mode[3]>1 ||
-			sprite_alpha != 0xff  )
+			(sprite_alpha&0xff) != 0xff  )
 		{
 			/* set alpha level */
 			if(alpha_level!=alpha_level_last)
@@ -2039,6 +2154,10 @@ deb_loop++;
 			/* set sprite alpha mode */
 			sprite_alpha_check=0;
 			sprite_alpha_all_2a=1;
+			dpix_sp[1]=0;
+			dpix_sp[2]=0;
+			dpix_sp[4]=0;
+			dpix_sp[8]=0;
 			for(i=0;i<4;i++)	/* i = sprite priority offset */
 			{
 				UINT8 sprite_alpha_mode=(sprite_alpha>>(i*2))&3;
@@ -2048,20 +2167,36 @@ deb_loop++;
 					if(sprite_alpha_mode==1)
 					{
 						if(f3_alpha_level_2as==0 && f3_alpha_level_2ad==255) sprite_pri_usage&=~sftbit;
-						else sprite_alpha_check|=sftbit;
+						else
+						{
+							dpix_sp[1<<i]=dpix_n[2];
+							sprite_alpha_check|=sftbit;
+						}
 					}
 					else if(sprite_alpha_mode==2)
 					{
-						if(f3_alpha_level_3as==0 && f3_alpha_level_3ad==255) sprite_pri_usage&=~sftbit;
+						if(sprite_alpha&0xff00)
+						{
+							if(f3_alpha_level_3as==0 && f3_alpha_level_3ad==255) sprite_pri_usage&=~sftbit;
+							else
+							{
+								dpix_sp[1<<i]=dpix_n[3];
+								sprite_alpha_check|=sftbit;
+								sprite_alpha_all_2a=0;
+							}
+						}
 						else
 						{
-							sprite_alpha_check|=sftbit;
-							sprite_alpha_all_2a=0;
+							if(f3_alpha_level_3bs==0 && f3_alpha_level_3bd==255) sprite_pri_usage&=~sftbit;
+							else
+							{
+								dpix_sp[1<<i]=dpix_n[5];
+								sprite_alpha_check|=sftbit;
+								sprite_alpha_all_2a=0;
+							}
 						}
 					}
-					//else sprite_alpha_all_2a=0;
 				}
-				dpix_sp[1<<i]=dpix_sn[sprite_alpha_mode];
 			}
 
 
@@ -2173,11 +2308,9 @@ deb_loop++;
 				int p0=pri[i];
 				int pri_sl1=p0&0x0f;
 				int pri_sl2=(p0&0xf0)>>4;
-				if(pri_sl2)
-				{
-					if(!(p0&0x200))	pri_sl1=pri_sl2>pri_sl1 ? pri_sl2 : pri_sl1;	//CLEOPATR
-					else			pri_sl1=pri_sl2<pri_sl1 ? pri_sl2 : pri_sl1;	//ARKRETRN
-				}
+
+				if (f3_game == ARKRETRN && (p0&0xf00)==0x300)			//???
+					pri_sl1=pri_sl2<pri_sl1 ? pri_sl2 : pri_sl1;
 
 				layer_tmp[i]=i + (pri_sl1<<2);
 

@@ -6,42 +6,63 @@
 extern int pc10_sdcs;			/* ShareD Chip Select */
 extern int pc10_dispmask;		/* Display Mask */
 extern int pc10_gun_controller;	/* wether we need to draw a crosshair or not */
+extern int pc10_int_detect;
+
+static struct tilemap *bg_tilemap;
+
+WRITE_HANDLER( playch10_videoram_w )
+{
+	if (pc10_sdcs)
+	{
+		if (videoram[offset] != data)
+		{
+			videoram[offset] = data;
+			tilemap_mark_tile_dirty(bg_tilemap, offset / 2);
+		}
+	}
+}
 
 PALETTE_INIT( playch10 )
 {
 	int i;
 
-	for ( i = 0;i < 256; i++ )
+	for (i = 0; i < 256; i++)
 	{
-		int bit0,bit1,bit2,bit3,r,g,b;
+		int bit0, bit1, bit2, bit3, r, g, b;
 
 		/* red component */
+
 		bit0 = ~(color_prom[0] >> 0) & 0x01;
 		bit1 = ~(color_prom[0] >> 1) & 0x01;
 		bit2 = ~(color_prom[0] >> 2) & 0x01;
 		bit3 = ~(color_prom[0] >> 3) & 0x01;
+
 		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
 		/* green component */
 		bit0 = ~(color_prom[256] >> 0) & 0x01;
 		bit1 = ~(color_prom[256] >> 1) & 0x01;
 		bit2 = ~(color_prom[256] >> 2) & 0x01;
 		bit3 = ~(color_prom[256] >> 3) & 0x01;
+
 		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
 		/* blue component */
+
 		bit0 = ~(color_prom[2*256] >> 0) & 0x01;
 		bit1 = ~(color_prom[2*256] >> 1) & 0x01;
 		bit2 = ~(color_prom[2*256] >> 2) & 0x01;
 		bit3 = ~(color_prom[2*256] >> 3) & 0x01;
+
 		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
 		palette_set_color(i,r,g,b);
+
 		color_prom++;
 	}
 
 	ppu2c03b_init_palette( 256 );
 }
-
-extern int pc10_int_detect;
 
 static void ppu_irq( int num )
 {
@@ -52,6 +73,7 @@ static void ppu_irq( int num )
 /* our ppu interface											*/
 /* things like mirroring and wether to use vrom or vram			*/
 /* can be set by calling 'ppu2c03b_override_hardware_options'	*/
+
 static struct ppu2c03b_interface ppu_interface =
 {
 	1,						/* num */
@@ -62,15 +84,28 @@ static struct ppu2c03b_interface ppu_interface =
 	{ ppu_irq }				/* irq */
 };
 
+static void get_bg_tile_info(int tile_index)
+{
+	int offs = tile_index * 2;
+	int code = videoram[offs] + ((videoram[offs + 1] & 0x07) << 8);
+	int color = (videoram[offs + 1] >> 3) & 0x1f;
+
+	SET_TILE_INFO(0, code, color, 0)
+}
+
 VIDEO_START( playch10 )
 {
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
 	if ( ppu2c03b_init( &ppu_interface ) )
 		return 1;
 
-	/* the bios uses the generic stuff */
-	return video_start_generic();
+	return 0;
 }
-
 
 /***************************************************************************
 
@@ -80,16 +115,11 @@ VIDEO_START( playch10 )
 
 VIDEO_UPDATE( playch10 )
 {
-	int offs;
-
 	struct rectangle top_monitor = Machine->visible_area;
 	struct rectangle bottom_monitor = Machine->visible_area;
 
 	top_monitor.max_y = ( top_monitor.max_y - top_monitor.min_y ) / 2;
 	bottom_monitor.min_y = ( bottom_monitor.max_y - bottom_monitor.min_y ) / 2;
-
-	if ( get_vh_global_attribute_changed() )
-		memset( dirtybuffer, 1, videoram_size );
 
 	/* On Playchoice 10 single monitor, this bit toggles	*/
 	/* between PPU and BIOS display.						*/
@@ -108,46 +138,14 @@ VIDEO_UPDATE( playch10 )
 			int x_center = readinputport( 5 );
 			int y_center = readinputport( 6 ) + 30*8;
 
-			draw_crosshair(bitmap,x_center,y_center,&Machine->visible_area);
-
+			draw_crosshair(bitmap, x_center, y_center, &bottom_monitor);
 		}
-	}
-	else
-	{
-		/* the ppu is masked, clear out the area */
-		fillbitmap( bitmap, Machine->pens[0], &bottom_monitor );
 	}
 
 	/* When the bios is accessing vram, the video circuitry cant access it */
-	if ( pc10_sdcs )
+
+	if ( !pc10_sdcs )
 	{
-		fillbitmap( bitmap, Machine->pens[0], &top_monitor );
-		return;
+		tilemap_draw(bitmap, &top_monitor, bg_tilemap, 0, 0);
 	}
-
-	for( offs = videoram_size - 2; offs >= 0; offs -= 2 )
-	{
-		if ( dirtybuffer[offs] || dirtybuffer[offs+1] )
-		{
-			int offs2 = offs / 2;
-
-			int sx = offs2 % 32;
-			int sy = offs2 / 32;
-
-			int tilenum = videoram[offs] + ( ( videoram[offs+1] & 7 ) << 8 );
-			int color = ( videoram[offs+1] >> 3 ) & 0x1f;
-
-			dirtybuffer[offs] = dirtybuffer[offs+1] = 0;
-
-			drawgfx( tmpbitmap, Machine->gfx[0],
-					 tilenum,
-					 color,
-					 0, 0,
-					 8 * sx, 8 * sy,
-					 &Machine->visible_area, TRANSPARENCY_NONE, 0 );
-		}
-	}
-
-	/* copy the temporary bitmap to the screen */
-	copybitmap( bitmap, tmpbitmap, 0, 0, 0, 0, &top_monitor, TRANSPARENCY_NONE, 0 );
 }

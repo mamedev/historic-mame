@@ -12,14 +12,20 @@ Driver by Takahiro Nogi (nogi@kt.rim.or.jp) 1999/10/04
 #include "cpu/m6502/m6502.h"
 #include "cpu/m6809/m6809.h"
 
-extern unsigned char *ssozumo_videoram2, *ssozumo_colorram2;
-extern size_t ssozumo_videoram2_size;
-extern unsigned char *ssozumo_scroll;
+extern UINT8 *ssozumo_videoram2;
+extern UINT8 *ssozumo_colorram2;
 
-WRITE_HANDLER( ssozumo_paletteram_w );
-PALETTE_INIT( ssozumo );
-VIDEO_UPDATE( ssozumo );
-VIDEO_START( ssozumo );
+extern WRITE_HANDLER( ssozumo_videoram_w );
+extern WRITE_HANDLER( ssozumo_colorram_w );
+extern WRITE_HANDLER( ssozumo_videoram2_w );
+extern WRITE_HANDLER( ssozumo_colorram2_w );
+extern WRITE_HANDLER( ssozumo_paletteram_w );
+extern WRITE_HANDLER( ssozumo_scroll_w );
+extern WRITE_HANDLER( ssozumo_flipscreen_w );
+
+extern PALETTE_INIT( ssozumo );
+extern VIDEO_START( ssozumo );
+extern VIDEO_UPDATE( ssozumo );
 
 
 static INTERRUPT_GEN( ssozumo_interrupt )
@@ -67,16 +73,16 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x077f, MWA_RAM },
 
 	{ 0x0780, 0x07ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x2000, 0x23ff, MWA_RAM, &ssozumo_videoram2, &ssozumo_videoram2_size },
-	{ 0x2400, 0x27ff, MWA_RAM, &ssozumo_colorram2 },
-	{ 0x3000, 0x31ff, videoram_w, &videoram, &videoram_size },
-	{ 0x3200, 0x33ff, colorram_w, &colorram },
+	{ 0x2000, 0x23ff, ssozumo_videoram2_w, &ssozumo_videoram2 },
+	{ 0x2400, 0x27ff, ssozumo_colorram2_w, &ssozumo_colorram2 },
+	{ 0x3000, 0x31ff, ssozumo_videoram_w, &videoram },
+	{ 0x3200, 0x33ff, ssozumo_colorram_w, &colorram },
 	{ 0x3400, 0x35ff, MWA_RAM },
 	{ 0x3600, 0x37ff, MWA_RAM },
 
 	{ 0x4000, 0x4000, MWA_RAM },			// fg page select?
 	{ 0x4010, 0x4010, ssozumo_sh_command_w },
-	{ 0x4020, 0x4020, MWA_RAM, &ssozumo_scroll },
+	{ 0x4020, 0x4020, ssozumo_scroll_w },
 //	{ 0x4030, 0x4030, MWA_RAM },
 	{ 0x4050, 0x407f, ssozumo_paletteram_w, &paletteram },
 

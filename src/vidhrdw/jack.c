@@ -9,13 +9,31 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+static struct tilemap *bg_tilemap;
+
+WRITE_HANDLER( jack_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
+
+WRITE_HANDLER( jack_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
 WRITE_HANDLER( jack_paletteram_w )
 {
 	/* RGB output is inverted */
 	paletteram_BBGGGRRR_w(offset,~data);
 }
-
 
 READ_HANDLER( jack_flipscreen_r )
 {
@@ -28,49 +46,35 @@ WRITE_HANDLER( jack_flipscreen_w )
 	flip_screen_set(offset);
 }
 
+static void get_bg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index] + ((colorram[tile_index] & 0x18) << 5);
+	int color = colorram[tile_index] & 0x07;
 
-VIDEO_UPDATE( jack )
+	SET_TILE_INFO(0, code, color, 0)
+}
+
+static UINT32 tilemap_scan_cols_flipy( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+{
+	/* logical (col,row) -> memory offset */
+	return (col * num_rows) + (num_rows - 1 - row);
+}
+
+VIDEO_START( jack )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_cols_flipy, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	return 0;
+}
+
+static void jack_draw_sprites( struct mame_bitmap *bitmap )
 {
 	int offs;
 
-
-	if (get_vh_global_attribute_changed())
-		memset(dirtybuffer,1,videoram_size);
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs / 32;
-			sy = 31 - offs % 32;
-
-			if (flip_screen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-			}
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + ((colorram[offs] & 0x18) << 5),
-					colorram[offs] & 0x07,
-					flip_screen,flip_screen,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the temporary bitmap to the screen */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-
-	/* draw sprites */
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
 		int sx,sy,num, color,flipx,flipy;
@@ -97,4 +101,10 @@ VIDEO_UPDATE( jack )
 				sx,sy,
 				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
+}
+
+VIDEO_UPDATE( jack )
+{
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	jack_draw_sprites(bitmap);
 }

@@ -1819,6 +1819,8 @@ static void init_common(void)
 
 static DRIVER_INIT(mystwarr)
 {
+	int i;
+
 	init_common();
 
 	#if MW_SKIPIDLE
@@ -1826,18 +1828,20 @@ static DRIVER_INIT(mystwarr)
 	#endif
 
 	// soften chorus(chip 0 channel 0-3), boost voice(chip 0 channel 4-7)
-	for (int i=0; i<=3; i++)
+	for (i=0; i<=3; i++)
 	{
 		K054539_set_gain(0, i, 0.8);
 		K054539_set_gain(0, i+4, 2.0);
 	}
 
 	// soften percussions(chip 1 channel 0-7)
-	for (int i=0; i<=7; i++) K054539_set_gain(1, i, 0.5);
+	for (i=0; i<=7; i++) K054539_set_gain(1, i, 0.5);
 }
 
 static DRIVER_INIT(dadandrn)
 {
+	int i;
+
 	init_common();
 
 	#if MW_SKIPIDLE
@@ -1845,11 +1849,13 @@ static DRIVER_INIT(dadandrn)
 	#endif
 
 	// boost voice(chip 0 channel 4-7)
-	for (int i=4; i<=7; i++) K054539_set_gain(0, i, 2.0);
+	for (i=4; i<=7; i++) K054539_set_gain(0, i, 2.0);
 }
 
 static DRIVER_INIT(viostorm)
 {
+	int i;
+
 	init_common();
 
 	#if MW_SKIPIDLE
@@ -1857,17 +1863,19 @@ static DRIVER_INIT(viostorm)
 	#endif
 
 	// boost voice(chip 0 channel 4-7)
-	for (int i=4; i<=7; i++) K054539_set_gain(0, i, 2.0);
+	for (i=4; i<=7; i++) K054539_set_gain(0, i, 2.0);
 }
 
 static DRIVER_INIT(metamrph)
 {
+	int i;
+
 	init_common();
 
 	K053250_unpack_pixels(REGION_GFX3);
 
 	// boost voice(chip 0 channel 4-7) and soften other channels
-	for (int i=0; i<=3; i++)
+	for (i=0; i<=3; i++)
 	{
 		K054539_set_gain(0, i,   0.8);
 		K054539_set_gain(0, i+4, 1.8);
@@ -1878,6 +1886,8 @@ static DRIVER_INIT(metamrph)
 
 static DRIVER_INIT(martchmp)
 {
+	int i;
+
 	init_common();
 
 	#if MW_SKIPIDLE
@@ -1887,11 +1897,13 @@ static DRIVER_INIT(martchmp)
 	K054539_init_flags(K054539_REVERSE_STEREO);
 
 	// boost voice(chip 0 channel 4-7)
-	for (int i=4; i<=7; i++) K054539_set_gain(0, i, 1.4);
+	for (i=4; i<=7; i++) K054539_set_gain(0, i, 1.4);
 }
 
 static DRIVER_INIT(gaiapols)
 {
+	int i;
+
 	init_common();
 
 	#if MW_SKIPIDLE
@@ -1899,7 +1911,7 @@ static DRIVER_INIT(gaiapols)
 	#endif
 
 	// boost voice(chip 0 channel 5-7)
-	for (int i=5; i<=7; i++) K054539_set_gain(0, i, 2.0);
+	for (i=5; i<=7; i++) K054539_set_gain(0, i, 2.0);
 }
 
 

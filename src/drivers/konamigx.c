@@ -2779,6 +2779,7 @@ static DRIVER_INIT(konamigx)
 #define BPP6  2
 #define BPP66 3
 
+	int i;
 	int readback = 0;
 
 	konamigx_cfgport = -1;
@@ -2866,7 +2867,7 @@ static DRIVER_INIT(konamigx)
 		konamigx_cfgport = 7;
 
 		// boost voice(chip 1 channel 3-7)
-		for (int i=3; i<=7; i++) K054539_set_gain(1, i, 2.0);
+		for (i=3; i<=7; i++) K054539_set_gain(1, i, 2.0);
 	}
 
 	else if (!strcmp(Machine->gamedrv->name, "dragoonj"))
@@ -2879,7 +2880,7 @@ static DRIVER_INIT(konamigx)
 		konamigx_cfgport = 7;
 
 		// soften percussions(chip 1 channel 0-3), boost voice(chip 1 channel 4-7)
-		for (int i=0; i<=3; i++)
+		for (i=0; i<=3; i++)
 		{
 			K054539_set_gain(1, i, 0.8);
 			K054539_set_gain(1, i+4, 2.0);

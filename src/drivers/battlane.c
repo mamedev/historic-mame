@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	BattleLane
+	Battle Lane Vol. 5
 	1986 Taito
 
 	2x6809
@@ -9,58 +9,34 @@
 
 ***************************************************************************/
 
-/*
-	
-	2003-06-01	Added player 2 cocktail inputs
-
-*/
-
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
 
+extern UINT8 *battlane_spriteram;
+extern UINT8 *battlane_tileram;
+
+extern struct tilemap *bg_tilemap;
+
+extern WRITE_HANDLER( battlane_palette_w );
+extern WRITE_HANDLER( battlane_scrollx_w );
+extern WRITE_HANDLER( battlane_scrolly_w );
+extern WRITE_HANDLER( battlane_tileram_w );
+extern WRITE_HANDLER( battlane_spriteram_w );
+extern WRITE_HANDLER( battlane_bitmap_w );
+extern WRITE_HANDLER( battlane_video_ctrl_w );
+
+extern PALETTE_INIT( battlane );
 extern VIDEO_START( battlane );
 extern VIDEO_UPDATE( battlane );
-extern PALETTE_INIT( battlane );
 
-extern unsigned char *battlane_bitmap;
-extern size_t battlane_bitmap_size;
-WRITE_HANDLER( battlane_spriteram_w );
-READ_HANDLER( battlane_spriteram_r );
-WRITE_HANDLER( battlane_tileram_w );
-READ_HANDLER( battlane_tileram_r );
-WRITE_HANDLER( battlane_bitmap_w );
-READ_HANDLER( battlane_bitmap_r );
-WRITE_HANDLER( battlane_video_ctrl_w );
-READ_HANDLER( battlane_video_ctrl_r );
-WRITE_HANDLER( battlane_palette_w );
-extern void battlane_set_video_flip(int);
-
-WRITE_HANDLER( battlane_scrolly_w );
-WRITE_HANDLER( battlane_scrollx_w );
 
 /* CPU interrupt control register */
 int battlane_cpu_control;
 
-/* RAM shared between CPU 0 and 1 */
-WRITE_HANDLER( battlane_shared_ram_w )
-{
-	unsigned char *RAM =
-		memory_region(REGION_CPU1);
-	RAM[offset]=data;
-}
-
-READ_HANDLER( battlane_shared_ram_r )
-{
-	unsigned char *RAM =
-		memory_region(REGION_CPU1);
-	return RAM[offset];
-}
-
-
 WRITE_HANDLER( battlane_cpu_command_w )
 {
-	battlane_cpu_control=data;
+	battlane_cpu_control = data;
 
 	/*
 	CPU control register
@@ -69,10 +45,13 @@ WRITE_HANDLER( battlane_cpu_command_w )
         0x08    = NMI
         0x04    = CPU 0 IRQ   (0=Activate)
         0x02    = CPU 1 IRQ   (0=Activate)
-        0x01    = Scroll MSB
+        0x01    = Y Scroll MSB
 	*/
 
-    battlane_set_video_flip(data & 0x80);
+	if (flip_screen != (data & 0x80)) {
+		flip_screen_set(data & 0x80);
+		tilemap_mark_all_tiles_dirty(bg_tilemap);
+	}
 
 	/*
         I think that the NMI is an inhibitor. It is constantly set
@@ -112,65 +91,63 @@ WRITE_HANDLER( battlane_cpu_command_w )
 	FA96: 27 FA       BEQ   $FA92	; Wait for bit to be set
 	*/
 
-	cpu_set_irq_line(1, M6809_IRQ_LINE,   data & 0x02 ? CLEAR_LINE : HOLD_LINE);
+	cpu_set_irq_line(1, M6809_IRQ_LINE, data & 0x02 ? CLEAR_LINE : HOLD_LINE);
 }
 
 /* Both CPUs share the same memory */
 
+WRITE_HANDLER( battlane_shared_ram_w )
+{
+	UINT8 *RAM = memory_region(REGION_CPU1);
+	RAM[offset] = data;
+}
+
+READ_HANDLER( battlane_shared_ram_r )
+{
+	UINT8 *RAM = memory_region(REGION_CPU1);
+	return RAM[offset];
+}
+
+
 static MEMORY_READ_START( battlane_readmem )
 	{ 0x0000, 0x0fff, battlane_shared_ram_r },
-    { 0x1000, 0x17ff, battlane_tileram_r },
-    { 0x1800, 0x18ff, battlane_spriteram_r },
+    { 0x1000, 0x17ff, MRA_RAM },
+    { 0x1800, 0x18ff, MRA_RAM },
 	{ 0x1c00, 0x1c00, input_port_0_r },
     { 0x1c01, 0x1c01, input_port_1_r },   /* VBLANK port */
 	{ 0x1c02, 0x1c02, input_port_2_r },
 	{ 0x1c03, 0x1c03, input_port_3_r },
 	{ 0x1c04, 0x1c04, YM3526_status_port_0_r },
-	{ 0x2000, 0x3fff, battlane_bitmap_r },
+	{ 0x2000, 0x3fff, MRA_RAM },
 	{ 0x4000, 0xffff, MRA_ROM },
 MEMORY_END
 
 static MEMORY_WRITE_START( battlane_writemem )
 	{ 0x0000, 0x0fff, battlane_shared_ram_w },
-    { 0x1000, 0x17ff, battlane_tileram_w },
-    { 0x1800, 0x18ff, battlane_spriteram_w },
+    { 0x1000, 0x17ff, battlane_tileram_w, &battlane_tileram },
+    { 0x1800, 0x18ff, battlane_spriteram_w, &battlane_spriteram },
 	{ 0x1c00, 0x1c00, battlane_video_ctrl_w },
-    { 0x1c01, 0x1c01, battlane_scrolly_w },
-    { 0x1c02, 0x1c02, battlane_scrollx_w },
+    { 0x1c01, 0x1c01, battlane_scrollx_w },
+    { 0x1c02, 0x1c02, battlane_scrolly_w },
     { 0x1c03, 0x1c03, battlane_cpu_command_w },
 	{ 0x1c04, 0x1c04, YM3526_control_port_0_w },
 	{ 0x1c05, 0x1c05, YM3526_write_port_0_w },
 	{ 0x1e00, 0x1e3f, battlane_palette_w },
-	{ 0x2000, 0x3fff, battlane_bitmap_w, &battlane_bitmap, &battlane_bitmap_size },
+	{ 0x2000, 0x3fff, battlane_bitmap_w },
 	{ 0x4000, 0xffff, MWA_ROM },
 MEMORY_END
 
+
 INTERRUPT_GEN( battlane_cpu1_interrupt )
 {
-#ifdef MAME_DEBUG
-	if (keyboard_pressed_memory(KEYCODE_F))
-	{
-		FILE *fp;
-		fp=fopen("RAM.DMP", "w+b");
-		if (fp)
-		{
-			unsigned char *RAM =
-			memory_region(REGION_CPU1);
-
-			fwrite(RAM, 0x4000, 1, fp);
-			fclose(fp);
-		}
-	}
-#endif
-
 	/* See note in battlane_cpu_command_w */
+
 	if (~battlane_cpu_control & 0x08)
 	{
 		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 		cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
 	}
 }
-
 
 
 INPUT_PORTS_START( battlane )
@@ -187,12 +164,12 @@ INPUT_PORTS_START( battlane )
     PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )     /* VBLank ? */
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 
 	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_B ) )
@@ -222,11 +199,11 @@ INPUT_PORTS_START( battlane )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x02, "4" )
 	PORT_DIPSETTING(    0x01, "5" )
-	PORT_BITX(0,        0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x0c, "20k & every 50k" )
-	PORT_DIPSETTING(    0x08, "20k & every 70k" )
-	PORT_DIPSETTING(    0x04, "20k & every 90k" )
+	PORT_DIPSETTING(    0x0c, "20000 50000" )
+	PORT_DIPSETTING(    0x08, "20000 70000" )
+	PORT_DIPSETTING(    0x04, "20000 90000" )
 	PORT_DIPSETTING(    0x00, "None" )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -235,19 +212,18 @@ INPUT_PORTS_START( battlane )
 INPUT_PORTS_END
 
 
-
 static struct GfxLayout spritelayout =
 {
-	16,16,
+	16, 16,
 	RGN_FRAC(1,3),
 	3,
 	{ RGN_FRAC(0,3), RGN_FRAC(1,3), RGN_FRAC(2,3) },
 	{
 		7, 6, 5, 4, 3, 2, 1, 0,
-	  16*8+7, 16*8+6, 16*8+5, 16*8+4, 16*8+3, 16*8+2, 16*8+1, 16*8+0,
+		16*8+7, 16*8+6, 16*8+5, 16*8+4, 16*8+3, 16*8+2, 16*8+1, 16*8+0,
 	},
 	{
-		15*8,14*8,13*8,12*8,11*8,10*8,9*8,8*8,
+		15*8, 14*8, 13*8, 12*8, 11*8, 10*8, 9*8, 8*8,
 		7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8,
 	},
 	16*8*2
@@ -255,36 +231,38 @@ static struct GfxLayout spritelayout =
 
 static struct GfxLayout tilelayout =
 {
-	16,16 ,    /* 16*16 tiles */
+	16, 16,    /* 16*16 tiles */
 	256,    /* 256 tiles */
 	3,      /* 3 bits per pixel */
 	{ 0x8000*8+4, 4, 0 },    /* plane offset */
 	{
-	16+8+0, 16+8+1, 16+8+2, 16+8+3,
-	16+0, 16+1, 16+2,   16+3,
-	8+0,    8+1,    8+2,    8+3,
-	0,       1,    2,      3,
+		3, 2, 1, 0,
+		8+3, 8+2, 8+1, 8+0,
+		16+3, 16+2, 16+1, 16+0,
+		16+8+3, 16+8+2, 16+8+1, 16+8+0
 	},
-	{ 0*8*4, 1*8*4,  2*8*4,  3*8*4,  4*8*4,  5*8*4,  6*8*4,  7*8*4,
-	  8*8*4, 9*8*4, 10*8*4, 11*8*4, 12*8*4, 13*8*4, 14*8*4, 15*8*4
+	{
+		0*8*4, 1*8*4,  2*8*4,  3*8*4,  4*8*4,  5*8*4,  6*8*4,  7*8*4,
+		8*8*4, 9*8*4, 10*8*4, 11*8*4, 12*8*4, 13*8*4, 14*8*4, 15*8*4
 	},
 	8*8*4*2     /* every char takes consecutive bytes */
 };
 
 static struct GfxLayout tilelayout2 =
 {
-	16,16 ,    /* 16*16 tiles */
+	16, 16,    /* 16*16 tiles */
 	256,    /* 256 tiles */
 	3,      /* 3 bits per pixel */
     { 0x8000*8, 0x4000*8+4, 0x4000*8+0 },    /* plane offset */
 	{
-	16+8+0, 16+8+1, 16+8+2, 16+8+3,
-	16+0, 16+1, 16+2,   16+3,
-	8+0,    8+1,    8+2,    8+3,
-	0,       1,    2,      3,
+		3, 2, 1, 0,
+		8+3, 8+2, 8+1, 8+0,
+		16+3, 16+2, 16+1, 16+0,
+		16+8+3, 16+8+2, 16+8+1, 16+8+0
 	},
-	{ 0*8*4, 1*8*4,  2*8*4,  3*8*4,  4*8*4,  5*8*4,  6*8*4,  7*8*4,
-	  8*8*4, 9*8*4, 10*8*4, 11*8*4, 12*8*4, 13*8*4, 14*8*4, 15*8*4
+	{
+		0*8*4, 1*8*4,  2*8*4,  3*8*4,  4*8*4,  5*8*4,  6*8*4,  7*8*4,
+		8*8*4, 9*8*4, 10*8*4, 11*8*4, 12*8*4, 13*8*4, 14*8*4, 15*8*4
 	},
 	8*8*4*2     /* every char takes consecutive bytes */
 };
@@ -299,10 +277,9 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-
 static void irqhandler(int irq)
 {
-	cpu_set_irq_line(0,M6809_FIRQ_LINE,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpu_set_irq_line(0, M6809_FIRQ_LINE, irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM3526interface ym3526_interface =
@@ -314,16 +291,15 @@ static struct YM3526interface ym3526_interface =
 };
 
 
-
 static MACHINE_DRIVER_START( battlane )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809, 1250000)        /* 1.25 MHz ? */
-	MDRV_CPU_MEMORY(battlane_readmem,battlane_writemem)
-	MDRV_CPU_VBLANK_INT(battlane_cpu1_interrupt,1)
+	MDRV_CPU_MEMORY(battlane_readmem, battlane_writemem)
+	MDRV_CPU_VBLANK_INT(battlane_cpu1_interrupt, 1)
 
 	MDRV_CPU_ADD(M6809, 1250000)        /* 1.25 MHz ? */
-	MDRV_CPU_MEMORY(battlane_readmem,battlane_writemem)
+	MDRV_CPU_MEMORY(battlane_readmem, battlane_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -331,8 +307,8 @@ static MACHINE_DRIVER_START( battlane )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(1*8, 31*8-1, 1*8, 31*8-1)       /* not sure */
+	MDRV_SCREEN_SIZE(32 * 8, 32 * 8)
+	MDRV_VISIBLE_AREA(1 * 8, 31 * 8 - 1, 0 * 8, 32 * 8 - 1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(64)
 
@@ -353,11 +329,12 @@ MACHINE_DRIVER_END
 ROM_START( battlane )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for main CPU */
 	/* first half of da00-5 will be copied at 0x4000-0x7fff */
+	ROM_LOAD( "da00-5",    0x4000, 0x8000, CRC(85b4ed73) SHA1(b8e61eedf8fb75bb07f1df91a7465cee2b6ff372) )
 	ROM_LOAD( "da01-5",    0x8000, 0x8000, CRC(7a6c3f02) SHA1(bee1ee858f81453a53afc2d016f549924801b090) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64K for slave CPU */
-	ROM_LOAD( "da00-5",    0x00000, 0x8000, CRC(85b4ed73) SHA1(b8e61eedf8fb75bb07f1df91a7465cee2b6ff372) )	/* ...second half goes here */
-	ROM_LOAD( "da02-2",    0x08000, 0x8000, CRC(69d8dafe) SHA1(a7dab13d7f05bf8e3220bb8193066e9b45c86a17) )
+	ROM_LOAD( "da00-5",    0x0000, 0x8000, CRC(85b4ed73) SHA1(b8e61eedf8fb75bb07f1df91a7465cee2b6ff372) )	/* ...second half goes here */
+	ROM_LOAD( "da02-2",    0x8000, 0x8000, CRC(69d8dafe) SHA1(a7dab13d7f05bf8e3220bb8193066e9b45c86a17) )
 
 	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "da05",      0x00000, 0x8000, CRC(834829d4) SHA1(d56781d2a7ef89b645a637166cd5acde6a65f7f9) ) /* Sprites Plane 1+2 */
@@ -376,11 +353,12 @@ ROM_END
 ROM_START( battlan2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for main CPU */
 	/* first half of da00-3 will be copied at 0x4000-0x7fff */
+	ROM_LOAD( "da00-3",    0x4000, 0x8000, CRC(7a0a5d58) SHA1(ef97e5a64a668c437c18cda931c52bf39b580b4a) )
 	ROM_LOAD( "da01-3",    0x8000, 0x8000, CRC(d9e40800) SHA1(dc87ae0d8631c220dbbddbf0e49b6bdaeb635269) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64K for slave CPU */
-	ROM_LOAD( "da00-3",    0x00000, 0x8000, CRC(7a0a5d58) SHA1(ef97e5a64a668c437c18cda931c52bf39b580b4a) )	/* ...second half goes here */
-	ROM_LOAD( "da02-2",    0x08000, 0x8000, CRC(69d8dafe) SHA1(a7dab13d7f05bf8e3220bb8193066e9b45c86a17) )
+	ROM_LOAD( "da00-3",    0x0000, 0x8000, CRC(7a0a5d58) SHA1(ef97e5a64a668c437c18cda931c52bf39b580b4a) )	/* ...second half goes here */
+	ROM_LOAD( "da02-2",    0x8000, 0x8000, CRC(69d8dafe) SHA1(a7dab13d7f05bf8e3220bb8193066e9b45c86a17) )
 
 	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "da05",      0x00000, 0x8000, CRC(834829d4) SHA1(d56781d2a7ef89b645a637166cd5acde6a65f7f9) ) /* Sprites Plane 1+2 */
@@ -399,11 +377,12 @@ ROM_END
 ROM_START( battlan3 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for main CPU */
 	/* first half of bl_04.rom will be copied at 0x4000-0x7fff */
+	ROM_LOAD( "bl_04.rom", 0x4000, 0x8000, CRC(5681564c) SHA1(25b3a715e91976830d87c7c45b93b473df709241) )
 	ROM_LOAD( "bl_05.rom", 0x8000, 0x8000, CRC(001c4bbe) SHA1(4320c0a85b5b3505ac7292673759e5288cf4187f) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64K for slave CPU */
-	ROM_LOAD( "bl_04.rom", 0x00000, 0x8000, CRC(5681564c) SHA1(25b3a715e91976830d87c7c45b93b473df709241) )	/* ...second half goes here */
-	ROM_LOAD( "da02-2",    0x08000, 0x8000, CRC(69d8dafe) SHA1(a7dab13d7f05bf8e3220bb8193066e9b45c86a17) )
+	ROM_LOAD( "bl_04.rom", 0x0000, 0x8000, CRC(5681564c) SHA1(25b3a715e91976830d87c7c45b93b473df709241) )	/* ...second half goes here */
+	ROM_LOAD( "da02-2",    0x8000, 0x8000, CRC(69d8dafe) SHA1(a7dab13d7f05bf8e3220bb8193066e9b45c86a17) )
 
 	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "da05",      0x00000, 0x8000, CRC(834829d4) SHA1(d56781d2a7ef89b645a637166cd5acde6a65f7f9) ) /* Sprites Plane 1+2 */
@@ -420,23 +399,6 @@ ROM_START( battlan3 )
 ROM_END
 
 
-
-static DRIVER_INIT( battlane )
-{
-	unsigned char *src,*dest;
-	int A;
-
-	/* one ROM is shared among two CPUs. We loaded it into the */
-	/* second CPU address space, let's copy it to the first CPU's one */
-	src = memory_region(REGION_CPU2);
-	dest = memory_region(REGION_CPU1);
-
-	for(A = 0;A < 0x4000;A++)
-		dest[A + 0x4000] = src[A];
-}
-
-
-
-GAMEX( 1986, battlane, 0,        battlane, battlane, battlane, ROT90, "Technos (Taito license)", "Battle Lane Vol. 5 (set 1)", GAME_NO_COCKTAIL )
-GAMEX( 1986, battlan2, battlane, battlane, battlane, battlane, ROT90, "Technos (Taito license)", "Battle Lane Vol. 5 (set 2)", GAME_NO_COCKTAIL )
-GAMEX( 1986, battlan3, battlane, battlane, battlane, battlane, ROT90, "Technos (Taito license)", "Battle Lane Vol. 5 (set 3)", GAME_NO_COCKTAIL )
+GAME( 1986, battlane, 0,        battlane, battlane, 0, ROT90, "Technos (Taito license)", "Battle Lane! Vol. 5 (set 1)" )
+GAME( 1986, battlan2, battlane, battlane, battlane, 0, ROT90, "Technos (Taito license)", "Battle Lane! Vol. 5 (set 2)" )
+GAME( 1986, battlan3, battlane, battlane, battlane, 0, ROT90, "Technos (Taito license)", "Battle Lane! Vol. 5 (set 3)" )

@@ -149,31 +149,32 @@ VBlank duration: 1/VSYNC * (16/256) = 1017.6 us
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+extern UINT8 *gottlieb_charram;
 
+extern WRITE_HANDLER( gottlieb_videoram_w );
+extern WRITE_HANDLER( gottlieb_charram_w );
+extern WRITE_HANDLER( gottlieb_video_outputs_w );
+extern WRITE_HANDLER( usvsthem_video_outputs_w );
+extern WRITE_HANDLER( gottlieb_paletteram_w );
 
-VIDEO_START( gottlieb );
-WRITE_HANDLER( gottlieb_characterram_w );
-WRITE_HANDLER( gottlieb_video_outputs_w );
-WRITE_HANDLER( usvsthem_video_outputs_w );
-extern unsigned char *gottlieb_characterram;
-WRITE_HANDLER( gottlieb_paletteram_w );
-VIDEO_UPDATE( gottlieb );
+extern VIDEO_START( gottlieb );
+extern VIDEO_UPDATE( gottlieb );
 
-WRITE_HANDLER( gottlieb_sh_w );
+extern WRITE_HANDLER( gottlieb_sh_w );
 
-extern unsigned char *riot_ram;
-READ_HANDLER( riot_ram_r );
-READ_HANDLER( gottlieb_riot_r );
-WRITE_HANDLER( riot_ram_w );
-WRITE_HANDLER( gottlieb_riot_w );
-WRITE_HANDLER( gottlieb_speech_w );
-WRITE_HANDLER( gottlieb_speech_clock_DAC_w );
-void gottlieb_sound_init(void);
-READ_HANDLER( stooges_sound_input_r );
-WRITE_HANDLER( stooges_8910_latch_w );
-WRITE_HANDLER( stooges_sound_control_w );
-WRITE_HANDLER( gottlieb_nmi_rate_w );
-WRITE_HANDLER( gottlieb_cause_dac_nmi_w );
+extern UINT8 *riot_ram;
+extern READ_HANDLER( riot_ram_r );
+extern READ_HANDLER( gottlieb_riot_r );
+extern WRITE_HANDLER( riot_ram_w );
+extern WRITE_HANDLER( gottlieb_riot_w );
+extern WRITE_HANDLER( gottlieb_speech_w );
+extern WRITE_HANDLER( gottlieb_speech_clock_DAC_w );
+extern void gottlieb_sound_init(void);
+extern READ_HANDLER( stooges_sound_input_r );
+extern WRITE_HANDLER( stooges_8910_latch_w );
+extern WRITE_HANDLER( stooges_sound_control_w );
+extern WRITE_HANDLER( gottlieb_nmi_rate_w );
+extern WRITE_HANDLER( gottlieb_cause_dac_nmi_w );
 
 
 static UINT8 *audiobuffer_region;
@@ -211,7 +212,6 @@ static int joympx;
 READ_HANDLER( stooges_IN4_r )
 {
 	int joy;
-
 
 	switch (joympx)
 	{
@@ -421,9 +421,9 @@ MEMORY_END
 static MEMORY_WRITE_START( reactor_writemem )
 	{ 0x00000, 0x01fff, MWA_RAM },
 	{ 0x02000, 0x020ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x03000, 0x033ff, videoram_w, &videoram, &videoram_size },
-	{ 0x03400, 0x037ff, videoram_w },	/* mirror address, some games write to it */
-	{ 0x04000, 0x04fff, gottlieb_characterram_w, &gottlieb_characterram },
+	{ 0x03000, 0x033ff, gottlieb_videoram_w, &videoram },
+	{ 0x03400, 0x037ff, gottlieb_videoram_w },	/* mirror address, some games write to it */
+	{ 0x04000, 0x04fff, gottlieb_charram_w, &gottlieb_charram },
 	{ 0x06000, 0x0601f, gottlieb_paletteram_w, &paletteram },
 	{ 0x07000, 0x07000, watchdog_reset_w },
 	{ 0x07001, 0x07001, gottlieb_track_reset_w },
@@ -462,9 +462,9 @@ static MEMORY_WRITE_START( gottlieb_writemem )
 	{ 0x01000, 0x01fff, MWA_RAM },	/* ROM in Krull */
 	{ 0x02000, 0x02fff, MWA_RAM },	/* ROM in Krull and 3 Stooges */
 	{ 0x03000, 0x030ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x03800, 0x03bff, videoram_w, &videoram, &videoram_size },
-	{ 0x03c00, 0x03fff, videoram_w },	/* mirror address, some games write to it */
-	{ 0x04000, 0x04fff, gottlieb_characterram_w, &gottlieb_characterram },
+	{ 0x03800, 0x03bff, gottlieb_videoram_w, &videoram },
+	{ 0x03c00, 0x03fff, gottlieb_videoram_w },	/* mirror address, some games write to it */
+	{ 0x04000, 0x04fff, gottlieb_charram_w, &gottlieb_charram },
 	{ 0x05000, 0x0501f, gottlieb_paletteram_w, &paletteram },
 	{ 0x05800, 0x05800, watchdog_reset_w },
 	{ 0x05801, 0x05801, gottlieb_track_reset_w },
@@ -473,9 +473,9 @@ static MEMORY_WRITE_START( gottlieb_writemem )
 	{ 0x06000, 0x0ffff, MWA_ROM },
 	/* Q*bert Qubes uses the Exxxx address space */
 	{ 0xe0000, 0xe37ff, MWA_BANK2 },
-	{ 0xe3800, 0xe3bff, videoram_w },
-	{ 0xe3c00, 0xe3fff, videoram_w },	/* mirror address, some games write to it */
-	{ 0xe4000, 0xe4fff, gottlieb_characterram_w },
+	{ 0xe3800, 0xe3bff, gottlieb_videoram_w },
+	{ 0xe3c00, 0xe3fff, gottlieb_videoram_w },	/* mirror address, some games write to it */
+	{ 0xe4000, 0xe4fff, gottlieb_charram_w },
 	{ 0xe5000, 0xe501f, gottlieb_paletteram_w },
 	{ 0xe5800, 0xe5800, watchdog_reset_w },
 	{ 0xe5801, 0xe5801, gottlieb_track_reset_w },
@@ -490,9 +490,9 @@ static MEMORY_WRITE_START( usvsthem_writemem )
 	{ 0x01000, 0x01fff, MWA_RAM },	/* ROM in Krull */
 	{ 0x02000, 0x02fff, MWA_RAM },	/* ROM in Krull and 3 Stooges */
 	{ 0x03000, 0x030ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x03800, 0x03bff, videoram_w, &videoram, &videoram_size },
-	{ 0x03c00, 0x03fff, videoram_w },	/* mirror address, some games write to it */
-	{ 0x04000, 0x04fff, gottlieb_characterram_w, &gottlieb_characterram },
+	{ 0x03800, 0x03bff, gottlieb_videoram_w, &videoram },
+	{ 0x03c00, 0x03fff, gottlieb_videoram_w },	/* mirror address, some games write to it */
+	{ 0x04000, 0x04fff, gottlieb_charram_w, &gottlieb_charram },
 	{ 0x05000, 0x0501f, gottlieb_paletteram_w, &paletteram },
 	{ 0x05800, 0x05800, watchdog_reset_w },
 	{ 0x05801, 0x05801, gottlieb_track_reset_w },
@@ -503,9 +503,9 @@ static MEMORY_WRITE_START( usvsthem_writemem )
 	{ 0x06000, 0x0ffff, MWA_ROM },
 	/* Us vs Them uses the Exxxx address space */
 	{ 0xe0000, 0xe37ff, MWA_BANK2 },
-	{ 0xe3800, 0xe3bff, videoram_w },
-	{ 0xe3c00, 0xe3fff, videoram_w },	/* mirror address, some games write to it */
-	{ 0xe4000, 0xe4fff, gottlieb_characterram_w },
+	{ 0xe3800, 0xe3bff, gottlieb_videoram_w },
+	{ 0xe3c00, 0xe3fff, gottlieb_videoram_w },	/* mirror address, some games write to it */
+	{ 0xe4000, 0xe4fff, gottlieb_charram_w },
 	{ 0xe5000, 0xe501f, gottlieb_paletteram_w },
 	{ 0xe5800, 0xe5800, watchdog_reset_w },
 	{ 0xe5801, 0xe5801, gottlieb_track_reset_w },
@@ -538,9 +538,9 @@ static MEMORY_WRITE_START( stooges_writemem )
 	{ 0x01000, 0x01fff, MWA_RAM },
 	{ 0x02000, 0x02fff, MWA_ROM },
 	{ 0x03000, 0x030ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x03800, 0x03bff, videoram_w, &videoram, &videoram_size },
-	{ 0x03c00, 0x03fff, videoram_w },	/* mirror address, some games write to it */
-	{ 0x04000, 0x04fff, gottlieb_characterram_w, &gottlieb_characterram },
+	{ 0x03800, 0x03bff, gottlieb_videoram_w, &videoram },
+	{ 0x03c00, 0x03fff, gottlieb_videoram_w },	/* mirror address, some games write to it */
+	{ 0x04000, 0x04fff, gottlieb_charram_w, &gottlieb_charram },
 	{ 0x05000, 0x0501f, gottlieb_paletteram_w, &paletteram },
 	{ 0x05800, 0x05800, watchdog_reset_w },
 	{ 0x05801, 0x05801, gottlieb_track_reset_w },
@@ -1892,16 +1892,16 @@ static DRIVER_INIT( gottlieb )
 
 
 GAME( 1982, reactor,  0,     reactor,  reactor,  0,        ROT0,   "Gottlieb", "Reactor" )
-GAME( 1983, mplanets, 0,     gottlieb, mplanets, 0,        ROT270, "Gottlieb", "Mad Planets" )
 GAME( 1982, qbert,    0,     qbert,    qbert,    0,        ROT270, "Gottlieb", "Q*bert (US)" )
 GAME( 1982, qbertjp,  qbert, qbert,    qbert,    0,        ROT270, "Gottlieb (Konami license)", "Q*bert (Japan)" )
 GAME( 1982, myqbert,  qbert, qbert,    qbert,    0,        ROT270, "Gottlieb", "Mello Yello Q*bert" )
 GAMEX(1982, insector, 0,     gottlieb, insector, 0,        ROT0,   "Gottlieb", "Insector (prototype)", GAME_NO_SOUND )
+GAME( 1983, mplanets, 0,     gottlieb, mplanets, 0,        ROT270, "Gottlieb", "Mad Planets" )
 GAME( 1983, krull,    0,     krull,    krull,    0,        ROT270, "Gottlieb", "Krull" )
 GAME( 1983, sqbert,   0,     qbert,    qbert,    0,        ROT270, "Mylstar", "Faster, Harder, More Challenging Q*bert (prototype)" )
 GAMEX(1983, mach3,    0,     mach3,    mach3,    gottlieb, ROT0,   "Mylstar", "M.A.C.H. 3", GAME_NOT_WORKING )
-GAMEX(19??, usvsthem, 0,     usvsthem, usvsthem, gottlieb, ROT0,   "Mylstar", "Us vs. Them", GAME_NOT_WORKING )
-GAMEX(1984, 3stooges, 0,     stooges,  3stooges, gottlieb, ROT0,   "Mylstar", "The Three Stooges In Brides Is Brides", GAME_IMPERFECT_SOUND )
 GAME( 1983, qbertqub, 0,     qbert,    qbertqub, 0,        ROT270, "Mylstar", "Q*bert's Qubes" )
 GAME( 1983, screwloo, 0,     gottlieb2,screwloo, gottlieb, ROT0,   "Mylstar", "Screw Loose (prototype)" )
 GAME( 1984, curvebal, 0,     gottlieb, curvebal, 0,        ROT270, "Mylstar", "Curve Ball" )
+GAMEX(1984, usvsthem, 0,     usvsthem, usvsthem, gottlieb, ROT0,   "Mylstar", "Us vs. Them", GAME_NOT_WORKING )
+GAMEX(1984, 3stooges, 0,     stooges,  3stooges, gottlieb, ROT0,   "Mylstar", "The Three Stooges In Brides Is Brides", GAME_IMPERFECT_SOUND )

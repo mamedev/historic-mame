@@ -146,7 +146,7 @@ Notes:
   the two are exchangeable and 052109's are found also on original boards whose
   schematics show a 051961.
 
-- Starting with the version 2 System GX mainboard, the following chip substitutions took place.  
+- Starting with the version 2 System GX mainboard, the following chip substitutions took place.
   All "new" chips are equivalent to their older counterparts, but are in a smaller package (and
   presumably are made on a smaller process).  The exception is the 058141, which is equivalent
   to 2 54539s (and yet takes less board space than even 1).
@@ -1988,6 +1988,7 @@ int K052109_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 	K052109_gfxnum = gfx_index;
 	K052109_callback = callback;
 	K052109_RMRD_line = CLEAR_LINE;
+	K052109_irq_enabled = 0;
 
 	has_extra_video_ram = 0;
 
@@ -2093,12 +2094,12 @@ WRITE_HANDLER( K052109_w )
 		{	/* A x scroll */	}
 		else if (offset == 0x1c80)
 		{
-if (K052109_scrollctrl != data)
-{
+			if (K052109_scrollctrl != data)
+			{
 //usrintf_showmessage("scrollcontrol = %02x",data);
 //logerror("%04x: rowscrollcontrol = %02x\n",activecpu_get_pc(),data);
-			K052109_scrollctrl = data;
-}
+				K052109_scrollctrl = data;
+			}
 		}
 		else if (offset == 0x1d00)
 		{
@@ -3289,7 +3290,7 @@ if (keyboard_pressed(KEYCODE_D))
 /*                                                                         */
 /***************************************************************************/
 
-static int K053247_memory_region, K053247_dx, K053247_dy, K053247_wraparound;
+static int K053247_memory_region, K053247_dx, K053247_dy, K053247_wraparound, K053247_z_rejection;
 static data8_t  K053246_regs[8];
 static data16_t K053247_regs[16];
 static data16_t *K053247_ram=0;
@@ -3370,8 +3371,16 @@ int K053247_vh_start(int gfx_memory_region, int dx, int dy, int plane0,int plane
 	}
 
 #if VERBOSE
-	if (!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
-		usrintf_showmessage("driver should use VIDEO_HAS_SHADOWS");
+	if (Machine->color_depth == 32)
+	{
+		if ((Machine->drv->video_attributes & (VIDEO_HAS_SHADOWS|VIDEO_HAS_HIGHLIGHTS)) != VIDEO_HAS_SHADOWS+VIDEO_HAS_HIGHLIGHTS)
+			usrintf_showmessage("driver missing SHADOWS or HIGHLIGHTS flag");
+	}
+	else
+	{
+		if (!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
+			usrintf_showmessage("driver should use VIDEO_HAS_SHADOWS");
+	}
 #endif
 
 	/* prepare shadow draw table */
@@ -3383,6 +3392,7 @@ int K053247_vh_start(int gfx_memory_region, int dx, int dy, int plane0,int plane
 	K053247_dx = dx;
 	K053247_dy = dy;
 	K053247_wraparound = 1;
+	K053247_z_rejection = -1;
 	K053247_memory_region = gfx_memory_region;
 	K053247_gfx = Machine->gfx[gfx_index];
 	K053247_callback = callback;
@@ -3468,7 +3478,7 @@ int K055673_vh_start(int gfx_memory_region, int layout, int dx, int dy, void (*c
 		size4 *= 4*1024*1024;
 		/* set the # of tiles based on the 4bpp section */
 		spritelayout.total = size4 / 128;
-		K055673_rom = (data16_t *)auto_malloc(size4 * 5);
+		if (!(K055673_rom = (data16_t *)auto_malloc(size4 * 5))) return 1;
 		d = (data8_t *)K055673_rom;
 		// now combine the graphics together to form 5bpp
 		s1 = memory_region(gfx_memory_region); // 4bpp area
@@ -3609,7 +3619,7 @@ WRITE_HANDLER( K053247_w )
 {
 	int offs = offset >> 1;
 
-	if(offset & 1)
+	if (offset & 1)
 		K053247_ram[offs] = (K053247_ram[offs] & 0xff00) | data;
 	else
 		K053247_ram[offs] = (K053247_ram[offs] & 0x00ff) | (data<<8);
@@ -3677,24 +3687,24 @@ READ16_HANDLER( K055673_GX6bpp_rom_word_r )
 
 	switch (offset)
 	{
-		case 0:	
+		case 0:
 			return ROM[romofs+3];
 			break;
-		case 1:	
+		case 1:
 			return ROM[romofs+4];
 			break;
-		case 2: 
-		case 3: 
+		case 2:
+		case 3:
 		       	return ROM[romofs+5];
 			break;
-		case 4:	
+		case 4:
 			return ROM[romofs];
 			break;
-		case 5:	
+		case 5:
 			return ROM[romofs+1];
 			break;
-		case 6:	
-		case 7:	
+		case 6:
+		case 7:
 		       	return ROM[romofs+2];
 			break;
 		default:
@@ -3768,8 +3778,23 @@ void K053246_set_OBJCHA_line(int state)
 
 int K053246_is_IRQ_enabled(void)
 {
-	//AT: This bit enables obj DMA rather than obj IRQ even though the two functions usually coincide.
+	//* This bit enables obj DMA rather than obj IRQ even though the two functions usually coincide.
 	return K053246_regs[5] & 0x10;
+}
+
+/*
+	In a K053247+K055555 setup objects with Z-code 0x00 should be ignored when PRFLIP is cleared,
+	while objects with Z-code 0xff should be ignored when PRFLIP is set. These behaviors may also
+	apply to the K053246+K053251 combo - Bucky 'O Hare and The Simpsons rely heavily on their
+	subsequent implications to prepare and retire sprites. The issue was not apparent because
+	its nature was largely concealed by the old sort method.
+
+	Z-code rejection has been made configurable by K053247_set_z_rejection() at VIDEO_START().
+	Parameter: -1=accept all(default), 0x00-0xff=zcode to ignore
+*/
+void K053247_set_z_rejection(int zcode)
+{
+	K053247_z_rejection = zcode;
 }
 
 /*
@@ -3804,59 +3829,113 @@ int K053246_is_IRQ_enabled(void)
 void K053247_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 #define NUM_SPRITES 256
-	int offs,pri_code;
+
+	/* sprites can be grouped up to 8x8. The draw order is
+		 0  1  4  5 16 17 20 21
+		 2  3  6  7 18 19 22 23
+		 8  9 12 13 24 25 28 29
+		10 11 14 15 26 27 30 31
+		32 33 36 37 48 49 52 53
+		34 35 38 39 50 51 54 55
+		40 41 44 45 56 57 60 61
+		42 43 46 47 58 59 62 63
+	*/
+	static int xoffset[8] = { 0, 1, 4, 5, 16, 17, 20, 21 };
+	static int yoffset[8] = { 0, 2, 8, 10, 32, 34, 40, 42 };
+
 	int sortedlist[NUM_SPRITES];
+	int offs,zcode;
+	int ox,oy,color,code,size,w,h,x,y,xa,ya,flipx,flipy,mirrorx,mirrory,shadow,zoomx,zoomy,primask;
+	int shdmask,nozoom,count,temp;
 
 	int flipscreenx = K053246_regs[5] & 0x01;
 	int flipscreeny = K053246_regs[5] & 0x02;
 	int offx = (short)((K053246_regs[0] << 8) | K053246_regs[1]);
 	int offy = (short)((K053246_regs[2] << 8) | K053246_regs[3]);
 
-	int ox,oy,color,code,size,w,h,x,y,xa,ya,flipx,flipy,mirrorx,mirrory,shadow,zoomx,zoomy,pri;
-	int nozoom, solidpens, temp;
-
-	solidpens = K053247_gfx->color_granularity - 1;
+	int solidpens = K053247_gfx->color_granularity - 1;
+	int screen_width = Machine->drv->screen_width;
 
 	/*
-		AT: This is not the correct sort method. Multiple objects can share the same Z and
-		priority value and should still be drawn and prioritized by their memory locations.
-		Fortunately it does little harm to the older games as long as they behave and add
-		the sprites in order.
+		safeguard older drivers missing any of the following video attributes:
+
+		VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS
 	*/
-	// Prebuild a sorted table
-	for (offs = 0;offs < NUM_SPRITES;offs++) sortedlist[offs] = -1;
-	for (offs = 0;offs < 0x800;offs += 8)
+	if (Machine->drv->video_attributes & VIDEO_HAS_SHADOWS)
 	{
-		if (K053247_ram[offs] & 0x8000)
+		if (Machine->color_depth == 32 && (Machine->drv->video_attributes & VIDEO_HAS_HIGHLIGHTS))
+			shdmask = 3; // enable all shadows and highlights
+		else
+			shdmask = 0; // enable default shadows
+	}
+	else
+		shdmask = -1; // disable everything
+
+	/*
+		The K053247 does not draw pixels on top of those with equal or smaller Z-values
+		regardless of priority. Embedded shadows inherit Z-values from their host sprites
+		but do not assume host priorities unless explicitly told. In other words shadows
+		can have priorities different from that of normal pens in the same sprite,
+		in addition to the ability of masking themselves from specific layers or pixels
+		on the other sprites.
+
+		In front-to-back rendering, sprites cannot sandwich between alpha blended layers
+		or the draw code will have to figure out the percentage opacities of what is on
+		top and beneath each sprite pixel and blend the target accordingly. The process
+		is overly demanding for realtime software and is thus another shortcoming of
+		pdrawgfx and pixel based mixers. Even mahjong games with straight forward video
+		subsystems are feeling the impact by which the girls cannot appear under
+		translucent dialogue boxes.
+
+		These are a small part of the K053247's feature set but many games expect them
+		to be the minimum compliances. The specification will undoubtedly require
+		redesigning the priority system from the ground up. Drawgfx.c and tilemap.c must
+		also undergo heavy facelifts but in the end the changes could hurt simpler games
+		more than they help complex systems; therefore the new engine should remain
+		completely stand alone and self-contained. Implementation details are being
+		hammered down but too early to make propositions.
+	*/
+
+	// Prebuild a sorted table by descending Z-order.
+	zcode = K053247_z_rejection;
+	offs = count = 0;
+
+	if (zcode == -1)
+	{
+		for (; offs<0x800; offs+=8)
+			if (K053247_ram[offs] & 0x8000) sortedlist[count++] = offs;
+	}
+	else
+	{
+		for (; offs<0x800; offs+=8)
+			if (K053247_ram[offs] & 0x8000 && (K053247_ram[offs] & 0xff) != zcode) sortedlist[count++] = offs;
+	}
+
+	w = count;
+	count--;
+	h = count;
+
+	for (y=0; y<h; y++)
+	{
+		offs = sortedlist[y];
+		zcode = K053247_ram[offs] & 0xff;
+		for (x=y+1; x<w; x++)
 		{
-			sortedlist[K053247_ram[offs] & 0x00ff] = offs;
+			temp = sortedlist[x];
+			code = K053247_ram[temp] & 0xff;
+			if (zcode <= code) { zcode = code; sortedlist[x] = offs; sortedlist[y] = offs = temp; }
 		}
 	}
 
-	for (pri_code = 0;pri_code < NUM_SPRITES;pri_code++)
+	for (; count>=0; count--)
 	{
-		/* sprites can be grouped up to 8x8. The draw order is
-			 0  1  4  5 16 17 20 21
-			 2  3  6  7 18 19 22 23
-			 8  9 12 13 24 25 28 29
-			10 11 14 15 26 27 30 31
-			32 33 36 37 48 49 52 53
-			34 35 38 39 50 51 54 55
-			40 41 44 45 56 57 60 61
-			42 43 46 47 58 59 62 63
-		*/
-		static int xoffset[8] = { 0, 1, 4, 5, 16, 17, 20, 21 };
-		static int yoffset[8] = { 0, 2, 8, 10, 32, 34, 40, 42 };
-
-
-		offs = sortedlist[pri_code];
-		if (offs == -1) continue;
+		offs = sortedlist[count];
 
 		code = K053247_ram[offs+1];
 		shadow = color = K053247_ram[offs+6];
-		pri = 0;
+		primask = 0;
 
-		(*K053247_callback)(&code,&color,&pri);
+		(*K053247_callback)(&code,&color,&primask);
 
 		temp = K053247_ram[offs];
 
@@ -3910,32 +3989,27 @@ void K053247_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 		if (mirrorx) flipx = 0; // only applies to x mirror, proven
 		mirrory = shadow & 0x8000;
 
-		if (color >= 0)
+		if (color == -1)
 		{
-			if (shadow &= 0x0c00)
-			{
-				if (1)//(shadow != 0x400 || K053246_read_register(5) & 0x20)
-				{
-					palette_set_shadow_mode((shadow>>10) - 1);
-				}
-				else
-				{
-					// drop the entire sprite to shadow if its shadow code is 1 and SD0EN is off (see p.48)
-					// true for Xexex/MW/GX but not sure about the older games
-					shadow = -1;
-					for (temp=1; temp<solidpens; temp++) gfx_drawmode_table[temp] = DRAWMODE_SHADOW;
-					palette_set_shadow_mode(0);
-				}
-			}
-		}
-		else if (color == -1)
-		{
-			// draw full shadow unconditionally
+			// drop the entire sprite to shadow unconditionally
+			if (shdmask < 0) continue;
 			color = 0;
 			shadow = -1;
 			for (temp=1; temp<solidpens; temp++) gfx_drawmode_table[temp] = DRAWMODE_SHADOW;
-			palette_set_shadow_mode(3);
+			palette_set_shadow_mode(0);
 		}
+		else
+		{
+			if (shdmask >= 0)
+			{
+				shadow = (color & K053247_CUSTOMSHADOW) ? (color>>K053247_SHDSHIFT) : (shadow>>10);
+				if (shadow &= 3) palette_set_shadow_mode((shadow-1) & shdmask);
+			}
+			else
+				shadow = 0;
+		}
+
+		color &= 0xffff; // strip attribute flags
 
 
 // ************************************************************************************
@@ -3953,7 +4027,7 @@ void K053247_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 			ox = (ox >> 1) + 1;	// Fix sprite draw position
 
 			if (flipscreenx)
-				ox = ox + Machine->drv->screen_width;
+				ox = ox + screen_width;
 		}
 
 
@@ -4052,7 +4126,7 @@ void K053247_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 							color,
 							fx,fy,
 							sx,sy,
-							cliprect,shadow ? TRANSPARENCY_PEN_TABLE : TRANSPARENCY_PEN,0,pri);
+							cliprect,shadow ? TRANSPARENCY_PEN_TABLE : TRANSPARENCY_PEN,0,primask);
 				}
 				else
 				{
@@ -4062,7 +4136,7 @@ void K053247_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 							fx,fy,
 							sx,sy,
 							cliprect,shadow ? TRANSPARENCY_PEN_TABLE : TRANSPARENCY_PEN,0,
-							(zw << 16) >> 4,(zh << 16) >> 4,pri);
+							(zw << 16) >> 4,(zh << 16) >> 4,primask);
 				}
 
 				if (mirrory && h == 1)  /* Simpsons shadows */
@@ -4074,7 +4148,7 @@ void K053247_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 								color,
 								fx,!fy,
 								sx,sy,
-								cliprect,shadow ? TRANSPARENCY_PEN_TABLE : TRANSPARENCY_PEN,0,pri);
+								cliprect,shadow ? TRANSPARENCY_PEN_TABLE : TRANSPARENCY_PEN,0,primask);
 					}
 					else
 					{
@@ -4084,7 +4158,7 @@ void K053247_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 								fx,!fy,
 								sx,sy,
 								cliprect,shadow ? TRANSPARENCY_PEN_TABLE : TRANSPARENCY_PEN,0,
-								(zw << 16) >> 4,(zh << 16) >> 4,pri);
+								(zw << 16) >> 4,(zh << 16) >> 4,primask);
 					}
 				}
 			} // end of X loop
@@ -5390,7 +5464,7 @@ static struct tilemap *K056832_tilemap[K056832_PAGE_COUNT];
 static int K056832_LayerAssociatedWithPage[K056832_PAGE_COUNT];
 static int K056832_LayerOffset[4][2];
 static int K056832_LSRAMPage[4][2];
-static int K056832_LayerAssociation;
+static int K056832_DefaultLayerAssociation, K056832_LayerAssociation;
 static int K056832_ActiveLayer;
 static int K056832_SelectedPage;
 static int K056832_SelectedPagex4096;
@@ -5450,7 +5524,7 @@ static void K056832_UpdatePageLayout(void)
 	int layer,i,r,c;
 
 	// disable association if any layer grabs the entire field map (happens in Twinbee and Dadandarn)
-	K056832_LayerAssociation = 1;
+	K056832_LayerAssociation = K056832_DefaultLayerAssociation;
 
 	for (layer=0; layer<4; layer++)
 	{
@@ -5583,6 +5657,7 @@ static void K056832_change_rombank(void)
 	K056832_CurGfxBank = bank % K056832_NumGfxBanks;
 }
 
+// todo: initialize tilemap_set_scrolldx() and tilemap_set_scrolldy()
 int K056832_vh_start(int gfx_memory_region, int bpp, int big, int (*scrolld)[4][2], void (*callback)(int, int *, int *))
 {
 	int gfx_index;
@@ -5698,6 +5773,7 @@ int K056832_vh_start(int gfx_memory_region, int bpp, int big, int (*scrolld)[4][
 	K056832_NumGfxBanks = memory_region_length(gfx_memory_region)/0x2000;
 	K056832_CurGfxBank = 0;
 	K056832_bUsesTileBanks = 0;
+	K056832_DefaultLayerAssociation = 1;
 	K056832_LayerAssociation = 0;
 	K056832_ActiveLayer = 0;
 	K056832_UpdateMode = 0;
@@ -5744,6 +5820,12 @@ int K056832_vh_start(int gfx_memory_region, int bpp, int big, int (*scrolld)[4][
 	state_save_register_UINT16("K056832", 0, "memory",      K056832_videoram, 0x10000);
 	state_save_register_UINT16("K056832", 0, "registers",   K056832_regs,     0x20);
 	state_save_register_UINT16("K056832", 0, "registers b", K056832_regsb,    0x4);
+	state_save_register_INT32 ("K056832", 0, "layerstat1",  K056832_X,        0x4);
+	state_save_register_INT32 ("K056832", 0, "layerstat2",  K056832_Y,        0x4);
+	state_save_register_INT32 ("K056832", 0, "layerstat3",  K056832_W,        0x4);
+	state_save_register_INT32 ("K056832", 0, "layerstat4",  K056832_H,        0x4);
+	state_save_register_INT32 ("K056832", 0, "layerstat5",  K056832_dx,       0x4);
+	state_save_register_INT32 ("K056832", 0, "layerstat6",  K056832_dy,       0x4);
 
 	state_save_register_func_postload(K056832_UpdatePageLayout);
 	state_save_register_func_postload(K056832_change_rambank);
@@ -5784,7 +5866,7 @@ static int K056832_rom_read_b(int offset, int blksize, int blksize2, int zerosec
 		K056832_rom_half = 1;
 	}
 
-	return ret;	
+	return ret;
 }
 
 READ16_HANDLER( K056832_5bpp_rom_word_r )
@@ -6079,7 +6161,7 @@ WRITE32_HANDLER( K056832_b_long_w )
 
 void K056832_set_LayerAssociation(int status)
 {
-	K056832_LayerAssociation = status;
+	K056832_DefaultLayerAssociation = status;
 }
 
 int K056832_get_LayerAssociation(void)
@@ -6187,7 +6269,7 @@ void K056832_tilemap_draw(struct mame_bitmap *bitmap, const struct rectangle *cl
 	if (flipy) sdat_adv = -sdat_adv;
 
 	last_active = K056832_ActiveLayer;
-	new_colorbase = K055555_get_palette_index(layer);
+	new_colorbase = (K056832_UpdateMode) ? K055555_get_palette_index(layer) : 0;
 
   for (r=0; r<rowspan; r++)
   {
@@ -6255,9 +6337,12 @@ void K056832_tilemap_draw(struct mame_bitmap *bitmap, const struct rectangle *cl
 		if (!flipy)
 			sdat_start = dy;
 		else
-			// AT: doesn't work with Y-flipped games, eg. Metamorphic Force and Martial Champion,
-			// although it looks more correct having -dy.
-//			sdat_start = K056832_PAGE_HEIGHT-1 -dy;
+			/*
+				doesn't work with Metamorphic Force and Martial Champion (software Y-flipped) but
+				LE2U (naturally Y-flipped) seems to expect this condition as an override.
+
+				sdat_start = K056832_PAGE_HEIGHT-1 -dy;
+			*/
 			sdat_start = K056832_PAGE_HEIGHT-1;
 
 		if (scrollmode == 2) { sdat_start &= ~7; line_starty -= dy & 7; }
@@ -6500,18 +6585,15 @@ static data16_t k54338_regs[32];
 static int K054338_shdRGB[9];
 static int K054338_alphainverted;
 
-void K054338_export_config(int **shdRGB)
-{
-	*shdRGB = K054338_shdRGB;
-}
 
 // K054338 alpha blend / final mixer (normally used with the 55555)
 // because the implementation is vidhrdw dependant, this is just a
 // register-handling shell.
 int K054338_vh_start(void)
 {
+	memset(k54338_regs, 0, sizeof(data16_t)*32);
 	memset(K054338_shdRGB, 0, sizeof(int)*9);
-	K054338_alphainverted = 0;
+	K054338_alphainverted = 1;
 
 	state_save_register_UINT16("K054338", 0, "registers", k54338_regs, 32);
 
@@ -6534,6 +6616,23 @@ WRITE32_HANDLER( K054338_long_w )
 int K054338_read_register(int reg)
 {
 	return k54338_regs[reg];
+}
+
+void K054338_update_all_shadows(void)
+{
+	int i, d;
+	int noclip = k54338_regs[K338_REG_CONTROL] & K338_CTL_CLIPSL;
+
+	for (i=0; i<9; i++)
+	{
+		d = k54338_regs[K338_REG_SHAD1R+i] & 0x1ff;
+		if (d >= 0x100) d -= 0x200;
+		K054338_shdRGB[i] = d;
+	}
+
+	palette_set_shadow_dRGB32(0, K054338_shdRGB[0], K054338_shdRGB[1], K054338_shdRGB[2], noclip);
+	palette_set_shadow_dRGB32(1, K054338_shdRGB[3], K054338_shdRGB[4], K054338_shdRGB[5], noclip);
+	palette_set_shadow_dRGB32(2, K054338_shdRGB[6], K054338_shdRGB[7], K054338_shdRGB[8], noclip);
 }
 
 // K054338 BG color fill
@@ -6637,54 +6736,46 @@ void K054338_fill_backcolor(struct mame_bitmap *bitmap, int mode) // (see p.67)
 	}
 }
 
-void K054338_update_all_shadows(void)
-{
-	int i, d;
-	int noclip = k54338_regs[K338_REG_CONTROL] & K338_CTL_CLIPSL;
-
-	for (i=0; i<9; i++)
-	{
-		d = k54338_regs[K338_REG_SHAD1R+i] & 0x1ff;
-		if (d >= 0x100) d -= 0x200;
-		K054338_shdRGB[i] = d;
-	}
-
-	palette_set_shadow_dRGB32(0, K054338_shdRGB[0], K054338_shdRGB[1], K054338_shdRGB[2], noclip);
-	palette_set_shadow_dRGB32(1, K054338_shdRGB[3], K054338_shdRGB[4], K054338_shdRGB[5], noclip);
-	palette_set_shadow_dRGB32(2, K054338_shdRGB[6], K054338_shdRGB[7], K054338_shdRGB[8], noclip);
-}
-
 // addition blending unimplemented (requires major changes to drawgfx and tilemap.c)
 int K054338_set_alpha_level(int pblend)
 {
-	int mixset, mixlv, mixpri;
+	data16_t *regs;
+	int ctrl, mixpri, mixset, mixlv;
 
-	if (pblend <= 0 || pblend > 3) return(255);
+	if (pblend <= 0 || pblend > 3)
+	{
+		alpha_set_level(255);
+		return(255);
+	}
 
-	mixset = k54338_regs[K338_REG_PBLEND + (pblend>>1 & 1)] >> (~pblend<<3 & 8);
+	regs   = k54338_regs;
+	ctrl   = k54338_regs[K338_REG_CONTROL];
+	mixpri = ctrl & K338_CTL_MIXPRI;
+	mixset = regs[K338_REG_PBLEND + (pblend>>1 & 1)] >> (~pblend<<3 & 8);
 	mixlv  = mixset & 0x1f;
+
 	if (K054338_alphainverted) mixlv = 0x1f - mixlv;
-	mixlv = mixlv<<3 | mixlv>>2;
 
 	if (!(mixset & 0x20))
 	{
-		alpha_set_level(mixlv); // source x alpha + target x (255-alpha)
+		mixlv = mixlv<<3 | mixlv>>2;
+		alpha_set_level(mixlv); // source x alpha/255  +  target x (255-alpha)/255
     }
 	else
 	{
-		mixpri = k54338_regs[K338_REG_CONTROL] & K338_CTL_MIXPRI;
-
 		if (!mixpri)
 		{
-			// source x alpha + target (clipped at 0xff)
+			// source x alpha  +  target (clipped at 255)
 		}
 		else
 		{
-			// source + target x alpha (clipped at 0xff)
+			// source  +  target x alpha (clipped at 255)
 		}
 
 		//* DUMMY
-		if (mixlv && mixlv<0xff) mixlv = 0x7f; alpha_set_level(mixlv);
+		if (mixlv && mixlv<0x1f) mixlv = 0x10;
+		mixlv = mixlv<<3 | mixlv>>2;
+		alpha_set_level(mixlv);
 
 		#if VERBOSE
 			usrintf_showmessage("MIXSET%1d %s addition mode: %02x",pblend,(mixpri)?"dst":"src",mixset&0x1f);
@@ -6697,6 +6788,11 @@ int K054338_set_alpha_level(int pblend)
 void K054338_invert_alpha(int invert)
 {
 	K054338_alphainverted = invert;
+}
+
+void K054338_export_config(int **shdRGB)
+{
+	*shdRGB = K054338_shdRGB;
 }
 
 
@@ -6863,7 +6959,7 @@ READ16_HANDLER( K053250_1_rom_r )
 
 #if 0
 
-//* old code (for reference only)
+//* old code (for reference; do not remove)
 #define ADJUST_FOR_ORIENTATION(type, orientation, bitmapi, bitmapp, x, y)	\
 	int dy = ((type *)bitmap->line[1]) - ((type *)bitmap->line[0]);			\
 	int dyp = ((UINT8 *)bitmapp->line[1]) - ((UINT8 *)bitmapp->line[0]);	\
@@ -7281,11 +7377,12 @@ INLINE void K053250_pdraw_scanline32(struct mame_bitmap *bitmap, pen_t *palette,
 
 	UINT32 src_wrapmask;
 	UINT8  *src_base;
+	int src_x;
+	int src_fx, src_fdx;
 	int pix_data, dst_offset;
 	pen_t  *pal_base;
 	UINT8  *pri_base;
 	UINT32 *dst_base;
-	int src_fx, src_fdx;
 	int dst_adv;
 	UINT8 pri;
 
@@ -7386,10 +7483,12 @@ INLINE void K053250_pdraw_scanline32(struct mame_bitmap *bitmap, pen_t *palette,
 		dst_base = (UINT32 *)bitmap->line[dst_start] + linepos + dst_offset;
 	}
 
+	// generalized
 	src_base = source;
+	src_x = 0;
 
 	// there is no need to wrap source offsets along with source clipping
-	// so we set all bits of the clipmask to one
+	// so we set all bits of the wrapmask to one
 	src_wrapmask = (clipmask) ? ~0 : wrapmask;
 
 	pal_base = palette;
@@ -7504,7 +7603,7 @@ void K053250_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, 
 				flags |= K053250_WRAP500;
 			break;
 //			case 2 : // Xexex: title
-//			case 7 : // Xexex: L4 orgainc stage
+//			case 7 : // Xexex: L4 organic stage
 			default:
 
 				// crop source offset between zero and one thousand and eleven inclusive,
@@ -7518,8 +7617,8 @@ void K053250_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, 
 
 		if (!(orientation & ORIENTATION_SWAP_XY))	// normal orientaion with no X Y switching
 		{
-			line_start = dst_miny;			// the first scanline starts at the minimum X clip location
-			line_end   = dst_maxy;			// the last scanline ends at the maximum X clip location
+			line_start = dst_miny;			// the first scanline starts at the minimum Y clip location
+			line_end   = dst_maxy;			// the last scanline ends at the maximum Y clip location
 			scroll_corr = map_scrollx;		// concentrate global X scroll
 			linedata_offs = map_scrolly;	// determine where to get info for the first line
 
@@ -7539,8 +7638,8 @@ void K053250_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, 
 		}
 		else  // orientaion with X and Y parameters switched
 		{
-			line_start = dst_minx;			// the first scanline starts at the minimum Y clip location
-			line_end   = dst_maxx;			// the last scanline ends at the maximum Y clip location
+			line_start = dst_minx;			// the first scanline starts at the minimum X clip location
+			line_end   = dst_maxx;			// the last scanline ends at the maximum X clip location
 			scroll_corr = map_scrolly;		// concentrate global Y scroll
 			linedata_offs = map_scrollx;	// determine where to get info for the first line
 
@@ -7687,6 +7786,7 @@ READ16_HANDLER( K056832_b_word_r ) { return(K056832_regsb[offset]); }	// VSCCS (
 READ16_HANDLER( K053246_reg_word_r ) { return(K053246_regs[offset*2]<<8|K053246_regs[offset*2+1]); } // OBJSET1
 READ16_HANDLER( K053247_reg_word_r ) { return(K053247_regs[offset]); }	// OBJSET2
 READ16_HANDLER( K054338_word_r ) { return(k54338_regs[offset]); }		// CLTC
+READ16_HANDLER( K053251_lsb_r ) { return(K053251_ram[offset]); }		// PCU1
 READ16_HANDLER( K053251_msb_r ) { return(K053251_ram[offset]<<8); }		// PCU1
 READ16_HANDLER( K055555_word_r ) { return(k55555_regs[offset]<<8); }	// PCU2
 

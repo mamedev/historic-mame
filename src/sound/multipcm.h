@@ -3,9 +3,10 @@
 
 #define MAX_MULTIPCM	(2)	// max # of multipcm chips
 
-// banking types
-#define MULTIPCM_MODE_MODEL1	(0)
-#define MULTIPCM_MODE_MULTI32	(1)
+// banking types (done via an external PAL, so can vary per game)
+#define MULTIPCM_MODE_MODEL1	(0)	// Model 1 banking method
+#define MULTIPCM_MODE_MULTI32	(1)	// Multi32 banking method
+#define MULTIPCM_MODE_STADCROSS (2)	// Stadium Cross banking method
 
 #ifndef VOL_YM3012
 #define YM3012_VOL(LVol,LPan,RVol,RPan) (MIXER(LVol,LPan)|(MIXER(RVol,RPan) << 16))

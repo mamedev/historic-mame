@@ -51,17 +51,18 @@ The 6809 NMI is used for sound timing.
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
 
+extern int nmi_enable;
 
-PALETTE_INIT( yiear );
-VIDEO_UPDATE( yiear );
-WRITE_HANDLER( yiear_videoram_w );
-WRITE_HANDLER( yiear_control_w );
-INTERRUPT_GEN( yiear_nmi_interrupt );
+extern WRITE_HANDLER( yiear_videoram_w );
+extern WRITE_HANDLER( yiear_control_w );
+
+extern PALETTE_INIT( yiear );
+extern VIDEO_START( yiear );
+extern VIDEO_UPDATE( yiear );
 
 /* in sndhrdw/trackfld.c */
-WRITE_HANDLER( konami_SN76496_latch_w );
-WRITE_HANDLER( konami_SN76496_0_w );
-
+extern WRITE_HANDLER( konami_SN76496_latch_w );
+extern WRITE_HANDLER( konami_SN76496_0_w );
 
 
 static READ_HANDLER( yiear_speech_r )
@@ -75,6 +76,12 @@ static WRITE_HANDLER( yiear_VLM5030_control_w )
 	/* bit 0 is latch direction */
 	VLM5030_ST( ( data >> 1 ) & 1 );
 	VLM5030_RST( ( data >> 2 ) & 1 );
+}
+
+INTERRUPT_GEN( yiear_nmi_interrupt )
+{
+	/* can't use nmi_line_pulse() because interrupt_enable_w() effects it */
+	if (nmi_enable) cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 }
 
 
@@ -101,7 +108,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x5030, 0x53ff, MWA_RAM },
 	{ 0x5400, 0x542f, MWA_RAM, &spriteram_2 },
 	{ 0x5430, 0x57ff, MWA_RAM },
-	{ 0x5800, 0x5fff, videoram_w, &videoram, &videoram_size },
+	{ 0x5800, 0x5fff, yiear_videoram_w, &videoram },
 	{ 0x8000, 0xffff, MWA_ROM },
 MEMORY_END
 
@@ -111,7 +118,7 @@ INPUT_PORTS_START( yiear )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -155,9 +162,7 @@ INPUT_PORTS_START( yiear )
 	PORT_DIPSETTING(    0x10, "Normal" )
 	PORT_DIPSETTING(    0x20, "Difficult" )
 	PORT_DIPSETTING(    0x00, "Very Difficult" )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -166,14 +171,11 @@ INPUT_PORTS_START( yiear )
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, "Number of Controllers" )
-	PORT_DIPSETTING(    0x02, "1" )
-	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPNAME( 0x02, 0x02, "Upright Controls" )
+	PORT_DIPSETTING(    0x02, "Single" )
+	PORT_DIPSETTING(    0x00, "Dual" )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0xf8, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW2 */
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
@@ -284,7 +286,7 @@ static MACHINE_DRIVER_START( yiear )
 	MDRV_COLORTABLE_LENGTH(32)
 
 	MDRV_PALETTE_INIT(yiear)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(yiear)
 	MDRV_VIDEO_UPDATE(yiear)
 
 	/* sound hardware */

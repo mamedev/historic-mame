@@ -32,9 +32,22 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "dominos.h"
 
+extern READ_HANDLER( dominos_port_r );
+extern READ_HANDLER( dominos_sync_r );
+extern WRITE_HANDLER( dominos_attract_w );
+extern WRITE_HANDLER( dominos_tumble_w );
+extern WRITE_HANDLER( dominos_lamp2_w );
+extern WRITE_HANDLER( dominos_lamp1_w );
 
+extern void dominos_ac_signal_flip(int dummy);
+
+extern UINT8 *dominos_sound_ram;
+
+extern WRITE_HANDLER( dominos_videoram_w );
+
+extern VIDEO_START( dominos );
+extern VIDEO_UPDATE( dominos );
 
 /*************************************
  *
@@ -93,7 +106,7 @@ static MEMORY_WRITE_START( writemem )
 // Not quite sure where the sound ram variables are.
 // The schematics seem the same as sprint2, but those locations do not sound right.
 	{ 0x0014, 0x0016, MWA_RAM, &dominos_sound_ram }, /* WRAM */
-	{ 0x0400, 0x07ff, videoram_w, &videoram, &videoram_size }, /* DISPLAY */
+	{ 0x0400, 0x07ff, dominos_videoram_w, &videoram }, /* DISPLAY */
 	{ 0x0c00, 0x0c0f, dominos_attract_w }, /* ATTRACT */
 	{ 0x0c10, 0x0c1f, dominos_tumble_w }, /* TUMBLE */
 	{ 0x0c30, 0x0c3f, dominos_lamp2_w }, /* LAMP2 */
@@ -264,7 +277,7 @@ static MACHINE_DRIVER_START( dominos )
 	MDRV_COLORTABLE_LENGTH(sizeof(colortable_source) / sizeof(colortable_source[0]))
 	
 	MDRV_PALETTE_INIT(dominos)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(dominos)
 	MDRV_VIDEO_UPDATE(dominos)
 
 	/* sound hardware */

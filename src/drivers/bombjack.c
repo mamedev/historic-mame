@@ -71,12 +71,13 @@ NMI interrupts for music timing
 #include "state.h"
 
 
+extern WRITE_HANDLER( bombjack_videoram_w );
+extern WRITE_HANDLER( bombjack_colorram_w );
+extern WRITE_HANDLER( bombjack_background_w );
+extern WRITE_HANDLER( bombjack_flipscreen_w );
 
-WRITE_HANDLER( bombjack_background_w );
-WRITE_HANDLER( bombjack_flipscreen_w );
-VIDEO_UPDATE( bombjack );
-VIDEO_START( bombjack );
-
+extern VIDEO_START( bombjack );
+extern VIDEO_UPDATE( bombjack );
 
 
 static int latch;
@@ -119,8 +120,8 @@ MEMORY_END
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x8fff, MWA_RAM },
-	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
-	{ 0x9400, 0x97ff, colorram_w, &colorram },
+	{ 0x9000, 0x93ff, bombjack_videoram_w, &videoram },
+	{ 0x9400, 0x97ff, bombjack_colorram_w, &colorram },
 	{ 0x9820, 0x987f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x9a00, 0x9a00, MWA_NOP },
 	{ 0x9c00, 0x9cff, paletteram_xxxxBBBBGGGGRRRR_w, &paletteram },

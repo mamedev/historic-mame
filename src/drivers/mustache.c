@@ -5,13 +5,68 @@
 
 	(there are also Seibu and Taito logos/copyrights in the ROMs)
 
-driver by Tomasz Slanina dox@space.pl
+ driver by Tomasz Slanina dox@space.pl
 
-todo:
+ The hardware similar to Knuckle Joe.
 
-Colours (need proms dumping?)
-Sound (needs sound rom redumping?) - T5182 ? (Coins are also probably handled by it)
-In attract mode player seems to walk on black areas? is this right?
+		TODO - Sound
+		   - YM2151 + YM 3012
+       - custom  T5182 cpu
+       - 27256 ROM with data/code (?)  (can be replaced with 27512)
+                     ______________________
+                   _|*                     |_
+             GND  |_|1                   50|_| Vcc
+                   _|                      |_
+              A8  |_|2                   49|_| A7
+                   _|                      |_
+              A9  |_|3                   48|_| A6
+                   _|                      |_
+             A10  |_|4                   47|_| A5
+                   _|                      |_
+             A11  |_|5                   46|_| A4
+                   _|       TOSHIBA        |_
+             A12  |_|6       T5182       45|_| A3
+                   _|                      |_
+             A13  |_|7                   44|_| A2
+                   _|     JAPAN  8612      |_
+             A14  |_|8                   43|_| A1
+                   _|                      |_
+            A15?  |_|9                   42|_| A0
+                   _|                      |_
+       ROM/YM D4  |_|10                  41|_| D3 ROM/YM
+                   _|                      |_
+       ROM/YM D5  |_|11                  40|_| D2 ROM/YM
+                   _|                      |_
+       ROM/YM D6  |_|12                  39|_| D1 ROM/YM
+                   _|                      |_
+       ROM/YM D7  |_|13                  38|_| D0 ROM/YM
+                   _|                      |_
+                  |_|14                  37|_|
+                   _|                      |_   __
+                  |_|15                  36|_|  CS YM2151
+                   _|                      |_
+                  |_|16                  35|_|
+                   _|                      |_
+                  |_|17                  34|_|
+                   _|                      |_
+                  |_|18                  33|_|
+                   _|                      |_   __
+                  |_|19                  32|_|  IC  YM2151
+                   _|                      |_
+                  |_|20                  31|_|
+                   _|                      |_
+                  |_|21                  30|_|
+                   _|                      |_
+                  |_|22                  29|_|
+                   _|                      |_
+                  |_|23                  28|_|
+                   _|                      |_
+                  |_|24                  27|_|
+                   _|                      |_
+             GND  |_|25                  26|_|  Vcc
+                    |______________________|
+
+Based on sketch made by Tormod
 
 ***************************************************************************/
 #include "driver.h"
@@ -34,7 +89,7 @@ READ_HANDLER ( mustache_coin_hack_r )
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xcfff, videoram_r },		/* videoram */
-	{ 0xd001, 0xd001, MRA_RAM },/* $72f7 */
+	{ 0xd001, 0xd001, MRA_RAM }, /* T5182 ? */
 	{ 0xd400, 0xd4ff, MRA_RAM }, /* shared with T5182 ?*/
 	{ 0xd800, 0xd800, input_port_0_r }, /* IN 0 */
 	{ 0xd801, 0xd801, input_port_1_r }, /* IN 1 */
@@ -47,10 +102,8 @@ MEMORY_END
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, mustache_videoram_w, &videoram },
-	{ 0xd000, 0xd000, MWA_RAM },
-	{ 0xd002, 0xd002, MWA_RAM },
-	{ 0xd003, 0xd003, MWA_RAM },/*$72f7*/
-	{ 0xd400, 0xd4ff, MWA_RAM },
+	{ 0xd000, 0xd003, MWA_RAM }, /* T5182 ? */
+	{ 0xd400, 0xd4ff, MWA_RAM }, /* shared with T5182 ?*/
 	{ 0xd806, 0xd806, mustache_scroll_w },
 	{ 0xd807, 0xd807, mustache_video_control_w },
 	{ 0xe800, 0xefff, MWA_RAM, &spriteram, &spriteram_size },
@@ -141,13 +194,12 @@ static struct GfxLayout charlayout =
 	{STEP8(0,8)},
 	8*8
 };
-
 static struct GfxLayout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,4),
 	4,
-	{ RGN_FRAC(0,4), RGN_FRAC(1,4),RGN_FRAC(2,4),RGN_FRAC(3,4)},
+	{ RGN_FRAC(1,4), RGN_FRAC(3,4),RGN_FRAC(0,4),RGN_FRAC(2,4)},
 	{STEP16(15,-1)},
 	{STEP16(0,16)},
 	16*16
@@ -156,16 +208,14 @@ static struct GfxLayout spritelayout =
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,   0x00, 16 },
-	{ REGION_GFX2, 0, &spritelayout, 0x80, 16 },
+	{ REGION_GFX2, 0, &spritelayout, 0x80, 8 },
 	{ -1 } /* end of array */
 };
-
-
 
 static MACHINE_DRIVER_START( mustache )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_ADD(Z80, 18432000/4) /* maybe 12000000/3 - two xtals (18.432 and 12.xxx) near cpu*/
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
@@ -177,7 +227,7 @@ static MACHINE_DRIVER_START( mustache )
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(1*8, 31*8-1, 2*8, 31*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(384)
+	MDRV_PALETTE_LENGTH(8*16+16*8)
 
 	MDRV_PALETTE_INIT(mustache)
 	MDRV_VIDEO_START(mustache)
@@ -189,8 +239,8 @@ ROM_START( mustache )
 	ROM_LOAD( "mustache.h18", 0x0000, 0x8000, CRC(123bd9b8) SHA1(33a7cba5c3a54b0b1a15dd1e24d298b6f7274321) )
 	ROM_LOAD( "mustache.h16", 0x8000, 0x4000, CRC(62552beb) SHA1(ee10991d7de0596608fa1db48805781cbfbbdb9f) )
 
-	ROM_REGION( 0x10000, REGION_USER1, 0 )  /* 0xxxxxxxxxxxxxx = 0xFF, 1xxxxxxxxxxxxxx = mustache.a13 */
-	ROM_LOAD( "mustache.e5",0x0000, 0x8000, BAD_DUMP CRC(e9e639c9) SHA1(4bc822aaf097299ba9db3184cc330872a1e9ba26) )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* T5182 */
+	ROM_LOAD( "mustache.e5",0x0000, 0x8000, CRC(efbb1943) SHA1(3320e9eaeb776d09ed63f7dedc79e720674e6718) )
 
 	ROM_REGION( 0x0c000, REGION_GFX1,0)	/* BG tiles  */
 	ROM_LOAD( "mustache.a13", 0x0000,  0x4000, CRC(9baee4a7) SHA1(31bcec838789462e67e54ebe7256db9fc4e51b69) )
@@ -203,12 +253,13 @@ ROM_START( mustache )
 	ROM_LOAD( "mustache.a5", 0x10000,  0x8000, CRC(c975fb06) SHA1(4d166bd79e19c7cae422673de3e095ad8101e013) )
 	ROM_LOAD( "mustache.a8", 0x18000,  0x8000, CRC(2e180ee4) SHA1(a5684a25c337aeb4effeda7982164d35bc190af9) )
 
-	ROM_REGION( 0x100, REGION_PROMS,0 )	/* proms ?? */
-	ROM_LOAD( "proms",0x0000, 0x100, NO_DUMP )
+	ROM_REGION( 0x1300, REGION_PROMS,0 )	/* proms */
+	ROM_LOAD( "mustache.c3",0x0000, 0x0100, CRC(68575300) SHA1(bc93a38df91ad8c2f335f9bccc98b52376f9b483) )
+	ROM_LOAD( "mustache.c2",0x0100, 0x0100, CRC(eb008d62) SHA1(a370fbd1affaa489210ea36eb9e365263fb4e232) )
+	ROM_LOAD( "mustache.c1",0x0200, 0x0100, CRC(65da3604) SHA1(e4874d4152a57944d4e47306250833ea5cd0d89b) )
 
+	ROM_LOAD( "mustache.b6",0x0300, 0x1000, CRC(5f83fa35) SHA1(cb13e63577762d818e5dcbb52b8a53f66e284e8f) ) /* 63S281N near SEI0070BU */
 ROM_END
-
-
 
 static DRIVER_INIT( mustache )
 {
@@ -254,8 +305,9 @@ static DRIVER_INIT( mustache )
 		memory_region(REGION_GFX2)[i] = buf[BITSWAP24(i,23,22,21,20,19,18,17,16,15,12,11,10,9,8,7,6,5,4,13,14,3,2,1,0)];
 
 	seibu_sound_decrypt(REGION_CPU1,0x8000);
+
 	install_mem_read_handler( 0, 0xd400, 0xd401, mustache_coin_hack_r);
 }
 
 
-GAMEX( 1987, mustache, 0, mustache, mustache, mustache, ROT90, "[Seibu Kaihatsu] (March license)", "Mustache Boy", GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1987, mustache, 0, mustache, mustache, mustache, ROT90, "[Seibu Kaihatsu] (March license)", "Mustache Boy", GAME_NO_SOUND | GAME_NO_COCKTAIL )

@@ -1,122 +1,97 @@
 #include "vidhrdw/generic.h"
 
-static data16_t tigeroad_scrollram[2];
-static int flipscreen,bgcharbank;
+static int bgcharbank;
+static struct tilemap *bg_tilemap, *fg_tilemap;
 
-
+WRITE16_HANDLER( tigeroad_videoram_w )
+{
+	if (videoram16[offset] != data)
+	{
+		COMBINE_DATA(&videoram16[offset]);
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
+}
 
 WRITE16_HANDLER( tigeroad_videoctrl_w )
 {
+	int bank;
+
 	if (ACCESSING_MSB)
 	{
 		data = (data >> 8) & 0xff;
 
 		/* bit 1 flips screen */
-		flipscreen = data & 0x02;
+
+		if (flip_screen != (data & 0x02))
+		{
+			flip_screen_set(data & 0x02);
+			tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+		}
 
 		/* bit 2 selects bg char bank */
-		bgcharbank = (data & 0x04) >> 2;
 
-		/* bits 4-5 are unknown, but used */
+		bank = (data & 0x04) >> 2;
+
+		if (bgcharbank != bank)
+		{
+			bgcharbank = bank;
+			tilemap_mark_all_tiles_dirty(bg_tilemap);
+		}
+
+		/* bits 4-5 are coin lockouts */
+
+		coin_lockout_w(0, !(data & 0x10));
+		coin_lockout_w(1, !(data & 0x20));
 
 		/* bits 6-7 are coin counters */
-		coin_counter_w(0,data & 0x40);
-		coin_counter_w(1,data & 0x80);
+
+		coin_counter_w(0, data & 0x40);
+		coin_counter_w(1, data & 0x80);
 	}
 }
 
 WRITE16_HANDLER( tigeroad_scroll_w )
 {
-	COMBINE_DATA(&tigeroad_scrollram[offset]);
-}
+	int scroll;
 
+	COMBINE_DATA(&scroll);
 
-static void render_background( struct mame_bitmap *bitmap, int priority )
-{
-	int scrollx = 	tigeroad_scrollram[0] & 0xfff; /* 0..4096 */
-	int scrolly =	tigeroad_scrollram[1] & 0xfff; /* 0..4096 */
-
-	unsigned char *p = memory_region(REGION_GFX4);
-
-	int alignx = scrollx%32;
-	int aligny = scrolly%32;
-
-	int row = scrolly/32;	/* 0..127 */
-	int sy = 224+aligny;
-
-	int transp0,transp1;
-
-	if( priority ){ /* foreground */
-		transp0 = 0xFFFF;	/* draw nothing (all pens transparent) */
-		transp1 = 0x01FF;	/* high priority half of tile */
-	}
-	else { /* background */
-		transp0 = 0;		/* NO_TRANSPARENCY */
-		transp1 = 0xFE00;	/* low priority half of tile */
-	}
-
-	while( sy>-32 ){
-		int col = scrollx/32;	/* 0..127 */
-		int sx = -alignx;
-
-		while( sx<256 ){
-			int offset = 2*(col%8) + 16*(row%8) + 128*(col/8) + 2048*(row/8);
-
-			int code = p[offset];
-			int attr = p[offset+1];
-
-			int flipx = attr & 0x20;
-			int flipy = 0;
-			int color = attr & 0x0f;
-
-			if (flipscreen)
-				drawgfx(bitmap,Machine->gfx[1],
-						code + ((attr & 0xc0) << 2) + (bgcharbank << 10),
-						color,
-						!flipx,!flipy,
-						224-sx,224-sy,
-						&Machine->visible_area,
-						TRANSPARENCY_PENS,(attr & 0x10) ? transp1 : transp0);
-			else
-				drawgfx(bitmap,Machine->gfx[1],
-						code + ((attr & 0xc0) << 2) + (bgcharbank << 10),
-						color,
-						flipx,flipy,
-						sx,sy,
-						&Machine->visible_area,
-						TRANSPARENCY_PENS,(attr & 0x10) ? transp1 : transp0);
-
-			sx+=32;
-			col++;
-			if( col>=128 ) col-=128;
-		}
-		sy-=32;
-		row++;
-		if( row>=128 ) row-=128;
+	switch (offset)
+	{
+	case 0:
+		tilemap_set_scrollx(bg_tilemap, 0, scroll);
+		break;
+	case 1:
+		tilemap_set_scrolly(bg_tilemap, 0, -scroll - 32 * 8);
+		break;
 	}
 }
 
-static void render_sprites( struct mame_bitmap *bitmap )
+static void tigeroad_draw_sprites( struct mame_bitmap *bitmap, int priority )
 {
-	data16_t *source = &buffered_spriteram16[spriteram_size/2] - 4;
-	data16_t *finish = buffered_spriteram16;
+	UINT16 *source = &buffered_spriteram16[spriteram_size/2] - 4;
+	UINT16 *finish = buffered_spriteram16;
 
-	while( source>=finish )
+	// TODO: The Track Map should probably be drawn on top of the background tilemap...
+	//       Also convert the below into a for loop!
+
+	while (source >= finish)
 	{
 		int tile_number = source[0];
-		if( tile_number!=0xFFF ){
-			int attributes = source[1];
+
+		if (tile_number != 0xfff) {
+			int attr = source[1];
 			int sy = source[2] & 0x1ff;
 			int sx = source[3] & 0x1ff;
 
-			int flipx = attributes&2;
-			int flipy = attributes&1;
-			int color = (attributes>>2)&0xf;
+			int flipx = attr & 0x02;
+			int flipy = attr & 0x01;
+			int color = (attr >> 2) & 0x0f;
 
-			if( sx>0x100 ) sx -= 0x200;
-			if( sy>0x100 ) sy -= 0x200;
+			if (sx > 0x100) sx -= 0x200;
+			if (sy > 0x100) sy -= 0x200;
 
-			if (flipscreen)
+			if (flip_screen)
 			{
 				sx = 240 - sx;
 				sy = 240 - sy;
@@ -124,59 +99,78 @@ static void render_sprites( struct mame_bitmap *bitmap )
 				flipy = !flipy;
 			}
 
-			drawgfx(bitmap,Machine->gfx[2],
+			drawgfx(bitmap, Machine->gfx[2],
 				tile_number,
 				color,
-				flipx,flipy,
-				sx,240-sy,
+				flipx, flipy,
+				sx, 240 - sy,
 				&Machine->visible_area,
-				TRANSPARENCY_PEN,15);
+				TRANSPARENCY_PEN, 15);
 		}
-		source-=4;
+
+		source -= 4;
 	}
 }
 
-static void render_text( struct mame_bitmap *bitmap )
+static void get_bg_tile_info(int tile_index)
 {
-	int offs;
+	UINT8 *tilerom = memory_region(REGION_GFX4);
 
+	int data = tilerom[tile_index];
+	int attr = tilerom[tile_index + 1];
+	int code = data + ((attr & 0xc0) << 2) + (bgcharbank << 10);
+	int color = attr & 0x0f;
+	int flags = ((attr & 0x20) ? TILE_FLIPX : 0) | ((attr & 0x10) ? TILE_SPLIT(1) : 0);
 
-	for (offs = 0;offs < videoram_size/2;offs++)
-	{
-		int sx,sy;
-		int data = videoram16[offs];
-		int attr = data >> 8;
-		int code = data & 0xff;
-		int color = attr & 0x0f;
-		int flipy = attr & 0x10;
-
-		sx = offs % 32;
-		sy = offs / 32;
-
-		if (flipscreen)
-		{
-			sx = 31 - sx;
-			sy = 31 - sy;
-			flipy = !flipy;
-		}
-
-		drawgfx(bitmap,Machine->gfx[0],
-				code + ((attr & 0xc0) << 2) + ((attr & 0x20) << 5),
-				color,
-				flipscreen,flipy,
-				8*sx,8*sy,
-				&Machine->visible_area, TRANSPARENCY_PEN,3);
-	}
+	SET_TILE_INFO(1, code, color, flags)
 }
 
+static void get_fg_tile_info(int tile_index)
+{
+	int data = videoram16[tile_index];
+	int attr = data >> 8;
+	int code = (data & 0xff) + ((attr & 0xc0) << 2) + ((attr & 0x20) << 5);
+	int color = attr & 0x0f;
+	int flags = (attr & 0x10) ? TILE_FLIPY : 0;
 
+	SET_TILE_INFO(0, code, color, flags)
+}
+
+static UINT32 tigeroad_tilemap_scan( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+{
+	/* logical (col,row) -> memory offset */
+	return 2 * (col % 8) + 16 * ((127 - row) % 8) + 128 * (col / 8) + 2048 * ((127 - row) / 8);
+}
+
+VIDEO_START( tigeroad )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tigeroad_tilemap_scan, 
+		TILEMAP_SPLIT, 32, 32, 128, 128);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, 
+		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
+
+	if ( !fg_tilemap )
+		return 1;
+
+	tilemap_set_transmask(bg_tilemap, 0, 0xffff, 0);
+	tilemap_set_transmask(bg_tilemap, 1, 0x1ff, 0xfe00);
+
+	tilemap_set_transparent_pen(fg_tilemap, 3);
+
+	return 0;
+}
 
 VIDEO_UPDATE( tigeroad )
 {
-	render_background( bitmap,0 );
-	render_sprites( bitmap );
-	render_background( bitmap,1 );
-	render_text( bitmap );
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, TILEMAP_BACK, 0);
+	tigeroad_draw_sprites(bitmap, 0);
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, TILEMAP_FRONT, 1);
+	//tigeroad_draw_sprites(bitmap, 1); draw priority sprites?
+	tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, 0, 2);
 }
 
 VIDEO_EOF( tigeroad )

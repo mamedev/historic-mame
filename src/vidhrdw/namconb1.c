@@ -227,7 +227,7 @@ video_update_common( struct mame_bitmap *bitmap, const struct rectangle *cliprec
 				tilemap_draw( bitmap,cliprect,background[i],0,0/*1<<pri*/ );
 			}
 		}
-		namco_obj_draw( bitmap, pri );
+		namco_obj_draw( bitmap, cliprect, pri );
 	}
 } /* video_update_common */
 

@@ -9,10 +9,9 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
-
 static int gfxbank;
 
+static struct tilemap *bg_tilemap;
 
 /***************************************************************************
 
@@ -78,67 +77,85 @@ PALETTE_INIT( champbas )
 		COLOR(0,i) = (*(color_prom++) & 0x0f);
 }
 
-
-
-WRITE_HANDLER( champbas_gfxbank_w )
+WRITE_HANDLER( champbas_videoram_w )
 {
-	if (gfxbank != (data & 1))
+	if (videoram[offset] != data)
 	{
-		gfxbank = data & 1;
-		memset(dirtybuffer,1,videoram_size);
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 }
 
+WRITE_HANDLER( champbas_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
-/***************************************************************************
+WRITE_HANDLER( champbas_gfxbank_w )
+{
+	if (gfxbank != (data & 0x01))
+	{
+		gfxbank = data & 0x01;
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
+}
 
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+static void get_bg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index];
+	int color = (colorram[tile_index] & 0x1f) + 32;
 
-***************************************************************************/
-VIDEO_UPDATE( champbas )
+	SET_TILE_INFO(gfxbank, code, color, 0)
+}
+
+VIDEO_START( champbas )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	return 0;
+}
+
+static void champbas_draw_sprites( struct mame_bitmap *bitmap )
 {
 	int offs;
 
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
+	for (offs = spriteram_size - 2; offs >= 0; offs -= 2)
 	{
-		if (dirtybuffer[offs])
+		int code = spriteram[offs] >> 2;
+		int color = spriteram[offs + 1];
+		int flipx = spriteram[offs] & 0x01;
+		int flipy = spriteram[offs] & 0x02;
+		int sx = ((256 + 16 - spriteram_2[offs + 1]) & 0xff) - 16;
+		int sy = spriteram_2[offs] - 16;
+
+		if (flip_screen)
 		{
-			int sx,sy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = 8 * (offs % 32);
-			sy = 8 * (offs / 32);
-
-			drawgfx(tmpbitmap,Machine->gfx[0 + gfxbank],
-					videoram[offs],
-					(colorram[offs] & 0x1f) + 32,
-					0,0,
-					sx,sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
+			sx = 240 - sx;
+			sy = 240 - sy;
+			flipx = !flipx;
+			flipy = !flipy;
 		}
+
+		drawgfx(bitmap,
+			Machine->gfx[2 + gfxbank],
+			code, color,
+			flipx, flipy,
+			sx, sy,
+			&Machine->visible_area,
+			TRANSPARENCY_COLOR, 0);
 	}
+}
 
-
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-
-
-	/* Draw the sprites. Note that it is important to draw them exactly in this */
-	/* order, to have the correct priorities. */
-	for (offs = spriteram_size - 2;offs >= 0;offs -= 2)
-	{
-		drawgfx(bitmap,Machine->gfx[2 + gfxbank],
-				spriteram[offs] >> 2,
-				spriteram[offs + 1],
-				spriteram[offs] & 1,spriteram[offs] & 2,
-				((256+16 - spriteram_2[offs + 1]) & 0xff) - 16,spriteram_2[offs] - 16,
-				&Machine->visible_area,TRANSPARENCY_COLOR,0);
-	}
+VIDEO_UPDATE( champbas )
+{
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	champbas_draw_sprites(bitmap);
 }

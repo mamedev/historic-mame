@@ -91,30 +91,39 @@ Interrupts: VBlank causes an IRQ. Coin insertion causes a NMI.
 #include "vidhrdw/crtc6845.h"
 
 
-extern unsigned char *rockola_videoram2;
-extern unsigned char *rockola_characterram;
-extern unsigned char *rockola_scrollx,*rockola_scrolly;
+extern UINT8 *rockola_videoram2;
+extern UINT8 *rockola_charram;
 
 extern const char *vanguard_sample_names[];
 
-WRITE_HANDLER( satansat_b002_w );
-WRITE_HANDLER( satansat_backcolor_w );
-PALETTE_INIT( satansat );
-VIDEO_UPDATE( satansat );
-WRITE_HANDLER( satansat_characterram_w );
 
-WRITE_HANDLER( rockola_characterram_w );
-WRITE_HANDLER( rockola_flipscreen_w );
-PALETTE_INIT( rockola );
-VIDEO_UPDATE( rockola );
+extern WRITE_HANDLER( rockola_colorram_w );
+extern WRITE_HANDLER( rockola_videoram_w );
+extern WRITE_HANDLER( rockola_videoram2_w );
+extern WRITE_HANDLER( rockola_charram_w );
+extern WRITE_HANDLER( rockola_flipscreen_w );
+extern WRITE_HANDLER( rockola_scrollx_w );
+extern WRITE_HANDLER( rockola_scrolly_w );
 
-WRITE_HANDLER( satansat_sound0_w );
-WRITE_HANDLER( satansat_sound1_w );
-WRITE_HANDLER( vanguard_sound0_w );
-WRITE_HANDLER( vanguard_sound1_w );
-WRITE_HANDLER( fantasy_sound0_w );
-WRITE_HANDLER( fantasy_sound1_w );
-WRITE_HANDLER( fantasy_sound2_w );
+extern PALETTE_INIT( rockola );
+extern VIDEO_START( rockola );
+extern VIDEO_UPDATE( rockola );
+
+extern WRITE_HANDLER( satansat_charram_w );
+extern WRITE_HANDLER( satansat_b002_w );
+extern WRITE_HANDLER( satansat_backcolor_w );
+
+extern PALETTE_INIT( satansat );
+extern VIDEO_START( satansat );
+
+extern WRITE_HANDLER( satansat_sound0_w );
+extern WRITE_HANDLER( satansat_sound1_w );
+extern WRITE_HANDLER( vanguard_sound0_w );
+extern WRITE_HANDLER( vanguard_sound1_w );
+extern WRITE_HANDLER( fantasy_sound0_w );
+extern WRITE_HANDLER( fantasy_sound1_w );
+extern WRITE_HANDLER( fantasy_sound2_w );
+
 int rockola_sh_start(const struct MachineSound *msound);
 void rockola_sh_update(void);
 
@@ -122,10 +131,10 @@ void rockola_sh_update(void);
 
 static MEMORY_WRITE_START( sasuke_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x0400, 0x07ff, MWA_RAM, &rockola_videoram2 },
-	{ 0x0800, 0x0bff, videoram_w, &videoram, &videoram_size },
-	{ 0x0c00, 0x0fff, colorram_w, &colorram },
-	{ 0x1000, 0x1fff, rockola_characterram_w, &rockola_characterram },
+	{ 0x0400, 0x07ff, rockola_videoram2_w, &rockola_videoram2 },
+	{ 0x0800, 0x0bff, rockola_videoram_w, &videoram },
+	{ 0x0c00, 0x0fff, rockola_colorram_w, &colorram },
+	{ 0x1000, 0x1fff, rockola_charram_w, &rockola_charram },
 	{ 0x4000, 0x97ff, MWA_ROM },
 	{ 0x3000, 0x3000, crtc6845_address_w },
 	{ 0x3001, 0x3001, crtc6845_register_w },
@@ -145,10 +154,10 @@ MEMORY_END
 
 static MEMORY_WRITE_START( satansat_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x0400, 0x07ff, MWA_RAM, &rockola_videoram2 },
-	{ 0x0800, 0x0bff, videoram_w, &videoram, &videoram_size },
-	{ 0x0c00, 0x0fff, colorram_w, &colorram },
-	{ 0x1000, 0x1fff, rockola_characterram_w, &rockola_characterram },
+	{ 0x0400, 0x07ff, rockola_videoram2_w, &rockola_videoram2 },
+	{ 0x0800, 0x0bff, rockola_videoram_w, &videoram },
+	{ 0x0c00, 0x0fff, rockola_colorram_w, &colorram },
+	{ 0x1000, 0x1fff, rockola_charram_w, &rockola_charram },
 	{ 0x4000, 0x97ff, MWA_ROM },
 	{ 0x3000, 0x3000, crtc6845_address_w },
 	{ 0x3001, 0x3001, crtc6845_register_w },
@@ -170,18 +179,18 @@ MEMORY_END
 
 static MEMORY_WRITE_START( vanguard_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x0400, 0x07ff, MWA_RAM, &rockola_videoram2 },
-	{ 0x0800, 0x0bff, videoram_w, &videoram, &videoram_size },
-	{ 0x0c00, 0x0fff, colorram_w, &colorram },
-	{ 0x1000, 0x1fff, rockola_characterram_w, &rockola_characterram },
+	{ 0x0400, 0x07ff, rockola_videoram2_w, &rockola_videoram2 },
+	{ 0x0800, 0x0bff, rockola_videoram_w, &videoram },
+	{ 0x0c00, 0x0fff, rockola_colorram_w, &colorram },
+	{ 0x1000, 0x1fff, rockola_charram_w, &rockola_charram },
 	{ 0x3000, 0x3000, crtc6845_address_w },
 	{ 0x3001, 0x3001, crtc6845_register_w },
 	{ 0x3100, 0x3100, vanguard_sound0_w },
 	{ 0x3101, 0x3101, vanguard_sound1_w },
 //	{ 0x3102, 0x3102, },	/* TODO: music channels #0 and #1 volume */
 	{ 0x3103, 0x3103, rockola_flipscreen_w },
-	{ 0x3200, 0x3200, MWA_RAM, &rockola_scrolly },
-	{ 0x3300, 0x3300, MWA_RAM, &rockola_scrollx },
+	{ 0x3200, 0x3200, rockola_scrollx_w },
+	{ 0x3300, 0x3300, rockola_scrolly_w },
 	{ 0x4000, 0xbfff, MWA_ROM },
 MEMORY_END
 
@@ -197,18 +206,18 @@ MEMORY_END
 
 static MEMORY_WRITE_START( fantasy_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x0400, 0x07ff, MWA_RAM, &rockola_videoram2 },
-	{ 0x0800, 0x0bff, videoram_w, &videoram, &videoram_size },
-	{ 0x0c00, 0x0fff, colorram_w, &colorram },
-	{ 0x1000, 0x1fff, rockola_characterram_w, &rockola_characterram },
+	{ 0x0400, 0x07ff, rockola_videoram2_w, &rockola_videoram2 },
+	{ 0x0800, 0x0bff, rockola_videoram_w, &videoram },
+	{ 0x0c00, 0x0fff, rockola_colorram_w, &colorram },
+	{ 0x1000, 0x1fff, rockola_charram_w, &rockola_charram },
 	{ 0x2000, 0x2000, crtc6845_address_w },
 	{ 0x2001, 0x2001, crtc6845_register_w },
 	{ 0x2100, 0x2100, fantasy_sound0_w },
 	{ 0x2101, 0x2101, fantasy_sound1_w },
 //	{ 0x2102, 0x2102, },	/* TODO: music channels #0 and #1 volume */
 	{ 0x2103, 0x2103, fantasy_sound2_w },	/* + flipscreen, gfx bank, bg color */
-	{ 0x2200, 0x2200, MWA_RAM, &rockola_scrolly },
-	{ 0x2300, 0x2300, MWA_RAM, &rockola_scrollx },
+	{ 0x2200, 0x2200, rockola_scrollx_w },
+	{ 0x2300, 0x2300, rockola_scrolly_w },
 	{ 0x3000, 0xbfff, MWA_ROM },
 MEMORY_END
 
@@ -224,10 +233,10 @@ MEMORY_END
 
 static MEMORY_WRITE_START( pballoon_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x0400, 0x07ff, MWA_RAM, &rockola_videoram2 },
-	{ 0x0800, 0x0bff, videoram_w, &videoram, &videoram_size },
-	{ 0x0c00, 0x0fff, colorram_w, &colorram },
-	{ 0x1000, 0x1fff, rockola_characterram_w, &rockola_characterram },
+	{ 0x0400, 0x07ff, rockola_videoram2_w, &rockola_videoram2 },
+	{ 0x0800, 0x0bff, rockola_videoram_w, &videoram },
+	{ 0x0c00, 0x0fff, rockola_colorram_w, &colorram },
+	{ 0x1000, 0x1fff, rockola_charram_w, &rockola_charram },
 	{ 0x3000, 0x9fff, MWA_ROM },
 	{ 0xb000, 0xb000, crtc6845_address_w },
 	{ 0xb001, 0xb001, crtc6845_register_w },
@@ -235,8 +244,8 @@ static MEMORY_WRITE_START( pballoon_writemem )
 	{ 0xb101, 0xb101, fantasy_sound1_w },
 //	{ 0xb102, 0xb102, },	/* TODO: music channels #0 and #1 volume */
 	{ 0xb103, 0xb103, fantasy_sound2_w },	/* + flipscreen, gfx bank, bg color */
-	{ 0xb200, 0xb200, MWA_RAM, &rockola_scrolly },
-	{ 0xb300, 0xb300, MWA_RAM, &rockola_scrollx },
+	{ 0xb200, 0xb200, rockola_scrollx_w },
+	{ 0xb300, 0xb300, rockola_scrolly_w },
 MEMORY_END
 
 
@@ -262,8 +271,6 @@ static INTERRUPT_GEN( rockola_interrupt )
 	}
 	else cpu_set_irq_line(0, 0, HOLD_LINE);	/* one IRQ per frame */
 }
-
-
 
 /* Derived from Zarzon. Might not reflect the actual hardware. */
 INPUT_PORTS_START( sasuke )
@@ -703,8 +710,8 @@ static MACHINE_DRIVER_START( sasuke )
 	MDRV_COLORTABLE_LENGTH(4*4 + 4*4)
 
 	MDRV_PALETTE_INIT(satansat)
-	MDRV_VIDEO_START(generic)
-	MDRV_VIDEO_UPDATE(satansat)
+	MDRV_VIDEO_START(satansat)
+	MDRV_VIDEO_UPDATE(rockola)
 
 	/* sound hardware */
 MACHINE_DRIVER_END
@@ -729,8 +736,8 @@ static MACHINE_DRIVER_START( satansat )
 	MDRV_COLORTABLE_LENGTH(4*4 + 4*4)
 
 	MDRV_PALETTE_INIT(satansat)
-	MDRV_VIDEO_START(generic)
-	MDRV_VIDEO_UPDATE(satansat)
+	MDRV_VIDEO_START(satansat)
+	MDRV_VIDEO_UPDATE(rockola)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(SAMPLES, vanguard_samples_interface)
@@ -757,7 +764,7 @@ static MACHINE_DRIVER_START( vanguard )
 	MDRV_COLORTABLE_LENGTH(16*4)
 
 	MDRV_PALETTE_INIT(rockola)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(rockola)
 	MDRV_VIDEO_UPDATE(rockola)
 
 	/* sound hardware */
@@ -785,7 +792,7 @@ static MACHINE_DRIVER_START( fantasy )
 	MDRV_COLORTABLE_LENGTH(16*4)
 
 	MDRV_PALETTE_INIT(rockola)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(rockola)
 	MDRV_VIDEO_UPDATE(rockola)
 
 	/* sound hardware */
@@ -814,7 +821,7 @@ static MACHINE_DRIVER_START( pballoon )
 	MDRV_COLORTABLE_LENGTH(16*4)
 
 	MDRV_PALETTE_INIT(rockola)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(rockola)
 	MDRV_VIDEO_UPDATE(rockola)
 
 	/* sound hardware */

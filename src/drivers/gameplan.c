@@ -4,8 +4,8 @@ GAME PLAN driver, used for games like MegaTack, Killer Comet, Kaos, Challenger
 
 driver by Chris Moore
 
-TO-DO: - Fix the input ports/dip switches of Kaos?
-       - Graphics are still somewhat scrambled sometimes (just look at
+TO-DO: - Fix the input ports of Kaos
+	   - Graphics are still somewhat scrambled sometimes (just look at
          the tests with f2/f1)
 
 ****************************************************************************/
@@ -182,12 +182,11 @@ INPUT_PORTS_START( kaos )
 	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2, "P2 Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
 
-	PORT_START      /* IN4 - from "TEST NO.6 - dip switch A" */
+	PORT_START
 
-	PORT_DIPNAME(0x0f, 0x0f, DEF_STR( Coinage ) ) /* -> 039F */
+	PORT_DIPNAME(0x0f, 0x0e, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(   0x00, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(   0x0f, DEF_STR( 1C_1C ) )
-//	PORT_DIPSETTING(   0x0e, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(   0x0e, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(   0x0d, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(   0x0c, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(   0x0b, DEF_STR( 1C_4C ) )
@@ -201,49 +200,38 @@ INPUT_PORTS_START( kaos )
 	PORT_DIPSETTING(   0x03, "1 Coin/12 Credits" )
 	PORT_DIPSETTING(   0x02, "1 Coin/13 Credits" )
 	PORT_DIPSETTING(   0x01, "1 Coin/14 Credits" )
-
-	PORT_DIPNAME(0x10, 0x10, DEF_STR( Unknown ) ) /* -> 039A */
+	PORT_DIPSETTING(   0x0f, DEF_STR( 2C_3C ) )
+	PORT_DIPNAME(0x10, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(   0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
-
-	PORT_DIPNAME(0x60, 0x20, DEF_STR( Unknown ) ) /* -> 039C */
-	PORT_DIPSETTING(   0x60, "1" )
-	PORT_DIPSETTING(   0x40, "2" )
-	PORT_DIPSETTING(   0x20, "3" )
-	PORT_DIPSETTING(   0x00, "4" )
-
-	PORT_DIPNAME(0x80, 0x80, DEF_STR( Free_Play ) ) /* -> 039D */
+	PORT_DIPNAME(0x60, 0x60, "Max Credits" )
+	PORT_DIPSETTING(   0x60, "10" )
+	PORT_DIPSETTING(   0x40, "20" )
+	PORT_DIPSETTING(   0x20, "30" )
+	PORT_DIPSETTING(   0x00, "40" )
+	PORT_DIPNAME(0x80, 0x80, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(   0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
 
-	PORT_START      /* IN5 - from "TEST NO.6 - dip switch B" */
-
+	PORT_START
 	PORT_DIPNAME(0x01, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(   0x01, "3" )
 	PORT_DIPSETTING(   0x00, "4" )
-
-	PORT_DIPNAME(0x02, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(   0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
-
-	PORT_DIPNAME(0x0c, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(   0x0c, "1" )
-	PORT_DIPSETTING(   0x08, "2" )
-	PORT_DIPSETTING(   0x04, "3" )
-	PORT_DIPSETTING(   0x00, "4" )
-
-	PORT_DIPNAME(0x10, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(   0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
-
-	PORT_DIPNAME(0x20, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(   0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
-
-	PORT_DIPNAME(0x40, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(   0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
-
+	PORT_DIPNAME(0x02, 0x00, "Speed" )
+	PORT_DIPSETTING(   0x00, "Slow" )
+	PORT_DIPSETTING(   0x02, "Fast" )
+	PORT_DIPNAME(0x0c, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(   0x0c, "No Bonus" )
+	PORT_DIPSETTING(   0x08, "10k" )
+	PORT_DIPSETTING(   0x04, "10k 30k" )
+	PORT_DIPSETTING(   0x00, "10k 30k 60k" )
+	PORT_DIPNAME(0x10, 0x10, "Number of $" )
+	PORT_DIPSETTING(   0x10, "8" )
+	PORT_DIPSETTING(   0x00, "12" )
+	PORT_DIPNAME(0x20, 0x00, "Bonus erg" )
+	PORT_DIPSETTING(   0x20, "Every other screen" )
+	PORT_DIPSETTING(   0x00, "Every screen" )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME(0x80, 0x80, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(   0x80, DEF_STR( Upright ) )
 	PORT_DIPSETTING(   0x00, DEF_STR( Cocktail ) )
@@ -532,7 +520,7 @@ static MACHINE_DRIVER_START( gameplan )
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0, 32*8-1, 0, 32*8-1)
 	MDRV_PALETTE_LENGTH(8)
-	
+
 	MDRV_PALETTE_INIT(gameplan)
 	MDRV_VIDEO_START(gameplan)
 	MDRV_VIDEO_UPDATE(generic_bitmapped)

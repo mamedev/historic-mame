@@ -15,11 +15,6 @@ MAIN BOARD:
 6000-ffff ROM
 1200-12ff IO
 
-Notes:
-
-- There are a few kludges to support cocktail mode in mastkin; it might be broken in
-  the real game.
-
 ***************************************************************************/
 
 #include "driver.h"
@@ -27,33 +22,30 @@ Notes:
 #include "cpu/m6809/m6809.h"
 
 
-void konami1_decode(void);
+extern void konami1_decode(void);
 
 
-extern unsigned char *trackfld_scroll;
-extern unsigned char *trackfld_scroll2;
-PALETTE_INIT( trackfld );
-VIDEO_START( trackfld );
-VIDEO_START( mastkin );
-VIDEO_UPDATE( trackfld );
+extern UINT8 *trackfld_scroll;
+extern UINT8 *trackfld_scroll2;
 
+extern WRITE_HANDLER( trackfld_videoram_w );
+extern WRITE_HANDLER( trackfld_colorram_w );
+extern WRITE_HANDLER( trackfld_flipscreen_w );
 
-WRITE_HANDLER( konami_sh_irqtrigger_w );
-READ_HANDLER( trackfld_sh_timer_r );
-READ_HANDLER( trackfld_speech_r );
-WRITE_HANDLER( trackfld_sound_w );
-READ_HANDLER( hyprolyb_speech_r );
-WRITE_HANDLER( hyprolyb_ADPCM_data_w );
+extern PALETTE_INIT( trackfld );
+extern VIDEO_START( trackfld );
+extern VIDEO_UPDATE( trackfld );
+
+extern WRITE_HANDLER( konami_sh_irqtrigger_w );
+extern READ_HANDLER( trackfld_sh_timer_r );
+extern READ_HANDLER( trackfld_speech_r );
+extern WRITE_HANDLER( trackfld_sound_w );
+extern READ_HANDLER( hyprolyb_speech_r );
+extern WRITE_HANDLER( hyprolyb_ADPCM_data_w );
 
 extern struct SN76496interface konami_sn76496_interface;
 extern struct DACinterface konami_dac_interface;
 extern struct ADPCMinterface hyprolyb_adpcm_interface;
-
-
-MACHINE_INIT( mastkin )
-{
-	flip_screen_set(0);
-}
 
 
 /* handle fake button for speed cheat */
@@ -74,21 +66,10 @@ static READ_HANDLER( konami_IN1_r )
 	return res;
 }
 
-/* There is no read from 0x1282 (where player 2 inputs should be).
-   However, there is a code for "Cocktail mode" support at 0x813b.
-   Thus this read handler based on the screen flip status.
-*/
-static READ_HANDLER( mastkin_IN1_r )
-{
-	return (flip_screen ? readinputport(2) : readinputport(1));
-}
-
-
-
 /*
  Track'n'Field has 1k of battery backed RAM which can be erased by setting a dipswitch
 */
-static unsigned char *nvram;
+static UINT8 *nvram;
 static size_t nvram_size;
 static int we_flipped_the_switch;
 
@@ -168,11 +149,6 @@ static NVRAM_HANDLER( mastkin )
 	}
 }
 
-static WRITE_HANDLER( flip_screen_w )
-{
-	flip_screen_set(data);
-}
-
 static WRITE_HANDLER( coin_w )
 {
 	coin_counter_w(offset,data & 1);
@@ -193,7 +169,7 @@ MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x1000, 0x1000, watchdog_reset_w },
-	{ 0x1080, 0x1080, flip_screen_w },
+	{ 0x1080, 0x1080, trackfld_flipscreen_w },
 	{ 0x1081, 0x1081, konami_sh_irqtrigger_w },  /* cause interrupt on audio CPU */
 	{ 0x1083, 0x1084, coin_w },
 	{ 0x1087, 0x1087, interrupt_enable_w },
@@ -206,15 +182,15 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x1c60, 0x1fff, MWA_RAM },
 	{ 0x2800, 0x2bff, MWA_RAM },
 	{ 0x2c00, 0x2fff, MWA_RAM, &nvram, &nvram_size },
-	{ 0x3000, 0x37ff, videoram_w, &videoram, &videoram_size },
-	{ 0x3800, 0x3fff, colorram_w, &colorram },
+	{ 0x3000, 0x37ff, trackfld_videoram_w, &videoram },
+	{ 0x3800, 0x3fff, trackfld_colorram_w, &colorram },
 	{ 0x6000, 0xffff, MWA_ROM },
 MEMORY_END
 
 static MEMORY_READ_START( mastkin_readmem )
 	{ 0x1200, 0x1200, input_port_4_r }, /* DIP 2 */
 	{ 0x1280, 0x1280, input_port_0_r }, /* IO Coin */
-	{ 0x1281, 0x1281, mastkin_IN1_r }, /* P1 and P2 IO */
+	{ 0x1281, 0x1281, input_port_1_r }, /* P1 IO */
 //	{ 0x1282, 0x1282, input_port_2_r }, /* unused */
 	{ 0x1283, 0x1283, input_port_3_r }, /* DIP 1 */
 	{ 0x1800, 0x1fff, MRA_RAM },
@@ -224,7 +200,7 @@ MEMORY_END
 
 static MEMORY_WRITE_START( mastkin_writemem )
 	{ 0x1000, 0x1000, watchdog_reset_w },
-	{ 0x10b0, 0x10b0, flip_screen_w },
+	{ 0x10b0, 0x10b0, trackfld_flipscreen_w },
 	{ 0x10b1, 0x10b1, konami_sh_irqtrigger_w },
 	{ 0x1083, 0x1084, coin_w },
 	{ 0x1087, 0x1087, interrupt_enable_w },
@@ -237,8 +213,8 @@ static MEMORY_WRITE_START( mastkin_writemem )
 	{ 0x1c60, 0x1fff, MWA_RAM },
 	{ 0x2800, 0x2bff, MWA_RAM },
 	{ 0x2c00, 0x2fff, MWA_RAM, &nvram, &nvram_size },
-	{ 0x3000, 0x37ff, videoram_w, &videoram, &videoram_size },
-	{ 0x3800, 0x3fff, colorram_w, &colorram },
+	{ 0x3000, 0x37ff, trackfld_videoram_w, &videoram },
+	{ 0x3800, 0x3fff, trackfld_colorram_w, &colorram },
 	{ 0x6000, 0xffff, MWA_ROM },
 MEMORY_END
 
@@ -410,16 +386,6 @@ INPUT_PORTS_START( mastkin )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START      /* FAKE IN2 - Read via mastkin_IN1_r */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x01, 0x00, "Allow Continue" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
@@ -438,12 +404,8 @@ INPUT_PORTS_START( mastkin )
 	PORT_DIPNAME( 0x20, 0x00, "Internal speed" )		// Check code at 0x8576
 	PORT_DIPSETTING(    0x20, "Slow" )				//   0x0c00
 	PORT_DIPSETTING(    0x00, "Fast" )				//   0x0a00
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )		// Stored at 0x284e but not read back
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )		// Stored at 0x284e but not read back
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )		// Cocktail Mode, not used
 
 	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x0f, 0x00, DEF_STR( Coin_B ) )
@@ -605,11 +567,6 @@ static MACHINE_DRIVER_START( mastkin )
 	MDRV_CPU_MEMORY(mastkin_readmem,mastkin_writemem)
 
 	MDRV_NVRAM_HANDLER(mastkin)
-
-	MDRV_MACHINE_INIT(mastkin)
-
-	/* video hardware */
-	MDRV_VIDEO_START(mastkin)
 MACHINE_DRIVER_END
 
 
@@ -821,11 +778,19 @@ static DRIVER_INIT( mastkin )
 	UINT8 *prom = memory_region(REGION_PROMS);
 	int i;
 
-	/* build a fake lookup table since we don't have the color PROMs */
-	for (i = 0;i < 0x0200;i++)
+	/* build a fake palette so the screen won't be all black */
+	for (i = 0; i < 0x20; i++)
 	{
-		if ((i & 0x0f) == 0) prom[i+0x20] = 0;
-		else prom[i + 0x20] = (i + i/16) & 0x0f;
+		prom[i] = i * 4;
+	}
+
+	/* build a fake lookup table since we don't have the color PROMs */
+	for (i = 0; i < 0x0200; i++)
+	{
+		if ((i & 0x0f) == 0)
+			prom[i + 0x20] = 0;
+		else
+			prom[i + 0x20] = (i + i / 16) & 0x0f;
 	}
 }
 

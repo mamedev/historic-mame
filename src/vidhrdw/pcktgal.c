@@ -1,9 +1,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static int flipscreen;
-
-
+static struct tilemap *bg_tilemap;
 
 PALETTE_INIT( pcktgal )
 {
@@ -33,52 +31,47 @@ PALETTE_INIT( pcktgal )
 	}
 }
 
-
+WRITE_HANDLER( pcktgal_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset / 2);
+	}
+}
 
 WRITE_HANDLER( pcktgal_flipscreen_w )
 {
-	static int last_flip;
-	flipscreen = (data&0x80) ? 1 : 0;
-	if (last_flip!=flipscreen)
-		memset(dirtybuffer,1,0x800);
-	last_flip=flipscreen;
+	if (flip_screen != (data & 0x80))
+	{
+		flip_screen_set(data & 0x80);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
 }
 
-VIDEO_UPDATE( pcktgal )
+static void get_bg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index*2+1] + ((videoram[tile_index*2] & 0x0f) << 8);
+	int color = videoram[tile_index*2] >> 4;
+
+	SET_TILE_INFO(0, code, color, 0)
+}
+
+VIDEO_START( pcktgal )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	return 0;
+}
+
+static void pcktgal_draw_sprites( struct mame_bitmap *bitmap )
 {
 	int offs;
 
-	/* Draw character tiles */
-	for (offs = videoram_size - 2;offs >= 0;offs -= 2)
-	{
-		if (dirtybuffer[offs] || dirtybuffer[offs+1])
-		{
-			int sx,sy,fx=0,fy=0;
-
-			dirtybuffer[offs] = dirtybuffer[offs+1] = 0;
-
-			sx = (offs/2) % 32;
-			sy = (offs/2) / 32;
-			if (flipscreen) {
-				sx=31-sx;
-				sy=31-sy;
-				fx=1;
-				fy=1;
-			}
-
-	        drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs+1] + ((videoram[offs] & 0x0f) << 8),
-					videoram[offs] >> 4,
-					fx,fy,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
-		}
-	}
-
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-
-	/* Sprites */
 	for (offs = 0;offs < spriteram_size;offs += 4)
 	{
 		if (spriteram[offs] != 0xf8)
@@ -91,7 +84,7 @@ VIDEO_UPDATE( pcktgal )
 
 			flipx = spriteram[offs+1] & 0x04;
 			flipy = spriteram[offs+1] & 0x02;
-			if (flipscreen) {
+			if (flip_screen) {
 				sx=240-sx;
 				sy=240-sy;
 				if (flipx) flipx=0; else flipx=1;
@@ -106,4 +99,10 @@ VIDEO_UPDATE( pcktgal )
 					&Machine->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
+}
+
+VIDEO_UPDATE( pcktgal )
+{
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	pcktgal_draw_sprites(bitmap);
 }

@@ -1,41 +1,41 @@
+#define MOO_DEBUG 0
+#define MOO_DMADELAY (100)
+
 /***************************************************************************
 
  Wild West C.O.W.boys of Moo Mesa
  Bucky O'Hare
  (c) 1992 Konami
- Driver by R. Belmont based on xexex.c by Olivier Galibert.
+ Driver by R. Belmont and Acho A. Tang based on xexex.c by Olivier Galibert.
  Moo Mesa protection information thanks to ElSemi and OG.
 
  These are the final Xexex hardware games before the pre-GX/Mystic Warriors
  hardware took over.
 
-TODO
-----
- - 54338 color blender support (is this even used in moo?)
- - Moon in ghost town stage of moo is in front of everything.  Priority
-   set in the sprite is in fact in front of the bg tilemaps, so the video
-   emulation is doing it's job.  Core bug?
- - Memory trashing(?) during moo causes a hang around the second boss even
-   with the protection correct.  (Save a state before that and restore it
-   to work around).
- - The table on ropes looks weird when it's first scrolling down.  Appears
-   to be related to some '157 linescroll bugs also seen in Xexex.
+Bug Fixes and Outstanding Issues
+--------------------------------
+Moo:
+ - 54338 color blender support. Works fine with Bucky but needs a correct
+   enable/disable bit in Moo. (intro gfx missing and fog blocking view)
+ - Enemies coming out of the jail cells in the last stage have wrong priority.
+   Could be tile priority or the typical "small Z, big pri" sprite masking
+   trick currently not supported by K053247_sprites_draw().
+ - Sprite lag, misalignment and flicking should be less severe.
+ - K056832 emulation is more save-state friendly.
 
-CHANGELOG
----------
-* March 18, 2002 (RB except as noted)
- - Visible area adjusted to make sense (384x224 is a reasonable resolution
-   for a standard-resolution PCB).  There's still a minor glitch on one of
-   the intro scenes but I consider that acceptable.  And sorry Stephh, we
-   definitely can't show the green lines.
- - Z80 banking corrected (bucky cared, moo didn't seem to)
- - Tilemaps in moo now use the correct '251 priority registers (confirmed
-   by the swinging table stage, which sends the linescroll data using plane 1's
-   RAM to the far back).
- - Game infos more exactly match the title screens (stephh)
- - Removed third button for moo (stephh)
- - Made bucky world version the parent as per mame tradition (stephh)
- - Can now pass ram/rom test with sound off (reported by stephh)
+Bucky:
+ - Shadows sometimes have wrong priority. (unsupported priority modes)
+ - Gaps between zoomed sprites. (fraction round-off)
+ - Rogue sprites keep popping on screen after stage 2. They can usually be
+   found near 950000 with sprite code around 5e40 or f400. The GFX viewer
+   only shows blanks at 5e40, however. Are they invalid data from bad
+   sprite ROMs or markers that aren't supposed to be displayed? These
+   artifacts have one thing in common: they all have zero zcode. In fact
+   no other sprites in Bucky seems to have zero zcode.
+
+   Update: More garbages seen in later stages with a great variety.
+   There's enough indication to assume Bucky simply ignores sprites with
+   zero Z. I wonder why nobody reported this.
 
 ***************************************************************************/
 
@@ -48,14 +48,13 @@ CHANGELOG
 
 VIDEO_START(moo);
 VIDEO_UPDATE(moo);
+void moo_set_alpha(int on);
 
-static int cur_control2;
-
-static int init_eeprom_count, init_nosound_count;
-
+static int init_eeprom_count, init_nosound_count, game_type;
 static data16_t *workram;
-
 static data16_t protram[16];
+static data16_t cur_control2;
+
 
 static struct EEPROM_interface eeprom_interface =
 {
@@ -115,10 +114,12 @@ static WRITE16_HANDLER( control2_w )
 	/* bit 0  is data */
 	/* bit 1  is cs (active low) */
 	/* bit 2  is clock (active high) */
-	/* bit 8 = enable sprite ROM reading */
+	/* bit 5  is enable irq 5 (unconfirmed) */
+	/* bit 8  is enable sprite ROM reading */
 	/* bit 10 is watchdog */
+	/* bit 11 is enable irq 4 (unconfirmed) */
 
-	cur_control2 = data;
+	COMBINE_DATA(&cur_control2);
 
 	EEPROM_write_bit(cur_control2 & 0x01);
 	EEPROM_set_cs_line((cur_control2 & 0x02) ? CLEAR_LINE : ASSERT_LINE);
@@ -134,20 +135,53 @@ static WRITE16_HANDLER( control2_w )
 	}
 }
 
+
+static void moo_objdma(int type)
+{
+	int counter, num_inactive;
+	data16_t *src, *dst, zmask;
+
+	K053247_export_config(&dst, (struct GfxElement**)&src, (void**)&src, &counter, &counter);
+	src = spriteram16;
+	num_inactive = counter = 256;
+
+	zmask = (type) ? 0x00ff : 0xffff;
+
+	do {
+		if ((*src & 0x8000) && (*src & zmask))
+		{
+			memcpy(dst, src, 0x10);
+			dst += 8;
+			num_inactive--;
+		}
+		src += 0x80;
+	}
+	while (--counter);
+
+	if (num_inactive) do { *dst = 0; dst += 8; } while (--num_inactive);
+}
+
+static void dmaend_callback(int data)
+{
+	if (cur_control2 & 0x800)
+		cpu_set_irq_line(0, 4, HOLD_LINE);
+}
+
 static INTERRUPT_GEN(moo_interrupt)
 {
-	switch (cpu_getiloops())
+	if (K053246_is_IRQ_enabled())
 	{
-		case 0:
-			cpu_set_irq_line(0, 4, HOLD_LINE);
-			break;
+		moo_objdma(game_type);
 
-		case 1:
-			if (K053246_is_IRQ_enabled())
-				cpu_set_irq_line(0, 5, HOLD_LINE);
-			break;
+		// schedule DMA end interrupt (delay shortened to catch up with V-blank)
+		timer_set(TIME_IN_USEC(MOO_DMADELAY), 0, dmaend_callback);
 	}
+
+	// trigger V-blank interrupt
+	if (cur_control2 & 0x20)
+		cpu_set_irq_line(0, 5, HOLD_LINE);
 }
+
 
 static WRITE16_HANDLER( sound_cmd1_w )
 {
@@ -200,6 +234,9 @@ static WRITE_HANDLER( sound_bankswitch_w )
 	cpu_setbank(2, memory_region(REGION_CPU2) + 0x10000 + (data&0xf)*0x4000);
 }
 
+
+#if 0 // (for reference; do not remove)
+
 /* the interface with the 053247 is weird. The chip can address only 0x1000 bytes */
 /* of RAM, but they put 0x10000 there. The CPU can access them all. */
 static READ16_HANDLER( K053247_scattered_word_r )
@@ -224,6 +261,9 @@ static WRITE16_HANDLER( K053247_scattered_word_w )
 		K053247_word_w(offset,data,mem_mask);
 	}
 }
+
+#endif
+
 
 static READ16_HANDLER( player1_r ) 	// players 1 and 3
 {
@@ -268,78 +308,102 @@ static MEMORY_READ16_START( readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM },
 	{ 0x0c4000, 0x0c4001, K053246_word_r },
 	{ 0x0d6014, 0x0d6015, sound_status_r },
+	{ 0x0d6000, 0x0d601f, MRA16_RAM },			/* sound regs fall through */
 	{ 0x0da000, 0x0da001, player1_r },
 	{ 0x0da002, 0x0da003, player2_r },
 	{ 0x0dc000, 0x0dc001, input_port_0_word_r },
 	{ 0x0dc002, 0x0dc003, control1_r },
 	{ 0x0de000, 0x0de001, control2_r },
 	{ 0x100000, 0x17ffff, MRA16_ROM },
-	{ 0x180000, 0x18ffff, MRA16_RAM },	      	/* Work RAM */
-	{ 0x190000, 0x19ffff, K053247_scattered_word_r },
-	{ 0x1a0000, 0x1a1fff, K054157_ram_word_r },	/* Graphic planes */
-	{ 0x1b0000, 0x1b1fff, K054157_rom_word_r }, 	/* Passthrough to tile roms */
+	{ 0x180000, 0x18ffff, MRA16_RAM },			/* Work RAM */
+	{ 0x190000, 0x19ffff, MRA16_RAM },			/* Sprite RAM */
+	{ 0x1a0000, 0x1a1fff, K056832_ram_word_r },	/* Graphic planes */
+	{ 0x1a2000, 0x1a3fff, K056832_ram_word_r },	/* Graphic planes mirror */
+	{ 0x1b0000, 0x1b1fff, K056832_rom_word_r },	/* Passthrough to tile roms */
 	{ 0x1c0000, 0x1c1fff, MRA16_RAM },
+#if MOO_DEBUG
+	{ 0x0c0000, 0x0c003f, K056832_word_r },
+	{ 0x0c2000, 0x0c2007, K053246_reg_word_r },
+	{ 0x0ca000, 0x0ca01f, K054338_word_r },
+	{ 0x0cc000, 0x0cc01f, K053251_lsb_r },
+	{ 0x0d0000, 0x0d001f, MRA16_RAM },
+	{ 0x0d8000, 0x0d8007, K056832_b_word_r },
+#endif
 MEMORY_END
 
 static MEMORY_WRITE16_START( writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x0c0000, 0x0c003f, K054157_word_w },
+	{ 0x0c0000, 0x0c003f, K056832_word_w },
 	{ 0x0c2000, 0x0c2007, K053246_word_w },
-	{ 0x0ca000, 0x0ca01f, MWA16_NOP },	/* K054338 alpha blending engine, coming soon */
+	{ 0x0ca000, 0x0ca01f, K054338_word_w },		/* K054338 alpha blending engine */
 	{ 0x0cc000, 0x0cc01f, K053251_lsb_w },
 	{ 0x0ce000, 0x0ce01f, moo_prot_w },
-	{ 0x0d0000, 0x0d001f, MWA16_NOP },
+	{ 0x0d0000, 0x0d001f, MWA16_RAM },			/* CCU regs (ignored) */
 	{ 0x0d4000, 0x0d4001, sound_irq_w },
 	{ 0x0d600c, 0x0d600d, sound_cmd1_w },
 	{ 0x0d600e, 0x0d600f, sound_cmd2_w },
-	{ 0x0d8000, 0x0d8007, K054157_b_word_w },
+	{ 0x0d6000, 0x0d601f, MWA16_RAM },			/* sound regs fall through */
+	{ 0x0d8000, 0x0d8007, K056832_b_word_w },	/* VSCCS regs */
 	{ 0x0de000, 0x0de001, control2_w },
 	{ 0x100000, 0x17ffff, MWA16_ROM },
 	{ 0x180000, 0x18ffff, MWA16_RAM, &workram },
-	{ 0x190000, 0x19ffff, K053247_scattered_word_w, &spriteram16 },
-	{ 0x1a0000, 0x1a1fff, K054157_ram_word_w },
+	{ 0x190000, 0x19ffff, MWA16_RAM, &spriteram16 },
+	{ 0x1a0000, 0x1a1fff, K056832_ram_word_w },	/* Graphic planes */
+	{ 0x1a2000, 0x1a3fff, K056832_ram_word_w },	/* Graphic planes mirror */
 	{ 0x1c0000, 0x1c1fff, paletteram16_xrgb_word_w, &paletteram16 },
 MEMORY_END
 
 static MEMORY_READ16_START( buckyreadmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM },
 	{ 0x080000, 0x08ffff, MRA16_RAM },
-	{ 0x090000, 0x09ffff, K053247_scattered_word_r },
-	{ 0x0a0000, 0x0affff, MRA16_RAM },
+	{ 0x090000, 0x09ffff, MRA16_RAM },			/* Sprite RAM */
+	{ 0x0a0000, 0x0affff, MRA16_RAM },			/* extra sprite RAM? */
 	{ 0x0c4000, 0x0c4001, K053246_word_r },
 	{ 0x0d2000, 0x0d20ff, K054000_lsb_r },
 	{ 0x0d6014, 0x0d6015, sound_status_r },
+	{ 0x0d6000, 0x0d601f, MRA16_RAM },			/* sound regs fall through */
 	{ 0x0da000, 0x0da001, player1_r },
 	{ 0x0da002, 0x0da003, player2_r },
 	{ 0x0dc000, 0x0dc001, input_port_0_word_r },
 	{ 0x0dc002, 0x0dc003, control1_r },
 	{ 0x0de000, 0x0de001, control2_r },
-	{ 0x180000, 0x181fff, K054157_ram_word_r },	/* Graphic planes */
-	{ 0x182000, 0x187fff, MRA16_RAM },
-	{ 0x190000, 0x191fff, K054157_rom_word_r }, 	/* Passthrough to tile roms */
+	{ 0x180000, 0x181fff, K056832_ram_word_r },	/* Graphic planes */
+	{ 0x182000, 0x183fff, K056832_ram_word_r },	/* Graphic planes mirror */
+	{ 0x184000, 0x187fff, MRA16_RAM },			/* extra tile RAM? */
+	{ 0x190000, 0x191fff, K056832_rom_word_r },	/* Passthrough to tile roms */
 	{ 0x1b0000, 0x1b3fff, MRA16_RAM },
-	{ 0x200000, 0x23ffff, MRA16_ROM },		/* data */
+	{ 0x200000, 0x23ffff, MRA16_ROM },			/* data */
+#if MOO_DEBUG
+	{ 0x0c0000, 0x0c003f, K056832_word_r },
+	{ 0x0c2000, 0x0c2007, K053246_reg_word_r },
+	{ 0x0ca000, 0x0ca01f, K054338_word_r },
+	{ 0x0cc000, 0x0cc01f, K053251_lsb_r },
+	{ 0x0d0000, 0x0d001f, MRA16_RAM },
+	{ 0x0d8000, 0x0d8007, K056832_b_word_r },
+#endif
 MEMORY_END
 
 static MEMORY_WRITE16_START( buckywritemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x080000, 0x08ffff, MWA16_RAM },
-	{ 0x090000, 0x09ffff, K053247_scattered_word_w, &spriteram16 },
-	{ 0x0a0000, 0x0affff, MWA16_RAM },
-	{ 0x0c0000, 0x0c003f, K054157_word_w },
+	{ 0x090000, 0x09ffff, MWA16_RAM, &spriteram16 },	/* Sprite RAM */
+	{ 0x0a0000, 0x0affff, MWA16_RAM },			/* extra sprite RAM? */
+	{ 0x0c0000, 0x0c003f, K056832_word_w },
 	{ 0x0c2000, 0x0c2007, K053246_word_w },
-	{ 0x0ca000, 0x0ca01f, MWA16_NOP },	/* K054338 alpha blending engine, coming soon */
+	{ 0x0ca000, 0x0ca01f, K054338_word_w },		/* K054338 alpha blending engine */
 	{ 0x0cc000, 0x0cc01f, K053251_lsb_w },
 	{ 0x0ce000, 0x0ce01f, moo_prot_w },
-	{ 0x0d0000, 0x0d001f, MWA16_NOP },
+	{ 0x0d0000, 0x0d001f, MWA16_RAM },			/* CCU regs (ignored) */
 	{ 0x0d2000, 0x0d20ff, K054000_lsb_w },
 	{ 0x0d4000, 0x0d4001, sound_irq_w },
 	{ 0x0d600c, 0x0d600d, sound_cmd1_w },
 	{ 0x0d600e, 0x0d600f, sound_cmd2_w },
-	{ 0x0d8000, 0x0d8007, K054157_b_word_w },
+	{ 0x0d6000, 0x0d601f, MWA16_RAM },			/* sound regs fall through */
+	{ 0x0d8000, 0x0d8007, K056832_b_word_w },	/* VSCCS regs */
 	{ 0x0de000, 0x0de001, control2_w },
-	{ 0x180000, 0x181fff, K054157_ram_word_w },
-	{ 0x182000, 0x187fff, MWA16_RAM },
+	{ 0x180000, 0x181fff, K056832_ram_word_w },	/* Graphic planes */
+	{ 0x182000, 0x183fff, K056832_ram_word_w },	/* Graphic planes mirror */
+	{ 0x184000, 0x187fff, MWA16_RAM },			/* extra tile RAM? */
 	{ 0x1b0000, 0x1b3fff, paletteram16_xrgb_word_w, &paletteram16 },
 	{ 0x200000, 0x23ffff, MWA16_ROM },
 MEMORY_END
@@ -530,26 +594,26 @@ static MACHINE_DRIVER_START( moo )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M68000, 16000000)
 	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(moo_interrupt, 2)
+	MDRV_CPU_VBLANK_INT(moo_interrupt, 1)
 
 	MDRV_CPU_ADD_TAG("sound", Z80, 8000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_VBLANK_DURATION(1200) // should give IRQ4 sufficient time to update scroll registers
 
 	MDRV_MACHINE_INIT(moo)
 
 	MDRV_NVRAM_HANDLER(moo)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_HAS_SHADOWS)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS | VIDEO_UPDATE_AFTER_VBLANK)
 	MDRV_SCREEN_SIZE(64*8, 32*8)
 	/* visrgn derived by opening it all the way up, taking snapshots,
 	   and measuring in the GIMP.  The character select screen demands this
 	   geometry or stuff gets cut off */
-	MDRV_VISIBLE_AREA(8*8, 56*8-1, 2*8, 30*8-1)
+	MDRV_VISIBLE_AREA(40, 40+384-1, 16, 16+224-1)
 
 	MDRV_PALETTE_LENGTH(2048)
 
@@ -712,6 +776,8 @@ static DRIVER_INIT( moo )
 
 	state_save_register_INT32("Moo", 0, "control2", (INT32 *)&cur_control2, 1);
 	state_save_register_UINT16("Moo", 0, "protram", (UINT16 *)protram, 1);
+
+	game_type = (!strcmp(Machine->gamedrv->name, "bucky") || !strcmp(Machine->gamedrv->name, "buckyua"));
 }
 
 

@@ -31,29 +31,36 @@ FEB-2003 (AT)
   sidearms055gre:  strange background color
   turtship37b5yel: various graphics glitches and priority problems
 
+JUN-2003 (Curt Coder)
+
+- converted driver to use tilemaps
+
 Notes:
 
   Unknown PROMs are mostly used for timing. Only the first four sprite
   encoding parameters have been identified, the other 28(!) are
-  believed to be line-buffer controls. Cocktail mode needs work. It may
-  be easier to flip the final bitmap instead of individual components.
+  believed to be line-buffer controls.
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern data8_t *sidearms_bg_scrollx,*sidearms_bg_scrolly;
+extern UINT8 *sidearms_bg_scrollx;
+extern UINT8 *sidearms_bg_scrolly;
 extern int sidearms_vidhrdw;
 
-WRITE_HANDLER( sidearms_star_scrollx_w );
-WRITE_HANDLER( sidearms_star_scrolly_w );
-WRITE_HANDLER( sidearms_c804_w );
-WRITE_HANDLER( sidearms_gfxctrl_w );
-VIDEO_START( sidearms );
-VIDEO_EOF( sidearms );
-PALETTE_INIT( sidearms );
-VIDEO_UPDATE( sidearms );
+extern WRITE_HANDLER( sidearms_videoram_w );
+extern WRITE_HANDLER( sidearms_colorram_w );
+extern WRITE_HANDLER( sidearms_star_scrollx_w );
+extern WRITE_HANDLER( sidearms_star_scrolly_w );
+extern WRITE_HANDLER( sidearms_c804_w );
+extern WRITE_HANDLER( sidearms_gfxctrl_w );
+
+extern PALETTE_INIT( sidearms );
+extern VIDEO_START( sidearms );
+extern VIDEO_UPDATE( sidearms );
+extern VIDEO_EOF( sidearms );
 
 
 static WRITE_HANDLER( sidearms_bankswitch_w )
@@ -107,8 +114,8 @@ static MEMORY_WRITE_START( writemem )
 	{ 0xc808, 0xc809, MWA_RAM, &sidearms_bg_scrollx },
 	{ 0xc80a, 0xc80b, MWA_RAM, &sidearms_bg_scrolly },
 	{ 0xc80c, 0xc80c, sidearms_gfxctrl_w },	/* background and sprite enable */
-	{ 0xd000, 0xd7ff, videoram_w, &videoram, &videoram_size },
-	{ 0xd800, 0xdfff, colorram_w, &colorram },
+	{ 0xd000, 0xd7ff, sidearms_videoram_w, &videoram },
+	{ 0xd800, 0xdfff, sidearms_colorram_w, &colorram },
 	{ 0xe000, 0xefff, MWA_RAM },
 	{ 0xf000, 0xffff, MWA_RAM, &spriteram, &spriteram_size },
 MEMORY_END
@@ -137,8 +144,8 @@ static MEMORY_WRITE_START( turtship_writemem )
 	{ 0xe808, 0xe809, MWA_RAM, &sidearms_bg_scrollx },
 	{ 0xe80a, 0xe80b, MWA_RAM, &sidearms_bg_scrolly },
 	{ 0xe80c, 0xe80c, sidearms_gfxctrl_w },	/* background and sprite enable */
-	{ 0xf000, 0xf7ff, videoram_w, &videoram, &videoram_size },
-	{ 0xf800, 0xffff, colorram_w, &colorram },
+	{ 0xf000, 0xf7ff, sidearms_videoram_w, &videoram },
+	{ 0xf800, 0xffff, sidearms_colorram_w, &colorram },
 MEMORY_END
 
 
@@ -801,9 +808,9 @@ static DRIVER_INIT( turtship ) { sidearms_vidhrdw = 1; }
 static DRIVER_INIT( dyger    ) { sidearms_vidhrdw = 2; }
 
 
-GAMEX( 1986, sidearms, 0,        sidearms, sidearms, sidearms, ROT0,   "Capcom", "Side Arms - Hyper Dyne (World)", GAME_NO_COCKTAIL|GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1986, sidearmr, sidearms, sidearms, sidearms, sidearms, ROT0,   "Capcom (Romstar license)", "Side Arms - Hyper Dyne (US)", GAME_NO_COCKTAIL|GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1986, sidearjp, sidearms, sidearms, sidearms, sidearms, ROT0,   "Capcom", "Side Arms - Hyper Dyne (Japan)", GAME_NO_COCKTAIL|GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1988, turtship, 0,        turtship, turtship, turtship, ROT0,   "Philko", "Turtle Ship", GAME_NO_COCKTAIL )
-GAMEX( 1989, dyger,    0,        turtship, dyger,    dyger,    ROT270, "Philko", "Dyger (Korea set 1)", GAME_NO_COCKTAIL )
-GAMEX( 1989, dygera,   dyger,    turtship, dyger,    dyger,    ROT270, "Philko", "Dyger (Korea set 2)", GAME_NO_COCKTAIL )
+GAMEX(1986, sidearms, 0,        sidearms, sidearms, sidearms, ROT0,   "Capcom", "Side Arms - Hyper Dyne (World)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1986, sidearmr, sidearms, sidearms, sidearms, sidearms, ROT0,   "Capcom (Romstar license)", "Side Arms - Hyper Dyne (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1986, sidearjp, sidearms, sidearms, sidearms, sidearms, ROT0,   "Capcom", "Side Arms - Hyper Dyne (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1988, turtship, 0,        turtship, turtship, turtship, ROT0,   "Philko", "Turtle Ship" )
+GAME( 1989, dyger,    0,        turtship, dyger,    dyger,    ROT270, "Philko", "Dyger (Korea set 1)" )
+GAME( 1989, dygera,   dyger,    turtship, dyger,    dyger,    ROT270, "Philko", "Dyger (Korea set 2)" )

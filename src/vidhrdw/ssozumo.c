@@ -10,9 +10,10 @@ Driver by Takahiro Nogi (nogi@kt.rim.or.jp) 1999/10/04
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *ssozumo_videoram2, *ssozumo_colorram2;
-size_t ssozumo_videoram2_size;
-unsigned char *ssozumo_scroll;
+UINT8 *ssozumo_videoram2;
+UINT8 *ssozumo_colorram2;
+
+static struct tilemap *bg_tilemap, *fg_tilemap;
 
 #define TOTAL_COLORS(gfxn)	(Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 #define COLOR(gfxn,offs)	(colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
@@ -47,6 +48,41 @@ PALETTE_INIT( ssozumo )
 	}
 }
 
+WRITE_HANDLER( ssozumo_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
+
+WRITE_HANDLER( ssozumo_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
+
+WRITE_HANDLER( ssozumo_videoram2_w )
+{
+	if (ssozumo_videoram2[offset] != data)
+	{
+		ssozumo_videoram2[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
+}
+
+WRITE_HANDLER( ssozumo_colorram2_w )
+{
+	if (ssozumo_colorram2[offset] != data)
+	{
+		ssozumo_colorram2[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
+}
 
 WRITE_HANDLER( ssozumo_paletteram_w )
 {
@@ -81,74 +117,89 @@ WRITE_HANDLER( ssozumo_paletteram_w )
 	palette_set_color(offs2 + 64, r, g, b);
 }
 
+WRITE_HANDLER( ssozumo_scroll_w )
+{
+	tilemap_set_scrolly(bg_tilemap, 0, data);
+}
+
+static void get_bg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index] + ((colorram[tile_index] & 0x08) << 5);
+	int color = (colorram[tile_index] & 0x30) >> 4;
+	int flags = ((tile_index % 32) >= 16) ? TILE_FLIPY : 0;
+
+	SET_TILE_INFO(1, code, color, flags)
+}
+
+static void get_fg_tile_info(int tile_index)
+{
+	int code = ssozumo_videoram2[tile_index] + 256 * (ssozumo_colorram2[tile_index] & 0x07);
+	int color = (ssozumo_colorram2[tile_index] & 0x30) >> 4;
+
+	SET_TILE_INFO(0, code, color, 0)
+}
+
+UINT32 tilemap_scan_cols_flipx( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+{
+	/* logical (col,row) -> memory offset */
+	return (num_cols - 1 - col) * num_rows + row;
+}
 
 VIDEO_START( ssozumo )
 {
-	if ((dirtybuffer = auto_malloc(videoram_size)) == 0)
-		return 1;
-	memset(dirtybuffer, 1, videoram_size);
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_cols_flipx, 
+		TILEMAP_OPAQUE, 16, 16, 16, 32);
 
-	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, 2 * Machine->drv->screen_height)) == 0)
+	if ( !bg_tilemap )
 		return 1;
+
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_cols_flipx, 
+		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	tilemap_set_transparent_pen(fg_tilemap, 0);
 
 	return 0;
 }
 
-
-VIDEO_UPDATE( ssozumo )
+static void ssozumo_draw_sprites( struct mame_bitmap *bitmap )
 {
-	int	offs;
-	int	sx, sy;
-	int	scrolly;
+	int offs;
 
-
-	/* Draw the background layer*/
-	for (offs = (videoram_size - 1) ; offs >= 0 ; offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			dirtybuffer[offs] = 0;
-
-			sx = (15 - offs / 32);
-			sy = (offs % 32);
-
-			drawgfx(tmpbitmap, Machine->gfx[1],
-					videoram[offs] + ((colorram[offs] & 0x08) << 5),
-					(colorram[offs] & 0x30) >> 4,
-					0, sy >= 16,
-					(16 * sx), (16 * sy),
-					0, TRANSPARENCY_NONE, 0);
-		}
-	}
-
-	/* Draw the front layer */
-	scrolly = -*ssozumo_scroll;
-	copyscrollbitmap(bitmap, tmpbitmap, 0, 0, 1, &scrolly, &Machine->visible_area, TRANSPARENCY_NONE, 0);
-
-	for (offs = (ssozumo_videoram2_size - 1) ; offs >= 0 ; offs--)
-	{
-		sx = (31 - offs / 32);
-		sy = (offs % 32);
-
-		drawgfx(bitmap,Machine->gfx[0],
-				ssozumo_videoram2[offs] + 256 * (ssozumo_colorram2[offs] & 0x07),
-				(ssozumo_colorram2[offs] & 0x30) >> 4,
-				0, 0,
-				(8 * sx), (8 * sy),
-				&Machine->visible_area, TRANSPARENCY_PEN, 0);
-	}
-
-	/* Draw the sprites layer */
-	for (offs = 0 ; offs < spriteram_size ; offs += 4)
+	for (offs = 0; offs < spriteram_size; offs += 4)
 	{
 		if (spriteram[offs] & 0x01)
 		{
+			int code = spriteram[offs + 1] + ((spriteram[offs] & 0xf0) << 4);
+			int color = (spriteram[offs] & 0x08) >> 3;
+			int flipx = spriteram[offs] & 0x04;
+			int flipy = spriteram[offs] & 0x02;
+			int sx = 239 - spriteram[offs + 3];
+			int sy = (240 - spriteram[offs + 2]) & 0xff;
+
+			if (flip_screen)
+			{
+				sx = 240 - sx;
+				sy = 240 - sy;
+				flipx = !flipx;
+				flipy = !flipy;
+			}
+
 			drawgfx(bitmap, Machine->gfx[2],
-					spriteram[offs+1] + ((spriteram[offs] & 0xf0) << 4),
-					(spriteram[offs] & 0x08) >> 3,
-					spriteram[offs] & 0x04,spriteram[offs] & 0x02,
-					239 - spriteram[offs+3], (240 - spriteram[offs+2]) & 0xff,
-					&Machine->visible_area, TRANSPARENCY_PEN, 0);
+				code, color,
+				flipx, flipy,
+				sx, sy,
+				&Machine->visible_area,
+				TRANSPARENCY_PEN, 0);
 		}
 	}
+}
+
+VIDEO_UPDATE( ssozumo )
+{
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, 0, 0);
+	ssozumo_draw_sprites(bitmap);
 }

@@ -24,10 +24,12 @@ Memory Overview:
 #include "cpu/z80/z80.h"
 
 
-WRITE16_HANDLER( tigeroad_videoctrl_w );
-WRITE16_HANDLER( tigeroad_scroll_w );
-VIDEO_UPDATE( tigeroad );
-VIDEO_EOF( tigeroad );
+extern WRITE16_HANDLER( tigeroad_videoram_w );
+extern WRITE16_HANDLER( tigeroad_videoctrl_w );
+extern WRITE16_HANDLER( tigeroad_scroll_w );
+extern VIDEO_START( tigeroad );
+extern VIDEO_UPDATE( tigeroad );
+extern VIDEO_EOF( tigeroad );
 
 
 static data16_t *ram16;
@@ -187,7 +189,7 @@ static MEMORY_WRITE16_START( writemem )
 	{ 0xfe0d00, 0xfe1807, MWA16_RAM },  /* still part of OBJ RAM */
 	{ 0xfe4000, 0xfe4001, tigeroad_videoctrl_w },	/* char bank, coin counters, + ? */
 	/*{ 0xfe4002, 0xfe4003, tigeroad_soundcmd_w }, added by init_tigeroad() */
-	{ 0xfec000, 0xfec7ff, MWA16_RAM, &videoram16, &videoram_size },
+	{ 0xfec000, 0xfec7ff, tigeroad_videoram_w, &videoram16 },
 	{ 0xfe8000, 0xfe8003, tigeroad_scroll_w },
 	{ 0xfe800e, 0xfe800f, MWA16_RAM },    /* fe800e = watchdog or IRQ acknowledge */
 	{ 0xff8200, 0xff867f, paletteram16_xxxxRRRRGGGGBBBB_word_w, &paletteram16 },
@@ -571,6 +573,7 @@ static MACHINE_DRIVER_START( tigeroad )
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(576)
 
+	MDRV_VIDEO_START(tigeroad)
 	MDRV_VIDEO_EOF(tigeroad)
 	MDRV_VIDEO_UPDATE(tigeroad)
 

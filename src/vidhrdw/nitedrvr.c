@@ -6,10 +6,19 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "nitedrvr.h"
 
-/* local */
-unsigned char *nitedrvr_hvc;
+UINT8 *nitedrvr_hvc;
+
+static struct tilemap *bg_tilemap;
+
+WRITE_HANDLER( nitedrvr_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
 WRITE_HANDLER( nitedrvr_hvc_w )
 {
@@ -17,8 +26,24 @@ WRITE_HANDLER( nitedrvr_hvc_w )
 
 //	if ((offset & 0x30) == 0x30)
 //		;		/* Watchdog called here */
+}
 
-	return;
+static void get_bg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index] & 0x3f;
+
+	SET_TILE_INFO(0, code, 0, 0)
+}
+
+VIDEO_START( nitedrvr )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	return 0;
 }
 
 static void nitedrvr_draw_block(struct mame_bitmap *bitmap, int bx, int by, int ex, int ey)
@@ -37,48 +62,10 @@ static void nitedrvr_draw_block(struct mame_bitmap *bitmap, int bx, int by, int 
 	return;
 }
 
-/***************************************************************************
-
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
-
-VIDEO_UPDATE( nitedrvr )
+static void nitedrvr_draw_road( struct mame_bitmap *bitmap )
 {
-	int offs,roadway;
-	char gear_buf[] =  {0x07,0x05,0x01,0x12,0x00,0x00}; /* "GEAR  " */
-	char track_buf[] = {0x0e,0x0f,0x16,0x09,0x03,0x05, /* "NOVICE" */
-						0x05,0x18,0x10,0x05,0x12,0x14, /* "EXPERT" */
-						0x00,0x00,0x00,0x10,0x12,0x0f};/* "   PRO" */
+	int roadway;
 
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int charcode;
-			int sx,sy;
-
-			dirtybuffer[offs]=0;
-
-			charcode = videoram[offs] & 0x3f;
-
-			sx = 8 * (offs % 32);
-			sy = 16 * (offs / 32);
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					charcode, 0,
-					0,0,sx,sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
-		}
-	}
-
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-
-	/* Draw roadway */
 	for (roadway=0; roadway < 16; roadway++)
 	{
 		int bx, by, ex, ey;
@@ -90,6 +77,19 @@ VIDEO_UPDATE( nitedrvr )
 
 		nitedrvr_draw_block(bitmap,bx,by,ex,ey);
 	}
+}
+
+static void nitedrvr_draw_hacks( struct mame_bitmap *bitmap )
+{
+	int offs;
+
+	extern int nitedrvr_gear;
+	extern int nitedrvr_track;
+
+	char gear_buf[] =  {0x07,0x05,0x01,0x12,0x00,0x00}; /* "GEAR  " */
+	char track_buf[] = {0x0e,0x0f,0x16,0x09,0x03,0x05, /* "NOVICE" */
+						0x05,0x18,0x10,0x05,0x12,0x14, /* "EXPERT" */
+						0x00,0x00,0x00,0x10,0x12,0x0f};/* "   PRO" */
 
 	/* gear shift indicator - not a part of the original game!!! */
 	gear_buf[5]=0x30 + nitedrvr_gear;
@@ -105,4 +105,11 @@ VIDEO_UPDATE( nitedrvr )
 				track_buf[offs + 6*nitedrvr_track],0,
 				0,0,(offs+26)*8,31*8,
 				&Machine->visible_area,TRANSPARENCY_NONE,0);
+}
+
+VIDEO_UPDATE( nitedrvr )
+{
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	nitedrvr_draw_road(bitmap);
+	//nitedrvr_draw_hacks(bitmap);
 }

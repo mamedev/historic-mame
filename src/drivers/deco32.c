@@ -18,7 +18,7 @@
 
 	Tattoo Assassins is a prototype, it is thought only 25 test units
 	were manufactured and distributed to test arcades before the game
-	was recalled.  TA is the only game developed by Data East Pinball 
+	was recalled.  TA is the only game developed by Data East Pinball
 	in USA, rather than Data East Corporation in Japan.
 
 	Tattoo Assassins uses DE Pinball soundboard 520-5077-00 R
@@ -30,6 +30,74 @@
 	special blending effects.  It's exact effect is unclear.
 
 	Video backgrounds in Dragongun and Lock N Load?
+
+
+
+Locked 'n Loaded (US)
+Data East Corporation (c) 1994
+
+PCB Layout - Same PCB as used for Dragon Gun, see comment below:
+
+------------------------------------------------------------
+|     32.220MHz   28.000MHz                                |
+|                                          MBM-05  MBM-03  |
+|         NH06-0   HuC6280A                                |
+|           YM2151                         MBM-04  MBM-02  |
+--+                                                        |
+--+           MBM-07                                       |
+|             MAR-07                74                     |
+| M6295 M6295 MBM-06                       MBM-01  NH05-0  |
+| M6295                                    MBM-00  NH04-0  |
+|                                      74                  |
+|J                                                         |
+|A                                                         |
+|M                                                         |
+|M                                          2M-5    2M-4   |
+|A  113                                    NH03-0  NH01-0  |
+|                                  101      2M-7    2M-6   |
+--+                                        NH02-0  NH00-0  |
+--+ DSW1   146                                             |
+|A             93C45                                       |
+|U                                +-------------------------+
+|X                                |         DE-0406-1       |
+--|       ADC0808CCN              |       AUX PCB with      |
+  --------------------------------|      Gun Connectors     |
+                                  --------------------------+
+
+2M-4 through 2M-7 are empty sockets for additional program ROMs (used by dragon Gun)
+AUX edge connector is a 48 pin type simular to those used on Namco System 11, 12, ect
+
+
+DE-0360-4 ROM board Layout:
+
+------------------------------------------------------------
+| CN2                   TC524256BZ-10 TC524256BZ-10  MAR-17|
+|                       TC524256BZ-10 TC524256BZ-10  MAR-18|
+| HM65256BLSP-10        TC524256BZ-10 TC524256BZ-10  MAR-19|
+| 16 of these chips     TC524256BZ-10 TC524256BZ-10  MAR-20|
+| in this area                                       MAR-21|
+|                                       Intel i750   MAR-22|
+|         187     23.000MHz                          MAR-23|
+|MBM-08                                              MAR-24|
+|MBM-09             20.0000MHz                       MAR-25|
+|MBM-10                                      145     MAR-26|
+|MBM-11  186                                         MAR-27|
+|MBM-12                                              MAR-28|
+|MBM-13                                                    |
+|MBM-14 PAL16L8BCN                          Intel i750     |
+|MBM-15 PAL16L8BCN                                         |
+| CN1                           25.000MHz      PAL16L8BCN  |
+------------------------------------------------------------
+
+CN1 = Tripple row 32 pin connector
+CN2 = Dual row 32 pin connector
+
+Locked 'n Loaded appears to be a conversion of Dragon Gun (c) 1993 as
+there are 12 surface mounted GFX roms and 1 surface mounted sample rom
+left over from the conversion.  The roms labeled "MAR-xx" are those
+from Dragon Gun.
+
+
 
 ***************************************************************************/
 
@@ -84,7 +152,7 @@ static READ32_HANDLER( deco32_irq_controller_r )
 			return 0xffffff80 | 0x1 | 0x10; /* Assume VBL takes priority over possible raster/lightgun irq */
 
 		return 0xffffff80 | cpu_getvblank() | (cpu_getiloops() ? 0x40 : 0x20);
-//		return 0xffffff80 | cpu_getvblank() | (0x40); //test for lock load guns 
+//		return 0xffffff80 | cpu_getvblank() | (0x40); //test for lock load guns
 	}
 
 	logerror("%08x: Unmapped IRQ read %08x (%08x)\n",activecpu_get_pc(),offset,mem_mask);
@@ -96,10 +164,10 @@ static WRITE32_HANDLER( deco32_irq_controller_w )
 	int scanline;
 
 	switch (offset) {
-	case 0: /* IRQ enable - probably an irq mask, but only values used are 0xc8 and 0xca */		
+	case 0: /* IRQ enable - probably an irq mask, but only values used are 0xc8 and 0xca */
 //		logerror("%08x:  IRQ write %d %08x\n",activecpu_get_pc(),offset,data);
 		raster_enable=(data&0xff)==0xc8; /* 0xca seems to be off */
-		break; 
+		break;
 
 	case 1: /* Raster IRQ scanline position, only valid for values between 1 & 239 (0 and 240-256 do NOT generate IRQ's) */
 		scanline=(data&0xff)+raster_offset; /* Captain America seems to need (scanline-1), may be related to unemulated hblank? */
@@ -288,13 +356,13 @@ static WRITE32_HANDLER( tattass_control_w )
 
 	/* Eprom in low byte */
 	if (mem_mask==0xffffff00) { /* Byte write to low byte only (different from word writing including low byte) */
-		/* 
+		/*
 			The Tattoo Assassins eprom seems strange...  It's 1024 bytes in size, and 8 bit
 			in width, but offers a 'multiple read' mode where a bit stream can be read
 			starting at any byte boundary.
-		
+
 			Multiple read mode:
-			Write 110aa000		[Read command, top two bits of address, 4 zeroes] 
+			Write 110aa000		[Read command, top two bits of address, 4 zeroes]
 			Write 00000000		[8 zeroes]
 			Write aaaaaaaa		[Bottom 8 bits of address]
 
@@ -386,7 +454,7 @@ static WRITE32_HANDLER( tattass_control_w )
 				bufPtr=0;
 			}
 		}
-	
+
 		lastClock=data&0x20;
 		return;
 	}
@@ -583,7 +651,7 @@ MEMORY_END
 static MEMORY_READ32_START( dragngun_readmem )
 	{ 0x000000, 0x0fffff, MRA32_ROM },
 	{ 0x100000, 0x11ffff, MRA32_RAM },
-	{ 0x120000, 0x120fff, dragngun_prot_r }, 
+	{ 0x120000, 0x120fff, dragngun_prot_r },
 	{ 0x128000, 0x12800f, deco32_irq_controller_r },
 	{ 0x130000, 0x131fff, MRA32_RAM },
 	{ 0x138000, 0x138003, MRA32_NOP }, /* Palette dma complete in bit 0x8? ack?  return 0 else tight loop */
@@ -661,7 +729,7 @@ MEMORY_END
 static MEMORY_READ32_START( lockload_readmem )
 	{ 0x000000, 0x0fffff, MRA32_ROM },
 	{ 0x100000, 0x11ffff, MRA32_RAM },
-	{ 0x120000, 0x120fff, dragngun_prot_r }, 
+	{ 0x120000, 0x120fff, dragngun_prot_r },
 	{ 0x128000, 0x12800f, deco32_irq_controller_r },
 	{ 0x130000, 0x131fff, MRA32_RAM },
 	{ 0x138000, 0x138003, MRA32_RAM }, //palette dma complete in bit 0x8? ack?  return 0 else tight loop
@@ -691,7 +759,7 @@ static MEMORY_READ32_START( lockload_readmem )
 
 	{ 0x300000, 0x3fffff, MRA32_ROM },
 
-	{ 0x400000, 0x400003, dragngun_oki_2_r }, 
+	{ 0x400000, 0x400003, dragngun_oki_2_r },
 	{ 0x420000, 0x420003, dragngun_eeprom_r },
 //	{ 0x438000, 0x438003, dragngun_lightgun_r },
 	{ 0x440000, 0x440003, dragngun_service_r },
@@ -746,7 +814,7 @@ static MEMORY_READ32_START( tattass_readmem )
 	{ 0x120000, 0x120003, MRA32_NOP }, /* ACIA (unused) */
 
 	{ 0x162000, 0x162fff, MRA32_RAM }, /* 'Jack' RAM!? */
-	{ 0x163000, 0x16307f, MRA32_RAM }, 
+	{ 0x163000, 0x16307f, MRA32_RAM },
 	{ 0x168000, 0x169fff, MRA32_RAM },
 
 	{ 0x170000, 0x171fff, MRA32_RAM },
@@ -788,9 +856,9 @@ static MEMORY_WRITE32_START( tattass_writemem )
 	{ 0x164000, 0x164003, MWA32_NOP }, /* Palette control BG2/3 ($1a constant) */
 	{ 0x164004, 0x164007, MWA32_NOP }, /* Palette control Obj1 ($6 constant) */
 	{ 0x164008, 0x16400b, MWA32_NOP }, /* Palette control Obj2 ($5 constant) */
-	{ 0x16400c, 0x16400f, MWA32_NOP }, 
+	{ 0x16400c, 0x16400f, MWA32_NOP },
 	{ 0x168000, 0x169fff, deco32_buffered_palette_w, &paletteram32 },
-	{ 0x16c000, 0x16c003, MWA32_NOP }, 
+	{ 0x16c000, 0x16c003, MWA32_NOP },
 	{ 0x16c008, 0x16c00b, deco32_palette_dma_w },
 
 	{ 0x170000, 0x171fff, MWA32_RAM, &spriteram32, &spriteram_size },
@@ -822,9 +890,9 @@ MEMORY_END
 
 static int bsmt_latch;
 
-static WRITE_HANDLER(deco32_bsmt0_w) 
-{ 
-	bsmt_latch = data; 
+static WRITE_HANDLER(deco32_bsmt0_w)
+{
+	bsmt_latch = data;
 }
 
 static WRITE_HANDLER(deco32_bsmt1_w)
@@ -833,9 +901,9 @@ static WRITE_HANDLER(deco32_bsmt1_w)
 	cpu_set_irq_line(1, M6809_IRQ_LINE, HOLD_LINE); /* BSMT is ready */
 }
 
-static READ_HANDLER(deco32_bsmt_status_r) 
+static READ_HANDLER(deco32_bsmt_status_r)
 {
-	return 0x80; 
+	return 0x80;
 }
 
 static MEMORY_READ_START( sound_readmem )
@@ -1044,7 +1112,7 @@ INPUT_PORTS_START( fghthist )
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START2 )
-	
+
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -1350,7 +1418,7 @@ static struct GfxLayout spritelayout2 =
 
 	  },
 
-	
+
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
 	32*8
 };
@@ -1505,7 +1573,7 @@ static NVRAM_HANDLER(tattass)
 	else
 	{
 		int len;
-		EEPROM_init(&eeprom_interface_tattass);	
+		EEPROM_init(&eeprom_interface_tattass);
 		if (file) EEPROM_load(file);
 		else memcpy(EEPROM_get_data_pointer(&len),tattass_default_eprom,0x160);
 	}
@@ -2045,57 +2113,57 @@ ROM_START( dragngun )
 	ROM_LOAD32_BYTE( "kb05.bin", 0x300003, 0x40000, CRC(fbad737b) SHA1(04e16abe8c4cec4f172bea29516535511db9db90) )
 
 	ROM_REGION(0x10000, REGION_CPU2, 0 ) /* Sound CPU */
-	ROM_LOAD( "kb10snd.bin",  0x00000,  0x10000,  CRC(ec56f560) SHA1(feb9491683ba7f1000edebb568d6b3471fcc87fb) )
+	ROM_LOAD( "kb10.bin",  0x00000,  0x10000,  CRC(ec56f560) SHA1(feb9491683ba7f1000edebb568d6b3471fcc87fb) )
 
 	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD16_BYTE( "kb08.bin",  0x00000,  0x10000,  CRC(8fe4e5f5) SHA1(922b94f8ce0c35e965259c11e95891ef4be913d4) ) /* Encrypted tiles */
 	ROM_LOAD16_BYTE( "kb09.bin",  0x00001,  0x10000,  CRC(e9dcac3f) SHA1(0621e601ffae73bbf69623042c9c8ab0526c3de6) )
 
 	ROM_REGION( 0x120000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "dgma0.bin",  0x00000,  0x80000,  CRC(d0491a37) SHA1(cc0ae1e9e5f42ba30159fb79bccd2e237cd037d0) ) /* Encrypted tiles */
-	ROM_LOAD( "dgma1.bin",  0x90000,  0x80000,  CRC(d5970365) SHA1(729baf1efbef15c9f3e1d700717f5ba4f10d3014) )
+	ROM_LOAD( "mar-00.bin",  0x00000,  0x80000,  CRC(d0491a37) SHA1(cc0ae1e9e5f42ba30159fb79bccd2e237cd037d0) ) /* Encrypted tiles */
+	ROM_LOAD( "mar-01.bin",  0x90000,  0x80000,  CRC(d5970365) SHA1(729baf1efbef15c9f3e1d700717f5ba4f10d3014) )
 
 	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "dgma2.bin",   0x000000, 0x40000,  CRC(c6cd4baf) SHA1(350286829a330b64f463d0a9cbbfdb71eecf5188) ) /* Encrypted tiles 0/4 */
+	ROM_LOAD( "mar-02.bin",  0x000000, 0x40000,  CRC(c6cd4baf) SHA1(350286829a330b64f463d0a9cbbfdb71eecf5188) ) /* Encrypted tiles 0/4 */
 	ROM_CONTINUE(            0x100000, 0x40000 ) /* 2 bpp per 0x40000 chunk, 1/4 */
 	ROM_CONTINUE(            0x200000, 0x40000 ) /* 2/4 */
 	ROM_CONTINUE(            0x300000, 0x40000 ) /* 3/4 */
-	ROM_LOAD( "dgma3.bin",   0x040000, 0x40000,  CRC(793006d7) SHA1(7d8aba2fe75917f580a3a931a7defe5939a0874e) ) /* Encrypted tiles 0/4 */
+	ROM_LOAD( "mar-03.bin",  0x040000, 0x40000,  CRC(793006d7) SHA1(7d8aba2fe75917f580a3a931a7defe5939a0874e) ) /* Encrypted tiles 0/4 */
 	ROM_CONTINUE(            0x140000, 0x40000 ) /* 2 bpp per 0x40000 chunk, 1/4 */
 	ROM_CONTINUE(            0x240000, 0x40000 ) /* 2/4 */
 	ROM_CONTINUE(            0x340000, 0x40000 ) /* 3/4 */
-	ROM_LOAD( "dgma4.bin",   0x080000, 0x40000,  CRC(56631a2b) SHA1(0fa3d6215df8ce923c153b96f39161ba88b2dd53) ) /* Encrypted tiles 0/4 */
+	ROM_LOAD( "mar-04.bin",  0x080000, 0x40000,  CRC(56631a2b) SHA1(0fa3d6215df8ce923c153b96f39161ba88b2dd53) ) /* Encrypted tiles 0/4 */
 	ROM_CONTINUE(            0x180000, 0x40000 ) /* 2 bpp per 0x40000 chunk, 1/4 */
 	ROM_CONTINUE(            0x280000, 0x40000 ) /* 2/4 */
 	ROM_CONTINUE(            0x380000, 0x40000 ) /* 3/4 */
-	ROM_LOAD( "dgma5.bin",   0x0c0000, 0x40000,  CRC(ac16e7ae) SHA1(dca32e0a677a99f47a7b8e8f105483c57382f218) ) /* Encrypted tiles 0/4 */
+	ROM_LOAD( "mar-05.bin",  0x0c0000, 0x40000,  CRC(ac16e7ae) SHA1(dca32e0a677a99f47a7b8e8f105483c57382f218) ) /* Encrypted tiles 0/4 */
 	ROM_CONTINUE(            0x1c0000, 0x40000 ) /* 2 bpp per 0x40000 chunk, 1/4 */
 	ROM_CONTINUE(            0x2c0000, 0x40000 ) /* 2/4 */
 	ROM_CONTINUE(            0x3c0000, 0x40000 ) /* 3/4 */
 
 	ROM_REGION( 0x800000, REGION_GFX4, ROMREGION_DISPOSE )
-	ROM_LOAD32_BYTE( "dgma9.bin",  0x000000, 0x100000,  CRC(18fec9e1) SHA1(1290a9c13b4fd7d2197b39ec616206796e3a17a8) )
-	ROM_LOAD32_BYTE( "dgma10.bin", 0x400000, 0x100000,  CRC(73126fbc) SHA1(9b9c31335e4db726863b219072c83810008f88f9) )
-	ROM_LOAD32_BYTE( "dgma11.bin", 0x000001, 0x100000,  CRC(1fc638a4) SHA1(003dcfbb65a8f32a1a030502a11432287cf8b4e0) )
-	ROM_LOAD32_BYTE( "dgma12.bin", 0x400001, 0x100000,  CRC(4c412512) SHA1(ccd5014bc9f9648cf5fa56bb8d54fc72a7099ca3) )
-	ROM_LOAD32_BYTE( "dgma13.bin", 0x000002, 0x100000,  CRC(d675821c) SHA1(ff195422d0bef62d1f9c7784bba1e6b7ab5cd211) )
-	ROM_LOAD32_BYTE( "dgma14.bin", 0x400002, 0x100000,  CRC(22d38c71) SHA1(62273665975f3e6000fa4b01755aeb70e5dd002d) )
-	ROM_LOAD32_BYTE( "dgma15.bin", 0x000003, 0x100000,  CRC(ec976b20) SHA1(c120b3c56d5e02162e41dc7f726c260d0f8d2f1a) )
-	ROM_LOAD32_BYTE( "dgma16.bin", 0x400003, 0x100000,  CRC(8b329bc8) SHA1(6e34eb6e2628a01a699d20a5155afb2febc31255) )
+	ROM_LOAD32_BYTE( "mar-09.bin", 0x000000, 0x100000,  CRC(18fec9e1) SHA1(1290a9c13b4fd7d2197b39ec616206796e3a17a8) )
+	ROM_LOAD32_BYTE( "mar-10.bin", 0x400000, 0x100000,  CRC(73126fbc) SHA1(9b9c31335e4db726863b219072c83810008f88f9) )
+	ROM_LOAD32_BYTE( "mar-11.bin", 0x000001, 0x100000,  CRC(1fc638a4) SHA1(003dcfbb65a8f32a1a030502a11432287cf8b4e0) )
+	ROM_LOAD32_BYTE( "mar-12.bin", 0x400001, 0x100000,  CRC(4c412512) SHA1(ccd5014bc9f9648cf5fa56bb8d54fc72a7099ca3) )
+	ROM_LOAD32_BYTE( "mar-13.bin", 0x000002, 0x100000,  CRC(d675821c) SHA1(ff195422d0bef62d1f9c7784bba1e6b7ab5cd211) )
+	ROM_LOAD32_BYTE( "mar-14.bin", 0x400002, 0x100000,  CRC(22d38c71) SHA1(62273665975f3e6000fa4b01755aeb70e5dd002d) )
+	ROM_LOAD32_BYTE( "mar-15.bin", 0x000003, 0x100000,  CRC(ec976b20) SHA1(c120b3c56d5e02162e41dc7f726c260d0f8d2f1a) )
+	ROM_LOAD32_BYTE( "mar-16.bin", 0x400003, 0x100000,  CRC(8b329bc8) SHA1(6e34eb6e2628a01a699d20a5155afb2febc31255) )
 
 	ROM_REGION( 0x100000, REGION_GFX5, 0 ) /* Video data - unused for now */
-	ROM_LOAD( "dgma17.bin",  0x00000,  0x100000,  CRC(7799ed23) SHA1(ae28ad4fa6033a3695fa83356701b3774b26e6b0) )
-	ROM_LOAD( "dgma18.bin",  0x00000,  0x100000,  CRC(ded66da9) SHA1(5134cb47043cc190a35ebdbf1912166669f9c055) )
-	ROM_LOAD( "dgma19.bin",  0x00000,  0x100000,  CRC(bdd1ed20) SHA1(2435b23210b8fee4d39c30d4d3c6ea40afaa3b93) )
-	ROM_LOAD( "dgma20.bin",  0x00000,  0x100000,  CRC(fa0462f0) SHA1(1a52617ad4d7abebc0f273dd979f4cf2d6a0306b) )
-	ROM_LOAD( "dgma21.bin",  0x00000,  0x100000,  CRC(2d0a28ae) SHA1(d87f6f71bb76880e4d4f1eab8e0451b5c3df69a5) )
-	ROM_LOAD( "dgma22.bin",  0x00000,  0x100000,  CRC(c85f3559) SHA1(a5d5cf9b18c9ef6a92d7643ca1ec9052de0d4a01) )
-	ROM_LOAD( "dgma23.bin",  0x00000,  0x100000,  CRC(ba907d6a) SHA1(1fd99b66e6297c8d927c1cf723a613b4ee2e2f90) )
-	ROM_LOAD( "dgma24.bin",  0x00000,  0x100000,  CRC(5cec45c8) SHA1(f99a26afaca9d9320477e469b09e3873bc8c156f) )
-	ROM_LOAD( "dgma25.bin",  0x00000,  0x100000,  CRC(d65d895c) SHA1(4508dfff95a7aff5109dc74622cbb4503b0b5840) )
-	ROM_LOAD( "dgma26.bin",  0x00000,  0x100000,  CRC(246a06c5) SHA1(447252be976a5059925f4ad98df8564b70198f62) )
-	ROM_LOAD( "dgma27.bin",  0x00000,  0x100000,  CRC(3fcbd10f) SHA1(70fc7b88bbe35bbae1de14364b03d0a06d541de5) )
-	ROM_LOAD( "dgma28.bin",  0x00000,  0x100000,  CRC(5a2ec71d) SHA1(447c404e6bb696f7eb7c61992a99b9be56f5d6b0) )
+	ROM_LOAD( "mar-17.bin",  0x00000,  0x100000,  CRC(7799ed23) SHA1(ae28ad4fa6033a3695fa83356701b3774b26e6b0) )
+	ROM_LOAD( "mar-18.bin",  0x00000,  0x100000,  CRC(ded66da9) SHA1(5134cb47043cc190a35ebdbf1912166669f9c055) )
+	ROM_LOAD( "mar-19.bin",  0x00000,  0x100000,  CRC(bdd1ed20) SHA1(2435b23210b8fee4d39c30d4d3c6ea40afaa3b93) )
+	ROM_LOAD( "mar-20.bin",  0x00000,  0x100000,  CRC(fa0462f0) SHA1(1a52617ad4d7abebc0f273dd979f4cf2d6a0306b) )
+	ROM_LOAD( "mar-21.bin",  0x00000,  0x100000,  CRC(2d0a28ae) SHA1(d87f6f71bb76880e4d4f1eab8e0451b5c3df69a5) )
+	ROM_LOAD( "mar-22.bin",  0x00000,  0x100000,  CRC(c85f3559) SHA1(a5d5cf9b18c9ef6a92d7643ca1ec9052de0d4a01) )
+	ROM_LOAD( "mar-23.bin",  0x00000,  0x100000,  CRC(ba907d6a) SHA1(1fd99b66e6297c8d927c1cf723a613b4ee2e2f90) )
+	ROM_LOAD( "mar-24.bin",  0x00000,  0x100000,  CRC(5cec45c8) SHA1(f99a26afaca9d9320477e469b09e3873bc8c156f) )
+	ROM_LOAD( "mar-25.bin",  0x00000,  0x100000,  CRC(d65d895c) SHA1(4508dfff95a7aff5109dc74622cbb4503b0b5840) )
+	ROM_LOAD( "mar-26.bin",  0x00000,  0x100000,  CRC(246a06c5) SHA1(447252be976a5059925f4ad98df8564b70198f62) )
+	ROM_LOAD( "mar-27.bin",  0x00000,  0x100000,  CRC(3fcbd10f) SHA1(70fc7b88bbe35bbae1de14364b03d0a06d541de5) )
+	ROM_LOAD( "mar-28.bin",  0x00000,  0x100000,  CRC(5a2ec71d) SHA1(447c404e6bb696f7eb7c61992a99b9be56f5d6b0) )
 
 	ROM_REGION(0x80000, REGION_SOUND1, 0 )
 	ROM_LOAD( "dgadpcm2.bin", 0x000000, 0x80000,  CRC(3e006c6e) SHA1(55786e0fde2bf6ba9802f3f4fa8d4c21625b976a) )
@@ -2104,7 +2172,7 @@ ROM_START( dragngun )
 	ROM_LOAD( "dgadpcm1.bin", 0x000000, 0x80000,  CRC(b9281dfd) SHA1(449faf5d36f3b970d0a9b483e2152a5f68604a77) )
 
 	ROM_REGION(0x80000, REGION_SOUND3, 0 )
-	ROM_LOAD( "dgadpcm3.bin", 0x000000, 0x80000,  CRC(40287d62) SHA1(c00cb08bcdae55bcddc14c38e88b0484b1bc9e3e) )
+	ROM_LOAD( "mar-07.bin", 0x000000, 0x80000,  CRC(40287d62) SHA1(c00cb08bcdae55bcddc14c38e88b0484b1bc9e3e) )
 ROM_END
 
 ROM_START( fghthist )
@@ -2359,7 +2427,7 @@ ROM_START( tattassa )
 	ROM_REGION(0x100000, REGION_CPU1, 0 ) /* ARM 32 bit code */
 	ROM_LOAD32_WORD( "rev232a.000", 0x000000, 0x80000, CRC(1a357112) SHA1(d7f78f90970fd56ca1452a4c138168568b06d868) )
 	ROM_LOAD32_WORD( "rev232a.001", 0x000002, 0x80000, CRC(550245d4) SHA1(c1b2b31768da9becebd907a8622d05aa68ecaa29) )
- 
+
 	ROM_REGION(0x10000, REGION_CPU2, 0 ) /* Sound CPU */
 	ROM_LOAD( "u7.snd",  0x00000, 0x10000,  CRC(6947be8a) SHA1(4ac6c3c7f54501f23c434708cea6bf327bc8cf95) )
 
@@ -2560,7 +2628,7 @@ static DRIVER_INIT( tattass )
 	memcpy(tmp,RAM+0x80000,0x80000);
 	memcpy(RAM+0x80000,RAM+0x100000,0x80000);
 	memcpy(RAM+0x100000,tmp,0x80000);
-	
+
 	RAM = memory_region(REGION_GFX2);
 	memcpy(tmp,RAM+0x80000,0x80000);
 	memcpy(RAM+0x80000,RAM+0x100000,0x80000);
@@ -2583,7 +2651,7 @@ static DRIVER_INIT( nslasher )
 	memcpy(tmp,RAM+0x80000,0x80000);
 	memcpy(RAM+0x80000,RAM+0x100000,0x80000);
 	memcpy(RAM+0x100000,tmp,0x80000);
-	
+
 	RAM = memory_region(REGION_GFX2);
 	memcpy(tmp,RAM+0x80000,0x80000);
 	memcpy(RAM+0x80000,RAM+0x100000,0x80000);

@@ -11,10 +11,11 @@
 
 static int palettebank;
 
+static struct tilemap *bg_tilemap;
+
 PALETTE_INIT( tagteam )
 {
 	int i;
-
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
@@ -39,6 +40,24 @@ PALETTE_INIT( tagteam )
 
 		palette_set_color(i,r,g,b);
 		color_prom++;
+	}
+}
+
+WRITE_HANDLER( tagteam_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
+
+WRITE_HANDLER( tagteam_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 }
 
@@ -75,7 +94,7 @@ WRITE_HANDLER( tagteam_mirrorvideoram_w )
 	y = offset % 32;
 	offset = 32 * y + x;
 
-	videoram_w(offset,data);
+	tagteam_videoram_w(offset,data);
 }
 
 WRITE_HANDLER( tagteam_mirrorcolorram_w )
@@ -87,7 +106,7 @@ WRITE_HANDLER( tagteam_mirrorcolorram_w )
 	y = offset % 32;
 	offset = 32 * y + x;
 
-	colorram_w(offset,data);
+	tagteam_colorram_w(offset,data);
 }
 
 WRITE_HANDLER( tagteam_control_w )
@@ -98,77 +117,49 @@ logerror("%04x: control = %02x\n",activecpu_get_pc(),data);
 	palettebank = (data & 0x80) >> 7;
 }
 
-
-/***************************************************************************
-
-Draw the game screen in the given mame_bitmap.
-Do NOT call osd_update_display() from this function, it will be called by
-the main emulation engine.
-
-***************************************************************************/
-static void drawchars(struct mame_bitmap *bitmap,int color)
+WRITE_HANDLER( tagteam_flipscreen_w )
 {
-	static int prev_flip_screen = 0;
-
-	int offs;
-
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. If the background is on, */
-	/* draw characters as sprites */
-
-
-	for (offs = videoram_size - 1;offs >= 0;offs--)
+	if (flip_screen != (data &0x01))
 	{
-		int sx,sy;
-
-		if ((flip_screen != prev_flip_screen) || dirtybuffer[offs])
-		{
-			dirtybuffer[offs] = 0;
-
-			sx = 31 - offs % 32;
-			sy = offs / 32;
-
-			if (flip_screen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-			}
-
-			/*Someday when the proms are properly figured out, we can remove
-			the color hack*/
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + 256 * colorram[offs],
-					2*color,	/* guess */
-					flip_screen,flip_screen,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
-		}
+		flip_screen_set(data & 0x01);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	}
-
-	/* copy the temporary bitmap to the screen */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	prev_flip_screen = flip_screen;
 }
 
-static void drawsprites(struct mame_bitmap *bitmap,int color)
+static void get_bg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index] + 256 * colorram[tile_index];
+	int color = palettebank * 2; // GUESS
+
+	SET_TILE_INFO(0, code, color, 0)
+}
+
+VIDEO_START( tagteam )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows_flip_x,
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	return 0;
+}
+
+static void tagteam_draw_sprites( struct mame_bitmap *bitmap )
 {
 	int offs;
 
-	/* Draw the sprites */
-	for (offs = 0;offs < 0x20;offs += 4)
+	for (offs = 0; offs < 0x20; offs += 4)
 	{
-		int sx,sy,flipx,flipy;
-		int spritebank;
+		int spritebank = (videoram[offs] & 0x30) << 4;
+		int code = videoram[offs + 1] + 256 * spritebank;
+		int color = 1 + 2 * palettebank; // GUESS
+		int flipx = videoram[offs] & 0x04;
+		int flipy = videoram[offs] & 0x02;
+		int sx = 240 - videoram[offs + 3];
+		int sy = 240 - videoram[offs + 2];
 
-		if (!(videoram[offs + 0] & 0x01)) continue;
-
-		sx = 240 - videoram[offs + 3];
-		sy = 240 - videoram[offs + 2];
-
-		flipx = videoram[offs + 0] & 0x04;
-		flipy = videoram[offs + 0] & 0x02;
-		spritebank = (videoram[offs] & 0x30) << 4;
+		if (!(videoram[offs] & 0x01)) continue;
 
 		if (flip_screen)
 		{
@@ -178,28 +169,30 @@ static void drawsprites(struct mame_bitmap *bitmap,int color)
 			flipy = !flipy;
 		}
 
-		drawgfx(bitmap,Machine->gfx[1],
-				videoram[offs + 1] + 256 * spritebank,
-				1+2*color,	/* guess */
-				flipx,flipy,
-				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
-
-		sy += (flip_screen ? -256 : 256);
+		drawgfx(bitmap, Machine->gfx[1],
+			code, color,
+			flipx, flipy,
+			sx, sy,
+			&Machine->visible_area,
+			TRANSPARENCY_PEN, 0);
 
 		/* Wrap around */
-		drawgfx(bitmap,Machine->gfx[1],
-				videoram[offs + 0x20] + 256 * spritebank,
-				color,
-				flipx,flipy,
-				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+
+		code = videoram[offs + 0x20] + 256 * spritebank;
+		color = palettebank;
+		sy += (flip_screen ? -256 : 256);
+
+		drawgfx(bitmap, Machine->gfx[1],
+			code, color,
+			flipx, flipy,
+			sx, sy,
+			&Machine->visible_area,
+			TRANSPARENCY_PEN, 0);
 	}
 }
 
 VIDEO_UPDATE( tagteam )
 {
-	drawchars(bitmap,palettebank);
-	drawsprites(bitmap,palettebank);
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	tagteam_draw_sprites(bitmap);
 }
-

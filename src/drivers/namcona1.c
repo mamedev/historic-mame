@@ -77,6 +77,7 @@ Notes:
 #include "vidhrdw/generic.h"
 #include "namcona1.h"
 #include "sound/namcona.h"
+#include "machine/random.h"
 
 static data16_t *mpBank0, *mpBank1;
 static data8_t mCoinCount[4];
@@ -581,7 +582,7 @@ static READ16_HANDLER( custom_key_r )
 	old_count = count;
 	do
 	{
-		count = rand();
+		count = mame_rand();
 	} while( old_count == count );
 
 	switch( namcona1_gametype )
@@ -652,7 +653,7 @@ static READ16_HANDLER( custom_key_r )
 	default:
 		return 0;
 	}
-	return rand()&0xffff;
+	return mame_rand()&0xffff;
 } /* custom_key_r */
 
 static WRITE16_HANDLER( custom_key_w )

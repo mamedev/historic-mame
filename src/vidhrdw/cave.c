@@ -50,7 +50,7 @@ Note:	if MAME_DEBUG is defined, pressing:
 /* Variables that driver has access to: */
 
 int cave_spritetype;
-int	cave_row_effect_offs_y = -1;
+int cave_kludge = 0;
 
 data16_t *cave_videoregs;
 
@@ -94,7 +94,7 @@ struct sprite_cave {
 	int zoomx_re, zoomy_re;
 };
 
-static int orientation, screen_width, screen_height;
+static int screen_width, screen_height;
 
 static struct {
 	int clip_left, clip_right, clip_top, clip_bottom;
@@ -117,12 +117,13 @@ static void (*get_sprite_info)(void);
 static void (*cave_sprite_draw)( int priority );
 
 static int sprite_init_cave(void);
-static void set_sprite_orientation(void);
 static void sprite_draw_cave( int priority );
 static void sprite_draw_cave_zbuf( int priority );
 static void sprite_draw_donpachi( int priority );
 static void sprite_draw_donpachi_zbuf( int priority );
 
+static int spriteram_bank;
+static int spriteram_bank_delay;
 
 /***************************************************************************
 
@@ -361,7 +362,10 @@ WRITE16_HANDLER( cave_vram_3_8x8_w )	{ vram_8x8_w(cave_vram_3, tilemap_3, offset
 
 ***************************************************************************/
 
-int cave_layers_offs_x, cave_layers_offs_y;
+static int cave_layers_offs_x, cave_layers_offs_y;
+static int cave_row_effect_offs_n;
+static int cave_row_effect_offs_f;
+static int background_color;
 
 int cave_vh_start( int num )
 {
@@ -425,6 +429,24 @@ int cave_vh_start( int num )
 
 	cave_layers_offs_x = 0x13;
 	cave_layers_offs_y = -0x12;
+
+	cave_row_effect_offs_n = -1;
+	cave_row_effect_offs_f = 1;
+
+//	background_color =	 Machine->drv->gfxdecodeinfo[0].color_codes_start;
+	background_color =	 Machine->drv->gfxdecodeinfo[0].color_codes_start +
+						(Machine->drv->gfxdecodeinfo[0].total_color_codes-1) *
+						 Machine->gfx[0]->color_granularity;
+
+	switch(cave_kludge)
+	{
+		case 1:		/* sailormn */
+			cave_row_effect_offs_n = -1;
+			cave_row_effect_offs_f = -1;
+			break;
+		case 2:		/* uopoko dfeveron */
+			background_color = 0x3f00;
+	}
 
 	return 0;
 }
@@ -493,7 +515,7 @@ static void get_sprite_info_cave(void)
 	const unsigned char  *base_gfx	=	memory_region(region);
 	int                   code_max	=	memory_region_length(region) / (16*16);
 
-	data16_t      *source			=	spriteram16 + ((spriteram_size/2) / 2) * (cave_videoregs[ 4 ] & 1);
+	data16_t      *source			=	spriteram16 + ((spriteram_size/2) / 2) * spriteram_bank;
 	data16_t      *finish			=	source + ((spriteram_size/2) / 2);
 
 	struct sprite_cave *sprite			=	sprite_cave;
@@ -604,8 +626,6 @@ static void get_sprite_info_cave(void)
 		sprite++;
 	}
 	num_sprites = sprite - sprite_cave;
-
-	set_sprite_orientation();
 }
 
 static void get_sprite_info_donpachi(void)
@@ -616,7 +636,7 @@ static void get_sprite_info_donpachi(void)
 	const unsigned char  *base_gfx	=	memory_region(region);
 	int                   code_max	=	memory_region_length(region) / (16*16);
 
-	data16_t      *source			=	spriteram16 + ((spriteram_size/2) / 2) * (cave_videoregs[ 4 ] & 1);
+	data16_t      *source			=	spriteram16 + ((spriteram_size/2) / 2) * spriteram_bank;
 	data16_t      *finish			=	source + ((spriteram_size/2) / 2);
 
 	struct sprite_cave *sprite			=	sprite_cave;
@@ -671,8 +691,6 @@ static void get_sprite_info_donpachi(void)
 		sprite++;
 	}
 	num_sprites = sprite - sprite_cave;
-
-	set_sprite_orientation();
 }
 
 
@@ -680,7 +698,6 @@ static int sprite_init_cave(void)
 {
 	struct mame_bitmap *bitmap = Machine->scrbitmap;
 
-	orientation = Machine->orientation;
 	screen_width = Machine->scrbitmap->width;
 	screen_height = Machine->scrbitmap->height;
 
@@ -708,57 +725,12 @@ static int sprite_init_cave(void)
 	if(!(sprite_cave = auto_malloc( num_sprites * sizeof(struct sprite_cave) ))) return 1;
 	memset(sprite_cave, 0, num_sprites * sizeof(struct sprite_cave));
 
+	memset(sprite_table,0,sizeof(sprite_table));
+	cave_sprite_draw = sprite_draw_donpachi;
+
 	return 0;
 }
 
-static void set_sprite_orientation( void )
-{
-	/* make a pass to adjust for screen orientation */
-	if( orientation & ORIENTATION_SWAP_XY ){
-		struct sprite_cave *sprite = sprite_cave;
-		const struct sprite_cave *finish = &sprite[num_sprites];
-		while( sprite<finish ){
-			SWAP(sprite->x, sprite->y)
-			SWAP(sprite->total_height,sprite->total_width)
-			SWAP(sprite->zoomx_re,sprite->zoomy_re)
-			SWAP(sprite->xcount0,sprite->ycount0)
-			SWAP(sprite->tile_width,sprite->tile_height)
-
-			/* we must also swap the flipx and flipy bits (if they aren't identical) */
-			if( sprite->flags&SPRITE_FLIPX_CAVE ){
-				if( !(sprite->flags&SPRITE_FLIPY_CAVE) ){
-					sprite->flags = (sprite->flags&~SPRITE_FLIPX_CAVE)|SPRITE_FLIPY_CAVE;
-				}
-			}
-			else {
-				if( sprite->flags&SPRITE_FLIPY_CAVE ){
-					sprite->flags = (sprite->flags&~SPRITE_FLIPY_CAVE)|SPRITE_FLIPX_CAVE;
-				}
-			}
-			sprite++;
-		}
-	}
-	if( orientation & ORIENTATION_FLIP_X ){
-		struct sprite_cave *sprite = sprite_cave;
-		const struct sprite_cave *finish = &sprite[num_sprites];
-		int toggle_bit = SPRITE_FLIPX_CAVE;
-		while( sprite<finish ){
-			sprite->x = screen_width - (sprite->x+sprite->total_width);
-			sprite->flags ^= toggle_bit;
-			sprite++;
-		}
-	}
-	if( orientation & ORIENTATION_FLIP_Y ){
-		struct sprite_cave *sprite = sprite_cave;
-		const struct sprite_cave *finish = &sprite[num_sprites];
-		int toggle_bit = SPRITE_FLIPY_CAVE;
-		while( sprite<finish ){
-			sprite->y = screen_height - (sprite->y+sprite->total_height);
-			sprite->flags ^= toggle_bit;
-			sprite++;
-		}
-	}
-}
 
 static void cave_sprite_check( const struct rectangle *clip )
 {
@@ -767,21 +739,6 @@ static void cave_sprite_check( const struct rectangle *clip )
 		int top = clip->min_y;
 		int right = clip->max_x+1;
 		int bottom = clip->max_y+1;
-
-		if( orientation & ORIENTATION_SWAP_XY ){
-			SWAP(left,top)
-			SWAP(right,bottom)
-		}
-		if( orientation & ORIENTATION_FLIP_X ){
-			SWAP(left,right)
-			left = screen_width-left;
-			right = screen_width-right;
-		}
-		if( orientation & ORIENTATION_FLIP_Y ){
-			SWAP(top,bottom)
-			top = screen_height-top;
-			bottom = screen_height-bottom;
-		}
 
 		blit.clip_left = left;
 		blit.clip_top = top;
@@ -915,55 +872,27 @@ static void do_blit_zoom16_cave( const struct sprite_cave *sprite ){
 		UINT16 *dest = (UINT16 *)(blit.baseaddr + blit.line_offset*y1);
 		int ycount = ycount0;
 
-		if( orientation & ORIENTATION_SWAP_XY ){ /* manually rotate the sprite graphics */
-			int xcount = xcount0;
-			for( x=x1; x!=x2; x+=dx ){
-				const unsigned char *source;
-				UINT16 *dest1;
+		for( y=y1; y!=y2; y+=dy ){
+			int xcount;
+			const unsigned char *source;
 
-				if (xcount&0xffff0000){
-					ycount = ycount0;
-					pen_data+=sprite->line_offset*(xcount>>16);
-					xcount &= 0xffff;
-					source = pen_data;
-					dest1 = &dest[x];
-					for( y=y1; y!=y2; y+=dy ){
-						if (ycount&0xffff0000){
-							source+=ycount>>16;
-							ycount &= 0xffff;
-							pen = *source;
-							if (pen) *dest1 = pal_data[pen];
-						}
-						ycount+= sprite->zoomy_re;
-						dest1 += pitch;
+			if (ycount&0xffff0000){
+				xcount = xcount0;
+				pen_data+=sprite->line_offset*(ycount>>16);
+				ycount &= 0xffff;
+				source = pen_data;
+				for( x=x1; x!=x2; x+=dx ){
+					if (xcount&0xffff0000){
+						source+=xcount>>16;
+						xcount &= 0xffff;
+						pen = *source;
+						if (pen) dest[x] = pal_data[pen];
 					}
+					xcount += sprite->zoomx_re;
 				}
-				xcount += sprite->zoomx_re;
 			}
-		}
-		else {
-			for( y=y1; y!=y2; y+=dy ){
-				int xcount;
-				const unsigned char *source;
-
-				if (ycount&0xffff0000){
-					xcount = xcount0;
-					pen_data+=sprite->line_offset*(ycount>>16);
-					ycount &= 0xffff;
-					source = pen_data;
-					for( x=x1; x!=x2; x+=dx ){
-						if (xcount&0xffff0000){
-							source+=xcount>>16;
-							xcount &= 0xffff;
-							pen = *source;
-							if (pen) dest[x] = pal_data[pen];
-						}
-						xcount += sprite->zoomx_re;
-					}
-				}
-				ycount += sprite->zoomy_re;
-				dest += pitch;
-			}
+			ycount += sprite->zoomy_re;
+			dest += pitch;
 		}
 	}
 }
@@ -1038,65 +967,31 @@ static void do_blit_zoom16_cave_zb( const struct sprite_cave *sprite ){
 		UINT16 pri_sp = (UINT16)(sprite - sprite_cave) + sprite_zbuf_baseval;
 		int ycount = ycount0;
 
-		if( orientation & ORIENTATION_SWAP_XY ){ /* manually rotate the sprite graphics */
-			int xcount = xcount0;
-			for( x=x1; x!=x2; x+=dx ){
-				const unsigned char *source;
-				UINT16 *dest1;
-				UINT16 *zbf1;
+		for( y=y1; y!=y2; y+=dy ){
+			int xcount;
+			const unsigned char *source;
 
-				if (xcount&0xffff0000){
-					ycount = ycount0;
-					pen_data+=sprite->line_offset*(xcount>>16);
-					xcount &= 0xffff;
-					source = pen_data;
-					dest1 = &dest[x];
-					zbf1 = &zbf[x];
-					for( y=y1; y!=y2; y+=dy ){
-						if (ycount&0xffff0000){
-							source+=ycount>>16;
-							ycount &= 0xffff;
-							pen = *source;
-							if (pen && (*zbf1<=pri_sp)){
-								*dest1 = pal_data[pen];
-								*zbf1 = pri_sp;
-							}
+			if (ycount&0xffff0000){
+				xcount = xcount0;
+				pen_data+=sprite->line_offset*(ycount>>16);
+				ycount &= 0xffff;
+				source = pen_data;
+				for( x=x1; x!=x2; x+=dx ){
+					if (xcount&0xffff0000){
+						source+=xcount>>16;
+						xcount &= 0xffff;
+						pen = *source;
+						if (pen && (zbf[x]<=pri_sp)){
+							dest[x] = pal_data[pen];
+							zbf[x] = pri_sp;
 						}
-						ycount+= sprite->zoomy_re;
-						dest1 += pitch;
-						zbf1 += pitchz;
 					}
+					xcount += sprite->zoomx_re;
 				}
-				xcount += sprite->zoomx_re;
 			}
-		}
-		else {
-			for( y=y1; y!=y2; y+=dy ){
-				int xcount;
-				const unsigned char *source;
-
-				if (ycount&0xffff0000){
-					xcount = xcount0;
-					pen_data+=sprite->line_offset*(ycount>>16);
-					ycount &= 0xffff;
-					source = pen_data;
-					for( x=x1; x!=x2; x+=dx ){
-						if (xcount&0xffff0000){
-							source+=xcount>>16;
-							xcount &= 0xffff;
-							pen = *source;
-							if (pen && (zbf[x]<=pri_sp)){
-								dest[x] = pal_data[pen];
-								zbf[x] = pri_sp;
-							}
-						}
-						xcount += sprite->zoomx_re;
-					}
-				}
-				ycount += sprite->zoomy_re;
-				dest += pitch;
-				zbf += pitchz;
-			}
+			ycount += sprite->zoomy_re;
+			dest += pitch;
+			zbf += pitchz;
 		}
 	}
 }
@@ -1162,35 +1057,17 @@ static void do_blit_16_cave( const struct sprite_cave *sprite ){
 		int pitch = blit.line_offset*dy/2;
 		UINT16 *dest = (UINT16 *)(blit.baseaddr + blit.line_offset*y1);
 
-		if( orientation & ORIENTATION_SWAP_XY ){ /* manually rotate the sprite graphics */
-			pen_data+=sprite->line_offset*xcount0+ycount0;
+		pen_data+=sprite->line_offset*ycount0+xcount0;
+		for( y=y1; y!=y2; y+=dy ){
+			const unsigned char *source;
+			source = pen_data;
 			for( x=x1; x!=x2; x+=dx ){
-				const unsigned char *source;
-				UINT16 *dest1;
-				source = pen_data;
-				dest1 = &dest[x];
-				for( y=y1; y!=y2; y+=dy ){
-					pen = *source;
-					if (pen) *dest1 = pal_data[pen];
-					source ++;
-					dest1 += pitch;
-				}
-				pen_data+=sprite->line_offset;
+				pen = *source;
+				if (pen) dest[x] = pal_data[pen];
+				source++;
 			}
-		}
-		else {
-			pen_data+=sprite->line_offset*ycount0+xcount0;
-			for( y=y1; y!=y2; y+=dy ){
-				const unsigned char *source;
-				source = pen_data;
-				for( x=x1; x!=x2; x+=dx ){
-					pen = *source;
-					if (pen) dest[x] = pal_data[pen];
-					source++;
-				}
-				pen_data += sprite->line_offset;
-				dest += pitch;
-			}
+			pen_data += sprite->line_offset;
+			dest += pitch;
 		}
 	}
 }
@@ -1260,47 +1137,22 @@ static void do_blit_16_cave_zb( const struct sprite_cave *sprite ){
 		UINT16 *zbf = (UINT16 *)(blit.baseaddr_zbuf + blit.line_offset_zbuf*y1);
 		UINT16 pri_sp = (UINT16)(sprite - sprite_cave) + sprite_zbuf_baseval;
 
-		if( orientation & ORIENTATION_SWAP_XY ){ /* manually rotate the sprite graphics */
-			pen_data+=sprite->line_offset*xcount0+ycount0;
+		pen_data+=sprite->line_offset*ycount0+xcount0;
+		for( y=y1; y!=y2; y+=dy ){
+			const unsigned char *source;
+			source = pen_data;
 			for( x=x1; x!=x2; x+=dx ){
-				const unsigned char *source;
-				UINT16 *dest1;
-				UINT16 *zbf1;
-				source = pen_data;
-				dest1 = &dest[x];
-				zbf1 = &zbf[x];
-				for( y=y1; y!=y2; y+=dy ){
-					pen = *source;
-					if (pen && (*zbf1<=pri_sp))
-					{
-						*dest1 = pal_data[pen];
-						*zbf1 = pri_sp;
-					}
-					source ++;
-					dest1 += pitch;
-					zbf1 += pitchz;
+				pen = *source;
+				if ( pen && (zbf[x]<=pri_sp))
+				{
+					dest[x] = pal_data[pen];
+					zbf[x] = pri_sp;
 				}
-				pen_data+=sprite->line_offset;
+				source++;
 			}
-		}
-		else {
-			pen_data+=sprite->line_offset*ycount0+xcount0;
-			for( y=y1; y!=y2; y+=dy ){
-				const unsigned char *source;
-				source = pen_data;
-				for( x=x1; x!=x2; x+=dx ){
-					pen = *source;
-					if ( pen && (zbf[x]<=pri_sp))
-					{
-						dest[x] = pal_data[pen];
-						zbf[x] = pri_sp;
-					}
-					source++;
-				}
-				pen_data += sprite->line_offset;
-				dest += pitch;
-				zbf += pitchz;
-			}
+			pen_data += sprite->line_offset;
+			dest += pitch;
+			zbf += pitchz;
 		}
 	}
 }
@@ -1424,7 +1276,7 @@ INLINE void cave_tilemap_draw(
 	offs_x	=	cave_layers_offs_x;
 	offs_y	=	cave_layers_offs_y;
 
-	offs_row =  flipy ? -cave_row_effect_offs_y : cave_row_effect_offs_y;
+	offs_row =  flipy ? cave_row_effect_offs_f : cave_row_effect_offs_n;
 
 	/* An additional 8 pixel offset for layers with 8x8 tiles. Plus
 	   Layer 0 is displaced by 1 pixel wrt Layer 1, so is Layer 2 wrt
@@ -1461,11 +1313,11 @@ INLINE void cave_tilemap_draw(
 		for(startline = cliprect->min_y; startline <= cliprect->max_y;)
 		{
 			/* Find the largest slice */
-			vramdata0 = (vramdata1 = VRAM[(0x1002+(((offs_row+startline)*4)&0x7ff))/2]);
+			vramdata0 = (vramdata1 = VRAM[(0x1002+(((sy+offs_row+startline)*4)&0x7ff))/2]);
 			for(endline = startline + 1; endline <= cliprect->max_y + 1; endline++)
-				if((++vramdata1) != VRAM[(0x1002+(((offs_row+endline)*4)&0x7ff))/2]) break;
+				if((++vramdata1) != VRAM[(0x1002+(((sy+offs_row+endline)*4)&0x7ff))/2]) break;
 
-			tilemap_set_scrolly(TILEMAP, 0, sy + vramdata0 - startline);
+			tilemap_set_scrolly(TILEMAP, 0, vramdata0 - startline);
 
 			if (VCTRL[0] & 0x4000)	// row-scroll, row-select
 			{
@@ -1482,8 +1334,8 @@ INLINE void cave_tilemap_draw(
 				tilemap_set_scroll_rows(TILEMAP,512);
 				for(line = startline; line < endline; line++)
 					tilemap_set_scrollx(	TILEMAP,
-											(sy+vramdata0-startline+line) & 511,
-											sx + VRAM[(0x1000+(((offs_row+line)*4)&0x7ff))/2] );
+											(vramdata0-startline+line) & 511,
+											sx + VRAM[(0x1000+(((sy+offs_row+line)*4)&0x7ff))/2] );
 			}
 			else					// no row-scroll, row-select
 			{
@@ -1491,8 +1343,16 @@ INLINE void cave_tilemap_draw(
 				tilemap_set_scrollx(TILEMAP, 0, sx );
 			}
 
-			clip.min_y = startline;
-			clip.max_y = endline - 1;
+			if(flipy)
+			{
+				clip.min_y = cliprect->max_y - (endline-1 - cliprect->min_y);
+				clip.max_y = cliprect->max_y - (startline - cliprect->min_y);
+			}
+			else
+			{
+				clip.min_y = startline;
+				clip.max_y = endline - 1;
+			}
 
 			tilemap_draw(bitmap, &clip, TILEMAP, flags, priority);
 
@@ -1506,7 +1366,7 @@ INLINE void cave_tilemap_draw(
 		for(line = cliprect->min_y; line <= cliprect->max_y; line++)
 			tilemap_set_scrollx(	TILEMAP,
 									(line + sy) & 511,
-									sx + VRAM[(0x1000+(((offs_row+line)*4)&0x7ff))/2] );
+									sx + VRAM[(0x1000+(((sy+offs_row+line)*4)&0x7ff))/2] );
 		tilemap_set_scrolly(TILEMAP, 0, sy );
 		tilemap_draw(bitmap, cliprect, TILEMAP, flags, priority);
 	}
@@ -1535,7 +1395,6 @@ VIDEO_UPDATE( cave )
 {
 	int pri, pri2;
 	int layers_ctrl = -1;
-	int background_color;
 
 	/* Choose the tilemap to display (8x8 tiles or 16x16 tiles) */
 	if (tilemap_0)
@@ -1616,12 +1475,8 @@ VIDEO_UPDATE( cave )
 }
 #endif
 
-	if(!mame_get_performance_info()->partial_updates_this_frame) (*get_sprite_info)();
-
 	cave_sprite_check(cliprect);
 
-	/* To be verified: the background color is the first of layer 0 */
-	background_color =	 Machine->drv->gfxdecodeinfo[0].color_codes_start;
 	fillbitmap(bitmap,Machine->remapped_colortable[background_color],cliprect);
 
 	/*
@@ -1646,6 +1501,30 @@ VIDEO_UPDATE( cave )
 			if (layers_ctrl&(1<<(pri+ 4)))	cave_tilemap_1_draw(bitmap, cliprect, pri, 0, pri2);
 			if (layers_ctrl&(1<<(pri+ 8)))	cave_tilemap_2_draw(bitmap, cliprect, pri, 0, pri2);
 			if (layers_ctrl&(1<<(pri+12)))	cave_tilemap_3_draw(bitmap, cliprect, pri, 0, pri2);
+		}
+	}
+}
+
+
+
+/**************************************************************/
+void cave_get_sprite_info(void)
+{
+	if(cave_kludge == 3)	/* mazinger metmqstr */
+	{
+		if (osd_skip_this_frame() == 0)
+		{
+			spriteram_bank = spriteram_bank_delay;
+			(*get_sprite_info)();
+		}
+		spriteram_bank_delay = cave_videoregs[ 4 ] & 1;
+	}
+	else
+	{
+		if (osd_skip_this_frame() == 0)
+		{
+			spriteram_bank = cave_videoregs[ 4 ] & 1;
+			(*get_sprite_info)();
 		}
 	}
 }

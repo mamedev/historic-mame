@@ -33,9 +33,9 @@
  *	  { TMS32025_INTERNAL_MEMORY_BLOCKS_READ },		// TMS320C25 internal Memory (Read)
  *	  { TMS32025_INTERNAL_MEMORY_BLOCKS_WRITE },	// TMS320C25 internal Memory (Write)
  *	  { TMS32025_PGM_ADDR_RANGE (0x0000, 0x1fff), MRA16_ROM },
- *	  { TMS32025_BIO,   TMS32025_BIO,    tms32025_bio_line_r  },
- *	  { TMS32025_HOLD,  TMS32025_HOLD,   tms32025_hold_line_r },
- *	  { TMS32025_HOLDA, TMS32025_HOLDA,  tms32025_hold_ack_line_w },
+ *	  { TMS32025_PORT_RANGE (TMS32025_BIO, TMS32025_BIO), tms32025_bio_line_r },
+ *	  { TMS32025_PORT_RANGE (TMS32025_HOLD, TMS32025_HOLD), tms32025_hold_line_r },
+ *	  { TMS32025_PORT_RANGE (TMS32025_HOLDA, TMS32025_HOLDA), tms32025_hold_ack_line_w },
  */
 
 

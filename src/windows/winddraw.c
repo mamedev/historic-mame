@@ -102,6 +102,20 @@ static int blit_and_flip(LPDIRECTDRAWSURFACE target_surface, LPRECT src, LPRECT 
 
 
 //============================================================
+//	win_ddraw_fullscreen_margins
+//============================================================
+
+void win_ddraw_fullscreen_margins(DWORD desc_width, DWORD desc_height, RECT *margins)
+{
+	margins->left = 0;
+	margins->top = 0;
+	margins->right = desc_width;
+	margins->bottom = desc_height;
+}
+
+
+
+//============================================================
 //	erase_outer_rect
 //============================================================
 
@@ -1022,7 +1036,7 @@ static int render_to_blit(struct mame_bitmap *bitmap, const struct rectangle *bo
 	LPDIRECTDRAWSURFACE target_surface;
 	struct win_blit_params params;
 	HRESULT result;
-	RECT src, dst;
+	RECT src, dst, margins;
 	int dstxoffs;
 
 tryagain:
@@ -1122,6 +1136,16 @@ tryagain:
 
 		// target surface is the back buffer
 		target_surface = back_surface ? back_surface : primary_surface;
+
+		win_ddraw_fullscreen_margins(primary_desc.dwWidth, primary_desc.dwHeight, &margins);
+		if (dst.left < margins.left)
+			dst.left = margins.left;
+		if (dst.top < margins.top)
+			dst.top = margins.top;
+		if (dst.right > margins.right)
+			dst.right = margins.right;
+		if (dst.bottom > margins.bottom)
+			dst.bottom = margins.bottom;
 	}
 
 	// blit and flip
@@ -1189,9 +1213,7 @@ tryagain:
 	if (update)
 	{
 		RECT outer;
-		outer.top = outer.left = 0;
-		outer.right = primary_desc.dwWidth;
-		outer.bottom = primary_desc.dwHeight;
+		win_ddraw_fullscreen_margins(primary_desc.dwWidth, primary_desc.dwHeight, &outer);
 		erase_outer_rect(&outer, dst, target_surface);
 	}
 
@@ -1267,9 +1289,7 @@ tryagain:
 	else
 	{
 		// win_start_maximized the rect, constraining to the aspect ratio
-		outer.left = outer.top = 0;
-		outer.right = primary_desc.dwWidth;
-		outer.bottom = primary_desc.dwHeight;
+		win_ddraw_fullscreen_margins(primary_desc.dwWidth, primary_desc.dwHeight, &outer);
 		inner = outer;
 		win_constrain_to_aspect_ratio(&inner, WMSZ_BOTTOMRIGHT, 0);
 

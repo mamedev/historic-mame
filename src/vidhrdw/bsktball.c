@@ -10,67 +10,62 @@
 
 unsigned char *bsktball_motion;
 
-/***************************************************************************
+static struct tilemap *bg_tilemap;
 
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
-
-VIDEO_UPDATE( bsktball )
+WRITE_HANDLER( bsktball_videoram_w )
 {
-    int offs,motion;
-
-    /* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
+	if (videoram[offset] != data)
 	{
-                if (dirtybuffer[offs])
-                {
-                        int charcode;
-                        int sx,sy;
-						int flipx;
-                        int color;
-
-                        dirtybuffer[offs]=0;
-
-                        charcode = videoram[offs];
-
-                        color = (charcode & 0x40) >> 6;
-						flipx = (charcode & 0x80) >> 7;
-
-                        charcode = ((charcode & 0x0F) << 2) | ((charcode & 0x30) >> 4);
-
-                        sx = 8 * (offs % 32);
-                        sy = 8 * (offs / 32);
-                        drawgfx(tmpbitmap,Machine->gfx[0],
-                                charcode, color,
-								flipx,0,sx,sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
-                }
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
+}
 
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+static void get_bg_tile_info(int tile_index)
+{
+	int attr = videoram[tile_index];
+	int code = ((attr & 0x0f) << 2) | ((attr & 0x30) >> 4);
+	int color = (attr & 0x40) >> 6;
+	int flags = (attr & 0x80) ? TILE_FLIPX : 0;
+
+	SET_TILE_INFO(0, code, color, flags)
+}
+
+VIDEO_START( bsktball )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	return 0;
+}
+
+static void bsktball_draw_sprites( struct mame_bitmap *bitmap )
+{
+	int motion;
 
 	for (motion=0;motion<16;motion++)
 	{
-		int pic,sx,sy,color,flipx;
+		int pic = bsktball_motion[motion*4];
+		int sy = 28*8 - bsktball_motion[motion*4 + 1];
+		int sx = bsktball_motion[motion*4 + 2];
+		int color = bsktball_motion[motion*4 + 3];
+		int flipx = (pic & 0x80) >> 7;
 
-		pic = bsktball_motion[motion*4];
-		sy = 28*8 - bsktball_motion[motion*4 + 1];
-		sx = bsktball_motion[motion*4 + 2];
-		color = bsktball_motion[motion*4 + 3];
-
-		flipx = (pic & 0x80) >> 7;
 		pic = (pic & 0x3F);
         color = (color & 0x3F);
 
         drawgfx(bitmap,Machine->gfx[1],
-                pic, color,
-				flipx,0,sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+            pic, color,
+			flipx,0,sx,sy,
+			&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }
 
+VIDEO_UPDATE( bsktball )
+{
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	bsktball_draw_sprites(bitmap);
+}

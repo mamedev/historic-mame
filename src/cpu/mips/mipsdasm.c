@@ -107,7 +107,7 @@ unsigned DasmMIPS( char *buffer, UINT32 oldpc )
 
 	pc = oldpc;
 #ifndef STANDALONE
-	op = mips_readop32( pc );
+	op = cpu_readop32( pc );
 #else
 	op = ( filebuf[ pc + order[ 0 ] - offset ] << 24 ) |
 		( filebuf[ pc + order[ 1 ] - offset ] << 16 ) |

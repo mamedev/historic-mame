@@ -20,24 +20,25 @@ The game supports Coin 2, but the dip switches used for it are the same
 as Coin 1. Basically, this allowed to select an alternative coin table
 based on wich Coin input was connected.
 
-KNOWN ISSUES/TODO:
-- Cocktail mode is unsupported.
-
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
 /* from vidhrdw */
-extern VIDEO_UPDATE( exctsccr );
+extern WRITE_HANDLER( exctsccr_videoram_w );
+extern WRITE_HANDLER( exctsccr_colorram_w );
+extern WRITE_HANDLER( exctsccr_gfx_bank_w );
+extern WRITE_HANDLER( exctsccr_flipscreen_w );
+
 extern PALETTE_INIT( exctsccr );
-WRITE_HANDLER( exctsccr_gfx_bank_w );
 extern VIDEO_START( exctsccr );
+extern VIDEO_UPDATE( exctsccr );
 
 /* from machine */
-extern unsigned char *exctsccr_mcu_ram;
-WRITE_HANDLER( exctsccr_mcu_w );
-WRITE_HANDLER( exctsccr_mcu_control_w );
+extern UINT8 *exctsccr_mcu_ram;
+extern WRITE_HANDLER( exctsccr_mcu_w );
+extern WRITE_HANDLER( exctsccr_mcu_control_w );
 
 
 WRITE_HANDLER( exctsccr_DAC_data_w )
@@ -56,8 +57,8 @@ static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0x6000, 0x63ff, MRA_RAM }, /* Alpha mcu (protection) */
 	{ 0x7c00, 0x7fff, MRA_RAM }, /* work ram */
-	{ 0x8000, 0x83ff, videoram_r },
-	{ 0x8400, 0x87ff, colorram_r },
+	{ 0x8000, 0x83ff, MRA_RAM },
+	{ 0x8400, 0x87ff, MRA_RAM },
 	{ 0x8800, 0x8bff, MRA_RAM }, /* ??? */
 	{ 0xa000, 0xa000, input_port_0_r },
 	{ 0xa040, 0xa040, input_port_1_r },
@@ -69,13 +70,13 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0x6000, 0x63ff, exctsccr_mcu_w, &exctsccr_mcu_ram }, /* Alpha mcu (protection) */
 	{ 0x7c00, 0x7fff, MWA_RAM }, /* work ram */
-	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
-	{ 0x8400, 0x87ff, colorram_w, &colorram },
+	{ 0x8000, 0x83ff, exctsccr_videoram_w, &videoram },
+	{ 0x8400, 0x87ff, exctsccr_colorram_w, &colorram },
 	{ 0x8800, 0x8bff, MWA_RAM }, /* ??? */
 	{ 0xa000, 0xa000, MWA_NOP }, /* ??? */
 	{ 0xa001, 0xa001, MWA_NOP }, /* ??? */
 	{ 0xa002, 0xa002, exctsccr_gfx_bank_w },
-	{ 0xa003, 0xa003, MWA_NOP }, /* Cocktail mode ( 0xff = flip screen, 0x00 = normal ) */
+	{ 0xa003, 0xa003, exctsccr_flipscreen_w }, /* Cocktail mode ( 0xff = flip screen, 0x00 = normal ) */
 	{ 0xa006, 0xa006, exctsccr_mcu_control_w }, /* MCU control */
 	{ 0xa007, 0xa007, MWA_NOP }, /* This is also MCU control, but i dont need it */
 	{ 0xa040, 0xa06f, MWA_RAM, &spriteram }, /* Sprite pos */
@@ -111,8 +112,8 @@ PORT_END
 /* Bootleg */
 static MEMORY_READ_START( bl_readmem )
 	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0x8000, 0x83ff, videoram_r },
-	{ 0x8400, 0x87ff, colorram_r },
+	{ 0x8000, 0x83ff, MRA_RAM },
+	{ 0x8400, 0x87ff, MRA_RAM },
 	{ 0x8800, 0x8fff, MRA_RAM }, /* ??? */
 	{ 0xa000, 0xa000, input_port_0_r },
 	{ 0xa040, 0xa040, input_port_1_r },
@@ -124,13 +125,13 @@ static MEMORY_WRITE_START( bl_writemem )
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0x7000, 0x7000, AY8910_write_port_0_w },
 	{ 0x7001, 0x7001, AY8910_control_port_0_w },
-	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
-	{ 0x8400, 0x87ff, colorram_w, &colorram },
+	{ 0x8000, 0x83ff, exctsccr_videoram_w, &videoram },
+	{ 0x8400, 0x87ff, exctsccr_colorram_w, &colorram },
 	{ 0x8800, 0x8fff, MWA_RAM }, /* ??? */
 	{ 0xa000, 0xa000, MWA_NOP }, /* ??? */
 	{ 0xa001, 0xa001, MWA_NOP }, /* ??? */
 	{ 0xa002, 0xa002, exctsccr_gfx_bank_w }, /* ??? */
-	{ 0xa003, 0xa003, MWA_NOP }, /* Cocktail mode ( 0xff = flip screen, 0x00 = normal ) */
+	{ 0xa003, 0xa003, exctsccr_flipscreen_w }, /* Cocktail mode ( 0xff = flip screen, 0x00 = normal ) */
 	{ 0xa006, 0xa006, MWA_NOP }, /* no MCU, but some leftover code still writes here */
 	{ 0xa007, 0xa007, MWA_NOP }, /* no MCU, but some leftover code still writes here */
 	{ 0xa040, 0xa06f, MWA_RAM, &spriteram }, /* Sprite Pos */
@@ -170,14 +171,14 @@ INPUT_PORTS_START( exctsccr )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 
 	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP   | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT| IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN   | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT| IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
 
 	PORT_START      /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
@@ -391,7 +392,7 @@ static MACHINE_DRIVER_START( exctsccb )
 	MDRV_COLORTABLE_LENGTH(64*8)
 
 	MDRV_PALETTE_INIT(exctsccr)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(exctsccr)
 	MDRV_VIDEO_UPDATE(exctsccr)
 
 	/* sound hardware */
@@ -519,7 +520,7 @@ ROM_END
 
 
 
-GAMEX( 1983, exctsccr, 0,        exctsccr, exctsccr, 0, ROT90, "Alpha Denshi Co.", "Exciting Soccer", GAME_NO_COCKTAIL )
-GAMEX( 1983, exctscca, exctsccr, exctsccr, exctsccr, 0, ROT90, "Alpha Denshi Co.", "Exciting Soccer (alternate music)", GAME_NO_COCKTAIL )
-GAMEX( 1983, exctsccb, exctsccr, exctsccb, exctsccr, 0, ROT90, "bootleg", "Exciting Soccer (bootleg)", GAME_NO_COCKTAIL )
-GAMEX( 1984, exctscc2, exctsccr, exctsccr, exctsccr, 0, ROT90, "Alpha Denshi Co.", "Exciting Soccer II", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAME( 1983, exctsccr, 0,        exctsccr, exctsccr, 0, ROT90, "Alpha Denshi Co.", "Exciting Soccer" )
+GAME( 1983, exctscca, exctsccr, exctsccr, exctsccr, 0, ROT90, "Alpha Denshi Co.", "Exciting Soccer (alternate music)" )
+GAME( 1983, exctsccb, exctsccr, exctsccb, exctsccr, 0, ROT90, "bootleg", "Exciting Soccer (bootleg)" )
+GAMEX(1984, exctscc2, exctsccr, exctsccr, exctsccr, 0, ROT90, "Alpha Denshi Co.", "Exciting Soccer II", GAME_NOT_WORKING )

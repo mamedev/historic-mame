@@ -8,7 +8,7 @@ TODO:
 champbbj and champbb2 don't work due to protection - a custom mcu probably.
 The protection involves locations a006-a007 and 6000-63ff.  It pulls
 addresses to routines from there.
-
+Flip screen?
 
 0000-5fff ROM
 7800-7fff ROM (Champion Baseball 2 only)
@@ -42,9 +42,13 @@ The second CPU plays speech
 
 
 
-PALETTE_INIT( champbas );
-WRITE_HANDLER( champbas_gfxbank_w );
-VIDEO_UPDATE( champbas );
+extern WRITE_HANDLER( champbas_videoram_w );
+extern WRITE_HANDLER( champbas_colorram_w );
+extern WRITE_HANDLER( champbas_gfxbank_w );
+
+extern PALETTE_INIT( champbas );
+extern VIDEO_START( champbas );
+extern VIDEO_UPDATE( champbas );
 
 
 
@@ -67,15 +71,17 @@ MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x5fff, MWA_ROM },
+	//{ 0x6000, 0x63ff, champbas_protection_w },
 	{ 0x7000, 0x7000, AY8910_write_port_0_w },
 	{ 0x7001, 0x7001, AY8910_control_port_0_w },
 	{ 0x7800, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
-	{ 0x8400, 0x87ff, colorram_w, &colorram },
+	{ 0x8000, 0x83ff, champbas_videoram_w, &videoram },
+	{ 0x8400, 0x87ff, champbas_colorram_w, &colorram },
 	{ 0x8800, 0x8fef, MWA_RAM },
 	{ 0x8ff0, 0x8fff, MWA_RAM, &spriteram, &spriteram_size},
 	{ 0xa000, 0xa000, interrupt_enable_w },
 	{ 0xa002, 0xa002, champbas_gfxbank_w },
+	//{ 0xa006, 0xa007, champbas_protection_w },
 	{ 0xa060, 0xa06f, MWA_RAM, &spriteram_2 },
 	{ 0xa080, 0xa080, soundlatch_w },
 	{ 0xa0c0, 0xa0c0, watchdog_reset_w },
@@ -235,7 +241,7 @@ static MACHINE_DRIVER_START( champbas )
 	MDRV_COLORTABLE_LENGTH(64*4)
 
 	MDRV_PALETTE_INIT(champbas)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(champbas)
 	MDRV_VIDEO_UPDATE(champbas)
 
 	/* sound hardware */

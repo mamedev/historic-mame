@@ -10,43 +10,21 @@
 #include "vidhrdw/generic.h"
 
 /* prototypes */
-void kchamp_vs_drawsprites( struct mame_bitmap *bitmap );
-void kchamp_1p_drawsprites( struct mame_bitmap *bitmap );
+void kchamp_vs_draw_sprites( struct mame_bitmap *bitmap );
+void kchamp_1p_draw_sprites( struct mame_bitmap *bitmap );
 
+typedef void (*kchamp_draw_spritesproc)( struct mame_bitmap * );
 
+static kchamp_draw_spritesproc kchamp_draw_sprites;
 
-typedef void (*kchamp_drawspritesproc)( struct mame_bitmap * );
+static struct tilemap *bg_tilemap;
 
-static kchamp_drawspritesproc kchamp_drawsprites;
-
-
-/***************************************************************************
-  Video hardware start.
-***************************************************************************/
-
-VIDEO_START( kchampvs ) {
-
-	kchamp_drawsprites = kchamp_vs_drawsprites;
-
-	return video_start_generic();
-}
-
-VIDEO_START( kchamp1p ) {
-
-	kchamp_drawsprites = kchamp_1p_drawsprites;
-
-	return video_start_generic();
-}
-
-/***************************************************************************
-  Convert color prom.
-***************************************************************************/
 PALETTE_INIT( kchamp )
 {
 	int i, red, green, blue;
+
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
-
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
@@ -58,10 +36,61 @@ PALETTE_INIT( kchamp )
 
 		*(colortable++) = i;
 	}
-
 }
 
-void kchamp_vs_drawsprites( struct mame_bitmap *bitmap ) {
+WRITE_HANDLER( kchamp_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
+
+WRITE_HANDLER( kchamp_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
+
+static void get_bg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index] + ((colorram[tile_index] & 7) << 8);
+	int color = (colorram[tile_index] >> 3) & 0x1f;
+
+	SET_TILE_INFO(0, code, color, 0)
+}
+
+VIDEO_START( kchampvs )
+{
+	kchamp_draw_sprites = kchamp_vs_draw_sprites;
+
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	return 0;
+}
+
+VIDEO_START( kchamp1p )
+{
+	kchamp_draw_sprites = kchamp_1p_draw_sprites;
+
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	return 0;
+}
+
+void kchamp_vs_draw_sprites( struct mame_bitmap *bitmap ) {
 
 	int offs;
 	        /*
@@ -94,7 +123,7 @@ void kchamp_vs_drawsprites( struct mame_bitmap *bitmap ) {
 	}
 }
 
-void kchamp_1p_drawsprites( struct mame_bitmap *bitmap ) {
+void kchamp_1p_draw_sprites( struct mame_bitmap *bitmap ) {
 
 	int offs;
 	        /*
@@ -127,43 +156,8 @@ void kchamp_1p_drawsprites( struct mame_bitmap *bitmap ) {
 	}
 }
 
-/***************************************************************************
-
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
-
 VIDEO_UPDATE( kchamp )
 {
-        int offs;
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-        for ( offs = videoram_size - 1; offs >= 0; offs-- ) {
-                if ( dirtybuffer[offs] ) {
-			int sx,sy,code;
-
-			dirtybuffer[offs] = 0;
-
-                        sx = (offs % 32);
-			sy = (offs / 32);
-
-                        code = videoram[offs] + ( ( colorram[offs] & 7 ) << 8 );
-
-                        drawgfx(tmpbitmap,Machine->gfx[0],
-                                        code,
-                                        ( colorram[offs] >> 3 ) & 0x1f,
-                                        0, /* flip x */
-                                        0, /* flip y */
-					sx*8,sy*8,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
-		}
-	}
-
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-
-	(*kchamp_drawsprites)( bitmap);
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	(*kchamp_draw_sprites)(bitmap);
 }

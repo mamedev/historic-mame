@@ -684,6 +684,9 @@ static READ16_HANDLER( system32_io_r )
 		return (EEPROM_read_bit() << 7) | readinputport(0x00);
 	case 0x06:
 		return 0xffff;
+	case 0x07:
+		// scross
+		return sys32_tilebank_external;
 	case 0x0e:
 		// f1lap
 		return 0xffff;

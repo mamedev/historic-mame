@@ -23,9 +23,24 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "bsktball.h"
 
+extern UINT8 *bsktball_motion;
 
+extern WRITE_HANDLER( bsktball_videoram_w );
+
+extern VIDEO_START( bsktball );
+extern VIDEO_UPDATE( bsktball );
+
+extern WRITE_HANDLER( bsktball_nmion_w );
+extern INTERRUPT_GEN( bsktball_interrupt );
+extern WRITE_HANDLER( bsktball_ld1_w );
+extern WRITE_HANDLER( bsktball_ld2_w );
+extern READ_HANDLER( bsktball_in0_r );
+extern WRITE_HANDLER( bsktball_led1_w );
+extern WRITE_HANDLER( bsktball_led2_w );
+extern WRITE_HANDLER( bsktball_bounce_w );
+extern WRITE_HANDLER( bsktball_note_w );
+extern WRITE_HANDLER( bsktball_noise_reset_w );
 
 /*************************************
  *
@@ -161,7 +176,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x102c, 0x102d, bsktball_noise_reset_w }, /* Noise Reset */
 	{ 0x102e, 0x102f, bsktball_nmion_w }, /* NMI On */
 	{ 0x1030, 0x1030, bsktball_note_w }, /* Music Ckt Note Dvsr */
-	{ 0x1800, 0x1bbf, videoram_w, &videoram, &videoram_size }, /* DISPLAY */
+	{ 0x1800, 0x1bbf, bsktball_videoram_w, &videoram }, /* DISPLAY */
 	{ 0x1bc0, 0x1bff, MWA_RAM, &bsktball_motion },
 	{ 0x2000, 0x3fff, MWA_ROM }, /* PROM1-PROM8 */
 MEMORY_END
@@ -383,7 +398,7 @@ static MACHINE_DRIVER_START( bsktball )
 	MDRV_COLORTABLE_LENGTH(sizeof(colortable_source) / sizeof(colortable_source[0]))
 	
 	MDRV_PALETTE_INIT(bsktball)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(bsktball)
 	MDRV_VIDEO_UPDATE(bsktball)
 
 	/* sound hardware */

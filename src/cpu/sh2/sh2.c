@@ -149,25 +149,12 @@ static SH2 sh2;
 static int sh2_active = 0;
 static int sh2_cycles;
 
-#if BUSY_LOOP_HACKS
-static UINT32 busy_loop_cycles;
-#endif
-
 INLINE UINT32 sh2_gettotalcycles(void)
 {
-	UINT32 retval;
-
 	if(sh2_active)
-	{
-		retval = sh2.total_cycles + sh2_cycles - sh2_icount;
-#if BUSY_LOOP_HACKS
-		retval -= busy_loop_cycles;
-#endif
-	}
+		return sh2.total_cycles + sh2_cycles - sh2_icount;
 	else
-		retval = sh2.total_cycles;
-
-	return retval;
+		return sh2.total_cycles;
 }
 
 static const int div_tab[4] = { 3, 5, 7, 0 };
@@ -542,10 +529,7 @@ INLINE void BRA(UINT32 d)
 		 * NOP
 		 */
 		if (next_opcode == 0x0009)
-		{
-			busy_loop_cycles += sh2_icount - sh2_icount % 3;
 			sh2_icount %= 3;	/* cycles for BRA $ and NOP taken (3) */
-		}
 	}
 #endif
 	sh2.delay = sh2.pc;
@@ -979,7 +963,6 @@ INLINE void DT(UINT32 n)
 			{
 				sh2.r[n]--;
 				sh2_icount -= 4;	/* cycles for DT (1) and BF taken (3) */
-				busy_loop_cycles += 4;
 			}
 		}
 	}
@@ -2400,11 +2383,6 @@ int sh2_execute(int cycles)
 	} while( sh2_icount > 0 );
 
 	sh2.total_cycles += cycles - sh2_icount;
-
-#if BUSY_LOOP_HACKS
-	sh2.total_cycles -= busy_loop_cycles;
-	busy_loop_cycles = 0;
-#endif
 
 	sh2_active = 0;
 

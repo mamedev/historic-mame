@@ -8,145 +8,92 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "state.h"
-
 
 static int background_image;
-static int flipscreen;
 
+static struct tilemap *fg_tilemap, *bg_tilemap;
 
+WRITE_HANDLER( bombjack_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
+}
+
+WRITE_HANDLER( bombjack_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
+}
 
 WRITE_HANDLER( bombjack_background_w )
 {
 	if (background_image != data)
 	{
-		memset(dirtybuffer,1,videoram_size);
 		background_image = data;
+		tilemap_mark_all_tiles_dirty(bg_tilemap);
 	}
 }
-
-
 
 WRITE_HANDLER( bombjack_flipscreen_w )
 {
-	if (flipscreen != (data & 1))
+	if (flip_screen != (data & 0x01))
 	{
-		flipscreen = data & 1;
-		memset(dirtybuffer,1,videoram_size);
+		flip_screen_set(data & 0x01);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	}
 }
 
-static void dirty_all(void)
+static void get_bg_tile_info(int tile_index)
 {
-	memset(dirtybuffer,1,videoram_size);
+	UINT8 *tilerom = memory_region(REGION_GFX4);
+
+	int offs = (background_image & 0x07) * 0x200 + tile_index;
+	int code = (background_image & 0x10) ? tilerom[offs] : 0;
+	int attr = tilerom[offs + 0x100];
+	int color = attr & 0x0f;
+	int flags = (attr & 0x80) ? TILE_FLIPY : 0;
+
+	SET_TILE_INFO(1, code, color, flags)
+}
+
+static void get_fg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index] + 16 * (colorram[tile_index] & 0x10);
+	int color = colorram[tile_index] & 0x0f;
+
+	SET_TILE_INFO(0, code, color, 0)
 }
 
 VIDEO_START( bombjack )
 {
-	state_save_register_int ("video", 0, "background_image", &background_image);
-	state_save_register_int ("video", 0, "flipscreen",       &flipscreen);
-	state_save_register_func_postload (dirty_all);
-	return video_start_generic();
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 16, 16, 16, 16);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, 
+		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
+
+	if ( !fg_tilemap )
+		return 1;
+
+	tilemap_set_transparent_pen(fg_tilemap, 0);
+
+	return 0;
 }
 
-/***************************************************************************
-
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
-VIDEO_UPDATE( bombjack )
+static void bombjack_draw_sprites( struct mame_bitmap *bitmap )
 {
-	int offs,base;
+	int offs;
 
-
-	base = 0x200 * (background_image & 0x07);
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		int sx,sy;
-		int tilecode,tileattribute;
-
-
-		sx = offs % 32;
-		sy = offs / 32;
-
-		if (background_image & 0x10)
-		{
-			int bgoffs;
-
-
-			bgoffs = base+16*(sy/2)+sx/2;
-
-			tilecode = memory_region(REGION_GFX4)[bgoffs],
-			tileattribute = memory_region(REGION_GFX4)[bgoffs + 0x100];
-		}
-		else
-		{
-			tilecode = 0xff;
-			tileattribute = 0;	/* avoid compiler warning */
-		}
-
-		if (dirtybuffer[offs])
-		{
-			if (flipscreen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-			}
-
-			/* draw the background (this can be handled better) */
-			if (tilecode != 0xff)
-			{
-				struct rectangle clip;
-				int flipy;
-
-
-				clip.min_x = 8*sx;
-				clip.max_x = 8*sx+7;
-				clip.min_y = 8*sy;
-				clip.max_y = 8*sy+7;
-
-				flipy = tileattribute & 0x80;
-				if (flipscreen) flipy = !flipy;
-
-				drawgfx(tmpbitmap,Machine->gfx[1],
-						tilecode,
-						tileattribute & 0x0f,
-						flipscreen,flipy,
-						16*(sx/2),16*(sy/2),
-						&clip,TRANSPARENCY_NONE,0);
-
-				drawgfx(tmpbitmap,Machine->gfx[0],
-						videoram[offs] + 16 * (colorram[offs] & 0x10),
-						colorram[offs] & 0x0f,
-						flipscreen,flipscreen,
-						8*sx,8*sy,
-						&Machine->visible_area,TRANSPARENCY_PEN,0);
-			}
-			else
-				drawgfx(tmpbitmap,Machine->gfx[0],
-						videoram[offs] + 16 * (colorram[offs] & 0x10),
-						colorram[offs] & 0x0f,
-						flipscreen,flipscreen,
-						8*sx,8*sy,
-						&Machine->visible_area,TRANSPARENCY_NONE,0);
-
-
-			dirtybuffer[offs] = 0;
-		}
-	}
-
-
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-
-
-	/* Draw the sprites. */
-	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
+	for (offs = spriteram_size - 4; offs >= 0; offs -= 4)
 	{
 
 /*
@@ -172,7 +119,7 @@ VIDEO_UPDATE( bombjack )
 			sy = 241-spriteram[offs+2];
 		flipx = spriteram[offs+1] & 0x40;
 		flipy =	spriteram[offs+1] & 0x80;
-		if (flipscreen)
+		if (flip_screen)
 		{
 			if (spriteram[offs+1] & 0x20)
 			{
@@ -195,4 +142,11 @@ VIDEO_UPDATE( bombjack )
 				sx,sy,
 				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
+}
+
+VIDEO_UPDATE( bombjack )
+{
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, 0, 0);
+	bombjack_draw_sprites(bitmap);
 }

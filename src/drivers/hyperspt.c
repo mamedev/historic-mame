@@ -9,26 +9,30 @@ Based on drivers from Juno First emulator by Chris Hardy (chrish@kcbbs.gen.nz)
 #include "cpu/m6809/m6809.h"
 
 
-void konami1_decode(void);
+extern void konami1_decode(void);
 
-extern unsigned char *hyperspt_scroll;
+extern UINT8 *hyperspt_scroll;
 
-WRITE_HANDLER( hyperspt_flipscreen_w );
-PALETTE_INIT( hyperspt );
-VIDEO_START( hyperspt );
-VIDEO_UPDATE( hyperspt );
-VIDEO_UPDATE( roadf );
+extern WRITE_HANDLER( hyperspt_videoram_w );
+extern WRITE_HANDLER( hyperspt_colorram_w );
+extern WRITE_HANDLER( hyperspt_flipscreen_w );
 
-WRITE_HANDLER( konami_sh_irqtrigger_w );
-READ_HANDLER( hyperspt_sh_timer_r );
-WRITE_HANDLER( hyperspt_sound_w );
+extern PALETTE_INIT( hyperspt );
+extern VIDEO_START( hyperspt );
+extern VIDEO_UPDATE( hyperspt );
+extern VIDEO_START( roadf );
+extern VIDEO_UPDATE( roadf );
+
+extern WRITE_HANDLER( konami_sh_irqtrigger_w );
+extern READ_HANDLER( hyperspt_sh_timer_r );
+extern WRITE_HANDLER( hyperspt_sound_w );
 
 /* these routines lurk in sndhrdw/trackfld.c */
 extern struct VLM5030interface konami_vlm5030_interface;
 extern struct SN76496interface konami_sn76496_interface;
 extern struct DACinterface konami_dac_interface;
-WRITE_HANDLER( konami_SN76496_latch_w );
-WRITE_HANDLER( konami_SN76496_0_w );
+extern WRITE_HANDLER( konami_SN76496_latch_w );
+extern WRITE_HANDLER( konami_SN76496_0_w );
 
 
 static WRITE_HANDLER( hyperspt_coin_counter_w )
@@ -59,7 +63,7 @@ static READ_HANDLER( konami_IN1_r )
 /*
  Track'n'Field has 1k of battery backed RAM which can be erased by setting a dipswitch
 */
-static unsigned char *nvram;
+static UINT8 *nvram;
 static size_t nvram_size;
 static int we_flipped_the_switch;
 
@@ -162,8 +166,8 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x1483, 0x1484, hyperspt_coin_counter_w },
 	{ 0x1487, 0x1487, interrupt_enable_w },  /* Interrupt enable */
 	{ 0x1500, 0x1500, soundlatch_w },
-	{ 0x2000, 0x27ff, videoram_w, &videoram, &videoram_size },
-	{ 0x2800, 0x2fff, colorram_w, &colorram },
+	{ 0x2000, 0x27ff, hyperspt_videoram_w, &videoram },
+	{ 0x2800, 0x2fff, hyperspt_colorram_w, &colorram },
 	{ 0x3000, 0x37ff, MWA_RAM },
 	{ 0x3800, 0x3fff, MWA_RAM, &nvram, &nvram_size },
 	{ 0x4000, 0xffff, MWA_ROM },
@@ -180,7 +184,7 @@ static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x4fff, MWA_RAM },
 	{ 0xa000, 0xa000, VLM5030_data_w }, /* speech data */
-	{ 0xc000, 0xdfff, hyperspt_sound_w },	  /* speech and output controll */
+	{ 0xc000, 0xdfff, hyperspt_sound_w },	  /* speech and output control */
 	{ 0xe000, 0xe000, DAC_0_data_w },
 	{ 0xe001, 0xe001, konami_SN76496_latch_w },  /* Loads the snd command into the snd latch */
 	{ 0xe002, 0xe002, konami_SN76496_0_w }, 	 /* This address triggers the SN chip to read the data port. */
@@ -497,35 +501,11 @@ MACHINE_DRIVER_END
 
 
 static MACHINE_DRIVER_START( roadf )
-
-	/* basic machine hardware */
-	MDRV_CPU_ADD(M6809, 2048000)		/* 1.400 MHz ??? */
-	MDRV_CPU_MEMORY(roadf_readmem,writemem)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
-
-	MDRV_CPU_ADD(Z80,14318180/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* Z80 Clock is derived from a 14.31818 MHz crystal */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_IMPORT_FROM(hyperspt)
+	MDRV_ASPECT_RATIO(3, 4)
+	MDRV_CPU_MEMORY(roadf_readmem, writemem)
 	MDRV_GFXDECODE(roadf_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(32)
-	MDRV_COLORTABLE_LENGTH(16*16+16*16)
-
-	MDRV_PALETTE_INIT(hyperspt)
-	MDRV_VIDEO_START(hyperspt)
-	MDRV_VIDEO_UPDATE(roadf)
-
-	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, konami_dac_interface)
-	MDRV_SOUND_ADD(SN76496, konami_sn76496_interface)
-	MDRV_SOUND_ADD(VLM5030, konami_vlm5030_interface)
+	MDRV_VIDEO_START(roadf)
 MACHINE_DRIVER_END
 
 
@@ -675,7 +655,6 @@ static DRIVER_INIT( hyperspt )
 
 
 GAME( 1984, hyperspt, 0,		hyperspt, hyperspt, hyperspt, ROT0,  "Konami (Centuri license)", "Hyper Sports" )
-GAME( 1984, hpolym84, hyperspt, hyperspt, hyperspt, hyperspt, ROT0,  "Konami", "Hyper Olympics '84" )
+GAME( 1984, hpolym84, hyperspt, hyperspt, hyperspt, hyperspt, ROT0,  "Konami", "Hyper Olympic '84" )
 GAME( 1984, roadf,	  0,		roadf,	  roadf,	hyperspt, ROT90, "Konami", "Road Fighter (set 1)" )
 GAME( 1984, roadf2,   roadf,	roadf,	  roadf,	hyperspt, ROT90, "Konami", "Road Fighter (set 2)" )
-

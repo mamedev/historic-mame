@@ -162,15 +162,15 @@ typedef enum { AH,AL,CH,CL,DH,DL,BH,BL,SPH,SPL,BPH,BPL,IXH,IXL,IYH,IYL } BREGS;
 	}
 
 #define ADJ4(param1,param2)					\
-	UINT8 tmpAL=I.regs.b[AL];				\
 	if (AF || ((I.regs.b[AL] & 0xf) > 9))	\
 	{										\
 		UINT16 tmp;							\
-		I.regs.b[AL] = tmp = tmpAL + param1;\
+		tmp = I.regs.b[AL] + param1;		\
+		I.regs.b[AL] = tmp;					\
 		I.AuxVal = 1;						\
 		I.CarryVal |= tmp & 0x100;			\
 	}										\
-	if (CF || (tmpAL > 0x9f))				\
+	if (CF || (I.regs.b[AL]>0x9f))			\
 	{										\
 		I.regs.b[AL] += param2;				\
 		I.CarryVal = 1;						\

@@ -10,7 +10,9 @@ Video hardware driver by Uki
 
 #include "vidhrdw/generic.h"
 
-static UINT8 flipscreen,markham_xscroll[2];
+static UINT8 markham_xscroll[2];
+
+static struct tilemap *bg_tilemap;
 
 PALETTE_INIT( markham )
 {
@@ -40,6 +42,15 @@ PALETTE_INIT( markham )
 
 }
 
+WRITE_HANDLER( markham_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset / 2);
+	}
+}
+
 WRITE_HANDLER( markham_scroll_x_w )
 {
 	markham_xscroll[offset] = data;
@@ -47,68 +58,53 @@ WRITE_HANDLER( markham_scroll_x_w )
 
 WRITE_HANDLER( markham_flipscreen_w )
 {
-	flipscreen = data & 1;
+	if (flip_screen != (data & 0x01))
+	{
+		flip_screen_set(data & 0x01);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
 }
 
-VIDEO_UPDATE( markham )
+static void get_bg_tile_info(int tile_index)
 {
+	int attr = videoram[tile_index * 2];
+	int code = videoram[(tile_index * 2) + 1] + ((attr & 0x60) << 3);
+	int color = (attr & 0x1f) | ((attr & 0x80) >> 2);
 
-	int offs,chr,col,x,y,px,py,fx,fy,bank ;
+	SET_TILE_INFO(0, code, color, 0)
+}
 
-	/* draw bg layer */
+VIDEO_START( markham )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_cols, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
-	for (offs=0; offs<(videoram_size/2); offs++)
-	{
-		int sx,sy;
+	if ( !bg_tilemap )
+		return 1;
 
-		sx = offs / 32;
-		sy = offs % 32;
+	tilemap_set_scroll_rows(bg_tilemap, 32);
 
-		py = sy*8;
-		px = sx*8;
+	return 0;
+}
 
-		if ( (sy > 3) && (sy<16) )
-			px = ((sx*8 + ~markham_xscroll[0]) & 0xff);
-		if (sy>=16)
-			px = ((sx*8 + ~markham_xscroll[1]) & 0xff);
+static void markham_draw_sprites( struct mame_bitmap *bitmap )
+{
+	int offs;
 
-		if (flipscreen != 0)
-		{
-			px = 248-px;
-			py = 248-py;
-		}
-
-		col = videoram[offs*2];
-		fx = flipscreen;
-		fy = flipscreen;
-		bank = (col & 0x60) << 3;
-		col = (col & 0x1f) | ((col & 0x80) >> 2);
-
-		drawgfx(bitmap,Machine->gfx[0],
-			videoram[offs*2+1] + bank,
-			col,
-			fx,fy,
-			px,py,
-			&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-/* draw sprites */
-
-	/* c860 - c8ff */
 	for (offs=0x60; offs<0x100; offs +=4)
 	{
-		chr = spriteram[offs+1];
-		col = spriteram[offs+2];
+		int chr = spriteram[offs+1];
+		int col = spriteram[offs+2];
 
-		fx = flipscreen;
-		fy = flipscreen;
+		int fx = flip_screen;
+		int fy = flip_screen;
 
-		x = spriteram[offs+3];
-		y = spriteram[offs+0];
-
+		int x = spriteram[offs+3];
+		int y = spriteram[offs+0];
+		int px,py;
 		col &= 0x3f ;
 
-		if (flipscreen==0)
+		if (flip_screen==0)
 		{
 			px = x-2;
 			py = 240-y;
@@ -131,5 +127,20 @@ VIDEO_UPDATE( markham )
 			px,py,
 			&Machine->visible_area,TRANSPARENCY_COLOR,0);
 	}
+}
 
+VIDEO_UPDATE( markham )
+{
+	int i;
+
+	for (i = 0; i < 32; i++)
+	{
+		if ((i > 3) && (i<16))
+			tilemap_set_scrollx(bg_tilemap, i, markham_xscroll[0]);
+		if (i >= 16)
+			tilemap_set_scrollx(bg_tilemap, i, markham_xscroll[1]);
+	}
+
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	markham_draw_sprites(bitmap);
 }

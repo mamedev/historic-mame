@@ -45,17 +45,17 @@ This info came from http://www.ne.jp/asahi/cc-sakura/akkun/old/fryski.html
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+extern UINT8 *seicross_row_scroll;
 
+extern WRITE_HANDLER( seicross_videoram_w );
+extern WRITE_HANDLER( seicross_colorram_w );
 
-extern unsigned char *seicross_row_scroll;
-WRITE_HANDLER( seicross_colorram_w );
-PALETTE_INIT( seicross );
-VIDEO_UPDATE( seicross );
+extern PALETTE_INIT( seicross );
+extern VIDEO_START( seicross );
+extern VIDEO_UPDATE( seicross );
 
-
-static unsigned char *nvram;
+static UINT8 *nvram;
 static size_t nvram_size;
-
 
 static NVRAM_HANDLER( seicross )
 {
@@ -113,7 +113,7 @@ static WRITE_HANDLER( friskyt_portB_w )
 }
 
 
-static unsigned char *sharedram;
+static UINT8 *sharedram;
 
 static READ_HANDLER( sharedram_r )
 {
@@ -143,7 +143,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x77ff, MWA_ROM },
 	{ 0x7800, 0x7fff, sharedram_w, &sharedram },
 	{ 0x8820, 0x887f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
+	{ 0x9000, 0x93ff, seicross_videoram_w, &videoram },
 	{ 0x9800, 0x981f, MWA_RAM, &seicross_row_scroll },
 	{ 0x9880, 0x989f, MWA_RAM, &spriteram_2, &spriteram_2_size },
 	{ 0x9c00, 0x9fff, seicross_colorram_w, &colorram },
@@ -464,7 +464,7 @@ static MACHINE_DRIVER_START( nvram )
 	MDRV_PALETTE_LENGTH(64)
 
 	MDRV_PALETTE_INIT(seicross)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(seicross)
 	MDRV_VIDEO_UPDATE(seicross)
 
 	/* sound hardware */
@@ -620,7 +620,7 @@ ROM_END
 static DRIVER_INIT( friskyt )
 {
 	int A;
-	unsigned char *src,*dest;
+	UINT8 *src,*dest;
 
 	/* the protection mcu shares the main program ROMs and RAM with the main CPU. */
 

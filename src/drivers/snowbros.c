@@ -794,6 +794,23 @@ ROM_START( 3in1semi )
 	ROM_LOAD( "u78", 0x180000, 0x80000, CRC(af596afc) )
 ROM_END
 
+ROM_START( 4in1boot ) /* snow bros, tetris, hyperman 1, pacman 2 */
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "u52",  0x00001, 0x80000, CRC(71815878) SHA1(e3868f5687c1d8ec817671c50ade6c56ee83bfa1) )
+	ROM_LOAD16_BYTE( "u74",  0x00000, 0x80000, CRC(e22d3fa2) SHA1(020ab92d8cbf37a9f8186a81934abb97088c16f9) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
+	ROM_LOAD( "u35", 0x00000, 0x10000 , CRC(c894ac80) SHA1(ee896675b5205ab2dbd0cbb13db16aa145391d06) )
+
+	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_LOAD( "u14", 0x00000, 0x40000, CRC(94b09b0e) SHA1(414de3e36eff85126038e8ff74145b35076e0a43) )
+
+	ROM_REGION( 0x100000, REGION_GFX1, 0 ) /* Sprites */
+	/* this only seems to have snowbros gfx? */
+	ROM_LOAD( "u78", 0x000000, 0x100000, BAD_DUMP CRC(0f925f01) SHA1(74f35185ffb19ca291673ce8a5330fd11fede276) )
+ROM_END
+
+
 ROM_START( cookbib2 )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
 	ROM_LOAD16_BYTE( "cookbib2.01",  0x00000, 0x40000, CRC(65aafde2) )
@@ -884,6 +901,52 @@ static DRIVER_INIT(snowbro3)
 	}
 }
 
+static DRIVER_INIT(4in1boot)
+{
+	unsigned char *buffer;
+	data8_t *src = memory_region(REGION_CPU1);
+	int len = memory_region_length(REGION_CPU1);
+
+	/* strange order */
+	if ((buffer = malloc(len)))
+	{
+		int i;
+		for (i = 0;i < len; i++)
+			if (i&1) buffer[i] = BITSWAP8(src[i],6,7,5,4,3,2,1,0);
+			else buffer[i] = src[i];
+
+		memcpy(src,buffer,len);
+		free(buffer);
+	}
+
+	src = memory_region(REGION_CPU2);
+	len = memory_region_length(REGION_CPU2);
+
+	/* strange order */
+	if ((buffer = malloc(len)))
+	{
+		int i;
+		for (i = 0;i < len; i++)
+			buffer[i] = src[i^0x4000];
+		memcpy(src,buffer,len);
+		free(buffer);
+	}
+
+	/* is this swapped too? i'm not sure */
+	src = memory_region(REGION_GFX1);
+	len = memory_region_length(REGION_GFX1);
+
+	if ((buffer = malloc(len)))
+	{
+		int i;
+		for (i = 0;i < len; i++)
+			buffer[i] = src[BITSWAP24(i,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0)];
+		memcpy(src,buffer,len);
+		free(buffer);
+	}
+
+}
+
 GAME( 1990, snowbros, 0,        snowbros, snowbros, 0, ROT0, "Toaplan", "Snow Bros. - Nick & Tom (set 1)" )
 GAME( 1990, snowbroa, snowbros, snowbros, snowbros, 0, ROT0, "Toaplan", "Snow Bros. - Nick & Tom (set 2)" )
 GAME( 1990, snowbrob, snowbros, snowbros, snowbros, 0, ROT0, "Toaplan", "Snow Bros. - Nick & Tom (set 3)" )
@@ -899,3 +962,5 @@ GAMEX(199?, moremorp, 0,        hyperpac, hyperpac, 0,        ROT0, "SemiCom", "
 GAMEX(1997, 3in1semi, 0,        hyperpac, hyperpac, 0,        ROT0, "SemiCom", "3-in-1 (SemiCom)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX(1996, cookbib2, 0,        hyperpac, hyperpac, 0,        ROT0, "SemiCom", "Cookie and Bibi 2", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX(1995, htchctch, 0,        hyperpac, hyperpac, 0,        ROT0, "SemiCom", "Hatch Catch", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+/* bad dump? */
+GAMEX(199?, 4in1boot, 0,        hyperpac, hyperpac, 4in1boot, ROT0, "bootleg", "4-in-1 bootleg", GAME_NOT_WORKING )

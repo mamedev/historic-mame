@@ -415,15 +415,15 @@ static PORT_READ16_START( DSP_readport )
 	{ TMS32025_PORT_RANGE (0x04, 0x04), dsp_rom_r },
 	{ TMS32025_PORT_RANGE (0x05, 0x05), input_port_0_word_r },
 	{ TMS32025_PORT_RANGE (0x07, 0x07), input_port_1_word_r },
-	{ TMS32025_BIO,  TMS32025_BIO,  dsp_bio_line_r },
-	{ TMS32025_HOLD, TMS32025_HOLD, dsp_hold_line_r },
+	{ TMS32025_PORT_RANGE( TMS32025_BIO,  TMS32025_BIO ),  dsp_bio_line_r },
+	{ TMS32025_PORT_RANGE( TMS32025_HOLD, TMS32025_HOLD ), dsp_hold_line_r },
 PORT_END
 
 static PORT_WRITE16_START( DSP_writeport )
 	{ TMS32025_PORT_RANGE (0x00, 0x01), dsp_romaddr_w },
 	{ TMS32025_PORT_RANGE (0x02, 0x02), dsp_answer_w },
 	{ TMS32025_PORT_RANGE (0x03, 0x03), dsp_dac_w },
-//	{ TMS32025_HOLDA, TMS32025_HOLDA, dsp_HOLDA_signal_w },
+//	{ TMS32025_PORT_RANGE( TMS32025_HOLDA, TMS32025_HOLDA ), dsp_HOLDA_signal_w },
 PORT_END
 
 

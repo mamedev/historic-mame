@@ -35,8 +35,29 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "nitedrvr.h"
 
+extern UINT8 *nitedrvr_ram;
+
+extern int nitedrvr_gear;
+extern int nitedrvr_track;
+
+extern READ_HANDLER( nitedrvr_in0_r );
+extern READ_HANDLER( nitedrvr_in1_r );
+extern READ_HANDLER( nitedrvr_ram_r );
+extern READ_HANDLER( nitedrvr_steering_reset_r );
+extern WRITE_HANDLER( nitedrvr_steering_reset_w );
+extern WRITE_HANDLER( nitedrvr_out0_w );
+extern WRITE_HANDLER( nitedrvr_out1_w );
+extern WRITE_HANDLER( nitedrvr_ram_w );
+extern void nitedrvr_crash_toggle(int dummy);
+
+extern UINT8 *nitedrvr_hvc;
+
+extern WRITE_HANDLER( nitedrvr_videoram_w );
+extern WRITE_HANDLER( nitedrvr_hvc_w );
+
+extern VIDEO_START( nitedrvr );
+extern VIDEO_UPDATE( nitedrvr );
 
 
 /*************************************
@@ -96,10 +117,10 @@ MEMORY_END
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x00ff, nitedrvr_ram_w, &nitedrvr_ram }, /* SCRAM */
 	{ 0x0100, 0x01ff, nitedrvr_ram_w }, /* SCRAM */
-	{ 0x0200, 0x027f, videoram_w, &videoram, &videoram_size }, /* PFW */
-	{ 0x0280, 0x02ff, videoram_w }, /* PFW */
-	{ 0x0300, 0x037f, videoram_w }, /* PFW */
-	{ 0x0380, 0x03ff, videoram_w }, /* PFW */
+	{ 0x0200, 0x027f, nitedrvr_videoram_w, &videoram }, /* PFW */
+	{ 0x0280, 0x02ff, nitedrvr_videoram_w }, /* PFW */
+	{ 0x0300, 0x037f, nitedrvr_videoram_w }, /* PFW */
+	{ 0x0380, 0x03ff, nitedrvr_videoram_w }, /* PFW */
 	{ 0x0400, 0x05ff, nitedrvr_hvc_w, &nitedrvr_hvc }, /* POSH, POSV, CHAR, Watchdog */
 	{ 0x0a00, 0x0bff, nitedrvr_out0_w },
 	{ 0x0c00, 0x0dff, nitedrvr_out1_w },
@@ -117,12 +138,12 @@ MEMORY_END
 
 INPUT_PORTS_START( nitedrvr )
 	PORT_START		/* fake port, gets mapped to Night Driver ports */
-	PORT_DIPNAME( 0x30, 0x10, "Cost" )
-	PORT_DIPSETTING(	0x00, "2 plays/coin" )
-	PORT_DIPSETTING(	0x10, "1 play/coin" )
-	PORT_DIPSETTING(	0x20, "1 play/coin" ) /* not a typo */
-	PORT_DIPSETTING(	0x30, "1 play/2 coins" )
-	PORT_DIPNAME( 0xC0, 0x80, "Seconds" )
+	PORT_DIPNAME( 0x30, 0x10, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(	0x30, DEF_STR( 2C_1C ) )
+	//PORT_DIPSETTING(	0x20, DEF_STR( 1C_1C ) ) /* not a typo */
+	PORT_DIPSETTING(	0x10, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0xC0, 0x80, "Playing Time" )
 	PORT_DIPSETTING(	0x00, "50" )
 	PORT_DIPSETTING(	0x40, "75" )
 	PORT_DIPSETTING(	0x80, "100" )
@@ -132,9 +153,9 @@ INPUT_PORTS_START( nitedrvr )
 	PORT_DIPNAME( 0x10, 0x00, "Track Set" )
 	PORT_DIPSETTING(	0x00, "Normal" )
 	PORT_DIPSETTING(	0x10, "Reverse" )
-	PORT_DIPNAME( 0x20, 0x20, "Bonus Time Allowed" )
-	PORT_DIPSETTING(	0x00, "None" )
-	PORT_DIPSETTING(	0x20, "Score=350" )
+	PORT_DIPNAME( 0x20, 0x20, "Bonus Time" )
+	PORT_DIPSETTING(	0x00, DEF_STR ( No ) )
+	PORT_DIPSETTING(	0x20, "Score = 350" )
 	PORT_BIT (0x40, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_SERVICE | IPF_TOGGLE, "Self Test", KEYCODE_F2, IP_JOY_NONE )
 
@@ -368,7 +389,7 @@ static MACHINE_DRIVER_START( nitedrvr )
 	MDRV_COLORTABLE_LENGTH(sizeof(colortable_source) / sizeof(colortable_source[0]))
 	
 	MDRV_PALETTE_INIT(nitedrvr)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(nitedrvr)
 	MDRV_VIDEO_UPDATE(nitedrvr)
 
 	/* sound hardware */

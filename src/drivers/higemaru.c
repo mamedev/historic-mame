@@ -10,10 +10,13 @@ driver by Mirko Buffoni
 #include "vidhrdw/generic.h"
 
 
-WRITE_HANDLER( higemaru_c800_w );
-PALETTE_INIT( higemaru );
-VIDEO_UPDATE( higemaru );
+extern WRITE_HANDLER( higemaru_videoram_w );
+extern WRITE_HANDLER( higemaru_colorram_w );
+extern WRITE_HANDLER( higemaru_c800_w );
 
+extern PALETTE_INIT( higemaru );
+extern VIDEO_START( higemaru );
+extern VIDEO_UPDATE( higemaru );
 
 
 INTERRUPT_GEN( higemaru_interrupt )
@@ -23,7 +26,6 @@ INTERRUPT_GEN( higemaru_interrupt )
 	else
 		cpu_set_irq_line_and_vector(0,0,HOLD_LINE,0xd7);	/* RST 10h */
 }
-
 
 
 static MEMORY_READ_START( readmem )
@@ -44,12 +46,11 @@ static MEMORY_WRITE_START( writemem )
 	{ 0xc802, 0xc802, AY8910_write_port_0_w },
 	{ 0xc803, 0xc803, AY8910_control_port_1_w },
 	{ 0xc804, 0xc804, AY8910_write_port_1_w },
-	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
-	{ 0xd400, 0xd7ff, colorram_w, &colorram },
+	{ 0xd000, 0xd3ff, higemaru_videoram_w, &videoram },
+	{ 0xd400, 0xd7ff, higemaru_colorram_w, &colorram },
 	{ 0xd880, 0xd9ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xe000, 0xefff, MWA_RAM },
 MEMORY_END
-
 
 
 INPUT_PORTS_START( higemaru )
@@ -138,7 +139,6 @@ INPUT_PORTS_START( higemaru )
 INPUT_PORTS_END
 
 
-
 static struct GfxLayout charlayout =
 {
 	8,8,
@@ -170,8 +170,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-
-
 static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
@@ -182,7 +180,6 @@ static struct AY8910interface ay8910_interface =
 	{ 0 },
 	{ 0 }
 };
-
 
 
 static MACHINE_DRIVER_START( higemaru )
@@ -204,14 +201,12 @@ static MACHINE_DRIVER_START( higemaru )
 	MDRV_COLORTABLE_LENGTH(32*4+16*16)
 
 	MDRV_PALETTE_INIT(higemaru)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(higemaru)
 	MDRV_VIDEO_UPDATE(higemaru)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(AY8910, ay8910_interface)
 MACHINE_DRIVER_END
-
-
 
 /***************************************************************************
 
@@ -242,5 +237,4 @@ ROM_START( higemaru )
 ROM_END
 
 
-
-GAME( 1984, higemaru, 0, higemaru, higemaru, 0, ROT0, "Capcom", "Pirate Ship HigeMaru" )
+GAME( 1984, higemaru, 0, higemaru, higemaru, 0, ROT0, "Capcom", "Pirate Ship Higemaru" )

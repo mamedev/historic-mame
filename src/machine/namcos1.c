@@ -1,5 +1,6 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "machine/random.h"
 
 #define NEW_TIMER 0 /* CPU slice optimize with new timer system */
 
@@ -607,7 +608,7 @@ static READ_HANDLER( splatter_key_r ) {
 #ifdef USE_MTRANDOM
 				data = randomMT() & 0xff;
 #else
-				data = rand() & 0xff;
+				data = mame_rand() & 0xff;
 #endif
 				if ( offset >= 0x1000 )
 					data |= 0x80;
@@ -1317,7 +1318,7 @@ DRIVER_INIT( splatter )
 	namcos1_game_id = 0x0181;
 
 #ifdef USE_MTRANDOM
-	seedMT(rand());
+	seedMT(mame_rand());
 #endif
 
 }

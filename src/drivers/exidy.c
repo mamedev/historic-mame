@@ -1,7 +1,7 @@
 /***************************************************************************
 
 	Exidy 6502 hardware
-	
+
 	Games supported:
 		* Side Track
 		* Targ
@@ -578,11 +578,11 @@ INPUT_PORTS_END
 INPUT_PORTS_START( venture )
 	PORT_START      /* DSW0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x06, "20000" )
-	PORT_DIPSETTING(    0x04, "30000" )
-	PORT_DIPSETTING(    0x02, "40000" )
-	PORT_DIPSETTING(    0x00, "50000" )
+	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "20000" )
+	PORT_DIPSETTING(    0x02, "30000" )
+	PORT_DIPSETTING(    0x04, "40000" )
+	PORT_DIPSETTING(    0x06, "50000" )
 	PORT_DIPNAME( 0x98, 0x80, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x88, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_1C ) )

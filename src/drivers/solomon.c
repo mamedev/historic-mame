@@ -9,15 +9,17 @@ driver by Mirko Buffoni
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 
+extern UINT8 *solomon_videoram2;
+extern UINT8 *solomon_colorram2;
 
-extern unsigned char *solomon_bgvideoram;
-extern unsigned char *solomon_bgcolorram;
+extern WRITE_HANDLER( solomon_videoram_w );
+extern WRITE_HANDLER( solomon_colorram_w );
+extern WRITE_HANDLER( solomon_videoram2_w );
+extern WRITE_HANDLER( solomon_colorram2_w );
+extern WRITE_HANDLER( solomon_flipscreen_w );
 
-WRITE_HANDLER( solomon_flipscreen_w );
-WRITE_HANDLER( solomon_bgvideoram_w );
-WRITE_HANDLER( solomon_bgcolorram_w );
-VIDEO_START( solomon );
-VIDEO_UPDATE( solomon );
+extern VIDEO_START( solomon );
+extern VIDEO_UPDATE( solomon );
 
 static WRITE_HANDLER( solomon_sh_command_w )
 {
@@ -43,10 +45,10 @@ MEMORY_END
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_RAM },
-	{ 0xd000, 0xd3ff, colorram_w, &colorram },
-	{ 0xd400, 0xd7ff, videoram_w, &videoram, &videoram_size },
-	{ 0xd800, 0xdbff, solomon_bgcolorram_w, &solomon_bgcolorram },
-	{ 0xdc00, 0xdfff, solomon_bgvideoram_w, &solomon_bgvideoram },
+	{ 0xd000, 0xd3ff, solomon_colorram_w, &colorram },
+	{ 0xd400, 0xd7ff, solomon_videoram_w, &videoram },
+	{ 0xd800, 0xdbff, solomon_colorram2_w, &solomon_colorram2 },
+	{ 0xdc00, 0xdfff, solomon_videoram2_w, &solomon_videoram2 },
 	{ 0xe000, 0xe07f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xe400, 0xe5ff, paletteram_xxxxBBBBGGGGRRRR_w, &paletteram },
 	{ 0xe600, 0xe600, interrupt_enable_w },

@@ -239,6 +239,7 @@ $(OBJ)/namco.a: \
 	$(OBJ)/vidhrdw/namcona1.o $(OBJ)/drivers/namcona1.o \
 	$(OBJ)/vidhrdw/namconb1.o $(OBJ)/drivers/namconb1.o \
 	$(OBJ)/machine/namcond1.o $(OBJ)/vidhrdw/ygv608.o $(OBJ)/drivers/namcond1.o \
+	$(OBJ)/vidhrdw/psx.o $(OBJ)/machine/psx.o $(OBJ)/drivers/namcos11.o \
 	$(OBJ)/vidhrdw/namcos3d.o \
 	$(OBJ)/vidhrdw/namcos21.o $(OBJ)/drivers/namcos21.o \
 	$(OBJ)/vidhrdw/namcos22.o $(OBJ)/drivers/namcos22.o \
@@ -602,6 +603,7 @@ $(OBJ)/atari.a: \
 	$(OBJ)/vidhrdw/destroyr.o $(OBJ)/drivers/destroyr.o \
 	$(OBJ)/drivers/ultratnk.o \
 	$(OBJ)/vidhrdw/wolfpack.o $(OBJ)/drivers/wolfpack.o \
+	$(OBJ)/vidhrdw/boxer.o $(OBJ)/drivers/boxer.o \
 	$(OBJ)/vidhrdw/skyraid.o $(OBJ)/drivers/skyraid.o \
 	$(OBJ)/machine/avalnche.o $(OBJ)/vidhrdw/avalnche.o $(OBJ)/drivers/avalnche.o \
 	$(OBJ)/drivers/firetrk.o $(OBJ)/vidhrdw/firetrk.o \
@@ -926,6 +928,7 @@ $(OBJ)/dynax.a: \
 $(OBJ)/sigma.a: \
 	$(OBJ)/vidhrdw/crtc6845.o \
 	$(OBJ)/vidhrdw/nyny.o $(OBJ)/drivers/nyny.o \
+	$(OBJ)/drivers/r2dtank.o \
 	$(OBJ)/machine/spiders.o $(OBJ)/vidhrdw/spiders.o $(OBJ)/drivers/spiders.o \
 
 $(OBJ)/igs.a: \
@@ -1036,6 +1039,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/lethalj.o $(OBJ)/drivers/lethalj.o \
 	$(OBJ)/vidhrdw/sbugger.o $(OBJ)/drivers/sbugger.o \
 	$(OBJ)/vidhrdw/portrait.o $(OBJ)/drivers/portrait.o \
+	$(OBJ)/drivers/enigma2.o \
 
 
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o

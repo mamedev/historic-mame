@@ -1,5 +1,7 @@
 /* video hardware for Namco System22 */
 
+//#define DUMP_POLYDATA
+
 #include <math.h>
 #include <assert.h>
 #include "namcos22.h"
@@ -14,9 +16,6 @@ static struct Matrix
 	double M[4][4];
 } *mpMatrix;
 
-static data8_t *mpTextureTileMap;
-static data8_t *mpTextureTileData;
-
 static int mPtRomSize;
 static const data8_t *mpPolyH;
 static const data8_t *mpPolyM;
@@ -25,9 +24,7 @@ static INT32 GetPolyData( INT32 addr );
 
 static data8_t nthbyte( const data32_t *pSource, int offs );
 static data16_t nthword( const data32_t *pSource, int offs );
-static void tilemap_get_info( int tile_index );
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect );
-static void draw_polygons( struct mame_bitmap *bitmap, int theWindow );
+static void DrawPolygons( struct mame_bitmap *bitmap, int theWindow );
 static const INT32 *LoadMatrix( const INT32 *pSource, double M[4][4] );
 
 #define CGRAM_SIZE 0x1e000
@@ -60,82 +57,6 @@ static unsigned char *cgdirty;
 static unsigned char *dirtypal;
 static struct tilemap *tilemap;
 
-#if 0
-#define BMP_H (0x4000)
-#define BMP_W (0x1000)
-static void
-DumpTexelBMP( void )
-{
-	const unsigned char header[] =
-	{
-		0x42,0x4d,
-		0x36,0x04,0x02,0x00, // file size in bytes
-		0x00,0x00,0x00,0x00, // reserved
-		0x36,0x04,0x00,0x00, // offset frolm file start to bmp data
-
-		0x28,0x00,0x00,0x00, // sizeof(BITMAPINFOHEADER)
-		(BMP_W&0xff),((BMP_W>>8)&0xff),((BMP_W>>16)&0xff),((BMP_W>>24)&0xff), // image width in pixels
-		(BMP_H&0xff),((BMP_H>>8)&0xff),((BMP_H>>16)&0xff),((BMP_H>>24)&0xff), // image height in pixels
-		0x01,0x00, // biPlanes
-		0x08,0x00, // bits per pixel
-		0x00,0x00,0x00,0x00, // compression type
-		0x00,0x00,0x00,0x00, // sizeof(image data); zero is valid if no compression
-		0xc4,0x0e,0x00,0x00, // horiz pixels per meter
-		0xc4,0x0e,0x00,0x00, // vert pixels per meter
-		0x00,0x00,0x00,0x00, // number of colors (0 means to calculate using bpp)
-		0x00,0x00,0x00,0x00  // number of "important" colors (zero means "all")
-	};
-	FILE *f;
-	f = fopen( "texel.bmp", "wb" );
-	if( f )
-	{
-		int x,y,i;
-		for( i=0; i<sizeof(header); i++ )
-		{
-			fputc( header[i], f );
-		}
-
-		for( i=0; i<256; i+=4 )
-		{
-			fputc( i,f ); // blue
-			fputc( i,f ); // green
-			fputc( i,f ); // red
-			fputc( 0x00, f );
-		}
-		for( i=0; i<256; i+=4 )
-		{
-			fputc( i,f ); // blue
-			fputc( 0,f ); // green
-			fputc( 0,f ); // red
-			fputc( 0x00, f );
-		}
-		for( i=0; i<256; i+=4 )
-		{
-			fputc( 0,f ); // blue
-			fputc( i,f ); // green
-			fputc( 0,f ); // red
-			fputc( 0x00, f );
-		}
-		for( i=0; i<256; i+=4 )
-		{
-			fputc( 0,f ); // blue
-			fputc( 0,f ); // green
-			fputc( i,f ); // red
-			fputc( 0x00, f );
-		}
-
-		for( y=0; y<BMP_H; y++ )
-		{
-			for( x=0; x<BMP_W; x++ )
-			{
-				fputc( texel(x,BMP_H-1-y), f );
-			}
-		}
-	}
-	fclose(f);
-} /* DumpTexelBMP */
-#endif
-
 static data8_t
 nthbyte( const data32_t *pSource, int offs )
 {
@@ -150,7 +71,7 @@ nthword( const data32_t *pSource, int offs )
 	return (pSource[0]<<((offs&1)*16))>>16;
 }
 
-static void tilemap_get_info( int tile_index )
+static void TextTilemapGetInfo( int tile_index )
 {
 	data16_t data = nthword( namcos22_textram,tile_index );
 	SET_TILE_INFO( NAMCOS22_ALPHA_GFX,data&0x3ff,(data>>12),0 );
@@ -189,7 +110,179 @@ WRITE32_HANDLER( namcos22_textram_w )
 	COMBINE_DATA( &namcos22_textram[offset] );
 	tilemap_mark_tile_dirty( tilemap, offset*2 );
 	tilemap_mark_tile_dirty( tilemap, offset*2+1 );
-//	logerror( "%08x: text_w(%08x)\n", activecpu_get_pc(), offset );
+}
+
+static unsigned GetPolyDataU( unsigned addr )
+{
+	return GetPolyData(addr)&0xffffff;
+}
+
+#ifdef DUMP_POLYDATA
+static void
+DumpQuad( INT32 addr )
+{
+	int i;
+	for( i=0; i<4; i++ )
+	{
+		INT32 lx = GetPolyDataU(  8+i*3+addr );
+		INT32 ly = GetPolyDataU(  9+i*3+addr );
+		INT32 lz = GetPolyDataU( 10+i*3+addr );
+		INT32 tx = GetPolyDataU(  0+2*i+addr );
+		INT32 ty = GetPolyDataU(  1+2*i+addr );
+		logerror( "\t\t\t%06x %06x (%06x,%06x,%06x)\n", tx,ty,lx,ly,lz );
+	}
+}
+static void
+DumpSimpleQuad( INT32 addr )
+{
+	int i;
+	for( i=0; i<4; i++ )
+	{
+		INT32 lx = GetPolyDataU( 0+i*3+addr );
+		INT32 ly = GetPolyDataU( 1+i*3+addr );
+		INT32 lz = GetPolyDataU( 2+i*3+addr );
+		logerror( "\t\t\t(%06x,%06x,%06x)\n", lx,ly,lz );
+	}
+}
+#endif
+
+static void
+DumpQuads( INT32 *pIndex )
+{
+	INT32 addr = *pIndex;
+	INT32 size = GetPolyDataU(addr++);
+
+	#ifdef DUMP_POLYDATA
+	logerror( "%06x: %06x\n", *pIndex, size );
+	#endif
+	*pIndex = addr+(size&0xff);
+
+	while( addr<*pIndex )
+	{
+		size = GetPolyDataU(addr++);
+		#ifdef DUMP_POLYDATA
+		logerror( "\t%06x", size );
+		#endif
+		size &= 0xff;
+		switch( size )
+		{
+		case 0x10:
+			#ifdef DUMP_POLYDATA
+			logerror( " %06x %06x %06x %06x\n",
+				GetPolyDataU(addr+0), /* ? */
+				GetPolyDataU(addr+1), /* ? */
+				GetPolyDataU(addr+2), /* count */
+				GetPolyDataU(addr+3));/* ? */
+			DumpSimpleQuad( addr+4 );
+			#endif
+			break;
+
+		case 0x0d:
+			#ifdef DUMP_POLYDATA
+			logerror( " %06x\n",
+				GetPolyDataU(addr+0));/* ? */
+			DumpSimpleQuad( addr+1 );
+			#endif
+			break;
+
+		case 0x17:
+			#ifdef DUMP_POLYDATA
+			logerror( " %06x %06x %06x\n",
+				GetPolyDataU(addr+0), /* ? */
+				GetPolyDataU(addr+1), /* vertex permute? */
+				GetPolyDataU(addr+2));/* 007f00 color */
+			DumpQuad( addr+3 );
+			#endif
+			break;
+
+		case 0x18:
+			#ifdef DUMP_POLYDATA
+			logerror( " %06x %06x %06x %06x\n",
+				GetPolyDataU(addr+0), /* ? */
+				GetPolyDataU(addr+1), /* vertex permute? */
+				GetPolyDataU(addr+2), /* 007f00 color */
+				GetPolyDataU(addr+3));/* ? */
+			DumpQuad( addr+4 );
+			#endif
+			break;
+
+		default:
+			exit(1);
+			break;
+		}
+		addr += size;
+	}
+}
+
+static void PutPolyData( unsigned addr, unsigned data )
+{
+	logerror( "%06x\n", data ^ GetPolyData(addr) );
+	((data8_t *)mpPolyH)[addr] = data>>16;
+	((data8_t *)mpPolyM)[addr] = (data>>8)&0xff;
+	((data8_t *)mpPolyL)[addr] = data&0xff;
+}
+
+static void
+DumpPolyObjs( void )
+{
+	if( namcos22_gametype != NAMCOS22_ALPINE_RACER ) return;
+
+	PutPolyData( 0x0077d0+13, 0xfffe80 );
+	PutPolyData( 0x0077d0+14, 0x0000e0 );
+	PutPolyData( 0x0077d0+15, 0x000000 );
+
+	PutPolyData( 0x0077d0+16, 0x000180 );
+	PutPolyData( 0x0077d0+17, 0x0000e0 );
+	PutPolyData( 0x0077d0+18, 0x000000 );
+
+	PutPolyData( 0x0077d0+19, 0x000180 );
+	PutPolyData( 0x0077d0+20, 0xffff20 );
+	PutPolyData( 0x0077d0+21, 0x000000 );
+
+	PutPolyData( 0x0077d0+22, 0xfffe80 );
+	PutPolyData( 0x0077d0+23, 0xffff20 );
+	PutPolyData( 0x0077d0+24, 0x000000 );
+
+//0077d0: 000018
+//	000017 8a24c0 001143 401100
+//			400200 402450 (fffd80,0001e0,000000) // top left
+//			40047f 402450 (000080,0000e0,000000) // top right
+//			00047f 00262f (000080,ff0020,000000) // bottom right
+//			000200 00262f (ff0080,ffff20,00ff00) // bottom left
+
+	{
+		int i;
+		int prev = 0xe00;
+		for( i = 0x45; i<0xe2d; i++ )
+		{
+			int iNext = GetPolyData(i)&0xff;
+			if( (iNext&0xff)<=(prev&0xff) )
+			{
+				prev += 0x100;
+			}
+			prev = (prev&0xffff00)|(iNext&0xff);
+			PutPolyData( i, prev );
+		}
+	}
+
+	{
+		INT32 iFinish = GetPolyData(3);
+		INT32 iDest = GetPolyData(0x45);
+		INT32 iIndex = GetPolyData(iDest);
+		INT32 iMaster = 0x45;
+		while( iIndex<iFinish )
+		{
+			int count = GetPolyData(iMaster+1) - GetPolyData(iMaster) - 1;
+			while( count-- > 0 )
+			{
+				PutPolyData( iDest++, iIndex );
+				DumpQuads( &iIndex );
+				if( iIndex>=iFinish ) break;
+			}
+			PutPolyData( iDest++, 0xffffff );
+			iMaster++;
+		}
+	}
 }
 
 VIDEO_START( namcos22s )
@@ -199,32 +292,36 @@ VIDEO_START( namcos22s )
 	mpMatrix = auto_malloc(sizeof(struct Matrix)*MAX_CAMERA);
 	if( !mpMatrix ) return -1; /* error */
 
-	mpTextureTileMap = memory_region(REGION_GFX3);
-	mpTextureTileData = memory_region(REGION_GFX2);
-
-	if( namcos3d_Init(NAMCOS22_SCREEN_WIDTH,NAMCOS22_SCREEN_HEIGHT) == 0 )
+	if( namcos3d_Init(
+			NAMCOS22_SCREEN_WIDTH,
+			NAMCOS22_SCREEN_HEIGHT,
+			memory_region(REGION_GFX3),	/* tilemap */
+			memory_region(REGION_GFX2)	/* texture */
+	) == 0 )
 	{
 		mPtRomSize = memory_region_length(REGION_GFX4)/3;
 		mpPolyL = memory_region(REGION_GFX4);
 		mpPolyM = mpPolyL + mPtRomSize;
 		mpPolyH = mpPolyM + mPtRomSize;
-		//DumpTexelBMP();
+
+		DumpPolyObjs();
 		if(0)
 		{
 			int i;
 			for( i=0; i<mPtRomSize; i++ )
 			{
 				if( (i&0xf)==0 ) logerror( "\n %08x:",i );
-				logerror( " %06x", (unsigned)(GetPolyData(i)&0xffffff) );
+				logerror( " %06x", GetPolyDataU(i) );
 			}
 		}
+
 		pGfx = decodegfx( (UINT8 *)namcos22_cgram,&cg_layout );
 		if( pGfx )
 		{
 			Machine->gfx[NAMCOS22_ALPHA_GFX] = pGfx;
 			pGfx->colortable = Machine->remapped_colortable+0x7f00;
 			pGfx->total_colors = 16;
-			tilemap = tilemap_create( tilemap_get_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,64 );
+			tilemap = tilemap_create( TextTilemapGetInfo,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,64 );
 			if( tilemap )
 			{
 				tilemap_set_transparent_pen( tilemap, 0xf );
@@ -244,7 +341,7 @@ VIDEO_START( namcos22s )
 }
 
 static void
-draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+DrawSprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	/*
 		0x980000:	00060000 00020053
@@ -348,25 +445,7 @@ draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 		pSource -= 4;
 		pPal -= 2;
 	}
-} /* draw_sprites */
-
-unsigned texel( unsigned x, unsigned y )
-{
-	unsigned attr,offs,tile,temp;
-
-	x &= 0xfff;  /* 256 columns, 16 pixels per tile */
-	y &= 0xffff; /* (0x200000/0x200)*0x10 = 0x10000 */
-	offs = (x/0x10)+(y/0x10)*0x100;
-	tile = 256*mpTextureTileMap[offs*2+1]+mpTextureTileMap[offs*2];
-	attr = mpTextureTileMap[0x200000+offs/2];
-	x &= 0xf;
-	y &= 0xf;
-	if( offs&1 ) attr &= 0xf; else attr >>= 4;
-	if( attr&4 ) x = 15-x;
-	if( attr&2 ) y = 15-y;
-	if( attr&8 ){ temp = x; x = y; y = temp; }
-	return mpTextureTileData[tile*16*16+y*16+x];
-} /* texel */
+} /* DrawSprites */
 
 static void
 update_palette( void )
@@ -391,7 +470,7 @@ update_palette( void )
 } /* update_palette */
 
 static void
-draw_text_layer( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+DrawTextLayer( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	unsigned i;
 	data32_t data;
@@ -421,7 +500,7 @@ draw_text_layer( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 		cgsomethingisdirty = 0;
 	}
 	tilemap_draw( bitmap, cliprect, tilemap, 0, 0 );
-} /* draw_text_layer */
+} /* DrawTextLayer */
 
 VIDEO_UPDATE( namcos22s )
 {
@@ -429,13 +508,13 @@ VIDEO_UPDATE( namcos22s )
 
 	update_palette();
 	fillbitmap( bitmap, get_black_pen(), cliprect );
-	draw_polygons( bitmap,0 );
-	draw_sprites( bitmap, cliprect );
+	DrawPolygons( bitmap,0 );
+	DrawSprites( bitmap, cliprect );
 	for( i=1; i<8; i++ )
 	{
-		draw_polygons( bitmap,i );
+		DrawPolygons( bitmap,i );
 	}
-	draw_text_layer( bitmap, cliprect );
+	DrawTextLayer( bitmap, cliprect );
 }
 
 VIDEO_UPDATE( namcos22 )
@@ -446,9 +525,9 @@ VIDEO_UPDATE( namcos22 )
 	fillbitmap( bitmap, get_black_pen(), cliprect );
 	for( i=0; i<8; i++ )
 	{
-		draw_polygons( bitmap,i );
+		DrawPolygons( bitmap,i );
 	}
-	draw_text_layer( bitmap, cliprect );
+	DrawTextLayer( bitmap, cliprect );
 }
 
 /*********************************************************************************************/
@@ -507,13 +586,21 @@ static void
 SetupWindow( const INT32 *pWindow )
 {
 	INT32 fovx = pWindow[0x38/4];
-	if( fovx == 0x980 )
+
+	if( namcos22_gametype == NAMCOS22_ALPINE_RACER )
 	{
-		mWindowZoom = /* 0x980 -> */0x198;
+		mWindowZoom = 0x320;
 	}
 	else
 	{
-		mWindowZoom = /* 0x780 -> */0x21e;
+		if( fovx == 0x980 )
+		{
+			mWindowZoom = /* 0x980 -> */0x198;
+		}
+		else
+		{
+			mWindowZoom = /* 0x780 -> */0x21e;
+		}
 	}
 	matrix_Identity( mWindowTransform.M );
 	ApplyRotation( &pWindow[1], mWindowTransform.M );
@@ -542,15 +629,16 @@ BlitQuadHelper(
 		unsigned addr,
 		double m[4][4] )
 {
-	double kScale = (namcos22_gametype == NAMCOS22_ALPINE_RACER)?0.005:0.5;
+	double kScale = 0.5;
 	struct VerTex v[5];
 	int i;
 	for( i=0; i<4; i++ )
 	{
+		const int permute[4] = { 0,1,2,3 };
+		struct VerTex *pVerTex = &v[permute[i]];
 		double lx = kScale * GetPolyData(  8+i*3+addr );
 		double ly = kScale * GetPolyData(  9+i*3+addr );
 		double lz = kScale * GetPolyData( 10+i*3+addr );
-		struct VerTex *pVerTex = &v[i];
 		pVerTex->x = m[0][0]*lx + m[1][0]*ly + m[2][0]*lz + m[3][0];
 		pVerTex->y = m[0][1]*lx + m[1][1]*ly + m[2][1]*lz + m[3][1];
 		pVerTex->z = m[0][2]*lx + m[1][2]*ly + m[2][2]*lz + m[3][2];
@@ -563,46 +651,36 @@ BlitQuadHelper(
 } /* BlitQuadHelper */
 
 static void
-BlitQuads( struct mame_bitmap *pBitmap, INT32 addr, double m[4][4] )
+BlitQuads( struct mame_bitmap *pBitmap, INT32 addr, double m[4][4], INT32 base )
 {
-	unsigned finish,size, color;
-
-	if( namcos22_gametype == NAMCOS22_ALPINE_RACER )
-	{
-		if( addr<0x180000 )
-		{
-			size = GetPolyData(addr+0)&0xff;
-			if( size && (size%25)==0 )
-			{
-				if( (GetPolyData(addr+1)&0xff)==0x18 )
-				{
-					goto L_Normal;
-				}
-			}
-		}
-		return;
-		logerror( "unmapped code=%08x\n", addr );
-	}
-	else
-	{
-L_Normal:
-		size = GetPolyData(addr++)&0xff;
-		finish = addr + size;
-	}
+	INT32 start = addr;
+	INT32 size = GetPolyData(addr++);
+	INT32 finish = addr + (size&0xff);
+	INT32 color;
 
 	while( addr<finish )
 	{
-		size = GetPolyData(addr++)&0xff;
+		size = GetPolyData(addr++);
+		size &= 0xff;
 		switch( size )
 		{
 		case 0x17:
-			color = GetPolyData(addr+2)&0x7f00;
-			//BlitQuadHelper( pBitmap,color,addr+3,m );
+			color = GetPolyData(addr+2);
+			BlitQuadHelper( pBitmap,color&0x7f00,addr+3,m );
 			break;
 
 		case 0x18:
-			color = GetPolyData(addr+2)&0x7f00;
-			BlitQuadHelper( pBitmap,color,addr+4,m );
+			color = GetPolyData(addr+2);
+			BlitQuadHelper( pBitmap,color&0x7f00,addr+4,m );
+			break;
+
+		case 0x10:
+		case 0x0d:
+			break;
+
+		default:
+			printf( "unexpected point data %08x at %08x.%08x\n", size, base, start );
+			exit(1);
 			break;
 		}
 		addr += size;
@@ -618,14 +696,13 @@ BlitPolyObject( struct mame_bitmap *pBitmap, int code, double m[4][4] )
 		INT32 addr2 = GetPolyData(addr1++);
 		if( addr2<0 )
 		{
-			/* TBA: if addr2 != -1, it may be a jump command to a new object chain */
 			break;
 		}
-		BlitQuads( pBitmap, addr2, m );
+		BlitQuads( pBitmap, addr2, m, code );
 	}
 } /* BlitPolyObject */
 
-/* hold "M" for polygon test; a single 3d object will be displayed onscreen.
+/* hold "B" for polygon test; a single 3d object will be displayed onscreen.
  * J,K,M,N modify the polygon select code, which is displayed at the topleft of the screen
  *
  * press "U" to dump the current 3d object list data to errorlog
@@ -634,7 +711,7 @@ static void
 PolyTest( struct mame_bitmap *pBitmap )
 {
 	double M[4][4];
-	static int mCode = 0x3c0;
+	static int mCode = 0;
 	static double angle;
 
 	if( keyboard_pressed( KEYCODE_M ) )
@@ -661,7 +738,7 @@ PolyTest( struct mame_bitmap *pBitmap )
 	matrix_RotY( M, sin(angle), cos(angle) );
 	matrix_Translate( M, 0, 0, 0x1800 );
 	BlitPolyObject( pBitmap, mCode, M );
-	angle += 5*3.14159/180.0;
+	angle += 2*3.14159/180.0;
 	drawgfx( pBitmap, Machine->uifont, "0123456789abcdef"[(mCode>>8)&0xf],
 		0,0,0,12*0,0,NULL,TRANSPARENCY_NONE,0 );
 	drawgfx( pBitmap, Machine->uifont, "0123456789abcdef"[(mCode>>4)&0xf],
@@ -671,7 +748,7 @@ PolyTest( struct mame_bitmap *pBitmap )
 } /* PolyTest */
 
 static void
-draw_polygons( struct mame_bitmap *pBitmap, int theWindow )
+DrawPolygons( struct mame_bitmap *pBitmap, int theWindow )
 {
 	double M[4][4];
 	INT32 code,mode;
@@ -708,7 +785,10 @@ draw_polygons( struct mame_bitmap *pBitmap, int theWindow )
 
 	if( keyboard_pressed( KEYCODE_B ) )
 	{
-		PolyTest( pBitmap );
+		if( theWindow==0 )
+		{
+			PolyTest( pBitmap );
+		}
 		return;
 	}
 	if( bDebug )
@@ -848,7 +928,7 @@ draw_polygons( struct mame_bitmap *pBitmap, int theWindow )
 			}
 		}
 	}
-} /* draw_polygons */
+} /* DrawPolygons */
 
 static const INT32 *
 LoadMatrix( const INT32 *pSource, double M[4][4] )

@@ -41,11 +41,14 @@ The 2 ay-8910 read ports are responsible for reading the sound commands.
 #include "cpu/z80/z80.h"
 
 
-WRITE_HANDLER( jack_paletteram_w );
-VIDEO_UPDATE( jack );
-READ_HANDLER( jack_flipscreen_r );
-WRITE_HANDLER( jack_flipscreen_w );
+extern WRITE_HANDLER( jack_videoram_w );
+extern WRITE_HANDLER( jack_colorram_w );
+extern WRITE_HANDLER( jack_paletteram_w );
+extern READ_HANDLER( jack_flipscreen_r );
+extern WRITE_HANDLER( jack_flipscreen_w );
 
+extern VIDEO_START( jack );
+extern VIDEO_UPDATE( jack );
 
 static int timer_rate;
 
@@ -86,8 +89,8 @@ static MEMORY_WRITE_START( writemem )
 	{ 0xb400, 0xb400, jack_sh_command_w },
 	{ 0xb506, 0xb507, jack_flipscreen_w },
 	{ 0xb600, 0xb61f, jack_paletteram_w, &paletteram },
-	{ 0xb800, 0xbbff, videoram_w, &videoram, &videoram_size },
-	{ 0xbc00, 0xbfff, colorram_w, &colorram },
+	{ 0xb800, 0xbbff, jack_videoram_w, &videoram },
+	{ 0xbc00, 0xbfff, jack_colorram_w, &colorram },
 	{ 0xc000, 0xffff, MWA_ROM },
 MEMORY_END
 
@@ -412,9 +415,9 @@ INPUT_PORTS_START( zzyzzyxx )
 	PORT_START      /* DSW2 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x02, "None" )
-	PORT_DIPSETTING(    0x00, "10k and 50k" )
-	PORT_DIPSETTING(    0x01, "25k and 100k" )
-	PORT_DIPSETTING(    0x03, "100k and 300k" )
+	PORT_DIPSETTING(    0x00, "10000 50000" )
+	PORT_DIPSETTING(    0x01, "25000 100000" )
+	PORT_DIPSETTING(    0x03, "100000 300000" )
 	PORT_DIPNAME( 0x04, 0x04, "2nd Bonus Given" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Yes ) )
@@ -697,7 +700,7 @@ static MACHINE_DRIVER_START( jack )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 18000000/6)	/* 3 MHz */
 	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 
 	MDRV_CPU_ADD(Z80,18000000/12)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.5 MHz */
@@ -714,19 +717,11 @@ static MACHINE_DRIVER_START( jack )
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32)
 
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(jack)
 	MDRV_VIDEO_UPDATE(jack)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-MACHINE_DRIVER_END
-
-static MACHINE_DRIVER_START( tripool )
-	MDRV_IMPORT_FROM(jack)
-	MDRV_CPU_MODIFY("main")
-// tripool needs 2 to avoid palette problems, check other games, they might too,
-//  it should be the same board
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -1033,8 +1028,7 @@ GAME( 1982, treahunt, jack,     jack, treahunt, treahunt, ROT90, "Hara Industrie
 GAME( 1982, zzyzzyxx, 0,        jack, zzyzzyxx, zzyzzyxx, ROT90, "Cinematronics + Advanced Microcomputer Systems", "Zzyzzyxx (set 1)" )
 GAME( 1982, zzyzzyx2, zzyzzyxx, jack, zzyzzyxx, zzyzzyxx, ROT90, "Cinematronics + Advanced Microcomputer Systems", "Zzyzzyxx (set 2)" )
 GAME( 1982, brix,     zzyzzyxx, jack, zzyzzyxx, zzyzzyxx, ROT90, "Cinematronics + Advanced Microcomputer Systems", "Brix" )
-GAME( 19??, freeze,   0,        jack, freeze,   jack,     ROT90, "Cinematronics", "Freeze" )
-GAME( 1982, sucasino, 0,        jack, sucasino, jack,     ROT90, "Data Amusement", "Super Casino" )
-GAME( 1981, tripool,  0,        tripool, tripool,  jack,     ROT90, "Noma (Casino Tech license)", "Tri-Pool (Casino Tech)" )
-GAME( 1981, tripoola, tripool,  tripool, tripool,  jack,     ROT90, "Noma (Costal Games license)", "Tri-Pool (Costal Games)" )
-
+GAME( 1984, freeze,   0,        jack, freeze,   jack,     ROT90, "Cinematronics", "Freeze" )
+GAME( 1984, sucasino, 0,        jack, sucasino, jack,     ROT90, "Data Amusement", "Super Casino" )
+GAME( 1981, tripool,  0,        jack, tripool,  jack,     ROT90, "Noma (Casino Tech license)", "Tri-Pool (Casino Tech)" )
+GAME( 1981, tripoola, tripool,  jack, tripool,  jack,     ROT90, "Noma (Costal Games license)", "Tri-Pool (Costal Games)" )

@@ -16,9 +16,12 @@
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
 
-PALETTE_INIT( pcktgal );
-VIDEO_UPDATE( pcktgal );
-WRITE_HANDLER( pcktgal_flipscreen_w );
+extern WRITE_HANDLER( pcktgal_videoram_w );
+extern WRITE_HANDLER( pcktgal_flipscreen_w );
+
+extern PALETTE_INIT( pcktgal );
+extern VIDEO_START( pcktgal );
+extern VIDEO_UPDATE( pcktgal );
 
 /***************************************************************************/
 
@@ -86,7 +89,7 @@ MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x0800, 0x0fff, videoram_w, &videoram, &videoram_size },
+	{ 0x0800, 0x0fff, pcktgal_videoram_w, &videoram },
 	{ 0x1000, 0x11ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x1801, 0x1801, pcktgal_flipscreen_w },
 	/* 1800 - 0x181f are unused BAC-06 registers, see vidhrdw/dec0.c */
@@ -279,7 +282,7 @@ static MACHINE_DRIVER_START( pcktgal )
 	MDRV_PALETTE_LENGTH(512)
 
 	MDRV_PALETTE_INIT(pcktgal)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(pcktgal)
 	MDRV_VIDEO_UPDATE(pcktgal)
 
 	/* sound hardware */
@@ -290,35 +293,8 @@ MACHINE_DRIVER_END
 
 
 static MACHINE_DRIVER_START( bootleg )
-
-	/* basic machine hardware */
-	MDRV_CPU_ADD(M6502, 2000000)
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
-
-	MDRV_CPU_ADD(M6502, 1500000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-							/* IRQs are caused by the ADPCM chip */
-							/* NMIs are caused by the main CPU */
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_IMPORT_FROM(pcktgal)
 	MDRV_GFXDECODE(bootleg_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(512)
-
-	MDRV_PALETTE_INIT(pcktgal)
-	MDRV_VIDEO_START(generic)
-	MDRV_VIDEO_UPDATE(pcktgal)
-
-	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
 MACHINE_DRIVER_END
 
 /***************************************************************************/

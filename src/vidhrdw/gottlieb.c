@@ -10,17 +10,12 @@
 #include "common.h"
 #include "vidhrdw/generic.h"
 
+UINT8 *gottlieb_charram;
 
-
-unsigned char *gottlieb_characterram;
-#define MAX_CHARS 256
-static unsigned char *dirtycharacter;
-static int background_priority=0;
-static unsigned char hflip=0;
-static unsigned char vflip=0;
+static int background_priority = 0;
 static int spritebank;
 
-
+static struct tilemap *bg_tilemap;
 
 /***************************************************************************
 
@@ -51,76 +46,65 @@ static int spritebank;
 ***************************************************************************/
 WRITE_HANDLER( gottlieb_paletteram_w )
 {
-	int bit0,bit1,bit2,bit3;
-	int r,g,b,val;
-
+	int bit0, bit1, bit2, bit3;
+	int r, g, b, val;
 
 	paletteram[offset] = data;
 
 	/* red component */
+
 	val = paletteram[offset | 1];
+
 	bit0 = (val >> 0) & 0x01;
 	bit1 = (val >> 1) & 0x01;
 	bit2 = (val >> 2) & 0x01;
 	bit3 = (val >> 3) & 0x01;
+
 	r = 0x10 * bit0 + 0x21 * bit1 + 0x46 * bit2 + 0x88 * bit3;
 
 	/* green component */
+
 	val = paletteram[offset & ~1];
+
 	bit0 = (val >> 4) & 0x01;
 	bit1 = (val >> 5) & 0x01;
 	bit2 = (val >> 6) & 0x01;
 	bit3 = (val >> 7) & 0x01;
+
 	g = 0x10 * bit0 + 0x21 * bit1 + 0x46 * bit2 + 0x88 * bit3;
 
 	/* blue component */
+
 	val = paletteram[offset & ~1];
+
 	bit0 = (val >> 0) & 0x01;
 	bit1 = (val >> 1) & 0x01;
 	bit2 = (val >> 2) & 0x01;
 	bit3 = (val >> 3) & 0x01;
+
 	b = 0x10 * bit0 + 0x21 * bit1 + 0x46 * bit2 + 0x88 * bit3;
 
-	palette_set_color(offset / 2,r,g,b);
+	palette_set_color(offset / 2, r, g, b);
 }
-
-
-
-/***************************************************************************
-
-  Start the video hardware emulation.
-
-***************************************************************************/
-
-VIDEO_START( gottlieb )
-{
-	if (video_start_generic() != 0)
-		return 1;
-
-	if ((dirtycharacter = auto_malloc(MAX_CHARS)) == 0)
-		return 1;
-
-	/* Some games have character gfx data in ROM, some others in RAM. We don't */
-	/* want to recalculate chars if data is in ROM, so let's start with the array */
-	/* initialized to 0. */
-	memset(dirtycharacter,0,MAX_CHARS);
-
-	return 0;
-}
-
 
 WRITE_HANDLER( gottlieb_video_outputs_w )
 {
 	extern void gottlieb_knocker(void);
-	static int last = 0;
+	int last = 0;
 
+	background_priority = data & 0x01;
 
-	background_priority = data & 1;
+	if (flip_screen_x != (data & 0x02))
+	{
+		flip_screen_x_set(data & 0x02);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
 
-	hflip = data & 2;
-	vflip = data & 4;
-	if ((data & 6) != (last & 6))
-		memset(dirtybuffer,1,videoram_size);
+	if (flip_screen_y != (data & 0x04))
+	{
+		flip_screen_y_set(data & 0x04);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
 
 	/* in Q*Bert Qubes only, bit 4 controls the sprite bank */
 	spritebank = (data & 0x10) >> 4;
@@ -132,7 +116,7 @@ WRITE_HANDLER( gottlieb_video_outputs_w )
 
 WRITE_HANDLER( usvsthem_video_outputs_w )
 {
-	background_priority = data & 1;
+	background_priority = data & 0x01;
 
 	/* in most games, bits 1 and 2 flip screen, however in the laser */
 	/* disc games they are different. */
@@ -145,98 +129,88 @@ WRITE_HANDLER( usvsthem_video_outputs_w )
 	/* bit 3 genlock control (1 = show laserdisc image) */
 }
 
-
-
-WRITE_HANDLER( gottlieb_characterram_w )
+WRITE_HANDLER( gottlieb_videoram_w )
 {
-	if (gottlieb_characterram[offset] != data)
+	if (videoram[offset] != data)
 	{
-		dirtycharacter[offset / 32] = 1;
-		gottlieb_characterram[offset] = data;
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 }
 
+WRITE_HANDLER( gottlieb_charram_w )
+{
+	if (gottlieb_charram[offset] != data)
+	{
+		gottlieb_charram[offset] = data;
 
+		decodechar(Machine->gfx[0], offset / 32, gottlieb_charram, 
+			Machine->drv->gfxdecodeinfo[0].gfxlayout);
+		
+		tilemap_mark_all_tiles_dirty(bg_tilemap);
+	}
+}
 
-/***************************************************************************
+static void get_bg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index];
 
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+	SET_TILE_INFO(0, code, 0, 0)
+}
 
-***************************************************************************/
-VIDEO_UPDATE( gottlieb )
+VIDEO_START( gottlieb )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	tilemap_set_transparent_pen(bg_tilemap, 0);
+
+	return 0;
+}
+
+static void gottlieb_draw_sprites( struct mame_bitmap *bitmap )
 {
     int offs;
 
-
-    /* recompute character graphics */
-    for (offs = 0;offs < Machine->drv->gfxdecodeinfo[0].gfxlayout->total;offs++)
+	for (offs = 0; offs < spriteram_size - 8; offs += 4)     /* it seems there's something strange with sprites #62 and #63 */
 	{
-		if (dirtycharacter[offs])
-			decodechar(Machine->gfx[0],offs,gottlieb_characterram,Machine->drv->gfxdecodeinfo[0].gfxlayout);
-	}
-
-
-    /* for every character in the Video RAM, check if it has been modified */
-    /* since last time and update it accordingly. */
-    for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs] || dirtycharacter[videoram[offs]])
-		{
-			int sx,sy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-			if (hflip) sx = 31 - sx;
-			if (vflip) sy = 29 - sy;
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs],
-					0,
-					hflip,vflip,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
-		}
-    }
-
-	memset(dirtycharacter,0,MAX_CHARS);
-
-
-	/* copy the character mapped graphics */
-	if (background_priority)
-		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
-	else
-		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-
-
-	/* Draw the sprites. Note that it is important to draw them exactly in this */
-	/* order, to have the correct priorities. */
-    for (offs = 0;offs < spriteram_size - 8;offs += 4)     /* it seems there's something strange with sprites #62 and #63 */
-	{
-	    int sx,sy;
-
-
 		/* coordinates hand tuned to make the position correct in Q*Bert Qubes start */
 		/* of level animation. */
-		sx = (spriteram[offs + 1]) - 4;
-		if (hflip) sx = 233 - sx;
-		sy = (spriteram[offs]) - 13;
-		if (vflip) sy = 228 - sy;
+		int sx = (spriteram[offs + 1]) - 4;
+		int sy = (spriteram[offs]) - 13;
+		int code = (255 ^ spriteram[offs + 2]) + 256 * spritebank;
+
+		if (flip_screen_x) sx = 233 - sx;
+		if (flip_screen_y) sy = 244 - sy;
 
 		if (spriteram[offs] || spriteram[offs + 1])	/* needed to avoid garbage on screen */
-			drawgfx(bitmap,Machine->gfx[1],
-					(255 ^ spriteram[offs + 2]) + 256 * spritebank,
-					0,
-					hflip,vflip,
-					sx,sy,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+			drawgfx(bitmap, Machine->gfx[1],
+				code, 0,
+				flip_screen_x, flip_screen_y,
+				sx,sy,
+				&Machine->visible_area,
+				TRANSPARENCY_PEN, 0);
+	}
+}
+
+VIDEO_UPDATE( gottlieb )
+{
+	if (!background_priority)
+	{
+		tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, TILEMAP_IGNORE_TRANSPARENCY, 0);
+	}
+	else
+	{
+		fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
 	}
 
+	gottlieb_draw_sprites(bitmap);
 
 	if (background_priority)
-		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_COLOR,0);
+	{
+		tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	}
 }

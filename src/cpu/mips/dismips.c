@@ -70,7 +70,7 @@ int main (int argc,char *argv[])
 				{
 					usage();
 				}
-				for( p=0; p < 3; p++ )
+				for( p=0; p < 4; p++ )
 				{
 					if( argv[ i ][ p ] < '0' || argv[ i ][ p ] > '3' )
 					{
@@ -115,17 +115,23 @@ int main (int argc,char *argv[])
 		return 4;
 	}
 	fclose (f);
-	pc=0;
-	while (pc<len-1)
+	pc = 0;
+	while( pc < len )
 	{
-		i=(DasmMIPS (buf,pc+offset));
+		i = DasmMIPS( buf, pc + offset );
 
-		printf ("%08x: ",pc+offset);
-		for (j=0;j<i ;++j) printf("%02x ",filebuf[pc+(j/4)*4+order[j%4]]);
-		for (   ;j<10;++j) printf("   ");
-		printf(buf);
-		printf ("\n");
-		pc+=i;
+		printf( "%08x: ", pc + offset );
+		for( j = 0; j < i ;j++ )
+		{
+			printf( "%02x ", filebuf[ ( pc & ~3 ) + order[ pc & 3 ] ] );
+			pc++;
+		}
+		while( j < 10 )
+		{
+			printf( "   " );
+			j++;
+		}
+		printf( "%s\n", buf );
 	}
 	free (filebuf);
 	return 0;

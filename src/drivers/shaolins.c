@@ -10,13 +10,17 @@ driver by Allard Van Der Bas
 #include "vidhrdw/generic.h"
 
 
+UINT8 shaolins_nmi_enable;
 
-unsigned char *shaolins_nmi_enable;
-extern unsigned char *shaolins_scroll;
+extern WRITE_HANDLER( shaolins_videoram_w );
+extern WRITE_HANDLER( shaolins_colorram_w );
+extern WRITE_HANDLER( shaolins_palettebank_w );
+extern WRITE_HANDLER( shaolins_scroll_w );
+extern WRITE_HANDLER( shaolins_nmi_w );
 
-PALETTE_INIT( shaolins );
-WRITE_HANDLER( shaolins_palettebank_w );
-VIDEO_UPDATE( shaolins );
+extern PALETTE_INIT( shaolins );
+extern VIDEO_START( shaolins );
+extern VIDEO_UPDATE( shaolins );
 
 
 INTERRUPT_GEN( shaolins_interrupt )
@@ -24,7 +28,7 @@ INTERRUPT_GEN( shaolins_interrupt )
 	if (cpu_getiloops() == 0) cpu_set_irq_line(0, 0, HOLD_LINE);
 	else if (cpu_getiloops() % 2)
 	{
-		if (*shaolins_nmi_enable & 0x02) cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+		if (shaolins_nmi_enable & 0x02) cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 	}
 }
 
@@ -45,8 +49,8 @@ static MEMORY_READ_START( readmem )
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x0000, MWA_RAM, &shaolins_nmi_enable },	/* bit 1 = nmi enable, bit 2 = ? */
-														/* bit 3, bit 4 = coin counters */
+	{ 0x0000, 0x0000, shaolins_nmi_w },	/* bit 0 = flip screen, bit 1 = nmi enable, bit 2 = ? */
+										/* bit 3, bit 4 = coin counters */
 	{ 0x0100, 0x0100, watchdog_reset_w },
 	{ 0x0300, 0x0300, SN76496_0_w }, 	/* trigger chip to read from latch. The program always */
 	{ 0x0400, 0x0400, SN76496_1_w }, 	/* writes the same number as the latch, so we don't */
@@ -54,12 +58,12 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x0800, 0x0800, MWA_NOP },	/* latch for 76496 #0 */
 	{ 0x1000, 0x1000, MWA_NOP },	/* latch for 76496 #1 */
 	{ 0x1800, 0x1800, shaolins_palettebank_w },
-	{ 0x2000, 0x2000, MWA_RAM, &shaolins_scroll },
+	{ 0x2000, 0x2000, shaolins_scroll_w },
 	{ 0x2800, 0x2bff, MWA_RAM },	/* RAM BANK 2 */
 	{ 0x3000, 0x30ff, MWA_RAM },	/* RAM BANK 1 */
 	{ 0x3100, 0x33ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x3800, 0x3bff, colorram_w, &colorram },
-	{ 0x3c00, 0x3fff, videoram_w, &videoram, &videoram_size },
+	{ 0x3800, 0x3bff, shaolins_colorram_w, &colorram },
+	{ 0x3c00, 0x3fff, shaolins_videoram_w, &videoram },
 	{ 0x6000, 0xffff, MWA_ROM },
 MEMORY_END
 
@@ -69,7 +73,7 @@ INPUT_PORTS_START( shaolins )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -123,7 +127,7 @@ INPUT_PORTS_START( shaolins )
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, "Single/Dual Control Upright" )
+	PORT_DIPNAME( 0x02, 0x02, "Upright Controls" )
 	PORT_DIPSETTING(	0x02, "Single" )
 	PORT_DIPSETTING(	0x00, "Dual" )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
@@ -240,7 +244,7 @@ static MACHINE_DRIVER_START( shaolins )
 	MDRV_COLORTABLE_LENGTH(16*8*16+16*8*16)
 
 	MDRV_PALETTE_INIT(shaolins)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(shaolins)
 	MDRV_VIDEO_UPDATE(shaolins)
 
 	/* sound hardware */

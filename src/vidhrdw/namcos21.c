@@ -396,7 +396,7 @@ static int objcode2tile( int code )
 
 VIDEO_START( namcos21 )
 {
-	namcos3d_Init( kScreenWidth, kScreenHeight );
+	namcos3d_Init( kScreenWidth, kScreenHeight, NULL, NULL );
 
 	namco_obj_init(
 		0,		/* gfx bank */
@@ -450,12 +450,12 @@ VIDEO_UPDATE( namcos21_default )
 	fillbitmap( bitmap, get_black_pen(), cliprect );
 
 	/* draw low priority 2d sprites */
-	for( pri=0; pri<3; pri++ ) namco_obj_draw( bitmap, pri );
+	for( pri=0; pri<3; pri++ ) namco_obj_draw( bitmap, cliprect, pri );
 
 	DrawPolygons( bitmap );
 
 	/* draw high priority 2d sprites */
-	for( pri=3; pri<8; pri++ ) namco_obj_draw( bitmap, pri );
+	for( pri=3; pri<8; pri++ ) namco_obj_draw( bitmap, cliprect, pri );
 
 #if 0
 	/* debug some video attributes */

@@ -209,6 +209,8 @@ MACHINE_INIT( simpsons )
 
 	paletteram = &RAM[0x88000];
 	simpsons_xtraram = &RAM[0x89000];
+	spriteram16 = (data16_t *)&RAM[0x8a000];
+
 	simpsons_firq_enabled = 0;
 
 	/* init the default banks */

@@ -9,15 +9,13 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+UINT8 *rockola_videoram2;
+UINT8 *rockola_charram;
 
-unsigned char *rockola_videoram2;
-unsigned char *rockola_characterram;
-unsigned char *rockola_scrollx,*rockola_scrolly;
-static unsigned char dirtycharacter[256];
 static int charbank;
 static int backcolor;
 
-
+static struct tilemap *bg_tilemap, *fg_tilemap;
 
 /***************************************************************************
 
@@ -29,163 +27,140 @@ static int backcolor;
 PALETTE_INIT( rockola )
 {
 	int i;
+
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
-
-	for (i = 0;i < Machine->drv->total_colors;i++)
+	for (i = 0; i < Machine->drv->total_colors; i++)
 	{
-		int bit0,bit1,bit2,r,g,b;
-
+		int bit0, bit1, bit2, r, g, b;
 
 		/* red component */
+
         bit0 = (*color_prom >> 0) & 0x01;
         bit1 = (*color_prom >> 1) & 0x01;
         bit2 = (*color_prom >> 2) & 0x01;
+
 		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
 		/* green component */
+
         bit0 = (*color_prom >> 3) & 0x01;
         bit1 = (*color_prom >> 4) & 0x01;
         bit2 = (*color_prom >> 5) & 0x01;
+
 		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
 		/* blue component */
+
 		bit0 = 0;
         bit1 = (*color_prom >> 6) & 0x01;
         bit2 = (*color_prom >> 7) & 0x01;
+
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(i, r, g, b);
+
 		color_prom++;
 	}
 
-
 	backcolor = 0;	/* background color can be changed by the game */
 
-	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = i;
+	for (i = 0; i < TOTAL_COLORS(0); i++)
+		COLOR(0, i) = i;
 
-	for (i = 0;i < TOTAL_COLORS(1);i++)
+	for (i = 0; i < TOTAL_COLORS(1); i++)
 	{
-		if (i % 4 == 0) COLOR(1,i) = 4 * backcolor + 0x20;
-		else COLOR(1,i) = i + 0x20;
+		if (i % 4 == 0)
+			COLOR(1, i) = 4 * backcolor + 0x20;
+		else
+			COLOR(1, i) = i + 0x20;
 	}
 }
 
-PALETTE_INIT( satansat )
+WRITE_HANDLER( rockola_videoram_w )
 {
-	int i;
-	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
-	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
-
-
-	for (i = 0;i < Machine->drv->total_colors;i++)
+	if (videoram[offset] != data)
 	{
-		int bit0,bit1,bit2,r,g,b;
-
-
-		/* red component */
-        bit0 = (*color_prom >> 0) & 0x01;
-        bit1 = (*color_prom >> 1) & 0x01;
-        bit2 = (*color_prom >> 2) & 0x01;
-		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		/* green component */
-        bit0 = (*color_prom >> 3) & 0x01;
-        bit1 = (*color_prom >> 4) & 0x01;
-        bit2 = (*color_prom >> 5) & 0x01;
-		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		/* blue component */
-		bit0 = 0;
-        bit1 = (*color_prom >> 6) & 0x01;
-        bit2 = (*color_prom >> 7) & 0x01;
-		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-
-		palette_set_color(i,r,g,b);
-		color_prom++;
-	}
-
-
-	backcolor = 0;	/* background color can be changed by the game */
-
-	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = 4 * (i % 4) + (i / 4);
-
-	for (i = 0;i < TOTAL_COLORS(1);i++)
-	{
-		if (i % 4 == 0) COLOR(1,i) = backcolor + 0x10;
-		else COLOR(1,i) = 4 * (i % 4) + (i / 4) + 0x10;
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 }
 
-
-
-WRITE_HANDLER( rockola_characterram_w )
+WRITE_HANDLER( rockola_videoram2_w )
 {
-	if (rockola_characterram[offset] != data)
+	if (rockola_videoram2[offset] != data)
 	{
-		dirtycharacter[(offset / 8) & 0xff] = 1;
-		rockola_characterram[offset] = data;
+		rockola_videoram2[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
 	}
 }
 
+WRITE_HANDLER( rockola_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+		tilemap_mark_tile_dirty(fg_tilemap, offset);
+	}
+}
 
+WRITE_HANDLER( rockola_charram_w )
+{
+	if (rockola_charram[offset] != data)
+	{
+		rockola_charram[offset] = data;
+		tilemap_mark_all_tiles_dirty(fg_tilemap);
+	}
+}
 
 WRITE_HANDLER( rockola_flipscreen_w )
 {
+	int bank;
+
 	/* bits 0-2 select background color */
+
 	if (backcolor != (data & 7))
 	{
 		int i;
-
 
 		backcolor = data & 7;
 
 		for (i = 0;i < 32;i += 4)
 			Machine->gfx[1]->colortable[i] = Machine->pens[4 * backcolor + 0x20];
 
-		set_vh_global_attribute(NULL,0);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	}
 
 	/* bit 3 selects char bank */
-	set_vh_global_attribute(&charbank,(~data & 0x08) >> 3);
+
+	bank = (~data & 0x08) >> 3;
+
+	if (charbank != bank)
+	{
+		charbank = bank;
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
 
 	/* bit 7 flips screen */
-	flip_screen_set(data & 0x80);
-}
 
-
-WRITE_HANDLER( satansat_b002_w )
-{
-	/* bit 0 flips screen */
-	flip_screen_set(data & 0x01);
-
-	/* bit 1 enables interrups */
-	/* it controls only IRQs, not NMIs. Here I am affecting both, which */
-	/* is wrong. */
-	interrupt_enable_w(0,data & 0x02);
-
-	/* other bits unused */
-}
-
-
-
-WRITE_HANDLER( satansat_backcolor_w )
-{
-	/* bits 0-1 select background color. Other bits unused. */
-	if (backcolor != (data & 3))
+	if (flip_screen != (data & 0x80))
 	{
-		int i;
-
-
-		backcolor = data & 3;
-
-		for (i = 0;i < 16;i += 4)
-			Machine->gfx[1]->colortable[i] = Machine->pens[backcolor + 0x10];
-
-		set_vh_global_attribute(NULL,0);
+		flip_screen_set(data & 0x80);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	}
 }
 
+WRITE_HANDLER( rockola_scrollx_w )
+{
+	tilemap_set_scrollx(bg_tilemap, 0, data);
+}
 
+WRITE_HANDLER( rockola_scrolly_w )
+{
+	tilemap_set_scrolly(bg_tilemap, 0, data);
+}
 
 /***************************************************************************
 
@@ -194,166 +169,176 @@ WRITE_HANDLER( satansat_backcolor_w )
   the main emulation engine.
 
 ***************************************************************************/
+static void get_bg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index] + 256 * charbank;
+	int color = (colorram[tile_index] & 0x38) >> 3;
+
+	SET_TILE_INFO(1, code, color, 0)
+}
+
+static void get_fg_tile_info(int tile_index)
+{
+	int code = rockola_videoram2[tile_index];
+	int color = colorram[tile_index] & 0x07;
+
+	decodechar(Machine->gfx[0], code, rockola_charram, 
+		Machine->drv->gfxdecodeinfo[0].gfxlayout);
+
+	SET_TILE_INFO(0, code, color, 0)
+}
+
+VIDEO_START( rockola )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, 
+		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
+
+	if ( !fg_tilemap )
+		return 1;
+
+	tilemap_set_transparent_pen(fg_tilemap, 0);
+
+	return 0;
+}
+
 VIDEO_UPDATE( rockola )
 {
-	int offs;
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, 0, 0);
+}
 
+/* Satan of Saturn */
 
-	if (get_vh_global_attribute_changed())
-		memset(dirtybuffer,1,videoram_size);
+PALETTE_INIT( satansat )
+{
+	int i;
 
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
+
+	for (i = 0; i < Machine->drv->total_colors; i++)
 	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy;
+		int bit0, bit1, bit2, r, g, b;
 
+		/* red component */
 
-			dirtybuffer[offs] = 0;
+        bit0 = (*color_prom >> 0) & 0x01;
+        bit1 = (*color_prom >> 1) & 0x01;
+        bit2 = (*color_prom >> 2) & 0x01;
 
-			sx = offs % 32;
-			sy = offs / 32;
-			if (flip_screen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-			}
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-			drawgfx(tmpbitmap,Machine->gfx[1],
-					videoram[offs] + 256 * charbank,
-					(colorram[offs] & 0x38) >> 3,
-					flip_screen,flip_screen,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
+		/* green component */
+
+        bit0 = (*color_prom >> 3) & 0x01;
+        bit1 = (*color_prom >> 4) & 0x01;
+        bit2 = (*color_prom >> 5) & 0x01;
+
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		/* blue component */
+
+		bit0 = 0;
+        bit1 = (*color_prom >> 6) & 0x01;
+        bit2 = (*color_prom >> 7) & 0x01;
+
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		palette_set_color(i, r, g, b);
+
+		color_prom++;
 	}
 
+	backcolor = 0;	/* background color can be changed by the game */
 
-	/* copy the background graphics */
+	for (i = 0; i < TOTAL_COLORS(0); i++)
+		COLOR(0, i) = 4 * (i % 4) + (i / 4);
+
+	for (i = 0; i < TOTAL_COLORS(1); i++)
 	{
-		int scrollx,scrolly;
-
-
-		scrollx = -*rockola_scrolly;
-		scrolly = -*rockola_scrollx;
-
-		if (flip_screen)
-		{
-			scrollx = -scrollx;
-			scrolly = -scrolly;
-		}
-
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-
-	/* draw the frontmost playfield. They are characters, but draw them as sprites */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		int charcode;
-		int sx,sy;
-
-
-		charcode = rockola_videoram2[offs];
-
-		/* decode modified characters */
-		if (dirtycharacter[charcode] != 0)
-		{
-			decodechar(Machine->gfx[0],charcode,rockola_characterram,
-					   Machine->drv->gfxdecodeinfo[0].gfxlayout);
-			dirtycharacter[charcode] = 0;
-		}
-
-		sx = offs % 32;
-		sy = offs / 32;
-		if (flip_screen)
-		{
-			sx = 31 - sx;
-			sy = 31 - sy;
-		}
-
-		drawgfx(bitmap,Machine->gfx[0],
-				charcode,
-				colorram[offs] & 0x07,
-				flip_screen,flip_screen,
-				8*sx,8*sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+		if (i % 4 == 0)
+			COLOR(1, i) = backcolor + 0x10;
+		else
+			COLOR(1, i) = 4 * (i % 4) + (i / 4) + 0x10;
 	}
 }
 
-
-/* Zarzon's background doesn't scroll, and the color code selection is different. */
-VIDEO_UPDATE( satansat )
+WRITE_HANDLER( satansat_b002_w )
 {
-	int offs;
+	/* bit 0 flips screen */
 
-
-	if (get_vh_global_attribute_changed())
-		memset(dirtybuffer,1,videoram_size);
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-    for (offs = videoram_size - 1;offs >= 0;offs--)
+	if (flip_screen != (data & 0x01))
 	{
-		if (dirtybuffer[offs])
-		{
-	        int sx,sy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-			if (flip_screen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-			}
-
-			drawgfx(tmpbitmap,Machine->gfx[1],
-					videoram[offs],
-					(colorram[offs] & 0x0c) >> 2,
-					flip_screen,flip_screen,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
-		}
-    }
-
-	/* copy the temporary bitmap to the screen */
-    copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-
-	/* draw the frontmost playfield. They are characters, but draw them as sprites */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		int charcode;
-		int sx,sy;
-
-
-		charcode = rockola_videoram2[offs];
-
-		/* decode modified characters */
-		if (dirtycharacter[charcode] != 0)
-		{
-			decodechar(Machine->gfx[0],charcode,rockola_characterram,
-					   Machine->drv->gfxdecodeinfo[0].gfxlayout);
-			dirtycharacter[charcode] = 0;
-		}
-
-		sx = offs % 32;
-		sy = offs / 32;
-		if (flip_screen)
-		{
-			sx = 31 - sx;
-			sy = 31 - sy;
-		}
-
-		drawgfx(bitmap,Machine->gfx[0],
-				charcode,
-				colorram[offs] & 0x03,
-				flip_screen,flip_screen,
-				8*sx,8*sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+		flip_screen_set(data & 0x01);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	}
+
+	/* bit 1 enables interrups */
+	/* it controls only IRQs, not NMIs. Here I am affecting both, which */
+	/* is wrong. */
+
+	interrupt_enable_w(0,data & 0x02);
+
+	/* other bits unused */
+}
+
+WRITE_HANDLER( satansat_backcolor_w )
+{
+	/* bits 0-1 select background color. Other bits unused. */
+
+	if (backcolor != (data & 0x03))
+	{
+		int i;
+
+		backcolor = data & 0x03;
+
+		for (i = 0; i < 16; i += 4)
+			Machine->gfx[1]->colortable[i] = Machine->pens[backcolor + 0x10];
+
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
+}
+
+static void satansat_get_bg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index];
+	int color = (colorram[tile_index] & 0x0c) >> 2;
+
+	SET_TILE_INFO(1, code, color, 0)
+}
+
+static void satansat_get_fg_tile_info(int tile_index)
+{
+	int code = rockola_videoram2[tile_index];
+	int color = colorram[tile_index] & 0x03;
+
+	decodechar(Machine->gfx[0], code, rockola_charram, 
+		Machine->drv->gfxdecodeinfo[0].gfxlayout);
+
+	SET_TILE_INFO(0, code, color, 0)
+}
+
+VIDEO_START( satansat )
+{
+	bg_tilemap = tilemap_create(satansat_get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	fg_tilemap = tilemap_create(satansat_get_fg_tile_info, tilemap_scan_rows, 
+		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
+
+	if ( !fg_tilemap )
+		return 1;
+
+	tilemap_set_transparent_pen(fg_tilemap, 0);
+
+	return 0;
 }

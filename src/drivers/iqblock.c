@@ -50,13 +50,23 @@ Stephh's notes :
 #include "iqblock.h"
 
 
-static WRITE_HANDLER( prot_w )
+static WRITE_HANDLER( iqblock_prot_w )
 {
     UINT8 *mem = memory_region( REGION_CPU1 );
 
     mem[0xfe26] = data;
     mem[0xfe27] = data;
     mem[0xfe1c] = data;
+}
+
+static WRITE_HANDLER( grndtour_prot_w )
+{
+    UINT8 *mem = memory_region( REGION_CPU1 );
+
+	mem[0xfe39] = data;
+    mem[0xfe3a] = data;
+    mem[0xfe2f] = data;
+
 }
 
 
@@ -117,7 +127,6 @@ MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xefff, MWA_ROM },
-	{ 0xfe26, 0xfe26, prot_w },	/* protection workaround */
 	{ 0xf000, 0xffff, MWA_RAM },
 MEMORY_END
 
@@ -365,38 +374,37 @@ ROM_END
 
 ROM_START( grndtour )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 64k for code + 64K for extra RAM */
-	ROM_LOAD( "grand7.u7",        0x0000, 0x10000, CRC(95cac31e) )
+	ROM_LOAD( "grand7.u7",        0x0000, 0x10000, CRC(95cac31e) SHA1(47bbcce6981ea3d38e0aa49ccd3762a4529f3c96) )
 
 	ROM_REGION( 0x8000, REGION_USER1, 0 )
-	ROM_LOAD( "grand6.u8",         0x0000, 0x8000, CRC(4c634b86) )	/* background maps, read by the CPU */
+	ROM_LOAD( "grand6.u8",         0x0000, 0x8000, CRC(4c634b86) SHA1(c36df147187bc526f2348bc2f4d4c4e35bb45f38) )	/* background maps, read by the CPU */
 
 	ROM_REGION( 0xc0000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "grand1.u28",        0x00000, 0x40000, CRC(de85c664) )
-	ROM_LOAD( "grand2.u27",        0x40000, 0x40000, CRC(8456204e) )
-	ROM_LOAD( "grand3.u26",        0x80000, 0x40000, CRC(77632917) )
+	ROM_LOAD( "grand1.u28",        0x00000, 0x40000, CRC(de85c664) SHA1(3a4b0cac88a0fea1c80541fe49c799e3550bedee) )
+	ROM_LOAD( "grand2.u27",        0x40000, 0x40000, CRC(8456204e) SHA1(b604d501f360670f57b937ad96af64c1c2038ef7) )
+	ROM_LOAD( "grand3.u26",        0x80000, 0x40000, CRC(77632917) SHA1(d91eadec2e0fb3082299362d18814b8ec4c5e068) )
 
 	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "grand4.u25",        0x0000, 0x4000, CRC(48d09746) )
-	ROM_LOAD( "grand5.u24",        0x4000, 0x4000, CRC(f896efb2) )
+	ROM_LOAD( "grand4.u25",        0x0000, 0x4000, CRC(48d09746) SHA1(64669f572b9a98b078ee1ea0b614c117e5dfbec9) )
+	ROM_LOAD( "grand5.u24",        0x4000, 0x4000, CRC(f896efb2) SHA1(8dc8546e363b4ff80983e3b8e2a19ebb7ff30c7b) )
 ROM_END
 
 ROM_START( cabaret )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 64k for code + 64K for extra RAM */
-	/* 0000-7fff missing??? */
-	ROM_LOAD( "cabaret.008",  0x8000, 0x8000, CRC(8ed8066c) )
+	ROM_LOAD( "cg-8v204.u97",  0x0000, 0x10000, CRC(44cebf77) )
 
 	ROM_REGION( 0x8000, REGION_USER1, 0 )
-	ROM_LOAD( "cabaret.007",  0x0000, 0x8000, CRC(b93ae6f8) )	/* background maps, read by the CPU */
+	ROM_LOAD( "cg-7.u98",  0x0000, 0x8000, CRC(b93ae6f8) )	/* background maps, read by the CPU */
 
 	ROM_REGION( 0x60000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "cabaret.004",  0x00000, 0x20000, CRC(e509f50a) )
-	ROM_LOAD( "cabaret.005",  0x20000, 0x20000, CRC(e2cbf489) )
-	ROM_LOAD( "cabaret.006",  0x40000, 0x20000, CRC(4f2fced7) )
+	ROM_LOAD( "cg-4.u43",  0x00000, 0x20000, CRC(e509f50a) )
+	ROM_LOAD( "cg-5.u44",  0x20000, 0x20000, CRC(e2cbf489) )
+	ROM_LOAD( "cg-6.u45",  0x40000, 0x20000, CRC(4f2fced7) )
 
 	ROM_REGION( 0xc000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "cabaret.001",  0x0000, 0x4000, CRC(7dee8b1f) )
-	ROM_LOAD( "cabaret.002",  0x4000, 0x4000, CRC(ce8dea39) )
-	ROM_LOAD( "cabaret.003",  0x8000, 0x4000, CRC(7e1f821f) )
+	ROM_LOAD( "cg-1.u40",  0x0000, 0x4000, CRC(7dee8b1f) )
+	ROM_LOAD( "cg-2.u41",  0x4000, 0x4000, CRC(ce8dea39) )
+	ROM_LOAD( "cg-3.u42",  0x8000, 0x4000, CRC(7e1f821f) )
 ROM_END
 
 
@@ -419,7 +427,32 @@ static DRIVER_INIT( iqblock )
 	paletteram_2       = rom + 0x12800;
 	iqblock_fgvideoram = rom + 0x16800;
 	iqblock_bgvideoram = rom + 0x17000;
+	install_mem_write_handler( 0, 0xfe26, 0xfe26, iqblock_prot_w);
+	iqblock_vidhrdw_type=1;
 }
+
+static DRIVER_INIT( grndtour )
+{
+	UINT8 *rom = memory_region(REGION_CPU1);
+	int i;
+
+	/* decrypt the program ROM */
+	for (i = 0;i < 0xf000;i++)
+	{
+		if ((i & 0x0282) != 0x0282) rom[i] ^= 0x01;
+		if ((i & 0x0940) == 0x0940) rom[i] ^= 0x02;
+		if ((i & 0x0060) == 0x0040) rom[i] ^= 0x20;
+	}
+
+	/* initialize pointers for I/O mapped RAM */
+	paletteram         = rom + 0x12000;
+	paletteram_2       = rom + 0x12800;
+	iqblock_fgvideoram = rom + 0x16800;
+	iqblock_bgvideoram = rom + 0x17000;
+	install_mem_write_handler( 0, 0xfe39, 0xfe39, grndtour_prot_w);
+	iqblock_vidhrdw_type=0;
+}
+
 
 static DRIVER_INIT( cabaret )
 {
@@ -437,11 +470,12 @@ static DRIVER_INIT( cabaret )
 	paletteram_2       = rom + 0x12800;
 	iqblock_fgvideoram = rom + 0x16800;
 	iqblock_bgvideoram = rom + 0x17000;
+	iqblock_vidhrdw_type=0;
 }
 
 
 
 GAME( 1993, iqblock, 0, iqblock, iqblock, iqblock, ROT0, "IGS", "IQ-Block" )
-GAMEX(1993, grndtour, 0, iqblock, iqblock, iqblock, ROT0, "IGS", "Grand Tour", GAME_NOT_WORKING )
+GAME( 1993, grndtour, 0, iqblock, iqblock, grndtour, ROT0, "IGS", "Grand Tour" )
 
 GAMEX( 19??, cabaret, 0, cabaret, iqblock, cabaret, ROT0, "IGS", "Cabaret", GAME_NOT_WORKING | GAME_NO_SOUND )

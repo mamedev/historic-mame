@@ -9,8 +9,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static int flipscreen;
-
+static struct tilemap *bg_tilemap;
 
 /***************************************************************************
 
@@ -62,64 +61,57 @@ PALETTE_INIT( mrjong )
   Display control parameter.
 
 ***************************************************************************/
-WRITE_HANDLER( mrjong_flipscreen_w )
+WRITE_HANDLER( mrjong_videoram_w )
 {
-	if (flipscreen != (data & 1))
+	if (videoram[offset] != data)
 	{
-		flipscreen = (data & 1);
-		memset(dirtybuffer, 1, videoram_size);
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 }
 
+WRITE_HANDLER( mrjong_colorram_w )
+{
+	if (colorram[offset] != data)
+	{
+		colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
 
-/***************************************************************************
+WRITE_HANDLER( mrjong_flipscreen_w )
+{
+	if (flip_screen != (data & 0x01))
+	{
+		flip_screen_set(data & 0x01);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
+}
 
-  Draw the game screen in the given mame_bitmap.
+static void get_bg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index] | ((colorram[tile_index] & 0x20) << 3);
+	int color = colorram[tile_index] & 0x1f;
+	int flags = ((colorram[tile_index] & 0x40) ? TILE_FLIPX : 0) | ((colorram[tile_index] & 0x80) ? TILE_FLIPY : 0);
 
-***************************************************************************/
-VIDEO_UPDATE( mrjong )
+	SET_TILE_INFO(0, code, color, flags)
+}
+
+VIDEO_START( mrjong )
+{
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows_flip_xy,
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	return 0;
+}
+
+static void mrjong_draw_sprites( struct mame_bitmap *bitmap )
 {
 	int offs;
 
-	/* Draw the tiles. */
-	for (offs = (videoram_size - 1); offs > 0; offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int tile;
-			int color;
-			int sx, sy;
-			int flipx, flipy;
-
-			dirtybuffer[offs] = 0;
-
-			tile = videoram[offs] | ((colorram[offs] & 0x20) << 3);
-			flipx = (colorram[offs] & 0x40) >> 6;
-			flipy = (colorram[offs] & 0x80) >> 7;
-			color = colorram[offs] & 0x1f;
-
-			sx = 31 - (offs % 32);
-			sy = 31 - (offs / 32);
-
-			if (flipscreen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			drawgfx(tmpbitmap, Machine->gfx[0],
-					tile,
-					color,
-					flipx, flipy,
-					8*sx, 8*sy,
-					&Machine->visible_area, TRANSPARENCY_NONE, 0);
-		}
-	}
-	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
-
-	/* Draw the sprites. */
 	for (offs = (spriteram_size - 4); offs >= 0; offs -= 4)
 	{
 		int sprt;
@@ -134,7 +126,7 @@ VIDEO_UPDATE( mrjong )
 
 		sx = 224 - spriteram[offs + 2];
 		sy = spriteram[offs + 0];
-		if (flipscreen)
+		if (flip_screen)
 		{
 			sx = 208 - sx;
 			sy = 240 - sy;
@@ -149,4 +141,10 @@ VIDEO_UPDATE( mrjong )
 				sx, sy,
 				&Machine->visible_area, TRANSPARENCY_PEN, 0);
 	}
+}
+
+VIDEO_UPDATE( mrjong )
+{
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	mrjong_draw_sprites(bitmap);
 }

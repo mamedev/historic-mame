@@ -11,15 +11,17 @@ Strength & Skill (c) 1984 Sun Electronics
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-PALETTE_INIT( strnskil );
-VIDEO_UPDATE( strnskil );
-
 static UINT8 *strnskil_sharedram;
 
 /****************************************************************************/
 
-WRITE_HANDLER( strnskil_scroll_x_w );
-WRITE_HANDLER( strnskil_scrl_ctrl_w );
+extern WRITE_HANDLER( strnskil_videoram_w );
+extern WRITE_HANDLER( strnskil_scroll_x_w );
+extern WRITE_HANDLER( strnskil_scrl_ctrl_w );
+
+extern PALETTE_INIT( strnskil );
+extern VIDEO_START( strnskil );
+extern VIDEO_UPDATE( strnskil );
 
 WRITE_HANDLER( strnskil_sharedram_w )
 {
@@ -90,7 +92,7 @@ static MEMORY_WRITE_START( strnskil_writemem1 )
 
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xc800, 0xcfff, strnskil_sharedram_w },
-	{ 0xd000, 0xd7ff, videoram_w, &videoram, &videoram_size },
+	{ 0xd000, 0xd7ff, strnskil_videoram_w, &videoram },
 
 	{ 0xd808, 0xd808, strnskil_scrl_ctrl_w },
 	{ 0xd809, 0xd809, MWA_NOP }, /* coin counter? */
@@ -361,7 +363,7 @@ static MACHINE_DRIVER_START( strnskil )
 	MDRV_COLORTABLE_LENGTH(1024)
 
 	MDRV_PALETTE_INIT(strnskil)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(strnskil)
 	MDRV_VIDEO_UPDATE(strnskil)
 
 	/* sound hardware */
