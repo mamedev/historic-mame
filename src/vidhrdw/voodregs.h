@@ -192,164 +192,164 @@ static void dTdY_w(int chips, offs_t regnum, data32_t data)
 
 static void fvertexAx_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 1) tri_va.x = (INT16)TRUNC_TO_INT(*(float *)&data * 16. + 0.5) * (1. / 16.);
+	if (chips & 1) tri_va.x = (INT16)TRUNC_TO_INT(u2f(data) * 16. + 0.5) * (1. / 16.);
 }
 
 static void fvertexAy_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 1) tri_va.y = (INT16)TRUNC_TO_INT(*(float *)&data * 16. + 0.5) * (1. / 16.);
+	if (chips & 1) tri_va.y = (INT16)TRUNC_TO_INT(u2f(data) * 16. + 0.5) * (1. / 16.);
 }
 
 static void fvertexBx_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 1) tri_vb.x = (INT16)TRUNC_TO_INT(*(float *)&data * 16. + 0.5) * (1. / 16.);
+	if (chips & 1) tri_vb.x = (INT16)TRUNC_TO_INT(u2f(data) * 16. + 0.5) * (1. / 16.);
 }
 
 static void fvertexBy_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 1) tri_vb.y = (INT16)TRUNC_TO_INT(*(float *)&data * 16. + 0.5) * (1. / 16.);
+	if (chips & 1) tri_vb.y = (INT16)TRUNC_TO_INT(u2f(data) * 16. + 0.5) * (1. / 16.);
 }
 
 static void fvertexCx_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 1) tri_vc.x = (INT16)TRUNC_TO_INT(*(float *)&data * 16. + 0.5) * (1. / 16.);
+	if (chips & 1) tri_vc.x = (INT16)TRUNC_TO_INT(u2f(data) * 16. + 0.5) * (1. / 16.);
 }
 
 static void fvertexCy_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 1) tri_vc.y = (INT16)TRUNC_TO_INT(*(float *)&data * 16. + 0.5) * (1. / 16.);
+	if (chips & 1) tri_vc.y = (INT16)TRUNC_TO_INT(u2f(data) * 16. + 0.5) * (1. / 16.);
 }
 
 static void fstartR_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 1) tri_startr = (INT32)(*(float *)&data * 65536.0);
+	if (chips & 1) tri_startr = (INT32)(u2f(data) * 65536.0);
 }
 
 static void fstartG_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 1) tri_startg = (INT32)(*(float *)&data * 65536.0);
+	if (chips & 1) tri_startg = (INT32)(u2f(data) * 65536.0);
 }
 
 static void fstartB_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 1) tri_startb = (INT32)(*(float *)&data * 65536.0);
+	if (chips & 1) tri_startb = (INT32)(u2f(data) * 65536.0);
 }
 
 static void fstartA_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 1) tri_starta = (INT32)(*(float *)&data * 65536.0);
+	if (chips & 1) tri_starta = (INT32)(u2f(data) * 65536.0);
 }
 
 static void fstartZ_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 1) tri_startz = (INT32)(*(float *)&data * 4096.0);
+	if (chips & 1) tri_startz = (INT32)(u2f(data) * 4096.0);
 }
 
 static void fstartW_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 1) tri_startw = *(float *)&data;
-	if (chips & 2) tri_startw0 = *(float *)&data;
-	if (chips & 4) tri_startw1 = *(float *)&data;
+	if (chips & 1) tri_startw = u2f(data);
+	if (chips & 2) tri_startw0 = u2f(data);
+	if (chips & 4) tri_startw1 = u2f(data);
 }
 
 static void fstartS_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 2) tri_starts0 = *(float *)&data;
-	if (chips & 4) tri_starts1 = *(float *)&data;
+	if (chips & 2) tri_starts0 = u2f(data);
+	if (chips & 4) tri_starts1 = u2f(data);
 }
 
 static void fstartT_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 2) tri_startt0 = *(float *)&data;
-	if (chips & 4) tri_startt1 = *(float *)&data;
+	if (chips & 2) tri_startt0 = u2f(data);
+	if (chips & 4) tri_startt1 = u2f(data);
 }
 
 static void fdRdX_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 1) tri_drdx = (INT32)(*(float *)&data * 65536.0);
+	if (chips & 1) tri_drdx = (INT32)(u2f(data) * 65536.0);
 }
 
 static void fdGdX_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 1) tri_dgdx = (INT32)(*(float *)&data * 65536.0);
+	if (chips & 1) tri_dgdx = (INT32)(u2f(data) * 65536.0);
 }
 
 static void fdBdX_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 1) tri_dbdx = (INT32)(*(float *)&data * 65536.0);
+	if (chips & 1) tri_dbdx = (INT32)(u2f(data) * 65536.0);
 }
 
 static void fdAdX_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 1) tri_dadx = (INT32)(*(float *)&data * 65536.0);
+	if (chips & 1) tri_dadx = (INT32)(u2f(data) * 65536.0);
 }
 
 static void fdZdX_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 1) tri_dzdx = (INT32)(*(float *)&data * 4096.0);
+	if (chips & 1) tri_dzdx = (INT32)(u2f(data) * 4096.0);
 }
 
 static void fdWdX_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 1) tri_dwdx = *(float *)&data;
-	if (chips & 2) tri_dw0dx = *(float *)&data;
-	if (chips & 4) tri_dw1dx = *(float *)&data;
+	if (chips & 1) tri_dwdx = u2f(data);
+	if (chips & 2) tri_dw0dx = u2f(data);
+	if (chips & 4) tri_dw1dx = u2f(data);
 }
 
 static void fdSdX_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 2) tri_ds0dx = *(float *)&data;
-	if (chips & 4) tri_ds1dx = *(float *)&data;
+	if (chips & 2) tri_ds0dx = u2f(data);
+	if (chips & 4) tri_ds1dx = u2f(data);
 }
 
 static void fdTdX_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 2) tri_dt0dx = *(float *)&data;
-	if (chips & 4) tri_dt1dx = *(float *)&data;
+	if (chips & 2) tri_dt0dx = u2f(data);
+	if (chips & 4) tri_dt1dx = u2f(data);
 }
 
 static void fdRdY_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 1) tri_drdy = (INT32)(*(float *)&data * 65536.0);
+	if (chips & 1) tri_drdy = (INT32)(u2f(data) * 65536.0);
 }
 
 static void fdGdY_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 1) tri_dgdy = (INT32)(*(float *)&data * 65536.0);
+	if (chips & 1) tri_dgdy = (INT32)(u2f(data) * 65536.0);
 }
 
 static void fdBdY_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 1) tri_dbdy = (INT32)(*(float *)&data * 65536.0);
+	if (chips & 1) tri_dbdy = (INT32)(u2f(data) * 65536.0);
 }
 
 static void fdAdY_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 1) tri_dady = (INT32)(*(float *)&data * 65536.0);
+	if (chips & 1) tri_dady = (INT32)(u2f(data) * 65536.0);
 }
 
 static void fdZdY_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 1) tri_dzdy = (INT32)(*(float *)&data * 4096.0);
+	if (chips & 1) tri_dzdy = (INT32)(u2f(data) * 4096.0);
 }
 
 static void fdWdY_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 1) tri_dwdy = *(float *)&data;
-	if (chips & 2) tri_dw0dy = *(float *)&data;
-	if (chips & 4) tri_dw1dy = *(float *)&data;
+	if (chips & 1) tri_dwdy = u2f(data);
+	if (chips & 2) tri_dw0dy = u2f(data);
+	if (chips & 4) tri_dw1dy = u2f(data);
 }
 
 static void fdSdY_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 2) tri_ds0dy = *(float *)&data;
-	if (chips & 4) tri_ds1dy = *(float *)&data;
+	if (chips & 2) tri_ds0dy = u2f(data);
+	if (chips & 4) tri_ds1dy = u2f(data);
 }
 
 static void fdTdY_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 2) tri_dt0dy = *(float *)&data;
-	if (chips & 4) tri_dt1dy = *(float *)&data;
+	if (chips & 2) tri_dt0dy = u2f(data);
+	if (chips & 4) tri_dt1dy = u2f(data);
 }
 
 

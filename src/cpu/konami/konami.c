@@ -601,7 +601,7 @@ static void konami_set_info(UINT32 state, union cpuinfo *info)
 		
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					konami.irq_callback = info->irqcallback; break;
-	case CPUINFO_PTR_KONAMI_SETLINES_CALLBACK:		konami.setlines_callback = (void (*)(int))info->p; break;
+	case CPUINFO_PTR_KONAMI_SETLINES_CALLBACK:		konami.setlines_callback = (void (*)(int))info->f; break;
 	}
 }
 
@@ -668,7 +668,7 @@ void konami_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &konami_ICount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = konami_reg_layout;			break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = konami_win_layout;			break;
-		case CPUINFO_PTR_KONAMI_SETLINES_CALLBACK:		info->p = (void *)konami.setlines_callback;	break;
+		case CPUINFO_PTR_KONAMI_SETLINES_CALLBACK:		info->f = (genf *)konami.setlines_callback;	break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "KONAMI"); break;

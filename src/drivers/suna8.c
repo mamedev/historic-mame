@@ -6,7 +6,7 @@
 
 
 Main  CPU:		Encrypted Z80 (Epoxy Module)
-Sound CPU:		Z80 [Music]  +  Z80 [4 Bit PCM, Optional]
+Sound CPU:		Z80 [Music]  +  Z80 [8 Bit PCM, Optional]
 Sound Chips:	AY8910  +  YM3812/YM2203  + DAC x 4 [Optional]
 
 
@@ -23,7 +23,7 @@ Year + Game         Game     PCB         Epoxy CPU    Notes
 
 To Do:
 
-- Samples playing in hardhead, rranger, starfigh, sparkman (AY8910 ports A&B)
+- Samples playing in rranger, starfigh, sparkman (AY8910 ports A&B)
 
 Notes:
 
@@ -60,6 +60,11 @@ VIDEO_START( suna8_textdim8 );
 VIDEO_START( suna8_textdim12 );
 VIDEO_UPDATE( suna8 );
 
+/* Functions defined in sndhrdw: */
+
+WRITE8_HANDLER( suna8_play_samples_w );
+WRITE8_HANDLER( suna8_samples_number_w );
+int suna8_sh_start(const struct MachineSound *msound);
 
 /***************************************************************************
 
@@ -100,8 +105,10 @@ DRIVER_INIT( hardhead )
 /* Non encrypted bootleg */
 static DRIVER_INIT( hardhedb )
 {
-	/* patch ROM checksum (ROM1 fails self test) */
-	memory_region( REGION_CPU1 )[0x1e5b] = 0xAF;
+	UINT8 *rom = memory_region(REGION_CPU1);
+	offs_t diff = memory_region_length(REGION_CPU1) / 2;
+
+	memory_set_opcode_base(0,rom+diff);
 }
 
 /***************************************************************************
@@ -1904,7 +1911,7 @@ static void soundirq(int state)
 	cpunum_set_input_line(1, 0, state);
 }
 
-/* In games with only 2 CPUs, port A&B of the AY8910 are probably used
+/* In games with only 2 CPUs, port A&B of the AY8910 are used
    for sample playing. */
 
 /***************************************************************************
@@ -1916,12 +1923,12 @@ static void soundirq(int state)
 static struct AY8910interface hardhead_ay8910_interface =
 {
 	1,
-	4000000,	/* ? */
-	{ 50 },
+	24000000 / 16,	/* ? */
+	{ 30 },
 	{ 0 },
 	{ 0 },
-	{ 0 },
-	{ 0 }
+	{ suna8_play_samples_w },
+	{ suna8_samples_number_w }
 };
 
 static struct YM3812interface hardhead_ym3812_interface =
@@ -1932,16 +1939,22 @@ static struct YM3812interface hardhead_ym3812_interface =
 	{  0 },		/* IRQ Line */
 };
 
+static struct CustomSound_interface custom_interface =
+{
+	suna8_sh_start,
+	0,
+	0
+};
 
 static MACHINE_DRIVER_START( hardhead )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 4000000)					/* ? */
+	MDRV_CPU_ADD(Z80, 24000000 / 4)			/* ? */
 	MDRV_CPU_PROGRAM_MAP(hardhead_readmem,hardhead_writemem)
 	MDRV_CPU_IO_MAP(hardhead_readport,hardhead_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* No NMI */
 
-	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_ADD(Z80, 24000000 / 4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)					/* ? */
 	MDRV_CPU_PROGRAM_MAP(hardhead_sound_readmem,hardhead_sound_writemem)
 	MDRV_CPU_IO_MAP(hardhead_sound_readport,hardhead_sound_writeport)
@@ -1964,6 +1977,7 @@ static MACHINE_DRIVER_START( hardhead )
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM3812, hardhead_ym3812_interface)
 	MDRV_SOUND_ADD(AY8910, hardhead_ay8910_interface)
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
 MACHINE_DRIVER_END
 
 
@@ -1990,12 +2004,12 @@ static struct YM2203interface rranger_ym2203_interface =
 static MACHINE_DRIVER_START( rranger )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 4000000)					/* ? */
+	MDRV_CPU_ADD(Z80, 24000000 / 4)					/* ? */
 	MDRV_CPU_PROGRAM_MAP(rranger_readmem,rranger_writemem)
 	MDRV_CPU_IO_MAP(rranger_readport,rranger_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* IRQ & NMI ! */
 
-	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_ADD(Z80, 24000000 / 4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)					/* ? */
 	MDRV_CPU_PROGRAM_MAP(rranger_sound_readmem,rranger_sound_writemem)
 	MDRV_CPU_IO_MAP(rranger_sound_readport,rranger_sound_writeport)
@@ -2029,7 +2043,7 @@ MACHINE_DRIVER_END
 static struct AY8910interface brickzn_ay8910_interface =
 {
 	1,
-	4000000,	/* ? */
+	24000000 / 16,	/* ? */
 	{ 33 },
 	{ 0 },
 	{ 0 },
@@ -2137,12 +2151,12 @@ MACHINE_DRIVER_END
 static struct AY8910interface starfigh_ay8910_interface =
 {
 	1,
-	4000000,	/* ? */
+	24000000 / 16,	/* ? */
 	{ 50 },
 	{ 0 },
 	{ 0 },
-	{ 0 },
-	{ 0 }
+	{ suna8_play_samples_w },
+	{ suna8_samples_number_w }
 };
 
 static struct YM3812interface starfigh_ym3812_interface =
@@ -2156,20 +2170,20 @@ static struct YM3812interface starfigh_ym3812_interface =
 static MACHINE_DRIVER_START( starfigh )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 4000000)					/* ? */
+	MDRV_CPU_ADD(Z80, 24000000 / 4)					/* ? */
 	MDRV_CPU_PROGRAM_MAP(starfigh_readmem,starfigh_writemem)
 	MDRV_CPU_IO_MAP(starfigh_readport,starfigh_writeport)
 	MDRV_CPU_VBLANK_INT(brickzn_interrupt,2)	/* IRQ & NMI */
 
 	/* The sound section is identical to that of hardhead */
-	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_ADD(Z80, 24000000 / 4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)					/* ? */
 	MDRV_CPU_PROGRAM_MAP(hardhead_sound_readmem,hardhead_sound_writemem)
 	MDRV_CPU_IO_MAP(hardhead_sound_readport,hardhead_sound_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)	/* No NMI */
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -2185,6 +2199,7 @@ static MACHINE_DRIVER_START( starfigh )
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM3812, starfigh_ym3812_interface)
 	MDRV_SOUND_ADD(AY8910, starfigh_ay8910_interface)
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
 MACHINE_DRIVER_END
 
 
@@ -2204,11 +2219,11 @@ static INTERRUPT_GEN( sparkman_interrupt )
 static MACHINE_DRIVER_START( sparkman )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 4000000)					/* ? */
+	MDRV_CPU_ADD(Z80, 24000000 / 4)					/* ? */
 	MDRV_CPU_PROGRAM_MAP(sparkman_readmem,sparkman_writemem)
 	MDRV_CPU_VBLANK_INT(sparkman_interrupt,2)	/* IRQ & NMI */
 
-	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_ADD(Z80, 24000000 / 4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)					/* ? */
 	MDRV_CPU_PROGRAM_MAP(hardhead_sound_readmem,hardhead_sound_writemem)
 	MDRV_CPU_IO_MAP(hardhead_sound_readport,hardhead_sound_writeport)
@@ -2231,6 +2246,7 @@ static MACHINE_DRIVER_START( sparkman )
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM3812, hardhead_ym3812_interface)
 	MDRV_SOUND_ADD(AY8910, hardhead_ay8910_interface)
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
 MACHINE_DRIVER_END
 
 
@@ -2305,15 +2321,23 @@ ROM_START( hardhead )
 ROM_END
 
 ROM_START( hardhedb )
-	ROM_REGION( 0x48000, REGION_CPU1, 0 ) /* Main Z80 Code */
-	ROM_LOAD( "9_1_6l.rom", 0x00000, 0x8000, CRC(750e6aee) SHA1(ec8f61a1a3d95ef0e3748968f6da73e972763493) )	// 1988,9,14 (already decrypted)
-	ROM_LOAD( "p2",  0x10000, 0x8000, CRC(faa2cf9a) SHA1(5987f146b58fcbc3aaa9c010d86022b5172bcfb4) )
-	ROM_LOAD( "p3",  0x18000, 0x8000, CRC(3d24755e) SHA1(519a179594956f7c3ddfaca362c42b453c928e25) )
-	ROM_LOAD( "p4",  0x20000, 0x8000, CRC(0241ac79) SHA1(b3c3b98fb29836cbc9fd35ac49e02bfefd3b0c79) )
-	ROM_LOAD( "p7",  0x28000, 0x8000, CRC(beba8313) SHA1(20aa4e07ec560a89d07ec73cc93311ceaed899a3) )
-	ROM_LOAD( "p8",  0x30000, 0x8000, CRC(211a9342) SHA1(85bdafe1a2c683eea391cc663caabd958fdf5197) )
-	ROM_LOAD( "p9",  0x38000, 0x8000, CRC(2ad430c4) SHA1(286a5b1042e077c3ae741d01311d4c91f8f87054) )
-	ROM_LOAD( "p10", 0x40000, 0x8000, CRC(b6894517) SHA1(e114a5f92b83d98215aab6e2cd943a110d118f56) )
+	ROM_REGION( 0x50000*2, REGION_CPU1, 0 ) /* Main Z80 Code */
+	ROM_LOAD( "1_27512.l6",  0x50000, 0x8000, CRC(bb4aa9ac) SHA1(da6310a1034cf610139d74fc30dd13e5fbd1d8dd) ) // 1988,9,14 (already decrypted)
+	ROM_CONTINUE(			 0x00000, 0x8000 )
+	ROM_LOAD( "p2",			 0x10000, 0x8000, CRC(faa2cf9a) SHA1(5987f146b58fcbc3aaa9c010d86022b5172bcfb4) )
+	ROM_RELOAD(			     0x60000, 0x8000 )
+	ROM_LOAD( "p3",			 0x18000, 0x8000, CRC(3d24755e) SHA1(519a179594956f7c3ddfaca362c42b453c928e25) )
+	ROM_RELOAD(			     0x68000, 0x8000 )
+	ROM_LOAD( "p4",			 0x20000, 0x8000, CRC(0241ac79) SHA1(b3c3b98fb29836cbc9fd35ac49e02bfefd3b0c79) )
+	ROM_RELOAD(			     0x70000, 0x8000 )
+	ROM_LOAD( "p7",			 0x28000, 0x8000, CRC(beba8313) SHA1(20aa4e07ec560a89d07ec73cc93311ceaed899a3) )
+	ROM_RELOAD(			     0x78000, 0x8000 )
+	ROM_LOAD( "p8",			 0x30000, 0x8000, CRC(211a9342) SHA1(85bdafe1a2c683eea391cc663caabd958fdf5197) )
+	ROM_RELOAD(			     0x80000, 0x8000 )
+	ROM_LOAD( "p9",			 0x38000, 0x8000, CRC(2ad430c4) SHA1(286a5b1042e077c3ae741d01311d4c91f8f87054) )
+	ROM_RELOAD(			     0x88000, 0x8000 )
+	ROM_LOAD( "p10",		 0x40000, 0x8000, CRC(b6894517) SHA1(e114a5f92b83d98215aab6e2cd943a110d118f56) )
+	ROM_RELOAD(			     0x90000, 0x8000 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* Sound Z80 Code */
 	ROM_LOAD( "p13", 0x0000, 0x8000, CRC(493c0b41) SHA1(994a334253e905c39ec912765e8b0f4b1be900bc) )
@@ -2334,15 +2358,23 @@ ROM_START( hardhedb )
 ROM_END
 
 ROM_START( pop_hh )
-	ROM_REGION( 0x48000, REGION_CPU1, 0 ) /* Main Z80 Code */
-	ROM_LOAD( "1_27512.l6", 0x00000, 0x10000, CRC(bb4aa9ac) SHA1(da6310a1034cf610139d74fc30dd13e5fbd1d8dd) ) // twice the size of other sets?
-	ROM_LOAD( "2_27256.k6", 0x10000, 0x8000,  CRC(8fcc1248) SHA1(5da0b7dc63f7bc00e81e9e5bac02ee6b0076ffaa) )
-	ROM_LOAD( "p3",  0x18000, 0x8000, CRC(3d24755e) SHA1(519a179594956f7c3ddfaca362c42b453c928e25) ) // 3_27256.j6
-	ROM_LOAD( "p4",  0x20000, 0x8000, CRC(0241ac79) SHA1(b3c3b98fb29836cbc9fd35ac49e02bfefd3b0c79) ) // 4_27256.i6
-	ROM_LOAD( "p7",  0x28000, 0x8000, CRC(beba8313) SHA1(20aa4e07ec560a89d07ec73cc93311ceaed899a3) ) // 7_27256.l8
+	ROM_REGION( 0x50000*2, REGION_CPU1, 0 ) /* Main Z80 Code */
+	ROM_LOAD( "1_27512.l6",  0x50000, 0x8000, CRC(bb4aa9ac) SHA1(da6310a1034cf610139d74fc30dd13e5fbd1d8dd) ) // 1988,9,14 (already decrypted)
+	ROM_CONTINUE(			 0x00000, 0x8000 )
+	ROM_LOAD( "2_27256.k6",  0x10000, 0x8000, CRC(8fcc1248) SHA1(5da0b7dc63f7bc00e81e9e5bac02ee6b0076ffaa) )
+	ROM_RELOAD(			     0x60000, 0x8000 )
+	ROM_LOAD( "p3",          0x18000, 0x8000, CRC(3d24755e) SHA1(519a179594956f7c3ddfaca362c42b453c928e25) ) // 3_27256.j6
+	ROM_RELOAD(			     0x68000, 0x8000 )
+	ROM_LOAD( "p4",          0x20000, 0x8000, CRC(0241ac79) SHA1(b3c3b98fb29836cbc9fd35ac49e02bfefd3b0c79) ) // 4_27256.i6
+	ROM_RELOAD(			     0x70000, 0x8000 )
+	ROM_LOAD( "p7",          0x28000, 0x8000, CRC(beba8313) SHA1(20aa4e07ec560a89d07ec73cc93311ceaed899a3) ) // 7_27256.l8
+	ROM_RELOAD(			     0x78000, 0x8000 )
 	ROM_LOAD( "8_27256.k8",  0x30000, 0x8000, CRC(87a8b4b4) SHA1(83d30cf184c5dccdf2666c0ef9e078541d6a146e) )
-	ROM_LOAD( "p9",  0x38000, 0x8000, CRC(2ad430c4) SHA1(286a5b1042e077c3ae741d01311d4c91f8f87054) ) // 9_27256.j8
+	ROM_RELOAD(			     0x80000, 0x8000 )
+	ROM_LOAD( "p9",          0x38000, 0x8000, CRC(2ad430c4) SHA1(286a5b1042e077c3ae741d01311d4c91f8f87054) ) // 9_27256.j8
+	ROM_RELOAD(			     0x88000, 0x8000 )
 	ROM_LOAD( "10_27256.i8", 0x40000, 0x8000, CRC(84fc6574) SHA1(ab33e6c656f25e65bb08d0a2689693df83cab43d) )
+	ROM_RELOAD(			     0x90000, 0x8000 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* Sound Z80 Code */
 	ROM_LOAD( "p13", 0x0000, 0x8000, CRC(493c0b41) SHA1(994a334253e905c39ec912765e8b0f4b1be900bc) ) // 13_27256.i10
@@ -2789,9 +2821,9 @@ ROM_END
 
 /* Working Games */
 GAMEX( 1988, rranger,  0,        rranger,  rranger,  0,        ROT0,  "SunA (Sharp Image license)", "Rough Ranger (v2.0)", GAME_IMPERFECT_SOUND )
-GAMEX( 1988, hardhead, 0,        hardhead, hardhead, hardhead, ROT0,  "SunA",                       "Hard Head",           GAME_IMPERFECT_SOUND )
-GAMEX( 1988, hardhedb, hardhead, hardhead, hardhead, hardhedb, ROT0,  "bootleg",                    "Hard Head (bootleg)", GAME_IMPERFECT_SOUND )
-GAMEX( 1988, pop_hh,   hardhead, hardhead, hardhead, hardhedb, ROT0,  "bootleg",                    "Popper (Hard Head bootleg)", GAME_IMPERFECT_SOUND )
+GAME ( 1988, hardhead, 0,        hardhead, hardhead, hardhead, ROT0,  "SunA",                       "Hard Head"									)
+GAME ( 1988, hardhedb, hardhead, hardhead, hardhead, hardhedb, ROT0,  "bootleg",                    "Hard Head (bootleg)"						)
+GAME ( 1988, pop_hh,   hardhead, hardhead, hardhead, hardhedb, ROT0,  "bootleg",                    "Popper (Hard Head bootleg)"				)
 GAME ( 1991, hardhea2, 0,        hardhea2, hardhea2, hardhea2, ROT0,  "SunA",                       "Hard Head 2 (v2.0)"                        )
 
 /* Non Working Games */

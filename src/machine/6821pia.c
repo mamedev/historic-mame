@@ -794,6 +794,24 @@ void pia_set_input_cb2(int which, int data)
 
 
 
+/******************* interface retrieving DDR *******************/
+
+UINT8 pia_get_ddr_a(int which)
+{
+	struct pia6821 *p = pia + which;
+	return p->ddr_a;
+}
+
+
+
+UINT8 pia_get_ddr_b(int which)
+{
+	struct pia6821 *p = pia + which;
+	return p->ddr_b;
+}
+
+
+
 /******************* Standard 8-bit CPU interfaces, D0-D7 *******************/
 
 READ8_HANDLER( pia_0_r ) { return pia_read(0, offset); }

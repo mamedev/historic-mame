@@ -59,7 +59,7 @@ data16_t *hdadsp_data_memory;
 data32_t *hdadsp_pgm_memory;
 
 data16_t *hdgsp_protection;
-data16_t *stmsp_sync[2];
+data16_t *stmsp_sync[3];
 
 data16_t *hdgsp_speedup_addr[2];
 offs_t hdgsp_speedup_pc;
@@ -1235,7 +1235,7 @@ READ16_HANDLER( hd68k_ds3_gdata_r )
 		cpunum_set_reg(hdcpu_adsp, (mstat & 1) ? ADSP2100_MR0 : ADSP2100_MR0_SEC, i6);
 		adsp_speedup_count[1]++;
 	}
-	
+
 	/* if we just cleared the IRQ, we are going to do some VERY timing critical reads */
 	/* it is important that all the CPUs be in sync before we continue, so spin a little */
 	/* while to let everyone else catch up */
@@ -1329,7 +1329,7 @@ WRITE16_HANDLER( hdds3_special_w )
 			ds3_gdata = data;
 			ds3_gflag = 1;
 			update_ds3_irq();
-			
+
 			/* once we've written data, trigger the main CPU to wake up again */
 			cpu_trigger(DS3_TRIGGER);
 			break;

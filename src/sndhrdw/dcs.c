@@ -426,7 +426,7 @@ static void dcs_reset(void)
 		cpu_setbank(21, dcs_sram_bank0);
 
 	/* initialize the ADSP Tx callback */
-	cpunum_set_info_ptr(dcs_cpunum, CPUINFO_PTR_ADSP2100_TX_HANDLER, (void *)sound_tx_callback);
+	cpunum_set_info_fct(dcs_cpunum, CPUINFO_PTR_ADSP2100_TX_HANDLER, (genf *)sound_tx_callback);
 
 	/* clear all interrupts */
 	cpunum_set_input_line(dcs_cpunum, ADSP2105_IRQ0, CLEAR_LINE);

@@ -584,8 +584,8 @@ MACHINE_DRIVER_END
 
 ROM_START( othunder )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )	/* 512K for 68000 code */
-	ROM_LOAD16_BYTE( "b67-20",    0x00000, 0x20000, CRC(21439ea2) SHA1(d5b5a194e9698cf43513c0d56146772e8132ab07) )
-	ROM_LOAD16_BYTE( "b67-23",    0x00001, 0x20000, CRC(789e9daa) SHA1(15bb0eec68aeea0b9f55889566338c9ce0ac9b5e) )
+	ROM_LOAD16_BYTE( "b67-20.63",    0x00000, 0x20000, CRC(21439ea2) SHA1(d5b5a194e9698cf43513c0d56146772e8132ab07) )
+	ROM_LOAD16_BYTE( "b67-23.64",    0x00001, 0x20000, CRC(789e9daa) SHA1(15bb0eec68aeea0b9f55889566338c9ce0ac9b5e) )
 	ROM_LOAD16_BYTE( "b67-14.61", 0x40000, 0x20000, CRC(7f3dd724) SHA1(2f2eeae0ee31e20082237b9a947c6848771eb73c) )
 	ROM_LOAD16_BYTE( "b67-15.62", 0x40001, 0x20000, CRC(e84f62d0) SHA1(3b4a55a14dee7d592467fde9a75bde64deabd27d) )
 
@@ -616,6 +616,36 @@ ROM_START( othunder )
 //	ROM_LOAD( "b67-10", 0x00000, 0xcd5, CRC(312f9e2a) )
 //	ROM_LOAD( "b67-11", 0x00000, 0xada, CRC(f863b864) )
 //	ROM_LOAD( "b67-12", 0x00000, 0xcd5, CRC(653d86bb) )
+ROM_END
+
+ROM_START( othunduo )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )	/* 512K for 68000 code */
+	ROM_LOAD16_BYTE( "b67-20.63",   0x00000, 0x20000, CRC(21439ea2) SHA1(d5b5a194e9698cf43513c0d56146772e8132ab07) )
+	ROM_LOAD16_BYTE( "b67-22.64",   0x00001, 0x20000, CRC(0f99ad3c) SHA1(dd6c9e822470ca867ec01e642443a871e879bae5) )
+	ROM_LOAD16_BYTE( "b67-14.61",   0x40000, 0x20000, CRC(7f3dd724) SHA1(2f2eeae0ee31e20082237b9a947c6848771eb73c) )
+	ROM_LOAD16_BYTE( "b67-15.62",   0x40001, 0x20000, CRC(e84f62d0) SHA1(3b4a55a14dee7d592467fde9a75bde64deabd27d) )
+
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound cpu */
+	ROM_LOAD( "b67-13.40",   0x00000, 0x04000, CRC(2936b4b1) SHA1(39b41643464dd89e456ab6eb15a0ff0aef30afde) )
+	ROM_CONTINUE(            0x10000, 0x0c000 ) /* banked stuff */
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "b67-06", 0x00000, 0x80000, CRC(b9a38d64) SHA1(7ae8165b444d9da6ccdbc4a769535bcbb6738aaa) )		/* SCR */
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD32_BYTE( "b67-01", 0x00000, 0x80000, CRC(81ad9acb) SHA1(d9ad3f6332c6ca6b9872da57526a8158a3cf5b2f) )	/* OBJ: each rom has 1 bitplane, forming 16x8 tiles */
+	ROM_LOAD32_BYTE( "b67-02", 0x00001, 0x80000, CRC(c20cd2fb) SHA1(b015e1fe167e19826aa451b45cd143d66a6db83c) )
+	ROM_LOAD32_BYTE( "b67-03", 0x00002, 0x80000, CRC(bc9019ed) SHA1(7eddc83d71be97ce6637e6b35c226d58e6c39c3f) )
+	ROM_LOAD32_BYTE( "b67-04", 0x00003, 0x80000, CRC(2af4c8af) SHA1(b2ae7aad0c59ffc368811f4bd5546dbb6860f9a9) )
+
+	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
+	ROM_LOAD16_WORD( "b67-05", 0x00000, 0x80000, CRC(9593e42b) SHA1(54b5538c302a1734ff4b752ab87a8c45d5c6b23d) )	/* STY, index used to create 64x64 sprites on the fly */
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
+	ROM_LOAD( "b67-08", 0x00000, 0x80000, CRC(458f41fb) SHA1(acca7c95acd1ae7a1cc51fb7fe644ad6d00ff5ac) )
+
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
+	ROM_LOAD( "b67-07", 0x00000, 0x80000, CRC(4f834357) SHA1(f34705ce64870a8b24ec2639505079cc031fb719) )
 ROM_END
 
 ROM_START( othundu )
@@ -658,3 +688,4 @@ static DRIVER_INIT( othunder )
 
 GAME( 1988, othunder, 0,        othunder, othunder, othunder, ORIENTATION_FLIP_X, "Taito Corporation Japan", "Operation Thunderbolt (World)" )
 GAME( 1988, othundu,  othunder, othunder, othundu,  othunder, ORIENTATION_FLIP_X, "Taito America Corporation", "Operation Thunderbolt (US)" )
+GAME( 1988, othunduo, othunder, othunder, othundu,  othunder, ORIENTATION_FLIP_X, "Taito America Corporation", "Operation Thunderbolt (US, older)" )

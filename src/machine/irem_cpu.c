@@ -643,7 +643,7 @@ void irem_cpu_decrypt(int cpu,const unsigned char *decryption_table)
 	unsigned char *rom;
 	int t[256];
 #ifdef MAME_DEBUG
-    extern char *opmap1[];
+//    extern char *opmap1[];
 #endif
 
 	rom = memory_region(cpu+REGION_CPU1);
@@ -660,8 +660,8 @@ void irem_cpu_decrypt(int cpu,const unsigned char *decryption_table)
 				t[A]++;
 			}
 #ifdef MAME_DEBUG
-        if (t[A]==0) logerror("Unused: [%d] %02x\t%s\n",byte_count_table[A],A,opmap1[A]);
-        if (t[A]>1) logerror("DUPLICATE: %02x\t%s\n",A,opmap1[A]);
+//        if (t[A]==0) logerror("Unused: [%d] %02x\t%s\n",byte_count_table[A],A,opmap1[A]);
+//        if (t[A]>1) logerror("DUPLICATE: %02x\t%s\n",A,opmap1[A]);
 #else
         if (t[A]==0) logerror("Unused: [%d] %02x\n",byte_count_table[A],A);
         if (t[A]>1) logerror("DUPLICATE: %02x\n",A);

@@ -3256,3 +3256,19 @@ intersect:
 		hintbase[closestindex] = (hintstart << 16) | hintend;
 	}
 }
+
+/*
+ * Export some variables needed by OSD vector code in xmame.
+ */
+const struct rectangle *artwork_get_game_rect(void)
+{
+	if (artwork_list)
+		return &gamerect;
+	else
+		return NULL;
+}
+
+int artwork_overlay_active(void)
+{
+	return num_overlays;
+}

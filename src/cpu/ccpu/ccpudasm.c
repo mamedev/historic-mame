@@ -1,493 +1,332 @@
+/*###################################################################################################
+**
+**
+**		ccpudasm.c
+**		Core implementation for the portable Cinematronics CPU disassembler.
+**
+**		Written by Aaron Giles
+**		Special thanks to Zonn Moore for his detailed documentation.
+**
+**
+**#################################################################################################*/
+
 #include <stdio.h>
 #include <string.h>
+#include "driver.h"
 #include "ccpu.h"
 
-#define CCPU_FETCH(A)	cpu_readop(A)
-
-/*
- * opcode tables for debugging
- */
-typedef enum {
-  CLR,  LDA,  INP,  ADD,  SUB,  LDJ,  LDP,  OUT,
-  CMP,  LDI,  STA,  VIN,  VDR,  XLT,  MUL,  LLT,
-  WAI,  AWD,  AND,  LSR,  LSL,  ASR,  ASRD, LSLD,
-  JPPB, JMIB, JDRB, JLTB, JEQB, JNCB, JAOB, NOPB,
-  JMPA, JMIA, JDRA, JLTA, JEQA, JNCA, JAOA, NOPA,
-  JEIA, JEIB
-} opcode_mnemonics;
-
-typedef struct {
-  opcode_mnemonics od_opcode;
-  const char *od_name;
-} opcode_detail;
-
-opcode_detail opcodes[] = {
-  { CLR, "clr" },
-  { LDA, "lda" },
-  { INP, "inp" },
-  { ADD, "add" },
-  { SUB, "sub" },
-  { LDJ, "ldj" },
-  { LDP, "ldp" },
-  { OUT, "out" },
-  { CMP, "cmp" },
-  { LDI, "ldi" },
-  { STA, "sta" },
-  { VIN, "vin" },
-  { VDR, "vdr" },
-  { XLT, "xlt" },
-  { MUL, "mul" },
-  { LLT, "llt" },
-  { WAI, "wai" },
-  { AWD, "awd" },
-  { AND, "and" },
-  { LSR, "lsr" },
-  { LSL, "lsl" },
-  { ASR, "asr" },
-  { ASRD, "asrd" },
-  { LSLD, "lsld" },
-  { JPPB, "jppb" },
-  { JMIB, "jmib" },
-  { JDRB, "jdrb" },
-  { JLTB, "jltb" },
-  { JEQB, "jeqb" },
-  { JNCB, "jncb" },
-  { JAOB, "jaob" },
-  { NOPB, "nopb" },
-  { JMPA, "jmpa" },
-  { JMIA, "jmia" },
-  { JDRA, "jdra" },
-  { JLTA, "jlta" },
-  { JEQA, "jeqa" },
-  { JNCA, "jnca" },
-  { JAOA, "jaoa" },
-  { NOPA, "nopa" },
-  { JEIA, "jeia" },
-  { JEIB, "jeib" }
-};
-
-typedef enum {
-  ACC,      // Accumulator
-  ADIR,     // Acc Direct memory access
-  AIM4,     // Acc 4 bit immediate
-  AIM4X,    // Acc 4 bit immediate extended size
-  AIM8,     // Acc 8 bit immediate
-  AINDM,    // Acc indirect through memory
-  AIMX,     // Acc immediate extended A-reg
-  AXLT,     // Acc lookup ROM using Acc as pointer
-  AIRG,     // Acc Through the I-reg
-  IRG,      // Through the I-reg
-  IM4,      // 4 bit immediate
-  IM12,     // 12 bit immediate
-  DIR,      // Direct memory access
-  IMP,      // Implied
-  JUMP,     // Acc selection/Jump instruction
-  JUMPX     // Acc selection/Extended jump instruction
-} amode_mnemonics;
-
-typedef struct {
-  amode_mnemonics ad_amode;
-  const char *ad_name;
-} amode_detail;
-
-amode_detail amodes[] = {
-  { ACC,   "acc" },
-  { ADIR,  "adir" },
-  { AIM4,  "aim4" },
-  { AIM4X, "aim4x" },
-  { AIM8,  "aim8" },
-  { AINDM, "aindm" },
-  { AIMX,  "aimx" },
-  { AXLT,  "axlt" },
-  { AIRG,  "airg" },
-  { IRG,   "irg" },
-  { IM4,   "im4" },
-  { IM12,  "im12" },
-  { DIR,   "dir" },
-  { IMP,   "imp" },
-  { JUMP,  "jump" },
-  { JUMPX, "jumpx" }
-};
-
-typedef struct {
-  opcode_mnemonics ot_opcode;
-  amode_mnemonics  ot_amode;
-} opcode_table_entry;
-
-opcode_table_entry opcode_table[] = {
-  { CLR, ACC   },           // 00
-  { LDA, AIM4X },           // 01
-  { LDA, AIM4X },           // 02
-  { LDA, AIM4X },           // 03
-  { LDA, AIM4X },           // 04
-  { LDA, AIM4X },           // 05
-  { LDA, AIM4X },           // 06
-  { LDA, AIM4X },           // 07
-  { LDA, AIM4X },           // 08
-  { LDA, AIM4X },           // 09
-  { LDA, AIM4X },           // 0A
-  { LDA, AIM4X },           // 0B
-  { LDA, AIM4X },           // 0C
-  { LDA, AIM4X },           // 0D
-  { LDA, AIM4X },           // 0E
-  { LDA, AIM4X },           // 0F
-
-  { INP, ADIR },            // 10
-  { INP, ADIR },            // 11
-  { INP, ADIR },            // 12
-  { INP, ADIR },            // 13
-  { INP, ADIR },            // 14
-  { INP, ADIR },            // 15
-  { INP, ADIR },            // 16
-  { INP, ADIR },            // 17
-  { INP, ADIR },            // 18
-  { INP, ADIR },            // 19
-  { INP, ADIR },            // 1A
-  { INP, ADIR },            // 1B
-  { INP, ADIR },            // 1C
-  { INP, ADIR },            // 1D
-  { INP, ADIR },            // 1E
-  { INP, ADIR },            // 1F
-
-  { ADD, AIM8 },            // 20
-  { ADD, AIM4 },            // 21
-  { ADD, AIM4 },            // 22
-  { ADD, AIM4 },            // 23
-  { ADD, AIM4 },            // 24
-  { ADD, AIM4 },            // 25
-  { ADD, AIM4 },            // 26
-  { ADD, AIM4 },            // 27
-  { ADD, AIM4 },            // 28
-  { ADD, AIM4 },            // 29
-  { ADD, AIM4 },            // 2A
-  { ADD, AIM4 },            // 2B
-  { ADD, AIM4 },            // 2C
-  { ADD, AIM4 },            // 2D
-  { ADD, AIM4 },            // 2E
-  { ADD, AIM4 },            // 2F
-
-  { SUB, AIM8 },            // 30
-  { SUB, AIM4 },            // 31
-  { SUB, AIM4 },            // 32
-  { SUB, AIM4 },            // 33
-  { SUB, AIM4 },            // 34
-  { SUB, AIM4 },            // 35
-  { SUB, AIM4 },            // 36
-  { SUB, AIM4 },            // 37
-  { SUB, AIM4 },            // 38
-  { SUB, AIM4 },            // 39
-  { SUB, AIM4 },            // 3A
-  { SUB, AIM4 },            // 3B
-  { SUB, AIM4 },            // 3C
-  { SUB, AIM4 },            // 3D
-  { SUB, AIM4 },            // 3E
-  { SUB, AIM4 },            // 3F
-
-  { LDJ, IM12 },            // 40
-  { LDJ, IM12 },            // 41
-  { LDJ, IM12 },            // 42
-  { LDJ, IM12 },            // 43
-  { LDJ, IM12 },            // 44
-  { LDJ, IM12 },            // 45
-  { LDJ, IM12 },            // 46
-  { LDJ, IM12 },            // 47
-  { LDJ, IM12 },            // 48
-  { LDJ, IM12 },            // 49
-  { LDJ, IM12 },            // 4A
-  { LDJ, IM12 },            // 4B
-  { LDJ, IM12 },            // 4C
-  { LDJ, IM12 },            // 4D
-  { LDJ, IM12 },            // 4E
-  { LDJ, IM12 },            // 4F
-
-  { JPPB, JUMP },           // 50
-  { JMIB, JUMP },           // 51
-  { JDRB, JUMP },           // 52
-  { JLTB, JUMP },           // 53
-  { JEQB, JUMP },           // 54
-  { JNCB, JUMP },           // 55
-  { JAOB, JUMP },           // 56
-  { NOPB, IMP },            // 57
-
-  { JMPA, JUMP },           // 58
-  { JMIA, JUMP },           // 59
-  { JDRA, JUMP },           // 5A
-  { JLTA, JUMP },           // 5B
-  { JEQA, JUMP },           // 5C
-  { JNCA, JUMP },           // 5D
-  { JAOA, JUMP },           // 5E
-  { NOPA, IMP },            // 5F
-
-  { ADD, ADIR },            // 60
-  { ADD, ADIR },            // 61
-  { ADD, ADIR },            // 62
-  { ADD, ADIR },            // 63
-  { ADD, ADIR },            // 64
-  { ADD, ADIR },            // 65
-  { ADD, ADIR },            // 66
-  { ADD, ADIR },            // 67
-  { ADD, ADIR },            // 68
-  { ADD, ADIR },            // 69
-  { ADD, ADIR },            // 6A
-  { ADD, ADIR },            // 6B
-  { ADD, ADIR },            // 6C
-  { ADD, ADIR },            // 6D
-  { ADD, ADIR },            // 6E
-  { ADD, ADIR },            // 6F
-
-  { SUB, ADIR },            // 70
-  { SUB, ADIR },            // 71
-  { SUB, ADIR },            // 72
-  { SUB, ADIR },            // 73
-  { SUB, ADIR },            // 74
-  { SUB, ADIR },            // 75
-  { SUB, ADIR },            // 76
-  { SUB, ADIR },            // 77
-  { SUB, ADIR },            // 78
-  { SUB, ADIR },            // 79
-  { SUB, ADIR },            // 7A
-  { SUB, ADIR },            // 7B
-  { SUB, ADIR },            // 7C
-  { SUB, ADIR },            // 7D
-  { SUB, ADIR },            // 7E
-  { SUB, ADIR },            // 7F
-
-  { LDP, IM4  },            // 80
-  { LDP, IM4  },            // 81
-  { LDP, IM4  },            // 82
-  { LDP, IM4  },            // 83
-  { LDP, IM4  },            // 84
-  { LDP, IM4  },            // 85
-  { LDP, IM4  },            // 86
-  { LDP, IM4  },            // 87
-  { LDP, IM4  },            // 88
-  { LDP, IM4  },            // 89
-  { LDP, IM4  },            // 8A
-  { LDP, IM4  },            // 8B
-  { LDP, IM4  },            // 8C
-  { LDP, IM4  },            // 8D
-  { LDP, IM4  },            // 8E
-  { LDP, IM4  },            // 8F
-
-  { OUT, ADIR },            // 90
-  { OUT, ADIR },            // 91
-  { OUT, ADIR },            // 92
-  { OUT, ADIR },            // 93
-  { OUT, ADIR },            // 94
-  { OUT, ADIR },            // 95
-  { OUT, ADIR },            // 96
-  { OUT, ADIR },            // 97
-  { OUT, ADIR },            // 98
-  { OUT, ADIR },            // 99
-  { OUT, ADIR },            // 9A
-  { OUT, ADIR },            // 9B
-  { OUT, ADIR },            // 9C
-  { OUT, ADIR },            // 9D
-  { OUT, ADIR },            // 9E
-  { OUT, ADIR },            // 9F
-
-  { LDA, ADIR },            // A0
-  { LDA, ADIR },            // A1
-  { LDA, ADIR },            // A2
-  { LDA, ADIR },            // A3
-  { LDA, ADIR },            // A4
-  { LDA, ADIR },            // A5
-  { LDA, ADIR },            // A6
-  { LDA, ADIR },            // A7
-  { LDA, ADIR },            // A8
-  { LDA, ADIR },            // A9
-  { LDA, ADIR },            // AA
-  { LDA, ADIR },            // AB
-  { LDA, ADIR },            // AC
-  { LDA, ADIR },            // AD
-  { LDA, ADIR },            // AE
-  { LDA, ADIR },            // AF
-
-  { CMP, ADIR },            // B0
-  { CMP, ADIR },            // B1
-  { CMP, ADIR },            // B2
-  { CMP, ADIR },            // B3
-  { CMP, ADIR },            // B4
-  { CMP, ADIR },            // B5
-  { CMP, ADIR },            // B6
-  { CMP, ADIR },            // B7
-  { CMP, ADIR },            // B8
-  { CMP, ADIR },            // B9
-  { CMP, ADIR },            // BA
-  { CMP, ADIR },            // BB
-  { CMP, ADIR },            // BC
-  { CMP, ADIR },            // BD
-  { CMP, ADIR },            // BE
-  { CMP, ADIR },            // BF
-
-  { LDI, DIR  },            // C0
-  { LDI, DIR  },            // C1
-  { LDI, DIR  },            // C2
-  { LDI, DIR  },            // C3
-  { LDI, DIR  },            // C4
-  { LDI, DIR  },            // C5
-  { LDI, DIR  },            // C6
-  { LDI, DIR  },            // C7
-  { LDI, DIR  },            // C8
-  { LDI, DIR  },            // C9
-  { LDI, DIR  },            // CA
-  { LDI, DIR  },            // CB
-  { LDI, DIR  },            // CC
-  { LDI, DIR  },            // CD
-  { LDI, DIR  },            // CE
-  { LDI, DIR  },            // CF
-
-  { STA, ADIR },            // D0
-  { STA, ADIR },            // D1
-  { STA, ADIR },            // D2
-  { STA, ADIR },            // D3
-  { STA, ADIR },            // D4
-  { STA, ADIR },            // D5
-  { STA, ADIR },            // D6
-  { STA, ADIR },            // D7
-  { STA, ADIR },            // D8
-  { STA, ADIR },            // D9
-  { STA, ADIR },            // DA
-  { STA, ADIR },            // DB
-  { STA, ADIR },            // DC
-  { STA, ADIR },            // DD
-  { STA, ADIR },            // DE
-  { STA, ADIR },            // DF
-
-  { VDR, IMP  },            // E0
-  { LDJ, IRG  },            // E1
-  { XLT, AXLT },            // E2
-  { MUL, IRG  },            // E3
-  { LLT, IMP  },            // E4
-  { WAI, IMP  },            // E5
-  { STA, AIRG },            // E6
-  { ADD, AIRG },            // E7
-  { SUB, AIRG },            // E8
-  { AND, AIRG },            // E9
-  { LDA, AIRG },            // EA
-  { LSR, ACC  },            // EB
-  { LSL, ACC  },            // EC
-  { ASR, ACC  },            // ED
-  { ASRD, IMP },            // EE
-  { LSLD, IMP },            // EF
-
-  { VIN, IMP  },            // F0
-  { LDJ, IRG  },            // F1
-  { XLT, AXLT },            // F2
-  { MUL, IRG  },            // F3
-  { LLT, IMP  },            // F4
-  { WAI, IMP  },            // F5
-  { STA, AIRG },            // F6
-  { AWD, AIRG },            // F7
-  { SUB, AIRG },            // F8
-  { AND, AIRG },            // F9
-  { LDA, AIRG },            // FA
-  { LSR, ACC  },            // FB
-  { LSL, ACC  },            // FC
-  { ASR, ACC  },            // FD
-  { ASRD, IMP },            // FE
-  { LSLD, IMP }             // FF
-};
 
 unsigned DasmCCPU(char *buffer, unsigned pc)
 {
-	char ambuffer [ 40 ];	/* text buffer for addressing mode values */
-	CINEBYTE opcode;
-	CINEBYTE opsize = 1;
+	unsigned startpc = pc;
+	UINT8 opcode = cpu_readop(pc++);
+	UINT8 tempval;
 
-	/* which opcode in opcode table? (includes immediate data) */
-	opcode = CCPU_FETCH (pc);
-
-	/* build addressing mode (value to opcode) */
-	memset(ambuffer, 0, sizeof(ambuffer));
-	switch (amodes [ opcode_table [ opcode ].ot_amode ].ad_amode)
+	switch (opcode)
 	{
-	/* 4-bit immediate value */
-	case AIM4:
-	case IM4:
-		sprintf (ambuffer, "#$%X", opcode & 0x0F);
-		break;
+		/* LDAI */
+		case 0x00:	case 0x01:	case 0x02:	case 0x03:
+		case 0x04:	case 0x05:	case 0x06:	case 0x07:
+		case 0x08:	case 0x09:	case 0x0a:	case 0x0b:
+		case 0x0c:	case 0x0d:	case 0x0e:	case 0x0f:
+			sprintf(buffer, "LDAI $%X", opcode & 0x0f);
+			break;
 
-	/* 4-bit extended immediate value */
-	case AIM4X:
-		sprintf (ambuffer, "#$%X", (opcode & 0x0F) << 8);
-		break;
+		/* INP */
+		case 0x10:	case 0x11:	case 0x12:	case 0x13:
+		case 0x14:	case 0x15:	case 0x16:	case 0x17:
+		case 0x18:	case 0x19:	case 0x1a:	case 0x1b:
+		case 0x1c:	case 0x1d:	case 0x1e:	case 0x1f:
+			sprintf(buffer, "INP  $%X", opcode & 0x0f);
+			break;
+		
+		/* A8I */
+		case 0x20:
+			sprintf(buffer, "A8I  $%X", cpu_readop(pc++));
+			break;
+		
+		/* A4I */
+		case 0x21:	case 0x22:	case 0x23:
+		case 0x24:	case 0x25:	case 0x26:	case 0x27:
+		case 0x28:	case 0x29:	case 0x2a:	case 0x2b:
+		case 0x2c:	case 0x2d:	case 0x2e:	case 0x2f:
+			sprintf(buffer, "A4I  $%X", opcode & 0x0f);
+			break;
 
-	/* 8-bit immediate value */
-	case AIM8:
-		sprintf (ambuffer, "#$%02X", CCPU_FETCH (pc + 1));
-		opsize ++; /* required second byte for value */
-		break;
+		/* S8I */
+		case 0x30:
+			sprintf(buffer, "S8I  $%X", cpu_readop(pc++));
+			break;
+		
+		/* S4I */
+		case 0x31:	case 0x32:	case 0x33:
+		case 0x34:	case 0x35:	case 0x36:	case 0x37:
+		case 0x38:	case 0x39:	case 0x3a:	case 0x3b:
+		case 0x3c:	case 0x3d:	case 0x3e:	case 0x3f:
+			sprintf(buffer, "S4I  $%X", opcode & 0x0f);
+			break;
 
-	/* [m] -- indirect through memory */
-	case AINDM:
-		sprintf (ambuffer, "AINDM/Error");
-		break;
+		/* LPAI */
+		case 0x40:	case 0x41:	case 0x42:	case 0x43:
+		case 0x44:	case 0x45:	case 0x46:	case 0x47:
+		case 0x48:	case 0x49:	case 0x4a:	case 0x4b:
+		case 0x4c:	case 0x4d:	case 0x4e:	case 0x4f:
+			tempval = cpu_readop(pc++);
+			sprintf(buffer, "LPAI $%03X", (opcode & 0x0f) + (tempval & 0xf0) + ((tempval & 0x0f) << 8));
+			break;
+		
+		/* T4K */
+		case 0x50:
+			sprintf(buffer, "T4K");
+			break;
+		
+		/* JMIB/JEHB */
+		case 0x51:
+			sprintf(buffer, "JMIB/JEHB");
+			break;
+		
+		/* JVNB */
+		case 0x52:
+			sprintf(buffer, "JVNB");
+			break;
+		
+		/* JLTB */
+		case 0x53:
+			sprintf(buffer, "JLTB");
+			break;
+		
+		/* JEQB */
+		case 0x54:
+			sprintf(buffer, "JEQB");
+			break;
+		
+		/* JCZB */
+		case 0x55:
+			sprintf(buffer, "JCZB");
+			break;
+		
+		/* JOSB */
+		case 0x56:
+			sprintf(buffer, "JOSB");
+			break;
 
-	/* [i] -- indirect through 'I' */
-	case AIRG:
-	case IRG:
-		sprintf (ambuffer, "[i]");
-		break;
+		/* SSA */
+		case 0x57:
+			sprintf(buffer, "SSA");
+			break;
 
-	/* extended 12-bit immediate value */
-	case AIMX:
-		sprintf (ambuffer, "AIMX/Error");
-		break;
+		/* JMP */
+		case 0x58:
+			sprintf(buffer, "JMP");
+			break;
+		
+		/* JMI/JEH */
+		case 0x59:
+			sprintf(buffer, "JMI/JEH");
+			break;
+		
+		/* JVN */
+		case 0x5a:
+			sprintf(buffer, "JVN");
+			break;
+		
+		/* JLT */
+		case 0x5b:
+			sprintf(buffer, "JLT");
+			break;
+		
+		/* JEQ */
+		case 0x5c:
+			sprintf(buffer, "JEQ");
+			break;
+		
+		/* JCZ */
+		case 0x5d:
+			sprintf(buffer, "JCZ");
+			break;
+		
+		/* JOS */
+		case 0x5e:
+			sprintf(buffer, "JOS");
+			break;
 
-	/* no special params */
-	case ACC:
-	case AXLT:
-	case IMP:
-		ambuffer [ 0 ] = '\0';
-		break;
+		/* NOP */
+		case 0x5f:
+			sprintf(buffer, "NOP");
+			break;
 
-	/* 12-bit immediate value */
-	case IM12:
-		sprintf (ambuffer, "#$%03X",
-			(CCPU_FETCH (pc) & 0x0F) +
-			(CCPU_FETCH (pc + 1) & 0xF0) +
-			((CCPU_FETCH (pc + 1) & 0x0F) << 8));
-		opsize ++;
-		break;
+		/* ADD */
+		case 0x60:	case 0x61:	case 0x62:	case 0x63:
+		case 0x64:	case 0x65:	case 0x66:	case 0x67:
+		case 0x68:	case 0x69:	case 0x6a:	case 0x6b:
+		case 0x6c:	case 0x6d:	case 0x6e:	case 0x6f:
+			sprintf(buffer, "ADD  $%X", opcode & 0x0f);
+			break;
 
-	/* display address of direct addressing modes */
-	case ADIR:
-	case DIR:
-		sprintf (ambuffer, "$%X", opcode & 0x0F);
-		break;
+		/* SUB n */
+		case 0x70:	case 0x71:	case 0x72:	case 0x73:
+		case 0x74:	case 0x75:	case 0x76:	case 0x77:
+		case 0x78:	case 0x79:	case 0x7a:	case 0x7b:
+		case 0x7c:	case 0x7d:	case 0x7e:	case 0x7f:
+			sprintf(buffer, "SUB  $%X", opcode & 0x0f);
+			break;
 
-	/* jump through J register */
-	case JUMP:
-		sprintf (ambuffer, "<jump>");
-		break;
+		/* SETP n */
+		case 0x80:	case 0x81:	case 0x82:	case 0x83:
+		case 0x84:	case 0x85:	case 0x86:	case 0x87:
+		case 0x88:	case 0x89:	case 0x8a:	case 0x8b:
+		case 0x8c:	case 0x8d:	case 0x8e:	case 0x8f:
+			sprintf(buffer, "SETP $%X", opcode & 0x0f);
+			break;
 
-	/* extended jump */
-	case JUMPX:
-		sprintf (ambuffer, "JUMPX/Error");
-		break;
+		/* OUT */
+		case 0x90:	case 0x91:	case 0x92:	case 0x93:
+		case 0x94:	case 0x95:	case 0x96:	case 0x97:
+		case 0x98:	case 0x99:	case 0x9a:	case 0x9b:
+		case 0x9c:	case 0x9d:	case 0x9e:	case 0x9f:
+			sprintf(buffer, "OUT  $%X", opcode & 0x0f);
+			break;
+			
+		/* LDA */
+		case 0xa0:	case 0xa1:	case 0xa2:	case 0xa3:
+		case 0xa4:	case 0xa5:	case 0xa6:	case 0xa7:
+		case 0xa8:	case 0xa9:	case 0xaa:	case 0xab:
+		case 0xac:	case 0xad:	case 0xae:	case 0xaf:
+			sprintf(buffer, "LDA  $%X", opcode & 0x0f);
+			break;
+			
+		/* CMP */
+		case 0xb0:	case 0xb1:	case 0xb2:	case 0xb3:
+		case 0xb4:	case 0xb5:	case 0xb6:	case 0xb7:
+		case 0xb8:	case 0xb9:	case 0xba:	case 0xbb:
+		case 0xbc:	case 0xbd:	case 0xbe:	case 0xbf:
+			sprintf(buffer, "TST  $%X", opcode & 0x0f);
+			break;
 
-	} /* switch on addressing mode */
-
-#if 0
-    /* build flags dump */
-	sprintf (flbuffer,
-	    "A=%03X B=%03X I=%03XZ J=%03X P=%X " \
-	    "A0=%02X %02X N%X O%X %c%c%c%c",
-	    register_A, register_B,
-	    register_I << 1,               /* use the <<1 for Zonn style */
-	    register_J, register_P, GETA0(),
-	    GETFC() /* ? 'C' : 'c' */,
-	    cmp_new, cmp_old,
-	    ((state == state_A) || (state == state_AA)) ? 'A' : ' ',
-	    (state == state_AA) ? 'A' : ' ',
-	    ((state == state_B) || (state == state_BB)) ? 'B' : ' ',
-	    (state == state_BB) ? 'B' : ' ');
-#endif
-
-	/* create final output */
-	sprintf (buffer, "%-5s%s",
-		opcodes [ opcode_table [ opcode ].ot_opcode ].od_name, ambuffer);
-
-	return opsize;
+		/* WS */
+		case 0xc0:	case 0xc1:	case 0xc2:	case 0xc3:
+		case 0xc4:	case 0xc5:	case 0xc6:	case 0xc7:
+		case 0xc8:	case 0xc9:	case 0xca:	case 0xcb:
+		case 0xcc:	case 0xcd:	case 0xce:	case 0xcf:
+			sprintf(buffer, "WS   $%X", opcode & 0x0f);
+			break;
+			
+		/* STA n */
+		case 0xd0:	case 0xd1:	case 0xd2:	case 0xd3:
+		case 0xd4:	case 0xd5:	case 0xd6:	case 0xd7:
+		case 0xd8:	case 0xd9:	case 0xda:	case 0xdb:
+		case 0xdc:	case 0xdd:	case 0xde:	case 0xdf:
+			sprintf(buffer, "STA  $%X", opcode & 0x0f);
+			break;
+		
+		/* DV */
+		case 0xe0:
+			sprintf(buffer, "DV");
+			break;
+		
+		/* LPAP */
+		case 0xe1:
+			sprintf(buffer, "LPAP");
+			break;
+		
+		/* WSP */
+		case 0xf1:
+			sprintf(buffer, "WSP");
+			break;
+		
+		/* LKP */
+		case 0xe2:
+		case 0xf2:
+			sprintf(buffer, "LKP");
+			break;
+		
+		/* MUL */
+		case 0xe3:
+		case 0xf3:
+			sprintf(buffer, "MUL");
+			break;
+		
+		/* NV */
+		case 0xe4:
+		case 0xf4:
+			sprintf(buffer, "NV");
+			break;
+			
+		/* FRM */
+		case 0xe5:
+		case 0xf5:
+			sprintf(buffer, "FRM");
+			break;
+		
+		/* STAP */
+		case 0xe6:
+		case 0xf6:
+			sprintf(buffer, "STAP");
+			break;
+		
+		/* CST */
+		case 0xf7:
+			sprintf(buffer, "CST");
+			break;
+			
+		/* ADDP */
+		case 0xe7:
+			sprintf(buffer, "ADDP");
+			break;
+		
+		/* SUBP */
+		case 0xe8:
+		case 0xf8:
+			sprintf(buffer, "SUBP");
+			break;
+		
+		/* ANDP */
+		case 0xe9:
+		case 0xf9:
+			sprintf(buffer, "ANDP");
+			break;
+		
+		/* LDAP */
+		case 0xea:
+		case 0xfa:
+			sprintf(buffer, "LDAP");
+			break;
+		
+		/* SHR */
+		case 0xeb:
+		case 0xfb:
+			sprintf(buffer, "SHR");
+			break;
+		
+		/* SHL */
+		case 0xec:
+		case 0xfc:
+			sprintf(buffer, "SHL");
+			break;
+		
+		/* ASR */
+		case 0xed:
+		case 0xfd:
+			sprintf(buffer, "ASR");
+			break;
+		
+		/* SHRB */
+		case 0xee:
+		case 0xfe:
+			sprintf(buffer, "SHRB");
+			break;
+		
+		/* SHLB */
+		case 0xef:
+		case 0xff:
+			sprintf(buffer, "SHLB");
+			break;
+		
+		/* IV */
+		case 0xf0:
+			sprintf(buffer, "IV");
+			break;
+	}
+	
+	return pc - startpc;
 }

@@ -288,6 +288,7 @@ union cpuinfo
 {
 	INT64	i;											/* generic integers */
 	void *	p;											/* generic pointers */
+	genf *  f;											/* generic function pointers */
 	char *	s;											/* generic strings */
 
 	void	(*setinfo)(UINT32 state, union cpuinfo *info);/* CPUINFO_PTR_SET_INFO */
@@ -398,11 +399,13 @@ void cpuintrf_set_dasm_override(offs_t (*dasm_override)(int cpunum, char *buffer
 /* get info accessors */
 INT64 activecpu_get_info_int(UINT32 state);
 void *activecpu_get_info_ptr(UINT32 state);
+genf *activecpu_get_info_fct(UINT32 state);
 const char *activecpu_get_info_string(UINT32 state);
 
 /* set info accessors */
 void activecpu_set_info_int(UINT32 state, INT64 data);
 void activecpu_set_info_ptr(UINT32 state, void *data);
+void activecpu_set_info_fct(UINT32 state, genf *data);
 
 /* apply a +/- to the current icount */
 void activecpu_adjust_icount(int delta);
@@ -445,7 +448,7 @@ const char *activecpu_dump_state(void);
 #define activecpu_addrbus_width(space)			activecpu_get_info_int(CPUINFO_INT_ADDRBUS_WIDTH + (space))
 #define activecpu_addrbus_shift(space)			activecpu_get_info_int(CPUINFO_INT_ADDRBUS_SHIFT + (space))
 #define activecpu_get_reg(reg)					activecpu_get_info_int(CPUINFO_INT_REGISTER + (reg))
-#define activecpu_irq_callback()				activecpu_get_info_ptr(CPUINFO_PTR_IRQ_CALLBACK)
+#define activecpu_irq_callback()				activecpu_get_info_fct(CPUINFO_PTR_IRQ_CALLBACK)
 #define activecpu_register_layout()				activecpu_get_info_ptr(CPUINFO_PTR_REGISTER_LAYOUT)
 #define activecpu_window_layout()				activecpu_get_info_ptr(CPUINFO_PTR_WINDOW_LAYOUT)
 #define activecpu_name()						activecpu_get_info_string(CPUINFO_STR_NAME)
@@ -458,7 +461,7 @@ const char *activecpu_dump_state(void);
 #define activecpu_reg_string(reg)				activecpu_get_info_string(CPUINFO_STR_REGISTER + (reg))
 
 #define activecpu_set_reg(reg, val)				activecpu_set_info_int(CPUINFO_INT_REGISTER + (reg), (val))
-#define activecpu_set_irq_callback(val)			activecpu_set_info_ptr(CPUINFO_PTR_IRQ_CALLBACK, (void *) (val))
+#define activecpu_set_irq_callback(val)			activecpu_set_info_fct(CPUINFO_PTR_IRQ_CALLBACK, (genf *) (val))
 
 
 
@@ -471,11 +474,13 @@ const char *activecpu_dump_state(void);
 /* get info accessors */
 INT64 cpunum_get_info_int(int cpunum, UINT32 state);
 void *cpunum_get_info_ptr(int cpunum, UINT32 state);
+genf *cpunum_get_info_fct(int cpunum, UINT32 state);
 const char *cpunum_get_info_string(int cpunum, UINT32 state);
 
 /* set info accessors */
 void cpunum_set_info_int(int cpunum, UINT32 state, INT64 data);
 void cpunum_set_info_ptr(int cpunum, UINT32 state, void *data);
+void cpunum_set_info_fct(int cpunum, UINT32 state, genf *data);
 
 /* execute the requested cycles on a given CPU */
 int cpunum_execute(int cpunum, int cycles);
@@ -519,7 +524,7 @@ const char *cpunum_dump_state(int cpunum);
 #define cpunum_addrbus_width(cpunum, space)		cpunum_get_info_int(cpunum, CPUINFO_INT_ADDRBUS_WIDTH + (space))
 #define cpunum_addrbus_shift(cpunum, space)		cpunum_get_info_int(cpunum, CPUINFO_INT_ADDRBUS_SHIFT + (space))
 #define cpunum_get_reg(cpunum, reg)				cpunum_get_info_int(cpunum, CPUINFO_INT_REGISTER + (reg))
-#define cpunum_irq_callback(cpunum)				cpunum_get_info_ptr(cpunum, CPUINFO_PTR_IRQ_CALLBACK)
+#define cpunum_irq_callback(cpunum)				cpunum_get_info_fct(cpunum, CPUINFO_PTR_IRQ_CALLBACK)
 #define cpunum_register_layout(cpunum)			cpunum_get_info_ptr(cpunum, CPUINFO_PTR_REGISTER_LAYOUT)
 #define cpunum_window_layout(cpunum)			cpunum_get_info_ptr(cpunum, CPUINFO_PTR_WINDOW_LAYOUT)
 #define cpunum_name(cpunum)						cpunum_get_info_string(cpunum, CPUINFO_STR_NAME)
@@ -532,7 +537,7 @@ const char *cpunum_dump_state(int cpunum);
 #define cpunum_reg_string(cpunum, reg)			cpunum_get_info_string(cpunum, CPUINFO_STR_REGISTER + (reg))
 
 #define cpunum_set_reg(cpunum, reg, val)		cpunum_set_info_int(cpunum, CPUINFO_INT_REGISTER + (reg), (val))
-#define cpunum_set_irq_callback(cpunum, val)	cpunum_set_info_ptr(cpunum, CPUINFO_PTR_IRQ_CALLBACK, (val)
+#define cpunum_set_irq_callback(cpunum, val)	cpunum_set_info_fct(cpunum, CPUINFO_PTR_IRQ_CALLBACK, (val)
 
 
 
@@ -545,6 +550,7 @@ const char *cpunum_dump_state(int cpunum);
 /* get info accessors */
 INT64 cputype_get_info_int(int cputype, UINT32 state);
 void *cputype_get_info_ptr(int cputype, UINT32 state);
+genf *cputype_get_info_fct(int cputype, UINT32 state);
 const char *cputype_get_info_string(int cputype, UINT32 state);
 
 #define cputype_context_size(cputype)			cputype_get_info_int(cputype, CPUINFO_INT_CONTEXT_SIZE)
@@ -560,7 +566,7 @@ const char *cputype_get_info_string(int cputype, UINT32 state);
 #define cputype_databus_width(cputype, space)	cputype_get_info_int(cputype, CPUINFO_INT_DATABUS_WIDTH + (space))
 #define cputype_addrbus_width(cputype, space)	cputype_get_info_int(cputype, CPUINFO_INT_ADDRBUS_WIDTH + (space))
 #define cputype_addrbus_shift(cputype, space)	cputype_get_info_int(cputype, CPUINFO_INT_ADDRBUS_SHIFT + (space))
-#define cputype_irq_callback(cputype)			cputype_get_info_ptr(cputype, CPUINFO_PTR_IRQ_CALLBACK)
+#define cputype_irq_callback(cputype)			cputype_get_info_fct(cputype, CPUINFO_PTR_IRQ_CALLBACK)
 #define cputype_register_layout(cputype)		cputype_get_info_ptr(cputype, CPUINFO_PTR_REGISTER_LAYOUT)
 #define cputype_window_layout(cputype)			cputype_get_info_ptr(cputype, CPUINFO_PTR_WINDOW_LAYOUT)
 #define cputype_name(cputype)					cputype_get_info_string(cputype, CPUINFO_STR_NAME)
@@ -579,10 +585,6 @@ const char *cputype_get_info_string(int cputype, UINT32 state);
 
 /* dump the states of all CPUs */
 void cpu_dump_states(void);
-
-/* set a callback function for reset on the 68k */
-void cpu_set_m68k_reset(int cpunum, void (*resetfn)(void));
-
 
 
 /*************************************

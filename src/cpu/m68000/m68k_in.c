@@ -4172,6 +4172,8 @@ M68KMAKE_OP(cmpi, 32, ., d)
 	uint dst = DY;
 	uint res = dst - src;
 
+	m68ki_cmpild_callback(src, REG_IR & 7);		   /* auto-disable (see m68kcpu.h) */
+
 	FLAG_N = NFLAG_32(res);
 	FLAG_Z = MASK_OUT_ABOVE_32(res);
 	FLAG_V = VFLAG_SUB_32(src, dst, res);
@@ -9022,6 +9024,7 @@ M68KMAKE_OP(rte, 32, ., .)
 		uint new_pc;
 		uint format_word;
 
+		m68ki_rte_callback();		   /* auto-disable (see m68kcpu.h) */
 		m68ki_trace_t0();			   /* auto-disable (see m68kcpu.h) */
 
 		if(CPU_TYPE_IS_000(CPU_TYPE))

@@ -710,7 +710,7 @@ int voodoo_start_common(void)
 	for (i = 0; i < 65536; i++)
 	{
 		UINT32 bits = (i << 16) | 0x8000;
-		float fval = *(float *)&bits;
+		float fval = u2f(bits);
 		
 		if (fval <= 0)
 			lod_lookup[i] = 0;
@@ -1483,7 +1483,7 @@ WRITE32_HANDLER( voodoo_regs_w )
 		if (regnum < fvertexAx || regnum > fdWdY)
 			logerror("%06X:voodoo %s(%d) write = %08X\n", memory_fifo_in_process ? 0 : activecpu_get_pc(), (regnum < 0x384/4) ? voodoo_reg_name[regnum] : "oob", chips, data);
 		else
-			logerror("%06X:voodoo %s(%d) write = %f\n", memory_fifo_in_process ? 0 : activecpu_get_pc(), (regnum < 0x384/4) ? voodoo_reg_name[regnum] : "oob", chips, *(float *)&data);
+			logerror("%06X:voodoo %s(%d) write = %f\n", memory_fifo_in_process ? 0 : activecpu_get_pc(), (regnum < 0x384/4) ? voodoo_reg_name[regnum] : "oob", chips, u2f(data));
 	}
 }
 
@@ -1738,8 +1738,8 @@ static UINT32 cmdfifo_execute(UINT32 *fifobase, offs_t readptr)
 			voodoo_regs[sSetupMode] = ((command >> 10) & 0xfff) | ((command >> 6) & 0xf0000);
 			for (i = 0; i < count; i++)
 			{
-				setup_pending.x = (INT16)TRUNC_TO_INT(*(float *)src++ * 16. + 0.5) * (1. / 16.);
-				setup_pending.y = (INT16)TRUNC_TO_INT(*(float *)src++ * 16. + 0.5) * (1. / 16.);
+				setup_pending.x = (INT16)TRUNC_TO_INT(u2f(*src++) * 16. + 0.5) * (1. / 16.);
+				setup_pending.y = (INT16)TRUNC_TO_INT(u2f(*src++) * 16. + 0.5) * (1. / 16.);
 
 				if (command & 0x10000000)
 				{
@@ -1916,7 +1916,7 @@ static void voodoo2_handle_register_w(offs_t offset, data32_t data)
 		if (regnum < fvertexAx || regnum > fdWdY)
 			logerror("%06X:voodoo %s(%d) write = %08X\n", memory_fifo_in_process ? 0 : activecpu_get_pc(), (regnum < 0x384/4) ? voodoo_reg_name[regnum] : "oob", chips, data);
 		else
-			logerror("%06X:voodoo %s(%d) write = %f\n", memory_fifo_in_process ? 0 : activecpu_get_pc(), (regnum < 0x384/4) ? voodoo_reg_name[regnum] : "oob", chips, *(float *)&data);
+			logerror("%06X:voodoo %s(%d) write = %f\n", memory_fifo_in_process ? 0 : activecpu_get_pc(), (regnum < 0x384/4) ? voodoo_reg_name[regnum] : "oob", chips, u2f(data));
 	}
 }
 
@@ -1996,7 +1996,7 @@ WRITE32_HANDLER( voodoo2_regs_w )
 	if (LOG_CMDFIFO_VERBOSE) 
 	{
 		if ((cmdfifo[voodoo_regs[cmdFifoRdPtr]/4] & 7) == 3)
-			logerror("CMDFIFO(%06X)=%f  (min=%06X max=%06X d=%d h=%d)\n", addr, *(float *)&data, voodoo_regs[cmdFifoAMin], voodoo_regs[cmdFifoAMax], voodoo_regs[cmdFifoDepth], voodoo_regs[cmdFifoHoles]);
+			logerror("CMDFIFO(%06X)=%f  (min=%06X max=%06X d=%d h=%d)\n", addr, u2f(data), voodoo_regs[cmdFifoAMin], voodoo_regs[cmdFifoAMax], voodoo_regs[cmdFifoDepth], voodoo_regs[cmdFifoHoles]);
 		else if ((cmdfifo[voodoo_regs[cmdFifoRdPtr]/4] & 7) != 5)
 			logerror("CMDFIFO(%06X)=%08X  (min=%06X max=%06X d=%d h=%d)\n", addr, data, voodoo_regs[cmdFifoAMin], voodoo_regs[cmdFifoAMax], voodoo_regs[cmdFifoDepth], voodoo_regs[cmdFifoHoles]);
 	}

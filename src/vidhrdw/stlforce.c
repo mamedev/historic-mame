@@ -111,64 +111,97 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 	const UINT16 *source = stlforce_spriteram+0x0;
 	const UINT16 *finish = stlforce_spriteram+0x800;
 	const struct GfxElement *gfx = Machine->gfx[2];
+	int ypos, xpos, attr, num;
 
 	while( source<finish )
 	{
-		int ypos = source[0]& 0x01ff;
-		int attr = source[1]& 0x000f;
-		int xpos = source[3]& 0x03ff;
-		int num = (source[2] & 0x1fff);
+		if(source[0] & 0x0800)
+		{
+			ypos = source[0]& 0x01ff;
+			attr = source[1]& 0x000f;
+			xpos = source[3]& 0x03ff;
+			num = (source[2] & 0x1fff);
 
-		ypos = 512-ypos;
+			ypos = 512-ypos;
 
-		drawgfx(
-				bitmap,
-				gfx,
-				num,
-				64+attr,
-				0,0,
-				xpos,ypos,
-				cliprect,
-				TRANSPARENCY_PEN,0
-				);
+			drawgfx( bitmap,
+					 gfx,
+					 num,
+					 64+attr,
+					 0,0,
+					 xpos,ypos,
+					 cliprect,
+					 TRANSPARENCY_PEN,0 );
+		}
+
 		source += 0x4;
 	}
 }
 
 VIDEO_UPDATE( stlforce )
 {
+	int i;
+	if(stlforce_vidattrram[6] & 1)
+	{
+		for(i=0;i<256;i++)
+			tilemap_set_scrollx(stlforce_bg_tilemap, i, stlforce_bg_scrollram[i]+8);
+	}
+	else
+	{
+		for(i=0;i<256;i++)
+			tilemap_set_scrollx(stlforce_bg_tilemap, i, stlforce_bg_scrollram[0]+8);
+	}
 
-	tilemap_set_scrollx( stlforce_bg_tilemap, 0, stlforce_bg_scrollram[0]+8);
-	tilemap_set_scrolly( stlforce_bg_tilemap, 0, stlforce_vidattrram[1] );
+	if(stlforce_vidattrram[6] & 4)
+	{
+		for(i=0;i<256;i++)
+			tilemap_set_scrollx(stlforce_mlow_tilemap, i, stlforce_mlow_scrollram[i]+8);
+	}
+	else
+	{
+		for(i=0;i<256;i++)
+			tilemap_set_scrollx(stlforce_mlow_tilemap, i, stlforce_mlow_scrollram[0]+8);
+	}
 
-	tilemap_set_scrollx( stlforce_mlow_tilemap, 0, stlforce_mlow_scrollram[0]+8 );
-	tilemap_set_scrolly( stlforce_mlow_tilemap, 0, stlforce_vidattrram[2] );
+	if(stlforce_vidattrram[6] & 0x10)
+	{
+		for(i=0;i<256;i++)
+			tilemap_set_scrollx(stlforce_mhigh_tilemap, i, stlforce_mhigh_scrollram[i]+8);
+	}
+	else
+	{
+		for(i=0;i<256;i++)
+			tilemap_set_scrollx(stlforce_mhigh_tilemap, i, stlforce_mhigh_scrollram[0]+8);
+	}
 
-	tilemap_set_scrollx( stlforce_mhigh_tilemap, 0, stlforce_mhigh_scrollram[0]+8);
-	tilemap_set_scrolly( stlforce_mhigh_tilemap, 0, stlforce_vidattrram[3] );
+	tilemap_set_scrolly(stlforce_bg_tilemap, 0, stlforce_vidattrram[1]);
+	tilemap_set_scrolly(stlforce_mlow_tilemap, 0, stlforce_vidattrram[2]);
+	tilemap_set_scrolly(stlforce_mhigh_tilemap, 0, stlforce_vidattrram[3]);
 
+	tilemap_set_scrollx(stlforce_tx_tilemap, 0, stlforce_vidattrram[0]+8);
+	tilemap_set_scrolly(stlforce_tx_tilemap, 0, stlforce_vidattrram[4]);
 
 	tilemap_draw(bitmap,cliprect,stlforce_bg_tilemap,0,0);
 	tilemap_draw(bitmap,cliprect,stlforce_mlow_tilemap,0,0);
 	tilemap_draw(bitmap,cliprect,stlforce_mhigh_tilemap,0,0);
-	draw_sprites(bitmap, cliprect);
+	draw_sprites(bitmap,cliprect);
 	tilemap_draw(bitmap,cliprect,stlforce_tx_tilemap,0,0);
-
-//usrintf_showmessage	("Regs %04x, %04x, %04x, %04x, %04", stlforce_vidattrram[0tlforce_tx_scrollram], stlforce_vidattrram[4],stlforce_vidattrram[5],stlforce_vidattrram[6],stlforce_vidattrram[7] );
 }
 
 VIDEO_START( stlforce )
 {
-	stlforce_bg_tilemap = tilemap_create(get_stlforce_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE, 16, 16,64,16);
+	stlforce_bg_tilemap    = tilemap_create(get_stlforce_bg_tile_info,   tilemap_scan_cols,TILEMAP_OPAQUE,      16,16,64,16);
+	stlforce_mlow_tilemap  = tilemap_create(get_stlforce_mlow_tile_info, tilemap_scan_cols,TILEMAP_TRANSPARENT, 16,16,64,16);
+	stlforce_mhigh_tilemap = tilemap_create(get_stlforce_mhigh_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT, 16,16,64,16);
+	stlforce_tx_tilemap    = tilemap_create(get_stlforce_tx_tile_info,   tilemap_scan_rows,TILEMAP_TRANSPARENT,  8, 8,64,32);
 
-	stlforce_mlow_tilemap = tilemap_create(get_stlforce_mlow_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT, 16, 16,64,16);
 	tilemap_set_transparent_pen(stlforce_mlow_tilemap,0);
-
-	stlforce_mhigh_tilemap = tilemap_create(get_stlforce_mhigh_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT, 16, 16,64,16);
 	tilemap_set_transparent_pen(stlforce_mhigh_tilemap,0);
-
-	stlforce_tx_tilemap = tilemap_create(get_stlforce_tx_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
 	tilemap_set_transparent_pen(stlforce_tx_tilemap,0);
+
+	tilemap_set_scroll_rows(stlforce_bg_tilemap, 256);
+	tilemap_set_scroll_rows(stlforce_mlow_tilemap, 256);
+	tilemap_set_scroll_rows(stlforce_mhigh_tilemap, 256);
 
 	return 0;
 }

@@ -46,7 +46,7 @@ static MACHINE_INIT( aztarac )
 
 static READ16_HANDLER( nvram_r )
 {
-	return ((data16_t *)generic_nvram)[offset] | 0xfff0;
+	return generic_nvram16[offset] | 0xfff0;
 }
 
 
@@ -86,7 +86,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x00bfff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x022000, 0x0220ff) AM_WRITE(MWA16_RAM) AM_BASE((data16_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x022000, 0x0220ff) AM_WRITE(MWA16_RAM) AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
 	AM_RANGE(0x027008, 0x027009) AM_WRITE(aztarac_sound_w)
 	AM_RANGE(0xff8000, 0xffafff) AM_WRITE(MWA16_RAM) AM_BASE(&aztarac_vectorram)
 	AM_RANGE(0xffb000, 0xffb001) AM_WRITE(aztarac_ubr_w)

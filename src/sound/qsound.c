@@ -33,6 +33,7 @@
 
 #include <math.h>
 #include "driver.h"
+#include "state.h"
 
 /*
 Two Q sound drivers:
@@ -189,6 +190,25 @@ int qsound_sh_start(const struct MachineSound *msound)
 	if (!fpRawDataR || !fpRawDataL)
 	{
 		return 1;
+	}
+#endif
+
+#if QSOUND_DRIVER1
+	/* state save (DRIVER1) */
+	for (i=0; i<QSOUND_CHANNELS; i++)
+	{
+		state_save_register_int("QSound", i, "bank", &qsound_channel[i].bank);
+		state_save_register_int("QSound", i, "address", &qsound_channel[i].address);
+		state_save_register_int("QSound", i, "pitch", &qsound_channel[i].pitch);
+		state_save_register_int("QSound", i, "loop", &qsound_channel[i].loop);
+		state_save_register_int("QSound", i, "end", &qsound_channel[i].end);
+		state_save_register_int("QSound", i, "vol", &qsound_channel[i].vol);
+		state_save_register_int("QSound", i, "pan", &qsound_channel[i].pan);
+		state_save_register_int("QSound", i, "key", &qsound_channel[i].key);
+		state_save_register_int("QSound", i, "lvol", &qsound_channel[i].lvol);
+		state_save_register_int("QSound", i, "rvol", &qsound_channel[i].rvol);
+		state_save_register_int("QSound", i, "lastdt", &qsound_channel[i].lastdt);
+		state_save_register_int("QSound", i, "offset", &qsound_channel[i].offset);
 	}
 #endif
 

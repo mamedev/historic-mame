@@ -48,6 +48,7 @@ void seibuspi_sprite_decrypt(data16_t* src, int romsize);
 
 void seibuspi_rf2_text_decrypt(unsigned char *rom);
 void seibuspi_rf2_bg_decrypt(unsigned char *rom, int size);
+void seibuspi_rf2_sprite_decrypt(data16_t* src, int romsize);
 
 VIDEO_START( spi );
 VIDEO_UPDATE( spi );
@@ -58,6 +59,7 @@ WRITE32_HANDLER( spi_fore_layer_w );
 WRITE32_HANDLER( spi_paletteram32_xBBBBBGGGGGRRRRR_w );
 READ32_HANDLER( spi_layer_bank_r );
 WRITE32_HANDLER( spi_layer_bank_w );
+READ32_HANDLER( spi_layer_enable_r );
 WRITE32_HANDLER( spi_layer_enable_w );
 
 extern UINT32 *back_ram, *mid_ram, *fore_ram, *scroll_ram;
@@ -942,6 +944,7 @@ static DRIVER_INIT( rf2 )
 {
 	seibuspi_rf2_text_decrypt(memory_region(REGION_GFX1));
 	seibuspi_rf2_bg_decrypt(memory_region(REGION_GFX2), memory_region_length(REGION_GFX2));
+	seibuspi_rf2_sprite_decrypt((data16_t*)memory_region(REGION_GFX3), 0x600000);
 }
 
 static DRIVER_INIT( rf2_eur )
@@ -1268,7 +1271,7 @@ ROM_START(rf2_us)
 	ROM_LOAD("zprg.bin", 0x000000, 0x20000, CRC(cc543c4f) SHA1(6e5c93fd3d21c594571b071d4a830211e1f162b2) )
 
 	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data */
-	ROM_LOAD("sound1.bin", 0x000000, 0x80000, CRC(20384b0e) SHA1(9c5d725418543df740f9145974ed6ffbbabee1d0) )
+	ROM_LOAD("sound1.bin", 0x100000, 0x80000, CRC(20384b0e) SHA1(9c5d725418543df740f9145974ed6ffbbabee1d0) )
 
 ROM_END
 

@@ -791,6 +791,64 @@ ROM_START( tron2 )
 ROM_END
 
 
+ROM_START( tron3 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "6-17-pga.rom", 0x0000, 0x2000, CRC(fc33afd7) SHA1(99a2ed972c3db477f35a7162079563367864f207) )
+	ROM_LOAD( "6-17-pgb.rom", 0x2000, 0x2000, CRC(7d9e22ac) SHA1(16a6e9651d5f764e8762fd8d6e53d13fda7473de) )
+	ROM_LOAD( "6-14-pgc.rom", 0x4000, 0x2000, CRC(902011c6) SHA1(17ac768a0fd1278ae83414f0d67d6ac8337f4773) )
+	ROM_LOAD( "6-17-pgd.rom", 0x6000, 0x2000, CRC(86477e89) SHA1(196f0d3930d10bfe4ddee82ce8b28bb99324069e) )
+	ROM_LOAD( "6-17-pge.rom", 0x8000, 0x2000, CRC(ea198fa8) SHA1(d8c97ea87d504e77edc38c87c2953c8c4f1a405b) )
+	ROM_LOAD( "6-17-pgf.rom", 0xa000, 0x2000, CRC(4325fb08) SHA1(70727aa37354425315d8a8b3ca07bbe91f7e8f08) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "ssi_0a.bin",   0x0000, 0x1000, CRC(765e6eba) SHA1(42efeefc8571dfc237c0be3368248f1e56add92e) )
+	ROM_LOAD( "ssi_0b.bin",   0x1000, 0x1000, CRC(1b90ccdd) SHA1(0876e5eeaa63bb8cc97f3634a6ddd8a29a9b012f) )
+	ROM_LOAD( "ssi_0c.bin",   0x2000, 0x1000, CRC(3a4bc629) SHA1(ce8452a99a313ae7429de471bbea39de08c9fd4b) )
+
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "scpu_bgg.bin", 0x00000, 0x2000, CRC(1a9ed2f5) SHA1(b0d85b47873ac8ad475da18b9540d37232cb2b7c) )
+	ROM_LOAD( "scpu_bgh.bin", 0x02000, 0x2000, CRC(3220f974) SHA1(a38ea5f1db27f05d9689db838ce7a8de98f34837) )
+
+	ROM_REGION( 0x08000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "vg_3.bin",     0x00000, 0x2000, CRC(bc036d1d) SHA1(c5d54d0b80ac768ccf6fdd32cad1ef6359fa324c) )
+	ROM_LOAD( "vg_2.bin",     0x02000, 0x2000, CRC(58ee14d3) SHA1(5fb4268c9c73bdfc3b1e866618979aea3f219bbc) )
+	ROM_LOAD( "vg_1.bin",     0x04000, 0x2000, CRC(3329f9d4) SHA1(11f4d744374e475d2c5b195a9f70888414529dd3) )
+	ROM_LOAD( "vg_0.bin",     0x06000, 0x2000, CRC(9743f873) SHA1(71ed80ecd8caaf9fce1d7010f95c4678c9bd7102) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.d12",   0x0000, 0x0020, CRC(e1281ee9) SHA1(9ac9b01d24affc0ee9227a4364c4fd8f8290343a) )
+ROM_END
+
+
+ROM_START( tron4 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "pga-615.d2",   0x0000, 0x2000, CRC(09d7a95a) SHA1(630f4c43204df0510926c5fc07e0c1b3783cf5e4) )
+	ROM_LOAD( "pgb-615.d3",   0x2000, 0x2000, CRC(b454337d) SHA1(c2306ad5401a3f60e231be59198610a36b527f1f) )
+	ROM_LOAD( "pgc-615.d4",   0x4000, 0x2000, CRC(ac1836ff) SHA1(a8d20facf91b4c93082f8e71a663e5da8b036ecb) )
+	ROM_LOAD( "pgd-615.d5",   0x6000, 0x2000, CRC(1a7bec6d) SHA1(4d47020494e0963db22473a459e97c1c06c4b5ee) )
+	ROM_LOAD( "pge-615.d6",   0x8000, 0x2000, CRC(ea198fa8) SHA1(d8c97ea87d504e77edc38c87c2953c8c4f1a405b) )
+	ROM_LOAD( "pgf-615.d7",   0xa000, 0x2000, CRC(790ee743) SHA1(14dc84b2bbaab22772e0579f11fe0bf136a0ddab) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "snd0-510.a7",  0x0000, 0x1000, CRC(2cbb332b) SHA1(48d1cbb336733588af728a3d0e02c8613d2b5fb2) )
+	ROM_LOAD( "ssiob.a8",     0x1000, 0x1000, CRC(1355b7e6) SHA1(61ed045212da67cd449910ae601058cf209b37e5) )
+	ROM_LOAD( "ssioc.a9",     0x2000, 0x1000, CRC(6dd4b7c9) SHA1(1ce78c242d1a7d9a4524a663a42fc8bc2870053a) )
+
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "scpu_bgg.bin", 0x00000, 0x2000, CRC(1a9ed2f5) SHA1(b0d85b47873ac8ad475da18b9540d37232cb2b7c) )
+	ROM_LOAD( "scpu_bgh.bin", 0x02000, 0x2000, CRC(3220f974) SHA1(a38ea5f1db27f05d9689db838ce7a8de98f34837) )
+
+	ROM_REGION( 0x08000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "vg_3.bin",     0x00000, 0x2000, CRC(bc036d1d) SHA1(c5d54d0b80ac768ccf6fdd32cad1ef6359fa324c) )
+	ROM_LOAD( "vg_2.bin",     0x02000, 0x2000, CRC(58ee14d3) SHA1(5fb4268c9c73bdfc3b1e866618979aea3f219bbc) )
+	ROM_LOAD( "vg_1.bin",     0x04000, 0x2000, CRC(3329f9d4) SHA1(11f4d744374e475d2c5b195a9f70888414529dd3) )
+	ROM_LOAD( "vg_0.bin",     0x06000, 0x2000, CRC(9743f873) SHA1(71ed80ecd8caaf9fce1d7010f95c4678c9bd7102) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.d12",   0x0000, 0x0020, CRC(e1281ee9) SHA1(9ac9b01d24affc0ee9227a4364c4fd8f8290343a) )
+ROM_END
+
+
 ROM_START( kroozr )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "kozmkcpu.2d",  0x0000, 0x2000, CRC(61e02045) SHA1(42ba00f28466870407be96e864fadba5d6908648) )
@@ -1036,6 +1094,8 @@ GAME( 1981, shollow,  0,        mcr2,     shollow,  mcr2,     ROT90, "Bally Midw
 GAME( 1981, shollow2, shollow,  mcr2,     shollow,  mcr2,     ROT90, "Bally Midway", "Satan's Hollow (set 2)" )
 GAME( 1982, tron,     0,        mcr2,     tron,     mcr2,     ROT90, "Bally Midway", "Tron (set 1)" )
 GAME( 1982, tron2,    tron,     mcr2,     tron,     mcr2,     ROT90, "Bally Midway", "Tron (set 2)" )
+GAME( 1982, tron3,    tron,     mcr2,     tron,     mcr2,     ROT90, "Bally Midway", "Tron (set 3)" )
+GAME( 1982, tron4,    tron,     mcr2,     tron,     mcr2,     ROT90, "Bally Midway", "Tron (set 4)" )
 GAME( 1982, kroozr,   0,        mcr2,     kroozr,   kroozr,   ROT0,  "Bally Midway", "Kozmik Kroozr" )
 GAME( 1982, domino,   0,        mcr2,     domino,   domino,   ROT0,  "Bally Midway", "Domino Man" )
 GAME( 1982, wacko,    0,        mcr2,     wacko,    wacko,    ROT0,  "Bally Midway", "Wacko" )

@@ -58,6 +58,10 @@ extern double sec_to_cycles[];
 #define TIME_IN_USEC(us)      ((double)(us) * (1.0 / 1000000.0))
 #define TIME_IN_NSEC(us)      ((double)(us) * (1.0 / 1000000000.0))
 
+// c must be greater then 1000pF to use this function
+// r is in Ohms.  c is in Farads.
+#define TIME_OF_74LS123(r,c)	(0.45 * (double)(r) * ((double)(c))
+
 #define TIME_NOW              (0.0)
 #define TIME_NEVER            (1.0e30)
 

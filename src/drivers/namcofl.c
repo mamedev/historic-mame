@@ -121,11 +121,11 @@ OSC3: 48.384MHz
 
 VIDEO_START( namcofl );
 VIDEO_UPDATE( namcofl );
-WRITE32_HANDLER( namcofl_videoram_w );
+//WRITE32_HANDLER( namcofl_videoram_w );
 
 extern data32_t *namcofl_spritebank32;
-extern data32_t *namcofl_tilebank32;
-extern data32_t *namcofl_scrollram32;
+//extern data32_t *namcofl_tilebank32;
+//extern data32_t *namcofl_scrollram32;
 extern data32_t *namcofl_mcuram;
 
 static data32_t *namcofl_workram;
@@ -172,10 +172,10 @@ static ADDRESS_MAP_START( sysfl_mem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x30300000, 0x30303fff) AM_RAM /* COMRAM */
 	AM_RANGE(0x30380000, 0x303800ff) AM_READ( fl_network_r )	/* network registers */
 	AM_RANGE(0x30400000, 0x3040ffff) AM_RAM AM_BASE(&paletteram32)
-	AM_RANGE(0x30800000, 0x3080ffff) AM_READWRITE(MRA32_RAM, namcofl_videoram_w) AM_BASE(&videoram32)
-	AM_RANGE(0x30a00000, 0x30a0003f) AM_RAM AM_BASE(&namcofl_scrollram32)
-	AM_RANGE(0x30c00000, 0x30c1ffff) AM_READWRITE(namco_rozvideoram32_le_r, namco_rozvideoram32_le_w)
-	AM_RANGE(0x30d00000, 0x30d0001f) AM_READWRITE(namco_rozcontrol32_le_r, namco_rozcontrol32_le_w)
+	AM_RANGE(0x30800000, 0x3080ffff) AM_READWRITE(namco_tilemapvideoram32_le_r, namco_tilemapvideoram32_le_w )
+	AM_RANGE(0x30a00000, 0x30a0003f) AM_READWRITE(namco_tilemapcontrol32_le_r, namco_tilemapcontrol32_le_w )
+	AM_RANGE(0x30c00000, 0x30c1ffff) AM_READWRITE(namco_rozvideoram32_le_r,namco_rozvideoram32_le_w)
+	AM_RANGE(0x30d00000, 0x30d0001f) AM_READWRITE(namco_rozcontrol32_le_r,namco_rozcontrol32_le_w)
 	AM_RANGE(0x30e00000, 0x30e1ffff) AM_READWRITE(namco_obj32_le_r, namco_obj32_le_w)
 	AM_RANGE(0x30f00000, 0x30f0000f) AM_RAM /* NebulaM2 code says this is int enable at 0000, int request at 0004, but doesn't do much about it */
 	AM_RANGE(0x40000000, 0x4000005f) AM_READWRITE( namcofl_sysreg_r, namcofl_sysreg_w )

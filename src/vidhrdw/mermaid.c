@@ -17,6 +17,7 @@ unsigned char* mermaid_foreground_colorram;
 unsigned char* mermaid_background_scrollram;
 unsigned char* mermaid_foreground_scrollram;
 
+int rougien_gfxbank1, rougien_gfxbank2;
 
 static struct rectangle spritevisiblearea =
 {
@@ -41,6 +42,15 @@ WRITE8_HANDLER( mermaid_flip_screen_y_w )
 	flip_screen_y_set(data & 0x01);
 }
 
+WRITE8_HANDLER( rougien_gfxbankswitch1_w )
+{
+	rougien_gfxbank1 = data & 1;
+}
+
+WRITE8_HANDLER( rougien_gfxbankswitch2_w )
+{
+	rougien_gfxbank2 = data & 1;
+}
 
 /***************************************************************************
 
@@ -164,6 +174,9 @@ VIDEO_UPDATE( mermaid )
 
 		code = mermaid_foreground_videoram[offs] | ((mermaid_foreground_colorram[offs] & 0x30) << 4);
 
+		code |= rougien_gfxbank1 * 0x2800;
+		code |= rougien_gfxbank2 * 0x2400;
+
 		flipx = mermaid_foreground_colorram[offs] & 0x40;
 		flipy = mermaid_foreground_colorram[offs] & 0x80;
 
@@ -191,10 +204,7 @@ VIDEO_UPDATE( mermaid )
 	/* draw the sprites */
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
-#ifdef MAME_DEBUG
-		extern int debug_key_pressed;
-#endif
-		UINT8 flipx,flipy,sx,sy,code,bank = 0;
+		int flipx,flipy,sx,sy,code,bank = 0;
 
 
 		sx = spriteram[offs + 3] + 1;
@@ -205,22 +215,28 @@ VIDEO_UPDATE( mermaid )
 		/* this doesn't look correct. Oh really? Maybe there is a PROM. */
 		switch (spriteram[offs + 2] & 0xf0)
 		{
-		case 0x00:  bank = 2; break;
+		case 0x00:  bank = 0; break;
 		case 0x10:  bank = 1; break;
 		case 0x20:  bank = 2; break;
 		case 0x30:  bank = 3; break;
+		case 0x40:  bank = 0; break;
 		case 0x50:  bank = 1; break;
 		case 0x60:  bank = 2; break;
+		case 0x70:  bank = 3; break;
 		case 0x80:  bank = 0; break;
-		case 0x90:  bank = 3; break;
+		case 0x90:  bank = 1; break;
 		case 0xa0:  bank = 2; break;
 		case 0xb0:  bank = 3; break;
-#ifdef MAME_DEBUG
-		default:  debug_key_pressed = 1; break;
-#endif
+		case 0xc0:  bank = 0; break;
+		case 0xd0:  bank = 1; break;
+		case 0xe0:  bank = 2; break;
+		case 0xf0:  bank = 3; break;
 		}
 
 		code = (spriteram[offs + 0] & 0x3f) | (bank << 6);
+
+		code |= rougien_gfxbank1 * 0x2800;
+		code |= rougien_gfxbank2 * 0x2400;
 
 		if (flip_screen_x) {
 			flipx = !flipx;

@@ -297,7 +297,7 @@ static ADDRESS_MAP_START( slapshot_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x800000, 0x80ffff) AM_WRITE(TC0480SCP_word_w)	  /* tilemaps */
 	AM_RANGE(0x830000, 0x83002f) AM_WRITE(TC0480SCP_ctrl_word_w)
 	AM_RANGE(0x900000, 0x907fff) AM_WRITE(color_ram_word_w) AM_BASE(&color_ram)
-	AM_RANGE(0xa00000, 0xa03fff) AM_WRITE(MWA16_RAM) AM_BASE((data16_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0xa00000, 0xa03fff) AM_WRITE(MWA16_RAM) AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
 	AM_RANGE(0xb00000, 0xb0001f) AM_WRITE(TC0360PRI_halfword_swap_w)	/* priority chip */
 	AM_RANGE(0xc00000, 0xc0000f) AM_WRITE(TC0640FIO_halfword_byteswap_w)
 	AM_RANGE(0xd00000, 0xd00003) AM_WRITE(slapshot_msb_sound_w)
@@ -326,7 +326,7 @@ static ADDRESS_MAP_START( opwolf3_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x800000, 0x80ffff) AM_WRITE(TC0480SCP_word_w)	  /* tilemaps */
 	AM_RANGE(0x830000, 0x83002f) AM_WRITE(TC0480SCP_ctrl_word_w)
 	AM_RANGE(0x900000, 0x907fff) AM_WRITE(color_ram_word_w) AM_BASE(&color_ram)
-	AM_RANGE(0xa00000, 0xa03fff) AM_WRITE(MWA16_RAM) AM_BASE((data16_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0xa00000, 0xa03fff) AM_WRITE(MWA16_RAM) AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
 	AM_RANGE(0xb00000, 0xb0001f) AM_WRITE(TC0360PRI_halfword_swap_w)	/* priority chip */
 	AM_RANGE(0xc00000, 0xc0000f) AM_WRITE(TC0640FIO_halfword_byteswap_w)
 	AM_RANGE(0xd00000, 0xd00003) AM_WRITE(slapshot_msb_sound_w)

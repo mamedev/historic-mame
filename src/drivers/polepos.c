@@ -228,6 +228,7 @@ extern data16_t *polepos_view16_memory;
 extern data16_t *polepos_road16_memory;
 extern data16_t *polepos_alpha16_memory;
 extern data16_t *polepos_sprite16_memory;
+extern int polepos_gear_bit;
 
 VIDEO_START( polepos );
 PALETTE_INIT( polepos );
@@ -603,6 +604,78 @@ INPUT_PORTS_START( poleposa )
 	PORT_DIPSETTING(	0x02, "km/h" )
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(	0x01, DEF_STR( Off ))
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+
+	PORT_START /* IN1 - Brake */
+	PORT_BIT( 0xff, 0x00, IPT_PEDAL2 ) PORT_MINMAX(0,0x90) PORT_SENSITIVITY(100) PORT_KEYDELTA(16) PORT_CODE_DEC(KEYCODE_LALT)
+
+	PORT_START /* IN2 - Accel */
+	PORT_BIT( 0xff, 0x00, IPT_PEDAL ) PORT_MINMAX(0,0x90) PORT_SENSITIVITY(100) PORT_KEYDELTA(16) PORT_CODE_DEC(KEYCODE_LCONTROL)
+
+	PORT_START /* IN3 - Steering */
+	PORT_BIT ( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(30) PORT_KEYDELTA(4)
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( topracra )
+	// no coins ?!
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SPECIAL )	// start 1, program controlled
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_NAME("Gear Change") PORT_CODE(KEYCODE_SPACE) POLEPOS_TOGGLE /* Gear */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START	/* DSW A */
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(	0x05, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(	0x03, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(	0x06, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x18, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Game_Time ) )
+	PORT_DIPSETTING(	0x60, "90 secs." )
+	PORT_DIPSETTING(	0x20, "100 secs." )
+	PORT_DIPSETTING(	0x40, "110 secs." )
+	PORT_DIPSETTING(	0x00, "120 secs." )
+	PORT_DIPNAME( 0x80, 0x80, "Nr. of Laps" )
+	PORT_DIPSETTING(	0x80, "3" )
+	PORT_DIPSETTING(	0x00, "4" )
+
+	PORT_START	/* DSW B */
+	PORT_DIPNAME( 0x07, 0x07, "Extended Rank" )
+	PORT_DIPSETTING(	0x07, "A" )
+	PORT_DIPSETTING(	0x03, "B" )
+	PORT_DIPSETTING(	0x05, "C" )
+	PORT_DIPSETTING(	0x01, "D" )
+	PORT_DIPSETTING(	0x06, "E" )
+	PORT_DIPSETTING(	0x02, "F" )
+	PORT_DIPSETTING(	0x04, "G" )
+	PORT_DIPSETTING(	0x00, "H" )
+	PORT_DIPNAME( 0x38, 0x38, "Practice Rank" )
+	PORT_DIPSETTING(	0x38, "A" )
+	PORT_DIPSETTING(	0x18, "B" )
+	PORT_DIPSETTING(	0x28, "C" )
+	PORT_DIPSETTING(	0x08, "D" )
+	PORT_DIPSETTING(	0x30, "E" )
+	PORT_DIPSETTING(	0x10, "F" )
+	PORT_DIPSETTING(	0x20, "G" )
+	PORT_DIPSETTING(	0x00, "H" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( Off) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Off ))
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 
 	PORT_START /* IN1 - Brake */
@@ -1148,6 +1221,82 @@ ROM_START( topracer )
 	ROM_LOAD( "136014.117",   0x0000, 0x0100, CRC(2401c817) SHA1(8991b7994513a469e64392fa8f233af5e5f06d54) )    /* sync chain */
 ROM_END
 
+ROM_START( topracra )
+	/* Z80 memory/ROM data */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "pole-c2",      0x0000, 0x2000, CRC(caab829a) SHA1(826f25f5c792ab8b24e73ebb735aebcad552454f) )
+	ROM_LOAD( "pole-h2",      0x2000, 0x1000, CRC(148f5000) SHA1(071f75518f06a317f53db78f11da3ee878569f86) )
+
+	/* Z8002 #1 memory/ROM data */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD16_BYTE( "tr1b.bin",     0x0001, 0x2000, CRC(127f0750) SHA1(97ae6c6f8086187c7cdb8bff5fec94914791890b) )
+	ROM_LOAD16_BYTE( "tr2b.bin",     0x0000, 0x2000, CRC(6bd4ff6b) SHA1(cf992de39a8cf7804961a8e6773fc4f7feb1878b) )
+
+	/* Z8002 #2 memory/ROM data */
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )
+	ROM_LOAD16_BYTE( "tr5b.bin",     0x0001, 0x2000, CRC(4e5f7b9c) SHA1(d26b1f24dd9ef00388987890bc5b95d4db403815) )
+	ROM_LOAD16_BYTE( "pole-d",       0x0000, 0x2000, CRC(932bb5a7) SHA1(8045fe1f9b4b1973ec0d6705adf3ba3891bddaa1) )
+
+	/* graphics data */
+	ROM_REGION( 0x01000, REGION_GFX1, ROMREGION_DISPOSE ) 	/* 2bpp alpha layer */
+	ROM_LOAD( "tr28.bin",     0x0000, 0x1000, CRC(b8217c96) SHA1(aba311bc3c4b118ba322a00e33e2d5cbe7bc6e4a) )
+
+	ROM_REGION( 0x01000, REGION_GFX2, ROMREGION_DISPOSE ) 	/* 2bpp view layer */
+	ROM_LOAD( "tr29.bin",     0x0000, 0x1000, CRC(c6e15c21) SHA1(e2a70b3f7ce51a003068eb75d9fe82548f0206d7) )
+
+	ROM_REGION( 0x04000, REGION_GFX3, ROMREGION_DISPOSE ) 	/* 4bpp 16x16 sprites */
+	ROM_LOAD( "pole-5",       0x0000, 0x2000, CRC(301117d2) SHA1(0d8be9e50da4601963a8392aa3e0f3414e721fa1) )    /* 4bpp sm sprites, planes 0+1 */
+	ROM_LOAD( "pole-6",       0x2000, 0x2000, CRC(3c9db014) SHA1(c26098dd78803e699845fefa92bf034c38259cea) )    /* 4bpp sm sprites, planes 2+3 */
+
+	ROM_REGION( 0x10000, REGION_GFX4, ROMREGION_DISPOSE ) 	/* 4bpp 32x32 sprites */
+	ROM_LOAD( "pp17.bin",     0x0000, 0x2000, CRC(613ab0df) SHA1(88aa4500275aae010fc9783c1d8d843feab89afa) )    /* 4bpp lg sprites, planes 0+1 */
+	ROM_LOAD( "tr19.bin",     0x2000, 0x2000, CRC(f8e7f551) SHA1(faa23c55bc43325e6f71936be970f2ca144697d8) )
+	ROM_LOAD( "tr21.bin",     0x4000, 0x2000, CRC(17c798b0) SHA1(ae2047bc0e4e8c85e1de09c39c200ea8f7c6a72e) )
+	ROM_LOAD( "pp18.bin",     0x8000, 0x2000, CRC(5fd933e3) SHA1(5b27a8519234c935308f943cd58abc1efc463726) )    /* 4bpp lg sprites, planes 2+3 */
+	ROM_LOAD( "tr20.bin",     0xa000, 0x2000, CRC(7053e219) SHA1(97700fbe887e2d11c9f9a0937147725f6787f081) )
+	ROM_LOAD( "pole-9",       0xc000, 0x2000, CRC(5fe9b365) SHA1(1a3ac099a6bb506a5f71c12c6fb14d014172371c) )
+
+	ROM_REGION( 0x5000, REGION_GFX5, 0 ) 	/* road generation ROMs needed at runtime */
+	ROM_LOAD( "136014.158",   0x0000, 0x2000, CRC(ee6b3315) SHA1(9cc26c6d3604c0f60d716f86e67e9d9c0487f87d) )    /* road control */
+	ROM_LOAD( "136014.159",   0x2000, 0x2000, CRC(6d1e7042) SHA1(90113ff0c93ed86d95067290088705bb5e6608d1) )    /* road bits 1 */
+	ROM_LOAD( "136014.134",   0x4000, 0x1000, CRC(4e97f101) SHA1(f377d053821c74aee93ebcd30a4d43e6156f3cfe) )    /* road bits 2 */
+
+	ROM_REGION( 0x1000, REGION_GFX6, 0 ) 	/* sprite scaling */
+	ROM_LOAD( "136014.231",   0x0000, 0x1000, CRC(a61bff15) SHA1(f7a59970831cdaaa7bf59c2221a38e4746c54244) )    /* vertical scaling */
+
+	/* graphics (P)ROM data */
+	ROM_REGION( 0x1040, REGION_PROMS, 0 )
+	ROM_LOAD( "136014.137",   0x0000, 0x0100, CRC(f07ff2ad) SHA1(e1f3cb10a03d23f8c1d422acf271dba4e7b98cb1) )    /* red palette */
+	ROM_LOAD( "136014.138",   0x0100, 0x0100, CRC(adbde7d7) SHA1(956ac5117c1e310f554ac705aa2dc24a796c36a5) )    /* green palette */
+	ROM_LOAD( "136014.139",   0x0200, 0x0100, CRC(ddac786a) SHA1(d1860105bf91297533ccc4aa6775987df198d0fa) )    /* blue palette */
+	ROM_LOAD( "10p.bin",      0x0300, 0x0100, CRC(5af3f710) SHA1(da13d17acf8abd0f6ebb4b51b23c3324c6197b7d) )    /* alpha color */
+	ROM_LOAD( "136014.141",   0x0400, 0x0100, CRC(0e4fe8a0) SHA1(d330b1e5ebccf5bbefcf71486fd80d816de38196) )    /* background color */
+	ROM_LOAD( "136014.142",   0x0500, 0x0100, CRC(2d502464) SHA1(682b7dd22e51d5db52c0804b7e27e47641dfa6bd) )    /* vertical position low */
+	ROM_LOAD( "136014.143",   0x0600, 0x0100, CRC(027aa62c) SHA1(c7030d8b64b80e107c446f6fbdd63f560c0a91c0) )    /* vertical position med */
+	ROM_LOAD( "136014.144",   0x0700, 0x0100, CRC(1f8d0df3) SHA1(b8f17758f114f5e247b65b3f2922ca2660757e66) )    /* vertical position hi */
+	ROM_LOAD( "136014.145",   0x0800, 0x0400, CRC(7afc7cfc) SHA1(ba2407f6eff124e881b354f13205a4c058b7cf60) )    /* road color */
+	ROM_LOAD( "pp1_6.bpr",    0x0c00, 0x0400, BAD_DUMP CRC(2f1079ee) SHA1(18a27998a78deff13dd198f3668a7e92f084f467) )    /* sprite color */
+	ROM_LOAD( "136014.135",   0x1000, 0x0020, CRC(4330a51b) SHA1(9531d18ce2de4eda9913d47ef8c5cd8f05791716) )    /* video RAM address decoder (not used) */
+	ROM_LOAD( "136014.136",   0x1020, 0x0020, CRC(4330a51b) SHA1(9531d18ce2de4eda9913d47ef8c5cd8f05791716) )    /* video RAM address decoder (not used) */
+
+	/* sound (P)ROM data */
+	ROM_REGION( 0x0100, REGION_SOUND1, 0 )
+	ROM_LOAD( "136014.118",   0x0000, 0x0100, CRC(8568decc) SHA1(0aac1fa082858d4d201e21511c609a989f9a1535) )    /* Namco sound */
+
+	ROM_REGION( 0x4000, REGION_SOUND2, 0 )
+	ROM_LOAD( "136014.110",   0x0000, 0x2000, CRC(b5ad4d5f) SHA1(c07e77a050200d6fe9952031f971ca35f4d15ff8) )    /* engine sound */
+	ROM_LOAD( "136014.111",   0x2000, 0x2000, CRC(8fdd2f6f) SHA1(3818dc94c60cd78c4212ab7a4367cf3d98166ee6) )    /* engine sound */
+
+	ROM_REGION( 0x8000, REGION_SOUND3, 0 )
+	ROM_LOAD( "pp1_11.2e",    0x0000, 0x2000, CRC(45b9bfeb) SHA1(ff8c690471944d414931fb88666594ef608997f8) )    /* voice */
+	ROM_LOAD( "pp1_12.2f",    0x2000, 0x2000, CRC(a31b4be5) SHA1(38298093bb97ea8647fe187359cae05b65e1c616) )    /* voice */
+	ROM_LOAD( "pp1_13.1e",    0x4000, 0x2000, CRC(a4237466) SHA1(88a397276038cc2fc05f2c18472e6b7cef167f2e) )    /* voice */
+	ROM_LOAD( "pp1_14.1f",    0x6000, 0x2000, CRC(944580f9) SHA1(c76f529cae718674ce97a1a599a3c6eaf6bf561a) )    /* voice */
+
+	/* unknown or unused (P)ROM data */
+	ROM_REGION( 0x0100, REGION_USER1, 0 )
+	ROM_LOAD( "136014.117",   0x0000, 0x0100, CRC(2401c817) SHA1(8991b7994513a469e64392fa8f233af5e5f06d54) )    /* sync chain */
+ROM_END
 
 ROM_START( polepos2 )
 	/* Z80 memory/ROM data */
@@ -1394,10 +1543,28 @@ ROM_END
  * Initialization routines
  *********************************************************************/
 
+static DRIVER_INIT( polepos )
+{
+	polepos_gear_bit = 2;
+}
+
+static DRIVER_INIT( topracra )
+{
+	polepos_gear_bit = 0x20;
+
+	/* extra direct mapped inputs read */
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x02, 0x02, 0, 0, input_port_5_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x03, 0x03, 0, 0, input_port_0_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x04, 0x04, 0, 0, input_port_1_r);
+
+}
+
 static DRIVER_INIT( polepos2 )
 {
 	/* note that the bootleg version doesn't need this custom IC; it has a hacked ROM in its place */
 	memory_install_read16_handler(1, ADDRESS_SPACE_PROGRAM, 0x4000, 0x5fff, 0, 0, polepos2_ic25_r);
+
+	init_polepos();
 }
 
 
@@ -1405,11 +1572,12 @@ static DRIVER_INIT( polepos2 )
  * Game drivers
  *********************************************************************/
 
-GAME( 1982, polepos,  0,		polepos, polepos,  0,		 ROT0, "Namco", "Pole Position" )
-GAME( 1982, poleposa, polepos,	polepos, poleposa, 0,		 ROT0, "Namco (Atari license)", "Pole Position (Atari version 2)" )
-GAME( 1982, polepos1, polepos,	polepos, poleposa, 0,		 ROT0, "[Namco] (Atari license)", "Pole Position (Atari version 1)" )
-GAME( 1982, topracer, polepos,	polepos, polepos,  0,		 ROT0, "bootleg", "Top Racer" )
+GAME( 1982, polepos,  0,		polepos, polepos,  polepos,	 ROT0, "Namco", "Pole Position" )
+GAME( 1982, poleposa, polepos,	polepos, poleposa, polepos,	 ROT0, "Namco (Atari license)", "Pole Position (Atari version 2)" )
+GAME( 1982, polepos1, polepos,	polepos, poleposa, polepos,	 ROT0, "[Namco] (Atari license)", "Pole Position (Atari version 1)" )
+GAME( 1982, topracer, polepos,	polepos, polepos,  polepos,	 ROT0, "bootleg", "Top Racer (set 1)" )
+GAME( 1982, topracra, polepos,	polepos, topracra, topracra, ROT0, "bootleg", "Top Racer (set 2)" )
 GAME( 1983, polepos2, 0,		polepos, polepos2, polepos2, ROT0, "Namco", "Pole Position II" )
 GAME( 1983, poleps2a, polepos2, polepos, polepos2, polepos2, ROT0, "Namco (Atari license)", "Pole Position II (Atari)" )
-GAME( 1983, poleps2b, polepos2, polepos, polepos2, 0,		 ROT0, "bootleg", "Pole Position II (bootleg)" )
+GAME( 1983, poleps2b, polepos2, polepos, polepos2, polepos,	 ROT0, "bootleg", "Pole Position II (bootleg)" )
 

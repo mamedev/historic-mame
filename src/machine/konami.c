@@ -9,7 +9,7 @@
 
 
 
-unsigned char decodebyte( unsigned char opcode, unsigned short address )
+unsigned char konami1_decodebyte( unsigned char opcode, unsigned short address )
 {
 /*
 >
@@ -51,7 +51,7 @@ static void decode(int cpu)
 
 	for (A = 0;A < diff;A++)
 	{
-		rom[A+diff] = decodebyte(rom[A],A);
+		rom[A+diff] = konami1_decodebyte(rom[A],A);
 	}
 }
 

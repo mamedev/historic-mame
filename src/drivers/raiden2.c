@@ -1293,6 +1293,36 @@ ROM_START( zeroteam )
 	ROM_LOAD( "pcm", 0x00000, 0x40000,  CRC(48be32b1) SHA1(969d2191a3c46871ee8bf93088b3cecce3eccf0c) ) // 6.4a
 ROM_END
 
+ROM_START( zeroteaa )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* dummy */
+
+	ROM_REGION( 0x200000, REGION_USER1, 0 ) /* v30 main cpu */
+	ROM_LOAD32_BYTE("1.bin",   0x000000, 0x40000, CRC(bd7b3f3a) SHA1(896413901a429d0efa3290f61920063c81730e9b) )
+	ROM_LOAD32_BYTE("3.bin",   0x000002, 0x40000, CRC(19e02822) SHA1(36c9b887eaa9b9b67d65c55e8f7eefd08fe0be15) )
+	ROM_LOAD32_BYTE("2.bin",   0x000001, 0x40000, CRC(0580b7e8) SHA1(d4416264aa5acdaa781ebcf51f128b3e665cc903) )
+	ROM_LOAD32_BYTE("4.bin",   0x000003, 0x40000, CRC(cc666385) SHA1(23a8878315b6009dcc1f27e49572e5be29f6a1a6) )
+
+	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* 64k code for sound Z80 */
+	ROM_LOAD( "5.bin",  0x000000, 0x10000, CRC(efc484ca) SHA1(c34b8e3e7f4c2967bc6414348993478ed637d338) )
+
+	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE ) /* chars */
+	ROM_LOAD16_BYTE( "7.bin",	0x000000,	0x010000, CRC(eb10467f) SHA1(fc7d576dc41bc878ff20f0370e669e19d54fcefb) )
+	ROM_LOAD16_BYTE( "8.bin",	0x000001,	0x010000, CRC(a0b2a09a) SHA1(9b1f6c732000b84b1ad635f332ebead5d65cc491) )
+
+	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE ) /* background gfx */
+	/* not dumped for this set */
+//	ROM_LOAD( "back-1",   0x000000, 0x100000, CRC(8b7f9219) SHA1(3412b6f8a4fe245e521ddcf185a53f2f4520eb57) )
+//	ROM_LOAD( "back-2",   0x100000, 0x080000, CRC(ce61c952) SHA1(52a843c8ba428b121fab933dd3b313b2894d80ac) )
+
+	ROM_REGION( 0x800000, REGION_GFX3, ROMREGION_DISPOSE ) /* sprite gfx (encrypted) (diff encrypt to raiden2? ) */
+	/* not dumped for this set */
+//	ROM_LOAD32_WORD( "obj-1",  0x000000, 0x200000, CRC(45be8029) SHA1(adc164f9dede9a86b96a4d709e9cba7d2ad0e564) )
+//	ROM_LOAD32_WORD( "obj-2",  0x000002, 0x200000, CRC(cb61c19d) SHA1(151a2ce9c32f3321a974819e9b165dddc31c8153) )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples */
+	ROM_LOAD( "pcm", 0x00000, 0x40000,  CRC(48be32b1) SHA1(969d2191a3c46871ee8bf93088b3cecce3eccf0c) ) // 6.bin
+ROM_END
+
 ROM_START( nzerotea )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* dummy */
 
@@ -1548,7 +1578,7 @@ unsigned int trans(unsigned int v, unsigned int x)
 
   if((R & (1<<19)) && (v & (1<<19)))
     r ^= 1<<15;
- 
+
   if((v & (1<<7)) && (x & (1<<14)))
     r ^= 1<<16;
 
@@ -1629,6 +1659,7 @@ GAMEX( 1993, raidndx,  0,       raiden2,  raidendx, raiden2,  ROT270, "Seibu Kai
 GAMEX( 1993, raidndxa, raidndx, raiden2,  raidendx, raiden2,  ROT270, "Seibu Kaihatsu", "Raiden DX (set 2)", GAME_NOT_WORKING|GAME_NO_SOUND)
 GAMEX( 1993, raidndxb, raidndx, raiden2,  raiden2n, r2nocpu,  ROT270, "Seibu Kaihatsu", "Raiden DX (set 3, Newer V33 PCB)", GAME_NOT_WORKING|GAME_NO_SOUND)
 GAMEX( 1993, raidndxj, raidndx, raiden2,  raidendx, raiden2,  ROT270, "Seibu Kaihatsu", "Raiden DX (Japan)", GAME_NOT_WORKING|GAME_NO_SOUND)
-GAMEX( 1993, zeroteam, 0,       raiden2,  raiden2,  raiden2,  ROT0,   "Seibu Kaihatsu", "Zero Team", GAME_NOT_WORKING|GAME_NO_SOUND)
+GAMEX( 1993, zeroteam, 0,       raiden2,  raiden2,  raiden2,  ROT0,   "Seibu Kaihatsu", "Zero Team (set 1)", GAME_NOT_WORKING|GAME_NO_SOUND)
+GAMEX( 1993, zeroteaa, zeroteam,raiden2,  raiden2,  raiden2,  ROT0,   "Seibu Kaihatsu", "Zero Team (set 2)", GAME_NOT_WORKING|GAME_NO_SOUND)
 GAMEX( 1993, nzerotea, zeroteam,raiden2,  raiden2,  raiden2,  ROT0,   "Seibu Kaihatsu", "New Zero Team", GAME_NOT_WORKING|GAME_NO_SOUND)
 

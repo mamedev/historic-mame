@@ -299,10 +299,12 @@ static int i286_execute(int num_cycles)
 	return num_cycles - i286_ICount;
 }
 
+extern int i386_dasm_one(char *buffer, UINT32 eip, int addr_size, int op_size);
+
 static offs_t i286_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
-    return DasmI286(buffer,pc);
+	return i386_dasm_one(buffer, pc, I.sregs[CS], I.sregs[CS]);
 #else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;

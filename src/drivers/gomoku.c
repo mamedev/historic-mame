@@ -38,8 +38,8 @@ extern data8_t *gomoku_videoram;
 extern data8_t *gomoku_colorram;
 extern data8_t *gomoku_bgram;
 
-data8_t *gomoku_soundregs1;
-data8_t *gomoku_soundregs2;
+extern data8_t *gomoku_soundregs1;
+extern data8_t *gomoku_soundregs2;
 extern WRITE8_HANDLER( gomoku_sound1_w );
 extern WRITE8_HANDLER( gomoku_sound2_w );
 

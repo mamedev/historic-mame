@@ -144,7 +144,7 @@ static void moo_objdma(int type)
 	int counter, num_inactive;
 	data16_t *src, *dst, zmask;
 
-	K053247_export_config(&dst, (struct GfxElement**)&src, (void**)&src, &counter, &counter);
+	K053247_export_config(&dst, 0, 0, 0, &counter);
 	src = spriteram16;
 	num_inactive = counter = 256;
 
@@ -866,8 +866,8 @@ static DRIVER_INIT( moo )
 	konami_rom_deinterleave_2(REGION_GFX1);
 	konami_rom_deinterleave_4(REGION_GFX2);
 
-	state_save_register_INT32("Moo", 0, "control2", (INT32 *)&cur_control2, 1);
-	state_save_register_UINT16("Moo", 0, "protram", (UINT16 *)protram, 1);
+	state_save_register_UINT16("Moo", 0, "control2", &cur_control2, 1);
+	state_save_register_UINT16("Moo", 0, "protram", protram, 16);
 
 	game_type = (!strcmp(Machine->gamedrv->name, "bucky") || !strcmp(Machine->gamedrv->name, "buckyua"));
 }

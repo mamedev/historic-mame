@@ -155,6 +155,20 @@ static ADDRESS_MAP_START( getrivia_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xc000, 0xffff) AM_READWRITE(MRA8_RAM, getrivia_bitmap_w) AM_BASE(&videoram)
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( gselect_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_ROM
+	AM_RANGE(0x2000, 0x3fff) AM_ROMBANK(1)
+	AM_RANGE(0x4000, 0x40ff) AM_RAM AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x4400, 0x4400) AM_WRITE(banksel_1_1_w)
+	AM_RANGE(0x4401, 0x4401) AM_WRITE(banksel_1_2_w)
+	AM_RANGE(0x4402, 0x4402) AM_WRITE(banksel_2_1_w)
+	AM_RANGE(0x4403, 0x4403) AM_WRITE(banksel_2_2_w)
+	AM_RANGE(0x4800, 0x4803) AM_READWRITE(ppi8255_0_r, ppi8255_0_w)
+	AM_RANGE(0x5000, 0x5003) AM_READWRITE(ppi8255_1_r, ppi8255_1_w)	
+	AM_RANGE(0x8000, 0x8002) AM_WRITE(MWA8_RAM) AM_BASE(&drawctrl)
+	AM_RANGE(0xc000, 0xffff) AM_READWRITE(MRA8_RAM, getrivia_bitmap_w) AM_BASE(&videoram)
+ADDRESS_MAP_END
+
 INPUT_PORTS_START( getrivia )
 	PORT_START
 	PORT_DIPNAME( 0x03, 0x03, "Questions" )
@@ -202,7 +216,58 @@ INPUT_PORTS_START( getrivia )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-static ppi8255_interface ppi8255_intf =
+INPUT_PORTS_START( gselect )
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(2)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_SERVICE( 0x08, IP_ACTIVE_LOW )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_IMPULSE(2)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_IMPULSE(2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_IMPULSE(2)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_IMPULSE(2)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_IMPULSE(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON6 ) PORT_IMPULSE(2) PORT_NAME("Deal")
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON7 ) PORT_IMPULSE(2) PORT_NAME("Cancel")
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON8 ) PORT_IMPULSE(2) PORT_NAME("Stand")
+
+	PORT_START
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+static ppi8255_interface getrivia_ppi8255_intf =
 {
 	2, 									/* 2 chips */
 	{ input_port_0_r, input_port_2_r },	/* Port A read */
@@ -213,6 +278,17 @@ static ppi8255_interface ppi8255_intf =
 	{ sound_w,        NULL },			/* Port C write */
 };
 
+static ppi8255_interface gselect_ppi8255_intf =
+{
+	2, 									/* 2 chips */
+	{ input_port_0_r, input_port_2_r },	/* Port A read */
+	{ input_port_1_r, NULL },			/* Port B read */
+	{ NULL,           input_port_3_r },	/* Port C read */
+	{ NULL,           NULL },			/* Port A write */
+	{ NULL,           lamps_w },		/* Port B write */
+	{ NULL,		      sound_w },		/* Port C write */
+};
+
 static struct DACinterface dac_interface =
 {
 	1,
@@ -221,11 +297,16 @@ static struct DACinterface dac_interface =
 
 static MACHINE_INIT( getrivia )
 {
-	ppi8255_init(&ppi8255_intf);
+	ppi8255_init(&getrivia_ppi8255_intf);
+}
+
+static MACHINE_INIT( gselect )
+{
+	ppi8255_init(&gselect_ppi8255_intf);
 }
 
 static MACHINE_DRIVER_START( getrivia )
-	MDRV_CPU_ADD(Z80,4000000) /* 4 MHz */
+	MDRV_CPU_ADD_TAG("cpu",Z80,4000000) /* 4 MHz */
 	MDRV_CPU_PROGRAM_MAP(getrivia_map,0)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
@@ -246,6 +327,17 @@ static MACHINE_DRIVER_START( getrivia )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( gselect )
+	
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(getrivia)
+
+	MDRV_CPU_MODIFY("cpu")
+	MDRV_CPU_PROGRAM_MAP(gselect_map,0)
+
+	MDRV_MACHINE_INIT(gselect)
 MACHINE_DRIVER_END
 
 ROM_START( gt102c )
@@ -327,11 +419,39 @@ ROM_START( sextriv2 )
 	ROM_LOAD( "novelty_sex",     0x18000, 0x4000, CRC(26603979) SHA1(78061741e5224b3162be51e637a2fbb9a48962a3) )
 ROM_END
 
-GAMEX( 1984, gt102c,   0,        getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C)",                 GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAMEX( 1984, gt102b,   0,        getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02B)",                 GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+/***************************************************
+Rom board is UVM-4B
+
+Contains 5 2764 eproms, MMI PAL16R4CN
+
+Battery (3V litium battery) backuped HM6117P-4
+
+Roms labeled as:
+
+4/1  at spot 1
+BLJK at spot 2
+POKR at spot 3
+SPRD at spot 4
+SLOT at spot 3
+****************************************************/
+
+ROM_START( gs4002 )
+	ROM_REGION( 0x18000, REGION_CPU1, 0 )
+	ROM_LOAD( "4-1.1",        0x0000, 0x2000, CRC(a456e456) SHA1(f36b96ac31ce0f128ecb94f94d1dbdd88ee03c77) )
+	/* Banked roms */
+	ROM_LOAD( "bljk.2",       0x10000, 0x2000, CRC(c3785523) SHA1(090f324fc7adb0a36b189cf04086f0e050895ee4) )
+	ROM_LOAD( "pokr.3",       0x12000, 0x2000, CRC(f0e99cc5) SHA1(02fdc95974e503b6627930918fcc3c029a7a4612) )
+	ROM_LOAD( "sprd.4",       0x14000, 0x2000, CRC(5fe90ed4) SHA1(38db69567d9c38f78127e581fdf924aca4926378) )
+	ROM_LOAD( "slot.5",       0x16000, 0x2000, CRC(cd7cfa4c) SHA1(aa3de086e5a1018b9e5a18403a6144a6b0ed1036) )
+ROM_END
+
+GAMEX( 1982, gs4002,   0,      gselect,  gselect,  0, ROT0, "G.E.I.", "Selection (Version 40.02TMB)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+
+GAMEX( 1984, gt102c,   0,      getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C)",                 GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1984, gt102b,   0,      getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02B)",                 GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 GAMEX( 1985, gt102c1,  gt102c, getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C Alt questions 1)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 GAMEX( 1985, gt102c2,  gt102c, getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C Alt questions 2)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 GAMEX( 1985, gt102c3,  gt102c, getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C Alt questions 3)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 
-GAMEX( 1985, sextriv1, 0,        getrivia, getrivia, 0, ROT0, "Kinky Kit and Game Co.", "Sexual Trivia (Version 1.02SB set 1)",  GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAMEX( 1985, sextriv2, sextriv1, getrivia, getrivia, 0, ROT0, "Kinky Kit and Game Co.", "Sexual Trivia (Version 1.02SB set 2)",  GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1985, sextriv1, 0,        getrivia, getrivia, 0, ROT0, "Kinky Kit and Game Co.", "Sexual Trivia (Version 1.02SB set 1)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1985, sextriv2, sextriv1, getrivia, getrivia, 0, ROT0, "Kinky Kit and Game Co.", "Sexual Trivia (Version 1.02SB set 2)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )

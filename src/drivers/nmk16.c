@@ -338,24 +338,6 @@ logerror("%04x: mcu_r %02x\n",activecpu_get_pc(),res);
 	return res;
 }
 
-static READ16_HANDLER( urashima_mcu_r )
-{
-	static int resp[] = {	0x99, 0xd8, 0x00,
-							0x2a, 0x6a, 0x00,
-							0x9c, 0xd8, 0x00,
-							0x2f, 0x6f, 0x00,
-							0x22, 0x62, 0x00,
-							0x25, 0x65, 0x00 };
-	int res;
-
-	res = resp[respcount++];
-	if (respcount >= sizeof(resp)/sizeof(resp[0])) respcount = 0;
-
-logerror("%04x: mcu_r %02x\n",activecpu_get_pc(),res);
-
-	return res;
-}
-
 static WRITE16_HANDLER( tharrier_shared_w )
 {
 	if(offset==0xf00/2)
@@ -440,41 +422,6 @@ static READ16_HANDLER( hachamf_protection_hack_r )
 }
 
 /***************************************************************************/
-
-static ADDRESS_MAP_START( urashima_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x080004, 0x080005) AM_READ(urashima_mcu_r)
-	AM_RANGE(0x09e000, 0x09e7ff) AM_READ(nmk_txvideoram_r)
-	AM_RANGE(0x0f0000, 0x0f7fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x0f8000, 0x0f8fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x0f9000, 0x0fffff) AM_READ(MRA16_RAM)
-#if 0
-	AM_RANGE(0x080000, 0x080001) AM_READ(input_port_0_word_r)
-	AM_RANGE(0x080002, 0x080003) AM_READ(input_port_1_word_r)
-	AM_RANGE(0x080008, 0x080009) AM_READ(input_port_2_word_r)
-	AM_RANGE(0x08000a, 0x08000b) AM_READ(input_port_3_word_r)
-	AM_RANGE(0x088000, 0x0887ff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x09e000, 0x0a1fff) AM_READ(nmk_bgvideoram_r)
-#endif
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( urashima_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x080014, 0x080015) AM_WRITE(macross_mcu_w)
-	AM_RANGE(0x09e000, 0x09e7ff) AM_WRITE(nmk_txvideoram_w) AM_BASE(&nmk_txvideoram)
-	AM_RANGE(0x0f0000, 0x0f7fff) AM_WRITE(MWA16_RAM)	/* Work RAM */
-	AM_RANGE(0x0f8000, 0x0f8fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x0f9000, 0x0fffff) AM_WRITE(MWA16_RAM) AM_BASE(&ram)	/* Work RAM again */
-#if 0
-	AM_RANGE(0x080014, 0x080015) AM_WRITE(nmk_flipscreen_w)
-	AM_RANGE(0x080016, 0x080017) AM_WRITE(MWA16_NOP)	/* IRQ enable? */
-	AM_RANGE(0x080018, 0x080019) AM_WRITE(nmk_tilebank_w)
-	AM_RANGE(0x088000, 0x0887ff) AM_WRITE(paletteram16_RRRRGGGGBBBBRGBx_word_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x08c000, 0x08c007) AM_WRITE(nmk_scroll_w)
-	AM_RANGE(0x09e000, 0x0a1fff) AM_WRITE(nmk_bgvideoram_w) AM_BASE(&nmk_bgvideoram)
-#endif
-ADDRESS_MAP_END
-
 
 static ADDRESS_MAP_START( vandyke_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
@@ -2650,32 +2597,6 @@ static INTERRUPT_GEN( nmk_interrupt )
 /* Parameters: YM3812 frequency, Oki frequency, Oki memory region */
 SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(14318180/4, 8000, REGION_SOUND1);
 
-static MACHINE_DRIVER_START( urashima )
-
-	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 10000000) /* 10 MHz ? */
-	MDRV_CPU_PROGRAM_MAP(urashima_readmem,urashima_writemem)
-//	MDRV_CPU_PERIODIC_INT(irq1_line_hold,112)	/* ???????? */
-
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(nmk16)
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(256, 256)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(macross_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(1024)
-
-	MDRV_VIDEO_START(macross)
-	MDRV_VIDEO_EOF(nmk)
-	MDRV_VIDEO_UPDATE(macross)
-
-	/* sound hardware */
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface_dual)
-MACHINE_DRIVER_END
-
 
 static MACHINE_DRIVER_START( vandyke )
 
@@ -3218,32 +3139,6 @@ static MACHINE_DRIVER_START( bjtwin )
 	/* sound hardware */
 	MDRV_SOUND_ADD(OKIM6295, okim6295_interface_dual)
 MACHINE_DRIVER_END
-
-
-
-ROM_START ( urashima )
-	ROM_REGION( 0x40000, REGION_CPU1, 0 )		/* 68000 code */
-	ROM_LOAD16_BYTE( "um-2.15d",  0x00000, 0x20000, CRC(a90a47e3) SHA1(2f912001e9177cce8c3795f3d299115b80fdca4e) )
-	ROM_LOAD16_BYTE( "um-1.15c",  0x00001, 0x20000, CRC(5f5c8f39) SHA1(cef663965c3112f87788d6a871e609c0b10ef9a2) )
-
-	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "um-5.22j",		0x000000, 0x020000, CRC(991776a2) SHA1(56740553d7d26aaeb9bec8557727030950bb01f7) )	/* 8x8 tiles */
-
-	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE ) /* 16x16 Tiles */
-	ROM_LOAD( "um-7.4l",	0x000000, 0x080000, CRC(d2a68cfb) SHA1(eb6cb1fad306b697b2035a31ad48e8996722a032) )
-
-	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE ) /* Maybe there are no Sprites? */
-	ROM_LOAD( "um-6.2l",	0x000000, 0x080000, CRC(076be5b5) SHA1(77444025f149a960137d3c79abecf9b30defa341) )
-
-	ROM_REGION( 0x0240, REGION_PROMS, 0 )
-	ROM_LOAD( "um-10.2b",      0x0000, 0x0100, CRC(cfdbb86c) SHA1(588822f6308a860937349c9106c2b4b1a75823ec) )	/* unknown */
-	ROM_LOAD( "um-11.2c",      0x0100, 0x0100, CRC(ff5660cf) SHA1(a4635dcf9d6dd637ea4f36f1ad233db0bd039731) )	/* unknown */
-	ROM_LOAD( "um-12.20c",     0x0200, 0x0020, CRC(bdb66b02) SHA1(8755244de638d7e835e35e08c62b0612958e6ca5) )	/* unknown */
-	ROM_LOAD( "um-13.10l",     0x0220, 0x0020, CRC(4ce07ec0) SHA1(5f5744ddc7f258307f036fde4c0a8e6271b2d1f9) )	/* unknown */
-
-	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "um-3.22c",		0x000000, 0x080000, CRC(9fd8c8fa) SHA1(0346f74c03a4daa7a84b64c9edf0e54297c82fd9) )
-ROM_END
 
 ROM_START( vandyke )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )		/* 68000 code */
@@ -4416,7 +4311,7 @@ static DRIVER_INIT( bjtwin )
 //	rom[0x08f74/2] = 0x4e71);
 }
 
-GAMEX( 1989, urashima, 0,       urashima, macross,  0,        ROT0,   "UPL",							"Urashima Mahjong", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING ) /* Similar Hardware? */
+//GAMEX( 1989, urashima, 0,       urashima, macross,  0,        ROT0,   "UPL",							"Urashima Mahjong", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING ) /* Similar Hardware? */
 GAMEX( 1989, tharrier, 0,       tharrier, tharrier, 0, 		  ROT270, "UPL (American Sammy license)",	"Task Force Harrier", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 1989, tharierj, tharrier,tharrier, tharrier, 0, 		  ROT270, "UPL",	                        "Task Force Harrier (Japan)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 1990, mustang,  0,       mustang,  mustang,  mustang,  ROT0,   "UPL",							"US AAF Mustang (Japan)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND) // Playable but there are Still Protection Problems

@@ -151,7 +151,7 @@ static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x00ff) AM_MIRROR(0x100) AM_RAM
 	AM_RANGE(0x0400, 0x0401) AM_WRITE(canyon_motor_w)
 	AM_RANGE(0x0500, 0x0500) AM_WRITE(canyon_explode_w)
-	AM_RANGE(0x0501, 0x0501) AM_WRITE(MWA8_NOP) /* watchdog, disabled in service mode */
+	AM_RANGE(0x0501, 0x0501) AM_WRITE(watchdog_reset_w) /* watchdog, disabled in service mode */
 	AM_RANGE(0x0600, 0x0603) AM_WRITE(canyon_whistle_w)
 	AM_RANGE(0x0680, 0x0683) AM_WRITE(canyon_led_w)
 	AM_RANGE(0x0700, 0x0703) AM_WRITE(canyon_attract_w)
@@ -479,6 +479,7 @@ static MACHINE_DRIVER_START( canyon )
 	MDRV_CPU_ADD(M6502, 12096000 / 16)
 	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse, 1)
+	MDRV_WATCHDOG_VBLANK_INIT(8)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(22 * 1000000 / 15750)

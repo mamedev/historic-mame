@@ -1454,7 +1454,7 @@ static WRITE8_HANDLER( i186_internal_port_w )
 			/* we need to do this at a time when the I86 context is swapped in */
 			/* this register is generally set once at startup and never again, so it's a good */
 			/* time to set it up */
-			activecpu_set_info_ptr(CPUINFO_PTR_IRQ_CALLBACK, (void *)int_callback);
+			activecpu_set_info_fct(CPUINFO_PTR_IRQ_CALLBACK, (genf *)int_callback);
 			break;
 
 		case 0xc0:

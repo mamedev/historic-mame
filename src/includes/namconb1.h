@@ -2,8 +2,6 @@
 
 #define NAMCONB1_COLS		36
 #define NAMCONB1_ROWS		28
-#define NAMCONB1_FG1BASE	(0x8010/2)
-#define NAMCONB1_FG2BASE	(0x8810/2)
 
 #define NAMCONB1_TILEMASKREGION		REGION_GFX1
 #define NAMCONB1_TILEGFXREGION		REGION_GFX2
@@ -18,10 +16,7 @@
 extern data32_t *namconb1_workram32;
 extern data32_t *namconb1_spritebank32;
 extern data32_t *namconb1_tilebank32;
-extern data32_t *namconb1_scrollram32;
 extern data32_t *namconb1_spritepos32;
-
-WRITE32_HANDLER( namconb1_videoram_w );
 
 VIDEO_UPDATE( namconb1 );
 VIDEO_START( namconb1 );

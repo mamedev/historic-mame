@@ -265,6 +265,7 @@ static void mcu_process_command( void )
 			mcu_buffer[0] = 1;
 			mcu_buffer[1] = result;
 		}
+		break;
 
 		case 0x55: /* 0x55,0x00,0x00,0x00,DSW2 -> timer */
 		{

@@ -29,7 +29,7 @@ extern data16_t *hdadsp_data_memory;
 extern data32_t *hdadsp_pgm_memory;
 
 extern data16_t *hdgsp_protection;
-extern data16_t *stmsp_sync[2];
+extern data16_t *stmsp_sync[3];
 
 extern data16_t *hdgsp_speedup_addr[2];
 extern offs_t hdgsp_speedup_pc;

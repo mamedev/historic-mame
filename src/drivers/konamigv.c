@@ -13,9 +13,9 @@ Game       Description                  Mother Board   Code       Version       
 pbball96   Powerful Pro Baseball '96    GV999          GV017   JAPAN 1.03   96.05.27  18:00
 hyperath   Hyper Athlete                ZV610          GV021   JAPAN 1.00   96.06.09  19:00
 susume     Susume! Taisen Puzzle-Dama   ZV610          GV027   JAPAN 1.20   96.03.04  12:00
+btchamp    Beat the Champ               GV999          GV053   UAA01        ?
 weddingr   Wedding Rhapsody             ?              GX624   JAA          97.05.29   9:12
 simpbowl   Simpsons Bowling             ?              GQ829   UAA          ?
-
 
 PCB Layouts
 -----------
@@ -599,6 +599,161 @@ INPUT_PORTS_START( simpbowl )
 
 INPUT_PORTS_END
 
+/* Beat the Champ */
+
+static READ32_HANDLER( btcflash_r )
+{
+	if (mem_mask == 0xffff0000)
+	{
+		return intelflash_read_word(0, offset*2);
+	}
+	else if (mem_mask == 0x0000ffff)
+	{
+		return intelflash_read_word(0, (offset*2)+1)<<16;
+	}
+
+	return 0;
+}
+
+static WRITE32_HANDLER( btcflash_w )
+{
+	if (mem_mask == 0xffff0000)
+	{
+		intelflash_write_word(0, offset*2, data);
+	}
+	else if (mem_mask == 0x0000ffff)
+	{
+		intelflash_write_word(0, (offset*2)+1, data>>16);
+	}
+}
+
+static data16_t btc_trackball_prev[ 4 ];
+static data32_t btc_trackball_data[ 4 ];
+
+static READ32_HANDLER( btc_trackball_r )
+{
+//	printf( "r %08x %08x %08x\n", activecpu_get_pc(), offset, mem_mask );
+
+	if( offset == 1 && mem_mask == 0x0000ffff )
+	{
+		int axis;
+		data16_t diff;
+		data16_t value;
+
+		for( axis = 0; axis < 4; axis++ )
+		{
+			value = readinputport( axis + 3 );
+			diff = value - btc_trackball_prev[ axis ];
+			btc_trackball_prev[ axis ] = value;
+			btc_trackball_data[ axis ] = ( ( diff & 0xf00 ) << 16 ) | ( ( diff & 0xff ) << 8 );
+		}
+	}
+	return btc_trackball_data[ offset ] | ( btc_trackball_data[ offset + 2 ] >> 8 );
+}
+
+static WRITE32_HANDLER( btc_trackball_w )
+{
+//	printf( "w %08x %08x %08x %08x\n", activecpu_get_pc(), offset, data, mem_mask );
+}
+
+static NVRAM_HANDLER( btchamp )
+{
+	nvram_handler_konamigv_93C46( file, read_or_write );
+	nvram_handler_intelflash_0( file, read_or_write );
+}
+
+static MACHINE_INIT( btchamp )
+{
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f680080, 0x1f68008f, 0, 0, btc_trackball_r );
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f680080, 0x1f68008f, 0, 0, btc_trackball_w );
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f380000, 0x1f4fffff, 0, 0, btcflash_r );
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f380000, 0x1f4fffff, 0, 0, btcflash_w );
+
+	psx_machine_init();
+}						      
+
+static MACHINE_DRIVER_START( btchamp )
+	MDRV_IMPORT_FROM( konamigv )
+	MDRV_MACHINE_INIT( btchamp )
+	MDRV_NVRAM_HANDLER( btchamp )
+MACHINE_DRIVER_END
+
+INPUT_PORTS_START( btchamp )
+	/* IN 0 */
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT) PORT_8WAY
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_UP) PORT_8WAY
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN) PORT_8WAY
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT(0x1000, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Test Switch") PORT_CODE(KEYCODE_F2)
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* EEPROM data */
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	/* IN 1 */
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	/* IN 2 */
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(3)
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(3)
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(3)
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(3)
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(3)
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(3)
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(4)
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(4)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(4)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(4)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(4)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(4)
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(4)
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START4 )
+
+	/* IN 3 */
+	PORT_START
+	PORT_BIT( 0x7ff, 0x0000, IPT_TRACKBALL_X ) PORT_SENSITIVITY(100) PORT_KEYDELTA(63) PORT_REVERSE PORT_PLAYER(1)
+
+	/* IN 4 */
+	PORT_START
+	PORT_BIT( 0x7ff, 0x0000, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(100) PORT_KEYDELTA(63) PORT_PLAYER(1)
+
+	/* IN 5 */
+	PORT_START
+	PORT_BIT( 0x7ff, 0x0000, IPT_TRACKBALL_X ) PORT_SENSITIVITY(100) PORT_KEYDELTA(63) PORT_REVERSE PORT_PLAYER(2)
+
+	/* IN 6 */
+	PORT_START
+	PORT_BIT( 0x7ff, 0x0000, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(100) PORT_KEYDELTA(63) PORT_PLAYER(2)
+
+INPUT_PORTS_END
+
 #define GV_BIOS	\
 	ROM_REGION32_LE( 0x080000, REGION_USER1, 0 )	\
 	ROM_LOAD( "999a01.7e",   0x0000000, 0x080000, CRC(ad498d2d) SHA1(02a82a2fe1fba0404517c3602324bfa64e23e478) )
@@ -658,11 +813,22 @@ ROM_START( simpbowl )
 	DISK_IMAGE_READONLY( "simpbowl", 0, MD5(47702fc060f3f1fbb2dba84ea3544a4a) SHA1(791ce11b0645fd5c3f5b30483bad879f26bb97db) )
 ROM_END
 
+ROM_START( btchamp )
+	GV_BIOS
+
+	ROM_REGION( 0x0000080, REGION_USER2, 0 ) /* default eeprom */
+	ROM_LOAD( "btchmp.25c", 0x000000, 0x000080, CRC(6d02ea54) SHA1(d3babf481fd89db3aec17f589d0d3d999a2aa6e1) )
+
+	DISK_REGION( REGION_DISKS )
+	DISK_IMAGE_READONLY( "btchamp", 0, MD5(edc387207bc878b3a4044441e77d25f7) SHA1(e1a75a034d83cffa44268eb30653ba334cc6252d) )
+ROM_END
+
 /* BIOS placeholder */
 GAMEX( 1995, konamigv, 0, konamigv, konamigv, konamigv, ROT0, "Konami", "Baby Phoenix/GV System", NOT_A_DRIVER )
 
 GAMEX( 1996, pbball96, konamigv, konamigv, konamigv, konamigv, ROT0, "Konami", "Powerful Baseball '96 (GV017 JAPAN 1.03)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1996, hyperath, konamigv, konamigv, konamigv, konamigv, ROT0, "Konami", "Hyper Athlete (GV021 JAPAN 1.00)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1996, susume,   konamigv, konamigv, konamigv, konamigv, ROT0, "Konami", "Susume! Taisen Puzzle-Dama (GV027 JAPAN 1.20)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1996, btchamp,  konamigv, btchamp,  btchamp,  konamigv, ROT0, "Konami", "Beat the Champ (GV053 UAA01)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1997, weddingr, konamigv, konamigv, konamigv, konamigv, ROT0, "Konami", "Wedding Rhapsody (GX624 JAA)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 2000, simpbowl, konamigv, simpbowl, simpbowl, konamigv, ROT0, "Konami", "Simpsons Bowling (GQ829 UAA)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )

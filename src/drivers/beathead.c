@@ -247,7 +247,7 @@ static WRITE32_HANDLER( eeprom_data_w )
 	if (eeprom_enabled)
 	{
 		mem_mask |= 0xffffff00;
-		COMBINE_DATA(&((data32_t *)generic_nvram)[offset]);
+		COMBINE_DATA(generic_nvram32 + offset);
 		eeprom_enabled = 0;
 	}
 }
@@ -343,7 +343,7 @@ static WRITE32_HANDLER( coin_count_w )
 static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x0001ffff) AM_RAM AM_BASE(&ram_base)
 	AM_RANGE(0x01800000, 0x01bfffff) AM_ROM AM_REGION(REGION_USER1, 0) AM_BASE(&rom_base)
-	AM_RANGE(0x40000000, 0x400007ff) AM_READWRITE(MRA32_RAM, eeprom_data_w) AM_BASE((data32_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x40000000, 0x400007ff) AM_READWRITE(MRA32_RAM, eeprom_data_w) AM_BASE(&generic_nvram32) AM_SIZE(&generic_nvram_size)
 	AM_RANGE(0x41000000, 0x41000003) AM_READWRITE(sound_data_r, sound_data_w)
 	AM_RANGE(0x41000100, 0x41000103) AM_READ(interrupt_control_r)
 	AM_RANGE(0x41000100, 0x4100011f) AM_WRITE(interrupt_control_w)

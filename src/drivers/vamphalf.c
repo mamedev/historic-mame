@@ -16,7 +16,7 @@
 
 static data32_t hyperstone_iram[0x1000];
 static data32_t *tiles, *wram;
-static UINT32 mux_data;
+static int flip_bit, flipscreen = 0;
 
 static WRITE32_HANDLER( hyperstone_iram_w )
 {
@@ -56,47 +56,39 @@ static WRITE32_HANDLER( oki_w )
 	OKIM6295_data_0_w(0, data);
 }
 
-static READ32_HANDLER( ym2151_r )
+static READ32_HANDLER( ym2151_status_r )
 {
 	return YM2151_status_port_0_r(0);
 }
 
-static WRITE32_HANDLER( ym2151_w )
+static WRITE32_HANDLER( ym2151_data_w )
 {
-	static int which = 0;
-
-	if(which)
-		YM2151_data_port_0_w(0, data);
-	else
-		YM2151_register_port_0_w(0,data);
-
-	which ^= 1;
+	YM2151_data_port_0_w(0, data);
 }
 
-static READ32_HANDLER( vamphalf_inputs_r )
+static WRITE32_HANDLER( ym2151_register_w )
 {
-#define E132XS_CL0 33
-	mux_data = activecpu_get_reg(E132XS_CL0);
-	mux_data &= 0xf000;
-	mux_data >>= 12;
-	/*This uses a multiplexer with CL0 register or this is a CPU core bug...*/
-	switch(mux_data)
-	{
-		case 0:	return 0xffff0000 | readinputport(1);
-		case 2: return 0xffff0000 | readinputport(0);
-		default: return 0xffffffff;
-	}
+	YM2151_register_port_0_w(0,data);
 }
 
-static READ32_HANDLER( vamphalf_eeprom_r )
+static READ32_HANDLER( eeprom_r )
 {
-	return 0;
 	return EEPROM_read_bit();
 }
 
-static WRITE32_HANDLER( vamphalf_eeprom_w )
+static WRITE32_HANDLER( eeprom_w )
 {
+	EEPROM_write_bit(data & 0x01);
+	EEPROM_set_cs_line((data & 0x04) ? CLEAR_LINE : ASSERT_LINE );
+	EEPROM_set_clock_line((data & 0x02) ? ASSERT_LINE : CLEAR_LINE );
+}
 
+static WRITE32_HANDLER( flipscreen_w )
+{
+	if(data & flip_bit)
+		flipscreen = 1;
+	else
+		flipscreen = 0;
 }
 
 static ADDRESS_MAP_START( common_map, ADDRESS_SPACE_PROGRAM, 32 )
@@ -108,32 +100,45 @@ static ADDRESS_MAP_START( common_map, ADDRESS_SPACE_PROGRAM, 32 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( vamphalf_io, ADDRESS_SPACE_IO, 32 )
-	AM_RANGE(0x030, 0x033) AM_READWRITE(oki_r, oki_w)
-	AM_RANGE(0x050, 0x053) AM_READWRITE(ym2151_r, ym2151_w)
-	AM_RANGE(0x070, 0x073) AM_READ(vamphalf_eeprom_r)
-	AM_RANGE(0x180, 0x183) AM_READWRITE(vamphalf_inputs_r, vamphalf_eeprom_w)
+	AM_RANGE(0x0c0, 0x0c3) AM_READWRITE(oki_r, oki_w)
+	AM_RANGE(0x140, 0x143) AM_WRITE(ym2151_register_w)
+	AM_RANGE(0x144, 0x147) AM_READWRITE(ym2151_status_r, ym2151_data_w)
+	AM_RANGE(0x1c0, 0x1c3) AM_READ(eeprom_r)
+	AM_RANGE(0x240, 0x243) AM_WRITE(flipscreen_w)
+	AM_RANGE(0x600, 0x603) AM_READ(input_port_1_dword_r)
+	AM_RANGE(0x604, 0x607) AM_READ(input_port_0_dword_r)
+	AM_RANGE(0x608, 0x60b) AM_WRITE(eeprom_w)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( misncrft_io, ADDRESS_SPACE_IO, 32 )
-	AM_RANGE(0x080, 0x083) AM_READ(input_port_0_dword_r)
-	AM_RANGE(0x090, 0x093) AM_READ(input_port_1_dword_r)
+	AM_RANGE(0x100, 0x103) AM_WRITE(flipscreen_w)
+	AM_RANGE(0x200, 0x203) AM_READ(input_port_0_dword_r)
+	AM_RANGE(0x240, 0x243) AM_READ(input_port_1_dword_r)
+	AM_RANGE(0x3c0, 0x3c3) AM_WRITE(eeprom_w)
+	AM_RANGE(0x580, 0x583) AM_READ(eeprom_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( coolmini_io, ADDRESS_SPACE_IO, 32 )
-	AM_RANGE(0x0c0, 0x0c3) AM_READWRITE(vamphalf_inputs_r, vamphalf_eeprom_w)
-	AM_RANGE(0x130, 0x133) AM_READWRITE(oki_r, oki_w)
-	AM_RANGE(0x150, 0x153) AM_READWRITE(ym2151_r, ym2151_w)
-	AM_RANGE(0x1f0, 0x1f3) AM_READ(vamphalf_eeprom_r)
+	AM_RANGE(0x200, 0x203) AM_WRITE(flipscreen_w)
+	AM_RANGE(0x300, 0x303) AM_READ(input_port_1_dword_r)
+	AM_RANGE(0x304, 0x307) AM_READ(input_port_0_dword_r)
+	AM_RANGE(0x308, 0x30b) AM_WRITE(eeprom_w)
+	AM_RANGE(0x4c0, 0x4c3) AM_READWRITE(oki_r, oki_w)
+	AM_RANGE(0x540, 0x543) AM_WRITE(ym2151_register_w)
+	AM_RANGE(0x544, 0x547) AM_READWRITE(ym2151_status_r, ym2151_data_w)
+	AM_RANGE(0x7c0, 0x7c3) AM_READ(eeprom_r)
 ADDRESS_MAP_END
 
 
 /*
-Vamp 1/2 preliminary sprite list:
+Sprite list:
+
 Offset+0
 -------- -------- xxxxxxxx xxxxxxxx Data
 -------- xxxxxxxx -------- -------- Y offs
-x------- -------- -------- -------- Flip X (trusted)
+x------- -------- -------- -------- Flip X
 -x------ -------- -------- -------- Flip Y
+
 Offset+1
 xxxxxxxx xxxxxxxx -------- -------- Color
 -------- -------- -------x xxxxxxxx X offs
@@ -142,7 +147,7 @@ xxxxxxxx xxxxxxxx -------- -------- Color
 -------- -------- -------- --------
 */
 
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	const struct GfxElement *gfx = Machine->gfx[0];
 	UINT32 cnt;
@@ -152,13 +157,19 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 
 	clip.min_x = Machine->visible_area.min_x;
 	clip.max_x = Machine->visible_area.max_x;
-	clip.min_y = Machine->visible_area.min_y;
-	clip.max_y = Machine->visible_area.max_y;
 
 	for (block=0; block<0x8000; block+=0x800)
 	{
-		clip.min_y= (16-(block/0x800))*16;
-		clip.max_y= ((16-(block/0x800))*16)+15;
+		if(flipscreen)
+		{
+			clip.min_y = 256 - (16-(block/0x800))*16;
+			clip.max_y = 256 - ((16-(block/0x800))*16)+15;
+		}
+		else
+		{
+			clip.min_y = (16-(block/0x800))*16;
+			clip.max_y = ((16-(block/0x800))*16)+15;
+		}
 
 		for (cnt=0; cnt<0x800; cnt+=8)
 		{
@@ -169,10 +180,19 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 			color = (tiles[offs+1] & 0x00ff0000) >> 16;
 
 			x = tiles[offs+1] & 0x000001ff;
-			y = 0x100 - ((tiles[offs] & 0x00ff0000) >> 16);
+			y = 256 - ((tiles[offs] & 0x00ff0000) >> 16);
 
 			fx = (tiles[offs] & 0x80000000) >> 31;
 			fy = (tiles[offs] & 0x40000000) >> 30;
+
+			if(flipscreen)
+			{
+				fx = !fx;
+				fy = !fy;
+
+				x = 366 - x;
+				y = 256 - y;
+			}
 
 			drawgfx(bitmap,gfx,code,color,fx,fy,x,y,&clip,TRANSPARENCY_PEN,0);
 		}
@@ -182,23 +202,23 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 VIDEO_UPDATE( common )
 {
 	fillbitmap(bitmap,Machine->pens[0],cliprect);
-	draw_sprites(bitmap,cliprect);
+	draw_sprites(bitmap);
 }
 
 
 INPUT_PORTS_START( common )
 	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )    PORT_PLAYER(1)
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )  PORT_PLAYER(1)
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )  PORT_PLAYER(1)
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    ) PORT_PLAYER(1)
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  ) PORT_PLAYER(1)
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  ) PORT_PLAYER(1)
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(1)
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )    PORT_PLAYER(2)
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )  PORT_PLAYER(2)
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )  PORT_PLAYER(2)
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    ) PORT_PLAYER(2)
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  ) PORT_PLAYER(2)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  ) PORT_PLAYER(2)
 	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2)
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
@@ -516,12 +536,15 @@ DRIVER_INIT( vamphalf )
 	cpu_setbank(1, memory_region(REGION_USER1));
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0004a6d0, 0x0004a6d3, 0, 0, vamphalf_speedup_r );
 
+	flip_bit = 0x80;
 }
 
 DRIVER_INIT( misncrft )
 {
 	cpu_setbank(1, memory_region(REGION_USER1));
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00072eb4, 0x00072eb7, 0, 0, misncrft_speedup_r );
+
+	flip_bit = 1;
 }
 
 DRIVER_INIT( coolmini )
@@ -531,6 +554,8 @@ DRIVER_INIT( coolmini )
 
 	cpu_setbank(1, memory_region(REGION_USER1));
 	cpu_setbank(2, memory_region(REGION_USER1)+0x80000);
+
+	flip_bit = 1;
 }
 
 GAME( 1999, vamphalf, 0, vamphalf, common, vamphalf, ROT0,  "Danbi & F2 System", "Vamp 1/2 (Korea)" )

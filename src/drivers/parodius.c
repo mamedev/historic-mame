@@ -419,7 +419,7 @@ static MACHINE_INIT( parodius )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	cpunum_set_info_ptr(0, CPUINFO_PTR_KONAMI_SETLINES_CALLBACK, (void *)parodius_banking);
+	cpunum_set_info_fct(0, CPUINFO_PTR_KONAMI_SETLINES_CALLBACK, (genf *)parodius_banking);
 
 	paletteram = &memory_region(REGION_CPU1)[0x48000];
 

@@ -51,19 +51,21 @@ lev 7 : 0x7c : 0000 0100 - just rte
                (I can't tell for the moment)
                Release date and manufacturers according to the title screen
 
+ 2004.24.10 - Pierpaolo Prazzoli
+ - fixed bit 4 of IN1. it is vblank and it fixed scroll issue in attract mode
+ - fixed sprite glitches with visible flag
+ - added rows scroll
+
 TO DO :
 
   - verify the player inputs in the 2nd part of the "test mode"
     (once the colors are correct, as you can't see anything for the moment)
-  - what do bits 4 and 6 of IN1 really do ?
-      * bit 4 must be On (freeze, vblank ?)
+  - what do bit 6 of IN1 really do ?
       * bit 6 must be Off during P.O.S.T. (eeprom read ?)
   - check the writes to 0x400010 and 0x400011
 
-  - sprite colours, I think they're wrong
   - fix sound (is the sound chip even right, the readme doesn't mention it ..)
   - unknown registers
-  - scrolling during attract mode
   - clipping issues?
   - priority issues?
 
@@ -141,7 +143,7 @@ INPUT_PORTS_START( stlforce )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_SERVICE( 0x0008, IP_ACTIVE_LOW )
-	PORT_BIT( 0x0010, IP_ACTIVE_HIGH,IPT_UNKNOWN )		// To be confirmed (see notes)
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED )		// To be confirmed (see notes)
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -204,7 +206,7 @@ static MACHINE_DRIVER_START( stlforce )
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
 

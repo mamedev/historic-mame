@@ -251,26 +251,6 @@ static void v60WritePSW(UINT32 newval)
 
 #define GETINTVECT(nint)	MemRead32(SBR + (nint)*4)
 
-static float u2f(UINT32 v)
-{
-	union {
-		float ff;
-		UINT32 vv;
-	} u;
-	u.vv = v;
-	return u.ff;
-}
-
-static UINT32 f2u(float f)
-{
-	union {
-		float ff;
-		UINT32 vv;
-	} u;
-	u.ff = f;
-	return u.vv;
-}
-
 
 // Addressing mode decoding functions
 #include "am.c"

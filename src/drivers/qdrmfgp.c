@@ -84,7 +84,7 @@ static WRITE16_HANDLER( gp_control_w )
 
 	if (control & 0x0100)
 	{
-		int vol = generic_nvram[0x20] & 0xff;
+		int vol = generic_nvram16[0x10] & 0xff;
 		if (vol)
 		{
 			int i;
@@ -113,7 +113,7 @@ static WRITE16_HANDLER( gp2_control_w )
 
 	if (control & 0x0100)
 	{
-		int vol = generic_nvram[0x10] & 0xff;
+		int vol = generic_nvram16[0x8] & 0xff;
 		if (vol)
 		{
 			int i;
@@ -360,7 +360,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_RAM) AM_BASE(&workram) 	/* work ram */
-	AM_RANGE(0x180000, 0x183fff) AM_WRITE(MWA16_RAM) AM_BASE((data16_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)	/* backup ram */
+	AM_RANGE(0x180000, 0x183fff) AM_WRITE(MWA16_RAM) AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)	/* backup ram */
 	AM_RANGE(0x280000, 0x280fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x300000, 0x30003f) AM_WRITE(K056832_word_w)		/* video reg */
 	AM_RANGE(0x320000, 0x32001f) AM_WRITE(K053252_word_w)		/* ccu */
@@ -397,7 +397,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( gp2_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x100000, 0x110fff) AM_WRITE(MWA16_RAM) AM_BASE(&workram)	/* work ram */
-	AM_RANGE(0x180000, 0x183fff) AM_WRITE(MWA16_RAM) AM_BASE((data16_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)	/* backup ram */
+	AM_RANGE(0x180000, 0x183fff) AM_WRITE(MWA16_RAM) AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)	/* backup ram */
 	AM_RANGE(0x280000, 0x280fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x300000, 0x30003f) AM_WRITE(K056832_word_w)		/* video reg */
 	AM_RANGE(0x320000, 0x32001f) AM_WRITE(K053252_word_w)		/* ccu */

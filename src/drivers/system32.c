@@ -2848,6 +2848,36 @@ ROM_END
 
 ROM_START( darkedge )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* v60 code */
+	ROM_LOAD16_WORD( "ep15246.8", 0x000000, 0x80000, CRC(c0bdceeb) SHA1(9cf670cf9a8691f259c75c1d9c6cb14e8a70bb72) )
+	ROM_RELOAD     (               0x080000, 0x80000 )
+
+	ROM_REGION( 0x480000, REGION_CPU2, 0 ) /* sound CPU */
+	ROM_LOAD( "epr15243.36", 0x00000, 0x20000, CRC(08ca5f11) SHA1(c2c48d2f02770941a93794f82cb407d6264904d2) )
+	ROM_RELOAD(              0x100000, 0x20000             )
+	ROM_LOAD( "mpr15242.35", 0x180000, 0x100000, CRC(ffb7d917) SHA1(bfeae1a2bd7250edb695b7034f6b1f851f6fd48a) )
+	ROM_LOAD( "mpr15240.24", 0x280000, 0x100000, CRC(867d59e8) SHA1(fb1c0d26dbb1bde9d8bc86419cd911b8e37bf923) )
+	ROM_LOAD( "mpr15241.34", 0x380000, 0x100000, CRC(8eccc4fe) SHA1(119724b9b6d2b51ad4f065ebf74d200960090e68) )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD16_BYTE( "mpr15248", 0x000000, 0x080000, CRC(185b308b) SHA1(a49c1b752b3c4355560e0cd712fb9a096140e37b) )
+	ROM_LOAD16_BYTE( "mpr15247", 0x000001, 0x080000, CRC(be21548c) SHA1(2e315aadc2a0b781c3ee3fe71c75eb1f43514eff) )
+
+	ROM_REGION( 0x1000000, REGION_GFX2, 0 ) /* sprites */
+	ROMX_LOAD( "mpr15249.32", 0x000000, 0x200000, CRC(2b4371a8) SHA1(47f448bfbc068f2d0cdedd81bcd280823d5758a3) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15251.30", 0x000002, 0x200000, CRC(efe2d689) SHA1(af22153ea3afdde3732f881087c642170f91d745) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15253.28", 0x000004, 0x200000, CRC(8356ed01) SHA1(a28747813807361c7d0c722a94e194caea8bfab6) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15255.26", 0x000006, 0x200000, CRC(ff04a5b0) SHA1(d4548f9da014ba5249c2f75d654a2a88c095aaf8) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15250.31", 0x800000, 0x200000, CRC(c5cab71a) SHA1(111c69c40a39c3fceef38f5876e1dcf7ac2fbee2) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15252.29", 0x800002, 0x200000, CRC(f8885fea) SHA1(ef944df5f6fd64813734056ad2a150f518c75459) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15254.27", 0x800004, 0x200000, CRC(7765424b) SHA1(7cd4c275f6333beeea62dd65a769e11650c68923) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15256.25", 0x800006, 0x200000, CRC(44c36b62) SHA1(4c7f2cc4347ef2126dcbf43e8dce8500e52b5f8e) , ROM_SKIP(6)|ROM_GROUPWORD )
+
+	ROM_REGION( 0x20000, REGION_GFX3, 0 ) /* FG tiles */
+	/* populated at runtime */
+ROM_END
+
+ROM_START( darkedgj )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* v60 code */
 	ROM_LOAD16_WORD( "epr15244.8", 0x000000, 0x80000, CRC(0db138cb) SHA1(79ccb754e0d816b395b536a6d9c5a6e93168a913) )
 	ROM_RELOAD     (               0x080000, 0x80000 )
 
@@ -3190,7 +3220,8 @@ GAMEX(1994, jleague,  svf,      system32, svf,      s32,      ROT0, "Sega", "The
 
 /* not really working */
 GAMEX(1992, arescue,  0,        system32, f1en,     arescue,  ROT0, "Sega", "Air Rescue", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS ) // might be protection
-GAMEX(1993, darkedge, 0,        sys32_hi, darkedge, s32,      ROT0, "Sega", "Dark Edge", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION ) /* locks up on some levels, sprites are submerged, protected */
+GAMEX(1992, darkedge, 0,        sys32_hi, darkedge, s32,      ROT0, "Sega", "Dark Edge (World)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION ) /* locks up on some levels, sprites are submerged, protected */
+GAMEX(1992, darkedgj, darkedge, sys32_hi, darkedge, s32,      ROT0, "Sega", "Dark Edge (Japan)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION ) /* locks up on some levels, sprites are submerged, protected */
 GAMEX(1993, f1lap,    0,        system32, f1lap,	f1sl,     ROT0, "Sega", "F1 Super Lap", GAME_NOT_WORKING ) /* blank screen, also requires 2 linked sys32 boards to function */
 GAMEX(1994, dbzvrvs,  0,        sys32_hi, system32,	s32,      ROT0, "Sega / Banpresto", "Dragon Ball Z V.R.V.S.", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION) /* does nothing useful, known to be heavily protected */
 GAMEX(1995, slipstrm, 0,        sys32_hi, system32,	f1en,     ROT0, "Capcom", "Slipstream", GAME_NOT_WORKING ) /* unhandled v60 opcodes .... */

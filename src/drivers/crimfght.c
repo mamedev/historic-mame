@@ -522,7 +522,7 @@ static MACHINE_INIT( crimfght )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	cpunum_set_info_ptr(0, CPUINFO_PTR_KONAMI_SETLINES_CALLBACK, (void *)crimfght_banking);
+	cpunum_set_info_fct(0, CPUINFO_PTR_KONAMI_SETLINES_CALLBACK, (genf *)crimfght_banking);
 
 	/* init the default bank */
 	cpu_setbank( 2, &RAM[0x10000] );

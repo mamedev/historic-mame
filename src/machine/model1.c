@@ -34,26 +34,6 @@ static int tgp_vr_select;
 static UINT16 ram_adr, ram_latch[2], ram_scanadr;
 static UINT32 *ram_data;
 
-static float u2f(UINT32 v)
-{
-	union {
-		float ff;
-		UINT32 vv;
-	} u;
-	u.vv = v;
-	return u.ff;
-}
-
-static UINT32 f2u(float f)
-{
-	union {
-		float ff;
-		UINT32 vv;
-	} u;
-	u.ff = f;
-	return u.vv;
-}
-
 static UINT32 fifoout_pop(void)
 {
 	UINT32 v;

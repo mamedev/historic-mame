@@ -30,8 +30,8 @@ typedef struct
 
 
 /* globals available to everyone */
-unsigned char *gomoku_soundregs1;
-unsigned char *gomoku_soundregs2;
+data8_t *gomoku_soundregs1;
+data8_t *gomoku_soundregs2;
 
 /* data about the sound system */
 static sound_channel channel_list[MAX_VOICES];

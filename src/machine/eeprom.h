@@ -26,7 +26,7 @@ void EEPROM_set_clock_line(int state);
 void EEPROM_load(mame_file *file);
 void EEPROM_save(mame_file *file);
 
-void EEPROM_set_data(UINT8 *data, int length);
+void EEPROM_set_data(const UINT8 *data, int length);
 UINT8 * EEPROM_get_data_pointer(int * length);
 
 /* 93C46 */

@@ -19,6 +19,10 @@
 
 #include "driver.h"
 
+#define GAME_IS_SPRINT1   (game == 1)
+#define GAME_IS_SPRINT2   (game == 2)
+#define GAME_IS_DOMINOS   (game == 3)
+
 extern READ8_HANDLER( sprint2_collision1_r );
 extern READ8_HANDLER( sprint2_collision2_r );
 
@@ -59,7 +63,7 @@ static INTERRUPT_GEN( sprint2 )
 
 	/* handle steering wheels */
 
-	if (game == 1 || game == 2)
+	if (GAME_IS_SPRINT1 || GAME_IS_SPRINT2)
 	{
 		int i;
 
@@ -92,7 +96,13 @@ static INTERRUPT_GEN( sprint2 )
 	discrete_sound_w(3, sprint2_video_ram[0x395] & 15);
 	discrete_sound_w(4, sprint2_video_ram[0x396] & 15);
 
-	cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
+	if ( ((readinputport(2) & 0x10) && (GAME_IS_SPRINT1)) || ((readinputport(2) & 0x04) && (GAME_IS_SPRINT1)) || ((readinputport(2) & 0x40) && (GAME_IS_SPRINT1)) )
+	{
+		/* interrupts and watchdog are disabled during service mode */
+		watchdog_enable(0);
+	}
+	else
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 
@@ -135,7 +145,7 @@ static READ8_HANDLER( sprint2_input_A_r )
 {
 	UINT8 val = readinputport(1);
 
-	if (game == 2)
+	if (GAME_IS_SPRINT2)
 	{
 		if (gear[0] == 1) val &= ~0x01;
 		if (gear[1] == 1) val &= ~0x02;
@@ -153,7 +163,7 @@ static READ8_HANDLER( sprint2_input_B_r )
 {
 	UINT8 val = readinputport(2);
 
-	if (game == 1)
+	if (GAME_IS_SPRINT1)
 	{
 		if (gear[0] == 1) val &= ~0x01;
 		if (gear[0] == 2) val &= ~0x02;
@@ -276,7 +286,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0c30, 0x0c3f) AM_WRITE(sprint2_lamp1_w)
 	AM_RANGE(0x0c40, 0x0c4f) AM_WRITE(sprint2_lamp2_w)
 	AM_RANGE(0x0c60, 0x0c6f) AM_WRITE(MWA8_NOP) /* SPARE */
-	AM_RANGE(0x0c80, 0x0cff) AM_WRITE(MWA8_NOP) /* watchdog, disabled during service mode */
+	AM_RANGE(0x0c80, 0x0cff) AM_WRITE(watchdog_reset_w)
 	AM_RANGE(0x0d00, 0x0d7f) AM_WRITE(sprint2_collision_reset1_w)
 	AM_RANGE(0x0d80, 0x0dff) AM_WRITE(sprint2_collision_reset2_w)
 	AM_RANGE(0x0e00, 0x0e7f) AM_WRITE(sprint2_steering_reset1_w)
@@ -866,6 +876,7 @@ static MACHINE_DRIVER_START( sprint2 )
 	MDRV_CPU_ADD(M6502, 12096000 / 16)
 	MDRV_CPU_PROGRAM_MAP(readmem, writemem)
 	MDRV_CPU_VBLANK_INT(sprint2, 1)
+	MDRV_WATCHDOG_VBLANK_INIT(8)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(38 * 1000000 / 15750)

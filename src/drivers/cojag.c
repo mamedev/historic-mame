@@ -265,9 +265,9 @@ static WRITE32_HANDLER( latch_w )
 static READ32_HANDLER( eeprom_data_r )
 {
 	if (cojag_is_r3000)
-		return ((UINT32 *)generic_nvram)[offset] | 0xffffff00;
+		return generic_nvram32[offset] | 0xffffff00;
 	else
-		return ((UINT32 *)generic_nvram)[offset] | 0x00ffffff;
+		return generic_nvram32[offset] | 0x00ffffff;
 }
 
 
@@ -282,9 +282,9 @@ static WRITE32_HANDLER( eeprom_data_w )
 //	if (eeprom_enable)
 	{
 		if (cojag_is_r3000)
-			((UINT32 *)generic_nvram)[offset] = data & 0x000000ff;
+			generic_nvram32[offset] = data & 0x000000ff;
 		else
-			((UINT32 *)generic_nvram)[offset] = data & 0xff000000;
+			generic_nvram32[offset] = data & 0xff000000;
 	}
 //	else
 //		logerror("%08X:error writing to disabled EEPROM\n", activecpu_get_previouspc());
@@ -553,7 +553,7 @@ static ADDRESS_MAP_START( r3000_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x12000000, 0x120fffff) AM_WRITE(MWA32_RAM)	// tested in self-test only?
 	AM_RANGE(0x14000004, 0x14000007) AM_WRITE(watchdog_reset32_w)
 	AM_RANGE(0x16000000, 0x16000003) AM_WRITE(eeprom_enable_w)
-	AM_RANGE(0x18000000, 0x18001fff) AM_WRITE(eeprom_data_w) AM_BASE((data32_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x18000000, 0x18001fff) AM_WRITE(eeprom_data_w) AM_BASE(&generic_nvram32) AM_SIZE(&generic_nvram_size)
 	AM_RANGE(0x1fc00000, 0x1fdfffff) AM_WRITE(MWA32_ROM) AM_BASE(&rom_base) AM_SIZE(&rom_size)
 ADDRESS_MAP_END
 
@@ -585,7 +585,7 @@ static ADDRESS_MAP_START( m68020_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x000000, 0x7fffff) AM_WRITE(MWA32_RAM) AM_BASE(&jaguar_shared_ram)
 	AM_RANGE(0x800000, 0x9fffff) AM_WRITE(MWA32_ROM) AM_BASE(&rom_base) AM_SIZE(&rom_size)
 	AM_RANGE(0xa00000, 0xa1ffff) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0xa20000, 0xa21fff) AM_WRITE(eeprom_data_w) AM_BASE((data32_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0xa20000, 0xa21fff) AM_WRITE(eeprom_data_w) AM_BASE(&generic_nvram32) AM_SIZE(&generic_nvram_size)
 	AM_RANGE(0xa30000, 0xa30003) AM_WRITE(watchdog_reset32_w)
 	AM_RANGE(0xa40000, 0xa40003) AM_WRITE(eeprom_enable_w)
 	AM_RANGE(0xb70000, 0xb70003) AM_WRITE(misc_control_w)

@@ -13,6 +13,7 @@ UINT8 *trackfld_scroll;
 UINT8 *trackfld_scroll2;
 
 static struct tilemap *bg_tilemap;
+static int bg_bank = 0, sprite_bank1 = 0, sprite_bank2 = 0;
 
 /***************************************************************************
 
@@ -104,12 +105,68 @@ WRITE8_HANDLER( trackfld_flipscreen_w )
 	}
 }
 
+WRITE8_HANDLER( atlantol_gfxbank_w )
+{
+	static int old = 0;
+
+	if( data & 1 )
+	{
+		/* male / female sprites switch */
+		if( (old == 1 && (data & 1) == 1) ||
+			(old == 0 && (data & 1) == 1) )
+			sprite_bank2 = 0x200;
+		else
+			sprite_bank2 = 0;
+
+		sprite_bank1 = 0;
+
+		old = data & 1;
+	}
+	else
+	{
+		/* male / female sprites switch */
+		if( (old == 0 && (data & 1) == 0) ||
+			(old == 1 && (data & 1) == 0) )
+			sprite_bank2 = 0;
+		else
+			sprite_bank2 = 0x200;
+
+		sprite_bank1 = 0;
+
+		old = data & 1;
+	}
+
+	if( (data & 3) == 3 )
+	{
+		if( sprite_bank2 )
+			sprite_bank1 = 0x500;
+		else
+			sprite_bank1 = 0x300;
+	}
+	else if( (data & 3) == 2 )
+	{
+		if( sprite_bank2 )
+			sprite_bank1 = 0x300;
+		else
+			sprite_bank1 = 0x100;
+	}
+
+	if( bg_bank != (data & 0x8) )
+	{
+		bg_bank = data & 0x8;
+		tilemap_mark_all_tiles_dirty(bg_tilemap);
+	}
+}
+
 static void get_bg_tile_info(int tile_index)
 {
 	int attr = colorram[tile_index];
 	int code = videoram[tile_index] + 4 * (attr & 0xc0);
 	int color = attr & 0x0f;
 	int flags = ((attr & 0x10) ? TILE_FLIPX : 0) | ((attr & 0x20) ? TILE_FLIPY : 0);
+
+	if( bg_bank )
+		code |= 0x400;
 
 	SET_TILE_INFO(0, code, color, flags)
 }
@@ -152,7 +209,7 @@ static void trackfld_draw_sprites( struct mame_bitmap *bitmap )
 		sy += 1;
 
 		drawgfx(bitmap, Machine->gfx[1],
-			code, color,
+			code + sprite_bank1 + sprite_bank2, color,
 			flipx, flipy,
 			sx, sy,
 			&Machine->visible_area,
@@ -160,7 +217,7 @@ static void trackfld_draw_sprites( struct mame_bitmap *bitmap )
 
 		/* redraw with wraparound */
 		drawgfx(bitmap,Machine->gfx[1],
-			code, color,
+			code + sprite_bank1 + sprite_bank2, color,
 			flipx, flipy,
 			sx - 256, sy,
 			&Machine->visible_area,

@@ -27,9 +27,9 @@ extern unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag);
 
 /* I/O access */
 /* read word */
-#define IO_READ_W(addr)        (io_read_dword_32be(((addr) >> 13) & 0x1fff))
+#define IO_READ_W(addr)        (io_read_dword_32be(((addr) >> 11) & 0x7ffc))
 /* write word */
-#define IO_WRITE_W(addr, data) (io_write_dword_32be(((addr) >> 13) & 0x1fff, data))
+#define IO_WRITE_W(addr, data) (io_write_dword_32be(((addr) >> 11) & 0x7ffc, data))
 
 
 #define READ_OP(addr)	       READ_HW(addr)

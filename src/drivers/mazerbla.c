@@ -1591,6 +1591,38 @@ ROM_START( mazerbla )
 	ROM_LOAD( "mblrom3.bin",0x12000,0x2000, CRC(18d75d7f) SHA1(51c35ea4a2127439a1299863eb74e57be833e2e4) )/*banked at 0x4000 (select=1)*/
 	/* empty socket??? (the *name* of next rom seems good ?) or wrong schematics ?*/
 	ROM_LOAD( "mblrom4.bin",0x16000,0x2000, CRC(1805acdc) SHA1(40b8e70e6ba69ac864af0b276e81218e63e48deb) )/*banked at 0x4000 (select=3)*/
+
+	ROM_REGION( 0x00240, REGION_PROMS, 0 )
+	ROM_LOAD( "sndprom.8b", 0x0000, 0x0020, CRC(d558af5a) SHA1(060556beeb1f6732c4520dcfb0086c428f7b9ce3) )
+	ROM_LOAD( "sndprom.9b", 0x0020, 0x0020, CRC(0390d748) SHA1(df0f750c1df45cc7bfb9dbabfa2b94563d19172a) )
+	ROM_LOAD( "sndprom.8g", 0x0040, 0x0100, CRC(19680615) SHA1(c309eb83e66b202bae9174dc2ffce231fca40644) )
+	ROM_LOAD( "sndprom.9g", 0x0140, 0x0100, CRC(f8c2c85b) SHA1(d9514af5682a2c5dec5366dcbdf5c7f6ef9f5380) )
+ROM_END
+
+ROM_START( mzrblzra )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for main CPU (ZPU board) */
+	ROM_LOAD( "zpu0",       0x0000, 0x2000, CRC(aa77705c) SHA1(ef93c3eaa66591bef495caa101ef2aff93f2de8c) )
+	ROM_LOAD( "zpu1",       0x2000, 0x2000, CRC(599e1b97) SHA1(ceeb3017d6130d4d54ff4436261f2d3f2a29f8ab) )
+	ROM_LOAD( "zpu2",       0x4000, 0x2000, CRC(e1504613) SHA1(815b56e067d60dda6c5ebed97ef8da3f6c2927ad) )
+	ROM_LOAD( "zpu3",       0x6000, 0x2000, CRC(fd27f409) SHA1(e3d49b931325c75cc0c1075944095bb48501501f) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for sound CPU (VSB board) */
+	ROM_LOAD( "mblvsb0.bin",0x0000, 0x1000, CRC(0cf7a1c3) SHA1(af27e3a3b51d03d46c62c2797268744d0577d075) )
+	ROM_LOAD( "mblvsb1.bin",0x1000, 0x1000, CRC(0b8d0e43) SHA1(b3ddb7561e715a58ca512fe76e53cda39402a8e4) )
+
+	ROM_REGION( 0x18000, REGION_CPU3, 0 )     /* 64k for video CPU (CFB board) */
+	ROM_LOAD( "mblrom0.bin",0x0000, 0x2000, CRC(948a2c5e) SHA1(d693f1b96caf31649f600c5038bb79b0d1d16133) )
+
+	ROM_LOAD( "mblrom2.bin",0x10000,0x2000, CRC(36237058) SHA1(9db8fced37a3d40c4ea5b87ea18ac8e75d71e586) )/*banked at 0x4000 (select=0)*/
+	ROM_LOAD( "mblrom3.bin",0x12000,0x2000, CRC(18d75d7f) SHA1(51c35ea4a2127439a1299863eb74e57be833e2e4) )/*banked at 0x4000 (select=1)*/
+	/* empty socket??? (the *name* of next rom seems good ?) or wrong schematics ?*/
+	ROM_LOAD( "mblrom4.bin",0x16000,0x2000, CRC(1805acdc) SHA1(40b8e70e6ba69ac864af0b276e81218e63e48deb) )/*banked at 0x4000 (select=3)*/
+
+	ROM_REGION( 0x00240, REGION_PROMS, 0 )
+	ROM_LOAD( "sndprom.8b", 0x0000, 0x0020, CRC(d558af5a) SHA1(060556beeb1f6732c4520dcfb0086c428f7b9ce3) )
+	ROM_LOAD( "sndprom.9b", 0x0020, 0x0020, CRC(0390d748) SHA1(df0f750c1df45cc7bfb9dbabfa2b94563d19172a) )
+	ROM_LOAD( "sndprom.8g", 0x0040, 0x0100, CRC(19680615) SHA1(c309eb83e66b202bae9174dc2ffce231fca40644) )
+	ROM_LOAD( "sndprom.9g", 0x0140, 0x0100, CRC(f8c2c85b) SHA1(d9514af5682a2c5dec5366dcbdf5c7f6ef9f5380) )
 ROM_END
 
 
@@ -1632,5 +1664,6 @@ ROM_START( greatgun )
 ROM_END
 
 
-GAMEX( 1983, mazerbla, 0, mazerbla,  mazerbla, 0, ROT0, "Stern", "Mazer Blazer", GAME_IMPERFECT_GRAPHICS |GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1983, greatgun, 0, greatgun,  greatgun, 0, ROT0, "Stern", "Great Guns", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1983, mazerbla, 0,        mazerbla,  mazerbla, 0, ROT0, "Stern", "Mazer Blazer (set 1)", GAME_IMPERFECT_GRAPHICS |GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1983, mzrblzra, mazerbla, mazerbla,  mazerbla, 0, ROT0, "Stern", "Mazer Blazer (set 2)", GAME_IMPERFECT_GRAPHICS |GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1983, greatgun, 0,        greatgun,  greatgun, 0, ROT0, "Stern", "Great Guns", GAME_IMPERFECT_GRAPHICS )

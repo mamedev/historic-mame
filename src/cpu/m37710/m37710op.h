@@ -1328,13 +1328,13 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 /* M37710   Swap accumulators */
 #undef OP_XAB
 #if FLAG_SET_M
-#define OP_XAB(MODE)														\
+#define OP_XAB()														\
 			CLK(6);						\
 			DST = REG_A;					\
 			FLAG_N = FLAG_Z = REG_A = REG_BA;		\
 			REG_BA = DST;
 #else
-#define OP_XAB(MODE)														\
+#define OP_XAB()														\
 			CLK(6);						\
 			DST = REG_A;					\
 			FLAG_Z = REG_A = REG_BA;			\

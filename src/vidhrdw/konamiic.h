@@ -160,7 +160,7 @@ int K053247_read_register(int regnum);
 void K053247_set_SpriteOffset(int offsx, int offsy);
 void K053247_wraparound_enable(int status);
 void K05324x_set_z_rejection(int zcode); // common to K053245/6/7
-void K053247_export_config(data16_t **ram, struct GfxElement **gfx, void **callback, int *dx, int *dy);
+void K053247_export_config(data16_t **ram, struct GfxElement **gfx, void (**callback)(int *, int *, int *), int *dx, int *dy);
 
 READ8_HANDLER( K053246_r );
 WRITE8_HANDLER( K053246_w );

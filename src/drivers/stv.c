@@ -328,8 +328,8 @@ void cdb_reset(void){
 			CD_part[i].sect[j] = NULL;
 
 		// reset filter conditions
-		CD_filt[i].true		= i;
-		CD_filt[i].false	= 0xff;
+		CD_filt[i].true_	= i;
+		CD_filt[i].false_	= 0xff;
 		CD_filt[i].mode		= 0;
 		CD_filt[i].fad		= 0;
 		CD_filt[i].range	= 0;
@@ -1007,8 +1007,8 @@ void do_cd_command(void){
 					logerror("ERROR: invalid selector\n");
 				}
 
-				if(CR1 & 0x01){ CD_filt[fn].true = CR2 >> 8; }
-				if(CR1 & 0x02){ CD_filt[fn].false = CR2 & 0xff; }
+				if(CR1 & 0x01){ CD_filt[fn].true_ = CR2 >> 8; }
+				if(CR1 & 0x02){ CD_filt[fn].false_ = CR2 & 0xff; }
 
 				CDB_SEND_REPORT();
 
@@ -1024,7 +1024,7 @@ void do_cd_command(void){
 				}
 
 				CR1 = (CD_status << 8);
-				CR2 = (CD_filt[fn].true << 8) | CD_filt[fn].false;
+				CR2 = (CD_filt[fn].true_ << 8) | CD_filt[fn].false_;
 				CR3 = 0;
 				CR4 = 0;
 
@@ -1054,8 +1054,8 @@ void do_cd_command(void){
 				// all partitions are reset
 
 				for(i = 0; i < CDB_SEL_NUM; i++){
-					if(rf & 0x80){ CD_filt[i].false = 0xff; }
-					if(rf & 0x40){ CD_filt[i].true = i; }
+					if(rf & 0x80){ CD_filt[i].false_ = 0xff; }
+					if(rf & 0x40){ CD_filt[i].true_ = i; }
 					if(rf & 0x20){
 						CD_filt_num = 0xff;
 						CD_mpeg_filt_num = 0xff;
@@ -1097,8 +1097,8 @@ void do_cd_command(void){
 							//exit(1);
 						}
 
-						if(rf & 0x80){ CD_filt[pn].false = 0xff; }
-						if(rf & 0x40){ CD_filt[pn].true = pn; }
+						if(rf & 0x80){ CD_filt[pn].false_ = 0xff; }
+						if(rf & 0x40){ CD_filt[pn].true_ = pn; }
 						if(rf & 0x20){ }
 						if(rf & 0x10){
 							CD_filt[pn].mode = 0x00;
@@ -4419,23 +4419,8 @@ ROM_START( sfish2 )
 	ROM_LOAD16_WORD_SWAP( "mpr18274.ic3",      0x0800000, 0x0200000, NO_DUMP )
 	ROM_LOAD16_WORD_SWAP( "mpr18275.ic4",      0x0c00000, 0x0200000, NO_DUMP )
 
-/*  I have nothing better to do with this ...
-
-FILE "SFISH2.BIN" BINARY
-  TRACK 01 MODE1/2352
-    INDEX 01 00:00:00
-  TRACK 02 MODE2/2352
-    PREGAP 00:03:00
-    INDEX 01 00:07:16
-  TRACK 03 AUDIO
-    PREGAP 00:02:00
-    INDEX 01 60:42:38
-
-*/
-
-	ROM_REGION(643765920, REGION_USER2,0 )
-	ROM_LOAD(             "sfish2.bin",      0, 643765920, CRC(339aa970) SHA1(bdc8dc7815d85305ddf836b1f56565a4cd779b71) )
-
+	DISK_REGION( REGION_DISKS )
+	DISK_IMAGE( "sfish2", 0, MD5(3c95f7e19c5475d0ffa0d89cc45a36e5) SHA1(d07e0aa09a0858b308cc2218996b2242885a2609) )
 ROM_END
 
 ROM_START( sfish2j )
@@ -4457,23 +4442,8 @@ ROM_START( sfish2j )
 	ROM_LOAD16_WORD_SWAP( "mpr18273.ic2",	   0x0400000, 0x0200000, NO_DUMP )
 	ROM_LOAD16_WORD_SWAP( "mpr18274.ic3",      0x0800000, 0x0200000, NO_DUMP )
 
-/*  I have nothing better to do with this ...
-
-FILE "SFISH2.BIN" BINARY
-  TRACK 01 MODE1/2352
-    INDEX 01 00:00:00
-  TRACK 02 MODE2/2352
-    PREGAP 00:03:00
-    INDEX 01 00:07:16
-  TRACK 03 AUDIO
-    PREGAP 00:02:00
-    INDEX 01 60:42:38
-
-*/
-
-	ROM_REGION(643765920, REGION_USER2,0 )
-	ROM_LOAD(             "sfish2.bin",      0, 643765920, CRC(339aa970) SHA1(bdc8dc7815d85305ddf836b1f56565a4cd779b71) )
-
+	DISK_REGION( REGION_DISKS )
+	DISK_IMAGE( "sfish2", 0, MD5(3c95f7e19c5475d0ffa0d89cc45a36e5) SHA1(d07e0aa09a0858b308cc2218996b2242885a2609) )
 ROM_END
 
 

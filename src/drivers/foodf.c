@@ -98,7 +98,7 @@ static UINT8 whichport = 0;
 
 static READ16_HANDLER( nvram_r )
 {
-	return ((data16_t *)generic_nvram)[offset] | 0xfff0;
+	return generic_nvram16[offset] | 0xfff0;
 }
 
 
@@ -211,7 +211,7 @@ static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x014000, 0x01bfff) AM_RAM
 	AM_RANGE(0x01c000, 0x01cfff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x800000, 0x8007ff) AM_READWRITE(MRA16_RAM, atarigen_playfield_w) AM_BASE(&atarigen_playfield)
-	AM_RANGE(0x900000, 0x9001ff) AM_READWRITE(nvram_r, MWA16_RAM) AM_BASE((data16_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x900000, 0x9001ff) AM_READWRITE(nvram_r, MWA16_RAM) AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
 	AM_RANGE(0x940000, 0x940007) AM_READ(analog_r)
 	AM_RANGE(0x944000, 0x944007) AM_WRITE(analog_w)
 	AM_RANGE(0x948000, 0x948001) AM_READWRITE(input_port_4_word_r, digital_w)

@@ -18,6 +18,7 @@ static data16_t road16_vscroll;
 static struct tilemap *bg_tilemap,*tx_tilemap;
 static int polepos_chacl;
 
+int polepos_gear_bit;
 
 /***************************************************************************
 
@@ -535,8 +536,9 @@ VIDEO_UPDATE( polepos )
 		int in = readinputport( 0 );
 		static int lastin;
 
-		if ((in ^ lastin) & 2)
-			usrintf_showmessage((in & 2) ? "LO" : "HI");
+		if ((in ^ lastin) & polepos_gear_bit)
+			usrintf_showmessage((in & polepos_gear_bit) ? "LO" : "HI");
+
 		lastin = in;
 	}
 }

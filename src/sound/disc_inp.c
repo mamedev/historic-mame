@@ -1,18 +1,18 @@
-/************************************************************************/
-/*                                                                      */
-/*  MAME - Discrete sound system emulation library                      */
-/*                                                                      */
-/*  Written by Keith Wilkins (mame@esplexo.co.uk)                       */
-/*                                                                      */
-/*  (c) K.Wilkins 2000                                                  */
-/*                                                                      */
-/************************************************************************/
-/*                                                                      */
-/* DSS_ADJUSTMENT        - UI Mapped adjustable input                   */
-/* DSS_CONSTANT          - Node based constant - Do we need this ???    */
-/* DSS_INPUT             - Memory Mapped input device                   */
-/*                                                                      */
-/************************************************************************/
+/************************************************************************
+ *
+ *  MAME - Discrete sound system emulation library
+ *
+ *  Written by Keith Wilkins (mame@esplexo.co.uk)
+ *
+ *  (c) K.Wilkins 2000
+ *
+ ***********************************************************************
+ *
+ * DSS_ADJUSTMENT        - UI Mapped adjustable input
+ * DSS_CONSTANT          - Node based constant - Do we need this ???
+ * DSS_INPUT             - Memory Mapped input device
+ *
+ ************************************************************************/
 
 #define DSS_INPUT_SPACE	0x1000
 
@@ -63,19 +63,19 @@ WRITE8_HANDLER(discrete_sound_w)
 }
 
 
-/************************************************************************/
-/*                                                                      */
-/* DSS_ADJUSTMENT - UI Adjustable constant node to emulate trimmers     */
-/*                                                                      */
-/* input[0]    - Enable                                                 */
-/* input[1]    - Minimum value                                          */
-/* input[2]    - Maximum value                                          */
-/* input[3]    - Log/Linear 0=Linear !0=Log                             */
-/* input[4]    - Input Port number                                      */
-/* input[5]    -                                                        */
-/* input[6]    -                                                        */
-/*                                                                      */
-/************************************************************************/
+/************************************************************************
+ *
+ * DSS_ADJUSTMENT - UI Adjustable constant node to emulate trimmers
+ *
+ * input[0]    - Enable
+ * input[1]    - Minimum value
+ * input[2]    - Maximum value
+ * input[3]    - Log/Linear 0=Linear !0=Log
+ * input[4]    - Input Port number
+ * input[5]    -
+ * input[6]    -
+ *
+ ************************************************************************/
 #define DSS_ADJUSTMENT_ENABLE	node->input[0]
 #define DSS_ADJUSTMENT_MIN		node->input[1]
 #define DSS_ADJUSTMENT_MAX		node->input[2]
@@ -88,7 +88,7 @@ void dss_adjustment_step(struct node_description *node)
 	{
 		struct dss_adjustment_context *context = node->context;
 		INT32 rawportval = readinputport(context->port);
-		
+
 		/* only recompute if the value changed from last time */
 		if (rawportval != context->lastpval)
 		{
@@ -117,14 +117,14 @@ void dss_adjustment_reset(struct node_description *node)
 	context->lastpval = 0x7fffffff;
 	context->pmin = node->input[5];
 	context->pscale = 1.0 / (double)(node->input[6] - node->input[5]);
-	
+
 	/* linear scale */
 	if (DSS_ADJUSTMENT_LOG == 0)
 	{
 		context->min = DSS_ADJUSTMENT_MIN;
 		context->scale = DSS_ADJUSTMENT_MAX - DSS_ADJUSTMENT_MIN;
 	}
-	
+
 	/* logarithmic scale */
 	else
 	{
@@ -132,36 +132,36 @@ void dss_adjustment_reset(struct node_description *node)
 		context->scale = log10(DSS_ADJUSTMENT_MAX) - log10(DSS_ADJUSTMENT_MIN);
 	}
 	context->lastval = 0;
-	
+
 	dss_adjustment_step(node);
 }
 
 
-/************************************************************************/
-/*                                                                      */
-/* DSS_CONSTANT - This is a constant.                                   */
-/*                                                                      */
-/* input[0]    - Constant value                                         */
-/*                                                                      */
-/************************************************************************/
+/************************************************************************
+ *
+ * DSS_CONSTANT - This is a constant.
+ *
+ * input[0]    - Constant value
+ *
+ ************************************************************************/
 void dss_constant_step(struct node_description *node)
 {
 	node->output=node->input[0];
 }
 
 
-/************************************************************************/
-/*                                                                      */
-/* DSS_INPUT    - Receives input from discrete_sound_w                  */
-/*                                                                      */
-/* input[0]    - Constant value                                         */
-/* input[1]    - Address value                                          */
-/* input[2]    - Address mask                                           */
-/* input[3]    - Gain value                                             */
-/* input[4]    - Offset value                                           */
-/* input[5]    - Starting Position                                      */
-/*                                                                      */
-/************************************************************************/
+/************************************************************************
+ *
+ * DSS_INPUT    - Receives input from discrete_sound_w
+ *
+ * input[0]    - Constant value
+ * input[1]    - Address value
+ * input[2]    - Address mask
+ * input[3]    - Gain value
+ * input[4]    - Offset value
+ * input[5]    - Starting Position
+ *
+ ************************************************************************/
 void dss_input_step(struct node_description *node)
 {
 	node->output=(node->input[0]*node->input[3])+node->input[4];

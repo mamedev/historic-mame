@@ -108,7 +108,7 @@ enum
 	IPT_JOYSTICKLEFT_LEFT,
 	IPT_JOYSTICKLEFT_RIGHT,
 #define __ipt_digital_joystick_end IPT_JOYSTICKLEFT_RIGHT
-	
+
 	/* action buttons */
 	IPT_BUTTON1,
 	IPT_BUTTON2,
@@ -130,7 +130,7 @@ enum
 	IPT_START6,
 	IPT_START7,
 	IPT_START8,
-	
+
 	/* coin slots */
 	IPT_COIN1,
 	IPT_COIN2,
@@ -154,7 +154,7 @@ enum
 	IPT_INTERLOCK,
 	IPT_VOLUME_UP,
 	IPT_VOLUME_DOWN,
-	
+
 	/* analog inputs */
 #define __ipt_analog_start IPT_PADDLE
 	IPT_PADDLE,			/* absolute */
@@ -420,7 +420,7 @@ struct InputPort
 		input_seq_t incseq;		/* increment sequence */
 		input_seq_t decseq;		/* decrement sequence */
 	} analog;
-	
+
 	/* valid if type is IPT_PORT */
 	struct
 	{
@@ -459,10 +459,11 @@ struct InputPort
 #define INPUT_PORTS_START(name)										\
  	void construct_ipt_##name(struct IptInitParams *param)			\
 	{																\
+ 		const char *modify_tag = NULL;								\
  		struct InputPort *port;										\
 		int seq_index[3];											\
 		int key;													\
- 		(void) port; (void) seq_index; (void) key;					\
+		(void) port; (void) seq_index; (void) key; (void)modify_tag;\
 
 /* end of table */
 #define INPUT_PORTS_END												\
@@ -483,17 +484,22 @@ struct InputPort
  	construct_ipt_##name(param);									\
 
 /* start of a new input port */
-#define PORT_START													\
-	port = input_port_initialize(param, IPT_PORT);					\
+#define PORT_START_TAG(tag_)										\
+	modify_tag = NULL;												\
+	port = input_port_initialize(param, IPT_PORT, NULL, 0);			\
+	port->start.tag = (tag_);										\
 
 /* start of a new input port */
-#define PORT_START_TAG(tag_)										\
-	port = input_port_initialize(param, IPT_PORT);					\
-	port->start.tag = (tag_);										\
+#define PORT_START													\
+	PORT_START_TAG(NULL)											\
+
+/* modify an existing port */
+#define PORT_MODIFY(tag_)											\
+	modify_tag = (tag_);											\
 
 /* input bit definition */
 #define PORT_BIT(mask_,default_,type_) 								\
-	port = input_port_initialize(param, (type_));					\
+	port = input_port_initialize(param, (type_), modify_tag, (mask_));\
 	port->mask = (mask_);											\
 	port->default_value = (default_);								\
 	seq_index[0] = seq_index[1] = seq_index[2] = key = 0;			\
@@ -555,7 +561,7 @@ struct InputPort
 /* note that PORT_CENTERDELTA must appear after PORT_KEYDELTA */
 #define PORT_CENTERDELTA(delta_)									\
 	port->analog.centerdelta = (delta_);							\
-	
+
 #define PORT_UNUSED													\
 	port->unused = 1;												\
 
@@ -617,7 +623,7 @@ extern const char *inptport_default_strings[];
 int load_input_port_settings(void);
 void save_input_port_settings(void);
 
-struct InputPort *input_port_initialize(struct IptInitParams *params, UINT32 type);
+struct InputPort *input_port_initialize(struct IptInitParams *params, UINT32 type, const char *tag, UINT32 mask);
 struct InputPort *input_port_allocate(void construct_ipt(struct IptInitParams *params));
 
 struct InputPortDefinition *get_input_port_list(void);
@@ -628,6 +634,9 @@ int port_type_is_analog(int type);
 int port_type_in_use(int type);
 int port_type_to_group(int type, int player);
 int port_tag_to_index(const char *tag);
+read8_handler port_tag_to_handler8(const char *tag);
+read16_handler port_tag_to_handler16(const char *tag);
+read32_handler port_tag_to_handler32(const char *tag);
 const char *input_port_name(const struct InputPort *in);
 input_seq_t *input_port_seq(struct InputPort *in, int seqtype);
 input_seq_t *input_port_default_seq(int type, int player, int seqtype);
@@ -645,6 +654,7 @@ void inputport_vblank_end(void);	/* called by cpuintrf.c - not for external use 
 
 UINT32 readinputport(int port);
 UINT32 readinputportbytag(const char *tag);
+UINT32 readinputportbytag_safe(const char *tag, UINT32 defvalue);
 
 READ8_HANDLER( input_port_0_r );
 READ8_HANDLER( input_port_1_r );

@@ -1,9 +1,12 @@
 /*
 
  Multi 5 / New Multi Game 5		(c) 1998 Yun Sung
+ Puzzle Club					(c) 2000 Yun Sung
+
  driver by Pierpaolo Prazzoli
 
- Press player 2 button 2 in service mode to enable image test
+- nmg5:
+  Press player 2 button 2 in service mode to enable image test
 
 */
 
@@ -12,7 +15,9 @@
 
 static struct tilemap *fg_tilemap,*bg_tilemap;
 data16_t *nmg5_bitmap;
-static data16_t *fgvideoram,*bgvideoram;
+static data16_t *fgvideoram,*bgvideoram,*scroll_ram,*sprite_pri;
+static data16_t gfx_bank = 0;
+static data16_t input_data;
 
 static WRITE16_HANDLER( fgvideoram_w )
 {
@@ -39,35 +44,92 @@ static WRITE16_HANDLER( nmg5_soundlatch_w )
 	}
 }
 
+static READ16_HANDLER( prot_r )
+{
+	return 0x10 | input_data;
+}
+
+static WRITE16_HANDLER( prot_w )
+{
+	input_data = data & 0xf;
+}
+
+static WRITE16_HANDLER( gfx_bank_w )
+{
+	if( gfx_bank != (data & 3) )
+	{
+		gfx_bank = data & 3;
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
+}
+
+static WRITE8_HANDLER( oki_banking_w )
+{
+	OKIM6295_set_bank_base(0, (data & 1) ? 0x40000 : 0 );
+}
+
+/*******************************************************************
+
+							Main Cpu
+
+********************************************************************/
+
 static ADDRESS_MAP_START( nmg5_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_ROM
 	AM_RANGE(0x120000, 0x12ffff) AM_RAM
 	AM_RANGE(0x140000, 0x1407ff) AM_RAM AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x160000, 0x1607ff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x180004, 0x180005) AM_READNOP
+	AM_RANGE(0x180000, 0x180001) AM_WRITE(nmg5_soundlatch_w)
+	AM_RANGE(0x180002, 0x180003) AM_WRITENOP
+	AM_RANGE(0x180004, 0x180005) AM_READWRITE(prot_r, prot_w)
+	AM_RANGE(0x180006, 0x180007) AM_WRITE(gfx_bank_w)
 	AM_RANGE(0x180008, 0x180009) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x18000a, 0x18000b) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x18000c, 0x18000d) AM_READ(input_port_2_word_r)
-	AM_RANGE(0x180000, 0x180001) AM_WRITE(nmg5_soundlatch_w)
-	AM_RANGE(0x180002, 0x180003) AM_WRITENOP
-	AM_RANGE(0x180004, 0x180005) AM_WRITENOP
-	AM_RANGE(0x180006, 0x180007) AM_WRITENOP
-	AM_RANGE(0x300000, 0x300001) AM_WRITENOP
-	AM_RANGE(0x300002, 0x300009) AM_WRITENOP
-	AM_RANGE(0x30000a, 0x30000b) AM_WRITENOP
-	AM_RANGE(0x30000c, 0x30000d) AM_WRITENOP
-	AM_RANGE(0x30000e, 0x30000f) AM_WRITENOP
+	AM_RANGE(0x300002, 0x300009) AM_WRITE(MWA16_RAM) AM_BASE(&scroll_ram)
+	AM_RANGE(0x30000a, 0x30000f) AM_WRITENOP
 	AM_RANGE(0x320000, 0x321fff) AM_RAM AM_WRITE(bgvideoram_w) AM_BASE(&bgvideoram)
 	AM_RANGE(0x322000, 0x323fff) AM_RAM AM_WRITE(fgvideoram_w) AM_BASE(&fgvideoram)
 	AM_RANGE(0x800000, 0x80ffff) AM_RAM AM_BASE(&nmg5_bitmap)
 ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( pclubys_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_ROM
+	AM_RANGE(0x200000, 0x20ffff) AM_RAM
+	AM_RANGE(0x440000, 0x4407ff) AM_RAM AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x460000, 0x4607ff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x480000, 0x480001) AM_WRITE(nmg5_soundlatch_w)
+	AM_RANGE(0x480002, 0x480003) AM_WRITENOP
+	AM_RANGE(0x480004, 0x480005) AM_READWRITE(prot_r, prot_w)
+	AM_RANGE(0x480006, 0x480007) AM_WRITE(gfx_bank_w)
+	AM_RANGE(0x480008, 0x480009) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x48000a, 0x48000b) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x48000c, 0x48000d) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x48000e, 0x48000f) AM_WRITE(MWA16_RAM) AM_BASE(&sprite_pri)
+	AM_RANGE(0x500002, 0x500009) AM_WRITE(MWA16_RAM) AM_BASE(&scroll_ram)
+	AM_RANGE(0x520000, 0x521fff) AM_RAM AM_WRITE(bgvideoram_w) AM_BASE(&bgvideoram)
+	AM_RANGE(0x522000, 0x523fff) AM_RAM AM_WRITE(fgvideoram_w) AM_BASE(&fgvideoram)
+	AM_RANGE(0x800000, 0x80ffff) AM_RAM AM_BASE(&nmg5_bitmap)
+ADDRESS_MAP_END
+
+/*******************************************************************
+
+							Sound Cpu
+
+********************************************************************/
 
 static ADDRESS_MAP_START( nmg5_sound_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xcfff) AM_ROM
 	AM_RANGE(0xe000, 0xe7ff) AM_RAM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( nmg5_sound_io_map, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( pclubys_sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xf7ff) AM_ROM
+	AM_RANGE(0xf800, 0xffff) AM_RAM
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( sound_io_map, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(oki_banking_w)
 	AM_RANGE(0x10, 0x10) AM_READWRITE(YM3812_status_port_0_r, YM3812_control_port_0_w)
 	AM_RANGE(0x11, 0x11) AM_WRITE(YM3812_write_port_0_w)
 	AM_RANGE(0x18, 0x18) AM_READ(soundlatch_r)
@@ -134,18 +196,88 @@ INPUT_PORTS_START( nmg5 )
 	PORT_BIT( 0xffac, IP_ACTIVE_LOW,  IPT_UNUSED )  // tested in service mode
 
 	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )    PORT_PLAYER(1) PORT_4WAY
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )  PORT_PLAYER(1) PORT_4WAY
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )  PORT_PLAYER(1) PORT_4WAY
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(1) PORT_4WAY
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )    PORT_PLAYER(1) PORT_8WAY
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )  PORT_PLAYER(1) PORT_8WAY
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )  PORT_PLAYER(1) PORT_8WAY
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(1) PORT_8WAY
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )    PORT_PLAYER(2) PORT_4WAY
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )  PORT_PLAYER(2) PORT_4WAY
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )  PORT_PLAYER(2) PORT_4WAY
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2) PORT_4WAY
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )    PORT_PLAYER(2) PORT_8WAY
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )  PORT_PLAYER(2) PORT_8WAY
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )  PORT_PLAYER(2) PORT_8WAY
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2) PORT_8WAY
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START2 )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( pclubys )
+	PORT_START
+	PORT_DIPNAME( 0x0001, 0x0001, "1" )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0000, "Nude Girls" )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0030, 0x0030, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0030, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Medium ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hard ) )
+	PORT_DIPNAME( 0x00c0, 0x00c0, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x00c0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( 1C_2C ) )
+	PORT_SERVICE( 0x0100, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x0200, 0x0200, "2" )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x4000, "4" )
+	PORT_DIPSETTING(      0x0000, "3" )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW,  IPT_COIN1 )
+	PORT_BIT( 0xfffe, IP_ACTIVE_LOW,  IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )    PORT_PLAYER(1) PORT_8WAY
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )  PORT_PLAYER(1) PORT_8WAY
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )  PORT_PLAYER(1) PORT_8WAY
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(1) PORT_8WAY
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )    PORT_PLAYER(2) PORT_8WAY
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )  PORT_PLAYER(2) PORT_8WAY
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )  PORT_PLAYER(2) PORT_8WAY
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2) PORT_8WAY
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
@@ -155,7 +287,7 @@ INPUT_PORTS_END
 
 INLINE void get_tile_info(int tile_index,data16_t *vram,int color)
 {
-	SET_TILE_INFO(0,vram[tile_index],color,0)
+	SET_TILE_INFO(0,vram[tile_index] | (gfx_bank << 16),color,0)
 }
 
 static void fg_get_tile_info(int tile_index) { get_tile_info(tile_index,fgvideoram, 0); }
@@ -163,12 +295,13 @@ static void bg_get_tile_info(int tile_index) { get_tile_info(tile_index,bgvideor
 
 VIDEO_START( nmg5 )
 {
-	bg_tilemap = tilemap_create(bg_get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     8,8,64,64);
+	bg_tilemap = tilemap_create(bg_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
 	fg_tilemap = tilemap_create(fg_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
 
 	if (!bg_tilemap || !fg_tilemap)
 		return 1;
 
+	tilemap_set_transparent_pen(bg_tilemap,0);
 	tilemap_set_transparent_pen(fg_tilemap,0);
 
 	return 0;
@@ -210,7 +343,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 	}
 }
 
-void draw_bitmap(struct mame_bitmap *bitmap)
+static void draw_bitmap(struct mame_bitmap *bitmap)
 {
 	int yyy=256;
 	int xxx=512/4;
@@ -241,14 +374,35 @@ void draw_bitmap(struct mame_bitmap *bitmap)
 
 VIDEO_UPDATE( nmg5 )
 {
+	tilemap_set_scrolly(bg_tilemap,0,scroll_ram[3]+9);
+	tilemap_set_scrollx(bg_tilemap,0,scroll_ram[2]+3);
+	tilemap_set_scrolly(fg_tilemap,0,scroll_ram[1]+9);
+	tilemap_set_scrollx(fg_tilemap,0,scroll_ram[0]-1);
+
+	fillbitmap(bitmap,Machine->pens[0x100],cliprect);
+
+	if(*sprite_pri == 0)
+		draw_sprites(bitmap,cliprect);
+
 	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+
+	if(*sprite_pri == 1)
+		draw_sprites(bitmap,cliprect);
+
 	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
+
+	if(*sprite_pri == 3)
+		draw_sprites(bitmap,cliprect);
+
 	draw_bitmap(bitmap);
-	draw_sprites(bitmap,cliprect);
+
+	if(*sprite_pri == 7)
+		draw_sprites(bitmap,cliprect);
+	
 }
 
 
-static struct GfxLayout layout_8x8x8 =
+static struct GfxLayout nmg5_layout_8x8x8 =
 {
 	8,8,
 	RGN_FRAC(1,8),
@@ -257,6 +411,17 @@ static struct GfxLayout layout_8x8x8 =
 	{ 0,1,2,3,4,5,6,7 },
 	{ 0*8,1*8,2*8,3*8,4*8,5*8,6*8,7*8 },
 	8*8
+};
+
+static struct GfxLayout pclubys_layout_8x8x8 =
+{
+	8,8,
+	RGN_FRAC(1,4),
+	8,
+	{ RGN_FRAC(1,4)+8,RGN_FRAC(2,4)+0,RGN_FRAC(0,4)+8,RGN_FRAC(0,4)+0,RGN_FRAC(3,4)+8,RGN_FRAC(3,4)+0,RGN_FRAC(2,4)+8,RGN_FRAC(1,4)+0 },
+	{ 0,1,2,3,4,5,6,7 },
+	{ 0*16,1*16,2*16,3*16,4*16,5*16,6*16,7*16 },
+	8*16
 };
 
 static struct GfxLayout layout_16x16x5 =
@@ -272,8 +437,15 @@ static struct GfxLayout layout_16x16x5 =
 
 static struct GfxDecodeInfo nmg5_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &layout_8x8x8,   0x000,  2 },
-	{ REGION_GFX2, 0, &layout_16x16x5, 0x200, 16 },
+	{ REGION_GFX1, 0, &nmg5_layout_8x8x8, 0x000,  2 },
+	{ REGION_GFX2, 0, &layout_16x16x5,	  0x200, 16 },
+	{ -1 }
+};
+
+static struct GfxDecodeInfo pclubys_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &pclubys_layout_8x8x8, 0x000,  2 },
+	{ REGION_GFX2, 0, &layout_16x16x5,		 0x200, 16 },
 	{ -1 }
 };
 
@@ -286,7 +458,7 @@ static void soundirq(int state)
 static struct YM3812interface ym3812_intf =
 {
 	1,
-	4000000,		/* ? */
+	4000000,
 	{ 100 },
 	{ soundirq },	/* IRQ Line */
 };
@@ -294,7 +466,7 @@ static struct YM3812interface ym3812_intf =
 static struct OKIM6295interface okim6295_intf =
 {
 	1,
-	{ 8000 },	/* ? */
+	{ 1000000 / 132 },
 	{ REGION_SOUND1 },
 	{ 100 }
 };
@@ -302,14 +474,14 @@ static struct OKIM6295interface okim6295_intf =
 static MACHINE_DRIVER_START( nmg5 )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 16000000)	/* 16 MHz ? */
+	MDRV_CPU_ADD_TAG("main", M68000, 16000000)	/* 16 MHz */
 	MDRV_CPU_PROGRAM_MAP(nmg5_map,0)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 3000000)		/* 3 MHz ? */
+	MDRV_CPU_ADD_TAG("sound", Z80, 4000000)		/* 4 MHz */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(nmg5_sound_map,0)
-	MDRV_CPU_IO_MAP(nmg5_sound_io_map,0)
+	MDRV_CPU_IO_MAP(sound_io_map,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -327,6 +499,20 @@ static MACHINE_DRIVER_START( nmg5 )
 	/* sound hardware */
 	MDRV_SOUND_ADD(YM3812, ym3812_intf)
 	MDRV_SOUND_ADD(OKIM6295, okim6295_intf)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( pclubys )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(nmg5)
+
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(pclubys_map,0)
+
+	MDRV_CPU_MODIFY("sound")
+	MDRV_CPU_PROGRAM_MAP(pclubys_sound_map,0)
+
+	MDRV_GFXDECODE(pclubys_gfxdecodeinfo)
 MACHINE_DRIVER_END
 
 
@@ -359,4 +545,77 @@ ROM_START( nmg5 )
 	ROM_LOAD( "xra1.bin", 0x00000, 0x20000, CRC(c74a4f3e) SHA1(2f6165c1d5bdd3e816b95ffd9303dd4bd07f7ac8) )
 ROM_END
 
-GAME( 1998, nmg5, 0, nmg5, nmg5, 0, ROT0, "Yun Sung", "Multi 5 / New Multi Game 5" )
+/*
+
+Puzzle Club
+Yunsung, 2000
+
+PCB Layout
+----------
+
+YS-2113
+|----------------------------------------------|
+|ROM1.128 ROM2.137 ROM3.7  62256  ROM5.97      |
+|  6116 Z80  6295  ROM4.2  62256  ROM6.95      |
+|  YMXXXX   16MHz     PAL         ROM7.105     |
+|  YM3014             PAL  PAL    ROM8.83      |
+|          62256    68000         ROM9.82      |
+|          62256           6116     14.38383MHz|
+|                          6116   PAL     PAL  |
+|J           6116   QL2003        PAL          |
+|A           6116                 PAL          |
+|M           6116   QL12X16B      PAL          |
+|M DIP1      6116                 PAL          |
+|A DIP2                                        |
+|            62256  QL2003                     |
+|            62256                             |
+|                                              |
+|  ROM11.166  ROM10.167                        |
+|                   QL2003        PAL          |
+|  ROM13.164  ROM12.165           PAL          |
+|----------------------------------------------|
+Notes:
+      68000 clock : 16.000MHz
+      Z80 clock   : 4.000MHz (16/4)
+      M6295 clock : 1.000MHz (16/16). Sample Rate = 1000000 / 132
+      YMXXXX clock: 4.000MHz (16/4). Chip is either YM2151 or YM3812
+      VSync       : 60Hz
+
+*/
+
+ROM_START( pclubys )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "rom3.7", 0x000000, 0x80000, CRC(62e28e6d) SHA1(30307dfbb6bd02d78fb06d3c3522b41115f1c27a) )
+	ROM_LOAD16_BYTE( "rom4.2", 0x000001, 0x80000, CRC(b51dab41) SHA1(2ad3929c8cf2b66c36289c2c851769190916b718) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* Z80 Code */
+	ROM_LOAD( "rom1.128", 0x00000, 0x10000, CRC(25cd27f8) SHA1(97af1368381234361bbd97f4552209c435652372) )
+
+	ROM_REGION( 0x1000000, REGION_GFX1, ROMREGION_DISPOSE )	/* 8x8x8 */
+	ROM_LOAD( "rom10.167", 0x000000, 0x400000, CRC(d67e8e84) SHA1(197d1bdb321cf7ac986b5dbfa061494ffd4db6e4) )
+	ROM_LOAD( "rom12.165", 0x400000, 0x400000, CRC(6be8b733) SHA1(bdbbec77938828ac9831537c00abd5c31dc56284) )
+	ROM_LOAD( "rom11.166", 0x800000, 0x400000, CRC(672501a4) SHA1(193e1965c2f21f469e5c6c514d3cdcab3ffdf629) )
+	ROM_LOAD( "rom13.164", 0xc00000, 0x400000, CRC(fc725ce7) SHA1(d997a31a975ae67efa071720c58235c738ebbbe3) )
+
+	ROM_REGION( 0x280000, REGION_GFX2, ROMREGION_DISPOSE )	/* 16x16x5 */
+	ROM_LOAD( "rom8.83", 0x000000, 0x80000, CRC(651af101) SHA1(350698bd7ee65fc1ed084382db7f66ffb83c23c6) )
+	ROM_LOAD( "rom9.82", 0x080000, 0x80000, CRC(2535b4d6) SHA1(85af6a042e83f8a7abb78c5edfd4497a9018ed68) )
+	ROM_LOAD( "rom7.105",0x100000, 0x80000, CRC(f7536c52) SHA1(546976f52c6f064f5172736988ada053c1c1183f) )
+	ROM_LOAD( "rom6.95", 0x180000, 0x80000, CRC(3c078a52) SHA1(be8936bcafbfd77e491c81a3d215a53dad78d652) )
+	ROM_LOAD( "rom5.97", 0x200000, 0x80000, CRC(20eae2f8) SHA1(ad9ac6e5e0331fb19652f6578dbb2f532bb22b3d) )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "rom2.137", 0x00000, 0x80000, CRC(4ff97ad1) SHA1(d472c8298e428cb9659ce90a8ce9402c119bdb0f) )
+ROM_END
+
+
+DRIVER_INIT( nmg5 )
+{
+	/* hardcoded sprites priority */
+	sprite_pri = auto_malloc(1);
+	*sprite_pri = 7;
+}
+
+
+GAME( 1998, nmg5,    0, nmg5,    nmg5,    nmg5, ROT0, "Yun Sung", "Multi 5 / New Multi Game 5" )
+GAME( 2000, pclubys, 0, pclubys, pclubys, 0,    ROT0, "Yun Sung", "Puzzle Club (Yun Sung)" )

@@ -1417,17 +1417,15 @@ static WRITE32_HANDLER( widget_w )
 
 static WRITE32_HANDLER( cmos_w )
 {
-	data32_t *cmos_base = (data32_t *)generic_nvram;
 	if (cmos_write_enabled)
-		COMBINE_DATA(&cmos_base[offset]);
+		COMBINE_DATA(generic_nvram32 + offset);
 	cmos_write_enabled = 0;
 }
 
 
 static READ32_HANDLER( cmos_r )
 {
-	data32_t *cmos_base = (data32_t *)generic_nvram;
-	return cmos_base[offset];
+	return generic_nvram32[offset];
 }
 
 
@@ -1530,7 +1528,7 @@ static ADDRESS_MAP_START( seattle_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0xac000000, 0xac000fff) AM_READWRITE(galileo_r, galileo_w)
 	AM_RANGE(0xb3000000, 0xb3000003) AM_WRITE(asic_fifo_w)
 	AM_RANGE(0xb6000000, 0xb600003f) AM_READWRITE(midway_ioasic_r, midway_ioasic_w)
-	AM_RANGE(0xb6100000, 0xb611ffff) AM_READWRITE(cmos_r, cmos_w) AM_BASE((data32_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0xb6100000, 0xb611ffff) AM_READWRITE(cmos_r, cmos_w) AM_BASE(&generic_nvram32) AM_SIZE(&generic_nvram_size)
 	AM_RANGE(0xb7000000, 0xb7000003) AM_READWRITE(cmos_protect_r, cmos_protect_w)
 	AM_RANGE(0xb7100000, 0xb7100003) AM_WRITE(seattle_watchdog_w)
 	AM_RANGE(0xb7300000, 0xb7300003) AM_READWRITE(MRA32_RAM, seattle_interrupt_enable_w) AM_BASE(&interrupt_enable)

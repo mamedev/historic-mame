@@ -303,7 +303,7 @@ logerror("%04x: setlines %02x\n",activecpu_get_pc(),lines);
 
 static MACHINE_INIT( surpratk )
 {
-	cpunum_set_info_ptr(0, CPUINFO_PTR_KONAMI_SETLINES_CALLBACK, (void *)surpratk_banking);
+	cpunum_set_info_fct(0, CPUINFO_PTR_KONAMI_SETLINES_CALLBACK, (genf *)surpratk_banking);
 
 	paletteram = &memory_region(REGION_CPU1)[0x48000];
 }

@@ -21,7 +21,8 @@ PALETTE_INIT( mermaid );
 VIDEO_UPDATE( mermaid );
 WRITE8_HANDLER( mermaid_flip_screen_x_w );
 WRITE8_HANDLER( mermaid_flip_screen_y_w );
-
+WRITE8_HANDLER( rougien_gfxbankswitch1_w );
+WRITE8_HANDLER( rougien_gfxbankswitch2_w );
 
 static unsigned char *mermaid_AY8910_enable;
 
@@ -81,6 +82,8 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xe005, 0xe005) AM_WRITE(mermaid_flip_screen_x_w)
 	AM_RANGE(0xe006, 0xe006) AM_WRITE(mermaid_flip_screen_y_w)
 	AM_RANGE(0xe007, 0xe007) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0xe804, 0xe804) AM_WRITE(rougien_gfxbankswitch1_w) /* Rougien */
+	AM_RANGE(0xe805, 0xe805) AM_WRITE(rougien_gfxbankswitch2_w) /* Rougien */
 	AM_RANGE(0xe807, 0xe807) AM_WRITE(MWA8_NOP)	/* watchdog? */
 	AM_RANGE(0xf802, 0xf802) AM_WRITE(MWA8_NOP)	/* ??? see memory map */
 	AM_RANGE(0xf806, 0xf806) AM_WRITE(mermaid_AY8910_write_port_w)
@@ -293,19 +296,19 @@ ROM_START( rougien )
 	ROM_LOAD( "rou-08.bin", 0x8000,  0x1000,  CRC(bfac531c) SHA1(63e6bdd1ca2709ae733c84311df5833546f08663) )
 	ROM_LOAD( "rou-09.bin", 0x9000,  0x1000,  CRC(af854340) SHA1(f2d5e1bb6b25d87ee03c21975f9c9976ae3652b1) )
 
-	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "rou-20.bin",  0x1000,  0x1000,  CRC(c5dc1258) SHA1(20034c77f205684f9c868747988ab391456a2189) )
+	ROM_REGION( 0x0c000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "rou-21.bin",  0x0000,  0x1000,  CRC(36e4ba8c) SHA1(6c39de7d983019b280c54e03d4ca0fe2cef4ea90) )
-	ROM_LOAD( "rou-22.bin",  0x3000,  0x1000,  CRC(35811443) SHA1(3e0ec254a94730664a3d13dd10d87d2040c9c5e6) )
+	ROM_LOAD( "rou-20.bin",  0x1000,  0x1000,  CRC(c5dc1258) SHA1(20034c77f205684f9c868747988ab391456a2189) )
 	ROM_LOAD( "rou-23.bin",  0x2000,  0x1000,  CRC(5974c848) SHA1(a3e5408aaee87afadea521115f78686f84832ab9) )
-	ROM_LOAD( "rou-24.bin",  0x5000,  0x1000,  CRC(56ceb0be) SHA1(a5475ce7d66e9f97da373d3fb694b536a257e78d) )
+	ROM_LOAD( "rou-22.bin",  0x3000,  0x1000,  CRC(35811443) SHA1(3e0ec254a94730664a3d13dd10d87d2040c9c5e6) )
 	ROM_LOAD( "rou-25.bin",  0x4000,  0x1000,  CRC(706d9864) SHA1(26d7e803670f791938a7e93bf3b68a94525c0458) )
-	ROM_LOAD( "rou-26.bin",  0x7000,  0x1000,  CRC(fbbc6339) SHA1(a4c7035fe61a267b53372a0504e7932e52ac4119) )
+	ROM_LOAD( "rou-24.bin",  0x5000,  0x1000,  CRC(56ceb0be) SHA1(a5475ce7d66e9f97da373d3fb694b536a257e78d) )
 	ROM_LOAD( "rou-27.bin",  0x6000,  0x1000,  CRC(522fa2e0) SHA1(ce20c5e447f27cb147a62c1dd176d9dfa60f4c33) )
-	ROM_LOAD( "rou-28.bin",  0x9000,  0x1000,  CRC(33f160dc) SHA1(3fc3a31a37cc724c692080edc2e4fd8678e9a8c9) )
+	ROM_LOAD( "rou-26.bin",  0x7000,  0x1000,  CRC(fbbc6339) SHA1(a4c7035fe61a267b53372a0504e7932e52ac4119) )
 	ROM_LOAD( "rou-29.bin",  0x8000,  0x1000,  CRC(bf018a7e) SHA1(e608630ead16f01f9b186f622644ce2567f29057) )
-	ROM_LOAD( "rou-30.bin",  0xb000,  0x1000,  CRC(c75be223) SHA1(ca3fa46d9132a31b46e6e29a8b91acf7a380fd74) )
+	ROM_LOAD( "rou-28.bin",  0x9000,  0x1000,  CRC(33f160dc) SHA1(3fc3a31a37cc724c692080edc2e4fd8678e9a8c9) )
 	ROM_LOAD( "rou-31.bin",  0xa000,  0x1000,  CRC(b2a6f058) SHA1(faba09b6fd80e1e20e79435b60ce89e7110ec98a) )
+	ROM_LOAD( "rou-30.bin",  0xb000,  0x1000,  CRC(c75be223) SHA1(ca3fa46d9132a31b46e6e29a8b91acf7a380fd74) )
 
 	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "rou-43.bin",  0x0000,  0x1000, CRC(ee4b9de4) SHA1(878a86113435536545353f68864c3a034566c616) )
@@ -321,4 +324,4 @@ ROM_START( rougien )
 ROM_END
 
 GAMEX( 1982, mermaid, 0, mermaid, mermaid, 0, ROT0, "[Sanritsu] Rock-ola", "Mermaid", GAME_NOT_WORKING )
-GAMEX( 1982, rougien, 0, mermaid, mermaid, 0, ROT0, "Sanritsu", "Rougien", GAME_NOT_WORKING )
+GAME( 1982, rougien, 0, mermaid, mermaid, 0, ROT0, "Sanritsu", "Rougien" )

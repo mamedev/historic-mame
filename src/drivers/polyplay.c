@@ -81,6 +81,7 @@ emulated now. ;)
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "machine/random.h"
 
 /* video hardware access */
 extern unsigned char *polyplay_characterram;
@@ -268,7 +269,7 @@ static WRITE8_HANDLER( polyplay_start_timer2 )
 
 static READ8_HANDLER( polyplay_random_read )
 {
-	return rand() & 0xff;
+	return mame_rand() & 0xff;
 }
 
 /* graphic structures */

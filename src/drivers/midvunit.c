@@ -175,17 +175,13 @@ static WRITE32_HANDLER( midvunit_cmos_protect_w )
 static WRITE32_HANDLER( midvunit_cmos_w )
 {
 	if (!cmos_protected)
-	{
-		data32_t *cmos = (data32_t *)generic_nvram;
-		COMBINE_DATA(&cmos[offset]);
-	}
+		COMBINE_DATA(generic_nvram32 + offset);
 }
 
 
 static READ32_HANDLER( midvunit_cmos_r )
 {
-	data32_t *cmos = (data32_t *)generic_nvram;
-	return cmos[offset];
+	return generic_nvram32[offset];
 }
 
 
@@ -349,10 +345,9 @@ static UINT32 bit_data[0x10] =
 
 static READ32_HANDLER( bit_data_r )
 {
-	data32_t *cmos_base = (data32_t *)generic_nvram;
 	int bit = (bit_data[bit_index / 32] >> (31 - (bit_index % 32))) & 1;
 	bit_index = (bit_index + 1) % 512;
-	return bit ? cmos_base[offset] : ~cmos_base[offset];
+	return bit ? generic_nvram32[offset] : ~generic_nvram32[offset];
 }
 
 
@@ -498,7 +493,7 @@ static ADDRESS_MAP_START( midvunit_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x995020, 0x995020) AM_WRITE(midvunit_cmos_protect_w)
 	AM_RANGE(0x997000, 0x997000) AM_NOP	// communications
 	AM_RANGE(0x9a0000, 0x9a0000) AM_WRITE(midvunit_sound_w)
-	AM_RANGE(0x9c0000, 0x9c1fff) AM_READWRITE(midvunit_cmos_r, midvunit_cmos_w) AM_BASE((data32_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x9c0000, 0x9c1fff) AM_READWRITE(midvunit_cmos_r, midvunit_cmos_w) AM_BASE(&generic_nvram32) AM_SIZE(&generic_nvram_size)
 	AM_RANGE(0x9e0000, 0x9e7fff) AM_READWRITE(MRA32_RAM, midvunit_paletteram_w) AM_BASE(&paletteram32)
 	AM_RANGE(0xa00000, 0xbfffff) AM_READWRITE(midvunit_textureram_r, midvunit_textureram_w) AM_BASE(&midvunit_textureram)
 	AM_RANGE(0xc00000, 0xffffff) AM_ROM AM_REGION(REGION_USER1, 0)

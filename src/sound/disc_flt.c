@@ -1,22 +1,22 @@
-/************************************************************************/
-/*                                                                      */
-/*  MAME - Discrete sound system emulation library                      */
-/*                                                                      */
-/*  Written by Keith Wilkins (mame@esplexo.co.uk)                       */
-/*                                                                      */
-/*  (c) K.Wilkins 2000                                                  */
-/*                                                                      */
-/************************************************************************/
-/*                                                                      */
-/* DST_CRFILTER          - Simple CR filter & also highpass filter      */
-/* DST_FILTER1           - Generic 1st order filter                     */
-/* DST_FILTER2           - Generic 2nd order filter                     */
-/* DST_OP_AMP_FILT       - Op Amp filter circuits                       */
-/* DST_RCFILTER          - Simple RC filter & also lowpass filter       */
-/* DST_RCDISC            - Simple discharging RC                        */
-/* DST_RCDISC2           - Simple charge R1/C, discharge R0/C           */
-/*                                                                      */
-/************************************************************************/
+/************************************************************************
+ *
+ *  MAME - Discrete sound system emulation library
+ *
+ *  Written by Keith Wilkins (mame@esplexo.co.uk)
+ *
+ *  (c) K.Wilkins 2000
+ *
+ ***********************************************************************
+ *
+ * DST_CRFILTER          - Simple CR filter & also highpass filter
+ * DST_FILTER1           - Generic 1st order filter
+ * DST_FILTER2           - Generic 2nd order filter
+ * DST_OP_AMP_FILT       - Op Amp filter circuits
+ * DST_RCFILTER          - Simple RC filter & also lowpass filter
+ * DST_RCDISC            - Simple discharging RC
+ * DST_RCDISC2           - Simple charge R1/C, discharge R0/C
+ *
+ ************************************************************************/
 
 struct dss_filter1_context
 {
@@ -38,14 +38,19 @@ struct dst_op_amp_filt_context
 {
 	int		type;		// What kind of filter
 	int		is_norton;	// 1 = Norton op-amps
+	double	vRef;
+	double	vP;
+	double	vN;
 	double	rTotal;		// All input resistance in parallel.
-	double	iFixed;		// Current supplied by rP & rN if used.
+	double	iFixed;		// Current supplied by r3 & r4 if used.
 	double	exponentC1;
 	double	exponentC2;
-	double	rRatio;		// divide ratio of rTotal & rF
+	double	exponentC3;
+	double	rRatio;		// divide ratio of resistance network
 	double	vC1;		// Charge on C1
 	double	vC1b;		// Charge on C1, part of C1 charge if needed
 	double	vC2;		// Charge on C2
+	double	vC3;		// Charge on C2
 	double	vF_last;	// Last output voltage relative to vRef.
 	double	gain;		// Gain of the filter
 };
@@ -66,16 +71,54 @@ struct dst_rcfilter_context
 };
 
 
-/************************************************************************/
-/*                                                                      */
-/* DST_FILTER1 - Generic 1st order filter                               */
-/*                                                                      */
-/* input[0]    - Enable input value                                     */
-/* input[1]    - input value                                            */
-/* input[2]    - Frequency value (initialization only)                  */
-/* input[3]    - Filter type (initialization only)                      */
-/*                                                                      */
-/************************************************************************/
+/************************************************************************
+ *
+ * DST_CRFILTER - Usage of node_description values for CR filter
+ *
+ * input[0]    - Enable input value
+ * input[1]    - input value
+ * input[2]    - Resistor value (initialization only)
+ * input[3]    - Capacitor Value (initialization only)
+ * input[4]    - Voltage reference. Usually 0V.
+ *
+ ************************************************************************/
+
+void dst_crfilter_step(struct node_description *node)
+{
+	struct dst_rcfilter_context *context = node->context;
+
+	if(node->input[0])
+	{
+		context->vCap += ((node->input[1] - node->input[4]) - context->vCap) * context->exponent;
+		node->output = node->input[1] - context->vCap;
+	}
+	else
+	{
+		node->output=0;
+	}
+}
+
+void dst_crfilter_reset(struct node_description *node)
+{
+	struct dst_rcfilter_context *context = node->context;
+
+	context->exponent = -1.0 / (node->input[2] * node->input[3] * Machine->sample_rate);
+	context->exponent = 1.0 - exp(context->exponent);
+	context->vCap = 0;
+	node->output = node->input[1];
+}
+
+
+/************************************************************************
+ *
+ * DST_FILTER1 - Generic 1st order filter
+ *
+ * input[0]    - Enable input value
+ * input[1]    - input value
+ * input[2]    - Frequency value (initialization only)
+ * input[3]    - Filter type (initialization only)
+ *
+ ************************************************************************/
 
 static void calculate_filter1_coefficients(double fc, double type,
                                            double *a1, double *b0, double *b1)
@@ -129,17 +172,17 @@ void dst_filter1_reset(struct node_description *node)
 }
 
 
-/************************************************************************/
-/*                                                                      */
-/* DST_FILTER2 - Generic 2nd order filter                               */
-/*                                                                      */
-/* input[0]    - Enable input value                                     */
-/* input[1]    - input value                                            */
-/* input[2]    - Frequency value (initialization only)                  */
-/* input[3]    - Damping value (initialization only)                    */
-/* input[4]    - Filter type (initialization only) 			*/
-/*                                                                      */
-/************************************************************************/
+/************************************************************************
+ *
+ * DST_FILTER2 - Generic 2nd order filter
+ *
+ * input[0]    - Enable input value
+ * input[1]    - input value
+ * input[2]    - Frequency value (initialization only)
+ * input[3]    - Damping value (initialization only)
+ * input[4]    - Filter type (initialization only)
+ *
+ ************************************************************************/
 
 static void calculate_filter2_coefficients(double fc, double d, double type,
                                            double *a1, double *a2,
@@ -213,19 +256,19 @@ void dst_filter2_reset(struct node_description *node)
 }
 
 
-/************************************************************************/
-/*                                                                      */
-/* DST_OP_AMP_FILT - Op Amp filter circuit RC filter                    */
-/*                                                                      */
-/* input[0]    - Enable input value                                     */
-/* input[1]    - IN0 node                                               */
-/* input[2]    - IN1 node                                               */
-/* input[3]    - Filter Type                                            */
-/*                                                                      */
-/* also passed discrete_op_amp_filt_info structure                      */
-/*                                                                      */
-/* Mar 2004, D Renaud.                                                  */
-/************************************************************************/
+/************************************************************************
+ *
+ * DST_OP_AMP_FILT - Op Amp filter circuit RC filter
+ *
+ * input[0]    - Enable input value
+ * input[1]    - IN0 node
+ * input[2]    - IN1 node
+ * input[3]    - Filter Type
+ *
+ * also passed discrete_op_amp_filt_info structure
+ *
+ * Mar 2004, D Renaud.
+ ************************************************************************/
 #define DST_OP_AMP_FILT_ENABLE	node->input[0]
 #define DST_OP_AMP_FILT_INP1	node->input[1]
 #define DST_OP_AMP_FILT_INP2	node->input[2]
@@ -240,12 +283,20 @@ void dst_op_amp_filt_step(struct node_description *node)
 
 	if (DST_OP_AMP_FILT_ENABLE)
 	{
-		/* Millman the input voltages. */
-		i = context->iFixed;
-		i += (DST_OP_AMP_FILT_INP1 - info->vRef) / info->r1;
-		if (info->r2 != 0)
-			i += (DST_OP_AMP_FILT_INP2 - info->vRef) / info->r2;
-		v = i * context->rTotal;
+		if (context->is_norton)
+		{
+			v = DST_OP_AMP_FILT_INP1 - context->vRef;
+			if (v < 0) v = 0;
+		}
+		else
+		{
+			/* Millman the input voltages. */
+			i = context->iFixed;
+			i += (DST_OP_AMP_FILT_INP1 - context->vRef) / info->r1;
+			if (info->r2 != 0)
+				i += (DST_OP_AMP_FILT_INP2 - context->vRef) / info->r2;
+			v = i * context->rTotal;
+		}
 
 		switch (context->type)
 		{
@@ -266,9 +317,26 @@ void dst_op_amp_filt_step(struct node_description *node)
 				node->output = context->vC1 * context->gain + info->vRef;
 				break;
 
+			case DISC_OP_AMP_FILTER_IS_BAND_PASS_0 | DISC_OP_AMP_IS_NORTON:
+				context->vC1 += (v - context->vC1) * context->exponentC1;
+				context->vC2 += (context->vC1 - context->vC2) * context->exponentC2;
+				v = context->vC2;
+				context->vC3 += (v - context->vC3) * context->exponentC3;
+				v -= context->vC3;
+				i = v / context->rTotal;
+				node->output = (context->iFixed - i) * info->rF;
+				break;
+
+			case DISC_OP_AMP_FILTER_IS_HIGH_PASS_0 | DISC_OP_AMP_IS_NORTON:
+				context->vC1 += (v - context->vC1) * context->exponentC1;
+				v -= context->vC1;
+				i = v / context->rTotal;
+				node->output = (context->iFixed - i) * info->rF;
+				break;
+
 			case DISC_OP_AMP_FILTER_IS_BAND_PASS_1M:
 				/* Only the code in this case is bad.  All other filter code is good.
-				 * In the restet I tell rhe module to use DISC_OP_AMP_FILTER_IS_BAND_PASS_1 for now.
+				 * In the reset I tell the module to use DISC_OP_AMP_FILTER_IS_BAND_PASS_1 for now.
 				 */
 				/* What a feedback nightmare, but these are facts I do know.
 				 * vRef is not shown because v is assumed to be refrenced to it all ready.
@@ -311,7 +379,7 @@ void dst_op_amp_filt_step(struct node_description *node)
 				 *
 				 * From here I get lost.
 				 */
-				 
+
 // Test stuff
 v=1;
 context->vF_last=-3;
@@ -322,7 +390,7 @@ context->vF_last=-3;
 				 *    v >--/\/\/\---+---/\/\/\--< vF_last (vOut without bias)
 				 *                  |
 				 *                  '-----------> vMid
-				 */ 
+				 */
 				vMid = (v - context->vF_last) * context->rRatio + context->vF_last;
 
 				/* Step 2 - RC filter C1.
@@ -342,7 +410,7 @@ context->vF_last=-3;
 
 				/* Step 3 - RC filter C2.
 				 *
-				 *         rTotal || rF   
+				 *         rTotal || rF
 				 *    vC1 >--/\/\/\---+---> vC2
 				 *                    |
 				 *                   ---
@@ -375,8 +443,8 @@ node->output=context->vC2;
 		/* Clip the output to the voltage rails.
 		 * This way we get the original distortion in all it's glory.
 		 */
-		if (node->output > info->vP) node->output = info->vP;
-		if (node->output < info->vN) node->output = info->vN;
+		if (node->output > context->vP) node->output = context->vP;
+		if (node->output < context->vN) node->output = context->vN;
 		context->vF_last = node->output - info->vRef;
 	}
 	else
@@ -395,19 +463,44 @@ void dst_op_amp_filt_reset(struct node_description *node)
 	/* Remove this when DISC_OP_AMP_FILTER_IS_BAND_PASS_1M works. */
 	if (context->type == DISC_OP_AMP_FILTER_IS_BAND_PASS_1M) context->type = DISC_OP_AMP_FILTER_IS_BAND_PASS_1;
 
-	/* Work out the input resistance.  It is all input and bias resistors in parallel. */
-	context->rTotal  = 1.0 / info->r1;			// There has to be an R1.  Otherwise the table is wrong.
-	if (info->r2 != 0) context->rTotal += 1.0 / info->r2;
-	if (info->rP != 0) context->rTotal += 1.0 / info->rP;
-	if (info->rN != 0) context->rTotal += 1.0 / info->rN;
-	context->rTotal = 1.0 / context->rTotal;
+	if (context->is_norton)
+	{
+		context->rTotal = info->r1;
+		if (context->type == (DISC_OP_AMP_FILTER_IS_BAND_PASS_0 | DISC_OP_AMP_IS_NORTON))
+			context->rTotal += info->r2 +  info->r3;
 
-	/* Work out the current of the bias circuit if used. */
-	context->iFixed = 0;
-	if (info->rP != 0) context->iFixed  = (info->vP - info->vRef) / info->rP;
-	if (info->rN != 0) context->iFixed += (info->vN - info->vRef) / info->rN;
+		/* Setup the current to the + input. */
+		context->iFixed = (info->vP - OP_AMP_NORTON_VBE) / info->r4;
 
-	
+		/* Inputs are .5V above ground. */
+		context->vRef = OP_AMP_NORTON_VBE;
+		/* Set the output max. */
+		context->vP =  info->vP - OP_AMP_NORTON_VBE;
+		context->vN =  info->vN;
+	}
+	else
+	{
+		context->vRef = info->vRef;
+		/* Set the output max. */
+		context->vP =  info->vP - OP_AMP_VP_RAIL_OFFSET;
+		context->vN =  info->vP + OP_AMP_VP_RAIL_OFFSET;
+
+		/* Work out the input resistance.  It is all input and bias resistors in parallel. */
+		context->rTotal  = 1.0 / info->r1;			// There has to be an R1.  Otherwise the table is wrong.
+		if (info->r2 != 0) context->rTotal += 1.0 / info->r2;
+		if (info->r3 != 0) context->rTotal += 1.0 / info->r3;
+		if (info->r4 != 0) context->rTotal += 1.0 / info->r4;
+		context->rTotal = 1.0 / context->rTotal;
+
+		/* Work out the current of the bias circuit if used. */
+		context->iFixed = 0;
+		if (info->r3 != 0) context->iFixed  = (info->vP - info->vRef) / info->r3;
+		if (info->r4 != 0) context->iFixed += (info->vN - info->vRef) / info->r4;
+
+		context->rRatio = info->rF / (context->rTotal + info->rF);
+		context->gain = -info->rF / context->rTotal;
+	}
+
 	switch (context->type)
 	{
 		case DISC_OP_AMP_FILTER_IS_LOW_PASS_1:
@@ -432,111 +525,42 @@ void dst_op_amp_filt_reset(struct node_description *node)
 			context->exponentC2 = -1.0 / ((1.0 / ( 1.0 / context->rTotal + 1.0 / info->rF)) * info->c2 * Machine->sample_rate);
 			context->exponentC2 = 1.0 - exp(context->exponentC2);
 			break;
+		case DISC_OP_AMP_FILTER_IS_BAND_PASS_0 | DISC_OP_AMP_IS_NORTON:
+			context->exponentC1 = -1.0 / ((1.0 / (1.0 / info->r1 + 1.0 / (info->r2 + info->r3 + info->r4))) * info->c1 * Machine->sample_rate);
+			context->exponentC1 = 1.0 - exp(context->exponentC1);
+			context->exponentC2 = -1.0 / ((1.0 / (1.0 / (info->r1 + info->r2) + 1.0 / (info->r3 + info->r4))) * info->c2 * Machine->sample_rate);
+			context->exponentC2 = 1.0 - exp(context->exponentC2);
+			context->exponentC3 = -1.0 / ((info->r1 + info->r2 + info->r3 + info->r4) * info->c3 * Machine->sample_rate);
+			context->exponentC3 = 1.0 - exp(context->exponentC3);
+			break;
+		case DISC_OP_AMP_FILTER_IS_HIGH_PASS_0 | DISC_OP_AMP_IS_NORTON:
+			context->exponentC1 = -1.0 / (info->r1 * info->c1 * Machine->sample_rate);
+			context->exponentC1 = 1.0 - exp(context->exponentC1);
+			break;
 	}
 
 	/* At startup there is no charge on the caps and output is 0V in relation to vRef. */
 	context->vC1 = 0;
 	context->vC1b = 0;
 	context->vC2 = 0;
+	context->vC3 = 0;
 	context->vF_last = 0;
 
-	context->rRatio = info->rF / (context->rTotal + info->rF);
-	context->gain = -info->rF / context->rTotal;
 	node->output = info->vRef;
 }
 
 
-/************************************************************************/
-/*                                                                      */
-/* DST_RCFILTER - Usage of node_description values for RC filter        */
-/*                                                                      */
-/* input[0]    - Enable input value                                     */
-/* input[1]    - input value                                            */
-/* input[2]    - Resistor value (initialization only)                   */
-/* input[3]    - Capacitor Value (initialization only)                  */
-/* input[4]    - Voltage reference. Usually 0V.                         */
-/*                                                                      */
-/************************************************************************/
-
-void dst_rcfilter_step(struct node_description *node)
-{
-	struct dst_rcfilter_context *context = node->context;
-
-	/************************************************************************/
-	/* Next Value = PREV + (INPUT_VALUE - PREV)*(1-(EXP(-TIMEDELTA/RC)))    */
-	/************************************************************************/
-
-	if(node->input[0])
-	{
-		context->vCap += ((node->input[1] - node->input[4] - context->vCap) * context->exponent);
-		node->output = context->vCap + node->input[4];
-	}
-	else
-	{
-		node->output=0;
-	}
-}
-
-void dst_rcfilter_reset(struct node_description *node)
-{
-	struct dst_rcfilter_context *context = node->context;
-
-	context->exponent = -1.0 / (node->input[2] * node->input[3] * Machine->sample_rate);
-	context->exponent = 1.0 - exp(context->exponent);
-	context->vCap = 0;
-	node->output = 0;
-}
-
-
-/************************************************************************/
-/*                                                                      */
-/* DST_CRFILTER - Usage of node_description values for CR filter        */
-/*                                                                      */
-/* input[0]    - Enable input value                                     */
-/* input[1]    - input value                                            */
-/* input[2]    - Resistor value (initialization only)                   */
-/* input[3]    - Capacitor Value (initialization only)                  */
-/* input[4]    - Voltage reference. Usually 0V.                         */
-/*                                                                      */
-/************************************************************************/
-
-void dst_crfilter_step(struct node_description *node)
-{
-	struct dst_rcfilter_context *context = node->context;
-
-	if(node->input[0])
-	{
-		context->vCap += ((node->input[1] - node->input[4]) - context->vCap) * context->exponent;
-		node->output = node->input[1] - context->vCap;
-	}
-	else
-	{
-		node->output=0;
-	}
-}
-
-void dst_crfilter_reset(struct node_description *node)
-{
-	struct dst_rcfilter_context *context = node->context;
-
-	context->exponent = -1.0 / (node->input[2] * node->input[3] * Machine->sample_rate);
-	context->exponent = 1.0 - exp(context->exponent);
-	context->vCap = 0;
-	node->output = node->input[1];
-}
-
-
-/************************************************************************/
-/*                                                                      */
-/* DST_RCDISC -   Usage of node_description values for RC discharge     */
-/*                (inverse slope of DST_RCFILTER)                       */
-/*                                                                      */
-/* input[0]    - Enable input value                                     */
-/* input[1]    - input value                                            */
-/* input[2]    - Resistor value (initialization only)                   */
-/* input[3]    - Capacitor Value (initialization only)                  */
-/*                                                                      */
-/************************************************************************/
+/************************************************************************
+ *
+ * DST_RCDISC -   Usage of node_description values for RC discharge
+ *                (inverse slope of DST_RCFILTER)
+ *
+ * input[0]    - Enable input value
+ * input[1]    - input value
+ * input[2]    - Resistor value (initialization only)
+ * input[3]    - Capacitor Value (initialization only)
+ *
+ ************************************************************************/
 
 void dst_rcdisc_step(struct node_description *node)
 {
@@ -574,19 +598,19 @@ void dst_rcdisc_reset(struct node_description *node)
 }
 
 
-/************************************************************************/
-/*                                                                      */
-/* DST_RCDISC2 -  Usage of node_description values for RC discharge     */
-/*                Has switchable charge resistor/input                  */
-/*                                                                      */
-/* input[0]    - Switch input value                                     */
-/* input[1]    - input[0] value                                         */
-/* input[2]    - Resistor0 value (initialization only)                  */
-/* input[3]    - input[1] value                                         */
-/* input[4]    - Resistor1 value (initialization only)                  */
-/* input[5]    - Capacitor Value (initialization only)                  */
-/*                                                                      */
-/************************************************************************/
+/************************************************************************
+ *
+ * DST_RCDISC2 -  Usage of node_description values for RC discharge
+ *                Has switchable charge resistor/input
+ *
+ * input[0]    - Switch input value
+ * input[1]    - input[0] value
+ * input[2]    - Resistor0 value (initialization only)
+ * input[3]    - input[1] value
+ * input[4]    - Resistor1 value (initialization only)
+ * input[5]    - Capacitor Value (initialization only)
+ *
+ ************************************************************************/
 
 void dst_rcdisc2_step(struct node_description *node)
 {
@@ -614,19 +638,67 @@ void dst_rcdisc2_reset(struct node_description *node)
 	context->exponent1=-1.0 * node->input[4]*node->input[5];
 }
 
+
+/************************************************************************
+ *
+ * DST_RCFILTER - Usage of node_description values for RC filter
+ *
+ * input[0]    - Enable input value
+ * input[1]    - input value
+ * input[2]    - Resistor value (initialization only)
+ * input[3]    - Capacitor Value (initialization only)
+ * input[4]    - Voltage reference. Usually 0V.
+ *
+ ************************************************************************/
+#define DST_RCFILTER_ENABLE	node->input[0]
+#define DST_RCFILTER_VIN	node->input[1]
+#define DST_RCFILTER_R		node->input[2]
+#define DST_RCFILTER_C		node->input[3]
+#define DST_RCFILTER_VREF	node->input[4]
+
+void dst_rcfilter_step(struct node_description *node)
+{
+	struct dst_rcfilter_context *context = node->context;
+
+	/************************************************************************/
+	/* Next Value = PREV + (INPUT_VALUE - PREV)*(1-(EXP(-TIMEDELTA/RC)))    */
+	/************************************************************************/
+
+	if(DST_RCFILTER_ENABLE)
+	{
+		context->vCap += ((DST_RCFILTER_VIN - DST_RCFILTER_VREF - context->vCap) * context->exponent);
+		node->output = context->vCap + DST_RCFILTER_VREF;
+	}
+	else
+	{
+		node->output=0;
+	}
+}
+
+void dst_rcfilter_reset(struct node_description *node)
+{
+	struct dst_rcfilter_context *context = node->context;
+
+	context->exponent = -1.0 / (DST_RCFILTER_R * DST_RCFILTER_C * Machine->sample_rate);
+	context->exponent = 1.0 - exp(context->exponent);
+	context->vCap = 0;
+	node->output = 0;
+}
+
+
 /* !!!!!!!!!!! NEW FILTERS for testing !!!!!!!!!!!!!!!!!!!!! */
 
 
-/************************************************************************/
-/*                                                                      */
-/* DST_RCFILTERN - Usage of node_description values for RC filter       */
-/*                                                                      */
-/* input[0]    - Enable input value                                     */
-/* input[1]    - input value                                            */
-/* input[2]    - Resistor value (initialization only)                   */
-/* input[3]    - Capacitor Value (initialization only)                  */
-/*                                                                      */
-/************************************************************************/
+/************************************************************************
+ *
+ * DST_RCFILTERN - Usage of node_description values for RC filter
+ *
+ * input[0]    - Enable input value
+ * input[1]    - input value
+ * input[2]    - Resistor value (initialization only)
+ * input[3]    - Capacitor Value (initialization only)
+ *
+ ************************************************************************/
 
 void dst_rcfilterN_reset(struct node_description *node)
 {
@@ -636,21 +708,21 @@ void dst_rcfilterN_reset(struct node_description *node)
 	node->input[3] = DISC_FILTER_LOWPASS;
 
 	/* Use first order filter */
-	dst_filter1_reset(node);
+	return dst_filter1_reset(node);
 }
 
 
-/************************************************************************/
-/*                                                                      */
-/* DST_RCDISCN -   Usage of node_description values for RC discharge    */
-/*                (inverse slope of DST_RCFILTER)                       */
-/*                                                                      */
-/* input[0]    - Enable input value                                     */
-/* input[1]    - input value                                            */
-/* input[2]    - Resistor value (initialization only)                   */
-/* input[3]    - Capacitor Value (initialization only)                  */
-/*                                                                      */
-/************************************************************************/
+/************************************************************************
+ *
+ * DST_RCDISCN -   Usage of node_description values for RC discharge
+ *                (inverse slope of DST_RCFILTER)
+ *
+ * input[0]    - Enable input value
+ * input[1]    - input value
+ * input[2]    - Resistor value (initialization only)
+ * input[3]    - Capacitor Value (initialization only)
+ *
+ ************************************************************************/
 
 void dst_rcdiscN_reset(struct node_description *node)
 {
@@ -660,7 +732,7 @@ void dst_rcdiscN_reset(struct node_description *node)
 	node->input[3] = DISC_FILTER_LOWPASS;
 
 	/* Use first order filter */
-	dst_filter1_reset(node);
+	return dst_filter1_reset(node);
 }
 
 void dst_rcdiscN_step(struct node_description *node)
@@ -685,19 +757,19 @@ void dst_rcdiscN_step(struct node_description *node)
 }
 
 
-/************************************************************************/
-/*                                                                      */
-/* DST_RCDISC2N -  Usage of node_description values for RC discharge    */
-/*                Has switchable charge resistor/input                  */
-/*                                                                      */
-/* input[0]    - Switch input value                                     */
-/* input[1]    - input[0] value                                         */
-/* input[2]    - Resistor0 value (initialization only)                  */
-/* input[3]    - input[1] value                                         */
-/* input[4]    - Resistor1 value (initialization only)                  */
-/* input[5]    - Capacitor Value (initialization only)                  */
-/*                                                                      */
-/************************************************************************/
+/************************************************************************
+ *
+ * DST_RCDISC2N -  Usage of node_description values for RC discharge
+ *                Has switchable charge resistor/input
+ *
+ * input[0]    - Switch input value
+ * input[1]    - input[0] value
+ * input[2]    - Resistor0 value (initialization only)
+ * input[3]    - input[1] value
+ * input[4]    - Resistor1 value (initialization only)
+ * input[5]    - Capacitor Value (initialization only)
+ *
+ ************************************************************************/
 
 struct dss_rcdisc2_context
 {

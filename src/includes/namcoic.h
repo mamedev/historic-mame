@@ -87,6 +87,28 @@ C102 - Controls CPU access to ROZ Memory Area.
 */
 
 /***********************************************************************************/
+
+int namco_tilemap_init(
+		int gfxbank, void *pMaskROM,
+		void (*cb)( data16_t code, int *gfx, int *mask) );
+void namco_tilemap_draw( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri );
+void namco_tilemap_invalidate( void );
+WRITE16_HANDLER( namco_tilemapvideoram16_w );
+READ16_HANDLER( namco_tilemapvideoram16_r );
+WRITE16_HANDLER( namco_tilemapcontrol16_w );
+READ16_HANDLER( namco_tilemapcontrol16_r );
+
+READ32_HANDLER( namco_tilemapvideoram32_r );
+WRITE32_HANDLER( namco_tilemapvideoram32_w );
+READ32_HANDLER( namco_tilemapcontrol32_r );
+WRITE32_HANDLER( namco_tilemapcontrol32_w );
+
+READ32_HANDLER( namco_tilemapvideoram32_le_r );
+WRITE32_HANDLER( namco_tilemapvideoram32_le_w );
+READ32_HANDLER( namco_tilemapcontrol32_le_r );
+WRITE32_HANDLER( namco_tilemapcontrol32_le_w );
+
+/***********************************************************************************/
 /* C355 Motion Object Emulation */
 
 /* for palXOR, supply either 0x0 (normal) or 0xf (palette mapping reversed) */

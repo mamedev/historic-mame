@@ -6,13 +6,6 @@
 #include "namcoic.h"
 #include "namcos2.h"
 
-
-/* tilemap_palette_bank is used to cache tilemap color, so that we can
- * mark whole tilemaps dirty only when necessary.
- */
-static int tilemap_palette_bank[6];
-static UINT8 *mpMaskData;
-static struct tilemap *background[6];
 static data32_t tilemap_tile_bank[4];
 
 /* nth_word32 is a general-purpose utility function, which allows us to
@@ -38,71 +31,47 @@ nth_word32( const data32_t *source, int which )
 INLINE data8_t
 nth_byte32( const data32_t *pSource, int which )
 {
-		data32_t data = pSource[which/4];
-		switch( which&3 )
-		{
-		case 0: return data>>24;
-		case 1: return (data>>16)&0xff;
-		case 2: return (data>>8)&0xff;
-		default: return data&0xff;
-		}
+	data32_t data = pSource[which/4];
+	switch( which&3 )
+	{
+	case 0: return data>>24;
+	case 1: return (data>>16)&0xff;
+	case 2: return (data>>8)&0xff;
+	default: return data&0xff;
+	}
 } /* nth_byte32 */
 
 INLINE void
-tilemapNB1_get_info(int tile_index,int tilemap_color,const data32_t *tilemap_videoram)
+NB1TilemapCB(data16_t code, int *tile, int *mask )
 {
-	data16_t tile = nth_word32( tilemap_videoram, tile_index );
-	SET_TILE_INFO(
-			NAMCONB1_TILEGFX,
-			tile,
-			tilemap_color,
-			0)
-	tile_info.mask_data = 8*tile + mpMaskData;
-}
+	*tile = code;
+	*mask = code;
+} /* NB1TilemapCB */
 
-static void tilemapNB1_get_info0(int tile_index) { tilemapNB1_get_info(tile_index,tilemap_palette_bank[0],&videoram32[0x0000]); }
-static void tilemapNB1_get_info1(int tile_index) { tilemapNB1_get_info(tile_index,tilemap_palette_bank[1],&videoram32[0x0800]); }
-static void tilemapNB1_get_info2(int tile_index) { tilemapNB1_get_info(tile_index,tilemap_palette_bank[2],&videoram32[0x1000]); }
-static void tilemapNB1_get_info3(int tile_index) { tilemapNB1_get_info(tile_index,tilemap_palette_bank[3],&videoram32[0x1800]); }
-static void tilemapNB1_get_info4(int tile_index) { tilemapNB1_get_info(tile_index,tilemap_palette_bank[4],&videoram32[NAMCONB1_FG1BASE/2]); }
-static void tilemapNB1_get_info5(int tile_index) { tilemapNB1_get_info(tile_index,tilemap_palette_bank[5],&videoram32[NAMCONB1_FG2BASE/2]); }
-
-WRITE32_HANDLER( namconb1_videoram_w )
+INLINE void
+NB2TilemapCB(data16_t code, int *tile, int *mask )
 {
-	int layer;
-	data32_t old_data;
+	int mangle;
 
-	old_data = videoram32[offset];
-	COMBINE_DATA( &videoram32[offset] );
-	if( videoram32[offset]!=old_data )
+	if( namcos2_gametype == NAMCONB2_MACH_BREAKERS )
 	{
-		offset*=2; /* convert dword offset to word offset */
-		layer = offset/(64*64);
-		if( layer<4 )
-		{
-			offset &= 0xfff;
-			tilemap_mark_tile_dirty( background[layer], offset );
-			tilemap_mark_tile_dirty( background[layer], offset+1 );
-		}
-		else
-		{
-			if( offset >= NAMCONB1_FG1BASE &&
-				offset<NAMCONB1_FG1BASE+NAMCONB1_COLS*NAMCONB1_ROWS )
-			{
-				offset -= NAMCONB1_FG1BASE;
-				tilemap_mark_tile_dirty( background[4], offset );
-				tilemap_mark_tile_dirty( background[4], offset+1 );
-			}
-			else if( offset >= NAMCONB1_FG2BASE &&
-				offset<NAMCONB1_FG2BASE+NAMCONB1_COLS*NAMCONB1_ROWS )
-			{
-				offset -= NAMCONB1_FG2BASE;
-				tilemap_mark_tile_dirty( background[5], offset );
-				tilemap_mark_tile_dirty( background[5], offset+1 );
-			}
-		}
+		/*	00010203 04050607 00010203 04050607 (normal) */
+		/*	00010718 191a1b07 00010708 090a0b07 (alt bank) */
+		int bank = nth_byte32( namconb1_tilebank32, (code>>13)+8 );
+		mangle = (code&0x1fff) + bank*0x2000;
+		*tile = mangle;
+		*mask = mangle;
 	}
-}
+	else
+	{
+		/* the pixmap index is mangled, the transparency bitmask index is not */
+		mangle = code&~(0x140);
+		if( code&0x100 ) mangle |= 0x040;
+		if( code&0x040 ) mangle |= 0x100;
+		*tile = mangle;
+		*mask = code;
+	}
+} /* NB2TilemapCB */
 
 static void
 namconb1_install_palette( void )
@@ -111,7 +80,8 @@ namconb1_install_palette( void )
 	data32_t r,g,b;
 	data32_t *pSource;
 
-	/* this is unnecessarily expensive.  Better would be to mark palette entries dirty as
+	/**
+	 * This is unnecessarily expensive.  Better would be to mark palette entries dirty as
 	 * they are modified, and only process those that have changed.
 	 */
 	pen = 0;
@@ -131,7 +101,7 @@ namconb1_install_palette( void )
 			}
 		}
 	}
-}
+} /* namconb1_install_palette */
 
 /**
  * MCU simulation.  It manages coinage, input ports, and presumably
@@ -192,49 +162,20 @@ handle_mcu( void )
 static void
 video_update_common( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int bROZ )
 {
-	const int xadjust[4] = { 0,2,3,4 };
-	int i,pri;
+	int pri;
 
 	handle_mcu();
 	namconb1_install_palette();
 
 	fillbitmap( bitmap, get_black_pen(), cliprect );
 
-	for( i=0; i<6; i++ )
-	{
-		int tilemap_color = nth_word32( &namconb1_scrollram32[0x30/4], i )&7;
-		if( tilemap_palette_bank[i]!= tilemap_color )
-		{
-			tilemap_palette_bank[i] = tilemap_color;
-			tilemap_mark_all_tiles_dirty( background[i] );
-		}
-		if( i<4 )
-		{
-			tilemap_set_scrollx( background[i],0,namconb1_scrollram32[i*2]+48-xadjust[i] );
-			tilemap_set_scrolly( background[i],0,namconb1_scrollram32[i*2+1]+24 );
-		}
-	}
-
-	for( pri=0; pri<8; pri++ )
+	for( pri=0; pri<16; pri++ )
 	{
 		if( bROZ )
 		{
 			namco_roz_draw( bitmap,cliprect,pri );
 		}
-		for( i=0; i<6; i++ )
-		{
-			if( nth_word32( &namconb1_scrollram32[0x20/4],i ) == pri )
-			{
-				if( namcos2_gametype == NAMCONB1_NEBULRAY && i==3 )
-				{
-					/* HACK; don't draw this tilemap - it contains garbage */
-				}
-				else
-				{
-					tilemap_draw( bitmap,cliprect,background[i],0,0/*1<<pri*/ );
-				}
-			}
-		}
+		namco_tilemap_draw( bitmap, cliprect, pri );
 		namco_obj_draw( bitmap, cliprect, pri );
 	}
 } /* video_update_common */
@@ -269,95 +210,40 @@ NB1objcode2tile( int code )
 
 VIDEO_START( namconb1 )
 {
-	int i;
-	static void (*get_info[6])(int tile_index) =
+	if( namco_tilemap_init( NAMCONB1_TILEGFX, memory_region(NAMCONB1_TILEMASKREGION), NB1TilemapCB )==0 )
 	{
-		tilemapNB1_get_info0, tilemapNB1_get_info1, tilemapNB1_get_info2,
-		tilemapNB1_get_info3, tilemapNB1_get_info4, tilemapNB1_get_info5
-	};
-
-	namco_obj_init(NAMCONB1_SPRITEGFX,0x0,NB1objcode2tile);
-	mpMaskData = (UINT8 *)memory_region( NAMCONB1_TILEMASKREGION );
-	for( i=0; i<6; i++ )
-	{
-		if( i<4 )
-		{
-			background[i] = tilemap_create(
-				get_info[i],
-				tilemap_scan_rows,
-				TILEMAP_BITMASK,8,8,64,64 );
-		}
-		else
-		{
-			background[i] = tilemap_create(
-				get_info[i],
-				tilemap_scan_rows,
-				TILEMAP_BITMASK,8,8,NAMCONB1_COLS,NAMCONB1_ROWS );
-		}
-
-		if( background[i]==NULL ) return 1; /* error */
-
-		tilemap_palette_bank[i] = -1;
+		namco_obj_init(NAMCONB1_SPRITEGFX,0x0,NB1objcode2tile);
+		return 0; /* no error */
 	}
-	return 0; /* no error */
-}
+	return -1;
+} /* namconb1 */
 
 /****************************************************************************************************/
 
-INLINE void
-tilemapNB2_get_info(int tile_index,int which,const data32_t *tilemap_videoram)
-{
-	int code = nth_word32( tilemap_videoram, tile_index );
-	int mangle;
-
-	if( namcos2_gametype == NAMCONB2_MACH_BREAKERS )
-	{
-		/*	00010203 04050607 00010203 04050607 (normal) */
-		/*	00010718 191a1b07 00010708 090a0b07 (alt bank) */
-		int bank = nth_byte32( namconb1_tilebank32, (code>>13)+8 );
-		code &= 0x1fff;
-		code += bank*0x2000;
-		mangle = code;
-	}
-	else
-	{
-		/* the pixmap index is mangled, the transparency bitmask index is not */
-		mangle = code&~(0x140);
-		if( code&0x100 ) mangle |= 0x040;
-		if( code&0x040 ) mangle |= 0x100;
-	}
-	SET_TILE_INFO( NAMCONB1_TILEGFX,mangle,tilemap_palette_bank[which],0)
-	tile_info.mask_data = 8*code + mpMaskData;
-} /* tilemapNB2_get_info */
-
-static void tilemapNB2_get_info0(int tile_index) { tilemapNB2_get_info(tile_index,0,&videoram32[0x0000/4]); }
-static void tilemapNB2_get_info1(int tile_index) { tilemapNB2_get_info(tile_index,1,&videoram32[0x2000/4]); }
-static void tilemapNB2_get_info2(int tile_index) { tilemapNB2_get_info(tile_index,2,&videoram32[0x4000/4]); }
-static void tilemapNB2_get_info3(int tile_index) { tilemapNB2_get_info(tile_index,3,&videoram32[0x6000/4]); }
-static void tilemapNB2_get_info4(int tile_index) { tilemapNB2_get_info(tile_index,4,&videoram32[NAMCONB1_FG1BASE/2]); }
-static void tilemapNB2_get_info5(int tile_index) { tilemapNB2_get_info(tile_index,5,&videoram32[NAMCONB1_FG2BASE/2]); }
-
 VIDEO_UPDATE( namconb2 )
 {
-	if( paletteram32[0x1800/4]==0x00db00db &&
-		paletteram32[0x1804/4]==0x00910091 )
-	{ /* HACK: adds screen blanking for Outfoxies.
-	   * I'm not sure the exact behavior of these registers.
-	   */
-		fillbitmap( bitmap, get_black_pen(), cliprect );
-		return;
-	}
+	/* compute window for custom screen blanking */
+	struct rectangle clip;
+	data32_t xclip = paletteram32[0x1800/4];
+	data32_t yclip = paletteram32[0x1804/4];
+	clip.min_x = (xclip>>16)    - 0x4b;
+	clip.max_x = (xclip&0xffff) - 0x4b - 1;
+	clip.min_y = (yclip>>16)    - 0x21;
+	clip.max_y = (yclip&0xffff) - 0x21 - 1;
+	/* intersect with master clip rectangle */
+	if( clip.min_x < cliprect->min_x ){ clip.min_x = cliprect->min_x; }
+	if( clip.min_y < cliprect->min_y ){ clip.min_y = cliprect->min_y; }
+	if( clip.max_x > cliprect->max_x ){ clip.max_x = cliprect->max_x; }
+	if( clip.max_y > cliprect->max_y ){ clip.max_y = cliprect->max_y; }
 
+	fillbitmap( bitmap, get_black_pen(), cliprect );
+	
 	if( memcmp(tilemap_tile_bank,namconb1_tilebank32,sizeof(tilemap_tile_bank))!=0 )
 	{
-		int i;
-		for( i=0; i<6; i++ )
-		{
-			tilemap_mark_all_tiles_dirty( background[i] );
-		}
+		namco_tilemap_invalidate();
 		memcpy(tilemap_tile_bank,namconb1_tilebank32,sizeof(tilemap_tile_bank));
 	}
-	video_update_common( bitmap, cliprect, 1 );
+	video_update_common( bitmap, &clip, 1 );
 } /* namconb2_vh_screenrefresh */
 
 static int
@@ -384,39 +270,18 @@ NB2objcode2tile( int code )
 		if( bank&0x40 ) code |= 0x20*0x800;
 	}
 	return code;
-}
+} /* NB2objcode2tile */
 
 VIDEO_START( namconb2 )
 {
-	int i;
-	static void (*get_info[6])(int tile_index) =
-		{ tilemapNB2_get_info0, tilemapNB2_get_info1, tilemapNB2_get_info2,
-		  tilemapNB2_get_info3, tilemapNB2_get_info4, tilemapNB2_get_info5 };
-
-	namco_obj_init(NAMCONB1_SPRITEGFX,0x0,NB2objcode2tile);
-
-	if( namco_roz_init(NAMCONB1_ROTGFX,NAMCONB1_ROTMASKREGION)!=0 ) return 1;
-
-	mpMaskData = (UINT8 *)memory_region( NAMCONB1_TILEMASKREGION );
-	for( i=0; i<6; i++ )
+	if( namco_tilemap_init(
+		NAMCONB1_TILEGFX, memory_region(NAMCONB1_TILEMASKREGION), NB2TilemapCB ) == 0 )
 	{
-		if( i<4 )
+		namco_obj_init(NAMCONB1_SPRITEGFX,0x0,NB2objcode2tile);
+		if( namco_roz_init(NAMCONB1_ROTGFX,NAMCONB1_ROTMASKREGION)==0 )
 		{
-			background[i] = tilemap_create(
-				get_info[i],
-				tilemap_scan_rows,
-				TILEMAP_BITMASK,8,8,64,64 );
+			return 0;
 		}
-		else
-		{
-			background[i] = tilemap_create(
-				get_info[i],
-				tilemap_scan_rows,
-				TILEMAP_BITMASK,8,8,NAMCONB1_COLS,NAMCONB1_ROWS );
-		}
-
-		if( background[i]==NULL ) return 1; /* error */
 	}
-
-	return 0;
+	return -1;
 } /* namconb2_vh_start */

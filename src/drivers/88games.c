@@ -537,7 +537,7 @@ logerror("%04x: bank select %02x\n",activecpu_get_pc(),lines);
 
 static MACHINE_INIT( 88games )
 {
-	cpunum_set_info_ptr(0, CPUINFO_PTR_KONAMI_SETLINES_CALLBACK, (void *)k88games_banking);
+	cpunum_set_info_fct(0, CPUINFO_PTR_KONAMI_SETLINES_CALLBACK, (genf *)k88games_banking);
 	paletteram = &memory_region(REGION_CPU1)[0x20000];
 }
 

@@ -2524,6 +2524,49 @@ Notes:
 
 ***************************************************************************/
 
+ROM_START( explbrkr )
+ 	ROM_REGION( 0x080000, REGION_CPU1, 0 )			/* 68000 Code */
+	ROM_LOAD16_BYTE( "ts100e.u18", 0x000000, 0x040000, CRC(cc84a985) SHA1(1732a607cc1f894dd45cfc915dfe0407335f0073) )
+	ROM_LOAD16_BYTE( "ts101e.u19", 0x000001, 0x040000, CRC(88f4afb7) SHA1(08b8efd6bd935bc1b8cf9753d58b38ccf9a70b4d) )
+
+	/* these actually match the other set but have different names on the board..*/
+	ROM_REGION( 0x240000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD( "ts001e.u37",  0x000000, 0x080000, CRC(70b66e7e) SHA1(307ba27b623f67ee4b4023179870c270bac8ea22) )
+	ROM_RELOAD(       0x100000, 0x080000             )
+	ROM_LOAD( "ts000e.u38",  0x080000, 0x080000, CRC(a7a94143) SHA1(d811a7597402c161850ddf98cdb00661ea506c7d) )
+	ROM_RELOAD(       0x180000, 0x080000             )
+	ROM_LOAD( "ts002e.u36",  0x200000, 0x040000, CRC(611271e6) SHA1(811c21822b074fbb4bb809fed29d48bbd51d57a0) )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* Tiles */
+	ROM_LOAD( "ts010.u4",  0x000000, 0x100000, CRC(df935324) SHA1(73b7aff8800a4e88a47ad426190b73dabdfbf142) )
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )	/* Tiles */
+	ROM_LOAD( "ts020.u33",  0x000000, 0x100000, CRC(eb58c35d) SHA1(762c5219de6f729a0fc1df90fce09cdf711c2a1e) )
+
+	ROM_REGION( 0x100000, REGION_USER1, ROMREGION_DISPOSE )	/* OKI Sample ROM */
+	ROM_LOAD( "ts030.u5",    0x000000, 0x100000, CRC(1d68e9d1) SHA1(aaa64a8e8d7cd7f91d2be346fafb9d1f29b40eda) )
+
+	/* $00000-$20000 stays the same in all sound banks, */
+	/* the second half of the bank is what gets switched */
+	ROM_REGION( 0x200000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_COPY( REGION_USER1, 0x000000, 0x000000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x020000, 0x020000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x000000, 0x040000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x040000, 0x060000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x000000, 0x080000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x060000, 0x0a0000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x000000, 0x0c0000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x080000, 0x0e0000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x000000, 0x100000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x0a0000, 0x120000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x000000, 0x140000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x0c0000, 0x160000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x000000, 0x180000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x0e0000, 0x1a0000, 0x020000)
+	ROM_FILL(                         0x1c0000, 0x020000, 0x00 )
+	ROM_FILL(                         0x1e0000, 0x020000, 0x00 )
+ROM_END
+
 ROM_START( bakubrkr )
  	ROM_REGION( 0x080000, REGION_CPU1, 0 )			/* 68000 Code */
 	ROM_LOAD16_BYTE( "ts100j.u18", 0x000000, 0x040000, CRC(8cc0a4fd) SHA1(e7e18b5ea236522a79ba9db8f573ac8f7ade504b) )
@@ -3700,7 +3743,8 @@ GAME( 1995, gtmr2a,   gtmr2,    gtmr2,    gtmr2,    kaneko16, ROT0,  "Kaneko", "
 
 /* Non-working games (mainly due to protection) */
 
-GAMEX(1992, bakubrkr, 0,        bakubrkr, bakubrkr, kaneko16, ROT90, "Kaneko", "Bakuretsu Breaker",       GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, explbrkr, 0,        bakubrkr, bakubrkr, kaneko16, ROT90, "Kaneko", "Explosive Breaker",       GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, bakubrkr, explbrkr, bakubrkr, bakubrkr, kaneko16, ROT90, "Kaneko", "Bakuretsu Breaker",       GAME_IMPERFECT_GRAPHICS )
 GAMEX(1992, shogwarr, 0,        shogwarr, shogwarr, shogwarr, ROT0,  "Kaneko", "Shogun Warriors",         GAME_NOT_WORKING )
 GAMEX(1992, fjbuster, shogwarr, shogwarr, shogwarr, shogwarr, ROT0,  "Kaneko", "Fujiyama Buster (Japan)", GAME_NOT_WORKING )
 GAMEX(1992, brapboys, 0,        shogwarr, shogwarr, 0,        ROT0,  "Kaneko", "B.Rap Boys",              GAME_NOT_WORKING )

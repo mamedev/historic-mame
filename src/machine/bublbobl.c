@@ -10,7 +10,7 @@
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
-
+#include "machine/random.h"
 
 
 unsigned char *bublbobl_sharedram1,*bublbobl_sharedram2;
@@ -232,7 +232,7 @@ logerror("%04x: 68705 unknown write to address %04x\n",activecpu_get_pc(),addres
 	if ((ddrB & 0x20) && (~data & 0x20) && (portB_out & 0x20))
 	{
 		/* hack to get random EXTEND letters (who is supposed to do this? 68705? PAL?) */
-		bublbobl_sharedram2[0x7c] = rand()%6;
+		bublbobl_sharedram2[0x7c] = mame_rand()%6;
 
 		cpunum_set_input_line_vector(0,0,bublbobl_sharedram2[0]);
 		cpunum_set_input_line(0,0,HOLD_LINE);

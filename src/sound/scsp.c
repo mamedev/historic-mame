@@ -39,7 +39,7 @@ static data32_t IrqTimBC=0;
 static data32_t IrqMidi=0;
 
 static data8_t MidiOutW=0,MidiOutR=0;
-static data8_t MidiStack[8];
+static data8_t MidiStack[16];
 static data8_t MidiW=0,MidiR=0;
 
 static data32_t FNS_Table[0x400];
@@ -645,10 +645,11 @@ static void SCSP_UpdateRegR(int reg)
 				unsigned short v=SCSP->udata.data[0x5/2];
 				v&=0xff00;
 				v|=MidiStack[MidiR];
+				SCSP[0].Int68kCB(0);	// cancel the IRQ
 				if(MidiR!=MidiW)
 				{
 					++MidiR;
-					MidiR&=7;
+					MidiR&=15;
 				}
 				SCSP->udata.data[0x5/2]=v;
 			}
@@ -985,7 +986,7 @@ static void SCSP_DoMasterSamples(int chip, int nsamples)
 
 static void dma_scsp()
 {
-	static UINT16 tmp_dma[2], *scsp_regs;
+	static UINT16 tmp_dma[3], *scsp_regs;
 
 	scsp_regs = (UINT16 *)SCSP->udata.datab;
 
@@ -1160,7 +1161,7 @@ WRITE16_HANDLER( SCSP_1_w )
 WRITE16_HANDLER( SCSP_MidiIn )
 {
 	MidiStack[MidiW++]=data;
-	MidiW&=7;
+	MidiW &= 15;
 }
 
 READ16_HANDLER( SCSP_MidiOutR )

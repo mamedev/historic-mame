@@ -219,6 +219,7 @@ static struct rc_option opts[] = {
 	{ "oslog", NULL, rc_bool, &erroroslog, "0", 0, 0, NULL, "output error log to debugger" },
 	{ "skip_disclaimer", NULL, rc_bool, &options.skip_disclaimer, "0", 0, 0, NULL, "skip displaying the disclaimer screen" },
 	{ "skip_gameinfo", NULL, rc_bool, &options.skip_gameinfo, "0", 0, 0, NULL, "skip displaying the " GAMENOUN " info screen" },
+	{ "skip_validitychecks", NULL, rc_bool, &options.skip_validitychecks, "0", 0, 0, NULL, "skip doing the code validity checks" },
 	{ "crconly", NULL, rc_bool, &options.crc_only, "0", 0, 0, NULL, "use only CRC for all integrity checks" },
 	{ "bios", NULL, rc_string, &options.bios, "default", 0, 14, NULL, "change system bios" },
 	{ "state", NULL, rc_string, &statename, NULL, 0, 0, NULL, "state to load" },
@@ -578,7 +579,7 @@ int cli_frontend_init (int argc, char **argv)
 	{
 		const struct GameDriver *tmp_gd;
 
-		sprintf(buffer, "%s", drivers[game_index]->source_file+12);
+		sprintf(buffer, "%s", drivers[game_index]->source_file+4);
 		buffer[strlen(buffer) - 2] = 0;
 
 		tmp_gd = drivers[game_index];

@@ -117,6 +117,10 @@ READ16_HANDLER( watchdog_reset16_r );
 WRITE32_HANDLER( watchdog_reset32_w );
 READ32_HANDLER( watchdog_reset32_r );
 
+/* watchdog enabled when TRUE */
+/* timer is set to reset state when going from disable to enable */
+void watchdog_enable(int enable);
+
 
 
 /*************************************
@@ -150,6 +154,14 @@ void activecpu_abort_timeslice(void);
 
 /* Returns the current local time for a CPU */
 mame_time cpunum_get_localtime(int cpunum);
+
+/* Returns the current CPU's unscaled running clock speed */
+/* If you want to know the current effective running clock
+ * after scaling it is just the double sec_to_cycles[cpunum] */
+int cpunum_get_clock(int cpunum);
+
+/* Sets the current CPU's clock speed and then adjusts for scaling */
+void cpunum_set_clock(int cpunum, int clock);
 
 /* Returns the current scaling factor for a CPU's clock speed */
 double cpunum_get_clockscale(int cpunum);

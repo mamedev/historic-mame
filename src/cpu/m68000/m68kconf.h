@@ -103,6 +103,20 @@
 #define M68K_RESET_CALLBACK()       your_reset_handler_function()
 
 
+/* If ON, CPU will call the callback when it encounters a cmpi.l #v, dn
+ * instruction.
+ */
+#define M68K_CMPILD_HAS_CALLBACK     OPT_OFF
+#define M68K_CMPILD_CALLBACK(v,r)    your_cmpild_handler_function(v,r)
+
+
+/* If ON, CPU will call the callback when it encounters a rte
+ * instruction.
+ */
+#define M68K_RTE_HAS_CALLBACK       OPT_OFF
+#define M68K_RTE_CALLBACK()         your_rte_handler_function()
+
+
 /* If ON, CPU will call the set fc callback on every memory access to
  * differentiate between user/supervisor, program/data access like a real
  * 68000 would.  This should be enabled and the callback should be set if you

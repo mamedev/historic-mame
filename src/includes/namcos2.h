@@ -6,9 +6,6 @@
 
 ***************************************************************************/
 
-// #define NAMCOS2_DEBUG_MODE
-
-
 /* CPU reference numbers */
 
 #define CPU_MASTER	0
@@ -137,17 +134,6 @@ extern data16_t *namcos2_eeprom;
 extern size_t namcos2_eeprom_size;
 
 /**************************************************************/
-/*	Shared video memory function handlers					  */
-/**************************************************************/
-WRITE16_HANDLER( namcos2_68k_vram_w );
-READ16_HANDLER( namcos2_68k_vram_r );
-
-extern size_t namcos2_68k_vram_size;
-
-READ16_HANDLER( namcos2_68k_vram_ctrl_r );
-WRITE16_HANDLER( namcos2_68k_vram_ctrl_w );
-
-/**************************************************************/
 /*	Shared video palette function handlers					  */
 /**************************************************************/
 READ16_HANDLER( namcos2_68k_video_palette_r );
@@ -157,12 +143,10 @@ WRITE16_HANDLER( namcos2_68k_video_palette_w );
 extern data16_t *namcos2_68k_palette_ram;
 extern size_t namcos2_68k_palette_size;
 
-
 /**************************************************************/
 /*	Shared data ROM memory handlerhandlers					  */
 /**************************************************************/
 READ16_HANDLER( namcos2_68k_data_rom_r );
-
 
 /**************************************************************/
 /* Shared serial communications processory (CPU5 ????)		  */
@@ -174,8 +158,6 @@ WRITE16_HANDLER( namcos2_68k_serial_comms_ctrl_w );
 
 extern data16_t  namcos2_68k_serial_comms_ctrl[];
 extern data16_t *namcos2_68k_serial_comms_ram;
-
-
 
 /**************************************************************/
 /* Shared protection/random number generator				  */
@@ -209,7 +191,6 @@ READ16_HANDLER( namcos2_68k_slave_C148_r );
 INTERRUPT_GEN( namcos2_68k_slave_vblank );
 void namcos2_68k_slave_posirq( int moog );
 
-
 /**************************************************************/
 /* MASTER CPU RAM MEMORY									  */
 /**************************************************************/
@@ -217,14 +198,12 @@ void namcos2_68k_slave_posirq( int moog );
 #define NAMCOS2_68K_MASTER_RAM_W	MWA16_BANK3
 #define NAMCOS2_68K_MASTER_RAM_R	MRA16_BANK3
 
-
 /**************************************************************/
 /* SLAVE CPU RAM MEMORY 									  */
 /**************************************************************/
 
 #define NAMCOS2_68K_SLAVE_RAM_W 	MWA16_BANK4
 #define NAMCOS2_68K_SLAVE_RAM_R 	MRA16_BANK4
-
 
 /**************************************************************/
 /*	ROZ - Rotate & Zoom memory function handlers			  */
@@ -243,14 +222,11 @@ extern data16_t *namcos2_68k_roz_ram;
 #define BANKED_SOUND_ROM_R		MRA8_BANK6
 #define CPU3_ROM1				6			/* Bank number */
 
-
-
 /**************************************************************/
 /* Sound CPU support handlers - 6809						  */
 /**************************************************************/
 
 WRITE8_HANDLER( namcos2_sound_bankselect_w );
-
 
 /**************************************************************/
 /* MCU Specific support handlers - HD63705					  */

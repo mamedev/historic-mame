@@ -1,6 +1,19 @@
 /* Hyper NeoGeo 64
 
-Driver By David Haywood and ElSemi
+Driver by David Haywood, ElSemi, and Andrew Gardner
+Rasterizing code provided in part by Andrew Zaferakis
+
+ToDo  12th Oct 2004:
+
+* find where the remainder of the display list information is 'hiding'
+    - complete display lists are not currently found in the dl_w memory handler.
+	  (this manifests itself as 'flickering' 3d in fatfurwa and missing bodies in buriki.
+* The effect of numerous (dozens of) 3d flags needs to be figured out by examining real hardware
+* Populate the display buffers with the data based on Elsemi's notes below
+    - maybe there are some frame-buffer effects which will then work
+* Determine wether or not the hardware does perspective-correct texture mapping - if not,
+    disable it in the rasterizer.
+
 
 ToDo  2nd Sept 2004:
 
@@ -18,9 +31,8 @@ fix remaining 2d graphic glitches
  -- fix zooming sprites (zoom registers not understood, differ between games?)
  -- priorities
  -- still some bad sprites (waterfall level 'splash')
-add 3d graphics
  -- 3d ram isn't populated at the moment?
- -- http://www.geocities.com/chowderq/hng64.html 3d rom format information
+
 hook up communications CPU (z80 based, we have bios rom)
 hook up CPU2 (v30 based?) no rom? (maybe its the 'sound driver' the game uploads?)
 add sound
@@ -438,12 +450,37 @@ or fatal fury for example)
 static data32_t *hng_mainram;
 static data32_t *hng_cart;
 static data32_t *hng64_dualport;
-static data32_t *hng64_spriteram;
-static data32_t *hng64_videoregs;
 static data32_t *hng64_soundram;
+
+
+// Stuff from over in vidhrdw...
+extern struct tilemap *hng64_tilemap, *hng64_tilemap2, *hng64_tilemap3, *hng64_tilemap4 ;
+extern data32_t *hng64_spriteram, *hng64_videoregs ;
+extern data32_t *hng64_videoram ;
+extern data32_t *hng64_fcram ;
+
+extern data32_t hng64_dls[2][0x81] ;
+
+VIDEO_START( hng64 ) ;
+VIDEO_UPDATE( hng64 ) ;
+VIDEO_STOP( hng64 ) ;
+
+static data32_t activeBuffer ;
+
+
 data32_t no_machine_error_code;
 static int hng64_interrupt_level_request;
 WRITE32_HANDLER( hng64_videoram_w );
+
+/* AJG */
+static data32_t *hng64_3d_1 ;
+static data32_t *hng64_3d_2 ;
+static data32_t *hng64_dl ;
+
+static data32_t *hng64_q2 ;
+
+
+char writeString[1024] ;
 
 /* DRIVER NOTE!!
 
@@ -544,126 +581,6 @@ void hyperneogeo_mmu_hack(UINT64 vaddr,UINT64 paddr)
 	}
 }
 
-static data32_t* hng64_videoram;
-static struct tilemap *hng64_tilemap;
-static struct tilemap *hng64_tilemap2;
-static struct tilemap *hng64_tilemap3;
-static struct tilemap *hng64_tilemap4;
-//static int mycounter;
-
-
-static void hng64_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
-{
-/* missing zoom */
-
-	const struct GfxElement *gfx;
-	data32_t *source = hng64_spriteram;
-	data32_t *finish = hng64_spriteram + 0xb000/4;
-
-	/* find end of list? */
-	while( source<finish)
-	{
-		int endlist;
-
-		endlist=(source[2]&0xffff0000)>>16;
-		if (endlist == 0x7ff) break;
-		source+=8;
-
-	}
-
-	finish = hng64_spriteram;
-	/* draw backwards .. */
-	while( source>finish )
-	{
-		int xpos, ypos, tileno,chainx,chainy,xflip;
-		int xdrw,ydrw,pal,xinc,yinc,yflip;
-		UINT32 zoomx,zoomy;
-		source-=8;
-
-		ypos = (source[0]&0xffff0000) >>16;
-		xpos = (source[0]&0x0000ffff) >>0;
-		tileno=(source[4]&0x00ffffff);
-		chainx=(source[2]&0x000000f0)>>4;
-		chainy=(source[2]&0x0000000f);
-
-		zoomy = (source[1]&0xffff0000) >>16;
-		zoomx = (source[1]&0x0000ffff) >>0;
-
-		if (zoomy==0x800) { zoomy=0x800; } else { zoomy=0x1000;}
-		if (zoomx==0x800) { zoomx=0x800; } else { zoomx=0x1000;}
-		/* zoom is wrong maybe a lookup somewhere? */
-
-		pal =(source[3]&0x00ff0000)>>16;
-		xflip=(source[4]&0x02000000)>>25;
-		yflip=(source[4]&0x01000000)>>24;
-
-		if(xpos&0x8000) xpos -=0x10000;
-		if(ypos&0x8000) ypos -=0x10000;
-
-
-		/* prevent any possible divide by zero errors */
-		if(!zoomx) zoomx=0x1000;
-		if(!zoomy) zoomy=0x1000;
-
-
-		if (source[3]&0x00800000) // maybe ..
-		{
-			gfx= Machine->gfx[4];
-		}
-		else
-		{
-			gfx= Machine->gfx[5];
-			tileno>>=1;
-		//	pal >>=4;
-
-		}
-
-
-		zoomx <<=4;
-		zoomy <<=4;
-
-		zoomx = 0x10000/zoomx;
-		zoomy = 0x10000/zoomy;
-
-
-		if(xflip)
-		{
-			xinc=-16*zoomx;
-			xpos-=xinc*chainx;
-		}
-		else
-		{
-			xinc=16*zoomx;
-		}
-
-		if(yflip)
-		{
-			yinc=-16*zoomy;
-			ypos-=yinc*chainy;
-		}
-		else
-		{
-			yinc=16*zoomy;
-		}
-
-		zoomx=0x10000*zoomx;
-		zoomy=0x10000*zoomy;
-
-
-		for(ydrw=0;ydrw<=chainy;ydrw++)
-		{
-			for(xdrw=0;xdrw<=chainx;xdrw++)
-			{
-				drawgfxzoom(bitmap,gfx,tileno,pal,xflip,yflip,xpos+(xinc*xdrw),ypos+(yinc*ydrw),cliprect,TRANSPARENCY_PEN,0,zoomx,zoomy/*0x10000*/);
-				tileno++;
-			}
-		}
-
-
-	}
-}
-
-
 WRITE32_HANDLER( hng64_videoram_w )
 {
 	int realoff;
@@ -693,145 +610,12 @@ WRITE32_HANDLER( hng64_videoram_w )
 	/* 400000 - 7fffff is scroll regs etc. */
 }
 
-/* 8x8 tiles, 4bpp layer */
-static void get_hng64_tile_info(int tile_index)
-{
-	int tileno,pal;
-	tileno = hng64_videoram[tile_index];
-	pal = hng64_videoram[tile_index]>>24;
-	SET_TILE_INFO((tileno&1)?0:1,(tileno&0x3fffff)>>1,pal,TILE_FLIPYX((tileno&0xc00000)>>22))
-}
 
-/* 16x16 tiles, 8bpp layer */
-static void get_hng64_tile2_info(int tile_index)
-{
-	int tileno,pal;
-	tileno = hng64_videoram[tile_index+(0x10000/4)];
-	pal = hng64_videoram[tile_index+(0x10000/4)]>>24;
-
-	SET_TILE_INFO(3,(tileno&0x3fffff)>>3,pal>>4,  TILE_FLIPYX((tileno&0xc00000)>>22) )
-}
-
-/* 16x16 tiles, 8bpp layer */
-static void get_hng64_tile3_info(int tile_index)
-{
-	int tileno,pal;
-	tileno = hng64_videoram[tile_index+(0x20000/4)];
-	pal = hng64_videoram[tile_index+(0x20000/4)]>>24;
-	SET_TILE_INFO(3,(tileno&0x3fffff)>>3,pal>>4,TILE_FLIPYX((tileno&0xc00000)>>22))
-}
-
-/* 16x16 tiles, 8bpp layer */
-static void get_hng64_tile4_info(int tile_index)
-{
-	int tileno,pal;
-	tileno = hng64_videoram[tile_index+(0x30000/4)];
-	pal = hng64_videoram[tile_index+(0x30000/4)]>>24;
-	SET_TILE_INFO(3,(tileno&0x3fffff)>>3,pal>>4,TILE_FLIPYX((tileno&0xc00000)>>22))
-}
-
-
-VIDEO_START( hng64 )
-{
-	hng64_tilemap = tilemap_create(get_hng64_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8, 128,128);     /* 128x128x4 = 0x10000 */
-	hng64_tilemap2 = tilemap_create(get_hng64_tile2_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 16, 16, 128,128); /* 128x128x4 = 0x10000 */
-	hng64_tilemap3 = tilemap_create(get_hng64_tile3_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 16, 16, 128,128); /* 128x128x4 = 0x10000 */
-	hng64_tilemap4 = tilemap_create(get_hng64_tile4_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 16, 16, 128,128); /* 128x128x4 = 0x10000 */
-	tilemap_set_transparent_pen(hng64_tilemap,0);
-	tilemap_set_transparent_pen(hng64_tilemap2,0);
-	tilemap_set_transparent_pen(hng64_tilemap3,0);
-	tilemap_set_transparent_pen(hng64_tilemap4,0);
-	return 0;
-}
-
-/* Tilemaps zoom, and probably rotate.. they can have linescroll/lineselect,
-looks like the zoom center can move too..
-not sure how these features are enabled up yet */
-
-static void hng64_drawtilemap3( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
-{
-	int scrollbase,xscroll,yscroll,xzoom,yzoom;
-
-	scrollbase = (hng64_videoregs[0x05]&0x3fff0000)>>16;
-	xscroll = hng64_videoram[(0x40000+(scrollbase<<4))/4]>>16;
-	yscroll = hng64_videoram[(0x40008+(scrollbase<<4))/4]>>16;
-	xzoom   = hng64_videoram[(0x40010+(scrollbase<<4))/4]>>16;
-	yzoom   = hng64_videoram[(0x4000c+(scrollbase<<4))/4]>>16;
-	xzoom   = xzoom-xscroll;
-	yzoom   = yzoom-yscroll;
-	xzoom &=0xffff;
-	yzoom &=0xffff;
-
-	xscroll <<=16;
-	yscroll <<=16;
-	xzoom <<=8;
-	yzoom <<=8;
-
-	tilemap_draw_roz(bitmap,cliprect,hng64_tilemap3,xscroll,yscroll,
-			xzoom,0,0,yzoom,
-			1,
-			0,0);
-}
-
-static void hng64_drawtilemap2( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
-{
-	int scrollbase,xscroll,yscroll,xzoom,yzoom;
-
-	scrollbase = (hng64_videoregs[0x04]&0x00003fff)>>0;
-	xscroll = hng64_videoram[(0x40000+(scrollbase<<4))/4]>>16;
-	yscroll = hng64_videoram[(0x40008+(scrollbase<<4))/4]>>16;
-	xzoom   = hng64_videoram[(0x40010+(scrollbase<<4))/4]>>16;
-	yzoom   = hng64_videoram[(0x4000c+(scrollbase<<4))/4]>>16;
-	xzoom   = xzoom-xscroll;
-	yzoom   = yzoom-yscroll;
-	xzoom &=0xffff;
-	yzoom &=0xffff;
-
-	xscroll <<=16;
-	yscroll <<=16;
-	xzoom <<=8;
-	yzoom <<=8;
-
-	tilemap_draw_roz(bitmap,cliprect,hng64_tilemap2,xscroll,yscroll,
-			xzoom,0,0,yzoom,
-			1,
-			0,0);
-}
-
-VIDEO_UPDATE( hng64 )
-{
-	int scrollbase;
-
-	fillbitmap(bitmap, get_black_pen(), 0);
-
-	scrollbase = (hng64_videoregs[0x05]&0x00003fff)>>0;
-	tilemap_set_scrollx(hng64_tilemap4,0, hng64_videoram[(0x40000+(scrollbase<<4))/4]>>16);
-	tilemap_set_scrolly(hng64_tilemap4,0, hng64_videoram[(0x40008+(scrollbase<<4))/4]>>16);
-	tilemap_draw(bitmap,cliprect,hng64_tilemap4,0,0);
-
-	hng64_drawtilemap3(bitmap,cliprect);
-	hng64_drawtilemap2(bitmap,cliprect);
-
-	tilemap_draw(bitmap,cliprect,hng64_tilemap,0,0);
-
-	hng64_drawsprites(bitmap,cliprect);
-
-
-	/* hack to enable 2nd cpu when key is pressed */
-	if ( code_pressed_memory(KEYCODE_L) )
-	{
-		cpunum_set_input_line(1, INPUT_LINE_HALT, CLEAR_LINE);
-		cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE);
-	}
-
-};
-
-/*
 READ32_HANDLER( hng64_random_reader )
 {
 	return mame_rand()&0xffffffff;
 }
-*/
+
 
 READ32_HANDLER( hng64_comm_r )
 {
@@ -848,12 +632,20 @@ READ32_HANDLER( hng64_comm_r )
 
 static WRITE32_HANDLER( hng64_pal_w )
 {
-	int r,g,b;
+	int r,g,b,a;
 	COMBINE_DATA(&paletteram32[offset]);
 
 	b = ((paletteram32[offset] & 0x000000ff) >>0);
 	g = ((paletteram32[offset] & 0x0000ff00) >>8);
 	r = ((paletteram32[offset] & 0x00ff0000) >>16);
+	a = ((paletteram32[offset] & 0xff000000) >>24);
+
+	// a sure ain't alpha ???
+	// alpha_set_level(mame_rand()) ;
+	// printf("Alpha : %d %d %d %d\n", a, b, g, r) ;
+
+	// if (a != 0)
+	//	usrintf_showmessage("Alpha is not zero!") ;
 
 	palette_set_color(offset,r,g,b);
 }
@@ -938,16 +730,163 @@ READ32_HANDLER( no_machine_error )
 
 WRITE32_HANDLER( hng64_dualport_w )
 {
+//	printf("dualport W %08x %08x %08x\n", activecpu_get_pc(), offset, hng64_dualport[offset]);
+
 	COMBINE_DATA (&hng64_dualport[offset]);
 }
 
 READ32_HANDLER( hng64_dualport_r )
 {
-//	printf("dualport read %08x\n",offset);
+//	printf("dualport R %08x %08x %08x\n", activecpu_get_pc(), offset, hng64_dualport[offset]);
 //	return mame_rand();
 
 	return hng64_dualport[offset];
 }
+
+/* AJG */
+WRITE32_HANDLER( hng64_3d_1_w )
+{
+	// !!! Never does a write to 1 in the tests !!!
+	COMBINE_DATA (&hng64_3d_1[offset]) ;
+	COMBINE_DATA (&hng64_3d_2[offset]) ;
+//	printf("1w : %d %d\n", offset, hng64_3d_1[offset]) ;
+
+	exit(1) ;
+}
+
+WRITE32_HANDLER( hng64_3d_2_w )
+{
+	COMBINE_DATA (&hng64_3d_1[offset]) ;
+	COMBINE_DATA (&hng64_3d_2[offset]) ;
+//	printf("2w : %d %d\n", offset, hng64_3d_2[offset]) ;
+}
+
+READ32_HANDLER( hng64_3d_1_r )
+{
+//	printf("1r : %d %d\n", offset, hng64_3d_1[offset]) ;
+	return hng64_3d_1[offset] ;
+}
+
+READ32_HANDLER( hng64_3d_2_r )
+{
+//	printf("2r : %d %d\n", offset, hng64_3d_2[offset]) ;
+	return hng64_3d_2[offset] ;
+}
+
+
+// These are for the 3d 'display list'
+
+WRITE32_HANDLER( dl_w )
+{
+	COMBINE_DATA (&hng64_dl[offset]) ;
+
+	// !!! There are a few other writes over 0x80 as well - don't forget about those someday !!!
+
+	// This method of finding the 85 writes and switching banks seems to work
+	//  the problem is when there are a lot of things to be drawn (more than what can fit in 2*0x80)
+	//  the list doesn't fit anymore, and parts aren't drawn every frame.
+
+	if (offset == 0x85)
+	{
+		// Only if it's VALID
+		if ((INT32)hng64_dl[offset] == 1 || (INT32)hng64_dl[offset] == 2)
+			activeBuffer = (INT32)hng64_dl[offset] - 1 ;		// Subtract 1 to fit into my array...
+	}
+
+	if (offset <= 0x80)
+		hng64_dls[activeBuffer][offset] = hng64_dl[offset] ;
+
+//	printf("dl W : %.8x %.8x\n", offset, hng64_dl[offset]) ;
+
+	// Write out some interesting parts of the 3d display list ...
+	/*
+	if (!flagFlag)
+	{
+		if (offset >= 0x00000007)
+		{
+			dataArray[offset-0x00000007] = hng64_dl[offset] ;
+		}
+	}
+
+	if (offset == 0x00000017)
+	{
+		flagFlag = 1 ;
+		// a test out of curiosity 
+		hng64_dl[offset] = 1 ;
+	}
+	*/
+}
+
+READ32_HANDLER( dl_r )
+{
+//	printf("dl R : %x %x\n", offset, hng64_dl[offset]) ;
+	return hng64_dl[offset] ;
+}
+
+/*
+WRITE32_HANDLER( activate_3d_buffer )
+{
+	COMBINE_DATA (&active_3d_buffer[offset]) ;
+	printf("COMBINED %d\n", active_3d_buffer[offset]) ;
+}
+*/
+
+// Transition Control memory...
+WRITE32_HANDLER( fcram_w )
+{
+	COMBINE_DATA (&hng64_fcram[offset]) ;
+//	printf("Q1 W : %.8x %.8x\n", offset, hng64_fcram[offset]) ;
+
+	if (offset == 0x00000007)
+	{
+		sprintf(writeString, "%.8x ", hng64_fcram[offset]) ;
+	}
+
+	if (offset == 0x0000000a)
+	{
+		sprintf(writeString, "%s %.8x ", writeString, hng64_fcram[offset]) ;
+	}
+
+	if (offset == 0x0000000b)
+	{
+		sprintf(writeString, "%s %.8x ", writeString, hng64_fcram[offset]) ;
+//		usrintf_showmessage("%s", writeString) ;
+	}
+}
+
+READ32_HANDLER( fcram_r )
+{
+//	printf("Q1 R : %.8x %.8x\n", offset, hng64_fcram[offset]) ;
+	return hng64_fcram[offset] ;
+}
+
+
+// Q2 handler (just after display list in memory)
+// Seems to read and write the same thing for every frame in fatfurwa
+/*
+	Q2 R : 00000000 00311800
+	Q2 W : 00000003 03000000
+	Q2 W : 00000002 e0001c00
+	Q2 W : 00000002 e0001c00
+	Q2 W : 00000001 3fe037e0
+	Q2 W : 00000001 3fe037e0
+	Q2 W : 00000000 00311800
+
+	In the beginning it likes setting 0x04-0x0b to what looks like
+	a bunch of bit-flags...
+*/
+WRITE32_HANDLER( q2_w )
+{
+	COMBINE_DATA (&hng64_q2[offset]) ;
+	// printf("Q2 W : %.8x %.8x\n", offset, hng64_q2[offset]) ;
+}
+
+READ32_HANDLER( q2_r )
+{
+	// printf("Q2 R : %.8x %.8x\n", offset, hng64_q2[offset]) ;
+	return hng64_q2[offset] ;
+}
+
 
 /*
 
@@ -963,11 +902,18 @@ READ32_HANDLER( hng64_dualport_r )
 
 */
 
+/*
+<ElSemi> d0100000-d011ffff is framebuffer A0 
+<ElSemi> d0120000-d013ffff is framebuffer A1 
+<ElSemi> d0140000-d015ffff is ZBuffer A
+*/
+
 READ32_HANDLER( hng64_inputs_r )
 {
 //	printf("hng read %08x %08x\n",offset,mem_mask);
 
 //	static int toggi=0;
+
 
 	switch (offset*4)
 	{
@@ -1026,20 +972,28 @@ READ32_HANDLER( hng64_soundram_r )
 
 static ADDRESS_MAP_START( hng_map, ADDRESS_SPACE_PROGRAM, 32 )
 
+	AM_RANGE(0x00000000, 0x00ffffff) AM_RAM AM_SHARE(3)
+	AM_RANGE(0x20000000, 0x20ffffff) AM_RAM AM_SHARE(3)
+	AM_RANGE(0x40000000, 0x40ffffff) AM_RAM AM_SHARE(3)
+	AM_RANGE(0x80000000, 0x80ffffff) AM_RAM AM_SHARE(3) AM_BASE(&hng_mainram)
+	AM_RANGE(0xa0000000, 0xa0ffffff) AM_RAM AM_SHARE(3)
+
+
 	AM_RANGE(0xc0000000, 0xc000bfff) AM_RAM AM_BASE(&hng64_spriteram)/* Sprites */
 	AM_RANGE(0xc0010000, 0xc0010013) AM_RAM
 	AM_RANGE(0xc0100000, 0xc017ffff) AM_READWRITE(MRA32_RAM, hng64_videoram_w) AM_BASE(&hng64_videoram) // tilemap
 	AM_RANGE(0xc0190000, 0xc0190037) AM_RAM AM_BASE(&hng64_videoregs)
 	AM_RANGE(0xc0200000, 0xc0203fff) AM_READWRITE(MRA32_RAM,hng64_pal_w) AM_BASE(&paletteram32)// palette
-//	AM_RANGE(0xc0200000, 0xc0203fff) AM_RAM
 
-	AM_RANGE(0xC0208000, 0xC020805f) AM_RAM
-//	AM_RANGE(0xC0300000, 0xC03002ff) AM_READ(random_read)
 
-	AM_RANGE(0xd0000000, 0xd000002f) AM_RAM
+	AM_RANGE(0xC0208000, 0xC020805f) AM_READWRITE(fcram_r, fcram_w) AM_BASE(&hng64_fcram)
 
-	AM_RANGE(0xd0100000, 0xd015ffff) AM_RAM /* 3D Bank A */
-	AM_RANGE(0xd0200000, 0xd025ffff) AM_RAM /* 3D Bank B */
+	AM_RANGE(0xC0300000, 0xC030ffff) AM_READWRITE(dl_r, dl_w) AM_BASE(&hng64_dl)
+	AM_RANGE(0xd0000000, 0xd000002f) AM_READWRITE(q2_r, q2_w) AM_BASE(&hng64_q2)
+
+
+	AM_RANGE(0xd0100000, 0xd015ffff) AM_READWRITE(hng64_3d_1_r,hng64_3d_2_w) AM_BASE(&hng64_3d_1) /* 3D Bank A */
+	AM_RANGE(0xd0200000, 0xd025ffff) AM_READWRITE(hng64_3d_2_r,hng64_3d_2_w) AM_BASE(&hng64_3d_2) /* 3D Bank B */
 
 	AM_RANGE(0xe0000000, 0xe01fffff) AM_RAM /* Sound ?? */
 	AM_RANGE(0xe0200000, 0xe03fffff) AM_READWRITE(hng64_soundram_r, hng64_soundram_w) /* uploads the v53 sound program here, elsewhere on ss64-2 */
@@ -1051,13 +1005,6 @@ static ADDRESS_MAP_START( hng_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x60000000, 0x60000fff) AM_RAM /* Dualp */
 
 	AM_RANGE(0x60001000, 0x6000ffff) AM_READ(hng64_comm_r)
-
-	AM_RANGE(0x00000000, 0x00ffffff) AM_RAM AM_SHARE(3)
-	AM_RANGE(0x20000000, 0x20ffffff) AM_RAM AM_SHARE(3)
-	AM_RANGE(0x40000000, 0x40ffffff) AM_RAM AM_SHARE(3)
-	AM_RANGE(0x80000000, 0x80ffffff) AM_RAM AM_SHARE(3) AM_BASE(&hng_mainram)
-	AM_RANGE(0xa0000000, 0xa0ffffff) AM_RAM AM_SHARE(3)
-
 
 	AM_RANGE(0x04000000, 0x05ffffff) AM_WRITENOP AM_ROM AM_SHARE(1) AM_REGION(REGION_USER3,0)
 	AM_RANGE(0x24000000, 0x25ffffff) AM_WRITENOP AM_ROM AM_SHARE(1)
@@ -1448,14 +1395,24 @@ static INTERRUPT_GEN( irq_start )
 
 MACHINE_INIT(hyperneo)
 {
+	FILE *fp;
 	data8_t *RAM = (data8_t*)hng64_soundram;
 	cpu_setbank(1,&RAM[0x1e0000]);
-	cpu_setbank(2,&RAM[0x100000]); // where..
+	cpu_setbank(2,&RAM[0x001000]); // where..
 	cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
 	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 
 	/* HACK .. put ram here on reset .. we end up replacing it with the MMU hack later so the game doesn't clear its own ram with thecode in it!!..... */
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000000, 0x0ffffff, 0, 0, hng64_mainram_w);
+
+	// Aaaaaugh !!! AJG ugliness
+	activeBuffer = 0 ;
+
+	fp = fopen("dump.bin", "wb") ;
+
+	// fwrite(memory_region(REGION_GFX4), sizeof(UINT8), 0x400000*3, fp) ;
+
+	fclose(fp) ;
 }
 
 MACHINE_DRIVER_START( hng64 )
@@ -1475,7 +1432,7 @@ MACHINE_DRIVER_START( hng64 )
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_MACHINE_INIT(hyperneo)
 
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_RGB_DIRECT | VIDEO_NEEDS_6BITS_PER_GUN)
 	MDRV_SCREEN_SIZE(1024, 1024)
 //	MDRV_VISIBLE_AREA(0, 1023, 0, 1023) // to see the whole textures
 	MDRV_VISIBLE_AREA(0, 511, 16, 447)
@@ -1483,6 +1440,7 @@ MACHINE_DRIVER_START( hng64 )
 
 	MDRV_VIDEO_START(hng64)
 	MDRV_VIDEO_UPDATE(hng64)
+	MDRV_VIDEO_STOP(hng64)
 MACHINE_DRIVER_END
 
 ROM_START( hng64 )
@@ -1524,7 +1482,7 @@ ROM_START( roadedge )
 	ROM_LOAD32_BYTE( "001sp04a.56",0x0000003, 0x400000, CRC(1a0eb173) SHA1(a69b786a9957197d1cc950ab046c57c18ca07ea7) )
 
 #if LOADHNGTEXS
-	/* Textures - 1024x1024x8 pages? */
+	/* Textures - 1024x1024x8 pages */
 	ROM_REGION( 0x1000000, REGION_GFX3, ROMREGION_DISPOSE )
 	/* note: same roms are at different positions on the board, repeated a total of 4 times*/
 	ROM_LOAD( "001tx01a.1", 0x0000000, 0x400000, CRC(f6539bb9) SHA1(57fc5583d56846be93d6f5784acd20fc149c70a5) )
@@ -1544,8 +1502,8 @@ ROM_START( roadedge )
 	ROM_LOAD( "001tx03a.15",0x0800000, 0x400000, CRC(22a375bd) SHA1(d55b62843d952930db110bcf3056a98a04a7adf4) )
 	ROM_LOAD( "001tx04a.16",0x0c00000, 0x400000, CRC(288a5bd5) SHA1(24e05db681894eb31cdc049cf42c1f9d7347bd0c) )
 
-	ROM_REGION( 0x0c00000, REGION_GFX4, ROMREGION_DISPOSE ) /* Vertex / 3d roms? */
-	/* they seem to interleave together, but there are only 3, x, y and z maybe? */
+	/* X,Y,Z Vertex ROMs */
+	ROM_REGION( 0x0c00000, REGION_GFX4, ROMREGION_DISPOSE )
 	ROM_LOAD( "001vt01a.17", 0x0000000, 0x400000, CRC(1a748e1b) SHA1(376d40baa3b94890d4740045d053faf208fe43db) )
 	ROM_LOAD( "001vt02a.18", 0x0400000, 0x400000, CRC(449f94d0) SHA1(2228690532d82d2661285aeb4260689b027597cb) )
 	ROM_LOAD( "001vt03a.19", 0x0800000, 0x400000, CRC(50ac8639) SHA1(dd2d3689466990a7c479bb8f11bd930ea45e47b5) )
@@ -1601,7 +1559,7 @@ ROM_START( sams64_2 )
 	ROM_LOAD32_BYTE( "005sp08a.118",0x2000003, 0x400000, CRC(05486fbc) SHA1(747d9ae03ce999be4ab697753e93c90ea85b7d44) )
 
 #if LOADHNGTEXS
-	/* Textures - 1024x1024x8 pages? */
+	/* Textures - 1024x1024x8 pages */
 	ROM_REGION( 0x1000000, REGION_GFX3, ROMREGION_DISPOSE )
 	/* note: same roms are at different positions on the board, repeated a total of 4 times*/
 	ROM_LOAD( "005tx01a.1", 0x0000000, 0x400000, CRC(05a4ceb7) SHA1(2dfc46a70c0a957ed0931a4c4df90c341aafff70) )
@@ -1621,8 +1579,8 @@ ROM_START( sams64_2 )
 	ROM_LOAD( "005tx03a.15",0x0800000, 0x400000, CRC(34764891) SHA1(cd6ea663ae28b7f6ac1ede2f9922afbb35b915b4) )
 	ROM_LOAD( "005tx04a.16",0x0c00000, 0x400000, CRC(6be50882) SHA1(1f99717cfa69076b258a0c52d66be007fd820374) )
 
-	ROM_REGION( 0x1800000, REGION_GFX4, ROMREGION_DISPOSE ) /* Vertex / 3d roms? */
-	/* they seem to interleave together, but there are only 3, x, y and z maybe? */
+	/* X,Y,Z Vertex ROMs */
+	ROM_REGION( 0x1800000, REGION_GFX4, ROMREGION_DISPOSE )
 	ROM_LOAD( "005vt01a.17", 0x0000000, 0x400000, CRC(48a61479) SHA1(ef982b1ecc6dfca2ad989391afcc1b3d1e7fe652) )
 	ROM_LOAD( "005vt02a.18", 0x0400000, 0x400000, CRC(ba9100c8) SHA1(f7704fb8e5310ea7d0e6ae6b8935717ec9119b6d) )
 	ROM_LOAD( "005vt03a.19", 0x0800000, 0x400000, CRC(f54a28de) SHA1(c445cf7fee71a516065cf37e05b898208f48b17e) )
@@ -1679,7 +1637,7 @@ ROM_START( fatfurwa )
 	ROM_LOAD32_BYTE( "006sp08a.118",0x2000003, 0x800000, CRC(9c3044ac) SHA1(24b28bcc6be51ab3ff59c2894094cd03ec377d84) )
 
 #if LOADHNGTEXS
-	/* Textures - 1024x1024x8 pages? */
+	/* Textures - 1024x1024x8 pages */
 	ROM_REGION( 0x1000000, REGION_GFX3, ROMREGION_DISPOSE )
 	/* note: same roms are at different positions on the board, repeated a total of 4 times*/
 	ROM_LOAD( "006tx01a.1", 0x0000000, 0x400000, CRC(ab4c1747) SHA1(2c097bd38f1a92c4b6534992f6bf29fd6dc2d265) )
@@ -1699,11 +1657,11 @@ ROM_START( fatfurwa )
 	ROM_LOAD( "006tx03a.15",0x0800000, 0x400000, CRC(94edfbd1) SHA1(d4004bb1273e6091608856cb4b151e9d81d5ed30) )
 	ROM_LOAD( "006tx04a.16",0x0c00000, 0x400000, CRC(82d61652) SHA1(28303ae9e2545a4cb0b5843f9e73407754f41e9e) )
 
-	ROM_REGION( 0x0c00000, REGION_GFX4, ROMREGION_DISPOSE ) /* Vertex / 3d roms? */
-	/* they seem to interleave together, but there are only 3, x, y and z maybe? */
-	ROM_LOAD( "006vt01a.17", 0x0000000, 0x400000, CRC(5c20ed4c) SHA1(df679f518292d70b9f23d2bddabf975d56b96910) )
-	ROM_LOAD( "006vt02a.18", 0x0400000, 0x400000, CRC(150eb717) SHA1(9acb067346eb386256047c0f1d24dc8fcc2118ca) )
-	ROM_LOAD( "006vt03a.19", 0x0800000, 0x400000, CRC(021cfcaf) SHA1(fb8b5f50d3490b31f0a4c3e6d3ae1b98bae41c97) )
+	/* X,Y,Z Vertex ROMs */
+	ROM_REGION16_BE( 0x0c00000, REGION_GFX4, ROMREGION_NODISPOSE )
+	ROMX_LOAD( "006vt01a.17", 0x0000000, 0x400000, CRC(5c20ed4c) SHA1(df679f518292d70b9f23d2bddabf975d56b96910), ROM_GROUPWORD | ROM_SKIP(4) )
+	ROMX_LOAD( "006vt02a.18", 0x0000002, 0x400000, CRC(150eb717) SHA1(9acb067346eb386256047c0f1d24dc8fcc2118ca), ROM_GROUPWORD | ROM_SKIP(4) )
+	ROMX_LOAD( "006vt03a.19", 0x0000004, 0x400000, CRC(021cfcaf) SHA1(fb8b5f50d3490b31f0a4c3e6d3ae1b98bae41c97), ROM_GROUPWORD | ROM_SKIP(4) )
 
 	ROM_REGION( 0x1000000, REGION_SOUND1, ROMREGION_DISPOSE ) /* Sound Samples? */
 	ROM_LOAD( "006sd01a.77", 0x0000000, 0x400000, CRC(790efb6d) SHA1(23ddd3ee8ae808e58cbcaf92a9ef56d3ca6289b5) )
@@ -1755,7 +1713,7 @@ ROM_START( buriki )
 	ROM_LOAD32_BYTE( "007sp08a.118",0x2000003, 0x400000, CRC(7a158c67) SHA1(d66f4920a513208d45b908a1934d9afb894debf1) )
 
 #if LOADHNGTEXS
-	/* Textures - 1024x1024x8 pages? */
+	/* Textures - 1024x1024x8 pages */
 	ROM_REGION( 0x1000000, REGION_GFX3, ROMREGION_DISPOSE )
 	/* note: same roms are at different positions on the board, repeated a total of 4 times*/
 	ROM_LOAD( "007tx01a.1", 0x0000000, 0x400000, CRC(a7774075) SHA1(4f3da9af131a7efb0f0a5180da57c19c65fffb82) )
@@ -1774,11 +1732,12 @@ ROM_START( buriki )
 	ROM_LOAD( "007tx02a.14",0x0400000, 0x400000, CRC(bc05d5fd) SHA1(84e3fafcebdeb1e2ffae80785949c973a14055d8) )
 	ROM_LOAD( "007tx03a.15",0x0800000, 0x400000, CRC(da9484fb) SHA1(f54b669a66400df00bf25436e5fd5c9bf68dbd55) )
 	ROM_LOAD( "007tx04a.16",0x0c00000, 0x400000, CRC(02aa3f46) SHA1(1fca89c70586f8ebcdf669ecac121afa5cdf623f) )
-	ROM_REGION( 0x0c00000, REGION_GFX4, ROMREGION_DISPOSE ) /* Vertex / 3d roms? */
-	/* they seem to interleave together, but there are only 3, x, y and z maybe? */
-	ROM_LOAD( "007vt01a.17", 0x0000000, 0x400000, CRC(f78a0376) SHA1(fde4ddd4bf326ae5f1ed10311c237b13b62e060c) )
-	ROM_LOAD( "007vt02a.18", 0x0400000, 0x400000, CRC(f365f608) SHA1(035fd9b829b7720c4aee6fdf204c080e6157994f) )
-	ROM_LOAD( "007vt03a.19", 0x0800000, 0x400000, CRC(ba05654d) SHA1(b7fe532732c0af7860c8eded3c5abd304d74e08e) )
+
+	/* X,Y,Z Vertex ROMs */
+	ROM_REGION16_BE( 0x0c00000, REGION_GFX4, ROMREGION_NODISPOSE )
+	ROMX_LOAD( "007vt01a.17", 0x0000000, 0x400000, CRC(f78a0376) SHA1(fde4ddd4bf326ae5f1ed10311c237b13b62e060c), ROM_GROUPWORD | ROM_SKIP(4) )
+	ROMX_LOAD( "007vt02a.18", 0x0000002, 0x400000, CRC(f365f608) SHA1(035fd9b829b7720c4aee6fdf204c080e6157994f), ROM_GROUPWORD | ROM_SKIP(4) )
+	ROMX_LOAD( "007vt03a.19", 0x0000004, 0x400000, CRC(ba05654d) SHA1(b7fe532732c0af7860c8eded3c5abd304d74e08e), ROM_GROUPWORD | ROM_SKIP(4) )
 
 	ROM_REGION( 0x1000000, REGION_SOUND1, ROMREGION_DISPOSE ) /* Sound Samples? */
 	ROM_LOAD( "007sd01a.77", 0x0000000, 0x400000, CRC(1afb48c6) SHA1(b072d4fe72d6c5267864818d300b32e85b426213) )

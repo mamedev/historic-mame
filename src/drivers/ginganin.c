@@ -438,6 +438,40 @@ ROM_START( ginganin )
 
 ROM_END
 
+ROM_START( gingania )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* main cpu */
+	ROM_LOAD16_BYTE( "2.bin", 0x00000, 0x10000, CRC(6da1d8a3) SHA1(ea81f2934fa7901563e886f3d600edd08ec0ea24) )
+	ROM_LOAD16_BYTE( "1.bin", 0x00001, 0x10000, CRC(0bd32d59) SHA1(5ab2c0e4a1d9cafbd3448d981103508debd7ed96) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* sound cpu */
+	ROM_LOAD( "gn_05.bin", 0x00000, 0x10000, CRC(e76e10e7) SHA1(b16f10a1a01b7b04221c9bf1b0d157e936bc5fb5) )
+
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "gn_15.bin", 0x000000, 0x10000, CRC(1b8ac9fb) SHA1(1e5ee2a565fa262f1e48c1088d84c6f42d84b4e3) )  /* bg */
+	ROM_LOAD( "gn_14.bin", 0x010000, 0x10000, CRC(e73fe668) SHA1(fa39fddd7448d3fc6b539506e33b951db205afa1) )
+
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "gn_12.bin", 0x000000, 0x10000, CRC(c134a1e9) SHA1(8bace0f0169e61f1b7254393fa9cad6dca09c335) )  /* fg */
+	ROM_LOAD( "gn_13.bin", 0x010000, 0x10000, CRC(1d3bec21) SHA1(305823c78cad9288f918178e1c24cb0459ba2a6e) )
+
+	ROM_REGION( 0x04000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "10.bin", 0x000000, 0x04000, CRC(48a20745) SHA1(69855b0402feca4ba9632142e569c652ca05b9fa) )  /* txt */
+
+	ROM_REGION( 0x50000, REGION_GFX4, ROMREGION_DISPOSE )
+	ROM_LOAD( "gn_06.bin", 0x000000, 0x10000, CRC(bdc65835) SHA1(53222fc3ec15e641289abb754657b0d59b88b66b) )  /* sprites */
+	ROM_CONTINUE(		   0x040000, 0x10000 )
+	ROM_LOAD( "gn_07.bin", 0x010000, 0x10000, CRC(c2b8eafe) SHA1(a042a200efd4e7361e9ab516085c9fc8067e28b4) )
+	ROM_LOAD( "gn_08.bin", 0x020000, 0x10000, CRC(f7c73c18) SHA1(102700e2217bcd1532af56ee6a00ad608c8217db) )
+	ROM_LOAD( "gn_09.bin", 0x030000, 0x10000, CRC(a5e07c3b) SHA1(cdda02cd847330575612cb33d1bb38a5d50a3e6d) )
+
+	ROM_REGION( 0x08000, REGION_GFX5, 0 )	/* background tilemaps */
+	ROM_LOAD( "gn_11.bin", 0x00000, 0x08000, CRC(f0d0e605) SHA1(0c541e8e036573be1d99ecb71fdb4568ca8cc269) )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* samples */
+	ROM_LOAD( "gn_04.bin", 0x00000, 0x10000, CRC(0ed9133b) SHA1(77f628e8ec28016efac2d906146865ca4ec54bd5) )
+	ROM_LOAD( "gn_03.bin", 0x10000, 0x10000, CRC(f1ba222c) SHA1(780c0bd0045bac1e1bb3209576383db90504fbf3) )
+ROM_END
+
 
 
 DRIVER_INIT( ginganin )
@@ -457,5 +491,5 @@ DRIVER_INIT( ginganin )
 }
 
 
-GAME( 1987, ginganin, 0, ginganin, ginganin, ginganin, ROT0, "Jaleco", "Ginga NinkyouDen" )
-
+GAME( 1987, ginganin, 0,        ginganin, ginganin, ginganin, ROT0, "Jaleco", "Ginga NinkyouDen (set 1)" )
+GAME( 1987, gingania, ginganin, ginganin, ginganin, ginganin, ROT0, "Jaleco", "Ginga NinkyouDen (set 2)" )

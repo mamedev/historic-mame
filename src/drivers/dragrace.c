@@ -16,7 +16,6 @@ static unsigned dragrace_misc_flags = 0;
 
 static int dragrace_gear[2];
 
-
 static void dragrace_frame_callback(int dummy)
 {
 	int i;
@@ -32,6 +31,9 @@ static void dragrace_frame_callback(int dummy)
 		case 0x10: dragrace_gear[i] = 0; break;
 		}
 	}
+
+	/* watchdog is disabled during service mode */
+		watchdog_enable(readinputport(0) & 0x20);
 }
 
 
@@ -184,7 +186,7 @@ static ADDRESS_MAP_START( dragrace_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0920, 0x093f) AM_WRITE(dragrace_misc_clear_w)
 	AM_RANGE(0x0a00, 0x0aff) AM_WRITE(MWA8_RAM) AM_BASE(&dragrace_playfield_ram)
 	AM_RANGE(0x0b00, 0x0bff) AM_WRITE(MWA8_RAM) AM_BASE(&dragrace_position_ram)
-	AM_RANGE(0x0e00, 0x0e00) AM_WRITE(MWA8_NOP) /* watchdog (disabled in service mode) */
+	AM_RANGE(0x0e00, 0x0eff) AM_WRITE(watchdog_reset_w)
 	AM_RANGE(0x1000, 0x1fff) AM_WRITE(MWA8_ROM) /* program */
 	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_ROM) /* program mirror */
 ADDRESS_MAP_END
@@ -529,7 +531,7 @@ static MACHINE_DRIVER_START( dragrace )
 	MDRV_CPU_ADD(M6800, 12096000 / 12)
 	MDRV_CPU_PROGRAM_MAP(dragrace_readmem, dragrace_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold, 4)
-
+	MDRV_WATCHDOG_VBLANK_INIT(8)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION((int) ((22. * 1000000) / (262. * 60) + 0.5))
 

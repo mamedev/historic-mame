@@ -392,6 +392,7 @@ INPUT_PORTS_START( kinst )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( kinst2 )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
@@ -601,9 +602,47 @@ ROM_START( kinst13 )
 ROM_END
 
 
+ROM_START( kinstp )
+	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* 512k for R4600 code */
+	ROM_LOAD( "ki_p47.u98", 0x00000, 0x80000, CRC(05e67bcb) SHA1(501e69b3026394f69229a6e9866c1037502b86bb) )
+
+	ROM_REGION16_LE( 0x1000000, REGION_SOUND1, ROMREGION_ERASEFF )	/* sound data */
+	ROM_LOAD16_BYTE( "u10-l1", 0x000000, 0x80000, CRC(b6cc155f) SHA1(810d455df8f385d76143e9d7d048f2b555ff8bf0) )
+	ROM_LOAD16_BYTE( "u11-l1", 0x200000, 0x80000, CRC(0b5e05df) SHA1(0595909cb667c38ac7c8c7bd0646b28899e27777) )
+	ROM_LOAD16_BYTE( "u12-l1", 0x400000, 0x80000, CRC(d05ce6ad) SHA1(7a8ee405c118fd176b66353fa7bfab888cc63cd2) )
+	ROM_LOAD16_BYTE( "u13-l1", 0x600000, 0x80000, CRC(7d0954ea) SHA1(ea4d1f153eb284f1bcfc5295fbce316bba6083f4) )
+	ROM_LOAD16_BYTE( "u33-l1", 0x800000, 0x80000, CRC(8bbe4f0c) SHA1(b22e365bc8d58a80eaac226be14b4bb8d9a04844) )
+	ROM_LOAD16_BYTE( "u34-l1", 0xa00000, 0x80000, CRC(b2e73603) SHA1(ee439f5162a2b3379d3f802328017bb3c68547d2) )
+	ROM_LOAD16_BYTE( "u35-l1", 0xc00000, 0x80000, CRC(0aaef4fc) SHA1(48c4c954ac9db648f28ad64f9845e19ec432eec3) )
+	ROM_LOAD16_BYTE( "u36-l1", 0xe00000, 0x80000, CRC(0577bb60) SHA1(cc78070cc41701e9a91fde5cfbdc7e1e83354854) )
+
+	DISK_REGION( REGION_DISKS )
+	DISK_IMAGE( "kinst", 0, MD5(6d4c2f152c9a18ab3a9b05b8804306a8) SHA1(a37a2c5e52ea936a715210d237874dd573bb002f) )
+ROM_END
+
+
 ROM_START( kinst2 )
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* 512k for R4600 code */
 	ROM_LOAD( "ki2-l14.u98", 0x00000, 0x80000, CRC(27d0285e) SHA1(aa7a2a9d72a47dd0ea2ee7b2776b79288060b179) )
+
+	ROM_REGION16_LE( 0x1000000, REGION_SOUND1, ROMREGION_ERASEFF )	/* sound data */
+	ROM_LOAD16_BYTE( "ki2_l1.u10", 0x000000, 0x80000, CRC(fdf6ed51) SHA1(acfc9460cd5df01403b7f00b2f68c2a8734ad6d3) )
+	ROM_LOAD16_BYTE( "ki2_l1.u11", 0x200000, 0x80000, CRC(f9e70024) SHA1(fe7fc78f1c60b15f2bbdc4c455f55cdf30f48ed4) )
+	ROM_LOAD16_BYTE( "ki2_l1.u12", 0x400000, 0x80000, CRC(2994c199) SHA1(9997a83432cb720f65b40a8af46f31a5d0d16d8e) )
+	ROM_LOAD16_BYTE( "ki2_l1.u13", 0x600000, 0x80000, CRC(3fe6327b) SHA1(7ff164fc2f079d039921594be92208973d43aa03) )
+	ROM_LOAD16_BYTE( "ki2_l1.u33", 0x800000, 0x80000, CRC(6f4dcdcf) SHA1(0ab6dbfb76e9fa2db072e287864ad1f9d514dd9b) )
+	ROM_LOAD16_BYTE( "ki2_l1.u34", 0xa00000, 0x80000, CRC(5db48206) SHA1(48456a7b6592c40bc9c664dcd2ee2cfd91942811) )
+	ROM_LOAD16_BYTE( "ki2_l1.u35", 0xc00000, 0x80000, CRC(7245ce69) SHA1(24a3ff009c8a7f5a0bfcb198b8dcb5df365770d3) )
+	ROM_LOAD16_BYTE( "ki2_l1.u36", 0xe00000, 0x80000, CRC(8920acbb) SHA1(0fca72c40067034939b984b4bf32972a5a6c26af) )
+
+	DISK_REGION( REGION_DISKS )
+	DISK_IMAGE( "kinst2", 0, MD5(2563b089b316f2c8636d78af661ac656) SHA1(ab0242233d2eaf9d907abe246a54e09a8a2561a5) )
+ROM_END
+
+
+ROM_START( kinst2k )
+	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* 512k for R4600 code */
+	ROM_LOAD( "ki2_l14k.u98", 0x00000, 0x80000, CRC(9cbd00a8) SHA1(926dce4bb9016331ea40d3c337a9ace896f07493) )
 
 	ROM_REGION16_LE( 0x1000000, REGION_SOUND1, ROMREGION_ERASEFF )	/* sound data */
 	ROM_LOAD16_BYTE( "ki2_l1.u10", 0x000000, 0x80000, CRC(fdf6ed51) SHA1(acfc9460cd5df01403b7f00b2f68c2a8734ad6d3) )
@@ -642,6 +681,25 @@ ROM_END
 ROM_START( kinst211 )
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* 512k for R4600 code */
 	ROM_LOAD( "ki2-l11.u98", 0x00000, 0x80000, CRC(0cb8de1e) SHA1(fe447f4b1d29b524f57c5ba1890652ef6afff88a) )
+
+	ROM_REGION16_LE( 0x1000000, REGION_SOUND1, ROMREGION_ERASEFF )	/* sound data */
+	ROM_LOAD16_BYTE( "ki2_l1.u10", 0x000000, 0x80000, CRC(fdf6ed51) SHA1(acfc9460cd5df01403b7f00b2f68c2a8734ad6d3) )
+	ROM_LOAD16_BYTE( "ki2_l1.u11", 0x200000, 0x80000, CRC(f9e70024) SHA1(fe7fc78f1c60b15f2bbdc4c455f55cdf30f48ed4) )
+	ROM_LOAD16_BYTE( "ki2_l1.u12", 0x400000, 0x80000, CRC(2994c199) SHA1(9997a83432cb720f65b40a8af46f31a5d0d16d8e) )
+	ROM_LOAD16_BYTE( "ki2_l1.u13", 0x600000, 0x80000, CRC(3fe6327b) SHA1(7ff164fc2f079d039921594be92208973d43aa03) )
+	ROM_LOAD16_BYTE( "ki2_l1.u33", 0x800000, 0x80000, CRC(6f4dcdcf) SHA1(0ab6dbfb76e9fa2db072e287864ad1f9d514dd9b) )
+	ROM_LOAD16_BYTE( "ki2_l1.u34", 0xa00000, 0x80000, CRC(5db48206) SHA1(48456a7b6592c40bc9c664dcd2ee2cfd91942811) )
+	ROM_LOAD16_BYTE( "ki2_l1.u35", 0xc00000, 0x80000, CRC(7245ce69) SHA1(24a3ff009c8a7f5a0bfcb198b8dcb5df365770d3) )
+	ROM_LOAD16_BYTE( "ki2_l1.u36", 0xe00000, 0x80000, CRC(8920acbb) SHA1(0fca72c40067034939b984b4bf32972a5a6c26af) )
+
+	DISK_REGION( REGION_DISKS )
+	DISK_IMAGE( "kinst2", 0, MD5(2563b089b316f2c8636d78af661ac656) SHA1(ab0242233d2eaf9d907abe246a54e09a8a2561a5) )
+ROM_END
+
+
+ROM_START( kinst210 )
+	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* 512k for R4600 code */
+	ROM_LOAD( "ki2_l10.u98", 0x00000, 0x80000, CRC(b17b4b3d) SHA1(756629cd1b51ae50f2b9818765dd3d277c3019b3) )
 
 	ROM_REGION16_LE( 0x1000000, REGION_SOUND1, ROMREGION_ERASEFF )	/* sound data */
 	ROM_LOAD16_BYTE( "ki2_l1.u10", 0x000000, 0x80000, CRC(fdf6ed51) SHA1(acfc9460cd5df01403b7f00b2f68c2a8734ad6d3) )
@@ -741,10 +799,13 @@ static DRIVER_INIT( kinst2 )
  *
  *************************************/
 
-GAME( 1994, kinst,    0,      kinst, kinst, kinst, ROT0, "Rare", "Killer Instinct (v1.5d)" )
-GAME( 1994, kinst14,  kinst,  kinst, kinst2, kinst, ROT0, "Rare", "Killer Instinct (v1.4)" )
-GAME( 1994, kinst13,  kinst,  kinst, kinst2, kinst, ROT0, "Rare", "Killer Instinct (v1.3)" )
+GAME( 1994, kinst,    0,      kinst, kinst,  kinst,   ROT0, "Rare", "Killer Instinct (v1.5d)" )
+GAME( 1994, kinst14,  kinst,  kinst, kinst2, kinst,   ROT0, "Rare", "Killer Instinct (v1.4)" )
+GAME( 1994, kinst13,  kinst,  kinst, kinst2, kinst,   ROT0, "Rare", "Killer Instinct (v1.3)" )
+GAME( 1994, kinstp,   kinst,  kinst, kinst2, kinst,   ROT0, "Rare", "Killer Instinct (proto v4.7)" )
 
-GAME( 1995, kinst2,   0,      kinst, kinst2, kinst2, ROT0, "Rare", "Killer Instinct 2 (v1.4)" )
-GAME( 1995, kinst213, kinst2, kinst, kinst2, kinst2, ROT0, "Rare", "Killer Instinct 2 (v1.3)" )
-GAME( 1995, kinst211, kinst2, kinst, kinst2, kinst2, ROT0, "Rare", "Killer Instinct 2 (v1.1)" )
+GAME( 1995, kinst2,   0,      kinst, kinst2, kinst2,  ROT0, "Rare", "Killer Instinct 2 (v1.4)" )
+GAMEX(1995, kinst2k,  kinst2, kinst, kinst2, kinst2,  ROT0, "Rare", "Killer Instinct 2 (v1.4k, upgrade kit)", GAME_NOT_WORKING )
+GAME( 1995, kinst213, kinst2, kinst, kinst2, kinst2,  ROT0, "Rare", "Killer Instinct 2 (v1.3)" )
+GAME( 1995, kinst211, kinst2, kinst, kinst2, kinst2,  ROT0, "Rare", "Killer Instinct 2 (v1.1)" )
+GAME( 1995, kinst210, kinst2, kinst, kinst2, kinst2,  ROT0, "Rare", "Killer Instinct 2 (v1.0)" )

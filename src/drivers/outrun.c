@@ -25,6 +25,7 @@
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "cpu/i8039/i8039.h"
+#include "cpu/m68000/m68000.h"
 #include "system16.h"
 
 static void set_fg_page( int data ){
@@ -978,7 +979,7 @@ static WRITE16_HANDLER( outrun_ctrl1_w )
 
 static void outrun_reset(void)
 {
-       cpunum_set_input_line(2, INPUT_LINE_RESET, PULSE_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_RESET, PULSE_LINE);
 }
 
 
@@ -1081,8 +1082,7 @@ static MACHINE_INIT( outrun ){
 	if (!strcmp(Machine->gamedrv->name,"outrunb")) sys16_patch_code( 0x5661, 0x00);
 	if (!strcmp(Machine->gamedrv->name,"outrundx")) sys16_patch_code( 0x559f, 0x00);
 
-     cpu_set_m68k_reset(0, outrun_reset);
-
+	cpunum_set_info_fct(0, CPUINFO_PTR_M68K_RESET_CALLBACK, (genf *)outrun_reset);
 
 	sys16_update_proc = outrun_update_proc;
 

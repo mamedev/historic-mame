@@ -82,6 +82,7 @@ INLINE UINT32 ppc_get_dcr(int dcr)
 			osd_die("ppc: get_dcr: Unimplemented DCR %X\n", dcr);
 			break;
 	}
+	return 0;
 }
 
 
@@ -257,6 +258,7 @@ static UINT8 ppc403_spu_r(UINT32 a)
 		case 0x9:		return ppc.spu.sprb;
 		default:		osd_die("ppc: spu_r: %02X\n", a & 0xf);
 	}
+	return 0;
 }
 
 static void ppc403_spu_w(UINT32 a, UINT8 d)

@@ -11,7 +11,7 @@
 		* Bloodstorm (4 sets)
 		* Hard Yardage (2 sets)
 		* Pairs (2 sets)
-		* Driver's Edge (not working)
+		* Driver's Edge (1 set)
 		* World Class Bowling (4 sets)
 		* Street Fighter: The Movie (4 sets)
 		* Shuffleshot (2 sets)
@@ -2286,14 +2286,19 @@ static DRIVER_INIT( sftm110 )
 }
 
 
-static DRIVER_INIT( shufshot )
+static void init_shuffle_bowl_common(int prot_addr)
 {
+	/*
+		The newest versions of World Class Bowling are on the same exact
+		platform as Shuffle Shot. So We'll use the same general INIT
+		routine for these two programs.  IE: PCB P/N 1082 Rev 2
+	*/
 	init_program_rom();
 	itech32_vram_height = 1024;
 	itech32_planes = 1;
 	is_drivedge = 0;
 
-	itech020_prot_address = 0x111a;
+	itech020_prot_address = prot_addr;
 
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x300000, 0x300003, 0, 0, itech020_color2_w);
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x380000, 0x380003, 0, 0, itech020_color1_w);
@@ -2302,21 +2307,16 @@ static DRIVER_INIT( shufshot )
 }
 
 
-static DRIVER_INIT( wcbowln )	/* PIC 16C54 labeled as ITBWL-3 */
-				/* The security PROM is NOT interchangable between the Deluxe and "Normal" versions. */
+static DRIVER_INIT( shufshot )	/* PIC 16C54 labeled as ITSHF-1 */
 {
-	init_program_rom();
-	itech32_vram_height = 1024;
-	itech32_planes = 1;
-	is_drivedge = 0;
+	init_shuffle_bowl_common(0x111a);
+}
 
-	itech020_prot_address = 0x1116;
 
-	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x300000, 0x300003, 0, 0, itech020_color2_w);
-	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x380000, 0x380003, 0, 0, itech020_color1_w);
-	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x180800, 0x180803, 0, 0, trackball32_4bit_r);
-	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x181000, 0x181003, 0, 0, trackball32_4bit_p2_r);
-
+static DRIVER_INIT( wcbowln )	/* PIC 16C54 labeled as ITBWL-3 */
+{
+	/* The security PROM is NOT interchangable between the Deluxe and "normal" versions. */
+	init_shuffle_bowl_common(0x1116);
 }
 
 

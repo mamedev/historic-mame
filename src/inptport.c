@@ -200,6 +200,7 @@ struct IptInitParams
 #define APPLY_INVERSE_SENSITIVITY(x,s) (((x) >= 0) ? (((INT64)(x) * 100 - 50) / (s)) : ((-(INT64)(x) * 100 - 50) / -(s)))
 
 
+
 /*************************************
  *
  *	Local variables
@@ -220,6 +221,52 @@ static struct DigitalJoystickInfo joystick_info[MAX_PLAYERS][DIGITAL_JOYSTICKS_P
 
 /* memory for UI keys */
 static UINT8 ui_memory[__ipt_max];
+
+
+
+/*************************************
+ *
+ *	Port handler tables
+ *
+ *************************************/
+
+static const read8_handler port_handler8[] =
+{
+	input_port_0_r,			input_port_1_r,			input_port_2_r,			input_port_3_r,
+	input_port_4_r,			input_port_5_r,			input_port_6_r,			input_port_7_r,
+	input_port_8_r,			input_port_9_r,			input_port_10_r,		input_port_11_r,
+	input_port_12_r,		input_port_13_r,		input_port_14_r,		input_port_15_r,
+	input_port_16_r,		input_port_17_r,		input_port_18_r,		input_port_19_r,
+	input_port_20_r,		input_port_21_r,		input_port_22_r,		input_port_23_r,
+	input_port_24_r,		input_port_25_r,		input_port_26_r,		input_port_27_r,
+	input_port_28_r,		input_port_29_r
+};
+
+
+static const read16_handler port_handler16[] =
+{
+	input_port_0_word_r,	input_port_1_word_r,	input_port_2_word_r,	input_port_3_word_r,
+	input_port_4_word_r,	input_port_5_word_r,	input_port_6_word_r,	input_port_7_word_r,
+	input_port_8_word_r,	input_port_9_word_r,	input_port_10_word_r,	input_port_11_word_r,
+	input_port_12_word_r,	input_port_13_word_r,	input_port_14_word_r,	input_port_15_word_r,
+	input_port_16_word_r,	input_port_17_word_r,	input_port_18_word_r,	input_port_19_word_r,
+	input_port_20_word_r,	input_port_21_word_r,	input_port_22_word_r,	input_port_23_word_r,
+	input_port_24_word_r,	input_port_25_word_r,	input_port_26_word_r,	input_port_27_word_r,
+	input_port_28_word_r,	input_port_29_word_r
+};
+
+
+static const read32_handler port_handler32[] =
+{
+	input_port_0_dword_r,	input_port_1_dword_r,	input_port_2_dword_r,	input_port_3_dword_r,
+	input_port_4_dword_r,	input_port_5_dword_r,	input_port_6_dword_r,	input_port_7_dword_r,
+	input_port_8_dword_r,	input_port_9_dword_r,	input_port_10_dword_r,	input_port_11_dword_r,
+	input_port_12_dword_r,	input_port_13_dword_r,	input_port_14_dword_r,	input_port_15_dword_r,
+	input_port_16_dword_r,	input_port_17_dword_r,	input_port_18_dword_r,	input_port_19_dword_r,
+	input_port_20_dword_r,	input_port_21_dword_r,	input_port_22_dword_r,	input_port_23_dword_r,
+	input_port_24_dword_r,	input_port_25_dword_r,	input_port_26_dword_r,	input_port_27_dword_r,
+	input_port_28_dword_r,	input_port_29_dword_r
+};
 
 
 
@@ -1030,16 +1077,56 @@ static void inputport_init(void)
  *
  *************************************/
 
-struct InputPort *input_port_initialize(struct IptInitParams *iip, UINT32 type)
+struct InputPort *input_port_initialize(struct IptInitParams *iip, UINT32 type, const char *tag, UINT32 mask)
 {
 	/* this function is used within an INPUT_PORT callback to set up a single port */
 	struct InputPort *port;
 	input_code_t code;
+	
+	/* are we modifying an existing port? */
+	if (tag != NULL)
+	{
+		int portnum, deleting;
 
-	/* allocate a port from the array */
-	if (iip->current_port >= iip->max_ports)
-		osd_die("Too many input ports");
-	port = &iip->ports[iip->current_port++];
+		/* find the matching port */
+		for (portnum = 0; portnum < iip->current_port; portnum++)
+			if (iip->ports[portnum].type == IPT_PORT && iip->ports[portnum].start.tag != NULL && !strcmp(iip->ports[portnum].start.tag, tag))
+				break;
+		if (portnum >= iip->current_port)
+			osd_die("Could not find port to modify: '%s'", tag);
+		
+		/* nuke any matching masks */
+		for (portnum++, deleting = 0; portnum < iip->current_port && iip->ports[portnum].type != IPT_PORT; portnum++)
+		{
+			deleting = (iip->ports[portnum].mask & mask) || (deleting && iip->ports[portnum].mask == 0);
+			if (deleting)
+			{
+				iip->current_port--;
+				memmove(&iip->ports[portnum], &iip->ports[portnum + 1], (iip->current_port - portnum) * sizeof(iip->ports[0]));
+				portnum--;
+			}
+		}
+		
+		/* allocate space for a new port at the end of this entry */
+		if (iip->current_port >= iip->max_ports)
+			osd_die("Too many input ports");
+		if (portnum < iip->current_port)
+		{
+			memmove(&iip->ports[portnum + 1], &iip->ports[portnum], (iip->current_port - portnum) * sizeof(iip->ports[0]));
+			iip->current_port++;
+			port = &iip->ports[portnum];
+		}
+		else
+			port = &iip->ports[iip->current_port++];
+	}
+	
+	/* otherwise, just allocate a new one from the end */
+	else
+	{
+		if (iip->current_port >= iip->max_ports)
+			osd_die("Too many input ports");
+		port = &iip->ports[iip->current_port++];
+	}
 
 	/* set up defaults */
 	memset(port, 0, sizeof(*port));
@@ -1072,7 +1159,6 @@ struct InputPort *input_port_initialize(struct IptInitParams *iip, UINT32 type)
 }
 
 
-
 struct InputPort *input_port_allocate(void construct_ipt(struct IptInitParams *param))
 {
 	struct IptInitParams iip;
@@ -1091,7 +1177,7 @@ struct InputPort *input_port_allocate(void construct_ipt(struct IptInitParams *p
  	construct_ipt(&iip);
 
 	/* append final IPT_END */
-	input_port_initialize(&iip, IPT_END);
+	input_port_initialize(&iip, IPT_END, NULL, 0);
 
 #ifdef MESS
 	/* process MESS specific extensions to the port */
@@ -1214,6 +1300,27 @@ int port_tag_to_index(const char *tag)
 		if (input_port_tag[port] != NULL && !strcmp(input_port_tag[port], tag))
 			return port;
 	return -1;
+}
+
+
+read8_handler port_tag_to_handler8(const char *tag)
+{
+	int port = port_tag_to_index(tag);
+	return (port == -1) ? MRA8_NOP : port_handler8[port];
+}
+
+
+read16_handler port_tag_to_handler16(const char *tag)
+{
+	int port = port_tag_to_index(tag);
+	return (port == -1) ? MRA16_NOP : port_handler16[port];
+}
+
+
+read32_handler port_tag_to_handler32(const char *tag)
+{
+	int port = port_tag_to_index(tag);
+	return (port == -1) ? MRA32_NOP : port_handler32[port];
 }
 
 
@@ -1850,13 +1957,14 @@ profiler_mark(PROFILER_INPUT);
 
 		/* insert into the port */
 		input_port_value[port] = (input_port_value[port] & ~info->port->mask) | ((value << info->shift) & info->port->mask);
+
+		/* handle playback/record scenarios */
+		if (playback)
+			read_port_value(playback, &input_port_value[port]);
+		if (record)
+			write_port_value(record, input_port_value[port]);
 	}
 
-	/* handle playback/record scenarios */
-	if (playback)
-		read_port_value(playback, &input_port_value[port]);
-	if (record)
-		write_port_value(record, input_port_value[port]);
 
 profiler_mark(PROFILER_END);
 }
@@ -1886,6 +1994,15 @@ UINT32 readinputportbytag(const char *tag)
 	/* otherwise fail horribly */
 	osd_die("Unable to locate input port '%s'", tag);
 	return -1;
+}
+
+
+UINT32 readinputportbytag_safe(const char *tag, UINT32 defvalue)
+{
+	int port = port_tag_to_index(tag);
+	if (port != -1)
+		return readinputport(port);
+	return defvalue;
 }
 
 

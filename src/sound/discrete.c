@@ -1,38 +1,38 @@
-/************************************************************************/
-/*                                                                      */
-/*  MAME - Discrete sound system emulation library                      */
-/*                                                                      */
-/*  Written by Keith Wilkins (mame@esplexo.co.uk)                       */
-/*                                                                      */
-/*  (c) K.Wilkins 2000                                                  */
-/*                                                                      */
-/*  Coding started in November 2000                                     */
-/*  KW - Added Sawtooth waveforms  Feb2003                              */
-/*                                                                      */
-/************************************************************************/
-/*                                                                      */
-/* SEE DISCRETE.H for documentation on usage                            */
-/*                                                                      */
-/************************************************************************/
-/*                                                                      */
-/* Each sound primative DSS_xxxx or DST_xxxx has its own implementation */
-/* file. All discrete sound primatives MUST implement the following     */
-/* API:                                                                 */
-/*                                                                      */
-/* dsX_NAME_step(inputs, context,float timestep)  - Perform time step   */
-/*                                                  return output value */
-/* dsX_NAME_reset(context) - Reset to initial state                     */
-/*                                                                      */
-/* Core software takes care of traversing the netlist in the correct    */
-/* order                                                                */
-/*                                                                      */
-/* discrete_sh_start()       - Read Node list, initialise & reset       */
-/* discrete_sh_stop()        - Shutdown discrete sound system           */
-/* discrete_sh_reset()       - Put sound system back to time 0          */
-/* discrete_sh_update()      - Update streams to current time           */
-/* discrete_stream_update()  - This does the real update to the sim     */
-/*                                                                      */
-/************************************************************************/
+/************************************************************************
+ *
+ *  MAME - Discrete sound system emulation library
+ *
+ *  Written by Keith Wilkins (mame@esplexo.co.uk)
+ *
+ *  (c) K.Wilkins 2000
+ *
+ *  Coding started in November 2000
+ *  KW - Added Sawtooth waveforms  Feb2003
+ *
+ ***********************************************************************
+ *
+ * SEE DISCRETE.H for documentation on usage
+ *
+ ***********************************************************************
+ *
+ * Each sound primative DSS_xxxx or DST_xxxx has its own implementation
+ * file. All discrete sound primatives MUST implement the following
+ * API:
+ *
+ * dsX_NAME_step(inputs, context,float timestep)  - Perform time step
+ *                                                  return output value
+ * dsX_NAME_reset(context) - Reset to initial state
+ *
+ * Core software takes care of traversing the netlist in the correct
+ * order
+ *
+ * discrete_sh_start()       - Read Node list, initialise & reset
+ * discrete_sh_stop()        - Shutdown discrete sound system
+ * discrete_sh_reset()       - Put sound system back to time 0
+ * discrete_sh_update()      - Update streams to current time
+ * discrete_stream_update()  - This does the real update to the sim
+ *
+ ************************************************************************/
 
 #include "driver.h"
 #include "wavwrite.h"
@@ -150,6 +150,7 @@ struct discrete_module module_list[] =
 	{ DSS_COUNTER_FIX ,"DSS_COUNTER_FIX" ,sizeof(struct dss_counterfix_context)  ,dss_counterfix_reset  ,dss_counterfix_step  },
 	{ DSS_LFSR_NOISE  ,"DSS_LFSR_NOISE"  ,sizeof(struct dss_lfsr_context)        ,dss_lfsr_reset        ,dss_lfsr_step        },
 	{ DSS_NOISE       ,"DSS_NOISE"       ,sizeof(struct dss_noise_context)       ,dss_noise_reset       ,dss_noise_step       },
+	{ DSS_NOTE        ,"DSS_NOTE"        ,sizeof(struct dss_note_context)        ,dss_note_reset        ,dss_note_step        },
 	{ DSS_SAWTOOTHWAVE,"DSS_SAWTOOTHWAVE",sizeof(struct dss_sawtoothwave_context),dss_sawtoothwave_reset,dss_sawtoothwave_step},
 	{ DSS_SINEWAVE    ,"DSS_SINEWAVE"    ,sizeof(struct dss_sinewave_context)    ,dss_sinewave_reset    ,dss_sinewave_step    },
 	{ DSS_SQUAREWAVE  ,"DSS_SQUAREWAVE"  ,sizeof(struct dss_squarewave_context)  ,dss_squarewave_reset  ,dss_squarewave_step  },
@@ -184,9 +185,10 @@ struct discrete_module module_list[] =
 	/* Component specific */
 	{ DST_COMP_ADDER  ,"DST_COMP_ADDER"  ,0                                      ,NULL                  ,dst_comp_adder_step  },
 	{ DST_DAC_R1      ,"DST_DAC_R1"      ,sizeof(struct dst_dac_r1_context)      ,dst_dac_r1_reset      ,dst_dac_r1_step      },
+	{ DST_INTEGRATE   ,"DST_INTEGRATE"   ,sizeof(struct dst_integrate_context)   ,dst_integrate_reset   ,dst_integrate_step   },
 	{ DST_MIXER       ,"DST_MIXER"       ,sizeof(struct dst_mixer_context)       ,dst_mixer_reset       ,dst_mixer_step       },
+	{ DST_TVCA_OP_AMP ,"DST_TVCA_OP_AMP" ,sizeof(struct dst_tvca_op_amp_context) ,dst_tvca_op_amp_reset ,dst_tvca_op_amp_step },
 	{ DST_VCA         ,"DST_VCA"         ,0                                      ,NULL                  ,NULL                 },
-	{ DST_VCA_OP_AMP  ,"DST_VCA_OP_AMP"  ,0                                      ,NULL                  ,NULL                 },
 
 	/* from disc_flt.c */
 	/* Generic modules */
@@ -258,7 +260,7 @@ int discrete_sh_start(const struct MachineSound *msound)
 		/* make sure the node number is in range */
 		if (intf[node_count].node < NODE_START || intf[node_count].node > NODE_END)
 			osd_die("discrete_sh_start() - Invalid node number on node %02d descriptor\n", node_count);
-		
+
 		/* make sure the node type is valid */
 		if (intf[node_count].type > DSO_OUTPUT)
 			osd_die("discrete_sh_start() - Invalid function type on NODE_%03d\n", intf[node_count].node - NODE_START);
@@ -271,7 +273,7 @@ int discrete_sh_start(const struct MachineSound *msound)
 	if (!node_list)
 		osd_die("discrete_sh_start() - Out of memory allocating node_list\n");
 	memset(node_list, 0, node_count * sizeof(node_list[0]));
-	
+
 	/* allocate memory for the node execution order array */
 	running_order = auto_malloc(node_count * sizeof(running_order[0]));
 	if (!running_order)
@@ -283,7 +285,7 @@ int discrete_sh_start(const struct MachineSound *msound)
 	if (!indexed_node)
 		osd_die("discrete_sh_start() - Out of memory allocating indexed_node\n");
 	memset(indexed_node, 0, DISCRETE_MAX_NODES * sizeof(indexed_node[0]));
-	
+
 	/* allocate memory to hold the input map */
 	dss_input_map = auto_malloc(DSS_INPUT_SPACE * sizeof(dss_input_map[0]));
 	if (!dss_input_map)
@@ -292,10 +294,10 @@ int discrete_sh_start(const struct MachineSound *msound)
 
 	/* initialize the node data */
 	init_nodes(intf);
-	
+
 	/* now go back and find pointers to all input nodes */
 	find_input_nodes(intf);
-	
+
 	/* then set up the output nodes */
 	setup_output_nodes();
 
@@ -370,11 +372,11 @@ void discrete_sh_reset(void)
 			if (inputnode && inputnode->node != NODE_NC)
 				node->input[inputnum] = inputnode->output;
 		}
-		
+
 		/* if the node has a reset function, call it */
 		if (node->module.reset)
 			(*node->module.reset)(node);
-		
+
 		/* otherwise, just step it */
 		else if (node->module.step)
 			(*node->module.step)(node);
@@ -458,11 +460,11 @@ static void init_nodes(struct discrete_sound_block *block_list)
 
 		/* our running order just follows the order specified */
 		running_order[nodenum] = node;
-		
+
 		/* if we are an output node, track that */
 		if (block->node == NODE_OP)
 			output_node[discrete_outputs++] = node;
-		
+
 		/* otherwise, make sure we are not a duplicate, and put ourselves into the indexed list */
 		else
 		{
@@ -471,7 +473,7 @@ static void init_nodes(struct discrete_sound_block *block_list)
 			indexed_node[block->node - NODE_START] = node;
 		}
 
-		/* find the requested module */	
+		/* find the requested module */
 		for (modulenum = 0; module_list[modulenum].type != DSS_NULL; modulenum++)
 			if (module_list[modulenum].type == block->type)
 				break;
@@ -482,18 +484,18 @@ static void init_nodes(struct discrete_sound_block *block_list)
 		node->node = block->node;
 		node->module = module_list[modulenum];
 		node->output = 0.0;
-		
+
 		node->active_inputs = block->active_inputs;
 		for (inputnum = 0; inputnum < DISCRETE_MAX_INPUTS; inputnum++)
 		{
 			node->input_node[inputnum] = NULL;
 			node->input[inputnum] = block->initial[inputnum];
 		}
-		
+
 		node->context = NULL;
 		node->name = block->name;
 		node->custom = block->custom;
-		
+
 		/* allocate memory if necessary */
 		if (node->module.contextsize)
 		{
@@ -503,7 +505,7 @@ static void init_nodes(struct discrete_sound_block *block_list)
 			memset(node->context, 0, node->module.contextsize);
 		}
 	}
-	
+
 	/* if no outputs, give an error */
 	if (discrete_outputs == 0)
 		osd_die("init_nodes() - Couldn't find an output node");
@@ -520,18 +522,18 @@ static void init_nodes(struct discrete_sound_block *block_list)
 static void find_input_nodes(struct discrete_sound_block *block_list)
 {
 	int nodenum, inputnum;
-	
+
 	/* loop over all nodes */
 	for (nodenum = 0; nodenum < node_count; nodenum++)
 	{
 		struct node_description *node = &node_list[nodenum];
 		struct discrete_sound_block *block = &block_list[nodenum];
-		
+
 		/* loop over all active inputs */
 		for (inputnum = 0; inputnum < node->active_inputs; inputnum++)
 		{
 			int inputnode = block->input_node[inputnum];
-			
+
 			/* if this input is node-based, find the node in the indexed list */
 			if (inputnode >= NODE_START && inputnode <= NODE_END)
 			{
@@ -564,7 +566,7 @@ static void setup_output_nodes(void)
 		/* make up a name for this output channel */
 		sprintf(&channel_name_data[outputnum][0], "Discrete CH%d", outputnum);
 		channel_names[outputnum] = &channel_name_data[outputnum][0];
-		
+
 		/* set the initial volume */
 		channel_vol[outputnum] = output_node[outputnum]->input[1];
 

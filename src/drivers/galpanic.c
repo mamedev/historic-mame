@@ -758,12 +758,6 @@ static struct OKIM6295interface okim6295_interface =
 	{ 100 }
 };
 
-static MACHINE_INIT( galpanib )
-{
-	/* init watchdog */
-	watchdog_reset_r(0);
-}
-
 static MACHINE_DRIVER_START( galpanic )
 
 	/* basic machine hardware */
@@ -799,7 +793,7 @@ static MACHINE_DRIVER_START( galpanib )
 	MDRV_CPU_PROGRAM_MAP(galpanib,0)
 
 	/* arm watchdog */
-	MDRV_MACHINE_INIT(galpanib)
+	MDRV_WATCHDOG_VBLANK_INIT(DEFAULT_60HZ_3S_VBLANK_WATCHDOG)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( galpania )
@@ -810,7 +804,7 @@ static MACHINE_DRIVER_START( galpania )
 	MDRV_CPU_PROGRAM_MAP(galpania,0)
 
 	/* arm watchdog */
-	MDRV_MACHINE_INIT(galpanib)
+	MDRV_WATCHDOG_VBLANK_INIT(DEFAULT_60HZ_3S_VBLANK_WATCHDOG)
 
 	/* video hardware */
 	MDRV_VIDEO_UPDATE(comad)

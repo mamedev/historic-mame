@@ -2149,26 +2149,26 @@ struct SEGAPCMinterface sys16_segapcm_interface_15k = {
 	SEGAPCM_SAMPLE15K,
 	BANK_256,
 	REGION_SOUND1,		// memory region
-	50
+	100
 };
 struct SEGAPCMinterface sys16_segapcm_interface_15k_512 = {
 	SEGAPCM_SAMPLE15K,
 	BANK_512,
 	REGION_SOUND1,		// memory region
-	50
+	100
 };
 struct SEGAPCMinterface sys16_segapcm_interface_32k = {
 	SEGAPCM_SAMPLE32K,
 	BANK_256,
 	REGION_SOUND1,
-	50
+	100
 };
 
 
 struct YM2151interface sys16_ym2151_interface = {
 	1,			/* 1 chip */
 	4000000,	/* 3.58 MHz ? */
-	{ YM3012_VOL(40,MIXER_PAN_LEFT,40,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(32,MIXER_PAN_LEFT,32,MIXER_PAN_RIGHT) },
 	{ 0 }
 };
 
@@ -2176,7 +2176,7 @@ struct YM2203interface sys16_ym2203_interface =
 {
 	1,	/* 1 chips */
 	4000000,	/* 3.58 MHz ? */
-	{ YM2203_VOL(50,50) },
+	{ YM2203_VOL(37,13) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -2188,7 +2188,7 @@ struct YM2203interface sys16_3xym2203_interface =
 {
 	3,	/* number of chips */
 	4000000,	/* 3.58 MHz ? */
-	{ YM2203_VOL(50,50),YM2203_VOL(50,50),YM2203_VOL(50,50) },
+	{ YM2203_VOL(37,13),YM2203_VOL(37,13),YM2203_VOL(37,13) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -2199,16 +2199,16 @@ struct YM2203interface sys16_3xym2203_interface =
 struct DACinterface sys16_7751_dac_interface =
 {
 	1,
-	{ 100 }
+	{ 80 }
 };
 
 
 struct UPD7759_interface sys16_upd7759_interface =
 {
 	1,			/* 1 chip */
-	{ 60 }, 	/* volumes */
+	{ 48 }, 	/* volumes */
 	{ REGION_CPU2 },			/* memory region 3 contains the sample data */
-    UPD7759_SLAVE_MODE,
+	UPD7759_SLAVE_MODE,
 	{ sound_cause_nmi },
 };
 

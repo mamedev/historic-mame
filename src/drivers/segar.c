@@ -1184,6 +1184,38 @@ ROM_START( astrob2 )
 ROM_END
 
 
+ROM_START( astrob2a )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_LOAD( "829b",     0x0000, 0x0800, CRC(14ae953c) SHA1(eb63d1b95faa5193db7fa6ab245e99325d519b5e) ) /* U25 */
+	ROM_LOAD( "888c",     0x0800, 0x0800, CRC(15fa9c3e) SHA1(8998a5fa21765eec1c393373e38015552735d119) ) /* U1 */
+	ROM_LOAD( "889",      0x1000, 0x0800, CRC(dd9ab173) SHA1(35617bb4480a668bdd07b0f8a6a879fd83c53448) ) /* U2 */
+	ROM_LOAD( "890",      0x1800, 0x0800, CRC(26f5b4cf) SHA1(be45e802f976b8847689ae8de7159843ac9100eb) ) /* U3 */
+	ROM_LOAD( "891",      0x2000, 0x0800, CRC(6437c95f) SHA1(c9340d8edcbee254976f8ed089261fce7ae76017) ) /* U4 */
+	ROM_LOAD( "892",      0x2800, 0x0800, CRC(2d3c949b) SHA1(17e3c5300793f2345ff6e28e82cd7a22f1d6e41f) ) /* U5 */
+	ROM_LOAD( "893",      0x3000, 0x0800, CRC(ccdb1a76) SHA1(1c8f0555e397c5558bbfca1fa1487cc32aca8592) ) /* U6 */
+	ROM_LOAD( "894",      0x3800, 0x0800, CRC(66ae5ced) SHA1(81bb6e3adcc76ffbeafefecce5fe5541a7eefc37) ) /* U7 */
+	ROM_LOAD( "895",      0x4000, 0x0800, CRC(202cf3a3) SHA1(26fcccfb3e94b2a01d38c14daa66713c223efb18) ) /* U8 */
+	ROM_LOAD( "896",      0x4800, 0x0800, CRC(b603fe23) SHA1(3128877355a9c5bba5cd22e9addf4c8b79ee39d2) ) /* U9 */
+	ROM_LOAD( "897b",     0x5000, 0x0800, CRC(a4f6008a) SHA1(79749ca9536cb8326d2d94cbce85cd1243733761) ) /* U10 */
+	ROM_LOAD( "898a",     0x5800, 0x0800, CRC(a92c7826) SHA1(dbc853d29616ab76832c9f702fab689af5012f26) ) /* U11 */
+	ROM_LOAD( "899",      0x6000, 0x0800, CRC(e0d189ee) SHA1(dcab31d64e6b2d248a82cbae9e37afe031dfc6cd) ) /* U12 */
+	ROM_LOAD( "900",      0x6800, 0x0800, CRC(682d4604) SHA1(6ac0d2d8ff407cc7e10b460736ae7fbc21148640) ) /* U13 */
+	ROM_LOAD( "901",      0x7000, 0x0800, CRC(9ed11c61) SHA1(dd965c06d2013acdabd958e713109eeb049d5d5e) ) /* U14 */
+	ROM_LOAD( "902",      0x7800, 0x0800, CRC(b4d6c330) SHA1(922a562b5f1a8a286e6777ba7d141bd0db6e2a92) ) /* U15 */
+	ROM_LOAD( "903c",     0x8000, 0x0800, CRC(ec8c8d98) SHA1(1148a120d054c7d518774883e106d5d65fdb20ff) ) /* U16 */
+	ROM_LOAD( "904a",     0x8800, 0x0800, CRC(d1df0f3e) SHA1(c5baa3c430327838f0135929b943d07cfe8a27c7) ) /* U17 */
+	ROM_LOAD( "905",      0x9000, 0x0800, CRC(4f08f9f4) SHA1(755a825b18ed50caa7bf274a0a5c3a1b00b1c070) ) /* U18 */
+	ROM_LOAD( "906",      0x9800, 0x0800, CRC(58149df1) SHA1(2bba56576a225ca47ce31a5b6dcc491546dfffec) ) /* U19 */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for speech code and data */
+	ROM_LOAD( "808b",     0x0000, 0x0800, CRC(5988c767) SHA1(3b91a8cd46aa7e714028cc40f700fea32287afb1) ) /* U7 */
+	ROM_LOAD( "809a",     0x0800, 0x0800, CRC(893f228d) SHA1(41c08210d322105f5446cfaa1258c194dd078a34) ) /* U6 */
+	ROM_LOAD( "810",      0x1000, 0x0800, CRC(ff0163c5) SHA1(158a12f9bf01d25c7e98f34fce56df51d49e5a85) ) /* U5 */
+	ROM_LOAD( "811",      0x1800, 0x0800, CRC(219f3978) SHA1(728edb9251f7cde237fa3b005971366a099c6342) ) /* U4 */
+	ROM_LOAD( "812a",     0x2000, 0x0800, CRC(410ad0d2) SHA1(9b5f05bb64a6ecfe3543025a10c6ec67de797333) ) /* U3 */
+ROM_END
+
+
 ROM_START( astrob1 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "829",      0x0000, 0x0800, CRC(5f66046e) SHA1(6aa7f94122db1a75a89c12ad9d087aec1a70d675) ) /* U25 */
@@ -1556,6 +1588,7 @@ static DRIVER_INIT( sindbadm )
 
 GAME( 1981, astrob,   0,       astrob,   astrob,   astrob,   ROT270, "Sega", "Astro Blaster (version 3)" )
 GAME( 1981, astrob2,  astrob,  astrob,   astrob2,  astrob,   ROT270, "Sega", "Astro Blaster (version 2)" )
+GAME( 1981, astrob2a, astrob,  astrob,   astrob2,  astrob,   ROT270, "Sega", "Astro Blaster (version 2a)" )
 GAMEX(1981, astrob1,  astrob,  astrob,   astrob1,  astrob,   ROT270, "Sega", "Astro Blaster (version 1)", GAME_NOT_WORKING )
 GAMEX(1981, 005,      0,       005,      005,      005,      ROT270, "Sega", "005", GAME_NO_SOUND )
 GAME( 1982, monsterb, 0,       monsterb, monsterb, monsterb, ROT270, "Sega", "Monster Bash" )

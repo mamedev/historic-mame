@@ -606,11 +606,11 @@ ADDRESS_MAP_END
 /*------ Ninja Clowns layout ------*/
 static ADDRESS_MAP_START( ninclown_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x00007f) AM_RAM
-	AM_RANGE(0x000080, 0x003fff) AM_RAM AM_BASE((data16_t **)&main_ram) AM_SIZE(&main_ram_size)
+	AM_RANGE(0x000080, 0x003fff) AM_RAM AM_BASE((void *)&main_ram) AM_SIZE(&main_ram_size)
 	AM_RANGE(0x004000, 0x07ffff) AM_ROM
 	AM_RANGE(0x100080, 0x100081) AM_WRITE(sound_data16_w)
-	AM_RANGE(0x100100, 0x100101) AM_READWRITE(input_port_0_word_r, grom_bank16_w) AM_BASE((data16_t **)&itech8_grom_bank)
-	AM_RANGE(0x100180, 0x100181) AM_READWRITE(input_port_1_word_r, display_page16_w) AM_BASE((data16_t **)&itech8_display_page)
+	AM_RANGE(0x100100, 0x100101) AM_READWRITE(input_port_0_word_r, grom_bank16_w) AM_BASE((void *)&itech8_grom_bank)
+	AM_RANGE(0x100180, 0x100181) AM_READWRITE(input_port_1_word_r, display_page16_w) AM_BASE((void *)&itech8_display_page)
 	AM_RANGE(0x100240, 0x100241) AM_WRITE(tms34061_latch16_w)
 	AM_RANGE(0x100280, 0x100281) AM_READWRITE(input_port_2_word_r, MWA16_NOP)
 	AM_RANGE(0x100300, 0x10031f) AM_READWRITE(blitter16_r, blitter16_w)

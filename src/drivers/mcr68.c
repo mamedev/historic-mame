@@ -416,7 +416,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( trisport_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x100000, 0x103fff) AM_WRITE(MWA16_RAM) AM_BASE((data16_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x100000, 0x103fff) AM_WRITE(MWA16_RAM) AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
 	AM_RANGE(0x120000, 0x12007f) AM_WRITE(mcr68_paletteram_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x140000, 0x1407ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x160000, 0x160fff) AM_WRITE(mcr68_videoram_w) AM_BASE(&videoram16) AM_SIZE(&videoram_size)

@@ -146,7 +146,7 @@
 #define HANDLER_IS_STATIC(h)	((FPTR)(h) < STATIC_COUNT)
 
 #define HANDLER_TO_BANK(h)		((FPTR)(h))
-#define BANK_TO_HANDLER(b)		((void *)(b))
+#define BANK_TO_HANDLER(b)		((genf *)(b))
 
 #define SPACE_SHIFT(s,a)		(((s)->ashift < 0) ? ((a) << -(s)->ashift) : ((a) >> (s)->ashift))
 #define SPACE_SHIFT_END(s,a)	(((s)->ashift < 0) ? (((a) << -(s)->ashift) | ((1 << -(s)->ashift) - 1)) : ((a) >> (s)->ashift))
@@ -179,7 +179,7 @@ struct bank_data_t
 
 union rwhandlers_t
 {
-	void *					generic;				/* generic handler void */
+	genf *					generic;				/* generic handler void */
 	union read_handlers_t	read;					/* read handlers */
 	union write_handlers_t	write;					/* write handlers */
 };
@@ -341,9 +341,9 @@ static int init_cpudata(void);
 static int init_addrspace(UINT8 cpunum, UINT8 spacenum);
 static int preflight_memory(void);
 static int populate_memory(void);
-static void install_mem_handler(struct addrspace_data_t *space, int iswrite, int databits, int ismatchmask, offs_t start, offs_t end, offs_t mask, offs_t mirror, void *handler, int isfixed);
-static void *assign_dynamic_bank(int cpunum, int spacenum, offs_t start, offs_t mirror, int isfixed);
-static UINT8 get_handler_index(struct handler_data_t *table, void *handler, offs_t start, offs_t end, offs_t mask);
+static void install_mem_handler(struct addrspace_data_t *space, int iswrite, int databits, int ismatchmask, offs_t start, offs_t end, offs_t mask, offs_t mirror, genf *handler, int isfixed);
+static genf *assign_dynamic_bank(int cpunum, int spacenum, offs_t start, offs_t mirror, int isfixed, int ismasked);
+static UINT8 get_handler_index(struct handler_data_t *table, genf *handler, offs_t start, offs_t end, offs_t mask);
 static void populate_table_range(struct addrspace_data_t *space, int iswrite, offs_t start, offs_t stop, UINT8 handler);
 static void populate_table_match(struct addrspace_data_t *space, int iswrite, offs_t matchval, offs_t matchmask, UINT8 handler);
 static UINT8 allocate_subtable(struct table_data_t *tabledata);
@@ -357,7 +357,7 @@ static void register_for_save(int cpunum, int spacenum, offs_t start, void *base
 static struct address_map_t *assign_intersecting_blocks(struct addrspace_data_t *space, offs_t start, offs_t end, UINT8 *base);
 static int find_memory(void);
 static void *memory_find_base(int cpunum, int spacenum, int readwrite, offs_t offset);
-static void *get_static_handler(int databits, int readorwrite, int spacenum, int which);
+static genf *get_static_handler(int databits, int readorwrite, int spacenum, int which);
 
 #if (MEM_DUMP)
 static void mem_dump(void);
@@ -680,7 +680,7 @@ void memory_set_bankptr(int banknum, void *base)
 data8_t *memory_install_read8_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read8_handler handler)
 {
 	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
-	install_mem_handler(space, 0, 8, 0, start, end, mask, mirror, (void *)handler, 0);
+	install_mem_handler(space, 0, 8, 0, start, end, mask, mirror, (genf *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, start));
 }
@@ -688,7 +688,7 @@ data8_t *memory_install_read8_handler(int cpunum, int spacenum, offs_t start, of
 data16_t *memory_install_read16_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read16_handler handler)
 {
 	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
-	install_mem_handler(space, 0, 16, 0, start, end, mask, mirror, (void *)handler, 0);
+	install_mem_handler(space, 0, 16, 0, start, end, mask, mirror, (genf *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, start));
 }
@@ -696,7 +696,7 @@ data16_t *memory_install_read16_handler(int cpunum, int spacenum, offs_t start, 
 data32_t *memory_install_read32_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read32_handler handler)
 {
 	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
-	install_mem_handler(space, 0, 32, 0, start, end, mask, mirror, (void *)handler, 0);
+	install_mem_handler(space, 0, 32, 0, start, end, mask, mirror, (genf *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, start));
 }
@@ -704,7 +704,7 @@ data32_t *memory_install_read32_handler(int cpunum, int spacenum, offs_t start, 
 data64_t *memory_install_read64_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read64_handler handler)
 {
 	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
-	install_mem_handler(space, 0, 64, 0, start, end, mask, mirror, (void *)handler, 0);
+	install_mem_handler(space, 0, 64, 0, start, end, mask, mirror, (genf *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, start));
 }
@@ -718,7 +718,7 @@ data64_t *memory_install_read64_handler(int cpunum, int spacenum, offs_t start, 
 data8_t *memory_install_write8_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write8_handler handler)
 {
 	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
-	install_mem_handler(space, 1, 8, 0, start, end, mask, mirror, (void *)handler, 0);
+	install_mem_handler(space, 1, 8, 0, start, end, mask, mirror, (genf *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, start));
 }
@@ -726,7 +726,7 @@ data8_t *memory_install_write8_handler(int cpunum, int spacenum, offs_t start, o
 data16_t *memory_install_write16_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write16_handler handler)
 {
 	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
-	install_mem_handler(space, 1, 16, 0, start, end, mask, mirror, (void *)handler, 0);
+	install_mem_handler(space, 1, 16, 0, start, end, mask, mirror, (genf *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, start));
 }
@@ -734,7 +734,7 @@ data16_t *memory_install_write16_handler(int cpunum, int spacenum, offs_t start,
 data32_t *memory_install_write32_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write32_handler handler)
 {
 	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
-	install_mem_handler(space, 1, 32, 0, start, end, mask, mirror, (void *)handler, 0);
+	install_mem_handler(space, 1, 32, 0, start, end, mask, mirror, (genf *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, start));
 }
@@ -742,9 +742,87 @@ data32_t *memory_install_write32_handler(int cpunum, int spacenum, offs_t start,
 data64_t *memory_install_write64_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write64_handler handler)
 {
 	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
-	install_mem_handler(space, 1, 64, 0, start, end, mask, mirror, (void *)handler, 0);
+	install_mem_handler(space, 1, 64, 0, start, end, mask, mirror, (genf *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, start));
+}
+
+
+/*-------------------------------------------------
+	memory_install_readX_matchmask_handler - 
+	install dynamic match/mask read handler for 
+	X-bit case
+-------------------------------------------------*/
+
+data8_t *memory_install_read8_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read8_handler handler)
+{
+	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	install_mem_handler(space, 0, 8, 1, matchval, maskval, mask, mirror, (genf *)handler, 0);
+	mem_dump();
+	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, matchval));
+}
+
+data16_t *memory_install_read16_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read16_handler handler)
+{
+	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	install_mem_handler(space, 0, 16, 1, matchval, maskval, mask, mirror, (genf *)handler, 0);
+	mem_dump();
+	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, matchval));
+}
+
+data32_t *memory_install_read32_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read32_handler handler)
+{
+	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	install_mem_handler(space, 0, 32, 1, matchval, maskval, mask, mirror, (genf *)handler, 0);
+	mem_dump();
+	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, matchval));
+}
+
+data64_t *memory_install_read64_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read64_handler handler)
+{
+	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	install_mem_handler(space, 0, 64, 1, matchval, maskval, mask, mirror, (genf *)handler, 0);
+	mem_dump();
+	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, matchval));
+}
+
+
+/*-------------------------------------------------
+	memory_install_writeX_matchmask_handler - 
+	install dynamic match/mask write handler for 
+	X-bit case
+-------------------------------------------------*/
+
+data8_t *memory_install_write8_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write8_handler handler)
+{
+	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	install_mem_handler(space, 1, 8, 1, matchval, maskval, mask, mirror, (genf *)handler, 0);
+	mem_dump();
+	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, matchval));
+}
+
+data16_t *memory_install_write16_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write16_handler handler)
+{
+	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	install_mem_handler(space, 1, 16, 1, matchval, maskval, mask, mirror, (genf *)handler, 0);
+	mem_dump();
+	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, matchval));
+}
+
+data32_t *memory_install_write32_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write32_handler handler)
+{
+	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	install_mem_handler(space, 1, 32, 1, matchval, maskval, mask, mirror, (genf *)handler, 0);
+	mem_dump();
+	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, matchval));
+}
+
+data64_t *memory_install_write64_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write64_handler handler)
+{
+	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	install_mem_handler(space, 1, 64, 1, matchval, maskval, mask, mirror, (genf *)handler, 0);
+	mem_dump();
+	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, matchval));
 }
 
 
@@ -808,7 +886,8 @@ INLINE void adjust_addresses(struct addrspace_data_t *space, int ismatchmask, of
 {
 	/* adjust start/end/mask values */
 	if (!*mask) *mask = space->rawmask;
-	if (ismatchmask) *mask |= *end & space->rawmask;
+/* ASG - I think this is wrong - it prevents using a mask to mirror match/mask cases
+	if (ismatchmask) *mask |= *end & space->rawmask; */
 	*mask &= ~*mirror;
 	*start &= ~*mirror & space->rawmask;
 	*end &= ~*mirror & space->rawmask;
@@ -833,7 +912,7 @@ static int init_addrspace(UINT8 cpunum, UINT8 spacenum)
 	int abits = cputype_addrbus_width(cputype, spacenum);
 	int dbits = cputype_databus_width(cputype, spacenum);
 	int accessorindex = (dbits == 8) ? 0 : (dbits == 16) ? 1 : (dbits == 32) ? 2 : 3;
-	construct_map_t internal_map = (construct_map_t)cputype_get_info_ptr(cputype, CPUINFO_PTR_INTERNAL_MEMORY_MAP + spacenum);
+	construct_map_t internal_map = (construct_map_t)cputype_get_info_fct(cputype, CPUINFO_PTR_INTERNAL_MEMORY_MAP + spacenum);
 	int entrynum;
 
 	/* determine the address and data bits */
@@ -1063,18 +1142,16 @@ static int populate_memory(void)
 	memory operations
 -------------------------------------------------*/
 
-static void install_mem_handler(struct addrspace_data_t *space, int iswrite, int databits, int ismatchmask, offs_t start, offs_t end, offs_t mask, offs_t mirror, void *handler, int isfixed)
+static void install_mem_handler(struct addrspace_data_t *space, int iswrite, int databits, int ismatchmask, offs_t start, offs_t end, offs_t mask, offs_t mirror, genf *handler, int isfixed)
 {
 	struct table_data_t *tabledata = iswrite ? &space->write : &space->read;
-	offs_t mirrorbit[32], mirrorbits, mirrorcount;
+	offs_t mirrorbit[32], mirrorbits, mirrorcount, original_mask = mask;
 	UINT8 idx;
 	int i;
 
 	/* sanity check */
 	if (space->dbits != databits)
-	{
 		osd_die("fatal: install_mem_handler called with a %d-bit handler for a %d-bit address space\n", databits, space->dbits);
-	}
 
 	/* if we're installing a new bank, make sure we mark it */
 	if (HANDLER_IS_BANK(handler) && !bankdata[HANDLER_TO_BANK(handler)].used)
@@ -1094,20 +1171,20 @@ static void install_mem_handler(struct addrspace_data_t *space, int iswrite, int
 	if (!iswrite)
 	{
 		if (HANDLER_IS_ROM(handler) || HANDLER_IS_RAMROM(handler))
-			handler = (void *)MRA8_RAM;
+			handler = (genf *)MRA8_RAM;
 	}
 
 	/* also translate ROM to UNMAP for write cases */
 	else
 	{
 		if (HANDLER_IS_ROM(handler))
-			handler = (void *)STATIC_UNMAP;
+			handler = (genf *)STATIC_UNMAP;
 	}
 
 	/* assign banks for RAM/ROM areas */
 	if (HANDLER_IS_RAM(handler) || HANDLER_IS_ROM(handler))
 	{
-		handler = (void *)assign_dynamic_bank(space->cpunum, space->spacenum, start, mirror, isfixed);
+		handler = (genf *)assign_dynamic_bank(space->cpunum, space->spacenum, start, mirror, isfixed, original_mask != 0);
 		if (!bank_ptr[HANDLER_TO_BANK(handler)])
 			bank_ptr[HANDLER_TO_BANK(handler)] = memory_find_base(space->cpunum, space->spacenum, iswrite, start);
 	}
@@ -1148,7 +1225,7 @@ static void install_mem_handler(struct addrspace_data_t *space, int iswrite, int
 	matching bank
 -------------------------------------------------*/
 
-static void *assign_dynamic_bank(int cpunum, int spacenum, offs_t start, offs_t mirror, int isfixed)
+static genf *assign_dynamic_bank(int cpunum, int spacenum, offs_t start, offs_t mirror, int isfixed, int ismasked)
 {
 	int bank;
 
@@ -1158,8 +1235,9 @@ static void *assign_dynamic_bank(int cpunum, int spacenum, offs_t start, offs_t 
 	{
 		/* ...unless it's mirrored, in which case, we need to use a bank anyway */
 		/* ...or unless we have a fixed pointer, in which case, we also need to use a bank */
-		if (mirror == 0 && !isfixed)
-			return (void *)STATIC_RAM;
+		/* ...or unless we have an explicit mask, in which case, we are effectively mirrored */
+		if (mirror == 0 && !isfixed && !ismasked)
+			return (genf *)STATIC_RAM;
 	}
 
 	/* loop over banks, searching for an exact match or an empty */
@@ -1186,7 +1264,7 @@ static void *assign_dynamic_bank(int cpunum, int spacenum, offs_t start, offs_t 
 	handler, or allocates a new one as necessary
 -------------------------------------------------*/
 
-static UINT8 get_handler_index(struct handler_data_t *table, void *handler, offs_t start, offs_t end, offs_t mask)
+static UINT8 get_handler_index(struct handler_data_t *table, genf *handler, offs_t start, offs_t end, offs_t mask)
 {
 	int i;
 
@@ -1913,7 +1991,7 @@ data8_t name(offs_t address)															\
 	return 0;																			\
 }																						\
 
-#define READBYTE(name,space,xormacro,handlertype,ignorebits,shiftbytes)					\
+#define READBYTE(name,space,xormacro,handlertype,ignorebits,shiftbytes,masktype)		\
 data8_t name(offs_t address)															\
 {																						\
 	UINT32 entry;																		\
@@ -1929,17 +2007,17 @@ data8_t name(offs_t address)															\
 	else																				\
 	{																					\
 		int shift = 8 * (shiftbytes);													\
-		MEMREADEND((*space.readhandlers[entry].handler.read.handlertype)(address >> (ignorebits), ~(0xff << shift)) >> shift);		\
+		MEMREADEND((*space.readhandlers[entry].handler.read.handlertype)(address >> (ignorebits), ~((masktype)0xff << shift)) >> shift);		\
 	}																					\
 	return 0;																			\
 }																						\
 
-#define READBYTE16BE(name,space)	READBYTE(name,space,BYTE_XOR_BE, handler16,1,~address & 1)
-#define READBYTE16LE(name,space)	READBYTE(name,space,BYTE_XOR_LE, handler16,1, address & 1)
-#define READBYTE32BE(name,space)	READBYTE(name,space,BYTE4_XOR_BE,handler32,2,~address & 3)
-#define READBYTE32LE(name,space)	READBYTE(name,space,BYTE4_XOR_LE,handler32,2, address & 3)
-#define READBYTE64BE(name,space)	READBYTE(name,space,BYTE8_XOR_BE,handler64,3,~address & 7)
-#define READBYTE64LE(name,space)	READBYTE(name,space,BYTE8_XOR_LE,handler64,3, address & 7)
+#define READBYTE16BE(name,space)	READBYTE(name,space,BYTE_XOR_BE, handler16,1,~address & 1,data16_t)
+#define READBYTE16LE(name,space)	READBYTE(name,space,BYTE_XOR_LE, handler16,1, address & 1,data16_t)
+#define READBYTE32BE(name,space)	READBYTE(name,space,BYTE4_XOR_BE,handler32,2,~address & 3,data32_t)
+#define READBYTE32LE(name,space)	READBYTE(name,space,BYTE4_XOR_LE,handler32,2, address & 3,data32_t)
+#define READBYTE64BE(name,space)	READBYTE(name,space,BYTE8_XOR_BE,handler64,3,~address & 7,data64_t)
+#define READBYTE64LE(name,space)	READBYTE(name,space,BYTE8_XOR_LE,handler64,3, address & 7,data64_t)
 
 
 /*-------------------------------------------------
@@ -1965,7 +2043,7 @@ data16_t name(offs_t address)															\
 	return 0;																			\
 }																						\
 
-#define READWORD(name,space,xormacro,handlertype,ignorebits,shiftbytes)					\
+#define READWORD(name,space,xormacro,handlertype,ignorebits,shiftbytes,masktype)		\
 data16_t name(offs_t address)															\
 {																						\
 	UINT32 entry;																		\
@@ -1981,15 +2059,15 @@ data16_t name(offs_t address)															\
 	else																				\
 	{																					\
 		int shift = 8 * (shiftbytes);													\
-		MEMREADEND((*space.readhandlers[entry].handler.read.handlertype)(address >> (ignorebits), ~(0xffff << shift)) >> shift);	\
+		MEMREADEND((*space.readhandlers[entry].handler.read.handlertype)(address >> (ignorebits), ~((masktype)0xffff << shift)) >> shift);	\
 	}																					\
 	return 0;																			\
 }																						\
 
-#define READWORD32BE(name,space)	READWORD(name,space,WORD_XOR_BE, handler32,2,~address & 2)
-#define READWORD32LE(name,space)	READWORD(name,space,WORD_XOR_LE, handler32,2, address & 2)
-#define READWORD64BE(name,space)	READWORD(name,space,WORD2_XOR_BE,handler64,3,~address & 6)
-#define READWORD64LE(name,space)	READWORD(name,space,WORD2_XOR_LE,handler64,3, address & 6)
+#define READWORD32BE(name,space)	READWORD(name,space,WORD_XOR_BE, handler32,2,~address & 2,data32_t)
+#define READWORD32LE(name,space)	READWORD(name,space,WORD_XOR_LE, handler32,2, address & 2,data32_t)
+#define READWORD64BE(name,space)	READWORD(name,space,WORD2_XOR_BE,handler64,3,~address & 6,data64_t)
+#define READWORD64LE(name,space)	READWORD(name,space,WORD2_XOR_LE,handler64,3, address & 6,data64_t)
 
 
 /*-------------------------------------------------
@@ -2015,7 +2093,7 @@ data32_t name(offs_t address)															\
 	return 0;																			\
 }																						\
 
-#define READDWORD(name,space,xormacro,handlertype,ignorebits,shiftbytes)				\
+#define READDWORD(name,space,xormacro,handlertype,ignorebits,shiftbytes,masktype)		\
 data32_t name(offs_t address)															\
 {																						\
 	UINT32 entry;																		\
@@ -2031,13 +2109,13 @@ data32_t name(offs_t address)															\
 	else																				\
 	{																					\
 		int shift = 8 * (shiftbytes);													\
-		MEMREADEND((*space.readhandlers[entry].handler.read.handlertype)(address >> (ignorebits), ~(0xffffffff << shift)) >> shift);\
+		MEMREADEND((*space.readhandlers[entry].handler.read.handlertype)(address >> (ignorebits), ~((masktype)0xffffffff << shift)) >> shift);\
 	}																					\
 	return 0;																			\
 }																						\
 
-#define READDWORD64BE(name,space)	READDWORD(name,space,DWORD_XOR_BE,handler64,3,~address & 4)
-#define READDWORD64LE(name,space)	READDWORD(name,space,DWORD_XOR_LE,handler64,3, address & 4)
+#define READDWORD64BE(name,space)	READDWORD(name,space,DWORD_XOR_BE,handler64,3,~address & 4,data64_t)
+#define READDWORD64LE(name,space)	READDWORD(name,space,DWORD_XOR_LE,handler64,3, address & 4,data64_t)
 
 
 /*-------------------------------------------------
@@ -2085,7 +2163,7 @@ void name(offs_t address, data8_t data)													\
 		MEMWRITEEND((*space.writehandlers[entry].handler.write.handler8)(address, data));\
 }																						\
 
-#define WRITEBYTE(name,space,xormacro,handlertype,ignorebits,shiftbytes)				\
+#define WRITEBYTE(name,space,xormacro,handlertype,ignorebits,shiftbytes,masktype)		\
 void name(offs_t address, data8_t data)													\
 {																						\
 	UINT32 entry;																		\
@@ -2101,16 +2179,16 @@ void name(offs_t address, data8_t data)													\
 	else																				\
 	{																					\
 		int shift = 8 * (shiftbytes);													\
-		MEMWRITEEND((*space.writehandlers[entry].handler.write.handlertype)(address >> (ignorebits), data << shift, ~(0xff << shift)));\
+		MEMWRITEEND((*space.writehandlers[entry].handler.write.handlertype)(address >> (ignorebits), (masktype)data << shift, ~((masktype)0xff << shift)));\
 	}																					\
 }																						\
 
-#define WRITEBYTE16BE(name,space)	WRITEBYTE(name,space,BYTE_XOR_BE, handler16,1,~address & 1)
-#define WRITEBYTE16LE(name,space)	WRITEBYTE(name,space,BYTE_XOR_LE, handler16,1, address & 1)
-#define WRITEBYTE32BE(name,space)	WRITEBYTE(name,space,BYTE4_XOR_BE,handler32,2,~address & 3)
-#define WRITEBYTE32LE(name,space)	WRITEBYTE(name,space,BYTE4_XOR_LE,handler32,2, address & 3)
-#define WRITEBYTE64BE(name,space)	WRITEBYTE(name,space,BYTE8_XOR_BE,handler64,3,~address & 7)
-#define WRITEBYTE64LE(name,space)	WRITEBYTE(name,space,BYTE8_XOR_LE,handler64,3, address & 7)
+#define WRITEBYTE16BE(name,space)	WRITEBYTE(name,space,BYTE_XOR_BE, handler16,1,~address & 1,data16_t)
+#define WRITEBYTE16LE(name,space)	WRITEBYTE(name,space,BYTE_XOR_LE, handler16,1, address & 1,data16_t)
+#define WRITEBYTE32BE(name,space)	WRITEBYTE(name,space,BYTE4_XOR_BE,handler32,2,~address & 3,data32_t)
+#define WRITEBYTE32LE(name,space)	WRITEBYTE(name,space,BYTE4_XOR_LE,handler32,2, address & 3,data32_t)
+#define WRITEBYTE64BE(name,space)	WRITEBYTE(name,space,BYTE8_XOR_BE,handler64,3,~address & 7,data64_t)
+#define WRITEBYTE64LE(name,space)	WRITEBYTE(name,space,BYTE8_XOR_LE,handler64,3, address & 7,data64_t)
 
 
 /*-------------------------------------------------
@@ -2135,7 +2213,7 @@ void name(offs_t address, data16_t data)												\
 		MEMWRITEEND((*space.writehandlers[entry].handler.write.handler16)(address >> 1, data, 0));\
 }																						\
 
-#define WRITEWORD(name,space,xormacro,handlertype,ignorebits,shiftbytes)				\
+#define WRITEWORD(name,space,xormacro,handlertype,ignorebits,shiftbytes,masktype)		\
 void name(offs_t address, data16_t data)												\
 {																						\
 	UINT32 entry;																		\
@@ -2151,14 +2229,14 @@ void name(offs_t address, data16_t data)												\
 	else																				\
 	{																					\
 		int shift = 8 * (shiftbytes);													\
-		MEMWRITEEND((*space.writehandlers[entry].handler.write.handlertype)(address >> (ignorebits), data << shift, ~(0xffff << shift)));\
+		MEMWRITEEND((*space.writehandlers[entry].handler.write.handlertype)(address >> (ignorebits), (masktype)data << shift, ~((masktype)0xffff << shift)));\
 	}																					\
 }																						\
 
-#define WRITEWORD32BE(name,space)	WRITEWORD(name,space,WORD_XOR_BE, handler32,2,~address & 2)
-#define WRITEWORD32LE(name,space)	WRITEWORD(name,space,WORD_XOR_LE, handler32,2, address & 2)
-#define WRITEWORD64BE(name,space)	WRITEWORD(name,space,WORD2_XOR_BE,handler64,3,~address & 6)
-#define WRITEWORD64LE(name,space)	WRITEWORD(name,space,WORD2_XOR_LE,handler64,3, address & 6)
+#define WRITEWORD32BE(name,space)	WRITEWORD(name,space,WORD_XOR_BE, handler32,2,~address & 2,data32_t)
+#define WRITEWORD32LE(name,space)	WRITEWORD(name,space,WORD_XOR_LE, handler32,2, address & 2,data32_t)
+#define WRITEWORD64BE(name,space)	WRITEWORD(name,space,WORD2_XOR_BE,handler64,3,~address & 6,data64_t)
+#define WRITEWORD64LE(name,space)	WRITEWORD(name,space,WORD2_XOR_LE,handler64,3, address & 6,data64_t)
 
 
 /*-------------------------------------------------
@@ -2183,7 +2261,7 @@ void name(offs_t address, data32_t data)												\
 		MEMWRITEEND((*space.writehandlers[entry].handler.write.handler32)(address >> 2, data, 0));\
 }																						\
 
-#define WRITEDWORD(name,space,xormacro,handlertype,ignorebits,shiftbytes)				\
+#define WRITEDWORD(name,space,xormacro,handlertype,ignorebits,shiftbytes,masktype)		\
 void name(offs_t address, data32_t data)												\
 {																						\
 	UINT32 entry;																		\
@@ -2199,12 +2277,12 @@ void name(offs_t address, data32_t data)												\
 	else																				\
 	{																					\
 		int shift = 8 * (shiftbytes);													\
-		MEMWRITEEND((*space.writehandlers[entry].handler.write.handlertype)(address >> (ignorebits), data << shift, ~(0xffffffff << shift)));\
+		MEMWRITEEND((*space.writehandlers[entry].handler.write.handlertype)(address >> (ignorebits), (masktype)data << shift, ~((masktype)0xffffffff << shift)));\
 	}																					\
 }																						\
 
-#define WRITEDWORD64BE(name,space)	WRITEDWORD(name,space,DWORD_XOR_BE,handler64,3,~address & 4)
-#define WRITEDWORD64LE(name,space)	WRITEDWORD(name,space,DWORD_XOR_LE,handler64,3, address & 4)
+#define WRITEDWORD64BE(name,space)	WRITEDWORD(name,space,DWORD_XOR_BE,handler64,3,~address & 4,data64_t)
+#define WRITEDWORD64LE(name,space)	WRITEDWORD(name,space,DWORD_XOR_LE,handler64,3, address & 4,data64_t)
 
 
 /*-------------------------------------------------
@@ -2592,48 +2670,48 @@ static WRITE64_HANDLER( mwh64_ramrom ) { COMBINE_DATA(&bank_ptr[STATIC_RAM][offs
 	memory handlers
 -------------------------------------------------*/
 
-static void *get_static_handler(int databits, int readorwrite, int spacenum, int which)
+static genf *get_static_handler(int databits, int readorwrite, int spacenum, int which)
 {
 	static const struct
 	{
 		UINT8		databits;
 		UINT8		handlernum;
 		UINT8		spacenum;
-		void *		read;
-		void *		write;
+		genf *		read;
+		genf *		write;
 	} static_handler_list[] =
 	{
-		{  8, STATIC_UNMAP,  ADDRESS_SPACE_PROGRAM, (void *)mrh8_unmap_program, (void *)mwh8_unmap_program },
-		{  8, STATIC_UNMAP,  ADDRESS_SPACE_DATA,    (void *)mrh8_unmap_data,    (void *)mwh8_unmap_data },
-		{  8, STATIC_UNMAP,  ADDRESS_SPACE_IO,      (void *)mrh8_unmap_io,      (void *)mwh8_unmap_io },
-		{  8, STATIC_NOP,    ADDRESS_SPACE_PROGRAM, (void *)mrh8_nop_program,   (void *)mwh8_nop },
-		{  8, STATIC_NOP,    ADDRESS_SPACE_DATA,    (void *)mrh8_nop_data,      (void *)mwh8_nop },
-		{  8, STATIC_NOP,    ADDRESS_SPACE_IO,      (void *)mrh8_nop_io,        (void *)mwh8_nop },
-		{  8, STATIC_RAMROM, ADDRESS_SPACE_PROGRAM, NULL,                       (void *)mwh8_ramrom },
+		{  8, STATIC_UNMAP,  ADDRESS_SPACE_PROGRAM, (genf *)mrh8_unmap_program, (genf *)mwh8_unmap_program },
+		{  8, STATIC_UNMAP,  ADDRESS_SPACE_DATA,    (genf *)mrh8_unmap_data,    (genf *)mwh8_unmap_data },
+		{  8, STATIC_UNMAP,  ADDRESS_SPACE_IO,      (genf *)mrh8_unmap_io,      (genf *)mwh8_unmap_io },
+		{  8, STATIC_NOP,    ADDRESS_SPACE_PROGRAM, (genf *)mrh8_nop_program,   (genf *)mwh8_nop },
+		{  8, STATIC_NOP,    ADDRESS_SPACE_DATA,    (genf *)mrh8_nop_data,      (genf *)mwh8_nop },
+		{  8, STATIC_NOP,    ADDRESS_SPACE_IO,      (genf *)mrh8_nop_io,        (genf *)mwh8_nop },
+		{  8, STATIC_RAMROM, ADDRESS_SPACE_PROGRAM, NULL,                       (genf *)mwh8_ramrom },
 
-		{ 16, STATIC_UNMAP,  ADDRESS_SPACE_PROGRAM, (void *)mrh16_unmap_program,(void *)mwh16_unmap_program },
-		{ 16, STATIC_UNMAP,  ADDRESS_SPACE_DATA,    (void *)mrh16_unmap_data,   (void *)mwh16_unmap_data },
-		{ 16, STATIC_UNMAP,  ADDRESS_SPACE_IO,      (void *)mrh16_unmap_io,     (void *)mwh16_unmap_io },
-		{ 16, STATIC_NOP,    ADDRESS_SPACE_PROGRAM, (void *)mrh16_nop_program,  (void *)mwh16_nop },
-		{ 16, STATIC_NOP,    ADDRESS_SPACE_DATA,    (void *)mrh16_nop_data,     (void *)mwh16_nop },
-		{ 16, STATIC_NOP,    ADDRESS_SPACE_IO,      (void *)mrh16_nop_io,       (void *)mwh16_nop },
-		{ 16, STATIC_RAMROM, ADDRESS_SPACE_PROGRAM, NULL,                       (void *)mwh16_ramrom },
+		{ 16, STATIC_UNMAP,  ADDRESS_SPACE_PROGRAM, (genf *)mrh16_unmap_program,(genf *)mwh16_unmap_program },
+		{ 16, STATIC_UNMAP,  ADDRESS_SPACE_DATA,    (genf *)mrh16_unmap_data,   (genf *)mwh16_unmap_data },
+		{ 16, STATIC_UNMAP,  ADDRESS_SPACE_IO,      (genf *)mrh16_unmap_io,     (genf *)mwh16_unmap_io },
+		{ 16, STATIC_NOP,    ADDRESS_SPACE_PROGRAM, (genf *)mrh16_nop_program,  (genf *)mwh16_nop },
+		{ 16, STATIC_NOP,    ADDRESS_SPACE_DATA,    (genf *)mrh16_nop_data,     (genf *)mwh16_nop },
+		{ 16, STATIC_NOP,    ADDRESS_SPACE_IO,      (genf *)mrh16_nop_io,       (genf *)mwh16_nop },
+		{ 16, STATIC_RAMROM, ADDRESS_SPACE_PROGRAM, NULL,                       (genf *)mwh16_ramrom },
 
-		{ 32, STATIC_UNMAP,  ADDRESS_SPACE_PROGRAM, (void *)mrh32_unmap_program,(void *)mwh32_unmap_program },
-		{ 32, STATIC_UNMAP,  ADDRESS_SPACE_DATA,    (void *)mrh32_unmap_data,   (void *)mwh32_unmap_data },
-		{ 32, STATIC_UNMAP,  ADDRESS_SPACE_IO,      (void *)mrh32_unmap_io,     (void *)mwh32_unmap_io },
-		{ 32, STATIC_NOP,    ADDRESS_SPACE_PROGRAM, (void *)mrh32_nop_program,  (void *)mwh32_nop },
-		{ 32, STATIC_NOP,    ADDRESS_SPACE_DATA,    (void *)mrh32_nop_data,     (void *)mwh32_nop },
-		{ 32, STATIC_NOP,    ADDRESS_SPACE_IO,      (void *)mrh32_nop_io,       (void *)mwh32_nop },
-		{ 32, STATIC_RAMROM, ADDRESS_SPACE_PROGRAM, NULL,                       (void *)mwh32_ramrom },
+		{ 32, STATIC_UNMAP,  ADDRESS_SPACE_PROGRAM, (genf *)mrh32_unmap_program,(genf *)mwh32_unmap_program },
+		{ 32, STATIC_UNMAP,  ADDRESS_SPACE_DATA,    (genf *)mrh32_unmap_data,   (genf *)mwh32_unmap_data },
+		{ 32, STATIC_UNMAP,  ADDRESS_SPACE_IO,      (genf *)mrh32_unmap_io,     (genf *)mwh32_unmap_io },
+		{ 32, STATIC_NOP,    ADDRESS_SPACE_PROGRAM, (genf *)mrh32_nop_program,  (genf *)mwh32_nop },
+		{ 32, STATIC_NOP,    ADDRESS_SPACE_DATA,    (genf *)mrh32_nop_data,     (genf *)mwh32_nop },
+		{ 32, STATIC_NOP,    ADDRESS_SPACE_IO,      (genf *)mrh32_nop_io,       (genf *)mwh32_nop },
+		{ 32, STATIC_RAMROM, ADDRESS_SPACE_PROGRAM, NULL,                       (genf *)mwh32_ramrom },
 
-		{ 64, STATIC_UNMAP,  ADDRESS_SPACE_PROGRAM, (void *)mrh64_unmap_program,(void *)mwh64_unmap_program },
-		{ 64, STATIC_UNMAP,  ADDRESS_SPACE_DATA,    (void *)mrh64_unmap_data,   (void *)mwh64_unmap_data },
-		{ 64, STATIC_UNMAP,  ADDRESS_SPACE_IO,      (void *)mrh64_unmap_io,     (void *)mwh64_unmap_io },
-		{ 64, STATIC_NOP,    ADDRESS_SPACE_PROGRAM, (void *)mrh64_nop_program,  (void *)mwh64_nop },
-		{ 64, STATIC_NOP,    ADDRESS_SPACE_DATA,    (void *)mrh64_nop_data,     (void *)mwh64_nop },
-		{ 64, STATIC_NOP,    ADDRESS_SPACE_IO,      (void *)mrh64_nop_io,       (void *)mwh64_nop },
-		{ 64, STATIC_RAMROM, ADDRESS_SPACE_PROGRAM, NULL,                       (void *)mwh64_ramrom }
+		{ 64, STATIC_UNMAP,  ADDRESS_SPACE_PROGRAM, (genf *)mrh64_unmap_program,(genf *)mwh64_unmap_program },
+		{ 64, STATIC_UNMAP,  ADDRESS_SPACE_DATA,    (genf *)mrh64_unmap_data,   (genf *)mwh64_unmap_data },
+		{ 64, STATIC_UNMAP,  ADDRESS_SPACE_IO,      (genf *)mrh64_unmap_io,     (genf *)mwh64_unmap_io },
+		{ 64, STATIC_NOP,    ADDRESS_SPACE_PROGRAM, (genf *)mrh64_nop_program,  (genf *)mwh64_nop },
+		{ 64, STATIC_NOP,    ADDRESS_SPACE_DATA,    (genf *)mrh64_nop_data,     (genf *)mwh64_nop },
+		{ 64, STATIC_NOP,    ADDRESS_SPACE_IO,      (genf *)mrh64_nop_io,       (genf *)mwh64_nop },
+		{ 64, STATIC_RAMROM, ADDRESS_SPACE_PROGRAM, NULL,                       (genf *)mwh64_ramrom }
 	};
 	int tablenum;
 

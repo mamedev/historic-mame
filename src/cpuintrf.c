@@ -1011,6 +1011,16 @@ void *activecpu_get_info_ptr(UINT32 state)
 	return info.p;
 }
 
+genf *activecpu_get_info_fct(UINT32 state)
+{
+	union cpuinfo info;
+
+	VERIFY_ACTIVECPU(0, activecpu_get_info_fct);
+	info.f = NULL;
+	(*cpu[activecpu].intf.get_info)(state, &info);
+	return info.f;
+}
+
 const char *activecpu_get_info_string(UINT32 state)
 {
 	union cpuinfo info;
@@ -1039,6 +1049,14 @@ void activecpu_set_info_ptr(UINT32 state, void *data)
 	union cpuinfo info;
 	VERIFY_ACTIVECPU_VOID(activecpu_set_info_ptr);
 	info.p = data;
+	(*cpu[activecpu].intf.set_info)(state, &info);
+}
+
+void activecpu_set_info_fct(UINT32 state, genf *data)
+{
+	union cpuinfo info;
+	VERIFY_ACTIVECPU_VOID(activecpu_set_info_fct);
+	info.f = data;
 	(*cpu[activecpu].intf.set_info)(state, &info);
 }
 
@@ -1220,6 +1238,18 @@ void *cpunum_get_info_ptr(int cpunum, UINT32 state)
 	return info.p;
 }
 
+genf *cpunum_get_info_fct(int cpunum, UINT32 state)
+{
+	union cpuinfo info;
+
+	VERIFY_CPUNUM(0, cpunum_get_info_fct);
+	cpuintrf_push_context(cpunum);
+	info.f = NULL;
+	(*cpu[cpunum].intf.get_info)(state, &info);
+	cpuintrf_pop_context();
+	return info.f;
+}
+
 const char *cpunum_get_info_string(int cpunum, UINT32 state)
 {
 	union cpuinfo info;
@@ -1257,6 +1287,16 @@ void cpunum_set_info_ptr(int cpunum, UINT32 state, void *data)
 	cpuintrf_pop_context();
 }
 
+void cpunum_set_info_fct(int cpunum, UINT32 state, genf *data)
+{
+	union cpuinfo info;
+	VERIFY_CPUNUM_VOID(cpunum_set_info_ptr);
+	info.f = data;
+	cpuintrf_push_context(cpunum);
+	(*cpu[cpunum].intf.set_info)(state, &info);
+	cpuintrf_pop_context();
+}
+
 
 /*--------------------------
  	Execute
@@ -1287,7 +1327,7 @@ void cpunum_reset(int cpunum, void *param, int (*irqack)(int))
 	memory_set_opbase(0);
 	(*cpu[cpunum].intf.reset)(param);
 	if (irqack)
-		activecpu_set_info_ptr(CPUINFO_PTR_IRQ_CALLBACK, (void *)irqack);
+		activecpu_set_info_fct(CPUINFO_PTR_IRQ_CALLBACK, (genf *)irqack);
 	cpuintrf_pop_context();
 }
 
@@ -1419,6 +1459,16 @@ void *cputype_get_info_ptr(int cputype, UINT32 state)
 	return info.p;
 }
 
+genf *cputype_get_info_fct(int cputype, UINT32 state)
+{
+	union cpuinfo info;
+
+	VERIFY_CPUTYPE(0, cputype_get_info_fct);
+	info.f = NULL;
+	(*cpuintrf[cputype].get_info)(state, &info);
+	return info.f;
+}
+
 const char *cputype_get_info_string(int cputype, UINT32 state)
 {
 	union cpuinfo info;
@@ -1535,46 +1585,3 @@ void dummy_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_STR_FLAGS:							strcpy(info->s = cpuintrf_temp_str(), "--"); break;
 	}
 }
-
-
-
-/*************************************
- *
- *	68000 reset kludge
- *
- *************************************/
-
-#if (HAS_M68000 || HAS_M68008 || HAS_M68010 || HAS_M68020 || HAS_M68EC020)
-void cpu_set_m68k_reset(int cpunum, void (*resetfn)(void))
-{
-	void m68k_set_reset_instr_callback(void (*callback)(void));
-	void m68000_set_reset_callback(void (*callback)(void));
-	void m68020_set_reset_callback(void (*callback)(void));
-
-	if ( cpu[cpunum].cputype != CPU_M68000 && cpu[cpunum].cputype != CPU_M68008 && cpu[cpunum].cputype != CPU_M68010 && cpu[cpunum].cputype != CPU_M68020 && cpu[cpunum].cputype != CPU_M68EC020 )
-	{
-		logerror("Trying to set m68k reset vector on non-68k cpu\n");
-		exit(1);
-	}
-
-	cpuintrf_push_context(cpunum);
-
-	if ( cpu[cpunum].cputype == CPU_M68000 || cpu[cpunum].cputype == CPU_M68008 || cpu[cpunum].cputype == CPU_M68010 )
-	{
-#ifdef A68K0
-		m68000_set_reset_callback(resetfn);
-#else
-		m68k_set_reset_instr_callback(resetfn);
-#endif
-	}
-	else
-	{
-#ifdef A68K2
-		m68020_set_reset_callback(resetfn);
-#else
-		m68k_set_reset_instr_callback(resetfn);
-#endif
-	}
-	cpuintrf_pop_context();
-}
-#endif

@@ -14,7 +14,7 @@ TODO:
 
 -Finish controls.
 
--NVRAM emulation & remove the hack.
+-Custom RAM emulation.
 
 -Fix the colors.
 
@@ -54,6 +54,7 @@ Code disassembling
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "machine/eeprom.h"
 
 static struct tilemap *bg_tilemap;
 
@@ -82,8 +83,6 @@ VIDEO_START( yumefuda )
 
 VIDEO_UPDATE( yumefuda )
 {
-//	fillbitmap(bitmap, get_black_pen(), &Machine->visible_area);
-
 	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 }
 
@@ -127,40 +126,86 @@ static WRITE8_HANDLER( yumefuda_cram_w )
 	}
 }
 
-static UINT8 *cus_ram,*ram;
-static UINT8 prot_lock,nvram_lock;
+static UINT8 *cus_ram;
+static UINT8 prot_lock;
 
 /*Custom RAM (Protection)*/
 static READ8_HANDLER( custom_ram_r )
 {
-	logerror("Custom RAM read at %02x PC = %x\n",offset+0xaf80,activecpu_get_pc());
+//	logerror("Custom RAM read at %02x PC = %x\n",offset+0xaf80,activecpu_get_pc());
 	return cus_ram[offset];// ^ 0x55;
 }
 
 static WRITE8_HANDLER( custom_ram_w )
 {
-	logerror("Custom RAM write at %02x : %02x PC = %x\n",offset+0xaf80,data,activecpu_get_pc());
+//	logerror("Custom RAM write at %02x : %02x PC = %x\n",offset+0xaf80,data,activecpu_get_pc());
 	if(prot_lock)	{ cus_ram[offset] = data; }
 }
 
 /*this might be used as NVRAM commands btw*/
 static WRITE8_HANDLER( prot_lock_w )
 {
-	logerror("PC %04x Prot lock value written %02x\n",activecpu_get_pc(),data);
+//	logerror("PC %04x Prot lock value written %02x\n",activecpu_get_pc(),data);
 	prot_lock = data;
 }
 
-static WRITE8_HANDLER( nvram_lock_w )
+static WRITE8_HANDLER( eeprom_w )
 {
-	logerror("PC %04x Nvram lock value written %02x\n",activecpu_get_pc(),data);
-	nvram_lock = data;
-	ram[0x51c] = 0x00; //hack
+	EEPROM_write_bit(data & 0x04);
+	EEPROM_set_cs_line((data & 0x02) ? CLEAR_LINE : ASSERT_LINE);
+	EEPROM_set_clock_line((data & 0x08) ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static WRITE8_HANDLER( port_c0_w )
 {
-	logerror("PC %04x (Port $c0) value written %02x\n",activecpu_get_pc(),data);
+//	logerror("PC %04x (Port $c0) value written %02x\n",activecpu_get_pc(),data);
 }
+
+
+static READ8_HANDLER( eeprom_r )
+{
+	return ((~EEPROM_read_bit()&0x01)<<6) | (0xff&~0x40);
+}
+
+static UINT8 mux_data;
+
+static READ8_HANDLER( mux_r )
+{
+	switch(mux_data)
+	{
+		case 0x00: return readinputport(0);
+		case 0x01: return readinputport(1);
+		case 0x02: return readinputport(2);
+		case 0x04: return readinputport(3);
+		case 0x08: return readinputport(4);
+		case 0x10: return 0xff; return readinputport(5);
+		case 0x20: return 0xff; return readinputport(6);
+	}
+	return 0xff;
+}
+
+static WRITE8_HANDLER( mux_w )
+{
+	static int bank=-1;
+
+	int new_bank = (data&0xc0)>>6;
+
+	//0x10000 service mode
+	//0x12000 gameplay
+	//0x14000 bonus game
+	//0x16000 ?
+	if(bank!=new_bank) {
+		unsigned char *ROM = memory_region(REGION_CPU1);
+		UINT32 bankaddress;
+
+		bank = new_bank;
+		bankaddress = 0x10000 + 0x2000 * bank;
+		cpu_setbank(1, &ROM[bankaddress]);
+	}
+
+	mux_data = data & ~0xc0;
+}
+
 
 /***************************************************************************************/
 
@@ -178,59 +223,17 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0x8000, 0x9fff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0xa7fc, 0xa7fc) AM_WRITE(prot_lock_w)
-	AM_RANGE(0xa7ff, 0xa7ff) AM_WRITE(nvram_lock_w)
+	AM_RANGE(0xa7ff, 0xa7ff) AM_WRITE(eeprom_w)
 	AM_RANGE(0xaf80, 0xafff) AM_WRITE(custom_ram_w) AM_BASE(&cus_ram) //260d - 2626
 	AM_RANGE(0xb000, 0xb0ff) AM_WRITE(MWA8_RAM) AM_WRITE(paletteram_RRRGGGBB_w) AM_BASE(&paletteram)/*Wrong format*/
 	AM_RANGE(0xc000, 0xc3ff) AM_WRITE(yumefuda_vram_w) AM_BASE(&videoram)
 	AM_RANGE(0xd000, 0xd3ff) AM_WRITE(yumefuda_cram_w) AM_BASE(&colorram)
-	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_RAM) AM_BASE(&ram)/*work ram*/
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_RAM)
 ADDRESS_MAP_END
-
-static READ8_HANDLER( unk_r )
-{
-	usrintf_showmessage("%02x",offset);
-	return 0xff;
-}
-
-static READ8_HANDLER( unk2_r )
-{
-	return 0xff ^ 0x40;
-}
-
-static UINT8 mux_data;
-
-static READ8_HANDLER( mux_r )
-{
-	switch(mux_data)
-	{
-		case 0x00: return readinputport(0);//COIN
-//		case 0x50: return readinputport(0);
-		case 0x60: return readinputport(4);
-		case 0x48: return readinputport(1);
-		case 0x44: return readinputport(2);//gameplay buttons
-		case 0x42: return readinputport(3);
-		case 0x41: return readinputport(4);//BET & START buttons
-		case 0x40: return readinputport(0);//COIN (mirror)
-//		case 0x01: return readinputport(0);
-//		case 0x02: return readinputport(0);
-//		case 0x04: return readinputport(0);
-//		case 0x08: return readinputport(0);
-//		case 0x10: return readinputport(0);
-//		case 0x20: return readinputport(0);
-		default:
-			logerror("(PC=%04x) MUX read with value %02x\n",activecpu_get_pc(),mux_data);
-			return 0xff;
-	}
-}
-
-static WRITE8_HANDLER( mux_w )
-{
-	mux_data = data;
-}
 
 static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x40, 0x40) AM_READ(AY8910_read_port_0_r)
-	AM_RANGE(0x81, 0x81) AM_READ(unk2_r)
+	AM_RANGE(0x81, 0x81) AM_READ(eeprom_r)
 	AM_RANGE(0x82, 0x82) AM_READ(mux_r)
 ADDRESS_MAP_END
 
@@ -255,13 +258,15 @@ static struct AY8910interface ay8910_interface =
 static MACHINE_DRIVER_START( yumefuda )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80 , 6000000)/*???*/
+	MDRV_CPU_ADD(Z80 , 6000000) /*???*/
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_NVRAM_HANDLER(93C46)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -318,12 +323,8 @@ INPUT_PORTS_START( yumefuda )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 BET Button") PORT_CODE(KEYCODE_RALT)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -341,18 +342,10 @@ INPUT_PORTS_START( yumefuda )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 )
 
 	PORT_START
 	PORT_DIPNAME( 0x01, 0x01, "Port 3" )
@@ -370,12 +363,8 @@ INPUT_PORTS_START( yumefuda )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON6 ) PORT_NAME("P1 Button 6 / Yes") PORT_CODE(KEYCODE_RCONTROL)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON5 )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -396,13 +385,17 @@ INPUT_PORTS_START( yumefuda )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_NAME("P1 BET Button") PORT_CODE(KEYCODE_RALT)
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-/*	PORT_START
+/*
+	PORT_START
 	PORT_DIPNAME( 0x01, 0x01, "Port 5" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -452,188 +445,6 @@ INPUT_PORTS_START( yumefuda )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, "Port 7" )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, "Port 8" )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, "Port 9" )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, "Port 10" )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, "Port 11" )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, "Port 12" )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, "Port 13" )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )*/
 INPUT_PORTS_END
 
@@ -652,20 +463,4 @@ ROM_START( yumefuda )
 	ROM_LOAD("zg001003.u3", 0xc000, 0x4000, CRC(5822ff27) SHA1(d40fa0790de3c912f770ef8f610bd8c42bc3500f))
 ROM_END
 
-DRIVER_INIT( yumefuda )
-{
-	unsigned char *ROM = memory_region(REGION_CPU1);
-	UINT32 bankaddress;
-
-	/*Temp until the bankswitch memory address is found...*/
-	//0x10000 service mode
-	//0x12000 gameplay
-	//0x14000 bonus game
-	//0x16000 ?
-	bankaddress = 0x12000;
-	cpu_setbank(1, &ROM[bankaddress]);
-
-}
-
-
-GAMEX( 198?, yumefuda, 0, yumefuda, yumefuda, yumefuda,	ROT0, "Alba", "(Medal) Yumefuda [BET]", GAME_NOT_WORKING | GAME_WRONG_COLORS )
+GAMEX( 198?, yumefuda, 0, yumefuda, yumefuda, 0, ROT0, "Alba", "(Medal) Yumefuda [BET]", GAME_NOT_WORKING | GAME_WRONG_COLORS )

@@ -1583,14 +1583,48 @@ profiler_mark(PROFILER_TILEMAP_DRAW_ROZ);
 
 			switch( dest->depth )
 			{
-
 			case 32:
+
+				/* Opaque drawing routines not present due to difficulty with
+				optimization using current ROZ methods
+				*/
+				if (priority)
+				{
+					if( flags&TILEMAP_ALPHA )
+						blit.draw_masked = (blitmask_t)pbt32;
+					else
+						blit.draw_masked = (blitmask_t)pdt32;
+				}
+				else
+				{
+					if( flags&TILEMAP_ALPHA )
+						blit.draw_masked = (blitmask_t)npbt32;
+					else
+						blit.draw_masked = (blitmask_t)npdt32;
+				}
+
 				copyroz_core32BPP(dest,tilemap,startx,starty,incxx,incxy,incyx,incyy,
 					wraparound,cliprect,mask,value,priority,tilemap->palette_offset);
 				break;
 
 			case 15:
+				if( flags&TILEMAP_ALPHA )
+					blit.draw_masked = (blitmask_t)pbt15;
+				else
+					blit.draw_masked = (blitmask_t)pdt15;
+
+				copyroz_core16BPP(dest,tilemap,startx,starty,incxx,incxy,incyx,incyy,
+					wraparound,cliprect,mask,value,priority,tilemap->palette_offset);
+				break;
+
 			case 16:
+				if (tilemap->palette_offset)
+					blit.draw_masked = (blitmask_t)pdt16pal;
+				else if (priority)
+					blit.draw_masked = (blitmask_t)pdt16;
+				else
+					blit.draw_masked = (blitmask_t)pdt16np;
+
 				copyroz_core16BPP(dest,tilemap,startx,starty,incxx,incxy,incyx,incyy,
 					wraparound,cliprect,mask,value,priority,tilemap->palette_offset);
 				break;
@@ -1704,6 +1738,58 @@ void tilemap_nb_draw( struct mame_bitmap *dest, UINT32 number, UINT32 scrollx, U
 
 #endif // !DECLARE && !TRANSP
 
+#define ROZ_PLOT_PIXEL(INPUT_VAL)										\
+	if (blit.draw_masked == (blitmask_t)pbt32)							\
+	{																	\
+		clut = &Machine->remapped_colortable[priority >> 16] ;			\
+		*dest = alpha_blend32(*dest, clut[INPUT_VAL]);					\
+		*pri |= priority;												\
+	}																	\
+	else if (blit.draw_masked == (blitmask_t)pdt32)						\
+	{																	\
+		clut = &Machine->remapped_colortable[priority >> 16] ;			\
+		*dest = clut[INPUT_VAL] ;										\
+		*pri |= priority;												\
+	}																	\
+	else if (blit.draw_masked == (blitmask_t)npbt32)					\
+	{																	\
+		clut = &Machine->remapped_colortable[priority >> 16] ;			\
+		*dest = alpha_blend32(*dest, clut[INPUT_VAL]) ;					\
+/*		logerror("PARTIALLY IMPLEMENTED ROZ VIDEO MODE - npbt32\n") ;*/	\
+	}																	\
+	else if (blit.draw_masked == (blitmask_t)npdt32)					\
+	{																	\
+		clut = &Machine->remapped_colortable[priority >> 16] ;			\
+		*dest = clut[INPUT_VAL] ;										\
+/*		logerror("PARTIALLY IMPLEMENTED ROZ VIDEO MODE - npbt32\n") ;*/	\
+	}																	\
+	else if (blit.draw_masked == (blitmask_t)pbt15)						\
+	{																	\
+		clut = &Machine->remapped_colortable[priority >> 16] ;			\
+		*dest = alpha_blend16(*dest, clut[INPUT_VAL]) ;					\
+		*pri |= priority;												\
+	}																	\
+	else if (blit.draw_masked == (blitmask_t)pdt15)						\
+	{																	\
+		clut = &Machine->remapped_colortable[priority >> 16] ;			\
+		*dest = clut[INPUT_VAL] ;										\
+		*pri |= priority;												\
+	}																	\
+	else if (blit.draw_masked == (blitmask_t)pdt16pal)					\
+	{																	\
+		*dest = (INPUT_VAL) + (priority >> 16) ;						\
+		*pri |= priority;												\
+	}																	\
+	else if (blit.draw_masked == (blitmask_t)pdt16)						\
+	{																	\
+		*dest = INPUT_VAL ;												\
+		*pri |= priority;												\
+	}																	\
+	else if (blit.draw_masked == (blitmask_t)pdt16np)					\
+	{																	\
+		*dest = INPUT_VAL ;												\
+	}
+
 #ifdef DECLARE
 
 DECLARE(copyroz_core,(struct mame_bitmap *bitmap,struct tilemap *tilemap,
@@ -1729,6 +1815,8 @@ DECLARE(copyroz_core,(struct mame_bitmap *bitmap,struct tilemap *tilemap,
 	UINT8 *pri;
 	const UINT16 *src;
 	const UINT8 *pMask;
+
+	pen_t *clut ;
 
 	if (clip)
 	{
@@ -1826,8 +1914,7 @@ DECLARE(copyroz_core,(struct mame_bitmap *bitmap,struct tilemap *tilemap,
 						{
 							if ( (pMask[cx]&mask) == value )
 							{
-								*dest = src[cx]+palette_offset;
-								*pri |= priority;
+								ROZ_PLOT_PIXEL((src[cx]+palette_offset)) ;
 							}
 							cx++;
 							x++;
@@ -1862,12 +1949,12 @@ DECLARE(copyroz_core,(struct mame_bitmap *bitmap,struct tilemap *tilemap,
 						pri = ((UINT8 *)priority_bitmap->line[sy]) + sx;
 						src = (UINT16 *)srcbitmap->line[cy];
 						pMask = (UINT8 *)transparency_bitmap->line[cy];
+
 						while (x <= ex && cx < widthshifted)
 						{
 							if ( (pMask[cx>>16]&mask) == value )
 							{
-								*dest = src[cx >> 16]+palette_offset;
-								*pri |= priority;
+								ROZ_PLOT_PIXEL((src[cx >> 16]+palette_offset)) ;
 							}
 							cx += incxx;
 							x++;
@@ -1897,8 +1984,7 @@ DECLARE(copyroz_core,(struct mame_bitmap *bitmap,struct tilemap *tilemap,
 				{
 					if( (((UINT8 *)transparency_bitmap->line[(cy>>16)&ymask])[(cx>>16)&xmask]&mask) == value )
 					{
-						*dest = ((UINT16 *)srcbitmap->line[(cy >> 16) & ymask])[(cx >> 16) & xmask]+palette_offset;
-						*pri |= priority;
+						ROZ_PLOT_PIXEL(((((UINT16 *)srcbitmap->line[(cy >> 16) & ymask])[(cx >> 16) & xmask]+palette_offset))) ;
 					}
 					cx += incxx;
 					cy += incxy;
@@ -1926,8 +2012,7 @@ DECLARE(copyroz_core,(struct mame_bitmap *bitmap,struct tilemap *tilemap,
 					{
 						if( (((UINT8 *)transparency_bitmap->line[cy>>16])[cx>>16]&mask)==value )
 						{
-							*dest = ((UINT16 *)srcbitmap->line[cy >> 16])[cx >> 16]+palette_offset;
-							*pri |= priority;
+							ROZ_PLOT_PIXEL((((UINT16 *)srcbitmap->line[cy >> 16])[cx >> 16]+palette_offset)) ;
 						}
 					}
 					cx += incxx;

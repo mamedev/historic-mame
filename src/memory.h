@@ -47,6 +47,53 @@ extern "C" {
 #endif
 
 
+/***************************************************************************
+
+    Floating-point <-> unsigned converters
+
+***************************************************************************/
+
+
+INLINE float u2f(UINT32 v)
+{
+	union {
+		float ff;
+		UINT32 vv;
+	} u;
+	u.vv = v;
+	return u.ff;
+}
+
+INLINE UINT32 f2u(float f)
+{
+	union {
+		float ff;
+		UINT32 vv;
+	} u;
+	u.ff = f;
+	return u.vv;
+}
+
+INLINE float u2d(UINT64 v)
+{
+	union {
+		double dd;
+		UINT64 vv;
+	} u;
+	u.vv = v;
+	return u.dd;
+}
+
+INLINE UINT64 d2u(double d)
+{
+	union {
+		double dd;
+		UINT64 vv;
+	} u;
+	u.dd = d;
+	return u.vv;
+}
+
 
 /***************************************************************************
 
@@ -110,6 +157,8 @@ struct data_accessors_t
 	void			(*write_qword)(offs_t offset, data64_t data);
 };
 
+/* ----- for generic function pointers ----- */
+typedef void genf(void);
 
 
 /***************************************************************************
@@ -506,7 +555,7 @@ struct data_accessors_t
 /* ----- a union of all the different read handler types ----- */
 union read_handlers_t
 {
-	void *				handler;
+	genf *				handler;
 	read8_handler		handler8;
 	read16_handler		handler16;
 	read32_handler		handler32;
@@ -516,7 +565,7 @@ union read_handlers_t
 /* ----- a union of all the different write handler types ----- */
 union write_handlers_t
 {
-	void *				handler;
+	genf *				handler;
 	write8_handler		handler8;
 	write16_handler		handler16;
 	write32_handler		handler32;
@@ -610,10 +659,10 @@ struct address_map_t *construct_map_##_name(struct address_map_t *map)	\
 	map->mirror = (_mirror);											\
 
 #define AM_READ(_handler)												\
-	map->read.handler = (void *)(read = _handler);						\
+	map->read.handler = (genf *)(read = _handler);						\
 
 #define AM_WRITE(_handler)												\
-	map->write.handler = (void *)(write = _handler);					\
+	map->write.handler = (genf *)(write = _handler);					\
 
 #define AM_REGION(_region, _offs)										\
 	map->memory = memory_region(_region) + _offs;						\
@@ -872,7 +921,7 @@ void		memory_set_opcode_base(int cpunum, void *base);
 void *		memory_get_read_ptr(int cpunum, int spacenum, offs_t offset);
 void *		memory_get_write_ptr(int cpunum, int spacenum, offs_t offset);
 
-/* ----- memory banking */
+/* ----- memory banking ----- */
 void		memory_set_bankptr(int banknum, void *base);
 
 /* ----- dynamic address space mapping ----- */
@@ -884,6 +933,15 @@ data8_t *	memory_install_write8_handler (int cpunum, int spacenum, offs_t start,
 data16_t *	memory_install_write16_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write16_handler handler);
 data32_t *	memory_install_write32_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write32_handler handler);
 data64_t *	memory_install_write64_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write64_handler handler);
+
+data8_t *	memory_install_read8_matchmask_handler  (int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read8_handler handler);
+data16_t *	memory_install_read16_matchmask_handler (int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read16_handler handler);
+data32_t *	memory_install_read32_matchmask_handler (int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read32_handler handler);
+data64_t *	memory_install_read64_matchmask_handler (int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read64_handler handler);
+data8_t *	memory_install_write8_matchmask_handler (int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write8_handler handler);
+data16_t *	memory_install_write16_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write16_handler handler);
+data32_t *	memory_install_write32_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write32_handler handler);
+data64_t *	memory_install_write64_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write64_handler handler);
 
 
 

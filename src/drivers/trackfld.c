@@ -23,6 +23,7 @@ MAIN BOARD:
 
 
 extern void konami1_decode(void);
+extern unsigned char konami1_decodebyte( unsigned char opcode, unsigned short address );
 
 
 extern UINT8 *trackfld_scroll;
@@ -31,6 +32,7 @@ extern UINT8 *trackfld_scroll2;
 extern WRITE8_HANDLER( trackfld_videoram_w );
 extern WRITE8_HANDLER( trackfld_colorram_w );
 extern WRITE8_HANDLER( trackfld_flipscreen_w );
+extern WRITE8_HANDLER( atlantol_gfxbank_w );
 
 extern PALETTE_INIT( trackfld );
 extern VIDEO_START( trackfld );
@@ -198,15 +200,18 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x1200, 0x1200) AM_READ(input_port_4_r) /* DIP 2 */
 	AM_RANGE(0x1280, 0x1280) AM_READ(input_port_0_r) /* IO Coin */
 //	AM_RANGE(0x1281, 0x1281) AM_READ(input_port_1_r) /* P1 IO */
-	AM_RANGE(0x1281, 0x1281) AM_READ(konami_IN1_r)	/* P1 IO and handle fake button for cheating */
+	AM_RANGE(0x1281, 0x1281) AM_READ(konami_IN1_r)	 /* P1 IO and handle fake button for cheating */
 	AM_RANGE(0x1282, 0x1282) AM_READ(input_port_2_r) /* P2 IO */
 	AM_RANGE(0x1283, 0x1283) AM_READ(input_port_3_r) /* DIP 1 */
 	AM_RANGE(0x1800, 0x1fff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x2800, 0x3fff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x6000, 0xffff) AM_READ(MRA8_ROM)
+
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)       /* for atlantol (everything not mapped is read from rom) */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0800, 0x0800) AM_WRITE(atlantol_gfxbank_w)
 	AM_RANGE(0x1000, 0x1000) AM_WRITE(watchdog_reset_w)
 	AM_RANGE(0x1080, 0x1080) AM_WRITE(trackfld_flipscreen_w)
 	AM_RANGE(0x1081, 0x1081) AM_WRITE(konami_sh_irqtrigger_w)  /* cause interrupt on audio CPU */
@@ -416,6 +421,103 @@ INPUT_PORTS_START( trackfld )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ))
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( None ) )
+	PORT_DIPSETTING(    0x00, "100000" )
+	PORT_DIPNAME( 0x10, 0x10, "World Records" )
+	PORT_DIPSETTING(    0x10, "Don't Erase" )
+	PORT_DIPSETTING(    0x00, "Erase on Reset" )
+	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, "Difficult" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( atlantol )
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START_TAG("IN1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+//	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	/* Fake button to press buttons 1 and 3 impossibly fast. Handle via konami_IN1_r */
+	PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_NAME("Run Like Hell (Cheat)") PORT_PLAYER(1)
+
+	PORT_START_TAG("IN2")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3  ) PORT_PLAYER(3) //PORT_COCKTAIL 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2  ) PORT_PLAYER(3) //PORT_COCKTAIL 
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1  ) PORT_PLAYER(3) //PORT_COCKTAIL 
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START4 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3  ) PORT_PLAYER(4) //PORT_COCKTAIL 
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2  ) PORT_PLAYER(4) //PORT_COCKTAIL 
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1  ) PORT_PLAYER(4) //PORT_COCKTAIL 
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START_TAG("DSW0")
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x00, "Disabled" )
+/* 0x00 disables Coin 2. It still accepts coins and makes the sound, but
+   it doesn't give you any credit */
+
+	PORT_START_TAG("DSW1")
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x01, "1" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Allow_Continue ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Language ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Italian ) )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( None ) )
 	PORT_DIPSETTING(    0x00, "100000" )
@@ -875,6 +977,34 @@ ROM_START( hyprolyb )
 	ROM_LOAD( "tfprom.2",     0x0120, 0x0100, CRC(053e5861) SHA1(6740a62cf7b6938a4f936a2fed429704612060a5) ) /* char lookup table */
 ROM_END
 
+ROM_START( atlantol )
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )     /* 64k for code + 64k for decrypted opcodes */
+	ROM_LOAD( "atl37", 0x00000, 0x10000, CRC(aca8da51) SHA1(50e96fd8496ed32e11eb43bcbfd468ce566caa47) )
+	ROM_CONTINUE(      0x00000, 0x10000 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for the audio CPU */
+	ROM_LOAD( "atl35", 0x00000, 0x10000, CRC(03331597) SHA1(74a6e20cb0cadc17500b9046d621be252839de98) )
+	ROM_CONTINUE(      0x00000, 0x10000 )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/*  64k for the 6802 which plays ADPCM samples */
+	/* this bootleg uses a 6802 to "emulate" the VLM5030 speech chip */
+	/* I didn't bother to emulate the 6802, I just play the samples. */
+	ROM_LOAD( "atl36", 0x00000, 0x10000, CRC(0bae8489) SHA1(fbaeac99733f9c46b0b8d9a601c57df4004e2044) )
+	ROM_CONTINUE(      0x00000, 0x10000 )
+
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "atl40", 0x00000, 0x20000, CRC(c915f53a) SHA1(5983fa68f8a494fe0c71e8dae79b45eee178bbcd) )
+
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "atl38", 0x00000, 0x20000, CRC(dbbcbcda) SHA1(df84fd73425bac2dcde0b650369ed1ff105f729f) )
+	ROM_LOAD( "atl39", 0x20000, 0x20000, CRC(d08f067f) SHA1(077446bf3269dba2881e745434f1581f3a901d99) )
+
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )
+	ROM_LOAD( "tfprom.1",     0x0000, 0x0020, CRC(d55f30b5) SHA1(4d6a851f4886778307f75771645078b97ad55f5f) ) /* palette */
+	ROM_LOAD( "tfprom.3",     0x0020, 0x0100, CRC(d2ba4d32) SHA1(894b5cedf01ba9225a0d6215291857e455b84903) ) /* sprite lookup table */
+	ROM_LOAD( "tfprom.2",     0x0120, 0x0100, CRC(053e5861) SHA1(6740a62cf7b6938a4f936a2fed429704612060a5) ) /* char lookup table */
+ROM_END
+
 ROM_START( mastkin )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "mk3",          0x8000, 0x2000, CRC(9f80d6ae) SHA1(724321d8c3e32d679f8170dfef6555d0179f9d20) )
@@ -950,6 +1080,29 @@ static DRIVER_INIT( trackfld )
 	konami1_decode();
 }
 
+static DRIVER_INIT( atlantol )
+{
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = memory_region_length(REGION_CPU1) / 2;
+	int A;
+
+	memory_set_opcode_base(0,rom+diff);
+
+	/* not encrypted opcodes */
+	for (A = 0;A < 0x6000;A++)
+	{
+		rom[A+diff] = rom[A];
+	}
+
+	/* "konami1" encrypted opcodes */
+	for (A = 0x6000;A < diff;A++)
+	{
+		rom[A+diff] = konami1_decodebyte(rom[A],A);
+	}
+
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x1000, 0, 0, MWA8_NOP );
+}
+
 static DRIVER_INIT( mastkin )
 {
 	UINT8 *prom = memory_region(REGION_PROMS);
@@ -996,5 +1149,6 @@ GAME( 1983, trackfld, 0,        trackfld, trackfld, trackfld, ROT0, "Konami", "T
 GAME( 1983, trackflc, trackfld, trackfld, trackfld, trackfld, ROT0, "Konami (Centuri license)", "Track & Field (Centuri)" )
 GAME( 1983, hyprolym, trackfld, trackfld, trackfld, trackfld, ROT0, "Konami", "Hyper Olympic" )
 GAME( 1983, hyprolyb, trackfld, hyprolyb, trackfld, trackfld, ROT0, "bootleg", "Hyper Olympic (bootleg)" )
+GAME( 1996, atlantol, trackfld, hyprolyb, atlantol,	atlantol, ROT0, "bootleg", "Atlant Olimpic" )
 GAMEX(1988, mastkin,  0,        mastkin,  mastkin,  mastkin,  ROT0, "Du Tech", "The Masters of Kin", GAME_WRONG_COLORS )
 GAME( 1985, wizzquiz, 0,        wizzquiz, wizzquiz, wizzquiz, ROT0, "Zilec - Zenitone", "Wizz Quiz (version 4)" )

@@ -518,9 +518,13 @@ static void m68000_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + M68K_A5:  		m68k_set_reg(M68K_REG_A5, info->i);			break;
 		case CPUINFO_INT_REGISTER + M68K_A6:  		m68k_set_reg(M68K_REG_A6, info->i);			break;
 		case CPUINFO_INT_REGISTER + M68K_A7:  		m68k_set_reg(M68K_REG_A7, info->i);			break;
-		
+		case CPUINFO_INT_REGISTER + M68K_PREF_ADDR:	m68k_set_reg(M68K_REG_PREF_ADDR, info->i);	break;
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:				m68k_set_int_ack_callback(info->irqcallback); break;
+		case CPUINFO_PTR_M68K_RESET_CALLBACK:		m68k_set_reset_instr_callback(info->f);		break;
+		case CPUINFO_PTR_M68K_CMPILD_CALLBACK:		m68k_set_cmpild_instr_callback((void (*)(unsigned int,int))(info->f));		break;
+		case CPUINFO_PTR_M68K_RTE_CALLBACK:			m68k_set_rte_instr_callback(info->f);		break;
 	}
 }
 
@@ -545,7 +549,7 @@ void m68000_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 10;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 4;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 158;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 16;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 24;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
@@ -701,9 +705,12 @@ static void m68008_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + M68K_A5:  		m68k_set_reg(M68K_REG_A5, info->i);			break;
 		case CPUINFO_INT_REGISTER + M68K_A6:  		m68k_set_reg(M68K_REG_A6, info->i);			break;
 		case CPUINFO_INT_REGISTER + M68K_A7:  		m68k_set_reg(M68K_REG_A7, info->i);			break;
-		
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:				m68k_set_int_ack_callback(info->irqcallback); break;
+		case CPUINFO_PTR_M68K_RESET_CALLBACK:		m68k_set_reset_instr_callback(info->f);		break;
+		case CPUINFO_PTR_M68K_CMPILD_CALLBACK:		m68k_set_cmpild_instr_callback((void (*)(unsigned int,int))(info->f));		break;
+		case CPUINFO_PTR_M68K_RTE_CALLBACK:			m68k_set_rte_instr_callback(info->f);		break;
 	}
 }
 
@@ -723,7 +730,7 @@ void m68008_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 10;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 4;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 158;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 22;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
@@ -945,9 +952,12 @@ static void m68020_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + M68K_VBR:		m68k_set_reg(M68K_REG_VBR, info->i);		break; /* 68010+ */
 		case CPUINFO_INT_REGISTER + M68K_SFC:		m68k_set_reg(M68K_REG_SFC, info->i);		break; /* 68010+ */
 		case CPUINFO_INT_REGISTER + M68K_DFC:		m68k_set_reg(M68K_REG_DFC, info->i);		break; /* 68010+ */
-		
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:				m68k_set_int_ack_callback(info->irqcallback); break;
+		case CPUINFO_PTR_M68K_RESET_CALLBACK:		m68k_set_reset_instr_callback(info->f);		break;
+		case CPUINFO_PTR_M68K_CMPILD_CALLBACK:		m68k_set_cmpild_instr_callback((void (*)(unsigned int,int))(info->f));		break;
+		case CPUINFO_PTR_M68K_RTE_CALLBACK:			m68k_set_rte_instr_callback(info->f);		break;
 	}
 }
 
@@ -967,7 +977,7 @@ void m68020_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 10;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 4;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 158;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;

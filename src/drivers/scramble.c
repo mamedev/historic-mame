@@ -2217,6 +2217,37 @@ ROM_START( sfx )
 	ROM_LOAD( "6331.9g",      0x0000, 0x0020, CRC(ca1d9ccd) SHA1(27124759a06497c1bc1a64b6d3faa6ba924a8447) )
 ROM_END
 
+ROM_START( skelagon )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	/* first half of 36.bin is missing */
+	ROM_LOAD( "31.bin",       0x1000, 0x1000, CRC(ae6f8647) SHA1(801e88b91c204f2797e5ce45390ea6eec27a3f54) )
+	ROM_LOAD( "32.bin",       0x2000, 0x1000, CRC(a28c5838) SHA1(0a37de7986c494d1522ce76635dd1fa6d03f05c7) )
+	ROM_LOAD( "33.bin",       0x3000, 0x1000, CRC(32f7e99c) SHA1(2718063a77eeeb8067a9cad7ff3d9e0266b61566) )
+	ROM_LOAD( "37.bin",       0x7000, 0x1000, CRC(47f68a31) SHA1(6e15024f67c88a733ede8702d2a80ddb1892b27e) )
+	ROM_LOAD( "24.bin",       0xc000, 0x1000, CRC(e6d7dc74) SHA1(c1e6d9598fb837775ee6550fea3cd4910572615e) )
+	ROM_LOAD( "35.bin",       0xd000, 0x1000, CRC(5b2a0158) SHA1(66d2fb05a8daaa86bb547b4860d5bf27b4359326) )
+	ROM_LOAD( "36.bin",       0xe000, 0x1000, BAD_DUMP CRC(f53ead29) SHA1(f8957b0c0558acc005f418adbfeb66d1d562c9ac) ) 
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "5.5j",         0x0000, 0x1000, CRC(59028fb6) SHA1(94105b5b03c81a948a409f7ea20312bb9c79c150) )
+	ROM_LOAD( "6.6j",         0x1000, 0x1000, CRC(5427670f) SHA1(ffc3f7186d0319f0fd7ed25eb97bb0db7bc107c6) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the sample CPU */
+	ROM_LOAD( "1.1j",         0x0000, 0x1000, CRC(2f172c58) SHA1(4706d55fcfad4d5a87d96a0a0187f59997ef9720) )
+	ROM_LOAD( "2.2j",         0x1000, 0x1000, CRC(a6ad2f6b) SHA1(14d1a93e507c349b14a1b26408cce23f089fa33c) )
+	ROM_LOAD( "3.3j",         0x2000, 0x1000, CRC(fa1274fa) SHA1(e98cb602b265b209eaa4a9b3972e47c869ff863b) )
+	ROM_LOAD( "4.4j",         0x3000, 0x1000, CRC(1cd33f3a) SHA1(cf9248fd6cb56ec81d354afe032a2dea810e834b) )
+	ROM_LOAD( "10.bin",       0x4000, 0x1000, CRC(2c719de2) SHA1(0953e96f8be1cbab3f4a8e166457c74e986a87b1) )
+	ROM_LOAD( "8.bin",        0x5000, 0x1000, CRC(350379dd) SHA1(e979251b11d6702170dd60ffd28fc15ea737588b) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "38.bin",       0x0000, 0x1000, CRC(2fffa8b1) SHA1(6a6032f55b9fe1da209e4ed4423042efec773d4d) )
+	ROM_LOAD( "39.bin",       0x1000, 0x1000, CRC(a854b5de) SHA1(dd038f20ee366d439f09f0c82fd6432101b3781a) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "6331.9g",      0x0000, 0x0020, CRC(ca1d9ccd) SHA1(27124759a06497c1bc1a64b6d3faa6ba924a8447) )
+ROM_END
+
 ROM_START( mimonscr )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "mm1",          0x0000, 0x1000, CRC(0399a0c4) SHA1(8314124f9b535ce531663625d19cd3a76782ed3b) )
@@ -2267,4 +2298,5 @@ GAMEX(1982, conquer,  0,        hotshock, hotshock, 0,            ROT90, "<unkno
 GAME( 1983, hunchbks, hunchbak, hunchbks, hunchbks, scramble_ppi, ROT90, "Century Electronics", "Hunchback (Scramble hardware)" )
 GAME( 1983, cavelon,  0,        cavelon,  cavelon,  cavelon,      ROT90, "Jetsoft", "Cavelon" )
 GAME( 1983, sfx,      0,        sfx,      sfx,      sfx,          ORIENTATION_FLIP_X, "Nichibutsu", "SF-X" )
+GAMEX(1983, skelagon, sfx,      sfx,      sfx,      sfx,          ORIENTATION_FLIP_X, "Nichibutsu USA", "Skelagon", GAME_NOT_WORKING )
 GAME( 198?, mimonscr, mimonkey, mimonscr, mimonscr, mimonscr,     ROT90, "bootleg", "Mighty Monkey (bootleg on Scramble hardware)" )

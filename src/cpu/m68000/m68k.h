@@ -225,6 +225,22 @@ void m68k_set_bkpt_ack_callback(void (*callback)(unsigned int data));
 void m68k_set_reset_instr_callback(void  (*callback)(void));
 
 
+/* Set the callback for the CMPI.L #v, Dn instruction.
+ * You must enable M68K_CMPILD_HAS_CALLBACK in m68kconf.h.
+ * The CPU calls this callback every time it encounters a CMPI.L #v, Dn instruction.
+ * Default behavior: do nothing.
+ */
+void m68k_set_cmpild_instr_callback(void  (*callback)(unsigned int val, int reg));
+
+
+/* Set the callback for the RTE instruction.
+ * You must enable M68K_RTE_HAS_CALLBACK in m68kconf.h.
+ * The CPU calls this callback every time it encounters a RTE instruction.
+ * Default behavior: do nothing.
+ */
+void m68k_set_rte_instr_callback(void  (*callback)(void));
+
+
 /* Set the callback for informing of a large PC change.
  * You must enable M68K_MONITOR_PC in m68kconf.h.
  * The CPU calls this callback with the new PC value every time the PC changes

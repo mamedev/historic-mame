@@ -403,12 +403,12 @@ invw1 = 0;
 							ft *= invw1;
 #if (PER_PIXEL_LOD)
 							flod = invw1 * invw1 * lodbase1;
-							lod = lod_lookup[*(UINT32 *)&flod >> 16];
+							lod = lod_lookup[f2u(flod) >> 16];
 #endif
 						}
 #if (PER_PIXEL_LOD)
 						else
-							lod = lod_lookup[*(UINT32 *)&lodbase1 >> 16];
+							lod = lod_lookup[f2u(lodbase1) >> 16];
 							
 						/* clamp LOD */
 						lod += trex_lodbias[1];
@@ -748,12 +748,12 @@ invw1 = 0;
 						ft *= invw0;
 #if (PER_PIXEL_LOD)
 						flod = invw0 * invw0 * lodbase0;
-						lod = lod_lookup[*(UINT32 *)&flod >> 16];
+						lod = lod_lookup[f2u(flod) >> 16];
 #endif
 					}
 #if (PER_PIXEL_LOD)
 					else
-						lod = lod_lookup[*(UINT32 *)&lodbase0 >> 16];
+						lod = lod_lookup[f2u(lodbase0) >> 16];
 						
 					/* clamp LOD */
 					lod += trex_lodbias[0];

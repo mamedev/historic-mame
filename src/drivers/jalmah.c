@@ -4,13 +4,13 @@ MJ-8956 HW games (c) 1989 Jaleco / NMK
 
 driver by Angelo Salese, based on early work by David Haywood
 
-Similar to the NMK16 board.
+Similar to the NMK16 board,but without sprites.
 
-TODO:
+TODO / Notes:
 -I think that the 0xf0000-0xf03ff area isn't work ram,because:
  -The first version of the MCU programs (daireika/mjzoomin) jump in that area.
-  Almost surely the MCU shares that area and upload a 68k code,also because of the strange
-  RAM checks that follows...
+  Almost surely the MCU shares that area and upload a 68k code;the program seems the same
+  for all the games...
  -input ports located there.Program doesn't check these locations at P.O.S.T. and doesn't
   give any work ram error.
 -All the games have a MCU protection which involves RAM areas $f0447(for kakumei/kakumei2)
@@ -19,19 +19,26 @@ TODO:
 
 -In all the games there are square gaps during gameplay.
 
--Add urashima (nmk16.c),it runs on the first version of this board.
-
 -Fix kakumei2 GFX3 rom region,maybe bad dump (half length)?
 
--Fix kakumei & suchipi priorities.
+-Fully understand priorities...
+
+-Rename the tilemaps according to mjzoomin test mode.
+
+-Fix daireika work ram error...
 
 -Some video banking issues in suchipi.
 
 -Fix sound banking.
 
--There could be timing issues,caused by MCU simulation at $80004.
+-Fix the dip-switches in the first version of this board.
 
--Merge this with NMK16 driver.
+-$f000e seems bogus,maybe the program snippets can modify this value,or the MCU itself can
+do that...
+
+-$f030e is a mirror for $f000e in urashima.
+
+-There could be timing issues caused by MCU simulation at $80004.
 
 ============================================================================================
 Debug cheats:
@@ -93,13 +100,14 @@ OSC:	12.000MHz
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *tx_tilemap, *fg_tilemap,*md_tilemap,*bg_tilemap;
+static struct tilemap *tx_tilemap, *fg_tilemap,*md_tilemap,*bg_tilemap,*backbg_tilemap,*backfg_tilemap,*backmd_tilemap,*backtx_tilemap;
 data16_t *jm_txvideoram, *jm_fgvideoram,*jm_mdvideoram,*jm_bgvideoram;
 data16_t *jm_regs,*jm_ram;
 data16_t *jm_scrollram,*jm_priorityram;
-static UINT16 fgbank;
+static UINT16 fgbank,pri;
 /*
-MCU program number,different for each game:
+MCU program number,different for each game(n.b. the numbering scheme is *mine*,do not
+take it seriously...):
 0x11 = daireika
 0x12 = urashima
 0x13 = mjzoomin
@@ -169,12 +177,21 @@ static void jm_get_md_tile_info(int tile_index)
 VIDEO_START( jalmah )
 {
 	bg_tilemap = tilemap_create(jm_get_bg_tile_info,bg_scan,TILEMAP_TRANSPARENT,16,16,256,32);
-	fg_tilemap = tilemap_create(jm_get_fg_tile_info,bg_scan,TILEMAP_OPAQUE,16,16,256,32);
+	fg_tilemap = tilemap_create(jm_get_fg_tile_info,bg_scan,TILEMAP_TRANSPARENT,16,16,256,32);
 	tx_tilemap = tilemap_create(jm_get_tx_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,256,32);
 	md_tilemap = tilemap_create(jm_get_md_tile_info,bg_scan,TILEMAP_TRANSPARENT,16,16,256,32);
+	/*OPAQUE versions*/
+	backbg_tilemap = tilemap_create(jm_get_bg_tile_info,bg_scan,TILEMAP_OPAQUE,16,16,256,32);
+	backfg_tilemap = tilemap_create(jm_get_fg_tile_info,bg_scan,TILEMAP_OPAQUE,16,16,256,32);
+	backtx_tilemap = tilemap_create(jm_get_tx_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,8,8,256,32);
+	backmd_tilemap = tilemap_create(jm_get_md_tile_info,bg_scan,TILEMAP_OPAQUE,16,16,256,32);
 
 	if(!bg_tilemap || !tx_tilemap || !fg_tilemap || !md_tilemap)
 		return 1;
+
+	if(!backbg_tilemap || !backtx_tilemap || !backfg_tilemap || !backmd_tilemap)
+		return 1;
+
 
 	jm_scrollram = auto_malloc(0x80);
 	jm_priorityram = auto_malloc(0x40);
@@ -183,15 +200,20 @@ VIDEO_START( jalmah )
 		return 1;
 
 	tilemap_set_transparent_pen(bg_tilemap,15);
-//	tilemap_set_transparent_pen(fg_tilemap,15);
+	tilemap_set_transparent_pen(fg_tilemap,15);
 	tilemap_set_transparent_pen(tx_tilemap,15);
 	tilemap_set_transparent_pen(md_tilemap,15);
 
 	return 0;
 }
 
+#define jalmah_tilemap_draw(_tilemap_) \
+	tilemap_draw(bitmap,cliprect,(opaque & 1) ? _tilemap_ : back##_tilemap_,0,0); \
+	if(!opaque) { opaque = 1; }
+
 VIDEO_UPDATE( jalmah )
 {
+	int opaque = 0;
 	tilemap_set_scrollx( fg_tilemap, 0, jm_scrollram[0] );
 	tilemap_set_scrollx( md_tilemap, 0, jm_scrollram[1] );
 	tilemap_set_scrollx( bg_tilemap, 0, jm_scrollram[2] );
@@ -200,13 +222,36 @@ VIDEO_UPDATE( jalmah )
 	tilemap_set_scrolly( fg_tilemap, 0, jm_scrollram[5] );
 	tilemap_set_scrolly( bg_tilemap, 0, jm_scrollram[6] );
 	tilemap_set_scrolly( tx_tilemap, 0, jm_scrollram[7] );
+	tilemap_set_scrollx( backfg_tilemap, 0, jm_scrollram[0] );
+	tilemap_set_scrollx( backmd_tilemap, 0, jm_scrollram[1] );
+	tilemap_set_scrollx( backbg_tilemap, 0, jm_scrollram[2] );
+	tilemap_set_scrollx( backtx_tilemap, 0, jm_scrollram[3] );
+	tilemap_set_scrolly( backmd_tilemap, 0, jm_scrollram[4] );
+	tilemap_set_scrolly( backfg_tilemap, 0, jm_scrollram[5] );
+	tilemap_set_scrolly( backbg_tilemap, 0, jm_scrollram[6] );
+	tilemap_set_scrolly( backtx_tilemap, 0, jm_scrollram[7] );
 
-//	usrintf_showmessage("%04x %04x %04x %04x %04x",jm_priorityram[0],jm_priorityram[1],jm_priorityram[2],jm_priorityram[3],fgbank);
+	//usrintf_showmessage("%04x %04x %04x %04x %04x %04x",jm_priorityram[0],jm_priorityram[1],jm_priorityram[2],jm_priorityram[3],fgbank,pri);
 
-	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
-	tilemap_draw(bitmap,cliprect,md_tilemap,0,0);
-	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
-	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+	/*
+	Argh,priorities are going to make me crazy,fixing one thing will break another,
+	probably I'm missing something but what?
+	|-----|----------------|
+	|pri n|0123456789abcdef|
+	|-----|----------------|
+	|bg   |101x1x0xx1xxx2xx|
+	|fg   |010x0x3xx0xxx0xx|
+	|tx   |232x3x1xx3xxx3xx|
+	|md   |323x2x2xx2xxx1xx|
+	|----------------------|
+	*/
+	if(!(pri & 2)) { jalmah_tilemap_draw(fg_tilemap); }
+	if(!(pri & 1)) { jalmah_tilemap_draw(bg_tilemap); }
+	if(!(pri & 4)) { jalmah_tilemap_draw(tx_tilemap); }
+	jalmah_tilemap_draw(md_tilemap);
+	if(pri & 2) { jalmah_tilemap_draw(fg_tilemap); }
+	if(pri & 1) { jalmah_tilemap_draw(bg_tilemap); }
+	if(pri & 4) { jalmah_tilemap_draw(tx_tilemap); }
 }
 
 
@@ -220,6 +265,7 @@ WRITE16_HANDLER( jm_fgvideoram_w )
 	{
 		jm_fgvideoram[offset] = newword;
 		tilemap_mark_tile_dirty(fg_tilemap,offset);
+		tilemap_mark_tile_dirty(backfg_tilemap,offset);
 	}
 }
 
@@ -233,6 +279,7 @@ WRITE16_HANDLER( jm_mdvideoram_w )
 	{
 		jm_mdvideoram[offset] = newword;
 		tilemap_mark_tile_dirty(md_tilemap,offset);
+		tilemap_mark_tile_dirty(backmd_tilemap,offset);
 	}
 }
 
@@ -246,6 +293,7 @@ WRITE16_HANDLER( jm_txvideoram_w )
 	{
 		jm_txvideoram[offset] = newword;
 		tilemap_mark_tile_dirty(tx_tilemap,offset);
+		tilemap_mark_tile_dirty(backtx_tilemap,offset);
 	}
 }
 
@@ -259,6 +307,8 @@ WRITE16_HANDLER( jm_bgvideoram_w )
 	{
 		jm_bgvideoram[offset] = newword;
 		tilemap_mark_tile_dirty(bg_tilemap,offset);
+		tilemap_mark_tile_dirty(backbg_tilemap,offset);
+
 	}
 }
 
@@ -266,23 +316,20 @@ WRITE16_HANDLER( jalmah_tilebank_w )
 {
 	/*
 	 xxxx ---- fg bank (used by suchipi)
-	 ---- xxxx ? but used
+	 ---- xxxx Priority number (trusted,see mjzoomin)
 	*/
 	//usrintf_showmessage("Write to tilebank %02x",data);
 	if (ACCESSING_LSB)
 	{
-		if (fgbank != (data & 0xff))
+		if (fgbank != ((data & 0xf0) >> 4))
 		{
 			fgbank = (data & 0xf0) >> 4;
 			tilemap_mark_all_tiles_dirty(fg_tilemap);
+			tilemap_mark_all_tiles_dirty(backfg_tilemap);
 		}
+		if (pri != (data & 0x0f))
+			pri = data & 0x0f;
 	}
-}
-
-WRITE16_HANDLER( jalmah_unk_w )
-{
-	/*---- ----x ?*/
-//	usrintf_showmessage("%04x",data);
 }
 
 #define MCU_READ(_number_,_bit_,_offset_,_retval_)\
@@ -293,11 +340,31 @@ static READ16_HANDLER( jalmah_reg_r )
 {
 	switch(offset)
 	{
+		case (0x000/2):
+			return input_port_2_word_r(0,0);
+		case (0x002/2):
+			return input_port_3_word_r(0,0);
+		case (0x004/2):
+			return input_port_4_word_r(0,0);
+		case (0x006/2):
+			return input_port_5_word_r(0,0);
+		case (0x008/2):
+			return input_port_6_word_r(0,0);
+		case (0x00a/2):
+			return input_port_7_word_r(0,0);
+		case (0x00e/2):
+			if(MJZOOMIN_MCU)
+				return 1;
+			else
+				return jm_regs[offset];
 		case (0x200/2):
+			if(!DAIREIKA_MCU)
 			return input_port_2_word_r(0,0);
 		case (0x202/2):
+			if(!DAIREIKA_MCU)
 			return input_port_3_word_r(0,0);
 		case (0x204/2):
+			if(!DAIREIKA_MCU)
 			return input_port_4_word_r(0,0);
 		/*kakumei 1/2 protection work-around*/
 		case (0x447/2):
@@ -383,7 +450,11 @@ static WRITE16_HANDLER( jalmah_scroll_w )
 {
 	switch(offset+(0x10))
 	{
-		/*Probably these 4 are just video regs*/
+		/*These 4 are just video regs,see mjzoomin test*/
+		/*
+			---x ---- Always on in suchipi,8x8 tiles switch?
+			---- --xx RANGE(?)
+		*/
 		case (0x24/2): jm_priorityram[0] = data; break;
 		case (0x2c/2): jm_priorityram[1] = data; break;
 		case (0x34/2): jm_priorityram[2] = data; break;
@@ -397,16 +468,35 @@ static WRITE16_HANDLER( jalmah_scroll_w )
 		case (0x2a/2): jm_scrollram[4] = data; break;
 		case (0x32/2): jm_scrollram[6] = data; break;
 		case (0x3a/2): jm_scrollram[7] = data; break;
+		default:    usrintf_showmessage("[%04x]<-%04x",offset+0x10,data);
 	}
 }
 
-/*fix this,commented out because current implementation is wrong. */
+static UINT8 oki_rom,oki_bank;
+
+WRITE16_HANDLER( jalmah_okirom_w )
+{
+	if(ACCESSING_LSB)
+		oki_rom = data & 1;
+
+	OKIM6295_set_bank_base(0, (oki_rom * 0x80000) + (oki_bank * 0x20000));
+}
+
 static WRITE16_HANDLER( jalmah_okibank_w )
 {
-//	usrintf_showmessage("Sound bank = %04x",data);
+	if(ACCESSING_LSB)
+		oki_bank = data & 3;
 
-	//if(ACCESSING_LSB)
-	//	OKIM6295_set_bank_base(0, data * 0x20000);
+	OKIM6295_set_bank_base(0, (oki_rom * 0x80000) + (oki_bank * 0x20000));
+}
+
+
+WRITE16_HANDLER( jalmah_flip_screen_w )
+{
+	/*---- ----x flip screen*/
+	flip_screen_set(data & 1);
+
+//	usrintf_showmessage("%04x",data);
 }
 
 static ADDRESS_MAP_START( jalmah, ADDRESS_SPACE_PROGRAM, 16 )
@@ -414,24 +504,183 @@ static ADDRESS_MAP_START( jalmah, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x080000, 0x080001) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x080002, 0x080003) AM_READ(input_port_1_word_r)
 	//       0x080004, 0x080005  MCU read,different for each game
+	AM_RANGE(0x080010, 0x080011) AM_WRITE(jalmah_flip_screen_w)
 	//       0x080012, 0x080013  MCU write related,same for each game
 	//       0x080014, 0x080015  MCU write related,same for each game
 	AM_RANGE(0x080016, 0x080017) AM_WRITE(jalmah_tilebank_w)
 	AM_RANGE(0x080018, 0x080019) AM_WRITE(jalmah_okibank_w)
-	AM_RANGE(0x08001a, 0x08001b) AM_WRITE(jalmah_unk_w)
+	AM_RANGE(0x08001a, 0x08001b) AM_WRITE(jalmah_okirom_w)
 	AM_RANGE(0x080020, 0x08003f) AM_WRITE(jalmah_scroll_w)
 	AM_RANGE(0x080040, 0x080041) AM_READWRITE(OKIM6295_status_0_lsb_r, OKIM6295_data_0_lsb_w)
-	//       0x084000, 0x084001  write,unknown meaning
+	//       0x084000, 0x084001  ?
 	AM_RANGE(0x088000, 0x0887ff) AM_READWRITE(MRA16_RAM, paletteram16_RRRRGGGGBBBBRGBx_word_w) AM_BASE(&paletteram16) /* Palette RAM */
 	AM_RANGE(0x090000, 0x093fff) AM_READWRITE(MRA16_RAM, jm_fgvideoram_w) AM_BASE(&jm_fgvideoram)
 	AM_RANGE(0x094000, 0x097fff) AM_READWRITE(MRA16_RAM, jm_mdvideoram_w) AM_BASE(&jm_mdvideoram)
 	AM_RANGE(0x098000, 0x09bfff) AM_READWRITE(MRA16_RAM, jm_bgvideoram_w) AM_BASE(&jm_bgvideoram)
 	AM_RANGE(0x09c000, 0x09ffff) AM_READWRITE(MRA16_RAM, jm_txvideoram_w) AM_BASE(&jm_txvideoram)
-	AM_RANGE(0x0f0000, 0x0f07ff) AM_READ(jalmah_reg_r) AM_WRITE(jalmah_reg_w) AM_BASE(&jm_regs)/*shared with MCU*/
+	AM_RANGE(0x0f0000, 0x0f07ff) AM_RAM AM_READ(jalmah_reg_r) AM_WRITE(jalmah_reg_w) AM_BASE(&jm_regs)/*shared with MCU*/
 	AM_RANGE(0x0f0800, 0x0fffff) AM_RAM AM_BASE(&jm_ram)
 ADDRESS_MAP_END
 
 INPUT_PORTS_START( jalmah )
+	/*System port*/
+	PORT_START
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	/*Dip-SW port*/
+	PORT_START
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_SERVICE( 0x0004, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0700, 0x0700, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0300, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0700, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0600, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0500, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0000, "1 Coin / 99 Credits" )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	/*Mahjong Panel ports*/
+	PORT_START
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 START") 	PORT_CODE(KEYCODE_1)
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 RON")   	PORT_CODE(KEYCODE_Z)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 KAN")   	PORT_CODE(KEYCODE_LCONTROL)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 REACH") 	PORT_CODE(KEYCODE_LSHIFT)
+	PORT_BIT( 0xe9fb, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 FF")  	PORT_CODE(KEYCODE_3) //? seems a button,affects continue countdown
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 CHI") 	PORT_CODE(KEYCODE_SPACE)
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 M")   	PORT_CODE(KEYCODE_M)
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 PON") 	PORT_CODE(KEYCODE_LALT)
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 N")   	PORT_CODE(KEYCODE_N)
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 K")   	PORT_CODE(KEYCODE_K)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 I")   	PORT_CODE(KEYCODE_I)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 L")   	PORT_CODE(KEYCODE_L)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 J")		PORT_CODE(KEYCODE_J)
+	PORT_BIT( 0xe1e0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 G")   	PORT_CODE(KEYCODE_G)
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 E")   	PORT_CODE(KEYCODE_E)
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 H")   	PORT_CODE(KEYCODE_H)
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 F")		PORT_CODE(KEYCODE_F)
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 C")		PORT_CODE(KEYCODE_C)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 A")		PORT_CODE(KEYCODE_A)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 D")		PORT_CODE(KEYCODE_D)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 B")		PORT_CODE(KEYCODE_B)
+	PORT_BIT( 0xe1e1, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2 START") 	PORT_CODE(KEYCODE_2)
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2 RON")   	PORT_CODE(CODE_NONE)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2 KAN")   	PORT_CODE(CODE_NONE)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2 REACH") 	PORT_CODE(CODE_NONE)
+	PORT_BIT( 0xe9fb, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2 FF")  	PORT_CODE(KEYCODE_4) //? seems a button,affects continue countdown
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2 CHI") 	PORT_CODE(CODE_NONE)
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2 M")   	PORT_CODE(CODE_NONE)
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2 PON") 	PORT_CODE(CODE_NONE)
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2 N")   	PORT_CODE(CODE_NONE)
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2 K")   	PORT_CODE(CODE_NONE)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2 I")   	PORT_CODE(CODE_NONE)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2 L")   	PORT_CODE(CODE_NONE)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2 J")		PORT_CODE(CODE_NONE)
+	PORT_BIT( 0xe1e0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2 G")   	PORT_CODE(CODE_NONE)
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2 E")   	PORT_CODE(CODE_NONE)
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2 H")   	PORT_CODE(CODE_NONE)
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2 F")		PORT_CODE(CODE_NONE)
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2 C")		PORT_CODE(CODE_NONE)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2 A")		PORT_CODE(CODE_NONE)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2 D")		PORT_CODE(CODE_NONE)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2 B")		PORT_CODE(CODE_NONE)
+	PORT_BIT( 0xe1e1, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( jalmah2 )
 	/*System port*/
 	PORT_START
 	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
@@ -605,7 +854,7 @@ static struct OKIM6295interface m6295_interface =
 };
 
 static MACHINE_DRIVER_START( jalmah )
-	MDRV_CPU_ADD_TAG("main" , M68000, 12000000/2)
+	MDRV_CPU_ADD_TAG("main" , M68000, 8000000)
 	MDRV_CPU_PROGRAM_MAP(jalmah,0)
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
@@ -625,6 +874,39 @@ static MACHINE_DRIVER_START( jalmah )
 
 	MDRV_SOUND_ADD(OKIM6295, m6295_interface)
 MACHINE_DRIVER_END
+
+/*
+
+Urashima Mahjong
+(c) 1989 UPL
+
+*/
+
+ROM_START ( urashima )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )		/* 68000 code */
+	ROM_LOAD16_BYTE( "um-2.15d",  0x00000, 0x20000, CRC(a90a47e3) SHA1(2f912001e9177cce8c3795f3d299115b80fdca4e) )
+	ROM_LOAD16_BYTE( "um-1.15c",  0x00001, 0x20000, CRC(5f5c8f39) SHA1(cef663965c3112f87788d6a871e609c0b10ef9a2) )
+
+	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "um-5.22j",		0x000000, 0x020000, CRC(991776a2) SHA1(56740553d7d26aaeb9bec8557727030950bb01f7) )	/* 8x8 tiles */
+
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE ) /* 16x16 Tiles */
+
+	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE ) /* Maybe there are no Sprites? */
+	ROM_LOAD( "um-6.2l",	0x000000, 0x080000, CRC(076be5b5) SHA1(77444025f149a960137d3c79abecf9b30defa341) )
+
+	ROM_REGION( 0x80000, REGION_GFX4, ROMREGION_DISPOSE ) /* BG3 */
+	ROM_LOAD( "um-7.4l",	0x000000, 0x080000, CRC(d2a68cfb) SHA1(eb6cb1fad306b697b2035a31ad48e8996722a032) )
+
+	ROM_REGION( 0x0240, REGION_PROMS, 0 )
+	ROM_LOAD( "um-10.2b",      0x0000, 0x0100, CRC(cfdbb86c) SHA1(588822f6308a860937349c9106c2b4b1a75823ec) )	/* unknown */
+	ROM_LOAD( "um-11.2c",      0x0100, 0x0100, CRC(ff5660cf) SHA1(a4635dcf9d6dd637ea4f36f1ad233db0bd039731) )	/* unknown */
+	ROM_LOAD( "um-12.20c",     0x0200, 0x0020, CRC(bdb66b02) SHA1(8755244de638d7e835e35e08c62b0612958e6ca5) )	/* unknown */
+	ROM_LOAD( "um-13.10l",     0x0220, 0x0020, CRC(4ce07ec0) SHA1(5f5744ddc7f258307f036fde4c0a8e6271b2d1f9) )	/* unknown */
+
+	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "um-3.22c",		0x000000, 0x080000, CRC(9fd8c8fa) SHA1(0346f74c03a4daa7a84b64c9edf0e54297c82fd9) )
+ROM_END
 
 /*
 
@@ -682,11 +964,11 @@ ROM_START( mjzoomin )
 	ROM_REGION( 0x20000, REGION_GFX1, 0 ) /* BG0 */
 	ROM_LOAD( "zoomin14.bin", 0x00000, 0x20000, CRC(4e32aa45) SHA1(450a3449ca8b4f0dfe8b62cceaee9366eaf3dc3d) )
 
-	ROM_REGION( 0x20000, REGION_GFX2, 0 ) /* BG1 */
-	ROM_LOAD( "zoomin13.bin", 0x00000, 0x20000, CRC(888d79fe) SHA1(eb9671d4c7608edd1231dc0cae47aab2430cbd66) )
-
-	ROM_REGION( 0x40000, REGION_GFX3, 0 ) /* BG2 */
+	ROM_REGION( 0x40000, REGION_GFX2, 0 ) /* BG1 */
 	ROM_LOAD( "zoomin12.bin", 0x00000, 0x40000, CRC(b0b94554) SHA1(10490b7475810910140ce075e62f604b914e5511) )
+
+	ROM_REGION( 0x20000, REGION_GFX3, 0 ) /* BG2 */
+	ROM_LOAD( "zoomin13.bin", 0x00000, 0x20000, CRC(888d79fe) SHA1(eb9671d4c7608edd1231dc0cae47aab2430cbd66) )
 
 	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* BG3 */
 	ROM_LOAD( "zoomin10.bin", 0x00000, 0x80000, CRC(40aec575) SHA1(ef7a3c7a94523c5967ab774936b873c9629e0e44) )
@@ -848,6 +1130,28 @@ MCU simulations
 
 ******************************************************************************************/
 
+static READ16_HANDLER( urashima_mcu_r )
+{
+	static int resp[] = {	0x99, 0xd8, 0x00,
+							0x2a, 0x6a, 0x00,
+							0x9c, 0xd8, 0x00,
+							0x2f, 0x6f, 0x00,
+							0x22, 0x62, 0x00,
+							0x25, 0x65, 0x00,
+							0x23, 0x63, 0x00,
+							0x3e, 0x7e, 0x00,
+							0x35, 0x75, 0x00,
+							0x21, 0x61, 0x00 };
+	int res;
+
+	res = resp[respcount++];
+	if (respcount >= sizeof(resp)/sizeof(resp[0])) respcount = 0;
+
+logerror("%04x: mcu_r %02x\n",activecpu_get_pc(),res);
+
+	return res;
+}
+
 static READ16_HANDLER( daireika_mcu_r )
 {
 	static int resp[] = {	0x99, 0xd8, 0x00,
@@ -856,7 +1160,10 @@ static READ16_HANDLER( daireika_mcu_r )
 							0x2f, 0x6f, 0x00,
 							0x22, 0x62, 0x00,
 							0x25, 0x65, 0x00,
-							0x23, 0x63, 0x00};
+							0x23, 0x63, 0x00,
+							0x3e, 0x7e, 0x00,
+							0x35, 0x75, 0x00,
+							0x21, 0x61, 0x00 };
 	int res;
 
 	res = resp[respcount++];
@@ -874,36 +1181,28 @@ static WRITE16_HANDLER( daireika_mcu_w )
 {
 	if(ACCESSING_LSB && data)
 	{
-		/*MCU program upload complete?Or just a vblank?*/
+		/*MCU program upload complete*/
 		jm_regs[0x000e/2] = 0x0005;
 
 		/*******************************************************
 		1st M68k code uploaded by the MCU.
-		(I'm currently just trying to get out of the protection
-		checks,probably there's something else too,palette ram
-		write for example...)
 		*******************************************************/
-		jm_regs[0x0140/2] = 0x33fc;
-		jm_regs[0x0142/2] = 0x0300;
-		jm_regs[0x0144/2] = 0x000f;
-		jm_regs[0x0146/2] = 0xff80;     //mov.w #$300,$fff80.l
-		jm_regs[0x0148/2] = 0x33fc;
-		jm_regs[0x014a/2] = 0x000f;
-		jm_regs[0x014c/2] = 0x000f;
-		jm_regs[0x014e/2] = 0xff7e;		//mov.w #$(>0x000e),$fff7e.l
-		jm_regs[0x0150/2] = 0x33fc;
-		jm_regs[0x0152/2] = 0x0200;
-		jm_regs[0x0154/2] = 0x000f;
-		jm_regs[0x0156/2] = 0xfff8;     //mov.w #$200,$ffff8.l
-		jm_regs[0x0158/2] = 0x33fc;
-		jm_regs[0x015a/2] = 0xfebe;
-		jm_regs[0x015c/2] = 0x000f;
-		jm_regs[0x015e/2] = 0xff86;     //mov.w #$febe,$fff86.l //stack_number
-		jm_regs[0x0160/2] = 0x33fc;
-		jm_regs[0x0162/2] = 0x000f;
-		jm_regs[0x0164/2] = 0x000f;
-		jm_regs[0x0166/2] = 0xff84;     //mov.w #$000f,$fff84.l //stack_number
-		jm_regs[0x0168/2] = 0x4e75; 	//rts
+		jm_regs[0x0140/2] = 0x4e75; 	//rts
+		/*******************************************************
+		2nd M68k code uploaded by the MCU.
+		*******************************************************/
+		jm_regs[0x0020/2] = 0x4e75; 	//rts
+
+		/*******************************************************
+		3rd M68k code uploaded by the MCU.
+		see mjzoomin_mcu_w
+		*******************************************************/
+		jm_regs[0x00c6/2] = 0xd0fc;
+		jm_regs[0x00c8/2] = 0x0060;//adda.w $60,A0
+		jm_regs[0x00ca/2] = 0x32d8;
+		jm_regs[0x00cc/2] = 0x51c9;//move.w A0,A1
+		jm_regs[0x00ce/2] = 0xfffc;//dbra D1,f00ca
+		jm_regs[0x00d0/2] = 0x4e75;//rts
 	}
 }
 
@@ -916,7 +1215,8 @@ static READ16_HANDLER( mjzoomin_mcu_r )
 							0x22, 0x62, 0x00,
 							0x25, 0x65, 0x00,
 							0x35, 0x75, 0x00,
-							0x36, 0x36, 0x00 };
+							0x36, 0x36, 0x00,
+							0x21, 0x61, 0x00 };
 	int res;
 
 	res = resp[respcount++];
@@ -925,6 +1225,34 @@ static READ16_HANDLER( mjzoomin_mcu_r )
 	logerror("%04x: mcu_r %02x\n",activecpu_get_pc(),res);
 
 	return res;
+}
+
+/*
+I don't know if this is used for MCU write,the following is just a guess.
+*/
+static WRITE16_HANDLER( mjzoomin_mcu_w )
+{
+	if(ACCESSING_LSB && data)
+	{
+		/*******************************************************
+		1st M68k code uploaded by the MCU(Service Mode PC=2a56).
+		Program passes some parameters before entering into the sub-routine (jsr)
+		D1 = 0xf
+		A0 = 1026e
+		A1 = 88600
+		Note that adda.w $60,A0 is a guess of mine...
+		*******************************************************/
+		jm_regs[0x00c6/2] = 0xd0fc;
+		jm_regs[0x00c8/2] = 0x0060;//adda.w $60,A0
+		jm_regs[0x00ca/2] = 0x32d8;
+		jm_regs[0x00cc/2] = 0x51c9;//move.w A0,A1
+		jm_regs[0x00ce/2] = 0xfffc;//dbra D1,f00ca
+		jm_regs[0x00d0/2] = 0x4e75;//rts
+		/*******************************************************
+		2nd M68k code uploaded by the MCU.
+		*******************************************************/
+		jm_regs[0x0020/2] = 0x4e75;//rts
+	}
 }
 
 static READ16_HANDLER( kakumei_mcu_r )
@@ -969,29 +1297,34 @@ static READ16_HANDLER( suchipi_mcu_r )
 	return res;
 }
 
+static DRIVER_INIT( urashima )
+{
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x80004, 0x80005, 0, 0, urashima_mcu_r );
+	//memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x80012, 0x80013, 0, 0, daireika_mcu_w );
+	mcu_prg = 0x12;
+}
 
 static DRIVER_INIT( daireika )
 {
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x80004, 0x80005, 0, 0, daireika_mcu_r );
 	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x80012, 0x80013, 0, 0, daireika_mcu_w );
-	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xf0000, 0xf03ff, 0, 0, MRA16_RAM );
-	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xf0000, 0xf03ff, 0, 0, MWA16_RAM );
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xf0140, 0xf0141, 0, 0, MRA16_RAM );
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xf0140, 0xf0141, 0, 0, MWA16_RAM );
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xf0020, 0xf0021, 0, 0, MRA16_RAM );
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xf0020, 0xf0021, 0, 0, MWA16_RAM );
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xf00c6, 0xf00d1, 0, 0, MRA16_RAM );
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xf00c6, 0xf00d1, 0, 0, MWA16_RAM );
 	mcu_prg = 0x11;
 }
 
 static DRIVER_INIT( mjzoomin )
 {
-	UINT16 *ROM = (data16_t *)memory_region(REGION_CPU1);
-
-	/*temp patch,program jumps to a RAM address???*/
-	ROM[0x2a5c/2] = 0x4e71;
-	ROM[0x2a5e/2] = 0x4e71;
-	ROM[0x2a60/2] = 0x4e71;
-	ROM[0x0a02/2] = 0x4e71;
-	ROM[0x0a04/2] = 0x4e71;
-	ROM[0x0a06/2] = 0x4e71;
-
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x80004, 0x80005, 0, 0, mjzoomin_mcu_r );
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x80012, 0x80013, 0, 0, mjzoomin_mcu_w );
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xf00c6, 0xf00d1, 0, 0, MRA16_RAM );
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xf00c6, 0xf00d1, 0, 0, MWA16_RAM );
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xf0020, 0xf0021, 0, 0, MRA16_RAM );
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xf0020, 0xf0021, 0, 0, MWA16_RAM );
 	mcu_prg = 0x13;
 }
 
@@ -1014,14 +1347,14 @@ static DRIVER_INIT( suchipi )
 }
 
 /*First version of the MCU,not yet working*/
-GAMEX( 1989, daireika, 0, jalmah,	jalmah, daireika, ROT0, "Jaleco / NMK", "Mahjong Daireikai",			      GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-//urashima
-GAMEX( 1990, mjzoomin, 0, jalmah,   jalmah, mjzoomin, ROT0, "Jaleco",       "Mahjong Channel Zoom In",            GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1989, daireika, 0, jalmah, jalmah, daireika, ROT0, "Jaleco / NMK", "Mahjong Daireikai",			        GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1989, urashima, 0, jalmah, jalmah, urashima, ROT0, "UPL",	      "Urashima Mahjong", 					GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1990, mjzoomin, 0, jalmah, jalmah, mjzoomin, ROT0, "Jaleco",       "Mahjong Channel Zoom In",            GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 
 /*Second version of the MCU,protection almost beaten*/
 /*Hangs when the CPU is about to reach/ron*/
-GAMEX( 1990, kakumei,  0, jalmah, jalmah, kakumei,  ROT0, "Jaleco",       "Mahjong Kakumei",                      GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1990, kakumei,  0, jalmah, jalmah2, kakumei,  ROT0, "Jaleco",       "Mahjong Kakumei",                      GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 /*The continue counter is too fast,probably the program reads a button pressed*/
-GAMEX( 1992, kakumei2, 0, jalmah, jalmah, kakumei2, ROT0, "Jaleco",       "Mahjong Kakumei 2 - Princess League",  GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1992, kakumei2, 0, jalmah, jalmah2, kakumei2, ROT0, "Jaleco",       "Mahjong Kakumei 2 - Princess League",  GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS )
 /*Can't play with the cards when you win,and sometimes when there are multiple CHI/PON/KAN decisions and the game waits for something,maybe is waiting for a button to be pressed or a RAM address to be changed...*/
-GAMEX( 1993, suchipi,  0, jalmah, jalmah, suchipi,  ROT0, "Jaleco",       "Idol Janshi Su-Chi-Pi Special",        GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1993, suchipi,  0, jalmah, jalmah2, suchipi,  ROT0, "Jaleco",       "Idol Janshi Su-Chi-Pi Special",        GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )

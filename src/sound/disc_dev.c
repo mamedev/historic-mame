@@ -1,19 +1,19 @@
-/************************************************************************/
-/*                                                                      */
-/*  MAME - Discrete sound system emulation library                      */
-/*                                                                      */
-/*  Written by Keith Wilkins (mame@dysfunction.demon.co.uk)             */
-/*                                                                      */
-/*  (c) K.Wilkins 2000                                                  */
-/*  (c) D.Renaud 2003-2004                                              */
-/*                                                                      */
-/************************************************************************/
-/*                                                                      */
-/* DSD_555_ASTBL         - NE555 Simulation code                        */
-/* DSD_555_CC            - NE555 Constant Current VCO                   */
-/* DSD_566               - NE566 Simulation code                        */
-/*                                                                      */
-/************************************************************************/
+/************************************************************************
+ *
+ *  MAME - Discrete sound system emulation library
+ *
+ *  Written by Keith Wilkins (mame@dysfunction.demon.co.uk)
+ *
+ *  (c) K.Wilkins 2000
+ *  (c) D.Renaud 2003-2004
+ *
+ ***********************************************************************
+ *
+ * DSD_555_ASTBL         - NE555 Simulation code
+ * DSD_555_CC            - NE555 Constant Current VCO
+ * DSD_566               - NE566 Simulation code
+ *
+ ************************************************************************/
 
 struct dsd_555_astbl_context
 {
@@ -50,20 +50,20 @@ struct dsd_566_context
 
 
 
-/************************************************************************/
-/*                                                                      */
-/* DSD_555_ASTBL - Usage of node_description values for 555 function    */
-/*                                                                      */
-/* input[0]    - Reset value                                            */
-/* input[1]    - R1 value                                               */
-/* input[2]    - R2 value                                               */
-/* input[3]    - C value                                                */
-/* input[4]    - Control Voltage value                                  */
-/*                                                                      */
-/* also passed discrete_555_astbl_desc structure                        */
-/*                                                                      */
-/* Jan 2004, D Renaud.                                                  */
-/************************************************************************/
+/************************************************************************
+ *
+ * DSD_555_ASTBL - Usage of node_description values for 555 function
+ *
+ * input[0]    - Reset value
+ * input[1]    - R1 value
+ * input[2]    - R2 value
+ * input[3]    - C value
+ * input[4]    - Control Voltage value
+ *
+ * also passed discrete_555_astbl_desc structure
+ *
+ * Jan 2004, D Renaud.
+ ************************************************************************/
 #define DSD_555_ASTBL_RESET	!node->input[0]
 #define DSD_555_ASTBL_R1	node->input[1]
 #define DSD_555_ASTBL_R2	node->input[2]
@@ -213,22 +213,22 @@ void dsd_555_astbl_reset(struct node_description *node)
 }
 
 
-/************************************************************************/
-/*                                                                      */
-/* DSD_555_CC - Usage of node_description values                        */
-/*                                                                      */
-/* input[0]    - Reset input value                                      */
-/* input[1]    - Voltage input for Constant current source.             */
-/* input[2]    - R value to set CC current.                             */
-/* input[3]    - C value                                                */
-/* input[4]    - rBias value                                            */
-/* input[5]    - rGnd value                                             */
-/* input[6]    - rDischarge value                                       */
-/*                                                                      */
-/* also passed discrete_555_cc_desc structure                           */
-/*                                                                      */
-/* Mar 2004, D Renaud.                                                  */
-/************************************************************************/
+/************************************************************************
+ *
+ * DSD_555_CC - Usage of node_description values
+ *
+ * input[0]    - Reset input value
+ * input[1]    - Voltage input for Constant current source.
+ * input[2]    - R value to set CC current.
+ * input[3]    - C value
+ * input[4]    - rBias value
+ * input[5]    - rGnd value
+ * input[6]    - rDischarge value
+ *
+ * also passed discrete_555_cc_desc structure
+ *
+ * Mar 2004, D Renaud.
+ ************************************************************************/
 #define DSD_555_CC_RESET	!node->input[0]
 #define DSD_555_CC_VIN		node->input[1]
 #define DSD_555_CC_R		node->input[2]
@@ -371,7 +371,7 @@ void dsd_555_cc_step(struct node_description *node)
 						context->state[1] = (context->state[1] + 1) & 0x03;
 					}
 				}
-				else	// Immediate discharge. No change in dt. 
+				else	// Immediate discharge. No change in dt.
 				{
 					vC = info->trigger555;
 					context->flip_flop = 1;
@@ -389,7 +389,7 @@ void dsd_555_cc_step(struct node_description *node)
 					v = vB;
 					if (vC < viLimit) v += vi;
 					else if (context->type <= 3) v = viLimit;
-							
+
 					tRC = rC * DSD_555_CC_C;
 					vCnext = vC + ((v - vC) * (1.0 - exp(-(dt / tRC))));
 					dt = 0;
@@ -427,7 +427,7 @@ void dsd_555_cc_step(struct node_description *node)
 						context->state[1] = (context->state[1] + 1) & 0x03;
 					}
 				}
-				else	// Immediate discharge. No change in dt. 
+				else	// Immediate discharge. No change in dt.
 				{
 					vC = info->trigger555;
 					context->flip_flop = 1;
@@ -593,19 +593,19 @@ void dsd_555_cc_reset(struct node_description *node)
 }
 
 
-/************************************************************************/
-/*                                                                      */
-/* DSD_566 - Usage of node_description values                           */
-/*                                                                      */
-/* input[0]    - Enable input value                                     */
-/* input[1]    - Modulation Voltage                                     */
-/* input[2]    - R value                                                */
-/* input[3]    - C value                                                */
-/*                                                                      */
-/* also passed discrete_566_desc structure                              */
-/*                                                                      */
-/* Mar 2004, D Renaud.                                                  */
-/************************************************************************/
+/************************************************************************
+ *
+ * DSD_566 - Usage of node_description values
+ *
+ * input[0]    - Enable input value
+ * input[1]    - Modulation Voltage
+ * input[2]    - R value
+ * input[3]    - C value
+ *
+ * also passed discrete_566_desc structure
+ *
+ * Mar 2004, D Renaud.
+ ************************************************************************/
 #define DSD_566_ENABLE	node->input[0]
 #define DSD_566_VMOD	node->input[1]
 #define DSD_566_R	node->input[2]
@@ -736,7 +736,7 @@ void dsd_566_reset(struct node_description *node)
 	context->state[1] = 0;
 
 	/* The data sheets are crap on this IC.  I will have to get my hands on a chip
-	 * to make real measurements.  Until now this should work fine for 12V. */
+	 * to make real measurements.  For now this should work fine for 12V. */
 	context->thresholdHigh = context->vDiff / 2 + info->vNeg;
 	context->thresholdLow = context->thresholdHigh - (0.2 * context->vDiff);
 	context->vSqrHigh = info->vPlus - 0.6;

@@ -1649,7 +1649,7 @@ static void i8085_set_info(UINT32 state, union cpuinfo *info)
 		
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					I.irq_callback = info->irqcallback;		break;
-		case CPUINFO_PTR_I8085_SOD_CALLBACK:			I.sod_callback = (void (*)(int))info->p;break;
+		case CPUINFO_PTR_I8085_SOD_CALLBACK:			I.sod_callback = (void (*)(int))info->f;break;
 	}
 }
 

@@ -273,9 +273,11 @@ int run_game(int game)
 
 	begin_resource_tracking();
 
-	/* validity checks -- perform these in all builds now due to the number of incorrect submissions */
-	if (mame_validitychecks())
-		return 1;
+	/* validity checks -- the default is to perform these in all builds now
+	 * due to the number of incorrect submissions */
+	if (!options.skip_validitychecks)
+		if (mame_validitychecks())
+			return 1;
 
 	/* first give the machine a good cleaning */
 	memset(Machine, 0, sizeof(Machine));
@@ -870,15 +872,11 @@ static int init_game_options(void)
 	alpha_active = 0;
 	if (Machine->drv->video_attributes & VIDEO_RGB_DIRECT)
 	{
-		/* first pick a default */
+		/* pick a default */
 		if (Machine->drv->video_attributes & VIDEO_NEEDS_6BITS_PER_GUN)
 			Machine->color_depth = 32;
 		else
 			Machine->color_depth = 15;
-
-		/* now allow overrides */
-		if (options.color_depth == 15 || options.color_depth == 32)
-			Machine->color_depth = options.color_depth;
 
 		/* enable alpha for direct video modes */
 		alpha_active = 1;
@@ -989,18 +987,18 @@ static void scale_vectorgames(int gfx_width, int gfx_height, int *width, int *he
 	double x_scale, y_scale, scale;
 
 	/* compute the scale values */
-	x_scale = (double)gfx_width / (double)(*width);
-	y_scale = (double)gfx_height / (double)(*height);
-
+	x_scale = (double)gfx_width  / *width;
+	y_scale = (double)gfx_height / *height;
+	
 	/* pick the smaller scale factor */
 	scale = (x_scale < y_scale) ? x_scale : y_scale;
 
 	/* compute the new size */
-	*width = (int)((double)*width * scale);
-	*height = (int)((double)*height * scale);
+	*width  = *width  * scale + 0.5;
+	*height = *height * scale + 0.5;
 
 	/* round to the nearest 4 pixel value */
-	*width &= ~3;
+	*width  &= ~3;
 	*height &= ~3;
 }
 

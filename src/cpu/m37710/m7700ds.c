@@ -59,7 +59,7 @@ enum
   TYA ,  TYX ,  WAI ,  WDM ,  XBA ,  XCE ,  MPY ,  DIV ,  MPYS,  DIVS,  RLA ,
   EXTS, EXTZ ,  LDT ,  LDM ,  UNK ,  SEB ,  SEM ,  CLM ,  STB ,  LDB ,  ADCB ,
   SBCB, EORB ,  TBX ,  CMPB,  INB ,  DEB ,  TXB ,  TYB ,  LSRB,  ORB ,  CLB ,
-  BBC,   BBS,   TBY,   ANDB,  PUL ,  PSH ,  PLAB,  XAB ,  PHB ,  
+  BBC,   BBS,   TBY,   ANDB,  PUL ,  PSH ,  PLAB,  XAB ,  PHB
 };
 
 static const char* g_opnames[] =

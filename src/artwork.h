@@ -97,5 +97,11 @@ void artwork_show(const char *tag, int show);
 
 mame_file *artwork_load_artwork_file(const struct GameDriver **driver);
 
+/*
+ * Export some variables needed by OSD vector code in xmame.
+ */
+const struct rectangle *artwork_get_game_rect(void);
+int artwork_overlay_active(void);
+
 #endif /* ARTWORK_H */
 

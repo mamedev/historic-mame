@@ -205,7 +205,7 @@ MACHINE_INIT( simpsons )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	cpunum_set_info_ptr(0, CPUINFO_PTR_KONAMI_SETLINES_CALLBACK, (void *)simpsons_banking);
+	cpunum_set_info_fct(0, CPUINFO_PTR_KONAMI_SETLINES_CALLBACK, (genf *)simpsons_banking);
 
 	paletteram = &RAM[0x88000];
 	simpsons_xtraram = &RAM[0x89000];

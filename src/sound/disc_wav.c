@@ -1,27 +1,28 @@
-/************************************************************************/
-/*                                                                      */
-/*  MAME - Discrete sound system emulation library                      */
-/*                                                                      */
-/*  Written by Keith Wilkins (mame@esplexo.co.uk)                       */
-/*                                                                      */
-/*  (c) K.Wilkins 2000                                                  */
-/*                                                                      */
-/************************************************************************/
-/*                                                                      */
-/* DISCRETE_COUNTER      - External clock Binary Counter                */
-/* DISCRETE_COUNTER_FIX  - Fixed Frequency Binary Counter               */
-/* DSS_LFSR_NOISE        - Linear Feedback Shift Register Noise         */
-/* DSS_NOISE             - Noise Source - Random source                 */
-/* DSS_OP_AMP_OSC        - Op Amp oscillator circuits                   */
-/* DSS_SAWTOOTHWAVE      - Sawtooth waveform generator                  */
-/* DSS_SCHMITT_OSC       - Schmitt Feedback Oscillator                  */
-/* DSS_SINEWAVE          - Sinewave generator source code               */
-/* DSS_SQUAREWAVE        - Squarewave generator source code             */
-/* DSS_SQUAREWFIX        - Squarewave generator - fixed frequency       */
-/* DSS_SQUAREWAVE2       - Squarewave generator - by tOn/tOff           */
-/* DSS_TRIANGLEWAVE      - Triangle waveform generator                  */
-/*                                                                      */
-/************************************************************************/
+/************************************************************************
+ *
+ *  MAME - Discrete sound system emulation library
+ *
+ *  Written by Keith Wilkins (mame@esplexo.co.uk)
+ *
+ *  (c) K.Wilkins 2000
+ *
+ ************************************************************************
+ *
+ * DISCRETE_COUNTER      - External clock Binary Counter
+ * DISCRETE_COUNTER_FIX  - Fixed Frequency Binary Counter
+ * DSS_LFSR_NOISE        - Linear Feedback Shift Register Noise
+ * DSS_NOISE             - Noise Source - Random source
+ * DSS_NOTE              - Note/tone generator
+ * DSS_OP_AMP_OSC        - Op Amp oscillator circuits
+ * DSS_SAWTOOTHWAVE      - Sawtooth waveform generator
+ * DSS_SCHMITT_OSC       - Schmitt Feedback Oscillator
+ * DSS_SINEWAVE          - Sinewave generator source code
+ * DSS_SQUAREWAVE        - Squarewave generator source code
+ * DSS_SQUAREWFIX        - Squarewave generator - fixed frequency
+ * DSS_SQUAREWAVE2       - Squarewave generator - by tOn/tOff
+ * DSS_TRIANGLEWAVE      - Triangle waveform generator
+ *
+ ************************************************************************/
 
 struct dss_adsr_context
 {
@@ -51,6 +52,15 @@ struct dss_lfsr_context
 struct dss_noise_context
 {
 	double phase;
+};
+
+struct dss_note_context
+{
+	double	step;	// sample time
+	double	cycle;	// time for 1 cycle of the given frequency
+	double	tLeft;	// time not used up
+	int		max1;	// Max 1 Count stored as int for easy use.
+	int		count;	// current count
 };
 
 struct dss_op_amp_osc_context
@@ -113,20 +123,20 @@ struct dss_trianglewave_context
 };
 
 
-/************************************************************************/
-/*                                                                      */
-/* DISCRETE_COUNTER - External clock Binary Counter                     */
-/*                                                                      */
-/* input0    - Enable input value                                       */
-/* input1    - Reset input (active high)                                */
-/* input2    - Clock Input                                              */
-/* input3    - Max count                                                */
-/* input4    - Direction - 0=down, 1=up                                 */
-/* input5    - Reset Value                                              */
-/* input6    - Clock type (count on 0/1)                                */
-/*                                                                      */
-/* Jan 2004, D Renaud.                                                  */
-/************************************************************************/
+/************************************************************************
+ *
+ * DISCRETE_COUNTER - External clock Binary Counter
+ *
+ * input0    - Enable input value
+ * input1    - Reset input (active high)
+ * input2    - Clock Input
+ * input3    - Max count
+ * input4    - Direction - 0=down, 1=up
+ * input5    - Reset Value
+ * input6    - Clock type (count on 0/1)
+ *
+ * Jan 2004, D Renaud.
+ ************************************************************************/
 void dss_counter_step(struct node_description *node)
 {
 	struct dss_counter_context *context = node->context;
@@ -163,19 +173,19 @@ void dss_counter_reset(struct node_description *node)
 }
 
 
-/************************************************************************/
-/*                                                                      */
-/* DISCRETE_COUNTER_FIX - Fixed Frequency Binary Counter                */
-/*                                                                      */
-/* input0    - Enable input value                                       */
-/* input1    - Reset input (active high)                                */
-/* input2    - Frequency                                                */
-/* input3    - Max count                                                */
-/* input4    - Direction - 0=up, 1=down                                 */
-/* input5    - Reset Value                                              */
-/*                                                                      */
-/* Jan 2004, D Renaud.                                                  */
-/************************************************************************/
+/************************************************************************
+ *
+ * DISCRETE_COUNTER_FIX - Fixed Frequency Binary Counter
+ *
+ * input0    - Enable input value
+ * input1    - Reset input (active high)
+ * input2    - Frequency
+ * input3    - Max count
+ * input4    - Direction - 0=up, 1=down
+ * input5    - Reset Value
+ *
+ * Jan 2004, D Renaud.
+ ************************************************************************/
 void dss_counterfix_step(struct node_description *node)
 {
 	struct dss_counterfix_context *context = node->context;
@@ -216,18 +226,18 @@ void dss_counterfix_reset(struct node_description *node)
 }
 
 
-/************************************************************************/
-/*                                                                      */
-/* DSS_LFSR_NOISE - Usage of node_description values for LFSR noise gen */
-/*                                                                      */
-/* input0    - Enable input value                                       */
-/* input1    - Register reset                                           */
-/* input2    - Noise sample frequency                                   */
-/* input3    - Amplitude input value                                    */
-/* input4    - Input feed bit                                           */
-/* input5    - Bias                                                     */
-/*                                                                      */
-/************************************************************************/
+/************************************************************************
+ *
+ * DSS_LFSR_NOISE - Usage of node_description values for LFSR noise gen
+ *
+ * input0    - Enable input value
+ * input1    - Register reset
+ * input2    - Noise sample frequency
+ * input3    - Amplitude input value
+ * input4    - Input feed bit
+ * input5    - Bias
+ *
+ ************************************************************************/
 int	dss_lfsr_function(int myfunc,int in0,int in1,int bitmask)
 {
 	int retval;
@@ -272,7 +282,7 @@ int	dss_lfsr_function(int myfunc,int in0,int in1,int bitmask)
 			break;
 		case DISC_LFSR_REPLACE:
 			retval=in0&~in1;
-			retval=in0|in1;
+			retval=retval|in1;
 			break;
 		default:
 			discrete_log("dss_lfsr_function - Invalid function type passed");
@@ -350,6 +360,7 @@ void dss_lfsr_reset(struct node_description *node)
 {
 	const struct discrete_lfsr_desc *lfsr_desc = node->custom;
 	struct dss_lfsr_context *context = node->context;
+	int fb0,fb1,fbresult;
 
 	context->t = 0;
 	context->sampleStep = 1.0 / Machine->sample_rate;
@@ -357,7 +368,13 @@ void dss_lfsr_reset(struct node_description *node)
 
 	context->lfsr_reg=lfsr_desc->reset_value;
 
-	context->lfsr_reg=dss_lfsr_function(DISC_LFSR_REPLACE,0, (dss_lfsr_function(lfsr_desc->feedback_function0,0,0,0x01))<<(lfsr_desc->bitlength),((2<<(lfsr_desc->bitlength))-1));
+	/* Now get and store the new feedback result */
+	/* Fetch the feedback bits */
+	fb0=((context->lfsr_reg)>>(lfsr_desc->feedback_bitsel0))&0x01;
+	fb1=((context->lfsr_reg)>>(lfsr_desc->feedback_bitsel1))&0x01;
+	/* Now do the combo on them */
+	fbresult=dss_lfsr_function(lfsr_desc->feedback_function0,fb0,fb1,0x01);
+	context->lfsr_reg=dss_lfsr_function(DISC_LFSR_REPLACE,(context->lfsr_reg), fbresult<<(lfsr_desc->bitlength), ((2<<(lfsr_desc->bitlength))-1));
 
 	/* Now select and setup the output bit */
 	node->output=((context->lfsr_reg)>>(lfsr_desc->output_bit))&0x01;
@@ -372,16 +389,16 @@ void dss_lfsr_reset(struct node_description *node)
 }
 
 
-/************************************************************************/
-/*                                                                      */
-/* DSS_NOISE - Usage of node_description values for white nose generator*/
-/*                                                                      */
-/* input0    - Enable input value                                       */
-/* input1    - Noise sample frequency                                   */
-/* input2    - Amplitude input value                                    */
-/* input3    - DC Bias value                                            */
-/*                                                                      */
-/************************************************************************/
+/************************************************************************
+ *
+ * DSS_NOISE - Usage of node_description values for white nose generator
+ *
+ * input0    - Enable input value
+ * input1    - Noise sample frequency
+ * input2    - Amplitude input value
+ * input3    - DC Bias value
+ *
+ ************************************************************************/
 void dss_noise_step(struct node_description *node)
 {
 	struct dss_noise_context *context = node->context;
@@ -422,18 +439,83 @@ void dss_noise_reset(struct node_description *node)
 }
 
 
-/************************************************************************/
-/*                                                                      */
-/* DSS_OP_AMP_OSC - Op Amp Oscillators                                  */
-/*                                                                      */
-/* input0    - Enable input value                                       */
-/* input1    - vMod1 (if needed)                                        */
-/* input2    - vMod2 (if needed)                                        */
-/*                                                                      */
-/* also passed discrete_op_amp_osc_info structure                       */
-/*                                                                      */
-/* Mar 2004, D Renaud.                                                  */
-/************************************************************************/
+/************************************************************************
+ *
+ * DSS_NOTE - Note/tone generator
+ *
+ * input0    - Enable input value
+ * input1    - Frequency value
+ * input2    - data value
+ * input3    - Max count 1
+ * input4    - Max count 2
+ *
+ * Mar 2004, D Renaud.
+ ************************************************************************/
+ #define DSS_NOTE_ENABLE	(node->input[0])
+ #define DSS_NOTE_FREQ		(node->input[1])
+ #define DSS_NOTE_DATA		(node->input[2])
+ #define DSS_NOTE_MAX1		(node->input[3])
+ #define DSS_NOTE_MAX2		(node->input[4])
+
+void dss_note_step(struct node_description *node)
+{
+	struct dss_note_context *context = node->context;
+
+	double	t;	// time to process in this step
+	int		i, countsThisStep;
+
+	if (DSS_NOTE_ENABLE)
+	{
+		t = context->step + context->tLeft;
+		countsThisStep = (int)(t / context->cycle);
+
+		/* This code could probably speed up by using a bunch of compares instead of
+		 * a loop.  But the loop is much more readable. */
+		for (i=0; i<countsThisStep; i++)
+		{
+			context->count++;
+			if (context->count >= context->max1)
+			{
+				/* Max 1 count reached.  Load Data into counter. */
+				context->count = (int)DSS_NOTE_DATA;
+				if (DSS_NOTE_DATA != DSS_NOTE_MAX1)
+				{
+					/* Count output as long as the data loaded is not already equal to max 1 count. */
+					node->output += 1;
+					if (node->output > DSS_NOTE_MAX2) node->output = 0;
+				}
+			}
+		}
+		context->tLeft = t - context->cycle * countsThisStep;
+	}
+	else
+		node->output = 0;
+}
+
+void dss_note_reset(struct node_description *node)
+{
+	struct dss_note_context *context = node->context;
+
+	context->step = 1.0 / Machine->sample_rate;
+	context->cycle = 1.0 / DSS_NOTE_FREQ;
+	context->count = (int)DSS_NOTE_DATA;
+	context->max1 = (int)DSS_NOTE_MAX1;
+	context->tLeft = 0;
+	node->output = 0;
+}
+
+/************************************************************************
+ *
+ * DSS_OP_AMP_OSC - Op Amp Oscillators
+ *
+ * input0    - Enable input value
+ * input1    - vMod1 (if needed)
+ * input2    - vMod2 (if needed)
+ *
+ * also passed discrete_op_amp_osc_info structure
+ *
+ * Mar 2004, D Renaud.
+ ************************************************************************/
 #define DSS_OP_AMP_OSC_ENABLE	node->input[0]
 #define DSS_OP_AMP_OSC_VMOD1	node->input[1]
 #define DSS_OP_AMP_OSC_VMOD2	node->input[2]
@@ -529,7 +611,6 @@ void dss_op_amp_osc_step(struct node_description *node)
 				}
 			}
 		} while(dt);
-//		} while(0);
 
 		context->vCap = vCnext;
 
@@ -634,21 +715,23 @@ void dss_op_amp_osc_reset(struct node_description *node)
 	context->vCap = 0;
 	context->step = 1.0 / Machine->sample_rate;
 logerror("type=%d, 0c=%f, 1c=%f, tL=%f, tH=%f, i1=%f, i2=%f\n",context->type,context->iCharge[0],context->iCharge[1],context->thresholdLow,context->thresholdHigh,i1,i2);
+
+	dss_op_amp_osc_step(node);
 }
 
 
-/************************************************************************/
-/*                                                                      */
-/* DSS_SAWTOOTHWAVE - Usage of node_description values for step function*/
-/*                                                                      */
-/* input0    - Enable input value                                       */
-/* input1    - Frequency input value                                    */
-/* input2    - Amplitde input value                                     */
-/* input3    - DC Bias Value                                            */
-/* input4    - Gradient                                                 */
-/* input5    - Initial Phase                                            */
-/*                                                                      */
-/************************************************************************/
+/************************************************************************
+ *
+ * DSS_SAWTOOTHWAVE - Usage of node_description values for step function
+ *
+ * input0    - Enable input value
+ * input1    - Frequency input value
+ * input2    - Amplitde input value
+ * input3    - DC Bias Value
+ * input4    - Gradient
+ * input5    - Initial Phase
+ *
+ ************************************************************************/
 void dss_sawtoothwave_step(struct node_description *node)
 {
 	struct dss_sawtoothwave_context *context = node->context;
@@ -693,18 +776,18 @@ void dss_sawtoothwave_reset(struct node_description *node)
 }
 
 
-/************************************************************************/
-/*                                                                      */
-/* DISCRETE_SCHMITT_OSCILLATOR - Schmitt feedback oscillator            */
-/*                                                                      */
-/* input0    - Enable input value                                       */
-/* input1    - Vin                                                      */
-/* input2    - Amplitude                                                */
-/*                                                                      */
-/* also passed discrete_schmitt_osc_disc structure                      */
-/*                                                                      */
-/* Mar 2004, D Renaud.                                                  */
-/************************************************************************/
+/************************************************************************
+ *
+ * DISCRETE_SCHMITT_OSCILLATOR - Schmitt feedback oscillator
+ *
+ * input0    - Enable input value
+ * input1    - Vin
+ * input2    - Amplitude
+ *
+ * also passed discrete_schmitt_osc_disc structure
+ *
+ * Mar 2004, D Renaud.
+ ************************************************************************/
 #define DSSSCHMITTOSC_ENABLE	(int)node->input[0]
 #define DSSSCHMITTOSC_VIN	node->input[1]
 #define DSSSCHMITTOSC_AMPL	node->input[2]
@@ -817,17 +900,17 @@ void dss_schmitt_osc_reset(struct node_description *node)
 }
 
 
-/************************************************************************/
-/*                                                                      */
-/* DSS_SINEWAVE - Usage of node_description values for step function    */
-/*                                                                      */
-/* input0    - Enable input value                                       */
-/* input1    - Frequency input value                                    */
-/* input2    - Amplitude input value                                    */
-/* input3    - DC Bias                                                  */
-/* input4    - Starting phase                                           */
-/*                                                                      */
-/************************************************************************/
+/************************************************************************
+ *
+ * DSS_SINEWAVE - Usage of node_description values for step function
+ *
+ * input0    - Enable input value
+ * input1    - Frequency input value
+ * input2    - Amplitude input value
+ * input3    - DC Bias
+ * input4    - Starting phase
+ *
+ ************************************************************************/
 void dss_sinewave_step(struct node_description *node)
 {
 	struct dss_sinewave_context *context = node->context;
@@ -868,18 +951,18 @@ void dss_sinewave_reset(struct node_description *node)
 }
 
 
-/************************************************************************/
-/*                                                                      */
-/* DSS_SQUAREWAVE - Usage of node_description values for step function  */
-/*                                                                      */
-/* input0    - Enable input value                                       */
-/* input1    - Frequency input value                                    */
-/* input2    - Amplitude input value                                    */
-/* input3    - Duty Cycle                                               */
-/* input4    - DC Bias level                                            */
-/* input5    - Start Phase                                              */
-/*                                                                      */
-/************************************************************************/
+/************************************************************************
+ *
+ * DSS_SQUAREWAVE - Usage of node_description values for step function
+ *
+ * input0    - Enable input value
+ * input1    - Frequency input value
+ * input2    - Amplitude input value
+ * input3    - Duty Cycle
+ * input4    - DC Bias level
+ * input5    - Start Phase
+ *
+ ************************************************************************/
 void dss_squarewave_step(struct node_description *node)
 {
 	struct dss_squarewave_context *context = node->context;
@@ -927,18 +1010,18 @@ void dss_squarewave_reset(struct node_description *node)
 	dss_squarewave_step(node);
 }
 
-/************************************************************************/
-/*                                                                      */
-/* DSS_SQUAREWFIX - Usage of node_description values for step function  */
-/*                                                                      */
-/* input0    - Enable input value                                       */
-/* input1    - Frequency input value                                    */
-/* input2    - Amplitude input value                                    */
-/* input3    - Duty Cycle                                               */
-/* input4    - DC Bias level                                            */
-/* input5    - Start Phase                                              */
-/*                                                                      */
-/************************************************************************/
+/************************************************************************
+ *
+ * DSS_SQUAREWFIX - Usage of node_description values for step function
+ *
+ * input0    - Enable input value
+ * input1    - Frequency input value
+ * input2    - Amplitude input value
+ * input3    - Duty Cycle
+ * input4    - DC Bias level
+ * input5    - Start Phase
+ *
+ ************************************************************************/
 void dss_squarewfix_step(struct node_description *node)
 {
 	struct dss_squarewfix_context *context = node->context;
@@ -998,18 +1081,18 @@ void dss_squarewfix_reset(struct node_description *node)
 }
 
 
-/************************************************************************/
-/*                                                                      */
-/* DSS_SQUAREWAVE2 - Usage of node_description values                   */
-/*                                                                      */
-/* input0    - Enable input value                                       */
-/* input1    - Amplitude input value                                    */
-/* input2    - OFF Time                                                 */
-/* input3    - ON Time                                                  */
-/* input4    - DC Bias level                                            */
-/* input5    - Initial Time Shift                                       */
-/*                                                                      */
-/************************************************************************/
+/************************************************************************
+ *
+ * DSS_SQUAREWAVE2 - Usage of node_description values
+ *
+ * input0    - Enable input value
+ * input1    - Amplitude input value
+ * input2    - OFF Time
+ * input3    - ON Time
+ * input4    - DC Bias level
+ * input5    - Initial Time Shift
+ *
+ ************************************************************************/
 void dss_squarewave2_step(struct node_description *node)
 {
 	struct dss_squarewave_context *context = node->context;
@@ -1060,17 +1143,17 @@ void dss_squarewave2_reset(struct node_description *node)
 }
 
 
-/************************************************************************/
-/*                                                                      */
-/* DSS_TRIANGLEWAVE - Usage of node_description values for step function*/
-/*                                                                      */
-/* input0    - Enable input value                                       */
-/* input1    - Frequency input value                                    */
-/* input2    - Amplitde input value                                     */
-/* input3    - DC Bias value                                            */
-/* input4    - Initial Phase                                            */
-/*                                                                      */
-/************************************************************************/
+/************************************************************************
+ *
+ * DSS_TRIANGLEWAVE - Usage of node_description values for step function
+ *
+ * input0    - Enable input value
+ * input1    - Frequency input value
+ * input2    - Amplitde input value
+ * input3    - DC Bias value
+ * input4    - Initial Phase
+ *
+ ************************************************************************/
 void dss_trianglewave_step(struct node_description *node)
 {
 	struct dss_trianglewave_context *context = node->context;
@@ -1113,15 +1196,15 @@ void dss_trianglewave_reset(struct node_description *node)
 }
 
 
-/************************************************************************/
-/*                                                                      */
-/* DSS_ADSR - Attack Decay Sustain Release                              */
-/*                                                                      */
-/* input0    - Enable input value                                       */
-/* input1    - Trigger value                                            */
-/* input2    - gain scaling factor                                      */
-/*                                                                      */
-/************************************************************************/
+/************************************************************************
+ *
+ * DSS_ADSR - Attack Decay Sustain Release
+ *
+ * input0    - Enable input value
+ * input1    - Trigger value
+ * input2    - gain scaling factor
+ *
+ ************************************************************************/
 void dss_adsrenv_step(struct node_description *node)
 {
 //	struct dss_adsr_context *context = node->context;

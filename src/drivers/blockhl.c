@@ -346,7 +346,7 @@ static MACHINE_INIT( blockhl )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	cpunum_set_info_ptr(0, CPUINFO_PTR_KONAMI_SETLINES_CALLBACK, (void *)blockhl_banking);
+	cpunum_set_info_fct(0, CPUINFO_PTR_KONAMI_SETLINES_CALLBACK, (genf *)blockhl_banking);
 
 	paletteram = &RAM[0x18000];
 }

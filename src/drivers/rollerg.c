@@ -351,7 +351,7 @@ static void rollerg_banking( int lines )
 
 static MACHINE_INIT( rollerg )
 {
-	cpunum_set_info_ptr(0, CPUINFO_PTR_KONAMI_SETLINES_CALLBACK, (void *)rollerg_banking);
+	cpunum_set_info_fct(0, CPUINFO_PTR_KONAMI_SETLINES_CALLBACK, (genf *)rollerg_banking);
 
 	readzoomroms = 0;
 }

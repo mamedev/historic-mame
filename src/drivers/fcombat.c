@@ -1,15 +1,13 @@
-/* Field Combat (c)1985 Jaleco */
+/* Field Combat (c)1985 Jaleco 
 
-/* todo:
+	TS 2004.10.22. analog[at]op.pl
+	- fixed sprite issues
+  - added backgrounds and terrain info (external roms)
 
-Very Preliminary WIP
+	(press buttons 1+2 at the same time, to release 'army' ;)
 
-Fix Colours
-Fix Sprites
-Backgrounds
-Unknown Reads / Writes
-See if it can be remerged with Exerion (its currently made from bits of it)
-
+	todo:
+		- fix colours (sprites , bg)
 */
 
 /* dump info
@@ -33,7 +31,15 @@ inputs + notes by stephh
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "exerion.h"
+PALETTE_INIT( fcombat );
+VIDEO_START( fcombat );
+VIDEO_UPDATE( fcombat );
+
+WRITE8_HANDLER( fcombat_videoreg_w );
+
+extern UINT8 fcombat_cocktail_flip;
+extern int fcombat_sh;
+extern int fcombat_sv;
 
 INPUT_PORTS_START( fcombat )
 	PORT_START_TAG("IN0")      /* player 1 inputs (muxed on 0xe000) */
@@ -112,7 +118,6 @@ static READ8_HANDLER( fcombat_protection_r )
 
 	   Check code at 0x76c8 for more infos.
 	*/
-
 	return 0xff;	// seems enough
 }
 
@@ -122,7 +127,7 @@ static READ8_HANDLER( fcombat_protection_r )
 static READ8_HANDLER( fcombat_port01_r )
 {
 	/* the cocktail flip bit muxes between ports 0 and 1 */
-	return exerion_cocktail_flip ? input_port_1_r(offset) : input_port_0_r(offset);
+	return fcombat_cocktail_flip ? input_port_1_r(offset) : input_port_0_r(offset);
 }
 
 
@@ -137,42 +142,81 @@ static READ8_HANDLER( fcombat_port3_r )
 }
 
 
+//bg scrolls 
+
+static WRITE8_HANDLER(e900_w)
+{
+	fcombat_sh=data;
+}
+
+static WRITE8_HANDLER(ea00_w)
+{
+	fcombat_sv=(fcombat_sv&0xff00)|data;
+}
+
+static WRITE8_HANDLER(eb00_w)
+{
+		fcombat_sv=(fcombat_sv&0xff)|(data<<8);
+}
+
+
+// terrain info (ec00=x, ed00=y, return val in e300
+
+static int tx=0,ty=0;
+
+static WRITE8_HANDLER(ec00_w)
+{
+	tx=data;
+}
+
+static WRITE8_HANDLER(ed00_w)
+{
+	ty=data;
+}
+
+static READ8_HANDLER(e300_r)
+{
+	int wx=(tx+fcombat_sh)/16;
+	int wy=(ty*2+fcombat_sv)/16;
+
+	return memory_region(REGION_USER2)[wx*32*16+wy];
+}
+
+static WRITE8_HANDLER(ee00_w)
+{
+
+}
+
 static ADDRESS_MAP_START( fcombat_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0xe000, 0xe000) AM_READ(fcombat_port01_r)
 	AM_RANGE(0xe100, 0xe100) AM_READ(input_port_2_r)
 	AM_RANGE(0xe200, 0xe200) AM_READ(fcombat_port3_r)
-	AM_RANGE(0xe300, 0xe300) AM_READ(MRA8_RAM) // unknown - even checked in "demo mode" - affects 0xec00 and 0xed00
+	AM_RANGE(0xe300, 0xe300) AM_READ(e300_r) 
 	AM_RANGE(0xe400, 0xe400) AM_READ(fcombat_protection_r) // protection?
-	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM) // ram?
-	AM_RANGE(0xd000, 0xd7ff) AM_READ(MRA8_RAM) // bgs?
-	AM_RANGE(0xd800, 0xd87f) AM_READ(MRA8_RAM) // sprites?
-	AM_RANGE(0xd880, 0xd8ff) AM_READ(MRA8_RAM) // something else ..
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM) 
+	AM_RANGE(0xd000, 0xd7ff) AM_READ(MRA8_RAM) 
+	AM_RANGE(0xd800, 0xd8ff) AM_READ(MRA8_RAM) 
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( fcombat_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
-	AM_RANGE(0xd800, 0xd87f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
-	AM_RANGE(0xd880, 0xd8ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xd800, 0xd8ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
 
-	AM_RANGE(0xe800, 0xe800) AM_WRITE(exerion_videoreg_w)	// at least bit 0 for flip screen and joystick input multiplexor
+	AM_RANGE(0xe800, 0xe800) AM_WRITE(fcombat_videoreg_w)	// at least bit 0 for flip screen and joystick input multiplexor
 
-	AM_RANGE(0xe900, 0xe900) AM_WRITE(MWA8_RAM)	// video ?
-	AM_RANGE(0xea00, 0xea00) AM_WRITE(MWA8_RAM)	// video ?
-	AM_RANGE(0xeb00, 0xeb00) AM_WRITE(MWA8_RAM)	// video ?
+	AM_RANGE(0xe900, 0xe900) AM_WRITE(e900_w)	
+	AM_RANGE(0xea00, 0xea00) AM_WRITE(ea00_w)	
+	AM_RANGE(0xeb00, 0xeb00) AM_WRITE(eb00_w)	
 
-	AM_RANGE(0xec00, 0xec00) AM_WRITE(MWA8_RAM)	// affected by read at 0xe300
-	AM_RANGE(0xed00, 0xed00) AM_WRITE(MWA8_RAM)	// affected by read at 0xe300
+	AM_RANGE(0xec00, 0xec00) AM_WRITE(ec00_w)	
+	AM_RANGE(0xed00, 0xed00) AM_WRITE(ed00_w)	
 
-	AM_RANGE(0xe300, 0xe300) AM_WRITE(MWA8_RAM)	// for debug purpose
-
-	AM_RANGE(0xee00, 0xee00) AM_WRITE(MWA8_RAM)	// related to protection ? - doesn't seem to have any effect
+	AM_RANGE(0xee00, 0xee00) AM_WRITE(ee00_w)	// related to protection ? - doesn't seem to have any effect
 
 	/* erk ... */
-
-	AM_RANGE(0xd880, 0xd8ff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0xef00, 0xef00) AM_WRITE(soundlatch_w)
 ADDRESS_MAP_END
 
@@ -231,34 +275,13 @@ static struct GfxLayout spritelayout =
 };
 
 
-/* Quick and dirty way to emulate pixel-doubled sprites. */
-static struct GfxLayout bigspritelayout =
-{
-	32,32,
-	RGN_FRAC(1,1),
-	2,
-	{ 0, 4 },
-	{  3, 3, 2, 2, 1, 1, 0, 0,
-			8+3, 8+3, 8+2, 8+2, 8+1, 8+1, 8+0, 8+0,
-			16+3, 16+3, 16+2, 16+2, 16+1, 16+1, 16+0, 16+0,
-			24+3, 24+3, 24+2, 24+2, 24+1, 24+1, 24+0, 24+0 },
-	{ 32*0, 32*0, 32*1, 32*1, 32*2, 32*2, 32*3, 32*3,
-			32*4, 32*4, 32*5, 32*5, 32*6, 32*6, 32*7, 32*7,
-			32*8, 32*8, 32*9, 32*9, 32*10, 32*10, 32*11, 32*11,
-			32*12, 32*12, 32*13, 32*13, 32*14, 32*14, 32*15, 32*15 },
-	64*8
-};
-
-
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,         0, 64 },
 	{ REGION_GFX2, 0, &spritelayout,     256, 64 },
-	{ REGION_GFX2, 0, &bigspritelayout,  256, 64 },
+	{ REGION_GFX3, 0, &spritelayout,     512, 64 }, 
 	{ -1 }
 };
-
-
 
 /*************************************
  *
@@ -312,9 +335,9 @@ static MACHINE_DRIVER_START( fcombat )
 	MDRV_PALETTE_LENGTH(32)
 	MDRV_COLORTABLE_LENGTH(256*3)
 
-	MDRV_PALETTE_INIT(exerion)
-	MDRV_VIDEO_START(exerion)
-	MDRV_VIDEO_UPDATE(exerion)
+	MDRV_PALETTE_INIT(fcombat)
+	MDRV_VIDEO_START(fcombat)
+	MDRV_VIDEO_UPDATE(fcombat)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(AY8910, ay8910_interface)
@@ -363,6 +386,28 @@ static DRIVER_INIT( fcombat )
 	/* decode the sprites */
 	/* the bits in the ROMs are ordered: n9 n8 n3 n7-n6 n5 n4 v3-v2 v1 v0 n2-n1 n0 h3 h2 */
 	/* we want them ordered like this:   n9 n8 n7 n6-n5 n4 n3 n2-n1 n0 v3 v2-v1 v0 h3 h2 */
+
+	for (oldaddr = 0; oldaddr < length; oldaddr++)
+	{
+		newaddr = ((oldaddr << 1) & 0x3c00) |       /* move n7-n4 */
+		          ((oldaddr >> 4) & 0x0200) |       /* move n3 */
+		          ((oldaddr << 4) & 0x01c0) |       /* move n2-n0 */
+		          ((oldaddr >> 3) & 0x003c) |       /* move v3-v0 */
+		          ((oldaddr     ) & 0xc003);        /* keep n9-n8 h3-h2 */
+
+		dst[newaddr] = src[oldaddr];
+	}
+
+	/* make a temporary copy of the character data */
+	src = temp;
+	dst = memory_region(REGION_GFX3);
+	length = memory_region_length(REGION_GFX3);
+	memcpy(src, dst, length);
+
+	/* decode the characters */
+	/* the bits in the ROM are ordered: n8-n7 n6 n5 n4-v2 v1 v0 n3-n2 n1 n0 h2 */
+	/* we want them ordered like this:  n8-n7 n6 n5 n4-n3 n2 n1 n0-v2 v1 v0 h2 */
+	
 	for (oldaddr = 0; oldaddr < length; oldaddr++)
 	{
 		newaddr = ((oldaddr << 1) & 0x3c00) |       /* move n7-n4 */
@@ -371,6 +416,29 @@ static DRIVER_INIT( fcombat )
 		          ((oldaddr >> 3) & 0x003c) |       /* move v3-v0 */
 		          ((oldaddr     ) & 0xc003);        /* keep n9-n8 h3-h2 */
 		dst[newaddr] = src[oldaddr];
+	}
+
+	src = temp;
+	dst = memory_region(REGION_USER1);
+	length = memory_region_length(REGION_USER1);
+	memcpy(src, dst, length);
+
+	for (oldaddr = 0; oldaddr < 32; oldaddr++)
+	{
+		memcpy(&dst[oldaddr*32*8*2],&src[oldaddr*32*8],32*8);
+		memcpy(&dst[oldaddr*32*8*2+32*8],&src[oldaddr*32*8+0x2000],32*8);
+	}
+	
+	
+	src = temp;
+	dst = memory_region(REGION_USER2);
+	length = memory_region_length(REGION_USER2);
+	memcpy(src, dst, length);
+	
+	for (oldaddr = 0; oldaddr < 32; oldaddr++)
+	{
+		memcpy(&dst[oldaddr*32*8*2],&src[oldaddr*32*8],32*8);
+		memcpy(&dst[oldaddr*32*8*2+32*8],&src[oldaddr*32*8+0x2000],32*8);
 	}
 
 	free(temp);
@@ -392,17 +460,20 @@ ROM_START( fcombat )
 	ROM_LOAD( "fcombat9.d11", 0x04000, 0x4000, CRC(f95988e6) SHA1(25876652decca7ec1e9b37a16536c15ca2d1cb12) )
 	ROM_LOAD( "fcomba10.d12", 0x08000, 0x4000, CRC(908f154c) SHA1(b3761ee60d4a5ea36376759875105d23c57b4bf2) )
 
-	ROM_REGION( 0x0c000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "fcombat4.p3",  0x00000, 0x4000, CRC(efe098ab) SHA1(fe64a5e9170835d242368109b1b221b0f8090e7e) ) /* bg data */
-	ROM_LOAD( "fcombat5.l3",  0x04000, 0x4000, CRC(96194ca7) SHA1(087d6ac8f93f087cb5e378dbe9a8cfcffa2cdddc) )
-	ROM_LOAD( "fcombat6.f3",  0x08000, 0x4000, CRC(97282729) SHA1(72db0593551c2d15631341bf621b96013b46ce72) )
+	ROM_REGION( 0x04000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "fcombat6.f3",  0x00000, 0x4000, CRC(97282729) SHA1(72db0593551c2d15631341bf621b96013b46ce72) )
+			
+	ROM_REGION( 0x04000, REGION_USER1, 0 )
+	ROM_LOAD( "fcombat5.l3",  0x00000, 0x4000, CRC(96194ca7) SHA1(087d6ac8f93f087cb5e378dbe9a8cfcffa2cdddc) ) /* bg data */
+	
+	ROM_REGION( 0x04000, REGION_USER2, 0 )
+	ROM_LOAD( "fcombat4.p3",  0x00000, 0x4000, CRC(efe098ab) SHA1(fe64a5e9170835d242368109b1b221b0f8090e7e) ) /* terrain info */
 
 	ROM_REGION( 0x0420, REGION_PROMS, 0 )
 	ROM_LOAD( "fcprom_a.c2",  0x0000, 0x0020, CRC(7ac480f0) SHA1(f491fe4da19d8c037e3733a5836de35cc438907e) ) /* palette */
 	ROM_LOAD( "fcprom_d.k12", 0x0020, 0x0100, CRC(9a348250) SHA1(faf8db4c42adee07795d06bea20704f8c51090ff) ) /* fg char lookup table */
 	ROM_LOAD( "fcprom_b.c4",  0x0120, 0x0100, CRC(ac9049f6) SHA1(57aa5b5df3e181bad76149745a422c3dd1edad49) ) /* sprite lookup table */
-//	ROM_LOAD( "exerion.i3",   0x0220, 0x0100, CRC(fe72ab79) ) /* bg char lookup table */
-	ROM_LOAD( "fcprom_c.a9",  0x0320, 0x0100, CRC(768ac120) SHA1(ceede1d6cbeae08da96ef52bdca2718a839d88ab) ) /* bg char mixer */
+	ROM_LOAD( "fcprom_c.a9",  0x0220, 0x0100, CRC(768ac120) SHA1(ceede1d6cbeae08da96ef52bdca2718a839d88ab) ) /* bg char mixer */
 ROM_END
 
-GAMEX( 1985, fcombat,  0,       fcombat, fcombat, fcombat,  ROT90, "Jaleco", "Field Combat", GAME_NOT_WORKING )
+GAMEX( 1985, fcombat,  0,       fcombat, fcombat, fcombat,  ROT90, "Jaleco", "Field Combat", GAME_WRONG_COLORS )

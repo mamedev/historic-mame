@@ -71,26 +71,6 @@ static struct quad **quadind;
 
 static UINT32 *poly_rom,*poly_ram;
 
-static float u2f(UINT32 v)
-{
-	union {
-		float ff;
-		UINT32 vv;
-	} u;
-	u.vv = v;
-	return u.ff;
-}
-
-static UINT32 f2u(float f)
-{
-	union {
-		float ff;
-		UINT32 vv;
-	} u;
-	u.ff = f;
-	return u.vv;
-}
-
 static UINT32 readi(const UINT16 *adr)
 {
 	return adr[0]|(adr[1] << 16);

@@ -3353,13 +3353,18 @@ static struct GfxElement *K053247_gfx;
 static void (*K053247_callback)(int *code,int *color,int *priority);
 static int K053246_OBJCHA_line;
 
-void K053247_export_config(data16_t **ram, struct GfxElement **gfx, void **callback, int *dx, int *dy)
+void K053247_export_config(data16_t **ram, struct GfxElement **gfx, void (**callback)(int *, int *, int *), int *dx, int *dy)
 {
-	*ram = K053247_ram;
-	*gfx = K053247_gfx;
-	*callback = (void*)K053247_callback;
-	*dx = K053247_dx;
-	*dy = K053247_dy;
+	if(ram)
+		*ram = K053247_ram;
+	if(gfx)
+		*gfx = K053247_gfx;
+	if(callback)
+		*callback = K053247_callback;
+	if(dx)
+		*dx = K053247_dx;
+	if(dy)
+		*dy = K053247_dy;
 }
 
 int K053246_read_register(int regnum) { return(K053246_regs[regnum]); }

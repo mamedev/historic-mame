@@ -1214,11 +1214,11 @@ static void do_info(int argc, char *argv[])
 				header.parentmd5[12], header.parentmd5[13], header.parentmd5[14], header.parentmd5[15]);
 		if (header.version >= 3)
 			printf("Parent SHA1:  %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",
-					header.parentmd5[0], header.parentmd5[1], header.parentmd5[2], header.parentmd5[3],
-					header.parentmd5[4], header.parentmd5[5], header.parentmd5[6], header.parentmd5[7],
-					header.parentmd5[8], header.parentmd5[9], header.parentmd5[10], header.parentmd5[11],
-					header.parentmd5[12], header.parentmd5[13], header.parentmd5[14], header.parentmd5[15],
-					header.parentmd5[16], header.parentmd5[17], header.parentmd5[18], header.parentmd5[19]);
+					header.parentsha1[0], header.parentsha1[1], header.parentsha1[2], header.parentsha1[3],
+					header.parentsha1[4], header.parentsha1[5], header.parentsha1[6], header.parentsha1[7],
+					header.parentsha1[8], header.parentsha1[9], header.parentsha1[10], header.parentsha1[11],
+					header.parentsha1[12], header.parentsha1[13], header.parentsha1[14], header.parentsha1[15],
+					header.parentsha1[16], header.parentsha1[17], header.parentsha1[18], header.parentsha1[19]);
 	}
 
 	/* print out metadata */

@@ -47,7 +47,7 @@ WRITE16_HANDLER( midtunit_cmos_w )
 {
 	if (1)/*cmos_write_enable)*/
 	{
-		COMBINE_DATA(&((data16_t *)generic_nvram)[offset]);
+		COMBINE_DATA(generic_nvram16+offset);
 		cmos_write_enable = 0;
 	}
 	else
@@ -60,7 +60,7 @@ WRITE16_HANDLER( midtunit_cmos_w )
 
 READ16_HANDLER( midtunit_cmos_r )
 {
-	return ((data16_t *)generic_nvram)[offset];
+	return generic_nvram16[offset];
 }
 
 

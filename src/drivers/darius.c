@@ -538,7 +538,7 @@ static struct MSM5205interface msm5205_interface =
 	384000, 			/* 384KHz */
 	{ darius_adpcm_int},	/* interrupt function */
 	{ MSM5205_S48_4B},	/* 8KHz   */
-	{ 50 }			/* volume */
+	{ 100 }			/* volume */
 };
 
 static READ8_HANDLER( adpcm_command_read )
@@ -824,7 +824,7 @@ static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
 	4000000,	/* 4 MHz ??? */
-	{ YM2203_VOL(60,20), YM2203_VOL(60,20) },
+	{ YM2203_VOL(60,8), YM2203_VOL(60,8) },
 	{ 0, 0 },		/* portA read */
 	{ 0, 0 },
 	{ darius_write_portA0, darius_write_portA1 },	/* portA write */

@@ -57,6 +57,8 @@ typedef UINT32 DWORD;
 #include "driver.h"
 #include "state.h"
 
+extern int i386_dasm_one(char *buffer, UINT32 eip, int addr_size, int op_size);
+
 static UINT8 nec_reg_layout[] = {
 	NEC_IP,NEC_SP,NEC_FLAGS,NEC_AW,NEC_CW,NEC_DW,NEC_BW,NEC_BP,NEC_IX,NEC_IY, -1,
 	NEC_ES,NEC_CS,NEC_SS,NEC_DS,NEC_VECTOR, 0
@@ -931,10 +933,14 @@ static void set_irq_line(int irqline, int state)
 	}
 }
 
+/*
+ WARNING: this doesn't support NEC extended instructions or special
+ encrypted fetching.  But the previous disassembler was GPL'd so it had to go.
+ */
 static offs_t nec_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
-    return Dasmnec(buffer,pc);
+	return i386_dasm_one(buffer, pc, I.sregs[CS], I.sregs[CS]);
 #else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;

@@ -807,6 +807,45 @@ ROM_START( 99lstwra )
 	ROM_LOAD( "m1.2c",        0x0320, 0x0020, CRC(83a39201) SHA1(4fdc722c9e20ee152c890342ef0dce18e35e2ef8) ) /* timing? (not used) */
 ROM_END
 
+ROM_START( 99lstwrk )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
+	ROM_LOAD( "1999.4f",      0x0000, 0x2000, CRC(e3cfc09f) SHA1(e48905726c6308194c596117dd30444dcb748908) )
+	ROM_LOAD( "1999.4h",      0x2000, 0x2000, CRC(fd58c6e1) SHA1(005f3114425fd2bfb9452c790d40653661b3d1d9) )
+	ROM_LOAD( "7.j4",         0x4000, 0x2000, CRC(57a8e900) SHA1(bc878e27130f0a9afb50c1926b47621e5e58d8b2) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for code */
+	ROM_LOAD( "1.f2",         0x0000, 0x2000, CRC(c485c621) SHA1(14fa1b1403f4f2513e1a824f79b750cedf24a31e) )
+	ROM_LOAD( "2.h2",         0x2000, 0x2000, CRC(b3c6a886) SHA1(efb136fc1671092fabc2fb2aff189a61bac90ca4) )
+	ROM_LOAD( "3.j2",         0x4000, 0x2000, CRC(197e314c) SHA1(6921cd1bc3571b0ac7d8d7eb19b256daca85f17e) )
+	ROM_LOAD( "repulse.b4",   0x6000, 0x2000, CRC(86b267f3) SHA1(5e352737e0ea0ca4a025d002b75c821c55660b4f) )
+
+	ROM_REGION( 0x01000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "1999-14.rom",  0x00000, 0x1000, CRC(b4995072) SHA1(5127a979c7f6897c5c53927012c679653920e56f) ) /* chars */
+
+	ROM_REGION( 0x06000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "15.9h",        0x00000, 0x2000, CRC(c9213469) SHA1(03bd7a86f9cbb28ecf39e7ac643a186cfeb38a35) ) /* tiles - plane 0 */
+	ROM_LOAD( "16.10h",       0x02000, 0x2000, CRC(7de5d39e) SHA1(47fc5740a972e105d282873b4d72774a4405dfff) ) /* tiles - plane 1 */
+	ROM_LOAD( "17.11h",       0x04000, 0x2000, CRC(0ba5f72c) SHA1(79292e16e2f6079f160d957a22e355457599669d) ) /* tiles - plane 2 */
+
+	ROM_REGION( 0x18000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "8.6a",         0x00000, 0x4000, CRC(0e9f757e) SHA1(1d4a46b3f18fe5099cdc889ba5e55c1d171a0430) ) /* sprites - plane 0 */
+	ROM_LOAD( "9.7a",         0x04000, 0x4000, CRC(f7d2e650) SHA1(eac715e09ad22b1a1d18e5cade4955cb8d4156f4) ) /* sprites - plane 0 */
+	ROM_LOAD( "10.8a",        0x08000, 0x4000, CRC(e717baf4) SHA1(d52a6c5f8b915769cc6dfb50d34922c1a3cd1333) ) /* sprites - plane 1 */
+	ROM_LOAD( "11.9a",        0x0c000, 0x4000, CRC(04b2250b) SHA1(d9948277d3ba3cb8188de647e25848f5222d066a) ) /* sprites - plane 1 */
+	ROM_LOAD( "12.10a",       0x10000, 0x4000, CRC(d110e140) SHA1(eb528b437e7967ecbe56de51274f286e563f7100) ) /* sprites - plane 2 */
+	ROM_LOAD( "13.11a",       0x14000, 0x4000, CRC(8fdc713c) SHA1(c8933d1c45c886c22ee89d02b8941bbbb963d7b1) ) /* sprites - plane 2 */
+
+	ROM_REGION( 0x0340, REGION_PROMS, 0 )
+	ROM_LOAD( "b.1j",   0x0000, 0x0100, CRC(3ea35431) SHA1(b45318ce898f03a338435a3f6109483d246ff914) ) /* blue */
+	ROM_LOAD( "g.1h",   0x0100, 0x0100, CRC(acd7a69e) SHA1(b18eab8f669f0a8105a4bbffa346c4b19491c451) ) /* green */
+	ROM_LOAD( "r.1f",   0x0200, 0x0100, CRC(b7f48b41) SHA1(2d84dc29c0ab43729014129e6392207db0f56e9e) ) /* red */
+	/* 0x0300-0x031f empty - looks like there isn't a lookup table PROM */
+	ROM_LOAD( "m1.2c",  0x0320, 0x0020, CRC(83a39201) SHA1(4fdc722c9e20ee152c890342ef0dce18e35e2ef8) ) /* timing? (not used) */
+
+	ROM_REGION( 0x0800, REGION_USER1, 0 )
+	ROM_LOAD( "1999-00.rom",  0x0000, 0x0800, CRC(0c0c449f) SHA1(efa4a8ac4c341ca5cdc3b5d2803eda43daf1bc93) ) /* unknown */
+ROM_END
+
 ROM_START( flashgal )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
 	ROM_LOAD( "15.4f",        0x0000, 0x2000, CRC(cf5ad733) SHA1(24561db9a3d72c7a69a7ce5a85aaa78254788675) )
@@ -1122,6 +1161,7 @@ GAME( 1985, sonofphx, 0,        sonofphx, sonofphx, 0,        ROT90, "Associated
 GAME( 1985, repulse,  sonofphx, sonofphx, sonofphx, 0,        ROT90, "Sega", "Repulse" )
 GAME( 1985, 99lstwar, sonofphx, sonofphx, sonofphx, 0,        ROT90, "Proma", "'99: The Last War" )
 GAME( 1985, 99lstwra, sonofphx, sonofphx, sonofphx, 0,        ROT90, "Proma", "'99: The Last War (alternate)" )
+GAME( 1985, 99lstwrk, sonofphx, sonofphx, sonofphx, 0,        ROT90, "Kyugo", "'99: The Last War (Kyugo)" )
 GAME( 1985, flashgal, 0,        flashgal, flashgal, 0,        ROT0,  "Sega", "Flashgal (set 1)" )
 GAME( 1985, flashgla, flashgal, flashgla, flashgal, 0,        ROT0,  "Sega", "Flashgal (set 2)" )
 GAME( 1986, srdmissn, 0,        srdmissn, srdmissn, srdmissn, ROT90, "Taito Corporation", "S.R.D. Mission" )

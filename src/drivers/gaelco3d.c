@@ -195,7 +195,7 @@ static void init_machine_common(void)
 	}
 
 	/* initialize the ADSP Tx callback */
-	cpunum_set_info_ptr(2, CPUINFO_PTR_ADSP2100_TX_HANDLER, (void *)adsp_tx_callback);
+	cpunum_set_info_fct(2, CPUINFO_PTR_ADSP2100_TX_HANDLER, (genf *)adsp_tx_callback);
 
 	/* allocate a timer for feeding the autobuffer */
 	adsp_autobuffer_timer = timer_alloc(adsp_autobuffer_irq);

@@ -191,7 +191,7 @@ ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/i86
 CPUDEFS += -DHAS_I86=1
 CPUOBJS += $(OBJ)/cpu/i86/i86.o
-DBGOBJS += $(OBJ)/cpu/i86/i86dasm.o
+DBGOBJS += $(OBJ)/cpu/i386/i386dasm.o
 $(OBJ)/cpu/i86/i86.o: i86.c instr86.c i86.h i86intf.h ea.h host.h modrm.h
 else
 CPUDEFS += -DHAS_I86=0
@@ -202,7 +202,7 @@ ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/i86
 CPUDEFS += -DHAS_I88=1
 CPUOBJS += $(OBJ)/cpu/i86/i86.o
-DBGOBJS += $(OBJ)/cpu/i86/i86dasm.o
+DBGOBJS += $(OBJ)/cpu/i386/i386dasm.o
 $(OBJ)/cpu/i86/i86.o: i86.c instr86.c i86.h i86intf.h ea.h host.h modrm.h
 else
 CPUDEFS += -DHAS_I88=0
@@ -213,7 +213,7 @@ ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/i86
 CPUDEFS += -DHAS_I186=1
 CPUOBJS += $(OBJ)/cpu/i86/i86.o
-DBGOBJS += $(OBJ)/cpu/i86/i86dasm.o
+DBGOBJS += $(OBJ)/cpu/i386/i386dasm.o
 $(OBJ)/cpu/i86/i86.o: i86.c instr186.c i86.h i186intf.h ea.h host.h modrm.h
 else
 CPUDEFS += -DHAS_I186=0
@@ -224,7 +224,7 @@ ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/i86
 CPUDEFS += -DHAS_I188=1
 CPUOBJS += $(OBJ)/cpu/i86/i86.o
-DBGOBJS += $(OBJ)/cpu/i86/i86dasm.o
+DBGOBJS += $(OBJ)/cpu/i386/i386dasm.o
 $(OBJ)/cpu/i86/i86.o: i86.c instr186.c i86.h i186intf.h ea.h host.h modrm.h
 else
 CPUDEFS += -DHAS_I188=0
@@ -235,7 +235,7 @@ ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/i86
 CPUDEFS += -DHAS_I286=1
 CPUOBJS += $(OBJ)/cpu/i86/i286.o
-DBGOBJS += $(OBJ)/cpu/i86/i86dasm.o
+DBGOBJS += $(OBJ)/cpu/i386/i386dasm.o
 $(OBJ)/cpu/i86/i86.o: i86.c instr286.c i86.h i286intf.h ea.h host.h modrm.h
 else
 CPUDEFS += -DHAS_I286=0
@@ -257,7 +257,7 @@ ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/nec
 CPUDEFS += -DHAS_V20=1
 CPUOBJS += $(OBJ)/cpu/nec/nec.o
-DBGOBJS += $(OBJ)/cpu/nec/necdasm.o
+DBGOBJS += $(OBJ)/cpu/i386/i386dasm.o
 $(OBJ)/cpu/nec/nec.o: nec.c nec.h necintrf.h necea.h nechost.h necinstr.h necmodrm.h
 else
 CPUDEFS += -DHAS_V20=0
@@ -268,7 +268,7 @@ ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/nec
 CPUDEFS += -DHAS_V30=1
 CPUOBJS += $(OBJ)/cpu/nec/nec.o
-DBGOBJS += $(OBJ)/cpu/nec/necdasm.o
+DBGOBJS += $(OBJ)/cpu/i386/i386dasm.o
 $(OBJ)/cpu/nec/nec.o: nec.c nec.h necintrf.h necea.h nechost.h necinstr.h necmodrm.h
 else
 CPUDEFS += -DHAS_V30=0
@@ -279,7 +279,7 @@ ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/nec
 CPUDEFS += -DHAS_V33=1
 CPUOBJS += $(OBJ)/cpu/nec/nec.o
-DBGOBJS += $(OBJ)/cpu/nec/necdasm.o
+DBGOBJS += $(OBJ)/cpu/i386/i386dasm.o
 $(OBJ)/cpu/nec/nec.o: nec.c nec.h necintrf.h necea.h nechost.h necinstr.h necmodrm.h
 else
 CPUDEFS += -DHAS_V33=0
@@ -828,7 +828,7 @@ OBJDIRS += $(OBJ)/cpu/ccpu
 CPUDEFS += -DHAS_CCPU=1
 CPUOBJS += $(OBJ)/cpu/ccpu/ccpu.o $(OBJ)/vidhrdw/cinemat.o
 DBGOBJS += $(OBJ)/cpu/ccpu/ccpudasm.o
-$(OBJ)/cpu/ccpu/ccpu.o: ccpu.c ccpu.h ccputabl.c
+$(OBJ)/cpu/ccpu/ccpu.o: ccpu.c ccpu.h
 else
 CPUDEFS += -DHAS_CCPU=0
 endif

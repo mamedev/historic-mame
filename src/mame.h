@@ -213,6 +213,7 @@ struct GameOptions
 	int 	skip_disclaimer;	/* 1 to skip the disclaimer screen at startup */
 	int 	skip_gameinfo;		/* 1 to skip the game info screen at startup */
 	int 	skip_warnings;		/* 1 to skip the warnings screen at startup */
+	int 	skip_validitychecks;		/* 1 to skip the validity checks at startup */
 
 	int		samplerate;		/* sound sample playback rate, in Hz */
 	int		use_samples;	/* 1 to enable external .wav samples */
@@ -221,7 +222,6 @@ struct GameOptions
 	float	brightness;		/* brightness of the display */
 	float	pause_bright;		/* additional brightness when in pause */
 	float	gamma;			/* gamma correction of the display */
-	int		color_depth;	/* 15, 16, or 32, any other value means auto */
 	int		vector_width;	/* requested width for vector games; 0 means default (640) */
 	int		vector_height;	/* requested height for vector games; 0 means default (480) */
 	int		ui_orientation;	/* orientation of the UI relative to the video */

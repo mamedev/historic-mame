@@ -6,8 +6,6 @@
 
 	preliminary version by smf.
 
-	very bad sound
-
 ***************************************************************************/
 
 #include "driver.h"
@@ -351,10 +349,18 @@ void PSX_sh_stop( void )
 	m_p_n_spuram = NULL;
 }
 
+static data32_t psx_spu_delay = 0;
+
+WRITE32_HANDLER( psx_spu_delay_w )
+{
+	COMBINE_DATA( &psx_spu_delay );
+	verboselog( 1, "psx_spu_delay_w( %08x %08x )\n", data, mem_mask );
+}
+
 READ32_HANDLER( psx_spu_delay_r )
 {
-	verboselog( 1, "psx_spu_delay_r()\n" );
-	return 0;
+	verboselog( 1, "psx_spu_delay_r( %08x )\n", mem_mask );
+	return psx_spu_delay;
 }
 
 READ32_HANDLER( psx_spu_r )

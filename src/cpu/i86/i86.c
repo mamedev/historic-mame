@@ -16,6 +16,8 @@
 #include "i86.h"
 #include "i86intf.h"
 
+extern int i386_dasm_one(char *buffer, UINT32 eip, int addr_size, int op_size);
+
 
 /* All pre-i286 CPUs have a 1MB address space */
 #define AMASK	0xfffff
@@ -251,7 +253,7 @@ static int i86_execute(int num_cycles)
 static offs_t i86_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
-	return DasmI86(buffer, pc);
+	return i386_dasm_one(buffer, pc, I.sregs[CS], I.sregs[CS]);
 #else
 	sprintf(buffer, "$%02X", cpu_readop(pc));
 	return 1;
@@ -310,7 +312,7 @@ static int i186_execute(int num_cycles)
 static offs_t i186_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
-	return DasmI186(buffer, pc);
+	return i386_dasm_one(buffer, pc, I.sregs[CS], I.sregs[CS]);
 #else
 	sprintf(buffer, "$%02X", cpu_readop(pc));
 	return 1;
@@ -438,7 +440,7 @@ static int v30_execute(int num_cycles)
 static offs_t v30_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
-	return DasmV30(buffer, pc);
+	return i386_dasm_one(buffer, pc, I.sregs[CS], I.sregs[CS]);
 #else
 	sprintf(buffer, "$%02X", cpu_readop(pc));
 	return 1;

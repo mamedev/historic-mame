@@ -411,7 +411,7 @@ static MACHINE_INIT( gbusters )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	cpunum_set_info_ptr(0, CPUINFO_PTR_KONAMI_SETLINES_CALLBACK, (void *)gbusters_banking);
+	cpunum_set_info_fct(0, CPUINFO_PTR_KONAMI_SETLINES_CALLBACK, (genf *)gbusters_banking);
 
 	/* mirror address for banked ROM */
 	memcpy(&RAM[0x18000], &RAM[0x10000], 0x08000 );

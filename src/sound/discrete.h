@@ -104,10 +104,11 @@
  * DISCRETE_INPUTX(NODE,ADDR,MASK,GAIN,OFFSET,INIT0)
  * DISCRETE_INPUT_PULSE(NODE,INIT0,ADDR,MASK)
  *
- * DISCRETE_COUNTER(NODE,ENAB,RESET,CLK,BITS,DIR,INIT0,CLKTYPE)
- * DISCRETE_COUNTER_FIX(NODE,ENAB,RESET,FREQ,BITS,DIR,INIT0)
+ * DISCRETE_COUNTER(NODE,ENAB,RESET,CLK,MAX,DIR,INIT0,CLKTYPE)
+ * DISCRETE_COUNTER_FIX(NODE,ENAB,RESET,FREQ,MAX,DIR,INIT0)
  * DISCRETE_LFSR_NOISE(NODE,ENAB,RESET,FREQ,AMPL,FEED,BIAS,LFSRTB)
  * DISCRETE_NOISE(NODE,ENAB,FREQ,AMP,BIAS)
+ * DISCRETE_NOTE(NODE,ENAB,FREQ,DATA,MAX1,MAX2)
  * DISCRETE_SAWTOOTHWAVE(NODE,ENAB,FREQ,AMP,BIAS,GRADIENT,PHASE)
  * DISCRETE_SINEWAVE(NODE,ENAB,FREQ,AMP,BIAS,PHASE)
  * DISCRETE_SQUAREWAVE(NODE,ENAB,FREQ,AMP,DUTY,BIAS,PHASE)
@@ -115,6 +116,9 @@
  * DISCRETE_SQUAREWAVE2(NODE,ENAB,AMPL,T_OFF,T_ON,BIAS,TSHIFT)
  * DISCRETE_TRIANGLEWAVE(NODE,ENAB,FREQ,AMP,BIAS,PHASE)
  *
+ * DISCRETE_OP_AMP_OSCILLATOR(NODE,ENAB,INFO)
+ * DISCRETE_OP_AMP_VCO1(NODE,ENAB,VMOD1,INFO)
+ * DISCRETE_OP_AMP_VCO2(NODE,ENAB,VMOD1,VMOD2,INFO)
  * DISCRETE_SCHMITT_OSCILLATOR(NODE,ENAB,INP0,AMPL,TABLE)
  *
  * DISCRETE_ADDER2(NODE,IN0,IN1)
@@ -126,8 +130,8 @@
  * DISCRETE_INVERT(NODE,IN0)
  * DISCRETE_MULTIPLY(NODE,ENAB,IN0,IN1)
  * DISCRETE_MULTADD(NODE,ENAB,INP0,INP1,INP2)
- * DISCRETE_ONESHOT(NODE,ENAB,TRIG,AMP,WIDTH)
- * DISCRETE_ONESHOTR(NODE,ENAB,TRIG,RESET,AMP,WIDTH)
+ * DISCRETE_ONESHOT(NODE,TRIG,AMPL,WIDTH,TYPE)
+ * DISCRETE_ONESHOTR(NODE,RESET,TRIG,AMPL,WIDTH,TYPE)
  * DISCRETE_ONOFF(NODE,IN0,IN1)
  * DISCRETE_RAMP(NODE,ENAB,RAMP,GRAD,MIN,MAX,CLAMP)
  * DISCRETE_SAMPLHOLD(NODE,ENAB,INP0,CLOCK,CLKTYPE)
@@ -139,6 +143,7 @@
  *
  * DISCRETE_COMP_ADDER(NODE,ENAB,DATA,TABLE)
  * DISCRETE_DAC_R1(NODE,ENAB,DATA,VDATA,LADDER)
+ * DISCRETE_INTEGRATE(NODE,TRG0,TRG1,INFO)
  * DISCRETE_LADDER(NODE,ENAB,IN0,GAIN,LADDER)
  * DISCRETE_MIXER2(NODE,ENAB,IN0,IN1,INFO)
  * DISCRETE_MIXER3(NODE,ENAB,IN0,IN1,IN2,INFO)
@@ -148,6 +153,7 @@
  * DISCRETE_MIXER7(NODE,ENAB,IN0,IN1,IN2,IN3,IN4,IN5,IN6,INFO)
  * DISCRETE_MIXER8(NODE,ENAB,IN0,IN1,IN2,IN3,IN4,IN5,IN6,IN7,INFO)
  * DISCRETE_MIXER(NODE,ENAB,IN0,IN1,IN2,IN3,IN4,IN5,IN6,IN7,IN8,INFO)
+ * DISCRETE_OP_AMP_TRIG_VCA(NODE,TRG0,TRG1,TRG2,IN0,IN1,INFO)
  *
  * DISCRETE_LOGIC_INVERT(NODE,ENAB,INP0)
  * DISCRETE_LOGIC_AND(NODE,ENAB,INP0,INP1)
@@ -166,10 +172,12 @@
  * DISCRETE_LOGIC_NXOR(NODE,ENAB,INP0,INP1)
  * DISCRETE_LOGIC_DFLIPFLOP(NODE,RESET,SET,CLK,INP)
  *
- * DISCRETE_CRFILTER(NODE,ENAB,IN0,RVAL,CVAL)
- * DISCRETE_CRFILTER_VREF(NODE,ENAB,IN0,RVAL,CVAL,VREF)
  * DISCRETE_FILTER1(NODE,ENAB,INP0,FREQ,TYPE)
  * DISCRETE_FILTER2(NODE,ENAB,INP0,FREQ,DAMP,TYPE)
+ *
+ * DISCRETE_CRFILTER(NODE,ENAB,IN0,RVAL,CVAL)
+ * DISCRETE_CRFILTER_VREF(NODE,ENAB,IN0,RVAL,CVAL,VREF)
+ * DISCRETE_OP_AMP_FILTER(NODE,ENAB,INP0,INP1,TYPE,INFO)
  * DISCRETE_RCDISC(NODE,ENAB,IN0,RVAL,CVAL)
  * DISCRETE_RCDISC2(NODE,IN0,RVAL0,IN1,RVAL1,CVAL)
  * DISCRETE_RCFILTER(NODE,ENAB,IN0,RVAL,CVAL)
@@ -179,7 +187,7 @@
  * DISCRETE_555_CC(NODE,RESET,VIN,R,C,RBIAS,RGND,RDIS,OPTIONS)
  * DISCRETE_566(NODE,ENAB,VMOD,R,C,OPTIONS)
  *
- * DISCRETE_OUTPUT(OPNODE)
+ * DISCRETE_OUTPUT(OPNODE,VOL)
  *
  ***********************************************************************
  =======================================================================
@@ -187,7 +195,7 @@
  =======================================================================
  ***********************************************************************
  *
- * DISCRETE_ADJUSTMENT - Adjustable constant nodempile time
+ * DISCRETE_ADJUSTMENT - Adjustable constant set by the UI [~] menu.
  *
  *                        .----------.
  *                        |          |
@@ -207,11 +215,13 @@
  *
  *     DISCRETE_ADJUSTMENT(NODE_01,1,0.0,5.0,DISC_LINADJ,0,5)
  *
- *  Define an adjustment slider that takes a 0-100 input from input 
- *  port #5, scaling between 0.0 and 5.0. Adujstment scaling is Linear.
+ *  Define an adjustment slider that takes a 0-100 input from input
+ *  port #5, scaling between 0.0 and 5.0. Adjustment scaling is Linear.
  *
  *      DISC_LOGADJ 1.0
  *      DISC_LINADJ 0.0
+ *
+ * EXAMPLES: see Hit Me
  *
  ***********************************************************************
  *
@@ -288,7 +298,7 @@
  *  Declaration syntax
  *
  *       where:         direction: 0 = down, 1 = up
- *                      clock type: toggle on 0/1
+ *                      clock type: toggle on 0/1 (falling/rising edge)
  *
  *     DISCRETE_COUNTER(name of node,
  *                      enable node or static value,
@@ -307,11 +317,13 @@
  *                          direction node or static value
  *                          reset value node or static value)
  *
+ * EXAMPLES: see Fire Truck, Monte Carlo, Super Bug, Polaris
+ *
  ***********************************************************************
  *
  * DISCRETE_LFSR_NOISE - Noise waveform generator node, generates
  *                       psuedo random digital stream at the requested
- *                       clock frequency. Amplitude is 0/AMPLITUDE.
+ *                       clock frequency. Output is 0 or AMPLITUDE.
  *
  *  Declaration syntax
  *
@@ -324,11 +336,16 @@
  *                         bias node or static value,
  *                         LFSR noise descriptor structure)
  *
+ *     discrete_lfsr_desc = {bitlength, reset_value,
+ *                           feedback_bitsel0, feedback_bitsel1,
+ *                           feedback_function0, feedback_function1, feedback_function2,
+ *                           feedback_function2_mask, flags, output_bit}
+ *
  *  The diagram below outlines the structure of the LFSR model.
  *
  *         .-------.
  *   FEED  |       |
- *   ----->|  F2   |<--------------------------------------------.
+ *   ----->|  F1   |<--------------------------------------------.
  *         |       |                                             |
  *         '-------'               BS - Bit Select               |
  *             |                   Fx - Programmable Function    |
@@ -339,7 +356,7 @@
  *             V  V     '-------'         |  .----               |
  *           .------.                     +->| BS |--. .------.  |
  *   BITMASK |      |    .-------------.  |  '----'  '-|      |  |
- *   ------->|  F3  |-+->| Shift Reg   |--+            |  F1  |--'
+ *   ------->|  F2  |-+->| Shift Reg   |--+            |  F0  |--'
  *           |      | |  '-------------'  |  .----.  .-|      |
  *           '------' |         ^         '->| BS |--' '------'
  *                    |         |            '----'
@@ -347,6 +364,8 @@
  *   ---->            |                      .----.  .----.
  *                    '----------------------| BS |--| PI |--->OUTPUT
  *                                           '----'  '----'
+ *
+ * EXAMPLES: see Fire Truck, Monte Carlo, Super Bug, Polaris
  *
  ***********************************************************************
  *
@@ -367,14 +386,33 @@
  *
  *  Declaration syntax
  *
- *     DISCRETE_NOISE     (name of node,
- *                         enable node or static value,
- *                         frequency node or static value,
- *                         amplitude node or static value)
+ *     DISCRETE_NOISE(name of node,
+ *                    enable node or static value,
+ *                    frequency node or static value,
+ *                    amplitude node or static value)
  *
  *  Example config line
  *
  *     DISCRETE_NOISE(NODE_03,1,5000,NODE_01,0)
+ *
+ ***********************************************************************
+ *
+ * DISCRETE_NOTE - Note generator.  This takes a fixed frequency, and
+ *                 clocks an up counter that is preloaded with the data
+ *                 value at every max 1 count.  Every time max 1 count
+ *                 is reached, the output counts up one and rolls over
+ *                 to 0 at max 2 count.
+ *                 When the data value is the same as max count 1, the
+ *                 counter no longer counts.
+ *
+ *     DISCRETE_NOTE(name of node,
+ *                   enable node or static value,
+ *                   frequency static value,
+ *                   data node or static value,
+ *                   max 1 count static value,
+ *                   max 2 count static value)
+ *
+ * EXAMPLES: see Polaris
  *
  ***********************************************************************
  *
@@ -488,6 +526,8 @@
  *              It takes up less CPU time then DISCRETE_SQUAREWAVE and
  *              should be used whenever possible.
  *
+ * EXAMPLES: see Polaris
+ *
  ***********************************************************************
  *
  * DISCRETE_SQUAREWAVE2 - Squarewave waveform generator node.
@@ -565,13 +605,15 @@
  *
  * DISCRETE_OP_AMP_OSCILLATOR - Various single power supply op-amp oscillator circuits
  *
- * Note: Set all unused components to 0.
- *
  *  Declaration syntax
  *
  *     DISCRETE_OP_AMP_OSCILLATOR(name of node,
  *                                enable node or static value,
  *                                address of dss_op_amp_osc_context structure)
+ *
+ *     discrete_op_amp_osc_info = {type, r1, r2, r3, r4, r5, r6, r7, r8, c, vP}
+ *
+ * Note: Set all unused components to 0.
  *
  *  Types:
  *
@@ -583,9 +625,9 @@
  *       Z     .---||----+---------------------------> DISC_OP_AMP_OSCILLATOR_IS_CAP
  *       Z r1  |         |
  *       Z     |   |\    |
- *       |     |   | \   |            |\   
- *       '-----+---|- \  |     r3     | \  
- *                 |   >-+----ZZZZ----|- \ 
+ *       |     |   | \   |            |\
+ *       '-----+---|- \  |     r3     | \
+ *                 |   >-+----ZZZZ----|- \
  *                 |+ /               |   >--+-------> DISC_OP_AMP_OSCILLATOR_IS_SQR
  *             .---| /             .--|+ /   |
  *             |   |/        r5    |  | /    |
@@ -597,12 +639,12 @@
  *             |                             |
  *             '-----------------------------'
  *
+ * EXAMPLES: see Polaris
+ *
  ***********************************************************************
  *
  * DISCRETE_OP_AMP_VCOn - Various single power supply op-amp VCO circuits
  *                   (n = 1 or 2)
- *
- * Note: Set all unused components to 0.
  *
  *  Declaration syntax
  *
@@ -611,6 +653,10 @@
  *                          modulation voltage 1 node or static value,
  *                          modulation voltage 2 node or static value,  [optional]
  *                          address of dss_op_amp_osc_context structure)
+ *
+ *     discrete_op_amp_osc_info = {type, r1, r2, r3, r4, r5, r6, r7, r8, c, vP}
+ *
+ * Note: Set all unused components to 0.
  *
  *  Types:
  *
@@ -623,9 +669,9 @@
  *  .------------------------+---||----+---------------------------> DISC_OP_AMP_OSCILLATOR_IS_CAP
  *  |                        |         |
  *  |                        |   |\    |
- *  |              r1        |   | \   |            |\   
- *  | vMod1 >--+--ZZZZ-------+---|- \  |            | \  
- *  |          |                 |   >-+------------|- \ 
+ *  |              r1        |   | \   |            |\
+ *  | vMod1 >--+--ZZZZ-------+---|- \  |            | \
+ *  |          |                 |   >-+------------|- \
  *  |          |   r2            |+ /               |   >--+-------> DISC_OP_AMP_OSCILLATOR_IS_SQR
  *  Z          '--ZZZZ--+--------| /             .--|+ /   |
  *  Z r6                |        |/        r4    |  | /    |
@@ -638,12 +684,12 @@
  *   gnd          '----------------------------------------'
  *
  *          --------------------------------------------------
- *           
+ *
  *     DISC_OP_AMP_OSCILLATOR_VCO_1 | DISC_OP_AMP_IS_NORTON
  *          Basic Norton Op Amp Voltage Controlled Oscillator circuit.
  *
  *                                             .---------------------------> DISC_OP_AMP_OSCILLATOR_IS_CAP
- *                                       c      |
+ *                                       c     |
  *               r6                  .---||----+
  *        vP >--ZZZZ---.             |         |         r5    |\
  *                     |             |   |\    |  vP >--ZZZZ-. | \
@@ -658,6 +704,8 @@
  *                                 | |                                |
  *                Enable >---------' |                                |
  *                                   '--------------------------------'
+ *
+ * EXAMPLES: see Polaris
  *
  ***********************************************************************
  *
@@ -684,15 +732,24 @@
  *                                 Amplitude node or static value,
  *                                 address of discrete_schmitt_osc_desc structure)
  *
+ *     discrete_schmitt_osc_desc = {rIn, rFeedback, c, trshRise, trshFall, vGate, options}
+ *
+ *  Where:
+ *     trshRise is the voltage level that triggers the gate input to go high (vGate) on rise.
+ *     trshFall is the voltage level that triggers the gate input to go low (0V) on fall.
+ *     vGate    is the ouput high voltage of the gate that gets fedback through rFeedback.
+ *
  *  Input Options:
  *     DISC_SCHMITT_OSC_IN_IS_LOGIC
  *     DISC_SCHMITT_OSC_IN_IS_VOLTAGE
  *
- *  Enable Options:
+ *  Enable Options: (ORed with input options)
  *     DISC_SCHMITT_OSC_ENAB_IS_AND
  *     DISC_SCHMITT_OSC_ENAB_IS_NAND
  *     DISC_SCHMITT_OSC_ENAB_IS_OR
  *     DISC_SCHMITT_OSC_ENAB_IS_NOR
+ *
+ * EXAMPLES: see Fire Truck, Monte Carlo, Super Bug
  *
  ***********************************************************************
  =======================================================================
@@ -734,7 +791,7 @@
  ***********************************************************************
  *
  * DISCRETE_ADDER      - Node addition function, available in three
- *                       lovelly flavours, ADDER2,ADDER3,ADDER4
+ *                       lovely flavours, ADDER2,ADDER3,ADDER4
  *                       that perform a summation of incoming nodes
  *
  *                        .------------.
@@ -873,13 +930,14 @@
  *
  ***********************************************************************
  *
- * DISCRETE_LOGIC_DFLIPFLOP - Standard D-type flip-flop
+ * DISCRETE_LOGIC_DFLIPFLOP - Standard D-type flip-flop.
+ *                            Changes on rising edge of clock.
  *
  *    /SET       -2 ------------.
  *                              v
  *                        .-----o------.
  *                        |            |
- *    INPUT      -4 ----->|            |
+ *    DATA       -4 ----->|            |
  *                        |            |
  *                        |  FLIPFLOP  |---->    Netlist node
  *                        |            |
@@ -896,7 +954,7 @@
  *                                reset node or static value,
  *                                set node or static value,
  *                                clock node,
- *                                input node or static value)
+ *                                data node or static value)
  *
  *  Example config line
  *
@@ -904,6 +962,8 @@
  *
  *  A flip-flop that clocks a logic 1 through on the rising edge of
  *  NODE_13. A logic 1 on NODE_17 resets the output to 0.
+ *
+ * EXAMPLES: see Hit Me, Polaris
  *
  ***********************************************************************
  *
@@ -977,6 +1037,8 @@
  *  NOTE: A width of 0 seconds will output a pulse of 1 sample.
  *        This is usefull for a guaranteed minimun pulse, regardless
  *        of the sample rate.
+ *
+ * EXAMPLES: see Polaris
  *
  ***********************************************************************
  *
@@ -1140,6 +1202,8 @@
  *   | - Pop two values from stack, binary OR and push result to stack
  *   ^ - Pop two values from stack, binary XOR and push result to stack
  *
+ * EXAMPLES: see Polaris
+ *
  ***********************************************************************
  =======================================================================
  * from from disc_mth.c
@@ -1148,49 +1212,53 @@
  ***********************************************************************
  *
  * DISCRETE_COMP_ADDER - Selecatable parallel component adder.
- *                       The total netlist out will be the sum of all
- *                       components selected in parallel.
+ *                       The total netlist out will be the parallel sum of all
+ *                       components with their corresponding data bit = 1.
  *                       Set cDefault to 0 if not used.
  *
- *      cDefault  >---xx---.
- *      data&0x01 >---xx---+
- *      data&0x02 >---xx---+
- *      data&0x04 >---xx---+
- *      data&0x08 >---xx---+-----> netlist node
- *      data&0x10 >---xx---+
- *      data&0x20 >---xx---+
- *      data&0x40 >---xx---+
- *      data&0x80 >---xx---'
+ *         common >---cDefault---.
+ *      data&0x01 >-----c[0]-----+
+ *      data&0x02 >-----c[1]-----+
+ *      data&0x04 >-----c[2]-----+
+ *      data&0x08 >-----c[3]-----+-----> netlist node
+ *      data&0x10 >-----c[4]-----+
+ *      data&0x20 >-----c[5]-----+
+ *      data&0x40 >-----c[6]-----+
+ *      data&0x80 >-----c[7]-----'
  *
  *  Declaration syntax
  *
  *     DISCRETE_COMP_ADDER(name of node,
  *                         enable node or static value,
  *                         data node (static value is useless),
- *                      address of discrete_comp_adder_table structure)
+ *                         address of discrete_comp_adder_table structure)
+ *
+ *     discrete_comp_adder_table = {type, cDefault, length, c{}}
  *
  *  Circuit Types:
  *     DISC_COMP_P_CAPACITOR - parallel capacitors
  *     DISC_COMP_P_RESISTOR  - parallel resistors
  *
+ * EXAMPLES: see Hit Me
+ *
  ***********************************************************************
  *
  * DISCRETE_DAC_R1 - R1 ladder DAC with cap smoothing and external bias
  *
- *                           rBias
- * data&0x01 >--/\R0/\--+-----/\/\----< vBias
- * data&0x02 >--/\R1/\--|
- * data&0x04 >--/\R2/\--|
- * data&0x08 >--/\R3/\--|
- * data&0x10 >--/\R4/\--|
- * data&0x20 >--/\R5/\--|
- * data&0x40 >--/\R6/\--|
- * data&0x80 >--/\R7/\--+-------------+-----> Netlist node
- *                      |             |
- *                      Z            ---
- *                      Z rGnd       --- cFilter
- *                      |             |
- *                     gnd           gnd
+ *                             rBias
+ * data&0x01 >--/\R[0]/\--+-----/\/\----< vBias
+ * data&0x02 >--/\R[1]/\--|
+ * data&0x04 >--/\R[2]/\--|
+ * data&0x08 >--/\R[3]/\--|
+ * data&0x10 >--/\R[4]/\--|
+ * data&0x20 >--/\R[5]/\--|
+ * data&0x40 >--/\R[6]/\--|
+ * data&0x80 >--/\R[7]/\--+-------------+-----> Netlist node
+ *                        |             |
+ *                        Z            ---
+ *                        Z rGnd       --- cFilter
+ *                        |             |
+ *                       gnd           gnd
  *
  * NOTES: rBias and vBias are used together.  If not needed they should
  *        be set to 0.  If used, they should both have valid values.
@@ -1198,7 +1266,7 @@
  *        A resistor value should be properly set for each resistor
  *        up to the ladder length.  Remember 0 is a short circuit.
  *        The data node is bit mapped to the ladder. valid int 0-255.
- *        TTL logic 0 is actually 0.2V but I use 0V.  The other parts
+ *        TTL logic 0 is actually 0.2V but 0V is used.  The other parts
  *        have a tolerance that more then makes up for this.
  *
  *  Declaration syntax
@@ -1209,11 +1277,72 @@
  *                     vData node or static value (vON),
  *                     address of discrete_dac_r1_ladder structure)
  *
+ *     discrete_dac_r1_ladder = {ladderLength, r{}, vBias, rBias, rGnd, cFilter}
+ *
+ * EXAMPLES: see Fire Truck, Monte Carlo, Super Bug, Polaris
+ *
+ ***********************************************************************
+ *
+ * DISCRETE_INTEGRATE - Various Integration circuits
+ *
+ *  Declaration syntax
+ *
+ *     DISCRETE_INTEGRATE(name of node,
+ *                        trigger 0 node or static value,
+ *                        trigger 1 node or static value,
+ *                        address of discrete_integrate_info)
+ *
+ *     discrete_integrate_info = {type, r1, r2, r3, c, vP, f0, f1, f2}
+ *
+ * Note: Set all unused components to 0.
+ *
+ *  Types:
+ *
+ *     DISC_INTEGRATE_OP_AMP_1 | DISC_OP_AMP_IS_NORTON
+ *
+*                               c
+ *                          .---||----.
+ *                          |         |
+ *                          |  |\     |
+ *               r1         |  | \    |
+ *      vP >----ZZZZ--------+--|- \   |
+ *                             |   >--+----> Netlist Node
+ *               r2         .--|+ /
+ *   Trig0 >----ZZZZ--------'  | /
+ *                             |/
+ *
+ * EXAMPLES: see
+ *
+ *          --------------------------------------------------
+ *
+ *     DISC_INTEGRATE_OP_AMP_2 | DISC_OP_AMP_IS_NORTON
+ *
+ *                                       c
+ *                                  .---||----.
+ *            r1a                   |         |
+ *   vP >----ZZZZ---.               |  |\     |
+ *          .----.  |   r1b   Diode |  | \    |
+ *          | F0 |--+--ZZZZ----|>|--+--|- \   |
+ *          '----'                     |   >--+----> Netlist Node
+ *            r2a       r2b         .--|+ /
+ *   vP >----ZZZZ---+--ZZZZ---------+  | /
+ *          .----.  |               |  |/
+ *          | F1 |--'               |
+ *          '----'                  |
+ *            r3a       r3b   Diode |
+ *   vP >----ZZZZ---+--ZZZZ----|>|--'
+ *          .----.  |
+ *          | F2 |--'
+ *          '----'
+ *
+ * Note: For an explanation of the functions and trigger inputs,
+ *       see DISCRETE_OP_AMP_TRIG_VCA below.
+ *
+ * EXAMPLES: see Polaris
+ *
  ***********************************************************************
  *
  * DISCRETE_MIXER - Mixes multiple input signals.
- *
- * Note: Set all unused components to 0.
  *
  *  Declaration syntax
  *
@@ -1229,50 +1358,132 @@
  *                     input 7 node,  (if used)
  *                     address of discrete_mixer_info structure)
  *
+ *     discrete_mixer_desc = {type, mixerLength, r{}, rNode{}, c{}, rI, rF, cF, cAmp, vRef, gain}
+ *
+ * Note: Set all unused components to 0.
+ *       If an rNode is not used it should also be set to 0.
+ *
  *  Types:
  *
  *     DISC_MIXER_IS_RESISTOR
  *
- *         r[0]   c[0]
- *  IN0 >--zzzz----||---.
- *                      |
- *         r[1]   c[1]  |
- *  IN1 >--zzzz----||---+--------.
- *   .      .      .    |        |      cAmp
- *   .      .      .    |        Z<------||---------> Netlist Node
- *   .      .      .    |        Z
- *   .     r[7]   c[7]  |        Z rF
- *  IN7 >--zzzz----||---+        |
- *                      |        |
- *                     ---       |
- *                  cF ---       |
- *                      |        |
- *                     gnd      gnd
+ *       rNode[0]   r[0]   c[0]
+ *  IN0 >--zzzz-----zzzz----||---.
+ *                               |
+ *       rNode[1]   r[1]   c[1]  |
+ *  IN1 >--zzzz-----zzzz----||---+--------.
+ *   .      .        .      .    |        |      cAmp
+ *   .      .        .      .    |        Z<------||---------> Netlist Node
+ *   .      .        .      .    |        Z
+ *   .   rNode[7]   r[7]   c[7]  |        Z rF
+ *  IN7 >--zzzz-----zzzz----||---+        |
+ *                               |        |
+ *                              ---       |
+ *                           cF ---       |
+ *                               |        |
+ *                              gnd      gnd
  *
  *  Note: The variable resistor is used in it's full volume position.
  *        MAME's built in volume is used for adjustment.
+ *
+ * EXAMPLES: see Polaris, Super Bug
  *
  *          --------------------------------------------------
  *
  *     DISC_MIXER_IS_OP_AMP
  *
- *                                    cF
- *                               .----||---.
- *                               |         |
- *         r[0]   c[0]           |    rF   |
- *  IN0 >--zzzz----||---.        +---ZZZZ--+
- *                      |        |         |
- *         r[1]   c[1]  |   rI   |  |\     |
- *  IN1 >--zzzz----||---+--zzzz--+  | \    |
- *   .      .      .    |        '--|- \   |  cAmp
- *   .      .      .    |           |   >--+---||-----> Netlist Node
- *   .      .      .    |        .--|+ /
- *   .     r[7]   c[7]  |        |  | /
- *  IN7 >--zzzz----||---'        |  |/
- *                               |
- *  vRef >-----------------------'
+ *                                               cF
+ *                                          .----||---.
+ *                                          |         |
+ *        rNode[0]    r[0]   c[0]           |    rF   |
+ *   IN0 >--zzzz------zzzz----||---.        +---ZZZZ--+
+ *                                 |        |         |
+ *        rNode[1]    r[1]   c[1]  |   rI   |  |\     |
+ *   IN1 >--zzzz------zzzz----||---+--zzzz--+  | \    |
+ *    .      .         .      .    |        '--|- \   |  cAmp
+ *    .      .         .      .    |           |   >--+---||-----> Netlist Node
+ *    .      .         .      .    |        .--|+ /
+ *    .   rNode[7]    r[7]   c[7]  |        |  | /
+ *   IN7 >--zzzz------zzzz----||---'        |  |/
+ *                                          |
+ *  vRef >----------------------------------'
  *
  * Note: rI is not always used and should then be 0.
+ *
+ * EXAMPLES: see Fire Truck, Monte Carlo
+ *
+ ***********************************************************************
+ *
+ * DISCRETE_OP_AMP_TRIG_VCA - Triggered Norton op amp voltage controlled amplifier.
+ *                            This means the cap is rapidly charged thru r5 when F2=1.
+ *                            Then it discharges thru r6+r7 when F2=0.
+ *                            This voltage controls the amplitude.
+ *                            While the diagram looks complex, usually only parts of it are used.
+ *
+ *  Declaration syntax
+ *
+ *     DISCRETE_OP_AMP_TRIG_VCA(name of node,
+ *                              trigger 0 node or static value,
+ *                              trigger 1 node or static value,
+ *                              trigger 2 node or static value,
+ *                              input 0 node or static value,
+ *                              input 1 node or static value,
+ *                              address of discrete_op_amp_tvca_info structure)
+ *
+ *     discrete_op_amp_tvca_info = { r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, c1, c2, c3, vP, f0, f1, f2, f3, f4, f5}
+ *
+ * Note: Set all unused components to 0.
+ *       Set all unused functions to DISC_OP_AMP_TRIGGER_FUNCTION_NONE
+ *       Set all unused nodes to NODE_NC.
+ *       If function F3 is not used then set r6=0 and use only r7.
+ *       r2 = r2a + r2b.  r3 = r3a + r3b.
+ *
+ *             r2a
+ *   IN0 >----ZZZZ-----.               r1
+ *           .----.    |     vP >------ZZZZ---.
+ *           | F0 |----+                      |
+ *           '----'    |                r2b   |    r4
+ *             r3a     '---------------ZZZZ---+---ZZZZ--.
+ *   IN1 >----ZZZZ---.                        |         |
+ *           .----.  |                  r3b   |  |\     |
+ *           | F1 |--+-----------------ZZZZ---+  | \    |
+ *           '----'                           '--|- \   |
+ *           .----.    diode     r6        r7    |   >--+----> Netlist Node
+ *           | F2 |--+--|>|--+--ZZZZ---+--ZZZZ-+-|+ /
+ *           '----'  |       |         |       | | /
+ *                   |      ---      .----.    | |/
+ *             r5    |      --- c1   | F3 |    |
+ *    vP >----ZZZZ---'       |       '----'    |
+ *                          gnd                |
+ *                                             |
+ *           .----.    diode               r9  |
+ *           | F4 |--+--|>|-----------+---ZZZZ-+
+ *           '----'  |           c2   |        |
+ *             r8    |   gnd >---||---'        |
+ *    vP >----ZZZZ---'                         |
+ *           .----.    diode               r11 |
+ *           | F5 |--+--|>|-----------+---ZZZZ-'
+ *           '----'  |           c3   |
+ *             r10   |   gnd >---||---'
+ *    vP >----ZZZZ---'
+ *
+ *  Function types:
+ *
+ *   Trigger 0, 1 and 2 are used for the functions F0 - F5.
+ *   When the output of the function is 0, then the connection is held at 0V or gnd.
+ *   When the output of the function is 1, then the function is an open circuit.
+ *
+ *   DISC_OP_AMP_TRIGGER_FUNCTION_NONE       - Not used, cicuit open.
+ *   DISC_OP_AMP_TRIGGER_FUNCTION_TRG0       - Gnd when trigger 0 is 0.
+ *   DISC_OP_AMP_TRIGGER_FUNCTION_TRG0_INV   - Gnd when trigger 0 is 1.
+ *   DISC_OP_AMP_TRIGGER_FUNCTION_TRG1       - Gnd when trigger 1 is 0.
+ *   DISC_OP_AMP_TRIGGER_FUNCTION_TRG1_INV   - Gnd when trigger 1 is 1.
+ *   DISC_OP_AMP_TRIGGER_FUNCTION_TRG2       - Gnd when trigger 2 is 0.
+ *   DISC_OP_AMP_TRIGGER_FUNCTION_TRG2_INV   - Gnd when trigger 2 is 1.
+ *   DISC_OP_AMP_TRIGGER_FUNCTION_TRG01_AND  - Gnd when trigger 0 or 1 are 0.
+ *   DISC_OP_AMP_TRIGGER_FUNCTION_TRG01_NAND - Gnd when trigger 0 and 1 are 1.
+ *
+ * EXAMPLES: see Polaris
  *
  ***********************************************************************
  =======================================================================
@@ -1343,7 +1554,7 @@
  *
  *  Example config line
  *
- *     DISCRETE_CRFILTER(NODE_11,1,NODE_10,100,1e-6)
+ *     DISCRETE_CRFILTER(NODE_11,1,NODE_10,100,CAP_U(1))
  *
  *  Defines an always enabled CR filter with a 100R & 1uF network
  *  the input is fed from NODE_10.
@@ -1360,11 +1571,6 @@
  *
  *  DISCRETE_OP_AMP_FILTER - Various Op Amp Filters.
  *
- * Note: Set all unused components to 0.
- *       vP and vN are bias voltages if needed.
- *       vRef is 0 if Gnd.
- *       NORTON Op Amps are not supported (yet).
- *
  *  Declaration syntax
  *
  *      DISCRETE_OP_AMP_FILTER(name of node,
@@ -1374,22 +1580,28 @@
  *                             type static value,
  *                             address of discrete_op_amp_filt_info)
  *
+ *      discrete_op_amp_filt_info = {r1, r2, r3, r4, rF, c1, c2, c3, vRef, vP, vN}
+ *
+ * Note: Set all unused components to 0.
+ *       vP and vN are bias voltages if needed.
+ *       vRef is 0 if Gnd.
+ *
  *  Types:
  *
  *     DISC_OP_AMP_FILTER_IS_LOW_PASS_1
  *          First Order Low Pass Filter
  *
- *          rP                  c1
- *   vP >--zzzz--.      .-------||---------.
+ *          r3                  c1
+ *   vP >--ZZZZ--.      .-------||---------.
  *               |      |                  |
  *          r1   |      |       rF         |
- *  IN0 >--zzzz--+      +------zzzz--------+
+ *  IN0 >--ZZZZ--+      +------ZZZZ--------+
  *               |      |                  |
  *          r2   |      |           |\     |
- *  IN1 >--zzzz--+------+--------+  | \    |
+ *  IN1 >--ZZZZ--+------+--------+  | \    |
  *               |               '--|- \   |
- *          rN   |                  |   >--+----------> Netlist Node
- *   vN >--zzzz--'               .--|+ /
+ *          r4   |                  |   >--+----------> Netlist Node
+ *   vN >--ZZZZ--'               .--|+ /
  *                               |  | /
  *  vRef >-----------------------'  |/
  *
@@ -1398,17 +1610,17 @@
  *     DISC_OP_AMP_FILTER_IS_HIGH_PASS_1
  *          First Order High Pass Filter
  *
- *          rP
- *   vP >--zzzz--.
+ *          r3
+ *   vP >--ZZZZ--.
  *               |
  *          r1   |              rF
- *  IN0 >--zzzz--+      .------zzzz--------.
+ *  IN0 >--ZZZZ--+      .------ZZZZ--------.
  *               |      |                  |
  *          r2   |  c1  |           |\     |
- *  IN1 >--zzzz--+--||--+--------+  | \    |
+ *  IN1 >--ZZZZ--+--||--+--------+  | \    |
  *               |               '--|- \   |
- *          rN   |                  |   >--+----------> Netlist Node
- *   vN >--zzzz--'               .--|+ /
+ *          r4   |                  |   >--+----------> Netlist Node
+ *   vN >--ZZZZ--'               .--|+ /
  *                               |  | /
  *  vRef >-----------------------'  |/
  *
@@ -1417,17 +1629,17 @@
  *     DISC_OP_AMP_FILTER_IS_BAND_PASS_1
  *          First Order Band Pass Filter
  *
- *          rP                  c1
- *   vP >--zzzz--.      .-------||---------.
+ *          r3                  c1
+ *   vP >--ZZZZ--.      .-------||---------.
  *               |      |                  |
  *          r1   |      |       rF         |
- *  IN0 >--zzzz--+      +------zzzz--------+
+ *  IN0 >--ZZZZ--+      +------ZZZZ--------+
  *               |      |                  |
  *          r2   |  c2  |           |\     |
- *  IN1 >--zzzz--+--||--+--------+  | \    |
+ *  IN1 >--ZZZZ--+--||--+--------+  | \    |
  *               |               '--|- \   |
- *          rN   |                  |   >--+----------> Netlist Node
- *   vN >--zzzz--'               .--|+ /
+ *          r4   |                  |   >--+----------> Netlist Node
+ *   vN >--ZZZZ--'               .--|+ /
  *                               |  | /
  *  vRef >-----------------------'  |/
  *
@@ -1438,27 +1650,65 @@
  *
  *  Note: This filter does not currently work.
  *
- *          rP             c1
- *   vP >--zzzz--.      .--||----+---------.
+ *          r3             c1
+ *   vP >--ZZZZ--.      .--||----+---------.
  *               |      |        |         |
- *          r1   |      |        z         |
- *  IN0 >--zzzz--+      |        z rF      |
- *               |      |        z         |
+ *          r1   |      |        Z         |
+ *  IN0 >--ZZZZ--+      |        Z rF      |
+ *               |      |        Z         |
  *          r2   |      |  c2    |  |\     |
- *  IN1 >--zzzz--+------+--||----+  | \    |
+ *  IN1 >--ZZZZ--+------+--||----+  | \    |
  *               |               '--|- \   |
- *          rN   |                  |   >--+----------> Netlist Node
- *   vN >--zzzz--'               .--|+ /
+ *          r4   |                  |   >--+----------> Netlist Node
+ *   vN >--ZZZZ--'               .--|+ /
  *                               |  | /
  *  vRef >-----------------------'  |/
  *
  * Here is how to calculate the filter info, even though there is no way to use it.
  * This will only be usefull if C1 = C2.
- * rA = 1/(1/rP + 1/r1 +1/r2 + 1/rN)  = all input resistors in parallel.
- * C = c1 = c2
+ *   rA = 1/(1/rP + 1/r1 +1/r2 + 1/rN)  = all input resistors in parallel.
+ *    C = c1 = c2
  *   fC = 1/(2 * PI * C * sqrt(rA * rF))
  *    Q = .5 * sqrt(rF / rA)
  * gain = -2 * Q*Q
+ *
+ *          --------------------------------------------------
+ *
+ *     DISC_OP_AMP_FILTER_IS_HIGH_PASS_0 | DISC_OP_AMP_IS_NORTON
+ *          Basic Norton High Pass Filter
+ *
+ *                                   rF
+ *          r1 = r1a + r1b       .--ZZZZ---.
+ *                               |         |
+ *          r1a   c1    r1b      |  |\     |
+ *  IN1 >--ZZZZ---||---ZZZZ------+  | \    |
+ *                               '--|- \   |
+ *                                  |   >--+----------> Netlist Node
+ *                               .--|+ /
+ *                     r4        |  | /
+ *  vRef >------------ZZZZ-------'  |/
+  *
+ * EXAMPLES: see Polaris
+*
+ *          --------------------------------------------------
+ *
+ *     DISC_OP_AMP_FILTER_IS_BAND_PASS_0 | DISC_OP_AMP_IS_NORTON
+ *          Basic Norton Band Pass Filter
+ *
+ *                                                    rF
+ *                             r3 = r3a + r3b     .--ZZZZ---.
+ *                                                |         |
+ *           r1       r2       r3a   c3     r3b   |  |\     |
+ *  IN1 >---ZZZZ--+--ZZZZ--+--ZZZZ---||----ZZZZ---+  | \    |
+ *                |        |                      '--|- \   |
+ *               ---      ---                        |   >--+---> Netlist Node
+ *               --- c1   --- c2                  .--|+ /
+ *                |        |                      |  | /
+ *               gnd      gnd                     |  |/
+ *                                         r4     |
+ *  vRef >--------------------------------ZZZZ----'
+ *
+ * EXAMPLES: see Polaris
  *
  ***********************************************************************
  *
@@ -1486,7 +1736,7 @@
  *
  *  Example config line
  *
- *     DISCRETE_RCDISC(NODE_11,NODE_10,10,100,1e-6)
+ *     DISCRETE_RCDISC(NODE_11,NODE_10,10,100,CAP_U(1))
  *
  *  When enabled by NODE_10, C discharges from 10v as indicated by RC
  *  of 100R & 1uF.
@@ -1523,7 +1773,7 @@
  *
  *  Example config line
  *
- *     DISCRETE_RCDISC(NODE_9,NODE_10,10.0,100,0.0,100,1e-6)
+ *     DISCRETE_RCDISC(NODE_9,NODE_10,10.0,100,0.0,100,CAP_U(1))
  *
  *  When switched by NODE_10, C charges/discharges from 10v/0v
  *  as dicated by RC0 & RC1 combos respectively
@@ -1563,7 +1813,7 @@
  *
  *  Example config line
  *
- *     DISCRETE_RCFILTER(NODE_11,1,NODE_10,100,1e-6)
+ *     DISCRETE_RCFILTER(NODE_11,1,NODE_10,100,CAP_U(1))
  *
  *  Defines an always enabled RC filter with a 100R & 1uF network
  *  the input is fed from NODE_10.
@@ -1575,6 +1825,8 @@
  *                            2*Pi*RVAL*CVAL
  *
  *  (3dB cutoff is where the output power has dropped by 3dB ie Half)
+ *
+ * EXAMPLES: see Polaris
  *
  ***********************************************************************
  =======================================================================
@@ -1616,14 +1868,23 @@
  *                    R2 node (or value) in ohms,
  *                    C node (or value) in farads,
  *                    Control Voltage node (or value),
- *                    &Type structure)
+ *                    address of discrete_555_astbl_desc structure)
+ *
+ *    discrete_555_astbl_desc =
+ *    {
+ *        options,        // bit mapped options
+ *        v555,           // B+ voltage of 555
+ *        v555high,       // High output voltage of 555 (Usually v555 - 1.7)
+ *        threshold555,   // normally 2/3 of v555
+ *        trigger555      // normally 1/3 of v555
+ *    }
  *
  *  Output Types:
  *     DISC_555_OUT_DC - Output is actual DC.
  *     DISC_555_OUT_AC - A cheat to make the waveform AC.
  *
- *  Waveform Types:
- *     DISC_555_OUT_SQW       - Output is Squarewave.  0 or v555high. 
+ *  Waveform Types: (ORed with output types)
+ *     DISC_555_OUT_SQW       - Output is Squarewave.  0 or v555high.
  *     DISC_555_OUT_CAP       - Output is Timing Capacitor 'C' voltage.
  *     DISC_555_OUT_CAP_CLAMP - During a sample period, the high/low
  *                              threshold may be reached, causing the
@@ -1638,6 +1899,10 @@
  *                              that is less noticeable then the noise
  *                              without the option.  Try without CLAMP
  *                              first, as it is more accurate.
+ *                              This option may be removed soon, as the
+ *                              filters help clear things up.
+ *
+ * EXAMPLES: see Hit Me
  *
  ***********************************************************************
  *
@@ -1692,13 +1957,26 @@
  *                     rDischarge node or static value,
  *                     address of discrete_555_cc_desc structure)
  *
- *  Output Types:
- *     See DISCRETE_555_ASTABLE for description. 
+ *     discrete_555_cc_desc =
+ *     {
+ *          options,        // bit mapped options
+ *          v555,           // B+ voltage of 555
+ *          v555high,       // High output voltage of 555 (Usually v555 - 1.7)
+ *          threshold555,   // normally 2/3 of v555
+ *          trigger555,     // normally 1/3 of v555
+ *          vCCsource,      // B+ voltage of the Constant Current source
+ *          vCCjunction     // The voltage drop of the Constant Current source transitor (0 if Op Amp)
+ *     }
  *
- *  Waveform Types:
- *     See DISCRETE_555_ASTABLE for description. 
+ *  Output Types:
+ *     See DISCRETE_555_ASTABLE for description.
+ *
+ *  Waveform Types: (ORed with output types)
+ *     See DISCRETE_555_ASTABLE for description.
  *     Note that DISC_555_OUT_CAP_CLAMP does not work well with
  *     type 0 circuit.
+ *
+ * EXAMPLES: see Fire Truck, Monte Carlo, Super Bug
  *
  ***********************************************************************
  *
@@ -1729,9 +2007,11 @@
  *                  vMod node or static value,
  *                  address of discrete_566_desc structure)
  *
+ *     discrete_566_desc = {options, vPlus, vNeg}
+ *
  *  Output Types:
- *     DISC_556_OUT_DC - Output is actual DC.
- *     DISC_556_OUT_AC - A cheat to make the waveform AC.
+ *     DISC_566_OUT_DC - Output is actual DC.
+ *     DISC_566_OUT_AC - A cheat to make the waveform AC.
  *
  *  Waveform Types:
  *     DISC_566_OUT_SQUARE   - Pin 3 Square Wave Output
@@ -1761,6 +2041,11 @@
  *     DISCRETE_OUTPUT(NODE_02,100)
  *
  *  Output stream will be generated from the NODE_02 output stream.
+ *
+ *  or for stereo use:
+ *
+ *     DISCRETE_OUTPUT(NODE_90, MIXER(100,MIXER_PAN_LEFT))
+ *     DISCRETE_OUTPUT(NODE_91, MIXER(100,MIXER_PAN_RIGHT))
  *
  ************************************************************************/
 
@@ -1831,18 +2116,39 @@
 #define DISC_MIXER_TYPE_MASK			3	// Used only internally.
 #define DISC_MIXER_HAS_R_NODE			4	// Used only internally.
 
+/* Triggered Op Amp Functions */
+enum
+{
+	DISC_OP_AMP_TRIGGER_FUNCTION_NONE,
+	DISC_OP_AMP_TRIGGER_FUNCTION_TRG0,
+	DISC_OP_AMP_TRIGGER_FUNCTION_TRG0_INV,
+	DISC_OP_AMP_TRIGGER_FUNCTION_TRG1,
+	DISC_OP_AMP_TRIGGER_FUNCTION_TRG1_INV,
+	DISC_OP_AMP_TRIGGER_FUNCTION_TRG2,
+	DISC_OP_AMP_TRIGGER_FUNCTION_TRG2_INV,
+	DISC_OP_AMP_TRIGGER_FUNCTION_TRG01_AND,
+	DISC_OP_AMP_TRIGGER_FUNCTION_TRG01_NAND
+};
+
+
 /* Common Op Amp Flags and values */
 #define DISC_OP_AMP_IS_NORTON	0x01
 #define OP_AMP_NORTON_VBE		0.5		// This is the norton junction voltage. Used only internally.
 #define OP_AMP_VP_RAIL_OFFSET	1.5		// This is how close an op-amp can get to the vP rail. Used only internally.
+
+/* Integrate options */
+#define DISC_INTEGRATE_OP_AMP_1	0x00
+#define DISC_INTEGRATE_OP_AMP_2	0x10
 
 /* Op Amp Filter Options */
 #define DISC_OP_AMP_FILTER_IS_LOW_PASS_1	0x00
 #define DISC_OP_AMP_FILTER_IS_HIGH_PASS_1	0x10
 #define DISC_OP_AMP_FILTER_IS_BAND_PASS_1	0x20
 #define DISC_OP_AMP_FILTER_IS_BAND_PASS_1M	0x30
+#define DISC_OP_AMP_FILTER_IS_HIGH_PASS_0	0x40
+#define DISC_OP_AMP_FILTER_IS_BAND_PASS_0	0x50
 
-#define DISC_OP_AMP_FILTER_TYPE_MASK		0xf0	// Used only internally.
+#define DISC_OP_AMP_FILTER_TYPE_MASK		(0xf0 | DISC_OP_AMP_IS_NORTON)	// Used only internally.
 
 /* Op Amp Oscillator Flags */
 #define DISC_OP_AMP_OSCILLATOR_1			0x00
@@ -1952,7 +2258,7 @@ struct node_description
 	double			output;							/* The nodes last output value */
 
 	int				active_inputs;					/* Number of active inputs on this node type */
-	struct node_description *		
+	struct node_description *
 					input_node[DISCRETE_MAX_INPUTS];/* Either pointer to input node OR NULL in which case use the input value */
 	double			input[DISCRETE_MAX_INPUTS];		/* Input values for this node */
 
@@ -2027,7 +2333,7 @@ struct discrete_comp_adder_table
 
 struct discrete_dac_r1_ladder
 {
-	int	ladderLength;		// 2 to DISC_LADDER_MAXRES.  1 would be useless.
+	int		ladderLength;		// 2 to DISC_LADDER_MAXRES.  1 would be useless.
 	double	r[DISC_LADDER_MAXRES];	// Don't use 0 for valid resistors.  That is a short.
 	double	vBias;			// Voltage Bias resistor is tied to (0 = not used)
 	double	rBias;			// Additional resistor tied to vBias (0 = not used)
@@ -2036,13 +2342,27 @@ struct discrete_dac_r1_ladder
 };
 
 
+struct discrete_integrate_info
+{
+	int		type;
+	double	r1;		// r1a + r1b
+	double	r2;		// r2a + r2b
+	double	r3;		// r3a + r3b
+	double	c;
+	double	vP;
+	double	f0;
+	double	f1;
+	double	f2;
+};
+
+
 #define DISC_MAX_MIXER_INPUTS	8
 struct discrete_mixer_desc
 {
-	int	type;
-	int	mixerLength;
+	int		type;
+	int		mixerLength;
 	double	r[DISC_MAX_MIXER_INPUTS];	// static input resistance values.  These are in series with rNode, if used.
-	int	rNode[DISC_MAX_MIXER_INPUTS];	// variable resistance nodes, if needed.  0 if not used.
+	int		rNode[DISC_MAX_MIXER_INPUTS];	// variable resistance nodes, if needed.  0 if not used.
 	double	c[DISC_MAX_MIXER_INPUTS];
 	double	rI;
 	double	rF;
@@ -2053,15 +2373,42 @@ struct discrete_mixer_desc
 };
 
 
+struct discrete_op_amp_tvca_info
+{
+	double	r1;
+	double	r2;		// r2a + r2b
+	double	r3;		// r3a + r3b
+	double	r4;
+	double	r5;
+	double	r6;
+	double	r7;
+	double	r8;
+	double	r9;
+	double	r10;
+	double	r11;
+	double	c1;
+	double	c2;
+	double	c3;
+	double	vP;
+	int		f0;
+	int		f1;
+	int		f2;
+	int		f3;
+	int		f4;
+	int		f5;
+};
+
+
 struct discrete_op_amp_filt_info
 {
 	double	r1;
 	double	r2;
-	double	rP;
-	double	rN;
+	double	r3;
+	double	r4;
 	double	rF;
 	double	c1;
 	double	c2;
+	double	c3;
 	double	vRef;
 	double	vP;
 	double	vN;
@@ -2161,7 +2508,7 @@ enum { NODE_00=0x40000000
 
 /*************************************
  *
- *	Enumerated values for Node types 
+ *	Enumerated values for Node types
  *	in the simulation
  *
  *		DSS - Discrete Sound Source
@@ -2186,6 +2533,7 @@ enum
 	DSS_COUNTER,		/* External clock Binary Counter */
 	DSS_COUNTER_FIX,	/* Fixed frequency Binary Counter */
 	DSS_LFSR_NOISE,		/* Cyclic/Resetable LFSR based Noise generator */
+	DSS_NOTE,			/* Note Generator */
 	DSS_NOISE,			/* Random Noise generator */
 	DSS_SAWTOOTHWAVE,	/* Sawtooth wave generator */
 	DSS_SINEWAVE,		/* Sine Wave generator */
@@ -2221,9 +2569,10 @@ enum
 	/* Component specific */
 	DST_COMP_ADDER,		/* Selectable Parallel Component Adder */
 	DST_DAC_R1,			/* R1 Ladder DAC with cap smoothing */
+	DST_INTEGRATE,		/* Various Integration circuits */
 	DST_MIXER,			/* Final Mixing Stage */
+	DST_TVCA_OP_AMP,	/* Triggered Op Amp Voltage controlled  amplifier circuits */
 	DST_VCA,			/* IC Voltage controlled  amplifiers */
-	DST_VCA_OP_AMP,		/* Op Amp Voltage controlled  amplifier circuits */
 //	DST_DELAY,			/* Phase shift/Delay line */
 
 	/* from disc_flt.c */
@@ -2259,7 +2608,7 @@ enum
 
 /*************************************
  *
- *	Encapsulation macros for defining 
+ *	Encapsulation macros for defining
  *	your simulation
  *
  *************************************/
@@ -2281,6 +2630,7 @@ enum
 #define DISCRETE_COUNTER_FIX(NODE,ENAB,RESET,FREQ,MAX,DIR,INIT0)        { NODE, DSS_COUNTER_FIX , 6, { ENAB,RESET,FREQ,NODE_NC,DIR,INIT0 }, { ENAB,RESET,FREQ,MAX,DIR,INIT0 }, NULL, "Fixed Freq Binary Counter" },
 #define DISCRETE_LFSR_NOISE(NODE,ENAB,RESET,FREQ,AMPL,FEED,BIAS,LFSRTB) { NODE, DSS_LFSR_NOISE  , 6, { ENAB,RESET,FREQ,AMPL,FEED,BIAS }, { ENAB,RESET,FREQ,AMPL,FEED,BIAS }, LFSRTB, "LFSR Noise Source" },
 #define DISCRETE_NOISE(NODE,ENAB,FREQ,AMPL,BIAS)                        { NODE, DSS_NOISE       , 4, { ENAB,FREQ,AMPL,BIAS }, { ENAB,FREQ,AMPL,BIAS }, NULL, "Noise Source" },
+#define DISCRETE_NOTE(NODE,ENAB,FREQ,DATA,MAX1,MAX2)                    { NODE, DSS_NOTE        , 5, { ENAB,NODE_NC,DATA,NODE_NC,NODE_NC }, { ENAB,FREQ,DATA,MAX1,MAX2 }, NULL, "Note Generator" },
 #define DISCRETE_SAWTOOTHWAVE(NODE,ENAB,FREQ,AMPL,BIAS,GRAD,PHASE)      { NODE, DSS_SAWTOOTHWAVE, 6, { ENAB,FREQ,AMPL,BIAS,NODE_NC,NODE_NC }, { ENAB,FREQ,AMPL,BIAS,GRAD,PHASE }, NULL, "Saw Tooth Wave" },
 #define DISCRETE_SINEWAVE(NODE,ENAB,FREQ,AMPL,BIAS,PHASE)               { NODE, DSS_SINEWAVE    , 5, { ENAB,FREQ,AMPL,BIAS,NODE_NC }, { ENAB,FREQ,AMPL,BIAS,PHASE }, NULL, "Sine Wave" },
 #define DISCRETE_SQUAREWAVE(NODE,ENAB,FREQ,AMPL,DUTY,BIAS,PHASE)        { NODE, DSS_SQUAREWAVE  , 6, { ENAB,FREQ,AMPL,DUTY,BIAS,NODE_NC }, { ENAB,FREQ,AMPL,DUTY,BIAS,PHASE }, NULL, "Square Wave" },
@@ -2335,6 +2685,7 @@ enum
 /* Component specific */
 #define DISCRETE_COMP_ADDER(NODE,ENAB,DATA,TABLE)                       { NODE, DST_COMP_ADDER  , 2, { ENAB,DATA }, { ENAB,DATA }, TABLE, "Selectable R or C component Adder" },
 #define DISCRETE_DAC_R1(NODE,ENAB,DATA,VDATA,LADDER)                    { NODE, DST_DAC_R1      , 3, { ENAB,DATA,VDATA }, { ENAB,DATA,VDATA }, LADDER, "DAC with R1 Ladder" },
+#define DISCRETE_INTEGRATE(NODE,TRG0,TRG1,INFO)                         { NODE, DST_INTEGRATE   , 2, { TRG0,TRG1 }, { TRG0,TRG1 }, INFO, "Various Integraton Circuit" },
 #define DISCRETE_MIXER2(NODE,ENAB,IN0,IN1,INFO)                         { NODE, DST_MIXER       , 3, { ENAB,IN0,IN1 }, { ENAB,IN0,IN1 }, INFO, "Final Mixer 2 Stage" },
 #define DISCRETE_MIXER3(NODE,ENAB,IN0,IN1,IN2,INFO)                     { NODE, DST_MIXER       , 4, { ENAB,IN0,IN1,IN2 }, { ENAB,IN0,IN1,IN2 }, INFO, "Final Mixer 3 Stage" },
 #define DISCRETE_MIXER4(NODE,ENAB,IN0,IN1,IN2,IN3,INFO)                 { NODE, DST_MIXER       , 5, { ENAB,IN0,IN1,IN2,IN3 }, { ENAB,IN0,IN1,IN2,IN3 }, INFO, "Final Mixer 4 Stage" },
@@ -2342,8 +2693,8 @@ enum
 #define DISCRETE_MIXER6(NODE,ENAB,IN0,IN1,IN2,IN3,IN4,IN5,INFO)         { NODE, DST_MIXER       , 7, { ENAB,IN0,IN1,IN2,IN3,IN4,IN5 }, { ENAB,IN0,IN1,IN2,IN3,IN4,IN5 }, INFO, "Final Mixer 6 Stage" },
 #define DISCRETE_MIXER7(NODE,ENAB,IN0,IN1,IN2,IN3,IN4,IN5,IN6,INFO)     { NODE, DST_MIXER       , 8, { ENAB,IN0,IN1,IN2,IN3,IN4,IN5,IN6 }, { ENAB,IN0,IN1,IN2,IN3,IN4,IN5,IN6 }, INFO, "Final Mixer 7 Stage" },
 #define DISCRETE_MIXER8(NODE,ENAB,IN0,IN1,IN2,IN3,IN4,IN5,IN6,IN7,INFO) { NODE, DST_MIXER       , 9, { ENAB,IN0,IN1,IN2,IN3,IN4,IN5,IN6,IN7 }, { ENAB,IN0,IN1,IN2,IN3,IN4,IN5,IN6,IN7 }, INFO, "Final Mixer 8 Stage" },
+#define DISCRETE_OP_AMP_TRIG_VCA(NODE,TRG0,TRG1,TRG2,IN0,IN1,INFO)      { NODE, DST_TVCA_OP_AMP , 5, { TRG0,TRG1,TRG2,IN0,IN1 }, { TRG0,TRG1,TRG2,IN0,IN1 }, INFO, "Triggered VCA Op Amp Circuit" },
 #define DISCRETE_VCA(NODE,ENAB,IN0,CTRL,TYPE)                           { NODE, DST_VCA         , 4, { ENAB,IN0,CTRL,NODE_NC }, { ENAB,IN0,CTRL,TYPE }, NULL, "VCA IC" },
-#define DISCRETE_VCA_OP_AMP(NODE,ENAB,IN0,CTRL,TYPE)                    { NODE, DST_VCA_OP_AMP  , 4, { ENAB,IN0,CTRL,NODE_NC }, { ENAB,IN0,CTRL,TYPE }, NULL, "VCA Op Amp Circuit" },
 
 /* from disc_flt.c */
 /* generic modules */

@@ -7,11 +7,13 @@
 /*----------- defined in sndhrdw/exidy.c -----------*/
 
 int exidy_sh_start(const struct MachineSound *msound);
+int victory_sh_start(const struct MachineSound *msound);
 
 WRITE8_HANDLER( exidy_shriot_w );
 WRITE8_HANDLER( exidy_sfxctrl_w );
 WRITE8_HANDLER( exidy_sh8253_w );
 WRITE8_HANDLER( exidy_sh6840_w );
+WRITE8_HANDLER( exidy_sound_filter_w );
 READ8_HANDLER( exidy_shriot_r );
 READ8_HANDLER( exidy_sh8253_r );
 READ8_HANDLER( exidy_sh6840_r );
@@ -36,13 +38,6 @@ WRITE8_HANDLER( targ_sh_w );
 #define COLORTABLE_LEN 20
 
 extern UINT8 *exidy_characterram;
-extern UINT8 *exidy_sprite_no;
-extern UINT8 *exidy_sprite_enable;
-extern UINT8 *exidy_sprite1_xpos;
-extern UINT8 *exidy_sprite1_ypos;
-extern UINT8 *exidy_sprite2_xpos;
-extern UINT8 *exidy_sprite2_ypos;
-extern UINT8 *exidy_color_latch;
 extern UINT8 *exidy_palette;
 extern UINT16 *exidy_colortable;
 
@@ -64,5 +59,11 @@ INTERRUPT_GEN( exidy_vblank_interrupt );
 
 WRITE8_HANDLER( exidy_characterram_w );
 WRITE8_HANDLER( exidy_color_w );
+WRITE8_HANDLER( exidy_sprite1_xpos_w );
+WRITE8_HANDLER( exidy_sprite1_ypos_w );
+WRITE8_HANDLER( exidy_sprite2_xpos_w );
+WRITE8_HANDLER( exidy_sprite2_ypos_w );
+WRITE8_HANDLER( exidy_spriteno_w );
+WRITE8_HANDLER( exidy_sprite_enable_w );
 
 READ8_HANDLER( exidy_interrupt_r );

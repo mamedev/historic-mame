@@ -1131,28 +1131,6 @@ static UINT32 opDIVUr(void)	// divu r1,r2
 	return clkIF;
 }
 
-
-//u2f/f2u from i960 core
-static float u2f(UINT32 v)
-{
-	union {
-		float ff;
-		UINT32 vv;
-	} u;
-	u.vv = v;
-	return u.ff;
-}
-
-static UINT32 f2u(float f)
-{
-	union {
-		float ff;
-		UINT32 vv;
-	} u;
-	u.ff = f;
-	return u.vv;
-}
-
 static void opADDF(void)
 {
 	//TODO: CY

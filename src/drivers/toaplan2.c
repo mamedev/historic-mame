@@ -12,37 +12,38 @@
 
 Supported games:
 
-	Name		Board No	Maker			Game name
+	Name		Board No	  Maker			Game name
 	----------------------------------------------------------------------------
-	tekipaki	TP-020		Toaplan		Teki Paki
-	ghox		TP-021		Toaplan		Ghox
-	dogyuun		TP-022		Toaplan		Dogyuun
-	kbash		TP-023		Toaplan		Knuckle Bash
-	truxton2	TP-024		Toaplan		Truxton 2 / Tatsujin 2
-	pipibibs	TP-025		Toaplan		Pipi & Bibis
-	whoopee		TP-025		Toaplan		Whoopee
-	pipibibi	bootleg?	Toaplan		Pipi & Bibis
-	fixeight	TP-026		Toaplan		FixEight
-	grindstm	TP-027		Toaplan		Grind Stormer  (1992)
-	grindsta	TP-027		Toaplan		Grind Stormer  (1992) (older)
-	vfive		TP-027		Toaplan		V-V  (V-Five)  (1993 - Japan only)
-	batsugun	TP-030		Toaplan		Batsugun
-	batugnsp	TP-030		Toaplan		Batsugun  (Special Version)
-	snowbro2	??????		Toaplan		Snow Bros. 2 - With New Elves
+	tekipaki	TP-020		  Toaplan		Teki Paki
+	ghox		TP-021		  Toaplan		Ghox
+	dogyuun		TP-022		  Toaplan		Dogyuun
+	kbash		TP-023		  Toaplan		Knuckle Bash
+	truxton2	TP-024		  Toaplan		Truxton 2 / Tatsujin 2
+	pipibibs	TP-025		  Toaplan		Pipi & Bibis
+	whoopee		TP-025		  Toaplan		Whoopee
+	pipibibi	bootleg?	  Toaplan		Pipi & Bibis
+	fixeight	TP-026		  Toaplan		FixEight
+	fixeighb	bootleg		  Toaplan		FixEight
+	grindstm	TP-027		  Toaplan		Grind Stormer  (1992)
+	grindsta	TP-027		  Toaplan		Grind Stormer  (1992) (older)
+	vfive		TP-027		  Toaplan		V-V  (V-Five)  (1993 - Japan only)
+	batsugun	TP-030		  Toaplan		Batsugun
+	batugnsp	TP-030		  Toaplan		Batsugun  (Special Version)
+	snowbro2	??????		  Toaplan		Snow Bros. 2 - With New Elves
 
-	sstriker	RA-MA7893-01	Raizing		Sorcer Striker
-	mahoudai	RA-MA7893-01	Raizing		Mahou Daisakusen
-	kingdmgp	RA-MA9402-03	Raizing/8ing	Kingdom Grandprix
-	shippumd	RA-MA9402-03	Raizing/8ing	Shippu Mahou Daisakusen
-	battleg		RA9503		Raizing/8ing	Battle Garegga (Type 2)
-	battlega	RA9503		Raizing/8ing	Battle Garegga
-	battlegb	RA9503		Raizing/8ing	Battle Garegga (New Version?)
-	battlegc	RA9503		Raizing/8ing	Battle Garegga
-	batrider	RA9704		Raizing/8ing	Armed Police Batrider - Rev B (Japan - Ver. Fri Feb 13 1998)
-	batridra	RA9704		Raizing/8ing	Armed Police Batrider (Japan - Ver. Mon Dec 22 1997)
-	batridrk	RA9704		Raizing/8ing	Armed Police Batrider (Korea - Ver. Fri Feb 13 1998)
-	bbakraid	ET68-V99	8ing		Battle Bakraid (Japan - Wed Apr 7th, 1999)
-	bbakradu	ET68-V99	8ing		Battle Bakraid - unlimited version (Japan - Tue Jun 8th, 1999)
+	sstriker	RA-MA7893-01  Raizing		Sorcer Striker
+	mahoudai	RA-MA7893-01  Raizing		Mahou Daisakusen
+	kingdmgp	RA-MA9402-03  Raizing/8ing	Kingdom Grandprix
+	shippumd	RA-MA9402-03  Raizing/8ing	Shippu Mahou Daisakusen
+	battleg		RA9503		  Raizing/8ing	Battle Garegga (Type 2)
+	battlega	RA9503		  Raizing/8ing	Battle Garegga
+	battlegb	RA9503		  Raizing/8ing	Battle Garegga (New Version?)
+	battlegc	RA9503		  Raizing/8ing	Battle Garegga
+	batrider	RA9704		  Raizing/8ing	Armed Police Batrider - Rev B (Japan - Ver. Fri Feb 13 1998)
+	batridra	RA9704		  Raizing/8ing	Armed Police Batrider (Japan - Ver. Mon Dec 22 1997)
+	batridrk	RA9704		  Raizing/8ing	Armed Police Batrider (Korea - Ver. Fri Feb 13 1998)
+	bbakraid	ET68-V99	  8ing			Battle Bakraid (Japan - Wed Apr 7th, 1999)
+	bbakradu	ET68-V99	  8ing			Battle Bakraid - unlimited version (Japan - Tue Jun 8th, 1999)
 
 	SET NOTES:
 
@@ -54,8 +55,8 @@ Supported games:
 	           being sold as 'Kingdom Grand Prix' are infact conversions using Neill Corlett's
 	           ghastly hack
 
-	           ** update the above two look like genuine korean release boards, raizing were probably
-	              just missed a few things
+	           ** update the above two look like genuine Korean release
+	      ÿÿ      boards, Raizing probably just missed a few things
 
  ****************************************************************************
  * Battle Garegga and Armed Police Batrider have secret characters.			*
@@ -148,7 +149,7 @@ CPU:
  TMP68HC000N-16
 
 Sound CPU/MCU:
- HD647180X0FS6 (Hitachi Z180 Compatible CPU with inernal ROM code)
+ HD647180X0FS6 (Hitachi Z180 Compatible CPU with internal 16k ROM)
  Z84C0006PEC (Z80)
 
 
@@ -164,47 +165,82 @@ Sound Chips:
 Graphics Custom 208pin QFP:
  GP9001 L7A0498 TOA PLAN
 
-Toaplan / Raizing / 8ing games use different revisions of the custom
-Toa Plan 208 pin QFP L7A0498 GP9001 series graphics processing chip:
+Found on....
+Fixeight
+Grind Stormer
+Truxton II
+Ghox
+Armed Police Batrider
+Battle Garegga
+Mahou Daisakusen
+Battle Bakraid
 
-Fixeight				L7A0498 GP9001 TOA PLAN 9150
-Grind Stormer			L7A0498 GP9001 TOA PLAN 9150
-Truxton II				L7A0498 GP9001 TOA PLAN 9152
-Ghox					L7A0498 GP9001 TOA PLAN 9044
-Armed Police Batrider	L7A0498 GP9001 TOA PLAN NNG 9217 WK94254
-Battle Garegga			L7A0498 GP9001 TOA PLAN 9236
-Mahou Daisakusen		L7A0498 GP9001 TOA PLAN 9240
-Battle Bakraid			L7A0498 GP9001 TOA PLAN 9335
+**********************************************************************
 
+Fix Eight (bootleg)
+Toaplan, 1992
+
+PCB Layout
+----------
+
+|--------------------------------------------|
+|   1.BIN        PAL               14MHz  PAL|
+|   M6295        PAL                         |
+|   PAL     6116 4.BIN          681000 681000|
+|           6116                             |
+|           6116                681000 681000|
+|J          6116        PAL                  |
+|A                             PAL           |
+|M                                           |
+|M   62256  62256              PAL           |
+|A   2.BIN  3.BIN       PAL                  |
+|                       PAL                  |
+|       68000           PAL                  |
+| DSW2        |------|  5.BIN                |
+| DSW1   6264 |TPC   |                       |
+| 3.579545MHz |1020  |  6.BIN                |
+| 10MHz  6264 |------|  7.BIN                |
+|--------------------------------------------|
+Notes:
+      68000 clock at 10.000MHz
+      M6295 clock at 875kHz [14M/16]. Sample rate = 875000 / 165
+      VSync at 60Hz
+      6116  - 2k   x8 SRAM (x4)
+      6264  - 8k   x8 SRAM (x2)
+      62256 - 32k  x8 SRAM (x2)
+      681000- 128k x8 SRAM (x4)
+
+*********************************************************************
 
 Game status:
 
-Teki Paki                      Working, but no sound. Missing sound MCU dump
-Ghox                           Working, but no sound. Missing sound MCU dump
-Dogyuun                        Working, but no sound. MCU type unknown - its a Z?80 of some sort.
-Knuckle Bash                   Working, but no sound. MCU dump exists, its a Z?80 of some sort.
+Teki Paki                      Working, but no sound. Missing sound MCU dump. Chip is protected. It's a QFP80 Hitachi HD647180.
+Ghox                           Working, but no sound. Missing sound MCU dump. It's a QFP80 Hitachi HD647180.
+Dogyuun                        Working, but no sound. MCU type is likely a NEC V25+. Chip is a PLCC94 stamped 'TS-002-MACH'.
+Knuckle Bash                   Working, but sound FX only (missing music). MCU type is a NEC V25+. Chip is a PLCC94 stamped 'TS-004-DASH'. Some PCBs use another version stamped 'NITRO' which is the same chip type.
 Truxton 2                      Working.
 Pipi & Bibis                   Working.
-Whoopee                        Working. Missing sound MCU dump. Using bootleg sound CPU dump for now
+Whoopee                        Working. Missing sound MCU dump. It's a Hitachi HD647180. Using bootleg sound CPU dump for now.
 Pipi & Bibis (Ryouta Kikaku)   Working.
-FixEight                       Not working properly. Missing background GFX (controlled by MCU). MCU type unknown - its a Z?80 of some sort.
-Grind Stormer                  Working, but no sound. MCU type unknown - its a Z?80 of some sort.
-VFive                          Working, but no sound. MCU type unknown - its a Z?80 of some sort.
-Batsugun                       Working, but no sound and wrong GFX priorities. MCU type unknown - its a Z?80 of some sort.
-Batsugun Sp'                   Working, but no sound and wrong GFX priorities. MCU type unknown - its a Z?80 of some sort.
+FixEight                       Not working properly. Missing background GFX, and sound FX only (missing music). Both controlled by MCU. MCU type is a NEC V25+. Chip is a PLCC94 stamped 'TS-001-TURBO'
+FixEight bootleg               Working. One unknown ROM (same as pipibibi one). Region hardcoded to Korea (@ $4d8)
+Grind Stormer                  Working, but no sound. MCU type is a NEC V25+. Chip is a PLCC94 stamped 'TS-007-SPY'.
+VFive                          Working, but no sound. MCU type is a NEC V25+. Chip is a PLCC94 stamped 'TS-007-SPY'.
+Batsugun                       Working, but sound FX only (missing music) and wrong GFX priorities. MCU type is a NEC V25+. Chip is a PLCC94 stamped 'TS-007-SPY'.
+Batsugun Sp'                   Working, but sound FX only (missing music) and wrong GFX priorities. MCU type is a NEC V25+. Chip is a PLCC94 stamped 'TS-007-SPY'.
 Snow Bros. 2                   Working.
 Mahou Daisakusen               Working.
 Shippu Mahou Daisakusen        Working.
 Battle Garegga                 Working.
 Armed Police Batrider          Working.
-Battle Bakraid                 Working, but sound levels/panning/fading are bad
+Battle Bakraid                 Working.
 
 
 Notes:
 	See Input Port definition header below, for instructions
 	  on how to enter pause/slow motion modes.
 	Code at $20A26 forces territory to Japan in V-Five. Some stuff
-	  NOP'd at reset vector, and Z?80 CPU post test is skipped (bootleg ?)
+	  NOP'd at reset vector, and NEC V25+ CPU post test is skipped (bootleg ?)
 
 To Do / Unknowns:
 	- Whoopee/Teki Paki sometimes tests bit 5 of the territory port
@@ -213,8 +249,17 @@ To Do / Unknowns:
 		(pirate ?) version of Pipi and Bibis (Ryouta Kikaku copyright).
 		It really has a HD647180 CPU, and its internal ROM needs to be dumped.
 	- Fix top character text layer (implement the line position table).
+	- Priority problem on 2nd player side of selection screen in FixEight (both original and bootleg)
+	- Fixeight bootleg text in sound check mode does not display properly
+		with the CPU set to 10MHz (ok at 16MHz). Possible error in video_count_r routine.
 
-
+	- Need to sort out the video status register. Currently should be enabled
+		by defining T2_VIDEO_CONTROL but sprite lag needs to be re-synched.
+		VIDEO_UPDATE should probably be AFTER Vblank.
+		Where did the magical '262' IRQ/Sec for the 68K come from? Probably
+		should be 256. CPU interleave on BBAKRAID is 262 aswell - why?
+	- Batrider IRQ4 beig activated at EOF is rubish. It's sound related -
+		maybe acknowledgement from the Z80 when its NMI has completed (port 46)
 
 *****************************************************************************/
 
@@ -227,19 +272,19 @@ To Do / Unknowns:
 
 
 /**************** Machine stuff ******************/
-#define HD64x180 0		/* Define if CPU support is available */
-#define Zx80     0
+#define HD64x180	0		/* Define if CPU support is available */
+#define V25			0
 
 #define CPU_2_NONE		0x00
 #define CPU_2_Z80		0x5a
 #define CPU_2_HD647180	0xa5
-#define CPU_2_Zx80		0xff
+#define CPU_2_V25		0xff
 
 /************ Machine RAM related values ************/
 static data8_t *toaplan2_shared_ram;
 static data8_t *raizing_shared_ram;		/* Shared ram used in Shippumd and Mahoudai */
 static data16_t *toaplan2_shared_ram16;	/* Really 8bit RAM connected to Z180 */
-static data16_t *Zx80_shared_ram;		/* Really 8bit RAM connected to Z180 */
+static data16_t *V25_shared_ram;		/* Really 8bit RAM connected to Z180 */
 static data16_t *battleg_commram16;		/* Comm ram used in Battle Garegga */
 static data16_t *raizing_cpu_comm16;	/* Raizing commands for the Z80 */
 static data8_t  raizing_cpu_reply[2];	/* Raizing replies to the 68K */
@@ -259,7 +304,6 @@ int toaplan2_sub_cpu = 0;
 static int mcu_data = 0;
 static int video_status;
 static int prev_scanline;
-//static int prev_beampos;
 static INT8 old_p1_paddle_h;			/* For Ghox */
 static INT8 old_p1_paddle_v;
 static INT8 old_p2_paddle_h;
@@ -323,6 +367,12 @@ WRITE16_HANDLER( pipibibi_spriteram16_w );
 WRITE16_HANDLER( pipibibi_scroll_w );
 
 
+/***************** Sound stuff *****************/
+void dogyuun_okisnd_w(int data);
+void kbash_okisnd_w(int data);
+void fixeight_okisnd_w(int data);
+void batsugun_okisnd_w(int data);
+
 
 /***************************************************************************
   Initialisation handlers
@@ -331,7 +381,7 @@ WRITE16_HANDLER( pipibibi_scroll_w );
 
 static MACHINE_INIT( toaplan2 )		/* machine_init_toaplan2(); */
 {
-	mcu_data = 0;
+	mcu_data = 0x00;
 }
 
 static MACHINE_INIT( ghox )
@@ -342,6 +392,16 @@ static MACHINE_INIT( ghox )
 	old_p2_paddle_v = 0;
 
 	machine_init_toaplan2();
+}
+
+static MACHINE_INIT( dogyuun )
+{
+	mcu_data = 0xffaa;
+}
+
+static MACHINE_INIT( vfive )
+{
+	mcu_data = 0xffaa;
 }
 
 static MACHINE_INIT( batrider )
@@ -361,9 +421,9 @@ static DRIVER_INIT( T2_Z180 )
 	toaplan2_sub_cpu = CPU_2_HD647180;
 }
 
-static DRIVER_INIT( T2_Zx80 )
+static DRIVER_INIT( T2_V25 )
 {
-	toaplan2_sub_cpu = CPU_2_Zx80;
+	toaplan2_sub_cpu = CPU_2_V25;
 }
 
 static DRIVER_INIT( T2_noZ80 )
@@ -376,8 +436,17 @@ static DRIVER_INIT( fixeight )
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x28f002, 0x28fbff, 0, 0, MRA16_RAM );
 	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x28f002, 0x28fbff, 0, 0, MWA16_RAM );
 
-	toaplan2_sub_cpu = CPU_2_Zx80;
+	toaplan2_sub_cpu = CPU_2_V25;
 }
+
+
+static DRIVER_INIT( fixeighb )
+{
+	data16_t *bgdata = (data16_t *)memory_region(REGION_CPU1);
+	cpu_setbank(1, &bgdata[0x40000]); /* $80000 - $fffff */
+}
+
+
 
 static DRIVER_INIT( pipibibi )
 {
@@ -487,34 +556,46 @@ static DRIVER_INIT( bbakradu )
   Toaplan games
 ***************************************************************************/
 
+#define T2_VIDEO_CONTROL 0		/* Need to adjust the sprite lag.. */
+
 READ16_HANDLER( toaplan2_inputport_0_word_r )
 {
-//	int retval = (current_scanline>255) ? 1 : 0;
+#if T2_VIDEO_CONTROL
+	return cpu_getvblank();
+#else
 	int retval = vblank_irq;
 	return retval;
+#endif
 }
 
 static void toaplan2_irq(int irq_line)
 {
+#if T2_VIDEO_CONTROL
+	int vpos = cpu_getscanline();
+	if (vpos == 240) cpunum_set_input_line(0, irq_line, HOLD_LINE);
+	vblank_irq = 0; //Remove
+//	logerror("IRQ: scanline=%04x iloop=%04x beampos=%04x\n",vpos,cpu_getiloops(),cpu_gethorzbeampos());
+#else
 	if (cpu_getiloops() == 0) current_scanline = 255;
 
-	if(current_scanline == 245)
+	if (current_scanline == 245)
 	{
 		cpunum_set_input_line(0, irq_line, HOLD_LINE);
 		vblank_irq = 1;
 	}
 
 	current_scanline++;
-	if(current_scanline > 261)
+	if (current_scanline > 261)
 	{
 		current_scanline = 0;
 		vblank_irq = 0;
 	}
+#endif
 }
 
-static INTERRUPT_GEN( toaplan2_vblank_irq2 ) {toaplan2_irq(2);}
-static INTERRUPT_GEN( toaplan2_vblank_irq3 ) {toaplan2_irq(3);}
-static INTERRUPT_GEN( toaplan2_vblank_irq4 ) {toaplan2_irq(4);}
+static INTERRUPT_GEN( toaplan2_vblank_irq2 ) { toaplan2_irq(2); }
+static INTERRUPT_GEN( toaplan2_vblank_irq3 ) { toaplan2_irq(3); }
+static INTERRUPT_GEN( toaplan2_vblank_irq4 ) { toaplan2_irq(4); }
 
 static READ16_HANDLER( video_count_r )
 {
@@ -524,26 +605,47 @@ static READ16_HANDLER( video_count_r )
 	/* +---------+---------+--------+---------------------------+ */
 	/*************** Control Signals are active low ***************/
 
-//	static int current_beampos = 0;
+#if T2_VIDEO_CONTROL
+	int hpos = cpu_gethorzbeampos();
+	int vpos = cpu_getscanline();
+	video_status = 0xff00;						/* Set signals inactive */
 
-//	logerror("Was VC=%04x  Vbl=%02x  VS=%04x  HS=%04x - ",video_status,vblank_irq,prev_scanline,prev_beampos );
+	if ((hpos > 325) && (hpos < 380))
+		video_status &= ~0x8000;
+	if ((vpos >= 242) && (vpos <= 245))
+		video_status &= ~0x4000;
+	if (cpu_getvblank())
+		video_status &= ~0x0100;
+	if (vpos < 256)
+		video_status |= (vpos & 0xff);
+	else
+		video_status |= 0xff;
+
+	current_scanline = prev_scanline = vpos; //Remove
+	logerror("VC: scanline=%04x iloop=%04x beampos=%04x VBL=%04x\n",vpos,cpu_getiloops(),hpos,cpu_getvblank());
+#else
+//	logerror("Was VS=%04x  Vbl=%02x  VS=%04x - ",video_status,vblank_irq,prev_scanline );
 
 	video_status = 0xff00;						/* Set signals inactive */
-	video_status |= (current_scanline & 0xff);	/* Scanline */
-
+	if ((current_scanline & 0x100) == 0) {
+		video_status |= (current_scanline & 0xff);	/* Scanline */
+	}
+	else {
+		video_status |= 0xff;
+	}
 	if (vblank_irq) {
 		video_status &= ~0x0100;
 	}
 	if (prev_scanline != current_scanline) {
-		video_status &= ~0x8000;				/* Activate V-Sync Clk */
+		video_status &= ~0x8000;				/* Activate H-Sync Clk */
 	}
-//	if (current_beampos) {
-//		video_status &= ~0x4000;
-//	}
-//	current_beampos = ~current_beampos;
+	if ((current_scanline >= 247) && (current_scanline <= 250)) {
+		video_status &= ~0x4000;				/* Activate V-Sync Clk */
+	}
 	prev_scanline = current_scanline;
 
 //	logerror("Now VC=%04x  Vbl=%02x  VS=%04x  HS=%04x\n",video_status,vblank_irq,cpu_getscanline(),cpu_gethorzbeampos() );
+#endif
 
 	return video_status;
 }
@@ -772,25 +874,11 @@ static WRITE16_HANDLER( ghox_shared_ram_w )
 		toaplan2_shared_ram16[offset] = data & 0xff;
 	}
 }
-static READ16_HANDLER( kbash_sub_cpu_r )
-{
-/*	Knuckle Bash's  68000 reads secondary CPU status via an I/O port.
-	If a value of 2 is read, then secondary CPU is busy.
-	Secondary CPU must report 0xff when no longer busy, to signify that it
-	has passed POST.
-*/
-	return 0xff;
-}
-
-static WRITE16_HANDLER( kbash_sub_cpu_w )
-{
-	logerror("PC:%08x writing %04x to Zx80 secondary CPU status port %02x\n",activecpu_get_previouspc(),mcu_data,offset/2);
-}
 
 static READ16_HANDLER( shared_ram_r )
 {
-/*	Other games using a Zx80 based secondary CPU, have shared memory between
-	the 68000 and the Zx80 CPU. The 68000 reads the status of the Zx80
+/*  Other games using a NEC V25+ secondary CPU, have shared memory between
+	the 68000 and the V25+ CPU. The 68000 reads the status of the V25+
 	via a location of the shared memory.
 */
 	return toaplan2_shared_ram16[offset] & 0xff;
@@ -810,7 +898,7 @@ static WRITE16_HANDLER( shared_ram_w )
 			case 0xcf8:
 			case 0xff8: toaplan2_shared_ram16[offset + 1] = data; /* Dogyuun */
 						toaplan2_shared_ram16[offset + 2] = data; /* FixEight */
-						logerror("PC:%08x Writing  (%04x) to secondary CPU\n",activecpu_get_previouspc(),data);
+						logerror("PC:%08x Writing (%04x) to shared RAM at %04x\n",activecpu_get_previouspc(),data,(offset*2));
 						if (data == 0x81) data = 0x0001;
 						break;
 			default:	break;
@@ -819,65 +907,147 @@ static WRITE16_HANDLER( shared_ram_w )
 	}
 }
 
-static READ16_HANDLER( Zx80_status_port_r )
+static READ16_HANDLER( toaplan2_snd_cpu_r )
 {
-/*** Status port includes Zx80 CPU POST codes. ************
- *** This is actually a part of the 68000/Zx80 Shared RAM */
+/*** Status port includes NEC V25+ CPU POST codes. ************
+ *** This is actually a part of the 68000/V25+ Shared RAM */
 
-	/*** Dogyuun mcu post data ***/
-	if (mcu_data == 0x800000aa) mcu_data = 0xff;
-	if (mcu_data == 0x00) mcu_data = 0x800000aa;
+	int response = 0xffff;
 
-	/*** FixEight mcu post data ***/
-	if (mcu_data == 0x8000ffaa)
+	/* Provide successful POST responses */
+	if (mcu_data == 0xffaa)						/* Dogyuun */
 	{
-#if 0 	/* check the 37B6 code */
-		/* copy nvram data to shared ram after post is complete */
-		fixeight_sharedram[0] = fixeight_nvram[0];	/* Dip Switch A */
-		fixeight_sharedram[1] = fixeight_nvram[1];	/* Dip Switch B */
-		fixeight_sharedram[2] = fixeight_nvram[2];	/* Territory */
-#endif
-		/* Hack Alert ! Fixeight does not have any DSW. The main CPU has a */
-		/* game keeping service mode. It writes/reads the settings to/from */
-		/* these shared RAM locations. The secondary CPU reads/writes them */
-		/* from/to nvram to store the settings (a 93C45 EEPROM) */
-		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x28f002, 0x28f003, 0, 0, MRA16_RAM);
-		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x28f004, 0x28f005, 0, 0, input_port_5_word_r);	/* Dip Switch A - Wrong !!! */
-		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x28f006, 0x28f007, 0, 0, input_port_6_word_r);	/* Dip Switch B - Wrong !!! */
-		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x28f008, 0x28f009, 0, 0, input_port_7_word_r);	/* Territory Jumper block - Wrong !!! */
-		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x28f00a, 0x28fbff, 0, 0, MRA16_RAM);
-		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x28f002, 0x28f003, 0, 0, MWA16_RAM);
-		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x28f004, 0x28f009, 0, 0, MWA16_NOP);
-		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x28f00a, 0x28fbff, 0, 0, MWA16_RAM);
-
+		response = 0xffaa;
 		mcu_data = 0xffff;
 	}
-	if (mcu_data == 0xffaa) mcu_data = 0x8000ffaa;
-	if (mcu_data == 0xff00) mcu_data = 0xffaa;
 
-	logerror("PC:%08x reading %08x from Zx80 secondary CPU command/status port\n",activecpu_get_previouspc(),mcu_data);
-	return mcu_data & 0xff;
+	logerror("PC:%06x reading status %08x from the NEC V25+ secondary CPU port\n",activecpu_get_previouspc(),response);
+	return response;
 }
 
-static WRITE16_HANDLER( Zx80_command_port_w )
+static WRITE16_HANDLER( dogyuun_snd_cpu_w )
 {
 	if (ACCESSING_LSB)
 	{
 		mcu_data = data;
-	logerror("PC:%08x Writing command (%04x) to Zx80 secondary CPU command/status port\n",activecpu_get_previouspc(),mcu_data);
-}
+		dogyuun_okisnd_w(data);
+	}
+	logerror("PC:%06x Writing command (%04x) to the NEC V25+ secondary CPU port\n",activecpu_get_previouspc(),mcu_data);
 }
 
-static READ16_HANDLER( Zx80_sharedram_r )
+static READ16_HANDLER( kbash_snd_cpu_r )
 {
-	return Zx80_shared_ram[offset] & 0xff;
+/*	Knuckle Bash's  68000 reads secondary CPU status via an I/O port.
+	If a value of 2 is read, then secondary CPU is busy.
+	Secondary CPU must report 0xff when no longer busy, to signify that it
+	has passed POST.
+*/
+	return 0xff;
 }
 
-static WRITE16_HANDLER( Zx80_sharedram_w )
+static WRITE16_HANDLER( kbash_snd_cpu_w )
 {
 	if (ACCESSING_LSB)
 	{
-		Zx80_shared_ram[offset] = data & 0xff;
+		kbash_okisnd_w(data);
+	}
+	logerror("PC:%06x Writing command (%04x) to the NEC V25+ secondary CPU port %02x\n",activecpu_get_previouspc(),data,(offset*2));
+}
+
+static READ16_HANDLER( fixeight_sec_cpu_r )
+{
+/*** Status port includes NEC V25+ CPU POST codes. ************
+ *** This is actually a part of the 68000/V25+ Shared RAM */
+
+	int response = 0xffff;
+
+	if ((mcu_data & 0xffff) == 0x0faa)
+	{
+		mcu_data = 0xffff;
+		response = 0xffaa;
+	}
+	if ((mcu_data & 0xffff) == 0xff00)
+	{
+		mcu_data = 0x0faa;
+		response = 0xffaa;		/* Second CPU passed POST response */
+	}
+	if ((mcu_data & 0xff00) == 0x0000)
+	{
+		response = mcu_data;	/* Return the shared RAM data during POST */
+	}
+	logerror("PC:%06x reading status %08x from the NEC V25+ secondary CPU port\n",activecpu_get_previouspc(),response);
+	return response;
+}
+
+static WRITE16_HANDLER( fixeight_sec_cpu_w )
+{
+	if (ACCESSING_LSB)
+	{
+		if (mcu_data & 0xff00)
+		{
+			mcu_data = (mcu_data & 0xff00) | (data & 0xff);
+			fixeight_okisnd_w(data);
+		}
+		else if (mcu_data == 0xff00)
+		{
+#if 0 	/* check the 37B6 code */
+			/* copy nvram data to shared ram after post is complete */
+			fixeight_sharedram[0] = fixeight_nvram[0];	/* Dip Switch A */
+			fixeight_sharedram[1] = fixeight_nvram[1];	/* Dip Switch B */
+			fixeight_sharedram[2] = fixeight_nvram[2];	/* Territory */
+#endif
+			/* Hack Alert ! Fixeight does not have any DSW. The main CPU has a */
+			/* game keeping service mode. It writes/reads the settings to/from */
+			/* these shared RAM locations. The secondary CPU reads/writes them */
+			/* from/to nvram to store the settings (a 93C45 EEPROM) */
+			memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x28f002, 0x28f003, 0, 0, MRA16_RAM);
+			memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x28f004, 0x28f005, 0, 0, input_port_5_word_r);	/* Dip Switch A - Wrong !!! */
+			memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x28f006, 0x28f007, 0, 0, input_port_6_word_r);	/* Dip Switch B - Wrong !!! */
+			memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x28f008, 0x28f009, 0, 0, input_port_7_word_r);	/* Territory Jumper block - Wrong !!! */
+			memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x28f00a, 0x28fbff, 0, 0, MRA16_RAM);
+			memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x28f002, 0x28f003, 0, 0, MWA16_RAM);
+			memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x28f004, 0x28f009, 0, 0, MWA16_NOP);
+			memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x28f00a, 0x28fbff, 0, 0, MWA16_RAM);
+
+			mcu_data = data;
+		}
+		else
+		{
+			mcu_data = data;
+		}
+	}
+	logerror("PC:%06x Writing command (%04x) to the NEC V25+ secondary CPU port\n",activecpu_get_previouspc(),mcu_data);
+}
+
+static WRITE16_HANDLER( vfive_snd_cpu_w )
+{
+	if (ACCESSING_LSB)
+	{
+		mcu_data = data;
+	}
+	logerror("PC:%06x Writing command (%04x) to the NEC V25+ secondary CPU port\n",activecpu_get_previouspc(),mcu_data);
+}
+
+static WRITE16_HANDLER( batsugun_snd_cpu_w )
+{
+	if (ACCESSING_LSB)
+	{
+		mcu_data = data;
+		batsugun_okisnd_w(data);
+	}
+	logerror("PC:%06x Writing command (%04x) to the NEC V25+ secondary CPU port %02x\n",activecpu_get_previouspc(),mcu_data,(offset*2));
+}
+
+static READ16_HANDLER( V25_sharedram_r )
+{
+	return V25_shared_ram[offset] & 0xff;
+}
+
+static WRITE16_HANDLER( V25_sharedram_w )
+{
+	if (ACCESSING_LSB)
+	{
+		V25_shared_ram[offset] = data & 0xff;
 	}
 }
 
@@ -889,7 +1059,18 @@ static WRITE16_HANDLER( oki_bankswitch_w )
 	}
 }
 
-
+static WRITE16_HANDLER( fixeighb_oki_bankswitch_w )
+{
+	if (ACCESSING_LSB)
+	{
+		data &= 7;
+		if (data <= 4)
+		{
+			data8_t *fixeighb_oki = memory_region(REGION_SOUND1);
+			memcpy(&fixeighb_oki[0x30000], &fixeighb_oki[(data * 0x10000) + 0x40000], 0x10000);
+		}
+	}
+}
 
 /***************************************************************************
   Raizing games
@@ -1236,14 +1417,14 @@ static ADDRESS_MAP_START( tekipaki_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x180000, 0x180001) AM_READ(input_port_4_word_r)	/* Dip Switch A */
 	AM_RANGE(0x180010, 0x180011) AM_READ(input_port_5_word_r)	/* Dip Switch B */
 	AM_RANGE(0x180020, 0x180021) AM_READ(input_port_3_word_r)	/* Coin/System inputs */
-	AM_RANGE(0x180030, 0x180031) AM_READ(c2map_port_6_r)			/* CPU 2 busy and Territory Jumper block */
+	AM_RANGE(0x180030, 0x180031) AM_READ(c2map_port_6_r)		/* CPU 2 busy and Territory Jumper block */
 	AM_RANGE(0x180050, 0x180051) AM_READ(input_port_1_word_r)	/* Player 1 controls */
 	AM_RANGE(0x180060, 0x180061) AM_READ(input_port_2_word_r)	/* Player 2 controls */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( tekipaki_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x01ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x020000, 0x03ffff) AM_WRITE(MWA16_ROM)				/* extra for Whoopee */
+	AM_RANGE(0x020000, 0x03ffff) AM_WRITE(MWA16_ROM)			/* extra for Whoopee */
 	AM_RANGE(0x080000, 0x082fff) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x0c0000, 0x0c0fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x140000, 0x140001) AM_WRITE(toaplan2_0_voffs_w)
@@ -1256,20 +1437,20 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( ghox_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x040000, 0x040001) AM_READ(ghox_p2_h_analog_r)		/* Paddle 2 */
+	AM_RANGE(0x040000, 0x040001) AM_READ(ghox_p2_h_analog_r)	/* Paddle 2 */
 	AM_RANGE(0x080000, 0x083fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x0c0000, 0x0c0fff) AM_READ(paletteram16_word_r)
-	AM_RANGE(0x100000, 0x100001) AM_READ(ghox_p1_h_analog_r)		/* Paddle 1 */
+	AM_RANGE(0x100000, 0x100001) AM_READ(ghox_p1_h_analog_r)	/* Paddle 1 */
 	AM_RANGE(0x140004, 0x140007) AM_READ(toaplan2_0_videoram16_r)
 	AM_RANGE(0x14000c, 0x14000d) AM_READ(toaplan2_inputport_0_word_r)	/* VBlank */
-	AM_RANGE(0x180000, 0x180001) AM_READ(ghox_mcu_r)				/* really part of shared RAM */
+	AM_RANGE(0x180000, 0x180001) AM_READ(ghox_mcu_r)			/* really part of shared RAM */
 	AM_RANGE(0x180006, 0x180007) AM_READ(input_port_4_word_r)	/* Dip Switch A */
 	AM_RANGE(0x180008, 0x180009) AM_READ(input_port_5_word_r)	/* Dip Switch B */
 	AM_RANGE(0x180010, 0x180011) AM_READ(input_port_3_word_r)	/* Coin/System inputs */
 //	AM_RANGE(0x18000c, 0x18000d) AM_READ(input_port_1_word_r)	/* Player 1 controls (real) */
 //	AM_RANGE(0x18000e, 0x18000f) AM_READ(input_port_2_word_r)	/* Player 2 controls (real) */
-	AM_RANGE(0x18000c, 0x18000d) AM_READ(ghox_p1_v_analog_r)		/* Player 1 controls */
-	AM_RANGE(0x18000e, 0x18000f) AM_READ(ghox_p2_v_analog_r)		/* Player 2 controls */
+	AM_RANGE(0x18000c, 0x18000d) AM_READ(ghox_p1_v_analog_r)	/* Player 1 controls */
+	AM_RANGE(0x18000e, 0x18000f) AM_READ(ghox_p2_v_analog_r)	/* Player 2 controls */
 	AM_RANGE(0x180500, 0x180fff) AM_READ(ghox_shared_ram_r)
 	AM_RANGE(0x18100c, 0x18100d) AM_READ(input_port_6_word_r)	/* Territory Jumper block */
 ADDRESS_MAP_END
@@ -1293,16 +1474,16 @@ static ADDRESS_MAP_START( dogyuun_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x200010, 0x200011) AM_READ(input_port_1_word_r)	/* Player 1 controls */
 	AM_RANGE(0x200014, 0x200015) AM_READ(input_port_2_word_r)	/* Player 2 controls */
 	AM_RANGE(0x200018, 0x200019) AM_READ(input_port_3_word_r)	/* Coin/System inputs */
-#if Zx80
+#if V25
 	AM_RANGE(0x21e000, 0x21fbff) AM_READ(shared_ram_r)			/* $21f000 status port */
-	AM_RANGE(0x21fc00, 0x21ffff) AM_READ(Zx80_sharedram_r)		/* 16-bit on 68000 side, 8-bit on Zx80 side */
+	AM_RANGE(0x21fc00, 0x21ffff) AM_READ(V25_sharedram_r)		/* 16-bit on 68000 side, 8-bit on V25+ side */
 #else
 	AM_RANGE(0x21e000, 0x21efff) AM_READ(shared_ram_r)
-	AM_RANGE(0x21f000, 0x21f001) AM_READ(Zx80_status_port_r)		/* Zx80 status port */
+	AM_RANGE(0x21f000, 0x21f001) AM_READ(toaplan2_snd_cpu_r)	/* V25 status port */
 	AM_RANGE(0x21f004, 0x21f005) AM_READ(input_port_4_word_r)	/* Dip Switch A */
 	AM_RANGE(0x21f006, 0x21f007) AM_READ(input_port_5_word_r)	/* Dip Switch B */
 	AM_RANGE(0x21f008, 0x21f009) AM_READ(input_port_6_word_r)	/* Territory Jumper block */
-	AM_RANGE(0x21fc00, 0x21ffff) AM_READ(Zx80_sharedram_r)		/* 16-bit on 68000 side, 8-bit on Zx80 side */
+	AM_RANGE(0x21fc00, 0x21ffff) AM_READ(V25_sharedram_r)		/* 16-bit on 68000 side, 8-bit on V25+ side */
 #endif
 	/***** The following in 0x30000x are for video controller 1 ******/
 	AM_RANGE(0x300004, 0x300007) AM_READ(toaplan2_0_videoram16_r)/* tile layers */
@@ -1316,24 +1497,23 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( dogyuun_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x100000, 0x103fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x200008, 0x200009) AM_WRITE(OKIM6295_data_0_lsb_w)	/// Really ?
 	AM_RANGE(0x20001c, 0x20001d) AM_WRITE(toaplan2_coin_word_w)
-#if Zx80
+#if V25
 	AM_RANGE(0x21e000, 0x21fbff) AM_WRITE(shared_ram_w) AM_BASE(&toaplan2_shared_ram16)	/* $21F000 */
-	AM_RANGE(0x21fc00, 0x21ffff) AM_WRITE(Zx80_sharedram_w) AM_BASE(&Zx80_shared_ram)	/* 16-bit on 68000 side, 8-bit on Zx80 side */
+	AM_RANGE(0x21fc00, 0x21ffff) AM_WRITE(V25_sharedram_w) AM_BASE(&V25_shared_ram)	/* 16-bit on 68000 side, 8-bit on V25+ side */
 #else
 	AM_RANGE(0x21e000, 0x21efff) AM_WRITE(shared_ram_w) AM_BASE(&toaplan2_shared_ram16)
-	AM_RANGE(0x21f000, 0x21f001) AM_WRITE(Zx80_command_port_w)	/* Zx80 command port */
-	AM_RANGE(0x21fc00, 0x21ffff) AM_WRITE(Zx80_sharedram_w) AM_BASE(&Zx80_shared_ram)	/* 16-bit on 68000 side, 8-bit on Zx80 side */
+	AM_RANGE(0x21f000, 0x21f001) AM_WRITE(dogyuun_snd_cpu_w)	/* V25+ command port */
+	AM_RANGE(0x21fc00, 0x21ffff) AM_WRITE(V25_sharedram_w) AM_BASE(&V25_shared_ram)	/* 16-bit on 68000 side, 8-bit on V25+ side */
 #endif
 	/***** The following in 0x30000x are for video controller 1 ******/
-	AM_RANGE(0x300000, 0x300001) AM_WRITE(toaplan2_0_voffs_w)		/* VideoRAM selector/offset */
+	AM_RANGE(0x300000, 0x300001) AM_WRITE(toaplan2_0_voffs_w)	/* VideoRAM selector/offset */
 	AM_RANGE(0x300004, 0x300007) AM_WRITE(toaplan2_0_videoram16_w)/* Tile/Sprite VideoRAM */
 	AM_RANGE(0x300008, 0x300009) AM_WRITE(toaplan2_0_scroll_reg_select_w)
 	AM_RANGE(0x30000c, 0x30000d) AM_WRITE(toaplan2_0_scroll_reg_data_w)
 	AM_RANGE(0x400000, 0x400fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
 	/***** The following in 0x50000x are for video controller 2 ******/
-	AM_RANGE(0x500000, 0x500001) AM_WRITE(toaplan2_1_voffs_w)		/* VideoRAM selector/offset */
+	AM_RANGE(0x500000, 0x500001) AM_WRITE(toaplan2_1_voffs_w)	/* VideoRAM selector/offset */
 	AM_RANGE(0x500004, 0x500007) AM_WRITE(toaplan2_1_videoram16_w)/* Tile/Sprite VideoRAM */
 	AM_RANGE(0x500008, 0x500009) AM_WRITE(toaplan2_1_scroll_reg_select_w)
 	AM_RANGE(0x50000c, 0x50000d) AM_WRITE(toaplan2_1_scroll_reg_data_w)
@@ -1342,7 +1522,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( kbash_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
 	AM_RANGE(0x100000, 0x103fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x200000, 0x200001) AM_READ(kbash_sub_cpu_r)
+	AM_RANGE(0x200000, 0x200001) AM_READ(kbash_snd_cpu_r)
 	AM_RANGE(0x200004, 0x200005) AM_READ(input_port_4_word_r)	/* Dip Switch A */
 	AM_RANGE(0x200006, 0x200007) AM_READ(input_port_5_word_r)	/* Dip Switch B */
 	AM_RANGE(0x200008, 0x200009) AM_READ(input_port_6_word_r)	/* Territory Jumper block */
@@ -1358,8 +1538,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( kbash_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x100000, 0x103fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x200000, 0x200003) AM_WRITE(kbash_sub_cpu_w)		/* sound number to play */
-//	AM_RANGE(0x200002, 0x200003) AM_WRITE(kbash_sub_cpu_w2)		/* ??? */
+	AM_RANGE(0x200000, 0x200003) AM_WRITE(kbash_snd_cpu_w)		/* sound number to play */
 	AM_RANGE(0x20801c, 0x20801d) AM_WRITE(toaplan2_coin_word_w)
 	AM_RANGE(0x300000, 0x300001) AM_WRITE(toaplan2_0_voffs_w)
 	AM_RANGE(0x300004, 0x300007) AM_WRITE(toaplan2_0_videoram16_w)
@@ -1395,7 +1574,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( truxton2_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x200000, 0x200001) AM_WRITE(toaplan2_0_voffs_w)		/* VideoRAM selector/offset */
+	AM_RANGE(0x200000, 0x200001) AM_WRITE(toaplan2_0_voffs_w)	/* VideoRAM selector/offset */
 	AM_RANGE(0x200004, 0x200007) AM_WRITE(toaplan2_0_videoram16_w)
 	AM_RANGE(0x200008, 0x200009) AM_WRITE(toaplan2_0_scroll_reg_select_w)
 	AM_RANGE(0x20000c, 0x20000d) AM_WRITE(toaplan2_0_scroll_reg_data_w)
@@ -1459,12 +1638,12 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( pipibibi_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x080000, 0x082fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x083000, 0x0837ff) AM_WRITE(pipibibi_spriteram16_w)	/* SpriteRAM */
-	AM_RANGE(0x083800, 0x087fff) AM_WRITE(MWA16_RAM)				/* SpriteRAM (unused) */
+	AM_RANGE(0x083000, 0x0837ff) AM_WRITE(pipibibi_spriteram16_w)/* SpriteRAM */
+	AM_RANGE(0x083800, 0x087fff) AM_WRITE(MWA16_RAM)			/* SpriteRAM (unused) */
 	AM_RANGE(0x0c0000, 0x0c0fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x120000, 0x120fff) AM_WRITE(MWA16_RAM)				/* Copy of SpriteRAM ? */
-//	AM_RANGE(0x13f000, 0x13f001) AM_WRITE(MWA16_NOP)				/* ??? */
-	AM_RANGE(0x180000, 0x182fff) AM_WRITE(pipibibi_videoram16_w)	/* TileRAM */
+	AM_RANGE(0x120000, 0x120fff) AM_WRITE(MWA16_RAM)			/* Copy of SpriteRAM ? */
+//	AM_RANGE(0x13f000, 0x13f001) AM_WRITE(MWA16_NOP)			/* ??? */
+	AM_RANGE(0x180000, 0x182fff) AM_WRITE(pipibibi_videoram16_w)/* TileRAM */
 	AM_RANGE(0x188000, 0x18800f) AM_WRITE(pipibibi_scroll_w)
 	AM_RANGE(0x190010, 0x190011) AM_WRITE(pipibibi_z80_task_w)	/* Z80 task to perform */
 	AM_RANGE(0x19c01c, 0x19c01d) AM_WRITE(toaplan2_coin_word_w)	/* Coin count/lock */
@@ -1478,18 +1657,18 @@ static ADDRESS_MAP_START( fixeight_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x200008, 0x200009) AM_READ(input_port_3_word_r)	/* Player 3 controls */
 	AM_RANGE(0x200010, 0x200011) AM_READ(input_port_4_word_r)	/* Coin/System inputs */
 	AM_RANGE(0x280000, 0x28dfff) AM_READ(MRA16_RAM)				/* part of shared ram ? */
-#if Zx80
+#if V25
 	AM_RANGE(0x28e000, 0x28fbff) AM_READ(shared_ram_r)			/* $28f000 status port */
-	AM_RANGE(0x28fc00, 0x28ffff) AM_READ(Zx80_sharedram_r)		/* 16-bit on 68000 side, 8-bit on Zx80 side */
+	AM_RANGE(0x28fc00, 0x28ffff) AM_READ(V25_sharedram_r)		/* 16-bit on 68000 side, 8-bit on V25+ side */
 #else
 	AM_RANGE(0x28e000, 0x28efff) AM_READ(shared_ram_r)
-	AM_RANGE(0x28f000, 0x28f001) AM_READ(Zx80_status_port_r)		/* Zx80 status port */
+	AM_RANGE(0x28f000, 0x28f001) AM_READ(fixeight_sec_cpu_r)	/* V25+ status port */
 //	AM_RANGE(0x28f002, 0x28f003) AM_READ(MRA16_RAM)				/* part of shared ram */
 //	AM_RANGE(0x28f004, 0x28f005) AM_READ(input_port_5_word_r)	/* Dip Switch A - Wrong !!! */
 //	AM_RANGE(0x28f006, 0x28f007) AM_READ(input_port_6_word_r)	/* Dip Switch B - Wrong !!! */
 //	AM_RANGE(0x28f008, 0x28f009) AM_READ(input_port_7_word_r)	/* Territory Jumper block - Wrong !!! */
 //	AM_RANGE(0x28f002, 0x28fbff) AM_READ(MRA16_RAM)				/* part of shared ram */
-	AM_RANGE(0x28fc00, 0x28ffff) AM_READ(Zx80_sharedram_r)		/* 16-bit on 68000 side, 8-bit on Zx80 side */
+	AM_RANGE(0x28fc00, 0x28ffff) AM_READ(V25_sharedram_r)		/* 16-bit on 68000 side, 8-bit on V25+ side */
 #endif
 	AM_RANGE(0x300004, 0x300007) AM_READ(toaplan2_0_videoram16_r)
 	AM_RANGE(0x30000c, 0x30000d) AM_READ(toaplan2_inputport_0_word_r)
@@ -1505,19 +1684,19 @@ static ADDRESS_MAP_START( fixeight_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x100000, 0x103fff) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x20001c, 0x20001d) AM_WRITE(toaplan2_coin_word_w)	/* Coin count/lock */
-	AM_RANGE(0x280000, 0x28dfff) AM_WRITE(MWA16_RAM)				/* part of shared ram ? */
-#if Zx80
+	AM_RANGE(0x280000, 0x28dfff) AM_WRITE(MWA16_RAM)			/* part of shared ram ? */
+#if V25
 	AM_RANGE(0x28e000, 0x28fbff) AM_WRITE(shared_ram_w) AM_BASE(&toaplan2_shared_ram16)	/* $28F000 */
-	AM_RANGE(0x28fc00, 0x28ffff) AM_WRITE(Zx80_sharedram_w) AM_BASE(&Zx80_shared_ram)	/* 16-bit on 68000 side, 8-bit on Zx80 side */
+	AM_RANGE(0x28fc00, 0x28ffff) AM_WRITE(V25_sharedram_w) AM_BASE(&V25_shared_ram)	/* 16-bit on 68000 side, 8-bit on V25+ side */
 #else
 	AM_RANGE(0x28e000, 0x28efff) AM_WRITE(shared_ram_w) AM_BASE(&toaplan2_shared_ram16)
-	AM_RANGE(0x28f000, 0x28f001) AM_WRITE(Zx80_command_port_w)	/* Zx80 command port */
-//	AM_RANGE(0x28f002, 0x28f003) AM_WRITE(MWA16_RAM)				/* part of shared ram */
-//	AM_RANGE(0x28f004, 0x28f009) AM_WRITE(MWA16_NOP)				/* part of shared ram */
-//	AM_RANGE(0x28f002, 0x28fbff) AM_WRITE(MWA16_RAM)				/* part of shared ram */
-	AM_RANGE(0x28fc00, 0x28ffff) AM_WRITE(Zx80_sharedram_w) AM_BASE(&Zx80_shared_ram)	/* 16-bit on 68000 side, 8-bit on Zx80 side */
+	AM_RANGE(0x28f000, 0x28f001) AM_WRITE(fixeight_sec_cpu_w)	/* V25+ command port */
+//	AM_RANGE(0x28f002, 0x28f003) AM_WRITE(MWA16_RAM)			/* part of shared ram */
+//	AM_RANGE(0x28f004, 0x28f009) AM_WRITE(MWA16_NOP)			/* part of shared ram */
+//	AM_RANGE(0x28f002, 0x28fbff) AM_WRITE(MWA16_RAM)			/* part of shared ram */
+	AM_RANGE(0x28fc00, 0x28ffff) AM_WRITE(V25_sharedram_w) AM_BASE(&V25_shared_ram)	/* 16-bit on 68000 side, 8-bit on V25+ side */
 #endif
-	AM_RANGE(0x300000, 0x300001) AM_WRITE(toaplan2_0_voffs_w)		/* VideoRAM selector/offset */
+	AM_RANGE(0x300000, 0x300001) AM_WRITE(toaplan2_0_voffs_w)	/* VideoRAM selector/offset */
 	AM_RANGE(0x300004, 0x300007) AM_WRITE(toaplan2_0_videoram16_w)/* Tile/Sprite VideoRAM */
 	AM_RANGE(0x300008, 0x300009) AM_WRITE(toaplan2_0_scroll_reg_select_w)
 	AM_RANGE(0x30000c, 0x30000d) AM_WRITE(toaplan2_0_scroll_reg_data_w)
@@ -1528,6 +1707,29 @@ static ADDRESS_MAP_START( fixeight_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x600000, 0x60ffff) AM_WRITE(toaplan2_tx_gfxram16_w) AM_BASE(&toaplan2_tx_gfxram16)
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( fixeighb_mem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_ROM /* 0-$7ffff ?*/
+	AM_RANGE(0x100000, 0x10ffff) AM_RAM /* 10000 - 107fff  105000-105xxx 106000-106xxx 108000 - related to sound ?*/
+	AM_RANGE(0x200000, 0x200001) AM_READ(input_port_1_word_r)	/* Player 1 controls */
+	AM_RANGE(0x200004, 0x200005) AM_READ(input_port_2_word_r)	/* Player 2 controls */
+	AM_RANGE(0x200008, 0x200009) AM_READ(input_port_3_word_r)	/* Player 3 controls */
+	AM_RANGE(0x20000c, 0x20000d) AM_READ(input_port_6_word_r)
+	AM_RANGE(0x200010, 0x200011) AM_READ(input_port_4_word_r)	/* Coin/System inputs */
+	AM_RANGE(0x200014, 0x200015) AM_WRITE(fixeighb_oki_bankswitch_w) /* Sound banking. Code at $4084c, $5070 */
+	AM_RANGE(0x200018, 0x200019) AM_WRITE(OKIM6295_data_0_lsb_w) AM_READ(OKIM6295_status_0_lsb_r) /* ?? */
+	AM_RANGE(0x20001c, 0x20001d) AM_READ(input_port_5_word_r)
+	AM_RANGE(0x300000, 0x300001) AM_WRITE(toaplan2_0_voffs_w)	/* VideoRAM selector/offset */
+	AM_RANGE(0x300004, 0x300007) AM_READ(toaplan2_0_videoram16_r) AM_WRITE(toaplan2_0_videoram16_w)/* Tile/Sprite VideoRAM */
+	AM_RANGE(0x300008, 0x300009) AM_WRITE(toaplan2_0_scroll_reg_select_w)
+	AM_RANGE(0x30000c, 0x30000d) AM_READ(toaplan2_inputport_0_word_r) AM_WRITE(toaplan2_0_scroll_reg_data_w)
+	AM_RANGE(0x400000, 0x400fff) AM_READ(paletteram16_word_r) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x500000, 0x501fff) AM_READ(toaplan2_txvideoram16_r) AM_WRITE(toaplan2_txvideoram16_w) AM_BASE(&toaplan2_txvideoram16) AM_SIZE(&toaplan2_tx_vram_size)
+	AM_RANGE(0x502000, 0x5021ff) AM_READ(toaplan2_txvideoram16_offs_r) AM_WRITE(toaplan2_txvideoram16_offs_w) AM_BASE(&toaplan2_txvideoram16_offs) AM_SIZE(&toaplan2_tx_offs_vram_size)
+	AM_RANGE(0x503000, 0x5031ff) AM_READ(toaplan2_txscrollram16_r) AM_WRITE(toaplan2_txscrollram16_w) AM_BASE(&toaplan2_txscrollram16) AM_SIZE(&toaplan2_tx_scroll_vram_size)
+	AM_RANGE(0x700000, 0x700001) AM_READ(video_count_r)
+	AM_RANGE(0x800000, 0x87ffff) AM_READ(MRA16_BANK1)
+ADDRESS_MAP_END
+
 static ADDRESS_MAP_START( vfive_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
 	AM_RANGE(0x100000, 0x103fff) AM_READ(MRA16_RAM)
@@ -1535,16 +1737,16 @@ static ADDRESS_MAP_START( vfive_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x200010, 0x200011) AM_READ(input_port_1_word_r)	/* Player 1 controls */
 	AM_RANGE(0x200014, 0x200015) AM_READ(input_port_2_word_r)	/* Player 2 controls */
 	AM_RANGE(0x200018, 0x200019) AM_READ(input_port_3_word_r)	/* Coin/System inputs */
-#if Zx80
+#if V25
 	AM_RANGE(0x21e000, 0x21fbff) AM_READ(shared_ram_r)			/* $21f000 status port */
-	AM_RANGE(0x21fc00, 0x21ffff) AM_READ(Zx80_sharedram_r)		/* 16-bit on 68000 side, 8-bit on Zx80 side */
+	AM_RANGE(0x21fc00, 0x21ffff) AM_READ(V25_sharedram_r)		/* 16-bit on 68000 side, 8-bit on V25+ side */
 #else
 	AM_RANGE(0x21e000, 0x21efff) AM_READ(shared_ram_r)
-	AM_RANGE(0x21f000, 0x21f001) AM_READ(Zx80_status_port_r)		/* Zx80 status port */
+	AM_RANGE(0x21f000, 0x21f001) AM_READ(toaplan2_snd_cpu_r)	/* V25+ status port */
 	AM_RANGE(0x21f004, 0x21f005) AM_READ(input_port_4_word_r)	/* Dip Switch A */
 	AM_RANGE(0x21f006, 0x21f007) AM_READ(input_port_5_word_r)	/* Dip Switch B */
 	AM_RANGE(0x21f008, 0x21f009) AM_READ(input_port_6_word_r)	/* Territory Jumper block */
-	AM_RANGE(0x21fc00, 0x21ffff) AM_READ(Zx80_sharedram_r)		/* 16-bit on 68000 side, 8-bit on Zx80 side */
+	AM_RANGE(0x21fc00, 0x21ffff) AM_READ(V25_sharedram_r)		/* 16-bit on 68000 side, 8-bit on V25+ side */
 #endif
 	AM_RANGE(0x300004, 0x300007) AM_READ(toaplan2_0_videoram16_r)
 	AM_RANGE(0x30000c, 0x30000d) AM_READ(toaplan2_inputport_0_word_r)
@@ -1555,17 +1757,17 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( vfive_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x100000, 0x103fff) AM_WRITE(MWA16_RAM)
-//	AM_RANGE(0x200000, 0x20ffff) AM_WRITE(MWA16_ROM)				/* Sound ROM is here ??? */
+//	AM_RANGE(0x200000, 0x20ffff) AM_WRITE(MWA16_ROM)			/* Sound ROM is here ??? */
 	AM_RANGE(0x20001c, 0x20001d) AM_WRITE(toaplan2_coin_word_w)	/* Coin count/lock */
-#if Zx80
+#if V25
 	AM_RANGE(0x21e000, 0x21fbff) AM_WRITE(shared_ram_w) AM_BASE(&toaplan2_shared_ram16)	/* $21F000 */
-	AM_RANGE(0x21fc00, 0x21ffff) AM_WRITE(Zx80_sharedram_w) AM_BASE(&Zx80_shared_ram)	/* 16-bit on 68000 side, 8-bit on Zx80 side */
+	AM_RANGE(0x21fc00, 0x21ffff) AM_WRITE(V25_sharedram_w) AM_BASE(&V25_shared_ram)	/* 16-bit on 68000 side, 8-bit on V25+ side */
 #else
 	AM_RANGE(0x21e000, 0x21efff) AM_WRITE(shared_ram_w) AM_BASE(&toaplan2_shared_ram16)
-	AM_RANGE(0x21f000, 0x21f001) AM_WRITE(Zx80_command_port_w)	/* Zx80 command port */
-	AM_RANGE(0x21fc00, 0x21ffff) AM_WRITE(Zx80_sharedram_w) AM_BASE(&Zx80_shared_ram)	/* 16-bit on 68000 side, 8-bit on Zx80 side */
+	AM_RANGE(0x21f000, 0x21f001) AM_WRITE(vfive_snd_cpu_w)		/* V25+ command port */
+	AM_RANGE(0x21fc00, 0x21ffff) AM_WRITE(V25_sharedram_w) AM_BASE(&V25_shared_ram)	/* 16-bit on 68000 side, 8-bit on V25+ side */
 #endif
-	AM_RANGE(0x300000, 0x300001) AM_WRITE(toaplan2_0_voffs_w)		/* VideoRAM selector/offset */
+	AM_RANGE(0x300000, 0x300001) AM_WRITE(toaplan2_0_voffs_w)	/* VideoRAM selector/offset */
 	AM_RANGE(0x300004, 0x300007) AM_WRITE(toaplan2_0_videoram16_w)/* Tile/Sprite VideoRAM */
 	AM_RANGE(0x300008, 0x300009) AM_WRITE(toaplan2_0_scroll_reg_select_w)
 	AM_RANGE(0x30000c, 0x30000d) AM_WRITE(toaplan2_0_scroll_reg_data_w)
@@ -1579,16 +1781,16 @@ static ADDRESS_MAP_START( batsugun_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x200014, 0x200015) AM_READ(input_port_2_word_r)	/* Player 2 controls */
 	AM_RANGE(0x200018, 0x200019) AM_READ(input_port_3_word_r)	/* Coin/System inputs */
 	AM_RANGE(0x210000, 0x21bbff) AM_READ(MRA16_RAM)
-#if Zx80
+#if V25
 	AM_RANGE(0x21e000, 0x21fbff) AM_READ(shared_ram_r)			/* $21f000 status port */
-	AM_RANGE(0x21fc00, 0x21ffff) AM_READ(Zx80_sharedram_r)		/* 16-bit on 68000 side, 8-bit on Zx80 side */
+	AM_RANGE(0x21fc00, 0x21ffff) AM_READ(V25_sharedram_r)		/* 16-bit on 68000 side, 8-bit on V25+ side */
 #else
 	AM_RANGE(0x21e000, 0x21efff) AM_READ(shared_ram_r)
-	AM_RANGE(0x21f000, 0x21f001) AM_READ(Zx80_status_port_r)		/* Zx80 status port */
+	AM_RANGE(0x21f000, 0x21f001) AM_READ(toaplan2_snd_cpu_r)	/* V25+ status port */
 	AM_RANGE(0x21f004, 0x21f005) AM_READ(input_port_4_word_r)	/* Dip Switch A */
 	AM_RANGE(0x21f006, 0x21f007) AM_READ(input_port_5_word_r)	/* Dip Switch B */
 	AM_RANGE(0x21f008, 0x21f009) AM_READ(input_port_6_word_r)	/* Territory Jumper block */
-	AM_RANGE(0x21fc00, 0x21ffff) AM_READ(Zx80_sharedram_r)		/* 16-bit on 68000 side, 8-bit on Zx80 side */
+	AM_RANGE(0x21fc00, 0x21ffff) AM_READ(V25_sharedram_r)		/* 16-bit on 68000 side, 8-bit on V25+ side */
 #endif
 	/***** The following in 0x30000x are for video controller 1 ******/
 	AM_RANGE(0x300004, 0x300007) AM_READ(toaplan2_0_videoram16_r)/* tile layers */
@@ -1604,22 +1806,22 @@ static ADDRESS_MAP_START( batsugun_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x20001c, 0x20001d) AM_WRITE(toaplan2_coin_word_w)	/* Coin count/lock */
 	AM_RANGE(0x210000, 0x21bbff) AM_WRITE(MWA16_RAM)
-#if Zx80
+#if V25
 	AM_RANGE(0x21e000, 0x21fbff) AM_WRITE(shared_ram_w) AM_BASE(&toaplan2_shared_ram16)	/* $21F000 */
-	AM_RANGE(0x21fc00, 0x21ffff) AM_WRITE(Zx80_sharedram_w) AM_BASE(&Zx80_shared_ram)	/* 16-bit on 68000 side, 8-bit on Zx80 side */
+	AM_RANGE(0x21fc00, 0x21ffff) AM_WRITE(V25_sharedram_w) AM_BASE(&V25_shared_ram)	/* 16-bit on 68000 side, 8-bit on V25+ side */
 #else
 	AM_RANGE(0x21e000, 0x21efff) AM_WRITE(shared_ram_w) AM_BASE(&toaplan2_shared_ram16)
-	AM_RANGE(0x21f000, 0x21f001) AM_WRITE(Zx80_command_port_w)	/* Zx80 command port */
-	AM_RANGE(0x21fc00, 0x21ffff) AM_WRITE(Zx80_sharedram_w) AM_BASE(&Zx80_shared_ram)	/* 16-bit on 68000 side, 8-bit on Zx80 side */
+	AM_RANGE(0x21f000, 0x21f001) AM_WRITE(batsugun_snd_cpu_w)	/* V25+ command port */
+	AM_RANGE(0x21fc00, 0x21ffff) AM_WRITE(V25_sharedram_w) AM_BASE(&V25_shared_ram)	/* 16-bit on 68000 side, 8-bit on V25+ side */
 #endif
 	/***** The following in 0x30000x are for video controller 1 ******/
-	AM_RANGE(0x300000, 0x300001) AM_WRITE(toaplan2_0_voffs_w)		/* VideoRAM selector/offset */
+	AM_RANGE(0x300000, 0x300001) AM_WRITE(toaplan2_0_voffs_w)	/* VideoRAM selector/offset */
 	AM_RANGE(0x300004, 0x300007) AM_WRITE(toaplan2_0_videoram16_w)/* Tile/Sprite VideoRAM */
 	AM_RANGE(0x300008, 0x300009) AM_WRITE(toaplan2_0_scroll_reg_select_w)
 	AM_RANGE(0x30000c, 0x30000d) AM_WRITE(toaplan2_0_scroll_reg_data_w)
 	AM_RANGE(0x400000, 0x400fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
 	/***** The following in 0x50000x are for video controller 2 ******/
-	AM_RANGE(0x500000, 0x500001) AM_WRITE(toaplan2_1_voffs_w)		/* VideoRAM selector/offset */
+	AM_RANGE(0x500000, 0x500001) AM_WRITE(toaplan2_1_voffs_w)	/* VideoRAM selector/offset */
 	AM_RANGE(0x500004, 0x500007) AM_WRITE(toaplan2_1_videoram16_w)/* Tile/Sprite VideoRAM */
 	AM_RANGE(0x500008, 0x500009) AM_WRITE(toaplan2_1_scroll_reg_select_w)
 	AM_RANGE(0x50000c, 0x50000d) AM_WRITE(toaplan2_1_scroll_reg_data_w)
@@ -1646,7 +1848,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( snowbro2_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x300000, 0x300001) AM_WRITE(toaplan2_0_voffs_w)		/* VideoRAM selector/offset */
+	AM_RANGE(0x300000, 0x300001) AM_WRITE(toaplan2_0_voffs_w)	/* VideoRAM selector/offset */
 	AM_RANGE(0x300004, 0x300007) AM_WRITE(toaplan2_0_videoram16_w)/* Tile/Sprite VideoRAM */
 	AM_RANGE(0x300008, 0x300009) AM_WRITE(toaplan2_0_scroll_reg_select_w)
 	AM_RANGE(0x30000c, 0x30000d) AM_WRITE(toaplan2_0_scroll_reg_data_w)
@@ -1724,7 +1926,7 @@ static ADDRESS_MAP_START( shippumd_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x218000, 0x21bfff) AM_WRITE(raizing_shared_ram_w)
-//	AM_RANGE(0x21c008, 0x21c009) AM_WRITE(MWA16_NOP)				/* ??? */
+//	AM_RANGE(0x21c008, 0x21c009) AM_WRITE(MWA16_NOP)			/* ??? */
 	AM_RANGE(0x21c01c, 0x21c01d) AM_WRITE(toaplan2_coin_word_w)
 	AM_RANGE(0x300000, 0x300001) AM_WRITE(toaplan2_0_voffs_w)
 	AM_RANGE(0x300004, 0x300007) AM_WRITE(toaplan2_0_videoram16_w)
@@ -1959,8 +2161,8 @@ static ADDRESS_MAP_START( bbakraid_sound_readport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( bbakraid_sound_writeport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x40, 0x40) AM_WRITE(raizing_command_ack_w)		/* Tune control */
-	AM_RANGE(0x42, 0x42) AM_WRITE(raizing_request_ack_w)		/* Tune to play */
+	AM_RANGE(0x40, 0x40) AM_WRITE(raizing_command_ack_w)	/* Tune control */
+	AM_RANGE(0x42, 0x42) AM_WRITE(raizing_request_ack_w)	/* Tune to play */
 	AM_RANGE(0x46, 0x46) AM_WRITE(raizing_clear_nmi_w)		/* Clear the NMI state */
 	AM_RANGE(0x80, 0x80) AM_WRITE(YMZ280B_register_0_w)
 	AM_RANGE(0x81, 0x81) AM_WRITE(YMZ280B_data_0_w)
@@ -1980,8 +2182,8 @@ ADDRESS_MAP_END
 #endif
 
 
-#if Zx80
-static ADDRESS_MAP_START( Zx80_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+#if V25
+static ADDRESS_MAP_START( V25_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x00000, 0x03fff) AM_READ(MRA8_ROM)
 //	AM_RANGE(0x00000, 0x007ff) AM_READ(MRA8_RAM)			/* External shared RAM (Banked) */
 	AM_RANGE(0x04000, 0x04000) AM_READ(YM2151_status_port_0_r)
@@ -1993,7 +2195,7 @@ static ADDRESS_MAP_START( Zx80_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x80000, 0x87fff) AM_READ(MRA8_RAM)			/* External shared RAM (ROM for KBASH) */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( Zx80_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( V25_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x00000, 0x03fff) AM_WRITE(MWA8_ROM)
 //	AM_RANGE(0x00000, 0x007ff) AM_WRITE(MWA8_RAM)			/* External shared RAM (Banked) */
 	AM_RANGE(0x04000, 0x04000) AM_WRITE(YM2151_register_port_0_w)
@@ -2002,10 +2204,10 @@ static ADDRESS_MAP_START( Zx80_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x04004, 0x04004) AM_WRITE(oki_bankswitch_w)
 	AM_RANGE(0x0400e, 0x0400e) AM_WRITE(toaplan2_coin_w)
 	AM_RANGE(0x0fe00, 0x0ffff) AM_WRITE(MWA8_RAM)			/* Internal 512 bytes of RAM */
-	AM_RANGE(0x80000, 0x87fff) AM_WRITE(MWA8_RAM) AM_BASE(&Zx80_sharedram)	/* External shared RAM (ROM for KBASH) */
+	AM_RANGE(0x80000, 0x87fff) AM_WRITE(MWA8_RAM) AM_BASE(&V25_sharedram)	/* External shared RAM (ROM for KBASH) */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( Zx80_readport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( V25_readport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x0060, 0x0060) AM_READ(input_port_4_r)		/* Directly mapped I/O ports */
 	AM_RANGE(0x0061, 0x0061) AM_READ(input_port_5_r)		/* Directly mapped I/O ports */
 	AM_RANGE(0x0062, 0x0062) AM_READ(input_port_6_r)		/* Directly mapped I/O ports */
@@ -2688,6 +2890,67 @@ INPUT_PORTS_START( fixeight )
 	PORT_DIPSETTING(	0x06, "South East Asia (Taito corp)" )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
+
+
+INPUT_PORTS_START( fixeighb )
+	PORT_START_TAG("IN0")		/* (0) VBlank */
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START_TAG("IN1")
+	TOAPLAN2_PLAYER_INPUT( 1, IPT_UNKNOWN, IPT_UNKNOWN )
+
+	PORT_START_TAG("IN2")
+	TOAPLAN2_PLAYER_INPUT( 2, IPT_UNKNOWN, IPT_UNKNOWN )
+
+	PORT_START_TAG("IN3")
+	SNOWBRO2_PLAYER_INPUT( 3, IPT_START3, IPT_UNKNOWN )
+
+	PORT_START_TAG("IN4")	/* service input is a push-button marked 'Test SW' */
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_TILT )
+	PORT_SERVICE_NO_TOGGLE(0x0004, IP_ACTIVE_HIGH)
+	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0xff80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START_TAG("DSWA")
+	PORT_DIPNAME( 0x0001,	0x0000, "Maximum Players" )
+	PORT_DIPSETTING(		0x0000, "2" )
+	PORT_DIPSETTING(		0x0001, "3" )
+	PORT_DIPNAME( 0x0002,	0x0000, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0002, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004,	0x0004, "Shooting style" )
+	PORT_DIPSETTING(		0x0004, "Semi-auto" )
+	PORT_DIPSETTING(		0x0000, "Fully-auto" )
+	PORT_DIPNAME( 0x0008,	0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
+//	EUROPEAN_COINAGE_16
+	NONEUROPEAN_COINAGE_16
+	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START_TAG("DSWB")
+	DIFFICULTY_16
+	PORT_DIPNAME( 0x000c,	0x0000, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(		0x0004, "300k and every 300k" )
+	PORT_DIPSETTING(		0x0008, "300k only" )
+	PORT_DIPSETTING(		0x0000, "500k and every 500k" )
+	PORT_DIPSETTING(		0x000c, DEF_STR( None ) )
+	LIVES_16
+	PORT_DIPNAME( 0x0040, 0x0000, "Invulnerability" )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0040, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Allow_Continue ) )
+	PORT_DIPSETTING(		0x0080, DEF_STR( No ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Yes ) )
+INPUT_PORTS_END
+
+
+
 
 INPUT_PORTS_START( grindstm )
 	PORT_START_TAG("IN0")		/* (0) VBlank */
@@ -3752,6 +4015,18 @@ static struct GfxLayout batrider_tx_tilelayout =
 };
 #endif
 
+
+static struct GfxLayout fixeighblayout =
+{
+   8,8,
+   RGN_FRAC(1,1),
+   4,
+   { 0,1,2,3 },
+   { 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4},
+   { 0*4*8, 1*4*8, 2*4*8, 3*4*8, 4*4*8, 5*4*8, 6*4*8, 7*4*8},
+   8*8*4
+};
+
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout,   0, 128 },
@@ -3795,6 +4070,13 @@ static struct GfxDecodeInfo batrider_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+static struct GfxDecodeInfo fixeighb_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &tilelayout     , 0, 128 },
+	{ REGION_GFX1, 0, &spritelayout   , 0,  64 },
+	{ REGION_GFX2, 0, &fixeighblayout , 0, 128 },
+	{ -1 } /* end of array */
+};
 
 static void irqhandler(int linestate)
 {
@@ -3829,7 +4111,31 @@ static struct YM2151interface raizing_ym2151_interface =
 static struct OKIM6295interface okim6295_interface =
 {
 	1,						/* 1 chip */
-	{ 27000000/10/132 },	/* frequency (Hz). 2.7MHz to 6295 (using B mode) */
+	{ 27000000/10/132 },	/* 20454.54Hz , 2.7MHz to 6295 (using B mode) */
+	{ REGION_SOUND1 },		/* memory region */
+	{ 25 }
+};
+
+static struct OKIM6295interface kbash_okim6295_interface =
+{
+	1,						/* 1 chip */
+	{ 32000000/32/132 },	/* 7575.75Hz , 1.0MHz to 6295 (using B mode) */
+	{ REGION_SOUND1 },		/* memory region */
+	{ 25 }
+};
+
+static struct OKIM6295interface fixeighb_okim6295_interface =
+{
+	1,						/* 1 chip */
+	{ 14000000/16/165 },	/* 5303.03Hz , 875KHz to 6295 (using A mode) */
+	{ REGION_SOUND1 },		/* memory region */
+	{ 100 }
+};
+
+static struct OKIM6295interface batsugun_okim6295_interface =
+{
+	1,						/* 1 chip */
+	{ 32000000/8/165 },		/* 24242.42Hz , 4.0MHz to 6295 (using A mode) */
 	{ REGION_SOUND1 },		/* memory region */
 	{ 25 }
 };
@@ -3837,7 +4143,7 @@ static struct OKIM6295interface okim6295_interface =
 static struct OKIM6295interface raizing_okim6295_interface =
 {
 	1,						/* 1 chip */
-	{ 32000000/32/132 },	/* frequency (Hz) 1MHz to 6295 (using B mode) */
+	{ 32000000/32/132 },	/* 7575.75Hz , 1MHz to 6295 (using B mode) */
 	{ REGION_SOUND1 },		/* memory region */
 	{ 25 }
 };
@@ -3845,7 +4151,7 @@ static struct OKIM6295interface raizing_okim6295_interface =
 static struct OKIM6295interface battleg_okim6295_interface =
 {
 	1,						/* 1 chip */
-	{ 32000000/16/132 },	/* frequency (Hz). 2MHz to 6295 (using B mode) */
+	{ 32000000/16/132 },	/* 15151.51Hz , 2MHz to 6295 (using B mode) */
 	{ REGION_SOUND1 },		/* memory region */
 	{ 25 }
 };
@@ -3853,7 +4159,7 @@ static struct OKIM6295interface battleg_okim6295_interface =
 static struct OKIM6295interface batrider_okim6295_interface =
 {
 	2,										/* 2 chips */
-	{ 32000000/10/132, 32000000/10/165 },	/* frequency (Hz). 3.2MHz to two 6295 (using B mode / A mode) */
+	{ 32000000/10/132, 32000000/10/165 },	/* 24242.42Hz & 19393.93Hz , 3.2MHz to two 6295 (using B mode / A mode) */
 	{ REGION_SOUND1, REGION_SOUND2 },		/* memory region */
 	{ 25, 25 }
 };
@@ -3866,8 +4172,6 @@ static struct YMZ280Binterface ymz280b_interface =
 	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
 	{ bbakraid_irqhandler }
 };
-
-
 
 static MACHINE_DRIVER_START( tekipaki )
 
@@ -3943,16 +4247,16 @@ static MACHINE_DRIVER_START( dogyuun )
 	MDRV_CPU_PROGRAM_MAP(dogyuun_readmem,dogyuun_writemem)
 	MDRV_CPU_VBLANK_INT(toaplan2_vblank_irq4,262)
 
-#if Zx80
-	MDRV_CPU_ADD(Z180, 16000000)			/* Z?80 type Toaplan marked CPU ??? */
-	MDRV_CPU_PROGRAM_MAP(Zx80_readmem,Zx80_writemem)
-	MDRV_CPU_IO_MAP(Zx80_readport,0)
+#if V25
+	MDRV_CPU_ADD(Z180, 16000000)			/* NEC V25+ type Toaplan marked CPU ??? */
+	MDRV_CPU_PROGRAM_MAP(V25_readmem,V25_writemem)
+	MDRV_CPU_IO_MAP(V25_readport,0)
 #endif
 
 	MDRV_FRAMES_PER_SECOND( (27000000.0 / 4) / (432 * 263) )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(toaplan2)
+	MDRV_MACHINE_INIT(dogyuun)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
@@ -3979,10 +4283,10 @@ static MACHINE_DRIVER_START( kbash )
 	MDRV_CPU_PROGRAM_MAP(kbash_readmem,kbash_writemem)
 	MDRV_CPU_VBLANK_INT(toaplan2_vblank_irq4,262)
 
-#if Zx80
-	MDRV_CPU_ADD(Z180, 16000000)			/* Z?80 type Toaplan marked CPU ??? */
-	MDRV_CPU_PROGRAM_MAP(Zx80_readmem,Zx80_writemem)
-	MDRV_CPU_IO_MAP(Zx80_readport,0)
+#if V25
+	MDRV_CPU_ADD(Z180, 16000000)			/* NEC V25+ type Toaplan marked CPU ??? */
+	MDRV_CPU_PROGRAM_MAP(V25_readmem,V25_writemem)
+	MDRV_CPU_IO_MAP(V25_readport,0)
 #endif
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -4004,7 +4308,7 @@ static MACHINE_DRIVER_START( kbash )
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SOUND_ADD(OKIM6295, kbash_okim6295_interface)
 MACHINE_DRIVER_END
 
 
@@ -4142,10 +4446,10 @@ static MACHINE_DRIVER_START( fixeight )
 	MDRV_CPU_PROGRAM_MAP(fixeight_readmem,fixeight_writemem)
 	MDRV_CPU_VBLANK_INT(toaplan2_vblank_irq4,262)
 
-#if Zx80
-	MDRV_CPU_ADD(Z180, 16000000)			/* Z?80 type Toaplan marked CPU ??? */
-	MDRV_CPU_PROGRAM_MAP(Zx80_readmem,Zx80_writemem)
-	MDRV_CPU_IO_MAP(Zx80_readport,0)
+#if V25
+	MDRV_CPU_ADD(Z180, 16000000)			/* NEC V25+ type Toaplan marked CPU ??? */
+	MDRV_CPU_PROGRAM_MAP(V25_readmem,V25_writemem)
+	MDRV_CPU_IO_MAP(V25_readport,0)
 #endif
 
 	MDRV_FRAMES_PER_SECOND( (27000000.0 / 4) / (432 * 263) )
@@ -4168,8 +4472,37 @@ static MACHINE_DRIVER_START( fixeight )
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SOUND_ADD(OKIM6295, kbash_okim6295_interface)
 MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( fixeighb )
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 10000000)			/* 10MHz Oscillator */
+	MDRV_CPU_PROGRAM_MAP(fixeighb_mem,0)
+	MDRV_CPU_VBLANK_INT(toaplan2_vblank_irq2,262)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(toaplan2)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(32*16, 32*16)
+	MDRV_VISIBLE_AREA(0, 319, 0, 239)
+	MDRV_GFXDECODE(fixeighb_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
+
+	MDRV_VIDEO_START(truxton2_0)
+	MDRV_VIDEO_EOF(toaplan2_0)
+	MDRV_VIDEO_UPDATE(truxton2_0)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(OKIM6295, fixeighb_okim6295_interface)
+MACHINE_DRIVER_END
+
 
 
 static MACHINE_DRIVER_START( vfive )
@@ -4179,16 +4512,16 @@ static MACHINE_DRIVER_START( vfive )
 	MDRV_CPU_PROGRAM_MAP(vfive_readmem,vfive_writemem)
 	MDRV_CPU_VBLANK_INT(toaplan2_vblank_irq4,262)
 
-#if Zx80
-	MDRV_CPU_ADD(Z180, 10000000)			/* Z?80 type Toaplan marked CPU ??? */
-	MDRV_CPU_PROGRAM_MAP(Zx80_readmem,Zx80_writemem)
-	MDRV_CPU_IO_MAP(Zx80_readport,0)
+#if V25
+	MDRV_CPU_ADD(Z180, 10000000)			/* NEC V25+ type Toaplan marked CPU ??? */
+	MDRV_CPU_PROGRAM_MAP(V25_readmem,V25_writemem)
+	MDRV_CPU_IO_MAP(V25_readport,0)
 #endif
 
 	MDRV_FRAMES_PER_SECOND( (27000000.0 / 4) / (432 * 263) )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(toaplan2)
+	MDRV_MACHINE_INIT(vfive)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
@@ -4214,10 +4547,10 @@ static MACHINE_DRIVER_START( batsugun )
 	MDRV_CPU_PROGRAM_MAP(batsugun_readmem,batsugun_writemem)
 	MDRV_CPU_VBLANK_INT(toaplan2_vblank_irq4,262)
 
-#if Zx80
-	MDRV_CPU_ADD(Z180, 32000000/2)			/* Z?80 type Toaplan marked CPU ??? */
-	MDRV_CPU_PROGRAM_MAP(Zx80_readmem,Zx80_writemem)
-	MDRV_CPU_IO_MAP(Zx80_readport,0)
+#if V25
+	MDRV_CPU_ADD(Z180, 32000000/2)			/* NEC V25+ type Toaplan marked CPU ??? */
+	MDRV_CPU_PROGRAM_MAP(V25_readmem,V25_writemem)
+	MDRV_CPU_IO_MAP(V25_readport,0)
 #endif
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -4239,7 +4572,7 @@ static MACHINE_DRIVER_START( batsugun )
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SOUND_ADD(OKIM6295, batsugun_okim6295_interface)
 MACHINE_DRIVER_END
 
 
@@ -4487,10 +4820,9 @@ ROM_START( dogyuun )
 	ROM_LOAD16_WORD( "tp022_01.r16", 0x000000, 0x080000, CRC(72f18907) SHA1(9d1b3800764a63e046644c78a2e0339280e038cb) )
 
 	/* Secondary CPU is a Toaplan marked chip, (TS-002-MACH  TOA PLAN) */
-	/* Its a Z?80 of some sort - 94 pin chip. */
-#if Zx80
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Secondary CPU code */
-	/* Secondary CPU is a Toaplan marked chip ??? */
+	/* Its likely to be a NEC V25+ (PLCC94). */
+#if V25
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Sound CPU code */
 //	ROM_LOAD( "tp022.mcu", 0x00000, 0x08000, NO_DUMP )
 #endif
 
@@ -4511,9 +4843,9 @@ ROM_START( kbash )
 	ROM_LOAD16_WORD_SWAP( "kbash01.bin", 0x000000, 0x080000, CRC(2965f81d) SHA1(46f2df30fa92c80ba5a37f75e756424e15534784) )
 
 	/* Secondary CPU is a Toaplan marked chip, (TS-004-Dash  TOA PLAN) */
-	/* Its a Z?80 of some sort - 94 pin chip. */
-#if Zx80
-	ROM_REGION( 0x88000, REGION_CPU2, 0 )			/* Sound Z?80 code */
+	/* Its likely to be a NEC V25+ (PLCC94). */
+#if V25
+	ROM_REGION( 0x88000, REGION_CPU2, 0 )			/* Sound CPU code */
 	ROM_LOAD( "kbash02.bin", 0x80000, 0x08000, CRC(4cd882a1) SHA1(7199a5c384918f775f0815e09c46b2a58141814a) )
 #else
 	ROM_REGION( 0x08000, REGION_USER1, 0 )
@@ -4594,10 +4926,10 @@ ROM_START( fixeight )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )			/* Main 68K code */
 	ROM_LOAD16_WORD_SWAP( "tp-026-1", 0x000000, 0x080000, CRC(f7b1746a) SHA1(0bbea6f111b818bc9b9b2060af4fe900f37cf7f9) )
 
-#if Zx80
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Secondary CPU code */
 	/* Secondary CPU is a Toaplan marked chip, (TS-001-Turbo  TOA PLAN) */
-	/* Its a Z?80 of some sort - 94 pin chip. */
+	/* Its likely to be a NEC V25+ (PLCC94). */
+#if V25
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Secondary CPU code */
 //	ROM_LOAD( "tp-026.mcu", 0x0000, 0x8000, NO_DUMP )
 #endif
 
@@ -4613,14 +4945,34 @@ ROM_START( fixeight )
 	ROM_LOAD( "93c45.u21", 0x00, 0x80, CRC(40d75df0) SHA1(a22f1cc74ce9bc9bfe53f48f6a43ab60e921052b) )
 ROM_END
 
+ROM_START( fixeighb )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )			/* Main 68K code */
+	ROM_LOAD16_BYTE( "3.bin", 0x000000, 0x80000, CRC(cc77d4b4) SHA1(4d3376cbae13d90c6314d8bb9236c2183fc6253c) )
+	ROM_LOAD16_BYTE( "2.bin", 0x000001, 0x80000, CRC(ed715488) SHA1(37be9bc8ff6b54a1f660d89469c6c2da6301e9cd) )
+
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "tp-026-3", 0x000000, 0x200000, CRC(e5578d98) SHA1(280d2b716d955e767d311fc9596823852435b6d7) )
+	ROM_LOAD( "tp-026-4", 0x200000, 0x200000, CRC(b760cb53) SHA1(bc9c5e49e45cdda0f774be0038aa4deb21d4d285) )
+
+	ROM_REGION( 0x08000, REGION_GFX2, ROMREGION_DISPOSE)
+	ROM_LOAD( "4.bin", 0x00000, 0x08000, CRC(a6aca465) SHA1(2b331faeee1832e0adc5218254a99d66331862c6) )
+
+	ROM_REGION( 0x90000, REGION_SOUND1, 0 )			/* ADPCM Samples */
+	ROM_LOAD( "1.bin", 0x00000, 0x30000, CRC(888f19ac) SHA1(d2f4f8b7be7a0fdb95baa0af8930e50e2f875c05) )
+	ROM_CONTINUE(      0x40000, 0x50000 )
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 )			/* ??? Some sort of table  - same as in pipibibi*/
+	ROM_LOAD( "5.bin", 0x0000, 0x8000, CRC(456dd16e) SHA1(84779ee64d3ea33ba1ba4dee39b504a81c6811a1) )
+ROM_END
+
 ROM_START( grindstm )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )			/* Main 68K code */
 	ROM_LOAD16_WORD_SWAP( "01.bin", 0x000000, 0x080000, CRC(4923f790) SHA1(1c2d66b432d190d0fb6ac7ca0ec0687aea3ccbf4) )
 
-#if Zx80
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Sound CPU code */
 	/* Secondary CPU is a Toaplan marked chip, (TS-007-Spy  TOA PLAN) */
-	/* Its a Z?80 of some sort - 94 pin chip. */
+	/* Its likely to be a NEC V25+ (PLCC94). */
+#if V25
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Sound CPU code */
 //	ROM_LOAD( "tp027.mcu", 0x8000, 0x8000, NO_DUMP )
 #endif
 
@@ -4633,10 +4985,10 @@ ROM_START( grindsta )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )			/* Main 68K code */
 	ROM_LOAD16_WORD_SWAP( "tp027-01.rom", 0x000000, 0x080000, CRC(8d8c0392) SHA1(824dde274c8bef8a87c54d8ccdda7f0feb8d11e1) )
 
-#if Zx80
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Sound CPU code */
 	/* Secondary CPU is a Toaplan marked chip, (TS-007-Spy  TOA PLAN) */
-	/* Its a Z?80 of some sort - 94 pin chip. */
+	/* Its likely to be a NEC V25+ (PLCC94). */
+#if V25
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Sound CPU code */
 //	ROM_LOAD( "tp027.mcu", 0x8000, 0x8000, NO_DUMP )
 #endif
 
@@ -4649,10 +5001,10 @@ ROM_START( vfive )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )			/* Main 68K code */
 	ROM_LOAD16_WORD_SWAP( "tp027_01.bin", 0x000000, 0x080000, CRC(731d50f4) SHA1(794255d0a809cda9170f5bac473df9d7f0efdac8) )
 
-#if Zx80
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Sound CPU code */
 	/* Secondary CPU is a Toaplan marked chip, (TS-007-Spy  TOA PLAN) */
-	/* Its a Z?80 of some sort - 94 pin chip. */
+	/* Its likely to be a NEC V25+ (PLCC94). */
+#if V25
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Sound CPU code */
 //	ROM_LOAD( "tp027.mcu", 0x8000, 0x8000, NO_DUMP )
 #endif
 
@@ -4665,10 +5017,10 @@ ROM_START( batsugun )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )			/* Main 68K code */
 	ROM_LOAD16_WORD_SWAP( "tp030_01.bin", 0x000000, 0x080000, CRC(3873d7dd) SHA1(baf6187d7d554cfcf4a86b63f07fc30df7ef84c9) )
 
-#if Zx80
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Sound CPU code */
 	/* Secondary CPU is a Toaplan marked chip, (TS-007-Spy  TOA PLAN) */
-	/* Its a Z?80 of some sort - 94 pin chip. */
+	/* Its likely to be a NEC V25+ (PLCC94). */
+#if V25
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Sound CPU code */
 //	ROM_LOAD( "tp030.mcu", 0x8000, 0x8000, NO_DUMP )
 #endif
 
@@ -4690,10 +5042,10 @@ ROM_START( batugnsp )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )			/* Main 68K code */
 	ROM_LOAD16_WORD_SWAP( "tp030-sp.u69", 0x000000, 0x080000, CRC(8072a0cd) SHA1(3a0a9cdf894926a16800c4882a2b00383d981367) )
 
-#if Zx80
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Sound CPU code */
 	/* Secondary CPU is a Toaplan marked chip, (TS-007-Spy  TOA PLAN) */
-	/* Its a Z?80 of some sort - 94 pin chip. */
+	/* Its likely to be a NEC V25+ (PLCC94). */
+#if V25
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Sound CPU code */
 //	ROM_LOAD( "tp030.mcu", 0x8000, 0x8000, NO_DUMP )
 #endif
 
@@ -4999,7 +5351,7 @@ ROM_START( bbakraid )
 	ROM_LOAD( "gfxu0511.bin", 0x800000, 0x400000, CRC(e16472c0) SHA1(6068d679a8b3b65e05acd58a7ce9ead90177049f) )
 	ROM_LOAD( "gfxu0513.bin", 0xc00000, 0x400000, CRC(8bb635a0) SHA1(9064f1a2d8bb88ddbca702fb8556d0dfe6a5cadc) )
 
-	ROM_REGION( 0x0c00000, REGION_SOUND1, 0 )	/* YMZ280B Samples */
+	ROM_REGION( 0x0c00000, REGION_SOUND1, 0 )		/* YMZ280B Samples */
 	ROM_LOAD( "rom6.829", 0x000000, 0x400000, CRC(8848b4a0) SHA1(e0dce136c5d5a4c1a92b863e57848cd5927d06f1) )
 	ROM_LOAD( "rom7.830", 0x400000, 0x400000, CRC(d6224267) SHA1(5c9b7b13effbef9f707811f84bfe50ca85e605e3) )
 	ROM_LOAD( "rom8.831", 0x800000, 0x400000, CRC(a101dfb0) SHA1(4b729b0d562e09df35438e9e6b457b8de2690a6e) )
@@ -5022,7 +5374,7 @@ ROM_START( bbakradu )
 	ROM_LOAD( "gfxu0511.bin", 0x800000, 0x400000, CRC(e16472c0) SHA1(6068d679a8b3b65e05acd58a7ce9ead90177049f) )
 	ROM_LOAD( "gfxu0513.bin", 0xc00000, 0x400000, CRC(8bb635a0) SHA1(9064f1a2d8bb88ddbca702fb8556d0dfe6a5cadc) )
 
-	ROM_REGION( 0x0c00000, REGION_SOUND1, 0 )	/* YMZ280B Samples */
+	ROM_REGION( 0x0c00000, REGION_SOUND1, 0 )		/* YMZ280B Samples */
 	ROM_LOAD( "rom6.829", 0x000000, 0x400000, CRC(8848b4a0) SHA1(e0dce136c5d5a4c1a92b863e57848cd5927d06f1) )
 	ROM_LOAD( "rom7.830", 0x400000, 0x400000, CRC(d6224267) SHA1(5c9b7b13effbef9f707811f84bfe50ca85e605e3) )
 	ROM_LOAD( "rom8.831", 0x800000, 0x400000, CRC(a101dfb0) SHA1(4b729b0d562e09df35438e9e6b457b8de2690a6e) )
@@ -5038,18 +5390,19 @@ ROM_END
 /*   ( YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR COMPANY    FULLNAME     FLAGS ) */
 GAMEX( 1991, tekipaki, 0,        tekipaki, tekipaki, T2_Z180,  ROT0,   "Toaplan", "Teki Paki", GAME_NO_SOUND )
 GAMEX( 1991, ghox,     0,        ghox,     ghox,     T2_Z180,  ROT270, "Toaplan", "Ghox", GAME_NO_SOUND )
-GAMEX( 1992, dogyuun,  0,        dogyuun,  dogyuun,  T2_Zx80,  ROT270, "Toaplan", "Dogyuun", GAME_NO_SOUND )
-GAMEX( 1993, kbash,    0,        kbash,    kbash,    T2_Zx80,  ROT0,   "Toaplan", "Knuckle Bash", GAME_NO_SOUND )
+GAMEX( 1992, dogyuun,  0,        dogyuun,  dogyuun,  T2_V25,   ROT270, "Toaplan", "Dogyuun", GAME_NO_SOUND )
+GAMEX( 1993, kbash,    0,        kbash,    kbash,    T2_V25,   ROT0,   "Toaplan", "Knuckle Bash", GAME_IMPERFECT_SOUND )
 GAME ( 1992, truxton2, 0,        truxton2, truxton2, T2_noZ80, ROT270, "Toaplan", "Truxton II / Tatsujin II / Tatsujin Oh (Japan)" )
 GAME ( 1991, pipibibs, 0,        pipibibs, pipibibs, T2_Z80,   ROT0,   "Toaplan", "Pipi & Bibis / Whoopee!!" )
 GAME ( 1991, whoopee,  pipibibs, whoopee,  whoopee,  T2_Z80,   ROT0,   "Toaplan", "Whoopee!! / Pipi & Bibis" )
 GAME ( 1991, pipibibi, pipibibs, pipibibi, pipibibi, pipibibi, ROT0,   "[Toaplan] Ryouta Kikaku", "Pipi & Bibis / Whoopee!! (bootleg ?)" )
-GAMEX( 1992, fixeight, 0,        fixeight, fixeight, fixeight, ROT270, "Toaplan", "FixEight", GAME_NOT_WORKING )
-GAMEX( 1992, grindstm, vfive,    vfive,    grindstm, T2_Zx80,  ROT270, "Toaplan", "Grind Stormer", GAME_NO_SOUND )
-GAMEX( 1992, grindsta, vfive,    vfive,    grindstm, T2_Zx80,  ROT270, "Toaplan", "Grind Stormer (older set)", GAME_NO_SOUND )
-GAMEX( 1993, vfive,    0,        vfive,    vfive,    T2_Zx80,  ROT270, "Toaplan", "V-Five (Japan)", GAME_NO_SOUND )
-GAMEX( 1993, batsugun, 0,        batsugun, batsugun, T2_Zx80,  ROT270, "Toaplan", "Batsugun", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1993, batugnsp, batsugun, batsugun, batsugun, T2_Zx80,  ROT270, "Toaplan", "Batsugun (Special Ver.)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1992, fixeight, 0,        fixeight, fixeight, fixeight, ROT270, "Toaplan", "FixEight", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
+GAME ( 1992, fixeighb, fixeight, fixeighb, fixeighb, fixeighb, ROT270, "bootleg", "FixEight (bootleg)" )
+GAMEX( 1992, grindstm, vfive,    vfive,    grindstm, T2_V25,   ROT270, "Toaplan", "Grind Stormer", GAME_NO_SOUND )
+GAMEX( 1992, grindsta, vfive,    vfive,    grindstm, T2_V25,   ROT270, "Toaplan", "Grind Stormer (older set)", GAME_NO_SOUND )
+GAMEX( 1993, vfive,    0,        vfive,    vfive,    T2_V25,   ROT270, "Toaplan", "V-Five (Japan)", GAME_NO_SOUND )
+GAMEX( 1993, batsugun, 0,        batsugun, batsugun, T2_V25,   ROT270, "Toaplan", "Batsugun", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1993, batugnsp, batsugun, batsugun, batsugun, T2_V25,   ROT270, "Toaplan", "Batsugun (Special Ver.)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAME ( 1994, snowbro2, 0,        snowbro2, snowbro2, T2_noZ80, ROT0,   "[Toaplan] Hanafram", "Snow Bros. 2 - With New Elves / Otenki Paradise" )
 GAME ( 1993, mahoudai, 0,        mahoudai, mahoudai, T2_Z80,   ROT270, "Raizing (Able license)", "Mahou Daisakusen (Japan)" )
 GAME ( 1993, sstriker, mahoudai, mahoudai, sstriker, T2_Z80,   ROT270, "Raizing", "Sorcer Striker (World)" ) // from korean board

@@ -1,3 +1,4 @@
+#include <windows.h>
 #include "driver.h"
 #include "info.h"
 #include "audit.h"
@@ -6,14 +7,10 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <dirent.h>
 #include <unzip.h>
 #include <zlib.h>
-
-#ifndef S_ISDIR
-#define S_ISDIR(mode) ((mode) & _S_IFDIR)
-#endif
+#include <tchar.h>
 
 #ifndef MESS
 enum { LIST_SHORT = 1, LIST_XML, LIST_FULL, LIST_SAMDIR, LIST_ROMS, LIST_SAMPLES,
@@ -408,18 +405,33 @@ void identify_dir(const char* dirname)
 	closedir(dir);
 }
 
-void romident(const char* name,int enter_dirs) {
-	struct stat s;
+void romident(const char* name,int enter_dirs)
+{
+	DWORD attr;
+#ifdef UNICODE
+	WCHAR tname[MAX_PATH];
+	MultiByteToWideChar(CP_ACP, 0, name, -1, tname, sizeof(tname) / sizeof(tname[0]));
+#else
+	const char *tname = name;
+#endif
+	TCHAR error[256];
 
-	if (stat(name,&s) != 0)	{
-		printf("%s: %s\n",name,strerror(errno));
+	attr = GetFileAttributes(tname);
+	if (attr == INVALID_FILE_ATTRIBUTES)
+	{
+		FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(), 0,
+			error, sizeof(error) / sizeof(error[0]), NULL);
+		_tprintf("%s: %s\n",name, error);
 		return;
 	}
 
-	if (S_ISDIR(s.st_mode)) {
+	if (attr & FILE_ATTRIBUTE_DIRECTORY)
+	{
 		if (enter_dirs)
 			identify_dir(name);
-	} else {
+	}
+	else
+	{
 		unsigned l = strlen(name);
 		if (l>=4 && stricmp(name+l-4,".zip")==0)
 			identify_zip(name);

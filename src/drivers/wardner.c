@@ -181,7 +181,7 @@ static ADDRESS_MAP_START( main_program_map, ADDRESS_SPACE_PROGRAM, 8 )
 
 	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_BANK1) /* Overlapped RAM/Banked ROM - See below */
 
-	AM_RANGE(0x8000, 0x8fff) AM_WRITE(wardner_sprite_w) AM_BASE((data8_t **)&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(wardner_sprite_w) AM_BASE((void *)&spriteram16) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x9000, 0x9fff) AM_ROM
 	AM_RANGE(0xa000, 0xadff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram)
 	AM_RANGE(0xae00, 0xafff) AM_RAM

@@ -4952,6 +4952,33 @@ ROM_START( eagle2 )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, CRC(6a0c7d87) SHA1(140335d85c67c75b65689d4e76d29863c209cf32) )
 ROM_END
 
+ROM_START( eagle3 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "e1",           0x0000, 0x0800, CRC(224c9526) SHA1(4c014d60d4ee80de7f60b4609269461688c181d0) )
+	ROM_LOAD( "e2",           0x0800, 0x0800, CRC(cc538ebd) SHA1(4ef3c7363e2dcd9ed99779039ccc50a9f2084dbd) )
+	ROM_LOAD( "f03.bin",      0x1000, 0x0800, CRC(29a2b0ab) SHA1(e9fc7161d0566e36307c45b7132e2262c0af4845) )
+	ROM_LOAD( "f04.bin",      0x1800, 0x0800, CRC(4c6a5a6d) SHA1(366516f63c9b5239e703e4dfb672659049ddbf44) )
+	ROM_LOAD( "e5",           0x2000, 0x0800, CRC(06d378a6) SHA1(99dbe9fc7f95f8fdce86eb5c32bd1ca1bea0ca3c) )
+	ROM_LOAD( "e6",           0x2800, 0x0800, CRC(0dea20d5) SHA1(405b51d4e3b1065f78afd2297e075e977ae19196) )
+	ROM_LOAD( "e7",           0x3000, 0x0800, CRC(b45af1e8) SHA1(d7020774707234acdaef5c655f667d5ee9e54a13) )
+	ROM_LOAD( "e8",           0x3800, 0x0800, CRC(c437a876) SHA1(845941b873970ac62ba9bb6353bee53d0fcfa292) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "e10a",         0x0000, 0x0800, CRC(e3c63d4c) SHA1(ad2b22e316da6bb819c58934d51cd4b2819b18f0) )
+	ROM_LOAD( "e12",          0x0800, 0x0200, CRC(628fdeed) SHA1(a798530c65e639fbf00ed3a4e8c428935bf5f38e) )
+	ROM_CONTINUE(             0x0c00, 0x0200 )	/* this version of the gfx ROMs has two */
+	ROM_CONTINUE(             0x0a00, 0x0200 )	/* groups of 16 sprites swapped */
+	ROM_CONTINUE(             0x0e00, 0x0200 )
+	ROM_LOAD( "e9a",          0x1000, 0x0800, CRC(59429e47) SHA1(b7629c81d122fd1e4d390aa7abba44df898387d3) )
+	ROM_LOAD( "e11",          0x1800, 0x0200, CRC(ee4ec5fd) SHA1(bf08b3f111f780dc8c81275e4e6247388183a8da) )
+	ROM_CONTINUE(             0x1c00, 0x0200 )
+	ROM_CONTINUE(             0x1a00, 0x0200 )
+	ROM_CONTINUE(             0x1e00, 0x0200 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, CRC(6a0c7d87) SHA1(140335d85c67c75b65689d4e76d29863c209cf32) )
+ROM_END
+
 ROM_START( spctbird )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "tssa-7f",      0x0000, 0x0800, CRC(45aab7a3) SHA1(52ae0463f363dc0964b976faa2c0c428d85a4f12) )
@@ -5065,6 +5092,25 @@ ROM_START( moonal2b )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
 	ROM_LOAD( "6l.bpr",       0x0000, 0x0020, CRC(c3ac9467) SHA1(f382ad5a34d282056c78a5ec00c30ec43772bae2) )
+ROM_END
+
+ROM_START( supergx )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
+	ROM_LOAD( "sg1",          0x0000, 0x0800, CRC(b83f4578) SHA1(9a5d5fc291839f7f1e0a52cca7bea29e99c13315) )
+	ROM_LOAD( "sg2",          0x0800, 0x0800, CRC(d12ca054) SHA1(8eb7f6904c3c650bfa80908a5988622d5e693bd1) )
+	ROM_LOAD( "sg3",          0x1000, 0x0800, CRC(53714cb1) SHA1(7dffcd3ced1c3354339bb69477f8aa4c708708db) )
+	ROM_LOAD( "sg4",          0x1800, 0x0800, CRC(2f36fc69) SHA1(d310dcb0a79b03ee26b0575db9cba6d920cb9273) )
+	ROM_LOAD( "sg5",          0x2000, 0x0800, CRC(1e0ed4fd) SHA1(183d8990dbff1954921f8c5b67cec09f2d380794) )
+	ROM_LOAD( "sg6",          0x2800, 0x0800, BAD_DUMP CRC(4f3d97a8) SHA1(b9fcab182ab57e8374fef93f7fd314a155a8d04d) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "sgg1",         0x0000, 0x0800, CRC(a1287bf6) SHA1(eeeaba4b9e186454a5e2f1c26e333e8fccd97af8) )
+	ROM_RELOAD(               0x0800, 0x0800 )
+	ROM_LOAD( "sgg2",         0x1000, 0x0800, CRC(528f1481) SHA1(e266a75c3109bcfa2a0394f2ed0ac136fc3158ba) )
+	ROM_RELOAD(               0x1800, 0x0800 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "supergx.prm",  0x0000, 0x0020, NO_DUMP )
 ROM_END
 
 ROM_START( mshuttle )
@@ -5558,6 +5604,7 @@ GAME( 1980, mooncrs2, mooncrst, mooncrst, mooncrsa, mooncrsu, ROT90,  "Nichibuts
 GAME( 1980, fantazia, mooncrst, mooncrst, fantazia, mooncrsu, ROT90,  "bootleg", "Fantazia" )
 GAME( 1980, eagle,    mooncrst, mooncrst, eagle,    mooncrsu, ROT90,  "Centuri", "Eagle (set 1)" )
 GAME( 1980, eagle2,   mooncrst, mooncrst, eagle2,   mooncrsu, ROT90,  "Centuri", "Eagle (set 2)" )
+GAME( 1980, eagle3,   mooncrst, mooncrst, eagle,    mooncrsu, ROT90,  "Centuri", "Eagle (set 3)" )
 GAME( 1981?,spctbird, mooncrst, mooncrst, eagle2,   mooncrsu, ROT90,  "Fortrek", "Space Thunderbird" )
 GAME( 1980, mooncrgx, mooncrst, mooncrgx, mooncrgx, mooncrgx, ROT270, "bootleg", "Moon Cresta (Galaxian hardware)" )
 GAME( 1980, moonqsr,  0,        moonqsr,  moonqsr,  moonqsr,  ROT90,  "Nichibutsu", "Moon Quasar" )
@@ -5565,6 +5612,7 @@ GAME( 1981, mshuttle, 0,        mshuttle, mshuttle, mshuttle, ROT0,   "Nichibuts
 GAME( 1981, mshuttlj, mshuttle, mshuttle, mshuttle, cclimbrj, ROT0,   "Nichibutsu", "Moon Shuttle (Japan)" )
 GAME( 1980, moonal2,  0,        mooncrst, moonal2,  0,        ROT90,  "Nichibutsu", "Moon Alien Part 2" )
 GAME( 1980, moonal2b, moonal2,  mooncrst, moonal2,  0,        ROT90,  "Nichibutsu", "Moon Alien Part 2 (older version)" )
+GAMEX(1980, supergx,  moonal2,  galaxian, superg,   0,        ROT90,  "Nichibutsu", "Super GX", GAME_NOT_WORKING | GAME_WRONG_COLORS )
 GAME( 1982, skybase,  0,        skybase,  skybase,  0,        ROT90,  "Omori Electric Co., Ltd.", "Sky Base" )
 GAME( 19??, omega,    theend,   galaxian, omega,    0,        ROT270, "bootleg?", "Omega" )
 GAME( 1980, kingball, 0,        kingball, kingball, kingball, ROT90,  "Namco", "King & Balloon (US)" )

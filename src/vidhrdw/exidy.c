@@ -9,13 +9,6 @@
 #include "exidy.h"
 
 UINT8 *exidy_characterram;
-UINT8 *exidy_color_latch;
-UINT8 *exidy_sprite_no;
-UINT8 *exidy_sprite_enable;
-UINT8 *exidy_sprite1_xpos;
-UINT8 *exidy_sprite1_ypos;
-UINT8 *exidy_sprite2_xpos;
-UINT8 *exidy_sprite2_ypos;
 
 UINT8 exidy_collision_mask;
 UINT8 exidy_collision_invert;
@@ -31,6 +24,15 @@ static UINT8 chardirty[256];
 static UINT8 update_complete;
 
 static UINT8 int_condition;
+
+static UINT8 spriteno;
+static UINT8 sprite_enable;
+static UINT8 sprite1_xpos;
+static UINT8 sprite1_ypos;
+static UINT8 sprite2_xpos;
+static UINT8 sprite2_ypos;
+
+static UINT8 color_latch[3];
 
 
 
@@ -182,7 +184,7 @@ VIDEO_START( exidy )
 INLINE void latch_condition(int collision)
 {
 	collision ^= exidy_collision_invert;
-	int_condition = (input_port_2_r(0) & ~0x1c) | (collision & exidy_collision_mask);
+	int_condition = (readinputportbytag("INTSOURCE") & ~0x1c) | (collision & exidy_collision_mask);
 }
 
 
@@ -200,7 +202,8 @@ INTERRUPT_GEN( exidy_vblank_interrupt )
 INTERRUPT_GEN( teetert_vblank_interrupt )
 {
 	/* standard stuff */
-	exidy_vblank_interrupt();
+	if (cpu_getiloops() == 0)
+		exidy_vblank_interrupt();
 	
 	/* plus a pulse on the NMI line */
 	cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
@@ -245,15 +248,53 @@ WRITE8_HANDLER( exidy_color_w )
 {
 	int i;
 
-	exidy_color_latch[offset] = data;
+	color_latch[offset] = data;
 
 	for (i = 0; i < 8; i++)
 	{
-		int b = ((exidy_color_latch[0] >> i) & 0x01) * 0xff;
-		int g = ((exidy_color_latch[1] >> i) & 0x01) * 0xff;
-		int r = ((exidy_color_latch[2] >> i) & 0x01) * 0xff;
+		int b = ((color_latch[0] >> i) & 0x01) * 0xff;
+		int g = ((color_latch[1] >> i) & 0x01) * 0xff;
+		int r = ((color_latch[2] >> i) & 0x01) * 0xff;
 		palette_set_color(i, r, g, b);
 	}
+}
+
+
+
+/*************************************
+ *
+ *	Sprite controls
+ *
+ *************************************/
+
+WRITE8_HANDLER( exidy_sprite1_xpos_w )
+{
+	sprite1_xpos = data;
+}
+
+WRITE8_HANDLER( exidy_sprite1_ypos_w )
+{
+	sprite1_ypos = data;
+}
+
+WRITE8_HANDLER( exidy_sprite2_xpos_w )
+{
+	sprite2_xpos = data;
+}
+
+WRITE8_HANDLER( exidy_sprite2_ypos_w )
+{
+	sprite2_ypos = data;
+}
+
+WRITE8_HANDLER( exidy_spriteno_w )
+{
+	spriteno = data;
+}
+
+WRITE8_HANDLER( exidy_sprite_enable_w )
+{
+	sprite_enable = data;
 }
 
 
@@ -344,17 +385,19 @@ static void collision_irq_callback(int param)
 
 INLINE int sprite_1_enabled(void)
 {
-	return (!(*exidy_sprite_enable & 0x80) || (*exidy_sprite_enable & 0x10));
+	/* if the exidy_collision_mask is 0x00, then we are on old hardware that always has */
+	/* sprite 1 enabled regardless */
+	return (!(sprite_enable & 0x80) || (sprite_enable & 0x10) || (exidy_collision_mask == 0x00));
 }
 
 INLINE int sprite_2_enabled(void)
 {
-	return (!(*exidy_sprite_enable & 0x40));
+	return (!(sprite_enable & 0x40));
 }
 
 VIDEO_EOF( exidy )
 {
-	UINT8 enable_set = ((*exidy_sprite_enable & 0x20) != 0);
+	UINT8 enable_set = ((sprite_enable & 0x20) != 0);
     struct rectangle clip = { 0, 15, 0, 15 };
     int pen0 = Machine->pens[0];
     int org_1_x = 0, org_1_y = 0;
@@ -381,10 +424,10 @@ VIDEO_EOF( exidy )
 	/* draw sprite 1 */
 	if (sprite_1_enabled())
 	{
-		org_1_x = 236 - *exidy_sprite1_xpos - 4;
-		org_1_y = 244 - *exidy_sprite1_ypos - 4;
+		org_1_x = 236 - sprite1_xpos - 4;
+		org_1_y = 244 - sprite1_ypos - 4;
 		drawgfx(motion_object_1_vid, Machine->gfx[1],
-			(*exidy_sprite_no & 0x0f) + 16 * enable_set, 0,
+			(spriteno & 0x0f) + 16 * enable_set, 0,
 			0, 0, 0, 0, &clip, TRANSPARENCY_NONE, 0);
 	}
 	else
@@ -393,10 +436,10 @@ VIDEO_EOF( exidy )
 	/* draw sprite 2 */
 	if (sprite_2_enabled())
 	{
-		org_2_x = 236 - *exidy_sprite2_xpos - 4;
-		org_2_y = 244 - *exidy_sprite2_ypos - 4;
+		org_2_x = 236 - sprite2_xpos - 4;
+		org_2_y = 244 - sprite2_ypos - 4;
 		drawgfx(motion_object_2_vid, Machine->gfx[1],
-			((*exidy_sprite_no >> 4) & 0x0f) + 32, 0,
+			((spriteno >> 4) & 0x0f) + 32, 0,
 			0, 0, 0, 0, &clip, TRANSPARENCY_NONE, 0);
 	}
 	else
@@ -409,7 +452,7 @@ VIDEO_EOF( exidy )
 		sx = org_2_x - org_1_x;
 		sy = org_2_y - org_1_y;
 		drawgfx(motion_object_2_clip, Machine->gfx[1],
-			((*exidy_sprite_no >> 4) & 0x0f) + 32, 0,
+			((spriteno >> 4) & 0x0f) + 32, 0,
 			0, 0, sx, sy, &clip, TRANSPARENCY_NONE, 0);
 	}
 
@@ -462,26 +505,26 @@ VIDEO_UPDATE( exidy )
 	/* draw sprite 2 first */
 	if (sprite_2_enabled())
 	{
-		sx = 236 - *exidy_sprite2_xpos - 4;
-		sy = 244 - *exidy_sprite2_ypos - 4;
+		sx = 236 - sprite2_xpos - 4;
+		sy = 244 - sprite2_ypos - 4;
 
 		drawgfx(bitmap, Machine->gfx[1],
-			((*exidy_sprite_no >> 4) & 0x0f) + 32, 1,
+			((spriteno >> 4) & 0x0f) + 32, 1,
 			0, 0, sx, sy, cliprect, TRANSPARENCY_PEN, 0);
 	}
 
 	/* draw sprite 1 next */
 	if (sprite_1_enabled())
 	{
-		UINT8 enable_set = ((*exidy_sprite_enable & 0x20) != 0);
+		UINT8 enable_set = ((sprite_enable & 0x20) != 0);
 
-		sx = 236 - *exidy_sprite1_xpos - 4;
-		sy = 244 - *exidy_sprite1_ypos - 4;
+		sx = 236 - sprite1_xpos - 4;
+		sy = 244 - sprite1_ypos - 4;
 
 		if (sy < 0) sy = 0;
 
 		drawgfx(bitmap, Machine->gfx[1],
-			(*exidy_sprite_no & 0x0f) + 16 * enable_set, 0,
+			(spriteno & 0x0f) + 16 * enable_set, 0,
 			0, 0, sx, sy, cliprect, TRANSPARENCY_PEN, 0);
 	}
 

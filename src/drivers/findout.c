@@ -362,6 +362,15 @@ ROM_START( gt103a2 )
 	ROM_LOAD( "famous_couples", 0x28000, 0x8000, CRC(e0618218) SHA1(ff64fcd6dec83a2271b63c3ae64dc932a3954ec5) )
 	ROM_LOAD( "famous_quotes",  0x30000, 0x8000, CRC(0a27d8ae) SHA1(427e6ae25e47da7f7f7c3e92a37e330d711da90c) )
 ROM_END
+
+ROM_START( gt103a3 )
+	ROM_REGION( 0x38000, REGION_CPU1, 0 )
+	ROM_LOAD( "prog1_versionc", 0x00000, 0x4000, CRC(340246a4) SHA1(d655e1cf2b1e87a05e87ff6af4b794e6d54a2a52) )
+	ROM_LOAD( "new_sports",     0x10000, 0x8000, CRC(19eff1a3) SHA1(8e024ae6cc572176c90d819a438ace7b2512dbf2) )
+	ROM_LOAD( "new_general",    0x18000, 0x8000, CRC(ba1f5b92) SHA1(7e94be0ef6904331d3a6b266e5887e9a15c5e7f9) )
+	ROM_LOAD( "new_tv_mash",    0x20000, 0x8000, CRC(f73240c6) SHA1(78020644074da719414133a86a91c1328e5d8929) )
+	ROM_LOAD( "new_entrtnmnt",  0x28000, 0x8000, CRC(0f54340c) SHA1(1ca4c23b542339791a2d8f4a9a857f755feca8a1) )
+ROM_END
 	
 ROM_START( gt103asx )
 	ROM_REGION( 0x38000, REGION_CPU1, 0 )
@@ -397,9 +406,10 @@ GAMEX( 1986, gt507uk,  0,        findout, findout, 0, ROT0, "Grayhound Electroni
 GAMEX( 1986, gt103,    0,        findout, findout, 0, ROT0, "Grayhound Electronics", "Trivia (Version 1.03)",                  GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 GAMEX( 1984, gt5,      0,        findout, findout, 0, ROT0, "Grayhound Electronics", "Trivia (Version 5)",                     GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 
-GAMEX( 1984, gt103a,   0,        findout, findout, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a)",                 GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1984, gt103a,   0,      findout, findout, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a)",                 GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 GAMEX( 1984, gt103a1,  gt103a, findout, findout, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a) (alt 1)",         GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 GAMEX( 1984, gt103a2,  gt103a, findout, findout, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a) (alt 2)",         GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1984, gt103a3,  gt103a, findout, findout, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a) (alt 3)",         GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 GAMEX( 1984, gt103asx, gt103a, findout, findout, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a Sex questions)",   GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 GAMEX( 1984, gt103asa, gt103a, findout, findout, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a Alt questions 1)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 

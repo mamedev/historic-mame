@@ -138,13 +138,14 @@ struct cpudata
 
 	UINT64 	totalcycles;			/* total CPU cycles executed */
 	mame_time localtime;			/* local time, relative to the timer system's global time */
+	int		clock;					/* current active clock */
 	double	clockscale;				/* current active clock scale factor */
-	
+
 	int 	vblankint_countdown;	/* number of vblank callbacks left until we interrupt */
 	int 	vblankint_multiplier;	/* number of vblank callbacks per interrupt */
 	void *	vblankint_timer;		/* reference to elapsed time counter */
 	mame_time vblankint_period;		/* timing period of the VBLANK interrupt */
-	
+
 	void *	timedint_timer;			/* reference to this CPU's timer */
 	mame_time timedint_period; 		/* timing period of the timed interrupt */
 };
@@ -194,6 +195,8 @@ static mame_timer *interleave_boost_timer;
 static mame_timer *interleave_boost_timer_end;
 static mame_time perfect_interleave;
 
+static mame_timer *watchdog_timer;
+
 
 
 /*************************************
@@ -220,10 +223,21 @@ static void cpu_vblankcallback(int param);
 static void cpu_updatecallback(int param);
 static void end_interleave_boost(int param);
 static void compute_perfect_interleave(void);
+static void watchdog_setup(void);
 
 static void handle_loadsave(void);
 
 
+/*************************************
+ *
+ *	Watchdog Flags
+ *
+ *************************************/
+#define WATCHDOG_IS_STARTED_DISABLED	-1
+#define WATCHDOG_IS_DISABLED			-2
+#define WATCHDOG_IS_TIMER_BASED			-3
+#define WATCHDOG_IS_INVALID				-4
+#define WATCHDOG_IS_BEING_STARTED		-5
 
 #if 0
 #pragma mark CORE CPU
@@ -238,7 +252,7 @@ static void handle_loadsave(void);
 int cpu_init(void)
 {
 	int cpunum;
-	
+
 	/* loop over all our CPUs */
 	for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
 	{
@@ -250,15 +264,16 @@ int cpu_init(void)
 
 		/* set the save state tag */
 		state_save_set_current_tag(cpunum + 1);
-		
+
 		/* initialize the cpuinfo struct */
 		memset(&cpu[cpunum], 0, sizeof(cpu[cpunum]));
 		cpu[cpunum].suspend = SUSPEND_REASON_RESET;
+		cpu[cpunum].clock = Machine->drv->cpu[cpunum].cpu_clock;
 		cpu[cpunum].clockscale = 1.0;
 		cpu[cpunum].localtime = time_zero;
 
 		/* compute the cycle times */
-		sec_to_cycles[cpunum] = cpu[cpunum].clockscale * Machine->drv->cpu[cpunum].cpu_clock;
+		sec_to_cycles[cpunum] = cpu[cpunum].clockscale * cpu[cpunum].clock;
 		cycles_to_sec[cpunum] = 1.0 / sec_to_cycles[cpunum];
 		cycles_per_second[cpunum] = sec_to_cycles[cpunum];
 		subseconds_per_cycle[cpunum] = MAX_SUBSECONDS / sec_to_cycles[cpunum];
@@ -267,7 +282,7 @@ int cpu_init(void)
 		if (cpuintrf_init_cpu(cpunum, cputype))
 			return 1;
 	}
-	
+
 	/* compute the perfect interleave factor */
 	compute_perfect_interleave();
 
@@ -304,7 +319,8 @@ static void cpu_pre_run(void)
 
 	/* initialize the various timers (suspends all CPUs at startup) */
 	cpu_inittimers();
-	watchdog_counter = -1;
+	watchdog_counter = WATCHDOG_IS_INVALID;
+	watchdog_setup();
 
 	/* reset sound chips */
 	sound_reset();
@@ -394,7 +410,7 @@ void cpu_run(void)
 			/* if we have a load/save scheduled, handle it */
 			if (loadsave_schedule != LOADSAVE_NONE)
 				handle_loadsave();
-			
+
 			/* execute CPUs */
 			cpu_timeslice();
 
@@ -642,25 +658,93 @@ void cpu_loadsave_reset(void)
  *
  *************************************/
 
-/*--------------------------------------------------------------
+/*---------------- Internal watchdog functions ---------------*/
 
-	Use these functions to initialize, and later maintain, the
-	watchdog. For convenience, when the machine is reset, the
-	watchdog is disabled. If you call this function, the
-	watchdog is initialized, and from that point onwards, if you
-	don't call it at least once every 3 seconds, the machine
-	will be reset.
+static void watchdog_callback(int param)
+{
+	logerror("reset caused by the (time) watchdog\n");
+	machine_reset();
+}
 
-	The 3 seconds delay is targeted at qzshowby, which otherwise
-	would reset at the start of a game.
-
---------------------------------------------------------------*/
+static void watchdog_setup(void)
+{
+	if (watchdog_counter != WATCHDOG_IS_DISABLED)
+	{
+		if (Machine->drv->watchdog_vblank_count)
+		{
+			/* Start a vblank based watchdog. */
+			watchdog_counter = Machine->drv->watchdog_vblank_count;
+		}
+		else
+		if (Machine->drv->watchdog_time != 0)
+		{
+			/* Start a time based watchdog. */
+			watchdog_timer = timer_alloc(watchdog_callback);
+			timer_adjust(watchdog_timer, Machine->drv->watchdog_time, 0, 0);
+			watchdog_counter = WATCHDOG_IS_TIMER_BASED;
+		}
+		else
+		if (watchdog_counter == WATCHDOG_IS_INVALID)
+		{
+			/* The watchdog was not initialized in the MACHINE_DRIVER,
+			 * so we will start with it disabled.
+			 */
+			watchdog_counter = WATCHDOG_IS_STARTED_DISABLED;
+		}
+		else
+		{
+			/* The watchdog was not initialized in the MACHINE_DRIVER.
+			 * But it has been manually started, so we will default to
+			 * using a vblank watchdog.  We will set up a default time
+			 * of 3 times the refresh rate.  Which is 3 seconds @ 60Hz
+			 * refresh.
+	
+			 * The 3 seconds delay is targeted at qzshowby, which otherwise
+			 * would reset at the start of a game.
+			 */
+			watchdog_counter = 3 * Machine->refresh_rate;
+		}
+	}
+}
 
 static void watchdog_reset(void)
 {
-	if (watchdog_counter == -1)
-		logerror("watchdog armed\n");
-	watchdog_counter = 3 * Machine->refresh_rate;
+	if (watchdog_counter == WATCHDOG_IS_TIMER_BASED)
+	{
+		timer_reset(watchdog_timer, Machine->drv->watchdog_time);
+	}
+	else
+	{
+		if (watchdog_counter == WATCHDOG_IS_STARTED_DISABLED)
+		{
+			watchdog_counter = WATCHDOG_IS_BEING_STARTED;
+			logerror("(vblank) watchdog armed by reset\n");
+		}
+
+		watchdog_setup();
+	}
+}
+
+
+/*---------------- External watchdog functions ---------------*/
+
+void watchdog_enable(int enable)
+{
+	if (!enable)
+	{
+		// Disable all timers
+		if (watchdog_counter == WATCHDOG_IS_TIMER_BASED)
+			timer_remove(watchdog_timer);
+		watchdog_counter = WATCHDOG_IS_DISABLED;
+	}
+	else
+	// Setup only on change from disable to enable.
+	// Do not setup if watchdog is disabled from machine init.
+	if (watchdog_counter == WATCHDOG_IS_DISABLED)
+	{
+		watchdog_counter = WATCHDOG_IS_BEING_STARTED;
+		watchdog_setup();
+	}
 }
 
 
@@ -721,10 +805,10 @@ static void cpu_timeslice(void)
 	mame_time target = mame_timer_next_fire_time();
 	mame_time base = mame_timer_get_time();
 	int cpunum, ran;
-	
+
 	LOG(("------------------\n"));
 	LOG(("cpu_timeslice: target = %.9f\n", mame_time_to_double(target)));
-	
+
 	/* process any pending suspends */
 	for (cpunum = 0; Machine->drv->cpu[cpunum].cpu_type != CPU_DUMMY; cpunum++)
 	{
@@ -743,7 +827,7 @@ static void cpu_timeslice(void)
 			/* compute how long to run */
 			cycles_running = MAME_TIME_TO_CYCLES(cpunum, sub_mame_times(target, cpu[cpunum].localtime));
 			LOG(("  cpu %d: %d cycles\n", cpunum, cycles_running));
-		
+
 			/* run for the requested number of cycles */
 			if (cycles_running > 0)
 			{
@@ -760,12 +844,12 @@ static void cpu_timeslice(void)
 
 				ran -= cycles_stolen;
 				profiler_mark(PROFILER_END);
-				
+
 				/* account for these cycles */
 				cpu[cpunum].totalcycles += ran;
 				cpu[cpunum].localtime = add_mame_times(cpu[cpunum].localtime, MAME_TIME_IN_CYCLES(ran, cpunum));
 				LOG(("         %d ran, %d total, time = %.9f\n", ran, (INT32)cpu[cpunum].totalcycles, mame_time_to_double(cpu[cpunum].localtime)));
-				
+
 				/* if the new local CPU time is less than our target, move the target up */
 				if (compare_mame_times(cpu[cpunum].localtime, target) < 0)
 				{
@@ -778,7 +862,7 @@ static void cpu_timeslice(void)
 			}
 		}
 	}
-	
+
 	/* update the local times of all CPUs */
 	for (cpunum = 0; Machine->drv->cpu[cpunum].cpu_type != CPU_DUMMY; cpunum++)
 	{
@@ -793,14 +877,14 @@ static void cpu_timeslice(void)
 			cpu[cpunum].localtime = add_mame_times(cpu[cpunum].localtime, MAME_TIME_IN_CYCLES(cycles_running, cpunum));
 			LOG(("         %d skipped, %d total, time = %.9f\n", cycles_running, (INT32)cpu[cpunum].totalcycles, mame_time_to_double(cpu[cpunum].localtime)));
 		}
-		
+
 		/* update the suspend state */
 		if (cpu[cpunum].suspend != cpu[cpunum].nextsuspend)
 			LOG(("--> updated CPU%d suspend from %X to %X\n", cpunum, cpu[cpunum].suspend, cpu[cpunum].nextsuspend));
 		cpu[cpunum].suspend = cpu[cpunum].nextsuspend;
 		cpu[cpunum].eatcycles = cpu[cpunum].nexteatcycles;
 	}
-	
+
 	/* update the global time */
 	mame_timer_set_global_time(target);
 
@@ -817,7 +901,7 @@ static void cpu_timeslice(void)
 
 /*************************************
  *
- *	Abort the timeslice for the 
+ *	Abort the timeslice for the
  *	active CPU
  *
  *************************************/
@@ -825,10 +909,10 @@ static void cpu_timeslice(void)
 void activecpu_abort_timeslice(void)
 {
 	int current_icount;
-	
+
 	VERIFY_EXECUTINGCPU_VOID(activecpu_abort_timeslice);
 	LOG(("activecpu_abort_timeslice (CPU=%d, cycles_left=%d)\n", cpu_getexecutingcpu(), activecpu_get_icount() + 1));
-	
+
 	/* swallow the remaining cycles */
 	current_icount = activecpu_get_icount() + 1;
 	cycles_stolen += current_icount;
@@ -849,7 +933,7 @@ void activecpu_abort_timeslice(void)
 mame_time cpunum_get_localtime(int cpunum)
 {
 	mame_time result;
-	
+
 	VERIFY_CPUNUM(time_zero, cpunum_get_localtime);
 
 	/* if we're active, add in the time from the current slice */
@@ -866,7 +950,7 @@ mame_time cpunum_get_localtime(int cpunum)
 
 /*************************************
  *
- *	Set a suspend reason for the 
+ *	Set a suspend reason for the
  *	given CPU
  *
  *************************************/
@@ -875,7 +959,7 @@ void cpunum_suspend(int cpunum, int reason, int eatcycles)
 {
 	VERIFY_CPUNUM_VOID(cpunum_suspend);
 	LOG(("cpunum_suspend (CPU=%d, r=%X, eat=%d)\n", cpunum, reason, eatcycles));
-	
+
 	/* set the pending suspend bits, and force a resync */
 	cpu[cpunum].nextsuspend |= reason;
 	cpu[cpunum].nexteatcycles = eatcycles;
@@ -887,7 +971,7 @@ void cpunum_suspend(int cpunum, int reason, int eatcycles)
 
 /*************************************
  *
- *	Clear a suspend reason for a 
+ *	Clear a suspend reason for a
  *	given CPU
  *
  *************************************/
@@ -922,7 +1006,41 @@ int cpunum_is_suspended(int cpunum, int reason)
 
 /*************************************
  *
- *	Returns the current scaling factor 
+ *	Gets the current CPU's clock speed
+ *
+ *************************************/
+int cpunum_get_clock(int cpunum)
+{
+	VERIFY_CPUNUM(1.0, cpunum_get_clock);
+	return cpu[cpunum].clock;
+}
+
+
+
+/*************************************
+ *
+ *	Sets the current CPU's clock speed
+ *
+ *************************************/
+void cpunum_set_clock(int cpunum, int clock)
+{
+	VERIFY_CPUNUM_VOID(cpunum_set_clock);
+
+	cpu[cpunum].clock = clock;
+	sec_to_cycles[cpunum] = (double)clock * cpu[cpunum].clockscale;
+	cycles_to_sec[cpunum] = 1.0 / sec_to_cycles[cpunum];
+	cycles_per_second[cpunum] = sec_to_cycles[cpunum];
+	subseconds_per_cycle[cpunum] = MAX_SUBSECONDS / sec_to_cycles[cpunum];
+
+	/* re-compute the perfect interleave factor */
+	compute_perfect_interleave();
+}
+
+
+
+/*************************************
+ *
+ *	Returns the current scaling factor
  *	for a CPU's clock speed
  *
  *************************************/
@@ -937,7 +1055,7 @@ double cpunum_get_clockscale(int cpunum)
 
 /*************************************
  *
- *	Sets the current scaling factor 
+ *	Sets the current scaling factor
  *	for a CPU's clock speed
  *
  *************************************/
@@ -947,7 +1065,7 @@ void cpunum_set_clockscale(int cpunum, double clockscale)
 	VERIFY_CPUNUM_VOID(cpunum_set_clockscale);
 
 	cpu[cpunum].clockscale = clockscale;
-	sec_to_cycles[cpunum] = cpu[cpunum].clockscale * Machine->drv->cpu[cpunum].cpu_clock;
+	sec_to_cycles[cpunum] = (double)cpu[cpunum].clock * clockscale;
 	cycles_to_sec[cpunum] = 1.0 / sec_to_cycles[cpunum];
 	cycles_per_second[cpunum] = sec_to_cycles[cpunum];
 	subseconds_per_cycle[cpunum] = MAX_SUBSECONDS / sec_to_cycles[cpunum];
@@ -973,11 +1091,11 @@ void cpu_boost_interleave(double _timeslice_time, double _boost_duration)
 	/* if you pass 0 for the timeslice_time, it means pick something reasonable */
 	if (compare_mame_times(timeslice_time, perfect_interleave) < 0)
 		timeslice_time = perfect_interleave;
-	
+
 	LOG(("cpu_boost_interleave(%.9f, %.9f)\n", mame_time_to_double(timeslice_time), mame_time_to_double(boost_duration)));
 
 	/* adjust the interleave timer */
-	mame_timer_adjust(interleave_boost_timer, timeslice_time, 0, timeslice_time);		
+	mame_timer_adjust(interleave_boost_timer, timeslice_time, 0, timeslice_time);
 
 	/* adjust the end timer */
 	mame_timer_adjust(interleave_boost_timer_end, boost_duration, 0, time_never);
@@ -1094,7 +1212,7 @@ int activecpu_geticount(void)
 
 /*************************************
  *
- *	Safely eats cycles so we don't 
+ *	Safely eats cycles so we don't
  *	cross a timeslice boundary
  *
  *************************************/
@@ -1120,7 +1238,7 @@ int cpu_scalebyfcount(int value)
 {
 	mame_time refresh_elapsed = mame_timer_timeelapsed(refresh_timer);
 	int result;
-	
+
 	/* shift off some bits to ensure no overflow */
 	if (value < 65536)
 		result = value * (refresh_elapsed.subseconds >> 16) / (refresh_period.subseconds >> 16);
@@ -1169,7 +1287,7 @@ void cpu_compute_scanline_timing(void)
 {
 	/* recompute the refresh period */
 	refresh_period = double_to_mame_time(1.0 / Machine->refresh_rate);
-	
+
 	/* recompute the vblank period */
 	vblank_period = double_to_mame_time(1.0 / (Machine->refresh_rate * (vblank_multiplier ? vblank_multiplier : 1)));
 	if (vblank_timer)
@@ -1184,7 +1302,7 @@ void cpu_compute_scanline_timing(void)
 	}
 	else
 		scanline_period.subseconds /= Machine->drv->screen_height;
-	
+
 	LOG(("cpu_compute_scanline_timing: refresh=%.9f vblank=%.9f scanline=%.9f\n", mame_time_to_double(refresh_period), mame_time_to_double(vblank_period), mame_time_to_double(scanline_period)));
 }
 
@@ -1222,10 +1340,10 @@ int cpu_getscanline(void)
 mame_time cpu_getscanlinetime_mt(int scanline)
 {
 	mame_time scantime, abstime;
-	
+
 	/* compute the target time */
 	scantime = add_subseconds_to_mame_time(mame_timer_starttime(refresh_timer), scanline * (scanline_period.subseconds + 1));
-	
+
 	/* get the current absolute time */
 	abstime = mame_timer_get_time();
 
@@ -1326,7 +1444,7 @@ int cpu_getcurrentframe(void)
 void cpu_trigger(int trigger)
 {
 	int cpunum;
-	
+
 	/* cause an immediate resynchronization */
 	if (cpu_getexecutingcpu() >= 0)
 		activecpu_abort_timeslice();
@@ -1648,7 +1766,7 @@ static void cpu_updatecallback(int param)
 	if (watchdog_counter > 0)
 		if (--watchdog_counter == 0)
 		{
-			logerror("reset caused by the watchdog\n");
+			logerror("reset caused by the (vblank) watchdog\n");
 			machine_reset();
 		}
 
@@ -1737,7 +1855,7 @@ static void cpu_timeslicecallback(int param)
 
 static void end_interleave_boost(int param)
 {
-	mame_timer_adjust(interleave_boost_timer, time_never, 0, time_never);		
+	mame_timer_adjust(interleave_boost_timer, time_never, 0, time_never);
 	LOG(("end_interleave_boost\n"));
 }
 
@@ -1769,7 +1887,7 @@ static void compute_perfect_interleave(void)
 		else if (subseconds_per_cycle[cpunum] < perfect_interleave.subseconds)
 			perfect_interleave.subseconds = subseconds_per_cycle[cpunum];
 	}
-	
+
 	/* adjust the final value */
 	if (perfect_interleave.subseconds == MAX_SUBSECONDS - 1)
 		perfect_interleave.subseconds = subseconds_per_cycle[0];
@@ -1797,7 +1915,7 @@ static void cpu_inittimers(void)
 	timeslice_period = double_to_mame_time(1.0 / (Machine->refresh_rate * ipf));
 	timeslice_timer = mame_timer_alloc(cpu_timeslicecallback);
 	mame_timer_adjust(timeslice_timer, timeslice_period, 0, timeslice_period);
-	
+
 	/* allocate timers to handle interleave boosts */
 	interleave_boost_timer = mame_timer_alloc(NULL);
 	interleave_boost_timer_end = mame_timer_alloc(end_interleave_boost);
@@ -1883,7 +2001,7 @@ static void cpu_inittimers(void)
 		first_time = add_mame_times(first_time, vblank_period);
 	}
 	mame_timer_set(first_time, 0, cpu_firstvblankcallback);
-	
+
 	/* reset the refresh timer to get ourself back in sync */
 	mame_timer_adjust(refresh_timer, time_never, 0, time_never);
 }

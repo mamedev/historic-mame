@@ -45,10 +45,18 @@ INLINE UINT16 psxreadword( UINT32 n_address )
 	return *( (UINT16 *)( (UINT8 *)g_p_n_psxram + WORD_XOR_LE( n_address ) ) );
 }
 
+static data32_t psx_com_delay = 0;
+
+WRITE32_HANDLER( psx_com_delay_w )
+{
+	COMBINE_DATA( &psx_com_delay );
+	verboselog( 1, "psx_com_delay_w( %08x %08x )\n", data, mem_mask );
+}
+
 READ32_HANDLER( psx_com_delay_r )
 {
-	verboselog( 1, "psx_com_delay_r()\n" );
-	return 0;
+	verboselog( 1, "psx_com_delay_r( %08x )\n", mem_mask );
+	return psx_com_delay;
 }
 
 /* IRQ */

@@ -10,6 +10,9 @@
 #include "vidhrdw/generic.h"
 
 static struct tilemap *bg_tilemap;
+static struct tilemap *grid_tilemap;
+
+UINT8 sraider_grid_status;
 
 /***************************************************************************
 
@@ -109,6 +112,35 @@ WRITE8_HANDLER( ladybug_flipscreen_w )
 	}
 }
 
+WRITE8_HANDLER( sraider_grid_w )
+{
+	static int old = -1;
+
+	if(old!=data)
+	{
+		old=data;
+		//printf("%04X: grid %X\n",activecpu_get_pc(),data);
+		sraider_grid_status = data;
+		tilemap_mark_all_tiles_dirty(grid_tilemap);
+	}
+	//cpu_set_irq_line(1,0,ASSERT_LINE);
+}
+
+static UINT8 gridline[256];
+
+WRITE8_HANDLER( sraider_grid_control_w )
+{
+	static int x = 0;
+
+	if (x == 0)
+	{
+		tilemap_mark_all_tiles_dirty(grid_tilemap);
+		x = 1;
+	}
+	gridline[offset] = data;
+
+}
+
 static void get_bg_tile_info(int tile_index)
 {
 	int code = videoram[tile_index] + 32 * (colorram[tile_index] & 0x08);
@@ -117,15 +149,53 @@ static void get_bg_tile_info(int tile_index)
 	SET_TILE_INFO(0, code, color, 0)
 }
 
+static void get_grid_tile_info(int tile_index)
+{
+	int color = 1;
+
+	if (tile_index < 512)
+		SET_TILE_INFO(3, tile_index, color, 0)
+	else
+	{
+		int temp = tile_index/32;
+		tile_index = (31 - temp) * 32 + (tile_index % 32);
+		SET_TILE_INFO(4, tile_index, color, 0)
+	}
+}
+
 VIDEO_START( ladybug )
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
 	if ( !bg_tilemap )
 		return 1;
 
 	tilemap_set_scroll_rows(bg_tilemap, 32);
+
+	return 0;
+}
+
+VIDEO_START( sraider )
+{
+	grid_tilemap = tilemap_create(get_grid_tile_info, tilemap_scan_rows,
+		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	if ( !grid_tilemap )
+		return 1;
+
+	tilemap_set_scroll_rows(grid_tilemap, 32);
+
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
+//		TILEMAP_OPAQUE, 8, 8, 32, 32);
+		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	tilemap_set_scroll_rows(bg_tilemap, 32);
+
+	tilemap_set_transparent_pen(bg_tilemap, 0);
 
 	return 0;
 }
@@ -170,7 +240,7 @@ static void ladybug_draw_sprites( struct mame_bitmap *bitmap )
 							&Machine->visible_area,TRANSPARENCY_PEN,0);
 				else	/* 8x8 */
 					drawgfx(bitmap,Machine->gfx[2],
-							spriteram[offs + i + 1] + 4 * (spriteram[offs + i + 2] & 0x10),
+							spriteram[offs + i + 1] + 16 * (spriteram[offs + i + 2] & 0x10),
 							spriteram[offs + i + 2] & 0x0f,
 							spriteram[offs + i] & 0x20,spriteram[offs + i] & 0x10,
 							spriteram[offs + i + 3],
@@ -199,3 +269,64 @@ VIDEO_UPDATE( ladybug )
 	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
 	ladybug_draw_sprites(bitmap);
 }
+
+extern UINT8 sraider_wierd_value[8];
+UINT8 sraider_0x30, sraider_0x38;
+
+VIDEO_UPDATE( sraider )
+{
+	int offs;
+
+	for (offs = 0; offs < 32; offs++)
+	{
+		int sx = offs % 4;
+		int sy = offs / 4;
+
+		if (flip_screen)
+			tilemap_set_scrollx(bg_tilemap, offs, -videoram[32 * sx + sy]);
+		else
+			tilemap_set_scrollx(bg_tilemap, offs, videoram[32 * sx + sy]);
+	}
+
+	//if (gridline[0xd8] != 0)
+	if (gridline[0xd8] != 0)
+	{
+		int i;
+		tilemap_draw(bitmap, &Machine->visible_area, grid_tilemap, 0, 0);
+		for(i=0;i<256;i++)
+		{
+			if (gridline[i] != 0)
+			{
+				plot_box(bitmap,i,0,1,255,
+					Machine->pens[
+						Machine->gfx[0]->colortable[4*gridline[i]+3]]);
+				//plot_box(bitmap,i,0,1,255,Machine->pens[gridline[i]]);
+			}
+		}
+	}
+
+	//plot_box(bitmap,sraider_0x30,sraider_0x38,4,4,Machine->pens[5]);
+
+	//for(int i=0;i<8;i++)
+	//{
+	//	plot_box(bitmap,sraider_wierd_value[i],108,1,40,Machine->pens[i]);
+	//}
+	//	plot_box(bitmap,sraider_wierd_value[i],108,1,40,Machine->pens[i]);
+	//}
+	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	ladybug_draw_sprites(bitmap);
+#if 0
+	for(int i=0;i<8;i++)
+	{
+		for(int j=0;j<8;j++)
+		{
+			int x,y,color;
+			x = j;
+			y = i;
+			color = (sraider_wierd_value[i]>>(7-j))&1;
+			plot_box(bitmap,y*8+32,4 - 4*(y&1) + x*4+32,4,4,Machine->pens[color+1]);
+		}
+	}
+#endif
+}
+

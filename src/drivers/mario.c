@@ -71,9 +71,13 @@ write:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/i8039/i8039.h"
+#include "state.h"
 
 static int p[8] = { 0,0xf0,0,0,0,0,0,0 };
 static int t[2] = { 0,0 };
+
+static int last;
+
 
 extern WRITE8_HANDLER( mario_videoram_w );
 extern WRITE8_HANDLER( mario_gfxbank_w );
@@ -123,9 +127,6 @@ static WRITE8_HANDLER( mario_sh_p2_w )
 }
 WRITE8_HANDLER( masao_sh_irqtrigger_w )
 {
-	static int last;
-
-
 	if (last == 1 && data == 0)
 	{
 		/* setting bit 0 high then low triggers IRQ on the sound CPU */
@@ -461,6 +462,15 @@ MACHINE_DRIVER_END
 
 
 
+static DRIVER_INIT( mario )
+{
+	state_save_register_UINT32("main", 0, "p", (UINT32*)p, 8);
+	state_save_register_UINT32("main", 0, "t", (UINT32*)t, 2);
+	state_save_register_int   ("main", 0, "last",    &last);
+}
+
+
+
 /***************************************************************************
 
   Game driver(s)
@@ -547,6 +557,6 @@ ROM_END
 
 
 
-GAME( 1983, mario,   0,     mario, mario,   0, ROT180, "Nintendo of America", "Mario Bros. (US)" )
-GAME( 1983, mariojp, mario, mario, mariojp, 0, ROT180, "Nintendo", "Mario Bros. (Japan)" )
-GAME( 1983, masao,   mario, masao, mario,   0, ROT180, "bootleg", "Masao" )
+GAME( 1983, mario,   0,     mario, mario,   mario, ROT180, "Nintendo of America", "Mario Bros. (US)" )
+GAME( 1983, mariojp, mario, mario, mariojp, mario, ROT180, "Nintendo", "Mario Bros. (Japan)" )
+GAME( 1983, masao,   mario, masao, mario,   mario, ROT180, "bootleg", "Masao" )

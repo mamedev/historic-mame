@@ -4,46 +4,44 @@
 
 *************************************************************************/
 
+
+/*----------- defined in driver/cinemat.c -----------*/
+
+MACHINE_INIT( cinemat );
+
+
 /*----------- defined in sndhrdw/cinemat.c -----------*/
 
-typedef void (*cinemat_sound_handler_proc)(UINT8, UINT8);
-extern cinemat_sound_handler_proc cinemat_sound_handler;
+WRITE8_HANDLER( cinemat_sound_control_w );
 
-MACHINE_INIT( cinemat_sound );
-
-READ16_HANDLER( cinemat_output_port_r );
-WRITE16_HANDLER( cinemat_output_port_w );
-
-extern struct Samplesinterface starcas_samples_interface;
-extern struct Samplesinterface warrior_samples_interface;
-extern struct Samplesinterface ripoff_samples_interface;
-extern struct Samplesinterface solarq_samples_interface;
-extern struct Samplesinterface spacewar_samples_interface;
-extern struct Samplesinterface armora_samples_interface;
-extern struct Samplesinterface sundance_samples_interface;
-extern struct Samplesinterface tailg_samples_interface;
-
-void tailg_sound_w(UINT8 sound_val, UINT8 bits_changed);
-void starcas_sound_w(UINT8 sound_val, UINT8 bits_changed);
-void warrior_sound_w(UINT8 sound_val, UINT8 bits_changed);
-void armora_sound_w(UINT8 sound_val, UINT8 bits_changed);
-void ripoff_sound_w(UINT8 sound_val, UINT8 bits_changed);
-void solarq_sound_w(UINT8 sound_val, UINT8 bits_changed);
-void spacewar_sound_w(UINT8 sound_val, UINT8 bits_changed);
-void demon_sound_w(UINT8 sound_val, UINT8 bits_changed);
-void armora_sound_w(UINT8 sound_val, UINT8 bits_changed);
-void sundance_sound_w(UINT8 sound_val, UINT8 bits_changed);
-
+MACHINE_DRIVER_EXTERN( spacewar_sound );
+MACHINE_DRIVER_EXTERN( barrier_sound );
+MACHINE_DRIVER_EXTERN( speedfrk_sound );
+MACHINE_DRIVER_EXTERN( starhawk_sound );
+MACHINE_DRIVER_EXTERN( sundance_sound );
+MACHINE_DRIVER_EXTERN( tailg_sound );
+MACHINE_DRIVER_EXTERN( warrior_sound );
+MACHINE_DRIVER_EXTERN( armora_sound );
+MACHINE_DRIVER_EXTERN( ripoff_sound );
+MACHINE_DRIVER_EXTERN( starcas_sound );
+MACHINE_DRIVER_EXTERN( solarq_sound );
+MACHINE_DRIVER_EXTERN( boxingb_sound );
+MACHINE_DRIVER_EXTERN( wotw_sound );
+MACHINE_DRIVER_EXTERN( wotwc_sound );
 MACHINE_DRIVER_EXTERN( demon_sound );
+MACHINE_DRIVER_EXTERN( qb3_sound );
 
 
 /*----------- defined in vidhrdw/cinemat.c -----------*/
 
-void CinemaVectorData(int fromx, int fromy, int tox, int toy, int color);
+void cinemat_vector_callback(INT16 sx, INT16 sy, INT16 ex, INT16 ey, UINT8 shift);
+WRITE8_HANDLER(cinemat_vector_control_w);
 
-PALETTE_INIT( cinemat );
-PALETTE_INIT( cinemat_color );
-VIDEO_START( cinemat );
+VIDEO_START( cinemat_bilevel );
+VIDEO_START( cinemat_16level );
+VIDEO_START( cinemat_64level );
+VIDEO_START( cinemat_color );
+VIDEO_START( cinemat_qb3color );
 VIDEO_EOF( cinemat );
 
 VIDEO_UPDATE( spacewar );

@@ -71,6 +71,8 @@ int resource_tracking_tag = 0;
 /* generic NVRAM */
 size_t generic_nvram_size;
 data8_t *generic_nvram;
+data16_t *generic_nvram16;
+data32_t *generic_nvram32;
 
 /* disks */
 static struct chd_file *disk_handle[4];
@@ -472,6 +474,18 @@ void coin_lockout_global_w(int on)
 
 ***************************************************************************/
 
+void *nvram_select(void)
+{
+	if (generic_nvram)
+		return generic_nvram;
+	if (generic_nvram16)
+		return generic_nvram16;
+	if (generic_nvram32)
+		return generic_nvram32;
+	osd_die("generic nvram handler called without nvram in the memory map\n");
+	return 0;
+}
+
 /*-------------------------------------------------
 	nvram_handler_generic_0fill - generic NVRAM
 	with a 0 fill
@@ -480,11 +494,11 @@ void coin_lockout_global_w(int on)
 void nvram_handler_generic_0fill(mame_file *file, int read_or_write)
 {
 	if (read_or_write)
-		mame_fwrite(file, generic_nvram, generic_nvram_size);
+		mame_fwrite(file, nvram_select(), generic_nvram_size);
 	else if (file)
-		mame_fread(file, generic_nvram, generic_nvram_size);
+		mame_fread(file, nvram_select(), generic_nvram_size);
 	else
-		memset(generic_nvram, 0, generic_nvram_size);
+		memset(nvram_select(), 0, generic_nvram_size);
 }
 
 
@@ -496,11 +510,11 @@ void nvram_handler_generic_0fill(mame_file *file, int read_or_write)
 void nvram_handler_generic_1fill(mame_file *file, int read_or_write)
 {
 	if (read_or_write)
-		mame_fwrite(file, generic_nvram, generic_nvram_size);
+		mame_fwrite(file, nvram_select(), generic_nvram_size);
 	else if (file)
-		mame_fread(file, generic_nvram, generic_nvram_size);
+		mame_fread(file, nvram_select(), generic_nvram_size);
 	else
-		memset(generic_nvram, 0xff, generic_nvram_size);
+		memset(nvram_select(), 0xff, generic_nvram_size);
 }
 
 

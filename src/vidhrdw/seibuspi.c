@@ -10,9 +10,10 @@ UINT32 *back_ram, *mid_ram, *fore_ram, *scroll_ram;
 UINT32 *back_rowscroll_ram, *mid_rowscroll_ram, *fore_rowscroll_ram;
 int old_vidhw;
 int bg_size;
-
 static UINT32 layer_bank;
 static UINT32 layer_enable;
+
+static int rf2_layer_bank = 0;
 
 READ32_HANDLER( spi_layer_bank_r )
 {
@@ -54,8 +55,13 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 	int x,y, x1, y1;
 	const struct GfxElement *gfx = Machine->gfx[2];
 
+	if( layer_enable & 0x10 )
+		return;
+
 	for( a = 0x400 - 2; a >= 0; a -= 2 ) {
 		tile_num = (spriteram32[a + 0] >> 16) & 0xffff;
+		if( spriteram32[a + 1] & 0x1000 )
+			tile_num |= 0x10000;
 
 		if( !tile_num )
 			continue;
@@ -64,8 +70,12 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 		if( pri_mask != priority )
 			continue;
 
-		xpos = spriteram32[a + 1] & 0xffff;
-		ypos = (spriteram32[a + 1] >> 16) & 0xffff;
+		xpos = spriteram32[a + 1] & 0x3ff;
+		if( xpos & 0x200 )
+			xpos |= 0xfc00;
+		ypos = (spriteram32[a + 1] >> 16) & 0x1ff;
+		if( ypos & 0x100 )
+			ypos |= 0xfe00;
 		color = (spriteram32[a + 0] & 0x3f);
 
 		width = ((spriteram32[a + 0] >> 8) & 0x7) + 1;
@@ -94,6 +104,18 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 					cliprect,
 					TRANSPARENCY_PEN, 63
 					);
+
+				/* xpos seems to wrap-around to 0 at 512 */
+				if( (xpos + (16 * x) + 16) >= 512 ) {
+					drawgfx(
+					bitmap,
+					gfx,
+					tile_num,
+					color, flip_x, flip_y, xpos - 512 + sprite_xtable[flip_x][x], ypos + sprite_ytable[flip_y][y],
+					cliprect,
+					TRANSPARENCY_PEN, 63
+					);
+				}
 
 				tile_num++;
 			}
@@ -165,7 +187,9 @@ static void get_back_tile_info( int tile_index )
 	int color = (tile >> 13) & 0x7;
 
 	tile &= 0x1fff;
-	//tile |= 0x4000;
+
+	if( rf2_layer_bank )
+		tile |= 0x4000;
 
 	SET_TILE_INFO(1, tile, color, 0)
 }
@@ -178,7 +202,9 @@ static void get_mid_tile_info( int tile_index )
 
 	tile &= 0x1fff;
 	tile |= 0x2000;
-	//tile |= 0x4000;
+
+	if( rf2_layer_bank )
+		tile |= 0x4000;
 
 	SET_TILE_INFO(1, tile, color + 16, 0)
 }
@@ -196,7 +222,10 @@ static void get_fore_tile_info( int tile_index )
 		case 1:	tile |= 0x4000; break;
 		case 2: tile |= 0x8000; break;
 	}
-	//tile |= 0x4000;
+
+	if( rf2_layer_bank )
+		tile |= 0x4000;
+
 	tile |= ((layer_bank >> 27) & 0x1) << 13;
 
 	SET_TILE_INFO(1, tile, color + 8, 0)
@@ -235,6 +264,8 @@ static void set_scroll(struct tilemap *layer, int scroll)
 	tilemap_set_scrolly(layer, 0, y);
 }
 
+static int tick = 0;
+
 VIDEO_UPDATE( spi )
 {
 	if( !old_vidhw ) {
@@ -247,25 +278,33 @@ VIDEO_UPDATE( spi )
 		set_scroll(fore_layer, 2);
 	}
 
+	tick++;
+	if( tick >= 5 ) {
+		tick = 0;
+
+		if( code_pressed(KEYCODE_O) )
+			rf2_layer_bank ^= 1;
+
+		tilemap_mark_all_tiles_dirty(fore_layer);
+		tilemap_mark_all_tiles_dirty(mid_layer);
+		tilemap_mark_all_tiles_dirty(back_layer);
+	}
+
 	if( layer_enable & 0x1 )
 		fillbitmap(bitmap, 0, cliprect);
 
 	tilemap_draw(bitmap, cliprect, back_layer, 0,0);
 
-	if( (layer_enable & 0x10) == 0 )
-		draw_sprites(bitmap, cliprect, 0);
+	draw_sprites(bitmap, cliprect, 0);
 
 	tilemap_draw(bitmap, cliprect, mid_layer, 0,0);
 
-	if( (layer_enable & 0x10) == 0 )
-		draw_sprites(bitmap, cliprect, 1);
-	if( (layer_enable & 0x10) == 0 )
-		draw_sprites(bitmap, cliprect, 2);
+	draw_sprites(bitmap, cliprect, 1);
+	draw_sprites(bitmap, cliprect, 2);
 
 	tilemap_draw(bitmap, cliprect, fore_layer, 0,0);
 
-	if( (layer_enable & 0x10) == 0 )
-		draw_sprites(bitmap, cliprect, 3);
+	draw_sprites(bitmap, cliprect, 3);
 
 	tilemap_draw(bitmap, cliprect, text_layer, 0,0);
 }

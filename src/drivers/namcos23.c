@@ -277,7 +277,7 @@ DrawPoly( struct mame_bitmap *bitmap, const UINT32 *pSource, int n, int bNew )
 
 		if( bNew )
 		{
-			printf( "\t(%lf,%lf,%lf)\n", x[i], y[i], z[i] );
+			printf( "\t(%f,%f,%f)\n", x[i], y[i], z[i] );
 		}
 	}
 	for( i=0; i<n; i++ )

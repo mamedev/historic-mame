@@ -12,6 +12,7 @@ Sadari         Z80     Z80 YM2151 OKI6295
 Gun Dealer '94 Z80     Z80 YM2151 OKI6295
 Super-X        68000   Z80 YM2151 OKI6295
 R-Shark        68000   Z80 YM2151 OKI6295
+Pop Bingo      68000   Z80 YM2151 OKI6295
 
 These games all run on different but similar hardware. A common thing that they
 all have is tilemaps hardcoded in ROM.
@@ -36,6 +37,11 @@ Primella:
 - are buttons 2 and 3 used as service mode suggests?
 R-Shark, Super-X:
 - sprite/fg priority is not understood
+Pop Bingo
+- appears to combine 2 4bpp layers to make 1 8bpp layer, for now we just
+  treat it as 1 8bpp layer and ignore the 2nd set of registers.
+- some unknown reads / writes
+- dipswitches need doing
 
 ***************************************************************************/
 
@@ -46,6 +52,7 @@ R-Shark, Super-X:
 extern unsigned char *lastday_txvideoram;
 extern unsigned char *lastday_bgscroll,*lastday_fgscroll,*bluehawk_fg2scroll;
 extern data16_t *rshark_scroll1,*rshark_scroll2,*rshark_scroll3,*rshark_scroll4;
+extern data16_t *popbingo_scroll, *popbingo_scroll2;
 
 WRITE8_HANDLER( lastday_ctrl_w );
 WRITE8_HANDLER( pollux_ctrl_w );
@@ -57,6 +64,7 @@ VIDEO_UPDATE( pollux );
 VIDEO_UPDATE( bluehawk );
 VIDEO_UPDATE( primella );
 VIDEO_UPDATE( rshark );
+VIDEO_UPDATE( popbingo );
 VIDEO_EOF( dooyong );
 VIDEO_EOF( rshark );
 
@@ -231,7 +239,34 @@ static ADDRESS_MAP_START( superx_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x08c010, 0x08c019) AM_WRITE(MWA16_RAM) AM_BASE(&rshark_scroll1)
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( popbingo_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(20) )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x040000, 0x04cfff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x04d000, 0x04dfff) AM_READ(MRA16_RAM) // sprites
+	AM_RANGE(0x04e000, 0x04ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x0c0002, 0x0c0003) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x0c0004, 0x0c0005) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x0c0006, 0x0c0007) AM_READ(input_port_2_word_r)
+ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( popbingo_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(20) )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x040000, 0x04cfff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x04d000, 0x04dfff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x04e000, 0x04ffff) AM_WRITE(MWA16_RAM)
+
+	AM_RANGE(0x0c0012, 0x0c0013) AM_WRITE(soundlatch_word_w)
+	AM_RANGE(0x0c0014, 0x0c0015) AM_WRITE(MWA16_NOP) // ctrl_w ?
+	AM_RANGE(0x0c001a, 0x0c001b) AM_WRITE(MWA16_NOP) // ?
+
+	AM_RANGE(0x0c4000, 0x0c401b) AM_RAM AM_BASE(&popbingo_scroll)
+	AM_RANGE(0x0cc000, 0x0cc01b) AM_RAM AM_BASE(&popbingo_scroll2) // not used atm
+	AM_RANGE(0x0c8000, 0x0c8fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
+
+	AM_RANGE(0x0dc000, 0x0dc01f) AM_RAM // registers of some kind?
+ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( lastday_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
@@ -766,7 +801,88 @@ INPUT_PORTS_START( rshark )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( popbingo )
+	PORT_START
+	PORT_SERVICE( 0x0001, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0030, 0x0030, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0030, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x00c2, 0x00c2, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0042, DEF_STR( 2C_1C ) )
+//	PORT_DIPSETTING(      0x00c0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x00c2, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x0082, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0000, "1" )
+	PORT_DIPSETTING(      0x0200, "2" )
+	PORT_DIPSETTING(      0x0300, "3" )
+	PORT_DIPSETTING(      0x0100, "4" )
+	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x0c00, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, "Blocks Don't Drop" )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Allow_Continue ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Yes ) )
 
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(2)
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
 
 static struct GfxLayout lastday_charlayout =
 {
@@ -833,6 +949,23 @@ static struct GfxLayout rshark_spritelayout =
 	128*8
 };
 
+static struct GfxLayout popbingo_tilelayout =
+{
+	32,32,
+	RGN_FRAC(1,2),
+	8,
+	{ 0*4, 1*4,  2*4, 3*4, RGN_FRAC(1,2)+0*4,RGN_FRAC(1,2)+1*4,RGN_FRAC(1,2)+2*4,RGN_FRAC(1,2)+3*4 },
+
+	{ 0, 1, 2, 3, 16+0, 16+1, 16+2, 16+3,
+			32*32+0, 32*32+1, 32*32+2, 32*32+3, 32*32+16+0, 32*32+16+1, 32*32+16+2, 32*32+16+3,
+			2*32*32+0, 2*32*32+1, 2*32*32+2, 2*32*32+3, 2*32*32+16+0, 2*32*32+16+1, 2*32*32+16+2, 2*32*32+16+3,
+			3*32*32+0, 3*32*32+1, 3*32*32+2, 3*32*32+3, 3*32*32+16+0, 3*32*32+16+1, 3*32*32+16+2, 3*32*32+16+3 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
+			8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32,
+			16*32, 17*32, 18*32, 19*32, 20*32, 21*32, 22*32, 23*32,
+			24*32, 25*32, 26*32, 27*32, 28*32, 29*32, 30*32, 31*32 },
+	512*8
+};
 
 static struct GfxDecodeInfo lastday_gfxdecodeinfo[] =
 {
@@ -873,7 +1006,13 @@ static struct GfxDecodeInfo rshark_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-
+static struct GfxDecodeInfo popbingo_gfxdecodeinfo[] =
+{
+	/* no chars */
+	{ REGION_GFX1, 0, &rshark_spritelayout,  0, 16 },
+	{ REGION_GFX2, 0, &popbingo_tilelayout,       256, 1 },
+	{ -1 } /* end of array */
+};
 
 static void irqhandler(int irq)
 {
@@ -1127,6 +1266,35 @@ static MACHINE_DRIVER_START( superx ) // dif mem map
 
 	MDRV_VIDEO_EOF(rshark)
 	MDRV_VIDEO_UPDATE(rshark)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(YM2151, primella_ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( popbingo )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 10000000)
+	MDRV_CPU_PROGRAM_MAP(popbingo_readmem,popbingo_writemem)
+	MDRV_CPU_VBLANK_INT(rshark_interrupt,2)	/* 5 and 6 */
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* measured on super-x */
+	MDRV_CPU_PROGRAM_MAP(bluehawk_sound_readmem,bluehawk_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 1*8, 31*8-1 )
+	MDRV_GFXDECODE(popbingo_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
+
+	MDRV_VIDEO_EOF(rshark)
+	MDRV_VIDEO_UPDATE(popbingo)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(YM2151, primella_ym2151_interface)
@@ -1660,7 +1828,69 @@ ROM_START( rshark )
 	ROM_LOAD( "rse2.bin",     0x20000, 0x20000, CRC(5a26ee72) SHA1(3ceed1f50510993354dd4def577af5cf4c4a4f7a) )
 ROM_END
 
+/*
 
+Pop Bingo
+Dooyong, 1996
+
+PCB Layout
+----------
+
+|------------------------------------------------------|
+|        6295    *      62256      62256      62256    |
+|YM3016  6116  ROM4.4R  62256      62256      62256    |
+|                                                      |
+| Z80   ROM1.3P YM2151           |----------| 62256    |
+|        PAL                     |DOOYONG   | 62256    |
+|                                |DY-OBJ-01 |          |
+|                                |H2B34027  |          |
+|J          6116       PAL       |          |          |
+|A          6116                 |----------|          |
+|M                                            ROM5.9M  |
+|M       |------------------|    6116         ROM6.9L  |
+|A       |   MC68000P10     |    6116                  |
+|        |                  |                          |
+|        |------------------|                 ROM7.9H  |
+| DSWA     ROM2.3F  62256        |----------|          |
+| DSWB     ROM3.3E  62256        |DOOYONG   | ROM8.9E  |
+|          PAL   PAL   PAL       |DY-PL-1   |          |
+|                                |H2A32067  | ROM9.9C  |
+|                                |          |          |
+|16MHz  20MHz                    |----------| ROM10.9A |
+|------------------------------------------------------|
+Notes:
+      68000 clock : 10.000MHz (20/2)
+      Z80 clock   : 4.000MHz  (16/4)
+      YM2151 clock: 4.000MHz  (16/4)
+      M6295 clock : 1.000MHz (16/16). Sample Rate = 1000000 / 132
+      VSync       : 60Hz
+      *           : Unpopulated socket
+
+*/
+
+ROM_START( popbingo )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 64k for code + 128k for banks */
+	ROM_LOAD16_BYTE( "rom2.3f",   0x00000, 0x20000, CRC(b24513c6) SHA1(ddbdb99c8bc84d32b787691630c4cd2060f3d9d0) )
+	ROM_LOAD16_BYTE( "rom3.3e",   0x00001, 0x20000, CRC(48070081) SHA1(5efc585207eb2b6f631e496ee1acc1d593024367) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* sound */
+	ROM_LOAD( "rom1.3p",     0x0000, 0x10000, CRC(46e8d2c4) SHA1(a6fb55766e0bad321ac03977f33d3000ab7ab295) )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* sprite */
+	ROM_LOAD16_BYTE( "rom5.9m",   0x00000, 0x80000, CRC(e8d73e07) SHA1(4ed647eaa6b32b9f159fc49d30962ad20f97b245) )
+	ROM_LOAD16_BYTE( "rom6.9l",   0x00001, 0x80000, CRC(c3db3975) SHA1(bb085c9339d640585b18992dc8b861870920559a) )
+
+	ROM_REGION( 0x200000, REGION_GFX2, 0 )	/* tiles + tilemaps (together!) */
+	/* its probably actually 4 bpp layers that combine to form 1 8bpp layer */
+	ROM_LOAD16_BYTE( "rom10.9a",    0x000000, 0x80000, CRC(135ab90a) SHA1(5911923ccf579edd0bf3449945a434fbf37b51aa) )
+	ROM_LOAD16_BYTE( "rom9.9c",     0x000001, 0x80000, CRC(c9d90007) SHA1(ad457ef297797dcb9bb8dc1725fa207cd57eedfe) )
+
+	ROM_LOAD16_BYTE( "rom7.9h",     0x100000, 0x80000, CRC(b2b4c13b) SHA1(37ddc9751860a85b809782c5cec4418bca71412c) )
+	ROM_LOAD16_BYTE( "rom8.9e",     0x100001, 0x80000, CRC(66c4b00f) SHA1(ed416ec594fe065c0f169008fb8ce553813f6260) )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* OKI6295 samples */
+	ROM_LOAD( "rom4.4r",     0x00000, 0x20000, CRC(0fdee034) SHA1(739d39b04c2e860c3c193ab32b30ccc39ff1a8c2) )
+ROM_END
 
 /* The differences between the two lastday sets are only in the sound program
    and graphics. The main program is the same. */
@@ -1678,3 +1908,4 @@ GAME( 1994, primella, gundl94,  primella, primella, 0, ROT0,   "[Dooyong] (NTC l
 GAMEX(1994, superx,   0,        superx,   rshark,   0, ROT270, "NTC", "Super-X (NTC)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1994, superxm,  superx,   superx,   rshark,   0, ROT270, "Mitchell", "Super-X (Mitchell)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1995, rshark,   0,        rshark,   rshark,   0, ROT270, "Dooyong", "R-Shark", GAME_IMPERFECT_GRAPHICS )
+GAME (1996, popbingo, 0,        popbingo, popbingo, 0, ROT0,   "Dooyong", "Pop Bingo" )

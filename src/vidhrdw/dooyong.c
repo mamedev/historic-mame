@@ -6,6 +6,7 @@
 unsigned char *lastday_txvideoram;
 unsigned char *lastday_bgscroll,*lastday_fgscroll,*bluehawk_fg2scroll;
 data16_t *rshark_scroll1,*rshark_scroll2,*rshark_scroll3,*rshark_scroll4;
+data16_t *popbingo_scroll, *popbingo_scroll2;
 static int tx_pri;
 
 
@@ -255,6 +256,56 @@ static void rshark_draw_layer(struct mame_bitmap *bitmap,int gfx,data16_t *scrol
 	}
 }
 
+static void popbingo_draw_layer(struct mame_bitmap *bitmap,int gfx,data16_t *scroll,
+		const unsigned char *tilemap,int transparency)
+{
+
+	int offs;
+	int scrollx,scrolly;
+
+	scrollx = scroll[0] + (scroll[1] << 8);
+	scrolly = scroll[3] + (scroll[4] << 8);
+
+	for (offs = 0;offs < 0x100;offs += 2)
+	{
+		int sx,sy,code,color,attr,flipx,flipy;
+		int toffs = offs+((scrollx&~0x1f)>>1);
+
+		attr = tilemap[toffs];
+		code = tilemap[toffs+1] | ((attr & 0x07) << 8);
+		color = 0;
+		sx = 32 * ((offs/2) / 8) - (scrollx & 0x1f);
+		sy = (32 * ((offs/2) % 8) - scrolly) & 0xff;
+		flipx = attr & 0x40;
+		flipy = attr & 0x80;
+		if (flip_screen)
+		{
+			sx = 512-32 - sx;
+			sy = 256-32 - sy;
+			flipx = !flipx;
+			flipy = !flipy;
+		}
+
+		drawgfx(bitmap,Machine->gfx[gfx],
+				code,
+				color,
+				flipx,flipy,
+				sx,sy,
+				&Machine->visible_area,transparency,15);
+		/* wraparound */
+		if (scrolly & 0x1f)
+		{
+			drawgfx(bitmap,Machine->gfx[gfx],
+					code,
+					color,
+					flipx,flipy,
+					sx,((sy + 0x20) & 0xff) - 0x20,
+					&Machine->visible_area,transparency,15);
+		}
+	}
+
+}
+
 static void draw_tx(struct mame_bitmap *bitmap,int yoffset)
 {
 	int offs;
@@ -456,6 +507,13 @@ VIDEO_UPDATE( rshark )
 	rshark_draw_layer(bitmap,1,rshark_scroll1,memory_region(REGION_GFX2),memory_region(REGION_GFX6)+0x00000,TRANSPARENCY_PEN);
 	rshark_draw_sprites(bitmap);
 }
+
+VIDEO_UPDATE( popbingo )
+{
+	popbingo_draw_layer(bitmap,1,popbingo_scroll,memory_region(REGION_GFX2),TRANSPARENCY_PEN);
+	rshark_draw_sprites(bitmap);
+}
+
 
 VIDEO_EOF( dooyong )
 {

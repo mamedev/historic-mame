@@ -156,7 +156,7 @@ ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x018000, 0x01cfff) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x800000, 0x801fff) AM_WRITE(MWA16_RAM) AM_BASE((data16_t **)&vectorram) AM_SIZE(&vectorram_size)
 	AM_RANGE(0x840000, 0x84003f) AM_WRITE(pokey_word_w)
-	AM_RANGE(0x900000, 0x9001ff) AM_WRITE(MWA16_RAM) AM_BASE((data16_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x900000, 0x9001ff) AM_WRITE(MWA16_RAM) AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
 	AM_RANGE(0x950000, 0x95001f) AM_WRITE(quantum_colorram_w)
 	AM_RANGE(0x958000, 0x958001) AM_WRITE(led_w)
 	AM_RANGE(0x960000, 0x960001) AM_WRITE(MWA16_NOP)	/* enable NVRAM? */

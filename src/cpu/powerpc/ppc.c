@@ -260,6 +260,7 @@ INLINE UINT32 ppc_get_spr(int spr)
 			osd_die("ppc: get_spr: Unimplemented SPR %X\n", spr);
 			break;
 	}
+	return 0;
 }
 
 INLINE void ppc_set_msr(UINT32 value)
@@ -319,20 +320,16 @@ INLINE UINT8 READ8(UINT32 a)
 
 INLINE UINT16 READ16(UINT32 a)
 {
-	if( a & 0x1 ) {
+	if( a & 0x1 )
 		osd_die("ppc: Unaligned read16 %08X\n", a);
-	} else {
-		return program_read_word_32be(a);
-	}
+	return program_read_word_32be(a);
 }
 
 INLINE UINT32 READ32(UINT32 a)
 {
-	if( a & 0x3 ) {
+	if( a & 0x3 )
 		osd_die("ppc: Unaligned read32 %08X\n", a);
-	} else {
-		return program_read_dword_32be(a);
-	}
+	return program_read_dword_32be(a);
 }
 
 INLINE void WRITE8(UINT32 a, UINT8 d)

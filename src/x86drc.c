@@ -113,7 +113,7 @@ void drc_cache_reset(struct drccore *drc)
 	drc->cache_top = drc->cache_base;
 
 	/* append the core entry points to the fresh cache */
-	drc->entry_point = (void (*)(void))drc->cache_top;
+	drc->entry_point = (void (*)(void))(UINT32)drc->cache_top;
 	append_entry_point(drc);
 	drc->out_of_cycles = drc->cache_top;
 	append_out_of_cycles(drc);
@@ -390,7 +390,7 @@ void drc_append_restore_volatiles(struct drccore *drc)
 	drc_append_save_call_restore
 ------------------------------------------------------------------*/
 
-void drc_append_save_call_restore(struct drccore *drc, void *target, UINT32 stackadj)
+void drc_append_save_call_restore(struct drccore *drc, genf *target, UINT32 stackadj)
 {
 	drc_append_save_volatiles(drc);									// save volatiles
 	_call(target);													// call	target
@@ -651,7 +651,7 @@ static void recompile_code(struct drccore *drc)
 static void append_recompile(struct drccore *drc)
 {
 	_push_imm(drc);													// push	drc
-	drc_append_save_call_restore(drc, (void *)recompile_code, 4);	// call	recompile_code
+	drc_append_save_call_restore(drc, (genf *)recompile_code, 4);	// call	recompile_code
 	drc_append_dispatcher(drc);										// dispatch
 }
 

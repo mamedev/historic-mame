@@ -9,57 +9,215 @@
 #include "cpu/ccpu/ccpu.h"
 #include "cinemat.h"
 
-#define RED   0x04
-#define GREEN 0x02
-#define BLUE  0x01
-#define WHITE RED|GREEN|BLUE
 
-static UINT8 color_display;
-static int cinemat_screenh;
+/*************************************
+ *
+ *	Constants
+ *
+ *************************************/
 
-void CinemaVectorData(int fromx, int fromy, int tox, int toy, int color)
+enum
 {
-    static int lastx, lasty;
+	COLOR_BILEVEL,
+	COLOR_16LEVEL,
+	COLOR_64LEVEL,
+	COLOR_RGB,
+	COLOR_QB3
+};
 
-	fromy = cinemat_screenh - fromy;
-	toy = cinemat_screenh - toy;
 
-	if (fromx != lastx || fromx != lasty)
-		vector_add_point (fromx << 16, fromy << 16, 0, 0);
 
-    if (color_display)
-        vector_add_point (tox << 16, toy << 16, VECTOR_COLOR111(color & 0x07), color & 0x08 ? 0x80: 0x40);
-    else
-        vector_add_point (tox << 16, toy << 16, VECTOR_COLOR111(WHITE), color * 12);
+/*************************************
+ *
+ *	Local variables
+ *
+ *************************************/
 
-	lastx = tox;
-	lasty = toy;
+static int color_mode;
+static rgb_t vector_color;
+static INT16 lastx, lasty;
+static UINT8 last_control;
+
+
+
+/*************************************
+ *
+ *	Vector rendering
+ *
+ *************************************/
+
+void cinemat_vector_callback(INT16 sx, INT16 sy, INT16 ex, INT16 ey, UINT8 shift)
+{
+	int intensity = 0xff;
+	
+	/* adjust for slop */
+	sx = sx - Machine->visible_area.min_x;
+	ex = ex - Machine->visible_area.min_x;
+	sy = sy - Machine->visible_area.min_y;
+	ey = ey - Machine->visible_area.min_y;
+	
+	/* point intensity is determined by the shift value */
+	if (sx == ex && sy == ey)
+		intensity = 0x1ff * shift / 8;
+
+	/* move to the starting position if we're not there already */
+	if (sx != lastx || sy != lasty)
+		vector_add_point(sx << 16, sy << 16, 0, 0);
+	
+	/* draw the vector */
+	vector_add_point(ex << 16, ey << 16, vector_color, intensity);
+	
+	/* remember the last point */
+	lastx = ex;
+	lasty = ey;
 }
 
-PALETTE_INIT( cinemat )
+
+
+/*************************************
+ *
+ *	Vector color handling
+ *
+ *************************************/
+
+WRITE8_HANDLER(cinemat_vector_control_w)
 {
-    color_display = 0;
+	int r, g, b, i;
+
+	switch (color_mode)
+	{
+		case COLOR_BILEVEL:
+			/* color is either bright or dim, selected by the value sent to the port */
+			vector_color = (data & 1) ? MAKE_RGB(0x80,0x80,0x80) : MAKE_RGB(0xff,0xff,0xff);
+			break;
+		
+		case COLOR_16LEVEL:
+			/* on the rising edge of the data value, latch bits 0-3 of the */
+			/* X register as the intensity */
+			if (data != last_control && data)
+			{
+				int xval = cpunum_get_reg(0, CCPU_X) & 0x0f;
+				i = (xval + 1) * 255 / 16;
+				vector_color = MAKE_RGB(i,i,i);
+			}
+			break;
+		
+		case COLOR_64LEVEL:
+			/* on the rising edge of the data value, latch bits 2-7 of the */
+			/* X register as the intensity */
+			if (data != last_control && data)
+			{
+				int xval = cpunum_get_reg(0, CCPU_X);
+				xval = (~xval >> 2) & 0x3f;
+				i = (xval + 1) * 255 / 64;
+				vector_color = MAKE_RGB(i,i,i);
+			}
+			break;
+		
+		case COLOR_RGB:
+			/* on the rising edge of the data value, latch the X register */
+			/* as 4-4-4 BGR values */
+			if (data != last_control && data)
+			{
+				int xval = cpunum_get_reg(0, CCPU_X);
+				r = (~xval >> 0) & 0x0f;
+				r = r * 255 / 15;
+				g = (~xval >> 4) & 0x0f;
+				g = g * 255 / 15;
+				b = (~xval >> 8) & 0x0f;
+				b = b * 255 / 15;
+				vector_color = MAKE_RGB(r,g,b);
+			}
+			break;
+		
+		case COLOR_QB3:
+			{
+				static int lastx, lasty;
+				
+				/* on the falling edge of the data value, remember the original X,Y values */
+				/* they will be restored on the rising edge; this is to simulate the fact */
+				/* that the Rockola color hardware did not overwrite the beam X,Y position */
+				/* on an IV instruction if data == 0 here */
+				if (data != last_control && !data)
+				{
+					lastx = cpunum_get_reg(0, CCPU_X);
+					lasty = cpunum_get_reg(0, CCPU_Y);
+				}
+
+				/* on the rising edge of the data value, latch the Y register */
+				/* as 2-3-3 BGR values */
+				if (data != last_control && data)
+				{
+					int yval = cpunum_get_reg(0, CCPU_Y);
+					r = (~yval >> 0) & 0x07;
+					r = r * 255 / 7;
+					g = (~yval >> 3) & 0x07;
+					g = g * 255 / 7;
+					b = (~yval >> 6) & 0x03;
+					b = b * 255 / 3;
+					vector_color = MAKE_RGB(r,g,b);
+					
+					/* restore the original X,Y values */
+					cpunum_set_reg(0, CCPU_X, lastx);
+					cpunum_set_reg(0, CCPU_Y, lasty);
+				}
+			}
+			break;
+	}
+	
+	/* remember the last value */
+	last_control = data;
 }
 
 
-PALETTE_INIT( cinemat_color )
+
+/*************************************
+ *
+ *	Video startup
+ *
+ *************************************/
+
+VIDEO_START( cinemat_bilevel )
 {
-    color_display = 1;
-}
-
-
-/***************************************************************************
-
-  Start the video hardware emulation.
-
-***************************************************************************/
-
-VIDEO_START( cinemat )
-{
-	cinemat_screenh = Machine->visible_area.max_y - Machine->visible_area.min_y;
+	color_mode = COLOR_BILEVEL;
 	return video_start_vector();
 }
 
+
+VIDEO_START( cinemat_16level )
+{
+	color_mode = COLOR_16LEVEL;
+	return video_start_vector();
+}
+
+
+VIDEO_START( cinemat_64level )
+{
+	color_mode = COLOR_64LEVEL;
+	return video_start_vector();
+}
+
+
+VIDEO_START( cinemat_color )
+{
+	color_mode = COLOR_RGB;
+	return video_start_vector();
+}
+
+
+VIDEO_START( cinemat_qb3color )
+{
+	color_mode = COLOR_QB3;
+	return video_start_vector();
+}
+
+
+
+/*************************************
+ *
+ *	End-of-frame
+ *
+ *************************************/
 
 VIDEO_EOF( cinemat )
 {
@@ -67,11 +225,18 @@ VIDEO_EOF( cinemat )
 }
 
 
+
+/*************************************
+ *
+ *	Space War update
+ *
+ *************************************/
+
 VIDEO_UPDATE( spacewar )
 {
-	int sw_option = readinputport(1);
+	int sw_option = readinputportbytag("INPUTS");
 
-	video_update_vector(bitmap, 0);
+	video_update_vector(bitmap, cliprect);
 
 	/* set the state of the artwork */
 	artwork_show("pressed3", (~sw_option >> 0) & 1);

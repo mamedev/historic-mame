@@ -619,6 +619,10 @@ ROM_START( gladiatr )
 	ROM_LOAD( "qc2-7",        	0x18000, 0x8000, CRC(c992c4f7) SHA1(3263973474af07c8b93c4ec97924568848cb7201) ) /* plane 3 */
 	ROM_LOAD( "qc1-10",       	0x20000, 0x8000, CRC(364cdb58) SHA1(4d8548f9dfa9d105dd277c61cf3d56583a5ebbcb) ) /* planes 1,2 */
 	ROM_LOAD( "qc2-11",       	0x28000, 0x8000, CRC(c9fecfff) SHA1(7c13ace4293fbfab7fe924b7b24c498d8cefc7ac) ) /* planes 1,2 */
+
+	ROM_REGION( 0x00040, REGION_PROMS, 0 )	/* unused */
+	ROM_LOAD( "q3.2b",          0x00000, 0x0020, CRC(6a7c3c60) SHA1(5125bfeb03752c8d76b140a4e74d5cac29dcdaa6) )
+	ROM_LOAD( "q4.5s",          0x00020, 0x0020, CRC(e325808e) SHA1(5fd92ad4eff24f6ccf2df19d268a6cafba72202e) )
 ROM_END
 
 ROM_START( ogonsiro )

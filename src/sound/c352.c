@@ -68,7 +68,7 @@ static long	channel_r2[2048];
 static short	mulaw_table[256];
 static unsigned int mseq_reg;
 
-#define SAMPLE_RATE_BASE    	(88200)
+#define SAMPLE_RATE_BASE    	(42667*2)
 
 // noise generator
 static int get_mseq_bit(void)

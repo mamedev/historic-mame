@@ -39,9 +39,10 @@ static READ8_HANDLER( rom_bank_select_r )
 */
 static WRITE8_HANDLER( rom_bank_select_w )
 {
+	UINT8 *region_base = memory_region(REGION_USER1);
+
 	suprgolf_rom_bank = data;
 
-	UINT8 *region_base = memory_region(REGION_USER1);
 	printf("ROM_BANK 0x8000 - %X @%X\n",data,activecpu_get_previouspc());
 	cpu_setbank(2, region_base + (data&0x3f ) * 0x4000);
 }

@@ -1396,6 +1396,21 @@ ROM_START( sspacat2 )
 	ROM_LOAD( "316-0138.u44", 0x0000, 0x0020, CRC(67104ea9) SHA1(26b6bd2a1973b83bb9af4e3385d8cb14cb3f62f2) )
 ROM_END
 
+ROM_START( sspacat3 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "epr115.u48",   0x0000, 0x0400, CRC(9bc36d80) SHA1(519b3f810b133ac82f066851626b73460956a807) )
+	ROM_LOAD( "epr116.u47",   0x0400, 0x0400, CRC(2c2750b3) SHA1(eab297678e6ee45d6f723d8ff7e6a29086ad4c78) )
+	ROM_LOAD( "epr117.u46",   0x0800, 0x0400, CRC(fa7c2cc0) SHA1(26e4f2c8599d16f1c7ec4bfb0a5a3dc709901045) )
+	ROM_LOAD( "epr118.u45",   0x0c00, 0x0400, CRC(273884ae) SHA1(9efae4acb9ba9bdef0fb58c2a16e0092c6c1a2ba) )
+	ROM_LOAD( "epr119.u44",   0x1000, 0x0400, CRC(1b53c6de) SHA1(7d8f3f5026e7d1a3b78a54c9c1acbb50a4f02c94) )
+	ROM_LOAD( "epr120.u43",   0x1400, 0x0400, CRC(60add585) SHA1(01d78d5cbad680b8ad7eb39f53eefad148d48ee2) )
+	ROM_LOAD( "epr121.u42",   0x1800, 0x0400, CRC(0979f72b) SHA1(244e80552b905df5484bb52100b2e46859fd2cf6) )
+	ROM_LOAD( "epr122.u41",   0x1c00, 0x0400, CRC(45cb3486) SHA1(0e9d5e8dd43643588989354847483283487b9a75) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "316-0138.u44", 0x0000, 0x0020, CRC(67104ea9) SHA1(26b6bd2a1973b83bb9af4e3385d8cb14cb3f62f2) )
+ROM_END
+
 ROM_START( sspacatc )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "139.u27",      0x0000, 0x0400, CRC(9f2112fc) SHA1(89c129ef1a95c5934a7c775994aafc91911b0051) )
@@ -1946,8 +1961,9 @@ GAME( 1977, depthv1,  depthch,  depthch,  depthch,  depthch,   ROT0,   "Gremlin"
 GAME( 1977, subhunt,  depthch,  depthch,  depthch,  depthch,   ROT0,   "Taito", "Sub Hunter" )
 GAMEX(1977, safari,   0,        safari,   safari,   safari,    ROT0,   "Gremlin", "Safari", GAME_NO_SOUND )
 GAMEX(1978, frogs,    0,        2ports,   frogs,    frogs,     ROT0,   "Gremlin", "Frogs", GAME_NO_SOUND )
-GAMEX(1979, sspaceat, 0,        3ports,   sspaceat, sspaceat,  ROT270, "Sega", "Space Attack (upright)", GAME_NO_SOUND )
-GAMEX(1979, sspacat2, sspaceat, 3ports,   sspaceat, sspaceat,  ROT270, "Sega", "Space Attack (upright, older)", GAME_NO_SOUND )
+GAMEX(1979, sspaceat, 0,        3ports,   sspaceat, sspaceat,  ROT270, "Sega", "Space Attack (upright set 1)", GAME_NO_SOUND )
+GAMEX(1979, sspacat2, sspaceat, 3ports,   sspaceat, sspaceat,  ROT270, "Sega", "Space Attack (upright set 2)", GAME_NO_SOUND )
+GAMEX(1979, sspacat3, sspaceat, 3ports,   sspaceat, sspaceat,  ROT270, "Sega", "Space Attack (upright set 3)", GAME_NO_SOUND )
 GAMEX(1979, sspacatc, sspaceat, 3ports,   sspaceat, sspaceat,  ROT270, "Sega", "Space Attack (cocktail)", GAME_NO_SOUND )
 GAMEX(1979, sspacaho, 0,        4ports,   sspacaho, sspacaho,  ROT270, "Sega", "Space Attack / Head On", GAME_NO_SOUND )
 GAMEX(1979, headon,   0,        2ports,   headon,   headon,    ROT0,   "Gremlin", "Head On (2 players)", GAME_NO_SOUND )

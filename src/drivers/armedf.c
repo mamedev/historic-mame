@@ -1114,6 +1114,40 @@ ROM_START( cclimbr2 )
 	ROM_LOAD( "9.bin",  0x0000, 0x4000, CRC(740d260f) SHA1(5b4487930c7a1fb0a796aec2243bec631b1b5104) )
 ROM_END
 
+ROM_START( cclmbr2a )
+	ROM_REGION( 0x60000, REGION_CPU1, 0 )	/* 64K*8 for 68000 code */
+	ROM_LOAD16_BYTE( "4a.bin", 0x00000, 0x10000, CRC(e1d3192c) SHA1(6e0e6d731af401147f3c2566ddef3e169223eccd) )
+	ROM_LOAD16_BYTE( "1a.bin", 0x00001, 0x10000, CRC(3ef84974) SHA1(04a6a2ac5b95d0a329ad7afc68b0ef480608c2d4) )
+	ROM_LOAD16_BYTE( "6.bin",  0x20000, 0x10000, CRC(7905c992) SHA1(5e3ddb3b8127476b763578c3717ffe85aa6b342a) )
+	ROM_LOAD16_BYTE( "5.bin",  0x20001, 0x10000, CRC(47be6c1e) SHA1(cbd928458087199e63020956c5b61925c3f055f4) )
+	ROM_LOAD16_BYTE( "3.bin",  0x40000, 0x10000, CRC(1fb110d6) SHA1(a478096b4b075ff655d079e43151d6b8375f0caa) )
+	ROM_LOAD16_BYTE( "2.bin",  0x40001, 0x10000, CRC(0024c15b) SHA1(0cd69a24139e878c09d4de37e4d102851765168f) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Z80 code (sound) */
+	ROM_LOAD( "11.bin", 0x00000, 0x04000, CRC(fe0175be) SHA1(5c50fa07d8fa61d58a825bbc2cc5a7b85ff3e42e) )
+	ROM_LOAD( "12.bin", 0x04000, 0x08000, CRC(5ddf18f2) SHA1(b66da5ad400d00b07160986e4841a309a3572bd1) )
+
+	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "10.bin", 0x00000, 0x08000, CRC(7f475266) SHA1(73d544731fcfd7266bca451880120c555d19ea5d) ) /* characters */
+
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "7.bin",  0x00000, 0x10000, CRC(cbdd3906) SHA1(0525599a5981f1e25ec6faf008e547da7a9ee2cb) ) /* foreground tiles */
+	ROM_LOAD( "8.bin",  0x10000, 0x10000, CRC(b2a613c0) SHA1(1d92b85a0dd4b7e533677c454ec23359867defda) )
+
+	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "17.bin", 0x00000, 0x10000, CRC(e24bb2d7) SHA1(8f4b8410b77a50ae735d72f2f37e63784ebc10d9) ) /* background tiles */
+	ROM_LOAD( "18.bin", 0x10000, 0x10000, CRC(56834554) SHA1(6d579c32fb57eb4eddc062cb2cc78b546f6607b2) )
+
+	ROM_REGION( 0x40000, REGION_GFX4, ROMREGION_DISPOSE )
+	ROM_LOAD( "15.bin", 0x00000, 0x10000, CRC(4bf838be) SHA1(6b1d7448caf406e47268a1276225bb0619b80cc9) ) /* sprites */
+	ROM_LOAD( "16.bin", 0x10000, 0x10000, CRC(21a265c5) SHA1(a2b3a1e5aa545030d933c0f058f4f9a18e1af1c9) )
+	ROM_LOAD( "13.bin", 0x20000, 0x10000, CRC(6b6ec999) SHA1(7749ce435f497732bd1b6958974cd95e960fc9fe) )
+	ROM_LOAD( "14.bin", 0x30000, 0x10000, CRC(f426a4ad) SHA1(facccb21ca73c560d3a38e05e677782516d5b0c0) )
+
+	ROM_REGION( 0x4000, REGION_GFX5, 0 )	/* data for mcu/blitter */
+	ROM_LOAD( "9.bin",  0x0000, 0x4000, CRC(740d260f) SHA1(5b4487930c7a1fb0a796aec2243bec631b1b5104) )
+ROM_END
+
 ROM_START( armedf )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 )	/* 68000 code */
 	ROM_LOAD16_BYTE( "af_06.rom", 0x00000, 0x10000, CRC(c5326603) SHA1(135a8d96d792cf9b55e39e21160ee419be76d28a) )
@@ -1192,10 +1226,11 @@ DRIVER_INIT( cclimbr2 )
 
 
 /*     YEAR, NAME,   PARENT,   MACHINE,  INPUT,    INIT,     MONITOR, COMPANY,     FULLNAME, FLAGS */
-GAMEX( 1987, legion,   0,      cclimbr2, legion,   legion,   ROT270, "Nichibutsu", "Legion (ver 2.03)",  GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
-GAMEX( 1987, legiono,  legion, cclimbr2, legion,   legiono,  ROT270, "Nichibutsu", "Legion (ver 1.05)",  GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
-GAMEX( 1987, terraf,   0,      terraf,   terraf,   terraf,   ROT0,   "Nichibutsu", "Terra Force",  GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
-GAMEX( 1987, terrafu,  terraf, terraf,   terraf,   terraf,   ROT0,   "Nichibutsu USA", "Terra Force (US)",  GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
-GAMEX( 1987, kodure,   0,      kodure,   kodure,   kodure,   ROT0,   "Nichibutsu", "Kodure Ookami (Japan)",  GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
-GAME( 1988, cclimbr2, 0,      cclimbr2, cclimbr2, cclimbr2, ROT0,   "Nichibutsu", "Crazy Climber 2 (Japan)")
-GAME( 1988, armedf,   0,      armedf,   armedf,   armedf,   ROT270, "Nichibutsu", "Armed Formation")
+GAMEX( 1987, legion,   0,        cclimbr2, legion,   legion,   ROT270, "Nichibutsu", "Legion (ver 2.03)",  GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
+GAMEX( 1987, legiono,  legion,   cclimbr2, legion,   legiono,  ROT270, "Nichibutsu", "Legion (ver 1.05)",  GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
+GAMEX( 1987, terraf,   0,        terraf,   terraf,   terraf,   ROT0,   "Nichibutsu", "Terra Force",  GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
+GAMEX( 1987, terrafu,  terraf,   terraf,   terraf,   terraf,   ROT0,   "Nichibutsu USA", "Terra Force (US)",  GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
+GAMEX( 1987, kodure,   0,        kodure,   kodure,   kodure,   ROT0,   "Nichibutsu", "Kodure Ookami (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
+GAME(  1988, cclimbr2, 0,        cclimbr2, cclimbr2, cclimbr2, ROT0,   "Nichibutsu", "Crazy Climber 2 (Japan)")
+GAME(  1988, cclmbr2a, cclimbr2, cclimbr2, cclimbr2, cclimbr2, ROT0,   "Nichibutsu", "Crazy Climber 2 (Japan Harder)")
+GAME(  1988, armedf,   0,        armedf,   armedf,   armedf,   ROT270, "Nichibutsu", "Armed Formation")

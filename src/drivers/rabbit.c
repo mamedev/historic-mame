@@ -98,7 +98,7 @@ static data32_t *rabbit_blitterregs;
 static struct mame_bitmap *rabbit_sprite_bitmap;
 struct rectangle rabbit_sprite_clip;
 
-static int rabbit_vblirqlevel, rabbit_bltirqlevel;
+static int rabbit_vblirqlevel, rabbit_bltirqlevel, rabbit_banking;
 
 data32_t *rabbit_tilemap_ram[4];
 
@@ -116,22 +116,21 @@ INLINE void get_rabbit_tilemap_info(int whichtilemap, int tilesize, int tile_ind
 	colour =  (rabbit_tilemap_ram[whichtilemap][tile_index]>>20)&0xff;
 	flipxy =  (rabbit_tilemap_ram[whichtilemap][tile_index]>>29)&3;
 
-	/* only right for rabbit .. */
-	switch (bank)
+	if(rabbit_banking)
 	{
-		case 0x8:
-			tileno+=0x10000;
-			break;
+		switch (bank)
+		{
+			case 0x8:
+				tileno += 0x10000;
+				break;
 
-		case 0x0:
-			tileno+=0x00000;
-			break;
-
-		default:
-			tileno+=0x20000;
-			break;
-
+			case 0xc:
+				tileno += 0x20000;
+				break;
+		}
 	}
+	else
+		tileno += (bank << 16);
 
 	if (depth)
 	{
@@ -725,15 +724,15 @@ WRITE32_HANDLER( rabbit_eeprom_write )
 	// (in particular, data & 0x100 here with mask = ffff00ff looks to be the watchdog)
 	if (mem_mask == 0x00ffffff)
 	{
-	// latch the bit
+		// latch the bit
 		EEPROM_write_bit(data & 0x01000000);
 
-	// reset line asserted: reset.
-	EEPROM_set_cs_line((data & 0x04000000) ? CLEAR_LINE : ASSERT_LINE );
+		// reset line asserted: reset.
+		EEPROM_set_cs_line((data & 0x04000000) ? CLEAR_LINE : ASSERT_LINE );
 
-	// clock line asserted: write latch or select next bit to read
-	EEPROM_set_clock_line((data & 0x02000000) ? ASSERT_LINE : CLEAR_LINE );
-}
+		// clock line asserted: write latch or select next bit to read
+		EEPROM_set_clock_line((data & 0x02000000) ? ASSERT_LINE : CLEAR_LINE );
+	}
 }
 
 static ADDRESS_MAP_START( rabbit_writemem, ADDRESS_SPACE_PROGRAM, 32 )
@@ -768,7 +767,7 @@ static ADDRESS_MAP_START( rabbit_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA32_RAM)
 ADDRESS_MAP_END
 
-/* tmmjprd has a different memory map? */
+/* tmmjprd has a different memory map */
 
 static ADDRESS_MAP_START( tmmjprd_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x000000, 0x1fffff) AM_READ(MRA32_ROM)
@@ -799,15 +798,13 @@ static WRITE32_HANDLER( tmmjprd_paletteram_dword_w )
 
 static ADDRESS_MAP_START( tmmjprd_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x000000, 0x1fffff) AM_WRITE(MWA32_ROM)
-	AM_RANGE(0x200160, 0x200177) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_tilemap_regs[3] ) // tilemap regs4
-
 /* check these are used .. */
-
 //	AM_RANGE(0x200010, 0x200013) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_viewregs0 )
-//	AM_RANGE(0x200100, 0x200117) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_tilemap_regs[0] ) // tilemap regs1
-//	AM_RANGE(0x200120, 0x200137) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_tilemap_regs[1] ) // tilemap regs2
-//	AM_RANGE(0x200140, 0x200157) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_tilemap_regs[2] ) // tilemap regs3
-//	AM_RANGE(0x200200, 0x20021b) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_spriteregs ) // sprregs?
+	AM_RANGE(0x200100, 0x200117) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_tilemap_regs[0] ) // tilemap regs1
+	AM_RANGE(0x200120, 0x200137) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_tilemap_regs[1] ) // tilemap regs2
+	AM_RANGE(0x200140, 0x200157) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_tilemap_regs[2] ) // tilemap regs3
+	AM_RANGE(0x200160, 0x200177) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_tilemap_regs[3] ) // tilemap regs4
+	AM_RANGE(0x200200, 0x20021b) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_spriteregs ) // sprregs?
 //	AM_RANGE(0x200300, 0x200303) AM_WRITE(rabbit_rombank_w) // used during rom testing, rombank/area select + something else?
 //	AM_RANGE(0x200400, 0x200413) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_viewregs6 ) // some global controls? (brightness etc.?)
 //	AM_RANGE(0x200500, 0x200503) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_viewregs7 )
@@ -817,10 +814,6 @@ static ADDRESS_MAP_START( tmmjprd_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	/* hmm */
 //	AM_RANGE(0x279700, 0x279713) AM_WRITE(MWA32_RAM) AM_BASE( &rabbit_viewregs10 )
 	/* tilemaps */
-
-
-
-
 	AM_RANGE(0x280000, 0x283fff) AM_WRITE(rabbit_tilemap0_w)
 	AM_RANGE(0x284000, 0x287fff) AM_WRITE(rabbit_tilemap1_w)
 	AM_RANGE(0x288000, 0x28bfff) AM_WRITE(rabbit_tilemap2_w)
@@ -832,12 +825,9 @@ static ADDRESS_MAP_START( tmmjprd_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0xf00000, 0xffffff) AM_WRITE(MWA32_RAM)
 ADDRESS_MAP_END
 
-/* bit 1 is unlabeled in input test, with Hazes old eeprom random# hookup this would be stuck on
-with hazes attempt at proper eeprom hookup this would freeze the game during startup if left on.
-with Arbee's working eeprom hookup this is stuck off */
 INPUT_PORTS_START( rabbit )
 	PORT_START	/* 16bit */
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN ) // unlabeled in test mode eeprom related?
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_SPECIAL ) // Eeprom
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN ) // unlabeled in input test
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_START2 )
@@ -854,6 +844,59 @@ INPUT_PORTS_START( rabbit )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(1)
 
+	PORT_START	/* 16bit */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(2)
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( tmmjprd )
+	PORT_START	/* 16bit */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN ) // unlabeled in input test
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_SERVICE( 0x0020, IP_ACTIVE_LOW )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_SPECIAL )  // Eeprom
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(1)
 
 	PORT_START	/* 16bit */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
@@ -986,17 +1029,15 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	/* this seems to be sprites */
 	{ REGION_USER1, 0, &rabbit_sprite_8x8x4_layout,   0x0, 0x1000  },
-	{ REGION_USER1, 0, &rabbit_sprite_16x16x4_layout,   0x0, 0x1000  },
+	{ REGION_USER1, 0, &rabbit_sprite_16x16x4_layout, 0x0, 0x1000  },
 	{ REGION_USER1, 0, &rabbit_sprite_8x8x8_layout,   0x0, 0x1000  }, // wrong
-	{ REGION_USER1, 0, &rabbit_sprite_16x16x8_layout,   0x0, 0x1000  }, // wrong
+	{ REGION_USER1, 0, &rabbit_sprite_16x16x8_layout, 0x0, 0x1000  }, // wrong
 
 	/* this seems to be backgrounds and tilemap gfx */
 	{ REGION_USER2, 0, &rabbit_8x8x4_layout,   0x0, 0x1000  },
-	{ REGION_USER2, 0, &rabbit_16x16x4_layout,   0x0, 0x1000  },
+	{ REGION_USER2, 0, &rabbit_16x16x4_layout, 0x0, 0x1000  },
 	{ REGION_USER2, 0, &rabbit_8x8x8_layout,   0x0, 0x1000  },
-	{ REGION_USER2, 0, &rabbit_16x16x8_layout,   0x0, 0x1000  },
-//	{ REGION_USER2, 0, &rabbit_32x32x8_layout,   0x0, 0x1000  },
-
+	{ REGION_USER2, 0, &rabbit_16x16x8_layout, 0x0, 0x1000  },
 
 	{ -1 } /* end of array */
 };
@@ -1068,17 +1109,17 @@ static void get_tmmjprd_tilemap0_tile_info(int tile_index)
 
 static void get_tmmjprd_tilemap1_tile_info(int tile_index)
 {
-	get_rabbit_tilemap_info(1,1,tile_index);
+	get_rabbit_tilemap_info(1,0,tile_index);
 }
 
 static void get_tmmjprd_tilemap2_tile_info(int tile_index)
 {
-	get_rabbit_tilemap_info(2,1,tile_index);
+	get_rabbit_tilemap_info(2,0,tile_index);
 }
 
 static void get_tmmjprd_tilemap3_tile_info(int tile_index)
 {
-	get_rabbit_tilemap_info(3,1,tile_index);
+	get_rabbit_tilemap_info(3,0,tile_index);
 }
 
 VIDEO_START(tmmjprd)
@@ -1096,10 +1137,10 @@ VIDEO_START(tmmjprd)
 	memset(rabbit_tilemap_ram[2], 0, 0x20000);
 	memset(rabbit_tilemap_ram[3], 0, 0x20000);
 
-	rabbit_tilemap[0] = tilemap_create(get_tmmjprd_tilemap0_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT ,     8, 8, 64,64);
-	rabbit_tilemap[1] = tilemap_create(get_tmmjprd_tilemap1_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT ,     16, 16, 64,64);
-	rabbit_tilemap[2] = tilemap_create(get_tmmjprd_tilemap2_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT ,     16, 16, 64,64);
-	rabbit_tilemap[3] = tilemap_create(get_tmmjprd_tilemap3_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT ,     16, 16, 64,64);
+	rabbit_tilemap[0] = tilemap_create(get_tmmjprd_tilemap0_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT ,     8, 8, 64, 64);
+	rabbit_tilemap[1] = tilemap_create(get_tmmjprd_tilemap1_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT ,     16, 16, 64, 64);
+	rabbit_tilemap[2] = tilemap_create(get_tmmjprd_tilemap2_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT ,     16, 16, 64, 64);
+	rabbit_tilemap[3] = tilemap_create(get_tmmjprd_tilemap3_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT ,     16, 16, 64, 64);
 	tilemap_set_transparent_pen(rabbit_tilemap[0],0x0);
 	tilemap_set_transparent_pen(rabbit_tilemap[1],0x0);
 	tilemap_set_transparent_pen(rabbit_tilemap[2],0x0);
@@ -1116,11 +1157,30 @@ VIDEO_START(tmmjprd)
 
 VIDEO_UPDATE( tmmjprd )
 {
+	tilemap_set_scrolly(rabbit_tilemap[3], 0, rabbit_tilemap_regs[3][2] >> 20);
+	tilemap_set_scrolly(rabbit_tilemap[2], 0, rabbit_tilemap_regs[2][2] >> 20);
+	tilemap_set_scrolly(rabbit_tilemap[1], 0, rabbit_tilemap_regs[1][2] >> 20);
+	tilemap_set_scrolly(rabbit_tilemap[0], 0, rabbit_tilemap_regs[0][2] >> 20);
+
+//	usrintf_showmessage("%08x %08x", rabbit_viewregs0[0], rabbit_viewregs0[1]);
+//	usrintf_showmessage("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[0][0],rabbit_tilemap_regs[0][1],rabbit_tilemap_regs[0][2],rabbit_tilemap_regs[0][3],rabbit_tilemap_regs[0][4],rabbit_tilemap_regs[0][5]);
+//	usrintf_showmessage("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[1][0],rabbit_tilemap_regs[1][1],rabbit_tilemap_regs[1][2],rabbit_tilemap_regs[1][3],rabbit_tilemap_regs[1][4],rabbit_tilemap_regs[1][5]);
+//	usrintf_showmessage("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[2][0],rabbit_tilemap_regs[2][1],rabbit_tilemap_regs[2][2],rabbit_tilemap_regs[2][3],rabbit_tilemap_regs[2][4],rabbit_tilemap_regs[2][5]);
+//	usrintf_showmessage("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[3][0],rabbit_tilemap_regs[3][1],rabbit_tilemap_regs[3][2],rabbit_tilemap_regs[3][3],rabbit_tilemap_regs[3][4],rabbit_tilemap_regs[3][5]);
+//	usrintf_showmessage("%08x %08x %08x %08x %08x %08x %08x", rabbit_spriteregs[0],rabbit_spriteregs[1],rabbit_spriteregs[2],rabbit_spriteregs[3],rabbit_spriteregs[4],rabbit_spriteregs[5], rabbit_spriteregs[6]);
+//	usrintf_showmessage("%08x %08x %08x %08x %08x", rabbit_viewregs6[0],rabbit_viewregs6[1],rabbit_viewregs6[2],rabbit_viewregs6[3],rabbit_viewregs6[4]);
+//	usrintf_showmessage("%08x", rabbit_viewregs7[0]);
+//	usrintf_showmessage("%08x %08x %08x %08x", rabbit_blitterregs[0],rabbit_blitterregs[1],rabbit_blitterregs[2],rabbit_blitterregs[3]);
+//	usrintf_showmessage("%08x %08x %08x %08x", rabbit_viewregs9[0],rabbit_viewregs9[1],rabbit_viewregs9[2],rabbit_viewregs9[3]);
+
+//	usrintf_showmessage("%08x %08x %08x %08x %08x", rabbit_viewregs10[0],rabbit_viewregs10[1],rabbit_viewregs10[2],rabbit_viewregs10[3],rabbit_viewregs10[4]);
+
 	fillbitmap(bitmap,get_black_pen(),cliprect);
 	tilemap_draw(bitmap,cliprect,rabbit_tilemap[3],0,0);
+	tilemap_draw(bitmap,cliprect,rabbit_tilemap[1],0,0); //same as 3?
 	tilemap_draw(bitmap,cliprect,rabbit_tilemap[2],0,0);
-	tilemap_draw(bitmap,cliprect,rabbit_tilemap[1],0,0);
 	tilemap_draw(bitmap,cliprect,rabbit_tilemap[0],0,0);
+
 }
 
 static INTERRUPT_GEN( tmmjprd_interrupt )
@@ -1154,6 +1214,7 @@ DRIVER_INIT( rabbit_common )
 DRIVER_INIT(rabbit)
 {
 	init_rabbit_common();
+	rabbit_banking = 1;
 	rabbit_vblirqlevel = 6;
 	rabbit_bltirqlevel = 4;
 	/* 5 and 1 are also valid and might be raster related */
@@ -1162,6 +1223,7 @@ DRIVER_INIT(rabbit)
 DRIVER_INIT(tmmjprd)
 {
 	init_rabbit_common();
+	rabbit_banking = 0;
 	rabbit_vblirqlevel = 5;
 	rabbit_bltirqlevel = 3; // actually palette related?
 	/* other irqs aren't valid */
@@ -1235,5 +1297,5 @@ ROM_START( tmmjprd )
 ROM_END
 
 
-GAMEX( 1997, rabbit,  0, rabbit,  rabbit, rabbit,  ROT0, "Electronic Arts / Aorn", "Rabbit", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND ) // somewhat playable
-GAMEX( 1997, tmmjprd, 0, tmmjprd, rabbit, tmmjprd, ROT0, "Media / Sonnet", "Tokimeki Mahjong Paradise - Dear My Love", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1997, rabbit,  0, rabbit,  rabbit,  rabbit,  ROT0, "Electronic Arts / Aorn", "Rabbit", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND ) // somewhat playable
+GAMEX( 1997, tmmjprd, 0, tmmjprd, tmmjprd, tmmjprd, ROT0, "Media / Sonnet", "Tokimeki Mahjong Paradise - Dear My Love", GAME_NOT_WORKING | GAME_NO_SOUND )

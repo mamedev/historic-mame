@@ -13,6 +13,141 @@
   hardware is easier to work with this way)
 
 
+
+Title Fight (Export Revision)
+Sega, 1992
+
+This game runs on Sega System Multi32 hardware.
+
+PCB Layout
+----------
+837-8676  171-6253C (C) SEGA 1992
+834-9324-02 (STICKER)
+|-------------------------------------------------------------------------------------------|
+|             CNF                                     CNH                          8464     |
+|8464   HM53461ZP-12 (x16)      |-----------|    HM53461ZP-12 (x16)                8464     |
+|8464                           | SEGA      |                                      8464     |
+|8464                           | 315-5386A |                                      8464     |
+|8464                           |           |                                               |
+|                               |           |                                               |
+|                               |           |                                               |
+|   |---------|  |---------|    |-----------|                    |---------|  |---------|   |
+|   |SEGA     |  |SEGA     |                                     |SEGA     |  |SEGA     |   |
+|   |315-5388 |  |315-5387 |  HM53461ZP-12 (x8)                  |315-5388 |  |315-5242 |   |
+|   |         |  |         |                                     |         |  |         |   |
+|   |         |  |         |                                     |         |  |         |   |
+|   |---------|  |---------|                                     |---------|  |---------|   |
+|             CND                                     CNE                                   |
+| |---------| MB3771 MB3771                      315-5596              |-------| M5M5278P-25|
+| |SEGA     |                                                          |SEGA   |            |
+| |315-5242 |      8464                                                |315-   | M5M5278P-25|
+| |         |BAT_3.3V                                                  |5591   |            |
+| |         |BAT_5.5V                     |---------|                  |-------| M5M5278P-25|
+| |---------|         Z80    50MHz        |SEGA     |     |-----------|                 DSW1|
+|                            32MHz        |315-5385 |     |NEC        |          M5M5278P-25|
+| |------|                                |         |     |D70632R-20 |                 SW4 |
+| |SEGA  |                   |-------|    |         |     |9314X9 V70 |    40MHz        SW3 |
+| |315-  |                   |SEGA   |    |---------|     |(C)NEC 1986|                     |
+| |5560  | YM3438            |315-   |                    |           |                     |
+| |------| LC78820           |5296   |                    |-----------|              93C45  |
+|TDA1518                     |-------|                                   |-------|          |
+|                                       SW1    SW2                       |SEGA   |       CNM|
+|  VOL                                                                   |315-   |          |
+|                                                                        |5296   |          |
+| UPC844 UPC4064                                                         |-------|          |
+|                                                                                           |
+|CNC                                                      LED                               |
+--|            JAMMA             |----|     CNJ      |----|            JAMMA             |--|
+  |------------------------------|    |--------------|    |------------------------------|
+Notes:
+      V70 CPU running at 20.00MHz [40/2]
+      Z80 CPU running at 8.000MHz [32/4]
+      YM3438 running at 8.000MHz [32/4]
+      315-5560 running at 8.000MHz [32/4]
+      CND/E/F/H: Multi-pin connectors for connection of ROM Board
+      CNC      : 4 pin connector for 2nd Speaker for Stereo Output
+      CNJ      : 32 pin connector (purpose unknown)
+      CNM      : 30 pin connector (purpose unknown)
+      SW1      : push-button TEST switch
+      SW2      : push button SERVICE switch
+      SW3/4    : push button switches (purpose unknown)
+      DSW1     : 4-position DIP Switch
+
+      SEGA Custom ICs:
+                      315-5596  Lattice GAL16V8A (DIP20)
+                      315-5386A (QFP184)
+                      315-5388  (x2, QFP160)
+                      315-5387  (QFP160)
+                      315-5242  (x2, custom ceramic DIP32 containing a small QFP IC and some capacitors/resistors etc)
+                      315-5296  (x2, QFP100)
+                      315-5560  (QFP80)
+                      315-5385  (QFP128)
+                      315-5591  (QFP100)
+
+
+ROM Board
+---------
+837-8890
+|-------------------------------------------------------------------------------------------|
+|             CN3                                     CN4                                   |
+|                                                                                           |
+|             IC3                          IC14            IC15              IC10           |
+| IC1   IC2                   JP1-5                                                         |
+|                                                                                           |
+|             IC11            JP6-10       IC22            IC23              IC18           |
+|                                                                                           |
+|                                                                                           |
+|                                          IC36            IC37                             |
+|             315-5598                                                       IC38           |
+|                  CN5                                                                      |
+| IC30  IC31                               IC39            IC40                             |
+|                                                                CN6         IC41           |
+|JP11-16      CN1                                     CN2                                   |
+|-------------------------------------------------------------------------------------------|
+
+Notes:
+CN1/2/3/4 : Multi-pin connectors (below PCB) for connection of ROM Board to Main Board
+CN5       : Custom Sega connector for connection of protection daughterboard (not used)
+CN6       : Custom Sega connector (purpose unknown)
+315-5598  : Lattice GAL16V8A (DIP20)
+
+Jumpers: (to configure ROM sizes used on Title Fight. Other games may vary depending on ROM types used.)
+JP1: 1-2
+JP2: 1-2
+JP3: 2-3
+JP4: 2-3
+JP5: 2-3
+JP6: 1-2
+JP7: 2-3
+JP8: 2-3
+JP9: 1-2
+JP10: 1-2
+JP11: OPEN
+JP12: OPEN
+JP13: OPEN
+JP14: OPEN
+JP15: 1-2
+JP16: 2-3
+
+ROM Locations (All known System Multi32 games shown for reference)
+-------------
+PCB Label     CPU P0    CPU P1    CPU D0    CPU D1    SOUND     SCR0      SCR1      OBJ0      OBJ1      OBJ2      OBJ3      OBJ4      OBJ5      OBJ6      OBJ7      PCM D0    PCM D1    PCM EP/S
+IC#           IC37      IC40      IC36      IC39      IC31      IC3       IC11      IC14      IC22      IC15      IC23      IC10      IC18      IC38      IC41      IC1       IC2       IC30
+
+IC Type       27C2048   27C2048   -         -         27C1000   8316200   8316200   8316200   8316200   8316200   8316200   8316200   8316200   8316200   8316200   8316200   -         -
+Title Fight   EPR15388  EPR15389  -         -         EPR15384  MPR15381  MPR15382  MPR15379  MPR15380  MPR15375  MPR15376  MPR15371  MPR15372  MPR15373  MPR15374  MPR15385  -         -
+
+IC Type       27C1024   27C1024   27C4200   27C4200   27C040    8316200   8316200   8316200   8316200   8316200   8316200   8316200   8316200   8316200   8316200   8316200   8316200   -
+OutRunners    EPR15618  EPR15619  EPR15538  EPR15539  EPR15550  MPR15548  MPR15549  MPR15540  MPR15541  MPR15542  MPR15543  MPR15544  MPR15545  MPR15546  MPR15547  MPR15551  MPR15552  -
+
+IC Type       27C2048   27C2048   -         -         27C1000   534200    534200    8316200   8316200   8316200   8316200   8316200   8316200   8316200   8316200   8316200   8316200   -
+Hard Dunk     EPR16512  EPR16509  -         -         EPR16505  MPR16503  MPR16504  MPR16495  MPR16496  MPR16497  MPR16498  MPR16499  MPR16500  MPR16501  MPR16502  MPR16506  MPR16507  -
+Hard Dunk (J) EPR16508  EPR16509  -         -         EPR16505  MPR16503  MPR16504  MPR16495  MPR16496  MPR16497  MPR16498  MPR16499  MPR16500  MPR16501  MPR16502  MPR16506  MPR16507  -
+
+IC Type       27C2048   27C2048   27C4200   27C4200   27C1000   27C160    27C160    27C160    27C160    27C160    27C160    27C160    27C160    27C160    27C160    27C160    27C160    -
+Stadium Cross EPR15093  EPR15094  EPR15018  EPR15019  EPR15192  EPR15020  EPR15021  EPR15022  EPR15023  EPR15024  EPR15025  EPR15026  EPR15027  EPR15028  EPR15029  EPR15031  EPR15032  -
+
+
 */
 
 #include "driver.h"
@@ -869,30 +1004,81 @@ INPUT_PORTS_START( titlef )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* EEPROM data */
 
 	PORT_START	// 0xc00000 - port 1
-	SYSTEM32_PLAYER_INPUTS(1, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN        ) PORT_PLAYER(1)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN        ) PORT_PLAYER(1)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN        ) PORT_PLAYER(1)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN        ) PORT_PLAYER(1)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN  ) PORT_PLAYER(1)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP    ) PORT_PLAYER(1)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT ) PORT_PLAYER(1)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT  ) PORT_PLAYER(1)
 
 	PORT_START	// 0xc00002 - port 2
-	SYSTEM32_PLAYER_INPUTS(2, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN        ) PORT_PLAYER(1)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN        ) PORT_PLAYER(1)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN        ) PORT_PLAYER(1)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN        ) PORT_PLAYER(1)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN  ) PORT_PLAYER(1)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP    ) PORT_PLAYER(1)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT ) PORT_PLAYER(1)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT  ) PORT_PLAYER(1)
 
 	PORT_START	// 0xc00008 - port 3
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME(DEF_STR( Test )) PORT_CODE(KEYCODE_F2)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	// 0xc00060 - port 4
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
 	PORT_START	// 0xc00062 - port 5
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
 	PORT_START	// 0xc00064 - port 6
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START	// port 7
+	PORT_START	// port 8
+	PORT_START	// port 9
+	PORT_START	// port A
+	PORT_START	// port B
+
+	PORT_START	// port C
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN        ) PORT_PLAYER(2)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN        ) PORT_PLAYER(2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN        ) PORT_PLAYER(2)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN        ) PORT_PLAYER(2)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN  ) PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP    ) PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT ) PORT_PLAYER(2)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT  ) PORT_PLAYER(2)
+
+	PORT_START	// port D
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN        ) PORT_PLAYER(2)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN        ) PORT_PLAYER(2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN        ) PORT_PLAYER(2)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN        ) PORT_PLAYER(2)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN  ) PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP    ) PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT ) PORT_PLAYER(2)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT  ) PORT_PLAYER(2)
+
+	PORT_START	// port E
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Test1") PORT_CODE(KEYCODE_F2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START4 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// port F
+	PORT_DIPNAME( 0x03, 0x01, "Monitors" )
+	PORT_DIPSETTING(    0x01, "A only" )
+	PORT_DIPSETTING(    0x03, "A and B" )
+	PORT_DIPSETTING(    0x02, "B only" )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( harddunk )
 	PORT_START	// 0xc0000a - port 0
@@ -1144,31 +1330,62 @@ ROM_END
 
 ROM_START( titlef )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* v60 code */
-	ROM_LOAD32_WORD( "tf-15386.rom", 0x000000, 0x40000, CRC(7ceaf15d) SHA1(0295ac248e5814fbe7caecb346ccbcaf8abf67dc) )
+	ROM_LOAD32_WORD( "epr15388.37", 0x000000, 0x40000, CRC(db1eefbd) SHA1(7059a1d5c9364d836c1d922071a108cbde661e0a) )
 	ROM_RELOAD(                      0x080000, 0x040000 )
-	ROM_LOAD32_WORD( "tf-15387.rom", 0x000002, 0x40000, CRC(aaf3cb03) SHA1(2956ee95b038fd08933174e16f84617c043034c3) )
+	ROM_LOAD32_WORD( "epr15389.40", 0x000002, 0x40000, CRC(da9f60a3) SHA1(87a7bea04e51e3c241871e83ff7322c6a07bd106) )
 	ROM_RELOAD(                      0x080002, 0x040000 )
 
 	ROM_REGION( 0x30000, REGION_CPU2, 0 ) /* sound CPU */
-	ROM_LOAD("tf-15384.rom", 0x00000, 0x20000, CRC(0f7d208d) SHA1(5425120480f813210fae28951e8bfd5acb08ca53) )
+	ROM_LOAD("epr15384.31", 0x00000, 0x20000, CRC(0f7d208d) SHA1(5425120480f813210fae28951e8bfd5acb08ca53) )
 	ROM_RELOAD(              0x10000, 0x20000             )
 
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
-	ROM_LOAD16_BYTE( "tf-15381.rom", 0x000000, 0x200000, CRC(162cc4d6) SHA1(2369d3d76ab5ef8f033aa45530ab957f0e5ff028) )
-	ROM_LOAD16_BYTE( "tf-15382.rom", 0x000001, 0x200000, CRC(fd03a130) SHA1(040c36383ef5d8298af714958cd5b0a4c7556ae7) )
+	ROM_LOAD16_BYTE( "mpr15381.3", 0x000000, 0x200000, CRC(162cc4d6) SHA1(2369d3d76ab5ef8f033aa45530ab957f0e5ff028) )
+	ROM_LOAD16_BYTE( "mpr15382.11", 0x000001, 0x200000, CRC(fd03a130) SHA1(040c36383ef5d8298af714958cd5b0a4c7556ae7) )
 
 	ROM_REGION( 0x1000000, REGION_GFX2, 0 ) /* sprites */
-	ROMX_LOAD( "tf-15379.rom", 0x000000, 0x200000, CRC(e5c74b11) SHA1(67e4460efe5dcd88ffc12024b255efc843e6a8b5) , ROM_SKIP(6)|ROM_GROUPWORD )
-	ROMX_LOAD( "tf-15375.rom", 0x000002, 0x200000, CRC(046a9b50) SHA1(2b4c53f2a0264835cb7197daa9b3461c212541e8) , ROM_SKIP(6)|ROM_GROUPWORD )
-	ROMX_LOAD( "tf-15371.rom", 0x000004, 0x200000, CRC(999046c6) SHA1(37ce4e8aaf537b5366eacabaf36e4477b5624121) , ROM_SKIP(6)|ROM_GROUPWORD )
-	ROMX_LOAD( "tf-15373.rom", 0x000006, 0x200000, CRC(9b3294d9) SHA1(19542f14ce09753385a44098dfd1aaf331e7af0e) , ROM_SKIP(6)|ROM_GROUPWORD )
-	ROMX_LOAD( "tf-15380.rom", 0x800000, 0x200000, CRC(6ea0e58d) SHA1(1c4b761522157b0b9d086181ba6f6994879d8fdf) , ROM_SKIP(6)|ROM_GROUPWORD )
-	ROMX_LOAD( "tf-15376.rom", 0x800002, 0x200000, CRC(de3e05c5) SHA1(cac0d04ecd37e5836d246c0809bcfc11430df591) , ROM_SKIP(6)|ROM_GROUPWORD )
-	ROMX_LOAD( "tf-15372.rom", 0x800004, 0x200000, CRC(c187c36a) SHA1(bb55c2a768a43ef19a7847a4aa113523fee26c20) , ROM_SKIP(6)|ROM_GROUPWORD )
-	ROMX_LOAD( "tf-15374.rom", 0x800006, 0x200000, CRC(e026aab0) SHA1(75dfaef6d50c3d1d7f27aa5e44fcbc0ff2173c6f) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15379.14", 0x000000, 0x200000, CRC(e5c74b11) SHA1(67e4460efe5dcd88ffc12024b255efc843e6a8b5) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15375.15", 0x000002, 0x200000, CRC(046a9b50) SHA1(2b4c53f2a0264835cb7197daa9b3461c212541e8) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15371.10", 0x000004, 0x200000, CRC(999046c6) SHA1(37ce4e8aaf537b5366eacabaf36e4477b5624121) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15373.38", 0x000006, 0x200000, CRC(9b3294d9) SHA1(19542f14ce09753385a44098dfd1aaf331e7af0e) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15380.22", 0x800000, 0x200000, CRC(6ea0e58d) SHA1(1c4b761522157b0b9d086181ba6f6994879d8fdf) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15376.23", 0x800002, 0x200000, CRC(de3e05c5) SHA1(cac0d04ecd37e5836d246c0809bcfc11430df591) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15372.18", 0x800004, 0x200000, CRC(c187c36a) SHA1(bb55c2a768a43ef19a7847a4aa113523fee26c20) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15374.41", 0x800006, 0x200000, CRC(e026aab0) SHA1(75dfaef6d50c3d1d7f27aa5e44fcbc0ff2173c6f) , ROM_SKIP(6)|ROM_GROUPWORD )
 
 	ROM_REGION( 0x300000, REGION_SOUND1, 0 ) /* Sega PCM sound data */
-	ROM_LOAD("tf-15385.rom", 0x000000, 0x200000, CRC(5a9b0aa0) SHA1(d208aa165f9eea05e3b8c3f406ff44374e4f6887) )
+	ROM_LOAD("mpr15385.1", 0x000000, 0x200000, CRC(5a9b0aa0) SHA1(d208aa165f9eea05e3b8c3f406ff44374e4f6887) )
+
+	ROM_REGION( 0x20000, REGION_GFX3, 0 ) /* FG tiles */
+ROM_END
+
+ROM_START( titlefu )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* v60 code */
+	ROM_LOAD32_WORD( "epr15386.37", 0x000000, 0x40000, BAD_DUMP CRC(7ceaf15d) SHA1(0295ac248e5814fbe7caecb346ccbcaf8abf67dc) )
+	ROM_RELOAD(                      0x080000, 0x040000 )
+	ROM_LOAD32_WORD( "epr15387.40", 0x000002, 0x40000, BAD_DUMP CRC(aaf3cb03) SHA1(2956ee95b038fd08933174e16f84617c043034c3) )
+	ROM_RELOAD(                      0x080002, 0x040000 )
+
+	ROM_REGION( 0x30000, REGION_CPU2, 0 ) /* sound CPU */
+	ROM_LOAD("epr15384.31", 0x00000, 0x20000, CRC(0f7d208d) SHA1(5425120480f813210fae28951e8bfd5acb08ca53) )
+	ROM_RELOAD(              0x10000, 0x20000             )
+
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD16_BYTE( "mpr15381.3", 0x000000, 0x200000, CRC(162cc4d6) SHA1(2369d3d76ab5ef8f033aa45530ab957f0e5ff028) )
+	ROM_LOAD16_BYTE( "mpr15382.11", 0x000001, 0x200000, CRC(fd03a130) SHA1(040c36383ef5d8298af714958cd5b0a4c7556ae7) )
+
+	ROM_REGION( 0x1000000, REGION_GFX2, 0 ) /* sprites */
+	ROMX_LOAD( "mpr15379.14", 0x000000, 0x200000, CRC(e5c74b11) SHA1(67e4460efe5dcd88ffc12024b255efc843e6a8b5) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15375.15", 0x000002, 0x200000, CRC(046a9b50) SHA1(2b4c53f2a0264835cb7197daa9b3461c212541e8) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15371.10", 0x000004, 0x200000, CRC(999046c6) SHA1(37ce4e8aaf537b5366eacabaf36e4477b5624121) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15373.38", 0x000006, 0x200000, CRC(9b3294d9) SHA1(19542f14ce09753385a44098dfd1aaf331e7af0e) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15380.22", 0x800000, 0x200000, CRC(6ea0e58d) SHA1(1c4b761522157b0b9d086181ba6f6994879d8fdf) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15376.23", 0x800002, 0x200000, CRC(de3e05c5) SHA1(cac0d04ecd37e5836d246c0809bcfc11430df591) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15372.18", 0x800004, 0x200000, CRC(c187c36a) SHA1(bb55c2a768a43ef19a7847a4aa113523fee26c20) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr15374.41", 0x800006, 0x200000, CRC(e026aab0) SHA1(75dfaef6d50c3d1d7f27aa5e44fcbc0ff2173c6f) , ROM_SKIP(6)|ROM_GROUPWORD )
+
+	ROM_REGION( 0x300000, REGION_SOUND1, 0 ) /* Sega PCM sound data */
+	ROM_LOAD("mpr15385.1", 0x000000, 0x200000, CRC(5a9b0aa0) SHA1(d208aa165f9eea05e3b8c3f406ff44374e4f6887) )
 
 	ROM_REGION( 0x20000, REGION_GFX3, 0 ) /* FG tiles */
 ROM_END
@@ -1218,5 +1435,7 @@ GAMEX( 1994, harddunk,     0,        multi32, harddunk, harddunk, ROT0, "Sega", 
 GAMEX( 1994, harddunj,     harddunk, multi32, harddunk, harddunk, ROT0, "Sega", "Hard Dunk (Japan)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1992, scross,       0,        scross,  scross,   orunners, ROT0, "Sega", "Stadium Cross (World)", GAME_IMPERFECT_GRAPHICS )
 
-// doesn't boot (needs v60 fixing, modeler has a hack in the cpu core)
-GAMEX( 199?, titlef,       0, multi32, titlef,   titlef,   ROT0, "Sega", "Title Fight", GAME_NOT_WORKING )
+GAMEX( 1992, titlef,       0,      multi32, titlef,   titlef,   ROT0, "Sega", "Title Fight (World)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 199?, titlefu,      titlef, multi32, titlef,   titlef,   ROT0, "Sega", "Title Fight (US, bad dump?)", GAME_NOT_WORKING ) // doesn't boot (needs v60 fixing, modeler has a hack in the cpu core but maybe its a workaround for a bad dump)
+
+

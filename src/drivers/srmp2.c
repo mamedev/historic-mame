@@ -396,7 +396,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( srmp2_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x0c0000, 0x0c3fff) AM_WRITE(MWA16_RAM) AM_BASE((data16_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x0c0000, 0x0c3fff) AM_WRITE(MWA16_RAM) AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
 	AM_RANGE(0x140000, 0x143fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16_2)	/* Sprites Code + X + Attr */
 	AM_RANGE(0x180000, 0x180609) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16)	/* Sprites Y */
 	AM_RANGE(0x1c0000, 0x1c0001) AM_WRITE(MWA16_NOP)					/* ??? */
@@ -448,7 +448,7 @@ static ADDRESS_MAP_START( mjyuugi_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xd00000, 0xd00609) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16)	/* Sprites Y */
 	AM_RANGE(0xd02000, 0xd023ff) AM_WRITE(MWA16_RAM)					/* ??? only writes $00fa */
 	AM_RANGE(0xe00000, 0xe03fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16_2)	/* Sprites Code + X + Attr */
-	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(MWA16_RAM) AM_BASE((data16_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(MWA16_RAM) AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
 ADDRESS_MAP_END
 
 

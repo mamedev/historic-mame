@@ -7982,7 +7982,7 @@ static void SetSearchRegionDefaultName(SearchRegion * region)
 
 			if(region->writeHandler)
 			{
-				void *				handler = region->writeHandler->write.handler;
+				genf *				handler = region->writeHandler->write.handler;
 				UINT32				handlerAddress = (UINT32)handler;
 
 				if(	(handlerAddress >= ((UINT32)MWA8_BANK1)) &&

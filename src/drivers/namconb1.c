@@ -2,20 +2,12 @@
 Namco System NB-1
 
 Notes:
-- tilemap system is virtually identical to Namco System2
+- tilemap system is identical to Namco System2
 
 ToDo:
 - gunbulet force feedback
-
 - MCU simulation (coin/inputs) is incomplete; it doesn't handle coinage
-
 - sound support
-
-- roz priority isn't understood; it's hacked with values that work for most stages, but are
-	clearly wrong for attract mode and cut scenes.  ROZ control attribute#1 appears to be
-	involved, but I don't see a direct relationship between it and the expected 3 bit priority code.
-
-- some roz layer glitches in Mach Breakers
 
 Main CPU : Motorola 68020 32-bit processor @ 25MHz
 Secondary CPUs : C329 + 137 (both custom)
@@ -291,49 +283,8 @@ static data32_t *nvmem32;
 data32_t *namconb1_workram32;
 data32_t *namconb1_spritebank32;
 data32_t *namconb1_tilebank32;
-data32_t *namconb1_scrollram32;
 
 /****************************************************************************/
-
-	/**
-	 * 801800: 004b016b 00210101 01450100 (Outfoxies)
-	 *         00db00db 00910091 01450100 (Outfoxies: video blanked)
-	 *         004b016b 00210101 00000000 (Mach Breakers)
-	 *         004b016b 00e90101 00000000 (Mach Breakers: video blanked)
-	 *         00da00da 00910091          (Mach Breakers: start of first event)
-	 *         00dc00da 00910091			...
-	 *         00d400e2 008b0097
-	 *         00cd00e9 0085009d
-	 *         00c600f0 008000a2
-	 *         00bf00f7 007a00a8
-	 *         00b700ff 007500ad
-	 *         00b00106 006f00b3
-	 *         00a9010d 006900b9
-	 *         00a20114 006400be
-	 *         009a011c 005e00c4
-	 *         00930123 005900c9
-	 *         008c012a 005300cf
-	 *         00850131 004d00d5
-	 *         007d0139 004800da
-	 *         00760140 004200e0
-	 *         006f0147 003d00e5
-	 *         0068014e 003700eb
-	 *         00600156 003100f1
-	 *         0059015d 002c00f6
-	 *         00520164 002600fc
-	 *         004b016b 00210101
-	 *         
-	 *
-	 *
-	 * 701800: 004a016a 00210101 01440020 (Nebulsray) tilemap#3 is invisible
-	 *                  00210021          (Nebulsray: coin up)
-	 *
-	 *         004a016a 00210101 00000000 (Great Sluggers '94)
-	 *
-	 *         004a016a 00210101 00000000 (Point Blank)
-	 *
-	 *                               xxxx posirq scanline
-	 */
 
 static data32_t *namconb_cpureg32;
 
@@ -448,16 +399,17 @@ static INTERRUPT_GEN( namconb1_interrupt )
 	{
 		timer_set( cpu_getscanlinetime(scanline), scanline, namconb1_TriggerPOSIRQ );
 	}
-}
+} /* namconb1_interrupt */
 
 static WRITE32_HANDLER( namconb_cpureg_w )
 {
 	COMBINE_DATA( &namconb_cpureg32[offset] );
-}
+} /* namconb_cpureg_w */
 
 /****************************************************************************/
 
-static NVRAM_HANDLER( namconb1 ){
+static NVRAM_HANDLER( namconb1 )
+{
 	int i;
 	data8_t data[4];
 	if( read_or_write )
@@ -491,42 +443,42 @@ static NVRAM_HANDLER( namconb1 ){
 			}
 		}
 	}
-}
+} /* namconb1 */
 
 static DRIVER_INIT( nebulray )
 {
 	namcos2_gametype = NAMCONB1_NEBULRAY;
-}
+} /* nebulray */
 
 static DRIVER_INIT( gslgr94u )
 {
 	namcos2_gametype = NAMCONB1_GSLGR94U;
-}
+} /* gslgr94u */
 
 static DRIVER_INIT( sws95 )
 {
 	namcos2_gametype = NAMCONB1_SWS95;
-}
+} /* sws95 */
 
 static DRIVER_INIT( sws96 )
 {
 	namcos2_gametype = NAMCONB1_SWS96;
-}
+} /* sws96 */
 
 static DRIVER_INIT( sws97 )
 {
 	namcos2_gametype = NAMCONB1_SWS97;
-}
+} /* sws97 */
 
 static DRIVER_INIT( gunbulet )
 {
 	namcos2_gametype = NAMCONB1_GUNBULET;
-}
+} /* gunbulet */
 
 static DRIVER_INIT( vshoot )
 {
 	namcos2_gametype = NAMCONB1_VSHOOT;
-}
+} /* vshoot */
 
 static void
 ShuffleDataROMs( void )
@@ -729,87 +681,50 @@ WRITE32_HANDLER( srand_w )
 	 */
 }
 
-static ADDRESS_MAP_START( namconb1_readmem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA32_ROM)
+static ADDRESS_MAP_START( namconb1_am, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA32_ROM) AM_WRITE(MWA32_ROM)
 	AM_RANGE(0x100000, 0x10001f) AM_READ(gunbulet_gun_r)
-	AM_RANGE(0x1c0000, 0x1cffff) AM_READ(MRA32_RAM) /* workram */
-	AM_RANGE(0x1e4000, 0x1e4003) AM_READ(randgen_r)
-	AM_RANGE(0x200000, 0x2fffff) AM_READ(MRA32_RAM) /* workram (shared with MCU) */
-	AM_RANGE(0x400000, 0x40001f) AM_READ(MRA32_RAM) /* namconb_cpureg32 */
-	AM_RANGE(0x580000, 0x5807ff) AM_READ(MRA32_RAM) /* nvmem */
-	AM_RANGE(0x600000, 0x61ffff) AM_READ(namco_obj32_r)
-	AM_RANGE(0x620000, 0x620007) AM_READ(namco_spritepos32_r)
-	AM_RANGE(0x640000, 0x64ffff) AM_READ(MRA32_RAM) /* videoram (4 scrolling + 2 fixed) */
-	AM_RANGE(0x660000, 0x66003f) AM_READ(MRA32_RAM) /* scrollram */
-	AM_RANGE(0x680000, 0x68000f) AM_READ(MRA32_RAM) /* spritebank */
-	AM_RANGE(0x6e0000, 0x6e001f) AM_READ(custom_key_r)
-	AM_RANGE(0x700000, 0x707fff) AM_READ(MRA32_RAM) /* palette */
+	AM_RANGE(0x1c0000, 0x1cffff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x1e4000, 0x1e4003) AM_READWRITE(randgen_r,srand_w)
+	AM_RANGE(0x200000, 0x2fffff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) AM_BASE(&namconb1_workram32) /* shared with MCU) */
+	AM_RANGE(0x400000, 0x40001f) AM_READ(MRA32_RAM) AM_WRITE(namconb_cpureg_w) AM_BASE(&namconb_cpureg32)
+	AM_RANGE(0x580000, 0x5807ff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) AM_BASE(&nvmem32)
+	AM_RANGE(0x600000, 0x61ffff) AM_READWRITE(namco_obj32_r,namco_obj32_w)
+	AM_RANGE(0x620000, 0x620007) AM_READWRITE(namco_spritepos32_r,namco_spritepos32_w)
+	AM_RANGE(0x640000, 0x64ffff) AM_READWRITE(namco_tilemapvideoram32_r,namco_tilemapvideoram32_w )
+	AM_RANGE(0x660000, 0x66003f) AM_READWRITE(namco_tilemapcontrol32_r,namco_tilemapcontrol32_w)
+	AM_RANGE(0x680000, 0x68000f) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) AM_BASE(&namconb1_spritebank32)
+	AM_RANGE(0x6e0000, 0x6e001f) AM_READ(custom_key_r) AM_WRITE(MWA32_NOP)
+	AM_RANGE(0x700000, 0x707fff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) AM_BASE(&paletteram32)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( namconb1_writemem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA32_ROM)
-	AM_RANGE(0x1c0000, 0x1cffff) AM_WRITE(MWA32_RAM) /* workram */
-	AM_RANGE(0x1e4000, 0x1e4003) AM_WRITE(srand_w)
-	AM_RANGE(0x200000, 0x2fffff) AM_WRITE(MWA32_RAM) AM_BASE(&namconb1_workram32) /* vshoot */
-	AM_RANGE(0x400000, 0x40001f) AM_WRITE(namconb_cpureg_w) AM_BASE(&namconb_cpureg32) /* cpu control registers */
-	AM_RANGE(0x580000, 0x5807ff) AM_WRITE(MWA32_RAM) AM_BASE(&nvmem32)
-	AM_RANGE(0x600000, 0x61ffff) AM_WRITE(namco_obj32_w)
-	AM_RANGE(0x620000, 0x620007) AM_WRITE(namco_spritepos32_w)
-	AM_RANGE(0x640000, 0x64ffff) AM_WRITE(namconb1_videoram_w) AM_BASE(&videoram32)
-	AM_RANGE(0x660000, 0x66003f) AM_WRITE(MWA32_RAM) AM_BASE(&namconb1_scrollram32)
-	AM_RANGE(0x680000, 0x68000f) AM_WRITE(MWA32_RAM) AM_BASE(&namconb1_spritebank32)
-	AM_RANGE(0x6e0000, 0x6e001f) AM_WRITE(MWA32_NOP) /* custom key write */
-	AM_RANGE(0x700000, 0x707fff) AM_WRITE(MWA32_RAM) AM_BASE(&paletteram32)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( namconb2_readmem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA32_ROM)
-	AM_RANGE(0x1c0000, 0x1cffff) AM_READ(MRA32_RAM)	/* workram */
-	AM_RANGE(0x1e4000, 0x1e4003) AM_READ(randgen_r)
-	AM_RANGE(0x200000, 0x2fffff) AM_READ(MRA32_RAM)	/* workram (shared with MCU) */
+static ADDRESS_MAP_START( namconb2_am, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA32_ROM) AM_WRITE(MWA32_ROM)
+	AM_RANGE(0x1c0000, 0x1cffff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x1e4000, 0x1e4003) AM_READWRITE(randgen_r,srand_w)
+	AM_RANGE(0x200000, 0x2fffff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) AM_BASE(&namconb1_workram32) /* shared with MCU */
 	AM_RANGE(0x400000, 0x4fffff) AM_READ(MRA32_BANK1)/* data ROMs */
-	AM_RANGE(0x600000, 0x61ffff) AM_READ(namco_obj32_r)
-	AM_RANGE(0x620000, 0x620007) AM_READ(namco_spritepos32_r)
-	AM_RANGE(0x640000, 0x64000f) AM_READ(MRA32_RAM) /* unknown xy offset */
-	AM_RANGE(0x680000, 0x68ffff) AM_READ(MRA32_RAM) /* videoram (4 scrolling + 2 fixed) */
-	AM_RANGE(0x6c0000, 0x6c003f) AM_READ(MRA32_RAM) /* scrollram, color, pri */
-	AM_RANGE(0x700000, 0x71ffff) AM_READ(namco_rozvideoram32_r)
-	AM_RANGE(0x740000, 0x74001f) AM_READ(namco_rozcontrol32_r)
-	AM_RANGE(0x800000, 0x807fff) AM_READ(MRA32_RAM) /* palette */
-	AM_RANGE(0x900008, 0x90000f) AM_READ(MRA32_RAM) /* sprite bank */
-	AM_RANGE(0x940000, 0x94000f) AM_READ(MRA32_RAM) /* tile bank */
-	AM_RANGE(0x980000, 0x98000f) AM_READ(namco_rozbank32_r)
-	AM_RANGE(0xa00000, 0xa007ff) AM_READ(MRA32_RAM) /* nvmem */
-	AM_RANGE(0xc00000, 0xc0001f) AM_READ(custom_key_r)
-	AM_RANGE(0xf00000, 0xf0001f) AM_READ(MRA32_RAM) /* namconb_cpureg32 */
+	AM_RANGE(0x600000, 0x61ffff) AM_READWRITE(namco_obj32_r,namco_obj32_w)
+	AM_RANGE(0x620000, 0x620007) AM_READWRITE(namco_spritepos32_r,namco_spritepos32_w)
+	AM_RANGE(0x640000, 0x64000f) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) /* unknown xy offset */
+	AM_RANGE(0x680000, 0x68ffff) AM_READWRITE(namco_tilemapvideoram32_r, namco_tilemapvideoram32_w )
+	AM_RANGE(0x6c0000, 0x6c003f) AM_READWRITE(namco_tilemapcontrol32_r, namco_tilemapcontrol32_w )
+	AM_RANGE(0x700000, 0x71ffff) AM_READWRITE(namco_rozvideoram32_r,namco_rozvideoram32_w)
+	AM_RANGE(0x740000, 0x74001f) AM_READWRITE(namco_rozcontrol32_r,namco_rozcontrol32_w)
+	AM_RANGE(0x800000, 0x807fff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) AM_BASE(&paletteram32)
+	AM_RANGE(0x900008, 0x90000f) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) AM_BASE(&namconb1_spritebank32)
+	AM_RANGE(0x940000, 0x94000f) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) AM_BASE(&namconb1_tilebank32)
+	AM_RANGE(0x980000, 0x98000f) AM_READ(namco_rozbank32_r) AM_WRITE(namco_rozbank32_w)
+	AM_RANGE(0xa00000, 0xa007ff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) AM_BASE(&nvmem32)
+	AM_RANGE(0xc00000, 0xc0001f) AM_READ(custom_key_r) AM_WRITE(MWA32_NOP)
+	AM_RANGE(0xf00000, 0xf0001f) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) AM_BASE(&namconb_cpureg32)
 ADDRESS_MAP_END /* namconb2_readmem */
-
-static ADDRESS_MAP_START( namconb2_writemem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA32_ROM)
-	AM_RANGE(0x1c0000, 0x1cffff) AM_WRITE(MWA32_RAM) /* workram */
-	AM_RANGE(0x1e4000, 0x1e4003) AM_WRITE(srand_w)
-	AM_RANGE(0x200000, 0x2fffff) AM_WRITE(MWA32_RAM) AM_BASE(&namconb1_workram32)
-	AM_RANGE(0x600000, 0x61ffff) AM_WRITE(namco_obj32_w)
-	AM_RANGE(0x620000, 0x620007) AM_WRITE(namco_spritepos32_w)
-	AM_RANGE(0x640000, 0x64000f) AM_WRITE(MWA32_RAM) /* unk xy offset */
-	AM_RANGE(0x680000, 0x68ffff) AM_WRITE(namconb1_videoram_w) AM_BASE(&videoram32)
-	AM_RANGE(0x6c0000, 0x6c003f) AM_WRITE(MWA32_RAM) AM_BASE(&namconb1_scrollram32)
-	AM_RANGE(0x700000, 0x71ffff) AM_WRITE(namco_rozvideoram32_w)
-	AM_RANGE(0x740000, 0x74001f) AM_WRITE(namco_rozcontrol32_w)
-	AM_RANGE(0x800000, 0x807fff) AM_WRITE(MWA32_RAM) AM_BASE(&paletteram32)
-	AM_RANGE(0x900008, 0x90000f) AM_WRITE(MWA32_RAM) AM_BASE(&namconb1_spritebank32)
-	AM_RANGE(0x940000, 0x94000f) AM_WRITE(MWA32_RAM) AM_BASE(&namconb1_tilebank32)
-	AM_RANGE(0x980000, 0x98000f) AM_WRITE(namco_rozbank32_w)
-	AM_RANGE(0xa00000, 0xa007ff) AM_WRITE(MWA32_RAM) /* nvmem */
-	AM_RANGE(0xc00000, 0xc0001f) AM_WRITE(MWA32_NOP) /* custom key (protection) */
-	AM_RANGE(0xf00000, 0xf0001f) AM_WRITE(MWA32_RAM) AM_BASE(&namconb_cpureg32)
-ADDRESS_MAP_END /* namconb2_writemem */
 
 #define MASTER_CLOCK_HZ 48384000
 
 static MACHINE_DRIVER_START( namconb1 )
 	MDRV_CPU_ADD(M68EC020,MASTER_CLOCK_HZ/2)
-	MDRV_CPU_PROGRAM_MAP(namconb1_readmem,namconb1_writemem)
+	MDRV_CPU_PROGRAM_MAP(namconb1_am,0)
 	MDRV_CPU_VBLANK_INT(namconb1_interrupt,1)
 	MDRV_FRAMES_PER_SECOND(59.7)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -826,10 +741,11 @@ MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( namconb2 )
 	MDRV_CPU_ADD(M68EC020,MASTER_CLOCK_HZ/2)
-	MDRV_CPU_PROGRAM_MAP(namconb2_readmem,namconb2_writemem)
+	MDRV_CPU_PROGRAM_MAP(namconb2_am,0)
 	MDRV_CPU_VBLANK_INT(namconb2_interrupt,1)
 	MDRV_FRAMES_PER_SECOND(59.7)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_NVRAM_HANDLER(namconb1)
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER|VIDEO_HAS_SHADOWS)
 	MDRV_SCREEN_SIZE(NAMCONB1_COLS*8, NAMCONB1_ROWS*8) /* 288x224 pixels */
 	MDRV_VISIBLE_AREA(0*8, NAMCONB1_COLS*8-1, 0*8, NAMCONB1_ROWS*8-1)
@@ -1443,4 +1359,4 @@ GAMEX( 1994, vshoot,   0,        namconb1, namconb1, vshoot,   ROT0,  "Namco", "
 /*     YEAR, NAME,     PARENT,   MACHINE,  INPUT,    INIT,     MNTR,  COMPANY, FULLNAME,   FLAGS */
 GAMEX( 1994, outfxies, 0,		 namconb2, outfxies, outfxies, ROT0, "Namco", "Outfoxies", GAME_NO_SOUND )
 GAMEX( 1994, outfxesj, outfxies, namconb2, outfxies, outfxies, ROT0, "Namco", "Outfoxies (Japan)", GAME_NO_SOUND )
-GAMEX( 1995, machbrkr, 0,		 namconb2, namconb1, machbrkr, ROT0, "Namco", "Mach Breakers (Japan)", GAME_IMPERFECT_GRAPHICS|GAME_NO_SOUND )
+GAMEX( 1995, machbrkr, 0,		 namconb2, namconb1, machbrkr, ROT0, "Namco", "Mach Breakers (Japan)", GAME_NO_SOUND )

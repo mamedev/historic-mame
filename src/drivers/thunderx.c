@@ -967,7 +967,7 @@ static MACHINE_INIT( thunderx )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	cpunum_set_info_ptr(0, CPUINFO_PTR_KONAMI_SETLINES_CALLBACK, (void *)thunderx_banking);
+	cpunum_set_info_fct(0, CPUINFO_PTR_KONAMI_SETLINES_CALLBACK, (genf *)thunderx_banking);
 	cpu_setbank( 1, &RAM[0x10000] ); /* init the default bank */
 
 	paletteram = &RAM[0x28000];

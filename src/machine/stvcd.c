@@ -271,17 +271,17 @@ UINT32 cdb_find_track(UINT32 fad){
 
 			// all checks passed, data is okay
 
-			if(f->true == 0xff) // disconnected
+			if(f->true_ == 0xff) // disconnected
 				return(1); // discard data
 
-			*pn = (UINT32)f->true;
+			*pn = (UINT32)f->true_;
 			return(0);
 		}
 
-		if(f->false != 0xff)
-			f = &CD_filt[f->false];
+		if(f->false_ != 0xff)
+			f = &CD_filt[f->false_];
 
-	}while(f->false != 0xff);
+	}while(f->false_ != 0xff);
 
 	return(1);
 }

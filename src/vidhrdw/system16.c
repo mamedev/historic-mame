@@ -93,6 +93,13 @@ type1		type0			function
 #include "system16.h"
 #include "vidhrdw/res_net.h"
 
+/* vidhrdw/segac2.c */
+extern void update_system18_vdp( struct mame_bitmap *bitmap, const struct rectangle *cliprect );
+extern void start_system18_vdp(void);
+extern READ16_HANDLER( segac2_vdp_r );
+extern WRITE16_HANDLER( segac2_vdp_w );
+
+
 /*
 static void debug_draw( struct mame_bitmap *bitmap, int x, int y, unsigned int data ){
 	int digit;
@@ -243,6 +250,7 @@ static void draw_sprite( //*
 	unsigned pen, data;
 
 	priority = 1<<priority;
+	if (!strcmp(Machine->gamedrv->name,"sonicbom")) flipy^=0x80; // temp hack until we fix drawing
 
 	if( flipy ){
 		dy = -1;
@@ -486,15 +494,15 @@ UINT32 sys16_text_map( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows 
 
 /*
 	Color generation details
-	
+
 	Each color is made up of 5 bits, connected through one or more resistors like so:
-	
+
 	Bit 0 = 1 x 3.9K ohm
 	Bit 1 = 1 x 2.0K ohm
 	Bit 2 = 1 x 1.0K ohm
 	Bit 3 = 2 x 1.0K ohm
 	Bit 4 = 4 x 1.0K ohm
-	
+
 	Another data bit is connected by a tristate buffer to the color output through a 470 ohm resistor.
 	The buffer allows the resistor to have no effect (tristate), halve brightness (pull-down) or double brightness (pull-up).
 	The data bit source is a PPI pin in some of the earlier hardware (Hang-On, Pre-System 16) or bit 15 of each
@@ -511,14 +519,14 @@ WRITE16_HANDLER( sys16_paletteram_w )
 	data16_t newword;
 	COMBINE_DATA( &paletteram16[offset] );
 	newword = paletteram16[offset];
-	
+
 	if( oldword!=newword )
-	{ 
+	{
 		/* we can do this, because we initialize palette RAM to all black in vh_start */
 		/*	   byte 0    byte 1 */
 		/*	sBGR BBBB GGGG RRRR */
 		/*	x000 4321 4321 4321 */
-		
+
 		int r, g, b, rs, gs, bs, rh, gh, bh;
 		int r0 = (newword >> 12) & 1;
 		int r1 = (newword >>  0) & 1;
@@ -540,7 +548,7 @@ WRITE16_HANDLER( sys16_paletteram_w )
 		r = combine_6_weights(weights[0][0], r0, r1, r2, r3, r4, 0);
 		g = combine_6_weights(weights[0][1], g0, g1, g2, g3, g4, 0);
 		b = combine_6_weights(weights[0][2], b0, b1, b2, b3, b4, 0);
-		
+
 		/* Shadow colors */
 		rs = combine_6_weights(weights[1][0], r0, r1, r2, r3, r4, 0);
 		gs = combine_6_weights(weights[1][1], g0, g1, g2, g3, g4, 0);
@@ -549,14 +557,14 @@ WRITE16_HANDLER( sys16_paletteram_w )
 		/* Highlight colors */
 		rh = combine_6_weights(weights[1][0], r0, r1, r2, r3, r4, 1);
 		gh = combine_6_weights(weights[1][1], g0, g1, g2, g3, g4, 1);
-		bh = combine_6_weights(weights[1][2], b0, b1, b2, b3, b4, 1);	
-	
+		bh = combine_6_weights(weights[1][2], b0, b1, b2, b3, b4, 1);
+
 		palette_set_color( offset, r, g, b );
-		
+
 #ifdef TRANSPARENT_SHADOWS
-		palette_set_color( offset+Machine->drv->total_colors/2,rs,gs,bs); 
-#endif		
-		
+		palette_set_color( offset+Machine->drv->total_colors/2,rs,gs,bs);
+#endif
+
 	}
 }
 
@@ -845,18 +853,18 @@ VIDEO_START( system16 ){
 	sys16_obj_bank = bank_default;
 
 	/* Normal colors */
-	compute_resistor_weights(0, 255, -1.0,  
+	compute_resistor_weights(0, 255, -1.0,
 		6, resistances_normal, weights[0][0], 0, 0,
 		6, resistances_normal, weights[0][1], 0, 0,
 		6, resistances_normal, weights[0][2], 0, 0
-		);	
+		);
 
 	/* Shadow/Highlight colors */
-	compute_resistor_weights(0, 255, -1.0,  
+	compute_resistor_weights(0, 255, -1.0,
 		6, resistances_sh, weights[1][0], 0, 0,
 		6, resistances_sh, weights[1][1], 0, 0,
 		6, resistances_sh, weights[1][2], 0, 0
-		);	
+		);
 
 	if( !sys16_bg1_trans )
 		background = tilemap_create(
@@ -888,7 +896,7 @@ VIDEO_START( system16 ){
 		40,28 );
 
 	num_sprites = 128*2; /* only 128 for most games; aburner uses 256 */
-	
+
 	if(!strcmp(Machine->gamedrv->name, "hangon"))
 		num_sprites = 128;
 
@@ -979,6 +987,8 @@ VIDEO_START( hangon ){
 
 VIDEO_START( system18 ){
 	sys16_bg1_trans=1;
+
+	start_system18_vdp();
 
 	background2 = tilemap_create(
 		get_bg2_tile_info,
@@ -1219,10 +1229,13 @@ VIDEO_UPDATE( system18 ){
 	tilemap_draw( bitmap,cliprect, background, TILEMAP_IGNORE_TRANSPARENCY | 1, 0 );	//??
 	tilemap_draw( bitmap,cliprect, background, TILEMAP_IGNORE_TRANSPARENCY | 2, 0 );	//??
 
+	if (!strcmp(Machine->gamedrv->name,"astorm"))  update_system18_vdp(bitmap,cliprect); // kludge: render vdp here for astorm
+
 //	sprite_draw(sprite_list,3);
 	tilemap_draw( bitmap,cliprect, background, 1, 0x1 );
 //	sprite_draw(sprite_list,2);
 	tilemap_draw( bitmap,cliprect, background, 2, 0x3 );
+
 
 	if(sys18_fg2_active) tilemap_draw( bitmap,cliprect, foreground2, 0, 0x3 );
 	tilemap_draw( bitmap,cliprect, foreground, 0, 0x3 );
@@ -1230,9 +1243,12 @@ VIDEO_UPDATE( system18 ){
 	if(sys18_fg2_active) tilemap_draw( bitmap,cliprect, foreground2, 1, 0x7 );
 	tilemap_draw( bitmap,cliprect, foreground, 1, 0x7 );
 
+	if (!strcmp(Machine->gamedrv->name,"ddcrew"))  update_system18_vdp(bitmap,cliprect); // kludge: render vdp here for ddcrew
+
 	tilemap_draw( bitmap,cliprect, text_layer, 1, 0x7 );
 //	sprite_draw(sprite_list,0);
 	tilemap_draw( bitmap,cliprect, text_layer, 0, 0xf );
+
 
 	draw_sprites( bitmap,cliprect, 0 );
 }

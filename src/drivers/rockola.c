@@ -1252,6 +1252,33 @@ ROM_START( nibblerb )
 	ROM_LOAD( "g-0959-45.ic53", 0x1000, 0x0800, CRC(33189917) SHA1(01a1b1693db0172609780daeb60430fa0c8bcec2) ) // 50-151.053
 ROM_END
 
+ROM_START( nibblero )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "50-144g.012", 	0x3000, 0x1000, CRC(1093f525) SHA1(6a63372300765acdbac1d2e30fd73af7773de80f) )
+	ROM_LOAD( "50-140g.007", 	0x4000, 0x1000, CRC(848651dd) SHA1(a5aafbcca42baca8d0d5d28546733aefc778ba99) )
+	ROM_LOAD( "50-141.008", 	0x5000, 0x1000, CRC(b50fd79c) SHA1(cd9847bf8d570ca9411d1bbcbccb3c94220349f9) )
+	ROM_LOAD( "ic9",        	0x6000, 0x1000, CRC(a599df10) SHA1(68ee8b5199ec24409fcbb40c887a1eec44c68dcf) )
+	ROM_LOAD( "ic10",       	0x7000, 0x1000, CRC(a6b5abe5) SHA1(a0f228dac801a54dfa1947d6b2f6b4e3d005e0b2) )
+	ROM_LOAD( "50-145.014", 	0x8000, 0x1000, CRC(29ea246a) SHA1(bf1afbddbea5ab7e93e5ac69c6445749dd65ed3b) )
+	ROM_RELOAD(                 0xf000, 0x1000 )	/* for the reset and interrupt vectors */
+	ROM_LOAD( "g-0960-54.ic15", 0x9000, 0x1000, CRC(7205fb8d) SHA1(bc341bc11a383aa8b8dd7b2be851907a3ec56f8b) )
+	ROM_LOAD( "g-0960-55.ic16", 0xa000, 0x1000, CRC(4bb39815) SHA1(1755c28d7d300524ab839aedcc744254544e9c19) )
+	ROM_LOAD( "g-0960-56.ic17", 0xb000, 0x1000, CRC(ed680f19) SHA1(b44203585f32ebe2a3bf0597eac7c0faa7e81a92) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "g-0960-57.ic50", 0x0000, 0x1000, CRC(01d4d0c2) SHA1(5a8026210a872351ce4e39e27f6479d3ca0689e2) )
+	ROM_LOAD( "g-0960-58.ic51", 0x1000, 0x1000, CRC(feff7faf) SHA1(50005502578a4ea9b9c8f36998670b787d2d0b20) )
+
+	ROM_REGION( 0x0040, REGION_PROMS, 0 )
+	ROM_LOAD( "g-0708-05.ic7",  0x0000, 0x0020, CRC(a5709ff3) SHA1(fbd07b756235f2d03aea3d777ca741ade54be200) ) /* foreground colors */
+	ROM_LOAD( "g-0708-04.ic6",  0x0020, 0x0020, CRC(dacd592d) SHA1(c7709c680e2764885a40bc256d07dffc9e827cd6) ) /* background colors */
+
+	ROM_REGION( 0x1800, REGION_SOUND1, 0 )	/* sound ROMs */
+	ROM_LOAD( "g-0959-43.ic51", 0x0000, 0x0800, CRC(0345f8b7) SHA1(c00992dc7222cc53d9fdff4ab47a7abdf90c5116) )
+	ROM_LOAD( "g-0959-44.ic52", 0x0800, 0x0800, CRC(87d67dee) SHA1(bd292eab3671cb953279f3136a450deac3818367) )
+	ROM_LOAD( "g-0959-45.ic53", 0x1000, 0x0800, CRC(33189917) SHA1(01a1b1693db0172609780daeb60430fa0c8bcec2) )
+ROM_END
+
 /* Game Drivers */
 
 GAMEX( 1980, sasuke,   0,        sasuke,   sasuke,   0, ROT90, "SNK", "Sasuke vs. Commander", GAME_NO_SOUND )
@@ -1266,3 +1293,4 @@ GAMEX( 1982, pballoon, 0,        pballoon, pballoon, 0, ROT90, "SNK", "Pioneer B
 GAMEX( 1982, nibbler,  0,        fantasy,  nibbler,  0, ROT90, "Rock-Ola", "Nibbler (set 1)", GAME_IMPERFECT_SOUND )
 GAMEX( 1982, nibblera, nibbler,  fantasy,  nibbler,  0, ROT90, "Rock-Ola", "Nibbler (set 2)", GAME_IMPERFECT_SOUND )
 GAMEX( 1982, nibblerb, nibbler,  fantasy,  nibbler,  0, ROT90, "Rock-Ola", "Nibbler (set 3)", GAME_IMPERFECT_SOUND )
+GAMEX( 1983, nibblero, nibbler,  fantasy,  nibbler,  0, ROT90, "Olympia",  "Nibbler (Olympia)", GAME_IMPERFECT_SOUND )

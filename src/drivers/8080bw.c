@@ -2020,6 +2020,7 @@ static MACHINE_DRIVER_START( polaris )
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_REPLACE("main",8080,1996800)        /* 19.968MHz / 10 */
 	MDRV_CPU_PROGRAM_MAP(schaser_readmem,schaser_writemem)
+	MDRV_WATCHDOG_VBLANK_INIT(255)
 
 	MDRV_CPU_IO_MAP(c8080bw_readport,writeport_0_3)
 	MDRV_CPU_VBLANK_INT(polaris_interrupt,2)
@@ -3261,6 +3262,14 @@ ROM_START( invaderl )
 	ROM_LOAD( "sv06.bin",     0x1c00, 0x0400, CRC(2c68e0b4) SHA1(a5e5357120102ad32792bf3ef6362f45b7ba7070) )
 ROM_END
 
+ROM_START( invader4 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_LOAD( "spin4.a",      0x0000, 0x0800, CRC(bb386dfe) SHA1(cc00f3e4f6ca4c05bae038a24ccdb213fb951cfc) )
+	ROM_LOAD( "spin4.b",      0x0800, 0x0800, CRC(63afa11d) SHA1(d8cedfa010a49237e31f6ebaed35134cb1c3ce68) )
+	ROM_LOAD( "spin4.c",      0x1000, 0x0800, CRC(22b0317c) SHA1(8fd037bf5f89a7bcb06042697410566d5180912a) )
+	ROM_LOAD( "spin4.d",      0x1800, 0x0800, CRC(9102fd68) SHA1(3523e69314844fcd1863b1e9a9d7fcebe9ee174b) )
+ROM_END
+
 ROM_START( jspecter )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "3305.u6",      0x0000, 0x1000, CRC(ab211a4f) SHA1(d675ed29c3479d7318f8559bd56dd619cf631b6a) )
@@ -3946,6 +3955,7 @@ ROM_END
 	  GAME( 1978, spcewars, invaders, invaders, invadpt2, invaders, ROT270, "Sanritsu", "Space War (Sanritsu)" )
 	  GAME( 1978, spacewr3, invaders, invaders, spacewr3, invaders, ROT270, "bootleg", "Space War Part 3" )
 	  GAME( 1978, invaderl, invaders, invaders, invaders, invaders, ROT270, "bootleg", "Space Invaders (Logitec)" )
+	  GAME( 1978, invader4, invaders, invaders, invaders, invaders, ROT270, "bootleg", "Space Invaders Part Four" )
 	  GAME( 1979, jspecter, invaders, invaders, jspecter, invaders, ROT270, "Jatre", "Jatre Specter (set 1)" )
 	  GAME( 1979, jspectr2, invaders, invaders, jspecter, invaders, ROT270, "Jatre", "Jatre Specter (set 2)" )
 	  GAME( 1979, cosmicmo, invaders, invaders, cosmicmo, invaders, ROT270, "Universal", "Cosmic Monsters" )

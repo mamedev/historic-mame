@@ -104,8 +104,8 @@ struct linkdata
 **#################################################################################################*/
 
 /* useful macros for accessing hi/lo portions of 64-bit values */
-#define LO(x)		(&(((UINT32 *)(x))[0]))
-#define HI(x)		(&(((UINT32 *)(x))[1]))
+#define LO(x)		(&(((UINT32 *)(UINT32)(x))[0]))
+#define HI(x)		(&(((UINT32 *)(UINT32)(x))[1]))
 
 extern const UINT8 scale_lookup[];
 
@@ -1574,7 +1574,7 @@ void drc_append_call_debugger(struct drccore *drc);
 void drc_append_standard_epilogue(struct drccore *drc, INT32 cycles, INT32 pcdelta, int allow_exit);
 void drc_append_save_volatiles(struct drccore *drc);
 void drc_append_restore_volatiles(struct drccore *drc);
-void drc_append_save_call_restore(struct drccore *drc, void *target, UINT32 stackadj);
+void drc_append_save_call_restore(struct drccore *drc, genf *target, UINT32 stackadj);
 void drc_append_verify_code(struct drccore *drc, void *code, UINT8 length);
 
 void drc_append_set_fp_rounding(struct drccore *drc, UINT8 regindex);

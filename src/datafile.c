@@ -441,28 +441,28 @@ static int index_datafile (struct tDatafileIndex **_index)
         while ((count < (num_games - 1)) && TOKEN_INVALID != token)
         {
                 long tell;
-                char *s;
+                UINT8 *s;
 
-                token = GetNextToken ((UINT8 **)&s, &tell);
+                token = GetNextToken (&s, &tell);
                 if (TOKEN_SYMBOL != token) continue;
 
                 /* DATAFILE_TAG_KEY identifies the driver */
-                if (!ci_strncmp (DATAFILE_TAG_KEY, s, strlen (DATAFILE_TAG_KEY)))
+                if (!ci_strncmp (DATAFILE_TAG_KEY, (char *)s, strlen (DATAFILE_TAG_KEY)))
                 {
-                        token = GetNextToken ((UINT8 **)&s, &tell);
+                        token = GetNextToken (&s, &tell);
                         if (TOKEN_EQUALS == token)
                         {
                                 int done = 0;
 
-                                token = GetNextToken ((UINT8 **)&s, &tell);
+                                token = GetNextToken (&s, &tell);
                                 while (!done && TOKEN_SYMBOL == token)
                                 {
 									int game_index;
-									char *p;
+									UINT8 *p;
 									for (p = s; *p; p++)
 										*p = tolower(*p);
 
-									game_index = GetGameNameIndex(s);
+									game_index = GetGameNameIndex((char *)s);
 									if (game_index >= 0)
 									{
 										idx->driver = drivers[game_index];
@@ -474,10 +474,10 @@ static int index_datafile (struct tDatafileIndex **_index)
 									}
 									if (!done)
 									{
-										token = GetNextToken ((UINT8 **)&s, &tell);
+										token = GetNextToken (&s, &tell);
 
 										if (TOKEN_COMMA == token)
-											token = GetNextToken ((UINT8 **)&s, &tell);
+											token = GetNextToken (&s, &tell);
 										else
 											done = 1; /* end of key field */
 									}
@@ -528,11 +528,11 @@ static int load_datafile_text (const struct GameDriver *drv, char *buffer, int b
         /* read text until buffer is full or end of entry is encountered */
         while (TOKEN_INVALID != token)
         {
-                char *s;
+                UINT8 *s;
                 int len;
                 long tell;
 
-                token = GetNextToken ((UINT8 **)&s, &tell);
+                token = GetNextToken (&s, &tell);
                 if (TOKEN_INVALID == token) continue;
 
                 if (found)
@@ -544,11 +544,11 @@ static int load_datafile_text (const struct GameDriver *drv, char *buffer, int b
 
                         /* translate platform-specific linebreaks to '\n' */
                         if (TOKEN_LINEBREAK == token)
-                                strcpy (s, "\n");
+							strcpy ((char *)s, "\n");
 
                         /* append a space to words */
                         if (TOKEN_LINEBREAK != token)
-                                strcat (s, " ");
+							strcat ((char *)s, " ");
 
                         /* remove extraneous space before commas */
                         if (TOKEN_COMMA == token)
@@ -559,23 +559,23 @@ static int load_datafile_text (const struct GameDriver *drv, char *buffer, int b
                         }
 
                         /* Get length of text to add to the buffer */
-                        len = strlen (s);
+                        len = strlen ((char *)s);
 
                         /* Check for buffer overflow */
                         /* For some reason we can get a crash if we try */
                         /* to use the last 30 characters of the buffer  */
                         if ((bufsize - offset) - len <= 45)
                         {
-                            strcpy (s, " ...[TRUNCATED]");
-                            len = strlen(s);
-                            strcpy (buffer, s);
+                            strcpy ((char *)s, " ...[TRUNCATED]");
+                            len = strlen((char *)s);
+                            strcpy (buffer, (char *)s);
                             buffer += len;
                             offset += len;
                             break;
                         }
 
                         /* add this word to the buffer */
-                        strcpy (buffer, s);
+                        strcpy (buffer, (char *)s);
                         buffer += len;
                         offset += len;
                 }
@@ -584,9 +584,9 @@ static int load_datafile_text (const struct GameDriver *drv, char *buffer, int b
                         if (TOKEN_SYMBOL == token)
                         {
                                 /* looking for requested tag */
-                                if (!ci_strncmp (tag, s, strlen (tag)))
+                                if (!ci_strncmp (tag, (char *)s, strlen (tag)))
                                         found = 1;
-                                else if (!ci_strncmp (DATAFILE_TAG_KEY, s, strlen (DATAFILE_TAG_KEY)))
+                                else if (!ci_strncmp (DATAFILE_TAG_KEY, (char *)s, strlen (DATAFILE_TAG_KEY)))
                                         break; /* error: tag missing */
                         }
                 }

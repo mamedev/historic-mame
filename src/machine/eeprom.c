@@ -343,7 +343,7 @@ void EEPROM_save(mame_file *f)
 	mame_fwrite(f,eeprom_data,(1 << intf->address_bits) * intf->data_bits / 8);
 }
 
-void EEPROM_set_data(UINT8 *data, int length)
+void EEPROM_set_data(const UINT8 *data, int length)
 {
 	memcpy(eeprom_data, data, length);
 }

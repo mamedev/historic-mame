@@ -1156,6 +1156,17 @@ static struct OKIM6295interface semicom_okim6295_interface =
 	{ 100 }
 };
 
+MACHINE_INIT (htchctch)
+{
+	/* copy protection data every reset */
+
+	data16_t *PROTDATA = (data16_t*)memory_region(REGION_USER1);
+	int i;
+
+	for (i = 0;i < 0x200/2;i++)
+		tumblep_mainram[0x000/2 + i] = PROTDATA[i];
+
+}
 
 static MACHINE_DRIVER_START( htchctch )
 	/* basic machine hardware */
@@ -1170,6 +1181,8 @@ static MACHINE_DRIVER_START( htchctch )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(529)
+
+	MDRV_MACHINE_INIT ( htchctch )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -1387,13 +1400,13 @@ also might be bad dumps, rom data is in a strange order */
 
 ROM_START( bcstry )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
-	ROM_LOAD16_BYTE( "bcstry_u.35",  0x20001, 0x20000, BAD_DUMP CRC(d25b80a4) SHA1(6ea1c28cf508b856e93a06063e634a09291cb32c) )
+	ROM_LOAD16_BYTE( "bcstry_u.35",  0x20001, 0x20000, CRC(d25b80a4) SHA1(6ea1c28cf508b856e93a06063e634a09291cb32c) )
 	ROM_CONTINUE ( 0x00001, 0x20000)
-	ROM_LOAD16_BYTE( "bcstry_u.62",  0x20000, 0x20000, BAD_DUMP CRC(7f7aa244) SHA1(ee9bb2bf22d16f06d7935168e2bd09296fba3abc) )
+	ROM_LOAD16_BYTE( "bcstry_u.62",  0x20000, 0x20000, CRC(7f7aa244) SHA1(ee9bb2bf22d16f06d7935168e2bd09296fba3abc) )
 	ROM_CONTINUE ( 0x00000, 0x20000)
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
-	ROM_LOAD( "bcstry_u.21", 0x04000, 0x4000 , BAD_DUMP CRC(3ba072d4) SHA1(8b64d3ab4c63132f2f77b2cf38a88eea1a8f11e0) )
+	ROM_LOAD( "bcstry_u.21", 0x04000, 0x4000 , CRC(3ba072d4) SHA1(8b64d3ab4c63132f2f77b2cf38a88eea1a8f11e0) )
 	ROM_CONTINUE( 0x0000, 0x4000 )
 	ROM_CONTINUE( 0xc000, 0x4000 )
 	ROM_CONTINUE( 0x8000, 0x4000 )
@@ -1404,7 +1417,8 @@ ROM_START( bcstry )
 	ROM_REGION( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
 	/* this is not a real rom but instead the data extracted from
 	   shared ram, the MCU puts it there */
-	/* not got it.. */
+	/* taken from other set, check... */
+	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x00000, 0x200 , CRC(e84e328c) SHA1(ce21988980654acb573bfb7396fd2f536204ecf0) )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
 	ROM_LOAD( "bcstry_u.64", 0x00000, 0x40000, CRC(23f0e0fe) SHA1(a8c3cbb6378797db353ca2873e73ff157a6f8a3c) )
@@ -1425,8 +1439,49 @@ ROM_START( bcstry )
 	ROM_LOAD16_BYTE( "bcstry_u.102", 0x100000, 0x80000, CRC(71b40ece) SHA1(1a13dfd7615a6f61851897ebcb10fa69bc8ae525) ) // a
 	ROM_LOAD16_BYTE( "bcstry_u.105", 0x300001, 0x80000, CRC(8166b596) SHA1(cbf6f5cec5f6991bb1d4ec0ea03cd617ff38fc3b) ) // a
 	ROM_LOAD16_BYTE( "bcstry_u.107", 0x300000, 0x80000, CRC(ab3c923a) SHA1(aaca1d2ed7b53e0933e0bd94a19458dd1598f204) ) // a
-
 ROM_END
+
+ROM_START( bcstrya )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "prg1.ic35",  0x20001, 0x20000, CRC(2c55100a) SHA1(bc98a0015c99ef84ebd3fc3f7b7a3bdfd700e1da) )
+	ROM_CONTINUE ( 0x00001, 0x20000)
+	ROM_LOAD16_BYTE( "prg2.ic62",  0x20000, 0x20000, CRC(f54c0a96) SHA1(79a3635792a23f47fc914d1d5e118b5a643ca100) )
+	ROM_CONTINUE ( 0x00000, 0x20000)
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
+	ROM_LOAD( "bcstry_u.21", 0x04000, 0x4000 , CRC(3ba072d4) SHA1(8b64d3ab4c63132f2f77b2cf38a88eea1a8f11e0) )
+	ROM_CONTINUE( 0x0000, 0x4000 )
+	ROM_CONTINUE( 0xc000, 0x4000 )
+	ROM_CONTINUE( 0x8000, 0x4000 )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Intel 87C52 MCU Code */
+	ROM_LOAD( "87c52.mcu", 0x00000, 0x10000 , NO_DUMP ) /* can't be dumped */
+
+	ROM_REGION( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
+	/* this is not a real rom but instead the data extracted from
+	   shared ram, the MCU puts it there - not confirmed as correct yet.. game doesn't work yet..*/
+	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x00000, 0x200 , CRC(e84e328c) SHA1(ce21988980654acb573bfb7396fd2f536204ecf0) )
+
+	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_LOAD( "bcstry_u.64", 0x00000, 0x40000, CRC(23f0e0fe) SHA1(a8c3cbb6378797db353ca2873e73ff157a6f8a3c) )
+
+	/* order / region of these not verified but each rom is probably 4 plane of 4bpp gfx .. */
+	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* Sprites */
+	ROM_LOAD16_BYTE( "bcstry_u.109", 0x000001, 0x80000, CRC(eb04d37a) SHA1(818dc7aafac577920d94c65e47d965dc0474d92c) ) // c
+	ROM_LOAD16_BYTE( "bcstry_u.110", 0x000000, 0x80000, CRC(1bfe65c3) SHA1(27dec16b271866ff336d8b25d352977ca80c35bf) ) // c
+	ROM_LOAD16_BYTE( "bcstry_u.111", 0x100001, 0x80000, CRC(c8bf3a3c) SHA1(604fc57c4d3a581016aa2516236c568488d23c77) ) // c
+	ROM_LOAD16_BYTE( "bcstry_u.113", 0x100000, 0x80000, CRC(746ecdd7) SHA1(afb6dbc0fb94e7ce96a9b219f5f7cd3721d1c1c4) ) // c
+
+	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE ) /* GFX */
+	ROM_LOAD16_BYTE( "bcstry_u.100", 0x000001, 0x80000, CRC(8c11cbed) SHA1(e04e53af4fe732bf9d20a9ae5c2a90b576ee0b83) ) // b
+	ROM_LOAD16_BYTE( "bcstry_u.104", 0x000000, 0x80000, CRC(377c0c71) SHA1(77efa9530b1c311d93c84dd8452701414f740269) ) // b
+	ROM_LOAD16_BYTE( "bcstry_u.106", 0x200001, 0x80000, CRC(5219bcbf) SHA1(4b88eab7ffc2dc1de451ae4ee52f1536e179ea13) ) // b
+	ROM_LOAD16_BYTE( "bcstry_u.108", 0x200000, 0x80000, CRC(442307ed) SHA1(71b7f19af64d9961f0f9205b86b4b0ebc13fddda) ) // b
+	ROM_LOAD16_BYTE( "bcstry_u.99",  0x100001, 0x80000, CRC(cdb1af87) SHA1(df1fbda5c7ce4fbd64d6db9eb80946e06119f096) ) // a
+	ROM_LOAD16_BYTE( "bcstry_u.102", 0x100000, 0x80000, CRC(71b40ece) SHA1(1a13dfd7615a6f61851897ebcb10fa69bc8ae525) ) // a
+	ROM_LOAD16_BYTE( "bcstry_u.105", 0x300001, 0x80000, CRC(8166b596) SHA1(cbf6f5cec5f6991bb1d4ec0ea03cd617ff38fc3b) ) // a
+	ROM_LOAD16_BYTE( "bcstry_u.107", 0x300000, 0x80000, CRC(ab3c923a) SHA1(aaca1d2ed7b53e0933e0bd94a19458dd1598f204) ) // a
+ROM_END
+
 
 /*
 
@@ -1839,5 +1894,6 @@ GAMEX(1991, tumblep2, tumblep, tumblepb,  tumblep,  tumblepb, ROT0, "bootleg", "
 GAMEX(1993, jumpkids, 0,       jumpkids,  tumblep,  jumpkids, ROT0, "Comad", "Jump Kids", GAME_NO_SOUND )
 GAME (1996, fncywld,  0,       fncywld,   fncywld,  fncywld,  ROT0, "Unico", "Fancy World - Earth of Crisis" ) // game says 1996, testmode 1995?
 GAME (1995, htchctch, 0,       htchctch,  htchctch, htchctch, ROT0, "SemiCom", "Hatch Catch" )
-GAMEX(1997, bcstry,   0,       htchctch,  htchctch, htchctch, ROT0, "SemiCom", "BC Story", GAME_NOT_WORKING)
+GAMEX(1997, bcstry,   0,       htchctch,  htchctch, htchctch, ROT0, "SemiCom", "BC Story (set 1)", GAME_NOT_WORKING)
+GAMEX(1997, bcstrya,  bcstry,  htchctch,  htchctch, htchctch, ROT0, "SemiCom", "BC Story (set 2)", GAME_NOT_WORKING)
 GAME (2001, jumppop,  0,       jumppop,   jumppop,  0, ORIENTATION_FLIP_X, "ESD", "Jumping Pop" )

@@ -1,5 +1,5 @@
 /********************************************************************
-	Preliminary Hyperstone based dfPix games driver
+ Preliminary Hyperstone based dgPix games driver
 
  Games dumped
  - X-Files
@@ -10,6 +10,9 @@
 *********************************************************************/
 
 #include "driver.h"
+#include "machine/random.h"
+#include "vidhrdw/generic.h"
+
 
 static data32_t hyperstone_iram[0x1000];
 
@@ -22,46 +25,109 @@ static READ32_HANDLER( hyperstone_iram_r )
 {
 	return hyperstone_iram[offset&0xfff];
 }
+static data32_t *vram;
 
-static ADDRESS_MAP_START( dfpix_map, ADDRESS_SPACE_PROGRAM, 32 )
+static ADDRESS_MAP_START( dgpix_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x00ffffff) AM_RAM
-	AM_RANGE(0x40000000, 0x4007ffff) AM_RAM
-	AM_RANGE(0x80000000, 0x800fffff) AM_RAM
+	AM_RANGE(0x40000000, 0x400fffff) AM_RAM AM_BASE(&vram)
+	AM_RANGE(0x80000000, 0x801fffff) AM_RAM
 	AM_RANGE(0xc0000000, 0xdfffffff) AM_READ(hyperstone_iram_r) AM_WRITE(hyperstone_iram_w)
 	AM_RANGE(0xe0000000, 0xe1f00003) AM_RAM
+	AM_RANGE(0xe1f80000, 0xe1f8ffff) AM_RAM
 	AM_RANGE(0xffc00000, 0xffffffff) AM_READ(MRA32_BANK1)
 ADDRESS_MAP_END
 
-INPUT_PORTS_START( dfpix )
+static UINT32 io2;
+static int frame_hack=0;
+
+static READ32_HANDLER( dgio_r )
+{
+		
+
+	switch(offset)
+	{
+	//	case 0x1c/4:	return io2;
+		case 0x400/4: return (((++frame_hack)>>14)&1)|mame_rand(); //vblank flag ?
+		default: return 0xffffffff;
+	}
+}
+
+static WRITE32_HANDLER( dgio_w )
+{
+	switch(offset)
+	{
+		case 0x1c/4:	COMBINE_DATA(&io2);break;
+		
+	}
+}
+
+static ADDRESS_MAP_START( io_map, ADDRESS_SPACE_IO, 32 )
+		AM_RANGE(0x00000000, 0x00ffffff) AM_READ(dgio_r) AM_WRITE(dgio_w)
+ADDRESS_MAP_END
+
+INPUT_PORTS_START( dgpix )
 INPUT_PORTS_END
 
-VIDEO_UPDATE( dfpix )
-{
 
+static void plot_pixel_rgb(struct mame_bitmap *bitmap, int x, int y , int color)
+{
+	if (Machine->color_depth == 32)
+	{
+		UINT32 cb=(color&0x1f)<<3;	
+		UINT32 cg=(color&0x3e0)>>2;	
+		UINT32 cr=(color&0x7c00)>>7;	
+		((UINT32 *)bitmap->line[y])[x] = cb | (cg<<8) | (cr<<16);
+	}
+	else
+	{
+		((UINT16 *)bitmap->line[y])[x] = color;	
+	}
+}
+
+
+
+VIDEO_UPDATE( dgpix )
+{
+	int x,y;	
+	for(y=0;y<240;y++)
+		for(x=0;x<160;x++)
+		{
+			plot_pixel_rgb(bitmap,x*2,y,(vram[y*256+x]>>16)&0x7fff);
+			plot_pixel_rgb(bitmap,x*2+1,y,vram[y*256+x]&0x7fff);
+		}
 }
 
 static INTERRUPT_GEN( test_interrupts )
 {
-	cpunum_set_input_line(0, cpu_getiloops(), PULSE_LINE);
+	if(cpu_getiloops())
+	{
+		cpunum_set_input_line(0, 0, PULSE_LINE);	
+	}
+	else
+	{
+		cpunum_set_input_line(0, 7, PULSE_LINE);	
+	}
 }
 
 
-static MACHINE_DRIVER_START( dfpix )
-	MDRV_CPU_ADD(E132XS, 100000000*5)		 /* ?? */
-	MDRV_CPU_PROGRAM_MAP(dfpix_map,0)
-	MDRV_CPU_VBLANK_INT(test_interrupts, 8)
+static MACHINE_DRIVER_START( dgpix )
+	MDRV_CPU_ADD(E132XS, 100000000)		 /* ?? */
+	MDRV_CPU_PROGRAM_MAP(dgpix_map,0)
+	MDRV_CPU_IO_MAP(io_map,0)
+	MDRV_CPU_VBLANK_INT(test_interrupts, 2)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(256, 256)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER| VIDEO_RGB_DIRECT)
+	MDRV_SCREEN_SIZE(512, 256)
+	MDRV_VISIBLE_AREA(0, 319, 0, 239)
 
 	MDRV_PALETTE_LENGTH(0x8000)
-
-	MDRV_VIDEO_UPDATE(dfpix)
+	
+	MDRV_VIDEO_START(generic_bitmapped)
+	MDRV_VIDEO_UPDATE(dgpix)
 MACHINE_DRIVER_END
 
 
@@ -133,9 +199,9 @@ ROM_START( xfiles )
 ROM_END
 
 
-DRIVER_INIT( dfpix )
+DRIVER_INIT( dgpix )
 {
 	cpu_setbank(1, memory_region(REGION_USER1));
 }
 
-GAMEX( 199?, xfiles, 0, dfpix, dfpix, dfpix, ROT0, "dfPIX Entertainment Inc.", "X-Files", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 199?, xfiles, 0, dgpix, dgpix, dgpix, ROT0, "dgPIX Entertainment Inc.", "X-Files", GAME_NO_SOUND | GAME_NOT_WORKING )

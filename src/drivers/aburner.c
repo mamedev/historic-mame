@@ -599,7 +599,7 @@ static struct math_context {
 	UINT16 compare[4];	/* F,G,H */
 } math0_context, math1_context;
 
-static WRITE16_HANDLER( math0_product_w ){
+WRITE16_HANDLER( math0_product_w ){
 	COMBINE_DATA( &math0_context.product[offset&3]);
 }
 static WRITE16_HANDLER( math0_quotient_w ){
@@ -613,7 +613,7 @@ static WRITE16_HANDLER( math0_compare_w ){
 		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 	}
 }
-static READ16_HANDLER( math0_product_r ){
+READ16_HANDLER( math0_product_r ){
 	UINT32 result = ((INT16)math0_context.product[0])*((INT16)math0_context.product[1]);
 	switch( offset&3 ){
 	case 0: return math0_context.product[0];
