@@ -137,7 +137,6 @@ int  liberator_port_r(int offset) ;
 int  liberator_interrupt(void) ;
 
 /* from vidhrdw */
-void liberator_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int  liberator_vh_start(void);
 void liberator_vh_update(struct osd_bitmap *bitmap);
 void liberator_vh_stop(void);
@@ -307,9 +306,9 @@ static struct MachineDriver machine_driver =
 	{ 0, 512-1, 0, 384-1 },	/* visible area {minx, maxx, miny, maxy}	*/
 #endif
 	0, 						/* GfxDecodeInfo			*/
-	0x100, 					/* total_colors				*/
+	32, 					/* total_colors				*/
 	0,						/* length in bytes of the color lookup table (3*total_colors bytes)	*/
-	liberator_vh_convert_color_prom,	/* vh_convert_color_prom()	*/
+	0,	/* vh_convert_color_prom()	*/
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,	/* video_attributes	*/
 	0,						/* vh_init()	*/

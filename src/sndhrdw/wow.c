@@ -47,27 +47,34 @@ static const char *PhonemeTable[65] =
  0
 };
 
+/* Missing samples : ready.sam from.sam one.sam bite.sam youl.sam explode.sam if.sam myself.sam back.sam
+   cant.sam do.sam wait.sam worlings.sam very.sam babies.sam breath.sam fire.sam beat.sam rest.sam
+   then.sam never.sam worlock.sam escape.sam door.sam try.sam any.sam harder.sam only.sam meet.sam with.sam
+   doom.sam pop.sam
+   Problems with YOU and YOU'LL and YOU'DD */
+
 static const char *wowWordTable[] =
 {
- "A2AYY1","A2E1","UH1GEH1I3N","AE1EH2M","AEM","and.sam","UH1NAH2I1YLA2SHUH2N","AH2NUHTHER","AH1NUHTHVRR",
- "AH1R","UHR","UH1TAEEH3K","avenger.sam","BAEEH3D","BAEEH1D","be.sam",
- "been.sam","BAH2I3Y1T","but.sam","BUH1DTTEH2NN","KUHDEH2T",
- "KAE1NUH1T","captain.sam","chronicles.sam","KO1UH3I3E1N","KO1UH3I3E1NS","colonel.sam",
- "KAH1NKER","KAH1NCHEHSNEHS","DE1FEH1NDER","destroy.sam","DE1STRO1I1Y1D","DYVAH1U1ER",
- "DU1UM","DRAW1S","DUHST","empire.sam","EHND",
- "EH1NEH1MY","EH1SKA1E1P","flagship.sam","FO1R","GUH1LAEKTI1K",
- "GAE1LUH1KSY","general.sam","GDTO1O1RRFF","GDTO1RFYA2N","GDTO1RFE1EH2N","GDTO1RFYA2NS",
- "GAH1EH3T","hahahahu.sam","hahaher.sam","harder.sam","have.sam",
- "hitting.sam","AH1I1Y", "AH1I1Y1","I1MPAH1SI1BL","in.sam","insert.sam",
- "I1S","LI1V","LAWNG","MEE1T","MUU1V",
- "MAH2I1Y","NIR","next.sam","nice.sam","NO",
- "now.sam","PA1","PAH1I1R","PLA1AYER","PRE1PAE1ER","PRI1SI3NEH3RS",
- "promoted.sam","POO1IUSH","RO1U1BAH1T","RO1U1BAH1TS","seek.sam",
- "SHIP","shot.sam","SUHM","SPA2I3YS","PA0",
- "SERVAH2I1Y1VUH3L","TAK","THVUH","THVUH1","time.sam",
- "TU","TRAH2I1Y","UH2NBE1AYTUH3BUH3L","warrior.sam","warriors.sam","WI1L",
- "Y1I3U1","YIUU1U1","YI1U1U1","Y1IUU1U1","Y1I1U1U1","YOR","YU1O1RSEH1LF",
- 0
+"AH1I3Y1", "UH1GA1EH1N", "AHAH2", "AE1EH3M", "AE1EH3ND",
+"anew.sam", "AH1NUHTHER", "AE1NY", "anyone.sam", "appear.sam", "AH1UH3R", "UHR", "BABYY1S", "BAE1EH3K",
+"BE1T", "become.sam", "BEHST", "BEH1TER", "BUH3AH2YT", "bones.sam", "BRE1YTH", "but.sam", "can.sam", "KAE1EH3NT",
+"chance.sam", "CHEHST", "KO1O2I3Y1N", "dance.sam", "DE1STRO1UH3I3AY",
+"DE1VEH1LUH3PT", "DIUU", "DONT", "DUUM", "DOO1R", "draw.sam", "DUHNJEH1N", "DUHNJEH1NZ",
+"each.sam", "eaten.sam", "EHSPA0KA2I3Y1P", "EHKPA0SPLOU1D", "fear.sam", "FAH1I3YND", "FAH1I3Y1ND", "FAH1EH3AYR", "FOR", "FRUHMM",
+"garwor.sam", "GEHT", "GEH1T", "GEHEH3T", "GEHTING", "good.sam", "HAH1HAH1HAH1HAH1", "HAH1RDER",
+"hasnt.sam", "have.sam", "HEH1I3VE1WA1I3Y1TS", "HAI1Y1", "HOP",
+"HUHNGRY", "HUHNGGRY", "HERRY", "AH1EH3I3Y", "AH1UH3I3Y", "IF", "I1F", "AH1I3YM", "AH1EH3I3YL", "AH1I3Y1L", "IN1",
+"INSERT", "invisibl.sam", "IT", "lie.sam", "MAE1EH3DJI1KUH1L",
+"MAE1EH3DJI1KUH1L", "MEE1", "MEE1T", "months.sam",
+"MAH1EH3I3Y", "MAH2AH2EH3I3Y", "MAH1I1Y", "MAH1I3Y1", "MAH1I3Y", "MAH1I3YSEHLF", "near.sam", "NEH1VER",
+"NAH1UH3U1", "UHV", "AWF", "WUHN", "O1NLY", "UHVEHN", "PA1", "PEHTS", "PAH1WERFUH1L", "PAH1P",
+"radar.sam", "REHDY",
+"REHST", "say.sam", "SAH1I3AYEHNS", "SE1Y", "PA0", "start.sam", "THVAYAY", "THVUH", "THVUH1", "THUH1", "THVEH1N",
+"THVRU", "thurwor.sam", "time.sam", "TU1", "TUU1", "TIUU1", "TREH1ZHERT", "TRAH1EH3I3Y", "VEHEH3RY", "WA2AYYT",
+"WOO1R", "WORYER", "watch.sam", "WE1Y", "WEHLKUHM",
+"WERR", "WAH1EH3I3L", "WIL", "WITH", "WIZERD", "wont.sam",
+"WO1O2R", "WO1ERLD", "WORLINGS", "WORLUHK",
+"YI3U", "Y1IUU", "YIUUI", "Y1IUU1U1", "YI3U1", "Y1IUUL", "YIUU1L", "Y1IUUD", "YO2O2R",0
 };
 
 #define num_samples (sizeof(wowWordTable)/sizeof(char *))
@@ -117,6 +124,8 @@ int wow_speech_r(int offset)
                 totalword[0] = 0;				   /* Clear the total word stack */
                 return data;
     }
+    if (PhonemeTable[Phoneme] == "PA0")						   /* We know PA0 is never part of a word */
+                totalword[0] = 0;				   /* Clear the total word stack */
 
 /* Phoneme to word translation */
 
@@ -141,6 +150,7 @@ int wow_speech_r(int offset)
 
     for (i=0; wowWordTable[i]; i++) {
        if (!strcmp(wowWordTable[i],totalword)) {		   /* Scan the word (sample) table for the complete word */
+	  /* WOW has Dungeon */
           if ((!strcmp("GDTO1RFYA2N",totalword)) || (!strcmp("RO1U1BAH1T",totalword)) || (!strcmp("KO1UH3I3E1N",totalword))) {		   /* May be plural */
              plural=i+1;
              strcpy(oldword,totalword);

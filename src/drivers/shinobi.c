@@ -34,12 +34,10 @@ WRITE:
 #include "machine/system16.h"
 #include "sndhrdw/2151intf.h"
 
-void system16_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void system16_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-
-void system16_soundcommand_w(int offset, int data)
-{
+void system16_soundcommand_w(int offset, int data);
+void system16_soundcommand_w(int offset, int data){
 	switch (offset){
 		case 0x2:
 			soundlatch_w(0, data);
@@ -77,6 +75,19 @@ static struct MemoryWriteAddress shinobi_writemem[] =
 	{ 0xfff018, 0xfff018, shinobi_refreshenable_w, &system16_refreshregister },  /* this is valid for Shinobi and Tetris */
 	{ 0xff0000, 0xffffff, MWA_BANK1 },
 	{ 0x000000, 0x03ffff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryReadAddress passshot_readmem[] =
+{
+	{ 0x410000, 0x410fff, system16_videoram_r, &system16_videoram, &s16_videoram_size },
+	{ 0x400000, 0x40ffff, system16_backgroundram_r, &system16_backgroundram, &s16_backgroundram_size },
+	{ 0x440000, 0x440fff, system16_spriteram_r, &system16_spriteram, &s16_spriteram_size },
+	{ 0x840000, 0x840fff, system16_paletteram_r, &system16_paletteram, &s16_paletteram_size },
+	{ 0xc41000, 0xc41007, passshot_control_r },
+	{ 0xc42000, 0xc42007, shinobi_dsw_r },
+	{ 0xff0000, 0xffffff, MRA_BANK1 },
+	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
 
@@ -125,7 +136,190 @@ static struct IOWritePort sound_writeport[] =
 };
 
 
-INPUT_PORTS_START( shinobi_ports )
+INPUT_PORTS_START( shinobi_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BITX(0x04, 0x04, 0, "Test Mode", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* DSW0: coins per credit selection */
+	PORT_DIPNAME( 0x0f, 0x0f, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x07, "4 Coins/1 Credit")
+	PORT_DIPSETTING(    0x08, "3 Coins/1 Credit")
+	PORT_DIPSETTING(    0x09, "2 Coins/1 Credit")
+	PORT_DIPSETTING(    0x05, "2/1 5/3 6/4")
+	PORT_DIPSETTING(    0x04, "2/1 4/3")
+	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit")
+	PORT_DIPSETTING(    0x01, "1/1 2/3")
+	PORT_DIPSETTING(    0x02, "1/1 4/5")
+	PORT_DIPSETTING(    0x03, "1/1 5/6")
+	PORT_DIPSETTING(    0x06, "2 Coins/3 Credits")
+	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits")
+	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits")
+	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits")
+	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits")
+	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits")
+	PORT_DIPSETTING(    0x00, "Free Play (if Coin B too) or 1/1")
+	PORT_DIPNAME( 0xf0, 0xf0, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x70, "4 Coins/1 Credit")
+	PORT_DIPSETTING(    0x80, "3 Coins/1 Credit")
+	PORT_DIPSETTING(    0x90, "2 Coins/1 Credit")
+	PORT_DIPSETTING(    0x50, "2/1 5/3 6/4")
+	PORT_DIPSETTING(    0x40, "2/1 4/3")
+	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit")
+	PORT_DIPSETTING(    0x10, "1/1 2/3")
+	PORT_DIPSETTING(    0x20, "1/1 4/5")
+	PORT_DIPSETTING(    0x30, "1/1 5/6")
+	PORT_DIPSETTING(    0x60, "2 Coins/3 Credits")
+	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits")
+	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits")
+	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits")
+	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits")
+	PORT_DIPSETTING(    0xa0, "1 Coin/6 Credits")
+	PORT_DIPSETTING(    0x00, "Free Play (if Coin A too) or 1/1")
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright")
+	PORT_DIPSETTING(    0x01, "Cocktail")
+	PORT_DIPNAME( 0x02, 0x02, "Attract Mode Sound", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "2" )
+	PORT_DIPSETTING(    0x0c, "3" )
+	PORT_DIPSETTING(    0x04, "5" )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "240", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPNAME( 0x30, 0x30, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Easy" )
+	PORT_DIPSETTING(    0x30, "Normal" )
+	PORT_DIPSETTING(    0x10, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x40, 0x40, "Enemy's Bullet Speed", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Slow" )
+	PORT_DIPSETTING(    0x00, "Fast" )
+	PORT_DIPNAME( 0x80, 0x80, "Language", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Japanese" )
+	PORT_DIPSETTING(    0x00, "English" )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( aliensyn_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BITX(0x04, 0x04, 0, "Test Mode", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* DSW0: coins per credit selection */
+	PORT_DIPNAME( 0x0f, 0x0f, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x07, "4 Coins/1 Credit")
+	PORT_DIPSETTING(    0x08, "3 Coins/1 Credit")
+	PORT_DIPSETTING(    0x09, "2 Coins/1 Credit")
+	PORT_DIPSETTING(    0x05, "2/1 5/3 6/4")
+	PORT_DIPSETTING(    0x04, "2/1 4/3")
+	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit")
+	PORT_DIPSETTING(    0x01, "1/1 2/3")
+	PORT_DIPSETTING(    0x02, "1/1 4/5")
+	PORT_DIPSETTING(    0x03, "1/1 5/6")
+	PORT_DIPSETTING(    0x06, "2 Coins/3 Credits")
+	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits")
+	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits")
+	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits")
+	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits")
+	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits")
+	PORT_DIPSETTING(    0x00, "Free Play (if Coin B too) or 1/1")
+	PORT_DIPNAME( 0xf0, 0xf0, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x70, "4 Coins/1 Credit")
+	PORT_DIPSETTING(    0x80, "3 Coins/1 Credit")
+	PORT_DIPSETTING(    0x90, "2 Coins/1 Credit")
+	PORT_DIPSETTING(    0x50, "2/1 5/3 6/4")
+	PORT_DIPSETTING(    0x40, "2/1 4/3")
+	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit")
+	PORT_DIPSETTING(    0x10, "1/1 2/3")
+	PORT_DIPSETTING(    0x20, "1/1 4/5")
+	PORT_DIPSETTING(    0x30, "1/1 5/6")
+	PORT_DIPSETTING(    0x60, "2 Coins/3 Credits")
+	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits")
+	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits")
+	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits")
+	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits")
+	PORT_DIPSETTING(    0xa0, "1 Coin/6 Credits")
+	PORT_DIPSETTING(    0x00, "Free Play (if Coin A too) or 1/1")
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x01, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "On")
+	PORT_DIPSETTING(    0x01, "Off")
+	PORT_DIPNAME( 0x02, 0x02, "Demo Sound?", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "2" )
+	PORT_DIPSETTING(    0x0c, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Free (127?)", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPNAME( 0x30, 0x30, "Timer", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x30, "150" )
+	PORT_DIPSETTING(    0x20, "140" )
+	PORT_DIPSETTING(    0x10, "130" )
+	PORT_DIPSETTING(    0x00, "120" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Easy" )
+	PORT_DIPSETTING(    0xc0, "Normal" )
+	PORT_DIPSETTING(    0x40, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( tetrisbl_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -176,10 +370,10 @@ INPUT_PORTS_START( shinobi_ports )
 	PORT_DIPSETTING(    0x04, "5" )
 	PORT_DIPSETTING(    0x00, "FREE" )
 	PORT_DIPNAME( 0x30, 0x30, "Difficulty", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x30, "NORMAL" )
-	PORT_DIPSETTING(    0x20, "EASY" )
-	PORT_DIPSETTING(    0x10, "HARD" )
-	PORT_DIPSETTING(    0x00, "HARDEST" )
+	PORT_DIPSETTING(    0x30, "Normal" )
+	PORT_DIPSETTING(    0x20, "Easy" )
+	PORT_DIPSETTING(    0x10, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x40, 0x40, "Bullets Speed", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x40, "Slow" )
 	PORT_DIPSETTING(    0x00, "Fast" )
@@ -187,6 +381,98 @@ INPUT_PORTS_START( shinobi_ports )
 	PORT_DIPSETTING(    0x80, "Japanese" )
 	PORT_DIPSETTING(    0x00, "English" )
 
+INPUT_PORTS_END
+
+INPUT_PORTS_START( passshot_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BITX(0x04, 0x04, 0, "Test Mode", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* DSW0: coins per credit selection */
+	PORT_DIPNAME( 0x0f, 0x0f, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x07, "4 Coins/1 Credit")
+	PORT_DIPSETTING(    0x08, "3 Coins/1 Credit")
+	PORT_DIPSETTING(    0x09, "2 Coins/1 Credit")
+	PORT_DIPSETTING(    0x05, "2/1 5/3 6/4")
+	PORT_DIPSETTING(    0x04, "2/1 4/3")
+	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit")
+	PORT_DIPSETTING(    0x01, "1/1 2/3")
+	PORT_DIPSETTING(    0x02, "1/1 4/5")
+	PORT_DIPSETTING(    0x03, "1/1 5/6")
+	PORT_DIPSETTING(    0x06, "2 Coins/3 Credits")
+	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits")
+	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits")
+	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits")
+	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits")
+	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits")
+	PORT_DIPSETTING(    0x00, "Free Play (if Coin B too) or 1/1")
+	PORT_DIPNAME( 0xf0, 0xf0, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x70, "4 Coins/1 Credit")
+	PORT_DIPSETTING(    0x80, "3 Coins/1 Credit")
+	PORT_DIPSETTING(    0x90, "2 Coins/1 Credit")
+	PORT_DIPSETTING(    0x50, "2/1 5/3 6/4")
+	PORT_DIPSETTING(    0x40, "2/1 4/3")
+	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit")
+	PORT_DIPSETTING(    0x10, "1/1 2/3")
+	PORT_DIPSETTING(    0x20, "1/1 4/5")
+	PORT_DIPSETTING(    0x30, "1/1 5/6")
+	PORT_DIPSETTING(    0x60, "2 Coins/3 Credits")
+	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits")
+	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits")
+	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits")
+	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits")
+	PORT_DIPSETTING(    0xa0, "1 Coin/6 Credits")
+	PORT_DIPSETTING(    0x00, "Free Play (if Coin A too) or 1/1")
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x01, 0x01, "Attract Mode Sound", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x0e, 0x0e, "Initial Point", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x06, "2000" )
+	PORT_DIPSETTING(    0x0a, "3000" )
+	PORT_DIPSETTING(    0x0c, "4000" )
+	PORT_DIPSETTING(    0x0e, "5000" )
+	PORT_DIPSETTING(    0x08, "6000" )
+	PORT_DIPSETTING(    0x04, "7000" )
+	PORT_DIPSETTING(    0x02, "8000" )
+	PORT_DIPSETTING(    0x00, "9000" )
+	PORT_DIPNAME( 0x30, 0x30, "Point Table", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Easy" )
+	PORT_DIPSETTING(    0x30, "Normal" )
+	PORT_DIPSETTING(    0x10, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Game Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Easy" )
+	PORT_DIPSETTING(    0xc0, "Normal" )
+	PORT_DIPSETTING(    0x40, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
 INPUT_PORTS_END
 
 
@@ -205,10 +491,7 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,     0, 8 },
-	{ 1, 0x00000, &charlayout,  1024, 128 },   /* fake: this give us lookup pointer for sprites */
-	{ 1, 0x00000, &charlayout,     0, 128 },   /* fake: this give us lookup pointer for chars   */
-	{ 1, 0x00000, &charlayout,     0, 256 },   /* fake: this give us lookup pointer for all     */
+	{ 1, 0x00000, &charlayout,     0, 256 },
 	{ -1 } /* end of array */
 };
 
@@ -228,17 +511,14 @@ static struct YM2151interface ym2151_interface =
 
 static void shinobi_init_machine(void)
 {
-	/*	Initialize Objects Bank vector
-	 */
+	/*	Initialize Objects Bank vector */
 
 	static int bank[16] = { 0,0,0,0,0,0,0,6,0,0,0,4,0,2,0,0 };
 
-	/*	And notify this to the System16 hardware
-	 */
+	/*	And notify this to the System16 hardware */
 
 	system16_define_bank_vector(bank);
 	system16_define_sprxoffset(-0xb8);
-
 }
 
 
@@ -246,33 +526,27 @@ static void tetris_init_machine(void)
 {
 	unsigned char *RAM = Machine->memory_region[0];
 
-	/*	Initialize Objects Bank vector
-	 */
+	/*	Initialize Objects Bank vector */
 
 	static int bank[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
 
-	/*	And notify this to the System16 hardware
-	 */
+	/*	And notify this to the System16 hardware */
 
 	system16_define_bank_vector(bank);
 	system16_define_sprxoffset(-0x40);
 
-	/*	Patch the audio CPU
-	 */
+	/*	Patch the audio CPU */
 	RAM = Machine->memory_region[3];
 	RAM[0x020f] = 0xc7;
 }
 
-
 static void passshot_init_machine(void)
 {
-	/*	Initialize Objects Bank vector
-	 */
+	/*	Initialize Objects Bank vector */
 
 	static int bank[16] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,3 };
 
-	/*	And notify this to the System16 hardware
-	 */
+	/*	And notify this to the System16 hardware */
 
 	system16_define_bank_vector(bank);
 	system16_define_sprxoffset(-0x48);
@@ -379,7 +653,7 @@ static struct MachineDriver passshot_machine_driver =
 			CPU_M68000,
 			10000000,	/* 10 Mhz */
 			0,
-			shinobi_readmem,passshot_writemem,0,0,
+			passshot_readmem,passshot_writemem,0,0,
 			system16_interrupt,1
 		},
 		{
@@ -416,47 +690,45 @@ static struct MachineDriver passshot_machine_driver =
 	}
 };
 
-
-static void shinobi_sprite_decode (void)
-{
-	unsigned char *temp = malloc (0x10000);
+void system16_sprite_decode( int num_banks, int bank_size );
+void system16_sprite_decode( int num_banks, int bank_size ){
+	unsigned char *base = Machine->memory_region[2];
+	unsigned char *temp = malloc( bank_size );
 	int i;
 
-	if (!temp) return;
-	for (i = 0; i < 4; i++)
-	{
-		unsigned char *dest = &Machine->memory_region[2][i * 0x20000];
-		unsigned char *p1 = temp;
-		unsigned char *p2 = dest + 0x10000;
-		int j;
+	if( !temp ) return;
 
-		memcpy (temp, dest, 0x10000);
-		for (j = 0; j < 0x10000; j++)
-			*dest++ = *p2++, *dest++ = *p1++;
+	for( i = num_banks; i >0; i-- ){
+		unsigned char *finish	= base + 2*bank_size*i;
+		unsigned char *dest = finish - 2*bank_size;
+
+		unsigned char *p1 = temp;
+		unsigned char *p2 = temp+bank_size/2;
+
+		unsigned char data;
+
+		memcpy (temp, base+bank_size*(i-1), bank_size);
+
+		do {
+			data = *p2++;
+			*dest++ = data >> 4;
+			*dest++ = data & 0xF;
+
+			data = *p1++;
+			*dest++ = data >> 4;
+			*dest++ = data & 0xF;
+		} while( dest<finish );
 	}
 
-	free (temp);
+	free( temp );
 }
 
-static void tetrisbl_sprite_decode (void)
-{
-	unsigned char *temp = malloc (0x10000);
-	int i;
+static void shinobi_sprite_decode (void){
+	system16_sprite_decode( 4, 0x20000 );
+}
 
-	if (!temp) return;
-	for (i = 0; i < 1; i++)
-	{
-		unsigned char *dest = &Machine->memory_region[2][i * 0x20000];
-		unsigned char *p1 = temp;
-		unsigned char *p2 = dest + 0x10000;
-		int j;
-
-		memcpy (temp, dest, 0x10000);
-		for (j = 0; j < 0x10000; j++)
-			*dest++ = *p2++, *dest++ = *p1++;
-	}
-
-	free (temp);
+static void tetrisbl_sprite_decode (void){
+	system16_sprite_decode( 1, 0x20000 );
 }
 
 
@@ -477,12 +749,12 @@ ROM_START( shinobi_rom )
 	ROM_LOAD( "shinobi.b10",  0x10000, 0x10000, 0x68400bb0 )        /* 8x8 1 */
 	ROM_LOAD( "shinobi.b11",  0x20000, 0x10000, 0x28d8e20e )        /* 8x8 2 */
 
-	ROM_REGION(0x80000)
-	ROM_LOAD( "shinobi.b1", 0x00000, 0x10000, 0xcffe9a7c )     /* sprites */
+	ROM_REGION(0x80000 * 2) /* sprites */
+	ROM_LOAD( "shinobi.b1", 0x00000, 0x10000, 0xcffe9a7c )
 	ROM_LOAD( "shinobi.b5", 0x10000, 0x10000, 0xc08a5da8 )
 	ROM_LOAD( "shinobi.b2", 0x20000, 0x10000, 0xd8d607c2 )
 	ROM_LOAD( "shinobi.b6", 0x30000, 0x10000, 0x97cf47a1 )
-	ROM_LOAD( "shinobi.b3", 0x40000, 0x10000, 0xed9c64e2 )     /* sprites */
+	ROM_LOAD( "shinobi.b3", 0x40000, 0x10000, 0xed9c64e2 )
 	ROM_LOAD( "shinobi.b7", 0x50000, 0x10000, 0x760836ba )
 	ROM_LOAD( "shinobi.b4", 0x60000, 0x10000, 0xd8b2b390 )
 	ROM_LOAD( "shinobi.b8", 0x70000, 0x10000, 0x8e3087a8 )
@@ -506,7 +778,7 @@ ROM_START( aliensyn_rom )
 	ROM_LOAD( "10703.b10",  0x10000, 0x10000, 0x13ac0520 )        /* 8x8 1 */
 	ROM_LOAD( "10704.b11",  0x20000, 0x10000, 0x93bef886 )        /* 8x8 2 */
 
-	ROM_REGION(0x80000)
+	ROM_REGION(0x80000*2)
 	ROM_LOAD( "10709.b1", 0x00000, 0x10000, 0x24e86498 )     /* sprites */
 	ROM_LOAD( "10713.b5", 0x10000, 0x10000, 0x93353427 )
 	ROM_LOAD( "10710.b2", 0x20000, 0x10000, 0xb3c675d6 )
@@ -527,17 +799,16 @@ ROM_START( tetrisbl_rom )
 	ROM_LOAD_EVEN( "rom2.bin", 0x00000, 0x8000, 0xc170a0f6 )
 
 	ROM_REGION(0x30000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "scr01.rom",  0x00000, 0x10000, 0x65864110 )        /* 8x8 0 */
-	ROM_LOAD( "scr02.rom",  0x10000, 0x10000, 0x24f4f4b4 )        /* 8x8 1 */
-	ROM_LOAD( "scr03.rom",  0x20000, 0x10000, 0xa19cfd40 )        /* 8x8 2 */
+	ROM_LOAD( "scr01.bin",  0x00000, 0x10000, 0x65864110 )        /* 8x8 0 */
+	ROM_LOAD( "scr02.bin",  0x10000, 0x10000, 0x24f4f4b4 )        /* 8x8 1 */
+	ROM_LOAD( "scr03.bin",  0x20000, 0x10000, 0xa19cfd40 )        /* 8x8 2 */
 
-	ROM_REGION(0x20000)
-	ROM_LOAD( "obj0-o.rom", 0x00000, 0x10000, 0x54463eb2 )     /* sprites */
-	ROM_LOAD( "obj0-e.rom", 0x10000, 0x10000, 0x5ef58537 )
+	ROM_REGION(0x20000*2)
+	ROM_LOAD( "obj0-o.bin", 0x00000, 0x10000, 0x54463eb2 )     /* sprites */
+	ROM_LOAD( "obj0-e.bin", 0x10000, 0x10000, 0x5ef58537 )
 
 	ROM_REGION(0x10000)		/* 64k for audio cpu */
-	ROM_LOAD( "s-prog.rom", 0x0000, 0x8000, 0x614b77e5 )
-
+	ROM_LOAD( "s-prog.bin", 0x0000, 0x8000, 0x614b77e5 )
 ROM_END
 
 
@@ -551,7 +822,7 @@ ROM_START( passshtb_rom )
 	ROM_LOAD( "passshot.b10",  0x10000, 0x10000, 0xcb2fb653 )        /* 8x8 1 */
 	ROM_LOAD( "passshot.b11",  0x20000, 0x10000, 0x5981f12f )        /* 8x8 2 */
 
-	ROM_REGION(0x80000)
+	ROM_REGION(0x80000*2)
 	ROM_LOAD( "passshot.b1", 0x00000, 0x10000, 0xcae4a044 )     /* sprites */
 	ROM_LOAD( "passshot.b5", 0x10000, 0x10000, 0xb8bc0832 )
 	ROM_LOAD( "passshot.b2", 0x20000, 0x10000, 0x8fb69228 )
@@ -561,7 +832,6 @@ ROM_START( passshtb_rom )
 
 	ROM_REGION(0x10000)		/* 64k for audio cpu */
 	ROM_LOAD( "passshot.a7", 0x0000, 0x8000, 0x37f388e5 )
-
 ROM_END
 
 
@@ -578,7 +848,7 @@ struct GameDriver shinobi_driver =
 	0,
 	0,
 
-	shinobi_ports,
+	shinobi_input_ports,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -598,7 +868,7 @@ struct GameDriver aliensyn_driver =
 	0,
 	0,
 
-	shinobi_ports,
+	aliensyn_input_ports,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -617,7 +887,7 @@ struct GameDriver tetrisbl_driver =
 	0,
 	0,
 
-	shinobi_ports,
+	tetrisbl_input_ports,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -637,11 +907,10 @@ struct GameDriver passshtb_driver =
 	0,
 	0,
 
-	shinobi_ports,
+	passshot_input_ports,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
 //	ORIENTATION_ROTATE_270,
 	0, 0
 };
-

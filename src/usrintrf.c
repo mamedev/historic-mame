@@ -51,15 +51,20 @@ static int findbestcolor(unsigned char r,unsigned char g,unsigned char b)
 		int d1,d2,d3,dist;
 
 		osd_get_pen(Machine->pens[i],&r1,&g1,&b1);
-		d1 = (int)r1 - r;
-		d2 = (int)g1 - g;
-		d3 = (int)b1 - b;
-		dist = d1*d1 + d2*d2 + d3*d3;
 
-		if (dist < mindist)
+		/* don't pick black for non-black colors */
+		if (r1+g1+b1 > 0 || r+g+b == 0)
 		{
-			best = i;
-			mindist = dist;
+			d1 = (int)r1 - r;
+			d2 = (int)g1 - g;
+			d3 = (int)b1 - b;
+			dist = d1*d1 + d2*d2 + d3*d3;
+
+			if (dist < mindist)
+			{
+				best = i;
+				mindist = dist;
+			}
 		}
 	}
 
@@ -263,10 +268,6 @@ void displaytext(const struct DisplayText *dt,int erase)
 	for( i=0; i<=10; i++ ) {
 		if( dt_r[i] >= 0 ) {
 			j = findbestcolor(dt_r[i],dt_g[i],dt_b[i]);
-			if( !j && (dt_r[i]>0 || dt_g[i]>0 || dt_b[i]>0) ) {
-				j = (dt_r[i]*30 + dt_g[i]*59 + dt_b[i]*11) / 100;
-				j = findbestcolor(j,j,j);
-			}
 			Machine->uifont->colortable[i] = j;
 		}
 	}
@@ -1298,13 +1299,15 @@ int showgameinfo(void)
 	{
 		"",
 		"Z80",
+		"I8085",
 		"6502",
 		"8086",
 		"8035",
 		"6803",
 		"6805",
 		"6809",
-		"68000"
+		"68000",
+		"T-11"
 	};
 	static char *soundnames[] =
 	{
@@ -1333,10 +1336,16 @@ int showgameinfo(void)
 	i = 0;
 	while (i < MAX_CPU && Machine->drv->cpu[i].cpu_type)
 	{
-		sprintf(&buf[strlen(buf)],"%s %d.%06d MHz\n",
+		sprintf(&buf[strlen(buf)],"%s %d.%06d MHz",
 				cpunames[Machine->drv->cpu[i].cpu_type & ~CPU_FLAGS_MASK],
 				Machine->drv->cpu[i].cpu_clock / 1000000,
 				Machine->drv->cpu[i].cpu_clock % 1000000);
+
+		if (Machine->drv->cpu[i].cpu_type & CPU_AUDIO_CPU)
+			strcat(buf," (sound)");
+
+		strcat(buf,"\n");
+
 		i++;
 	}
 
@@ -1380,7 +1389,12 @@ int showgameinfo(void)
 		if (Machine->drv->video_attributes & VIDEO_SUPPORTS_16BIT)
 			sprintf(&buf[strlen(buf)],">256 colors (16-bit required)\n");
 		else
-			sprintf(&buf[strlen(buf)],"%d colors\n",Machine->drv->total_colors);
+		{
+			sprintf(&buf[strlen(buf)],"%d colors",Machine->drv->total_colors);
+			if (Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE)
+				strcat(buf," (dynamic palette)");
+			strcat(buf,"\n");
+		}
 	}
 
 	dt[0].text = buf;

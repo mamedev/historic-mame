@@ -133,6 +133,9 @@ static struct MemoryWriteAddress cps1_writemem[] =
 ********************************************************************/
 
 #define MACHINE_DRIVER(CPS1_DRVNAME, CPS1_IRQ, CPS1_GFX, CPS1_CPU_FRQ) \
+        MACHINE_DRV(CPS1_DRVNAME, CPS1_IRQ, 2, CPS1_GFX, CPS1_CPU_FRQ)
+
+#define MACHINE_DRV(CPS1_DRVNAME, CPS1_IRQ, CPS1_ICNT, CPS1_GFX, CPS1_CPU_FRQ) \
 static struct MachineDriver CPS1_DRVNAME =                             \
 {                                                                        \
         /* basic machine hardware */                                     \
@@ -142,7 +145,7 @@ static struct MachineDriver CPS1_DRVNAME =                             \
                         CPS1_CPU_FRQ,                                    \
                         0,                                               \
                         cps1_readmem,cps1_writemem,0,0,                  \
-                        CPS1_IRQ, 2   /* 2 interrupts per frame */       \
+                        CPS1_IRQ, CPS1_ICNT  /* ??? interrupts per frame */   \
                 },                                                       \
                 {                                                        \
                         CPU_Z80 | CPU_AUDIO_CPU,                         \
@@ -182,10 +185,6 @@ static struct MachineDriver CPS1_DRVNAME =                             \
                     Graphics Layout macros
 
 ********************************************************************/
-
-
-//#define SPRITE_SEP2 0x080000*8
-#define TILE_SEP2   0x100000*8
 
 #define SPRITE_LAYOUT(LAYOUT, SPRITES, SPRITE_SEP2, PLANE_SEP) \
 static struct GfxLayout LAYOUT = \
@@ -265,7 +264,7 @@ static struct GfxLayout LAYOUT =        \
 static struct GfxLayout LAYOUT = \
 {                                 \
         8,8,   /* 8*8 tiles */     \
-        CHARS,  /* 4096  tiles */    \
+        CHARS,  /* ???? characters */    \
         4,       /* 4 bits per pixel */   \
         {3*PLANE_SEP,2*PLANE_SEP,PLANE_SEP,0},   \
         { 0,1,2,3,4,5,6,7, },                  \
@@ -291,12 +290,15 @@ static struct GfxLayout LAYOUT = \
 };
 
 #define TILE32_LAYOUT2(LAYOUT, TILES, SEP) \
+        TILE32_LAYOUT3(LAYOUT, TILES, SEP, 0x80000*8)
+
+#define TILE32_LAYOUT3(LAYOUT, TILES, SEP, PLANE_SEP) \
 static struct GfxLayout LAYOUT =                                   \
 {                                                                  \
         32,32,   /* 32*32 tiles */                                 \
         TILES,   /* ????  tiles */                                 \
         4,       /* 4 bits per pixel */                            \
-        {0x100000*8, 0x180000*8, 0,0x80000*8 },                    \
+        {2*PLANE_SEP, 3*PLANE_SEP, 0,PLANE_SEP  },                                  \
         {                                                          \
            SEP+0,SEP+1,SEP+2,SEP+3, SEP+4,SEP+5,SEP+6,SEP+7,       \
            0,1,2,3,4,5,6,7,                                        \
@@ -313,6 +315,7 @@ static struct GfxLayout LAYOUT =                                   \
         },                                                         \
         4*32*8    /* every sprite takes 32*8*4 consecutive bytes */\
 };
+
 
 /********************************************************************
 
@@ -337,7 +340,7 @@ static struct CPS1config cps1_config_table[]=
   {"pnickj",       0,0x0800,0x0800,0xffff, 0,     -1,    -1,    -1},
   {"knights", 0x0800,0x0000,0x4c00,0x1a00, 3,     -1,    -1,    -1},
   {"cawingj",      0,     0,0x2c00,0x0600, 0,     -1,    -1,    -1},
-  {"ghouls",  0x0400,0x0000,0x0000,0x0000, 0, 0x2420,0x2000,0x1000, 0x0800},
+  {"ghouls",  0x0000,0x0000,0x2000,0x0500, 5, 0x2420,0x2000,0x0500, 0x0800, 1},
 
   /* End of table (default values) */
   {0,              0,     0,     0,     0, 0,     -1,    -1,    -1},
@@ -358,6 +361,10 @@ static int cps1_sh_init(const char *gamename)
         if (stricmp(gamename, "cawingj")==0)
         {
                 /* Quick hack (NOP out CPSB test) */
+                if (errorlog)
+                {
+                   fprintf(errorlog, "Patching CPSB test\n");
+                }
                 WRITE_WORD(&RAM[0x04ca], 0x4e71);
                 WRITE_WORD(&RAM[0x04cc], 0x4e71);
         }
@@ -2114,14 +2121,10 @@ struct GameDriver knights_driver =
 
                           GHOULS AND GHOSTS
 
- Unplayable due to incomplete ROM set (missing tile maps
- and graphics).
+  Sprites are split across 2 different graphics layouts.
 
- Apparently, the offending ROM chips are surface mounted and are
- difficult to read without destroying the board.
 
 ********************************************************************/
-
 
 INPUT_PORTS_START( input_ports_ghouls )
         PORT_START      /* IN0 */
@@ -2170,26 +2173,13 @@ INPUT_PORTS_START( input_ports_ghouls )
         PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-
-/* Kludge to lift chars from the sprites */
-static struct GfxLayout charlayout_ghouls =
-{
-        8,8,      /* 8*8  */
-        128,      /* 128 chars ???? */
-        4,        /* 4 bits per pixel */
-        { 0xc0000*8,0x80000*8,0x40000*8,0 },
-        { 0,1,2,3,4,5,6,7, },
-        { 8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8, },
-        16*8    /* every sprite takes 16*8 consecutive bytes */
-};
-
-#define SPRITE_SEP (0x100000*8)
-static struct GfxLayout spritelayout_ghouls =
+#define SPRITE_SEP (0x040000*8)
+static struct GfxLayout spritelayout2_ghouls =
 {
         16,16,  /* 16*16 sprites */
-        4096*2,   /* 4096*2 sprites ???? */
+        4096,   /* 4096  sprites ???? */
         4,      /* 4 bits per pixel */
-        { 0xc0000*8,0x80000*8,0x40000*8,0 },
+        { 1*0x010000*8, 2*0x010000*8, 3*0x010000*8, 0*0x010000*8 },
         {
            0,1,2,3,4,5,6,7,
            SPRITE_SEP+0, SPRITE_SEP+1, SPRITE_SEP+2, SPRITE_SEP+3,
@@ -2202,80 +2192,109 @@ static struct GfxLayout spritelayout_ghouls =
         16*8    /* every sprite takes 16*8 consecutive bytes */
 };
 
-TILE32_LAYOUT(tilelayout32_ghouls, 2048,   0x100000*8, 0x40000*8 )
+CHAR_LAYOUT(charlayout_ghouls,     4096*2,   0x100000*8)
+SPRITE_LAYOUT(spritelayout_ghouls, 4096,     0x080000*8, 0x100000*8 )
+SPRITE_LAYOUT(tilelayout_ghouls,   4096*3,   0x080000*8, 0x100000*8 )
+
+
+/* Can't work out the bottom half of this */
+#define SEP2 16*8
+#define TILE32_LAYOUT4(LAYOUT, TILES, SEP, PLANE_SEP) \
+static struct GfxLayout LAYOUT =                                   \
+{                                                                  \
+        32,32,   /* 32*32 tiles */                                 \
+        TILES,   /* ????  tiles */                                 \
+        4,       /* 4 bits per pixel */                            \
+        {0x30000*8,0x20000*8, 0x10000*8, 0},                       \
+        {                                                          \
+           0,1,2,3,4,5,6,7,8,\
+           SEP+0, SEP+1, SEP+ 2, SEP+ 3, SEP+ 4, SEP+ 5, SEP+ 6, SEP+ 7, \
+           9,10,11,12,13,14,15,                  \
+           SEP+8, SEP+9, SEP+10, SEP+11, SEP+12, SEP+13, SEP+14, SEP+15, \
+        },                                                         \
+        {                                                          \
+           0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,         \
+           8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32,   \
+           SEP2+0*32, SEP2+1*32, SEP2+2*32, SEP2+3*32,\
+           SEP2+4*32, SEP2+5*32, SEP2+6*32, SEP2+7*32,\
+           SEP2+8*32, SEP2+9*32, SEP2+10*32, SEP2+11*32,\
+           SEP2+12*32, SEP2+13*32, SEP2+14*32, SEP2+15*32,   \
+        },                                                         \
+        16*32 /* every sprite takes 32*8*4 consecutive bytes */\
+};
+
+TILE32_LAYOUT4(tilelayout32_ghouls, 1 /*4096*4-1*/,    0x040000*8, 0x020000*8 )
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
         /*   start    pointer          colour start   number of colours */
-        { 1, 0x01f000, &charlayout_ghouls,      0,                     32 },
-        { 1, 0x000000, &spritelayout_ghouls,    32*16,                 32 },
-        { 1, 0x020000, &charlayout_ghouls,      32*16+32*16,           32 },
-        { 1, 0x020000, &tilelayout32_ghouls,    32*16+32*16+32*16,     32 },
+        { 1, 0x030000, &charlayout_ghouls,      0,                       32 },
+        { 1, 0x000000, &spritelayout_ghouls,    32*16,                   32 },
+        { 1, 0x040000, &tilelayout_ghouls,      32*16+32*16,             32 },
+        { 1, 0x280000, &tilelayout32_ghouls,    32*16+32*16+32*16,       32 },
+        { 1, 0x200000, &spritelayout2_ghouls,   32*16,                   32 },
 	{ -1 } /* end of array */
 };
 
-
-MACHINE_DRIVER(
+MACHINE_DRV(
         ghouls_machine_driver,
-        cps1_interrupt,
+        cps1_interrupt, 1,
         gfxdecodeinfo,
         CPS1_DEFAULT_CPU_SLOW_SPEED)
 
 ROM_START( ghouls_rom )
-        ROM_REGION(0x100000)      /*  */
-        ROM_LOAD_EVEN("dmu.29",   0x00000, 0x20000, 0x00000000 ) /* 68000 code */
-        ROM_LOAD_ODD ("dmu.30",   0x00000, 0x20000, 0x00000000 ) /* 68000 code */
-        ROM_LOAD_EVEN("dmu.27",   0x40000, 0x20000, 0x00000000 ) /* 68000 code */
-        ROM_LOAD_ODD ("dmu.28",   0x40000, 0x20000, 0x00000000 ) /* 68000 code */
+        ROM_REGION(0x100000)
+#if 1
+        ROM_LOAD_EVEN("GHL29.BIN",   0x00000, 0x20000, 0x8821a2b3 ) /* 68000 code */
+        ROM_LOAD_ODD ("GHL30.BIN",   0x00000, 0x20000, 0xaff1cd13 ) /* 68000 code */
+        ROM_LOAD_EVEN("GHL27.BIN",   0x40000, 0x20000, 0x82a7d49d ) /* 68000 code */
+        ROM_LOAD_ODD ("GHL28.BIN",   0x40000, 0x20000, 0xe32cdaa6 ) /* 68000 code */
+#else
+        /*
+         Alternative set - boots up faster, game will reboot due to
+         incorrect tile map data.
+        */
 
-        /* Missing ROMS (contains tile maps and palette) */
-        ROM_LOAD_WIDE("dmu.28",   0x80000, 0x20000, 0x00000000 ) /* Tile map (missing) */
-        ROM_LOAD_WIDE("dmu.28",   0xa0000, 0x20000, 0x00000000 ) /* Tile map (missing) */
+        ROM_LOAD_EVEN("DMU.29",   0x00000, 0x20000, 0x90efb087 ) /* 68000 code */
+        ROM_LOAD_ODD ("DMU.30",   0x00000, 0x20000, 0xac09ca89 ) /* 68000 code */
+        ROM_LOAD_EVEN("DMU.27",   0x40000, 0x20000, 0x7bc0c8d8 ) /* 68000 code */
+        ROM_LOAD_ODD ("DMU.28",   0x40000, 0x20000, 0xc07d69e3 ) /* 68000 code */
+#endif
 
-        ROM_REGION(0x200000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_LOAD_WIDE("GHL17.BIN",   0x80000, 0x80000, 0x12eee9a4 ) /* Tile map */
 
-        /* Plane 1 */
-//      ROM_LOAD( "dmu.??",      0x080000, 0x10000, 0x00000000 )
-        ROM_LOAD( "dmu.10",      0x090000, 0x10000, 0x00000000 )
-        ROM_LOAD( "dmu.18",      0x0a0000, 0x10000, 0x00000000 )
+        ROM_REGION(0x300000)     /* temporary space for graphics (disposed after conversion) */
 
-        /* Plane 2 */
-//      ROM_LOAD( "dmu.??",      0x040000, 0x10000, 0x00000000 )
-        ROM_LOAD( "dmu.23",      0x050000, 0x10000, 0x00000000 )
-        ROM_LOAD( "dmu.13",      0x060000, 0x10000, 0x00000000 )
+        ROM_LOAD( "GHL6.BIN",       0x000000, 0x80000, 0xeaf5b7e3 ) /* Sprites / tiles */
+        ROM_LOAD( "GHL5.BIN",       0x080000, 0x80000, 0xa4adc913 )
+        ROM_LOAD( "GHL8.BIN",       0x100000, 0x80000, 0xe7fa3f94 )
+        ROM_LOAD( "GHL7.BIN",       0x180000, 0x80000, 0x8587f2cb )
 
-        /* Plane 3 */
-//      ROM_LOAD( "dmu.??",      0x0c0000, 0x10000, 0x00000000 )
-        ROM_LOAD( "dmu.14",      0x0d0000, 0x10000, 0x00000000 )
-        ROM_LOAD( "dmu.24",      0x0e0000, 0x10000, 0x00000000 )
+        ROM_LOAD( "GHL10.BIN",      0x200000, 0x10000, 0x1ad5edb3 ) /* Sprite set 2 */
+        ROM_LOAD( "GHL23.BIN",      0x210000, 0x10000, 0xa1a14a87 )
+        ROM_LOAD( "GHL14.BIN",      0x220000, 0x10000, 0xa1e55fd9 )
+        ROM_LOAD( "GHL19.BIN",      0x230000, 0x10000, 0x142db95f )
 
-        /* Plane 4 */
-//      ROM_LOAD( "dmu.??",      0x000000, 0x10000, 0x00000000 )
-        ROM_LOAD( "dmu.19",      0x010000, 0x10000, 0x00000000 )
-        ROM_LOAD( "dmu.09",      0x020000, 0x10000, 0x00000000 )
+        ROM_LOAD( "GHL12.BIN",      0x240000, 0x10000, 0xb0882fde )
+        ROM_LOAD( "GHL25.BIN",      0x250000, 0x10000, 0x0f231d0f )
+        ROM_LOAD( "GHL16.BIN",      0x260000, 0x10000, 0xc47e04ba )
+        ROM_LOAD( "GHL21.BIN",      0x270000, 0x10000, 0x30cecdb6 )
 
-        /* Right half - plane 1 */
-//      ROM_LOAD( "dmu.??",      0x100000, 0x10000, 0x00000000 )
-        ROM_LOAD( "dmu.21",      0x110000, 0x10000, 0x00000000 )
-        ROM_LOAD( "dmu.11",      0x120000, 0x10000, 0x00000000 )
 
-        /* Right half - plane 2 */
-//      ROM_LOAD( "dmu.??",      0x140000, 0x10000, 0x00000000 )
-        ROM_LOAD( "dmu.25",      0x150000, 0x10000, 0x00000000 )
-        ROM_LOAD( "dmu.15",      0x160000, 0x10000, 0x00000000 )
+        /* 32 * 32 tiles - left half */
+        ROM_LOAD( "GHL09.BIN",      0x280000, 0x10000, 0x3d57242d ) /* Plane x */
+        ROM_LOAD( "GHL18.BIN",      0x290000, 0x10000, 0x237eb922 ) /* Plane x */
+        ROM_LOAD( "GHL13.BIN",      0x2a0000, 0x10000, 0x18a99b29 ) /* Plane x */
+        ROM_LOAD( "GHL22.BIN",      0x2b0000, 0x10000, 0x08a71d8f ) /* Plane x */
 
-        /* Right half - plane 3 */
-//      ROM_LOAD( "dmu.??",      0x180000, 0x10000, 0x00000000 )
-        ROM_LOAD( "dmu.12",      0x190000, 0x10000, 0x00000000 )
-        ROM_LOAD( "dmu.22",      0x1a0000, 0x10000, 0x00000000 )
-
-        /* Right half - plane 4 */
-//      ROM_LOAD( "dmu.??",      0x1c0000, 0x10000, 0x00000000 )
-        ROM_LOAD( "dmu.16",      0x1d0000, 0x10000, 0x00000000 )
-        ROM_LOAD( "dmu.20",      0x1e0000, 0x10000, 0x00000000 )
+        /* 32 * 32 tiles - right half */
+        ROM_LOAD( "GHL11.BIN",      0x2c0000, 0x10000, 0x11957991 ) /* Plane x */
+        ROM_LOAD( "GHL20.BIN",      0x2d0000, 0x10000, 0xf2757633 ) /* Plane x */
+        ROM_LOAD( "GHL15.BIN",      0x2e0000, 0x10000, 0xdfcd0bfb ) /* Plane x */
+        ROM_LOAD( "GHL24.BIN",      0x2f0000, 0x10000, 0x3cf07f7a ) /* Plane x */
 
         ROM_REGION(0x18000) /* 64k for the audio CPU */
-        ROM_LOAD( "dmu.26",      0x000000, 0x08000, 0x00000000 )
+        ROM_LOAD( "GHL26.BIN",      0x000000, 0x08000, 0x8df5e803 )
                 ROM_CONTINUE(    0x010000, 0x08000 )
 ROM_END
 
@@ -2446,14 +2465,6 @@ ROM_START( cawingj_rom )
         ROM_LOAD_EVEN("CAJ37A.BIN", 0x40000, 0x20000, 0x00435ecb )
         ROM_LOAD_ODD ("CAJ43A.BIN", 0x40000, 0x20000, 0xb7dcf07a )
 
-        /*
-           I have no idea what order these are supposed to be loaded in.
-           they may be even/odd pairs.
-         */
-//        ROM_LOAD_WIDE("CAJ40.BIN",  0x80000, 0x20000, 0xdd000e7c )
-//        ROM_LOAD_WIDE("CAJ41.BIN",  0xa0000, 0x20000, 0xe7579e57 )
-//        ROM_LOAD_WIDE("CAJ34.BIN",  0xc0000, 0x20000, 0xf148094e )
-//        ROM_LOAD_WIDE("CAJ35.BIN",  0xe0000, 0x20000, 0x6875566d )
 
         /* what about these 4 ? They could be correct */
         ROM_LOAD_EVEN("CAJ34.BIN",  0x80000, 0x20000, 0xf148094e )

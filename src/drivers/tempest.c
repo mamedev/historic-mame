@@ -418,11 +418,10 @@ static struct MachineDriver machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			readmem,writemem,0,0,
-			0,0,	/* no vblank interrupts */
-			interrupt, 244 /* 4.1ms */
+			interrupt,4 /* 4.1ms */
 		}
 	},
-	30, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
+	60, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
 	1,
 	0,
 

@@ -253,13 +253,13 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	use_synced  = get_bool   ("config", "syncedtweak",  NULL,  1);
 	vesa        = get_bool   ("config", "vesa",         NULL,  0);
 	ntsc        = get_bool   ("config", "ntsc",         NULL,  0);
-	vgafreq     = get_int    ("config", "vgafreq",      NULL,  0);
+	vgafreq     = get_int    ("config", "vgafreq",      NULL,  -1);
 	color_depth = get_int    ("config", "depth",        NULL, 16);
 	skiplines   = get_int    ("config", "skiplines",    NULL, 0);
 	skipcolumns = get_int    ("config", "skipcolumns",  NULL, 0);
 	f_beam      = get_float  ("config", "beam",         NULL, 1.0);
 	f_flicker   = get_float  ("config", "flicker",      NULL, 0.0);
-	gamma_correction = get_float ("config", "gamma",   NULL, 1.0);
+	gamma_correction = get_float ("config", "gamma",   NULL, 1.2);
 
 	options->frameskip = get_int  ("config", "frameskip", NULL, 0);
 	options->norotate  = get_bool ("config", "norotate",  NULL, 0);

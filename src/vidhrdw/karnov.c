@@ -19,9 +19,72 @@ unsigned char *karnov_foreground,*karnov_sprites,*dirty_f;
 static struct osd_bitmap *bitmap_f;
 int karnov_scroll[4];
 
-extern int karnov_a,karnov_b,karnov_c,karnov_pal;
+extern int karnov_a,karnov_b,karnov_c;
 
 //#define KARNOV_ATTR
+
+
+
+
+/***************************************************************************
+
+  Convert the color PROMs into a more useable format.
+
+  Karnov has two 1024x8 palette PROM.
+  I don't know the exact values of the resistors between the RAM and the
+  RGB output. I assumed these values (the same as Commando)
+
+  bit 7 -- 220 ohm resistor  -- GREEN
+        -- 470 ohm resistor  -- GREEN
+        -- 1  kohm resistor  -- GREEN
+        -- 2.2kohm resistor  -- GREEN
+        -- 220 ohm resistor  -- RED
+        -- 470 ohm resistor  -- RED
+        -- 1  kohm resistor  -- RED
+  bit 0 -- 2.2kohm resistor  -- RED
+
+  bit 7 -- unused
+        -- unused
+        -- unused
+        -- unused
+        -- 220 ohm resistor  -- BLUE
+        -- 470 ohm resistor  -- BLUE
+        -- 1  kohm resistor  -- BLUE
+  bit 0 -- 2.2kohm resistor  -- BLUE
+
+***************************************************************************/
+void karnov_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+	int i;
+
+
+	for (i = 0;i < Machine->drv->total_colors;i++)
+	{
+		int bit0,bit1,bit2,bit3;
+
+
+		bit0 = (color_prom[0] >> 0) & 0x01;
+		bit1 = (color_prom[0] >> 1) & 0x01;
+		bit2 = (color_prom[0] >> 2) & 0x01;
+		bit3 = (color_prom[0] >> 3) & 0x01;
+		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[0] >> 4) & 0x01;
+		bit1 = (color_prom[0] >> 5) & 0x01;
+		bit2 = (color_prom[0] >> 6) & 0x01;
+		bit3 = (color_prom[0] >> 7) & 0x01;
+		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
+		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+		color_prom++;
+	}
+}
+
+
+
 
 /******************************************************************************/
 
@@ -40,7 +103,7 @@ void karnov_vh_screenrefresh(struct osd_bitmap *bitmap)
     if (!dirty_f[offs]) continue; else dirty_f[offs]=0;
 
     tile=READ_WORD (&karnov_foreground[offs]);
-    color = 32+((tile & 0xf000) >> 12);
+    color = ((tile & 0xf000) >> 12);
     tile=tile&0x7ff;
 
 		drawgfx(bitmap_f,Machine->gfx[1],tile,
@@ -57,7 +120,7 @@ void karnov_vh_screenrefresh(struct osd_bitmap *bitmap)
     if (!dirty_f[offs]) continue; else dirty_f[offs]=0;
 
     tile=READ_WORD (&karnov_foreground[offs]);
-    color = 32+((tile & 0xf000) >> 12);
+    color = ((tile & 0xf000) >> 12);
     tile=tile&0x7ff;
 
 		drawgfx(bitmap_f,Machine->gfx[1],tile,
@@ -79,7 +142,7 @@ void karnov_vh_screenrefresh(struct osd_bitmap *bitmap)
 
     y=y&0x1ff;
     sprite=READ_WORD (&karnov_sprites[offs+6]);
-    colour=((sprite&0xf000)>>12)+16;
+    colour=((sprite&0xf000)>>12);
     sprite=0xfff&sprite;
     x=0x1ff&READ_WORD (&karnov_sprites[offs+4]);
 
@@ -183,74 +246,9 @@ int karnov_vh_start (void)
   memset(karnov_foreground,0,0x1000);
   memset(dirty_f,1,0x1000);
 
-  karnov_pal=0;
 
 	return generic_vh_start();
 }
-
-/******************************************************************************/
-
-void karnov_palette(void)
-{
-  int kColours_Allocated=2,pen,r,g,b,i,z,offset;
-  int kdirty_pal_r[1024];
-  int kdirty_pal_g[1024];
-  int kdirty_pal_b[1024];
-
-  for (i=0; i<1024; i++) {
-  	kdirty_pal_r[i]=0;
-    kdirty_pal_b[i]=0;
-    kdirty_pal_g[i]=0;
-  }
-
-  osd_modify_pen(Machine->pens[0],0,0,0);
-  osd_modify_pen(Machine->pens[1],1,0,0);
-
-  /* initialize the color table */
-	for (i = 0;i < Machine->drv->total_colors;i++)
-		Machine->gfx[0]->colortable[i] = i;
-
-  for (i=0; i<1024; i++) {
-    r=15*(Machine->memory_region[3][i] & 0xf);
-    g=15*(Machine->memory_region[3][i] >> 4);
-    b=15*(Machine->memory_region[3][i+1024]);
-
-    offset=i*2;
-
-    /* Search list of pens to see if this colour is already allocated */
-    pen=-1;
- 		for (z=0; z<kColours_Allocated; z++)
-     	if (kdirty_pal_r[z]==r && kdirty_pal_b[z]==b && kdirty_pal_g[z]==g) {
-       	pen=z;
-        break;
-      }
-
-    if (pen>-1) {
-      Machine->gfx[0]->colortable[offset/2]=Machine->pens[pen];
-      Machine->gfx[1]->colortable[offset/2]=Machine->pens[pen];
-      Machine->gfx[2]->colortable[offset/2]=Machine->pens[pen];
-   	  continue;
-    }
-
-  /* Allocate a pen number for this colour, Neither Karnov nor Chelnov overflows.. */
-  if (kColours_Allocated>255) {
-  	kColours_Allocated++;
-  	continue;
-  }
-
-  osd_modify_pen(Machine->pens[kColours_Allocated],r,g,b);
-
-  kdirty_pal_r[kColours_Allocated]=r;
-  kdirty_pal_g[kColours_Allocated]=g;
-  kdirty_pal_b[kColours_Allocated]=b;
-
-  Machine->gfx[0]->colortable[offset/2]=Machine->pens[kColours_Allocated];
-  Machine->gfx[1]->colortable[offset/2]=Machine->pens[kColours_Allocated];
-  Machine->gfx[2]->colortable[offset/2]=Machine->pens[kColours_Allocated];
-  kColours_Allocated++;
-  }
-}
-
 
 /******************************************************************************/
 

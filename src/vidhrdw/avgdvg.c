@@ -27,8 +27,10 @@
  *
  * Games with self adjusting framerate
  *
- * 5.4ms: Black Widow, Gravitar, Red Baron
+ * 5.4ms: Black Widow, Gravitar
  * 4.1ms: Tempest
+ * Major Havoc
+ * Quantum
  *
  * TODO: accurate vector timing (need timing diagramm)
  */

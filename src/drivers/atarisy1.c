@@ -116,7 +116,6 @@ extern unsigned char *marble_speedcheck;
 int atarisys1_io_r (int offset);
 int atarisys1_6502_switch_r (int offset);
 int atarisys1_6522_r (int offset);
-int atarisys1_prioritycolor_r (int offset);
 int atarisys1_int3state_r (int offset);
 int atarisys1_trakball_r (int offset);
 int atarisys1_joystick_r (int offset);
@@ -128,7 +127,6 @@ int marble_speedcheck_r (int offset);
 
 void atarisys1_led_w (int offset, int data);
 void atarisys1_6522_w (int offset, int data);
-void atarisys1_prioritycolor_w (int offset, int data);
 void atarisys1_joystick_w (int offset, int data);
 void atarisys1_paletteram_w (int offset, int data);
 void atarisys1_playfieldram_w (int offset, int data);
@@ -171,7 +169,7 @@ static struct MemoryReadAddress atarisys1_readmem[] =
 	{ 0x080000, 0x087fff, atarigen_slapstic_r, &atarigen_slapstic },
 	{ 0x2e0000, 0x2e0003, atarisys1_int3state_r },
 	{ 0x400000, 0x401fff, MRA_BANK1 },
-	{ 0x840000, 0x840003, atarisys1_prioritycolor_r, &atarisys1_prioritycolor },
+	{ 0x840000, 0x840003, MRA_BANK4, &atarisys1_prioritycolor },
 	{ 0x900000, 0x9fffff, MRA_BANK2 },
 	{ 0xa00000, 0xa01fff, atarisys1_playfieldram_r, &atarigen_playfieldram, &atarigen_playfieldram_size },
 	{ 0xa02000, 0xa02fff, atarisys1_spriteram_r, &atarigen_spriteram, &atarigen_spriteram_size },
@@ -193,7 +191,7 @@ static struct MemoryWriteAddress atarisys1_writemem[] =
 	{ 0x400000, 0x401fff, MWA_BANK1 },
 	{ 0x800000, 0x800003, atarisys1_hscroll_w, &atarigen_hscroll },
 	{ 0x820000, 0x820003, atarisys1_vscroll_w, &atarigen_vscroll },
-	{ 0x840000, 0x840003, atarisys1_prioritycolor_w },
+	{ 0x840000, 0x840003, MWA_BANK4 },
 	{ 0x860000, 0x860003, atarisys1_bankselect_w, &atarisys1_bankselect },
 	{ 0x880000, 0x880003, watchdog_reset_w },
 	{ 0x8a0000, 0x8a0003, MWA_NOP },		/* VBLANK ack */
@@ -217,7 +215,7 @@ static struct MemoryReadAddress marble_readmem[] =
 	{ 0x2e0000, 0x2e0003, atarisys1_int3state_r },
 	{ 0x400014, 0x400017, marble_speedcheck_r, &marble_speedcheck },
 	{ 0x400000, 0x401fff, MRA_BANK1 },
-	{ 0x840000, 0x840003, atarisys1_prioritycolor_r, &atarisys1_prioritycolor },
+	{ 0x840000, 0x840003, MRA_BANK4, &atarisys1_prioritycolor },
 	{ 0x900000, 0x9fffff, MRA_BANK2 },
 	{ 0xa00000, 0xa01fff, atarisys1_playfieldram_r, &atarigen_playfieldram, &atarigen_playfieldram_size },
 	{ 0xa02000, 0xa02fff, MRA_BANK3, &atarigen_spriteram, &atarigen_spriteram_size },
@@ -240,7 +238,7 @@ static struct MemoryWriteAddress marble_writemem[] =
 	{ 0x400000, 0x401fff, MWA_BANK1 },
 	{ 0x800000, 0x800003, atarisys1_hscroll_w, &atarigen_hscroll },
 	{ 0x820000, 0x820003, atarisys1_vscroll_w, &atarigen_vscroll },
-	{ 0x840000, 0x840003, atarisys1_prioritycolor_w },
+	{ 0x840000, 0x840003, MWA_BANK4 },
 	{ 0x860000, 0x860003, atarisys1_bankselect_w, &atarisys1_bankselect },
 	{ 0x880000, 0x880003, watchdog_reset_w },
 	{ 0x8a0000, 0x8a0003, MWA_NOP },		/* VBLANK ack */

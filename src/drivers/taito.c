@@ -450,7 +450,7 @@ INPUT_PORTS_START( junglek_input_ports )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x08, "5" )
 	PORT_DIPSETTING(    0x00, "6" )
-	PORT_DIPNAME( 0x20, 0x20, "Test Mode", IP_KEY_NONE )
+	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x40, 0x40, "Flip Screen", IP_KEY_NONE )
@@ -577,7 +577,7 @@ INPUT_PORTS_START( frontlin_input_ports )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x08, "5" )
 	PORT_DIPSETTING(    0x00, "6" )
-	PORT_DIPNAME( 0x20, 0x20, "Test Mode", IP_KEY_NONE )
+	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x40, 0x00, "Flip Screen", IP_KEY_NONE )
@@ -649,6 +649,137 @@ INPUT_PORTS_START( frontlin_input_ports )
 	PORT_DIPSETTING(    0x80, "A and B" )
 	PORT_DIPSETTING(    0x00, "A only" )
 INPUT_PORTS_END
+
+
+INPUT_PORTS_START( spaceskr_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START      /* Service */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x01, 0x01, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x02, 0x02, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x04, 0x04, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x18, 0x18, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x08, "4" )
+	PORT_DIPSETTING(    0x10, "5" )
+	PORT_DIPSETTING(    0x18, "6" )
+	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x80, "Cocktail" )
+
+	PORT_START      /* DSW2 Coinage */
+	PORT_DIPNAME( 0x0f, 0x00, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x0f, "9 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0e, "8 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0d, "7 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0c, "6 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0b, "5 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0a, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x09, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x01, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x02, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x03, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x04, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x05, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x06, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x07, "1 Coin/8 Credits" )
+	PORT_DIPNAME( 0xf0, 0x00, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0xf0, "9 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xe0, "8 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xd0, "7 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xc0, "6 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xb0, "5 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xa0, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x90, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x10, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x20, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x30, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x40, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x50, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x60, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x70, "1 Coin/8 Credits" )
+
+	PORT_START      /* DSW3 */
+	PORT_DIPNAME( 0x01, 0x01, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x02, 0x02, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x04, 0x04, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x20, "Year Display", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "No" )
+	PORT_DIPSETTING(    0x20, "Yes" )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "A and B" )
+	PORT_DIPSETTING(    0x00, "A only" )
+INPUT_PORTS_END
+
 
 
 static struct GfxLayout charlayout =
@@ -978,6 +1109,34 @@ ROM_START( alpine_rom )
 	ROM_LOAD( "rh13.070", 0x0000, 0x1000, 0xf53a66fe )
 ROM_END
 
+ROM_START( spaceskr_rom )
+	ROM_REGION(0x12000)	/* 64k for code */
+	ROM_LOAD( "eb01", 0x0000, 0x1000, 0x01a01ff6 )
+	ROM_LOAD( "eb02", 0x1000, 0x1000, 0x2e605918 )
+	ROM_LOAD( "eb03", 0x2000, 0x1000, 0x63ddc52f )
+	ROM_LOAD( "eb04", 0x3000, 0x1000, 0x6fd9ed97 )
+	ROM_LOAD( "eb05", 0x4000, 0x1000, 0x5c61da87 )
+	ROM_LOAD( "eb06", 0x5000, 0x1000, 0xa9c054d2 )
+	ROM_LOAD( "eb07", 0x6000, 0x1000, 0x0a53cfe3 )
+	ROM_LOAD( "eb08", 0x7000, 0x1000, 0xe402b0f6 )
+	/* 10000-11fff space for banked ROMs (not used) */
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x8000)	/* graphic ROMs */
+	ROM_LOAD( "eb09",  0x0000, 0x1000, 0x470e0e2a )
+	ROM_LOAD( "eb10",  0x1000, 0x1000, 0xc926dc3e )
+	ROM_LOAD( "eb11",  0x2000, 0x1000, 0x232de4ad )
+	ROM_LOAD( "eb12",  0x3000, 0x1000, 0x9658e886 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "eb13", 0x0000, 0x1000, 0x009f6a83 )
+	ROM_LOAD( "eb14", 0x1000, 0x1000, 0x2d007f12 )
+	ROM_LOAD( "eb15", 0x2000, 0x1000, 0x6da3eefb )
+ROM_END
+
 
 
 static int elevator_hiload(void)
@@ -1071,7 +1230,7 @@ static int frontlin_hiload(void)
 	{
 		void *f;
 
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) == 0)
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
 			osd_fread(f,&RAM[0x8640],3);
 			osd_fclose(f);
@@ -1244,6 +1403,26 @@ struct GameDriver alpine_driver =
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
+
+	0, 0
+};
+
+struct GameDriver spaceskr_driver =
+{
+	"Space Seeker",
+	"spaceskr",
+	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)",
+	&machine_driver,
+
+	spaceskr_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	spaceskr_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_180,
 
 	0, 0
 };

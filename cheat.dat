@@ -11,6 +11,7 @@
 ;  -Special (see Docs) usually 0
 ;  -Description of the cheat (30 caracters max)
 ;
+005:0:E382:6:0:Infinite Lives
 1942:0:E101:6:0:Infinite Lives
 1942:0:E09B:6:0:Infinite R
 1942:0:E0A5:2:0:Invincibility
@@ -31,28 +32,47 @@ amidar:0:81F5:FF:0:Invincibility
 amidarjp:0:8288:6:0:Infinite Lives
 amidarjp:0:8285:6:0:Infinite Jump
 amidarjp:0:81F5:FF:0:Invincibility
+amidars:0:4285:5:0:Infinite Jumps
+amidars:0:4288:7:0:Infinite Lives
 amigo:0:8288:6:0:Infinite Lives
 amigo:0:8285:6:0:Infinite Jump
 amigo:0:81F5:FF:0:Invincibility
 anteater:0:8665:3:0:Infinite Lives
 arabian:0:D406:5:0:Infinite Lives PL1
 arabian:0:D407:5:0:Infinite Lives PL2
+arkanoid:0:ED76:3:0:Infinite Lives PL1
+arkatayt:0:ED71:2:0:Infinite Lives
+arkatayt:0:ED72:20:0:Jump to End of Game
+armorcar:0:8628:5:0:Infinite Lives
+armorcar:0:8630:6:0:Infinite Sawhorses
 astdelux:0:006F:6:0:Infinite Lives PL1
 astdelux:0:0070:6:0:Infinite Lives PL2
 astdelux:0:02EF:FF:0:Infinite Shield
 asteroid:0:0056:5:0:Infinite Lives
 asteroi2:0:0057:5:0:Infinite Lives
+
+astrob:0:CCF3:FF:0:Warp always available
+astrob:0:CCDC:19:0:unlimited Fuel
+astrob:0:CCEE:5:0:Infinite Lives PL1
+astrob:0:CD4A:0:0:Anti-Firing Overheater
+
 atlantis:0:4022:6:0:Infinite Lives
+
 bagman:0:6056:5:0:Infinite Lives
 bagman:0:61E8:99:0:Infinite Time (99)
 bagman:0:61CF:1:0:Carry a pic
+
 bankp:0:E0A0:6:0:Infinite Lives
 bankp:0:E0A5:38:0:Infinite Time
+
 berzerk:0:4349:6:0:Infinite Lives
+berzerk1:0:4349:5:0:Infinite Lives
+
 blaster:0:BD26:6:0:Infinite Lives
 blaster:0:973E:3:0:Invincibility
+
+blktiger:0:F3AC:5:0:Level 5 Weapon
 blktiger:0:F3A0:9:0:Infinite lives
-blktiger:0:F3A0:9:0:Infinite Lives
 blktiger:0:F3AD:6:0:Infinite Shield
 blktiger:0:F3B0:9:0:Vitality
 blktiger:0:F3AB:9:0:Keys
@@ -65,7 +85,9 @@ blktiger:0:F3A1:4:0:Level 5 Start
 blktiger:0:F3A1:5:0:Level 6 Start
 blktiger:0:F3A1:6:0:Level 7 Start
 blktiger:0:F3A1:7:0:Level 8 Start
+
 blueprnt:0:80E1:4:0:Infinite Lives
+bnj:0:001A:7:0:Infinite Lives PL1
 ; -----------------
 boblbobl:0:E645:6:0:Infinite Lives (P1)
 boblbobl:0:e6c1:26:0:Extra Fast (P1)
@@ -115,6 +137,8 @@ boblbobl:0:E720:1:1:Throw The Book At Them
 bombjack:0:819B:5:0:Infinite Lives
 bosco:0:83E2:5:0:Infinite Lives
 bosconm:0:83E2:5:0:Infinite Lives
+brkthru:0:040F:4:0:Infinite Lives
+brubber:0:001A:5:0:Infinite Lives PL1
 btime:0:0029:5:0:Infinite Lives
 btime:0:002B:56:0:Infinite Pepper
 btimea:0:0029:5:0:Infinite Lives
@@ -123,6 +147,7 @@ bublbobl:0:E645:6:0:Infinite Lives
 bwidow:0:0440:6:0:Infinite Lives
 bzone:0:00CC:6:0:Infinite Lives
 bzone2:0:00CC:6:0:Infinite Lives
+
 carnival:0:E590:44:0:Infinite Ammo
 cavenger:0:60E7:6:0:Infinite lives PL1
 cavenger:0:6216:6:0:Infinite lives PL1
@@ -135,6 +160,21 @@ centiped:0:00A5:6:0:Infinite Lives
 centiped:0:0070:F8:0:No Fleas and Scorpions
 centiped:0:0061:FF:0:No Spiders
 centiped:0:00B5:0:0:No Spider sound
+circus:0:002C:5:0:Infinite Jumps PL1
+;All of these cheats apply to both players.
+circusc:0:2200:7:0:Infinte lives
+;There is no need to disable this cheat while playing.
+circusc:0:227C:7:0:Infinite time
+;Apply these cheats before you hit start.  They must be turned off
+;after you start or you'll repeat the level over and over.
+circusc:0:2201:1:0:Start on level 2
+circusc:0:2201:2:0:Start on level 3
+circusc:0:2201:3:0:Start on level 4
+circusc:0:2201:4:0:Start on level 5
+circusc:0:2201:5:0:Start on level 6
+circusc:0:2201:6:0:Start on hidden level 7
+citycon:0:004C:3:0:infinite lives
+citycon:0:00AE:1:0:infinite oil
 ckong:0:6228:6:0:Infinite Lives
 ckonga:0:6228:6:0:Infinite Lives
 ckongjeu:0:6228:6:0:Infinite Lives
@@ -145,6 +185,7 @@ commandj:0:D1E0:9:0:Infinite Grenades
 commando:0:EDA0:6:0:Infinite Lives
 commando:0:D1E0:9:0:Infinite Grenades
 congo:0:8220:6:0:Infinite Lives
+cosmicmo:0:21FF:4:0:Infinite Lives
 crush:0:4C1C:6:0:Infinite Lives
 defender:0:A1C9:5:0:Infinite Lives
 defender:0:A1CB:5:0:Infinite Smart Bomb
@@ -199,6 +240,10 @@ elim2:0:C997:99:0:Infinite Lives PL1
 elim2:0:C998:99:0:Infinite Lives PL2
 espial:0:582B:7:0:Infinite Lives PL1
 espial:0:582C:7:0:Infinite Lives PL2
+excthour:0:004A:FF:0:004A Infinite Energy
+excthour:0:02CF:59:0:02CF Infinite Time
+excthour:0:0039:0:0:Infinite Attacks
+excthour:0:00E6:1:0:00E6 Referee stops counting
 exedexes:0:F007:6:0:Infinite Lives PL1
 exedexes:0:F087:6:0:Infinite Lives PL2
 exedexes:0:E040:3:0:Infinite Bomb
@@ -206,7 +251,13 @@ exedexes:0:F015:7:0:Weapon power up PL1
 exedexes:0:F095:7:0:Weapon power up PL2
 exedexes:0:F015:f:0:Super Weapon PL1
 exedexes:0:F095:f:0:Super Weapon PL2
+exerion:0:6046:50:0:Infinite Firepower
+exerion:0:6048:6:0:Infinite Lives
 fantasy:0:00C1:8:0:Infinite Lives
+ffight:0:90880D:1:0:Infinite Lives (P1)
+ffight:0:FF8581:8C:0:Infinite Energy (P1)
+firetpbl:0:C143:3:0:Infinite lives
+frenzy:0:400C:5:0:Infinite Lives
 frogger:0:83E5:6:0:Infinite Lives PL1
 frogger:0:83E6:6:0:Infinite Lives PL2
 frogger:0:83DD:39:0:Stop Timer
@@ -216,6 +267,12 @@ froggers:0:43DD:39:0:Stop Timer
 frogsega:0:83E5:6:0:Infinite Lives PL1
 frogsega:0:83E6:6:0:Infinite Lives PL2
 frogsega:0:83DD:39:0:Stop Timer
+;This code may be glitchy until you dock once.
+;If you get both ships hit at the same time, the game bugs out.
+galaga:0:8B60:6:0:Double Ships Part 1
+galaga:0:8B61:9:0:Double Ships Part 2
+galaga:0:9361:29:0:Double Ships Part 3
+galaga:0:9827:1:0:Double Ships Part 4
 galaga:0:9820:6:0:Infinite Lives
 galaganm:0:9820:6:0:Infinite Lives
 galagabl:0:9820:6:0:Infinite Lives
@@ -246,9 +303,21 @@ gorf:0:D032:5:0:Infinite Lives PL1
 gorf:0:D033:5:0:Infinite Lives PL2
 gravitar:0:0042:6:0:Infinite Lives
 gravitar:0:016C:99:0:Infinite Fuel
-gunsmoke:0:E040:6:0:Infinite lives
+gundealr:0:EDB5:FF:0:Winning Score (1 of 2)
+gundealr:0:ED5F:FF:0:Winning Score (2 of 2)
+gundealr:0:ECAB:34:0:End Level
 gunsmoke:0:E037:ff:0:Horse (Invulnerability)
+gunsmoke:0:E040:6:0:Infinite lives
+gunsmoke:0:E041:5:0:Max Speed
+gunsmoke:0:E042:5:0:Max Bullets
+gunsmoke:0:E043:5:0:Max Rifle
+gunsmrom:0:E040:6:0:Infinite lives
+gunsmrom:0:E041:6:0:Infinite Boots (Speed)
+gunsmrom:0:E042:6:0:Infinite Bullets (Shot Speed)
+gunsmrom:0:E043:6:0:Infinite Rifles (Range)
 gyruss:0:9600:6:0:Infinite Lives
+gyrussce:0:930E:1:0:Double Laser
+
 hangly:0:4e14:5:0:Infinite Lives
 hangly:0:4e15:4:0:Infinite Lives (Visual)
 hangly:0:4DA7:1:0:Red always blue
@@ -256,6 +325,31 @@ hangly:0:4DA8:1:0:Pink always blue
 hangly:0:4DA9:1:0:Green always blue
 hangly:0:4DAA:1:0:Orange always blue
 hangly:0:4DCC:2:0:Stay blue until you eat them
+hbarrel:0:FF804D:29:0:Infinite Lives
+hippodrm:0:FF8011:4:0:Level Skip
+hippodrm:0:FF800D:0:0:Enemy has more energy
+hippodrm:0:FF8032:10:0:Invincibility
+hustler:0:81C0:1:0:Infinite Lives PL1
+
+;These let you go to certain events in Track n Field
+;and Hypersports so you can practice a specific event.
+;Enable the cheat when the screen comes up asking
+;you to enter your initials. If you try to enable one
+;of these when in the middle of another event, it
+;may produce strange results. :)
+
+hyperspt:0:3068:1:0:Always Skeet Shoot
+hyperspt:0:3068:2:0:Always Long Horse
+hyperspt:0:3068:3:0:Always Archery
+hyperspt:0:3068:4:0:Always Triple Jump
+hyperspt:0:3068:5:0:Always Weight Lifting
+hyperspt:0:3068:6:0:Always Pole Vaulting
+
+indytemp:0:40062E:6:0:Infinite Lives
+;For The Following Cheat, You MUST Rescue At Least One Kid
+;For The Game To Re-Read The Value.
+indytemp:0:400CD4:0:0:All Children Rescued
+
 invaders:0:21FF:7:0:Infinite Lives PL1
 invaders:0:22FF:7:0:Infinite Lives PL2
 invdelux:0:21FF:7:0:Infinite Lives PL1
@@ -268,9 +362,11 @@ invho2:0:E3D9:6:0:Infinite Lives PL1 Head on
 invho2:0:E3DA:6:0:Infinite Lives PL2 Head on
 invrvnge:0:2083:6:0:Infinite Lives PL1
 invrvnge:0:20C3:6:0:Infinite Lives PL2
+ironhors:0:3604:4:0:Infinite Flames
 japirem:0:421D:6:0:Infinite Lives
 jbugsega:0:4219:5:0:Infinite lives PL1
 jbugsega:0:421A:5:0:Infinite lives PL2
+jedi:0:0013:3:0:Infinite Lives
 jhunt:0:8425:1F:0:Infinite lives PL1
 jhunt:0:8426:1F:0:Infinite lives PL2
 jhunt:0:842F:99:0:Stop timer
@@ -293,6 +389,8 @@ junglek:0:8426:1F:0:Infinite lives PL2
 junglek:0:842F:99:0:Stop timer
 kangaroo:0:E06A:6:0:Infinite lives PL1
 kangaroo:0:E06B:6:0:Infinite lives PL2
+karnov:0:60066:2:0:Infinite Lives
+karnov:0:6007B:96:0:Infinite Time
 kick:0:72BE:6:0:Infinite lives PL1
 kick:0:72E4:6:0:Infinite lives PL2
 kickridr:0:2106:99:0:Stop Timer
@@ -323,8 +421,12 @@ lwings:0:C070:6:0:Infinite lives PL1
 lwings:0:C071:6:0:Infinite lives PL2
 mappy:0:2030:6:0:Infinite Lives
 mappyjp:0:2030:6:0:Infinite Lives
+marble2:0:400082:FF:0:Infinite Time
 mario:0:6116:7:0:Infinite lives PL1
 mario:0:6156:7:0:Infinite lives PL2
+midres:0:102177:5:0:Infinite Lives
+midres:0:10217D:6:0:Always 6 keys
+midres:0:102180:1:0:Always have auto fire
 milliped:0:00B3:6:0:Infinite lives PL1
 milliped:0:00B4:6:0:Infinite lives PL2
 missile:0:00c0:2:0:Infinite cities
@@ -372,6 +474,19 @@ nrallyx:0:800F:5:0:Infinite Lives
 ; Do not let activated at the end of a level
 nrallyx:0:826B:3B:0:Infinite Fuel
 omegrace:0:4066:5:0:Infinite lives
+pacland:0:221C:9:0:Infinite Time
+pacland:0:2100:1:0:Infinite Lives
+pacland:0:221C:9:0:Infinite Time
+pacland:0:2100:1:0:Infinite Lives
+pacman:0:4E13:FF:0:Always Garbage Maze
+pacman:0:4E13:0:0:Always Cherries Maze
+pacman:0:4E13:1:0:Always Strawbery Maze
+pacman:0:4E13:2:0:Always 1st Peach Maze
+pacman:0:4E13:4:0:Always 1st Apple Maze
+pacman:0:4E13:6:0:Always 1st Pineapple Maze
+pacman:0:4E13:8:0:Always 1st Galaxian Maze
+pacman:0:4E13:A:0:Always 1st Bell Maze
+pacman:0:4E13:C:0:Always 1st Key Maze
 pacman:0:4e14:5:0:Infinite Lives
 pacman:0:4e15:4:0:Infinite Lives (Visual)
 pacman:0:4DA7:1:0:Red always blue
@@ -410,6 +525,7 @@ pacplus:0:4DAA:1:0:Orange always blue
 pacplus:0:4DCC:2:0:Stay blue until you eat them
 panic:0:40D0:5:0:Infinite Lives
 panica:0:40D0:5:0:Infinite Lives
+pbaction:0:C15B:9:0:Infinite Lives
 pengo:0:8814:5:0:Infinite Lives
 pengoa:0:8814:5:0:Infinite Lives
 penta:0:8814:5:0:Infinite Lives
@@ -441,6 +557,8 @@ puckman:0:4DAA:1:0:Orange always blue
 puckman:0:4DCC:2:0:Stay blue until you eat them
 pulsar:0:E596:9:0:Infinite Lives
 pulsar:0:E58E:A:4:Infinite Fuel
+punchout:0:D022:70:0:Invulnerability
+punchout:0:D048:1A:0:KO Power
 qbert:0:0D00:3:0:Infinite lives
 qbertjp:0:1000:3:0:Infinite Lives
 qbertqub:0:0819:7:0:Infinite Lives
@@ -454,17 +572,24 @@ rampage:0:E49E:C4:0:Infinite Energy Pl1
 rampage:0:E49E:C7:0:Infinite Damage Pl1
 rampage:0:E4EE:C7:0:Infinite Damage Pl2
 rampage:0:E53E:C7:0:Infinite Damage Pl3
+rbtapper:0:E4A7:3:0:Infinite Lives
+rbtapper:0:E4A8:C:0:Level Skip
 reactor:0:023C:15:0:Infinite Lives PL1
 reactor:0:0405:15:0:Infinite Lives PL2
 reactor:0:0247:14:0:Infinite Decoys Pl1
 reactor:0:0410:14:0:Infinite Decoys Pl2
 redbaron:0:00B0:9:0:Infinite lives
 rescue:0:8669:9:0:Infinite lives
+roadrunn:0:401591:5:0:No missed birdseed
+roadrunn:0:400C8C:3:0:Infinite lives
 robby:0:E388:4:0:Infinite lives
 robotron:0:BDEC:8:0:Infinite Lives PL1
 robotron:0:BE28:8:0:Infinite Lives PL2
 rushatck:0:DBB0:5:0:Infinite lives
 rushatck:0:D229:5:0:Infinite ammo
+rygar:0:C0A0:3:0:Infinite Lives
+rygar:0:C0AA:64:0:Infinite Time
+sarge:0:E0F3:5:0:Invincible
 sbagman:0:6056:7:0:Infinite Lives
 sbagman:0:61E8:99:0:Infinite Time (99)
 ;
@@ -480,16 +605,31 @@ scobrak:0:8108:5:0:Infinite Lives
 scobrak:0:8105:FF:0:Infinite Fuel
 scramble:0:4108:5:0:Infinite Lives
 scramble:0:4105:FF:0:Infinite Fuel
+sdungeon:0:86E6:5:0:Infinite Lives
 seawolf2:0:C1DB:99:0:Infinite Time
 sectionz:0:CDA0:B:0:Infinite Lives
 sectionz:0:C08F:4:0:Maximum Power
 sectionz:0:C10F:3:0:Maximum Speed
 seicross:0:78A1:99:0:Infinite Lives
+shadoww:0:61E8E:5:0:Infinite Lives
+shadoww:0:61EC3:F:0:Infinite Energy
+shadoww:0:61E89:98:0:Infinite Time
 shollow:0:C39D:9:0:Infinite Lives
 shollow:0:C396:78:0:Infinite Shield
+sidearms:0:F20B:3:0:Player 1 infinite lives
+sidearms:0:F40B:3:0:Player 2 infinite lives
+sidearms:0:F20B:80:0:Player 1 inmunity
+sidearms:0:F40B:80:0:Player 2 inmunity
 sinistar:0:9FFC:6:0:Infinite Lives
 sinistar:0:A013:32:0:Infinite Bombs
-silkworm:0:D531:5:0:Infinite Lives
+silkworm:0:D531:3:0:Heli infinite lives
+silkworm:0:D578:D:0:Heli inmunity
+silkworm:0:D577:A9:0:Killer heli
+silkworm:0:D547:F:0:Heli starts with auto+double shot
+silkworm:0:D555:3:0:Jeep infinite lives
+silkworm:0:D5A8:D:0:Jeep inmunity
+silkworm:0:D5A7:A9:0:Killer jeep
+silkworm:0:D56B:F:0:Jeep starts with auto+double shot
 snapjack:0:6017:2:0:Infinite Lives PL1
 snapjack:0:6018:2:0:Infinite Lives PL2
 solarfox:0:73AC:9:0:Infinite Lives
@@ -501,6 +641,7 @@ spacefb:0:C002:9:0:Infinite Lives
 spaceatt:0:21FF:5:0:Infinite Lives
 spacezap:0:D012:9:0:Infinite Lives
 spacfury:0:CD1C:5:0:Infinite Lives
+spectar:0:00C1:8:0:Infinite Lives PL1
 splat:0:9911:9:0:Infinite Lives PL1
 sspaceat:0:E5D9:8:0:Infinite Lives PL1
 starforc:0:8166:9:0:Infinite Lives
@@ -514,16 +655,28 @@ startrek:0:CE17:4:0:Infinite Shield
 startrek:0:CE18:4:0:Infinite Torpedo
 startrek:0:E4D9:99:0:Infinite Warp
 starwars:0:4860:9:0:Infinite Shield
+strider:0:FF0CE8:81:0:infinite Energy
+strider:0:FF8B8B:5:0:Infinite Lives
 superpac:0:1007:6:0:Infinite Lives
 superpac:0:1625:1:0:Invincibility
 superg:0:421D:6:0:Infinite Lives
 sxevious:0:8183:9:0:Infinite Lives
+tacscan:0:E0DC:1:0:Always have ship 1
+tacscan:0:E0E6:1:0:Always have ship 2
+tacscan:0:E0F0:1:0:Always have ship 3
+tacscan:0:E0FA:1:0:Always have ship 4
+tacscan:0:E104:1:0:Always have ship 5
+tacscan:0:E10E:1:0:Always have ship 6
+tacscan:0:E118:1:0:Always have ship 7
 tapper:0:E4A7:6:0:Infinite Lives
 ;
 ;Enable that cheat before beginning a game
 ;If enabled during a level, you will have to finish the level to skip
 tapper:0:E4A8:9:0:Level 10 (the aliens)
 ;
+targ:0:00C1:8:0:Infinite Lives PL1
+tazmania:0:852F:A:0:Infinite Bombs
+tazmania:0:8529:5:0:Infinite Lives
 tempest:0:0048:6:0:Infinite Lives
 tempest:0:0046:0:0:Go to the Blue Circle
 tempest:0:0046:10:0:Go to the Red Circle
@@ -547,6 +700,22 @@ timber:0:E49F:59:0:Always 59 seconds
 timber:0:E49E:59:0:Always 59 minutes
 todruaga:0:1703:5:0:Infinite Lives
 tp84:0:57D0:5:0:Infinite Lives
+;These let you go to certain events in Track n Field
+;and Hypersports so you can practice a specific event.
+;Enable the cheat when the screen comes up asking
+;you to enter your initials. If you try to enable one
+;of these when in the middle of another event, it
+;may produce strange results. :)
+
+trackfld:0:2884:1:0:Always Long Jump
+trackfld:0:2884:2:0:Always Javelin Throw
+trackfld:0:2884:3:0:Always Hurdles
+trackfld:0:2884:4:0:Always Hammer Throw
+trackfld:0:2884:5:0:Always High Jump
+
+; Track And Field Infinite Lives
+trackfld:0:2B81:2:0:Infinite Lives
+trojan:0:C078:00:0:Infinite Energy
 tron:0:C41F:4:0:Infinite Lives PL1&2
 turpin:0:8630:9:0:Infinite Lives
 turpin:0:8637:63:0:Infinite Bombs
@@ -555,6 +724,8 @@ turtles:0:8637:63:0:Infinite Bombs
 tutankhm:0:8880:5:0:Infinite Lives
 tutankhm:0:8882:6:0:Infinite Bombs
 uniwars:0:421D:9:0:Infinite Lives
+unsquad:0:FF15CD:40:0:Infinite Energy
+unsquad:0:FF15E3:28:0:Infinite Ammo
 vanguard:0:00BE:8:0:Infinite Lives
 vanguard:0:00A0:3:0:Invincibility
 venture:0:00BE:3:0:Infinite Lives
@@ -564,6 +735,11 @@ wacko:0:C264:5:0:Infinite Lives
 warofbug:0:4109:6:0:Infinite lives
 warpwarp:0:8000:6:0:Infinite Lives
 warpwarp:0:8000:6:0:Infinite Lives
+wbdeluxe:0:C302:3:0:Infinite Lives PL1
+wbdeluxe:0:C46A:18:0:Infinite Timer PL1
+willow:0:FF8362:5:0:Infinite Health
+willow:0:FF83C7:25:0:Infinite Time
+wiz:0:C064:3:0:Infinite Lives PL1
 wow:0:D301:5:0:Infinite lives PL1
 wow:0:D300:5:0:Infinite lives PL2
 xevious:0:8183:9:0:Infinite Lives
@@ -574,18 +750,9 @@ xeviousn:0:8183:9:0:Infinite Lives
 yard:0:E44A:30:4:Infinite Time
 yard:0:E44A:60:1:Reset Timer (once)
 yiear:0:508C:8:0:Infinite energy
+yiear:0:5430:5:0:Infinite Lives
 zaxxon:0:6067:6:0:Infinite Lives
 zaxxon:0:62B1:80:0:Infinite Fuel
-
-;
-;----------------
-;New ones
-;
-exerion:0:6046:50:0:Infinite Firepower
-exerion:0:6048:6:0:Infinite Lives
-pbaction:0:C15B:9:0:Infinite Lives
-; Track And Field Infinite Lives
-trackfld:0:2B81:2:0:Infinite Lives
 ; Zookeeper Infinite Lives: Must do both codes for it to work.
 zookeep:0:04A0:3:0:Infinite Lives Part 1/2
 zookeep:0:04C9:3:0:Infinite Lives Part 2/2
@@ -600,195 +767,9 @@ zookeep:0:049B:7F:0:Invincibility
 ; the game to display the correct Round number, keep an eye on
 ; 04B5.
 zookeep:0:04C6:8:1:Warp to Round 5/6
-citycon:0:004C:3:0:infinite lives
-citycon:0:00AE:1:0:infinite oil
-excthour:0:004A:FF:0:004A Infinite Energy
-excthour:0:02CF:59:0:02CF Infinite Time
-excthour:0:0039:0:0:Infinite Attacks
-excthour:0:00E6:1:0:00E6 Referee stops counting
-arkatayt:0:ED71:2:0:Infinite Lives
-arkatayt:0:ED72:20:0:Jump to End of Game
-astrob:0:CCEE:4:0:Infinite Lives
-astrob:0:CD4B:0:0:Laser Temp cool
-astrob:0:CCF3:FF:0:Warp always available
-astrob:0:CCDC:19:0:unlimited Fuel
-;This code may be glitchy until you dock once.
-;If you get both ships hit at the same time, the game bugs out.
-galaga:0:8B60:6:0:Double Ships Part 1
-galaga:0:8B61:9:0:Double Ships Part 2
-galaga:0:9361:29:0:Double Ships Part 3
-galaga:0:9827:1:0:Double Ships Part 4
-tacscan:0:E0DC:1:0:Always have ship 1
-tacscan:0:E0E6:1:0:Always have ship 2
-tacscan:0:E0F0:1:0:Always have ship 3
-tacscan:0:E0FA:1:0:Always have ship 4
-tacscan:0:E104:1:0:Always have ship 5
-tacscan:0:E10E:1:0:Always have ship 6
-tacscan:0:E118:1:0:Always have ship 7
-firetpbl:0:C143:3:0:Infinite lives
 
-pacman:0:4E13:FF:0:Always Garbage Maze
-pacman:0:4E13:0:0:Always Cherries Maze
-pacman:0:4E13:1:0:Always Strawbery Maze
-pacman:0:4E13:2:0:Always 1st Peach Maze
-pacman:0:4E13:4:0:Always 1st Apple Maze
-pacman:0:4E13:6:0:Always 1st Pineapple Maze
-pacman:0:4E13:8:0:Always 1st Galaxian Maze
-pacman:0:4E13:A:0:Always 1st Bell Maze
-pacman:0:4E13:C:0:Always 1st Key Maze
+;
+;----------------
+;New ones
+;
 
-;These let you go to certain events in Track n Field
-;and Hypersports so you can practice a specific event.
-;Enable the cheat when the screen comes up asking
-;you to enter your initials. If you try to enable one
-;of these when in the middle of another event, it
-;may produce strange results. :)
-
-hyperspt:0:3068:1:0:Always Skeet Shoot
-hyperspt:0:3068:2:0:Always Long Horse
-hyperspt:0:3068:3:0:Always Archery
-hyperspt:0:3068:4:0:Always Triple Jump
-hyperspt:0:3068:5:0:Always Weight Lifting
-hyperspt:0:3068:6:0:Always Pole Vaulting
-
-trackfld:0:2884:1:0:Always Long Jump
-trackfld:0:2884:2:0:Always Javelin Throw
-trackfld:0:2884:3:0:Always Hurdles
-trackfld:0:2884:4:0:Always Hammer Throw
-trackfld:0:2884:5:0:Always High Jump
-
-005:0:E382:6:0:Infinite Lives
-amidars:0:4285:5:0:Infinite Jumps
-amidars:0:4288:7:0:Infinite Lives
-armorcar:0:8628:5:0:Infinite Lives
-armorcar:0:8630:6:0:Infinite Sawhorses
-astrob:0:CCEE:5:0:Infinite Lives PL1
-astrob:0:CD4A:0:0:Anti-Firing Overheater
-berzerk1:0:4349:5:0:Infinite Lives
-bnj:0:001A:7:0:Infinite Lives PL1
-brkthru:0:040F:4:0:Infinite Lives
-brubber:0:001A:5:0:Infinite Lives PL1
-circus:0:002C:5:0:Infinite Jumps PL1
-cosmicmo:0:21FF:4:0:Infinite Lives
-frenzy:0:400C:5:0:Infinite Lives
-spectar:0:00C1:8:0:Infinite Lives PL1
-targ:0:00C1:8:0:Infinite Lives PL1
-gunsmrom:0:E041:6:0:Infinite Boots (Speed)
-gunsmrom:0:E042:6:0:Infinite Bullets (Shot Speed)
-gunsmrom:0:E043:6:0:Infinite Rifles (Range)
-sidearms:0:F20B:3:0:Player 1 infinite lives
-sidearms:0:F40B:3:0:Player 2 infinite lives
-sidearms:0:F20B:80:0:Player 1 inmunity
-sidearms:0:F40B:80:0:Player 2 inmunity
-silkworm:0:D531:3:0:Heli infinite lives
-silkworm:0:D578:D:0:Heli inmunity
-silkworm:0:D577:A9:0:Killer heli
-silkworm:0:D547:F:0:Heli starts with auto+double shot
-silkworm:0:D555:3:0:Jeep infinite lives
-silkworm:0:D5A8:D:0:Jeep inmunity
-silkworm:0:D5A7:A9:0:Killer jeep
-silkworm:0:D56B:F:0:Jeep starts with auto+double shot
-jedi:0:0013:3:0:Infinite Lives
-punchout:0:D022:70:0:Invulnerability
-punchout:0:D048:1A:0:KO Power
-trojan:0:C078:00:0:Infinite Energy
-marble2:0:400082:FF:0:Infinite Time
-indytemp:0:40062E:6:0:Infinite Lives
-
-;For The Following Cheat, You MUST Rescue At Least One Kid
-;For The Game To Re-Read The Value.
-indytemp:0:400CD4:0:0:All Children Rescued
-
-roadrunn:0:401591:5:0:No missed birdseed
-roadrunn:0:400C8C:3:0:Infinite lives
-gundealr:0:EDB5:FF:0:Winning Score (1 of 2)
-gundealr:0:ED5F:FF:0:Winning Score (2 of 2)
-gundealr:0:ECAB:34:0:End Level
-tazmania:0:852F:A:0:Infinite Bombs
-tazmania:0:8529:5:0:Infinite Lives
-wbdeluxe:0:C302:3:0:Infinite Lives
-rbtapper:0:E4A7:3:0:Infinite Lives
-rbtapper:0:E4A8:C:0:Level Skip
-hippodrm:0:FF8011:4:0:Level Skip
-hippodrm:0:FF800D:0:0:Enemy has more energy
-;All of these cheats apply to both players.
-circusc:0:2200:7:0:Infinte lives
-;There is no need to disable this cheat while playing.
-circusc:0:227C:7:0:Infinite time
-;Apply these cheats before you hit start.  They must be turned off
-;after you start or you'll repeat the level over and over.
-circusc:0:2201:1:0:Start on level 2
-circusc:0:2201:2:0:Start on level 3
-circusc:0:2201:3:0:Start on level 4
-circusc:0:2201:4:0:Start on level 5
-circusc:0:2201:5:0:Start on level 6
-circusc:0:2201:6:0:Start on hidden level 7
-arkanoid:0:ED76:3:0:Infinite Lives PL1
-hustler:0:81C0:1:0:Infinite Lives PL1
-wbdeluxe:0:C302:3:0:Infinite Lives PL1
-wbdeluxe:0:C46A:18:0:Infinite Timer PL1
-wiz:0:C064:3:0:Infinite Lives PL1
-sdungeon:0:86E6:5:0:Infinite Lives
-blktiger:0:F3AD:2:0:Infinite Energy
-blktiger:0:F3AC:5:0:Level 5 Weapon
-brkthru:0:040F:2:0:Infinite Lives
-yiear:0:5430:5:0:Infinite Lives
-gunsmoke:0:E037:1:0:Always have horse
-gyrussce:0:930E:1:0:Double Laser
-gunsmoke:0:E041:5:0:Max Speed
-gunsmoke:0:E042:5:0:Max Bullets
-gunsmoke:0:E043:5:0:Max Rifle
-pbaction:0:C15B:5:0:Infinite Lives
-willow:0:FF8362:5:0:Infinite Health
-willow:0:FF83C7:25:0:Infinite Time
-shadoww:0:61E8E:5:0:Infinite Lives
-shadoww:0:61EC3:F:0:Infinite Energy
-midres:0:102177:5:0:Infinite Lives
-midres:0:10217D:6:0:Always 6 keys
-midres:0:102180:1:0:Always have auto fire
-shadoww:0:61E89:98:0:Infinite Time
-karnov:0:60066:2:0:Infinite Lives
-karnov:0:6007B:96:0:Infinite Time
-hbarrel:0:FF804D:29:0:Infinite Lives
-hbarrel:0:FF804D:29:0:Infinite Lives
-rygar:0:C0A0:3:0:Infinite Lives
-rygar:0:C0AA:64:0:Infinite Time
-hippodrm:0:FF8032:10:0:Invincibility
-strider:0:FF0CE8:81:0:infinite Energy
-strider:0:FF8B8B:5:0:Infinite Lives
-strider:0:FF8B8B:5:0:Infinite Lives
-willow:0:FF8362:5:0:Infinite Health
-willow:0:FF83C7:25:0:Infinite Time
-shadoww:0:61E8E:5:0:Infinite Lives
-shadoww:0:61EC3:F:0:Infinite Energy
-midres:0:102177:5:0:Infinite Lives
-midres:0:10217D:6:0:Always 6 keys
-midres:0:102180:1:0:Always have auto fire
-shadoww:0:61E89:98:0:Infinite Time
-karnov:0:60066:2:0:Infinite Lives
-karnov:0:6007B:96:0:Infinite Time
-hbarrel:0:FF804D:29:0:Infinite Lives
-hbarrel:0:FF804D:29:0:Infinite Lives
-rygar:0:C0A0:3:0:Infinite Lives
-rygar:0:C0AA:64:0:Infinite Time
-hippodrm:0:FF8032:10:0:Invincibility
-strider:0:FF0CE8:81:0:infinite Energy
-strider:0:FF8B8B:5:0:Infinite Lives
-strider:0:FF8B8B:5:0:Infinite Lives
-willow:0:FF8362:5:0:Infinite Health
-willow:0:FF83C7:25:0:Infinite Time
-shadoww:0:61E8E:5:0:Infinite Lives
-shadoww:0:61EC3:F:0:Infinite Energy
-midres:0:102177:5:0:Infinite Lives
-midres:0:10217D:6:0:Always 6 keys
-midres:0:102180:1:0:Always have auto fire
-shadoww:0:61E89:98:0:Infinite Time
-karnov:0:60066:2:0:Infinite Lives
-karnov:0:6007B:96:0:Infinite Time
-hbarrel:0:FF804D:29:0:Infinite Lives
-hbarrel:0:FF804D:29:0:Infinite Lives
-rygar:0:C0A0:3:0:Infinite Lives
-rygar:0:C0AA:64:0:Infinite Time
-hippodrm:0:FF8032:10:0:Invincibility
-strider:0:FF0CE8:81:0:infinite Energy
-strider:0:FF8B8B:5:0:Infinite Lives

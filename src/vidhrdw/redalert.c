@@ -16,6 +16,48 @@ unsigned char *redalert_characterram;
 
 static unsigned char redalert_dirtyback[0x400];
 static unsigned char redalert_dirtycharacter[0x100];
+static unsigned char redalert_backcolor[0x400];
+
+/* There might be a color PROM that dictates this? */
+/* These guesses are based on comparing the color bars on the test
+   screen with the picture in the manual */
+static unsigned char color_lookup[] = {
+	1,1,1,1,1,1,1,1,1,1,1,1,3,3,3,3,
+	1,1,1,1,1,1,1,1,3,3,3,3,3,3,3,3,
+	3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+	1,1,1,1,1,1,1,1,1,1,3,3,3,3,3,3,
+	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+	1,1,1,1,1,1,1,1,1,1,3,3,3,3,3,3,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+
+	1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,
+	2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+	2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,
+	1,1,1,1,1,1,1,1,1,1,3,3,3,3,3,3,
+	3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+	3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+	3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+	3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3
+};
+
+static int backcolor;
+
+void redalert_c040_w(int offset, int data)
+{
+	/* Only seems to load D0-D3 into a flip-flop. */
+	/* D0/D1 seem to head off to unconnected circuits */
+	/* D2 connects to a "NL" line, and NOTted to a "NH" line */
+	/* D3 connects to a "YI" line */
+}
+
+void redalert_backcolor_w(int offset, int data)
+{
+	/* Only seems to load D0-D2 into a flip-flop. */
+	/* Outputs feed into RAM which seems to feed to RGB lines. */
+	backcolor = data & 0x07;
+}
+
 
 /***************************************************************************
 redalert_backram_w
@@ -23,10 +65,16 @@ redalert_backram_w
 
 void redalert_backram_w(int offset,int data)
 {
-	if (redalert_backram[offset] != data)
+	int charnum;
+
+	charnum = offset / 8 % 0x400;
+
+	if ((redalert_backram[offset] != data) ||
+		(redalert_backcolor[charnum] != backcolor))
 	{
-		redalert_dirtyback[offset / 8 % 0x400] = 1;
-		dirtybuffer[offset / 8 % 0x400] = 1;
+		redalert_dirtyback[charnum] = 1;
+		dirtybuffer[charnum] = 1;
+		redalert_backcolor[charnum] = backcolor;
 
 		redalert_backram[offset] = data;
 	}
@@ -90,6 +138,7 @@ void redalert_vh_screenrefresh(struct osd_bitmap *bitmap)
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		int charcode;
+		int stat_transparent;
 
 
 		charcode = videoram[offs];
@@ -125,36 +174,32 @@ void redalert_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sx = 8 * (offs % 32);
 			sy = 8 * (offs / 32);
 
+			stat_transparent = TRANSPARENCY_NONE;
+
 			/* First layer of color */
 			if (charcode >= 0xC0)
 			{
-				color = 0;
+				stat_transparent = TRANSPARENCY_COLOR;
+
+				color = color_lookup[charcode];
+
 				drawgfx(tmpbitmap,Machine->gfx[2],
 						charcode-0x80,color,
 						0,0,sx,sy,
 						&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 			}
-			else
-			{
-				/* Second layer - background */
-				color = 3;
-				drawgfx(tmpbitmap,Machine->gfx[0],
-						offs,color,
-						0,0,sx,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-			}
 
 			/* Second layer - background */
-			color = 3;
+			color = redalert_backcolor[offs];
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					offs,color,
 					0,0,sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+					&Machine->drv->visible_area,stat_transparent,0);
 
 			/* Third layer - alphanumerics & sprites */
 			if (charcode < 0x80)
 			{
-				color = 6;
+				color = color_lookup[charcode];
 				drawgfx(tmpbitmap,Machine->gfx[1],
 						charcode,color,
 						0,0,sx,sy,
@@ -162,7 +207,7 @@ void redalert_vh_screenrefresh(struct osd_bitmap *bitmap)
 			}
 			else if (charcode < 0xC0)
 			{
-				color = 0;
+				color = color_lookup[charcode];
 				drawgfx(tmpbitmap,Machine->gfx[2],
 						charcode-0x80,color,
 						0,0,sx,sy,

@@ -27,13 +27,6 @@
      preference is 512x384, but if it is too slow on the 'reference'
      machine, then so be it...
 
-   This is my first MAME driver.  The colors are handled
-     somewhat differently than in other drivers, and the powers that
-     be may need to change this to work on other platforms (originally
-     developed for Mac).  For speed, I directly map the emulated machine's
-     videoram values as pen numbers and changes to the emulated color ram
-     as osd_modify_pen calls.
-
 ***************************************************************************/
 #include "driver.h"
 #include "generic.h"
@@ -163,8 +156,7 @@ void liberator_bitmap_w(int offset, int data)
 
 		lib_videoram[addr] = d ;
 
-		/* 0xff is black.  +0x10 maps to proper part of 'colorram'	*/
-		tmb = (d == 0) ? 0xff : ((d >> 5) + 0x10) ;
+		tmb = Machine->pens[(d >> 5) + 0x10];
 
 #if LIB_ASPECTRATIO_512x384
 		xt = 2 * xcoor ;
@@ -190,7 +182,7 @@ void liberator_bitmap_w(int offset, int data)
 		memset( lib_videoram , 0x00 , LIB_VIDEORAM_SIZE ) ;
 		for( ycoor = 0 ; ycoor < Machine->drv->screen_height ; ycoor++)
 			for( xcoor = 0 ; xcoor < Machine->drv->screen_width ; xcoor++ )
-				tmpbitmap->line[ycoor][xcoor] = 0xff ;
+				tmpbitmap->line[ycoor][xcoor] = Machine->pens[0x10];
 	}
 
 } /* liberator_bitmap_w */
@@ -221,9 +213,8 @@ void liberator_basram_w(int address, int data)
 } /* liberator_basram_w */
 
 /********************************************************************************************/
-void liberator_colorram_w(int address, int data)
+void liberator_colorram_w(int offset,int data)
 {
-	int				addr ;
 	unsigned char	red, green, blue ;
 	static unsigned char	map[]     = {0xff,0xdf,0xb8,0x97,0x68,0x47,0x20,0x00} ;
 	static unsigned char	bluemap[] = {0xff,0x00,0xb8,0x00,0x68,0x00,0x00,0x00} ;
@@ -231,31 +222,24 @@ void liberator_colorram_w(int address, int data)
 	//   hardware does between vram and color ram */
 	static unsigned char	penmap[]={0x10,0x12,0x14,0x16,0x11,0x13,0x15,0x17} ;
 
-	addr = address & 0x1f ;
 
 	red   = map[((data >> 3) & 0x07)] ;
 	green = map[((data     ) & 0x07)] ;
 	blue  = bluemap[((data >> 5) & 0x06)] ;
 
-	lib_raw_colorram[ addr ] = data ;
+	lib_raw_colorram[offset] = data ;
 
-	if( addr & 0x10 )
+	if (offset & 0x10)
 	{
 		/* bitmap colorram values */
-		addr = penmap[ addr & 0x07 ] ;
+		offset = penmap[offset & 0x07] ;
  	}
 	else
 	{
-		/* planet colorram values */
-		if( addr == 0 )
-			/* map the flashing base off the MAME-prohibited pen 0,
-			//   keeping it above the 0x1X range used by the bitmap video */
-			addr = 0x20 ;
-		else
-			addr = addr ^ 0x0f ;
+		offset ^= 0x0f;
 	}
 
-	osd_modify_pen( addr, red, green, blue );
+	palette_change_color(offset,red,green,blue);
 
 } /* liberator_colorram_w */
 
@@ -287,8 +271,6 @@ void liberator_vh_update(struct osd_bitmap *bitmap)
 ***************************************************************************/
 int liberator_vh_start(void)
 {
-	int pen ;
-
 	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
 
@@ -296,8 +278,6 @@ int liberator_vh_start(void)
 	lib_raw_colorram 	= calloc( 1 , 0x20 ) ;
 	lib_basram      	= calloc( 1 , 0x20 ) ;
 
-	for( pen = 0 ; pen <= 0x20 ; pen++ )
-		osd_modify_pen( pen, 0,0,0 ) ;
 
 	/*
 	// allocate the planet descriptor structure
@@ -368,13 +348,6 @@ void liberator_vh_stop(void)
 	tmpbitmap = NULL ;
 
 } /* liberator_vh_stop */
-
-/********************************************************************************************/
-void liberator_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-{
-	/* this function intentionally left blank at this time */
-	return ;
-} /* liberator_vh_convert_color_prom */
 
 /********************************************************************************************
   lib_init_planet()
@@ -558,6 +531,11 @@ static void lib_drawplanet(int data)
 	unsigned int	tbmX  ;
 	unsigned char	*tbm ;
 	unsigned char	*buf ;
+	unsigned char reverse_map[256];
+
+
+	for (x = 0;x < 0x20;x++)
+		reverse_map[Machine->pens[x]] = x;
 
 	startlg = data & 0xff ;
 
@@ -575,12 +553,7 @@ static void lib_drawplanet(int data)
 		// grab the color value for the base (if any) at this latitude
 		*/
 		base = lib_basram[ (vdl>>3) & 0x0f ] ;
-		if( base == 0 )
-			/* map the flashing base off the MAME-prohibited pen 0,
-			//   keeping it above the 0x1X range used by the bitmap video */
-			base = 0x20 ;
-		else
-			base = base ^ 0x0f ;
+		base = base ^ 0x0f ;
 
 		x = 0 ;					/* from the western horizon */
 		nsegs = *buf++ ;
@@ -617,26 +590,22 @@ static void lib_drawplanet(int data)
 				//   (they use pens 0x10-0x17)
 				*/
 				tbm = &(tmpbitmap->line[y][tbmX]) ;
-				if( ((*tbm & 0x10) == 0 ) || (*tbm == 0xff) )
-					*tbm = cc ;
+				if (reverse_map[*tbm] <= 0x10)
+					*tbm = Machine->pens[cc];
 				if( (vdl & 1) == 0 )
 				{
 					tbm = &(tmpbitmap->line[y+1][tbmX]) ;
-					if( ((*tbm & 0x10) == 0 ) || (*tbm == 0xff) )
-						*tbm = cc ;
+					if (reverse_map[*tbm] <= 0x10)
+						*tbm = Machine->pens[cc];
 				}
 
 #elif LIB_ASPECTRATIO_342x256
-				/* planet video doesn't overwrite bitmap video, so
-				// check the tmpbitmap where we want to draw into.
-				//   bitmap writes into the tmpbitmap all have bit 4 (0x10) set
-				//   (they use pens 0x10-0x17)
-				*/
 				tbm = &(tmpbitmap->line[y][tbmX]) ;
-				if( ((*tbm & 0x10) == 0 ) || (*tbm == 0xff) )
-				{
-					*tbm = cc ;
-				}
+				/* Draw the planet only over itself, or over black. */
+				/* The planet uses pens 0x00-0x0f, black is 0x10 */
+				if (reverse_map[*tbm] <= 0x10)
+					*tbm = Machine->pens[cc];
+
 				/* taking two out of three of the planet pixels.  skip over
 				//   an x pixel every other tmpbitmap pixel */
 				if( tbmX & 1 )

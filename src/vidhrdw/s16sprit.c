@@ -1,278 +1,125 @@
-/*
- *	System 16 Sprite Drawing (this is #included by the video driver)
- *	zooming implemented
- *
- *	needs:
- *		clipping may not work in all cases
- *		when zoom=0, a faster draw method should be provided
- *		vflipped sprites may not work properly
- */
+#include "driver.h"
 
+/*
+ *	Used by System 16 Sprite Drawing
+ *
+ *	To Do:
+ *	make more general
+ *	optimize non-zoomed case
+ *	rotation
+*/
 
 #define IS_OPAQUE(X) ((X+1) & 0xEE)
 
-static void DrawNormal( struct osd_bitmap *bitmap,
-	const unsigned char *data,
+void drawgfxpicture(
+	struct osd_bitmap *bitmap,
+	const unsigned char *source,
+	int width, int screenheight,
 	const unsigned short *pal,
-	int rowbytes,
-	int numrows,
-	int x, int y, int zoom )
-{
+	int xflip, int yflip,
+	int sx, int sy,
+	int zoom,
+	const struct rectangle *clip
+);
 
-	int delta = 0x400+zoom; // 100 0000 0000
+void drawgfxpicture(
+	struct osd_bitmap *bitmap,
+	const unsigned char *source,
+	int width, int screenheight,
+	const unsigned short *pal,
+	int xflip, int yflip,
+	int sx, int sy,
+	int zoom,
+	const struct rectangle *clip
+){
+	int ypos, ycount = 0;
+	int xcount0 = 0;
 
-	int width = rowbytes*2*0x3ff/delta;
+	int delta = (1<<10)+zoom;
+	/*
+		xcount0, xcount, ycount, and delta are fixed point
 
-	int sy, ycount = 0;
-	int x0 = 0;
+		zoom = 0x000 draws a sprite normally (scale = 1.0)
+		zoom = 0x3ff draws a sprite shrunk down to fifty percent (scale = 0.50)
+	*/
 
-	if( x<0 )
-	{
-		x0 = -delta*x;
-		width += x;
-		x = 0;
+	int screenwidth = width*(1<<10)/delta; /* scale adjust */
+
+	{ /* clipping */
+		int pixels;
+
+		pixels = clip->min_x - sx;
+		if( pixels>0 ){ /* clip left */
+			if( !xflip ) xcount0 = delta*pixels;
+			screenwidth -= pixels;
+			sx = clip->min_x;
+		}
+
+		pixels = clip->min_y - sy;
+		if( pixels>0 ){ /* clip top */
+			if( !yflip ) ycount = delta*pixels;
+			screenheight -= pixels;
+			sy = clip->min_y;
+		}
+
+		pixels = sx+screenwidth - clip->max_x-1;
+		if( pixels>0 ){ /* clip right */
+			if( xflip ) xcount0 = delta*pixels;
+			screenwidth -= pixels;
+		}
+
+		pixels = sy+screenheight - clip->max_y-1;
+		if( pixels>0 ){ /* clip bottom */
+			if( yflip ) ycount = delta*pixels;
+			screenheight -= pixels;
+		}
 	}
 
-	if( y<0 )
-	{
-		ycount = -delta*y;
-		numrows += y;
-		y = 0;
-	}
+	if( screenwidth>0 ){
+		int x1,x2,dx;
 
-	if( x+width>320 )
-	{
-		width = 320-x;
-	}
+		if( yflip ) width = -width;
 
-	if( y+numrows>224 )
-	{
-		numrows = 224-y;
-	}
+		if( xflip ){
+			x1 = sx+screenwidth-1;
+			x2 = sx-1;
+			dx = -1;
+		}
+		else{
+			x1 = sx;
+			x2 = sx+screenwidth;
+			dx = 1;
+		}
 
-	if( width<=0 || numrows<=0 ) return; /* totally clipped */
+		if( bitmap->depth!=16 ){
+			for( ypos = sy; ypos < sy+screenheight; ypos++ ){
+				char *dest = &bitmap->line[ypos][0];
+				const char *src = source + width*(ycount>>10);
 
-	for( sy=y; sy<y+numrows; sy++ )
-	{
-		int sx, xcount = x0;
-		char *dest = &bitmap->line[sy][0];
-		const char *source = data+rowbytes*(ycount>>10);
-		ycount+=delta;
+				int xcount = xcount0;
+				int xpos;
+				for( xpos = x1; xpos!=x2; xpos+=dx ){
+					unsigned char pen = src[xcount>>10];
+					if( IS_OPAQUE(pen) ) dest[xpos] = pal[pen];
+					xcount += delta;
+				}
+				ycount+=delta;
+			}
+		}
+		else { /* 16 bit color */
+			for( ypos = sy; ypos < sy+screenheight; ypos++ ){
+				unsigned short *dest = (unsigned short *)&bitmap->line[ypos][0];
+				const char *src = source + width*(ycount>>10);
 
-		for( sx=x; sx<x+width; sx++ )
-		{
-			int offset = xcount>>10;
-			unsigned char color = source[offset/2];
-			if( (offset&1) ) color = color&0xf; else color = color>>4;
-			if( IS_OPAQUE(color) ) dest[sx] = pal[color];
-			xcount += delta;
+				int xcount = xcount0;
+				int xpos;
+				for( xpos = x1; xpos!=x2; xpos+=dx ){
+					unsigned char pen = src[xcount>>10];
+					if( IS_OPAQUE(pen) ) dest[xpos] = pal[pen];
+					xcount += delta;
+				}
+				ycount+=delta;
+			}
 		}
 	}
 }
-
-static void DrawHflip( struct osd_bitmap *bitmap,
-	const unsigned char *data,
-	const unsigned short *pal,
-	int rowbytes,
-	int numrows,
-	int x, int y, int zoom )
-{
-
-	int delta = 0x400+zoom; // 100 0000 0000
-
-	int width = rowbytes*2*0x3ff/delta;
-
-	int sy, ycount = 0;
-	int x0 = 0;
-
-	if( x<0 )
-	{
-		width += x;
-		x = 0;
-	}
-
-	if( y<0 )
-	{
-		ycount = -delta*y;
-		numrows += y;
-		y = 0;
-	}
-
-	if( x+width>320 )
-	{
-		x0 = (x+width-320)*delta;
-		width = 320-x;
-	}
-
-	if( y+numrows>224 )
-	{
-		numrows = 224-y;
-	}
-
-	if( width<=0 || numrows<=0 ) return; /* totally clipped */
-
-	for( sy=y; sy<y+numrows; sy++ )
-	{
-		int sx, xcount = x0;
-		char *dest = &bitmap->line[sy][0];
-		const char *source = data+rowbytes*(ycount>>10);
-		ycount+=delta;
-
-		for( sx=x+width-1; sx>=x; sx-- )
-		{
-			int offset = xcount>>10;
-			unsigned char color = source[offset/2];
-			if( (offset&1) ) color = color&0xf; else color = color>>4;
-			if( IS_OPAQUE(color) ) dest[sx] = pal[color];
-			xcount += delta;
-		}
-	}
-}
-
-static void DrawVflip( struct osd_bitmap *bitmap,
-	const unsigned char *data,
-	const unsigned short *pal,
-	int rowbytes,
-	int numrows,
-	int x, int y, int zoom )
-{
-
-	int delta = 0x400+zoom; // 100 0000 0000
-
-	int width = rowbytes*2*0x3ff/delta;
-
-	int sy, ycount = 0;
-	int x0 = 0;
-
-	if( x<0 )
-	{
-		x0 = -delta*x;
-		width += x;
-		x = 0;
-	}
-
-	if( y<0 )
-	{
-		ycount = -delta*y;
-		numrows += y;
-		y = 0;
-	}
-
-	if( x+width>320 )
-	{
-		width = 320-x;
-	}
-
-	if( y+numrows>224 )
-	{
-		numrows = 224-y;
-	}
-
-	if( width<=0 || numrows<=0 ) return; /* totally clipped */
-
-	for( sy=y; sy<y+numrows; sy++ )
-	{
-		int sx, xcount = x0;
-		char *dest = &bitmap->line[sy][0];
-		const char *source = data-rowbytes*(ycount>>10);
-		ycount+=delta;
-
-		for( sx=x; sx<x+width; sx++ )
-		{
-			int offset = xcount>>10;
-			unsigned char color = source[-(offset/2)];
-			if( (offset&1) ) color = color>>4; else color = color&0xf;
-			if( IS_OPAQUE(color) ) dest[sx] = pal[color];
-			xcount += delta;
-		}
-	}
-}
-
-static void DrawHVflip( struct osd_bitmap *bitmap,
-	const unsigned char *data,
-	const unsigned short *pal,
-	int rowbytes,
-	int numrows,
-	int x, int y, int zoom )
-{
-
-	int delta = 0x400+zoom; // 100 0000 0000
-
-	int width = rowbytes*2*0x3ff/delta;
-
-	int sy, ycount = 0;
-	int x0 = 0;
-
-	if( x<0 )
-	{
-		width += x;
-		x = 0;
-	}
-
-	if( y<0 )
-	{
-		ycount = -delta*y;
-		numrows += y;
-		y = 0;
-	}
-
-	if( x+width>320 )
-	{
-		x0 = delta*(320-x);
-		width = 320-x;
-	}
-
-	if( y+numrows>224 )
-	{
-		numrows = 224-y;
-	}
-
-	if( width<=0 || numrows<=0 ) return; /* totally clipped */
-
-	for( sy=y; sy<y+numrows; sy++ )
-	{
-		int sx, xcount = x0;
-		char *dest = &bitmap->line[sy][0];
-		const char *source = data-rowbytes*(ycount>>10);
-		ycount+=delta;
-
-		for( sx=x+width-1; sx>=x; sx-- )
-		{
-			int offset = xcount>>10;
-			unsigned char color = source[-(offset/2)];
-			if( (offset&1) ) color = color>>4; else color = color&0xf;
-			if( IS_OPAQUE(color) ) dest[sx] = pal[color];
-			xcount += delta;
-		}
-	}
-}
-
-static void DrawSprite(struct osd_bitmap *bitmap, struct sys16_sprite_info *sprite )
-{
-	const unsigned char *data = Machine->memory_region[2] +
-		sprite->number * 2 + (s16_obj_bank[sprite->bank] << 16);
-
-	const unsigned short *pal = Machine->gfx[1]->colortable + sprite->color;
-
-	int x			= sprite->horizontal_position + system16_sprxoffset;
-	int y			= sprite->begin_line;
-	int numrows		= sprite->end_line - y;
-	int rowbytes	= sprite->width*2;
-
-	if( sprite->vertical_flip )
-	{
-		if( sprite->horizontal_flip )
-			DrawHVflip( bitmap,data,pal,256-rowbytes,numrows,x,y,sprite->zoom );
-		else
-			DrawVflip( bitmap,data,pal,256-rowbytes,numrows,x,y,sprite->zoom );
-	}
-	else
-	{
-		if( sprite->horizontal_flip )
-			DrawHflip( bitmap,data+2,pal,rowbytes,numrows,x,y,sprite->zoom );
-		else
-			DrawNormal( bitmap,data+rowbytes,pal,rowbytes,numrows,x,y,sprite->zoom );
-	}
-}
-
-

@@ -105,7 +105,6 @@ int toobin_controls_r (int offset);
 void toobin_interrupt_scan_w (int offset, int data);
 void toobin_interrupt_ack_w (int offset, int data);
 void toobin_sound_reset_w (int offset, int data);
-void toobin_intensity_w (int offset, int data);
 void toobin_moslip_w (int offset, int data);
 void toobin_6502_bank_w (int offset, int data);
 void toobin_playfieldram_w (int offset, int data);
@@ -152,7 +151,7 @@ static struct MemoryWriteAddress toobin_writemem[] =
 	{ 0xc10000, 0xc107ff, MWA_BANK6 },
 	{ 0xff8000, 0xff8003, watchdog_reset_w },
 	{ 0xff8100, 0xff8103, atarigen_sound_w },
-	{ 0xff8300, 0xff8303, toobin_intensity_w, &toobin_intensity },
+	{ 0xff8300, 0xff8303, MWA_BANK7, &toobin_intensity },
 	{ 0xff8340, 0xff8343, toobin_interrupt_scan_w, &toobin_interrupt_scan },
 	{ 0xff8380, 0xff8383, toobin_moslip_w, &toobin_moslip },
 	{ 0xff83c0, 0xff83c3, toobin_interrupt_ack_w },
@@ -218,7 +217,6 @@ INPUT_PORTS_START( toobin_ports )
 	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1, "P1 Throw", OSD_KEY_LCONTROL, IP_JOY_DEFAULT, 0)
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1, "P1 Right Hand", OSD_KEY_E, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1, "P1 Left Hand", OSD_KEY_Q, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1, "P1 Left Foot", OSD_KEY_A, IP_JOY_DEFAULT, 0)
@@ -229,12 +227,14 @@ INPUT_PORTS_START( toobin_ports )
 	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2, "P2 Right Foot", OSD_KEY_L, IP_JOY_DEFAULT, 0)
 
 	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED ) /* self test */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED ) /* input buffer full */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED ) /* output buffer full */
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED ) /* speech chip ready */
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x1c, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 
 	PORT_START	/* DSW */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )

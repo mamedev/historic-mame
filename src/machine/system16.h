@@ -109,6 +109,8 @@ void shinobi_scroll_w(int offset, int data);
 void shinobi_pagesel_w(int offset, int data);
 void shinobi_refreshenable_w(int offset, int data);
 
+int  passshot_control_r (int offset);
+
 int  goldnaxe_mirror1_r (int offset);
 int  goldnaxe_mirror2_r (int offset);
 void goldnaxe_refreshenable_w(int offset, int data);

@@ -15,7 +15,6 @@
 unsigned char *mcr2_paletteram;
 
 static int sprite_transparency[128]; /* no mcr2 game has more than this many sprites */
-static int sprite_color;
 
 
 /***************************************************************************
@@ -24,49 +23,24 @@ static int sprite_color;
 
 ***************************************************************************/
 
-void mcr2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-{
-	int i;
-	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
-	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
-
-	/* the palette will be initialized by the game. We just set it to some */
-	/* pre-cooked values so the startup copyright notice can be displayed. */
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		*(palette++) = ((i & 1) >> 0) * 0xff;
-		*(palette++) = ((i & 2) >> 1) * 0xff;
-		*(palette++) = ((i & 4) >> 2) * 0xff;
-	}
-
-	/* characters and sprites use the same palette */
-	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = i;
-
-   /* sprite color is 1 by default */
-  	sprite_color = 1;
-}
-
-
 void mcr2_palette_w(int offset,int data)
 {
-   int r;
-   int g;
-   int b;
+	int r,g,b;
 
-   mcr2_paletteram[offset] = data;
-	offset &= 0x7f;
 
-   r = ((offset & 1) << 2) + (data >> 6);
-   g = (data >> 0) & 7;
-   b = (data >> 3) & 7;
+	mcr2_paletteram[offset] = data;
 
-   /* up to 8 bits */
-   r = (r << 5) | (r << 2) | (r >> 1);
-   g = (g << 5) | (g << 2) | (g >> 1);
-   b = (b << 5) | (b << 2) | (b >> 1);
+	/* bit 2 of the red component is taken from bit 0 of the address */
+	r = ((offset & 1) << 2) + (data >> 6);
+	g = (data >> 0) & 7;
+	b = (data >> 3) & 7;
 
-   osd_modify_pen(Machine->gfx[0]->colortable[offset/2], r, g, b);
+	/* up to 8 bits */
+	r = (r << 5) | (r << 2) | (r >> 1);
+	g = (g << 5) | (g << 2) | (g >> 1);
+	b = (b << 5) | (b << 2) | (b >> 1);
+
+	palette_change_color(offset/2,r,g,b);
 }
 
 
@@ -121,39 +95,25 @@ void mcr2_vh_screenrefresh(struct osd_bitmap *bitmap)
    /* Draw the sprites. */
    for (offs = 0;offs < spriteram_size;offs += 4)
    {
-      int code,color,flipx,flipy,sx,sy,flags;
+      int code,flipx,flipy,sx,sy,flags;
 
       if (spriteram[offs] == 0)
 			continue;
 
       code = spriteram[offs+1] & 0x3f;
       flags = spriteram[offs+3];
-      color = sprite_color;
 		flipx = spriteram[offs+1] & 0x40;
 		flipy = spriteram[offs+1] & 0x80;
       sx = (spriteram[offs+2]-3)*2;
       sy = (241-spriteram[offs])*2;
 
       drawgfx(bitmap,Machine->gfx[1],
-	      code,color,flipx,flipy,sx,sy,
+	      code,
+		  0,
+		  flipx,flipy,
+		  sx,sy,
 	      &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
    }
-}
-
-
-/***************************************************************************
-
-  Wacko-specific video routines
-
-***************************************************************************/
-
-void wacko_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-{
-	/* standard init */
-	mcr2_vh_convert_color_prom (palette, colortable, color_prom);
-
-	/* except sprite color is 0 */
-	sprite_color = 0;
 }
 
 
@@ -163,26 +123,8 @@ void wacko_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 
 ***************************************************************************/
 
-void journey_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+int journey_vh_start(void)
 {
-	int i;
-	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
-	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
-
-
-	/* the palette will be initialized by the game. We just set it to some */
-	/* pre-cooked values so the startup copyright notice can be displayed. */
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		*(palette++) = ((i & 1) >> 0) * 0xff;
-		*(palette++) = ((i & 2) >> 1) * 0xff;
-		*(palette++) = ((i & 4) >> 2) * 0xff;
-	}
-
-	/* characters and sprites use the same palette */
-	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = i;
-
    /* now check our sprites and mark which ones have color 8 ('draw under') */
    {
       struct GfxElement *gfx;
@@ -207,6 +149,8 @@ void journey_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 					fprintf(errorlog,"sprite %i has transparency.\n",i);
       }
    }
+
+	return generic_vh_start();
 }
 
 

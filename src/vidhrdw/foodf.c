@@ -160,7 +160,7 @@ void foodf_paletteram_w (int offset, int data)
 	green = (green << 5) | (green << 2) | (green >> 1);
 	blue = (blue << 6) | (blue << 4) | (blue << 2) | blue;
 
-	osd_modify_pen (Machine->gfx[0]->colortable[offset], red, green, blue);
+	palette_change_color(offset,red,green,blue);
 }
 
 

@@ -655,7 +655,7 @@ static void draw_tilemap_core8(int layer_num,struct osd_bitmap *bitmap,int x,int
 	DATA_SIZE *bm,*ebm,*eebm;
 	int flipx,flipy;
 	struct GfxLayer *layer = Machine->layer[layer_num];
-	int cols_to_copy;
+	int lines_to_copy,cols_to_copy;
 	int minx,maxx,miny,maxy;
 
 
@@ -720,6 +720,7 @@ static void draw_tilemap_core8(int layer_num,struct osd_bitmap *bitmap,int x,int
 
 
 	cols_to_copy = (maxx - minx) / 8;
+	lines_to_copy = maxy - miny;
 
 	dy = (DATA_SIZE *)bitmap->line[1] - (DATA_SIZE *)bitmap->line[0];
 	bm = (DATA_SIZE *)bitmap->line[0] + dy * miny + minx;
@@ -737,7 +738,7 @@ static void draw_tilemap_core8(int layer_num,struct osd_bitmap *bitmap,int x,int
 	}
 
 	ebm = bm + cols_to_copy * dx;
-	eebm = ebm + (maxy - miny) * dy;
+	eebm = ebm + lines_to_copy * dy;
 
 	while (ebm != eebm)
 	{
@@ -1004,7 +1005,7 @@ static void draw_tilemap_core16(int layer_num,struct osd_bitmap *bitmap,int x,in
 	DATA_SIZE *bm,*ebm,*eebm;
 	int flipx,flipy;
 	struct GfxLayer *layer = Machine->layer[layer_num];
-	int cols_to_copy;
+	int lines_to_copy,cols_to_copy;
 	int minx,maxx,miny,maxy;
 
 
@@ -1069,6 +1070,7 @@ static void draw_tilemap_core16(int layer_num,struct osd_bitmap *bitmap,int x,in
 
 
 	cols_to_copy = (maxx - minx) / 8;
+	lines_to_copy = maxy - miny;
 
 	dy = (DATA_SIZE *)bitmap->line[1] - (DATA_SIZE *)bitmap->line[0];
 	bm = (DATA_SIZE *)bitmap->line[0] + dy * miny + minx;
@@ -1086,7 +1088,7 @@ static void draw_tilemap_core16(int layer_num,struct osd_bitmap *bitmap,int x,in
 	}
 
 	ebm = bm + cols_to_copy * dx;
-	eebm = ebm + (maxy - miny) * dy;
+	eebm = ebm + lines_to_copy * dy;
 
 	while (ebm != eebm)
 	{

@@ -550,8 +550,7 @@ static struct MachineDriver asteroid_machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			asteroid_readmem,asteroid_writemem,0,0,
-			0, 0, /* no vblank based interrupt */
-			asteroid_interrupt, 250 /* 250Hz? */
+			asteroid_interrupt,4	/* 250 Hz */
 		}
 	},
 	60, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
@@ -617,8 +616,7 @@ static struct MachineDriver astdelux_machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			astdelux_readmem,astdelux_writemem,0,0,
-			0, 0, /* no vblank based interrupt */
-			asteroid_interrupt, 250 /* 250Hz? */
+			asteroid_interrupt,4	/* 250 Hz */
 		}
 	},
 	60, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
@@ -669,8 +667,7 @@ static struct MachineDriver llander_machine_driver =
 			1500000,			/* 1.5 Mhz */
 			0,
 			llander_readmem, llander_writemem,0,0,
-			0, 0,				/* no vblank based interrupt */
-			llander_interrupt, 250 		/* 3KHz/12 as described in schematics */
+			llander_interrupt,6	/* 250 Hz */
 		}
 	},
 	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */

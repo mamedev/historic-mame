@@ -55,14 +55,18 @@ int run_game(int game, struct GameOptions *options)
 		Machine->orientation = ORIENTATION_DEFAULT;
 	if (options->ror)
 	{
-		if (Machine->orientation & ORIENTATION_SWAP_XY)
+		/* if only one of the components is inverted, switch them */
+		if ((Machine->orientation & ORIENTATION_ROTATE_180) == ORIENTATION_FLIP_X ||
+				(Machine->orientation & ORIENTATION_ROTATE_180) == ORIENTATION_FLIP_Y)
 			Machine->orientation ^= ORIENTATION_ROTATE_180;
 
 		Machine->orientation ^= ORIENTATION_ROTATE_90;
 	}
 	if (options->rol)
 	{
-		if (Machine->orientation & ORIENTATION_SWAP_XY)
+		/* if only one of the components is inverted, switch them */
+		if ((Machine->orientation & ORIENTATION_ROTATE_180) == ORIENTATION_FLIP_X ||
+				(Machine->orientation & ORIENTATION_ROTATE_180) == ORIENTATION_FLIP_Y)
 			Machine->orientation ^= ORIENTATION_ROTATE_180;
 
 		Machine->orientation ^= ORIENTATION_ROTATE_270;
@@ -352,7 +356,10 @@ int updatescreen(void)
 
 	/* if the user pressed F3, reset the emulation */
 	if (osd_key_pressed(OSD_KEY_F3))
+	{
+		while (osd_key_pressed(OSD_KEY_F3));
 		machine_reset();
+	}
 
 
 #ifndef macintosh /* LBO 061497 */
@@ -550,8 +557,7 @@ int run_machine(void)
 						"DOING AS SUCH WILL HARM ANY FURTHER DEVELOPMENT OF MAME AND COULD "
 						"RESULT IN LEGAL ACTION BEING TAKEN BY THE LAWFUL COPYRIGHT HOLDERS "
 						"OF ANY ROM IMAGES.\n\n"
-						"IF YOU DO NOT AGREE WITH THESE CONDITIONS THEN PLEASE PRESS ESC NOW.";
-
+                                                "IF YOU DO NOT AGREE WITH THESE CONDITIONS THEN PLEASE PRESS ESC NOW.";
 				dt[0].color = DT_COLOR_RED;
 				dt[0].x = 0;
 				dt[0].y = 0;

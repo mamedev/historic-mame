@@ -7,74 +7,71 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "machine/atarigen.h"
 #include "vidhrdw/generic.h"
 
-#define XDIM 42
-#define YDIM 30
+#define XCHARS 42
+#define YCHARS 30
+
+#define XDIM (XCHARS*8)
+#define YDIM (YCHARS*8)
 
 
-/*
- *		Globals we own
- */
 
-unsigned char *gauntlet_playfieldram;
-unsigned char *gauntlet_spriteram;
-unsigned char *gauntlet_alpharam;
-unsigned char *gauntlet_paletteram;
-unsigned char *gauntlet_vscroll;
-unsigned char *gauntlet_hscroll;
-unsigned char *gauntlet_bank3;
-
-int gauntlet_playfieldram_size;
-int gauntlet_spriteram_size;
-int gauntlet_alpharam_size;
-int gauntlet_paletteram_size;
-
-
-/*
+/*************************************
+ *
  *		Statics
- */
+ *
+ *************************************/
 
 static unsigned char *playfielddirty;
-static unsigned char *colordirty;
-static unsigned char *spritevisit;
 
 static struct osd_bitmap *playfieldbitmap;
 
-static unsigned char trans_count_col[XDIM];
-static unsigned char trans_count_row[YDIM];
+static unsigned char trans_count_col[XCHARS];
+static unsigned char trans_count_row[YCHARS];
 
-static int current_head;
-static int current_head_link;
+static int xscroll, yscroll;
 
 
-/*
+
+/*************************************
+ *
  *		Prototypes from other modules
- */
-
-int gauntlet_system_start (void);
-int gauntlet_system_stop (void);
+ *
+ *************************************/
 
 void gauntlet_vh_stop (void);
 
 
-/*
- *   video system start; we also initialize the system memory as well here
- */
+
+/*************************************
+ *
+ *		Video system start
+ *
+ *************************************/
 
 int gauntlet_vh_start(void)
 {
+	static struct atarigen_modesc gauntlet_modesc =
+	{
+		1024,                /* maximum number of MO's */
+		2,                   /* number of bytes per MO entry */
+		0x800,               /* number of bytes between MO words */
+		3,                   /* ignore an entry if this word == 0xffff */
+		3, 0, 0x3ff,         /* link = (data[linkword] >> linkshift) & linkmask */
+		0                    /* render in reverse link order */
+	};
+
 	/* allocate dirty buffers */
 	if (!playfielddirty)
-		playfielddirty = calloc (gauntlet_playfieldram_size/2 + gauntlet_paletteram_size/2 +
-		                         gauntlet_spriteram_size/8, 1);
+		playfielddirty = malloc (atarigen_playfieldram_size / 2);
 	if (!playfielddirty)
 	{
 		gauntlet_vh_stop ();
 		return 1;
 	}
-	colordirty = playfielddirty + gauntlet_playfieldram_size/2;
-	spritevisit = colordirty + gauntlet_paletteram_size/2;
+	memset (playfielddirty, 1, atarigen_playfieldram_size / 2);
 
 	/* allocate bitmaps */
 	if (!playfieldbitmap)
@@ -86,18 +83,23 @@ int gauntlet_vh_start(void)
 	}
 
 	/* initialize the transparency trackers */
-	memset (trans_count_col, YDIM, sizeof (trans_count_col));
-	memset (trans_count_row, XDIM, sizeof (trans_count_row));
+	memset (trans_count_col, YCHARS, sizeof (trans_count_col));
+	memset (trans_count_row, XCHARS, sizeof (trans_count_row));
 
-	current_head = current_head_link = 0;
-
-	return 0;
+	/* initialize the palette remapping */
+	atarigen_init_remap (COLOR_PALETTE_4444, 0);
+	
+	/* initialize the displaylist system */
+	return atarigen_init_display_list (&gauntlet_modesc);
 }
 
 
-/*
- *   video system shutdown; we also bring down the system memory as well here
- */
+
+/*************************************
+ *
+ *		Video system shutdown
+ *
+ *************************************/
 
 void gauntlet_vh_stop(void)
 {
@@ -109,67 +111,79 @@ void gauntlet_vh_stop(void)
 	/* free dirty buffers */
 	if (playfielddirty)
 		free (playfielddirty);
-	playfielddirty = colordirty = spritevisit = 0;
+	playfielddirty = 0;
 }
 
 
-/*
- *   vertical scroll read/write handlers
- */
+
+/*************************************
+ *
+ *		Vertical scroll/PF bank
+ *
+ *************************************/
 
 int gauntlet_vscroll_r (int offset)
 {
-	return READ_WORD (&gauntlet_vscroll[offset]);
+	return READ_WORD (&atarigen_vscroll[offset]);
 }
+
 
 void gauntlet_vscroll_w (int offset, int data)
 {
-	int oldword = READ_WORD (&gauntlet_vscroll[offset]);
+	int oldword = READ_WORD (&atarigen_vscroll[offset]);
 	int newword = COMBINE_WORD (oldword, data);
-	WRITE_WORD (&gauntlet_vscroll[offset], newword);
+	WRITE_WORD (&atarigen_vscroll[offset], newword);
 
 	/* invalidate the entire playfield if we're switching ROM banks */
 	if (offset == 2 && (oldword & 3) != (newword & 3))
-		memset (playfielddirty, 1, gauntlet_playfieldram_size / 2);
+		memset (playfielddirty, 1, atarigen_playfieldram_size / 2);
 }
 
 
-/*
- *   playfield RAM read/write handlers
- */
+
+/*************************************
+ *
+ *		Playfield RAM read/write handlers
+ *
+ *************************************/
 
 int gauntlet_playfieldram_r (int offset)
 {
-	return READ_WORD (&gauntlet_playfieldram[offset]);
+	return READ_WORD (&atarigen_playfieldram[offset]);
 }
+
 
 void gauntlet_playfieldram_w (int offset, int data)
 {
-	int oldword = READ_WORD (&gauntlet_playfieldram[offset]);
+	int oldword = READ_WORD (&atarigen_playfieldram[offset]);
 	int newword = COMBINE_WORD (oldword, data);
 
 	if (oldword != newword)
 	{
-		WRITE_WORD (&gauntlet_playfieldram[offset], newword);
+		WRITE_WORD (&atarigen_playfieldram[offset], newword);
 		playfielddirty[offset / 2] = 1;
 	}
 }
 
 
-/*
- *   alpha RAM read/write handlers
- */
+
+/*************************************
+ *
+ *		Alpha RAM read/write handlers
+ *
+ *************************************/
 
 int gauntlet_alpharam_r (int offset)
 {
-	return READ_WORD (&gauntlet_alpharam[offset]);
+	return READ_WORD (&atarigen_alpharam[offset]);
 }
+
 
 void gauntlet_alpharam_w (int offset, int data)
 {
-	int oldword = READ_WORD (&gauntlet_alpharam[offset]);
+	int oldword = READ_WORD (&atarigen_alpharam[offset]);
 	int newword = COMBINE_WORD (oldword, data);
-	WRITE_WORD (&gauntlet_alpharam[offset], newword);
+	WRITE_WORD (&atarigen_alpharam[offset], newword);
 
 	/* track opacity of rows & columns */
 	if ((oldword ^ newword) & 0x8000)
@@ -179,7 +193,7 @@ void gauntlet_alpharam_w (int offset, int data)
 		sx = (offset/2) % 64;
 		sy = (offset/2) / 64;
 
-		if (sx < XDIM && sy < YDIM)
+		if (sx < XCHARS && sy < YCHARS)
 		{
 			if (newword & 0x8000)
 				trans_count_col[sx]--, trans_count_row[sy]--;
@@ -190,24 +204,112 @@ void gauntlet_alpharam_w (int offset, int data)
 }
 
 
-/*
- *   palette RAM read/write handlers
- */
 
-int gauntlet_paletteram_r (int offset)
+/*************************************
+ *
+ *		Motion object list handlers
+ *
+ *************************************/
+
+int gauntlet_update_display_list (int scanline)
 {
-	return READ_WORD (&gauntlet_paletteram[offset]);
+	/* look up the SLIP link */
+	int yscroll = (READ_WORD (&atarigen_vscroll[2]) >> 7) & 0x1ff;
+
+	int link = READ_WORD (&atarigen_alpharam[0xf80 + 2 * (((scanline + yscroll) / 8) & 0x3f)]) & 0x3ff;
+
+	atarigen_update_display_list (atarigen_spriteram, link, scanline);
+	
+	return yscroll;
 }
 
-void gauntlet_paletteram_w (int offset, int data)
-{
-	int oldword = READ_WORD (&gauntlet_paletteram[offset]);
-	int newword = COMBINE_WORD (oldword, data);
 
-	if (oldword != newword)
+/*---------------------------------------------------------------------------------
+ *
+ * 	Motion Object encoding
+ *
+ *		4 16-bit words are used
+ *
+ *		Word 1:
+ *
+ *			Bits 0-14  = index of the image (0-32767)
+ *
+ *		Word 2:
+ *
+ *			Bits 0-3   = sprite color
+ *			Bits 7-15  = X position of the sprite
+ *
+ *		Word 3:
+ *
+ *			Bits 0-2   = height of the sprite / 8 (ranges from 1-8)
+ *			Bits 3-5   = width of the sprite / 8 (ranges from 1-8)
+ *			Bit  6     = horizontal flip
+ *			Bits 7-14  = Y position of the sprite
+ *
+ *		Word 4:
+ *
+ *			Bits 0-9   = link to the next image to display
+ *
+ *---------------------------------------------------------------------------------
+ */
+ 
+void gauntlet_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
+{
+	int *sprite_map = param;
+	int sx, sy, x, y, xadv;
+
+	/* extract data from the various words */
+	int pict = data[0] & 0x7fff;
+	int color = data[1] & 0x0f;
+	int xpos = xscroll + (data[1] >> 7);
+	int vsize = (data[2] & 7) + 1;
+	int hsize = ((data[2] >> 3) & 7) + 1;
+	int hflip = data[2] & 0x40;
+	int ypos = yscroll - (data[2] >> 7) - vsize * 8;
+	
+	/* adjust for h flip */
+	if (hflip)
+		xpos += (hsize - 1) * 8, xadv = -8;
+	else
+		xadv = 8;
+
+	/* adjust the final coordinates */
+	xpos &= 0x1ff;
+	ypos &= 0x1ff;
+	if (xpos >= XDIM) xpos -= 0x200;
+	if (ypos >= YDIM) ypos -= 0x200;
+
+	/* loop over the height */
+	for (y = 0, sy = ypos; y < vsize; y++, sy += 8)
 	{
-		WRITE_WORD (&gauntlet_paletteram[offset], newword);
-		colordirty[offset / 2] = 1;
+		/* clip the Y coordinate */
+		if (sy <= clip->min_y - 8)
+		{
+			pict += hsize;
+			continue;
+		}
+		else if (sy > clip->max_y)
+			break;
+
+		/* loop over the width */
+		for (x = 0, sx = xpos; x < hsize; x++, sx += xadv, pict++)
+		{
+			/* clip the X coordinate */
+			if (sx <= -8 || sx >= XDIM)
+				continue;
+
+			/* if this sprite's color has not been used yet this frame, grab it */
+			/* note that by doing it here, we don't map sprites that aren't visible */
+			if (!sprite_map[color])
+			{
+				atarigen_alloc_dynamic_colors (0x100 + 16 * color + 1, 15);
+				sprite_map[color] = 1;
+			}
+
+			/* draw the sprite */
+			drawgfx (bitmap, Machine->gfx[1],
+					pict ^ 0x800, color, hflip, 0, sx, sy, clip, TRANSPARENCY_PEN, 0);
+		}
 	}
 }
 
@@ -223,217 +325,141 @@ void gauntlet_paletteram_w (int offset, int data)
 
 void gauntlet_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	unsigned char smalldirty[64];
+	int sprite_map[64], alpha_map[64], pf_map[64];
+	int x, y, sx, sy, xoffs, yoffs, i, offs, bank;
 	struct rectangle clip;
-	int xscroll, yscroll;
-	int offs, bank, link;
-	int x, y, sx, sy, xoffs, yoffs;
-
 
 	/* clip out any rows and columns that are completely covered by characters */
-	for (x = 0; x < XDIM; x++)
+	for (x = 0; x < XCHARS; x++)
 		if (trans_count_col[x]) break;
 	clip.min_x = x*8;
 
-	for (x = XDIM-1; x > 0; x--)
+	for (x = XCHARS-1; x > 0; x--)
 		if (trans_count_col[x]) break;
 	clip.max_x = x*8+7;
 
-	for (y = 0; y < YDIM; y++)
+	for (y = 0; y < YCHARS; y++)
 		if (trans_count_row[y]) break;
 	clip.min_y = y*8;
 
-	for (y = YDIM-1; y > 0; y--)
+	for (y = YCHARS-1; y > 0; y--)
 		if (trans_count_row[y]) break;
 	clip.max_y = y*8+7;
 
-
-	/* update the colors */
-	memset (smalldirty, 0, sizeof (smalldirty));
-	for (offs = gauntlet_paletteram_size - 2; offs >= 0; offs -= 2)
-	{
-		if (colordirty[offs / 2])
-		{
-			int palette = READ_WORD (&gauntlet_paletteram[offs]);
-			int inten = (palette >> 12) & 15;
-			int red = ((palette >> 8) & 15) * inten + inten;
-			int green = ((palette >> 4) & 15) * inten + inten;
-			int blue = (palette & 15) * inten + inten;
-
-			int index = offs / 2;
-			smalldirty[index >> 4] = 1;
-
-			setgfxcolorentry (Machine, index, red, green, blue);
-
-			colordirty[offs / 2] = 0;
-		}
-	}
-
-
-	/* mark any tiles containing dirty colors dirty now */
-	for (offs = gauntlet_playfieldram_size - 2; offs >= 0; offs -= 2)
-	{
-		int color = ((READ_WORD (&gauntlet_playfieldram[offs]) >> 12) & 7) + 0x18;
-		if (smalldirty[color+16])
-			playfielddirty[offs/2] = 1;
-	}
-
-
 	/* compute scrolling so we know what to update */
-	xscroll = READ_WORD (&gauntlet_hscroll[0]);
-	yscroll = READ_WORD (&gauntlet_vscroll[2]);
+	xscroll = READ_WORD (&atarigen_hscroll[0]);
+	yscroll = READ_WORD (&atarigen_vscroll[2]);
 	xscroll = -(xscroll & 0x1ff);
 	yscroll = -((yscroll >> 7) & 0x1ff);
 
+	/* reset color tracking */
+	for (i = 0; i < 64; i++)
+		sprite_map[i] = alpha_map[i] = pf_map[i] = 0;
+
+	/*
+	 *---------------------------------------------------------------------------------
+	 *
+	 * 	Playfield encoding
+	 *
+	 *		1 16-bit word is used
+	 *
+	 *			Bits 0-11  = image
+	 *			Bits 12-14 = color
+	 *			Bit  15    = horizontal flip
+	 *
+	 *---------------------------------------------------------------------------------
+	 */
 
 	/* update only the portion of the playfield that's visible. */
-	bank = (READ_WORD (&gauntlet_vscroll[2]) & 3) << 12;
-	xoffs = (-xscroll/8) + (clip.min_x/8);
-	yoffs = (-yscroll/8) + (clip.min_y/8);
-	for (y = yoffs + (clip.max_y-clip.min_y)/8 + 1; y >= yoffs; y--)
+	bank = (READ_WORD (&atarigen_vscroll[2]) & 3) << 12;
+	xoffs = (-xscroll / 8) + (clip.min_x / 8);
+	yoffs = (-yscroll / 8) + (clip.min_y / 8);
+
+	/* loop over the visible Y region */
+	for (y = yoffs + (clip.max_y - clip.min_y) / 8 + 1; y >= yoffs; y--)
 	{
 		sy = y & 63;
+
+		/* loop over the visible X region */
 		for (x = xoffs + clip.max_x/8 + 1; x >= xoffs; x--)
 		{
 			int data, color;
 
+			/* read the data word */
 			sx = x & 63;
 			offs = sx * 64 + sy;
+			data = READ_WORD (&atarigen_playfieldram[offs * 2]);
 
-			data = READ_WORD (&gauntlet_playfieldram[offs*2]);
-			color = ((data >> 12) & 7) + 0x18;
+			/* update color statistics */
+			color = ((data >> 12) & 7) + 8;
+			pf_map[color] = 1;
 
+			/* rerender if dirty */
 			if (playfielddirty[offs])
 			{
 				int hflip = (data >> 15) & 1;
 				int pict = bank + (data & 0xfff);
 
+				drawgfx (playfieldbitmap, Machine->gfx[1], pict ^ 0x800, color + 0x10, hflip, 0,
+						8 * sx, 8 * sy, 0, TRANSPARENCY_NONE, 0);
 				playfielddirty[offs] = 0;
-
-				drawgfx (playfieldbitmap, Machine->gfx[1],
-						pict ^ 0x800, color,
-						hflip, 0,
-						8*sx, 8*sy,
-						0,
-						TRANSPARENCY_NONE, 0);
 			}
 		}
 	}
 
+	/* allocate playfield colors */
+	atarigen_alloc_fixed_colors (pf_map, 0x200, 16, 16);
 
 	/* copy the playfield to the destination */
-	copyscrollbitmap (bitmap, playfieldbitmap,
-			1, &xscroll,
-			1, &yscroll,
-			&clip,
-			TRANSPARENCY_NONE, 0);
+	copyscrollbitmap (bitmap, playfieldbitmap, 1, &xscroll, 1, &yscroll, &clip, TRANSPARENCY_NONE, 0);
 
+	/* render the motion objects */
+	atarigen_render_display_list (bitmap, gauntlet_render_mo, sprite_map);
 
-	/* motion objects -- attempt to simulate the real hardware behavior as closely as possible */
-	yoffs = (-yscroll/8) % 64;
-	memset (spritevisit, 0, gauntlet_spriteram_size/8);
-	for (y = 0; y <= YDIM; y++, yoffs = (yoffs + 1) % 64)
-	{
-		/* compute the address of the link list start */
-		offs = 0xf80 + yoffs*2;
-		link = (READ_WORD (&gauntlet_alpharam[offs]) & 0x3ff) * 2;
-
-		/* loop over motion objects until one is clipped */
-		while (!spritevisit[link/2])
-		{
-			int data1 = READ_WORD (&gauntlet_spriteram[link + 0x0000]);
-			int data2 = READ_WORD (&gauntlet_spriteram[link + 0x0800]);
-			int data3 = READ_WORD (&gauntlet_spriteram[link + 0x1000]);
-			int data4 = READ_WORD (&gauntlet_spriteram[link + 0x1800]);
-
-			/* extract data from the various words */
-			int pict = data1 & 0x7fff;
-			int color = (data2 & 0x0f);
-			int xpos = xscroll + (data2 >> 7);
-			int vsize = (data3 & 7) + 1;
-			int hsize = ((data3 >> 3) & 7) + 1;
-			int hflip = ((data3 >> 6) & 1);
-			int ypos = yscroll - (data3 >> 7) - vsize * 8;
-			int x, y;
-
-			/* h-flip case is handled differently */
-			if (hflip)
-			{
-				for (y = 0; y < vsize; y++)
-				{
-					/* wrap and clip the Y coordinate */
-					int ty = (ypos + y*8) & 0x1ff;
-					if (ty > 0x1f8) ty -= 0x200;
-					if (ty <= -8 || ty >= YDIM*8)
-					{
-						pict += hsize;
-						continue;
-					}
-
-					for (x = 0; x < hsize; x++, pict++)
-					{
-						/* wrap and clip the X coordinate */
-						int tx = (xpos + (hsize-x-1)*8) & 0x1ff;
-						if (tx > 0x1f8) tx -= 0x200;
-						if (tx <= -8 || tx >= XDIM*8) continue;
-
-						drawgfx (bitmap, Machine->gfx[1],
-								pict ^ 0x800, color, 1, 0, tx, ty, &clip, TRANSPARENCY_PEN, 0);
-					}
-				}
-			}
-			else
-			{
-				for (y = 0; y < vsize; y++)
-				{
-					/* wrap and clip the Y coordinate */
-					int ty = (ypos + y*8) & 0x1ff;
-					if (ty > 0x1f8) ty -= 0x200;
-					if (ty <= -8 || ty >= YDIM*8)
-					{
-						pict += hsize;
-						continue;
-					}
-
-					for (x = 0; x < hsize; x++, pict++)
-					{
-						/* wrap and clip the X coordinate */
-						int tx = (xpos + x*8) & 0x1ff;
-						if (tx > 0x1f8) tx -= 0x200;
-						if (tx <= -8 || tx >= XDIM*8) continue;
-
-						drawgfx (bitmap, Machine->gfx[1],
-								pict ^ 0x800, color, 0, 0, tx, ty, &clip, TRANSPARENCY_PEN, 0);
-					}
-				}
-			}
-
-			/* get a link to the next sprite */
-			spritevisit[link/2] = 1;
-			link = (data4 & 0x3ff) * 2;
-		}
-	}
-
+	/*
+	 *---------------------------------------------------------------------------------
+	 *
+	 * 	Alpha layer encoding
+	 *
+	 *		1 16-bit word is used
+	 *
+	 *			Bits 0-9   = index of the character
+	 *			Bit  10-13 = color
+	 *			Bit  15    = transparent/opaque
+	 *
+	 *---------------------------------------------------------------------------------
+	 */
 
 	/* redraw the alpha layer completely */
-	for (sy = 0; sy < YDIM; sy++)
+	for (sy = 0; sy < YCHARS; sy++)
 	{
-		for (sx = 0, offs = sy*64; sx < XDIM; sx++, offs++)
+		for (sx = 0, offs = sy * 64; sx < XCHARS; sx++, offs++)
 		{
-			int data = READ_WORD (&gauntlet_alpharam[offs*2]);
+			int data = READ_WORD (&atarigen_alpharam[offs * 2]);
 			int pict = (data & 0x3ff);
 
 			if (pict || (data & 0x8000))
 			{
 				int color = ((data >> 10) & 0xf) | ((data >> 9) & 0x20);
 
+				/* if this character's color has not been used yet this frame, grab it */
+				/* note that by doing it here, we don't map characters that aren't visible */
+				if (!alpha_map[color])
+				{
+					atarigen_alloc_dynamic_colors (0x000 + 4 * color, 4);
+					alpha_map[color] = 1;
+				}
+
 				drawgfx (bitmap, Machine->gfx[0],
 						pict, color,
 						0, 0,
-						8*sx, 8*sy,
+						8 * sx, 8 * sy,
 						0,
 						(data & 0x8000) ? TRANSPARENCY_NONE : TRANSPARENCY_PEN, 0);
 			}
 		}
 	}
+
+	/* final color update */
+	atarigen_update_colors (-1);
 }

@@ -292,8 +292,21 @@ ROM_END
 
 static int hiload(void)
 {
+	static int loop = 0;
+
+
+	unsigned char *RAM = Machine->memory_region[0];
+
 	/* check if the hi score table has already been initialized */
-	/* this check is really stupid and almost useless, but better than nothing */
+	/* the high score table is intialized to all 0, so first of all */
+	/* we dirty it, then we wait for it to be cleared again */
+	if (loop == 0)
+	{
+		memset(&RAM[0x0e590],0xff,16*10);
+		memset(&RAM[0xe018],0xff,7);	/* high score */
+		loop = 1;
+	}
+
 	if (memcmp(&RAM[0xe590],"\x00\x00\x00\x00\x00\x00\x00",7) == 0 &&
 			memcmp(&RAM[0xe620],"\x00\x00\x00\x00\x00\x00\x00",7) == 0 &&
 			memcmp(&RAM[0xe018],"\x00\x00\x00\x00\x00\x00\x00",7) == 0)	/* high score */
@@ -308,9 +321,10 @@ static int hiload(void)
 			osd_fclose(f);
 		}
 
+		loop = 0;
 		return 1;
 	}
-	else return 0;	/* we can't load the hi scores yet */
+	else return 0;   /* we can't load the hi scores yet */
 }
 
 

@@ -23,20 +23,25 @@ C004      Fire
 C005      Test Mode
 C006      ???
 C007      Coin Slot 2
+C010      Joystick (read like an analog one, but it's digital)
+          0->23 = DOWN
+          24->63 = UP
+          64->111 = LEFT
+          112->167 = RIGHT
+          168->255 = NEUTRAL
 C020-C027 Dipswitch 1->8 in bit 0
 
-C010      Analog Joystick
-			 0->62 = DOWN
-			 63->110 = LEFT
-			 111->166 = RIGHT
-			 167->255 = UP
-
 write:
-
-C003			WatchDog reset (ignore)
-C036			re-enable interrupts (ignore)
-C010			Sound Port (??)
-C020			Sound Port 2 (??)
+c000-c001 bullet x/y pos
+C002      Sound
+C003      WatchDog reset
+C010      Music 1
+C020      Music 2
+c030-c032 lamps
+c034      coin lock out
+c035      coin counter
+c036      IRQ enable _and_ bullet enable (both on bit 0) (currently ignored)
+C037      flip screen (currently ignored)
 
 ***************************************************************************/
 
@@ -45,12 +50,39 @@ C020			Sound Port 2 (??)
 
 
 extern unsigned char *warpwarp_bulletsram;
+void warpwarp_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void warpwarp_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 int warpwarp_input_c000_7_r(int offset);
 int warpwarp_input_c020_27_r(int offset);
 int warpwarp_input_controller_r(int offset);
 int warpwarp_interrupt(void);
+
+
+
+int warpwarp_input_c000_7_r(int offset)
+{
+	return (readinputport(0) >> offset) & 1;
+}
+
+/* Read the Dipswitches */
+int warpwarp_input_c020_27_r(int offset)
+{
+	return (readinputport(1) >> offset) & 1;
+}
+
+int warpwarp_input_controller_r(int offset)
+{
+	int res;
+
+	res = readinputport(2);
+	if (res & 1) return 23;
+	if (res & 2) return 63;
+	if (res & 4) return 111;
+	if (res & 8) return 167;
+	return 255;
+}
+
 
 
 static struct MemoryReadAddress readmem[] =
@@ -73,35 +105,14 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x4800, 0x4fff, MWA_ROM },
 	{ 0x8000, 0x83ff, MWA_RAM },
 	{ 0xC000, 0xC001, MWA_RAM, &warpwarp_bulletsram },
+	{ 0xC003, 0xC003, watchdog_reset_w },
+	{ 0xc030, 0xc032, osd_led_w },
+	{ 0xc035, 0xc035, coin_counter_w },
 	{ -1 }	/* end of table */
 };
 
 
 INPUT_PORTS_START( input_ports )
-	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x03, 0x01, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x03, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x01, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x00, "Freeplay" )
-	PORT_DIPNAME( 0x0c, 0x04, "Lives", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "2" )
-	PORT_DIPSETTING(    0x04, "3" )
-	PORT_DIPSETTING(    0x08, "4" )
-	PORT_DIPSETTING(    0x0c, "5" )
-/* The bonus setting changes depending on the number of lives */
-	PORT_DIPNAME( 0x30, 0x10, "Bonus", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Setting 1" )
-	PORT_DIPSETTING(    0x10, "Setting 2" )
-	PORT_DIPSETTING(    0x20, "Setting 3" )
-	PORT_DIPSETTING(    0x30, "Setting 4" )
-	PORT_DIPNAME( 0x40, 0x40, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE ) /* Probably unused */
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
@@ -116,11 +127,35 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x00, "Cocktail" )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x01, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x01, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	PORT_DIPNAME( 0x0c, 0x04, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x04, "3" )
+	PORT_DIPSETTING(    0x08, "4" )
+	PORT_DIPSETTING(    0x0c, "5" )
+	/* TODO: The bonus setting changes for 5 lives */
+	PORT_DIPNAME( 0x30, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "8000 30000" )
+	PORT_DIPSETTING(    0x10, "10000 40000" )
+	PORT_DIPSETTING(    0x20, "15000 60000" )
+	PORT_DIPSETTING(    0x30, "None" )
+	PORT_DIPNAME( 0x40, 0x40, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x00, "High Score Initials", IP_KEY_NONE ) /* Probably unused */
+	PORT_DIPSETTING(    0x80, "No" )
+	PORT_DIPSETTING(    0x00, "Yes" )
+
 	PORT_START      /* FAKE - used by input_controller_r to simulate an analog stick */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 INPUT_PORTS_END
 
 
@@ -130,23 +165,23 @@ static struct GfxLayout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
-	1,	/* 2 bits per pixel */
-	{ 0 },	/* the two bitplanes for 4 pixels are packed into one byte */
-	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 }, /* characters are rotated 90 degrees */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* bits are packed in groups of four */
-	8*8	/* every char takes 16 bytes */
+	1,	/* 1 bit per pixel */
+	{ 0 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8	/* every char takes 8 bytes */
 };
 
 static struct GfxLayout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	64,	/* 64 sprites */
-	1,	/* 1 bits per pixel */
-	{ 0 },	/* the two bitplanes for 4 pixels are packed into one byte */
-	{ 23 * 8, 22 * 8, 21 * 8, 20 * 8, 19 * 8, 18 * 8, 17 * 8, 16 * 8 ,
-           7 * 8, 6 * 8, 5 * 8, 4 * 8, 3 * 8, 2 * 8, 1 * 8, 0 * 8 },
+	1,	/* 1 bit per pixel */
+	{ 0 },
 	{  0, 1, 2, 3, 4, 5, 6, 7 ,
-         8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
+			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
 	32*8	/* every sprite takes 32 bytes */
 };
 
@@ -154,50 +189,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0, 0x4800, &charlayout,   0, 16 },
-	{ 0, 0x4800, &spritelayout, 0, 16 },
+	{ 0, 0x4800, &charlayout,   0, 256 },
+	{ 0, 0x4800, &spritelayout, 0, 256 },
 	{ -1 } /* end of array */
-};
-
-
-static unsigned char palette[] =
-{
-	0, 0, 0,
-	0, 165, 255,
-	231, 231, 0,
-	165, 0, 0,
-	181, 181, 181,
-	239, 0, 239,
-	247, 0, 156,
-	255, 0, 0,
-	255, 132, 0,
-	255, 181, 115,
-	255, 255, 255,
-	255, 0, 255,
-	0, 255, 255,
-	0, 0, 255,
-	255, 0, 0
-};
-
-static unsigned short colortable[] =
-{
-	0,0,
-	0,1,
-	0,2,
-	0,3,
-	0,4,
-	0,5,
-	0,6,
-	0,7,
-	0,8,
-	0,9,
-	0,9,
-	0,10,
-	0,11,
-	0,12,
-	0,13,
-	0,14,
-	0,15
 };
 
 
@@ -207,7 +201,7 @@ static struct MachineDriver machine_driver =
 	/* basic machine hardware */
 	{
 		{
-			CPU_Z80,
+			CPU_8080,
 			2048000,	/* 3 Mhz? */
 			0,
 			readmem,writemem,0,0,
@@ -219,11 +213,11 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-  	31*8, 34*8, { 0*8, 31*8-1, 0*8, 34*8-1 },
+  	34*8, 32*8, { 0*8, 34*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 
-	sizeof(palette)/3 ,sizeof(colortable)/sizeof(unsigned short),
-	0,
+	256, 2*256,
+	warpwarp_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -301,8 +295,8 @@ struct GameDriver warpwarp_driver =
 
 	input_ports,
 
-	0, palette, colortable,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };

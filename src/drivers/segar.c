@@ -1074,9 +1074,9 @@ static struct MachineDriver astrob_machine_driver =
 	{
 		{
 			CPU_Z80,
-			8000000,	/* 8.000 Mhz */
+			3867120,	/* 3.86712 Mhz ??? */
 			0,
-                        readmem,writemem,readport,astrob_writeport,
+			readmem,writemem,readport,astrob_writeport,
 			segar_interrupt,1
 		}
 	},
@@ -1109,9 +1109,9 @@ static struct MachineDriver spaceod_machine_driver =
 	{
 		{
 			CPU_Z80,
-			8000000,	/* 8.000 Mhz */
+			3867120,	/* 3.86712 Mhz ??? */
 			0,
-                        spaceod_readmem,writemem,readport,spaceod_writeport,
+			spaceod_readmem,writemem,readport,spaceod_writeport,
 			segar_interrupt,1
 		}
 	},
@@ -1144,9 +1144,9 @@ static struct MachineDriver s005_machine_driver =
 	{
 		{
 			CPU_Z80,
-			8000000,	/* 8.000 Mhz */
+			3867120,	/* 3.86712 Mhz ??? */
 			0,
-                        readmem,writemem,readport,s005_writeport,
+			readmem,writemem,readport,s005_writeport,
 			segar_interrupt,1
 		}
 	},
@@ -1180,9 +1180,9 @@ static struct MachineDriver monsterb_machine_driver =
 	{
 		{
 			CPU_Z80,
-			8000000,	/* 8.000 Mhz */
+			3867120,	/* 3.86712 Mhz ??? */
 			0,
-                        monsterb_readmem,writemem,readport,monsterb_writeport,
+			monsterb_readmem,writemem,readport,monsterb_writeport,
 			segar_interrupt,1
 		}
 	},

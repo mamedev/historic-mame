@@ -35,11 +35,13 @@ write:
 extern unsigned char *gaiden_videoram;
 extern unsigned char *gaiden_spriteram;
 extern unsigned char *gaiden_paletteram;
+extern unsigned char *gaiden_videoram2;
 extern unsigned char *gaiden_videoram3;
 extern unsigned char *gaiden_scrolla;
 extern unsigned char *gaiden_scrollb;
 
 extern int gaiden_videoram_size;
+extern int gaiden_videoram2_size;
 extern int gaiden_videoram3_size;
 extern int gaiden_paletteram_size;
 extern int gaiden_spriteram_size;
@@ -52,6 +54,8 @@ void gaiden_videoram_w(int offset,int data);
 int gaiden_videoram_r(int offset);
 void gaiden_paletteram_w(int offset,int data);
 int gaiden_paletteram_r(int offset);
+void gaiden_videoram2_w(int offset,int data);
+int gaiden_videoram2_r(int offset);
 void gaiden_videoram3_w(int offset,int data);
 int gaiden_videoram3_r(int offset);
 void gaiden_spriteram_w(int offset,int data);
@@ -109,9 +113,11 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x060000, 0x063fff, MRA_BANK1 },   /* RAM */
 	{ 0x070000, 0x070fff, gaiden_videoram_r },
-	{ 0x072000, 0x075fff, gaiden_videoram3_r },
+	{ 0x072000, 0x073fff, gaiden_videoram2_r },
+	{ 0x074000, 0x075fff, gaiden_videoram3_r },
 	{ 0x076000, 0x077fff, gaiden_spriteram_r },
-	{ 0x078000, 0x079fff, gaiden_paletteram_r },
+	{ 0x078000, 0x0787ff, gaiden_paletteram_r },
+	{ 0x078800, 0x079fff, MRA_NOP },   /* extra portion of palette RAM, not really used */
 	{ 0x07a000, 0x07a007, gaiden_input_r },
 	{ 0x07a100, 0x07a1ff, MRA_BANK2 },
 	{ -1 }  /* end of table */
@@ -123,9 +129,11 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x060000, 0x063fff, MWA_BANK1 },
 	{ 0x070000, 0x070fff, gaiden_videoram_w, &gaiden_videoram, &gaiden_videoram_size },
 //	{ 0x071000, 0x071fff, MWA_NOP },   /* I'm not sure */
-	{ 0x072000, 0x075fff, gaiden_videoram3_w,  &gaiden_videoram3, &gaiden_videoram3_size },
+	{ 0x072000, 0x073fff, gaiden_videoram2_w,  &gaiden_videoram2, &gaiden_videoram2_size },
+	{ 0x074000, 0x075fff, gaiden_videoram3_w,  &gaiden_videoram3, &gaiden_videoram3_size },
 	{ 0x076000, 0x077fff, gaiden_spriteram_w, &gaiden_spriteram, &gaiden_spriteram_size },
-	{ 0x078000, 0x079fff, gaiden_paletteram_w, &gaiden_paletteram, &gaiden_paletteram_size },
+	{ 0x078000, 0x0787ff, gaiden_paletteram_w, &gaiden_paletteram, &gaiden_paletteram_size },
+	{ 0x078800, 0x079fff, MWA_NOP },   /* extra portion of palette RAM, not really used */
 //	{ 0x07a000, 0x07a00f, MWA_NOP },   /* I'm not sure */
 //	{ 0x07a100, 0x07a111, MWA_BANK2 },  /* video? */
 	{ 0x07a200, 0x07a20f, gaiden_scrolla_w, &gaiden_scrolla },
@@ -305,17 +313,17 @@ static struct GfxLayout spritelayout16x16 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &tilelayout,  0, 0x1000*+16 },	/* tiles 8x8*/
-	{ 1, 0x110000, &tile2layout,  0, 0x1000+16 },	/* tiles 16x16*/
-	{ 1, 0x190000, &tile2layout,  0, 0x1000+16 },	/* tiles 16x16*/
-	{ 1, 0x10000, &spritelayout,  0, 0x1000+16 },	/* sprites 32x32*/
-	{ 1, 0x50000, &spritelayout,  0, 0x1000+16 },	/* sprites 32x32*/
-	{ 1, 0x90000, &spritelayout,  0, 0x1000+16 },	/* sprites 32x32*/
-	{ 1, 0xd0000, &spritelayout,  0, 0x1000+16 },	/* sprites 32x32*/
-	{ 1, 0x10000, &spritelayout16x16,  0, 0x1000+16 },	/* sprites 16x16*/
-	{ 1, 0x50000, &spritelayout16x16,  0, 0x1000+16 },	/* sprites 16x16*/
-	{ 1, 0x90000, &spritelayout16x16,  0, 0x1000+16 },	/* sprites 16x16*/
-	{ 1, 0xd0000, &spritelayout16x16,  0, 0x1000+16 },	/* sprites 16x16*/
+	{ 1, 0x000000, &tilelayout,        256, 16 },	/* tiles 8x8*/
+	{ 1, 0x110000, &tile2layout,       768, 16 },	/* tiles 16x16*/
+	{ 1, 0x190000, &tile2layout,       512, 16 },	/* tiles 16x16*/
+	{ 1, 0x010000, &spritelayout,        0, 16 },	/* sprites 32x32*/
+	{ 1, 0x050000, &spritelayout,        0, 16 },	/* sprites 32x32*/
+	{ 1, 0x090000, &spritelayout,        0, 16 },	/* sprites 32x32*/
+	{ 1, 0x0d0000, &spritelayout,        0, 16 },	/* sprites 32x32*/
+	{ 1, 0x010000, &spritelayout16x16,   0, 16 },	/* sprites 16x16*/
+	{ 1, 0x050000, &spritelayout16x16,   0, 16 },	/* sprites 16x16*/
+	{ 1, 0x090000, &spritelayout16x16,   0, 16 },	/* sprites 16x16*/
+	{ 1, 0x0d0000, &spritelayout16x16,   0, 16 },	/* sprites 16x16*/
 	{ -1 } /* end of array */
 };
 
@@ -376,10 +384,10 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 30*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256,256*16+16,
-        0,
+	1024, 1024,
+	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	gaiden_vh_start,
 	gaiden_vh_stop,

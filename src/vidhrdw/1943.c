@@ -148,7 +148,9 @@ void c1943_c804_w(int offset,int data)
 	int bankaddress;
 
 
-	/* bits 0 and 1 are for coin counters - we ignore them */
+	/* bits 0 and 1 are coin counters */
+	coin_counter_w(0,data & 1);
+	coin_counter_w(1,data & 2);
 
 	/* bits 2, 3 and 4 select the ROM bank */
 	bankaddress = 0x10000 + (data & 0x1c) * 0x1000;

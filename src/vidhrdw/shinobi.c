@@ -11,9 +11,16 @@
 #include "machine/system16.h"
 #include "vidhrdw/s16sprit.c"
 
-//#include "vgeneric.h"
-//#include "msystem16.h"
-//#include "vs16sprit.c"
+extern void drawgfxpicture(
+	struct osd_bitmap *bitmap,
+	const unsigned char *source,
+	int width, int screenheight,
+	const unsigned short *pal,
+	int xflip, int yflip,
+	int sx, int sy,
+	int zoom,
+	const struct rectangle *clip
+);
 
 /***************************************************************************
 
@@ -24,12 +31,10 @@
 
   Graphics use 4 bitplanes.
 
-  Since MAME doesn't yet support 16-bit color,
-  we define a reduced 3x3x2 color space.
-
 ***************************************************************************/
 
-void system16_paletterefresh(void)
+static void refresh_palette(void);
+static void refresh_palette(void)
 {
 	unsigned char *dirty = system16_colordirty;
 	int index;
@@ -44,17 +49,6 @@ void system16_paletterefresh(void)
 				GBGR BBBB	GGGG RRRR
 				5444 3210	3210 3210
 			*/
-#if 0
-			/* extract color components and scale to 0..255 */
-			int red		= ( byte1 & 0xf )<<4;
-			int green	= ( byte1 & 0xf0 );
-			int blue	= ( byte0 & 0xf )<<4;
-
-			/* map to our reduced palette: BBGGGRRR */
-			int color = ((red >> 5) & 0x07) + ((green >> 2) & 0x38) + (blue & 0xc0);
-
-			Machine->gfx[0]->colortable[index] = Machine->pens[color];
-#endif
 			int red		= ( palette & 0xf );
 			int green	= ( palette >> 4 ) & 0x0f;
 			int blue	= ( palette >> 8 ) & 0x0f;
@@ -63,15 +57,17 @@ void system16_paletterefresh(void)
 			green = (green << 4) + green;
 			blue = (blue << 4) + blue;
 
-			setgfxcolorentry (Machine->gfx[3], index, red, green, blue);
+			setgfxcolorentry (Machine->gfx[0], index, red, green, blue);
 			dirty[index] = 0;
 		}
 	}
 }
 
-void system16_backgroundrefresh(struct osd_bitmap *bitmap)
+static void draw_background(struct osd_bitmap *bitmap);
+static void draw_background(struct osd_bitmap *bitmap)
 {
-	const struct GfxElement *gfx = Machine->gfx[2];
+	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct GfxElement *gfx = Machine->gfx[0];
 
 	int page;
 
@@ -102,9 +98,9 @@ void system16_backgroundrefresh(struct osd_bitmap *bitmap)
 					int tile = READ_WORD( &source[0] );
 					drawgfx( bitmap, gfx,
 						tile + system16_background_bank*0x1000,
-						(tile >> 6),
+						(tile >> 6)%128,
 						0, 0, x, y,
-						&Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+						clip, TRANSPARENCY_NONE, 0);
 				}
 				source+=2;
 			}
@@ -112,9 +108,11 @@ void system16_backgroundrefresh(struct osd_bitmap *bitmap)
 	} /* next page */
 }
 
-void system16_foregroundrefresh(struct osd_bitmap *bitmap, int priority )
+static void draw_foreground(struct osd_bitmap *bitmap, int priority );
+static void draw_foreground(struct osd_bitmap *bitmap, int priority )
 {
-	const struct GfxElement *gfx = Machine->gfx[2];
+	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct GfxElement *gfx = Machine->gfx[0];
 
 	int page;
 	int scrollx = 320+scrollX[FG_OFFS];
@@ -146,9 +144,9 @@ void system16_foregroundrefresh(struct osd_bitmap *bitmap, int priority )
 						if( tile )
 						 drawgfx( bitmap, gfx,
 							tile+(priority?8192:0),/*hack for altered beast */
-							(tile >> 6),
+							(tile >> 6)%128,
 							0, 0, x, y,
-							&Machine->drv->visible_area, TRANSPARENCY_PEN, 0);
+							clip, TRANSPARENCY_PEN, 0);
 					}
 				}
 				source+=2;
@@ -157,57 +155,94 @@ void system16_foregroundrefresh(struct osd_bitmap *bitmap, int priority )
 	} /* next page */
 }
 
-void system16_textrefresh(struct osd_bitmap *bitmap)
+static void draw_text(struct osd_bitmap *bitmap);
+static void draw_text(struct osd_bitmap *bitmap)
 {
+	const struct rectangle *clip = &Machine->drv->visible_area;
+
 	int sx,sy;
 	for (sx = 0; sx < 40; sx++) for (sy = 0; sy < 28; sy++){
 			int offs = (sy * 64 + sx + (64-40)) << 1;
-			int tile = READ_WORD(&system16_videoram[offs]);
-			if( tile ){
+			int data = READ_WORD(&system16_videoram[offs]);
+			int tile_number = data&0x1ff;
+			if( tile_number ){ /* skip spaces */
 				drawgfx(bitmap,Machine->gfx[0],
-							tile & 0x1ff,
-							tile >> 9,
-							0,0, // xflip, yflip
+							tile_number,
+							(data >> 9)%8, /* color */
+							0,0, // no flip
 							8*sx,8*sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							clip,
+							TRANSPARENCY_PEN,0);
 			}
 	}
 }
 
-void system16_spriterefresh(struct osd_bitmap *bitmap, int priority)
+static void draw_sprites(struct osd_bitmap *bitmap, int priority);
+static void draw_sprites(struct osd_bitmap *bitmap, int priority)
 {
 	struct sys16_sprite_info *sprite = sys16_sprite;
 	struct sys16_sprite_info *finish = sprite+64;
 
 	do{
 		if( sprite->end_line == 0xff ) break;
-		if( sprite->priority == priority ) DrawSprite( bitmap, sprite );
+
+		if( sprite->priority == priority ){
+			const unsigned char *source = Machine->memory_region[2] +
+				sprite->number * 4 + (s16_obj_bank[sprite->bank] << 17);
+
+			const unsigned short *pal = Machine->gfx[0]->colortable + sprite->color+1024;
+
+			int sx			= sprite->horizontal_position + system16_sprxoffset;
+			int sy			= sprite->begin_line;
+			int height		= sprite->end_line - sy;
+			int width		= sprite->width*4;
+
+			if( sprite->vertical_flip ){
+				width = 512-width;
+			}
+
+			if( sprite->horizontal_flip ){
+				source += 4;
+				if( sprite->vertical_flip ) source -= width*2;
+			}
+			else{
+				if( sprite->vertical_flip ) source -= width; else source += width;
+			}
+
+			drawgfxpicture(
+				bitmap,
+				source,
+				width, height,
+				pal,
+				sprite->horizontal_flip, sprite->vertical_flip,
+				sx, sy,
+				sprite->zoom,
+				&Machine->drv->visible_area
+			);
+		}
 		sprite++;
 	}while( sprite<finish );
 }
 
 
+void system16_vh_screenrefresh(struct osd_bitmap *bitmap);
 void system16_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-		system16_paletterefresh();
+	refresh_palette();
 
-	if (system16_refreshenable_r(0))
-	{
-		system16_backgroundrefresh(bitmap);
+	if( system16_refreshenable_r(0) ){
+		draw_background(bitmap);
 
-		system16_spriterefresh(bitmap,1);
+		draw_sprites(bitmap,1);
 
-		system16_foregroundrefresh(bitmap,0);
+		draw_foreground(bitmap,0);
 
-		system16_spriterefresh(bitmap,2);
+		draw_sprites(bitmap,2);
 
-		system16_foregroundrefresh(bitmap,1);
+		draw_foreground(bitmap,1);
 
-		system16_textrefresh(bitmap);
+		draw_text(bitmap);
 
-		system16_spriterefresh(bitmap,3);
+		draw_sprites(bitmap,3);
 	}
 }
-
-
-

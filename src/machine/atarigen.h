@@ -6,8 +6,22 @@
 
 ***************************************************************************/
 
+#include "driver.h"
+
 #define COLOR_PALETTE_555 1
 #define COLOR_PALETTE_4444 2
+
+struct atarigen_modesc
+{
+	int maxmo;                              /* maximum number of MO's */
+	int moskip;                             /* number of bytes per MO entry */
+	int mowordskip;                         /* number of bytes between MO words */
+	int ignoreword;                         /* ignore an entry if this word == 0xffff */
+	int linkword, linkshift, linkmask;		/* link = (data[linkword >> linkshift) & linkmask */
+	int reverse;                            /* render in reverse link order */
+};
+
+typedef void (*atarigen_morender) (struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param);
 
 void atarigen_init_machine (void (*sound_int)(void), int slapstic);
 
@@ -28,7 +42,11 @@ int atarigen_6502_sound_r (int offset);
 void atarigen_6502_sound_w (int offset, int data);
 int atarigen_sound_r (int offset);
 
-void atarigen_init_remap (int _colortype);
+int atarigen_init_display_list (struct atarigen_modesc *_modesc);
+void atarigen_update_display_list (unsigned char *base, int start, int scanline);
+void atarigen_render_display_list (struct osd_bitmap *bitmap, atarigen_morender morender, void *param);
+
+void atarigen_init_remap (int _colortype, int reuse);
 void atarigen_alloc_fixed_colors (int *usage, int base, int colors, int palettes);
 void atarigen_alloc_dynamic_colors (int base, int number);
 void atarigen_update_colors (int intensity);

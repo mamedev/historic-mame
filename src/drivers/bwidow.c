@@ -648,11 +648,10 @@ static struct MachineDriver bwidow_machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			bwidow_readmem,bwidow_writemem,0,0,
-			0, 0, /* no vblank-interrupts */
-			interrupt, 185 /* 5.4ms */
+			interrupt,4	/* 5.4ms */
 		}
 	},
-	30, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
+	45, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
 	1,
 	0,
 
@@ -687,8 +686,7 @@ static struct MachineDriver gravitar_machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			bwidow_readmem,bwidow_writemem,0,0,
-			0, 0, /* no vblank-interrupts */
-			interrupt, 185 /* 5.4ms */
+			interrupt,3 /* 5.4ms */
 		}
 	},
 	60, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
@@ -726,8 +724,7 @@ static struct MachineDriver spacduel_machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			spacduel_readmem,spacduel_writemem,0,0,
-			0, 0, /* no vblank-interrupts */
-			interrupt, 185 /* 5.4ms */
+			interrupt,4 /* 5.4ms */
 		}
 	},
 	45, 0,	/* frames per second, vblank duration (vector game, so no vblank) */

@@ -26,7 +26,14 @@ void cps1_dump_driver(void)
         fp=fopen("ROM.DMP", "w+b");
         if (fp)
         {
-                fwrite(RAM, 0x80000, 1, fp);
+                int i;
+                char *p=RAM;
+                for (i=0; i<0x80000; i++)
+                {
+                        fwrite(p+1, 1, 1, fp);
+                        fwrite(p, 1, 1, fp);
+                        p+=2;
+                }
                 fclose(fp);
         }
 

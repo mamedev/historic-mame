@@ -33,12 +33,11 @@ WRITE:
 #include "vidhrdw/generic.h"
 #include "machine/system16.h"
 
-void system16_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void system16_vh_screenrefresh(struct osd_bitmap *bitmap);
-
 
 unsigned char *altbeast_backgroundbank;
 
+int altbeast_backbank_r(int offset);
 int altbeast_backbank_r(int offset)
 {
 	int rv = READ_WORD(&altbeast_backgroundbank[offset]);
@@ -77,6 +76,7 @@ static struct MemoryWriteAddress altbeast_writemem[] =
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
+
 
 
 INPUT_PORTS_START( altbeast_ports )
@@ -184,27 +184,20 @@ static struct GfxLayout charlayout =
 	8*8	/* every sprite takes 8 consecutive bytes */
 };
 
-
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,     0, 8 },
-	{ 1, 0x00000, &charlayout,  1024, 128 },   /* fake: this give us lookup pointer for sprites */
-	{ 1, 0x00000, &charlayout,     0, 128 },   /* fake: this give us lookup pointer for chars   */
-	{ 1, 0x00000, &charlayout,     0, 256 },   /* fake: this give us lookup pointer for all     */
+	{ 1, 0x00000, &charlayout,	0, 256 },
 	{ -1 } /* end of array */
 };
 
-
-
+void altbeast_init_machine(void);
 void altbeast_init_machine(void)
 {
-	/*	Initialize Objects Bank vector
-	 */
+	/*	Initialize Objects Bank vector */
 
 	static int bank[16] = { 0,0,2,0,4,0,6,0,8,0,10,0,12,0,0,0 };
 
-	/*	And notify this to the System16 hardware
-	 */
+	/*	And notify this to the System16 hardware */
 
 	system16_define_bank_vector(bank);
 	system16_define_sprxoffset(-0xb8);
@@ -247,26 +240,10 @@ static struct MachineDriver machine_driver =
 	0
 };
 
+extern void system16_sprite_decode( int num_banks, int bank_size );
 
-static void altbeast_sprite_decode (void)
-{
-	unsigned char *temp = malloc (0x10000);
-	int i;
-
-	if (!temp) return;
-	for (i = 0; i < 7; i++)
-	{
-		unsigned char *dest = &Machine->memory_region[2][i * 0x20000];
-		unsigned char *p1 = temp;
-		unsigned char *p2 = dest + 0x10000;
-		int j;
-
-		memcpy (temp, dest, 0x10000);
-		for (j = 0; j < 0x10000; j++)
-			*dest++ = *p2++, *dest++ = *p1++;
-	}
-
-	free (temp);
+static void altbeast_sprite_decode (void){
+	system16_sprite_decode( 7, 0x20000 );
 }
 
 
@@ -286,7 +263,7 @@ ROM_START( altbeast_rom )
 	ROM_LOAD( "ab11675.bin",  0x20000, 0x20000, 0xb4da9b5c )        /* 8x8 1 */
 	ROM_LOAD( "ab11676.bin",  0x40000, 0x20000, 0xe29679fe )        /* 8x8 2 */
 
-	ROM_REGION(0x0e0000)
+	ROM_REGION(0x0e0000 * 2)
 	ROM_LOAD( "ab11677.bin", 0x000000, 0x10000, 0x4790062c )     /* sprites */
 	ROM_LOAD( "ab11681.bin", 0x010000, 0x10000, 0x64ba3d78 )
 	ROM_LOAD( "ab11726.bin", 0x020000, 0x10000, 0x92b73325 )
@@ -309,7 +286,7 @@ struct GameDriver altbeast_driver =
 {
 	"Altered Beast",
 	"altbeast",
-	"Mirko Buffoni         (Mame Driver)\nThierry Lescot & Nao  (Hardware Info)\nMarco Cassili         (Dip Switches)",
+	"Mirko Buffoni         (Mame Driver)\nThierry Lescot & Nao  (Hardware Info)",
 	&machine_driver,
 
 	altbeast_rom,
@@ -323,5 +300,3 @@ struct GameDriver altbeast_driver =
 	ORIENTATION_DEFAULT,
 	0, 0
 };
-
-

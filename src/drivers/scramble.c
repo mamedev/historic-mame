@@ -864,12 +864,25 @@ static void atlantis_hisave(void)
 
 static int theend_hiload(void)
 {
+	static int loop = 0;
+
+
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 	unsigned char *RAM = Machine->memory_region[0];
 
 	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x43C0],"\x00\x00\x00",3) == 0)
+	/* the high score table is intialized to all 0, so first of all */
+	/* we dirty it, then we wait for it to be cleared again */
+	if (loop == 0)
+	{
+		memset(&RAM[0x43c0],0xff,3*5);
+		loop = 1;
+	}
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x43c0],"\x00\x00\x00",3) == 0 &&
+			memcmp(&RAM[0x43cc],"\x00\x00\x00",3) == 0)
 	{
 		void *f;
 
@@ -879,12 +892,13 @@ static int theend_hiload(void)
 			/* This seems to have more than 5 scores in memory. */
 			/* If this DISPLAYS more than 5 scores, change 3*5 to 3*10 or */
 			/* however many it should be. */
-			osd_fread(f,&RAM[0x43C0],3*5);
+			osd_fread(f,&RAM[0x43c0],3*5);
 			/* copy high score */
-			memcpy(&RAM[0x40A8],&RAM[0x43C0],3);
+			memcpy(&RAM[0x40a8],&RAM[0x43c0],3);
 			osd_fclose(f);
 		}
 
+		loop = 0;
 		return 1;
 	}
 	else return 0;	/* we can't load the hi scores yet */

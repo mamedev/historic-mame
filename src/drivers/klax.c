@@ -253,7 +253,7 @@ static struct GfxDecodeInfo klax_gfxdecodeinfo[] =
 static struct OKIM6295interface okim6295_interface =
 {
 	1,			/* 1 chip */
-	8000,    /* 8000 Hz */
+	7159160 / 1024,    /* ~7000 Hz */
 	2,       /* memory region 2 */
 	{ 255 }
 };
@@ -279,7 +279,7 @@ static struct MachineDriver klax_machine_driver =
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
+	1,
 	klax_init_machine,
 
 	/* video hardware */

@@ -1120,7 +1120,7 @@ static struct MachineDriver robotron_machine_driver =
 
 	/* video hardware */
 	304, 256,                               /* screen_width, screen_height */
-	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
+	{ 0, 304-1, 7, 246-1 },                 /* struct rectangle visible_area */
 	0,                          /* GfxDecodeInfo * */
 	16,                                  /* total colors */
 	0,                                      /* color table length */
@@ -1176,7 +1176,7 @@ static struct MachineDriver joust_machine_driver =
 
 	/* video hardware */
 	304, 256,                               /* screen_width, screen_height */
-	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
+	{ 0, 304-1, 7, 246-1 },                 /* struct rectangle visible_area */
 	0,                          /* GfxDecodeInfo * */
 	16,                                  /* total colors */
 	0,                                      /* color table length */
@@ -1233,7 +1233,7 @@ static struct MachineDriver stargate_machine_driver =
 
 	/* video hardware */
 	304, 256,                               /* screen_width, screen_height */
-	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
+	{ 0, 304-1, 7, 246-1 },                 /* struct rectangle visible_area */
 	0,                          /* GfxDecodeInfo * */
 	16,                                  /* total colors */
 	0,                                      /* color table length */
@@ -1289,7 +1289,7 @@ static struct MachineDriver bubbles_machine_driver =
 
 	/* video hardware */
 	304, 256,                               /* screen_width, screen_height */
-	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
+	{ 0, 304-1, 7, 246-1 },                 /* struct rectangle visible_area */
 	0,                          /* GfxDecodeInfo * */
 	16,                                  /* total colors */
 	0,                                      /* color table length */
@@ -1350,7 +1350,7 @@ static struct MachineDriver sinistar_machine_driver =
 
 	/* video hardware */
 	304, 256,                               /* screen_width, screen_height */
-	{ 0, 304-1, 0, 256-1 },                /* struct rectangle visible_area */
+	{ 0, 304-1, 7, 246-1 },                 /* struct rectangle visible_area */
 	0,                          /* GfxDecodeInfo * */
 	16,                                  /* total colors */
 	0,                                      /* color table length */
@@ -1410,7 +1410,7 @@ static struct MachineDriver defender_machine_driver =
 
 	/* video hardware */
 	304, 256,                               /* screen_width, screen_height */
-	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
+	{ 0, 304-1, 7, 246-1 },                 /* struct rectangle visible_area */
 	0,                          /* GfxDecodeInfo * */
 	16,                                  /* total colors */
 	0,                                      /* color table length */
@@ -1466,7 +1466,7 @@ static struct MachineDriver splat_machine_driver =
 
 	/* video hardware */
 	304, 256,                               /* screen_width, screen_height */
-	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
+	{ 0, 304-1, 7, 246-1 },                 /* struct rectangle visible_area */
 	0,                          /* GfxDecodeInfo * */
 	16,                                  /* total colors */
 	0,                                      /* color table length */
@@ -1522,7 +1522,7 @@ static struct MachineDriver blaster_machine_driver =
 
 	/* video hardware */
 	304, 256,                               /* screen_width, screen_height */
-	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
+	{ 0, 304-1, 7, 246-1 },                 /* struct rectangle visible_area */
 	0,                          /* GfxDecodeInfo * */
 	256,                                  /* total colors */
 	0,                                      /* color table length */
@@ -1578,7 +1578,7 @@ static struct MachineDriver colony7_machine_driver =
 
 	/* video hardware */
 	304, 256,                               /* screen_width, screen_height */
-	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
+	{ 0, 304-1, 7, 246-1 },                 /* struct rectangle visible_area */
 	0,                          /* GfxDecodeInfo * */
 	16,                                  /* total colors */
 	0,                                      /* color table length */
@@ -1634,7 +1634,7 @@ static struct MachineDriver lottofun_machine_driver =
 
 	/* video hardware */
 	304, 256,								/* screen_width, screen_height */
-	{ 0, 304-1, 8, 256-8-1 }, 				/* struct rectangle visible_area */
+	{ 0, 304-1, 7, 246-1 },                 /* struct rectangle visible_area */
 	0,							/* GfxDecodeInfo * */
 	16, 								 /* total colors */
 	0,										/* color table length */

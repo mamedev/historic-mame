@@ -3,8 +3,7 @@
  Route 16/Stratovox memory map (preliminary)
 
  Notes: Route 16 and Stratovox use identical hardware with the following
-        exceptions: Stratovox has a DAC for voice and a SN76477 for the
-        player explosion and bonus ship sound effects.
+        exceptions: Stratovox has a DAC for voice.
         Route 16 has the added ability to turn off each bitplane indiviaually.
         This looks like an afterthought, as one of the same bits that control
         the palette selection is doubly utilized as the bitmap enable bit.
@@ -52,7 +51,6 @@ extern unsigned char *route16_sharedram;
 extern unsigned char *route16_videoram1;
 extern unsigned char *route16_videoram2;
 
-void route16_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void route16_set_machine_type(void);
 void stratvox_set_machine_type(void);
 int  route16_vh_start(void);
@@ -259,11 +257,11 @@ static unsigned char color_prom[] =
 static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
-	14318000/8,     /* ? */
+	10000000/8,     /* 10Mhz / 8 = 1.25Mhz */
 	{ 0x60ff },
 	{ 0 },
 	{ 0 },
-	{ stratvox_samples_w },  // SN76477 commands
+	{ stratvox_samples_w },  /* SN76477 commands (not used in Route 16?) */
 	{ 0 }
 };
 
@@ -283,105 +281,72 @@ static struct Samplesinterface samples_interface =
 };
 
 
-static struct MachineDriver route16_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80 | CPU_16BIT_PORT,
-			2500000,
-			0,
-			cpu1_readmem,cpu1_writemem,0,cpu1_writeport,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			2500000,
-			2,
-			cpu2_readmem,cpu2_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	30, DEFAULT_REAL_30HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	1,
-	0,
-
-	/* video hardware */
-	256, 256, { 8, 256-8-1, 0, 256-1 },
-	0,
-	8, 0,
-	route16_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
-	0,
-	route16_vh_start,
-	route16_vh_stop,
-	route16_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
+#define MACHINE_DRIVER(GAMENAME, AUDIO_INTERFACES)   		\
+															\
+static struct MachineDriver GAMENAME##_machine_driver =		\
+{															\
+	/* basic machine hardware */							\
+	{														\
+		{													\
+			CPU_Z80 | CPU_16BIT_PORT,						\
+			2500000,	/* 10Mhz / 4 = 2.5Mhz */			\
+			0,												\
+			cpu1_readmem,cpu1_writemem,0,cpu1_writeport,	\
+			interrupt,1										\
+		},													\
+		{													\
+			CPU_Z80,										\
+			2500000,	/* 10Mhz / 4 = 2.5Mhz */			\
+			2,												\
+			cpu2_readmem,cpu2_writemem,0,0,					\
+			ignore_interrupt,0								\
+		}													\
+	},														\
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */ \
+	1,														\
+	0,														\
+															\
+	/* video hardware */									\
+	256, 256, { 8, 256-8-1, 0, 256-1 },						\
+	0,														\
+	8, 0,													\
+	0,														\
+															\
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE, \
+	0,														\
+	route16_vh_start,										\
+	route16_vh_stop,										\
+	route16_vh_screenrefresh,								\
+															\
+	/* sound hardware */									\
+	0,0,0,0,												\
+	{														\
+		AUDIO_INTERFACES									\
+	}														\
 };
 
-// Same as Route 16, but with extra audio interfaces added
-static struct MachineDriver stratvox_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80 | CPU_16BIT_PORT,
-			2500000,
-			0,
-			cpu1_readmem,cpu1_writemem,0,cpu1_writeport,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			2500000,
-			2,
-			cpu2_readmem,cpu2_writemem,0,0,
-			ignore_interrupt,0
+#define ROUTE16_AUDIO_INTERFACE  \
+		{						 \
+			SOUND_AY8910,		 \
+			&ay8910_interface	 \
 		}
-	},
-	30, DEFAULT_REAL_30HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	1,
-	0,
 
-	/* video hardware */
-	256, 256, { 8, 256-8-1, 0, 256-1 },
-	0,
-	8, 0,
-	route16_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
-	0,
-	route16_vh_start,
-	route16_vh_stop,
-	route16_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		},
-		{
-			SOUND_SAMPLES,
-			&samples_interface
+#define STRATVOX_AUDIO_INTERFACE \
+		{						 \
+			SOUND_AY8910,		 \
+			&ay8910_interface	 \
+		},						 \
+		{						 \
+			SOUND_DAC,			 \
+			&dac_interface		 \
+		},						 \
+		{						 \
+			SOUND_SAMPLES,		 \
+			&samples_interface	 \
 		}
-	}
-};
 
+MACHINE_DRIVER(route16,  ROUTE16_AUDIO_INTERFACE )
+MACHINE_DRIVER(stratvox, STRATVOX_AUDIO_INTERFACE)
 
 /***************************************************************************
 
@@ -512,45 +477,28 @@ static void stratvox_hisave(void)
 }
 
 
-struct GameDriver route16_driver =
-{
-	"Route 16",
-	"route16",
-	"Zsolt Vasvari\nMike Balfour",
-	&route16_machine_driver,
-
-	route16_rom,
-	route16_set_machine_type, 0,
-	0,
-	0,	/* sound_prom */
-
-	route16_input_ports,
-
-	color_prom, 0, 0,
-
-	ORIENTATION_ROTATE_90,
-
-	route16_hiload, route16_hisave
+#define GAMEDRIVER(GAMENAME, SAMPLES, DESC, CREDITS) \
+											\
+struct GameDriver GAMENAME##_driver =		\
+{											\
+	DESC,									\
+	#GAMENAME,								\
+	CREDITS,								\
+	&GAMENAME##_machine_driver,				\
+											\
+	GAMENAME##_rom,							\
+	GAMENAME##_set_machine_type, 0,			\
+	SAMPLES,								\
+	0,	/* sound_prom */					\
+											\
+	GAMENAME##_input_ports,					\
+											\
+	color_prom, 0, 0,						\
+											\
+	ORIENTATION_ROTATE_90,					\
+											\
+	GAMENAME##_hiload, GAMENAME##_hisave	\
 };
 
-
-struct GameDriver stratvox_driver =
-{
-	"Stratovox",
-	"stratvox",
-	"Darren Olafson\nZsolt Vasvari\nMike Balfour",
-	&stratvox_machine_driver,
-
-	stratvox_rom,
-	stratvox_set_machine_type, 0,
-	stratvox_sample_names,
-	0,	/* sound_prom */
-
-	stratvox_input_ports,
-
-	color_prom, 0, 0,
-
-	ORIENTATION_ROTATE_90,
-
-	stratvox_hiload, stratvox_hisave
-};
+GAMEDRIVER(route16, 0, "Route 16", "Zsolt Vasvari\nMike Balfour")
+GAMEDRIVER(stratvox, stratvox_sample_names, "Stratovox", "Darren Olafson\nZsolt Vasvari\nMike Balfour")

@@ -13,8 +13,6 @@
 
 #include "vidhrdw/generic.h"
 #include "machine/system16.h"
-//#include "vgeneric.h"
-//#include "msystem16.h"
 
 int s16_videoram_size;
 int s16_soundram_size;
@@ -261,6 +259,15 @@ int shinobi_control_r (int offset){
 		case 0: return input_port_2_r (offset);    /* GEN */
 		case 2: return input_port_0_r (offset);    /* PL1 */
 		case 6: return input_port_1_r (offset);    /* PL2 */
+	}
+	return 0x00;
+}
+
+int passshot_control_r (int offset){
+	switch (offset){
+		case 0: return input_port_2_r (offset);    /* GEN */
+		case 2: return input_port_0_r (offset);    /* PL1 */
+		case 4: return input_port_1_r (offset);    /* PL2 */
 	}
 	return 0x00;
 }

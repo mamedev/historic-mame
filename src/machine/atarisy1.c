@@ -13,7 +13,7 @@
 
 int slapstic_tweak (int offset);
 
-void atarisys1_begin_frame (int param);
+void atarisys1_update_display_list (int scanline);
 
 
 
@@ -64,14 +64,14 @@ static void atarisys1_soundint (void)
 void atarisys1_init_machine (int slapstic)
 {
 	atarigen_init_machine (atarisys1_soundint, slapstic);
-	
+
 	joystick_value = joystick_type = trackball_type = 0;
 	joystick_timer = NULL;
-	
+
 	m6522_ddra = m6522_ddrb = 0xff;
 	m6522_dra = m6522_drb = 0xff;
 	memset (m6522_regs, 0xff, sizeof (m6522_regs));
-	
+
 	speedcheck_time1 = speedcheck_time2 = 0;
 }
 
@@ -148,7 +148,7 @@ void atarisys1_led_w (int offset, int data)
 static int indytemp_setopbase (int pc)
 {
 	int prevpc = cpu_getpreviouspc ();
-	
+
 	/*
 	 *		This is a slightly ugly kludge for Indiana Jones & the Temple of Doom because it jumps
 	 *		directly to code in the slapstic.  The general order of things is this:
@@ -166,7 +166,7 @@ static int indytemp_setopbase (int pc)
 	 *		Fortunately for us, all 4 banks have exactly the same code at this point in their
 	 *		ROM, so it doesn't matter which version we're actually executing.
 	 */
-	
+
 	if (pc & 0x80000)
 		slapstic_tweak (0);
 	else if (prevpc & 0x80000)
@@ -186,8 +186,8 @@ static int indytemp_setopbase (int pc)
 int atarisys1_interrupt (void)
 {
 	/* set a timer to reset the video parameters just before the end of VBLANK */
-	timer_set (TIME_IN_USEC (Machine->drv->vblank_duration - 10), 0, atarisys1_begin_frame);
-	
+	timer_set (TIME_IN_USEC (Machine->drv->vblank_duration - 10), 0, atarisys1_update_display_list);
+
 	/* update the gas pedal for RoadBlasters */
 	if (joystick_type == 3)
 	{
@@ -202,7 +202,7 @@ int atarisys1_interrupt (void)
 			if (pedal_value < 0) pedal_value = 0;
 		}
 	}
-	
+
 	return 4;       /* Interrupt vector 4, used by VBlank */
 }
 
@@ -235,11 +235,11 @@ int atarisys1_joystick_r (int offset)
 	/* digital joystick type */
 	if (joystick_type == 1)
 		newval = (input_port_0_r (offset) & (0x80 >> (offset / 2))) ? 0xf0 : 0x00;
-	
+
 	/* Hall-effect analog joystick */
 	else if (joystick_type == 2)
 		newval = (offset & 2) ? input_port_0_r (offset) : input_port_1_r (offset);
-	
+
 	/* Road Blasters gas pedal */
 	else if (joystick_type == 3)
 		newval = pedal_value;
@@ -279,30 +279,30 @@ int atarisys1_trakball_r (int offset)
 		int player = (offset >> 2) & 1;
 		int which = (offset >> 1) & 1;
 		int diff;
-		
+
 		/* when reading the even ports, do a real analog port update */
 		if (which == 0)
 		{
 			int dx = (signed char)input_port_0_r (offset);
 			int dy = (signed char)input_port_1_r (offset);
-			
+
 			cur[player][0] += dx + dy;
 			cur[player][1] += dx - dy;
 		}
-		
+
 		/* clip the result to -0x3f to +0x3f to remove directional ambiguities */
 		diff = cur[player][which] - old[player][which];
 		if (diff < -0x3f) diff = -0x3f;
 		if (diff >  0x3f) diff =  0x3f;
 		result = old[player][which] += diff;
 	}
-	
+
 	/* Road Blasters steering wheel */
 	else if (trackball_type == 2)
 	{
 		result = input_port_0_r (offset);
 	}
-	
+
 	return result;
 }
 
@@ -329,7 +329,7 @@ int atarisys1_6502_switch_r (int offset)
 	if (atarigen_cpu_to_sound_ready) temp ^= 0x08;
 	if (atarigen_sound_to_cpu_ready) temp ^= 0x10;
 	if (!(input_port_5_r (offset) & 0x40)) temp ^= 0x80;
-	
+
 	return temp;
 }
 
@@ -387,10 +387,10 @@ int atarisys1_6522_r (int offset)
 		case 0x01:	/* DRA */
 		case 0x0f:	/* NHDRA */
 			return (m6522_dra & m6522_ddra);
-		
+
 		case 0x02:	/* DDRB */
 			return m6522_ddrb;
-		
+
 		case 0x03:	/* DDRA */
 			return m6522_ddra;
 
@@ -403,7 +403,7 @@ int atarisys1_6522_r (int offset)
 void atarisys1_6522_w (int offset, int data)
 {
 	int old;
-	
+
 	switch (offset)
 	{
 		case 0x00:	/* DRB */
@@ -419,15 +419,15 @@ void atarisys1_6522_w (int offset, int data)
 		case 0x0f:	/* NHDRA */
 			m6522_dra = (m6522_dra & ~m6522_ddra) | (data & m6522_ddra);
 			break;
-			
+
 		case 0x02:	/* DDRB */
 			m6522_ddrb = data;
 			break;
-		
+
 		case 0x03:	/* DDRA */
 			m6522_ddra = data;
 			break;
-		
+
 		default:
 			m6522_regs[offset & 15] = data;
 			break;
@@ -445,7 +445,7 @@ void atarisys1_6522_w (int offset, int data)
 int marble_speedcheck_r (int offset)
 {
 	int result = READ_WORD (&marble_speedcheck[offset]);
-	
+
 	if (offset == 2 && result == 0)
 	{
 		int time = cpu_gettotalcycles ();
@@ -455,7 +455,7 @@ int marble_speedcheck_r (int offset)
 		speedcheck_time2 = speedcheck_time1;
 		speedcheck_time1 = time;
 	}
-	
+
 	return result;
 }
 

@@ -202,11 +202,10 @@ static struct MachineDriver machine_driver =
 			8000000,		/* really should be 6MHz, but we use 8 because the 68k isn't properly timed */
 			0,
 			quantum_read,quantum_write,0,0,
-			0,0,
-			quantum_interrupt,750000/4096	/* IRQ rate = 750kHz/4096 */
+			quantum_interrupt,3	/* IRQ rate = 750kHz/4096 */
 		}
 	},
-	30, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
+	60, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
 	1,
 	0,
 

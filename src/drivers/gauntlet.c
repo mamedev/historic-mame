@@ -131,7 +131,6 @@ int gauntlet_6502_switch_r (int offset);
 int gauntlet_playfieldram_r (int offset);
 int gauntlet_alpharam_r (int offset);
 int gauntlet_vscroll_r (int offset);
-int gauntlet_paletteram_r (int offset);
 
 void gauntlet_io_w (int offset, int data);
 void gauntlet_68010_speedup_w (int offset, int data);
@@ -141,7 +140,6 @@ void gauntlet_tms_w (int offset, int data);
 void gauntlet_playfieldram_w (int offset, int data);
 void gauntlet_alpharam_w (int offset, int data);
 void gauntlet_vscroll_w (int offset, int data);
-void gauntlet_paletteram_w (int offset, int data);
 
 int gauntlet_interrupt (void);
 int gauntlet_sound_interrupt (void);
@@ -178,7 +176,7 @@ static struct MemoryReadAddress gauntlet_readmem[] =
 	{ 0x905f6c, 0x905f6f, gauntlet_vscroll_r, &atarigen_vscroll },
 	{ 0x905000, 0x905eff, gauntlet_alpharam_r, &atarigen_alpharam, &atarigen_alpharam_size },
 	{ 0x905f00, 0x905fff, MRA_BANK3 },
-	{ 0x910000, 0x9107ff, gauntlet_paletteram_r, &atarigen_paletteram, &atarigen_paletteram_size },
+	{ 0x910000, 0x9107ff, MRA_BANK6, &atarigen_paletteram, &atarigen_paletteram_size },
 	{ 0x930000, 0x930003, MRA_BANK5, &atarigen_hscroll },
 	{ -1 }  /* end of table */
 };
@@ -203,7 +201,7 @@ static struct MemoryWriteAddress gauntlet_writemem[] =
 	{ 0x905f6c, 0x905f6f, gauntlet_vscroll_w },
 	{ 0x905000, 0x905eff, gauntlet_alpharam_w },
 	{ 0x905f00, 0x905fff, MWA_BANK3 },
-	{ 0x910000, 0x9107ff, gauntlet_paletteram_w },
+	{ 0x910000, 0x9107ff, MWA_BANK6 },
 	{ 0x930000, 0x930003, MWA_BANK5 },
 	{ -1 }  /* end of table */
 };
@@ -452,7 +450,7 @@ static struct MachineDriver gauntlet_machine_driver =
 	0,0,0,0,
 	{
 		{
-			SOUND_YM2151_ALT,
+			SOUND_YM2151,
 			&ym2151_interface
 		},
 		{
@@ -507,7 +505,7 @@ static struct MachineDriver gaunt2p_machine_driver =
 	0,0,0,0,
 	{
 		{
-			SOUND_YM2151_ALT,
+			SOUND_YM2151,
 			&ym2151_interface
 		},
 		{
@@ -562,7 +560,7 @@ static struct MachineDriver gauntlet2_machine_driver =
 	0,0,0,0,
 	{
 		{
-			SOUND_YM2151_ALT,
+			SOUND_YM2151,
 			&ym2151_interface
 		},
 		{

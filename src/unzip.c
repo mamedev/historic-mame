@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdarg.h>
 #include "types.h"
 #include "osdepend.h"
 
@@ -23,8 +24,6 @@
 #define intelWord(x) ((x << 8) | (x >> 8))
 #define intelLong(x) (((x << 24) | (((unsigned long) x) >> 24) | (( x & 0x0000ff00) << 8) | (( x & 0x00ff0000) >> 8)))
 #endif
-
-#define ERRORMSG printf
 
 
 typedef struct
@@ -153,8 +152,13 @@ static debug_print_central_dir_entry (t_central_dir_ent *cd);
 static debug_print_end_central_dir (t_end_of_cent_dir *ecd);
 #endif
 
-static long	gZipLen;			/* length of zipfile */
+static long	gZipLen;				/* length of zipfile */
 static char input_buffer[BUFSIZE];	/* small input buffer */
+
+/* JB 980519 */
+extern FILE *errorlog;				/* MAME's errorlog */
+int	gUnzipQuiet = 1;					/* flag controls error messages */
+static char *gZipfileName;			/* store pointer to basename of zipfile globally */
 
 /*----------------------------------
         inflate.c support
@@ -175,6 +179,45 @@ void inflate_FLUSH (unsigned char *buffer, unsigned long n)
      end of inflate.c support
 ----------------------------------*/
 
+/* JB 980519 */
+static char * get_zipfile_basename (const char *zipfile)
+{
+	char		*token, *s;
+	static char	name[256];
+
+	strcpy (name, zipfile);
+
+	/* spin to last word after path delimiters */
+	for (s=token=strtok (name, "/\\:"); token!=NULL; token=strtok (NULL, "/\\:"))
+		s = token;
+
+	return s;
+}
+
+/* JB 980519 */
+static void errormsg (va_list arg_list, ...)
+{
+	va_list	arg_ptr;
+	char	*format;
+	char	s[256];
+
+	va_start (arg_ptr, arg_list);
+	format = arg_list;
+	(void) vsprintf (s, format, arg_ptr);
+
+	if (gUnzipQuiet)
+	{
+		if (errorlog)
+			fprintf (errorlog, s);
+	}
+	else
+	{
+		printf (s);
+	}
+}
+
+
+
 /*	Pass the path to the zipfile and the name of the file within the zipfile.
 	buf will be set to point to the uncompressed image of that zipped file.
 	length will be set to the length of the uncompressed data. */
@@ -189,14 +232,17 @@ int /* error */ load_zipped_file (const char *zipfile, const char *filename,
 	char				filenameUpper[32], *p;
 	int 				err;
 
+	/* store pointer to zipfile name globally for error messages */
+	gZipfileName = get_zipfile_basename (zipfile);
+
 	/* open zipfile for binary read */
-	if ((fp = fopen (zipfile,"rb")) != NULL)
+	if ((fp = fopen (zipfile, "rb")) != NULL)
 	{
 		/* determine length of zip file */
 		err = get_file_length (fp, &gZipLen);
 		if (err!=0)
 		{
-			ERRORMSG ("Error in zipfile: get_file_length() failed\n");
+			errormsg ("Error in zipfile %s: get_file_length() failed\n", gZipfileName);
 			goto bail;
 		}
 
@@ -204,7 +250,7 @@ int /* error */ load_zipped_file (const char *zipfile, const char *filename,
 		err = read_end_of_cent_dir (fp, &ecd);
 		if (err!=0)
 		{
-			ERRORMSG ("Error reading 'end of central directory'\n");
+			errormsg ("Error reading 'end of central directory' in zipfile %s\n", gZipfileName);
 			goto bail;
 		}
 
@@ -214,7 +260,7 @@ int /* error */ load_zipped_file (const char *zipfile, const char *filename,
 			(ecd.total_entries_cent_dir < 1))
 		{
 			err = -1;
-			ERRORMSG ("Unsupported zipfile: zipfile cannot span disks\n");
+			errormsg ("Unsupported zipfile %s: zipfile cannot span disks\n", gZipfileName);
 			goto bail;
 		}
 
@@ -224,7 +270,7 @@ int /* error */ load_zipped_file (const char *zipfile, const char *filename,
 		err = find_matching_cd_entry (fp, filenameUpper, &ecd, &cd);
 		if (err!=0)
 		{
-			ERRORMSG("Could not find %s in zipfile %s\n", filenameUpper, zipfile);
+			errormsg ("Could not find %s in zipfile %s\n", filenameUpper, gZipfileName);
 			goto bail;
 		}
 
@@ -232,7 +278,7 @@ int /* error */ load_zipped_file (const char *zipfile, const char *filename,
 		err = read_local_file_header (fp, &cd, &lfh);
 		if (err!=0)
 		{
-			ERRORMSG ("Error reading 'local file header'\n");
+			errormsg ("Error reading 'local file header' in zipfile %s\n", gZipfileName);
 			goto bail;
 		}
 
@@ -242,7 +288,7 @@ int /* error */ load_zipped_file (const char *zipfile, const char *filename,
 			/* file is not compressed, simply stored -- copy directly to output buffer */
 			err = create_input_buffer (fp, &cd, &lfh, &outbuf);
 			if (err!=0)
-				ERRORMSG ("Couldn't extract uncompressed file\n");
+				errormsg ("Couldn't extract uncompressed file from zipfile %s\n", gZipfileName);
 		}
 		else if (lfh.compression_method == 0x0008)
 		{
@@ -258,14 +304,14 @@ int /* error */ load_zipped_file (const char *zipfile, const char *filename,
 					g_outbuf = outbuf;
 				else
 				{
-					ERRORMSG ("Couldn't allocate %d bytes for output buffer\n",
-						lfh.uncompressed_size);
+					errormsg ("Couldn't allocate %d bytes for zipfile %s output buffer\n",
+						gZipfileName, lfh.uncompressed_size);
 					err = -1;
 				}
 			}
 			else
 			{
-				ERRORMSG ("Could not create input buffer\n");
+				errormsg ("Could not create input buffer for zipfile %s\n", gZipfileName);
 			}
 
 			/* create sliding window for inflate() */
@@ -274,7 +320,7 @@ int /* error */ load_zipped_file (const char *zipfile, const char *filename,
 				slide = malloc (0x8000);
 				if (slide==0)
 				{
-					ERRORMSG ("Could not create 32K sliding window\n");
+					errormsg ("Could not create 32K sliding window for zipfile %s\n", gZipfileName);
 					err = -1;
 				}
 			}
@@ -285,7 +331,8 @@ int /* error */ load_zipped_file (const char *zipfile, const char *filename,
 				err = inflate ();
 				if (err!=0)
 				{
-					ERRORMSG ("Error inflating compressed file: %d", err);
+					errormsg ("Error %d inflating compressed file from zipfile %s\n",
+						err, gZipfileName);
 				}
 			}
 		}
@@ -300,7 +347,7 @@ int /* error */ load_zipped_file (const char *zipfile, const char *filename,
 	}
 	else
 	{
-		ERRORMSG ("Could not open zipfile %s\n", zipfile);
+		errormsg ("Could not open zipfile %s\n", zipfile);
 		err = -1;
 	}
 
@@ -329,7 +376,8 @@ static int create_input_buffer (FILE *fp, const t_central_dir_ent *cd,
 	*inbuf = malloc (count);
 	if (*inbuf==0)
 	{
-		ERRORMSG ("Couldn't allocate %ld bytes for input buffer\n", count);
+		errormsg ("Couldn't allocate %ld bytes for input buffer for zipfile %s\n",
+			count, gZipfileName);
 		return -1;
 	}
 
@@ -344,12 +392,13 @@ static int create_input_buffer (FILE *fp, const t_central_dir_ent *cd,
 		read = fread (*inbuf, sizeof (unsigned char), count, fp);
 		if (read!=count)
 		{
-			ERRORMSG ("Error in zipfile: couldn't read %ld bytes of compressed data\n", count);
+			errormsg ("Error in zipfile %s: couldn't read %ld bytes of compressed data\n",
+				gZipfileName, count);
 			err = -1;
 		}
 	}
 	else
-		ERRORMSG ("Error reading zipfile: fseek to compressed data failed\n");
+		errormsg ("Error reading zipfile %s: fseek to compressed data failed\n", gZipfileName);
 
 	/* clean up if errors */
 	if (err!=0 && *inbuf!=0)
@@ -378,11 +427,12 @@ static int read_local_file_header (FILE *fp, const t_central_dir_ent *cd, t_loca
 		if (read!=count)
 		{
 			err = -1;
-			ERRORMSG ("Error in zipfile: couldn't read %ld bytes from local file header", count);
+			errormsg ("Error in zipfile %s: couldn't read %ld bytes from local file header",
+				gZipfileName, count);
 		}
 	}
 	else
-		ERRORMSG ("Error in zipfile: couldn't fseek to local file header\n");
+		errormsg ("Error in zipfile %s: couldn't fseek to local file header\n", gZipfileName);
 
 	if (err==0)
 	{
@@ -441,12 +491,14 @@ static int find_matching_cd_entry (FILE *fp, char *match,
 		read = fread (input_buffer, sizeof (unsigned char), count, fp);
 		if (read!=count)
 		{
-			ERRORMSG ("Error in zipfile: couldn't read %ld bytes from central directory\n", count);
+			errormsg ("Error in zipfile %s: couldn't read %ld bytes from central directory\n",
+				gZipfileName, count);
 			err = -1;
 		}
 	}
 	else
-		ERRORMSG ("Error in zipfile: couldn't fseek to start of central directory\n");
+		errormsg ("Error in zipfile %s: couldn't fseek to start of central directory\n",
+			gZipfileName);
 
 	if (err==0)
 	{
@@ -472,29 +524,30 @@ static int find_matching_cd_entry (FILE *fp, char *match,
 					cd->compression_method != 0x0008 )
 				{
 					found = 0;
-					ERRORMSG ("Error in zipfile: compression method for file %s unsupported.\n",
-						match);
-					ERRORMSG ("Method: $%04x  must be $0000 (Stored) or $0008 (Deflated)\n",
+					errormsg ("Error in zipfile %s: compression method for file %s unsupported.\n",
+						gZipfileName, match);
+					errormsg ("Method: $%04x  must be $0000 (Stored) or $0008 (Deflated)\n",
 						cd->compression_method);
 				}
 				if	(cd->version_needed_to_extract > 0x14)
 				{
 					found = 0;
-					ERRORMSG ("Error in zipfile: version for file %s too new.\n", match);
-					ERRORMSG ("Version: $%02x must be $14 or less\n",
+					errormsg ("Error in zipfile %s: version for file %s too new.\n",
+						gZipfileName, match);
+					errormsg ("Version: $%02x must be $14 or less\n",
 						cd->version_needed_to_extract);
 				}
 				if (cd->os_needed_to_extract != 0x00)
 				{
 					found = 0;
-					ERRORMSG ("Error in zipfile: OS for file %s not supported.\n",
-						match);
-					ERRORMSG ("OS: $%02x must be $00\n",cd->os_needed_to_extract);
+					errormsg ("Error in zipfile %s: OS for file %s not supported.\n",
+						gZipfileName, match);
+					errormsg ("OS: $%02x must be $00\n", cd->os_needed_to_extract);
 				}
 				if (cd->disk_number_start != ecd->number_of_this_disk)
 				{
 					found = 0;
-					ERRORMSG ("Error in zipfile: zipfile cannot span disks\n");
+					errormsg ("Error in zipfile %s: zipfile cannot span disks\n", gZipfileName);
 				}
 			}
 
@@ -602,7 +655,7 @@ static int read_end_of_cent_dir (FILE *fp, t_end_of_cent_dir *ecd)
 	err = fseek (fp, -count, SEEK_END);
 	if (err!=0)
 	{
-		ERRORMSG ("Error in zipfile: fseek failed\n");
+		errormsg ("Error in zipfile %s: fseek failed\n", gZipfileName);
 		return err;
 	}
 
@@ -627,11 +680,13 @@ static int read_end_of_cent_dir (FILE *fp, t_end_of_cent_dir *ecd)
 			ecd->zipfile_comment_length = read_word (p+ZIPECOML);
 		}
 		else
-			ERRORMSG ("Error in zipfile: couldn't find 'end of central dir' signature\n");
+			errormsg ("Error in zipfile %s: couldn't find 'end of central dir' signature\n",
+				gZipfileName);
 	}
 	else
 	{
-		ERRORMSG ("Error in zipfile: couldn't read %ld bytes from end of file\n", count);
+		errormsg ("Error in zipfile %s: couldn't read %ld bytes from end of file\n",
+			gZipfileName, count);
 		err = -1;
 	}
 	return err;

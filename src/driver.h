@@ -179,19 +179,21 @@ struct MachineCPU
 };
 
 #define CPU_Z80    1
-#define CPU_8080   CPU_Z80
-#define CPU_M6502  2
-#define CPU_I86    3
-#define CPU_I8039  4
+#define CPU_8085A  2
+#define CPU_8080   CPU_8085A
+#define CPU_M6502  3
+#define CPU_I86    4
+#define CPU_I8039  5
 #define CPU_I8035  CPU_I8039
-#define CPU_M6803  5
+#define CPU_M6803  6
 #define CPU_M6802  CPU_M6803
 #define CPU_M6808  CPU_M6803
 #define CPU_HD63701  CPU_M6803	/* 6808 with some additional opcodes */
-#define CPU_M6805  6
-#define CPU_M6809  7
+#define CPU_M6805  7
+#define CPU_M6809  8
 #define CPU_M6309  CPU_M6809	/* actually it's not 100% compatible */
-#define CPU_M68000 8
+#define CPU_M68000 9
+#define CPU_T11    10	/* ASG 030598 */
 
 /* set this if the CPU is used as a slave for audio. It will not be emulated if */
 /* sound is disabled, therefore speeding up a lot the emulation. */
@@ -340,11 +342,11 @@ struct GameDriver
 
 	struct InputPort *new_input_ports;
 
-		/* if they are available, provide a dump of the color proms (there is no */
-		/* copyright infringement in that, since you can't copyright a color scheme) */
-		/* and a function to convert them to a usable palette and colortable (the */
-		/* function pointer is in the MachineDriver, not here) */
-		/* Otherwise, leave this field null and provide palette and colortable. */
+	/* if they are available, provide a dump of the color proms, or even */
+	/* better load them from disk like the other ROMs. */
+	/* If you load them from disk, you must place them in a memory region by */
+	/* itself, and use the PROM_MEMORY_REGION macro below to say in which */
+	/* region they are. */
 	const unsigned char *color_prom;
 	const unsigned char *palette;
 	const unsigned short *colortable;
@@ -355,6 +357,9 @@ struct GameDriver
 	void (*hiscore_save)(void);	/* will not be called if hiscore_load() hasn't yet */
 						/* returned nonzero, to avoid saving an invalid table */
 };
+
+
+#define PROM_MEMORY_REGION(region) ((const unsigned char *)-region-1)
 
 
 #define	ORIENTATION_DEFAULT		0x00
@@ -368,7 +373,6 @@ struct GameDriver
 /* For example, to rotate 90 degrees counterclockwise and flip horizontally, use: */
 /* ORIENTATION_ROTATE_270 ^ ORIENTATION_FLIP_X*/
 /* Always remember that FLIP is performed *after* SWAP_XY. */
-
 
 
 extern const struct GameDriver *drivers[];

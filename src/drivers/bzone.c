@@ -569,8 +569,7 @@ static struct MachineDriver bzone_machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			bzone_readmem,bzone_writemem,0,0,
-			0, 0, /* no vblank interrupt */
-			bzone_interrupt, 244 /* 4.1ms */
+			bzone_interrupt,6 /* 4.1ms */
 		}
 	},
 	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
@@ -735,8 +734,7 @@ static struct MachineDriver redbaron_machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			redbaron_readmem,redbaron_writemem,0,0,
-			0, 0, /* no vblank interrupts */
-			bzone_interrupt, 185 /* 5.4ms */
+			bzone_interrupt,4 /* 5.4ms */
 		}
 	},
 	45, 0,	/* frames per second, vblank duration (vector game, so no vblank) */

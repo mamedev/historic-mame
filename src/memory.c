@@ -21,11 +21,13 @@
 #define ABITSMIN(index)                 (cpuintf[Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK].abitsmin)
 
 #if LSB_FIRST
-	#define BYTE_XOR(a) ((a) ^ 1)
-	#define BIG_DWORD(x) (((x) >> 16) + ((x) << 16))
+	#define BYTE_XOR_BE(a) ((a) ^ 1)
+	#define BYTE_XOR_LE(a) (a)
+	#define BIG_DWORD_BE(x) (((x) >> 16) + ((x) << 16))
 #else
-	#define BYTE_XOR(a) (a)
-	#define BIG_DWORD(x) (x)
+	#define BYTE_XOR_BE(a) (a)
+	#define BYTE_XOR_LE(a) ((a) ^ 1)
+	#define BIG_DWORD_BE(x) (x)
 #endif
 
 /* GSL 980224 Shift values for bytes within a word, used by the misaligned word load/store code */
@@ -736,6 +738,52 @@ int cpu_readmem16 (int address)
 }
 
 
+int cpu_readmem16lew (int address)
+{
+	int shift, word;
+	MHELE hw;
+
+	/* 1st element link */
+	hw = cur_mrhard[address >> (ABITS2_16LEW + ABITS_MIN_16LEW)];
+	if (hw <= HT_BANKMAX) return cpu_bankbase[hw][BYTE_XOR_LE (address - memoryreadoffset[hw])];
+	if (hw >= MH_HARDMAX)
+	{
+		/* 2nd element link */
+		hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_16LEW) & MHMASK(ABITS2_16LEW))];
+		if (hw <= HT_BANKMAX) return cpu_bankbase[hw][BYTE_XOR_LE (address - memoryreadoffset[hw])];
+	}
+
+	/* fallback to handler */
+	shift = (address & 1) << 3;
+	address &= ~1;
+	word = memoryreadhandler[hw](address - memoryreadoffset[hw]);
+	return (word >> shift) & 0xff;
+}
+
+
+int cpu_readmem16lew_word (int address)
+{
+	MHELE hw;
+
+	/* reads across word boundaries must be broken up */
+	if (address & 1)
+		return cpu_readmem16lew (address) + (cpu_readmem16lew (address + 1) << 8);
+
+	/* 1st element link */
+	hw = cur_mrhard[address >> (ABITS2_16LEW + ABITS_MIN_16LEW)];
+	if (hw <= HT_BANKMAX) return READ_WORD (&cpu_bankbase[hw][address - memoryreadoffset[hw]]);
+	if (hw >= MH_HARDMAX)
+	{
+		/* 2nd element link */
+		hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_16LEW) & MHMASK(ABITS2_16LEW))];
+		if (hw <= HT_BANKMAX) return READ_WORD (&cpu_bankbase[hw][address - memoryreadoffset[hw]]);
+	}
+
+	/* fallback to handler */
+	return memoryreadhandler[hw](address - memoryreadoffset[hw]);
+}
+
+
 int cpu_readmem20 (int address)
 {
 	MHELE hw;
@@ -762,12 +810,12 @@ int cpu_readmem24 (int address)
 
 	/* 1st element link */
 	hw = cur_mrhard[address >> (ABITS2_24 + ABITS_MIN_24)];
-	if (hw <= HT_BANKMAX) return cpu_bankbase[hw][BYTE_XOR (address - memoryreadoffset[hw])];
+	if (hw <= HT_BANKMAX) return cpu_bankbase[hw][BYTE_XOR_BE (address - memoryreadoffset[hw])];
 	if (hw >= MH_HARDMAX)
 	{
 		/* 2nd element link */
 		hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_24) & MHMASK(ABITS2_24))];
-		if (hw <= HT_BANKMAX) return cpu_bankbase[hw][BYTE_XOR (address - memoryreadoffset[hw])];
+		if (hw <= HT_BANKMAX) return cpu_bankbase[hw][BYTE_XOR_BE (address - memoryreadoffset[hw])];
 	}
 
 	/* fallback to handler */
@@ -815,13 +863,13 @@ int cpu_readmem24_dword (int address)
 		else
 		{
 			val = *(unsigned long *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
-			return BIG_DWORD(val);
+			return BIG_DWORD_BE(val);
 		}
 
 		#else
 
 		val = *(unsigned long *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
-		return BIG_DWORD(val);
+		return BIG_DWORD_BE(val);
 		#endif
 
 	}
@@ -840,13 +888,13 @@ int cpu_readmem24_dword (int address)
 			else
 			{
 				val = *(unsigned long *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
-				return BIG_DWORD(val);
+				return BIG_DWORD_BE(val);
 			}
 
 			#else
 
 			val = *(unsigned long *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
-			return BIG_DWORD(val);
+			return BIG_DWORD_BE(val);
 			#endif
 
 		}
@@ -891,6 +939,71 @@ void cpu_writemem16 (int address, int data)
 }
 
 
+void cpu_writemem16lew (int address, int data)
+{
+	int shift;
+	MHELE hw;
+
+	/* 1st element link */
+	hw = cur_mwhard[address >> (ABITS2_16LEW + ABITS_MIN_16LEW)];
+	if (hw <= HT_BANKMAX)
+	{
+		cpu_bankbase[hw][BYTE_XOR_LE (address - memorywriteoffset[hw])] = data;
+		return;
+	}
+	if (hw >= MH_HARDMAX)
+	{
+		/* 2nd element link */
+		hw = writehardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_16LEW) & MHMASK(ABITS2_16LEW))];
+		if (hw <= HT_BANKMAX)
+		{
+			cpu_bankbase[hw][BYTE_XOR_LE (address - memorywriteoffset[hw])] = data;
+			return;
+		}
+	}
+
+	/* fallback to handler */
+	shift = (address & 1) << 3;
+	address &= ~1;
+	memorywritehandler[hw](address - memorywriteoffset[hw], (0xff000000 >> shift) | ((data & 0xff) << shift));
+}
+
+
+void cpu_writemem16lew_word (int address, int data)
+{
+	MHELE hw;
+
+	/* writes across word boundaries must be broken up */
+	if (address & 1)
+	{
+		cpu_writemem16lew (address, data & 0xff);
+		cpu_writemem16lew (address + 1, data >> 8);
+		return;
+	}
+
+	/* 1st element link */
+	hw = cur_mwhard[address >> (ABITS2_16LEW + ABITS_MIN_16LEW)];
+	if (hw <= HT_BANKMAX)
+	{
+		WRITE_WORD (&cpu_bankbase[hw][address - memorywriteoffset[hw]], data);
+		return;
+	}
+	if (hw >= MH_HARDMAX)
+	{
+		/* 2nd element link */
+		hw = writehardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_16LEW) & MHMASK(ABITS2_16LEW))];
+		if (hw <= HT_BANKMAX)
+		{
+			WRITE_WORD (&cpu_bankbase[hw][address - memorywriteoffset[hw]], data);
+			return;
+		}
+	}
+
+	/* fallback to handler */
+	memorywritehandler[hw](address - memorywriteoffset[hw], data & 0xffff);
+}
+
+
 void cpu_writemem20 (int address, int data)
 {
 	MHELE hw;
@@ -927,7 +1040,7 @@ void cpu_writemem24 (int address, int data)
 	hw = cur_mwhard[address >> (ABITS2_24 + ABITS_MIN_24)];
 	if (hw <= HT_BANKMAX)
 	{
-		cpu_bankbase[hw][BYTE_XOR (address - memorywriteoffset[hw])] = data;
+		cpu_bankbase[hw][BYTE_XOR_BE (address - memorywriteoffset[hw])] = data;
 		return;
 	}
 	if (hw >= MH_HARDMAX)
@@ -936,7 +1049,7 @@ void cpu_writemem24 (int address, int data)
 		hw = writehardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_24) & MHMASK(ABITS2_24))];
 		if (hw <= HT_BANKMAX)
 		{
-			cpu_bankbase[hw][BYTE_XOR (address - memorywriteoffset[hw])] = data;
+			cpu_bankbase[hw][BYTE_XOR_BE (address - memorywriteoffset[hw])] = data;
 			return;
 		}
 	}
@@ -995,14 +1108,14 @@ void cpu_writemem24_dword (int address, int data)
 		}
 		else
 		{
-			data = BIG_DWORD ((unsigned long)data);
+			data = BIG_DWORD_BE ((unsigned long)data);
 			*(unsigned long *)&cpu_bankbase[hw][address - memorywriteoffset[hw]] = data;
 			return;
 		}
 
 		#else
 
-		data = BIG_DWORD ((unsigned long)data);
+		data = BIG_DWORD_BE ((unsigned long)data);
 		*(unsigned long *)&cpu_bankbase[hw][address - memorywriteoffset[hw]] = data;
 		return;
 		#endif
@@ -1026,14 +1139,14 @@ void cpu_writemem24_dword (int address, int data)
 			}
 			else
 			{
-				data = BIG_DWORD ((unsigned long)data);
+				data = BIG_DWORD_BE ((unsigned long)data);
 				*(unsigned long *)&cpu_bankbase[hw][address - memorywriteoffset[hw]] = data;
 				return;
 			}
 
 			#else
 
-			data = BIG_DWORD ((unsigned long)data);
+			data = BIG_DWORD_BE ((unsigned long)data);
 			*(unsigned long *)&cpu_bankbase[hw][address - memorywriteoffset[hw]] = data;
 			return;
 			#endif
@@ -1273,6 +1386,48 @@ void cpu_setOPbase16 (int pc)
 	{
 		/* 2nd element link */
 		hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + ((pc >> ABITS_MIN_16) & MHMASK(ABITS2_16))];
+	}
+	ophw = hw;
+
+	if (!hw)
+	{
+	 /* memory direct */
+		OP_RAM = RAM;
+		OP_ROM = ROM;
+		return;
+	}
+
+	if (hw <= HT_BANKMAX)
+	{
+		/* banked memory select */
+		OP_RAM = cpu_bankbase[hw] - memoryreadoffset[hw];
+		if (RAM == ROM) OP_ROM = OP_RAM;
+		return;
+	}
+
+	/* do not support on callbank memory reasion */
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - op-code execute on mapped i/o\n",cpu_getactivecpu(),cpu_getpc());
+}
+
+
+void cpu_setOPbase16lew (int pc)
+{
+	MHELE hw;
+
+	/* ASG 970206 -- allow overrides */
+	if (setOPbasefunc)
+	{
+		pc = setOPbasefunc (pc);
+		if (pc == -1)
+			return;
+	}
+
+	/* 1st element link */
+	hw = cur_mrhard[pc >> (ABITS2_16LEW + ABITS_MIN_16LEW)];
+	if (hw >= MH_HARDMAX)
+	{
+		/* 2nd element link */
+		hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + ((pc >> ABITS_MIN_16LEW) & MHMASK(ABITS2_16LEW))];
 	}
 	ophw = hw;
 

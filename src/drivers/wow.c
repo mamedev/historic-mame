@@ -7,6 +7,9 @@
               Sparkle Circuit for Gorf
               errorlog output conditional on MAME_DEBUG
 
+   03/04 98 - Extra Bases driver 				ATJ
+	      Wow word driver
+
  ****************************************************************************
  * To make it easier to differentiate between each machine's settings
  * I have split it into a separate section for each driver.
@@ -60,6 +63,7 @@ void gorf_sh_stop(void);
 void gorf_sh_update(void);
 int  gorf_speech_r(int offset);
 int  gorf_port_2_r(int offset);
+void gorf_sound_control_a_w(int offset,int data);
 
 void colour_register_w(int offset, int data);
 void colour_split_w(int offset, int data);
@@ -73,7 +77,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x7fff, MRA_RAM },
 	{ 0x8000, 0xcfff, MRA_ROM },
-    { 0xd000, 0xdfff, MRA_RAM },
+	{ 0xd000, 0xdfff, MRA_RAM },
 	{ -1 }	/* end of table */
 };
 
@@ -82,38 +86,38 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0000, 0x3fff, wow_magicram_w },
 	{ 0x4000, 0x7fff, wow_videoram_w, &wow_videoram, &videoram_size },	/* ASG */
 	{ 0x8000, 0xcfff, MWA_ROM },
-    { 0xd000, 0xdfff, MWA_RAM },
+	{ 0xd000, 0xdfff, MWA_RAM },
 	{ -1 }	/* end of table */
 };
 
 static struct IOReadPort readport[] =
 {
 	{ 0x08, 0x08, wow_intercept_r },
-    { 0x0e, 0x0e, wow_video_retrace_r },
+	{ 0x0e, 0x0e, wow_video_retrace_r },
 	{ 0x10, 0x10, input_port_0_r },
 	{ 0x11, 0x11, input_port_1_r },
   	{ 0x12, 0x12, wow_port_2_r },
 	{ 0x13, 0x13, input_port_3_r },
-    { 0x17, 0x17, wow_speech_r },				/* Actually a Write! */
+	{ 0x17, 0x17, wow_speech_r },				/* Actually a Write! */
 	{ -1 }	/* end of table */
 };
 
 static struct IOWritePort writeport[] =
 {
-        { 0x00, 0x07, colour_register_w },
-        { 0x08, 0x08, MWA_NOP }, /* Gorf uses this */
-        { 0x09, 0x09, colour_split_w },
-        { 0x0a, 0x0b, MWA_NOP }, /* Gorf uses this */
+	{ 0x00, 0x07, colour_register_w },
+	{ 0x08, 0x08, MWA_NOP }, /* Gorf uses this */
+	{ 0x09, 0x09, colour_split_w },
+	{ 0x0a, 0x0b, MWA_NOP }, /* Gorf uses this */
 	{ 0x0c, 0x0c, wow_magic_control_w },
 	{ 0x0d, 0x0d, interrupt_vector_w },
-        { 0x0e, 0x0e, wow_interrupt_enable_w },
-        { 0x0f, 0x0f, wow_interrupt_w },
-        { 0x10, 0x17, MWA_NOP }, /* Frequency modulation for lines to sound channel left. */
-        { 0x18, 0x18, MWA_NOP }, /* WOW Sound Channel Left */
+	{ 0x0e, 0x0e, wow_interrupt_enable_w },
+	{ 0x0f, 0x0f, wow_interrupt_w },
+	{ 0x10, 0x17, MWA_NOP }, /* Frequency modulation for lines to sound channel left. */
+	{ 0x18, 0x18, MWA_NOP }, /* WOW Sound Channel Left */
 	{ 0x19, 0x19, wow_magic_expand_color_w },
-        { 0x50, 0x57, MWA_NOP }, /* Frequency modulation for lines to sound channel right */
-        { 0x58, 0x58, MWA_NOP }, /* WOW Sound Channel Right */
-        { 0x5b, 0x5b, MWA_NOP }, /* speech board ? Wow always sets this to a5*/
+	{ 0x50, 0x57, MWA_NOP }, /* Frequency modulation for lines to sound channel right */
+	{ 0x58, 0x58, MWA_NOP }, /* WOW Sound Channel Right */
+	{ 0x5b, 0x5b, MWA_NOP }, /* speech board ? Wow always sets this to a5*/
 	{ 0x78, 0x7e, wow_pattern_board_w },
 //	{ 0xf8, 0xff, MWA_NOP }, /* Gorf uses these */
 	{ -1 }	/* end of table */
@@ -404,7 +408,30 @@ ROM_START( wow_rom )
 /*	ROM_LOAD( "wow.x8", 0xc000, 0x1000, ? )	here would go the foreign language ROM */
 ROM_END
 
-
+static const char *wow_sample_names[] =
+{
+	"*wow",
+	"a.sam", "again.sam", "ahh.sam", "am.sam", "and.sam",
+	"anew.sam", "another.sam", "any.sam", "anyone.sam", "appear.sam", "are.sam", "are.sam", "babies.sam", "back.sam",
+	"beat.sam", "become.sam", "best.sam", "better.sam", "bite.sam", "bones.sam", "breath.sam", "but.sam", "can.sam", "cant.sam",
+	"chance.sam", "chest.sam", "coin.sam", "dance.sam", "destroy.sam",
+	"develop.sam", "do.sam", "dont.sam", "doom.sam", "door.sam", "draw.sam", "dungeon.sam", "dungeons.sam",
+	"each.sam", "eaten.sam", "escape.sam", "explode.sam", "fear.sam", "find.sam", "find.sam", "fire.sam", "for.sam", "from.sam",
+	"garwor.sam", "get.sam", "get.sam", "get.sam", "getting.sam", "good.sam", "hahahaha.sam", "harder.sam",
+	"hasnt.sam", "have.sam", "heavyw.sam", "hey.sam", "hope.sam",
+	"hungry.sam", "hungry.sam", "hurry.sam", "i.sam", "i.sam", "if.sam", "if.sam", "im.sam", "i1.sam", "ill.sam", "in.sam",
+	"insert.sam", "invisibl.sam", "it.sam", "lie.sam", "magic.sam",
+	"magical.sam", "me.sam", "meet.sam", "months.sam",
+	"my.sam", "my.sam", "my.sam", "my.sam", "my.sam", "myself.sam", "near.sam", "never.sam",
+	"now.sam", "of.sam", "off.sam", "one.sam", "only.sam", "oven.sam", "pause.sam", "pets.sam", "powerful.sam", "pop.sam",
+	"radar.sam", "ready.sam",
+	"rest.sam", "say.sam", "science.sam", "see.sam", "spause.sam", "start.sam", "the.sam", "the.sam", "the.sam", "the.sam", "then.sam",
+	"through.sam", "thurwor.sam", "time.sam", "to.sam", "to.sam", "to.sam", "treasure.sam", "try.sam", "very.sam", "wait.sam",
+	"war.sam", "warrior.sam", "watch.sam", "we.sam", "welcome.sam",
+	"were.sam", "while.sam", "will.sam", "with.sam", "wizard.sam", "wont.sam",
+	"wor.sam", "world.sam", "worlings.sam", "worlock.sam",
+	"you.sam", "you.sam", "you.sam", "you.sam", "you.sam", "youl.sam", "youl.sam", "youd.sam", "your.sam",0
+};
 
 INPUT_PORTS_START( wow_input_ports )
 	PORT_START /* IN0 */
@@ -414,9 +441,9 @@ INPUT_PORTS_START( wow_input_ports )
 	PORT_BITX(    0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x08, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_TILT )
-    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
-    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_DIPNAME( 0x80, 0x80, "Flip Screen", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
@@ -501,29 +528,29 @@ static struct MachineDriver wow_machine_driver =
 	wow_vh_screenrefresh_stars,
 
 	/* sound hardware */
-    0,             				/* Initialise audio hardware */
-    wow_sh_start,   			/* Start audio  */
-    wow_sh_stop,     			/* Stop audio   */
-    wow_sh_update,               /* Update audio */
-    {
+	0,             				/* Initialise audio hardware */
+	wow_sh_start,   			/* Start audio  */
+	wow_sh_stop,     			/* Stop audio   */
+	wow_sh_update,                          /* Update audio */
+	{
 		{
 			SOUND_SAMPLES,
 			&wow_samples_interface
 		}
-	}
+ 	}
 };
 
 static int wow_hiload(void)
 {
 	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0xD004],"\x00\x00",2) == 0)
+	if (memcmp(&RAM[0xD004],"\x00\x00",2) == 0)
 	{
 		void *f;
 
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-            osd_fread(f,&RAM[0xD004],20);
+	    osd_fread(f,&RAM[0xD004],20);
 			/* stored twice in memory??? */
 			memcpy(&RAM[0xD304],&RAM[0xD004],20);
 			osd_fclose(f);
@@ -542,7 +569,7 @@ static void wow_hisave(void)
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-        osd_fwrite(f,&RAM[0xD004],20);
+	osd_fwrite(f,&RAM[0xD004],20);
 		osd_fclose(f);
 	}
 
@@ -550,14 +577,14 @@ static void wow_hisave(void)
 
 struct GameDriver wow_driver =
 {
-    "Wizard of Wor",
+	"Wizard of Wor",
 	"wow",
-    "Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nJim Hernandez (hardware info)\nMike Coates (additional code)\nMike Balfour (high score save)",
+	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nJim Hernandez (hardware info)\nMike Coates (additional code)\nMike Balfour (high score save)\nKevin Estep (samples)\nAlex Judd (sound programming)",
 	&wow_machine_driver,
 
 	wow_rom,
 	0, 0,
-	0,
+	wow_sample_names,
 	0,	/* sound_prom */
 
 	wow_input_ports,
@@ -613,9 +640,9 @@ INPUT_PORTS_START( robby_input_ports )
 	PORT_BITX(    0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x08, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_TILT )
-    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
-    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START /* IN1 */
@@ -702,7 +729,7 @@ static struct MachineDriver robby_machine_driver =
 static int robby_hiload(void)
 {
 	/* check if the hi score table has already been initialized */
-        if ((memcmp(&RAM[0xE13B],"\x10\x27",2) == 0) &&
+	if ((memcmp(&RAM[0xE13B],"\x10\x27",2) == 0) &&
 		(memcmp(&RAM[0xE1E4],"COCK",4) == 0))
 	{
 		void *f;
@@ -710,7 +737,7 @@ static int robby_hiload(void)
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-            osd_fread(f,&RAM[0xE13B],0xAD);
+	    osd_fread(f,&RAM[0xE13B],0xAD);
 			/* appears twice in memory??? */
 			memcpy(&RAM[0xE33B],&RAM[0xE13B],0xAD);
 			osd_fclose(f);
@@ -729,7 +756,7 @@ static void robby_hisave(void)
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-        osd_fwrite(f,&RAM[0xE13B],0xAD);
+	osd_fwrite(f,&RAM[0xE13B],0xAD);
 		osd_fclose(f);
 	}
 
@@ -737,9 +764,9 @@ static void robby_hisave(void)
 
 struct GameDriver robby_driver =
 {
-    "Robby Roto",
+	"Robby Roto",
 	"robby",
-    "Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (additional code)\nMike Balfour (high score save)",
+	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (additional code)\nMike Balfour (high score save)",
 	&robby_machine_driver,
 
 	robby_rom,
@@ -812,22 +839,22 @@ static const char *gorf_sample_names[] =
 static struct IOReadPort Gorf_readport[] =
 {
 	{ 0x08, 0x08, wow_intercept_r },
-        { 0x0E, 0x0E, wow_video_retrace_r },
+	{ 0x0E, 0x0E, wow_video_retrace_r },
 	{ 0x10, 0x10, input_port_0_r },
 	{ 0x11, 0x11, input_port_1_r },
 	{ 0x12, 0x12, gorf_port_2_r },
 	{ 0x13, 0x13, input_port_3_r },
-        { 0x15, 0x16, Gorf_IO_r },				/* Actually a Write! */
-        { 0x17, 0x17, gorf_speech_r },				/* Actually a Write! */
+	{ 0x15, 0x16, Gorf_IO_r },				/* Actually a Write! */
+	{ 0x17, 0x17, gorf_speech_r },				/* Actually a Write! */
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryReadAddress Gorf_readmem[] =
 {
-    { 0xd000, 0xd0a4, MRA_RAM },
-    { 0xd0a5, 0xd0a5, gorf_timer_r },
-    { 0xd0a6, 0xdfff, MRA_RAM },
-    { 0xd9d5, 0xdfff, MRA_RAM },
+	{ 0xd000, 0xd0a4, MRA_RAM },
+	{ 0xd0a5, 0xd0a5, gorf_timer_r },
+	{ 0xd0a6, 0xdfff, MRA_RAM },
+	{ 0xd9d5, 0xdfff, MRA_RAM },
 	{ 0x4000, 0x7fff, MRA_RAM },
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0xcfff, MRA_ROM },
@@ -841,13 +868,13 @@ INPUT_PORTS_START( gorf_input_ports )
 	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x04, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-        PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_TILT )
-        PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
-        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_DIPNAME( 0x40, 0x40, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x40, "Upright" )
 	PORT_DIPSETTING(    0x00, "Cocktail" )
-        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
@@ -855,9 +882,9 @@ INPUT_PORTS_START( gorf_input_ports )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
@@ -865,8 +892,8 @@ INPUT_PORTS_START( gorf_input_ports )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* speech status */
 
 	PORT_START /* Dip Switch */
@@ -946,14 +973,14 @@ static struct MachineDriver gorf_machine_driver =
 static int gorf_hiload(void)
 {
 	/* check if the hi score table has already been initialized */
-        if ((RAM[0xD00B]==0xFF) && (RAM[0xD03D]==0x33))
+	if ((RAM[0xD00B]==0xFF) && (RAM[0xD03D]==0x33))
 	{
 		void *f;
 
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-            osd_fread(f,&RAM[0xD010],0x22);
+	    osd_fread(f,&RAM[0xD010],0x22);
 			osd_fclose(f);
 		}
 
@@ -970,7 +997,7 @@ static void gorf_hisave(void)
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-        osd_fwrite(f,&RAM[0xD010],0x22);
+	osd_fwrite(f,&RAM[0xD010],0x22);
 		osd_fclose(f);
 	}
 
@@ -1038,10 +1065,10 @@ INPUT_PORTS_START( spacezap_input_ports )
 	PORT_BITX(    0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x08, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
-    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
-    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START /* IN1 */
 
@@ -1051,9 +1078,9 @@ INPUT_PORTS_START( spacezap_input_ports )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START /* Dip Switch */
 	PORT_DIPNAME( 0x01, 0x01, "Coin A", IP_KEY_NONE )
@@ -1119,14 +1146,14 @@ static struct MachineDriver spacezap_machine_driver =
 static int spacezap_hiload(void)
 {
 	/* check if memory has already been initialized */
-        if (memcmp(&RAM[0xD024],"\x01\x01",2) == 0)
+	    if (memcmp(&RAM[0xD024],"\x01\x01",2) == 0)
 	{
 		void *f;
 
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-            osd_fread(f,&RAM[0xD01D],6);
+	        osd_fread(f,&RAM[0xD01D],6);
 			/* Appears twice in memory??? */
 			memcpy(&RAM[0xD041],&RAM[0xD01D],6);
 			osd_fclose(f);
@@ -1145,7 +1172,7 @@ static void spacezap_hisave(void)
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-        osd_fwrite(f,&RAM[0xD01D],6);
+	    osd_fwrite(f,&RAM[0xD01D],6);
 		osd_fclose(f);
 	}
 
@@ -1153,9 +1180,9 @@ static void spacezap_hisave(void)
 
 struct GameDriver spacezap_driver =
 {
-    "Space Zap",
+	"Space Zap",
 	"spacezap",
-    "Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nMike Balfour (high score save)",
+	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nMike Balfour (high score save)",
 	&spacezap_machine_driver,
 
 	spacezap_rom,
@@ -1220,8 +1247,8 @@ INPUT_PORTS_START( seawolf2_input_ports )
 
 	PORT_START /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-    PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START1 )
-    PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_DIPNAME( 0x08, 0x00, "Language 2", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "English" )
 	PORT_DIPSETTING(    0x08, "German" )
@@ -1261,7 +1288,7 @@ INPUT_PORTS_END
 static struct IOReadPort seawolf2_readport[] =
 {
 	{ 0x08, 0x08, wow_intercept_r },
-    { 0x0E, 0x0E, wow_video_retrace_r },
+	{ 0x0E, 0x0E, wow_video_retrace_r },
 	{ 0x10, 0x10, seawolf2_controller2_r },
 	{ 0x11, 0x11, seawolf2_controller1_r },
 	{ 0x12, 0x12, input_port_2_r },
@@ -1307,14 +1334,14 @@ static struct MachineDriver seawolf_machine_driver =
 static int seawolf_hiload(void)
 {
 	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0xC20D],"\xD8\x19",2) == 0)
+	    if (memcmp(&RAM[0xC20D],"\xD8\x19",2) == 0)
 	{
 		void *f;
 
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-            osd_fread(f,&RAM[0xC208],2);
+	        osd_fread(f,&RAM[0xC208],2);
 			osd_fclose(f);
 		}
 
@@ -1329,7 +1356,7 @@ static void seawolf_hisave(void)
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-        osd_fwrite(f,&RAM[0xC208],2);
+	    osd_fwrite(f,&RAM[0xC208],2);
 		osd_fclose(f);
 	}
 
@@ -1337,9 +1364,9 @@ static void seawolf_hisave(void)
 
 struct GameDriver seawolf2_driver =
 {
-    "Sea Wolf II",
+	"Sea Wolf II",
 	"seawolf2",
-    "Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nMike Balfour (high score support)",
+	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nMike Balfour (high score support)",
 	&seawolf_machine_driver,
 
 	seawolf2_rom,
@@ -1387,46 +1414,47 @@ static struct MemoryWriteAddress ebases_writemem[] =
 
 INPUT_PORTS_START( ebases_input_ports )
 	PORT_START /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BITX(    0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_TILT )
-    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
-    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_DIPNAME( 0x08, 0x08, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_DIPNAME( 0x10, 0x00, "Colour / Mono", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Colour" )
+	PORT_DIPSETTING(    0x10, "Mono" )
+	PORT_DIPNAME( 0x20, 0x00, "Unknown 4", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x20, "On" )
+	PORT_DIPNAME( 0x40, 0x00, "Unknown 5", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x40, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x80, "On" )
 
-	PORT_START /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START /* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START /* Dip Switch */
-	PORT_DIPNAME( 0x01, 0x00, "Unknown 1", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x01, "On" )
+	PORT_DIPNAME( 0x01, 0x00, "2 Players Game", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1 Credit" )
+	PORT_DIPSETTING(    0x08, "2 Credits" )
 	PORT_DIPNAME( 0x02, 0x00, "Unknown 2", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x02, "On" )
-	PORT_DIPNAME( 0x04, 0x04, "Free Play", IP_KEY_NONE )
+	PORT_DIPNAME( 0x04, 0x00, "Free Play", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x04, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x08, 0x08, "Cabinet", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x08, "Upright" )
 	PORT_DIPSETTING(    0x00, "Cocktail" )
 	PORT_DIPNAME( 0x10, 0x00, "Unknown 3", IP_KEY_NONE )
@@ -1442,13 +1470,16 @@ INPUT_PORTS_START( ebases_input_ports )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x80, "On" )
 
+	PORT_START /* Dip Switch */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
 INPUT_PORTS_END
 
 
 static struct IOReadPort ebases_readport[] =
 {
 	{ 0x08, 0x08, wow_intercept_r },
-        { 0x0E, 0x0E, wow_video_retrace_r },
+	{ 0x0E, 0x0E, wow_video_retrace_r },
 	{ 0x10, 0x10, input_port_0_r },
 	{ 0x11, 0x11, input_port_1_r },
 	{ 0x12, 0x12, input_port_2_r },
@@ -1493,9 +1524,9 @@ static struct MachineDriver ebases_machine_driver =
 
 struct GameDriver ebases_driver =
 {
-    "Extra Bases",
+	"Extra Bases",
 	"ebases",
-    "Alex Judd (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nMike Balfour (high score support)",
+	"Alex Judd (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nMike Balfour (high score support)",
 	&ebases_machine_driver,
 
 	ebases_rom,
@@ -1524,14 +1555,14 @@ d000-d3ff STATIC RAM
 I/O ports:
 IN:
 08        intercept register (collision detector)
-          bit 0: intercept in pixel 3 in an OR or XOR write since last reset
-          bit 1: intercept in pixel 2 in an OR or XOR write since last reset
-          bit 2: intercept in pixel 1 in an OR or XOR write since last reset
-          bit 3: intercept in pixel 0 in an OR or XOR write since last reset
-          bit 4: intercept in pixel 3 in last OR or XOR write
-          bit 5: intercept in pixel 2 in last OR or XOR write
-          bit 6: intercept in pixel 1 in last OR or XOR write
-          bit 7: intercept in pixel 0 in last OR or XOR write
+	      bit 0: intercept in pixel 3 in an OR or XOR write since last reset
+	      bit 1: intercept in pixel 2 in an OR or XOR write since last reset
+	      bit 2: intercept in pixel 1 in an OR or XOR write since last reset
+	      bit 3: intercept in pixel 0 in an OR or XOR write since last reset
+	      bit 4: intercept in pixel 3 in last OR or XOR write
+	      bit 5: intercept in pixel 2 in last OR or XOR write
+	      bit 6: intercept in pixel 1 in last OR or XOR write
+	      bit 7: intercept in pixel 0 in last OR or XOR write
 10        IN0
 11        IN1
 12        IN2
@@ -1593,14 +1624,14 @@ OUT:
 0a        screen height
 0b        color block transfer
 0c        magic RAM control
-          bit 7: ?
-          bit 6: flip
-          bit 5: draw in XOR mode
-          bit 4: draw in OR mode
-          bit 3: "expand" mode (convert 1bpp data to 2bpp)
-          bit 2: ?
-          bit 1:\ shift amount to be applied before copying
-          bit 0:/
+	      bit 7: ?
+	      bit 6: flip
+	      bit 5: draw in XOR mode
+	      bit 4: draw in OR mode
+	      bit 3: "expand" mode (convert 1bpp data to 2bpp)
+	      bit 2: ?
+	      bit 1:\ shift amount to be applied before copying
+	      bit 0:/
 0d        set interrupt vector
 10-18     sound
 19        magic RAM expand mode color
@@ -1613,26 +1644,26 @@ Seawolf Specific Bits
 IN
 10		Controller Player 2
 		bit 0-5	= rotary controller
-        bit 7   = fire button
+	    bit 7   = fire button
 
 11		Controller Player 1
 		bit 0-5 = rotary controller
-        bit 6   = Language Select 1  (On = French, Off = language 2)
-        bit 7   = fire button
+	    bit 6   = Language Select 1  (On = French, Off = language 2)
+	    bit 7   = fire button
 
 12      bit 0   = Coin
 		bit 1   = Start 1 Player
-        bit 2   = Start 2 Player
-        bit 3   = Language 2         (On = German, Off = English)
+	    bit 2   = Start 2 Player
+	    bit 3   = Language 2         (On = German, Off = English)
 
 13      bit 0   = Coinage
 		bit 1   = \ Length of time	 (40, 50, 60 or 70 Seconds)
-        bit 2   = / for Game
-        bit 3   = ?
-        bit 4   = ?
-        bit 5   = ?
-        bit 6   = Colour / Mono
-        bit 7   = Test
+	    bit 2   = / for Game
+	    bit 3   = ?
+	    bit 4   = ?
+	    bit 5   = ?
+	    bit 6   = Colour / Mono
+	    bit 7   = Test
 
 ***************************************************************************/
 

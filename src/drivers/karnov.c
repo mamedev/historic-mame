@@ -6,7 +6,7 @@
 
   	* Karnov (Data East USA, 1987)
     * Karnov (Japan rom set - Data East Corp, 1987)
-		* Chelnov (Data East USA, 1988) (partially working)
+    * Chelnov (Data East USA, 1988) (partially working)
     * Chelnov (Japan rom set - Data East Corp, 1987) (partially working)
 
 NOTE!  Karnov USA & Karnov Japan sets have different gameplay!
@@ -43,15 +43,14 @@ Changes, May 1998 :
 extern unsigned char *karnov_foreground,*karnov_sprites;
 extern int karnov_scroll[4];
 
-extern void karnov_vh_screenrefresh(struct osd_bitmap *bitmap);
-extern void karnov_foreground_w(int offset, int data);
-extern void karnov_palette(void);
+void karnov_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void karnov_vh_screenrefresh(struct osd_bitmap *bitmap);
+void karnov_foreground_w(int offset, int data);
 
 int karnov_vh_start (void);
 void karnov_vh_stop (void);
 
 static int prot=0; /* For 'protection' on main player sprite */
-int karnov_pal;
 int karnov_a,karnov_b,karnov_c;  /* For testing of unknown ports */
 
 /******************************************************************************/
@@ -59,8 +58,7 @@ int karnov_a,karnov_b,karnov_c;  /* For testing of unknown ports */
 void karnov_c_write(int offset, int data)
 {
 	switch (offset) {
-    case 0: /* Dunno.. but a good place to map palette for now */
-			if (!karnov_pal) {karnov_palette(); karnov_pal=1;}
+    case 0: /* Dunno..  */
 			return;
 
 		case 2: /* Sound CPU in byte 3 */
@@ -437,28 +435,26 @@ static struct GfxLayout tiles =
 
 static struct GfxDecodeInfo karnov_gfxdecodeinfo[] =
 {
-  { 1, 0x00000, &chars,  0, 0x80 },
-  { 1, 0x08000, &tiles,  0, 0x80 },
-	{ 1, 0x48000, &sprites,0, 0x80 },
+	{ 1, 0x00000, &chars,     0,  4 },	/* colors 0-31 */
+	{ 1, 0x08000, &tiles,   512, 16 },	/* colors 512-767 */
+	{ 1, 0x48000, &sprites, 256, 16 },	/* colors 256-511 */
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo chelnov_gfxdecodeinfo[] =
 {
-  { 1, 0x00000, &chars,  0, 0x80 },
-	{ 1, 0x08000, &tiles,  0, 0x80 },
-	{ 1, 0x48000, &tiles,  0, 0x80 },
+	{ 1, 0x00000, &chars,     0,  4 },	/* colors 0-31 */
+	{ 1, 0x08000, &tiles,   512, 16 },	/* colors 512-767 */
+	{ 1, 0x48000, &tiles,   256, 16 },	/* colors 256-511 */
 	{ -1 } /* end of array */
 };
 
-/******************************************************************************/
+
 
 int karnov_interrupt(void)
 {
-	static int a=0;
-
-	if (a) {a=0; return 6;}
-	a=1; return 7;
+	if (cpu_getiloops() == 0) return 7;
+	else return 6;
 }
 
 static struct YM2203interface ym2203_interface =
@@ -495,9 +491,9 @@ static struct MachineDriver karnov_machine_driver =
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1500000,
-			2,
+			3,
 			karnov_s_readmem,karnov_s_writemem,0,0,
-			interrupt,12
+			interrupt,14	/* hand tuned */
 		}
 	},
 57,50,
@@ -509,10 +505,10 @@ static struct MachineDriver karnov_machine_driver =
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
 
 	karnov_gfxdecodeinfo,
-	256, 64*16,
-	0,
+	1024, 1024,
+	karnov_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
 	karnov_vh_start,
 	karnov_vh_stop,
@@ -546,7 +542,7 @@ static struct MachineDriver chelnov_machine_driver =
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1500000,
-			2,
+			3,
 			karnov_s_readmem,karnov_s_writemem,0,0,
 			interrupt,12
 		}
@@ -560,10 +556,10 @@ static struct MachineDriver chelnov_machine_driver =
  	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
 
 	chelnov_gfxdecodeinfo,
-	256, 64*16,
-	0,
+	1024, 1024,
+	karnov_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
 	karnov_vh_start,
 	karnov_vh_stop,
@@ -591,70 +587,70 @@ ROM_START( karnov_rom )
 	ROM_LOAD_ODD ( "dn11-5", 0x00000, 0x10000, 0xd6ecaea4 )
 	ROM_LOAD_EVEN( "dn07-",  0x20000, 0x10000, 0x730e1ed8 )
 	ROM_LOAD_ODD ( "dn10-",  0x20000, 0x10000, 0x9813e18f )
-  ROM_LOAD_EVEN( "dn06-5", 0x40000, 0x10000, 0xc54bcfa1 )
-  ROM_LOAD_ODD ( "dn09-5", 0x40000, 0x10000, 0xb678cfd8 )
+	ROM_LOAD_EVEN( "dn06-5", 0x40000, 0x10000, 0xc54bcfa1 )
+	ROM_LOAD_ODD ( "dn09-5", 0x40000, 0x10000, 0xb678cfd8 )
 
-  ROM_REGION(0xa8000)
-  /* Characters */
-  ROM_LOAD( "dn00-", 0x00000, 0x08000, 0x8cf6e300 )
-  /* Backgrounds */
-  ROM_LOAD( "dn04-", 0x08000, 0x10000, 0x85d7a661 )
+	ROM_REGION(0xa8000)
+	/* Characters */
+	ROM_LOAD( "dn00-", 0x00000, 0x08000, 0x8cf6e300 )
+	/* Backgrounds */
+	ROM_LOAD( "dn04-", 0x08000, 0x10000, 0x85d7a661 )
 	ROM_LOAD( "dn01-", 0x18000, 0x10000, 0xbe2ab384 )
-  ROM_LOAD( "dn03-", 0x28000, 0x10000, 0xb2032daf )
-  ROM_LOAD( "dn02-", 0x38000, 0x10000, 0xe60970ed )
-  /* Sprites - 2 sets of 4, interleaved here */
-  ROM_LOAD( "dn12-",  0x48000, 0x10000, 0x0300f4c8 )
-  ROM_LOAD( "dn14-5", 0x58000, 0x08000, 0xb6b9f841 )
-  ROM_LOAD( "dn13-",  0x60000, 0x10000, 0x7d211a85 )
-  ROM_LOAD( "dn15-5", 0x70000, 0x08000, 0xcf18d74a )
+	ROM_LOAD( "dn03-", 0x28000, 0x10000, 0xb2032daf )
+	ROM_LOAD( "dn02-", 0x38000, 0x10000, 0xe60970ed )
+	/* Sprites - 2 sets of 4, interleaved here */
+	ROM_LOAD( "dn12-",  0x48000, 0x10000, 0x0300f4c8 )
+	ROM_LOAD( "dn14-5", 0x58000, 0x08000, 0xb6b9f841 )
+	ROM_LOAD( "dn13-",  0x60000, 0x10000, 0x7d211a85 )
+	ROM_LOAD( "dn15-5", 0x70000, 0x08000, 0xcf18d74a )
 	ROM_LOAD( "dn16-",  0x78000, 0x10000, 0xc945ee31 )
-  ROM_LOAD( "dn17-5", 0x88000, 0x08000, 0x06e9df53 )
-  ROM_LOAD( "dn18-",  0x90000, 0x10000, 0xbb24da3a )
-  ROM_LOAD( "dn19-5", 0xa0000, 0x08000, 0x83fcbe26 )
+	ROM_LOAD( "dn17-5", 0x88000, 0x08000, 0x06e9df53 )
+	ROM_LOAD( "dn18-",  0x90000, 0x10000, 0xbb24da3a )
+	ROM_LOAD( "dn19-5", 0xa0000, 0x08000, 0x83fcbe26 )
 
-  /* 6502 Sound CPU */
-  ROM_REGION(0x10000)
-  ROM_LOAD( "dn05-5", 0x8000, 0x8000, 0x4fc9a353 )
-  /* Colour proms */
-  ROM_REGION(2048)
-  ROM_LOAD( "karnprom.21", 0x000, 0x400, 0x8485ab35)
-  ROM_LOAD( "karnprom.20", 0x400, 0x400, 0x13c00e08)
+	ROM_REGION(0x0800)	/* color PROMs */
+	ROM_LOAD( "karnprom.21", 0x0000, 0x0400, 0x8485ab35 )
+	ROM_LOAD( "karnprom.20", 0x0400, 0x0400, 0x13c00e08 )
+
+	/* 6502 Sound CPU */
+	ROM_REGION(0x10000)
+	ROM_LOAD( "dn05-5", 0x8000, 0x8000, 0x4fc9a353 )
 ROM_END
 
 ROM_START( karnovj_rom )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
-  ROM_LOAD_EVEN( "kar8",  0x00000, 0x10000, 0xc945f329 )
+	ROM_LOAD_EVEN( "kar8",  0x00000, 0x10000, 0xc945f329 )
 	ROM_LOAD_ODD ( "kar11", 0x00000, 0x10000, 0x347e4e36 )
 	ROM_LOAD_EVEN( "kar7",  0x20000, 0x10000, 0x730e1ed8 )
 	ROM_LOAD_ODD ( "kar10", 0x20000, 0x10000, 0x9813e18f )
-  ROM_LOAD_EVEN( "kar6",  0x40000, 0x10000, 0x062d7e77 )
+	ROM_LOAD_EVEN( "kar6",  0x40000, 0x10000, 0x062d7e77 )
 	ROM_LOAD_ODD ( "kar9",  0x40000, 0x10000, 0x37c0a23a )
 
-  ROM_REGION(0xa8000)
-  /* Characters */
-  ROM_LOAD( "kar0", 0x00000, 0x08000, 0x8cf6e300 )
-  /* Backgrounds */
-  ROM_LOAD( "kar4", 0x08000, 0x10000, 0x85d7a661 )
-  ROM_LOAD( "kar1", 0x18000, 0x10000, 0xbe2ab384 )
-  ROM_LOAD( "kar3", 0x28000, 0x10000, 0xb2032daf )
-  ROM_LOAD( "kar2", 0x38000, 0x10000, 0xe60970ed )
-  /* Sprites */
+	ROM_REGION(0xa8000)
+	/* Characters */
+	ROM_LOAD( "kar0", 0x00000, 0x08000, 0x8cf6e300 )
+	/* Backgrounds */
+	ROM_LOAD( "kar4", 0x08000, 0x10000, 0x85d7a661 )
+	ROM_LOAD( "kar1", 0x18000, 0x10000, 0xbe2ab384 )
+	ROM_LOAD( "kar3", 0x28000, 0x10000, 0xb2032daf )
+	ROM_LOAD( "kar2", 0x38000, 0x10000, 0xe60970ed )
+	/* Sprites */
 	ROM_LOAD( "kar12", 0x48000, 0x10000, 0x0300f4c8 )
-  ROM_LOAD( "kar14", 0x58000, 0x08000, 0x3d95baef )
-  ROM_LOAD( "kar13", 0x60000, 0x10000, 0x7d211a85 )
-  ROM_LOAD( "kar15", 0x70000, 0x08000, 0xbb2d9d09 )
-  ROM_LOAD( "kar16", 0x78000, 0x10000, 0xc945ee31 )
-  ROM_LOAD( "kar17", 0x88000, 0x08000, 0xc1a153c7 )
-  ROM_LOAD( "kar18", 0x90000, 0x10000, 0xbb24da3a )
-  ROM_LOAD( "kar19", 0xa0000, 0x08000, 0x77773ad5 )
+	ROM_LOAD( "kar14", 0x58000, 0x08000, 0x3d95baef )
+	ROM_LOAD( "kar13", 0x60000, 0x10000, 0x7d211a85 )
+	ROM_LOAD( "kar15", 0x70000, 0x08000, 0xbb2d9d09 )
+	ROM_LOAD( "kar16", 0x78000, 0x10000, 0xc945ee31 )
+	ROM_LOAD( "kar17", 0x88000, 0x08000, 0xc1a153c7 )
+	ROM_LOAD( "kar18", 0x90000, 0x10000, 0xbb24da3a )
+	ROM_LOAD( "kar19", 0xa0000, 0x08000, 0x77773ad5 )
+
+	ROM_REGION(0x0800)	/* color PROMs */
+	ROM_LOAD( "karnprom.21", 0x0000, 0x0400, 0x8485ab35 )
+	ROM_LOAD( "karnprom.20", 0x0400, 0x0400, 0x13c00e08 )
 
 	/* 6502 Sound CPU */
 	ROM_REGION(0x10000)
-  ROM_LOAD( "kar5", 0x8000, 0x8000, 0x50cf61cf)
-  /* Colour proms */
-  ROM_REGION(2048)
-  ROM_LOAD( "karnprom.21", 0x000, 0x400, 0x8485ab35)
-  ROM_LOAD( "karnprom.20", 0x400, 0x400, 0x13c00e08)
+	ROM_LOAD( "kar5", 0x8000, 0x8000, 0x50cf61cf)
 ROM_END
 
 ROM_START( chelnov_rom )
@@ -666,8 +662,8 @@ ROM_START( chelnov_rom )
 	ROM_LOAD_EVEN( "ee06-e.j13", 0x40000, 0x10000, 0x463270f6 )
 	ROM_LOAD_ODD ( "ee09-e.j17", 0x40000, 0x10000, 0x18020e86 )
 
-  ROM_REGION(0x88000)
-  /* Characters */
+	ROM_REGION(0x88000)
+	/* Characters */
 	ROM_LOAD( "ee00-e.c5", 0x00000, 0x08000, 0x25ad554f )
 	/* Backgrounds */
 	ROM_LOAD( "ee04-.d18", 0x08000, 0x10000, 0xd447b383 )
@@ -680,46 +676,47 @@ ROM_START( chelnov_rom )
 	ROM_LOAD( "ee14-.f13", 0x68000, 0x10000, 0x47efa38b )
 	ROM_LOAD( "ee15-.f15", 0x78000, 0x10000, 0x0aaca864 )
 
+	ROM_REGION(0x0800)	/* color PROMs */
+	ROM_LOAD( "ee21.k8", 0x0000, 0x0400, 0xe6be044a )
+	ROM_LOAD( "ee20.l6", 0x0400, 0x0400, 0xfeba090e )
+
 	/* 6502 Sound CPU */
 	ROM_REGION(0x10000)
 	ROM_LOAD( "ee05-.f3", 0x8000, 0x8000, 0xc9f33353 )
-
-	ROM_REGION(2048)
-	ROM_LOAD( "ee21.k8", 0x000, 0x400, 0xe6be044a )
-	ROM_LOAD( "ee20.l6", 0x400, 0x400, 0xfeba090e )
 ROM_END
 
 ROM_START( chelnovj_rom )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "a-j15.bin", 0x00000, 0x10000, 0x4af03e04 )
 	ROM_LOAD_ODD ( "a-j20.bin", 0x00000, 0x10000, 0x7ff4255c )
-  ROM_LOAD_EVEN( "a-j14.bin", 0x20000, 0x10000, 0x639164ef )
+	ROM_LOAD_EVEN( "a-j14.bin", 0x20000, 0x10000, 0x639164ef )
 	ROM_LOAD_ODD ( "a-j18.bin", 0x20000, 0x10000, 0x53df7af1 )
-  ROM_LOAD_EVEN( "a-j13.bin", 0x40000, 0x10000, 0xb60270c6 )
+	ROM_LOAD_EVEN( "a-j13.bin", 0x40000, 0x10000, 0xb60270c6 )
 	ROM_LOAD_ODD ( "a-j17.bin", 0x40000, 0x10000, 0x1a1f248f )
 
-  ROM_REGION(0x88000)
+	ROM_REGION(0x88000)
 	/* Characters */
-  ROM_LOAD( "a-c5.bin", 0x00000, 0x08000, 0x25c8aab0 )
-  /* Backgrounds */
-  ROM_LOAD( "a-d18.bin", 0x08000, 0x10000, 0xd447b383 )
-  ROM_LOAD( "a-c15.bin", 0x18000, 0x10000, 0x476a4d90 )
-  ROM_LOAD( "a-d15.bin", 0x28000, 0x10000, 0xe23fd4ff )
+	ROM_LOAD( "a-c5.bin", 0x00000, 0x08000, 0x25c8aab0 )
+	/* Backgrounds */
+	ROM_LOAD( "a-d18.bin", 0x08000, 0x10000, 0xd447b383 )
+	ROM_LOAD( "a-c15.bin", 0x18000, 0x10000, 0x476a4d90 )
+	ROM_LOAD( "a-d15.bin", 0x28000, 0x10000, 0xe23fd4ff )
 	ROM_LOAD( "a-c18.bin", 0x38000, 0x10000, 0x7897fcb7 )
-  /* Sprites */
-  ROM_LOAD( "b-f8.BIN",  0x48000, 0x10000, 0x62adc797 )
+	/* Sprites */
+	ROM_LOAD( "b-f8.BIN",  0x48000, 0x10000, 0x62adc797 )
 	ROM_LOAD( "b-f9.BIN",  0x58000, 0x10000, 0x4524d74c )
 	ROM_LOAD( "b-f13.BIN", 0x68000, 0x10000, 0x47efa38b )
 	ROM_LOAD( "b-f16.BIN", 0x78000, 0x10000, 0x0aaca864 )
 
-  /* 6502 Sound CPU */
-  ROM_REGION(0x10000)
-  ROM_LOAD( "a-f3.BIN", 0x8000, 0x8000, 0xc9f33353)
+	ROM_REGION(0x0800)	/* color PROMs */
+	ROM_LOAD( "a-k7.bin", 0x0000, 0x0400, 0xd97d37c5 )
+	ROM_LOAD( "a-l6.bin", 0x0400, 0x0400, 0xfeba090e )
 
-  ROM_REGION(2048)
-  ROM_LOAD( "a-k7.bin", 0x000, 0x400, 0xd97d37c5)
-  ROM_LOAD( "a-l6.bin", 0x400, 0x400, 0xfeba090e)
+	/* 6502 Sound CPU */
+	ROM_REGION(0x10000)
+	ROM_LOAD( "a-f3.BIN", 0x8000, 0x8000, 0xc9f33353)
 ROM_END
+
 
 /******************************************************************************/
 
@@ -788,7 +785,7 @@ struct GameDriver karnov_driver =
 
 	karnov_input_ports,
 
-	0, 0, 0,   /* colors, palette, colortable */
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 	0, 0
 };
@@ -808,7 +805,7 @@ struct GameDriver karnovj_driver =
 
 	karnov_input_ports,
 
-	0, 0, 0,   /* colors, palette, colortable */
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 	0, 0
 };
@@ -828,7 +825,7 @@ struct GameDriver chelnov_driver =
 
 	chelnov_input_ports,
 
-	0, 0, 0,   /* colors, palette, colortable */
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 	0, 0
 };
@@ -848,7 +845,7 @@ struct GameDriver chelnovj_driver =
 
 	chelnov_input_ports,
 
-	0, 0, 0,   /* colors, palette, colortable */
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 	0, 0
 };

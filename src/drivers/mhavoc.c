@@ -380,8 +380,7 @@ static struct MachineDriver machine_driver =
 			2500000,	/* 2.5 Mhz */
 			0,
 			readmem,writemem,0,0,
-			0, 0, /* no vblank interrupt */
-			interrupt, 407 /* 2.4576 ms period */
+			interrupt,8 /* 2.4576 ms period */
 		},
 		{
 			CPU_M6502,
@@ -392,7 +391,7 @@ static struct MachineDriver machine_driver =
 			interrupt, 305 /* 3.2768 ms period */
 		}
 	},
-	30, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
+	50, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
 			/* fps should be 30, but MH draws "empty" frames */
 	1,		/* 1 CPU slice. see machine.c */
 	mhavoc_init_machine,

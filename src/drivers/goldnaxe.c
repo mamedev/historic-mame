@@ -42,7 +42,6 @@ void system16_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 void system16_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
-
 static struct MemoryReadAddress goldnaxe_readmem[] =
 {
 	{ 0x000000, 0x0bffff, MRA_ROM },
@@ -66,15 +65,17 @@ static struct MemoryWriteAddress goldnaxe_writemem[] =
 	{ 0x110e80, 0x110e87, system16_pagesel_w, &system16_pagesram },
 	{ 0x110000, 0x110fff, system16_videoram_w },
 	{ 0x100000, 0x10ffff, system16_backgroundram_w },
+	{ 0x1f0000, 0x1f0003, MWA_NOP },				/* IO Ctrl: Unknown */
 	{ 0x200000, 0x200fff, system16_spriteram_w },
 	{ 0x140000, 0x140fff, system16_paletteram_w },
 	{ 0xc40000, 0xc40003, goldnaxe_refreshenable_w, &system16_refreshregister },
-	{ 0xc40008, 0xc4000f, MWA_NOP },                 /* IO Ctrl:  Unknown */
-	{ 0xc43000, 0xc4300f, MWA_NOP },                 /* IO Ctrl:  Unknown */
+	{ 0xc40008, 0xc4000f, MWA_NOP },				/* IO Ctrl:  Unknown */
+	{ 0xc43000, 0xc4300f, MWA_NOP },				/* IO Ctrl:  Unknown */
 	{ 0xfe0000, 0xfeffff, system16_soundram_w },
 	{ 0xff0000, 0xffffff, MWA_BANK1 },
 	{ -1 }  /* end of table */
 };
+
 
 
 INPUT_PORTS_START( goldnaxe_input_ports )
@@ -167,7 +168,6 @@ INPUT_PORTS_END
 
 
 
-
 static struct GfxLayout charlayout =
 {
 	8,8,	/* 8*8 chars */
@@ -182,24 +182,19 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,     0, 8 },
-	{ 1, 0x00000, &charlayout,  1024, 128 },   /* fake: this give us lookup pointer for sprites */
-	{ 1, 0x00000, &charlayout,     0, 128 },   /* fake: this give us lookup pointer for chars   */
-	{ 1, 0x00000, &charlayout,     0, 256 },   /* fake: this give us lookup pointer for all     */
+	{ 1, 0x00000, &charlayout,     0, 256 },
 	{ -1 } /* end of array */
 };
 
 
-
+void goldnaxe_init_machine(void);
 void goldnaxe_init_machine(void)
 {
-	/*	Initialize Objects Bank vector
-	 */
+	/*	Initialize Objects Bank vector */
 
 	static int bank[16] = { 0,2,8,10,16,18,0,0,4,6,12,14,20,22,0,0 };
 
-	/*	And notify this to the System16 hardware
-	 */
+	/*	And notify this to the System16 hardware */
 
 	system16_define_bank_vector(bank);
 	system16_define_sprxoffset(-0xb8);
@@ -248,29 +243,11 @@ static struct MachineDriver machine_driver =
 	0
 };
 
+extern void system16_sprite_decode( int num_banks, int bank_size );
 
-static void goldnaxe_sprite_decode (void)
-{
-	unsigned char *temp = malloc (0x40000);
-	int i;
-
-	if (!temp) return;
-	for (i = 0; i < 3; i++)
-	{
-		unsigned char *dest = &Machine->memory_region[2][i * 0x80000];
-		unsigned char *p1 = temp;
-		unsigned char *p2 = dest + 0x40000;
-		int j;
-
-		memcpy (temp, dest, 0x40000);
-		for (j = 0; j < 0x40000; j++)
-			*dest++ = *p2++, *dest++ = *p1++;
-	}
-
-	free (temp);
+static void goldnaxe_sprite_decode (void){
+	system16_sprite_decode( 3, 0x80000 );
 }
-
-
 
 /***************************************************************************
 
@@ -294,7 +271,7 @@ ROM_START( goldnaxe_rom )
 	ROM_LOAD( "ga12386.bin",  0x20000, 0x20000, 0x08e5b5e3 )        /* 8x8 1 */
 	ROM_LOAD( "ga12387.bin",  0x40000, 0x20000, 0x49afcab3 )        /* 8x8 2 */
 
-	ROM_REGION(0x180000)
+	ROM_REGION(0x180000*2)
 	ROM_LOAD( "ga12378.bin", 0x000000, 0x40000, 0x3bbf4177 )     /* sprites */
 	ROM_LOAD( "ga12379.bin", 0x040000, 0x40000, 0x06616abf )
 	ROM_LOAD( "ga12380.bin", 0x080000, 0x40000, 0x92c8cf4c )
@@ -309,7 +286,7 @@ struct GameDriver goldnaxe_driver =
 {
 	"Golden Axe",
 	"goldnaxe",
-	"Mirko Buffoni         (Mame Driver)\nThierry Lescot & Nao  (Hardware Info)\nMarco Cassili         (Dip Switches)",
+	"Mirko Buffoni         (Mame Driver)\nThierry Lescot & Nao  (Hardware Info)",
 	&machine_driver,
 
 	goldnaxe_rom,
@@ -323,5 +300,3 @@ struct GameDriver goldnaxe_driver =
 	ORIENTATION_DEFAULT,
 	0, 0
 };
-
-

@@ -8,9 +8,9 @@ Note: This game doesn't seem to support cocktail mode, which is not too
 0000-3fff ROM
 5000-53ff Foreground RAM 1
 5400-57ff Foreground RAM 2
-5800-5bff Background RAM (Only the first 28 lines are visible, I'm not sure
-                          if the last 0x80 bytes contain junk or some
-                          meaningful data, possibly color information)
+5800-5bff Background RAM (Only the first 28 lines are visible,
+						  the last 0x80 bytes probably contain color
+						  information)
 5c00-5fff Attributes RAM for Foreground 2
           A0-A5 seem to be ignored.
           D0 - X Flip
@@ -24,7 +24,7 @@ read:
 6c00  Input Port #1
 7000  Dip Sw #1
 7400  Dip Sw #2
-7800  Timer?
+7800  Timer
 7c00  Analog Control
 
 write:
@@ -34,12 +34,14 @@ write:
 6401 AY8910 #1 Write Port
 6800 AY8910 #2 Control Port
 6801 AY8910 #2 Write Port
-6802-680d ? (Values written here never changes)
 7800 Bit 0 - Coin Counter 1
      Bit 1 - Coin Counter 2
-     Bit 2-6 - ??? (Bit 2 is pulsated when the player is hit.
-                    Bit 5 is always on)
-     Bit 7 - Seems to be unused
+	 Bit 2 - ??? Pulsated when the player is hit
+	 Bit 3 - ??? Seems to be unused
+	 Bit 4 - Tied to AY8910 RST. Used to turn off sound
+	 Bit 5 - ??? Seem to be always on
+	 Bit 6 - ???
+     Bit 7 - ??? Seems to be unused
 
 
 ***************************************************************************/
@@ -49,13 +51,14 @@ write:
 
 extern unsigned char *dday_videoram2;
 extern unsigned char *dday_videoram3;
-extern unsigned char *dday_video_control;
 
 void dday_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void dday_vh_screenrefresh(struct osd_bitmap *bitmap);
 void dday_colorram_w(int offset, int data);
 int  dday_colorram_r(int offset);
-
+void dday_control_w (int offset, int data);
+void dday_AY8910_0_w(int offset, int data);
+void dday_AY8910_1_w(int offset, int data);
 
 // Note: There seems to be no way to reset this timer via hardware.
 //       The game uses a difference method to reset it to 99.
@@ -90,7 +93,7 @@ static int dday_interrupt (void)
 		if (timerVal == -1) timerVal = START_TIMER;
     }
 
-    return Z80_IGNORE_INT;
+    return ignore_interrupt();
 }
 
 static struct MemoryReadAddress readmem[] =
@@ -109,20 +112,15 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x4000, MWA_NOP }, // ???
-	{ 0x5400, 0x57ff, MWA_RAM },
 	{ 0x5000, 0x53ff, MWA_RAM, &dday_videoram2 },
 	{ 0x5400, 0x57ff, MWA_RAM, &dday_videoram3 },
 	{ 0x5800, 0x5bff, videoram_w, &videoram, &videoram_size },
 	{ 0x5c00, 0x5fff, dday_colorram_w, &colorram },
 	{ 0x6000, 0x63ff, MWA_RAM },
-	{ 0x6400, 0x6400, AY8910_control_port_0_w },
-	{ 0x6401, 0x6401, AY8910_write_port_0_w },
-	{ 0x6800, 0x6800, AY8910_control_port_1_w },
-	{ 0x6801, 0x6801, AY8910_write_port_1_w },
-	{ 0x6802, 0x680d, MWA_NOP }, // ???
-	{ 0x7800, 0x7800, MWA_RAM, &dday_video_control },
+	{ 0x6400, 0x640d, dday_AY8910_0_w },
+	{ 0x6800, 0x6801, dday_AY8910_1_w },
+	{ 0x7800, 0x7800, dday_control_w },
 	{ -1 }  /* end of table */
 };
 
@@ -154,7 +152,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x30, "Easiest" )                  // Easy    - No Bombs, Troop Carriers
 	PORT_DIPSETTING(    0x20, "Easy" )                     // Hard    - Bombs, Troop Carriers
 	PORT_DIPSETTING(    0x10, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hard" ) // Same as 0x10
+  //PORT_DIPSETTING(    0x00, "Hard" ) // Same as 0x10
 	PORT_DIPNAME( 0x40, 0x00, "Unknown", IP_KEY_NONE ) // Doesn't seem to be used
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x40, "On" )
@@ -318,7 +316,6 @@ static struct AY8910interface ay8910_interface =
 };
 
 
-
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -331,7 +328,7 @@ static struct MachineDriver machine_driver =
 			dday_interrupt,1
 		}
 	},
-	60, 2500,       /* frames per second, vblank duration */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
 	1,      /* single CPU, no need for interleaving */
 	0,
 

@@ -464,7 +464,7 @@ INPUT_PORTS_START( megatack_input_ports )
         PORT_START      /* IN4 - from "TEST NO.6 - dip switch A" */
         PORT_DIPNAME(0x03, 0x03, "Coinage", IP_KEY_NONE )
         PORT_DIPSETTING(   0x01, "2 Coins/1 Credit" )
-        PORT_DIPSETTING(   0x02, "2 Coins/1 Credits" )
+        PORT_DIPSETTING(   0x02, "3 Coins/2 Credits" )
         PORT_DIPSETTING(   0x03, "1 Coin/1 Credit" )
         PORT_DIPSETTING(   0x00, "Free Play" )
         PORT_DIPNAME(0x04, 0x04, "Dip A 3", IP_KEY_NONE )
@@ -871,7 +871,6 @@ struct GameDriver kaos_driver =
 	"Kaos",
 	"kaos",
 	"Chris Moore (MAME driver)\n"
-	"Al Kossow (hardware info)\n"
 	"Santeri Saarimaa (not a sausage)",
 	&machine_driver,
 
@@ -892,7 +891,6 @@ struct GameDriver killcom_driver =
 	"Killer Comet",
 	"killcom",
 	"Chris Moore (MAME driver)\n"
-	"Al Kossow (hardware info)\n"
 	"Santeri Saarimaa (hardware info)",
 	&machine_driver,
 
@@ -913,7 +911,6 @@ struct GameDriver megatack_driver =
 	"MegaTack",
 	"megatack",
 	"Chris Moore (MAME driver)\n"
-	"Al Kossow (hardware info)\n"
 	"Santeri Saarimaa (hardware info)",
 	&machine_driver,
 

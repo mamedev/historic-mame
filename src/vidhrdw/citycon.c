@@ -14,7 +14,7 @@
 unsigned char *citycon_paletteram,*citycon_charlookup;
 unsigned char *citycon_scroll;
 static struct osd_bitmap *tmpbitmap2;
-static int bg_image,dirty_background,dirtypalette;
+static int bg_image,dirty_background;
 static unsigned char dirtylookup[32];
 static int flipscreen;
 
@@ -32,7 +32,6 @@ int citycon_vh_start(void)
 	memset(dirtybuffer,1,videoram_size);
 
 	dirty_background = 1;
-	dirtypalette = 1;
 
 	/* CityConnection has a virtual screen 4 times as large as the visible screen */
 	if ((tmpbitmap = osd_new_bitmap(4 * Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
@@ -70,12 +69,37 @@ void citycon_vh_stop(void)
 
 void citycon_paletteram_w(int offset,int data)
 {
-	if (citycon_paletteram[offset] != data)
-	{
-		citycon_paletteram[offset] = data;
+	int bit0,bit1,bit2,bit3;
+	int r,g,b,val;
 
-		dirtypalette = 1;
-	}
+
+	citycon_paletteram[offset] = data;
+
+	/* red component */
+	val = citycon_paletteram[offset & ~1];
+	bit0 = (val >> 4) & 0x01;
+	bit1 = (val >> 5) & 0x01;
+	bit2 = (val >> 6) & 0x01;
+	bit3 = (val >> 7) & 0x01;
+	r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+	/* green component */
+	val = citycon_paletteram[offset & ~1];
+	bit0 = (val >> 0) & 0x01;
+	bit1 = (val >> 1) & 0x01;
+	bit2 = (val >> 2) & 0x01;
+	bit3 = (val >> 3) & 0x01;
+	g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+	/* blue component */
+	val = citycon_paletteram[offset | 1];
+	bit0 = (val >> 4) & 0x01;
+	bit1 = (val >> 5) & 0x01;
+	bit2 = (val >> 6) & 0x01;
+	bit3 = (val >> 7) & 0x01;
+	b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+	palette_change_color(offset / 2,r,g,b);
 }
 
 
@@ -126,53 +150,44 @@ if (errorlog && (data & 0x0e) != 0) fprintf(errorlog,"background register = %02x
 void citycon_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	int offs;
-	int j, i;
-
-	/* rebuild the colour lookup table from RAM palette */
-	if (dirtypalette)
-	{
-		for (j=0; j<3; j++)
-		{
-			/*
-			0000-01ff:  sprites palettes   (16x16 colours)
-			0200-03ff:  background palette (16x16 colours)
-			0400-04ff:  characters palette (32x4 colours)
-			*/
-			/* CHARS  SPRITES TILES   */
-			int start[3]={0x0400, 0x0000, 0x0200};
-			int count[3]={0x0080, 0x0100, 0x0100};
-			int base=start[j];
-			int max=count[j];
+unsigned char used_colors[640];
 
 
-			for (i=0; i<max; i++)
-			{
-				int red, green, blue, redgreen;
+memset(used_colors,PALETTE_COLOR_UNUSED,640);
 
-				redgreen=citycon_paletteram[base + 2*i];
-				red=redgreen >>4;
-				green=redgreen & 0x0f ;
-				blue=citycon_paletteram[base + 2*i + 1]>>4;
+for (offs = videoram_size - 1;offs >= 0;offs--)
+{
+	int code,color;
 
-				red = (red << 4) + red;
-				green = (green << 4) + green;
-				blue = (blue << 4) + blue;
+	code = Machine->memory_region[2][0x1000 * bg_image + offs];
+	color = Machine->memory_region[2][0xc000 + 0x100 * bg_image + code],
+	memset(&used_colors[256 + 16 * color],PALETTE_COLOR_FIXED,16);
+}
+for (offs = 0;offs < 256;offs++)
+{
+	int color;
 
-				if (j == 0)
-				{
-					if (i % 4 == 0) red = green = blue = 0;	/* ensure transparency */
-					else if (!red && !green && !blue) red = 0x20;	/* avoid transparency */
-					setgfxcolorentry (Machine->gfx[2*j],i,red,green,blue);
-				}
-				else
-					setgfxcolorentry (Machine->gfx[2*j],i,red,green,blue);
-			}
-		}
-	}
+	color = citycon_charlookup[offs];
+	used_colors[512 + 4 * color] = PALETTE_COLOR_TRANSPARENT;
+	memset(&used_colors[512 + 4 * color + 1],PALETTE_COLOR_FIXED,3);
+}
+for (offs = spriteram_size-4;offs >= 0;offs -= 4)
+{
+	int color;
+
+	color = spriteram[offs + 2] & 0x0f;
+	memset(&used_colors[16 * color + 1],PALETTE_COLOR_DYNAMIC,15);
+}
+
+if (palette_recalc(used_colors))
+{
+	memset(dirtybuffer,1,videoram_size);
+	dirty_background = 1;
+}
 
 
 	/* Create the background */
-	if (dirty_background || dirtypalette)
+	if (dirty_background)
 	{
 		dirty_background = 0;
 
@@ -225,7 +240,7 @@ void citycon_vh_screenrefresh(struct osd_bitmap *bitmap)
 		sx = (offs % 32) + (sy & 0x60);
 		sy = sy & 0x1f;
 
-		if (dirtybuffer[offs] || dirtylookup[sy] || dirtypalette)
+		if (dirtybuffer[offs] || dirtylookup[sy])
 		{
 			int i;
 			struct rectangle clip;
@@ -280,7 +295,8 @@ void citycon_vh_screenrefresh(struct osd_bitmap *bitmap)
 			for (i = 6;i < 32;i++)
 				scroll[i] = -(citycon_scroll[0]*256+citycon_scroll[1]);
 		}
-		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 	}
 
 
@@ -307,8 +323,6 @@ void citycon_vh_screenrefresh(struct osd_bitmap *bitmap)
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 
-
-	dirtypalette = 0;
 
 	for (offs = 0;offs < 32;offs++)
 		dirtylookup[offs] = 0;

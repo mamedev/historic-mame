@@ -1,3 +1,4 @@
+
 /***************************************************************************
 
   vidhrdw.c
@@ -359,10 +360,22 @@ inline void cps1_render_sprites(struct osd_bitmap *bitmap)
         int i;
         int base_obj=cps1_game_config->base_obj;
         int obj_size=cps1_obj_size;
+
+        int gng_obj_kludge=cps1_game_config->gng_sprite_kludge;
+        int bank;
         if (cps1_game_config->size_obj)
         {
                 obj_size=cps1_game_config->size_obj;
         }
+
+        if (gng_obj_kludge)
+        {
+                /*
+                Ghouls and Ghosts splits the sprites over two separate
+                graphics layouts */
+                bank=4;
+        }
+
         /* Draw the sprites */
         for (i=obj_size-8; i>=0; i-=8)
         {
@@ -378,6 +391,13 @@ inline void cps1_render_sprites(struct osd_bitmap *bitmap)
                    if (code >= base_obj)
                    {
                      code -= base_obj;
+                     bank=1;
+                     if (gng_obj_kludge && code >= 0x01000)
+                     {
+                         code &= 0xfff;
+                         bank=4;
+                     }
+
                      if (colour & 0xff00)
                      {
                            /* handle blocked sprites */
@@ -396,7 +416,7 @@ inline void cps1_render_sprites(struct osd_bitmap *bitmap)
                                {
                                     for (nxs=0; nxs<nx; nxs++)
                                     {
-                                         drawgfx(bitmap,Machine->gfx[1],
+                                         drawgfx(bitmap,Machine->gfx[bank],
                                                 code+(nx-1)-nxs+0x10*(ny-1-nys),
                                                 col&0x1f,
                                                 1,1,
@@ -411,7 +431,7 @@ inline void cps1_render_sprites(struct osd_bitmap *bitmap)
                                {
                                     for (nxs=0; nxs<nx; nxs++)
                                     {
-                                         drawgfx(bitmap,Machine->gfx[1],
+                                         drawgfx(bitmap,Machine->gfx[bank],
                                                 code+nxs+0x10*(ny-1-nys),
                                                 col&0x1f,
                                                 0,1,
@@ -430,7 +450,7 @@ inline void cps1_render_sprites(struct osd_bitmap *bitmap)
                                {
                                     for (nxs=0; nxs<nx; nxs++)
                                     {
-                                         drawgfx(bitmap,Machine->gfx[1],
+                                         drawgfx(bitmap,Machine->gfx[bank],
                                                 code+(nx-1)-nxs+0x10*nys,
                                                 col&0x1f,
                                                 1,0,
@@ -445,7 +465,7 @@ inline void cps1_render_sprites(struct osd_bitmap *bitmap)
                                {
                                     for (nxs=0; nxs<nx; nxs++)
                                     {
-                                         drawgfx(bitmap,Machine->gfx[1],
+                                         drawgfx(bitmap,Machine->gfx[bank],
                                                 code+nxs+0x10*nys,
                                                 col&0x1f,
                                                 0,0,
@@ -455,18 +475,18 @@ inline void cps1_render_sprites(struct osd_bitmap *bitmap)
                                }
                             }
                          }
-                   }
-                   else
-                   {
+                    }
+                    else
+                    {
                         /* Simple case... 1 sprite */
-                           drawgfx(bitmap,Machine->gfx[1],
+                           drawgfx(bitmap,Machine->gfx[bank],
                                        code,
                                        col&0x1f,
                                        colour&0x20,colour&0x40,
                                        x,y,
                                        &Machine->drv->visible_area,
                                        TRANSPARENCY_PEN,15);
-                   }
+                    }
                   }
              }
         }
@@ -685,7 +705,7 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
         int layercontrolport;
         int layercontrol;
-        int scrl2on, scrl3on;
+        int scrl1on, scrl2on, scrl3on;
         int scroll1priority;
         int scroll2priority;
 
@@ -711,18 +731,33 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap)
                         /* default */
                         layercontrolport=0x66;
                         layercontrol=READ_WORD(&cps1_output[layercontrolport]);
+                        /* Layers on / off */
+                        scrl1on=1;
+                        scrl2on=layercontrol&0x08;      /* Not quite should probably */
+                        scrl3on=layercontrol&0x08;      /* be individually turn-offable  */
+
                         scroll2priority=(layercontrol&0x040);
                         break;
                 case 1:
                         /* Willow */
                         layercontrolport=0x70;
                         layercontrol=READ_WORD(&cps1_output[layercontrolport]);
+                        /* Layers on / off */
+                        scrl1on=1;
+                        scrl2on=layercontrol&0x08;      /* Not quite should probably */
+                        scrl3on=layercontrol&0x08;      /* be individually turn-offable  */
+
                         /* Scroll 2 / 3 priority */
                         scroll2priority=(layercontrol&0x040);
                         break;
                 case 2:
                         layercontrolport=0x6e;
                         layercontrol=READ_WORD(&cps1_output[layercontrolport]);
+                        /* Layers on / off */
+                        scrl1on=1;
+                        scrl2on=layercontrol&0x08;      /* Not quite should probably */
+                        scrl3on=layercontrol&0x08;      /* be individually turn-offable  */
+
                         /* Scroll 2 / 3 priority */
                         scroll2priority=(layercontrol&0x040);
                         break;
@@ -731,6 +766,11 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap)
                         /* Strider (completely kludged) */
                         layercontrolport=0x66;
                         layercontrol=READ_WORD(&cps1_output[layercontrolport]);
+                        /* Layers on / off */
+                        scrl1on=1;
+                        scrl2on=layercontrol&0x08;      /* Not quite should probably */
+                        scrl3on=layercontrol&0x08;      /* be individually turn-offable  */
+
                         /*
                          Scroll 2 / 3 priority (best kluge, so far)
                          works on level 1 but not the in-between intermissions
@@ -743,9 +783,24 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap)
 
                         break;
 
+                case 5: /* Ghouls and Ghosts */
+                        layercontrolport=0x66;
+                        layercontrol=READ_WORD(&cps1_output[layercontrolport]);
+
+                        /* Layers on / off */
+                        scrl1on=layercontrol&0x02;
+                        scrl2on=1;
+                        scrl3on=1;
+                        scroll2priority=(layercontrol&0x060)==0x40;
+                        break;
+
                 default:
                         layercontrolport=0;
                         layercontrol=0xffff;
+                        scrl1on=1;
+                        scrl2on=layercontrol&0x08;      /* Not quite should probably */
+                        scrl3on=layercontrol&0x08;      /* be individually turn-offable  */
+
                         /* Scroll 2 / 3 priority */
                         scroll2priority=1;
                         break;
@@ -757,15 +812,12 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap)
         /* Blank screen */
         fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
 
-        /* Layers on / off */
-        scrl2on=layercontrol&0x08;      /* Not quite should probably */
-        scrl3on=layercontrol&0x08;      /* be individually turn-offable  */
 
         /* Scroll 1 priority */
         scroll1priority=(layercontrol&0x0080);
 
         /* Scroll 1 priority */
-        if (!scroll1priority)
+        if (!scroll1priority && scrl1on)
         {
               cps1_render_scroll1(bitmap);
         }
@@ -818,7 +870,7 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap)
                 }
         }
 
-        if (scroll1priority)
+        if (scroll1priority && scrl1on)
         {
                 cps1_render_scroll1(bitmap);
         }

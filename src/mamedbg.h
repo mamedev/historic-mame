@@ -34,27 +34,33 @@
 #include "M6502/M6502.h"
 #include "I86/i86intrf.h"
 #include "I8039/i8039.h"
+#include "I8085/i8085.h"
 #include "M6808/m6808.h"
 #include "M6805/m6805.h"
 #include "M6809/m6809.h"
 #include "M68000/M68000.h"
+#include "t11/t11.h"	/* ASG 030598 */
 
-extern int Dasm6502 (char *buf, int pc);
-extern int Dasm6808 (unsigned char *base, char *buf, int pc);
-extern int Dasm6805 (unsigned char *base, char *buf, int pc);	/* JB 980214 */
-extern int Dasm6809 (char *buffer, int pc);
-extern int Dasm68000 (unsigned char *pBase, char *buffer, int pc);
+
+int Dasm6502 (char *buf, int pc);
+int Dasm6808 (unsigned char *base, char *buf, int pc);
+int Dasm6805 (unsigned char *base, char *buf, int pc);	/* JB 980214 */
+int Dasm6809 (char *buffer, int pc);
+int Dasm68000 (unsigned char *pBase, char *buffer, int pc);
+int DasmT11 (unsigned char *pBase, char *buffer, int pc);	/* ASG 030598 */
 
 /* JB 980214 */
-extern void asg_TraceInit(int count, char *filename);
-extern void asg_TraceKill(void);
-extern void asg_TraceSelect(int index);
-extern void asg_Z80Trace(unsigned char *RAM, int PC);
-extern void asg_6809Trace(unsigned char *RAM, int PC);
-extern void asg_6808Trace(unsigned char *RAM, int PC);
-extern void asg_6805Trace(unsigned char *RAM, int PC);
-extern void asg_6502Trace(unsigned char *RAM, int PC);
-extern void asg_68000Trace(unsigned char *RAM, int PC);
+void asg_TraceInit(int count, char *filename);
+void asg_TraceKill(void);
+void asg_TraceSelect(int index);
+void asg_Z80Trace(unsigned char *RAM, int PC);
+void asg_6809Trace(unsigned char *RAM, int PC);
+void asg_6808Trace(unsigned char *RAM, int PC);
+void asg_6805Trace(unsigned char *RAM, int PC);
+void asg_6502Trace(unsigned char *RAM, int PC);
+void asg_68000Trace(unsigned char *RAM, int PC);
+void asg_8085Trace(unsigned char *RAM, int PC);
+void asg_T11Trace(unsigned char *RAM, int PC);	/* ASG 030598 */
 extern int traceon;
 
 extern int CurrentVolume;
@@ -93,6 +99,8 @@ int TempDasm6808 (char *buffer, int pc) { return (Dasm6808 (&ROM[pc], buffer, pc
 int TempDasm6805 (char *buffer, int pc) { return (Dasm6805 (&ROM[pc], buffer, pc)); }
 int TempDasm6809 (char *buffer, int pc) { return (Dasm6809 (buffer, pc)); }
 int TempDasm68000 (char *buffer, int pc){ return (Dasm68000 (&ROM[pc], buffer, pc));}
+int TempDasm8085 (char *buffer, int pc)  { return (Dasm8085 (buffer, pc)); }
+int TempDasmT11 (char *buffer, int pc){ return (DasmT11 (&ROM[pc], buffer, pc));}	/* ASG 030598 */
 int TempDasmZ80 (char *buffer, int pc)  { return (DasmZ80 (buffer, pc)); }
 
 /* JB 980214 */
@@ -102,6 +110,8 @@ void Temp6808Trace (int PC) { asg_6808Trace (ROM, PC); }
 void Temp6805Trace (int PC) { asg_6805Trace (ROM, PC); }
 void Temp6502Trace (int PC) { asg_6502Trace (ROM, PC); }
 void Temp68000Trace (int PC) { asg_68000Trace (ROM, PC); }
+void Temp8085Trace (int PC) { asg_8085Trace (ROM, PC); }
+void TempT11Trace (int PC) { asg_T11Trace (ROM, PC); }	/* ASG 030598 */
 
 /* Commands functions */
 static int ModifyRegisters(char *param);
@@ -233,7 +243,20 @@ static tBackupReg BackupRegisters[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_M6502  2 */
+	/* #define CPU_8085  2 */
+	{
+			{
+					{ "AF", (int *)&((I8085_Regs *)bckrgs)->AF.W.l, 2, 2, 1 },
+					{ "HL", (int *)&((I8085_Regs *)bckrgs)->HL.W.l, 2, 10, 1 },
+					{ "DE", (int *)&((I8085_Regs *)bckrgs)->DE.W.l, 2, 18, 1 },
+					{ "BC", (int *)&((I8085_Regs *)bckrgs)->BC.W.l, 2, 26, 1 },
+					{ "PC", (int *)&((I8085_Regs *)bckrgs)->PC.W.l, 2, 34, 1 },
+					{ "SP", (int *)&((I8085_Regs *)bckrgs)->PC.W.l, 2, 42, 1 },
+					{ "IM", (int *)&((I8085_Regs *)bckrgs)->IM, 1, 50, 1 },
+					{ "", (int *)-1, -1, -1, -1 }
+			},
+	},
+	/* #define CPU_M6502  3 */
 	{
 		{
 			{ "A", (int *)&((M6502 *)bckrgs)->A, 1, 2, 1 },	/* JB 980103 */
@@ -244,7 +267,7 @@ static tBackupReg BackupRegisters[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_I86    3 */
+	/* #define CPU_I86    4 */
 	{
 		{
 			{ "IP", (int *)&((i86_Regs *)bckrgs)->ip, 4, 2, 1 },
@@ -263,7 +286,7 @@ static tBackupReg BackupRegisters[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_I8039  4 */
+	/* #define CPU_I8039  5 */
 	{
 		{
 			{ "PC", (int *)&((I8039_Regs *)bckrgs)->PC, 2, 2, 1 },
@@ -272,7 +295,7 @@ static tBackupReg BackupRegisters[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_M6803  5 */ /* CPU_6802, CPU_6808 */
+	/* #define CPU_M6803  6 */ /* CPU_6802, CPU_6808 */
 	{
 		{
 			{ "A", (int *)&((m6808_Regs *)bckrgs)->a, 1, 2, 1 },
@@ -283,7 +306,7 @@ static tBackupReg BackupRegisters[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_6805 6 */	/* JB 980214 */
+	/* #define CPU_6805 7 */	/* JB 980214 */
 	{
 		{
 			{ "A", (int *)&((m6805_Regs *)bckrgs)->a, 1, 2, 1 },
@@ -293,7 +316,7 @@ static tBackupReg BackupRegisters[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_M6809  7 */
+	/* #define CPU_M6809  8 */
 	{
 		{
 			{ "A", (int *)&((m6809_Regs *)bckrgs)->a, 1, 2, 1 },
@@ -307,7 +330,7 @@ static tBackupReg BackupRegisters[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_M68000 8 */
+	/* #define CPU_M68000 9 */
 	{
 		{
 			{ "PC", (int *)&((MC68000_Regs *)bckrgs)->regs.pc, 4, 2, 1 },
@@ -334,8 +357,24 @@ static tBackupReg BackupRegisters[] =
 			{ "A7", (int *)&((MC68000_Regs *)bckrgs)->regs.a[7], 4, 67, 19 },
 			{ "", (int *)-1, -1, -1, -1 }
 		},
-	}
+	},
+	/* #define CPU_T11    10 */
+	{
+		{
+			{ "R0", (int *)&((t11_Regs *)bckrgs)->reg[0], 2, 2, 1 },
+			{ "R1", (int *)&((t11_Regs *)bckrgs)->reg[1], 2, 10, 1 },
+			{ "R2", (int *)&((t11_Regs *)bckrgs)->reg[2], 2, 18, 1 },
+			{ "R3", (int *)&((t11_Regs *)bckrgs)->reg[3], 2, 26, 1 },
+			{ "R4", (int *)&((t11_Regs *)bckrgs)->reg[4], 2, 34, 1 },
+			{ "R5", (int *)&((t11_Regs *)bckrgs)->reg[5], 2, 42, 1 },
+			{ "SP", (int *)&((t11_Regs *)bckrgs)->reg[6], 2, 50, 1 },
+			{ "PC", (int *)&((t11_Regs *)bckrgs)->reg[7], 2, 58, 1 },
+			{ "PSW", (int *)&((t11_Regs *)bckrgs)->psw, 2, 66, 1 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+	},
 };
+
 
 static tDebugCpuInfo DebugInfo[] =
 {
@@ -377,7 +416,28 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_M6502  2 */
+	/* #define CPU_8085  2 */
+	{
+		"8085A", 14,
+		DrawDebugScreen8,
+		TempDasm8085, Temp8085Trace, 15, 8,
+		"SZ.H.PNC", (int *)&((I8085_Regs *)rgs)->AF.B.l, 8,
+		"%04X:", 0xffff,
+		25, 31, 77, 16,
+		4, 1,					/* CM 980428 */
+                (int *)&((I8085_Regs *)rgs)->SP.W.l, 2,
+		{
+                        { "AF", (int *)&((I8085_Regs *)rgs)->AF.W.l, 2, 2, 1 },
+                        { "HL", (int *)&((I8085_Regs *)rgs)->HL.W.l, 2, 10, 1 },
+                        { "DE", (int *)&((I8085_Regs *)rgs)->DE.W.l, 2, 18, 1 },
+                        { "BC", (int *)&((I8085_Regs *)rgs)->BC.W.l, 2, 26, 1 },
+                        { "PC", (int *)&((I8085_Regs *)rgs)->PC.W.l, 2, 34, 1 },
+                        { "SP", (int *)&((I8085_Regs *)rgs)->SP.W.l, 2, 42, 1 },
+                        { "IM", (int *)&((I8085_Regs *)rgs)->IM, 1, 50, 1 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+	},
+	/* #define CPU_M6502  3 */
 	{
 		"6502", 14,
 		DrawDebugScreen8,
@@ -396,7 +456,7 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_I86    3 */
+	/* #define CPU_I86    4 */
 	{
 		"I86", 21,
 		DrawDebugScreen16,
@@ -423,7 +483,7 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_I8039  4 */
+	/* #define CPU_I8039  5 */
 	{
 		"I8039", 14,
 		DrawDebugScreen8,
@@ -440,7 +500,7 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_M6803  5 */ /* CPU_6802, CPU_6808 */
+	/* #define CPU_M6803  6 */ /* CPU_6802, CPU_6808 */
 	{
 		"6808", 14,
 		DrawDebugScreen8,
@@ -459,7 +519,7 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_6805 6 */	/* JB 980214 */
+	/* #define CPU_6805 7 */	/* JB 980214 */
 	{
 		"6805", 14,
 		DrawDebugScreen8,
@@ -477,7 +537,7 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_M6809  7 */
+	/* #define CPU_M6809  8 */
 	{
 		"6809", 14,
 		DrawDebugScreen8,
@@ -499,7 +559,7 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_M68000 8 */
+	/* #define CPU_M68000 9 */
 	{
 		"68K", 21,
 		DrawDebugScreen16,
@@ -533,6 +593,28 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "A5", (int *)&((MC68000_Regs *)rgs)->regs.a[5], 4, 67, 17 },
 			{ "A6", (int *)&((MC68000_Regs *)rgs)->regs.a[6], 4, 67, 18 },
 			{ "A7", (int *)&((MC68000_Regs *)rgs)->regs.a[7], 4, 67, 19 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+	},
+	/* #define CPU_T11    10 */
+	{
+		"T11", 14,
+		DrawDebugScreen8,
+		TempDasmT11, DummyTrace, 15, 8,	/* JB 980103 */
+		".IITNZVC", (int *)&((t11_Regs *)rgs)->psw.b.l, 8,
+		"%04X:", 0xffff,
+		25, 31, 77, 16,
+		6, 2,					/* CM 980428 */
+		(int *)&((t11_Regs *)rgs)->reg[6].w.l, 2,
+		{
+			{ "R0", (int *)&((t11_Regs *)rgs)->reg[0].w.l, 2, 2, 1 },
+			{ "R1", (int *)&((t11_Regs *)rgs)->reg[1].w.l, 2, 10, 1 },
+			{ "R2", (int *)&((t11_Regs *)rgs)->reg[2].w.l, 2, 18, 1 },
+			{ "R3", (int *)&((t11_Regs *)rgs)->reg[3].w.l, 2, 26, 1 },
+			{ "R4", (int *)&((t11_Regs *)rgs)->reg[4].w.l, 2, 34, 1 },
+			{ "R5", (int *)&((t11_Regs *)rgs)->reg[5].w.l, 2, 42, 1 },
+			{ "SP", (int *)&((t11_Regs *)rgs)->reg[6].w.l, 2, 50, 1 },
+			{ "PC", (int *)&((t11_Regs *)rgs)->reg[7].w.l, 2, 58, 1 },
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},

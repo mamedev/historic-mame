@@ -428,6 +428,50 @@ static struct MachineDriver wc90_machine_driver =
 	}
 };
 
+static int wc90_hiload(void)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+        /* the color RAM is initialized when the startup reset is finished */
+        if (RAM[0xc200] == 0x69)
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+                        osd_fread(f,&RAM[0x800F],6*5);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+
+        else
+                return 0;  /* we can't load the hi scores yet */
+}
+
+static void wc90_hisave(void)
+{
+	void *f;
+
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+        /* for avoiding problems when we reset the game by pressing the F3 key */
+        RAM[0xc200] = 0x00;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+                osd_fwrite(f,&RAM[0x800F],6*5);
+		osd_fclose(f);
+	}
+
+}
 
 
 ROM_START( wc90_rom )
@@ -461,7 +505,7 @@ struct GameDriver wc90_driver =
 {
 	"World Cup 90",
 	"wc90",
-    "Ernesto Corvi",
+        "Ernesto Corvi",
 	&wc90_machine_driver,
 
 	wc90_rom,
@@ -474,5 +518,5 @@ struct GameDriver wc90_driver =
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+        wc90_hiload, wc90_hisave
 };

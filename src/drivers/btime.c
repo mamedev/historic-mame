@@ -46,16 +46,16 @@ extern int bnj_backgroundram_size;
 extern unsigned char *bnj_scroll2;
 extern unsigned char *zoar_scrollram;
 
+void btime_vh_convert_color_prom (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void lnc_vh_convert_color_prom (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void zoar_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 void lnc_init_machine (void);
 void eggs_init_machine(void);
 
 int  bnj_vh_start (void);
-int  zoar_vh_start(void);
 
 void bnj_vh_stop (void);
-void zoar_vh_stop(void);
 
 void btime_vh_screenrefresh(struct osd_bitmap *bitmap);
 void bnj_vh_screenrefresh  (struct osd_bitmap *bitmap);
@@ -73,6 +73,8 @@ int  btime_mirrorcolorram_r(int offset);
 void btime_mirrorcolorram_w(int offset,int data);
 void lnc_videoram_w(int offset,int data);
 void lnc_mirrorvideoram_w(int offset,int data);
+void zoar_video_control_w(int offset,int data);
+
 static void sound_command_w(int offset,int data);
 
 static void btime_decrypt(void)
@@ -138,6 +140,8 @@ static void zoar_ram_w(int offset,int data)
 		{ btime_mirrorvideoram_w(offset - 0x8800,data); good = 1; }
 	else if (offset >= 0x8c00 && offset <= 0x8fff)
 		{ btime_mirrorcolorram_w(offset - 0x8c00,data); good = 1; }
+	else if (offset == 0x9000)
+		{ zoar_video_control_w(0, data); good = 1; }
 	else if (offset >= 0x9800 && offset <= 0x9803)
 		{ zoar_scrollram[offset - 0x9800] = data; good = 1; }
 	else if (offset == 0x9804)
@@ -209,13 +213,12 @@ static struct MemoryWriteAddress zoar_writemem[] =
 	{ 0x8400, 0x87ff, colorram_w, &colorram },
 	{ 0x8800, 0x8bff, btime_mirrorvideoram_w },
 	{ 0x8c00, 0x8fff, btime_mirrorcolorram_w },
-	//{ 0x9000, 0x9000, MWA_RAM },  // Bit 7 is flip screen, the rest might
-								    // have to do with colors
+	{ 0x9000, 0x9000, zoar_video_control_w },
 	{ 0x9800, 0x9803, MWA_RAM, &zoar_scrollram },
 	{ 0x9804, 0x9804, MWA_RAM, &bnj_scroll2 },
 	{ 0x9805, 0x9805, bnj_scroll1_w },
 	{ 0x9806, 0x9806, sound_command_w },
-	//{ 0x9807, 0x9807, MWA_RAM },  // ???
+  //{ 0x9807, 0x9807, MWA_RAM },  // Marked as ACK on schematics (Board 2 Pg 5)
 	{ -1 }  /* end of table */
 };
 
@@ -845,9 +848,9 @@ static struct GfxDecodeInfo bnj_gfxdecodeinfo[] =
 
 static struct GfxDecodeInfo zoar_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,       0, 1 }, /* char set #1 */
-	{ 1, 0x7800, &zoar_spritelayout,0, 1 }, /* sprites */
-	{ 1, 0x6000, &btime_tilelayout, 8, 1 }, /* background tiles */
+	{ 1, 0x0000, &charlayout,       0, 8 }, /* char set #1 */
+	{ 1, 0x7800, &zoar_spritelayout,0, 8 }, /* sprites */
+	{ 1, 0x6000, &btime_tilelayout, 0, 8 }, /* background tiles */
 	{ -1 } /* end of array */
 };
 
@@ -859,49 +862,23 @@ static unsigned char hamburge_color_prom[] =
 	0x00,0xFF,0x2F,0x3F,0x07,0x38,0x1E,0x2B,0x00,0xAD,0xF8,0xC0,0xFF,0x07,0x3F,0xC7
 };
 
-static unsigned char eggs_palette[] =
+static unsigned char eggs_color_prom[] =
 {
-	0x00,0x00,0x00,   /* black      */
-	0xd8,0xd8,0x74,   /* darkyellow */
-	0x00,0x00,0xd8,   /* blue       */
-	0xd8,0x74,0x40,   /* darkwhite  */
-	0xf8,0x00,0x00,   /* red        */
-	0xff,0x44,0x00,   /* orange     */
-	0xf8,0xf8,0x20,   /* yellow     */
-	0xff,0xff,0xff    /* white      */
+	/* screggco.c6 */
+	0x21,0x07,0x00,0x3F,0xC0,0x26,0x91,0xFF,0x21,0x07,0x00,0x3F,0x00,0x26,0x00,0xFF,
+	0x21,0x07,0x00,0x3F,0xC0,0x26,0x91,0xFF,0x21,0x07,0x00,0x3F,0xC0,0x26,0x91,0xFF,
 };
 
-static unsigned short eggs_colortable[] =
-{
-	0, 1, 2, 3, 4, 5, 6, 7
-};
 
-// We're missing the color PROMs. This is handmade (badly)
-static unsigned char zoar_palette[] =
+static unsigned char zoar_color_prom[] =
 {
-	0x00,0x00,0x00,   /* black      */
-	0x40,0x40,0x40,   /* lt.gray    */
-	0x00,0xff,0x00,   /* green      */
-	0x00,0x00,0x00,   /* black      */
-	0xff,0x00,0x00,   /* red        */
-	0x80,0x80,0x80,   /* gray       */
-	0xff,0xff,0x00,   /* yellow     */
-	0xff,0xff,0xff,   /* white      */
+	// z20-1l
+	0x00,0x2c,0x21,0x6d,0x25,0x0b,0xc0,0x80,0x00,0x07,0x30,0x3f,0x00,0x25,0xb6,0xff,
+	0x00,0x26,0x22,0x6d,0x1d,0x0a,0x80,0x80,0x00,0x07,0x30,0x3f,0x00,0x25,0xb6,0xff,
 
-	0x00,0x00,0x00,   /* black      */
-	0xa0,0x70,0x50,   /* brown      */
-	0x80,0x80,0x80,   /* gray       */
-	0xff,0xff,0xff,   /* white      */
-	0xff,0x00,0x00,   /* red        */
-	0x00,0xff,0x00,   /* green      */
-	0xff,0xff,0x00,   /* yellow     */
-	0x00,0x00,0xff    /* blue       */
-};
-
-static unsigned short zoar_colortable[] =
-{
-	0, 1, 2, 3, 4, 5, 6, 7,
-	8, 9, 10, 11, 12, 13, 14, 15
+	// z21-2l
+	0xff,0x42,0x6b,0x2c,0x14,0x01,0x40,0x40,0x00,0x07,0x30,0x3f,0x00,0x25,0xb6,0xff,
+	0xff,0x60,0x75,0x2c,0x14,0x00,0x40,0x40,0x00,0x07,0x30,0x3f,0x00,0x25,0xb6,0xff
 };
 
 static unsigned char lnc_color_prom[] =
@@ -942,20 +919,21 @@ static struct AY8910interface ay8910_interface =
 *
 ********************************************************************/
 
-#define btime_vh_convert_color_prom  0
 #define bnj_vh_convert_color_prom    0
-#define eggs_vh_convert_color_prom   0
-#define zoar_vh_convert_color_prom   0
+#define eggs_vh_convert_color_prom   btime_vh_convert_color_prom
+#define zoar_vh_convert_color_prom   btime_vh_convert_color_prom
 
 #define btime_init_machine  0
 #define bnj_init_machine    0
 #define zoar_init_machine   0
 
 #define btime_vh_start  generic_vh_start
+#define zoar_vh_start   generic_vh_start
 #define eggs_vh_start   generic_vh_start
 #define lnc_vh_start    generic_vh_start
 
 #define btime_vh_stop   generic_vh_stop
+#define zoar_vh_stop    generic_vh_stop
 #define eggs_vh_stop    generic_vh_stop
 #define lnc_vh_stop     generic_vh_stop
 
@@ -1008,13 +986,13 @@ static struct MachineDriver GAMENAME##_machine_driver =             \
 
 MACHINE_DRIVER(btime, 1500000, btime_irq_interrupt, nmi_interrupt, btime_gfxdecodeinfo, 16);
 
-MACHINE_DRIVER(eggs, 1500000, interrupt, nmi_interrupt, lnc_gfxdecodeinfo, sizeof(eggs_palette)/3);
+MACHINE_DRIVER(eggs, 1500000, interrupt, nmi_interrupt, lnc_gfxdecodeinfo, 8);
 
 MACHINE_DRIVER(lnc, 1500000, btime_nmi_interrupt, lnc_sound_interrupt, lnc_gfxdecodeinfo, 8);
 
 MACHINE_DRIVER(bnj, 750000, btime_nmi_interrupt, nmi_interrupt, bnj_gfxdecodeinfo, 16);
 
-MACHINE_DRIVER(zoar, 1500000, zoar_irq_interrupt, nmi_interrupt, zoar_gfxdecodeinfo, sizeof(zoar_palette)/3);
+MACHINE_DRIVER(zoar, 1500000, zoar_irq_interrupt, nmi_interrupt, zoar_gfxdecodeinfo, 64);
 
 /***************************************************************************
 
@@ -1109,12 +1087,12 @@ ROM_START( eggs_rom )
 	ROM_RELOAD(          0xf000, 0x1000 )   /* for reset/interrupt vectors */
 
 	ROM_REGION(0x6000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "j12.bin",  0x0000, 0x1000, 0x27ab70f5 )
-	ROM_LOAD( "j10.bin",  0x1000, 0x1000, 0x8786e8c4 )
+	ROM_LOAD( "g12.bin",  0x0000, 0x1000, 0x4beb2eab )
+	ROM_LOAD( "g10.bin",  0x1000, 0x1000, 0x61460352 )
 	ROM_LOAD( "h12.bin",  0x2000, 0x1000, 0x9c23f42b )
 	ROM_LOAD( "h10.bin",  0x3000, 0x1000, 0x77b53ac7 )
-	ROM_LOAD( "g12.bin",  0x4000, 0x1000, 0x4beb2eab )
-	ROM_LOAD( "g10.bin",  0x5000, 0x1000, 0x61460352 )
+	ROM_LOAD( "j12.bin",  0x4000, 0x1000, 0x27ab70f5 )
+	ROM_LOAD( "j10.bin",  0x5000, 0x1000, 0x8786e8c4 )
 
 	ROM_REGION(0x10000)     /* Dummy region for nonexistent audio CPU */
 ROM_END
@@ -1129,12 +1107,12 @@ ROM_START( scregg_rom )
 	ROM_RELOAD(             0xf000, 0x1000 )        /* for reset/interrupt vectors */
 
 	ROM_REGION(0x6000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "scregg.j12",  0x0000, 0x1000, 0xe5077119 )
-	ROM_LOAD( "scregg.j10",  0x1000, 0x1000, 0xc41a7b5e )
+	ROM_LOAD( "scregg.g12",  0x0000, 0x1000, 0xa3b0e2d6 )
+	ROM_LOAD( "scregg.g10",  0x1000, 0x1000, 0xeb7f0865 )
 	ROM_LOAD( "scregg.h12",  0x2000, 0x1000, 0xc48207f2 )
 	ROM_LOAD( "scregg.h10",  0x3000, 0x1000, 0x007800b8 )
-	ROM_LOAD( "scregg.g12",  0x4000, 0x1000, 0xa3b0e2d6 )
-	ROM_LOAD( "scregg.g10",  0x5000, 0x1000, 0xeb7f0865 )
+	ROM_LOAD( "scregg.j12",  0x4000, 0x1000, 0xe5077119 )
+	ROM_LOAD( "scregg.j10",  0x5000, 0x1000, 0xc41a7b5e )
 
 	ROM_REGION(0x10000)     /* Dummy region for audio CPU. Only defined so we
 							   can use a common machine driver definition */
@@ -1217,18 +1195,20 @@ ROM_START( zoar_rom )
 	ROM_LOAD( "zoar17",     0xf000, 0x1000, 0x5f438e27 )
 
 	ROM_REGION(0xa800)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "zoar00",     0x0000, 0x1000, 0x209f31c1 )
-	ROM_LOAD( "zoar01",     0x1000, 0x1000, 0xbed82d5a )
+	ROM_LOAD( "zoar06",     0x0000, 0x1000, 0x1d88e394 )
+	ROM_LOAD( "zoar07",     0x1000, 0x1000, 0x1f03000f )
 	ROM_LOAD( "zoar03",     0x2000, 0x1000, 0x8e0e75b6 )
 	ROM_LOAD( "zoar04",     0x3000, 0x1000, 0xd84f692d )
-	ROM_LOAD( "zoar06",     0x4000, 0x1000, 0x1d88e394 )
-	ROM_LOAD( "zoar07",     0x5000, 0x1000, 0x1f03000f )
-	ROM_LOAD( "zoar10",     0x6000, 0x0800, 0xae683efc )
+	ROM_LOAD( "zoar00",     0x4000, 0x1000, 0x209f31c1 )
+	ROM_LOAD( "zoar01",     0x5000, 0x1000, 0xbed82d5a )
+
+	ROM_LOAD( "zoar12",     0x6000, 0x0800, 0xe0a986e5 )
 	ROM_LOAD( "zoar11",     0x6800, 0x0800, 0x01d2fca0 )
-	ROM_LOAD( "zoar12",     0x7000, 0x0800, 0xe0a986e5 )
-	ROM_LOAD( "zoar02",     0x7800, 0x1000, 0x40a9bd9f )
+	ROM_LOAD( "zoar10",     0x7000, 0x0800, 0xae683efc )
+
+	ROM_LOAD( "zoar08",     0x7800, 0x1000, 0xd7226052 )
 	ROM_LOAD( "zoar05",     0x8800, 0x1000, 0xc94cd6a8 )
-	ROM_LOAD( "zoar08",     0x9800, 0x1000, 0xd7226052 )
+	ROM_LOAD( "zoar02",     0x9800, 0x1000, 0x40a9bd9f )
 
 	ROM_REGION(0x10000)      /* 64k for the audio CPU */
 	ROM_LOAD( "zoar09",     0xf000, 0x1000, 0xd9658801 )
@@ -1525,7 +1505,7 @@ static void zoar_hisave(void)
 }
 
 
-#define GAMEDRIVER(GAMENAME, BASENAME, DECODE, PROM, PAL, COLTAB, DESC, CREDITS) \
+#define GAMEDRIVER(GAMENAME, BASENAME, DECODE, PROM, DESC, CREDITS) \
 struct GameDriver GAMENAME##_driver =          \
 {                                              \
 	DESC,	                                   \
@@ -1540,39 +1520,39 @@ struct GameDriver GAMENAME##_driver =          \
 											   \
 	BASENAME##_input_ports,                	   \
 											   \
-	PROM, PAL, COLTAB,                     	   \
+	PROM, 0, 0,                         	   \
 	ORIENTATION_DEFAULT,                   	   \
 											   \
 	BASENAME##_hiload, BASENAME##_hisave   	   \
 }
 
-GAMEDRIVER(btime, btime, btime_decode, 0, 0, 0, "Burger Time (Midway)",
+GAMEDRIVER(btime, btime, btime_decode, 0, "Burger Time (Midway)",
 		   "Kevin Brisley (Replay emulator)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nZsolt Vasvari (ROM decryption)");
 
-GAMEDRIVER(btimea, btime, btime_decode, 0, 0, 0, "Burger Time (Data East)",
+GAMEDRIVER(btimea, btime, btime_decode, 0, "Burger Time (Data East)",
 		   "Kevin Brisley (Replay emulator)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nZsolt Vasvari (ROM decryption)");
 
-GAMEDRIVER(hamburge, btime, 0, hamburge_color_prom, 0, 0, "Hamburger",
+GAMEDRIVER(hamburge, btime, 0, hamburge_color_prom, "Hamburger",
 		   "Kevin Brisley (Replay emulator)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)");
 
-GAMEDRIVER(eggs, eggs, 0, 0, eggs_palette, eggs_colortable, "Eggs",
+GAMEDRIVER(eggs, eggs, 0, eggs_color_prom, "Eggs",
 		   "Nicola Salmoria (MAME driver)\nMike Balfour (high score save)");
 
-GAMEDRIVER(scregg, eggs, 0, 0, eggs_palette, eggs_colortable, "Scrambled Egg",
+GAMEDRIVER(scregg, eggs, 0, eggs_color_prom, "Scrambled Egg",
 		   "Nicola Salmoria (MAME driver)\nMike Balfour (high score save)");
 
-GAMEDRIVER(lnc, lnc, lnc_decode, lnc_color_prom, 0, 0, "Lock'n'Chase",
+GAMEDRIVER(lnc, lnc, lnc_decode, lnc_color_prom, "Lock'n'Chase",
 		   "Zsolt Vasvari\nKevin Brisley (Bunp 'n' Jump driver)\nMirko Buffoni (Audio/Add. code)");
 
-GAMEDRIVER(bnj, bnj, lnc_decode, 0, 0, 0, "Bump 'n' Jump",
+GAMEDRIVER(bnj, bnj, lnc_decode, 0, "Bump 'n' Jump",
 		   "Kevin Brisley (MAME driver)\nMirko Buffoni (Audio/Add. code)");
 
-GAMEDRIVER(brubber, bnj, lnc_decode, 0, 0, 0, "Burnin' Rubber",
+GAMEDRIVER(brubber, bnj, lnc_decode, 0, "Burnin' Rubber",
 		   "Kevin Brisley (MAME driver)\nMirko Buffoni (Audio/Add. code)");
 
-GAMEDRIVER(caractn, bnj, lnc_decode, 0, 0, 0, "Car Action",
+GAMEDRIVER(caractn, bnj, lnc_decode, 0, "Car Action",
 		   "Ivan Mackintosh\nKevin Brisley (Bump 'n' Jump driver)\nMirko Buffoni (Audio/Add. code)");
 
-GAMEDRIVER(zoar, zoar, zoar_decode, 0, zoar_palette, zoar_colortable, "Zoar",
+GAMEDRIVER(zoar, zoar, zoar_decode, zoar_color_prom, "Zoar",
 		   "Zsolt Vasvari\nKevin Brisley (Bunp 'n' Jump driver)");
 

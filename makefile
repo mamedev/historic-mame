@@ -10,7 +10,7 @@ DEFS   = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES -DBETA_VERSION
 CFLAGS = -Isrc -Isrc/msdos -fomit-frame-pointer -O3 -mpentium -Werror -Wall \
 	-W -Wno-sign-compare -Wno-unused \
 	-Wpointer-arith -Wbad-function-cast -Wcast-align -Waggregate-return \
-	-Wstrict-prototypes
+        -Wstrict-prototypes
 #	-pedantic \
 #	-Wredundant-decls \
 #	-Wlarger-than-27648 \
@@ -61,7 +61,7 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/machine/scramble.o obj/sndhrdw/scramble.o obj/drivers/scramble.o \
          obj/drivers/scobra.o \
          obj/vidhrdw/amidar.o obj/drivers/amidar.o \
-         obj/machine/warpwarp.o obj/vidhrdw/warpwarp.o obj/drivers/warpwarp.o \
+         obj/vidhrdw/warpwarp.o obj/drivers/warpwarp.o \
          obj/vidhrdw/popeye.o obj/drivers/popeye.o \
          obj/vidhrdw/rallyx.o obj/drivers/rallyx.o \
          obj/drivers/locomotn.o \
@@ -69,7 +69,7 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/vidhrdw/timeplt.o obj/drivers/timeplt.o \
          obj/vidhrdw/phoenix.o obj/sndhrdw/phoenix.o obj/drivers/phoenix.o \
          obj/sndhrdw/pleiads.o \
-         obj/machine/carnival.o obj/vidhrdw/carnival.o obj/sndhrdw/carnival.o obj/drivers/carnival.o \
+         obj/vidhrdw/vicdual.o obj/sndhrdw/vicdual.o obj/drivers/vicdual.o \
          obj/machine/8080bw.o obj/vidhrdw/8080bw.o obj/sndhrdw/8080bw.o obj/drivers/8080bw.o \
          obj/vidhrdw/mario.o obj/sndhrdw/mario.o obj/drivers/mario.o \
          obj/vidhrdw/zaxxon.o obj/sndhrdw/zaxxon.o obj/drivers/zaxxon.o \
@@ -139,6 +139,7 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/machine/mcr.o \
          obj/vidhrdw/mcr1.o obj/vidhrdw/mcr2.o obj/vidhrdw/mcr3.o \
          obj/drivers/mcr1.o obj/drivers/mcr2.o obj/drivers/mcr3.o \
+         obj/machine/mcr68.o obj/vidhrdw/mcr68.o obj/drivers/mcr68.o \
          obj/machine/espial.o obj/vidhrdw/espial.o obj/drivers/espial.o \
          obj/machine/tp84.o obj/vidhrdw/tp84.o obj/drivers/tp84.o \
          obj/vidhrdw/mikie.o obj/drivers/mikie.o \
@@ -163,7 +164,11 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/machine/slapstic.o \
          obj/machine/gauntlet.o obj/vidhrdw/gauntlet.o obj/drivers/gauntlet.o \
          obj/vidhrdw/klax.o obj/drivers/klax.o \
+         obj/machine/blstroid.o obj/vidhrdw/blstroid.o obj/drivers/blstroid.o \
+         obj/vidhrdw/eprom.o obj/drivers/eprom.o \
+         obj/vidhrdw/xybots.o obj/drivers/xybots.o \
          obj/machine/atarisy1.o obj/vidhrdw/atarisy1.o obj/drivers/atarisy1.o \
+         obj/machine/atarisy2.o obj/vidhrdw/atarisy2.o obj/drivers/atarisy2.o \
 		 obj/machine/atarigen.o \
          obj/machine/foodf.o obj/vidhrdw/foodf.o obj/drivers/foodf.o \
          obj/vidhrdw/circus.o obj/drivers/circus.o \
@@ -213,7 +218,7 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/vidhrdw/blockade.o obj/drivers/blockade.o \
          obj/machine/leprechn.o obj/vidhrdw/leprechn.o obj/drivers/leprechn.o \
          obj/vidhrdw/atetris.o obj/drivers/atetris.o \
-         obj/vidhrdw/dday.o obj/drivers/dday.o \
+         obj/vidhrdw/dday.o obj/sndhrdw/dday.o obj/drivers/dday.o \
          obj/machine/system8.o obj/drivers/system8.o \
          obj/vidhrdw/pacland.o obj/drivers/pacland.o \
          obj/vidhrdw/tmnt.o obj/drivers/tmnt.o \
@@ -227,18 +232,21 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/vidhrdw/aeroboto.o obj/drivers/aeroboto.o \
          obj/machine/system16.o obj/vidhrdw/shinobi.o \
          obj/drivers/shinobi.o obj/drivers/altbeast.o obj/drivers/goldnaxe.o \
-         obj/vidhrdw/safari.o obj/drivers/safari.o \
-         obj/vidhrdw/redalert.o obj/drivers/redalert.o \
+         obj/vidhrdw/redalert.o obj/sndhrdw/redalert.o obj/drivers/redalert.o \
          obj/machine/irobot.o obj/vidhrdw/irobot.o obj/drivers/irobot.o \
-         obj/Z80/Z80.o obj/M6502/M6502.o obj/I86/I86.o obj/I8039/I8039.o \
+         obj/vidhrdw/crbaloon.o obj/drivers/crbaloon.o \
+         obj/vidhrdw/zaccaria.o obj/drivers/zaccaria.o \
+         obj/vidhrdw/ssi.o obj/drivers/ssi.o \
+         obj/Z80/Z80.o obj/M6502/M6502.o obj/I86/I86.o obj/I8039/I8039.o obj/I8085/I8085.o \
 		 obj/M6809/m6809.o obj/M6808/m6808.o obj/M6805/m6805.o \
+         obj/T11/t11.o \
          obj/M68000/opcode0.o obj/M68000/opcode1.o obj/M68000/opcode2.o obj/M68000/opcode3.o obj/M68000/opcode4.o obj/M68000/opcode5.o \
          obj/M68000/opcode6.o obj/M68000/opcode7.o obj/M68000/opcode8.o obj/M68000/opcode9.o obj/M68000/opcodeb.o \
          obj/M68000/opcodec.o obj/M68000/opcoded.o obj/M68000/opcodee.o obj/M68000/mc68kmem.o \
          obj/M68000/cpufunc.o \
-         obj/mamedbg.o obj/asg.o obj/M6502/6502dasm.o \
+         obj/mamedbg.o obj/asg.o obj/M6502/6502dasm.o obj/I8085/8085dasm.o \
          obj/M6809/6809dasm.o obj/M6808/6808dasm.o obj/M6805/6805dasm.o \
-         obj/M68000/m68kdasm.o \
+         obj/T11/t11dasm.o obj/M68000/m68kdasm.o \
          obj/msdos/msdos.o obj/msdos/video.o obj/msdos/vector.o obj/msdos/sound.o \
          obj/msdos/input.o obj/msdos/fileio.o obj/msdos/config.o obj/msdos/fronthlp.o
 
@@ -266,10 +274,12 @@ makedir:
 	mkdir obj\M6502
 	mkdir obj\I86
 	mkdir obj\I8039
+	mkdir obj\I8085
 	mkdir obj\M6809
 	mkdir obj\M6808
 	mkdir obj\M6805
 	mkdir obj\M68000
+	mkdir obj\T11
 	mkdir obj\drivers
 	mkdir obj\machine
 	mkdir obj\vidhrdw
@@ -282,10 +292,12 @@ clean:
 	del obj\M6502\*.o
 	del obj\I86\*.o
 	del obj\I8039\*.o
+	del obj\I8085\*.o
 	del obj\M6809\*.o
 	del obj\M6808\*.o
 	del obj\M6805\*.o
 	del obj\M68000\*.o
+	del obj\T11\*.o
 	del obj\drivers\*.o
 	del obj\machine\*.o
 	del obj\vidhrdw\*.o
@@ -297,8 +309,10 @@ cleandebug:
 	del obj\*.o
 	del obj\Z80\*.o
 	del obj\M6502\*.o
+	del obj\I8085\*.o
 	del obj\M6809\*.o
 	del obj\M6808\*.o
 	del obj\M6805\*.o
 	del obj\M68000\*.o
+	del obj\T11\*.o
 	del mame.exe

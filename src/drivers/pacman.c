@@ -6,19 +6,20 @@ Pac Man memory map (preliminary)
 4000-43ff Video RAM
 4400-47ff Color RAM
 4c00-4fff RAM
-8000-9fff ROM (Ms Pac Man and Pon Poko only)
-a000-bfff ROM (Pon Poko only)
+8000-9fff ROM (Ms Pac Man and Ponpoko only)
+a000-bfff ROM (Ponpoko only)
 
 memory mapped ports:
 
 read:
 5000      IN0
 5040      IN1
-5080      DSW
+5080      DSW 1
+50c0	  DSW 2 (Ponpoko only)
 see the input_ports definition below for details on the input bits
 
 write:
-4ff2-4ffd 6 pairs of two bytes:
+4ff0-4fff 8 pairs of two bytes:
           the first byte contains the sprite image number (bits 2-7), Y flip (bit 0),
 		  X flip (bit 1); the second byte the color
 5000      interrupt enable
@@ -41,7 +42,7 @@ write:
 505a      sound voice 2 volume (nibble)
 505b-505e sound voice 3 frequency (nibbles)
 505f      sound voice 3 volume (nibble)
-5062-506d Sprite coordinates, x/y pairs for 6 sprites
+5060-506f Sprite coordinates, x/y pairs for 8 sprites
 50c0      Watchdog reset
 
 I/O ports:
@@ -57,9 +58,9 @@ OUT on port $0 sets the interrupt vector
 void pacman_init_machine(void);
 int pacman_interrupt(void);
 
+int pacman_vh_start(void);
 void pengo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void pengo_updatehook0(int offset);
-int pacman_vh_start(void);
 void pengo_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 extern unsigned char *pengo_soundregs;
@@ -75,8 +76,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x4c00, 0x4fff, MRA_RAM },	/* including sprite codes at 4ff0-4fff */
 	{ 0x5000, 0x503f, input_port_0_r },	/* IN0 */
 	{ 0x5040, 0x507f, input_port_1_r },	/* IN1 */
-	{ 0x5080, 0x50bf, input_port_2_r },	/* DSW */
-	{ 0x8000, 0xbfff, MRA_ROM },	/* Ms. Pac Man / Pon Poko only */
+	{ 0x5080, 0x50bf, input_port_2_r },	/* DSW1 */
+	{ 0x50c0, 0x50ff, input_port_3_r },	/* DSW2 */
+	{ 0x8000, 0xbfff, MRA_ROM },	/* Ms. Pac Man / Ponpoko only */
 	{ -1 }	/* end of table */
 };
 
@@ -92,13 +94,15 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5002, 0x5002, MWA_NOP },
 	{ 0x5003, 0x5003, MWA_RAM, &flip_screen },
  	{ 0x5004, 0x5005, osd_led_w },
- 	{ 0x5006, 0x5007, MWA_NOP },
+ 	{ 0x5006, 0x5006, MWA_NOP },
+ 	{ 0x5007, 0x5007, coin_counter_w },
 	{ 0x5040, 0x505f, pengo_sound_w, &pengo_soundregs },
 	{ 0x5060, 0x506f, MWA_RAM, &spriteram_2 },
 	{ 0x50c0, 0x50c0, watchdog_reset_w },
-	{ 0x8000, 0xbfff, MWA_ROM },	/* Ms. Pac Man / Pon Poko only */
+	{ 0x8000, 0xbfff, MWA_ROM },	/* Ms. Pac Man / Ponpoko only */
 	{ 0xc000, 0xc3ff, videoram00_w },	/* mirror address for video ram, */
 	{ 0xc400, 0xc7ef, videoram01_w },	/* used to display HIGH SCORE and CREDITS */
+	{ 0xffff, 0xffff, MWA_NOP },		/* Eyes writes to this location to simplify code */
 	{ -1 }	/* end of table */
 };
 
@@ -139,7 +143,7 @@ INPUT_PORTS_START( pacman_input_ports )
 	PORT_DIPSETTING(    0x80, "Upright" )
 	PORT_DIPSETTING(    0x00, "Cocktail" )
 
-	PORT_START	/* DSW */
+	PORT_START	/* DSW 1 */
  	PORT_DIPNAME( 0x03, 0x01, "Coinage", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x03, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x01, "1 Coin/1 Credit" )
@@ -154,13 +158,16 @@ INPUT_PORTS_START( pacman_input_ports )
 	PORT_DIPSETTING(    0x00, "10000" )
 	PORT_DIPSETTING(    0x10, "15000" )
 	PORT_DIPSETTING(    0x20, "20000" )
-	PORT_DIPSETTING(    0x30, "None" )
+	PORT_DIPSETTING(    0x30, "Never" )
 	PORT_DIPNAME( 0x40, 0x40, "Difficulty", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x40, "Normal" )
 	PORT_DIPSETTING(    0x00, "Hard" )
 	PORT_DIPNAME( 0x80, 0x80, "Ghost Names", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x80, "Normal" )
 	PORT_DIPSETTING(    0x00, "Alternate" )
+
+	PORT_START	/* DSW 2 */
+ 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* FAKE */
 	/* This fake input port is used to get the status of the fire button */
@@ -199,7 +206,7 @@ INPUT_PORTS_START( mspacman_input_ports )
 	PORT_DIPSETTING(    0x80, "Upright" )
 	PORT_DIPSETTING(    0x00, "Cocktail" )
 
-	PORT_START	/* DSW */
+	PORT_START	/* DSW 1 */
  	PORT_DIPNAME( 0x03, 0x01, "Coinage", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x03, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x01, "1 Coin/1 Credit" )
@@ -214,11 +221,14 @@ INPUT_PORTS_START( mspacman_input_ports )
 	PORT_DIPSETTING(    0x00, "10000" )
 	PORT_DIPSETTING(    0x10, "15000" )
 	PORT_DIPSETTING(    0x20, "20000" )
-	PORT_DIPSETTING(    0x30, "None" )
+	PORT_DIPSETTING(    0x30, "Never" )
 	PORT_DIPNAME( 0x40, 0x40, "Difficulty", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x40, "Normal" )
 	PORT_DIPSETTING(    0x00, "Hard" )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* DSW 2 */
+ 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* FAKE */
 	/* This fake input port is used to get the status of the fire button */
@@ -255,7 +265,7 @@ INPUT_PORTS_START( crush_input_ports )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 
-	PORT_START	/* DSW */
+	PORT_START	/* DSW 1 */
  	PORT_DIPNAME( 0x03, 0x01, "Coinage", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x03, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x01, "1 Coin/1 Credit" )
@@ -278,6 +288,136 @@ INPUT_PORTS_START( crush_input_ports )
 	PORT_DIPNAME( 0x80, 0x80, "Unknown 4", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
+
+	PORT_START	/* DSW 2 */
+ 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( ponpoko_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
+
+	/* The 2nd player controls are used even in upright mode */
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* DSW 1 */
+	PORT_DIPNAME( 0x03, 0x01, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "10000" )
+	PORT_DIPSETTING(    0x02, "30000" )
+	PORT_DIPSETTING(    0x03, "50000" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x0c, 0x00, "Unknown 1", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "0" )
+	PORT_DIPSETTING(    0x04, "1" )
+	PORT_DIPSETTING(    0x08, "2" )
+	PORT_DIPSETTING(    0x0c, "3" )
+	PORT_DIPNAME( 0x30, 0x20, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x10, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPSETTING(    0x30, "5" )
+	PORT_DIPNAME( 0x40, 0x40, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown 2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+
+	PORT_START	/* DSW 2 */
+ 	PORT_DIPNAME( 0x0f, 0x01, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "A 3/1 B 3/1" )
+	PORT_DIPSETTING(    0x0e, "A 3/1 B 1/2" )
+	PORT_DIPSETTING(    0x0f, "A 3/1 B 1/4" )
+	PORT_DIPSETTING(    0x02, "A 2/1 B 2/1" )
+	PORT_DIPSETTING(    0x0d, "A 2/1 B 1/1" )
+	PORT_DIPSETTING(    0x07, "A 2/1 B 1/3" )
+	PORT_DIPSETTING(    0x0b, "A 2/1 B 1/5" )
+	PORT_DIPSETTING(    0x0c, "A 2/1 B 1/6" )
+	PORT_DIPSETTING(    0x01, "A 1/1 B 1/1" )
+	PORT_DIPSETTING(    0x06, "A 1/1 B 4/5" )
+	PORT_DIPSETTING(    0x05, "A 1/1 B 2/3" )
+	PORT_DIPSETTING(    0x0a, "A 1/1 B 1/3" )
+	PORT_DIPSETTING(    0x08, "A 1/1 B 1/5" )
+	PORT_DIPSETTING(    0x09, "A 1/1 B 1/6" )
+	PORT_DIPSETTING(    0x03, "A 1/2 B 1/2" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown 3", IP_KEY_NONE )  /* Most likely unused */
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown 4", IP_KEY_NONE )  /* Most likely unused */
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown 5", IP_KEY_NONE )  /* Most likely unused */
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( eyes_input_ports )
+    PORT_START  /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BITX(0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(0x10, "Off" )
+	PORT_DIPSETTING(0x00, "On" )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+
+	PORT_START	/* DSW 1 */
+ 	PORT_DIPNAME( 0x03, 0x03, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	PORT_DIPNAME( 0x0c, 0x08, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x0c, "2" )
+	PORT_DIPSETTING(    0x08, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x30, 0x30, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x30, "50000" )
+	PORT_DIPSETTING(    0x20, "75000" )
+	PORT_DIPSETTING(    0x10, "100000" )
+	PORT_DIPSETTING(    0x00, "125000" )
+	PORT_DIPNAME( 0x40, 0x40, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )  /* Not accessed */
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+
+	PORT_START	/* DSW 2 */
+ 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 
@@ -295,12 +435,12 @@ static struct GfxLayout spritelayout =
 	64*8	/* every sprite takes 64 bytes */
 };
 
+
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0x1000, &spritelayout, 0, 32 },
 	{ -1 } /* end of array */
 };
-
 
 
 static struct GfxTileLayout tilelayout =
@@ -312,6 +452,7 @@ static struct GfxTileLayout tilelayout =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	16*8	/* every char takes 16 bytes */
 };
+
 
 static struct GfxTileDecodeInfo gfxtiledecodeinfo[] =
 {
@@ -363,7 +504,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	16,4*32,
+	16, 4*32,
 	pengo_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -556,6 +697,95 @@ ROM_START( ponpoko_rom )
 	ROM_LOAD( "ppoko10.bin", 0x1000, 0x1000, 0xe3fe3e40 )
 ROM_END
 
+ROM_START( eyes_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "D7", 0x0000, 0x1000, 0xf98019b2 )
+	ROM_LOAD( "E7", 0x1000, 0x1000, 0xa1f59e25 )
+	ROM_LOAD( "F7", 0x2000, 0x1000, 0x03bd58d3 )
+	ROM_LOAD( "H7", 0x3000, 0x1000, 0x5125cc69 )
+
+	ROM_REGION(0x2000)  /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "D5", 0x0000, 0x1000, 0x8555fbeb )
+	ROM_LOAD( "E5", 0x1000, 0x1000, 0x73ec4d68 )
+ROM_END
+
+
+
+static void ponpoko_decode(void)
+{
+	int i, j;
+	unsigned char *RAM, temp;
+
+	/* The gfx data is swapped wrt the other Pac Man hardware games. */
+	/* Here we revert it to the usual format. */
+
+	/* Characters */
+	RAM = Machine->memory_region[1];
+	for (i = 0; i < 0x1000; i += 0x10)
+	{
+		for (j = 0; j < 8; j++)
+		{
+			temp          = RAM[i+j+0x08];
+			RAM[i+j+0x08] = RAM[i+j+0x00];
+			RAM[i+j+0x00] = temp;
+		}
+	}
+
+	/* Sprites */
+	for (; i < 0x2000; i += 0x20)
+	{
+		for (j = 0; j < 8; j++)
+		{
+			temp          = RAM[i+j+0x18];
+			RAM[i+j+0x18] = RAM[i+j+0x10];
+			RAM[i+j+0x10] = RAM[i+j+0x08];
+			RAM[i+j+0x08] = RAM[i+j+0x00];
+			RAM[i+j+0x00] = temp;
+		}
+	}
+}
+
+
+static void eyes_decode(void)
+{
+	int i;
+	unsigned char *RAM;
+
+	/* CPU ROMs */
+
+	/* Data lines D3 and D5 swapped */
+	RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	for (i = 0; i < 0x4000; i++)
+	{
+		RAM[i] =  (RAM[i] & 0xc0) | ((RAM[i] & 0x08) << 2) |
+				  (RAM[i] & 0x10) | ((RAM[i] & 0x20) >> 2) | (RAM[i] & 0x07);
+	}
+
+
+	/* Graphics ROMs */
+
+	/* Data lines D4 and D6 and address lines A0 and A2 are swapped */
+	RAM = Machine->memory_region[1];
+	for (i = 0; i < 0x2000; i += 8)
+	{
+		int j;
+		unsigned char swapbuffer[8];
+
+		for (j = 0; j < 8; j++)
+		{
+			swapbuffer[j] = RAM[i + (j >> 2) + (j & 2) + ((j & 1) << 2)];
+		}
+
+		for (j = 0; j < 8; j++)
+		{
+			char ch = swapbuffer[j];
+
+			RAM[i + j] = (ch & 0x80) | ((ch & 0x10) << 2) |
+				         (ch & 0x20) | ((ch & 0x40) >> 2) | (ch & 0x0f);
+		}
+	}
+}
+
 
 
 /* waveforms for the audio hardware */
@@ -627,6 +857,35 @@ static unsigned char crush_color_prom[] =
 };
 
 
+static void copytoscreen(int mem, int len, int screen, int direction)
+{
+	char buf[10];
+	int hi;
+
+	hi =      (RAM[mem + direction*3] & 0x0f) +
+		      (RAM[mem + direction*3] >> 4)   * 10 +
+		      (RAM[mem + direction*2] & 0x0f) * 100 +
+		      (RAM[mem + direction*2] >> 4)   * 1000 +
+		      (RAM[mem + direction*1] & 0x0f) * 10000 +
+		      (RAM[mem + direction*1] >> 4)   * 100000;
+
+	if (len == 4)
+	{
+		hi += (RAM[mem + 0*direction] & 0x0f) * 1000000 +
+		      (RAM[mem + 0*direction] >> 4)   * 10000000;
+	}
+
+	if (hi)
+	{
+		sprintf(buf,"%8d",hi);
+		if (buf[2] != ' ') videoram00_w(screen + direction*0, buf[2]-'0');
+		if (buf[3] != ' ') videoram00_w(screen + direction*1, buf[3]-'0');
+		if (buf[4] != ' ') videoram00_w(screen + direction*2, buf[4]-'0');
+		if (buf[5] != ' ') videoram00_w(screen + direction*3, buf[5]-'0');
+		if (buf[6] != ' ') videoram00_w(screen + direction*4, buf[6]-'0');
+		                   videoram00_w(screen + direction*5, buf[7]-'0');
+	}
+}
 
 static int pacman_hiload(void)
 {
@@ -637,7 +896,7 @@ static int pacman_hiload(void)
 	if (++resetcount < 60) return 0;
 
 	/* wait for "HIGH SCORE" to be on screen */
-	if (memcmp(&RAM[0x43d1],"\x48\x47\x49\x48",2) == 0)
+	if (memcmp(&RAM[0x43d1],"\x48\x47",2) == 0)
 	{
 		void *f;
 
@@ -646,31 +905,12 @@ static int pacman_hiload(void)
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			char buf[10];
-			int hi;
-
-
 			osd_fread(f,&RAM[0x4e88],4);
+
 			/* also copy the high score to the screen, otherwise it won't be */
 			/* updated */
-			hi = (RAM[0x4e88] & 0x0f) +
-					(RAM[0x4e88] >> 4) * 10 +
-					(RAM[0x4e89] & 0x0f) * 100 +
-					(RAM[0x4e89] >> 4) * 1000 +
-					(RAM[0x4e8a] & 0x0f) * 10000 +
-					(RAM[0x4e8a] >> 4) * 100000 +
-					(RAM[0x4e8b] & 0x0f) * 1000000 +
-					(RAM[0x4e8b] >> 4) * 10000000;
-			if (hi)
-			{
-				sprintf(buf,"%8d",hi);
-				if (buf[2] != ' ') videoram00_w(0x03f2,buf[2]-'0');
-				if (buf[3] != ' ') videoram00_w(0x03f1,buf[3]-'0');
-				if (buf[4] != ' ') videoram00_w(0x03f0,buf[4]-'0');
-				if (buf[5] != ' ') videoram00_w(0x03ef,buf[5]-'0');
-				if (buf[6] != ' ') videoram00_w(0x03ee,buf[6]-'0');
-				cpu_writemem16(0x43ed,buf[7]-'0');	/* ASG 971005 */
-			}
+			copytoscreen(0x4e8b, 4, 0x3f2, -1);
+
 			osd_fclose(f);
 		}
 
@@ -704,7 +944,7 @@ static int crush_hiload(void)
 	if (++resetcount < 60) return 0;
 
 	/* wait for "HI SCORE" to be on screen */
-	if (memcmp(&RAM[0x43d0],"\x53\x40\x49\x48",2) == 0)
+	if (memcmp(&RAM[0x43d0],"\x53\x40",2) == 0)
 	{
 		void *f;
 
@@ -713,29 +953,12 @@ static int crush_hiload(void)
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			char buf[10];
-			int hi;
-
-
 			osd_fread(f,&RAM[0x4c80],3);
+
 			/* also copy the high score to the screen, otherwise it won't be */
 			/* updated */
-			hi = (RAM[0x4c82] & 0x0f) +
-					(RAM[0x4c82] >> 4) * 10 +
-					(RAM[0x4c81] & 0x0f) * 100 +
-					(RAM[0x4c81] >> 4) * 1000 +
-					(RAM[0x4c80] & 0x0f) * 10000 +
-					(RAM[0x4c80] >> 4) * 100000;
-			if (hi)
-			{
-				sprintf(buf,"%8d",hi);
-				if (buf[2] != ' ') videoram00_w(0x03f3,buf[2]-'0');
-				if (buf[3] != ' ') videoram00_w(0x03f2,buf[3]-'0');
-				if (buf[4] != ' ') videoram00_w(0x03f1,buf[4]-'0');
-				if (buf[5] != ' ') videoram00_w(0x03f0,buf[5]-'0');
-				if (buf[6] != ' ') videoram00_w(0x03ef,buf[6]-'0');
-				cpu_writemem16(0x43ee,buf[7]-'0');	/* ASG 971005 */
-			}
+			copytoscreen(0x4c83, 3, 0x3f3, -1);
+
 			osd_fclose(f);
 		}
 
@@ -760,242 +983,138 @@ static void crush_hisave(void)
 
 
 
-struct GameDriver pacman_driver =
+static int eyes_hiload(void)
 {
-	"Pac Man (Midway)",
-	"pacman",
-	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)",
-	&machine_driver,
+	if (memcmp(&RAM[0x4d30],"\x90\x52\x00",3) == 0)
+	{
+		void *f;
 
-	pacman_rom,
-	0, 0,
-	0,
-	sound_prom,	/* sound_prom */
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x4cf7],0x3c);
 
-	pacman_input_ports,
+			/* also copy the high score to the screen, otherwise it won't be */
+			/* updated */
+			copytoscreen(0x4cfd, 3, 0x3f2, -1);
 
-	pacman_color_prom, 0, 0,
-	ORIENTATION_ROTATE_90,
+			osd_fclose(f);
+		}
 
-	pacman_hiload, pacman_hisave
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+static void eyes_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x4cf7],0x3c);
+		osd_fclose(f);
+	}
+}
+
+
+static int ponpoko_hiload(void)
+{
+	if (memcmp(&RAM[0x406c],"\x0f\x0f\x0f\x0f\x0f\x00",6) == 0)
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x4e5a],0x14);
+			memcpy(&RAM[0x4c40], &RAM[0x4e5a], 3);
+
+			/* also copy the high score to the screen, otherwise it won't be */
+			/* updated */
+			copytoscreen(0x4e59, 3, 0x6c, 1);
+
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+static void ponpoko_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x4e5a],0x14);
+		osd_fclose(f);
+	}
+}
+
+
+#define GAMEDRIVER(NAME, BASENAME, ORIENT, DECODE, DESC, CREDITS)        \
+																		 \
+struct GameDriver NAME##_driver =										 \
+{																		 \
+	DESC,																 \
+	#NAME,																 \
+	CREDITS,															 \
+	&machine_driver,													 \
+																		 \
+	NAME##_rom,															 \
+	DECODE, 0,														     \
+	0,																	 \
+	sound_prom,	/* sound_prom */										 \
+																		 \
+	BASENAME##_input_ports,												 \
+																		 \
+	BASENAME##_color_prom, 0, 0,										 \
+	ORIENT,																 \
+																		 \
+	BASENAME##_hiload, BASENAME##_hisave								 \
 };
 
-struct GameDriver namcopac_driver =
-{
-	"Pac Man (Namco)",
-	"namcopac",
-	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)",
-	&machine_driver,
 
-	namcopac_rom,
-	0, 0,
-	0,
-	sound_prom,	/* sound_prom */
+#define mspacman_hiload      pacman_hiload
+#define pacplus_hiload       pacman_hiload
+#define mspacman_hisave      pacman_hisave
+#define pacplus_hisave       pacman_hisave
 
-	pacman_input_ports,
+#define pacplus_input_ports  pacman_input_ports
 
-	pacman_color_prom, 0, 0,
-	ORIENTATION_ROTATE_90,
+#define mspacman_color_prom  pacman_color_prom
+#define ponpoko_color_prom   pacman_color_prom  /* Probably Correct */
+#define eyes_color_prom      pacman_color_prom  /* Wrong !!! */
 
-	pacman_hiload, pacman_hisave
-};
 
-struct GameDriver pacmanjp_driver =
-{
-	"Pac Man (Namco, alternate)",
-	"pacmanjp",
-	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)",
-	&machine_driver,
+#define BASE_CREDITS "Allard van der Bas (original code)\nNicola Salmoria (MAME driver)"
 
-	pacmanjp_rom,
-	0, 0,
-	0,
-	sound_prom,	/* sound_prom */
 
-	pacman_input_ports,
+GAMEDRIVER(pacman,   pacman,   ORIENTATION_ROTATE_90, 0, "Pac Man (Midway)", BASE_CREDITS)
 
-	pacman_color_prom, 0, 0,
-	ORIENTATION_ROTATE_90,
+GAMEDRIVER(namcopac, pacman,   ORIENTATION_ROTATE_90, 0, "Pac Man (Namco)", BASE_CREDITS)
 
-	pacman_hiload, pacman_hisave
-};
+GAMEDRIVER(pacmanjp, pacman,   ORIENTATION_ROTATE_90, 0, "Pac Man (Namco, alternate)", BASE_CREDITS)
 
-struct GameDriver pacmod_driver =
-{
-	"Pac Man (modified)",
-	"pacmod",
-	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)",
-	&machine_driver,
+GAMEDRIVER(pacmod,   pacman,   ORIENTATION_ROTATE_90, 0, "Pac Man (modified)", BASE_CREDITS)
 
-	pacmod_rom,
-	0, 0,
-	0,
-	sound_prom,	/* sound_prom */
+GAMEDRIVER(pacplus,  pacplus,  ORIENTATION_ROTATE_90, 0, "Pac Man with Pac Man Plus graphics", BASE_CREDITS)
 
-	pacman_input_ports,
+GAMEDRIVER(hangly,   pacman,   ORIENTATION_ROTATE_90, 0, "Hangly Man", BASE_CREDITS)
 
-	pacman_color_prom, 0, 0,
-	ORIENTATION_ROTATE_90,
+GAMEDRIVER(puckman,  pacman,   ORIENTATION_ROTATE_90, 0, "Puck Man", BASE_CREDITS)
 
-	pacman_hiload, pacman_hisave
-};
+GAMEDRIVER(piranha,  mspacman, ORIENTATION_ROTATE_90, 0, "Piranha", BASE_CREDITS)
 
-struct GameDriver pacplus_driver =
-{
-	"Pac Man with Pac Man Plus graphics",
-	"pacplus",
-	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)",
-	&machine_driver,
+GAMEDRIVER(mspacman, mspacman, ORIENTATION_ROTATE_90, 0, "Ms. Pac Man", BASE_CREDITS)
 
-	pacplus_rom,
-	0, 0,
-	0,
-	sound_prom,	/* sound_prom */
+GAMEDRIVER(mspacatk, mspacman, ORIENTATION_ROTATE_90, 0, "Miss Pac Plus", BASE_CREDITS)
 
-	pacman_input_ports,
+GAMEDRIVER(crush,    crush,    ORIENTATION_ROTATE_90, 0, "Crush Roller", BASE_CREDITS"\nGary Walton (color info)\nSimon Walls (color info)")
 
-	pacplus_color_prom, 0, 0,
-	ORIENTATION_ROTATE_90,
+GAMEDRIVER(ponpoko,  ponpoko,  ORIENTATION_DEFAULT,   ponpoko_decode, "Ponpoko", BASE_CREDITS)
 
-	pacman_hiload, pacman_hisave
-};
+GAMEDRIVER(eyes,     eyes,     ORIENTATION_ROTATE_90, eyes_decode, "Eyes", "Zsolt Vasvari\n"BASE_CREDITS)
 
-struct GameDriver hangly_driver =
-{
-	"Hangly Man",
-	"hangly",
-	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)",
-	&machine_driver,
-
-	hangly_rom,
-	0, 0,
-	0,
-	sound_prom,	/* sound_prom */
-
-	pacman_input_ports,
-
-	pacman_color_prom, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	pacman_hiload, pacman_hisave
-};
-
-struct GameDriver puckman_driver =
-{
-	"Puck Man",
-	"puckman",
-	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)",
-	&machine_driver,
-
-	puckman_rom,
-	0, 0,
-	0,
-	sound_prom,	/* sound_prom */
-
-	pacman_input_ports,
-
-	pacman_color_prom, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	pacman_hiload, pacman_hisave
-};
-
-struct GameDriver piranha_driver =
-{
-	"Piranha",
-	"piranha",
-	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)",
-	&machine_driver,
-
-	piranha_rom,
-	0, 0,
-	0,
-	sound_prom,	/* sound_prom */
-
-	mspacman_input_ports,
-
-	pacman_color_prom, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	pacman_hiload, pacman_hisave
-};
-
-struct GameDriver mspacman_driver =
-{
-	"Ms. Pac Man",
-	"mspacman",
-	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)",
-	&machine_driver,
-
-	mspacman_rom,
-	0, 0,
-	0,
-	sound_prom,	/* sound_prom */
-
-	mspacman_input_ports,
-
-	pacman_color_prom, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	pacman_hiload, pacman_hisave
-};
-
-struct GameDriver mspacatk_driver =
-{
-	"Miss Pac Plus",
-	"mspacatk",
-	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)",
-	&machine_driver,
-
-	mspacatk_rom,
-	0, 0,
-	0,
-	sound_prom,	/* sound_prom */
-
-	mspacman_input_ports,
-
-	pacman_color_prom, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	pacman_hiload, pacman_hisave
-};
-
-struct GameDriver crush_driver =
-{
-	"Crush Roller",
-	"crush",
-	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)",
-	&machine_driver,
-
-	crush_rom,
-	0, 0,
-	0,
-	sound_prom,	/* sound_prom */
-
-	crush_input_ports,
-
-	crush_color_prom, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	crush_hiload, crush_hisave
-};
-
-struct GameDriver ponpoko_driver =
-{
-	"Pon Poko",
-	"ponpoko",
-	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)",
-	&machine_driver,
-
-	ponpoko_rom,
-	0, 0,
-	0,
-	sound_prom,	/* sound_prom */
-
-	pacman_input_ports,
-
-	pacman_color_prom, 0, 0,	/* wrong! */
-	ORIENTATION_DEFAULT,
-
-	0, 0
-};

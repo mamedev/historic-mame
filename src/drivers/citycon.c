@@ -168,21 +168,21 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout, 2*16*16, 32 },
-	{ 1, 0x02000, &spritelayout,     0, 16 },
-	{ 1, 0x03000, &spritelayout,     0, 16 },
-	{ 1, 0x06000, &tilelayout,   16*16, 16 },
-	{ 1, 0x07000, &tilelayout,   16*16, 16 },
-	{ 1, 0x08000, &tilelayout,   16*16, 16 },
-	{ 1, 0x09000, &tilelayout,   16*16, 16 },
-	{ 1, 0x0a000, &tilelayout,   16*16, 16 },
-	{ 1, 0x0b000, &tilelayout,   16*16, 16 },
-	{ 1, 0x0c000, &tilelayout,   16*16, 16 },
-	{ 1, 0x0d000, &tilelayout,   16*16, 16 },
-	{ 1, 0x0e000, &tilelayout,   16*16, 16 },
-	{ 1, 0x0f000, &tilelayout,   16*16, 16 },
-	{ 1, 0x10000, &tilelayout,   16*16, 16 },
-	{ 1, 0x11000, &tilelayout,   16*16, 16 },
+	{ 1, 0x00000, &charlayout, 512, 32 },	/* colors 512-639 */
+	{ 1, 0x02000, &spritelayout, 0, 16 },	/* colors 0-255 */
+	{ 1, 0x03000, &spritelayout, 0, 16 },
+	{ 1, 0x06000, &tilelayout, 256, 16 },	/* colors 256-511 */
+	{ 1, 0x07000, &tilelayout, 256, 16 },
+	{ 1, 0x08000, &tilelayout, 256, 16 },
+	{ 1, 0x09000, &tilelayout, 256, 16 },
+	{ 1, 0x0a000, &tilelayout, 256, 16 },
+	{ 1, 0x0b000, &tilelayout, 256, 16 },
+	{ 1, 0x0c000, &tilelayout, 256, 16 },
+	{ 1, 0x0d000, &tilelayout, 256, 16 },
+	{ 1, 0x0e000, &tilelayout, 256, 16 },
+	{ 1, 0x0f000, &tilelayout, 256, 16 },
+	{ 1, 0x10000, &tilelayout, 256, 16 },
+	{ 1, 0x11000, &tilelayout, 256, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -227,10 +227,10 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256, 16*16+16*16+32*4,
+	640, 640,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	citycon_vh_start,
 	citycon_vh_stop,

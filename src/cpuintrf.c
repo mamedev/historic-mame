@@ -11,11 +11,13 @@
 #include "driver.h"
 #include "Z80/Z80.h"
 #include "I8039/I8039.h"
+#include "I8085/I8085.h"
 #include "M6502/M6502.h"
 #include "M6809/M6809.h"
 #include "M6808/M6808.h"
 #include "M6805/M6805.h"
 #include "M68000/M68000.h"
+#include "t11/t11.h"
 #include "I86/i86intrf.h"
 #include "timer.h"
 
@@ -159,7 +161,24 @@ struct cpu_interface cpuintf[] =
 		16,                                /* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16   /* Address bits, for the memory system */
 	},
-	/* #define CPU_M6502  2 */
+	/* #define CPU_8085A 2 */
+	{
+		I8085_Reset,                        /* Reset CPU */
+		I8085_Execute,                      /* Execute a number of cycles */
+		(void (*)(void *))I8085_SetRegs,    /* Set the contents of the registers */
+		(void (*)(void *))I8085_GetRegs,    /* Get the contents of the registers */
+		(unsigned int (*)(void))I8085_GetPC,/* Return the current PC */
+		I8085_Cause_Interrupt,              /* Generate an interrupt */
+		I8085_Clear_Pending_Interrupts,     /* Clear pending interrupts */
+		&I8085_ICount,                      /* Pointer to the instruction count */
+		I8085_NONE,I8085_INTR,I8085_TRAP,   /* Interrupt types: none, IRQ, NMI */
+		cpu_readmem16,                      /* Memory read */
+		cpu_writemem16,                     /* Memory write */
+		cpu_setOPbase16,                    /* Update CPU opcode base */
+		16,                                 /* CPU address bits */
+		ABITS1_16,ABITS2_16,ABITS_MIN_16    /* Address bits, for the memory system */
+	},
+	/* #define CPU_M6502  3 */
 	{
 		m6502_Reset,                       /* Reset CPU */
 		m6502_Execute,                     /* Execute a number of cycles */
@@ -176,7 +195,7 @@ struct cpu_interface cpuintf[] =
 		16,                                /* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16   /* Address bits, for the memory system */
 	},
-	/* #define CPU_I86    3 */
+	/* #define CPU_I86    4 */
 	{
 		i86_Reset,                         /* Reset CPU */
 		i86_Execute,                       /* Execute a number of cycles */
@@ -193,7 +212,7 @@ struct cpu_interface cpuintf[] =
 		20,                                /* CPU address bits */
 		ABITS1_20,ABITS2_20,ABITS_MIN_20   /* Address bits, for the memory system */
 	},
-	/* #define CPU_I8039  4 */
+	/* #define CPU_I8039  5 */
 	{
 		I8039_Reset,                       /* Reset CPU */
 		I8039_Execute,                     /* Execute a number of cycles */
@@ -210,7 +229,7 @@ struct cpu_interface cpuintf[] =
 		16,                                /* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16   /* Address bits, for the memory system */
 	},
-	/* #define CPU_M6808  5 */
+	/* #define CPU_M6808  6 */
 	{
 		m6808_reset,                       /* Reset CPU */
 		m6808_execute,                     /* Execute a number of cycles */
@@ -227,7 +246,7 @@ struct cpu_interface cpuintf[] =
 		16,                                /* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16   /* Address bits, for the memory system */
 	},
-	/* #define CPU_M6805  6 */
+	/* #define CPU_M6805  7 */
 	{
 		m6805_reset,                       /* Reset CPU */
 		m6805_execute,                     /* Execute a number of cycles */
@@ -244,7 +263,7 @@ struct cpu_interface cpuintf[] =
 		16,                                /* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16   /* Address bits, for the memory system */
 	},
-	/* #define CPU_M6809  7 */
+	/* #define CPU_M6809  8 */
 	{
 		m6809_reset,                       /* Reset CPU */
 		m6809_execute,                     /* Execute a number of cycles */
@@ -261,7 +280,7 @@ struct cpu_interface cpuintf[] =
 		16,                                /* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16   /* Address bits, for the memory system */
 	},
-	/* #define CPU_M68000 8 */
+	/* #define CPU_M68000 9 */
 	{
 		MC68000_Reset,                     /* Reset CPU */
 		MC68000_Execute,                   /* Execute a number of cycles */
@@ -277,6 +296,23 @@ struct cpu_interface cpuintf[] =
 		cpu_setOPbase24,                   /* Update CPU opcode base */
 		24,                                /* CPU address bits */
 		ABITS1_24,ABITS2_24,ABITS_MIN_24   /* Address bits, for the memory system */
+	},
+	/* #define CPU_T11  10 */
+	{
+		t11_reset,                       /* Reset CPU */
+		t11_execute,                     /* Execute a number of cycles */
+		(void (*)(void *))t11_SetRegs,             /* Set the contents of the registers */
+		(void (*)(void *))t11_GetRegs,             /* Get the contents of the registers */
+		t11_GetPC,                       /* Return the current PC */
+		t11_Cause_Interrupt,             /* Generate an interrupt */
+		t11_Clear_Pending_Interrupts,    /* Clear pending interrupts */
+		&t11_ICount,                     /* Pointer to the instruction count */
+		T11_INT_NONE,-1,-1,                /* Interrupt types: none, IRQ, NMI */
+		cpu_readmem16lew,                  /* Memory read */
+		cpu_writemem16lew,                 /* Memory write */
+		cpu_setOPbase16lew,                /* Update CPU opcode base */
+		16,                                /* CPU address bits */
+		ABITS1_16LEW,ABITS2_16LEW,ABITS_MIN_16LEW /* Address bits, for the memory system */
 	}
 };
 

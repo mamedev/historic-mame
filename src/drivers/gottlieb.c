@@ -78,8 +78,8 @@ write:
 5802    Outputs 20-27
 5803    Flipflop outputs:
 		b0: F/B priority
-		b1: horiz. flip
-		b2: vert. flip
+		b1: horiz. flip (sprite bank in Us vs. Them)
+		b2: vert. flip (maybe genlock control in the laser disc games)
 		b3: Output 33
 		b4: coin counter (sprite bank in Q*Bert Qubes)
 		b5: Q*Bert: kicker; Q*Bert Qubes: coin counter
@@ -140,6 +140,7 @@ int gottlieb_vh_start(void);
 void gottlieb_vh_stop(void);
 void gottlieb_characterram_w(int offset, int data);
 void gottlieb_video_outputs(int offset,int data);
+void usvsthem_video_outputs(int offset,int data);
 extern unsigned char *gottlieb_paletteram;
 extern unsigned char *gottlieb_characterram;
 void gottlieb_paletteram_w(int offset,int data);
@@ -220,6 +221,15 @@ void stooges_output(int offset,int data)
 	gottlieb_video_outputs(offset,data);
 }
 
+int gottlieb_laserdisc_status_r(int offset)
+{
+	/* this covers 3 consecutive bytes, to form a 24 bit number. */
+	/* the low 20 bits are the frame number played by the disc. */
+	/* the top 4 bits contain at least a "disc ready" signal (bit 23?), and */
+	/* maybe something else as well. */
+	return rand();
+}
+
 
 
 static struct MemoryReadAddress reactor_readmem[] =
@@ -252,7 +262,6 @@ static struct MemoryWriteAddress reactor_writemem[] =
 	{ -1 }  /* end of table */
 };
 
-
 static struct MemoryReadAddress gottlieb_readmem[] =
 {
 	{ 0x0000, 0x0fff, MRA_RAM },
@@ -265,6 +274,7 @@ static struct MemoryReadAddress gottlieb_readmem[] =
 	{ 0x5802, 0x5802, gottlieb_track_0_r },	/* trackball H */
 	{ 0x5803, 0x5803, gottlieb_track_1_r },	/* trackball V */
 	{ 0x5804, 0x5804, input_port_4_r },	/* joystick */
+	{ 0x5805, 0x5807, gottlieb_laserdisc_status_r },
 	{ 0x6000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -288,6 +298,26 @@ static struct MemoryWriteAddress gottlieb_writemem[] =
 };
 
 
+/* same as above, different video_outputs */
+static struct MemoryWriteAddress usvsthem_writemem[] =
+{
+	{ 0x0000, 0x0fff, MWA_RAM },
+	{ 0x1000, 0x1fff, MWA_RAM },	/* ROM in Krull */
+	{ 0x2000, 0x2fff, MWA_RAM },	/* ROM in Krull and 3 Stooges */
+	{ 0x3000, 0x30ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x3800, 0x3bff, videoram_w, &videoram, &videoram_size },
+	{ 0x3c00, 0x3fff, videoram_w },	/* mirror address, some games write to it */
+	{ 0x4000, 0x4fff, gottlieb_characterram_w, &gottlieb_characterram },
+	{ 0x5000, 0x501f, gottlieb_paletteram_w, &gottlieb_paletteram },
+	{ 0x5800, 0x5800, watchdog_reset_w },
+	{ 0x5801, 0x5801, gottlieb_track_reset_w },
+	{ 0x5802, 0x5802, gottlieb_sh_w }, /* sound/speech command */
+	{ 0x5803, 0x5803, usvsthem_video_outputs },       /* OUT1 */
+	{ 0x6000, 0xffff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
+
+/* same as above, different IN4 */
 static struct MemoryReadAddress stooges_readmem[] =
 {
 	{ 0x0000, 0x0fff, MRA_RAM },
@@ -304,6 +334,7 @@ static struct MemoryReadAddress stooges_readmem[] =
 	{ -1 }  /* end of table */
 };
 
+/* same as above, different video_outputs */
 static struct MemoryWriteAddress stooges_writemem[] =
 {
 	{ 0x0000, 0x0fff, MWA_RAM },
@@ -671,7 +702,6 @@ INPUT_PORTS_START( krull_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_LEFT | IPF_8WAY )
 INPUT_PORTS_END
 
-
 INPUT_PORTS_START( mach3_input_ports )
 	PORT_START      /* DSW0 */
 	/* TODO: values are different for 5 lives */
@@ -722,6 +752,62 @@ INPUT_PORTS_START( mach3_input_ports )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( usvsthem_input_ports )
+	PORT_START      /* DSW0 */
+	/* TODO: values are different for 5 lives */
+	PORT_DIPNAME( 0x09, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x01, "Free Play" )
+/*	PORT_DIPSETTING(    0x09, "Free Play" ) */
+	PORT_DIPNAME( 0x10, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x10, "On" )
+	PORT_DIPNAME( 0x04, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Normal" )
+	PORT_DIPSETTING(    0x04, "Hard" )
+	PORT_DIPNAME( 0x20, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x20, "On" )
+	PORT_DIPNAME( 0x02, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x02, "On" )
+	PORT_DIPNAME( 0x40, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x40, "On" )
+	PORT_DIPNAME( 0x80, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x80, "On" )
+
+	PORT_START      /* IN0 */
+	PORT_BITX(    0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_SERVICE, "Select in Service Mode", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START2 )
+
+	PORT_START	/* trackball H not used */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* trackball V not used */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START      /* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -1039,7 +1125,7 @@ static struct MachineDriver GAMENAME##_machine_driver =             \
 			2,	/* memory region #2 */								\
 			stooges_sound_readmem,stooges_sound_writemem,0,0,		\
 			ignore_interrupt,1	/* IRQs are triggered by the main CPU */			\
-								/* NMIs are triggered by the second sound CPU */	\
+								/* NMIs are triggered by the second sound CPU (really? I don't remember) */	\
 		},                                                   		\
 		{		                                                    \
 			CPU_M6502 | CPU_AUDIO_CPU ,								\
@@ -1086,7 +1172,8 @@ MACHINE_DRIVER_SOUND_1(gottlieb,gottlieb_readmem,gottlieb_writemem,charROM_gfxde
 MACHINE_DRIVER_SOUND_1(qbertqub,gottlieb_readmem,gottlieb_writemem,qbertqub_gfxdecodeinfo);
 MACHINE_DRIVER_SOUND_1(krull,gottlieb_readmem,gottlieb_writemem,charRAM_gfxdecodeinfo);
 /* games using the revision 2 sound board */
-MACHINE_DRIVER_SOUND_2(mach3,gottlieb_readmem,gottlieb_writemem,charROM_gfxdecodeinfo);
+MACHINE_DRIVER_SOUND_2(mach3,gottlieb_readmem,usvsthem_writemem,charROM_gfxdecodeinfo);
+MACHINE_DRIVER_SOUND_2(usvsthem,gottlieb_readmem,usvsthem_writemem,qbertqub_gfxdecodeinfo);
 MACHINE_DRIVER_SOUND_2(stooges,stooges_readmem,stooges_writemem,charRAM_gfxdecodeinfo);
 
 
@@ -1276,6 +1363,29 @@ ROM_START( mach3_rom )
 	ROM_LOAD( "M3YROM1.BIN", 0xf000, 0x1000, 0x63f4c3a2 )
 ROM_END
 
+ROM_START( usvsthem_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "USVS.RM4", 0x6000, 0x2000, 0x6a22ed88 )
+	ROM_LOAD( "USVS.RM3", 0x8000, 0x2000, 0xc8f37c2b )
+	ROM_LOAD( "USVS.RM2", 0xa000, 0x2000, 0x50a19c93 )
+	ROM_LOAD( "USVS.RM1", 0xc000, 0x2000, 0xc7d6abda )
+	ROM_LOAD( "USVS.RM0", 0xe000, 0x2000, 0xc35a57da )
+
+	ROM_REGION(0x12000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "USVS.BG0", 0x0000, 0x1000, 0xb33ab5f0 )
+	ROM_LOAD( "USVS.BG1", 0x1000, 0x1000, 0xe0d8c600 )
+	ROM_LOAD( "USVS.FG3", 0x2000, 0x4000, 0x3c6f6455 )
+	ROM_LOAD( "USVS.FG2", 0x6000, 0x4000, 0xb6d219a4 )
+	ROM_LOAD( "USVS.FG1", 0xa000, 0x4000, 0x61b9c2b5 )
+	ROM_LOAD( "USVS.FG0", 0xe000, 0x4000, 0x27beba12 )
+
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_LOAD( "USVSDROM.1", 0xe000, 0x2000, 0x9fb80d54 )
+
+	ROM_REGION(0x10000)	/* 64k for second sound cpu */
+	ROM_LOAD( "USVSYROM.1", 0xe000, 0x2000, 0x58c73a2f )
+ROM_END
+
 ROM_START( stooges_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "GV113RAM.4", 0x2000, 0x1000, 0x64249570 )
@@ -1315,7 +1425,8 @@ ROM_START( curvebal_rom )
 	ROM_LOAD( "cb-fg-0.chp", 0x8000, 0x2000, 0x112e7ee6 )
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	/* the sound ROMs are missing! */
+	ROM_LOAD( "yrom.sbd", 0xe000, 0x1000, 0x6066d74a )
+	ROM_LOAD( "drom.sbd", 0xf000, 0x1000, 0x607b0ee3 )
 ROM_END
 
 
@@ -1560,7 +1671,8 @@ struct GameDriver mach3_driver =
 {
 	"M.A.C.H. 3",
 	"mach3",
-	"Fabrice Frances (MAME driver)",
+	"Fabrice Frances (MAME driver)\n\n"
+	"This is a LASER DISC game, so it doesn't work.",
 	&mach3_machine_driver,
 
 	mach3_rom,
@@ -1571,7 +1683,28 @@ struct GameDriver mach3_driver =
 	mach3_input_ports,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_180,
+	ORIENTATION_DEFAULT,
+
+	gottlieb_nvram_load, gottlieb_nvram_save
+};
+
+struct GameDriver usvsthem_driver =
+{
+	"Us vs. Them",
+	"usvsthem",
+	"Fabrice Frances (MAME driver)\n\n"
+	"This is a LASER DISC game, so it doesn't work.",
+	&usvsthem_machine_driver,
+
+	usvsthem_rom,
+	0, 0,   /* rom decode and opcode decode functions */
+	0,
+	0,	/* sound_prom */
+
+	usvsthem_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
 
 	gottlieb_nvram_load, gottlieb_nvram_save
 };
@@ -1601,7 +1734,7 @@ struct GameDriver curvebal_driver =
 	"Curve Ball",
 	"curvebal",
 	"Fabrice Frances (MAME driver)",
-	&mach3_machine_driver,
+	&gottlieb_machine_driver,
 
 	curvebal_rom,
 	0, 0,   /* rom decode and opcode decode functions */

@@ -281,8 +281,7 @@ static struct MachineDriver machine_driver =
 			1500000,					/* 1.5 Mhz CPU clock (Don't know what speed it should be) */
 			0,							/* Memory region #0 */
 			readmem,writemem,0,0,
-			0, 0, /* no vblank interrupts */
-			interrupt, 183 /* 183Hz ? */
+			interrupt,6 /* 183Hz ? */
 			/* Increasing number of interrupts per frame speeds game up */
 		},
 		/* Sound CPU */

@@ -33,6 +33,7 @@ void blktiger_screen_layout_w(int offset,int data);
 int blktiger_background_r(int offset);
 void blktiger_background_w(int offset,int data);
 void blktiger_video_control_w(int offset,int data);
+void blktiger_video_enable_w(int offset,int data);
 void blktiger_scrollbank_w(int offset,int data);
 void blktiger_scrollx_w(int offset,int data);
 void blktiger_scrolly_w(int offset,int data);
@@ -104,17 +105,17 @@ static struct IOReadPort readport[] =
 static struct IOWritePort writeport[] =
 {
 	{ 0x00, 0x00, soundlatch_w },
-	{ 0x01, 0x01, blktiger_bankswitch_w },  /* Code bank switch */
-	{ 0x04, 0x04, blktiger_video_control_w },/* Video control */
-	{ 0x06, 0x06, watchdog_reset_w },	/* watchdog */
+	{ 0x01, 0x01, blktiger_bankswitch_w },
+	{ 0x04, 0x04, blktiger_video_control_w },
+	{ 0x06, 0x06, watchdog_reset_w },
 	{ 0x07, 0x07, IOWP_NOP }, /* Software protection (7) */
-	{ 0x08, 0x09, blktiger_scrollx_w},      /* X scroll */
-	{ 0x0a, 0x0b, blktiger_scrolly_w},      /* Y scroll */
-	{ 0x0d, 0x0d, blktiger_scrollbank_w},   /* Scroll ram bank register */
-	{ 0x0e, 0x0e, blktiger_screen_layout_w},/* Video scrolling layout */
+	{ 0x08, 0x09, blktiger_scrollx_w },
+	{ 0x0a, 0x0b, blktiger_scrolly_w },
+	{ 0x0c, 0x0c, blktiger_video_enable_w },
+	{ 0x0d, 0x0d, blktiger_scrollbank_w },   /* Scroll ram bank register */
+	{ 0x0e, 0x0e, blktiger_screen_layout_w },/* Video scrolling layout */
 #if 0
-	{ 0x03, 0x03, IOWP_NOP}, /* Unknown port 3 */
-	{ 0x0c, 0x0c, IOWP_NOP}, /* Unknown port c */
+	{ 0x03, 0x03, IOWP_NOP }, /* Unknown port 3 */
 #endif
 	{ -1 }	/* end of table */
 };
@@ -152,10 +153,10 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -182,7 +183,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x00, "4 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x01, "3 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x02, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x07, "1 Coin 1 Credit" )
+	PORT_DIPSETTING(    0x07, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x06, "1 Coin/2 Credits" )
 	PORT_DIPSETTING(    0x05, "1 Coin/3 Credits" )
 	PORT_DIPSETTING(    0x04, "1 Coin/4 Credits" )
@@ -191,7 +192,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x00, "4 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x08, "3 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x38, "1 Coin 1 Credit" )
+	PORT_DIPSETTING(    0x38, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x30, "1 Coin/2 Credits" )
 	PORT_DIPSETTING(    0x28, "1 Coin/3 Credits" )
 	PORT_DIPSETTING(    0x20, "1 Coin/4 Credits" )
@@ -261,9 +262,9 @@ static struct GfxLayout spritelayout =
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	/*   start    pointer       colour start   number of colours */
-	{ 1, 0x00000, &charlayout,            0,  32 },
-	{ 1, 0x10000, &spritelayout,        32*4, 16 },
-	{ 1, 0x50000, &spritelayout,  32*4+16*16,  8 },
+	{ 1, 0x00000, &charlayout,          768, 32 },	/* colors 768 - 895 */
+	{ 1, 0x10000, &spritelayout,          0, 16 },	/* colors 0 - 255 */
+	{ 1, 0x50000, &spritelayout,        512,  8 },	/* colors 512 - 639 */
 	{ -1 } /* end of array */
 };
 
@@ -308,18 +309,17 @@ static struct MachineDriver machine_driver =
 			ignore_interrupt,0	/* IRQs are triggered by the YM2203 */
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, 1500,	/* frames per second, vblank duration - hand tuned to get rid of sprite lag */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256,               /* 256 colours */
-	32*4+16*16+8*16,   /* Colour table length */
+	1024, 1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	blktiger_vh_start,
 	blktiger_vh_stop,
@@ -402,16 +402,16 @@ static int hiload(void)
 
 
 	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0xe204],"\x02\x00\x00",3) == 0)
+	if (memcmp(&RAM[0xe204],"\x02\x00\x00",3) == 0 &&
+			memcmp(&RAM[0xe244],"\x01\x02\x00",3) == 0)
 	{
 		void *f;
 
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-
-                        osd_fread(f,&RAM[0xe200],16*5);
-                        memcpy(&RAM[0xe1e0], &RAM[0xe200], 8);
+			osd_fread(f,&RAM[0xe200],16*5);
+			memcpy(&RAM[0xe1e0],&RAM[0xe200],8);
 			osd_fclose(f);
 		}
 
@@ -459,7 +459,7 @@ struct GameDriver blktiger_driver =
 
 struct GameDriver blkdrgon_driver =
 {
-	"Black Dragon (Black Tiger clone)",
+	"Black Dragon",
 	"blkdrgon",
 	"Paul Leaman (MAME driver)\nIshmair\nJuan Carlos Lorente (high score save)\nDani Portillo (protection)",
 	&machine_driver,

@@ -27,6 +27,7 @@ DECLARE_COLOR_DEPTH_LIST(
 void scale_vectorgames(int gfx_width,int gfx_height,int *width,int *height);
 void joy_calibration(void);
 
+
 static struct osd_bitmap *scrbitmap;
 static unsigned char current_palette[256][3];
 static unsigned char current_background_color;
@@ -81,7 +82,6 @@ vga_tweaked[] = {
 	{ 320, 204, scr320x204, sizeof(scr320x204)/sizeof(Register), -1, 0 },
 	{ 288, 224, scr288x224, sizeof(scr288x224)/sizeof(Register),  0, 0 },
 	{ 256, 256, scr256x256, sizeof(scr256x256)/sizeof(Register),  1, 0 },
-	{ 240, 272, scr240x272, sizeof(scr240x272)/sizeof(Register), -1, 0 },
 	{ 224, 288, scr224x288, sizeof(scr224x288)/sizeof(Register),  1, 0 },
 	{ 200, 320, scr200x320, sizeof(scr200x320)/sizeof(Register), -1, 0 },
 	{ 0, 0 }
@@ -729,7 +729,8 @@ int osd_set_display(int width,int height, int attributes)
 	if (video_sync)
 	{
 		uclock_t a,b;
-		int i,rate;
+		int i;
+		float rate;
 
 
 		/* wait some time to let everything stabilize */
@@ -740,21 +741,27 @@ int osd_set_display(int width,int height, int attributes)
 		}
 		vsync();
 		b = uclock();
-if (errorlog) fprintf(errorlog,"video frame rate = %3.2fHz\n",((float)UCLOCKS_PER_SEC)/(b-a));
+		rate = ((float)UCLOCKS_PER_SEC)/(b-a);
 
-		rate = UCLOCKS_PER_SEC/(b-a);
+if (errorlog) fprintf(errorlog,"target frame rate = %dfps, video frame rate = %3.2fHz\n",Machine->drv->frames_per_second,rate);
 
-		/* don't allow more than 5% difference between target and actual frame rate */
-		while (rate > Machine->drv->frames_per_second * 105 / 100)
+		/* don't allow more than 8% difference between target and actual frame rate */
+		while (rate > Machine->drv->frames_per_second * 108 / 100)
 			rate /= 2;
 
-		if (rate < Machine->drv->frames_per_second * 95 / 100)
+		if (rate < Machine->drv->frames_per_second * 92 / 100)
 		{
 			osd_close_display();
-			printf("-vsync option cannot be used with this display mode:\n"
+if (errorlog) fprintf(errorlog,"-vsync option cannot be used with this display mode:\n"
 					"video refresh frequency = %dHz, target frame rate = %dfps\n",
 					(int)(UCLOCKS_PER_SEC/(b-a)),Machine->drv->frames_per_second);
 			return 0;
+		}
+
+		if (Machine->sample_rate)
+		{
+			Machine->sample_rate = Machine->sample_rate * Machine->drv->frames_per_second / rate;
+if (errorlog) fprintf(errorlog,"sample rate adjusted to match video freq: %d\n",Machine->sample_rate);
 		}
 	}
 	return 1;
@@ -1473,7 +1480,9 @@ void osd_update_display(void)
 					current_palette[current_background_color][1] != 0 ||
 					current_palette[current_background_color][2] != 0)
 			{
-				for (i = 0;i < 256;i++)
+				/* start from pen 255 (which is the game's color 0 */
+				/* because we allocated pens backwards) */
+				for (i = 255;i >= 0;i--)
 				{
 					if (current_palette[i][0] == 0 &&
 							current_palette[i][1] == 0 &&
@@ -1484,7 +1493,7 @@ void osd_update_display(void)
 					}
 				}
 
-				if (i < 256)
+				if (i >= 0)
 				{
 					/* update the background areas of the screen to the new color */
 					clear_screen();

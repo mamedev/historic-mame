@@ -1,5 +1,6 @@
 #include "driver.h"
 #include "strings.h"
+#include "audit.h"
 
 /* Mame frontend interface & commandline */
 /* parsing rountines by Maurizio Zanello */
@@ -8,8 +9,6 @@
 /* for this to work correctly, the shells internal wildcard expansion */
 /* mechanism has to be disabled. Look into msdos.c */
 
-int  VerifyRomSet (int game);
-int  VerifySampleSet (int game);
 void get_rom_sample_path (int argc, char **argv, int game_index);
 
 static const struct GameDriver *gamedrv;
@@ -345,7 +344,7 @@ int frontend_help (int argc, char **argv)
 
 			if (verify == 1)
 			{
-				res = VerifyRomSet (i);
+				res = VerifyRomSet (i,(verify_printf_proc)printf);
 				if (res)
 					printf ("romset %s ", drivers[i]->name);
 			}
@@ -356,7 +355,7 @@ int frontend_help (int argc, char **argv)
 					drivers[i]->samplenames[0] == 0)
 					continue;
 
-				res = VerifySampleSet (i);
+				res = VerifySampleSet (i,(verify_printf_proc)printf);
 				if (res)
 					printf ("sampleset %s ", drivers[i]->name);
 			}

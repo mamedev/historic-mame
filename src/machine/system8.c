@@ -49,6 +49,79 @@ static void (*Check_SpriteRAM_for_Clear)(void) = NULL;
 
 
 
+/***************************************************************************
+
+  Convert the color PROMs into a more useable format.
+
+  There are two kind of color handling in System 8 games: in some, values in
+  the palette RAM are directly mapped to colors with the usual BBGGGRRR format;
+  in others, the value in the palette RAM is a lookup offset for three palette
+  PROMs in RRRRGGGGBBBB format.
+  It's hard to tell for sure because they use resistor packs, but here's
+  what I think the values are from measurment with a volt meter:
+
+  Blue: .250K ohms
+  Blue: .495K ohms
+  Green:.250K ohms
+  Green:.495K ohms
+  Green:.995K ohms
+  Red:  .495K ohms
+  Red:  .250K ohms
+  Red:  .995K ohms
+
+  accurate to +/- .003K ohms.
+
+***************************************************************************/
+void system8_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+	int i;
+
+	for (i = 0;i < Machine->drv->total_colors;i++)
+	{
+		int val;
+
+
+		/* red component */
+		val = (i >> 0) & 0x07;
+		*(palette++) = (val << 5) | (val << 2) | (val >> 1);
+		/* green component */
+		val = (i >> 3) & 0x07;
+		*(palette++) = (val << 5) | (val << 2) | (val >> 1);
+		/* blue component */
+		val = (i >> 5) & 0x06;
+		*(palette++) = (val << 5) | (val << 2) | (val >> 1);
+	}
+}
+
+void system8_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+	int i;
+
+	for (i = 0;i < Machine->drv->total_colors;i++)
+	{
+		int bit0,bit1,bit2,bit3;
+
+		bit0 = (color_prom[0*Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[0*Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[0*Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[0*Machine->drv->total_colors] >> 3) & 0x01;
+		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[1*Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[1*Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[1*Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[1*Machine->drv->total_colors] >> 3) & 0x01;
+		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x01;
+		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		color_prom++;
+	}
+}
+
+
+
 int system8_vh_start(void)
 {
 	int i;
@@ -269,7 +342,7 @@ static void RenderSprite(struct osd_bitmap *bitmap, const struct rectangle *clip
 	DataOffset 	= SprReg[SPR_GFXOFS_LO]+((SprReg[SPR_GFXOFS_HI] & 0x7F)<<8)+Width;
 	SprPalette	= system8_spritepaletteram + (spr_number<<4);
 	SprX 		= (SprReg[SPR_X_LO] >> 1) + ((SprReg[SPR_X_HI] & 1) << 7);
-	SprY 		= SprReg[SPR_Y_TOP];
+	SprY 		= SprReg[SPR_Y_TOP] + 1;
 	NextLine	= Width;
 
 	if (DataOffset & 0x8000) FlipX^=0x80;
@@ -404,7 +477,6 @@ void system8_backgroundpaletteram_w(int offset,int data)
 void system8_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	int scroll_x,scroll_y, sx,sy, i;
-	int pitfall2_trans_pen;
 
 	scrollx = (system8_scroll_x[0] >> 1) + ((system8_scroll_x[1] & 1) << 7) + 14;
 	scrolly = *system8_scroll_y - 16;
@@ -447,21 +519,12 @@ void system8_vh_screenrefresh(struct osd_bitmap *bitmap)
 			int palette = code >> 5;
 			sx = (i % 64) << 2;
 			sy = (i >> 6) << 3;
-			pitfall2_trans_pen=0;
 
-			if (strcmp(Machine->gamedrv->name,"pitfall")==0)
-			{
-			   if (code==1658) pitfall2_trans_pen=5;
-			   if (code==1660) pitfall2_trans_pen=6;
-			   if (code==227  || code==976 || (code>977 && code<983)) pitfall2_trans_pen=3;
-			   if (code==1645 || code==1046 || code==1039 || code==1805
-						  || code==1820 || code==1641) pitfall2_trans_pen=1;
-			}
 			drawgfx(bitmap1,Machine->gfx[0],
 					code,palette,
 					0,0,
 					sx,sy,
-					0,TRANSPARENCY_PEN,pitfall2_trans_pen);
+					0,TRANSPARENCY_PEN,0);
 		}
 	}
 
@@ -496,35 +559,6 @@ void system8_vh_screenrefresh(struct osd_bitmap *bitmap)
 	}
 
 }
-
-
-void system8_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-{
-	int i;
-
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		int bit0,bit1,bit2,bit3;
-
-		bit0 = (color_prom[0*Machine->drv->total_colors] >> 0) & 0x01;
-		bit1 = (color_prom[0*Machine->drv->total_colors] >> 1) & 0x01;
-		bit2 = (color_prom[0*Machine->drv->total_colors] >> 2) & 0x01;
-		bit3 = (color_prom[0*Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		bit0 = (color_prom[1*Machine->drv->total_colors] >> 0) & 0x01;
-		bit1 = (color_prom[1*Machine->drv->total_colors] >> 1) & 0x01;
-		bit2 = (color_prom[1*Machine->drv->total_colors] >> 2) & 0x01;
-		bit3 = (color_prom[1*Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x01;
-		bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x01;
-		bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x01;
-		bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		color_prom++;
-	}
-}
-
 
 
 void system8_bankswitch_w(int offset,int data)

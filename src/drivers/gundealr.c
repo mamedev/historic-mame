@@ -42,7 +42,6 @@ Runs in interrupt mode 0, the interrupt vectors are 0xcf (RST 08h) and
 
 
 extern unsigned char *gundealr_paletteram;
-extern int gundealr_paletteram_size;
 extern unsigned char *gundealr_bsvideoram;
 extern unsigned char *gundealr_bigspriteram;
 
@@ -53,8 +52,9 @@ void gundealr_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 static int gundealr_interrupt(void)
 {
-	if (cpu_getiloops() == 0) return 0xd7;
-	else return 0xcf;
+	if (cpu_getiloops() == 0) return 0xd7;	/* vblank */
+	if ((cpu_getiloops() & 1) == 1) return 0xcf;	/* sound (hand tuned) */
+	else return ignore_interrupt();
 }
 
 
@@ -75,7 +75,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc020, 0xc023, MWA_RAM, &gundealr_bigspriteram },
 	{ 0xd000, 0xd1ff, MWA_RAM, &gundealr_bsvideoram },
-	{ 0xc400, 0xc7ff, gundealr_paletteram_w, &gundealr_paletteram, &gundealr_paletteram_size },
+	{ 0xc400, 0xc7ff, gundealr_paletteram_w, &gundealr_paletteram },
 	{ 0xc800, 0xcfff, videoram_w, &videoram, &videoram_size },
 	{ 0xe000, 0xffff, MWA_RAM },
 	{ -1 }	/* end of table */
@@ -206,8 +206,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,       0, 16 },
-	{ 1, 0x10000, &spritelayout, 16*16, 16 },
+	{ 1, 0x00000, &charlayout,     0, 16 },	/* colors 0-255 */
+	{ 1, 0x10000, &spritelayout, 256, 16 },	/* colors 256-511 */
 	{ -1 } /* end of array */
 };
 
@@ -235,7 +235,7 @@ static struct MachineDriver machine_driver =
 			8000000,	/* 8 Mhz ??? */
 			0,
 			readmem,writemem,readport,writeport,
-			gundealr_interrupt,2
+			gundealr_interrupt,4	/* ? */
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -245,10 +245,10 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256, 16*16+16*16,
+	512, 512,
 	0,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
 	0,
 	generic_vh_start,
 	generic_vh_stop,

@@ -142,6 +142,17 @@ void gottlieb_video_outputs(int offset,int data)
 	last = data;
 }
 
+void usvsthem_video_outputs(int offset,int data)
+{
+	background_priority = data & 1;
+
+	/* in most games, bits 1 and 2 flip screen, however they have probably */
+	/* a different function in the laserdisc games. In Us vs. Them, bit 1 */
+	/* controls the sprite bank. */
+	/* bit 2 could be a genlock control. */
+	spritebank = (data & 0x02) >> 1;
+}
+
 
 
 void gottlieb_characterram_w(int offset,int data)

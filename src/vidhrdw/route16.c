@@ -31,24 +31,6 @@ static void modify_pen(int pen, int colorindex);
 static void common_videoram_w(int offset,int data,
                               int coloroffset, struct osd_bitmap *bitmap);
 
-
-
-void route16_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-{
-        int i;
-
-
-        /* the palette will be initialized later. We just set it to some */
-        /* pre-cooked values so the startup copyright notice can be displayed. */
-        for (i = 0;i < Machine->drv->total_colors;i++)
-        {
-                *(palette++) = ((i & 1) >> 0) * 0xff;
-                *(palette++) = ((i & 2) >> 1) * 0xff;
-                *(palette++) = ((i & 4) >> 2) * 0xff;
-        }
-}
-
-
 /***************************************************************************
 
   Set hardware dependent flag.
@@ -172,7 +154,8 @@ void route16_out0_w(int offset,int data)
         video_disable_1 = ((data & 0x02) << 6) && route16;
         video_color_select_1 = ((data & 0x1F) << 2);
 
-        /* Bit 5 is a coin counter. We don't emulate it */
+		/* Bit 5 is the coin counter. */
+		coin_counter_w(0, data & 0x20);
 
         video_remap_1 = 1;
         last_write = data;

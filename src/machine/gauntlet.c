@@ -9,6 +9,8 @@
 #include "vidhrdw/generic.h"
 #include "m6502/m6502.h"
 
+int gauntlet_update_display_list (int scanline);
+
 
 
 /*************************************
@@ -79,8 +81,28 @@ void gauntlet2_init_machine (void)
  *
  *************************************/
 
+void gauntlet_update (int param)
+{
+	int yscroll;
+	
+	/* update the display list */
+	yscroll = gauntlet_update_display_list (param);
+
+	/* reset the timer */
+	if (!param)
+	{
+		int next = 8 - (yscroll & 7);
+		timer_set (cpu_getscanlineperiod () * (double)next, next, gauntlet_update);
+	}
+	else if (param < 240)
+		timer_set (cpu_getscanlineperiod () * 8.0, param + 8, gauntlet_update);
+}
+
+
 int gauntlet_interrupt(void)
 {
+	timer_set (TIME_IN_USEC (Machine->drv->vblank_duration), 0, gauntlet_update);
+	
 	return 4;       /* Interrupt vector 4, used by VBlank */
 }
 

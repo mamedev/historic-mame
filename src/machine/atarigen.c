@@ -7,8 +7,8 @@
 ***************************************************************************/
 
 
-#include "atarigen.h"
 #include "driver.h"
+#include "atarigen.h"
 #include "m6502/m6502.h"
 #include "m68000/m68000.h"
 
@@ -44,12 +44,21 @@ static void *comm_timer;
 static void *stop_comm_timer;
 
 static int colortype;
-static int last_palette[256];
-static int this_palette[256];
+static int reuse_colors;
+static unsigned char last_used[256];
+static unsigned char this_used[256];
 static int last_color[256];
 static int this_color[256];
 static int last_intensity;
 static int current_black;
+static unsigned short *this_colortable;
+static unsigned short *last_colortable;
+
+static struct atarigen_modesc *modesc;
+
+static unsigned short *displaylist;
+static unsigned short *displaylist_end;
+static unsigned short *displaylist_last;
 
 static void (*sound_int)(void);
 
@@ -269,16 +278,179 @@ int atarigen_sound_r (int offset)
 
 /*************************************
  *
+ *		MO display list management
+ *
+ *************************************/
+
+int atarigen_init_display_list (struct atarigen_modesc *_modesc)
+{
+	modesc = _modesc;
+	
+	displaylist = malloc (modesc->maxmo * 10 * (Machine->drv->screen_height / 8));
+	if (!displaylist)
+		return 1;
+	
+	displaylist_end = displaylist;
+	displaylist_last = NULL;
+	
+	return 0;
+}
+
+
+void atarigen_update_display_list (unsigned char *base, int start, int scanline)
+{
+	int link = start, match = 0, moskip = modesc->moskip, wordskip = modesc->mowordskip;
+	int ignoreword = modesc->ignoreword;
+	unsigned short *d, *startd, *lastd;
+	unsigned char spritevisit[1024];
+
+	/* scanline 0 means first update */
+	if (scanline <= 0)
+	{
+		displaylist_end = displaylist;
+		displaylist_last = NULL;
+	}
+
+	/* set up local pointers */
+	startd = d = displaylist_end;
+	lastd = displaylist_last;
+
+	/* if the last list entries were on the same scanline, overwrite them */
+	if (lastd)
+	{
+		if (*lastd == scanline)
+			d = startd = lastd;
+		else
+			match = 1;
+	}
+
+	/* visit all the sprites and copy their data into the display list */
+	memset (spritevisit, 0, sizeof (spritevisit));
+	while (!spritevisit[link])
+	{
+		unsigned char *modata = &base[link * moskip];
+		unsigned short data[4];
+
+		/* bounds checking */
+		if (d - displaylist >= modesc->maxmo * 5 * (Machine->drv->screen_height / 8))
+		{
+			if (errorlog) fprintf (errorlog, "Motion object list exceeded maximum\n");
+			break;
+		}
+
+		/* start with the scanline */		
+		*d++ = scanline;
+
+		/* add the data words */
+		data[0] = *d++ = READ_WORD (&modata[0]);
+		data[1] = *d++ = READ_WORD (&modata[wordskip]);
+		data[2] = *d++ = READ_WORD (&modata[2 * wordskip]);
+		data[3] = *d++ = READ_WORD (&modata[3 * wordskip]);
+		
+		/* is this one to ignore? */
+		if (data[ignoreword] == 0xffff)
+			d -= 5;
+
+		/* update our match status */
+		else if (match)
+		{
+			lastd++;
+			if (*lastd++ != data[0] || *lastd++ != data[1] || *lastd++ != data[2] || *lastd++ != data[3])
+				match = 0;
+		}
+
+		/* link to the next object */
+		spritevisit[link] = 1;
+		if (modesc->linkword >= 0)
+			link = (data[modesc->linkword] >> modesc->linkshift) & modesc->linkmask;
+		else
+			link = (link + 1) & modesc->linkmask;
+	}
+
+	/* if we didn't match the last set of entries, update the counters */
+	if (!match)
+	{
+		displaylist_end = d;
+		displaylist_last = startd;
+	}
+}
+
+
+void atarigen_render_display_list (struct osd_bitmap *bitmap, atarigen_morender morender, void *param)
+{
+	unsigned short *base = displaylist;
+	int last_start_scan = -1;
+	struct rectangle clip;
+
+	/* create a clipping rectangle so that only partial sections are updated at a time */
+	clip.min_x = 0;
+	clip.max_x = Machine->drv->screen_width - 1;
+
+	/* loop over the list until the end */
+	while (base < displaylist_end)
+	{
+		unsigned short *d, *first, *last;
+		int start_scan = base[0], step;
+		
+		last_start_scan = start_scan;
+		clip.min_y = start_scan;
+
+		/* look for an entry whose scanline start is different from ours; that's our bottom */
+		for (d = base; d < displaylist_end; d += 5)
+			if (*d != start_scan)
+			{
+				clip.max_y = *d;
+				break;
+			}
+
+		/* if we didn't find any additional regions, go until the bottom of the screen */
+		if (d == displaylist_end)
+			clip.max_y = Machine->drv->screen_height - 1;
+		
+		/* set the start and end points */
+		if (modesc->reverse)
+		{
+			first = d - 5;
+			last = base - 5;
+			step = -5;
+		}
+		else
+		{
+			first = base;
+			last = d;
+			step = 5;
+		}
+
+		/* update the base */
+		base = d;
+
+		/* render the mos */
+		for (d = first; d != last; d += step)
+			(*morender)(bitmap, &clip, &d[1], param);
+	}
+}
+
+
+
+/*************************************
+ *
  *		Palette remapping
  *
  *************************************/
 
-void atarigen_init_remap (int _colortype)
+void atarigen_init_remap (int _colortype, int reuse)
 {
 	colortype = _colortype;
+	reuse_colors = reuse;
+	
+	/* allocate arrays */
+	last_colortable = malloc (Machine->drv->color_table_len * sizeof (unsigned short));
+	memset (last_colortable, 0xff, Machine->drv->color_table_len * sizeof (unsigned short));
+	this_colortable = malloc (Machine->drv->color_table_len * sizeof (unsigned short));
+	memset (this_colortable, 0xff, Machine->drv->color_table_len * sizeof (unsigned short));
 
 	/* initialize the palettes */
-	memset (this_palette, 0xff, sizeof (this_palette));
+	memset (this_used, 0, sizeof (this_used));
 	memset (this_color, 0xff, sizeof (this_color));
 
 	/* reset the ranout count */
@@ -299,13 +471,19 @@ inline int is_black (int color)
 
 void atarigen_alloc_fixed_colors (int *usage, int base, int colors, int palettes)
 {
-	unsigned short *pram = (unsigned short *)atarigen_paletteram + base;
+	unsigned short *pram = (unsigned short *)atarigen_paletteram + base, *temp;
 	int i, j, index;
 
 	/* see if we ran out of colors last frame */
 	if (ranout && errorlog)
 		fprintf (errorlog, "Fell short %d colors\n", ranout);
 	ranout = 0;
+	
+	/* initialize the colortables */
+	temp = last_colortable;
+	last_colortable = this_colortable;
+	this_colortable = temp;
+	memset (this_colortable, 0xff, Machine->drv->color_table_len * sizeof (unsigned short));
 
 	/* for each palette that is used by the playfield, assign it the associated bank from the palette */
 	for (i = index = 0; i < palettes; i++)
@@ -315,51 +493,86 @@ void atarigen_alloc_fixed_colors (int *usage, int base, int colors, int palettes
 		/* do the same thing for each color in the given palette */
 		for (j = 0; j < colors; j++, index++)
 		{
-			last_palette[index] = this_palette[index];
+			last_used[index] = this_used[index];
 			last_color[index] = this_color[index];
 
 			/* if this palette is in use, assign the colors */
 			if (used)
 			{
-				this_palette[index] = base + index;
+				this_used[index] = 1;
 				this_color[index] = pram[index];
+				this_colortable[base + index] = index;
 			}
 
 			/* else mark them free */
 			else
-				this_palette[index] = -1;
+				this_used[index] = 0;
 		}
 	}
 
 	/* find a black color to use for anything requesting black */
-	if (this_palette[current_black] >= 0)
+	if (this_used[current_black])
 	{
 		for (i = 255; i >= 0; i--)
-			if (this_palette[i] < 0)
+			if (!this_used[i])
 			{
 				current_black = i;
 				break;
 			}
 	}
-	this_palette[current_black] = 10001;
+	this_used[current_black] = 1;
 	this_color[current_black] = 0;
 
 	/* find the special color */
-	if (this_palette[atarigen_special_color] >= 0)
+	if (this_used[atarigen_special_color])
 	{
 		for (i = 255; i >= 0; i--)
-			if (this_palette[i] < 0)
+			if (!this_used[i])
 			{
 				atarigen_special_color = i;
 				break;
 			}
 	}
-	this_palette[atarigen_special_color] = 10000;
+	this_used[atarigen_special_color] = 1;
 }
 
 
 static int atarigen_find_closest (int color)
 {
+	/* find the closest color match -- hopefully this won't be necessary 99% of the time */
+	
+	/* 555 case */
+	if (colortype == COLOR_PALETTE_555)
+	{
+		int mask = 0x7fff, i, j;
+
+		/* this is cheesy, but it should do the trick */
+		for (i = 0; i < 5; i++)
+		{
+			mask ^= 0x421 << i;
+			color &= mask;
+			for (j = 0; j < 256; j++)
+				if ((this_color[j] & mask) == color)
+					return j;
+		}
+	}
+
+	/* 4444 case */
+	else if (colortype == COLOR_PALETTE_4444)
+	{
+		int mask = 0xffff, i, j;
+
+		/* this is cheesy, but it should do the trick */
+		for (i = 0; i < 4; i++)
+		{
+			mask ^= 0x1111 << i;
+			color &= mask;
+			for (j = 0; j < 256; j++)
+				if ((this_color[j] & mask) == color)
+					return j;
+		}
+	}
+	
 	return (rand () & 255);
 }
 
@@ -382,38 +595,49 @@ void atarigen_alloc_dynamic_colors (int entry, int number)
 			goto assignit;
 		}
 
-		/* first see if there's an exact color match */
-		/* WARNING: this can cause flickering; use only if necessary */
-/*		for (j = 0; j < 256; j++)
-			if (this_color[j] == color)
-				goto assignit;*/
-
-		/* then see if we had an entry last frame */
-		for (j = 0; j < 256; j++)
-			if (last_palette[j] == entry && this_palette[j] < 0)
+		/* first see if we had an entry last frame and try to reuse that */
+		j = last_colortable[entry];
+		if (j != 0xffff)
+		{
+			if (!this_used[j])
 				goto assignit;
+			if (this_color[j] == color)
+				goto assignit;
+		}
+
+		/* next see if there's an exact color match */
+		/* WARNING: this can cause flickering; use only if necessary */
+		if (reuse_colors)
+		{
+			for (j = 0; j < 256; j++)
+				if (this_color[j] == color)
+					goto assignit;
+		}
 
 		/* then try to use an empty entry from last frame */
 		for (j = 0; j < 256; j++)
-			if (last_palette[j] < 0 && this_palette[j] < 0)
+			if (!last_used[j] && !this_used[j])
 				goto assignit;
 
 		/* then try to use an empty entry from this frame */
 		for (j = 0; j < 256; j++)
-			if (this_palette[j] < 0)
+			if (!this_used[j])
 				goto assignit;
 
 		/* finally, find the closest */
 		ranout++;
 		j = atarigen_find_closest (color);
+		ctable[i] = Machine->pens[j];
+		continue;
 
 assignit:
 		/* now assign things */
-		if (this_palette[j] < 0)
+		if (!this_used[j])
 		{
-			this_palette[j] = entry;
+			this_used[j] = 1;
 			this_color[j] = color;
 		}
+		this_colortable[entry] = j;
 		ctable[i] = Machine->pens[j];
 	}
 }
@@ -439,10 +663,14 @@ void atarigen_update_colors (int intensity)
 			/* only update the color if it's different than last frame's */
 			if (tcolor != last_color[j] || idirty)
 			{
-				int red = ((tcolor >> 10) & 0x1f) << 3;
-				int green = ((tcolor >> 5) & 0x1f) << 3;
-				int blue = (tcolor & 0x1f) << 3;
+				int red =   (((tcolor >> 10) & 31) * 224) >> 5;
+				int green = (((tcolor >>  5) & 31) * 224) >> 5;
+				int blue =  (((tcolor      ) & 31) * 224) >> 5;
 
+				if (red) red += 38;
+				if (green) green += 38;
+				if (blue) blue += 38;
+				
 				/* adjust for intensity */
 				if (!(tcolor & 0x8000) && intensity >= 0)
 				{
@@ -451,7 +679,7 @@ void atarigen_update_colors (int intensity)
 					blue = (blue * intensity) >> 5;
 				}
 
-				osd_modify_pen (Machine->pens[j], red, green, blue);
+				palette_change_color (j, red, green, blue);
 			}
 		}
 	}
@@ -459,9 +687,6 @@ void atarigen_update_colors (int intensity)
 	/* handle the 4444 case */
 	else if (colortype == COLOR_PALETTE_4444)
 	{
-		static const int intensity_table[16] =
-			{ 0x00, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80, 0x90, 0xa0, 0xb0, 0xc0, 0xd0, 0xe0, 0xf0, 0x100, 0x110 };
-
 		int j;
 
 		/* loop over everyone */
@@ -472,12 +697,14 @@ void atarigen_update_colors (int intensity)
 			/* only update the color if it's different than last frame's */
 			if (tcolor != last_color[j])
 			{
-				int inten = intensity_table[(tcolor >> 12) & 15];
-				int red = (((tcolor >> 8) & 15) * inten) >> 4;
-				int green = (((tcolor >> 4) & 15) * inten) >> 4;
-				int blue = ((tcolor & 15) * inten) >> 4;
+				static const int ztable[16] =
+					{ 0x0, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x10, 0x11 };
+				int inten = ztable[(tcolor >> 12) & 15];
+				int red =   ((tcolor >> 8) & 15) * inten;
+				int green = ((tcolor >> 4) & 15) * inten;
+				int blue =  ((tcolor     ) & 15) * inten;
 
-				osd_modify_pen (Machine->pens[j], red, green, blue);
+				palette_change_color (j, red, green, blue);
 			}
 		}
 	}
