@@ -68,9 +68,15 @@ void zaxxon_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 int  zaxxon_vh_start(void);
 void zaxxon_vh_stop(void);
 void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern int zaxxon_vid_type;
 
 void zaxxon_sound_w(int offset, int data);
 
+
+void zaxxon_init_machine(void)
+{
+	zaxxon_vid_type = 0;
+}
 
 
 static struct MemoryReadAddress readmem[] =
@@ -221,25 +227,25 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout charlayout1 =
+struct GfxLayout zaxxon_charlayout1 =
 {
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
 	3,	/* 3 bits per pixel (actually 2, the third plane is 0) */
 	{ 2*256*8*8, 256*8*8, 0 },	/* the bitplanes are separated */
-	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
-static struct GfxLayout charlayout2 =
+struct GfxLayout zaxxon_charlayout2 =
 {
 	8,8,	/* 8*8 characters */
 	1024,	/* 1024 characters */
 	3,	/* 3 bits per pixel */
 	{ 2*1024*8*8, 1024*8*8, 0 },	/* the bitplanes are separated */
-	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
@@ -249,14 +255,14 @@ static struct GfxLayout spritelayout =
 	64,	/* 64 sprites */
 	3,	/* 3 bits per pixel */
 	{ 2*64*128*8, 64*128*8, 0 },	/* the bitplanes are separated */
-	{ 103*8, 102*8, 101*8, 100*8, 99*8, 98*8, 97*8, 96*8,
-			71*8, 70*8, 69*8, 68*8, 67*8, 66*8, 65*8, 64*8,
-			39*8, 38*8, 37*8, 36*8, 35*8, 34*8, 33*8, 32*8,
-			7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7,
 			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7,
 			16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7,
 			24*8+0, 24*8+1, 24*8+2, 24*8+3, 24*8+4, 24*8+5, 24*8+6, 24*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			32*8, 33*8, 34*8, 35*8, 36*8, 37*8, 38*8, 39*8,
+			64*8, 65*8, 66*8, 67*8, 68*8, 69*8, 70*8, 71*8,
+			96*8, 97*8, 98*8, 99*8, 100*8, 101*8, 102*8, 103*8 },
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
 
@@ -264,9 +270,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout1,   0, 32 },	/* characters */
-	{ 1, 0x1800, &charlayout2,   0, 32 },	/* background tiles */
-	{ 1, 0x7800, &spritelayout,  0, 32 },	/* sprites */
+	{ 1, 0x0000, &zaxxon_charlayout1,   0, 32 },	/* characters */
+	{ 1, 0x1800, &zaxxon_charlayout2,   0, 32 },	/* background tiles */
+	{ 1, 0x7800, &spritelayout,  0, 32 },			/* sprites */
 	{ -1 } /* end of array */
 };
 
@@ -369,10 +375,10 @@ static struct MachineDriver machine_driver =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
-	0,
+	zaxxon_init_machine,
 
 	/* video hardware */
-	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1,2*8, 30*8-1 },
 	gfxdecodeinfo,
 	256,32*8,
 	zaxxon_vh_convert_color_prom,
@@ -651,7 +657,7 @@ struct GameDriver zaxxon_driver =
 	"Zaxxon",
 	"1982",
 	"Sega",
-	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nAlex Judd (sound)\nGerald Vanderick (color info)\nFrank Palazzolo (sound info)\nRiek Gladys (sound info)",
+	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nAlex Judd (sound)\nGerald Vanderick (color info)\nFrank Palazzolo (sound info)\nRiek Gladys (sound info)\nJohn Butler (video)",
 	0,
 	&machine_driver,
 
@@ -663,7 +669,7 @@ struct GameDriver zaxxon_driver =
 	input_ports,
 
 	zaxxon_color_prom, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
@@ -688,7 +694,7 @@ struct GameDriver szaxxon_driver =
 	input_ports,
 
 	szaxxon_color_prom, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
@@ -715,7 +721,7 @@ struct GameDriver futspy_driver =
 	input_ports,
 
 	szaxxon_color_prom, 0, 0,
-	ORIENTATION_ROTATE_180,
+	ORIENTATION_ROTATE_270,
 
 	0, 0
 };

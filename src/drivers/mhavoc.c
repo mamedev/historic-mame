@@ -542,6 +542,7 @@ void hisave(void)
 	"Bernd Wiebelt (MAME driver)\n" \
 	"Frank Palazzolo (technical info)\n" \
 	"Jess Askey (technical info)\n" \
+	"Owen Rubin (technical info)\n" \
 	VECTOR_TEAM
 
 struct GameDriver mhavoc_driver =

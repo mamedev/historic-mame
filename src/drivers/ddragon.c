@@ -6,9 +6,9 @@ Help to do the original drivers from Chris Moore
 Sprite CPU support and additional code by Phil Stroffolino
 Sprite CPU emulation, vblank support, and partial sound code by Ernesto Corvi.
 Dipswitch to dd2 by Marco Cassili.
+High Score support by Roberto Fresca.
 
 TODO:
-- Add High Score support
 - Find the original MCU code so original Double Dragon ROMs can be supported
 
 NOTES:
@@ -106,18 +106,17 @@ static void dd_adpcm_w(int offset,int data)
 
 	offset >>= 1;
 
-fprintf(errorlog,"chip %d offset %d data %02x\n",chip,offset,data);
 	switch (offset)
 	{
 		case 3:
 			break;
 
 		case 2:
-			start[chip] = data;
+			start[chip] = data & 0x7f;
 			break;
 
 		case 1:
-			end[chip] = data;
+			end[chip] = data & 0x7f;
 			break;
 
 		case 0:
@@ -738,6 +737,86 @@ ROM_END
 
 
 
+static int ddragonb_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	/* check if the hi score table has already been initialized */
+	if ((RAM[0x0e73] == 0x02) && (RAM[0x0e76] == 0x27) && (RAM[0x0023] == 0x02))
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x0e73],6*5);
+			RAM[0x0023] = RAM[0x0e73];
+			RAM[0x0024] = RAM[0x0e74];
+			RAM[0x0025] = RAM[0x0e75];
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+static void ddragonb_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x0e73],6*5);
+		osd_fclose(f);
+	}
+}
+
+
+static int ddragon2_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	/* check if the hi score table has already been initialized */
+	if ((RAM[0x0f91] == 0x02) && (RAM[0x0f94] == 0x25) && (RAM[0x0023] == 0x02))
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x0f91],6*5);
+			RAM[0x0023] = RAM[0x0f91];
+			RAM[0x0024] = RAM[0x0f92];
+			RAM[0x0025] = RAM[0x0f93];
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+static void ddragon2_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x0f91],6*5);
+		osd_fclose(f);
+	}
+
+}
+
+
+
 struct GameDriver ddragon_driver =
 {
 	__FILE__,
@@ -760,7 +839,7 @@ struct GameDriver ddragon_driver =
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	ddragonb_hiload, ddragonb_hisave
 };
 
 struct GameDriver ddragonb_driver =
@@ -785,7 +864,7 @@ struct GameDriver ddragonb_driver =
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	ddragonb_hiload, ddragonb_hisave
 };
 
 struct GameDriver ddragon2_driver =
@@ -810,5 +889,5 @@ struct GameDriver ddragon2_driver =
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	ddragon2_hiload, ddragon2_hisave
 };

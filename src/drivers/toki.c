@@ -293,9 +293,9 @@ static struct YM3526interface ym3812_interface =
 static struct MSM5205interface msm5205_interface =
 {
 	1,			/* 1 chips */
-	8000,       /* 8000Hz playback? */
+	4000,       /* 8000Hz playback? */
 	toki_adpcm_int,	/* interrupt function */
-	{ 200 }
+	{ 255 }
 };
 
 
@@ -306,7 +306,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M68000,
-			14000000,	/* 14 MHz ??? */
+			14000000,	/* the real speed should be 8MHz or less (68000-8 CPU) */
 			0,
 			readmem,writemem,
 			0,0,

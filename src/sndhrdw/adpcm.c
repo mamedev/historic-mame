@@ -407,7 +407,6 @@ void ADPCM_play (int num, int offset, int length)
 	/* update the ADPCM voice */
 	ADPCM_update (voice, cpu_scalebyfcount (buffer_len));
 
-fprintf(errorlog,"play num %d offset %05x length %04x\n",num,offset,length);
 	/* set up the voice to play this sample */
 	voice->playing = 1;
 	voice->base = &Machine->memory_region[adpcm_intf->region][offset];

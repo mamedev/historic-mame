@@ -13,7 +13,6 @@ unsigned char targ_spec_flag;
 static unsigned char targ_sh_ctrl0=0;
 static unsigned char targ_sh_ctrl1=0;
 static unsigned char tone_vol;
-static int music_count;
 
 #define MAXFREQ_A 525000
 
@@ -54,7 +53,6 @@ int targ_sh_start(void)
 {
 	tone_channel = get_play_channels(1);
 
-    music_count=0;
     tone_pointer=0;
     tone_offset=0;
     tone_vol=0;
@@ -91,16 +89,15 @@ void targ_sh_w(int offset,int data)
     else
     {
         /* cpu music */
-        if RISING_EDGE(0x01) {
-            if (!sample_playing(0) && !music_count)
-				sample_start(0,5,0);
-            music_count++;
-            if (music_count > 68) music_count=0;
+        if ((data & 0x01) != (targ_sh_ctrl0 & 0x01)) {
+            DAC_data_w(0,(data & 0x01) * 0xFF);
         }
-
         /* Shoot */
-        if RISING_EDGE(0x02) {
+        if FALLING_EDGE(0x02) {
             if (!sample_playing(0))  sample_start(0,1,0);
+        }
+        if RISING_EDGE(0x02) {
+            sample_stop(0);
         }
 
         /* Crash */

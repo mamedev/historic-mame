@@ -2,7 +2,7 @@
 #include "vidhrdw/system8.h"
 
 
-int  system8_bank = 0x0f;
+int  system8_bank = 0x00;
 
 
 void system8_bankswitch_w(int offset,int data)
@@ -17,32 +17,53 @@ void system8_bankswitch_w(int offset,int data)
 	system8_bank=data;
 }
 
+void wbml_bankswitch_w(int offset,int data)
+{
+	int bankaddress;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	bankaddress = 0x10000 + (((data & 0x0c)>>2) * 0x4000);
+	cpu_setbank(1,&RAM[bankaddress]);
+	/* TODO: the memory system doesn't yet support bank switching on an encrypted */
+	/* ROM, so we have to copy the data manually */
+	memcpy(&ROM[0x8000],&RAM[bankaddress+0x20000],0x4000);
+
+	system8_bank=data;
+}
+
 int system8_bankswitch_r(int offset)
 {
 	return(system8_bank);
+}
+
+void system8_soundport_w(int offset, int data)
+{
+	soundlatch_w(0,data);
+	cpu_cause_interrupt(1,Z80_NMI_INT);
 }
 
 
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x0000, 0xBFFF, MRA_ROM },
-	{ 0xC000, 0xFFFF, MRA_RAM },
+	{ 0x0000, 0xbfff, MRA_ROM },
+	{ 0xc000, 0xffff, MRA_RAM },
 	{ -1 } /* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x0000, 0xBFFF, MWA_ROM },
-	{ 0xD000, 0xD1FF, MWA_RAM, &system8_spriteram },
-	{ 0xD800, 0xDFFF, system8_paletteram_w, &paletteram },
-	{ 0xE000, 0xE7FF, system8_backgroundram_w, &system8_backgroundram, &system8_backgroundram_size },
-	{ 0xE800, 0xEEFF, MWA_RAM, &system8_videoram, &system8_videoram_size },
-	{ 0xEFBD, 0xEFBD, MWA_RAM, &system8_scroll_y },
-	{ 0xEFFC, 0xEFFD, MWA_RAM, &system8_scroll_x },
-	{ 0xF020, 0xF03F, MWA_RAM, &system8_background_collisionram },
-	{ 0xF800, 0xFBFF, MWA_RAM, &system8_sprites_collisionram },
-	{ 0xC000, 0xFFFF, MWA_RAM },
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xd000, 0xd1ff, MWA_RAM, &system8_spriteram },
+	{ 0xd800, 0xdfff, system8_paletteram_w, &paletteram },
+	{ 0xe000, 0xe7ff, system8_backgroundram_w, &system8_backgroundram, &system8_backgroundram_size },
+	{ 0xe800, 0xeeff, MWA_RAM, &system8_videoram, &system8_videoram_size },
+	{ 0xefbd, 0xefbd, MWA_RAM, &system8_scroll_y },
+	{ 0xeffc, 0xeffd, MWA_RAM, &system8_scroll_x },
+	{ 0xf020, 0xf03f, MWA_RAM, &system8_background_collisionram },
+	{ 0xf800, 0xfbff, MWA_RAM, &system8_sprites_collisionram },
+	{ 0xc000, 0xffff, MWA_RAM },
 	{ -1 } /* end of table */
 };
 
@@ -50,33 +71,41 @@ static struct MemoryReadAddress wbml_readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xfbff, MRA_RAM },
+	{ 0xc000, 0xcfff, MRA_RAM },
 	{ -1 } /* end of table */
 };
 
 static struct MemoryWriteAddress wbml_writemem[] =
 {
 	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xD000, 0xD1FF, MWA_RAM, &system8_spriteram },
-	{ 0xD800, 0xDFFF, system8_paletteram_w, &paletteram },
-	{ 0xE740, 0xE747, MWA_RAM, &system8_bg_pagesel },
-	{ 0xE7BC, 0xE7FB, choplifter_scroll_x_w, &system8_scrollx_ram },
-	{ 0xE000, 0xE7FF, system8_videoram_w, &system8_videoram, &system8_videoram_size },
-	{ 0xE800, 0xEEFF, system8_backgroundram_w, &system8_backgroundram, &system8_backgroundram_size },
-	{ 0xF020, 0xF03F, MWA_RAM, &system8_background_collisionram },
-	{ 0xF800, 0xFBFF, MWA_RAM, &system8_sprites_collisionram },
-	{ 0xc000, 0xfbff, MWA_RAM },
+	{ 0xc000, 0xcfff, MWA_RAM },
+	{ 0xd000, 0xd1ff, MWA_RAM, &system8_spriteram },
+	{ 0xd800, 0xddff, system8_paletteram_w, &paletteram },
+	{ 0xe000, 0xefff, wbml_paged_videoram_w },
 	{ -1 } /* end of table */
 };
 
+static struct MemoryWriteAddress choplift_writemem[] =
+{
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xd000, 0xd1ff, MWA_RAM, &system8_spriteram },
+	{ 0xd800, 0xdfff, system8_paletteram_w, &paletteram },
+	{ 0xe7c0, 0xe7ff, choplifter_scroll_x_w, &system8_scrollx_ram },
+	{ 0xe000, 0xe7ff, system8_videoram_w, &system8_videoram, &system8_videoram_size },
+	{ 0xe800, 0xeeff, system8_backgroundram_w, &system8_backgroundram, &system8_backgroundram_size },
+	{ 0xf020, 0xf03f, MWA_RAM, &system8_background_collisionram },
+	{ 0xf800, 0xfbff, MWA_RAM, &system8_sprites_collisionram },
+	{ 0xc000, 0xfbff, MWA_RAM },
+	{ -1 } /* end of table */
+};
 
 static struct IOReadPort readport[] =
 {
 	{ 0x0000, 0x0000, input_port_0_r },	/* joy1 */
 	{ 0x0004, 0x0004, input_port_1_r },	/* joy2 */
 	{ 0x0008, 0x0008, input_port_2_r },	/* coin,start */
-	{ 0x000C, 0x000C, input_port_3_r },	/* DIP2 */
-	{ 0x000D, 0x000D, input_port_4_r },	/* DIP1 (Up'n Down only) */
+	{ 0x000c, 0x000c, input_port_3_r },	/* DIP2 */
+	{ 0x000d, 0x000d, input_port_4_r },	/* DIP1 (Up'n Down only) */
 	{ 0x0010, 0x0010, input_port_4_r },	/* DIP1 */
 	{ -1 }	/* end of table */
 };
@@ -96,7 +125,7 @@ static struct IOReadPort pitfall2_readport[] =
 	{ 0x0000, 0x0000, input_port_0_r },	/* joy1 */
 	{ 0x0004, 0x0004, input_port_1_r },	/* joy2 */
 	{ 0x0008, 0x0008, input_port_2_r },	/* coin,start */
-	{ 0x000C, 0x000C, input_port_3_r },	/* DIP2 */
+	{ 0x000c, 0x000c, input_port_3_r },	/* DIP2 */
 	{ 0x0010, 0x0010, input_port_4_r },	/* DIP1 */
 /*	{ 0x0019, 0x0019, pitfall2_unknownport_r },  */
 	{ -1 }	/* end of table */
@@ -114,36 +143,55 @@ static struct IOReadPort wbml_readport[] =
 	{ 0x0000, 0x0000, input_port_0_r },	/* joy1 */
 	{ 0x0004, 0x0004, input_port_1_r },	/* joy2 */
 	{ 0x0008, 0x0008, input_port_2_r },	/* coin,start */
-	{ 0x000C, 0x000C, input_port_3_r },	/* DIP2 */
-	{ 0x000D, 0x000D, input_port_4_r },	/* DIP1 */
+	{ 0x000c, 0x000c, input_port_3_r },	/* DIP2 */
+	{ 0x000d, 0x000d, input_port_4_r },	/* DIP1 */
 	{ 0x0015, 0x0015, system8_bankswitch_r },
-	{ 0x0016, 0x0016, system8_bg_bankselect_r },
+	{ 0x0016, 0x0016, wbml_bg_bankselect_r },
 	{ -1 }	/* end of table */
 };
 
 static struct IOWritePort wbml_writeport[] =
 {
 	{ 0x0014, 0x0014, system8_soundport_w },	/* sound commands */
+	{ 0x0015, 0x0015, wbml_bankswitch_w },
+	{ 0x0016, 0x0016, wbml_bg_bankselect_w },
+	{ -1 }	/* end of table */
+};
+
+static struct IOReadPort choplift_readport[] =
+{
+	{ 0x0000, 0x0000, input_port_0_r },	/* joy1 */
+	{ 0x0004, 0x0004, input_port_1_r },	/* joy2 */
+	{ 0x0008, 0x0008, input_port_2_r },	/* coin,start */
+	{ 0x000c, 0x000c, input_port_3_r },	/* DIP2 */
+	{ 0x000d, 0x000d, input_port_4_r },	/* DIP1 */
+	{ 0x0015, 0x0015, system8_bankswitch_r },
+	{ -1 }	/* end of table */
+};
+
+static struct IOWritePort choplift_writeport[] =
+{
+	{ 0x0014, 0x0014, system8_soundport_w },	/* sound commands */
 	{ 0x0015, 0x0015, system8_bankswitch_w },
-	{ 0x0016, 0x0016, system8_bg_bankselect_w },
 //	{ 0x0017, 0x0017, choplifter_unknownport_w },	// ?
 	{ -1 }	/* end of table */
 };
 
+
 static struct MemoryReadAddress sound_readmem[] =
 {
-	{ 0x0000, 0x7FFF, MRA_ROM },
-	{ 0x8000, 0x9FFF, MRA_RAM },
-	{ 0xE000, 0xE000, soundlatch_r },
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0x87ff, MRA_RAM },
+	{ 0xe000, 0xe000, soundlatch_r },
 	{ -1 } /* end of table */
 };
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
-	{ 0x0000, 0x7FFF, MWA_ROM },
-	{ 0x8000, 0x9FFF, MWA_RAM },
-	{ 0xA000, 0xA003, SN76496_0_w },	/* Choplifter writes to the four addresses */
-	{ 0xC000, 0xC003, SN76496_1_w },	/* in sequence */
+	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0x8000, 0x87ff, MWA_RAM },
+	{ 0xa000, 0xa003, SN76496_0_w },	/* Choplifter writes to the four addresses */
+	{ 0xc000, 0xc003, SN76496_1_w },	/* in sequence */
 	{ -1 } /* end of table */
 };
 
@@ -630,7 +678,7 @@ static struct GfxLayout charlayout =
 static struct GfxLayout choplift_charlayout =
 {
 	8,8,	/* 8 by 8 */
-	4096,	/* 2048 characters */
+	4096,	/* 4096 characters */
 	3,	/* 3 bits per pixel */
 	{ 0, 4096*8*8, 2*4096*8*8 },		/* plane */
 	{ 0, 1, 2, 3, 4, 5, 6, 7},		/* x bit */
@@ -641,13 +689,15 @@ static struct GfxLayout choplift_charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,  512, 128},
+	/* sprites use colors 0-511, but are not defined here */
+	{ 1, 0x0000, &charlayout, 512, 128 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo choplift_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &choplift_charlayout, 512, 128},
+	/* sprites use colors 0-511, but are not defined here */
+	{ 1, 0x0000, &choplift_charlayout, 512, 128 },
 	{ -1 } /* end of array */
 };
 
@@ -657,40 +707,32 @@ static void wbdeluxe_init_machine(void)
 {
 	system8_define_checkspriteram(NULL);
 	system8_define_banksupport(SYSTEM8_SUPPORTS_SPRITEBANKS);
-	system8_define_cliparea(16,239,0,223);
 	system8_define_spritememsize(2, 0x10000);
-	system8_define_sprite_offset_y(16);
 	system8_define_sprite_pixelmode(SYSTEM8_SPRITE_PIXEL_MODE1);
-}
-
-static void wbml_init_machine(void)
-{
-	system8_define_checkspriteram(NULL);
-	system8_define_banksupport(SYSTEM8_SUPPORTS_SPRITEBANKS);
-	system8_define_cliparea(0,255,0,224);
-	system8_define_spritememsize(2, 0x20000);
-	system8_define_sprite_offset_y(0);
-	system8_define_sprite_pixelmode(SYSTEM8_SPRITE_PIXEL_MODE2);
 }
 
 static void pitfall2_init_machine(void)
 {
 	system8_define_checkspriteram(pitfall2_clear_spriteram);
 	system8_define_banksupport(SYSTEM8_NO_SPRITEBANKS);
-	system8_define_cliparea(6,249,0,223);
 	system8_define_spritememsize(2, 0x8000);
-	system8_define_sprite_offset_y(16);
 	system8_define_sprite_pixelmode(SYSTEM8_SPRITE_PIXEL_MODE1);
 }
 
 static void choplift_init_machine(void)
 {
-	system8_bankswitch_w(1,123);
+	system8_bankswitch_w(0,123);
 	system8_define_checkspriteram(NULL);
 	system8_define_banksupport(SYSTEM8_SUPPORTS_SPRITEBANKS);
-	system8_define_cliparea(8,247,16,239);
 	system8_define_spritememsize(2, 0x20000);
-	system8_define_sprite_offset_y(16);
+	system8_define_sprite_pixelmode(SYSTEM8_SPRITE_PIXEL_MODE2);
+}
+
+static void wbml_init_machine(void)
+{
+	system8_define_checkspriteram(NULL);
+	system8_define_banksupport(SYSTEM8_SUPPORTS_SPRITEBANKS);
+	system8_define_spritememsize(2, 0x20000);
 	system8_define_sprite_pixelmode(SYSTEM8_SPRITE_PIXEL_MODE2);
 }
 
@@ -833,8 +875,7 @@ static struct MachineDriver wbdeluxe_machine_driver =
 			3000000,			/* 3 Mhz ? */
 			3,			/* memory region */
 			sound_readmem,sound_writemem,0,0,
-			interrupt,		/* interrupt routine */
-			4			/* interrupts per frame */
+			interrupt,4			/* NMIs are caused by the main CPU */
 		},
 
 	},
@@ -844,7 +885,7 @@ static struct MachineDriver wbdeluxe_machine_driver =
 
 	/* video hardware */
 	256, 256,				/* screen_width, screen_height */
-	{ 16, 239, 16, 239 },			/* struct rectangle visible_area */
+	{ 0*8, 32*8-1, 0*8, 28*8-1 },			/* struct rectangle visible_area */
 	gfxdecodeinfo,				/* GfxDecodeInfo */
 	2048,						/* total colors */
 	2048,						/* color table length */
@@ -883,8 +924,7 @@ static struct MachineDriver pitfall2_machine_driver =
 			3000000,			/* 3 Mhz ? */
 			3,				/* memory region */
 			sound_readmem,sound_writemem,0,0,
-			interrupt,			/* interrupt routine */
-			4				/* interrupts per frame */
+			interrupt,4			/* NMIs are caused by the main CPU */
 		},
 
 	},
@@ -894,7 +934,7 @@ static struct MachineDriver pitfall2_machine_driver =
 
 	/* video hardware */
 	256, 256,				/* screen_width, screen_height */
-	{ 6, 249, 16, 239 },			/* struct rectangle visible_area */
+	{ 0*8, 32*8-1, 0*8, 28*8-1 },			/* struct rectangle visible_area */
 	gfxdecodeinfo,				/* GfxDecodeInfo */
 	2048,						/* total colors */
 	2048,						/* color table length */
@@ -924,7 +964,7 @@ static struct MachineDriver choplift_machine_driver =
 			CPU_Z80,
 			3650000,			/* 3.65 MHz ? */
 			0,				/* memory region */
-			wbml_readmem,wbml_writemem,wbml_readport,wbml_writeport,
+			wbml_readmem,choplift_writemem,choplift_readport,choplift_writeport,
 			interrupt,			/* interrupt routine */
 			1				/* interrupts per frame */
 		},
@@ -933,8 +973,7 @@ static struct MachineDriver choplift_machine_driver =
 			3000000,			/* 3 Mhz ? */
 			3,				/* memory region */
 			sound_readmem,sound_writemem,0,0,
-			interrupt,			/* interrupt routine */
-			4				/* interrupts per frame */
+			interrupt,4			/* NMIs are caused by the main CPU */
 		},
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -943,7 +982,7 @@ static struct MachineDriver choplift_machine_driver =
 
 	/* video hardware */
 	256, 256,						/* screen_width, screen_height */
-	{ 6, 249, 16, 239 },			/* struct rectangle visible_area */
+	{ 0*8, 32*8-1, 0*8, 28*8-1 },			/* struct rectangle visible_area */
 	choplift_gfxdecodeinfo,			/* GfxDecodeInfo */
 	2048,						/* total colors */
 	2048,						/* color table length */
@@ -982,8 +1021,7 @@ static struct MachineDriver wbml_machine_driver =
 			3000000,			/* 3 Mhz ? */
 			3,					/* memory region */
 			sound_readmem,sound_writemem,0,0,
-			interrupt,			/* interrupt routine */
-			4					/* interrupts per frame */
+			interrupt,4			/* NMIs are caused by the main CPU */
 		},
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -992,10 +1030,9 @@ static struct MachineDriver wbml_machine_driver =
 
 	/* video hardware */
 	256, 256,				/* screen_width, screen_height */
-	{ 0, 255, 0, 239 },			/* struct rectangle visible_area */
+	{ 0*8, 32*8-1, 0*8, 28*8-1 },			/* struct rectangle visible_area */
 	choplift_gfxdecodeinfo,				/* GfxDecodeInfo */
-	2048,						/* total colors */
-	2048,						/* color table length */
+	1536, 1536,
 	system8_vh_convert_color_prom,	/* convert color prom routine */
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -1049,11 +1086,11 @@ ROM_END
 ROM_START( wbml_rom )
 	ROM_REGION(0x40000)		/* 256k for code */
 	ROM_LOAD( "WBML.01", 0x20000, 0x8000, 0xa5329b82 )	/* Unencrypted opcodes */
-	ROM_CONTINUE( 0x0000, 0x8000 )              /* Now load the operands in RAM */
+	ROM_CONTINUE(        0x00000, 0x8000 )              /* Now load the operands in RAM */
 	ROM_LOAD( "WBML.02", 0x30000, 0x8000, 0xcdafb89f )	/* Unencrypted opcodes */
-	ROM_CONTINUE( 0x10000, 0x8000 )
+	ROM_CONTINUE(        0x10000, 0x8000 )
 	ROM_LOAD( "WBML.03", 0x38000, 0x8000, 0x31cd6733 )	/* Unencrypted opcodes */
-	ROM_CONTINUE( 0x18000, 0x8000 )
+	ROM_CONTINUE(        0x18000, 0x8000 )
 
 	ROM_REGION(0x18000) 		/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "WBML.08", 0x00000, 0x8000, 0xef89ac27 )
@@ -1116,7 +1153,6 @@ ROM_START( pitfall2_rom )
 	ROM_REGION(0x10000)		/* 64k for sound cpu */
 	ROM_LOAD( "EPR6462"  , 0x00000, 0x2000, 0x0ecd1add )
 ROM_END
-
 
 ROM_START( chplft_rom )
 	ROM_REGION(0x20000)	/* 128k for code */
@@ -1399,8 +1435,8 @@ struct GameDriver upndown_driver =
 	0,
 	"upndown",
 	"Up'n Down",
-	"1984?",
-	"bootleg?",
+	"1983",
+	"Sega",
 	"Jarek Parchanski (MAME driver)\nRoberto Ventura  (hardware info)\nJarek Burczynski (sound)\nMirko Buffoni (additional code)",
 	0,
 	&wbdeluxe_machine_driver,
@@ -1424,9 +1460,9 @@ struct GameDriver wbml_driver =
 	"wbml",
 	"Wonder Boy in Monster Land",
 	"1987",
-	"Sega",
-	"Mirko Buffoni",
-	GAME_NOT_WORKING,
+	"bootleg",
+	"Mirko Buffoni\nNicola Salmoria",
+	0,
 	&wbml_machine_driver,
 
 	wbml_rom,
@@ -1448,7 +1484,7 @@ struct GameDriver pitfall2_driver =
 	0,
 	"pitfall2",
 	"Pitfall II",
-	"1984?",
+	"1985",
 	"Sega",
 	"Jarek Parchanski (MAME driver)\nRoberto Ventura  (hardware info)\nJarek Burczynski (sound)\nMirko Buffoni (additional code)",
 	0,

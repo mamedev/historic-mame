@@ -2,25 +2,20 @@
 
 
 
-
 On MC6840, from Xenophobe schematics:
 	Counter 1 appears to be vertical blank.
-  Counter 3 appears to be horizontal blank.
-  Counter 2 & gate inputs appear unused.
+	Counter 3 appears to be horizontal blank.
+	Counter 2 & gate inputs appear unused.
 
 
 */
 
-
-
 #include "driver.h"
 #include "machine/6821pia.h"
-
 
 static int m6840_cr_select=3;
 static int m6840_timerLSB[3];
 static int m6840_timerMSB[3];
-
 
 static unsigned char soundlatch[4];
 static unsigned char soundstatus;
@@ -50,7 +45,6 @@ static pia6821_interface sg_pia_intf =
 	{ sg_irq },       /* IRQ B */
 };
 
-
 int mcr68_init_machine(void)
 {
 
@@ -58,23 +52,21 @@ int mcr68_init_machine(void)
 	for (i=0; i<3; i++) {
 		m6840_timerLSB[i]=255;
 		m6840_timerMSB[i]=255;
-
+        /* More to come.. */
 	}
 
 
 	/* reset the sound */
-   for (i = 0; i < 4; i++)
+	for (i = 0; i < 4; i++)
       soundlatch[i] = 0;
-   soundstatus = 0;
-   suspended = 0;
+	soundstatus = 0;
+	suspended = 0;
 
 	/* reset the PIAs */
-  pia_startup (&sg_pia_intf);
-
+	pia_startup (&sg_pia_intf);
 
 	return 0;
 }
-
 
 int mcr68_interrupt(void)
 {
@@ -91,7 +83,13 @@ int mcr68_interrupt(void)
 	/* Timer stuff - timer 3 is VBL? */
 	m6840_timerLSB[2]--;
 	if (m6840_timerLSB[2]<0) {m6840_timerLSB[2]=255;m6840_timerMSB[2]--;}
-	if (m6840_timerMSB[2]<0) {on=1; if (errorlog) fprintf(errorlog,"***TIMER3INT***\n");cpu_cause_interrupt(0,2);/* interrupt */}
+	if (m6840_timerMSB[2]<0) {
+    	on=1;
+        if (errorlog) fprintf(errorlog,"***TIMER3INT***\n");
+        cpu_cause_interrupt(0,2);
+    }
+
+    /* Other 2 timers disabled for now.. */
  /*
 	m6840_timerLSB[1]--;
   if (m6840_timerLSB[1]<0) {m6840_timerLSB[1]=255;m6840_timerMSB[1]--;}
@@ -103,8 +101,7 @@ int mcr68_interrupt(void)
 
    */
 
-
-  /* HBL ? */
+	/* HBL ? */
 	if (on) i++;
 	if (i>4) {i=0; return 1;}
 
@@ -115,9 +112,7 @@ int mcr68_interrupt(void)
 
 int mcr68_control_0(int offset)
 {
-
 //	int a=readinputport( 0 );
-
 //	if ((a&0x7)!=0x7) cpu_cause_interrupt(0,1);
 
 	return (readinputport( 1 ) << 8 ) + readinputport( 0 );
@@ -132,43 +127,6 @@ int mcr68_control_2(int offset)
 {
 	return readinputport( 4 );
 }
-
-/*
-
-Xenophobe
-
-(SW2 = 10-position switch at A13 on 68000 CPU BOARD)
-
-1   2   3   4   5   6   7   8   9   10  Meaning
----------------------------------------------------------------------
-On  On                                  ( Unused )
-Off On                                  ( Unused )
-On  Off                                 ( Unused )
-Off Off                                 ( Unused )
-        On                              Free play
-        Off                             No free play
-            On                          1 coin per life unit
-            Off                         2 coins per life unit
-                On                      1000 hit points per life unit
-                Off                     2000 hit points per life unit
-                    On                  Attract mode sounds ON
-                    Off                 Attract mode sounds OFF
-                        On  On          Difficulty = Medium
-                        Off On          Difficulty = Easy
-                        On  Off         Difficulty = Hard
-                        Off Off         Difficulty = Medium
-                                On      ( Unused )
-                                Off     ( Unused )
-                                     On Freeze Mode
-                                    Off Normal game play
-
-
-
-
-*/
-
-
-
 
 int mcr68_6840_r(int offset)
 {
@@ -234,9 +192,6 @@ void mcr68_6840_w(int offset, int data)
 	int byt;
 
 	/* From datasheet:
-
-
-** ftpsearch.ntnu.no/
 
 
 0		0 - write control reg 1/3 (reg 1 if lsb of Reg 2 is 1, else 3)
@@ -369,7 +324,7 @@ void mcr68_sg_w(int offset, int data)
 {
 	if (errorlog) fprintf(errorlog,"Sound CPU: %04x %04x\n",offset,data);
 
-  timer_set (TIME_NOW, data&0xff, xenophobe_delayed_write);
+	timer_set (TIME_NOW, data&0xff, xenophobe_delayed_write);
 }
 
 
@@ -396,6 +351,6 @@ static void sg_portb_w (int offset, int data)
 static void sg_irq (void)
 {
 	/* generate a sound interrupt */
-  	cpu_cause_interrupt (1, 4);
+	cpu_cause_interrupt (1, 3); /* From 4 */
 }
 

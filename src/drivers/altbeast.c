@@ -67,7 +67,7 @@ static struct MemoryWriteAddress altbeast_writemem[] =
 	{ 0x410000, 0x410fff, system16_videoram_w, &system16_videoram, &s16_videoram_size },
 	{ 0x400000, 0x40ffff, system16_backgroundram_w, &system16_backgroundram, &s16_backgroundram_size },
 	{ 0x440000, 0x440fff, system16_spriteram_w, &system16_spriteram, &s16_spriteram_size },
-	{ 0x840000, 0x840fff, system16_paletteram_w },
+	{ 0x840000, 0x840fff, system16_paletteram_w, &paletteram },
 	{ 0xc40000, 0xc40003, goldnaxe_refreshenable_w, &system16_refreshregister },
 	{ 0xc40004, 0xc4000f, MWA_NOP },                 /* IO Ctrl:  Unknown */
 	{ 0xc43000, 0xc4300f, MWA_NOP },                 /* IO Ctrl:  Unknown */

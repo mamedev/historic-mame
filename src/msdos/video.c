@@ -38,13 +38,13 @@ static int dirtypalette;
 int vesa;
 int ntsc;
 int vgafreq;
+int always_synced;
 int video_sync;
 int color_depth;
 int skiplines;
 int skipcolumns;
 int scanlines;
 int use_double;
-int use_synced;
 float gamma_correction;
 char *pcxdir;
 char *resolution;
@@ -82,8 +82,17 @@ static uclock_t start_time,end_time;	/* to calculate fps average on exit */
 							/* to avoid counting the copyright and info screens */
 
 
-struct { int x, y; Register *reg; int reglen; int syncvgafreq; int scanlines; }
-vga_tweaked[] = {
+struct vga_tweak { int x, y; Register *reg; int reglen; int syncvgafreq; int scanlines; };
+struct vga_tweak vga_orig_tweaked[] = {
+	{ 288, 224, orig_scr288x224scanlines, sizeof(scr288x224scanlines)/sizeof(Register), 0, 1},
+	{ 256, 256, orig_scr256x256scanlines, sizeof(scr256x256scanlines)/sizeof(Register), 0, 1},
+	{ 224, 288, orig_scr224x288scanlines, sizeof(scr224x288scanlines)/sizeof(Register), 0, 1},
+	{ 288, 224, orig_scr288x224, sizeof(scr288x224)/sizeof(Register),  0, 0 },
+	{ 256, 256, orig_scr256x256, sizeof(scr256x256)/sizeof(Register),  0, 0 },
+	{ 224, 288, orig_scr224x288, sizeof(scr224x288)/sizeof(Register),  0, 0 },
+	{ 0, 0 }
+};
+struct vga_tweak vga_tweaked[] = {
 	{ 288, 224, scr288x224scanlines, sizeof(scr288x224scanlines)/sizeof(Register), 0, 1},
 	{ 256, 256, scr256x256scanlines, sizeof(scr256x256scanlines)/sizeof(Register), 1, 1},
 	{ 224, 288, scr224x288scanlines, sizeof(scr224x288scanlines)/sizeof(Register), 2, 1},
@@ -262,6 +271,7 @@ static void select_display_mode(void)
 
 
 	auto_resolution = 0;
+	doubling = use_double;
 
 	if (vector_game)
 	{
@@ -354,8 +364,6 @@ static void select_display_mode(void)
 		}
 		else
 		{
-			doubling = use_double;
-
 			/* turn off pixel doubling if we don't want scanlines */
 			if (scanlines == 0) doubling = 0;
 
@@ -459,7 +467,7 @@ static void adjust_display (int xmin, int ymin, int xmax, int ymax)
 	visheight = ymax - ymin + 1;
 
 	if (doubling == 0 || gfx_mode == GFX_VGA ||
-			viswidth > gfx_width/2 || visheight > gfx_height/2)
+			(doubling != 1 && (viswidth > gfx_width/2 || visheight > gfx_height/2)))
 		doubling = 0;
 	else
 		doubling = 1;
@@ -672,6 +680,25 @@ int osd_set_display(int width,int height, int attributes)
 
 		/* find the matching tweaked mode */
 		/* use noscanline modes if scanline modes not possible */
+		if (video_sync == 0 && always_synced == 0)
+		{
+			/* if vsync not requested, first look for more compatible modes */
+			for (i=0; ((vga_orig_tweaked[i].x != 0) && !found); i++)
+			{
+				int scan;
+				scan = vga_orig_tweaked[i].scanlines;
+
+				if (gfx_width  == vga_orig_tweaked[i].x &&
+					gfx_height == vga_orig_tweaked[i].y &&
+					(scanlines == scan || scan == 0))
+				{
+					reg = vga_orig_tweaked[i].reg;
+					reglen = vga_orig_tweaked[i].reglen;
+					videofreq = 0;	/* always use the most compatible vgafreq 0 */
+					found = 1;
+				}
+			}
+		}
 		for (i=0; ((vga_tweaked[i].x != 0) && !found); i++)
 		{
 			int scan;
@@ -689,9 +716,6 @@ int osd_set_display(int width,int height, int attributes)
 			}
 		}
 
-/* TODO: this is a temporary hack */
-if (reg == scr256x256scanlines && use_synced == 0)
-	reg = orig_scr256x256scanlines;
 
 		/* can't find a VGA mode, use VESA */
 		if (found == 0)

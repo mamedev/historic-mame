@@ -385,7 +385,7 @@ static void hisave(void)
 struct GameDriver mrdo_driver =
 {
 	__FILE__,
-	&mrdo_driver,
+	0,
 	"mrdo",
 	"Mr. Do! (Universal)",
 	"1982",

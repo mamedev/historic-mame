@@ -476,8 +476,8 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,	/* 100 CPU slices per frame - an high value to ensure proper */
-			/* synchronization of the CPUs */
+	60,	/* 60 CPU slices per frame - an high value to ensure proper */
+		/* synchronization of the CPUs */
 	qix_init_machine,			/* init machine routine */ /* JB 970526 */
 
 	/* video hardware */
@@ -537,7 +537,8 @@ static struct MachineDriver zoo_machine_driver =
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,								/* 100 cpu slices per frame */
+	60,	/* 60 CPU slices per frame - an high value to ensure proper */
+		/* synchronization of the CPUs */
 	zoo_init_machine,					/* init machine routine */
 
 	/* video hardware */

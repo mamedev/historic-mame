@@ -114,7 +114,7 @@
 
 static unsigned char *game_palette;	/* RGB palette as set by the driver. */
 static unsigned short *game_colortable;	/* lookup table as set up by the driver */
-static unsigned char shrinked_palette[3 * STATIC_MAX_PENS];
+static unsigned char shrinked_palette[3 * 256];
 static unsigned short *shrinked_pens;
 static unsigned short *palette_map;	/* map indexes from game_palette to shrinked_palette */
 static unsigned short pen_usage_count[STATIC_MAX_PENS];
@@ -946,6 +946,44 @@ void paletteram_BBGGGRRR_w(int offset,int data)
 	bit1 = (data >> 6) & 0x01;
 	bit2 = (data >> 7) & 0x01;
 	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+	palette_change_color(offset,r,g,b);
+}
+
+
+void paletteram_IIBBGGRR_w(int offset,int data)
+{
+	int r,g,b,i;
+
+
+	paletteram[offset] = data;
+
+	i = (data >> 6) & 0x03;
+	/* red component */
+	r = (((data << 2) & 0x0c) | i) * 0x11;
+	/* green component */
+	g = (((data >> 0) & 0x0c) | i) * 0x11;
+	/* blue component */
+	b = (((data >> 2) & 0x0c) | i) * 0x11;
+
+	palette_change_color(offset,r,g,b);
+}
+
+
+void paletteram_BBGGRRII_w(int offset,int data)
+{
+	int r,g,b,i;
+
+
+	paletteram[offset] = data;
+
+	i = (data >> 0) & 0x03;
+	/* red component */
+	r = (((data >> 0) & 0x0c) | i) * 0x11;
+	/* green component */
+	g = (((data >> 2) & 0x0c) | i) * 0x11;
+	/* blue component */
+	b = (((data >> 4) & 0x0c) | i) * 0x11;
 
 	palette_change_color(offset,r,g,b);
 }

@@ -167,6 +167,8 @@ int paletteram_word_r(int offset);	/* for 16 bit CPU */
 
 void paletteram_BBGGGRRR_w(int offset,int data);
 void paletteram_RRRGGGBB_w(int offset,int data);
+void paletteram_IIBBGGRR_w(int offset,int data);
+void paletteram_BBGGRRII_w(int offset,int data);
 
 /* _w       least significant byte first */
 /* _swap_w  most significant byte first */

@@ -21,15 +21,33 @@ Notes:
 #include "Z80/Z80.h"
 #include "M6809/m6809.h"
 
-void mainevt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-int mainevt_vh_start(void);
-void mainevt_vh_stop(void);
-void mainevt_control_w(int offset, int data);
-void mainevt_video_control(int offset, int data);
-void mainevt_video_w(int offset, int data);
-void mainevt_attr_w(int offset, int data);
+void mainevt_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
+int mainevt_vh_start (void);
+void mainevt_vh_stop (void);
+void mainevt_control_w (int offset, int data);
+void mainevt_video_control (int offset, int data);
 
+void mainevt_bg_video_w (int offset, int data);
+void mainevt_fg_video_w (int offset, int data);
+void mainevt_video_w (int offset, int data);
+
+void mainevt_bg_attr_w (int offset, int data);
+void mainevt_fg_attr_w (int offset, int data);
+void mainevt_attr_w (int offset, int data);
+
+extern unsigned char *mainevt_bg_attr_ram;
+extern unsigned char *mainevt_fg_attr_ram;
 extern unsigned char *mainevt_attr_ram;
+
+extern unsigned char *bg_videoram;
+extern unsigned char *fg_videoram;
+
+extern unsigned char *bg_scrollx_lo;
+extern unsigned char *bg_scrollx_hi;
+extern unsigned char *bg_scrolly;
+extern unsigned char *fg_scrollx_lo;
+extern unsigned char *fg_scrollx_hi;
+extern unsigned char *fg_scrolly;
 
 static int mainevt_int_type;
 
@@ -87,11 +105,30 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x0000, 0x1bff, mainevt_attr_w, &mainevt_attr_ram },
+	{ 0x0000, 0x07ff, mainevt_attr_w, &mainevt_attr_ram },
+	{ 0x0800, 0x0fff, mainevt_bg_attr_w, &mainevt_bg_attr_ram },
+	{ 0x1000, 0x17ff, mainevt_fg_attr_w, &mainevt_fg_attr_ram },
+//	{ 0x0000, 0x1bff, mainevt_attr_w, &mainevt_attr_ram },
+
+	{ 0x180c, 0x180c, MWA_RAM, &bg_scrolly },
+	{ 0x1a00, 0x1a00, MWA_RAM, &bg_scrollx_lo },
+	{ 0x1a01, 0x1a01, MWA_RAM, &bg_scrollx_hi },
+//	{ 0x1800, 0x1bff, MWA_RAM },
+
 	{ 0x1d00, 0x1d00, MWA_NOP },  //??
 	{ 0x1e80, 0x1e80, mainevt_int_w },
 	{ 0x1f80, 0x1f90, mainevt_control_w },
-	{ 0x2000, 0x3bff, mainevt_video_w, &videoram, &videoram_size },
+
+	{ 0x2000, 0x27ff, mainevt_video_w, &videoram, &videoram_size },
+	{ 0x2800, 0x2fff, mainevt_bg_video_w, &bg_videoram },
+	{ 0x3000, 0x37ff, mainevt_fg_video_w, &fg_videoram },
+//	{ 0x2000, 0x3bff, mainevt_video_w, &videoram, &videoram_size },
+
+	{ 0x380c, 0x380c, MWA_RAM, &fg_scrolly },
+	{ 0x3a00, 0x3a00, MWA_RAM, &fg_scrollx_lo },
+	{ 0x3a01, 0x3a01, MWA_RAM, &fg_scrollx_hi },
+//	{ 0x3800, 0x3bff, MWA_RAM },
+
 	{ 0x3c00, 0x3fff, MWA_RAM, &spriteram },
 	{ 0x4000, 0x5dff, MWA_RAM },
 	{ 0x5e00, 0x5fff, paletteram_xBBBBBGGGGGRRRRR_swap_w, &paletteram },
@@ -128,12 +165,30 @@ static struct MemoryReadAddress dv_readmem[] =
 
 static struct MemoryWriteAddress dv_writemem[] =
 {
-	{ 0x0000, 0x1bff, mainevt_attr_w, &mainevt_attr_ram },
+	{ 0x0000, 0x07ff, mainevt_attr_w, &mainevt_attr_ram },
+	{ 0x0800, 0x0fff, mainevt_bg_attr_w, &mainevt_bg_attr_ram },
+	{ 0x1000, 0x17ff, mainevt_fg_attr_w, &mainevt_fg_attr_ram },
+//	{ 0x0000, 0x1bff, mainevt_attr_w, &mainevt_attr_ram },
+	{ 0x180c, 0x180c, MWA_RAM, &bg_scrolly },
+	{ 0x1a00, 0x1a00, MWA_RAM, &bg_scrollx_lo },
+	{ 0x1a01, 0x1a01, MWA_RAM, &bg_scrollx_hi },
+//	{ 0x1800, 0x1bff, MWA_RAM },
+
 //  { 0x1d00, 0x1d00, MWA_NOP },  //??
 	{ 0x1e80, 0x1e80, mainevt_int_w },
 	{ 0x1f80, 0x1f90, mainevt_control_w },
 	{ 0x1fb2, 0x1fb2, MWA_NOP },
-	{ 0x2000, 0x3bff, mainevt_video_w, &videoram, &videoram_size },
+
+	{ 0x2000, 0x27ff, mainevt_video_w, &videoram, &videoram_size },
+	{ 0x2800, 0x2fff, mainevt_bg_video_w, &bg_videoram },
+	{ 0x3000, 0x37ff, mainevt_fg_video_w, &fg_videoram },
+//	{ 0x2000, 0x3bff, mainevt_video_w, &videoram, &videoram_size },
+
+	{ 0x380c, 0x380c, MWA_RAM, &fg_scrolly },
+	{ 0x3a00, 0x3a00, MWA_RAM, &fg_scrollx_lo },
+	{ 0x3a01, 0x3a01, MWA_RAM, &fg_scrollx_hi },
+//	{ 0x3800, 0x3bff, MWA_RAM },
+
 	{ 0x3c00, 0x3fff, MWA_RAM, &spriteram },
 	{ 0x4000, 0x5dff, MWA_RAM },
 	{ 0x5e00, 0x5fff, paletteram_xBBBBBGGGGGRRRRR_swap_w, &paletteram },

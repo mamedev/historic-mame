@@ -17,7 +17,7 @@
      c001               R/W      AY8910 #2 Data R/W
      c002               W        AY8910 #1 Control W
      c003               W        AY8910 #2 Control W
-     c004               R        Watchdog reset
+     c004               R        Interrupt acknowledge / Watchdog reset
      c006               R        Player 1 Controls
      c007               R        Player 2 Controls
      c00e               R        Coin Inputs, etc.
@@ -25,8 +25,6 @@
 
      Issues:
 
-     - Clock Frequencies on the Z80 and the 8910's
-     - Are the colors exact?  I think they must be pretty close.
      - High Score Saving doesn't update the HISCORE display at the top,
        but it does update the high score table.
 
@@ -201,8 +199,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct AY8910interface ay8910_interface =
 {
-	2,                /* 2 chips */
-	1500000,          /* ?? */
+	2,	/* 2 chips */
+	1200000,	/* 1.2 MHz */
 	{ 255, 255 },
 	{ 0, input_port_3_r },
 	{ 0, input_port_4_r },
@@ -216,7 +214,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_Z80,
-			3000000,	/* ? */
+			3000000,	/* 3 MHz */
 			0,
 			readmem,writemem,0,0,
 			interrupt,1

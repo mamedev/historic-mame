@@ -581,7 +581,7 @@ extern struct GameDriver fax_driver;
 extern struct GameDriver circus_driver;
 extern struct GameDriver robotbwl_driver;
 extern struct GameDriver crash_driver;
-//extern struct GameDriver starfire_driver;
+extern struct GameDriver starfire_driver;
 
 /* Atari vector games */
 extern struct GameDriver asteroid_driver;
@@ -1441,7 +1441,7 @@ const struct GameDriver *drivers[] =
 	&circus_driver,		/* no copyright notice [1977?] */
 	&robotbwl_driver,	/* no copyright notice */
 	&crash_driver,		/* Exidy [1979?] */
-//	&starfire_driver,	/* Exidy */
+	&starfire_driver,	/* Exidy */
 
 	/* Atari vector games */
 	&asteroid_driver,	/* (c) 1979 */

@@ -619,7 +619,16 @@ INPUT_PORTS_START( invdelux_input_ports )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( invadpt2_input_ports )
-	PORT_START      /* IN0 */
+	PORT_START		/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* N ? */
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START		/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
@@ -1563,7 +1572,7 @@ static struct MachineDriver invadpt2_machine_driver =
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
 			0,
-			readmem, lrescue_writemem, readport, invadpt2_writeport,
+			readmem, lrescue_writemem, invdelux_readport, invadpt2_writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
 	},

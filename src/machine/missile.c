@@ -13,52 +13,24 @@
 static int ctrld;
 static int h_pos, v_pos;
 
-int  missile_video_r(int address);
-void missile_video_w(int address, int data);
-void missile_video_mult_w(int address, int data);
-void missile_video_3rd_bit_w(int address, int data);
+extern int missile_flipscreen;
+
+int  missile_video_r (int address);
+void missile_video_w (int address, int data);
+void missile_video_mult_w (int address, int data);
+
+void missile_palette_w (int offset, int data);
+void missile_flip_screen (void);
 
 
 /********************************************************************************************/
-void missile_4800_w(int offset, int data)
+int missile_IN0_r(int offset)
 {
-	ctrld = data & 1;
-}
-
-
-
-/********************************************************************************************/
-int missile_4800_r(int offset)
-{
-	int xdelta, ydelta;
-
-	if(ctrld) {
-/* EEA Added this */
-	    ydelta = readinputport(4);
-	    v_pos += ydelta;
-	    xdelta = readinputport(5);
-	    h_pos += xdelta;
-  	    return( ((v_pos << 4) & 0xF0)  |  (h_pos & 0x0F));
-/*	EEA return(missile_read_trackball()); */
-	}
-	else {
+	if (ctrld)	/* trackball */
+  	    return ((readinputport(5) << 4) & 0xf0) | (readinputport(4) & 0x0f);
+	else	/* buttons */
 		return (readinputport(0));
-
-	}
 }
-
-/********************************************************************************************/
-int missile_4900_r(int offset)
-{
-	return (readinputport(1));
-}
-
-/********************************************************************************************/
-int missile_4A00_r(int offset)
-{
-	return (readinputport(2));
-}
-
 
 
 /********************************************************************************************/
@@ -78,80 +50,110 @@ void missile_w(int address, int data)
 	pc = cpu_getpreviouspc();
 	opcode = cpu_readop(pc);
 
-/* 	3 different ways to write to video ram... 		 */
+	address += 0x640;
 
-	if((opcode == 0x81) && address >= 0x640){
+	/* 3 different ways to write to video ram - the third is caught by the core memory handler */
+	if (opcode == 0x81)
+	{
 		/* 	STA ($00,X) */
-		missile_video_w(address, data);
+		missile_video_w (address, data);
+		return;
+	}
+	if (address <= 0x3fff)
+	{
+		missile_video_mult_w (address, data);
 		return;
 	}
 
-	if(address >= 0x401 && address <= 0x5FF){
-		missile_video_3rd_bit_w(address, data);
+	/* $4c00 - watchdog */
+	if (address == 0x4c00)
+	{
+		watchdog_reset_w (address, data);
 		return;
 	}
 
-	if(address >= 0x640 && address <= 0x3FFF){
-			missile_video_mult_w(address, data);
-			return;
-	}
-
-
-
-
-	if(address == 0x4800){
-		ctrld = data & 1;
-		osd_led_w(0, ~data>>1);
-		osd_led_w(1, ~data>>2);
+	/* $4800 - various IO */
+	if (address == 0x4800)
+	{
+		if (RAM[address] != data)
+		{
+			if (missile_flipscreen != (!(data & 0x40)))
+				missile_flip_screen ();
+			missile_flipscreen = !(data & 0x40);
+			coin_counter_w (0, data & 0x20);
+			coin_counter_w (1, data & 0x10);
+			coin_counter_w (2, data & 0x08);
+			osd_led_w (0, ~data >> 1);
+			osd_led_w (1, ~data >> 2);
+			ctrld = data & 1;
+			RAM[address] = data;
+		}
 		return;
 	}
 
-	if(address >= 0x4000 && address <= 0x400F){
-		pokey1_w(address, data);
+	/* $4d00 - IRQ acknowledge */
+	if (address == 0x4d00)
+	{
 		return;
 	}
 
-	if(address >= 0x4B00 && address <= 0x4B07){
-		RAM[address] = (data & 0x0E) >> 1;
+	/* $4000 - $400f - Pokey */
+	if (address >= 0x4000 && address <= 0x400f)
+	{
+		pokey1_w (address, data);
 		return;
 	}
 
-	RAM[address] = data;
+	/* $4b00 - $4b07 - color RAM */
+	if (address >= 0x4b00 && address <= 0x4b07)
+	{
+		int r,g,b;
+
+
+		r = 0xff * ((~data >> 3) & 1);
+		g = 0xff * ((~data >> 2) & 1);
+		b = 0xff * ((~data >> 1) & 1);
+
+		palette_change_color(address - 0x4b00,r,g,b);
+
+		return;
+	}
+
+	if (errorlog) fprintf (errorlog, "possible unmapped write, offset: %04x, data: %02x\n", address, data);
 }
 
 
-
 /********************************************************************************************/
-int missile_r(int address)
+int missile_r (int address)
 {
 	int pc, opcode;
 	extern unsigned char *RAM;
 
 
-	if (address < 0x1900) return (RAM[address]);
-
 	pc = cpu_getpreviouspc();
 	opcode = RAM[pc];
 
+	address += 0x1900;
 
-	if((opcode == 0xA1) && (address >= 0x1900 && address <= 0xFFF9)){
-	/* 		LDA ($00,X)  */
-		return(missile_video_r(address));
+	if (opcode == 0xa1)
+	{
+		/* 	LDA ($00,X)  */
+		return (missile_video_r(address));
 	}
 
-//	if(address == 0x4008)
-//		return(missile_4008_r(0));
+	if (address >= 0x5000)
+		return RAM[address];
+
+	if (address == 0x4800)
+		return (missile_IN0_r(0));
+	if (address == 0x4900)
+		return (readinputport (1));
+	if (address == 0x4a00)
+		return (readinputport (2));
+
 	if ((address >= 0x4000) && (address <= 0x400f))
-		return(pokey1_r (address & 0x0f));
-	if(address == 0x4800)
-		return(missile_4800_r(0));
-	if(address == 0x4900)
-		return(missile_4900_r(0));
-	if(address == 0x4A00)
-		return(missile_4A00_r(0));
+		return (pokey1_r (address & 0x0f));
 
-/* 	if(address >= 0xFFF9 && address <= 0xFFFF) */
-/* 		return(ROM[address]); */
-
-	return (RAM[address]);
+	if (errorlog) fprintf (errorlog, "possible unmapped read, offset: %04x\n", address);
+	return RAM[address];
 }

@@ -53,8 +53,9 @@ int contra_vh_start(void);
 void contra_vh_stop(void);
 
 
-void contra_init_machine(void);
-void contra_init_machine(void){
+
+void contra_init_machine(void)
+{
 	/* Set optimization flags for M6809 */
 	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
 }
@@ -71,21 +72,23 @@ void contra_bankswitch_w(int offset,int data)
 		cpu_setbank(1,&RAM[bankaddress]);
 }
 
-void contra_sh_irqtrigger_w(int offset, int data);
 void contra_sh_irqtrigger_w(int offset, int data)
 {
 	cpu_cause_interrupt(1,M6809_INT_IRQ);
 }
 
-void contra_coin_counter_w(int offset, int data);
-void contra_coin_counter_w(int offset, int data){
-	if (data & 0x01) coin_counter_w(0, data & 0x01);
-	if (data & 0x02) coin_counter_w(1, (data & 0x02) >> 1);
+void contra_coin_counter_w(int offset, int data)
+{
+	if (data & 0x01) coin_counter_w(0,data & 0x01);
+	if (data & 0x02) coin_counter_w(1,(data & 0x02) >> 1);
 }
 
-static void cpu_sound_command_w( int offset, int data ) {
-	soundlatch_w( offset, data );
+static void cpu_sound_command_w(int offset,int data)
+{
+	soundlatch_w(offset,data);
 }
+
+
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -327,7 +330,7 @@ static struct MachineDriver contra_machine_driver =
 			1000000,
 			3,
 			readmem_sound,writemem_sound,0,0,
-			ignore_interrupt,0
+			ignore_interrupt,0	/* IRQs are caused by the main CPU */
 		},
 	},
 	60,DEFAULT_REAL_60HZ_VBLANK_DURATION,
@@ -356,6 +359,7 @@ static struct MachineDriver contra_machine_driver =
 		}
 	}
 };
+
 
 
 ROM_START( contra_rom )
@@ -461,7 +465,7 @@ struct GameDriver contra_driver =
 	__FILE__,
 	0,
 	"contra",
-	"Contra",
+	"Contra (US)",
 	"1987",
 	"Konami",
 	"Carlos A. Lozano\nJose Tejada Gomez\nPhil Stroffolino\nEric Hustvedt",
@@ -486,7 +490,7 @@ struct GameDriver contrab_driver =
 	__FILE__,
 	&contra_driver,
 	"contrab",
-	"Contra (bootleg)",
+	"Contra (US bootleg)",
 	"1987",
 	"bootleg",
 	"Carlos A. Lozano\nJose Tejada Gomez\nPhil Stroffolino\nEric Hustvedt",
@@ -511,7 +515,7 @@ struct GameDriver gryzorb_driver =
 	__FILE__,
 	&contra_driver,
 	"gryzorb",
-	"Gryzor (bootleg)",
+	"Contra (Japan bootleg)",
 	"1987",
 	"bootleg",
 	"Carlos A. Lozano\nJose Tejada Gomez\nPhil Stroffolino\nEric Hustvedt",

@@ -1,15 +1,14 @@
 /***************************************************************************
 
 	Xenophobe, (c) 1987 Bally Midway, Game No. 0E85
-  Spy Hunter 2,
-  Blasted,
-  Zwackery,
+	Spy Hunter 2 (Not working yet)
+	Blasted (Not working yet)
+	Zwackery (Not working yet)
 
+    The timer chip (see machine/mcr68.c) needs to be fully emulated before
+    the other games will work.
 
-
-
-
-  Emulation by Bryan McPhail, mish@tendril.force9.net
+	Emulation by Bryan McPhail, mish@tendril.force9.net
 
 ***************************************************************************/
 
@@ -17,28 +16,20 @@
 #include "vidhrdw/generic.h"
 #include "machine/6821pia.h"
 
-void mcr3_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-void mcr3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
 void mcr68_videoram_w(int offset,int data);
 void mcr68_paletteram_w(int offset,int data);
 
 extern unsigned char *mcr68_spriteram;
 int mcr68_videoram_r(int offset);
-
-
 void mcr68_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void xenophobe_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
 void mcr68_init_machine(void);
 int mcr68_interrupt(void);
-
 
 void mcr_soundstatus_w (int offset,int data);
 int mcr_soundlatch_r (int offset);
 void mcr_pia_1_w (int offset, int data);
 int mcr_pia_1_r (int offset);
-
 
 int mcr68_control_0(int offset);
 int mcr68_control_1(int offset);
@@ -46,7 +37,6 @@ int mcr68_control_2(int offset);
 int mcr68_6840_r(int offset);
 void mcr68_6840_w(int offset,int data);
 void mcr68_sg_w(int offset,int data);
-
 
 /***************************************************************************
 
@@ -63,9 +53,9 @@ static struct MemoryReadAddress mcr68_readmem[] =
 	{ 0x80000, 0x80fff, MRA_BANK3 },
 	{ 0x90000, 0x900ff, paletteram_word_r },
 	{ 0xa0000, 0xa000f, mcr68_6840_r },
-	{ 0xd0000, 0xd0003, mcr68_control_0 },
-	{ 0xe0000, 0xe0003, mcr68_control_1 },
-	{ 0xf0000, 0xf0003, mcr68_control_2 },
+	{ 0xd0000, 0xd0001, mcr68_control_0 },
+	{ 0xe0000, 0xe0001, mcr68_control_1 },
+	{ 0xf0000, 0xf0001, mcr68_control_2 },
 	{ -1 }  /* end of table */
 };
 
@@ -78,14 +68,12 @@ static struct MemoryWriteAddress mcr68_writemem[] =
 	{ 0x80000, 0x80fff, MWA_BANK3, &mcr68_spriteram },
 	{ 0x90000, 0x900ff, mcr68_paletteram_w, &paletteram },
 	{ 0xa0000, 0xa000f, mcr68_6840_w },
-	{ 0xb0000, 0xb0003, MWA_NOP }, /* Watchdog is 0xb0000 */
-	{ 0xc0000, 0xc0003, mcr68_sg_w }, /* sound cpu */
+	{ 0xb0000, 0xb0001, MWA_NOP }, /* Watchdog is 0xb0000 */
+	{ 0xc0000, 0xc0001, mcr68_sg_w }, /* sound cpu */
 	{ -1 }  /* end of table */
 };
 
-
-
-
+/* Not finished yet */
 static struct MemoryReadAddress zwackery_readmem[] =
 {
 	{ 0x00000, 0x3ffff, MRA_ROM },
@@ -96,9 +84,9 @@ static struct MemoryReadAddress zwackery_readmem[] =
 //	{ 0x80000, 0x80fff, MRA_BANK3 },
 	{ 0x90000, 0x900ff, paletteram_word_r },
 	{ 0xa0000, 0xa000f, mcr68_6840_r },
-	{ 0xd0000, 0xd0003, mcr68_control_0 },
-	{ 0xe0000, 0xe0003, mcr68_control_1 },
-	{ 0xf0000, 0xf0003, mcr68_control_2 },
+	{ 0xd0000, 0xd0001, mcr68_control_0 },
+	{ 0xe0000, 0xe0001, mcr68_control_1 },
+	{ 0xf0000, 0xf0001, mcr68_control_2 },
 
 	{ 0x104000, 0x14000f, MRA_NOP },
 
@@ -118,8 +106,8 @@ static struct MemoryWriteAddress zwackery_writemem[] =
 
 	{ 0x90000, 0x900ff, mcr68_paletteram_w, &paletteram },
 	{ 0xa0000, 0xa000f, mcr68_6840_w },
-	{ 0xb0000, 0xb0003, MWA_NOP }, /* Watchdog is 0xb0000 */
-	{ 0xc0000, 0xc0003, mcr68_sg_w }, /* sound cpu */
+	{ 0xb0000, 0xb0001, MWA_NOP }, /* Watchdog is 0xb0000 */
+	{ 0xc0000, 0xc0001, mcr68_sg_w }, /* sound cpu */
 
 	{ 0x104000, 0x14000f, MWA_NOP },
 
@@ -129,8 +117,7 @@ static struct MemoryWriteAddress zwackery_writemem[] =
 	{ -1 }  /* end of table */
 };
 
-
-
+/* Xenophobe Sounds Good board */
 static struct MemoryReadAddress sg_readmem[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },
@@ -158,11 +145,10 @@ INPUT_PORTS_START( xenophobe_input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 ) // check
-// 0x10??
-
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN ) // actually tilt...
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* actually tilt? */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_TILT )  /* actually service..? */
 	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
@@ -174,7 +160,8 @@ INPUT_PORTS_START( xenophobe_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
@@ -183,7 +170,8 @@ INPUT_PORTS_START( xenophobe_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER3 )
@@ -192,70 +180,29 @@ INPUT_PORTS_START( xenophobe_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER3 )
-	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN3 -- dipswitches */
-//	PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE )/
-//	PORT_DIPSETTING(    0x02, "Easy" )
-//	PORT_DIPSETTING(    0x03, "Normal" )
-
-		PORT_DIPNAME( 0x01, 0x01, "Unknown 1", IP_KEY_NONE )
-		PORT_DIPSETTING(    0x00, "a1" )
-		PORT_DIPSETTING(    0x01, "A2" )
-PORT_DIPNAME( 0x02, 0x02, "Unknown 2", IP_KEY_NONE )
-		PORT_DIPSETTING(    0x00, "a1" )
-		PORT_DIPSETTING(    0x02, "A2" )
-PORT_DIPNAME( 0x04, 0x04, "Unknown 3 (FREE PLAY)", IP_KEY_NONE )
-		PORT_DIPSETTING(    0x00, "a1" )
-		PORT_DIPSETTING(    0x04, "A2" )
-PORT_DIPNAME( 0x08, 0x08, "Unknown 4", IP_KEY_NONE )
-		PORT_DIPSETTING(    0x00, "a1" )
-		PORT_DIPSETTING(    0x08, "A2" )
-PORT_DIPNAME( 0x10, 0x10, "Unknown 5", IP_KEY_NONE )
-		PORT_DIPSETTING(    0x00, "a1" )
-		PORT_DIPSETTING(    0x10, "A2" )
-PORT_DIPNAME( 0x20, 0x20, "Unknown 6", IP_KEY_NONE )
-		PORT_DIPSETTING(    0x00, "a1" )
-		PORT_DIPSETTING(    0x20, "A2" )
-PORT_DIPNAME( 0x40, 0x40, "Unknown 7", IP_KEY_NONE )
-		PORT_DIPSETTING(    0x00, "a1" )
-		PORT_DIPSETTING(    0x40, "A2" )
-PORT_DIPNAME( 0x80, 0x80, "Unknown 8", IP_KEY_NONE )
-		PORT_DIPSETTING(    0x00, "a1" )
-		PORT_DIPSETTING(    0x80, "A2" )
-
-//	PORT_DIPSETTING(    0x01, "Hard" )
-//	PORT_DIPSETTING(    0x00, "Free Play" )
-
-
-	/* Free play in Spy 2 *
-	PORT_DIPNAME( 0x04, 0x04, "Score Option", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, "Keep score when continuing" )
-	PORT_DIPSETTING(    0x00, "Lose score when continuing" )
-
-
-
-	PORT_DIPNAME( 0x08, 0x08, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x08, "1 Coin/1 Credit" )
-	PORT_DIPNAME( 0x70, 0x70, "Coin B", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x70, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x60, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x50, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x40, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x30, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0x20, "1 Coin/6 Credits" )
-	PORT_BITX( 0x80,    0x80, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Advance", OSD_KEY_F1, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_START
+	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x04, 0x04, "Free Play", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "On" )
-
-*/
-
-
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPNAME( 0x08, 0x08, "Coins per Life Unit", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x08, "1" )
+	PORT_DIPNAME( 0x10, 0x10, "Life Unit", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2000" )
+	PORT_DIPSETTING(    0x10, "1000" )
+	PORT_DIPNAME( 0x20, 0x20, "Attract Music", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x20, "On" )
+	PORT_DIPNAME( 0xC0, 0xC0, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Medium" )
+	PORT_DIPSETTING(    0x40, "Easy" )
+	PORT_DIPSETTING(    0x80, "Hard" )
+	PORT_DIPSETTING(    0xC0, "Medium" )
 INPUT_PORTS_END
-
 
 INPUT_PORTS_START( spyhunt2_input_ports )
 	PORT_START
@@ -263,33 +210,27 @@ INPUT_PORTS_START( spyhunt2_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
-// 0x10??
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_TILT )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN ) // actually tilt...
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )  //test
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE )
 	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+ 	PORT_ANALOGX( 0xff, 0x74, IPT_AD_STICK_X | IPF_CENTER, 100, 0, 0x20, 0xff, OSD_KEY_LEFT, OSD_KEY_RIGHT, IPT_JOYSTICK_LEFT, IPT_JOYSTICK_RIGHT, 2 )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 ) /* Left Trigger */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 ) /* Left Button */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 ) /* Right Trigger */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 ) /* Right Button */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
 
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-
-	PORT_START
+	PORT_START //to do
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER3 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER3 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER3 )
@@ -307,25 +248,25 @@ INPUT_PORTS_START( spyhunt2_input_ports )
 		PORT_DIPNAME( 0x01, 0x01, "Unknown 1", IP_KEY_NONE )
 		PORT_DIPSETTING(    0x00, "a1" )
 		PORT_DIPSETTING(    0x01, "A2" )
-PORT_DIPNAME( 0x02, 0x02, "Unknown 2", IP_KEY_NONE )
+	PORT_DIPNAME( 0x02, 0x02, "Unknown 2", IP_KEY_NONE )
 		PORT_DIPSETTING(    0x00, "a1" )
 		PORT_DIPSETTING(    0x02, "A2" )
-PORT_DIPNAME( 0x04, 0x04, "Unknown 3 (FREE PLAY)", IP_KEY_NONE )
+	PORT_DIPNAME( 0x04, 0x04, "Unknown 3 (FREE PLAY)", IP_KEY_NONE )
 		PORT_DIPSETTING(    0x00, "a1" )
 		PORT_DIPSETTING(    0x04, "A2" )
-PORT_DIPNAME( 0x08, 0x08, "Unknown 4", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown 4", IP_KEY_NONE )
 		PORT_DIPSETTING(    0x00, "a1" )
 		PORT_DIPSETTING(    0x08, "A2" )
-PORT_DIPNAME( 0x10, 0x10, "Unknown 5", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown 5", IP_KEY_NONE )
 		PORT_DIPSETTING(    0x00, "a1" )
 		PORT_DIPSETTING(    0x10, "A2" )
-PORT_DIPNAME( 0x20, 0x20, "Unknown 6", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown 6", IP_KEY_NONE )
 		PORT_DIPSETTING(    0x00, "a1" )
 		PORT_DIPSETTING(    0x20, "A2" )
-PORT_DIPNAME( 0x40, 0x40, "Unknown 7", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown 7", IP_KEY_NONE )
 		PORT_DIPSETTING(    0x00, "a1" )
 		PORT_DIPSETTING(    0x40, "A2" )
-PORT_DIPNAME( 0x80, 0x80, "Unknown 8", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown 8", IP_KEY_NONE )
 		PORT_DIPSETTING(    0x00, "a1" )
 		PORT_DIPSETTING(    0x80, "A2" )
 
@@ -358,16 +299,9 @@ PORT_DIPNAME( 0x80, 0x80, "Unknown 8", IP_KEY_NONE )
 
 */
 
-
 INPUT_PORTS_END
 
-/***************************************************************************
-
-  Graphics layouts
-
-***************************************************************************/
-
-/* generic character layouts */
+/***************************************************************************/
 
 /* note that characters are half the resolution of sprites in each direction, so we generate
    them at double size */
@@ -384,11 +318,7 @@ static struct GfxLayout mcr68_charlayout_2048 =
 };
 
 
-/* generic sprite layouts */
-
-/* CHECK num of sprites************/
-
-/* 512 sprites; used by rampage */
+/* 512 sprites; used by Rampage, Xenophobe */
 #define X (512*128*8)
 #define Y (2*X)
 #define Z (3*X)
@@ -451,10 +381,10 @@ static struct MachineDriver mcr68_machine_driver =
 		},
 		{
 			CPU_M68000 | CPU_AUDIO_CPU,
-			7500000,	/* 7.5 Mhz */
+			8000000,
 			2,
 			sg_readmem,sg_writemem,0,0,
-			ignore_interrupt,1
+			ignore_interrupt,0
 		}
 	},
 	30, DEFAULT_30HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -467,7 +397,7 @@ static struct MachineDriver mcr68_machine_driver =
 	8*16, 8*16,
 	mcr68_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_DIRTY,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -534,25 +464,6 @@ static struct MachineDriver zwackery_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( spyhunt2_rom )
-	ROM_REGION(0x40000)
-	ROM_LOAD_EVEN( "3c", 0x0000, 0x10000, 0x471a3c00 )
-	ROM_LOAD_ODD ( "3b", 0x0000, 0x10000, 0x54429658 )
-	ROM_LOAD_EVEN( "2c", 0x20000, 0x10000, 0x471a3c00 )
-	ROM_LOAD_ODD ( "2b", 0x20000, 0x10000, 0x54429658 )
-
-	ROM_REGION(0x90000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "bg1.12d", 0x00000, 0x8000, 0xefa953c5 )
-	ROM_LOAD( "bg0.11d", 0x08000, 0x8000, 0x88fe2998 )
-	ROM_LOAD( "fg3.10j", 0x10000, 0x20000, 0x06033763 )
-	ROM_LOAD( "fg2.9j",  0x30000, 0x20000, 0xdf6c8714 )
-	ROM_LOAD( "fg1.8j",  0x50000, 0x20000, 0xa0449c5e )
-	ROM_LOAD( "fg0.7j",  0x70000, 0x20000, 0xf9f7bf39 )
-
-	ROM_REGION(0x20000)  /* Sound */
-
-ROM_END
-
 ROM_START( xenophob_rom )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "xeno_pro.3c", 0x00000, 0x10000, 0x4d1f1ec9 )
@@ -575,6 +486,24 @@ ROM_START( xenophob_rom )
 	ROM_LOAD_ODD ( "xeno_snd.u18", 0x20000, 0x10000, 0x04132bd1 )
 ROM_END
 
+ROM_START( spyhunt2_rom )
+	ROM_REGION(0x40000)
+	ROM_LOAD_EVEN( "3c", 0x0000, 0x10000, 0x471a3c00 )
+	ROM_LOAD_ODD ( "3b", 0x0000, 0x10000, 0x54429658 )
+	ROM_LOAD_EVEN( "2c", 0x20000, 0x10000, 0x471a3c00 )
+	ROM_LOAD_ODD ( "2b", 0x20000, 0x10000, 0x54429658 )
+
+	ROM_REGION(0x90000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "bg1.12d", 0x00000, 0x8000, 0xefa953c5 )
+	ROM_LOAD( "bg0.11d", 0x08000, 0x8000, 0x88fe2998 )
+	ROM_LOAD( "fg3.10j", 0x10000, 0x20000, 0x06033763 )
+	ROM_LOAD( "fg2.9j",  0x30000, 0x20000, 0xdf6c8714 )
+	ROM_LOAD( "fg1.8j",  0x50000, 0x20000, 0xa0449c5e )
+	ROM_LOAD( "fg0.7j",  0x70000, 0x20000, 0xf9f7bf39 )
+
+	ROM_REGION(0x20000)  /* Sound */
+
+ROM_END
 
 ROM_START( blasted_rom )
 	ROM_REGION(0x40000)
@@ -594,8 +523,6 @@ ROM_START( blasted_rom )
 	ROM_REGION(0x20000)  /* Unknown */
 
 ROM_END
-
-
 
 ROM_START( zwackery_rom )
 	ROM_REGION(0x40000)
@@ -709,7 +636,6 @@ struct GameDriver blasted_driver =
 
 	0,0
 };
-
 
 struct GameDriver zwackery_driver =
 {

@@ -3,8 +3,8 @@
 
 CC = gcc
 LD = gcc
-#ASM = nasm
-ASM = nasmw
+ASM = nasm
+#ASM = nasmw
 ASMFLAGS = -f coff
 
 # uncomment next line to use Assembler 6808 engine
@@ -33,7 +33,8 @@ M68KDEF  =
 endif
 
 # add -DMAME_DEBUG to include the debugger
-DEFS   = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES -Dinline=__inline__ -Dasm=__asm__ \
+DEFS   = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES -Dinline=__inline__ -Dasm=__asm__
+#DEFS   = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES -Dinline=__inline__ -Dasm=__asm__ \
 	-DBETA_VERSION
 #DEFS   = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES -Dinline=__inline__ -Dasm=__asm__ \
 	-DMAME_DEBUG
@@ -107,7 +108,7 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/machine/z80bw.o obj/vidhrdw/z80bw.o obj/sndhrdw/z80bw.o obj/drivers/z80bw.o \
          obj/vidhrdw/mario.o obj/sndhrdw/mario.o obj/drivers/mario.o \
          obj/vidhrdw/zaxxon.o obj/sndhrdw/zaxxon.o obj/drivers/zaxxon.o \
-         obj/vidhrdw/congo.o obj/sndhrdw/congo.o obj/drivers/congo.o \
+         obj/sndhrdw/congo.o obj/drivers/congo.o \
          obj/vidhrdw/bombjack.o obj/drivers/bombjack.o \
          obj/machine/centiped.o obj/vidhrdw/centiped.o obj/drivers/centiped.o \
          obj/machine/milliped.o obj/vidhrdw/milliped.o obj/drivers/milliped.o \

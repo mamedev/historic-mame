@@ -355,21 +355,25 @@ void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
    /* Draw the sprites. */
    for (offs = 0;offs < spriteram_size;offs += 4)
    {
-      int code,flipx,flipy,sx,sy,flags;
+      int code,color,flipx,flipy,sx,sy,flags;
 
       if (spriteram[offs] == 0)
 			 continue;
 
       code = spriteram[offs+2] ^ 0x80;
       flags = spriteram[offs+1];
+      color = 3 - (flags & 0x03);	/* Crater Raider only, Spy Hunter has only one color combination */
       flipx = flags & 0x10;
       flipy = flags & 0x20;
       sx = (spriteram[offs+3])*2;
       sy = (241-spriteram[offs])*2;
 
       drawgfx(bitmap,Machine->gfx[2],
-	      code,0,flipx,flipy,sx-16,sy+4,
-	      &clip,TRANSPARENCY_PEN,0);
+			  code,
+			  color,
+			  flipx,flipy,
+			  sx-16,sy+4,
+			  &clip,TRANSPARENCY_PEN,0);
 
       /* sprites use color 0 for background pen and 8 for the 'under tile' pen.
 			The color 8 is used to cover over other sprites.

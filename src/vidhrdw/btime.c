@@ -11,22 +11,19 @@
 
 
 unsigned char *lnc_charbank;
-unsigned char *lnc_control;
 unsigned char *bnj_backgroundram;
-unsigned char *bnj_scroll2;
 unsigned char *zoar_scrollram;
 int bnj_backgroundram_size;
 
-static int background_image = 0;
 static int flipscreen = 0;
-static int zoar_palette = 0;
+static int btime_palette = 0;
 static unsigned char bnj_scroll1 = 0;
-static unsigned char *dirtybuffer2 = NULL;
+static unsigned char bnj_scroll2 = 0;
+static unsigned char *dirtybuffer2 = 0;
 static struct osd_bitmap *background_bitmap;
+static int lnc_sound_interrupt_enabled = 0;
 
 /***************************************************************************
-
-	Convert the color PROMs into a more useable format.
 
 	Burger Time doesn't have a color PROM. It uses RAM to dynamically
 	create the palette.
@@ -75,6 +72,22 @@ void btime_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 	}
 }
 
+/***************************************************************************
+
+	Convert the color PROMs into a more useable format.
+
+	The PROM is connected to the RGB output this way:
+
+	bit 7 -- 47 kohm resistor  -- RED
+		  -- 33 kohm resistor  -- RED
+		  -- 15 kohm resistor  -- RED
+		  -- 47 kohm resistor  -- GREEN
+		  -- 33 kohm resistor  -- GREEN
+		  -- 15 kohm resistor  -- GREEN
+		  -- 33 kohm resistor  -- BLUE
+	bit 0 -- 15 kohm resistor  -- BLUE
+
+***************************************************************************/
 void lnc_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
@@ -85,19 +98,19 @@ void lnc_vh_convert_color_prom(unsigned char *palette, unsigned short *colortabl
 		int bit0,bit1,bit2;
 
 		/* red component */
-		bit0 = (*color_prom >> 5) & 0x01;
+		bit0 = (*color_prom >> 7) & 0x01;
 		bit1 = (*color_prom >> 6) & 0x01;
-		bit2 = (*color_prom >> 7) & 0x01;
+		bit2 = (*color_prom >> 5) & 0x01;
 		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
-		bit0 = (*color_prom >> 2) & 0x01;
+		bit0 = (*color_prom >> 4) & 0x01;
 		bit1 = (*color_prom >> 3) & 0x01;
-		bit2 = (*color_prom >> 4) & 0x01;
+		bit2 = (*color_prom >> 2) & 0x01;
 		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
 		bit0 = 0;
-		bit1 = (*color_prom >> 0) & 0x01;
-		bit2 = (*color_prom >> 1) & 0x01;
+		bit1 = (*color_prom >> 1) & 0x01;
+		bit2 = (*color_prom >> 0) & 0x01;
 		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
 		color_prom++;
@@ -105,16 +118,9 @@ void lnc_vh_convert_color_prom(unsigned char *palette, unsigned short *colortabl
 }
 
 
-void eggs_init_machine(void)
-{
-	// Suspend the dummy sound CPU
-	cpu_halt(1,0);
-}
-
 void lnc_init_machine(void)
 {
 	*lnc_charbank = 1;
-	*lnc_control = 0;
 }
 
 /***************************************************************************
@@ -235,42 +241,6 @@ void btime_mirrorcolorram_w(int offset,int data)
 	colorram_w(offset,data);
 }
 
-void btime_background_w(int offset,int data)
-{
-	if (background_image != data)
-	{
-		int offs, base;
-
-		/* kludge to get the correct background */
-		static int mapconvert[2][8] = {
-			{ 1,2,3,0,5,6,7,4 },
-			{ 0,1,2,3,4,5,6,7 }
-		};
-
-		memset(dirtybuffer,1,videoram_size);
-
-		background_image = data;
-
-		// Create background image
-		base = 0x100 * mapconvert[flipscreen][(background_image & 0x07)];
-
-		for (offs = 0; offs < 0x100; offs++)
-		{
-			int bx,by;
-
-			bx = 16 * (offs % 16) - 2 * flipscreen;
-			by = 16 * (offs / 16);
-
-			drawgfx(tmpbitmap,Machine->gfx[2],
-					Machine->memory_region[3][base+offs],
-					0,
-					0,0,
-					bx,by,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-}
-
 void bnj_background_w(int offset, int data)
 {
 	if (bnj_backgroundram[offset] != data)
@@ -292,6 +262,11 @@ void bnj_scroll1_w(int offset, int data)
 	bnj_scroll1 = data;
 }
 
+void bnj_scroll2_w(int offset, int data)
+{
+	bnj_scroll2 = data;
+}
+
 void zoar_video_control_w(int offset,int data)
 {
 	// Zoar video control
@@ -308,8 +283,8 @@ void zoar_video_control_w(int offset,int data)
 
 		zoar_video_control = data;
 
-		flipscreen   =  zoar_video_control & 0x80;
-		zoar_palette = (zoar_video_control & 0x30) >> 3;
+		flipscreen    =  zoar_video_control & 0x80;
+		btime_palette = (zoar_video_control & 0x30) >> 3;
 	}
 }
 
@@ -325,13 +300,52 @@ void btime_video_control_w(int offset,int data)
 	if (btime_video_control != data)
 	{
 		memset(dirtybuffer,1,videoram_size);
-		if (dirtybuffer2 != NULL)
+
+		// This is used by Bump'n'Jump
+		if (dirtybuffer2)
+		{
 			memset(dirtybuffer2,1,bnj_backgroundram_size);
+		}
 
 		btime_video_control = data;
 		flipscreen = btime_video_control & 0x01;
 	}
 }
+
+void bnj_video_control_w(int offset,int data)
+{
+	/* Bnj/Lnc works a little differently than the btime/eggs (apparently). */
+	/* According to the information at: */
+	/* http://www.davesclassics.com/arcade/Switch_Settings/BumpNJump.sw */
+	/* SW8 is used for cocktail video selection (as opposed to controls), */
+	/* but bit 7 of the input port is used for vblank input. */
+	/* My guess is that this switch open circuits some connection to */
+	/* the monitor hardware. */
+	/* For now we just check 0x40 in DSW1, and ignore the write if we */
+	/* are in upright controls mode. */
+
+	if (input_port_3_r(0) & 0x40) /* Cocktail mode */
+		btime_video_control_w(offset, data);
+}
+
+void lnc_video_control_w(int offset,int data)
+{
+	// I have a feeling that this only works by coincidence. I couldn't
+	// figure out how NMI's are disabled by the sound processor
+	lnc_sound_interrupt_enabled = data & 0x08;
+
+	bnj_video_control_w(offset, data & 0x01);
+}
+
+
+int lnc_sound_interrupt(void)
+{
+	if (lnc_sound_interrupt_enabled)
+		return nmi_interrupt();
+	else
+		return ignore_interrupt();
+}
+
 
 /***************************************************************************
 
@@ -425,12 +439,66 @@ static void drawsprites(struct osd_bitmap *bitmap, int color,
 }
 
 
+static void drawbackground(struct osd_bitmap *bitmap, unsigned char* tilemap)
+{
+	int i, offs;
+
+	int scroll = -(bnj_scroll2 | ((bnj_scroll1 & 0x03) << 8));
+
+	// One extra iteration for wrap around
+	for (i = 0; i < 5; i++, scroll += 256)
+	{
+		int tileoffset = tilemap[i & 3] * 0x100;
+
+		// Skip if this title is completely off the screen
+		if (scroll > 256)  break;
+		if (scroll < -256) continue;
+
+		for (offs = 0; offs < 0x100; offs++)
+		{
+			int sx,sy;
+
+			sx = 16 * (offs % 16);
+			sy = 16 * (offs / 16) + scroll;
+
+			if (flipscreen)
+			{
+				sx = 240 - sx;
+				sy = 240 - sy;
+			}
+
+			drawgfx(bitmap, Machine->gfx[2],
+					Machine->memory_region[3][tileoffset + offs],
+					btime_palette,
+					flipscreen,flipscreen,
+					sx,sy,
+					0,TRANSPARENCY_NONE,0);
+		}
+	}
+}
+
+
 void btime_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	if (background_image & 0x10)
+	if (bnj_scroll1 & 0x10)
 	{
-		// The background layer was drawn into tmpbitmap
-		copybitmap(bitmap,tmpbitmap,flipscreen,flipscreen,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		int i, start;
+
+		// Generate tile map
+		static unsigned char btime_tilemap[4];
+
+		if (flipscreen)
+			start = 0;
+		else
+			start = 1;
+
+		for (i = 0; i < 4; i++)
+		{
+			btime_tilemap[i] = start | (bnj_scroll1 & 0x04);
+			start = (++start & 0x03);
+		}
+
+        drawbackground(bitmap, btime_tilemap);
 
 		drawchars(bitmap, 0, 1);
 	}
@@ -470,56 +538,23 @@ void lnc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void zoar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int scroll = -(*bnj_scroll2 | ((bnj_scroll1 & 0x03) << 8));
-
 	if (bnj_scroll1 & 0x04)
 	{
-		int i, offs;
+        drawbackground(bitmap, zoar_scrollram);
 
-		// One extra iteration for wrap around
-		for (i = 0; i < 5; i++, scroll += 256)
-		{
-			int tileoffset = zoar_scrollram[i & 3] * 0x100;
-
-			// Skip if this title is completely off the screen
-			if (scroll > 256)  break;
-			if (scroll < -256) continue;
-
-			for (offs = 0; offs < 0x100; offs++)
-			{
-				int sx,sy;
-
-				sx = 16 * (offs % 16);
-				sy = 16 * (offs / 16) + scroll;
-
-				if (flipscreen)
-				{
-					sx = 240 - sx;
-					sy = 240 - sy;
-				}
-
-				drawgfx(bitmap, Machine->gfx[2],
-						Machine->memory_region[3][tileoffset + offs],
-						zoar_palette,
-						flipscreen,flipscreen,
-						sx,sy,
-						0,TRANSPARENCY_NONE,0);
-			}
-		}
-
-		drawchars(bitmap, zoar_palette+1, 1);
+		drawchars(bitmap, btime_palette + 1, 1);
 	}
 	else
 	{
-		drawchars(bitmap, zoar_palette+1, 0);
+		drawchars(bitmap, btime_palette + 1, 0);
 
 		/* copy the temporary bitmap to the screen */
 		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 	/* The order is important for correct priorities */
-	drawsprites(bitmap, zoar_palette+1, 0x1f, 1);
-	drawsprites(bitmap, zoar_palette+1, 0, 1);
+	drawsprites(bitmap, btime_palette + 1, 0x1f, 1);
+	drawsprites(bitmap, btime_palette + 1, 0, 1);
 }
 
 
@@ -559,7 +594,7 @@ void bnj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 
 		/* copy the background bitmap to the screen */
-		scroll = (bnj_scroll1 & 0x02) * 128 + 511 - *bnj_scroll2;
+		scroll = (bnj_scroll1 & 0x02) * 128 + 511 - bnj_scroll2;
 		if (flipscreen)
 			scroll = 767-scroll;
 		copyscrollbitmap (bitmap, background_bitmap, 0, 0, 1, &scroll, &Machine->drv->visible_area,TRANSPARENCY_NONE, 0);

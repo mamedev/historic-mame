@@ -70,7 +70,6 @@ extern int starforc_bgvideoram_size;
 void starforc_tiles2_w(int offset,int data);
 void starforc_tiles3_w(int offset,int data);
 void starforc_tiles4_w(int offset,int data);
-void starforc_paletteram_w(int offset,int data);
 
 int starforc_vh_start(void);
 void starforc_vh_stop(void);
@@ -114,7 +113,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
 	{ 0x9400, 0x97ff, colorram_w, &colorram },
 	{ 0x9800, 0x987f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x9c00, 0x9d7f, starforc_paletteram_w, &paletteram },
+	{ 0x9c00, 0x9d7f, paletteram_IIBBGGRR_w, &paletteram },
 	{ 0x9e20, 0x9e21, MWA_RAM, &starforc_scrollx2 },
 	{ 0x9e25, 0x9e25, MWA_RAM, &starforc_scrolly2 },
 //	{ 0x9e28, 0x9e29, MWA_RAM, &starforc_scrollx? },

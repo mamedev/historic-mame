@@ -457,12 +457,12 @@ printoperands:
    {
       case REL:                                          /* 8-bit relative */
          rel = operandarray[0];
-         sprintf (buffer + strlen (buffer), hexstring ((short) (pc + ((rel < 128) ? rel : rel - 256))));
+         strcpy (buffer + strlen (buffer), hexstring ((short) (pc + ((rel < 128) ? rel : rel - 256))));
          break;
 
       case LREL:                                   /* 16-bit long relative */
          rel = (operandarray[0] << 8) + operandarray[1];
-         sprintf (buffer + strlen (buffer), hexstring (pc + ((rel < 32768) ? rel : rel - 65536)));
+         strcpy (buffer + strlen (buffer), hexstring (pc + ((rel < 32768) ? rel : rel - 65536)));
          break;
 
       case IND:                                  /* indirect- many flavors */

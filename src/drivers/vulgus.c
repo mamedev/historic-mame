@@ -213,10 +213,10 @@ static struct GfxLayout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	512,	/* 512 characters */
-	2,	/* 2 bits per pixel */
+	2,		/* 2 bits per pixel */
 	{ 4, 0 },
+	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	{ 8+3, 8+2, 8+1, 8+0, 3, 2, 1, 0 },
 	16*8	/* every char takes 16 consecutive bytes */
 };
 static struct GfxLayout tilelayout =
@@ -225,10 +225,10 @@ static struct GfxLayout tilelayout =
 	512,	/* 512 tiles */
 	3,	/* 3 bits per pixel */
 	{ 0, 512*32*8, 2*512*32*8 },	/* the bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
+		16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	{ 16*8+7, 16*8+6, 16*8+5, 16*8+4, 16*8+3, 16*8+2, 16*8+1, 16*8+0,
-			7, 6, 5, 4, 3, 2, 1, 0 },
 	32*8	/* every tile takes 32 consecutive bytes */
 };
 static struct GfxLayout spritelayout =
@@ -237,10 +237,10 @@ static struct GfxLayout spritelayout =
 	256,	/* 256 sprites */
 	4,	/* 4 bits per pixel */
 	{ 256*64*8+4, 256*64*8, 4, 0 },
+	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
+			32*8+0, 32*8+1, 32*8+2, 32*8+3, 33*8+0, 33*8+1, 33*8+2, 33*8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
 			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	{ 33*8+3, 33*8+2, 33*8+1, 33*8+0, 32*8+3, 32*8+2, 32*8+1, 32*8+0,
-			8+3, 8+2, 8+1, 8+0, 3, 2, 1, 0 },
 	64*8	/* every sprite takes 64 consecutive bytes */
 };
 
@@ -293,7 +293,7 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	256,64*4+16*16+4*32*8,
 	vulgus_vh_convert_color_prom,
@@ -420,7 +420,7 @@ struct GameDriver vulgus_driver =
 	input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };

@@ -10,7 +10,6 @@
 #define COMMON_H
 
 #include "osdepend.h"
-#include "driver.h"
 
 struct RomModule
 {

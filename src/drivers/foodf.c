@@ -236,7 +236,7 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
 	256, 256,
 	foodf_vh_convert_color_prom,

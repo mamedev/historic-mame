@@ -143,6 +143,8 @@ int taito_vh_start(void)
 		return 1;
 	}
 
+	flipscreen[0] = flipscreen[1] = 0;
+
 	return 0;
 }
 

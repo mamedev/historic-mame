@@ -13,10 +13,23 @@
 static struct osd_bitmap *back_bitmap;
 static struct osd_bitmap *front_bitmap;
 static char *dirty_f,*dirty_b;
-unsigned char *mainevt_attr_ram;
 static int dirty_video;
+static int dirty_bg_video;
+static int dirty_fg_video;
 
+unsigned char *mainevt_attr_ram;
+unsigned char *mainevt_bg_attr_ram;
+unsigned char *mainevt_fg_attr_ram;
 
+unsigned char *bg_videoram;
+unsigned char *fg_videoram;
+
+unsigned char *bg_scrollx_lo;
+unsigned char *bg_scrollx_hi;
+unsigned char *bg_scrolly;
+unsigned char *fg_scrollx_lo;
+unsigned char *fg_scrollx_hi;
+unsigned char *fg_scrolly;
 
 void mainevt_video_w(int offset, int data)
 {
@@ -24,22 +37,50 @@ void mainevt_video_w(int offset, int data)
 		return;
 	videoram[offset]=data;
 	dirty_video=1;
-
-	/* Dirty correct layer */
-	if (offset>0xfff) dirty_f[offset-0x1000]=1;
-	else if (offset>0x7ff) dirty_b[offset-0x800]=1;
 }
 
-void mainevt_attr_w(int offset, int data)
+void mainevt_bg_video_w(int offset, int data)
+{
+	if (bg_videoram[offset]==data)
+		return;
+	bg_videoram[offset]=data;
+	dirty_bg_video=1;
+	dirty_b[offset]=1;
+}
+
+void mainevt_fg_video_w(int offset, int data)
+{
+	if (fg_videoram[offset]==data)
+		return;
+	fg_videoram[offset]=data;
+	dirty_fg_video=1;
+	dirty_f[offset]=1;
+}
+
+void mainevt_attr_w (int offset, int data)
 {
 	if (mainevt_attr_ram[offset]==data)
   		return;
 	mainevt_attr_ram[offset]=data;
 	dirty_video=1;
+}
 
-	/* Dirty correct layer */
-	if (offset>0xfff) dirty_f[offset-0x1000]=1;
-	else if (offset>0x7ff) dirty_b[offset-0x800]=1;
+void mainevt_bg_attr_w (int offset, int data)
+{
+	if (mainevt_bg_attr_ram[offset] == data)
+  		return;
+	mainevt_bg_attr_ram[offset] = data;
+	dirty_bg_video = 1;
+	dirty_b[offset] = 1;
+}
+
+void mainevt_fg_attr_w (int offset, int data)
+{
+	if (mainevt_fg_attr_ram[offset] == data)
+  		return;
+	mainevt_fg_attr_ram[offset] = data;
+	dirty_fg_video = 1;
+	dirty_f[offset] = 1;
 }
 
 void mainevt_control_w(int offset, int data)
@@ -85,10 +126,10 @@ int mainevt_vh_start(void)
  	if ((front_bitmap = osd_create_bitmap(64*8,32*8)) == 0)
 		return 1;
 
-	dirty_b=(char *)malloc(0x800);
-	dirty_f=(char *)malloc(0x800);
-	memset(dirty_b,1,0x800);
-	memset(dirty_f,1,0x800);
+	dirty_b=(char *)malloc (videoram_size);
+	dirty_f=(char *)malloc (videoram_size);
+	memset(dirty_b,1,videoram_size);
+	memset(dirty_f,1,videoram_size);
 
 	return 0;
 }
@@ -174,75 +215,78 @@ void mainevt_vh_drawsprites(struct osd_bitmap *bitmap, int behind)
 void mainevt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs,tile,color,mx,my,fx,bank,scrollx,scrolly;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if (palette_recalc())
 	{
-		memset(dirty_b,1,0x800);
-		memset(dirty_f,1,0x800);
+		memset(dirty_b,1,videoram_size);
+		memset(dirty_f,1,videoram_size);
 		dirty_video = 1;
+		dirty_bg_video = 1;
+		dirty_fg_video = 1;
 	}
 
 	/* If whole video layer is unchanged, then don't even go through the control
   	loops below, this gains a 2/3% speed increase */
-	if (!dirty_video) goto NO_BACK_DRAW;
+	if (!dirty_bg_video) goto NO_BACK_DRAW;
 
 	/* Draw character tiles */
 	mx=-1; my=0;
-	for (offs = 0x0800;offs < 0x1000;offs += 1) {
-  	mx++;
-  	if (mx==64) {mx=0; my++;}
+	for (offs = 0; offs < videoram_size; offs += 1)
+	{
+  		mx++;
+  		if (mx==64) {mx=0; my++;}
 
-  	if (!dirty_b[offs-0x800]) continue;
-		dirty_b[offs-0x800]=0;
+  		if (!dirty_b[offs]) continue;
+		dirty_b[offs]=0;
 
-		tile=videoram[offs];
-		fx=mainevt_attr_ram[offs]&0x2;
-		bank=((((mainevt_attr_ram[offs]>>1)&0xe)+(mainevt_attr_ram[offs]&0x1))*0x100);
-		color=mainevt_attr_ram[offs]>>6;
+		tile=bg_videoram[offs];
+		fx=mainevt_bg_attr_ram[offs]&0x2;
+		bank=((((mainevt_bg_attr_ram[offs]>>1)&0xe)+(mainevt_bg_attr_ram[offs]&0x1))*0x100);
+		color=mainevt_bg_attr_ram[offs]>>6;
 
 		drawgfx(back_bitmap,Machine->gfx[0],
-			tile+bank,color+8,fx,0,8*mx,8*my,
-			0,TRANSPARENCY_NONE,0);
+				tile+bank,color+8,fx,0,8*mx,8*my,
+				0,TRANSPARENCY_NONE,0);
 	}
+	dirty_bg_video = 0;
 
 NO_BACK_DRAW:
 
-	scrolly=-(RAM[0x180c]);
-	scrollx=-((RAM[0x1a01]<<8)+RAM[0x1a00])+6;
+	scrolly = -*bg_scrolly;
+	scrollx = -((*bg_scrollx_hi<<8)+*bg_scrollx_lo)+6;
 	copyscrollbitmap(bitmap,back_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 	/* Render sprites that are behind 2nd playfield */
 	mainevt_vh_drawsprites(bitmap,1);
-	if (!dirty_video) goto NO_FORE_DRAW;
+	if (!dirty_fg_video) goto NO_FORE_DRAW;
 
 	/* Draw character tiles */
 	mx=-1; my=0;
-	for (offs = 0x1000;offs < 0x1800;offs += 1) {
+	for (offs = 0; offs < videoram_size; offs += 1)
+	{
 		mx++;
 		if (mx==64) {mx=0; my++;}
 
-		if (!dirty_f[offs-0x1000]) continue;
-		dirty_f[offs-0x1000]=0;
+		if (!dirty_f[offs]) continue;
+		dirty_f[offs]=0;
 
-		tile=videoram[offs];
-		fx=mainevt_attr_ram[offs]&0x2;
-		color=mainevt_attr_ram[offs]>>6;
+		tile=fg_videoram[offs];
+		fx=mainevt_fg_attr_ram[offs]&0x2;
+		color=mainevt_fg_attr_ram[offs]>>6;
 
-		bank=((((mainevt_attr_ram[offs]>>1)&0xe)+(mainevt_attr_ram[offs]&0x1))*0x100);
+		bank=((((mainevt_fg_attr_ram[offs]>>1)&0xe)+(mainevt_fg_attr_ram[offs]&0x1))*0x100);
 
 		drawgfx(front_bitmap,Machine->gfx[0],
-			tile+bank,color+4,fx,0,8*mx,8*my,
-			0,TRANSPARENCY_NONE,0);
+				tile+bank,color+4,fx,0,8*mx,8*my,
+				0,TRANSPARENCY_NONE,0);
 	}
-
-	dirty_video=0;
+	dirty_fg_video=0;
 
 NO_FORE_DRAW:
 
-	scrolly=-(RAM[0x380c]);
-	scrollx=-((RAM[0x3a01]<<8)+RAM[0x3a00])+6;
+	scrolly = -*fg_scrolly;
+	scrollx=-((*fg_scrollx_hi<<8)+*fg_scrollx_lo)+6;
 	copyscrollbitmap(bitmap,front_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
 
 	/* Render sprites foreground sprites */
@@ -250,22 +294,23 @@ NO_FORE_DRAW:
 
 	/* Draw character tiles */
 	mx=-1; my=0;
-	for (offs = 0x000;offs < 0x800;offs += 1) {
+	for (offs = 0x000;offs < videoram_size;offs += 1)
+	{
 		mx++;
-    if (mx==64) {mx=0; my++;}
-    if (mx<14 || mx>50) continue; /* Clipped areas */
+    	if (mx==64) {mx=0; my++;}
+    	if (mx<14 || mx>50) continue; /* Clipped areas */
 
-    tile=videoram[offs];
-    bank=((((mainevt_attr_ram[offs]>>1)&0xe)+(mainevt_attr_ram[offs]&0x1))*0x100);
+    	tile=videoram[offs];
+    	bank=((((mainevt_attr_ram[offs]>>1)&0xe)+(mainevt_attr_ram[offs]&0x1))*0x100);
 
-    /* Simple speedup */
-    if (tile==0xfe && bank==0x100) continue;
+    	/* Simple speedup */
+    	if (tile==0xfe && bank==0x100) continue;
 
  		fx=mainevt_attr_ram[offs]&0x2;
-    color=mainevt_attr_ram[offs]>>6;
+    	color=mainevt_attr_ram[offs]>>6;
 
 		drawgfx(bitmap,Machine->gfx[0],
-    	tile+bank,color,fx,0,mx*8,my*8,
-			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+    			tile+bank,color,fx,0,mx*8,my*8,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
   	}
 }

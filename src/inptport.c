@@ -333,15 +333,15 @@ struct ipd inputport_defaults[] =
 	{ IPT_BUTTON2 | IPF_PLAYER4, "4 Button 2",        0,               0 },
 	{ IPT_BUTTON3 | IPF_PLAYER4, "4 Button 3",        0,               0 },
 	{ IPT_BUTTON4 | IPF_PLAYER4, "4 Button 4",        0,               0 },
-	{ IPT_COIN1,               "Coin A",          OSD_KEY_3,       IP_JOY_NONE },
-	{ IPT_COIN2,               "Coin B",          OSD_KEY_4,       IP_JOY_NONE },
-	{ IPT_COIN3,               "Coin C",          OSD_KEY_5,       IP_JOY_NONE },
-	{ IPT_COIN4,               "Coin D",          OSD_KEY_6,       IP_JOY_NONE },
+	{ IPT_COIN1,               "Coin A",          OSD_KEY_3,           0 },
+	{ IPT_COIN2,               "Coin B",          OSD_KEY_4,           0 },
+	{ IPT_COIN3,               "Coin C",          OSD_KEY_5,           0 },
+	{ IPT_COIN4,               "Coin D",          OSD_KEY_6,           0 },
 	{ IPT_TILT,                "Tilt",            OSD_KEY_T,       IP_JOY_NONE },
-	{ IPT_START1,              "1 Player Start",  OSD_KEY_1,       IP_JOY_NONE },
-	{ IPT_START2,              "2 Players Start", OSD_KEY_2,       IP_JOY_NONE },
-	{ IPT_START3,              "3 Players Start", OSD_KEY_7,       IP_JOY_NONE },
-	{ IPT_START4,              "4 Players Start", OSD_KEY_8,       IP_JOY_NONE },
+	{ IPT_START1,              "1 Player Start",  OSD_KEY_1,           0 },
+	{ IPT_START2,              "2 Players Start", OSD_KEY_2,           0 },
+	{ IPT_START3,              "3 Players Start", OSD_KEY_7,           0 },
+	{ IPT_START4,              "4 Players Start", OSD_KEY_8,           0 },
 	{ IPT_PADDLE,              "Paddle",          IPF_DEC(OSD_KEY_LEFT) | IPF_INC(OSD_KEY_RIGHT) | IPF_DELTA(4), \
 	                                              IPF_DEC(OSD_JOY_LEFT) | IPF_INC(OSD_JOY_RIGHT) | IPF_DELTA(4) },
 	{ IPT_PADDLE | IPF_PLAYER2,  "Paddle 2",          IPF_DELTA(4), IPF_DELTA(4) },
@@ -439,6 +439,7 @@ void update_analog_port(int port)
 	if (nocheat && (in->type & IPF_CHEAT)) return;
 	type=(in->type & ~IPF_MASK);
 
+
 	key = default_key(in);
 	joy = default_joy(in);
 
@@ -490,21 +491,27 @@ void update_analog_port(int port)
 
 	current = input_analog_value[port];
 
-	if (axis == X_AXIS)
-	{
-		int now;
+	delta = 0;
 
-		now = cpu_scalebyfcount(mouse_current_x - mouse_previous_x) + mouse_previous_x;
-		delta = now - mouse_last_x;
-		mouse_last_x = now;
-	}
-	else
+	/* we can't support more than one analog input for now */
+	if ((in->type & IPF_PLAYERMASK) == IPF_PLAYER1)
 	{
-		int now;
+		if (axis == X_AXIS)
+		{
+			int now;
 
-		now = cpu_scalebyfcount(mouse_current_y - mouse_previous_y) + mouse_previous_y;
-		delta = now - mouse_last_y;
-		mouse_last_y = now;
+			now = cpu_scalebyfcount(mouse_current_x - mouse_previous_x) + mouse_previous_x;
+			delta = now - mouse_last_x;
+			mouse_last_x = now;
+		}
+		else
+		{
+			int now;
+
+			now = cpu_scalebyfcount(mouse_current_y - mouse_previous_y) + mouse_previous_y;
+			delta = now - mouse_last_y;
+			mouse_last_y = now;
+		}
 	}
 
 	if (osd_key_pressed(deckey)) delta -= keydelta;
@@ -522,63 +529,67 @@ void update_analog_port(int port)
 
 	if (in->type & IPF_REVERSE) delta = -delta;
 
-	if (is_stick)
+	/* we can't support more than one analog input for now */
+	if ((in->type & IPF_PLAYERMASK) == IPF_PLAYER1)
 	{
-		int new, prev;
-
-		/* center stick */
-		if ((delta == 0) && (in->type & IPF_CENTER))
+		if (is_stick)
 		{
-			if (current > default_value)
-				delta = -100 / sensitivity;
-			if (current < default_value)
-				delta =  100 / sensitivity;
-		}
+			int new, prev;
 
-		/* An analog joystick which is not at zero position (or has just */
-		/* moved there) takes precedence over all other computations */
-		/* analog_x/y holds values from -128 to 128 (yes, 128, not 127) */
-
-		if (axis == X_AXIS)
-		{
-			new  = analog_current_x;
-			prev = analog_previous_x;
-		}
-		else
-		{
-			new  = analog_current_y;
-			prev = analog_previous_y;
-		}
-
-		if ((new != 0) || (new-prev != 0))
-		{
-			delta=0;
-
-			if (in->type & IPF_REVERSE)
+			/* center stick */
+			if ((delta == 0) && (in->type & IPF_CENTER))
 			{
-				new  = -new;
-				prev = -prev;
+				if (current > default_value)
+					delta = -100 / sensitivity;
+				if (current < default_value)
+					delta =  100 / sensitivity;
 			}
 
-			/* scale by time */
+			/* An analog joystick which is not at zero position (or has just */
+			/* moved there) takes precedence over all other computations */
+			/* analog_x/y holds values from -128 to 128 (yes, 128, not 127) */
 
-			new = cpu_scalebyfcount(new - prev) + prev;
-
-#if 1 /* logarithmic scale */
-			if (new > 0)
+			if (axis == X_AXIS)
 			{
-				current = (pow(new / 128.0, 100.0 / sensitivity) * (max-in->default_value)
-						+ in->default_value) * 100 / sensitivity;
+				new  = analog_current_x;
+				prev = analog_previous_x;
 			}
 			else
 			{
-				current = (pow(-new / 128.0, 100.0 / sensitivity) * (min-in->default_value)
-						+ in->default_value) * 100 / sensitivity;
+				new  = analog_current_y;
+				prev = analog_previous_y;
 			}
+
+			if ((new != 0) || (new-prev != 0))
+			{
+				delta=0;
+
+				if (in->type & IPF_REVERSE)
+				{
+					new  = -new;
+					prev = -prev;
+				}
+
+				/* scale by time */
+
+				new = cpu_scalebyfcount(new - prev) + prev;
+
+#if 1 /* logarithmic scale */
+				if (new > 0)
+				{
+					current = (pow(new / 128.0, 100.0 / sensitivity) * (max-in->default_value)
+							+ in->default_value) * 100 / sensitivity;
+				}
+				else
+				{
+					current = (pow(-new / 128.0, 100.0 / sensitivity) * (min-in->default_value)
+							+ in->default_value) * 100 / sensitivity;
+				}
 #else
-			current = default_value + (new * (max-min) * 100) / (256 * sensitivity);
+				current = default_value + (new * (max-min) * 100) / (256 * sensitivity);
 #endif
 
+			}
 		}
 	}
 

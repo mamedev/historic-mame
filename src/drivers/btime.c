@@ -40,10 +40,8 @@ can take. Should the game reset????
 #include "M6502/M6502.h"
 
 extern unsigned char *lnc_charbank;
-extern unsigned char *lnc_control;
 extern unsigned char *bnj_backgroundram;
 extern int bnj_backgroundram_size;
-extern unsigned char *bnj_scroll2;
 extern unsigned char *zoar_scrollram;
 
 void btime_vh_convert_color_prom (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -51,7 +49,6 @@ void lnc_vh_convert_color_prom (unsigned char *palette, unsigned short *colortab
 void zoar_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 void lnc_init_machine (void);
-void eggs_init_machine(void);
 
 int  bnj_vh_start (void);
 
@@ -64,9 +61,9 @@ void eggs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void zoar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void btime_paletteram_w(int offset,int data);
-void btime_background_w(int offset,int data);
 void bnj_background_w(int offset, int data);
 void bnj_scroll1_w(int offset, int data);
+void bnj_scroll2_w(int offset, int data);
 int  btime_mirrorvideoram_r(int offset);
 void btime_mirrorvideoram_w(int offset,int data);
 int  btime_mirrorcolorram_r(int offset);
@@ -75,6 +72,10 @@ void lnc_videoram_w(int offset,int data);
 void lnc_mirrorvideoram_w(int offset,int data);
 void zoar_video_control_w(int offset,int data);
 void btime_video_control_w(int offset,int data);
+void bnj_video_control_w(int offset,int data);
+void lnc_video_control_w(int offset,int data);
+
+int lnc_sound_interrupt(void);
 
 static void sound_command_w(int offset,int data);
 
@@ -129,7 +130,7 @@ static void btime_ram_w(int offset,int data)
 	else if (offset == 0x4003)
 		sound_command_w(0,data);
 	else if (offset == 0x4004)
-		btime_background_w(0,data);
+		bnj_scroll1_w(0,data);
 
 	btime_decrypt();
 }
@@ -155,7 +156,7 @@ static void zoar_ram_w(int offset,int data)
 	else if (offset >= 0x9800 && offset <= 0x9803)
 		{ zoar_scrollram[offset - 0x9800] = data; good = 1; }
 	else if (offset == 0x9804)
-		{ *bnj_scroll2 = data; good = 1; }
+		{ bnj_scroll2_w(0,data); good = 1; }
 	else if (offset == 0x9805)
 		{ bnj_scroll1_w(0,data); good = 1; }
 	else if (offset == 0x9806)
@@ -190,7 +191,7 @@ static struct MemoryWriteAddress btime_writemem[] =
 	{ 0x0000, 0xffff, btime_ram_w },	/* override the following entries to */
 										/* support ROM decryption */
 	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x0c00, 0x0c0f, btime_paletteram_w },
+	{ 0x0c00, 0x0c0f, btime_paletteram_w, &paletteram },
 	{ 0x1000, 0x13ff, videoram_w, &videoram, &videoram_size },
 	{ 0x1400, 0x17ff, colorram_w, &colorram },
 	{ 0x1800, 0x1bff, btime_mirrorvideoram_w },
@@ -198,7 +199,7 @@ static struct MemoryWriteAddress btime_writemem[] =
 	{ 0x4000, 0x4000, MWA_NOP },
 	{ 0x4002, 0x4002, btime_video_control_w },
 	{ 0x4003, 0x4003, sound_command_w },
-	{ 0x4004, 0x4004, btime_background_w },
+	{ 0x4004, 0x4004, bnj_scroll1_w },
 	{ -1 }  /* end of table */
 };
 
@@ -226,7 +227,7 @@ static struct MemoryWriteAddress zoar_writemem[] =
 	{ 0x8c00, 0x8fff, btime_mirrorcolorram_w },
 	{ 0x9000, 0x9000, zoar_video_control_w },
 	{ 0x9800, 0x9803, MWA_RAM, &zoar_scrollram },
-	{ 0x9804, 0x9804, MWA_RAM, &bnj_scroll2 },
+	{ 0x9805, 0x9805, bnj_scroll2_w },
 	{ 0x9805, 0x9805, bnj_scroll1_w },
 	{ 0x9806, 0x9806, sound_command_w },
   //{ 0x9807, 0x9807, MWA_RAM },  // Marked as ACK on schematics (Board 2 Pg 5)
@@ -287,7 +288,7 @@ static struct MemoryWriteAddress lnc_writemem[] =
 	{ 0x7800, 0x7bff, MWA_RAM, &colorram },  // Dummy
 	{ 0x7c00, 0x7fff, lnc_mirrorvideoram_w },
 	{ 0x8000, 0x8000, MWA_NOP },            /* ??? */
-	{ 0x8001, 0x8001, MWA_RAM, &lnc_control },
+	{ 0x8001, 0x8001, lnc_video_control_w },
 	{ 0x8003, 0x8003, MWA_RAM, &lnc_charbank },
 	{ 0x9000, 0x9000, MWA_NOP },            /* ??? */
 	{ 0x9002, 0x9002, sound_command_w },
@@ -313,7 +314,7 @@ static struct MemoryReadAddress bnj_readmem[] =
 static struct MemoryWriteAddress bnj_writemem[] =
 {
 	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x1001, 0x1001, btime_video_control_w },
+	{ 0x1001, 0x1001, bnj_video_control_w },
 	{ 0x1002, 0x1002, sound_command_w },
 	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
 	{ 0x4400, 0x47ff, colorram_w, &colorram },
@@ -321,8 +322,8 @@ static struct MemoryWriteAddress bnj_writemem[] =
 	{ 0x4c00, 0x4fff, btime_mirrorcolorram_w },
 	{ 0x5000, 0x51ff, bnj_background_w, &bnj_backgroundram, &bnj_backgroundram_size },
 	{ 0x5400, 0x5400, bnj_scroll1_w },
-	{ 0x5800, 0x5800, MWA_RAM, &bnj_scroll2 },
-	{ 0x5c00, 0x5c0f, btime_paletteram_w },
+	{ 0x5800, 0x5800, bnj_scroll2_w },
+	{ 0x5c00, 0x5c0f, btime_paletteram_w, &paletteram },
 	{ -1 }  /* end of table */
 };
 
@@ -388,16 +389,6 @@ static int zoar_irq_interrupt(void)
 static int btime_nmi_interrupt(void)
 {
 	return btime_interrupt(nmi_interrupt, 0);
-}
-
-int lnc_sound_interrupt(void)
-{
-	// I have a feeling that this only works by coincidence. I couldn't
-	// figure out how NMI's are disabled by the sound processor
-	if (*lnc_control & 0x08)
-		return nmi_interrupt();
-	else
-		return ignore_interrupt();
 }
 
 static void sound_command_w(int offset,int data)
@@ -660,8 +651,8 @@ INPUT_PORTS_START( lnc_input_ports )
 	PORT_DIPSETTING(    0x20, "Watchdog Test Only" )
 	PORT_DIPSETTING(    0x10, "All Tests" )
 	PORT_DIPNAME( 0x40, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "1 Controller" )
-	PORT_DIPSETTING(    0x40, "2 Controllers" )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x40, "Cocktail" )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK  )
 
 	PORT_START      /* DSW2 */
@@ -673,21 +664,10 @@ INPUT_PORTS_START( lnc_input_ports )
 	PORT_DIPSETTING(    0x04, "20,000" )
 	PORT_DIPSETTING(    0x02, "30,000" )
 	PORT_DIPSETTING(    0x00, "Never" )
-	PORT_DIPNAME( 0x08, 0x08, "Difficulty", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x08, "Easy" )
+	PORT_DIPNAME( 0x08, 0x08, "Game Speed", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Slow" )
 	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x10, 0x00, "Unknown", IP_KEY_NONE )  /* almost certainly unused */
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x10, "On" )
-	PORT_DIPNAME( 0x20, 0x00, "Unknown", IP_KEY_NONE )  /* almost certainly unused */
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x40, 0x00, "Unknown", IP_KEY_NONE )  /* almost certainly unused */
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x40, "On" )
-	PORT_DIPNAME( 0x80, 0x00, "Unknown", IP_KEY_NONE )  /* almost certainly unused */
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x50, "On" )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )	 // According to the manual
 INPUT_PORTS_END
 
 
@@ -724,51 +704,51 @@ INPUT_PORTS_START( bnj_input_ports )
 
 	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x03, 0x03, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING(        0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(        0x03, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(        0x02, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(        0x01, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x01, "1 Coin/3 Credits" )
 	PORT_DIPNAME( 0x0c, 0x0c, "Coin B", IP_KEY_NONE )
-	PORT_DIPSETTING(        0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(        0x0c, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(        0x08, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(        0x04, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x04, "1 Coin/3 Credits" )
 	PORT_BITX(      0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(        0x10, "Off" )
-	PORT_DIPSETTING(        0x00, "On" )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(        0x20, "Off" )
-	PORT_DIPSETTING(        0x00, "On" )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x40, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(        0x00, "Upright" )
-	PORT_DIPSETTING(        0x40, "Cocktail" )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x40, "Cocktail" )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK  )
 
 	PORT_START      /* DSW2 */
 	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x01, 0x01, "Lives", IP_KEY_NONE )
-	PORT_DIPSETTING(        0x01, "3" )
-	PORT_DIPSETTING(        0x00, "5" )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x06, 0x06, "Bonus Life", IP_KEY_NONE )
-	PORT_DIPSETTING(        0x06, "Every 30,000" )
-	PORT_DIPSETTING(        0x04, "Every 70,000" )
-	PORT_DIPSETTING(        0x02, "20,000 Only"  )
-	PORT_DIPSETTING(        0x00, "30,000 Only"  )
+	PORT_DIPSETTING(    0x06, "Every 30,000" )
+	PORT_DIPSETTING(    0x04, "Every 70,000" )
+	PORT_DIPSETTING(    0x02, "20,000 Only"  )
+	PORT_DIPSETTING(    0x00, "30,000 Only"  )
 	PORT_DIPNAME( 0x08, 0x00, "Allow Continue", IP_KEY_NONE )
-	PORT_DIPSETTING(        0x08, "No" )
-	PORT_DIPSETTING(        0x00, "Yes" )
+	PORT_DIPSETTING(    0x08, "No" )
+	PORT_DIPSETTING(    0x00, "Yes" )
 	PORT_DIPNAME( 0x10, 0x10, "Difficulty", IP_KEY_NONE )
-	PORT_DIPSETTING(        0x10, "Easy" )
-	PORT_DIPSETTING(        0x00, "Hard" )
+	PORT_DIPSETTING(    0x10, "Easy" )
+	PORT_DIPSETTING(    0x00, "Hard" )
 	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(        0x20, "Off" )
-	PORT_DIPSETTING(        0x00, "On" )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(        0x40, "Off" )
-	PORT_DIPSETTING(        0x00, "On" )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(        0x80, "Off" )
-	PORT_DIPSETTING(        0x00, "On" )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
 
 
@@ -896,19 +876,13 @@ static unsigned char zoar_color_prom[] =
 
 static unsigned char lnc_color_prom[] =
 {
-	// I think the color PROM is corrupted in the bit indicated by the arrow.
-	// Changing it to 0x27 makes the color scheme match the flyer's
-	// drawing to a tee. The flyer is at
-	// www.gamearchive.com/flyers/video/taito/locknchase_f.jpg
-
 	/* palette SC-5M */
-  //0x00,0xdf,0x51,0x1c,0xa7,0xe0,0xfc,0xff,
-    0x00,0xdf,0x51,0x1c,0x27,0xe0,0xfc,0xff,
-  //                      ^
+    0x00,0xdf,0x51,0x1c,0xa7,0xe0,0xfc,0xff
 
-	/* ROM SB-4C, don't know what it is, unused for now */
+	/* PROM SB-4C. This PROM is in the RAS/CAS logic. Nothing to do with
+	   colors, but I'm leaving it here for documentation purposed
 	0xf7,0xf7,0xf5,0xfd,0xf9,0xf9,0xf0,0xf6,0xf6,0xf6,0xf6,0xf4,0xfc,0xf8,0xf8,0xf6,
-	0xf6,0xf6,0xf4,0xfc,0xf8,0xf8,0xf6,0xf6,0xf6,0xf6,0xf6,0xf4,0xfc,0xf8,0xf8,0xf6
+	0xf6,0xf6,0xf4,0xfc,0xf8,0xf8,0xf6,0xf6,0xf6,0xf6,0xf6,0xf4,0xfc,0xf8,0xf8,0xf6 */
 };
 
 
@@ -973,7 +947,7 @@ static struct MachineDriver GAMENAME##_machine_driver =             \
 	},                                                          	\
 	57, 3072,        /* frames per second, vblank duration */   	\
 	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */ \
-	GAMENAME##_init_machine,                                    	\
+	GAMENAME##_init_machine,		                               	\
 																	\
 	/* video hardware */                                        	\
 	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },                   	\
@@ -1013,7 +987,7 @@ static struct MachineDriver GAMENAME##_machine_driver =             \
 	},                                                          	\
 	57, 3072,        /* frames per second, vblank duration */   	\
 	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */ \
-	GAMENAME##_init_machine,                                    	\
+	0,						                                    	\
 																	\
 	/* video hardware */                                        	\
 	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },                   	\
@@ -1165,6 +1139,9 @@ ROM_START( scregg_rom )
 	ROM_LOAD( "scregg.j12",  0x4000, 0x1000, 0xe5077119 )
 	ROM_LOAD( "scregg.j10",  0x5000, 0x1000, 0xc41a7b5e )
 ROM_END
+
+/* There is a flyer with a screen shot for Lock'n'Chase at:
+   http://www.gamearchive.com/flyers/video/taito/locknchase_f.jpg  */
 
 ROM_START( lnc_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
@@ -1682,7 +1659,7 @@ struct GameDriver lnc_driver =
 	"Lock'n'Chase",
 	"1981",
 	"Data East Corporation",
-	"Zsolt Vasvari\nKevin Brisley (Bunp 'n' Jump driver)\nMirko Buffoni (Audio/Add. code)",
+	"Zsolt Vasvari\nKevin Brisley (Bump 'n' Jump driver)\nMirko Buffoni (Audio/Add. code)",
 	0,
 	&lnc_machine_driver,
 
@@ -1782,7 +1759,7 @@ struct GameDriver zoar_driver =
 	"Zoar",
 	"1982",
 	"Data East USA",
-	"Zsolt Vasvari\nKevin Brisley (Bunp 'n' Jump driver)",
+	"Zsolt Vasvari\nKevin Brisley (Bump 'n' Jump driver)",
 	0,
 	&zoar_machine_driver,
 

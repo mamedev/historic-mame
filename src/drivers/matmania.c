@@ -589,6 +589,7 @@ ROM_START( maniach_rom )
 ROM_END
 
 
+
 static int matmania_hiload(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
@@ -604,6 +605,9 @@ static int matmania_hiload(void)
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
 			osd_fread(f,&RAM[0x0700],16*5);
+			RAM[0x0028] = RAM[0x0700];
+			RAM[0x0029] = RAM[0x0701];
+			RAM[0x002a] = RAM[0x0702];
 			osd_fclose(f);
 		}
 
@@ -612,7 +616,31 @@ static int matmania_hiload(void)
 	else return 0;	/* we can't load the hi scores yet */
 }
 
+static int excthour_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
+
+	/* check if the hi score table has already been initialized */
+	if ((memcmp(&RAM[0x0700],"\x00\x30\x00",3) == 0) &&
+		(memcmp(&RAM[0x074d],"\xc9\xcd\xb0",3) == 0))
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x0700],16*5);
+			RAM[0x0028] = RAM[0x0700];
+			RAM[0x0029] = RAM[0x0701];
+			RAM[0x002a] = RAM[0x0702];
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
 
 static void matmania_hisave(void)
 {
@@ -625,7 +653,6 @@ static void matmania_hisave(void)
 		osd_fwrite(f,&RAM[0x0700],16*5);
 		osd_fclose(f);
 	}
-
 }
 
 
@@ -677,7 +704,7 @@ struct GameDriver excthour_driver =
 	matmania_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	matmania_hiload, matmania_hisave
+	excthour_hiload, matmania_hisave
 };
 
 struct GameDriver maniach_driver =

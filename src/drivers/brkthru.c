@@ -421,11 +421,17 @@ static unsigned char color_prom[] =
 
 
 
+/* handler called by the 3812 emulator when the internal timers cause an IRQ */
+static void irqhandler(void)
+{
+	cpu_cause_interrupt(1,M6809_INT_IRQ);
+}
+
 static struct YM2203interface ym2203_interface =
 {
 	1,
 	1500000,	/* Unknown */
-	{ YM2203_VOL(100,255) },
+	{ YM2203_VOL(255,255) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -436,7 +442,8 @@ static struct YM3526interface ym3526_interface =
 {
 	1,			/* 1 chip (no more supported) */
 	3600000,	/* 3.600000 MHz ? (partially supported) */
-	{ 255 }		/* (not supported) */
+	{ 255 },		/* (not supported) */
+	irqhandler,
 };
 
 
@@ -457,7 +464,7 @@ static struct MachineDriver brkthru_machine_driver =
 			1250000,        /* 1.25 Mhz ? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-                        interrupt,8     /* Set by hand. */
+			ignore_interrupt,0	/* IRQs are caused by the YM3526 */
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -506,7 +513,7 @@ static struct MachineDriver darwin_machine_driver =
 			1200000,        /* 1.25 Mhz ? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			interrupt,6     /* Set by hand. */
+			ignore_interrupt,0	/* IRQs are caused by the YM3526 */
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -578,6 +585,7 @@ ROM_START( brkthru_rom )
 	ROM_REGION(0x10000)	/* 64K for sound CPU */
 	ROM_LOAD( "brkthru.5", 0x8000, 0x8000, 0x364efd26 )
 ROM_END
+
 ROM_START( darwin_rom )
 	ROM_REGION(0x20000)     /* 64k for main CPU + 64k for banked ROMs */
 	ROM_LOAD( "darw_04.rom", 0x04000, 0x4000, 0x44937a5d )

@@ -212,8 +212,8 @@ void foodf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* walk the motion object list. */
 	for (offs = 0; offs < foodf_spriteram_size; offs += 4)
 	{
-		int data1 = READ_WORD (&foodf_spriteram[offs + 0x0000]);
-		int data2 = READ_WORD (&foodf_spriteram[offs + 0x0002]);
+		int data1 = READ_WORD (&foodf_spriteram[offs]);
+		int data2 = READ_WORD (&foodf_spriteram[offs + 2]);
 
 		int pict = data1 & 0xff;
 		int color = (data1 >> 8) & 0x1f;
@@ -222,11 +222,19 @@ void foodf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		int hflip = (data1 >> 15) & 1;
 		int vflip = (data1 >> 14) & 1;
 
-		drawgfx (bitmap, Machine->gfx[1],
-				pict, color,
-				hflip, vflip,
-				xpos, ypos,
-				&Machine->drv->visible_area,
-				TRANSPARENCY_PEN, 0);
+		drawgfx(bitmap,Machine->gfx[1],
+				pict,
+				color,
+				hflip,vflip,
+				xpos,ypos,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+
+		/* draw again with wraparound (needed to get the end of level animation right) */
+		drawgfx(bitmap,Machine->gfx[1],
+				pict,
+				color,
+				hflip,vflip,
+				xpos-256,ypos,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

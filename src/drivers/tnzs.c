@@ -533,7 +533,7 @@ struct GameDriver tnzs_driver =
 	"1988",
 	"Taito",
     "Chris Moore\nMartin Scragg\nRichard Mitton\nSanteri Saarimaa (hi-scores)",
-	0,
+	GAME_NOT_WORKING,
 	&tnzs_machine_driver,
 
 	tnzs_rom,

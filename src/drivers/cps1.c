@@ -1278,24 +1278,24 @@ MACHINE_DRIVER(
 
 ROM_START( unsquad_rom )
         ROM_REGION(0x100000)      /* 68000 code */
-        ROM_LOAD_EVEN("UNSQUAD.30",  0x00000, 0x20000, 0x474a8f2c )
-        ROM_LOAD_ODD ("UNSQUAD.35",  0x00000, 0x20000, 0x46432039 )
-        ROM_LOAD_EVEN("UNSQUAD.31",  0x40000, 0x20000, 0x4f1952f1 )
-        ROM_LOAD_ODD ("UNSQUAD.36",  0x40000, 0x20000, 0xf69148b7 )
+        ROM_LOAD_EVEN("UNSQUAD.30",       0x00000, 0x20000, 0x474a8f2c )
+        ROM_LOAD_ODD ("UNSQUAD.35",       0x00000, 0x20000, 0x46432039 )
+        ROM_LOAD_EVEN("UNSQUAD.31",       0x40000, 0x20000, 0x4f1952f1 )
+        ROM_LOAD_ODD ("UNSQUAD.36",       0x40000, 0x20000, 0xf69148b7 )
         ROM_LOAD_WIDE_SWAP( "UNSQUAD.32", 0x80000, 0x80000, 0x45a55eb7 ) /* tiles + chars */
 
         ROM_REGION(0x200000)     /* temporary space for graphics (disposed after conversion) */
-        ROM_LOAD( "UNSQUAD.01",   0x000000, 0x80000, 0x87c8d9a8 )
-        ROM_LOAD( "UNSQUAD.05",   0x080000, 0x80000, 0xea7f4a55 )
-        ROM_LOAD( "UNSQUAD.03",   0x100000, 0x80000, 0x0ce0ac76 )
-        ROM_LOAD( "UNSQUAD.07",   0x180000, 0x80000, 0x837e8800 )
+        ROM_LOAD( "UNSQUAD.01", 0x000000, 0x80000, 0x87c8d9a8 )
+        ROM_LOAD( "UNSQUAD.05", 0x080000, 0x80000, 0xea7f4a55 )
+        ROM_LOAD( "UNSQUAD.03", 0x100000, 0x80000, 0x0ce0ac76 )
+        ROM_LOAD( "UNSQUAD.07", 0x180000, 0x80000, 0x837e8800 )
 
         ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
-        ROM_LOAD( "UNSQUAD.09",    0x00000, 0x10000, 0xc55f46db )
-        ROM_LOAD( "UNSQUAD.09",    0x08000, 0x10000, 0xc55f46db )
+        ROM_LOAD( "UNSQUAD.09", 0x00000, 0x10000, 0xc55f46db )
+        ROM_RELOAD(             0x08000, 0x10000 )
 
         ROM_REGION(0x20000) /* Samples */
-        ROM_LOAD ("UNSQUAD.18",    0x00000, 0x20000, 0x6cc60418 )
+        ROM_LOAD ("UNSQUAD.18", 0x00000, 0x20000, 0x6cc60418 )
 ROM_END
 
 struct GameDriver unsquad_driver =
@@ -2398,34 +2398,33 @@ ROM_START( pnickj_rom )
         ROM_LOAD_ODD("PNIJ42.BIN",  0x00000, 0x20000, 0x31a6c64a )
 
         ROM_REGION(0x200000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_LOAD( "PNIJ01.BIN", 0x000000, 0x20000, 0x7d70f1ae )
+        ROM_LOAD( "PNIJ02.BIN", 0x020000, 0x20000, 0x0920aab2 )
+        ROM_LOAD( "PNIJ18.BIN", 0x040000, 0x20000, 0x69c6ec06 )
+        ROM_LOAD( "PNIJ19.BIN", 0x060000, 0x20000, 0x699426fe )
 
-        ROM_LOAD( "PNIJ01.BIN",   0x000000, 0x20000, 0x7d70f1ae )
-        ROM_LOAD( "PNIJ02.BIN",   0x020000, 0x20000, 0x0920aab2 )
-        ROM_LOAD( "PNIJ18.BIN",   0x040000, 0x20000, 0x69c6ec06 )
-        ROM_LOAD( "PNIJ19.BIN",   0x060000, 0x20000, 0x699426fe )
+        ROM_LOAD( "PNIJ09.BIN", 0x080000, 0x20000, 0x084f08d5 )
+        ROM_LOAD( "PNIJ10.BIN", 0x0a0000, 0x20000, 0x82453ef5 )
+        ROM_LOAD( "PNIJ26.BIN", 0x0c0000, 0x20000, 0x1222eeb4 )
+        ROM_LOAD( "PNIJ27.BIN", 0x0e0000, 0x20000, 0x58a385ed )
 
-        ROM_LOAD( "PNIJ09.BIN",   0x080000, 0x20000, 0x084f08d5 )
-        ROM_LOAD( "PNIJ10.BIN",   0x0a0000, 0x20000, 0x82453ef5 )
-        ROM_LOAD( "PNIJ26.BIN",   0x0c0000, 0x20000, 0x1222eeb4 )
-        ROM_LOAD( "PNIJ27.BIN",   0x0e0000, 0x20000, 0x58a385ed )
+        ROM_LOAD( "PNIJ05.BIN", 0x100000, 0x20000, 0xa524baa6 )
+        ROM_LOAD( "PNIJ06.BIN", 0x120000, 0x20000, 0xecf87970 )
+        ROM_LOAD( "PNIJ32.BIN", 0x140000, 0x20000, 0xca010ba7 )
+        ROM_LOAD( "PNIJ33.BIN", 0x160000, 0x20000, 0x6743e579 )
 
-        ROM_LOAD( "PNIJ05.BIN",   0x100000, 0x20000, 0xa524baa6 )
-        ROM_LOAD( "PNIJ06.BIN",   0x120000, 0x20000, 0xecf87970 )
-        ROM_LOAD( "PNIJ32.BIN",   0x140000, 0x20000, 0xca010ba7 )
-        ROM_LOAD( "PNIJ33.BIN",   0x160000, 0x20000, 0x6743e579 )
-
-        ROM_LOAD( "PNIJ13.BIN",   0x180000, 0x20000, 0x9914a0fe )
-        ROM_LOAD( "PNIJ14.BIN",   0x1a0000, 0x20000, 0x03c84eda )
-        ROM_LOAD( "PNIJ38.BIN",   0x1c0000, 0x20000, 0x5cb05f98 )
-        ROM_LOAD( "PNIJ39.BIN",   0x1e0000, 0x20000, 0xe561e0a9 )
+        ROM_LOAD( "PNIJ13.BIN", 0x180000, 0x20000, 0x9914a0fe )
+        ROM_LOAD( "PNIJ14.BIN", 0x1a0000, 0x20000, 0x03c84eda )
+        ROM_LOAD( "PNIJ38.BIN", 0x1c0000, 0x20000, 0x5cb05f98 )
+        ROM_LOAD( "PNIJ39.BIN", 0x1e0000, 0x20000, 0xe561e0a9 )
 
         ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
-        ROM_LOAD( "PNIJ17.BIN",    0x00000, 0x10000, 0x06a99847 )
-        ROM_LOAD( "PNIJ17.BIN",    0x08000, 0x10000, 0x06a99847 )
+        ROM_LOAD( "PNIJ17.BIN", 0x00000, 0x10000, 0x06a99847 )
+        ROM_LOAD( "PNIJ17.BIN", 0x08000, 0x10000, 0x06a99847 )
 
         ROM_REGION(0x40000) /* Samples */
-        ROM_LOAD ("PNIJ24.BIN",    0x00000, 0x20000, 0x5aaf13c5 )
-        ROM_LOAD ("PNIJ25.BIN",    0x20000, 0x20000, 0x86d371df )
+        ROM_LOAD ("PNIJ24.BIN", 0x00000, 0x20000, 0x5aaf13c5 )
+        ROM_LOAD ("PNIJ25.BIN", 0x20000, 0x20000, 0x86d371df )
 ROM_END
 
 struct GameDriver pnickj_driver =
@@ -2597,26 +2596,26 @@ MACHINE_DRIVER(
 
 ROM_START( knights_rom )
         ROM_REGION(0x100000)      /* 68000 code */
-        ROM_LOAD_WIDE_SWAP("KR_23E.ROM", 0x00000, 0x80000, 0x79b18275 )
-        ROM_LOAD_WIDE_SWAP("KR_22.ROM", 0x80000, 0x80000, 0x006ee1da )
+        ROM_LOAD_WIDE_SWAP( "KR_23E.ROM", 0x00000, 0x80000, 0x79b18275 )
+        ROM_LOAD_WIDE_SWAP( "KR_22.ROM",  0x80000, 0x80000, 0x006ee1da )
 
         ROM_REGION(0x400000)     /* temporary space for graphics (disposed after conversion) */
-        ROM_LOAD( "KR_GFX2.ROM",   0x000000, 0x80000, 0xb4dd6223 )
-        ROM_LOAD( "KR_GFX6.ROM",   0x080000, 0x80000, 0x6c092895 )
-        ROM_LOAD( "KR_GFX1.ROM",   0x100000, 0x80000, 0xbc0f588f )
-        ROM_LOAD( "KR_GFX5.ROM",   0x180000, 0x80000, 0x5917bf8f )
-        ROM_LOAD( "KR_GFX4.ROM",   0x200000, 0x80000, 0xf30df6ad )
-        ROM_LOAD( "KR_GFX8.ROM",   0x280000, 0x80000, 0x21a5b3b5 )
-        ROM_LOAD( "KR_GFX3.ROM",   0x300000, 0x80000, 0x07a98709 )
-        ROM_LOAD( "KR_GFX7.ROM",   0x380000, 0x80000, 0x5b53bdb9 )
+        ROM_LOAD( "KR_GFX2.ROM", 0x000000, 0x80000, 0xb4dd6223 )
+        ROM_LOAD( "KR_GFX6.ROM", 0x080000, 0x80000, 0x6c092895 )
+        ROM_LOAD( "KR_GFX1.ROM", 0x100000, 0x80000, 0xbc0f588f )
+        ROM_LOAD( "KR_GFX5.ROM", 0x180000, 0x80000, 0x5917bf8f )
+        ROM_LOAD( "KR_GFX4.ROM", 0x200000, 0x80000, 0xf30df6ad )
+        ROM_LOAD( "KR_GFX8.ROM", 0x280000, 0x80000, 0x21a5b3b5 )
+        ROM_LOAD( "KR_GFX3.ROM", 0x300000, 0x80000, 0x07a98709 )
+        ROM_LOAD( "KR_GFX7.ROM", 0x380000, 0x80000, 0x5b53bdb9 )
 
         ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
-        ROM_LOAD( "KR_09.ROM",    0x00000, 0x10000, 0x795a9f98 )
-        ROM_LOAD( "KR_09.ROM",    0x08000, 0x10000, 0x795a9f98 )
+        ROM_LOAD( "KR_09.ROM", 0x00000, 0x10000, 0x795a9f98 )
+        ROM_RELOAD(            0x08000, 0x10000 )
 
         ROM_REGION(0x40000) /* Samples */
-        ROM_LOAD ("KR_18.ROM",    0x00000, 0x20000, 0x06633ed3 )
-        ROM_LOAD ("KR_19.ROM",    0x20000, 0x20000, 0x750a1ca4 )
+        ROM_LOAD ("KR_18.ROM", 0x00000, 0x20000, 0x06633ed3 )
+        ROM_LOAD ("KR_19.ROM", 0x20000, 0x20000, 0x750a1ca4 )
 ROM_END
 
 struct GameDriver knights_driver =

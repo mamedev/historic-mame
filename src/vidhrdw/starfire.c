@@ -66,6 +66,7 @@ void starfire_videoram_w(int offset,int data) {
     unsigned char c,d,d2;
     int i;
 
+    offset &= 0x1FFF;
     /* Handle selector 6A */
     if (offset & 0x2000)
         c = starfire_vidctrl;
@@ -145,6 +146,7 @@ void starfire_videoram_w(int offset,int data) {
 int starfire_videoram_r(int offset) {
     unsigned char d;
 
+    offset &= 0x1FFF;
     d = starfire_videoram[offset];
     return (d << 1) | ((d & 0x01) << 7);
 
@@ -196,9 +198,9 @@ void starfire_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 //                col = 1;
                 for (j=0; j<8; j++) {
                     if (d & 0x80)
-                        tmpbitmap->line[y][xx+j] = col+32;
+                        tmpbitmap->line[y][xx+j] = Machine->pens[col+32];
                     else
-                        tmpbitmap->line[y][xx+j] = col;
+                        tmpbitmap->line[y][xx+j] = Machine->pens[col];
                     d = d << 1;
                 }
             }

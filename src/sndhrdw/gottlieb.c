@@ -132,6 +132,13 @@ void gottlieb_riot_w(int offset, int data)
 static int psg_latch,nmi_enable;
 static void *nmi_timer;
 
+
+int gottlieb_sh_init (const char *gamename)
+{
+	nmi_timer = NULL;
+	return 0;
+}
+
 int stooges_sound_input_r(int offset)
 {
 	/* bits 0-3 are probably unused (future expansion) */

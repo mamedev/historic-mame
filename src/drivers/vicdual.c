@@ -1344,7 +1344,7 @@ struct GameDriver carnival_driver =
 	"Carnival",
 	"1980",
 	"Sega",
-	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari\nPeter Clare (sound)",
+	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari\nPeter Clare (sound)\nAlan J McCormick (sound)",
 	0,
 	&carnival_machine_driver,
 

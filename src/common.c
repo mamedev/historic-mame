@@ -362,11 +362,11 @@ void printromlist(const struct RomModule *romp,const char *basename)
 
 		while (romp->length)
 		{
-			char name[100];
+			const char *name;
 			int length,expchecksum;
 
 
-			sprintf(name,romp->name,basename);
+			name = romp->name;
 			expchecksum = romp->checksum;
 
 			length = 0;

@@ -392,7 +392,7 @@ static struct MachineDriver lazercmd_machine_driver =
 	 0 * VERT_CHR, VERT_RES * VERT_CHR - 1},
 
 	gfxdecodeinfo,
-	sizeof(palette) / sizeof(palette[0]),
+	sizeof(palette) / sizeof(palette[0]) / 3,
 	sizeof(colortable) / sizeof(colortable[0]),
 	0,					   /* convert color prom */
 
@@ -411,6 +411,8 @@ static struct MachineDriver lazercmd_machine_driver =
 		}
 	}
 };
+
+
 
 /***************************************************************************
 

@@ -65,7 +65,7 @@
 #ifdef MAME_DEBUG
 
 #include "mamedbg.h"
-#include "mame.h"
+#include "driver.h"
 
 /* undefine the following if you don't want 'LEFT' and 'RIGHT' to do
    anything in the disassembly window.
@@ -1046,7 +1046,7 @@ static int ScreenEdit (int XMin, int XMax, int YMin, int YMax, int Col, int Base
 				{
 					b = cpuintf[cputype].memory_read(Add & DebugInfo[cputype].AddMask);
 
-					sprintf(Num, osd_key_name(Key));
+					strcpy(Num, osd_key_name(Key));
 					ScreenPutString (Num, Col, X, Y);
 					Num[0] -= '0';
 					if (Num[0] > 9)
@@ -1378,7 +1378,7 @@ static void EditRegisters (int Which)
 			case OSD_KEY_D:
 			case OSD_KEY_E:
 			case OSD_KEY_F:
-				sprintf(Num, osd_key_name(Key));
+				strcpy(Num, osd_key_name(Key));
 				ScreenPutString (Num, REGISTER_COLOUR, X, Y);
 				Num[0] -= '0';
 				if (Num[0] > 9)

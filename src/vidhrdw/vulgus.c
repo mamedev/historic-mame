@@ -37,21 +37,32 @@ void vulgus_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 		int bit0,bit1,bit2,bit3;
 
 
-		bit0 = (color_prom[0] >> 0) & 0x01;
-		bit1 = (color_prom[0] >> 1) & 0x01;
-		bit2 = (color_prom[0] >> 2) & 0x01;
-		bit3 = (color_prom[0] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
-		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
-		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
-		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x01;
-		bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x01;
-		bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x01;
-		bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		if (i == 47)
+		{
+			/* color 47 is transparent, make sure its pen isn't shared with other colors */
+			/* (none of the game colors can have these RGB components) */
+			*(palette++) = 1;
+			*(palette++) = 1;
+			*(palette++) = 1;
+		}
+		else
+		{
+			bit0 = (color_prom[0] >> 0) & 0x01;
+			bit1 = (color_prom[0] >> 1) & 0x01;
+			bit2 = (color_prom[0] >> 2) & 0x01;
+			bit3 = (color_prom[0] >> 3) & 0x01;
+			*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+			bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
+			bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
+			bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
+			bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
+			*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+			bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x01;
+			bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x01;
+			bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x01;
+			bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x01;
+			*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		}
 
 		color_prom++;
 	}
@@ -175,8 +186,8 @@ void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int scrollx,scrolly;
 
 
-	scrollx = -(vulgus_scrolllow[0] + 256 * vulgus_scrollhigh[0]);
-	scrolly = vulgus_scrolllow[1] + 256 * vulgus_scrollhigh[1] - 256;
+	scrolly = -(vulgus_scrolllow[0] + 256 * vulgus_scrollhigh[0]);
+	scrollx = -(vulgus_scrolllow[1] + 256 * vulgus_scrollhigh[1]);
 
 	for (offs = vulgus_bgvideoram_size - 1;offs >= 0;offs--)
 	{
@@ -185,15 +196,16 @@ void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		if (dirtybuffer2[offs])
 		{
-			int minx,maxx,miny,maxy;
+//			int minx,maxx,miny,maxy;
 
 
-			sx = 16 * (offs % 32);
-			sy = 16 * (31 - offs / 32);
+			sx = (offs % 32);
+			sy = (offs / 32);
 
 			/* between level Vulgus changes the palette bank every frame. Redrawing */
 			/* the whole background every time would slow the game to a crawl, so here */
 			/* we check and redraw only the visible tiles */
+/*
 			minx = (sx + scrollx) & 0x1ff;
 			maxx = (sx + 15 + scrollx) & 0x1ff;
 			if (minx > maxx) minx = maxx - 15;
@@ -205,6 +217,7 @@ void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					maxx - 15 <= Machine->drv->visible_area.max_x &&
 					miny + 15 >= Machine->drv->visible_area.min_y &&
 					maxy - 15 <= Machine->drv->visible_area.max_y)
+*/
 			{
 				dirtybuffer2[offs] = 0;
 
@@ -212,7 +225,7 @@ void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						vulgus_bgvideoram[offs] + 2 * (vulgus_bgcolorram[offs] & 0x80),
 						(vulgus_bgcolorram[offs] & 0x1f) + 32 * *vulgus_palette_bank,
 						vulgus_bgcolorram[offs] & 0x40,vulgus_bgcolorram[offs] & 0x20,
-						sx,sy,
+						16*sy,16*sx,
 						0,TRANSPARENCY_NONE,0);
 			}
 		}
@@ -231,8 +244,8 @@ void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		code = spriteram[offs];
 		col = spriteram[offs + 1] & 0x0f;
-		sx = spriteram[offs + 2];
-		sy = 240 - spriteram[offs + 3] + 0x10 * (spriteram[offs + 1] & 0x10);
+		sy = spriteram[offs + 2];
+		sx = spriteram[offs + 3] + 0x10 * (spriteram[offs + 1] & 0x10);
 
 		i = (spriteram[offs + 1] & 0xc0) >> 6;
 		if (i == 2) i = 3;
@@ -243,9 +256,8 @@ void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					code + i,
 					col,
 					0, 0,
-					sx + 16 * i,sy,
+					sx, sy + 16 * i,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
-
 			i--;
 		} while (i >= 0);
 	}
@@ -257,8 +269,8 @@ void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		int sx,sy;
 
 
-		sx = 8 * (offs / 32);
-		sy = 8 * (31 - offs % 32);
+		sx = 8 * (offs % 32);
+		sy = 8 * (offs / 32);
 
 		drawgfx(bitmap,Machine->gfx[0],
 				videoram[offs] + 2 * (colorram[offs] & 0x80),

@@ -233,7 +233,7 @@ struct GameDriver astinvad_driver =
 struct GameDriver kamikaze_driver =
 {
 	__FILE__,
-	0,
+	&astinvad_driver,
 	"kamikaze",
 	"Kamikaze",
 	"1979",

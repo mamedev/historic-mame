@@ -649,10 +649,10 @@ INPUT_PORTS_START( spyhunt_input_ports )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* new fake for acceleration */
-	PORT_ANALOGX( 0xff, 0x30, IPT_AD_STICK_Y | IPF_REVERSE, 100, 0, 0x30, 0xff, OSD_KEY_UP, OSD_KEY_DOWN, IPT_JOYSTICK_UP, IPT_JOYSTICK_DOWN, 1 )
+	PORT_ANALOGX( 0xff, 0x30, IPT_AD_STICK_Y | IPF_REVERSE, 100, 0, 0x30, 0xff, OSD_KEY_UP, OSD_KEY_DOWN, OSD_JOY_UP, OSD_JOY_DOWN, 1 )
 
 	PORT_START	/* new fake for steering */
-	PORT_ANALOGX( 0xff, 0x74, IPT_AD_STICK_X | IPF_CENTER, 80, 0, 0x34, 0xb4, OSD_KEY_LEFT, OSD_KEY_RIGHT, IPT_JOYSTICK_LEFT, IPT_JOYSTICK_RIGHT, 2 )
+	PORT_ANALOGX( 0xff, 0x74, IPT_AD_STICK_X | IPF_CENTER, 80, 0, 0x34, 0xb4, OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_JOY_LEFT, OSD_JOY_RIGHT, 2 )
 INPUT_PORTS_END
 
 
@@ -962,7 +962,7 @@ static struct GfxDecodeInfo crater_gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &spyhunt_charlayout_128, 3*16, 1 },	/* top half */
 	{ 1, 0x0004, &spyhunt_charlayout_128, 3*16, 1 },	/* bottom half */
-	{ 1, 0x8000, &mcr3_spritelayout_256,  0*16, 1 },
+	{ 1, 0x8000, &mcr3_spritelayout_256,  0*16, 4 },
 	{ 1, 0x28000, &spyhunt_alphalayout,   8*16, 1 },
 	{ -1 } /* end of array */
 };
@@ -1863,15 +1863,24 @@ ROM_START( sarge_rom )
 	ROM_REGION(0x24000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "til_15a.bin", 0x00000, 0x2000, 0x9fbe8040 )
 	ROM_LOAD( "til_14b.bin", 0x02000, 0x2000, 0xf1d8588e )
-	ROM_LOAD( "spr_4e.bin", 0x04000, 0x8000, 0xbeb5a087 )
-	ROM_LOAD( "spr_5e.bin", 0x0c000, 0x8000, 0x8656a6b0 )
-	ROM_LOAD( "spr_6e.bin", 0x14000, 0x8000, 0x77fcd1fa )
-	ROM_LOAD( "spr_8e.bin", 0x1c000, 0x8000, 0x03a20ad4 )
+	ROM_LOAD( "spr_4e.bin",  0x04000, 0x8000, 0xbeb5a087 )
+	ROM_LOAD( "spr_5e.bin",  0x0c000, 0x8000, 0x8656a6b0 )
+	ROM_LOAD( "spr_6e.bin",  0x14000, 0x8000, 0x77fcd1fa )
+	ROM_LOAD( "spr_8e.bin",  0x1c000, 0x8000, 0x03a20ad4 )
 
 	ROM_REGION(0x10000)  /* 64k for the Turbo Cheap Squeak */
 	ROM_LOAD( "tcs_u5.bin", 0xc000, 0x2000, 0xee7518d3 )
 	ROM_LOAD( "tcs_u4.bin", 0xe000, 0x2000, 0x9b3a062e )
 ROM_END
+
+void sarge_rom_decode (void)
+{
+	int i;
+
+	/* Sarge tile graphics are inverted */
+	for (i = 0; i < 0x4000; i++)
+		Machine->memory_region[1][i] ^= 0xff;
+}
 
 struct GameDriver sarge_driver =
 {
@@ -1886,7 +1895,7 @@ struct GameDriver sarge_driver =
 	&sarge_machine_driver,
 
 	sarge_rom,
-	rampage_rom_decode, 0,
+	sarge_rom_decode, 0,
 	0,
 	0,	/* sound_prom */
 

@@ -839,7 +839,7 @@ struct GameDriver dowild_driver =
 	__FILE__,
 	0,
 	"dowild",
-	"Mr. Do! Wild Ride",
+	"Mr. Do's Wild Ride",
 	"1984",
 	"Universal",
 	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili",

@@ -217,7 +217,7 @@ static unsigned char cycles1[] =
 {
 	/*    0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F */
   /*0*/	  6,  0,  0,  6,  6,  0,  6,  6,  6,  6,  6,  0,  6,  6,  3,  6,
-  /*1*/	255,255,  2,  2,  0,  0,  5,  9,  0,  2,  3,  0,  3,  2,  8,  7,
+  /*1*/	255,255,  2,  2,  0,  0,  5,  9,  0,  2,  3,  0,  3,  2,  8,  6,
   /*2*/	  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,
   /*3*/	E+4,E+4,E+4,E+4,  5,  5,  5,  5,  0,  5,  3,  6,  0, 11,  0, 19,
   /*4*/	  2,  0,  0,  2,  2,  0,  2,  2,  2,  2,  2,  0,  2,  2,  0,  2,
@@ -1040,7 +1040,7 @@ INLINE byte fetch_effective_address( void )
 	    case 0xB0: eaddr=yreg;yreg++;eaddr=M_RDMEM_WORD(eaddr);ec=5;break;
 	    case 0xB1: eaddr=yreg;yreg+=2;eaddr=M_RDMEM_WORD(eaddr);ec=6;break;
 	    case 0xB2: yreg--;eaddr=yreg;eaddr=M_RDMEM_WORD(eaddr);ec=5;break;
-	    case 0xB3: yreg-=2;eaddr=yreg;eaddr=M_RDMEM_WORD(eaddr);ec=5;break;
+	    case 0xB3: yreg-=2;eaddr=yreg;eaddr=M_RDMEM_WORD(eaddr);ec=6;break;
 	    case 0xB4: eaddr=yreg;eaddr=M_RDMEM_WORD(eaddr);ec=3;break;
 	    case 0xB5: eaddr=yreg+SIGNED(breg);eaddr=M_RDMEM_WORD(eaddr);ec=4;break;
 	    case 0xB6: eaddr=yreg+SIGNED(areg);eaddr=M_RDMEM_WORD(eaddr);ec=4;break;

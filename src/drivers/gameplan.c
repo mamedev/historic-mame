@@ -630,7 +630,7 @@ static struct MachineDriver machine_driver =
 		{
             CPU_M6502 | CPU_AUDIO_CPU,
 			3579000 / 4,		/* 3.579 / 4 MHz */
-			1,					/* memory_region */
+			2,					/* memory_region */
 			readmem_snd,writemem_snd,0,0,
 			gameplan_interrupt,1
 		},
@@ -703,6 +703,10 @@ ROM_START( kaos_rom )
     ROM_LOAD( "kaosab.e1", 0xb800, 0x0800, 0x42b95983 )
     ROM_CONTINUE(		   0xf800, 0x0800			  )
 
+	ROM_REGION(0x1000)
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
     ROM_REGION(0x10000)
 	ROM_LOAD( "kaossnd.e1", 0xf800, 0x800, 0xd406d7a6 )
 ROM_END
@@ -719,6 +723,10 @@ ROM_START( killcom_rom )
     ROM_LOAD( "killcom.f1", 0xf000, 0x800, 0xca4212d4 )
     ROM_LOAD( "killcom.e1", 0xf800, 0x800, 0x6ed6e10a )
 
+	ROM_REGION(0x1000)
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
     ROM_REGION(0x10000)
 	ROM_LOAD( "killsnd.e1", 0xf800, 0x800, 0x5ac95bbb )
 ROM_END
@@ -734,6 +742,10 @@ ROM_START( megatack_rom )
     ROM_LOAD( "megattac.f1", 0xf000, 0x800, 0xd0fdd29f )
     ROM_LOAD( "megattac.e1", 0xf800, 0x800, 0x5a5799db )
 
+	ROM_REGION(0x1000)
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
     ROM_REGION(0x10000)
 	ROM_LOAD( "megatsnd.e1", 0xf800, 0x800, 0xf47bab9f )
 ROM_END
@@ -747,8 +759,12 @@ ROM_START( challeng_rom )
     ROM_LOAD( "chall.2", 0xe000, 0x1000, 0x1702df08 )
     ROM_LOAD( "chall.1", 0xf000, 0x1000, 0x0cfbdc29 )
 
+	ROM_REGION(0x1000)
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
     ROM_REGION(0x10000)
-    /* the ROM is missing! */
+	ROM_LOAD( "chall.snd", 0xf800, 0x800, 0x222e6cc6 )
 ROM_END
 
 
@@ -813,7 +829,7 @@ static int killcom_hiload(void)
 
 static void killcom_hisave(void)
 {
-    unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
     void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -846,7 +862,7 @@ static int megatack_hiload(void)
 
 static void megatack_hisave(void)
 {
-    unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
     void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -879,7 +895,7 @@ static int challeng_hiload(void)
 
 static void challeng_hisave(void)
 {
-    unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
     void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

@@ -14,7 +14,6 @@
 
 extern int system8_bank;
 
-unsigned char	*system8_bg_pagesel;
 unsigned char 	*system8_scroll_y;
 unsigned char 	*system8_scroll_x;
 unsigned char 	*system8_videoram;
@@ -31,12 +30,11 @@ static unsigned char 	*bg_dirtybuffer;
 static unsigned char 	*tx_dirtybuffer;
 static unsigned char 	*SpritesData = NULL;
 static unsigned char 	*SpritesCollisionTable;
-static unsigned char 	scrollx=0,scrolly=0,system8_supports_banks=0,bg_bank=0,bg_bank_latch=0,sprite_offset_y=16;
+static unsigned char 	scrollx=0,scrolly=0,system8_supports_banks=0,bg_bank=0,bg_bank_latch=0;
 
 static int		scrollx_row[32];
 static struct osd_bitmap *bitmap1;
 static struct osd_bitmap *bitmap2;
-static struct rectangle system8_clip;
 
 static int  system8_pixel_mode = 0;
 static void (*Check_SpriteRAM_for_Clear)(void) = NULL;
@@ -119,24 +117,42 @@ void system8_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 	}
 }
 
+void system8_paletteram_w(int offset,int data)
+{
+	unsigned char *palette = palette_lookup + data * 3;
+	int r,g,b;
+
+
+	paletteram[offset] = data;
+
+	r = *palette++;
+	g = *palette++;
+	b = *palette++;
+
+	palette_change_color(offset,r,g,b);
+}
+
 
 
 int system8_vh_start(void)
 {
 	if ((SpritesCollisionTable = malloc(0x10000)) == 0)
 		return 1;
+	memset(SpritesCollisionTable,255,0x10000);
 
 	if ((bg_dirtybuffer = malloc(1024)) == 0)
 	{
 		free(SpritesCollisionTable);
 		return 1;
 	}
+	memset(bg_dirtybuffer,1,1024);
 	if ((tx_dirtybuffer = malloc(1024)) == 0)
 	{
 		free(bg_dirtybuffer);
 		free(SpritesCollisionTable);
 		return 1;
 	}
+	memset(tx_dirtybuffer,1,1024);
 	if ((bg_ram = malloc(0x4000)) == 0)			/* Allocate 16k for background banked ram */
 	{
 		free(bg_dirtybuffer);
@@ -144,6 +160,7 @@ int system8_vh_start(void)
 		free(SpritesCollisionTable);
 		return 1;
 	}
+	memset(bg_ram,0,0x4000);
 	if ((SpritesData = malloc(0x40000)) == 0)	/* Allocate a maximum for 512k of 16 colors sprites */
 	{
 		free(bg_ram);
@@ -171,12 +188,6 @@ int system8_vh_start(void)
 		free(SpritesCollisionTable);
 		return 1;
 	}
-
-	memset(bg_dirtybuffer,1,1024);
-	memset(tx_dirtybuffer,1,1024);
-	memset(system8_backgroundram,0,system8_backgroundram_size);
-	memset(system8_videoram,0,system8_videoram_size);
-	memset(SpritesCollisionTable,255,0x10000);
 
 	return 0;
 }
@@ -226,30 +237,19 @@ void system8_define_banksupport(int support)
 	system8_supports_banks = support;
 }
 
-void system8_define_sprite_offset_y(int offset)
-{
-	sprite_offset_y = offset;
-}
-
-void system8_define_cliparea(int x1, int x2, int y1, int y2)
-{
-	system8_clip.min_x = x1;
-	system8_clip.max_x = x2;
-	system8_clip.min_y = y1;
-	system8_clip.max_y = y2;
-}
-
 static int GetSpriteBottomY(int spr_number)
 {
 	return  system8_spriteram[(spr_number<<4) + SPR_Y_BOTTOM];
 }
 
 
+extern struct GameDriver wbml_driver;
 static void Pixel(struct osd_bitmap *bitmap,int x,int y,int spr_number,int color)
 {
 	int xr,yr,spr_y1,spr_y2;
 	int SprOnScreen;
 	int adjx = x, adjy = y;
+
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
@@ -270,6 +270,7 @@ static void Pixel(struct osd_bitmap *bitmap,int x,int y,int spr_number,int color
 	else
 	{
 		SprOnScreen=SpritesCollisionTable[256*y+x];
+if (Machine->gamedrv != &wbml_driver)
 		system8_sprites_collisionram[SprOnScreen + (spr_number<<5)] = 0xff;
 		if (system8_pixel_mode==SYSTEM8_SPRITE_PIXEL_MODE1)
 		{
@@ -288,8 +289,9 @@ static void Pixel(struct osd_bitmap *bitmap,int x,int y,int spr_number,int color
 	}
 	xr = (x>>3);
 	yr = (y>>3);
+if (Machine->gamedrv != &wbml_driver)
 	if (system8_backgroundram[((yr%32)<<6) + ((xr%32)<<1) + 1] & 0x10)
-	  system8_background_collisionram[spr_number] = 0xff;
+		system8_background_collisionram[spr_number] = 0xff;
 }
 
 
@@ -298,7 +300,7 @@ static void MarkBackgroundDirtyBufferBySprite(int x,int y,int width,int height)
 	int xr,yr,wr,hr,row,col;
 
 	x  = (unsigned char)((x - scrollx) % 256);
-	y  = (unsigned char)((scrolly + y + sprite_offset_y) % 256);
+	y  = (unsigned char)((scrolly + y) % 256);
 	xr = (x>>3);
 	yr = (y>>3);
 	wr = (width>>3)  + ((x & 7) ? 1:0) +  ((width & 7) ? 1:0);
@@ -316,13 +318,16 @@ static void MarkBackgroundDirtyBufferBySprite(int x,int y,int width,int height)
 }
 
 
-static void RenderSprite(struct osd_bitmap *bitmap, const struct rectangle *clip, int spr_number)
+static void RenderSprite(struct osd_bitmap *bitmap,int spr_number,const struct rectangle *clip)
 {
 	int SprX,SprY,Col,Row,Height,DataOffset,FlipX;
 	int Color,scrx,scry,Bank;
 	unsigned char *SprReg;
 	unsigned short *SprPalette;
 	unsigned short NextLine,Width,Offset16;
+	struct rectangle myclip = { 0, 255, 0, 255 };
+
+	if (clip == 0) clip = &myclip;
 
 	SprReg		= system8_spriteram + (spr_number<<4);
 	Bank		= ((((SprReg[SPR_BANK] & 0x80)>>7)+((SprReg[SPR_BANK] & 0x40)>>5))<<16) * system8_supports_banks;
@@ -331,7 +336,8 @@ static void RenderSprite(struct osd_bitmap *bitmap, const struct rectangle *clip
 	FlipX 	    = SprReg[SPR_FLIP_X] & 0x80;
 	DataOffset 	= SprReg[SPR_GFXOFS_LO]+((SprReg[SPR_GFXOFS_HI] & 0x7F)<<8)+Width;
 	SprPalette	= Machine->colortable + (spr_number<<4);
-	SprX 		= (SprReg[SPR_X_LO] >> 1) + ((SprReg[SPR_X_HI] & 1) << 7);
+	SprX 		= (SprReg[SPR_X_LO] >> 1) + ((SprReg[SPR_X_HI] & 1) << 7) + 1;
+if (Machine->gamedrv == &wbml_driver) SprX += 6;
 	SprY 		= SprReg[SPR_Y_TOP] + 1;
 	NextLine	= Width;
 
@@ -345,7 +351,7 @@ static void RenderSprite(struct osd_bitmap *bitmap, const struct rectangle *clip
 	for(Row=0; Row<Height; Row++)
 	{
 		Offset16 = (DataOffset+(Row*NextLine)) << 1;
-		scry = (unsigned char)(((SprY+Row) + scrolly + sprite_offset_y) % 256);
+		scry = (unsigned char)(((SprY+Row) + scrolly) % 256);
 		if ((clip->min_y <= SprY+Row) && (clip->max_y >= SprY+Row))
 		{
 			for(Col=0; Col<Width; Col++)
@@ -396,11 +402,10 @@ static void DrawSprites(struct osd_bitmap *bitmap,const struct rectangle *clip)
 	unsigned char *SprReg;
 
 
-	if (!clip) clip = &Machine->drv->visible_area;
-
 	if (Check_SpriteRAM_for_Clear)
 		Check_SpriteRAM_for_Clear();
 
+if (Machine->gamedrv != &wbml_driver)
 	memset(system8_sprites_collisionram,0,0x400);
 
 	for(spr_number=0; spr_number<32; spr_number++)
@@ -409,7 +414,7 @@ static void DrawSprites(struct osd_bitmap *bitmap,const struct rectangle *clip)
 		SprTop		= SprReg[SPR_Y_TOP];
 		SprBottom	= SprReg[SPR_Y_BOTTOM];
 		if (SprBottom && (SprBottom-SprTop > 0))
-			RenderSprite(bitmap,clip,spr_number);
+			RenderSprite(bitmap,spr_number,clip);
 	}
 
 	ClearSpritesCollisionTable();
@@ -487,52 +492,15 @@ void system8_compute_palette (void)
 }
 
 
-void system8_soundport_w(int offset, int data)
-{
-	soundlatch_w(0,data);
-	cpu_cause_interrupt(1, Z80_NMI_INT);
-}
-
-int  system8_bg_bankselect_r(int offset)
-{
-	return bg_bank_latch;
-}
-
-void system8_bg_bankselect_w(int offset, int data)
-{
-	if (data != bg_bank_latch)
-	{
-		bg_bank_latch = data;
-		bg_bank = (data >> 1) & 0x03;	/* Select 4 banks of 4k, bit 2,1 */
-	}
-}
-
 void system8_videoram_w(int offset,int data)
 {
 	system8_videoram[offset] = data;
-	bg_ram[0x1000*bg_bank + offset] = data;
 	tx_dirtybuffer[offset>>1] = 1;
-}
-
-void system8_paletteram_w(int offset,int data)
-{
-	unsigned char *palette = palette_lookup + data * 3;
-	int r,g,b;
-
-
-	paletteram[offset] = data;
-
-	r = *palette++;
-	g = *palette++;
-	b = *palette++;
-
-	palette_change_color(offset,r,g,b);
 }
 
 void system8_backgroundram_w(int offset,int data)
 {
 	system8_backgroundram[offset] = data;
-	bg_ram[0x1000*bg_bank + offset + 0x800] = data;
 	bg_dirtybuffer[offset>>1] = 1;
 }
 
@@ -544,8 +512,8 @@ void system8_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	system8_compute_palette ();
 
 
-	scrollx = (system8_scroll_x[0] >> 1) + ((system8_scroll_x[1] & 1) << 7) + 14;
-	scrolly = *system8_scroll_y - 16;
+	scrollx = (system8_scroll_x[0] >> 1) + ((system8_scroll_x[1] & 1) << 7) + 15;
+	scrolly = *system8_scroll_y;
 
 	/* for every character in the background video RAM, check if it has
 	 * been modified since last time and update it accordingly.
@@ -569,7 +537,7 @@ void system8_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 	}
 
-	DrawSprites(bitmap1, &system8_clip);
+	DrawSprites(bitmap1,0);
 
 
 	/* for every character in the background video RAM,
@@ -614,7 +582,7 @@ void system8_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		{
 			int palette = code>>5;
 			sx = (i % 64)<<2;
-			sy = ((i >> 6)<<3)+16;
+			sy = ((i >> 6)<<3);
 			drawgfx(bitmap,Machine->gfx[0],
 					code,palette,
 					0,0,
@@ -637,7 +605,7 @@ void choplifter_scroll_x_w(int offset,int data)
 void choplifter_backgroundrefresh(struct osd_bitmap *bitmap, int layer)
 {
 	int code,palette,priority,sx,sy,i;
-	int choplifter_scroll_x_on = (system8_scrollx_ram[4] == 0xE5 && system8_scrollx_ram[5] == 0xFF) ? 0:1;
+	int choplifter_scroll_x_on = (system8_scrollx_ram[0] == 0xE5 && system8_scrollx_ram[1] == 0xFF) ? 0:1;
 
 	/*	for every character in the background & text video RAM,
 	 *	check if it has been modified since last time and update it accordingly.
@@ -654,10 +622,9 @@ void choplifter_backgroundrefresh(struct osd_bitmap *bitmap, int layer)
 			if (!priority)
 				bg_dirtybuffer[i]=0;
 			sx = (i % 32)<<3;
-			sy = ((i >> 5)<<3)+16;
+			sy = ((i >> 5)<<3);
 			code = ((code >> 4) & 0x800) | (code & 0x7ff);
 
-//			code = 48+priority;
 			if (!layer)
 				drawgfx(bitmap1,Machine->gfx[0],
 					code,palette + 64,0,0,sx,sy,0,TRANSPARENCY_NONE,0);
@@ -666,18 +633,18 @@ void choplifter_backgroundrefresh(struct osd_bitmap *bitmap, int layer)
 			{
 				if (choplifter_scroll_x_on)
 				{
-					int row = (i >> 5)+2;
+					int row = (i >> 5);
 					sx = (((i % 32)<<3)+scrollx_row[row]) % 256;
 					sy = row<<3;
 					drawgfx(bitmap,Machine->gfx[0],
-							code,palette + 64,0,0,sx,sy,&system8_clip,TRANSPARENCY_PEN,0);
+							code,palette + 64,0,0,sx,sy,&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 				}
 				else
 				{
 					sx = ((i % 32)<<3);
 					sy = ((i >> 5)<<3);
 					drawgfx(bitmap,Machine->gfx[0],
-							code,palette + 64,0,0,sx,sy+16,&system8_clip,TRANSPARENCY_PEN,0);
+							code,palette + 64,0,0,sx,sy,&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 				}
 			}
 		}
@@ -686,52 +653,59 @@ void choplifter_backgroundrefresh(struct osd_bitmap *bitmap, int layer)
 	if (!layer)
 	{
 		if (choplifter_scroll_x_on)
-			copyscrollbitmap(bitmap,bitmap1,32,scrollx_row,0,0,&system8_clip,TRANSPARENCY_NONE,0);
+			copyscrollbitmap(bitmap,bitmap1,32,scrollx_row,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		else
-			copybitmap(bitmap,bitmap1,0,0,0,0,&system8_clip,TRANSPARENCY_NONE,0);
+			copybitmap(bitmap,bitmap1,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 }
 
 void choplifter_textrefresh(struct osd_bitmap *bitmap, int layer)
 {
-	int code,palette,priority,sx,sy,i;
+	int offs;
 
-	/*	for every character in the background & text video RAM,
-	 *	check if it has been modified since last time and update it accordingly.
-	 */
 
-	for (i = 0; i < system8_backgroundram_size>>1; i++)
+	for (offs = 0;offs < system8_videoram_size;offs += 2)
 	{
-		code = system8_videoram[i*2] + (system8_videoram[i*2+1] << 8);
-		priority = (code >> 11) & 0x01;
-		palette = (code>>5) & 0x3f;
+		int sx,sy,code,priority;
 
-		if (tx_dirtybuffer[i])
+
+		sx = (offs/2) % 32;
+		sy = (offs/2) / 32;
+		code = system8_videoram[offs] | (system8_videoram[offs+1] << 8);
+		priority = code & 0x800;
+		code = ((code >> 4) & 0x800) | (code & 0x7ff);
+
+		if (layer)
 		{
-			if (!priority)
-				tx_dirtybuffer[i]=0;
-			sx = (i % 32)<<3;
-			sy = ((i >> 5)<<3);
-			code = ((code >> 4) & 0x800) | (code & 0x7ff);
-
-//			code = 48+priority;
-			if (layer)
+			if (priority)
+			{
 				drawgfx(bitmap,Machine->gfx[0],
-					code,palette,0,0,sx,sy+16,&system8_clip,TRANSPARENCY_PEN,0);
-			else
+						code,
+						(code >> 5) & 0x3f,
+						0,0,
+						8*sx,8*sy,
+						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			}
+		}
+		else
+		{
+			if (tx_dirtybuffer[offs/2])
+			{
+				tx_dirtybuffer[offs/2] = 0;
+
 				drawgfx(bitmap2,Machine->gfx[0],
-					code,palette,0,0,sx,sy,0,TRANSPARENCY_NONE,0);
+						code,
+						(code >> 5) & 0x3f,
+						0,0,
+						8*sx,8*sy,
+						&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+			}
 		}
 	}
 
 	if (!layer)
-	/*  Copy background & text bitmap to the screen */
-	copybitmap(bitmap,bitmap2,0,0,0,16,&system8_clip,TRANSPARENCY_PEN,palette_transparent_pen);
-//	else
-//	copybitmap(bitmap,bitmap2,0,0,0,16,&system8_clip,TRANSPARENCY_NONE,0);
-
+		copybitmap(bitmap,bitmap2,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 }
-
 
 void choplifter_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
@@ -739,7 +713,7 @@ void choplifter_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	choplifter_backgroundrefresh(bitmap,0);
 	choplifter_textrefresh(bitmap,0);
 	choplifter_backgroundrefresh(bitmap,2);
-	DrawSprites(bitmap,&system8_clip);
+	DrawSprites(bitmap,&Machine->drv->visible_area);
 	choplifter_backgroundrefresh(bitmap,1);
 	choplifter_textrefresh(bitmap,1);
 
@@ -753,96 +727,106 @@ void choplifter_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 
-void system8_backgroundrefresh(struct osd_bitmap *bitmap, int trasp)
-{
-	const struct GfxElement *gfx = Machine->gfx[0];
 
+
+
+
+int wbml_bg_bankselect_r(int offset)
+{
+	return bg_bank_latch;
+}
+
+void wbml_bg_bankselect_w(int offset, int data)
+{
+	bg_bank_latch = data;
+	bg_bank = (data >> 1) & 0x03;	/* Select 4 banks of 4k, bit 2,1 */
+}
+void wbml_paged_videoram_w(int offset,int data)
+{
+	bg_ram[0x1000*bg_bank + offset] = data;
+}
+
+void wbml_backgroundrefresh(struct osd_bitmap *bitmap, int trasp)
+{
 	int page;
 
-	unsigned char * scrx = ((system8_bank&0x80)?(system8_videoram + 0x7F6):(system8_videoram + 0x7c0));
-	unsigned char * scry = ((system8_bank&0x80)?(system8_videoram + 0x784):(system8_videoram + 0x7ba));
 
-	int xscroll = (scrx[0] >> 1) + ((scrx[1] & 1) << 7)-256-2;
-	int yscroll = -*scry;
-
-	if (xscroll < 0) xscroll = 512 - (-xscroll) % 512; else xscroll = xscroll % 512;
-	if (yscroll < 0) yscroll = 512 - (-yscroll) % 512; else yscroll = yscroll % 512;
+	int xscroll = (bg_ram[0x7c0] >> 1) + ((bg_ram[0x7c1] & 1) << 7) - 256 + 5;
+	int yscroll = -bg_ram[0x7ba];
 
 	for (page=0; page < 4; page++)
 	{
-		const unsigned char *source = bg_ram + (system8_bg_pagesel[ page*2 ] & 0x07)*0x800;
-
+		const unsigned char *source = bg_ram + (bg_ram[0x0740 + page*2] & 0x07)*0x800;
 		int startx = (page&1)*256+xscroll;
 		int starty = (page>>1)*256+yscroll;
-
 		int row,col;
 
-		for( row=0; row<28*8; row+=8 )
+
+		for( row=0; row<32*8; row+=8 )
 		{
 			for( col=0; col<32*8; col+=8 )
 			{
-				int x = startx+col;
-				int y = starty+row;
-				if( x>256 ) x-=512;
-				if( y>224 ) y-=512;
-				if( x>-8 && x<256 && y>-8 && y<224 )
-				{
-					int tile = source[0] + source[1]*256;
-					int priority = tile & 0x800;
-					tile = ((tile >> 4) & 0x800)|(tile & 0x7ff);
-					if (!trasp)
-						drawgfx(bitmap, gfx,
-								tile,
-								(tile >> 5) + 64,
-								0, 0, x, y,
-								&system8_clip, TRANSPARENCY_NONE, 0);
-					else if (priority)
-						drawgfx(bitmap, gfx,
-								tile,
-								(tile >> 5) + 64,
-								0, 0, x, y,
-								&system8_clip, TRANSPARENCY_COLOR, 0);
-				}
+				int code,priority;
+				int x = (startx+col) & 0x1ff;
+				int y = (starty+row) & 0x1ff;
+				if (x > 256) x -= 512;
+				if (y > 256) y -= 512;
+
+
+				code = source[0] + (source[1] << 8);
+				priority = code & 0x800;
+				code = ((code >> 4) & 0x800) | (code & 0x7ff);
+
+				if (!trasp)
+					drawgfx(bitmap,Machine->gfx[0],
+							code,
+							((code >> 5) & 0x3f) + 64,
+							0,0,
+							x,y,
+							&Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+				else if (priority)
+					drawgfx(bitmap,Machine->gfx[0],
+							code,
+							((code >> 5) & 0x3f) + 64,
+							0,0,
+							x,y,
+							&Machine->drv->visible_area, TRANSPARENCY_PEN, 0);
 				source+=2;
 			}
 		}
 	} /* next page */
 }
 
-void system8_textrefresh(struct osd_bitmap *bitmap)
+void wbml_textrefresh(struct osd_bitmap *bitmap)
 {
-	int i;
+	int offs;
 
-	for (i = 0; i < system8_videoram_size>>1; i++)
+
+	for (offs = 0;offs < 0x700;offs += 2)
 	{
-		int code = bg_ram[i*2] | (bg_ram[i*2+1] << 8);
-		int palette = (code>>5) & 0x3f;
+		int sx,sy,code;
 
-		if (tx_dirtybuffer[i])
-		{
-			int sx,sy;
 
-			tx_dirtybuffer[i]=0;
-			sx = (i % 32)<<3;
-			sy = ((i >> 5)<<3);
-			code = ((code >> 4) & 0x800) + (code & 0x7ff);
+		sx = (offs/2) % 32;
+		sy = (offs/2) / 32;
+		code = bg_ram[offs] | (bg_ram[offs+1] << 8);
+		code = ((code >> 4) & 0x800) | (code & 0x7ff);
 
-			if (sx < 7*8 || sy < 3*8 || sy >= 216)
-				drawgfx(bitmap,Machine->gfx[0],
-					code,palette + 64,0,0,sx,sy,0,TRANSPARENCY_NONE,0);
-			else
-				drawgfx(bitmap,Machine->gfx[0],
-					code,palette + 64,0,0,sx,sy,0,TRANSPARENCY_COLOR,0);
-		}
+		drawgfx(bitmap,Machine->gfx[0],
+				code,
+				(code >> 5) & 0x3f,
+				0,0,
+				8*sx,8*sy,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }
 
 
 void wbml_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	system8_compute_palette ();
-	system8_backgroundrefresh(bitmap,0);
-	DrawSprites(bitmap,&system8_clip);
-	system8_backgroundrefresh(bitmap,1);
-	system8_textrefresh(bitmap);
+	palette_recalc();
+	wbml_backgroundrefresh(bitmap,0);
+	DrawSprites(bitmap,&Machine->drv->visible_area);
+	wbml_backgroundrefresh(bitmap,1);
+	wbml_textrefresh(bitmap);
 }

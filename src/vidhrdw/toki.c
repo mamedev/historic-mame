@@ -17,7 +17,7 @@
 
 #define XBG1SCROLL_ADJUST(x) (-(x)+0x103)
 #define XBG2SCROLL_ADJUST(x) (-(x)+0x101)
-#define YBGSCROLL_ADJUST(x) (-(x))
+#define YBGSCROLL_ADJUST(x) (-(x)-1)
 
 unsigned char *toki_foreground_videoram;
 unsigned char *toki_background1_videoram;
@@ -229,7 +229,7 @@ void toki_render_sprites (struct osd_bitmap *bitmap)
 					SprTile,
 					SprPalette,
 					SprFlipX,0,
-					SprX,SprY,
+					SprX,SprY-1,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
 		}
 	}

@@ -6,23 +6,24 @@
 
 int ssi_input_r (int offset)
 {
-	switch (offset)
-	{
-	        case 0x00:
-		        return 0xff;  /* not sure what this really is */
-                case 0x02:
-                        return readinputport(3);
+    switch (offset)
+    {
 
-                case 0x04:
-			return readinputport(0);
+         case 0x04:
+              return readinputport(0); /* IN0 */
 
-		case 0x06:
-			return readinputport(1);
+         case 0x06:
+              return readinputport(1); /* IN1 */
 
-		case 0x0e:
-			return readinputport(2);
+         case 0x0e:
+              return readinputport(2); /* IN2 */
 
-	}
+         case 0x00:
+              return readinputport(3); /* DSW A */
+
+         case 0x02:
+              return readinputport(4); /* DSW B */
+    }
 
 if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_getpc(),0x100000+offset);
 
@@ -84,53 +85,88 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 INPUT_PORTS_START( ssi_input_ports )
 
-//        PORT_START      /* IN0 */
+        PORT_START      /* IN0 */
+        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_PLAYER1 )
+        PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_PLAYER1 )
+        PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_PLAYER1 )
+        PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_PLAYER1 )
+        PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN)
+        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1)
 
-//        PORT_START      /* IN1 */
-
+        PORT_START      /* IN1 */
+        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_PLAYER2 )
+        PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_PLAYER2 )
+        PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_PLAYER2 )
+        PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_PLAYER2 )
+        PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN)
+        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2)
 
         PORT_START      /* IN2 */
-        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 )
-        PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1 )
-        PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1 )
-        PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
-        PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 ) /* who knows? */
-        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 ) /* who knows? */
-        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED) /* who knows? */
-        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1) /* who knows? */
-
-        PORT_START      /* IN3 */
-        PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
-        PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
-        PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
-        PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
-        PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 ) /* who knows? */
-        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 ) /* who knows? */
-        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED) /* who knows? */
-        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2) /* who knows? */
-
-
-//        PORT_START      /* IN4 */
-
-
-//        PORT_START      /* IN5 */
-
-
-
-//      PORT_START      /* IN6 */
-
-        PORT_START      /* IN7 */
         PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_TILT )
-        PORT_BITX(    0x02, 0x02, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE, 0 )
-        PORT_DIPSETTING(    0x02, "Off")
-        PORT_DIPSETTING(    0x00, "On")
+        PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3 )
         PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
         PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
-        PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED) /* who knows? */
-        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED) /* who knows? */
-        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED) /* who knows? */
-        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED) /* who knows? */
+        PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
+        PORT_START /* DSW A */
+        PORT_DIPNAME( 0x01, 0x01, "Unknown", IP_KEY_NONE)
+        PORT_DIPSETTING(    0x01, "Off")
+        PORT_DIPSETTING(    0x00, "On")
+        PORT_DIPNAME( 0x02, 0x02, "Unknown", IP_KEY_NONE)
+        PORT_DIPSETTING(    0x02, "Off")
+        PORT_DIPSETTING(    0x00, "On")
+        PORT_DIPNAME( 0x04, 0x04, "Test Mode", IP_KEY_NONE)
+        PORT_DIPSETTING(    0x04, "Off")
+        PORT_DIPSETTING(    0x00, "On")
+        PORT_DIPNAME( 0x08, 0x08, "Unknown", IP_KEY_NONE)
+        PORT_DIPSETTING(    0x08, "Off")
+        PORT_DIPSETTING(    0x00, "On")
+        PORT_DIPNAME( 0x30, 0x30, "Coin A", IP_KEY_NONE)
+        PORT_DIPSETTING(    0x00, "4 Coins/1 Credit")
+        PORT_DIPSETTING(    0x10, "3 Coins/1 Credit")
+        PORT_DIPSETTING(    0x20, "2 Coins/1 Credit")
+        PORT_DIPSETTING(    0x30, "1 Coin/1 Credit")
+        PORT_DIPNAME( 0xc0, 0xc0, "Coin B", IP_KEY_NONE)
+        PORT_DIPSETTING(    0xc0, "1 Coin/2 Credits")
+        PORT_DIPSETTING(    0x80, "1 Coin/3 Credits")
+        PORT_DIPSETTING(    0x40, "1 Coin/4 Credits")
+        PORT_DIPSETTING(    0x00, "1 Coin/6 Credits")
+
+        PORT_START /* DSW B */
+        PORT_DIPNAME( 0x01, 0x01, "Unknown",IP_KEY_NONE )
+        PORT_DIPSETTING(    0x01, "Off")
+        PORT_DIPSETTING(    0x00, "On")
+        PORT_DIPNAME( 0x02, 0x02, "Unknown",IP_KEY_NONE )
+        PORT_DIPSETTING(    0x02, "Off")
+        PORT_DIPSETTING(    0x00, "On")
+        PORT_DIPNAME( 0x0c, 0x0c, "Shields",IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "None")
+        PORT_DIPSETTING(    0x0c, "1")
+        PORT_DIPSETTING(    0x04, "2")
+        PORT_DIPSETTING(    0x08, "3")
+        PORT_DIPNAME( 0x10, 0x10, "Lives",IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "2")
+        PORT_DIPSETTING(    0x10, "3")
+        PORT_DIPNAME( 0x20, 0x20, "2 Players Mode", IP_KEY_NONE)
+        PORT_DIPSETTING(    0x00, "Alternate")
+        PORT_DIPSETTING(    0x20, "Simultaneous")
+        PORT_DIPNAME( 0x40, 0x40, "Allow Continue", IP_KEY_NONE)
+        PORT_DIPSETTING(    0x40, "Yes")
+        PORT_DIPSETTING(    0x00, "No")
+        PORT_DIPNAME( 0x80, 0x80, "Allow Simultaneous Game", IP_KEY_NONE)
+        PORT_DIPSETTING(    0x80, "Yes")
+        PORT_DIPSETTING(    0x00, "No")
+     /* I think the cabinet for this game should have two joysticks even
+        in upright mode. Maybe this dip actually set cocktail mode where
+        simultaneous game is now allowed of course.
+        Or maybe it's just what I described... Sand666 21/5 */
 
 INPUT_PORTS_END
 
@@ -183,7 +219,8 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	30*8, 40*8, { 2*8, 30*8-1, 2*8, 40*8-1 },
+        30*8, 42*8, { 2*8, 30*8-1, 2*8, 42*8-1 },
+
 	ssi_gfxdecodeinfo,
 	256*16,256*16,
         0,

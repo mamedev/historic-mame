@@ -48,15 +48,24 @@ NMI causes a ROM/RAM test.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+extern struct GfxLayout zaxxon_charlayout1;
+extern struct GfxLayout zaxxon_charlayout2;
 
-extern unsigned char *congo_background_position;
-extern unsigned char *congo_background_enable;
+extern int zaxxon_vid_type;
+extern unsigned char *zaxxon_background_position;
+extern unsigned char *zaxxon_background_enable;
 void zaxxon_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int  congo_vh_start(void);
-void congo_vh_stop(void);
-void congo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+int  zaxxon_vh_start(void);
+void zaxxon_vh_stop(void);
+void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void congo_daio(int offset, int data);
+
+
+void congo_init_machine(void)
+{
+	zaxxon_vid_type = 1;
+}
 
 
 
@@ -81,8 +90,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa400, 0xa7ff, colorram_w, &colorram },
 	{ 0x8400, 0x8fff, MWA_RAM, &spriteram },
 	{ 0xc01f, 0xc01f, interrupt_enable_w },
-	{ 0xc028, 0xc029, MWA_RAM, &congo_background_position },
-	{ 0xc01d, 0xc01d, MWA_RAM, &congo_background_enable },
+	{ 0xc028, 0xc029, MWA_RAM, &zaxxon_background_position },
+	{ 0xc01d, 0xc01d, MWA_RAM, &zaxxon_background_enable },
 	{ 0xc038, 0xc038, soundlatch_w },
 	{ 0xc030, 0xc033, MWA_NOP }, /* ??? */
 	{ 0xc01e, 0xc01e, MWA_NOP }, /* flip unused for now */
@@ -232,53 +241,29 @@ INPUT_PORTS_START( input_ports )
 INPUT_PORTS_END
 
 
-
-static struct GfxLayout charlayout1 =
-{
-	8,8,	/* 8*8 characters */
-	256,	/* 256 characters */
-	3,	/* 3 bits per pixel (actually 2, the third plane is 0) */
-	{ 2*256*8*8, 256*8*8, 0 },	/* the two bitplanes are separated */
-	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	8*8	/* every char takes 8 consecutive bytes */
-};
-
-static struct GfxLayout charlayout2 =
-{
-	8,8,	/* 8*8 characters */
-	1024,	/* 1024 characters */
-	3,	/* 3 bits per pixel */
-	{ 2*1024*8*8, 1024*8*8, 0 },	/* the bitplanes are separated */
-	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	8*8	/* every char takes 8 consecutive bytes */
-};
-
 static struct GfxLayout spritelayout =
 {
 	32,32,	/* 32*32 sprites */
 	128,	/* 128 sprites */
 	3,	/* 3 bits per pixel */
 	{ 2*128*128*8, 128*128*8, 0 },    /* the bitplanes are separated */
-	{ 103*8, 102*8, 101*8, 100*8, 99*8, 98*8, 97*8, 96*8,
-			71*8, 70*8, 69*8, 68*8, 67*8, 66*8, 65*8, 64*8,
-			39*8, 38*8, 37*8, 36*8, 35*8, 34*8, 33*8, 32*8,
-			7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7,
 			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7,
 			16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7,
 			24*8+0, 24*8+1, 24*8+2, 24*8+3, 24*8+4, 24*8+5, 24*8+6, 24*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			32*8, 33*8, 34*8, 35*8, 36*8, 37*8, 38*8, 39*8,
+			64*8, 65*8, 66*8, 67*8, 68*8, 69*8, 70*8, 71*8,
+			96*8, 97*8, 98*8, 99*8, 100*8, 101*8, 102*8, 103*8 },
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
 
 
-
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout1,  0, 32 },	/* characters */
-	{ 1, 0x1800, &charlayout2,  0, 32 },	/* background tiles */
-	{ 1, 0x7800, &spritelayout, 0, 32 },	/* sprites */
+	{ 1, 0x0000, &zaxxon_charlayout1,  0, 32 },	/* characters */
+	{ 1, 0x1800, &zaxxon_charlayout2,  0, 32 },	/* background tiles */
+	{ 1, 0x7800, &spritelayout, 0, 32 },		/* sprites */
 	{ -1 } /* end of array */
 };
 
@@ -342,19 +327,19 @@ static struct MachineDriver machine_driver =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	congo_init_machine,
 
 	/* video hardware */
-	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1,2*8, 30*8-1 },
 	gfxdecodeinfo,
 	256,32*8,
 	zaxxon_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
-	congo_vh_start,
-	congo_vh_stop,
-	congo_vh_screenrefresh,
+	zaxxon_vh_start,
+	zaxxon_vh_stop,
+	zaxxon_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -521,7 +506,7 @@ struct GameDriver congo_driver =
 	input_ports,
 
 	color_prom, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
@@ -546,7 +531,7 @@ struct GameDriver tiptop_driver =
 	input_ports,
 
 	color_prom, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };

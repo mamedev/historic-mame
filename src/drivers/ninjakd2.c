@@ -456,7 +456,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct YM2203interface ym2203_interface =
 {
 	2, /* 2 chips */
-	2000000, /* 12000000/6 MHz (?) */
+	2500000, /* 5000000/2 MHz (?) */
 	{ YM2203_VOL(255,255), YM2203_VOL(255,255) },
 	{ 0 },
 	{ 0 },
@@ -545,6 +545,7 @@ static struct MachineDriver ninjak2a_machine_driver =
 };
 
 
+
 ROM_START( ninjakd2_rom )
 	ROM_REGION(0x30000)
 	ROM_LOAD( "NK2_01.ROM", 0x00000, 0x8000, 0xc8f6765a )
@@ -618,6 +619,8 @@ ROM_START( ninjak2a_rom )
 	ROM_REGION(0x10000)
 	ROM_LOAD( "NK2_09.ROM", 0x0000, 0x10000, 0x2ecf1235 )  // raw pcm samples
 ROM_END
+
+
 
 static int hiload(void)
 {

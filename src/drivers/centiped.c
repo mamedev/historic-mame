@@ -452,7 +452,7 @@ struct GameDriver centipd2_driver =
 	"1980",
 	"Atari",
 	"Ivan Mackintosh (hardware info)\nEdward Massey (MageX emulator)\nPete Rittwage (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (MAME driver)\nBrad Oliver (additional code)",
-	0,
+	GAME_NOT_WORKING,
 	&machine_driver,
 
 	centipd2_rom,

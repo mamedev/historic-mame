@@ -15,8 +15,6 @@ CPU:
 
 int superqix_vh_start(void);
 void superqix_vh_stop(void);
-int superqix_paletteram_r(int offset);
-void superqix_paletteram_w(int offset,int data);
 int superqix_bitmapram_r(int offset);
 void superqix_bitmapram_w(int offset,int data);
 int superqix_bitmapram2_r(int offset);
@@ -47,7 +45,7 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct IOReadPort readport[] =
 {
-	{ 0x0000, 0x00ff, superqix_paletteram_r },
+	{ 0x0000, 0x00ff, paletteram_r },
 	{ 0x0401, 0x0401, AY8910_read_port_0_r },
 	{ 0x0405, 0x0405, AY8910_read_port_1_r },
 	{ 0x0418, 0x0418, input_port_4_r },
@@ -58,7 +56,7 @@ static struct IOReadPort readport[] =
 
 static struct IOWritePort writeport[] =
 {
-	{ 0x0000, 0x00ff, superqix_paletteram_w },
+	{ 0x0000, 0x00ff, paletteram_BBGGRRII_w },
 	{ 0x0402, 0x0402, AY8910_write_port_0_w },
 	{ 0x0403, 0x0403, AY8910_control_port_0_w },
 	{ 0x0406, 0x0406, AY8910_write_port_1_w },
@@ -211,7 +209,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_Z80 | CPU_16BIT_PORT,
-			8000000,	/* 8 Mhz ? */
+			10000000,	/* 10 Mhz ? */
 			0,
 			readmem,writemem,readport,writeport,
 			nmi_interrupt,3	/* ??? */

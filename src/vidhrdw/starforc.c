@@ -25,40 +25,6 @@ static struct osd_bitmap *tmpbitmap2,*tmpbitmap3;
 
 /***************************************************************************
 
-  Star Force doesn't have colors PROMs, it uses RAM. The meaning of the bits are
-  bit 7 -- Intensity
-        -- Intensity
-        -- Blue
-        -- Blue
-        -- Green
-        -- Green
-        -- Red
-  bit 0 -- Red
-
-***************************************************************************/
-void starforc_paletteram_w(int offset,int data)
-{
-	int bits,intensity;
-	int r,g,b;
-
-
-	paletteram[offset] = data;
-
-	intensity = (data >> 6) & 0x03;
-	bits = (data >> 0) & 0x03;
-	r = 0x44 * bits + 0x11 * intensity;
-	bits = (data >> 2) & 0x03;
-	g = 0x44 * bits + 0x11 * intensity;
-	bits = (data >> 4) & 0x03;
-	b = 0x44 * bits + 0x11 * intensity;
-
-	palette_change_color(offset,r,g,b);
-}
-
-
-
-/***************************************************************************
-
   Start the video hardware emulation.
 
 ***************************************************************************/

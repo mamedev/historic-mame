@@ -45,7 +45,7 @@ void xevious_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
-	for (i = 0;i < Machine->drv->total_colors;i++)
+	for (i = 0;i < 128;i++)
 	{
 		int bit0,bit1,bit2,bit3;
 
@@ -57,22 +57,28 @@ void xevious_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 		bit3 = (color_prom[0] >> 3) & 0x01;
 		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 		/* green component */
-		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
-		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
-		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
-		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
+		bit0 = (color_prom[256] >> 0) & 0x01;
+		bit1 = (color_prom[256] >> 1) & 0x01;
+		bit2 = (color_prom[256] >> 2) & 0x01;
+		bit3 = (color_prom[256] >> 3) & 0x01;
 		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 		/* blue component */
-		bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x01;
-		bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x01;
-		bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x01;
-		bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x01;
+		bit0 = (color_prom[2*256] >> 0) & 0x01;
+		bit1 = (color_prom[2*256] >> 1) & 0x01;
+		bit2 = (color_prom[2*256] >> 2) & 0x01;
+		bit3 = (color_prom[2*256] >> 3) & 0x01;
 		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
 		color_prom++;
 	}
 
-	color_prom += 2*Machine->drv->total_colors;
+	/* color 0x80 is used by sprites to mark transparency */
+	*(palette++) = 1;
+	*(palette++) = 1;
+	*(palette++) = 1;
+
+	color_prom += 128;	/* the bottom part of the PROM is unused */
+	color_prom += 2*256;
 	/* color_prom now points to the beginning of the lookup table */
 
 	/* background tiles */
@@ -83,7 +89,7 @@ void xevious_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 	for (i = 0;i < TOTAL_COLORS(2);i++)
 	{
 		if (i % 8 == 0) COLOR(2,i) = 0x80; 	/* transparent */
-		else COLOR(2,i) = *color_prom;
+		else COLOR(2,i) = *color_prom;	/* this can be transparent too */
 
 		color_prom++;
 	}
@@ -91,7 +97,7 @@ void xevious_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 	/* foreground characters */
 	for (i = 0;i < TOTAL_COLORS(0);i++)
 	{
-		if (i % 2 == 0) COLOR(0,i) = 0;
+		if (i % 2 == 0) COLOR(0,i) = 0x80;	/* transparent */
 		else COLOR(0,i) = i / 2;
 	}
 }
@@ -374,6 +380,6 @@ void xevious_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		scrollx = fo_x_pos - 14;
 		scrolly = -fo_y_pos - 32;
 
-		copyscrollbitmap(bitmap,tmpbitmap1,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+		copyscrollbitmap(bitmap,tmpbitmap1,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0x80);
 	}
 }

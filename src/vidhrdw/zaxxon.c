@@ -10,7 +10,6 @@
 #include "vidhrdw/generic.h"
 
 
-
 unsigned char *zaxxon_char_color_bank;
 unsigned char *zaxxon_background_position;
 unsigned char *zaxxon_background_color_bank;
@@ -18,6 +17,10 @@ unsigned char *zaxxon_background_enable;
 static struct osd_bitmap *backgroundbitmap1,*backgroundbitmap2;
 static const unsigned char *color_codes;
 
+int zaxxon_vid_type;	/* set by init_machine; 0 = zaxxon; 1 = congobongo */
+
+#define ZAXXON_VID	0
+#define CONGO_VID	1
 
 
 /***************************************************************************
@@ -83,10 +86,21 @@ void zaxxon_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 		COLOR(0,i) = i;
 }
 
-/* handle flips of the background bitmaps */
-static void copy_rotated_pixel (struct osd_bitmap *dst_bm, int dy, int dx,
-	struct osd_bitmap *src_bm, int sy, int sx)
+/* handle rotation of the background bitmaps */
+static void copy_rotated_pixel (struct osd_bitmap *dst_bm, int dx, int dy,
+	struct osd_bitmap *src_bm, int sx, int sy)
 {
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		int temp;
+
+		temp = dx;
+		dx = dy;
+		dy = temp;
+		temp = sx;
+		sx = sy;
+		sy = temp;
+	}
 	if (Machine->orientation & ORIENTATION_FLIP_X)
 	{
 		dx = dst_bm->width - 1 - dx;
@@ -120,10 +134,10 @@ int zaxxon_vh_start(void)
 
 	/* for speed, backgrounds are arranged differently if axis is swapped */
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
-		/* leave a screenful of black pixels at each end */
-		width = 256+4096+256, height = 256;
+		height = 512, width = 2303+32;
 	else
-		width = 512, height = 2303+32;
+		/* leave a screenful of black pixels at each end */
+		height = 256+4096+256, width = 256;
 
 	/* large bitmap for the precalculated background */
 	if ((backgroundbitmap1 = osd_create_bitmap(width,height)) == 0)
@@ -132,35 +146,40 @@ int zaxxon_vh_start(void)
 		return 1;
 	}
 
-	if ((backgroundbitmap2 = osd_create_bitmap(width,height)) == 0)
+	if (zaxxon_vid_type == ZAXXON_VID)
 	{
-		osd_free_bitmap(backgroundbitmap1);
-		generic_vh_stop();
-		return 1;
-	}
-
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-		prebitmap = backgroundbitmap1;
-	else
-	{
-		/* create a temporary bitmap to prepare the background before converting it */
-		if ((prebitmap = osd_create_bitmap(4096,256)) == 0)
+		if ((backgroundbitmap2 = osd_create_bitmap(width,height)) == 0)
 		{
-			osd_free_bitmap(backgroundbitmap2);
 			osd_free_bitmap(backgroundbitmap1);
 			generic_vh_stop();
 			return 1;
 		}
 	}
 
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		/* create a temporary bitmap to prepare the background before converting it */
+		if ((prebitmap = osd_create_bitmap(256,4096)) == 0)
+		{
+			if (zaxxon_vid_type == ZAXXON_VID)
+				osd_free_bitmap(backgroundbitmap2);
+			osd_free_bitmap(backgroundbitmap1);
+			generic_vh_stop();
+			return 1;
+		}
+	}
+	else
+		prebitmap = backgroundbitmap1;
+
 	/* prepare the background */
 	for (offs = 0;offs < 0x4000;offs++)
 	{
-		sx = 8 * (511 - offs / 32);
-		sy = 8 * (offs % 32);
+		sy = 8 * (offs / 32);
+		sx = 8 * (offs % 32);
 
-		if (Machine->orientation & ORIENTATION_SWAP_XY)
-			sx += 256;
+		if (!(Machine->orientation & ORIENTATION_SWAP_XY))
+			/* leave screenful of black pixels at end */
+			sy += 256;
 
 		drawgfx(prebitmap,Machine->gfx[1],
 				Machine->memory_region[2][offs] + 256 * (Machine->memory_region[2][0x4000 + offs] & 3),
@@ -170,7 +189,7 @@ int zaxxon_vh_start(void)
 				0,TRANSPARENCY_NONE,0);
 	}
 
-	if (!(Machine->orientation & ORIENTATION_SWAP_XY))
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
 		/* the background is stored as a rectangle, but is drawn by the hardware skewed: */
 		/* go right two pixels, then up one pixel. Doing the conversion at run time would */
@@ -179,63 +198,67 @@ int zaxxon_vh_start(void)
 		/* column shifts) */
 		for (offs = -510;offs < 4096;offs += 2)
 		{
-			sy = (2302-510/2) - offs/2;
+			sx = (2302-510/2) - offs/2;
 
-			for (sx = 0;sx < 512;sx += 2)
+			for (sy = 0;sy < 512;sy += 2)
 			{
-				if (offs + sx >= 0 && offs + sx < 4096)
+				if (offs + sy >= 0 && offs + sy < 4096)
 				{
-					copy_rotated_pixel (backgroundbitmap1, sy, sx, prebitmap, sx/2, offs+sx);
-					copy_rotated_pixel (backgroundbitmap1, sy, sx+1, prebitmap, sx/2, offs+sx+1);
+					copy_rotated_pixel (backgroundbitmap1, sx, 511 - sy, prebitmap, sy/2, 4095 - (offs+sy));
+					copy_rotated_pixel (backgroundbitmap1, sx, 511 - (sy+1), prebitmap, sy/2, 4095 - (offs+sy+1));
+				}
+			}
+		}
+	}
+
+	if (zaxxon_vid_type == ZAXXON_VID)
+	{
+		if (!(Machine->orientation & ORIENTATION_SWAP_XY))
+			prebitmap = backgroundbitmap2;
+
+		/* prepare a second background with different colors, used in the death sequence */
+		for (offs = 0;offs < 0x4000;offs++)
+		{
+			sy = 8 * (offs / 32);
+			sx = 8 * (offs % 32);
+
+			if (!(Machine->orientation & ORIENTATION_SWAP_XY))
+				/* leave screenful of black pixels at end */
+				sy += 256;
+
+			drawgfx(prebitmap,Machine->gfx[1],
+					Machine->memory_region[2][offs] + 256 * (Machine->memory_region[2][0x4000 + offs] & 3),
+					16 + (Machine->memory_region[2][0x4000 + offs] >> 4),
+					0,0,
+					sx,sy,
+					0,TRANSPARENCY_NONE,0);
+		}
+
+		if (Machine->orientation & ORIENTATION_SWAP_XY)
+		{
+			/* the background is stored as a rectangle, but is drawn by the hardware skewed: */
+			/* go right two pixels, then up one pixel. Doing the conversion at run time would */
+			/* be extremely expensive, so we do it now. To save memory, we squash the image */
+			/* horizontally (doing line shifts at run time is much less expensive than doing */
+			/* column shifts) */
+			for (offs = -510;offs < 4096;offs += 2)
+			{
+				sx = (2302-510/2) - offs/2;
+
+				for (sy = 0;sy < 512;sy += 2)
+				{
+					if (offs + sy >= 0 && offs + sy < 4096)
+					{
+						copy_rotated_pixel (backgroundbitmap2, sx, 511 - sy, prebitmap, sy/2, 4095 - (offs+sy));
+						copy_rotated_pixel (backgroundbitmap2, sx, 511 - (sy+1), prebitmap, sy/2, 4095 - (offs+sy+1));
+					}
 				}
 			}
 		}
 	}
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
-		prebitmap = backgroundbitmap2;
-
-	/* prepare a second background with different colors, used in the death sequence */
-	for (offs = 0;offs < 0x4000;offs++)
-	{
-		sx = 8 * (511 - offs / 32);
-		sy = 8 * (offs % 32);
-
-		if (Machine->orientation & ORIENTATION_SWAP_XY)
-			sx += 256;
-
-		drawgfx(prebitmap,Machine->gfx[1],
-				Machine->memory_region[2][offs] + 256 * (Machine->memory_region[2][0x4000 + offs] & 3),
-				16 + (Machine->memory_region[2][0x4000 + offs] >> 4),
-				0,0,
-				sx,sy,
-				0,TRANSPARENCY_NONE,0);
-	}
-
-	if (!(Machine->orientation & ORIENTATION_SWAP_XY))
-	{
-		/* the background is stored as a rectangle, but is drawn by the hardware skewed: */
-		/* go right two pixels, then up one pixel. Doing the conversion at run time would */
-		/* be extremely expensive, so we do it now. To save memory, we squash the image */
-		/* horizontally (doing line shifts at run time is much less expensive than doing */
-		/* column shifts) */
-		for (offs = -510;offs < 4096;offs += 2)
-		{
-			sy = (2302-510/2) - offs/2;
-
-			for (sx = 0;sx < 512;sx += 2)
-			{
-				if (offs + sx >= 0 && offs + sx < 4096)
-				{
-					copy_rotated_pixel (backgroundbitmap2, sy, sx, prebitmap, sx/2, offs+sx);
-					copy_rotated_pixel (backgroundbitmap2, sy, sx+1, prebitmap, sx/2, offs+sx+1);
-				}
-			}
-		}
-
 		osd_free_bitmap(prebitmap);
-	}
-
 
 	/* free the graphics ROMs, they are no longer needed */
 	free(Machine->memory_region[2]);
@@ -254,11 +277,11 @@ int zaxxon_vh_start(void)
 ***************************************************************************/
 void zaxxon_vh_stop(void)
 {
-	osd_free_bitmap(backgroundbitmap2);
+	if (zaxxon_vid_type == ZAXXON_VID)
+		osd_free_bitmap(backgroundbitmap2);
 	osd_free_bitmap(backgroundbitmap1);
 	generic_vh_stop();
 }
-
 
 
 /***************************************************************************
@@ -268,7 +291,7 @@ void zaxxon_vh_stop(void)
   the main emulation engine.
 
 ***************************************************************************/
-void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap)
+void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
@@ -283,69 +306,117 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap)
 	{
 		int i,skew,scroll;
 		struct rectangle clip;
+		int bottom;
 
-
-		clip.min_x = Machine->drv->visible_area.min_x;
-		clip.max_x = Machine->drv->visible_area.max_x;
+		if (zaxxon_vid_type == CONGO_VID)
+			bottom = 256-2*8;
+		else
+			bottom = 256-4*8;
 
 		if (Machine->orientation & ORIENTATION_SWAP_XY)
 		{
-			/* for rotated case, skew up one pixel every 2 horizontal pixels */
-			scroll = 2*(zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7));
+			/* standard rotation - skew background horizontally */
+			if (zaxxon_vid_type == CONGO_VID)
+				scroll = 1023+63 - (zaxxon_background_position[0] + 256*zaxxon_background_position[1]);
+			else
+				scroll = 2048+63 - (zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7));
 
-			skew = 64;
+			skew = 128 - 512;
 
-			clip.min_y = 0;
-			clip.max_y = 256-4*8-1;
+			clip.min_y = Machine->drv->visible_area.min_y;
+			clip.max_y = Machine->drv->visible_area.max_y;
 
-			for (i = 0;i < Machine->drv->visible_area.max_x;i+=2)
+			for (i = 0; i < bottom; i++)
 			{
 				clip.min_x = i;
-				clip.max_x = i+1;
+				clip.max_x = i;
 
-				if (*zaxxon_background_color_bank & 1)
+				if (zaxxon_vid_type == ZAXXON_VID && (*zaxxon_background_color_bank & 1))
 					copybitmap(bitmap,backgroundbitmap2,0,0,-scroll,skew,&clip,TRANSPARENCY_NONE,0);
 				else
 					copybitmap(bitmap,backgroundbitmap1,0,0,-scroll,skew,&clip,TRANSPARENCY_NONE,0);
 
-				skew--;
+				skew += 2;
 			}
 		}
 		else
 		{
-			/* standard rotation - skew horizontally only */
-			scroll = 2048+63 - (zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7));
+			/* skew background up one pixel every 2 horizontal pixels */
+			if (zaxxon_vid_type == CONGO_VID)
+				scroll = 2050 + 2*(zaxxon_background_position[0] + 256*zaxxon_background_position[1])
+					- backgroundbitmap1->height + 256;
+			else
+				scroll = 2*(zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7))
+					- backgroundbitmap1->height + 256;
 
-			skew = 128;
+			skew = 64;
 
-			for (i = 0;i < 256-4*8;i++)
+			clip.min_x = 0;
+			clip.max_x = bottom-1;
+
+			for (i = 255;i >=0 ;i-=2)
 			{
-				clip.min_y = i;
+				clip.min_y = i-1;
 				clip.max_y = i;
 
-				if (*zaxxon_background_color_bank & 1)
-					copybitmap(bitmap,backgroundbitmap2,0,0,skew,-scroll,&clip,TRANSPARENCY_NONE,0);
-				else copybitmap(bitmap,backgroundbitmap1,0,0,skew,-scroll,&clip,TRANSPARENCY_NONE,0);
+				if (zaxxon_vid_type == ZAXXON_VID && (*zaxxon_background_color_bank & 1))
+					copybitmap(bitmap,backgroundbitmap2,0,0,skew,scroll,&clip,TRANSPARENCY_NONE,0);
+				else
+					copybitmap(bitmap,backgroundbitmap1,0,0,skew,scroll,&clip,TRANSPARENCY_NONE,0);
 
-				skew -= 2;
+				skew--;
 			}
 		}
 	}
 	else fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
 
 
-	/* Draw the sprites. Note that it is important to draw them exactly in this */
-	/* order, to have the correct priorities. */
-	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
+	if (zaxxon_vid_type == CONGO_VID)
 	{
-		if (spriteram[offs] != 0xff)
+		int i;
+		static unsigned int sprpri[0x100]; /* this really should not be more
+		                             * than 0x1e, but I did not want to check
+		                             * for 0xff which is set when sprite is off
+		                             * -V-
+		                             */
+
+		/* Draw the sprites. Note that it is important to draw them exactly in this */
+		/* order, to have the correct priorities. */
+		/* Sprites actually start at 0xff * [0xc031], it seems to be static tho'*/
+		/* The number of active sprites is stored at 0xc032 */
+
+		for (offs = 0x1e * 0x20 ;offs >= 0x00 ;offs -= 0x20)
+			sprpri[ spriteram[offs+1] ] = offs;
+
+		for (i=0x1e ; i>=0; i--)
 		{
+			offs = sprpri[i];
+
+			if (spriteram[offs+2] != 0xff)
+			{
 				drawgfx(bitmap,Machine->gfx[2],
-					spriteram[offs+1] & 0x3f,
-					spriteram[offs+2] & 0x3f,
-					spriteram[offs+1] & 0x80,spriteram[offs+1] & 0x40,
-					spriteram[offs] - 15,((spriteram[offs+3] + 16) & 0xff) - 32,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						spriteram[offs+2+1]& 0x7f,spriteram[offs+2+2],
+						spriteram[offs+2+2] & 0x80,spriteram[offs+2+1] & 0x80,
+						((spriteram[offs+2+3] + 16) & 0xff) - 31,255 - spriteram[offs+2] - 15,
+						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			}
+		}
+	}
+	else
+	{
+		/* Draw the sprites. Note that it is important to draw them exactly in this */
+		/* order, to have the correct priorities. */
+		for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
+		{
+			if (spriteram[offs] != 0xff)
+			{
+					drawgfx(bitmap,Machine->gfx[2],
+						spriteram[offs+1] & 0x3f,
+						spriteram[offs+2] & 0x3f,
+						spriteram[offs+1] & 0x40,spriteram[offs+1] & 0x80,
+						((spriteram[offs+3] + 16) & 0xff) - 32,255 - spriteram[offs] - 16,
+						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			}
 		}
 	}
 
@@ -354,15 +425,21 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap)
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		int sx,sy;
+		int color;
 
 
-		sx = 31 - offs / 32;
-		sy = offs % 32;
+		sy = offs / 32;
+		sx = offs % 32;
+
+		if (zaxxon_vid_type == CONGO_VID)
+			color = colorram[offs];
+		else
+			/* not sure about the color code calculation - char_color_bank is used only in test mode */
+			color =	(color_codes[sx + 32 * (sy/4)] & 0x0f) + 16 * (*zaxxon_char_color_bank & 1);
 
 		drawgfx(bitmap,Machine->gfx[0],
 				videoram[offs],
-/* not sure about the color code calculation - char_color_bank is used only in test mode */
-				(color_codes[sy + 32 * (7-sx/4)] & 0x0f) + 16 * (*zaxxon_char_color_bank & 1),
+				color,
 				0,0,
 				8*sx,8*sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);

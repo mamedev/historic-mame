@@ -22,7 +22,6 @@
 #define SYSTEM8_SPRITE_PIXEL_MODE2	1	// mode in which sprites are always drawing in order (0.1.2...31)
 						// (choplifter,wonder boy in monster land)
 
-extern unsigned char	*system8_bg_pagesel;
 extern unsigned char 	*system8_scroll_y;
 extern unsigned char 	*system8_scroll_x;
 extern unsigned char 	*system8_videoram;
@@ -39,16 +38,14 @@ int  system8_vh_start(void);
 void system8_vh_stop(void);
 void system8_define_checkspriteram(void	(*check)(void));
 void system8_define_banksupport(int support);
-void system8_define_sprite_offset_y(int offset);
 void system8_define_spritememsize(int region, int size);
-void system8_define_cliparea(int x1, int x2, int y1, int y2);
 void system8_define_sprite_pixelmode(int Mode);
 
 void pitfall2_clear_spriteram(void);
 
-void system8_soundport_w(int offset, int data);
-int  system8_bg_bankselect_r(int offset);
-void system8_bg_bankselect_w(int offset, int data);
+int  wbml_bg_bankselect_r(int offset);
+void wbml_bg_bankselect_w(int offset, int data);
+void wbml_paged_videoram_w(int offset,int data);
 void system8_videoram_w(int offset,int data);
 void system8_paletteram_w(int offset,int data);
 void system8_backgroundram_w(int offset,int data);

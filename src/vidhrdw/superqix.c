@@ -12,48 +12,7 @@
 
 
 static int gfxbank;
-static unsigned char *superqix_paletteram,*superqix_bitmapram,*superqix_bitmapram2;
-
-
-
-/***************************************************************************
-
-  Super Qix doesn't have colors PROMs, it uses RAM. The meaning of the bits are
-  bit 7 -- Blue
-        -- Blue
-        -- Green
-        -- Green
-        -- Red
-        -- Red
-        -- Intensity
-  bit 0 -- Intensity
-
-***************************************************************************/
-void superqix_paletteram_w(int offset,int data)
-{
-	int bits,intensity,r,g,b;
-
-
-	superqix_paletteram[offset] = data;
-
-	intensity = (data >> 0) & 0x03;
-	/* red component */
-	bits = (data >> 2) & 0x03;
-	r = 0x44 * bits + 0x11 * intensity;
-	/* green component */
-	bits = (data >> 4) & 0x03;
-	g = 0x44 * bits + 0x11 * intensity;
-	/* blue component */
-	bits = (data >> 6) & 0x03;
-	b = 0x44 * bits + 0x11 * intensity;
-
-	palette_change_color(offset,r,g,b);
-}
-
-int superqix_paletteram_r(int offset)
-{
-	return superqix_paletteram[offset];
-}
+static unsigned char *superqix_bitmapram,*superqix_bitmapram2;
 
 
 
@@ -69,7 +28,7 @@ int superqix_vh_start(void)
 
 	/* palette RAM is accessed thorough I/O ports, so we have to */
 	/* allocate it ourselves */
-	if ((superqix_paletteram = malloc(256 * sizeof(unsigned char))) == 0)
+	if ((paletteram = malloc(256 * sizeof(unsigned char))) == 0)
 	{
 		generic_vh_stop();
 		return 1;
@@ -77,7 +36,7 @@ int superqix_vh_start(void)
 
 	if ((superqix_bitmapram = malloc(0x7000 * sizeof(unsigned char))) == 0)
 	{
-		free(superqix_paletteram);
+		free(paletteram);
 		generic_vh_stop();
 		return 1;
 	}
@@ -85,7 +44,7 @@ int superqix_vh_start(void)
 	if ((superqix_bitmapram2 = malloc(0x7000 * sizeof(unsigned char))) == 0)
 	{
 		free(superqix_bitmapram);
-		free(superqix_paletteram);
+		free(paletteram);
 		generic_vh_stop();
 		return 1;
 	}
@@ -104,7 +63,7 @@ void superqix_vh_stop(void)
 {
 	free(superqix_bitmapram2);
 	free(superqix_bitmapram);
-	free(superqix_paletteram);
+	free(paletteram);
 	generic_vh_stop();
 }
 

@@ -57,6 +57,7 @@ int rallyx_vh_start(void);
 void rallyx_vh_stop(void);
 void locomotn_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void jungler_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void commsega_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
@@ -469,98 +470,56 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 Mhz ? */
-			0,
-			readmem,writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318180/4,	/* ???? same as other Konami games */
-			2,	/* memory region #2 */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
-
-	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	32,64*4+4*2,
-	rallyx_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	rallyx_vh_start,
-	rallyx_vh_stop,
-	locomotn_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
+#define MACHINE_DRIVER(GAMENAME)   \
+																	\
+static struct MachineDriver GAMENAME##_machine_driver =             \
+{                                                                   \
+	/* basic machine hardware */                                    \
+	{                                                               \
+		{                                                           \
+			CPU_Z80,                                                \
+			3072000,	/* 3.072 Mhz ? */                           \
+			0,                                                      \
+			readmem,writemem,0,0,                                   \
+			nmi_interrupt,1                                         \
+		},                                                          \
+		{                                                           \
+			CPU_Z80 | CPU_AUDIO_CPU,                                \
+			14318180/4,	/* ???? same as other Konami games */       \
+			2,	/* memory region #2 */                              \
+			sound_readmem,sound_writemem,0,0,                       \
+			ignore_interrupt,1	/* interrupts are triggered by the main CPU */ \
+		}                                                           \
+	},                                                              \
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */ \
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */ \
+	0,                                                              \
+                                                                    \
+	/* video hardware */                                            \
+	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },                       \
+	gfxdecodeinfo,                                                  \
+	32,64*4+4*2,                                                    \
+	rallyx_vh_convert_color_prom,                                   \
+                                                                    \
+	VIDEO_TYPE_RASTER,                                              \
+	0,                                                              \
+	rallyx_vh_start,                                                \
+	rallyx_vh_stop,                                                 \
+	GAMENAME##_vh_screenrefresh,                                    \
+                                                                    \
+	/* sound hardware */                                            \
+	0,0,0,0,                                                        \
+	{                                                               \
+		{                                                           \
+			SOUND_AY8910,                                           \
+			&ay8910_interface                                       \
+		}                                                           \
+	}                                                               \
 };
 
-/* same as the above, but we use a different vh_screenrefresh() */
-/* to properly place sprites and bullets */
-static struct MachineDriver jungler_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 Mhz ? */
-			0,
-			readmem,writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318180/4,	/* ???? same as other Konami games */
-			2,	/* memory region #2 */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
-
-	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	32,64*4+4*2,
-	rallyx_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	rallyx_vh_start,
-	rallyx_vh_stop,
-	jungler_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
-
+MACHINE_DRIVER(locomotn)
+MACHINE_DRIVER(jungler)
+MACHINE_DRIVER(commsega)
 
 
 /***************************************************************************
@@ -744,7 +703,7 @@ struct GameDriver locomotn_driver =
 	"Konami (Centuri license)",
 	"Nicola Salmoria\nMike Balfour (high score save)\nKevin Klopp (color info)",
 	0,
-	&machine_driver,
+	&locomotn_machine_driver,
 
 	locomotn_rom,
 	0, 0,
@@ -793,8 +752,8 @@ struct GameDriver commsega_driver =
 	"1983",
 	"Sega",
 	"Nicola Salmoria\nBrad Oliver",
-	GAME_NOT_WORKING,
-	&machine_driver,
+	0,
+	&commsega_machine_driver,
 
 	commsega_rom,
 	0, 0,

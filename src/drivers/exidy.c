@@ -1107,7 +1107,6 @@ static const char *targ_sample_names[] =
 	"sexpl.sam",
 	"spslow.sam",
 	"spfast.sam",
-	"oneup.sam",
 	0	/* end of array */
 };
 
@@ -1121,6 +1120,14 @@ static struct CustomSound_interface targ_custom_interface =
 	targ_sh_start,
 	targ_sh_stop,
 	0
+};
+
+static struct DACinterface targ_DAC_interface =
+{
+	1,
+	441000,
+	{255,255 },
+	{  1,  1 }
 };
 
 static struct MachineDriver machine_driver =
@@ -1291,7 +1298,11 @@ static struct MachineDriver targ_machine_driver =
 		{
 			SOUND_SAMPLES,
 			&targ_samples_interface
-		}
+        },
+        {
+            SOUND_DAC,
+            &targ_DAC_interface
+        }
 	}
 };
 

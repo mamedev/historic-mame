@@ -8,6 +8,7 @@ Read:
 8000 - 9FFF: Working RAM
 A000 - BFFF: Pallette RAM (best I can figure)
 C000 - DFFF: Video RAM
+E000 - FFFF: Video RAM
 
 9400,9800  Dip switch
 
@@ -99,7 +100,7 @@ static struct MemoryReadAddress readmem[] =
         { 0x9807, 0x9807, input_port_3_r },
         { 0x9805, 0x9805, starfire_throttle_r },
         { 0xA000, 0xBfff, starfire_colorram_r },
-        { 0xC000, 0xDFFF, starfire_videoram_r },
+        { 0xC000, 0xE000, starfire_videoram_r },
 
         { 0xE000, 0xffff, MRA_RAM },
         { -1 }  /* end of table */
@@ -113,8 +114,7 @@ static struct MemoryWriteAddress writemem[] =
         { 0x9401, 0x9401, starfire_vidctrl1_w },
         { 0x9402, 0x9402, starfire_soundctrl_w },
         { 0xA000, 0xBfff, starfire_colorram_w },
-        { 0xC000, 0xDFFF, starfire_videoram_w },
-        { 0xE000, 0xffff, MWA_RAM },
+        { 0xC000, 0xFFFF, starfire_videoram_w },
 	{ -1 }	/* end of table */
 };
 
@@ -141,7 +141,7 @@ INPUT_PORTS_START( starfire_input_ports )
         PORT_DIPNAME( 0x40, 0x00, "Score Table Hold",IP_KEY_NONE)
         PORT_DIPSETTING(    0x00, "fixed length" )
         PORT_DIPSETTING(    0x40, "fixed length+fire" )
-        PORT_DIPNAME( 0x80, 0x80, "Mode",IP_KEY_NONE)
+        PORT_DIPNAME( 0x80, 0x00, "Mode",IP_KEY_NONE)
         PORT_DIPSETTING(    0x80, "Diagnostic" )
         PORT_DIPSETTING(    0x00, "Normal" )
 
@@ -231,7 +231,7 @@ struct GameDriver starfire_driver =
 	"1978",
 	"Exidy",
 	"Daniel Boris\n",
-	0,
+	GAME_NOT_WORKING,
 	&machine_driver,
 
 	starfire_rom,

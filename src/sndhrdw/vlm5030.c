@@ -351,7 +351,7 @@ static void vlm5030_process(unsigned char *buffer, int size)
 				/* next interpolator */
 				/* Update values based on step values */
 				/*printf("\n");*/
-				interp_effect = (int)(interp_coeff[FR_SIZE - (interp_count%FR_SIZE)]);
+				interp_effect = (int)(interp_coeff[(FR_SIZE-1) - (interp_count%FR_SIZE)]);
 
 				current_energy += (target_energy - current_energy) / interp_effect;
 				if (old_pitch != 0)

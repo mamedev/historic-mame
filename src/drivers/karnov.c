@@ -1,10 +1,10 @@
 /*******************************************************************************
 
-	Karnov - Bryan McPhail, mish@tendril.force9.net
+  Karnov - Bryan McPhail, mish@tendril.force9.net
 
   This file contains drivers for:
 
-  	* Karnov (Data East USA, 1987)
+    * Karnov (Data East USA, 1987)
     * Karnov (Japan rom set - Data East Corp, 1987)
     * Chelnov (Data East USA, 1988) (partially working)
     * Chelnov (Japan rom set - Data East Corp, 1987) (partially working)
@@ -36,6 +36,12 @@ Changes, May 1998 :
 * Chelnov attract mode now works properly.
 * Palette bug that affected Windows port fixed.
 * Karnov sprite banks merged.
+July:
+* Fixed visible area
+* Fixed Chelnov interrupts
+* Adjusted vbl time (again)
+* There was a serious glitch, big slowdowns occured with more than about 7 sprites
+on screen, increasing cpu speed (from 10 to 14) seems to have helped.
 
 *******************************************************************************/
 
@@ -61,34 +67,34 @@ int karnov_a,karnov_b,karnov_c;  /* For testing of unknown ports */
 void karnov_c_write(int offset, int data)
 {
 	switch (offset) {
-    case 0: /* Dunno..  */
+		case 0: /* Dunno..  */
 			return;
 
 		case 2: /* Sound CPU in byte 3 */
 			soundlatch_w(0,data&0xff);
-      cpu_cause_interrupt (1, INT_NMI);
-    	break;
+			cpu_cause_interrupt (1, INT_NMI);
+			break;
 
-    case 4: /* ?? */
-    	karnov_a=data;
-    	break;
+		case 4: /* ?? */
+			karnov_a=data;
+			break;
 
-    case 6:  /* Controls main player animation in Karnov */
-      if (errorlog) fprintf(errorlog,"CPU %04x - Write %02x at c0000 %d\n",cpu_getpc(),data,offset);
-     	karnov_b=data;  /****/
-   		prot=data;
-    	break;
+		case 6:  /* Controls main player animation in Karnov */
+			if (errorlog) fprintf(errorlog,"CPU %04x - Write %02x at c0000 %d\n",cpu_getpc(),data,offset);
+			karnov_b=data;  /****/
+			prot=data;
+			break;
 
-  	case 8:
+		case 8:
 			WRITE_WORD (&karnov_scroll[0], data);
 			break;
 
-    case 10:
+		case 10:
 			WRITE_WORD (&karnov_scroll[2], data);
 			break;
 
 		case 14: /* ?? */
-    	karnov_c=data;
+			karnov_c=data;
 			break;
 
 		default:
@@ -110,8 +116,7 @@ int karnov_c_read(int offset)
 		case 2: /* Start buttons & VBL */
 			return input_port_1_r (offset);
 
-		/* Dipswitch A & B */
-		case 4:
+		case 4: /* Dipswitch A & B */
 			lsb=input_port_3_r (offset);
 			msb=input_port_4_r (offset);
 			return ( lsb + (msb<<8));
@@ -136,13 +141,13 @@ int chelnov_c_read(int offset)
 		case 2: /* Start buttons & VBL */
 		 	return input_port_1_r (offset);
 
-    case 4: /* Dipswitch A & B */
-    	lsb=input_port_3_r (offset);
-      msb=input_port_4_r (offset);
+		case 4: /* Dipswitch A & B */
+			lsb=input_port_3_r (offset);
+			msb=input_port_4_r (offset);
 			return ( lsb + (msb<<8));
 
 		case 6: /* Byte 7 - coins, byte 6 is protection */
-      	if (errorlog) fprintf(errorlog,"Read at c0000 %d %d\n",offset,prot);
+      		if (errorlog) fprintf(errorlog,"Read at c0000 %d %d\n",offset,prot);
 
 			/* Some known return values for 8571 commands */
  //     if (prot==0x100) return 0x71b;
@@ -200,9 +205,9 @@ int chelnov_c_read(int offset)
 static struct MemoryReadAddress karnov_readmem[] =
 {
 	{ 0x000000, 0x05ffff, MRA_ROM },
-  { 0x060000, 0x063fff, MRA_BANK1 },
+	{ 0x060000, 0x063fff, MRA_BANK1 },
 	{ 0x080000, 0x080fff, MRA_BANK2 },
-  { 0x0a0000, 0x0a07ff, MRA_BANK3 },
+	{ 0x0a0000, 0x0a07ff, MRA_BANK3 },
 	{ 0x0c0000, 0x0c0007, karnov_c_read },
 	{ -1 }  /* end of table */
 };
@@ -221,7 +226,7 @@ static struct MemoryWriteAddress karnov_writemem[] =
 {
 	{ 0x000000, 0x05ffff, MWA_ROM },
 	{ 0x060000, 0x063fff, MWA_BANK1 },
-  { 0x080000, 0x080fff, MWA_BANK2 , &karnov_sprites },
+	{ 0x080000, 0x080fff, MWA_BANK2 , &karnov_sprites },
 	{ 0x0a0000, 0x0a07ff, MWA_BANK3 , &videoram, &videoram_size },
 	{ 0x0a1000, 0x0a1fff, karnov_foreground_w },
 	{ 0x0c0000, 0x0c000f, karnov_c_write },
@@ -242,8 +247,8 @@ static struct MemoryWriteAddress karnov_s_writemem[] =
 {
  	{ 0x0000, 0x05ff, MWA_RAM},
 	{ 0x1000, 0x1000, YM2203_control_port_0_w },
-  { 0x1001, 0x1001, YM2203_write_port_0_w },
-  { 0x1800, 0x1800, YM3526_control_port_0_w },
+	{ 0x1001, 0x1001, YM2203_write_port_0_w },
+	{ 0x1800, 0x1800, YM3526_control_port_0_w },
 	{ 0x1801, 0x1801, YM3526_write_port_0_w },
  	{ 0x8000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
@@ -296,14 +301,14 @@ INPUT_PORTS_START( karnov_input_ports )
 	PORT_DIPNAME( 0x30, 0x30, "Difficulty", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x10, "Normal" )
 	PORT_DIPSETTING(    0x30, "Easy" )
-  PORT_DIPSETTING(    0x00, "Very Hard" )
+	PORT_DIPSETTING(    0x00, "Very Hard" )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPNAME( 0x40, 0x40, "Atract Mode Sound", IP_KEY_NONE )
-  PORT_DIPSETTING(    0x00, "On" )
-  PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPNAME( 0x80, 0x80, "Timer Speed", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x80, "Normal" )
-  PORT_DIPSETTING(    0x00, "Fast" )
+	PORT_DIPSETTING(    0x00, "Fast" )
 
 	PORT_START	/* Dip switch bank 1 */
 	PORT_DIPNAME( 0x03, 0x03, "Right Coin", IP_KEY_NONE )
@@ -317,8 +322,8 @@ INPUT_PORTS_START( karnov_input_ports )
 	PORT_DIPSETTING(    0x00, "3 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-  PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Cabinet */
-  PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Screen flip */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Cabinet */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Screen flip */
 	PORT_DIPNAME( 0x80, 0x80, "No Die Mode", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
@@ -383,7 +388,7 @@ INPUT_PORTS_START( chelnov_input_ports )
 	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x00, "3 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
-  PORT_DIPNAME( 0x10, 0x10, "Test Mode", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Test Mode", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x10, "No" )
 	PORT_DIPSETTING(    0x00, "Yes" )
  	PORT_DIPNAME( 0x20, 0x20, "Attract Mode Sound", IP_KEY_NONE )
@@ -419,7 +424,7 @@ static struct GfxLayout sprites =
  	{ 0x48000*8,0x00000*8,0x18000*8,0x30000*8 },
 	{ 16*8, 1+(16*8), 2+(16*8), 3+(16*8), 4+(16*8), 5+(16*8), 6+(16*8), 7+(16*8),
   	0,1,2,3,4,5,6,7 },
-  { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 ,8*8,9*8,10*8,11*8,12*8,13*8,14*8,15*8},
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 ,8*8,9*8,10*8,11*8,12*8,13*8,14*8,15*8},
 	16*16
 };
 
@@ -432,7 +437,7 @@ static struct GfxLayout tiles =
  	{ 0x30000*8,0x00000*8,0x10000*8,0x20000*8 },
 	{ 16*8, 1+(16*8), 2+(16*8), 3+(16*8), 4+(16*8), 5+(16*8), 6+(16*8), 7+(16*8),
   	0,1,2,3,4,5,6,7 },
-  { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 ,8*8,9*8,10*8,11*8,12*8,13*8,14*8,15*8},
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 ,8*8,9*8,10*8,11*8,12*8,13*8,14*8,15*8},
 	16*16
 };
 
@@ -452,19 +457,19 @@ static struct GfxDecodeInfo chelnov_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-
+/******************************************************************************/
 
 int karnov_interrupt(void)
 {
-	if (cpu_getiloops() == 0) return 7;
-	else return 6;
+	if (cpu_getiloops() == 0) return 6;
+	else return 7;
 }
 
 static struct YM2203interface ym2203_interface =
 {
 	1,
 	1500000,	/* Unknown */
-	{ YM2203_VOL(120,255) },
+	{ YM2203_VOL(255,255) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -486,7 +491,7 @@ static struct MachineDriver karnov_machine_driver =
 	{
 		{
 			CPU_M68000,
-			10000000,	/* 10 Mhz ?? */
+			14000000,	/* 14 Mhz ?? */
 			0,
 			karnov_readmem,karnov_writemem,0,0,
 			karnov_interrupt,2
@@ -499,13 +504,12 @@ static struct MachineDriver karnov_machine_driver =
 			interrupt,14	/* hand tuned */
 		}
 	},
-57,50,
-//	57, 1536, /* frames per second, vblank duration taken from Burger Time */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	karnov_gfxdecodeinfo,
 	1024, 1024,
@@ -521,7 +525,7 @@ static struct MachineDriver karnov_machine_driver =
 	0,0,0,0,
 	{
 		{
-    	SOUND_YM2203,
+			SOUND_YM2203,
 			&ym2203_interface
 		},
 		{
@@ -537,7 +541,7 @@ static struct MachineDriver chelnov_machine_driver =
 	{
 		{
 			CPU_M68000,
-			10000000,	/* 10 Mhz ?? */
+			14000000,	/* 14 Mhz ?? */
 			0,
 			chelnov_readmem,karnov_writemem,0,0,
 			karnov_interrupt,2
@@ -550,13 +554,12 @@ static struct MachineDriver chelnov_machine_driver =
 			interrupt,12
 		}
 	},
-57,50,
-//	57, 1536, /* frames per second, vblank duration taken from Burger Time */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
- 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
+ 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
 	chelnov_gfxdecodeinfo,
 	1024, 1024,
@@ -572,10 +575,10 @@ static struct MachineDriver chelnov_machine_driver =
 	0,0,0,0,
 	{
 		{
-    	SOUND_YM2203,
+			SOUND_YM2203,
 			&ym2203_interface
 		},
-    {
+	{
 			SOUND_YM3526,
 			&ym3526_interface
 		}
@@ -715,7 +718,6 @@ static void karnov_patch(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-
 	WRITE_WORD (&RAM[0x05E4],0x600A);
 }
 
@@ -723,14 +725,12 @@ static void karnovj_patch(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-
 	WRITE_WORD (&RAM[0x05E4],0x600A);
 }
 
 static void chelnov_patch(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
 
 	WRITE_WORD (&RAM[0x0A26],0x4E71);  /* removes a protection lookup table */
 
@@ -750,15 +750,12 @@ static void chelnov_patch(void)
     reads from the 8751 before a timeout... Perhaps interrupts are wrong?
 
     Let's just patch out the checks for now ;) */
-  WRITE_WORD (&RAM[0x09EC],0x4E75);
+	WRITE_WORD (&RAM[0x09EC],0x4E75);
 	WRITE_WORD (&RAM[0x099E],0x4E75);
 
   /* The main protection check...  kinda.. */
 //	WRITE_WORD (&RAM[0xf0ac],0x4E71);
 
-  /* Eliminate slowdowns. I tried to fix this by adjusting vbl times, but it
-  	didn't work... */
-	WRITE_WORD (&RAM[0xdfe],0x4E71);
 }
 
 static void chelnovj_patch(void)

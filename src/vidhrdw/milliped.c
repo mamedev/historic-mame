@@ -77,6 +77,9 @@ void milliped_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 
 
+	if (full_refresh)
+		memset (dirtybuffer, 1, videoram_size);
+
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
@@ -101,7 +104,7 @@ void milliped_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				color = 2;
 			else color = 0;
 
-			drawgfx(tmpbitmap,Machine->gfx[0],
+			drawgfx(bitmap,Machine->gfx[0],
 					0x40 + (videoram[offs] & 0x3f) + 0x80 * bank,
 					bank + color,
 					0,0,
@@ -111,15 +114,16 @@ void milliped_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 
-	/* copy the temporary bitmap to the screen */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-
-
 	/* Draw the sprites */
 	for (offs = 0;offs < 0x10;offs++)
 	{
 		int spritenum,color;
+		int x, y;
+		int sx, sy;
 
+
+		x = spriteram[offs + 0x20];
+		y = 240 - spriteram[offs + 0x10];
 
 		spritenum = spriteram[offs] & 0x3f;
 		if (spritenum & 1) spritenum = spritenum / 2 + 64;
@@ -144,8 +148,30 @@ void milliped_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				spritenum,
 				0,
 				0,spriteram[offs] & 0x80,
-				spriteram[offs + 0x20],240 - spriteram[offs + 0x10],
+				x,y,
 				&spritevisiblearea,TRANSPARENCY_PEN,0);
+
+		/* mark tiles underneath as dirty */
+		sx = x >> 3;
+		sy = y >> 3;
+
+		{
+			int max_x = 1;
+			int max_y = 2;
+			int x2, y2;
+
+			if (x & 0x07) max_x ++;
+			if (y & 0x0f) max_y ++;
+
+			for (y2 = sy; y2 < sy + max_y; y2 ++)
+			{
+				for (x2 = sx; x2 < sx + max_x; x2 ++)
+				{
+					if ((x2 < 32) && (y2 < 32) && (x2 >= 0) && (y2 >= 0))
+						dirtybuffer[x2 + 32*y2] = 1;
+				}
+			}
+		}
 
 	}
 }

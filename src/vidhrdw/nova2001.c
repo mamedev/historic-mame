@@ -49,17 +49,16 @@ void nova2001_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		/* I don't know if these are correct */
-		/* but they look pretty good!        */
+		int intensity;
 
+
+		intensity = (*color_prom >> 0) & 0x03;
 		/* red component */
-		*(palette++) = ((*color_prom & 0x0f) >> 0) * 0x11;
-
+		*(palette++) = (((*color_prom >> 0) & 0x0c) | intensity) * 0x11;
 		/* green component */
-		*(palette++) = ((*color_prom & 0x30) >> 4) * 0x55;
-
+		*(palette++) = (((*color_prom >> 2) & 0x0c) | intensity) * 0x11;
 		/* blue component */
-		*(palette++) = ((*color_prom & 0xc0) >> 6) * 0x55;
+		*(palette++) = (((*color_prom >> 4) & 0x0c) | intensity) * 0x11;
 
 		color_prom++;
 	}

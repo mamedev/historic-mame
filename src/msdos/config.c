@@ -13,8 +13,8 @@
 extern int ignorecfg;
 
 /* from video.c */
-extern int scanlines, use_double, video_sync, antialias, use_synced, ntsc;
-extern int vgafreq, color_depth, skiplines, skipcolumns;
+extern int scanlines, use_double, video_sync, antialias, ntsc;
+extern int vgafreq, always_synced, color_depth, skiplines, skipcolumns;
 extern int beam, flicker;
 extern float gamma_correction;
 extern int gfx_mode, gfx_width, gfx_height;
@@ -251,11 +251,11 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	use_double  = get_bool   ("config", "double",       NULL, -1);
 	video_sync  = get_bool   ("config", "vsync",        NULL,  0);
 	antialias   = get_bool   ("config", "antialias",    NULL,  1);
-	use_synced  = get_bool   ("config", "syncedtweak",  NULL,  1);
 	_vesa       = get_bool   ("config", "vesa",         NULL,  0);
 	vesamode	= get_string ("config", "vesamode",		NULL,  "vesa2l");
 	ntsc        = get_bool   ("config", "ntsc",         NULL,  0);
 	vgafreq     = get_int    ("config", "vgafreq",      NULL,  -1);
+	always_synced = get_bool ("config", "alwayssynced", NULL, 0);
 	color_depth = get_int    ("config", "depth",        NULL, 16);
 	skiplines   = get_int    ("config", "skiplines",    NULL, 0);
 	skipcolumns = get_int    ("config", "skipcolumns",  NULL, 0);
@@ -325,7 +325,9 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	/* this is to handle the old "-wxh" commandline option. */
 	for (i = 1; i < argc; i++)
 	{
-		if ((argv[i][0] == '-') && (isdigit (argv[i][1])))
+		if (argv[i][0] == '-' && isdigit(argv[i][1]) &&
+	/* additional kludge to handle negative arguments to -skiplines and -skipcolumns */
+				(i == 1 || (strcmp(argv[i-1],"-skiplines") && strcmp(argv[i-1],"-skipcolumns"))))
 			resolution = &argv[i][1];
 	}
 

@@ -131,7 +131,7 @@ void gameplan_sound_w(int offset,int data)
 
 		if (cb2 == 0)
 		{
-			cpu_reset(1);
+//			cpu_reset(1);	enabling this causes a hang in Challenger when entering high score name
 			return;
 		}
 
@@ -142,7 +142,7 @@ void gameplan_sound_w(int offset,int data)
 		/* shortly after requesting a sound, the game board checks
 		   whether the sound board has ackknowledged receipt of the
 		   command - yield now to allow it to send the ACK */
-		cpu_yield();
+//		cpu_yield();	enabling this causes a hang in Challenger when entering high score name
 	}
 	else if (offset == 0x0c)	/* PCR */
 	{
