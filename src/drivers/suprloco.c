@@ -210,14 +210,12 @@ static struct MachineDriver suprloco_machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* 4 MHz (?) */
-			0,		/* memory region */
 			readmem,writemem,0,writeport,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,
-			3,		/* memory region */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4			/* NMIs are caused by the main CPU */
 		},
@@ -258,7 +256,7 @@ static struct MachineDriver suprloco_machine_driver =
 ***************************************************************************/
 
 ROM_START( suprloco )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ic37.bin",     0x0000, 0x4000, 0x57f514dd )	/* encrypted */
 	ROM_LOAD( "ic15.bin",     0x4000, 0x4000, 0x5a1d2fb0 )	/* encrypted */
 	ROM_LOAD( "ic28.bin",     0x8000, 0x4000, 0xa597828a )
@@ -274,7 +272,7 @@ ROM_START( suprloco )
 	ROM_LOAD( "ic56.bin",     0x4000, 0x2000, 0xf04a4b50 )
 							/*0x6000 empty */
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "ic64.bin",     0x0000, 0x2000, 0x0aa57207 )
 
 	ROM_REGIONX( 0x0600, REGION_PROMS )
@@ -296,9 +294,9 @@ void suprloco_unmangle(void)
 	int i, j, k, color_source, color_dest;
 	unsigned char *source, *dest, *lookup;
 
-	source = Machine->memory_region[1];
+	source = memory_region(1);
 	dest   = source + 0x6000;
-	lookup = Machine->memory_region[4] + 0x0200;
+	lookup = memory_region(4) + 0x0200;
 
 	for (i = 0; i < 0x80; i++, lookup += 8)
 	{
@@ -325,7 +323,7 @@ void suprloco_unmangle(void)
 
 /**** Super Locomotive high score save routine - RJF (April 5, 1999) ****/
 static int suprloco_hiload(void){
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
         if (memcmp(&RAM[0xfd00],"\x02\x20\x00",3) == 0){
 		void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
@@ -347,7 +345,7 @@ static int suprloco_hiload(void){
 }
 
 static void suprloco_hisave(void){
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
 
                         osd_fwrite(f,&RAM[0xfca0],10*3);

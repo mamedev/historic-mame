@@ -4,7 +4,9 @@
 
 /* input ports handling */
 
-
+/* Max number of key/joy codes */
+#define INPUT_KEY_CODE_MAX 2
+#define INPUT_JOY_CODE_MAX 2
 
 /***************************************************************************
 
@@ -21,8 +23,8 @@ struct InputPort
 							/* you can also use one of the IP_ACTIVE defines below */
 	UINT32 type;			/* see defines below */
 	const char *name;		/* name to display */
-	UINT16 keyboard;		/* key affecting the input bits */
-	UINT16 joystick;		/* joystick command affecting the input bits */
+	UINT16 keyboard_code[INPUT_KEY_CODE_MAX];		/* key affecting the input bits */
+	UINT16 joystick_code[INPUT_JOY_CODE_MAX];		/* joystick command affecting the input bits */
    #ifdef MESS
 	UINT32 arg;				/* extra argument needed in some cases */
 	UINT16 min, max;		/* for analog controls */
@@ -158,42 +160,56 @@ enum { IPT_END=1,IPT_PORT,
 #define IP_JOY_NONE		0xfffe
 #define IP_JOY_PREVIOUS	0xfffd	/* use the same joy as the previous input bit */
 
+/* Input port key/joy code definitions */
+/* constant definitions */
+#define INPUT_KEY_CODE_DEF_0 { IP_KEY_NONE, IP_KEY_NONE }
+#define INPUT_JOY_CODE_DEF_0 { IP_JOY_NONE, IP_KEY_NONE }
+#define INPUT_KEY_CODE_DEF_1(a) { a, IP_KEY_NONE }
+#define INPUT_JOY_CODE_DEF_1(a) { a, IP_JOY_NONE }
+#define INPUT_KEY_CODE_DEF_2(a,b) { a, b }
+#define INPUT_JOY_CODE_DEF_2(a,b) { a, b }
+/* variable set dest = code */
+#define INPUT_KEY_CODE_SET_1(code,a) (code[0]=a,code[1]=IP_KEY_NONE)
+#define INPUT_JOY_CODE_SET_1(code,a) (code[0]=a,code[1]=IP_JOY_NONE)
+/* variable compare, ==0 if equal !=0 if different */
+#define INPUT_KEY_CODE_COMPARE(code_a,code_b) (code_a[0]!=code_b[0] || code_a[1]!=code_b[1])
+#define INPUT_JOY_CODE_COMPARE(code_a,code_b) (code_a[0]!=code_b[0] || code_a[1]!=code_b[1])
+/* variable copy, dest = src */
+#define INPUT_KEY_CODE_COPY(code_a,code_b) (code_a[0]=code_b[0],code_a[1]=code_b[1])
+#define INPUT_JOY_CODE_COPY(code_a,code_b) (code_a[0]=code_b[0],code_a[1]=code_b[1])
+
 /* start of table */
 #define INPUT_PORTS_START(name) static struct InputPort input_ports_##name[] = {
 /* end of table */
-#define INPUT_PORTS_END { 0, 0, IPT_END, 0, 0, 0 } };
+#define INPUT_PORTS_END { 0, 0, IPT_END, 0, INPUT_KEY_CODE_DEF_0, INPUT_JOY_CODE_DEF_0 } };
 /* start of a new input port */
-#define PORT_START { 0, 0, IPT_PORT, 0, 0, 0 },
+#define PORT_START { 0, 0, IPT_PORT, 0, INPUT_KEY_CODE_DEF_0, INPUT_JOY_CODE_DEF_0  },
 /* input bit definition */
-#define PORT_BIT(mask,default,type) { mask, default, type, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT },
+#define PORT_BIT(mask,default,type) { mask, default, type, IP_NAME_DEFAULT, INPUT_KEY_CODE_DEF_1(IP_KEY_DEFAULT), INPUT_JOY_CODE_DEF_1(IP_JOY_DEFAULT) },
 /* impulse input bit definition */
 #define PORT_BIT_IMPULSE(mask,default,type,duration) { mask, default, \
-		type | IPF_IMPULSE | ((duration & 0xff) << 8), IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT },
+		type | IPF_IMPULSE | ((duration & 0xff) << 8), IP_NAME_DEFAULT, INPUT_KEY_CODE_DEF_1(IP_KEY_DEFAULT), INPUT_JOY_CODE_DEF_1(IP_JOY_DEFAULT) },
 /* input bit definition with extended fields */
-#define PORT_BITX(mask,default,type,name,key,joy) { mask, default, type, name, key, joy },
+#define PORT_BITX(mask,default,type,name,key,joy) { mask, default, type, name, INPUT_KEY_CODE_DEF_1(key), INPUT_JOY_CODE_DEF_1(joy) },
 /* analog input */
 #define PORT_ANALOG(mask,default,type,sensitivity,delta,clip,min,max) \
-	{ mask, default, type, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT }, \
+	{ mask, default, type, IP_NAME_DEFAULT, INPUT_KEY_CODE_DEF_1(IP_KEY_DEFAULT), INPUT_JOY_CODE_DEF_1(IP_JOY_DEFAULT) }, \
 	{ min, max, IPT_EXTENSION | IPF_SENSITIVITY(sensitivity) | IPF_DELTA(delta) | IPF_CLIP(clip), \
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT },
+			IP_NAME_DEFAULT, INPUT_KEY_CODE_DEF_1(IP_KEY_DEFAULT), INPUT_JOY_CODE_DEF_1(IP_JOY_DEFAULT) },
 #define PORT_ANALOGX(mask,default,type,sensitivity,delta,clip,min,max,keydec,keyinc,joydec,joyinc) \
-	{ mask, default, type, IP_NAME_DEFAULT, keydec, joydec }, \
+	{ mask, default, type, IP_NAME_DEFAULT, INPUT_KEY_CODE_DEF_1(keydec), INPUT_JOY_CODE_DEF_1(joydec) }, \
 	{ min, max, IPT_EXTENSION | IPF_SENSITIVITY(sensitivity) | IPF_DELTA(delta) | IPF_CLIP(clip), \
-			IP_NAME_DEFAULT, keyinc, joyinc },
+			IP_NAME_DEFAULT, INPUT_KEY_CODE_DEF_1(keyinc), INPUT_JOY_CODE_DEF_1(joyinc) },
 
 /* dip switch definition */
-#ifdef MESS
- #define PORT_DIPNAME(mask,default,name,key) { mask, default, IPT_DIPSWITCH_NAME, name, key, IP_JOY_NONE, 0 },
-#else
- #define PORT_DIPNAME(mask,default,name) { mask, default, IPT_DIPSWITCH_NAME, name, IP_KEY_NONE, IP_JOY_NONE },
-#endif
-#define PORT_DIPSETTING(default,name) { 0, default, IPT_DIPSWITCH_SETTING, name, IP_KEY_NONE, IP_JOY_NONE },
+#define PORT_DIPNAME(mask,default,name) { mask, default, IPT_DIPSWITCH_NAME, name, INPUT_KEY_CODE_DEF_0, INPUT_JOY_CODE_DEF_0 },
+#define PORT_DIPSETTING(default,name) { 0, default, IPT_DIPSWITCH_SETTING, name, INPUT_KEY_CODE_DEF_0, INPUT_JOY_CODE_DEF_0 },
+
 
 #define PORT_SERVICE(mask,default)	\
 	PORT_BITX(    mask, mask & default, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )	\
 	PORT_DIPSETTING(    mask & default, DEF_STR( Off ) )	\
 	PORT_DIPSETTING(    mask &~default, DEF_STR( On ) )
-
 
 #define MAX_DEFSTR_LEN 20
 extern char ipdn_defaultstrings[][MAX_DEFSTR_LEN];
@@ -253,10 +269,10 @@ int load_input_port_settings(void);
 void save_input_port_settings(void);
 
 const char *input_port_name(const struct InputPort *in);
-int input_port_type_key(int type);
-int input_port_type_joy(int type);
-int input_port_key(const struct InputPort *in);
-int input_port_joy(const struct InputPort *in);
+UINT16* input_port_type_key_multi(int type);
+UINT16* input_port_type_joy_multi(int type);
+UINT16* input_port_key_multi(const struct InputPort *in);
+UINT16* input_port_joy_multi(const struct InputPort *in);
 
 #ifdef MAME_NET
 void set_default_player_controls(int player);
@@ -288,8 +304,8 @@ struct ipd
 {
 	UINT32 type;
 	const char *name;
-	UINT16 keyboard;
-	UINT16 joystick;
+	UINT16 keyboard_code[INPUT_KEY_CODE_MAX];
+	UINT16 joystick_code[INPUT_KEY_CODE_MAX];
 };
 
 #endif

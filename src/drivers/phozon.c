@@ -271,21 +271,18 @@ static struct MachineDriver phozon_machine_driver =
 		{
 			CPU_M6809,			/* MAIN CPU */
 			1536000,			/* same as Gaplus? */
-			0,
 			readmem_cpu1,writemem_cpu1,0,0,
 			interrupt,1
 		},
 		{
 			CPU_M6809,			/* SUB CPU */
 			1536000,			/* same as Gaplus? */
-			2,
 			readmem_cpu2,writemem_cpu2,0,0,
 			interrupt,1
 		},
 		{
 			CPU_M6809,			/* SOUND CPU */
 			1536000,			/* same as Gaplus? */
-			3,
 			readmem_cpu3,writemem_cpu3,0,0,
 			interrupt,1
 		},
@@ -317,7 +314,7 @@ static struct MachineDriver phozon_machine_driver =
 };
 
 ROM_START( phozon )
-	ROM_REGION(0x10000)     /* 64k for code for the MAIN CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code for the MAIN CPU  */
 	ROM_LOAD( "6e.rom", 0x8000, 0x2000, 0xa6686af1 )
 	ROM_LOAD( "6h.rom", 0xa000, 0x2000, 0x72a65ba0 )
 	ROM_LOAD( "6c.rom", 0xc000, 0x2000, 0xf1fda22e )
@@ -328,10 +325,10 @@ ROM_START( phozon )
 	ROM_LOAD( "8j.rom", 0x1000, 0x1000, 0x15b12ef8 ) /* characters (set 2) */
 	ROM_LOAD( "5t.rom", 0x2000, 0x2000, 0xd50f08f8 ) /* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the SUB CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the SUB CPU */
 	ROM_LOAD( "9r.rom", 0xe000, 0x2000, 0x5d9f0a28 )
 
-	ROM_REGION(0x10000)     /* 64k for the SOUND CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )     /* 64k for the SOUND CPU */
 	ROM_LOAD( "3b.rom", 0xe000, 0x2000, 0x5a4b3a79 )
 
 	ROM_REGIONX( 0x0520, REGION_PROMS )

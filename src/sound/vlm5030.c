@@ -582,10 +582,10 @@ int VLM5030_sh_start(const struct MachineSound *msound)
 	phase = PH_IDLE;
 /*	VLM5030_VCU(intf->vcu); */
 
-	VLM5030_rom = Machine->memory_region[intf->memory_region];
+	VLM5030_rom = memory_region(intf->memory_region);
 	/* memory size */
 	if( intf->memory_size == 0)
-		VLM5030_address_mask = Machine->memory_region_length[intf->memory_region]-1;
+		VLM5030_address_mask = memory_region_length(intf->memory_region)-1;
 	else
 		VLM5030_address_mask = intf->memory_size-1;
 

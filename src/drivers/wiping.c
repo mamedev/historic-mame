@@ -327,14 +327,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			18432000/6,	/* 3.072 Mhz */
-			3,
 			sound_readmem,sound_writemem,0,0,
 			0,0,
 			interrupt,140	/* periodic interrupt, don't know about the frequency */
@@ -375,7 +373,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( wiping )
-	ROM_REGION(0x10000)	/* Region 0 - main cpu code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* Region 0 - main cpu code */
 	ROM_LOAD( "1",            0x0000, 0x2000, 0xb55d0d19 )
 	ROM_LOAD( "2",            0x2000, 0x2000, 0xb1f96e47 )
 	ROM_LOAD( "3",            0x4000, 0x2000, 0xc67bab5a )
@@ -389,7 +387,7 @@ ROM_START( wiping )
 	ROM_LOAD( "wip-f4.bin",   0x0020, 0x0100, 0x3f56c8d5 )	/* char lookup table */
 	ROM_LOAD( "wip-e11.bin",  0x0120, 0x0100, 0xe7400715 )	/* sprite lookup table */
 
-	ROM_REGION(0x10000)	/* Region 3 - sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Region 3 - sound cpu */
 	ROM_LOAD( "4",            0x0000, 0x1000, 0xa1547e18 )
 
 	ROM_REGION(0x4000)	/* samples */
@@ -402,7 +400,7 @@ ROM_START( wiping )
 ROM_END
 
 ROM_START( rugrats )
-	ROM_REGION(0x10000)	/* Region 0 - main cpu code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* Region 0 - main cpu code */
 	ROM_LOAD( "rugr1d1",      0x0000, 0x2000, 0xe7e1bd6d )
 	ROM_LOAD( "rugr2d2",      0x2000, 0x2000, 0x5f47b9ad )
 	ROM_LOAD( "rugr3d3",      0x4000, 0x2000, 0x3d748d1a )
@@ -416,7 +414,7 @@ ROM_START( rugrats )
 	ROM_LOAD( "prom.4f",      0x0020, 0x0100, 0xcfc90f3d )	/* char lookup table */
 	ROM_LOAD( "prom.11e",     0x0120, 0x0100, 0xcfc90f3d )	/* sprite lookup table */
 
-	ROM_REGION(0x10000)	/* Region 3 - sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Region 3 - sound cpu */
 	ROM_LOAD( "rugr4c4",      0x0000, 0x2000, 0xd4a92c38 )
 
 	ROM_REGION(0x4000)	/* samples */
@@ -436,7 +434,7 @@ ROM_END
 
 static int wiping_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -474,7 +472,7 @@ static int wiping_hiload(void)
 static void wiping_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{

@@ -83,13 +83,8 @@ static void io_latch_w(int offset, int data)
 	if (!(data & 0x00ff0000))
 	{
 		/* bit 4 resets the sound CPU */
-		if (data & 0x10)
-			cpu_halt(1, 1);
-		else
-		{
-			atarigen_sound_reset_w(offset, data);
-			cpu_halt(1, 0);
-		}
+		cpu_set_reset_line(1, (data & 0x10) ? CLEAR_LINE : ASSERT_LINE);
+		if (!(data & 0x10)) atarijsa_reset();
 	}
 
 	if (errorlog) fprintf(errorlog, "sound control = %04X\n", data);
@@ -408,13 +403,10 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,
 			7159160,		/* 7.159 Mhz */
-			0,
 			readmem,writemem,0,0,
 			ignore_interrupt,1
 		},
-		{
-			JSA_III_CPU(1)
-		}
+		JSA_III_CPU
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
@@ -448,8 +440,8 @@ static void rom_decode(void)
 {
 	int i;
 
-	for (i = 0; i < Machine->memory_region_length[2]; i++)
-		Machine->memory_region[2][i] ^= 0xff;
+	for (i = 0; i < memory_region_length(2); i++)
+		memory_region(2)[i] ^= 0xff;
 }
 
 
@@ -461,11 +453,11 @@ static void rom_decode(void)
  *************************************/
 
 ROM_START( offtwall )
-	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "otw2012.bin", 0x00000, 0x20000, 0xd08d81eb )
 	ROM_LOAD_ODD ( "otw2013.bin", 0x00000, 0x20000, 0x61c2553d )
 
-	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "otw1020.bin", 0x10000, 0x4000, 0x488112a5 )
 	ROM_CONTINUE(            0x04000, 0xc000 )
 
@@ -480,11 +472,11 @@ ROM_END
 
 
 ROM_START( offtwalc )
-	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "090-2612.rom", 0x00000, 0x20000, 0xfc891a3f )
 	ROM_LOAD_ODD ( "090-2613.rom", 0x00000, 0x20000, 0x805d79d4 )
 
-	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "otw1020.bin", 0x10000, 0x4000, 0x488112a5 )
 	ROM_CONTINUE(            0x04000, 0xc000 )
 

@@ -319,14 +319,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* 4 Mhz */
-			0,
 			readmem,writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3072000,	/* 3.072 Mhz????? */
-			3,	/* memory region #3 */
 			bombjack_sound_readmem,bombjack_sound_writemem,0,bombjack_sound_writeport,
 			nmi_interrupt,1
 		}
@@ -366,7 +364,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( bombjack )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "09_j01b.bin",  0x0000, 0x2000, 0xc668dc30 )
 	ROM_LOAD( "10_l01b.bin",  0x2000, 0x2000, 0x52a1e5fb )
 	ROM_LOAD( "11_m01b.bin",  0x4000, 0x2000, 0xb68a062a )
@@ -387,12 +385,12 @@ ROM_START( bombjack )
 	ROM_REGION(0x1000)	/* background graphics */
 	ROM_LOAD( "02_p04t.bin",  0x0000, 0x1000, 0x398d4a02 )
 
-	ROM_REGION(0x10000)	/* 64k for sound board */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound board */
 	ROM_LOAD( "01_h03t.bin",  0x0000, 0x2000, 0x8407917d )
 ROM_END
 
 ROM_START( bombjac2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "09_j01b.bin",  0x0000, 0x2000, 0xc668dc30 )
 	ROM_LOAD( "10_l01b.bin",  0x2000, 0x2000, 0x52a1e5fb )
 	ROM_LOAD( "11_m01b.bin",  0x4000, 0x2000, 0xb68a062a )
@@ -413,7 +411,7 @@ ROM_START( bombjac2 )
 	ROM_REGION(0x1000)	/* background graphics */
 	ROM_LOAD( "02_p04t.bin",  0x0000, 0x1000, 0x398d4a02 )
 
-	ROM_REGION(0x10000)	/* 64k for sound board */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound board */
 	ROM_LOAD( "01_h03t.bin",  0x0000, 0x2000, 0x8407917d )
 ROM_END
 
@@ -421,7 +419,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -478,7 +476,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

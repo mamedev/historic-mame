@@ -278,14 +278,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4000000,        /* 4 MHz??? */
-			0,
 			readmem,writemem,readport,writeport,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,        /* 4 MHz??? */
-			3,
 			sound_readmem,sound_writemem,0,0,
 			sauron_interrupt,8 /* ?? */
 		}
@@ -323,7 +321,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 ROM_START( sauro )
-	ROM_REGION(0x10000)          /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )          /* 64k for code */
 	ROM_LOAD( "sauro-2.bin",     0x00000, 0x8000, 0x19f8de25 )
 	ROM_LOAD( "sauro-1.bin",     0x08000, 0x8000, 0x0f8b876f )
 
@@ -342,14 +340,14 @@ ROM_START( sauro )
 	ROM_LOAD( "82s137-2.bin",    0x0400, 0x0400, 0xc3e96d5d )  /* Green component */
 	ROM_LOAD( "82s137-1.bin",    0x0800, 0x0400, 0xbdfcf00c )  /* Blue component */
 
-	ROM_REGION(0x10000)          /* 64k for sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )          /* 64k for sound CPU */
 	ROM_LOAD( "sauro-3.bin",     0x00000, 0x8000, 0x0d501e1b )
 ROM_END
 
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -374,7 +372,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -391,7 +389,7 @@ static void driver_init(void)
 	/* This game doesn't like all memory to be initialized to zero, it won't
 	   initialize the high scores */
 
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	memset(&RAM[0xe000], 0, 0x100);
 	RAM[0xe000] = 1;

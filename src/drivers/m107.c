@@ -43,7 +43,7 @@ int m107_vram_r(int offset);
 
 static void bankswitch_w(int offset, int data)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if (offset==1) return; /* Unused top byte */
 	cpu_setbank(1,&RAM[0x100000 + ((data&0x7)*0x10000)]);
@@ -367,7 +367,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_V33,	/* NEC V33 */
 			28000000,	/* 28MHz clock */
-			0,
 			readmem,writemem,readport,writeport,
 			m107_raster_interrupt,256 /* 8 prelines, 240 visible lines, 8 for vblank? */
 		},
@@ -375,7 +374,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_V33 | CPU_AUDIO_CPU,
 			14318000,	/* 14.318 Mhz */
-			2,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -409,7 +407,6 @@ static struct MachineDriver dsoccr94_machine_driver =
 		{
 			CPU_V33,	/* NEC V33 */
 			20000000,	/* Could be 28MHz clock? */
-			0,
 			readmem,writemem,readport,writeport,
 			m107_interrupt,1
 		},
@@ -417,7 +414,6 @@ static struct MachineDriver dsoccr94_machine_driver =
 		{
 			CPU_V33 | CPU_AUDIO_CPU,
 			14318000,	/* 14.318 Mhz */
-			2,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -447,7 +443,7 @@ static struct MachineDriver dsoccr94_machine_driver =
 /***************************************************************************/
 
 ROM_START( firebarr )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_V20_EVEN( "f4-h0",  0x000000, 0x40000, 0x2aa5676e )
 	ROM_LOAD_V20_ODD ( "f4-l0",  0x000000, 0x40000, 0x42f75d59 )
 	ROM_LOAD_V20_EVEN( "f4-h1",  0x080000, 0x20000, 0xbb7f6968 )
@@ -468,7 +464,7 @@ ROM_START( firebarr )
 	ROM_LOAD_GFX_EVEN( "f4-030",   0x700000, 0x80000, 0x7e7b30cd )
 	ROM_LOAD_GFX_ODD ( "f4-031",   0x700000, 0x80000, 0x83ac56c5 )
 
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU2 )
 	ROM_LOAD_V20_EVEN( "f4-sh0",  0x000000, 0x10000, 0x30a8e232 )
 	ROM_LOAD_V20_ODD ( "f4-sl0",  0x000000, 0x10000, 0x204b5f1f )
 
@@ -481,7 +477,7 @@ ROM_START( firebarr )
 ROM_END
 
 ROM_START( dsoccr94 )
-	ROM_REGION(0x180000) /* Region 0 - v30 main cpu */
+	ROM_REGIONX( 0x180000, REGION_CPU1 ) /* Region 0 - v30 main cpu */
 	ROM_LOAD_V20_EVEN("ds_h0-c.rom",  0x000000, 0x040000, 0xd01d3fd7 )
 	ROM_LOAD_V20_ODD ("ds_l0-c.rom",  0x000000, 0x040000, 0x8af0afe2 )
 	ROM_LOAD_V20_EVEN("ds_h1-c.rom",  0x100000, 0x040000, 0x6109041b )
@@ -498,7 +494,7 @@ ROM_START( dsoccr94 )
 	ROM_LOAD("ds_020.rom",0x600000, 0x100000, 0x5a310f7f )
 	ROM_LOAD("ds_030.rom",0x700000, 0x100000, 0x328b1f45 )
 
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU2 )
 	ROM_LOAD_V20_EVEN("ds_sh0.rom",0x000000, 0x010000, 0x23fe6ffc )
 	ROM_LOAD_V20_ODD ("ds_sl0.rom",0x000000, 0x010000, 0x768132e5 )
 
@@ -510,12 +506,12 @@ ROM_END
 
 static void m107_startup(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	memcpy(RAM+0xffff0,RAM+0x7fff0,0x10); /* Start vector */
 	cpu_setbank(1,&RAM[0xa0000]); /* Initial bank */
 
-	RAM = Machine->memory_region[2];
+	RAM = memory_region(2);
 	memcpy(RAM+0xffff0,RAM+0x1fff0,0x10); /* Sound cpu Start vector */
 
 	m107_irq_vectorbase=0x20;
@@ -524,12 +520,12 @@ static void m107_startup(void)
 
 static void dsoccr94_startup(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	memcpy(RAM+0xffff0,RAM+0x7fff0,0x10); /* Start vector */
 	cpu_setbank(1,&RAM[0xa0000]); /* Initial bank */
 
-	RAM = Machine->memory_region[2];
+	RAM = memory_region(2);
 	memcpy(RAM+0xffff0,RAM+0x1fff0,0x10); /* Sound cpu Start vector */
 
 	m107_irq_vectorbase=0x80;

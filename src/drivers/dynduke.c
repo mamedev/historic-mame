@@ -14,6 +14,9 @@
 	My current implementation looks pretty good though I've never seen
 	the real game.
 
+	There is a country code byte in the program to select between
+	Seibu Kaihatsu/Fabtek/Taito licenses.
+
 	Emulation by Bryan McPhail, mish@tendril.force9.net
 
 ***************************************************************************/
@@ -21,6 +24,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "sndhrdw/seibu.h"
 
 int dynduke_background_r(int offset);
 int dynduke_foreground_r(int offset);
@@ -33,7 +37,7 @@ void dynduke_control_w(int offset, int data);
 void dynduke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void dynduke_paletteram_w(int offset, int data);
 
-static unsigned char *dynduke_shared_ram,*sound_shared_ram;
+static unsigned char *dynduke_shared_ram;
 extern unsigned char *dynduke_back_data,*dynduke_fore_data,*dynduke_scroll_ram,*dynduke_control_ram;
 
 /***************************************************************************/
@@ -44,51 +48,19 @@ static void dynduke_shared_w(int offset,int data) { dynduke_shared_ram[offset]=d
 static int dynduke_soundcpu_r(int offset)
 {
 	int erg,orig;
-	orig=sound_shared_ram[offset];
+	orig=seibu_shared_sound_ram[offset];
 
 	/* Small kludge to allows coins with sound off */
 	if (offset==4 && (!Machine->sample_rate) && (readinputport(4)&1)==1) return 1;
 
 	switch (offset)
 	{
-		case 0x04:{erg=sound_shared_ram[6];sound_shared_ram[6]=0;break;} /* just 1 time */
+		case 0x04:{erg=seibu_shared_sound_ram[6];seibu_shared_sound_ram[6]=0;break;} /* just 1 time */
 		case 0x06:{erg=0xa0;break;}
 		case 0x0a:{erg=0;break;}
-		default: erg=sound_shared_ram[offset];
+		default: erg=seibu_shared_sound_ram[offset];
 	}
 	return erg;
-}
-
-static void dynduke_soundcpu_w(int offset, int data)
-{
-	sound_shared_ram[offset]=data;
-
-	if (offset==0xc && data!=0xff) {
-		cpu_cause_interrupt(2,0xdf); /* RST 18 */
-	}
-}
-
-static int maincpu_data_r(int offset)
-{
-	return sound_shared_ram[offset<<1];
-}
-
-static void maincpu_data_w(int offset, int data)
-{
-	sound_shared_ram[offset<<1]=data;
-}
-
-static void sound_bank_w(int offset,int data)
-{
-	unsigned char *RAM = Machine->memory_region[2];
-
-	if (data&1) { cpu_setbank(1,&RAM[0x0000]); }
-	else { cpu_setbank(1,&RAM[0x10000]); }
-}
-
-static void sound_clear_w(int offset,int data)
-{
-	sound_shared_ram[0]=data;
 }
 
 /******************************************************************************/
@@ -114,7 +86,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0a000, 0x0afff, dynduke_shared_w, &dynduke_shared_ram },
 	{ 0x0b000, 0x0b007, dynduke_control_w, &dynduke_control_ram },
 	{ 0x0c000, 0x0c7ff, dynduke_text_w, &videoram },
-	{ 0x0d000, 0x0d00f, dynduke_soundcpu_w, &sound_shared_ram },
+	{ 0x0d000, 0x0d00f, seibu_soundlatch_w, &seibu_shared_sound_ram },
 	{ 0xa0000, 0xfffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -146,32 +118,7 @@ static struct MemoryWriteAddress sub_writemem[] =
 /******************************************************************************/
 
 #if 0
-static struct MemoryReadAddress sound_readmem[] =
-{
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x2000, 0x27ff, MRA_RAM },
-	{ 0x4008, 0x4008, YM3812_status_port_0_r },
-	{ 0x4010, 0x4011, maincpu_data_r }, /* Soundlatch (16 bits) */
-	{ 0x4013, 0x4013, input_port_4_r }, /* Coins */
-	{ 0x6000, 0x6000, OKIM6295_status_0_r },
-	{ 0x8000, 0xffff, MRA_BANK1 },
-	{ -1 }	/* end of table */
-};
-
-static struct MemoryWriteAddress sound_writemem[] =
-{
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2000, 0x27ff, MWA_RAM },
-	{ 0x4000, 0x4000, sound_clear_w }, /* Or command ack?? */
-	{ 0x4002, 0x4002, MWA_NOP }, /* RST 10h interrupt ack */
-	{ 0x4003, 0x4003, MWA_NOP }, /* RST 18h interrupt ack */
-	{ 0x4007, 0x4007, sound_bank_w },
-	{ 0x4008, 0x4008, YM3812_control_port_0_w },
-	{ 0x4009, 0x4009, YM3812_write_port_0_w },
-	{ 0x4018, 0x401f, maincpu_data_w },
-	{ 0x6000, 0x6000, OKIM6295_data_0_w },
-	{ -1 }	/* end of table */
-};
+SEIBU_SOUND_SYSTEM_YM3812_MEMORY_MAP(input_port_4_r); /* Coin port */
 #endif
 
 /******************************************************************************/
@@ -325,28 +272,8 @@ static struct GfxDecodeInfo dynduke_gfxdecodeinfo[] =
 
 /******************************************************************************/
 
-/* handler called by the 3812 emulator when the internal timers cause an IRQ */
-static void YM3812_irqhandler(int linestate)
-{
-	cpu_irq_line_vector_w(2,0,0xd7); /* RST 10h */
-	cpu_set_irq_line(2,0,linestate);
-}
-
-static struct YM3812interface ym3812_interface =
-{
-	1,
-	4000000,
-	{ 50 },
-	{ YM3812_irqhandler }
-};
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,
-	{ 8000 },
-	{ 4 },
-	{ 41 }
-};
+/* Parameters: YM3812 frequency, Oki frequency, Oki memory region */
+SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(14318180/4,8000,4);
 
 static int dynduke_interrupt(void)
 {
@@ -365,30 +292,24 @@ static struct MachineDriver dynduke_machine_driver =
 		{
 			CPU_V30, /* NEC V30-8 CPU */
 			16000000, /* Guess */
-			0,
 			readmem,writemem,0,0,
 			dynduke_interrupt,1
 		},
 		{
 			CPU_V30, /* NEC V30-8 CPU */
 			16000000, /* Guess */
-			3,
 			sub_readmem,sub_writemem,0,0,
 			dynduke_interrupt,1
 		},
 #if 0
 		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,
-			2,
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
+			SEIBU_SOUND_SYSTEM_CPU(14318180/4)
 		}
 #endif
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	60,	/* CPU interleave  */
-	0,
+	0,//seibu_sound_init_2,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
@@ -406,21 +327,14 @@ static struct MachineDriver dynduke_machine_driver =
 	/* sound hardware */
 	0,0,0,0,
 	{
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
+		SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
 	}
 };
 
 /***************************************************************************/
 
 ROM_START( dynduke )
-	ROM_REGION(0x100000) /* Region 0 - v30 main cpu */
+	ROM_REGIONX(0x100000, REGION_CPU1) /* Region 0 - v30 main cpu */
 	ROM_LOAD_V20_ODD ("dd1.cd8",   0x0a0000, 0x10000, 0xa5e2a95a )
 	ROM_LOAD_V20_EVEN("dd2.cd7",   0x0a0000, 0x10000, 0x7e51af22 )
 	ROM_LOAD_V20_ODD ("dd3.ef8",   0x0c0000, 0x20000, 0xa56f8692 )
@@ -451,11 +365,11 @@ ROM_START( dynduke )
 	ROM_LOAD_GFX_EVEN(  "dd.f1", 0x420000, 0x40000, 0x9aed24ba )
 	ROM_LOAD_GFX_ODD (  "dd.f2", 0x420000, 0x40000, 0x3eb5783f )
 
-	ROM_REGION(0x18000)	 /* Region 2 - 64k code for sound Z80 */
+	ROM_REGIONX(0x18000, REGION_CPU3) /* Region 2 - 64k code for sound Z80 */
 	ROM_LOAD( "dd8.w8", 0x000000, 0x08000, 0x3c29480b )
 	ROM_CONTINUE(       0x010000, 0x08000 )
 
-	ROM_REGION(0x100000) /* Region 3 - v30 sub cpu */
+	ROM_REGIONX(0x100000, REGION_CPU2) /* Region 3 - v30 sub cpu */
 	ROM_LOAD_V20_ODD ("dd5.p8",  0x0e0000, 0x10000, 0x883d319c )
 	ROM_LOAD_V20_EVEN("dd6.p7",  0x0e0000, 0x10000, 0xd94cb4ff )
 
@@ -464,7 +378,7 @@ ROM_START( dynduke )
 ROM_END
 
 ROM_START( dbldyn )
-	ROM_REGION(0x100000) /* Region 0 - v30 main cpu */
+	ROM_REGIONX(0x100000, REGION_CPU1) /* Region 0 - v30 main cpu */
 	ROM_LOAD_V20_ODD ("dd1.cd8", 0x0a0000, 0x10000, 0xa5e2a95a )
 	ROM_LOAD_V20_EVEN("dd2.cd7", 0x0a0000, 0x10000, 0x7e51af22 )
 	ROM_LOAD_V20_ODD ("3.8e",    0x0c0000, 0x20000, 0x9b785028 )
@@ -499,64 +413,17 @@ ROM_START( dbldyn )
 	ROM_LOAD_GFX_EVEN(  "dd.f1", 0x420000, 0x40000, 0x9aed24ba )
 	ROM_LOAD_GFX_ODD (  "dd.f2", 0x420000, 0x40000, 0x3eb5783f )
 
-	ROM_REGION(0x18000)	 /* Region 2 - 64k code for sound Z80 */
+	ROM_REGIONX(0x18000, REGION_CPU3) /* Region 2 - 64k code for sound Z80 */
 	ROM_LOAD( "8.8w", 0x000000, 0x08000, 0xf4066081 )
 	ROM_CONTINUE(     0x010000, 0x08000 )
 
-	ROM_REGION(0x100000) /* Region 3 - v30 sub cpu */
+	ROM_REGIONX(0x100000, REGION_CPU2) /* Region 3 - v30 sub cpu */
 	ROM_LOAD_V20_ODD ("5.8p",  0x0e0000, 0x10000, 0xea56d719 )
 	ROM_LOAD_V20_EVEN("6.7p",  0x0e0000, 0x10000, 0x9ffa0ecd )
 
 	ROM_REGION(0x10000)	 /* Region 4 - ADPCM samples */
 	ROM_LOAD( "dd7.x10", 0x000000, 0x10000, 0x9cbc7b41 )
 ROM_END
-
-/***************************************************************************/
-
-/* NOTICE!  This is not currently correct, this table works for the first
-128 bytes, but goes wrong after that.  I suspect the bytes in this table
-are shifted according to an address line.  I have not confirmed the pattern
-repeats after 128 bytes, it may be more...
-
-To help with decryption - compare this to the Raiden sound cpu program,
-the first 0x1000 bytes at least should be identical.
-
-There is also a 0xff fill at the end of the rom.
-
-*/
-static void dynduke_decrypt(void)
-{
-	unsigned char *RAM = Machine->memory_region[2];
-	int xor_table[128]={
-		0x00,0x00,0x10,0x10,0x08,0x00,0x00,0x18,
-		0x00,0x00,0x10,0x10,0x08,0x08,0x18,0x18,
-
-		0x00,0x00,0x00,0x10,0x08,0x08,0x18,0x18,
-		0x00,0x00,0x00,0x10,0x08,0x08,0x18,0x18,
-
-		0x00,0x00,0x10,0x10,0x08,0x08,0x18,0x18,
-		0x00,0x00,0x10,0x10,0x08,0x08,0x18,0x18,
-
-		0x00,0x00,0x10,0x10,0x08,0x08,0x18,0x18,
-		0x00,0x00,0x10,0x10,0x08,0x08,0x18,0x18,
-
-		0x00,0x00,0x00,0x00,0x08,0x08,0x08,0x08,
-		0x00,0x00,0x00,0x00,0x08,0x08,0x08,0x08,
-
-		0x00,0x00,0x00,0x00,0x08,0x08,0x08,0x08,
-		0x00,0x00,0x00,0x00,0x08,0x08,0x08,0x08,
-
-		0x00,0x00,0x00,0x00,0x08,0x08,0x08,0x08,
-		0x00,0x00,0x00,0x00,0x08,0x08,0x08,0x08,
-
-		0x00,0x00,0x00,0x00,0x00,0x00,0x08,0x08,
-		0x00,0x00,0x00,0x00,0x08,0x08,0x08,0x08,
-	};
-	int i;
-
-	for (i=0; i<0x18000; i++)
-		RAM[i]=RAM[i]^xor_table[i%128];
-}
 
 /***************************************************************************/
 
@@ -574,7 +441,7 @@ struct GameDriver driver_dynduke =
 	0,
 
 	rom_dynduke,
-	dynduke_decrypt, 0,
+	seibu_sound_decrypt, 0,
 	0, 0,
 	input_ports_dynduke,
 
@@ -598,7 +465,7 @@ struct GameDriver driver_dbldyn =
 	0,
 
 	rom_dbldyn,
-	dynduke_decrypt, 0,
+	seibu_sound_decrypt, 0,
 	0, 0,
 	input_ports_dynduke,
 

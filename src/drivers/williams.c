@@ -1323,14 +1323,12 @@ static struct MachineDriver defender_machine_driver =
 		{
 			CPU_M6809,
 			1000000,
-			0,
 			defender_readmem,defender_writemem,0,0,
 			ignore_interrupt,1
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
 			3579000/4,
-			1,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1
 		}
@@ -1370,14 +1368,12 @@ static struct MachineDriver williams_machine_driver =
 		{
 			CPU_M6809,
 			1000000,
-			0,
 			williams_readmem,williams_writemem,0,0,
 			ignore_interrupt,1
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
 			3579000/4,
-			1,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1
 		}
@@ -1417,14 +1413,12 @@ static struct MachineDriver sinistar_machine_driver =
 		{
 			CPU_M6809,
 			1000000,
-			0,
 			williams_readmem,williams_writemem,0,0,
 			ignore_interrupt,1
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
 			3579000/4,
-			1,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1
 		}
@@ -1468,14 +1462,12 @@ static struct MachineDriver blaster_machine_driver =
 		{
 			CPU_M6809,
 			1000000,
-			0,
 			blaster_readmem,blaster_writemem,0,0,
 			ignore_interrupt,1
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
 			3579000/4,
-			1,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1
 		}
@@ -1515,14 +1507,12 @@ static struct MachineDriver williams2_machine_driver =
 		{
 			CPU_M6809,
 			1000000,
-			0,
 			williams2_readmem,williams2_writemem,0,0,
 			ignore_interrupt,1
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
 			3579000/4,
-			1,
 			williams2_sound_readmem,williams2_sound_writemem,0,0,
 			ignore_interrupt,1
 		}
@@ -1562,18 +1552,16 @@ static struct MachineDriver joust2_machine_driver =
 		{
 			CPU_M6809,
 			1000000,
-			0,
 			williams2_readmem,williams2_writemem,0,0,
 			ignore_interrupt,1
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
 			3579000/4,
-			1,
 			williams2_sound_readmem,williams2_sound_writemem,0,0,
 			ignore_interrupt,1
 		},
-		SOUND_CPU_WILLIAMS_CVSD(3)
+		SOUND_CPU_WILLIAMS_CVSD
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,
 	1,
@@ -1609,7 +1597,7 @@ static struct MachineDriver joust2_machine_driver =
 
 static int cmos_load(void)
 {
-	UINT8 *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 	void *f = osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
 
 	if (f)
@@ -1624,7 +1612,7 @@ static int cmos_load(void)
 
 static void cmos_save(void)
 {
-	UINT8 *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 	void *f = osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
 
 	if (f)
@@ -1690,7 +1678,7 @@ static void defndjeu_init(void)
 	ROMD.BIN    IC04-4.BIN            DFNDR-D.ROM           21
 */
 
-	UINT8 *rom = memory_region(Machine->drv->cpu[0].memory_region);
+	UINT8 *rom = memory_region(REGION_CPU1);
 	int x;
 
 	for (x = 0xd000; x < 0x15000; x++)
@@ -1879,12 +1867,12 @@ static void joust2_init(void)
 	CONFIGURE_PIAS(williams2_muxed_pia_0_intf, joust2_pia_1_intf, williams2_snd_pia_intf);
 
 	/* expand the sound ROMs */
-	memcpy(&Machine->memory_region[3][0x18000], &Machine->memory_region[3][0x10000], 0x08000);
-	memcpy(&Machine->memory_region[3][0x20000], &Machine->memory_region[3][0x10000], 0x10000);
-	memcpy(&Machine->memory_region[3][0x38000], &Machine->memory_region[3][0x30000], 0x08000);
-	memcpy(&Machine->memory_region[3][0x40000], &Machine->memory_region[3][0x30000], 0x10000);
-	memcpy(&Machine->memory_region[3][0x58000], &Machine->memory_region[3][0x50000], 0x08000);
-	memcpy(&Machine->memory_region[3][0x60000], &Machine->memory_region[3][0x50000], 0x10000);
+	memcpy(&memory_region(3)[0x18000], &memory_region(3)[0x10000], 0x08000);
+	memcpy(&memory_region(3)[0x20000], &memory_region(3)[0x10000], 0x10000);
+	memcpy(&memory_region(3)[0x38000], &memory_region(3)[0x30000], 0x08000);
+	memcpy(&memory_region(3)[0x40000], &memory_region(3)[0x30000], 0x10000);
+	memcpy(&memory_region(3)[0x58000], &memory_region(3)[0x50000], 0x08000);
+	memcpy(&memory_region(3)[0x60000], &memory_region(3)[0x50000], 0x10000);
 }
 
 
@@ -1936,7 +1924,7 @@ static void inferno_init(void)
  *************************************/
 
 ROM_START( defender )
-	ROM_REGION(0x14000)
+	ROM_REGIONX( 0x14000, REGION_CPU1 )
 	ROM_LOAD( "defend.1",     0x0d000, 0x0800, 0xc3e52d7e )
 	ROM_LOAD( "defend.4",     0x0d800, 0x0800, 0x9a72348b )
 	ROM_LOAD( "defend.2",     0x0e000, 0x1000, 0x89b75984 )
@@ -1951,13 +1939,13 @@ ROM_START( defender )
 	ROM_RELOAD(               0x13800, 0x0800 )
 	ROM_LOAD( "defend.6",     0x13000, 0x0800, 0x65f4efd1 )
 
-	ROM_REGION(0x10000)     /* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sound CPU */
 	ROM_LOAD( "defend.snd",   0xf800, 0x0800, 0xfefd5b48 )
 ROM_END
 
 
 ROM_START( defendg )
-	ROM_REGION(0x14000)
+	ROM_REGIONX( 0x14000, REGION_CPU1 )
 	ROM_LOAD( "defeng01.bin", 0x0d000, 0x0800, 0x6111d74d )
 	ROM_LOAD( "defeng04.bin", 0x0d800, 0x0800, 0x3cfc04ce )
 	ROM_LOAD( "defeng02.bin", 0x0e000, 0x1000, 0xd184ab6b )
@@ -1972,13 +1960,13 @@ ROM_START( defendg )
 	ROM_RELOAD(               0x13800, 0x0800 )
 	ROM_LOAD( "defeng06.bin", 0x13000, 0x0800, 0x3af34c05 )
 
-	ROM_REGION(0x10000)     /* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sound CPU */
 	ROM_LOAD( "defend.snd",   0xf800, 0x0800, 0xfefd5b48 )
 ROM_END
 
 
 ROM_START( defndjeu )
-	ROM_REGION(0x15000)
+	ROM_REGIONX( 0x15000, REGION_CPU1 )
 	ROM_LOAD( "15", 0x0d000, 0x1000, 0x706a24bd )
 	ROM_LOAD( "16", 0x0e000, 0x1000, 0x03201532 )
 	ROM_LOAD( "17", 0x0f000, 0x1000, 0x25287eca )
@@ -1989,13 +1977,13 @@ ROM_START( defndjeu )
 	ROM_LOAD( "21", 0x13000, 0x1000, 0xbddb71a3 )
 	ROM_RELOAD(     0x14000, 0x1000 )
 
-	ROM_REGION(0x10000)     /* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sound CPU */
 	ROM_LOAD( "s", 0xf800, 0x0800, 0xcb79ae42 )
 ROM_END
 
 
 ROM_START( defcmnd )
-	ROM_REGION(0x15000)
+	ROM_REGIONX( 0x15000, REGION_CPU1 )
 	ROM_LOAD( "defcmnda.1",   0x0d000, 0x1000, 0x68effc1d )
 	ROM_LOAD( "defcmnda.2",   0x0e000, 0x1000, 0x1126adc9 )
 	ROM_LOAD( "defcmnda.3",   0x0f000, 0x1000, 0x7340209d )
@@ -2008,13 +1996,13 @@ ROM_START( defcmnd )
 	ROM_LOAD( "defcmnda.5",   0x12800, 0x0800, 0x49b50b40 )
 	ROM_LOAD( "defcmnda.4",   0x13000, 0x0800, 0x43d42a1b )
 
-	ROM_REGION(0x10000)     /* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sound CPU */
 	ROM_LOAD( "defcmnda.snd", 0xf800, 0x0800, 0xf122d9c9 )
 ROM_END
 
 
 ROM_START( defence )
-	ROM_REGION(0x15000)
+	ROM_REGIONX( 0x15000, REGION_CPU1 )
 	ROM_LOAD( "1",            0x0d000, 0x1000, 0xebc93622 )
 	ROM_LOAD( "2",            0x0e000, 0x1000, 0x2a4f4f44 )
 	ROM_LOAD( "3",            0x0f000, 0x1000, 0xa4112f91 )
@@ -2027,13 +2015,13 @@ ROM_START( defence )
 	ROM_LOAD( "5",            0x12800, 0x0800, 0x4a270340 )
 	ROM_LOAD( "4",            0x13000, 0x0800, 0xe13f457c )
 
-	ROM_REGION(0x10000)     /* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sound CPU */
 	ROM_LOAD( "defcmnda.snd", 0xf800, 0x0800, 0xf122d9c9 )
 ROM_END
 
 
 ROM_START( defcomnd )
-	ROM_REGION(0x15000)
+	ROM_REGIONX( 0x15000, REGION_CPU1 )
 	ROM_LOAD( "dfndr-c.rom", 0x0d000, 0x1000, 0x2a256b93 )
 	ROM_LOAD( "dfndr-b.rom", 0x0e000, 0x1000, 0xe34e87fc )
 	ROM_LOAD( "dfndr-a.rom", 0x0f000, 0x1000, 0xf78d62fa )
@@ -2044,13 +2032,13 @@ ROM_START( defcomnd )
 	ROM_LOAD( "dfndr-i.rom", 0x13000, 0x1000, 0x5998a4cf )
 	ROM_LOAD( "dfndr-g.rom", 0x14000, 0x1000, 0xa1b63291 )
 
-	ROM_REGION(0x10000)     /* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sound CPU */
 	ROM_LOAD( "dfndr-h.rom", 0xf000, 0x1000, 0x30fced3d )
 ROM_END
 
 
 ROM_START( mayday )
-	ROM_REGION(0x15000)
+	ROM_REGIONX( 0x15000, REGION_CPU1 )
 	ROM_LOAD( "ic03-3.bin",  0x0d000, 0x1000, 0xa1ff6e62 )
 	ROM_LOAD( "ic02-2.bin",  0x0e000, 0x1000, 0x62183aea )
 	ROM_LOAD( "ic01-1.bin",  0x0f000, 0x1000, 0x5dcb113f )
@@ -2061,14 +2049,14 @@ ROM_START( mayday )
 	ROM_LOAD( "ic07-7d.bin", 0x13000, 0x1000, 0xd9c065e7 )
 	ROM_RELOAD(              0x14000, 0x1000 )
 
-	ROM_REGION(0x10000)     /* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sound CPU */
 	ROM_LOAD( "ic28-8.bin",  0xf800, 0x0800, 0xfefd5b48 )
 	/* Sound ROM is same in both versions. Can be merged !!! */
 ROM_END
 
 
 ROM_START( maydaya )
-	ROM_REGION(0x15000)
+	ROM_REGIONX( 0x15000, REGION_CPU1 )
 	ROM_LOAD( "mayday.c", 0x0d000, 0x1000, 0x872a2f2d )
 	ROM_LOAD( "mayday.b", 0x0e000, 0x1000, 0xc4ab5e22 )
 	ROM_LOAD( "mayday.a", 0x0f000, 0x1000, 0x329a1318 )
@@ -2079,13 +2067,13 @@ ROM_START( maydaya )
 	ROM_LOAD( "mayday.g", 0x13000, 0x1000, 0x2bd0f106 )
 	ROM_RELOAD(           0x14000, 0x1000 )
 
-	ROM_REGION(0x10000)     /* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sound CPU */
 	ROM_LOAD( "ic28-8.bin", 0xf800, 0x0800, 0xfefd5b48 )
 ROM_END
 
 
 ROM_START( colony7 )
-	ROM_REGION(0x14000)
+	ROM_REGIONX( 0x14000, REGION_CPU1 )
 	ROM_LOAD( "cs03.bin",     0x0d000, 0x1000, 0x7ee75ae5 )
 	ROM_LOAD( "cs02.bin",     0x0e000, 0x1000, 0xc60b08cb )
 	ROM_LOAD( "cs01.bin",     0x0f000, 0x1000, 0x1bc97436 )
@@ -2097,13 +2085,13 @@ ROM_START( colony7 )
 	ROM_LOAD( "cs08.bin",     0x12000, 0x0800, 0x3bfde87a )
 	ROM_RELOAD(           0x12800, 0x0800 )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "cs11.bin",     0xf800, 0x0800, 0x6032293c ) /* Sound ROM */
 ROM_END
 
 
 ROM_START( colony7a )
-	ROM_REGION(0x14000)
+	ROM_REGIONX( 0x14000, REGION_CPU1 )
 	ROM_LOAD( "cs03a.bin",    0x0d000, 0x1000, 0xe0b0d23b )
 	ROM_LOAD( "cs02a.bin",    0x0e000, 0x1000, 0x370c6f41 )
 	ROM_LOAD( "cs01a.bin",    0x0f000, 0x1000, 0xba299946 )
@@ -2115,13 +2103,13 @@ ROM_START( colony7a )
 	ROM_LOAD( "cs08.bin",     0x12000, 0x0800, 0x3bfde87a )
 	ROM_RELOAD(            0x12800, 0x0800 )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "cs11.bin",     0xf800, 0x0800, 0x6032293c ) /* Sound ROM */
 ROM_END
 
 
 ROM_START( stargate )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "01",           0x0000, 0x1000, 0x88824d18 )
 	ROM_LOAD( "02",           0x1000, 0x1000, 0xafc614c5 )
 	ROM_LOAD( "03",           0x2000, 0x1000, 0x15077a9d )
@@ -2135,13 +2123,13 @@ ROM_START( stargate )
 	ROM_LOAD( "11",           0xe000, 0x1000, 0x7d2c5daf )
 	ROM_LOAD( "12",           0xf000, 0x1000, 0xa0396670 )
 
-	ROM_REGION(0x10000)     /* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sound CPU */
 	ROM_LOAD( "sg.snd",       0xf800, 0x0800, 0x2fcf6c4d )
 ROM_END
 
 
 ROM_START( joust )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "joust.wg1",    0x0000, 0x1000, 0xfe41b2af )
 	ROM_LOAD( "joust.wg2",    0x1000, 0x1000, 0x501c143c )
 	ROM_LOAD( "joust.wg3",    0x2000, 0x1000, 0x43f7161d )
@@ -2155,13 +2143,13 @@ ROM_START( joust )
 	ROM_LOAD( "joust.wgb",    0xe000, 0x1000, 0xea48b359 )
 	ROM_LOAD( "joust.wgc",    0xf000, 0x1000, 0xc710717b )
 
-	ROM_REGION(0x10000)     /* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sound CPU */
 	ROM_LOAD( "joust.snd",    0xf000, 0x1000, 0xf1835bdd )
 ROM_END
 
 
 ROM_START( joustwr )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "joust.wg1",    0x0000, 0x1000, 0xfe41b2af )
 	ROM_LOAD( "joust.wg2",    0x1000, 0x1000, 0x501c143c )
 	ROM_LOAD( "joust.wg3",    0x2000, 0x1000, 0x43f7161d )
@@ -2175,13 +2163,13 @@ ROM_START( joustwr )
 	ROM_LOAD( "joust.wgb",    0xe000, 0x1000, 0xea48b359 )
 	ROM_LOAD( "joust.wgc",    0xf000, 0x1000, 0xc710717b )
 
-	ROM_REGION(0x10000)     /* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sound CPU */
 	ROM_LOAD( "joust.snd",    0xf000, 0x1000, 0xf1835bdd )
 ROM_END
 
 
 ROM_START( joustr )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "joust.wg1",    0x0000, 0x1000, 0xfe41b2af )
 	ROM_LOAD( "joust.wg2",    0x1000, 0x1000, 0x501c143c )
 	ROM_LOAD( "joust.wg3",    0x2000, 0x1000, 0x43f7161d )
@@ -2195,13 +2183,13 @@ ROM_START( joustr )
 	ROM_LOAD( "joust.srb",    0xe000, 0x1000, 0xab11bcf9 )
 	ROM_LOAD( "joust.src",    0xf000, 0x1000, 0xea14574b )
 
-	ROM_REGION(0x10000)     /* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sound CPU */
 	ROM_LOAD( "joust.snd",    0xf000, 0x1000, 0xf1835bdd )
 ROM_END
 
 
 ROM_START( robotron )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "robotron.sb1", 0x0000, 0x1000, 0x66c7d3ef )
 	ROM_LOAD( "robotron.sb2", 0x1000, 0x1000, 0x5bc6c614 )
 	ROM_LOAD( "robotron.sb3", 0x2000, 0x1000, 0xe99a82be )
@@ -2215,13 +2203,13 @@ ROM_START( robotron )
 	ROM_LOAD( "robotron.sbb", 0xe000, 0x1000, 0x7e3c1b87 )
 	ROM_LOAD( "robotron.sbc", 0xf000, 0x1000, 0x645d543e )
 
-	ROM_REGION(0x10000)     /* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sound CPU */
 	ROM_LOAD( "robotron.snd", 0xf000, 0x1000, 0xc56c1d28 )
 ROM_END
 
 
 ROM_START( robotryo )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "robotron.sb1", 0x0000, 0x1000, 0x66c7d3ef )
 	ROM_LOAD( "robotron.sb2", 0x1000, 0x1000, 0x5bc6c614 )
 	ROM_LOAD( "robotron.yo3", 0x2000, 0x1000, 0x67a369bc )
@@ -2235,13 +2223,13 @@ ROM_START( robotryo )
 	ROM_LOAD( "robotron.yob", 0xe000, 0x1000, 0x2afc5e7f )
 	ROM_LOAD( "robotron.yoc", 0xf000, 0x1000, 0x45da9202 )
 
-	ROM_REGION(0x10000)     /* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sound CPU */
 	ROM_LOAD( "robotron.snd", 0xf000, 0x1000, 0xc56c1d28 )
 ROM_END
 
 
 ROM_START( bubbles )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "bubbles.1b",   0x0000, 0x1000, 0x8234f55c )
 	ROM_LOAD( "bubbles.2b",   0x1000, 0x1000, 0x4a188d6a )
 	ROM_LOAD( "bubbles.3b",   0x2000, 0x1000, 0x7728f07f )
@@ -2255,13 +2243,13 @@ ROM_START( bubbles )
 	ROM_LOAD( "bubbles.11b",  0xe000, 0x1000, 0x5a5b572f )
 	ROM_LOAD( "bubbles.12b",  0xf000, 0x1000, 0xce22d2e2 )
 
-	ROM_REGION(0x10000)     /* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sound CPU */
 	ROM_LOAD( "bubbles.snd",  0xf000, 0x1000, 0x689ce2aa )
 ROM_END
 
 
 ROM_START( bubblesr )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "bubblesr.1b",  0x0000, 0x1000, 0xdda4e782 )
 	ROM_LOAD( "bubblesr.2b",  0x1000, 0x1000, 0x3c8fa7f5 )
 	ROM_LOAD( "bubblesr.3b",  0x2000, 0x1000, 0xf869bb9c )
@@ -2275,13 +2263,13 @@ ROM_START( bubblesr )
 	ROM_LOAD( "bubblesr.11b", 0xe000, 0x1000, 0x096af43e )
 	ROM_LOAD( "bubblesr.12b", 0xf000, 0x1000, 0x5c1244ef )
 
-	ROM_REGION(0x10000)     /* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sound CPU */
 	ROM_LOAD( "bubbles.snd",  0xf000, 0x1000, 0x689ce2aa )
 ROM_END
 
 
 ROM_START( splat )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "splat.01",     0x0000, 0x1000, 0x1cf26e48 )
 	ROM_LOAD( "splat.02",     0x1000, 0x1000, 0xac0d4276 )
 	ROM_LOAD( "splat.03",     0x2000, 0x1000, 0x74873e59 )
@@ -2295,13 +2283,13 @@ ROM_START( splat )
 	ROM_LOAD( "splat.11",     0xe000, 0x1000, 0xca8cde95 )
 	ROM_LOAD( "splat.12",     0xf000, 0x1000, 0x5bee3e60 )
 
-	ROM_REGION(0x10000)     /* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sound CPU */
 	ROM_LOAD( "splat.snd",    0xf000, 0x1000, 0xa878d5f3 )
 ROM_END
 
 
 ROM_START( sinistar )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "sinistar.01",  0x0000, 0x1000, 0xf6f3a22c )
 	ROM_LOAD( "sinistar.02",  0x1000, 0x1000, 0xcab3185c )
 	ROM_LOAD( "sinistar.03",  0x2000, 0x1000, 0x1ce1b3cc )
@@ -2314,7 +2302,7 @@ ROM_START( sinistar )
 	ROM_LOAD( "sinistar.10",  0xe000, 0x1000, 0x3d670417 )
 	ROM_LOAD( "sinistar.11",  0xf000, 0x1000, 0x3162bc50 )
 
-	ROM_REGION(0x10000)     /* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sound CPU */
 	ROM_LOAD( "speech.ic7",   0xb000, 0x1000, 0xe1019568 )
 	ROM_LOAD( "speech.ic5",   0xc000, 0x1000, 0xcf3b5ffd )
 	ROM_LOAD( "speech.ic6",   0xd000, 0x1000, 0xff8d2645 )
@@ -2324,7 +2312,7 @@ ROM_END
 
 
 ROM_START( sinista1 )
-	ROM_REGION(0x10000) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "sinrev1.01",   0x0000, 0x1000, 0x3810d7b8 )
 	ROM_LOAD( "sinistar.02",  0x1000, 0x1000, 0xcab3185c )
 	ROM_LOAD( "sinrev1.03",   0x2000, 0x1000, 0x7c984ca9 )
@@ -2337,7 +2325,7 @@ ROM_START( sinista1 )
 	ROM_LOAD( "sinrev1.10",   0xe000, 0x1000, 0xea87a53f )
 	ROM_LOAD( "sinrev1.11",   0xf000, 0x1000, 0x88d36e80 )
 
-	ROM_REGION(0x10000) /* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
 	ROM_LOAD( "speech.ic7",   0xb000, 0x1000, 0xe1019568 )
 	ROM_LOAD( "speech.ic5",   0xc000, 0x1000, 0xcf3b5ffd )
 	ROM_LOAD( "speech.ic6",   0xd000, 0x1000, 0xff8d2645 )
@@ -2347,7 +2335,7 @@ ROM_END
 
 
 ROM_START( sinista2 )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "sinistar.01",  0x0000, 0x1000, 0xf6f3a22c )
 	ROM_LOAD( "sinistar.02",  0x1000, 0x1000, 0xcab3185c )
 	ROM_LOAD( "sinistar.03",  0x2000, 0x1000, 0x1ce1b3cc )
@@ -2360,7 +2348,7 @@ ROM_START( sinista2 )
 	ROM_LOAD( "sinistar.10",  0xe000, 0x1000, 0x3d670417 )
 	ROM_LOAD( "sinrev2.11",   0xf000, 0x1000, 0x792c8b00 )
 
-	ROM_REGION(0x10000) /* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
 	ROM_LOAD( "speech.ic7",   0xb000, 0x1000, 0xe1019568 )
 	ROM_LOAD( "speech.ic5",   0xc000, 0x1000, 0xcf3b5ffd )
 	ROM_LOAD( "speech.ic6",   0xd000, 0x1000, 0xff8d2645 )
@@ -2370,7 +2358,7 @@ ROM_END
 
 
 ROM_START( lottofun )
-	ROM_REGION(0x10000) 	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) 	/* 64k for code */
 	ROM_LOAD( "vl4e.dat",     0x0000, 0x1000, 0x5e9af236 )
 	ROM_LOAD( "vl4c.dat",     0x1000, 0x1000, 0x4b134ae2 )
 	ROM_LOAD( "vl4a.dat",     0x2000, 0x1000, 0xb2f1f95a )
@@ -2384,13 +2372,13 @@ ROM_START( lottofun )
 	ROM_LOAD( "vl7c.dat",     0xe000, 0x1000, 0x9a496519 )
 	ROM_LOAD( "vl7e.dat",     0xf000, 0x1000, 0x032cab4b )
 
-	ROM_REGION(0x10000) 	/* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) 	/* 64k for the sound CPU */
 	ROM_LOAD( "vl2532.snd",   0xf000, 0x1000, 0x214b8a04 )
 ROM_END
 
 
 ROM_START( blaster )
-	ROM_REGION(0x3c000)
+	ROM_REGIONX( 0x3c000, REGION_CPU1 )
 	ROM_LOAD( "blaster.11",   0x04000, 0x2000, 0x6371e62f )
 	ROM_LOAD( "blaster.12",   0x06000, 0x2000, 0x9804faac )
 	ROM_LOAD( "blaster.17",   0x08000, 0x1000, 0xbf96182f )
@@ -2410,7 +2398,7 @@ ROM_START( blaster )
 	ROM_LOAD( "blaster.4",    0x34000, 0x4000, 0xfc9d39fb )
 	ROM_LOAD( "blaster.3",    0x38000, 0x4000, 0x253690fb )
 
-	ROM_REGION(0x10000)     /* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sound CPU */
 	ROM_LOAD( "blaster.18",   0xf000, 0x1000, 0xc33a3145 )
 
 	ROM_REGION(0x0800)		/* color PROM data */
@@ -2419,7 +2407,7 @@ ROM_END
 
 
 ROM_START( tshoot )
-	ROM_REGION(0x48000)
+	ROM_REGIONX( 0x48000, REGION_CPU1 )
 	ROM_LOAD( "rom18.cpu", 0x0D000, 0x1000, 0xeffc33f1 )	/* IC55 */
 	ROM_LOAD( "rom2.cpu",  0x0E000, 0x1000, 0xfd982687 )	/* IC9	*/
 	ROM_LOAD( "rom3.cpu",  0x0F000, 0x1000, 0x9617054d )	/* IC10 */
@@ -2443,7 +2431,7 @@ ROM_START( tshoot )
 	ROM_LOAD( "rom12.cpu", 0x46000, 0x2000, 0x98ae7afa )	/* IC19 */
 
 	/* sound CPU */
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "rom1.cpu", 0xE000, 0x2000, 0x011a94a7 )		/* IC8	*/
 
 	ROM_REGION_DISPOSE(0xc000)
@@ -2454,7 +2442,7 @@ ROM_END
 
 
 ROM_START( joust2 )
-	ROM_REGION(0x48000)
+	ROM_REGIONX( 0x48000, REGION_CPU1 )
 	ROM_LOAD( "ic55_r1.cpu", 0x0D000, 0x1000, 0x08b0d5bd )	/* IC55 ROM02 */
 	ROM_LOAD( "ic09_r2.cpu", 0x0E000, 0x1000, 0x951175ce )	/* IC09 ROM03 */
 	ROM_LOAD( "ic10_r2.cpu", 0x0F000, 0x1000, 0xba6e0f6c )	/* IC10 ROM04 */
@@ -2479,7 +2467,7 @@ ROM_START( joust2 )
 	ROM_LOAD( "ic19_r1.cpu", 0x46000, 0x2000, 0xb9221ed1 )	/* IC19 ROM12 */
 
 	/* sound CPU */
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "ic08_r1.cpu", 0x0E000, 0x2000, 0x84517c3c )	/* IC08 ROM08 */
 
 	ROM_REGION_DISPOSE(0xc000)
@@ -2488,7 +2476,7 @@ ROM_START( joust2 )
 	ROM_LOAD( "ic41_r1.vid", 0x08000, 0x4000, 0xc41e3daa )	/* IC41 ROM22 */
 
 	/* sound board */
-	ROM_REGION(0x70000)
+	ROM_REGIONX( 0x70000, REGION_CPU3 )
 	ROM_LOAD( "u04_r1.snd", 0x10000, 0x8000, 0x3af6b47d )	/* IC04 ROM23 */
 	ROM_LOAD( "u19_r1.snd", 0x30000, 0x8000, 0xe7f9ed2e )	/* IC19 ROM24 */
 	ROM_LOAD( "u20_r1.snd", 0x50000, 0x8000, 0xc85b29f7 )	/* IC20 ROM25 */
@@ -2496,7 +2484,7 @@ ROM_END
 
 
 ROM_START( mysticm )
-	ROM_REGION(0x48000)
+	ROM_REGIONX( 0x48000, REGION_CPU1 )
 	ROM_LOAD( "mm02_2.a09", 0x0E000, 0x1000, 0x3a776ea8 )	/* IC9	*/
 	ROM_LOAD( "mm03_2.a10", 0x0F000, 0x1000, 0x6e247c75 )	/* IC10 */
 
@@ -2520,7 +2508,7 @@ ROM_START( mysticm )
 	ROM_LOAD( "mm12_1.a19", 0x46000, 0x2000, 0xa1f04bf0 )	/* IC19 */
 
 	/* sound CPU */
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "mm01_1.a08", 0x0E000, 0x2000, 0x65339512 )	/* IC8	*/
 
 	ROM_REGION_DISPOSE(0xc000)
@@ -2531,7 +2519,7 @@ ROM_END
 
 
 ROM_START( inferno )
-	ROM_REGION(0x48000)
+	ROM_REGIONX( 0x48000, REGION_CPU1 )
 	ROM_LOAD( "ic9.inf", 0x0E000, 0x1000, 0x1a013185 )		/* IC9	*/
 	ROM_LOAD( "ic10.inf", 0x0F000, 0x1000, 0xdbf64a36 ) 	/* IC10 */
 
@@ -2551,7 +2539,7 @@ ROM_START( inferno )
 	ROM_LOAD( "ic19.inf", 0x46000, 0x2000, 0xade7645a ) 	/* IC19 */
 
 	/* sound CPU */
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "ic8.inf", 0x0E000, 0x2000, 0x4e3123b8 )		/* IC8	*/
 
 	ROM_REGION_DISPOSE(0xc000)

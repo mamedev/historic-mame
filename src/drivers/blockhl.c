@@ -227,14 +227,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_KONAMI,		/* Konami custom 052526 */
 			3000000,		/* ? */
-			0,
 			readmem,writemem,0,0,
             blockhl_interrupt,1
         },
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,		/* ? */
-			3,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
 		}
@@ -273,7 +271,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( quarth )
-	ROM_REGION( 0x18800 ) /* code + banked roms + space for banked RAM */
+	ROM_REGIONX( 0x18800, REGION_CPU1 ) /* code + banked roms + space for banked RAM */
 	ROM_LOAD( "973j02.e21", 0x10000, 0x08000, 0x27a90118 )
 	ROM_CONTINUE(           0x08000, 0x08000 )
 
@@ -289,10 +287,10 @@ ROM_START( quarth )
 	ROM_LOAD_GFX_EVEN( "973e04.k7",  0x10000, 0x08000, 0xd70f4a2c )
 	ROM_LOAD_GFX_ODD ( "973e03.k4",  0x10000, 0x08000, 0x2c5a4b4b )
 
-	ROM_REGION( 0x10000 ) /* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
 	ROM_LOAD( "973d01.g6",  0x0000, 0x8000, 0xeeee9d92 )
 
-	ROM_REGION(0x0100)	/* PROMs */
+	ROM_REGIONX( 0x0100, REGION_PROMS )	/* PROMs */
 	ROM_LOAD( "973a11.h10", 0x0000, 0x0100, 0x46d28fe9 )	/* priority encoder (not used) */
 ROM_END
 
@@ -304,7 +302,7 @@ ROM_END
 
 static void blockhl_banking( int lines )
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int offs;
 
 	/* bits 0-1 = ROM bank */
@@ -330,7 +328,7 @@ if (errorlog && (lines & 0x84) != 0x80) fprintf(errorlog,"%04x: setlines %02x\n"
 
 static void blockhl_init_machine( void )
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	konami_cpu_setlines_callback = blockhl_banking;
 

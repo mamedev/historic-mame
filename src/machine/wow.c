@@ -155,7 +155,7 @@ int gorf_interrupt(void)
 int gorf_timer_r(int offset)
 {
 	static int Skip=0;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((RAM[0x5A93]==160) || (RAM[0x5A93]==4)) 	/* INVADERS AND    */

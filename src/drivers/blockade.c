@@ -113,8 +113,7 @@ void comotion_init(void)
 
 int blockade_interrupt(void)
 {
-	/* release the cpu in case it's been halted */
-	timer_suspendcpu(0, 0);
+	timer_suspendcpu(0, 0, SUSPEND_ANY_REASON);
 
 	if ((input_port_0_r(0) & 0x80) == 0)
 	{
@@ -488,7 +487,6 @@ static struct MachineDriver blockade_machine_driver =
         {
             CPU_8080,
             2079000,
-            0,
             readmem,writemem,readport,writeport,
             blockade_interrupt,1
         },
@@ -526,7 +524,6 @@ static struct MachineDriver comotion_machine_driver =
         {
             CPU_8080,
             2079000,
-            0,
             readmem,writemem,readport,writeport,
             blockade_interrupt,1
         },
@@ -564,7 +561,6 @@ static struct MachineDriver blasto_machine_driver =
         {
             CPU_8080,
             2079000,
-            0,
             readmem,writemem,readport,writeport,
             blockade_interrupt,1
         },
@@ -602,7 +598,6 @@ static struct MachineDriver hustle_machine_driver =
         {
             CPU_8080,
             2079000,
-            0,
             readmem,writemem,readport,writeport,
             blockade_interrupt,1
         },
@@ -640,7 +635,7 @@ static struct MachineDriver hustle_machine_driver =
 ***************************************************************************/
 
 ROM_START( blockade )
-    ROM_REGION(0x10000) /* 64k for code */
+    ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
     /* Note: These are being loaded into a bogus location, */
     /*       They are nibble wide rom images which will be */
     /*       merged and loaded into the proper place by    */
@@ -654,7 +649,7 @@ ROM_START( blockade )
 ROM_END
 
 ROM_START( comotion )
-    ROM_REGION(0x10000) /* 64k for code */
+    ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
     /* Note: These are being loaded into a bogus location, */
     /*       They are nibble wide rom images which will be */
     /*       merged and loaded into the proper place by    */
@@ -670,7 +665,7 @@ ROM_START( comotion )
 ROM_END
 
 ROM_START( blasto )
-    ROM_REGION(0x10000) /* 64k for code */
+    ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
     /* Note: These are being loaded into a bogus location, */
     /*       They are nibble wide rom images which will be */
     /*       merged and loaded into the proper place by    */
@@ -686,7 +681,7 @@ ROM_START( blasto )
 ROM_END
 
 ROM_START( hustle )
-    ROM_REGION(0x10000) /* 64k for code */
+    ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
     /* Note: These are being loaded into a bogus location, */
     /*       They are nibble wide rom images which will be */
     /*       merged and loaded into the proper place by    */
@@ -705,7 +700,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score has already been initialized */
     if (memcmp(&RAM[0xff3a],"\x30\x30\x30",3) == 0)
@@ -728,7 +723,7 @@ static int hiload(void)
 static void hisave(void)
 {
     void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

@@ -157,7 +157,7 @@ static unsigned char *taitof2_ram; /* used for high score save */
 
 static void bankswitch_w (int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[2];
+	unsigned char *RAM = memory_region(2);
 	int banknum = (data - 1) & 3;
 
 	cpu_setbank (2, &RAM [0x10000 + (banknum * 0x4000)]);
@@ -903,14 +903,12 @@ static struct MachineDriver liquidk_machine_driver =
 		{
 			CPU_M68000,
 			12000000,	/* 12 MHz ? */
-			0,
 			liquidk_readmem, liquidk_writemem, 0, 0,
 			liquidk_interrupt, 1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 MHz ??? */
-			2,
 			sound_readmem, sound_writemem, 0, 0,
 			ignore_interrupt, 0	/* IRQs are triggered by the YM2610 */
 		}
@@ -949,14 +947,12 @@ static struct MachineDriver finalb_machine_driver =
 		{
 			CPU_M68000,
 			12000000,	/* 12 MHz ??? */
-			0,
 			liquidk_readmem, liquidk_writemem, 0, 0,
 			liquidk_interrupt, 1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 MHz ??? */
-			2,
 			sound_readmem, sound_writemem, 0, 0,
 			ignore_interrupt, 0	/* IRQs are triggered by the YM2610 */
 		}
@@ -995,14 +991,12 @@ static struct MachineDriver growl_machine_driver =
 		{
 			CPU_M68000,
 			12000000,	/* 12 MHz ??? */
-			0,
 			growl_readmem, growl_writemem, 0, 0,
 			liquidk_interrupt, 1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 MHz ??? */
-			2,
 			sound_readmem, sound_writemem, 0, 0,
 			ignore_interrupt, 0	/* IRQs are triggered by the YM2610 */
 		}
@@ -1041,14 +1035,12 @@ static struct MachineDriver megab_machine_driver =
 		{
 			CPU_M68000,
 			12000000,	/* 12 MHz ??? */
-			0,
 			megab_readmem, megab_writemem, 0, 0,
 			liquidk_interrupt, 1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 MHz ??? */
-			2,
 			sound_readmem, sound_writemem, 0, 0,
 			ignore_interrupt, 0	/* IRQs are triggered by the YM2610 */
 		}
@@ -1089,7 +1081,7 @@ static struct MachineDriver megab_machine_driver =
 ***************************************************************************/
 
 ROM_START( liquidk )
-	ROM_REGION(0x80000)     /* 512k for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )     /* 512k for 68000 code */
 	ROM_LOAD_EVEN( "lq09.bin",  0x00000, 0x20000, 0x6ae09eb9 )
 	ROM_LOAD_ODD ( "lq11.bin",  0x00000, 0x20000, 0x42d2be6e )
 	ROM_LOAD_EVEN( "lq10.bin",  0x40000, 0x20000, 0x50bef2e0 )
@@ -1100,7 +1092,7 @@ ROM_START( liquidk )
 	ROM_LOAD( "lk_obj0.bin", 0x100000, 0x080000, 0x67cc3163 )
 	ROM_LOAD( "lk_obj1.bin", 0x180000, 0x080000, 0xd2400710 )
 
-	ROM_REGION(0x1c000)      /* sound cpu */
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )      /* sound cpu */
 	ROM_LOAD( "lq08.bin",    0x00000, 0x04000, 0x413c310c )
 	ROM_CONTINUE(            0x10000, 0x0c000 ) /* banked stuff */
 
@@ -1109,7 +1101,7 @@ ROM_START( liquidk )
 ROM_END
 
 ROM_START( liquidku )
-	ROM_REGION(0x80000)     /* 512k for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )     /* 512k for 68000 code */
 	ROM_LOAD_EVEN( "lq09.bin",  0x00000, 0x20000, 0x6ae09eb9 )
 	ROM_LOAD_ODD ( "lq11.bin",  0x00000, 0x20000, 0x42d2be6e )
 	ROM_LOAD_EVEN( "lq10.bin",  0x40000, 0x20000, 0x50bef2e0 )
@@ -1120,7 +1112,7 @@ ROM_START( liquidku )
 	ROM_LOAD( "lk_obj0.bin", 0x100000, 0x080000, 0x67cc3163 )
 	ROM_LOAD( "lk_obj1.bin", 0x180000, 0x080000, 0xd2400710 )
 
-	ROM_REGION(0x1c000)      /* sound cpu */
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )      /* sound cpu */
 	ROM_LOAD( "lq08.bin",    0x00000, 0x04000, 0x413c310c )
 	ROM_CONTINUE(            0x10000, 0x0c000 ) /* banked stuff */
 
@@ -1129,7 +1121,7 @@ ROM_START( liquidku )
 ROM_END
 
 ROM_START( mizubaku )
-	ROM_REGION(0x80000)     /* 512k for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )     /* 512k for 68000 code */
 	ROM_LOAD_EVEN( "lq09.bin",  0x00000, 0x20000, 0x6ae09eb9 )
 	ROM_LOAD_ODD ( "lq11.bin",  0x00000, 0x20000, 0x42d2be6e )
 	ROM_LOAD_EVEN( "lq10.bin",  0x40000, 0x20000, 0x50bef2e0 )
@@ -1140,7 +1132,7 @@ ROM_START( mizubaku )
 	ROM_LOAD( "lk_obj0.bin", 0x100000, 0x080000, 0x67cc3163 )
 	ROM_LOAD( "lk_obj1.bin", 0x180000, 0x080000, 0xd2400710 )
 
-	ROM_REGION(0x1c000)      /* sound cpu */
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )      /* sound cpu */
 	ROM_LOAD( "lq08.bin",    0x00000, 0x04000, 0x413c310c )
 	ROM_CONTINUE(            0x10000, 0x0c000 ) /* banked stuff */
 
@@ -1253,7 +1245,7 @@ struct GameDriver driver_mizubaku =
 };
 
 ROM_START( finalb )
-	ROM_REGION(0x40000)     /* 256k for 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )     /* 256k for 68000 code */
 	ROM_LOAD_EVEN( "fb_09.rom",  0x00000, 0x20000, 0x632f1ecd )
 	ROM_LOAD_ODD ( "fb_17.rom",  0x00000, 0x20000, 0xe91b2ec9 )
 //	ROM_LOAD_EVEN( "fb_m01.rom", 0x40000, 0x80000, 0xb63003c4 ) /* palette? */
@@ -1266,7 +1258,7 @@ ROM_START( finalb )
 	ROM_LOAD( "fb_m04.rom", 0x180000, 0x080000, 0x6346f98e ) /* sprites */
 //	ROM_LOAD( "fb_m05.rom", 0x000000, 0x080000, 0xaa90b93a ) /* palette? */
 
-	ROM_REGION(0x1c000)      /* sound cpu */
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )      /* sound cpu */
 	ROM_LOAD( "fb_10.rom",   0x00000, 0x04000, 0xa38aaaed )
 	ROM_CONTINUE(            0x10000, 0x0c000 ) /* banked stuff */
 
@@ -1303,7 +1295,7 @@ struct GameDriver driver_finalb =
 };
 
 ROM_START( growl )
-	ROM_REGION(0x100000)     /* 1024k for 68000 code */
+	ROM_REGIONX( 0x100000, REGION_CPU1 )     /* 1024k for 68000 code */
 	ROM_LOAD_EVEN( "growl_10.rom",  0x00000, 0x40000, 0xca81a20b )
 	ROM_LOAD_ODD ( "growl_08.rom",  0x00000, 0x40000, 0xaa35dd9e )
 	ROM_LOAD_EVEN( "growl_11.rom",  0x80000, 0x40000, 0xee3bd6d5 )
@@ -1314,7 +1306,7 @@ ROM_START( growl )
 	ROM_LOAD( "growl_03.rom", 0x100000, 0x100000, 0x1a0d8951 ) /* sprites */
 	ROM_LOAD( "growl_02.rom", 0x200000, 0x100000, 0x15a21506 ) /* sprites */
 
-	ROM_REGION(0x1c000)      /* sound cpu */
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )      /* sound cpu */
 	ROM_LOAD( "growl_12.rom", 0x00000, 0x04000, 0xbb6ed668 )
 	ROM_CONTINUE(             0x10000, 0x0c000 ) /* banked stuff */
 
@@ -1326,7 +1318,7 @@ ROM_START( growl )
 ROM_END
 
 ROM_START( growlu )
-	ROM_REGION(0x100000)     /* 1024k for 68000 code */
+	ROM_REGIONX( 0x100000, REGION_CPU1 )     /* 1024k for 68000 code */
 	ROM_LOAD_EVEN( "growl_10.rom",  0x00000, 0x40000, 0xca81a20b )
 	ROM_LOAD_ODD ( "growl_08.rom",  0x00000, 0x40000, 0xaa35dd9e )
 	ROM_LOAD_EVEN( "growl_11.rom",  0x80000, 0x40000, 0xee3bd6d5 )
@@ -1337,7 +1329,7 @@ ROM_START( growlu )
 	ROM_LOAD( "growl_03.rom", 0x100000, 0x100000, 0x1a0d8951 ) /* sprites */
 	ROM_LOAD( "growl_02.rom", 0x200000, 0x100000, 0x15a21506 ) /* sprites */
 
-	ROM_REGION(0x1c000)      /* sound cpu */
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )      /* sound cpu */
 	ROM_LOAD( "growl_12.rom", 0x00000, 0x04000, 0xbb6ed668 )
 	ROM_CONTINUE(             0x10000, 0x0c000 ) /* banked stuff */
 
@@ -1349,7 +1341,7 @@ ROM_START( growlu )
 ROM_END
 
 ROM_START( runark )
-	ROM_REGION(0x100000)     /* 1024k for 68000 code */
+	ROM_REGIONX( 0x100000, REGION_CPU1 )     /* 1024k for 68000 code */
 	ROM_LOAD_EVEN( "growl_10.rom",  0x00000, 0x40000, 0xca81a20b )
 	ROM_LOAD_ODD ( "growl_08.rom",  0x00000, 0x40000, 0xaa35dd9e )
 	ROM_LOAD_EVEN( "growl_11.rom",  0x80000, 0x40000, 0xee3bd6d5 )
@@ -1360,7 +1352,7 @@ ROM_START( runark )
 	ROM_LOAD( "growl_03.rom", 0x100000, 0x100000, 0x1a0d8951 ) /* sprites */
 	ROM_LOAD( "growl_02.rom", 0x200000, 0x100000, 0x15a21506 ) /* sprites */
 
-	ROM_REGION(0x1c000)      /* sound cpu */
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )      /* sound cpu */
 	ROM_LOAD( "growl_12.rom", 0x00000, 0x04000, 0xbb6ed668 )
 	ROM_CONTINUE(             0x10000, 0x0c000 ) /* banked stuff */
 
@@ -1478,7 +1470,7 @@ struct GameDriver driver_runark =
 
 
 ROM_START( megab )
-	ROM_REGION(0x100000)     /* 256k for 68000 code */
+	ROM_REGIONX( 0x100000, REGION_CPU1 )     /* 256k for 68000 code */
 	ROM_LOAD_EVEN( "c11-07",  0x00000, 0x20000, 0x11d228b6 )
 	ROM_LOAD_ODD ( "c11-08",  0x00000, 0x20000, 0xa79d4dca )
 
@@ -1489,7 +1481,7 @@ ROM_START( megab )
 	ROM_LOAD( "c11-04", 0x180000, 0x080000, 0x663f33cc )
 	ROM_LOAD( "c11-05", 0x200000, 0x080000, 0x733e6d8e )
 
-	ROM_REGION(0x1c000)      /* sound cpu */
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )      /* sound cpu */
 	ROM_LOAD( "c11-12", 0x00000, 0x04000, 0xb11094f1 )
 	ROM_CONTINUE(       0x10000, 0x0c000 ) /* banked stuff */
 

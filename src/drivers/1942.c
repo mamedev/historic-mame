@@ -368,7 +368,7 @@ void c1942_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void c1942_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	bankaddress = 0x10000 + (data & 0x03) * 0x4000;
@@ -585,14 +585,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* 4 Mhz (?) */
-			0,
 			readmem,writemem,0,0,
 			c1942_interrupt,2
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3000000,	/* 3 Mhz ??? */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
 		}
@@ -632,7 +630,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( 1942 )
-	ROM_REGION(0x1c000)	/* 64k for code + 3*16k for the banked ROMs images */
+	ROM_REGIONX( 0x1c000, REGION_CPU1 )	/* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "1-n3a.bin",    0x00000, 0x4000, 0x40201bab )
 	ROM_LOAD( "1-n4.bin",     0x04000, 0x4000, 0xa60ac644 )
 	ROM_LOAD( "1-n5.bin",     0x10000, 0x4000, 0x835f7b24 )
@@ -660,12 +658,12 @@ ROM_START( 1942 )
 	ROM_LOAD( "06d_sb-4.bin", 0x0400, 0x0100, 0x4858968d )	/* tile lookup table */
 	ROM_LOAD( "03k_sb-8.bin", 0x0500, 0x0100, 0xf6fad943 )	/* sprite lookup table */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "1-c11.bin",    0x0000, 0x4000, 0xbd87f06b )
 ROM_END
 
 ROM_START( 1942a )
-	ROM_REGION(0x1c000)	/* 64k for code + 3*16k for the banked ROMs images */
+	ROM_REGIONX( 0x1c000, REGION_CPU1 )	/* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "1-n3.bin",     0x00000, 0x4000, 0x612975f2 )
 	ROM_LOAD( "1-n4.bin",     0x04000, 0x4000, 0xa60ac644 )
 	ROM_LOAD( "1-n5.bin",     0x10000, 0x4000, 0x835f7b24 )
@@ -693,12 +691,12 @@ ROM_START( 1942a )
 	ROM_LOAD( "06d_sb-4.bin", 0x0400, 0x0100, 0x4858968d )	/* tile lookup table */
 	ROM_LOAD( "03k_sb-8.bin", 0x0500, 0x0100, 0xf6fad943 )	/* sprite lookup table */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "1-c11.bin",    0x0000, 0x4000, 0xbd87f06b )
 ROM_END
 
 ROM_START( 1942b )
-	ROM_REGION(0x1c000)	/* 64k for code + 3*16k for the banked ROMs images */
+	ROM_REGIONX( 0x1c000, REGION_CPU1 )	/* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "srb-03.n3",    0x00000, 0x4000, 0xd9dafcc3 )
 	ROM_LOAD( "srb-04.n4",    0x04000, 0x4000, 0xda0cf924 )
 	ROM_LOAD( "srb-05.n5",    0x10000, 0x4000, 0xd102911c )
@@ -726,7 +724,7 @@ ROM_START( 1942b )
 	ROM_LOAD( "06d_sb-4.bin", 0x0400, 0x0100, 0x4858968d )	/* tile lookup table */
 	ROM_LOAD( "03k_sb-8.bin", 0x0500, 0x0100, 0xf6fad943 )	/* sprite lookup table */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "1-c11.bin",    0x0000, 0x4000, 0xbd87f06b )
 ROM_END
 
@@ -734,7 +732,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -781,7 +779,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

@@ -101,7 +101,7 @@ void stfight_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 static void get_fg_tile_info( int col, int row )
 {
-	unsigned char   *fgMap = Machine->memory_region[4];
+	unsigned char   *fgMap = memory_region(4);
 
     int             tile_index;
     int             attr;
@@ -125,7 +125,7 @@ static void get_fg_tile_info( int col, int row )
 
 static void get_bg_tile_info(int col,int row)
 {
-	unsigned char   *bgMap = Machine->memory_region[6];
+	unsigned char   *bgMap = memory_region(6);
 
     int             tile_index;
     int             attr;

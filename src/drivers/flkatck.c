@@ -30,7 +30,7 @@ extern int flkatck_irq_enabled;
 
 static void flkatck_init_machine( void )
 {
-	unsigned char *RAM = Machine->memory_region[3];
+	unsigned char *RAM = memory_region(3);
 	int bank_A, bank_B;
 
 	bank_A = 0x20000 * 0;
@@ -48,7 +48,7 @@ static int flkatck_interrupt( void )
 
 static void flkatck_bankswitch_w(int offset,int data)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress = 0;
 
 	/* bits 3-4: coin counters */
@@ -300,14 +300,12 @@ static struct MachineDriver flkatck_machine_driver =
 		{
 			CPU_HD6309,	/* HD63C09EP */
 			3000000,	/* 24/8 MHz*/
-			0,
 			flkatck_readmem,flkatck_writemem,0,0,
 			flkatck_interrupt,1
 		},
 		{
 			CPU_Z80,	/* NEC D780C-1 */
 			3579545,	/* 3.579545 MHz */
-			2,
 			flkatck_readmem_sound, flkatck_writemem_sound,0,0,
 			ignore_interrupt,0	/* IRQs triggered by the 6309 */
 		}
@@ -344,14 +342,14 @@ static struct MachineDriver flkatck_machine_driver =
 
 
 ROM_START( mx5000 )
-	ROM_REGION(0x18000)		/* 6309 code */
+	ROM_REGIONX( 0x18000, REGION_CPU1 )		/* 6309 code */
 	ROM_LOAD( "r01",          0x010000, 0x006000, 0x79b226fc )/* banked ROM */
 	ROM_CONTINUE(             0x006000, 0x00a000 )			/* fixed ROM */
 
     ROM_REGION_DISPOSE(0x080000) /* graphics (disposed after conversion) */
 	ROM_LOAD( "mask4m.bin",		0x000000, 0x080000, 0xff1d718b )/* tiles + sprites */
 
-	ROM_REGION(0x10000)		/* 64k for the SOUND CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for the SOUND CPU */
 	ROM_LOAD( "m02.bin",		0x000000, 0x008000, 0x7e11e6b9 )
 
 	ROM_REGION( 0x040000 )	/* 007232 data (chip 1) */
@@ -359,14 +357,14 @@ ROM_START( mx5000 )
 ROM_END
 
 ROM_START( flkatck )
-	ROM_REGION(0x18000)		/* 6309 code */
+	ROM_REGIONX( 0x18000, REGION_CPU1 )		/* 6309 code */
 	ROM_LOAD( "gx669_p1.16c", 0x010000, 0x006000, 0xc5cd2807 )/* banked ROM */
 	ROM_CONTINUE(             0x006000, 0x00a000 )			/* fixed ROM */
 
     ROM_REGION_DISPOSE(0x080000) /* graphics (disposed after conversion) */
 	ROM_LOAD( "mask4m.bin",		0x000000, 0x080000, 0xff1d718b )/* tiles + sprites */
 
-	ROM_REGION(0x10000)		/* 64k for the SOUND CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for the SOUND CPU */
 	ROM_LOAD( "m02.bin",		0x000000, 0x008000, 0x7e11e6b9 )
 
 	ROM_REGION( 0x040000 )	/* 007232 data (chip 1) */
@@ -379,7 +377,7 @@ ROM_END
 /****  RJF (Nov 23, 1999)  ****/
 static int flkatck_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
 	if ((memcmp(&RAM[0x3a00],"\x00\x66\x90",3) == 0) &&
@@ -411,7 +409,7 @@ static int flkatck_hiload(void)
 static void flkatck_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{

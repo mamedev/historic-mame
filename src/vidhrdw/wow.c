@@ -503,7 +503,7 @@ void gorf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
     int Sparkle=0;
     int SparkleLow=0;
     int SparkleHigh=0;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
   	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
@@ -561,7 +561,7 @@ void seawolf2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	extern int wow_controller2;
 
     int x,y,centre;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);

@@ -185,7 +185,7 @@ void dec8_scroll2_w(int offset, int data)
 void srdarwin_control_w(int offset, int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	switch (offset) {
     	case 0: /* Top 3 bits - bank switch, bottom 4 - scroll MSB */
@@ -203,7 +203,7 @@ void srdarwin_control_w(int offset, int data)
 void lastmiss_control_w(int offset, int data)
 {
 	int bankaddress;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* Bottom 4 bits - bank switch, Bits 4 & 5 - Scroll MSBs */
 	bankaddress = 0x10000 + (data & 0x0f) * 0x4000;

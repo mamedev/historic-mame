@@ -268,7 +268,7 @@ static void nvram_save(void)
 static int spang_nvram_load(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 	{
@@ -283,7 +283,7 @@ static int spang_nvram_load(void)
 static void spang_nvram_save(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -296,7 +296,7 @@ static void spang_nvram_save(void)
 static int block_nvram_load(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 	{
@@ -311,7 +311,7 @@ static int block_nvram_load(void)
 static void block_nvram_save(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -338,7 +338,7 @@ static void pang_bankswitch_w(int offset,int data)
 	if (data != olddata)
 	{
 		int bankaddress;
-		unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+		unsigned char *RAM = memory_region(REGION_CPU1);
 
 		bankaddress = 0x10000 + (data & 0x0f) * 0x4000;
 
@@ -1045,7 +1045,6 @@ static struct MachineDriver mgakuen_machine_driver =
 		{
 			CPU_Z80,
 			6000000,	/* ??? */
-			0,
 			mgakuen_readmem,mgakuen_writemem,readport,writeport,
 			interrupt,2	/* ??? one extra irq seems to be needed for music (see input5_r) */
 		},
@@ -1082,7 +1081,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			8000000,	/* Super Pang says 8MHZ ORIGINAL BOARD */
-			0,
 			readmem,writemem,readport,writeport,
 			interrupt,2	/* ??? one extra irq seems to be needed for music (see input5_r) */
 		},
@@ -1119,7 +1117,6 @@ static struct MachineDriver marukin_machine_driver =
 		{
 			CPU_Z80,
 			8000000,	/* Super Pang says 8MHZ ORIGINAL BOARD */
-			0,
 			readmem,writemem,readport,writeport,
 			interrupt,2	/* ??? one extra irq seems to be needed for music (see input5_r) */
 		},
@@ -1153,7 +1150,7 @@ static struct MachineDriver marukin_machine_driver =
 
 
 ROM_START( mgakuen )
-	ROM_REGION(0x50000)
+	ROM_REGIONX( 0x50000, REGION_CPU1 )
 	ROM_LOAD( "mg-1.1j",      0x00000, 0x08000, 0xbf02ea6b )
 	ROM_LOAD( "mg-2.1l",      0x10000, 0x20000, 0x64141b0c )
 
@@ -1165,12 +1162,12 @@ ROM_START( mgakuen )
 	ROM_LOAD( "mg-6.4l",      0x200000, 0x20000, 0x34594e62 )	/* sprites */
 	ROM_LOAD( "mg-7.6l",      0x220000, 0x20000, 0xf304c806 )
 
-	ROM_REGION(0x80000)	/* OKIM */
+	ROM_REGION( 0x80000 )	/* OKIM */
 	ROM_LOAD( "mg-5.1c",      0x00000, 0x80000, 0x170332f1 )	/* banked */
 ROM_END
 
 ROM_START( mgakuen2 )
-	ROM_REGION(0x50000)
+	ROM_REGIONX( 0x50000, REGION_CPU1 )
 	ROM_LOAD( "mg2-xf.1j",    0x00000, 0x08000, 0xc8165d2d )
 	ROM_LOAD( "mg2-y.1l",     0x10000, 0x20000, 0x75bbcc14 )
 	ROM_LOAD( "mg2-z.3l",     0x30000, 0x20000, 0xbfdba961 )
@@ -1183,12 +1180,12 @@ ROM_START( mgakuen2 )
 	ROM_LOAD( "mg2-f.4l",     0x200000, 0x20000, 0x3172c9fe )	/* sprites */
 	ROM_LOAD( "mg2-g.6l",     0x220000, 0x20000, 0x19b8b61c )
 
-	ROM_REGION(0x80000)	/* OKIM */
+	ROM_REGION( 0x80000 )	/* OKIM */
 	ROM_LOAD( "mg2-e.1c",     0x00000, 0x80000, 0x70fd0809 )	/* banked */
 ROM_END
 
 ROM_START( pkladies )
-	ROM_REGION(0x50000)
+	ROM_REGIONX( 0x50000, REGION_CPU1 )
 	ROM_LOAD( "pko-prg1.14f", 0x00000, 0x08000, 0x86585a94 )
 	ROM_LOAD( "pko-prg2.15f", 0x10000, 0x10000, 0x86cbe82d )
 
@@ -1200,13 +1197,13 @@ ROM_START( pkladies )
 	ROM_LOAD( "pko-chr1.2j",  0x200000, 0x20000, 0x31ce33cd )	/* sprites */
 	ROM_LOAD( "pko-chr2.3j",  0x220000, 0x20000, 0xad7e055f )
 
-	ROM_REGION(0x80000)	/* OKIM */
+	ROM_REGION( 0x80000 )	/* OKIM */
 	ROM_LOAD( "pko-voi1.2d",  0x00000, 0x20000, 0x07e0f531 )
 	ROM_LOAD( "pko-voi2.3d",  0x20000, 0x20000, 0x18398bf6 )
 ROM_END
 
 ROM_START( dokaben )
-	ROM_REGION(0x50000)
+	ROM_REGIONX( 0x50000, REGION_CPU1 )
 	ROM_LOAD( "db06.11h",     0x00000, 0x08000, 0x413e0886 )
 	ROM_LOAD( "db07.13h",     0x10000, 0x20000, 0x8bdcf49e )
 	ROM_LOAD( "db08.14h",     0x30000, 0x20000, 0x1643bdd9 )
@@ -1221,12 +1218,12 @@ ROM_START( dokaben )
 	ROM_LOAD( "db10.2k",      0x100000, 0x20000, 0x9e70f7ae )	/* sprites */
 	ROM_LOAD( "db09.1k",      0x120000, 0x20000, 0x2d9263f7 )
 
-	ROM_REGION(0x80000)	/* OKIM */
+	ROM_REGION( 0x80000 )	/* OKIM */
 	ROM_LOAD( "db01.1d",      0x00000, 0x20000, 0x62fa6b81 )
 ROM_END
 
 ROM_START( pang )
-	ROM_REGION(0x50000)
+	ROM_REGIONX( 0x50000, REGION_CPU1 )
 	ROM_LOAD( "pang6.bin",    0x00000, 0x08000, 0x68be52cd )
 	ROM_LOAD( "pang7.bin",    0x10000, 0x20000, 0x4a2e70f6 )
 
@@ -1240,12 +1237,12 @@ ROM_START( pang )
 	ROM_LOAD( "bb10.bin",     0x100000, 0x20000, 0xfdba4f6e )	/* sprites */
 	ROM_LOAD( "bb9.bin",      0x120000, 0x20000, 0x39f47a63 )
 
-	ROM_REGION(0x80000)	/* OKIM */
+	ROM_REGION( 0x80000 )	/* OKIM */
 	ROM_LOAD( "bb1.bin",      0x00000, 0x20000, 0xc52e5b8e )
 ROM_END
 
 ROM_START( pangb )
-	ROM_REGION(0x60000)
+	ROM_REGIONX( 0x60000, REGION_CPU1 )
 	ROM_LOAD( "pang_03.bin",  0x10000, 0x20000, 0x0c8477ae )   /* Decrypted data */
 	ROM_LOAD( "pang_02.bin",  0x30000, 0x20000, 0x3f15bb61 )   /* Decrypted op codes */
 	ROM_LOAD( "pang_04.bin",  0x50000, 0x10000, 0xf68f88a5 )   /* Decrypted opcode + data */
@@ -1260,13 +1257,13 @@ ROM_START( pangb )
 	ROM_LOAD( "bb10.bin",     0x100000, 0x20000, 0xfdba4f6e )	/* sprites */
 	ROM_LOAD( "bb9.bin",      0x120000, 0x20000, 0x39f47a63 )
 
-	ROM_REGION(0x80000)	/* OKIM */
+	ROM_REGION( 0x80000 )	/* OKIM */
 	ROM_LOAD( "bb1.bin",      0x00000, 0x20000, 0xc52e5b8e )
 ROM_END
 
 static void pangb_decode(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* this is a bootleg, the ROMs contain decrypted opcodes and data separately */
 	memcpy(ROM, RAM+0x50000, 0x8000);   /* OP codes */
@@ -1275,7 +1272,7 @@ static void pangb_decode(void)
 }
 
 ROM_START( bbros )
-	ROM_REGION(0x50000)
+	ROM_REGIONX( 0x50000, REGION_CPU1 )
 	ROM_LOAD( "bb6.bin",      0x00000, 0x08000, 0xa3041ca4 )
 	ROM_LOAD( "bb7.bin",      0x10000, 0x20000, 0x09231c68 )
 
@@ -1289,12 +1286,12 @@ ROM_START( bbros )
 	ROM_LOAD( "bb10.bin",     0x100000, 0x20000, 0xfdba4f6e )	/* sprites */
 	ROM_LOAD( "bb9.bin",      0x120000, 0x20000, 0x39f47a63 )
 
-	ROM_REGION(0x80000)	/* OKIM */
+	ROM_REGION( 0x80000 )	/* OKIM */
 	ROM_LOAD( "bb1.bin",      0x00000, 0x20000, 0xc52e5b8e )
 ROM_END
 
 ROM_START( pompingw )
-	ROM_REGION(0x50000)
+	ROM_REGIONX( 0x50000, REGION_CPU1 )
 	ROM_LOAD( "pwj_06.11h",   0x00000, 0x08000, 0x4a0a6426 )
 	ROM_LOAD( "pwj_07.13h",   0x10000, 0x20000, 0xa9402420 )
 
@@ -1308,12 +1305,12 @@ ROM_START( pompingw )
 	ROM_LOAD( "bb10.bin",     0x100000, 0x20000, 0xfdba4f6e )	/* sprites */
 	ROM_LOAD( "bb9.bin",      0x120000, 0x20000, 0x39f47a63 )
 
-	ROM_REGION(0x80000)	/* OKIM */
+	ROM_REGION( 0x80000 )	/* OKIM */
 	ROM_LOAD( "bb1.bin",      0x00000, 0x20000, 0xc52e5b8e )
 ROM_END
 
 ROM_START( cworld )
-	ROM_REGION(0x50000)
+	ROM_REGIONX( 0x50000, REGION_CPU1 )
 	ROM_LOAD( "cw05.bin",     0x00000, 0x08000, 0xd3c1723d )
 	ROM_LOAD( "cw06.bin",     0x10000, 0x20000, 0xd71ed4a3 )
 	ROM_LOAD( "cw07.bin",     0x30000, 0x20000, 0xd419ce08 )
@@ -1330,12 +1327,12 @@ ROM_START( cworld )
 	ROM_LOAD( "cw16.bin",     0x100000, 0x20000, 0xf90217d1 )	/* sprites */
 	ROM_LOAD( "cw17.bin",     0x120000, 0x20000, 0xc953c702 )
 
-	ROM_REGION(0x80000)	/* OKIM */
+	ROM_REGION( 0x80000 )	/* OKIM */
 	ROM_LOAD( "cw01.bin",     0x00000, 0x20000, 0xf4368f5b )
 ROM_END
 
 ROM_START( hatena )
-	ROM_REGION(0x50000)
+	ROM_REGIONX( 0x50000, REGION_CPU1 )
 	ROM_LOAD( "q2-05.rom",    0x00000, 0x08000, 0x66c9e1da )
 	ROM_LOAD( "q2-06.rom",    0x10000, 0x20000, 0x5fc39916 )
 	ROM_LOAD( "q2-07.rom",    0x30000, 0x20000, 0xec6d5e5e )
@@ -1352,12 +1349,12 @@ ROM_START( hatena )
 	ROM_LOAD( "q2-16.rom",    0x100000, 0x20000, 0xec19b2f0 )	/* sprites */
 	ROM_LOAD( "q2-17.rom",    0x120000, 0x20000, 0xecd69d92 )
 
-	ROM_REGION(0x80000)	/* OKIM */
+	ROM_REGION( 0x80000 )	/* OKIM */
 	ROM_LOAD( "q2-01.rom",    0x00000, 0x20000, 0x149e7a89 )
 ROM_END
 
 ROM_START( spang )
-	ROM_REGION(0x50000)
+	ROM_REGIONX( 0x50000, REGION_CPU1 )
 	ROM_LOAD( "spe_06.rom",   0x00000, 0x08000, 0x1af106fb )
 	ROM_LOAD( "spe_07.rom",   0x10000, 0x20000, 0x208b5f54 )
 	ROM_LOAD( "spe_08.rom",   0x30000, 0x20000, 0x2bc03ade )
@@ -1372,12 +1369,12 @@ ROM_START( spang )
 	ROM_LOAD( "spe_10.rom",   0x100000, 0x20000, 0xeedd0ade )	/* sprites */
 	ROM_LOAD( "spe_09.rom",   0x120000, 0x20000, 0x04b41b75 )
 
-	ROM_REGION(0x80000)	/* OKIM */
+	ROM_REGION( 0x80000 )	/* OKIM */
 	ROM_LOAD( "spe_01.rom",   0x00000, 0x20000, 0x2d19c133 )
 ROM_END
 
 ROM_START( sbbros )
-	ROM_REGION(0x50000)
+	ROM_REGIONX( 0x50000, REGION_CPU1 )
 	ROM_LOAD( "06.j12",       0x00000, 0x08000, 0x292eee6a )
 	ROM_LOAD( "07.j13",       0x10000, 0x20000, 0xf46b698d )
 	ROM_LOAD( "08.j14",       0x30000, 0x20000, 0xa75e7fbe )
@@ -1392,12 +1389,12 @@ ROM_START( sbbros )
 	ROM_LOAD( "10.l2",        0x100000, 0x20000, 0xd6675d8f )	/* sprites */
 	ROM_LOAD( "09.l1",        0x120000, 0x20000, 0x8f678bc8 )
 
-	ROM_REGION(0x80000)	/* OKIM */
+	ROM_REGION( 0x80000 )	/* OKIM */
 	ROM_LOAD( "01.d1",        0x00000, 0x20000, 0xb96ea126 )
 ROM_END
 
 ROM_START( marukin )
-	ROM_REGION(0x50000)
+	ROM_REGIONX( 0x50000, REGION_CPU1 )
 	ROM_LOAD( "mg3-01.9d",    0x00000, 0x08000, 0x04357973 )
 	ROM_LOAD( "mg3-02.10d",   0x10000, 0x20000, 0x50d08da0 )
 
@@ -1409,12 +1406,12 @@ ROM_START( marukin )
 	ROM_LOAD( "mg3-05.2g",    0x200000, 0x20000, 0x7a738d2d )	/* sprites */
 	ROM_LOAD( "mg3-04.1g",    0x220000, 0x20000, 0x56f30515 )
 
-	ROM_REGION(0x80000)	/* OKIM */
+	ROM_REGION( 0x80000 )	/* OKIM */
 	ROM_LOAD( "mg3-e.1d",     0x00000, 0x80000, 0x106c2fa9 )	/* banked */
 ROM_END
 
 ROM_START( qtono1 )
-	ROM_REGION(0x50000)
+	ROM_REGIONX( 0x50000, REGION_CPU1 )
 	ROM_LOAD( "q3-05.rom",    0x00000, 0x08000, 0x1dd0a344 )
 	ROM_LOAD( "q3-06.rom",    0x10000, 0x20000, 0xbd6a2110 )
 	ROM_LOAD( "q3-07.rom",    0x30000, 0x20000, 0x61e53c4f )
@@ -1431,12 +1428,12 @@ ROM_START( qtono1 )
 	ROM_LOAD( "q3-16.rom",    0x100000, 0x20000, 0x863d6836 )	/* sprites */
 	ROM_LOAD( "q3-17.rom",    0x120000, 0x20000, 0x459bf59c )
 
-	ROM_REGION(0x80000)	/* OKIM */
+	ROM_REGION( 0x80000 )	/* OKIM */
 	ROM_LOAD( "q3-01.rom",    0x00000, 0x20000, 0x6c1be591 )
 ROM_END
 
 ROM_START( qsangoku )
-	ROM_REGION(0x50000)
+	ROM_REGIONX( 0x50000, REGION_CPU1 )
 	ROM_LOAD( "q4-05c.rom",   0x00000, 0x08000, 0xe1d010b4 )
 	ROM_LOAD( "q4-06.rom",    0x10000, 0x20000, 0xa0301849 )
 	ROM_LOAD( "q4-07.rom",    0x30000, 0x20000, 0x2941ef5b )
@@ -1453,12 +1450,12 @@ ROM_START( qsangoku )
 	ROM_LOAD( "q4-16.rom",    0x100000, 0x20000, 0x77342320 )	/* sprites */
 	ROM_LOAD( "q4-17.rom",    0x120000, 0x20000, 0x1275c436 )
 
-	ROM_REGION(0x80000)	/* OKIM */
+	ROM_REGION( 0x80000 )	/* OKIM */
 	ROM_LOAD( "q4-01.rom",    0x00000, 0x20000, 0x5d0d07d8 )
 ROM_END
 
 ROM_START( block )
-	ROM_REGION(0x50000)
+	ROM_REGIONX( 0x50000, REGION_CPU1 )
 	ROM_LOAD( "ble_05.rom",   0x00000, 0x08000, 0xc12e7f4c )
 	ROM_LOAD( "ble_06.rom",   0x10000, 0x20000, 0xcdb13d55 )
 	ROM_LOAD( "ble_07.rom",   0x30000, 0x20000, 0x1d114f13 )
@@ -1475,12 +1472,12 @@ ROM_START( block )
 	ROM_LOAD( "bl_16.rom",    0x100000, 0x20000, 0xfadcaff7 )	/* sprites */
 	ROM_LOAD( "bl_17.rom",    0x120000, 0x20000, 0x5f8cab42 )
 
-	ROM_REGION(0x80000)	/* OKIM */
+	ROM_REGION( 0x80000 )	/* OKIM */
 	ROM_LOAD( "bl_01.rom",    0x00000, 0x20000, 0xc2ec2abb )
 ROM_END
 
 ROM_START( blockj )
-	ROM_REGION(0x50000)
+	ROM_REGIONX( 0x50000, REGION_CPU1 )
 	ROM_LOAD( "blj_05.rom",   0x00000, 0x08000, 0x3b55969a )
 	ROM_LOAD( "ble_06.rom",   0x10000, 0x20000, 0xcdb13d55 )
 	ROM_LOAD( "blj_07.rom",   0x30000, 0x20000, 0x1723883c )
@@ -1497,12 +1494,12 @@ ROM_START( blockj )
 	ROM_LOAD( "bl_16.rom",    0x100000, 0x20000, 0xfadcaff7 )	/* sprites */
 	ROM_LOAD( "bl_17.rom",    0x120000, 0x20000, 0x5f8cab42 )
 
-	ROM_REGION(0x80000)	/* OKIM */
+	ROM_REGION( 0x80000 )	/* OKIM */
 	ROM_LOAD( "bl_01.rom",    0x00000, 0x20000, 0xc2ec2abb )
 ROM_END
 
 ROM_START( blockbl )
-	ROM_REGION(0xa0000)
+	ROM_REGIONX( 0xa0000, REGION_CPU1 )
 	ROM_LOAD( "m6.l5",        0x30000, 0x20000, 0x5768d8eb )   /* Decrypted data */
 	ROM_LOAD( "m7.l6",        0x50000, 0x10000, 0x3b576fd9 )   /* Decrypted opcode + data */
 	ROM_LOAD( "m5.l3",        0x60000, 0x40000, 0x7c988bb7 )   /* Decrypted opcode + data */
@@ -1521,13 +1518,13 @@ ROM_START( blockbl )
 	ROM_LOAD( "m9.o3",        0x120000, 0x10000, 0x29357fe4 )
 	ROM_LOAD( "m8.o2",        0x130000, 0x10000, 0xabd665d1 )
 
-	ROM_REGION(0x80000)	/* OKIM */
+	ROM_REGION( 0x80000 )	/* OKIM */
 	ROM_LOAD( "bl_01.rom",    0x00000, 0x20000, 0xc2ec2abb )
 ROM_END
 
 static void blockbl_decode(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* this is a bootleg, the ROMs contain decrypted opcodes and data separately */
 	memcpy(ROM, RAM+0x50000, 0x8000);   /* OP codes */
@@ -1541,7 +1538,7 @@ static void blockbl_decode(void)
 /****  Mahjong Gakuen high score save routine - RJF (Aug 5, 1999)  ****/
 static int mgakuen_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0xe702],"\x01\x00\x00",3) == 0)
@@ -1570,7 +1567,7 @@ static int mgakuen_hiload(void)
 static void mgakuen_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{

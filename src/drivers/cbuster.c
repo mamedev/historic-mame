@@ -404,14 +404,12 @@ static struct MachineDriver twocrude_machine_driver =
 	 	{
 			CPU_M68000,
 			12000000, /* Accurate */
-			0,
 			twocrude_readmem,twocrude_writemem,0,0,
 			m68_level4_irq,1 /* VBL */
 		},
 		{
 			CPU_H6280 | CPU_AUDIO_CPU,
 			32220000/8,	/* Accurate */
-			2,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -454,7 +452,7 @@ static struct MachineDriver twocrude_machine_driver =
 /******************************************************************************/
 
 ROM_START( cbuster )
-	ROM_REGION(0x80000) /* 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
   	ROM_LOAD_EVEN( "fx01.rom", 0x00000, 0x20000, 0xddae6d83 )
 	ROM_LOAD_ODD ( "fx00.rom", 0x00000, 0x20000, 0x5bc2c0de )
   	ROM_LOAD_EVEN( "fx03.rom", 0x40000, 0x20000, 0xc3d65bf9 )
@@ -477,7 +475,7 @@ ROM_START( cbuster )
 	ROM_LOAD( "fu09-.rom",    0x280000, 0x10000, 0x526809ca )
 	ROM_LOAD( "fu10-.rom",    0x290000, 0x10000, 0x6be6d50e )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fu11-.rom",    0x00000, 0x10000, 0x65f20f10 )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -488,7 +486,7 @@ ROM_START( cbuster )
 ROM_END
 
 ROM_START( cbusterw )
-	ROM_REGION(0x80000) /* 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
   	ROM_LOAD_EVEN( "fu01-.rom", 0x00000, 0x20000, 0x0203e0f8 )
 	ROM_LOAD_ODD ( "fu00-.rom", 0x00000, 0x20000, 0x9c58626d )
   	ROM_LOAD_EVEN( "fu03-.rom", 0x40000, 0x20000, 0xdef46956 )
@@ -511,7 +509,7 @@ ROM_START( cbusterw )
 	ROM_LOAD( "fu09-.rom",    0x280000, 0x10000, 0x526809ca )
 	ROM_LOAD( "fu10-.rom",    0x290000, 0x10000, 0x6be6d50e )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fu11-.rom",    0x00000, 0x10000, 0x65f20f10 )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -522,7 +520,7 @@ ROM_START( cbusterw )
 ROM_END
 
 ROM_START( cbusterj )
-	ROM_REGION(0x80000) /* 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
   	ROM_LOAD_EVEN( "fr01-1", 0x00000, 0x20000, 0xaf3c014f )
 	ROM_LOAD_ODD ( "fr00-1", 0x00000, 0x20000, 0xf666ad52 )
   	ROM_LOAD_EVEN( "fr03",   0x40000, 0x20000, 0x02c06118 )
@@ -545,7 +543,7 @@ ROM_START( cbusterj )
 	ROM_LOAD( "fr09",    0x280000, 0x10000, 0xf8363424 )
 	ROM_LOAD( "fr10",    0x290000, 0x10000, 0x241d5760 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fu11-.rom",    0x00000, 0x10000, 0x65f20f10 )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -556,7 +554,7 @@ ROM_START( cbusterj )
 ROM_END
 
 ROM_START( twocrude )
-	ROM_REGION(0x80000) /* 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "ft01",    0x00000, 0x20000, 0x08e96489 )
 	ROM_LOAD_ODD ( "ft00",    0x00000, 0x20000, 0x6765c445 )
 	ROM_LOAD_EVEN( "ft03",    0x40000, 0x20000, 0x28002c99 )
@@ -579,7 +577,7 @@ ROM_START( twocrude )
 	ROM_LOAD( "ft09",    0x280000, 0x10000, 0x6e3657b9 )
 	ROM_LOAD( "ft10",    0x290000, 0x10000, 0xcdb83560 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fu11-.rom",    0x00000, 0x10000, 0x65f20f10 )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -593,7 +591,7 @@ ROM_END
 
 static void twocrude_decrypt(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	unsigned char *PTR;
 	int i,j;
 
@@ -615,8 +613,8 @@ static void twocrude_decrypt(void)
 	}
 
 	/* Rearrange the 'extra' sprite bank to be in the same format as main sprites */
-	PTR = Machine->memory_region[1] + 0x260000;
-	RAM = Machine->memory_region[1] + 0x1a0000;
+	PTR = memory_region(1) + 0x260000;
+	RAM = memory_region(1) + 0x1a0000;
 	for (i=0; i<0x20000; i+=64) {
 		for (j=0; j<16; j+=1) { /* Copy 16 lines down */
 			RAM[i+      0+j*2]=PTR[i/2+      0+j]; /* Pixels 0-7 for each plane */

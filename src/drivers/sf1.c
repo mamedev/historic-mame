@@ -193,7 +193,7 @@ static int button2_r(int offset)
 
 static void sound2_bank_w(int offset, int data)
 {
-	cpu_setbank(4, Machine->memory_region[4]+0x8000*(data+1));
+	cpu_setbank(4, memory_region(4)+0x8000*(data+1));
 }
 
 
@@ -869,14 +869,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,
 			8000000,	/* 8 MHz ? (xtal is 16MHz) */
-			0,
 			readmem,writemem,0,0,
 			m68_level1_irq,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,	/* ? xtal is 3.579545MHz */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the YM2151 */
 								/* NMIs are caused by the main CPU */
@@ -884,7 +882,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,	/* ? xtal is 3.579545MHz */
-			4,	/* memory region #4 */
 			sound2_readmem, sound2_writemem,
 			sound2_readport, sound2_writeport,
 			0,0,
@@ -927,14 +924,12 @@ static struct MachineDriver us_machine_driver =
 		{
 			CPU_M68000,
 			8000000,	/* 8 MHz ? (xtal is 16MHz) */
-			0,
 			readmemus,writemem,0,0,
 			m68_level1_irq,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,	/* ? xtal is 3.579545MHz */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the YM2151 */
 								/* NMIs are caused by the main CPU */
@@ -942,7 +937,6 @@ static struct MachineDriver us_machine_driver =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,	/* ? xtal is 3.579545MHz */
-			4,	/* memory region #4 */
 			sound2_readmem, sound2_writemem,
 			sound2_readport, sound2_writeport,
 			0,0,
@@ -985,14 +979,12 @@ static struct MachineDriver jp_machine_driver =
 		{
 			CPU_M68000,
 			8000000,	/* 8 MHz ? (xtal is 16MHz) */
-			0,
 			readmemjp,writemem,0,0,
 			m68_level1_irq,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,	/* ? xtal is 3.579545MHz */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the YM2151 */
 								/* NMIs are caused by the main CPU */
@@ -1000,7 +992,6 @@ static struct MachineDriver jp_machine_driver =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,	/* ? xtal is 3.579545MHz */
-			4,	/* memory region #4 */
 			sound2_readmem, sound2_writemem,
 			sound2_readport, sound2_writeport,
 			0,0,
@@ -1039,7 +1030,7 @@ static struct MachineDriver jp_machine_driver =
 
 
 ROM_START( sf1 )
-	ROM_REGION(0x60000)
+	ROM_REGIONX( 0x60000, REGION_CPU1 )
 	ROM_LOAD_EVEN("sfe-19", 0x00000, 0x10000, 0x8346c3ca )
 	ROM_LOAD_ODD ("sfe-22", 0x00000, 0x10000, 0x3a4bfaa8 )
 	ROM_LOAD_EVEN("sfe-20", 0x20000, 0x10000, 0xb40e67ee )
@@ -1076,22 +1067,22 @@ ROM_START( sf1 )
 	ROM_LOAD( "sf-05.bin", 0x320000, 0x020000, 0x538c7cbe )
 	ROM_LOAD( "sf-27.bin", 0x340000, 0x004000, 0x2b09b36d ) /* Characters planes 1-2 */
 
-	ROM_REGION(0x40000) /* Backgrounds */
+	ROM_REGION( 0x40000 ) /* Backgrounds */
 	ROM_LOAD( "sf-37.bin", 0x000000, 0x010000, 0x23d09d3d )
 	ROM_LOAD( "sf-36.bin", 0x010000, 0x010000, 0xea16df6c )
 	ROM_LOAD( "sf-32.bin", 0x020000, 0x010000, 0x72df2bd9 )
 	ROM_LOAD( "sf-33.bin", 0x030000, 0x010000, 0x3e99d3d5 )
 
-	ROM_REGION(0x10000)	/* 64k for the music CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the music CPU */
 	ROM_LOAD( "sf-02.bin", 0x0000, 0x8000, 0x4a9ac534 )
 
-	ROM_REGION(0x40000)	/* 256k for the samples CPU */
+	ROM_REGIONX( 0x40000, REGION_CPU3 )	/* 256k for the samples CPU */
 	ROM_LOAD( "sfu-00",    0x00000, 0x20000, 0xa7cce903 )
 	ROM_LOAD( "sf-01.bin", 0x20000, 0x20000, 0x86e0f0d5 )
 ROM_END
 
 ROM_START( sf1us )
-	ROM_REGION(0x60000)
+	ROM_REGIONX( 0x60000, REGION_CPU1 )
 	ROM_LOAD_EVEN("sfd-19", 0x00000, 0x10000, 0xfaaf6255 )
 	ROM_LOAD_ODD ("sfd-22", 0x00000, 0x10000, 0xe1fe3519 )
 	ROM_LOAD_EVEN("sfd-20", 0x20000, 0x10000, 0x44b915bd )
@@ -1128,22 +1119,22 @@ ROM_START( sf1us )
 	ROM_LOAD( "sf-05.bin", 0x320000, 0x020000, 0x538c7cbe )
 	ROM_LOAD( "sf-27.bin", 0x340000, 0x004000, 0x2b09b36d ) /* Characters planes 1-2 */
 
-	ROM_REGION(0x40000) /* Backgrounds */
+	ROM_REGION( 0x40000 ) /* Backgrounds */
 	ROM_LOAD( "sf-37.bin", 0x000000, 0x010000, 0x23d09d3d )
 	ROM_LOAD( "sf-36.bin", 0x010000, 0x010000, 0xea16df6c )
 	ROM_LOAD( "sf-32.bin", 0x020000, 0x010000, 0x72df2bd9 )
 	ROM_LOAD( "sf-33.bin", 0x030000, 0x010000, 0x3e99d3d5 )
 
-	ROM_REGION(0x10000)	/* 64k for the music CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the music CPU */
 	ROM_LOAD( "sf-02.bin", 0x0000, 0x8000, 0x4a9ac534 )
 
-	ROM_REGION(0x40000)	/* 256k for the samples CPU */
+	ROM_REGIONX( 0x40000, REGION_CPU3 )	/* 256k for the samples CPU */
 	ROM_LOAD( "sfu-00",    0x00000, 0x20000, 0xa7cce903 )
 	ROM_LOAD( "sf-01.bin", 0x20000, 0x20000, 0x86e0f0d5 )
 ROM_END
 
 ROM_START( sf1jp )
-	ROM_REGION(0x60000)
+	ROM_REGIONX( 0x60000, REGION_CPU1 )
 	ROM_LOAD_EVEN("sf-19.bin", 0x00000, 0x10000, 0x116027d7 )
 	ROM_LOAD_ODD ("sf-22.bin", 0x00000, 0x10000, 0xd3cbd09e )
 	ROM_LOAD_EVEN("sf-20.bin", 0x20000, 0x10000, 0xfe07e83f )
@@ -1180,16 +1171,16 @@ ROM_START( sf1jp )
 	ROM_LOAD( "sf-05.bin", 0x320000, 0x020000, 0x538c7cbe )
 	ROM_LOAD( "sf-27.bin", 0x340000, 0x004000, 0x2b09b36d ) /* Characters planes 1-2 */
 
-	ROM_REGION(0x40000) /* Backgrounds */
+	ROM_REGION( 0x40000 ) /* Backgrounds */
 	ROM_LOAD( "sf-37.bin", 0x000000, 0x010000, 0x23d09d3d )
 	ROM_LOAD( "sf-36.bin", 0x010000, 0x010000, 0xea16df6c )
 	ROM_LOAD( "sf-32.bin", 0x020000, 0x010000, 0x72df2bd9 )
 	ROM_LOAD( "sf-33.bin", 0x030000, 0x010000, 0x3e99d3d5 )
 
-	ROM_REGION(0x10000)	/* 64k for the music CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the music CPU */
 	ROM_LOAD( "sf-02.bin", 0x0000, 0x8000, 0x4a9ac534 )
 
-	ROM_REGION(0x40000)	/* 256k for the samples CPU */
+	ROM_REGIONX( 0x40000, REGION_CPU3 )	/* 256k for the samples CPU */
 	ROM_LOAD( "sf-00.bin", 0x00000, 0x20000, 0x4b733845 )
 	ROM_LOAD( "sf-01.bin", 0x20000, 0x20000, 0x86e0f0d5 )
 ROM_END

@@ -317,7 +317,7 @@ static int main_interrupt(void)
 static void init_machine(void)
 {
 	exidy440_bank = 0;
-	cpu_setbank(1, &memory_region(Machine->drv->cpu[0].memory_region)[0x10000]);
+	cpu_setbank(1, &memory_region(REGION_CPU1)[0x10000]);
 
 	last_coins = input_port_3_r(0) & 3;
 	coin_state = 3;
@@ -362,7 +362,7 @@ static void bankram_w(int offset, int data)
 	/* EEROM lives in the upper 8k of bank 15 */
 	if (exidy440_bank == 15 && offset >= 0x2000)
 	{
-		memory_region(Machine->drv->cpu[0].memory_region)[0x10000 + 15 * 0x4000 + offset] = data;
+		memory_region(REGION_CPU1)[0x10000 + 15 * 0x4000 + offset] = data;
 		if (errorlog) fprintf(errorlog, "W EEROM[%04X] = %02X\n", offset - 0x2000, data);
 	}
 
@@ -510,7 +510,7 @@ int showdown_pld_trigger_r(int offset)
 		showdown_bank_triggered = 1;
 
 	/* just return the value from the current bank */
-	return memory_region(Machine->drv->cpu[0].memory_region)[0x10000 + exidy440_bank * 0x4000 + 0x0055 + offset];
+	return memory_region(REGION_CPU1)[0x10000 + exidy440_bank * 0x4000 + 0x0055 + offset];
 }
 
 
@@ -528,11 +528,11 @@ int showdown_pld_select1_r(int offset)
 
 		/* clear the trigger and copy the expected 24 bytes to the RAM area */
 		showdown_bank_triggered = 0;
-		memcpy(&memory_region(Machine->drv->cpu[0].memory_region)[0x10000], bankdata, 0x18);
+		memcpy(&memory_region(REGION_CPU1)[0x10000], bankdata, 0x18);
 	}
 
 	/* just return the value from the current bank */
-	return memory_region(Machine->drv->cpu[0].memory_region)[0x10000 + exidy440_bank * 0x4000 + 0x00ed + offset];
+	return memory_region(REGION_CPU1)[0x10000 + exidy440_bank * 0x4000 + 0x00ed + offset];
 }
 
 
@@ -550,11 +550,11 @@ int showdown_pld_select2_r(int offset)
 
 		/* clear the trigger and copy the expected 24 bytes to the RAM area */
 		showdown_bank_triggered = 0;
-		memcpy(&memory_region(Machine->drv->cpu[0].memory_region)[0x10000], bankdata, 0x18);
+		memcpy(&memory_region(REGION_CPU1)[0x10000], bankdata, 0x18);
 	}
 
 	/* just return the value from the current bank */
-	return memory_region(Machine->drv->cpu[0].memory_region)[0x10000 + exidy440_bank * 0x4000 + 0x1243 + offset];
+	return memory_region(REGION_CPU1)[0x10000 + exidy440_bank * 0x4000 + 0x1243 + offset];
 }
 
 
@@ -1083,14 +1083,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			12979200/8,                     /* 12Mhz/8 */
-			0,
 			readmem_cpu1,writemem_cpu1,0,0,
 			main_interrupt,1
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
 			12979200/4/4,                   /* 12MHz/4 into XTAL, which is 4x clock */
-			1,
 			readmem_cpu2,writemem_cpu2,0,0,
 			exidy440_sound_interrupt,1
 		}
@@ -1135,11 +1133,11 @@ static int hiload(void)
 	if (f)
 	{
 		/* the EEROM lives in the uppermost 8k of the top bank */
-		osd_fread(f, &memory_region(Machine->drv->cpu[0].memory_region)[0x10000 + 15 * 0x4000 + 0x2000], 0x2000);
+		osd_fread(f, &memory_region(REGION_CPU1)[0x10000 + 15 * 0x4000 + 0x2000], 0x2000);
 		osd_fclose(f);
 	}
 	else
-		memset(&memory_region(Machine->drv->cpu[0].memory_region)[0x10000 + 15 * 0x4000 + 0x2000], 0, 0x2000);
+		memset(&memory_region(REGION_CPU1)[0x10000 + 15 * 0x4000 + 0x2000], 0, 0x2000);
 
 	return 1;
 }
@@ -1150,7 +1148,7 @@ static void hisave(void)
 	if (f)
 	{
 		/* the EEROM lives in the uppermost 8k of the top bank */
-		osd_fwrite(f, &memory_region(Machine->drv->cpu[0].memory_region)[0x10000 + 15 * 0x4000 + 0x2000], 0x2000);
+		osd_fwrite(f, &memory_region(REGION_CPU1)[0x10000 + 15 * 0x4000 + 0x2000], 0x2000);
 		osd_fclose(f);
 	}
 }
@@ -1206,7 +1204,7 @@ static void showdown_init(void)
  *************************************/
 
 ROM_START( crossbow )
-	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
+	ROM_REGIONX( 0x50000, REGION_CPU1 )     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "xbl-2.1a",   0x08000, 0x2000, 0xbd53ac46 )
 	ROM_LOAD( "xbl-2.3a",   0x0a000, 0x2000, 0x703e1376 )
 	ROM_LOAD( "xbl-2.4a",   0x0c000, 0x2000, 0x52c5daa1 )
@@ -1239,7 +1237,7 @@ ROM_START( crossbow )
 	ROM_LOAD( "xbl-1.3b",   0x42000, 0x2000, 0x4a03c2c9 )
 	ROM_LOAD( "xbl-1.4b",   0x44000, 0x2000, 0x7e21c624 )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "xba-11.1h",  0x0e000, 0x2000, 0x1b61d0c1 )
 
 	ROM_REGION(0x20000)
@@ -1263,7 +1261,7 @@ ROM_END
 
 
 ROM_START( cheyenne )
-	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
+	ROM_REGIONX( 0x50000, REGION_CPU1 )     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "cyl-1.1a",   0x08000, 0x2000, 0x504c3fa6 )
 	ROM_LOAD( "cyl-1.3a",   0x0a000, 0x2000, 0x09b7903b )
 	ROM_LOAD( "cyl-1.4a",   0x0c000, 0x2000, 0xb708646b )
@@ -1295,7 +1293,7 @@ ROM_START( cheyenne )
 	ROM_LOAD( "cyl-1.8b",   0x4a000, 0x2000, 0xc0653d3e )
 	ROM_LOAD( "cyl-1.10b",  0x4c000, 0x2000, 0x7fc67d19 )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "cya-1.1h",   0x0e000, 0x2000, 0x5aed3d8c )
 
 	ROM_REGION(0x20000)
@@ -1317,7 +1315,7 @@ ROM_END
 
 
 ROM_START( combat )
-	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
+	ROM_REGIONX( 0x50000, REGION_CPU1 )     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "1a",   0x08000, 0x2000, 0x159a573b )
 	ROM_LOAD( "3a",   0x0a000, 0x2000, 0x59ae51a7 )
 	ROM_LOAD( "4a",   0x0c000, 0x2000, 0x95a1f3d0 )
@@ -1343,7 +1341,7 @@ ROM_START( combat )
 	ROM_LOAD( "8b",   0x4a000, 0x2000, 0xae977f4c )
 	ROM_LOAD( "10b",  0x4c000, 0x2000, 0x502da003 )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "1h",  0x0e000, 0x2000, 0x8f3dd350 )
 
 	ROM_REGION(0x20000)
@@ -1365,7 +1363,7 @@ ROM_END
 
 
 ROM_START( cracksht )
-	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
+	ROM_REGIONX( 0x50000, REGION_CPU1 )     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "csl2.1a",   0x08000, 0x2000, 0x16fd0171 )
 	ROM_LOAD( "csl2.3a",   0x0a000, 0x2000, 0x906f3209 )
 	ROM_LOAD( "csl2.4a",   0x0c000, 0x2000, 0x9996d2bf )
@@ -1387,7 +1385,7 @@ ROM_START( cracksht )
 	ROM_LOAD( "csl2.8b",   0x4a000, 0x2000, 0xaf1c8cb8 )
 	ROM_LOAD( "csl2.10b",  0x4c000, 0x2000, 0x8a0d6ad0 )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "csa3.1h",   0x0e000, 0x2000, 0x5ba8b4ac )
 
 	ROM_REGION(0x20000)
@@ -1411,7 +1409,7 @@ ROM_END
 
 
 ROM_START( claypign )
-	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
+	ROM_REGIONX( 0x50000, REGION_CPU1 )     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "claypige.1a",   0x08000, 0x2000, 0x446d7004 )
 	ROM_LOAD( "claypige.3a",   0x0a000, 0x2000, 0xdf39701b )
 	ROM_LOAD( "claypige.4a",   0x0c000, 0x2000, 0xf205afb8 )
@@ -1425,7 +1423,7 @@ ROM_START( claypign )
 	ROM_LOAD( "claypige.7b",   0x48000, 0x2000, 0x6140b026 )
 	ROM_LOAD( "claypige.8b",   0x4a000, 0x2000, 0xd0f9d170 )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "claypige.h1",   0x0e000, 0x2000, 0x9eedc68d )
 
 	ROM_REGION(0x20000)
@@ -1444,7 +1442,7 @@ ROM_END
 
 
 ROM_START( chiller )
-	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
+	ROM_REGIONX( 0x50000, REGION_CPU1 )     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "chl3.1a",   0x08000, 0x2000, 0x996ad02e )
 	ROM_LOAD( "chl3.3a",   0x0a000, 0x2000, 0x17e6f904 )
 	ROM_LOAD( "chl3.4a",   0x0c000, 0x2000, 0xf30d6e32 )
@@ -1473,7 +1471,7 @@ ROM_START( chiller )
 	ROM_LOAD( "chl3.8b",   0x4a000, 0x2000, 0x6172b12f )
 	ROM_LOAD( "chl3.10b",  0x4c000, 0x2000, 0x5d15342a )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "cha3.1h",   0x0f000, 0x1000, 0xb195cbba )
 
 	ROM_REGION(0x20000)
@@ -1497,7 +1495,7 @@ ROM_END
 
 
 ROM_START( topsecex )
-	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
+	ROM_REGIONX( 0x50000, REGION_CPU1 )     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "tsl1.a1",   0x08000, 0x2000, 0x30ff2142 )
 	ROM_LOAD( "tsl1.a3",   0x0a000, 0x2000, 0x9295e5b7 )
 	ROM_LOAD( "tsl1.a4",   0x0c000, 0x2000, 0x402abca4 )
@@ -1533,7 +1531,7 @@ ROM_START( topsecex )
 	ROM_LOAD( "tsl1.b8",   0x4a000, 0x2000, 0xcc770802 )
 	ROM_LOAD( "tsl1.b10",  0x4c000, 0x2000, 0x079d0a1d )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "tsa1.1h",   0x0e000, 0x2000, 0x35a1dd40 )
 
 	ROM_REGION(0x20000)
@@ -1557,7 +1555,7 @@ ROM_END
 
 
 ROM_START( hitnmiss )
-	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
+	ROM_REGIONX( 0x50000, REGION_CPU1 )     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "hml3.a1",   0x08000, 0x2000, 0xd79ae18e )
 	ROM_LOAD( "hml3.a3",   0x0a000, 0x2000, 0x61baf38b )
 	ROM_LOAD( "hml3.a4",   0x0c000, 0x2000, 0x60ca260b )
@@ -1583,7 +1581,7 @@ ROM_START( hitnmiss )
 	ROM_LOAD( "hml3.b8",   0x4a000, 0x2000, 0xe0a5a6aa )
 	ROM_LOAD( "hml3.b10",  0x4c000, 0x2000, 0xde65dfdc )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "hma3.1h",  0x0e000, 0x2000, 0xf718da36 )
 
 	ROM_REGION(0x20000)
@@ -1604,7 +1602,7 @@ ROM_END
 
 
 ROM_START( hitnmis2 )
-	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
+	ROM_REGIONX( 0x50000, REGION_CPU1 )     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "hml2.a1",   0x08000, 0x2000, 0x322f7e83 )
 	ROM_LOAD( "hml2.a3",   0x0a000, 0x2000, 0x0e12a721 )
 	ROM_LOAD( "hml2.a4",   0x0c000, 0x2000, 0x6cec8ad2 )
@@ -1631,7 +1629,7 @@ ROM_START( hitnmis2 )
 	ROM_LOAD( "hml2.b8",   0x4a000, 0x2000, 0x9c2db94a )
 	ROM_LOAD( "hml2.b10",  0x4c000, 0x2000, 0xf01bd7d4 )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "hma2.1h",  0x0e000, 0x2000, 0x9be48f45 )
 
 	ROM_REGION(0x20000)
@@ -1652,7 +1650,7 @@ ROM_END
 
 
 ROM_START( whodunit )
-	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
+	ROM_REGIONX( 0x50000, REGION_CPU1 )     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "wdl8.1a",   0x08000, 0x2000, 0x50658904 )
 	ROM_LOAD( "wdl8.3a",   0x0a000, 0x2000, 0x5d1530f8 )
 	ROM_LOAD( "wdl8.4a",   0x0c000, 0x2000, 0x0323d6b8 )
@@ -1687,7 +1685,7 @@ ROM_START( whodunit )
 	ROM_LOAD( "wdl8.8b",   0x4a000, 0x2000, 0x33792758 )
 	ROM_LOAD( "wdl6.10b",  0x4c000, 0x2000, 0x2f48cfdb )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "wda8.h1",  0x0e000, 0x2000, 0x0090e5a7 )
 
 	ROM_REGION(0x20000)
@@ -1710,7 +1708,7 @@ ROM_END
 
 
 ROM_START( showdown )
-	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
+	ROM_REGIONX( 0x50000, REGION_CPU1 )     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "showda1.bin",   0x08000, 0x2000, 0xe4031507 )
 	ROM_LOAD( "showd3a.bin",   0x0a000, 0x2000, 0xe7de171e )
 	ROM_LOAD( "showd4a.bin",   0x0c000, 0x2000, 0x5c8683c9 )
@@ -1740,7 +1738,7 @@ ROM_START( showdown )
 	ROM_LOAD( "showd8b.bin",   0x4a000, 0x2000, 0x024fe6ee )
 	ROM_LOAD( "showd10b.bin",  0x4c000, 0x2000, 0x0b318dfe )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "showd1h.bin",  0x0e000, 0x2000, 0x6a10ff47 )
 
 	ROM_REGION(0x20000)

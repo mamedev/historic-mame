@@ -52,7 +52,7 @@ static int blktiger_protection_r(int offset)
 static void blktiger_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	bankaddress = 0x10000 + (data & 0x0f) * 0x4000;
@@ -289,14 +289,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* 4 Mhz (?) */
-			0,
 			readmem,writemem,readport,writeport,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3000000,	/* 3 Mhz (?) */
-			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are triggered by the YM2203 */
 		}
@@ -335,7 +333,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( blktiger )
-	ROM_REGION(0x50000)	/* 64k for code + banked ROMs images */
+	ROM_REGIONX( 0x50000, REGION_CPU1 )	/* 64k for code + banked ROMs images */
 	ROM_LOAD( "blktiger.5e",  0x00000, 0x08000, 0xa8f98f22 )	/* CODE */
 	ROM_LOAD( "blktiger.6e",  0x10000, 0x10000, 0x7bef96e8 )	/* 0+1 */
 	ROM_LOAD( "blktiger.8e",  0x20000, 0x10000, 0x4089e157 )	/* 2+3 */
@@ -353,7 +351,7 @@ ROM_START( blktiger )
 	ROM_LOAD( "blktiger.9a",  0x70000, 0x10000, 0xfc33ccc6 )
 	ROM_LOAD( "blktiger.8a",  0x80000, 0x10000, 0xf449de01 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "blktiger.1l",  0x0000, 0x8000, 0x2cf54274 )
 
 	ROM_REGION(0x0400)     /* PROMs (function unknown) */
@@ -364,7 +362,7 @@ ROM_START( blktiger )
 ROM_END
 
 ROM_START( bktigerb )
-	ROM_REGION(0x50000)	/* 64k for code + banked ROMs images */
+	ROM_REGIONX( 0x50000, REGION_CPU1 )	/* 64k for code + banked ROMs images */
 	ROM_LOAD( "btiger1.f6",   0x00000, 0x08000, 0x9d8464e8 )	/* CODE */
 	ROM_LOAD( "blktiger.6e",  0x10000, 0x10000, 0x7bef96e8 )	/* 0+1 */
 	ROM_LOAD( "btiger3.j6",   0x20000, 0x10000, 0x52c56ed1 )	/* 2+3 */
@@ -382,7 +380,7 @@ ROM_START( bktigerb )
 	ROM_LOAD( "blktiger.9a",  0x70000, 0x10000, 0xfc33ccc6 )
 	ROM_LOAD( "blktiger.8a",  0x80000, 0x10000, 0xf449de01 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "blktiger.1l",  0x0000, 0x8000, 0x2cf54274 )
 
 	ROM_REGION(0x0400)     /* PROMs (function unknown) */
@@ -393,7 +391,7 @@ ROM_START( bktigerb )
 ROM_END
 
 ROM_START( blkdrgon )
-	ROM_REGION(0x50000)	/* 64k for code + banked ROMs images */
+	ROM_REGIONX( 0x50000, REGION_CPU1 )	/* 64k for code + banked ROMs images */
 	ROM_LOAD( "blkdrgon.5e",  0x00000, 0x08000, 0x27ccdfbc )	/* CODE */
 	ROM_LOAD( "blkdrgon.6e",  0x10000, 0x10000, 0x7d39c26f )	/* 0+1 */
 	ROM_LOAD( "blkdrgon.8e",  0x20000, 0x10000, 0xd1bf3757 )	/* 2+3 */
@@ -411,7 +409,7 @@ ROM_START( blkdrgon )
 	ROM_LOAD( "blktiger.9a",  0x70000, 0x10000, 0xfc33ccc6 )
 	ROM_LOAD( "blktiger.8a",  0x80000, 0x10000, 0xf449de01 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "blktiger.1l",  0x0000, 0x8000, 0x2cf54274 )
 
 	ROM_REGION(0x0400)     /* PROMs (function unknown) */
@@ -422,7 +420,7 @@ ROM_START( blkdrgon )
 ROM_END
 
 ROM_START( blkdrgnb )
-	ROM_REGION(0x50000)	/* 64k for code + banked ROMs images */
+	ROM_REGIONX( 0x50000, REGION_CPU1 )	/* 64k for code + banked ROMs images */
 	ROM_LOAD( "j1-5e",        0x00000, 0x08000, 0x97e84412 )	/* CODE */
 	ROM_LOAD( "blkdrgon.6e",  0x10000, 0x10000, 0x7d39c26f )	/* 0+1 */
 	ROM_LOAD( "j3-8e",        0x20000, 0x10000, 0xf4cd0f39 )	/* 2+3 */
@@ -440,7 +438,7 @@ ROM_START( blkdrgnb )
 	ROM_LOAD( "blktiger.9a",  0x70000, 0x10000, 0xfc33ccc6 )
 	ROM_LOAD( "blktiger.8a",  0x80000, 0x10000, 0xf449de01 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "blktiger.1l",  0x0000, 0x8000, 0x2cf54274 )
 
 	ROM_REGION(0x0400)     /* PROMs (function unknown) */
@@ -454,7 +452,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -481,7 +479,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

@@ -1013,7 +1013,6 @@ static struct MachineDriver machine_driver_namcos2_default =
 		{
 			CPU_M68000,
 			12288000,
-			REGION_CPU1,
 			readmem_master_default,writemem_master_default,0,0,
 			namcos2_68k_master_vblank,1,
 			0,0
@@ -1021,7 +1020,6 @@ static struct MachineDriver machine_driver_namcos2_default =
 		{
 			CPU_M68000,
 			12288000,
-			REGION_CPU2,
 			readmem_slave_default,writemem_slave_default,0,0,
 			namcos2_68k_slave_vblank,1,
 			0,0
@@ -1029,7 +1027,6 @@ static struct MachineDriver machine_driver_namcos2_default =
 		{
 			CPU_M6809, // Sound handling
 			3072000,
-			REGION_CPU3,
 			readmem_sound,writemem_sound,0,0,
 			interrupt,2,
 			namcos2_sound_interrupt,120
@@ -1037,7 +1034,6 @@ static struct MachineDriver machine_driver_namcos2_default =
 		{
 			CPU_HD63705, // I/O handling
 			2048000,
-			REGION_CPU4,
 			readmem_mcu,writemem_mcu,0,0,
 			namcos2_mcu_interrupt,1,
 			0,0
@@ -1082,7 +1078,6 @@ static struct MachineDriver machine_driver_namcos2_finallap =
 		{
 			CPU_M68000,
 			12288000,
-			REGION_CPU1,
 			readmem_master_finallap,writemem_master_finallap,0,0,
 			namcos2_68k_master_vblank,1,
 			0,0
@@ -1090,7 +1085,6 @@ static struct MachineDriver machine_driver_namcos2_finallap =
 		{
 			CPU_M68000,
 			12288000,
-			REGION_CPU2,
 			readmem_slave_finallap,writemem_slave_finallap,0,0,
 			namcos2_68k_slave_vblank,1,
 			0,0
@@ -1098,7 +1092,6 @@ static struct MachineDriver machine_driver_namcos2_finallap =
 		{
 			CPU_M6809, // Sound handling
 			3072000,
-			REGION_CPU3,
 			readmem_sound,writemem_sound,0,0,
 			interrupt,2,
 			namcos2_sound_interrupt,120
@@ -1106,7 +1099,6 @@ static struct MachineDriver machine_driver_namcos2_finallap =
 		{
 			CPU_HD63705, // I/O handling
 			2048000,
-			REGION_CPU4,
 			readmem_mcu,writemem_mcu,0,0,
 			namcos2_mcu_interrupt,1,
 			0,0
@@ -1293,11 +1285,11 @@ ROM_START( assault )
 	ROM_REGIONX(0x080000, REGION_GFX4)                                /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_128K( "atshape.bin" , 0x000000, 0xdfcad82b )
 
-	ROM_REGION(0x200000)                                              /* Shared data roms */
+	ROM_REGION( 0x200000 )                                              /* Shared data roms */
 	NAMCOS2_DATA_LOAD_E_128K( "at1dat0.bin" , 0x000000, 0x844890f4 )
 	NAMCOS2_DATA_LOAD_O_128K( "at1dat1.bin" , 0x000000, 0x21715313 )
 
-	ROM_REGION(0x100000)	                                          /* Sound voices */
+	ROM_REGION( 0x100000 )	                                          /* Sound voices */
 	ROM_LOAD( "atvoi1.bin"  , 0x000000, 0x080000, 0xd36a649e )
 ROM_END
 
@@ -1350,11 +1342,11 @@ ROM_START( assaultj )
 	ROM_REGIONX(0x080000, REGION_GFX4)                                /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_128K( "atshape.bin" , 0x000000, 0xdfcad82b )
 
-	ROM_REGION(0x200000)                                              /* Shared data roms */
+	ROM_REGION( 0x200000 )                                              /* Shared data roms */
 	NAMCOS2_DATA_LOAD_E_128K( "at1dat0.bin" , 0x000000, 0x844890f4 )
 	NAMCOS2_DATA_LOAD_O_128K( "at1dat1.bin" , 0x000000, 0x21715313 )
 
-	ROM_REGION(0x100000)	                                          /* Sound voices */
+	ROM_REGION( 0x100000 )	                                          /* Sound voices */
 	ROM_LOAD( "atvoi1.bin"  , 0x000000, 0x080000, 0xd36a649e )
 ROM_END
 
@@ -1407,11 +1399,11 @@ ROM_START( assaultp )
 	ROM_REGIONX(0x080000, REGION_GFX4)                                /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_128K( "atshape.bin" , 0x000000, 0xdfcad82b )
 
-	ROM_REGION(0x200000)                                              /* Shared data roms */
+	ROM_REGION( 0x200000 )                                              /* Shared data roms */
 	NAMCOS2_DATA_LOAD_E_128K( "at1dat0.bin" , 0x000000, 0x844890f4 )
 	NAMCOS2_DATA_LOAD_O_128K( "at1dat1.bin" , 0x000000, 0x21715313 )
 
-	ROM_REGION(0x100000)	                                          /* Sound voices */
+	ROM_REGION( 0x100000 )	                                          /* Sound voices */
 	ROM_LOAD( "atvoi1.bin"  , 0x000000, 0x080000, 0xd36a649e )
 ROM_END
 
@@ -1463,11 +1455,11 @@ ROM_START( burnforc )
 	ROM_REGIONX(0x080000, REGION_GFX4)                                /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_128K( "bushape.bin" , 0x000000,0x80a6b722 )
 
-	ROM_REGION(0x200000)                                              /* Shared data roms */
+	ROM_REGION( 0x200000 )                                              /* Shared data roms */
 	NAMCOS2_DATA_LOAD_E_128K( "bu1dat0.bin" , 0x000000, 0xe0a9d92f )
 	NAMCOS2_DATA_LOAD_O_128K( "bu1dat1.bin" , 0x000000, 0x5fe54b73 )
 
-	ROM_REGION(0x100000)	                                          /* Sound voices */
+	ROM_REGION( 0x100000 )	                                          /* Sound voices */
 	ROM_LOAD( "buvoi1.bin"  , 0x000000, 0x080000, 0x99d8a239 )
 ROM_END
 
@@ -1511,11 +1503,11 @@ ROM_START( cosmogng )
 	ROM_REGIONX(0x080000, REGION_GFX4)                                /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_512K( "co1sha0.bin" , 0x000000, 0x063a70cc )
 
-	ROM_REGION(0x200000)                                              /* Shared data roms */
+	ROM_REGION( 0x200000 )                                              /* Shared data roms */
 	NAMCOS2_DATA_LOAD_E_128K( "co1dat0.bin" , 0x000000, 0xb53da2ae )
 	NAMCOS2_DATA_LOAD_O_128K( "co1dat1.bin" , 0x000000, 0xd21ad10b )
 
-	ROM_REGION(0x100000)	                                          /* Sound voices */
+	ROM_REGION( 0x100000 )	                                          /* Sound voices */
 	ROM_LOAD( "co1voi1.bin" , 0x000000, 0x080000, 0xb5ba8f15 )
 	ROM_LOAD( "co1voi2.bin" , 0x080000, 0x080000, 0xb566b105 )
 ROM_END
@@ -1567,11 +1559,11 @@ ROM_START( dirtfoxj )
 	ROM_REGIONX(0x080000, REGION_GFX4)                                /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_128K( "df1_sha.bin" , 0x000000, 0x9a7c9a9b )
 
-	ROM_REGION(0x200000)                                              /* Shared data roms */
+	ROM_REGION( 0x200000 )                                              /* Shared data roms */
 	NAMCOS2_DATA_LOAD_E_256K( "df1_dat0.bin", 0x000000, 0xf5851c85 )
 	NAMCOS2_DATA_LOAD_O_256K( "df1_dat1.bin", 0x000000, 0x1a31e46b )
 
-	ROM_REGION(0x100000)	                                          /* Sound voices */
+	ROM_REGION( 0x100000 )	                                          /* Sound voices */
 	ROM_LOAD("df1_voi1.bin", 0x000000, 0x080000, 0x15053904 )
 ROM_END
 
@@ -1614,11 +1606,11 @@ ROM_START( dsaber )
 	ROM_REGIONX(0x080000, REGION_GFX4)                                /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_512K( "shape.bin"   , 0x000000, 0x698e7a3e )
 
-	ROM_REGION(0x200000)                                              /* Shared data roms */
+	ROM_REGION( 0x200000 )                                              /* Shared data roms */
 	NAMCOS2_DATA_LOAD_E_128K( "data0.bin"   , 0x000000, 0x3e53331f )
 	NAMCOS2_DATA_LOAD_O_128K( "data1.bin"   , 0x000000, 0xd5427f11 )
 
-	ROM_REGION(0x100000)	                                          /* Sound voices */
+	ROM_REGION( 0x100000 )	                                          /* Sound voices */
 	ROM_LOAD( "voi1.bin"    , 0x000000, 0x080000, 0xdadf6a57 )
 	ROM_LOAD( "voi2.bin"    , 0x080000, 0x080000, 0x81078e01 )
 ROM_END
@@ -1662,11 +1654,11 @@ ROM_START( dsaberj )
 	ROM_REGIONX(0x080000, REGION_GFX4)                                /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_512K( "shape.bin"   , 0x000000, 0x698e7a3e )
 
-	ROM_REGION(0x200000)                                              /* Shared data roms */
+	ROM_REGION( 0x200000 )                                              /* Shared data roms */
 	NAMCOS2_DATA_LOAD_E_128K( "data0.bin"   , 0x000000, 0x3e53331f )
 	NAMCOS2_DATA_LOAD_O_128K( "data1.bin"   , 0x000000, 0xd5427f11 )
 
-	ROM_REGION(0x100000)	                                          /* Sound voices */
+	ROM_REGION( 0x100000 )	                                          /* Sound voices */
 	ROM_LOAD( "voi1.bin"    , 0x000000, 0x080000, 0xdadf6a57 )
 	ROM_LOAD( "voi2.bin"    , 0x080000, 0x080000, 0x81078e01 )
 ROM_END
@@ -1719,10 +1711,10 @@ ROM_START( finallap )
 	ROM_REGIONX(0x080000, REGION_GFX4)                                /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_128K( "fl2-sha"     , 0x000000, 0x5fda0b6d )
 
-	ROM_REGION(0x200000)                                              /* Shared data roms */
+	ROM_REGION( 0x200000 )                                              /* Shared data roms */
 	/* No DAT files present in ZIP archive - Must be wrong */
 
-	ROM_REGION(0x100000)	                                          /* Sound voices */
+	ROM_REGION( 0x100000 )	                                          /* Sound voices */
 	ROM_LOAD( "fl1-v1"      , 0x000000, 0x020000, 0x86b21996 )
 	ROM_RELOAD(               0x020000, 0x020000 )
 	ROM_RELOAD(               0x040000, 0x020000 )
@@ -1776,10 +1768,10 @@ ROM_START( finalapd )
 	ROM_REGIONX(0x080000, REGION_GFX4)                                /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_128K( "fl2-sha"     , 0x000000, 0x5fda0b6d )
 
-	ROM_REGION(0x200000)                                              /* Shared data roms */
+	ROM_REGION( 0x200000 )                                              /* Shared data roms */
 	/* No DAT files present in ZIP archive - Must be wrong */
 
-	ROM_REGION(0x100000)	                                          /* Sound voices */
+	ROM_REGION( 0x100000 )	                                          /* Sound voices */
 	ROM_LOAD( "fl1-v1"      , 0x000000, 0x020000, 0x86b21996 )
 	ROM_RELOAD(               0x020000, 0x020000 )
 	ROM_RELOAD(               0x040000, 0x020000 )
@@ -1833,10 +1825,10 @@ ROM_START( finalapc )
 	ROM_REGIONX(0x080000, REGION_GFX4)                                /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_128K( "fl2-sha"     , 0x000000, 0x5fda0b6d )
 
-	ROM_REGION(0x200000)                                              /* Shared data roms */
+	ROM_REGION( 0x200000 )                                              /* Shared data roms */
 	/* No DAT files present in ZIP archive - Must be wrong */
 
-	ROM_REGION(0x100000)	                                          /* Sound voices */
+	ROM_REGION( 0x100000 )	                                          /* Sound voices */
 	ROM_LOAD( "fl1-v1"      , 0x000000, 0x020000, 0x86b21996 )
 	ROM_RELOAD(               0x020000, 0x020000 )
 	ROM_RELOAD(               0x040000, 0x020000 )
@@ -1895,11 +1887,11 @@ ROM_START( finalap2 )
 	ROM_REGIONX(0x080000, REGION_GFX4)                                /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_128K( "fls2sha"     , 0x000000, 0x95a63037 )
 
-	ROM_REGION(0x200000)                                              /* Shared data roms */
+	ROM_REGION( 0x200000 )                                              /* Shared data roms */
 	NAMCOS2_DATA_LOAD_E_256K( "fls2dat0"    , 0x000000, 0xf1af432c )
 	NAMCOS2_DATA_LOAD_O_256K( "fls2dat1"    , 0x000000, 0x8719533e )
 
-	ROM_REGION(0x100000)	                                          /* Sound voices */
+	ROM_REGION( 0x100000 )	                                          /* Sound voices */
 	ROM_LOAD( "flsvoi1"     , 0x000000, 0x080000, 0x590be52f )
 	ROM_LOAD( "flsvoi2"     , 0x080000, 0x080000, 0x204b3c27 )
 ROM_END
@@ -1952,11 +1944,11 @@ ROM_START( finalp2j )
 	ROM_REGIONX(0x080000, REGION_GFX4)                                /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_128K( "fls2sha"     , 0x000000, 0x95a63037 )
 
-	ROM_REGION(0x200000)                                              /* Shared data roms */
+	ROM_REGION( 0x200000 )                                              /* Shared data roms */
 	NAMCOS2_DATA_LOAD_E_256K( "fls2dat0"    , 0x000000, 0xf1af432c )
 	NAMCOS2_DATA_LOAD_O_256K( "fls2dat1"    , 0x000000, 0x8719533e )
 
-	ROM_REGION(0x100000)	                                          /* Sound voices */
+	ROM_REGION( 0x100000 )	                                          /* Sound voices */
 	ROM_LOAD( "flsvoi1"     , 0x000000, 0x080000, 0x590be52f )
 	ROM_LOAD( "flsvoi2"     , 0x080000, 0x080000, 0x204b3c27 )
 ROM_END
@@ -2009,11 +2001,11 @@ ROM_START( finalap3 )
 	ROM_REGIONX(0x080000, REGION_GFX4)                                /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_128K( "fltsha"      , 0x000000, 0x089dc194 )
 
-	ROM_REGION(0x200000)                                              /* Shared data roms */
+	ROM_REGION( 0x200000 )                                              /* Shared data roms */
 	NAMCOS2_DATA_LOAD_E_128K( "flt1d0"      , 0x000000, 0x80004966 )
 	NAMCOS2_DATA_LOAD_O_128K( "flt1d1"      , 0x000000, 0xa2e93e8c )
 
-	ROM_REGION(0x100000)	                                          /* Sound voices */
+	ROM_REGION( 0x100000 )	                                          /* Sound voices */
 	ROM_LOAD( "fltvoi1"     , 0x000000, 0x080000, 0x4fc7c0ba )
 	ROM_LOAD( "fltvoi2"     , 0x080000, 0x080000, 0x409c62df )
 ROM_END
@@ -2065,13 +2057,13 @@ ROM_START( finehour )
 	ROM_REGIONX(0x080000, REGION_GFX4)                                /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_256K( "fh1_sha.bin" , 0x000000, 0x15875eb0 )
 
-	ROM_REGION(0x200000)                                              /* Shared data roms */
+	ROM_REGION( 0x200000 )                                              /* Shared data roms */
 	NAMCOS2_DATA_LOAD_E_128K( "fh1_dt0.bin" , 0x000000, 0x2441c26f )
 	NAMCOS2_DATA_LOAD_O_128K( "fh1_dt1.bin" , 0x000000, 0x48154deb )
 	NAMCOS2_DATA_LOAD_E_128K( "fh1_dt2.bin" , 0x100000, 0x12453ba4 )
 	NAMCOS2_DATA_LOAD_O_128K( "fh1_dt3.bin" , 0x100000, 0x50bab9da )
 
-	ROM_REGION(0x100000)	                                          /* Sound voices */
+	ROM_REGION( 0x100000 )	                                          /* Sound voices */
 	ROM_LOAD( "fh1_vo1.bin" , 0x000000, 0x080000, 0x07560fc7 )
 ROM_END
 
@@ -2116,13 +2108,13 @@ ROM_START( fourtrax )
 	ROM_REGIONX(0x080000, REGION_GFX4)                                /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_128K( "fxsha"       , 0x000000, 0xf7aa4af7 )
 
-	ROM_REGION(0x200000)                                              /* Shared data roms */
+	ROM_REGION( 0x200000 )                                              /* Shared data roms */
 	NAMCOS2_DATA_LOAD_E_256K( "fxdat0"      , 0x000000, 0x63abf69b )
 	NAMCOS2_DATA_LOAD_O_256K( "fxdat1"      , 0x000000, 0x725bed14 )
 	NAMCOS2_DATA_LOAD_E_256K( "fxdat2"      , 0x100000, 0x71e4a5a0 )
 	NAMCOS2_DATA_LOAD_O_256K( "fxdat3"      , 0x100000, 0x605725f7 )
 
-	ROM_REGION(0x100000)	                                          /* Sound voices */
+	ROM_REGION( 0x100000 )	                                          /* Sound voices */
 	ROM_LOAD("fxvoi1"      , 0x000000, 0x080000, 0x6173364f )
 ROM_END
 
@@ -2170,11 +2162,11 @@ ROM_START( marvland )
 	ROM_REGIONX(0x080000, REGION_GFX4)                                /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_256K( "mv1-sha.bin" , 0x000000, 0xa47db5d3 )
 
-	ROM_REGION(0x200000)                                              /* Shared data roms */
+	ROM_REGION( 0x200000 )                                              /* Shared data roms */
 	NAMCOS2_DATA_LOAD_E_128K( "mv1-dat0.bin", 0x000000, 0xe15f412e )
 	NAMCOS2_DATA_LOAD_O_128K( "mv1-dat1.bin", 0x000000, 0x73e1545a )
 
-	ROM_REGION(0x100000)	                                          /* Sound voices */
+	ROM_REGION( 0x100000 )	                                          /* Sound voices */
 	ROM_LOAD_EVEN( "mv1-voi1.bin", 0x000000, 0x080000, 0xde5cac09 )
 ROM_END
 
@@ -2229,11 +2221,11 @@ ROM_START( metlhawk )
 	ROM_REGIONX(0x080000, REGION_GFX4)                                /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_128K( "mh1sha.7n"   , 0x000000, 0x6ac22294 )
 
-	ROM_REGION(0x200000)                                              /* Shared data roms */
+	ROM_REGION( 0x200000 )                                              /* Shared data roms */
 	NAMCOS2_DATA_LOAD_E_128K( "mh1d0.13s"   , 0x000000, 0x8b178ac7 )
 	NAMCOS2_DATA_LOAD_O_128K( "mh1d1.13p"   , 0x000000, 0x10684fd6 )
 
-	ROM_REGION(0x100000)	                                          /* Sound voices */
+	ROM_REGION( 0x100000 )	                                          /* Sound voices */
 	ROM_LOAD( "mhvoi-1.bin" , 0x000000, 0x080000, 0x2723d137 )
 	ROM_LOAD( "mhvoi-2.bin" , 0x080000, 0x080000, 0xdbc92d91 )
 ROM_END
@@ -2287,11 +2279,11 @@ ROM_START( mirninja )
 	ROM_REGIONX(0x080000, REGION_GFX4)                                /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_128K( "mn_sha.bin"  , 0x000000, 0xc28af90f )
 
-	ROM_REGION(0x200000)                                              /* Shared data roms */
+	ROM_REGION( 0x200000 )                                              /* Shared data roms */
 	NAMCOS2_DATA_LOAD_E_128K( "mn1_dat0.bin", 0x000000, 0x104bcca8 )
 	NAMCOS2_DATA_LOAD_O_128K( "mn1_dat1.bin", 0x000000, 0xd2a918fb )
 
-	ROM_REGION(0x100000)	                                          /* Sound voices */
+	ROM_REGION( 0x100000 )	                                          /* Sound voices */
 	ROM_LOAD( "mn_voi1.bin" , 0x000000, 0x080000, 0x2ca3573c )
 	ROM_LOAD( "mn_voi2.bin" , 0x080000, 0x080000, 0x466c3b47 )
 ROM_END
@@ -2346,11 +2338,11 @@ ROM_START( ordyne )
 	ROM_REGIONX(0x080000, REGION_GFX4)                                /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_128K( "or1_sha.bin" , 0x000000, 0x7aec9dee )
 
-	ROM_REGION(0x200000)                                              /* Shared data roms */
+	ROM_REGION( 0x200000 )                                              /* Shared data roms */
 	NAMCOS2_DATA_LOAD_E_128K( "or1_dt0.bin" , 0x000000, 0xde214f7a )
 	NAMCOS2_DATA_LOAD_O_128K( "or1_dt1.bin" , 0x000000, 0x25e3e6c8 )
 
-	ROM_REGION(0x100000)	                                          /* Sound voices */
+	ROM_REGION( 0x100000 )	                                          /* Sound voices */
 	ROM_LOAD( "or1_vo1.bin" , 0x000000, 0x080000, 0x369e0bca )
 	ROM_LOAD( "or1_vo2.bin" , 0x080000, 0x080000, 0x9f4cd7b5 )
 ROM_END
@@ -2408,11 +2400,11 @@ ROM_START( phelios )
 	ROM_REGIONX(0x080000, REGION_GFX4)                                /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_128K( "ps1-sha.bin"  , 0x000000, 0x58e26fcf )
 
-	ROM_REGION(0x200000)                                              /* Shared data roms */
+	ROM_REGION( 0x200000 )                                              /* Shared data roms */
 	NAMCOS2_DATA_LOAD_E_128K( "ps1dat0.bin" , 0x000000, 0xee4194b0 )
 	NAMCOS2_DATA_LOAD_O_128K( "ps1dat1.bin" , 0x000000, 0x5b22d714 )
 
-	ROM_REGION(0x100000)	                                          /* Sound voices */
+	ROM_REGION( 0x100000 )	                                          /* Sound voices */
 	ROM_LOAD( "psvoi-1.bin" , 0x000000, 0x080000, 0xf67376ed )
 ROM_END
 
@@ -2455,12 +2447,12 @@ ROM_START( rthun2 )
 	ROM_REGIONX(0x080000, REGION_GFX4)                                /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_512K( "shape.bin"   , 0x000000, 0xcf58fbbe )
 
-	ROM_REGION(0x200000)                                              /* Shared data roms */
+	ROM_REGION( 0x200000 )                                              /* Shared data roms */
 	NAMCOS2_DATA_LOAD_E_128K( "data0.bin"   , 0x000000, 0x0baf44ee )
 	NAMCOS2_DATA_LOAD_O_128K( "data1.bin"   , 0x000000, 0x58a8daac )
 	NAMCOS2_DATA_LOAD_E_128K( "data2.bin"   , 0x100000, 0x8e850a2a )
 
-	ROM_REGION(0x100000)	                                          /* Sound voices */
+	ROM_REGION( 0x100000 )	                                          /* Sound voices */
 	ROM_LOAD( "voi1.bin"    , 0x000000, 0x080000, 0xe42027cd )
 	ROM_LOAD( "voi2.bin"    , 0x080000, 0x080000, 0x0c4c2b66 )
 ROM_END
@@ -2504,12 +2496,12 @@ ROM_START( rthun2j )
 	ROM_REGIONX(0x080000, REGION_GFX4)                                /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_512K( "shape.bin"   , 0x000000, 0xcf58fbbe )
 
-	ROM_REGION(0x200000)                                              /* Shared data roms */
+	ROM_REGION( 0x200000 )                                              /* Shared data roms */
 	NAMCOS2_DATA_LOAD_E_128K( "data0.bin"   , 0x000000, 0x0baf44ee )
 	NAMCOS2_DATA_LOAD_O_128K( "data1.bin"   , 0x000000, 0x58a8daac )
 	NAMCOS2_DATA_LOAD_E_128K( "data2.bin"   , 0x100000, 0x8e850a2a )
 
-	ROM_REGION(0x100000)	                                          /* Sound voices */
+	ROM_REGION( 0x100000 )	                                          /* Sound voices */
 	ROM_LOAD( "voi1.bin"    , 0x000000, 0x080000, 0xe42027cd )
 	ROM_LOAD( "voi2.bin"    , 0x080000, 0x080000, 0x0c4c2b66 )
 ROM_END
@@ -2518,7 +2510,7 @@ ROM_END
 /*************************************************************/
 /*                     STEEL GUNNER 2                        */
 /*************************************************************/
-ROM_START( sgunner2)
+ROM_START( sgunner2 )
 	ROM_REGIONX(0x040000, REGION_CPU1)                                /* Master CPU */        /* Main CPU */
 	ROM_LOAD_EVEN( "sns_mpr0.bin", 0x000000, 0x020000, 0xe7216ad7 )
 	ROM_LOAD_ODD(  "sns_mpr1.bin", 0x000000, 0x020000, 0x6caef2ee )
@@ -2558,13 +2550,13 @@ ROM_START( sgunner2)
 	ROM_REGIONX(0x080000, REGION_GFX4)                                /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_512K( "sns_sha0.bin", 0x000000, 0x5687e8c0 )
 
-	ROM_REGION(0x200000)                                              /* Shared data roms */
+	ROM_REGION( 0x200000 )                                              /* Shared data roms */
 	NAMCOS2_DATA_LOAD_E_128K( "sns_dat0.bin", 0x000000, 0x48295d93 )
 	NAMCOS2_DATA_LOAD_O_128K( "sns_dat1.bin", 0x000000, 0xb44cc656 )
 	NAMCOS2_DATA_LOAD_E_128K( "sns_dat2.bin", 0x100000, 0xca2ae645 )
 	NAMCOS2_DATA_LOAD_O_128K( "sns_dat3.bin", 0x100000, 0x203bb018 )
 
-	ROM_REGION(0x100000)	                                          /* Sound voices */
+	ROM_REGION( 0x100000 )	                                          /* Sound voices */
 	ROM_LOAD( "sns_voi1.bin", 0x000000, 0x080000, 0x219c97f7 )
 	ROM_LOAD( "sns_voi2.bin", 0x080000, 0x080000, 0x562ec86b )
 ROM_END
@@ -2612,12 +2604,12 @@ ROM_START( suzuka8h )
 	ROM_REGIONX(0x080000, REGION_GFX4)                                /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_512K( "eh1-shrp.bin", 0x000000, 0x39585cf9 )
 
-	ROM_REGION(0x200000)                                              /* Shared data roms */
+	ROM_REGION( 0x200000 )                                              /* Shared data roms */
 	NAMCOS2_DATA_LOAD_E_128K( "eh1-d0.bin"  , 0x000000, 0xb3c4243b )
 	NAMCOS2_DATA_LOAD_O_128K( "eh1-d1.bin"  , 0x000000, 0xc946e79c )
 	NAMCOS2_DATA_LOAD_O_128K( "eh1-d3.bin"  , 0x100000, 0x8425a9c7 )
 
-	ROM_REGION(0x100000)	                                          /* Sound voices */
+	ROM_REGION( 0x100000 )	                                          /* Sound voices */
 	ROM_LOAD( "eh1-voi1.bin", 0x000000, 0x080000, 0x71e534d3 )
 	ROM_LOAD( "eh1-voi2.bin", 0x080000, 0x080000, 0x3e20df8e )
 ROM_END
@@ -2671,11 +2663,11 @@ ROM_START( valkyrie )
 	ROM_REGIONX(0x080000, REGION_GFX4)                                /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_128K( "wdshape.bin" , 0x000000, 0x3b5e0249 )
 
-	ROM_REGION(0x200000)                                              /* Shared data roms */
+	ROM_REGION( 0x200000 )                                              /* Shared data roms */
 	NAMCOS2_DATA_LOAD_E_128K( "wd1dat0.bin" , 0x000000, 0xea209f48 )
 	NAMCOS2_DATA_LOAD_O_128K( "wd1dat1.bin" , 0x000000, 0x04b48ada )
 
-	ROM_REGION(0x100000)	                                          /* Sound voices */
+	ROM_REGION( 0x100000 )	                                          /* Sound voices */
 	ROM_LOAD( "wd1voi1.bin" , 0x000000, 0x040000, 0xf1ace193 )
 	ROM_RELOAD(               0x040000, 0x040000 )
 	ROM_LOAD( "wd1voi2.bin" , 0x080000, 0x020000, 0xe95c5cf3 )

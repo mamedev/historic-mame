@@ -120,7 +120,7 @@ void gunsmoke_vh_stop(void)
 void gunsmoke_c804_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* bits 0 and 1 are for coin counters? - we ignore them */
@@ -169,7 +169,7 @@ void gunsmoke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs,sx,sy;
 	int bg_scrolly, bg_scrollx;
-	unsigned char *p=Machine->memory_region[4];
+	unsigned char *p=memory_region(4);
 	int top,left,xscroll,yscroll;
 
 

@@ -130,7 +130,7 @@ static int status_port_r(int offset)
 
 static int m92_eeprom_r(int offset)
 {
-	unsigned char *RAM = Machine->memory_region[4];
+	unsigned char *RAM = memory_region(4);
 //	if (errorlog) fprintf(errorlog,"%05x: EEPROM RE %04x\n",cpu_get_pc(),offset);
 
 	return RAM[offset/2];
@@ -138,7 +138,7 @@ static int m92_eeprom_r(int offset)
 
 static void m92_eeprom_w(int offset,int data)
 {
-	unsigned char *RAM = Machine->memory_region[4];
+	unsigned char *RAM = memory_region(4);
 //	if (errorlog) fprintf(errorlog,"%05x: EEPROM WR %04x\n",cpu_get_pc(),offset);
 	RAM[offset/2]=data;
 }
@@ -150,7 +150,7 @@ static void m92_coincounter_w(int offset, int data)
 		coin_counter_w(1,data & 0x02);
 
 		if (m92_game_kludge==2) {
-			unsigned char *RAM = Machine->memory_region[0];
+			unsigned char *RAM = memory_region(REGION_CPU1);
 			RAM[0x1840]=0x90; /* For Leagueman */
 			RAM[0x1841]=0x90;
 			RAM[0x830]=0x90;
@@ -185,7 +185,7 @@ static void m92_unknown_w(int offset, int data)
 
 static void m92_bankswitch_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 //	if (errorlog) fprintf(errorlog,"%04x: Bank %04x\n",cpu_get_pc(),data);
 	if (offset==1) return; /* Unused top byte */
@@ -1063,8 +1063,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_V33,	/* NEC V33 */
-			20000000,	/* 18 MHz clock, but cycles in core are for v30 (v33 is faster?) */
-			0,
+			18000000,	/* 18 MHz clock */
 			readmem,writemem,readport,writeport,
 			m92_raster_interrupt,256 /* 8 prelines, 240 visible lines, 8 for vblank? */
 		},
@@ -1072,7 +1071,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_V33 | CPU_AUDIO_CPU,
 			14318180,	/* 14.31818 MHz */
-			2,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -1113,8 +1111,7 @@ static struct MachineDriver nonraster_machine_driver =
 	{
 		{
 			CPU_V33,	/* NEC V33 */
-			20000000,	/* 18 MHz clock, but cycles in core are for v30 (v33 is faster?) */
-			0,
+			18000000,	/* 18 MHz clock */
 			readmem,writemem,readport,writeport,
 			m92_interrupt,1
 		},
@@ -1122,7 +1119,6 @@ static struct MachineDriver nonraster_machine_driver =
 		{
 			CPU_V33 | CPU_AUDIO_CPU,
 			14318180,	/* 14.31818 MHz */
-			2,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -1163,8 +1159,7 @@ static struct MachineDriver lethalth_machine_driver =
 	{
 		{
 			CPU_V33,	/* NEC V33 */
-			20000000,	/* 18 MHz clock, but cycles in core are for v30 (v33 is faster?) */
-			0,
+			18000000,	/* 18 MHz clock */
 			lethalth_readmem,lethalth_writemem,readport,writeport,
 			m92_interrupt,1
 		},
@@ -1172,7 +1167,6 @@ static struct MachineDriver lethalth_machine_driver =
 		{
 			CPU_V33 | CPU_AUDIO_CPU,
 			14318180,	/* 14.31818 MHz */
-			2,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -1213,8 +1207,7 @@ static struct MachineDriver psoldier_machine_driver =
 	{
 		{
 			CPU_V33,	/* NEC V33 */
-			20000000,	/* 18 MHz clock, but cycles in core are for v30 (v33 is faster?) */
-			0,
+			18000000,	/* 18 MHz clock */
 			readmem,writemem,readport,writeport,
 			m92_interrupt,1
 		},
@@ -1222,7 +1215,6 @@ static struct MachineDriver psoldier_machine_driver =
 		{
 			CPU_V33 | CPU_AUDIO_CPU,
 			14318180,	/* 14.31818 MHz */
-			2,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -1260,7 +1252,7 @@ static struct MachineDriver psoldier_machine_driver =
 /***************************************************************************/
 
 ROM_START( bmaster )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_V20_EVEN( "bm_d-h0.rom",  0x000000, 0x40000, 0x49b257c7 )
 	ROM_LOAD_V20_ODD ( "bm_d-l0.rom",  0x000000, 0x40000, 0xa873523e )
 	ROM_LOAD_V20_EVEN( "bm_d-h1.rom",  0x080000, 0x10000, 0x082b7158 )
@@ -1277,7 +1269,7 @@ ROM_START( bmaster )
 	ROM_LOAD( "bm_020.rom",      0x400000, 0x80000, 0x31532198 )
 	ROM_LOAD( "bm_030.rom",      0x500000, 0x80000, 0xd1a041d3 )
 
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU2 )
 	ROM_LOAD_V20_EVEN( "bm_d-sh0.rom",  0x000000, 0x10000, 0x9f7c075b )
 	ROM_LOAD_V20_ODD ( "bm_d-sl0.rom",  0x000000, 0x10000, 0x1fa87c89 )
 
@@ -1286,7 +1278,7 @@ ROM_START( bmaster )
 ROM_END
 
 ROM_START( skingame )
-	ROM_REGION(0x180000)
+	ROM_REGIONX( 0x180000, REGION_CPU1 )
 	ROM_LOAD_V20_EVEN( "is-h0-d",  0x000000, 0x40000, 0x80940abb )
 	ROM_LOAD_V20_ODD ( "is-l0-d",  0x000000, 0x40000, 0xb84beed6 )
 	ROM_LOAD_V20_EVEN( "is-h1",    0x100000, 0x40000, 0x9ba8e1f2 )
@@ -1303,7 +1295,7 @@ ROM_START( skingame )
 	ROM_LOAD( "k32",      0x400000, 0x100000, 0x3a258c41 )
 	ROM_LOAD( "k33",      0x500000, 0x100000, 0xc1e91a14 )
 
-	ROM_REGION(0x100000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x100000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD_V20_EVEN( "mt2sh0",  0x000000, 0x10000, 0x1ecbea43 )
 	ROM_LOAD_V20_ODD ( "mt2sl0",  0x000000, 0x10000, 0x8fd5b531 )
 
@@ -1315,7 +1307,7 @@ ROM_START( skingame )
 ROM_END
 
 ROM_START( majtitl2 )
-	ROM_REGION(0x180000)
+	ROM_REGIONX( 0x180000, REGION_CPU1 )
 	ROM_LOAD_V20_EVEN( "mt2-ho-b.5m",0x000000, 0x40000, 0xb163b12e )
 	ROM_LOAD_V20_ODD ( "mt2-lo-b.5f",0x000000, 0x40000, 0x6f3b5d9d )
 	ROM_LOAD_V20_EVEN( "is-h1",      0x100000, 0x40000, 0x9ba8e1f2 )
@@ -1332,7 +1324,7 @@ ROM_START( majtitl2 )
 	ROM_LOAD( "k32",      0x400000, 0x100000, 0x3a258c41 )
 	ROM_LOAD( "k33",      0x500000, 0x100000, 0xc1e91a14 )
 
-	ROM_REGION(0x100000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x100000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD_V20_EVEN( "mt2sh0",  0x000000, 0x10000, 0x1ecbea43 )
 	ROM_LOAD_V20_ODD ( "mt2sl0",  0x000000, 0x10000, 0x8fd5b531 )
 
@@ -1344,7 +1336,7 @@ ROM_START( majtitl2 )
 ROM_END
 
 ROM_START( skingam2 )
-	ROM_REGION(0x180000)
+	ROM_REGIONX( 0x180000, REGION_CPU1 )
 	ROM_LOAD_V20_EVEN( "mt2h0a", 0x000000, 0x40000, 0x7c6dbbc7 )
 	ROM_LOAD_V20_ODD ( "mt2l0a", 0x000000, 0x40000, 0x9de5f689 )
 	ROM_LOAD_V20_EVEN( "is-h1",  0x100000, 0x40000, 0x9ba8e1f2 )
@@ -1361,7 +1353,7 @@ ROM_START( skingam2 )
 	ROM_LOAD( "k32",      0x400000, 0x100000, 0x3a258c41 )
 	ROM_LOAD( "k33",      0x500000, 0x100000, 0xc1e91a14 )
 
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU2 )
 	ROM_LOAD_V20_EVEN( "mt2sh0",  0x000000, 0x10000, 0x1ecbea43 )
 	ROM_LOAD_V20_ODD ( "mt2sl0",  0x000000, 0x10000, 0x8fd5b531 )
 
@@ -1373,7 +1365,7 @@ ROM_START( skingam2 )
 ROM_END
 
 ROM_START( gunforce )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_V20_EVEN( "gf_h0-c.rom",  0x000000, 0x20000, 0xc09bb634 )
 	ROM_LOAD_V20_ODD ( "gf_l0-c.rom",  0x000000, 0x20000, 0x1bef6f7d )
 	ROM_LOAD_V20_EVEN( "gf_h1-c.rom",  0x040000, 0x20000, 0xc84188b7 )
@@ -1390,7 +1382,7 @@ ROM_START( gunforce )
 	ROM_LOAD( "gf_020.rom",      0x400000, 0x40000, 0x6f5c3cb0 )
 	ROM_LOAD( "gf_030.rom",      0x500000, 0x40000, 0x18978a9f )
 
-	ROM_REGION(0x100000)	/* 1MB for the audio CPU - encrypted V30 = NANAO custom D80001 (?) */
+	ROM_REGIONX( 0x100000, REGION_CPU2 )	/* 1MB for the audio CPU - encrypted V30 = NANAO custom D80001 (?) */
 	ROM_LOAD_V20_EVEN( "gf_sh0.rom",0x000000, 0x010000, 0x3f8f16e0 )
 	ROM_LOAD_V20_ODD ( "gf_sl0.rom",0x000000, 0x010000, 0xdb0b13a3 )
 
@@ -1399,7 +1391,7 @@ ROM_START( gunforce )
 ROM_END
 
 ROM_START( gunforcu )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_V20_EVEN( "gf_h0-d.5m",  0x000000, 0x20000, 0xa6db7b5c )
 	ROM_LOAD_V20_ODD ( "gf_l0-d.5f",  0x000000, 0x20000, 0x82cf55f6 )
 	ROM_LOAD_V20_EVEN( "gf_h1-d.5l",  0x040000, 0x20000, 0x08a3736c )
@@ -1416,7 +1408,7 @@ ROM_START( gunforcu )
 	ROM_LOAD( "gf_020.rom",      0x400000, 0x40000, 0x6f5c3cb0 )
 	ROM_LOAD( "gf_030.rom",      0x500000, 0x40000, 0x18978a9f )
 
-	ROM_REGION(0x100000)	/* 1MB for the audio CPU - encrypted V30 = NANAO custom D80001 (?) */
+	ROM_REGIONX( 0x100000, REGION_CPU2 )	/* 1MB for the audio CPU - encrypted V30 = NANAO custom D80001 (?) */
 	ROM_LOAD_V20_EVEN( "gf_sh0.rom",0x000000, 0x010000, 0x3f8f16e0 )
 	ROM_LOAD_V20_ODD ( "gf_sl0.rom",0x000000, 0x010000, 0xdb0b13a3 )
 
@@ -1425,7 +1417,7 @@ ROM_START( gunforcu )
 ROM_END
 
 ROM_START( inthunt )
-	ROM_REGION(0x100000) /* Region 0 - v33 main cpu */
+	ROM_REGIONX( 0x100000, REGION_CPU1 ) /* Region 0 - v33 main cpu */
 	ROM_LOAD_V20_EVEN( "ith-h0-d.rom",0x000000, 0x040000, 0x52f8e7a6 )
 	ROM_LOAD_V20_ODD ( "ith-l0-d.rom",0x000000, 0x040000, 0x5db79eb7 )
 	ROM_LOAD_V20_EVEN( "ith-h1-b.rom",0x080000, 0x020000, 0xfc2899df )
@@ -1442,7 +1434,7 @@ ROM_START( inthunt )
 	ROM_LOAD( "ith_ic36.rom",0x400000, 0x100000, 0x20d1b28b )
 	ROM_LOAD( "ith_ic37.rom",0x500000, 0x100000, 0x90b6fd4b )
 
-	ROM_REGION(0x100000)	/* Irem D8000011A1 */
+	ROM_REGIONX( 0x100000, REGION_CPU2 )	/* Irem D8000011A1 */
 	ROM_LOAD_V20_EVEN( "ith-sh0.rom",0x000000, 0x010000, 0x209c8b7f )
 	ROM_LOAD_V20_ODD ( "ith-sl0.rom",0x000000, 0x010000, 0x18472d65 )
 
@@ -1451,7 +1443,7 @@ ROM_START( inthunt )
 ROM_END
 
 ROM_START( kaiteids )
-	ROM_REGION(0x100000) /* Region 0 - v33 main cpu */
+	ROM_REGIONX( 0x100000, REGION_CPU1 ) /* Region 0 - v33 main cpu */
 	ROM_LOAD_V20_EVEN( "ith-h0j.bin",0x000000, 0x040000, 0xdc1dec36 )
 	ROM_LOAD_V20_ODD ( "ith-l0j.bin",0x000000, 0x040000, 0x8835d704 )
 	ROM_LOAD_V20_EVEN( "ith-h1j.bin",0x080000, 0x020000, 0x5a7b212d )
@@ -1468,7 +1460,7 @@ ROM_START( kaiteids )
 	ROM_LOAD( "ith_ic36.rom",0x400000, 0x100000, 0x20d1b28b )
 	ROM_LOAD( "ith_ic37.rom",0x500000, 0x100000, 0x90b6fd4b )
 
-	ROM_REGION(0x100000)	/* Irem D8000011A1 */
+	ROM_REGIONX( 0x100000, REGION_CPU2 )	/* Irem D8000011A1 */
 	ROM_LOAD_V20_EVEN( "ith-sh0.rom",0x000000, 0x010000, 0x209c8b7f )
 	ROM_LOAD_V20_ODD ( "ith-sl0.rom",0x000000, 0x010000, 0x18472d65 )
 
@@ -1477,7 +1469,7 @@ ROM_START( kaiteids )
 ROM_END
 
 ROM_START( hook )
-	ROM_REGION(0x100000) /* Region 0 - v33 main cpu */
+	ROM_REGIONX( 0x100000, REGION_CPU1 ) /* Region 0 - v33 main cpu */
 	ROM_LOAD_V20_EVEN( "h-h0-d.rom",0x000000, 0x040000, 0x40189ff6 )
 	ROM_LOAD_V20_ODD ( "h-l0-d.rom",0x000000, 0x040000, 0x14567690 )
 	ROM_LOAD_V20_EVEN( "h-h1.rom",  0x080000, 0x020000, 0x264ba1f0 )
@@ -1494,7 +1486,7 @@ ROM_START( hook )
 	ROM_LOAD( "hook-020.rom",0x400000, 0x100000, 0x8847af9a )
 	ROM_LOAD( "hook-030.rom",0x500000, 0x100000, 0x239e877e )
 
-	ROM_REGION(0x100000)	/* 1MB for the audio CPU - encrypted V30 = NANAO custom D80001 (?) */
+	ROM_REGIONX( 0x100000, REGION_CPU2 )	/* 1MB for the audio CPU - encrypted V30 = NANAO custom D80001 (?) */
 	ROM_LOAD_V20_EVEN( "h-sh0.rom",0x000000, 0x010000, 0x86a4e56e )
 	ROM_LOAD_V20_ODD ( "h-sl0.rom",0x000000, 0x010000, 0x10fd9676 )
 
@@ -1503,7 +1495,7 @@ ROM_START( hook )
 ROM_END
 
 ROM_START( hooku )
-	ROM_REGION(0x100000) /* Region 0 - v33 main cpu */
+	ROM_REGIONX( 0x100000, REGION_CPU1 ) /* Region 0 - v33 main cpu */
 	ROM_LOAD_V20_EVEN( "h0-c.3h",0x000000, 0x040000, 0x84cc239e )
 	ROM_LOAD_V20_ODD ( "l0-c.5h",0x000000, 0x040000, 0x45e194fe )
 	ROM_LOAD_V20_EVEN( "h-h1.rom",  0x080000, 0x020000, 0x264ba1f0 )
@@ -1520,7 +1512,7 @@ ROM_START( hooku )
 	ROM_LOAD( "hook-020.rom",0x400000, 0x100000, 0x8847af9a )
 	ROM_LOAD( "hook-030.rom",0x500000, 0x100000, 0x239e877e )
 
-	ROM_REGION(0x100000)	/* 1MB for the audio CPU - encrypted V30 = NANAO custom D80001 (?) */
+	ROM_REGIONX( 0x100000, REGION_CPU2 )	/* 1MB for the audio CPU - encrypted V30 = NANAO custom D80001 (?) */
 	ROM_LOAD_V20_EVEN( "h-sh0.rom",0x000000, 0x010000, 0x86a4e56e )
 	ROM_LOAD_V20_ODD ( "h-sl0.rom",0x000000, 0x010000, 0x10fd9676 )
 
@@ -1529,7 +1521,7 @@ ROM_START( hooku )
 ROM_END
 
 ROM_START( rtypeleo )
-	ROM_REGION(0x100000) /* Region 0 - v33 main cpu */
+	ROM_REGIONX( 0x100000, REGION_CPU1 ) /* Region 0 - v33 main cpu */
 	ROM_LOAD_V20_EVEN( "rtl-h0-d.bin", 0x000000, 0x040000, 0x3dbac89f )
 	ROM_LOAD_V20_ODD ( "rtl-l0-d.bin", 0x000000, 0x040000, 0xf85a2537 )
 	ROM_LOAD_V20_EVEN( "rtl-h1-d.bin", 0x080000, 0x020000, 0x352ff444 )
@@ -1546,7 +1538,7 @@ ROM_START( rtypeleo )
 	ROM_LOAD( "rtl-020.bin",0x400000, 0x100000, 0xf9a3f3a1 )
 	ROM_LOAD( "rtl-030.bin",0x500000, 0x100000, 0x03528d95 )
 
-	ROM_REGION(0x100000)	/* 1MB for the audio CPU - encrypted V30 = NANAO custom D80001 (?) */
+	ROM_REGIONX( 0x100000, REGION_CPU2 )	/* 1MB for the audio CPU - encrypted V30 = NANAO custom D80001 (?) */
 	ROM_LOAD_V20_EVEN( "rtl-sh0a.bin",0x000000, 0x010000, 0xe518b4e3 )
 	ROM_LOAD_V20_ODD ( "rtl-sl0a.bin",0x000000, 0x010000, 0x896f0d36 )
 
@@ -1555,7 +1547,7 @@ ROM_START( rtypeleo )
 ROM_END
 
 ROM_START( mysticri )
-	ROM_REGION(0x100000) /* Region 0 - v30 main cpu */
+	ROM_REGIONX( 0x100000, REGION_CPU1 ) /* Region 0 - v30 main cpu */
 	ROM_LOAD_V20_EVEN( "mr-h0-b.bin",  0x000000, 0x040000, 0xd529f887 )
 	ROM_LOAD_V20_ODD ( "mr-l0-b.bin",  0x000000, 0x040000, 0xa457ab44 )
 	ROM_LOAD_V20_EVEN( "mr-h1-b.bin",  0x080000, 0x010000, 0xe17649b9 )
@@ -1572,7 +1564,7 @@ ROM_START( mysticri )
 	ROM_LOAD( "mr-o20.bin", 0x400000, 0x080000, 0xb9c468fc )
 	ROM_LOAD( "mr-o30.bin", 0x500000, 0x080000, 0xcc32433a )
 
-	ROM_REGION(0x100000)	/* 1MB for the audio CPU - encrypted V30 = NANAO custom D80001 (?) */
+	ROM_REGIONX( 0x100000, REGION_CPU2 )	/* 1MB for the audio CPU - encrypted V30 = NANAO custom D80001 (?) */
 	ROM_LOAD_V20_EVEN( "mr-sh0.bin",0x000000, 0x010000, 0x50d335e4 )
 	ROM_LOAD_V20_ODD ( "mr-sl0.bin",0x000000, 0x010000, 0x0fa32721 )
 
@@ -1581,7 +1573,7 @@ ROM_START( mysticri )
 ROM_END
 
 ROM_START( gunhohki )
-	ROM_REGION(0x100000) /* Region 0 - v30 main cpu */
+	ROM_REGIONX( 0x100000, REGION_CPU1 ) /* Region 0 - v30 main cpu */
 	ROM_LOAD_V20_EVEN( "mr-h0.bin",  0x000000, 0x040000, 0x83352270 )
 	ROM_LOAD_V20_ODD ( "mr-l0.bin",  0x000000, 0x040000, 0x9db308ae )
 	ROM_LOAD_V20_EVEN( "mr-h1.bin",  0x080000, 0x010000, 0xc9532b60 )
@@ -1598,7 +1590,7 @@ ROM_START( gunhohki )
 	ROM_LOAD( "mr-o20.bin", 0x400000, 0x080000, 0xb9c468fc )
 	ROM_LOAD( "mr-o30.bin", 0x500000, 0x080000, 0xcc32433a )
 
-	ROM_REGION(0x100000)	/* 1MB for the audio CPU - encrypted V30 = NANAO custom D80001 (?) */
+	ROM_REGIONX( 0x100000, REGION_CPU2 )	/* 1MB for the audio CPU - encrypted V30 = NANAO custom D80001 (?) */
 	ROM_LOAD_V20_EVEN( "mr-sh0.bin",0x000000, 0x010000, 0x50d335e4 )
 	ROM_LOAD_V20_ODD ( "mr-sl0.bin",0x000000, 0x010000, 0x0fa32721 )
 
@@ -1607,7 +1599,7 @@ ROM_START( gunhohki )
 ROM_END
 
 ROM_START( uccops )
-	ROM_REGION(0x100000) /* Region 0 - v30 main cpu */
+	ROM_REGIONX( 0x100000, REGION_CPU1 ) /* Region 0 - v30 main cpu */
 	ROM_LOAD_V20_EVEN( "uc_h0.rom",  0x000000, 0x040000, 0x240aa5f7 )
 	ROM_LOAD_V20_ODD ( "uc_l0.rom",  0x000000, 0x040000, 0xdf9a4826 )
 	ROM_LOAD_V20_EVEN( "uc_h1.rom",  0x080000, 0x020000, 0x8d29bcd6 )
@@ -1624,7 +1616,7 @@ ROM_START( uccops )
 	ROM_LOAD( "uc_k18m.rom", 0x400000, 0x100000, 0xa626eb12 )
 	ROM_LOAD( "uc_k19m.rom", 0x500000, 0x100000, 0x5df46549 )
 
-	ROM_REGION(0x100000)	/* 1MB for the audio CPU - encrypted V30 = NANAO custom D80001 (?) */
+	ROM_REGIONX( 0x100000, REGION_CPU2 )	/* 1MB for the audio CPU - encrypted V30 = NANAO custom D80001 (?) */
 	ROM_LOAD_V20_EVEN( "uc_sh0.rom", 0x000000, 0x010000, 0xdf90b198 )
 	ROM_LOAD_V20_ODD ( "uc_sl0.rom", 0x000000, 0x010000, 0x96c11aac )
 
@@ -1633,7 +1625,7 @@ ROM_START( uccops )
 ROM_END
 
 ROM_START( uccopsj )
-	ROM_REGION(0x100000) /* Region 0 - v30 main cpu */
+	ROM_REGIONX( 0x100000, REGION_CPU1 ) /* Region 0 - v30 main cpu */
 	ROM_LOAD_V20_EVEN( "uca-h0.bin", 0x000000, 0x040000, 0x9e17cada )
 	ROM_LOAD_V20_ODD ( "uca-l0.bin", 0x000000, 0x040000, 0x4a4e3208 )
 	ROM_LOAD_V20_EVEN( "uca-h1.bin", 0x080000, 0x020000, 0x83f78dea )
@@ -1650,7 +1642,7 @@ ROM_START( uccopsj )
 	ROM_LOAD( "uca-o1.bin", 0x400000, 0x100000, 0xbdc224b3 )
 	ROM_LOAD( "uca-o0.bin", 0x500000, 0x100000, 0x7526daec )
 
-	ROM_REGION(0x100000)	/* 1MB for the audio CPU - encrypted V30 = NANAO custom D80001 (?) */
+	ROM_REGIONX( 0x100000, REGION_CPU2 )	/* 1MB for the audio CPU - encrypted V30 = NANAO custom D80001 (?) */
 	ROM_LOAD_V20_EVEN( "uca-sh0.bin", 0x000000, 0x010000, 0xf0ca1b03 )
 	ROM_LOAD_V20_ODD ( "uca-sl0.bin", 0x000000, 0x010000, 0xd1661723 )
 
@@ -1659,7 +1651,7 @@ ROM_START( uccopsj )
 ROM_END
 
 ROM_START( lethalth )
-	ROM_REGION(0x100000) /* Region 0 - v30 main cpu */
+	ROM_REGIONX( 0x100000, REGION_CPU1 ) /* Region 0 - v30 main cpu */
 	ROM_LOAD_V20_EVEN( "lt_d-h0.rom",  0x000000, 0x020000, 0x20c68935 )
 	ROM_LOAD_V20_ODD ( "lt_d-l0.rom",  0x000000, 0x020000, 0xe1432fb3 )
 	ROM_LOAD_V20_EVEN( "lt_d-h1.rom",  0x040000, 0x020000, 0xd7dd3d48 )
@@ -1676,7 +1668,7 @@ ROM_START( lethalth )
 	ROM_LOAD( "lt_7s.rom", 0x400000, 0x040000, 0xc8e970df )
 	ROM_LOAD( "lt_7y.rom", 0x500000, 0x040000, 0xf5436708 )
 
-	ROM_REGION(0x100000)	/* 1MB for the audio CPU */
+	ROM_REGIONX( 0x100000, REGION_CPU2 )	/* 1MB for the audio CPU */
 	ROM_LOAD_V20_EVEN( "lt_d-sh0.rom",0x000000, 0x010000, 0xaf5b224f )
 	ROM_LOAD_V20_ODD ( "lt_d-sl0.rom",0x000000, 0x010000, 0xcb3faac3 )
 
@@ -1685,7 +1677,7 @@ ROM_START( lethalth )
 ROM_END
 
 ROM_START( thndblst )
-	ROM_REGION(0x100000) /* Region 0 - v30 main cpu */
+	ROM_REGIONX( 0x100000, REGION_CPU1 ) /* Region 0 - v30 main cpu */
 	ROM_LOAD_V20_EVEN( "lt_d-h0j.rom", 0x000000, 0x020000, 0xdc218a18 )
 	ROM_LOAD_V20_ODD ( "lt_d-l0j.rom", 0x000000, 0x020000, 0xae9a3f81 )
 	ROM_LOAD_V20_EVEN( "lt_d-h1.rom",  0x040000, 0x020000, 0xd7dd3d48 )
@@ -1702,7 +1694,7 @@ ROM_START( thndblst )
 	ROM_LOAD( "lt_7s.rom", 0x400000, 0x040000, 0xc8e970df )
 	ROM_LOAD( "lt_7y.rom", 0x500000, 0x040000, 0xf5436708 )
 
-	ROM_REGION(0x100000)	/* 1MB for the audio CPU */
+	ROM_REGIONX( 0x100000, REGION_CPU2 )	/* 1MB for the audio CPU */
 	ROM_LOAD_V20_EVEN( "lt_d-sh0.rom",0x000000, 0x010000, 0xaf5b224f )
 	ROM_LOAD_V20_ODD ( "lt_d-sl0.rom",0x000000, 0x010000, 0xcb3faac3 )
 
@@ -1711,7 +1703,7 @@ ROM_START( thndblst )
 ROM_END
 
 ROM_START( nbbatman )
-	ROM_REGION(0x180000) /* Region 0 - v30 main cpu */
+	ROM_REGIONX( 0x180000, REGION_CPU1 ) /* Region 0 - v30 main cpu */
 	ROM_LOAD_V20_EVEN( "a1-h0-a.34",  0x000000, 0x040000, 0x24a9b794 )
 	ROM_LOAD_V20_ODD ( "a1-l0-a.31",  0x000000, 0x040000, 0x846d7716 )
 	ROM_LOAD_V20_EVEN( "a1-h1-.33",   0x100000, 0x040000, 0x3ce2aab5 )
@@ -1728,7 +1720,7 @@ ROM_START( nbbatman )
 	ROM_LOAD( "lh538395.44", 0x400000, 0x100000, 0x2a533b5e )
 	ROM_LOAD( "lh538396.45", 0x500000, 0x100000, 0x863a66fa )
 
-	ROM_REGION(0x100000)	/* 1MB for the audio CPU */
+	ROM_REGIONX( 0x100000, REGION_CPU2 )	/* 1MB for the audio CPU */
 	ROM_LOAD_V20_EVEN( "a1-sh0-.14",0x000000, 0x010000, 0xb7fae3e6 )
 	ROM_LOAD_V20_ODD ( "a1-sl0-.17",0x000000, 0x010000, 0xb26d54fc )
 
@@ -1737,7 +1729,7 @@ ROM_START( nbbatman )
 ROM_END
 
 ROM_START( leaguemn )
-	ROM_REGION(0x180000) /* Region 0 - v30 main cpu */
+	ROM_REGIONX( 0x180000, REGION_CPU1 ) /* Region 0 - v30 main cpu */
 	ROM_LOAD_V20_EVEN( "lma1-h0.34",  0x000000, 0x040000, 0x47c54204 )
 	ROM_LOAD_V20_ODD ( "lma1-l0.31",  0x000000, 0x040000, 0x1d062c82 )
 	ROM_LOAD_V20_EVEN( "a1-h1-.33",   0x100000, 0x040000, 0x3ce2aab5 )
@@ -1754,7 +1746,7 @@ ROM_START( leaguemn )
 	ROM_LOAD( "lh538395.44", 0x400000, 0x100000, 0x2a533b5e )
 	ROM_LOAD( "lh538396.45", 0x500000, 0x100000, 0x863a66fa )
 
-	ROM_REGION(0x100000)	/* 1MB for the audio CPU */
+	ROM_REGIONX( 0x100000, REGION_CPU2 )	/* 1MB for the audio CPU */
 	ROM_LOAD_V20_EVEN( "a1-sh0-.14",0x000000, 0x010000, 0xb7fae3e6 )
 	ROM_LOAD_V20_ODD ( "a1-sl0-.17",0x000000, 0x010000, 0xb26d54fc )
 
@@ -1763,7 +1755,7 @@ ROM_START( leaguemn )
 ROM_END
 
 ROM_START( psoldier )
-	ROM_REGION(0x100000) /* Region 0 - v30 main cpu */
+	ROM_REGIONX( 0x100000, REGION_CPU1 ) /* Region 0 - v30 main cpu */
 	ROM_LOAD_V20_EVEN( "f3_h0d.h0",  0x000000, 0x040000, 0x38f131fd )
 	ROM_LOAD_V20_ODD ( "f3_l0d.l0",  0x000000, 0x040000, 0x1662969c )
 	ROM_LOAD_V20_EVEN( "f3_h1.h1",   0x080000, 0x040000, 0xc8d1947c )
@@ -1784,7 +1776,7 @@ ROM_START( psoldier )
 	ROM_LOAD_GFX_EVEN( "f3_w43.030", 0x800000, 0x100000, 0xdae7327a )
 	ROM_LOAD_GFX_ODD ( "f3_w44.031", 0x800000, 0x100000, 0xd0fc84ac )
 
-	ROM_REGION(0x100000)	/* 1MB for the audio CPU */
+	ROM_REGIONX( 0x100000, REGION_CPU2 )	/* 1MB for the audio CPU */
 	ROM_LOAD_V20_EVEN( "f3_sh0.sh0",0x000000, 0x010000, 0x90b55e5e )
 	ROM_LOAD_V20_ODD ( "f3_sl0.sl0",0x000000, 0x010000, 0x77c16d57 )
 
@@ -1923,7 +1915,7 @@ static void memory_hooks(void)
 
 static void m92_startup(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	memcpy(RAM+0xffff0,RAM+0x7fff0,0x10); /* Start vector */
 	cpu_setbank(1,&RAM[0xa0000]); /* Initial bank */
@@ -1932,7 +1924,7 @@ static void m92_startup(void)
 	memcpy(RAM+0xc0000,RAM+0x00000,0x10000);
 	cpu_setbank(2,&RAM[0xc0000]);
 
-	RAM = Machine->memory_region[2];
+	RAM = memory_region(2);
 	memcpy(RAM+0xffff0,RAM+0x1fff0,0x10); /* Sound cpu Start vector */
 
 	/* These games use M92-A-B motherboard, others are M92-A-A */

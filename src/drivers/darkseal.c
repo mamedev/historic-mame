@@ -332,14 +332,12 @@ static struct MachineDriver darkseal_machine_driver =
 	 	{
 			CPU_M68000, /* Custom chip 59 */
 			12000000,
-			0,
 			darkseal_readmem,darkseal_writemem,0,0,
 			m68_level6_irq,1 /* VBL */
 		},
 		{
 			CPU_H6280 | CPU_AUDIO_CPU, /* Custom chip 45 */
 			32220000/8, /* Audio section crystal is 32.220 MHz */
-			2,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -382,7 +380,7 @@ static struct MachineDriver darkseal_machine_driver =
 /******************************************************************************/
 
 ROM_START( darkseal )
-	ROM_REGION(0x80000) /* 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "ga04-3.rom",   0x00000, 0x20000, 0xbafad556 )
 	ROM_LOAD_ODD ( "ga01-3.rom",   0x00000, 0x20000, 0xf409050e )
 	ROM_LOAD_EVEN( "ga-00.rom",    0x40000, 0x20000, 0xfbf3ac63 )
@@ -397,7 +395,7 @@ ROM_START( darkseal )
 	ROM_LOAD( "mac-00.rom",   0x120000, 0x80000, 0x52acf1d6 ) /* sprites */
 	ROM_LOAD( "mac-01.rom",   0x1a0000, 0x80000, 0xb28f7584 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fz-06.rom",    0x00000, 0x10000, 0xc4828a6d )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -408,7 +406,7 @@ ROM_START( darkseal )
 ROM_END
 
 ROM_START( darksea1 )
-	ROM_REGION(0x80000) /* 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "ga-04.rom",    0x00000, 0x20000, 0xa1a985a9 )
 	ROM_LOAD_ODD ( "ga-01.rom",    0x00000, 0x20000, 0x98bd2940 )
 	ROM_LOAD_EVEN( "ga-00.rom",    0x40000, 0x20000, 0xfbf3ac63 )
@@ -423,7 +421,7 @@ ROM_START( darksea1 )
 	ROM_LOAD( "mac-00.rom",   0x120000, 0x80000, 0x52acf1d6 ) /* sprites */
 	ROM_LOAD( "mac-01.rom",   0x1a0000, 0x80000, 0xb28f7584 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fz-06.rom",    0x00000, 0x10000, 0xc4828a6d )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -434,7 +432,7 @@ ROM_START( darksea1 )
 ROM_END
 
 ROM_START( gatedoom )
-	ROM_REGION(0x80000) /* 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "gb04-4",       0x00000, 0x20000, 0x8e3a0bfd )
 	ROM_LOAD_ODD ( "gb01-4",       0x00000, 0x20000, 0x8d0fd383 )
 	ROM_LOAD_EVEN( "ga-00.rom",    0x40000, 0x20000, 0xfbf3ac63 )
@@ -449,7 +447,7 @@ ROM_START( gatedoom )
 	ROM_LOAD( "mac-00.rom",   0x120000, 0x80000, 0x52acf1d6 ) /* sprites */
 	ROM_LOAD( "mac-01.rom",   0x1a0000, 0x80000, 0xb28f7584 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fz-06.rom",    0x00000, 0x10000, 0xc4828a6d )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -460,7 +458,7 @@ ROM_START( gatedoom )
 ROM_END
 
 ROM_START( gatedom1 )
-	ROM_REGION(0x80000) /* 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "gb04.bin",     0x00000, 0x20000, 0x4c3bbd2b )
 	ROM_LOAD_ODD ( "gb01.bin",     0x00000, 0x20000, 0x59e367f4 )
 	ROM_LOAD_EVEN( "gb00.bin",     0x40000, 0x20000, 0xa88c16a1 )
@@ -477,7 +475,7 @@ ROM_START( gatedom1 )
 	ROM_LOAD( "mac-00.rom",   0x120000, 0x80000, 0x52acf1d6 ) /* sprites */
  	ROM_LOAD( "mac-01.rom",   0x1a0000, 0x80000, 0xb28f7584 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fz-06.rom",    0x00000, 0x10000, 0xc4828a6d )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -492,7 +490,7 @@ ROM_END
 
 static void darkseal_decrypt(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int i;
 
 	for (i=0x00000; i<0x80000; i++)

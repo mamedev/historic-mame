@@ -249,14 +249,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
 			1500000,	/* 1.5 Mhz ?? */
-			0,
 			readmem,writemem,0,0,
 			tagteam_interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			975000,  /* 975 kHz ?? */
-			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			nmi_interrupt,16   /* IRQs are triggered by the main CPU */
 		}
@@ -292,7 +290,7 @@ static struct MachineDriver machine_driver =
 };
 
 ROM_START( tagteam )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "prowbf0.bin",  0x08000, 0x2000, 0x6ec3afae )
 	ROM_LOAD( "prowbf1.bin",  0x0a000, 0x2000, 0xb8fdd176 )
 	ROM_LOAD( "prowbf2.bin",  0x0c000, 0x2000, 0x3d33a923 )
@@ -310,7 +308,7 @@ ROM_START( tagteam )
 	ROM_LOAD( "prowbf17.bin", 0x0e000, 0x2000, 0xccf42380 )
 	ROM_LOAD( "prowbf18.bin", 0x10000, 0x2000, 0xe73a4bba )
 
-	ROM_REGION(0x10000)	/* 64k for audio code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for audio code */
 	ROM_LOAD( "prowbf4.bin",  0x04000, 0x2000, 0x0558e1d8 )
 	ROM_LOAD( "prowbf5.bin",  0x06000, 0x2000, 0xc1073f24 )
 	ROM_LOAD( "prowbf6.bin",  0x08000, 0x2000, 0x208cd081 )
@@ -328,7 +326,7 @@ ROM_END
 static int tagteam_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0x0513],"\x19",1)==0 && memcmp(&RAM[0x0034],"\x05",1)== 0)
@@ -353,7 +351,7 @@ static int tagteam_hiload(void)
 static void tagteam_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

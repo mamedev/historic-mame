@@ -100,8 +100,8 @@ int K053157_vh_start(int rambank, int rombank, int roms_memory_region)
 
 	K053157_rombank = rombank;
 	K053157_cur_rombank = 0;
-	K053157_rombase = Machine->memory_region[roms_memory_region];
-	K053157_romnbbanks = Machine->memory_region_length[roms_memory_region]/0x2000;
+	K053157_rombase = memory_region(roms_memory_region);
+	K053157_romnbbanks = memory_region_length(roms_memory_region)/0x2000;
 	cpu_setbank(K053157_rombank, K053157_rombase);
 
 	return 0;

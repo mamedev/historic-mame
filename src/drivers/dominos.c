@@ -150,7 +150,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
 			750000, 	   /* 750 Khz ???? */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		}
@@ -187,7 +186,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( dominos )
-	ROM_REGION(0x10000) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 		ROM_LOAD( "7352-02.d1",   0x3000, 0x0800, 0x738b4413 )
 		ROM_LOAD( "7438-02.e1",   0x3800, 0x0800, 0xc84e54e2 )
 		ROM_RELOAD( 			0xF800, 0x0800 )

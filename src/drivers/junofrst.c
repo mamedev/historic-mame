@@ -101,7 +101,7 @@ unsigned char KonamiDecode( unsigned char opcode, unsigned short address );
 void junofrst_bankselect_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	bankaddress = 0x10000 + (data & 0x0f) * 0x1000;
@@ -399,21 +399,18 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			1500000,			/* 1.5 Mhz ??? */
-			0,				/* memory region # 0 */
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318000/8,	/* 1.78975 MHz */
-			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		},
 		{
 			CPU_I8039 | CPU_AUDIO_CPU,
 			8000000/15,	/* 8MHz crystal */
-			3,	/* memory region #3 */
 			i8039_readmem,i8039_writemem,i8039_readport,i8039_writeport,
 			ignore_interrupt,1
 		}
@@ -451,7 +448,7 @@ static struct MachineDriver machine_driver =
 
 
 ROM_START( junofrst )
-	ROM_REGION( 0x22000 )      /* 64k for M6809 CPU code + 64k for ROM banks */
+	ROM_REGIONX( 0x22000, REGION_CPU1 )      /* 64k for M6809 CPU code + 64k for ROM banks */
 	ROM_LOAD( "jfa_b9.bin",   0x0a000, 0x2000, 0xf5a7ab9d ) /* program ROMs */
 	ROM_LOAD( "jfb_b10.bin",  0x0c000, 0x2000, 0xf20626e0 )
 	ROM_LOAD( "jfc_a10.bin",  0x0e000, 0x2000, 0x1e7744a7 )
@@ -472,10 +469,10 @@ ROM_START( junofrst )
 	/* empty memory region - not used by the game, but needed bacause the main */
 	/* core currently always frees region #1 after initialization. */
 
-	ROM_REGION( 0x10000 ) /* 64k for Z80 sound CPU code */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* 64k for Z80 sound CPU code */
 	ROM_LOAD( "jfs1_j3.bin",  0x0000, 0x1000, 0x235a2893 )
 
-	ROM_REGION(0x1000)	/* 8039 */
+	ROM_REGIONX( 0x1000, REGION_CPU3 )	/* 8039 */
 	ROM_LOAD( "jfs2_p4.bin",  0x0000, 0x1000, 0xd0fa5d5f )
 ROM_END
 
@@ -484,7 +481,7 @@ ROM_END
 static void junofrst_decode(void)
 {
 	int A;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	for (A = 0x6000;A < 0x1c000;A++)
@@ -520,7 +517,7 @@ static void junofrst_decode(void)
 void junofrst_blitter_w( int offset, int data )
 {
 	static unsigned char blitterdata[4];
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	blitterdata[offset] = data;
@@ -598,7 +595,7 @@ void junofrst_blitter_w( int offset, int data )
 static int hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -626,7 +623,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

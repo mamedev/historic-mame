@@ -262,7 +262,6 @@ static struct MachineDriver popeyebl_machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* 4 Mhz */
-			0,
 			readmem,writemem,readport,writeport,
 			nmi_interrupt,2
 		}
@@ -302,7 +301,7 @@ static struct MachineDriver popeyebl_machine_driver =
 ***************************************************************************/
 
 ROM_START( popeye )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "c-7a",         0x0000, 0x2000, 0x9af7c821 )
 	ROM_LOAD( "c-7b",         0x2000, 0x2000, 0xc3704958 )
 	ROM_LOAD( "c-7c",         0x4000, 0x2000, 0x5882ebf9 )
@@ -324,7 +323,7 @@ ROM_START( popeye )
 ROM_END
 
 ROM_START( popeye2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "7a",           0x0000, 0x2000, 0x0bd04389 )
 	ROM_LOAD( "7b",           0x2000, 0x2000, 0xefdf02c3 )
 	ROM_LOAD( "7c",           0x4000, 0x2000, 0x8eee859e )
@@ -346,7 +345,7 @@ ROM_START( popeye2 )
 ROM_END
 
 ROM_START( popeyebl )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "po1",          0x0000, 0x2000, 0xb14a07ca )
 	ROM_LOAD( "po2",          0x2000, 0x2000, 0x995475ff )
 	ROM_LOAD( "po3",          0x4000, 0x2000, 0x99d6a04a )
@@ -371,7 +370,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -418,7 +417,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

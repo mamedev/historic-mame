@@ -108,8 +108,8 @@ void bosco_init_machine(void)
 	nmi_timer_1 = nmi_timer_2 = 0;
 	bosco_halt_w (0, 0);
 
-	Machine->memory_region[0][0x8c00] = 1;
-	Machine->memory_region[0][0x8c01] = 1;
+	memory_region(REGION_CPU1)[0x8c00] = 1;
+	memory_region(REGION_CPU1)[0x8c01] = 1;
 }
 
 

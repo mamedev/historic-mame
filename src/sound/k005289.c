@@ -44,7 +44,7 @@ static k005289_sound_channel channel_list[2];
 
 /* global sound parameters */
 static const unsigned char *sound_prom;
-static int sample_bits,stream,clock,rate;
+static int sample_bits,stream,mclock,rate;
 
 /* mixer tables and internal buffers */
 static signed char *mixer_table;
@@ -113,7 +113,7 @@ static void K005289_update(int ch, void *buffer, int length)
 	f=voice[0].frequency;
 	if (v && f)
 	{
-		const unsigned char *w = voice->wave;
+		const unsigned char *w = voice[0].wave;
 		int c = voice[0].counter;
 
 		mix = mixer_buffer;
@@ -123,7 +123,7 @@ static void K005289_update(int ch, void *buffer, int length)
 		{
 			int offs;
 
-			c+=(long)((((float)clock / (float)(f * 16))*(float)(1<<FREQBASEBITS)) / (float)(rate / 32));
+			c+=(long)((((float)mclock / (float)(f * 16))*(float)(1<<FREQBASEBITS)) / (float)(rate / 32));
 			offs = (c >> 16) & 0x1f;
 			*mix++ += ((w[offs] & 0x0f) - 8) * v;
 		}
@@ -136,7 +136,7 @@ static void K005289_update(int ch, void *buffer, int length)
 	f=voice[1].frequency;
 	if (v && f)
 	{
-		const unsigned char *w = voice->wave;
+		const unsigned char *w = voice[1].wave;
 		int c = voice[1].counter;
 
 		mix = mixer_buffer;
@@ -146,7 +146,7 @@ static void K005289_update(int ch, void *buffer, int length)
 		{
 			int offs;
 
-			c+=(long)((((float)clock / (float)(f * 16))*(float)(1<<FREQBASEBITS)) / (float)(rate / 32));
+			c+=(long)((((float)mclock / (float)(f * 16))*(float)(1<<FREQBASEBITS)) / (float)(rate / 32));
 			offs = (c >> 16) & 0x1f;
 			*mix++ += ((w[offs] & 0x0f) - 8) * v;
 		}
@@ -180,7 +180,7 @@ int K005289_sh_start(const struct MachineSound *msound)
 	/* get stream channels */
 	sample_bits = Machine->sample_bits;
 	stream = stream_init(snd_name, intf->volume, Machine->sample_rate, sample_bits, 0, K005289_update);
-	clock = intf->master_clock;
+	mclock = intf->master_clock;
 	rate = Machine->sample_rate;
 
 	/* allocate a pair of buffers to mix into - 1 second's worth should be more than enough */
@@ -194,7 +194,7 @@ int K005289_sh_start(const struct MachineSound *msound)
 		return 1;
 	}
 
-	sound_prom = Machine->memory_region[intf->region];
+	sound_prom = memory_region(intf->region);
 
 	/* reset all the voices */
 	voice[0].frequency = 0;
@@ -203,7 +203,7 @@ int K005289_sh_start(const struct MachineSound *msound)
 	voice[0].counter = 0;
 	voice[1].frequency = 0;
 	voice[1].volume = 0;
-	voice[1].wave = &sound_prom[0];
+	voice[1].wave = &sound_prom[0x100];
 	voice[1].counter = 0;
 
 	return 0;

@@ -343,14 +343,12 @@ static struct MachineDriver vaportra_machine_driver =
 	 	{
 			CPU_M68000, /* Custom chip 59 */
 			12000000,
-			0,
 			vaportra_readmem,vaportra_writemem,0,0,
 			m68_level6_irq,1 /* VBL */
 		},
 		{
 			CPU_H6280 | CPU_AUDIO_CPU, /* Custom chip 45 */
 			32220000/8, /* Audio section crystal is 32.220 MHz */
-			2,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -393,7 +391,7 @@ static struct MachineDriver vaportra_machine_driver =
 /******************************************************************************/
 
 ROM_START( vaportra )
-	ROM_REGION(0x80000) /* 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
   	ROM_LOAD_EVEN( "fj02",   0x00000, 0x20000, 0xa2affb73 )
   	ROM_LOAD_ODD ( "fj00",   0x00000, 0x20000, 0xef05e07b )
 	ROM_LOAD_EVEN( "fj03",   0x40000, 0x20000, 0x44893379 )
@@ -406,7 +404,7 @@ ROM_START( vaportra )
   	ROM_LOAD( "vtmaa03.bin",   0x180000, 0x80000, 0x1a30bf81 ) /* sprites */
   	ROM_LOAD( "vtmaa04.bin",   0x200000, 0x80000, 0xb713e9cc )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fj04",    0x00000, 0x10000, 0xe9aedf9b )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -417,7 +415,7 @@ ROM_START( vaportra )
 ROM_END
 
 ROM_START( kuhga )
-	ROM_REGION(0x80000) /* 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
   	ROM_LOAD_EVEN( "fp02-3.bin", 0x00000, 0x20000, 0xd0705ef4 )
   	ROM_LOAD_ODD ( "fp00-3.bin", 0x00000, 0x20000, 0x1da92e48 )
 	ROM_LOAD_EVEN( "fp03.bin",   0x40000, 0x20000, 0xea0da0f1 )
@@ -430,7 +428,7 @@ ROM_START( kuhga )
   	ROM_LOAD( "vtmaa03.bin",   0x180000, 0x80000, 0x1a30bf81 ) /* sprites */
   	ROM_LOAD( "vtmaa04.bin",   0x200000, 0x80000, 0xb713e9cc )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fj04",    0x00000, 0x10000, 0xe9aedf9b )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -444,7 +442,7 @@ ROM_END
 
 static void vaportra_decrypt(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int i;
 
 	for (i=0x00000; i<0x80000; i++)

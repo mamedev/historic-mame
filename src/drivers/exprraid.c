@@ -66,7 +66,7 @@ void exprraid_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 static int exprraid_prot_0_r(int offset)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	return RAM[0x02a9];
 }
@@ -327,14 +327,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
 			4000000,        /* 4 Mhz ??? */
-			0,
 			readmem,writemem,0,0,
 			exprraid_interrupt, 1
 		},
 		{
 			CPU_M6809,
 			2000000,        /* 2 Mhz ??? */
-			4,
 			sub_readmem,sub_writemem,0,0,
 			ignore_interrupt,0	/* NMIs are caused by the main CPU */
 								/* IRQs are caused by the YM3526 */
@@ -379,7 +377,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( exprraid )
-    ROM_REGION(0x34000)     /* 64k for code */
+    ROM_REGIONX( 0x34000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "cz01",    0x4000, 0x4000, 0xdc8f9fba )
     ROM_LOAD( "cz00",    0x8000, 0x8000, 0xa81290bc )
 
@@ -402,15 +400,15 @@ ROM_START( exprraid )
     ROM_LOAD( "cz15.prm", 0x0200, 0x0100, 0xa6168d7f ) /* blue */
     ROM_LOAD( "cz14.prm", 0x0300, 0x0100, 0x52aad300 ) /* ??? */
 
-    ROM_REGION(0x8000)     /* 32k for tile maps */
+    ROM_REGION( 0x8000 )     /* 32k for tile maps */
 	ROM_LOAD( "cz03",    0x0000, 0x8000, 0x6ce11971 )
 
-    ROM_REGION(0x10000)     /* 64k for the sub cpu */
+    ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sub cpu */
     ROM_LOAD( "cz02",    0x8000, 0x8000, 0x552e6112 )
 ROM_END
 
 ROM_START( wexpress )
-    ROM_REGION(0x34000)     /* 64k for code */
+    ROM_REGIONX( 0x34000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "2",       0x4000, 0x4000, 0xea5e5a8f )
     ROM_LOAD( "1",       0x8000, 0x8000, 0xa7daae12 )
 
@@ -436,12 +434,12 @@ ROM_START( wexpress )
     ROM_REGION(0x8000)     /* 32k for tile maps */
 	ROM_LOAD( "3",        0x0000, 0x8000, 0x242e3e64 )
 
-    ROM_REGION(0x10000)     /* 64k for the sub cpu */
+    ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sub cpu */
     ROM_LOAD( "cz02",    0x8000, 0x8000, 0x552e6112 )
 ROM_END
 
 ROM_START( wexpresb )
-    ROM_REGION(0x34000)     /* 64k for code */
+    ROM_REGIONX( 0x34000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "wexpress.3", 0x4000, 0x4000, 0xb4dd0fa4 )
     ROM_LOAD( "wexpress.1", 0x8000, 0x8000, 0xe8466596 )
 
@@ -467,7 +465,7 @@ ROM_START( wexpresb )
     ROM_REGION(0x8000)     /* 32k for tile maps */
 	ROM_LOAD( "3",        0x0000, 0x8000, 0x242e3e64 )
 
-    ROM_REGION(0x10000)     /* 64k for the sub cpu */
+    ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sub cpu */
     ROM_LOAD( "cz02",    0x8000, 0x8000, 0x552e6112 )
 ROM_END
 
@@ -475,7 +473,7 @@ static void exprraid_gfx_expand( void ) {
 
 	/* Expand the background rom so we can use regular decode routines */
 
-	unsigned char	*gfx = Machine->memory_region[1];
+	unsigned char	*gfx = memory_region(1);
 	int				offs = 0x10000-0x1000;
 	int				i;
 
@@ -496,7 +494,7 @@ static void exprraid_gfx_expand( void ) {
 
 static void wexpress_decode_rom( void )
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int i;
 
 
@@ -515,7 +513,7 @@ static void wexpress_decode_rom( void )
 
 static void exprraid_decode_rom( void )
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* decode vectors */
@@ -536,7 +534,7 @@ static void exprraid_decode_rom( void )
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	static int resetcount;
 
 
@@ -564,7 +562,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{

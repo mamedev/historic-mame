@@ -141,7 +141,7 @@ void flkatck_vh_stop(void)
 
 static void draw_sprites(struct osd_bitmap *bitmap)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	const struct GfxElement *gfx = Machine->gfx[0];
 	unsigned char *source, *finish;
 
@@ -196,7 +196,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 static void mark_sprites_colors(void)
 {
 	int i;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	unsigned char *source, *finish;
 
 	unsigned short palette_map[16];

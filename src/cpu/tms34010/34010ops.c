@@ -54,7 +54,7 @@ static void unimpl(void)
 	/* extra check to prevent bad things */
 	if (PC == 0 || opcode_table[cpu_readop16(TOBYTE(PC)) >> 4] == unimpl)
 	{
-		cpu_halt(cpu_getactivecpu(), 0);
+		cpu_set_halt_line(cpu_getactivecpu(),ASSERT_LINE);
 #if MAME_DEBUG
 		{
 			extern int debug_key_pressed;
@@ -540,6 +540,7 @@ static void exgf1_b(void) { EXGF(1,B); }
 static void lmo_a(void) { LMO(A); }
 static void lmo_b(void) { LMO(B); }
 
+#if TMS34010_FAST_STACK
 #define MMFM(R,N)			       		       			    	\
 {																\
 	INT32 i;													\
@@ -577,9 +578,31 @@ static void lmo_b(void) { LMO(B); }
 		}														\
 	}															\
 }
+#else
+#define MMFM(R,N)			       		       			    	\
+{																\
+	INT32 i;													\
+	UINT16 l = (UINT16) PARAM_WORD();							\
+	COUNT_CYCLES(3);											\
+	{															\
+		INT32 rd = R##DSTREG;									\
+		for (i = 15; i >= 0 ; i--)								\
+		{														\
+			if (l & 0x8000)										\
+			{													\
+				R##REG(i*N) = RLONG(R##REG(rd));				\
+				R##REG(rd) += 0x20;								\
+				COUNT_CYCLES(4);								\
+			}													\
+			l <<= 1;											\
+		}														\
+	}															\
+}
+#endif
 static void mmfm_a(void) { MMFM(A,1   ); }
 static void mmfm_b(void) { MMFM(B,0x10); }
 
+#if TMS34010_FAST_STACK
 #define MMTM(R,N)			       		       			    	\
 {			  													\
 	UINT32 i;													\
@@ -621,6 +644,28 @@ static void mmfm_b(void) { MMFM(B,0x10); }
 		}														\
 	}															\
 }
+#else
+#define MMTM(R,N)			       		       			    	\
+{			  													\
+	UINT32 i;													\
+	UINT16 l = (UINT16) PARAM_WORD();							\
+	COUNT_CYCLES(2);											\
+	{															\
+		INT32 rd = R##DSTREG;									\
+		SET_N(R##REG(rd)^0x80000000);							\
+		for (i = 0; i  < 16; i++)								\
+		{														\
+			if (l & 0x8000)										\
+			{													\
+				R##REG(rd) -= 0x20;								\
+				WLONG(R##REG(rd),R##REG(i*N));					\
+				COUNT_CYCLES(4);								\
+			}													\
+			l <<= 1;											\
+		}														\
+	}															\
+}
+#endif
 static void mmtm_a(void) { MMTM(A,1   ); }
 static void mmtm_b(void) { MMTM(B,0x10); }
 

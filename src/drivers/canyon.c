@@ -212,7 +212,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
             750000,        /* 0.3 Mhz ???? */
-			0,
 			readmem,writemem,0,0,
             nmi_interrupt,1
 		}
@@ -246,11 +245,11 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( canyon )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "9496-01.d1", 0x3800, 0x0800, 0x8be15080 )
 	ROM_RELOAD(             0xF800, 0x0800 )
 
-	ROM_REGION(0x600)     /* 1.5k for graphics */
+	ROM_REGION_DISPOSE( 0x600 )     /* 1.5k for graphics */
 	ROM_LOAD( "9492-01.n8", 0x0000, 0x0400, 0x7449f754 )
 	ROM_LOAD( "9505-01.n5", 0x0400, 0x0100, 0x60507c07 )
 	ROM_LOAD( "9506-01.m5", 0x0500, 0x0100, 0x0d63396a )
@@ -258,7 +257,7 @@ ROM_END
 
 
 ROM_START( canbprot )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD_NIB_LOW ( "cbp3000l.j1", 0x3000, 0x0800, 0x49cf29a0 )
 	ROM_LOAD_NIB_HIGH( "cbp3000m.p1", 0x3000, 0x0800, 0xb4385c23 )
 	ROM_LOAD_NIB_LOW ( "cbp3800l.h1", 0x3800, 0x0800, 0xc7ee4431 )
@@ -266,7 +265,7 @@ ROM_START( canbprot )
 	ROM_LOAD_NIB_HIGH( "cbp3800m.r1", 0x3800, 0x0800, 0x94246a9a )
 	ROM_RELOAD_NIB_HIGH (             0xf800, 0x0800 ) /* for 6502 vectors */
 
-	ROM_REGION(0x600)     /* 1.5k for graphics */
+	ROM_REGION_DISPOSE( 0x600 )     /* 1.5k for graphics */
 	ROM_LOAD( "9492-01.n8", 0x0000, 0x0400, 0x7449f754 )
 	ROM_LOAD( "9505-01.n5", 0x0400, 0x0100, 0x60507c07 )
 	ROM_LOAD( "9506-01.m5", 0x0500, 0x0100, 0x0d63396a )
@@ -282,7 +281,7 @@ ROM_END
 static int hiload(void)
 {
 
-      unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+      unsigned char *RAM = memory_region(REGION_CPU1);
 	static int firsttime;
 
 
@@ -315,7 +314,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

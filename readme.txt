@@ -132,7 +132,7 @@ support. Basically, if you can't get the emulator to work, you are on your own.
 First of all, read the docs carefully. If you still can't find an answer to
 your question, try checking the beginner's sections that many emulation pages
 have, or ask on the appropriate Usenet newsgroups (e.g. comp.emulators.misc) or
-on the official MAME message board, http://mame.retrogames.com/msgboard.htm.
+on the official MAME message board, http://www.mame.net/msgboard.htm.
 
 For help in compiling MAME, check this page:
 http://mameworld.retrogames.com

@@ -121,7 +121,7 @@ void taitosj_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 	/* do a simple conversion of the PROM into layer priority order. Note that */
 	/* this is a simplification, which assumes the PROM encodes a sensible priority */
 	/* scheme. */
-	color_prom = Machine->memory_region[3];
+	color_prom = memory_region(3);
 	for (i = 0;i < 32;i++)
 	{
 		int j,mask;
@@ -293,7 +293,7 @@ int taitosj_gfxrom_r(int offset)
 	if (taitosj_gfxpointer[0] == 0) taitosj_gfxpointer[1]++;
 
 	if (offs < 0x8000)
-		return Machine->memory_region[1][offs];
+		return memory_region(1)[offs];
 	else return 0;
 }
 

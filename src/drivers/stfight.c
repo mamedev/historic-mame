@@ -513,7 +513,6 @@ static struct MachineDriver stfight_machine_driver =
 		{
 			CPU_Z80,
 			3000000,	/* 3 Mhz */
-			0,
 			readmem_cpu1, writemem_cpu1, 0, 0,
 			stfight_vb_interrupt, 1,
             stfight_interrupt_1, 30
@@ -521,7 +520,6 @@ static struct MachineDriver stfight_machine_driver =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3000000,	/* 3 Mhz */
-			1,
 			readmem_cpu2, writemem_cpu2, 0, 0,
 			0, 0,
             stfight_interrupt_2, 120
@@ -566,11 +564,11 @@ static struct MachineDriver stfight_machine_driver =
 ***************************************************************************/
 
 ROM_START( empcity )
-	ROM_REGION(0x18000)	        /* 64k for the first CPU */
+	ROM_REGIONX( 0x18000, REGION_CPU1 )	        /* 64k for the first CPU */
 	ROM_LOAD( "ec_01.rom",  0x00000, 0x8000, 0xfe01d9b1 )
 	ROM_LOAD( "ec_02.rom",  0x10000, 0x8000, 0xb3cf1ef7 )	/* bank switched */
 
-	ROM_REGION(0x10000)	        /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	        /* 64k for the second CPU */
 	ROM_LOAD( "ec_04.rom",  0x0000,  0x8000, 0xaa3e7d1e )
 
 	ROM_REGION(0x08000)	        /* adpcm voice data */
@@ -617,11 +615,11 @@ ROM_START( empcity )
 ROM_END
 
 ROM_START( stfight )
-	ROM_REGION(0x18000)	        /* 64k for the first CPU */
+	ROM_REGIONX( 0x18000, REGION_CPU1 )	        /* 64k for the first CPU */
 	ROM_LOAD( "a-1.4q",     0x00000, 0x8000, 0xff83f316 )
 	ROM_LOAD( "sf02.bin",   0x10000, 0x8000, 0xe626ce9e )	/* bank switched */
 
-	ROM_REGION(0x10000)	        /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	        /* 64k for the second CPU */
 	ROM_LOAD( "sf03.bin",   0x0000,  0x8000, 0x6a8cb7a6 )
 
 	ROM_REGION(0x08000)	        /* adpcm voice data */
@@ -670,7 +668,7 @@ ROM_END
 
 static int stfight_hiload( void )
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
 	if( memcmp( &RAM[0xE0B4], "WORST   ", 8 ) == 0 )
@@ -692,7 +690,7 @@ static int stfight_hiload( void )
 static void stfight_hisave( void )
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if( ( f = osd_fopen( Machine->gamedrv->name, 0,
                          OSD_FILETYPE_HIGHSCORE, 1 ) ) != 0 )

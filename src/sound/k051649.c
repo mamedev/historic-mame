@@ -26,13 +26,14 @@ typedef struct
 	int frequency;
 	int volume;
 	int key;
-	unsigned char waveform[32];
+	/*unsigned char waveform[32];*/
+	signed char waveform[32];		/* 19991207.CAB */
 } k051649_sound_channel;
 
 static k051649_sound_channel channel_list[5];
 
 /* global sound parameters */
-static int sample_bits,stream,clock,rate;
+static int sample_bits,stream,mclock,rate;
 
 /* mixer tables and internal buffers */
 static signed char *mixer_table;
@@ -98,7 +99,8 @@ static void K051649_update(int ch, void *buffer, int length)
 		k=voice[j].key;
 		if (v && f && k)
 		{
-			const unsigned char *w = voice[j].waveform;
+			/*const unsigned char *w = voice[j].waveform;*/
+			const signed char *w = voice[j].waveform;			/* 19991207.CAB */
 			int c=voice[j].counter;
 
 			mix = mixer_buffer;
@@ -109,9 +111,10 @@ static void K051649_update(int ch, void *buffer, int length)
 				int offs;
 
 				/* Amuse source:  Cab suggests this method gives greater resolution */
-				c+=(long)((((float)clock / (float)(f * 16))*(float)(1<<FREQBASEBITS)) / (float)(rate / 32));
+				c+=(long)((((float)mclock / (float)(f * 16))*(float)(1<<FREQBASEBITS)) / (float)(rate / 32));
 				offs = (c >> 16) & 0x1f;
-				*mix++ += ((w[offs] - 0x80) * v)>>3;
+				/* *mix++ += ((w[offs] - 0x80) * v)>>3; */
+				*mix++ += (w[offs] * v)>>3;						/* 19991207.CAB */
 			}
 
 			/* update the counter for this voice */
@@ -145,7 +148,7 @@ int K051649_sh_start(const struct MachineSound *msound)
 	/* get stream channels */
 	sample_bits = Machine->sample_bits;
 	stream = stream_init(snd_name, intf->volume, Machine->sample_rate, sample_bits, 0, K051649_update);
-	clock = intf->master_clock;
+	mclock = intf->master_clock;
 	rate = Machine->sample_rate;
 
 	/* allocate a buffer to mix into - 1 second's worth should be more than enough */

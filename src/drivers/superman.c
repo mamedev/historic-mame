@@ -90,7 +90,7 @@ int superman_input_r (int offset)
 
 static void taito68k_sound_bankswitch_w ( int offset, int data )
 {
-	unsigned char *RAM = Machine->memory_region[2];
+	unsigned char *RAM = memory_region(2);
 
 	int banknum = ( data - 1 ) & 3;
 
@@ -304,14 +304,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,
 			8000000,	/* 8 MHz? */
-			0,
 			superman_readmem,superman_writemem,0,0,
 			m68_level6_irq,1
 		},
 		{
 			CPU_Z80,
 			4000000,	/* 4 MHz ??? */
-			2,
 			sound_readmem, sound_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
 		}
@@ -387,7 +385,7 @@ static void hisave(void)
 ***************************************************************************/
 
 ROM_START( superman )
-	ROM_REGION(0x80000)     /* 512k for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )     /* 512k for 68000 code */
 	ROM_LOAD_EVEN( "a10_09.bin", 0x00000, 0x20000, 0x640f1d58 )
 	ROM_LOAD_ODD ( "a05_07.bin", 0x00000, 0x20000, 0xfddb9953 )
 	ROM_LOAD_EVEN( "a08_08.bin", 0x40000, 0x20000, 0x79fc028e )
@@ -399,7 +397,7 @@ ROM_START( superman )
 	ROM_LOAD( "j01_16.bin", 0x100000, 0x80000, 0x3622ed2f ) /* Plane 2, 3 */
 	ROM_LOAD( "k01_17.bin", 0x180000, 0x80000, 0xc34f27e0 )
 
-	ROM_REGION(0x1c000)     /* 64k for Z80 code */
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )     /* 64k for Z80 code */
 	ROM_LOAD( "d18_10.bin", 0x00000, 0x4000, 0x6efe79e8 )
 	ROM_CONTINUE(           0x10000, 0xc000 ) /* banked stuff */
 

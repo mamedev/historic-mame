@@ -247,7 +247,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_8080,
 			2048000,	/* 3 Mhz? */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		}
@@ -285,7 +284,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( warpwarp )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "g-n9601n.2r",  0x0000, 0x1000, 0xf5262f38 )
 	ROM_LOAD( "g-09602n.2m",  0x1000, 0x1000, 0xde8355dd )
 	ROM_LOAD( "g-09603n.1p",  0x2000, 0x1000, 0xbdd1dec5 )
@@ -294,7 +293,7 @@ ROM_START( warpwarp )
 ROM_END
 
 ROM_START( warpwarr )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "g-09601.2r",   0x0000, 0x1000, 0x916ffa35 )
 	ROM_LOAD( "g-09602.2m",   0x1000, 0x1000, 0x398bb87b )
 	ROM_LOAD( "g-09603.1p",   0x2000, 0x1000, 0x6b962fc4 )
@@ -303,7 +302,7 @@ ROM_START( warpwarr )
 ROM_END
 
 ROM_START( warpwar2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "g-09601.2r",   0x0000, 0x1000, 0x916ffa35 )
 	ROM_LOAD( "g-09602.2m",   0x1000, 0x1000, 0x398bb87b )
 	ROM_LOAD( "g-09603.1p",   0x2000, 0x1000, 0x6b962fc4 )
@@ -316,7 +315,7 @@ ROM_END
 static int hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if (memcmp(&RAM[0x8358],"\x00\x30\x00",3) == 0 &&
@@ -338,7 +337,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

@@ -13,6 +13,7 @@
 #include "osd_cpu.h"
 
 #define TMS34010_AVGCYCLES			1
+#define TMS34010_FAST_STACK			0
 
 enum {
 	TMS34010_PC=1, TMS34010_SP, TMS34010_ST,

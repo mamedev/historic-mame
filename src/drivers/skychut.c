@@ -125,7 +125,6 @@ static struct MachineDriver skychut_machine_driver =
 		{
 			CPU_M6502,
 			20000000/8,
-			0,
 			skychut_readmem,skychut_writemem,0,0,
 			skychut_interrupt,1
 		}
@@ -160,7 +159,7 @@ static struct MachineDriver skychut_machine_driver =
 ***************************************************************************/
 
 ROM_START( skychut )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sc1d", 0x1000, 0x0400, 0x30b5ded1 )
 	ROM_LOAD( "sc2d", 0x1400, 0x0400, 0xfd1f4b9e )
 	ROM_LOAD( "sc3d", 0x1800, 0x0400, 0x67ed201e )

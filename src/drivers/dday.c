@@ -327,7 +327,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			2000000,     /* 2 Mhz ? */
-			0,
 			readmem,writemem,0,0,
 			dday_interrupt,1
 		}
@@ -367,7 +366,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( dday )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "e8_63co.bin",  0x0000, 0x1000, 0x13d53793 )
 	ROM_LOAD( "e7_64co.bin",  0x1000, 0x1000, 0xe1ef2a70 )
 	ROM_LOAD( "e6_65co.bin",  0x2000, 0x1000, 0xfe414a83 )
@@ -386,7 +385,7 @@ ROM_START( dday )
 	ROM_LOAD( "dday.m8",      0x0100, 0x0100, 0xad3314b9 )  /* green component */
 	ROM_LOAD( "dday.m3",      0x0200, 0x0100, 0xe877ab82 )  /* blue component */
 
-	ROM_REGION(0x2000)      /* search light */
+	ROM_REGION( 0x2000 )      /* search light */
 	ROM_LOAD( "d2_67.bin",    0x0000, 0x1000, 0x2b693e42 )  /* layout */
 	ROM_LOAD( "d4_68.bin",    0x1000, 0x0800, 0xf3649264 )  /* mask */
 							/*0x1800 -0x1fff will be filled in dynamically */
@@ -396,7 +395,7 @@ ROM_START( dday )
 ROM_END
 
 ROM_START( ddayc )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "e8_63-c.bin",  0x0000, 0x1000, 0xd4fa3ae3 )
 	ROM_LOAD( "e7_64-c.bin",  0x1000, 0x1000, 0x9fb8b1a7 )
 	ROM_LOAD( "e6_65-c.bin",  0x2000, 0x1000, 0x4c210686 )
@@ -415,7 +414,7 @@ ROM_START( ddayc )
 	ROM_LOAD( "dday.m8",      0x0100, 0x0100, 0xad3314b9 )  /* green component */
 	ROM_LOAD( "dday.m3",      0x0200, 0x0100, 0xe877ab82 )  /* blue component */
 
-	ROM_REGION(0x2000)      /* search light */
+	ROM_REGION( 0x2000 )      /* search light */
 	ROM_LOAD( "d2_67.bin",    0x0000, 0x1000, 0x2b693e42 )  /* layout */
 	ROM_LOAD( "d4_68.bin",    0x1000, 0x0800, 0xf3649264 )  /* mask */
 							/*0x1800 -0x1fff will be filled in dynamically */
@@ -428,7 +427,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	static int firsttime = 0;
 	if (firsttime == 0)
 	{
@@ -465,7 +464,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{

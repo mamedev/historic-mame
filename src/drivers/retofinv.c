@@ -35,19 +35,19 @@ static void retofinv_init_machine(void)
 
 static int  retofinv_shared_ram_r(int offset)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	return RAM[0x8800+offset];
 }
 
 static void retofinv_shared_ram_w(int offset, int data)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	RAM[0x8800+offset] = data;
 }
 
 static void retofinv_protection_w(int offset,int data)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if (cpu0_me800_last & 0x80)
 	{
@@ -112,10 +112,7 @@ static void reset_cpu1_w(int offset,int data)
 
 static void cpu1_halt_w(int offset,int data)
 {
-	if (data)
-		cpu_halt(1,1);
-	else
-		cpu_halt(1,0);
+	cpu_set_halt_line(1, data ? CLEAR_LINE : ASSERT_LINE);
 }
 
 static int protection_2_r(int offset)
@@ -416,21 +413,18 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3072000,
-			0,
 			readmem, writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
 			3072000,
-			2,
 			readmem_sub, writemem_sub,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
 			3072000,
-			3,
 			readmem_sound, writemem_sound,0,0,
 			nmi_interrupt,2
 		},
@@ -468,12 +462,12 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( retofinv )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ic70.rom", 0x0000, 0x2000, 0xeae7459d )
 	ROM_LOAD( "ic71.rom", 0x2000, 0x2000, 0x72895e37 )
 	ROM_LOAD( "ic72.rom", 0x4000, 0x2000, 0x505dd20b )
 
-	ROM_REGION(0x10000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE( 0x10000 )	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "ic61.rom", 0x0000, 0x2000, 0x4e3f501c )
 	ROM_LOAD( "ic55.rom", 0x2000, 0x2000, 0xef7f8651 )
 	ROM_LOAD( "ic56.rom", 0x4000, 0x2000, 0x03b40905 )
@@ -483,10 +477,10 @@ ROM_START( retofinv )
 	ROM_LOAD( "ic10.rom", 0xa000, 0x2000, 0xd10b2eed )
 	ROM_LOAD( "ic11.rom", 0xc000, 0x2000, 0x00ca6b3d )
 
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
 	ROM_LOAD( "ic62.rom", 0x0000, 0x2000, 0xd2899cc1 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for sound cpu */
 	ROM_LOAD( "ic17.rom", 0x0000, 0x2000, 0x9025abea )
 
 	ROM_REGIONX( 0x0b00, REGION_PROMS )
@@ -497,12 +491,12 @@ ROM_START( retofinv )
 ROM_END
 
 ROM_START( retofin1 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "roi.02",  0x0000, 0x2000, 0xd98fd462 )
 	ROM_LOAD( "roi.01b", 0x2000, 0x2000, 0x3379f930 )
 	ROM_LOAD( "roi.01",  0x4000, 0x2000, 0x57679062 )
 
-	ROM_REGION(0x10000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x10000 )	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "ic61.rom", 0x0000, 0x2000, 0x4e3f501c )
 	ROM_LOAD( "ic55.rom", 0x2000, 0x2000, 0xef7f8651 )
 	ROM_LOAD( "ic56.rom", 0x4000, 0x2000, 0x03b40905 )
@@ -512,10 +506,10 @@ ROM_START( retofin1 )
 	ROM_LOAD( "ic10.rom", 0xa000, 0x2000, 0xd10b2eed )
 	ROM_LOAD( "ic11.rom", 0xc000, 0x2000, 0x00ca6b3d )
 
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
 	ROM_LOAD( "ic62.rom", 0x0000, 0x2000, 0xd2899cc1 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for sound cpu */
 	ROM_LOAD( "ic17.rom", 0x0000, 0x2000, 0x9025abea )
 
 	ROM_REGIONX( 0x0b00, REGION_PROMS )
@@ -526,12 +520,12 @@ ROM_START( retofin1 )
 ROM_END
 
 ROM_START( retofin2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ri-c.1e", 0x0000, 0x2000, 0xe3c31260 )
 	ROM_LOAD( "roi.01b", 0x2000, 0x2000, 0x3379f930 )
 	ROM_LOAD( "ri-a.1c", 0x4000, 0x2000, 0x3ae7c530 )
 
-	ROM_REGION(0x10000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x10000 )	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "ic61.rom", 0x0000, 0x2000, 0x4e3f501c )
 	ROM_LOAD( "ic55.rom", 0x2000, 0x2000, 0xef7f8651 )
 	ROM_LOAD( "ic56.rom", 0x4000, 0x2000, 0x03b40905 )
@@ -541,10 +535,10 @@ ROM_START( retofin2 )
 	ROM_LOAD( "ic10.rom", 0xa000, 0x2000, 0xd10b2eed )
 	ROM_LOAD( "ic11.rom", 0xc000, 0x2000, 0x00ca6b3d )
 
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
 	ROM_LOAD( "ic62.rom", 0x0000, 0x2000, 0xd2899cc1 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for sound cpu */
 	ROM_LOAD( "ic17.rom", 0x0000, 0x2000, 0x9025abea )
 
 	ROM_REGIONX( 0x0b00, REGION_PROMS )
@@ -558,7 +552,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0x990F],"\x00\x20\x00",3) == 0)
@@ -581,7 +575,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
        	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
         {

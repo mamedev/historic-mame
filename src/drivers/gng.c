@@ -188,7 +188,7 @@ void gng_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void gng_bankswitch_w(int offset,int data)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	static int bank[] = { 0x10000, 0x12000, 0x14000, 0x16000, 0x04000, 0x18000 };
@@ -572,14 +572,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			1500000,			/* 1.5 Mhz ? */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3000000,	/* 3 Mhz (?) */
-			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
 		}
@@ -620,7 +618,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( gng )
-	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
+	ROM_REGIONX( 0x18000, REGION_CPU1 )	/* 64k for code * 5 pages */
 	ROM_LOAD( "gg3.bin",      0x08000, 0x8000, 0x9e01c65e )
 	ROM_LOAD( "gg4.bin",      0x04000, 0x4000, 0x66606beb )	/* 4000-5fff is page 0 */
 	ROM_LOAD( "gg5.bin",      0x10000, 0x8000, 0xd6397b2b )	/* page 1, 2, 3 and 4 */
@@ -640,12 +638,12 @@ ROM_START( gng )
 	ROM_LOAD( "gg13.bin",     0x2c000, 0x4000, 0xe80c3fca )	/* sprites 1 Plane 3-4 */
 	ROM_LOAD( "gg12.bin",     0x30000, 0x4000, 0x7780a925 )	/* sprites 2 Plane 3-4 */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
 ROM_END
 
 ROM_START( gnga )
-	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
+	ROM_REGIONX( 0x18000, REGION_CPU1 )	/* 64k for code * 5 pages */
 	ROM_LOAD( "gng.n9",       0x08000, 0x4000, 0xb6b91cfb )
 	ROM_LOAD( "gng.n8",       0x0c000, 0x4000, 0xa5cfa928 )
 	ROM_LOAD( "gng.n10",      0x04000, 0x4000, 0x60343188 )
@@ -667,12 +665,12 @@ ROM_START( gnga )
 	ROM_LOAD( "gg13.bin",     0x2c000, 0x4000, 0xe80c3fca )	/* sprites 1 Plane 3-4 */
 	ROM_LOAD( "gg12.bin",     0x30000, 0x4000, 0x7780a925 )	/* sprites 2 Plane 3-4 */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
 ROM_END
 
 ROM_START( gngt )
-	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
+	ROM_REGIONX( 0x18000, REGION_CPU1 )	/* 64k for code * 5 pages */
 	ROM_LOAD( "mm03",         0x08000, 0x8000, 0xfb040b42 )
 	ROM_LOAD( "mm04",         0x04000, 0x4000, 0x652406f6 )	/* 4000-5fff is page 0 */
 	ROM_LOAD( "mm05",         0x10000, 0x8000, 0x8f7cff61 )	/* page 1, 2, 3 and 4 */
@@ -692,12 +690,12 @@ ROM_START( gngt )
 	ROM_LOAD( "gg13.bin",     0x2c000, 0x4000, 0xe80c3fca )	/* sprites 1 Plane 3-4 */
 	ROM_LOAD( "gg12.bin",     0x30000, 0x4000, 0x7780a925 )	/* sprites 2 Plane 3-4 */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
 ROM_END
 
 ROM_START( makaimur )
-	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
+	ROM_REGIONX( 0x18000, REGION_CPU1 )	/* 64k for code * 5 pages */
 	ROM_LOAD( "8n.rom",       0x08000, 0x8000, 0x9612d66c )
 	ROM_LOAD( "10n.rom",      0x04000, 0x4000, 0x81e567e0 )	/* 4000-5fff is page 0 */
 	ROM_LOAD( "12n.rom",      0x10000, 0x8000, 0x65a6a97b )	/* page 1, 2, 3 and 4 */
@@ -717,12 +715,12 @@ ROM_START( makaimur )
 	ROM_LOAD( "gg13.bin",     0x2c000, 0x4000, 0xe80c3fca )	/* sprites 1 Plane 3-4 */
 	ROM_LOAD( "gg12.bin",     0x30000, 0x4000, 0x7780a925 )	/* sprites 2 Plane 3-4 */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
 ROM_END
 
 ROM_START( makaimuc )
-	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
+	ROM_REGIONX( 0x18000, REGION_CPU1 )	/* 64k for code * 5 pages */
 	ROM_LOAD( "mj03c.bin",       0x08000, 0x8000, 0xd343332d )
 	ROM_LOAD( "mj04c.bin",      0x04000, 0x4000, 0x1294edb1 )	/* 4000-5fff is page 0 */
 	ROM_LOAD( "mj05c.bin",      0x10000, 0x8000, 0x535342c2 )	/* page 1, 2, 3 and 4 */
@@ -742,12 +740,12 @@ ROM_START( makaimuc )
 	ROM_LOAD( "gg13.bin",     0x2c000, 0x4000, 0xe80c3fca )	/* sprites 1 Plane 3-4 */
 	ROM_LOAD( "gg12.bin",     0x30000, 0x4000, 0x7780a925 )	/* sprites 2 Plane 3-4 */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
 ROM_END
 
 ROM_START( makaimug )
-	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
+	ROM_REGIONX( 0x18000, REGION_CPU1 )	/* 64k for code * 5 pages */
 	ROM_LOAD( "mj03g.bin",       0x08000, 0x8000, 0x61b043bb )
 	ROM_LOAD( "mj04g.bin",      0x04000, 0x4000, 0x757c94d3 )	/* 4000-5fff is page 0 */
 	ROM_LOAD( "mj05g.bin",      0x10000, 0x8000, 0xf2fdccf5 )	/* page 1, 2, 3 and 4 */
@@ -767,12 +765,12 @@ ROM_START( makaimug )
 	ROM_LOAD( "gg13.bin",     0x2c000, 0x4000, 0xe80c3fca )	/* sprites 1 Plane 3-4 */
 	ROM_LOAD( "gg12.bin",     0x30000, 0x4000, 0x7780a925 )	/* sprites 2 Plane 3-4 */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
 ROM_END
 
 ROM_START( diamond )
-	ROM_REGION(0x1a000)	/* 64k for code * 6 pages (is it really 6?) */
+	ROM_REGIONX( 0x1a000, REGION_CPU1 )	/* 64k for code * 6 pages (is it really 6?) */
 	ROM_LOAD( "d5",           0x00000, 0x8000, 0x453f3f9e )
 	ROM_LOAD( "d3",           0x08000, 0x8000, 0xf436d6fa )
 	ROM_LOAD( "d3o",          0x04000, 0x2000, 0xba4bf9f1 )	/* 4000-5fff is page 0 */
@@ -794,7 +792,7 @@ ROM_START( diamond )
 	/* empty space for unused sprites 1 Plane 3-4 */
 	/* empty space for unused sprites 2 Plane 3-4 */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "d2",           0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
 ROM_END
 
@@ -802,7 +800,7 @@ ROM_END
 
 static int gng_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -836,7 +834,7 @@ static int gng_hiload(void)
 static void gng_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -850,7 +848,7 @@ static void gng_hisave(void)
 
 static int diamond_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* We're just going to blast the hi score table into ROM and be done with it */
@@ -875,7 +873,7 @@ static int diamond_hiload(void)
 static void diamond_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

@@ -352,7 +352,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			5000000,
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		}

@@ -392,14 +392,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			18000000/6,	/* 3 MHz */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			18000000/12,	/* 1.5 MHz */
-			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,0	/* IRQs are caused by the main CPU */
 		}
@@ -438,7 +436,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( jack )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "j8",           0x0000, 0x1000, 0xc8e73998 )
 	ROM_LOAD( "jgk.j6",       0x1000, 0x1000, 0x36d7810e )
 	ROM_LOAD( "jgk.j7",       0x2000, 0x1000, 0xb15ff3ee )
@@ -454,12 +452,12 @@ ROM_START( jack )
 	ROM_LOAD( "jgk.j11",      0x2000, 0x1000, 0xfd14c525 )
 	ROM_LOAD( "jgk.j10",      0x3000, 0x1000, 0xeab890b2 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "jgk.j9",       0x0000, 0x1000, 0xc2dc1e00 )
 ROM_END
 
 ROM_START( jack2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "jgk.j8",       0x0000, 0x1000, 0xfe229e20 )
 	ROM_LOAD( "jgk.j6",       0x1000, 0x1000, 0x36d7810e )
 	ROM_LOAD( "jgk.j7",       0x2000, 0x1000, 0xb15ff3ee )
@@ -475,12 +473,12 @@ ROM_START( jack2 )
 	ROM_LOAD( "jgk.j11",      0x2000, 0x1000, 0xfd14c525 )
 	ROM_LOAD( "jgk.j10",      0x3000, 0x1000, 0xeab890b2 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "jgk.j9",       0x0000, 0x1000, 0xc2dc1e00 )
 ROM_END
 
 ROM_START( jack3 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "jack8",        0x0000, 0x1000, 0x632151d2 )
 	ROM_LOAD( "jack6",        0x1000, 0x1000, 0xf94f80d9 )
 	ROM_LOAD( "jack7",        0x2000, 0x1000, 0xc830ff1e )
@@ -496,12 +494,12 @@ ROM_START( jack3 )
 	ROM_LOAD( "jgk.j11",      0x2000, 0x1000, 0xfd14c525 )
 	ROM_LOAD( "jgk.j10",      0x3000, 0x1000, 0xeab890b2 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "jgk.j9",       0x0000, 0x1000, 0xc2dc1e00 )
 ROM_END
 
 ROM_START( treahunt )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "thunt-1.f2",   0x0000, 0x1000, 0x0b35858c )
 	ROM_LOAD( "thunt-2.f3",   0x1000, 0x1000, 0x67305a51 )
 	ROM_LOAD( "thunt-3.4f",   0x2000, 0x1000, 0xd7a969c3 )
@@ -517,12 +515,12 @@ ROM_START( treahunt )
 	ROM_LOAD( "thunt-10.a1",  0x2000, 0x1000, 0x51ec7934 )
 	ROM_LOAD( "thunt-11.a2",  0x3000, 0x1000, 0xf9781143 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "jgk.j9",       0x0000, 0x1000, 0xc2dc1e00 )
 ROM_END
 
 ROM_START( zzyzzyxx )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "a.2f",         0x0000, 0x1000, 0xa9102e34 )
 	ROM_LOAD( "zzyzzyxx.b",   0x1000, 0x1000, 0xefa9d4c6 )
 	ROM_LOAD( "zzyzzyxx.c",   0x2000, 0x1000, 0xb0a365b1 )
@@ -538,13 +536,13 @@ ROM_START( zzyzzyxx )
 	ROM_LOAD( "k.1b",         0x2000, 0x1000, 0xb8b2b8cc )
 	ROM_LOAD( "l.1a",         0x3000, 0x1000, 0xab421a83 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "i.5a",         0x0000, 0x1000, 0xc7742460 )
 	ROM_LOAD( "j.6a",         0x1000, 0x1000, 0x72166ccd )
 ROM_END
 
 ROM_START( zzyzzyx2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "a.2f",         0x0000, 0x1000, 0xa9102e34 )
 	ROM_LOAD( "b.3f",         0x1000, 0x1000, 0x4277beab )
 	ROM_LOAD( "c.4f",         0x2000, 0x1000, 0x72ac99e1 )
@@ -560,13 +558,13 @@ ROM_START( zzyzzyx2 )
 	ROM_LOAD( "k.1b",         0x2000, 0x1000, 0xb8b2b8cc )
 	ROM_LOAD( "l.1a",         0x3000, 0x1000, 0xab421a83 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "i.5a",         0x0000, 0x1000, 0xc7742460 )
 	ROM_LOAD( "j.6a",         0x1000, 0x1000, 0x72166ccd )
 ROM_END
 
 ROM_START( brix )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "a",            0x0000, 0x1000, 0x050e0d70 )
 	ROM_LOAD( "b",            0x1000, 0x1000, 0x668118ae )
 	ROM_LOAD( "c",            0x2000, 0x1000, 0xff5ed6cf )
@@ -582,13 +580,13 @@ ROM_START( brix )
 	ROM_LOAD( "k",            0x2000, 0x1000, 0xc7d7e2a0 )
 	ROM_LOAD( "l.1a",         0x3000, 0x1000, 0xab421a83 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "i.5a",         0x0000, 0x1000, 0xc7742460 )
 	ROM_LOAD( "j.6a",         0x1000, 0x1000, 0x72166ccd )
 ROM_END
 
 ROM_START( freeze )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "freeze.f2",    0x0000, 0x1000, 0x0a431665 )
 	ROM_LOAD( "freeze.f3",    0x1000, 0x1000, 0x1189b8ad )
 	ROM_LOAD( "freeze.f4",    0x2000, 0x1000, 0x10c4a5ea )
@@ -604,12 +602,12 @@ ROM_START( freeze )
 	ROM_LOAD( "freeze.1a",    0x2000, 0x1000, 0x3a7f2fa9 )
 	ROM_LOAD( "freeze.2a",    0x3000, 0x1000, 0xdd70ddd6 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "freeze.a1",    0x0000, 0x1000, 0x7771f5b9 )
 ROM_END
 
 ROM_START( sucasino )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1",       	  0x0000, 0x1000, 0xe116e979 )
 	ROM_LOAD( "2",      	  0x1000, 0x1000, 0x2a2635f5 )
 	ROM_LOAD( "3",       	  0x2000, 0x1000, 0x69864d90 )
@@ -625,7 +623,7 @@ ROM_START( sucasino )
 	ROM_LOAD( "10",      	  0x2000, 0x1000, 0x3b0783ce )
 	/* 3000-3fff empty */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "9",       	  0x0000, 0x1000, 0x67cf8aec )
 ROM_END
 
@@ -634,7 +632,7 @@ ROM_END
 static void treahunt_decode(void)
 {
 	int A;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int data;
 
 	/* Thanks to Mike Balfour for helping out with the decryption */
@@ -675,7 +673,7 @@ static void treahunt_decode(void)
 
 static int jack_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -699,7 +697,7 @@ static int jack_hiload(void)
 static void jack_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -711,7 +709,7 @@ static void jack_hisave(void)
 
 static int zzyzzyxx_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -736,7 +734,7 @@ static int zzyzzyxx_hiload(void)
 static void zzyzzyxx_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

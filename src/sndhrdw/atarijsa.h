@@ -109,29 +109,32 @@ extern struct OKIM6295interface atarijsa_okim6295_interface_6;
 
 
 /* Common CPU definitions */
-#define JSA_I_CPU(mem_region)								\
+#define JSA_I_CPU											\
+	{														\
 		CPU_M6502,											\
 		1789790,											\
-		mem_region,											\
 		atarijsa1_readmem,atarijsa1_writemem,0,0,			\
 		0,0,												\
-		atarigen_6502_irq_gen,250
+		atarigen_6502_irq_gen,250							\
+	}
 
-#define JSA_II_CPU(mem_region)								\
+#define JSA_II_CPU											\
+	{														\
 		CPU_M6502,											\
 		1789790,											\
-		mem_region,											\
 		atarijsa2_readmem,atarijsa2_writemem,0,0,			\
 		0,0,												\
-		atarigen_6502_irq_gen,250
+		atarigen_6502_irq_gen,250							\
+	}
 
-#define JSA_III_CPU(mem_region)								\
+#define JSA_III_CPU											\
+	{														\
 		CPU_M6502,											\
 		1789790,											\
-		mem_region,											\
 		atarijsa3_readmem,atarijsa3_writemem,0,0,			\
 		0,0,												\
-		atarigen_6502_irq_gen,250
+		atarigen_6502_irq_gen,250							\
+	}
 
 
 

@@ -142,7 +142,7 @@ static void init_machine(void)
 	atarigen_sound_io_reset(1);
 
 	/* reset the sound system */
-	bank_base = &memory_region(Machine->drv->cpu[1].memory_region)[0x10000];
+	bank_base = &memory_region(REGION_CPU2)[0x10000];
 	cpu_setbank(8, &bank_base[0x0000]);
 	fast_68k_int = io_68k_int = 0;
 	sound_data_from_68k = sound_data_from_6502 = 0;
@@ -616,8 +616,8 @@ static void handle_68k_sound_command(int command)
 
 		default:
 			/* bail if we're not enabled or if we get a bogus voice */
-			offset = READ_WORD(&Machine->memory_region[2][0x1e2a + 2 * command]);
-			sound = (struct sound_descriptor *)&Machine->memory_region[2][offset];
+			offset = READ_WORD(&memory_region(2)[0x1e2a + 2 * command]);
+			sound = (struct sound_descriptor *)&memory_region(2)[offset];
 
 			/* check the voice */
 			temp = sound->voice_priority >> 8;
@@ -653,9 +653,9 @@ static void handle_68k_sound_command(int command)
 
 			/* fill in the voice; we're taking over */
 			voice->playing = 1;
-			voice->start = &Machine->memory_region[2][(sound->start_address_h << 16) | sound->start_address_l];
+			voice->start = &memory_region(2)[(sound->start_address_h << 16) | sound->start_address_l];
 			voice->current = voice->start;
-			voice->end = &Machine->memory_region[2][(sound->end_address_h << 16) | sound->end_address_l];
+			voice->end = &memory_region(2)[(sound->end_address_h << 16) | sound->end_address_l];
 			voice->reps = sound->reps;
 			voice->volume = actual_volume;
 			voice->delta_volume = actual_delta;
@@ -1087,14 +1087,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,		/* verified */
 			7159160,		/* 7.159 Mhz */
-			0,
 			main_readmem,main_writemem,0,0,
 			ignore_interrupt,1
 		},
 		{
 			CPU_M6502,
 			7159160/4,
-			1,
 			sound_readmem,sound_writemem,0,0,
 			0,0,
 			atarigen_6502_irq_gen,250
@@ -1102,7 +1100,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,		/* verified */
 			7159160,		/* 7.159 Mhz */
-			4,
 			extra_readmem,extra_writemem,0,0,
 			atarigen_video_int_gen,1
 		}
@@ -1110,7 +1107,6 @@ static struct MachineDriver machine_driver =
 		,{
 			CPU_M68000,		/* verified */
 			7159160,		/* 7.159 Mhz */
-			2,
 			sound_68k_readmem,sound_68k_writemem,0,0,
 			0,0,
 			sound_68k_irq_gen,10000
@@ -1163,13 +1159,10 @@ static struct MachineDriver cyberb2p_machine_driver =
 		{
 			CPU_M68000,		/* verified */
 			7159160,		/* 7.159 Mhz */
-			0,
 			cyberb2p_readmem,cyberb2p_writemem,0,0,
 			atarigen_video_int_gen,1
 		},
-		{
-			JSA_II_CPU(1)
-		}
+		JSA_II_CPU
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
@@ -1201,15 +1194,15 @@ static struct MachineDriver cyberb2p_machine_driver =
  *************************************/
 
 ROM_START( cyberbal )
-	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "4123.1m", 0x00000, 0x10000, 0xfb872740 )
 	ROM_LOAD_ODD ( "4124.1k", 0x00000, 0x10000, 0x87babad9 )
 
-	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "2131-snd.2f",  0x10000, 0x4000, 0xbd7e3d84 )
 	ROM_CONTINUE(             0x04000, 0xc000 )
 
-	ROM_REGION(0x40000)	/* 256k for 68000 sound code */
+	ROM_REGIONX( 0x40000, REGION_CPU4 )	/* 256k for 68000 sound code */
 	ROM_LOAD_EVEN( "1132-snd.5c",  0x00000, 0x10000, 0xca5ce8d8 )
 	ROM_LOAD_ODD ( "1133-snd.7c",  0x00000, 0x10000, 0xffeb8746 )
 	ROM_LOAD_EVEN( "1134-snd.5a",  0x20000, 0x10000, 0xbcbd4c00 )
@@ -1244,7 +1237,7 @@ ROM_START( cyberbal )
 	ROM_LOAD( "1166.14n",  0x180000, 0x10000, 0x0ca1e3b3 ) /* alphanumerics */
 	ROM_LOAD( "1167.16n",  0x190000, 0x10000, 0x882f4e1c ) /* alphanumerics */
 
-	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU3 )	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "2127.3c", 0x00000, 0x10000, 0x3e5feb1f )
 	ROM_LOAD_ODD ( "2128.1b", 0x00000, 0x10000, 0x4e642cc3 )
 	ROM_LOAD_EVEN( "2129.1c", 0x20000, 0x10000, 0xdb11d2f0 )
@@ -1253,17 +1246,17 @@ ROM_END
 
 
 ROM_START( cyberbt )
-	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "cyb1007.bin", 0x00000, 0x10000, 0xd434b2d7 )
 	ROM_LOAD_ODD ( "cyb1008.bin", 0x00000, 0x10000, 0x7d6c4163 )
 	ROM_LOAD_EVEN( "cyb1009.bin", 0x20000, 0x10000, 0x3933e089 )
 	ROM_LOAD_ODD ( "cyb1010.bin", 0x20000, 0x10000, 0xe7a7cae8 )
 
-	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "cyb1029.bin",  0x10000, 0x4000, 0xafee87e1 )
 	ROM_CONTINUE(             0x04000, 0xc000 )
 
-	ROM_REGION(0x40000)	/* 256k for 68000 sound code */
+	ROM_REGIONX( 0x40000, REGION_CPU4 )	/* 256k for 68000 sound code */
 	ROM_LOAD_EVEN( "1132-snd.5c",  0x00000, 0x10000, 0xca5ce8d8 )
 	ROM_LOAD_ODD ( "1133-snd.7c",  0x00000, 0x10000, 0xffeb8746 )
 	ROM_LOAD_EVEN( "1134-snd.5a",  0x20000, 0x10000, 0xbcbd4c00 )
@@ -1294,7 +1287,7 @@ ROM_START( cyberbt )
 	ROM_LOAD( "cyb1019.bin",  0x180000, 0x10000, 0x833b4768 ) /* alphanumerics */
 	ROM_LOAD( "cyb1020.bin",  0x190000, 0x10000, 0x4976cffd ) /* alphanumerics */
 
-	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU3 )
 	ROM_LOAD_EVEN( "cyb1011.bin", 0x00000, 0x10000, 0x22d3e09c )
 	ROM_LOAD_ODD ( "cyb1012.bin", 0x00000, 0x10000, 0xa8eeed8c )
 	ROM_LOAD_EVEN( "cyb1013.bin", 0x20000, 0x10000, 0x11d287c9 )
@@ -1303,7 +1296,7 @@ ROM_END
 
 
 ROM_START( cyberb2p )
-	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "3019.bin", 0x00000, 0x10000, 0x029f8cb6 )
 	ROM_LOAD_ODD ( "3020.bin", 0x00000, 0x10000, 0x1871b344 )
 	ROM_LOAD_EVEN( "3021.bin", 0x20000, 0x10000, 0xfd7ebead )
@@ -1313,7 +1306,7 @@ ROM_START( cyberb2p )
 	ROM_LOAD_EVEN( "1025.bin", 0x60000, 0x10000, 0x95ff68c6 )
 	ROM_LOAD_ODD ( "1026.bin", 0x60000, 0x10000, 0xf61c4898 )
 
-	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "1042.bin",  0x10000, 0x4000, 0xe63cf125 )
 	ROM_CONTINUE(          0x04000, 0xc000 )
 

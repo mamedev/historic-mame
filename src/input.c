@@ -8,6 +8,8 @@
 
 #include "driver.h"
 
+#include <time.h>
+
 #define MAX_KEYS 256	/* allow up to 256 entries in the key list */
 #define MAX_JOYS 256	/* allow up to 256 entries in the joy list */
 
@@ -30,6 +32,38 @@ const char *keyboard_name(int keycode)
 	}
 
 	return "n/a";
+}
+
+void keyboard_name_multi(UINT16* keycode, char* buffer, unsigned max) {
+	int j;
+	char* dest = buffer;
+	for(j=0;j<INPUT_KEY_CODE_MAX;++j) {
+		const char* name;
+
+		if (keycode[j]==IP_KEY_NONE)
+			break;
+
+		name = keyboard_name(keycode[j]);
+		if (!name)
+			break;
+
+		if (dest != buffer && 1 + 1 <= max) {
+			*dest++ = ' ';
+			--max;
+		}
+
+		if (strlen(name) + 1 <= max) {
+			strcpy(dest,name);
+			dest += strlen(name);
+			max -= strlen(name);
+		}
+	}
+
+	if (dest == buffer && 4 + 1 <= max ) {
+		strcpy(dest,"None");
+	} else {
+		*dest = 0;
+	}
 }
 
 
@@ -67,6 +101,19 @@ profiler_mark(PROFILER_END);
 	return res;
 }
 
+int keyboard_pressed_multi(UINT16* keycode)
+{
+	int j;
+	if (!keyboard_pressed(keycode[0]))
+		return 0;
+	for(j=1;j<INPUT_KEY_CODE_MAX;++j) {
+		if (keycode[j]==IP_KEY_NONE)
+			return 1;
+		if (!keyboard_pressed(keycode[j]))
+			return 0;
+	}
+	return 1;
+}
 
 static char keymemory[MAX_KEYS];
 
@@ -91,6 +138,19 @@ profiler_mark(PROFILER_END);
 	return res;
 }
 
+int keyboard_pressed_memory_multi(UINT16* keycode)
+{
+	int j;
+	if (!keyboard_pressed_memory(keycode[0]))
+		return 0;
+	for(j=1;j<INPUT_KEY_CODE_MAX;++j) {
+		if (keycode[j]==IP_KEY_NONE)
+			return 1;
+		if (!keyboard_pressed_memory(keycode[j]))
+			return 0;
+	}
+	return 1;
+}
 
 int keyboard_pressed_memory_repeat(int keycode,int speed)
 {
@@ -125,6 +185,19 @@ profiler_mark(PROFILER_END);
 	return res;
 }
 
+int keyboard_pressed_memory_repeat_multi(UINT16* keycode,int speed)
+{
+	int j;
+	if (!keyboard_pressed_memory_repeat(keycode[0],speed))
+		return 0;
+	for(j=1;j<INPUT_KEY_CODE_MAX;++j) {
+		if (keycode[j]==IP_KEY_NONE)
+			return 1;
+		if (!keyboard_pressed_memory_repeat(keycode[j],speed))
+			return 0;
+	}
+	return 1;
+}
 
 int keyboard_read_async(void)
 {
@@ -202,7 +275,7 @@ int keyboard_read_sync(void)
 
 
 
-const char *joystick_name(int joycode)
+static const char *joystick_name(int joycode)
 {
 	const struct JoystickInfo *joyinfo;
 
@@ -221,6 +294,39 @@ const char *joystick_name(int joycode)
 
 	return "n/a";
 }
+
+void joystick_name_multi(UINT16* joycode, char* buffer, unsigned max) {
+	int j;
+	char* dest = buffer;
+	for(j=0;j<INPUT_KEY_CODE_MAX;++j) {
+		const char* name;
+
+		if (joycode[j]==IP_JOY_NONE)
+			break;
+
+		name = joystick_name(joycode[j]);
+		if (!name)
+			break;
+
+		if (dest != buffer && 1 + 1 <= max) {
+			*dest++ = ' ';
+			--max;
+		}
+
+		if (strlen(name) + 1 <= max) {
+			strcpy(dest,name);
+			dest += strlen(name);
+			max -= strlen(name);
+		}
+	}
+
+	if (dest == buffer && 4 + 1 <= max ) {
+		strcpy(dest,"None");
+	} else {
+		*dest = 0;
+	}
+}
+
 
 
 static int pseudo_to_joy_code(int *joycode,int *entry)
@@ -257,6 +363,19 @@ profiler_mark(PROFILER_END);
 	return res;
 }
 
+int joystick_pressed_multi(UINT16* joycode)
+{
+	int j;
+	if (!joystick_pressed(joycode[0]))
+		return 0;
+	for(j=1;j<INPUT_JOY_CODE_MAX;++j) {
+		if (joycode[j]==IP_JOY_NONE)
+			return 1;
+		if (!joystick_pressed(joycode[j]))
+			return 0;
+	}
+	return 1;
+}
 
 static char joymemory[MAX_JOYS];
 
@@ -281,6 +400,19 @@ profiler_mark(PROFILER_END);
 	return res;
 }
 
+int joystick_pressed_memory_multi(UINT16* joycode)
+{
+	int j;
+	if (!joystick_pressed_memory(joycode[0]))
+		return 0;
+	for(j=1;j<INPUT_JOY_CODE_MAX;++j) {
+		if (joycode[j]==IP_JOY_NONE)
+			return 1;
+		if (!joystick_pressed_memory(joycode[j]))
+			return 0;
+	}
+	return 1;
+}
 
 int joystick_pressed_memory_repeat(int joycode,int speed)
 {
@@ -315,6 +447,19 @@ profiler_mark(PROFILER_END);
 	return res;
 }
 
+int joystick_pressed_memory_repeat_multi(UINT16* joycode, int speed)
+{
+	int j;
+	if (!joystick_pressed_memory_repeat(joycode[0],speed))
+		return 0;
+	for(j=1;j<INPUT_JOY_CODE_MAX;++j) {
+		if (joycode[j]==IP_JOY_NONE)
+			return 1;
+		if (!joystick_pressed_memory_repeat(joycode[j],speed))
+			return 0;
+	}
+	return 1;
+}
 
 int joystick_read_async(void)
 {
@@ -357,13 +502,120 @@ profiler_mark(PROFILER_END);
 
 int input_ui_pressed(int code)
 {
-	return (keyboard_pressed_memory(input_port_type_key(code))
-			|| joystick_pressed_memory(input_port_type_joy(code)));
+	return (keyboard_pressed_memory_multi(input_port_type_key_multi(code))
+			|| joystick_pressed_memory_multi(input_port_type_joy_multi(code)));
 }
 
 
 int input_ui_pressed_repeat(int code,int speed)
 {
-	return (keyboard_pressed_memory_repeat(input_port_type_key(code),speed)
-			|| joystick_pressed_memory_repeat(input_port_type_joy(code),speed));
+	return (keyboard_pressed_memory_repeat_multi(input_port_type_key_multi(code),speed)
+			|| joystick_pressed_memory_repeat_multi(input_port_type_joy_multi(code),speed));
 }
+
+
+/* Static Information used in key/joy recording */
+static UINT16 record_keycode[INPUT_KEY_CODE_MAX]; /* buffer for key recording */
+static UINT16 record_joycode[INPUT_KEY_CODE_MAX]; /* buffer for joy recording */
+static unsigned record_count; /* number of key/joy press recorded */
+static clock_t record_last; /* time of last key/joy press */
+
+#define RECORD_TIME (CLOCKS_PER_SEC/2) /* max time between key press */
+
+/* Start a key/joy recording */
+void record_start(void) {
+	record_count = 0;
+	record_last = clock();
+}
+
+/* Record a keystroke
+	return <0 if no key pressed
+	return ==0 if key recorded
+	return >0 if aborted
+*/
+int keyboard_record(UINT16* keycode) {
+	int newkey;
+
+	if (keyboard_pressed_memory_multi(input_port_type_key_multi(IPT_UI_CANCEL)))
+		return 1;
+
+	if (record_count > 0 && clock() > record_last + RECORD_TIME)
+	{
+		/* fill to end */
+		while (record_count < INPUT_KEY_CODE_MAX) {
+			record_keycode[record_count++] = IP_KEY_NONE;
+		}
+
+		INPUT_KEY_CODE_COPY(keycode,record_keycode);
+		return 0;
+	}
+
+	newkey = keyboard_read_async();
+	if (newkey != KEYCODE_NONE)
+	{
+		int j;
+
+		/* don't insert duplicate */
+		for(j=0;j<record_count && j<INPUT_KEY_CODE_MAX;++j)
+			if (record_keycode[j] == newkey)
+				return -1;
+
+		record_keycode[record_count++] = newkey;
+		record_last = clock();
+
+		if (record_count == INPUT_KEY_CODE_MAX)
+		{
+			INPUT_KEY_CODE_COPY(keycode,record_keycode);
+			return 0;
+		}
+	}
+
+	return -1;
+}
+
+int joystick_record(UINT16* joycode) {
+	int newjoy;
+
+	if (keyboard_pressed_memory_multi(input_port_type_key_multi(IPT_UI_CANCEL)))
+		return 1;
+
+	if (keyboard_pressed_memory(KEYCODE_N))
+	{
+		INPUT_JOY_CODE_SET_1(joycode, JOYCODE_NONE);
+		return 0;
+	}
+
+	if (record_count > 0 && clock() > record_last + RECORD_TIME)
+	{
+		/* fill to end */
+		while (record_count < INPUT_JOY_CODE_MAX) {
+			record_joycode[record_count++] = IP_JOY_NONE;
+		}
+
+		INPUT_JOY_CODE_COPY(joycode,record_joycode);
+		return 0;
+	}
+
+	newjoy = joystick_read_async();
+	if (newjoy != JOYCODE_NONE)
+	{
+		int j;
+
+		/* don't insert duplicate */
+		for(j=0;j<record_count && j<INPUT_JOY_CODE_MAX;++j)
+			if (record_joycode[j] == newjoy)
+				return -1;
+
+		record_joycode[record_count++] = newjoy;
+		record_last = clock();
+
+		if (record_count == INPUT_JOY_CODE_MAX)
+		{
+			INPUT_JOY_CODE_COPY(joycode,record_joycode);
+			return 0;
+		}
+	}
+
+	return -1;
+}
+

@@ -310,13 +310,10 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,		/* verified */
 			7159160,		/* 7.159 Mhz */
-			0,
 			main_readmem,main_writemem,0,0,
 			atarigen_video_int_gen,1
 		},
-		{
-			JSA_II_CPU(1)
-		}
+		JSA_II_CPU
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
@@ -348,7 +345,7 @@ static struct MachineDriver machine_driver =
  *************************************/
 
 ROM_START( skullxbo )
-	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "5150", 0x00000, 0x10000, 0x9546d88b )
 	ROM_LOAD_ODD ( "5151", 0x00000, 0x10000, 0xb9ed8bd4 )
 	ROM_LOAD_EVEN( "5152", 0x20000, 0x10000, 0xc07e44fc )
@@ -358,7 +355,7 @@ ROM_START( skullxbo )
 	ROM_LOAD_EVEN( "5156", 0x70000, 0x08000, 0xcde16b55 )
 	ROM_LOAD_ODD ( "5157", 0x70000, 0x08000, 0x31c77376 )
 
-	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "1149",      0x10000, 0x4000, 0x8d730e7a )
 	ROM_CONTINUE(          0x04000, 0xc000 )
 
@@ -414,7 +411,7 @@ ROM_END
 
 
 ROM_START( skullxb2 )
-	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "sku0h.bin", 0x00000, 0x10000, 0x47083d59 )
 	ROM_LOAD_ODD ( "sku0l.bin", 0x00000, 0x10000, 0x2c03feaf )
 	ROM_LOAD_EVEN( "sku1h.bin", 0x20000, 0x10000, 0xaa0471de )
@@ -424,7 +421,7 @@ ROM_START( skullxb2 )
 	ROM_LOAD_EVEN( "5156",      0x70000, 0x08000, 0xcde16b55 )
 	ROM_LOAD_ODD ( "5157",      0x70000, 0x08000, 0x31c77376 )
 
-	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "1149",      0x10000, 0x4000, 0x8d730e7a )
 	ROM_CONTINUE(          0x04000, 0xc000 )
 
@@ -490,9 +487,9 @@ static void rom_decode(void)
 {
 	int i;
 	for (i = 0x170000; i < 0x190000; i++)
-		Machine->memory_region[3][i] = 0;
+		memory_region(3)[i] = 0;
 	for (i = 0x190000; i < 0x230000; i++)
-		Machine->memory_region[3][i] ^= 0xff;
+		memory_region(3)[i] ^= 0xff;
 }
 
 

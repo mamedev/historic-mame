@@ -187,7 +187,7 @@ int exidy440_sh_start(const struct MachineSound *msound)
 	sound_stream = stream_init_multi(2, names, vol, SAMPLE_RATE_FAST, sample_bits, 0, channel_update);
 
 	/* allocate the sample cache */
-	length = Machine->memory_region_length[2] * sample_bits + MAX_CACHE_ENTRIES * sizeof(sound_cache_entry);
+	length = memory_region_length(2) * sample_bits + MAX_CACHE_ENTRIES * sizeof(sound_cache_entry);
 	sound_cache = malloc(length);
 	if (!sound_cache)
 		return 1;
@@ -735,7 +735,7 @@ INT16 *find_or_add_to_sound_cache(int address, int length, int bits, int frequen
 		if (current->address == address && current->length == length && current->bits == bits && current->frequency == frequency)
 			return current->data;
 
-	return add_to_sound_cache(&Machine->memory_region[2][address], address, length, bits, frequency);
+	return add_to_sound_cache(&memory_region(2)[address], address, length, bits, frequency);
 }
 
 

@@ -428,7 +428,6 @@ static struct MachineDriver GAMENAME##_machine_driver =					\
 		{																\
 			CPU_Z80,													\
 			2500000,        /* 2.5 MHz */								\
-			0,															\
 			GAMENAME##_readmem,GAMENAME##_writemem,readport,writeport,	\
 			berzerk_interrupt,8											\
 		},																\
@@ -476,7 +475,7 @@ DRIVER(frenzy)
 ***************************************************************************/
 
 ROM_START( berzerk )
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU1 )
 	ROM_LOAD( "1c-0",         0x0000, 0x0800, 0xca566dbc )
 	ROM_LOAD( "1d-1",         0x1000, 0x0800, 0x7ba69fde )
 	ROM_LOAD( "3d-2",         0x1800, 0x0800, 0xa1d5248b )
@@ -486,7 +485,7 @@ ROM_START( berzerk )
 ROM_END
 
 ROM_START( berzerk1 )
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU1 )
 	ROM_LOAD( "rom0.1c",      0x0000, 0x0800, 0x5b7eb77d )
 	ROM_LOAD( "rom1.1d",      0x1000, 0x0800, 0xe58c8678 )
 	ROM_LOAD( "rom2.3d",      0x1800, 0x0800, 0x705bb339 )
@@ -496,7 +495,7 @@ ROM_START( berzerk1 )
 ROM_END
 
 ROM_START( frenzy )
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU1 )
 	ROM_LOAD( "1c-0",         0x0000, 0x1000, 0xabdd25b8 )
 	ROM_LOAD( "1d-1",         0x1000, 0x1000, 0x536e4ae8 )
 	ROM_LOAD( "3d-2",         0x2000, 0x1000, 0x3eb9bc9b )
@@ -509,7 +508,7 @@ ROM_END
 
 static int berzerk_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f;
 
 
@@ -525,7 +524,7 @@ static int berzerk_hiload(void)
 static void berzerk_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -538,7 +537,7 @@ static void berzerk_hisave(void)
 static int frenzy_hiload(void)
 {
 	static int firsttime = 0;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -572,7 +571,7 @@ static int frenzy_hiload(void)
 static void frenzy_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

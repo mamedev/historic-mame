@@ -233,13 +233,10 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,		/* verified */
 			7159160,
-			0,
 			main_readmem,main_writemem,0,0,
 			atarigen_video_int_gen,1
 		},
-		{
-			JSA_I_CPU(1)
-		}
+		JSA_I_CPU
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
@@ -270,13 +267,13 @@ static struct MachineDriver machine_driver =
  *************************************/
 
 ROM_START( xybots )
-	ROM_REGION(0x90000)	/* 8*64k for 68000 code */
+	ROM_REGIONX( 0x90000, REGION_CPU1 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "2112.c17",     0x00000, 0x10000, 0x16d64748 )
 	ROM_LOAD_ODD ( "2113.c19",     0x00000, 0x10000, 0x2677d44a )
 	ROM_LOAD_EVEN( "2114.b17",     0x20000, 0x08000, 0xd31890cb )
 	ROM_LOAD_ODD ( "2115.b19",     0x20000, 0x08000, 0x750ab1b0 )
 
-	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "xybots.snd",   0x10000, 0x4000, 0x3b9f155d )
 	ROM_CONTINUE(             0x04000, 0xc000 )
 

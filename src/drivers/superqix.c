@@ -222,7 +222,6 @@ static struct MachineDriver machine_driver =
 			CPU_Z80 | CPU_16BIT_PORT,
 //			10000000,	/* 10 Mhz ? */
 			6000000,	/* 6 Mhz ? */
-			0,
 			readmem,writemem,readport,writeport,
 //			nmi_interrupt,3	/* ??? */
 			sqix_interrupt,6	/* ??? */
@@ -263,7 +262,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( superqix )
-	ROM_REGION(0x20000)	/* 64k for code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sq01.97",      0x00000, 0x08000, 0x0888b7de )
 	ROM_LOAD( "sq02.96",      0x10000, 0x10000, 0x9c23cb64 )
 
@@ -273,12 +272,12 @@ ROM_START( superqix )
 	ROM_LOAD( "sq06.14",      0x18000, 0x10000, 0x38154517 )
 	ROM_LOAD( "sq05.1",       0x28000, 0x10000, 0xdf326540 )
 
-	ROM_REGION(0x1000)	/* Unknown (protection related?) */
+	ROM_REGION( 0x1000 )	/* Unknown (protection related?) */
 	ROM_LOAD( "sq07.108",     0x00000, 0x1000, 0x071a598c )
 ROM_END
 
 ROM_START( sqixbl )
-	ROM_REGION(0x20000)	/* 64k for code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "cpu.2",        0x00000, 0x08000, 0x682e28e3 )
 	ROM_LOAD( "sq02.96",      0x10000, 0x10000, 0x9c23cb64 )
 
@@ -292,7 +291,7 @@ ROM_END
 static int superqix_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -318,7 +317,7 @@ static int superqix_hiload(void)
 static void superqix_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{

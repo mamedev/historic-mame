@@ -111,7 +111,7 @@ void gbusters_sh_irqtrigger_w(int offset, int data)
 
 static void gbusters_snd_bankswitch_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[4];
+	unsigned char *RAM = memory_region(4);
 
 	int bank_B = 0x20000*((data >> 2) & 0x01);	/* ?? */
 	int bank_A = 0x20000*((data) & 0x01);		/* ?? */
@@ -328,14 +328,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_KONAMI,		/* Konami custom 052526 */
 			3000000,		/* ? */
-			0,
 			gbusters_readmem,gbusters_writemem,0,0,
             gbusters_interrupt,1
         },
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,		/* ? */
-			3,
 			gbusters_readmem_sound, gbusters_writemem_sound,0,0,
 			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
 		}
@@ -378,7 +376,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( gbusters )
-	ROM_REGION( 0x30800 ) /* code + banked roms + space for banked RAM */
+	ROM_REGIONX( 0x30800, REGION_CPU1 ) /* code + banked roms + space for banked RAM */
 	ROM_LOAD( "878n02.rom", 0x10000, 0x08000, 0x51697aaa )	/* ROM K13 */
 	ROM_CONTINUE(           0x08000, 0x08000 )
 	ROM_LOAD( "878j03.rom", 0x20000, 0x10000, 0x3943a065 )	/* ROM K15 */
@@ -391,13 +389,13 @@ ROM_START( gbusters )
 	ROM_LOAD( "878c05.rom", 0x00000, 0x40000, 0x01f4aea5 )	/* sprites */
 	ROM_LOAD( "878c06.rom", 0x40000, 0x40000, 0xedfaaaaf )	/* sprites */
 
-	ROM_REGION( 0x10000 ) /* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
 	ROM_LOAD( "878h01.rom", 0x00000, 0x08000, 0x96feafaa )
 
 	ROM_REGION( 0x40000 ) /* samples for 007232 */
 	ROM_LOAD( "878c04.rom",  0x00000, 0x40000, 0x9e982d1c )
 
-	ROM_REGION(0x0100)	/* PROMs */
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "878a09.rom",   0x0000, 0x0100, 0xe2d09a1b )	/* priority encoder (not used) */
 ROM_END
 
@@ -409,7 +407,7 @@ ROM_END
 
 static void gbusters_banking( int lines )
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int offs = 0x10000;
 
 	/* bits 0-3 ROM bank */
@@ -428,7 +426,7 @@ static void gbusters_banking( int lines )
 
 static void gbusters_init_machine( void )
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	konami_cpu_setlines_callback = gbusters_banking;
 

@@ -18,7 +18,7 @@ TO DO:
 #include "cpu/m6809/m6809.h"
 
 static unsigned char *sharedram;
-extern unsigned char *textlayerram, *spriteram, *drgnbstr_videoram;
+extern unsigned char *skykid_textram, *spriteram, *drgnbstr_videoram;
 
 /* from vidhrdw/skykid.c */
 int skykid_vh_start( void );
@@ -96,10 +96,10 @@ static void skykid_halt_mcu_w( int offset, int data )
 {
 	if (offset == 0){
 		cpu_set_reset_line(1,PULSE_LINE);
-		cpu_halt( 1, 1 );
+		cpu_set_halt_line( 1, CLEAR_LINE );
 	}
 	else{
-		cpu_halt( 1, 0 );
+		cpu_set_halt_line( 1, ASSERT_LINE );
 	}
 }
 
@@ -115,7 +115,7 @@ void skykid_sharedram_w( int offset, int val )
 void skykid_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	bankaddress = 0x10000 + (offset ? 0 : 0x2000);
 	cpu_setbank(1,&RAM[bankaddress]);
@@ -139,7 +139,7 @@ static struct MemoryWriteAddress skykid_writemem[] =
 {
 	{ 0x0000, 0x1fff, MWA_ROM },				/* banked ROM */
 	{ 0x2000, 0x2fff, skykid_videoram_w, &drgnbstr_videoram },/* Video RAM (background) */
-	{ 0x4000, 0x47ff, MWA_RAM, &textlayerram },	/* video RAM (text layer) */
+	{ 0x4000, 0x47ff, MWA_RAM, &skykid_textram },	/* video RAM (text layer) */
 	{ 0x4800, 0x5fff, MWA_RAM },				/* RAM + Sprite RAM */
 	{ 0x6000, 0x60ff, skykid_scroll_y_w },		/* Y scroll register map */
 	{ 0x6200, 0x63ff, skykid_scroll_x_w },		/* X scroll register map */
@@ -196,8 +196,7 @@ static struct IOWritePort mcu_writeport[] =
 };
 
 INPUT_PORTS_START( skykid )
-
-PORT_START	/* DSW A */
+	PORT_START	/* DSW A */
 	PORT_SERVICE( 0x01, IP_ACTIVE_HIGH )
 	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
@@ -219,7 +218,7 @@ PORT_START	/* DSW A */
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0xc0, DEF_STR( 3C_1C ) )
 
-PORT_START	/* DSW B */
+	PORT_START	/* DSW B */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "2" )
@@ -243,7 +242,7 @@ PORT_START	/* DSW B */
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
-PORT_START	/* DSW C */
+	PORT_START	/* DSW C */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
@@ -254,7 +253,7 @@ PORT_START	/* DSW C */
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-PORT_START	/* IN 0 */
+	PORT_START	/* IN 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START3 )	/* service */
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -264,31 +263,29 @@ PORT_START	/* IN 0 */
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-PORT_START	/* IN 1 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_START	/* IN 1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-PORT_START	/* IN 2 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_START	/* IN 2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
-
 INPUT_PORTS_END
 
 INPUT_PORTS_START( drgnbstr )
-
-PORT_START	/* DSW A */
+	PORT_START	/* DSW A */
 	PORT_SERVICE( 0x01, IP_ACTIVE_HIGH )
 	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
@@ -310,7 +307,7 @@ PORT_START	/* DSW A */
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0xc0, DEF_STR( 3C_1C ) )
 
-PORT_START	/* DSW B */
+	PORT_START	/* DSW B */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
@@ -336,7 +333,7 @@ PORT_START	/* DSW B */
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
-PORT_START	/* DSW C */
+	PORT_START	/* DSW C */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
@@ -347,7 +344,7 @@ PORT_START	/* DSW C */
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-PORT_START	/* IN 0 */
+	PORT_START	/* IN 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START3 )	/* service */
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -357,26 +354,25 @@ PORT_START	/* IN 0 */
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-PORT_START	/* IN 1 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_START	/* IN 1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-PORT_START	/* IN 2 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_START	/* IN 2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
-
 INPUT_PORTS_END
 
 
@@ -468,14 +464,12 @@ static struct MachineDriver skykid_machine_driver =
 		{
 			CPU_M6809,
 			49152000/32,	/* ??? */
-			0,
 			skykid_readmem,skykid_writemem,0,0,
 			skykid_interrupt,1
 		},
 		{
 			CPU_HD63701,	/* or compatible 6808 with extra instructions */
 			49152000/32,	/* ??? */
-			2,
 			mcu_readmem,mcu_writemem,mcu_readport,mcu_writeport,
 			interrupt,1
 		}
@@ -513,14 +507,12 @@ static struct MachineDriver drgnbstr_machine_driver =
 		{
 			CPU_M6809,
 			49152000/32,	/* ??? */
-			0,
 			skykid_readmem,skykid_writemem,0,0,
 			skykid_interrupt,1
 		},
 		{
 			CPU_HD63701,	/* or compatible 6808 with extra instructions */
 			49152000/32,	/* ??? */
-			2,
 			mcu_readmem,mcu_writemem,mcu_readport,mcu_writeport,
 			interrupt,1
 		}
@@ -552,7 +544,7 @@ static struct MachineDriver drgnbstr_machine_driver =
 };
 
 ROM_START( skykid )
-	ROM_REGION(0x14000)	/* 6809 code */
+	ROM_REGIONX( 0x14000, REGION_CPU1 )	/* 6809 code */
 	ROM_LOAD( "sk2-6c.bin",   0x08000, 0x4000, 0xea8a5822 )
 	ROM_LOAD( "sk1-6b.bin",   0x0c000, 0x4000, 0x7abe6c6c )
 	ROM_LOAD( "sk3-6d.bin",   0x10000, 0x4000, 0x314b8765 )	/* banked ROM */
@@ -564,7 +556,7 @@ ROM_START( skykid )
 	ROM_LOAD( "sk7-10m.bin",  0x08000, 0x4000, 0x3454671d )
 	/* empty space to decode the sprites as 3bpp */
 
-	ROM_REGION( 0x10000 ) /* MCU code */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* MCU code */
 	ROM_LOAD( "sk4-3c.bin",   0x8000, 0x2000, 0xa460d0e0 )	/* subprogram for the MCU */
 	ROM_LOAD( "sk1-mcu.bin",  0xf000, 0x1000, 0x6ef08fb3 )	/* MCU internal code */
 
@@ -578,7 +570,7 @@ ROM_END
 
 
 ROM_START( drgnbstr )
-	ROM_REGION( 0x14000 ) /* 6809 code */
+	ROM_REGIONX( 0x14000, REGION_CPU1 ) /* 6809 code */
 	ROM_LOAD( "6c.bin",		0x08000, 0x04000, 0x0f11cd17 )
 	ROM_LOAD( "6b.bin",		0x0c000, 0x04000, 0x1c7c1821 )
 	ROM_LOAD( "6d.bin",		0x10000, 0x04000, 0x6da169ae )	/* banked ROM */
@@ -590,7 +582,7 @@ ROM_START( drgnbstr )
 	ROM_LOAD( "10m.bin",	0x08000, 0x4000, 0xcc130fe2 )
 		/* empty space to decode the sprites as 3bpp */
 
-	ROM_REGION( 0x10000 ) /* MCU code */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* MCU code */
 	ROM_LOAD( "3c.bin",		0x8000, 0x02000, 0x8a0b1fc1 )	/* subprogram for the MCU */
 	ROM_LOAD( "pl1-mcu.bin",0xf000,	0x01000, 0x6ef08fb3 )	/* The MCU internal code is missing */
 															/* Using Pacland code (probably similar) */

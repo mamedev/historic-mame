@@ -400,26 +400,20 @@ INLINE void blockmove_transpen_noremap_flipx16(
 #define BLOCKMOVE(function,flipx,args) \
 	if (flipx) blockmove_##function##_flipx##8 args ; \
 	else blockmove_##function##8 args
-#define RGB_MASK 0x92   /* RRRGGGBB */
 #include "drawgfx.c"
 #undef DATA_TYPE
 #undef DECLARE
 #undef BLOCKMOVE
-#undef RGB_MASK
-
-extern unsigned short *shrinked_pens;
 
 #define DATA_TYPE UINT16
 #define DECLARE(function,args,body) INLINE void function##16 args body
 #define BLOCKMOVE(function,flipx,args) \
 	if (flipx) blockmove_##function##_flipx##16 args ; \
 	else blockmove_##function##16 args
-#define RGB_MASK shrinked_pens[0x4210]
 #include "drawgfx.c"
 #undef DATA_TYPE
 #undef DECLARE
 #undef BLOCKMOVE
-#undef RGB_MASK
 
 
 /***************************************************************************
@@ -440,12 +434,11 @@ extern unsigned short *shrinked_pens;
 									 has priority over them.
 
   transparency == TRANSPARENCY_PEN_TABLE - the transparency condition is same as TRANSPARENCY_PEN
-									A special drawing is done according to gfx_drawmode_table[source pixel].
-									DRAWMODE_NONE   :transparent
-									DRAWMODE_SOURCE :normal, draw source pixel.
-									DRAWMODE_HALF   :_destination_ brightness is shifted down
-									DRAWMODE_DOUBLE :_destination_ brightness is shifted up
-									DRAWMODE_MIX    :mixing _destination_ and source color.
+					A special drawing is done according to gfx_drawmode_table[source pixel].
+					DRAWMODE_NONE      transparent
+					DRAWMODE_SOURCE    normal, draw source pixel.
+					DRAWMODE_SHADOW    destination is changed through palette_shadow_table[]
+					DRAWMODE_HIGHLIGHT destination is changed through palette_highlight_table[]
 
 ***************************************************************************/
 
@@ -2183,15 +2176,11 @@ DECLARE(blockmove_pen_table,(
 				case DRAWMODE_SOURCE:
 					*dstdata = paldata[col];
 					break;
-				case DRAWMODE_HALF:
-					*dstdata = (*dstdata>>1)&(~RGB_MASK);
+				case DRAWMODE_SHADOW:
+					*dstdata = palette_shadow_table[*dstdata];
 					break;
-				case DRAWMODE_DOUBLE:
-					/* !!!!! overflow check is wrong !!!!! */
-					*dstdata = (*dstdata&RGB_MASK) | ((*dstdata&~RGB_MASK)<<1);
-					break;
-				case DRAWMODE_MIX:
-					*dstdata = ((*dstdata>>1)&(~RGB_MASK)) + ((paldata[col]>>1)&(~RGB_MASK));
+				case DRAWMODE_HIGHLIGHT:
+					*dstdata = palette_highlight_table[*dstdata];
 					break;
 				}
 			}
@@ -2230,15 +2219,11 @@ DECLARE(blockmove_pen_table_flipx,(
 				case DRAWMODE_SOURCE:
 					*dstdata = paldata[col];
 					break;
-				case DRAWMODE_HALF:
-					*dstdata = (*dstdata>>1)&(~RGB_MASK);
+				case DRAWMODE_SHADOW:
+					*dstdata = palette_shadow_table[*dstdata];
 					break;
-				case DRAWMODE_DOUBLE:
-					/* !!!!! overflow check is wrong !!!!! */
-					*dstdata = (*dstdata&RGB_MASK) | ((*dstdata&~RGB_MASK)<<1);
-					break;
-				case DRAWMODE_MIX:
-					*dstdata = ((*dstdata>>1)&(~RGB_MASK)) + ((paldata[col]>>1)&(~RGB_MASK));
+				case DRAWMODE_HIGHLIGHT:
+					*dstdata = palette_highlight_table[*dstdata];
 					break;
 				}
 			}

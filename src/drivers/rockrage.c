@@ -32,7 +32,7 @@ static int rockrage_interrupt( void )
 
 static void rockrage_bankswitch_w(int offset, int data)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
 
 	/* bits 4-6 = bank number */
@@ -281,14 +281,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_HD6309,
 			3000000,		/* 24MHz/8 (?) */
-			0,
 			rockrage_readmem,rockrage_writemem,0,0,
             rockrage_interrupt,1
         },
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
 			2000000,		/* ? */
-			2,
 			rockrage_readmem_sound, rockrage_writemem_sound,0,0,
 			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
 		}
@@ -331,7 +329,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( rockrage )
-	ROM_REGION( 0x20000 ) /* code + banked roms */
+	ROM_REGIONX( 0x20000, REGION_CPU1 ) /* code + banked roms */
 	ROM_LOAD( "rr-q01.rom", 0x08000, 0x08000, 0x0ddb5ef5 )	/* fixed ROM */
 	ROM_LOAD( "rr-q02.rom", 0x10000, 0x10000, 0xb4f6e346 )	/* banked ROM */
 
@@ -341,7 +339,7 @@ ROM_START( rockrage )
 	ROM_LOAD( "rr-k11.rom",	0x040000, 0x20000, 0x70449239 )	/* sprites */
 	ROM_LOAD( "rr-l10.rom",	0x060000, 0x20000, 0x06d108e0 )	/* sprites */
 
-	ROM_REGION( 0x10000 ) /* 64k for the sound CPU */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* 64k for the sound CPU */
 	ROM_LOAD( "620k03.11c", 0x08000, 0x08000, 0x9fbefe82 )
 
 	ROM_REGION( 0x08000 ) /* VLM3050 data */
@@ -354,7 +352,7 @@ ROM_START( rockrage )
 ROM_END
 
 ROM_START( rockragj )
-	ROM_REGION( 0x20000 ) /* code + banked roms */
+	ROM_REGIONX( 0x20000, REGION_CPU1 ) /* code + banked roms */
 	ROM_LOAD( "620k01.16c", 0x08000, 0x08000, 0x4f5171f7 )	/* fixed ROM */
 	ROM_LOAD( "620k02.15c", 0x10000, 0x10000, 0x04c4d8f7 )	/* banked ROM */
 
@@ -364,7 +362,7 @@ ROM_START( rockragj )
 	ROM_LOAD( "620k11.7g",	0x040000, 0x20000, 0x7430f6e9 )	/* sprites */
 	ROM_LOAD( "620k10.8g",	0x060000, 0x20000, 0x0d1a95ab )	/* sprites */
 
-	ROM_REGION( 0x10000 ) /* 64k for the sound CPU */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* 64k for the sound CPU */
 	ROM_LOAD( "620k03.11c", 0x08000, 0x08000, 0x9fbefe82 )
 
 	ROM_REGION( 0x08000 ) /* VLM3050 data */

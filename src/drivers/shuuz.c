@@ -310,7 +310,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,		/* verified */
 			7159160,		/* 7.159 Mhz */
-			0,
 			readmem,writemem,0,0,
 			ignore_interrupt,1
 		}
@@ -353,8 +352,8 @@ static void rom_decode(void)
 {
 	int i;
 
-	for (i = 0; i < Machine->memory_region_length[1]; i++)
-		Machine->memory_region[1][i] ^= 0xff;
+	for (i = 0; i < memory_region_length(1); i++)
+		memory_region(1)[i] ^= 0xff;
 }
 
 
@@ -366,7 +365,7 @@ static void rom_decode(void)
  *************************************/
 
 ROM_START( shuuz )
-	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "4010.23p",     0x00000, 0x20000, 0x1c2459f8 )
 	ROM_LOAD_ODD ( "4011.13p",     0x00000, 0x20000, 0x6db53a85 )
 
@@ -385,14 +384,14 @@ ROM_START( shuuz )
 	ROM_LOAD( "1025.87m", 0x140000, 0x20000, 0xf7b20a64 )
 	ROM_LOAD( "1027.65m", 0x160000, 0x20000, 0x55d54952 )
 
-	ROM_REGION(0x40000)	/* ADPCM data */
+	ROM_REGION( 0x40000 )	/* ADPCM data */
 	ROM_LOAD( "1040.75b", 0x00000, 0x20000, 0x0896702b )
 	ROM_LOAD( "1041.65b", 0x20000, 0x20000, 0xb3b07ce9 )
 ROM_END
 
 
 ROM_START( shuuz2 )
-	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "23p.rom",     0x00000, 0x20000, 0x98aec4e7 )
 	ROM_LOAD_ODD ( "13p.rom",     0x00000, 0x20000, 0xdd9d5d5c )
 
@@ -411,7 +410,7 @@ ROM_START( shuuz2 )
 	ROM_LOAD( "1025.87m", 0x140000, 0x20000, 0xf7b20a64 )
 	ROM_LOAD( "1027.65m", 0x160000, 0x20000, 0x55d54952 )
 
-	ROM_REGION(0x40000)	/* ADPCM data */
+	ROM_REGION( 0x40000 )	/* ADPCM data */
 	ROM_LOAD( "1040.75b", 0x00000, 0x20000, 0x0896702b )
 	ROM_LOAD( "1041.65b", 0x20000, 0x20000, 0xb3b07ce9 )
 ROM_END

@@ -638,14 +638,12 @@ static struct MachineDriver mappy_machine_driver =
 		{
 			CPU_M6809,
 			1100000,                        /* 1.1 Mhz */
-			0,
 			mappy_readmem_cpu1,writemem_cpu1,0,0,
 			mappy_interrupt_1,1
 		},
 		{
 			CPU_M6809,
 			1100000,                        /* 1.1 Mhz */
-			3,      /* memory region #3 */
 			mappy_readmem_cpu2,writemem_cpu2,0,0,
 			mappy_interrupt_2,1
 		}
@@ -684,14 +682,12 @@ static struct MachineDriver digdug2_machine_driver =
 		{
 			CPU_M6809,
 			1600000,                        /* 1.6 Mhz */
-			0,
 			digdug2_readmem_cpu1,writemem_cpu1,0,0,
 			mappy_interrupt_1,1
 		},
 		{
 			CPU_M6809,
 			1600000,                        /* 1.6 Mhz */
-			3,      /* memory region #3 */
 			digdug2_readmem_cpu2,writemem_cpu2,0,0,
 			mappy_interrupt_2,1
 		}
@@ -730,14 +726,12 @@ static struct MachineDriver motos_machine_driver =
 		{
 			CPU_M6809,
 			1600000,                        /* 1.6 Mhz */
-			0,
 			motos_readmem_cpu1,writemem_cpu1,0,0,
 			mappy_interrupt_1,1
 		},
 		{
 			CPU_M6809,
 			1600000,                        /* 1.6 Mhz */
-			3,      /* memory region #3 */
 			motos_readmem_cpu2,writemem_cpu2,0,0,
 			mappy_interrupt_2,1
 		}
@@ -776,14 +770,12 @@ static struct MachineDriver todruaga_machine_driver =
 		{
 			CPU_M6809,
 			1600000,                        /* 1.6 Mhz */
-			0,
 			todruaga_readmem_cpu1,writemem_cpu1,0,0,
 			mappy_interrupt_1,1
 		},
 		{
 			CPU_M6809,
 			1600000,                        /* 1.6 Mhz */
-			3,      /* memory region #3 */
 			todruaga_readmem_cpu2,writemem_cpu2,0,0,
 			mappy_interrupt_2,1
 		}
@@ -819,7 +811,7 @@ static struct MachineDriver todruaga_machine_driver =
 
 /* ROM loader description */
 ROM_START( mappy )
-	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
 	ROM_LOAD( "mappy1d.64",   0xa000, 0x2000, 0x52e6c708 )
 	ROM_LOAD( "mappy1c.64",   0xc000, 0x2000, 0xa958a61c )
 	ROM_LOAD( "mappy1b.64",   0xe000, 0x2000, 0x203766d4 )
@@ -834,7 +826,7 @@ ROM_START( mappy )
 	ROM_LOAD( "mappy.pr2",    0x0020, 0x0100, 0x50765082 ) /* characters */
 	ROM_LOAD( "mappy.pr3",    0x0120, 0x0100, 0x5396bd78 ) /* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "mappy1k.64",   0xe000, 0x2000, 0x8182dd5b )
 
 	ROM_REGION(0x0100)      /* sound prom */
@@ -842,7 +834,7 @@ ROM_START( mappy )
 ROM_END
 
 ROM_START( mappyjp )
-	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
 	ROM_LOAD( "mappy3.bin",   0xa000, 0x2000, 0xdb9d5ab5 )
 	ROM_LOAD( "mappy1c.64",   0xc000, 0x2000, 0xa958a61c )
 	ROM_LOAD( "mappy1.bin",   0xe000, 0x2000, 0x77c0b492 )
@@ -858,7 +850,7 @@ ROM_START( mappyjp )
 ROM_LOAD( "mappy.pr2",    0x0020, 0x0100, 0x50765082 ) /* characters */
 	ROM_LOAD( "mappy.pr3",    0x0120, 0x0100, 0x5396bd78 ) /* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "mappy1k.64",   0xe000, 0x2000, 0x8182dd5b )
 
 	ROM_REGION(0x0100)      /* sound prom */
@@ -866,7 +858,7 @@ ROM_LOAD( "mappy.pr2",    0x0020, 0x0100, 0x50765082 ) /* characters */
 ROM_END
 
 ROM_START( digdug2 )
-	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
 	ROM_LOAD( "ddug2-3.bin",  0x8000, 0x4000, 0xbe7ec80b )
 	ROM_LOAD( "ddug2-1.bin",  0xc000, 0x4000, 0x5c77c0d4 )
 
@@ -880,7 +872,7 @@ ROM_START( digdug2 )
 	ROM_LOAD( "ddclr-4c.bin", 0x0020, 0x0100, 0x55a88695 ) /* characters */
 	ROM_LOAD( "ddclr-5k.bin", 0x0120, 0x0100, 0x1525a4d1 ) /* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "ddug2-4.bin",  0xe000, 0x2000, 0x737443b1 )
 
 	ROM_REGION(0x0100)      /* sound prom */
@@ -888,7 +880,7 @@ ROM_START( digdug2 )
 ROM_END
 
 ROM_START( digdug2a )
-	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
 	ROM_LOAD( "ddug2a_3.bin",  0x8000, 0x4000, 0xcc155338 )
 	ROM_LOAD( "ddug2a_1.bin",  0xc000, 0x4000, 0x40e46af8 )
 
@@ -903,7 +895,7 @@ ROM_START( digdug2a )
 	ROM_LOAD( "ddclr_5k.bin", 0x0120, 0x0100, 0x9c55feda ) /* sprites */
 	/* Can't see the difference on screen, but CRC differs. */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "ddug2-4.bin",  0xe000, 0x2000, 0x737443b1 )
 
 	ROM_REGION(0x0100)      /* sound prom */
@@ -911,7 +903,7 @@ ROM_START( digdug2a )
 ROM_END
 
 ROM_START( motos )
-	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
 	ROM_LOAD( "mts_1d.bin",   0x8000, 0x4000, 0x1104abb2 )
 	ROM_LOAD( "mts_1b.bin",   0xc000, 0x4000, 0x57b157e2 )
 
@@ -925,7 +917,7 @@ ROM_START( motos )
 	ROM_LOAD( "motos.pr2",    0x0020, 0x0100, 0x730ba7fb ) /* characters */
 	ROM_LOAD( "motos.pr3",    0x0120, 0x0100, 0x7721275d ) /* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "mts_1k.bin",   0xe000, 0x2000, 0x55e45d21 )
 
 	ROM_REGION(0x0100)      /* sound prom */
@@ -933,7 +925,7 @@ ROM_START( motos )
 ROM_END
 
 ROM_START( todruaga )
-	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
 	ROM_LOAD( "druaga3.bin",  0x8000, 0x4000, 0x7ab4f5b2 )
 	ROM_LOAD( "druaga1.bin",  0xc000, 0x4000, 0x8c20ef10 )
 
@@ -950,7 +942,7 @@ ROM_START( todruaga )
 	ROM_LOAD( "todruaga.pr5", 0x0320, 0x0100, 0xecdc206c ) /* sprites */
 	ROM_LOAD( "todruaga.pr6", 0x0420, 0x0100, 0x57b5ad6d ) /* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "druaga4.bin",  0xe000, 0x2000, 0xae9d06d9 )
 
 	ROM_REGION(0x0100)      /* sound prom */
@@ -958,7 +950,7 @@ ROM_START( todruaga )
 ROM_END
 
 ROM_START( todruagb )
-	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
 	ROM_LOAD( "druaga3a.bin", 0x8000, 0x4000, 0xfbf16299 )
 	ROM_LOAD( "druaga1a.bin", 0xc000, 0x4000, 0xb238d723 )
 
@@ -975,7 +967,7 @@ ROM_START( todruagb )
 	ROM_LOAD( "todruaga.pr5", 0x0320, 0x0100, 0xecdc206c ) /* sprites */
 	ROM_LOAD( "todruaga.pr6", 0x0420, 0x0100, 0x57b5ad6d ) /* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "druaga4.bin",  0xe000, 0x2000, 0xae9d06d9 )
 
 	ROM_REGION(0x0100)      /* sound prom */
@@ -989,7 +981,7 @@ static int mappy_hiload(void)
 {
 	int writing = 0;
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1033,7 +1025,7 @@ static int mappy_hiload(void)
 static void mappy_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1049,7 +1041,7 @@ static int digdug2_hiload(void)
 {
 	int writing = 0;
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1093,7 +1085,7 @@ static int digdug2_hiload(void)
 static void digdug2_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1110,7 +1102,7 @@ static int motos_hiload(void)
 
 
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1143,7 +1135,7 @@ static int motos_hiload(void)
 static void motos_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1156,7 +1148,7 @@ static void motos_hisave(void)
 static int todruaga_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1182,7 +1174,7 @@ static int todruaga_hiload(void)
 static void todruaga_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

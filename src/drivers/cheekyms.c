@@ -152,7 +152,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			5000000/2,  /* 2.5 Mhz */
-			0,
 			readmem, writemem,
 			readport, writeport,
 			cheekyms_interrupt,1
@@ -194,7 +193,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( cheekyms )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "cm03.c5",       0x0000, 0x0800, 0x1ad0cb40 )
 	ROM_LOAD( "cm04.c6",       0x0800, 0x0800, 0x2238f607 )
 	ROM_LOAD( "cm05.c7",       0x1000, 0x0800, 0x4169eba8 )

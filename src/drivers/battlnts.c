@@ -34,7 +34,7 @@ void battlnts_sh_irqtrigger_w(int offset, int data)
 
 static void battlnts_bankswitch_w(int offset, int data)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
 
 	/* bits 6 & 7 = bank number */
@@ -355,14 +355,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_HD6309,
 			3000000,		/* ? */
-			0,
 			battlnts_readmem,battlnts_writemem,0,0,
             battlnts_interrupt,1
         },
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,		/* ? */
-			2,
 			battlnts_readmem_sound, battlnts_writemem_sound,0,0,
 			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
 		}
@@ -401,7 +399,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( battlnts )
-	ROM_REGION( 0x20000 ) /* code + banked roms */
+	ROM_REGIONX( 0x20000, REGION_CPU1 ) /* code + banked roms */
 	ROM_LOAD( "g02.7e",     0x08000, 0x08000, 0xdbd8e17e )	/* fixed ROM */
 	ROM_LOAD( "g03.8e",     0x10000, 0x10000, 0x7bd44fef )	/* banked ROM */
 
@@ -409,12 +407,12 @@ ROM_START( battlnts )
 	ROM_LOAD( "777c04.bin",	0x000000, 0x40000, 0x45d92347 )	/* tiles */
 	ROM_LOAD( "777c05.bin",	0x040000, 0x40000, 0xaeee778c )	/* sprites */
 
-	ROM_REGION( 0x10000 ) /* 64k for the sound CPU */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* 64k for the sound CPU */
 	ROM_LOAD( "777c01.bin", 0x00000, 0x08000, 0xc21206e9 )
 ROM_END
 
 ROM_START( battlntj )
-	ROM_REGION( 0x20000 ) /* code + banked roms */
+	ROM_REGIONX( 0x20000, REGION_CPU1 ) /* code + banked roms */
 	ROM_LOAD( "777e02.bin", 0x08000, 0x08000, 0xd631cfcb )	/* fixed ROM */
 	ROM_LOAD( "777e03.bin", 0x10000, 0x10000, 0x5ef1f4ef )	/* banked ROM */
 
@@ -422,12 +420,12 @@ ROM_START( battlntj )
 	ROM_LOAD( "777c04.bin",	0x000000, 0x40000, 0x45d92347 )	/* tiles */
 	ROM_LOAD( "777c05.bin",	0x040000, 0x40000, 0xaeee778c )	/* sprites */
 
-	ROM_REGION( 0x10000 ) /* 64k for the sound CPU */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* 64k for the sound CPU */
 	ROM_LOAD( "777c01.bin", 0x00000, 0x08000, 0xc21206e9 )
 ROM_END
 
 ROM_START( thehustl )
-	ROM_REGION( 0x20000 ) /* code + banked roms */
+	ROM_REGIONX( 0x20000, REGION_CPU1 ) /* code + banked roms */
 	ROM_LOAD( "765-m02.7e",     0x08000, 0x08000, 0x934807b9 )	/* fixed ROM */
 	ROM_LOAD( "765-j03.8e",     0x10000, 0x10000, 0xa13fd751 )	/* banked ROM */
 
@@ -435,12 +433,12 @@ ROM_START( thehustl )
 	ROM_LOAD( "765-e04.13a",	0x000000, 0x40000, 0x08c2b72e )	/* tiles */
 	ROM_LOAD( "765-e05.13e",	0x040000, 0x40000, 0xef044655 )	/* sprites */
 
-	ROM_REGION( 0x10000 ) /* 64k for the sound CPU */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* 64k for the sound CPU */
 	ROM_LOAD( "765-j01.10a", 	0x00000, 0x08000, 0x77ae753e )
 ROM_END
 
 ROM_START( thehustj )
-	ROM_REGION( 0x20000 ) /* code + banked roms */
+	ROM_REGIONX( 0x20000, REGION_CPU1 ) /* code + banked roms */
 	ROM_LOAD( "765-j02.7e",     0x08000, 0x08000, 0x2ac14c75 )	/* fixed ROM */
 	ROM_LOAD( "765-j03.8e",     0x10000, 0x10000, 0xa13fd751 )	/* banked ROM */
 
@@ -448,7 +446,7 @@ ROM_START( thehustj )
 	ROM_LOAD( "765-e04.13a",	0x000000, 0x40000, 0x08c2b72e )	/* tiles */
 	ROM_LOAD( "765-e05.13e",	0x040000, 0x40000, 0xef044655 )	/* sprites */
 
-	ROM_REGION( 0x10000 ) /* 64k for the sound CPU */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* 64k for the sound CPU */
 	ROM_LOAD( "765-j01.10a", 	0x00000, 0x08000, 0x77ae753e )
 ROM_END
 

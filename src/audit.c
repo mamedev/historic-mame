@@ -143,16 +143,24 @@ int AuditRomSet (int game, tAuditRecord **audit)
 			}
 			while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
 
-			if (!aud->expchecksum)
-				aud->status = AUD_NOT_AVAILABLE;
-			else if (err)
-				aud->status = AUD_ROM_NOT_FOUND;
+			if (err)
+			{
+				if (!aud->expchecksum)
+					/* not found but it's not good anyway */
+					aud->status = AUD_NOT_AVAILABLE;
+				else
+					/* not found */
+					aud->status = AUD_ROM_NOT_FOUND;
+			}
+			/* all cases below assume the ROM was at least found */
 			else if (aud->explength != aud->length)
 				aud->status = AUD_LENGTH_MISMATCH;
 			else if (aud->checksum != aud->expchecksum)
 			{
-				if (aud->checksum == BADCRC (aud->expchecksum))
-					aud->status = AUD_ROM_BAD;
+				if (!aud->expchecksum)
+					aud->status = AUD_ROM_NEED_DUMP; /* new case - found but not known to be dumped */
+				else if (aud->checksum == BADCRC (aud->expchecksum))
+					aud->status = AUD_ROM_NEED_REDUMP;
 				else
 					aud->status = AUD_BAD_CHECKSUM;
 			}
@@ -207,14 +215,18 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf)
 					drivers[game]->name, aud->rom, aud->explength, aud->expchecksum);
 				break;
 			case AUD_NOT_AVAILABLE:
+				verify_printf ("%-8s: %-12s %7d bytes NOT FOUND - NO GOOD DUMP KNOWN\n",
+					drivers[game]->name, aud->rom, aud->explength);
+				break;
+			case AUD_ROM_NEED_DUMP:
 				verify_printf ("%-8s: %-12s %7d bytes NO GOOD DUMP KNOWN\n",
 					drivers[game]->name, aud->rom, aud->explength);
 				break;
 			case AUD_BAD_CHECKSUM:
 				verify_printf ("%-8s: %-12s %7d bytes %08x INCORRECT CHECKSUM: %08x\n",
-					drivers[game]->name, aud->rom, aud->explength, aud->expchecksum, aud->checksum);
+					drivers[game]->name, aud->rom, aud->explength, aud->expchecksum,aud->checksum);
 				break;
-			case AUD_ROM_BAD:
+			case AUD_ROM_NEED_REDUMP:
 				verify_printf ("%-8s: %-12s %7d bytes ROM NEEDS REDUMP\n",
 					drivers[game]->name, aud->rom, aud->explength);
 				break;
@@ -223,10 +235,10 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf)
 				break;
 			case AUD_LENGTH_MISMATCH:
 				verify_printf ("%-8s: %-12s %7d bytes %08x INCORRECT LENGTH: %8d\n",
-					drivers[game]->name, aud->rom, aud->explength, aud->expchecksum, aud->length);
+					drivers[game]->name, aud->rom, aud->explength, aud->expchecksum,aud->length);
 				break;
 			case AUD_ROM_GOOD:
-#if	0		 	/* if you want a full accounting of roms */
+#if 0    /* if you want a full accounting of roms */
 				verify_printf ("%-8s: %-12s %7d bytes %08x ROM GOOD\n",
 					drivers[game]->name, aud->rom, aud->explength, aud->expchecksum);
 #endif
@@ -237,7 +249,7 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf)
 
 	if (archive_status & (AUD_ROM_NOT_FOUND|AUD_BAD_CHECKSUM|AUD_MEM_ERROR|AUD_LENGTH_MISMATCH))
 		return INCORRECT;
-	if (archive_status & (AUD_ROM_BAD|AUD_NOT_AVAILABLE))
+	if (archive_status & (AUD_ROM_NEED_REDUMP|AUD_NOT_AVAILABLE))
 		return BEST_AVAILABLE;
 
 	return CORRECT;
@@ -263,11 +275,13 @@ int AuditSampleSet (int game, tMissingSample **audit)
 
 	gamedrv = drivers[game];
 	samplenames = NULL;
+#if (HAS_SAMPLES)
 	for( j = 0; gamedrv->drv->sound[j].sound_type && j < MAX_SOUND; j++ )
 	{
 		if( gamedrv->drv->sound[j].sound_type == SOUND_SAMPLES )
 			samplenames = ((struct Samplesinterface *)gamedrv->drv->sound[j].sound_interface)->samplenames;
 	}
+#endif
     /* does the game use samples at all? */
 	if (samplenames == 0 || samplenames[0] == 0)
 		return 0;

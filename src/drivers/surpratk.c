@@ -247,7 +247,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_KONAMI,		/* 053248 */
 			3000000,		/* ? */
-			0,
 			surpratk_readmem,surpratk_writemem,0,0,
             surpratk_interrupt,1
 		}
@@ -285,7 +284,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( surpratk )
-	ROM_REGION( 0x51000 ) /* code + banked roms + palette RAM */
+	ROM_REGIONX( 0x51000, REGION_CPU1 ) /* code + banked roms + palette RAM */
 	ROM_LOAD( "911m01.bin", 0x10000, 0x20000, 0xee5b2cc8 )
 	ROM_LOAD( "911m02.bin", 0x30000, 0x18000, 0x5d4148a8 )
 	ROM_CONTINUE(           0x08000, 0x08000 )
@@ -307,7 +306,7 @@ ROM_END
 
 static void surpratk_banking(int lines)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int offs = 0;
 
 if (errorlog) fprintf(errorlog,"%04x: setlines %02x\n",cpu_get_pc(),lines);
@@ -321,7 +320,7 @@ static void surpratk_init_machine( void )
 {
 	konami_cpu_setlines_callback = surpratk_banking;
 
-	paletteram = &memory_region(Machine->drv->cpu[0].memory_region)[0x48000];
+	paletteram = &memory_region(REGION_CPU1)[0x48000];
 }
 
 static void gfx_untangle(void)

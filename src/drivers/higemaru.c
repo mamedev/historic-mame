@@ -186,7 +186,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* 4 MHz ? Main xtal is 12MHz */
-			0,
 			readmem,writemem,0,0,
 			higemaru_interrupt,2
 		},
@@ -226,7 +225,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( higemaru )
-	ROM_REGION(0x1c000)	/* 64k for code */
+	ROM_REGIONX( 0x1c000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "hg4",          0x0000, 0x2000, 0xdc67a7f9 )
 	ROM_LOAD( "hg5",          0x2000, 0x2000, 0xf65a4b68 )
 	ROM_LOAD( "hg6",          0x4000, 0x2000, 0x5f5296aa )
@@ -246,7 +245,7 @@ ROM_END
 static int higemaru_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -272,7 +271,7 @@ static int higemaru_hiload(void)
 static void higemaru_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -287,7 +286,7 @@ struct GameDriver driver_higemaru =
 	__FILE__,
 	0,
 	"higemaru",
-	"HigeMaru",
+	"Pirate Ship HigeMaru",
 	"1984",
 	"Capcom",
 	"Mirko Buffoni\nNicola Salmoria",

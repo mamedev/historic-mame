@@ -138,11 +138,11 @@ static void vendetta_5fe0_w(int offset,int data)
 
 static int speedup_r( int offs )
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	int data = ( RAM[0x28d2] << 8 ) | RAM[0x28d3];
 
-	if ( data < Machine->memory_region_length[0] )
+	if ( data < memory_region_length(0) )
 	{
 		data = ( RAM[data] << 8 ) | RAM[data + 1];
 
@@ -336,14 +336,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_KONAMI,
 			3000000,		/* ? */
-			0,
 			readmem,writemem,0,0,
 			vendetta_irq,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,
-			3,
 			readmem_sound, writemem_sound,0,0,
 			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
 		}
@@ -385,7 +383,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( vendetta )
-	ROM_REGION( 0x49000 ) /* code + banked roms + banked ram */
+	ROM_REGIONX( 0x49000, REGION_CPU1 ) /* code + banked roms + banked ram */
 	ROM_LOAD( "081u01", 0x10000, 0x38000, 0xb4d9ade5 )
 	ROM_CONTINUE(		0x08000, 0x08000 )
 
@@ -399,7 +397,7 @@ ROM_START( vendetta )
 	ROM_LOAD( "081a06", 0x200000, 0x100000, 0xe9fe6d80 ) /* sprites */
 	ROM_LOAD( "081a07", 0x300000, 0x100000, 0x8a22b29a ) /* sprites */
 
-	ROM_REGION( 0x10000 ) /* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
 	ROM_LOAD( "081b02", 0x000000, 0x10000, 0x4c604d9b )
 
 	ROM_REGION( 0x100000 ) /* 053260 samples */
@@ -407,7 +405,7 @@ ROM_START( vendetta )
 ROM_END
 
 ROM_START( vendett2 )
-	ROM_REGION( 0x49000 ) /* code + banked roms + banked ram */
+	ROM_REGIONX( 0x49000, REGION_CPU1 ) /* code + banked roms + banked ram */
 	ROM_LOAD( "081d01", 0x10000, 0x38000, 0x335da495 )
 	ROM_CONTINUE(		0x08000, 0x08000 )
 
@@ -421,7 +419,7 @@ ROM_START( vendett2 )
 	ROM_LOAD( "081a06", 0x200000, 0x100000, 0xe9fe6d80 ) /* sprites */
 	ROM_LOAD( "081a07", 0x300000, 0x100000, 0x8a22b29a ) /* sprites */
 
-	ROM_REGION( 0x10000 ) /* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
 	ROM_LOAD( "081b02", 0x000000, 0x10000, 0x4c604d9b )
 
 	ROM_REGION( 0x100000 ) /* 053260 samples */
@@ -429,7 +427,7 @@ ROM_START( vendett2 )
 ROM_END
 
 ROM_START( vendettj )
-	ROM_REGION( 0x49000 ) /* code + banked roms + banked ram */
+	ROM_REGIONX( 0x49000, REGION_CPU1 ) /* code + banked roms + banked ram */
 	ROM_LOAD( "081p01", 0x10000, 0x38000, 0x5fe30242 )
 	ROM_CONTINUE(		0x08000, 0x08000 )
 
@@ -443,7 +441,7 @@ ROM_START( vendettj )
 	ROM_LOAD( "081a06", 0x200000, 0x100000, 0xe9fe6d80 ) /* sprites */
 	ROM_LOAD( "081a07", 0x300000, 0x100000, 0x8a22b29a ) /* sprites */
 
-	ROM_REGION( 0x10000 ) /* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
 	ROM_LOAD( "081b02", 0x000000, 0x10000, 0x4c604d9b )
 
 	ROM_REGION( 0x100000 ) /* 053260 samples */
@@ -459,7 +457,7 @@ ROM_END
 
 static void vendetta_banking( int lines )
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ( lines >= 0x1c )
 	{
@@ -474,11 +472,11 @@ static void vendetta_init_machine( void )
 {
 	konami_cpu_setlines_callback = vendetta_banking;
 
-	paletteram = &memory_region(Machine->drv->cpu[0].memory_region)[0x48000];
+	paletteram = &memory_region(REGION_CPU1)[0x48000];
 	irq_enabled = 0;
 
 	/* init banks */
-	cpu_setbank( 1, &memory_region(Machine->drv->cpu[0].memory_region)[0x10000] );
+	cpu_setbank( 1, &memory_region(REGION_CPU1)[0x10000] );
 	vendetta_video_banking( 0 );
 
 	EEPROM_init(&eeprom_interface);

@@ -364,7 +364,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
 			1000000,	/* 1 Mhz ???? */
-			0,
 			readmem,writemem,0,0,
 			interrupt, 4  /* EEA was 1 */
 		}
@@ -405,7 +404,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( missile )
-	ROM_REGION(0x10000) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "035820.02",    0x5000, 0x0800, 0x7a62ce6a )
 	ROM_LOAD( "035821.02",    0x5800, 0x0800, 0xdf3bd57f )
 	ROM_LOAD( "035822.02",    0x6000, 0x0800, 0xa1cd384a )
@@ -416,7 +415,7 @@ ROM_START( missile )
 ROM_END
 
 ROM_START( missile2 )
-	ROM_REGION(0x10000) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "35820-01.h1",  0x5000, 0x0800, 0x41cbb8f2 )
 	ROM_LOAD( "35821-01.jk1", 0x5800, 0x0800, 0x728702c8 )
 	ROM_LOAD( "35822-01.kl1", 0x6000, 0x0800, 0x28f0999f )
@@ -427,7 +426,7 @@ ROM_START( missile2 )
 ROM_END
 
 ROM_START( suprmatk )
-	ROM_REGION(0x10000) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "035820.sma",   0x5000, 0x0800, 0x75f01b87 )
 	ROM_LOAD( "035821.sma",   0x5800, 0x0800, 0x3320d67e )
 	ROM_LOAD( "035822.sma",   0x6000, 0x0800, 0xe6be5055 )
@@ -442,7 +441,7 @@ ROM_END
 static int hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -463,7 +462,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0){

@@ -349,13 +349,10 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68010,		/* verified */
 			7159160,		/* 7.159 Mhz */
-			0,
 			main_readmem,main_writemem,0,0,
 			atarigen_video_int_gen,1
 		},
-		{
-			JSA_I_CPU(1)
-		}
+		JSA_I_CPU
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
@@ -391,7 +388,7 @@ static void rom_decode(void)
 
 	/* invert the graphics bits on the playfield and motion objects */
 	for (i = 0; i < 0x100000; i++)
-		Machine->memory_region[2][i] ^= 0xff;
+		memory_region(2)[i] ^= 0xff;
 }
 
 
@@ -403,7 +400,7 @@ static void rom_decode(void)
  *************************************/
 
 ROM_START( vindictr )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "vin.d1", 0x00000, 0x10000, 0x2e5135e4 )
 	ROM_LOAD_ODD ( "vin.d3", 0x00000, 0x10000, 0xe357fa79 )
 	ROM_LOAD_EVEN( "vin.j1", 0x20000, 0x10000, 0x44c77ee0 )
@@ -411,7 +408,7 @@ ROM_START( vindictr )
 	ROM_LOAD_EVEN( "vin.k1", 0x40000, 0x10000, 0x9a0444ee )
 	ROM_LOAD_ODD ( "vin.k3", 0x40000, 0x10000, 0xd5022d78 )
 
-	ROM_REGION(0x14000)	/* 64k + 16k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k + 16k for 6502 code */
 	ROM_LOAD( "vin.snd",     0x10000, 0x4000, 0xd2212c0a )
 	ROM_CONTINUE(            0x04000, 0xc000 )
 

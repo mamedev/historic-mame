@@ -306,8 +306,8 @@ static void init_machine(void)
 	memset(noise_position, 0, sizeof(noise_position));
 
 	/* point the banks to bank 0 */
-	cpu_setbank(1, &memory_region(Machine->drv->cpu[0].memory_region)[0x10000]);
-	cpu_setbank(2, &memory_region(Machine->drv->cpu[0].memory_region)[0x12000]);
+	cpu_setbank(1, &memory_region(REGION_CPU1)[0x10000]);
+	cpu_setbank(2, &memory_region(REGION_CPU1)[0x12000]);
 
 	/* start a timer to generate interrupts */
 	timer_set(cpu_getscanlinetime(0), 0, interrupt_timer);
@@ -430,8 +430,8 @@ static void rombank_select_w(int offset, int data)
 if (errorlog) fprintf(errorlog, "%04X:rombank_select_w(%02X)\n", cpu_getpreviouspc(), data);
 
 	/* the bank number comes from bits 4-6 */
-	cpu_setbank(1, &memory_region(Machine->drv->cpu[0].memory_region)[0x10000 + bank_offset]);
-	cpu_setbank(2, &memory_region(Machine->drv->cpu[0].memory_region)[0x12000 + bank_offset]);
+	cpu_setbank(1, &memory_region(REGION_CPU1)[0x10000 + bank_offset]);
+	cpu_setbank(2, &memory_region(REGION_CPU1)[0x12000 + bank_offset]);
 }
 
 
@@ -441,22 +441,22 @@ static void rombank2_select_w(int offset, int data)
 	int bank = data & 7;
 
 	/* top bit controls which half of the ROMs to use (Name that Tune only) */
-	if (Machine->memory_region_length[0] > 0x40000) bank |= (data >> 4) & 8;
+	if (memory_region_length(0) > 0x40000) bank |= (data >> 4) & 8;
 
 //if (errorlog) fprintf(errorlog, "%04X:rombank2_select_w(%02X)\n", cpu_getpreviouspc(), data);
 
 	/* when they set the AB bank, it appears as though the CD bank is reset */
 	if (data & 0x20)
 	{
-		cpu_setbank(1, &memory_region(Machine->drv->cpu[0].memory_region)[0x10000 + 0x6000 * bank]);
-		cpu_setbank(2, &memory_region(Machine->drv->cpu[0].memory_region)[0x12000 + 0x6000 * 6]);
+		cpu_setbank(1, &memory_region(REGION_CPU1)[0x10000 + 0x6000 * bank]);
+		cpu_setbank(2, &memory_region(REGION_CPU1)[0x12000 + 0x6000 * 6]);
 	}
 
 	/* set both banks */
 	else
 	{
-		cpu_setbank(1, &memory_region(Machine->drv->cpu[0].memory_region)[0x10000 + 0x6000 * bank]);
-		cpu_setbank(2, &memory_region(Machine->drv->cpu[0].memory_region)[0x12000 + 0x6000 * bank]);
+		cpu_setbank(1, &memory_region(REGION_CPU1)[0x10000 + 0x6000 * bank]);
+		cpu_setbank(2, &memory_region(REGION_CPU1)[0x12000 + 0x6000 * bank]);
 	}
 }
 
@@ -2404,14 +2404,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			5000000/4,                     /* 5Mhz/4 */
-			0,
 			readmem_cpu1,writemem_cpu1,0,0,
 			update_analog_inputs,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,                       /* 4Mhz */
-			1,
 			readmem_cpu2,writemem_cpu2,readport_cpu2,writeport_cpu2,
 			ignore_interrupt,1
 		}
@@ -2455,11 +2453,11 @@ static int hiload(void)
 	void *f = osd_fopen(Machine->gamedrv->name,0, OSD_FILETYPE_HIGHSCORE, 0);
 	if (f)
 	{
-		osd_fread(f, &memory_region(Machine->drv->cpu[0].memory_region)[0x9b00], 0x200);
+		osd_fread(f, &memory_region(REGION_CPU1)[0x9b00], 0x200);
 		osd_fclose(f);
 	}
 	else
-		memset(&memory_region(Machine->drv->cpu[0].memory_region)[0x9b00], 0, 0x200);
+		memset(&memory_region(REGION_CPU1)[0x9b00], 0, 0x200);
 
 	return 1;
 }
@@ -2470,7 +2468,7 @@ static void hisave(void)
 	void *f = osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
 	if (f)
 	{
-		osd_fwrite(f, &memory_region(Machine->drv->cpu[0].memory_region)[0x9b00], 0x200);
+		osd_fwrite(f, &memory_region(REGION_CPU1)[0x9b00], 0x200);
 		osd_fclose(f);
 	}
 }
@@ -2497,10 +2495,10 @@ static void expand_roms(UINT8 cd_rom_mask)
 	UINT8 *temp = malloc(0x20000);
 	if (temp)
 	{
-		UINT8 *rom = memory_region(Machine->drv->cpu[0].memory_region);
+		UINT8 *rom = memory_region(REGION_CPU1);
 		UINT32 base;
 
-		for (base = 0x10000; base < Machine->memory_region_length[0]; base += 0x30000)
+		for (base = 0x10000; base < memory_region_length(0); base += 0x30000)
 		{
 			UINT8 *ab_base = &temp[0x00000];
 			UINT8 *cd_base = &temp[0x10000];
@@ -2564,8 +2562,8 @@ static void stocker_init(void)  { expand_roms(EXPAND_ALL);  balsente_shooter = 0
 static void triviag1_init(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
 static void triviag2_init(void)
 {
-	memcpy(&memory_region(Machine->drv->cpu[0].memory_region)[0x20000], &memory_region(Machine->drv->cpu[0].memory_region)[0x28000], 0x4000);
-	memcpy(&memory_region(Machine->drv->cpu[0].memory_region)[0x24000], &memory_region(Machine->drv->cpu[0].memory_region)[0x28000], 0x4000);
+	memcpy(&memory_region(REGION_CPU1)[0x20000], &memory_region(REGION_CPU1)[0x28000], 0x4000);
+	memcpy(&memory_region(REGION_CPU1)[0x24000], &memory_region(REGION_CPU1)[0x28000], 0x4000);
 	expand_roms(EXPAND_NONE); balsente_shooter = 0; /* noanalog */
 }
 static void triviasp_init(void) { triviag2_init(); }
@@ -2599,10 +2597,10 @@ static void rescraid_init(void) { expand_roms(EXPAND_NONE); balsente_shooter = 0
  *************************************/
 
 ROM_START( sentetst )
-	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "sdiagef.bin",  0x2e000, 0x2000, 0x2a39fc53 )
 
-	ROM_REGION(0x10000)		/* 64k for Z80 */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",     0x00000, 0x2000, 0x4dd0a525 )
 
 	ROM_REGION(0x10000)		/* up to 64k of sprites */
@@ -2611,7 +2609,7 @@ ROM_END
 
 
 ROM_START( cshift )
-	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "cs-ab0.bin", 0x10000, 0x2000, 0xd2069e75 )
 	ROM_LOAD( "cs-ab1.bin", 0x12000, 0x2000, 0x198f25a8 )
 	ROM_LOAD( "cs-ab2.bin", 0x14000, 0x2000, 0x2e2b2b82 )
@@ -2621,7 +2619,7 @@ ROM_START( cshift )
 	ROM_LOAD( "cs-cd.bin",  0x2c000, 0x2000, 0xf555a0b2 )
 	ROM_LOAD( "cs-ef.bin",  0x2e000, 0x2000, 0x368b1ce3 )
 
-	ROM_REGION(0x10000)		/* 64k for Z80 */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",   0x00000, 0x2000, 0x4dd0a525 )
 
 	ROM_REGION(0x10000)		/* up to 64k of sprites */
@@ -2634,7 +2632,7 @@ ROM_END
 
 
 ROM_START( gghost )
-	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "ggh-ab0.bin", 0x10000, 0x2000, 0xed0fdeac )
 	ROM_LOAD( "ggh-ab1.bin", 0x12000, 0x2000, 0x5bfbae58 )
 	ROM_LOAD( "ggh-ab2.bin", 0x14000, 0x2000, 0xf0baf921 )
@@ -2644,7 +2642,7 @@ ROM_START( gghost )
 	ROM_LOAD( "ggh-cd.bin",  0x2c000, 0x2000, 0xd3d75f84 )
 	ROM_LOAD( "ggh-ef.bin",  0x2e000, 0x2000, 0xa02b4243 )
 
-	ROM_REGION(0x10000)		/* 64k for Z80 */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",    0x00000, 0x2000, 0x4dd0a525 )
 
 	ROM_REGION(0x10000)		/* up to 64k of sprites */
@@ -2658,14 +2656,14 @@ ROM_END
 
 
 ROM_START( hattrick )
-	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "rom-ab0.u9a", 0x10000, 0x2000, 0xf25c1b99 )
 	ROM_LOAD( "rom-ab1.u8a", 0x12000, 0x2000, 0xc1df3d1f )
 	ROM_LOAD( "rom-ab2.u7a", 0x14000, 0x2000, 0xf6c41257 )
 	ROM_LOAD( "rom-cd.u3a",  0x2c000, 0x2000, 0xfc44f36c )
 	ROM_LOAD( "rom-ef.u2a",  0x2e000, 0x2000, 0xd8f910fb )
 
-	ROM_REGION(0x10000)		/* 64k for Z80 */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",    0x00000, 0x2000, 0x4dd0a525 )
 
 	ROM_REGION(0x10000)		/* up to 64k of sprites */
@@ -2675,7 +2673,7 @@ ROM_END
 
 
 ROM_START( otwalls )
-	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "otw-ab0.bin", 0x10000, 0x2000, 0x474441c7 )
 	ROM_LOAD( "otw-ab1.bin", 0x12000, 0x2000, 0x2e9e9411 )
 	ROM_LOAD( "otw-ab2.bin", 0x14000, 0x2000, 0xba092128 )
@@ -2685,7 +2683,7 @@ ROM_START( otwalls )
 	ROM_LOAD( "otw-cd.bin",  0x2c000, 0x2000, 0x8e2d15ab )
 	ROM_LOAD( "otw-ef.bin",  0x2e000, 0x2000, 0x57eab299 )
 
-	ROM_REGION(0x10000)		/* 64k for Z80 */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",    0x00000, 0x2000, 0x4dd0a525 )
 
 	ROM_REGION(0x10000)		/* up to 64k of sprites */
@@ -2699,7 +2697,7 @@ ROM_END
 
 
 ROM_START( snakepit )
-	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "spit-ab0.bin", 0x10000, 0x2000, 0x5aa86081 )
 	ROM_LOAD( "spit-ab1.bin", 0x12000, 0x2000, 0x588228b8 )
 	ROM_LOAD( "spit-ab2.bin", 0x14000, 0x2000, 0x60173ab6 )
@@ -2709,7 +2707,7 @@ ROM_START( snakepit )
 	ROM_LOAD( "spit-cd.bin",  0x2c000, 0x2000, 0x54095cbb )
 	ROM_LOAD( "spit-ef.bin",  0x2e000, 0x2000, 0x5f836a66 )
 
-	ROM_REGION(0x10000)		/* 64k for Z80 */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",     0x00000, 0x2000, 0x4dd0a525 )
 
 	ROM_REGION(0x10000)		/* up to 64k of sprites */
@@ -2723,7 +2721,7 @@ ROM_END
 
 
 ROM_START( snakjack )
-	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "rom-ab0.u9a", 0x10000, 0x2000, 0xda2dd119 )
 	ROM_LOAD( "rom-ab1.u8a", 0x12000, 0x2000, 0x657ddf26 )
 	ROM_LOAD( "rom-ab2.u7a", 0x14000, 0x2000, 0x15333dcf )
@@ -2733,7 +2731,7 @@ ROM_START( snakjack )
 	ROM_LOAD( "rom-cd.u3a",  0x2c000, 0x2000, 0x7b44ca4c )
 	ROM_LOAD( "rom-ef.u1a",  0x2e000, 0x2000, 0xf5309b38 )
 
-	ROM_REGION(0x10000)		/* 64k for Z80 */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",    0x00000, 0x2000, 0x4dd0a525 )
 
 	ROM_REGION(0x10000)		/* up to 64k of sprites */
@@ -2747,7 +2745,7 @@ ROM_END
 
 
 ROM_START( stocker )
-	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "stkr-ab0.bin", 0x10000, 0x2000, 0x784a00ad )
 	ROM_LOAD( "stkr-ab1.bin", 0x12000, 0x2000, 0xcdae01dc )
 	ROM_LOAD( "stkr-ab2.bin", 0x14000, 0x2000, 0x18527d57 )
@@ -2755,7 +2753,7 @@ ROM_START( stocker )
 	ROM_LOAD( "stkr-cd.bin",  0x2c000, 0x2000, 0x53dbc4e5 )
 	ROM_LOAD( "stkr-ef.bin",  0x2e000, 0x2000, 0xcdcf46bc )
 
-	ROM_REGION(0x10000)		/* 64k for Z80 */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",    0x00000, 0x2000, 0x4dd0a525 )
 
 	ROM_REGION(0x10000)		/* up to 64k of sprites */
@@ -2767,7 +2765,7 @@ ROM_END
 
 
 ROM_START( triviag1 )
-	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "tpg1-ab0.bin", 0x10000, 0x2000, 0x79fd3ac3 )
 	ROM_LOAD( "tpg1-ab1.bin", 0x12000, 0x2000, 0x0ff677e9 )
 	ROM_LOAD( "tpg1-ab2.bin", 0x14000, 0x2000, 0x3b4d03e7 )
@@ -2777,7 +2775,7 @@ ROM_START( triviag1 )
 	ROM_LOAD( "tpg1-cd.bin",  0x2c000, 0x2000, 0x35c9b9c2 )
 	ROM_LOAD( "tpg1-ef.bin",  0x2e000, 0x2000, 0x64878342 )
 
-	ROM_REGION(0x10000)		/* 64k for Z80 */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",    0x00000, 0x2000, 0x4dd0a525 )
 
 	ROM_REGION(0x10000)		/* up to 64k of sprites */
@@ -2791,7 +2789,7 @@ ROM_END
 
 
 ROM_START( triviag2 )
-	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "ab01.bin",  0x10000, 0x4000, 0x4fca20c5 )
 	ROM_LOAD( "ab23.bin",  0x14000, 0x4000, 0x6cf2ddeb )
 	ROM_LOAD( "ab45.bin",  0x18000, 0x4000, 0xa7ff789c )
@@ -2799,7 +2797,7 @@ ROM_START( triviag2 )
 	ROM_LOAD( "cd45.bin",  0x28000, 0x4000, 0xfc9c752a )
 	ROM_LOAD( "cd6ef.bin", 0x2c000, 0x4000, 0x23b56fb8 )
 
-	ROM_REGION(0x10000)		/* 64k for Z80 */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
 
 	ROM_REGION(0x10000)		/* up to 64k of sprites */
@@ -2810,7 +2808,7 @@ ROM_END
 
 
 ROM_START( triviasp )
-	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "allsport.8a", 0x10000, 0x4000, 0x54b7ff31 )
 	ROM_LOAD( "allsport.7a", 0x14000, 0x4000, 0x59fae9d2 )
 	ROM_LOAD( "allsport.6a", 0x18000, 0x4000, 0x237b6b95 )
@@ -2818,7 +2816,7 @@ ROM_START( triviasp )
 	ROM_LOAD( "allsport.3a", 0x28000, 0x4000, 0xe45d09d6 )
 	ROM_LOAD( "allsport.1a", 0x2c000, 0x4000, 0x8bb3e831 )
 
-	ROM_REGION(0x10000)		/* 64k for Z80 */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",     0x00000, 0x2000, 0x4dd0a525 )
 
 	ROM_REGION(0x10000)		/* up to 64k of sprites */
@@ -2829,7 +2827,7 @@ ROM_END
 
 
 ROM_START( triviayp )
-	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "ab01.bin",  0x10000, 0x4000, 0x97d35a85 )
 	ROM_LOAD( "ab23.bin",  0x14000, 0x4000, 0x2ff67c70 )
 	ROM_LOAD( "ab45.bin",  0x18000, 0x4000, 0x511a0fab )
@@ -2837,7 +2835,7 @@ ROM_START( triviayp )
 	ROM_LOAD( "cd45.bin",  0x28000, 0x4000, 0xac45809e )
 	ROM_LOAD( "cd6ef.bin", 0x2c000, 0x4000, 0xa008059f )
 
-	ROM_REGION(0x10000)		/* 64k for Z80 */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
 
 	ROM_REGION(0x10000)		/* up to 64k of sprites */
@@ -2848,7 +2846,7 @@ ROM_END
 
 
 ROM_START( triviabb )
-	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "ab01.bin",  0x10000, 0x4000, 0x1b7c439d )
 	ROM_LOAD( "ab23.bin",  0x14000, 0x4000, 0xe4f1e704 )
 	ROM_LOAD( "ab45.bin",  0x18000, 0x4000, 0xdaa2d8bc )
@@ -2856,7 +2854,7 @@ ROM_START( triviabb )
 	ROM_LOAD( "cd45.bin",  0x28000, 0x4000, 0x07fd88ff )
 	ROM_LOAD( "cd6ef.bin", 0x2c000, 0x4000, 0x2d03f241 )
 
-	ROM_REGION(0x10000)		/* 64k for Z80 */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
 
 	ROM_REGION(0x10000)		/* up to 64k of sprites */
@@ -2867,13 +2865,13 @@ ROM_END
 
 
 ROM_START( gimeabrk )
-	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "ab01.u8a",  0x10000, 0x4000, 0x18cc53db )
 	ROM_LOAD( "ab23.u7a",  0x14000, 0x4000, 0x6bd4190a )
 	ROM_LOAD( "ab45.u6a",  0x18000, 0x4000, 0x5dca4f33 )
 	ROM_LOAD( "cd6ef.uia", 0x2c000, 0x4000, 0x5e2b3510 )
 
-	ROM_REGION(0x10000)		/* 64k for Z80 */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
 
 	ROM_REGION(0x10000)		/* up to 64k of sprites */
@@ -2883,7 +2881,7 @@ ROM_END
 
 
 ROM_START( minigolf )
-	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "ab01.u8a",  0x10000, 0x4000, 0x348f827f )
 	ROM_LOAD( "ab23.u7a",  0x14000, 0x4000, 0x19a6ff47 )
 	ROM_LOAD( "ab45.u6a",  0x18000, 0x4000, 0x925d76eb )
@@ -2891,7 +2889,7 @@ ROM_START( minigolf )
 	ROM_LOAD( "cd23.u3a",  0x24000, 0x4000, 0x52279801 )
 	ROM_LOAD( "cd6ef.u1a", 0x2c000, 0x4000, 0x34c64f4c )
 
-	ROM_REGION(0x10000)		/* 64k for Z80 */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
 
 	ROM_REGION(0x10000)		/* up to 64k of sprites */
@@ -2902,11 +2900,11 @@ ROM_END
 
 
 ROM_START( minigol2 )
-	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "4a-ver2",  0x10000, 0x10000, 0x97d50493 )
 	ROM_LOAD( "1a-ver2",  0x20000, 0x10000, 0x60b6cd58 )
 
-	ROM_REGION(0x10000)		/* 64k for Z80 */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
 
 	ROM_REGION(0x10000)		/* up to 64k of sprites */
@@ -2916,7 +2914,7 @@ ROM_END
 
 
 ROM_START( toggle )
-	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "tgle-ab0.bin", 0x10000, 0x2000, 0x8c7b7fad )
 	ROM_LOAD( "tgle-ab1.bin", 0x12000, 0x2000, 0x771e5434 )
 	ROM_LOAD( "tgle-ab2.bin", 0x14000, 0x2000, 0x9b4baa3f )
@@ -2926,7 +2924,7 @@ ROM_START( toggle )
 	ROM_LOAD( "tgle-cd.bin",  0x2c000, 0x2000, 0x0a2bb949 )
 	ROM_LOAD( "tgle-ef.bin",  0x2e000, 0x2000, 0x3ec10804 )
 
-	ROM_REGION(0x10000)		/* 64k for Z80 */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",    0x00000, 0x2000, 0x4dd0a525 )
 
 	ROM_REGION(0x10000)		/* up to 64k of sprites */
@@ -2936,7 +2934,7 @@ ROM_END
 
 
 ROM_START( nametune )
-	ROM_REGION(0x70000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_REGIONX( 0x70000, REGION_CPU1 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "nttab01.bin",  0x10000, 0x4000, 0xf99054f1 )
 	ROM_CONTINUE(             0x40000, 0x4000 )
 	ROM_LOAD( "nttab23.bin",  0x14000, 0x4000, 0xf2b8f7fa )
@@ -2954,7 +2952,7 @@ ROM_START( nametune )
 	ROM_LOAD( "nttcd6ef.bin", 0x2c000, 0x4000, 0x0459e6f8 )
 	ROM_CONTINUE(             0x5c000, 0x4000 )
 
-	ROM_REGION(0x10000)		/* 64k for Z80 */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
 
 	ROM_REGION(0x10000)		/* up to 64k of sprites */
@@ -2963,7 +2961,7 @@ ROM_END
 
 
 ROM_START( nstocker )
-	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "ab01.u8a",  0x10000, 0x4000, 0xa635f973 )
 	ROM_LOAD( "ab23.u7a",  0x14000, 0x4000, 0x223acbb2 )
 	ROM_LOAD( "ab45.u6a",  0x18000, 0x4000, 0x27a728b5 )
@@ -2973,7 +2971,7 @@ ROM_START( nstocker )
 	ROM_LOAD( "cd45.u2a",  0x28000, 0x4000, 0x9bb292fe )
 	ROM_LOAD( "cd6ef.u1a", 0x2c000, 0x4000, 0xe77c1aea )
 
-	ROM_REGION(0x10000)		/* 64k for Z80 */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
 
 	ROM_REGION(0x10000)		/* up to 64k of sprites */
@@ -2985,13 +2983,13 @@ ROM_END
 
 
 ROM_START( sfootbal )
-	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "sfbab01.bin",  0x10000, 0x4000, 0x2a69803f )
 	ROM_LOAD( "sfbab23.bin",  0x14000, 0x4000, 0x89f157c2 )
 	ROM_LOAD( "sfbab45.bin",  0x18000, 0x4000, 0x91ad42c5 )
 	ROM_LOAD( "sfbcd6ef.bin", 0x2c000, 0x4000, 0xbf80bb1a )
 
-	ROM_REGION(0x10000)		/* 64k for Z80 */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
 
 	ROM_REGION(0x10000)		/* up to 64k of sprites */
@@ -3003,12 +3001,12 @@ ROM_END
 
 
 ROM_START( spiker )
-	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "ab01.u8a",  0x10000, 0x4000, 0x2d53d023 )
 	ROM_LOAD( "ab23.u7a",  0x14000, 0x4000, 0x3be87edf )
 	ROM_LOAD( "cd6ef.u1a", 0x2c000, 0x4000, 0xf2c73ece )
 
-	ROM_REGION(0x10000)		/* 64k for Z80 */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
 
 	ROM_REGION(0x10000)		/* up to 64k of sprites */
@@ -3019,13 +3017,13 @@ ROM_END
 
 
 ROM_START( rescraid )
-	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "ab1.a10",   0x10000, 0x8000, 0x33a76b47 )
 	ROM_LOAD( "ab12.a12",  0x18000, 0x8000, 0x7c7a9f12 )
 	ROM_LOAD( "cd8.a16",   0x20000, 0x8000, 0x90917a43 )
 	ROM_LOAD( "cd12.a18",  0x28000, 0x8000, 0x0450e9d7 )
 
-	ROM_REGION(0x10000)		/* 64k for Z80 */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
 
 	ROM_REGION(0x10000)		/* up to 64k of sprites */

@@ -370,13 +370,10 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3072000,        /* 3.072 Mhz ? */
-			0,
 			readmem,writemem,0,writeport,
 			interrupt,1
 		},
-		{
-			IREM_AUDIO_CPU(3)
-		}
+		IREM_AUDIO_CPU
 	},
 	57, 1790,	/* accurate frequency, measured on a real board, is 56.75Hz. */
 				/* the Lode Runner manual (similar but different hardware) */
@@ -412,7 +409,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( mpatrol )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "mp-a.3m",      0x0000, 0x1000, 0x5873a860 )
 	ROM_LOAD( "mp-a.3l",      0x1000, 0x1000, 0xf4b85974 )
 	ROM_LOAD( "mp-a.3k",      0x2000, 0x1000, 0x2e1a598c )
@@ -433,12 +430,12 @@ ROM_START( mpatrol )
 	ROM_LOAD( "1c1j",         0x0120, 0x0020, 0x26979b13 ) /* sprite palette */
 	ROM_LOAD( "2hx",          0x0140, 0x0100, 0x7ae4cd97 ) /* sprite lookup table */
 
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for code */
 	ROM_LOAD( "mp-snd.1a",    0xf000, 0x1000, 0x561d3108 )
 ROM_END
 
 ROM_START( mpatrolw )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "mpw-a.3m",     0x0000, 0x1000, 0xbaa1a1d4 )
 	ROM_LOAD( "mpw-a.3l",     0x1000, 0x1000, 0x52459e51 )
 	ROM_LOAD( "mpw-a.3k",     0x2000, 0x1000, 0x9b249fe5 )
@@ -459,12 +456,12 @@ ROM_START( mpatrolw )
 	ROM_LOAD( "1c1j",         0x0120, 0x0020, 0x26979b13 ) /* sprite palette */
 	ROM_LOAD( "2hx",          0x0140, 0x0100, 0x7ae4cd97 ) /* sprite lookup table */
 
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for code */
 	ROM_LOAD( "mp-snd.1a",    0xf000, 0x1000, 0x561d3108 )
 ROM_END
 
 ROM_START( mranger )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "mp-a.3m",      0x0000, 0x1000, 0x5873a860 )
 	ROM_LOAD( "mr-a.3l",      0x1000, 0x1000, 0x217dd431 )
 	ROM_LOAD( "mr-a.3k",      0x2000, 0x1000, 0x9f0af7b2 )
@@ -485,7 +482,7 @@ ROM_START( mranger )
 	ROM_LOAD( "1c1j",         0x0120, 0x0020, 0x26979b13 ) /* sprite palette */
 	ROM_LOAD( "2hx",          0x0140, 0x0100, 0x7ae4cd97 ) /* sprite lookup table */
 
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for code */
 	ROM_LOAD( "mp-snd.1a",    0xf000, 0x1000, 0x561d3108 )
 ROM_END
 
@@ -496,7 +493,7 @@ static int hiload(void)
 	static int loop = 0;
 
 
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
 	/* the high score table is intialized to all 0, so first of all */
@@ -528,7 +525,7 @@ static void hisave(void)
 {
 	void *f;
 
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{

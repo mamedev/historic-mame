@@ -47,6 +47,7 @@ enum {
 	REGION_CPU5,
 	REGION_CPU6,
 	REGION_CPU7,
+	REGION_CPU8,
 	REGION_GFX1,
 	REGION_GFX2,
 	REGION_GFX3,
@@ -157,6 +158,9 @@ void freesamples(struct GameSamples *samples);
 /* number, or one of the REGION_XXX identifiers defined above */
 unsigned char *memory_region(int num);
 int memory_region_length(int num);
+/* allocate a new memory region - num can be either an absolute */
+/* number, or one of the REGION_XXX identifiers defined above */
+int new_memory_region(int num, int length);
 
 void save_screen_snapshot(void);
 

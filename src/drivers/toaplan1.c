@@ -1411,14 +1411,12 @@ static struct MachineDriver rallybik_machine_driver =
 		{
 			CPU_M68000,
 			10000000,
-			REGION_CPU1,
 			rallybik_readmem,rallybik_writemem,0,0,
 			toaplan1_interrupt,1
 		},
 		{
 			CPU_Z80,
 			28000000/8,		/* 3.5Mhz (28Mhz Oscillator) */
-			REGION_CPU2,
 			sound_readmem,sound_writemem,truxton_sound_readport,rallybik_sound_writeport,
 			ignore_interrupt,0
 		}
@@ -1456,14 +1454,12 @@ static struct MachineDriver truxton_machine_driver =
 		{
 			CPU_M68000,
 			10000000,
-			REGION_CPU1,
 			truxton_readmem,truxton_writemem,0,0,
 			toaplan1_interrupt,1
 		},
 		{
 			CPU_Z80,
 			28000000/8,		/* 3.5Mhz (28Mhz Oscillator) */
-			REGION_CPU2,
 			sound_readmem,sound_writemem,truxton_sound_readport,truxton_sound_writeport,
 			ignore_interrupt,0
 		}
@@ -1501,14 +1497,12 @@ static struct MachineDriver hf_machine_driver =
 		{
 			CPU_M68000,
 			10000000,
-			REGION_CPU1,
 			hf_readmem,hf_writemem,0,0,
 			toaplan1_interrupt,1
 		},
 		{
 			CPU_Z80,
 			28000000/8,		/* 3.5Mhz (28Mhz Oscillator) */
-			REGION_CPU2,
 			sound_readmem,sound_writemem,hf_sound_readport,hf_sound_writeport,
 			ignore_interrupt,0
 		}
@@ -1546,14 +1540,12 @@ static struct MachineDriver zw_machine_driver =
 		{
 			CPU_M68000,
 			10000000,
-			REGION_CPU1,
 			zw_readmem,zw_writemem,0,0,
 			toaplan1_interrupt,1
 		},
 		{
 			CPU_Z80,
 			28000000/8,		/* 3.5Mhz (28Mhz Oscillator) */
-			REGION_CPU2,
 			sound_readmem,sound_writemem,zw_sound_readport,zw_sound_writeport,
 			ignore_interrupt,0
 		}
@@ -1591,21 +1583,18 @@ static struct MachineDriver demonwld_machine_driver =
 		{
 			CPU_M68000,
 			10000000,
-			REGION_CPU1,
 			demonwld_readmem,demonwld_writemem,0,0,
 			toaplan1_interrupt,1
 		},
 		{
 			CPU_Z80,
 			28000000/8,		/* 3.5Mhz (28Mhz Oscillator) */
-			REGION_CPU2,
 			sound_readmem,sound_writemem,demonwld_sound_readport,demonwld_sound_writeport,
 			ignore_interrupt,0
 		},
 		{
 			CPU_TMS320C10,
 			28000000/8,		/* 3.5 MHz */
-			REGION_CPU3,	/* memory region #3 */
 			DSP_readmem,DSP_writemem,DSP_readport,DSP_writeport,
 			ignore_interrupt,0	/* IRQs are caused by 68000 */
 		}
@@ -1643,14 +1632,12 @@ static struct MachineDriver outzone_machine_driver =
 		{
 			CPU_M68000,
 			10000000,
-			REGION_CPU1,
 			outzone_readmem,outzone_writemem,0,0,
 			toaplan1_interrupt,1
 		},
 		{
 			CPU_Z80,
 			28000000/8,		/* 3.5Mhz (28Mhz Oscillator) */
-			REGION_CPU2,
 			sound_readmem,sound_writemem,outzone_sound_readport,outzone_sound_writeport,
 			ignore_interrupt,0
 		}
@@ -1688,7 +1675,6 @@ static struct MachineDriver vm_machine_driver =
 		{
 			CPU_M68000,
 			10000000,
-			REGION_CPU1,
 			vm_readmem,vm_writemem,0,0,
 			toaplan1_interrupt,1
 		}

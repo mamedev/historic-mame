@@ -214,7 +214,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3000000,	/* 3 MHz */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		}
@@ -245,7 +244,7 @@ static struct MachineDriver machine_driver =
 };
 
 ROM_START( nova2001 )
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU1 )
 	ROM_LOAD( "nova2001.1",   0x0000, 0x2000, 0xb79461bd )
 	ROM_LOAD( "nova2001.2",   0x2000, 0x2000, 0xfab87144 )
 	ROM_LOAD( "nova2001.3",   0x4000, 0x2000, 0xb2849038 )
@@ -266,7 +265,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
     /* check if the hi score table has already been initialized */
@@ -290,7 +289,7 @@ static int hiload(void)
 static void hisave(void)
 {
     void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

@@ -27,9 +27,6 @@ struct MachineCPU
 {
 	int cpu_type;	/* see #defines below. */
 	int cpu_clock;	/* in Hertz */
-/* number of the memory region (allocated by loadroms()) */
-/* where this CPU resides */
-	int memory_region;
 	const struct MemoryReadAddress *memory_read;
 	const struct MemoryWriteAddress *memory_write;
 	const struct IOReadPort *port_read;
@@ -173,6 +170,9 @@ enum
 #endif
 #if (HAS_PDP1)
 	CPU_PDP1,
+#endif
+#if (HAS_ADSP2100)
+	CPU_ADSP2100,
 #endif
 	CPU_COUNT
 };

@@ -879,7 +879,7 @@ INPUT_PORTS_START( usvsthem )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( stooges )
+INPUT_PORTS_START( 3stooges )
 	PORT_START	/* DSW */
 	PORT_DIPNAME (0x01, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING (   0x01, DEF_STR( Off ) )
@@ -1219,14 +1219,12 @@ static struct MachineDriver GAMENAME##_machine_driver =             \
 		{	  	                                                    \
 			CPU_I86,												\
 			5000000,        /* 5 Mhz */								\
-			0,														\
 			READMEM,WRITEMEM,0,0,									\
 			gottlieb_interrupt,1									\
 		},		                                                    \
 		{		                                                    \
 			CPU_M6502 | CPU_AUDIO_CPU ,								\
 			3579545/4,	/* the board can be set to /2 as well */	\
-			2,	/* memory region #2 */								\
 			gottlieb_sound_readmem,gottlieb_sound_writemem,0,0,		\
 			ignore_interrupt,1	/* IRQs are triggered by the main CPU */		\
 								/* NMIs are triggered by the Votrax SC-01 */	\
@@ -1270,14 +1268,12 @@ static struct MachineDriver GAMENAME##_machine_driver =				\
 		{															\
 			CPU_I86,												\
 			5000000,        /* 5 Mhz */								\
-			0,														\
 			READMEM,WRITEMEM,0,0,									\
 			gottlieb_interrupt,1									\
 		},															\
 		{															\
 			CPU_M6502 | CPU_AUDIO_CPU ,								\
 			1000000,	/* 1 MHz */									\
-			2,	/* memory region #2 */								\
 			stooges_sound_readmem,stooges_sound_writemem,0,0,		\
 			ignore_interrupt,1	/* IRQs are triggered by the main CPU */			\
 								/* NMIs are triggered by the second sound CPU */	\
@@ -1285,7 +1281,6 @@ static struct MachineDriver GAMENAME##_machine_driver =				\
 		{															\
 			CPU_M6502 | CPU_AUDIO_CPU ,								\
 			1000000,	/* 1 MHz */									\
-			3,	/* memory region #3 */								\
 			stooges_sound2_readmem,stooges_sound2_writemem,0,0,		\
 			ignore_interrupt,1	/* IRQs are triggered by the main CPU */			\
 								/* NMIs are triggered by a programmable timer */	\
@@ -1339,7 +1334,7 @@ MACHINE_DRIVER_SOUND_2(stooges,stooges_readmem,stooges_writemem,charRAM_gfxdecod
 ***************************************************************************/
 
 ROM_START( reactor )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "rom7",         0x8000, 0x1000, 0xa62d86fd )
 	ROM_LOAD( "rom6",         0x9000, 0x1000, 0x6ed841f3 )
 	ROM_LOAD( "rom5",         0xa000, 0x1000, 0xd90576a3 )
@@ -1359,7 +1354,7 @@ ROM_START( reactor )
 	/* 6000-6fff empty */
 	ROM_LOAD( "fg3",          0x7000, 0x1000, 0x8416ad53 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "snd1",         0xf000, 0x800, 0xd958a0fd )
 	ROM_RELOAD(       0x7000, 0x800) /* A15 is not decoded */
 	ROM_LOAD( "snd2",         0xf800, 0x800, 0x5dc86942 )
@@ -1367,7 +1362,7 @@ ROM_START( reactor )
 ROM_END
 
 ROM_START( mplanets )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "rom4",         0x6000, 0x2000, 0x5402077f )
 	ROM_LOAD( "rom3",         0x8000, 0x2000, 0x5d18d740 )
 	ROM_LOAD( "rom2",         0xa000, 0x2000, 0x960c3bb1 )
@@ -1382,7 +1377,7 @@ ROM_START( mplanets )
 	ROM_LOAD( "fg1",          0x6000, 0x2000, 0x6456cc1c )
 	ROM_LOAD( "fg0",          0x8000, 0x2000, 0xa920e325 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "snd1",         0xf000, 0x800, 0x453193a1 )
 	ROM_RELOAD(       0x7000, 0x800) /* A15 is not decoded */
 	ROM_LOAD( "snd2",         0xf800, 0x800, 0xf5ffc98f )
@@ -1390,7 +1385,7 @@ ROM_START( mplanets )
 ROM_END
 
 ROM_START( qbert )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "qb-rom2.bin",  0xa000, 0x2000, 0xfe434526 )
 	ROM_LOAD( "qb-rom1.bin",  0xc000, 0x2000, 0x55635447 )
 	ROM_LOAD( "qb-rom0.bin",  0xe000, 0x2000, 0x8e318641 )
@@ -1403,7 +1398,7 @@ ROM_START( qbert )
 	ROM_LOAD( "qb-fg1.bin",   0x6000, 0x2000, 0x224e8356 )
 	ROM_LOAD( "qb-fg0.bin",   0x8000, 0x2000, 0x2f695b85 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "qb-snd1.bin",  0xf000, 0x800, 0x15787c07 )
 	ROM_RELOAD(              0x7000, 0x800) /* A15 is not decoded */
 	ROM_LOAD( "qb-snd2.bin",  0xf800, 0x800, 0x58437508 )
@@ -1411,7 +1406,7 @@ ROM_START( qbert )
 ROM_END
 
 ROM_START( qbertjp )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "qbj-rom2.bin", 0xa000, 0x2000, 0x67bb1cb2 )
 	ROM_LOAD( "qbj-rom1.bin", 0xc000, 0x2000, 0xc61216e7 )
 	ROM_LOAD( "qbj-rom0.bin", 0xe000, 0x2000, 0x69679d5c )
@@ -1424,7 +1419,7 @@ ROM_START( qbertjp )
 	ROM_LOAD( "qb-fg1.bin",   0x6000, 0x2000, 0x224e8356 )
 	ROM_LOAD( "qb-fg0.bin",   0x8000, 0x2000, 0x2f695b85 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "qb-snd1.bin",  0xf000, 0x800, 0x15787c07 )
 	ROM_RELOAD(              0x7000, 0x800) /* A15 is not decoded */
 	ROM_LOAD( "qb-snd2.bin",  0xf800, 0x800, 0x58437508 )
@@ -1432,7 +1427,7 @@ ROM_START( qbertjp )
 ROM_END
 
 ROM_START( sqbert )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "qb-rom2.bin",  0xa000, 0x2000, 0x1e3d4038 )
 	ROM_LOAD( "qb-rom1.bin",  0xc000, 0x2000, 0xeaf3076c )
 	ROM_LOAD( "qb-rom0.bin",  0xe000, 0x2000, 0x61260a7e )
@@ -1445,7 +1440,7 @@ ROM_START( sqbert )
 	ROM_LOAD( "qb-fg1.bin",   0x6000, 0x2000, 0x2a60e3ad )
 	ROM_LOAD( "qb-fg0.bin",   0x8000, 0x2000, 0xb11ad9d8 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "qb-snd1.bin",  0xf000, 0x800, 0x15787c07 )
 	ROM_RELOAD(              0x7000, 0x800) /* A15 is not decoded */
 	ROM_LOAD( "qb-snd2.bin",  0xf800, 0x800, 0x58437508 )
@@ -1453,7 +1448,7 @@ ROM_START( sqbert )
 ROM_END
 
 ROM_START( qbertqub )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "qq-rom3.bin",  0x8000, 0x2000, 0xc4dbdcd7 )
 	ROM_LOAD( "qq-rom2.bin",  0xa000, 0x2000, 0x21a6c6cc )
 	ROM_LOAD( "qq-rom1.bin",  0xc000, 0x2000, 0x63e6c43d )
@@ -1467,7 +1462,7 @@ ROM_START( qbertqub )
 	ROM_LOAD( "qq-fg1.bin",   0xa000, 0x4000, 0x71c3ac4c )
 	ROM_LOAD( "qq-fg0.bin",   0xe000, 0x4000, 0x6192853f )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "qb-snd1.bin",  0xf000, 0x800, 0x15787c07 )
 	ROM_RELOAD(              0x7000, 0x800) /* A15 is not decoded */
 	ROM_LOAD( "qb-snd2.bin",  0xf800, 0x800, 0x58437508 )
@@ -1475,7 +1470,7 @@ ROM_START( qbertqub )
 ROM_END
 
 ROM_START( krull )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "ram2.bin",     0x1000, 0x1000, 0x302feadf )
 	ROM_LOAD( "ram4.bin",     0x2000, 0x1000, 0x79355a60 )
 	ROM_LOAD( "rom4.bin",     0x6000, 0x2000, 0x2b696394 )
@@ -1490,7 +1485,7 @@ ROM_START( krull )
 	ROM_LOAD( "fg1.bin",      0x4000, 0x2000, 0x7e3ad7b0 )
 	ROM_LOAD( "fg0.bin",      0x6000, 0x2000, 0x7402dc19 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "snd1.bin",     0xe000, 0x1000, 0xdd2b30b4 )
 	ROM_RELOAD(0x6000, 0x1000) /* A15 is not decoded */
 	ROM_LOAD( "snd2.bin",     0xf000, 0x1000, 0x8cab901b )
@@ -1498,7 +1493,7 @@ ROM_START( krull )
 ROM_END
 
 ROM_START( mach3 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "m3rom4.bin",   0x6000, 0x2000, 0x8bfd5a44 )
 	ROM_LOAD( "m3rom3.bin",   0x8000, 0x2000, 0xb1b045af )
 	ROM_LOAD( "m3rom2.bin",   0xa000, 0x2000, 0xfbdfb03d )
@@ -1513,15 +1508,15 @@ ROM_START( mach3 )
 	ROM_LOAD( "mach3fg1.bin", 0x6000, 0x2000, 0x9b88767b )
 	ROM_LOAD( "mach3fg0.bin", 0x8000, 0x2000, 0x0bae12a5 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "m3drom1.bin",  0xf000, 0x1000, 0xa6e29212 )
 
-	ROM_REGION(0x10000)	/* 64k for second sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for second sound cpu */
 	ROM_LOAD( "m3yrom1.bin",  0xf000, 0x1000, 0xeddf8872 )
 ROM_END
 
 ROM_START( usvsthem )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "usvs.rm4",     0x6000, 0x2000, 0x0d7a4072 )
 	ROM_LOAD( "usvs.rm3",     0x8000, 0x2000, 0x6f32a671 )
 	ROM_LOAD( "usvs.rm2",     0xa000, 0x2000, 0x36770716 )
@@ -1536,15 +1531,15 @@ ROM_START( usvsthem )
 	ROM_LOAD( "usvs.fg1",     0xa000, 0x4000, 0xa2057430 )
 	ROM_LOAD( "usvs.fg0",     0xe000, 0x4000, 0x7734e53f )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "usvsdrom.1",   0xe000, 0x2000, 0xc0b5cab0 )
 
-	ROM_REGION(0x10000)	/* 64k for second sound cpu */
+	ROM_REGIONX(0x10000, REGION_CPU3 )	/* 64k for second sound cpu */
 	ROM_LOAD( "usvsyrom.1",   0xe000, 0x2000, 0xc3d245ca )
 ROM_END
 
-ROM_START( stooges )
-	ROM_REGION(0x10000)     /* 64k for code */
+ROM_START( 3stooges )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "gv113ram.4",   0x2000, 0x1000, 0x533bff2a )
 	ROM_LOAD( "gv113rom.4",   0x6000, 0x2000, 0x8b6e52b8 )
 	ROM_LOAD( "gv113rom.3",   0x8000, 0x2000, 0xb816d8c4 )
@@ -1558,16 +1553,16 @@ ROM_START( stooges )
 	ROM_LOAD( "gv113fg1",     0x4000, 0x2000, 0xfb223854 )
 	ROM_LOAD( "gv113fg0",     0x6000, 0x2000, 0x95762c53 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "drom1",        0xe000, 0x2000, 0x87a9fa10 )
 
-	ROM_REGION(0x10000)	/* 64k for second sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for second sound cpu */
 	ROM_LOAD( "yrom2",        0xc000, 0x2000, 0x90f9c940 )
 	ROM_LOAD( "yrom1",        0xe000, 0x2000, 0x55f8ab30 )
 ROM_END
 
 ROM_START( curvebal )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "cb-rom-3.chp", 0x8000, 0x2000, 0x72ad4d45 )
 	ROM_LOAD( "cb-rom-2.chp", 0xa000, 0x2000, 0xd46c3db5 )
 	ROM_LOAD( "cb-rom-1.chp", 0xc000, 0x2000, 0xeb1e08bd )
@@ -1581,7 +1576,7 @@ ROM_START( curvebal )
 	ROM_LOAD( "cb-fg-1.chp",  0x6000, 0x2000, 0x1b7b7f94 )
 	ROM_LOAD( "cb-fg-0.chp",  0x8000, 0x2000, 0xe3a8230e )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "yrom.sbd",     0xe000, 0x1000, 0x4c313d9b )
 	ROM_LOAD( "drom.sbd",     0xf000, 0x1000, 0xcecece88 )
 ROM_END
@@ -1591,7 +1586,7 @@ ROM_END
 /* Reactor is the only game which doesn't have non volatile RAM */
 static int reactor_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1619,7 +1614,7 @@ static int reactor_hiload(void)
 static void reactor_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1634,7 +1629,7 @@ static void reactor_hisave(void)
 int gottlieb_nvram_load(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* Try loading static RAM */
@@ -1653,7 +1648,7 @@ int gottlieb_nvram_load(void)
 void gottlieb_nvram_save(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1900,7 +1895,7 @@ struct GameDriver driver_usvsthem =
 	gottlieb_nvram_load, gottlieb_nvram_save
 };
 
-struct GameDriver driver_stooges =
+struct GameDriver driver_3stooges =
 {
 	__FILE__,
 	0,
@@ -1913,12 +1908,12 @@ struct GameDriver driver_stooges =
 	&stooges_machine_driver,
 	gottlieb_sound_init,	/* clear nmi_timer */
 
-	rom_stooges,
+	rom_3stooges,
 	0, 0,
 	0,
 	0,
 
-	input_ports_stooges,
+	input_ports_3stooges,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

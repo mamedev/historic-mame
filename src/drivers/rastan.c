@@ -81,10 +81,10 @@ static int rastan_cycle_r(int offset)
 
 static int rastan_sound_spin(int offset)
 {
-	if ( (cpu_get_pc()==0x1c5) && !(Machine->memory_region[2][ 0x8f27 ] & 0x01) )
+	if ( (cpu_get_pc()==0x1c5) && !(memory_region(2)[ 0x8f27 ] & 0x01) )
 		cpu_spin();
 
-	return Machine->memory_region[2][ 0x8f27 ];
+	return memory_region(2)[ 0x8f27 ];
 }
 
 
@@ -130,7 +130,7 @@ static struct MemoryWriteAddress rastan_writemem[] =
 static void rastan_bankswitch_w(int offset, int data)
 {
 	int bankaddress;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU2);
 
 	bankaddress = 0x10000 + ((data^1) & 0x01) * 0x4000;
 	cpu_setbank(5,&RAM[bankaddress]);
@@ -401,14 +401,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,
 			8000000,	/* 8 Mhz */
-			0,
 			rastan_readmem,rastan_writemem,0,0,
 			rastan_interrupt,1
 		},
 		{
 			CPU_Z80,
 			4000000,	/* 4 Mhz */
-			2,
 			rastan_s_readmem,rastan_s_writemem,0,0,
 			ignore_interrupt,1
 		}
@@ -453,7 +451,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( rastan )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "ic19_38.bin", 0x00000, 0x10000, 0x1c91dbb1 )
 	ROM_LOAD_ODD ( "ic07_37.bin", 0x00000, 0x10000, 0xecf20bdd )
 	ROM_LOAD_EVEN( "ic20_40.bin", 0x20000, 0x10000, 0x0930d4b3 )
@@ -471,7 +469,7 @@ ROM_START( rastan )
 	ROM_LOAD( "ic28_06.bin",  0xc0000, 0x20000, 0x002ccf39 )        /* sprites 1b */
 	ROM_LOAD( "ic27_08.bin",  0xe0000, 0x20000, 0xfeafca05 )        /* sprites 3b */
 
-	ROM_REGION(0x1c000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ic49_19.bin", 0x00000, 0x4000, 0xee81fdd8 )
 	ROM_CONTINUE(            0x10000, 0xc000 )
 
@@ -480,7 +478,7 @@ ROM_START( rastan )
 ROM_END
 
 ROM_START( rastanu )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "ic19_38.bin", 0x00000, 0x10000, 0x1c91dbb1 )
 	ROM_LOAD_ODD ( "ic07_37.bin", 0x00000, 0x10000, 0xecf20bdd )
 	ROM_LOAD_EVEN( "b04-45.20",   0x20000, 0x10000, 0x362812dd )
@@ -498,7 +496,7 @@ ROM_START( rastanu )
 	ROM_LOAD( "ic28_06.bin",  0xc0000, 0x20000, 0x002ccf39 )        /* sprites 1b */
 	ROM_LOAD( "ic27_08.bin",  0xe0000, 0x20000, 0xfeafca05 )        /* sprites 3b */
 
-	ROM_REGION(0x1c000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ic49_19.bin", 0x00000, 0x4000, 0xee81fdd8 )
 	ROM_CONTINUE(            0x10000, 0xc000 )
 
@@ -507,7 +505,7 @@ ROM_START( rastanu )
 ROM_END
 
 ROM_START( rastanu2 )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "rs19_38.bin", 0x00000, 0x10000, 0xa38ac909 )
 	ROM_LOAD_ODD ( "b04-21.7",    0x00000, 0x10000, 0x7c8dde9a )
 	ROM_LOAD_EVEN( "b04-23.20",   0x20000, 0x10000, 0x254b3dce )
@@ -525,7 +523,7 @@ ROM_START( rastanu2 )
 	ROM_LOAD( "ic28_06.bin",  0xc0000, 0x20000, 0x002ccf39 )        /* sprites 1b */
 	ROM_LOAD( "ic27_08.bin",  0xe0000, 0x20000, 0xfeafca05 )        /* sprites 3b */
 
-	ROM_REGION(0x1c000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ic49_19.bin", 0x00000, 0x4000, 0xee81fdd8 )
 	ROM_CONTINUE(            0x10000, 0xc000 )
 
@@ -534,7 +532,7 @@ ROM_START( rastanu2 )
 ROM_END
 
 ROM_START( rastsaga )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "rs19_38.bin", 0x00000, 0x10000, 0xa38ac909 )
 	ROM_LOAD_ODD ( "rs07_37.bin", 0x00000, 0x10000, 0xbad60872 )
 	ROM_LOAD_EVEN( "rs20_40.bin", 0x20000, 0x10000, 0x6bcf70dc )
@@ -552,7 +550,7 @@ ROM_START( rastsaga )
 	ROM_LOAD( "ic28_06.bin",  0xc0000, 0x20000, 0x002ccf39 )        /* sprites 1b */
 	ROM_LOAD( "ic27_08.bin",  0xe0000, 0x20000, 0xfeafca05 )        /* sprites 3b */
 
-	ROM_REGION(0x1c000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ic49_19.bin", 0x00000, 0x4000, 0xee81fdd8 )
 	ROM_CONTINUE(            0x10000, 0xc000 )
 
@@ -722,8 +720,8 @@ struct GameDriver driver_rastsaga =
 */
 
 ROM_START( ymcym )
-	ROM_REGION(0x10000)
-	ROM_REGION(0x1000)
+	ROM_REGIONX( 0x10000, REGION_CPU1 )
+	ROM_REGIONX( 0x1000, REGION_CPU2 )
 ROM_END
 
 INPUT_PORTS_START( ymcym )
@@ -807,7 +805,6 @@ static struct MachineDriver ymcym_machine =
 		{
 			CPU_Z80,
 			1000000,	/* 1 Mhz */
-			0, /*rom region*/
 			ymcym_readmem, ymcym_writemem,0,0,
 			ymcym_interrupt, 1
 		}
@@ -979,7 +976,6 @@ static struct MachineDriver ymtest_machine =
 		{
 			CPU_Z80,
 			1000000,	/* 1 Mhz */
-			0, /*rom region*/
 			ymcym_readmem, ymcym_writemem,0,0,
 			ymtest_interrupt, 1
 		}

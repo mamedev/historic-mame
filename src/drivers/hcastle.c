@@ -30,7 +30,7 @@ void hcastle_pf2_control_w(int offset,int data);
 
 static void hcastle_bankswitch_w(int offset, int data)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
 
 	bankaddress = 0x10000 + (data & 0x1f) * 0x2000;
@@ -50,11 +50,11 @@ static void hcastle_coin_w(int offset, int data)
 
 static int speedup_r( int offs )
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	int data = ( RAM[0x18dc] << 8 ) | RAM[0x18dd];
 
-	if ( data < memory_region_length(Machine->drv->cpu[0].memory_region) )
+	if ( data < memory_region_length(REGION_CPU1) )
 	{
 		data = ( RAM[data] << 8 ) | RAM[data + 1];
 
@@ -111,7 +111,7 @@ static struct MemoryWriteAddress writemem[] =
 
 static void sound_bank_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[3];
+	unsigned char *RAM = memory_region(3);
 	int bank_A=0x20000 * (data&0x3);
 	int bank_B=0x20000 * ((data>>2)&0x3);
 
@@ -312,14 +312,12 @@ static struct MachineDriver machine_driver =
  		{
 			CPU_KONAMI,
 			3000000,	/* Derived from 24 MHz clock */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,
-			2,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -363,7 +361,7 @@ static struct MachineDriver machine_driver =
 /***************************************************************************/
 
 ROM_START( hcastle )
-	ROM_REGION(0x30000)
+	ROM_REGIONX( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "768.k03",      0x08000, 0x08000, 0x40ce4f38 )
 	ROM_LOAD( "768.g06",      0x10000, 0x20000, 0xcdade920 )
 
@@ -373,7 +371,7 @@ ROM_START( hcastle )
 	ROM_LOAD( "d91.j5",       0x100000, 0x80000, 0x2960680e )
 	ROM_LOAD( "d92.j6",       0x180000, 0x80000, 0x65a2f227 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "768.e01",      0x00000, 0x08000, 0xb9fff184 )
 
 	ROM_REGION(0x80000)	/* 512k for the samples */
@@ -388,7 +386,7 @@ ROM_START( hcastle )
 ROM_END
 
 ROM_START( hcastlea )
-	ROM_REGION(0x30000)
+	ROM_REGIONX( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "m03.k12",      0x08000, 0x08000, 0xd85e743d )
 	ROM_LOAD( "b06.k8",       0x10000, 0x20000, 0xabd07866 )
 
@@ -398,7 +396,7 @@ ROM_START( hcastlea )
 	ROM_LOAD( "d91.j5",       0x100000, 0x80000, 0x2960680e )
 	ROM_LOAD( "d92.j6",       0x180000, 0x80000, 0x65a2f227 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "768.e01",      0x00000, 0x08000, 0xb9fff184 )
 
 	ROM_REGION(0x80000)	/* 512k for the samples */
@@ -413,7 +411,7 @@ ROM_START( hcastlea )
 ROM_END
 
 ROM_START( hcastlej )
-	ROM_REGION(0x30000)
+	ROM_REGIONX( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "768p03.k12",0x08000, 0x08000, 0xd509e340 )
 	ROM_LOAD( "768j06.k8", 0x10000, 0x20000, 0x42283c3e )
 
@@ -423,7 +421,7 @@ ROM_START( hcastlej )
 	ROM_LOAD( "d91.j5",       0x100000, 0x80000, 0x2960680e )
 	ROM_LOAD( "d92.j6",       0x180000, 0x80000, 0x65a2f227 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "768.e01",   0x00000, 0x08000, 0xb9fff184 )
 
 	ROM_REGION(0x80000)	/* 512k for the samples */

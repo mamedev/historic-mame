@@ -108,7 +108,7 @@ static int ddrible_vlm5030_busy_r(int offset)
 
 static void ddrible_vlm5030_ctrl_w(int offset,int data)
 {
-	unsigned char *SPEECH_ROM = Machine->memory_region[5];
+	unsigned char *SPEECH_ROM = memory_region(5);
 	/* b7 : vlm data bus OE   */
 	/* b6 : VLM5030-RST       */
 	/* b5 : VLM5030-ST        */
@@ -403,21 +403,18 @@ static struct MachineDriver ddrible_machine_driver =
 		{
 			CPU_M6809,			/* CPU #0 */
 			1536000,			/* 18432000/12 MHz? */
-			0,
 			readmem_cpu0,writemem_cpu0,0,0,
 			ddrible_interrupt_0,1
 		},
 		{
 			CPU_M6809,			/* CPU #1 */
 			1536000,			/* 18432000/12 MHz? */
-			3,
 			readmem_cpu1,writemem_cpu1,0,0,
 			ddrible_interrupt_1,1
 		},
 		{
 			CPU_M6809,			/* SOUND CPU */
 			1536000,			/* 18432000/12 MHz? */
-			4,
 			readmem_cpu2,writemem_cpu2,0,0,
 			ignore_interrupt,1
 		},
@@ -454,7 +451,7 @@ static struct MachineDriver ddrible_machine_driver =
 
 
 ROM_START( ddrible )
-	ROM_REGION(0x1a000) /* 64K CPU #0 + 40K for Banked ROMS */
+	ROM_REGIONX( 0x1a000, REGION_CPU1 ) /* 64K CPU #0 + 40K for Banked ROMS */
 	ROM_LOAD( "690c03.bin",	0x10000, 0x0a000, 0x07975a58 )
 	ROM_CONTINUE(			0x0a000, 0x06000 )
 
@@ -469,10 +466,10 @@ ROM_START( ddrible )
 	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "690a11.i15", 0x0000, 0x0100, 0xf34617ad )	/* sprite lookup table */
 
-	ROM_REGION(0x10000) /* 64 for the CPU #1 */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64 for the CPU #1 */
 	ROM_LOAD( "690c02.bin", 0x08000, 0x08000, 0xf07c030a )
 
-	ROM_REGION(0x10000)	/* 64k for the SOUND CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the SOUND CPU */
 	ROM_LOAD( "690b01.bin", 0x08000, 0x08000, 0x806b8453 )
 
 	ROM_REGION(0x20000)	/* 128k for the VLM5030 data */
@@ -488,7 +485,7 @@ ROM_END
 
 static int ddribble_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0x4800],"\x1d\x0a\x19",3) == 0)
@@ -518,7 +515,7 @@ static int ddribble_hiload(void)
 static void ddribble_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{

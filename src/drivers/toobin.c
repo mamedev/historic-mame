@@ -296,13 +296,10 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68010,		/* verified */
 			7159160,
-			0,
 			main_readmem,main_writemem,0,0,
 			ignore_interrupt,1
 		},
-		{
-			JSA_I_CPU(1)
-		}
+		JSA_I_CPU
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
@@ -333,7 +330,7 @@ static struct MachineDriver machine_driver =
  *************************************/
 
 ROM_START( toobin )
-	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "061-3133.bin", 0x00000, 0x10000, 0x79a92d02 )
 	ROM_LOAD_ODD ( "061-3137.bin", 0x00000, 0x10000, 0xe389ef60 )
 	ROM_LOAD_EVEN( "061-3134.bin", 0x20000, 0x10000, 0x3dbe9a48 )
@@ -343,7 +340,7 @@ ROM_START( toobin )
 	ROM_LOAD_EVEN( "061-1136.bin", 0x60000, 0x10000, 0x5ae3eeac )
 	ROM_LOAD_ODD ( "061-1140.bin", 0x60000, 0x10000, 0xdacbbd94 )
 
-	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "061-1114.bin", 0x10000, 0x4000, 0xc0dcce1a )
 	ROM_CONTINUE(             0x04000, 0xc000 )
 
@@ -385,7 +382,7 @@ ROM_END
 
 
 ROM_START( toobin2 )
-	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "061-2133.1j",  0x00000, 0x10000, 0x2c3382e4 )
 	ROM_LOAD_ODD ( "061-2137.1f",  0x00000, 0x10000, 0x891c74b1 )
 	ROM_LOAD_EVEN( "061-2134.2j",  0x20000, 0x10000, 0x2b8164c8 )
@@ -395,7 +392,7 @@ ROM_START( toobin2 )
 	ROM_LOAD_EVEN( "061-1136.bin", 0x60000, 0x10000, 0x5ae3eeac )
 	ROM_LOAD_ODD ( "061-1140.bin", 0x60000, 0x10000, 0xdacbbd94 )
 
-	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "061-1114.bin", 0x10000, 0x4000, 0xc0dcce1a )
 	ROM_CONTINUE(             0x04000, 0xc000 )
 
@@ -437,7 +434,7 @@ ROM_END
 
 
 ROM_START( toobinp )
-	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "pg-0-up.1j",   0x00000, 0x10000, 0xcaeb5d1b )
 	ROM_LOAD_ODD ( "pg-0-lo.1f",   0x00000, 0x10000, 0x9713d9d3 )
 	ROM_LOAD_EVEN( "pg-20-up.2j",  0x20000, 0x10000, 0x119f5d7b )
@@ -447,7 +444,7 @@ ROM_START( toobinp )
 	ROM_LOAD_EVEN( "061-1136.bin", 0x60000, 0x10000, 0x5ae3eeac )
 	ROM_LOAD_ODD ( "061-1140.bin", 0x60000, 0x10000, 0xdacbbd94 )
 
-	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "061-1114.bin", 0x10000, 0x4000, 0xc0dcce1a )
 	ROM_CONTINUE(             0x04000, 0xc000 )
 

@@ -716,7 +716,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_V30,
 			16000000,	/* ??? */
-			0,
 			readmem,writemem,readport,writeport,
 			shanghai_interrupt,1,
 			0,0
@@ -757,7 +756,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( shanghai )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_V20_EVEN( "shg-22a.rom", 0xa0000, 0x10000, 0xe0a085be )
 	ROM_LOAD_V20_ODD ( "shg-21a.rom", 0xa0000, 0x10000, 0x4ab06d32 )
 	ROM_LOAD_V20_EVEN( "shg-28a.rom", 0xc0000, 0x10000, 0x983ec112 )

@@ -442,9 +442,7 @@ static void msmint( int data ) {
 static struct AY8910interface ay8910_interface =
 {
 	2, /* 2 chips */
-//	1500000,			/* 12 Mhz / 8 = 1.5 Mhz */
-	12000000/12,			// lax 10/31/1999  (1500000 -> 1000000 ???)
-//	{ 50, 50 },
+	1500000,			/* 12 Mhz / 8 = 1.5 Mhz */
 	{ 30, 30 },			// Modified by T.Nogi 1999/11/08
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
@@ -488,15 +486,12 @@ static struct MachineDriver kchampvs_machine_driver =
 		{
 			CPU_Z80,
 			3000000,	/* 12Mhz / 4 = 3.0 Mhz */
-			0,
 			readmem,writemem,readport,writeport,
 			kc_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-		//	3000000,	/* 12Mhz / 4 = 3.0 Mhz */
-                        3500000,        // lax 11/2/1999  (3000000 -> 3500000)
-			3,
+			3000000,	/* 12Mhz / 4 = 3.0 Mhz */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt, 0
 			/* irq's triggered from main cpu */
@@ -545,15 +540,12 @@ static struct MachineDriver kchamp_machine_driver =
 		{
 			CPU_Z80,
 			3000000,	/* 12Mhz / 4 = 3.0 Mhz */
-			0,
 			kc_readmem, kc_writemem, kc_readport, kc_writeport,
 			kc_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-		//	3000000,	/* 12Mhz / 4 = 3.0 Mhz */
-                        3500000,        // lax 11/2/1999  (3000000 -> 3500000)
-			3,
+			3000000,	/* 12Mhz / 4 = 3.0 Mhz */
 			kc_sound_readmem,kc_sound_writemem,kc_sound_readport,kc_sound_writeport,
 			ignore_interrupt, 0,
 			sound_int, 125 /* Hz */
@@ -599,7 +591,7 @@ static struct MachineDriver kchamp_machine_driver =
 
 ***************************************************************************/
 ROM_START( kchampvs )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "bs24", 0x0000, 0x2000, 0x829da69b )
 	ROM_LOAD( "bs23", 0x2000, 0x2000, 0x091f810e )
 	ROM_LOAD( "bs22", 0x4000, 0x2000, 0xd4df2a52 )
@@ -630,14 +622,14 @@ ROM_START( kchampvs )
 	ROM_LOAD( "br26", 0x0100, 0x0100, 0x3ddbb6c4 ) /* green */
 	ROM_LOAD( "br25", 0x0200, 0x0100, 0xba4a5651 ) /* blue */
 
-	ROM_REGION(0x10000) /* Sound CPU */ /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Sound CPU */ /* 64k for code */
 	ROM_LOAD( "bs18", 0x0000, 0x2000, 0xeaa646eb )
 	ROM_LOAD( "bs17", 0x2000, 0x2000, 0xd71031ad ) /* adpcm */
 	ROM_LOAD( "bs16", 0x4000, 0x2000, 0x6f811c43 ) /* adpcm */
 ROM_END
 
 ROM_START( karatevs )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "br24", 0x0000, 0x2000, 0xea9cda49 )
 	ROM_LOAD( "br23", 0x2000, 0x2000, 0x46074489 )
 	ROM_LOAD( "br22", 0x4000, 0x2000, 0x294f67ba )
@@ -668,7 +660,7 @@ ROM_START( karatevs )
 	ROM_LOAD( "br26", 0x0100, 0x0100, 0x3ddbb6c4 ) /* green */
 	ROM_LOAD( "br25", 0x0200, 0x0100, 0xba4a5651 ) /* blue */
 
-	ROM_REGION(0x10000) /* Sound CPU */ /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Sound CPU */ /* 64k for code */
 	ROM_LOAD( "br18", 0x0000, 0x2000, 0x00ccb8ea )
 	ROM_LOAD( "bs17", 0x2000, 0x2000, 0xd71031ad ) /* adpcm */
 	ROM_LOAD( "br16", 0x4000, 0x2000, 0x2512d961 ) /* adpcm */
@@ -679,7 +671,7 @@ ROM_END
 ********************/
 
 ROM_START( kchamp )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "b014.bin", 0x0000, 0x2000, 0x0000d1a0 )
 	ROM_LOAD( "b015.bin", 0x2000, 0x2000, 0x03fae67e )
 	ROM_LOAD( "b016.bin", 0x4000, 0x2000, 0x3b6e1d08 )
@@ -708,7 +700,7 @@ ROM_START( kchamp )
 	ROM_LOAD( "br26", 0x0100, 0x0100, 0x3ddbb6c4 ) /* green */
 	ROM_LOAD( "br25", 0x0200, 0x0100, 0xba4a5651 ) /* blue */
 
-	ROM_REGION(0x10000) /* Sound CPU */ /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Sound CPU */ /* 64k for code */
 	ROM_LOAD( "b026.bin", 0x0000, 0x2000, 0x999ed2c7 )
 	ROM_LOAD( "b025.bin", 0x2000, 0x2000, 0x33171e07 ) /* adpcm */
 	ROM_LOAD( "b024.bin", 0x4000, 0x2000, 0x910b48b9 ) /* adpcm */
@@ -719,7 +711,7 @@ ROM_START( kchamp )
 ROM_END
 
 ROM_START( karatedo )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "be14", 0x0000, 0x2000, 0x44e60aa0 )
 	ROM_LOAD( "be15", 0x2000, 0x2000, 0xa65e3793 )
 	ROM_LOAD( "be16", 0x4000, 0x2000, 0x151d8872 )
@@ -748,7 +740,7 @@ ROM_START( karatedo )
 	ROM_LOAD( "br26", 0x0100, 0x0100, 0x3ddbb6c4 ) /* green */
 	ROM_LOAD( "br25", 0x0200, 0x0100, 0xba4a5651 ) /* blue */
 
-	ROM_REGION(0x10000) /* Sound CPU */ /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Sound CPU */ /* 64k for code */
 	ROM_LOAD( "be26", 0x0000, 0x2000, 0x999ab0a3 )
 	ROM_LOAD( "be25", 0x2000, 0x2000, 0x253bf0da ) /* adpcm */
 	ROM_LOAD( "be24", 0x4000, 0x2000, 0xe2c188af ) /* adpcm */
@@ -777,7 +769,7 @@ static void kchamp_decode( void ) {
 		0x02, 0x03, 0x0A, 0x0B, 0x06, 0x07, 0x0E, 0x0F
 	};
 
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int A;
 
 	for (A = 1;A < 0xE000;A++)
@@ -792,7 +784,7 @@ static void kchamp_decode( void ) {
 
 static void kchampvs_decode( void ) {
 
-	unsigned char *RAM = Machine ->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	ROM[0] = RAM[0];
 	RAM[1] = 0x6e;
@@ -802,7 +794,7 @@ static void kchampvs_decode( void ) {
 
 static void karatedo_decode( void ){
 
-	unsigned char *RAM = Machine ->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	ROM[0] = RAM[0];
 	RAM[1] = 0x5f;
@@ -812,7 +804,7 @@ static void karatedo_decode( void ){
 
 static int kchampvs_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f;
 
 	/* Wait for hiscore table initialization to be done. */
@@ -832,7 +824,7 @@ static int kchampvs_hiload(void)
 
 static void kchampvs_hisave(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0) {
@@ -847,7 +839,7 @@ static void kchampvs_hisave(void)
 ********************/
 static int kchamp_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f;
 
 	/* Wait for hiscore table initialization to be done. */
@@ -867,7 +859,7 @@ static int kchamp_hiload(void)
 
 static void kchamp_hisave(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0) {

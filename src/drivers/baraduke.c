@@ -15,7 +15,7 @@ TO DO:
 #include "cpu/m6800/m6800.h"
 
 static unsigned char *sharedram;
-extern unsigned char *textlayerram, *spriteram, *baraduke_videoram;
+extern unsigned char *baraduke_textram, *spriteram, *baraduke_videoram;
 
 /* from vidhrdw/baraduke.c */
 int baraduke_vh_start( void );
@@ -102,7 +102,7 @@ static struct MemoryWriteAddress baraduke_writemem[] =
 	{ 0x2000, 0x3fff, baraduke_videoram_w, &baraduke_videoram },/* Video RAM */
 	{ 0x4000, 0x40ff, namcos1_wavedata_w },		/* PSG device, shared RAM */
 	{ 0x4000, 0x43ff, baraduke_sharedram_w, &sharedram },/* shared RAM with the MCU */
-	{ 0x4800, 0x4fff, MWA_RAM, &textlayerram },	/* video RAM (text layer) */
+	{ 0x4800, 0x4fff, MWA_RAM, &baraduke_textram },	/* video RAM (text layer) */
 	{ 0x8000, 0x8000, watchdog_reset_w },		/* watchdog reset */
 	{ 0x8800, 0x8800, MWA_NOP },				/* ??? */
 	{ 0xb000, 0xb002, baraduke_scroll0_w },		/* scroll (layer 0) */
@@ -111,11 +111,19 @@ static struct MemoryWriteAddress baraduke_writemem[] =
 	{ -1 }
 };
 
+static int soundkludge(int offset)
+{
+	static int counter;
+
+	return ((counter++) >> 4) & 0xff;
+}
+
 static struct MemoryReadAddress mcu_readmem[] =
 {
 	{ 0x0000, 0x001f, hd63701_internal_registers_r },/* internal registers */
 	{ 0x0080, 0x00ff, MRA_RAM },					/* built in RAM */
 	{ 0x1000, 0x10ff, namcos1_wavedata_r },			/* PSG device, shared RAM */
+	{ 0x1105, 0x1105, soundkludge },	/* cures speech */
 	{ 0x1100, 0x113f, MRA_RAM },					/* PSG device */
 	{ 0x1000, 0x13ff, baraduke_sharedram_r },		/* shared RAM with the 6809 */
 	{ 0x8000, 0xbfff, MRA_ROM },					/* MCU external ROM */
@@ -438,14 +446,12 @@ static struct MachineDriver baraduke_machine_driver =
 		{
 			CPU_M6809,
 			49152000/32,	/* ??? */
-			0,
 			baraduke_readmem,baraduke_writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_HD63701,	/* or compatible 6808 with extra instructions */
 			49152000/32,	/* ??? */
-			2,
 			mcu_readmem,mcu_writemem,mcu_readport,mcu_writeport,
 			interrupt,1
 		}
@@ -483,14 +489,12 @@ static struct MachineDriver metrocrs_machine_driver =
 		{
 			CPU_M6809,
 			49152000/32,	/* ??? */
-			0,
 			baraduke_readmem,baraduke_writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_HD63701,	/* or compatible 6808 with extra instructions */
 			49152000/32,	/* ??? */
-			2,
 			mcu_readmem,mcu_writemem,mcu_readport,mcu_writeport,
 			interrupt,1
 		}
@@ -522,7 +526,7 @@ static struct MachineDriver metrocrs_machine_driver =
 };
 
 ROM_START( baraduke )
-	ROM_REGION( 0x10000 ) /* 6809 code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 6809 code */
 	ROM_LOAD( "prg1.9c",	0x6000, 0x02000, 0xea2ea790 )
 	ROM_LOAD( "prg2.9a",	0x8000, 0x04000, 0x9a0a9a87 )
 	ROM_LOAD( "prg3.9b",	0xc000, 0x04000, 0x383e5458 )
@@ -537,7 +541,7 @@ ROM_START( baraduke )
 	ROM_LOAD( "obj3.8m",	0x16000, 0x4000, 0x3076af9c )
 	ROM_LOAD( "obj4.8n",	0x1a000, 0x4000, 0x8b4c09a3 )
 
-	ROM_REGION( 0x10000 ) /* MCU code */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* MCU code */
 	ROM_LOAD( "prg4.3b",	0x8000,  0x4000, 0xabda0fe7 )	/* subprogram for the MCU */
 	ROM_LOAD( "pl1-mcu.bin",0xf000,	 0x1000, 0x6ef08fb3 )	/* The MCU internal code is missing */
 															/* Using Pacland code (probably similar) */
@@ -547,7 +551,7 @@ ROM_START( baraduke )
 ROM_END
 
 ROM_START( metrocrs )
-	ROM_REGION( 0x10000 ) /* 6809 code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 6809 code */
 	ROM_LOAD( "mc1-3.9c",	0x6000, 0x02000, 0x3390b33c )
 	ROM_LOAD( "mc1-1.9a",	0x8000, 0x04000, 0x10b0977e )
 	ROM_LOAD( "mc1-2.9b",	0xc000, 0x04000, 0x5c846f35 )
@@ -560,7 +564,7 @@ ROM_START( metrocrs )
 	ROM_LOAD( "mc1-8.8k",	0x0e000, 0x4000, 0x265b31fa )	/* sprites */
 	ROM_LOAD( "mc1-9.8l",	0x12000, 0x4000, 0x541ec029 )
 
-	ROM_REGION( 0x10000 ) /* MCU code */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* MCU code */
 	ROM_LOAD( "mc1-4.3b",	0x8000, 0x02000, 0x9c88f898 )	/* subprogram for the MCU */
 	ROM_LOAD( "pl1-mcu.bin",0xf000,	 0x1000, 0x6ef08fb3 )	/* The MCU internal code is missing */
 															/* Using Pacland code (probably similar) */
@@ -572,7 +576,7 @@ ROM_END
 static void gfx_untangle( void )
 {
 	int i;
-	unsigned char *gfx = Machine->memory_region[1];
+	unsigned char *gfx = memory_region(1);
 
 	for( i = 0xa000; i < 0x0e000; i++ ){
 		gfx[i] = 0xff;
@@ -583,7 +587,7 @@ static void gfx_untangle( void )
 /****  RJF (Nov 22, 1999)  ****/
 static int baraduke_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
 	if ((memcmp(&RAM[0x0280],"\x00\x07\x65",3) == 0) &&
@@ -618,7 +622,7 @@ static int baraduke_hiload(void)
 static void baraduke_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -635,7 +639,7 @@ static void baraduke_hisave(void)
 /****  RJF (Nov 22, 1999)  ****/
 static int metrocrs_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
 	if ((memcmp(&RAM[0x1473],"\x08\x00\x00",3) == 0) &&
@@ -678,7 +682,7 @@ static int metrocrs_hiload(void)
 static void metrocrs_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{

@@ -236,7 +236,6 @@ static struct MachineDriver shaolins_machine_driver =
 		{
 			CPU_M6809,
 			1250000,        /* 1.25 Mhz */
-			0,
 			readmem,writemem,0,0,
 			shaolins_interrupt,16	/* 1 IRQ + 8 NMI */
 		},
@@ -275,7 +274,7 @@ static struct MachineDriver shaolins_machine_driver =
 ***************************************************************************/
 
 ROM_START( kicker )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "kikrd8.bin",   0x6000, 0x2000, 0x2598dfdd )
 	ROM_LOAD( "kikrd9.bin",   0x8000, 0x4000, 0x0cf0351a )
 	ROM_LOAD( "kikrd11.bin",  0xC000, 0x4000, 0x654037f8 )
@@ -295,7 +294,7 @@ ROM_START( kicker )
 ROM_END
 
 ROM_START( shaolins )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "kikrd8.bin",   0x6000, 0x2000, 0x2598dfdd )
 	ROM_LOAD( "kikrd9.bin",   0x8000, 0x4000, 0x0cf0351a )
 	ROM_LOAD( "kikrd11.bin",  0xC000, 0x4000, 0x654037f8 )
@@ -318,7 +317,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -348,7 +347,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

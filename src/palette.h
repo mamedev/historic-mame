@@ -117,7 +117,7 @@
 
 int palette_start(void);
 void palette_stop(void);
-void palette_init(void);
+int palette_init(void);
 
 void palette_change_color(int color,unsigned char red,unsigned char green,unsigned char blue);
 
@@ -166,6 +166,10 @@ extern unsigned short palette_transparent_pen;
 /* can automatically handled by your paletteram_w() function. The Tecmo games */
 /* do this. */
 extern int palette_transparent_color;
+
+
+extern unsigned short *palette_shadow_table;
+extern unsigned short *palette_highlight_table;
 
 
 

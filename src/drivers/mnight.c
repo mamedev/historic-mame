@@ -39,7 +39,7 @@ int mnight_bankselect_r(int offset)
 
 void mnight_bankselect_w(int offset, int data)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[main_cpu_num].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1+main_cpu_num);
 	int bankaddress;
 
 	if ( data != mnight_bank_latch )
@@ -362,14 +362,12 @@ static struct MachineDriver mnight_machine_driver =
 		{
 			CPU_Z80,
 			6000000,		/* 12000000/2 ??? */
-			0,			/* & vbl duration since sprites are */
 			readmem,writemem,0,0,	/* very sensitive to these settings */
 			mnight_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,		/* 12000000/3 ??? */
-			2,
 			snd_readmem,snd_writemem,
 			0,snd_writeport,
 			interrupt,2
@@ -401,7 +399,7 @@ static struct MachineDriver mnight_machine_driver =
 
 
 ROM_START( mnight )
-	ROM_REGION(0x30000)
+	ROM_REGIONX( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "mn6-j19.bin",  0x00000, 0x8000, 0x56678d14 )
 	ROM_LOAD( "mn5-j17.bin",  0x10000, 0x8000, 0x2a73f88e )
 	ROM_LOAD( "mn4-j16.bin",  0x18000, 0x8000, 0xc5e42bb4 )
@@ -438,12 +436,12 @@ ROM_START( mnight )
 	ROM_CONTINUE(             0x62000, 0x2000 )
 	ROM_CONTINUE(             0x66000, 0x2000 )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "mn1-j7.bin",   0x00000, 0x10000, 0xa0782a31 )
 ROM_END
 
 ROM_START( arkarea )
-	ROM_REGION(0x30000)
+	ROM_REGIONX( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "arkarea.008",  0x00000, 0x8000, 0x1ce1b5b9 )
 	ROM_LOAD( "arkarea.009",  0x10000, 0x8000, 0xdb1c81d1 )
 	ROM_LOAD( "arkarea.010",  0x18000, 0x8000, 0x5a460dae )
@@ -480,7 +478,7 @@ ROM_START( arkarea )
 	ROM_CONTINUE(             0x62000, 0x2000 )
 	ROM_CONTINUE(             0x66000, 0x2000 )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "arkarea.013",  0x00000, 0x8000, 0x2d409d58 )
 ROM_END
 
@@ -490,7 +488,7 @@ ROM_END
 
 static int mnight_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -519,7 +517,7 @@ static int mnight_hiload(void)
 static void mnight_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

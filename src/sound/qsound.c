@@ -3,7 +3,12 @@
   Capcom System QSound(tm)
   ========================
 
+  Driver by Paul Leaman (paul@vortexcomputing.demon.co.uk)
+        and Miguel Angel Horna (mahorna@teleline.es)
+
   A 16 channel stereo sample player.
+
+  QSpace position is simulated by panning the sound in the stereo space.
 
   Register
   0     xxbb    xx = unknown bb = start high address
@@ -20,18 +25,52 @@
   Many thanks to CAB (the author of Amuse), without whom this probably would
   never have been finished.
 
+  If anybody has some information about this hardware, please send it to me
+  to mahorna@teleline.es or 432937@cepsz.unizar.es.
+  http://teleline.terra.es/personal/mahorna
+
 ***************************************************************************/
 
 #include <math.h>
 #include "driver.h"
 
+/*
+Two Q sound drivers:
+DRIVER1 Based on the Amuse source
+DRIVER2 Miguel Angel Horna (mahorna@teleline.es)
+*/
+#define QSOUND_DRIVER1      1
+
+/*
+I don't know whether this system uses 8 bit or 16 bit samples.
+If it uses 16 bit samples then the sample ROM loading macros need
+to be modified to work with non-intel machines.
+*/
+#define QSOUND_8BIT_SAMPLES 1
+
+/*
+Debug defines
+*/
+#define LOG_WAVE    0
+#define LOG_QSOUND  0
+
+/* Typedefs & defines */
+
+#define QSOUND_DRIVER2 !QSOUND_DRIVER1
+
+#if QSOUND_8BIT_SAMPLES
+/* 8 bit source ROM samples */
+typedef signed char QSOUND_SRC_SAMPLE;
+#define LENGTH_DIV 1
+#else
+/* 8 bit source ROM samples */
+typedef signed short QSOUND_SRC_SAMPLE;
+#define LENGTH_DIV 2
+#endif
+
 #define QSOUND_CLOCKDIV 166             /* Clock divider */
 #define QSOUND_CHANNELS 16
-typedef unsigned short int QSOUND_SAMPLE;
-
-#define LOG_WAVE 0
-
-#define LOG_QSOUND 0
+typedef signed short int QSOUND_SAMPLE;
 
 struct QSOUND_CHANNEL
 {
@@ -42,23 +81,37 @@ struct QSOUND_CHANNEL
     int loop;       /* loop address */
     int end;        /* end address */
     int vol;        /* master volume */
-    int lvol;       /* left volume */
-    int rvol;       /* right volume */
+    int pan;        /* Pan value */
     int reg9;       /* unknown */
 
     /* Work variables */
+    int key;        /* Key on / key off */
+
+#if QSOUND_DRIVER1
+    int lvol;       /* left volume */
+    int rvol;       /* right volume */
     int lastdt;     /* last sample value */
     int offset;     /* current offset counter */
-    int key;        /* Key on / key off */
+#else
+    QSOUND_SRC_SAMPLE *buffer;
+	float factor;
+	float mixl,mixr;
+    float cursor;
+#endif
 };
+
 
 /* Private variables */
 static struct QSound_interface *intf;    /* Interface  */
-static int qsound_pan_table[33];         /* Pan volume table */
-static float qsound_frq_ratio;           /* Frequency ratio */
 static int qsound_stream;                /* Audio stream */
 static struct QSOUND_CHANNEL qsound_channel[QSOUND_CHANNELS];
-static int qsound_data;
+static int qsound_data;                  /* register latch data */
+QSOUND_SRC_SAMPLE *qsound_sample_rom;    /* Q sound sample ROM */
+
+#if QSOUND_DRIVER1
+static int qsound_pan_table[33];         /* Pan volume table */
+static float qsound_frq_ratio;           /* Frequency ratio */
+#endif
 
 #if LOG_WAVE
 static FILE *fpRawDataL;
@@ -69,6 +122,12 @@ static FILE *fpRawDataR;
 void qsound_update( int num, void **buffer, int length );
 void qsound_set_command(int data, int value);
 
+#if QSOUND_DRIVER2
+void setchannel(int channel,signed short *buffer,int length,int vol,int pan);
+void setchloop(int channel,int loops,int loope);
+void stopchan(int channel);
+#endif
+
 int qsound_sh_start(const struct MachineSound *msound)
 {
     int i;
@@ -77,16 +136,23 @@ int qsound_sh_start(const struct MachineSound *msound)
 
     intf = msound->sound_interface;
 
+    qsound_sample_rom = (QSOUND_SRC_SAMPLE *)memory_region(intf->region);
+
     memset(qsound_channel, 0, sizeof(qsound_channel));
 
+#if QSOUND_DRIVER1
     qsound_frq_ratio = ((float)intf->clock / (float)QSOUND_CLOCKDIV) /
                         (float) Machine->sample_rate;
+    qsound_frq_ratio *= 16.0;
 
     /* Create pan table */
     for (i=0; i<33; i++)
     {
         qsound_pan_table[i]=(int)((256/sqrt(32)) * sqrt(i));
     }
+#else
+    i=0;
+#endif
 
 #if LOG_QSOUND
     if (errorlog)
@@ -203,6 +269,7 @@ void qsound_set_command(int data, int value)
         case 0: /* Bank */
             ch=(ch+1)&0x0f;    /* strange ... */
             qsound_channel[ch].bank=(value&0x7f)<<16;
+            qsound_channel[ch].bank /= LENGTH_DIV;
 #ifdef MAME_DEBUG
             if (!value & 0x8000)
             {
@@ -215,10 +282,23 @@ void qsound_set_command(int data, int value)
             break;
         case 1: /* start */
             qsound_channel[ch].address=value;
+            qsound_channel[ch].address/=LENGTH_DIV;
             break;
         case 2: /* pitch */
+#if QSOUND_DRIVER1
             qsound_channel[ch].pitch=(long)
-                    ((float)value * qsound_frq_ratio * 16.0);
+                    ((float)value * qsound_frq_ratio );
+            qsound_channel[ch].pitch/=LENGTH_DIV;
+#else
+            qsound_channel[ch].factor=(float) (value*(6/LENGTH_DIV)) /
+                                      (float) Machine->sample_rate;
+
+#endif
+            if (!value)
+            {
+                /* Key off */
+                qsound_channel[ch].key=0;
+            }
             break;
         case 3: /* unknown */
             qsound_channel[ch].reg3=value;
@@ -232,10 +312,10 @@ void qsound_set_command(int data, int value)
 #endif
             break;
         case 4: /* loop offset */
-            qsound_channel[ch].loop=value;
+            qsound_channel[ch].loop=value/LENGTH_DIV;
             break;
         case 5: /* end */
-            qsound_channel[ch].end=value;
+            qsound_channel[ch].end=value/LENGTH_DIV;
             break;
         case 6: /* master volume */
             if (value==0)
@@ -247,8 +327,12 @@ void qsound_set_command(int data, int value)
             {
                 /* Key on */
                 qsound_channel[ch].key=1;
+#if QSOUND_DRIVER1
                 qsound_channel[ch].offset=0;
                 qsound_channel[ch].lastdt=0;
+#else
+                qsound_channel[ch].cursor=qsound_channel[ch].address;
+#endif
             }
             qsound_channel[ch].vol=value;
             break;
@@ -265,6 +349,7 @@ void qsound_set_command(int data, int value)
             break;
         case 8:
             {
+#if QSOUND_DRIVER1
                int pandata=(value-0x10)&0x3f;
                if (pandata > 32)
                {
@@ -272,6 +357,9 @@ void qsound_set_command(int data, int value)
                }
                qsound_channel[ch].lvol=qsound_pan_table[pandata];
                qsound_channel[ch].rvol=qsound_pan_table[32-pandata];
+#endif
+               qsound_channel[ch].pan = value;
+
             }
             break;
          case 9:
@@ -295,13 +383,16 @@ void qsound_set_command(int data, int value)
 #endif
 }
 
+#if QSOUND_DRIVER1
+
+/* Driver 1 - based on the Amuse source */
+
 void qsound_update( int num, void **buffer, int length )
 {
     int i,j;
     int rvol, lvol, count;
-    signed char *pSampleRom = (signed char *)Machine->memory_region[intf->region];
     struct QSOUND_CHANNEL *pC=&qsound_channel[0];
-    signed char * pST;
+    QSOUND_SRC_SAMPLE * pST;
     QSOUND_SAMPLE  *datap[2];
 
     if (Machine->sample_rate == 0) return;
@@ -317,9 +408,9 @@ void qsound_update( int num, void **buffer, int length )
         {
             QSOUND_SAMPLE *pOutL=datap[0];
             QSOUND_SAMPLE *pOutR=datap[1];
-            pST=pSampleRom+pC->bank;
-            rvol=(pC->rvol*pC->vol)>>8;
-            lvol=(pC->lvol*pC->vol)>>8;
+            pST=qsound_sample_rom+pC->bank;
+            rvol=(pC->rvol*pC->vol)>>(8*LENGTH_DIV);
+            lvol=(pC->lvol*pC->vol)>>(8*LENGTH_DIV);
 
             for (j=length-1; j>=0; j--)
             {
@@ -330,6 +421,12 @@ void qsound_update( int num, void **buffer, int length )
                     pC->address += count;
                     if (pC->address >= pC->end)
                     {
+                        if (!pC->loop)
+                        {
+                            /* Reached the end of a non-looped sample */
+                            pC->key=0;
+                            break;
+                        }
                         /* Reached the end, restart the loop */
                         pC->address = (pC->end - pC->loop) & 0xffff;
                     }
@@ -351,5 +448,87 @@ void qsound_update( int num, void **buffer, int length )
     fwrite(datap[1], length*sizeof(QSOUND_SAMPLE), 1, fpRawDataR);
 #endif
 }
+
+#else
+
+/* ----------------------------------------------------------------
+        QSound Sample Mixer (Slow)
+		Miguel Angel Horna mahorna@teleline.es
+
+ ------------------------------------------------------------------ */
+
+int ILimit(int v, int max, int min)
+{
+	return v > max ? max : (v < min ? min : v);
+}
+
+void calcula_mix(int channel)
+{
+	float factl,factr;
+    struct QSOUND_CHANNEL *pC=&qsound_channel[channel];
+    int vol=pC->vol>>5;
+    int pan=(pC->pan&0xFF)*4;
+    pC->mixl=(float) vol/128.0;
+    pC->mixr=(float) vol/128.0;
+    pC->mixl=pC->mixr;
+    factr=(double) pan/256.0;
+	factl=1.0-factr;
+    pC->mixl*=factl;
+    pC->mixr*=factr;
+#if QSOUND_8BIT_SAMPLES
+    pC->mixl*=256;
+    pC->mixr*=256;
+#endif
+}
+
+void qsound_update(int num,void **buffer,int length)
+{
+    int i,j;
+    signed short *bufL,*bufR;
+    signed int lsample,rsample;
+
+    bufL=(signed short *) buffer[0];
+    bufR=(signed short *) buffer[1];
+
+    for (i=0; i<QSOUND_CHANNELS;i++)
+    {
+       qsound_channel[i].buffer=
+                        qsound_sample_rom+
+                        qsound_channel[i].bank;
+       calcula_mix(i);
+    }
+
+    for(i=0;i<length;++i)
+    {
+          struct QSOUND_CHANNEL *pC=qsound_channel;
+
+          lsample=0;
+          rsample=0;
+
+          for(j=0;j<QSOUND_CHANNELS;++j)
+          {
+               if(pC->key)
+               {
+                   lsample+=((float) pC->buffer[(int) pC->cursor])*pC->mixl;
+                   rsample+=((float) pC->buffer[(int) pC->cursor])*pC->mixr;
+                   lsample=ILimit( lsample, 32767, -32768 );
+                   rsample=ILimit( rsample, 32767, -32768 );
+                   pC->cursor+=pC->factor;
+                   if(pC->loop && pC->cursor > pC->end)
+                   {
+                         pC->cursor=pC->end-pC->loop;
+                   }
+                   else if(pC->cursor > pC->end)
+                           pC->key=0;
+               }
+               pC++;
+          }
+
+          *bufL++=lsample;
+          *bufR++=rsample;
+     }
+}
+#endif
+
 
 /**************** end of file ****************/

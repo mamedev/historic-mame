@@ -300,14 +300,12 @@ static struct MachineDriver supbtime_machine_driver =
 	 	{
 			CPU_M68000,
 			12000000,
-			0,
 			supbtime_readmem,supbtime_writemem,0,0,
 			m68_level6_irq,1
 		},
 		{
 			CPU_H6280 | CPU_AUDIO_CPU, /* Custom chip 45 */
 			32220000/8, /* Audio section crystal is 32.220 MHz */
-			2,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -346,7 +344,7 @@ static struct MachineDriver supbtime_machine_driver =
 /******************************************************************************/
 
 ROM_START( supbtime )
-	ROM_REGION(0x40000) /* 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "gc03.bin", 0x00000, 0x20000, 0xb5621f6a )
 	ROM_LOAD_ODD ( "gc04.bin", 0x00000, 0x20000, 0x551b2a0c )
 
@@ -355,7 +353,7 @@ ROM_START( supbtime )
 	ROM_LOAD( "mae01.bin", 0x080000, 0x80000, 0x434af3fb )
 	ROM_LOAD( "mae02.bin", 0x100000, 0x80000, 0xa715cca0 ) /* chars */
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "gc06.bin",    0x00000, 0x10000, 0xe0e6c0f4 )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */

@@ -147,8 +147,8 @@ after conversion :
 
   for (offs=0; offs<0x4000; offs++)
   {
-     v1 = Machine->memory_region[1][offs];
-     v2 = Machine->memory_region[1][offs+0x4000];
+     v1 = memory_region(1)[offs];
+     v2 = memory_region(1)[offs+0x4000];
 
      p1 = (v1 & 0x01) | ( (v1 & 0x10) >> 3) | ( (v2 & 0x01) << 2 ) | ( (v2 & 0x10) >> 1);
      v1 = v1 >> 1;
@@ -161,8 +161,8 @@ after conversion :
      v2 = v2 >> 1;
      p4 = (v1 & 0x01) | ( (v1 & 0x10) >> 3) | ( (v2 & 0x01) << 2 ) | ( (v2 & 0x10) >> 1);
 
-     Machine->memory_region[1][offs] = p1 | (p2<<4);
-     Machine->memory_region[1][offs+0x4000] = p3 | (p4<<4);
+     memory_region(1)[offs] = p1 | (p2<<4);
+     memory_region(1)[offs+0x4000] = p3 | (p4<<4);
 
   }
 	return 0;
@@ -250,7 +250,7 @@ void arabian_blit_area(UINT8 plane, UINT16 src, UINT8 x, UINT8 y, UINT8 sx, UINT
 	{
 		for (j = 0; j <= sy; j++)
 		{
-			blit_byte(x, y+j, Machine->memory_region[1][src], Machine->memory_region[1][src+0x4000], plane);
+			blit_byte(x, y+j, memory_region(1)[src], memory_region(1)[src+0x4000], plane);
 			src++;
 		}
 	}

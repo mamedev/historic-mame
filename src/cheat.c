@@ -1869,7 +1869,7 @@ static int build_tables (void)
 	/* const struct MemoryReadAddress *mra = Machine->drv->cpu[SearchCpuNo].memory_read; */
 	const struct MemoryWriteAddress *mwa = Machine->drv->cpu[SearchCpuNo].memory_write;
 
-	int region = Machine->drv->cpu[SearchCpuNo].memory_region;
+	int region = REGION_CPU1+SearchCpuNo;
 
 	struct ExtMemory *ext_sr = StartRam;
 	struct ExtMemory *ext_br = BackupRam;

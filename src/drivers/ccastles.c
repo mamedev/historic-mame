@@ -110,7 +110,7 @@ static void ccastles_coin_counter_w(int offset,int data)
 
 static void ccastles_bankswitch_w(int offset, int data)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if (data) { cpu_setbank(1,&RAM[0x10000]); }
@@ -243,7 +243,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
 			1500000,	/* 1.5 Mhz */
-			0,
 			readmem,writemem,0,0,
 			interrupt,4
 		}
@@ -282,7 +281,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( ccastles )
-     ROM_REGION(0x14000)	/* 64k for code */
+     ROM_REGIONX( 0x14000, REGION_CPU1 )	/* 64k for code */
      ROM_LOAD( "ccastles.303", 0x0a000, 0x2000, 0x10e39fce )
      ROM_LOAD( "ccastles.304", 0x0c000, 0x2000, 0x74510f72 )
      ROM_LOAD( "ccastles.305", 0x0e000, 0x2000, 0x9418cf8a )
@@ -295,7 +294,7 @@ ROM_START( ccastles )
 ROM_END
 
 ROM_START( ccastle2 )
-     ROM_REGION(0x14000)	/* 64k for code */
+     ROM_REGIONX( 0x14000, REGION_CPU1 )	/* 64k for code */
      ROM_LOAD( "ccastles.203", 0x0a000, 0x2000, 0x348a96f0 )
      ROM_LOAD( "ccastles.204", 0x0c000, 0x2000, 0xd48d8c1f )
      ROM_LOAD( "ccastles.205", 0x0e000, 0x2000, 0x0e4883cc )
@@ -314,7 +313,7 @@ static int hiload(void)
 	/* Read the NVRAM contents from disk */
 	/* No check necessary */
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
@@ -330,7 +329,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

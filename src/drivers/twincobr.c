@@ -924,21 +924,18 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,
 			28000000/4,			/* 7.0 MHz - Main board Crystal is 28Mhz */
-			REGION_CPU1,		/* memory region #0 */
 			readmem,writemem,0,0,
 			twincobr_interrupt,1
 		},
 		{
 			CPU_Z80,
 			28000000/8,			/* 3.5 MHz */
-			REGION_CPU2,		/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,0	/* IRQs are caused by the YM3812 */
 		},
 		{
 			CPU_TMS320C10,
 			28000000/8,			/* 3.5 MHz */
-			REGION_CPU3,		/* memory region #3 */
 			DSP_readmem,DSP_writemem,DSP_readport,DSP_writeport,
 			ignore_interrupt,0	/* IRQs are caused by 68000 */
 		},

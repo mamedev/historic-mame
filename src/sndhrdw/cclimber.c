@@ -17,7 +17,7 @@ int cclimber_sh_start(const struct MachineSound *msound)
 	channel = mixer_allocate_channel(50);
 	mixer_set_name(channel,"Samples");
 
-	samplebuf = malloc(2*Machine->memory_region_length[3]);
+	samplebuf = malloc(2*memory_region_length(3));
 	if (!samplebuf)
 		return 1;
 
@@ -36,12 +36,12 @@ void cclimber_sh_stop(void)
 static void cclimber_play_sample(int start,int freq,int volume)
 {
 	int len;
-	const UINT8 *rom = Machine->memory_region[3];
+	const UINT8 *rom = memory_region(3);
 
 
 	/* decode the rom samples */
 	len = 0;
-	while (start + len < Machine->memory_region_length[3] && rom[start+len] != 0x70)
+	while (start + len < memory_region_length(3) && rom[start+len] != 0x70)
 	{
 		int sample;
 

@@ -6,7 +6,7 @@
 ** (c) 1997,1998,1999 Jarek Burczynski (s0246@priv4.onet.pl)
 ** Many of the optimizing ideas by Tatsuyuki Satoh
 **
-** Version 2.100 October, 9th 1999
+** Version 2.101 December, 5th 1999
 **
 **
 ** CAUTION !!! CAUTION !!!     H E L P   W A N T E D !!!

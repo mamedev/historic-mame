@@ -187,7 +187,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3072000,
-			0,
 			readmem,writemem,0,writeport,
 			interrupt,1
 		},
@@ -227,7 +226,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( pkunwar )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "pkwar.01r",    0x0000, 0x4000, 0xce2d2c7b )
 	ROM_LOAD( "pkwar.02r",    0x4000, 0x4000, 0xabc1f661 )
 	ROM_LOAD( "pkwar.03r",    0xE000, 0x2000, 0x56faebea )
@@ -243,7 +242,7 @@ ROM_START( pkunwar )
 ROM_END
 
 ROM_START( pkunwarj )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "pgunwar.6",    0x0000, 0x4000, 0x357f3ef3 )
 	ROM_LOAD( "pgunwar.5",    0x4000, 0x4000, 0x0092e49e )
 	ROM_LOAD( "pkwar.03r",    0xE000, 0x2000, 0x56faebea )
@@ -260,7 +259,7 @@ ROM_END
 
 static int pkunwar_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -287,7 +286,7 @@ static int pkunwar_hiload(void)
 static void pkunwar_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

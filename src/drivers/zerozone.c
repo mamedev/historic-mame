@@ -209,14 +209,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,
 			10000000,	/* 10 MHz */
-			0,
 			readmem,writemem,0,0,
 			m68_level1_irq,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			1000000,	/* 1 MHz ??? */
-			2,
 			sound_readmem, sound_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are triggered by the main cpu */
 		}
@@ -292,14 +290,14 @@ static void hisave(void)
 ***************************************************************************/
 
 ROM_START( zerozone )
-	ROM_REGION(0x20000)     /* 128k for 68000 code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 128k for 68000 code */
 	ROM_LOAD_EVEN( "zz-4.rom", 0x0000, 0x10000, 0x83718b9b )
 	ROM_LOAD_ODD ( "zz-5.rom", 0x0000, 0x10000, 0x18557f41 )
 
 	ROM_REGION_DISPOSE(0x080000)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "zz-6.rom", 0x00000, 0x80000, 0xc8b906b9 )
 
-	ROM_REGION(0x10000)      /* sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )      /* sound cpu */
 	ROM_LOAD( "zz-1.rom", 0x00000, 0x08000, 0x223ccce5 )
 
 	ROM_REGION(0x40000)      /* ADPCM samples */

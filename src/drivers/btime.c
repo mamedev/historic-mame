@@ -1349,14 +1349,12 @@ static struct MachineDriver GAMENAME##_machine_driver =             \
 		{	  	                                                    \
 			CPU_M6502,                                  			\
 			CLOCK,													\
-			0,                                          			\
 			GAMENAME##_readmem,GAMENAME##_writemem,0,0, 			\
 			MAIN_IRQ,1                                  			\
 		},		                                                    \
 		{		                                                    \
 			CPU_M6502 | CPU_AUDIO_CPU,                  			\
 			500000, /* 500 kHz */                       			\
-			2,      /* memory region #2 */              			\
 			GAMENAME##_sound_readmem,GAMENAME##_sound_writemem,0,0, \
 			SOUND_IRQ,16   /* IRQs are triggered by the main CPU */ \
 		}                                                   		\
@@ -1407,7 +1405,7 @@ MACHINE_DRIVER( disco,     750000, btime_irq_interrupt, nmi_interrupt,       dis
 ***************************************************************************/
 
 ROM_START( btime )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "aa04.9b",      0xc000, 0x1000, 0x368a25b5 )
 	ROM_LOAD( "aa06.13b",     0xd000, 0x1000, 0xb4ba400d )
 	ROM_LOAD( "aa05.10b",     0xe000, 0x1000, 0x8005bffa )
@@ -1424,7 +1422,7 @@ ROM_START( btime )
 	ROM_LOAD( "ab01.3b",      0x6800, 0x0800, 0x25b49078 )
 	ROM_LOAD( "ab02.4b",      0x7000, 0x0800, 0xb8ef56c3 )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "ab14.12h",     0xf000, 0x1000, 0xf55e5211 )
 
 	ROM_REGION(0x0800)      /* background graphics */
@@ -1432,7 +1430,7 @@ ROM_START( btime )
 ROM_END
 
 ROM_START( btime2 )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "aa04.9b2",     0xc000, 0x1000, 0xa041e25b )
 	ROM_LOAD( "aa06.13b",     0xd000, 0x1000, 0xb4ba400d )
 	ROM_LOAD( "aa05.10b",     0xe000, 0x1000, 0x8005bffa )
@@ -1449,7 +1447,7 @@ ROM_START( btime2 )
 	ROM_LOAD( "ab01.3b",      0x6800, 0x0800, 0x25b49078 )
 	ROM_LOAD( "ab02.4b",      0x7000, 0x0800, 0xb8ef56c3 )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "ab14.12h",     0xf000, 0x1000, 0xf55e5211 )
 
 	ROM_REGION(0x0800)      /* background graphics */
@@ -1457,7 +1455,7 @@ ROM_START( btime2 )
 ROM_END
 
 ROM_START( btimem )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "ab05a1.12b",   0xb000, 0x1000, 0x0a98b230 )
 	ROM_LOAD( "ab04.9b",      0xc000, 0x1000, 0x797e5f75 )
 	ROM_LOAD( "ab06.13b",     0xd000, 0x1000, 0xc77f3f64 )
@@ -1475,7 +1473,7 @@ ROM_START( btimem )
 	ROM_LOAD( "ab01.3b",      0x6800, 0x0800, 0x25b49078 )
 	ROM_LOAD( "ab02.4b",      0x7000, 0x0800, 0xb8ef56c3 )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "ab14.12h",     0xf000, 0x1000, 0xf55e5211 )
 
 	ROM_REGION(0x0800)      /* background graphics */
@@ -1483,7 +1481,7 @@ ROM_START( btimem )
 ROM_END
 
 ROM_START( cookrace )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	/* code is in the range 0500-3fff, encrypted */
 	ROM_LOAD( "1f.1",         0x0000, 0x2000, 0x68759d32 )
 	ROM_LOAD( "2f.2",         0x2000, 0x2000, 0xbe7d72d1 )
@@ -1500,7 +1498,7 @@ ROM_START( cookrace )
 	ROM_LOAD( "5f.5",         0x7000, 0x0800, 0x611c686f )  /* garbage?? */
 	ROM_CONTINUE(             0x7000, 0x0800 )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "6f.6",         0x0000, 0x1000, 0x6b8e0272 ) /* starts at 0000, not f000; 0000-01ff is RAM */
 	ROM_RELOAD(               0xf000, 0x1000 )     /* for the reset/interrupt vectors */
 
@@ -1513,7 +1511,7 @@ ROM_END
    http://www.gamearchive.com/flyers/video/taito/locknchase_f.jpg  */
 
 ROM_START( lnc )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "s3-3d",        0xc000, 0x1000, 0x1ab4f2c2 )
 	ROM_LOAD( "s2-3c",        0xd000, 0x1000, 0x5e46b789 )
 	ROM_LOAD( "s1-3b",        0xe000, 0x1000, 0x1308a32e )
@@ -1527,7 +1525,7 @@ ROM_START( lnc )
 	ROM_LOAD( "s8-15l",       0x4000, 0x1000, 0x672a92d0 )
 	ROM_LOAD( "s9-15m",       0x5000, 0x1000, 0x87c8ee9a )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "sa-1h",        0xf000, 0x1000, 0x379387ec )
 
 	ROM_REGIONX( 0x0040, REGION_PROMS )
@@ -1536,7 +1534,7 @@ ROM_START( lnc )
 ROM_END
 
 ROM_START( wtennis )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "tx",           0xc000, 0x0800, 0xfd343474 )
 	ROM_LOAD( "t4",           0xd000, 0x1000, 0xe465d82c )
 	ROM_LOAD( "t3",           0xe000, 0x1000, 0x8f090eab )
@@ -1550,7 +1548,7 @@ ROM_START( wtennis )
 	ROM_LOAD( "t6",           0x4000, 0x1000, 0x4fb8565d )
 	ROM_LOAD( "t9",           0x5000, 0x1000, 0x4893286d )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "t1",           0x0000, 0x1000, 0x40737ea7 ) /* starts at 0000, not f000; 0000-01ff is RAM */
 	ROM_RELOAD(               0xf000, 0x1000 )     /* for the reset/interrupt vectors */
 
@@ -1560,7 +1558,7 @@ ROM_START( wtennis )
 ROM_END
 
 ROM_START( mmonkey )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "mmonkey.e4",   0xc000, 0x1000, 0x8d31bf6a )
 	ROM_LOAD( "mmonkey.d4",   0xd000, 0x1000, 0xe54f584a )
 	ROM_LOAD( "mmonkey.b4",   0xe000, 0x1000, 0x399a161e )
@@ -1574,7 +1572,7 @@ ROM_START( mmonkey )
 	ROM_LOAD( "mmonkey.l14",  0x4000, 0x1000, 0x922bb3e1 )
 	ROM_LOAD( "mmonkey.m14",  0x5000, 0x1000, 0xf943e28c )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "mmonkey.h1",   0xf000, 0x1000, 0x5bcb2e81 )
 
 	ROM_REGIONX( 0x0040, REGION_PROMS )
@@ -1583,7 +1581,7 @@ ROM_START( mmonkey )
 ROM_END
 
 ROM_START( brubber )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	/* a000-bfff space for the service ROM */
 	ROM_LOAD( "brubber.12c",  0xc000, 0x2000, 0xb5279c70 )
 	ROM_LOAD( "brubber.12d",  0xe000, 0x2000, 0xb2ce51f5 )
@@ -1595,12 +1593,12 @@ ROM_START( brubber )
 	ROM_LOAD( "bnj10e.bin",   0x6000, 0x1000, 0xf4e9eb49 )
 	ROM_LOAD( "bnj10f.bin",   0x7000, 0x1000, 0xa9ffacb4 )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "bnj6c.bin",    0xf000, 0x1000, 0x8c02f662 )
 ROM_END
 
 ROM_START( bnj )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "bnj12b.bin",   0xa000, 0x2000, 0xba3e3801 )
 	ROM_LOAD( "bnj12c.bin",   0xc000, 0x2000, 0xfb3a2cdd )
 	ROM_LOAD( "bnj12d.bin",   0xe000, 0x2000, 0xb88bc99e )
@@ -1612,12 +1610,12 @@ ROM_START( bnj )
 	ROM_LOAD( "bnj10e.bin",   0x6000, 0x1000, 0xf4e9eb49 )
 	ROM_LOAD( "bnj10f.bin",   0x7000, 0x1000, 0xa9ffacb4 )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "bnj6c.bin",    0xf000, 0x1000, 0x8c02f662 )
 ROM_END
 
 ROM_START( caractn )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	/* a000-bfff space for the service ROM */
 	ROM_LOAD( "brubber.12c",  0xc000, 0x2000, 0xb5279c70 )
 	ROM_LOAD( "caractn.a6",   0xe000, 0x2000, 0x1d6957c4 )
@@ -1629,12 +1627,12 @@ ROM_START( caractn )
 	ROM_LOAD( "bnj10e.bin",   0x6000, 0x1000, 0xf4e9eb49 )
 	ROM_LOAD( "bnj10f.bin",   0x7000, 0x1000, 0xa9ffacb4 )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "bnj6c.bin",    0xf000, 0x1000, 0x8c02f662 )
 ROM_END
 
 ROM_START( zoar )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "zoar15",       0xd000, 0x1000, 0x1f0cfdb7 )
 	ROM_LOAD( "zoar16",       0xe000, 0x1000, 0x7685999c )
 	ROM_LOAD( "zoar17",       0xf000, 0x1000, 0x619ea867 )
@@ -1655,7 +1653,7 @@ ROM_START( zoar )
 	ROM_LOAD( "zoar05",       0x8800, 0x1000, 0x05dc6b09 )
 	ROM_LOAD( "zoar08",       0x9800, 0x1000, 0x9a148551 )
 
-	ROM_REGION(0x10000)      /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )      /* 64k for the audio CPU */
 	ROM_LOAD( "zoar09",       0xf000, 0x1000, 0x18d96ff1 )
 
 	ROM_REGION(0x1000)      /* background graphics */
@@ -1667,7 +1665,7 @@ ROM_START( zoar )
 ROM_END
 
 ROM_START( disco )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "disco.w5",     0xa000, 0x1000, 0xb2c87b78 )
 	ROM_LOAD( "disco.w4",     0xb000, 0x1000, 0xad7040ee )
 	ROM_LOAD( "disco.w3",     0xc000, 0x1000, 0x12fb4f08 )
@@ -1677,7 +1675,7 @@ ROM_START( disco )
 
 	ROM_REGION_DISPOSE(0x0010)  /* empty */
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "disco.w6",     0xf000, 0x1000, 0xd81e781e )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
@@ -1687,7 +1685,7 @@ ROM_END
 
 static int wtennis_reset_hack_r(int offset)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* Otherwise the game goes into test mode and there is no way out that I
 	   can see.  I'm not sure how it can work, it probably somehow has to do
@@ -1706,7 +1704,7 @@ static void wtennis_driver_init(void)
 
 static void btime_decode(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* For now, just copy the RAM array over to ROM. Decryption will happen */
@@ -1717,7 +1715,7 @@ static void btime_decode(void)
 
 static void zoar_decode(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* At location 0xD50A is what looks like an undocumented opcode. I tried
@@ -1732,7 +1730,7 @@ static void zoar_decode(void)
 static void lnc_decode(void)
 {
 	int A;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* Swap bits 5 & 6 for opcodes */
@@ -1744,7 +1742,7 @@ static void lnc_decode(void)
 
 static int btime_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1770,7 +1768,7 @@ static int btime_hiload(void)
 static void btime_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1783,7 +1781,7 @@ static void btime_hisave(void)
 
 static int lnc_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	static int firsttime=0;
 	/* check if the hi score table has already been initialized */
 	/* the high score table is intialized to all 0, so first of all */
@@ -1851,7 +1849,7 @@ static int lnc_hiload(void)
 static void lnc_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1865,7 +1863,7 @@ static void lnc_hisave(void)
 
 static int bnj_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/*   Check if the hi score table has already been initialized.
@@ -1900,7 +1898,7 @@ static int bnj_hiload(void)
 static void bnj_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1914,7 +1912,7 @@ static void bnj_hisave(void)
 
 static int zoar_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1942,7 +1940,7 @@ static int zoar_hiload(void)
 static void zoar_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1961,7 +1959,7 @@ static void zoar_hisave(void)
 /*** Disco No.1 high score save - RJF (Apr 5, 1999) ***/
 static int disco_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	static int firsttime=0;
 	/* check if the hi score table has already been initialized */
 	/* the high score table is intialized to all 0, so first of all */
@@ -2002,7 +2000,7 @@ static int disco_hiload(void)
 static void disco_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2499,14 +2497,12 @@ static struct MachineDriver decocass_machine_driver =
 		{
 			CPU_M6502,
 			1500000,	/* ? I guess it should be 750000 like in bnj */
-			0,
 			decocass_readmem,decocass_writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			500000, /* 500 kHz */
-			1,      /* memory region #1 */
 			decocass_sound_readmem,decocass_sound_writemem,0,0,
 ignore_interrupt,0,//			nmi_interrupt,16   /* IRQs are triggered by the main CPU */
 		}
@@ -2538,13 +2534,13 @@ ignore_interrupt,0,//			nmi_interrupt,16   /* IRQs are triggered by the main CPU
 };
 
 ROM_START( decocass )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "rms8.cpu",     0xf000, 0x1000, 0x23d929b7 )
 /* the following two are just about the same stuff as the one above */
 //	ROM_LOAD( "dsp3.p0b",     0xf000, 0x0800, 0xb67a91d9 )
 //	ROM_LOAD( "dsp3.p1b",     0xf800, 0x0800, 0x3bfff5f3 )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "rms8.snd",     0xf800, 0x0800, 0xb66b2c2a )
 ROM_END
 

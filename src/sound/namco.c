@@ -323,7 +323,7 @@ int namco_sh_start(const struct MachineSound *msound)
 	}
 	else
 	{
-		sound_prom = Machine->memory_region[intf->region];
+		sound_prom = memory_region(intf->region);
 		samples_per_byte = 1;	/* use only low 4 bits */
 	}
 

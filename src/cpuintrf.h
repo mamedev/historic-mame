@@ -177,6 +177,9 @@ enum {
 #ifndef HAS_PDP1
 #define HAS_PDP1		0
 #endif
+#ifndef HAS_ADSP2100
+#define HAS_ADSP2100	0
+#endif
 
 /* ASG 971222 -- added this generic structure */
 struct cpu_interface
@@ -204,6 +207,7 @@ struct cpu_interface
 	unsigned num_irqs;
 	int default_vector;
     int *icount;
+    double overclock;
     int no_int, irq_int, nmi_int;
     int (*memory_read)(int offset);
     void (*memory_write)(int offset, int data);
@@ -225,9 +229,9 @@ int watchdog_reset_r(int offset);
 void machine_reset(void);
 /* Use this function to reset a single CPU */
 void cpu_set_reset_line(int cpu,int state);
+/* Use this function to halt a single CPU */
+void cpu_set_halt_line(int cpu,int state);
 
-/* Use this function to stop and restart CPUs */
-void cpu_halt(int cpunum,int running);
 /* This function returns CPUNUM current status (running or halted) */
 int cpu_getstatus(int cpunum);
 int cpu_gettotalcpu(void);
@@ -343,6 +347,10 @@ void cpu_0_irq_line_vector_w(int offset, int data);
 void cpu_1_irq_line_vector_w(int offset, int data);
 void cpu_2_irq_line_vector_w(int offset, int data);
 void cpu_3_irq_line_vector_w(int offset, int data);
+void cpu_4_irq_line_vector_w(int offset, int data);
+void cpu_5_irq_line_vector_w(int offset, int data);
+void cpu_6_irq_line_vector_w(int offset, int data);
+void cpu_7_irq_line_vector_w(int offset, int data);
 
 /* Obsolete functions: avoid to use them in new drivers if possible. */
 

@@ -188,7 +188,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4000000,        /* 4.00 MHz??? */
-			0,
 			readmem,writemem,readport,writeport,
 			interrupt,1
 		}
@@ -227,7 +226,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( ambush )
-	ROM_REGION(0x10000)       /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )       /* 64k for code */
 	ROM_LOAD( "ambush.h7",    0x0000, 0x2000, 0xce306563 )
 	ROM_LOAD( "ambush.g7",    0x2000, 0x2000, 0x90291409 )
 	ROM_LOAD( "ambush.f7",    0x4000, 0x2000, 0xd023ca29 )
@@ -237,20 +236,18 @@ ROM_START( ambush )
 	ROM_LOAD( "ambush.n4",    0x0000, 0x2000, 0xecc0dc85 )
 	ROM_LOAD( "ambush.m4",    0x2000, 0x2000, 0xe86ca98a )
 
-	ROM_REGIONX( 0x0200, REGION_PROMS )
+	ROM_REGIONX( 0x0400, REGION_PROMS )
 	ROM_LOAD( "a.bpr",        0x0000, 0x0100, 0x5f27f511 )  /* color PROMs */
 	ROM_LOAD( "b.bpr",        0x0100, 0x0100, 0x1b03fd3b )	/* How is this selected, */
 															/* or is it even a color PROM? */
-
-	ROM_REGION(0x0300)
-	ROM_LOAD( "13.bpr",		  0x0000, 0x0100, 0x547e970f )  /* I'm not sure what these do. */
-	ROM_LOAD( "14.bpr",		  0x0000, 0x0100, 0x622a8ce7 )  /* They don't look like color PROMs */
+	ROM_LOAD( "13.bpr",		  0x0200, 0x0100, 0x547e970f )  /* I'm not sure what these do. */
+	ROM_LOAD( "14.bpr",		  0x0300, 0x0100, 0x622a8ce7 )  /* They don't look like color PROMs */
 ROM_END
 
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* wait for the checkerboard pattern to be on screen */
@@ -273,7 +270,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

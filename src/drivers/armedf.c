@@ -572,14 +572,12 @@ static struct MachineDriver terraf_machine_driver =
 		{
 			CPU_M68000,
 			8000000, /* 8 Mhz?? */
-			0,
 			terraf_readmem,terraf_writemem,0,0,
 			armedf_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3072000,	/* 3.072 Mhz???? */
-			2,
 			soundreadmem,soundwritemem,readport,writeport,
 			interrupt,128
 		},
@@ -620,14 +618,12 @@ static struct MachineDriver armedf_machine_driver =
 		{
 			CPU_M68000,
 			8000000, /* 8 Mhz?? */
-			0,
 			armedf_readmem,armedf_writemem,0,0,
 			armedf_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3072000,	/* 3.072 Mhz???? */
-			2,
 			soundreadmem,soundwritemem,readport,writeport,
 			interrupt,128
 		},
@@ -668,14 +664,12 @@ static struct MachineDriver cclimbr2_machine_driver =
 		{
 			CPU_M68000,
 			8000000, /* 8 Mhz?? */
-			0,
 			cclimbr2_readmem,cclimbr2_writemem,0,0,
 			cclimbr2_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3072000,	/* 3.072 Mhz???? */
-			2,
 			cclimbr2_soundreadmem,cclimbr2_soundwritemem,readport,writeport,
 			interrupt,128
 		},
@@ -711,7 +705,7 @@ static struct MachineDriver cclimbr2_machine_driver =
 };
 
 ROM_START( terraf )
-	ROM_REGION(0x80000)	/* 64K*8 for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 64K*8 for 68000 code */
 	ROM_LOAD_EVEN( "terrafor.014", 0x00000, 0x10000, 0x8e5f557f )
 	ROM_LOAD_ODD(  "terrafor.011", 0x00000, 0x10000, 0x5320162a )
 	ROM_LOAD_EVEN( "terrafor.013", 0x20000, 0x10000, 0xa86951e0 )
@@ -719,7 +713,7 @@ ROM_START( terraf )
 	ROM_LOAD_EVEN( "terrafor.012", 0x40000, 0x08000, 0x4f0e1d76 )
 	ROM_LOAD_ODD(  "terrafor.009", 0x40000, 0x08000, 0xd1014280 )
 
-	ROM_REGION(0x88000)
+	ROM_REGION_DISPOSE( 0x88000 )
 	ROM_LOAD( "terrafor.008", 0x00000, 0x08000, 0xbc6f7cbc ) /* characters */
 	ROM_LOAD( "terrafor.006", 0x08000, 0x10000, 0x25d23dfd ) /* foreground tiles */
 	ROM_LOAD( "terrafor.007", 0x18000, 0x10000, 0xb9b0fe27 )
@@ -728,12 +722,12 @@ ROM_START( terraf )
 	ROM_LOAD( "terrafor.003", 0x48000, 0x10000, 0xd74085a1 ) /* sprites */
 	ROM_LOAD( "terrafor.002", 0x68000, 0x10000, 0x148aa0c5 )
 
-	ROM_REGION(0x10000)	/* Z80 code (sound) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Z80 code (sound) */
 	ROM_LOAD( "terrafor.001", 0x00000, 0x10000, 0xeb6b4138 )
 ROM_END
 
 ROM_START( terrafu )
-	ROM_REGION(0x80000)	/* 64K*8 for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 64K*8 for 68000 code */
 	ROM_LOAD_EVEN( "tf.8",         0x00000, 0x10000, 0xfea6dd64 )
 	ROM_LOAD_ODD(  "tf.3",         0x00000, 0x10000, 0x02f9d05a )
 	ROM_LOAD_EVEN( "tf.7",         0x20000, 0x10000, 0xfde8de7e )
@@ -741,7 +735,7 @@ ROM_START( terrafu )
 	ROM_LOAD_EVEN( "tf.6",         0x40000, 0x08000, 0xb91e9ba3 )
 	ROM_LOAD_ODD(  "tf.1",         0x40000, 0x08000, 0xd6e22375 )
 
-	ROM_REGION(0x88000)
+	ROM_REGION_DISPOSE(0x88000)
 	ROM_LOAD( "terrafor.008", 0x00000, 0x08000, 0xbc6f7cbc ) /* characters */
 	ROM_LOAD( "terrafor.006", 0x08000, 0x10000, 0x25d23dfd ) /* foreground tiles */
 	ROM_LOAD( "terrafor.007", 0x18000, 0x10000, 0xb9b0fe27 )
@@ -750,12 +744,12 @@ ROM_START( terrafu )
 	ROM_LOAD( "terrafor.003", 0x48000, 0x10000, 0xd74085a1 ) /* sprites */
 	ROM_LOAD( "terrafor.002", 0x68000, 0x10000, 0x148aa0c5 )
 
-	ROM_REGION(0x10000)	/* Z80 code (sound) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Z80 code (sound) */
 	ROM_LOAD( "terrafor.001", 0x00000, 0x10000, 0xeb6b4138 )
 ROM_END
 
 ROM_START( armedf )
-	ROM_REGION(0x80000)	/* 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 68000 code */
 	ROM_LOAD_EVEN( "af_06.rom", 0x00000, 0x10000, 0xc5326603 )
 	ROM_LOAD_ODD(  "af_01.rom", 0x00000, 0x10000, 0x458e9542 )
 	ROM_LOAD_EVEN( "af_07.rom", 0x20000, 0x10000, 0xcc8517f5 )
@@ -763,7 +757,7 @@ ROM_START( armedf )
 	ROM_LOAD_EVEN( "af_08.rom", 0x40000, 0x10000, 0xd1d43600 )
 	ROM_LOAD_ODD(  "af_03.rom", 0x40000, 0x10000, 0xbbe1fe2d )
 
-	ROM_REGION(0x88000)
+	ROM_REGION_DISPOSE(0x88000)
 	ROM_LOAD( "af_09.rom", 0x00000, 0x08000, 0x7025e92d ) /* characters */
 	ROM_LOAD( "af_04.rom", 0x08000, 0x10000, 0x44d3af4f ) /* foreground tiles */
 	ROM_LOAD( "af_05.rom", 0x18000, 0x10000, 0x92076cab )
@@ -772,12 +766,12 @@ ROM_START( armedf )
 	ROM_LOAD( "af_11.rom", 0x48000, 0x20000, 0xb46c473c ) /* sprites */
 	ROM_LOAD( "af_12.rom", 0x68000, 0x20000, 0x23cb6bfe )
 
-	ROM_REGION(0x10000)	/* Z80 code (sound) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Z80 code (sound) */
 	ROM_LOAD( "af_10.rom", 0x00000, 0x10000, 0xc5eacb87 )
 ROM_END
 
 ROM_START( cclimbr2 )
-	ROM_REGION(0x80000)	/* 64K*8 for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 64K*8 for 68000 code */
 	ROM_LOAD_EVEN( "4.bin", 0x00000, 0x10000, 0x7922ea14 )
 	ROM_LOAD_ODD(  "1.bin", 0x00000, 0x10000, 0x2ac7ed67 )
 	ROM_LOAD_EVEN( "6.bin", 0x20000, 0x10000, 0x7905c992 )
@@ -785,7 +779,7 @@ ROM_START( cclimbr2 )
 	ROM_LOAD_EVEN( "3.bin", 0x40000, 0x10000, 0x1fb110d6 )
 	ROM_LOAD_ODD(  "2.bin", 0x40000, 0x10000, 0x0024c15b )
 
-	ROM_REGION(0x88000)
+	ROM_REGION( 0x88000 )
 	ROM_LOAD( "10.bin", 0x00000, 0x08000, 0x7f475266 ) /* characters */
 	ROM_LOAD( "7.bin",  0x08000, 0x10000, 0xcbdd3906 ) /* foreground tiles */
 	ROM_LOAD( "8.bin",  0x18000, 0x10000, 0xb2a613c0 )
@@ -796,7 +790,7 @@ ROM_START( cclimbr2 )
 	ROM_LOAD( "13.bin", 0x68000, 0x10000, 0x6b6ec999 )
 	ROM_LOAD( "14.bin", 0x78000, 0x10000, 0xf426a4ad )
 
-	ROM_REGION(0x10000)	/* Z80 code (sound) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Z80 code (sound) */
 	ROM_LOAD( "11.bin", 0x00000, 0x04000, 0xfe0175be )
 	ROM_LOAD( "12.bin", 0x04000, 0x08000, 0x5ddf18f2 )
 

@@ -58,7 +58,7 @@ void jackal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	unsigned char *sr, *ss;
 	int offs,i;
-	unsigned char *RAM = (Machine->memory_region[0]);
+	unsigned char *RAM = (memory_region(REGION_CPU1));
 
 
 	if (palette_recalc())

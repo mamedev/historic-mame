@@ -137,6 +137,8 @@ static UINT32 last_speed_check;
 static UINT8 speech_val;
 static UINT8 last_speech_write;
 
+static UINT16 last_sound_reset;
+
 
 
 /*************************************
@@ -165,6 +167,7 @@ static void init_machine(void)
 {
 	last_speed_check = 0;
 	last_speech_write = 0x80;
+	last_sound_reset = 1;
 
 	atarigen_eeprom_reset();
 	atarigen_slapstic_reset();
@@ -301,11 +304,17 @@ static void input_w(int offset, int data)
 	switch (offset)
 	{
 		case 0x0e:		/* sound CPU reset */
-			if (data & 1)
-				atarigen_sound_reset_w(0, 0);
-			else
-				cpu_halt(1, 0);
+		{
+			int newword = COMBINE_WORD(last_sound_reset, data);
+			int diff = newword ^ last_sound_reset;
+			last_sound_reset = newword;
+			if (diff & 1)
+			{
+				cpu_set_reset_line(1, (newword & 1) ? CLEAR_LINE : ASSERT_LINE);
+				atarigen_sound_reset();
+			}
 			break;
+		}
 	}
 }
 
@@ -702,14 +711,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68010,		/* verified */
 			7159160,
-			0,
 			main_readmem,main_writemem,0,0,
 			atarigen_video_int_gen,1
 		},
 		{
 			CPU_M6502,
 			7159160/4,
-			1,
 			sound_readmem,sound_writemem,0,0,
 			0,0,
 			atarigen_6502_irq_gen,250
@@ -758,7 +765,7 @@ static struct MachineDriver machine_driver =
  *************************************/
 
 ROM_START( gauntlet )
-	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "gauntlt1.9a",  0x00000, 0x08000, 0x46fe8743 )
 	ROM_LOAD_ODD ( "gauntlt1.9b",  0x00000, 0x08000, 0x276e15c4 )
 	ROM_LOAD_EVEN( "gauntlt1.10a", 0x38000, 0x04000, 0x6d99ed51 )
@@ -766,7 +773,7 @@ ROM_START( gauntlet )
 	ROM_LOAD_EVEN( "gauntlt1.7a",  0x40000, 0x08000, 0x6fb8419c )
 	ROM_LOAD_ODD ( "gauntlt1.7b",  0x40000, 0x08000, 0x931bd2a0 )
 
-	ROM_REGION(0x10000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "gauntlt1.16r", 0x4000, 0x4000, 0x6ee7f3cc )
 	ROM_LOAD( "gauntlt1.16s", 0x8000, 0x8000, 0xfa19861f )
 
@@ -789,7 +796,7 @@ ROM_END
 
 
 ROM_START( gauntir1 )
-	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "gaun1ir1.9a",  0x00000, 0x08000, 0xfd871f81 )
 	ROM_LOAD_ODD ( "gaun1ir1.9b",  0x00000, 0x08000, 0xbcb2fb1d )
 	ROM_LOAD_EVEN( "gaun1ir1.10a", 0x38000, 0x04000, 0x4642cd95 )
@@ -797,7 +804,7 @@ ROM_START( gauntir1 )
 	ROM_LOAD_EVEN( "gaun1ir1.7a",  0x40000, 0x08000, 0xc57377b3 )
 	ROM_LOAD_ODD ( "gaun1ir1.7b",  0x40000, 0x08000, 0x1cac2071 )
 
-	ROM_REGION(0x10000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "gauntlt1.16r", 0x4000, 0x4000, 0x6ee7f3cc )
 	ROM_LOAD( "gauntlt1.16s", 0x8000, 0x8000, 0xfa19861f )
 
@@ -820,7 +827,7 @@ ROM_END
 
 
 ROM_START( gauntir2 )
-	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "gaun1ir1.9a",  0x00000, 0x08000, 0xfd871f81 )
 	ROM_LOAD_ODD ( "gaun1ir1.9b",  0x00000, 0x08000, 0xbcb2fb1d )
 	ROM_LOAD_EVEN( "gaun1ir1.10a", 0x38000, 0x04000, 0x4642cd95 )
@@ -828,7 +835,7 @@ ROM_START( gauntir2 )
 	ROM_LOAD_EVEN( "gaun1ir2.7a",  0x40000, 0x08000, 0x73e1ad79 )
 	ROM_LOAD_ODD ( "gaun1ir2.7b",  0x40000, 0x08000, 0xfd248cea )
 
-	ROM_REGION(0x10000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "gauntlt1.16r", 0x4000, 0x4000, 0x6ee7f3cc )
 	ROM_LOAD( "gauntlt1.16s", 0x8000, 0x8000, 0xfa19861f )
 
@@ -851,7 +858,7 @@ ROM_END
 
 
 ROM_START( gaunt2p )
-	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "gaunt2p.9a",   0x00000, 0x08000, 0x8784133f )
 	ROM_LOAD_ODD ( "gaunt2p.9b",   0x00000, 0x08000, 0x2843bde3 )
 	ROM_LOAD_EVEN( "gauntlt1.10a", 0x38000, 0x04000, 0x6d99ed51 )
@@ -859,7 +866,7 @@ ROM_START( gaunt2p )
 	ROM_LOAD_EVEN( "gaunt2p.7a",   0x40000, 0x08000, 0x5b4ee415 )
 	ROM_LOAD_ODD ( "gaunt2p.7b",   0x40000, 0x08000, 0x41f5c9e2 )
 
-	ROM_REGION(0x10000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "gauntlt1.16r", 0x4000, 0x4000, 0x6ee7f3cc )
 	ROM_LOAD( "gauntlt1.16s", 0x8000, 0x8000, 0xfa19861f )
 
@@ -882,7 +889,7 @@ ROM_END
 
 
 ROM_START( gaunt2 )
-	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "gauntlt2.9a",  0x00000, 0x08000, 0x46fe8743 )
 	ROM_LOAD_ODD ( "gauntlt2.9b",  0x00000, 0x08000, 0x276e15c4 )
 	ROM_LOAD_EVEN( "gauntlt2.10a", 0x38000, 0x04000, 0x45dfda47 )
@@ -892,7 +899,7 @@ ROM_START( gaunt2 )
 	ROM_LOAD_EVEN( "gauntlt2.6a",  0x50000, 0x08000, 0xae301bba )
 	ROM_LOAD_ODD ( "gauntlt2.6b",  0x50000, 0x08000, 0xe94aaa8a )
 
-	ROM_REGION(0x10000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "gauntlt2.16r", 0x4000, 0x4000, 0x5c731006 )
 	ROM_LOAD( "gauntlt2.16s", 0x8000, 0x8000, 0xdc3591e7 )
 
@@ -923,7 +930,7 @@ ROM_END
 
 
 ROM_START( vindctr2 )
-	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "1186", 0x00000, 0x08000, 0xaf138263 )
 	ROM_LOAD_ODD ( "1187", 0x00000, 0x08000, 0x44baff64 )
 	ROM_LOAD_EVEN( "1196", 0x38000, 0x04000, 0xc92bf6dd )
@@ -937,7 +944,7 @@ ROM_START( vindctr2 )
 	ROM_LOAD_EVEN( "1194", 0x70000, 0x08000, 0xe6bcf458 )
 	ROM_LOAD_ODD ( "1195", 0x70000, 0x08000, 0xb9bf245d )
 
-	ROM_REGION(0x10000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "1160", 0x4000, 0x4000, 0xeef0a003 )
 	ROM_LOAD( "1161", 0x8000, 0x8000, 0x68c74337 )
 
@@ -989,24 +996,24 @@ static void rom_decode(void)
 	int i;
 
 	/* swap the top and bottom halves of the main CPU ROM images */
-	p1 = (UINT32 *)&memory_region(Machine->drv->cpu[0].memory_region)[0x000000];
-	p2 = (UINT32 *)&memory_region(Machine->drv->cpu[0].memory_region)[0x008000];
+	p1 = (UINT32 *)&memory_region(REGION_CPU1)[0x000000];
+	p2 = (UINT32 *)&memory_region(REGION_CPU1)[0x008000];
 	for (i = 0; i < 0x8000 / 4; i++)
 		temp = *p1, *p1++ = *p2, *p2++ = temp;
-	p1 = (UINT32 *)&memory_region(Machine->drv->cpu[0].memory_region)[0x040000];
-	p2 = (UINT32 *)&memory_region(Machine->drv->cpu[0].memory_region)[0x048000];
+	p1 = (UINT32 *)&memory_region(REGION_CPU1)[0x040000];
+	p2 = (UINT32 *)&memory_region(REGION_CPU1)[0x048000];
 	for (i = 0; i < 0x8000 / 4; i++)
 		temp = *p1, *p1++ = *p2, *p2++ = temp;
-	p1 = (UINT32 *)&memory_region(Machine->drv->cpu[0].memory_region)[0x050000];
-	p2 = (UINT32 *)&memory_region(Machine->drv->cpu[0].memory_region)[0x058000];
+	p1 = (UINT32 *)&memory_region(REGION_CPU1)[0x050000];
+	p2 = (UINT32 *)&memory_region(REGION_CPU1)[0x058000];
 	for (i = 0; i < 0x8000 / 4; i++)
 		temp = *p1, *p1++ = *p2, *p2++ = temp;
-	p1 = (UINT32 *)&memory_region(Machine->drv->cpu[0].memory_region)[0x060000];
-	p2 = (UINT32 *)&memory_region(Machine->drv->cpu[0].memory_region)[0x068000];
+	p1 = (UINT32 *)&memory_region(REGION_CPU1)[0x060000];
+	p2 = (UINT32 *)&memory_region(REGION_CPU1)[0x068000];
 	for (i = 0; i < 0x8000 / 4; i++)
 		temp = *p1, *p1++ = *p2, *p2++ = temp;
-	p1 = (UINT32 *)&memory_region(Machine->drv->cpu[0].memory_region)[0x070000];
-	p2 = (UINT32 *)&memory_region(Machine->drv->cpu[0].memory_region)[0x078000];
+	p1 = (UINT32 *)&memory_region(REGION_CPU1)[0x070000];
+	p2 = (UINT32 *)&memory_region(REGION_CPU1)[0x078000];
 	for (i = 0; i < 0x8000 / 4; i++)
 		temp = *p1, *p1++ = *p2, *p2++ = temp;
 
@@ -1015,18 +1022,18 @@ static void rom_decode(void)
 	data = malloc(0x8000);
 	if (data)
 	{
-		memcpy(data, &Machine->memory_region[3][0x88000], 0x8000);
+		memcpy(data, &memory_region(3)[0x88000], 0x8000);
 		for (i = 0; i < 0x8000; i++)
 		{
 			int srcoffs = (i & 0x4000) | ((i << 11) & 0x3800) | ((i >> 3) & 0x07ff);
-			Machine->memory_region[3][0x88000 + i] = data[srcoffs];
+			memory_region(3)[0x88000 + i] = data[srcoffs];
 		}
 		free(data);
 	}
 
 	/* also invert the graphics bits on the playfield and motion objects */
-	for (i = 0; i < Machine->memory_region_length[3]; i++)
-		Machine->memory_region[3][i] ^= 0xff;
+	for (i = 0; i < memory_region_length(3); i++)
+		memory_region(3)[i] ^= 0xff;
 }
 
 

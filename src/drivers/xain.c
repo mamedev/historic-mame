@@ -51,7 +51,7 @@ void xain_sharedram_w(int offset, int data)
 
 void xainCPUA_bankswitch_w(int offset,int data)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if (data & 0x08) {cpu_setbank(1,&RAM[0x10000]);}
 	else {cpu_setbank(1,&RAM[0x4000]);}
@@ -59,7 +59,7 @@ void xainCPUA_bankswitch_w(int offset,int data)
 
 void xainCPUB_bankswitch_w(int offset,int data)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU2);
 
 	if (data & 0x01) {cpu_setbank(2,&RAM[0x10000]);}
 	else {cpu_setbank(2,&RAM[0x4000]);}
@@ -341,7 +341,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			2000000,	/* 2 Mhz ??? */
-			0,
 			readmem,writemem,0,0,
 			xainA_interrupt,4	/* wrong, this is just a hack */
 								/* IRQs are caused by CPU B */
@@ -353,14 +352,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			2000000,	/* 2 Mhz ??? */
-			2,
 			readmemB,writememB,0,0,
 			ignore_interrupt,0	/* IRQs are caused by CPU A */
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
 			2000000,	/* 2 Mhz ??? */
-			3,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by CPU A */
 								/* FIRQs are caused by the YM2203 */
@@ -401,7 +398,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( xsleena )
-	ROM_REGION(0x14000)	/* 64k for code */
+	ROM_REGIONX( 0x14000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "s-10.7d",      0x08000, 0x8000, 0x370164be )
 	ROM_LOAD( "s-11.7c",      0x04000, 0x4000, 0xd22bf859 )
 	ROM_CONTINUE(             0x10000, 0x4000 )
@@ -433,12 +430,12 @@ ROM_START( xsleena )
 	ROM_LOAD( "s-19.8g",      0xb8000, 0x8000, 0x76641ee3 )
 	ROM_LOAD( "s-20.7g",      0xc0000, 0x8000, 0x37671f36 )
 
-	ROM_REGION(0x14000)	/* 64k for code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for code */
 	ROM_LOAD( "s-2.3b",       0x08000, 0x8000, 0xa1a860e2 )
 	ROM_LOAD( "s-1.2b",       0x04000, 0x4000, 0x948b9757 )
 	ROM_CONTINUE(       0x10000, 0x4000 )
 
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for code */
 	ROM_LOAD( "s-3.4s",       0x8000, 0x8000, 0xa5318cb8 )
 
 	ROM_REGION(0x0100)	/* PROM */
@@ -446,7 +443,7 @@ ROM_START( xsleena )
 ROM_END
 
 ROM_START( xsleenab )
-	ROM_REGION(0x14000)	/* 64k for code */
+	ROM_REGIONX( 0x14000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1.rom",        0x08000, 0x8000, 0x79f515a7 )
 	ROM_LOAD( "s-11.7c",      0x04000, 0x4000, 0xd22bf859 )
 	ROM_CONTINUE(             0x10000, 0x4000 )
@@ -478,12 +475,12 @@ ROM_START( xsleenab )
 	ROM_LOAD( "s-19.8g",      0xb8000, 0x8000, 0x76641ee3 )
 	ROM_LOAD( "s-20.7g",      0xc0000, 0x8000, 0x37671f36 )
 
-	ROM_REGION(0x14000)	/* 64k for code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for code */
 	ROM_LOAD( "s-2.3b",       0x08000, 0x8000, 0xa1a860e2 )
 	ROM_LOAD( "s-1.2b",       0x04000, 0x4000, 0x948b9757 )
 	ROM_CONTINUE(       0x10000, 0x4000 )
 
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for code */
 	ROM_LOAD( "s-3.4s",       0x8000, 0x8000, 0xa5318cb8 )
 
 	ROM_REGION(0x0100)	/* PROM */
@@ -491,7 +488,7 @@ ROM_START( xsleenab )
 ROM_END
 
 ROM_START( solarwar )
-	ROM_REGION(0x14000)	/* 64k for code */
+	ROM_REGIONX( 0x14000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "p9-0.bin",     0x08000, 0x8000, 0x8ff372a8 )
 	ROM_LOAD( "pa-0.bin",     0x04000, 0x4000, 0x154f946f )
 	ROM_CONTINUE(             0x10000, 0x4000 )
@@ -523,12 +520,12 @@ ROM_START( solarwar )
 	ROM_LOAD( "s-19.8g",      0xb8000, 0x8000, 0x76641ee3 )
 	ROM_LOAD( "s-20.7g",      0xc0000, 0x8000, 0x37671f36 )
 
-	ROM_REGION(0x14000)	/* 64k for code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for code */
 	ROM_LOAD( "p1-0.bin",     0x08000, 0x8000, 0xf5f235a3 )
 	ROM_LOAD( "p0-0.bin",     0x04000, 0x4000, 0x51ae95ae )
 	ROM_CONTINUE(         0x10000, 0x4000 )
 
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for code */
 	ROM_LOAD( "s-3.4s",       0x8000, 0x8000, 0xa5318cb8 )
 
 	ROM_REGION(0x0100)	/* PROM */
@@ -539,7 +536,7 @@ ROM_END
 
 void xsleena_patch(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* do the same patch as the bootleg xsleena */
 	RAM[0xd488] = 0x12;
@@ -552,7 +549,7 @@ void xsleena_patch(void)
 
 void solarwar_patch(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* do the same patch as the bootleg xsleena */
 	RAM[0xd47e] = 0x12;
@@ -567,7 +564,7 @@ void solarwar_patch(void)
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -593,7 +590,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

@@ -62,8 +62,10 @@ Video Section Summary		[ Cisco Heat ]			[ F1 GP Star ]
 
 /* Variables only used here: */
 
-int cischeat_ip_select;
-int debugsprites;	// For debug purposes
+static int cischeat_ip_select;
+#ifdef MAME_DEBUG
+static int debugsprites;	// For debug purposes
+#endif
 
 /* Variables that driver has access to: */
 unsigned char *cischeat_roadram[2];

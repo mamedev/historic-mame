@@ -239,7 +239,7 @@ static struct CPS1config cps1_config_table[]=
 static void cps1_init_machine(void)
 {
 	const char *gamename = Machine->gamedrv->name;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	struct CPS1config *pCFG=&cps1_config_table[0];
@@ -291,7 +291,7 @@ INLINE int cps1_port(int offset)
     return READ_WORD(&cps1_output[offset]);
 }
 
-INLINE unsigned char * cps1_base(int offset)
+INLINE unsigned char * cps1_base(int offset,int boundary)
 {
     int base=cps1_port(offset)*256;
     /*
@@ -302,7 +302,7 @@ INLINE unsigned char * cps1_base(int offset)
        Muscle bomber games  - will animate garbage during gameplay
     Mask out the irrelevant bits.
     */
-    base &= 0xfc000;
+	base &= ~(boundary-1);
  	return &cps1_gfxram[base&0x3ffff];
 }
 
@@ -406,7 +406,7 @@ const int cps1_scroll1_size=0x4000;
 const int cps1_scroll2_size=0x4000;
 const int cps1_scroll3_size=0x4000;
 const int cps1_obj_size    =0x0800;
-const int cps1_other_size  =0x4000;
+const int cps1_other_size  =0x0800;
 const int cps1_palette_size=cps1_palette_entries*32; /* Size of palette RAM */
 static int cps1_flip_screen;    /* Flip screen on / off */
 
@@ -464,8 +464,8 @@ static int cps1_max_tile32;	     /* Maximum number of 32x32 tiles */
 int cps1_gfx_start(void)
 {
 	UINT32 dwval;
-	int size=Machine->memory_region_length[cps1_gfx_region];
-	unsigned char *data = Machine->memory_region[cps1_gfx_region];
+	int size=memory_region_length(cps1_gfx_region);
+	unsigned char *data = memory_region(cps1_gfx_region);
 	int i,j,nchar,penusage,gfxsize;
 
 	gfxsize=size/4;
@@ -860,12 +860,12 @@ INLINE void cps1_get_video_base(void )
 	int layercontrol;
 
 	/* Re-calculate the VIDEO RAM base */
-    cps1_scroll1=cps1_base(CPS1_SCROLL1_BASE);
-    cps1_scroll2=cps1_base(CPS1_SCROLL2_BASE);
-    cps1_scroll3=cps1_base(CPS1_SCROLL3_BASE);
-    cps1_obj=cps1_base(CPS1_OBJ_BASE);
-    cps1_palette=cps1_base(CPS1_PALETTE_BASE);
-    cps1_other=cps1_base(CPS1_OTHER_BASE);
+    cps1_scroll1=cps1_base(CPS1_SCROLL1_BASE,cps1_scroll1_size);
+    cps1_scroll2=cps1_base(CPS1_SCROLL2_BASE,cps1_scroll2_size);
+    cps1_scroll3=cps1_base(CPS1_SCROLL3_BASE,cps1_scroll3_size);
+    cps1_obj=cps1_base(CPS1_OBJ_BASE,cps1_obj_size);
+    cps1_palette=cps1_base(CPS1_PALETTE_BASE,cps1_palette_size);
+    cps1_other=cps1_base(CPS1_OTHER_BASE,cps1_other_size);
 
     /* Get scroll values */
     scroll1x=cps1_port(CPS1_SCROLL1_SCROLLX);

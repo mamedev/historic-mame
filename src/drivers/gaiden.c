@@ -511,14 +511,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,
 			8000000,	/* 8 Mhz */
-			0,
 			readmem,writemem,0,0,
 			gaiden_interrupt,1,0,0
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 MHz */
-			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
 								/* IRQs are triggered by the YM2203 */
@@ -563,7 +561,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( gaiden )
-	ROM_REGION(0x40000)	/* 2*128k for 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 2*128k for 68000 code */
 	ROM_LOAD_EVEN( "gaiden.1",     0x00000, 0x20000, 0xe037ff7c )
 	ROM_LOAD_ODD ( "gaiden.2",     0x00000, 0x20000, 0x454f7314 )
 
@@ -586,7 +584,7 @@ ROM_START( gaiden )
 	ROM_LOAD( "gaiden.11",    0x1d0000, 0x20000, 0x7fbfdf5e )	/* sprites C2 */
 	ROM_LOAD( "gaiden.13",    0x1f0000, 0x20000, 0x7d9f5c5e )	/* sprites D2 */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "gaiden.3",     0x0000, 0x10000, 0x75fd3e6a )   /* Audio CPU is a Z80  */
 
 	ROM_REGION(0x20000)	/* 128k for ADPCM samples - sound chip is OKIM6295 */
@@ -594,7 +592,7 @@ ROM_START( gaiden )
 ROM_END
 
 ROM_START( shadoww )
-	ROM_REGION(0x40000)	/* 2*128k for 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 2*128k for 68000 code */
 	ROM_LOAD_EVEN( "shadoww.1",    0x00000, 0x20000, 0xfefba387 )
 	ROM_LOAD_ODD ( "shadoww.2",    0x00000, 0x20000, 0x9b9d6b18 )
 
@@ -619,7 +617,7 @@ ROM_START( shadoww )
 	ROM_LOAD( "shadoww.13a",  0x1f0000, 0x10000, 0x996d2fa5 )	/* sprites D2 */
 	ROM_LOAD( "shadoww.13b",  0x200000, 0x10000, 0xb8df8a34 )	/* sprites D2 */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "gaiden.3",     0x0000, 0x10000, 0x75fd3e6a )   /* Audio CPU is a Z80  */
 
 	ROM_REGION(0x20000)	/* 128k for ADPCM samples - sound chip is OKIM6295 */
@@ -627,7 +625,7 @@ ROM_START( shadoww )
 ROM_END
 
 ROM_START( tknight )
-	ROM_REGION(0x40000)	/* 2*128k for 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 2*128k for 68000 code */
 	ROM_LOAD_EVEN( "tkni1.bin",    0x00000, 0x20000, 0x9121daa8 )
 	ROM_LOAD_ODD ( "tkni2.bin",    0x00000, 0x20000, 0x6669cd87 )
 
@@ -638,7 +636,7 @@ ROM_START( tknight )
 	ROM_LOAD( "tkni9.bin",    0x110000, 0x80000, 0xd22f4239 )	/* sprites */
 	ROM_LOAD( "tkni8.bin",    0x190000, 0x80000, 0x4931b184 )	/* sprites */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "tkni3.bin",    0x0000, 0x10000, 0x15623ec7 )   /* Audio CPU is a Z80  */
 
 	ROM_REGION(0x20000)	/* 128k for ADPCM samples - sound chip is OKIM6295 */
@@ -646,7 +644,7 @@ ROM_START( tknight )
 ROM_END
 
 ROM_START( wildfang )
-	ROM_REGION(0x40000)	/* 2*128k for 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 2*128k for 68000 code */
 	ROM_LOAD_EVEN( "1.3st",    0x00000, 0x20000, 0xab876c9b )
 	ROM_LOAD_ODD ( "2.5st",    0x00000, 0x20000, 0x1dc74b3b )
 
@@ -660,7 +658,7 @@ ROM_START( wildfang )
 	ROM_LOAD( "tkni9.bin",    0x110000, 0x80000, 0xd22f4239 )	/* sprites */
 	ROM_LOAD( "tkni8.bin",    0x190000, 0x80000, 0x4931b184 )	/* sprites */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "tkni3.bin",    0x0000, 0x10000, 0x15623ec7 )   /* Audio CPU is a Z80  */
 
 	ROM_REGION(0x20000)	/* 128k for ADPCM samples - sound chip is OKIM6295 */

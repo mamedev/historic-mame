@@ -244,13 +244,13 @@ static void sound_bank_w(int offset, int data)
 	int bank_A, bank_B;
 
 	/* banks # for the 007232 (chip 1) */
-	RAM = Machine->memory_region[6];
+	RAM = memory_region(6);
 	bank_A = 0x20000 * ((data >> 1) & 0x01);
 	bank_B = 0x20000 * ((data >> 0) & 0x01);
 	K007232_bankswitch(0,RAM + bank_A,RAM + bank_B);
 
 	/* banks # for the 007232 (chip 2) */
-	RAM = Machine->memory_region[7];
+	RAM = memory_region(7);
 	bank_A = 0x20000 * ((data >> 4) & 0x03);
 	bank_B = 0x20000 * ((data >> 2) & 0x03);
 	K007232_bankswitch(1,RAM + bank_A,RAM + bank_B);
@@ -291,21 +291,18 @@ static struct MachineDriver ajax_machine_driver =
 		{
 			CPU_KONAMI,	/* Konami Custom 052001 */
 			3000000,	/* 12/4 MHz*/
-			0,
 			ajax_readmem,ajax_writemem,0,0,
 			ajax_interrupt,1	/* IRQs triggered by the 051960 */
 		},
 		{
 			CPU_M6809,	/* 6809E */
 			3000000,	/* ? */
-			4,
 			ajax_readmem_2, ajax_writemem_2,0,0,
 			ignore_interrupt,1	/* FIRQs triggered by the 052001 */
 		},
 		{
 			CPU_Z80,	/* Z80A */
 			3579545,	/* 3.58 MHz */
-			5,
 			ajax_readmem_sound, ajax_writemem_sound,0,0,
 			ignore_interrupt,0	/* IRQs triggered by the 052001 */
 		}
@@ -342,7 +339,7 @@ static struct MachineDriver ajax_machine_driver =
 
 
 ROM_START( ajax )
-	ROM_REGION(0x28000)	/* 052001 code */
+	ROM_REGIONX( 0x28000, REGION_CPU1 )	/* 052001 code */
 	ROM_LOAD( "m01.n11",	0x10000, 0x08000, 0x4a64e53a )	/* banked ROM */
 	ROM_CONTINUE(			0x08000, 0x08000 )				/* fixed ROM */
 	ROM_LOAD( "l02.n12",	0x18000, 0x10000, 0xad7d592b )	/* banked ROM */
@@ -359,12 +356,12 @@ ROM_START( ajax )
 	ROM_LOAD( "770c06",		0x000000, 0x040000, 0xd0c592ee )	/* zoom/rotate (F4) */
 	ROM_LOAD( "770c07",		0x040000, 0x040000, 0x0b399fb1 )	/* zoom/rotate (H4) */
 
-	ROM_REGION(0x22000)	/* 64k + 72k for banked ROMs */
+	ROM_REGIONX( 0x22000, REGION_CPU2 )	/* 64k + 72k for banked ROMs */
 	ROM_LOAD( "l05.i16",	0x20000, 0x02000, 0xed64fbb2 )	/* banked ROM */
 	ROM_CONTINUE(			0x0a000, 0x06000 )				/* fixed ROM */
 	ROM_LOAD( "f04.g16",	0x10000, 0x10000, 0xe0e4ec9c )	/* banked ROM */
 
-	ROM_REGION(0x10000)	/* 64k for the SOUND CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the SOUND CPU */
 	ROM_LOAD( "h03.f16",	0x00000, 0x08000, 0x2ffd2afc )
 
 	ROM_REGION( 0x040000 )	/* 007232 data (chip 1) */
@@ -373,12 +370,12 @@ ROM_START( ajax )
 	ROM_REGION( 0x080000 )	/* 007232 data (chip 2) */
 	ROM_LOAD( "770c11",		0x000000, 0x080000, 0x299a615a )
 
-	ROM_REGION(0x0200)	/* PROMs */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "63s241.j11",	0x0000, 0x0200, 0x9bdd719f )	/* priority encoder (not used) */
 ROM_END
 
 ROM_START( ajaxj )
-	ROM_REGION(0x28000)	/* 052001 code */
+	ROM_REGIONX( 0x28000, REGION_CPU1 )	/* 052001 code */
 	ROM_LOAD( "770l01.bin",	0x10000, 0x08000, 0x7cea5274 )	/* banked ROM */
 	ROM_CONTINUE(			0x08000, 0x08000 )				/* fixed ROM */
 	ROM_LOAD( "l02.n12",	0x18000, 0x10000, 0xad7d592b )	/* banked ROM */
@@ -395,12 +392,12 @@ ROM_START( ajaxj )
 	ROM_LOAD( "770c06",		0x000000, 0x040000, 0xd0c592ee )	/* zoom/rotate (F4) */
 	ROM_LOAD( "770c07",		0x040000, 0x040000, 0x0b399fb1 )	/* zoom/rotate (H4) */
 
-	ROM_REGION(0x22000)	/* 64k + 72k for banked ROMs */
+	ROM_REGIONX( 0x22000, REGION_CPU2 )	/* 64k + 72k for banked ROMs */
 	ROM_LOAD( "l05.i16",	0x20000, 0x02000, 0xed64fbb2 )	/* banked ROM */
 	ROM_CONTINUE(			0x0a000, 0x06000 )				/* fixed ROM */
 	ROM_LOAD( "f04.g16",	0x10000, 0x10000, 0xe0e4ec9c )	/* banked ROM */
 
-	ROM_REGION(0x10000)	/* 64k for the SOUND CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the SOUND CPU */
 	ROM_LOAD( "770f03.bin",	0x00000, 0x08000, 0x3fe914fd )
 
 	ROM_REGION( 0x040000 )	/* 007232 data (chip 1) */
@@ -409,7 +406,7 @@ ROM_START( ajaxj )
 	ROM_REGION( 0x080000 )	/* 007232 data (chip 2) */
 	ROM_LOAD( "770c11",		0x000000, 0x080000, 0x299a615a )
 
-	ROM_REGION(0x0200)	/* PROMs */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "63s241.j11",	0x0000, 0x0200, 0x9bdd719f )	/* priority encoder (not used) */
 ROM_END
 

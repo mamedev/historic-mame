@@ -11,6 +11,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "sndhrdw/seibu.h"
 
 void dcon_background_w(int offset,int data);
 void dcon_foreground_w(int offset,int data);
@@ -22,34 +23,13 @@ int dcon_vh_start(void);
 void dcon_control_w(int offset, int data);
 void dcon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-static unsigned char *sound_shared_ram;
 extern unsigned char *dcon_back_data,*dcon_fore_data,*dcon_mid_data,*dcon_scroll_ram;
 
 /***************************************************************************/
 
 static void dcon_sound_w(int offset, int data)
 {
-	sound_shared_ram[offset]=data&0xff;
-	if (offset==0x2 && (data&0xff)!=0)
-		cpu_cause_interrupt(1,0xdf); /* RST 18 */
-}
-
-static int maincpu_data_r(int offset)
-{
-	return sound_shared_ram[offset<<1];
-}
-
-static void sound_bank_w(int offset,int data)
-{
-	unsigned char *RAM = Machine->memory_region[2];
-
-	if (data&1) { cpu_setbank(1,&RAM[0x0000]); }
-	else { cpu_setbank(1,&RAM[0x10000]); }
-}
-
-static void sound_clear_w(int offset,int data)
-{
-	sound_shared_ram[0]=data;
+	seibu_soundlatch_w(offset,data&0xff); /* Convert 16 bit write to 8 bit */
 }
 
 static int dcon_control_r(int offset)
@@ -98,7 +78,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x8d800, 0x8e7ff, dcon_text_w, &videoram },
 	{ 0x8e800, 0x8f7ff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
 	{ 0x8f800, 0x8ffff, MWA_BANK3, &spriteram },
-	{ 0xa0000, 0xa000f, dcon_sound_w, &sound_shared_ram },
+	{ 0xa0000, 0xa000f, dcon_sound_w, &seibu_shared_sound_ram },
 	{ 0xc001c, 0xc001d, dcon_control_w },
 	{ 0xc0020, 0xc002b, MWA_BANK4, &dcon_scroll_ram },
 	{ 0xc0000, 0xc00ff, MWA_NOP },
@@ -107,32 +87,7 @@ static struct MemoryWriteAddress writemem[] =
 
 /******************************************************************************/
 
-static struct MemoryReadAddress sound_readmem[] =
-{
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x2000, 0x27ff, MRA_RAM },
-	{ 0x4008, 0x4008, YM3812_status_port_0_r },
-	{ 0x4010, 0x4012, maincpu_data_r }, /* Soundlatch (16 bits) */
-	{ 0x4013, 0x4013, MRA_NOP }, /* Unused coin input */
-	{ 0x6000, 0x6000, OKIM6295_status_0_r },
-	{ 0x8000, 0xffff, MRA_BANK1 },
-	{ -1 }	/* end of table */
-};
-
-static struct MemoryWriteAddress sound_writemem[] =
-{
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2000, 0x27ff, MWA_RAM },
-	{ 0x4000, 0x4000, sound_clear_w },
-	{ 0x4002, 0x4002, MWA_NOP }, /* RST 10h interrupt ack */
-	{ 0x4003, 0x4003, MWA_NOP }, /* RST 18h interrupt ack */
-	{ 0x4007, 0x4007, sound_bank_w },
-	{ 0x4008, 0x4008, YM3812_control_port_0_w },
-	{ 0x4009, 0x4009, YM3812_write_port_0_w },
-	{ 0x4018, 0x401f, MWA_NOP }, /* Unused main cpu data write */
-	{ 0x6000, 0x6000, OKIM6295_data_0_w },
-	{ -1 }	/* end of table */
-};
+SEIBU_SOUND_SYSTEM_YM3812_MEMORY_MAP(MRA_NOP); /* No coin port in this game */
 
 /******************************************************************************/
 
@@ -243,38 +198,38 @@ static struct GfxLayout dcon_charlayout =
 
 static struct GfxLayout dcon_tilelayout =
 {
-  16,16,	/* 16*16 tiles */
-  4096,		/* 2048*4 tiles */
-  4,		/* 4 bits per pixel */
-  { 8,12, 0,4 },
-  {
-	3,2,1,0,19,18,17,16,
-	512+3,512+2,512+1,512+0,
-	512+11+8,512+10+8,512+9+8,512+8+8,
-  },
-  {
-	0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
-	8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32,
-  },
-  1024
+	16,16,	/* 16*16 tiles */
+	4096,		/* 2048*4 tiles */
+	4,		/* 4 bits per pixel */
+	{ 8,12, 0,4 },
+	{
+		3,2,1,0,19,18,17,16,
+		512+3,512+2,512+1,512+0,
+		512+11+8,512+10+8,512+9+8,512+8+8,
+	},
+	{
+		0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
+		8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32,
+	},
+	1024
 };
 
 static struct GfxLayout dcon_spritelayout =
 {
-  16,16,	/* 16*16 tiles */
-  4096*4,		/* 2048*4 tiles */
-  4,		/* 4 bits per pixel */
-  {  8,12, 0,4 },
-  {
-	3,2,1,0,19,18,17,16,
-	512+3,512+2,512+1,512+0,
-	512+11+8,512+10+8,512+9+8,512+8+8,
-  },
-  {
-	0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
-	8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32,
-  },
-  1024
+	16,16,	/* 16*16 tiles */
+	4096*4,		/* 2048*4 tiles */
+	4,		/* 4 bits per pixel */
+	{  8,12, 0,4 },
+	{
+		3,2,1,0,19,18,17,16,
+		512+3,512+2,512+1,512+0,
+		512+11+8,512+10+8,512+9+8,512+8+8,
+	},
+	{
+		0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
+		8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32,
+	},
+	1024
 };
 
 static struct GfxDecodeInfo dcon_gfxdecodeinfo[] =
@@ -289,28 +244,8 @@ static struct GfxDecodeInfo dcon_gfxdecodeinfo[] =
 
 /******************************************************************************/
 
-/* handler called by the 3812 emulator when the internal timers cause an IRQ */
-static void YM3812_irqhandler(int linestate)
-{
-	cpu_irq_line_vector_w(1,0,0xd7); /* RST 10h */
-	cpu_set_irq_line(1,0,linestate);
-}
-
-static struct YM3812interface ym3812_interface =
-{
-	1,
-	4000000,
-	{ 45 },
-	{ YM3812_irqhandler },
-};
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,
-	{ 8000 },
-	{ 3 },
-	{ 55 }
-};
+/* Parameters: YM3812 frequency, Oki frequency, Oki memory region */
+SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(4000000,8000,3);
 
 static struct MachineDriver dcon_machine_driver =
 {
@@ -319,21 +254,16 @@ static struct MachineDriver dcon_machine_driver =
 		{
 			CPU_M68000,
 			10000000,
-			0,
 			readmem,writemem,0,0,
 			m68_level4_irq,1
 		},
 		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,
-			2,
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
+			SEIBU_SOUND_SYSTEM_CPU(4000000)
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* CPU interleave  */
-	0,
+	seibu_sound_init_1,
 
 	/* video hardware */
 	40*8, 32*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
@@ -351,21 +281,14 @@ static struct MachineDriver dcon_machine_driver =
 	/* sound hardware */
 	0,0,0,0,
 	{
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
+		SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
 	}
 };
 
 /***************************************************************************/
 
 ROM_START( dcon )
-	ROM_REGION(0x80000)
+	ROM_REGIONX(0x80000, REGION_CPU1)
 	ROM_LOAD_EVEN("p0-0",   0x000000, 0x20000, 0xa767ec15 )
 	ROM_LOAD_ODD ("p0-1",   0x000000, 0x20000, 0xa7efa091 )
 	ROM_LOAD_EVEN("p1-0",   0x040000, 0x20000, 0x3ec1ef7d )
@@ -383,13 +306,20 @@ ROM_START( dcon )
 	ROM_LOAD( "obj2",  0x2a0000, 0x80000, 0x24e0b51c )
 	ROM_LOAD( "obj3",  0x320000, 0x80000, 0x5274f02d )
 
-	ROM_REGION(0x18000)	 /* Region 2 - 64k code for sound Z80 */
+	ROM_REGIONX(0x18000, REGION_CPU2)	 /* Region 2 - 64k code for sound Z80 */
 	ROM_LOAD( "fm", 0x000000, 0x08000, 0x50450faa )
 	ROM_CONTINUE(   0x010000, 0x08000 )
 
 	ROM_REGION(0x20000)	 /* Region 3 - ADPCM samples */
 	ROM_LOAD( "pcm", 0x000000, 0x20000, 0xd2133b85 )
 ROM_END
+
+/***************************************************************************/
+
+static void memory_patch(void)
+{
+	install_seibu_sound_speedup(1);
+}
 
 /***************************************************************************/
 
@@ -404,7 +334,7 @@ struct GameDriver driver_dcon =
 	"Bryan McPhail",
 	0,
 	&dcon_machine_driver,
-	0,
+	memory_patch,
 
 	rom_dcon,
 	0, 0,

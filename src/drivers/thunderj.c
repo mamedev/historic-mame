@@ -310,20 +310,16 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,		/* verified */
 			7159160,		/* 7.159 Mhz */
-			0,
 			main_readmem,main_writemem,0,0,
 			ignore_interrupt,1
 		},
 		{
 			CPU_M68000,		/* verified */
 			7159160,		/* 7.159 Mhz */
-			1,
 			extra_readmem,extra_writemem,0,0,
 			ignore_interrupt,1
 		},
-		{
-			JSA_II_CPU(2)
-		}
+		JSA_II_CPU
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	100,
@@ -359,10 +355,10 @@ static void rom_decode(void)
 
 	/* invert the graphics bits on the playfield and motion objects */
 	for (i = 0; i < 0x200000; i++)
-		Machine->memory_region[4][i] ^= 0xff;
+		memory_region(4)[i] ^= 0xff;
 
 	/* copy the shared ROM from region 0 to region 1 */
-	memcpy(&Machine->memory_region[1][0x60000], &memory_region(Machine->drv->cpu[0].memory_region)[0x60000], 0x20000);
+	memcpy(&memory_region(1)[0x60000], &memory_region(REGION_CPU1)[0x60000], 0x20000);
 }
 
 
@@ -399,7 +395,7 @@ static void thunderj_init(void)
  *************************************/
 
 ROM_START( thunderj )
-	ROM_REGION(0xa0000)	/* 10*64k for 68000 code */
+	ROM_REGIONX( 0xa0000, REGION_CPU1 )	/* 10*64k for 68000 code */
 	ROM_LOAD_EVEN( "2001.14e",   0x00000, 0x10000, 0xf6a71532 )
 	ROM_LOAD_ODD ( "2002.14c",   0x00000, 0x10000, 0x173ec10d )
 	ROM_LOAD_EVEN( "2003.15e",   0x20000, 0x10000, 0x6e155469 )
@@ -411,11 +407,11 @@ ROM_START( thunderj )
 	ROM_LOAD_EVEN( "1007.17e",   0x80000, 0x10000, 0x9c2a8aba )
 	ROM_LOAD_ODD ( "1008.17c",   0x80000, 0x10000, 0x22109d16 )
 
-	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU2 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "1011.17l",   0x00000, 0x10000, 0xbbbbca45 )
 	ROM_LOAD_ODD ( "1012.17n",   0x00000, 0x10000, 0x53e5e638 )
 
-	ROM_REGION(0x14000)	/* 64k + 16k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU3 )	/* 64k + 16k for 6502 code */
 	ROM_LOAD( "tjw65snd.bin",  0x10000, 0x4000, 0xd8feb7fb )
 	ROM_CONTINUE(              0x04000, 0xc000 )
 

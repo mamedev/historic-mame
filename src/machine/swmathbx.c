@@ -38,7 +38,7 @@ static int PROM_AM[1024]; /* Storage for address mode select only */
 void translate_proms(void)
 {
 	int cnt,val;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	for (cnt=0;cnt<1024;cnt++)
 	{
@@ -73,7 +73,7 @@ void run_mbox(void)
 	int MA;
 	int IP15_8, IP7, IP6_0; /* Instruction PROM values */
 
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 if (errorlog) fprintf(errorlog, "Running Mathbox...\n");
 

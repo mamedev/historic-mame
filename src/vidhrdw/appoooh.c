@@ -168,7 +168,7 @@ void appoooh_out_w(int offset,int data)
 
 	/* bit 6 ROM bank select */
 	{
-		unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+		unsigned char *RAM = memory_region(REGION_CPU1);
 
 		cpu_setbank(1,&RAM[data&0x40 ? 0x10000 : 0x0a000]);
 	}

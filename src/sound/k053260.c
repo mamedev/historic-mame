@@ -343,8 +343,8 @@ int K053260_sh_start(const struct MachineSound *msound) {
 	/* Initialize our chip structure */
 	K053260_chip.intf = msound->sound_interface;
 	K053260_chip.mode = 0;
-	K053260_chip.rom = Machine->memory_region[K053260_chip.intf->region];
-	K053260_chip.rom_size = Machine->memory_region_length[K053260_chip.intf->region] - 1;
+	K053260_chip.rom = memory_region(K053260_chip.intf->region);
+	K053260_chip.rom_size = memory_region_length(K053260_chip.intf->region) - 1;
 
 	K053260_reset();
 

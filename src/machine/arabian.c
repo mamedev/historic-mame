@@ -61,7 +61,7 @@ int arabian_input_port_r(int offset)
 	}
 	else  /* if bit 4 of AY port 0f==0 then read RAM memory instead of switches */
 	{
-		unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+		unsigned char *RAM = memory_region(REGION_CPU1);
 		pom = RAM[ 0xd7f0 + offset ];
 	}
 

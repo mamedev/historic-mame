@@ -351,14 +351,12 @@ static struct MachineDriver yamato_machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 MHz ? */
-			0,
 			yamato_readmem,yamato_writemem,yamato_readport,yamato_writeport,
 			nmi_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3072000,	/* 3.072 Mhz ? */
-			3,	/* memory region #3 */
 			yamato_sound_readmem,yamato_sound_writemem,yamato_sound_readport,yamato_sound_writeport,
 			ignore_interrupt,0
 		}
@@ -392,7 +390,7 @@ static struct MachineDriver yamato_machine_driver =
 
 
 ROM_START( yamato )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "2.5de",        0x0000, 0x2000, 0x20895096 )
 	ROM_LOAD( "3.5f",         0x2000, 0x2000, 0x57a696f9 )
 	ROM_LOAD( "4.5jh",        0x4000, 0x2000, 0x59a468e8 )
@@ -422,12 +420,12 @@ ROM_START( yamato )
 	ROM_LOAD( "4.bpr",        0x0060, 0x0020, 0x1c97dc0b )
 	ROM_LOAD( "5.bpr",        0x0080, 0x0020, 0xedd6c05f )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "1.5v",         0x0000, 0x0800, 0x3aad9e3c )
 ROM_END
 
 ROM_START( yamato2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "2-2.5de",      0x0000, 0x2000, 0x93da1d52 )
 	ROM_LOAD( "3-2.5f",       0x2000, 0x2000, 0x31e73821 )
 	ROM_LOAD( "4-2.5jh",      0x4000, 0x2000, 0xfd7bcfc3 )
@@ -457,13 +455,13 @@ ROM_START( yamato2 )
 	ROM_LOAD( "4.bpr",        0x0060, 0x0020, 0x1c97dc0b )
 	ROM_LOAD( "5.bpr",        0x0080, 0x0020, 0xedd6c05f )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "1.5v",         0x0000, 0x0800, 0x3aad9e3c )
 ROM_END
 
 /**** Yamato high score save routine - RJF (Apr 1, 1999) ****/
 static int yamato_hiload(void){
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
         if (memcmp(&RAM[0x6106],"\x11\x11\x11",3) == 0){
 		void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
@@ -483,7 +481,7 @@ static int yamato_hiload(void){
 }
 
 static void yamato_hisave(void){
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
 
                         osd_fwrite(f,&RAM[0x6038], 3);

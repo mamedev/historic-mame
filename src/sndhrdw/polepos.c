@@ -46,7 +46,7 @@ static void engine_sound_update(int num, void *buffer, int length)
 	/* determine the volume */
 	slot = (sample_msb >> 3) & 7;
 	volume = volume_table[slot];
-	base = &Machine->memory_region[5][0x1000 + slot * 0x800];
+	base = &memory_region(5)[0x1000 + slot * 0x800];
 
 	/* fill in the sample */
 	while (length--)
@@ -75,10 +75,10 @@ int polepos_sh_start(const struct MachineSound *msound)
 	/* decode the rom samples */
 	for (i = 0;i < SAMPLE_SIZE;i++)
 	{
-		bits = Machine->memory_region[5][0x5000+i] & 0x0f;
+		bits = memory_region(5)[0x5000+i] & 0x0f;
 		speech[2*i] = SAMPLE_CONV4(bits);
 
-		bits = (Machine->memory_region[5][0x5000+i] & 0xf0) >> 4;
+		bits = (memory_region(5)[0x5000+i] & 0xf0) >> 4;
 		speech[2*i + 1] = SAMPLE_CONV4(bits);
 	}
 

@@ -50,7 +50,7 @@ void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 /* if a read from this address doesn't return the value it expects. */
 int mrdo_SECRE_r(int offset)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	return RAM[ cpu_get_reg(Z80_HL) ];
 }
 
@@ -212,7 +212,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* 4 Mhz */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		}
@@ -252,7 +251,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( mrdo )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "a4-01.bin",    0x0000, 0x2000, 0x03dcfba2 )
 	ROM_LOAD( "c4-02.bin",    0x2000, 0x2000, 0x0ecdd39c )
 	ROM_LOAD( "e4-03.bin",    0x4000, 0x2000, 0x358f5dc2 )
@@ -273,7 +272,7 @@ ROM_START( mrdo )
 ROM_END
 
 ROM_START( mrdot )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "d1",           0x0000, 0x2000, 0x3dcd9359 )
 	ROM_LOAD( "d2",           0x2000, 0x2000, 0x710058d8 )
 	ROM_LOAD( "d3",           0x4000, 0x2000, 0x467d12d8 )
@@ -294,7 +293,7 @@ ROM_START( mrdot )
 ROM_END
 
 ROM_START( mrdofix )
-	ROM_REGION(0x10000) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "d1",           0x0000, 0x2000, 0x3dcd9359 )
 	ROM_LOAD( "d2",           0x2000, 0x2000, 0x710058d8 )
 	ROM_LOAD( "dofix.d3",     0x4000, 0x2000, 0x3a7d039b )
@@ -315,7 +314,7 @@ ROM_START( mrdofix )
 ROM_END
 
 ROM_START( mrlo )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "mrlo01.bin",   0x0000, 0x2000, 0x6f455e7d )
 	ROM_LOAD( "d2",           0x2000, 0x2000, 0x710058d8 )
 	ROM_LOAD( "dofix.d3",     0x4000, 0x2000, 0x3a7d039b )
@@ -336,7 +335,7 @@ ROM_START( mrlo )
 ROM_END
 
 ROM_START( mrdu )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "d1",           0x0000, 0x2000, 0x3dcd9359 )
 	ROM_LOAD( "d2",           0x2000, 0x2000, 0x710058d8 )
 	ROM_LOAD( "d3",           0x4000, 0x2000, 0x467d12d8 )
@@ -357,7 +356,7 @@ ROM_START( mrdu )
 ROM_END
 
 ROM_START( mrdoy )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "dosnow.1",     0x0000, 0x2000, 0xd3454e2c )
 	ROM_LOAD( "dosnow.2",     0x2000, 0x2000, 0x5120a6b2 )
 	ROM_LOAD( "dosnow.3",     0x4000, 0x2000, 0x96416dbe )
@@ -378,7 +377,7 @@ ROM_START( mrdoy )
 ROM_END
 
 ROM_START( yankeedo )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "a4-01.bin",    0x0000, 0x2000, 0x03dcfba2 )
 	ROM_LOAD( "yd_d2.c4",     0x2000, 0x2000, 0x7c9d7ce0 )
 	ROM_LOAD( "e4-03.bin",    0x4000, 0x2000, 0x358f5dc2 )
@@ -402,7 +401,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -426,7 +425,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

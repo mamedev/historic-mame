@@ -59,7 +59,7 @@ int ldrun2_bankswitch_r(int offset)
 {
 	if (ldrun2_bankswap)
 	{
-		unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+		unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 		ldrun2_bankswap--;
@@ -81,7 +81,7 @@ void ldrun2_bankswitch_w(int offset,int data)
 		0,1,1,1,1,1,0,0,0,0,
 		1,0,1,1,1,1,1,1,1,1
 	};
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	bankcontrol[offset] = data;
@@ -122,7 +122,7 @@ int ldrun3_prot_7_r(int offset)
 void ldrun4_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	bankaddress = 0x10000 + ((data & 0x01) * 0x4000);
@@ -132,7 +132,7 @@ void ldrun4_bankswitch_w(int offset,int data)
 static void kidniki_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	bankaddress = 0x10000 + (data & 0x0f) * 0x2000;
@@ -144,7 +144,7 @@ static void kidniki_bankswitch_w(int offset,int data)
 static void spelunkr_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	bankaddress = 0x10000 + (data & 0x03) * 0x2000;
@@ -153,7 +153,7 @@ static void spelunkr_bankswitch_w(int offset,int data)
 
 void spelunk2_bankswitch_w( int offset, int data )
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	cpu_setbank(1,&RAM[0x20000 + 0x1000 * ((data & 0xc0)>>6)]);
@@ -1180,13 +1180,10 @@ static struct MachineDriver GAMENAME##_machine_driver =                         
 		{                                                                                    \
 			CPU_Z80,                                                                         \
 			4000000,	/* 4 Mhz (?) */                                                      \
-			0,                                                                               \
 			GAMENAME##_readmem,GAMENAME##_writemem,READPORT##_readport,GAMENAME##_writeport, \
 			interrupt,1                                                                      \
 		},                                                                                   \
-		{                                                                                    \
-			IREM_AUDIO_CPU(3)                                                                \
-		}                                                                                    \
+		IREM_AUDIO_CPU                                                                       \
 	},                                                                                       \
 	55, 1790, /* frames per second and vblank duration from the Lode Runner manual */        \
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */ \
@@ -1246,7 +1243,7 @@ MACHINE_DRIVER(spelunk2, ldrun,  8*8, (64-8)*8-1,  768,spelunk2);
 ***************************************************************************/
 
 ROM_START( kungfum )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "a-4e-c.bin",   0x0000, 0x4000, 0xb6e2d083 )
 	ROM_LOAD( "a-4d-c.bin",   0x4000, 0x4000, 0x7532918e )
 
@@ -1278,14 +1275,14 @@ ROM_START( kungfum )
 															/* sprites. Used at run time! */
 	ROM_LOAD( "b-6f-.bin",    0x0620, 0x0100, 0x82c20d12 )	/* video timing? - same as battroad */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU (6803) */
 	ROM_LOAD( "a-3e-.bin",    0xa000, 0x2000, 0x58e87ab0 )	/* samples (ADPCM 4-bit) */
 	ROM_LOAD( "a-3f-.bin",    0xc000, 0x2000, 0xc81e31ea )	/* samples (ADPCM 4-bit) */
 	ROM_LOAD( "a-3h-.bin",    0xe000, 0x2000, 0xd99fb995 )
 ROM_END
 
 ROM_START( kungfud )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "a-4e-d",       0x0000, 0x4000, 0xfc330a46 )
 	ROM_LOAD( "a-4d-d",       0x4000, 0x4000, 0x1b2fd32f )
 
@@ -1317,14 +1314,14 @@ ROM_START( kungfud )
 															/* sprites. Used at run time! */
 	ROM_LOAD( "b-6f-.bin",    0x0620, 0x0100, 0x82c20d12 )	/* video timing? - same as battroad */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU (6803) */
 	ROM_LOAD( "a-3e-.bin",    0xa000, 0x2000, 0x58e87ab0 )	/* samples (ADPCM 4-bit) */
 	ROM_LOAD( "a-3f-.bin",    0xc000, 0x2000, 0xc81e31ea )	/* samples (ADPCM 4-bit) */
 	ROM_LOAD( "a-3h-.bin",    0xe000, 0x2000, 0xd99fb995 )
 ROM_END
 
-ROM_START( spaltanx )
-	ROM_REGION(0x10000)	/* 64k for code */
+ROM_START( spartanx )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "a-4e-c-j.bin", 0x0000, 0x4000, 0x32a0a9a6 )
 	ROM_LOAD( "a-4d-c-j.bin", 0x4000, 0x4000, 0x3173ea78 )
 
@@ -1356,14 +1353,14 @@ ROM_START( spaltanx )
 															/* sprites. Used at run time! */
 	ROM_LOAD( "b-6f-.bin",    0x0620, 0x0100, 0x82c20d12 )	/* video timing? - same as battroad */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU (6803) */
 	ROM_LOAD( "a-3e-.bin",    0xa000, 0x2000, 0x58e87ab0 )	/* samples (ADPCM 4-bit) */
 	ROM_LOAD( "a-3f-.bin",    0xc000, 0x2000, 0xc81e31ea )	/* samples (ADPCM 4-bit) */
 	ROM_LOAD( "a-3h-.bin",    0xe000, 0x2000, 0xd99fb995 )
 ROM_END
 
 ROM_START( kungfub )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "c5.5h",        0x0000, 0x4000, 0x5d8e791d )
 	ROM_LOAD( "c4.5k",        0x4000, 0x4000, 0x4000e2b8 )
 
@@ -1395,14 +1392,14 @@ ROM_START( kungfub )
 															/* sprites. Used at run time! */
 	ROM_LOAD( "b-6f-.bin",    0x0620, 0x0100, 0x82c20d12 )	/* video timing? - same as battroad */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU (6803) */
 	ROM_LOAD( "a-3e-.bin",    0xa000, 0x2000, 0x58e87ab0 )	/* samples (ADPCM 4-bit) */
 	ROM_LOAD( "a-3f-.bin",    0xc000, 0x2000, 0xc81e31ea )	/* samples (ADPCM 4-bit) */
 	ROM_LOAD( "a-3h-.bin",    0xe000, 0x2000, 0xd99fb995 )
 ROM_END
 
 ROM_START( kungfub2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "kf4",          0x0000, 0x4000, 0x3f65313f )
 	ROM_LOAD( "kf5",          0x4000, 0x4000, 0x9ea325f3 )
 
@@ -1434,14 +1431,14 @@ ROM_START( kungfub2 )
 															/* sprites. Used at run time! */
 	ROM_LOAD( "b-6f-.bin",    0x0620, 0x0100, 0x82c20d12 )	/* video timing? - same as battroad */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU (6803) */
 	ROM_LOAD( "a-3e-.bin",    0xa000, 0x2000, 0x58e87ab0 )	/* samples (ADPCM 4-bit) */
 	ROM_LOAD( "a-3f-.bin",    0xc000, 0x2000, 0xc81e31ea )	/* samples (ADPCM 4-bit) */
 	ROM_LOAD( "a-3h-.bin",    0xe000, 0x2000, 0xd99fb995 )
 ROM_END
 
 ROM_START( battroad )
-	ROM_REGION(0x1e000)	/* 64k for code */
+	ROM_REGIONX( 0x1e000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "br-a-4e.b",	0x00000, 0x2000, 0x9bf14768 )
 	ROM_LOAD( "br-a-4d.b",	0x02000, 0x2000, 0x39ca1627 )
 	ROM_LOAD( "br-a-4b.b",	0x04000, 0x2000, 0x1865bb22 )
@@ -1478,14 +1475,14 @@ ROM_START( battroad )
 	                                                        /* sprites. Used at run time! */
 	ROM_LOAD( "br-b-6f",     0x0640, 0x0100, 0x82c20d12 )	/* video timing? - same as kungfum */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU (6803) */
 	ROM_LOAD( "br-a-3e",     0xa000, 0x2000, 0xa7140871 )
 	ROM_LOAD( "br-a-3f",     0xc000, 0x2000, 0x1bb51b30 )
 	ROM_LOAD( "br-a-3h",     0xe000, 0x2000, 0xafb3e083 )
 ROM_END
 
 ROM_START( ldrun )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "lr-a-4e",      0x0000, 0x2000, 0x5d7e2a4d )
 	ROM_LOAD( "lr-a-4d",      0x2000, 0x2000, 0x96f20473 )
 	ROM_LOAD( "lr-a-4b",      0x4000, 0x2000, 0xb041c4a9 )
@@ -1510,13 +1507,13 @@ ROM_START( ldrun )
 	                                                        /* sprites. Used at run time! */
 	ROM_LOAD( "lr-b-6f",      0x0620, 0x0100, 0x34d88d3c )	/* video timing? - common to the other games */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU (6803) */
 	ROM_LOAD( "lr-a-3f",      0xc000, 0x2000, 0x7a96accd )
 	ROM_LOAD( "lr-a-3h",      0xe000, 0x2000, 0x3f7f3939 )
 ROM_END
 
 ROM_START( ldruna )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "roma4c",       0x0000, 0x2000, 0x279421e1 )
 	ROM_LOAD( "lr-a-4d",      0x2000, 0x2000, 0x96f20473 )
 	ROM_LOAD( "roma4b",       0x4000, 0x2000, 0x3c464bad )
@@ -1541,13 +1538,13 @@ ROM_START( ldruna )
 	                                                        /* sprites. Used at run time! */
 	ROM_LOAD( "lr-b-6f",      0x0620, 0x0100, 0x34d88d3c )	/* video timing? - common to the other games */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU (6803) */
 	ROM_LOAD( "lr-a-3f",      0xc000, 0x2000, 0x7a96accd )
 	ROM_LOAD( "lr-a-3h",      0xe000, 0x2000, 0x3f7f3939 )
 ROM_END
 
 ROM_START( ldrun2 )
-	ROM_REGION(0x14000)	/* 64k for code + 16k for banks */
+	ROM_REGIONX( 0x14000, REGION_CPU1 )	/* 64k for code + 16k for banks */
 	ROM_LOAD( "lr2-a-4e.a",   0x00000, 0x2000, 0x22313327 )
 	ROM_LOAD( "lr2-a-4d",     0x02000, 0x2000, 0xef645179 )
 	ROM_LOAD( "lr2-a-4a.a",   0x04000, 0x2000, 0xb11ddf59 )
@@ -1577,14 +1574,14 @@ ROM_START( ldrun2 )
 	                                                        /* sprites. Used at run time! */
 	ROM_LOAD( "lr2-b-6f",     0x0620, 0x0100, 0x34d88d3c )	/* video timing? - common to the other games */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU (6803) */
 	ROM_LOAD( "lr2-a-3e",     0xa000, 0x2000, 0x853f3898 )
 	ROM_LOAD( "lr2-a-3f",     0xc000, 0x2000, 0x7a96accd )
 	ROM_LOAD( "lr2-a-3h",     0xe000, 0x2000, 0x2a0e83ca )
 ROM_END
 
 ROM_START( ldrun3 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "lr3-a-4e",     0x0000, 0x4000, 0x5b334e8e )
 	ROM_LOAD( "lr3-a-4d.a",   0x4000, 0x4000, 0xa84bc931 )
 	ROM_LOAD( "lr3-a-4b.a",   0x8000, 0x4000, 0xbe09031d )
@@ -1609,13 +1606,13 @@ ROM_START( ldrun3 )
 	ROM_LOAD( "lr3-n-4f",     0x0620, 0x0100, 0xdf674be9 )	/* unknown */
 	ROM_LOAD( "lr3-b-6f",     0x0720, 0x0100, 0x34d88d3c )	/* video timing? - common to the other games */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU (6803) */
 	ROM_LOAD( "lr3-a-3d",     0x8000, 0x4000, 0x28be68cd )
 	ROM_LOAD( "lr3-a-3f",     0xc000, 0x4000, 0xcb7186b7 )
 ROM_END
 
 ROM_START( ldrun4 )
-	ROM_REGION(0x18000)	/* 64k for code + 32k for banked ROM */
+	ROM_REGIONX( 0x18000, REGION_CPU1 )	/* 64k for code + 32k for banked ROM */
 	ROM_LOAD( "lr4-a-4e",     0x00000, 0x4000, 0x5383e9bf )
 	ROM_LOAD( "lr4-a-4d.c",   0x04000, 0x4000, 0x298afa36 )
 	ROM_LOAD( "lr4-v-4k",     0x10000, 0x8000, 0x8b248abd )	/* banked at 8000-bfff */
@@ -1643,13 +1640,13 @@ ROM_START( ldrun4 )
 	ROM_LOAD( "lr4-v-4h",     0x0620, 0x0100, 0xdf674be9 )	/* unknown */
 	ROM_LOAD( "lr4-b-6f",     0x0720, 0x0100, 0x34d88d3c )	/* video timing? - common to the other games */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU (6803) */
 	ROM_LOAD( "lr4-a-3d",     0x8000, 0x4000, 0x86c6d445 )
 	ROM_LOAD( "lr4-a-3f",     0xc000, 0x4000, 0x097c6c0a )
 ROM_END
 
 ROM_START( lotlot )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "lot-a-4e",     0x0000, 0x4000, 0x2913d08f )
 	ROM_LOAD( "lot-a-4d",     0x4000, 0x4000, 0x0443095f )
 
@@ -1680,12 +1677,12 @@ ROM_START( lotlot )
 	ROM_LOAD( "lot-k-7h",     0x0b20, 0x0200, 0x04442bee )	/* unknown */
 	ROM_LOAD( "lot-b-6f",     0x0d20, 0x0100, 0x34d88d3c )	/* video timing? - common to the other games */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU (6803) */
 	ROM_LOAD( "lot-a-3h",     0xe000, 0x2000, 0x0781cee7 )
 ROM_END
 
 ROM_START( kidniki )
-	ROM_REGION( 0x30000 )	/* main CPU */
+	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* main CPU */
 	ROM_LOAD( "dr04.4e",      0x00000, 0x04000, 0x80431858 )
 	ROM_LOAD( "dr03.4cd",     0x04000, 0x04000, 0xdba20934 )
 	ROM_LOAD( "dr11.8k",      0x10000, 0x08000, 0x04d82d93 )	/* banked at 8000-9fff */
@@ -1724,7 +1721,7 @@ ROM_START( kidniki )
 	ROM_LOAD( "dr28.8f",      0x0620, 0x0200, 0x6cef0fbd )	/* unknown */
 	ROM_LOAD( "dr33.6f",      0x0820, 0x0100, 0x34d88d3c )	/* video timing? - common to the other games */
 
-	ROM_REGION( 0x10000 )	/* sound CPU */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 )	/* sound CPU */
 	ROM_LOAD( "dr00.3a",      0x4000, 0x04000, 0x458309f7 )
 	ROM_LOAD( "dr01.3cd",     0x8000, 0x04000, 0xe66897bd )
 	ROM_LOAD( "dr02.3f",      0xc000, 0x04000, 0xf9e31e26 ) /* 6803 code */
@@ -1732,7 +1729,7 @@ ROM_END
 
 
 ROM_START( yanchamr )
-	ROM_REGION( 0x30000 )	/* main CPU */
+	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* main CPU */
 	ROM_LOAD( "ky_a-4e-.bin", 0x00000, 0x04000, 0xc73ad2d6 )
 	ROM_LOAD( "ky_a-4d-.bin", 0x04000, 0x04000, 0x401af828 )
 	ROM_LOAD( "ky_t-8k-.bin", 0x10000, 0x08000, 0xe967de88 )	/* banked at 8000-9fff */
@@ -1771,14 +1768,14 @@ ROM_START( yanchamr )
 	ROM_LOAD( "dr28.8f",      0x0620, 0x0200, 0x6cef0fbd )	/* unknown */
 	ROM_LOAD( "dr33.6f",      0x0820, 0x0100, 0x34d88d3c )	/* video timing? - common to the other games */
 
-	ROM_REGION( 0x10000 )	/* sound CPU */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 )	/* sound CPU */
 	ROM_LOAD( "ky_a-3a-.bin", 0x4000, 0x04000, 0xcb365f3b )
 	ROM_LOAD( "dr01.3cd",     0x8000, 0x04000, 0xe66897bd )
 	ROM_LOAD( "dr02.3f",      0xc000, 0x04000, 0xf9e31e26 ) /* 6803 code */
 ROM_END
 
 ROM_START( spelunkr )
-	ROM_REGION( 0x18000 )	/* main CPU */
+	ROM_REGIONX( 0x18000, REGION_CPU1 )	/* main CPU */
 	ROM_LOAD( "spra.4e",      0x00000, 0x4000, 0xcf811201 )
 	ROM_LOAD( "spra.4d",      0x04000, 0x4000, 0xbb4faa4f )
 	ROM_LOAD( "sprm.7c",      0x10000, 0x4000, 0xfb6197e2 )	/* banked at 8000-9fff */
@@ -1813,13 +1810,13 @@ ROM_START( spelunkr )
 	ROM_LOAD( "sprm.8h",      0x0620, 0x0200, 0x875cc442 )	/* unknown */
 	ROM_LOAD( "sprb.6f",      0x0820, 0x0100, 0x34d88d3c )	/* video timing? - common to the other games */
 
-	ROM_REGION( 0x10000 )	/* sound CPU */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 )	/* sound CPU */
 	ROM_LOAD( "spra.3d",      0x8000, 0x04000, 0x4110363c ) /* adpcm data */
 	ROM_LOAD( "spra.3f",      0xc000, 0x04000, 0x67a9d2e6 ) /* 6803 code */
 ROM_END
 
 ROM_START( spelunk2 )
-	ROM_REGION( 0x24000 )	/* main CPU */
+	ROM_REGIONX( 0x24000, REGION_CPU1 )	/* main CPU */
 	ROM_LOAD( "sp2-a.4e",     0x00000, 0x4000, 0x96c04bbb )
 	ROM_LOAD( "sp2-a.4d",     0x04000, 0x4000, 0xcb38c2ff )
 	ROM_LOAD( "sp2-r.7d",     0x10000, 0x8000, 0x558837ea )	/* banked at 9000-9fff */
@@ -1852,7 +1849,7 @@ ROM_START( spelunk2 )
 	ROM_LOAD( "sp2-r.8j",     0x0720, 0x0200, 0x875cc442 )	/* unknown */
 	ROM_LOAD( "sp2-b.6f",     0x0920, 0x0100, 0x34d88d3c )	/* video timing? - common to the other games */
 
-	ROM_REGION( 0x10000 )	/* sound CPU */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 )	/* sound CPU */
 	ROM_LOAD( "sp2-a.3d",     0x8000, 0x04000, 0x839ec7e2 ) /* adpcm data */
 	ROM_LOAD( "sp2-a.3f",     0xc000, 0x04000, 0xad3ce898 ) /* 6803 code */
 ROM_END
@@ -1860,7 +1857,7 @@ ROM_END
 
 static int kungfum_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1887,7 +1884,7 @@ static int kungfum_hiload(void)
 static void kungfum_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1900,7 +1897,7 @@ static void kungfum_hisave(void)
 
 static int battroad_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if (memcmp(&RAM[0xed52],"\x06\x05\x04",3) == 0 &&
 			memcmp(&RAM[0xedfd],"\x00\x13\x08",3) == 0 )
@@ -1921,7 +1918,7 @@ static int battroad_hiload(void)
 static void battroad_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1934,7 +1931,7 @@ static void battroad_hisave(void)
 
 static int ldrun_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if (memcmp(&RAM[0xE5E5],"\x01\x01\x00",3) == 0 &&
@@ -1957,7 +1954,7 @@ static int ldrun_hiload(void)
 static void ldrun_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1969,7 +1966,7 @@ static void ldrun_hisave(void)
 
 static int ldrun2_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if (memcmp(&RAM[0xE6bd],"\x00\x48\x54",3) == 0 &&
@@ -1992,7 +1989,7 @@ static int ldrun2_hiload(void)
 static void ldrun2_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2009,7 +2006,7 @@ static void ldrun2_hisave(void)
 
 static int ldrun4_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if (memcmp(&RAM[0xE735],"\x00\x28\x76",3) == 0 &&
@@ -2032,7 +2029,7 @@ static int ldrun4_hiload(void)
 static void ldrun4_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2045,7 +2042,7 @@ static void ldrun4_hisave(void)
 
 static int kidniki_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if (memcmp(&RAM[0xE062],"\x00\x10\x00",3) == 0 &&
@@ -2068,7 +2065,7 @@ static int kidniki_hiload(void)
 static void kidniki_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2081,7 +2078,7 @@ static void kidniki_hisave(void)
 
 static int spelunk2_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if (memcmp(&RAM[0xE066],"\x99\x11\x59",3) == 0 &&
@@ -2104,7 +2101,7 @@ static int spelunk2_hiload(void)
 static void spelunk2_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2117,7 +2114,7 @@ static void spelunk2_hisave(void)
 
 static int lotlot_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if (memcmp(&RAM[0xE96a],"\x00\x02\x51",3) == 0 &&
 			memcmp(&RAM[0xEb8d],"\x49\x20\x20",3) == 0 )
@@ -2139,7 +2136,7 @@ static int lotlot_hiload(void)
 static void lotlot_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2203,12 +2200,12 @@ struct GameDriver driver_kungfud =
 	kungfum_hiload, kungfum_hisave
 };
 
-struct GameDriver driver_spaltanx =
+struct GameDriver driver_spartanx =
 {
 	__FILE__,
 	&driver_kungfum,
-	"spaltanx",
-	"Spaltan X (Japan)",
+	"spartanx",
+	"Spartan X (Japan)",
 	"1984",
 	"Irem",
 	"Mirko Buffoni\nNicola Salmoria\nIshmair\nAaron Giles (sound)",
@@ -2216,7 +2213,7 @@ struct GameDriver driver_spaltanx =
 	&kungfum_machine_driver,
 	0,
 
-	rom_spaltanx,
+	rom_spartanx,
 	0, 0,
 	0,
 	0,

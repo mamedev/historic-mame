@@ -136,16 +136,12 @@ int raiden_vh_start(void)
 
 void raiden_control_w(int offset, int data)
 {
-	static int old;
-
-	/* All other bits unknown */
+	/* All other bits unknown - could be playfield enables */
 
 	/* Flipscreen */
 	if (offset==6) {
 		flipscreen=data&0x2;
-		if (flipscreen!=old)
-			tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
-		old=flipscreen;
+		tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 	}
 }
 
@@ -156,19 +152,19 @@ static void draw_sprites(struct osd_bitmap *bitmap,int pri_mask)
 	for (offs = 0x1000-8;offs >= 0;offs -= 8)
 	{
 		/* Don't draw empty sprite table entries */
-		if (spriteram[offs+7]!=0xf) continue;
-		if (spriteram[offs+0]==0xf0f) continue;
-		if (!(pri_mask&spriteram[offs+5])) continue;
+		if (buffered_spriteram[offs+7]!=0xf) continue;
+		if (buffered_spriteram[offs+0]==0xf0f) continue;
+		if (!(pri_mask&buffered_spriteram[offs+5])) continue;
 
-		fx= spriteram[offs+1]&0x20;
-		fy= spriteram[offs+1]&0x40;
-		y = spriteram[offs+0];
-		x = spriteram[offs+4];
+		fx= buffered_spriteram[offs+1]&0x20;
+		fy= buffered_spriteram[offs+1]&0x40;
+		y = buffered_spriteram[offs+0];
+		x = buffered_spriteram[offs+4];
 
-		if (spriteram[offs+5]&1) x=0-(0x100-x);
+		if (buffered_spriteram[offs+5]&1) x=0-(0x100-x);
 
-		color = spriteram[offs+1]&0xf;
-		sprite = spriteram[offs+2]+(spriteram[offs+3]<<8);
+		color = buffered_spriteram[offs+1]&0xf;
+		sprite = buffered_spriteram[offs+2]+(buffered_spriteram[offs+3]<<8);
 		sprite &= 0x0fff;
 
 		if (flipscreen) {
@@ -198,10 +194,10 @@ void raiden_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		tilemap_set_scrolly( foreground_layer,0, ((raiden_scroll_ram[7]<<8)+raiden_scroll_ram[6]) );
 	}
 	else {
-		tilemap_set_scrolly( background_layer,0, ((raiden_scroll_ram[0x02]<<8)+raiden_scroll_ram[0x12]) );
-		tilemap_set_scrollx( background_layer,0, ((raiden_scroll_ram[0x04]<<7)+raiden_scroll_ram[0x14])&0x7f );
-		tilemap_set_scrolly( foreground_layer,0, ((raiden_scroll_ram[0x22]<<8)+raiden_scroll_ram[0x24]) );
-		tilemap_set_scrollx( foreground_layer,0, ((raiden_scroll_ram[0x32]<<7)+raiden_scroll_ram[0x34])&0x7f );
+		tilemap_set_scrolly( background_layer,0, ((raiden_scroll_ram[0x02]&0x30)<<4)+((raiden_scroll_ram[0x04]&0x7f)<<1)+((raiden_scroll_ram[0x04]&0x80)>>7) );
+		tilemap_set_scrollx( background_layer,0, ((raiden_scroll_ram[0x12]&0x30)<<4)+((raiden_scroll_ram[0x14]&0x7f)<<1)+((raiden_scroll_ram[0x14]&0x80)>>7) );
+		tilemap_set_scrolly( foreground_layer,0, ((raiden_scroll_ram[0x22]&0x30)<<4)+((raiden_scroll_ram[0x24]&0x7f)<<1)+((raiden_scroll_ram[0x24]&0x80)>>7) );
+		tilemap_set_scrollx( foreground_layer,0, ((raiden_scroll_ram[0x32]&0x30)<<4)+((raiden_scroll_ram[0x34]&0x7f)<<1)+((raiden_scroll_ram[0x34]&0x80)>>7) );
 	}
 
 	tilemap_update(ALL_TILEMAPS);
@@ -214,8 +210,8 @@ void raiden_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	for (color = 0;color < 16;color++) colmask[color] = 0;
 	for (offs = 0;offs <0x1000;offs += 8)
 	{
-		color = spriteram[offs+1]&0xf;
-		sprite = spriteram[offs+2]+(spriteram[offs+3]<<8);
+		color = buffered_spriteram[offs+1]&0xf;
+		sprite = buffered_spriteram[offs+2]+(buffered_spriteram[offs+3]<<8);
 		sprite &= 0x0fff;
 		colmask[color] |= Machine->gfx[3]->pen_usage[sprite];
 	}

@@ -331,11 +331,11 @@ static int controller4_r (int offset) { return readinputport(6); }
 
 static void neo_bankswitch_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[MEM_CPU0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
 
 
-	if (Machine->memory_region_length[MEM_CPU0] <= 0x100000)
+	if (memory_region_length(REGION_CPU1) <= 0x100000)
 	{
 if (errorlog) fprintf(errorlog,"warning: bankswitch to %02x but no banks available\n",data);
 		return;
@@ -343,7 +343,7 @@ if (errorlog) fprintf(errorlog,"warning: bankswitch to %02x but no banks availab
 
 	data = data&0x7;
 	bankaddress = (data+1)*0x100000;
-	if (bankaddress >= Machine->memory_region_length[MEM_CPU0])
+	if (bankaddress >= memory_region_length(REGION_CPU1))
 	{
 if (errorlog) fprintf(errorlog,"PC %06x: warning: bankswitch to empty bank %02x\n",cpu_get_pc(),data);
 		bankaddress = 0x100000;
@@ -628,7 +628,7 @@ static int z80_port_r(int offset)
 
 		case 0x08:
 			{
-				unsigned char *RAM = Machine->memory_region[MEM_CPU1];
+				unsigned char *RAM = memory_region(REGION_CPU2);
 				bank[3] = 0x0800 * ((offset >> 8) & 0x7f);
 				cpu_setbank(8,&RAM[bank[3]]);
 				return 0;
@@ -637,7 +637,7 @@ static int z80_port_r(int offset)
 
 		case 0x09:
 			{
-				unsigned char *RAM = Machine->memory_region[MEM_CPU1];
+				unsigned char *RAM = memory_region(REGION_CPU2);
 				bank[2] = 0x1000 * ((offset >> 8) & 0x3f);
 				cpu_setbank(7,&RAM[bank[2]]);
 				return 0;
@@ -646,7 +646,7 @@ static int z80_port_r(int offset)
 
 		case 0x0a:
 			{
-				unsigned char *RAM = Machine->memory_region[MEM_CPU1];
+				unsigned char *RAM = memory_region(REGION_CPU2);
 				bank[1] = 0x2000 * ((offset >> 8) & 0x1f);
 				cpu_setbank(6,&RAM[bank[1]]);
 				return 0;
@@ -655,7 +655,7 @@ static int z80_port_r(int offset)
 
 		case 0x0b:
 			{
-				unsigned char *RAM = Machine->memory_region[MEM_CPU1];
+				unsigned char *RAM = memory_region(REGION_CPU2);
 				bank[0] = 0x4000 * ((offset >> 8) & 0x0f);
 				cpu_setbank(5,&RAM[bank[0]]);
 				return 0;
@@ -953,14 +953,12 @@ static struct MachineDriver neogeo_machine_driver =
 		{
 			CPU_M68000,
 			12000000,
-			MEM_CPU0,
 			neogeo_readmem,neogeo_writemem,0,0,
 			neogeo_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU | CPU_16BIT_PORT,
 			6000000,
-			MEM_CPU1,
 			sound_readmem,sound_writemem,neo_readio,neo_writeio,
 			ignore_interrupt,0
 		}
@@ -998,14 +996,12 @@ static struct MachineDriver neogeo_raster_machine_driver =
 		{
 			CPU_M68000,
 			12000000,
-			MEM_CPU0,
 			neogeo_readmem,neogeo_writemem,0,0,
 			neogeo_raster_interrupt,RASTER_LINES
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU | CPU_16BIT_PORT,
 			6000000,
-			MEM_CPU1,
 			sound_readmem,sound_writemem,neo_readio,neo_writeio,
 			ignore_interrupt,0
 		}
@@ -1039,21 +1035,21 @@ static struct MachineDriver neogeo_raster_machine_driver =
 #define NEO_BIOS_SOUND_256K(name,sum) \
 	ROM_REGION(0x20000) \
 	ROM_LOAD_WIDE_SWAP( "neo-geo.rom", 0x00000, 0x020000, 0x9036d879 ) \
-	ROM_REGION(0x40000) \
+	ROM_REGIONX( 0x40000, REGION_CPU2 ) \
 	ROM_LOAD( "ng-sm1.rom", 0x00000, 0x20000, 0x97cf998b )	/* we don't use the BIOS anyway... */ \
 	ROM_LOAD( name,         0x00000, 0x40000, sum )	/* so overwrite it with the real thing */
 
 #define NEO_BIOS_SOUND_128K(name,sum) \
 	ROM_REGION(0x20000) \
 	ROM_LOAD_WIDE_SWAP( "neo-geo.rom", 0x00000, 0x020000, 0x9036d879 ) \
-	ROM_REGION(0x40000) \
+	ROM_REGIONX( 0x40000, REGION_CPU2 ) \
 	ROM_LOAD( "ng-sm1.rom", 0x00000, 0x20000, 0x97cf998b )	/* we don't use the BIOS anyway... */ \
 	ROM_LOAD( name,         0x00000, 0x20000, sum )	/* so overwrite it with the real thing */
 
 #define NEO_BIOS_SOUND_64K(name,sum) \
 	ROM_REGION(0x20000) \
 	ROM_LOAD_WIDE_SWAP( "neo-geo.rom", 0x00000, 0x020000, 0x9036d879 ) \
-	ROM_REGION(0x40000) \
+	ROM_REGIONX( 0x40000, REGION_CPU2 ) \
 	ROM_LOAD( "ng-sm1.rom", 0x00000, 0x20000, 0x97cf998b )	/* we don't use the BIOS anyway... */ \
 	ROM_LOAD( name,         0x00000, 0x10000, sum )	/* so overwrite it with the real thing */
 
@@ -1078,7 +1074,7 @@ static struct MachineDriver neogeo_raster_machine_driver =
 /******************************************************************************/
 
 ROM_START( nam1975 )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "nam_p1.rom", 0x000000, 0x080000, 0xcc9fc951 )
 
 	NEO_SFIX_64K( "nam_s1.rom", 0x8ded55a5 )
@@ -1093,7 +1089,7 @@ ROM_START( nam1975 )
 	ROM_LOAD( "nam_v22.rom", 0x080000, 0x080000, 0xab0d8368 )
 	ROM_LOAD( "nam_v23.rom", 0x100000, 0x080000, 0xdf468e28 )
 
-	ROM_REGION(0x300000)
+	ROM_REGION( 0x300000 )
 	ROM_LOAD_GFX_EVEN( "nam_c1.rom", 0x000000, 0x80000, 0x32ea98e1 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "nam_c2.rom", 0x000000, 0x80000, 0xcbc4064c ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "nam_c3.rom", 0x100000, 0x80000, 0x0151054c ) /* Plane 0,1 */
@@ -1103,7 +1099,7 @@ ROM_START( nam1975 )
 ROM_END
 
 ROM_START( bstars )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "bpro_p1.rom", 0x000000, 0x080000, 0x3bc7790e )
 
 	NEO_SFIX_128K( "bpro_s1.rom", 0x1a7fd0c6 )
@@ -1119,7 +1115,7 @@ ROM_START( bstars )
 	ROM_REGION_OPTIONAL(0x080000) /* sound samples */
 	ROM_LOAD( "bpro_v21.rom", 0x000000, 0x080000, 0x04a733d1 )
 
-	ROM_REGION(0x300000)
+	ROM_REGION( 0x300000 )
 	ROM_LOAD_GFX_EVEN( "bpro_c1.rom", 0x000000, 0x080000, 0xaaff2a45 )
 	ROM_LOAD_GFX_ODD ( "bpro_c2.rom", 0x000000, 0x080000, 0x3ba0f7e4 )
 	ROM_LOAD_GFX_EVEN( "bpro_c3.rom", 0x100000, 0x080000, 0x96f0fdfa )
@@ -1129,7 +1125,7 @@ ROM_START( bstars )
 ROM_END
 
 ROM_START( tpgolf )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "topg_p1.rom", 0x000000, 0x080000, 0xf75549ba )
 	ROM_LOAD_WIDE_SWAP( "topg_p2.rom", 0x080000, 0x080000, 0xb7809a8f )
 
@@ -1146,7 +1142,7 @@ ROM_START( tpgolf )
 	ROM_LOAD( "topg_v23.rom", 0x100000, 0x080000, 0x30f53e54 )
 	ROM_LOAD( "topg_v24.rom", 0x180000, 0x080000, 0x5ba0f501 )
 
-	ROM_REGION(0x400000)
+	ROM_REGION( 0x400000 )
 	ROM_LOAD_GFX_EVEN( "topg_c1.rom", 0x000000, 0x80000, 0x0315fbaf )
 	ROM_LOAD_GFX_ODD ( "topg_c2.rom", 0x000000, 0x80000, 0xb4c15d59 )
 	ROM_LOAD_GFX_EVEN( "topg_c3.rom", 0x100000, 0x80000, 0xb09f1612 )
@@ -1158,7 +1154,7 @@ ROM_START( tpgolf )
 ROM_END
 
 ROM_START( mahretsu )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "maj_p1.rom", 0x000000, 0x080000, 0xfc6f53db )
 
 	NEO_SFIX_64K( "maj_s1.rom", 0xb0d16529 )
@@ -1174,7 +1170,7 @@ ROM_START( mahretsu )
 	ROM_LOAD( "maj_v4.rom", 0x080000, 0x080000, 0x776fa2a2 )
 	ROM_LOAD( "maj_v5.rom", 0x100000, 0x080000, 0xb3e7eeea )
 
-	ROM_REGION(0x200000)
+	ROM_REGION( 0x200000 )
 	ROM_LOAD_GFX_EVEN( "maj_c1.rom", 0x000000, 0x80000, 0xf1ae16bc ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "maj_c2.rom", 0x000000, 0x80000, 0xbdc13520 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "maj_c3.rom", 0x100000, 0x80000, 0x9c571a37 ) /* Plane 0,1 */
@@ -1182,7 +1178,7 @@ ROM_START( mahretsu )
 ROM_END
 
 ROM_START( maglord )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "magl_p1.rom", 0x000000, 0x080000, 0xbd0a492d )
 
 	NEO_SFIX_128K( "magl_s1.rom", 0x1c5369a2 )
@@ -1196,7 +1192,7 @@ ROM_START( maglord )
 	ROM_LOAD( "magl_v21.rom", 0x000000, 0x080000, 0xf94ab5b7 )
 	ROM_LOAD( "magl_v22.rom", 0x080000, 0x080000, 0x232cfd04 )
 
-	ROM_REGION(0x300000)
+	ROM_REGION( 0x300000 )
 	ROM_LOAD_GFX_EVEN( "magl_c1.rom", 0x000000, 0x80000, 0x806aee34 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "magl_c2.rom", 0x000000, 0x80000, 0x34aa9a86 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "magl_c3.rom", 0x100000, 0x80000, 0xc4c2b926 ) /* Plane 0,1 */
@@ -1206,7 +1202,7 @@ ROM_START( maglord )
 ROM_END
 
 ROM_START( maglordh )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "maglh_p1.rom", 0x000000, 0x080000, 0x599043c5 )
 
 	NEO_SFIX_128K( "magl_s1.rom", 0x1c5369a2 )
@@ -1220,7 +1216,7 @@ ROM_START( maglordh )
 	ROM_LOAD( "magl_v21.rom", 0x000000, 0x080000, 0xf94ab5b7 )
 	ROM_LOAD( "magl_v22.rom", 0x080000, 0x080000, 0x232cfd04 )
 
-	ROM_REGION(0x300000)
+	ROM_REGION( 0x300000 )
 	ROM_LOAD_GFX_EVEN( "magl_c1.rom", 0x000000, 0x80000, 0x806aee34 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "magl_c2.rom", 0x000000, 0x80000, 0x34aa9a86 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "magl_c3.rom", 0x100000, 0x80000, 0xc4c2b926 ) /* Plane 0,1 */
@@ -1230,7 +1226,7 @@ ROM_START( maglordh )
 ROM_END
 
 ROM_START( ridhero )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_ODD ( "n046001a.038", 0x000000, 0x040000, 0xdabfac95 )
 	ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
 
@@ -1248,7 +1244,7 @@ ROM_START( ridhero )
 	ROM_LOAD( "n046001b.278", 0x100000, 0x080000, 0x069c71ed )
 	ROM_LOAD( "n046001b.27c", 0x180000, 0x080000, 0x89fbb825 )
 
-	ROM_REGION(0x200000)
+	ROM_REGION( 0x200000 )
 	ROM_LOAD( "n046001a.538", 0x000000, 0x40000, 0x24096241 ) /* Plane 0,1 */
 	ROM_CONTINUE(             0x100000, 0x40000 )
 	ROM_LOAD( "n046001a.53c", 0x040000, 0x40000, 0x7026a3a2 ) /* Plane 0,1 */
@@ -1260,7 +1256,7 @@ ROM_START( ridhero )
 ROM_END
 
 ROM_START( alpham2 )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "lstg_p1.rom", 0x000000, 0x100000, 0x7b0ebe08 )
 
 	NEO_SFIX_128K( "lstg_s1.rom", 0x85ec9acf )
@@ -1277,7 +1273,7 @@ ROM_START( alpham2 )
 	ROM_LOAD( "lstg_v23.rom", 0x100000, 0x100000, 0x2e4f1e48 )
 	ROM_LOAD( "lstg_v24.rom", 0x180000, 0x100000, 0x658ee845 )
 
-	ROM_REGION(0x300000)
+	ROM_REGION( 0x300000 )
 	ROM_LOAD_GFX_EVEN( "lstg_c1.rom", 0x000000, 0x100000, 0x8fba8ff3 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "lstg_c2.rom", 0x000000, 0x100000, 0x4dad2945 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "lstg_c3.rom", 0x200000, 0x080000, 0x68c2994e ) /* Plane 0,1 */
@@ -1285,7 +1281,7 @@ ROM_START( alpham2 )
 ROM_END
 
 ROM_START( ncombat )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "ncom_p1.rom", 0x000000, 0x080000, 0xb45fcfbf )
 
 	NEO_SFIX_128K( "ncom_s1.rom", 0xd49afee8 )
@@ -1300,7 +1296,7 @@ ROM_START( ncombat )
 	ROM_REGION_OPTIONAL(0x080000) /* sound samples */
 	ROM_LOAD( "ncom_v21.rom", 0x000000, 0x080000, 0x365f9011 )
 
-	ROM_REGION(0x300000)
+	ROM_REGION( 0x300000 )
 	ROM_LOAD_GFX_EVEN( "ncom_c1.rom", 0x000000, 0x80000, 0x33cc838e ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "ncom_c2.rom", 0x000000, 0x80000, 0x26877feb ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "ncom_c3.rom", 0x100000, 0x80000, 0x3b60a05d ) /* Plane 0,1 */
@@ -1310,7 +1306,7 @@ ROM_START( ncombat )
 ROM_END
 
 ROM_START( cyberlip )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "cybl_p1.rom", 0x000000, 0x080000, 0x69a6b42d )
 
 	NEO_SFIX_128K( "cybl_s1.rom", 0x79a35264 )
@@ -1326,7 +1322,7 @@ ROM_START( cyberlip )
 	ROM_REGION_OPTIONAL(0x080000) /* sound samples */
 	ROM_LOAD( "cybl_v21.rom", 0x000000, 0x080000, 0x586f4cb2 )
 
-	ROM_REGION(0x300000)
+	ROM_REGION( 0x300000 )
 	ROM_LOAD_GFX_EVEN( "cybl_c1.rom", 0x000000, 0x80000, 0x8bba5113 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "cybl_c2.rom", 0x000000, 0x80000, 0xcbf66432 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "cybl_c3.rom", 0x100000, 0x80000, 0xe4f86efc ) /* Plane 0,1 */
@@ -1336,7 +1332,7 @@ ROM_START( cyberlip )
 ROM_END
 
 ROM_START( superspy )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_ODD ( "n138001a.038", 0x000000, 0x040000, 0x2e949e32 )
 	ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
 	ROM_LOAD_ODD ( "n138001a.03c", 0x080000, 0x040000, 0x54443d72 )
@@ -1354,7 +1350,7 @@ ROM_START( superspy )
 	ROM_REGION_OPTIONAL(0x080000) /* sound samples */
 	ROM_LOAD( "n138001a.278", 0x000000, 0x080000, 0x426cd040 )
 
-	ROM_REGION(0x400000)
+	ROM_REGION( 0x400000 )
 	ROM_LOAD( "n138001a.538", 0x000000, 0x40000, 0x239f22c4 ) /* Plane 0,1 */
 	ROM_CONTINUE(             0x200000, 0x40000 )
 	ROM_LOAD( "n138001a.53c", 0x040000, 0x40000, 0xce80c326 ) /* Plane 0,1 */
@@ -1374,7 +1370,7 @@ ROM_START( superspy )
 ROM_END
 
 ROM_START( mutnat )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_ODD ( "n054001a.038", 0x000000, 0x040000, 0x30cbd46b )
 	ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
 
@@ -1390,7 +1386,7 @@ ROM_START( mutnat )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x400000)
+	ROM_REGION( 0x400000 )
 	ROM_LOAD( "n054001a.538", 0x000000, 0x40000, 0x83d59ccf ) /* Plane 0,1 */
 	ROM_CONTINUE(             0x200000, 0x40000 )
 	ROM_LOAD( "n054001a.53c", 0x040000, 0x40000, 0xb2f1409d ) /* Plane 0,1 */
@@ -1410,7 +1406,7 @@ ROM_START( mutnat )
 ROM_END
 
 ROM_START( kotm )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_ODD ( "n058001a.038", 0x000000, 0x040000, 0xd239c184 )
 	ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
 	ROM_LOAD_ODD ( "n058001a.03c", 0x080000, 0x040000, 0x7291a388 )
@@ -1428,7 +1424,7 @@ ROM_START( kotm )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x400000)
+	ROM_REGION( 0x400000 )
 	ROM_LOAD( "n058001a.538", 0x000000, 0x40000, 0x493db90e ) /* Plane 0,1 */
 	ROM_CONTINUE(             0x200000, 0x40000 )
 	ROM_LOAD( "n058001a.53c", 0x040000, 0x40000, 0x0d211945 ) /* Plane 0,1 */
@@ -1448,7 +1444,7 @@ ROM_START( kotm )
 ROM_END
 
 ROM_START( sengoku )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "sngku_p1.rom", 0x000000, 0x080000, 0xf8a63983 )
 	ROM_LOAD_WIDE_SWAP( "sngku_p2.rom", 0x080000, 0x020000, 0x3024bbb3 )
 
@@ -1462,7 +1458,7 @@ ROM_START( sengoku )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x400000)
+	ROM_REGION( 0x400000 )
 	ROM_LOAD_GFX_EVEN( "sngku_c1.rom", 0x000000, 0x100000, 0xb4eb82a1 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "sngku_c2.rom", 0x000000, 0x100000, 0xd55c550d ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "sngku_c3.rom", 0x200000, 0x100000, 0xed51ef65 ) /* Plane 0,1 */
@@ -1470,7 +1466,7 @@ ROM_START( sengoku )
 ROM_END
 
 ROM_START( sengokh )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "sngkh_p1.rom", 0x000000, 0x080000, 0x33eccae0 )
 	ROM_LOAD_WIDE_SWAP( "sngku_p2.rom", 0x080000, 0x020000, 0x3024bbb3 )
 
@@ -1484,7 +1480,7 @@ ROM_START( sengokh )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x400000)
+	ROM_REGION( 0x400000 )
 	ROM_LOAD_GFX_EVEN( "sngku_c1.rom", 0x000000, 0x100000, 0xb4eb82a1 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "sngku_c2.rom", 0x000000, 0x100000, 0xd55c550d ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "sngku_c3.rom", 0x200000, 0x100000, 0xed51ef65 ) /* Plane 0,1 */
@@ -1492,43 +1488,49 @@ ROM_START( sengokh )
 ROM_END
 
 ROM_START( burningf )
-	ROM_REGION(0x100000)
-	ROM_LOAD_ODD ( "n054001a.038", 0x000000, 0x040000, 0x188c5e11 )
-	ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
+	ROM_LOAD_WIDE_SWAP( "burnf_p1.rom", 0x000000, 0x080000, 0x4092c8db )
 
-	NEO_SFIX_128K( "n054001a.378", 0x6799ea0d )
+	NEO_SFIX_128K( "burnf_s1.rom", 0x6799ea0d )
 
-	NEO_BIOS_SOUND_128K( "n054001a.4f8", 0x58d10c2b )
+	NEO_BIOS_SOUND_128K( "burnf_m1.rom", 0x0c939ee2 )
 
 	ROM_REGION_OPTIONAL(0x200000) /* sound samples */
-	ROM_LOAD( "n054001a.1f8", 0x000000, 0x080000, 0xb55b9670 )
-	ROM_LOAD( "n054001a.1fc", 0x080000, 0x080000, 0xa0bcf260 )
-	ROM_LOAD( "n054001b.1f8", 0x100000, 0x080000, 0x270f4707 )
-	ROM_LOAD( "n054001b.1fc", 0x180000, 0x080000, 0x924e3d69 )
+	ROM_LOAD( "burnf_v1.rom", 0x000000, 0x100000, 0x508c9ffc )
+	ROM_LOAD( "burnf_v2.rom", 0x100000, 0x100000, 0x854ef277 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x400000)
-	ROM_LOAD( "n054001a.538", 0x000000, 0x40000, 0x4ddc137b ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x200000, 0x40000 )
-	ROM_LOAD( "n054001a.53c", 0x040000, 0x40000, 0x896d8545 ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x240000, 0x40000 )
-	ROM_LOAD( "n054001b.538", 0x080000, 0x40000, 0x2b2cb196 ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x280000, 0x40000 )
-	ROM_LOAD( "n054001b.53c", 0x0c0000, 0x40000, 0x0f49caa9 ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x2c0000, 0x40000 )
-	ROM_LOAD( "n054001a.638", 0x100000, 0x40000, 0x7d7d87dc ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x300000, 0x40000 )
-	ROM_LOAD( "n054001a.63c", 0x140000, 0x40000, 0x39fe5307 ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x340000, 0x40000 )
-	ROM_LOAD( "n054001b.638", 0x180000, 0x40000, 0x03aa8a36 ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x380000, 0x40000 )
-	ROM_LOAD( "n054001b.63c", 0x1c0000, 0x40000, 0xf759626e ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x3c0000, 0x40000 )
+	ROM_REGION( 0x400000 )
+	ROM_LOAD_GFX_EVEN( "burnf_c1.rom", 0x000000, 0x100000, 0x25a25e9b ) /* Plane 0,1 */
+	ROM_LOAD_GFX_ODD ( "burnf_c2.rom", 0x000000, 0x100000, 0xd4378876 ) /* Plane 2,3 */
+	ROM_LOAD_GFX_EVEN( "burnf_c3.rom", 0x200000, 0x100000, 0x862b60da ) /* Plane 0,1 */
+	ROM_LOAD_GFX_ODD ( "burnf_c4.rom", 0x200000, 0x100000, 0xe2e0aff7 ) /* Plane 2,3 */
+ROM_END
+
+ROM_START( burningh )
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
+	ROM_LOAD_WIDE_SWAP( "burnh_p1.rom", 0x000000, 0x080000, 0xddffcbf4 )
+
+	NEO_SFIX_128K( "burnf_s1.rom", 0x6799ea0d )
+
+	NEO_BIOS_SOUND_128K( "burnf_m1.rom", 0x0c939ee2 )
+
+	ROM_REGION_OPTIONAL(0x200000) /* sound samples */
+	ROM_LOAD( "burnf_v1.rom", 0x000000, 0x100000, 0x508c9ffc )
+	ROM_LOAD( "burnf_v2.rom", 0x100000, 0x100000, 0x854ef277 )
+
+	NO_DELTAT_REGION
+
+	ROM_REGION( 0x400000 )
+	ROM_LOAD_GFX_EVEN( "burnf_c1.rom", 0x000000, 0x100000, 0x25a25e9b ) /* Plane 0,1 */
+	ROM_LOAD_GFX_ODD ( "burnf_c2.rom", 0x000000, 0x100000, 0xd4378876 ) /* Plane 2,3 */
+	ROM_LOAD_GFX_EVEN( "burnf_c3.rom", 0x200000, 0x100000, 0x862b60da ) /* Plane 0,1 */
+	ROM_LOAD_GFX_ODD ( "burnf_c4.rom", 0x200000, 0x100000, 0xe2e0aff7 ) /* Plane 2,3 */
 ROM_END
 
 ROM_START( lbowling )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_ODD ( "n050001a.038", 0x000000, 0x040000, 0x380e358d )
 	ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
 
@@ -1543,7 +1545,7 @@ ROM_START( lbowling )
 	ROM_REGION_OPTIONAL(0x080000) /* sound samples */
 	ROM_LOAD( "n050001a.278", 0x000000, 0x080000, 0x2efd5ada )
 
-	ROM_REGION(0x400000)
+	ROM_REGION( 0x400000 )
 	ROM_LOAD( "n050001a.538", 0x000000, 0x40000, 0x17df7955 ) /* Plane 0,1 */
 	ROM_CONTINUE(             0x200000, 0x40000 )
 	ROM_LOAD( "n050001a.53c", 0x040000, 0x40000, 0x67bf2d89 ) /* Plane 0,1 */
@@ -1563,7 +1565,7 @@ ROM_START( lbowling )
 ROM_END
 
 ROM_START( gpilots )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "ghst_p1.rom", 0x000000, 0x080000, 0xe6f2fe64 )
 	ROM_LOAD_WIDE_SWAP( "ghst_p2.rom", 0x080000, 0x020000, 0xedcb22ac )
 
@@ -1578,7 +1580,7 @@ ROM_START( gpilots )
 	ROM_REGION_OPTIONAL(0x080000) /* sound samples */
 	ROM_LOAD( "ghst_v21.rom", 0x000000, 0x080000, 0x7abf113d )
 
-	ROM_REGION(0x400000)
+	ROM_REGION( 0x400000 )
 	ROM_LOAD_GFX_EVEN( "ghst_c1.rom", 0x000000, 0x100000, 0xbd6fe78e )
 	ROM_LOAD_GFX_ODD ( "ghst_c2.rom", 0x000000, 0x100000, 0x5f4a925c )
 	ROM_LOAD_GFX_EVEN( "ghst_c3.rom", 0x200000, 0x100000, 0xd1e42fd0 )
@@ -1586,7 +1588,7 @@ ROM_START( gpilots )
 ROM_END
 
 ROM_START( joyjoy )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "joy_p1.rom", 0x000000, 0x080000, 0x39c3478f )
 
 	NEO_SFIX_128K( "joy_s1.rom", 0x6956d778 )
@@ -1599,13 +1601,13 @@ ROM_START( joyjoy )
 	ROM_REGION_OPTIONAL(0x080000) /* sound samples */
 	ROM_LOAD( "joy_v2.rom", 0x000000, 0x080000, 0x8ed20a86 )
 
-	ROM_REGION(0x100000)
+	ROM_REGION( 0x100000 )
 	ROM_LOAD_GFX_EVEN( "joy_c1.rom", 0x000000, 0x080000, 0x509250ec )
 	ROM_LOAD_GFX_ODD ( "joy_c2.rom", 0x000000, 0x080000, 0x09ed5258 )
 ROM_END
 
 ROM_START( bjourney )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "bj-p1.rom", 0x000000, 0x100000, 0x6a2f6d4a )
 
 	NEO_SFIX_128K( "bj-s1.rom", 0x843c3624 )
@@ -1618,7 +1620,7 @@ ROM_START( bjourney )
 	ROM_REGION_OPTIONAL(0x100000) /* sound samples */
 	ROM_LOAD( "bj-v22.rom", 0x000000, 0x100000, 0x65a54d13 )
 
-	ROM_REGION(0x300000)
+	ROM_REGION( 0x300000 )
 	ROM_LOAD_GFX_EVEN( "bj-c1.rom", 0x000000, 0x100000, 0x4d47a48c )
 	ROM_LOAD_GFX_ODD ( "bj-c2.rom", 0x000000, 0x100000, 0xe8c1491a )
 	ROM_LOAD_GFX_EVEN( "bj-c3.rom", 0x200000, 0x080000, 0x66e69753 )
@@ -1626,7 +1628,7 @@ ROM_START( bjourney )
 ROM_END
 
 ROM_START( quizdais )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "quizd_p1.rom", 0x000000, 0x100000, 0xc488fda3 )
 
 	NEO_SFIX_128K( "quizd_s1.rom", 0xac31818a )
@@ -1638,13 +1640,13 @@ ROM_START( quizdais )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x200000)
+	ROM_REGION( 0x200000 )
 	ROM_LOAD_GFX_EVEN( "quizd_c1.rom", 0x000000, 0x100000, 0x2999535a ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "quizd_c2.rom", 0x000000, 0x100000, 0x876a99e6 ) /* Plane 2,3 */
 ROM_END
 
 ROM_START( lresort )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_ODD ( "n046001a.038", 0x000000, 0x040000, 0x5f0a5a4b )
 	ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
 
@@ -1660,7 +1662,7 @@ ROM_START( lresort )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x300000)
+	ROM_REGION( 0x300000 )
 	ROM_LOAD( "n046001a.538", 0x000000, 0x40000, 0x9f7995a9 ) /* Plane 0,1 */
 	ROM_CONTINUE(             0x180000, 0x40000 )
 	ROM_LOAD( "n046001a.53c", 0x040000, 0x40000, 0xe122b155 ) /* Plane 0,1 */
@@ -1676,7 +1678,7 @@ ROM_START( lresort )
 ROM_END
 
 ROM_START( eightman )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_ODD ( "n046001a.038", 0x000000, 0x040000, 0xe23e2631 )
 	ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
 
@@ -1692,7 +1694,7 @@ ROM_START( eightman )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x300000)
+	ROM_REGION( 0x300000 )
 	ROM_LOAD( "n046001a.538", 0x000000, 0x40000, 0xc916c9bf ) /* Plane 0,1 */
 	ROM_CONTINUE(             0x180000, 0x40000 )
 	ROM_LOAD( "n046001a.53c", 0x040000, 0x40000, 0x4b057b13 ) /* Plane 0,1 */
@@ -1708,7 +1710,7 @@ ROM_START( eightman )
 ROM_END
 
 ROM_START( minasan )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_ODD ( "n054001a.038", 0x000000, 0x040000, 0x86805d5a )
 	ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
 
@@ -1724,7 +1726,7 @@ ROM_START( minasan )
 	ROM_LOAD( "n054001a.278", 0x000000, 0x080000, 0x0100e548 )
 	ROM_LOAD( "n054001a.27c", 0x080000, 0x080000, 0x0c31c5b0 )
 
-	ROM_REGION(0x400000)
+	ROM_REGION( 0x400000 )
 	ROM_LOAD( "n054001a.538", 0x000000, 0x40000, 0x43f48265 ) /* Plane 0,1 */
 	ROM_CONTINUE(             0x200000, 0x40000 )
 	ROM_LOAD( "n054001a.53c", 0x040000, 0x40000, 0xcbf9eef8 ) /* Plane 0,1 */
@@ -1744,7 +1746,7 @@ ROM_START( minasan )
 ROM_END
 
 ROM_START( legendos )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "joe_p1.rom", 0x000000, 0x080000, 0x9d563f19 )
 
 	NEO_SFIX_128K( "joe_s1.rom",  0xbcd502f0 )
@@ -1756,7 +1758,7 @@ ROM_START( legendos )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x400000)
+	ROM_REGION( 0x400000 )
 	ROM_LOAD_GFX_EVEN( "joe_c1.rom", 0x000000, 0x100000, 0x2f5ab875 )
 	ROM_LOAD_GFX_ODD ( "joe_c2.rom", 0x000000, 0x100000, 0x318b2711 )
 	ROM_LOAD_GFX_EVEN( "joe_c3.rom", 0x200000, 0x100000, 0x6bc52cb2 )
@@ -1764,7 +1766,7 @@ ROM_START( legendos )
 ROM_END
 
 ROM_START( 2020bb )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "2020_p1.rom", 0x000000, 0x080000, 0xd396c9cb )
 
 	NEO_SFIX_128K( "2020_s1.rom", 0x7015b8fc )
@@ -1777,7 +1779,7 @@ ROM_START( 2020bb )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x300000)
+	ROM_REGION( 0x300000 )
 	ROM_LOAD_GFX_EVEN( "2020_c1.rom", 0x000000, 0x100000, 0x4f5e19bd ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "2020_c2.rom", 0x000000, 0x100000, 0xd6314bf0 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "2020_c3.rom", 0x200000, 0x080000, 0x6a87ae30 ) /* Plane 0,1 */
@@ -1785,7 +1787,7 @@ ROM_START( 2020bb )
 ROM_END
 
 ROM_START( 2020bbh )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "2020h_p1.rom", 0x000000, 0x080000, 0x12d048d7 )
 
 	NEO_SFIX_128K( "2020_s1.rom", 0x7015b8fc )
@@ -1798,7 +1800,7 @@ ROM_START( 2020bbh )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x300000)
+	ROM_REGION( 0x300000 )
 	ROM_LOAD_GFX_EVEN( "2020_c1.rom", 0x000000, 0x100000, 0x4f5e19bd ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "2020_c2.rom", 0x000000, 0x100000, 0xd6314bf0 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "2020_c3.rom", 0x200000, 0x080000, 0x6a87ae30 ) /* Plane 0,1 */
@@ -1806,7 +1808,7 @@ ROM_START( 2020bbh )
 ROM_END
 
 ROM_START( socbrawl )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "sbrl_p1.rom", 0x000000, 0x080000, 0xa2801c24 )
 
 	NEO_SFIX_64K( "sbrl_s1.rom", 0x2db38c3b )
@@ -1819,7 +1821,7 @@ ROM_START( socbrawl )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x300000)
+	ROM_REGION( 0x300000 )
 	ROM_LOAD_GFX_EVEN( "sbrl_c1.rom", 0x000000, 0x100000, 0xbd0a4eb8 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "sbrl_c2.rom", 0x000000, 0x100000, 0xefde5382 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "sbrl_c3.rom", 0x200000, 0x080000, 0x580f7f33 ) /* Plane 0,1 */
@@ -1827,7 +1829,7 @@ ROM_START( socbrawl )
 ROM_END
 
 ROM_START( roboarmy )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "rarmy_p1.rom", 0x000000, 0x080000, 0xcd11cbd4 )
 
 	NEO_SFIX_128K( "rarmy_s1.rom", 0xac0daa1b )
@@ -1842,7 +1844,7 @@ ROM_START( roboarmy )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x300000)
+	ROM_REGION( 0x300000 )
 	ROM_LOAD_GFX_EVEN( "rarmy_c1.rom", 0x000000, 0x080000, 0xe17fa618 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "rarmy_c2.rom", 0x000000, 0x080000, 0xd5ebdb4d ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "rarmy_c3.rom", 0x100000, 0x080000, 0xaa4d7695 ) /* Plane 0,1 */
@@ -1852,7 +1854,7 @@ ROM_START( roboarmy )
 ROM_END
 
 ROM_START( fatfury1 )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "ffry_p1.rom", 0x000000, 0x080000, 0x47ebdc2f )
 	ROM_LOAD_WIDE_SWAP( "ffry_p2.rom", 0x080000, 0x020000, 0xc473af1c )
 
@@ -1866,7 +1868,7 @@ ROM_START( fatfury1 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x400000)
+	ROM_REGION( 0x400000 )
 	ROM_LOAD_GFX_EVEN( "ffry_c1.rom", 0x000000, 0x100000, 0x74317e54 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "ffry_c2.rom", 0x000000, 0x100000, 0x5bb952f3 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "ffry_c3.rom", 0x200000, 0x100000, 0x9b714a7c ) /* Plane 0,1 */
@@ -1874,7 +1876,7 @@ ROM_START( fatfury1 )
 ROM_END
 
 ROM_START( fbfrenzy )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_ODD ( "n046001a.038", 0x000000, 0x040000, 0xc9fc879c )
 	ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
 
@@ -1890,7 +1892,7 @@ ROM_START( fbfrenzy )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x300000)
+	ROM_REGION( 0x300000 )
 	ROM_LOAD( "n046001a.538", 0x000000, 0x40000, 0xcd377680 ) /* Plane 0,1 */
 	ROM_CONTINUE(             0x180000, 0x40000 )
 	ROM_LOAD( "n046001a.53c", 0x040000, 0x40000, 0x2f6d09c2 ) /* Plane 0,1 */
@@ -1906,7 +1908,7 @@ ROM_START( fbfrenzy )
 ROM_END
 
 ROM_START( bakatono )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_ODD ( "n058001a.038", 0x000000, 0x040000, 0x083ca651 )
 	ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
 	ROM_LOAD_ODD ( "n058001a.03c", 0x080000, 0x040000, 0xb3bc26ae )
@@ -1924,7 +1926,7 @@ ROM_START( bakatono )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x400000)
+	ROM_REGION( 0x400000 )
 	ROM_LOAD( "n058001a.538", 0x000000, 0x40000, 0xacb82025 ) /* Plane 0,1 */
 	ROM_CONTINUE(             0x200000, 0x40000 )
 	ROM_LOAD( "n058001a.53c", 0x040000, 0x40000, 0xc6954f8e ) /* Plane 0,1 */
@@ -1944,7 +1946,7 @@ ROM_START( bakatono )
 ROM_END
 
 ROM_START( crsword )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_ODD ( "n046001a.038", 0x000000, 0x040000, 0x42c78fe1 )
 	ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
 
@@ -1958,7 +1960,7 @@ ROM_START( crsword )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x400000)
+	ROM_REGION( 0x400000 )
 	ROM_LOAD( "n046001a.538", 0x000000, 0x40000, 0x4b373de7 ) /* Plane 0,1 */
 	ROM_CONTINUE(             0x200000, 0x40000 )
 	ROM_LOAD( "n046001a.53c", 0x040000, 0x40000, 0xcddf6d69 ) /* Plane 0,1 */
@@ -1978,7 +1980,7 @@ ROM_START( crsword )
 ROM_END
 
 ROM_START( trally )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "tral_p1.rom", 0x000000, 0x080000, 0x1e52a576 )
 	ROM_LOAD_WIDE_SWAP( "tral_p2.rom", 0x080000, 0x080000, 0xa5193e2f )
 
@@ -1992,7 +1994,7 @@ ROM_START( trally )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x300000)
+	ROM_REGION( 0x300000 )
 	ROM_LOAD_GFX_EVEN( "tral_c1.rom", 0x000000, 0x100000, 0xc58323d4 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "tral_c2.rom", 0x000000, 0x100000, 0xbba9c29e ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "tral_c3.rom", 0x200000, 0x080000, 0x3bb7b9d6 ) /* Plane 0,1 */
@@ -2000,7 +2002,7 @@ ROM_START( trally )
 ROM_END
 
 ROM_START( kotm2 )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "kotm2_p1.rom", 0x000000, 0x080000, 0xb372d54c )
 	ROM_LOAD_WIDE_SWAP( "kotm2_p2.rom", 0x080000, 0x080000, 0x28661afe )
 
@@ -2014,7 +2016,7 @@ ROM_START( kotm2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x800000)
+	ROM_REGION( 0x800000 )
 	ROM_LOAD_GFX_EVEN( "kotm2_c1.rom", 0x000000, 0x100000, 0x6d1c4aa9 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_EVEN( 0,              0x400000, 0x100000, 0 )
 	ROM_LOAD_GFX_ODD ( "kotm2_c2.rom", 0x000000, 0x100000, 0xf7b75337 ) /* Plane 2,3 */
@@ -2026,7 +2028,7 @@ ROM_START( kotm2 )
 ROM_END
 
 ROM_START( sengoku2 )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "goku2_p1.rom", 0x000000, 0x080000, 0xcc245299 )
 	ROM_LOAD_WIDE_SWAP( "goku2_p2.rom", 0x080000, 0x080000, 0x2e466360 )
 
@@ -2041,7 +2043,7 @@ ROM_START( sengoku2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x800000)
+	ROM_REGION( 0x800000 )
 	ROM_LOAD_GFX_EVEN( "goku2_c1.rom", 0x000000, 0x200000, 0x3cacd552 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "goku2_c2.rom", 0x000000, 0x200000, 0xe2aadef3 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "goku2_c3.rom", 0x400000, 0x200000, 0x037614d5 ) /* Plane 0,1 */
@@ -2049,7 +2051,7 @@ ROM_START( sengoku2 )
 ROM_END
 
 ROM_START( bstars2 )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "star2_p1.rom", 0x000000, 0x080000, 0x523567fd )
 
 	NEO_SFIX_128K( "star2_s1.rom", 0x015c5c94 )
@@ -2063,7 +2065,7 @@ ROM_START( bstars2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x400000)
+	ROM_REGION( 0x400000 )
 	ROM_LOAD_GFX_EVEN( "star2_c1.rom", 0x000000, 0x100000, 0xb39a12e1 )
 	ROM_LOAD_GFX_ODD ( "star2_c2.rom", 0x000000, 0x100000, 0x766cfc2f )
 	ROM_LOAD_GFX_EVEN( "star2_c3.rom", 0x200000, 0x100000, 0xfb31339d )
@@ -2071,7 +2073,7 @@ ROM_START( bstars2 )
 ROM_END
 
 ROM_START( quizdai2 )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "mein_p1.rom", 0x000000, 0x100000, 0xed719dcf)
 
 	NEO_SFIX_128K( "mein_s1.rom", 0x164fd6e6 )
@@ -2084,7 +2086,7 @@ ROM_START( quizdai2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x300000)
+	ROM_REGION( 0x300000 )
 	ROM_LOAD_GFX_EVEN( "mein_c1.rom", 0x000000, 0x100000, 0xcb5809a1 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "mein_c2.rom", 0x000000, 0x100000, 0x1436dfeb ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "mein_c3.rom", 0x200000, 0x080000, 0xbcd4a518 ) /* Plane 0,1 */
@@ -2092,7 +2094,7 @@ ROM_START( quizdai2 )
 ROM_END
 
 ROM_START( 3countb )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "3cb_p1.rom", 0x000000, 0x080000, 0xeb2714c4 )
 	ROM_LOAD_WIDE_SWAP( "3cb_p2.rom", 0x080000, 0x080000, 0x5e764567 )
 
@@ -2114,7 +2116,7 @@ ROM_START( 3countb )
 ROM_END
 
 ROM_START( aof )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "aof_p1.rom", 0x000000, 0x080000, 0xca9f7a6d )
 
 	NEO_SFIX_128K( "aof_s1.rom", 0x89903f39 )
@@ -2127,7 +2129,7 @@ ROM_START( aof )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x800000)
+	ROM_REGION( 0x800000 )
 	ROM_LOAD_GFX_EVEN( "aof_c1.rom", 0x000000, 0x100000, 0xddab98a7 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_EVEN( 0,            0x400000, 0x100000, 0 )
 	ROM_LOAD_GFX_ODD ( "aof_c2.rom", 0x000000, 0x100000, 0xd8ccd575 ) /* Plane 2,3 */
@@ -2139,7 +2141,7 @@ ROM_START( aof )
 ROM_END
 
 ROM_START( samsho )
-	ROM_REGION(0x180000)
+	ROM_REGIONX( 0x180000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "samsh_p1.rom", 0x000000, 0x080000, 0x80aa6c97 )
 	ROM_LOAD_WIDE_SWAP( "samsh_p2.rom", 0x080000, 0x080000, 0x71768728 )
 	ROM_LOAD_WIDE_SWAP( "samsh_p3.rom", 0x100000, 0x080000, 0x38ee9ba9 )
@@ -2154,7 +2156,7 @@ ROM_START( samsho )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x900000)
+	ROM_REGION( 0x900000 )
 	ROM_LOAD_GFX_EVEN( "samsh_c1.rom", 0x000000, 0x200000, 0x2e5873a4 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "samsh_c2.rom", 0x000000, 0x200000, 0x04febb10 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "samsh_c3.rom", 0x400000, 0x200000, 0xf3dabd1e ) /* Plane 0,1 */
@@ -2164,7 +2166,7 @@ ROM_START( samsho )
 ROM_END
 
 ROM_START( tophuntr )
-	ROM_REGION(0x180000)
+	ROM_REGIONX( 0x180000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "thunt_p1.rom", 0x000000, 0x100000, 0x69fa9e29 )
 	ROM_LOAD_WIDE_SWAP( "thunt_p2.rom", 0x100000, 0x080000, 0xdb71f269 )
 
@@ -2180,7 +2182,7 @@ ROM_START( tophuntr )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x800000)
+	ROM_REGION( 0x800000 )
 	ROM_LOAD_GFX_EVEN( "thunt_c1.rom", 0x000000, 0x100000, 0xfa720a4a ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "thunt_c2.rom", 0x000000, 0x100000, 0xc900c205 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "thunt_c3.rom", 0x200000, 0x100000, 0x880e3c25 ) /* Plane 0,1 */
@@ -2192,7 +2194,7 @@ ROM_START( tophuntr )
 ROM_END
 
 ROM_START( fatfury2 )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "fury2_p1.rom", 0x000000, 0x080000, 0xbe40ea92 )
 	ROM_LOAD_WIDE_SWAP( "fury2_p2.rom", 0x080000, 0x080000, 0x2a9beac5 )
 
@@ -2206,7 +2208,7 @@ ROM_START( fatfury2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x800000)
+	ROM_REGION( 0x800000 )
 	ROM_LOAD_GFX_EVEN( "fury2_c1.rom", 0x000000, 0x100000, 0xf72a939e ) /* Plane 0,1 */
 	ROM_LOAD_GFX_EVEN( 0,              0x400000, 0x100000, 0 )
 	ROM_LOAD_GFX_ODD ( "fury2_c2.rom", 0x000000, 0x100000, 0x05119a0d ) /* Plane 2,3 */
@@ -2218,7 +2220,7 @@ ROM_START( fatfury2 )
 ROM_END
 
 ROM_START( janshin )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "jans-p1.rom", 0x000000, 0x100000, 0x7514cb7a )
 
 	NEO_SFIX_128K( "jans-s1.rom", 0x8285b25a )
@@ -2230,13 +2232,13 @@ ROM_START( janshin )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x400000)
+	ROM_REGION( 0x400000 )
 	ROM_LOAD_GFX_EVEN( "jans-c1.rom", 0x000000, 0x200000, 0x3fa890e9 )
 	ROM_LOAD_GFX_ODD ( "jans-c2.rom", 0x000000, 0x200000, 0x59c48ad8 )
 ROM_END
 
 ROM_START( androdun )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "adun_p1.rom", 0x000000, 0x080000, 0x3b857da2 )
 	ROM_LOAD_WIDE_SWAP( "adun_p2.rom", 0x080000, 0x080000, 0x2f062209 )
 
@@ -2250,7 +2252,7 @@ ROM_START( androdun )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x400000)
+	ROM_REGION( 0x400000 )
 	ROM_LOAD_GFX_EVEN( "adun_c1.rom", 0x000000, 0x100000, 0x7ace6db3 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "adun_c2.rom", 0x000000, 0x100000, 0xb17024f7 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "adun_c3.rom", 0x200000, 0x100000, 0x2e0f3f9a ) /* Plane 0,1 */
@@ -2258,7 +2260,7 @@ ROM_START( androdun )
 ROM_END
 
 ROM_START( ncommand )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_ODD ( "n054001a.038", 0x000000, 0x040000, 0xfdaaca42)
 	ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
 	ROM_LOAD_ODD ( "n054001a.03c", 0x080000, 0x040000, 0xb34e91fe)
@@ -2275,7 +2277,7 @@ ROM_START( ncommand )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x400000)
+	ROM_REGION( 0x400000 )
 	ROM_LOAD( "n054001a.538", 0x000000, 0x40000, 0x73acaa79) /* Plane 0,1 */
 	ROM_CONTINUE(             0x200000, 0x40000 )
 	ROM_LOAD( "n054001a.53c", 0x040000, 0x40000, 0xad56623d) /* Plane 0,1 */
@@ -2295,7 +2297,7 @@ ROM_START( ncommand )
 ROM_END
 
 ROM_START( viewpoin )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "viewp_p1.rom", 0x000000, 0x100000, 0x17aa899d )
 
 	NEO_SFIX_64K( "viewp_s1.rom", 0x6d0f146a )
@@ -2308,7 +2310,7 @@ ROM_START( viewpoin )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x600000)
+	ROM_REGION( 0x600000 )
 	ROM_LOAD_GFX_EVEN( "viewp_c1.rom", 0x000000, 0x100000, 0xd624c132 )
 	ROM_LOAD_GFX_EVEN( 0,              0x400000, 0x100000, 0 )
 	ROM_LOAD_GFX_ODD ( "viewp_c2.rom", 0x000000, 0x100000, 0x40d69f1e )
@@ -2316,7 +2318,7 @@ ROM_START( viewpoin )
 ROM_END
 
 ROM_START( ssideki )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "sidek_p1.rom", 0x000000, 0x080000, 0x9cd97256 )
 
 	NEO_SFIX_128K( "sidek_s1.rom", 0x97689804 )
@@ -2328,7 +2330,7 @@ ROM_START( ssideki )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x600000)
+	ROM_REGION( 0x600000 )
 	ROM_LOAD_GFX_EVEN( "sidek_c1.rom", 0x000000, 0x100000, 0x53e1c002 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_EVEN( 0,              0x400000, 0x100000, 0 )
 	ROM_LOAD_GFX_ODD ( "sidek_c2.rom", 0x000000, 0x100000, 0x776a2d1f ) /* Plane 2,3 */
@@ -2336,7 +2338,7 @@ ROM_START( ssideki )
 ROM_END
 
 ROM_START( wh1 )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "wh_p1.rom", 0x000000, 0x080000, 0x95b574cb )
 	ROM_LOAD_WIDE_SWAP( "wh_p2.rom", 0x080000, 0x080000, 0xf198ed45 )
 
@@ -2350,7 +2352,7 @@ ROM_START( wh1 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x600000)
+	ROM_REGION( 0x600000 )
 	ROM_LOAD_GFX_EVEN( "wh_c1.rom", 0x000000, 0x100000, 0x85eb5bce ) /* Plane 0,1 */
 	ROM_LOAD_GFX_EVEN( 0,           0x400000, 0x100000, 0 )
 	ROM_LOAD_GFX_ODD ( "wh_c2.rom", 0x000000, 0x100000, 0xec93b048 ) /* Plane 2,3 */
@@ -2360,7 +2362,7 @@ ROM_START( wh1 )
 ROM_END
 
 ROM_START( kof94 )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "kof94_p1.rom", 0x100000, 0x100000, 0xf10a2042 )
 	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
@@ -2375,7 +2377,7 @@ ROM_START( kof94 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x1000000)
+	ROM_REGION( 0x1000000 )
 	ROM_LOAD_GFX_EVEN( "kof94_c1.rom", 0x000000, 0x200000, 0xb96ef460 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "kof94_c2.rom", 0x000000, 0x200000, 0x15e096a7 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "kof94_c3.rom", 0x400000, 0x200000, 0x54f66254 ) /* Plane 0,1 */
@@ -2387,7 +2389,7 @@ ROM_START( kof94 )
 ROM_END
 
 ROM_START( aof2 )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "aof2_p1.rom", 0x000000, 0x100000, 0xa3b1d021 )
 
 	NEO_SFIX_128K( "aof2_s1.rom", 0x8b02638e )
@@ -2401,7 +2403,7 @@ ROM_START( aof2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x1000000)
+	ROM_REGION( 0x1000000 )
 	ROM_LOAD_GFX_EVEN( "aof2_c1.rom", 0x000000, 0x200000, 0x17b9cbd2 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "aof2_c2.rom", 0x000000, 0x200000, 0x5fd76b67 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "aof2_c3.rom", 0x400000, 0x200000, 0xd2c88768 ) /* Plane 0,1 */
@@ -2413,7 +2415,7 @@ ROM_START( aof2 )
 ROM_END
 
 ROM_START( wh2 )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "hero2_p1.rom", 0x100000, 0x100000, 0x65a891d9 )
 	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
@@ -2427,7 +2429,7 @@ ROM_START( wh2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0xc00000)
+	ROM_REGION( 0xc00000 )
 	ROM_LOAD_GFX_EVEN( "hero2_c1.rom", 0x000000, 0x200000, 0x21c6bb91 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "hero2_c2.rom", 0x000000, 0x200000, 0xa3999925 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "hero2_c3.rom", 0x400000, 0x200000, 0xb725a219 ) /* Plane 0,1 */
@@ -2437,7 +2439,7 @@ ROM_START( wh2 )
 ROM_END
 
 ROM_START( fatfursp )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "ffspe_p1.rom", 0x000000, 0x100000, 0x2f585ba2 )
 	ROM_LOAD_WIDE_SWAP( "ffspe_p2.rom", 0x100000, 0x080000, 0xd7c71a6b )
 	ROM_LOAD_WIDE_SWAP( "ffspe_p3.rom", 0x180000, 0x080000, 0x9f0c1e1a )
@@ -2453,7 +2455,7 @@ ROM_START( fatfursp )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0xc00000)
+	ROM_REGION( 0xc00000 )
 	ROM_LOAD_GFX_EVEN( "ffspe_c1.rom", 0x000000, 0x200000, 0x044ab13c ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "ffspe_c2.rom", 0x000000, 0x200000, 0x11e6bf96 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "ffspe_c3.rom", 0x400000, 0x200000, 0x6f7938d5 ) /* Plane 0,1 */
@@ -2463,7 +2465,7 @@ ROM_START( fatfursp )
 ROM_END
 
 ROM_START( savagere )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "savag_p1.rom", 0x100000, 0x100000, 0x01d4e9c0 )
 	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
@@ -2478,7 +2480,7 @@ ROM_START( savagere )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x1000000)
+	ROM_REGION( 0x1000000 )
 	ROM_LOAD_GFX_EVEN( "savag_c1.rom", 0x000000, 0x200000, 0x763ba611 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "savag_c2.rom", 0x000000, 0x200000, 0xe05e8ca6 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "savag_c3.rom", 0x400000, 0x200000, 0x3e4eba4b ) /* Plane 0,1 */
@@ -2490,7 +2492,7 @@ ROM_START( savagere )
 ROM_END
 
 ROM_START( fightfev )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "ff_p1.rom", 0x000000, 0x080000, 0x3032041b )
 	ROM_LOAD_WIDE_SWAP( "ff_p2.rom", 0x080000, 0x080000, 0xb0801d5f )
 
@@ -2512,7 +2514,7 @@ ROM_START( fightfev )
 ROM_END
 
 ROM_START( ssideki2 )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "kick2_p1.rom", 0x000000, 0x100000, 0x5969e0dc )
 
 	NEO_SFIX_128K( "kick2_s1.rom", 0x226d1b68 )
@@ -2525,7 +2527,7 @@ ROM_START( ssideki2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x800000)
+	ROM_REGION( 0x800000 )
 	ROM_LOAD_GFX_EVEN( "kick2_c1.rom", 0x000000, 0x200000, 0xa626474f ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "kick2_c2.rom", 0x000000, 0x200000, 0xc3be42ae ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "kick2_c3.rom", 0x400000, 0x200000, 0x2a7b98b9 ) /* Plane 0,1 */
@@ -2533,7 +2535,7 @@ ROM_START( ssideki2 )
 ROM_END
 
 ROM_START( spinmast )
-	ROM_REGION(0x180000)
+	ROM_REGIONX( 0x180000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "spnm_p1.rom", 0x000000, 0x100000, 0x37aba1aa )
 	ROM_LOAD_WIDE_SWAP( "spnm_p2.rom", 0x100000, 0x080000, 0x43763ad2 )
 
@@ -2546,7 +2548,7 @@ ROM_START( spinmast )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x800000)
+	ROM_REGION( 0x800000 )
 	ROM_LOAD_GFX_EVEN( "spnm_c1.rom", 0x000000, 0x100000, 0xa9375aa2 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "spnm_c2.rom", 0x000000, 0x100000, 0x0e73b758 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "spnm_c3.rom", 0x200000, 0x100000, 0xdf51e465 ) /* Plane 0,1 */
@@ -2558,7 +2560,7 @@ ROM_START( spinmast )
 ROM_END
 
 ROM_START( samsho2 )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "sams2_p1.rom", 0x100000, 0x100000, 0x22368892 )
 	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
@@ -2574,7 +2576,7 @@ ROM_START( samsho2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x1000000)
+	ROM_REGION( 0x1000000 )
 	ROM_LOAD_GFX_EVEN( "sams2_c1.rom", 0x000000, 0x200000, 0x86cd307c ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "sams2_c2.rom", 0x000000, 0x200000, 0xcdfcc4ca ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "sams2_c3.rom", 0x400000, 0x200000, 0x7a63ccc7 ) /* Plane 0,1 */
@@ -2586,7 +2588,7 @@ ROM_START( samsho2 )
 ROM_END
 
 ROM_START( wh2j )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "wh2j_p1.rom", 0x100000, 0x100000, 0x385a2e86 )
 	ROM_CONTINUE(                      0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
@@ -2600,7 +2602,7 @@ ROM_START( wh2j )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x1000000)
+	ROM_REGION( 0x1000000 )
 	ROM_LOAD_GFX_EVEN( "wh2j_c1.rom", 0x000000, 0x200000, 0x2ec87cea ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "wh2j_c2.rom", 0x000000, 0x200000, 0x526b81ab ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "wh2j_c3.rom", 0x400000, 0x200000, 0x436d1b31 ) /* Plane 0,1 */
@@ -2612,7 +2614,7 @@ ROM_START( wh2j )
 ROM_END
 
 ROM_START( wjammers )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "windj_p1.rom", 0x000000, 0x080000, 0xe81e7a31 )
 
 	NEO_SFIX_128K( "windj_s1.rom", 0x66cb96eb )
@@ -2627,7 +2629,7 @@ ROM_START( wjammers )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x400000)
+	ROM_REGION( 0x400000 )
 	ROM_LOAD_GFX_EVEN( "windj_c1.rom", 0x000000, 0x100000, 0xc7650204 )
 	ROM_LOAD_GFX_ODD ( "windj_c2.rom", 0x000000, 0x100000, 0xd9f3e71d )
 	ROM_LOAD_GFX_EVEN( "windj_c3.rom", 0x200000, 0x100000, 0x40986386 )
@@ -2635,7 +2637,7 @@ ROM_START( wjammers )
 ROM_END
 
 ROM_START( karnovr )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "karev_p1.rom", 0x000000, 0x100000, 0x8c86fd22 )
 
 	NEO_SFIX_128K( "karev_s1.rom", 0xbae5d5e5 )
@@ -2647,7 +2649,7 @@ ROM_START( karnovr )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0xc00000)
+	ROM_REGION( 0xc00000 )
 	ROM_LOAD_GFX_EVEN( "karev_c1.rom", 0x000000, 0x200000, 0x09dfe061 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "karev_c2.rom", 0x000000, 0x200000, 0xe0f6682a ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "karev_c3.rom", 0x400000, 0x200000, 0xa673b4f7 ) /* Plane 0,1 */
@@ -2657,7 +2659,7 @@ ROM_START( karnovr )
 ROM_END
 
 ROM_START( gururin )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "gurin_p1.rom", 0x000000, 0x80000, 0x4cea8a49 )
 
 	NEO_SFIX_128K( "gurin_s1.rom", 0x4f0cbd58 )
@@ -2669,13 +2671,13 @@ ROM_START( gururin )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x400000)
+	ROM_REGION( 0x400000 )
 	ROM_LOAD_GFX_EVEN( "gurin_c1.rom", 0x000000, 0x200000, 0x35866126 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "gurin_c2.rom", 0x000000, 0x200000, 0x9db64084 ) /* Plane 2,3 */
 ROM_END
 
 ROM_START( pspikes2 )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "spike_p1.rom", 0x000000, 0x100000, 0x105a408f )
 
 	NEO_SFIX_128K( "spike_s1.rom", 0x18082299 )
@@ -2689,7 +2691,7 @@ ROM_START( pspikes2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x600000)
+	ROM_REGION( 0x600000 )
 	ROM_LOAD_GFX_EVEN( "spike_c1.rom", 0x000000, 0x100000, 0x7f250f76 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "spike_c2.rom", 0x000000, 0x100000, 0x20912873 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "spike_c3.rom", 0x200000, 0x100000, 0x4b641ba1 ) /* Plane 0,1 */
@@ -2699,7 +2701,7 @@ ROM_START( pspikes2 )
 ROM_END
 
 ROM_START( fatfury3 )
-	ROM_REGION(0x300000)
+	ROM_REGIONX( 0x300000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "fury3_p1.rom", 0x000000, 0x100000, 0xa8bcfbbc )
 	ROM_LOAD_WIDE_SWAP( "fury3_p2.rom", 0x100000, 0x200000, 0xdbe963ed )
 
@@ -2714,7 +2716,7 @@ ROM_START( fatfury3 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x1400000)
+	ROM_REGION( 0x1400000 )
 	ROM_LOAD_GFX_EVEN( "fury3_c1.rom", 0x0400000, 0x200000, 0xc73e86e4 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_EVEN( 0,              0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "fury3_c2.rom", 0x0400000, 0x200000, 0xbfaf3258 ) /* Plane 2,3 */
@@ -2728,7 +2730,7 @@ ROM_START( fatfury3 )
 ROM_END
 
 ROM_START( panicbom )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "panic_p1.rom", 0x000000, 0x040000, 0x0b21130d )
 
 	NEO_SFIX_128K( "panic_s1.rom", 0xb876de7e )
@@ -2741,13 +2743,13 @@ ROM_START( panicbom )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x200000)
+	ROM_REGION( 0x200000 )
 	ROM_LOAD_GFX_EVEN( "panic_c1.rom", 0x000000, 0x100000, 0x8582e1b5 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "panic_c2.rom", 0x000000, 0x100000, 0xe15a093b ) /* Plane 2,3 */
 ROM_END
 
 ROM_START( aodk )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "aodk_p1.rom", 0x100000, 0x100000, 0x62369553 )
 	ROM_CONTINUE(                      0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
@@ -2761,7 +2763,7 @@ ROM_START( aodk )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x1000000)
+	ROM_REGION( 0x1000000 )
 	ROM_LOAD_GFX_EVEN( "aodk_c1.rom", 0x000000, 0x200000, 0xa0b39344 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "aodk_c2.rom", 0x000000, 0x200000, 0x203f6074 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "aodk_c3.rom", 0x400000, 0x200000, 0x7fff4d41 ) /* Plane 0,1 */
@@ -2773,7 +2775,7 @@ ROM_START( aodk )
 ROM_END
 
 ROM_START( sonicwi2 )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "afig2_p1.rom", 0x100000, 0x100000, 0x92871738 )
 	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
@@ -2787,7 +2789,7 @@ ROM_START( sonicwi2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x800000)
+	ROM_REGION( 0x800000 )
 	ROM_LOAD_GFX_EVEN( "afig2_c1.rom", 0x000000, 0x200000, 0x3278e73e ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "afig2_c2.rom", 0x000000, 0x200000, 0xfe6355d6 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "afig2_c3.rom", 0x400000, 0x200000, 0xc1b438f1 ) /* Plane 0,1 */
@@ -2795,7 +2797,7 @@ ROM_START( sonicwi2 )
 ROM_END
 
 ROM_START( zedblade )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "zedbl_p1.rom", 0x000000, 0x080000, 0xd7c1effd )
 
 	NEO_SFIX_128K( "zedbl_s1.rom", 0xf4c25dd5 )
@@ -2809,7 +2811,7 @@ ROM_START( zedblade )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x800000)
+	ROM_REGION( 0x800000 )
 	ROM_LOAD_GFX_EVEN( "zedbl_c1.rom", 0x000000, 0x200000, 0x4d9cb038 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "zedbl_c2.rom", 0x000000, 0x200000, 0x09233884 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "zedbl_c3.rom", 0x400000, 0x200000, 0xd06431e3 ) /* Plane 0,1 */
@@ -2817,7 +2819,7 @@ ROM_START( zedblade )
 ROM_END
 
 ROM_START( galaxyfg )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "galfi_p1.rom", 0x100000, 0x100000, 0x45906309 )
 	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
@@ -2832,7 +2834,7 @@ ROM_START( galaxyfg )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0xe00000)
+	ROM_REGION( 0xe00000 )
 	ROM_LOAD_GFX_EVEN( "galfi_c1.rom", 0x000000, 0x200000, 0xc890c7c0 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "galfi_c2.rom", 0x000000, 0x200000, 0xb6d25419 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "galfi_c3.rom", 0x400000, 0x200000, 0x9d87e761 ) /* Plane 0,1 */
@@ -2844,7 +2846,7 @@ ROM_START( galaxyfg )
 ROM_END
 
 ROM_START( strhoop )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "shoop_p1.rom", 0x000000, 0x100000, 0x5e78328e )
 
 	NEO_SFIX_128K( "shoop_s1.rom", 0xa8205610 )
@@ -2857,7 +2859,7 @@ ROM_START( strhoop )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x800000)
+	ROM_REGION( 0x800000 )
 	ROM_LOAD_GFX_EVEN( "shoop_c1.rom", 0x000000, 0x200000, 0x0581c72a ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "shoop_c2.rom", 0x000000, 0x200000, 0x5b9b8fb6 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "shoop_c3.rom", 0x400000, 0x200000, 0xcd65bb62 ) /* Plane 0,1 */
@@ -2865,7 +2867,7 @@ ROM_START( strhoop )
 ROM_END
 
 ROM_START( quizkof )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "qkof-p1.rom", 0x000000, 0x100000, 0x4440315e )
 
 	NEO_SFIX_128K( "qkof-s1.rom", 0xd7b86102 )
@@ -2879,7 +2881,7 @@ ROM_START( quizkof )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x800000)
+	ROM_REGION( 0x800000 )
 	ROM_LOAD_GFX_EVEN( "qkof-c1.rom",  0x000000, 0x200000, 0xea1d764a ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "qkof-c2.rom",  0x000000, 0x200000, 0xc78c49da ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "qkof-c3.rom",  0x400000, 0x200000, 0xb4851bfe ) /* Plane 0,1 */
@@ -2887,7 +2889,7 @@ ROM_START( quizkof )
 ROM_END
 
 ROM_START( ssideki3 )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "side3_p1.rom", 0x100000, 0x100000, 0x6bc27a3d )
 	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
@@ -2902,7 +2904,7 @@ ROM_START( ssideki3 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0xc00000)
+	ROM_REGION( 0xc00000 )
 	ROM_LOAD_GFX_EVEN( "side3_c1.rom", 0x000000, 0x200000, 0x1fb68ebe ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "side3_c2.rom", 0x000000, 0x200000, 0xb28d928f ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "side3_c3.rom", 0x400000, 0x200000, 0x3b2572e8 ) /* Plane 0,1 */
@@ -2912,7 +2914,7 @@ ROM_START( ssideki3 )
 ROM_END
 
 ROM_START( doubledr )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "ddrag_p1.rom", 0x100000, 0x100000, 0x34ab832a )
 	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
@@ -2926,7 +2928,7 @@ ROM_START( doubledr )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0xe00000)
+	ROM_REGION( 0xe00000 )
 	ROM_LOAD_GFX_EVEN( "ddrag_c1.rom", 0x000000, 0x200000, 0xb478c725 )
 	ROM_LOAD_GFX_ODD ( "ddrag_c2.rom", 0x000000, 0x200000, 0x2857da32 )
 	ROM_LOAD_GFX_EVEN( "ddrag_c3.rom", 0x400000, 0x200000, 0x8b0d378e )
@@ -2938,7 +2940,7 @@ ROM_START( doubledr )
 ROM_END
 
 ROM_START( pbobble )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "puzzb_p1.rom", 0x000000, 0x040000, 0x7c3c34e1 )
 
 	NEO_SFIX_128K( "puzzb_s1.rom", 0x9caae538 )
@@ -2952,13 +2954,13 @@ ROM_START( pbobble )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x100000)
+	ROM_REGION( 0x100000 )
 	ROM_LOAD_GFX_EVEN( "puzzb_c5.rom", 0x000000, 0x080000, 0xe89ad494 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "puzzb_c6.rom", 0x000000, 0x080000, 0x4b42d7eb ) /* Plane 2,3 */
 ROM_END
 
 ROM_START( kof95 )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "kof95_p1.rom", 0x100000, 0x100000, 0x5e54cf95 )
 	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
@@ -2974,7 +2976,7 @@ ROM_START( kof95 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x1a00000)
+	ROM_REGION( 0x1a00000 )
 	ROM_LOAD_GFX_EVEN( "kof95_c1.rom", 0x0400000, 0x200000, 0x33bf8657 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_EVEN( 0,              0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "kof95_c2.rom", 0x0400000, 0x200000, 0xf21908a4 ) /* Plane 2,3 */
@@ -2991,7 +2993,7 @@ ROM_START( kof95 )
 ROM_END
 
 ROM_START( tws96 )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "tecmo_p1.rom", 0x000000, 0x100000, 0x03e20ab6 )
 
 	NEO_SFIX_128K( "tecmo_s1.rom", 0x6f5e2b3a )
@@ -3004,7 +3006,7 @@ ROM_START( tws96 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0xa00000)
+	ROM_REGION( 0xa00000 )
 	ROM_LOAD_GFX_EVEN( "tecmo_c1.rom", 0x400000, 0x200000, 0xd301a867 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_EVEN( 0,              0x000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "tecmo_c2.rom", 0x400000, 0x200000, 0x305fc74f ) /* Plane 2,3 */
@@ -3014,7 +3016,7 @@ ROM_START( tws96 )
 ROM_END
 
 ROM_START( samsho3 )
-	ROM_REGION(0x300000)
+	ROM_REGIONX( 0x300000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "sams3_p1.rom", 0x000000, 0x100000, 0x282a336e )
 	ROM_LOAD_WIDE_SWAP( "sams3_p2.rom", 0x100000, 0x200000, 0x9bbe27e0 )
 
@@ -3028,7 +3030,7 @@ ROM_START( samsho3 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x1a00000)	/* lowering this to 0x1900000 corrupts the graphics */
+	ROM_REGION( 0x1a00000 )	/* lowering this to 0x1900000 corrupts the graphics */
 	ROM_LOAD_GFX_EVEN( "sams3_c1.rom", 0x0400000, 0x200000, 0xe079f767 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_EVEN( 0,              0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "sams3_c2.rom", 0x0400000, 0x200000, 0xfc045909 ) /* Plane 2,3 */
@@ -3046,7 +3048,7 @@ ROM_START( samsho3 )
 ROM_END
 
 ROM_START( stakwin )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "stakw_p1.rom",  0x100000, 0x100000, 0xbd5814f6 )
 	ROM_CONTINUE(                        0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP)
 
@@ -3059,7 +3061,7 @@ ROM_START( stakwin )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x800000)
+	ROM_REGION( 0x800000 )
 	ROM_LOAD_GFX_EVEN( "stakw_c1.rom", 0x000000, 0x200000, 0x6e733421 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "stakw_c2.rom", 0x000000, 0x200000, 0x4d865347 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "stakw_c3.rom", 0x400000, 0x200000, 0x8fa5a9eb ) /* Plane 0,1 */
@@ -3067,7 +3069,7 @@ ROM_START( stakwin )
 ROM_END
 
 ROM_START( pulstar )
-	ROM_REGION(0x300000)
+	ROM_REGIONX( 0x300000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "pstar_p1.rom", 0x000000, 0x100000, 0x5e5847a2 )
 	ROM_LOAD_WIDE_SWAP( "pstar_p2.rom", 0x100000, 0x200000, 0x028b774c )
 
@@ -3081,7 +3083,7 @@ ROM_START( pulstar )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x1c00000)
+	ROM_REGION( 0x1c00000 )
 	ROM_LOAD_GFX_EVEN( "pstar_c1.rom", 0x0400000, 0x200000, 0x63020fc6 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_EVEN( 0,              0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "pstar_c2.rom", 0x0400000, 0x200000, 0x260e9d4d ) /* Plane 2,3 */
@@ -3099,7 +3101,7 @@ ROM_START( pulstar )
 ROM_END
 
 ROM_START( whp )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "whp_p1.rom", 0x100000, 0x100000, 0xafaa4702 )
 	ROM_CONTINUE(                     0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
@@ -3114,7 +3116,7 @@ ROM_START( whp )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x1c00000)
+	ROM_REGION( 0x1c00000 )
 	ROM_LOAD_GFX_EVEN( "whp_c1.rom", 0x0400000, 0x200000, 0xaecd5bb1 )
 	ROM_LOAD_GFX_EVEN( 0,            0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "whp_c2.rom", 0x0400000, 0x200000, 0x7566ffc0 )
@@ -3130,7 +3132,7 @@ ROM_START( whp )
 ROM_END
 
 ROM_START( kabukikl )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "klash_p1.rom", 0x100000, 0x100000, 0x28ec9b77 )
 	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
@@ -3146,7 +3148,7 @@ ROM_START( kabukikl )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x1000000)
+	ROM_REGION( 0x1000000 )
 	ROM_LOAD_GFX_EVEN( "klash_c1.rom", 0x400000, 0x200000, 0x4d896a58 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_EVEN( 0,              0x000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "klash_c2.rom", 0x400000, 0x200000, 0x3cf78a18 ) /* Plane 2,3 */
@@ -3158,7 +3160,7 @@ ROM_START( kabukikl )
 ROM_END
 
 ROM_START( neobombe )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "bombm_p1.rom", 0x000000, 0x100000, 0xa1a71d0d )
 
 	NEO_SFIX_128K( "bombm_s1.rom", 0x4b3fa119 )
@@ -3172,7 +3174,7 @@ ROM_START( neobombe )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x900000)
+	ROM_REGION( 0x900000 )
 	ROM_LOAD_GFX_EVEN( "bombm_c1.rom", 0x400000, 0x200000, 0xb90ebed4 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_EVEN( 0,              0x000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "bombm_c2.rom", 0x400000, 0x200000, 0x41e62b4f ) /* Plane 2,3 */
@@ -3182,7 +3184,7 @@ ROM_START( neobombe )
 ROM_END
 
 ROM_START( gowcaizr )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "vfgow_p1.rom", 0x100000, 0x100000, 0x33019545 )
 	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
@@ -3197,7 +3199,7 @@ ROM_START( gowcaizr )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x1000000)
+	ROM_REGION( 0x1000000 )
 	ROM_LOAD_GFX_EVEN( "vfgow_c1.rom", 0x000000, 0x200000, 0x042f6af5 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "vfgow_c2.rom", 0x000000, 0x200000, 0x0fbcd046 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "vfgow_c3.rom", 0x400000, 0x200000, 0x58bfbaa1 ) /* Plane 0,1 */
@@ -3209,7 +3211,7 @@ ROM_START( gowcaizr )
 ROM_END
 
 ROM_START( rbff1 )
-	ROM_REGION(0x300000)
+	ROM_REGIONX( 0x300000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "rbff1_p1.rom", 0x000000, 0x100000, 0x63b4d8ae )
 	ROM_LOAD_WIDE_SWAP( "rbff1_p2.rom", 0x100000, 0x200000, 0xcc15826e )
 
@@ -3224,7 +3226,7 @@ ROM_START( rbff1 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x1c00000)
+	ROM_REGION( 0x1c00000 )
 	ROM_LOAD_GFX_EVEN( "rbff1_c1.rom", 0x0400000, 0x200000, 0xc73e86e4 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_EVEN( 0,              0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "rbff1_c2.rom", 0x0400000, 0x200000, 0xbfaf3258 ) /* Plane 2,3 */
@@ -3242,7 +3244,7 @@ ROM_START( rbff1 )
 ROM_END
 
 ROM_START( aof3 )
-	ROM_REGION(0x300000)
+	ROM_REGIONX( 0x300000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "aof3_p1.rom", 0x000000, 0x100000, 0x9edb420d )
 	ROM_LOAD_WIDE_SWAP( "aof3_p2.rom", 0x100000, 0x200000, 0x4d5a2602 )
 
@@ -3257,7 +3259,7 @@ ROM_START( aof3 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x1c00000)
+	ROM_REGION( 0x1c00000 )
 	ROM_LOAD_GFX_EVEN( "aof3_c1.rom", 0x0400000, 0x200000, 0xf6c74731 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_EVEN( 0,             0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "aof3_c2.rom", 0x0400000, 0x200000, 0xf587f149 ) /* Plane 2,3 */
@@ -3275,7 +3277,7 @@ ROM_START( aof3 )
 ROM_END
 
 ROM_START( sonicwi3 )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "sonw3_p1.rom", 0x100000, 0x100000, 0x0547121d )
 	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
@@ -3289,7 +3291,7 @@ ROM_START( sonicwi3 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0xc00000)
+	ROM_REGION( 0xc00000 )
 	ROM_LOAD_GFX_EVEN( "sonw3_c1.rom", 0x400000, 0x200000, 0x3ca97864 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_EVEN( 0,              0x000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "sonw3_c2.rom", 0x400000, 0x200000, 0x1da4b3a9 ) /* Plane 2,3 */
@@ -3299,7 +3301,7 @@ ROM_START( sonicwi3 )
 ROM_END
 
 ROM_START( turfmast )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "turfm_p1.rom",  0x100000, 0x100000, 0x28c83048 )
 	ROM_CONTINUE(                        0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP)
 
@@ -3315,7 +3317,7 @@ ROM_START( turfmast )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x800000)
+	ROM_REGION( 0x800000 )
 	ROM_LOAD_GFX_EVEN( "turfm_c1.rom", 0x400000, 0x200000, 0x8c6733f2 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_EVEN( 0,              0x000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "turfm_c2.rom", 0x400000, 0x200000, 0x596cc256 ) /* Plane 2,3 */
@@ -3323,7 +3325,7 @@ ROM_START( turfmast )
 ROM_END
 
 ROM_START( mslug )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "mslug_p1.rom", 0x100000, 0x100000, 0x08d8daa5 )
 	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
@@ -3337,7 +3339,7 @@ ROM_START( mslug )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x1000000)
+	ROM_REGION( 0x1000000 )
 	ROM_LOAD_GFX_EVEN( "mslug_c1.rom", 0x400000, 0x200000, 0xd00bd152 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_EVEN( 0,              0x000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "mslug_c2.rom", 0x400000, 0x200000, 0xddff1dea ) /* Plane 2,3 */
@@ -3349,7 +3351,7 @@ ROM_START( mslug )
 ROM_END
 
 ROM_START( puzzledp )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "pdpon_p1.rom", 0x000000, 0x080000, 0x2b61415b )
 
 	NEO_SFIX_64K( "pdpon_s1.rom", 0x4a421612 )
@@ -3361,13 +3363,13 @@ ROM_START( puzzledp )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x200000)
+	ROM_REGION( 0x200000 )
 	ROM_LOAD_GFX_EVEN( "pdpon_c1.rom", 0x000000, 0x100000, 0xcc0095ef ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "pdpon_c2.rom", 0x000000, 0x100000, 0x42371307 ) /* Plane 2,3 */
 ROM_END
 
 ROM_START( mosyougi )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "syoug_p1.rom", 0x000000, 0x100000, 0x7ba70e2d )
 
 	NEO_SFIX_128K( "syoug_s1.rom", 0x4e132fac )
@@ -3379,13 +3381,13 @@ ROM_START( mosyougi )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x400000)
+	ROM_REGION( 0x400000 )
 	ROM_LOAD_GFX_EVEN( "syoug_c1.rom",  0x000000, 0x200000, 0xbba9e8c0 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "syoug_c2.rom",  0x000000, 0x200000, 0x2574be03 ) /* Plane 2,3 */
 ROM_END
 
 ROM_START( marukodq )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "maru-p1.rom", 0x000000, 0x100000, 0xc33ed21e )
 
 	NEO_SFIX_32K( "maru-s1.rom", 0x3b52a219 )
@@ -3398,7 +3400,7 @@ ROM_START( marukodq )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0xa00000)
+	ROM_REGION( 0xa00000 )
 	ROM_LOAD_GFX_EVEN( "maru-c1.rom", 0x000000, 0x400000, 0x4bd5e70f ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "maru-c2.rom", 0x000000, 0x400000, 0x67dbe24d ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "maru-c3.rom", 0x800000, 0x100000, 0x79aa2b48 ) /* Plane 0,1 */
@@ -3406,7 +3408,7 @@ ROM_START( marukodq )
 ROM_END
 
 ROM_START( neomrdo )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "neomd-p1.rom", 0x000000, 0x80000, 0x39efdb82 )
 
 	NEO_SFIX_64K( "neomd-s1.rom", 0x6c4b09c4 )
@@ -3418,13 +3420,13 @@ ROM_START( neomrdo )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x400000)
+	ROM_REGION( 0x400000 )
 	ROM_LOAD_GFX_EVEN( "neomd-c1.rom", 0x000000, 0x200000, 0xc7541b9d )
 	ROM_LOAD_GFX_ODD ( "neomd-c2.rom", 0x000000, 0x200000, 0xf57166d2 )
 ROM_END
 
 ROM_START( sdodgeb )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "dodge_p1.rom", 0x100000, 0x100000, 0x127f3d32 )
 	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
@@ -3446,7 +3448,7 @@ ROM_START( sdodgeb )
 ROM_END
 
 ROM_START( goalx3 )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "goal!_p1.rom", 0x100000, 0x100000, 0x2a019a79 )
 	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
@@ -3459,7 +3461,7 @@ ROM_START( goalx3 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0xa00000)
+	ROM_REGION( 0xa00000 )
 	ROM_LOAD_GFX_EVEN( "goal!_c1.rom", 0x400000, 0x200000, 0xd061f1f5 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_EVEN( 0,              0x000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "goal!_c2.rom", 0x400000, 0x200000, 0x3f63c1a2 ) /* Plane 2,3 */
@@ -3469,7 +3471,7 @@ ROM_START( goalx3 )
 ROM_END
 
 ROM_START( overtop )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "ovr_p1.rom", 0x100000, 0x100000, 0x16c063a9 )
 	ROM_CONTINUE(                     0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
@@ -3482,7 +3484,7 @@ ROM_START( overtop )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x1400000)
+	ROM_REGION( 0x1400000 )
 	ROM_LOAD_GFX_EVEN( "ovr_c1.rom", 0x0000000, 0x400000, 0x50f43087 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "ovr_c2.rom", 0x0000000, 0x400000, 0xa5b39807 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "ovr_c3.rom", 0x0800000, 0x400000, 0x9252ea02 ) /* Plane 0,1 */
@@ -3492,7 +3494,7 @@ ROM_START( overtop )
 ROM_END
 
 ROM_START( neodrift )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "drift_p1.rom",  0x100000, 0x100000, 0xe397d798 )
 	ROM_CONTINUE(                        0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP)
 
@@ -3506,7 +3508,7 @@ ROM_START( neodrift )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x800000)
+	ROM_REGION( 0x800000 )
 	ROM_LOAD_GFX_EVEN( "drift_c1.rom", 0x400000, 0x200000, 0x62c5edc9 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_EVEN( 0,              0x000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "drift_c2.rom", 0x400000, 0x200000, 0x9dc9c72a ) /* Plane 2,3 */
@@ -3514,7 +3516,7 @@ ROM_START( neodrift )
 ROM_END
 
 ROM_START( kof96 )
-	ROM_REGION(0x300000)
+	ROM_REGIONX( 0x300000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "kof96_p1.rom", 0x000000, 0x100000, 0x52755d74 )
 	ROM_LOAD_WIDE_SWAP( "kof96_p2.rom", 0x100000, 0x200000, 0x002ccb73 )
 
@@ -3529,7 +3531,7 @@ ROM_START( kof96 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x2000000)
+	ROM_REGION( 0x2000000 )
 	ROM_LOAD_GFX_EVEN( "kof96_c1.rom", 0x0000000, 0x400000, 0x7ecf4aa2 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "kof96_c2.rom", 0x0000000, 0x400000, 0x05b54f37 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "kof96_c3.rom", 0x0800000, 0x400000, 0x64989a65 ) /* Plane 0,1 */
@@ -3541,7 +3543,7 @@ ROM_START( kof96 )
 ROM_END
 
 ROM_START( ssideki4 )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "side4_p1.rom", 0x100000, 0x100000, 0x519b4ba3 )
 	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
@@ -3556,7 +3558,7 @@ ROM_START( ssideki4 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x1400000)
+	ROM_REGION( 0x1400000 )
 	ROM_LOAD_GFX_EVEN( "side4_c1.rom", 0x0400000, 0x200000, 0x288a9225 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_EVEN( 0,              0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "side4_c2.rom", 0x0400000, 0x200000, 0x3fc9d1c4 ) /* Plane 2,3 */
@@ -3570,7 +3572,7 @@ ROM_START( ssideki4 )
 ROM_END
 
 ROM_START( kizuna )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "ke_p1.rom", 0x100000, 0x100000, 0x75d2b3de )
 	ROM_CONTINUE(                    0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
@@ -3586,7 +3588,7 @@ ROM_START( kizuna )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x1c00000)
+	ROM_REGION( 0x1c00000 )
 	ROM_LOAD_GFX_EVEN( "ke_c1.rom", 0x0000000, 0x200000, 0x763ba611 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "ke_c2.rom", 0x0000000, 0x200000, 0xe05e8ca6 ) /* Plane 2,3 */
 	/* 400000-7fffff empty */
@@ -3600,7 +3602,7 @@ ROM_START( kizuna )
 ROM_END
 
 ROM_START( ninjamas )
-	ROM_REGION(0x300000)
+	ROM_REGIONX( 0x300000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "ninjm_p1.rom", 0x000000, 0x100000, 0x3e97ed69 )
 	ROM_LOAD_WIDE_SWAP( "ninjm_p2.rom", 0x100000, 0x200000, 0x191fca88 )
 
@@ -3614,7 +3616,7 @@ ROM_START( ninjamas )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x2000000)
+	ROM_REGION( 0x2000000 )
 	ROM_LOAD_GFX_EVEN( "ninjm_c1.rom", 0x0400000, 0x200000, 0x58f91ae0 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_EVEN( 0,              0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "ninjm_c2.rom", 0x0400000, 0x200000, 0x4258147f ) /* Plane 2,3 */
@@ -3634,7 +3636,7 @@ ROM_START( ninjamas )
 ROM_END
 
 ROM_START( ragnagrd )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "rgard_p1.rom", 0x100000, 0x100000, 0xca372303 )
 	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
@@ -3648,7 +3650,7 @@ ROM_START( ragnagrd )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x2000000)
+	ROM_REGION( 0x2000000 )
 	ROM_LOAD_GFX_EVEN( "rgard_c1.rom", 0x0400000, 0x200000, 0x18f61d79 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_EVEN( 0,              0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "rgard_c2.rom", 0x0400000, 0x200000, 0xdbf4ff4b ) /* Plane 2,3 */
@@ -3668,7 +3670,7 @@ ROM_START( ragnagrd )
 ROM_END
 
 ROM_START( pgoal )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "pgoal_p1.rom", 0x100000, 0x100000, 0x6af0e574 )
 	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
@@ -3682,7 +3684,7 @@ ROM_START( pgoal )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x0c00000)
+	ROM_REGION( 0xc00000 )
 	ROM_LOAD_GFX_EVEN( "pgoal_c1.rom", 0x0000000, 0x200000, 0x2dc69faf ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "pgoal_c2.rom", 0x0000000, 0x200000, 0x5db81811 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "pgoal_c3.rom", 0x0400000, 0x200000, 0x9dbfece5 ) /* Plane 0,1 */
@@ -3692,7 +3694,7 @@ ROM_START( pgoal )
 ROM_END
 
 ROM_START( magdrop2 )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "drop2_p1.rom", 0x000000, 0x80000, 0x7be82353 )
 
 	NEO_SFIX_128K( "drop2_s1.rom", 0x2a4063a3 )
@@ -3704,13 +3706,13 @@ ROM_START( magdrop2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x800000)
+	ROM_REGION( 0x800000 )
 	ROM_LOAD_GFX_EVEN( "drop2_c1.rom", 0x000000, 0x400000, 0x1f862a14 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "drop2_c2.rom", 0x000000, 0x400000, 0x14b90536 ) /* Plane 2,3 */
 ROM_END
 
 ROM_START( samsho4 )
-	ROM_REGION(0x500000)
+	ROM_REGIONX( 0x500000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "sams4_p1.rom", 0x000000, 0x100000, 0x1a5cb56d )
 	ROM_LOAD_WIDE_SWAP( "sams4_p2.rom", 0x300000, 0x200000, 0x7587f09b )
 	ROM_CONTINUE(                       0x100000, 0x200000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
@@ -3726,7 +3728,7 @@ ROM_START( samsho4 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x2000000)
+	ROM_REGION( 0x2000000 )
 	ROM_LOAD_GFX_EVEN( "sams4_c1.rom", 0x0400000, 0x200000, 0x289100fa ) /* Plane 0,1 */
 	ROM_LOAD_GFX_EVEN( 0,              0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "sams4_c2.rom", 0x0400000, 0x200000, 0xc2716ea0 ) /* Plane 2,3 */
@@ -3746,7 +3748,7 @@ ROM_START( samsho4 )
 ROM_END
 
 ROM_START( rbffspec )
-	ROM_REGION(0x500000)
+	ROM_REGIONX( 0x500000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "rbffs_p1.rom", 0x000000, 0x100000, 0xf84a2d1d )
 	ROM_LOAD_WIDE_SWAP( "rbffs_p2.rom", 0x300000, 0x200000, 0x27e3e54b )
 	ROM_CONTINUE(                       0x100000, 0x200000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
@@ -3762,7 +3764,7 @@ ROM_START( rbffspec )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x2000000)
+	ROM_REGION( 0x2000000 )
 	ROM_LOAD_GFX_EVEN( "rbffs_c1.rom", 0x0400000, 0x200000, 0x436edad4 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_EVEN( 0,              0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "rbffs_c2.rom", 0x0400000, 0x200000, 0xcc7dc384 ) /* Plane 2,3 */
@@ -3782,7 +3784,7 @@ ROM_START( rbffspec )
 ROM_END
 
 ROM_START( twinspri )
-	ROM_REGION(0x400000)
+	ROM_REGIONX( 0x400000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "sprit_p1.rom", 0x100000, 0x100000, 0x7697e445 )
 	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
@@ -3796,7 +3798,7 @@ ROM_START( twinspri )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0xa00000)
+	ROM_REGION( 0xa00000 )
 	ROM_LOAD_GFX_EVEN( "sprit_c1.rom", 0x400000, 0x200000, 0x73b2a70b ) /* Plane 0,1 */
 	ROM_LOAD_GFX_EVEN( 0,              0x000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "sprit_c2.rom", 0x400000, 0x200000, 0x3a3e506c ) /* Plane 2,3 */
@@ -3806,7 +3808,7 @@ ROM_START( twinspri )
 ROM_END
 
 ROM_START( wakuwak7 )
-	ROM_REGION(0x300000)
+	ROM_REGIONX( 0x300000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "waku7_p1.rom", 0x000000, 0x100000, 0xb14da766 )
 	ROM_LOAD_WIDE_SWAP( "waku7_p2.rom", 0x100000, 0x200000, 0xfe190665 )
 
@@ -3820,7 +3822,7 @@ ROM_START( wakuwak7 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x1800000)
+	ROM_REGION( 0x1800000 )
 	ROM_LOAD_GFX_EVEN( "waku7_c1.rom", 0x0400000, 0x200000, 0xd91d386f ) /* Plane 0,1 */
 	ROM_LOAD_GFX_EVEN( 0,              0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "waku7_c2.rom", 0x0400000, 0x200000, 0x36b5cf41 ) /* Plane 2,3 */
@@ -3836,7 +3838,7 @@ ROM_START( wakuwak7 )
 ROM_END
 
 ROM_START( stakwin2 )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "sw2_p1.rom", 0x100000, 0x100000, 0xdaf101d2 )
 	ROM_CONTINUE(                     0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
@@ -3850,7 +3852,7 @@ ROM_START( stakwin2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0xc00000)
+	ROM_REGION( 0xc00000 )
 	ROM_LOAD_GFX_EVEN( "sw2_c1.rom", 0x0000000, 0x400000, 0x7d6c2af4 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "sw2_c2.rom", 0x0000000, 0x400000, 0x7e402d39 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "sw2_c3.rom", 0x0800000, 0x200000, 0x93dfd660 ) /* Plane 0,1 */
@@ -3858,7 +3860,7 @@ ROM_START( stakwin2 )
 ROM_END
 
 ROM_START( breakers )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "break_p1.rom", 0x100000, 0x100000, 0xed24a6e6 )
 	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
@@ -3872,7 +3874,7 @@ ROM_START( breakers )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x1000000)
+	ROM_REGION( 0x1000000 )
 	ROM_LOAD_GFX_EVEN( "break_c1.rom", 0x000000, 0x400000, 0x68d4ae76 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "break_c2.rom", 0x000000, 0x400000, 0xfdee05cd ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "break_c3.rom", 0x800000, 0x400000, 0x645077f3 ) /* Plane 0,1 */
@@ -3880,7 +3882,7 @@ ROM_START( breakers )
 ROM_END
 
 ROM_START( miexchng )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "miex-p1.rom", 0x000000, 0x80000, 0x61be1810 )
 
 	NEO_SFIX_128K( "miex-s1.rom", 0xfe0c0c53 )
@@ -3892,7 +3894,7 @@ ROM_START( miexchng )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x500000)
+	ROM_REGION( 0x500000 )
 	ROM_LOAD_GFX_EVEN( "miex-c1.rom", 0x000000, 0x200000, 0x6c403ba3 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "miex-c2.rom", 0x000000, 0x200000, 0x554bcd9b ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "miex-c3.rom", 0x400000, 0x080000, 0x14524eb5 ) /* Plane 0,1 */
@@ -3900,7 +3902,7 @@ ROM_START( miexchng )
 ROM_END
 
 ROM_START( kof97 )
-	ROM_REGION(0x500000)
+	ROM_REGIONX( 0x500000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "kof97_p1.rom", 0x000000, 0x100000, 0x7db81ad9 )
 	ROM_LOAD_WIDE_SWAP( "kof97_p2.rom", 0x100000, 0x400000, 0x158b23f6 )
 
@@ -3915,7 +3917,7 @@ ROM_START( kof97 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x2800000)
+	ROM_REGION( 0x2800000 )
 	ROM_LOAD_GFX_EVEN( "kof97_c1.rom", 0x0000000, 0x800000, 0x5f8bf0a1 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "kof97_c2.rom", 0x0000000, 0x800000, 0xe4d45c81 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "kof97_c3.rom", 0x1000000, 0x800000, 0x581d6618 ) /* Plane 0,1 */
@@ -3925,7 +3927,7 @@ ROM_START( kof97 )
 ROM_END
 
 ROM_START( magdrop3 )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "drop3_p1.rom", 0x000000, 0x100000, 0x931e17fa )
 
 	NEO_SFIX_128K( "drop3_s1.rom", 0x7399e68a )
@@ -3938,7 +3940,7 @@ ROM_START( magdrop3 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x1000000)
+	ROM_REGION( 0x1000000 )
 	ROM_LOAD_GFX_EVEN( "drop3_c1.rom", 0x400000, 0x200000, 0x734db3d6 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_EVEN( 0,              0x000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "drop3_c2.rom", 0x400000, 0x200000, 0xd78f50e5 ) /* Plane 2,3 */
@@ -3950,7 +3952,7 @@ ROM_START( magdrop3 )
 ROM_END
 
 ROM_START( lastblad )
-	ROM_REGION(0x500000)
+	ROM_REGIONX( 0x500000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "lb_p1.rom", 0x000000, 0x100000, 0xcd01c06d )
 	ROM_LOAD_WIDE_SWAP( "lb_p2.rom", 0x100000, 0x400000, 0x0fdc289e )
 
@@ -3966,7 +3968,7 @@ ROM_START( lastblad )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x2400000)
+	ROM_REGION( 0x2400000 )
 	ROM_LOAD_GFX_EVEN( "lb_c1.rom", 0x0000000, 0x800000, 0x9f7e2bd3 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "lb_c2.rom", 0x0000000, 0x800000, 0x80623d3c ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "lb_c3.rom", 0x1000000, 0x800000, 0x91ab1a30 ) /* Plane 0,1 */
@@ -3976,7 +3978,7 @@ ROM_START( lastblad )
 ROM_END
 
 ROM_START( puzzldpr )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "pdpnr_p1.rom", 0x000000, 0x080000, 0xafed5de2 )
 
 	NEO_SFIX_64K( "pdpnr_s1.rom", 0x5a68d91e )
@@ -3988,21 +3990,21 @@ ROM_START( puzzldpr )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x200000)
+	ROM_REGION( 0x200000 )
 	ROM_LOAD_GFX_EVEN( "pdpon_c1.rom", 0x000000, 0x100000, 0xcc0095ef ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "pdpon_c2.rom", 0x000000, 0x100000, 0x42371307 ) /* Plane 2,3 */
 ROM_END
 
 ROM_START( irrmaze )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "im_p1.rom", 0x000000, 0x200000, 0x6d536c6e )
 
 	NEO_SFIX_128K( "im_s1.rom", 0x5d1ca640 )
 
-	ROM_REGION(0x20000)
+	ROM_REGION( 0x20000 )
 	/* special BIOS with trackball support */
 	ROM_LOAD_WIDE_SWAP( "im_bios.rom", 0x00000, 0x020000, 0x853e6b96 )
-	ROM_REGION(0x40000)
+	ROM_REGIONX( 0x40000, REGION_CPU2 )
 	ROM_LOAD( "ng-sm1.rom", 0x00000, 0x20000, 0x97cf998b )	/* we don't use the BIOS anyway... */
 	ROM_LOAD( "im_m1.rom",  0x00000, 0x20000, 0x880a1abd )	/* so overwrite it with the real thing */
 
@@ -4018,7 +4020,7 @@ ROM_START( irrmaze )
 ROM_END
 
 ROM_START( popbounc )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "pnb-p1.rom", 0x000000, 0x100000, 0xbe96e44f )
 
 	NEO_SFIX_128K( "pnb-s1.rom", 0xb61cf595 )
@@ -4030,13 +4032,13 @@ ROM_START( popbounc )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x400000)
+	ROM_REGION( 0x400000 )
 	ROM_LOAD_GFX_EVEN( "pnb-c1.rom", 0x000000, 0x200000, 0xeda42d66 )
 	ROM_LOAD_GFX_ODD ( "pnb-c2.rom", 0x000000, 0x200000, 0x5e633c65 )
 ROM_END
 
 ROM_START( shocktro )
-	ROM_REGION(0x500000)
+	ROM_REGIONX( 0x500000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "shock_p1.rom", 0x000000, 0x100000, 0x5677456f )
 	ROM_LOAD_WIDE_SWAP( "shock_p2.rom", 0x300000, 0x200000, 0x646f6c76 )
 	ROM_CONTINUE(                       0x100000, 0x200000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
@@ -4051,7 +4053,7 @@ ROM_START( shocktro )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x2000000)
+	ROM_REGION( 0x2000000 )
 	ROM_LOAD_GFX_EVEN( "shock_c1.rom", 0x0400000, 0x200000, 0xaad087fc ) /* Plane 0,1 */
 	ROM_LOAD_GFX_EVEN( 0,              0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "shock_c2.rom", 0x0400000, 0x200000, 0x7e39df1f ) /* Plane 2,3 */
@@ -4071,7 +4073,7 @@ ROM_START( shocktro )
 ROM_END
 
 ROM_START( blazstar )
-	ROM_REGION(0x300000)
+	ROM_REGIONX( 0x300000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "bstar_p1.rom", 0x000000, 0x100000, 0x183682f8 )
 	ROM_LOAD_WIDE_SWAP( "bstar_p2.rom", 0x100000, 0x200000, 0x9a9f4154 )
 
@@ -4085,7 +4087,7 @@ ROM_START( blazstar )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x2000000)
+	ROM_REGION( 0x2000000 )
 	ROM_LOAD_GFX_EVEN( "bstar_c1.rom", 0x0400000, 0x200000, 0x754744e0 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_EVEN( 0,              0x0000000, 0x200000, 0 )
 	ROM_LOAD_GFX_ODD ( "bstar_c2.rom", 0x0400000, 0x200000, 0xaf98c037 ) /* Plane 2,3 */
@@ -4105,7 +4107,7 @@ ROM_START( blazstar )
 ROM_END
 
 ROM_START( rbff2 )
-	ROM_REGION(0x500000)
+	ROM_REGIONX( 0x500000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "rb2_p1.rom", 0x000000, 0x100000, 0xb6969780 )
 	ROM_LOAD_WIDE_SWAP( "rb2_p2.rom", 0x100000, 0x400000, 0x960aa88d )
 
@@ -4121,7 +4123,7 @@ ROM_START( rbff2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x3000000)
+	ROM_REGION( 0x3000000 )
 	ROM_LOAD_GFX_EVEN( "rb2_c1.rom", 0x0000000, 0x800000, 0xeffac504 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "rb2_c2.rom", 0x0000000, 0x800000, 0xed182d44 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "rb2_c3.rom", 0x1000000, 0x800000, 0x22e0330a ) /* Plane 0,1 */
@@ -4131,7 +4133,7 @@ ROM_START( rbff2 )
 ROM_END
 
 ROM_START( mslug2 )
-	ROM_REGION(0x300000)
+	ROM_REGIONX( 0x300000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "ms2_p1.rom", 0x000000, 0x100000, 0x2a53c5da )
 	ROM_LOAD_WIDE_SWAP( "ms2_p2.rom", 0x100000, 0x200000, 0x38883f44 )
 
@@ -4145,7 +4147,7 @@ ROM_START( mslug2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x2000000)
+	ROM_REGION( 0x2000000 )
 	ROM_LOAD_GFX_EVEN( "ms2_c1.rom", 0x0000000, 0x800000, 0x394b5e0d ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "ms2_c2.rom", 0x0000000, 0x800000, 0xe5806221 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "ms2_c3.rom", 0x1000000, 0x800000, 0x9f6bfa6f ) /* Plane 0,1 */
@@ -4153,7 +4155,7 @@ ROM_START( mslug2 )
 ROM_END
 
 ROM_START( kof98 )
-	ROM_REGION(0x500000)
+	ROM_REGIONX( 0x500000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "kof98_p1.rom", 0x000000, 0x100000, 0x61ac868a )
 	ROM_LOAD_WIDE_SWAP( "kof98_p2.rom", 0x100000, 0x400000, 0x980aba4c )
 
@@ -4169,7 +4171,7 @@ ROM_START( kof98 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x4000000)
+	ROM_REGION( 0x4000000 )
 	ROM_LOAD_GFX_EVEN( "kof98_c1.rom", 0x0000000, 0x800000, 0xe564ecd6 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "kof98_c2.rom", 0x0000000, 0x800000, 0xbd959b60 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "kof98_c3.rom", 0x1000000, 0x800000, 0x22127b4f ) /* Plane 0,1 */
@@ -4181,7 +4183,7 @@ ROM_START( kof98 )
 ROM_END
 
 ROM_START( lastbld2 )
-	ROM_REGION(0x500000)
+	ROM_REGIONX( 0x500000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "lb2_p1.rom", 0x000000, 0x100000, 0xaf1e6554 )
 	ROM_LOAD_WIDE_SWAP( "lb2_p2.rom", 0x100000, 0x400000, 0xadd4a30b )
 
@@ -4197,7 +4199,7 @@ ROM_START( lastbld2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x3000000)
+	ROM_REGION( 0x3000000 )
 	ROM_LOAD_GFX_EVEN( "lb2_c1.rom",  0x0000000, 0x800000, 0x5839444d ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "lb2_c2.rom",  0x0000000, 0x800000, 0xdd087428 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "lb2_c3.rom",  0x1000000, 0x800000, 0x6054cbe0 ) /* Plane 0,1 */
@@ -4207,7 +4209,7 @@ ROM_START( lastbld2 )
 ROM_END
 
 ROM_START( neocup98 )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "nc98_p1.rom", 0x100000, 0x100000, 0xf8fdb7a5 )
 	ROM_CONTINUE(                      0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
@@ -4221,13 +4223,13 @@ ROM_START( neocup98 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x1000000)
+	ROM_REGION( 0x1000000 )
 	ROM_LOAD_GFX_EVEN( "nc98_c1.rom", 0x000000, 0x800000, 0xd2c40ec7 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "nc98_c2.rom", 0x000000, 0x800000, 0x33aa0f35 ) /* Plane 2,3 */
 ROM_END
 
 ROM_START( breakrev )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "brev_p1.rom", 0x100000, 0x100000, 0xc828876d )
 	ROM_CONTINUE(                      0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
@@ -4251,7 +4253,7 @@ ROM_START( breakrev )
 ROM_END
 
 ROM_START( shocktr2 )
-	ROM_REGION(0x500000)
+	ROM_REGIONX( 0x500000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "st2_p1.rom", 0x000000, 0x100000, 0x6d4b7781 )
 	ROM_LOAD_WIDE_SWAP( "st2_p2.rom", 0x100000, 0x400000, 0x72ea04c3 )
 
@@ -4266,7 +4268,7 @@ ROM_START( shocktr2 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x3000000)
+	ROM_REGION( 0x3000000 )
 	ROM_LOAD_GFX_EVEN( "st2_c1.rom", 0x0000000, 0x800000, 0x47ac9ec5 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "st2_c2.rom", 0x0000000, 0x800000, 0x7bcab64f ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "st2_c3.rom", 0x1000000, 0x800000, 0xdb2f73e8 ) /* Plane 0,1 */
@@ -4276,7 +4278,7 @@ ROM_START( shocktr2 )
 ROM_END
 
 ROM_START( flipshot )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "flip_p1.rom", 0x000000, 0x080000, 0xd2e7a7e3 )
 
 	NEO_SFIX_128K( "flip_s1.rom", 0x6300185c )
@@ -4288,13 +4290,13 @@ ROM_START( flipshot )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x400000)
+	ROM_REGION( 0x400000 )
 	ROM_LOAD_GFX_EVEN( "flip_c1.rom",  0x000000, 0x200000, 0xc9eedcb2 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "flip_c2.rom",  0x000000, 0x200000, 0x7d6d6e87 ) /* Plane 2,3 */
 ROM_END
 
 ROM_START( pbobbl2n )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "pb2_p1.rom", 0x000000, 0x100000, 0x9d6c0754 )
 
 	NEO_SFIX_128K( "pb2_s1.rom", 0x0a3fee41 )
@@ -4307,7 +4309,7 @@ ROM_START( pbobbl2n )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0xa00000)
+	ROM_REGION( 0xa00000 )
 	ROM_LOAD_GFX_EVEN( "pb2_c1.rom", 0x000000, 0x400000, 0xd9115327 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "pb2_c2.rom", 0x000000, 0x400000, 0x77f9fdac ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "pb2_c3.rom", 0x800000, 0x100000, 0x8890bf7c ) /* Plane 0,1 */
@@ -4315,7 +4317,7 @@ ROM_START( pbobbl2n )
 ROM_END
 
 ROM_START( ctomaday )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "ctom_p1.rom", 0x100000, 0x100000, 0xc9386118 )
 	ROM_CONTINUE(                      0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
@@ -4329,13 +4331,13 @@ ROM_START( ctomaday )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x800000)
+	ROM_REGION( 0x800000 )
 	ROM_LOAD_GFX_EVEN( "ctom_c1.rom",  0x000000, 0x400000, 0x041fb8ee ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "ctom_c2.rom",  0x000000, 0x400000, 0x74f3cdf4 ) /* Plane 2,3 */
 ROM_END
 
 ROM_START( mslugx )
-	ROM_REGION(0x500000)
+	ROM_REGIONX( 0x500000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "msx_p1.rom", 0x000000, 0x100000, 0x81f1f60b )
 	ROM_LOAD_WIDE_SWAP( "msx_p2.rom", 0x100000, 0x400000, 0x1fda2e12 )
 
@@ -4350,7 +4352,7 @@ ROM_START( mslugx )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x3000000)
+	ROM_REGION( 0x3000000 )
 	ROM_LOAD_GFX_EVEN( "msx_c1.rom", 0x0000000, 0x800000, 0x09a52c6f ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "msx_c2.rom", 0x0000000, 0x800000, 0x31679821 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "msx_c3.rom", 0x1000000, 0x800000, 0xfd602019 ) /* Plane 0,1 */
@@ -4360,7 +4362,7 @@ ROM_START( mslugx )
 ROM_END
 
 ROM_START( kof99 )
-	ROM_REGION(0x500000)
+	ROM_REGIONX( 0x500000, REGION_CPU1 )
 	ROM_LOAD_WIDE_SWAP( "kof99_p1.rom", 0x000000, 0x100000, 0x00000000 )
 	ROM_LOAD_WIDE_SWAP( "kof99_p2.rom", 0x100000, 0x400000, 0x00000000 )
 
@@ -4376,7 +4378,7 @@ ROM_START( kof99 )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION(0x4000000)
+	ROM_REGION( 0x4000000 )
 	ROM_LOAD_GFX_EVEN( "kof99_c1.rom", 0x0000000, 0x800000, 0x00000000 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "kof99_c2.rom", 0x0000000, 0x800000, 0x00000000 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "kof99_c3.rom", 0x1000000, 0x800000, 0x00000000 ) /* Plane 0,1 */
@@ -4391,10 +4393,10 @@ ROM_END
 
 /* dummy entry for the dummy bios driver */
 ROM_START( bios )
-	ROM_REGION(0x020000)
+	ROM_REGION( 0x020000 )
 	ROM_LOAD_WIDE_SWAP( "neo-geo.rom", 0x00000, 0x020000, 0x9036d879 )
 
-	ROM_REGION(0x020000)
+	ROM_REGION( 0x020000 )
 	ROM_LOAD( "ng-sfix.rom",  0x00000, 0x20000, 0x354029fc )
  	ROM_LOAD( "ng-sm1.rom",   0x20000, 0x20000, 0x97cf998b )
 ROM_END
@@ -4440,8 +4442,8 @@ static void shuffle(unsigned char *buf,int len)
 
 void neogeo_mgd2_untangle(void)
 {
-	unsigned char *gfxdata = Machine->memory_region[MEM_GFX];
-	int len = Machine->memory_region_length[MEM_GFX];
+	unsigned char *gfxdata = memory_region(MEM_GFX);
+	int len = memory_region_length(MEM_GFX);
 
 	/*
 		data is now in the order 0 4 8 12... 1 5 9 13... 2 6 10 14... 3 7 11 15...
@@ -4572,7 +4574,8 @@ NEODRIVERMGD2(mutnat,  "Mutation Nation","1992","SNK",&neogeo_machine_driver,0)
 NEODRIVERMGD2(kotm,    "King of the Monsters","1991","SNK",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
 NEODRIVER(sengoku, "Sengoku / Sengoku Denshou (set 1)","1991","SNK",&neogeo_machine_driver,0)
 NEODRIVERCLONE(sengokh, sengoku, "Sengoku / Sengoku Denshou (set 2)","1991","SNK",&neogeo_machine_driver,0)
-NEODRIVERMGD2(burningf,"Burning Fight","1991","SNK",&neogeo_machine_driver,0)
+NEODRIVER(burningf,"Burning Fight (set 1)","1991","SNK",&neogeo_machine_driver,0)
+NEODRIVERCLONE(burningh,burningf,"Burning Fight (set 2)","1991","SNK",&neogeo_machine_driver,0)
 NEODRIVERMGD2(lbowling,"League Bowling","1990","SNK",&neogeo_machine_driver,0)
 NEODRIVER(gpilots, "Ghost Pilots","1991","SNK",&neogeo_machine_driver,0)
 NEODRIVER(joyjoy,  "Puzzled / Joy Joy Kid","1990","SNK",&neogeo_machine_driver,0)

@@ -458,7 +458,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3000000,	/* 3.0 MHz */
-			0,
 			readmem,writemem,readport,writeport,
 			0,0, /* no vblank interrupt */
 			interrupt, 250 /* 250 Hz */
@@ -466,7 +465,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			1500000,	/* 1.5 MHz */
-			2, 		/* memory region 1*/
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			0, 0, /* no vblank interrupt */
 			nmi_interrupt, 250 /* 250 Hz */
@@ -507,7 +505,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( omegrace )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "omega.m7",     0x0000, 0x1000, 0x0424d46e )
 	ROM_LOAD( "omega.l7",     0x1000, 0x1000, 0xedcd7a7d )
 	ROM_LOAD( "omega.k7",     0x2000, 0x1000, 0x6d10f197 )
@@ -516,7 +514,7 @@ ROM_START( omegrace )
 	ROM_LOAD( "omega.f1",     0x9800, 0x0800, 0xd44c0814 )
 
 	ROM_REGION_DISPOSE(0x0800)	/* temporary space for graphics (disposed after conversion) */
-	ROM_REGION(0x10000)	/* 64k for audio cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for audio cpu */
 	ROM_LOAD( "sound.k5",     0x0000, 0x0800, 0x7d426017 )
 ROM_END
 
@@ -525,7 +523,7 @@ static int hiload(void)
 	/* no reason to check hiscore table. It's an NV_RAM! */
 	/* However, it does not work yet. Don't know why. BW */
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
@@ -539,7 +537,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

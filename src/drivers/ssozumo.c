@@ -233,7 +233,7 @@ static struct DACinterface dac_interface =
 
 
 ROM_START( ssozumo )
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU1 )
 	/* Main Program ROMs */
 	ROM_LOAD( "ic61.g01",	0x06000, 0x2000, 0x86968f46 )	// m1
 	ROM_LOAD( "ic60.g11",	0x08000, 0x2000, 0x1a5143dd )	// m2
@@ -273,7 +273,7 @@ ROM_START( ssozumo )
 	ROM_LOAD( "ic32.gz1",	0x00040, 0x0020, 0x6fbff4d2 )	/* char palette blue component */
 	ROM_LOAD( "ic31.gz3",	0x00060, 0x0020, 0x18e7fe63 )	/* tile palette blue component */
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	/* Sound Program & Voice Sample ROMs*/
 	ROM_LOAD( "ic47.g50",	0x04000, 0x2000, 0xb64ec829 )	// a1
 	ROM_LOAD( "ic46.g60",	0x06000, 0x2000, 0x630d7380 )	// a2
@@ -291,14 +291,12 @@ static struct MachineDriver ssozumo_machine_driver =
 		{
 			CPU_M6502,
 			1200000,	/* 1.2 Mhz ???? */
-			0,
 			readmem, writemem, 0, 0,
 			ssozumo_interrupt, 1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			975000, 		/* 975 kHz ?? */
-			3,			/* memory region 3 */
 			sound_readmem, sound_writemem, 0, 0,
 			nmi_interrupt,16	/* IRQs are triggered by the main CPU */
 		}

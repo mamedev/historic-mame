@@ -299,7 +299,9 @@ INPUT_PORTS_START( polepos2 )
 	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
 
 	PORT_START  /* DSW0 */
-	PORT_BIT( 0x01, 0x01, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )	/* docs say "freeze", but it doesn't seem to work */
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ))
+	PORT_DIPSETTING(	0x01, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(	0x02, DEF_STR( Off ))
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
@@ -322,7 +324,9 @@ INPUT_PORTS_START( polepos2 )
 	PORT_DIPSETTING(	0xe0, DEF_STR( Free_Play ) )
 
 	PORT_START  /* DSW1 */
-	PORT_BIT( 0x01, 0x01, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x01, 0x01, "Speed" )
+    PORT_DIPSETTING(    0x00, "Average" )
+    PORT_DIPSETTING(    0x01, "High" )
 	PORT_DIPNAME( 0x06, 0x00, "Goal" )
 	PORT_DIPSETTING(	0x04, "3" )
 	PORT_DIPSETTING(	0x00, "4" )
@@ -459,21 +463,18 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3125000,	/* 3.125 Mhz */
-			0,
 			z80_readmem,z80_writemem,z80_readport,z80_writeport,
 			ignore_interrupt,1
 		},
 		{
 			CPU_Z8000,
 			3125000,	/* 3.125 Mhz */
-			1,
 			z8002_readmem,z8002_writemem,0,0,
 			polepos_z8002_1_interrupt,1
 		},
 		{
 			CPU_Z8000,
 			3125000,	/* 3.125 Mhz */
-			2,
 			z8002_readmem,z8002_writemem,0,0,
 			polepos_z8002_2_interrupt,1
 		}
@@ -519,17 +520,17 @@ static struct MachineDriver machine_driver =
 
 ROM_START( polepos )
 	/* Z80 memory/ROM data */
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU1 )
 	ROM_LOAD	 ( "014-105.rom",	0x00000, 0x2000, 0xc918c043 )
 	ROM_LOAD	 ( "014-116.rom",	0x02000, 0x1000, 0x7174bcb7 )
 
 	/* Z8002 #1 memory/ROM data */
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD_ODD ( "014-101.rom",	0x00000, 0x2000, 0x8c2cf172 )
 	ROM_LOAD_EVEN( "014-102.rom",	0x00000, 0x2000, 0x51018857 )
 
 	/* Z8002 #2 memory/ROM data */
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU3 )
 	ROM_LOAD_ODD ( "014-203.rom",	0x00000, 0x2000, 0xeedea6e7 )
 	ROM_LOAD_EVEN( "014-204.rom",	0x00000, 0x2000, 0xc52c98ed )
 
@@ -582,17 +583,17 @@ ROM_END
 
 ROM_START( polepos1 )
 	/* Z80 memory/ROM data */
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU1 )
 	ROM_LOAD	 ( "014-105.rom",	0x00000, 0x2000, 0xc918c043 )
 	ROM_LOAD	 ( "014-116.rom",	0x02000, 0x1000, 0x7174bcb7 )
 
 	/* Z8002 #1 memory/ROM data */
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD_ODD ( "014-101.rom",	0x00000, 0x2000, 0x8c2cf172 )
 	ROM_LOAD_EVEN( "014-102.rom",	0x00000, 0x2000, 0x51018857 )
 
 	/* Z8002 #2 memory/ROM data */
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU3 )
 	ROM_LOAD_ODD ( "103.3e",		0x00000, 0x2000, 0xaf4fc019 )
 	ROM_LOAD_EVEN( "104.4e",		0x00000, 0x2000, 0xba0045f3 )
 
@@ -645,17 +646,17 @@ ROM_END
 
 ROM_START( topracer )
 	/* Z80 memory/ROM data */
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU1 )
 	ROM_LOAD	 ( "tr9b.bin",		0x00000, 0x2000, 0x94436b70 )
 	ROM_LOAD	 ( "014-116.rom",	0x02000, 0x1000, 0x7174bcb7 )
 
 	/* Z8002 #1 memory/ROM data */
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD_ODD ( "tr1b.bin",		0x00000, 0x2000, 0x127f0750 )
 	ROM_LOAD_EVEN( "tr2b.bin",		0x00000, 0x2000, 0x6bd4ff6b )
 
 	/* Z8002 #2 memory/ROM data */
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU3 )
 	ROM_LOAD_ODD ( "tr5b.bin",		0x00000, 0x2000, 0x4e5f7b9c )
 	ROM_LOAD_EVEN( "tr6b.bin",		0x00000, 0x2000, 0x9d038ada )
 
@@ -708,18 +709,18 @@ ROM_END
 
 ROM_START( polepos2 )
 	/* Z80 memory/ROM data */
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU1 )
 	ROM_LOAD	 ( "180.7h",		0x00000, 0x2000, 0xf85212c4 )
 	ROM_LOAD	 ( "183.7f",		0x02000, 0x1000, 0xa9d4c380 )
 
 	/* Z8002 #1 memory/ROM data */
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD_ODD ( "176-v2.3l",		0x00000, 0x2000, 0x848ab742 )
 	ROM_LOAD_EVEN( "177-v2.4l",		0x00000, 0x2000, 0x643483f7 )
 	ROM_LOAD_EVEN( "rom-v2.4k",		0x04000, 0x1000, 0x2d70dce4 )
 
 	/* Z8002 #2 memory/ROM data */
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU3 )
 	ROM_LOAD_ODD ( "178.3e",		0x00000, 0x2000, 0xeac35cfa )
 	ROM_LOAD_EVEN( "179.4e",		0x00000, 0x2000, 0x613e917d )
 	ROM_LOAD_ODD ( "184.3d",		0x04000, 0x2000, 0xd893c4ed )
@@ -776,18 +777,18 @@ ROM_END
 
 ROM_START( poleps2a )
 	/* Z80 memory/ROM data */
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU1 )
 	ROM_LOAD	 ( "180.7h",		0x00000, 0x2000, 0xf85212c4 )
 	ROM_LOAD	 ( "183.7f",		0x02000, 0x1000, 0xa9d4c380 )
 
 	/* Z8002 #1 memory/ROM data */
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD_ODD ( "3lcpu.rom",		0x00000, 0x2000, 0xcf95a6b7 )
 	ROM_LOAD_EVEN( "177-v2.4l",		0x00000, 0x2000, 0x643483f7 )
 	ROM_LOAD_EVEN( "cpu-4k.rom",	0x04000, 0x1000, 0x97a496b3 )
 
 	/* Z8002 #2 memory/ROM data */
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU3 )
 	ROM_LOAD_ODD ( "178.3e",		0x00000, 0x2000, 0xeac35cfa )
 	ROM_LOAD_EVEN( "179.4e",		0x00000, 0x2000, 0x613e917d )
 	ROM_LOAD_ODD ( "184.3d",		0x04000, 0x2000, 0xd893c4ed )
@@ -850,7 +851,7 @@ static int hiload(void)
 {
 	/* no reason to check hiscore table. It's an NV_RAM! */
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
@@ -867,7 +868,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

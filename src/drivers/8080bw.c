@@ -187,22 +187,22 @@ void mix_hiscoreprint(int x, int y, int value, int width,int size, int adjust,in
 		{
 		case 0:
 		invaders_videoram_w((31-y) + (i+adjust)*32 + j*256,
-								memory_region(Machine->drv->cpu[0].memory_region)[romarea+offset+disp+i]);
+								memory_region(REGION_CPU1)[romarea+offset+disp+i]);
 		break;
 
 		case 1:
 					lrescue_videoram_w((31-y) + (i+adjust)*32 + j*256,
-								memory_region(Machine->drv->cpu[0].memory_region)[romarea+offset+disp+i]);
+								memory_region(REGION_CPU1)[romarea+offset+disp+i]);
 		break;
 
 		case 2:
 					boothill_videoram_w((31-j) + (i+adjust)*32 + y*256,
-								memory_region(Machine->drv->cpu[0].memory_region)[romarea+offset+disp+i]);
+								memory_region(REGION_CPU1)[romarea+offset+disp+i]);
 		break;
 
 		case 3:
 		boothill_videoram_w((31-j) + (i+adjust)*32 + y*256,
-										~(memory_region(Machine->drv->cpu[0].memory_region)[romarea+offset+disp+i]));
+										~(memory_region(REGION_CPU1)[romarea+offset+disp+i]));
 		break;
 		}
 
@@ -220,7 +220,7 @@ void mix_hiscoreprint(int x, int y, int value, int width,int size, int adjust,in
 /*******************************************************/
 
 ROM_START( invaders )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "invaders.h",   0x0000, 0x0800, 0x734f5ad8 )
 	ROM_LOAD( "invaders.g",   0x0800, 0x0800, 0x6bfaca4a )
 	ROM_LOAD( "invaders.f",   0x1000, 0x0800, 0x0ccead96 )
@@ -361,7 +361,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
-			0,
 			readmem,writemem,readport,writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -394,7 +393,7 @@ static struct MachineDriver machine_driver =
 
 static int invaders_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -417,7 +416,7 @@ static int invaders_hiload(void)
 static void invaders_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -461,7 +460,7 @@ struct GameDriver driver_invaders =
 /*******************************************************/
 
 ROM_START( invaders2 )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "pv.01",        0x0000, 0x0800, 0x7288a511 )
 	ROM_LOAD( "pv.02",        0x0800, 0x0800, 0x097dd8d5 )
 	ROM_LOAD( "pv.03",        0x1000, 0x0800, 0x1766337e )
@@ -556,7 +555,6 @@ static struct MachineDriver invadpt2_machine_driver =
 		{
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
-			0,
 			readmem, invadpt2_writemem, invadpt2_readport, invadpt2_writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -589,7 +587,7 @@ static struct MachineDriver invadpt2_machine_driver =
 
 static int invadpt2_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -614,7 +612,7 @@ static int invadpt2_hiload(void)
 static void invadpt2_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -663,7 +661,7 @@ struct GameDriver driver_invadpt2 =
 /*******************************************************/
 
 ROM_START( earthinv )
-	ROM_REGION(0x10000)             /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )             /* 64k for code */
 	ROM_LOAD( "earthinv.h",   0x0000, 0x0800, 0x58a750c8 )
 	ROM_LOAD( "earthinv.g",   0x0800, 0x0800, 0xb91742f1 )
 	ROM_LOAD( "earthinv.f",   0x1000, 0x0800, 0x4acbbc60 )
@@ -733,7 +731,7 @@ struct GameDriver driver_earthinv =
 /*******************************************************/
 
 ROM_START( spaceatt )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "spaceatt.h",   0x0000, 0x0800, 0xa31d0756 )
 	ROM_LOAD( "spaceatt.g",   0x0800, 0x0800, 0xf41241f7 )
 	ROM_LOAD( "spaceatt.f",   0x1000, 0x0800, 0x4c060223 )
@@ -801,7 +799,7 @@ struct GameDriver driver_spaceatt =
 /*******************************************************/
 
 ROM_START( invrvnge )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "invrvnge.h",   0x0000, 0x0800, 0xaca41bbb )
 	ROM_LOAD( "invrvnge.g",   0x0800, 0x0800, 0xcfe89dad )
 	ROM_LOAD( "invrvnge.f",   0x1000, 0x0800, 0xe350de2c )
@@ -809,7 +807,7 @@ ROM_START( invrvnge )
 ROM_END
 
 ROM_START( invrvnga )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "5m.bin",   0x0000, 0x0800, 0xb145cb71 )
 	ROM_LOAD( "5n.bin",   0x0800, 0x0800, 0x660e8af3 )
 	ROM_LOAD( "5p.bin",   0x1000, 0x0800, 0x6ec5a9ad )
@@ -861,7 +859,6 @@ static struct MachineDriver invrvnge_machine_driver =
 		{
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
-			0,
 			readmem, invrvnge_writemem, readport, writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -894,7 +891,7 @@ static struct MachineDriver invrvnge_machine_driver =
 
 static int invrvnge_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -918,7 +915,7 @@ static int invrvnge_hiload(void)
 static void invrvnge_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -988,7 +985,7 @@ struct GameDriver driver_invrvnga =
 /*******************************************************/
 
 ROM_START( invdpt2m )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "invdelux.h",   0x0000, 0x0800, 0xe690818f )
 	ROM_LOAD( "invdelux.g",   0x0800, 0x0800, 0x4268c12d )
 	ROM_LOAD( "invdelux.f",   0x1000, 0x0800, 0xf4aa1880 )
@@ -1064,7 +1061,6 @@ static struct MachineDriver invdpt2m_machine_driver =
 		{
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
-			0,
 			readmem, invdpt2m_writemem, invdpt2m_readport, writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -1097,7 +1093,7 @@ static struct MachineDriver invdpt2m_machine_driver =
 
 static int invdpt2m_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1122,7 +1118,7 @@ static int invdpt2m_hiload(void)
 static void invdpt2m_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1170,7 +1166,7 @@ struct GameDriver driver_invdpt2m =
 /*******************************************************/
 
 ROM_START( astlaser )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "1.u36",        0x0000, 0x0800, 0xb44e2c41 )
 	ROM_LOAD( "2.u35",        0x0800, 0x0800, 0x9876f331 )
 	ROM_LOAD( "3.u34",        0x1000, 0x0800, 0xed79000b )
@@ -1222,7 +1218,7 @@ INPUT_PORTS_END
 
 static int astlaser_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 			/* check if the hi score table has already been initialized */
@@ -1251,7 +1247,7 @@ static int astlaser_hiload(void)
 static void astlaser_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1298,7 +1294,7 @@ struct GameDriver driver_astlaser =
 /*******************************************************/
 
 ROM_START( intruder )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "la01",         0x0000, 0x0800, 0xbedc0078 )
 	ROM_LOAD( "la02",         0x0800, 0x0800, 0x43bc65c5 )
 	ROM_LOAD( "la03",         0x1000, 0x0800, 0x1083e9cc )
@@ -1380,7 +1376,7 @@ struct GameDriver driver_intruder =
 /*******************************************************/
 
 ROM_START( galxwars )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "galxwars.0",   0x0000, 0x0400, 0x608bfe7f )
 	ROM_LOAD( "galxwars.1",   0x0400, 0x0400, 0xa810b258 )
 	ROM_LOAD( "galxwars.2",   0x0800, 0x0400, 0x74f31781 )
@@ -1421,7 +1417,7 @@ INPUT_PORTS_END
 
 static int galxwars_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1460,7 +1456,7 @@ static int galxwars_hiload(void)
 static void galxwars_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1504,7 +1500,7 @@ struct GameDriver driver_galxwars =
 /*******************************************************/
 
 ROM_START( lrescue )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "lrescue.1",    0x0000, 0x0800, 0x2bbc4778 )
 	ROM_LOAD( "lrescue.2",    0x0800, 0x0800, 0x49e79706 )
 	ROM_LOAD( "lrescue.3",    0x1000, 0x0800, 0x1ac969be )
@@ -1514,7 +1510,7 @@ ROM_START( lrescue )
 ROM_END
 
 ROM_START( grescue )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "lrescue.1",    0x0000, 0x0800, 0x2bbc4778 )
 	ROM_LOAD( "lrescue.2",    0x0800, 0x0800, 0x49e79706 )
 	ROM_LOAD( "lrescue.3",    0x1000, 0x0800, 0x1ac969be )
@@ -1570,7 +1566,6 @@ static struct MachineDriver lrescue_machine_driver =
 		{
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
-			0,
 			readmem, lrescue_writemem, readport, writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -1603,7 +1598,7 @@ static struct MachineDriver lrescue_machine_driver =
 
 static int lrescue_hiload(void)     /* V.V */ /* Whole function */
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1631,7 +1626,7 @@ static int lrescue_hiload(void)     /* V.V */ /* Whole function */
 static void lrescue_hisave(void)    /* V.V */ /* Whole function */
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1708,7 +1703,7 @@ struct GameDriver driver_grescue =
 /*******************************************************/
 
 ROM_START( desterth )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "36_h.bin",     0x0000, 0x0800, 0xf86923e5 )
 	ROM_LOAD( "35_g.bin",     0x0800, 0x0800, 0x797f440d )
 	ROM_LOAD( "34_f.bin",     0x1000, 0x0800, 0x993d0846 )
@@ -1748,7 +1743,7 @@ INPUT_PORTS_END
 
 static int desterth_hiload(void)     /* V.V */ /* Whole function */
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1805,7 +1800,7 @@ struct GameDriver driver_desterth =
 /*******************************************************/
 
 ROM_START( cosmicmo )  /* L.T */
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "cosmicmo.1",   0x0000, 0x0400, 0xd6e4e5da )
 	ROM_LOAD( "cosmicmo.2",   0x0400, 0x0400, 0x8f7988e6 )
 	ROM_LOAD( "cosmicmo.3",   0x0800, 0x0400, 0x2d2e9dc8 )
@@ -1878,7 +1873,7 @@ struct GameDriver driver_cosmicmo =
 /*******************************************************/
 
 ROM_START( rollingc )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "rc01.bin",     0x0000, 0x0400, 0x66fa50bf )
 	ROM_LOAD( "rc02.bin",     0x0400, 0x0400, 0x61c06ae4 )
 	ROM_LOAD( "rc03.bin",     0x0800, 0x0400, 0x77e39fa0 )
@@ -1985,7 +1980,6 @@ static struct MachineDriver rollingc_machine_driver =
 		{
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
-			0,
 			rollingc_readmem,rollingc_writemem,invdpt2m_readport,writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -2018,7 +2012,7 @@ static struct MachineDriver rollingc_machine_driver =
 
 static int rollingc_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -2042,7 +2036,7 @@ static int rollingc_hiload(void)
 static void rollingc_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2093,7 +2087,7 @@ struct GameDriver driver_rollingc =
 /*******************************************************/
 
 ROM_START( bandido )                                                                                /* MJC */
-	ROM_REGION(0x10000)             /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )             /* 64k for code */
 	ROM_LOAD( "baf1-3",       0x0000, 0x0400, 0xaec94829 )
 	ROM_LOAD( "baf2-1",       0x0400, 0x0400, 0xda67721a )
 	ROM_LOAD( "bag1-1",       0x0800, 0x0400, 0x3fb7888e )
@@ -2106,7 +2100,7 @@ ROM_START( bandido )                                                            
 	ROM_LOAD( "baj2-2",       0x2400, 0x0400, 0xa10b848a )
 
 #if 0
-	ROM_REGION(0x0010)              /* Not Used */
+	ROM_REGIONX( 0x0010, REGION_CPU2 )              /* Not Used */
 
     ROM_REGION(0x0800)                  /* Sound 8035 + 76477 Sound Generator */
     ROM_LOAD( "basnd.u2",     0x0000, 0x0400, 0x0 )
@@ -2216,7 +2210,6 @@ static struct MachineDriver bandido_machine_driver =                    /* MJC *
 		{
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
-			0,
 			bandido_readmem, bandido_writemem, bandido_readport, bandido_writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -2243,7 +2236,7 @@ static struct MachineDriver bandido_machine_driver =                    /* MJC *
 
 static int bandido_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -2265,7 +2258,7 @@ static int bandido_hiload(void)
 static void bandido_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2310,7 +2303,7 @@ struct GameDriver driver_bandido =                                              
 /*******************************************************/
 
 ROM_START( boothill )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "romh.cpu",     0x0000, 0x0800, 0x1615d077 )
 	ROM_LOAD( "romg.cpu",     0x0800, 0x0800, 0x65a90420 )
 	ROM_LOAD( "romf.cpu",     0x1000, 0x0800, 0x3fdafd79 )
@@ -2391,7 +2384,6 @@ static struct MachineDriver boothill_machine_driver =                   /* MJC 3
 		{
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
-			0,
 			readmem, boothill_writemem, boothill_readport, boothill_writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -2429,7 +2421,6 @@ static struct MachineDriver gmissile_machine_driver =                   /* MJC 3
 		{
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
-			0,
 			readmem, boothill_writemem, boothill_readport, boothill_writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -2494,7 +2485,7 @@ struct GameDriver driver_boothill =                                             
 /*******************************************************/
 
 ROM_START( schaser )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "rt13.bin",     0x0000, 0x0400, 0x0dfbde68 )
 	ROM_LOAD( "rt14.bin",     0x0400, 0x0400, 0x5a508a25 )
 	ROM_LOAD( "rt15.bin",     0x0800, 0x0400, 0x2ac43a93 )
@@ -2543,7 +2534,7 @@ INPUT_PORTS_END
 
 static int schaser_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -2567,7 +2558,7 @@ static int schaser_hiload(void)
 static void schaser_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2615,7 +2606,7 @@ struct GameDriver driver_schaser =
 /*******************************************************/
 
 ROM_START( spcenctr )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "4m33.cpu",     0x0000, 0x0800, 0x7458b2db )
 	ROM_LOAD( "4m32.cpu",     0x0800, 0x0800, 0x1b873788 )
 	ROM_LOAD( "4m31.cpu",     0x1000, 0x0800, 0xd4319c91 )
@@ -2682,7 +2673,6 @@ static struct MachineDriver spcenctr_machine_driver =
 		{
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
-			0,
 			readmem, boothill_writemem, spcenctr_readport, spcenctr_writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -2716,7 +2706,7 @@ static struct MachineDriver spcenctr_machine_driver =
 
 static int spcenctr_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x26f0],"\x0e\x0e",2) == 0)
 	{
@@ -2740,7 +2730,7 @@ static int spcenctr_hiload(void)
 static void spcenctr_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2784,7 +2774,7 @@ struct GameDriver driver_spcenctr =
 /*******************************************************/
 
 ROM_START( clowns )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "h2.cpu",       0x0000, 0x0400, 0xff4432eb )
 	ROM_LOAD( "g2.cpu",       0x0400, 0x0400, 0x676c934b )
 	ROM_LOAD( "f2.cpu",       0x0800, 0x0400, 0x00757962 )
@@ -2843,7 +2833,6 @@ static struct MachineDriver clowns_machine_driver =
 		{
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
-			0,
 			readmem, boothill_writemem, invdpt2m_readport, spcenctr_writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -2876,7 +2865,7 @@ static struct MachineDriver clowns_machine_driver =
 
 static int clowns_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 
@@ -2911,7 +2900,7 @@ static int clowns_hiload(void)
 static void clowns_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2957,7 +2946,7 @@ struct GameDriver driver_clowns =
 /*******************************************************/
 
 ROM_START( gmissile )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "gm_623.h",     0x0000, 0x0800, 0xa3ebb792 )
 	ROM_LOAD( "gm_623.g",     0x0800, 0x0800, 0xa5e740bb )
 	ROM_LOAD( "gm_623.f",     0x1000, 0x0800, 0xda381025 )
@@ -3040,7 +3029,7 @@ struct GameDriver driver_gmissile =
 /*******************************************************/
 
 ROM_START( seawolf )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "sw0041.h",     0x0000, 0x0400, 0x8f597323 )
 	ROM_LOAD( "sw0042.g",     0x0400, 0x0400, 0xdb980974 )
 	ROM_LOAD( "sw0043.f",     0x0800, 0x0400, 0xe6ffa008 )
@@ -3105,7 +3094,6 @@ static struct MachineDriver seawolf_machine_driver =
 		{
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
-			0,
 			readmem,boothill_writemem,seawolf_readport,seawolf_writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -3140,7 +3128,7 @@ static struct MachineDriver seawolf_machine_driver =
 
 static int seawolf_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x23f0],"\x78\x00\x54",3) == 0)
@@ -3172,7 +3160,7 @@ static int seawolf_hiload(void)
 static void seawolf_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -3218,7 +3206,7 @@ struct GameDriver driver_seawolf =
 /*******************************************************/
 
 ROM_START( gunfight )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "7609h.bin",    0x0000, 0x0400, 0x0b117d73 )
 	ROM_LOAD( "7609g.bin",    0x0400, 0x0400, 0x57bc3159 )
 	ROM_LOAD( "7609f.bin",    0x0800, 0x0400, 0x8049a6bd )
@@ -3302,7 +3290,6 @@ static struct MachineDriver gunfight_machine_driver =
 		{
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
-			0,
 			readmem,boothill_writemem,boothill_readport,gunfight_writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -3366,7 +3353,7 @@ struct GameDriver driver_gunfight =
 /*******************************************************/
 
 ROM_START( zzzap )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "zzzaph",       0x0000, 0x0400, 0x1fa86e1c )
 	ROM_LOAD( "zzzapg",       0x0400, 0x0400, 0x9639bc6b )
 	ROM_LOAD( "zzzapf",       0x0800, 0x0400, 0xadc6ede1 )
@@ -3429,7 +3416,6 @@ static struct MachineDriver zzzap_machine_driver =
 		{
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
-			0,
 			readmem,boothill_writemem,invdpt2m_readport,zzzap_writeport,
 			invaders_interrupt, 2    /* two interrupts per frame */
 		}
@@ -3457,7 +3443,7 @@ static struct MachineDriver zzzap_machine_driver =
 
 static int zzzap_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 
@@ -3513,7 +3499,7 @@ static int zzzap_hiload(void)
 static void zzzap_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -3560,7 +3546,7 @@ struct GameDriver driver_zzzap =
 /*******************************************************/
 
 ROM_START( lupin3 )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "lp12.bin",     0x0000, 0x0800, 0x68a7f47a )
 	ROM_LOAD( "lp13.bin",     0x0800, 0x0800, 0xcae9a17b )
 	ROM_LOAD( "lp14.bin",     0x1000, 0x0800, 0x3553b9e4 )
@@ -3628,7 +3614,6 @@ static struct MachineDriver lupin3_machine_driver =
 		{
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
-			0,
 			readmem,lupin3_writemem,invdpt2m_readport,writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -3661,7 +3646,7 @@ static struct MachineDriver lupin3_machine_driver =
 
 static int lupin3_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
     /* check if the hi score table has already been initialized */
     if (memcmp(&RAM[0x2000],"\x18\x41",2) == 0 )
@@ -3683,7 +3668,7 @@ static int lupin3_hiload(void)
 static void lupin3_hisave(void)
 {
     void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -3728,7 +3713,7 @@ struct GameDriver driver_lupin3 =
 /*******************************************************/
 
 ROM_START( helifire )                                                                                /* MJC */
-	ROM_REGION(0x10000)             /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )             /* 64k for code */
 	ROM_LOAD( "tub.f1b",      0x0000, 0x0400, 0x032f89ca )
 	ROM_LOAD( "tub.f2b",      0x0400, 0x0400, 0x2774e70f )
 	ROM_LOAD( "tub.g1b",      0x0800, 0x0400, 0xb5ad6e8a )
@@ -3741,7 +3726,7 @@ ROM_START( helifire )                                                           
 	ROM_LOAD( "tub.j2b",      0x2400, 0x0400, 0x5e2b5877 )
 
 #if 0
-	ROM_REGION(0x0010)              /* Not Used */
+	ROM_REGIONX( 0x0010, REGION_CPU2 )              /* Not Used */
 
 	ROM_REGION(0x0800)   /* Sound 8035 + 76477 Sound Generator */
 	ROM_LOAD( "tub.snd",      0x0000, 0x0400, 0x0 )
@@ -3749,7 +3734,7 @@ ROM_START( helifire )                                                           
 ROM_END
 
 ROM_START( helifira )
-	ROM_REGION(0x10000)             /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )             /* 64k for code */
 	ROM_LOAD( "f1a.bin",      0x0000, 0x0400, 0x92c9d6c1 )
 	ROM_LOAD( "f2a.bin",      0x0400, 0x0400, 0xa264dde8 )
 	ROM_LOAD( "tub.g1b",      0x0800, 0x0400, 0xb5ad6e8a )
@@ -3762,7 +3747,7 @@ ROM_START( helifira )
 	ROM_LOAD( "tub.j2b",      0x2400, 0x0400, 0x5e2b5877 )
 
 #if 0
-	ROM_REGION(0x0010)              /* Not Used */
+	ROM_REGIONX( 0x0010, REGION_CPU2 )              /* Not Used */
 
 	ROM_REGION(0x0800)   /* Sound 8035 + 76477 Sound Generator */
 	ROM_LOAD( "tub.snd",      0x0000, 0x0400, 0x0 )
@@ -3822,7 +3807,7 @@ INPUT_PORTS_END
 
 static int helifire_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
     /* check if the hi score table has already been initialized */
@@ -3856,7 +3841,7 @@ static int helifire_hiload(void)
 static void helifire_hisave(void)
 {
     void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -3930,7 +3915,7 @@ struct GameDriver driver_helifira =
 
 
 ROM_START( spacefev )                                                                                /* MJC */
-	ROM_REGION(0x10000)             /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )             /* 64k for code */
 	ROM_LOAD( "tsf.f1",       0x0000, 0x0400, 0x35f295bd )
 	ROM_LOAD( "tsf.f2",       0x0400, 0x0400, 0x0c633f4c )
 	ROM_LOAD( "tsf.g1",       0x0800, 0x0400, 0xf3d851cb )
@@ -3940,7 +3925,7 @@ ROM_START( spacefev )                                                           
 	ROM_LOAD( "tsf.i1",       0x1800, 0x0400, 0xd4f3b50d )
 
 #if 0
-	ROM_REGION(0x0010)              /* Not Used */
+	ROM_REGIONX( 0x0010, REGION_CPU2 )              /* Not Used */
 	ROM_REGION(0x0800)    /* Sound 8035 + 76477 Sound Generator */
 	ROM_LOAD( "tsf.snd",      0x0000, 0x0400, 0x0 )
 #endif
@@ -3983,7 +3968,7 @@ INPUT_PORTS_END
 
 static int spacefev_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
     /* check if the hi score table has already been initialized */
     if (memcmp(&RAM[0x6013],"\xd0\x04",2) == 0 )
     {
@@ -4005,7 +3990,7 @@ static int spacefev_hiload(void)
 static void spacefev_hisave(void)
 {
     void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -4051,7 +4036,7 @@ struct GameDriver driver_spacefev =
 /*                                                     */
 /*******************************************************/
 ROM_START( sfeverbw )
-	ROM_REGION(0x10000)             /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )             /* 64k for code */
 	ROM_LOAD( "spacefev.f1", 0x0000, 0x0400, 0xb8887351 )
 	ROM_LOAD( "spacefev.f2", 0x0400, 0x0400, 0xcda933a7 )
 	ROM_LOAD( "spacefev.g1", 0x0800, 0x0400, 0xde17578a )
@@ -4062,7 +4047,7 @@ ROM_START( sfeverbw )
 	ROM_LOAD( "spacefev.i2", 0x1c00, 0x0400, 0xeff9f82d )
 
 #if 0
-	ROM_REGION(0x0010)              /* Not Used */
+	ROM_REGIONX( 0x0010, REGION_CPU2 )              /* Not Used */
 
 	ROM_REGION(0x0800)    /* Sound 8035 + 76477 Sound Generator */
 	ROM_LOAD( "TSF.SND", 0x0000, 0x0400, 0x0 )
@@ -4072,7 +4057,7 @@ ROM_END
 
 static int sfeverbw_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
     /* check if the hi score table has already been initialized */
     if (memcmp(&RAM[0x6070],"\xB0\x04",2) == 0 )
     {
@@ -4103,7 +4088,7 @@ static int sfeverbw_hiload(void)
 static void sfeverbw_hisave(void)
 {
     void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -4161,7 +4146,7 @@ struct GameDriver driver_sfeverbw =
 
 
 ROM_START( polaris )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "ps-01",        0x0000, 0x0800, 0xc04ce5a9 )
 	ROM_LOAD( "ps-09",        0x0800, 0x0800, 0x9a5c8cb2 )
 	ROM_LOAD( "ps-08",        0x1000, 0x0800, 0x8680d7ea )
@@ -4171,7 +4156,7 @@ ROM_START( polaris )
 ROM_END
 
 ROM_START( polarisa )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "ps01-1",      0x0000, 0x0800, 0x7d41007c )
 	ROM_LOAD( "ps-09",       0x0800, 0x0800, 0x9a5c8cb2 )
 	ROM_LOAD( "ps03-1",      0x1000, 0x0800, 0x21f32415 )
@@ -4265,7 +4250,6 @@ static struct MachineDriver polaris_machine_driver =
 		{
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
-			0,
 			polaris_readmem,polaris_writemem,polaris_readport,polaris_writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -4293,7 +4277,7 @@ static struct MachineDriver polaris_machine_driver =
 
 static int polaris_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
     /* check if the hi score table has already been initialized */
@@ -4316,7 +4300,7 @@ static int polaris_hiload(void)
 static void polaris_hisave(void)
 {
     void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -4390,7 +4374,7 @@ struct GameDriver driver_polarisa =
 
 
 ROM_START( lagunar )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "lagunar.h",    0x0000, 0x0800, 0x0cd5a280 )
 	ROM_LOAD( "lagunar.g",    0x0800, 0x0800, 0x824cd6f5 )
 	ROM_LOAD( "lagunar.f",    0x1000, 0x0800, 0x62692ca7 )
@@ -4437,7 +4421,7 @@ INPUT_PORTS_END
 
 static int lagunar_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
     /* check if the hi score table has already been initialized */
     if (memcmp(&RAM[0x2030],"\x04\x0d",2) == 0 )
     {
@@ -4460,7 +4444,7 @@ static int lagunar_hiload(void)
 static void lagunar_hisave(void)
 {
     void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -4511,7 +4495,7 @@ struct GameDriver driver_lagunar =
 
 
 ROM_START( m4 )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "m4.h",         0x0000, 0x0800, 0x9ee2a0b5 )
 	ROM_LOAD( "m4.g",         0x0800, 0x0800, 0x0e84b9cb )
 	ROM_LOAD( "m4.f",         0x1000, 0x0800, 0x9ded9956 )
@@ -4572,7 +4556,6 @@ static struct MachineDriver m4_machine_driver =
 		{
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
-			0,
 			readmem, boothill_writemem, m4_readport, boothill_writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -4640,7 +4623,7 @@ struct GameDriver driver_m4 =
 
 
 ROM_START( phantom2 )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "phantom2.h",   0x0000, 0x0800, 0x0e3c2439 )
 	ROM_LOAD( "phantom2.g",   0x0800, 0x0800, 0xe8df3e52 )
 	ROM_LOAD( "phantom2.f",   0x1000, 0x0800, 0x30e83c6d )
@@ -4694,7 +4677,6 @@ static struct MachineDriver phantom2_machine_driver =
 		{
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
-			0,
 			readmem, boothill_writemem, phantom2_readport, boothill_writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -4728,7 +4710,7 @@ static struct MachineDriver phantom2_machine_driver =
 
 static int phantom2_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
     /* check if the hi score table has already been initialized */
@@ -4753,7 +4735,7 @@ static int phantom2_hiload(void)
 static void phantom2_hisave(void)
 {
     void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -4865,7 +4847,6 @@ static struct MachineDriver dogpatch_machine_driver =
 		{
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
-			0,
 			readmem,boothill_writemem,dogpatch_readport,dogpatch_writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -4897,7 +4878,7 @@ static struct MachineDriver dogpatch_machine_driver =
 };
 
 ROM_START( dogpatch )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "dogpatch.h",   0x0000, 0x0800, 0x74ebdf4d )
 	ROM_LOAD( "dogpatch.g",   0x0800, 0x0800, 0xac246f70 )
 	ROM_LOAD( "dogpatch.f",   0x1000, 0x0800, 0xa975b011 )
@@ -4955,7 +4936,7 @@ static struct IOWritePort midwbowl_writeport[] =
 };
 
 ROM_START( midwbowl )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "h.cpu",        0x0000, 0x0800, 0x74c29b93 )
 	ROM_LOAD( "g.cpu",        0x0800, 0x0800, 0xca26d8b4 )
 	ROM_LOAD( "f.cpu",        0x1000, 0x0800, 0xba8a0bfa )
@@ -5005,7 +4986,6 @@ static struct MachineDriver midwbowl_machine_driver =
 		{
 			CPU_8080,
 			2000000,        /* 2 Mhz */
-			0,
 			readmem, boothill_writemem, midwbowl_readport, midwbowl_writeport,
 			invaders_interrupt, 2    /* two interrupts per frame */
 		}
@@ -5034,7 +5014,7 @@ static struct MachineDriver midwbowl_machine_driver =
 
 static int midbowl_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
     /* check if the hi score table has already been initialized */
@@ -5056,7 +5036,7 @@ static int midbowl_hiload(void)
 static void midbowl_hisave(void)
 {
     void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -5102,7 +5082,7 @@ struct GameDriver driver_midwbowl =
 
 
 ROM_START( blueshrk )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "blueshrk.h",   0x0000, 0x0800, 0x4ff94187 )
 	ROM_LOAD( "blueshrk.g",   0x0800, 0x0800, 0xe49368fd )
 	ROM_LOAD( "blueshrk.f",   0x1000, 0x0800, 0x86cca79d )
@@ -5154,7 +5134,6 @@ static struct MachineDriver blueshrk_machine_driver =
 		{
 			CPU_8080,
 			2000000,
-			0,
 			readmem, boothill_writemem, blueshrk_readport, blueshrk_writeport,
 			invaders_interrupt, 2    /* two interrupts per frame */
 		}
@@ -5181,7 +5160,7 @@ static struct MachineDriver blueshrk_machine_driver =
 
 static int blueshrk_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
     /* check if the hi score table has already been initialized */
     if (memcmp(&RAM[0x2450],"\xc3\x7e",2) == 0 )
 	{
@@ -5209,7 +5188,7 @@ static int blueshrk_hiload(void)
 static void blueshrk_hisave(void)
 {
     void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -5256,7 +5235,7 @@ struct GameDriver driver_blueshrk =
 
 
 ROM_START( einnings )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "ei.h",         0x0000, 0x0800, 0xeff9c7af )
 	ROM_LOAD( "ei.g",         0x0800, 0x0800, 0x5d1e66cb )
 	ROM_LOAD( "ei.f",         0x1000, 0x0800, 0xed96785d )
@@ -5341,7 +5320,7 @@ struct GameDriver driver_einnings =
 
 
 ROM_START( dplay )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "dplay619.h",   0x0000, 0x0800, 0x6680669b )
 	ROM_LOAD( "dplay619.g",   0x0800, 0x0800, 0x0eec7e01 )
 	ROM_LOAD( "dplay619.f",   0x1000, 0x0800, 0x3af4b719 )
@@ -5382,7 +5361,7 @@ struct GameDriver driver_dplay =
 /*******************************************************/
 
 ROM_START( maze )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "invaders.h",   0x0000, 0x0800, 0xf2860cff )
 	ROM_LOAD( "invaders.g",   0x0800, 0x0800, 0x65fad839 )
 ROM_END
@@ -5440,7 +5419,6 @@ static struct MachineDriver maze_machine_driver =
 		{
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
-			0,
 			readmem,boothill_writemem,invdpt2m_readport,writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -5501,7 +5479,7 @@ struct GameDriver driver_maze =
 /*******************************************************/
 
 ROM_START( tornbase )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "tb.h",         0x0000, 0x0800, 0x653f4797 )
 	ROM_LOAD( "tb.g",         0x0800, 0x0800, 0x33468006 )
 	ROM_LOAD( "tb.f",         0x1000, 0x0800, 0x215e070c )
@@ -5559,7 +5537,6 @@ static struct MachineDriver tornbase_machine_driver =
 		{
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
-			0,
 			readmem,boothill_writemem,invdpt2m_readport,writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -5618,7 +5595,7 @@ struct GameDriver driver_tornbase =
 /*******************************************************/
 
 ROM_START( checkmat )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "checkmat.h", 0x0000, 0x0400, 0x3481a6d1 )
 	ROM_LOAD( "checkmat.g", 0x0400, 0x0400, 0xdf5fa551 )
 	ROM_LOAD( "checkmat.f", 0x0800, 0x0400, 0x25586406 )
@@ -5703,7 +5680,6 @@ static struct MachineDriver checkmat_machine_driver =
 		{
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
-			0,
 			readmem,boothill_writemem,checkmat_readport,checkmat_writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -5767,7 +5743,7 @@ struct GameDriver driver_checkmat =
 /*******************************************************/
 
 ROM_START( ozmawars )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "mw01", 0x0000, 0x0800, 0x31f4397d )
 	ROM_LOAD( "mw02", 0x0800, 0x0800, 0xd8e77c62 )
 	ROM_LOAD( "mw03", 0x1000, 0x0800, 0x3bfa418f )
@@ -5777,7 +5753,7 @@ ROM_START( ozmawars )
 ROM_END
 
 ROM_START( solfight )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "solfight.m", 0x0000, 0x0800, 0xa4f2814e )
 	ROM_LOAD( "solfight.n", 0x0800, 0x0800, 0x5657ec07 )
 	ROM_LOAD( "solfight.p", 0x1000, 0x0800, 0xef9ce96d )
@@ -5787,7 +5763,7 @@ ROM_START( solfight )
 ROM_END
 
 ROM_START( spaceph )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "sv01.bin",     0x0000, 0x0400, 0xde84771d )
 	ROM_LOAD( "sv02.bin",     0x0400, 0x0400, 0x957fc661 )
 	ROM_LOAD( "sv03.bin",     0x0800, 0x0400, 0xdbda38b9 )
@@ -5933,7 +5909,7 @@ INPUT_PORTS_END
 
 static int ozmawars_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -5963,7 +5939,7 @@ static int ozmawars_hiload(void)
 static void ozmawars_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -6102,7 +6078,7 @@ INPUT_PORTS_START( sinvemag )
 INPUT_PORTS_END
 
 ROM_START( sinvemag )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "sv0h.bin",   0x0000, 0x0400, 0x86bb8cb6 )
 	ROM_LOAD( "emag_si.b",  0x0400, 0x0400, 0xfebe6d1a )
 	ROM_LOAD( "emag_si.c",  0x0800, 0x0400, 0xaafb24f7 )
@@ -6188,7 +6164,7 @@ INPUT_PORTS_START( alieninv2 )
 INPUT_PORTS_END
 
 ROM_START( alieninv2 )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "1h.bin",   0x0000, 0x0800, 0xc46df7f4 )
 	ROM_LOAD( "1g.bin",   0x0800, 0x0800, 0x4b1112d6 )
 	ROM_LOAD( "1f.bin",   0x1000, 0x0800, 0Xadca18a5 )
@@ -6309,7 +6285,6 @@ static struct MachineDriver sitv_machine_driver =
 		{
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
-			0,
 			readmem,writemem,sitv_readport,sitv_writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -6342,7 +6317,7 @@ static struct MachineDriver sitv_machine_driver =
 
 
 ROM_START( sitv )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "tv0h.s1",   0x0000, 0x0800, 0xfef18aad )
 	ROM_LOAD( "tv04.m1",   0x1800, 0x0800, 0xcd2c67f6 )
 	ROM_LOAD( "tv03.n1",   0x1000, 0x0800, 0x0ad3657f )
@@ -6451,7 +6426,6 @@ static struct MachineDriver sicv_machine_driver =
 		{
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
-			0,
 			readmem, invadpt2_writemem, sicv_readport, sicv_writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -6484,7 +6458,7 @@ static struct MachineDriver sicv_machine_driver =
 
 
 ROM_START( sicv )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "cv17.bin",   0x0000, 0x0800, 0x3dfbe9e6 )
 	ROM_LOAD( "cv18.bin",   0x0800, 0x0800, 0xbc3c82bf )
 	ROM_LOAD( "cv19.bin",   0x1000, 0x0800, 0xd202b41c )
@@ -6526,7 +6500,7 @@ struct GameDriver driver_sicv =
 
 /* LT 24-12-1998 */
 ROM_START( sisv )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "sv0h.bin",   0x0000, 0x0400, 0x86bb8cb6 )
 	ROM_LOAD( "sv10.bin",   0x0800, 0x0400, 0x483e651e )
 	ROM_LOAD( "sv04.bin",   0x1400, 0x0400, 0x1293b826 )
@@ -6574,7 +6548,7 @@ void ballbomb_sh_port3_w(int offset, int data);
 void ballbomb_vh_convert_color_prom(unsigned char *pallete, unsigned short *colortable,const unsigned char *color_prom);
 
 ROM_START( ballbomb )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "tn01",   0x0000, 0x0800, 0x551585b5 )
 	ROM_LOAD( "tn02",   0x0800, 0x0800, 0x7e1f734f )
 	ROM_LOAD( "tn03",   0x1000, 0x0800, 0xd93e20bc )
@@ -6652,7 +6626,6 @@ static struct MachineDriver ballbomb_machine_driver =
 		{
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
-			0,
 			readmem, ballbomb_writemem, invadpt2_readport, ballbomb_writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
@@ -6712,7 +6685,7 @@ struct GameDriver driver_ballbomb =
 /*******************************************************/
 
 ROM_START( spacewr3 )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "ic36.bin",   0x0000, 0x0800, 0x9e30f88a )
 	ROM_LOAD( "ic35.bin",   0x0800, 0x0800, 0x40c2d55b )
 	ROM_LOAD( "ic34.bin",   0x1000, 0x0800, 0xb435f021 )
@@ -6796,7 +6769,7 @@ struct GameDriver driver_spacewr3 =
 
 
 ROM_START( logi_invader )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "c01",        0x0000, 0x0400, 0x499f253a )
 	ROM_LOAD( "c02",        0x0400, 0x0400, 0x2d0b2e1f )
 	ROM_LOAD( "c03",        0x0800, 0x0400, 0x03033dc2 )
@@ -6844,7 +6817,7 @@ struct GameDriver driver_logitec =
 
 
 ROM_START( starw_invader )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "roma",   0x0000, 0x0400, 0x60e8993c )
 	ROM_LOAD( "romb",   0x0400, 0x0400, 0xb8060773 )
 	ROM_LOAD( "romc",   0x0800, 0x0400, 0x307ce6b8 )
@@ -6888,7 +6861,7 @@ struct GameDriver driver_starw =
 /*******************************************************/
 
 ROM_START( sisv2_invader )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "sv0h.bin",    0x0000, 0x0400, 0x86bb8cb6 )
 	ROM_LOAD( "emag_si.b",   0x0400, 0x0400, 0xfebe6d1a )
 	ROM_LOAD( "sv12",        0x0800, 0x0400, 0xa08e7202 )

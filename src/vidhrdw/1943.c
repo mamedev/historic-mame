@@ -146,7 +146,7 @@ void c1943_vh_stop(void)
 void c1943_c804_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* bits 0 and 1 are coin counters */
@@ -203,7 +203,7 @@ void c1943_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 /* TODO: support flipscreen */
 	if (sc2on)
 	{
-		p=Machine->memory_region[4]+0x8000;
+		p=memory_region(4)+0x8000;
 		bg_scrolly = c1943_bgscrolly[0] + 256 * c1943_bgscrolly[1];
 		offs = 16 * ((bg_scrolly>>5)+8);
 
@@ -287,7 +287,7 @@ void c1943_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 /* TODO: support flipscreen */
 	if (sc1on)
 	{
-		p=Machine->memory_region[4];
+		p=memory_region(4);
 
 		bg_scrolly = c1943_scrolly[0] + 256 * c1943_scrolly[1];
 		bg_scrollx = c1943_scrollx[0];

@@ -291,14 +291,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
 			1000000,	/* 1 Mhz ???? */
-			0,
 			readmem,writemem,0,0,
 			interrupt,4
 		},
 		{
 			CPU_M6502,
             1250000,        /* 1 Mhz ???? */
-			2,
 			readmem2,writemem2,0,0,
 			interrupt,2
 		}
@@ -339,7 +337,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( cloak )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "136023.501",   0x4000, 0x2000, 0xc2dbef1b )
 	ROM_LOAD( "136023.502",   0x6000, 0x2000, 0x316d0c7b )
 	ROM_LOAD( "136023.503",   0x8000, 0x4000, 0xb9c291a6 )
@@ -351,7 +349,7 @@ ROM_START( cloak )
 	ROM_LOAD( "136023.307",   0x2000, 0x1000, 0xc42c84a4 )
 	ROM_LOAD( "136023.308",   0x3000, 0x1000, 0x4fe13d58 )
 
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
 	ROM_LOAD( "136023.509",   0x2000, 0x2000, 0x46c021a4 )
 	ROM_LOAD( "136023.510",   0x4000, 0x2000, 0x8c9cf017 )
 	ROM_LOAD( "136023.511",   0x6000, 0x2000, 0x66fd8a34 )

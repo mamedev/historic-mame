@@ -94,11 +94,11 @@ static void convert_palette(unsigned char *palette,const unsigned char *color_pr
 		color_prom++;
 	}
 
-	/* reserve the last color for the transparent pen (none of the game colors can have */
+	/* reserve the last color for the transparent pen (none of the game colors has */
 	/* these RGB components) */
-	*(palette++) = 1;
-	*(palette++) = 1;
-	*(palette++) = 1;
+	*(palette++) = 240;
+	*(palette++) = 240;
+	*(palette++) = 240;
 }
 
 void punchout_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom)

@@ -25,25 +25,24 @@
 static struct osd_bitmap *tmpbitmap1, *tmpbitmap2;
 unsigned char *exterm_master_videoram, *exterm_slave_videoram;
 
-void exterm_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+void exterm_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
-	unsigned int i;
+	int i;
 
-	palette += 3*0x1000;
+	palette += 3*4096;	/* first 4096 colors are dynamic */
 
-	for (i = 0;i < 0x8000; i++)
+	/* initialize 555 RGB lookup */
+	for (i = 0;i < 32768;i++)
 	{
-		int r = (i >> 10) & 0x1f;
-		int g = (i >>  5) & 0x1f;
-		int b = (i >>  0) & 0x1f;
+		int r,g,b;
 
-		r = (r << 3) | (r >> 2);
-		g = (g << 3) | (g >> 2);
-		b = (b << 3) | (b >> 2);
+		r = (i >> 10) & 0x1f;
+		g = (i >>  5) & 0x1f;
+		b = (i >>  0) & 0x1f;
 
-		*(palette++) = r;
-		*(palette++) = g;
-		*(palette++) = b;
+		(*palette++) = (r << 3) | (r >> 2);
+		(*palette++) = (g << 3) | (g >> 2);
+		(*palette++) = (b << 3) | (b >> 2);
 	}
 }
 
@@ -232,6 +231,8 @@ int exterm_vh_start(void)
 		install_mem_write_handler(1, TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_8_w);
 	}
 
+	palette_used_colors[0] = PALETTE_COLOR_TRANSPARENT;
+
 	return 0;
 }
 
@@ -316,4 +317,3 @@ void exterm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		copybitmap(bitmap,tmpbitmap1,0,0,0,0,&foregroundvisiblearea,TRANSPARENCY_PEN, palette_transparent_pen);
 	}
 }
-

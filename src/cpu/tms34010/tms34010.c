@@ -371,19 +371,30 @@ INLINE void WLONG (UINT32 bitaddr, UINT32 data)
 
 INLINE void PUSH (UINT32 data)
 {
+#if TMS34010_FAST_STACK
 	UINT8* base;
 	SP -= 0x20;
 	base = STACKPTR(SP);
 	WRITE_WORD(base, (UINT16)data);
 	WRITE_WORD(base+2, data >> 16);
+#else
+	SP -= 0x20;
+	TMS34010_WRMEM_DWORD(TOBYTE(SP), data);
+#endif
 }
 
 INLINE INT32 POP (void)
 {
+#if TMS34010_FAST_STACK
 	UINT8* base = STACKPTR(SP);
 	INT32 ret = READ_WORD(base) + (READ_WORD(base+2) << 16);
 	SP += 0x20;
 	return ret;
+#else
+	INT32 ret = TMS34010_RDMEM_DWORD(TOBYTE(SP));
+	SP += 0x20;
+	return ret;
+#endif
 }
 
 
@@ -768,7 +779,7 @@ void tms34010_reset(void *param)
 	if (stackbase[cpunum] == 0)
 		if (errorlog) fprintf(errorlog, "Stack Base not set on CPU #%d\n", cpunum);
 	state.stackbase = stackbase[cpunum] - stackoffs[cpunum];
-	
+
 	/* HALT the CPU if requested, and remember to re-read the starting PC */
 	/* the first time we are run */
 	state.reset_deferred = config->halt_on_reset;
@@ -1374,11 +1385,11 @@ static void update_display_address(TMS34010_Regs *context, int vcount)
 	INT32 dudate = CONTEXT_IOREG(context, REG_DPYCTL) & 0x03fc;
 	int org = CONTEXT_IOREG(context, REG_DPYCTL) & 0x0400;
 	int scans = (CONTEXT_IOREG(context, REG_DPYSTRT) & 3) + 1;
-	
+
 	/* anytime during VBLANK is effectively the start of the next frame */
 	if (vcount >= CONTEXT_IOREG(context, REG_VSBLNK) || vcount <= CONTEXT_IOREG(context, REG_VEBLNK))
 		context->last_update_vcount = vcount = CONTEXT_IOREG(context, REG_VEBLNK);
-	
+
 	/* otherwise, compute the updated address */
 	else
 	{
@@ -1388,12 +1399,12 @@ static void update_display_address(TMS34010_Regs *context, int vcount)
 		CONTEXT_IOREG(context, REG_DPYADR) = dpyadr | (CONTEXT_IOREG(context, REG_DPYADR) & 0x0003);
 		context->last_update_vcount = vcount;
 	}
-	
+
 	/* now compute the actual address */
 	if (org == 0) dpyadr ^= 0xfffc;
 	dpyadr <<= 8;
 	dpyadr |= dpytap << 4;
-	
+
 	/* callback */
 	if (context->config->display_addr_changed)
 	{
@@ -1421,7 +1432,7 @@ static void dpyint_callback(int cpunum)
 	double interval = TIME_IN_HZ(Machine->drv->frames_per_second);
 	dpyint_timer[cpunum] = timer_set(interval, cpunum, dpyint_callback);
 	cpu_generate_internal_interrupt(cpunum, TMS34010_DI);
-	
+
 	/* allow a callback so we can update before they are likely to do nasty things */
 	if (context->config->display_int_callback)
 		(*context->config->display_int_callback)(vcount_to_scanline(context, CONTEXT_IOREG(context, REG_DPYINT)));
@@ -1438,7 +1449,7 @@ static void update_timers(int cpunum, TMS34010_Regs *context)
 		timer_remove(dpyint_timer[cpunum]);
 	if (vsblnk_timer[cpunum])
 		timer_remove(vsblnk_timer[cpunum]);
-		
+
 	/* set new timers */
 	dpyint_timer[cpunum] = timer_set(cpu_getscanlinetime(vcount_to_scanline(context, dpyint)), cpunum, dpyint_callback);
 	vsblnk_timer[cpunum] = timer_set(cpu_getscanlinetime(vcount_to_scanline(context, vsblnk)), cpunum, vsblnk_callback);
@@ -1464,7 +1475,7 @@ static const char *ioreg_name[] =
 static void common_io_register_w(int cpunum, TMS34010_Regs *context, int reg, int data)
 {
 	int oldreg, newreg;
-	
+
 	/* Set register */
 	reg >>= 1;
 	oldreg = CONTEXT_IOREG(context, reg);
@@ -1476,27 +1487,27 @@ static void common_io_register_w(int cpunum, TMS34010_Regs *context, int reg, in
 			if (data != oldreg || !dpyint_timer[cpunum])
 				update_timers(cpunum, context);
 			break;
-		
+
 		case REG_VSBLNK:
 			if (data != oldreg || !vsblnk_timer[cpunum])
 				update_timers(cpunum, context);
 			break;
-	
+
 		case REG_VEBLNK:
 			if (data != oldreg)
 				update_timers(cpunum, context);
 			break;
-	
+
 		case REG_CONTROL:
 			context->transparency = data & 0x20;
 			context->window_checking = (data >> 6) & 0x03;
 			set_raster_op(context);
 			set_pixel_function(context);
 			break;
-	
+
 		case REG_PSIZE:
 			set_pixel_function(context);
-	
+
 			switch (data)
 			{
 				default:
@@ -1507,17 +1518,17 @@ static void common_io_register_w(int cpunum, TMS34010_Regs *context, int reg, in
 				case 0x10: context->xytolshiftcount2 = 4; break;
 			}
 			break;
-	
+
 		case REG_PMASK:
 			if (data && errorlog) fprintf(errorlog, "Plane masking not supported. PC=%08X\n", cpu_get_pc());
 			break;
-	
+
 		case REG_DPYCTL:
 			set_pixel_function(context);
 			if ((oldreg ^ data) & 0x03fc)
 				update_display_address(context, scanline_to_vcount(context, cpu_getscanline()));
 			break;
-			
+
 		case REG_DPYADR:
 			if (data != oldreg)
 			{
@@ -1525,28 +1536,28 @@ static void common_io_register_w(int cpunum, TMS34010_Regs *context, int reg, in
 				update_display_address(context, context->last_update_vcount);
 			}
 			break;
-		
+
 		case REG_DPYSTRT:
 			if (data != oldreg)
 				update_display_address(context, scanline_to_vcount(context, cpu_getscanline()));
 			break;
-		
+
 		case REG_DPYTAP:
 			if ((oldreg ^ data) & 0x3fff)
 				update_display_address(context, scanline_to_vcount(context, cpu_getscanline()));
 			break;
-	
+
 		case REG_HSTCTLH:
 			/* if the CPU is halting itself, stop execution right away */
 			if ((data & 0x8000) && context == &state)
 				tms34010_ICount = 0;
-			cpu_halt(cpunum, !(data & 0x8000));
+			cpu_set_halt_line(cpunum, (data & 0x8000) ? ASSERT_LINE : CLEAR_LINE);
 
 			/* NMI issued? */
 			if (data & 0x0100)
 				cpu_generate_internal_interrupt(cpunum, TMS34010_NMI);
 			break;
-			
+
 		case REG_HSTCTLL:
 			/* the TMS34010 can change MSGOUT, can set INTOUT, and can clear INTIN */
 			if (cpunum == cpu_getactivecpu())
@@ -1564,7 +1575,7 @@ static void common_io_register_w(int cpunum, TMS34010_Regs *context, int reg, in
 				newreg |= data & 0x0008;
 			}
 			CONTEXT_IOREG(context, reg) = newreg;
-		
+
 			/* output interrupt? */
 			if (!(oldreg & 0x0080) && (newreg & 0x0080))
 			{
@@ -1578,7 +1589,7 @@ static void common_io_register_w(int cpunum, TMS34010_Regs *context, int reg, in
 				if (context->config->output_int)
 					(*context->config->output_int)(0);
 			}
-		
+
 			/* input interrupt? (should really be state-based, but the functions don't exist!) */
 			if (!(oldreg & 0x0008) && (newreg & 0x0008))
 			{
@@ -1591,11 +1602,11 @@ static void common_io_register_w(int cpunum, TMS34010_Regs *context, int reg, in
 				CONTEXT_IOREG(context, REG_INTPEND) &= ~TMS34010_HI;
 			}
 			break;
-	
+
 		case REG_CONVDP:
 			context->xytolshiftcount1 = (~data & 0x0f);
 			break;
-	
+
 		case REG_INTENB:
 			if (CONTEXT_IOREG(context, REG_INTENB) & CONTEXT_IOREG(context, REG_INTPEND))
 				check_interrupt();
@@ -1622,7 +1633,7 @@ void TMS34010_io_register_w(int reg, int data)
 static int common_io_register_r(int cpunum, TMS34010_Regs *context, int reg)
 {
 	int result, total;
-	
+
 	reg >>= 1;
 	if (errorlog)
 		fprintf(errorlog, "CPU#%d: read %s\n", cpunum, ioreg_name[reg]);
@@ -1631,22 +1642,22 @@ static int common_io_register_r(int cpunum, TMS34010_Regs *context, int reg)
 	{
 		case REG_VCOUNT:
 			return scanline_to_vcount(context, cpu_getscanline());
-	
+
 		case REG_HCOUNT:
-		
+
 			/* scale the horizontal position from screen width to HTOTAL */
 			result = cpu_gethorzbeampos();
 			total = CONTEXT_IOREG(context, REG_HTOTAL);
 			result = result * total / Machine->drv->screen_width;
-			
+
 			/* offset by the HBLANK end */
 			result += CONTEXT_IOREG(context, REG_HEBLNK);
-			
+
 			/* wrap around */
 			if (result > total)
 				result -= total;
 			return result;
-		
+
 		case REG_DPYADR:
 			update_display_address(context, scanline_to_vcount(context, cpu_getscanline()));
 			break;
@@ -1734,7 +1745,7 @@ void tms34010_host_w(int cpunum, int reg, int data)
 	const struct cpu_interface *interface;
 	unsigned int addr;
 	int oldcpu;
-	
+
 	switch (reg)
 	{
 		/* upper 16 bits of the address */
@@ -1746,14 +1757,14 @@ void tms34010_host_w(int cpunum, int reg, int data)
 		case TMS34010_HOST_ADDRESS_L:
 			CONTEXT_IOREG(context, REG_HSTADRL) = data & 0xfff0;
 			break;
-			
+
 		/* actual data */
 		case TMS34010_HOST_DATA:
-		
+
 			/* swap to the target cpu */
 			oldcpu = cpu_getactivecpu();
 			memorycontextswap(cpunum);
-			
+
 			/* write to the address */
 			host_interface_cpu = cpunum;
 			host_interface_context = context;
@@ -1768,7 +1779,7 @@ void tms34010_host_w(int cpunum, int reg, int data)
 				CONTEXT_IOREG(context, REG_HSTADRH) = addr >> 16;
 				CONTEXT_IOREG(context, REG_HSTADRL) = (UINT16)addr;
 			}
-			
+
 			/* swap back */
 			memorycontextswap(oldcpu);
 			interface = &cpuintf[Machine->drv->cpu[oldcpu].cpu_type & ~CPU_FLAGS_MASK];
@@ -1780,7 +1791,7 @@ void tms34010_host_w(int cpunum, int reg, int data)
 			common_io_register_w(cpunum, context, REG_HSTCTLH * 2, data & 0xff00);
 			common_io_register_w(cpunum, context, REG_HSTCTLL * 2, data & 0x00ff);
 			break;
-		
+
 		/* error case */
 		default:
 			if (errorlog) fprintf(errorlog, "tms34010_host_control_w called on invalid register %d\n", reg);
@@ -1799,7 +1810,7 @@ int tms34010_host_r(int cpunum, int reg)
 	const struct cpu_interface *interface;
 	unsigned int addr;
 	int oldcpu, result;
-	
+
 	switch (reg)
 	{
 		/* upper 16 bits of the address */
@@ -1809,14 +1820,14 @@ int tms34010_host_r(int cpunum, int reg)
 		/* lower 16 bits of the address */
 		case TMS34010_HOST_ADDRESS_L:
 			return CONTEXT_IOREG(context, REG_HSTADRL);
-			
+
 		/* actual data */
 		case TMS34010_HOST_DATA:
-		
+
 			/* swap to the target cpu */
 			oldcpu = cpu_getactivecpu();
 			memorycontextswap(cpunum);
-			
+
 			/* read from the address */
 			host_interface_cpu = cpunum;
 			host_interface_context = context;
@@ -1832,7 +1843,7 @@ int tms34010_host_r(int cpunum, int reg)
 				CONTEXT_IOREG(context, REG_HSTADRH) = addr >> 16;
 				CONTEXT_IOREG(context, REG_HSTADRL) = (UINT16)addr;
 			}
-			
+
 			/* swap back */
 			memorycontextswap(oldcpu);
 			interface = &cpuintf[Machine->drv->cpu[oldcpu].cpu_type & ~CPU_FLAGS_MASK];
@@ -1843,7 +1854,7 @@ int tms34010_host_r(int cpunum, int reg)
 		case TMS34010_HOST_CONTROL:
 			return (CONTEXT_IOREG(context, REG_HSTCTLH) & 0xff00) | (CONTEXT_IOREG(context, REG_HSTCTLL) & 0x00ff);
 	}
-	
+
 	/* error case */
 	if (errorlog) fprintf(errorlog, "tms34010_host_control_r called on invalid register %d\n", reg);
 	return 0;

@@ -21,7 +21,7 @@ int  r_rd_a001(int offset);
 
 static void bankswitch_w ( int offset, int data ) {
 
-	unsigned char *RAM = Machine->memory_region[2];
+	unsigned char *RAM = memory_region(2);
 
 	int banknum = ( data - 1 ) & 3;
 
@@ -327,14 +327,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,
 			12000000,	/* 12 MHz ? */
-			0,
 			readmem,writemem,0,0,
 			m68_level5_irq,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 MHz ??? */
-			2,
 			sound_readmem, sound_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
 		}
@@ -375,14 +373,14 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( ssi )
-	ROM_REGION(0x80000)     /* 512k for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )     /* 512k for 68000 code */
 	ROM_LOAD_EVEN( "ssi_15-1.rom", 0x00000, 0x40000, 0xce9308a6 )
 	ROM_LOAD_ODD ( "ssi_16-1.rom", 0x00000, 0x40000, 0x470a483a )
 
 	ROM_REGION_DISPOSE(0x100000)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "ssi_m01.rom",  0x00000, 0x100000, 0xa1b4f486 )
 
-	ROM_REGION(0x1c000)      /* sound cpu */
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )      /* sound cpu */
 	ROM_LOAD( "ssi_09.rom",   0x00000, 0x04000, 0x88d7f65c )
 	ROM_CONTINUE(             0x10000, 0x0c000 ) /* banked stuff */
 
@@ -391,7 +389,7 @@ ROM_START( ssi )
 ROM_END
 
 ROM_START( majest12 )
-	ROM_REGION(0x80000)     /* 512k for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )     /* 512k for 68000 code */
 	ROM_LOAD_EVEN( "c64-07.bin", 0x00000, 0x20000, 0xf29ed5c9 )
 	ROM_LOAD_EVEN( "c64-06.bin", 0x40000, 0x20000, 0x18dc71ac )
 	ROM_LOAD_ODD ( "c64-08.bin", 0x00000, 0x20000, 0xddfd33d5 )
@@ -400,7 +398,7 @@ ROM_START( majest12 )
 	ROM_REGION_DISPOSE(0x100000)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "ssi_m01.rom",  0x00000, 0x100000, 0xa1b4f486 )
 
-	ROM_REGION(0x1c000)      /* sound cpu */
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )      /* sound cpu */
 	ROM_LOAD( "ssi_09.rom",   0x00000, 0x04000, 0x88d7f65c )
 	ROM_CONTINUE(             0x10000, 0x0c000 ) /* banked stuff */
 

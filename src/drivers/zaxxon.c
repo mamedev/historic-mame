@@ -634,7 +634,6 @@ static struct MachineDriver zaxxon_machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz ?? */
-			0,
 			readmem,writemem,0,0,
 			zaxxon_interrupt,1
 		}
@@ -672,7 +671,6 @@ static struct MachineDriver futspy_machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz ?? */
-			0,
 			readmem,futspy_writemem,0,0,
 			zaxxon_interrupt,1
 		}
@@ -710,7 +708,6 @@ static struct MachineDriver razmataz_machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz ?? */
-			0,
 			razmataz_readmem,razmataz_writemem,0,0,
 			zaxxon_interrupt,1
 		}
@@ -744,7 +741,7 @@ static struct MachineDriver razmataz_machine_driver =
 ***************************************************************************/
 
 ROM_START( zaxxon )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "zaxxon.3",     0x0000, 0x2000, 0x6e2b4a30 )
 	ROM_LOAD( "zaxxon.2",     0x2000, 0x2000, 0x1c9ea398 )
 	ROM_LOAD( "zaxxon.1",     0x4000, 0x1000, 0x1c123ef9 )
@@ -760,7 +757,7 @@ ROM_START( zaxxon )
 	ROM_LOAD( "zaxxon.12",    0x9800, 0x2000, 0x1c5369c7 )
 	ROM_LOAD( "zaxxon.13",    0xb800, 0x2000, 0xab4e8a9a )
 
-	ROM_REGION(0x8000)	/* background graphics */
+	ROM_REGION( 0x8000 )	/* background graphics */
 	ROM_LOAD( "zaxxon.8",     0x0000, 0x2000, 0x28d65063 )
 	ROM_LOAD( "zaxxon.7",     0x2000, 0x2000, 0x6284c200 )
 	ROM_LOAD( "zaxxon.10",    0x4000, 0x2000, 0xa95e61fd )
@@ -772,7 +769,7 @@ ROM_START( zaxxon )
 ROM_END
 
 ROM_START( zaxxon2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "3a",           0x0000, 0x2000, 0xb18e428a )
 	ROM_LOAD( "zaxxon.2",     0x2000, 0x2000, 0x1c9ea398 )
 	ROM_LOAD( "1a",           0x4000, 0x1000, 0x1977d933 )
@@ -788,7 +785,7 @@ ROM_START( zaxxon2 )
 	ROM_LOAD( "zaxxon.12",    0x9800, 0x2000, 0x1c5369c7 )
 	ROM_LOAD( "zaxxon.13",    0xb800, 0x2000, 0xab4e8a9a )
 
-	ROM_REGION(0x8000)	/* background graphics */
+	ROM_REGION( 0x8000 )	/* background graphics */
 	ROM_LOAD( "zaxxon.8",     0x0000, 0x2000, 0x28d65063 )
 	ROM_LOAD( "zaxxon.7",     0x2000, 0x2000, 0x6284c200 )
 	ROM_LOAD( "zaxxon.10",    0x4000, 0x2000, 0xa95e61fd )
@@ -800,7 +797,7 @@ ROM_START( zaxxon2 )
 ROM_END
 
 ROM_START( zaxxonb )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "zaxxonb.3",    0x0000, 0x2000, 0x125bca1c )
 	ROM_LOAD( "zaxxonb.2",    0x2000, 0x2000, 0xc088df92 )
 	ROM_LOAD( "zaxxonb.1",    0x4000, 0x1000, 0xe7bdc417 )
@@ -816,7 +813,7 @@ ROM_START( zaxxonb )
 	ROM_LOAD( "zaxxon.12",    0x9800, 0x2000, 0x1c5369c7 )
 	ROM_LOAD( "zaxxon.13",    0xb800, 0x2000, 0xab4e8a9a )
 
-	ROM_REGION(0x8000)	/* background graphics */
+	ROM_REGION( 0x8000 )	/* background graphics */
 	ROM_LOAD( "zaxxon.8",     0x0000, 0x2000, 0x28d65063 )
 	ROM_LOAD( "zaxxon.7",     0x2000, 0x2000, 0x6284c200 )
 	ROM_LOAD( "zaxxon.10",    0x4000, 0x2000, 0xa95e61fd )
@@ -828,7 +825,7 @@ ROM_START( zaxxonb )
 ROM_END
 
 ROM_START( szaxxon )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "suzaxxon.3",   0x0000, 0x2000, 0xaf7221da )
 	ROM_LOAD( "suzaxxon.2",   0x2000, 0x2000, 0x1b90fb2a )
 	ROM_LOAD( "suzaxxon.1",   0x4000, 0x1000, 0x07258b4a )
@@ -844,7 +841,7 @@ ROM_START( szaxxon )
 	ROM_LOAD( "suzaxxon.12",  0x9800, 0x2000, 0x3b53d83f )
 	ROM_LOAD( "suzaxxon.13",  0xb800, 0x2000, 0x581e8793 )
 
-	ROM_REGION(0x8000)	/* background graphics */
+	ROM_REGION( 0x8000 )	/* background graphics */
 	ROM_LOAD( "suzaxxon.8",   0x0000, 0x2000, 0xdd1b52df )
 	ROM_LOAD( "suzaxxon.7",   0x2000, 0x2000, 0xb5bc07f0 )
 	ROM_LOAD( "suzaxxon.10",  0x4000, 0x2000, 0x68e84174 )
@@ -856,7 +853,7 @@ ROM_START( szaxxon )
 ROM_END
 
 ROM_START( futspy )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "fs_snd.u27",   0x0000, 0x2000, 0x7578fe7f )
 	ROM_LOAD( "fs_snd.u28",   0x2000, 0x2000, 0x8ade203c )
 	ROM_LOAD( "fs_snd.u29",   0x4000, 0x1000, 0x734299c3 )
@@ -872,7 +869,7 @@ ROM_START( futspy )
 	ROM_LOAD( "fs_vid.u78",   0xb800, 0x4000, 0x50e55262 )
 	ROM_LOAD( "fs_vid.u79",   0xf800, 0x4000, 0xbfb02e3e )
 
-	ROM_REGION(0x8000)	/* background graphics */
+	ROM_REGION( 0x8000 )	/* background graphics */
 	ROM_LOAD( "fs_vid.u91",   0x0000, 0x2000, 0x86da01f4 )
 	ROM_LOAD( "fs_vid.u90",   0x2000, 0x2000, 0x2bd41d2d )
 	ROM_LOAD( "fs_vid.u93",   0x4000, 0x2000, 0xb82b4997 )
@@ -884,7 +881,7 @@ ROM_START( futspy )
 ROM_END
 
 ROM_START( razmataz )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "u27",           0x0000, 0x2000, 0x254f350f )
 	ROM_LOAD( "u28",           0x2000, 0x2000, 0x3a1eaa99 )
 	ROM_LOAD( "u29",           0x4000, 0x2000, 0x0ee67e78 )
@@ -900,7 +897,7 @@ ROM_START( razmataz )
 	ROM_LOAD( "1926.u78",      0x9800, 0x2000, 0x9a3af434 )
 	ROM_LOAD( "1927.u79",      0xb800, 0x2000, 0x0323de2b )
 
-	ROM_REGION(0x8000)	/* background graphics */
+	ROM_REGION( 0x8000 )	/* background graphics */
 	ROM_LOAD( "1929.u91",      0x0000, 0x2000, 0x55c7c757 )
 	ROM_LOAD( "1928.u90",      0x2000, 0x2000, 0xe58b155b )
 	ROM_LOAD( "1931.u93",      0x4000, 0x2000, 0x55fe0f82 )
@@ -960,7 +957,7 @@ static void zaxxonb_decode(void)
 		{ 0x02,0x08,0x2a,0x20,0x20,0x2a,0x08,0x02 } 	/* .......1...1...1 */
 	};
 	int A;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	for (A = 0x0000;A < 0x8000;A++)
@@ -993,7 +990,7 @@ static void zaxxonb_decode(void)
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1021,7 +1018,7 @@ static int hiload(void)
 
 static void hisave(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* make sure that the high score table is still valid (entering the */
@@ -1041,7 +1038,7 @@ static void hisave(void)
 
 static int futspy_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if (memcmp(&RAM[0x0427],"\x00\x00\x01",3) == 0 &&
@@ -1065,7 +1062,7 @@ static int futspy_hiload(void)
 static void futspy_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1078,7 +1075,7 @@ static void futspy_hisave(void)
 /****  Razzmatazz high score save routine - RJF (July 11, 1999)  ****/
 static int razmataz_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
 	/* high score values are intialized to all 0 */
@@ -1104,7 +1101,7 @@ static int razmataz_hiload(void)
 static void razmataz_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{

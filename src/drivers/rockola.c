@@ -709,7 +709,6 @@ static struct MachineDriver sasuke_machine_driver =
 		{
 			CPU_M6502,
 			11289000/16,    /* 700 kHz */
-			0,
 			satansat_readmem,sasuke_writemem,0,0,
 			satansat_interrupt,2
 		},
@@ -741,7 +740,6 @@ static struct MachineDriver satansat_machine_driver =
 		{
 			CPU_M6502,
 			11289000/16,    /* 700 kHz */
-			0,
 			satansat_readmem,satansat_writemem,0,0,
 			satansat_interrupt,2
 		},
@@ -779,7 +777,6 @@ static struct MachineDriver vanguard_machine_driver =
 		{
 			CPU_M6502,
 			1000000,    /* 1 MHz??? */
-			0,
 			vanguard_readmem,vanguard_writemem,0,0,
 			rockola_interrupt,2
 		}
@@ -817,7 +814,6 @@ static struct MachineDriver fantasy_machine_driver =
 		{
 			CPU_M6502,
 			1000000,    /* 1 MHz??? */
-			0,
 			fantasy_readmem,fantasy_writemem,0,0,
 			rockola_interrupt,2
 		}
@@ -856,7 +852,6 @@ static struct MachineDriver pballoon_machine_driver =
 		{
 			CPU_M6502,
 			1000000,    /* 1 MHz??? */
-			0,
 			pballoon_readmem,pballoon_writemem,0,0,
 			rockola_interrupt,2
 		}
@@ -896,7 +891,7 @@ static struct MachineDriver pballoon_machine_driver =
 ***************************************************************************/
 
 ROM_START( sasuke )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sc1",          0x4000, 0x0800, 0x34cbbe03 )
 	ROM_LOAD( "sc2",          0x4800, 0x0800, 0x38cc14f0 )
 	ROM_LOAD( "sc3",          0x5000, 0x0800, 0x54c41285 )
@@ -921,7 +916,7 @@ ROM_START( sasuke )
 ROM_END
 
 ROM_START( satansat )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ss1",          0x4000, 0x0800, 0x549dd13a )
 	ROM_LOAD( "ss2",          0x4800, 0x0800, 0x04972fa8 )
 	ROM_LOAD( "ss3",          0x5000, 0x0800, 0x9caf9057 )
@@ -942,13 +937,13 @@ ROM_START( satansat )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "zarz138.03",   0x0000, 0x0020, 0x5dd6933a )
 
-    ROM_REGION(0x1000)  /* sound data for Vanguard-style audio section */
+    ROM_REGION( 0x1000 )  /* sound data for Vanguard-style audio section */
 	ROM_LOAD( "ss12",         0x0000, 0x0800, 0xdee01f24 )
 	ROM_LOAD( "zarz134.54",   0x0800, 0x0800, 0x580934d2 )
 ROM_END
 
 ROM_START( zarzon )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "zarz122.07",   0x4000, 0x0800, 0xbdfa67e2 )
 	ROM_LOAD( "zarz123.08",   0x4800, 0x0800, 0xd034e61e )
 	ROM_LOAD( "zarz124.09",   0x5000, 0x0800, 0x296397ea )
@@ -969,13 +964,13 @@ ROM_START( zarzon )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "zarz138.03",   0x0000, 0x0020, 0x5dd6933a )
 
-    ROM_REGION(0x1000)  /* sound data for Vanguard-style audio section */
+    ROM_REGION( 0x1000 )  /* sound data for Vanguard-style audio section */
 	ROM_LOAD( "zarz133.53",   0x0000, 0x0800, 0xb253cf78 )
 	ROM_LOAD( "zarz134.54",   0x0800, 0x0800, 0x580934d2 )
 ROM_END
 
 ROM_START( vanguard )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sk4_ic07.bin", 0x4000, 0x1000, 0x6a29e354 )
 	ROM_LOAD( "sk4_ic08.bin", 0x5000, 0x1000, 0x302bba54 )
 	ROM_LOAD( "sk4_ic09.bin", 0x6000, 0x1000, 0x424755f6 )
@@ -994,7 +989,7 @@ ROM_START( vanguard )
 	ROM_LOAD( "sk5_ic7.bin",  0x0000, 0x0020, 0xad782a73 ) /* foreground colors */
 	ROM_LOAD( "sk5_ic6.bin",  0x0020, 0x0020, 0x7dc9d450 ) /* background colors */
 
-	ROM_REGION(0x1000)	/* space for the sound ROMs */
+	ROM_REGION( 0x1000 )	/* space for the sound ROMs */
 	ROM_LOAD( "sk4_ic51.bin", 0x0000, 0x0800, 0xd2a64006 )  /* sound ROM 1 */
 	ROM_LOAD( "sk4_ic52.bin", 0x0800, 0x0800, 0xcc4a0b6f )  /* sound ROM 2 */
 
@@ -1005,7 +1000,7 @@ ROM_START( vanguard )
 ROM_END
 
 ROM_START( vangrdce )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sk4_ic07.bin", 0x4000, 0x1000, 0x6a29e354 )
 	ROM_LOAD( "sk4_ic08.bin", 0x5000, 0x1000, 0x302bba54 )
 	ROM_LOAD( "sk4_ic09.bin", 0x6000, 0x1000, 0x424755f6 )
@@ -1024,7 +1019,7 @@ ROM_START( vangrdce )
 	ROM_LOAD( "sk5_ic7.bin",  0x0000, 0x0020, 0xad782a73 ) /* foreground colors */
 	ROM_LOAD( "sk5_ic6.bin",  0x0020, 0x0020, 0x7dc9d450 ) /* background colors */
 
-	ROM_REGION(0x1000)	/* space for the sound ROMs */
+	ROM_REGION( 0x1000 )	/* space for the sound ROMs */
 	ROM_LOAD( "sk4_ic51.bin", 0x0000, 0x0800, 0xd2a64006 )  /* missing, using the SNK one */
 	ROM_LOAD( "sk4_ic52.bin", 0x0800, 0x0800, 0xcc4a0b6f )  /* missing, using the SNK one */
 
@@ -1035,7 +1030,7 @@ ROM_START( vangrdce )
 ROM_END
 
 ROM_START( fantasy )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ic12.cpu",        0x3000, 0x1000, 0x22cb2249 )
 	ROM_LOAD( "ic07.cpu",        0x4000, 0x1000, 0x0e2880b6 )
 	ROM_LOAD( "ic08.cpu",        0x5000, 0x1000, 0x4c331317 )
@@ -1055,7 +1050,7 @@ ROM_START( fantasy )
 	ROM_LOAD( "fantasy.ic7",     0x0000, 0x0020, 0x361a5e99 ) /* foreground colors */
 	ROM_LOAD( "fantasy.ic6",     0x0020, 0x0020, 0x33d974f7 ) /* background colors */
 
-	ROM_REGION(0x1800)	/* space for the sound ROMs */
+	ROM_REGION( 0x1800 )	/* space for the sound ROMs */
 	ROM_LOAD( "fs_b_51.bin",     0x0000, 0x0800, 0x48094ec5 )
 	ROM_LOAD( "fs_a_52.bin",     0x0800, 0x0800, 0x1d0316e8 )
 	ROM_LOAD( "fs_c_53.bin",     0x1000, 0x0800, 0x49fd4ae8 )
@@ -1067,7 +1062,7 @@ ROM_START( fantasy )
 ROM_END
 
 ROM_START( fantasyj )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "fs5jic12.bin",    0x3000, 0x1000, 0xdd1eac89 )
 	ROM_LOAD( "fs1jic7.bin",     0x4000, 0x1000, 0x7b8115ae )
 	ROM_LOAD( "fs2jic8.bin",     0x5000, 0x1000, 0x61531dd1 )
@@ -1087,7 +1082,7 @@ ROM_START( fantasyj )
 	ROM_LOAD( "fantasy.ic7",     0x0000, 0x0020, 0x361a5e99 ) /* foreground colors */
 	ROM_LOAD( "fantasy.ic6",     0x0020, 0x0020, 0x33d974f7 ) /* background colors */
 
-	ROM_REGION(0x1800)	/* space for the sound ROMs */
+	ROM_REGION( 0x1800 )	/* space for the sound ROMs */
 	ROM_LOAD( "fs_b_51.bin",     0x0000, 0x0800, 0x48094ec5 )
 	ROM_LOAD( "fs_a_52.bin",     0x0800, 0x0800, 0x1d0316e8 )
 	ROM_LOAD( "fs_c_53.bin",     0x1000, 0x0800, 0x49fd4ae8 )
@@ -1099,7 +1094,7 @@ ROM_START( fantasyj )
 ROM_END
 
 ROM_START( pballoon )
-	ROM_REGION(0x10000) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "sk7_ic12.bin", 0x3000, 0x1000, 0xdfe2ae05 )
 	ROM_LOAD( "sk7_ic07.bin", 0x4000, 0x1000, 0x736e67df )
 	ROM_LOAD( "sk7_ic08.bin", 0x5000, 0x1000, 0x7a2032b2 )
@@ -1117,14 +1112,14 @@ ROM_START( pballoon )
 	ROM_LOAD( "sk8_ic7.bin",  0x0000, 0x0020, 0xef6c82a0 ) /* foreground colors */
 	ROM_LOAD( "sk8_ic6.bin",  0x0020, 0x0020, 0xeabc6a00 ) /* background colors */
 
-	ROM_REGION(0x1800)  /* space for the sound ROMs */
+	ROM_REGION( 0x1800 )  /* space for the sound ROMs */
 	ROM_LOAD( "sk7_ic51.bin", 0x0000, 0x0800, 0x0345f8b7 )
 	ROM_LOAD( "sk7_ic52.bin", 0x0800, 0x0800, 0x5d6d68ea )
 	ROM_LOAD( "sk7_ic53.bin", 0x1000, 0x0800, 0xa4c505cd )
 ROM_END
 
 ROM_START( nibbler )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "g960-52.12",   0x3000, 0x1000, 0xac6a802b )
 	ROM_LOAD( "g960-48.07",   0x4000, 0x1000, 0x35971364 )
 	ROM_LOAD( "g960-49.08",   0x5000, 0x1000, 0x6b33b806 )
@@ -1144,14 +1139,14 @@ ROM_START( nibbler )
 	ROM_LOAD( "g70805.ic7",   0x0000, 0x0020, 0xa5709ff3 ) /* foreground colors */
 	ROM_LOAD( "g70804.ic6",   0x0020, 0x0020, 0xdacd592d ) /* background colors */
 
-	ROM_REGION(0x1800)  /* space for the sound ROMs */
+	ROM_REGION( 0x1800 )  /* space for the sound ROMs */
 	ROM_LOAD( "g959-43.51",   0x0000, 0x0800, 0x0345f8b7 )
 	ROM_LOAD( "g959-44.52",   0x0800, 0x0800, 0x87d67dee )
 	ROM_LOAD( "g959-45.53",   0x1000, 0x0800, 0x33189917 )
 ROM_END
 
 ROM_START( nibblera )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ic12",         0x3000, 0x1000, 0x6dfa1be5 )
 	ROM_LOAD( "ic07",         0x4000, 0x1000, 0x808e1a03 )
 	ROM_LOAD( "ic08",         0x5000, 0x1000, 0x1571d4a2 )
@@ -1171,7 +1166,7 @@ ROM_START( nibblera )
 	ROM_LOAD( "g70805.ic7",   0x0000, 0x0020, 0xa5709ff3 ) /* foreground colors */
 	ROM_LOAD( "g70804.ic6",   0x0020, 0x0020, 0xdacd592d ) /* background colors */
 
-	ROM_REGION(0x1800)  /* space for the sound ROMs */
+	ROM_REGION( 0x1800 )  /* space for the sound ROMs */
 	ROM_LOAD( "g959-43.51",   0x0000, 0x0800, 0x0345f8b7 )
 	ROM_LOAD( "g959-44.52",   0x0800, 0x0800, 0x87d67dee )
 	ROM_LOAD( "g959-45.53",   0x1000, 0x0800, 0x33189917 )
@@ -1181,7 +1176,7 @@ ROM_END
 
 static int vanguard_hiload(void)     /* V.V */
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1206,7 +1201,7 @@ static int vanguard_hiload(void)     /* V.V */
 static void vanguard_hisave(void)    /* V.V */
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1220,7 +1215,7 @@ static void vanguard_hisave(void)    /* V.V */
 
 static int fantasy_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1243,7 +1238,7 @@ static int fantasy_hiload(void)
 static void fantasy_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1256,7 +1251,7 @@ static void fantasy_hisave(void)
 
 static int nibbler_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1281,7 +1276,7 @@ static int nibbler_hiload(void)
 static void nibbler_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

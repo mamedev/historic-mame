@@ -782,7 +782,6 @@ static struct MachineDriver punchout_machine_driver =
 		{
 			CPU_Z80,
 			8000000/2,	/* 4 Mhz */
-			0,
 			readmem,writemem,readport,writeport,
 			nmi_interrupt,1
 		},
@@ -790,7 +789,6 @@ static struct MachineDriver punchout_machine_driver =
 			CPU_N2A03 | CPU_AUDIO_CPU,
 			21477270/16,	/* ??? the external clock is right, I assume it is */
 							/* demultiplied internally by the CPU */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			nmi_interrupt,1
 		}
@@ -837,7 +835,6 @@ static struct MachineDriver spnchout_machine_driver =
 		{
 			CPU_Z80,
 			8000000/2,	/* 4 Mhz */
-			0,
 			readmem,writemem,readport,writeport,
 			nmi_interrupt,1
 		},
@@ -845,7 +842,6 @@ static struct MachineDriver spnchout_machine_driver =
 			CPU_N2A03 | CPU_AUDIO_CPU,
 			21477270/16,	/* ??? the external clock is right, I assume it is */
 							/* demultiplied internally by the CPU */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			nmi_interrupt,1
 		}
@@ -891,7 +887,6 @@ static struct MachineDriver armwrest_machine_driver =
 		{
 			CPU_Z80,
 			8000000/2,	/* 4 Mhz */
-			0,
 			readmem,writemem,readport,writeport,
 			nmi_interrupt,1
 		},
@@ -899,7 +894,6 @@ static struct MachineDriver armwrest_machine_driver =
 			CPU_N2A03 | CPU_AUDIO_CPU,
 			21477270/16,	/* ??? the external clock is right, I assume it is */
 							/* demultiplied internally by the CPU */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			nmi_interrupt,1
 		}
@@ -947,7 +941,7 @@ static struct MachineDriver armwrest_machine_driver =
 ***************************************************************************/
 
 ROM_START( punchout )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "chp1-c.8l",    0x0000, 0x2000, 0xa4003adc )
 	ROM_LOAD( "chp1-c.8k",    0x2000, 0x2000, 0x745ecf40 )
 	ROM_LOAD( "chp1-c.8j",    0x4000, 0x2000, 0x7a7f870e )
@@ -992,7 +986,7 @@ ROM_START( punchout )
 	ROM_LOAD( "chp1-b.8f",    0x0a00, 0x0200, 0x1ffd894a )	/* blue component */
 	ROM_LOAD( "chp1-v.2d",    0x0c00, 0x0100, 0x71dc0d48 )	/* timing - not used */
 
-	ROM_REGION(0x10000)	/* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the sound CPU */
 	ROM_LOAD( "chp1-c.4k",    0xe000, 0x2000, 0xcb6ef376 )
 
 	ROM_REGION(0x4000)	/* 16k for the VLM5030 data */
@@ -1000,7 +994,7 @@ ROM_START( punchout )
 ROM_END
 
 ROM_START( spnchout )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "chs1-c.8l",    0x0000, 0x2000, 0x703b9780 )
 	ROM_LOAD( "chs1-c.8k",    0x2000, 0x2000, 0xe13719f6 )
 	ROM_LOAD( "chs1-c.8j",    0x4000, 0x2000, 0x1fa629e8 )
@@ -1066,7 +1060,7 @@ ROM_START( spnchout )
 	ROM_LOAD( "chs1-b.8f",    0x0a00, 0x0200, 0x1663eed7 )	/* blue component */
 	ROM_LOAD( "chs1-v.2d",    0x0c00, 0x0100, 0x71dc0d48 )	/* timing - not used */
 
-	ROM_REGION(0x10000)	/* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the sound CPU */
 	ROM_LOAD( "chp1-c.4k",    0xe000, 0x2000, 0xcb6ef376 )
 
 	ROM_REGION(0x10000)	/* 64k for the VLM5030 data */
@@ -1074,7 +1068,7 @@ ROM_START( spnchout )
 ROM_END
 
 ROM_START( armwrest )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "chv1-c.8l",    0x0000, 0x2000, 0xb09764c1 )
 	ROM_LOAD( "chv1-c.8k",    0x2000, 0x2000, 0x0e147ff7 )
 	ROM_LOAD( "chv1-c.8j",    0x4000, 0x2000, 0xe7365289 )
@@ -1116,7 +1110,7 @@ ROM_START( armwrest )
 	ROM_LOAD( "chv1-b.3c",    0x0c00, 0x0100, 0xc3f92ea2 )	/* priority encoder - not used */
 	ROM_LOAD( "chpv-v.2d",    0x0d00, 0x0100, 0x71dc0d48 )	/* timing - not used */
 
-	ROM_REGION(0x10000)	/* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the sound CPU */
 	ROM_LOAD( "chp1-c.4k",    0xe000, 0x2000, 0xcb6ef376 )	/* same as Punch Out */
 
 	ROM_REGION(0x10000)	/* 64k for the VLM5030 data */
@@ -1130,7 +1124,7 @@ static void punchout_decode(void)
 
 	/* there is no encryption in Punch Out, however one graphics ROM (4v) doesn't */
 	/* exist but must be seen as a 0xff fill for colors to come out properly */
-	RAM = Machine->memory_region[1];
+	RAM = memory_region(1);
 	memset(&RAM[0x34000],0xff,0x4000);
 }
 
@@ -1141,7 +1135,7 @@ static void armwrest_decode(void)
 
 	/* there is no encryption in Arm Wrestling, however one graphics ROM (4v) doesn't */
 	/* exist but must be seen as a 0xff fill for colors to come out properly */
-	RAM = Machine->memory_region[1];
+	RAM = memory_region(1);
 	memset(&RAM[0x40000],0xff,0x4000);
 
 	/* also, ROM 2k is enabled only when its top half is accessed. The other half must */
@@ -1154,7 +1148,7 @@ static void armwrest_decode(void)
 static int hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* Try loading static RAM */
@@ -1170,7 +1164,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

@@ -66,7 +66,7 @@ extern unsigned char *exterm_master_speedup, *exterm_slave_speedup;
 extern unsigned char *exterm_master_videoram, *exterm_slave_videoram;
 
 /* Functions in vidhrdw/exterm.c */
-void exterm_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void exterm_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int  exterm_vh_start(void);
 void exterm_vh_stop (void);
 int  exterm_master_videoram_r(int offset);
@@ -301,7 +301,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_TMS34010,
 			40000000/8,	/* 40 Mhz */
-			0,
             master_readmem,master_writemem,0,0,
             ignore_interrupt,0,  /* Display Interrupts caused internally */
             0,0,&master_config
@@ -309,7 +308,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_TMS34010,
 			40000000/8,	/* 40 Mhz */
-			2,
             slave_readmem,slave_writemem,0,0,
             ignore_interrupt,0,  /* Display Interrupts caused internally */
             0,0,&slave_config
@@ -317,7 +315,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			2000000,	/* 2 Mhz */
-			3,
 			sound_dac_readmem,sound_dac_writemem,0,0,
 			ignore_interrupt,0	/* IRQ caused when sound command is written */
 								/* NMIs are triggered by the YM2151 CPU */
@@ -325,9 +322,8 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			2000000,	/* 2 Mhz */
-			4,
-            sound_ym2151_readmem,sound_ym2151_writemem,0,0,
-            ignore_interrupt,0	/* IRQ caused when sound command is written */
+			sound_ym2151_readmem,sound_ym2151_writemem,0,0,
+			ignore_interrupt,0	/* IRQ caused when sound command is written */
 								/* NMIs are triggered by a programmable timer */
 		}
 	},
@@ -341,7 +337,7 @@ static struct MachineDriver machine_driver =
 
 	0,
 	4096+32768,0,
-    exterm_vh_convert_color_prom,
+    exterm_init_palette,
 
     VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
@@ -405,7 +401,7 @@ static void hisave (void)
 ***************************************************************************/
 
 ROM_START( exterm )
-	ROM_REGION(0x200000)     /* 2MB for 34010 code */
+	ROM_REGIONX( 0x200000, REGION_CPU1 )     /* 2MB for 34010 code */
 	ROM_LOAD_ODD(  "v101bg0",  0x000000, 0x10000, 0x8c8e72cf )
 	ROM_LOAD_EVEN( "v101bg1",  0x000000, 0x10000, 0xcc2da0d8 )
 	ROM_LOAD_ODD(  "v101bg2",  0x020000, 0x10000, 0x2dcb3653 )
@@ -427,21 +423,19 @@ ROM_START( exterm )
 	ROM_LOAD_ODD(  "v101p0",   0x1e0000, 0x10000, 0x6c8ee79a )
 	ROM_LOAD_EVEN( "v101p1",   0x1e0000, 0x10000, 0x557bfc84 )
 
-	ROM_REGION_DISPOSE(0x1000)   /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	 /* Slave CPU memory space. There are no ROMs mapped here */
 
-	ROM_REGION(0x1000)	 /* Slave CPU memory space. There are no ROMs mapped here */
-
-	ROM_REGION(0x10000)	 /* 64k for DAC code */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	 /* 64k for DAC code */
 	ROM_LOAD( "v101d1", 0x08000, 0x08000, 0x83268b7d )
 
-	ROM_REGION(0x10000)	 /* 64k for YM2151 code */
+	ROM_REGIONX( 0x10000, REGION_CPU4 )	 /* 64k for YM2151 code */
 	ROM_LOAD( "v101y1", 0x08000, 0x08000, 0xcbeaa837 )
 ROM_END
 
 
 void driver_init(void)
 {
-	memcpy (exterm_code_rom,memory_region(Machine->drv->cpu[0].memory_region),code_rom_size);
+	memcpy (exterm_code_rom,memory_region(REGION_CPU1),code_rom_size);
 
 	TMS34010_set_stack_base(0, cpu_bankbase[1], TOBYTE(0x00c00000));
 	TMS34010_set_stack_base(1, cpu_bankbase[4], TOBYTE(0xff800000));

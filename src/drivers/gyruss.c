@@ -503,21 +503,18 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz (?) */
-			0,
 			readmem,writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318180/4,	/* 3.579545 Mhz */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		},
 		{
 			CPU_I8039 | CPU_AUDIO_CPU,
 			8000000/15,	/* 8Mhz crystal */
-			5,	/* memory region #5 */
 			i8039_readmem,i8039_writemem,i8039_readport,i8039_writeport,
 			ignore_interrupt,1
 		},
@@ -525,7 +522,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			2000000,        /* 2 Mhz ??? */
-			4,	/* memory region #4 */
 			m6809_readmem,m6809_writemem,0,0,
 			interrupt,1
 		},
@@ -579,7 +575,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( gyruss )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "gyrussk.1",    0x0000, 0x2000, 0xc673b43d )
 	ROM_LOAD( "gyrussk.2",    0x2000, 0x2000, 0xa4ec03e4 )
 	ROM_LOAD( "gyrussk.3",    0x4000, 0x2000, 0x27454a98 )
@@ -597,7 +593,7 @@ ROM_START( gyruss )
 	ROM_LOAD( "gyrussk.pr1",  0x0020, 0x0100, 0x7ed057de )	/* sprite lookup table */
 	ROM_LOAD( "gyrussk.pr2",  0x0120, 0x0100, 0xde823a81 )	/* character lookup table */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "gyrussk.1a",   0x0000, 0x2000, 0xf4ae1c17 )
 	ROM_LOAD( "gyrussk.2a",   0x2000, 0x2000, 0xba498115 )
 	/* the diagnostics ROM would go here */
@@ -605,12 +601,12 @@ ROM_START( gyruss )
 	ROM_REGION(0x10000)	/* 64k for the sprite CPU  */
 	ROM_LOAD( "gyrussk.9",    0xe000, 0x2000, 0x822bf27e )
 
-	ROM_REGION(0x1000)	/* 8039 */
+	ROM_REGIONX( 0x1000, REGION_CPU3 )	/* 8039 */
 	ROM_LOAD( "gyrussk.3a",   0x0000, 0x1000, 0x3f9b5dea )
 ROM_END
 
 ROM_START( gyrussce )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "gya-1.bin",    0x0000, 0x2000, 0x85f8b7c2 )
 	ROM_LOAD( "gya-2.bin",    0x2000, 0x2000, 0x1e1a970f )
 	ROM_LOAD( "gya-3.bin",    0x4000, 0x2000, 0xf6dbb33b )
@@ -628,7 +624,7 @@ ROM_START( gyrussce )
 	ROM_LOAD( "gyrussk.pr1",  0x0020, 0x0100, 0x7ed057de )	/* sprite lookup table */
 	ROM_LOAD( "gyrussk.pr2",  0x0120, 0x0100, 0xde823a81 )	/* character lookup table */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "gyrussk.1a",   0x0000, 0x2000, 0xf4ae1c17 )
 	ROM_LOAD( "gyrussk.2a",   0x2000, 0x2000, 0xba498115 )
 	/* the diagnostics ROM would go here */
@@ -636,12 +632,12 @@ ROM_START( gyrussce )
 	ROM_REGION(0x10000)	/* 64k for the sprite CPU  */
 	ROM_LOAD( "gyrussk.9",    0xe000, 0x2000, 0x822bf27e )
 
-	ROM_REGION(0x1000)	/* 8039 */
+	ROM_REGIONX( 0x1000, REGION_CPU3 )	/* 8039 */
 	ROM_LOAD( "gyrussk.3a",   0x0000, 0x1000, 0x3f9b5dea )
 ROM_END
 
 ROM_START( venus )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "r1",           0x0000, 0x2000, 0xd030abb1 )
 	ROM_LOAD( "r2",           0x2000, 0x2000, 0xdbf65d4d )
 	ROM_LOAD( "r3",           0x4000, 0x2000, 0xdb246fcd )
@@ -659,7 +655,7 @@ ROM_START( venus )
 	ROM_LOAD( "gyrussk.pr1",  0x0020, 0x0100, 0x7ed057de )	/* sprite lookup table */
 	ROM_LOAD( "gyrussk.pr2",  0x0120, 0x0100, 0xde823a81 )	/* character lookup table */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "gyrussk.1a",   0x0000, 0x2000, 0xf4ae1c17 )
 	ROM_LOAD( "gyrussk.2a",   0x2000, 0x2000, 0xba498115 )
 	/* the diagnostics ROM would go here */
@@ -667,7 +663,7 @@ ROM_START( venus )
 	ROM_REGION(0x10000)	/* 64k for the sprite CPU  */
 	ROM_LOAD( "gyrussk.9",    0xe000, 0x2000, 0x822bf27e )
 
-	ROM_REGION(0x1000)	/* 8039 */
+	ROM_REGIONX( 0x1000, REGION_CPU3 )	/* 8039 */
 	ROM_LOAD( "gyrussk.3a",   0x0000, 0x1000, 0x3f9b5dea )
 ROM_END
 
@@ -680,7 +676,7 @@ static void gyruss_decode(void)
 	extern int encrypted_cpu;
 
 
-	RAM = memory_region(Machine->drv->cpu[3].memory_region);
+	RAM = memory_region(REGION_CPU4);
 	encrypted_cpu = 3;
 	for (A = 0xe000;A < 0x10000;A++)
 	{
@@ -692,7 +688,7 @@ static void gyruss_decode(void)
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -719,7 +715,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

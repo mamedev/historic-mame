@@ -672,21 +672,18 @@ static struct MachineDriver bublbobl_machine_driver =
 		{
 			CPU_Z80,
 			6000000,		/* 6 Mhz??? */
-			0,			/* memory_region */
 			bublbobl_readmem,bublbobl_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are triggered by the 68705 */
 		},
 		{
 			CPU_Z80,
 			6000000,		/* 6 Mhz??? */
-			2,			/* memory_region */
 			bublbobl_readmem2,bublbobl_writemem2,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 Mhz ??? */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
 								/* IRQs are triggered by the YM2203 */
@@ -694,7 +691,6 @@ static struct MachineDriver bublbobl_machine_driver =
 		{
 			CPU_M68705,
 			4000000/2,	/* xtal is 4MHz, I think it's divided by 2 internally */
-			4,
 			m68705_readmem,m68705_writemem,0,0,
 			bublbobl_m68705_interrupt,2	/* ??? should come from the same */
 					/* clock which latches the INT pin on the second Z80 */
@@ -738,21 +734,18 @@ static struct MachineDriver boblbobl_machine_driver =
 		{
 			CPU_Z80,
 			6000000,		/* 6 Mhz??? */
-			0,			/* memory_region */
 			boblbobl_readmem,boblbobl_writemem,0,0,
 			interrupt,1	/* interrupt mode 1, unlike Bubble Bobble */
 		},
 		{
 			CPU_Z80,
 			6000000,		/* 6 Mhz??? */
-			2,			/* memory_region */
 			bublbobl_readmem2,bublbobl_writemem2,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 Mhz ??? */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
 								/* IRQs are triggered by the YM2203 */
@@ -796,21 +789,18 @@ static struct MachineDriver tokio_machine_driver =
 		{       /* Main CPU */
 			CPU_Z80,
 			4000000,		/* 4 Mhz??? */
-			0,			/* memory_region */
 			tokio_readmem,tokio_writemem,0,0,
 			interrupt,1
 		},
 		{       /* Video CPU */
 			CPU_Z80,
 			4000000,		/* 4 Mhz??? */
-			2,			/* memory_region */
 			tokio_readmem2,tokio_writemem2,0,0,
 			interrupt,1
 		},
 		{       /* Audio CPU */
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	        /* 4 Mhz ??? */
-			3,	                /* memory region */
 			tokio_sound_readmem,tokio_sound_writemem,0,0,
 			ignore_interrupt,0
 						/* NMIs are triggered by the main CPU */
@@ -852,7 +842,7 @@ static struct MachineDriver tokio_machine_driver =
 ***************************************************************************/
 
 ROM_START( bublbobl )
-    ROM_REGION(0x1c000)	/* 64k+64k for the first CPU */
+    ROM_REGIONX( 0x1c000, REGION_CPU1 )	/* 64k+64k for the first CPU */
     ROM_LOAD( "a78_06.bin",   0x00000, 0x8000, 0x32c8305b )
     ROM_LOAD( "a78_05.bin",   0x08000, 0x4000, 0x53f4bc6e )	/* banked at 8000-bfff. I must load */
 	ROM_CONTINUE(             0x10000, 0xc000 )				/* bank 0 at 8000 because the code falls into */
@@ -873,18 +863,18 @@ ROM_START( bublbobl )
     ROM_LOAD( "a78_20.bin",   0x68000, 0x8000, 0x9ef863ad )
 	/* 0x70000-0x7ffff empty */
 
-    ROM_REGION(0x10000)	/* 64k for the second CPU */
+    ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
     ROM_LOAD( "a78_08.bin",   0x0000, 0x08000, 0xae11a07b )
 
-    ROM_REGION(0x10000)	/* 64k for the third CPU */
+    ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the third CPU */
     ROM_LOAD( "a78_07.bin",   0x0000, 0x08000, 0x4f9a26e8 )
 
-	ROM_REGION(0x0800)	/* 2k for the microcontroller */
+	ROM_REGIONX( 0x0800, REGION_CPU4 )	/* 2k for the microcontroller */
 	ROM_LOAD( "68705.bin",    0x0000, 0x0800, 0x78caa635 )	/* from a pirate board */
 ROM_END
 
 ROM_START( bublbobr )
-    ROM_REGION(0x1c000)	/* 64k+64k for the first CPU */
+    ROM_REGIONX( 0x1c000, REGION_CPU1 )	/* 64k+64k for the first CPU */
     ROM_LOAD( "25.cpu",       0x00000, 0x8000, 0x2d901c9d )
     ROM_LOAD( "24.cpu",       0x08000, 0x4000, 0xb7afedc4 )	/* banked at 8000-bfff. I must load */
 	ROM_CONTINUE(             0x10000, 0xc000 )				/* bank 0 at 8000 because the code falls into */
@@ -905,18 +895,18 @@ ROM_START( bublbobr )
     ROM_LOAD( "a78_20.bin",   0x68000, 0x8000, 0x9ef863ad )
 	/* 0x70000-0x7ffff empty */
 
-    ROM_REGION(0x10000)	/* 64k for the second CPU */
+    ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
     ROM_LOAD( "a78_08.bin",   0x0000, 0x08000, 0xae11a07b )
 
-    ROM_REGION(0x10000)	/* 64k for the third CPU */
+    ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the third CPU */
     ROM_LOAD( "a78_07.bin",   0x0000, 0x08000, 0x4f9a26e8 )
 
-	ROM_REGION(0x0800)	/* 2k for the microcontroller */
+	ROM_REGIONX( 0x0800, REGION_CPU4 )	/* 2k for the microcontroller */
 	ROM_LOAD( "68705.bin",    0x0000, 0x0800, 0x78caa635 )	/* from a pirate board */
 ROM_END
 
 ROM_START( boblbobl )
-    ROM_REGION(0x1c000)	/* 64k+64k for the first CPU */
+    ROM_REGIONX( 0x1c000, REGION_CPU1 )	/* 64k+64k for the first CPU */
     ROM_LOAD( "bb3",          0x00000, 0x8000, 0x01f81936 )
     ROM_LOAD( "bb5",          0x08000, 0x4000, 0x13118eb1 )	/* banked at 8000-bfff. I must load */
 	ROM_CONTINUE(             0x10000, 0x4000 )				/* bank 0 at 8000 because the code falls into */
@@ -939,15 +929,15 @@ ROM_START( boblbobl )
     ROM_LOAD( "a78_20.bin",   0x68000, 0x8000, 0x9ef863ad )
 	/* 0x70000-0x7ffff empty */
 
-    ROM_REGION(0x10000)	/* 64k for the second CPU */
+    ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
     ROM_LOAD( "a78_08.bin",   0x0000, 0x08000, 0xae11a07b )
 
-    ROM_REGION(0x10000)	/* 64k for the third CPU */
+    ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the third CPU */
     ROM_LOAD( "a78_07.bin",   0x0000, 0x08000, 0x4f9a26e8 )
 ROM_END
 
 ROM_START( sboblbob )
-    ROM_REGION(0x1c000)	/* 64k+64k for the first CPU */
+    ROM_REGIONX( 0x1c000, REGION_CPU1 )	/* 64k+64k for the first CPU */
     ROM_LOAD( "bbb-3.rom",    0x00000, 0x8000, 0xf304152a )
     ROM_LOAD( "bb5",          0x08000, 0x4000, 0x13118eb1 )	/* banked at 8000-bfff. I must load */
 	ROM_CONTINUE(             0x10000, 0x4000 )				/* bank 0 at 8000 because the code falls into */
@@ -970,15 +960,15 @@ ROM_START( sboblbob )
     ROM_LOAD( "a78_20.bin",   0x68000, 0x8000, 0x9ef863ad )
 	/* 0x70000-0x7ffff empty */
 
-    ROM_REGION(0x10000)	/* 64k for the second CPU */
+    ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
     ROM_LOAD( "a78_08.bin",   0x0000, 0x08000, 0xae11a07b )
 
-    ROM_REGION(0x10000)	/* 64k for the third CPU */
+    ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the third CPU */
     ROM_LOAD( "a78_07.bin",   0x0000, 0x08000, 0x4f9a26e8 )
 ROM_END
 
 ROM_START( tokio )
-    ROM_REGION(0x30000)	/* main CPU */
+    ROM_REGIONX( 0x30000, REGION_CPU1 )	/* main CPU */
     ROM_LOAD( "a7127-1.256", 0x00000, 0x8000, 0x8c180896 )
     /* ROMs banked at 8000-bfff */
     ROM_LOAD( "a7128-1.256", 0x10000, 0x8000, 0x1b447527 )
@@ -1004,15 +994,15 @@ ROM_START( tokio )
     ROM_LOAD( "a7122.256",   0x70000, 0x8000, 0xfb98eac0 )
     ROM_LOAD( "a7123.256",   0x78000, 0x8000, 0x30bd46ad )
 
-    ROM_REGION(0x10000)	/* video CPU */
+    ROM_REGIONX( 0x10000, REGION_CPU2 )	/* video CPU */
     ROM_LOAD( "a7101.256",   0x00000, 0x8000, 0x0867c707 )
 
-    ROM_REGION(0x10000)	/* audio CPU */
+    ROM_REGIONX( 0x10000, REGION_CPU3 )	/* audio CPU */
     ROM_LOAD( "a7107.256",   0x0000, 0x08000, 0xf298cc7b )
 ROM_END
 
 ROM_START( tokiob )
-    ROM_REGION(0x30000) /* main CPU */
+    ROM_REGIONX( 0x30000, REGION_CPU1 ) /* main CPU */
     ROM_LOAD( "2",           0x00000, 0x8000, 0xf583b1ef )
     /* ROMs banked at 8000-bfff */
     ROM_LOAD( "3",           0x10000, 0x8000, 0x69dacf44 )
@@ -1038,16 +1028,16 @@ ROM_START( tokiob )
     ROM_LOAD( "a7122.256",   0x70000, 0x8000, 0xfb98eac0 )
     ROM_LOAD( "a7123.256",   0x78000, 0x8000, 0x30bd46ad )
 
-    ROM_REGION(0x10000)	/* video CPU */
+    ROM_REGIONX( 0x10000, REGION_CPU2 )	/* video CPU */
     ROM_LOAD( "a7101.256",   0x00000, 0x8000, 0x0867c707 )
 
-    ROM_REGION(0x10000)	/* audio CPU */
+    ROM_REGIONX( 0x10000, REGION_CPU3 )	/* audio CPU */
     ROM_LOAD( "a7107.256",   0x0000, 0x08000, 0xf298cc7b )
 ROM_END
 
 
 
-#define MOD_PAGE(page,addr,data) memory_region(Machine->drv->cpu[0].memory_region)[page ? addr-0x8000+0x10000+0x4000*(page-1) : addr] = data;
+#define MOD_PAGE(page,addr,data) memory_region(REGION_CPU1)[page ? addr-0x8000+0x10000+0x4000*(page-1) : addr] = data;
 
 void boblbobl_patch(void)
 {
@@ -1083,7 +1073,7 @@ void boblbobl_patch(void)
  */
 static int bublbobl_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1116,7 +1106,7 @@ static int bublbobl_hiload(void)
 static void bublbobl_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1131,7 +1121,7 @@ static void bublbobl_hisave(void)
 static int tokio_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if (memcmp(&RAM[0xf4c0],"\x61,\x28",2) == 0 )
         {
@@ -1148,7 +1138,7 @@ static int tokio_hiload(void)
 static void tokio_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{

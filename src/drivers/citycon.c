@@ -210,14 +210,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			2048000,        /* 2.048 Mhz ??? */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
 			640000,        /* 0.640 Mhz ??? */
-			3,
 			readmem_sound,writemem_sound,0,0,
 			interrupt,1
 		}
@@ -257,7 +255,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( citycon )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "c10",          0x4000, 0x4000, 0xae88b53c )
 	ROM_LOAD( "c11",          0x8000, 0x8000, 0x139eb1aa )
 
@@ -270,17 +268,17 @@ ROM_START( citycon )
 	ROM_LOAD( "c6",           0x12000, 0x8000, 0x2246fe9d )
 	ROM_LOAD( "c7",           0x1a000, 0x4000, 0xe8b97de9 )
 
-	ROM_REGION(0xe000)
+	ROM_REGION( 0xe000 )
 	ROM_LOAD( "c2",           0x0000, 0x8000, 0xf2da4f23 )	/* background maps */
 	ROM_LOAD( "c3",           0x8000, 0x4000, 0x7ef3ac1b )
 	ROM_LOAD( "c5",           0xc000, 0x2000, 0xc03d8b1b )	/* color codes for the background */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "c1",           0x8000, 0x8000, 0x1fad7589 )
 ROM_END
 
 ROM_START( citycona )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "c10",          0x4000, 0x4000, 0xae88b53c )
 	ROM_LOAD( "c11b",         0x8000, 0x8000, 0xd64af468 )
 
@@ -293,17 +291,17 @@ ROM_START( citycona )
 	ROM_LOAD( "c6",           0x12000, 0x8000, 0x2246fe9d )
 	ROM_LOAD( "c7",           0x1a000, 0x4000, 0xe8b97de9 )
 
-	ROM_REGION(0xe000)
+	ROM_REGION( 0xe000 )
 	ROM_LOAD( "c2",           0x0000, 0x8000, 0xf2da4f23 )	/* background maps */
 	ROM_LOAD( "c3",           0x8000, 0x4000, 0x7ef3ac1b )
 	ROM_LOAD( "c5",           0xc000, 0x2000, 0xc03d8b1b )	/* color codes for the background */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "c1",           0x8000, 0x8000, 0x1fad7589 )
 ROM_END
 
 ROM_START( cruisin )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "cr10",         0x4000, 0x4000, 0xcc7c52f3 )
 	ROM_LOAD( "cr11",         0x8000, 0x8000, 0x5422f276 )
 
@@ -316,12 +314,12 @@ ROM_START( cruisin )
 	ROM_LOAD( "c6",           0x12000, 0x8000, 0x2246fe9d )
 	ROM_LOAD( "c7",           0x1a000, 0x4000, 0xe8b97de9 )
 
-	ROM_REGION(0xe000)
+	ROM_REGION( 0xe000 )
 	ROM_LOAD( "c2",           0x0000, 0x8000, 0xf2da4f23 )	/* background maps */
 	ROM_LOAD( "c3",           0x8000, 0x4000, 0x7ef3ac1b )
 	ROM_LOAD( "c5",           0xc000, 0x2000, 0xc03d8b1b )	/* color codes for the background */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "c1",           0x8000, 0x8000, 0x1fad7589 )
 ROM_END
 
@@ -329,7 +327,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -354,7 +352,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

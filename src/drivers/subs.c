@@ -172,7 +172,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
 			12096000/16, 	   /* clock input is the "4H" signal */
-			0,
 			readmem,writemem,0,0,
 			subs_interrupt,4	/* NMI interrupt on the 32V signal if not in self-TEST */
 		}
@@ -218,7 +217,7 @@ static void subs_rom_init(void)
 }
 
 ROM_START( subs )
-	ROM_REGION(0x10000) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "34190.p1",     0x2800, 0x0800, 0xa88aef21 )
 	ROM_LOAD( "34191.p2",     0x3000, 0x0800, 0x2c652e72 )
 	ROM_LOAD( "34192.n2",     0x3800, 0x0800, 0x3ce63d33 )

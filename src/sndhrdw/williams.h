@@ -34,11 +34,10 @@ void williams_narc_data_w(int offset, int data);
 void williams_narc_reset_w(int state);
 
 
-#define SOUND_CPU_WILLIAMS_CVSD(mem)						\
+#define SOUND_CPU_WILLIAMS_CVSD								\
 	{														\
 		CPU_M6809 | CPU_AUDIO_CPU,							\
 		8000000/4,	/* 2 Mhz */								\
-		mem,												\
 		williams_cvsd_readmem,williams_cvsd_writemem,0,0,	\
 		ignore_interrupt,1									\
 	}
@@ -58,11 +57,10 @@ void williams_narc_reset_w(int state);
 	}
 
 
-#define SOUND_CPU_WILLIAMS_ADPCM(mem)						\
+#define SOUND_CPU_WILLIAMS_ADPCM							\
 	{														\
 		CPU_M6809 | CPU_AUDIO_CPU,							\
 		8000000/4,	/* 2 Mhz */								\
-		mem,												\
 		williams_adpcm_readmem,williams_adpcm_writemem,0,0,	\
 		ignore_interrupt,1									\
 	}
@@ -82,18 +80,16 @@ void williams_narc_reset_w(int state);
 	}
 
 
-#define SOUND_CPU_WILLIAMS_NARC(mem1,mem2)					\
+#define SOUND_CPU_WILLIAMS_NARC								\
 	{														\
 		CPU_M6809 | CPU_AUDIO_CPU,							\
 		8000000/4,	/* 2 Mhz */								\
-		mem1,												\
 		williams_narc_master_readmem,williams_narc_master_writemem,0,0,\
 		ignore_interrupt,1									\
 	},														\
 	{														\
 		CPU_M6809 | CPU_AUDIO_CPU,							\
 		8000000/4,	/* 2 Mhz */								\
-		mem2,												\
 		williams_narc_slave_readmem,williams_narc_slave_writemem,0,0,\
 		ignore_interrupt,1									\
 	}

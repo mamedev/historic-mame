@@ -189,7 +189,7 @@ static int liberatr_init_planet(int planet_select)
 	UINT8 *planet_rom;
 
 
-	planet_rom = Machine->memory_region[1];
+	planet_rom = memory_region(1);
 
 	/* for each starting longitude */
 	for (longitude = 0; longitude < 0x100; longitude++)

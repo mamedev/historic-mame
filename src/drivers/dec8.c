@@ -369,7 +369,7 @@ if (errorlog && data!=5) fprintf(errorlog,"PC %06x - Write %02x to 8751 %d\n",cp
 static void dec8_bank_w(int offset, int data)
 {
  	int bankaddress;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	bankaddress = 0x10000 + (data & 0x0f) * 0x4000;
 	cpu_setbank(1,&RAM[bankaddress]);
@@ -379,7 +379,7 @@ static void dec8_bank_w(int offset, int data)
 static void ghostb_bank_w(int offset, int data)
 {
  	int bankaddress;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* Bit 0: Interrupt enable/disable (I think..)
 	   Bit 1: NMI enable/disable
@@ -400,7 +400,7 @@ static void ghostb_bank_w(int offset, int data)
 void csilver_control_w(int offset, int data)
 {
 	int bankaddress;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* Bottom 4 bits - bank switch */
 	bankaddress = 0x10000 + (data & 0x0f) * 0x4000;
@@ -447,7 +447,7 @@ static void csilver_adpcm_data_w(int offset,int data)
 
 static void csilver_sound_bank_w(int offset,int data)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[2].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU3);
 
 	if (data&8) { cpu_setbank(3,&RAM[0x14000]); }
 	else { cpu_setbank(3,&RAM[0x10000]); }
@@ -1951,14 +1951,12 @@ static struct MachineDriver cobra_machine_driver =
  		{
 			CPU_M6809,
 			2000000,
-			0,
 			cobra_readmem,cobra_writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1500000,
-			2,	/* memory region #2 */
 			dec8_s_readmem,dec8_s_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the YM3812 */
 								/* NMIs are caused by the main CPU */
@@ -2002,14 +2000,12 @@ static struct MachineDriver ghostb_machine_driver =
 		{
 			CPU_HD6309,
 			3000000,
-			0,
 			ghostb_readmem,ghostb_writemem,0,0,
 			ghostb_interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1500000,
-			2,	/* memory region #2 */
 			dec8_s_readmem,dec8_s_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the YM3812 */
 								/* NMIs are caused by the main CPU */
@@ -2053,14 +2049,12 @@ static struct MachineDriver srdarwin_machine_driver =
 		{
 			CPU_M6809,  /* MC68A09EP */
 			2000000,
-			0,
 			srdarwin_readmem,srdarwin_writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1500000,
-			2,	/* memory region #2 */
 			dec8_s_readmem,dec8_s_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the YM3812 */
 								/* NMIs are caused by the main CPU */
@@ -2104,14 +2098,12 @@ static struct MachineDriver gondo_machine_driver =
  		{
 			CPU_HD6309, /* HD63C09EP */
 			3000000,
-			0,
 			gondo_readmem,gondo_writemem,0,0,
 			gondo_interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1500000,
-			2,	/* memory region #2 */
 			dec8_s_readmem,dec8_s_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the YM3526 */
 								/* NMIs are caused by the main CPU */
@@ -2155,21 +2147,18 @@ static struct MachineDriver oscar_machine_driver =
 	  	{
 			CPU_HD6309,
 			2000000,
-			0,
 			oscar_readmem,oscar_writemem,0,0,
 			oscar_interrupt,1
 		},
 	 	{
 			CPU_HD6309,
 			2000000,
-			3,
 			oscar_sub_readmem,oscar_sub_writemem,0,0,
 			ignore_interrupt,0
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1500000,
-			2,	/* memory region #2 */
 			dec8_s_readmem,dec8_s_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the YM3526 */
 								/* NMIs are caused by the main CPU */
@@ -2213,21 +2202,18 @@ static struct MachineDriver lastmiss_machine_driver =
   		{
 			CPU_M6809,
 			2000000,
-			0,
 			lastmiss_readmem,lastmiss_writemem,0,0,
 			ignore_interrupt,0
 		},
      	{
 			CPU_M6809,
 			2000000,
-			3,
 			lastmiss_sub_readmem,lastmiss_sub_writemem,0,0,
 			ignore_interrupt,0
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1500000,
-			2,	/* memory region #2 */
 			ym3526_s_readmem,ym3526_s_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the YM3526 */
 								/* NMIs are caused by the main CPU */
@@ -2271,21 +2257,18 @@ static struct MachineDriver shackled_machine_driver =
   		{
 			CPU_M6809,
 			2000000,
-			0,
 			shackled_readmem,shackled_writemem,0,0,
 		   	ignore_interrupt,0
 		},
      	{
 			CPU_M6809,
 			2000000,
-			3,
 			shackled_sub_readmem,shackled_sub_writemem,0,0,
 			ignore_interrupt,0
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1500000,
-			2,	/* memory region #2 */
 			ym3526_s_readmem,ym3526_s_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the YM3526 */
 								/* NMIs are caused by the main CPU */
@@ -2329,21 +2312,18 @@ static struct MachineDriver csilver_machine_driver =
   		{
 			CPU_M6809,
 			2000000,
-			0,
 			csilver_readmem,csilver_writemem,0,0,
 		   	ignore_interrupt,0
 		},
      	{
 			CPU_M6809,
 			2000000,
-			3,
 			csilver_sub_readmem,csilver_sub_writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1500000,
-			2,	/* memory region #2 */
 			csilver_s_readmem,csilver_s_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the MSM5205 */
 								/* NMIs are caused by the main CPU */
@@ -2391,14 +2371,12 @@ static struct MachineDriver garyoret_machine_driver =
  		{
 			CPU_HD6309, /* HD63C09EP */
 			3000000,
-			0,
 			garyoret_readmem,garyoret_writemem,0,0,
 			gondo_interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1500000,
-			2,	/* memory region #2 */
 			dec8_s_readmem,dec8_s_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the YM3526 */
 								/* NMIs are caused by the main CPU */
@@ -2438,7 +2416,7 @@ static struct MachineDriver garyoret_machine_driver =
 /******************************************************************************/
 
 ROM_START( cobracom )
-	ROM_REGION(0x30000)
+	ROM_REGIONX( 0x30000, REGION_CPU1 )
  	ROM_LOAD( "eh-11.rom",    0x08000, 0x08000, 0x868637e1 )
  	ROM_LOAD( "eh-12.rom",    0x10000, 0x10000, 0x7c878a83 )
  	ROM_LOAD( "eh-13.rom",    0x20000, 0x10000, 0x04505acb )
@@ -2458,12 +2436,12 @@ ROM_START( cobracom )
 	ROM_LOAD( "eh-09.rom",    0x128000,0x08000, 0x1fae5be7 )
 	ROM_CONTINUE(             0x168000,0x8000)
 
-	ROM_REGION(0x10000)	/* 64K for sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64K for sound CPU */
 	ROM_LOAD( "eh-10.rom",    0x8000,  0x8000,  0x62ca5e89 )
 ROM_END
 
 ROM_START( ghostb )
-	ROM_REGION(0x50000)
+	ROM_REGIONX( 0x50000, REGION_CPU1 )
  	ROM_LOAD( "dz-01.rom", 0x08000, 0x08000, 0x7c5bb4b1 )
  	ROM_LOAD( "dz-02.rom", 0x10000, 0x10000, 0x8e117541 )
 	ROM_LOAD( "dz-03.rom", 0x20000, 0x10000, 0x5606a8f4 )
@@ -2487,7 +2465,7 @@ ROM_START( ghostb )
  	ROM_LOAD( "dz-09.rom", 0xa8000, 0x10000, 0xbb6efc02 )
 	ROM_LOAD( "dz-10.rom", 0xb8000, 0x10000, 0x6ef9963b )
 
-	ROM_REGION(0x10000)	/* 64K for sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64K for sound CPU */
 	ROM_LOAD( "dz-06.rom", 0x8000, 0x8000, 0x798f56df )
 
 	ROM_REGIONX( 0x0800, REGION_PROMS )
@@ -2496,7 +2474,7 @@ ROM_START( ghostb )
 ROM_END
 
 ROM_START( ghostb3 )
-	ROM_REGION(0x50000)
+	ROM_REGIONX( 0x50000, REGION_CPU1 )
  	ROM_LOAD( "dz01-3b",   0x08000, 0x08000, 0xc8cc862a )
  	ROM_LOAD( "dz-02.rom", 0x10000, 0x10000, 0x8e117541 )
 	ROM_LOAD( "dz-03.rom", 0x20000, 0x10000, 0x5606a8f4 )
@@ -2520,7 +2498,7 @@ ROM_START( ghostb3 )
  	ROM_LOAD( "dz-09.rom", 0xa8000, 0x10000, 0xbb6efc02 )
 	ROM_LOAD( "dz-10.rom", 0xb8000, 0x10000, 0x6ef9963b )
 
-	ROM_REGION(0x10000)	/* 64K for sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64K for sound CPU */
 	ROM_LOAD( "dz-06.rom", 0x8000, 0x8000, 0x798f56df )
 
 	ROM_REGIONX( 0x0800, REGION_PROMS )
@@ -2529,7 +2507,7 @@ ROM_START( ghostb3 )
 ROM_END
 
 ROM_START( meikyuh )
-	ROM_REGION(0x40000)
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
  	ROM_LOAD( "dw-01.rom", 0x08000, 0x08000, 0x87610c39 )
  	ROM_LOAD( "dw-02.rom", 0x10000, 0x10000, 0x40c9b0b8 )
  	ROM_LOAD( "dz-03.rom", 0x20000, 0x10000, 0x5606a8f4 )
@@ -2552,7 +2530,7 @@ ROM_START( meikyuh )
 	ROM_LOAD( "dw-08.rom", 0xa8000, 0x10000, 0xbb2cf4a0 )
 	ROM_LOAD( "dw-09.rom", 0xb8000, 0x10000, 0x6a528d13 )
 
-	ROM_REGION(0x10000)	/* 64K for sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64K for sound CPU */
 	ROM_LOAD( "dw-05.rom", 0x8000, 0x8000, 0xc28c4d82 )
 
 	ROM_REGIONX( 0x0800, REGION_PROMS )
@@ -2561,7 +2539,7 @@ ROM_START( meikyuh )
 ROM_END
 
 ROM_START( srdarwin )
-	ROM_REGION(0x28000)
+	ROM_REGIONX( 0x28000, REGION_CPU1 )
  	ROM_LOAD( "dy_01.rom", 0x20000, 0x08000, 0x1eeee4ff )
 	ROM_CONTINUE(          0x08000, 0x08000 )
  	ROM_LOAD( "dy_00.rom", 0x10000, 0x10000, 0x2bf6b461 )
@@ -2586,12 +2564,12 @@ ROM_START( srdarwin )
 	ROM_CONTINUE(0x60000,0x4000)
 	ROM_CONTINUE(0x70000,0x4000)
 
-	ROM_REGION(0x10000)	/* 64K for sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64K for sound CPU */
 	ROM_LOAD( "dy_04.rom", 0x8000, 0x8000, 0x2ae3591c )
 ROM_END
 
 ROM_START( gondo )
-	ROM_REGION(0x40000)
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
  	ROM_LOAD( "dt-00.256", 0x08000, 0x08000, 0xa8cf9118 )
  	ROM_LOAD( "dt-01.512", 0x10000, 0x10000, 0xc39bb877 )
 	ROM_LOAD( "dt-02.512", 0x20000, 0x10000, 0xbb5e674b )
@@ -2622,12 +2600,12 @@ ROM_START( gondo )
 	ROM_CONTINUE(          0xf8000, 0x08000 )
 	ROM_LOAD( "dt-11.256", 0xf0000, 0x08000, 0x53e9cf17 )
 
-	ROM_REGION(0x10000)	/* 64K for sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64K for sound CPU */
 	ROM_LOAD( "dt-05.256", 0x8000, 0x8000, 0xec08aa29 )
 ROM_END
 
 ROM_START( makyosen )
-	ROM_REGION(0x40000)
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
  	ROM_LOAD( "ds00",      0x08000, 0x08000, 0x33bb16fe )
  	ROM_LOAD( "dt-01.512", 0x10000, 0x10000, 0xc39bb877 )
 	ROM_LOAD( "ds02",      0x20000, 0x10000, 0x925307a4 )
@@ -2658,12 +2636,12 @@ ROM_START( makyosen )
 	ROM_CONTINUE(          0xf8000, 0x08000 )
 	ROM_LOAD( "dt-11.256", 0xf0000, 0x08000, 0x53e9cf17 )
 
-	ROM_REGION(0x10000)	/* 64K for sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64K for sound CPU */
 	ROM_LOAD( "ds05", 0x8000, 0x8000, 0xe6e28ca9 )
 ROM_END
 
 ROM_START( oscar )
-	ROM_REGION(0x20000)
+	ROM_REGIONX( 0x20000, REGION_CPU1 )
  	ROM_LOAD( "ed10", 0x08000, 0x08000, 0xf9b0d4d4 )
  	ROM_LOAD( "ed09", 0x10000, 0x10000, 0xe2d4bba9 )
 
@@ -2680,15 +2658,15 @@ ROM_START( oscar )
 	ROM_LOAD( "ed02", 0xe8000, 0x10000, 0x7ddc5651 )
 	ROM_LOAD( "ed03", 0xa8000, 0x10000, 0x4fc4fb0f )
 
-	ROM_REGION(0x10000)	/* 64K for sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64K for sound CPU */
 	ROM_LOAD( "ed12", 0x8000, 0x8000,  0x432031c5 )
 
-	ROM_REGION(0x10000)	/* CPU 2, 1st 16k is empty */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* CPU 2, 1st 16k is empty */
 	ROM_LOAD( "ed11", 0x0000, 0x10000,  0x10e5d919 )
 ROM_END
 
 ROM_START( oscarj )
-	ROM_REGION(0x20000)
+	ROM_REGIONX( 0x20000, REGION_CPU1 )
  	ROM_LOAD( "du10", 0x08000, 0x08000, 0x120040d8 )
  	ROM_LOAD( "ed09", 0x10000, 0x10000, 0xe2d4bba9 )
 
@@ -2705,15 +2683,15 @@ ROM_START( oscarj )
 	ROM_LOAD( "ed02", 0xe8000, 0x10000, 0x7ddc5651 )
 	ROM_LOAD( "ed03", 0xa8000, 0x10000, 0x4fc4fb0f )
 
-	ROM_REGION(0x10000)	/* 64K for sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64K for sound CPU */
 	ROM_LOAD( "ed12", 0x8000, 0x8000, 0x432031c5 )
 
-	ROM_REGION(0x10000)	/* CPU 2, 1st 16k is empty */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* CPU 2, 1st 16k is empty */
 	ROM_LOAD( "du11", 0x0000, 0x10000, 0xff45c440 )
 ROM_END
 
 ROM_START( lastmiss )
-	ROM_REGION(0x20000)
+	ROM_REGIONX( 0x20000, REGION_CPU1 )
  	ROM_LOAD( "dl03-6",      0x08000, 0x08000, 0x47751a5e ) /* Rev 6 roms */
  	ROM_LOAD( "lm_dl04.rom", 0x10000, 0x10000, 0x7dea1552 )
 
@@ -2730,15 +2708,15 @@ ROM_START( lastmiss )
 	ROM_LOAD( "lm_dl07.rom", 0xc8000, 0x10000, 0x1b60604d )
 	ROM_LOAD( "lm_dl06.rom", 0xe8000, 0x10000, 0xc43c26a7 )
 
-	ROM_REGION(0x10000)	/* 64K for sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64K for sound CPU */
 	ROM_LOAD( "lm_dl05.rom", 0x8000, 0x8000, 0x1a5df8c0 )
 
-	ROM_REGION(0x10000)	/* CPU 2, 1st 16k is empty */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* CPU 2, 1st 16k is empty */
 	ROM_LOAD( "lm_dl02.rom", 0x0000, 0x10000, 0xec9b5daf )
 ROM_END
 
 ROM_START( lastmss2 )
-	ROM_REGION(0x20000)
+	ROM_REGIONX( 0x20000, REGION_CPU1 )
  	ROM_LOAD( "lm_dl03.rom", 0x08000, 0x08000, 0x357f5f6b ) /* Rev 5 roms */
  	ROM_LOAD( "lm_dl04.rom", 0x10000, 0x10000, 0x7dea1552 )
 
@@ -2755,15 +2733,15 @@ ROM_START( lastmss2 )
 	ROM_LOAD( "lm_dl07.rom", 0xc8000, 0x10000, 0x1b60604d )
 	ROM_LOAD( "lm_dl06.rom", 0xe8000, 0x10000, 0xc43c26a7 )
 
-	ROM_REGION(0x10000)	/* 64K for sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64K for sound CPU */
 	ROM_LOAD( "lm_dl05.rom", 0x8000, 0x8000, 0x1a5df8c0 )
 
-	ROM_REGION(0x10000)	/* CPU 2, 1st 16k is empty */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* CPU 2, 1st 16k is empty */
 	ROM_LOAD( "lm_dl02.rom", 0x0000, 0x10000, 0xec9b5daf )
 ROM_END
 
 ROM_START( shackled )
-	ROM_REGION(0x48000)
+	ROM_REGIONX( 0x48000, REGION_CPU1 )
  	ROM_LOAD( "dk-02.rom", 0x08000, 0x08000, 0x87f8fa85 )
 	ROM_LOAD( "dk-06.rom", 0x10000, 0x10000, 0x69ad62d1 )
 	ROM_LOAD( "dk-05.rom", 0x20000, 0x10000, 0x598dd128 )
@@ -2787,15 +2765,15 @@ ROM_START( shackled )
 	ROM_LOAD( "dk-09.rom", 0xc8000, 0x10000, 0xc1557fac )
 	ROM_LOAD( "dk-08.rom", 0xe8000, 0x10000, 0x5e54e9f5 )
 
-	ROM_REGION(0x10000)	/* 64K for sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64K for sound CPU */
 	ROM_LOAD( "dk-07.rom", 0x08000, 0x08000, 0x887e4bcc )
 
-	ROM_REGION(0x10000)	/* CPU 2, 1st 16k is empty */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* CPU 2, 1st 16k is empty */
 	ROM_LOAD( "dk-01.rom", 0x00000, 0x10000, 0x71fe3bda )
 ROM_END
 
 ROM_START( breywood )
-	ROM_REGION(0x48000)
+	ROM_REGIONX( 0x48000, REGION_CPU1 )
  	ROM_LOAD( "7.bin", 0x08000, 0x08000, 0xc19856b9 )
    	ROM_LOAD( "3.bin", 0x10000, 0x10000, 0x2860ea02 )
 	ROM_LOAD( "4.bin", 0x20000, 0x10000, 0x0fdd915e )
@@ -2819,15 +2797,15 @@ ROM_START( breywood )
 	ROM_LOAD( "11.bin", 0xc8000, 0x10000, 0xe37d5dbe )
 	ROM_LOAD( "12.bin", 0xe8000, 0x10000, 0xbeee880f )
 
-	ROM_REGION(0x10000)	/* 64K for sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64K for sound CPU */
 	ROM_LOAD( "2.bin", 0x8000, 0x8000,  0x4a471c38 )
 
-	ROM_REGION(0x10000)	/* CPU 2, 1st 16k is empty */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* CPU 2, 1st 16k is empty */
 	ROM_LOAD( "8.bin", 0x0000, 0x10000,  0x3d9fb623 )
 ROM_END
 
 ROM_START( csilver )
-	ROM_REGION(0x48000)
+	ROM_REGIONX( 0x48000, REGION_CPU1 )
  	ROM_LOAD( "a4", 0x08000, 0x08000, 0x02dd8cfc )
    	ROM_LOAD( "a2", 0x10000, 0x10000, 0x570fb50c )
 	ROM_LOAD( "a3", 0x20000, 0x10000, 0x58625890 )
@@ -2850,16 +2828,16 @@ ROM_START( csilver )
 	ROM_LOAD( "b1",  0xc8000, 0x10000, 0x3ef77a32 )
 	ROM_LOAD( "b2",  0xd8000, 0x10000, 0x9cf3d5b8 )
 
-	ROM_REGION(0x18000)	/* 64K for sound CPU */
+	ROM_REGIONX( 0x18000, REGION_CPU3 )	/* 64K for sound CPU */
 	ROM_LOAD( "a6", 0x10000, 0x08000,  0xeb32cf25 )
 	ROM_CONTINUE(   0x08000, 0x08000 )
 
-	ROM_REGION(0x10000)	/* CPU 2, 1st 16k is empty */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* CPU 2, 1st 16k is empty */
 	ROM_LOAD( "a5", 0x0000, 0x10000,  0x29432691 )
 ROM_END
 
 ROM_START( garyoret )
-	ROM_REGION(0x58000)
+	ROM_REGIONX( 0x58000, REGION_CPU1 )
  	ROM_LOAD( "dv00", 0x08000, 0x08000, 0xcceaaf05 )
 	ROM_LOAD( "dv01", 0x10000, 0x10000, 0xc33fc18a )
 	ROM_LOAD( "dv02", 0x20000, 0x10000, 0xf9e26ce7 )
@@ -2898,7 +2876,7 @@ ROM_START( garyoret )
 	ROM_LOAD( "dv13", 0xd0000, 0x08000, 0xa7af6dfd )
 	ROM_CONTINUE(     0xe0000, 0x08000 )
 
-	ROM_REGION(0x10000)	/* 64K for sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64K for sound CPU */
 	ROM_LOAD( "dv05", 0x08000, 0x08000, 0xc97c347f )
 ROM_END
 
@@ -2916,7 +2894,7 @@ static void deco222_decode(void)
 	if (Machine->drv->cpu[2].cpu_type != 0) sound_cpu = 2;
 
 	/* bits 5 and 6 of the opcodes are swapped */
-	RAM = memory_region(Machine->drv->cpu[sound_cpu].memory_region);
+	RAM = memory_region(REGION_CPU1+sound_cpu);
 	encrypted_cpu = sound_cpu;
 	for (A = 0;A < 0x10000;A++)
 		ROM[A] = (RAM[A] & 0x9f) | ((RAM[A] & 0x20) << 1) | ((RAM[A] & 0x40) >> 1);
@@ -2925,7 +2903,7 @@ static void deco222_decode(void)
 static void meikyuh_patch(void)
 {
 	/* Blank out garbage in colour prom to avoid colour overflow */
-	unsigned char *RAM = Machine->memory_region[3];
+	unsigned char *RAM = memory_region(3);
 	memset(RAM+0x20,0,0xe0);
 }
 
@@ -2951,13 +2929,13 @@ static void ghostb_decode(void)
 
 /* Short versions of hiscore save since they are all the same!  I'd like to change
 the load hiscore functions to macros too... */
-HI_SAVE(cobracom,memory_region(Machine->drv->cpu[0].memory_region),0x06c6,30)
-HI_SAVE(ghostb,  memory_region(Machine->drv->cpu[0].memory_region),0x01C0,118)
-HI_SAVE(ghostb3, memory_region(Machine->drv->cpu[0].memory_region),0x0DA0,118)
-HI_SAVE(srdarwin,memory_region(Machine->drv->cpu[0].memory_region),0x1342,70)
-HI_SAVE(gondo,   memory_region(Machine->drv->cpu[0].memory_region),0x1532,72)
-HI_SAVE(makyo,   memory_region(Machine->drv->cpu[0].memory_region),0x14f9,72)
-HI_SAVE(meikyuh, memory_region(Machine->drv->cpu[0].memory_region),0x0190,80)
+HI_SAVE(cobracom,memory_region(REGION_CPU1),0x06c6,30)
+HI_SAVE(ghostb,  memory_region(REGION_CPU1),0x01C0,118)
+HI_SAVE(ghostb3, memory_region(REGION_CPU1),0x0DA0,118)
+HI_SAVE(srdarwin,memory_region(REGION_CPU1),0x1342,70)
+HI_SAVE(gondo,   memory_region(REGION_CPU1),0x1532,72)
+HI_SAVE(makyo,   memory_region(REGION_CPU1),0x14f9,72)
+HI_SAVE(meikyuh, memory_region(REGION_CPU1),0x0190,80)
 HI_SAVE(oscar,   dec8_shared_ram,0x075A,70)
 HI_SAVE(lastmiss,dec8_shared_ram,0x09aa,60)
 HI_SAVE(shackled,dec8_shared_ram,0x0108,40)
@@ -2966,7 +2944,7 @@ HI_SAVE(csilver, dec8_shared_ram,0x0e3c,60)
 static int cobracom_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x06c6],"\x00\x84\x76",3) == 0)
@@ -2989,7 +2967,7 @@ static int cobracom_hiload(void)
 static int ghostb_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x01C0],"\x01\x1F\x0F",3) == 0)
@@ -3007,7 +2985,7 @@ static int ghostb_hiload(void)
 static int meikyuh_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x0190],"\x01\x1F\x0F",3) == 0)
@@ -3025,7 +3003,7 @@ static int meikyuh_hiload(void)
 static int ghostb3_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x0DA0],"\x01\x1F\x0F",3) == 0)
@@ -3060,7 +3038,7 @@ static int oscar_hiload(void)
 /* Last Mission (Rev.5 & Rev.6) high score save - RJF (Feb 15, 1999) */
 static int lastmiss_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3086,7 +3064,7 @@ static int lastmiss_hiload(void)
 /* Super Real Darwin high score save - RJF (Feb 14, 1999) */
 static int srdarwin_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3113,7 +3091,7 @@ static int srdarwin_hiload(void)
 /* Gondomania & Makyou Senshi high score save - RJF (Feb 14, 1999) */
 static int gondo_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3135,7 +3113,7 @@ static int gondo_hiload(void)
 
 static int makyo_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0x14f9],"\x21\x2d\x25",3) == 0)
 	{
@@ -3157,7 +3135,7 @@ static int makyo_hiload(void)
 /* Shackled & Breywood high score save - RJF (Feb 15, 1999) */
 static int shackled_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3182,7 +3160,7 @@ static int shackled_hiload(void)
 
 static int breywood_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3208,7 +3186,7 @@ static int breywood_hiload(void)
 /* Captain Silver high score save - RJF (Feb 16, 1999) */
 static int csilver_hiload(void)
 {
-    unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+    unsigned char *RAM = memory_region(REGION_CPU1);
 	static int firsttime;
 
 

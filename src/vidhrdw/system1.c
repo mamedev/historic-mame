@@ -315,7 +315,7 @@ static void RenderSprite(struct osd_bitmap *bitmap,int spr_number)
 
 	src = SprReg[SPR_GFXOFS_LO] + (SprReg[SPR_GFXOFS_HI] << 8);
 	bank = 0x8000 * (((SprReg[SPR_X_HI] & 0x80) >> 7) + ((SprReg[SPR_X_HI] & 0x40) >> 5));
-	bank &= (Machine->memory_region_length[2]-1);	/* limit to the range of available ROMs */
+	bank &= (memory_region_length(2)-1);	/* limit to the range of available ROMs */
 	skip = SprReg[SPR_SKIP_LO] + (SprReg[SPR_SKIP_HI] << 8);
 
 	Height		= SprReg[SPR_Y_BOTTOM] - SprReg[SPR_Y_TOP];
@@ -343,7 +343,7 @@ static void RenderSprite(struct osd_bitmap *bitmap,int spr_number)
 				offs = ((src - Col / 2) & 0x7fff) + bank;
 
 				/* memory region #2 contains the packed sprite data */
-				data = Machine->memory_region[2][offs];
+				data = memory_region(2)[offs];
 				color1 = data & 0x0f;
 				color2 = data >> 4;
 			}
@@ -354,7 +354,7 @@ static void RenderSprite(struct osd_bitmap *bitmap,int spr_number)
 				offs = ((src + Col / 2) & 0x7fff) + bank;
 
 				/* memory region #2 contains the packed sprite data */
-				data = Machine->memory_region[2][offs];
+				data = memory_region(2)[offs];
 				color1 = data >> 4;
 				color2 = data & 0x0f;
 			}
@@ -748,7 +748,7 @@ void choplifter_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 #ifdef MAME_DEBUG
 	if (keyboard_pressed(KEYCODE_SPACE))		// goto next level
 	{
-		Machine->memory_region[0][0xC085]=33;
+		memory_region(REGION_CPU1)[0xC085]=33;
 	}
 #endif
 }

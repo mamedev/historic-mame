@@ -308,7 +308,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz ? */
-			0,
 			readmem,writemem,0,writeport,
 			interrupt,1
 		}
@@ -352,7 +351,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( rallyx )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1b",           0x0000, 0x1000, 0x5882700d )
 	ROM_LOAD( "rallyxn.1e",   0x1000, 0x1000, 0xed1eba2b )
 	ROM_LOAD( "rallyxn.1h",   0x2000, 0x1000, 0x4f98dd1c )
@@ -366,12 +365,12 @@ ROM_START( rallyx )
 	ROM_LOAD( "m3-7603.11n",  0x0000, 0x0020, 0xc7865434 )
 	ROM_LOAD( "im5623.8p",    0x0020, 0x0100, 0x834d4fda )
 
-	ROM_REGION(0x0100)	/* sound prom */
+	ROM_REGION( 0x0100 )	/* sound prom */
 	ROM_LOAD( "im5623.3p",    0x0000, 0x0100, 0x4bad7017 )
 ROM_END
 
 ROM_START( rallyxm )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1b",           0x0000, 0x1000, 0x5882700d )
 	ROM_LOAD( "1e",           0x1000, 0x1000, 0x786585ec )
 	ROM_LOAD( "1h",           0x2000, 0x1000, 0x110d7dcd )
@@ -385,12 +384,12 @@ ROM_START( rallyxm )
 	ROM_LOAD( "m3-7603.11n",  0x0000, 0x0020, 0xc7865434 )
 	ROM_LOAD( "im5623.8p",    0x0020, 0x0100, 0x834d4fda )
 
-	ROM_REGION(0x0100)	/* sound prom */
+	ROM_REGION( 0x0100 )	/* sound prom */
 	ROM_LOAD( "im5623.3p",    0x0000, 0x0100, 0x4bad7017 )
 ROM_END
 
 ROM_START( nrallyx )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "nrallyx.1b",   0x0000, 0x1000, 0x9404c8d6 )
 	ROM_LOAD( "nrallyx.1e",   0x1000, 0x1000, 0xac01bf3f )
 	ROM_LOAD( "nrallyx.1h",   0x2000, 0x1000, 0xaeba29b5 )
@@ -404,7 +403,7 @@ ROM_START( nrallyx )
 	ROM_LOAD( "nrallyx.pr1",  0x0000, 0x0020, 0xa0a49017 )
 	ROM_LOAD( "nrallyx.pr2",  0x0020, 0x0100, 0xb2b7ca15 )
 
-	ROM_REGION(0x0100)	/* sound prom */
+	ROM_REGION( 0x0100 )	/* sound prom */
 	ROM_LOAD( "nrallyx.spr",  0x0000, 0x0100, 0xb75c4e87 )
 ROM_END
 
@@ -412,7 +411,7 @@ ROM_END
 
 static int hiload(void)     /* V.V */
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -424,6 +423,7 @@ static int hiload(void)     /* V.V */
 		{
 			osd_fread(f,&RAM[0x08060],8);
 			osd_fclose(f);
+			memset(&dirtybuffer[0x60],1,8);
 		}
 
 		return 1;
@@ -436,13 +436,14 @@ static int hiload(void)     /* V.V */
 static void hisave(void)    /* V.V */
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
 		osd_fwrite(f,&RAM[0x08060],8);
 		osd_fclose(f);
+		memset(&dirtybuffer[0x60],1,8);
 	}
 }
 

@@ -618,7 +618,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80 | CPU_16BIT_PORT,
 			4000000,	/* ? */
-			0,
 			readmem,writemem,csk227_readport,csk227_writeport,
 			cska_interrupt,6
 		}
@@ -650,7 +649,6 @@ static struct MachineDriver csk234it_machine_driver =
 		{
 			CPU_Z80 | CPU_16BIT_PORT,
 			4000000,	/* ? */
-			0,
 			readmem,writemem,csk234_readport,csk234_writeport,
 			cska_interrupt,6
 		}
@@ -681,7 +679,7 @@ static struct MachineDriver csk234it_machine_driver =
  */
 
 ROM_START( csk227it )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "v227i.bin",   0x0000, 0x10000, 0xdf1ebf49 )
 
 	ROM_REGION_DISPOSE(0xc0000) /* temporary space for graphics (disposed after conversion) */
@@ -693,13 +691,13 @@ ROM_START( csk227it )
 	ROM_LOAD( "2.bin",  0x70000, 0x10000, 0x848343a3 )
 	ROM_LOAD( "1.bin",  0x80000, 0x10000, 0x921ad5de )
 
-	ROM_REGION(0x10000)	/* expansion rom - contains backgrounds and pictures charmaps */
+	ROM_REGION( 0x10000 )	/* expansion rom - contains backgrounds and pictures charmaps */
 	ROM_LOAD( "7.227",   0x0000, 0x10000, 0xa10786ad )
 ROM_END
 
 
 ROM_START( csk234it )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "v234it.bin",   0x0000, 0x10000, 0x344b7059 )
 
 	ROM_REGION_DISPOSE(0xc0000) /* temporary space for graphics (disposed after conversion) */
@@ -711,7 +709,7 @@ ROM_START( csk234it )
 	ROM_LOAD( "2.bin",  0x70000, 0x10000, 0x848343a3 )
 	ROM_LOAD( "1.bin",  0x80000, 0x10000, 0x921ad5de )
 
-	ROM_REGION(0x10000)	/* expansion rom - contains backgrounds and pictures charmaps */
+	ROM_REGION( 0x10000 )	/* expansion rom - contains backgrounds and pictures charmaps */
 	ROM_LOAD( "7.234",   0x0000, 0x10000, 0xae6dd4ad )
 ROM_END
 
@@ -724,7 +722,7 @@ ROM_END
 static void cska_decode(void)
 {
 	int A;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	for (A = 0;A < 0x10000;A++)

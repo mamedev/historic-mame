@@ -319,13 +319,10 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* 4 Mhz (?) */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
-		{
-			IREM_AUDIO_CPU(3)
-		}
+		IREM_AUDIO_CPU
 	},
 	57, 1790,	/* accurate frequency, measured on a Moon Patrol board, is 56.75Hz. */
 				/* the Lode Runner manual (similar but different hardware) */
@@ -359,7 +356,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 ROM_START( yard )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "yf-a-3p",      0x0000, 0x2000, 0x4586114f )
 	ROM_LOAD( "yf-a-3n",      0x2000, 0x2000, 0x947fa760 )
 	ROM_LOAD( "yf-a-3m",      0x4000, 0x2000, 0xd4975633 )
@@ -383,7 +380,7 @@ ROM_START( yard )
 	ROM_LOAD( "yard.2n",      0x0320, 0x0100, 0xcd85b646 ) /* radar palette low 4 bits */
 	ROM_LOAD( "yard.2m",      0x0420, 0x0100, 0x45384397 ) /* radar palette high 4 bits */
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "yf-s-3b",      0x8000, 0x2000, 0x0392a60c )		/* samples (ADPCM 4-bit) */
 	ROM_LOAD( "yf-s-1b",      0xa000, 0x2000, 0x6588f41a )		/* samples (ADPCM 4-bit) */
 	ROM_LOAD( "yf-s-3a",      0xc000, 0x2000, 0xbd054e44 )		/* samples (ADPCM 4-bit) */
@@ -391,7 +388,7 @@ ROM_START( yard )
 ROM_END
 
 ROM_START( vsyard )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "a-3p",         0x0000, 0x2000, 0x1edac08f )
 	ROM_LOAD( "vyf-a-3m",     0x2000, 0x2000, 0x3b9330f8 )
 	ROM_LOAD( "a-3m",         0x4000, 0x2000, 0xcf783dad )
@@ -415,7 +412,7 @@ ROM_START( vsyard )
 	ROM_LOAD( "yard.2n",      0x0320, 0x0100, 0xcd85b646 ) /* radar palette low 4 bits */
 	ROM_LOAD( "yard.2m",      0x0420, 0x0100, 0x45384397 ) /* radar palette high 4 bits */
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "yf-s-3b",      0x8000, 0x2000, 0x0392a60c )		/* samples (ADPCM 4-bit) */
 	ROM_LOAD( "yf-s-1b",      0xa000, 0x2000, 0x6588f41a )		/* samples (ADPCM 4-bit) */
 	ROM_LOAD( "yf-s-3a",      0xc000, 0x2000, 0xbd054e44 )		/* samples (ADPCM 4-bit) */
@@ -423,7 +420,7 @@ ROM_START( vsyard )
 ROM_END
 
 ROM_START( vsyard2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "vyf-a-3n",     0x0000, 0x2000, 0x418e01fc )
 	ROM_LOAD( "vyf-a-3m",     0x2000, 0x2000, 0x3b9330f8 )
 	ROM_LOAD( "vyf-a-3k",     0x4000, 0x2000, 0xa0ec15bb )
@@ -447,7 +444,7 @@ ROM_START( vsyard2 )
 	ROM_LOAD( "yard.2n",      0x0320, 0x0100, 0xcd85b646 ) /* radar palette low 4 bits */
 	ROM_LOAD( "yard.2m",      0x0420, 0x0100, 0x45384397 ) /* radar palette high 4 bits */
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "yf-s-3b",      0x8000, 0x2000, 0x0392a60c )
 	ROM_LOAD( "yf-s-1b",      0xa000, 0x2000, 0x6588f41a )
 	ROM_LOAD( "yf-s-3a",      0xc000, 0x2000, 0xbd054e44 )
@@ -458,7 +455,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -486,7 +483,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

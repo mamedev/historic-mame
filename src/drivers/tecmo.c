@@ -74,7 +74,7 @@ int tecmo_bankedrom_r(int offset);
 void tecmo_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	bankaddress = 0x10000 + ((data & 0xf8) << 8);
@@ -680,14 +680,12 @@ static struct MachineDriver silkworm_machine_driver =
 		{
 			CPU_Z80,
 			7600000,	/* 7.6 Mhz (?????) */
-			0,
 			readmem,silkworm_writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 MHz ???? */
-			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,2	/* ?? */
 						/* NMIs are triggered by the main CPU */
@@ -730,14 +728,12 @@ static struct MachineDriver rygar_machine_driver =
 		{
 			CPU_Z80,
 			7600000,
-			0,
 			readmem,rygar_writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 MHz ???? */
-			2,	/* memory region #2 */
 			rygar_sound_readmem,rygar_sound_writemem,0,0,
 			interrupt,2	/* ?? */
 						/* NMIs are triggered by the main CPU */
@@ -780,14 +776,12 @@ static struct MachineDriver gemini_machine_driver =
 		{
 			CPU_Z80,
 			7600000,	/* 7.6 Mhz (?????) */
-			0,
 			readmem,gemini_writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 MHz ???? */
-			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,2	/* ?? */
 						/* NMIs are triggered by the main CPU */
@@ -832,7 +826,7 @@ static struct MachineDriver gemini_machine_driver =
 ***************************************************************************/
 
 ROM_START( rygar )
-	ROM_REGION(0x18000)	/* 64k for code */
+	ROM_REGIONX( 0x18000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "5.5p",         0x00000, 0x08000, 0x062cd55d ) /* code */
 	ROM_LOAD( "cpu_5m.bin",   0x08000, 0x04000, 0x7ac5191b ) /* code */
 	ROM_LOAD( "cpu_5j.bin",   0x10000, 0x08000, 0xed76d606 ) /* banked at f000-f7ff */
@@ -855,7 +849,7 @@ ROM_START( rygar )
 	ROM_LOAD( "vid_6c.bin",   0x58000, 0x08000, 0x89868c85 )
 	ROM_LOAD( "vid_6b.bin",   0x60000, 0x08000, 0x35389a7b )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "cpu_4h.bin",   0x0000, 0x2000, 0xe4a2fa87 )
 
 	ROM_REGION(0x4000)	/* ADPCM samples */
@@ -863,7 +857,7 @@ ROM_START( rygar )
 ROM_END
 
 ROM_START( rygar2 )
-	ROM_REGION(0x18000)	/* 64k for code */
+	ROM_REGIONX( 0x18000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "cpu_5p.bin",   0x00000, 0x08000, 0xe79c054a ) /* code */
 	ROM_LOAD( "cpu_5m.bin",   0x08000, 0x04000, 0x7ac5191b ) /* code */
 	ROM_LOAD( "cpu_5j.bin",   0x10000, 0x08000, 0xed76d606 ) /* banked at f000-f7ff */
@@ -886,7 +880,7 @@ ROM_START( rygar2 )
 	ROM_LOAD( "vid_6c.bin",   0x58000, 0x08000, 0x89868c85 )
 	ROM_LOAD( "vid_6b.bin",   0x60000, 0x08000, 0x35389a7b )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "cpu_4h.bin",   0x0000, 0x2000, 0xe4a2fa87 )
 
 	ROM_REGION(0x4000)	/* ADPCM samples */
@@ -894,7 +888,7 @@ ROM_START( rygar2 )
 ROM_END
 
 ROM_START( rygarj )
-	ROM_REGION(0x18000)	/* 64k for code */
+	ROM_REGIONX( 0x18000, REGION_CPU1 )	/* 64k for code */
 
 	ROM_LOAD( "cpuj_5p.bin",  0x00000, 0x08000, 0xb39698ba ) /* code */
 	ROM_LOAD( "cpuj_5m.bin",  0x08000, 0x04000, 0x3f180979 ) /* code */
@@ -918,7 +912,7 @@ ROM_START( rygarj )
 	ROM_LOAD( "vid_6c.bin",   0x58000, 0x08000, 0x89868c85 )
 	ROM_LOAD( "vid_6b.bin",   0x60000, 0x08000, 0x35389a7b )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "cpu_4h.bin",   0x0000, 0x2000, 0xe4a2fa87 )
 
 	ROM_REGION(0x4000)	/* ADPCM samples */
@@ -926,7 +920,7 @@ ROM_START( rygarj )
 ROM_END
 
 ROM_START( silkworm )
-	ROM_REGION(0x20000)	/* 64k for code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "silkworm.4",   0x00000, 0x10000, 0xa5277cce )	/* c000-ffff is not used */
 	ROM_LOAD( "silkworm.5",   0x10000, 0x10000, 0xa6c7bb51 )	/* banked at f000-f7ff */
 
@@ -945,7 +939,7 @@ ROM_START( silkworm )
 	ROM_LOAD( "silkworm.16",  0xa8000, 0x10000, 0x9292ed63 )	/* tiles #2 */
 	ROM_LOAD( "silkworm.17",  0xb8000, 0x10000, 0x3fa4563d )	/* tiles #2 */
 
-	ROM_REGION(0x20000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x20000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "silkworm.3",   0x0000, 0x8000, 0xb589f587 )
 
 	ROM_REGION(0x8000)	/* ADPCM samples */
@@ -953,7 +947,7 @@ ROM_START( silkworm )
 ROM_END
 
 ROM_START( silkwrm2 )
-	ROM_REGION(0x20000)	/* 64k for code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "r4",           0x00000, 0x10000, 0x6df3df22 )	/* c000-ffff is not used */
 	ROM_LOAD( "silkworm.5",   0x10000, 0x10000, 0xa6c7bb51 )	/* banked at f000-f7ff */
 
@@ -972,7 +966,7 @@ ROM_START( silkwrm2 )
 	ROM_LOAD( "silkworm.16",  0xa8000, 0x10000, 0x9292ed63 )	/* tiles #2 */
 	ROM_LOAD( "silkworm.17",  0xb8000, 0x10000, 0x3fa4563d )	/* tiles #2 */
 
-	ROM_REGION(0x20000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x20000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "r3",           0x0000, 0x8000, 0xb79848d0 )
 
 	ROM_REGION(0x8000)	/* ADPCM samples */
@@ -980,7 +974,7 @@ ROM_START( silkwrm2 )
 ROM_END
 
 ROM_START( gemini )
-	ROM_REGION(0x20000)	/* 64k for code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "gw04-5s.rom",  0x00000, 0x10000, 0xff9de855 )	/* c000-ffff is not used */
 	ROM_LOAD( "gw05-6s.rom",  0x10000, 0x10000, 0x5a6947a9 )	/* banked at f000-f7ff */
 
@@ -999,7 +993,7 @@ ROM_START( gemini )
 	ROM_LOAD( "gw16-2rb.rom", 0xa8000, 0x10000, 0xf911c7be )	/* tiles #2 */
 	ROM_LOAD( "gw17-3r.rom",  0xb8000, 0x10000, 0x79a9ce25 )	/* tiles #2 */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "gw03-5h.rom",  0x0000, 0x8000, 0x9bc79596 )
 
 	ROM_REGION(0x8000)	/* ADPCM samples */
@@ -1010,7 +1004,7 @@ ROM_END
 
 static int rygar_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1054,7 +1048,7 @@ static int rygar_hiload(void)
 static void rygar_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1067,7 +1061,7 @@ static void rygar_hisave(void)
 
 static int silkworm_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1092,7 +1086,7 @@ static int silkworm_hiload(void)
 static void silkworm_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1108,7 +1102,7 @@ static void silkworm_hisave(void)
 
 static int gemini_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1132,7 +1126,7 @@ static int gemini_hiload(void)
 static void gemini_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

@@ -343,7 +343,6 @@ static struct MachineDriver machine_driver =
         {
             CPU_M6809,
             2800000,
-            0,
             readmem,writemem,0,0,
             0,0,                     /* Vblank Int */
             spiders_timed_irq , 25   /* Timed Int  */
@@ -383,7 +382,7 @@ static struct MachineDriver machine_driver =
 
 
 ROM_START( spiders )
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU1 )
 	ROM_LOAD( "sp-ic74",      0xc000, 0x1000, 0x6a2578f6 )
 	ROM_LOAD( "sp-ic73",      0xd000, 0x1000, 0xd69b2f21 )
 	ROM_LOAD( "sp-ic72",      0xe000, 0x1000, 0x464125da )
@@ -393,7 +392,7 @@ ROM_START( spiders )
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "sp-ic3",       0xf800, 0x0800, 0x944d761e )
 
 	ROM_REGION(0x10000)     /* 64k graphics block */
@@ -407,7 +406,7 @@ ROM_START( spiders )
 ROM_END
 
 ROM_START( spiders2 )
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU1 )
 	ROM_LOAD( "sp-ic74",      0xc000, 0x1000, 0x6a2578f6 )
 	ROM_LOAD( "sp2.bin",      0xd000, 0x1000, 0xcf71d12b )
 	ROM_LOAD( "sp-ic72",      0xe000, 0x1000, 0x464125da )
@@ -417,7 +416,7 @@ ROM_START( spiders2 )
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "sp-ic3",       0xf800, 0x0800, 0x944d761e )
 
 	ROM_REGION(0x10000)     /* 64k graphics block */
@@ -454,7 +453,7 @@ struct GameDriver driver_spiders =
 	input_ports_spiders,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ORIENTATION_ROTATE_270 | GAME_NO_SOUND,
 
 	0,0
 };
@@ -480,7 +479,7 @@ struct GameDriver driver_spiders2 =
 	input_ports_spiders,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ORIENTATION_ROTATE_270 | GAME_NO_SOUND,
 
 	0,0
 };

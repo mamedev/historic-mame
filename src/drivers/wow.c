@@ -394,7 +394,7 @@ static void init_palette(unsigned char *game_palette, unsigned short *game_color
  ****************************************************************************/
 
 ROM_START( wow )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "wow.x1", 0x0000, 0x1000, 0xc1295786 )
 	ROM_LOAD( "wow.x2", 0x1000, 0x1000, 0x9be93215 )
 	ROM_LOAD( "wow.x3", 0x2000, 0x1000, 0x75e5a22e )
@@ -515,7 +515,6 @@ static struct MachineDriver wow_machine_driver =
 		{
 			CPU_Z80,
 			1789773,	/* 1.789 Mhz */
-			0,
 			readmem,writemem,readport,writeport,
 			wow_interrupt,256
 		}
@@ -556,7 +555,7 @@ static struct MachineDriver wow_machine_driver =
 
 static int wow_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -583,7 +582,7 @@ static int wow_hiload(void)
 static void wow_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -625,7 +624,7 @@ struct GameDriver driver_wow =
  ****************************************************************************/
 
 ROM_START( robby )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "rotox1.bin",  0x0000, 0x1000, 0xa431b85a )
 	ROM_LOAD( "rotox2.bin",  0x1000, 0x1000, 0x33cdda83 )
 	ROM_LOAD( "rotox3.bin",  0x2000, 0x1000, 0xdbf97491 )
@@ -721,7 +720,6 @@ static struct MachineDriver robby_machine_driver =
 		{
 			CPU_Z80,
 			1789773,	/* 1.789 Mhz */
-			0,
 			robby_readmem,robby_writemem,readport,writeport,
 			wow_interrupt,256
 		}
@@ -754,7 +752,7 @@ static struct MachineDriver robby_machine_driver =
 
 static int robby_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -782,7 +780,7 @@ static int robby_hiload(void)
 static void robby_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -824,7 +822,7 @@ struct GameDriver driver_robby =
  ****************************************************************************/
 
 ROM_START( gorf )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "gorf-a.bin", 0x0000, 0x1000, 0x5b348321 )
 	ROM_LOAD( "gorf-b.bin", 0x1000, 0x1000, 0x62d6de77 )
 	ROM_LOAD( "gorf-c.bin", 0x2000, 0x1000, 0x1d3bc9c9 )
@@ -836,7 +834,7 @@ ROM_START( gorf )
 ROM_END
 
 ROM_START( gorfpgm1 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "873a", 0x0000, 0x1000, 0x97cb4a6a )
 	ROM_LOAD( "873b", 0x1000, 0x1000, 0x257236f8 )
 	ROM_LOAD( "873c", 0x2000, 0x1000, 0x16b0638b )
@@ -925,7 +923,6 @@ static struct MachineDriver gorf_machine_driver =
 		{
 			CPU_Z80,
 			1789773,	/* 1.789 Mhz */
-			0,
 			readmem,writemem,readport,writeport,		/* ASG */
 			gorf_interrupt,256
 		}
@@ -969,7 +966,7 @@ static struct MachineDriver gorf_machine_driver =
 
 static int gorf_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -994,7 +991,7 @@ static int gorf_hiload(void)
 static void gorf_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1062,7 +1059,7 @@ struct GameDriver driver_gorfpgm1 =
  ****************************************************************************/
 
 ROM_START( spacezap )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "0662.01", 0x0000, 0x1000, 0xa92de312 )
 	ROM_LOAD( "0663.xx", 0x1000, 0x1000, 0x4836ebf1 )
 	ROM_LOAD( "0664.xx", 0x2000, 0x1000, 0xd8193a80 )
@@ -1126,7 +1123,6 @@ static struct MachineDriver spacezap_machine_driver =
 		{
 			CPU_Z80,
 			1789773,	/* 1.789 Mhz */
-			0,
 			readmem,writemem,readport,writeport,
 			wow_interrupt,256
 		}
@@ -1159,7 +1155,7 @@ static struct MachineDriver spacezap_machine_driver =
 
 static int spacezap_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if memory has already been initialized */
@@ -1186,7 +1182,7 @@ static int spacezap_hiload(void)
 static void spacezap_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1228,7 +1224,7 @@ struct GameDriver driver_spacezap =
  ****************************************************************************/
 
 ROM_START( seawolf2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sw2x1.bin", 0x0000, 0x0800, 0xad0103f6 )
 	ROM_LOAD( "sw2x2.bin", 0x0800, 0x0800, 0xe0430f0a )
 	ROM_LOAD( "sw2x3.bin", 0x1000, 0x0800, 0x05ad1619 )
@@ -1332,7 +1328,6 @@ static struct MachineDriver seawolf_machine_driver =
 		{
 			CPU_Z80,
 			1789773,	/* 1.789 Mhz */
-			0,
 			seawolf2_readmem,seawolf2_writemem,readport,seawolf2_writeport,
 			wow_interrupt,256
 		}
@@ -1359,7 +1354,7 @@ static struct MachineDriver seawolf_machine_driver =
 
 static int seawolf_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1382,7 +1377,7 @@ static int seawolf_hiload(void)
 static void seawolf_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1424,7 +1419,7 @@ struct GameDriver driver_seawolf2 =
  ****************************************************************************/
 
 ROM_START( ebases )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "m761a", 0x0000, 0x1000, 0x34422147 )
 	ROM_LOAD( "m761b", 0x1000, 0x1000, 0x4f28dfd6 )
 	ROM_LOAD( "m761c", 0x2000, 0x1000, 0xbff6c97e )
@@ -1517,7 +1512,6 @@ static struct MachineDriver ebases_machine_driver =
 		{
 			CPU_Z80,
 			1789773,	/* 1.789 Mhz */
-			0,
 			readmem,writemem,readport,writeport,
 			wow_interrupt,256
 		}

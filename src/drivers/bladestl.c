@@ -422,8 +422,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &charlayout,     0,	1 },	/* colors 00..31 */
-	{ 1, 0x040000, &spritelayout,2*16,	16 },	/* colors 32..47 but using lookup table */
+	{ REGION_GFX1, 0x000000, &charlayout,     0,	1 },	/* colors 00..31 */
+	{ REGION_GFX1, 0x040000, &spritelayout,2*16,	16 },	/* colors 32..47 but using lookup table */
 	{ -1 } /* end of array */
 };
 
@@ -462,14 +462,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_HD6309,
 			3000000,		/* 24MHz/8 (?) */
-			REGION_CPU1,
 			bladestl_readmem,bladestl_writemem,0,0,
             bladestl_interrupt,1
         },
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
 			2000000,		/* ? */
-			REGION_CPU2,
 			bladestl_readmem_sound, bladestl_writemem_sound,0,0,
 			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
 		}

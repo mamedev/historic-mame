@@ -515,21 +515,18 @@ static struct MachineDriver gaplus_machine_driver =
 		{
 			CPU_M6809,		  /* MAIN CPU */
 			1536000,			/* 24.576 Mhz / 16 = 1.536 Mhz */
-			0,
 			readmem_cpu1,writemem_cpu1,0,0,
 			gaplus_interrupt_1,1
 		},
 		{
 			CPU_M6809,		  /* SUB CPU */
 			1536000,			/* 24.576 Mhz / 16 = 1.536 Mhz */
-			2,
 			readmem_cpu2,writemem_cpu2,0,0,
 			gaplus_interrupt_2,1
 		},
 		{
 			CPU_M6809,		  /* SOUND CPU */
 			1536000,			/* 24.576 Mhz / 16 = 1.536 Mhz */
-			3,
 			readmem_cpu3,writemem_cpu3,0,0,
 			gaplus_interrupt_3,1
 		}
@@ -573,21 +570,18 @@ static struct MachineDriver gaplusa_machine_driver =
 		{
 			CPU_M6809,		  /* MAIN CPU */
 			1536000,			/* 24.576 Mhz / 16 = 1.536 Mhz */
-			0,
 			gaplusa_readmem_cpu1,writemem_cpu1,0,0,
 			gaplus_interrupt_1,1
 		},
 		{
 			CPU_M6809,		  /* SUB CPU */
 			1536000,			/* 24.576 Mhz / 16 = 1.536 Mhz */
-			2,
 			readmem_cpu2,writemem_cpu2,0,0,
 			gaplus_interrupt_2,1
 		},
 		{
 			CPU_M6809,		  /* SOUND CPU */
 			1536000,			/* 24.576 Mhz / 16 = 1.536 Mhz */
-			3,
 			readmem_cpu3,writemem_cpu3,0,0,
 			gaplus_interrupt_3,1
 		}
@@ -631,21 +625,18 @@ static struct MachineDriver galaga3_machine_driver =
 		{
 			CPU_M6809,		  /* MAIN CPU */
 			1536000,			/* 24.576 Mhz / 16 = 1.536 Mhz */
-			0,
 			galaga3_readmem_cpu1,writemem_cpu1,0,0,
 			gaplus_interrupt_1,1
 		},
 		{
 			CPU_M6809,		  /* SUB CPU */
 			1536000,			/* 24.576 Mhz / 16 = 1.536 Mhz */
-			2,
 			readmem_cpu2,writemem_cpu2,0,0,
 			gaplus_interrupt_2,1
 		},
 		{
 			CPU_M6809,		  /* SOUND CPU */
 			1536000,			/* 24.576 Mhz / 16 = 1.536 Mhz */
-			3,
 			readmem_cpu3,writemem_cpu3,0,0,
 			gaplus_interrupt_3,1
 		}
@@ -683,7 +674,7 @@ static struct MachineDriver galaga3_machine_driver =
 };
 
 ROM_START( gaplus )
-	ROM_REGION(0x10000) /* 64k for the MAIN CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for the MAIN CPU */
 	ROM_LOAD( "gp2-4.64",   0xa000, 0x2000, 0x484f11e0 )
 	ROM_LOAD( "gp2-3.64",   0xc000, 0x2000, 0xa74b0266 )
 	ROM_LOAD( "gp2-2.64",   0xe000, 0x2000, 0x69fdfdb7 )
@@ -696,12 +687,12 @@ ROM_START( gaplus )
 	ROM_LOAD( "gp2-12.64",  0x8000, 0x2000, 0x7316a1f1 )	/* objects */
 	/* 0xa000-0xbfff empty space to decode sprite set #3 as 3 bits per pixel */
 
-	ROM_REGION(0x10000) /* 64k for the SUB CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the SUB CPU */
 	ROM_LOAD( "gp2-8.64",   0xa000, 0x2000, 0xbff601a6 )
 	ROM_LOAD( "gp2-7.64",   0xc000, 0x2000, 0x0621f7df )
 	ROM_LOAD( "gp2-6.64",   0xe000, 0x2000, 0x14cd61ea )
 
-	ROM_REGION(0x10000) /* 64k for the SOUND CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* 64k for the SOUND CPU */
 	ROM_LOAD( "gp2-1.64",   0xe000, 0x2000, 0xed8aa206 )
 
 	ROM_REGIONX( 0x0800, REGION_PROMS )
@@ -717,7 +708,7 @@ ROM_START( gaplus )
 ROM_END
 
 ROM_START( gaplusa )
-	ROM_REGION(0x10000) /* 64k for the MAIN CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for the MAIN CPU */
 	ROM_LOAD( "gp2-4.8d",   0xa000, 0x2000, 0xe525d75d )
 	ROM_LOAD( "gp2-3b.8c",  0xc000, 0x2000, 0xd77840a4 )
 	ROM_LOAD( "gp2-2b.8b",  0xe000, 0x2000, 0xb3cb90db )
@@ -730,12 +721,12 @@ ROM_START( gaplusa )
 	ROM_LOAD( "gp2-12.64",  0x8000, 0x2000, 0x7316a1f1 )	/* objects */
 	/* 0xa000-0xbfff empty space to decode sprite set #3 as 3 bits per pixel */
 
-	ROM_REGION(0x10000) /* 64k for the SUB CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the SUB CPU */
 	ROM_LOAD( "gp2-8.11d",  0xa000, 0x2000, 0x42b9fd7c )
 	ROM_LOAD( "gp2-7.64",   0xc000, 0x2000, 0x0621f7df )
 	ROM_LOAD( "gp2-6.11b",  0xe000, 0x2000, 0x75b18652 )
 
-	ROM_REGION(0x10000) /* 64k for the SOUND CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* 64k for the SOUND CPU */
 	ROM_LOAD( "gp2-1.64",   0xe000, 0x2000, 0xed8aa206 )
 
 	ROM_REGIONX( 0x0800, REGION_PROMS )
@@ -751,7 +742,7 @@ ROM_START( gaplusa )
 ROM_END
 
 ROM_START( galaga3 )
-	ROM_REGION(0x10000) /* 64k for the MAIN CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for the MAIN CPU */
 	ROM_LOAD( "gal3_9e.bin",   0xa000, 0x2000, 0xf4845e7f )
 	ROM_LOAD( "gal3_9d.bin",   0xc000, 0x2000, 0x86fac687 )
 	ROM_LOAD( "gal3_9c.bin",   0xe000, 0x2000, 0xf1b00073 )
@@ -764,12 +755,12 @@ ROM_START( galaga3 )
 	ROM_LOAD( "gp2-12.64",  0x8000, 0x2000, 0x7316a1f1 )	/* objects */
 	/* 0xa000-0xbfff empty space to decode sprite set #3 as 3 bits per pixel */
 
-	ROM_REGION(0x10000) /* 64k for the SUB CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the SUB CPU */
 	ROM_LOAD( "gal3_6l.bin",0xa000, 0x2000, 0x9ec3dce5 )
 	ROM_LOAD( "gp2-7.64",   0xc000, 0x2000, 0x0621f7df )
 	ROM_LOAD( "gal3_6n.bin",0xe000, 0x2000, 0x6a2942c5 )
 
-	ROM_REGION(0x10000) /* 64k for the SOUND CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* 64k for the SOUND CPU */
 	ROM_LOAD( "gp2-1.64",   0xe000, 0x2000, 0xed8aa206 )
 
 	ROM_REGIONX( 0x0800, REGION_PROMS )
@@ -785,7 +776,7 @@ ROM_START( galaga3 )
 ROM_END
 
 ROM_START( galaga3a )
-	ROM_REGION(0x10000) /* 64k for the MAIN CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for the MAIN CPU */
 	ROM_LOAD( "mi.9e",         0xa000, 0x2000, 0xe392704e )
 	ROM_LOAD( "gal3_9d.bin",   0xc000, 0x2000, 0x86fac687 )
 	ROM_LOAD( "gal3_9c.bin",   0xe000, 0x2000, 0xf1b00073 )
@@ -798,12 +789,12 @@ ROM_START( galaga3a )
 	ROM_LOAD( "gp2-12.64",  0x8000, 0x2000, 0x7316a1f1 )	/* objects */
 	/* 0xa000-0xbfff empty space to decode sprite set #3 as 3 bits per pixel */
 
-	ROM_REGION(0x10000) /* 64k for the SUB CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the SUB CPU */
 	ROM_LOAD( "gal3_6l.bin",0xa000, 0x2000, 0x9ec3dce5 )
 	ROM_LOAD( "gp2-7.64",   0xc000, 0x2000, 0x0621f7df )
 	ROM_LOAD( "gal3_6n.bin",0xe000, 0x2000, 0x6a2942c5 )
 
-	ROM_REGION(0x10000) /* 64k for the SOUND CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* 64k for the SOUND CPU */
 	ROM_LOAD( "gp2-1.64",   0xe000, 0x2000, 0xed8aa206 )
 
 	ROM_REGIONX( 0x0800, REGION_PROMS )

@@ -263,7 +263,7 @@ void lrescue_videoram_w (int offset,int data)
 void rollingc_videoram_w (int offset,int data)
 {
 	/* TODO: get rid of this */
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if (invaders_videoram[offset] != data)

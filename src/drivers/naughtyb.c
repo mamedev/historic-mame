@@ -261,7 +261,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			1500000,	/* 3 Mhz ? */
-			0,
 			readmem,writemem,0,0,
 			naughtyb_interrupt,1
 		}
@@ -301,7 +300,6 @@ static struct MachineDriver popflame_machine_driver =
 		{
 			CPU_Z80,
 			1500000,	/* 3 Mhz ? */
-			0,
 			readmem,popflame_writemem,0,0,
 			naughtyb_interrupt,1
 		}
@@ -342,7 +340,7 @@ static struct MachineDriver popflame_machine_driver =
 ***************************************************************************/
 
 ROM_START( naughtyb )
-	ROM_REGION(0x10000)      /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )      /* 64k for code */
 	ROM_LOAD( "1.30",      0x0000, 0x0800, 0xf6e1178e )
 	ROM_LOAD( "2.29",      0x0800, 0x0800, 0xb803eb8c )
 	ROM_LOAD( "3.28",      0x1000, 0x0800, 0x004d0ba7 )
@@ -368,7 +366,7 @@ ROM_START( naughtyb )
 ROM_END
 
 ROM_START( naughtya )
-	ROM_REGION(0x10000)      /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )      /* 64k for code */
 	ROM_LOAD( "91",        0x0000, 0x0800, 0x42b14bc7 )
 	ROM_LOAD( "92",        0x0800, 0x0800, 0xa24674b4 )
 	ROM_LOAD( "3.28",      0x1000, 0x0800, 0x004d0ba7 )
@@ -394,7 +392,7 @@ ROM_START( naughtya )
 ROM_END
 
 ROM_START( naughtyc )
-	ROM_REGION(0x10000)      /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )      /* 64k for code */
 	ROM_LOAD( "nb1ic30",   0x0000, 0x0800, 0x3f482fa3 )
 	ROM_LOAD( "nb2ic29",   0x0800, 0x0800, 0x7ddea141 )
 	ROM_LOAD( "nb3ic28",   0x1000, 0x0800, 0x8c72a069 )
@@ -420,7 +418,7 @@ ROM_START( naughtyc )
 ROM_END
 
 ROM_START( popflame )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ic86.pop",     0x0000, 0x1000, 0x5e32bbdf )
 	ROM_LOAD( "ic80.pop",     0x1000, 0x1000, 0xb77abf3d )
 	ROM_LOAD( "ic94.pop",     0x2000, 0x1000, 0x945a3c0f )
@@ -438,7 +436,7 @@ ROM_START( popflame )
 ROM_END
 
 ROM_START( popflama )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "popflama.30",     0x0000, 0x1000, 0xa9bb0e8a )
 	ROM_LOAD( "popflama.28",     0x1000, 0x1000, 0xdebe6d03 )
 	ROM_LOAD( "popflama.26",     0x2000, 0x1000, 0x09df0d4d )
@@ -460,7 +458,7 @@ ROM_END
 static int naughtyb_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score has already been written to screen */
@@ -512,7 +510,7 @@ static void naughtyb_hisave(void)
 	unsigned long score1,score2,hiscore;
 	void *f;
 
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	score1 = get_score(&RAM[0x4020]);
 	score2 = get_score(&RAM[0x4030]);
@@ -534,7 +532,7 @@ static void naughtyb_hisave(void)
 static int popflame_hiload (void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score has already been written to screen */
@@ -566,7 +564,7 @@ static void popflame_hisave (void)
 	unsigned long score1,score2,hiscore;
 	void *f;
 
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	score1 = get_score (&RAM[0x4021]);
 	score2 = get_score (&RAM[0x4031]);

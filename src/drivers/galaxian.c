@@ -360,7 +360,7 @@ static struct MemoryWriteAddress checkmaj_sound_writemem[] =
 /* Zig Zag can swap ROMs 2 and 3 as a form of copy protection */
 static void zigzag_sillyprotection_w(int offset,int data)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if (data)
@@ -1297,7 +1297,6 @@ static struct MachineDriver NAME##_machine_driver =								\
 		{																		\
 			CPU_Z80,															\
 			18432000/6,	/* 3.072 Mhz */											\
-			0,																	\
 			readmem,writemem,0,0,												\
 			INTERRUPT##_vh_interrupt,1											\
 		}																		\
@@ -1346,7 +1345,6 @@ static struct MachineDriver zigzag_machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
-			0,
 			zigzag_readmem,zigzag_writemem,0,0,
 			nmi_interrupt,1
 		}
@@ -1384,7 +1382,6 @@ static struct MachineDriver scramblb_machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 MHz */
-			0,
 			scramblb_readmem,scramblb_writemem,0,0,
 			scramble_vh_interrupt,1
 		}
@@ -1422,7 +1419,6 @@ static struct MachineDriver jumpbug_machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz */
-			0,
 			jumpbug_readmem,jumpbug_writemem,0,0,
 			scramble_vh_interrupt,1
 		}
@@ -1460,14 +1456,12 @@ static struct MachineDriver checkmaj_machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz */
-			0,
 			readmem,checkmaj_writemem,0,0,
 			galaxian_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			1620000,	/* 1.62 MHz? (used the same as Moon Cresta) */
-			3,
 			checkmaj_sound_readmem,checkmaj_sound_writemem,0,0,
 			interrupt,32	/* NMIs are triggered by the main CPU */
 		}
@@ -1506,7 +1500,7 @@ static struct MachineDriver checkmaj_machine_driver =
 ***************************************************************************/
 
 ROM_START( galaxian )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "galmidw.u",    0x0000, 0x0800, 0x745e2d61 )
 	ROM_LOAD( "galmidw.v",    0x0800, 0x0800, 0x9c999a40 )
 	ROM_LOAD( "galmidw.w",    0x1000, 0x0800, 0xb5894925 )
@@ -1522,7 +1516,7 @@ ROM_START( galaxian )
 ROM_END
 
 ROM_START( galmidw )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "galmidw.u",    0x0000, 0x0800, 0x745e2d61 )
 	ROM_LOAD( "galmidw.v",    0x0800, 0x0800, 0x9c999a40 )
 	ROM_LOAD( "galmidw.w",    0x1000, 0x0800, 0xb5894925 )
@@ -1538,7 +1532,7 @@ ROM_START( galmidw )
 ROM_END
 
 ROM_START( superg )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "superg.u",     0x0000, 0x0800, 0xe8f3aa67 )
 	ROM_LOAD( "superg.v",     0x0800, 0x0800, 0xf58283e3 )
 	ROM_LOAD( "superg.w",     0x1000, 0x0800, 0xddeabdae )
@@ -1554,7 +1548,7 @@ ROM_START( superg )
 ROM_END
 
 ROM_START( galaxb )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "superg.u",     0x0000, 0x0800, 0xe8f3aa67 )
 	ROM_LOAD( "superg.v",     0x0800, 0x0800, 0xf58283e3 )
 	ROM_LOAD( "cp3",          0x1000, 0x0800, 0x4c7031c0 )
@@ -1570,7 +1564,7 @@ ROM_START( galaxb )
 ROM_END
 
 ROM_START( galapx )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "galx.u",       0x0000, 0x0800, 0x79e4007d )
 	ROM_LOAD( "galx.v",       0x0800, 0x0800, 0xbc16064e )
 	ROM_LOAD( "galx.w",       0x1000, 0x0800, 0x72d2d3ee )
@@ -1586,7 +1580,7 @@ ROM_START( galapx )
 ROM_END
 
 ROM_START( galap1 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "superg.u",     0x0000, 0x0800, 0xe8f3aa67 )
 	ROM_LOAD( "superg.v",     0x0800, 0x0800, 0xf58283e3 )
 	ROM_LOAD( "cp3",          0x1000, 0x0800, 0x4c7031c0 )
@@ -1602,7 +1596,7 @@ ROM_START( galap1 )
 ROM_END
 
 ROM_START( galap4 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "galnamco.u",   0x0000, 0x0800, 0xacfde501 )
 	ROM_LOAD( "galnamco.v",   0x0800, 0x0800, 0x65cf3c77 )
 	ROM_LOAD( "galnamco.w",   0x1000, 0x0800, 0x9eef9ae6 )
@@ -1618,7 +1612,7 @@ ROM_START( galap4 )
 ROM_END
 
 ROM_START( galturbo )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "superg.u",     0x0000, 0x0800, 0xe8f3aa67 )
 	ROM_LOAD( "galx.v",       0x0800, 0x0800, 0xbc16064e )
 	ROM_LOAD( "superg.w",     0x1000, 0x0800, 0xddeabdae )
@@ -1634,7 +1628,7 @@ ROM_START( galturbo )
 ROM_END
 
 ROM_START( swarm )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "swarm1.bin",    0x0000, 0x0800, 0x21eba3d0 )
 	ROM_LOAD( "swarm2.bin",    0x0800, 0x0800, 0xf3a436cd )
 	ROM_LOAD( "swarm3.bin",    0x1000, 0x0800, 0x2915e38b )
@@ -1650,7 +1644,7 @@ ROM_START( swarm )
 ROM_END
 
 ROM_START( pisces )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "pisces.a1",    0x0000, 0x0800, 0x856b8e1f )
 	ROM_LOAD( "pisces.a2",    0x0800, 0x0800, 0x055f9762 )
 	ROM_LOAD( "pisces.b2",    0x1000, 0x0800, 0x5540f2e4 )
@@ -1667,7 +1661,7 @@ ROM_START( pisces )
 ROM_END
 
 ROM_START( uniwars )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "f07_1a.bin",   0x0000, 0x0800, 0xd975af10 )
 	ROM_LOAD( "h07_2a.bin",   0x0800, 0x0800, 0xb2ed14c3 )
 	ROM_LOAD( "k07_3a.bin",   0x1000, 0x0800, 0x945f4160 )
@@ -1688,7 +1682,7 @@ ROM_START( uniwars )
 ROM_END
 
 ROM_START( gteikoku )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "f07_1a.bin",   0x0000, 0x0800, 0xd975af10 )
 	ROM_LOAD( "h07_2a.bin",   0x0800, 0x0800, 0xb2ed14c3 )
 	ROM_LOAD( "k07_3a.bin",   0x1000, 0x0800, 0x945f4160 )
@@ -1709,7 +1703,7 @@ ROM_START( gteikoku )
 ROM_END
 
 ROM_START( spacbatt )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "f07_1a.bin",   0x0000, 0x0800, 0xd975af10 )
 	ROM_LOAD( "h07_2a.bin",   0x0800, 0x0800, 0xb2ed14c3 )
 	ROM_LOAD( "sb.3",         0x1000, 0x0800, 0xc25ce4c1 )
@@ -1730,7 +1724,7 @@ ROM_START( spacbatt )
 ROM_END
 
 ROM_START( warofbug )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "warofbug.u",   0x0000, 0x0800, 0xb8dfb7e3 )
 	ROM_LOAD( "warofbug.v",   0x0800, 0x0800, 0xfd8854e0 )
 	ROM_LOAD( "warofbug.w",   0x1000, 0x0800, 0x4495aa14 )
@@ -1746,7 +1740,7 @@ ROM_START( warofbug )
 ROM_END
 
 ROM_START( redufo )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ru1a",         0x0000, 0x0800, 0x5a8e4f37 )
 	ROM_LOAD( "ru2a",         0x0800, 0x0800, 0xc624f52d )
 	ROM_LOAD( "ru3a",         0x1000, 0x0800, 0xe1030d1c )
@@ -1763,7 +1757,7 @@ ROM_START( redufo )
 ROM_END
 
 ROM_START( pacmanbl )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "blpac1b",      0x0000, 0x0800, 0x6718df42 )
 	ROM_LOAD( "blpac2b",      0x0800, 0x0800, 0x33be3648 )
 	ROM_LOAD( "blpac3b",      0x1000, 0x0800, 0xf98c0ceb )
@@ -1783,7 +1777,7 @@ ROM_START( pacmanbl )
 ROM_END
 
 ROM_START( devilfsg )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "dfish1.7f",    0x2000, 0x0800, 0x2ab19698 )
 	ROM_CONTINUE(             0x0000, 0x0800 )
 	ROM_LOAD( "dfish2.7h",    0x2800, 0x0800, 0x4e77f097 )
@@ -1804,7 +1798,7 @@ ROM_START( devilfsg )
 ROM_END
 
 ROM_START( zigzag )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "zz_d1.bin",    0x0000, 0x1000, 0x8cc08d81 )
 	ROM_LOAD( "zz_d2.bin",    0x1000, 0x1000, 0x326d8d45 )
 	ROM_LOAD( "zz_d4.bin",    0x2000, 0x1000, 0xa94ed92a )
@@ -1821,7 +1815,7 @@ ROM_START( zigzag )
 ROM_END
 
 ROM_START( zigzag2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "z1",           0x0000, 0x1000, 0x4c28349a )
 	ROM_LOAD( "zz_d2.bin",    0x1000, 0x1000, 0x326d8d45 )
 	ROM_LOAD( "zz_d4.bin",    0x2000, 0x1000, 0xa94ed92a )
@@ -1838,7 +1832,7 @@ ROM_START( zigzag2 )
 ROM_END
 
 ROM_START( mooncrgx )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1",            0x0000, 0x0800, 0x84cf420b )
 	ROM_LOAD( "2",            0x0800, 0x0800, 0x4c2a61a1 )
 	ROM_LOAD( "3",            0x1000, 0x0800, 0x1962523a )
@@ -1859,7 +1853,7 @@ ROM_START( mooncrgx )
 ROM_END
 
 ROM_START( scramblb )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "scramble.1k",  0x0000, 0x0800, 0x9e025c4a )
 	ROM_LOAD( "scramble.2k",  0x0800, 0x0800, 0x306f783e )
 	ROM_LOAD( "scramble.3k",  0x1000, 0x0800, 0x0500b701 )
@@ -1878,7 +1872,7 @@ ROM_START( scramblb )
 ROM_END
 
 ROM_START( jumpbug )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "jb1",          0x0000, 0x1000, 0x415aa1b7 )
 	ROM_LOAD( "jb2",          0x1000, 0x1000, 0xb1c27510 )
 	ROM_LOAD( "jb3",          0x2000, 0x1000, 0x97c24be2 )
@@ -1900,7 +1894,7 @@ ROM_START( jumpbug )
 ROM_END
 
 ROM_START( jumpbugb )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "jb1",          0x0000, 0x1000, 0x415aa1b7 )
 	ROM_LOAD( "jb2",          0x1000, 0x1000, 0xb1c27510 )
 	ROM_LOAD( "jb3b",         0x2000, 0x1000, 0xcb8b8a0f )
@@ -1922,7 +1916,7 @@ ROM_START( jumpbugb )
 ROM_END
 
 ROM_START( levers )
-	ROM_REGION(0x10000)       /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )       /* 64k for code */
 	ROM_LOAD( "g96059.a8", 	  0x0000, 0x1000, 0x9550627a )
 	ROM_LOAD( "g96060.d8", 	  0x2000, 0x1000, 0x5ac64646 )
 	ROM_LOAD( "g96061.e8", 	  0x3000, 0x1000, 0x9db8e520 )
@@ -1943,7 +1937,7 @@ ROM_START( levers )
 ROM_END
 
 ROM_START( azurian )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "pgm.1",        0x0000, 0x1000, 0x17a0fca7 )
 	ROM_LOAD( "pgm.2",        0x1000, 0x1000, 0x14659848 )
 	ROM_LOAD( "pgm.3",        0x2000, 0x1000, 0x8f60fb97 )
@@ -1957,7 +1951,7 @@ ROM_START( azurian )
 ROM_END
 
 ROM_START( orbitron )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "orbitron.3",   0x0600, 0x0200, 0x419f9c9b )
 	ROM_CONTINUE(			  0x0400, 0x0200)
 	ROM_CONTINUE(			  0x0200, 0x0200)
@@ -1985,7 +1979,7 @@ ROM_START( orbitron )
 ROM_END
 
 ROM_START( checkmaj )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "cm_1.bin",     0x0000, 0x1000, 0x456a118f )
 	ROM_LOAD( "cm_2.bin",     0x1000, 0x1000, 0x146b2c44 )
 	ROM_LOAD( "cm_3.bin",     0x2000, 0x0800, 0x73e1c945 )
@@ -1997,7 +1991,7 @@ ROM_START( checkmaj )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "checkman.clr", 0x0000, 0x0020, 0x57a45057 )
 
-	ROM_REGION(0x10000)	/* 64k for sound code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound code */
 	ROM_LOAD( "cm_4.bin",     0x0000, 0x1000, 0x923cffa1 )
 ROM_END
 
@@ -2005,7 +1999,7 @@ ROM_END
 
 static int galaxian_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* wait for the checkerboard pattern to be on screen */
@@ -2028,7 +2022,7 @@ static int galaxian_hiload(void)
 static void galaxian_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2041,7 +2035,7 @@ static void galaxian_hisave(void)
 
 static int pisces_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	static int firsttime;
 	/* check if the hi score table has already been initialized */
 	/* the high score table is intialized to all 0, so first of all */
@@ -2073,7 +2067,7 @@ static int pisces_hiload(void)
 static void pisces_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2086,7 +2080,7 @@ static void pisces_hisave(void)
 
 static int warofbug_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	static int firsttime;
 
 	/* check if the hi score table has already been initialized */
@@ -2119,7 +2113,7 @@ static int warofbug_hiload(void)
 static void warofbug_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2133,7 +2127,7 @@ static void warofbug_hisave(void)
 static int pacmanbl_hiload(void)
 {
 	static int firsttime;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -2192,7 +2186,7 @@ static int pacmanbl_hiload(void)
 static void pacmanbl_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2204,7 +2198,7 @@ static void pacmanbl_hisave(void)
 
 static int zigzag_hiload(void)
 {
-    unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+    unsigned char *RAM = memory_region(REGION_CPU1);
 
     /* wait for memory to be set */
     if (memcmp(&RAM[0x5000],"\x10\x10\x10",3) == 0)
@@ -2246,7 +2240,7 @@ static int zigzag_hiload(void)
 static void zigzag_hisave(void)
 {
     void *f;
-    unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+    unsigned char *RAM = memory_region(REGION_CPU1);
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
     {
@@ -2257,7 +2251,7 @@ static void zigzag_hisave(void)
 
 static int mooncrgx_hiload(void)
 {
-    unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+    unsigned char *RAM = memory_region(REGION_CPU1);
     /* wait for memory to be set */
     if (memcmp(&RAM[0x4042],"\x00\x50\x00",3) == 0)
 
@@ -2279,7 +2273,7 @@ static int mooncrgx_hiload(void)
 static void mooncrgx_hisave(void)
 {
     void *f;
-    unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+    unsigned char *RAM = memory_region(REGION_CPU1);
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
     {
@@ -2290,7 +2284,7 @@ static void mooncrgx_hisave(void)
 
 static int scramble_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -2316,7 +2310,7 @@ static int scramble_hiload(void)
 static void scramble_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2329,7 +2323,7 @@ static void scramble_hisave(void)
 
 static int jumpbug_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if (memcmp(&RAM[0x4208],"\x00\x00\x00\x05",4) == 0 &&
@@ -2355,7 +2349,7 @@ static int jumpbug_hiload(void)
 static void jumpbug_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2369,7 +2363,7 @@ static void jumpbug_hisave(void)
 /****  Levers high score save routine - RJF (Oct 19, 1999)  ****/
 static int levers_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	static int firsttime;
 	/* check if the hi score table has already been initialized */
 	/* the high score table is intialized to all 0, so first of all */
@@ -2401,7 +2395,7 @@ static int levers_hiload(void)
 static void levers_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2414,7 +2408,7 @@ static void levers_hisave(void)
 /****  Azurian Attack high score save routine - RJF (Nov 1, 1999)  ****/
 static int azurian_hiload(void)
 {
-    unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+    unsigned char *RAM = memory_region(REGION_CPU1);
     /* wait for memory to be set */
     if (memcmp(&RAM[0x40b3],"\x00\x50\x00",3) == 0)
 
@@ -2436,7 +2430,7 @@ static int azurian_hiload(void)
 static void azurian_hisave(void)
 {
     void *f;
-    unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+    unsigned char *RAM = memory_region(REGION_CPU1);
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
     {
@@ -2448,7 +2442,7 @@ static void azurian_hisave(void)
 /****  Orbitron high score save routine - RJF (Nov 3, 1999)  ****/
 static int orbitron_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	static int firsttime;
 	/* check if the hi score table has already been initialized */
 	/* the high score table is intialized to all 0, so first of all */
@@ -2480,7 +2474,7 @@ static int orbitron_hiload(void)
 static void orbitron_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

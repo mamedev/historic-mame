@@ -235,9 +235,9 @@ static struct MemoryReadAddress hunchbks_readmem[] =
 	{ 0x1501, 0x1501, input_port_1_r },	/* IN1 */
 	{ 0x1502, 0x1502, input_port_2_r },	/* IN2 */
 	{ 0x1680, 0x1680, watchdog_reset_r },
-    { 0x3000, 0x3fff, hunchbks_mirror_r },
-    { 0x5000, 0x5fff, hunchbks_mirror_r },
-    { 0x7000, 0x7fff, hunchbks_mirror_r },
+	{ 0x3000, 0x3fff, hunchbks_mirror_r },
+	{ 0x5000, 0x5fff, hunchbks_mirror_r },
+	{ 0x7000, 0x7fff, hunchbks_mirror_r },
 	{ -1 }	/* end of table */
 };
 
@@ -357,9 +357,9 @@ static struct MemoryWriteAddress hunchbks_writemem[] =
 	{ 0x1607, 0x1607, galaxian_flipy_w },
 	{ 0x1210, 0x1210, soundlatch_w },
 	{ 0x1211, 0x1211, scramble_sh_irqtrigger_w },
-    { 0x3000, 0x3fff, hunchbks_mirror_w },
-    { 0x5000, 0x5fff, hunchbks_mirror_w },
-    { 0x7000, 0x7fff, hunchbks_mirror_w },
+	{ 0x3000, 0x3fff, hunchbks_mirror_w },
+	{ 0x5000, 0x5fff, hunchbks_mirror_w },
+	{ 0x7000, 0x7fff, hunchbks_mirror_w },
 	{ -1 }	/* end of table */
 };
 
@@ -463,12 +463,12 @@ static struct IOWritePort hotshock_sound_writeport[] =
 
 INPUT_PORTS_START( scramble )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
@@ -481,12 +481,12 @@ INPUT_PORTS_START( scramble )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x00, "A 1/1  B 2/1  C 1/1" )
 	PORT_DIPSETTING(    0x02, "A 1/2  B 1/1  C 1/2" )
@@ -495,20 +495,20 @@ INPUT_PORTS_START( scramble )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* protection check? */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* protection check? */
 INPUT_PORTS_END
 
 INPUT_PORTS_START( atlantis )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
@@ -522,32 +522,32 @@ INPUT_PORTS_START( atlantis )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x0e, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x02, "A 1/3  B 2/1" )
 	PORT_DIPSETTING(    0x00, "A 1/6  B 1/1" )
 	PORT_DIPSETTING(    0x04, "A 1/99 B 1/99")
 	/* all the other combos give 99 credits */
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 /* same as scramble, dip switches are different */
 INPUT_PORTS_START( theend )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
@@ -560,12 +560,12 @@ INPUT_PORTS_START( theend )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
@@ -574,20 +574,20 @@ INPUT_PORTS_START( theend )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* protection check? */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* protection check? */
 INPUT_PORTS_END
 
 INPUT_PORTS_START( froggers )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* 1P shoot2 - unused */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* 1P shoot1 - unused */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
@@ -600,12 +600,12 @@ INPUT_PORTS_START( froggers )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* 2P shoot2 - unused */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* 2P shoot1 - unused */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x02, "A 2/1 B 2/1 C 2/1" )
 	PORT_DIPSETTING(    0x04, "A 2/1 B 1/3 C 2/1" )
@@ -614,20 +614,20 @@ INPUT_PORTS_START( froggers )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( amidars )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* 1P shoot2 - unused */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
@@ -640,12 +640,12 @@ INPUT_PORTS_START( amidars )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x00, "A 1/1 B 1/6" )
 	PORT_DIPSETTING(    0x02, "A 2/1 B 1/3" )
@@ -655,12 +655,12 @@ INPUT_PORTS_START( amidars )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -668,12 +668,12 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( triplep )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
@@ -686,12 +686,12 @@ INPUT_PORTS_START( triplep )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x02, "A 1/2 B 1/1 C 1/2" )
 	PORT_DIPSETTING(    0x04, "A 1/3 B 3/1 C 1/3" )
@@ -700,9 +700,9 @@ INPUT_PORTS_START( triplep )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
 	PORT_SERVICE( 0x20, IP_ACTIVE_HIGH )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_BITX(    0x80, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", KEYCODE_F1, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
@@ -710,12 +710,12 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( ckongs )
 	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
@@ -732,7 +732,7 @@ INPUT_PORTS_START( ckongs )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
@@ -740,7 +740,7 @@ INPUT_PORTS_START( ckongs )
 	/* the coinage dip switch is spread across bits 0/1 of port 1 and bit 3 of port 2. */
 	/* To handle that, we swap bits 0/1 of port 1 and bits 1/2 of port 2 - this is handled */
 	/* by ckongs_input_port_N_r() */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x0e, 0x0e, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
@@ -750,9 +750,9 @@ INPUT_PORTS_START( ckongs )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x06, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 INPUT_PORTS_END
 
@@ -806,12 +806,12 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( devilfsh )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
@@ -825,12 +825,12 @@ INPUT_PORTS_START( devilfsh )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
@@ -840,7 +840,7 @@ INPUT_PORTS_START( devilfsh )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_5C ) )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP   | IPF_8WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -855,7 +855,7 @@ INPUT_PORTS_START( newsin7 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
@@ -868,12 +868,12 @@ INPUT_PORTS_START( newsin7 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
@@ -883,9 +883,9 @@ INPUT_PORTS_START( newsin7 )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x08, "5" )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* IN3 - unused */
@@ -893,11 +893,11 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( hotshock )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* IN1 */
@@ -971,6 +971,46 @@ INPUT_PORTS_START( hotshock )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( hunchbks )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START	/* IN1 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x02, "A 2/1 B 1/3" )
+	PORT_DIPSETTING(    0x00, "A 1/1 B 1/5" )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "10000" )
+	PORT_DIPSETTING(    0x02, "20000" )
+	PORT_DIPSETTING(    0x04, "40000" )
+	PORT_DIPSETTING(    0x06, "80000" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* protection check? */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* protection check? */
+INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
@@ -1197,14 +1237,12 @@ static struct MachineDriver NAME##_machine_driver =				\
 		{														\
 			CPU_Z80,											\
 			18432000/6,	/* 3.072 MHz */							\
-			0,													\
 			MAINMEM##_readmem,MAINMEM##_writemem,0,0,			\
 			scramble_vh_interrupt,1								\
 		},														\
 		{														\
 			CPU_Z80 | CPU_AUDIO_CPU,							\
 			14318000/8,	/* 1.78975 MHz */						\
-			3,	/* memory region #3 */							\
 			SOUND##_sound_readmem,SOUND##_sound_writemem,SOUND##_sound_readport,SOUND##_sound_writeport,	\
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */								\
 		}														\
@@ -1254,7 +1292,6 @@ static struct MachineDriver triplep_machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 MHz */
-			0,
 			scramble_readmem,triplep_writemem,triplep_readport,triplep_writeport,
 			scramble_vh_interrupt,1
 		}
@@ -1292,7 +1329,6 @@ static struct MachineDriver mariner_machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 MHz */
-			0,
 			mariner_readmem,triplep_writemem,triplep_readport,triplep_writeport,
 			mariner_vh_interrupt,1
 		}
@@ -1335,14 +1371,12 @@ static struct MachineDriver hunchbks_machine_driver =
 		{
 			CPU_S2650,
 			18432000/6,
-			0,
 			hunchbks_readmem,hunchbks_writemem,0,0,
 			hunchbks_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318000/8,	/* 1.78975 MHz */
-			3,	/* memory region #3 */
 			scramble_sound_readmem,scramble_sound_writemem,scramble_sound_readport,scramble_sound_writeport,
 			ignore_interrupt,1
 		}
@@ -1380,7 +1414,7 @@ static struct MachineDriver hunchbks_machine_driver =
 ***************************************************************************/
 
 ROM_START( scramble )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "2d",           0x0000, 0x0800, 0xb89207a1 )
 	ROM_LOAD( "2e",           0x0800, 0x0800, 0xe9b4b9eb )
 	ROM_LOAD( "2f",           0x1000, 0x0800, 0xa1f14f4c )
@@ -1397,14 +1431,14 @@ ROM_START( scramble )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "5c",           0x0000, 0x0800, 0xbcd297f0 )
 	ROM_LOAD( "5d",           0x0800, 0x0800, 0xde7912da )
 	ROM_LOAD( "5e",           0x1000, 0x0800, 0xba2fa933 )
 ROM_END
 
 ROM_START( scramblk )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "2d.k",         0x0000, 0x0800, 0xea35ccaa )
 	ROM_LOAD( "2e.k",         0x0800, 0x0800, 0xe7bba1b3 )
 	ROM_LOAD( "2f.k",         0x1000, 0x0800, 0x12d7fc3e )
@@ -1421,14 +1455,14 @@ ROM_START( scramblk )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "5c",           0x0000, 0x0800, 0xbcd297f0 )
 	ROM_LOAD( "5d",           0x0800, 0x0800, 0xde7912da )
 	ROM_LOAD( "5e",           0x1000, 0x0800, 0xba2fa933 )
 ROM_END
 
 ROM_START( atlantis )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "2c",           0x0000, 0x0800, 0x0e485b9a )
 	ROM_LOAD( "2e",           0x0800, 0x0800, 0xc1640513 )
 	ROM_LOAD( "2f",           0x1000, 0x0800, 0xeec265ee )
@@ -1443,14 +1477,14 @@ ROM_START( atlantis )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "5c",           0x0000, 0x0800, 0xbcd297f0 )
 	ROM_LOAD( "5d",           0x0800, 0x0800, 0xde7912da )
 	ROM_LOAD( "5e",           0x1000, 0x0800, 0xba2fa933 )
 ROM_END
 
 ROM_START( atlants2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "rom1",         0x0000, 0x0800, 0xad348089 )
 	ROM_LOAD( "rom2",         0x0800, 0x0800, 0xcaa705d1 )
 	ROM_LOAD( "rom3",         0x1000, 0x0800, 0xe420641d )
@@ -1467,14 +1501,14 @@ ROM_START( atlants2 )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "5c",           0x0000, 0x0800, 0xbcd297f0 )
 	ROM_LOAD( "5d",           0x0800, 0x0800, 0xde7912da )
 	ROM_LOAD( "5e",           0x1000, 0x0800, 0xba2fa933 )
 ROM_END
 
 ROM_START( theend )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ic13_1t.bin",  0x0000, 0x0800, 0x93e555ba )
 	ROM_LOAD( "ic14_2t.bin",  0x0800, 0x0800, 0x2de7ad27 )
 	ROM_LOAD( "ic15_3t.bin",  0x1000, 0x0800, 0x035f750b )
@@ -1489,13 +1523,13 @@ ROM_START( theend )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "6331-1j.86",   0x0000, 0x0020, 0x24652bc4 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ic56_1.bin",   0x0000, 0x0800, 0x7a141f29 )
 	ROM_LOAD( "ic55_2.bin",   0x0800, 0x0800, 0x218497c1 )
 ROM_END
 
 ROM_START( theends )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ic13",         0x0000, 0x0800, 0x90e5ab14 )
 	ROM_LOAD( "ic14",         0x0800, 0x0800, 0x950f0a07 )
 	ROM_LOAD( "ic15",         0x1000, 0x0800, 0x6786bcf5 )
@@ -1510,13 +1544,13 @@ ROM_START( theends )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "6331-1j.86",   0x0000, 0x0020, 0x24652bc4 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ic56",         0x0000, 0x0800, 0x3b2c2f70 )
 	ROM_LOAD( "ic55",         0x0800, 0x0800, 0xe0429e50 )
 ROM_END
 
 ROM_START( froggers )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "vid_d2.bin",   0x0000, 0x0800, 0xc103066e )
 	ROM_LOAD( "vid_e2.bin",   0x0800, 0x0800, 0xf08bc094 )
 	ROM_LOAD( "vid_f2.bin",   0x1000, 0x0800, 0x637a2ff8 )
@@ -1531,14 +1565,14 @@ ROM_START( froggers )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "vid_e6.bin",   0x0000, 0x0020, 0x0b878b54 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "frogger.608",  0x0000, 0x0800, 0xe8ab0256 )
 	ROM_LOAD( "frogger.609",  0x0800, 0x0800, 0x7380a48f )
 	ROM_LOAD( "frogger.610",  0x1000, 0x0800, 0x31d7eb27 )
 ROM_END
 
 ROM_START( amidars )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "am2d",         0x0000, 0x0800, 0x24b79547 )
 	ROM_LOAD( "am2e",         0x0800, 0x0800, 0x4c64161e )
 	ROM_LOAD( "am2f",         0x1000, 0x0800, 0xb3987a72 )
@@ -1555,13 +1589,13 @@ ROM_START( amidars )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "amidar.clr",   0x0000, 0x0020, 0xf940dcc3 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "amidarus.5c",  0x0000, 0x1000, 0x8ca7b750 )
 	ROM_LOAD( "amidarus.5d",  0x1000, 0x1000, 0x9b5bdc0a )
 ROM_END
 
 ROM_START( triplep )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "triplep.2g",   0x0000, 0x1000, 0xc583a93d )
 	ROM_LOAD( "triplep.2h",   0x1000, 0x1000, 0xc03ddc49 )
 	ROM_LOAD( "triplep.2k",   0x2000, 0x1000, 0xe83ca6b5 )
@@ -1576,7 +1610,7 @@ ROM_START( triplep )
 ROM_END
 
 ROM_START( mariner )
-	ROM_REGION(0x10000)     /* 64k for main CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
 	ROM_LOAD( "tp1",          0x0000, 0x1000, 0xdac1dfd0 )
 	ROM_LOAD( "tm2",          0x1000, 0x1000, 0xefe7ca28 )
 	ROM_LOAD( "tm3",          0x2000, 0x1000, 0x027881a6 )
@@ -1593,7 +1627,7 @@ ROM_START( mariner )
 ROM_END
 
 ROM_START( ckongs )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "vid_2c.bin",   0x0000, 0x1000, 0x49a8c234 )
 	ROM_LOAD( "vid_2e.bin",   0x1000, 0x1000, 0xf1b667f1 )
 	ROM_LOAD( "vid_2f.bin",   0x2000, 0x1000, 0xb194b75d )
@@ -1608,13 +1642,13 @@ ROM_START( ckongs )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "vid_6e.bin",   0x0000, 0x0020, 0x5039af97 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "turt_snd.5c",  0x0000, 0x1000, 0xf0c30f9a )
 	ROM_LOAD( "snd_5d.bin",   0x1000, 0x1000, 0x892c9547 )
 ROM_END
 
 ROM_START( mars )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "u26.3",        0x0000, 0x0800, 0x2f88892c )
 	ROM_LOAD( "u56.4",        0x0800, 0x0800, 0x9e6bcbf7 )
 	ROM_LOAD( "u69.5",        0x1000, 0x0800, 0xdf496e6e )
@@ -1629,14 +1663,14 @@ ROM_START( mars )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "u39.9",        0x0000, 0x0800, 0xbb5968b9 )
 	ROM_LOAD( "u51.10",       0x0800, 0x0800, 0x75fd7720 )
 	ROM_LOAD( "u78.11",       0x1000, 0x0800, 0x72a492da )
 ROM_END
 
 ROM_START( devilfsh )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "u26.1",        0x0000, 0x0800, 0xec047d71 )
 	ROM_LOAD( "u56.2",        0x0800, 0x0800, 0x0138ade9 )
 	ROM_LOAD( "u69.3",        0x1000, 0x0800, 0x5dd0b3fc )
@@ -1653,14 +1687,14 @@ ROM_START( devilfsh )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "u39.9",        0x0000, 0x0800, 0x09987e2e )
 	ROM_LOAD( "u51.10",       0x0800, 0x0800, 0x1e2b1471 )
 	ROM_LOAD( "u78.11",       0x1000, 0x0800, 0x45279aaa )
 ROM_END
 
 ROM_START( newsin7 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "newsin.1",     0x0000, 0x1000, 0xe6c23fe0 )
 	ROM_LOAD( "newsin.2",     0x1000, 0x1000, 0x3d477b5f )
 	ROM_LOAD( "newsin.3",     0x2000, 0x1000, 0x7dfa9af0 )
@@ -1675,14 +1709,14 @@ ROM_START( newsin7 )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "newsin.6",     0x0000, 0x0020, 0x5cf2cd8d )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "newsin.13",    0x0000, 0x0800, 0xd88489a2 )
 	ROM_LOAD( "newsin.12",    0x0800, 0x0800, 0xb154a7af )
 	ROM_LOAD( "newsin.11",    0x1000, 0x0800, 0x7ade709b )
 ROM_END
 
 ROM_START( hotshock )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "hotshock.l10", 0x0000, 0x1000, 0x401078f7 )
 	ROM_LOAD( "hotshock.l9",  0x1000, 0x1000, 0xaf76c237 )
 	ROM_LOAD( "hotshock.l8",  0x2000, 0x1000, 0x30486031 )
@@ -1695,13 +1729,13 @@ ROM_START( hotshock )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "hotshock.b3",  0x0000, 0x1000, 0x0092f0e2 )
 	ROM_LOAD( "hotshock.b4",  0x1000, 0x1000, 0xc2135a44 )
 ROM_END
 
 ROM_START( hunchbks )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "2c_hb01.bin",           0x0000, 0x0800, 0x8bebd834 )
 	ROM_LOAD( "2e_hb02.bin",           0x0800, 0x0800, 0x07de4229 )
 	ROM_LOAD( "2f_hb03.bin",           0x2000, 0x0800, 0xb75a0dfc )
@@ -1718,7 +1752,7 @@ ROM_START( hunchbks )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "6e_prom.bin",           0x0000, 0x0020, 0x4e3caeab )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "11d_snd.bin",           0x0000, 0x0800, 0x88226086 )
 ROM_END
 
@@ -1748,7 +1782,7 @@ static void froggers_decode(void)
 
 
 	/* the first ROM of the second CPU has data lines D0 and D1 swapped. Decode it. */
-	RAM = memory_region(Machine->drv->cpu[1].memory_region);
+	RAM = memory_region(REGION_CPU2);
 	for (A = 0;A < 0x0800;A++)
 		RAM[A] = (RAM[A] & 0xfc) | ((RAM[A] & 1) << 1) | ((RAM[A] & 2) >> 1);
 }
@@ -1765,7 +1799,7 @@ static void mars_decode(void)
 		A2 -> A3
 		A3 -> A1 */
 
-	RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	RAM = memory_region(REGION_CPU1);
 	for (i = 0; i < 0x10000; i += 16)
 	{
 		int j;
@@ -1783,7 +1817,7 @@ static void mars_decode(void)
 
 static int scramble_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1809,7 +1843,7 @@ static int scramble_hiload(void)
 static void scramble_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1823,7 +1857,7 @@ static void scramble_hisave(void)
 
 static int atlantis_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1846,7 +1880,7 @@ static int atlantis_hiload(void)
 static void atlantis_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1861,7 +1895,7 @@ static void atlantis_hisave(void)
 static int theend_hiload(void)
 {
 	static int loop = 0;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1900,7 +1934,7 @@ static int theend_hiload(void)
 static void theend_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1917,7 +1951,7 @@ static void theend_hisave(void)
 
 static int froggers_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1943,7 +1977,7 @@ static int froggers_hiload(void)
 static void froggers_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1956,7 +1990,7 @@ static void froggers_hisave(void)
 
 static int ckongs_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
     /* check if the hi score table has already been initialized */
     /* NOTE : 60b8 + 3 */
@@ -1989,7 +2023,7 @@ static int ckongs_hiload(void)
 static void ckongs_hisave(void)
 {
     void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2413,7 +2447,7 @@ struct GameDriver driver_hunchbks =
 	0,
 	0,
 
-	input_ports_scramble,
+	input_ports_hunchbks,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,

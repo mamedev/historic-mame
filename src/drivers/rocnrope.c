@@ -26,7 +26,7 @@ void timeplt_sh_irqtrigger_w(int offset,int data);
 /* Roc'n'Rope has the IRQ vectors in RAM. The rom contains $FFFF at this address! */
 void rocnrope_interrupt_vector_w(int offset, int data)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	RAM[0xFFF2+offset] = data;
@@ -235,14 +235,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			2048000,        /* 2 Mhz */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318180/8,	/* 1.789772727 MHz */						\
-			3,	/* memory region #3 */
 			timeplt_sound_readmem,timeplt_sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -280,7 +278,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( rocnrope )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "rr1.1h",       0x6000, 0x2000, 0x83093134 )
 	ROM_LOAD( "rr2.2h",       0x8000, 0x2000, 0x75af8697 )
 	ROM_LOAD( "rr3.3h",       0xa000, 0x2000, 0xb21372b1 )
@@ -300,13 +298,13 @@ ROM_START( rocnrope )
 	ROM_LOAD( "b16_prom.bin", 0x0020, 0x0100, 0x750a9677 )
 	ROM_LOAD( "rocnrope.pr3", 0x0120, 0x0100, 0xb5c75a27 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "rnr_7a.snd",   0x0000, 0x1000, 0x75d2c4e2 )
 	ROM_LOAD( "rnr_8a.snd",   0x1000, 0x1000, 0xca4325ae )
 ROM_END
 
 ROM_START( rocnropk )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "rnr_h1.vid",   0x6000, 0x2000, 0x0fddc1f6 )
 	ROM_LOAD( "rnr_h2.vid",   0x8000, 0x2000, 0xce9db49a )
 	ROM_LOAD( "rnr_h3.vid",   0xa000, 0x2000, 0x6d278459 )
@@ -326,7 +324,7 @@ ROM_START( rocnropk )
 	ROM_LOAD( "b16_prom.bin", 0x0020, 0x0100, 0x750a9677 )
 	ROM_LOAD( "rocnrope.pr3", 0x0120, 0x0100, 0xb5c75a27 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "rnr_7a.snd",   0x0000, 0x1000, 0x75d2c4e2 )
 	ROM_LOAD( "rnr_8a.snd",   0x1000, 0x1000, 0xca4325ae )
 ROM_END
@@ -336,7 +334,7 @@ ROM_END
 static void rocnropk_decode(void)
 {
 	int A;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	for (A = 0x6000;A < 0x10000;A++)
@@ -355,7 +353,7 @@ static void rocnrope_decode(void)
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if (memcmp(&RAM[0x5160],"\x01\x00\x00",3) == 0 &&
@@ -381,7 +379,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

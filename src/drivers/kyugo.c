@@ -490,49 +490,47 @@ static struct AY8910interface ay8910_interface =
 ***************************************************************************/
 
 #define Machine_Driver( name ) \
-	static struct MachineDriver name##_machine_driver = { \
-		/* basic machine hardware */																\
-		{																							\
-			{																						\
-				CPU_Z80,																			\
-				18432000 / 4,	/* 18.432 MHz crystal */											\
-				0,																					\
-				name##_readmem,name##_writemem,name##_readport,name##_writeport,					\
-				nmi_interrupt,1																		\
-			},																						\
-			{																						\
-				CPU_Z80,																			\
-				18432000 / 4,	/* 18.432 MHz crystal */											\
-				3,																					\
-				name##_sub_readmem,name##_sub_writemem,name##_sub_readport,name##_sub_writeport,	\
-				interrupt,4																			\
-			}																						\
-		},																							\
-		60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */			\
-		100,	/* cpu interleaving */																\
-		0,																							\
-																									\
-		/* video hardware */																		\
-		64*8, 32*8, { 0*8, 36*8-1, 2*8, 30*8-1 },													\
-		gfxdecodeinfo,																		\
-		256, 256,																					\
-		kyugo_vh_convert_color_prom,																\
-																									\
-		VIDEO_TYPE_RASTER,																			\
-		0,																							\
-		generic_vh_start,																			\
-		generic_vh_stop,																			\
-		kyugo_vh_screenrefresh,																	\
-																									\
-		/* sound hardware */																		\
-		SOUND_SUPPORTS_STEREO,0,0,0,																\
-		{																							\
-			{																						\
-				SOUND_AY8910,																		\
-				&ay8910_interface																	\
-			}																						\
-		}																							\
-	};
+static struct MachineDriver name##_machine_driver =											\
+{																							\
+	{																						\
+		{																					\
+			CPU_Z80,																		\
+			18432000 / 4,	/* 18.432 MHz crystal */										\
+			name##_readmem,name##_writemem,name##_readport,name##_writeport,				\
+			nmi_interrupt,1																	\
+		},																					\
+		{																					\
+			CPU_Z80,																		\
+			18432000 / 4,	/* 18.432 MHz crystal */										\
+			name##_sub_readmem,name##_sub_writemem,name##_sub_readport,name##_sub_writeport,\
+			interrupt,4																		\
+		}																					\
+	},																						\
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */		\
+	100,	/* cpu interleaving */															\
+	0,																						\
+																							\
+	/* video hardware */																	\
+	64*8, 32*8, { 0*8, 36*8-1, 2*8, 30*8-1 },												\
+	gfxdecodeinfo,																			\
+	256, 256,																				\
+	kyugo_vh_convert_color_prom,															\
+																							\
+	VIDEO_TYPE_RASTER,																		\
+	0,																						\
+	generic_vh_start,																		\
+	generic_vh_stop,																		\
+	kyugo_vh_screenrefresh,																	\
+																							\
+	/* sound hardware */																	\
+	SOUND_SUPPORTS_STEREO,0,0,0,															\
+	{																						\
+		{																					\
+			SOUND_AY8910,																	\
+			&ay8910_interface																\
+		}																					\
+	}																						\
+};
 
 /* actual definitions */
 Machine_Driver( gyrodine )
@@ -547,13 +545,13 @@ Machine_Driver( flashgal )
 ***************************************************************************/
 
 ROM_START( gyrodine )
-	ROM_REGION( 0x10000 ) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "a21.02", 0x0000, 0x2000, 0xc5ec4a50 )
 	ROM_LOAD( "a21.03", 0x2000, 0x2000, 0x4e9323bd )
 	ROM_LOAD( "a21.04", 0x4000, 0x2000, 0x57e659d4 )
 	ROM_LOAD( "a21.05", 0x6000, 0x2000, 0x1e7293f3 )
 
-	ROM_REGION( 0x1f000 ) /* temporary space for graphics */
+	ROM_REGION_DISPOSE( 0x1f000 ) /* temporary space for graphics */
 	ROM_LOAD( "a21.15", 0x00000, 0x1000, 0xadba18d0 ) /* chars */
 	ROM_LOAD( "a21.14", 0x01000, 0x2000, 0x9c5c4d5b ) /* sprites - plane 0 */
 	/* 0x03000-0x04fff empty */
@@ -578,17 +576,17 @@ ROM_START( gyrodine )
 	ROM_LOAD( "a21.20", 0x0300, 0x0020, 0xefc4985e ) /* char lookup table */
 	ROM_LOAD( "a21.19", 0x0320, 0x0020, 0x83a39201 ) /* timing? (not used) */
 
-	ROM_REGION( 0x10000 ) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for code */
 	ROM_LOAD( "a21.01", 0x0000, 0x2000, 0xb2ce0aa2 )
 ROM_END
 
 ROM_START( sonofphx )
-	ROM_REGION( 0x10000 ) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "5.f4",   0x0000, 0x2000, 0xe0d2c6cf )
 	ROM_LOAD( "6.h4",   0x2000, 0x2000, 0x3a0d0336 )
 	ROM_LOAD( "7.j4",   0x4000, 0x2000, 0x57a8e900 )
 
-	ROM_REGION( 0x1f000 ) /* temporary space for graphics */
+	ROM_REGION_DISPOSE( 0x1f000 ) /* temporary space for graphics */
 	ROM_LOAD( "14.4a",  0x00000, 0x1000, 0xb3859b8b ) /* chars */
 	ROM_LOAD( "8.6a",   0x01000, 0x4000, 0x0e9f757e ) /* sprites - plane 0 */
 	ROM_LOAD( "9.7a",   0x05000, 0x4000, 0xf7d2e650 ) /* sprites - plane 0 */
@@ -607,7 +605,7 @@ ROM_START( sonofphx )
 	/* 0x0300-0x031f empty - looks like there isn't a lookup table PROM */
 	ROM_LOAD( "2c",     0x0320, 0x0020, 0x83a39201 ) /* timing? (not used) */
 
-	ROM_REGION( 0x10000 ) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for code */
 	ROM_LOAD( "1.f2",   0x0000, 0x2000, 0xc485c621 )
 	ROM_LOAD( "2.h2",   0x2000, 0x2000, 0xb3c6a886 )
 	ROM_LOAD( "3.j2",   0x4000, 0x2000, 0x197e314c )
@@ -615,12 +613,12 @@ ROM_START( sonofphx )
 ROM_END
 
 ROM_START( repulse )
-	ROM_REGION( 0x10000 ) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "repulse.b5", 0x0000, 0x2000, 0xfb2b7c9d )
 	ROM_LOAD( "repulse.b6", 0x2000, 0x2000, 0x99129918 )
 	ROM_LOAD( "7.j4",       0x4000, 0x2000, 0x57a8e900 )
 
-	ROM_REGION( 0x1f000 ) /* temporary space for graphics */
+	ROM_REGION_DISPOSE( 0x1f000 ) /* temporary space for graphics */
 	ROM_LOAD( "repulse.a11",  0x00000, 0x1000, 0x8e1de90a ) /* chars */
 	ROM_LOAD( "8.6a",   0x01000, 0x4000, 0x0e9f757e ) /* sprites - plane 0 */
 	ROM_LOAD( "9.7a",   0x05000, 0x4000, 0xf7d2e650 ) /* sprites - plane 0 */
@@ -639,7 +637,7 @@ ROM_START( repulse )
 	/* 0x0300-0x031f empty - looks like there isn't a lookup table PROM */
 	ROM_LOAD( "2c",     0x0320, 0x0020, 0x83a39201 ) /* timing? (not used) */
 
-	ROM_REGION( 0x10000 ) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2  ) /* 64k for code */
 	ROM_LOAD( "1.f2",       0x0000, 0x2000, 0xc485c621 )
 	ROM_LOAD( "2.h2",       0x2000, 0x2000, 0xb3c6a886 )
 	ROM_LOAD( "3.j2",       0x4000, 0x2000, 0x197e314c )
@@ -647,12 +645,12 @@ ROM_START( repulse )
 ROM_END
 
 ROM_START( 99lstwar )
-	ROM_REGION( 0x10000 ) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "99.4f",   0x0000, 0x2000, 0xe3cfc09f )
 	ROM_LOAD( "99.4h",   0x2000, 0x2000, 0xfd58c6e1 )
 	ROM_LOAD( "7.j4",    0x4000, 0x2000, 0x57a8e900 )
 
-	ROM_REGION( 0x1f000 ) /* temporary space for graphics */
+	ROM_REGION_DISPOSE( 0x1f000 ) /* temporary space for graphics */
 	ROM_LOAD( "99.4a",  0x00000, 0x1000, 0x49a2383e ) /* chars */
 	ROM_LOAD( "8.6a",   0x01000, 0x4000, 0x0e9f757e ) /* sprites - plane 0 */
 	ROM_LOAD( "9.7a",   0x05000, 0x4000, 0xf7d2e650 ) /* sprites - plane 0 */
@@ -671,7 +669,7 @@ ROM_START( 99lstwar )
 	/* 0x0300-0x031f empty - looks like there isn't a lookup table PROM */
 	ROM_LOAD( "2c",     0x0320, 0x0020, 0x83a39201 ) /* timing? (not used) */
 
-	ROM_REGION( 0x10000 ) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for code */
 	ROM_LOAD( "1.f2",       0x0000, 0x2000, 0xc485c621 )
 	ROM_LOAD( "2.h2",       0x2000, 0x2000, 0xb3c6a886 )
 	ROM_LOAD( "3.j2",       0x4000, 0x2000, 0x197e314c )
@@ -679,13 +677,13 @@ ROM_START( 99lstwar )
 ROM_END
 
 ROM_START( flashgal )
-	ROM_REGION( 0x10000 ) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "15.4f",        0x0000, 0x2000, 0xcf5ad733 )
 	ROM_LOAD( "16.4h",        0x2000, 0x2000, 0x00c4851f )
 	ROM_LOAD( "17.4j",        0x4000, 0x2000, 0x1ef0b8f7 )
 	ROM_LOAD( "18.4k",        0x6000, 0x2000, 0x885d53de )
 
-	ROM_REGION( 0x1f000 ) /* temporary space for graphics */
+	ROM_REGION_DISPOSE( 0x1f000 ) /* temporary space for graphics */
 	ROM_LOAD( "19.4b",        0x00000, 0x1000, 0xdca9052f ) /* chars */
 	ROM_LOAD( "20.6b",        0x01000, 0x4000, 0x62caf2a1 ) /* sprites - plane 0 */
 	ROM_LOAD( "21.7b",        0x05000, 0x4000, 0x10f78a10 ) /* sprites - plane 0 */
@@ -704,7 +702,7 @@ ROM_START( flashgal )
 	ROM_LOAD( "flashgal.pr2", 0x0300, 0x0020, 0xcce2e29f ) /* char lookup table */
 	ROM_LOAD( "flashgal.pr1", 0x0320, 0x0020, 0x83a39201 ) /* timing? (not used) */
 
-	ROM_REGION( 0x10000 ) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for code */
 	ROM_LOAD( "11.2f",        0x0000, 0x2000, 0xeee2134d )
 	ROM_LOAD( "12.2h",        0x2000, 0x2000, 0xe5e0cd22 )
 	ROM_LOAD( "13.2j",        0x4000, 0x2000, 0x4cd3fe5e )
@@ -712,11 +710,11 @@ ROM_START( flashgal )
 ROM_END
 
 ROM_START( srdmissn )
-	ROM_REGION( 0x10000 ) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "5.t2",   0x0000, 0x4000, 0xa682b48c )
 	ROM_LOAD( "7.t3",   0x4000, 0x4000, 0x1719c58c )
 
-	ROM_REGION( 0x1f000 ) /* temporary space for graphics */
+	ROM_REGION_DISPOSE( 0x1f000 ) /* temporary space for graphics */
 	ROM_LOAD( "15.4a",  0x00000, 0x1000, 0x4961f7fd ) /* chars */
 	ROM_LOAD( "14.6a",  0x01000, 0x4000, 0x3d4c0447 ) /* sprites - plane 0 */
 	ROM_LOAD( "13.7a",  0x05000, 0x4000, 0x22414a67 ) /* sprites - plane 0 */
@@ -735,16 +733,16 @@ ROM_START( srdmissn )
 	ROM_LOAD( "m2.5j",  0x0300, 0x0020, 0x190a55ad ) /* char lookup table */
 	ROM_LOAD( "m1.2c",  0x0320, 0x0020, 0x83a39201 ) /* timing? not used */
 
-	ROM_REGION( 0x10000 ) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for code */
 	ROM_LOAD( "1.t7",   0x0000, 0x4000, 0xdc48595e )
 	ROM_LOAD( "3.t8",   0x4000, 0x4000, 0x216be1e8 )
 ROM_END
 
 ROM_START( airwolf )
-	ROM_REGION( 0x10000 ) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "b.2s",        0x0000, 0x8000, 0x8c993cce )
 
-	ROM_REGION( 0x1f000 ) /* temporary space for graphics */
+	ROM_REGION_DISPOSE(  0x1f000 ) /* temporary space for graphics */
 	ROM_LOAD( "f.4a",        0x00000, 0x1000, 0x4df44ce9 ) /* chars */
 	ROM_LOAD( "e.6a",        0x01000, 0x2000, 0xe8fbc7d2 ) /* sprites - plane 0 */
 	ROM_CONTINUE(            0x05000, 0x2000 )
@@ -769,16 +767,16 @@ ROM_START( airwolf )
 	/* 0x0300-0x031f empty - looks like there isn't a lookup table PROM */
 	ROM_LOAD( "02c_m1.bin",  0x0320, 0x0020, 0x83a39201 ) /* timing? not used */
 
-	ROM_REGION( 0x10000 ) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for code */
 	ROM_LOAD( "a.7s",        0x0000, 0x8000, 0xa3c7af5c )
 ROM_END
 
 ROM_START( skywolf )
-	ROM_REGION( 0x10000 ) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "02s_03.bin",  0x0000, 0x4000, 0xa0891798 )
 	ROM_LOAD( "03s_04.bin",  0x4000, 0x4000, 0x5f515d46 )
 
-	ROM_REGION( 0x1f000 ) /* temporary space for graphics */
+	ROM_REGION_DISPOSE( 0x1f000 ) /* temporary space for graphics */
 	ROM_LOAD( "04a_11.bin",  0x00000, 0x1000, 0x219de9aa ) /* chars */
 	ROM_LOAD( "06a_10.bin",  0x01000, 0x4000, 0x1c809383 ) /* sprites - plane 0 */
 	ROM_LOAD( "07a_09.bin",  0x05000, 0x4000, 0x5665d774 ) /* sprites - plane 0 */
@@ -797,16 +795,16 @@ ROM_START( skywolf )
 	/* 0x0300-0x031f empty - looks like there isn't a lookup table PROM */
 	ROM_LOAD( "02c_m1.bin",  0x0320, 0x0020, 0x83a39201 ) /* timing? not used */
 
-	ROM_REGION( 0x10000 ) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for code */
 	ROM_LOAD( "07s_01.bin",  0x0000, 0x4000, 0xc680a905 )
 	ROM_LOAD( "08s_02.bin",  0x4000, 0x4000, 0x3d66bf26 )
 ROM_END
 
 ROM_START( skywolf2 )
-	ROM_REGION( 0x10000 ) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "z80_2.bin",   0x0000, 0x8000, 0x34db7bda )
 
-	ROM_REGION( 0x1f000 ) /* temporary space for graphics */
+	ROM_REGION_DISPOSE( 0x1f000 ) /* temporary space for graphics */
 	ROM_LOAD( "04a_11.bin",  0x00000, 0x1000, 0x219de9aa ) /* chars */
 	ROM_LOAD( "06a_10.bin",  0x01000, 0x4000, 0x1c809383 ) /* sprites - plane 0 */
 	ROM_LOAD( "07a_09.bin",  0x05000, 0x4000, 0x5665d774 ) /* sprites - plane 0 */
@@ -825,7 +823,7 @@ ROM_START( skywolf2 )
 	/* 0x0300-0x031f empty - looks like there isn't a lookup table PROM */
 	ROM_LOAD( "02c_m1.bin",  0x0320, 0x0020, 0x83a39201 ) /* timing? not used */
 
-	ROM_REGION( 0x10000 ) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for code */
 	ROM_LOAD( "07s_01.bin",  0x0000, 0x4000, 0xc680a905 )
 	ROM_LOAD( "08s_02.bin",  0x4000, 0x4000, 0x3d66bf26 )
 ROM_END

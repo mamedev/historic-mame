@@ -291,7 +291,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,
 			16000000, /* ?? MHz ? */
-			0,
 			readmem,writemem,0,0,
 			m68_level4_irq,1,
 			m68_level1_irq,102
@@ -325,7 +324,7 @@ static struct MachineDriver machine_driver =
 
 
 ROM_START( bjtwin )
-	ROM_REGION(0x80000)		/* 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )		/* 68000 code */
 	ROM_LOAD_EVEN( "bjt.77",  0x00000, 0x40000, 0x7830A465 )	/* 68000 code */
 	ROM_LOAD_ODD ( "bjt.76",  0x00000, 0x40000, 0x7CD4E72A )	/* 68000 code */
 
@@ -335,10 +334,10 @@ ROM_START( bjtwin )
 	ROM_LOAD( "bjt.32",		0x010000, 0x100000, 0x8A4F26D0 )	/* 16x16 tiles */
 	ROM_LOAD( "bjt.100",	0x110000, 0x100000, 0xBB06245D )	/* Sprites */
 
-	ROM_REGION(0x100000)		/* 1Mb for ADPCM sounds - sound chip is OKIM6295 */
+	ROM_REGION( 0x100000 )		/* 1Mb for ADPCM sounds - sound chip is OKIM6295 */
 	ROM_LOAD( "bjt.130",    0x000000, 0x100000, 0x372D46DD )
 
-	ROM_REGION(0x100000)		/* 1Mb for ADPCM sounds - sound chip is OKIM6295 */
+	ROM_REGION( 0x100000 )		/* 1Mb for ADPCM sounds - sound chip is OKIM6295 */
 	ROM_LOAD( "bjt.127",    0x000000, 0x100000, 0x8DA67808 )
 
 ROM_END
@@ -382,7 +381,7 @@ unsigned long bjtwin_address_map_sprites(unsigned long addr)
 void bjtwin_decode(void)
 {
 	/* GFX are scrambled.  We decode them here.  (BIG Thanks to Antiriad for descrambling info) */
-	unsigned char * RAM = Machine->memory_region[1];
+	unsigned char * RAM = memory_region(1);
 
 	static unsigned char decode_data_bg[8][8] =
 	{
@@ -430,7 +429,7 @@ void bjtwin_decode(void)
 	 *	is invalid.  So we void the highest bits of address here.
 	 */
 
-	RAM = Machine->memory_region[2];	/* Process OKI 1 ROM */
+	RAM = memory_region(2);	/* Process OKI 1 ROM */
 	for (i=0; i < 0x10; i++)
 		for (A=0; A < 0x400; A += 8)
 		{
@@ -438,7 +437,7 @@ void bjtwin_decode(void)
 			RAM[i*0x10000+A+3] = 0;
 		}
 
-	RAM = Machine->memory_region[3];	/* Process OKI 2 ROM */
+	RAM = memory_region(3);	/* Process OKI 2 ROM */
 	for (i=0; i < 0x10; i++)
 		for (A=0; A < 0x400; A += 8)
 		{
@@ -463,7 +462,7 @@ void bjtwin_decode(void)
  *	008F7E: 207C 000F 9000           movea.l #$f9000, A0
  */
 
-	RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	RAM = memory_region(REGION_CPU1);
 //	WRITE_WORD(&RAM[0x09172], 0x6006);	/* patch checksum error */
 //	WRITE_WORD(&RAM[0x08f74], 0x4e71);
 }

@@ -409,7 +409,7 @@ void ADPCM_trigger (int num, int which)
 
 			/* set up the voice to play this sample */
 			voice->playing = 1;
-			voice->base = &Machine->memory_region[adpcm_intf->region][sample->offset];
+			voice->base = &memory_region(adpcm_intf->region)[sample->offset];
 			voice->sample = 0;
 			voice->count = sample->length;
 
@@ -447,7 +447,7 @@ void ADPCM_play (int num, int offset, int length)
 
 	/* set up the voice to play this sample */
 	voice->playing = 1;
-	voice->base = &Machine->memory_region[adpcm_intf->region][offset];
+	voice->base = &memory_region(adpcm_intf->region)[offset];
 	voice->sample = 0;
 	voice->count = length;
 
@@ -771,7 +771,7 @@ static void OKIM6295_data_w (int num, int data)
 		unsigned char *base;
 
 		/* determine the start/stop positions */
-//		base = &Machine->memory_region[okim6295_interface->region[num]][okim6295_base[num] + okim6295_command[num] * 8];
+//		base = &memory_region(okim6295_interface->region[num)][okim6295_base[num] + okim6295_command[num] * 8];
 //		start = (base[0] << 16) + (base[1] << 8) + base[2];
 //		stop = (base[3] << 16) + (base[4] << 8) + base[5];
 
@@ -789,7 +789,7 @@ static void OKIM6295_data_w (int num, int data)
 				buffer_end = cpu_scalebyfcount (voice->buffer_len);
 
 				/* determine the start/stop positions */
-				base = &Machine->memory_region[okim6295_interface->region[num]][okim6295_base[num][i] + okim6295_command[num] * 8];
+				base = &memory_region(okim6295_interface->region[num])[okim6295_base[num][i] + okim6295_command[num] * 8];
 				start = (base[0] << 16) + (base[1] << 8) + base[2];
 				stop = (base[3] << 16) + (base[4] << 8) + base[5];
 
@@ -805,7 +805,7 @@ if (errorlog) fprintf(errorlog,"OKIM6295: requested to play invalid sample %02x\
 				else
 				{
 					voice->playing = 1;
-					voice->base = &Machine->memory_region[okim6295_interface->region[num]][okim6295_base[num][i] + start];
+					voice->base = &memory_region(okim6295_interface->region[num])[okim6295_base[num][i] + start];
 					voice->sample = 0;
 					voice->count = 2 * (stop - start + 1);
 

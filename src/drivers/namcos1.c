@@ -324,13 +324,14 @@ static int namcos1_eeprom_load(void)
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 	{
-		osd_fread(f,&Machine->memory_region[6][0xc800],0x800);
+		osd_fread(f,&memory_region(REGION_CPU4)[0xc800],0x800);
 		osd_fclose(f);
 	}
 	else
 	{
 		usrintf_showmessage("F2 toggles test mode");
-		memset(&Machine->memory_region[6][0xc800],0xff,0x800);
+		memset(&memory_region(REGION_CPU4)[0xc800],0xff,0x800);
+		memory_region(REGION_CPU4)[0xc856] = 0x00;
 	}
 
 	return 1;
@@ -342,7 +343,7 @@ static void namcos1_eeprom_save(void)
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		osd_fwrite(f,&Machine->memory_region[6][0xc800],0x800);
+		osd_fwrite(f,&memory_region(REGION_CPU4)[0xc800],0x800);
 		osd_fclose(f);
 	}
 }
@@ -478,28 +479,24 @@ static struct MachineDriver machine_driver =
 		{
 		    CPU_M6809,
 		    49152000/32,        /* Not sure if divided by 32 or 24 */
-		    0,
 		    main_readmem,main_writemem,0,0,
 		    interrupt,1,
 		},
 		{
 		    CPU_M6809,
 		    49152000/32,        /* Not sure if divided by 32 or 24 */
-		    2,
 		    sub_readmem,sub_writemem,0,0,
 		    interrupt,1,
 		},
 		{
 		    CPU_M6809,
 			49152000/32,        /* Not sure if divided by 32 or 24 */
-		    3,
 		    sound_readmem,sound_writemem,0,0,
 		    interrupt,1
 		},
 		{
 		    CPU_HD63701,	/* or compatible 6808 with extra instructions */
 			49152000/8/4,
-		    6,
 		    mcu_readmem,mcu_writemem,mcu_readport,mcu_writeport,
 		    interrupt,1
 		}
@@ -511,7 +508,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	128*16+6*256+1, 128*16+6*256+1,
+	3*3584+1,	/* palette, shadowed palette, highlighted palette, background */
+		128*16+6*256+1,
 	namcos1_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
@@ -551,7 +549,7 @@ static struct MachineDriver machine_driver =
 
 /* Shadowland */
 ROM_START( shadowld )
-	ROM_REGION(0x10000)     /* 64k for the main cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
@@ -572,10 +570,10 @@ ROM_START( shadowld )
 	ROM_LOAD( "yd.ob4",			0x1a0000, 0x20000, 0xef97bffb )	/* sprites */
 	ROM_LOAD( "yd3.ob5",		0x1c0000, 0x10000, 0x1e4aa460 )	/* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the sub cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_REGIONX( 0x2c000, REGION_CPU3 )     /* 192k for the sound cpu */
 	ROM_LOAD( "yd1.sd0",		0x0c000, 0x10000, 0xa9cb51fb )
 	ROM_LOAD( "yd1.sd1",		0x1c000, 0x10000, 0x65d1dc0d )
 
@@ -595,7 +593,7 @@ ROM_START( shadowld )
 	/* 0x08000 - 0x0c000 = RAM1 ( 2 * 8k ) */
 	/* 0x0c000 - 0x14000 = RAM3 ( 3 * 8k ) */
 
-	ROM_REGION( 0xd0000 ) /* the MCU & voice */
+	ROM_REGIONX( 0xd0000, REGION_CPU4 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
 	ROM_LOAD_HS( "yd1.v0",		0x10000, 0x10000, 0xcde1ee23 )
 	ROM_LOAD_HS( "yd1.v1",		0x30000, 0x10000, 0xc61f462b )
@@ -607,7 +605,7 @@ ROM_END
 
 /* Youkai Douchuuki (Shadowland Japan) */
 ROM_START( youkaidk )
-	ROM_REGION(0x10000)     /* 64k for the main cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
@@ -627,10 +625,10 @@ ROM_START( youkaidk )
 	ROM_LOAD( "yd.ob3",			0x180000, 0x20000, 0x8a6c3d1c )	/* sprites */
 	ROM_LOAD( "yd.ob4",			0x1a0000, 0x20000, 0xef97bffb )	/* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the sub cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_REGIONX( 0x2c000, REGION_CPU3 )     /* 192k for the sound cpu */
 	ROM_LOAD( "yd1.sd0",		0x0c000, 0x10000, 0xa9cb51fb )
 	ROM_LOAD( "yd1.sd1",		0x1c000, 0x10000, 0x65d1dc0d )
 
@@ -650,7 +648,7 @@ ROM_START( youkaidk )
 	/* 0x08000 - 0x0c000 = RAM1 ( 2 * 8k ) */
 	/* 0x0c000 - 0x14000 = RAM3 ( 3 * 8k ) */
 
-	ROM_REGION( 0xd0000 ) /* the MCU & voice */
+	ROM_REGIONX( 0xd0000, REGION_CPU4 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
 	ROM_LOAD_HS( "yd1.v0",		0x10000, 0x10000, 0xcde1ee23 )
 	ROM_LOAD_HS( "yd1.v1",		0x30000, 0x10000, 0xc61f462b )
@@ -662,7 +660,7 @@ ROM_END
 
 /* Dragon Spirit */
 ROM_START( dspirit )
-	ROM_REGION(0x10000)     /* 64k for the main cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
@@ -682,10 +680,64 @@ ROM_START( dspirit )
 	ROM_LOAD( "dsobj-3.bin",	0x180000, 0x20000, 0x63225a09 )	/* sprites */
 	ROM_LOAD( "dsobj-4.bin",	0x1a0000, 0x10000, 0xa6246fcb )	/* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the sub cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_REGIONX( 0x2c000, REGION_CPU3 )     /* 192k for the sound cpu */
+	ROM_LOAD( "dssnd-0.bin",	0x0c000, 0x10000, 0x27100065 )
+	ROM_LOAD( "dssnd-1.bin",	0x1c000, 0x10000, 0xb398645f )
+
+	ROM_REGION( 0x100000 ) /* 1m for ROMs */
+	/* PRGx ROMs go here - they can be 128k max. */
+	/* if you got a 64k one, reload it */
+	ROM_LOAD_HS( "ds3-p7.bin",	0x000000, 0x10000, 0x820bedb2 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "ds3-p6.bin",	0x020000, 0x10000, 0xfcc01bd1 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "dsprg-5.bin",	0x040000, 0x10000, 0x9a3a1028 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "dsprg-4.bin",	0x060000, 0x10000, 0xf3307870 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "dsprg-3.bin",	0x080000, 0x10000, 0xc6e5954b )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "dsprg-2.bin",	0x0a0000, 0x10000, 0x3c9b0100 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "dsprg-1.bin",	0x0c0000, 0x10000, 0xf7e3298a )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "dsprg-0.bin",	0x0e0000, 0x10000, 0xb22a2856 )	/* 8 * 8k banks */
+
+	ROM_REGION( 0x14000 ) /* 80k for RAM */
+	/* 0x00000 - 0x08000 = RAM6 ( 4 * 8k ) */
+	/* 0x08000 - 0x0c000 = RAM1 ( 2 * 8k ) */
+	/* 0x0c000 - 0x14000 = RAM3 ( 3 * 8k ) */
+
+	ROM_REGIONX( 0xb0000, REGION_CPU4 ) /* the MCU & voice */
+	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
+	ROM_LOAD_HS( "dsvoi-0.bin",	0x10000, 0x10000, 0x313b3508 )
+	ROM_LOAD( "dsvoi-1.bin",	0x30000, 0x20000, 0x54790d4e )
+	ROM_LOAD( "dsvoi-2.bin",	0x50000, 0x20000, 0x05298534 )
+	ROM_LOAD( "dsvoi-3.bin",	0x70000, 0x20000, 0x13e84c7e )
+	ROM_LOAD( "dsvoi-4.bin",	0x90000, 0x20000, 0x34fbb8cd )
+ROM_END
+
+ROM_START( dspirito )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for the main cpu */
+	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
+
+	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "dschr-8.bin",	0x00000, 0x20000, 0x946eb242 )	/* character mask */
+	ROM_LOAD( "dschr-0.bin",	0x20000, 0x20000, 0x7bf28ac3 )	/* characters */
+	ROM_LOAD( "dschr-1.bin",	0x40000, 0x20000, 0x03582fea )	/* characters */
+	ROM_LOAD( "dschr-2.bin",	0x60000, 0x20000, 0x5e05f4f9 )	/* characters */
+	ROM_LOAD( "dschr-3.bin",	0x80000, 0x20000, 0xdc540791 )	/* characters */
+	ROM_LOAD( "dschr-4.bin",	0xa0000, 0x20000, 0xffd1f35c )	/* characters */
+	ROM_LOAD( "dschr-5.bin",	0xc0000, 0x20000, 0x8472e0a3 )	/* characters */
+	ROM_LOAD( "dschr-6.bin",	0xe0000, 0x20000, 0xa799665a )	/* characters */
+	ROM_LOAD( "dschr-7.bin",	0x100000, 0x20000, 0xa51724af )	/* characters */
+
+	ROM_LOAD( "dsobj-0.bin",	0x120000, 0x20000, 0x03ec3076 )	/* sprites */
+	ROM_LOAD( "dsobj-1.bin",	0x140000, 0x20000, 0xe67a8fa4 )	/* sprites */
+	ROM_LOAD( "dsobj-2.bin",	0x160000, 0x20000, 0x061cd763 )	/* sprites */
+	ROM_LOAD( "dsobj-3.bin",	0x180000, 0x20000, 0x63225a09 )	/* sprites */
+	ROM_LOAD( "dsobj-4.bin",	0x1a0000, 0x10000, 0xa6246fcb )	/* sprites */
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sub cpu */
+	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
+
+	ROM_REGIONX( 0x2c000, REGION_CPU3 )     /* 192k for the sound cpu */
 	ROM_LOAD( "dssnd-0.bin",	0x0c000, 0x10000, 0x27100065 )
 	ROM_LOAD( "dssnd-1.bin",	0x1c000, 0x10000, 0xb398645f )
 
@@ -706,7 +758,7 @@ ROM_START( dspirit )
 	/* 0x08000 - 0x0c000 = RAM1 ( 2 * 8k ) */
 	/* 0x0c000 - 0x14000 = RAM3 ( 3 * 8k ) */
 
-	ROM_REGION( 0xb0000 ) /* the MCU & voice */
+	ROM_REGIONX( 0xb0000, REGION_CPU4 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
 	ROM_LOAD_HS( "dsvoi-0.bin",	0x10000, 0x10000, 0x313b3508 )
 	ROM_LOAD( "dsvoi-1.bin",	0x30000, 0x20000, 0x54790d4e )
@@ -717,7 +769,7 @@ ROM_END
 
 /* Blazer */
 ROM_START( blazer )
-	ROM_REGION(0x10000)     /* 64k for the main cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
@@ -736,10 +788,10 @@ ROM_START( blazer )
 	ROM_LOAD( "bz1_obj2.bin",	0x160000, 0x20000, 0x34b23bb7 )	/* sprites */
 	ROM_LOAD( "bz1_obj3.bin",	0x180000, 0x20000, 0x9bc1db71 )	/* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the sub cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x3c000)     /* 192k for the sound cpu */
+	ROM_REGIONX( 0x3c000, REGION_CPU3 )     /* 192k for the sound cpu */
 	ROM_LOAD( "bz1_snd0.bin",	0x0c000, 0x10000, 0x6c3a580b )
 	ROM_LOAD( "bz1_voi4.bin",	0x1c000, 0x20000, 0xd206b1bd )
 
@@ -760,7 +812,7 @@ ROM_START( blazer )
 	/* 0x08000 - 0x0c000 = RAM1 ( 2 * 8k ) */
 	/* 0x0c000 - 0x14000 = RAM3 ( 3 * 8k ) */
 
-	ROM_REGION( 0x90000 ) /* the MCU & voice */
+	ROM_REGIONX( 0x90000, REGION_CPU4 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
 	ROM_LOAD_HS( "bz1_voi0.bin",0x10000, 0x10000, 0x3d09d32e )
 	ROM_LOAD( "bz1_voi1.bin",	0x30000, 0x20000, 0x2043b141 )
@@ -770,7 +822,7 @@ ROM_END
 
 /* Pacmania */
 ROM_START( pacmania )
-	ROM_REGION(0x10000)     /* 64k for the main cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
@@ -783,10 +835,10 @@ ROM_START( pacmania )
 	ROM_LOAD( "pm_obj0.bin",	0x120000, 0x20000, 0xfda57e8b )	/* sprites */
 	ROM_LOAD( "pm_obj1.bin",	0x140000, 0x20000, 0x4c08affe )	/* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the sub cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_REGIONX( 0x2c000, REGION_CPU3 )     /* 192k for the sound cpu */
 	ROM_LOAD( "pm_snd0.bin",	0x0c000, 0x10000, 0xc10370fa )
 	ROM_LOAD( "pm_snd1.bin",	0x1c000, 0x10000, 0xf761ed5a )
 
@@ -801,14 +853,14 @@ ROM_START( pacmania )
 	/* 0x08000 - 0x0c000 = RAM1 ( 2 * 8k ) */
 	/* 0x0c000 - 0x14000 = RAM3 ( 3 * 8k ) */
 
-	ROM_REGION( 0x30000 ) /* the MCU & voice */
+	ROM_REGIONX( 0x30000, REGION_CPU4 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",	0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
 	ROM_LOAD_HS( "pm_voice.bin",0x10000, 0x10000, 0x1ad5788f )
 ROM_END
 
 /* Pacmania (Japan) deff o1,s0,s1,p7,v0 */
 ROM_START( pacmanij )
-	ROM_REGION(0x10000)     /* 64k for the main cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
@@ -821,10 +873,10 @@ ROM_START( pacmanij )
 	ROM_LOAD( "pm_obj0.bin",	0x120000, 0x20000, 0xfda57e8b )	/* sprites */
 	ROM_LOAD( "pm-01.b9",	    0x140000, 0x20000, 0x27bdf440 )	/* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the sub cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_REGIONX( 0x2c000, REGION_CPU3 )     /* 192k for the sound cpu */
 	ROM_LOAD( "pm-s0.a10",		0x0c000, 0x10000, 0xd5ef5eee )
 	ROM_LOAD( "pm-s1.b10",		0x1c000, 0x10000, 0x411bc134 )
 
@@ -839,14 +891,14 @@ ROM_START( pacmanij )
 	/* 0x08000 - 0x0c000 = RAM1 ( 2 * 8k ) */
 	/* 0x0c000 - 0x14000 = RAM3 ( 3 * 8k ) */
 
-	ROM_REGION( 0x30000 ) /* the MCU & voice */
+	ROM_REGIONX( 0x30000, REGION_CPU4 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",	0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
 	ROM_LOAD_HS( "pm-v0.b5",	0x10000, 0x10000, 0xe2689f79 )
 ROM_END
 
 /* Galaga 88 */
 ROM_START( galaga88 )
-	ROM_REGION(0x10000)     /* 64k for the main cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
     ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
@@ -863,10 +915,10 @@ ROM_START( galaga88 )
 	ROM_LOAD( "g88_obj4.rom",	0x1a0000, 0x20000, 0x370ff4ad )	/* sprites */
 	ROM_LOAD( "g88_obj5.rom",	0x1c0000, 0x20000, 0xb0645169 )	/* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the sub cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_REGIONX( 0x2c000, REGION_CPU3 )     /* 192k for the sound cpu */
 	ROM_LOAD( "g88_snd0.rom",	0x0c000, 0x10000, 0x164a3fdc )
 	ROM_LOAD( "g88_snd1.rom",	0x1c000, 0x10000, 0x16a4b784 )
 
@@ -884,7 +936,7 @@ ROM_START( galaga88 )
 	/* 0x08000 - 0x0c000 = RAM1 ( 2 * 8k ) */
 	/* 0x0c000 - 0x14000 = RAM3 ( 3 * 8k ) */
 
-	ROM_REGION( 0xd0000 ) /* the MCU & voice */
+	ROM_REGIONX( 0xd0000, REGION_CPU4 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",	0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
 	ROM_LOAD_HS( "g88_vce0.rom",0x10000, 0x10000, 0x86921dd4 )
 	ROM_LOAD_HS( "g88_vce1.rom",0x30000, 0x10000, 0x9c300e16 )
@@ -896,7 +948,7 @@ ROM_END
 
 /* Galaga 88 japan */
 ROM_START( galag88j )
-	ROM_REGION(0x10000)     /* 64k for the main cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
     ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
@@ -913,10 +965,10 @@ ROM_START( galag88j )
 	ROM_LOAD( "g88_obj4.rom",	0x1a0000, 0x20000, 0x370ff4ad )	/* sprites */
 	ROM_LOAD( "g88_obj5.rom",	0x1c0000, 0x20000, 0xb0645169 )	/* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the sub cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_REGIONX( 0x2c000, REGION_CPU3 )     /* 192k for the sound cpu */
 	ROM_LOAD( "g88_snd0.rom",	0x0c000, 0x10000, 0x164a3fdc )
 	ROM_LOAD( "g88_snd1.rom",	0x1c000, 0x10000, 0x16a4b784 )
 
@@ -934,7 +986,7 @@ ROM_START( galag88j )
 	/* 0x08000 - 0x0c000 = RAM1 ( 2 * 8k ) */
 	/* 0x0c000 - 0x14000 = RAM3 ( 3 * 8k ) */
 
-	ROM_REGION( 0xd0000 ) /* the MCU & voice */
+	ROM_REGIONX( 0xd0000, REGION_CPU4 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",	0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
 	ROM_LOAD_HS( "g88_vce0.rom",0x10000, 0x10000, 0x86921dd4 )
 	ROM_LOAD_HS( "g88_vce1.rom",0x30000, 0x10000, 0x9c300e16 )
@@ -946,7 +998,7 @@ ROM_END
 
 /* Beraboh Man */
 ROM_START( berabohm )
-	ROM_REGION(0x10000)     /* 64k for the main cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
@@ -967,10 +1019,10 @@ ROM_START( berabohm )
 	ROM_LOAD( "bm-obj5.bin",	0x1c0000, 0x20000, 0xfe70201d )	/* sprites */
 	ROM_LOAD( "bm-obj7.bin",	0x200000, 0x20000, 0x377c81ed )	/* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the sub cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_REGIONX( 0x2c000, REGION_CPU3 )     /* 192k for the sound cpu */
 	ROM_LOAD( "bm1-snd0.bin",	0x0c000, 0x10000, 0xd5d53cb1 )
 
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
@@ -985,7 +1037,7 @@ ROM_START( berabohm )
 
 	ROM_REGION( 0x14000 ) /* 80k for RAM */
 
-	ROM_REGION( 0x70000 ) /* the MCU & voice */
+	ROM_REGIONX( 0x70000, REGION_CPU4 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",	0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
 	ROM_LOAD_HS( "bm1-voi0.bin",0x10000, 0x10000, 0x4e40d0ca )
 	ROM_LOAD(    "bm1-voi1.bin",0x30000, 0x20000, 0xbe9ce0a8 )
@@ -994,7 +1046,7 @@ ROM_END
 
 /* Marchen Maze */
 ROM_START( mmaze )
-	ROM_REGION(0x10000)     /* 64k for the main cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
@@ -1011,10 +1063,10 @@ ROM_START( mmaze )
 	ROM_LOAD( "mm.ob2",			0x160000, 0x20000, 0x3d3d5de3 )	/* sprites */
 	ROM_LOAD( "mm.ob3",			0x180000, 0x20000, 0xdac57358 )	/* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the sub cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_REGIONX( 0x2c000, REGION_CPU3 )     /* 192k for the sound cpu */
 	ROM_LOAD( "mm.sd0",			0x0c000, 0x10000, 0x25d25e07 )
 	ROM_LOAD( "mm1.sd1",		0x1c000, 0x10000, 0x4a3cc89e )
 
@@ -1032,7 +1084,7 @@ ROM_START( mmaze )
 	/* 0x08000 - 0x0c000 = RAM1 ( 2 * 8k ) */
 	/* 0x0c000 - 0x14000 = RAM3 ( 3 * 8k ) */
 
-	ROM_REGION( 0x80000 ) /* the MCU & voice */
+	ROM_REGIONX( 0x80000, REGION_CPU4 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
 	ROM_LOAD( "mm.v0",			0x10000, 0x20000, 0xee974cff )
 	ROM_LOAD( "mm.v1",			0x30000, 0x20000, 0xd09b5830 )
@@ -1040,7 +1092,7 @@ ROM_END
 
 /* Bakutotsu Kijuutei */
 ROM_START( bakutotu )
-	ROM_REGION(0x10000)     /* 64k for the main cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
@@ -1057,10 +1109,10 @@ ROM_START( bakutotu )
 	ROM_LOAD( "bk-obj6.bin",	0x1e0000, 0x20000, 0x2cd4d2ea )	/* sprites */
 	ROM_LOAD( "bk-obj7.bin",	0x200000, 0x20000, 0x809aa0e6 )	/* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the sub cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_REGIONX( 0x2c000, REGION_CPU3 )     /* 192k for the sound cpu */
 	ROM_LOAD( "bk1-snd0.bin",	0x0c000, 0x10000, 0xc35d7df6 )
 
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
@@ -1078,14 +1130,14 @@ ROM_START( bakutotu )
 
 	ROM_REGION( 0x14000 ) /* 80k for RAM */
 
-	ROM_REGION( 0x30000 ) /* the MCU & voice */
+	ROM_REGIONX( 0x30000, REGION_CPU4 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",	0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
 	ROM_LOAD_HS( "bk1-voi0.bin",0x10000, 0x10000, 0x008e290e )
 ROM_END
 
 /* World Court */
 ROM_START( wldcourt )
-	ROM_REGION(0x10000)     /* 64k for the main cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
@@ -1100,10 +1152,10 @@ ROM_START( wldcourt )
 	ROM_LOAD( "wc1-obj2.bin",	0x160000, 0x20000, 0xc2bd5f0f )	/* sprites */
 	ROM_LOAD( "wc1-obj3.bin",	0x180000, 0x10000, 0x1aa2dbc8 )	/* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the sub cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_REGIONX( 0x2c000, REGION_CPU3 )     /* 192k for the sound cpu */
 	ROM_LOAD( "wc1-snd0.bin",	0x0c000, 0x10000, 0x17a6505d )
 
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
@@ -1117,7 +1169,7 @@ ROM_START( wldcourt )
 	/* 0x08000 - 0x0c000 = RAM1 ( 2 * 8k ) */
 	/* 0x0c000 - 0x14000 = RAM3 ( 3 * 8k ) */
 
-	ROM_REGION( 0x50000 ) /* the MCU & voice */
+	ROM_REGIONX( 0x50000, REGION_CPU4 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",	0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
 	ROM_LOAD_HS( "wc1-voi0.bin",0x10000, 0x10000, 0xb57919f7 )
 	ROM_LOAD( "wc1-voi1.bin",	0x30000, 0x20000, 0x97974b4b )
@@ -1125,7 +1177,7 @@ ROM_END
 
 /* Splatter House */
 ROM_START( splatter )
-	ROM_REGION(0x10000)     /* 64k for the main cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
@@ -1146,10 +1198,10 @@ ROM_START( splatter )
 	ROM_LOAD( "obj6",			0x1e0000, 0x20000, 0x80830b0e )	/* sprites */
 	ROM_LOAD( "obj7",			0x200000, 0x20000, 0x08b1953a )	/* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the sub cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_REGIONX( 0x2c000, REGION_CPU3 )     /* 192k for the sound cpu */
 	ROM_LOAD( "sound0",			0x0c000, 0x10000, 0x90abd4ad )
 	ROM_LOAD( "sound1",			0x1c000, 0x10000, 0x8ece9e0a )
 
@@ -1170,7 +1222,7 @@ ROM_START( splatter )
 	/* 0x08000 - 0x0c000 = RAM1 ( 2 * 8k ) */
 	/* 0x0c000 - 0x14000 = RAM3 ( 3 * 8k ) */
 
-	ROM_REGION( 0x90000 ) /* the MCU & voice */
+	ROM_REGIONX( 0x90000, REGION_CPU4 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
 	ROM_LOAD( "voice0",   		0x20000, 0x20000, 0x2199cb66 )
 	ROM_LOAD( "voice1",   		0x30000, 0x20000, 0x9b6472af )
@@ -1180,7 +1232,7 @@ ROM_END
 
 /* Rompers */
 ROM_START( rompers )
-	ROM_REGION(0x10000)     /* 64k for the main cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
@@ -1198,10 +1250,10 @@ ROM_START( rompers )
 	ROM_LOAD( "rp1-obj5.bin",	0x1c0000, 0x10000, 0x9e2ba243 )	/* sprites */
 	ROM_LOAD( "rp1-obj6.bin",	0x1e0000, 0x10000, 0x6bf2aca6 )	/* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the sub cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_REGIONX( 0x2c000, REGION_CPU3 )     /* 192k for the sound cpu */
 	ROM_LOAD( "rp1-snd0.bin",	0x0c000, 0x10000, 0xc7c8d649 )
 
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
@@ -1214,14 +1266,14 @@ ROM_START( rompers )
 
 	ROM_REGION( 0x14000 ) /* 80k for RAM */
 
-	ROM_REGION( 0x30000 ) /* the MCU & voice */
+	ROM_REGIONX( 0x30000, REGION_CPU4 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
 	ROM_LOAD( "rp1-voi0.bin",	0x10000, 0x20000, 0x11caef7e )
 ROM_END
 
 /* Blast off */
 ROM_START( blastoff )
-	ROM_REGION(0x10000)     /* 64k for the main cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
@@ -1240,10 +1292,10 @@ ROM_START( blastoff )
 	ROM_LOAD( "bo1-obj3.bin",	0x180000, 0x20000, 0xe3d9ed58 )	/* sprites */
 	ROM_LOAD( "bo1-obj4.bin",	0x1a0000, 0x20000, 0xc2c1b9cb )	/* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the sub cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_REGIONX( 0x2c000, REGION_CPU3 )     /* 192k for the sound cpu */
 	ROM_LOAD( "bo1-snd0.bin",	0x0c000, 0x10000, 0x2ecab76e )
 	ROM_LOAD( "bo1-snd1.bin",	0x1c000, 0x10000, 0x048a6af1 )
 
@@ -1256,7 +1308,7 @@ ROM_START( blastoff )
 
 	ROM_REGION( 0x14000 ) /* 80k for RAM */
 
-	ROM_REGION( 0x70000 ) /* the MCU & voice */
+	ROM_REGIONX( 0x70000, REGION_CPU4 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
 	ROM_LOAD( "bo1-voi0.bin",	0x10000, 0x20000, 0x47065e18 )
 	ROM_LOAD( "bo1-voi1.bin",	0x30000, 0x20000, 0x0308b18e )
@@ -1265,7 +1317,7 @@ ROM_END
 
 /* Dangerous Sseed */
 ROM_START( dangseed )
-	ROM_REGION(0x10000)     /* 64k for the main cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
@@ -1282,10 +1334,10 @@ ROM_START( dangseed )
 	ROM_LOAD( "dr1-obj1.bin",	0x140000, 0x20000, 0x24d6db51 )	/* sprites */
 	ROM_LOAD( "dr1-obj2.bin",	0x160000, 0x20000, 0x7e3a78c0 )	/* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the sub cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_REGIONX( 0x2c000, REGION_CPU3 )     /* 192k for the sound cpu */
 	ROM_LOAD( "dr1-snd0.bin",	0x0c000, 0x20000, 0xbcbbb21d )
 
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
@@ -1298,14 +1350,14 @@ ROM_START( dangseed )
 
 	ROM_REGION( 0x14000 ) /* 80k for RAM */
 
-	ROM_REGION( 0x30000 ) /* the MCU & voice */
+	ROM_REGIONX( 0x30000, REGION_CPU4 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
 	ROM_LOAD( "dr1-voi0.bin",	0x10000, 0x20000, 0xde4fdc0e )
 ROM_END
 
 /* World Stadium 90 */
 ROM_START( ws90 )
-	ROM_REGION(0x10000)     /* 64k for the main cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
@@ -1322,10 +1374,10 @@ ROM_START( ws90 )
 	ROM_LOAD( "wsobj-2.bin",	0x160000, 0x20000, 0xcd5ba55d )	/* sprites */
 	ROM_LOAD( "wsobj-3.bin",	0x180000, 0x10000, 0x7d0b8961 )	/* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the sub cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_REGIONX( 0x2c000, REGION_CPU3 )     /* 192k for the sound cpu */
 	ROM_LOAD( "wssnd-0.bin",	0x0c000, 0x10000, 0x52b84d5a )
 	ROM_LOAD( "wssnd-1.bin",	0x1c000, 0x10000, 0x31bf74c1 )
 
@@ -1342,7 +1394,7 @@ ROM_START( ws90 )
 	/* 0x08000 - 0x0c000 = RAM1 ( 2 * 8k ) */
 	/* 0x0c000 - 0x14000 = RAM3 ( 3 * 8k ) */
 
-	ROM_REGION( 0x50000 ) /* the MCU & voice */
+	ROM_REGIONX( 0x50000, REGION_CPU4 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",	0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
 	ROM_LOAD_HS( "wsvoi-0.bin",	0x10000, 0x10000, 0xf6949199 )
 	ROM_LOAD( "wsvoi-1.bin",	0x30000, 0x20000, 0x210e2af9 )
@@ -1350,7 +1402,7 @@ ROM_END
 
 /* Pistol Daimyo no Bouken */
 ROM_START( pistoldm )
-	ROM_REGION(0x10000)     /* 64k for the main cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
@@ -1369,10 +1421,10 @@ ROM_START( pistoldm )
 	ROM_LOAD( "pd-obj6.bin",	0x1e0000, 0x20000, 0x91b4e6e0 )	/* sprites */
 	ROM_LOAD( "pd-obj7.bin",	0x200000, 0x20000, 0x00d4a8f0 )	/* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the sub cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_REGIONX( 0x2c000, REGION_CPU3 )     /* 192k for the sound cpu */
 	ROM_LOAD( "pd1-snd0.bin",	0x0c000, 0x20000, 0x026da54e )
 
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
@@ -1384,7 +1436,7 @@ ROM_START( pistoldm )
 
 	ROM_REGION( 0x14000 ) /* 80k for RAM */
 
-	ROM_REGION( 0x50000 ) /* the MCU & voice */
+	ROM_REGIONX( 0x50000, REGION_CPU4 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
 	ROM_LOAD( "pd-voi0.bin",	0x10000, 0x20000, 0xad1b8128 )
 	ROM_LOAD( "pd-voi1.bin",	0x30000, 0x20000, 0x2871c494 )
@@ -1392,7 +1444,7 @@ ROM_END
 
 /* Soukoban DX */
 ROM_START( soukobdx )
-	ROM_REGION(0x10000)     /* 64k for the main cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
@@ -1404,10 +1456,10 @@ ROM_START( soukobdx )
 
 	ROM_LOAD( "sb1-obj0.bin",	0x120000, 0x10000, 0xed810da4 )	/* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the sub cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_REGIONX( 0x2c000, REGION_CPU3 )     /* 192k for the sound cpu */
 	ROM_LOAD( "sb1-snd0.bin",	0x0c000, 0x10000, 0xbf46a106 )
 
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
@@ -1419,14 +1471,14 @@ ROM_START( soukobdx )
 
 	ROM_REGION( 0x14000 ) /* 80k for RAM */
 
-	ROM_REGION( 0x40000 ) /* the MCU & voice */
+	ROM_REGIONX( 0x40000, REGION_CPU4 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",	0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
 	ROM_LOAD_HS( "sb1-voi0.bin",0x10000, 0x10000, 0x63d9cedf )
 ROM_END
 
 /* Tank Force */
 ROM_START( tankfrce )
-	ROM_REGION(0x10000)     /* 64k for the main cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
@@ -1441,10 +1493,10 @@ ROM_START( tankfrce )
 	ROM_LOAD( "tf1-obj0.bin",	0x120000, 0x20000, 0x4bedd51a )	/* sprites */
 	ROM_LOAD( "tf1-obj1.bin",	0x140000, 0x20000, 0xdf674d6d )	/* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the sub cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_REGIONX( 0x2c000, REGION_CPU3 )     /* 192k for the sound cpu */
 	ROM_LOAD( "tf1-snd0.bin",	0x0c000, 0x20000, 0x4d9cf7aa )
 
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
@@ -1457,7 +1509,7 @@ ROM_START( tankfrce )
 
 	ROM_REGION( 0x14000 ) /* 80k for RAM */
 
-	ROM_REGION( 0x50000 ) /* the MCU & voice */
+	ROM_REGIONX( 0x50000, REGION_CPU4 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
 	ROM_LOAD( "tf1-voi0.bin",	0x10000, 0x20000, 0xf542676a )
 	ROM_LOAD( "tf1-voi1.bin",	0x30000, 0x20000, 0x615d09cd )
@@ -1516,8 +1568,8 @@ struct GameDriver driver_##NAME = \
 
 GAME_DRIVER (shadowld,         1987,"Shadow Land",                    "Namco",shadowld,ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT)
 CLONE_DRIVER(youkaidk,shadowld,1987,"Yokai Douchuuki (Japan)",        "Namco",shadowld,ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT)
-GAME_DRIVER (dspirit,          1987,"Dragon Spirit",                  "Namco",dspirit, ORIENTATION_ROTATE_270)
-//GAME_DRIVER (dspirita,       1987,"Dragon Spirit (set 2)",          "Namco",dspirit, ORIENTATION_ROTATE_270)
+GAME_DRIVER (dspirit,          1987,"Dragon Spirit (new version)",    "Namco",dspirit, ORIENTATION_ROTATE_270)
+CLONE_DRIVER(dspirito,dspirit, 1987,"Dragon Spirit (old version)",    "Namco",dspirit, ORIENTATION_ROTATE_270)
 GAME_DRIVER (blazer,           1987,"Blazer (Japan)",                 "Namco",blazer,  ORIENTATION_ROTATE_270)
 //GAME_DRIVER (quester,        1987,"Quester",                        "Namco",quester, ORIENTATION_DEFAULT | GAME_NOT_WORKING)
 GAME_DRIVER (pacmania,         1987,"Pac-Mania",                      "Namco",pacmania,ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT)
@@ -1541,5 +1593,6 @@ GAME_DRIVER (blastoff,         1989,"Blast Off (Japan)",              "Namco",bl
 GAME_DRIVER (dangseed,         1989,"Dangerous Seed (Japan)",         "Namco",dangseed,ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT)
 GAME_DRIVER (ws90,             1990,"World Stadium 90 (Japan)",       "Namco",ws90,    ORIENTATION_DEFAULT)
 GAME_DRIVER (pistoldm,         1990,"Pistol Daimyo no Bouken (Japan)","Namco",pistoldm,ORIENTATION_DEFAULT)
-GAME_DRIVER (soukobdx,         1990,"Souko Ban Deluxe (Japan)",       "Namco",soukobdx,ORIENTATION_DEFAULT)
+/* soukobdx need 16-bit only for highlight */
+GAME_DRIVER (soukobdx,         1990,"Souko Ban Deluxe (Japan)",       "Namco",soukobdx,ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT)
 GAME_DRIVER (tankfrce,         1991,"Tank Force (Japan)",             "Namco",tankfrce,ORIENTATION_DEFAULT | GAME_NOT_WORKING)

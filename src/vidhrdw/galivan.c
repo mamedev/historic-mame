@@ -56,7 +56,7 @@ static const unsigned char *spritepalettebank;
 /* Sets the ROM bank READ at c000-dfff. bank must be 0 or 1 */
 void galivan_setrombank(int bank)
 {
-unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+unsigned char *RAM = memory_region(REGION_CPU1);
 
 	cpu_setbank(1,&RAM[0x10000 + 0x2000 * bank]);
 }
@@ -159,7 +159,7 @@ void galivan_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 static void get_bg_tile_info( int col, int row )
 {
-	unsigned char *RAM = Machine->memory_region[2];
+	unsigned char *RAM = memory_region(2);
 	int addr = row*128+col;
 	int attr = RAM[addr+0x4000];
 	int code = RAM[addr]+((attr & 0x03) << 8);

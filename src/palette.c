@@ -114,6 +114,7 @@
 
 #define VERBOSE 0
 
+
 static unsigned char *game_palette;	/* RGB palette as set by the driver. */
 static unsigned char *new_palette;	/* changes to the palette are stored here before */
 							/* being moved to game_palette by palette_recalc() */
@@ -125,17 +126,24 @@ static int *pen_visiblecount,*pen_cachedcount;
 static unsigned char *just_remapped;	/* colors which have been remapped in this frame, */
 										/* returned by palette_recalc() */
 
-static unsigned char shrinked_palette[3 * 256];
+static int use_16bit;
+#define NO_16BIT			0
+#define STATIC_16BIT		1
+#define PALETTIZED_16BIT	2
+
+static int total_shrinked_pens;
 unsigned short *shrinked_pens;
+static unsigned char *shrinked_palette;
 static unsigned short *palette_map;	/* map indexes from game_palette to shrinked_palette */
-static unsigned short pen_usage_count[STATIC_MAX_PENS];
+static unsigned short pen_usage_count[DYNAMIC_MAX_PENS];
 
 unsigned short palette_transparent_pen;
 int palette_transparent_color;
 
-#define BLACK_PEN 0
-#define TRANSPARENT_PEN 1
-#define FIRST_AVAILABLE_PEN 2
+
+#define BLACK_PEN		0
+#define TRANSPARENT_PEN	1
+#define RESERVED_PENS	2
 
 #define PALETTE_COLOR_NEEDS_REMAP 0x80
 
@@ -143,9 +151,16 @@ int palette_transparent_color;
 #define rgbpenindex(r,g,b) ((Machine->scrbitmap->depth==16) ? ((((r)>>3)<<10)+(((g)>>3)<<5)+((b)>>3)) : ((((r)>>5)<<5)+(((g)>>5)<<2)+((b)>>6)))
 
 
+unsigned short *palette_shadow_table;
+unsigned short *palette_highlight_table;
+
+
 
 int palette_start(void)
 {
+	int i,num;
+
+
 	game_palette = malloc(3 * Machine->drv->total_colors * sizeof(unsigned char));
 	palette_map = malloc(Machine->drv->total_colors * sizeof(unsigned short));
 	if (Machine->drv->color_table_len)
@@ -155,13 +170,36 @@ int palette_start(void)
 	}
 	else Machine->game_colortable = Machine->remapped_colortable = 0;
 
-	/* ASG 980209 - allocate space for the pens */
 	if (Machine->color_depth == 16 || (Machine->gamedrv->flags & GAME_REQUIRES_16BIT))
-		shrinked_pens = malloc(32768 * sizeof (short));
+	{
+		if (Machine->color_depth == 8 || Machine->drv->total_colors > 65532)
+			use_16bit = STATIC_16BIT;
+		else
+			use_16bit = PALETTIZED_16BIT;
+	}
 	else
-		shrinked_pens = malloc(STATIC_MAX_PENS * sizeof (short));
+		use_16bit = NO_16BIT;
 
-	Machine->pens = malloc(Machine->drv->total_colors * sizeof (short));
+	switch (use_16bit)
+	{
+		case NO_16BIT:
+			if (Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE)
+				total_shrinked_pens = DYNAMIC_MAX_PENS;
+			else
+				total_shrinked_pens = STATIC_MAX_PENS;
+			break;
+		case STATIC_16BIT:
+			total_shrinked_pens = 32768;
+			break;
+		case PALETTIZED_16BIT:
+			total_shrinked_pens = Machine->drv->total_colors + RESERVED_PENS;
+			break;
+	}
+
+	shrinked_pens = malloc(total_shrinked_pens * sizeof(short));
+	shrinked_palette = malloc(3 * total_shrinked_pens * sizeof(unsigned char));
+
+	Machine->pens = malloc(Machine->drv->total_colors * sizeof(short));
 
 	if ((Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE))
 	{
@@ -189,8 +227,21 @@ int palette_start(void)
 	}
 	else palette_used_colors = old_used_colors = just_remapped = new_palette = palette_dirty = 0;
 
+	if (Machine->color_depth == 8) num = 256;
+	else num = 65536;
+	palette_shadow_table = malloc(2 * num * sizeof(unsigned short));
+	if (palette_shadow_table == 0)
+	{
+		palette_stop();
+		return 1;
+	}
+	palette_highlight_table = palette_shadow_table + num;
+	for (i = 0;i < num;i++)
+		palette_shadow_table[i] = palette_highlight_table[i] = i;
+
 	if ((Machine->drv->color_table_len && (Machine->game_colortable == 0 || Machine->remapped_colortable == 0))
-			|| game_palette == 0 ||	palette_map == 0 || Machine->pens == 0)
+			|| game_palette == 0 ||	palette_map == 0
+			|| shrinked_pens == 0 || shrinked_palette == 0 || Machine->pens == 0)
 	{
 		palette_stop();
 		return 1;
@@ -215,13 +266,17 @@ void palette_stop(void)
 	Machine->remapped_colortable = 0;
 	free(shrinked_pens);
 	shrinked_pens = 0;
+	free(shrinked_palette);
+	shrinked_palette = 0;
 	free(Machine->pens);
 	Machine->pens = 0;
+	free(palette_shadow_table);
+	palette_shadow_table = 0;
 }
 
 
 
-void palette_init(void)
+int palette_init(void)
 {
 	int i;
 
@@ -252,155 +307,204 @@ void palette_init(void)
 		(*Machine->drv->vh_init_palette)(game_palette,Machine->game_colortable,memory_region(REGION_PROMS));
 
 
-	if (Machine->color_depth == 16 || (Machine->gamedrv->flags & GAME_REQUIRES_16BIT))
+	switch (use_16bit)
 	{
-		if (Machine->scrbitmap->depth == 16)
-			osd_allocate_colors(32768,0,shrinked_pens);
-		else
+		case NO_16BIT:
+		{
+			/* initialize shrinked palette to all black */
+			for (i = 0;i < total_shrinked_pens;i++)
+			{
+				shrinked_palette[3*i + 0] =
+				shrinked_palette[3*i + 1] =
+				shrinked_palette[3*i + 2] = 0;
+			}
+
+			if (Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE)
+			{
+				/* initialize pen usage counters */
+				for (i = 0;i < DYNAMIC_MAX_PENS;i++)
+					pen_usage_count[i] = 0;
+
+				/* allocate two fixed pens at the beginning: */
+				/* transparent black */
+				pen_usage_count[TRANSPARENT_PEN] = 1;	/* so the pen will not be reused */
+
+				/* non transparent black */
+				pen_usage_count[BLACK_PEN] = 1;
+
+				/* create some defaults associations of game colors to shrinked pens. */
+				/* They will be dynamically modified at run time. */
+				for (i = 0;i < Machine->drv->total_colors;i++)
+					palette_map[i] = (i & 7) + 8;
+
+				if (osd_allocate_colors(total_shrinked_pens,shrinked_palette,shrinked_pens,1))
+					return 1;
+			}
+			else
+			{
+				int j,used;
+
+
+if (errorlog) fprintf(errorlog,"shrinking %d colors palette...\n",Machine->drv->total_colors);
+
+				/* shrink palette to fit */
+				used = 0;
+
+				for (i = 0;i < Machine->drv->total_colors;i++)
+				{
+					for (j = 0;j < used;j++)
+					{
+						if (	shrinked_palette[3*j + 0] == game_palette[3*i + 0] &&
+								shrinked_palette[3*j + 1] == game_palette[3*i + 1] &&
+								shrinked_palette[3*j + 2] == game_palette[3*i + 2])
+							break;
+					}
+
+					palette_map[i] = j;
+
+					if (j == used)
+					{
+						used++;
+						if (used > total_shrinked_pens)
+						{
+							used = total_shrinked_pens;
+							palette_map[i] = total_shrinked_pens-1;
+							usrintf_showmessage("cannot shrink static palette");
+if (errorlog) fprintf(errorlog,"error: ran out of free pens to shrink the palette.\n");
+						}
+						else
+						{
+							shrinked_palette[3*j + 0] = game_palette[3*i + 0];
+							shrinked_palette[3*j + 1] = game_palette[3*i + 1];
+							shrinked_palette[3*j + 2] = game_palette[3*i + 2];
+						}
+					}
+				}
+
+if (errorlog) fprintf(errorlog,"shrinked palette uses %d colors\n",used);
+
+				if (osd_allocate_colors(used,shrinked_palette,shrinked_pens,0))
+					return 1;
+			}
+
+
+			for (i = 0;i < Machine->drv->total_colors;i++)
+				Machine->pens[i] = shrinked_pens[palette_map[i]];
+
+			palette_transparent_pen = shrinked_pens[TRANSPARENT_PEN];	/* for dynamic palette games */
+		}
+		break;
+
+		case STATIC_16BIT:
 		{
 			unsigned char *p = shrinked_palette;
 			int r,g,b;
 
-			for (r = 0;r < 8;r++)
+			if (Machine->scrbitmap->depth == 16)
 			{
-				for (g = 0;g < 8;g++)
+				for (r = 0;r < 32;r++)
 				{
-					for (b = 0;b < 4;b++)
+					for (g = 0;g < 32;g++)
 					{
-						*p++ = (r << 5) | (r << 2) | (r >> 1);
-						*p++ = (g << 5) | (g << 2) | (g >> 1);
-						*p++ = (b << 6) | (b << 4) | (b << 2) | b;
+						for (b = 0;b < 32;b++)
+						{
+							*p++ = (r << 3) | (r >> 2);
+							*p++ = (g << 3) | (g >> 2);
+							*p++ = (b << 3) | (b >> 2);
+						}
 					}
 				}
+
+				if (osd_allocate_colors(32768,shrinked_palette,shrinked_pens,0))
+					return 1;
 			}
-
-			osd_allocate_colors(256,shrinked_palette,shrinked_pens);
-		}
-
-		for (i = 0;i < Machine->drv->total_colors;i++)
-		{
-			int r,g,b;
-
-
-			r = game_palette[3*i + 0];
-			g = game_palette[3*i + 1];
-			b = game_palette[3*i + 2];
-
-			Machine->pens[i] = shrinked_pens[rgbpenindex(r,g,b)];
-		}
-
-		palette_transparent_pen = shrinked_pens[0];	/* we are forced to use black for the transparent pen */
-	}
-	else
-	{
-		if (Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE)
-		{
-			/* copy over the default palette... */
-			for (i = 0;i < DYNAMIC_MAX_PENS && i < Machine->drv->total_colors;i++)
+			else
 			{
-				shrinked_palette[3*i + 0] = game_palette[3*i + 0];
-				shrinked_palette[3*i + 1] = game_palette[3*i + 1];
-				shrinked_palette[3*i + 2] = game_palette[3*i + 2];
+				for (r = 0;r < 8;r++)
+				{
+					for (g = 0;g < 8;g++)
+					{
+						for (b = 0;b < 4;b++)
+						{
+							*p++ = (r << 5) | (r << 2) | (r >> 1);
+							*p++ = (g << 5) | (g << 2) | (g >> 1);
+							*p++ = (b << 6) | (b << 4) | (b << 2) | b;
+						}
+					}
+				}
 
-				pen_usage_count[i] = 0;
+				if (osd_allocate_colors(256,shrinked_palette,shrinked_pens,0))
+					return 1;
 			}
-
-			/* ... but allocate two fixed pens at the beginning: */
-			/*  transparent black */
-			shrinked_palette[3*TRANSPARENT_PEN+0] = 0;
-			shrinked_palette[3*TRANSPARENT_PEN+1] = 0;
-			shrinked_palette[3*TRANSPARENT_PEN+2] = 0;
-			pen_usage_count[TRANSPARENT_PEN] = 1;	/* so the pen will not be reused */
-
-			/* non transparent black */
-			shrinked_palette[3*BLACK_PEN+0] = 0;
-			shrinked_palette[3*BLACK_PEN+1] = 0;
-			shrinked_palette[3*BLACK_PEN+2] = 0;
-			pen_usage_count[BLACK_PEN] = 1;
-
-			/* create some defaults associations of game colors to shrinked pens. */
-			/* They will be dynamically modified at run time. */
-			for (i = 0;i < Machine->drv->total_colors;i++)
-			{
-				palette_map[i] = (i & 7) + 8;
-			}
-
-			osd_allocate_colors(
-					DYNAMIC_MAX_PENS,
-					shrinked_palette,
-					shrinked_pens);
-		}
-		else
-		{
-			int j,used;
-
-
-if (errorlog) fprintf(errorlog,"shrinking %d colors palette...\n",Machine->drv->total_colors);
-			/* shrink palette to fit */
-			used = 0;
 
 			for (i = 0;i < Machine->drv->total_colors;i++)
 			{
-				for (j = 0;j < used;j++)
-				{
-					if (shrinked_palette[3*j + 0] == game_palette[3*i + 0] &&
-							shrinked_palette[3*j + 1] == game_palette[3*i + 1] &&
-							shrinked_palette[3*j + 2] == game_palette[3*i + 2])
-						break;
-				}
+				r = game_palette[3*i + 0];
+				g = game_palette[3*i + 1];
+				b = game_palette[3*i + 2];
 
-				palette_map[i] = j;
-
-				if (j == used)
-				{
-					used++;
-					if (used > STATIC_MAX_PENS)
-					{
-						used = STATIC_MAX_PENS;
-						palette_map[i] = STATIC_MAX_PENS-1;
-						usrintf_showmessage("cannot shrink static palette");
-if (errorlog) fprintf(errorlog,"error: ran out of free pens to shrink the palette.\n");
-					}
-					else
-					{
-						shrinked_palette[3*j + 0] = game_palette[3*i + 0];
-						shrinked_palette[3*j + 1] = game_palette[3*i + 1];
-						shrinked_palette[3*j + 2] = game_palette[3*i + 2];
-					}
-				}
+				Machine->pens[i] = shrinked_pens[rgbpenindex(r,g,b)];
 			}
 
-if (errorlog) fprintf(errorlog,"shrinked palette uses %d colors\n",used);
-
-			osd_allocate_colors(
-					used,
-					shrinked_palette,
-					shrinked_pens);
+			palette_transparent_pen = shrinked_pens[0];	/* we are forced to use black for the transparent pen */
 		}
+		break;
 
+		case PALETTIZED_16BIT:
+		{
+			for (i = 0;i < RESERVED_PENS;i++)
+			{
+				shrinked_palette[3*i + 0] =
+				shrinked_palette[3*i + 1] =
+				shrinked_palette[3*i + 2] = 0;
+			}
 
-		for (i = 0;i < Machine->drv->total_colors;i++)
-			Machine->pens[i] = shrinked_pens[palette_map[i]];
+			for (i = 0;i < Machine->drv->total_colors;i++)
+			{
+				shrinked_palette[3*(i+RESERVED_PENS) + 0] = game_palette[3*i + 0];
+				shrinked_palette[3*(i+RESERVED_PENS) + 1] = game_palette[3*i + 1];
+				shrinked_palette[3*(i+RESERVED_PENS) + 2] = game_palette[3*i + 2];
+			}
 
-		palette_transparent_pen = shrinked_pens[TRANSPARENT_PEN];	/* for dynamic palette games */
+			if (osd_allocate_colors(total_shrinked_pens,shrinked_palette,shrinked_pens,(Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE)))
+				return 1;
+
+			for (i = 0;i < Machine->drv->total_colors;i++)
+				Machine->pens[i] = shrinked_pens[i + RESERVED_PENS];
+
+			palette_transparent_pen = shrinked_pens[TRANSPARENT_PEN];	/* for dynamic palette games */
+		}
+		break;
 	}
 
 	for (i = 0;i < Machine->drv->color_table_len;i++)
 		Machine->remapped_colortable[i] = Machine->pens[Machine->game_colortable[i]];
+
+	return 0;
 }
 
 
 
-INLINE void palette_change_color_16(int color,unsigned char red,unsigned char green,unsigned char blue)
+INLINE void palette_change_color_16_static(int color,unsigned char red,unsigned char green,unsigned char blue)
 {
 	if (color == palette_transparent_color)
 	{
+		int i;
+
+
 		palette_transparent_pen = shrinked_pens[rgbpenindex(red,green,blue)];
 
 		if (color == -1) return;	/* by default, palette_transparent_color is -1 */
+
+		for (i = 0;i < Machine->drv->total_colors;i++)
+		{
+			if ((old_used_colors[i] & (PALETTE_COLOR_VISIBLE | PALETTE_COLOR_TRANSPARENT_FLAG))
+					== (PALETTE_COLOR_VISIBLE | PALETTE_COLOR_TRANSPARENT_FLAG))
+				old_used_colors[i] |= PALETTE_COLOR_NEEDS_REMAP;
+		}
 	}
 
-	if (game_palette[3*color + 0] == red &&
+	if (	game_palette[3*color + 0] == red &&
 			game_palette[3*color + 1] == green &&
 			game_palette[3*color + 2] == blue)
 		return;
@@ -414,6 +518,26 @@ INLINE void palette_change_color_16(int color,unsigned char red,unsigned char gr
 		old_used_colors[color] |= PALETTE_COLOR_NEEDS_REMAP;
 }
 
+INLINE void palette_change_color_16_palettized(int color,unsigned char red,unsigned char green,unsigned char blue)
+{
+	if (color == palette_transparent_color)
+	{
+		osd_modify_pen(palette_transparent_pen,red,green,blue);
+
+		if (color == -1) return;	/* by default, palette_transparent_color is -1 */
+	}
+
+	if (	game_palette[3*color + 0] == red &&
+			game_palette[3*color + 1] == green &&
+			game_palette[3*color + 2] == blue)
+		return;
+
+	osd_modify_pen(Machine->pens[color],red,green,blue);
+	game_palette[3*color + 0] = red;
+	game_palette[3*color + 1] = green;
+	game_palette[3*color + 2] = blue;
+}
+
 INLINE void palette_change_color_8(int color,unsigned char red,unsigned char green,unsigned char blue)
 {
 	int pen;
@@ -425,7 +549,7 @@ INLINE void palette_change_color_8(int color,unsigned char red,unsigned char gre
 		if (color == -1) return;	/* by default, palette_transparent_color is -1 */
 	}
 
-	if (game_palette[3*color + 0] == red &&
+	if (	game_palette[3*color + 0] == red &&
 			game_palette[3*color + 1] == green &&
 			game_palette[3*color + 2] == blue)
 	{
@@ -466,10 +590,18 @@ if (errorlog) fprintf(errorlog,"error: palette_change_color() called with color 
 		return;
 	}
 
-	if (Machine->color_depth == 16 || (Machine->gamedrv->flags & GAME_REQUIRES_16BIT))
-		palette_change_color_16(color,red,green,blue);
-	else
-		palette_change_color_8(color,red,green,blue);
+	switch (use_16bit)
+	{
+		case NO_16BIT:
+			palette_change_color_8(color,red,green,blue);
+			break;
+		case STATIC_16BIT:
+			palette_change_color_16_static(color,red,green,blue);
+			break;
+		case PALETTIZED_16BIT:
+			palette_change_color_16_palettized(color,red,green,blue);
+			break;
+	}
 }
 
 
@@ -674,7 +806,7 @@ if (errorlog)
 }
 
 
-static const unsigned char *palette_recalc_16(void)
+static const unsigned char *palette_recalc_16_static(void)
 {
 	int i,color;
 	int did_remap = 0;
@@ -711,6 +843,49 @@ static const unsigned char *palette_recalc_16(void)
 
 				Machine->pens[color] = shrinked_pens[rgbpenindex(r,g,b)];
 			}
+		}
+
+		old_used_colors[color] = palette_used_colors[color];
+	}
+
+
+	if (did_remap)
+	{
+		/* rebuild the color lookup table */
+		for (i = 0;i < Machine->drv->color_table_len;i++)
+			Machine->remapped_colortable[i] = Machine->pens[Machine->game_colortable[i]];
+	}
+
+	if (need_refresh) return just_remapped;
+	else return 0;
+}
+
+static const unsigned char *palette_recalc_16_palettized(void)
+{
+	int i,color;
+	int did_remap = 0;
+	int need_refresh = 0;
+
+
+	memset(just_remapped,0,Machine->drv->total_colors * sizeof(unsigned char));
+
+	for (color = 0;color < Machine->drv->total_colors;color++)
+	{
+		if ((palette_used_colors[color] & PALETTE_COLOR_TRANSPARENT_FLAG) !=
+				(old_used_colors[color] & PALETTE_COLOR_TRANSPARENT_FLAG))
+		{
+			did_remap = 1;
+			if (old_used_colors[color] & palette_used_colors[color] & PALETTE_COLOR_CACHED)
+			{
+				/* the color was and still is cached, we'll have to redraw everything */
+				need_refresh = 1;
+				just_remapped[color] = 1;
+			}
+
+			if (palette_used_colors[color] & PALETTE_COLOR_TRANSPARENT_FLAG)
+				Machine->pens[color] = palette_transparent_pen;
+			else
+				Machine->pens[color] = shrinked_pens[color + RESERVED_PENS];
 		}
 
 		old_used_colors[color] = palette_used_colors[color];
@@ -771,7 +946,7 @@ static const unsigned char *palette_recalc_8(void)
 			}
 			else
 			{
-				if (pen < FIRST_AVAILABLE_PEN)
+				if (pen < RESERVED_PENS)
 				{
 					/* the color uses a reserved pen, the only thing we can do is remap it */
 					for (i = color;i < Machine->drv->total_colors;i++)
@@ -870,7 +1045,7 @@ if (errorlog) fprintf(errorlog,"Need %d new pens; %d available. I'll reuse some 
 		}
 	}
 
-	first_free_pen = FIRST_AVAILABLE_PEN;
+	first_free_pen = RESERVED_PENS;
 	for (color = 0;color < Machine->drv->total_colors;color++)
 	{
 		/* the comparison between palette_used_colors and old_used_colors also includes */
@@ -978,7 +1153,7 @@ retry:
 									did_remap = 1;
 									need_refresh = 1;	/* we'll have to redraw everything */
 
-									first_free_pen = FIRST_AVAILABLE_PEN;
+									first_free_pen = RESERVED_PENS;
 									goto retry;
 								}
 							}
@@ -1109,10 +1284,16 @@ const unsigned char *palette_recalc(void)
 	/* if we are not dynamically reducing the palette, return immediately. */
 	if (palette_used_colors == 0)
 		return 0;
-	if (Machine->color_depth == 16 || (Machine->gamedrv->flags & GAME_REQUIRES_16BIT))
-		return palette_recalc_16();
-	else
-		return palette_recalc_8();
+	switch (use_16bit)
+	{
+		case NO_16BIT:
+		default:
+			return palette_recalc_8();
+		case STATIC_16BIT:
+			return palette_recalc_16_static();
+		case PALETTIZED_16BIT:
+			return palette_recalc_16_palettized();
+	}
 }
 
 

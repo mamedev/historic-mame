@@ -127,7 +127,7 @@ static void sound_arm_nmi( int offs, int data )
 
 static int speedup_r( int offs )
 {
-	int data = memory_region(Machine->drv->cpu[0].memory_region)[0x1837];
+	int data = memory_region(REGION_CPU1)[0x1837];
 
 	if ( cpu_get_pc() == 0xa400 && data == 0 )
 		cpu_spinuntil_int();
@@ -330,14 +330,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_KONAMI,		/* 053248 */
 			3000000,		/* ? */
-			0,
 			parodius_readmem,parodius_writemem,0,0,
             parodius_interrupt,1
         },
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,
-			3,
 			parodius_readmem_sound, parodius_writemem_sound,0,0,
 			ignore_interrupt,0	/* IRQs are triggered by the main CPU */
 								/* NMIs are triggered by the 053260 */
@@ -380,7 +378,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( parodius )
-	ROM_REGION( 0x51000 ) /* code + banked roms + palette RAM */
+	ROM_REGIONX( 0x51000, REGION_CPU1 ) /* code + banked roms + palette RAM */
 	ROM_LOAD( "955e01.bin", 0x10000, 0x20000, 0x49baa334 )
 	ROM_LOAD( "955e02.bin", 0x30000, 0x18000, 0x14010d6f )
 	ROM_CONTINUE(           0x08000, 0x08000 )
@@ -393,7 +391,7 @@ ROM_START( parodius )
 	ROM_LOAD( "955d05.bin", 0x000000, 0x080000, 0x7a1e55e0 )	/* sprites */
 	ROM_LOAD( "955d06.bin", 0x080000, 0x080000, 0xf4252875 )	/* sprites */
 
-	ROM_REGION( 0x10000 ) /* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
 	ROM_LOAD( "955e03.bin", 0x0000, 0x10000, 0x940aa356 )
 
 	ROM_REGION( 0x80000 ) /* 053260 samples */
@@ -408,7 +406,7 @@ ROM_END
 
 static void parodius_banking(int lines)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int offs = 0;
 
 if (errorlog && (lines & 0xf0)) fprintf(errorlog,"%04x: setlines %02x\n",cpu_get_pc(),lines);
@@ -420,11 +418,11 @@ if (errorlog && (lines & 0xf0)) fprintf(errorlog,"%04x: setlines %02x\n",cpu_get
 
 static void parodius_init_machine( void )
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	konami_cpu_setlines_callback = parodius_banking;
 
-	paletteram = &memory_region(Machine->drv->cpu[0].memory_region)[0x48000];
+	paletteram = &memory_region(REGION_CPU1)[0x48000];
 
 	videobank = 0;
 

@@ -85,8 +85,8 @@ void atarijsa_init(int cpunum, int inputport, int testport, int testmask)
 	test_mask = testmask;
 
 	/* predetermine the bank base */
-	bank_base = &memory_region(Machine->drv->cpu[cpunum].memory_region)[0x03000];
-	bank_source_data = &memory_region(Machine->drv->cpu[cpunum].memory_region)[0x10000];
+	bank_base = &memory_region(REGION_CPU1+cpunum)[0x03000];
+	bank_source_data = &memory_region(REGION_CPU1+cpunum)[0x10000];
 
 	/* determine which sound hardware is installed */
 	has_tms5220 = has_oki6295 = has_pokey = has_ym2151 = 0;

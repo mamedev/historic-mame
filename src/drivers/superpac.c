@@ -360,7 +360,6 @@ static struct MachineDriver superpac_machine_driver =
 		{
 			CPU_M6809,
 			1100000,             /* 1.1 Mhz */
-			0,                   /* memory region */
 			readmem_cpu1,        /* MemoryReadAddress */
 			writemem_cpu1,       /* MemoryWriteAddress */
 			0,                   /* IOReadPort */
@@ -371,7 +370,6 @@ static struct MachineDriver superpac_machine_driver =
 		{
 			CPU_M6809,
 			1100000,             /* 1.1 Mhz */
-			3,                   /* memory region */
 			superpac_readmem_cpu2,/* MemoryReadAddress */
 			superpac_writemem_cpu2,/* MemoryWriteAddress */
 			0,                   /* IOReadPort */
@@ -416,7 +414,6 @@ static struct MachineDriver pacnpal_machine_driver =
 		{
 			CPU_M6809,
 			1100000,             /* 1.1 Mhz */
-			0,                   /* memory region */
 			readmem_cpu1,        /* MemoryReadAddress */
 			writemem_cpu1,       /* MemoryWriteAddress */
 			0,                   /* IOReadPort */
@@ -427,7 +424,6 @@ static struct MachineDriver pacnpal_machine_driver =
 		{
 			CPU_M6809,
 			1100000,             /* 1.1 Mhz */
-			3,                   /* memory region */
 			pacnpal_readmem_cpu2,/* MemoryReadAddress */
 			pacnpal_writemem_cpu2,/* MemoryWriteAddress */
 			0,                   /* IOReadPort */
@@ -469,7 +465,7 @@ static struct MachineDriver pacnpal_machine_driver =
 
 
 ROM_START( superpac )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sp1.2",        0xc000, 0x2000, 0x4bb33d9c )
 	ROM_LOAD( "sp1.1",        0xe000, 0x2000, 0x846fbb4a )
 
@@ -482,7 +478,7 @@ ROM_START( superpac )
 	ROM_LOAD( "superpac.4e",  0x0020, 0x0100, 0x1253c5c1 ) /* chars */
 	ROM_LOAD( "superpac.3l",  0x0120, 0x0100, 0xd4d7026f ) /* sprites */
 
-	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "spc-3.1k",     0xf000, 0x1000, 0x04445ddb )
 
 	ROM_REGION(0x0100)	/* sound prom */
@@ -490,7 +486,7 @@ ROM_START( superpac )
 ROM_END
 
 ROM_START( superpcm )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "spc-2.1c",     0xc000, 0x2000, 0x1a38c30e )
 	ROM_LOAD( "spc-1.1b",     0xe000, 0x2000, 0x730e95a9 )
 
@@ -503,7 +499,7 @@ ROM_START( superpcm )
 	ROM_LOAD( "superpac.4e",  0x0020, 0x0100, 0x1253c5c1 ) /* chars */
 	ROM_LOAD( "superpac.3l",  0x0120, 0x0100, 0xd4d7026f ) /* sprites */
 
-	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "spc-3.1k",     0xf000, 0x1000, 0x04445ddb )
 
 	ROM_REGION(0x0100)	/* sound prom */
@@ -511,7 +507,7 @@ ROM_START( superpcm )
 ROM_END
 
 ROM_START( pacnpal )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "pap13b.cpu",   0xa000, 0x2000, 0xed64a565 )
 	ROM_LOAD( "pap12b.cpu",   0xc000, 0x2000, 0x15308bcf )
 	ROM_LOAD( "pap11b.cpu",   0xe000, 0x2000, 0x3cac401c )
@@ -525,7 +521,7 @@ ROM_START( pacnpal )
 	ROM_LOAD( "papi5.vid",    0x0020, 0x0100, 0xac46203c ) /* chars */
 	ROM_LOAD( "papi4.vid",    0x0120, 0x0100, 0x686bde84 ) /* sprites */
 
-	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "pap14.cpu",    0xf000, 0x1000, 0x330e20de )
 
 	ROM_REGION(0x0100)	/* sound prom */
@@ -538,7 +534,7 @@ static int superpac_hiload(void)
 {
 	int writing = 0;
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -582,7 +578,7 @@ static int superpac_hiload(void)
 static void superpac_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -598,7 +594,7 @@ static int pacnpal_hiload(void)
 {
 	int writing = 0;
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -642,7 +638,7 @@ static int pacnpal_hiload(void)
 static void pacnpal_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

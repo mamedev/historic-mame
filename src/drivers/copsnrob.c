@@ -214,7 +214,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
 			14318180/16, /* 894886.25 kHz */
-			0,
 			readmem,writemem,0,0,
 			ignore_interrupt,1
 		}
@@ -250,7 +249,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( copsnrob )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "5777.l7",      0x1200, 0x0200, 0x2b62d627 )
 	ROM_LOAD( "5776.k7",      0x1400, 0x0200, 0x7fb12a49 )
 	ROM_LOAD( "5775.j7",      0x1600, 0x0200, 0x627dee63 )

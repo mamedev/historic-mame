@@ -330,7 +330,6 @@ static struct MachineDriver panic_machine_driver =
 		{
 			CPU_Z80,
 			2000000,	/* 2 Mhz? */
-			0,
 			readmem,panic_writemem,0,0,
 			panic_interrupt,2
 		}
@@ -368,7 +367,7 @@ static struct MachineDriver panic_machine_driver =
 
 static int panic_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* wait for default to be copied */
@@ -395,7 +394,7 @@ static int panic_hiload(void)
 static void panic_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -432,7 +431,7 @@ int panic_interrupt(void)
 }
 
 ROM_START( panic )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "spcpanic.1",   0x0000, 0x0800, 0x405ae6f9 )         /* Code */
 	ROM_LOAD( "spcpanic.2",   0x0800, 0x0800, 0xb6a286c5 )
 	ROM_LOAD( "spcpanic.3",   0x1000, 0x0800, 0x85ae8b2e )
@@ -453,7 +452,7 @@ ROM_START( panic )
 ROM_END
 
 ROM_START( panica )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "panica.1",     0x0000, 0x0800, 0x289720ce )         /* Code */
 	ROM_LOAD( "spcpanic.2",   0x0800, 0x0800, 0xb6a286c5 )
 	ROM_LOAD( "spcpanic.3",   0x1000, 0x0800, 0x85ae8b2e )
@@ -474,7 +473,7 @@ ROM_START( panica )
 ROM_END
 
 ROM_START( panicger )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "spacepan.001", 0x0000, 0x0800, 0xa6d9515a )         /* Code */
 	ROM_LOAD( "spacepan.002", 0x0800, 0x0800, 0xcfc22663 )
 	ROM_LOAD( "spacepan.003", 0x1000, 0x0800, 0xe1f36893 )
@@ -711,7 +710,7 @@ static struct GfxDecodeInfo cosmicalien_gfxdecodeinfo[] =
 static int cosmicalienhiload(void)
 {
 	static int firsttime = 0;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
 	/* the high score table is intialized to all 0, so first of all */
@@ -742,7 +741,7 @@ static int cosmicalienhiload(void)
 static void cosmicalienhisave(void)
 {
     void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
     {
@@ -758,7 +757,6 @@ static struct MachineDriver cosmicalien_machine_driver =
 		{
 			CPU_Z80,
 			1081600,
-			0,
 			cosmicalien_readmem,cosmicalien_writemem,0,0,
 			cosmicalien_interrupt,32
 		}
@@ -784,7 +782,7 @@ static struct MachineDriver cosmicalien_machine_driver =
 };
 
 ROM_START( cosmicalien )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "r1",           0x0000, 0x0800, 0x535ee0c5 )
 	ROM_LOAD( "r2",           0x0800, 0x0800, 0xed3cf8f7 )
 	ROM_LOAD( "r3",           0x1000, 0x0800, 0x6a111e5e )
@@ -854,31 +852,60 @@ struct GameDriver driver_cosmica =
 /* 0016-0017   Colourmap Selector                                        */
 /*************************************************************************/
 
+/* R Nabet : One weird thing is that the memory map allows the use of a cheaper tms9980.
+Did the original hardware really use the high-end tms9900 ? */
+/* Set the flag below to compile with a tms9980. */
+#define COSMIC_GUERILLA_USES_TMS9980 0
+
 void cosmicguerilla_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void cosmicguerilla_output_w(int offset, int data);
 void cosmicguerilla_colourmap_select(int offset,int data);
 int  cosmicguerilla_read_pixel_clock(int offset);
 
+#if COSMIC_GUERILLA_USES_TMS9980
+
 static struct MemoryReadAddress cosmicguerilla_readmem[] =
 {
-	{ 0x2000, 0x3fff, MRA_RAM},
-	{ 0x0000, 0x1fff, MRA_ROM},
+	{ 0x2000, 0x3fff, MRA_RAM },
+	{ 0x0000, 0x1fff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
 
+#else
+
+static int cosmic_guerilla_videoram_r(int offset)
+{
+	return (cosmic_videoram[offset] << 8) | cosmic_videoram[offset+1];
+}
+
+static struct MemoryReadAddress cosmicguerilla_readmem[] =
+{
+	{ 0x2000, 0x23ff, MRA_RAM },
+	{ 0x2400, 0x3bff, cosmic_guerilla_videoram_r },
+	{ 0x3C00, 0x3fff, MRA_RAM },
+	{ 0x0000, 0x1fff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+#endif
+
+#if COSMIC_GUERILLA_USES_TMS9980
+
+/* 8-bit handler */
+#define cosmic_guerilla_videoram_w cosmic_videoram_w
+
+#else
+
 static void cosmic_guerilla_videoram_w(int offset,int data)
 {
-#if 0
-  // 8-bit handler
-  cosmic_videoram_w(offset, data);
-#else
-  // 16-bit handler
+  /* 16-bit handler */
   if (! (data & 0xff000000))
     cosmic_videoram_w(offset, (data >> 8) & 0xff);
   if (! (data & 0x00ff0000))
     cosmic_videoram_w(offset + 1, data & 0xff);
-#endif
 }
+
+#endif
 
 static struct MemoryWriteAddress cosmicguerilla_writemem[] =
 {
@@ -1033,7 +1060,13 @@ int cosmicguerilla_interrupt(void)
 	{
 		if ((readinputport(2) & 1)) /* Coin */
 		{
+#if COSMIC_GUERILLA_USES_TMS9980
+			/* on tms9980, a 6 on the interrupt bus means level 4 interrupt */
+			cpu_0_irq_line_vector_w(0, 6);
+#else
+			/* tms9900 is more straightforward */
 			cpu_0_irq_line_vector_w(0, 4);
+#endif
 			cpu_set_irq_line(0, 0, ASSERT_LINE);
 		}
 		else
@@ -1054,22 +1087,26 @@ static void cosmicguerilla_decode(void)
 
     for(Count=0x1fff;Count>=0;Count--)
 	{
-        Scrambled = Machine->memory_region[0][Count];
+        Scrambled = memory_region(REGION_CPU1)[Count];
 
         Normal = (Scrambled >> 3 & 0x11)
                | (Scrambled >> 1 & 0x22)
                | (Scrambled << 1 & 0x44)
                | (Scrambled << 3 & 0x88);
 
-        Machine->memory_region[0][Count] = Normal;
+        memory_region(REGION_CPU1)[Count] = Normal;
     }
 
     /* Patch to avoid crash - Seems like duff romcheck routine */
     /* I would expect it to be bitrot, but have two romsets    */
     /* from different sources with the same problem!           */
 
-    Machine->memory_region[0][0x1e9e] = 0x04;
-    Machine->memory_region[0][0x1e9f] = 0xc0;
+#if COSMIC_GUERILLA_USES_TMS9980
+    memory_region(REGION_CPU1)[0x1e9e] = 0x04;
+    memory_region(REGION_CPU1)[0x1e9f] = 0xc0;
+#else
+	WRITE_WORD(memory_region(REGION_CPU1) + 0x1e9e, 0x04c0);
+#endif
 }
 
 /* These are used for the CR handling - This can be used to */
@@ -1136,7 +1173,7 @@ INPUT_PORTS_END
 static int cosmicguerillahiload(void)
 {
 	static int firsttime = 0;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
 	/* the high score table is intialized to all 0, so first of all */
@@ -1169,7 +1206,7 @@ static int cosmicguerillahiload(void)
 static void cosmicguerillahisave(void)
 {
     void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
     {
@@ -1211,9 +1248,15 @@ static struct MachineDriver cosmicguerilla_machine_driver =
 	/* basic machine hardware */
 	{
 		{
+#if COSMIC_GUERILLA_USES_TMS9980
+			CPU_TMS9980A,
+#else
 			CPU_TMS9900,
+#endif
 			1228500,			/* 9.828 Mhz Crystal */
-			0,
+			/* R Nabet : huh ? This would imply the crystal frequency is somehow divided by 2 before being
+			fed to the tms9904 or tms9980.  Also, I have never heard of a tms9900/9980 operating under
+			1.5MHz.  So, if someone can check this... */
 			cosmicguerilla_readmem,cosmicguerilla_writemem,
 			cosmicguerilla_readport,cosmicguerilla_writeport,
 			cosmicguerilla_interrupt,16
@@ -1249,16 +1292,22 @@ static struct MachineDriver cosmicguerilla_machine_driver =
 	}
 };
 
+#if COSMIC_GUERILLA_USES_TMS9980
+	#define COSMICGUERILLA_ROM_LOAD ROM_LOAD
+#else
+	#define COSMICGUERILLA_ROM_LOAD ROM_LOAD_WIDE
+#endif
+
 ROM_START( cosmicguerilla )
-	ROM_REGION(0x10000)  /* 8k for code */
-	ROM_LOAD( "cosmicg1.bin",  0x0000, 0x0400, 0xe1b9f894 )
-	ROM_LOAD( "cosmicg2.bin",  0x0400, 0x0400, 0x35c75346 )
-	ROM_LOAD( "cosmicg3.bin",  0x0800, 0x0400, 0x82a49b48 )
-	ROM_LOAD( "cosmicg4.bin",  0x0C00, 0x0400, 0x1c1c934c )
-	ROM_LOAD( "cosmicg5.bin",  0x1000, 0x0400, 0xb1c00fbf )
-	ROM_LOAD( "cosmicg6.bin",  0x1400, 0x0400, 0xf03454ce )
-	ROM_LOAD( "cosmicg7.bin",  0x1800, 0x0400, 0xf33ebae7 )
-	ROM_LOAD( "cosmicg8.bin",  0x1C00, 0x0400, 0x472e4990 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )  /* 8k for code */
+	COSMICGUERILLA_ROM_LOAD( "cosmicg1.bin",  0x0000, 0x0400, 0xe1b9f894 )
+	COSMICGUERILLA_ROM_LOAD( "cosmicg2.bin",  0x0400, 0x0400, 0x35c75346 )
+	COSMICGUERILLA_ROM_LOAD( "cosmicg3.bin",  0x0800, 0x0400, 0x82a49b48 )
+	COSMICGUERILLA_ROM_LOAD( "cosmicg4.bin",  0x0C00, 0x0400, 0x1c1c934c )
+	COSMICGUERILLA_ROM_LOAD( "cosmicg5.bin",  0x1000, 0x0400, 0xb1c00fbf )
+	COSMICGUERILLA_ROM_LOAD( "cosmicg6.bin",  0x1400, 0x0400, 0xf03454ce )
+	COSMICGUERILLA_ROM_LOAD( "cosmicg7.bin",  0x1800, 0x0400, 0xf33ebae7 )
+	COSMICGUERILLA_ROM_LOAD( "cosmicg8.bin",  0x1C00, 0x0400, 0x472e4990 )
 
 	ROM_REGIONX( 0x0400, REGION_PROMS )
 	ROM_LOAD( "cosmicg9.bin",  0x0000, 0x0400, 0x689c2c96 )
@@ -1450,7 +1499,6 @@ static struct MachineDriver magspot2_machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz ???? */
-			0,
 			magspot2_readmem,magspot2_writemem,0,0,
 			magspot2_interrupt,1
 		},
@@ -1482,7 +1530,7 @@ static struct MachineDriver magspot2_machine_driver =
 };
 
 ROM_START( magspot2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "my1",  0x0000, 0x0800, 0xc0085ade )
 	ROM_LOAD( "my2",  0x0800, 0x0800, 0xd534a68b )
 	ROM_LOAD( "my3",  0x1000, 0x0800, 0x25513b2a )
@@ -1568,7 +1616,6 @@ static struct MachineDriver devzone_machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz ???? */
-			0,
 			devzone_readmem,devzone_writemem,0,0,
 			magspot2_interrupt,1
 		},
@@ -1683,7 +1730,7 @@ INPUT_PORTS_START( devzone )
 INPUT_PORTS_END
 
 ROM_START( devzone )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "dv1.e3",  0x0000, 0x0800, 0xc70faf00 )
 	ROM_LOAD( "dv2.e4",  0x0800, 0x0800, 0xeacfed61 )
 	ROM_LOAD( "dv3.e5",  0x1000, 0x0800, 0x7973317e )
@@ -1837,7 +1884,7 @@ static struct MemoryWriteAddress nomanland_writemem[] =
 };
 
 ROM_START( nomanland )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1.bin",  0x0000, 0x0800, 0xba117ba6 )
 	ROM_LOAD( "2.bin",  0x0800, 0x0800, 0xe5ed654f )
 	ROM_LOAD( "3.bin",  0x1000, 0x0800, 0x7fc42724 )
@@ -1857,7 +1904,7 @@ ROM_START( nomanland )
 ROM_END
 
 ROM_START( nomanlandg )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "nml1.e3",  0x0000, 0x0800, 0xe212ed91 )
 	ROM_LOAD( "nml2.e4",  0x0800, 0x0800, 0xf66ef3d8 )
 	ROM_LOAD( "nml3.e5",  0x1000, 0x0800, 0xd422fc8a )
@@ -1883,7 +1930,6 @@ static struct MachineDriver nomanland_machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz ???? */
-			0,
 			nomanland_readmem,nomanland_writemem,0,0,
 			nomanland_interrupt,1
 		},
@@ -1920,7 +1966,6 @@ static struct MachineDriver nomanland2_machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz ???? */
-			0,
 			nomanland2_readmem,nomanland_writemem,0,0,
 			nomanland_interrupt,1
 		},

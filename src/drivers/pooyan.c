@@ -240,14 +240,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz (?) */
-			0,
 			readmem,writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318180/8,	/* 1.789772727 MHz */						\
-			3,	/* memory region #3 */
 			timeplt_sound_readmem,timeplt_sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -287,7 +285,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( pooyan )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1.4a",         0x0000, 0x2000, 0xbb319c63 )
 	ROM_LOAD( "2.5a",         0x2000, 0x2000, 0xa1463d98 )
 	ROM_LOAD( "3.6a",         0x4000, 0x2000, 0xfe1a9e08 )
@@ -304,13 +302,13 @@ ROM_START( pooyan )
 	ROM_LOAD( "pooyan.pr2",   0x0020, 0x0100, 0x82748c0b ) /* sprites */
 	ROM_LOAD( "pooyan.pr3",   0x0120, 0x0100, 0x8cd4cd60 ) /* characters */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "xx.7a",        0x0000, 0x1000, 0xfbe2b368 )
 	ROM_LOAD( "xx.8a",        0x1000, 0x1000, 0xe1795b3d )
 ROM_END
 
 ROM_START( pooyans )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ic22_a4.cpu",  0x0000, 0x2000, 0x916ae7d7 )
 	ROM_LOAD( "ic23_a5.cpu",  0x2000, 0x2000, 0x8fe38c61 )
 	ROM_LOAD( "ic24_a6.cpu",  0x4000, 0x2000, 0x2660218a )
@@ -327,13 +325,13 @@ ROM_START( pooyans )
 	ROM_LOAD( "pooyan.pr2",   0x0020, 0x0100, 0x82748c0b ) /* sprites */
 	ROM_LOAD( "pooyan.pr3",   0x0120, 0x0100, 0x8cd4cd60 ) /* characters */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "xx.7a",        0x0000, 0x1000, 0xfbe2b368 )
 	ROM_LOAD( "xx.8a",        0x1000, 0x1000, 0xe1795b3d )
 ROM_END
 
 ROM_START( pootan )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "poo_ic22.bin", 0x0000, 0x2000, 0x41b23a24 )
 	ROM_LOAD( "poo_ic23.bin", 0x2000, 0x2000, 0xc9d94661 )
 	ROM_LOAD( "3.6a",         0x4000, 0x2000, 0xfe1a9e08 )
@@ -350,7 +348,7 @@ ROM_START( pootan )
 	ROM_LOAD( "pooyan.pr2",   0x0020, 0x0100, 0x82748c0b ) /* sprites */
 	ROM_LOAD( "pooyan.pr3",   0x0120, 0x0100, 0x8cd4cd60 ) /* characters */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "xx.7a",        0x0000, 0x1000, 0xfbe2b368 )
 	ROM_LOAD( "xx.8a",        0x1000, 0x1000, 0xe1795b3d )
 ROM_END
@@ -359,7 +357,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -396,7 +394,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

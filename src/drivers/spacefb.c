@@ -359,14 +359,12 @@ static struct MachineDriver machine_driver =
         {
             CPU_Z80,
             4000000,    /* 4 Mhz? */
-            0,
             readmem,writemem,readport,writeport,
             spacefb_interrupt,2 /* two int's per frame */
         },
 		{
             CPU_I8035 | CPU_AUDIO_CPU,
             6000000/15,
-            3,
 			readmem_sound,writemem_sound,readport_sound,writeport_sound,
             ignore_interrupt,0
         }
@@ -402,7 +400,7 @@ static struct MachineDriver machine_driver =
 
 
 ROM_START( spacefb )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "5e.cpu",       0x0000, 0x0800, 0x2d406678 )         /* Code */
 	ROM_LOAD( "5f.cpu",       0x0800, 0x0800, 0x89f0c34a )
 	ROM_LOAD( "5h.cpu",       0x1000, 0x0800, 0xc4bcac3e )
@@ -420,12 +418,12 @@ ROM_START( spacefb )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "mb7051.3n",    0x0000, 0x0020, 0x465d07af )
 
-	ROM_REGION(0x1000)	/* sound */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound */
     ROM_LOAD( "ic20.snd",     0x0000, 0x0400, 0x1c8670b3 )
 ROM_END
 
 ROM_START( spacefbg )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "tst-c.5e",     0x0000, 0x0800, 0x07949110 )         /* Code */
 	ROM_LOAD( "tst-c.5f",     0x0800, 0x0800, 0xce591929 )
 	ROM_LOAD( "tst-c.5h",     0x1000, 0x0800, 0x55d34ea5 )
@@ -443,12 +441,12 @@ ROM_START( spacefbg )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "mb7051.3n",    0x0000, 0x0020, 0x465d07af )
 
-	ROM_REGION(0x1000)	/* sound */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound */
     ROM_LOAD( "ic20.snd",     0x0000, 0x0400, 0x1c8670b3 )
 ROM_END
 
 ROM_START( spcbird )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sb5e.cpu",     0x0000, 0x0800, 0x232d66b8 )         /* Code */
 	ROM_LOAD( "sb5f.cpu",     0x0800, 0x0800, 0x99504327 )
 	ROM_LOAD( "sb5h.cpu",     0x1000, 0x0800, 0x49a26fe5 )
@@ -466,12 +464,12 @@ ROM_START( spcbird )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "spcbird.clr",  0x0000, 0x0020, 0x25c79518 )
 
-	ROM_REGION(0x1000)	/* sound */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound */
     ROM_LOAD( "ic20.snd",     0x0000, 0x0400, 0x1c8670b3 )
 ROM_END
 
 ROM_START( spacedem )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sd5e.cpu",     0x0000, 0x0800, 0xbe4b9cbb )         /* Code */
 	ROM_LOAD( "sd5f.cpu",     0x0800, 0x0800, 0x0814f964 )
 	ROM_LOAD( "sd5h.cpu",     0x1000, 0x0800, 0xebfff682 )
@@ -489,7 +487,7 @@ ROM_START( spacedem )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "mb7051.3n",    0x0000, 0x0020, 0x00000000 )  /* This ROM wasn't in the set. Using Space Firebird's */
 
-	ROM_REGION(0x1000)	/* sound */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound */
     ROM_LOAD( "ic20.snd",     0x0000, 0x0400, 0x00000000 )  /* This ROM wasn't in the set. Using Space Firebird's */
 ROM_END
 
@@ -499,7 +497,7 @@ static int hiload(void)
 {
 	unsigned char *from, *to;
 	int i, j, digit, started;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -565,7 +563,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name, 0,

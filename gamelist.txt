@@ -229,7 +229,7 @@ command to list them.
 | Espial               |  Yes   |  Yes?  |  Yes   |   No   |   No   | espial   |
 | Exciting Soccer      |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | exctsccr |
 | Exed Exes            |  Yes   |  Yes   |Partial |  Yes   |   No   | exedexes |
-| Exerion              |  Yes   |   No   |  Yes   |  Yes   |   No   | exerion  |
+| Exerion              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | exerion  |
 | Express Raider       |  Yes   |  Yes   |  Yes   |  Yes   |   No   | exprraid |
 | Extermination        |  Yes   |  Yes   |  Yes   |   No   |  Yes   | extrmatn |
 | Exterminator         |  Yes   |  Yes   |  Yes   |  Yes   |  n/a   | exterm   |
@@ -1418,20 +1418,6 @@ Known issues:
 
 
 
-Exerion ("exerion")
-===================
-Clones supported:
-  Taito license ("exeriont")
-  alternate version (bootleg?) ("exerionb")
-
-Known issues:
-- exeriont resets when you try to start a game
-- Sometimes the game resets while you are playing. It has been reported that
-  the original did it as well, but this is still uncertain.
-- The background graphics are missing.
-
-
-
 Express Raider ("exprraid")
 ===========================
 Clones supported:
@@ -1440,13 +1426,6 @@ Clones supported:
 
 Known issues:
 - Some flickering graphics.
-
-
-
-Exterminator ("exterm")
-=======================
-Initializing the EEPROM takes a LOOOONG time. It should take about 30sec at
-100% according to the manual, adjust for your frame rate accordingly.
 
 
 

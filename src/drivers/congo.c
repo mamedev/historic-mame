@@ -305,14 +305,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz ?? */
-			0,
 			readmem,writemem,0,0,
 			congo_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			2000000,
-			4,
 			sh_readmem, sh_writemem, 0,0,
 			interrupt, 4
 		}
@@ -356,7 +354,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( congo )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "congo1.bin",   0x0000, 0x2000, 0x09355b5b )
 	ROM_LOAD( "congo2.bin",   0x2000, 0x2000, 0x1c5e30ae )
 	ROM_LOAD( "congo3.bin",   0x4000, 0x2000, 0x5ee1132c )
@@ -374,6 +372,7 @@ ROM_START( congo )
 	ROM_LOAD( "congo14.bin",  0x0d800, 0x2000, 0xbf9169fe )
 	ROM_LOAD( "congo16.bin",  0x0f800, 0x2000, 0xcb6d5775 )
 	ROM_LOAD( "congo15.bin",  0x11800, 0x2000, 0x7b15a7a4 )
+
 	ROM_REGION(0x8000)      /* background data */
 	ROM_LOAD( "congo6.bin",   0x0000, 0x2000, 0xd637f02b )
 	/* 2000-3fff empty space to match Zaxxon */
@@ -383,12 +382,12 @@ ROM_START( congo )
 	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "congo.u68",    0x0000, 0x100, 0xb788d8ae ) /* palette */
 
-	ROM_REGION(0x10000) /*64K for the sound cpu*/
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /*64K for the sound cpu*/
 	ROM_LOAD( "congo17.bin",  0x0000, 0x2000, 0x5024e673 )
 ROM_END
 
 ROM_START( tiptop )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "tiptop1.bin",  0x0000, 0x2000, 0xe19dc77b )
 	ROM_LOAD( "tiptop2.bin",  0x2000, 0x2000, 0x3fcd3b6e )
 	ROM_LOAD( "tiptop3.bin",  0x4000, 0x2000, 0x1c94250b )
@@ -406,6 +405,7 @@ ROM_START( tiptop )
 	ROM_LOAD( "congo14.bin",  0x0d800, 0x2000, 0xbf9169fe )
 	ROM_LOAD( "congo16.bin",  0x0f800, 0x2000, 0xcb6d5775 )
 	ROM_LOAD( "congo15.bin",  0x11800, 0x2000, 0x7b15a7a4 )
+
 	ROM_REGION(0x8000)      /* background data */
 	ROM_LOAD( "congo6.bin",   0x0000, 0x2000, 0xd637f02b )
 	/* 2000-3fff empty space to match Zaxxon */
@@ -415,7 +415,7 @@ ROM_START( tiptop )
 	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "congo.u68",    0x0000, 0x100, 0xb788d8ae ) /* palette */
 
-	ROM_REGION(0x10000) /*64K for the sound cpu*/
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /*64K for the sound cpu*/
 	ROM_LOAD( "congo17.bin",  0x0000, 0x2000, 0x5024e673 )
 ROM_END
 
@@ -423,7 +423,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x8030],"\x00\x89\x00",3) == 0 &&
 	    memcmp(&RAM[0x8099],"\x00\x37\x00",3) == 0)
@@ -449,7 +449,7 @@ static int hiload(void)
 
 static void hisave(void)
 {
-    unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+    unsigned char *RAM = memory_region(REGION_CPU1);
 	/* make sure that the high score table is still valid (entering the */
 	/* test mode corrupts it) */
 	if (memcmp(&RAM[0x8030],"\x00\x00\x00",3) != 0)

@@ -264,14 +264,12 @@ static struct MachineDriver mikie_machine_driver =
 		{
 			CPU_M6809,
 			1250000,        /* 1.25 Mhz */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318180/4,	/* ? */
-			3,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -312,7 +310,7 @@ static struct MachineDriver mikie_machine_driver =
 
 
 ROM_START( mikie )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "11c_n14.bin",  0x6000, 0x2000, 0xf698e6dd )
 	ROM_LOAD( "12a_o13.bin",  0x8000, 0x4000, 0x826e7035 )
 	ROM_LOAD( "12d_o17.bin",  0xc000, 0x4000, 0x161c25c8 )
@@ -331,12 +329,12 @@ ROM_START( mikie )
 	ROM_LOAD( "12h_d22.bin",  0x0300, 0x0100, 0x872be05c )	/* character lookup table */
 	ROM_LOAD( "f09_d18.bin",  0x0400, 0x0100, 0x7396b374 )	/* sprite lookup table */
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "06e_n10.bin",  0x0000, 0x2000, 0x2cf9d670 )
 ROM_END
 
 ROM_START( mikiej )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "11c_n14.bin",  0x6000, 0x2000, 0xf698e6dd )
 	ROM_LOAD( "12a_o13.bin",  0x8000, 0x4000, 0x826e7035 )
 	ROM_LOAD( "12d_o17.bin",  0xc000, 0x4000, 0x161c25c8 )
@@ -355,12 +353,12 @@ ROM_START( mikiej )
 	ROM_LOAD( "12h_d22.bin",  0x0300, 0x0100, 0x872be05c )	/* character lookup table */
 	ROM_LOAD( "f09_d18.bin",  0x0400, 0x0100, 0x7396b374 )	/* sprite lookup table */
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "06e_n10.bin",  0x0000, 0x2000, 0x2cf9d670 )
 ROM_END
 
 ROM_START( mikiehs )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "11c_l14.bin",  0x6000, 0x2000, 0x633f3a6d )
 	ROM_LOAD( "12a_m13.bin",  0x8000, 0x4000, 0x9c42d715 )
 	ROM_LOAD( "12d_m17.bin",  0xc000, 0x4000, 0xcb5c03c9 )
@@ -379,7 +377,7 @@ ROM_START( mikiehs )
 	ROM_LOAD( "12h_d22.bin",  0x0300, 0x0100, 0x872be05c )	/* character lookup table */
 	ROM_LOAD( "f09_d18.bin",  0x0400, 0x0100, 0x7396b374 )	/* sprite lookup table */
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "06e_h10.bin",  0x0000, 0x2000, 0x4ed887d2 )
 ROM_END
 
@@ -387,7 +385,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -420,7 +418,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

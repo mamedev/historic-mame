@@ -175,7 +175,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
 			1000000,	   /* 1 MHz ???? */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		}
@@ -212,7 +211,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( nitedrvr )
-	ROM_REGION(0x10000) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "6569-01.d2",   0x9000, 0x0800, 0x7afa7542 )
 	ROM_LOAD( "6570-01.f2",   0x9800, 0x0800, 0xbf5d77b1 )
 	ROM_RELOAD( 			0xF800, 0x0800 )

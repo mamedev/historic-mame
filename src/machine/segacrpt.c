@@ -198,7 +198,7 @@
 static void lfkp(int mask)
 {
 	int A;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if (!errorlog) return;
@@ -269,7 +269,7 @@ static void read_table_from_disk(unsigned char *xortable)
 static void sega_decode(const unsigned char xortable[32][4])
 {
 	int A;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	for (A = 0x0000;A < 0x8000;A++)
@@ -869,7 +869,7 @@ void fdwarrio_decode(void)
 		{ 0x00,0x11,0x05,0x14,0x50,0x41,0x55,0x44 }		/* extra line for data decode */
 	};
 	int A;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	for (A = 0x0000;A < 0x8000;A++)
@@ -1065,7 +1065,7 @@ void wboy4_decode(void)
 		{ 0x14,0x05,0x11,0x00,0x00,0x11,0x05,0x14 },	/* .1.1 ..1. .1.. 1..1 */
 	};
 	int A;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	for (A = 0x0000;A < 0x8000;A++)

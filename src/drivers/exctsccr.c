@@ -370,14 +370,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* 4.0 Mhz (?) */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
 			4123456,	/* ??? with 4 MHz, nested NMIs might happen */
-			3,
 			sound_readmem,sound_writemem,0,sound_writeport,
 			ignore_interrupt,0,
 			nmi_interrupt, 4000 /* 4 khz, updates the dac */
@@ -421,14 +419,12 @@ static struct MachineDriver bl_machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* 4.0 Mhz (?) */
-			0,
 			bl_readmem,bl_writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz ? */
-			3,
 			bl_sound_readmem,bl_sound_writemem,0,0,
 			ignore_interrupt,0
 		},
@@ -470,12 +466,12 @@ static struct MachineDriver bl_machine_driver =
 ***************************************************************************/
 
 ROM_START( exctsccr )
-    ROM_REGION(0x10000)     /* 64k for code */
+    ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
     ROM_LOAD( "1_g10.bin",    0x0000, 0x2000, 0xaa68df66 )
     ROM_LOAD( "2_h10.bin",    0x2000, 0x2000, 0x2d8f8326 )
     ROM_LOAD( "3_j10.bin",    0x4000, 0x2000, 0xdce4a04d )
 
-    ROM_REGION(0x08000)
+    ROM_REGION_DISPOSE( 0x08000 )
     ROM_LOAD( "4_a5.bin",     0x0000, 0x2000, 0xc342229b )
     ROM_LOAD( "5_b5.bin",     0x2000, 0x2000, 0x35f4f8c9 )
     ROM_LOAD( "6_c5.bin",     0x4000, 0x2000, 0xeda40e32 )
@@ -487,7 +483,7 @@ ROM_START( exctsccr )
 	ROM_LOAD( "prom2.8r",     0x0020, 0x0100, 0x8a9c0edf ) /* lookup table */
 	ROM_LOAD( "prom3.k5",     0x0120, 0x0100, 0xb5db1c2c ) /* lookup table */
 
-    ROM_REGION(0x10000)     /* 64k for code */
+    ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for code */
     ROM_LOAD( "0_h6.bin",     0x0000, 0x2000, 0x3babbd6b )
     ROM_LOAD( "9_f6.bin",     0x2000, 0x2000, 0x639998f5 )
     ROM_LOAD( "8_d6.bin",     0x4000, 0x2000, 0x88651ee1 )
@@ -496,12 +492,12 @@ ROM_START( exctsccr )
 ROM_END
 
 ROM_START( exctscca )
-    ROM_REGION(0x10000)     /* 64k for code */
+    ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
     ROM_LOAD( "1_g10.bin",    0x0000, 0x2000, 0xaa68df66 )
     ROM_LOAD( "2_h10.bin",    0x2000, 0x2000, 0x2d8f8326 )
     ROM_LOAD( "3_j10.bin",    0x4000, 0x2000, 0xdce4a04d )
 
-    ROM_REGION(0x08000)
+    ROM_REGION_DISPOSE( 0x08000 )
     ROM_LOAD( "4_a5.bin",     0x0000, 0x2000, 0xc342229b )
     ROM_LOAD( "5_b5.bin",     0x2000, 0x2000, 0x35f4f8c9 )
     ROM_LOAD( "6_c5.bin",     0x4000, 0x2000, 0xeda40e32 )
@@ -513,7 +509,7 @@ ROM_START( exctscca )
 	ROM_LOAD( "prom2.8r",     0x0020, 0x0100, 0x8a9c0edf ) /* lookup table */
 	ROM_LOAD( "prom3.k5",     0x0120, 0x0100, 0xb5db1c2c ) /* lookup table */
 
-    ROM_REGION(0x10000)     /* 64k for code */
+    ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for code */
     ROM_LOAD( "exctsccc.000", 0x0000, 0x2000, 0x642fc42f )
     ROM_LOAD( "exctsccc.009", 0x2000, 0x2000, 0xd88b3236 )
     ROM_LOAD( "8_d6.bin",     0x4000, 0x2000, 0x88651ee1 )
@@ -523,12 +519,12 @@ ROM_END
 
 /* Bootleg */
 ROM_START( exctsccb )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "es-1.e2",      0x0000, 0x2000, 0x997c6a82 )
 	ROM_LOAD( "es-2.g2",      0x2000, 0x2000, 0x5c66e792 )
 	ROM_LOAD( "es-3.h2",      0x4000, 0x2000, 0xe0d504c0 )
 
-	ROM_REGION(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE( 0x8000 )	/* temporary space for graphics (disposed after conversion) */
 	/* I'm using the ROMs from exctscc2, national flags would be wrong otherwise */
     ROM_LOAD( "vr.5a",        0x0000, 0x2000, BADCRC( 0x4ff1783d ) )
     ROM_LOAD( "vr.5b",        0x2000, 0x2000, BADCRC( 0x5605b60b ) )
@@ -541,19 +537,19 @@ ROM_START( exctsccb )
 	ROM_LOAD( "prom2.8r",     0x0020, 0x0100, 0x8a9c0edf ) /* lookup table */
 	ROM_LOAD( "prom3.k5",     0x0120, 0x0100, 0xb5db1c2c ) /* lookup table */
 
-	ROM_REGION(0x10000)	/* sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* sound */
 	ROM_LOAD( "es-a.k2",      0x0000, 0x2000, 0x99e87b78 )
 	ROM_LOAD( "es-b.l2",      0x2000, 0x2000, 0x8b3db794 )
 	ROM_LOAD( "es-c.m2",      0x4000, 0x2000, 0x7bed2f81 )
 ROM_END
 
 ROM_START( exctscc2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "vr.3j",        0x0000, 0x2000, 0xc6115362 )
 	ROM_LOAD( "vr.3k",        0x2000, 0x2000, 0xde36ba00 )
 	ROM_LOAD( "vr.3l",        0x4000, 0x2000, 0x1ddfdf65 )
 
-	ROM_REGION(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE( 0x8000 )	/* temporary space for graphics (disposed after conversion) */
     ROM_LOAD( "vr.5a",        0x0000, 0x2000, 0x4ff1783d )
     ROM_LOAD( "vr.5b",        0x2000, 0x2000, 0x5605b60b )
     ROM_LOAD( "vr.5c",        0x4000, 0x2000, 0x1fb84ee6 )
@@ -565,7 +561,7 @@ ROM_START( exctscc2 )
 	ROM_LOAD( "prom2.8r",     0x0020, 0x0100, 0x8a9c0edf ) /* lookup table */
 	ROM_LOAD( "prom3.k5",     0x0120, 0x0100, 0xb5db1c2c ) /* lookup table */
 
-    ROM_REGION(0x10000)     /* 64k for code */
+    ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for code */
     ROM_LOAD( "vr.7d",        0x0000, 0x2000, 0x2c675a43 )
     ROM_LOAD( "vr.7e",        0x2000, 0x2000, 0xe571873d )
     ROM_LOAD( "8_d6.bin",     0x4000, 0x2000, 0x88651ee1 )	/* vr.7f */
@@ -578,7 +574,7 @@ static int hiload_es(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if (memcmp(&RAM[0x7c60],"\x02\x00\x00",3) == 0)
 	{
@@ -604,7 +600,7 @@ static void hisave_es(void)
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
 
 	if (f)
@@ -618,7 +614,7 @@ static int hiload_esb(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if (memcmp(&RAM[0x8c60],"\x02\x00\x00",3) == 0)
 	{
@@ -644,7 +640,7 @@ static void hisave_esb(void)
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
 
 	if (f)

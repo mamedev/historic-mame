@@ -131,7 +131,6 @@ static struct MachineDriver astinvad_machine_driver = /* LT */
 		{
 			CPU_Z80,
 			2000000,        /* 2 Mhz? */
-			0,
 			astinvad_readmem,astinvad_writemem,astinvad_readport,astinvad_writeport,
 			interrupt,1    /* two interrupts per frame */
 		}
@@ -171,7 +170,7 @@ static struct MachineDriver astinvad_machine_driver = /* LT */
 ***************************************************************************/
 
 ROM_START( astinvad )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "ai_cpu_1.rom", 0x0000, 0x0400, 0x20e3ec41 )
 	ROM_LOAD( "ai_cpu_2.rom", 0x0400, 0x0400, 0xe8f1ab55 )
 	ROM_LOAD( "ai_cpu_3.rom", 0x0800, 0x0400, 0xa0092553 )
@@ -185,7 +184,7 @@ ROM_START( astinvad )
 ROM_END
 
 ROM_START( kamikaze )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "km01",         0x0000, 0x0800, 0x8aae7414 )
 	ROM_LOAD( "km02",         0x0800, 0x0800, 0x6c7a2beb )
 	ROM_LOAD( "km03",         0x1000, 0x0800, 0x3e8dedb6 )
@@ -202,7 +201,7 @@ ROM_END
 
 static int astinvad_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if (memcmp(&RAM[0x1cff],"\x08\x20\x03",3) == 0 )
@@ -225,7 +224,7 @@ static int astinvad_hiload(void)
 static void astinvad_hisave(void)
 {
     void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -394,7 +393,6 @@ static struct MachineDriver spaceint_machine_driver = /* 20-12-1998 LT */
 		{
 			CPU_Z80,
 			2000000,        /* 2 Mhz? */
-			0,
 			spaceint_readmem,spaceint_writemem,spaceint_readport,spaceint_writeport,
 			spaceint_interrupt,1
 		}
@@ -428,7 +426,7 @@ static struct MachineDriver spaceint_machine_driver = /* 20-12-1998 LT */
 
 
 ROM_START( spaceint )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "1",	 0x0000, 0x0400, 0x184314d2 )
 	ROM_LOAD( "2",	 0x0400, 0x0400, 0x55459aa1 )
 	ROM_LOAD( "3",	 0x0800, 0x0400, 0x9d6819be )

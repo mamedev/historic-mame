@@ -69,7 +69,7 @@ void ginganin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 static void ginganin_init_machine (void)
 {
 	/* The background tilemap resides in ROM */
-	ginganin_bgram = Machine->memory_region[2];
+	ginganin_bgram = memory_region(2);
 }
 
 
@@ -389,14 +389,12 @@ static struct MachineDriver ginganin_machine_driver =
 		{
 			CPU_M68000,
 			6000000,	/* ? */
-			0,
 			readmem,writemem,0,0,
 			ginganin_interrupt, 1
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
 			1000000,	/* ? */		// Takahiro Nogi. 1999/09/27 (3579545 -> 1000000)
-			3,
 			sound_readmem,sound_writemem,0,0,
 			ginganin_sound_interrupt, 60	// Takahiro Nogi. 1999/09/27 (1 -> 60)
 		},
@@ -440,7 +438,7 @@ static struct MachineDriver ginganin_machine_driver =
 
 ROM_START( ginganin )
 
-	ROM_REGION(0x20000)				/* Region 0 - main cpu */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )				/* Region 0 - main cpu */
 	ROM_LOAD_EVEN( "gn_02.bin", 0x00000, 0x10000, 0x4a4e012f )
 	ROM_LOAD_ODD(  "gn_01.bin", 0x00000, 0x10000, 0x30256fcb )
 
@@ -456,10 +454,10 @@ ROM_START( ginganin )
 	ROM_LOAD( "gn_08.bin", 0x064000, 0x10000, 0xf7c73c18 )
 	ROM_LOAD( "gn_09.bin", 0x074000, 0x10000, 0xa5e07c3b )
 
-	ROM_REGION(0x08000)				/* Region 2 - bg tilemap */
+	ROM_REGION( 0x08000 )				/* Region 2 - bg tilemap */
 	ROM_LOAD( "gn_11.bin", 0x00000, 0x08000, 0xf0d0e605 )
 
-	ROM_REGION(0x10000)				/* Region 3 - sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )				/* Region 3 - sound cpu */
 	ROM_LOAD( "gn_05.bin", 0x00000, 0x10000, 0xe76e10e7 )
 
 	ROM_REGION(0x20000)				/* Region 4 - samples */
@@ -475,12 +473,12 @@ void ginganin_rom_decode(void)
 unsigned char *RAM;
 
 /* main cpu patches */
-	RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	RAM = memory_region(REGION_CPU1);
 	WRITE_WORD(&RAM[0x408],0x6000);	WRITE_WORD(&RAM[0x40a],0x001c);	// avoid writes to rom getting to the log
 
 
 /* sound cpu patches */
-	RAM = memory_region(Machine->drv->cpu[1].memory_region);
+	RAM = memory_region(REGION_CPU2);
 
 	/* let's clear the RAM: ROM starts at 0x4000 */
 	memset (&RAM[0],0,0x800);

@@ -31,7 +31,7 @@ void srumbler_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void srumbler_bankswitch_w(int offset,int data)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	cpu_setbank (1, &RAM[0x10000+(data&0x0f)*0x9000]);
 }
@@ -323,8 +323,8 @@ static void srumbler_init_machine(void)
      */
 
     int j, i;
-    unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
-    unsigned char *pROM = Machine->memory_region[3];
+    unsigned char *RAM = memory_region(REGION_CPU1);
+    unsigned char *pROM = memory_region(3);
 
     /* Resident ROM area e000-ffff */
     memcpy(&RAM[0xe000], pROM+0x0c000, 0x2000);
@@ -378,14 +378,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			1500000,        /* 1.5 Mhz (?) */
-			0,
 			readmem,writemem,0,0,
 			srumbler_interrupt,2
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3000000,        /* 3 Mhz ??? */
-			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
 		}
@@ -427,7 +425,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( srumbler )
-	ROM_REGION(0x10000+0x9000*16)  /* 64k for code + banked ROM images */
+	ROM_REGIONX( 0x10000+0x9000*16, REGION_CPU1 )  /* 64k for code + banked ROM images */
 	/* empty, will be filled later */
 
 	ROM_REGION_DISPOSE(0x90000)     /* temporary space for graphics (disposed after conversion) */
@@ -449,7 +447,7 @@ ROM_START( srumbler )
 	ROM_LOAD( "15j_sr26.bin", 0x80000, 0x8000, 0xd4f1732f )
 	ROM_LOAD( "14j_sr25.bin", 0x88000, 0x8000, 0xd2a4ea4f )
 
-	ROM_REGION(0x10000) /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
 	ROM_LOAD( "2f_sr05.bin",  0x0000, 0x8000, 0x0177cebe )
 
 	ROM_REGION(0x40000) /* Paged ROMs */
@@ -469,7 +467,7 @@ ROM_START( srumbler )
 ROM_END
 
 ROM_START( srumblr2 )
-	ROM_REGION(0x10000+0x9000*16)  /* 64k for code + banked ROM images */
+	ROM_REGIONX( 0x10000+0x9000*16, REGION_CPU1 )  /* 64k for code + banked ROM images */
 	/* empty, will be filled later */
 
 	ROM_REGION_DISPOSE(0x90000)     /* temporary space for graphics (disposed after conversion) */
@@ -491,7 +489,7 @@ ROM_START( srumblr2 )
 	ROM_LOAD( "15j_sr26.bin", 0x80000, 0x8000, 0xd4f1732f )
 	ROM_LOAD( "14j_sr25.bin", 0x88000, 0x8000, 0xd2a4ea4f )
 
-	ROM_REGION(0x10000) /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
 	ROM_LOAD( "rc05.2f",      0x0000, 0x8000, 0xea04fa07 )  /* AUDIO (different) */
 
 	ROM_REGION(0x40000) /* Paged ROMs */
@@ -511,7 +509,7 @@ ROM_START( srumblr2 )
 ROM_END
 
 ROM_START( rushcrsh )
-	ROM_REGION(0x10000+0x9000*16)  /* 64k for code + banked ROM images */
+	ROM_REGIONX( 0x10000+0x9000*16, REGION_CPU1 )  /* 64k for code + banked ROM images */
 	/* empty, will be filled later */
 
 	ROM_REGION_DISPOSE(0x90000)     /* temporary space for graphics (disposed after conversion) */
@@ -533,7 +531,7 @@ ROM_START( rushcrsh )
 	ROM_LOAD( "15j_sr26.bin", 0x80000, 0x8000, 0xd4f1732f )
 	ROM_LOAD( "14j_sr25.bin", 0x88000, 0x8000, 0xd2a4ea4f )
 
-	ROM_REGION(0x10000) /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
 	ROM_LOAD( "rc05.2f",      0x0000, 0x8000, 0xea04fa07 )  /* AUDIO (different) */
 
 	ROM_REGION(0x40000) /* Paged ROMs */
@@ -556,7 +554,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -588,7 +586,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

@@ -543,7 +543,7 @@ void williams2_bank_select(int offset, int data)
 	/* other banks reference ROM plus either palette RAM or the top of videoram */
 	else
 	{
-		unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+		unsigned char *RAM = memory_region(REGION_CPU1);
 
 		cpu_setbank(1, &RAM[bank[williams2_bank]]);
 
@@ -650,7 +650,7 @@ void defender_bank_select_w(int offset, int data)
 	UINT32 bank_offset = defender_bank_list[data & 7];
 
 	/* set bank address */
-	cpu_setbank(2, &Machine->memory_region[0][bank_offset]);
+	cpu_setbank(2, &memory_region(REGION_CPU1)[bank_offset]);
 
 	/* if the bank maps into normal RAM, it represents I/O space */
 	if (bank_offset < 0x10000)
@@ -680,7 +680,7 @@ int defender_input_port_0_r(int offset)
 	if (altkeys)
 	{
 		keys |= altkeys;
-		if (Machine->memory_region[0][0xa0bb] == 0xfd)
+		if (memory_region(REGION_CPU1)[0xa0bb] == 0xfd)
 		{
 			if (keys & 0x02)
 				keys = (keys & 0xfd) | 0x40;
@@ -768,7 +768,7 @@ int stargate_input_port_0_r(int offset)
 	if (altkeys)
 	{
 		keys |= altkeys;
-		if (Machine->memory_region[0][0x9c92] == 0xfd)
+		if (memory_region(REGION_CPU1)[0x9c92] == 0xfd)
 		{
 			if (keys & 0x02)
 				keys = (keys & 0xfd) | 0x40;
@@ -797,7 +797,7 @@ static const UINT32 blaster_bank_offset[16] =
 
 void blaster_vram_select_w(int offset, int data)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	vram_bank = data;
 
@@ -819,7 +819,7 @@ void blaster_vram_select_w(int offset, int data)
 
 void blaster_bank_select_w(int offset, int data)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	blaster_bank = data & 15;
 

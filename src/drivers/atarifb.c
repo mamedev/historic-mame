@@ -665,7 +665,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
 			750000, 	   /* 750 KHz */
-			0,
 			readmem,writemem,0,0,
 			interrupt,4
 		}
@@ -704,7 +703,6 @@ static struct MachineDriver atarifb4_machine_driver =
 		{
 			CPU_M6502,
 			750000, 	   /* 750 KHz */
-			0,
 			atarifb4_readmem,atarifb4_writemem,0,0,
 			interrupt,4
 		}
@@ -743,7 +741,6 @@ static struct MachineDriver soccer_machine_driver =
 		{
 			CPU_M6502,
 			750000, 	   /* 750 KHz */
-			0,
 			soccer_readmem, soccer_writemem,0,0,
 			interrupt,4
 		}
@@ -807,7 +804,7 @@ void soccer_init(void)
 }
 
 ROM_START( atarifb1 )
-	ROM_REGION(0x10000) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "03302601.m1", 0x6800, 0x0800, 0xf8ce7ed8 )
 	ROM_LOAD( "03302801.p1", 0x7000, 0x0800, 0xa79c79ca )
 	ROM_LOAD( "03302701.n1", 0x7800, 0x0800, 0x7740be51 )
@@ -820,7 +817,7 @@ ROM_START( atarifb1 )
 ROM_END
 
 ROM_START( atarifb )
-	ROM_REGION(0x10000) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "03302602.m1", 0x6800, 0x0800, 0x352e35db )
 	ROM_LOAD( "03302801.p1", 0x7000, 0x0800, 0xa79c79ca )
 	ROM_LOAD( "03302702.n1", 0x7800, 0x0800, 0xe7e916ae )
@@ -833,7 +830,7 @@ ROM_START( atarifb )
 ROM_END
 
 ROM_START( atarifb4 )
-	ROM_REGION(0x10000) /* 64k for code, the ROMs are nibble-wide */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code, the ROMs are nibble-wide */
 	ROM_LOAD_NIB_LOW ( "34889.m1", 0x6000, 0x0400, 0x5c63974a )
 	ROM_LOAD_NIB_HIGH( "34891.m2", 0x6000, 0x0400, 0x9d03baa1 )
 	ROM_LOAD_NIB_LOW ( "34890.n1", 0x6400, 0x0400, 0x2deb5844 )
@@ -860,7 +857,7 @@ ROM_START( atarifb4 )
 ROM_END
 
 ROM_START( abaseb2 )
-	ROM_REGION(0x10000) /* 64k for code, the ROMs are nibble-wide */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code, the ROMs are nibble-wide */
 	ROM_LOAD_NIB_LOW ( "034725.c0", 0x6000, 0x0400, 0x95912c58 )
 	ROM_LOAD_NIB_HIGH( "034723.m0", 0x6000, 0x0400, 0x5eb1597f )
 	ROM_LOAD_NIB_LOW ( "034726.b0", 0x6400, 0x0400, 0x1f8d506c )
@@ -880,14 +877,14 @@ ROM_START( abaseb2 )
 	ROM_LOAD_NIB_HIGH( "034714.f0", 0x7c00, 0x0400, 0x920979ea )
 	ROM_RELOAD_NIB_HIGH(            0xfc00, 0x0400 ) /* for 6502 vectors */
 
-	ROM_REGION(0x600)	  /* 2k for graphics */
+	ROM_REGION_DISPOSE( 0x600 )	  /* 2k for graphics */
 	ROM_LOAD_NIB_LOW ( "034710.d5", 0x0000, 0x0400, 0x31275d86 )
 	ROM_LOAD_NIB_LOW ( "034708.n7", 0x0400, 0x0200, 0x8a0f971b )
 	ROM_LOAD_NIB_HIGH( "034709.c5", 0x0400, 0x0200, 0x021d1067 )
 ROM_END
 
 ROM_START( abaseb )
-	ROM_REGION(0x10000) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "34738-01.n0", 0x6000, 0x0800, 0xedcfffe8 )
 	ROM_LOAD( "34737-03.m1", 0x6800, 0x0800, 0x7250863f )
 	ROM_LOAD( "34735-01.p1", 0x7000, 0x0800, 0x54854d7c )
@@ -901,7 +898,7 @@ ROM_START( abaseb )
 ROM_END
 
 ROM_START( soccer )
-	ROM_REGION(0x10000) /* 64k for code, the ROMs are nibble-wide */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code, the ROMs are nibble-wide */
 	ROM_LOAD_NIB_LOW ( "035222.e1", 0x2000, 0x0400, 0x03ec6bce )
 	ROM_LOAD_NIB_HIGH( "035224.e2", 0x2000, 0x0400, 0xa1aeaa70 )
 	ROM_LOAD_NIB_LOW ( "035223.f1", 0x2400, 0x0400, 0x9c600726 )

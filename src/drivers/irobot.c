@@ -83,10 +83,6 @@ void irobot_control_w (int offset, int data);
 int irobot_sharedmem_r(int offset);
 void irobot_sharedmem_w(int offset,int data);
 
-int irobot_interrupt(void) {
-    return interrupt();
-}
-
 void irobot_clearirq(int offest,int data) {
     cpu_set_irq_line(0, M6809_IRQ_LINE ,CLEAR_LINE);
 }
@@ -128,7 +124,7 @@ static struct MemoryWriteAddress writemem[] =
     { 0x1900, 0x19FF, MWA_RAM },            /* Watchdog reset */
     { 0x1A00, 0x1A00, irobot_clearfirq },
     { 0x1B00, 0x1BFF, irobot_control_w },
-    { 0x1C00, 0x1FFF, videoram_w, &videoram, &videoram_size },
+    { 0x1C00, 0x1FFF, MWA_RAM, &videoram, &videoram_size },
     { 0x2000, 0x3fff, irobot_sharedmem_w},
     { 0x4000, 0xffff, MWA_ROM },
     { -1 }  /* end of table */
@@ -138,13 +134,13 @@ static struct MemoryWriteAddress writemem[] =
 
 INPUT_PORTS_START( irobot )
 	PORT_START	/* IN0 */
-    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN)
-    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN)
-    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN)
-    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN)
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
     PORT_SERVICE( 0x10, IP_ACTIVE_LOW )
-    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3)
-    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1)
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
     PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* IN1 */
@@ -167,60 +163,52 @@ INPUT_PORTS_START( irobot )
     PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* EXT DONE */
     PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
-	PORT_START      /* DSW1 */
-    PORT_DIPNAME( 0x03, 0x02, "Coins Per Credit" )
-    PORT_DIPSETTING(    0x03, "4 Coins=1 Credit" )
-    PORT_DIPSETTING(    0x02, "3 Coins=1 Credit " )
-    PORT_DIPSETTING(    0x01, "2 Coins=1 Credit" )
-    PORT_DIPSETTING(    0x00, "1 Coin=1 Credit" )
+	PORT_START /* DSW1 */
+	PORT_DIPNAME(    0x03, 0x00, "Coins Per Credit" )
+	PORT_DIPSETTING( 0x00, "1 Coin 1 Credit" )
+	PORT_DIPSETTING( 0x01, "2 Coins 1 Credit" )
+	PORT_DIPSETTING( 0x02, "3 Coins 1 Credit" )
+	PORT_DIPSETTING( 0x03, "4 Coins 1 Credit" )
+	PORT_DIPNAME(    0x0c, 0x00, "Right Coin" )
+	PORT_DIPSETTING( 0x00, "1 Coin for 1 Coin Unit" )
+	PORT_DIPSETTING( 0x04, "1 Coin for 4 Coin Units" )
+	PORT_DIPSETTING( 0x08, "1 Coin for 5 Coin Units" )
+	PORT_DIPSETTING( 0x0c, "1 Coin for 6 Coin Units" )
+	PORT_DIPNAME(    0x10, 0x00, "Left Coin" )
+	PORT_DIPSETTING( 0x00, "1 Coin for 1 Coin Unit" )
+	PORT_DIPSETTING( 0x10, "1 Coin for 2 Coin Units" )
+	PORT_DIPNAME(    0xe0, 0x00, "Bonus Adder" )
+	PORT_DIPSETTING( 0x00, "None" )
+	PORT_DIPSETTING( 0x20, "1 Credit for 2 Coin Units" )
+	PORT_DIPSETTING( 0xa0, "1 Credit for 3 Coin Units" )
+	PORT_DIPSETTING( 0x40, "1 Credit for 4 Coin Units" )
+	PORT_DIPSETTING( 0x80, "1 Credit for 5 Coin Units" )
+	PORT_DIPSETTING( 0x60, "2 Credits for 4 Coin Units" )
+	PORT_DIPSETTING( 0xe0, DEF_STR( Free_Play ) )
 
-    PORT_DIPNAME( 0x0C, 0x00, "Right Coin" )
-    PORT_DIPSETTING(    0x00, "1 Coin for 1 Coin Unit" )
-    PORT_DIPSETTING(    0x04, "1 Coin for 4 Coin Units" )
-    PORT_DIPSETTING(    0x08, "1 Coin for 5 Coin Units" )
-    PORT_DIPSETTING(    0x0C, "1 Coin for 6 Coin Units" )
-
-    PORT_DIPNAME( 0x10, 0x00, "Left Coin" )
-    PORT_DIPSETTING(    0x00, "1 Coin for 1 Credit" )
-    PORT_DIPSETTING(    0x10, "1 Coin for 2 Credits" )
-
-    PORT_DIPNAME( 0xE0, 0x00, "Bonus Adder" )
-    PORT_DIPSETTING(    0x00, "No Bonus" )
-    PORT_DIPSETTING(    0x20, "2 Coin Units for 1 Credit" )
-    PORT_DIPSETTING(    0xA0, "3 Coin Units for 1 Credit" )
-    PORT_DIPSETTING(    0x40, "4 Coin Units for 1 Credit" )
-    PORT_DIPSETTING(    0x80, "5 Coin Units for 1 Credit" )
-    PORT_DIPSETTING(    0xC0, "No Bonus" )
-    PORT_DIPSETTING(    0xE0, DEF_STR( Free_Play ) )
-
-    PORT_START      /* DSW2 */
-    PORT_DIPNAME( 0x01, 0x01, "Language" )
-    PORT_DIPSETTING(    0x00, "German" )
-    PORT_DIPSETTING(    0x01, "English" )
-
-    PORT_DIPNAME( 0x02, 0x00, DEF_STR( Difficulty ) )
-    PORT_DIPSETTING(    0x00, "Medium" )
-    PORT_DIPSETTING(    0x02, "Easy" )
-
-    PORT_DIPNAME( 0x0C, 0x00, "Bonus lives per coin" )
-    PORT_DIPSETTING(    0x00, "3" )
-    PORT_DIPSETTING(    0x40, "2" )
-    PORT_DIPSETTING(    0x80, "5" )
-    PORT_DIPSETTING(    0xC0, "4" )
-
-    PORT_DIPNAME( 0x30, 0x00, "Bonus life" )
-    PORT_DIPSETTING(    0x20, "None" )
-    PORT_DIPSETTING(    0x00, "20,000" )
-    PORT_DIPSETTING(    0x30, "30,000" )
-    PORT_DIPSETTING(    0x10, "50,000" )
-
-    PORT_DIPNAME( 0x40, 0x00, "Min Game Time" )
-    PORT_DIPSETTING(    0x40, "90 Sec" )
-    PORT_DIPSETTING(    0x00, "3 Lives" )
-
-    PORT_DIPNAME( 0x80, 0x00, "Doodle City Time" )
-    PORT_DIPSETTING(    0x80, "3 min 5 sec" )
-    PORT_DIPSETTING(    0x00, "2 min 10 sec" )
+	PORT_START /* DSW2 */
+	PORT_DIPNAME(    0x01, 0x01, "Language" )
+	PORT_DIPSETTING( 0x01, "English" )
+	PORT_DIPSETTING( 0x00, "German" )
+	PORT_DIPNAME(    0x02, 0x02, "Min Game Time" )
+	PORT_DIPSETTING( 0x00, "90 Sec" )
+	PORT_DIPSETTING( 0x02, "3 Lives" )
+	PORT_DIPNAME(    0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING( 0x08, "None" )
+	PORT_DIPSETTING( 0x0c, "20000" )
+	PORT_DIPSETTING( 0x00, "30000" )
+	PORT_DIPSETTING( 0x04, "50000" )
+	PORT_DIPNAME(    0x30, 0x30, DEF_STR( Lives ) )
+	PORT_DIPSETTING( 0x20, "2" )
+	PORT_DIPSETTING( 0x30, "3" )
+	PORT_DIPSETTING( 0x00, "4" )
+	PORT_DIPSETTING( 0x10, "5" )
+	PORT_DIPNAME(    0x40, 0x40, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING( 0x00, "Easy" )
+	PORT_DIPSETTING( 0x40, "Medium" )
+	PORT_DIPNAME(    0x80, 0x80, "Demo Mode" )
+	PORT_DIPSETTING( 0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
 
 	PORT_START	/* IN4 */
 	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y|IPF_CENTER, 70, 50, 0, 95, 159 )
@@ -283,7 +271,6 @@ static struct MachineDriver machine_driver =
 		{
             CPU_M6809,
             1500000,    /* 1.5 Mhz */
-			REGION_CPU1,
 			readmem,writemem,0,0,
             ignore_interrupt,0		/* interrupt handled by scanline callbacks */
          },
@@ -334,12 +321,12 @@ ROM_START( irobot )
 	ROM_REGIONX( 0x800, REGION_GFX1 | REGIONFLAG_DISPOSE)
 	ROM_LOAD( "136029.124",   0x0000, 0x800, 0x848948b6 )
 
-	ROM_REGION(0x10000)  /* temoporary space for mathbox roms */
-	ROM_LOAD( "ir103.bin",    0x0000, 0x2000, 0x0c83296d )
-	ROM_LOAD( "ir104.bin",    0x2000, 0x2000, 0x0a6cdcca )
-	ROM_LOAD( "ir101.bin",    0x4000, 0x4000, 0x62a38c08 )
-	ROM_LOAD( "ir102.bin",    0x8000, 0x4000, 0x9d588f22 )
-	ROM_LOAD( "ir111.bin",    0xC000, 0x400, 0x9fbc9bf3 )
+	ROM_REGION( 0x14000 )  /* mathbox region */
+	ROM_LOAD_ODD ( "ir103.bin",    0x0000, 0x2000, 0x0c83296d )	/* ROM data from 0000-BFFF */
+	ROM_LOAD_EVEN( "ir104.bin",    0x0000, 0x2000, 0x0a6cdcca )
+	ROM_LOAD_ODD ( "ir101.bin",    0x4000, 0x4000, 0x62a38c08 )
+	ROM_LOAD_EVEN( "ir102.bin",    0x4000, 0x4000, 0x9d588f22 )
+	ROM_LOAD( "ir111.bin",    0xC000, 0x400, 0x9fbc9bf3 )		/* program ROMs from C000-F3FF */
 	ROM_LOAD( "ir112.bin",    0xC400, 0x400, 0xb2713214 )
 	ROM_LOAD( "ir113.bin",    0xC800, 0x400, 0x7875930a )
 	ROM_LOAD( "ir114.bin",    0xCC00, 0x400, 0x51d29666 )
@@ -352,6 +339,8 @@ ROM_START( irobot )
 	ROM_LOAD( "ir121.bin",    0xE800, 0x400, 0xadebcb99 )
 	ROM_LOAD( "ir122.bin",    0xEC00, 0x400, 0xda7b6f79 )
 	ROM_LOAD( "ir123.bin",    0xF000, 0x400, 0x39fff18f )
+	/* RAM data from 10000-11FFF */
+	/* COMRAM from   12000-13FFF */
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "ir125.bin",    0x0000, 0x0020, 0x446335ba )
@@ -363,9 +352,9 @@ ROM_END
 
 static int novram_load(void)
 {
-unsigned char *RAM = Machine->memory_region[0];
-
+	UINT8 *RAM = memory_region(REGION_CPU1);
 	void *f;
+
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 	{
         osd_fread(f,&RAM[0x1200],256);
@@ -376,8 +365,8 @@ unsigned char *RAM = Machine->memory_region[0];
 
 static void novram_save(void)
 {
+	UINT8 *RAM = memory_region(REGION_CPU1);
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{

@@ -7,7 +7,7 @@ static int gfxbank;
 void sichuan2_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 if (errorlog && (data & 0xc0)) fprintf(errorlog,"bank switch %02x\n",data);
 

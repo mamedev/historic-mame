@@ -237,12 +237,11 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			2500000,	/* 2.5 Mhz */
-			0,
 			readmem,writemem,readport,writeport,
 			mcr_interrupt,1,
 			0,0,mcr_daisy_chain
 		},
-		SOUND_CPU_SSIO(2)
+		SOUND_CPU_SSIO
 	},
 	30, DEFAULT_REAL_30HZ_VBLANK_DURATION,
 	1,
@@ -305,7 +304,7 @@ static void kick_init(void)
  *************************************/
 
 ROM_START( solarfox )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sfcpu.3b",     0x0000, 0x1000, 0x8c40f6eb )
 	ROM_LOAD( "sfcpu.4b",     0x1000, 0x1000, 0x4d47bd7e )
 	ROM_LOAD( "sfcpu.5b",     0x2000, 0x1000, 0xb52c3bd5 )
@@ -322,7 +321,7 @@ ROM_START( solarfox )
 	ROM_LOAD( "sfvid.1d",     0x6000, 0x2000, 0x4d8445cf )
 	ROM_LOAD( "sfvid.1e",     0x8000, 0x2000, 0x3da25495 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "sfsnd.7a",     0x0000, 0x1000, 0xcdecf83a )
 	ROM_LOAD( "sfsnd.8a",     0x1000, 0x1000, 0xcb7788cb )
 	ROM_LOAD( "sfsnd.9a",     0x2000, 0x1000, 0x304896ce )
@@ -330,7 +329,7 @@ ROM_END
 
 
 ROM_START( kick )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1200a-v2.b3",  0x0000, 0x1000, 0x65924917 )
 	ROM_LOAD( "1300b-v2.b4",  0x1000, 0x1000, 0x27929f52 )
 	ROM_LOAD( "1400c-v2.b5",  0x2000, 0x1000, 0x69107ce6 )
@@ -346,7 +345,7 @@ ROM_START( kick )
 	ROM_LOAD( "2800c-v2.1b",  0x6000, 0x2000, 0xf3be56a1 )
 	ROM_LOAD( "2900d-v2.1a",  0x8000, 0x2000, 0x77da795e )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "4200-a.a7",    0x0000, 0x1000, 0x9e35c02e )
 	ROM_LOAD( "4300-b.a8",    0x1000, 0x1000, 0xca2b7c28 )
 	ROM_LOAD( "4400-c.a9",    0x2000, 0x1000, 0xd1901551 )
@@ -355,7 +354,7 @@ ROM_END
 
 
 ROM_START( kicka )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1200-a.b3",    0x0000, 0x1000, 0x22fa42ed )
 	ROM_LOAD( "1300-b.b4",    0x1000, 0x1000, 0xafaca819 )
 	ROM_LOAD( "1400-c.b5",    0x2000, 0x1000, 0x6054ee56 )
@@ -371,7 +370,7 @@ ROM_START( kicka )
 	ROM_LOAD( "2800-c.1b",    0x6000, 0x2000, 0xc93e0170 )
 	ROM_LOAD( "2900-d.1a",    0x8000, 0x2000, 0x91e59383 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "4200-a.a7",    0x0000, 0x1000, 0x9e35c02e )
 	ROM_LOAD( "4300-b.a8",    0x1000, 0x1000, 0xca2b7c28 )
 	ROM_LOAD( "4400-c.a9",    0x2000, 0x1000, 0xd1901551 )

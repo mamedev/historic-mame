@@ -258,7 +258,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80 | CPU_16BIT_PORT,
 			4000000,	/* 4 Mhz */
-			0,
 			readmem,writemem,0,writeport,
 			arabian_interrupt,1
 		}
@@ -298,13 +297,13 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( arabian )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ic1rev2.87",       0x0000, 0x2000, 0x5e1c98b8 )
 	ROM_LOAD( "ic2rev2.88",       0x2000, 0x2000, 0x092f587e )
 	ROM_LOAD( "ic3rev2.89",       0x4000, 0x2000, 0x15145f23 )
 	ROM_LOAD( "ic4rev2.90",       0x6000, 0x2000, 0x32b77b44 )
 
-	ROM_REGION(0x10000) /* graphics roms */
+	ROM_REGION( 0x10000 ) /* graphics roms */
 	ROM_LOAD( "ic84.91",      0x0000, 0x2000, 0xc4637822 )	/* because of very rare way */
 	ROM_LOAD( "ic85.92",      0x2000, 0x2000, 0xf7c6866d )  /* CRT controller uses these roms */
 	ROM_LOAD( "ic86.93",      0x4000, 0x2000, 0x71acd48d )  /* there's no way, but to decode */
@@ -312,13 +311,13 @@ ROM_START( arabian )
 ROM_END
 
 ROM_START( arabiana )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ic1.87",       0x0000, 0x2000, 0x51e9a6b1 )
 	ROM_LOAD( "ic2.88",       0x2000, 0x2000, 0x1cdcc1ab )
 	ROM_LOAD( "ic3.89",       0x4000, 0x2000, 0xb7b7faa0 )
 	ROM_LOAD( "ic4.90",       0x6000, 0x2000, 0xdbded961 )
 
-	ROM_REGION(0x10000) /* graphics roms */
+	ROM_REGION( 0x10000 ) /* graphics roms */
 	ROM_LOAD( "ic84.91",      0x0000, 0x2000, 0xc4637822 )	/* because of very rare way */
 	ROM_LOAD( "ic85.92",      0x2000, 0x2000, 0xf7c6866d )  /* CRT controller uses these roms */
 	ROM_LOAD( "ic86.93",      0x4000, 0x2000, 0x71acd48d )  /* there's no way, but to decode */
@@ -329,7 +328,7 @@ ROM_END
 
 static int arabian_hiload(void)
 {
-  unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+  unsigned char *RAM = memory_region(REGION_CPU1);
   void *f;
 
   /* Wait for hiscore table initialization to be done. */
@@ -350,7 +349,7 @@ static int arabian_hiload(void)
 
 static void arabian_hisave(void)
 {
-  unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+  unsigned char *RAM = memory_region(REGION_CPU1);
   void *f;
 
   if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

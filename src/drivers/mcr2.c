@@ -471,12 +471,11 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			2500000,	/* 2.5 Mhz */
-			0,
 			readmem,writemem,readport,writeport,
 			mcr_interrupt,1,
 			0,0,mcr_daisy_chain
 		},
-		SOUND_CPU_SSIO(2)
+		SOUND_CPU_SSIO
 	},
 	30, DEFAULT_REAL_30HZ_VBLANK_DURATION,
 	1,
@@ -509,12 +508,11 @@ static struct MachineDriver journey_machine_driver =
 		{
 			CPU_Z80,
 			7500000,	/* Looks like it runs at 7.5 Mhz rather than 5 or 2.5 */
-			0,
 			readmem,writemem,readport,writeport,
 			mcr_interrupt,1,
 			0,0,mcr_daisy_chain
 		},
-		SOUND_CPU_SSIO(2)
+		SOUND_CPU_SSIO
 	},
 	30, DEFAULT_REAL_30HZ_VBLANK_DURATION,
 	1,
@@ -626,7 +624,7 @@ static void journey_init(void)
  *************************************/
 
 ROM_START( shollow )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sh-pro.00",    0x0000, 0x2000, 0x95e2b800 )
 	ROM_LOAD( "sh-pro.01",    0x2000, 0x2000, 0xb99f6ff8 )
 	ROM_LOAD( "sh-pro.02",    0x4000, 0x2000, 0x1202c7b2 )
@@ -642,7 +640,7 @@ ROM_START( shollow )
 	ROM_LOAD( "sh-fg.02",     0x0c000, 0x2000, 0x6b57f6da )
 	ROM_LOAD( "sh-fg.03",     0x10000, 0x2000, 0x37ea9d07 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "sh-snd.01",    0x0000, 0x1000, 0x55a297cc )
 	ROM_LOAD( "sh-snd.02",    0x1000, 0x1000, 0x46fc31f6 )
 	ROM_LOAD( "sh-snd.03",    0x2000, 0x1000, 0xb1f4a6a8 )
@@ -650,7 +648,7 @@ ROM_END
 
 
 ROM_START( shollow2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sh-pro.00",    0x0000, 0x2000, 0x95e2b800 )
 	ROM_LOAD( "sh-pro.01",    0x2000, 0x2000, 0xb99f6ff8 )
 	ROM_LOAD( "sh-pro.02",    0x4000, 0x2000, 0x1202c7b2 )
@@ -666,7 +664,7 @@ ROM_START( shollow2 )
 	ROM_LOAD( "sh-fg.02",     0x0c000, 0x2000, 0x6b57f6da )
 	ROM_LOAD( "sh-fg.03",     0x10000, 0x2000, 0x37ea9d07 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "snd-0.a7",     0x0000, 0x1000, 0x9d815bb3 )
 	ROM_LOAD( "snd-1.a8",     0x1000, 0x1000, 0x9f253412 )
 	ROM_LOAD( "snd-2.a9",     0x2000, 0x1000, 0x7783d6c6 )
@@ -674,7 +672,7 @@ ROM_END
 
 
 ROM_START( tron )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "scpu_pga.bin", 0x0000, 0x2000, 0x5151770b )
 	ROM_LOAD( "scpu_pgb.bin", 0x2000, 0x2000, 0x8ddf8717 )
 	ROM_LOAD( "scpu_pgc.bin", 0x4000, 0x2000, 0x4241e3a0 )
@@ -690,7 +688,7 @@ ROM_START( tron )
 	ROM_LOAD( "vg_1.bin",     0x0c000, 0x2000, 0x3329f9d4 )
 	ROM_LOAD( "vg_0.bin",     0x10000, 0x2000, 0x9743f873 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ssi_0a.bin",   0x0000, 0x1000, 0x765e6eba )
 	ROM_LOAD( "ssi_0b.bin",   0x1000, 0x1000, 0x1b90ccdd )
 	ROM_LOAD( "ssi_0c.bin",   0x2000, 0x1000, 0x3a4bc629 )
@@ -698,7 +696,7 @@ ROM_END
 
 
 ROM_START( tron2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "pro0.d2",      0x0000, 0x2000, 0x0de0471a )
 	ROM_LOAD( "scpu_pgb.bin", 0x2000, 0x2000, 0x8ddf8717 )
 	ROM_LOAD( "scpu_pgc.bin", 0x4000, 0x2000, 0x4241e3a0 )
@@ -714,7 +712,7 @@ ROM_START( tron2 )
 	ROM_LOAD( "vg_1.bin",     0x0c000, 0x2000, 0x3329f9d4 )
 	ROM_LOAD( "vg_0.bin",     0x10000, 0x2000, 0x9743f873 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ssi_0a.bin",   0x0000, 0x1000, 0x765e6eba )
 	ROM_LOAD( "ssi_0b.bin",   0x1000, 0x1000, 0x1b90ccdd )
 	ROM_LOAD( "ssi_0c.bin",   0x2000, 0x1000, 0x3a4bc629 )
@@ -722,7 +720,7 @@ ROM_END
 
 
 ROM_START( kroozr )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "kozmkcpu.2d",  0x0000, 0x2000, 0x61e02045 )
 	ROM_LOAD( "kozmkcpu.3d",  0x2000, 0x2000, 0xcaabed57 )
 	ROM_LOAD( "kozmkcpu.4d",  0x4000, 0x2000, 0x2bc83fc7 )
@@ -737,7 +735,7 @@ ROM_START( kroozr )
 	ROM_LOAD( "kozmkvid.1b",  0x0c000, 0x2000, 0xc6041ba7 )
 	ROM_LOAD( "kozmkvid.1a",  0x10000, 0x2000, 0xb57fb0ff )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "kozmksnd.7a",  0x0000, 0x1000, 0x6736e433 )
 	ROM_LOAD( "kozmksnd.8a",  0x1000, 0x1000, 0xea9cd919 )
 	ROM_LOAD( "kozmksnd.9a",  0x2000, 0x1000, 0x9dfa7994 )
@@ -745,7 +743,7 @@ ROM_END
 
 
 ROM_START( domino )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "dmanpg0.bin",  0x0000, 0x2000, 0x3bf3bb1c )
 	ROM_LOAD( "dmanpg1.bin",  0x2000, 0x2000, 0x85cf1d69 )
 	ROM_LOAD( "dmanpg2.bin",  0x4000, 0x2000, 0x7dd2177a )
@@ -759,7 +757,7 @@ ROM_START( domino )
 	ROM_LOAD( "dmanfg2.bin",  0x0c000, 0x2000, 0x4a8e76b8 )
 	ROM_LOAD( "dmanfg3.bin",  0x10000, 0x2000, 0x1f39257e )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "dm-a7.snd",    0x0000, 0x1000, 0xfa982dcc )
 	ROM_LOAD( "dm-a8.snd",    0x1000, 0x1000, 0x72839019 )
 	ROM_LOAD( "dm-a9.snd",    0x2000, 0x1000, 0xad760da7 )
@@ -768,7 +766,7 @@ ROM_END
 
 
 ROM_START( wacko )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "wackocpu.2d",  0x0000, 0x2000, 0xc98e29b6 )
 	ROM_LOAD( "wackocpu.3d",  0x2000, 0x2000, 0x90b89774 )
 	ROM_LOAD( "wackocpu.4d",  0x4000, 0x2000, 0x515edff7 )
@@ -782,7 +780,7 @@ ROM_START( wacko )
 	ROM_LOAD( "wackovid.1b",  0x0c000, 0x2000, 0x7d899790 )
 	ROM_LOAD( "wackovid.1a",  0x10000, 0x2000, 0x080be3ad )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "wackosnd.7a",  0x0000, 0x1000, 0x1a58763f )
 	ROM_LOAD( "wackosnd.8a",  0x1000, 0x1000, 0xa4e3c771 )
 	ROM_LOAD( "wackosnd.9a",  0x2000, 0x1000, 0x155ba3dd )
@@ -790,7 +788,7 @@ ROM_END
 
 
 ROM_START( twotiger )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "2tgrpg0.bin",  0x0000, 0x2000, 0xe77a924b )
 	ROM_LOAD( "2tgrpg1.bin",  0x2000, 0x2000, 0x2699ebdc )
 	ROM_LOAD( "2tgrpg2.bin",  0x4000, 0x2000, 0xb5ca3f17 )
@@ -804,7 +802,7 @@ ROM_START( twotiger )
 	ROM_LOAD( "2tgrfg2.bin",  0x0c000, 0x2000, 0x08e3e1a6 )
 	ROM_LOAD( "2tgrfg3.bin",  0x10000, 0x2000, 0x9b22697b )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "2tgra7.bin",   0x0000, 0x1000, 0x4620d970 )
 	ROM_LOAD( "2tgra8.bin",   0x1000, 0x1000, 0xe95d8cfe )
 	ROM_LOAD( "2tgra9.bin",   0x2000, 0x1000, 0x81e6ce0e )
@@ -812,7 +810,7 @@ ROM_END
 
 
 ROM_START( journey )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "d2",           0x0000, 0x2000, 0xf2618913 )
 	ROM_LOAD( "d3",           0x2000, 0x2000, 0x2f290d2e )
 	ROM_LOAD( "d4",           0x4000, 0x2000, 0xcc6c0150 )
@@ -831,7 +829,7 @@ ROM_START( journey )
 	ROM_LOAD( "a1",           0x10000, 0x2000, 0x4af986f8 )
 	ROM_LOAD( "a2",           0x12000, 0x2000, 0xb30cd2a7 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "a",            0x0000, 0x1000, 0x2524a2aa )
 	ROM_LOAD( "b",            0x1000, 0x1000, 0xb8e35814 )
 	ROM_LOAD( "c",            0x2000, 0x1000, 0x09c488cf )

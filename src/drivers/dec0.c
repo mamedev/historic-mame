@@ -983,14 +983,12 @@ static struct MachineDriver hbarrel_machine_driver =
 		{
 			CPU_M68000,
 			10000000,
-			0,
 			dec0_readmem,dec0_writemem,0,0,
 			m68_level6_irq,1 /* VBL, level 5 interrupts from i8751 */
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1500000,
-			2,
 			dec0_s_readmem,dec0_s_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -1037,14 +1035,12 @@ static struct MachineDriver baddudes_machine_driver =
 		{
 			CPU_M68000,
 			10000000,
-			0,
 			dec0_readmem,dec0_writemem,0,0,
 			m68_level6_irq,1 /* VBL, level 5 interrupts from i8751 */
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1500000,
-			2,
 			dec0_s_readmem,dec0_s_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -1091,14 +1087,12 @@ static struct MachineDriver birdtry_machine_driver =
 		{
 			CPU_M68000,
 			10000000,
-			0,
 			dec0_readmem,dec0_writemem,0,0,
 			m68_level6_irq,1 /* VBL, level 5 interrupts from i8751 */
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1500000,
-			2,
 			dec0_s_readmem,dec0_s_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -1145,21 +1139,18 @@ static struct MachineDriver robocop_machine_driver =
 		{
 			CPU_M68000,
 			10000000,
-			0,
 			dec0_readmem,dec0_writemem,0,0,
 			m68_level6_irq,1 /* VBL */
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1500000,
-			2,
 			dec0_s_readmem,dec0_s_writemem,0,0,
 			ignore_interrupt,0
 		},
 		{
 			CPU_H6280,
 			21477200/16, /* 21.4772MHz clock */
-			4,
 			robocop_sub_readmem,robocop_sub_writemem,0,0,
 			ignore_interrupt,0
 		},
@@ -1206,14 +1197,12 @@ static struct MachineDriver robocopb_machine_driver =
 		{
 			CPU_M68000,
 			10000000,
-			0,
 			dec0_readmem,dec0_writemem,0,0,
 			m68_level6_irq,1 /* VBL */
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1500000,
-			2,
 			dec0_s_readmem,dec0_s_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -1260,21 +1249,18 @@ static struct MachineDriver hippodrm_machine_driver =
 		{
 			CPU_M68000,
 			10000000,
-			0,
 			dec0_readmem,dec0_writemem,0,0,
 			m68_level6_irq,1 /* VBL */
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1500000,
-			2,
 			dec0_s_readmem,dec0_s_writemem,0,0,
 			ignore_interrupt,0
 		},
 		{
 			CPU_H6280,
 			21477200/16, /* 21.4772MHz clock */
-			4,
 			hippodrm_sub_readmem,hippodrm_sub_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -1321,14 +1307,12 @@ static struct MachineDriver slyspy_machine_driver =
 		{
 			CPU_M68000,
 			12000000,
-			0,
 			slyspy_readmem,slyspy_writemem,0,0,
 			m68_level6_irq,1 /* VBL */
 		},
 		{
 			CPU_H6280 | CPU_AUDIO_CPU,
 			3000000,
-			2,
 			slyspy_s_readmem,slyspy_s_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -1375,14 +1359,12 @@ static struct MachineDriver midres_machine_driver =
 		{
 			CPU_M68000,
 			12000000,
-			0,
 			midres_readmem,midres_writemem,0,0,
 			m68_level6_irq,1 /* VBL */
 		},
 		{
 			CPU_H6280 | CPU_AUDIO_CPU,
 			3000000,
-			2,
 			midres_s_readmem,midres_s_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -1425,7 +1407,7 @@ static struct MachineDriver midres_machine_driver =
 /******************************************************************************/
 
 ROM_START( hbarrel )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "hb_ec04.rom",  0x00000, 0x10000, 0xd01bc3db )
 	ROM_LOAD_ODD ( "hb_ec01.rom",  0x00000, 0x10000, 0x6756f8ae )
 	ROM_LOAD_EVEN( "hb05.bin",     0x20000, 0x10000, 0x2087d570 )
@@ -1461,7 +1443,7 @@ ROM_START( hbarrel )
 	ROM_LOAD( "hb09.bin",     0x180000, 0x10000, 0x26240ea0 )
 	ROM_LOAD( "hb10.bin",     0x190000, 0x10000, 0x47d95447 )
 
-	ROM_REGION(0x10000)	/* 6502 Sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 Sound */
 	ROM_LOAD( "hb_ec07.rom",  0x8000, 0x8000, 0x16a5a1aa )
 
 	ROM_REGION(0x10000)	/* ADPCM samples */
@@ -1469,7 +1451,7 @@ ROM_START( hbarrel )
 ROM_END
 
 ROM_START( hbarrelu )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "hb04.bin",     0x00000, 0x10000, 0x4877b09e )
 	ROM_LOAD_ODD ( "hb01.bin",     0x00000, 0x10000, 0x8b41c219 )
 	ROM_LOAD_EVEN( "hb05.bin",     0x20000, 0x10000, 0x2087d570 )
@@ -1505,7 +1487,7 @@ ROM_START( hbarrelu )
 	ROM_LOAD( "hb09.bin",     0x180000, 0x10000, 0x26240ea0 )
 	ROM_LOAD( "hb10.bin",     0x190000, 0x10000, 0x47d95447 )
 
-	ROM_REGION(0x10000)	/* 6502 Sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 Sound */
 	ROM_LOAD( "hb07.bin",     0x8000, 0x8000, 0xa127f0f7 )
 
 	ROM_REGION(0x10000)	/* ADPCM samples */
@@ -1513,7 +1495,7 @@ ROM_START( hbarrelu )
 ROM_END
 
 ROM_START( baddudes )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code, middle 0x20000 unused */
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code, middle 0x20000 unused */
 	ROM_LOAD_EVEN( "baddudes.4",   0x00000, 0x10000, 0x4bf158a7 )
 	ROM_LOAD_ODD ( "baddudes.1",   0x00000, 0x10000, 0x74f5110c )
 	ROM_LOAD_EVEN( "baddudes.6",   0x40000, 0x10000, 0x3ff8da57 )
@@ -1557,7 +1539,7 @@ ROM_START( baddudes )
 	ROM_LOAD( "baddudes.10",  0x190000, 0x08000, 0xeeee8a1a )
 	/* 198000-19ffff empty */
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "baddudes.7",   0x8000, 0x8000, 0x9fb1ef4b )
 
 	ROM_REGION(0x10000)	/* ADPCM samples */
@@ -1565,7 +1547,7 @@ ROM_START( baddudes )
 ROM_END
 
 ROM_START( drgninja )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code, middle 0x20000 unused */
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code, middle 0x20000 unused */
 	ROM_LOAD_EVEN( "drgninja.04",  0x00000, 0x10000, 0x41b8b3f8 )
 	ROM_LOAD_ODD ( "drgninja.01",  0x00000, 0x10000, 0xe08e6885 )
 	ROM_LOAD_EVEN( "drgninja.06",  0x40000, 0x10000, 0x2b81faf7 )
@@ -1609,7 +1591,7 @@ ROM_START( drgninja )
 	ROM_LOAD( "baddudes.10",  0x190000, 0x08000, 0xeeee8a1a )
 	/* 198000-19ffff empty */
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "drgninja.07",  0x8000, 0x8000, 0x001d2f51 )
 
 	ROM_REGION(0x10000)	/* ADPCM samples */
@@ -1617,7 +1599,7 @@ ROM_START( drgninja )
 ROM_END
 
 ROM_START( birdtry )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "ek-04.bin",     0x00000, 0x10000, 0x5f0f4686 )
 	ROM_LOAD_ODD ( "ek-01.bin",     0x00000, 0x10000, 0x47f470db )
 	ROM_LOAD_EVEN( "ek-05.bin",     0x20000, 0x10000, 0xb508cffd )
@@ -1649,7 +1631,7 @@ ROM_START( birdtry )
 	ROM_LOAD( "ek-09.bin",     0x180000, 0x10000, 0x6d2d488a )
 	ROM_LOAD( "ek-10.bin",     0x190000, 0x08000, 0x580ba206 )
 
-	ROM_REGION(0x10000)	/* 6502 Sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 Sound */
 	ROM_LOAD( "ek-07.bin",     0x8000, 0x8000, 0x236549bc )
 
 	ROM_REGION(0x10000)	/* ADPCM samples */
@@ -1657,7 +1639,7 @@ ROM_START( birdtry )
 ROM_END
 
 ROM_START( robocop )
-	ROM_REGION(0x40000) /* 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "ep05-3", 0x00000, 0x10000, 0xba69bf84 )
 	ROM_LOAD_ODD ( "ep01-3", 0x00000, 0x10000, 0x2a9f6e2c )
 	ROM_LOAD_EVEN( "ep04-3", 0x20000, 0x10000, 0x39181778 )
@@ -1687,18 +1669,18 @@ ROM_START( robocop )
 	ROM_LOAD( "ep12", 0x190000, 0x08000, 0x3cd1d0c3 )
 	/* f8000-fffff empty */
 
-	ROM_REGION(0x10000)	/* 6502 Sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 Sound */
 	ROM_LOAD( "ep03-3", 0x08000, 0x08000, 0x5b164b24 )
 
 	ROM_REGION(0x10000)	/* ADPCM samples */
 	ROM_LOAD( "ep02", 0x00000, 0x10000, 0x711ce46f )
 
-	ROM_REGION(0x10000)	/* HuC6280 CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* HuC6280 CPU */
 	/* Filled in later */
 ROM_END
 
 ROM_START( robocopu )
-	ROM_REGION(0x40000) /* 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "ep05-1", 0x00000, 0x10000, 0x8de5cb3d )
 	ROM_LOAD_ODD ( "ep01-1", 0x00000, 0x10000, 0xb3c6bc02 )
 	ROM_LOAD_EVEN( "ep04", 0x20000, 0x10000, 0xc38b9d18 )
@@ -1728,18 +1710,18 @@ ROM_START( robocopu )
 	ROM_LOAD( "ep12", 0x190000, 0x08000, 0x3cd1d0c3 )
 	/* f8000-fffff empty */
 
-	ROM_REGION(0x10000)	/* 6502 Sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 Sound */
 	ROM_LOAD( "ep03", 0x08000, 0x08000, 0x1089eab8 )
 
 	ROM_REGION(0x10000)	/* ADPCM samples */
 	ROM_LOAD( "ep02", 0x00000, 0x10000, 0x711ce46f )
 
-	ROM_REGION(0x10000)	/* HuC6280 CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* HuC6280 CPU */
 	/* Filled in later */
 ROM_END
 
 ROM_START( robocpu0 )
-	ROM_REGION(0x40000) /* 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "ep05", 0x00000, 0x10000, 0xc465bdd8 )
 	ROM_LOAD_ODD ( "ep01", 0x00000, 0x10000, 0x1352d36e )
 	ROM_LOAD_EVEN( "ep04", 0x20000, 0x10000, 0xc38b9d18 )
@@ -1769,18 +1751,18 @@ ROM_START( robocpu0 )
 	ROM_LOAD( "ep12", 0x190000, 0x08000, 0x3cd1d0c3 )
 	/* f8000-fffff empty */
 
-	ROM_REGION(0x10000)	/* 6502 Sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 Sound */
 	ROM_LOAD( "ep03", 0x08000, 0x08000, 0x1089eab8 )
 
 	ROM_REGION(0x10000)	/* ADPCM samples */
 	ROM_LOAD( "ep02", 0x00000, 0x10000, 0x711ce46f )
 
-	ROM_REGION(0x10000)	/* HuC6280 CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* HuC6280 CPU */
 	/* Filled in later */
 ROM_END
 
 ROM_START( robocopb )
-	ROM_REGION(0x40000) /* 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "robop_05.rom", 0x00000, 0x10000, 0xbcef3e9b )
 	ROM_LOAD_ODD ( "robop_01.rom", 0x00000, 0x10000, 0xc9803685 )
 	ROM_LOAD_EVEN( "robop_04.rom", 0x20000, 0x10000, 0x9d7b79e0 )
@@ -1810,7 +1792,7 @@ ROM_START( robocopb )
 	ROM_LOAD( "ep12", 0x190000, 0x08000, 0x3cd1d0c3 )
 	/* f8000-fffff empty */
 
-	ROM_REGION(0x10000)	/* 6502 Sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 Sound */
 	ROM_LOAD( "ep03-3", 0x08000, 0x08000, 0x5b164b24 )
 
 	ROM_REGION(0x10000)	/* ADPCM samples */
@@ -1818,7 +1800,7 @@ ROM_START( robocopb )
 ROM_END
 
 ROM_START( hippodrm )
-	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "ew02",         0x00000, 0x10000, 0xdf0d7dc6 )
 	ROM_LOAD_ODD ( "ew01",         0x00000, 0x10000, 0xd5670aa7 )
 	ROM_LOAD_EVEN( "ew05",         0x20000, 0x10000, 0xc76d65ec )
@@ -1844,18 +1826,18 @@ ROM_START( hippodrm )
 	ROM_LOAD( "ew17",         0x180000, 0x10000, 0x8c97c757 )
 	ROM_LOAD( "ew12",         0x190000, 0x10000, 0xa2d244bc )
 
-	ROM_REGION(0x10000)	/* 6502 sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 sound */
 	ROM_LOAD( "ew04",         0x8000, 0x8000, 0x9871b98d )
 
 	ROM_REGION(0x10000)	/* ADPCM sounds */
 	ROM_LOAD( "ew03",         0x0000, 0x10000, 0xb606924d )
 
-	ROM_REGION(0x10000) /* Encrypted code bank */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* Encrypted code bank */
 	ROM_LOAD( "ew08",         0x00000, 0x10000, 0x53010534 )
 ROM_END
 
 ROM_START( ffantasy )
-	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "ev02",         0x00000, 0x10000, 0x797a7860 )
 	ROM_LOAD_ODD ( "ev01",         0x00000, 0x10000, 0x0f17184d )
 	ROM_LOAD_EVEN( "ew05",         0x20000, 0x10000, 0xc76d65ec )
@@ -1881,18 +1863,18 @@ ROM_START( ffantasy )
 	ROM_LOAD( "ev17",         0x180000, 0x10000, 0x045509d4 )
 	ROM_LOAD( "ew12",         0x190000, 0x10000, 0xa2d244bc )
 
-	ROM_REGION(0x10000)	/* 6502 sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 sound */
 	ROM_LOAD( "ew04",         0x8000, 0x8000, 0x9871b98d )
 
 	ROM_REGION(0x10000)	/* ADPCM sounds */
 	ROM_LOAD( "ew03",         0x0000, 0x10000, 0xb606924d )
 
-	ROM_REGION(0x10000) /* Encrypted code bank */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* Encrypted code bank */
 	ROM_LOAD( "ew08",         0x00000, 0x10000, 0x53010534 )
 ROM_END
 
 ROM_START( slyspy )
-	ROM_REGION(0x60000) /* 68000 code */
+	ROM_REGIONX( 0x60000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "fa14-3.17l",   0x00000, 0x10000, 0x54353a84 )
 	ROM_LOAD_ODD ( "fa12-2.9l",    0x00000, 0x10000, 0x1b534294 )
 	ROM_LOAD_EVEN( "fa15.19l",     0x20000, 0x10000, 0x04a79266 )
@@ -1917,15 +1899,15 @@ ROM_START( slyspy )
 	ROM_LOAD( "fa00.2a",      0x160000, 0x20000, 0xf7df3fd7 )
 	ROM_LOAD( "fa02.5a",      0x180000, 0x20000, 0x84e8da9d )
 
-	ROM_REGION (0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fa10.5h",      0x00000, 0x10000, 0xdfd2ff25 )
 
-	ROM_REGION (0x20000)	/* ADPCM samples */
+	ROM_REGION(0x20000)	/* ADPCM samples */
 	ROM_LOAD( "fa11.11k",     0x00000, 0x20000, 0x4e547bad )
 ROM_END
 
 ROM_START( slyspy2 )
-	ROM_REGION(0x60000) /* 68000 code */
+	ROM_REGIONX( 0x60000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "fa14-2.bin",   0x00000, 0x10000, 0x0e431e39 )
 	ROM_LOAD_ODD ( "fa12-2.9l",    0x00000, 0x10000, 0x1b534294 )
 	ROM_LOAD_EVEN( "fa15.19l",     0x20000, 0x10000, 0x04a79266 )
@@ -1961,15 +1943,15 @@ ROM_START( slyspy2 )
 	ROM_LOAD( "fa00.2a",      0x160000, 0x20000, 0xf7df3fd7 )
 	ROM_LOAD( "fa02.5a",      0x180000, 0x20000, 0x84e8da9d )
 
-	ROM_REGION (0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fa10.5h",      0x00000, 0x10000, 0xdfd2ff25 )
 
-	ROM_REGION (0x20000)	/* ADPCM samples */
+	ROM_REGION(0x20000)	/* ADPCM samples */
 	ROM_LOAD( "fa11.11k",     0x00000, 0x20000, 0x4e547bad )
 ROM_END
 
 ROM_START( secretag )
-	ROM_REGION(0x60000) /* 68000 code */
+	ROM_REGIONX( 0x60000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "fb14.bin",   0x00000, 0x10000, 0x9be6ac90 )
 	ROM_LOAD_ODD ( "fb12.bin",   0x00000, 0x10000, 0x28904b6b )
 	ROM_LOAD_EVEN( "fb15.bin",   0x20000, 0x10000, 0x106bb26c )
@@ -2005,16 +1987,16 @@ ROM_START( secretag )
 	ROM_LOAD( "fa00.2a",      0x160000, 0x20000, 0xf7df3fd7 )
 	ROM_LOAD( "fa02.5a",      0x180000, 0x20000, 0x84e8da9d )
 
-	ROM_REGION (0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fa10.5h",      0x00000, 0x10000, 0xdfd2ff25 )
 
-	ROM_REGION (0x20000)	/* ADPCM samples */
+	ROM_REGION(0x20000)	/* ADPCM samples */
 	ROM_LOAD( "fa11.11k",     0x00000, 0x20000, 0x4e547bad )
 ROM_END
 
 #if 0
 ROM_START( secretab )
-	ROM_REGION(0x60000) /* 68000 code */
+	ROM_REGIONX( 0x60000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "sa_05.bin",    0x00000, 0x10000, 0x54353a84 )
 	ROM_LOAD_ODD ( "sa_03.bin",    0x00000, 0x10000, 0x1b534294 )
 	ROM_LOAD_EVEN( "sa_06.bin",    0x20000, 0x10000, 0x04a79266 )
@@ -2048,7 +2030,7 @@ ROM_END
 #endif
 
 ROM_START( midres )
-	ROM_REGION(0x80000) /* 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "fk_14.rom",    0x00000, 0x20000, 0xde7522df )
 	ROM_LOAD_ODD ( "fk_12.rom",    0x00000, 0x20000, 0x3494b8c9 )
 	ROM_LOAD_EVEN( "fl15",         0x40000, 0x20000, 0x1328354e )
@@ -2076,7 +2058,7 @@ ROM_START( midres )
 	ROM_LOAD( "fl00",              0x160000, 0x20000, 0x756fb801 )
 	ROM_LOAD( "fl02",              0x180000, 0x20000, 0x54d2c120 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fl16",              0x00000, 0x10000, 0x66360bdf )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -2084,7 +2066,7 @@ ROM_START( midres )
 ROM_END
 
 ROM_START( midresu )
-	ROM_REGION(0x80000) /* 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "fl14",         0x00000, 0x20000, 0x2f9507a2 )
 	ROM_LOAD_ODD ( "fl12",         0x00000, 0x20000, 0x3815ad9f )
 	ROM_LOAD_EVEN( "fl15",         0x40000, 0x20000, 0x1328354e )
@@ -2112,7 +2094,7 @@ ROM_START( midresu )
 	ROM_LOAD( "fl00",              0x160000, 0x20000, 0x756fb801 )
 	ROM_LOAD( "fl02",              0x180000, 0x20000, 0x54d2c120 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fl16",              0x00000, 0x10000, 0x66360bdf )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -2120,7 +2102,7 @@ ROM_START( midresu )
 ROM_END
 
 ROM_START( midresj )
-	ROM_REGION(0x80000) /* 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "fh14",         0x00000, 0x20000, 0x6d632a51 )
 	ROM_LOAD_ODD ( "fh12",         0x00000, 0x20000, 0x45143384 )
 	ROM_LOAD_EVEN( "fl15",         0x40000, 0x20000, 0x1328354e )
@@ -2148,7 +2130,7 @@ ROM_START( midresj )
 	ROM_LOAD( "fl00",              0x160000, 0x20000, 0x756fb801 )
 	ROM_LOAD( "fl02",              0x180000, 0x20000, 0x54d2c120 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fh16",              0x00000, 0x10000, 0x00736f32 )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -2156,7 +2138,7 @@ ROM_START( midresj )
 ROM_END
 
 ROM_START( bouldash )
-	ROM_REGION(0x60000) /* 68000 code */
+	ROM_REGIONX( 0x60000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "fn-15",   0x00000, 0x10000, 0xca19a967 )
 	ROM_LOAD_ODD ( "fn-12",   0x00000, 0x10000, 0x242bdc2a )
 	ROM_LOAD_EVEN( "fn-16",   0x20000, 0x10000, 0xb7217265 )
@@ -2182,10 +2164,10 @@ ROM_START( bouldash )
 	ROM_LOAD( "fn-00",      0x160000, 0x10000, 0xec18d098 )
 	ROM_LOAD( "fn-02",      0x180000, 0x10000, 0x4f060cba )
 
-	ROM_REGION (0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "fn-10",      0x00000, 0x10000, 0xc74106e7 )
 
-	ROM_REGION (0x20000)	/* ADPCM samples */
+	ROM_REGION(0x20000)	/* ADPCM samples */
 	ROM_LOAD( "fn-11",      0x00000, 0x10000, 0x990fd8d9 )
 ROM_END
 
@@ -2194,7 +2176,7 @@ ROM_END
 static void h6280_decrypt(int memory_area)
 {
 	int i;
-	unsigned char *RAM = Machine->memory_region[memory_area];
+	unsigned char *RAM = memory_region(memory_area);
 
 	/* Read each byte, decrypt it */
 	for (i=0x00000; i<0x10000; i++)
@@ -2203,7 +2185,7 @@ static void h6280_decrypt(int memory_area)
 
 static void hippodrm_patch(void)
 {
-	unsigned char *RAM = Machine->memory_region[4];
+	unsigned char *RAM = memory_region(4);
 
 	h6280_decrypt(4);
 
@@ -2216,7 +2198,7 @@ static void hippodrm_patch(void)
 
 static void slyspy_patch(void)
 {
-	unsigned char *RAM = Machine->memory_region[2];
+	unsigned char *RAM = memory_region(2);
 
 	h6280_decrypt(2);
 

@@ -10,7 +10,7 @@ static void render_background( struct osd_bitmap *bitmap, int priority )
 	int scrollx = 	READ_WORD(&tigeroad_scrollram[0]) & 0xfff; /* 0..4096 */
 	int scrolly =	READ_WORD(&tigeroad_scrollram[2]) & 0xfff; /* 0..4096 */
 
-	unsigned char *p = Machine->memory_region[2];
+	unsigned char *p = memory_region(2);
 
 	int alignx = scrollx%32;
 	int aligny = scrolly%32;

@@ -80,6 +80,9 @@
 #if (HAS_PDP1)
 #include "cpu/pdp1/pdp1.h"
 #endif
+#if (HAS_ADSP2100)
+#include "cpu/adsp2100/adsp2100.h"
+#endif
 
 /* these are triggers sent to the timer system for various interrupt events */
 #define TRIGGER_TIMESLICE       -1000
@@ -157,22 +160,23 @@ static int usres; /* removed from cpu_run and made global */
 static int vblank;
 static int current_frame;
 
-static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num);
-static void cpu_vblankintcallback (int param);
-static void cpu_timedintcallback (int param);
+static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num);
+static void cpu_vblankintcallback(int param);
+static void cpu_timedintcallback(int param);
 static void cpu_internal_interrupt(int cpunum, int type);
 static void cpu_manualnmicallback(int param);
 static void cpu_manualirqcallback(int param);
 static void cpu_internalintcallback(int param);
-static void cpu_manualintcallback (int param);
-static void cpu_clearintcallback (int param);
-static void cpu_resetcallback (int param);
-static void cpu_timeslicecallback (int param);
-static void cpu_vblankreset (void);
-static void cpu_vblankcallback (int param);
-static void cpu_updatecallback (int param);
-static double cpu_computerate (int value);
-static void cpu_inittimers (void);
+static void cpu_manualintcallback(int param);
+static void cpu_clearintcallback(int param);
+static void cpu_resetcallback(int param);
+static void cpu_haltcallback(int param);
+static void cpu_timeslicecallback(int param);
+static void cpu_vblankreset(void);
+static void cpu_vblankcallback(int param);
+static void cpu_updatecallback(int param);
+static double cpu_computerate(int value);
+static void cpu_inittimers(void);
 
 
 /* default irq callback handlers */
@@ -274,6 +278,7 @@ struct cpu_interface cpuintf[] =
 		Dummy_dasm, 						/* Disassemble one instruction */
 		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&dummy_icount,						/* Pointer to the instruction count */
+		1.0,								/* Overclocking factor */
 		0,									/* Interrupt types: none, IRQ, NMI */
 		-1,
 		-1,
@@ -307,7 +312,8 @@ struct cpu_interface cpuintf[] =
 		gensync_dasm,
 		0,0,
 		&gensync_ICount,
-		-1,
+		1.0,
+        -1,
 		-1,
 		-1,
 		cpu_readmem20,
@@ -341,7 +347,8 @@ struct cpu_interface cpuintf[] =
 		z80_dasm,							/* Disassemble one instruction */
 		1,0xff, 							/* Number of IRQ lines, default IRQ vector */
 		&z80_ICount,						/* Pointer to the instruction count */
-		Z80_IGNORE_INT, 					/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        Z80_IGNORE_INT,                     /* Interrupt types: none, IRQ, NMI */
 		Z80_IRQ_INT,
 		Z80_NMI_INT,
         cpu_readmem16,                      /* Memory read */
@@ -375,7 +382,8 @@ struct cpu_interface cpuintf[] =
 		z80_vm_dasm,						/* Disassemble one instruction */
 		1,0xff, 							/* Number of IRQ lines, default IRQ vector */
 		&z80_ICount,						/* Pointer to the instruction count */
-		Z80_IGNORE_INT, 					/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        Z80_IGNORE_INT,                     /* Interrupt types: none, IRQ, NMI */
 		Z80_IRQ_INT,
 		Z80_NMI_INT,
         cpu_readmem16,                      /* Memory read */
@@ -409,7 +417,8 @@ struct cpu_interface cpuintf[] =
 		i8080_dasm, 						/* Disassemble one instruction */
 		4,0xff, 							/* Number of IRQ lines, default IRQ vector */
 		&i8080_ICount,						/* Pointer to the instruction count */
-		I8080_NONE, 						/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        I8080_NONE,                         /* Interrupt types: none, IRQ, NMI */
 		I8080_INTR,
 		I8080_TRAP,
 		cpu_readmem16,                      /* Memory read */
@@ -443,7 +452,8 @@ struct cpu_interface cpuintf[] =
 		i8085_dasm, 						/* Disassemble one instruction */
 		4,0xff, 							/* Number of IRQ lines, default IRQ vector */
 		&i8085_ICount,						/* Pointer to the instruction count */
-		I8085_NONE, 						/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        I8085_NONE,                         /* Interrupt types: none, IRQ, NMI */
 		I8085_INTR,
 		I8085_TRAP,
 		cpu_readmem16,                      /* Memory read */
@@ -477,7 +487,8 @@ struct cpu_interface cpuintf[] =
 		m6502_dasm, 						/* Disassemble one instruction */
 		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&m6502_ICount,						/* Pointer to the instruction count */
-		M6502_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        M6502_INT_NONE,                     /* Interrupt types: none, IRQ, NMI */
 		M6502_INT_IRQ,
 		M6502_INT_NMI,
 		cpu_readmem16,						/* Memory read */
@@ -511,7 +522,8 @@ struct cpu_interface cpuintf[] =
 		m65c02_dasm,						/* Disassemble one instruction */
 		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&m65c02_ICount, 					/* Pointer to the instruction count */
-		M65C02_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        M65C02_INT_NONE,                    /* Interrupt types: none, IRQ, NMI */
 		M65C02_INT_IRQ,
 		M65C02_INT_NMI,
 		cpu_readmem16,						/* Memory read */
@@ -545,7 +557,8 @@ struct cpu_interface cpuintf[] =
 		m6510_dasm, 						/* Disassemble one instruction */
 		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&m6510_ICount,						/* Pointer to the instruction count */
-		M6510_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        M6510_INT_NONE,                     /* Interrupt types: none, IRQ, NMI */
 		M6510_INT_IRQ,
 		M6510_INT_NMI,
 		cpu_readmem16,						/* Memory read */
@@ -579,7 +592,8 @@ struct cpu_interface cpuintf[] =
 		n2a03_dasm, 						/* Disassemble one instruction */
 		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&n2a03_ICount,						/* Pointer to the instruction count */
-		N2A03_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        N2A03_INT_NONE,                     /* Interrupt types: none, IRQ, NMI */
 		N2A03_INT_IRQ,
 		N2A03_INT_NMI,
 		cpu_readmem16,						/* Memory read */
@@ -613,7 +627,8 @@ struct cpu_interface cpuintf[] =
 		h6280_dasm, 						/* Disassemble one instruction */
 		3,0,								/* Number of IRQ lines, default IRQ vector */
 		&h6280_ICount,						/* Pointer to the instruction count */
-		H6280_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        H6280_INT_NONE,                     /* Interrupt types: none, IRQ, NMI */
 		-1,
 		H6280_INT_NMI,
 		cpu_readmem21,						/* Memory read */
@@ -647,7 +662,8 @@ struct cpu_interface cpuintf[] =
 		i86_dasm,							/* Disassemble one instruction */
 		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&i86_ICount,						/* Pointer to the instruction count */
-		I86_INT_NONE,						/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        I86_INT_NONE,                       /* Interrupt types: none, IRQ, NMI */
 		-1000,
 		I86_NMI_INT,
 		cpu_readmem20,						/* Memory read */
@@ -681,7 +697,8 @@ struct cpu_interface cpuintf[] =
 		nec_dasm,							/* Disassemble one instruction */
 		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&nec_ICount,						/* Pointer to the instruction count */
-		NEC_INT_NONE,						/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        NEC_INT_NONE,                       /* Interrupt types: none, IRQ, NMI */
 		-1000,
 		NEC_NMI_INT,
 		cpu_readmem20,						/* Memory read */
@@ -715,7 +732,8 @@ struct cpu_interface cpuintf[] =
 		nec_dasm,							/* Disassemble one instruction */
 		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&nec_ICount,						/* Pointer to the instruction count */
-		NEC_INT_NONE,						/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        NEC_INT_NONE,                       /* Interrupt types: none, IRQ, NMI */
 		-1000,
 		NEC_NMI_INT,
 		cpu_readmem20,						/* Memory read */
@@ -749,7 +767,8 @@ struct cpu_interface cpuintf[] =
 		nec_dasm,							/* Disassemble one instruction */
 		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&nec_ICount,						/* Pointer to the instruction count */
-		NEC_INT_NONE,						/* Interrupt types: none, IRQ, NMI */
+		1.05,								/* Overclocking factor */
+        NEC_INT_NONE,                       /* Interrupt types: none, IRQ, NMI */
 		-1000,
 		NEC_NMI_INT,
 		cpu_readmem20,						/* Memory read */
@@ -783,7 +802,8 @@ struct cpu_interface cpuintf[] =
 		i8035_dasm, 						/* Disassemble one instruction */
 		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&i8035_ICount,						/* Pointer to the instruction count */
-		I8035_IGNORE_INT,					/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        I8035_IGNORE_INT,                   /* Interrupt types: none, IRQ, NMI */
 		I8035_EXT_INT,
         -1,
         cpu_readmem16,                      /* Memory read */
@@ -817,7 +837,8 @@ struct cpu_interface cpuintf[] =
 		i8039_dasm, 						/* Disassemble one instruction */
 		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&i8039_ICount,						/* Pointer to the instruction count */
-		I8039_IGNORE_INT,					/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        I8039_IGNORE_INT,                   /* Interrupt types: none, IRQ, NMI */
 		I8039_EXT_INT,
 		-1,
 		cpu_readmem16,						/* Memory read */
@@ -851,7 +872,8 @@ struct cpu_interface cpuintf[] =
 		i8048_dasm, 						/* Disassemble one instruction */
 		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&i8048_ICount,						/* Pointer to the instruction count */
-		I8048_IGNORE_INT,					/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        I8048_IGNORE_INT,                   /* Interrupt types: none, IRQ, NMI */
 		I8048_EXT_INT,
 		-1,
 		cpu_readmem16,						/* Memory read */
@@ -885,7 +907,8 @@ struct cpu_interface cpuintf[] =
 		n7751_dasm, 						/* Disassemble one instruction */
 		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&n7751_ICount,						/* Pointer to the instruction count */
-		N7751_IGNORE_INT,					/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        N7751_IGNORE_INT,                   /* Interrupt types: none, IRQ, NMI */
 		N7751_EXT_INT,
 		-1,
 		cpu_readmem16,						/* Memory read */
@@ -919,7 +942,8 @@ struct cpu_interface cpuintf[] =
 		m6800_dasm, 						/* Disassemble one instruction */
 		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&m6800_ICount,						/* Pointer to the instruction count */
-		M6800_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        M6800_INT_NONE,                     /* Interrupt types: none, IRQ, NMI */
 		M6800_INT_IRQ,
 		M6800_INT_NMI,
 		cpu_readmem16,						/* Memory read */
@@ -953,7 +977,8 @@ struct cpu_interface cpuintf[] =
 		m6801_dasm, 						/* Disassemble one instruction */
 		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&m6801_ICount,						/* Pointer to the instruction count */
-		M6801_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        M6801_INT_NONE,                     /* Interrupt types: none, IRQ, NMI */
 		M6801_INT_IRQ,
 		M6801_INT_NMI,
 		cpu_readmem16,						/* Memory read */
@@ -987,7 +1012,8 @@ struct cpu_interface cpuintf[] =
 		m6802_dasm, 						/* Disassemble one instruction */
 		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&m6802_ICount,						/* Pointer to the instruction count */
-		M6802_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        M6802_INT_NONE,                     /* Interrupt types: none, IRQ, NMI */
 		M6802_INT_IRQ,
 		M6802_INT_NMI,
 		cpu_readmem16,						/* Memory read */
@@ -1021,7 +1047,8 @@ struct cpu_interface cpuintf[] =
 		m6803_dasm, 						/* Disassemble one instruction */
 		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&m6803_ICount,						/* Pointer to the instruction count */
-		M6803_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        M6803_INT_NONE,                     /* Interrupt types: none, IRQ, NMI */
 		M6803_INT_IRQ,
 		M6803_INT_NMI,
 		cpu_readmem16,						/* Memory read */
@@ -1055,7 +1082,8 @@ struct cpu_interface cpuintf[] =
 		m6808_dasm, 						/* Disassemble one instruction */
 		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&m6808_ICount,						/* Pointer to the instruction count */
-		M6808_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        M6808_INT_NONE,                     /* Interrupt types: none, IRQ, NMI */
 		M6808_INT_IRQ,
 		M6808_INT_NMI,
 		cpu_readmem16,						/* Memory read */
@@ -1089,7 +1117,8 @@ struct cpu_interface cpuintf[] =
 		hd63701_dasm,						/* Disassemble one instruction */
 		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&hd63701_ICount,					/* Pointer to the instruction count */
-		HD63701_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        HD63701_INT_NONE,                   /* Interrupt types: none, IRQ, NMI */
 		HD63701_INT_IRQ,
 		HD63701_INT_NMI,
 		cpu_readmem16,						/* Memory read */
@@ -1123,7 +1152,8 @@ struct cpu_interface cpuintf[] =
 		nsc8105_dasm,						/* Disassemble one instruction */
 		1,0,                                /* Number of IRQ lines, default IRQ vector */
 		&nsc8105_ICount,					/* Pointer to the instruction count */
-		NSC8105_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        NSC8105_INT_NONE,                   /* Interrupt types: none, IRQ, NMI */
 		NSC8105_INT_IRQ,
 		NSC8105_INT_NMI,
 		cpu_readmem16,						/* Memory read */
@@ -1157,7 +1187,8 @@ struct cpu_interface cpuintf[] =
 		m6805_dasm, 						/* Disassemble one instruction */
 		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&m6805_ICount,						/* Pointer to the instruction count */
-		M6805_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        M6805_INT_NONE,                     /* Interrupt types: none, IRQ, NMI */
 		M6805_INT_IRQ,
 		-1,
 		cpu_readmem16,						/* Memory read */
@@ -1191,7 +1222,8 @@ struct cpu_interface cpuintf[] =
 		m68705_dasm,						/* Disassemble one instruction */
 		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&m68705_ICount, 					/* Pointer to the instruction count */
-		M68705_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        M68705_INT_NONE,                    /* Interrupt types: none, IRQ, NMI */
 		M68705_INT_IRQ,
 		-1,
 		cpu_readmem16,						/* Memory read */
@@ -1225,7 +1257,8 @@ struct cpu_interface cpuintf[] =
 		hd63705_dasm,						/* Disassemble one instruction */
 		8,0,								/* Number of IRQ lines, default IRQ vector */
 		&hd63705_ICount,					/* Pointer to the instruction count */
-		HD63705_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        HD63705_INT_NONE,                   /* Interrupt types: none, IRQ, NMI */
 		HD63705_INT_IRQ,
 		-1,
 		cpu_readmem16,						/* Memory read */
@@ -1259,7 +1292,8 @@ struct cpu_interface cpuintf[] =
 		m6309_dasm, 						/* Disassemble one instruction */
 		2,0,								/* Number of IRQ lines, default IRQ vector */
 		&m6309_ICount,						/* Pointer to the instruction count */
-		HD6309_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        HD6309_INT_NONE,                    /* Interrupt types: none, IRQ, NMI */
 		HD6309_INT_IRQ,
 		HD6309_INT_NMI,
 		cpu_readmem16,						/* Memory read */
@@ -1293,7 +1327,8 @@ struct cpu_interface cpuintf[] =
 		m6809_dasm, 						/* Disassemble one instruction */
 		2,0,								/* Number of IRQ lines, default IRQ vector */
 		&m6809_ICount,						/* Pointer to the instruction count */
-		M6809_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        M6809_INT_NONE,                     /* Interrupt types: none, IRQ, NMI */
 		M6809_INT_IRQ,
 		M6809_INT_NMI,
 		cpu_readmem16,						/* Memory read */
@@ -1327,7 +1362,8 @@ struct cpu_interface cpuintf[] =
 		konami_dasm, 						/* Disassemble one instruction */
 		2,0,								/* Number of IRQ lines, default IRQ vector */
 		&konami_ICount,						/* Pointer to the instruction count */
-		KONAMI_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        KONAMI_INT_NONE,                    /* Interrupt types: none, IRQ, NMI */
 		KONAMI_INT_IRQ,
 		KONAMI_INT_NMI,
 		cpu_readmem16,						/* Memory read */
@@ -1361,7 +1397,8 @@ struct cpu_interface cpuintf[] =
 		m68000_dasm,						/* Disassemble one instruction */
 		8,MC68000_INT_ACK_AUTOVECTOR,		/* Number of IRQ lines, default IRQ vector */
 		&m68000_ICount, 					/* Pointer to the instruction count */
-		MC68000_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        MC68000_INT_NONE,                   /* Interrupt types: none, IRQ, NMI */
 		-1,
 		-1,
 		cpu_readmem24,						/* Memory read */
@@ -1395,7 +1432,8 @@ struct cpu_interface cpuintf[] =
 		m68010_dasm,						/* Disassemble one instruction */
 		8,MC68010_INT_ACK_AUTOVECTOR,		/* Number of IRQ lines, default IRQ vector */
 		&m68010_ICount, 					/* Pointer to the instruction count */
-		MC68010_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        MC68010_INT_NONE,                   /* Interrupt types: none, IRQ, NMI */
 		-1,
 		-1,
 		cpu_readmem24,						/* Memory read */
@@ -1429,7 +1467,8 @@ struct cpu_interface cpuintf[] =
 		m68020_dasm,						/* Disassemble one instruction */
 		8,MC68020_INT_ACK_AUTOVECTOR,		/* Number of IRQ lines, default IRQ vector */
         &m68020_ICount,                     /* Pointer to the instruction count */
-		MC68020_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        MC68020_INT_NONE,                   /* Interrupt types: none, IRQ, NMI */
 		-1,
 		-1,
 		cpu_readmem24,						/* Memory read */
@@ -1463,7 +1502,8 @@ struct cpu_interface cpuintf[] =
 		t11_dasm,							/* Disassemble one instruction */
 		4,0,								/* Number of IRQ lines, default IRQ vector */
 		&t11_ICount,						/* Pointer to the instruction count */
-		T11_INT_NONE,						/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        T11_INT_NONE,                       /* Interrupt types: none, IRQ, NMI */
 		-1,
 		-1,
 		cpu_readmem16lew,					/* Memory read */
@@ -1497,7 +1537,8 @@ struct cpu_interface cpuintf[] =
 		s2650_dasm, 						/* Disassemble one instruction */
 		2,0,								/* Number of IRQ lines, default IRQ vector */
 		&s2650_ICount,						/* Pointer to the instruction count */
-		S2650_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        S2650_INT_NONE,                     /* Interrupt types: none, IRQ, NMI */
 		-1,
 		-1,
 		cpu_readmem16,                      /* Memory read */
@@ -1531,7 +1572,8 @@ struct cpu_interface cpuintf[] =
 		tms34010_dasm,						/* Disassemble one instruction */
 		2,0,								/* Number of IRQ lines, default IRQ vector */
 		&tms34010_ICount,					/* Pointer to the instruction count */
-		TMS34010_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        TMS34010_INT_NONE,                  /* Interrupt types: none, IRQ, NMI */
 		TMS34010_INT1,
 		-1,
 		cpu_readmem29,						/* Memory read */
@@ -1565,7 +1607,8 @@ struct cpu_interface cpuintf[] =
 		tms9900_dasm,						/* Disassemble one instruction */
 		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&tms9900_ICount,					/* Pointer to the instruction count */
-		TMS9900_NONE,						/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        TMS9900_NONE,                       /* Interrupt types: none, IRQ, NMI */
 		-1,
 		-1,
 		cpu_readmem16bew,					/* Memory read */
@@ -1599,7 +1642,8 @@ struct cpu_interface cpuintf[] =
 		z8000_dasm, 						/* Disassemble one instruction */
 		2,0,								/* Number of IRQ lines, default IRQ vector */
 		&z8000_ICount,						/* Pointer to the instruction count */
-		Z8000_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        Z8000_INT_NONE,                     /* Interrupt types: none, IRQ, NMI */
 		Z8000_NVI,
 		Z8000_NMI,
 		cpu_readmem16bew,                   /* Memory read */
@@ -1633,7 +1677,8 @@ struct cpu_interface cpuintf[] =
 		tms320c10_dasm, 					/* Disassemble one instruction */
 		2,0,								/* Number of IRQ lines, default IRQ vector */
 		&tms320c10_ICount,					/* Pointer to the instruction count */
-		TMS320C10_INT_NONE, 				/* Interrupt types: none, IRQ, NMI */
+		1.0,								/* Overclocking factor */
+        TMS320C10_INT_NONE,                 /* Interrupt types: none, IRQ, NMI */
 		-1,
 		-1,
 		cpu_readmem16,						/* Memory read */
@@ -1667,7 +1712,8 @@ struct cpu_interface cpuintf[] =
 		ccpu_dasm,							/* Disassemble one instruction */
 		2,0,								/* Number of IRQ lines, default IRQ vector */
 		&ccpu_ICount,						/* Pointer to the instruction count  */
-		0,									/* Interrupt types: none, IRQ, NMI	*/
+		1.0,								/* Overclocking factor */
+        0,                                  /* Interrupt types: none, IRQ, NMI  */
 		-1,
 		-1,
 		cpu_readmem16,						/* Memory read	*/
@@ -1701,7 +1747,8 @@ struct cpu_interface cpuintf[] =
 		pdp1_dasm,							/* Disassemble one instruction */
 		0,0,								/* Number of IRQ lines, default IRQ vector */
 		&pdp1_ICount,						/* Pointer to the instruction count  */
-		0,									/* Interrupt types: none, IRQ, NMI	*/
+		1.0,								/* Overclocking factor */
+        0,                                  /* Interrupt types: none, IRQ, NMI  */
 		-1,
 		-1,
 		cpu_readmem16,						/* Memory read	*/
@@ -1709,7 +1756,42 @@ struct cpu_interface cpuintf[] =
 		cpu_setOPbase16,					/* Update CPU opcode base  */
 		0,18,CPU_IS_LE,1,3, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	 */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system	*/
-	},
+    },
+#endif
+#if (HAS_ADSP2100)
+    {
+		CPU_ADSP2100,						/* CPU number and family cores sharing resources */
+        adsp2100_reset,						/* Reset CPU */
+		adsp2100_exit, 						/* Shut down the CPU */
+		adsp2100_execute,					/* Execute a number of cycles */
+		adsp2100_get_context,				/* Get the contents of the registers */
+		adsp2100_set_context,				/* Set the contents of the registers */
+		adsp2100_get_pc,					/* Return the current program counter */
+		adsp2100_set_pc,					/* Set the current program counter */
+		adsp2100_get_sp,					/* Return the current stack pointer */
+		adsp2100_set_sp,					/* Set the current stack pointer */
+		adsp2100_get_reg,					/* Get a specific register value */
+		adsp2100_set_reg,					/* Set a specific register value */
+		adsp2100_set_nmi_line, 				/* Set state of the NMI line */
+		adsp2100_set_irq_line, 				/* Set state of the IRQ line */
+		adsp2100_set_irq_callback, 			/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+		adsp2100_info, 						/* Get formatted string for a specific register */
+		adsp2100_dasm, 						/* Disassemble one instruction */
+		4,0,								/* Number of IRQ lines, default IRQ vector */
+		&adsp2100_icount,					/* Pointer to the instruction count */
+		1.0,								/* Overclocking factor */
+        ADSP2100_INT_NONE,                  /* Interrupt types: none, IRQ, NMI */
+		-1,
+		-1,
+		cpu_readmem16lew,					/* Memory read */
+		cpu_writemem16lew, 					/* Memory write */
+		cpu_setOPbase16lew,					/* Update CPU opcode base */
+		-1,14,CPU_IS_LE,2,4,				/* CPU address shift, bits, endianess, align unit, max. instruction length */
+		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
+    },
 #endif
 };
 
@@ -1737,14 +1819,14 @@ void cpu_init(void)
 	}
 
 	/* zap the CPU data structure */
-	memset (cpu, 0, sizeof (cpu));
+	memset(cpu, 0, sizeof(cpu));
 
 	/* Set up the interface functions */
     for (i = 0; i < MAX_CPU; i++)
         cpu[i].intf = &cpuintf[CPU_TYPE(i)];
 
 	/* reset the timer system */
-	timer_init ();
+	timer_init();
 	timeslice_timer = refresh_timer = vblank_timer = NULL;
 }
 
@@ -1760,19 +1842,19 @@ void cpu_run(void)
         /* allocate a context buffer for the CPU */
 		size = GETCONTEXT(i,NULL);
         if( size == 0 )
-    	{
+        {
             /* That can't really be true */
 			fprintf( stderr, "CPU #%d claims to need no context buffer!\n", i);
             raise( SIGABRT );
-    	}
+        }
 
         cpu[i].context = malloc( size );
         if( cpu[i].context == NULL )
-    	{
+        {
             /* That's really bad :( */
 			fprintf( stderr, "CPU #%d failed to allocate context buffer (%d bytes)!\n", i, size);
             raise( SIGABRT );
-    	}
+        }
 
 		/* Zap the context buffer */
 		memset(cpu[i].context, 0, size );
@@ -1800,7 +1882,7 @@ void cpu_run(void)
 			irq_line_state[i * MAX_IRQ_LINES + j] = CLEAR_LINE;
             irq_line_vector[i * MAX_IRQ_LINES + j] = cpuintf[CPU_TYPE(i)].default_vector;
 		}
-	}
+    }
 
 #ifdef	MAME_DEBUG
 	/* Initialize the debugger */
@@ -1810,7 +1892,7 @@ void cpu_run(void)
 
 reset:
 	/* initialize the various timers (suspends all CPUs at startup) */
-	cpu_inittimers ();
+	cpu_inittimers();
 	watchdog_counter = -1;
 
 	/* reset sound chips */
@@ -1822,12 +1904,12 @@ reset:
         if (!CPU_AUDIO(i) || Machine->sample_rate != 0)
 		{
 			cpu_running[i] = 1;
-			timer_suspendcpu (i, 0);
+			timer_suspendcpu(i, 0, SUSPEND_REASON_RESET);
 		}
 		else
 		{
 			cpu_running[i] = 0;
-			timer_suspendcpu (i, 1);
+			timer_suspendcpu(i, 1, SUSPEND_REASON_DISABLE);
 		}
 	}
 
@@ -1853,10 +1935,10 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 	for (i = 0; i < totalcpu; i++)
 	{
 		/* swap memory contexts and reset */
-		memorycontextswap (i);
-		if (cpu[i].save_context) SETCONTEXT (i, cpu[i].context);
+		memorycontextswap(i);
+		if (cpu[i].save_context) SETCONTEXT(i, cpu[i].context);
 		activecpu = i;
-		RESET (i);
+		RESET(i);
 
         /* Set the irq callback for the cpu */
 		SETIRQCALLBACK(i,cpu_irq_callbacks[i]);
@@ -1866,10 +1948,10 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 
         /* reset the total number of cycles */
 		cpu[i].totalcycles = 0;
-	}
+    }
 
 	/* reset the globals */
-	cpu_vblankreset ();
+	cpu_vblankreset();
 	current_frame = 0;
 
 	/* loop until the user quits */
@@ -1898,10 +1980,10 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 					for( cpunum = 0; cpunum < totalcpu; cpunum++ )
 					{
 						activecpu = cpunum;
-						memorycontextswap (activecpu);
-						if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
+						memorycontextswap(activecpu);
+						if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
 						/* make sure any bank switching is reset */
-						SET_OP_BASE (activecpu, GETPC (activecpu));
+						SET_OP_BASE(activecpu, GETPC(activecpu));
 						if( cpu[activecpu].intf->cpu_state_save )
 							(*cpu[activecpu].intf->cpu_state_save)(s);
 					}
@@ -1913,54 +1995,54 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
         	{
                 void *s = state_open(Machine->gamedrv->name);
                 if( s )
-            	{
+                {
 					for( cpunum = 0; cpunum < totalcpu; cpunum++ )
-                	{
+                    {
 						activecpu = cpunum;
-						memorycontextswap (activecpu);
-						if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
+						memorycontextswap(activecpu);
+						if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
 						/* make sure any bank switching is reset */
-						SET_OP_BASE (activecpu, GETPC (activecpu));
+						SET_OP_BASE(activecpu, GETPC(activecpu));
 						if( cpu[activecpu].intf->cpu_state_load )
 							(*cpu[activecpu].intf->cpu_state_load)(s);
 						/* update the contexts */
-						if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
-						updatememorybase (activecpu);
-                	}
+						if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
+						updatememorybase(activecpu);
+                    }
                     state_close(s);
-            	}
-        	}
-    	}
+                }
+            }
+        }
 #endif
         /* ask the timer system to schedule */
-		if (timer_schedule_cpu (&cpunum, &cycles_running))
+		if (timer_schedule_cpu(&cpunum, &cycles_running))
 		{
 			int ran;
 
 
 			/* switch memory and CPU contexts */
 			activecpu = cpunum;
-			memorycontextswap (activecpu);
-			if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
+			memorycontextswap(activecpu);
+			if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
 
 			/* make sure any bank switching is reset */
-			SET_OP_BASE (activecpu, GETPC (activecpu));
+			SET_OP_BASE(activecpu, GETPC(activecpu));
 
             /* run for the requested number of cycles */
 			profiler_mark(PROFILER_CPU1 + cpunum);
-			ran = EXECUTE (activecpu, cycles_running);
+			ran = EXECUTE(activecpu, cycles_running);
 			profiler_mark(PROFILER_END);
 
 			/* update based on how many cycles we really ran */
 			cpu[activecpu].totalcycles += ran;
 
 			/* update the contexts */
-			if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
-			updatememorybase (activecpu);
+			if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
+			updatememorybase(activecpu);
 			activecpu = -1;
 
 			/* update the timer with how long we actually ran */
-			timer_update_cpu (cpunum, ran);
+			timer_update_cpu(cpunum, ran);
 		}
 
 		profiler_mark(PROFILER_END);
@@ -2049,36 +2131,19 @@ void machine_reset(void)
 ***************************************************************************/
 void cpu_set_reset_line(int cpunum,int state)
 {
-	timer_set (TIME_NOW, (cpunum & 7) | (state << 3), cpu_resetcallback);
+	timer_set(TIME_NOW, (cpunum & 7) | (state << 3), cpu_resetcallback);
 }
 
 
 /***************************************************************************
 
-  Use this function to stop and restart CPUs
+  Use this function to control the HALT line on a CPU
 
 ***************************************************************************/
-
-#define TRIGGER_NEVER           0
-
-void cpu_halt(int cpunum,int running)
+void cpu_set_halt_line(int cpunum,int state)
 {
-	if (cpunum >= MAX_CPU) return;
-
-	/* don't resume audio CPUs if sound is disabled */
-	if (!CPU_AUDIO(cpunum) || Machine->sample_rate != 0)
-	{
-		cpu_running[cpunum] = running;
-		if(!running)
-		{
-			/* suspend and clear suspend trigger */
-			timer_suspendcpu_trigger (cpunum, TRIGGER_NEVER);
-		}
-		else
-			timer_suspendcpu (cpunum, 0);
-	}
+	timer_set(TIME_NOW, (cpunum & 7) | (state << 3), cpu_haltcallback);
 }
-
 
 
 /***************************************************************************
@@ -2116,38 +2181,38 @@ int cpu_gettotalcpu(void)
 unsigned cpu_get_pc(void)
 {
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
-	return GETPC (cpunum);
+	return GETPC(cpunum);
 }
 
 void cpu_set_pc(unsigned val)
 {
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
-	SETPC (cpunum,val);
+	SETPC(cpunum,val);
 }
 
 unsigned cpu_get_sp(void)
 {
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
-	return GETSP (cpunum);
+	return GETSP(cpunum);
 }
 
 void cpu_set_sp(unsigned val)
 {
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
-	SETSP (cpunum,val);
+	SETSP(cpunum,val);
 }
 
 /* these are available externally, for the timer system */
 int cycles_currently_ran(void)
 {
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
-	return cycles_running - ICOUNT (cpunum);
+	return cycles_running - ICOUNT(cpunum);
 }
 
 int cycles_left_to_run(void)
 {
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
-	return ICOUNT (cpunum);
+	return ICOUNT(cpunum);
 }
 
 
@@ -2180,7 +2245,7 @@ int cpu_gettotalcycles(void)
 int cpu_geticount(void)
 {
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
-	int result = TIME_TO_CYCLES (cpunum, cpu[cpunum].vblankint_period - timer_timeelapsed (cpu[cpunum].vblankint_timer));
+	int result = TIME_TO_CYCLES(cpunum, cpu[cpunum].vblankint_period - timer_timeelapsed(cpu[cpunum].vblankint_timer));
 	return (result < 0) ? 0 : result;
 }
 
@@ -2194,7 +2259,7 @@ int cpu_geticount(void)
 int cpu_getfcount(void)
 {
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
-	int result = TIME_TO_CYCLES (cpunum, refresh_period - timer_timeelapsed (refresh_timer));
+	int result = TIME_TO_CYCLES(cpunum, refresh_period - timer_timeelapsed(refresh_timer));
 	return (result < 0) ? 0 : result;
 }
 
@@ -2208,7 +2273,7 @@ int cpu_getfcount(void)
 int cpu_getfperiod(void)
 {
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
-	return TIME_TO_CYCLES (cpunum, refresh_period);
+	return TIME_TO_CYCLES(cpunum, refresh_period);
 }
 
 
@@ -2220,7 +2285,7 @@ int cpu_getfperiod(void)
 ***************************************************************************/
 int cpu_scalebyfcount(int value)
 {
-	int result = (int)((double)value * timer_timeelapsed (refresh_timer) * refresh_period_inv);
+	int result = (int)((double)value * timer_timeelapsed(refresh_timer) * refresh_period_inv);
 	if (value >= 0) return (result < value) ? result : value;
 	else return (result > value) ? result : value;
 }
@@ -2238,20 +2303,20 @@ int cpu_scalebyfcount(int value)
 ***************************************************************************/
 int cpu_getscanline(void)
 {
-	return (int)(timer_timeelapsed (refresh_timer) * scanline_period_inv);
+	return (int)(timer_timeelapsed(refresh_timer) * scanline_period_inv);
 }
 
 
 double cpu_getscanlinetime(int scanline)
 {
 	double ret;
-	double scantime = timer_starttime (refresh_timer) + (double)scanline * scanline_period;
-	double abstime = timer_get_time ();
+	double scantime = timer_starttime(refresh_timer) + (double)scanline * scanline_period;
+	double abstime = timer_get_time();
 	if (abstime >= scantime) scantime += TIME_IN_HZ(Machine->drv->frames_per_second);
 	ret = scantime - abstime;
 	if (ret < TIME_IN_NSEC(1))
 	{
-		ret = TIME_IN_HZ (Machine->drv->frames_per_second);
+		ret = TIME_IN_HZ(Machine->drv->frames_per_second);
 	}
 
 	return ret;
@@ -2272,7 +2337,7 @@ double cpu_getscanlineperiod(void)
 int cpu_getscanlinecycles(void)
 {
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
-	return TIME_TO_CYCLES (cpunum, scanline_period);
+	return TIME_TO_CYCLES(cpunum, scanline_period);
 }
 
 
@@ -2284,7 +2349,7 @@ int cpu_getscanlinecycles(void)
 int cpu_getcurrentcycles(void)
 {
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
-	return TIME_TO_CYCLES (cpunum, timer_timeelapsed (refresh_timer));
+	return TIME_TO_CYCLES(cpunum, timer_timeelapsed(refresh_timer));
 }
 
 
@@ -2295,7 +2360,7 @@ int cpu_getcurrentcycles(void)
  ***************************************************************************/
 int cpu_gethorzbeampos(void)
 {
-    double elapsed_time = timer_timeelapsed (refresh_timer);
+    double elapsed_time = timer_timeelapsed(refresh_timer);
     int scanline = (int)(elapsed_time * scanline_period_inv);
     double time_since_scanline = elapsed_time -
                          (double)scanline * scanline_period;
@@ -2385,7 +2450,7 @@ static int cpu_3_irq_callback(int irqline)
 ***************************************************************************/
 void cpu_generate_internal_interrupt(int cpunum, int type)
 {
-	timer_set (TIME_NOW, (cpunum & 7) | (type << 3), cpu_internalintcallback);
+	timer_set(TIME_NOW, (cpunum & 7) | (type << 3), cpu_internalintcallback);
 }
 
 
@@ -2417,6 +2482,10 @@ void cpu_0_irq_line_vector_w(int offset, int data) { cpu_irq_line_vector_w(0, of
 void cpu_1_irq_line_vector_w(int offset, int data) { cpu_irq_line_vector_w(1, offset, data); }
 void cpu_2_irq_line_vector_w(int offset, int data) { cpu_irq_line_vector_w(2, offset, data); }
 void cpu_3_irq_line_vector_w(int offset, int data) { cpu_irq_line_vector_w(3, offset, data); }
+void cpu_4_irq_line_vector_w(int offset, int data) { cpu_irq_line_vector_w(4, offset, data); }
+void cpu_5_irq_line_vector_w(int offset, int data) { cpu_irq_line_vector_w(5, offset, data); }
+void cpu_6_irq_line_vector_w(int offset, int data) { cpu_irq_line_vector_w(6, offset, data); }
+void cpu_7_irq_line_vector_w(int offset, int data) { cpu_irq_line_vector_w(7, offset, data); }
 
 /***************************************************************************
 
@@ -2429,7 +2498,7 @@ void cpu_set_nmi_line(int cpunum, int state)
 	if (cpu_getstatus(cpunum) == 0) return;
 
 	LOG((errorlog,"cpu_set_nmi_line(%d,%d)\n",cpunum,state));
-	timer_set (TIME_NOW, (cpunum & 7) | (state << 3), cpu_manualnmicallback);
+	timer_set(TIME_NOW, (cpunum & 7) | (state << 3), cpu_manualnmicallback);
 }
 
 /***************************************************************************
@@ -2444,7 +2513,7 @@ void cpu_set_irq_line(int cpunum, int irqline, int state)
 	if (cpu_getstatus(cpunum) == 0) return;
 
 	LOG((errorlog,"cpu_set_irq_line(%d,%d,%d)\n",cpunum,irqline,state));
-	timer_set (TIME_NOW, (irqline & 7) | ((cpunum & 7) << 3) | (state << 6), cpu_manualirqcallback);
+	timer_set(TIME_NOW, (irqline & 7) | ((cpunum & 7) << 3) | (state << 6), cpu_manualirqcallback);
 }
 
 /***************************************************************************
@@ -2458,14 +2527,14 @@ void cpu_cause_interrupt(int cpunum,int type)
 	/* don't trigger interrupts on suspended CPUs */
 	if (cpu_getstatus(cpunum) == 0) return;
 
-	timer_set (TIME_NOW, (cpunum & 7) | (type << 3), cpu_manualintcallback);
+	timer_set(TIME_NOW, (cpunum & 7) | (type << 3), cpu_manualintcallback);
 }
 
 
 
 void cpu_clear_pending_interrupts(int cpunum)
 {
-	timer_set (TIME_NOW, cpunum, cpu_clearintcallback);
+	timer_set(TIME_NOW, cpunum, cpu_clearintcallback);
 }
 
 
@@ -2502,9 +2571,9 @@ int interrupt(void)
 	int val;
 
     if (interrupt_enable[cpunum] == 0)
-		return INT_TYPE_NONE (cpunum);
+		return INT_TYPE_NONE(cpunum);
 
-    val = INT_TYPE_IRQ (cpunum);
+    val = INT_TYPE_IRQ(cpunum);
     if (val == -1000)
 		val = interrupt_vector[cpunum];
 
@@ -2518,9 +2587,9 @@ int nmi_interrupt(void)
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
 
     if (interrupt_enable[cpunum] == 0)
-		return INT_TYPE_NONE (cpunum);
+		return INT_TYPE_NONE(cpunum);
 
-    return INT_TYPE_NMI (cpunum);
+    return INT_TYPE_NMI(cpunum);
 }
 
 
@@ -2573,7 +2642,7 @@ int m68_level7_irq(void)
 int ignore_interrupt(void)
 {
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
-	return INT_TYPE_NONE (cpunum);
+	return INT_TYPE_NONE(cpunum);
 }
 
 
@@ -2585,78 +2654,78 @@ int ignore_interrupt(void)
 ***************************************************************************/
 
 /* generate a trigger */
-void cpu_trigger (int trigger)
+void cpu_trigger(int trigger)
 {
-	timer_trigger (trigger);
+	timer_trigger(trigger);
 }
 
 /* generate a trigger after a specific period of time */
-void cpu_triggertime (double duration, int trigger)
+void cpu_triggertime(double duration, int trigger)
 {
-	timer_set (duration, trigger, cpu_trigger);
+	timer_set(duration, trigger, cpu_trigger);
 }
 
 
 
 /* burn CPU cycles until a timer trigger */
-void cpu_spinuntil_trigger (int trigger)
+void cpu_spinuntil_trigger(int trigger)
 {
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
-	timer_suspendcpu_trigger (cpunum, trigger);
+	timer_suspendcpu_trigger(cpunum, trigger);
 }
 
 /* burn CPU cycles until the next interrupt */
-void cpu_spinuntil_int (void)
+void cpu_spinuntil_int(void)
 {
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
-	cpu_spinuntil_trigger (TRIGGER_INT + cpunum);
+	cpu_spinuntil_trigger(TRIGGER_INT + cpunum);
 }
 
 /* burn CPU cycles until our timeslice is up */
-void cpu_spin (void)
+void cpu_spin(void)
 {
-	cpu_spinuntil_trigger (TRIGGER_TIMESLICE);
+	cpu_spinuntil_trigger(TRIGGER_TIMESLICE);
 }
 
 /* burn CPU cycles for a specific period of time */
-void cpu_spinuntil_time (double duration)
+void cpu_spinuntil_time(double duration)
 {
 	static int timetrig = 0;
 
-	cpu_spinuntil_trigger (TRIGGER_SUSPENDTIME + timetrig);
-	cpu_triggertime (duration, TRIGGER_SUSPENDTIME + timetrig);
+	cpu_spinuntil_trigger(TRIGGER_SUSPENDTIME + timetrig);
+	cpu_triggertime(duration, TRIGGER_SUSPENDTIME + timetrig);
 	timetrig = (timetrig + 1) & 255;
 }
 
 
 
 /* yield our timeslice for a specific period of time */
-void cpu_yielduntil_trigger (int trigger)
+void cpu_yielduntil_trigger(int trigger)
 {
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
-	timer_holdcpu_trigger (cpunum, trigger);
+	timer_holdcpu_trigger(cpunum, trigger);
 }
 
 /* yield our timeslice until the next interrupt */
-void cpu_yielduntil_int (void)
+void cpu_yielduntil_int(void)
 {
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
-	cpu_yielduntil_trigger (TRIGGER_INT + cpunum);
+	cpu_yielduntil_trigger(TRIGGER_INT + cpunum);
 }
 
 /* yield our current timeslice */
-void cpu_yield (void)
+void cpu_yield(void)
 {
-	cpu_yielduntil_trigger (TRIGGER_TIMESLICE);
+	cpu_yielduntil_trigger(TRIGGER_TIMESLICE);
 }
 
 /* yield our timeslice for a specific period of time */
-void cpu_yielduntil_time (double duration)
+void cpu_yielduntil_time(double duration)
 {
 	static int timetrig = 0;
 
-	cpu_yielduntil_trigger (TRIGGER_YIELDTIME + timetrig);
-	cpu_triggertime (duration, TRIGGER_YIELDTIME + timetrig);
+	cpu_yielduntil_trigger(TRIGGER_YIELDTIME + timetrig);
+	cpu_triggertime(duration, TRIGGER_YIELDTIME + timetrig);
 	timetrig = (timetrig + 1) & 255;
 }
 
@@ -2689,8 +2758,8 @@ static void cpu_manualnmicallback(int param)
     /* swap to the CPU's context */
 	oldactive = activecpu;
     activecpu = cpunum;
-    memorycontextswap (activecpu);
-	if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
+    memorycontextswap(activecpu);
+	if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
 
 	LOG((errorlog,"cpu_manualnmicallback %d,%d\n",cpunum,state));
 
@@ -2709,15 +2778,15 @@ static void cpu_manualnmicallback(int param)
             break;
         default:
 			if( errorlog ) fprintf( errorlog, "cpu_manualnmicallback cpu #%d unknown state %d\n", cpunum, state);
-	}
+    }
     /* update the CPU's context */
-	if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
+	if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
 	activecpu = oldactive;
-	if (activecpu >= 0) memorycontextswap (activecpu);
+	if (activecpu >= 0) memorycontextswap(activecpu);
 
 	/* generate a trigger to unsuspend any CPUs waiting on the interrupt */
 	if (state != CLEAR_LINE)
-        timer_trigger (TRIGGER_INT + cpunum);
+        timer_trigger(TRIGGER_INT + cpunum);
 }
 
 static void cpu_manualirqcallback(int param)
@@ -2731,8 +2800,8 @@ static void cpu_manualirqcallback(int param)
     /* swap to the CPU's context */
 	oldactive = activecpu;
     activecpu = cpunum;
-    memorycontextswap (activecpu);
-	if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
+    memorycontextswap(activecpu);
+	if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
 
 	LOG((errorlog,"cpu_manualirqcallback %d,%d,%d\n",cpunum,irqline,state));
 
@@ -2752,39 +2821,39 @@ static void cpu_manualirqcallback(int param)
             break;
         default:
 			if( errorlog ) fprintf( errorlog, "cpu_manualirqcallback cpu #%d, line %d, unknown state %d\n", cpunum, irqline, state);
-	}
+    }
 
     /* update the CPU's context */
-	if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
+	if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
 	activecpu = oldactive;
-	if (activecpu >= 0) memorycontextswap (activecpu);
+	if (activecpu >= 0) memorycontextswap(activecpu);
 
 	/* generate a trigger to unsuspend any CPUs waiting on the interrupt */
 	if (state != CLEAR_LINE)
-        timer_trigger (TRIGGER_INT + cpunum);
+        timer_trigger(TRIGGER_INT + cpunum);
 }
 
-static void cpu_internal_interrupt (int cpunum, int type)
+static void cpu_internal_interrupt(int cpunum, int type)
 {
     int oldactive = activecpu;
 
     /* swap to the CPU's context */
     activecpu = cpunum;
-    memorycontextswap (activecpu);
-	if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
+    memorycontextswap(activecpu);
+	if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
 
-	INTERNAL_INTERRUPT (cpunum, type);
+	INTERNAL_INTERRUPT(cpunum, type);
 
     /* update the CPU's context */
-	if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
+	if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
     activecpu = oldactive;
-    if (activecpu >= 0) memorycontextswap (activecpu);
+    if (activecpu >= 0) memorycontextswap(activecpu);
 
     /* generate a trigger to unsuspend any CPUs waiting on the interrupt */
-    timer_trigger (TRIGGER_INT + cpunum);
+    timer_trigger(TRIGGER_INT + cpunum);
 }
 
-static void cpu_internalintcallback (int param)
+static void cpu_internalintcallback(int param)
 {
 	int type = param >> 3;
     int cpunum = param & 7;
@@ -2794,7 +2863,7 @@ static void cpu_internalintcallback (int param)
 	cpu_internal_interrupt(cpunum, type);
 }
 
-static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
+static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 {
 	int oldactive = activecpu;
 
@@ -2802,8 +2871,8 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 
 	/* swap to the CPU's context */
     activecpu = cpunum;
-	memorycontextswap (activecpu);
-	if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
+	memorycontextswap(activecpu);
+	if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
 
 	/* cause the interrupt, calling the function if it exists */
 	if (func) num = (*func)();
@@ -2817,7 +2886,7 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 		{
 
             LOG((errorlog,"NMI\n"));
-			cpu_manualnmicallback (cpunum | (PULSE_LINE << 3) );
+			cpu_manualnmicallback(cpunum | (PULSE_LINE << 3) );
 
 		}
 		else
@@ -3050,7 +3119,19 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 				case TMS320C10_ACTIVE_INT:	irq_line = 0; LOG((errorlog,"TMS32010 INT\n")); break;
 				case TMS320C10_ACTIVE_BIO:	irq_line = 1; LOG((errorlog,"TMS32010 BIO\n")); break;
 				default:					irq_line = 0; LOG((errorlog,"TMS32010 unknown\n"));
-            	}
+                }
+                break;
+#endif
+#if HAS_ADSP2100
+            case CPU_ADSP2100:
+				switch (num)
+				{
+				case ADSP2100_IRQ0:			irq_line = 0; LOG((errorlog,"ADSP2100 IRQ0\n")); break;
+				case ADSP2100_IRQ1:			irq_line = 1; LOG((errorlog,"ADSP2100 IRQ1\n")); break;
+				case ADSP2100_IRQ2:			irq_line = 2; LOG((errorlog,"ADSP2100 IRQ1\n")); break;
+				case ADSP2100_IRQ3:			irq_line = 3; LOG((errorlog,"ADSP2100 IRQ1\n")); break;
+				default:					irq_line = 0; LOG((errorlog,"ADSP2100 unknown\n"));
+                }
                 break;
 #endif
 			default:
@@ -3059,27 +3140,27 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 				LOG((errorlog,"unknown IRQ\n"));
         	}
 			cpu_irq_line_vector_w(cpunum, irq_line, num);
-			cpu_manualirqcallback (irq_line | (cpunum << 3) | (HOLD_LINE << 6) );
-    	}
+			cpu_manualirqcallback(irq_line | (cpunum << 3) | (HOLD_LINE << 6) );
+        }
 	}
 
     /* update the CPU's context */
-	if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
+	if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
     activecpu = oldactive;
-    if (activecpu >= 0) memorycontextswap (activecpu);
+    if (activecpu >= 0) memorycontextswap(activecpu);
 
 	/* trigger already generated by cpu_manualirqcallback or cpu_manualnmicallback */
 }
 
-static void cpu_clear_interrupts (int cpunum)
+static void cpu_clear_interrupts(int cpunum)
 {
 	int oldactive = activecpu;
 	int i;
 
 	/* swap to the CPU's context */
 	activecpu = cpunum;
-	memorycontextswap (activecpu);
-	if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
+	memorycontextswap(activecpu);
+	if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
 
 	/* clear NMI line */
 	SETNMILINE(activecpu,CLEAR_LINE);
@@ -3089,31 +3170,31 @@ static void cpu_clear_interrupts (int cpunum)
 		SETIRQLINE(activecpu,i,CLEAR_LINE);
 
 	/* update the CPU's context */
-	if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
+	if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
 	activecpu = oldactive;
-	if (activecpu >= 0) memorycontextswap (activecpu);
+	if (activecpu >= 0) memorycontextswap(activecpu);
 }
 
 
-static void cpu_reset_cpu (int cpunum)
+static void cpu_reset_cpu(int cpunum)
 {
 	int oldactive = activecpu;
 
 	/* swap to the CPU's context */
 	activecpu = cpunum;
-	memorycontextswap (activecpu);
-	if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
+	memorycontextswap(activecpu);
+	if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
 
 	/* reset the CPU */
-	RESET (cpunum);
+	RESET(cpunum);
 
     /* Set the irq callback for the cpu */
 	SETIRQCALLBACK(cpunum,cpu_irq_callbacks[cpunum]);
 
 	/* update the CPU's context */
-	if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
+	if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
 	activecpu = oldactive;
-	if (activecpu >= 0) memorycontextswap (activecpu);
+	if (activecpu >= 0) memorycontextswap(activecpu);
 }
 
 /***************************************************************************
@@ -3123,65 +3204,76 @@ static void cpu_reset_cpu (int cpunum)
   or not the CPU's interrupts are synced to VBLANK.
 
 ***************************************************************************/
-static void cpu_vblankintcallback (int param)
+static void cpu_vblankintcallback(int param)
 {
 	if (Machine->drv->cpu[param].vblank_interrupt)
-		cpu_generate_interrupt (param, Machine->drv->cpu[param].vblank_interrupt, 0);
+		cpu_generate_interrupt(param, Machine->drv->cpu[param].vblank_interrupt, 0);
 
 	/* update the counters */
 	cpu[param].iloops--;
 }
 
 
-static void cpu_timedintcallback (int param)
+static void cpu_timedintcallback(int param)
 {
 	/* bail if there is no routine */
 	if (!Machine->drv->cpu[param].timed_interrupt)
 		return;
 
 	/* generate the interrupt */
-	cpu_generate_interrupt (param, Machine->drv->cpu[param].timed_interrupt, 0);
+	cpu_generate_interrupt(param, Machine->drv->cpu[param].timed_interrupt, 0);
 }
 
 
-static void cpu_manualintcallback (int param)
+static void cpu_manualintcallback(int param)
 {
 	int intnum = param >> 3;
 	int cpunum = param & 7;
 
 	/* generate the interrupt */
-	cpu_generate_interrupt (cpunum, 0, intnum);
+	cpu_generate_interrupt(cpunum, 0, intnum);
 }
 
 
-static void cpu_clearintcallback (int param)
+static void cpu_clearintcallback(int param)
 {
 	/* clear the interrupts */
-	cpu_clear_interrupts (param);
+	cpu_clear_interrupts(param);
 }
 
 
-static void cpu_resetcallback (int param)
+static void cpu_resetcallback(int param)
 {
 	int state = param >> 3;
 	int cpunum = param & 7;
 
 	/* reset the CPU */
 	if (state == PULSE_LINE)
-		cpu_reset_cpu (cpunum);
+		cpu_reset_cpu(cpunum);
 	else if (state == ASSERT_LINE)
 	{
-		cpu_reset_cpu (cpunum);
-		cpu_halt (cpunum, 0);	/* halt cpu */
+/* ASG - do we need this? 		cpu_reset_cpu(cpunum);*/
+		timer_suspendcpu(cpunum, 1, SUSPEND_REASON_RESET);	/* halt cpu */
 	}
 	else if (state == CLEAR_LINE)
 	{
-		if (cpu_getstatus(cpunum) == 0)
-		{
-			cpu_reset_cpu (cpunum);
-			cpu_halt (cpunum, 1);	/* restart cpu */
-		}
+		if (timer_iscpususpended(cpunum, SUSPEND_REASON_RESET))
+			cpu_reset_cpu(cpunum);
+		timer_suspendcpu(cpunum, 0, SUSPEND_REASON_RESET);	/* restart cpu */
 	}
+}
+
+
+static void cpu_haltcallback(int param)
+{
+	int state = param >> 3;
+	int cpunum = param & 7;
+
+	/* reset the CPU */
+	if (state == ASSERT_LINE)
+		timer_suspendcpu(cpunum, 1, SUSPEND_REASON_HALT);	/* halt cpu */
+	else if (state == CLEAR_LINE)
+		timer_suspendcpu(cpunum, 0, SUSPEND_REASON_HALT);	/* restart cpu */
 }
 
 
@@ -3192,7 +3284,7 @@ static void cpu_resetcallback (int param)
   order to update the input ports and reset the interrupt counter.
 
 ***************************************************************************/
-static void cpu_vblankreset (void)
+static void cpu_vblankreset(void)
 {
 	int i;
 
@@ -3205,12 +3297,12 @@ profiler_mark(PROFILER_END);
 	}
 
 	/* read keyboard & update the status of the input ports */
-	update_input_ports ();
+	update_input_ports();
 
 	/* reset the cycle counters */
 	for (i = 0; i < totalcpu; i++)
 	{
-		if (!timer_iscpususpended (i))
+		if (!timer_iscpususpended(i, SUSPEND_ANY_REASON))
 			cpu[i].iloops = Machine->drv->cpu[i].vblank_interrupts_per_frame - 1;
 		else
 			cpu[i].iloops = -1;
@@ -3224,17 +3316,17 @@ profiler_mark(PROFILER_END);
   service VBLANK-synced interrupts and to begin the screen update process.
 
 ***************************************************************************/
-static void cpu_firstvblankcallback (int param)
+static void cpu_firstvblankcallback(int param)
 {
 	/* now that we're synced up, pulse from here on out */
-	vblank_timer = timer_pulse (vblank_period, param, cpu_vblankcallback);
+	vblank_timer = timer_pulse(vblank_period, param, cpu_vblankcallback);
 
 	/* but we need to call the standard routine as well */
-	cpu_vblankcallback (param);
+	cpu_vblankcallback(param);
 }
 
 /* note that calling this with param == -1 means count everything, but call no subroutines */
-static void cpu_vblankcallback (int param)
+static void cpu_vblankcallback(int param)
 {
 	int i;
 
@@ -3248,15 +3340,15 @@ static void cpu_vblankcallback (int param)
 			if (!--cpu[i].vblankint_countdown)
 			{
 				if (param != -1)
-					cpu_vblankintcallback (i);
+					cpu_vblankintcallback(i);
 				cpu[i].vblankint_countdown = cpu[i].vblankint_multiplier;
-				timer_reset (cpu[i].vblankint_timer, TIME_NEVER);
+				timer_reset(cpu[i].vblankint_timer, TIME_NEVER);
 			}
 		}
 
 		/* else reset the VBLANK timer if this is going to be a real VBLANK */
 		else if (vblank_countdown == 1)
-			timer_reset (cpu[i].vblankint_timer, TIME_NEVER);
+			timer_reset(cpu[i].vblankint_timer, TIME_NEVER);
 	}
 
 	/* is it a real VBLANK? */
@@ -3267,11 +3359,11 @@ static void cpu_vblankcallback (int param)
 			usres = updatescreen();
 
 		/* Set the timer to update the screen */
-		timer_set (TIME_IN_USEC (Machine->drv->vblank_duration), 0, cpu_updatecallback);
+		timer_set(TIME_IN_USEC(Machine->drv->vblank_duration), 0, cpu_updatecallback);
 		vblank = 1;
 
 		/* reset the globals */
-		cpu_vblankreset ();
+		cpu_vblankreset();
 
 		/* reset the counter */
 		vblank_countdown = vblank_multiplier;
@@ -3285,7 +3377,7 @@ static void cpu_vblankcallback (int param)
   after the VBLANK in order to trigger a video update.
 
 ***************************************************************************/
-static void cpu_updatecallback (int param)
+static void cpu_updatecallback(int param)
 {
 	/* update the screen if we didn't before */
 	if (Machine->drv->video_attributes & VIDEO_UPDATE_AFTER_VBLANK)
@@ -3301,14 +3393,14 @@ static void cpu_updatecallback (int param)
 		if (--watchdog_counter == 0)
 		{
 if (errorlog) fprintf(errorlog,"reset caused by the watchdog\n");
-			machine_reset ();
+			machine_reset();
 		}
 	}
 
 	current_frame++;
 
 	/* reset the refresh timer */
-	timer_reset (refresh_timer, TIME_NEVER);
+	timer_reset(refresh_timer, TIME_NEVER);
 }
 
 
@@ -3323,7 +3415,7 @@ if (errorlog) fprintf(errorlog,"reset caused by the watchdog\n");
         rate < -10000  -> 'rate' nanoseconds
 
 ***************************************************************************/
-static double cpu_computerate (int value)
+static double cpu_computerate(int value)
 {
 	/* values equal to zero are zero */
 	if (value <= 0)
@@ -3331,17 +3423,17 @@ static double cpu_computerate (int value)
 
 	/* values above between 0 and 50000 are in Hz */
 	if (value < 50000)
-		return TIME_IN_HZ (value);
+		return TIME_IN_HZ(value);
 
 	/* values greater than 50000 are in nanoseconds */
 	else
-		return TIME_IN_NSEC (value);
+		return TIME_IN_NSEC(value);
 }
 
 
-static void cpu_timeslicecallback (int param)
+static void cpu_timeslicecallback(int param)
 {
-	timer_trigger (TRIGGER_TIMESLICE);
+	timer_trigger(TRIGGER_TIMESLICE);
 }
 
 
@@ -3350,34 +3442,34 @@ static void cpu_timeslicecallback (int param)
   Initializes all the timers used by the CPU system.
 
 ***************************************************************************/
-static void cpu_inittimers (void)
+static void cpu_inittimers(void)
 {
 	double first_time;
 	int i, max, ipf;
 
 	/* remove old timers */
 	if (timeslice_timer)
-		timer_remove (timeslice_timer);
+		timer_remove(timeslice_timer);
 	if (refresh_timer)
-		timer_remove (refresh_timer);
+		timer_remove(refresh_timer);
 	if (vblank_timer)
-		timer_remove (vblank_timer);
+		timer_remove(vblank_timer);
 
 	/* allocate a dummy timer at the minimum frequency to break things up */
 	ipf = Machine->drv->cpu_slices_per_frame;
 	if (ipf <= 0)
 		ipf = 1;
-	timeslice_period = TIME_IN_HZ (Machine->drv->frames_per_second * ipf);
-	timeslice_timer = timer_pulse (timeslice_period, 0, cpu_timeslicecallback);
+	timeslice_period = TIME_IN_HZ(Machine->drv->frames_per_second * ipf);
+	timeslice_timer = timer_pulse(timeslice_period, 0, cpu_timeslicecallback);
 
 	/* allocate an infinite timer to track elapsed time since the last refresh */
-	refresh_period = TIME_IN_HZ (Machine->drv->frames_per_second);
+	refresh_period = TIME_IN_HZ(Machine->drv->frames_per_second);
 	refresh_period_inv = 1.0 / refresh_period;
-	refresh_timer = timer_set (TIME_NEVER, 0, NULL);
+	refresh_timer = timer_set(TIME_NEVER, 0, NULL);
 
 	/* while we're at it, compute the scanline times */
 	if (Machine->drv->vblank_duration)
-		scanline_period = (refresh_period - TIME_IN_USEC (Machine->drv->vblank_duration)) /
+		scanline_period = (refresh_period - TIME_IN_USEC(Machine->drv->vblank_duration)) /
 				(double)(Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y + 1);
 	else
 		scanline_period = refresh_period / (double)Machine->drv->screen_height;
@@ -3424,8 +3516,8 @@ static void cpu_inittimers (void)
 	}
 
 	/* allocate a vblank timer at the frame rate * the LCD number of interrupts per frame */
-	vblank_period = TIME_IN_HZ (Machine->drv->frames_per_second * vblank_multiplier);
-	vblank_timer = timer_pulse (vblank_period, 0, cpu_vblankcallback);
+	vblank_period = TIME_IN_HZ(Machine->drv->frames_per_second * vblank_multiplier);
+	vblank_timer = timer_pulse(vblank_period, 0, cpu_vblankcallback);
 	vblank_countdown = vblank_multiplier;
 
 	/*
@@ -3440,37 +3532,37 @@ static void cpu_inittimers (void)
 
 		/* remove old timers */
 		if (cpu[i].vblankint_timer)
-			timer_remove (cpu[i].vblankint_timer);
+			timer_remove(cpu[i].vblankint_timer);
 		if (cpu[i].timedint_timer)
-			timer_remove (cpu[i].timedint_timer);
+			timer_remove(cpu[i].timedint_timer);
 
 		/* compute the average number of cycles per interrupt */
 		if (ipf <= 0)
 			ipf = 1;
-		cpu[i].vblankint_period = TIME_IN_HZ (Machine->drv->frames_per_second * ipf);
-		cpu[i].vblankint_timer = timer_set (TIME_NEVER, 0, NULL);
+		cpu[i].vblankint_period = TIME_IN_HZ(Machine->drv->frames_per_second * ipf);
+		cpu[i].vblankint_timer = timer_set(TIME_NEVER, 0, NULL);
 
 		/* see if we need to allocate a CPU timer */
 		ipf = Machine->drv->cpu[i].timed_interrupts_per_second;
 		if (ipf)
 		{
-			cpu[i].timedint_period = cpu_computerate (ipf);
-			cpu[i].timedint_timer = timer_pulse (cpu[i].timedint_period, i, cpu_timedintcallback);
+			cpu[i].timedint_period = cpu_computerate(ipf);
+			cpu[i].timedint_timer = timer_pulse(cpu[i].timedint_period, i, cpu_timedintcallback);
 		}
 	}
 
 	/* note that since we start the first frame on the refresh, we can't pulse starting
 	   immediately; instead, we back up one VBLANK period, and inch forward until we hit
 	   positive time. That time will be the time of the first VBLANK timer callback */
-	timer_remove (vblank_timer);
+	timer_remove(vblank_timer);
 
-	first_time = -TIME_IN_USEC (Machine->drv->vblank_duration) + vblank_period;
+	first_time = -TIME_IN_USEC(Machine->drv->vblank_duration) + vblank_period;
 	while (first_time < 0)
 	{
-		cpu_vblankcallback (-1);
+		cpu_vblankcallback(-1);
 		first_time += vblank_period;
 	}
-	vblank_timer = timer_set (first_time, 0, cpu_firstvblankcallback);
+	vblank_timer = timer_set(first_time, 0, cpu_firstvblankcallback);
 }
 
 
@@ -3482,7 +3574,7 @@ int cpu_is_saving_context(int _activecpu)
 
 
 /* JB 971019 */
-void* cpu_getcontext (int _activecpu)
+void* cpu_getcontext(int _activecpu)
 {
 	return cpu[_activecpu].context;
 }
@@ -4003,15 +4095,15 @@ unsigned cpunum_get_reg(int cpunum, int regnum)
     /* swap to the CPU's context */
     oldactive = activecpu;
     activecpu = cpunum;
-    memorycontextswap (activecpu);
-    if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
+    memorycontextswap(activecpu);
+    if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
 
     val = GETREG(activecpu,regnum);
 
     /* update the CPU's context */
-    if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
+    if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
     activecpu = oldactive;
-    if (activecpu >= 0) memorycontextswap (activecpu);
+    if (activecpu >= 0) memorycontextswap(activecpu);
 
     return val;
 }
@@ -4032,15 +4124,15 @@ void cpunum_set_reg(int cpunum, int regnum, unsigned val)
     /* swap to the CPU's context */
     oldactive = activecpu;
     activecpu = cpunum;
-    memorycontextswap (activecpu);
-    if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
+    memorycontextswap(activecpu);
+    if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
 
     SETREG(activecpu,regnum,val);
 
     /* update the CPU's context */
-    if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
+    if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
     activecpu = oldactive;
-    if (activecpu >= 0) memorycontextswap (activecpu);
+    if (activecpu >= 0) memorycontextswap(activecpu);
 }
 
 /***************************************************************************
@@ -4057,15 +4149,15 @@ unsigned cpunum_dasm(int cpunum,char *buffer,unsigned pc)
     /* swap to the CPU's context */
 	oldactive = activecpu;
     activecpu = cpunum;
-    memorycontextswap (activecpu);
-	if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
+    memorycontextswap(activecpu);
+	if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
 
 	result = CPUDASM(activecpu,buffer,pc);
 
 	/* update the CPU's context */
-    if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
+    if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
 	activecpu = oldactive;
-    if (activecpu >= 0) memorycontextswap (activecpu);
+    if (activecpu >= 0) memorycontextswap(activecpu);
 
     return result;
 }
@@ -4084,15 +4176,15 @@ const char *cpunum_flags(int cpunum)
     /* swap to the CPU's context */
 	oldactive = activecpu;
     activecpu = cpunum;
-    memorycontextswap (activecpu);
-	if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
+    memorycontextswap(activecpu);
+	if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
 
 	result = CPUINFO(activecpu,NULL,CPU_INFO_FLAGS);
 
 	/* update the CPU's context */
-    if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
+    if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
 	activecpu = oldactive;
-    if (activecpu >= 0) memorycontextswap (activecpu);
+    if (activecpu >= 0) memorycontextswap(activecpu);
 
     return result;
 }
@@ -4111,15 +4203,15 @@ const char *cpunum_dump_reg(int cpunum, int regnum)
     /* swap to the CPU's context */
 	oldactive = activecpu;
     activecpu = cpunum;
-    memorycontextswap (activecpu);
-	if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
+    memorycontextswap(activecpu);
+	if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
 
 	result = CPUINFO(activecpu,NULL,CPU_INFO_REG+regnum);
 
 	/* update the CPU's context */
-    if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
+    if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
 	activecpu = oldactive;
-    if (activecpu >= 0) memorycontextswap (activecpu);
+    if (activecpu >= 0) memorycontextswap(activecpu);
 
     return result;
 }
@@ -4135,15 +4227,15 @@ const char *cpunum_dump_state(int cpunum)
 	/* swap to the CPU's context */
 	oldactive = activecpu;
     activecpu = cpunum;
-    memorycontextswap (activecpu);
-	if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
+    memorycontextswap(activecpu);
+	if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
 
 	strcpy( buffer, cpu_dump_state() );
 
 	/* update the CPU's context */
-    if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
+    if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
 	activecpu = oldactive;
-    if (activecpu >= 0) memorycontextswap (activecpu);
+    if (activecpu >= 0) memorycontextswap(activecpu);
 
     return buffer;
 }

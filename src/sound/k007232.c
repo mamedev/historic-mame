@@ -311,8 +311,8 @@ int K007232_sh_start(const struct MachineSound *msound)
 		const char *name[2];
 		int vol[2];
 
-		kpcm[j].pcmbuf[0] = (unsigned char *)Machine->memory_region[intf->bank[j]];
-		kpcm[j].pcmbuf[1] = (unsigned char *)Machine->memory_region[intf->bank[j]];
+		kpcm[j].pcmbuf[0] = (unsigned char *)memory_region(intf->bank[j]);
+		kpcm[j].pcmbuf[1] = (unsigned char *)memory_region(intf->bank[j]);
 
 		for( i = 0; i < KDAC_A_PCM_MAX; i++ )
 		{

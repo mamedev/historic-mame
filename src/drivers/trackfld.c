@@ -328,14 +328,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			2048000,        /* 1.400 Mhz ??? */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318180/4,	/* Z80 Clock is derived from a 14.31818 Mhz crystal */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -383,14 +381,12 @@ static struct MachineDriver hyprolyb_machine_driver =
 		{
 			CPU_M6809,
 			2048000,        /* 1.400 Mhz ??? */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318180/4,	/* Z80 Clock is derived from a 14.31818 Mhz crystal */
-			3,	/* memory region #3 */
 			hyprolyb_sound_readmem,hyprolyb_sound_writemem,0,0,
 			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
 		}
@@ -438,7 +434,7 @@ static struct MachineDriver hyprolyb_machine_driver =
 ***************************************************************************/
 
 ROM_START( trackfld )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "a01_e01.bin",  0x6000, 0x2000, 0x2882f6d4 )
 	ROM_LOAD( "a02_e02.bin",  0x8000, 0x2000, 0x1743b5ee )
 	ROM_LOAD( "a03_k03.bin",  0xA000, 0x2000, 0x6c0d1ee9 )
@@ -459,7 +455,7 @@ ROM_START( trackfld )
 	ROM_LOAD( "tfprom.3",     0x0020, 0x0100, 0xd2ba4d32 ) /* sprite lookup table */
 	ROM_LOAD( "tfprom.2",     0x0120, 0x0100, 0x053e5861 ) /* char lookup table */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "c2_d13.bin",   0x0000, 0x2000, 0x95bf79b6 )
 
 	ROM_REGION(0x10000)	/*  64k for speech rom    */
@@ -467,7 +463,7 @@ ROM_START( trackfld )
 ROM_END
 
 ROM_START( trackflc )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "f01.1a",       0x6000, 0x2000, 0x4e32b360 )
 	ROM_LOAD( "f02.2a",       0x8000, 0x2000, 0x4e7ebf07 )
 	ROM_LOAD( "l03.3a",       0xA000, 0x2000, 0xfef4c0ea )
@@ -488,7 +484,7 @@ ROM_START( trackflc )
 	ROM_LOAD( "tfprom.3",     0x0020, 0x0100, 0xd2ba4d32 ) /* sprite lookup table */
 	ROM_LOAD( "tfprom.2",     0x0120, 0x0100, 0x053e5861 ) /* char lookup table */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "c2_d13.bin",   0x0000, 0x2000, 0x95bf79b6 )
 
 	ROM_REGION(0x10000)	/*  64k for speech rom    */
@@ -496,7 +492,7 @@ ROM_START( trackflc )
 ROM_END
 
 ROM_START( hyprolym )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "hyprolym.a01", 0x6000, 0x2000, 0x82257fb7 )
 	ROM_LOAD( "hyprolym.a02", 0x8000, 0x2000, 0x15b83099 )
 	ROM_LOAD( "hyprolym.a03", 0xA000, 0x2000, 0xe54cc960 )
@@ -517,7 +513,7 @@ ROM_START( hyprolym )
 	ROM_LOAD( "tfprom.3",     0x0020, 0x0100, 0xd2ba4d32 ) /* sprite lookup table */
 	ROM_LOAD( "tfprom.2",     0x0120, 0x0100, 0x053e5861 ) /* char lookup table */
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "c2_d13.bin",   0x0000, 0x2000, 0x95bf79b6 )
 
 	ROM_REGION(0x10000)	/*  64k for speech rom    */
@@ -525,7 +521,7 @@ ROM_START( hyprolym )
 ROM_END
 
 ROM_START( hyprolyb )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "a1.1",         0x6000, 0x2000, 0x9aee2d5a )
 	ROM_LOAD( "hyprolym.a02", 0x8000, 0x2000, 0x15b83099 )
 	ROM_LOAD( "a3.3",         0xA000, 0x2000, 0x2d6fc308 )
@@ -546,7 +542,7 @@ ROM_START( hyprolyb )
 	ROM_LOAD( "tfprom.3",     0x0020, 0x0100, 0xd2ba4d32 ) /* sprite lookup table */
 	ROM_LOAD( "tfprom.2",     0x0120, 0x0100, 0x053e5861 ) /* char lookup table */
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "c2_d13.bin",   0x0000, 0x2000, 0x95bf79b6 )
 
 	ROM_REGION(0x10000)	/*  64k for the 6802 which plays ADPCM samples */
@@ -563,7 +559,7 @@ ROM_END
 static void trackfld_decode(void)
 {
 	int A;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	for (A = 0x6000;A < 0x10000;A++)
@@ -583,7 +579,7 @@ static int we_flipped_the_switch;
 static int hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
@@ -624,7 +620,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

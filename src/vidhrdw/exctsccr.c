@@ -147,7 +147,7 @@ static void exctsccr_drawsprites( struct osd_bitmap *bitmap ) {
 				TRANSPARENCY_PEN,0);
 	}
 
-	OBJ1 = &(Machine->memory_region[0][0x8800]);
+	OBJ1 = &(memory_region(REGION_CPU1)[0x8800]);
 	OBJ2 = spriteram;
 
 	for ( offs = 0x0e; offs >= 0; offs -= 2 ) {

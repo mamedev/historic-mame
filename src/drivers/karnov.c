@@ -582,14 +582,12 @@ static struct MachineDriver karnov_machine_driver =
 		{
 			CPU_M68000,
 			10000000,	/* 10 Mhz */
-			0,
 			karnov_readmem,karnov_writemem,0,0,
 			karnov_interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1500000,	/* Accurate */
-			3,
 			karnov_s_readmem,karnov_s_writemem,0,0,
 			ignore_interrupt,0	/* Interrupts from OPL chip */
 		}
@@ -632,14 +630,12 @@ static struct MachineDriver wndrplnt_machine_driver =
 		{
 			CPU_M68000,
 			10000000,	/* 10 Mhz */
-			0,
 			karnov_readmem,karnov_writemem,0,0,
 			karnov_interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1500000,	/* Accurate */
-			3,
 			karnov_s_readmem,karnov_s_writemem,0,0,
 			ignore_interrupt,0	/* Interrupts from OPL chip */
 		}
@@ -678,7 +674,7 @@ static struct MachineDriver wndrplnt_machine_driver =
 /******************************************************************************/
 
 ROM_START( karnov )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "dn08-5",       0x00000, 0x10000, 0xdb92c264 )
 	ROM_LOAD_ODD ( "dn11-5",       0x00000, 0x10000, 0x05669b4b )
 	ROM_LOAD_EVEN( "dn07-",        0x20000, 0x10000, 0xfc14291b )
@@ -705,12 +701,12 @@ ROM_START( karnov )
 	ROM_LOAD( "karnprom.21",  0x0000, 0x0400, 0xaab0bb93 )
 	ROM_LOAD( "karnprom.20",  0x0400, 0x0400, 0x02f78ffb )
 
-	ROM_REGION(0x10000) /* 6502 Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 6502 Sound CPU */
 	ROM_LOAD( "dn05-5",       0x8000, 0x8000, 0xfa1a31a8 )
 ROM_END
 
 ROM_START( karnovj )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "kar8",         0x00000, 0x10000, 0x3e17e268 )
 	ROM_LOAD_ODD ( "kar11",        0x00000, 0x10000, 0x417c936d )
 	ROM_LOAD_EVEN( "dn07-",        0x20000, 0x10000, 0xfc14291b )
@@ -737,12 +733,12 @@ ROM_START( karnovj )
 	ROM_LOAD( "karnprom.21",  0x0000, 0x0400, 0xaab0bb93 )
 	ROM_LOAD( "karnprom.20",  0x0400, 0x0400, 0x02f78ffb )
 
-	ROM_REGION(0x10000) /* 6502 Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 6502 Sound CPU */
 	ROM_LOAD( "kar5",         0x8000, 0x8000, 0x7c9158f1 )
 ROM_END
 
 ROM_START( wndrplnt )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "ea08.bin",   0x00000, 0x10000, 0xb0578a14 )
 	ROM_LOAD_ODD ( "ea11.bin",   0x00000, 0x10000, 0x271edc6c )
 	ROM_LOAD_EVEN( "ea07.bin",   0x20000, 0x10000, 0x7095a7d5 )
@@ -769,12 +765,12 @@ ROM_START( wndrplnt )
 	ROM_LOAD( "ea21.prm",      0x0000, 0x0400, 0xc8beab49 )
 	ROM_LOAD( "ea20.prm",      0x0400, 0x0400, 0x619f9d1e )
 
-	ROM_REGION(0x10000)	/* 6502 Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 Sound CPU */
 	ROM_LOAD( "ea05.bin",     0x8000, 0x8000, 0x8dbb6231 )
 ROM_END
 
 ROM_START( chelnov )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "ee08-a.j15",   0x00000, 0x10000, 0x2f2fb37b )
 	ROM_LOAD_ODD ( "ee11-a.j20",   0x00000, 0x10000, 0xf306d05f )
 	ROM_LOAD_EVEN( "ee07-a.j14",   0x20000, 0x10000, 0x9c69ed56 )
@@ -798,12 +794,12 @@ ROM_START( chelnov )
 														/* might be bad */
 	ROM_LOAD( "ee20.l6",      0x0400, 0x0400, 0x41816132 )
 
-	ROM_REGION(0x10000)	/* 6502 Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 Sound CPU */
 	ROM_LOAD( "ee05-.f3",     0x8000, 0x8000, 0x6a8936b4 )
 ROM_END
 
 ROM_START( chelnovj )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "a-j15.bin",    0x00000, 0x10000, 0x1978cb52 )
 	ROM_LOAD_ODD ( "a-j20.bin",    0x00000, 0x10000, 0xe0ed3d99 )
 	ROM_LOAD_EVEN( "a-j14.bin",    0x20000, 0x10000, 0x51465486 )
@@ -827,7 +823,7 @@ ROM_START( chelnovj )
 														/* might be bad */
 	ROM_LOAD( "ee20.l6",      0x0400, 0x0400, 0x41816132 )
 
-	ROM_REGION(0x10000)	/* 6502 Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 Sound CPU */
 	ROM_LOAD( "ee05-.f3",     0x8000, 0x8000, 0x6a8936b4 )
 ROM_END
 
@@ -835,7 +831,7 @@ ROM_END
 
 static void wndrplnt_patch(void)
 {
-//	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+//	unsigned char *RAM = memory_region(REGION_CPU1);
 
 //	WRITE_WORD (&RAM[0x1106],0x4E71);
 //	WRITE_WORD (&RAM[0x110e],0x4E71);
@@ -852,7 +848,7 @@ static void wndrplnt_patch(void)
 
 static void chelnov_patch(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	WRITE_WORD (&RAM[0x0A26],0x4E71);  /* removes a protection lookup table */
 	WRITE_WORD (&RAM[0x062a],0x4E71);  /* hangs waiting on i8751 int */
@@ -860,7 +856,7 @@ static void chelnov_patch(void)
 
 static void chelnovj_patch(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	WRITE_WORD (&RAM[0x0A2E],0x4E71);  /* removes a protection lookup table */
 	WRITE_WORD (&RAM[0x062a],0x4E71);  /* hangs waiting on i8751 int */

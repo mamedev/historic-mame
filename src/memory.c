@@ -318,7 +318,7 @@ static int memory_allocate_ext (void)
 		const struct MemoryReadAddress *mra;
 		const struct MemoryWriteAddress *mwa;
 
-		int region = Machine->drv->cpu[cpu].memory_region;
+		int region = REGION_CPU1+cpu;
 		int size = memory_region_length(region);
 
 		/* now it's time to loop */
@@ -373,7 +373,7 @@ static int memory_allocate_ext (void)
 
 unsigned char *findmemorychunk(int cpu, int offset, int *chunkstart, int *chunkend)
 {
-	int region = Machine->drv->cpu[cpu].memory_region;
+	int region = REGION_CPU1+cpu;
 	struct ExtMemory *ext;
 
 	/* look in external memory first */
@@ -394,7 +394,7 @@ unsigned char *findmemorychunk(int cpu, int offset, int *chunkstart, int *chunke
 
 unsigned char *memory_find_base (int cpu, int offset)
 {
-	int region = Machine->drv->cpu[cpu].memory_region;
+	int region = REGION_CPU1+cpu;
 	struct ExtMemory *ext;
 
 	/* look in external memory first */
@@ -443,7 +443,7 @@ int initmemoryhandlers(void)
 
 		setOPbasefunc[cpu] = NULL;
 
-		ramptr[cpu] = memory_region(Machine->drv->cpu[cpu].memory_region);
+		ramptr[cpu] = memory_region(REGION_CPU1+cpu);
 
 		/* opcode decryption is currently supported only for the first memory region */
 		if (cpu == encrypted_cpu) romptr[cpu] = ROM;

@@ -36,7 +36,7 @@ static int firq_enable;
 
 static void ajax_bankswitch_w( int offset, int data )
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress = 0;
 
 	/* rom select */
@@ -192,7 +192,7 @@ void ajax_sharedram_w( int offset, int data )
 
 void ajax_bankswitch_w_2( int offset, int data )
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU2);
 	int bankaddress;
 
 	/* enable char ROM reading through the video RAM */

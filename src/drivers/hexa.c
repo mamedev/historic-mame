@@ -142,7 +142,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4000000,		/* 4 MHz ??????? */
-			0,				/* memory region */
 			readmem,writemem,0,0,
 			interrupt,1
 		}
@@ -183,7 +182,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( hexa )
-	ROM_REGION(0x18000)		/* 64k for code + 32k for banked ROM */
+	ROM_REGIONX( 0x18000, REGION_CPU1 )		/* 64k for code + 32k for banked ROM */
 	ROM_LOAD( "hexa.20",      0x00000, 0x8000, 0x98b00586 )
 	ROM_LOAD( "hexa.21",      0x10000, 0x8000, 0x3d5d006c )
 
@@ -201,7 +200,7 @@ ROM_END
 static int hexa_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	static int firsttime = 0;
 
 
@@ -232,7 +231,7 @@ static int hexa_hiload(void)
 static void hexa_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -245,7 +244,7 @@ static void hexa_hisave(void)
 
 static void hexa_patch(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* Hexa is not protected or anything, but it keeps writing 0x3f to register */

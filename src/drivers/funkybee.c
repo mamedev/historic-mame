@@ -252,7 +252,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz */
-			0,
 			readmem,writemem,readport,writeport,
 			interrupt,1
 		}
@@ -291,7 +290,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( funkybee )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "funkybee.1",    0x0000, 0x1000, 0x3372cb33 )
 	ROM_LOAD( "funkybee.3",    0x1000, 0x1000, 0x7bf7c62f )
 	ROM_LOAD( "funkybee.2",    0x2000, 0x1000, 0x8cc0fe8e )
@@ -306,7 +305,7 @@ ROM_START( funkybee )
 ROM_END
 
 ROM_START( skylancr )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1.5a",          0x0000, 0x2000, 0x82d55824 )
 	ROM_LOAD( "2.5c",          0x2000, 0x2000, 0xdff3a682 )
 	ROM_LOAD( "3.5d",          0x4000, 0x1000, 0x7c006ee6 )

@@ -2,11 +2,20 @@
 **
 ** File: ymdeltat.c
 **
-** YAMAHA DELTA-T sound emulation sunroutine
-** used by fmopl.c and fm.c
-** Copyright (C) 1999 Tatsuyuki Satoh , MultiArcadeMachineEmurator development
+** YAMAHA DELTA-T adpcm sound emulation subroutine
+** used by fmopl.c(v0.36e-) and fm.c(v0.36c-)
 **
-** Version 0.36
+** Base program is YM2610 emulator by Hiromitsu Shioya.
+** Written by Tatsuyuki Satoh
+**
+** Version 0.36a
+**
+** sound chips who has this unit
+**
+** YM2608   OPNA
+** YM2610/B OPNB
+** Y8950    MSX AUDI,OPL base
+**
 **
 */
 
@@ -16,7 +25,6 @@
 #include "ymdeltat.h"
 
 unsigned char *ym_deltat_memory;      /* memory pointer */
-unsigned char ym_deltat_arrived_flag; /* arrived flag   */
 
 /* Forecast to next Forecast (rate = *8) */
 /* 1/8 , 3/8 , 5/8 , 7/8 , 9/8 , 11/8 , 13/8 , 15/8 */
@@ -136,6 +144,7 @@ void YM_DELTAT_ADPCM_Reset(YM_DELTAT *DELTAT,int pan)
 	DELTAT->volume    = 0;
 	DELTAT->pan       = &DELTAT->output_pointer[pan];
 	/* DELTAT->flagMask  = 0; */
+	DELTAT->arrivedFlag = 0;
 	DELTAT->flag      = 0;
 	DELTAT->adpcmx    = 0;
 	DELTAT->adpcmd    = 127;
@@ -197,7 +206,7 @@ INLINE void YM_DELTAT_ADPCM_CALC(YM_DELTAT *DELTAT)
 					DELTAT->next_leveling = 0;
 					DELTAT->flag     = 1;
 				}else{
-					ym_deltat_arrived_flag |= DELTAT->flagMask;
+					DELTAT->arrivedFlag |= DELTAT->flagMask;
 					DELTAT->flag = 0;
 					DELTAT->adpcml = 0;
 					now_leveling = 0;

@@ -323,14 +323,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
-			0,
 			readmem,writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318000/8,	/* 1.78975 Mhz */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -368,14 +366,12 @@ static struct MachineDriver frogger2_machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
-			0,
 			frogger2_readmem,frogger2_writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318000/8,	/* 1.78975 Mhz */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -416,7 +412,7 @@ static struct MachineDriver frogger2_machine_driver =
 
 
 ROM_START( frogger )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "frogger.26",   0x0000, 0x1000, 0x597696d6 )
 	ROM_LOAD( "frogger.27",   0x1000, 0x1000, 0xb6e6fcc3 )
 	ROM_LOAD( "frsm3.7",      0x2000, 0x1000, 0xaca22ae0 )
@@ -428,14 +424,14 @@ ROM_START( frogger )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "pr-91.6l",     0x0000, 0x0020, 0x413703bf )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "frogger.608",  0x0000, 0x0800, 0xe8ab0256 )
 	ROM_LOAD( "frogger.609",  0x0800, 0x0800, 0x7380a48f )
 	ROM_LOAD( "frogger.610",  0x1000, 0x0800, 0x31d7eb27 )
 ROM_END
 
 ROM_START( frogseg1 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "frogger.26",   0x0000, 0x1000, 0x597696d6 )
 	ROM_LOAD( "frogger.27",   0x1000, 0x1000, 0xb6e6fcc3 )
 	ROM_LOAD( "frogger.34",   0x2000, 0x1000, 0xed866bab )
@@ -447,14 +443,14 @@ ROM_START( frogseg1 )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "pr-91.6l",     0x0000, 0x0020, 0x413703bf )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "frogger.608",  0x0000, 0x0800, 0xe8ab0256 )
 	ROM_LOAD( "frogger.609",  0x0800, 0x0800, 0x7380a48f )
 	ROM_LOAD( "frogger.610",  0x1000, 0x0800, 0x31d7eb27 )
 ROM_END
 
 ROM_START( frogseg2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "frogger.ic5",  0x0000, 0x1000, 0xefab0c79 )
 	ROM_LOAD( "frogger.ic6",  0x1000, 0x1000, 0xaeca9c13 )
 	ROM_LOAD( "frogger.ic7",  0x2000, 0x1000, 0xdd251066 )
@@ -467,14 +463,14 @@ ROM_START( frogseg2 )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "pr-91.6l",     0x0000, 0x0020, 0x413703bf )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "frogger.608",  0x0000, 0x0800, 0xe8ab0256 )
 	ROM_LOAD( "frogger.609",  0x0800, 0x0800, 0x7380a48f )
 	ROM_LOAD( "frogger.610",  0x1000, 0x0800, 0x31d7eb27 )
 ROM_END
 
 ROM_START( frogger2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "epr-1031.15",  0x0000, 0x1000, 0x4b7c8d11 )
 	ROM_LOAD( "epr-1032.16",  0x1000, 0x1000, 0xac00b9d9 )
 	ROM_LOAD( "epr-1033.33",  0x2000, 0x1000, 0xbc1d6fbc )
@@ -487,7 +483,7 @@ ROM_START( frogger2 )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "pr-91.6l",     0x0000, 0x0020, 0x413703bf )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "epr-1082.42",  0x0000, 0x1000, 0x802843c2 )
 	ROM_LOAD( "epr-1035.43",  0x1000, 0x0800, 0x14e74148 )
 ROM_END
@@ -501,12 +497,12 @@ static void frogger_decode(void)
 
 
 	/* the first ROM of the second CPU has data lines D0 and D1 swapped. Decode it. */
-	RAM = memory_region(Machine->drv->cpu[1].memory_region);
+	RAM = memory_region(REGION_CPU2);
 	for (A = 0;A < 0x0800;A++)
 		RAM[A] = (RAM[A] & 0xfc) | ((RAM[A] & 1) << 1) | ((RAM[A] & 2) >> 1);
 
 	/* likewise, the first gfx ROM has data lines D0 and D1 swapped. Decode it. */
-	RAM = Machine->memory_region[1];
+	RAM = memory_region(1);
 	for (A = 0;A < 0x0800;A++)
 		RAM[A] = (RAM[A] & 0xfc) | ((RAM[A] & 1) << 1) | ((RAM[A] & 2) >> 1);
 }
@@ -518,7 +514,7 @@ static void frogger2_decode(void)
 
 
 	/* the first ROM of the second CPU has data lines D0 and D1 swapped. Decode it. */
-	RAM = memory_region(Machine->drv->cpu[1].memory_region);
+	RAM = memory_region(REGION_CPU2);
 	for (A = 0;A < 0x1000;A++)
 		RAM[A] = (RAM[A] & 0xfc) | ((RAM[A] & 1) << 1) | ((RAM[A] & 2) >> 1);
 }
@@ -527,7 +523,7 @@ static void frogger2_decode(void)
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -553,7 +549,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

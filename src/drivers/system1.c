@@ -40,8 +40,8 @@ static void system1_init_machine(void)
 	/* skip the long IC CHECK in Teddyboy Blues and Choplifter */
 	/* this is not a ROM patch, the game checks a RAM location */
 	/* before doing the test */
-	memory_region(Machine->drv->cpu[0].memory_region)[0xeffe] = 0x4f;
-	memory_region(Machine->drv->cpu[0].memory_region)[0xefff] = 0x4b;
+	memory_region(REGION_CPU1)[0xeffe] = 0x4f;
+	memory_region(REGION_CPU1)[0xefff] = 0x4b;
 
 	system1_define_sprite_pixelmode(system1_SPRITE_PIXEL_MODE1);
 	system1_define_background_memory(system1_BACKGROUND_MEMORY_SINGLE);
@@ -52,8 +52,8 @@ static void chplft_init_machine(void)
 	/* skip the long IC CHECK in Teddyboy Blues and Choplifter */
 	/* this is not a ROM patch, the game checks a RAM location */
 	/* before doing the test */
-	memory_region(Machine->drv->cpu[0].memory_region)[0xeffe] = 0x4f;
-	memory_region(Machine->drv->cpu[0].memory_region)[0xefff] = 0x4b;
+	memory_region(REGION_CPU1)[0xeffe] = 0x4f;
+	memory_region(REGION_CPU1)[0xefff] = 0x4b;
 
 	system1_define_sprite_pixelmode(system1_SPRITE_PIXEL_MODE2);
 	system1_define_background_memory(system1_BACKGROUND_MEMORY_SINGLE);
@@ -64,8 +64,8 @@ static void wbml_init_machine(void)
 	/* skip the long IC CHECK in Teddyboy Blues and Choplifter */
 	/* this is not a ROM patch, the game checks a RAM location */
 	/* before doing the test */
-	memory_region(Machine->drv->cpu[0].memory_region)[0xeffe] = 0x4f;
-	memory_region(Machine->drv->cpu[0].memory_region)[0xefff] = 0x4b;
+	memory_region(REGION_CPU1)[0xeffe] = 0x4f;
+	memory_region(REGION_CPU1)[0xefff] = 0x4b;
 
 	system1_define_sprite_pixelmode(system1_SPRITE_PIXEL_MODE2);
 	system1_define_background_memory(system1_BACKGROUND_MEMORY_BANKED);
@@ -82,7 +82,7 @@ int wbml_bankswitch_r(int offset)
 void hvymetal_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* patch out the obnoxiously long startup RAM tests */
@@ -102,7 +102,7 @@ void hvymetal_bankswitch_w(int offset,int data)
 void brain_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	bankaddress = 0x10000 + (((data & 0x04)>>2) * 0x4000) + (((data & 0x40)>>5) * 0x4000);
@@ -117,7 +117,7 @@ void brain_bankswitch_w(int offset,int data)
 void chplft_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	bankaddress = 0x10000 + (((data & 0x0c)>>2) * 0x4000);
@@ -129,7 +129,7 @@ void chplft_bankswitch_w(int offset,int data)
 void wbml_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	bankaddress = 0x10000 + (((data & 0x0c)>>2) * 0x4000);
@@ -1728,14 +1728,12 @@ static struct MachineDriver system1_machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* My Hero has 2 OSCs 8 & 20 MHz (Cabbe Info) */
-			0,		/* memory region */
 			readmem,writemem,readport,writeport,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,
-			3,		/* memory region */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4			/* NMIs are caused by the main CPU */
 		},
@@ -1776,14 +1774,12 @@ static struct MachineDriver system1_small_machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* My Hero has 2 OSCs 8 & 20 MHz (Cabbe Info) */
-			0,		/* memory region */
 			readmem,writemem,readport,writeport,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,
-			3,		/* memory region */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4			/* NMIs are caused by the main CPU */
 		},
@@ -1823,14 +1819,12 @@ static struct MachineDriver pitfall2_machine_driver =
 		{
 			CPU_Z80,
 			3650000,			/* 3.65 MHz ? changing it to 4 makes the title disappear */
-			0,				/* memory region */
 			readmem,writemem,readport,writeport,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3000000,			/* 3 Mhz ? */
-			3,				/* memory region */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4			/* NMIs are caused by the main CPU */
 		},
@@ -1871,14 +1865,12 @@ static struct MachineDriver hvymetal_machine_driver =
 		{
 			CPU_Z80,
 			4000000,			/* 4 MHz ? */
-			0,				/* memory region */
 			chplft_readmem,writemem,wbml_readport,hvymetal_writeport,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,			/* 4 Mhz ? */
-			3,				/* memory region */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4			/* NMIs are caused by the main CPU */
 		},
@@ -1918,14 +1910,12 @@ static struct MachineDriver chplft_machine_driver =
 		{
 			CPU_Z80,
 			4000000,			/* 4 MHz ? */
-			0,				/* memory region */
 			chplft_readmem,chplft_writemem,wbml_readport,chplft_writeport,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,			/* 4 Mhz ? */
-			3,				/* memory region */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4			/* NMIs are caused by the main CPU */
 		},
@@ -1965,14 +1955,12 @@ static struct MachineDriver brain_machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* My Hero has 2 OSCs 8 & 20 MHz (Cabbe Info) */
-			0,		/* memory region */
 			readmem,writemem,readport,brain_writeport,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,
-			3,		/* memory region */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4			/* NMIs are caused by the main CPU */
 		},
@@ -2012,14 +2000,12 @@ static struct MachineDriver wbml_machine_driver =
 		{
 			CPU_Z80,
 			4000000,			/* 4 MHz ? */
-			0,				/* memory region */
 			wbml_readmem,wbml_writemem,wbml_readport,wbml_writeport,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,			/* 4 Mhz ? */
-			3,				/* memory region */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4			/* NMIs are caused by the main CPU */
 		},
@@ -2062,7 +2048,7 @@ static struct MachineDriver wbml_machine_driver =
 /* Since the standard System 1 PROM has part # 5317, Star Jacker, whose first */
 /* ROM is #5318, is probably the first or second System 1 game produced */
 ROM_START( starjack )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "5320b",        0x0000, 0x2000, 0x7ab72ecd )
 	ROM_LOAD( "5321a",        0x2000, 0x2000, 0x38b99050 )
 	ROM_LOAD( "5322a",        0x4000, 0x2000, 0x103a595b )
@@ -2082,12 +2068,12 @@ ROM_START( starjack )
 	ROM_LOAD( "5318",         0x0000, 0x4000, 0x6f2e1fd3 )
 	ROM_LOAD( "5319",         0x4000, 0x4000, 0xebee4999 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "5332",         0x0000, 0x2000, 0x7a72ab3d )
 ROM_END
 
 ROM_START( starjacs )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sja1ic29",     0x0000, 0x2000, 0x59a22a1f )
 	ROM_LOAD( "sja1ic30",     0x2000, 0x2000, 0x7f4597dc )
 	ROM_LOAD( "sja1ic31",     0x4000, 0x2000, 0x6074c046 )
@@ -2110,12 +2096,12 @@ ROM_START( starjacs )
 	ROM_LOAD( "5318",         0x0000, 0x4000, 0x6f2e1fd3 )
 	ROM_LOAD( "5319",         0x4000, 0x4000, 0xebee4999 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "5332",         0x0000, 0x2000, 0x7a72ab3d )
 ROM_END
 
 ROM_START( regulus )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "epr5640a.29",  0x0000, 0x2000, 0xdafb1528 )	/* encrypted */
 	ROM_LOAD( "epr5641a.30",  0x2000, 0x2000, 0x0fcc850e )	/* encrypted */
 	ROM_LOAD( "epr5642a.31",  0x4000, 0x2000, 0x4feffa17 )	/* encrypted */
@@ -2135,12 +2121,12 @@ ROM_START( regulus )
 	ROM_LOAD( "epr5638.92",   0x0000, 0x4000, 0x617363dd )
 	ROM_LOAD( "epr5639.93",   0x4000, 0x4000, 0xa4ec5131 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "epr5652.3",    0x0000, 0x2000, 0x74edcb98 )
 ROM_END
 
 ROM_START( regulusu )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "epr-5950.129", 0x0000, 0x2000, 0x3b047b67 )
 	ROM_LOAD( "epr-5951.130", 0x2000, 0x2000, 0xd66453ab )
 	ROM_LOAD( "epr-5952.131", 0x4000, 0x2000, 0xf3d0158a )
@@ -2160,12 +2146,12 @@ ROM_START( regulusu )
 	ROM_LOAD( "epr5638.92",   0x0000, 0x4000, 0x617363dd )
 	ROM_LOAD( "epr5639.93",   0x4000, 0x4000, 0xa4ec5131 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "epr5652.3",    0x0000, 0x2000, 0x74edcb98 )
 ROM_END
 
 ROM_START( upndown )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "upnd5679.bin", 0x0000, 0x2000, 0xc4f2f9c2 )
 	ROM_LOAD( "upnd5680.bin", 0x2000, 0x2000, 0x837f021c )
 	ROM_LOAD( "upnd5681.bin", 0x4000, 0x2000, 0xe1c7ff7e )
@@ -2185,12 +2171,12 @@ ROM_START( upndown )
 	ROM_LOAD( "upnd5514.bin", 0x0000, 0x4000, 0xfcc0a88b )
 	ROM_LOAD( "upnd5515.bin", 0x4000, 0x4000, 0x60908838 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "upnd5528.bin", 0x0000, 0x2000, 0x00cd44ab )
 ROM_END
 
 ROM_START( mrviking )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "vepr5873",     0x0000, 0x2000, 0x14d21624 )	/* encrypted */
 	ROM_LOAD( "vepr5874",     0x2000, 0x2000, 0x6df7de87 )	/* encrypted */
 	ROM_LOAD( "vepr5975",     0x4000, 0x2000, 0xac226100 )	/* encrypted */
@@ -2210,12 +2196,12 @@ ROM_START( mrviking )
 	ROM_LOAD( "viepr574",     0x0000, 0x4000, 0xe24682cd )
 	ROM_LOAD( "vepr5750",     0x4000, 0x4000, 0x6564d1ad )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "vepr5763",     0x0000, 0x2000, 0xd712280d )
 ROM_END
 
 ROM_START( swat )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "epr5807b.29",  0x0000, 0x2000, 0x93db9c9f )	/* encrypted */
 	ROM_LOAD( "epr5808.30",   0x2000, 0x2000, 0x67116665 )	/* encrypted */
 	ROM_LOAD( "epr5809.31",   0x4000, 0x2000, 0xfd792fc9 )	/* encrypted */
@@ -2235,12 +2221,12 @@ ROM_START( swat )
 	ROM_LOAD( "epr5805.92",   0x0000, 0x4000, 0x5a732865 )
 	ROM_LOAD( "epr5806.93",   0x4000, 0x4000, 0x26ac258c )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "epr5819.3",    0x0000, 0x2000, 0xf6afd0fd )
 ROM_END
 
 ROM_START( flicky )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "epr5978",      0x0000, 0x4000, 0x296f1492 )	/* encrypted */
 	ROM_LOAD( "epr5979",      0x4000, 0x4000, 0x64b03ef9 )	/* encrypted */
 
@@ -2253,12 +2239,12 @@ ROM_START( flicky )
 	ROM_LOAD( "epr5855",      0x0000, 0x4000, 0xb5f894a1 )
 	ROM_LOAD( "epr5856",      0x4000, 0x4000, 0x266af78f )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "epr5869",      0x0000, 0x2000, 0x6d220d4e )
 ROM_END
 
 ROM_START( flicky2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "f_9",          0x0000, 0x2000, 0xa65ac88e )	/* encrypted */
 	ROM_LOAD( "f_10",         0x2000, 0x2000, 0x18b412f4 )	/* encrypted */
 	ROM_LOAD( "f_11",         0x4000, 0x2000, 0xa5558d7e )	/* encrypted */
@@ -2273,12 +2259,12 @@ ROM_START( flicky2 )
 	ROM_LOAD( "epr5855",      0x0000, 0x4000, 0xb5f894a1 )
 	ROM_LOAD( "epr5856",      0x4000, 0x4000, 0x266af78f )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "epr5869",      0x0000, 0x2000, 0x6d220d4e )
 ROM_END
 
 ROM_START( bullfgtj )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "6071",         0x0000, 0x4000, 0x96b57df9 )	/* encrypted */
 	ROM_LOAD( "6072",         0x4000, 0x4000, 0xf7baadd0 )	/* encrypted */
 	ROM_LOAD( "6073",         0x8000, 0x4000, 0x721af166 )
@@ -2295,12 +2281,12 @@ ROM_START( bullfgtj )
 	ROM_LOAD( "6069",         0x0000, 0x4000, 0xfe691e41 )
 	ROM_LOAD( "6070",         0x4000, 0x4000, 0x34f080df )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "6077",         0x0000, 0x2000, 0x02a37602 )
 ROM_END
 
 ROM_START( pitfall2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "epr6456a.116", 0x0000, 0x4000, 0xbcc8406b )	/* encrypted */
 	ROM_LOAD( "epr6457a.109", 0x4000, 0x4000, 0xa016fd2a )	/* encrypted */
 	ROM_LOAD( "epr6458a.96",  0x8000, 0x4000, 0x5c30b3e8 )
@@ -2317,12 +2303,12 @@ ROM_START( pitfall2 )
 	ROM_LOAD( "epr6454a.117", 0x0000, 0x4000, 0xa5d96780 )
 	ROM_LOAD( "epr6455.05",   0x4000, 0x4000, 0x32ee64a1 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "epr6462.120",  0x0000, 0x2000, 0x86bb9185 )
 ROM_END
 
 ROM_START( pitfallu )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "epr6623",      0x0000, 0x4000, 0xbcb47ed6 )
 	ROM_LOAD( "epr6624a",     0x4000, 0x4000, 0x6e8b09c1 )
 	ROM_LOAD( "epr6625",      0x8000, 0x4000, 0xdc5484ba )
@@ -2339,12 +2325,12 @@ ROM_START( pitfallu )
 	ROM_LOAD( "epr6454a.117", 0x0000, 0x4000, 0xa5d96780 )
 	ROM_LOAD( "epr6455.05",   0x4000, 0x4000, 0x32ee64a1 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "epr6462.120",  0x0000, 0x2000, 0x86bb9185 )
 ROM_END
 
 ROM_START( seganinj )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ic116.bin",    0x0000, 0x4000, 0xa5d0c9d0 )	/* encrypted */
 	ROM_LOAD( "ic109.bin",    0x4000, 0x4000, 0xb9e6775c )	/* encrypted */
 	ROM_LOAD( "7151.96",      0x8000, 0x4000, 0xf2eeb0d8 )
@@ -2363,12 +2349,12 @@ ROM_START( seganinj )
 	ROM_LOAD( "6547.110",     0x8000, 0x4000, 0x34451b08 )
 	ROM_LOAD( "6549.05",      0xc000, 0x4000, 0xd2057668 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "6559.120",     0x0000, 0x2000, 0x5a1570ee )
 ROM_END
 
 ROM_START( seganinu )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "7149.116",     0x0000, 0x4000, 0xcd9fade7 )
 	ROM_LOAD( "7150.109",     0x4000, 0x4000, 0xc36351e2 )
 	ROM_LOAD( "7151.96",      0x8000, 0x4000, 0xf2eeb0d8 )
@@ -2387,12 +2373,12 @@ ROM_START( seganinu )
 	ROM_LOAD( "6547.110",     0x8000, 0x4000, 0x34451b08 )
 	ROM_LOAD( "6549.05",      0xc000, 0x4000, 0xd2057668 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "6559.120",     0x0000, 0x2000, 0x5a1570ee )
 ROM_END
 
 ROM_START( nprinces )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "epr6550.116",  0x0000, 0x4000, 0x5f6d59f1 )	/* encrypted */
 	ROM_LOAD( "epr6551.109",  0x4000, 0x4000, 0x1af133b2 )	/* encrypted */
 	ROM_LOAD( "7151.96",      0x8000, 0x4000, 0xf2eeb0d8 )
@@ -2411,12 +2397,12 @@ ROM_START( nprinces )
 	ROM_LOAD( "6547.110",     0x8000, 0x4000, 0x34451b08 )
 	ROM_LOAD( "6549.05",      0xc000, 0x4000, 0xd2057668 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "6559.120",     0x0000, 0x2000, 0x5a1570ee )
 ROM_END
 
 ROM_START( nprincsu )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "6573.129",     0x0000, 0x2000, 0xd2919c7d )
 	ROM_LOAD( "6574.130",     0x2000, 0x2000, 0x5a132833 )
 	ROM_LOAD( "6575.131",     0x4000, 0x2000, 0xa94b0bd4 )
@@ -2438,12 +2424,12 @@ ROM_START( nprincsu )
 	ROM_LOAD( "6547.110",     0x8000, 0x4000, 0x34451b08 )
 	ROM_LOAD( "6549.05",      0xc000, 0x4000, 0xd2057668 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "6559.120",     0x0000, 0x2000, 0x5a1570ee )
 ROM_END
 
 ROM_START( nprincsb )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "nprinces.001", 0x0000, 0x4000, 0xe0de073c )	/* encrypted */
 	ROM_LOAD( "nprinces.002", 0x4000, 0x4000, 0x27219c7f )	/* encrypted */
 	ROM_LOAD( "7151.96",      0x8000, 0x4000, 0xf2eeb0d8 )
@@ -2462,12 +2448,12 @@ ROM_START( nprincsb )
 	ROM_LOAD( "6547.110",     0x8000, 0x4000, 0x34451b08 )
 	ROM_LOAD( "6549.05",      0xc000, 0x4000, 0xd2057668 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "6559.120",     0x0000, 0x2000, 0x5a1570ee )
 ROM_END
 
 ROM_START( imsorry )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "epr6676.116",  0x0000, 0x4000, 0xeb087d7f )	/* encrypted */
 	ROM_LOAD( "epr6677.109",  0x4000, 0x4000, 0xbd244bee )	/* encrypted */
 	ROM_LOAD( "epr6678.96",   0x8000, 0x4000, 0x2e16b9fd )
@@ -2484,12 +2470,12 @@ ROM_START( imsorry )
 	ROM_LOAD( "epr66xx.117",  0x0000, 0x4000, 0x1ba167ee )
 	ROM_LOAD( "epr66xx.u04",  0x4000, 0x4000, 0xedda7ad6 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "epr6656.113",  0x0000, 0x2000, 0x25e3d685 )
 ROM_END
 
 ROM_START( imsorryj )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "6647.116",     0x0000, 0x4000, 0xcc5d915d )	/* encrypted */
 	ROM_LOAD( "6648.109",     0x4000, 0x4000, 0x37574d60 )	/* encrypted */
 	ROM_LOAD( "6649.96",      0x8000, 0x4000, 0x5f59bdee )
@@ -2506,12 +2492,12 @@ ROM_START( imsorryj )
 	ROM_LOAD( "epr66xx.117",  0x0000, 0x4000, 0x1ba167ee )
 	ROM_LOAD( "epr66xx.u04",  0x4000, 0x4000, 0xedda7ad6 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "epr6656.113",  0x0000, 0x2000, 0x25e3d685 )
 ROM_END
 
 ROM_START( teddybb )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "6768.116",     0x0000, 0x4000, 0x5939817e )	/* encrypted */
 	ROM_LOAD( "6769.109",     0x4000, 0x4000, 0x14a98ddd )	/* encrypted */
 	ROM_LOAD( "6770.96",      0x8000, 0x4000, 0x67b0c7c2 )
@@ -2530,13 +2516,13 @@ ROM_START( teddybb )
 	ROM_LOAD( "6736.110",     0x8000, 0x4000, 0x565c25d0 )
 	ROM_LOAD( "6738.005",     0xc000, 0x4000, 0xe116285f )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "6748.120",     0x0000, 0x2000, 0xc2a1b89d )
 ROM_END
 
 /* This is the first System 1 game to have extended ROM space */
 ROM_START( hvymetal )
-	ROM_REGION(0x20000)	/* 128k for code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128k for code */
 	ROM_LOAD( "epra6790.1",   0x00000, 0x8000, 0x59195bb9 )	/* encrypted */
 	ROM_LOAD( "epra6789.2",   0x10000, 0x8000, 0x83e1d18a )
 	ROM_LOAD( "epra6788.3",   0x18000, 0x8000, 0x6ecefd57 )
@@ -2555,7 +2541,7 @@ ROM_START( hvymetal )
 	ROM_LOAD( "epr6780.4",    0x10000, 0x8000, 0x55b31df5 )
 	ROM_LOAD( "epr6779.5",    0x18000, 0x8000, 0xe03a2b28 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "epr6787.120",  0x0000, 0x8000, 0xb64ac7f0 )
 
 	ROM_REGIONX( 0x0300, REGION_PROMS )
@@ -2565,7 +2551,7 @@ ROM_START( hvymetal )
 ROM_END
 
 ROM_START( myhero )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "epr6963b.116", 0x0000, 0x4000, 0x4daf89d4 )
 	ROM_LOAD( "epr6964a.109", 0x4000, 0x4000, 0xc26188e5 )
 	ROM_LOAD( "epr6965.96",   0x8000, 0x4000, 0x3cbbaf64 )
@@ -2584,12 +2570,12 @@ ROM_START( myhero )
 	ROM_LOAD( "epr6922.110",  0x8000, 0x4000, 0x37f77a78 )
 	ROM_LOAD( "epr6924.u05",  0xc000, 0x4000, 0x42bdc8f6 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "epr69xx.120",  0x0000, 0x2000, 0x0039e1e9 )
 ROM_END
 
 ROM_START( myheroj )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "mhj_boot.01",  0x0000, 0x4000, 0xff54dcec )
 	ROM_LOAD( "mhj_boot.02",  0x4000, 0x4000, 0x5c41eea8 )
 	ROM_LOAD( "epr6965.96",   0x8000, 0x4000, 0x3cbbaf64 )
@@ -2605,12 +2591,12 @@ ROM_START( myheroj )
 	ROM_LOAD( "epr6922.110",  0x8000, 0x4000, 0x37f77a78 )
 	ROM_LOAD( "epr6924.u05",  0xc000, 0x4000, 0x42bdc8f6 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "mhj_boot.08",  0x0000, 0x2000, 0xaf467223 )
 ROM_END
 
 ROM_START( myherok )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	/* all the three program ROMs have bits 0-1 swapped */
 	/* when decoded, they are identical to the Japanese version */
 	ROM_LOAD( "ry-11.rom",    0x0000, 0x4000, 0x6f4c8ee5 )	/* encrypted */
@@ -2630,7 +2616,7 @@ ROM_START( myherok )
 	ROM_LOAD( "epr6922.110",  0x8000, 0x4000, 0x37f77a78 )
 	ROM_LOAD( "epr6924.u05",  0xc000, 0x4000, 0x42bdc8f6 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "mhj_boot.08",  0x0000, 0x2000, 0xaf467223 )
 ROM_END
 
@@ -2641,12 +2627,12 @@ void myherok_unmangle(void)
 
 	/* additionally to the usual protection, all the program ROMs have data lines */
 	/* D0 and D1 swapped. */
-	RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	RAM = memory_region(REGION_CPU1);
 	for (A = 0;A < 0xc000;A++)
 		RAM[A] = (RAM[A] & 0xfc) | ((RAM[A] & 1) << 1) | ((RAM[A] & 2) >> 1);
 
 	/* the tile gfx ROMs are mangled as well: */
-	RAM = Machine->memory_region[1];
+	RAM = memory_region(1);
 
 	/* the first ROM has data lines D0 and D6 swapped. */
 	for (A = 0x0000;A < 0x4000;A++)
@@ -2678,7 +2664,7 @@ void myherok_unmangle(void)
 
 
 ROM_START( shtngmst )
-	ROM_REGION(0x20000)	/* 128k for code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128k for code */
 	ROM_LOAD( "epr7100",      0x00000, 0x8000, 0x45e64431 )
 	ROM_LOAD( "epr7101",      0x10000, 0x8000, 0xebf5ff72 )
 	ROM_LOAD( "epr7102",      0x18000, 0x8000, 0xc890a4ad )
@@ -2697,7 +2683,7 @@ ROM_START( shtngmst )
 	ROM_LOAD( "epr7108",      0x28000, 0x8000, 0x816180ac )
 	ROM_LOAD( "epr7110",      0x30000, 0x8000, 0x5d1a5048 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "epr7043",      0x0000, 0x8000, 0x99a368ab )
 
 	ROM_REGIONX( 0x0300, REGION_PROMS )
@@ -2707,7 +2693,7 @@ ROM_START( shtngmst )
 ROM_END
 
 ROM_START( chplft )
-	ROM_REGION(0x20000)	/* 128k for code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128k for code */
 	ROM_LOAD( "7124.90",      0x00000, 0x8000, 0x678d5c41 )
 	ROM_LOAD( "7125.91",      0x10000, 0x8000, 0xf5283498 )
 	ROM_LOAD( "7126.92",      0x18000, 0x8000, 0xdbd192ab )
@@ -2723,7 +2709,7 @@ ROM_START( chplft )
 	ROM_LOAD( "7123.89",      0x10000, 0x8000, 0x8f16a303 )
 	ROM_LOAD( "7122.88",      0x18000, 0x8000, 0x7c93f160 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "7130.126",     0x0000, 0x8000, 0x346af118 )
 
 	ROM_REGIONX( 0x0300, REGION_PROMS )
@@ -2733,7 +2719,7 @@ ROM_START( chplft )
 ROM_END
 
 ROM_START( chplftb )
-	ROM_REGION(0x20000)	/* 128k for code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128k for code */
 	ROM_LOAD( "7152.90",      0x00000, 0x8000, 0xfe49d83e )
 	ROM_LOAD( "7153.91",      0x10000, 0x8000, 0x48697666 )
 	ROM_LOAD( "7154.92",      0x18000, 0x8000, 0x56d6222a )
@@ -2749,7 +2735,7 @@ ROM_START( chplftb )
 	ROM_LOAD( "7123.89",      0x10000, 0x8000, 0x8f16a303 )
 	ROM_LOAD( "7122.88",      0x18000, 0x8000, 0x7c93f160 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "7130.126",     0x0000, 0x8000, 0x346af118 )
 
 	ROM_REGIONX( 0x0300, REGION_PROMS )
@@ -2759,7 +2745,7 @@ ROM_START( chplftb )
 ROM_END
 
 ROM_START( chplftbl )
-	ROM_REGION(0x20000)	/* 128k for code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128k for code */
 	ROM_LOAD( "7124bl.90",    0x00000, 0x8000, 0x71a37932 )
 	ROM_LOAD( "7125.91",      0x10000, 0x8000, 0xf5283498 )
 	ROM_LOAD( "7126.92",      0x18000, 0x8000, 0xdbd192ab )
@@ -2775,7 +2761,7 @@ ROM_START( chplftbl )
 	ROM_LOAD( "7123.89",      0x10000, 0x8000, 0x8f16a303 )
 	ROM_LOAD( "7122.88",      0x18000, 0x8000, 0x7c93f160 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "7130.126",     0x0000, 0x8000, 0x346af118 )
 
 	ROM_REGIONX( 0x0300, REGION_PROMS )
@@ -2785,7 +2771,7 @@ ROM_START( chplftbl )
 ROM_END
 
 ROM_START( fdwarrio )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "4d.116",       0x0000, 0x4000, 0x546d1bc7 )	/* encrypted */
 	ROM_LOAD( "4d.109",       0x4000, 0x4000, 0xf1074ec3 )	/* encrypted */
 	ROM_LOAD( "4d.96",        0x8000, 0x4000, 0x387c1e8f )
@@ -2804,12 +2790,12 @@ ROM_START( fdwarrio )
 	ROM_LOAD( "4d.110",       0x8000, 0x4000, 0x6ec5990a )
 	ROM_LOAD( "4d.05",        0xc000, 0x4000, 0xf31a1e6a )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "4d.120",       0x0000, 0x2000, 0x5241c009 )
 ROM_END
 
 ROM_START( brain )
-	ROM_REGION(0x20000)	/* 128k for code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128k for code */
 	ROM_LOAD( "brain.1",      0x00000, 0x8000, 0x2d2aec31 )
 	ROM_LOAD( "brain.2",      0x10000, 0x8000, 0x810a8ab5 )
 	ROM_LOAD( "brain.3",      0x18000, 0x8000, 0x9a225634 )
@@ -2825,7 +2811,7 @@ ROM_START( brain )
 	ROM_LOAD( "brain.4",      0x10000, 0x8000, 0xfd2ea53b )
 	/* 18000-1ffff empty */
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "brain.120",    0x0000, 0x8000, 0xc7e50278 )
 
 	ROM_REGIONX( 0x0300, REGION_PROMS )
@@ -2835,7 +2821,7 @@ ROM_START( brain )
 ROM_END
 
 ROM_START( wboy )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "b-1.bin",      0x0000, 0x4000, 0x51d27534 )	/* encrypted */
 	ROM_LOAD( "b-2.bin",      0x4000, 0x4000, 0xe29d1cd1 )	/* encrypted */
 	ROM_LOAD( "epr7491.96",   0x8000, 0x4000, 0x1f7d0efe )
@@ -2854,12 +2840,12 @@ ROM_START( wboy )
 	ROM_LOAD( "epr7486.110",  0x8000, 0x4000, 0x8d622c50 )
 	ROM_LOAD( "epr7488.05",   0xc000, 0x4000, 0x007c2f1b )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "ic120_98.bin", 0x0000, 0x2000, 0x78ae1e7b )
 ROM_END
 
 ROM_START( wboy2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "wb_1",         0x0000, 0x4000, 0xbd6fef49 )	/* encrypted */
 	ROM_LOAD( "wb_2",         0x4000, 0x4000, 0x4081b624 )	/* encrypted */
 	ROM_LOAD( "wb_3",         0x8000, 0x4000, 0xc48a0e36 )
@@ -2878,12 +2864,12 @@ ROM_START( wboy2 )
 	ROM_LOAD( "epr7486.110",  0x8000, 0x4000, 0x8d622c50 )
 	ROM_LOAD( "epr7488.05",   0xc000, 0x4000, 0x007c2f1b )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "ic120_98.bin", 0x0000, 0x2000, 0x78ae1e7b )
 ROM_END
 
 ROM_START( wboy3 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "epr7489.116",  0x0000, 0x4000, 0x130f4b70 )	/* encrypted */
 	ROM_LOAD( "epr7490.109",  0x4000, 0x4000, 0x9e656733 )	/* encrypted */
 	ROM_LOAD( "epr7491.96",   0x8000, 0x4000, 0x1f7d0efe )
@@ -2902,12 +2888,12 @@ ROM_START( wboy3 )
 	ROM_LOAD( "epr7486.110",  0x8000, 0x4000, 0x8d622c50 )
 	ROM_LOAD( "epr7488.05",   0xc000, 0x4000, 0x007c2f1b )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "epra7498.120", 0x0000, 0x2000, 0xc198205c )
 ROM_END
 
 ROM_START( wboy4 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ic129",        0x0000, 0x2000, 0x1bbb7354 )	/* encrypted */
 	ROM_LOAD( "ic130",        0x2000, 0x2000, 0x21007413 )	/* encrypted */
 	ROM_LOAD( "ic131",        0x4000, 0x2000, 0x44b30433 )	/* encrypted */
@@ -2929,12 +2915,12 @@ ROM_START( wboy4 )
 	ROM_LOAD( "epr7486.110",  0x8000, 0x4000, 0x8d622c50 )
 	ROM_LOAD( "epr7488.05",   0xc000, 0x4000, 0x007c2f1b )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "epr7502",      0x0000, 0x2000, 0xc92484b3 )
 ROM_END
 
 ROM_START( wboyu )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ic116_89.bin", 0x0000, 0x4000, 0x73d8cef0 )
 	ROM_LOAD( "ic109_90.bin", 0x4000, 0x4000, 0x29546828 )
 	ROM_LOAD( "ic096_91.bin", 0x8000, 0x4000, 0xc7145c2a )
@@ -2953,12 +2939,12 @@ ROM_START( wboyu )
 	ROM_LOAD( "ic110_86.bin", 0x8000, 0x4000, 0x26d0fac4 )
 	ROM_LOAD( "ic005_88.bin", 0xc000, 0x4000, 0x2602e519 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "ic120_98.bin", 0x0000, 0x2000, 0x78ae1e7b )
 ROM_END
 
 ROM_START( wboy4u )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ic129_02.bin", 0x0000, 0x2000, 0x32c4b709 )
 	ROM_LOAD( "ic130_03.bin", 0x2000, 0x2000, 0x56463ede )
 	ROM_LOAD( "ic131_04.bin", 0x4000, 0x2000, 0x775ed392 )
@@ -2980,12 +2966,12 @@ ROM_START( wboy4u )
 	ROM_LOAD( "epr7486.110",  0x8000, 0x4000, 0x8d622c50 )
 	ROM_LOAD( "epr7488.05",   0xc000, 0x4000, 0x007c2f1b )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "epra7498.120", 0x0000, 0x2000, 0xc198205c )
 ROM_END
 
 ROM_START( wbdeluxe )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "wbd1.bin",     0x0000, 0x2000, 0xa1bedbd7 )
 	ROM_LOAD( "ic130_03.bin", 0x2000, 0x2000, 0x56463ede )
 	ROM_LOAD( "wbd3.bin",     0x4000, 0x2000, 0x6fcdbd4c )
@@ -3007,12 +2993,12 @@ ROM_START( wbdeluxe )
 	ROM_LOAD( "epr7486.110",  0x8000, 0x4000, 0x8d622c50 )
 	ROM_LOAD( "epr7488.05",   0xc000, 0x4000, 0x007c2f1b )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "epra7498.120", 0x0000, 0x2000, 0xc198205c )
 ROM_END
 
 ROM_START( gardia )
-	ROM_REGION(0x20000)	/* 128k for code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128k for code */
 	ROM_LOAD( "epr10255.1",   0x00000, 0x8000, 0x89282a6b )
 	ROM_LOAD( "epr10254.2",   0x10000, 0x8000, 0x2826b6d8 )
 	ROM_LOAD( "epr10253.3",   0x18000, 0x8000, 0x7911260f )
@@ -3028,7 +3014,7 @@ ROM_START( gardia )
 	ROM_LOAD( "epr10236.04",  0x10000, 0x8000, 0xb35ab227 )
 	ROM_LOAD( "epr10235.5",   0x18000, 0x8000, 0x006a3151 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "epr10243.120", 0x0000, 0x4000, 0x87220660 )
 
 	ROM_REGIONX( 0x0300, REGION_PROMS )
@@ -3038,7 +3024,7 @@ ROM_START( gardia )
 ROM_END
 
 ROM_START( gardiab )
-	ROM_REGION(0x20000)	/* 128k for code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128k for code */
 	ROM_LOAD( "gardiabl.5",   0x00000, 0x8000, 0x207f9cbb )
 	ROM_LOAD( "gardiabl.6",   0x10000, 0x8000, 0xb2ed05dc )
 	ROM_LOAD( "gardiabl.7",   0x18000, 0x8000, 0x0a490588 )
@@ -3054,7 +3040,7 @@ ROM_START( gardiab )
 	ROM_LOAD( "epr10236.04",  0x10000, 0x8000, 0xb35ab227 )
 	ROM_LOAD( "epr10235.5",   0x18000, 0x8000, 0x006a3151 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "epr10243.120", 0x0000, 0x4000, 0x87220660 )
 
 	ROM_REGIONX( 0x0300, REGION_PROMS )
@@ -3064,7 +3050,7 @@ ROM_START( gardiab )
 ROM_END
 
 ROM_START( blockgal )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "bg.116",       0x0000, 0x4000, 0xa99b231a )	/* encrypted */
 	ROM_LOAD( "bg.109",       0x4000, 0x4000, 0xa6b573d5 )	/* encrypted */
 	/* 0x8000-0xbfff empty (was same as My Hero) */
@@ -3083,12 +3069,12 @@ ROM_START( blockgal )
 	ROM_LOAD( "bg.110",       0x8000, 0x4000, 0x064c812c )
 	ROM_LOAD( "bg.05",        0xc000, 0x4000, 0x02e0b040 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "bg.120",       0x0000, 0x2000, 0xd848faff )
 ROM_END
 
 ROM_START( blckgalb )
-	ROM_REGION(0x18000)	/* 64k for code */
+	ROM_REGIONX( 0x18000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ic62",         0x10000, 0x8000, 0x65c47676 )	/* decrypted opcodes */
 	ROM_CONTINUE(             0x00000, 0x8000 )				/* decrypted data */
 
@@ -3106,12 +3092,12 @@ ROM_START( blckgalb )
 	ROM_LOAD( "bg.110",       0x8000, 0x4000, 0x064c812c )
 	ROM_LOAD( "bg.05",        0xc000, 0x4000, 0x02e0b040 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "bg.120",       0x0000, 0x2000, 0xd848faff )
 ROM_END
 
 ROM_START( tokisens )
-	ROM_REGION(0x20000)	/* 128k for code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128k for code */
 	ROM_LOAD( "epr10961.90",  0x00000, 0x8000, 0x1466b61d )
 	ROM_LOAD( "epr10962.91",  0x10000, 0x8000, 0xa8479f91 )
 	ROM_LOAD( "epr10963.92",  0x18000, 0x8000, 0xb7193b39 )
@@ -3127,7 +3113,7 @@ ROM_START( tokisens )
 	ROM_LOAD( "epr10960.89",  0x10000, 0x8000, 0x880e0d44 )
 	ROM_LOAD( "epr10959.88",  0x18000, 0x8000, 0x4deda48f )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "epr10967.126", 0x0000, 0x8000, 0x97966bf2 )
 
 	ROM_REGIONX( 0x0300, REGION_PROMS )
@@ -3137,7 +3123,7 @@ ROM_START( tokisens )
 ROM_END
 
 ROM_START( wbml )
-	ROM_REGION(0x40000)	/* 256k for code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 256k for code */
 	ROM_LOAD( "wbml.01",      0x20000, 0x8000, 0x66482638 )	/* Unencrypted opcodes */
 	ROM_CONTINUE(             0x00000, 0x8000 )              /* Now load the operands in RAM */
 	ROM_LOAD( "wbml.02",      0x30000, 0x8000, 0x48746bb6 )	/* Unencrypted opcodes */
@@ -3156,7 +3142,7 @@ ROM_START( wbml )
 	ROM_LOAD( "epr11030.89",  0x10000, 0x8000, 0xf05ffc76 )
 	ROM_LOAD( "epr11029.88",  0x18000, 0x8000, 0xcedc9c61 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "epr11037.126", 0x0000, 0x8000, 0x7a4ee585 )
 
 	ROM_REGIONX( 0x0300, REGION_PROMS )
@@ -3166,7 +3152,7 @@ ROM_START( wbml )
 ROM_END
 
 ROM_START( wbmlj )
-	ROM_REGION(0x20000)	/* 256k for code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 256k for code */
 	ROM_LOAD( "epr11031.90",  0x00000, 0x8000, 0x497ebfb4 )	/* encrypted */
 	ROM_LOAD( "epr11032.91",  0x10000, 0x8000, 0x9d03bdb2 )	/* encrypted */
 	ROM_LOAD( "epr11033.92",  0x18000, 0x8000, 0x7076905c )	/* encrypted */
@@ -3182,7 +3168,7 @@ ROM_START( wbmlj )
 	ROM_LOAD( "epr11030.89",  0x10000, 0x8000, 0xf05ffc76 )
 	ROM_LOAD( "epr11029.88",  0x18000, 0x8000, 0xcedc9c61 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "epr11037.126", 0x0000, 0x8000, 0x7a4ee585 )
 
 	ROM_REGIONX( 0x0300, REGION_PROMS )
@@ -3192,7 +3178,7 @@ ROM_START( wbmlj )
 ROM_END
 
 ROM_START( wbmlj2 )
-	ROM_REGION(0x20000)	/* 256k for code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 256k for code */
 	ROM_LOAD( "ep11031a.90",  0x00000, 0x8000, 0xbd3349e5 )	/* encrypted */
 	ROM_LOAD( "epr11032.91",  0x10000, 0x8000, 0x9d03bdb2 )	/* encrypted */
 	ROM_LOAD( "epr11033.92",  0x18000, 0x8000, 0x7076905c )	/* encrypted */
@@ -3208,7 +3194,7 @@ ROM_START( wbmlj2 )
 	ROM_LOAD( "epr11030.89",  0x10000, 0x8000, 0xf05ffc76 )
 	ROM_LOAD( "epr11029.88",  0x18000, 0x8000, 0xcedc9c61 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "epr11037.126", 0x0000, 0x8000, 0x7a4ee585 )
 
 	ROM_REGIONX( 0x0300, REGION_PROMS )
@@ -3218,7 +3204,7 @@ ROM_START( wbmlj2 )
 ROM_END
 
 ROM_START( wbmlju )
-	ROM_REGION(0x40000)	/* 256k for code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 256k for code */
 	ROM_LOAD( "wbml.01",      0x20000, 0x8000, 0x66482638 )	/* Unencrypted opcodes */
 	ROM_CONTINUE(             0x00000, 0x8000 )              /* Now load the operands in RAM */
 	ROM_LOAD( "m-6.bin",      0x30000, 0x8000, 0x8c08cd11 )	/* Unencrypted opcodes */
@@ -3237,7 +3223,7 @@ ROM_START( wbmlju )
 	ROM_LOAD( "epr11030.89",  0x10000, 0x8000, 0xf05ffc76 )
 	ROM_LOAD( "epr11029.88",  0x18000, 0x8000, 0xcedc9c61 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "epr11037.126", 0x0000, 0x8000, 0x7a4ee585 )
 
 	ROM_REGIONX( 0x0300, REGION_PROMS )
@@ -3247,7 +3233,7 @@ ROM_START( wbmlju )
 ROM_END
 
 ROM_START( dakkochn )
-	ROM_REGION(0x20000)	/* 128k for code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128k for code */
 	ROM_LOAD( "epr11224.90",  0x00000, 0x8000, 0x9fb1972b )	/* encrypted */
 	ROM_LOAD( "epr11225.91",  0x10000, 0x8000, 0xc540f9e2 )	/* encrypted */
 	/* 18000-1ffff empty */
@@ -3263,7 +3249,7 @@ ROM_START( dakkochn )
 	ROM_LOAD( "epr11223.89",  0x10000, 0x8000, 0x538adc55 )
 	ROM_LOAD( "epr11222.88",  0x18000, 0x8000, 0x33fab0b2 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "epr11229.126", 0x0000, 0x8000, 0xc11648d0 )
 
 	ROM_REGIONX( 0x0300, REGION_PROMS )
@@ -3273,7 +3259,7 @@ ROM_START( dakkochn )
 ROM_END
 
 ROM_START( ufosensi )
-	ROM_REGION(0x20000)	/* 128k for code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128k for code */
 	ROM_LOAD( "epr11661.90",  0x00000, 0x8000, 0xf3e394e2 )	/* encrypted */
 	ROM_LOAD( "epr11662.91",  0x10000, 0x8000, 0x0c2e4120 )	/* encrypted */
 	ROM_LOAD( "epr11663.92",  0x18000, 0x8000, 0x4515ebae )	/* encrypted */
@@ -3289,7 +3275,7 @@ ROM_START( ufosensi )
 	ROM_LOAD( "epr11660.89",  0x10000, 0x8000, 0xe1e2e7c5 )
 	ROM_LOAD( "epr11659.88",  0x18000, 0x8000, 0x286c7286 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "epr11667.126", 0x0000, 0x8000, 0x110baba9 )
 
 	ROM_REGIONX( 0x0300, REGION_PROMS )
@@ -3302,7 +3288,7 @@ ROM_END
 static void wbml_decode(void)
 {
 	int A;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	for (A = 0x0000;A < 0x8000;A++)
 	{
@@ -3313,7 +3299,7 @@ static void wbml_decode(void)
 static void blckgalb_decode(void)
 {
 	int A;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	for (A = 0x0000;A < 0x8000;A++)
 	{
@@ -3326,7 +3312,7 @@ static void blckgalb_decode(void)
 static int starjack_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3351,7 +3337,7 @@ static int starjack_hiload(void)
 static void starjack_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -3364,7 +3350,7 @@ static void starjack_hisave(void)
 static int starjacs_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3389,7 +3375,7 @@ static int starjacs_hiload(void)
 static void starjacs_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -3402,7 +3388,7 @@ static void starjacs_hisave(void)
 static int upndown_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3421,7 +3407,7 @@ static int upndown_hiload(void)
 static void upndown_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -3435,7 +3421,7 @@ static void upndown_hisave(void)
 static int mrviking_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3461,7 +3447,7 @@ static int mrviking_hiload(void)
 static void mrviking_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -3475,7 +3461,7 @@ static void mrviking_hisave(void)
 static int flicky_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3500,7 +3486,7 @@ static int flicky_hiload(void)
 static void flicky_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -3513,7 +3499,7 @@ static void flicky_hisave(void)
 static int bullfgtj_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3539,7 +3525,7 @@ static int bullfgtj_hiload(void)
 static void bullfgtj_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -3552,7 +3538,7 @@ static void bullfgtj_hisave(void)
 static int pitfall2_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3576,7 +3562,7 @@ static int pitfall2_hiload(void)
 static void pitfall2_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -3589,7 +3575,7 @@ static void pitfall2_hisave(void)
 static int seganinj_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3609,7 +3595,7 @@ static int seganinj_hiload(void)
 static void seganinj_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -3624,7 +3610,7 @@ static void seganinj_hisave(void)
 static int imsorry_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3649,7 +3635,7 @@ static int imsorry_hiload(void)
 static void imsorry_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -3661,7 +3647,7 @@ static void imsorry_hisave(void)
 static int fdwarrio_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3688,7 +3674,7 @@ static int fdwarrio_hiload(void)
 static int teddybb_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3713,7 +3699,7 @@ static int teddybb_hiload(void)
 static void teddybb_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -3726,7 +3712,7 @@ static void teddybb_hisave(void)
 static int myhero_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3749,7 +3735,7 @@ static int myhero_hiload(void)
 static void myhero_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -3763,7 +3749,7 @@ static void myhero_hisave(void)
 static int wbdeluxe_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3794,7 +3780,7 @@ static int wbdeluxe_hiload(void)
 static void wbdeluxe_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -3809,7 +3795,7 @@ static void wbdeluxe_hisave(void)
 static int chplft_hiload(void)
 {
 	void *f;
-	unsigned char *choplifter_ram = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *choplifter_ram = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3828,7 +3814,7 @@ static int chplft_hiload(void)
 static void chplft_hisave(void)
 {
 	void *f;
-	unsigned char *choplifter_ram = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *choplifter_ram = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -3842,7 +3828,7 @@ static void chplft_hisave(void)
 static int wbml_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3861,7 +3847,7 @@ static int wbml_hiload(void)
 static void wbml_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -3873,7 +3859,7 @@ static void wbml_hisave(void)
 static int wboy_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3907,7 +3893,7 @@ static int wboy_hiload(void)
 static void wboy_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -3920,7 +3906,7 @@ static void wboy_hisave(void)
 static int regulus_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3943,7 +3929,7 @@ static int regulus_hiload(void)
 static void regulus_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -3958,7 +3944,7 @@ static void regulus_hisave(void)
 static int swat_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -4007,7 +3993,7 @@ static int swat_hiload(void)
 static void swat_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -4021,7 +4007,7 @@ static void swat_hisave(void)
 static int hvymetal_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -4044,7 +4030,7 @@ static int hvymetal_hiload(void)
 static void hvymetal_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -4057,7 +4043,7 @@ static void hvymetal_hisave(void)
 static int brain_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -4080,7 +4066,7 @@ static int brain_hiload(void)
 static void brain_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -4093,7 +4079,7 @@ static void brain_hisave(void)
 static int tokisens_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -4116,7 +4102,7 @@ static int tokisens_hiload(void)
 static void tokisens_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{

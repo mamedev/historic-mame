@@ -581,14 +581,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
-			0,
 			amidar_readmem,writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318000/8,	/* 1.78975 Mhz */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -628,7 +626,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( amidar )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "amidarus.2c",  0x0000, 0x1000, 0x951e0792 )
 	ROM_LOAD( "amidarus.2e",  0x1000, 0x1000, 0xa1a3a136 )
 	ROM_LOAD( "amidarus.2f",  0x2000, 0x1000, 0xa5121bf5 )
@@ -642,13 +640,13 @@ ROM_START( amidar )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "amidar.clr",   0x0000, 0x0020, 0xf940dcc3 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "amidarus.5c",  0x0000, 0x1000, 0x8ca7b750 )
 	ROM_LOAD( "amidarus.5d",  0x1000, 0x1000, 0x9b5bdc0a )
 ROM_END
 
 ROM_START( amidaro )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "107.2cd",      0x0000, 0x1000, 0xc52536be )
 	ROM_LOAD( "108.2fg",      0x1000, 0x1000, 0x38538b98 )
 	ROM_LOAD( "109.2fg",      0x2000, 0x1000, 0x69907f0f )
@@ -662,13 +660,13 @@ ROM_START( amidaro )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "amidar.clr",   0x0000, 0x0020, 0xf940dcc3 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "amidarus.5c",  0x0000, 0x1000, 0x8ca7b750 )
 	ROM_LOAD( "amidarus.5d",  0x1000, 0x1000, 0x9b5bdc0a )
 ROM_END
 
 ROM_START( amidarjp )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "amidar.2c",    0x0000, 0x1000, 0xc294bf27 )
 	ROM_LOAD( "amidar.2e",    0x1000, 0x1000, 0xe6e96826 )
 	ROM_LOAD( "amidar.2f",    0x2000, 0x1000, 0x3656be6f )
@@ -681,13 +679,13 @@ ROM_START( amidarjp )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "amidar.clr",   0x0000, 0x0020, 0xf940dcc3 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "amidar.5c",    0x0000, 0x1000, 0xc4b66ae4 )
 	ROM_LOAD( "amidar.5d",    0x1000, 0x1000, 0x806785af )
 ROM_END
 
 ROM_START( amigo )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "2732.a1",      0x0000, 0x1000, 0x930dc856 )
 	ROM_LOAD( "2732.a2",      0x1000, 0x1000, 0x66282ff5 )
 	ROM_LOAD( "2732.a3",      0x2000, 0x1000, 0xe9d3dc76 )
@@ -700,13 +698,13 @@ ROM_START( amigo )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "amidar.clr",   0x0000, 0x0020, 0xf940dcc3 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "amidarus.5c",  0x0000, 0x1000, 0x8ca7b750 )
 	ROM_LOAD( "amidarus.5d",  0x1000, 0x1000, 0x9b5bdc0a )
 ROM_END
 
 ROM_START( turtles )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "turt_vid.2c",  0x0000, 0x1000, 0xec5e61fb )
 	ROM_LOAD( "turt_vid.2e",  0x1000, 0x1000, 0xfd10821e )
 	ROM_LOAD( "turt_vid.2f",  0x2000, 0x1000, 0xddcfc5fa )
@@ -720,13 +718,13 @@ ROM_START( turtles )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "turtles.clr",  0x0000, 0x0020, 0xf3ef02dd )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "turt_snd.5c",  0x0000, 0x1000, 0xf0c30f9a )
 	ROM_LOAD( "turt_snd.5d",  0x1000, 0x1000, 0xaf5fc43c )
 ROM_END
 
 ROM_START( turpin )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "m1",           0x0000, 0x1000, 0x89177473 )
 	ROM_LOAD( "m2",           0x1000, 0x1000, 0x4c6ca5c6 )
 	ROM_LOAD( "m3",           0x2000, 0x1000, 0x62291652 )
@@ -740,13 +738,13 @@ ROM_START( turpin )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "turtles.clr",  0x0000, 0x0020, 0xf3ef02dd )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "turt_snd.5c",  0x0000, 0x1000, 0xf0c30f9a )
 	ROM_LOAD( "turt_snd.5d",  0x1000, 0x1000, 0xaf5fc43c )
 ROM_END
 
 ROM_START( 600 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "600_vid.2c",   0x0000, 0x1000, 0x8ee090ae )
 	ROM_LOAD( "600_vid.2e",   0x1000, 0x1000, 0x45bfaff2 )
 	ROM_LOAD( "600_vid.2f",   0x2000, 0x1000, 0x9f4c8ed7 )
@@ -760,7 +758,7 @@ ROM_START( 600 )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "turtles.clr",  0x0000, 0x0020, 0xf3ef02dd )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "600_snd.5c",   0x0000, 0x1000, 0x1773c68e )
 	ROM_LOAD( "600_snd.5d",   0x1000, 0x1000, 0xa311b998 )
 ROM_END
@@ -769,7 +767,7 @@ ROM_END
 
 static int amidar_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -797,7 +795,7 @@ static int amidar_hiload(void)
 
 static int turtles_hiload(void) /* V.V */
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* same as Amidar, but the high score table is initialized with zeros */
@@ -849,7 +847,7 @@ static int turtles_hiload(void) /* V.V */
 static void amidar_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

@@ -267,7 +267,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
 			1500000,	/* 1.5 Mhz ???? */
-			0,
 			readmem,writemem,0,0,
 			interrupt,4
 		}
@@ -307,7 +306,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( milliped )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "milliped.104", 0x4000, 0x1000, 0x40711675 )
 	ROM_LOAD( "milliped.103", 0x5000, 0x1000, 0xfb01baf2 )
 	ROM_LOAD( "milliped.102", 0x6000, 0x1000, 0x62e137e0 )

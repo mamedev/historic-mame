@@ -86,7 +86,7 @@ struct ADPCMinterface adpcm_interface =
 
 static void cabal_play_adpcm( int channel, int which ){
 	if( which!=0xff ){
-		unsigned char *RAM = Machine->memory_region[3];
+		unsigned char *RAM = memory_region(3);
 		int offset = channel*0x10000;
 		int start, len;
 
@@ -388,14 +388,12 @@ static struct MachineDriver cabal_machine_driver =
 		{
 			CPU_M68000,
 			12000000, /* 12 Mhz */
-			0,
 			readmem_cpu,writemem_cpu,0,0,
 			m68_level1_irq,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 Mhz */
-			1,
 			readmem_sound,writemem_sound,0,0,
 			interrupt,1
 		},
@@ -427,14 +425,12 @@ static struct MachineDriver cabalbl_machine_driver =
 		{
 			CPU_M68000,
 			12000000, /* 12 Mhz */
-			0,
 			readmem_cpu,writemem_cpu,0,0,
 			m68_level1_irq,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 Mhz */
-			1,
 			cabalbl_readmem_sound,cabalbl_writemem_sound,0,0,
 			interrupt,1
 		},
@@ -471,13 +467,13 @@ static struct MachineDriver cabalbl_machine_driver =
 };
 
 ROM_START( cabal )
-	ROM_REGION(0x50000)	/* 64k for cpu code */
+	ROM_REGIONX( 0x50000, REGION_CPU1 )	/* 64k for cpu code */
 	ROM_LOAD_EVEN( "h7_512.bin",      0x00000, 0x10000, 0x8fe16fb4 )
 	ROM_LOAD_ODD ( "h6_512.bin",      0x00000, 0x10000, 0x6968101c )
 	ROM_LOAD_EVEN( "k7_512.bin",      0x20000, 0x10000, 0x562031a2 )
 	ROM_LOAD_ODD ( "k6_512.bin",      0x20000, 0x10000, 0x4fda2856 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu code */
 	ROM_LOAD( "4-3n",           0x0000, 0x2000, 0x4038eff2 )
 	ROM_LOAD( "3-3p",           0x8000, 0x8000, 0xd9defcbf )
 
@@ -508,13 +504,13 @@ ROM_START( cabal )
 ROM_END
 
 ROM_START( cabal2 )
-	ROM_REGION(0x50000)	/* 64k for cpu code */
+	ROM_REGIONX( 0x50000, REGION_CPU1 )	/* 64k for cpu code */
 	ROM_LOAD_EVEN( "9-7h",            0x00000, 0x10000, 0xebbb9484 )
 	ROM_LOAD_ODD ( "7-6h",            0x00000, 0x10000, 0x51aeb49e )
 	ROM_LOAD_EVEN( "8-7k",            0x20000, 0x10000, 0x4c24ed9a )
 	ROM_LOAD_ODD ( "6-6k",            0x20000, 0x10000, 0x681620e8 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu code */
 	ROM_LOAD( "4-3n",           0x0000, 0x2000, 0x4038eff2 )
 	ROM_LOAD( "3-3p",           0x8000, 0x8000, 0xd9defcbf )
 
@@ -545,13 +541,13 @@ ROM_START( cabal2 )
 ROM_END
 
 ROM_START( cabalbl )
-	ROM_REGION(0x50000)	/* 64k for cpu code */
+	ROM_REGIONX( 0x50000, REGION_CPU1 )	/* 64k for cpu code */
 	ROM_LOAD_EVEN( "cabal_24.bin",    0x00000, 0x10000, 0x00abbe0c )
 	ROM_LOAD_ODD ( "cabal_22.bin",    0x00000, 0x10000, 0x78c4af27 )
 	ROM_LOAD_EVEN( "cabal_23.bin",    0x20000, 0x10000, 0xd763a47c )
 	ROM_LOAD_ODD ( "cabal_21.bin",    0x20000, 0x10000, 0x96d5e8af )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu code */
 	ROM_LOAD( "cabal_11.bin",    0x0000, 0x10000, 0xd308a543 )
 
 	ROM_REGION_DISPOSE(0x104000)

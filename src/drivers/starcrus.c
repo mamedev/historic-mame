@@ -186,7 +186,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_8080,
 			9750000/9,  /* 8224 chip is a divide by 9 */
-			0,
 			readmem,writemem,readport,writeport,
 			interrupt,1
 		}
@@ -219,7 +218,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( starcrus )
-    ROM_REGION(0x10000)  /* code */
+    ROM_REGIONX( 0x10000, REGION_CPU1 )  /* code */
 	ROM_LOAD( "starcrus.j1",   0x0000, 0x0200, 0x0ee60a50 )
 	ROM_LOAD( "starcrus.k1",   0x0200, 0x0200, 0xa7bc3bc4 )
 	ROM_LOAD( "starcrus.l1",   0x0400, 0x0200, 0x10d233ec )

@@ -290,13 +290,10 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,		/* verified */
 			7159160*2,		/* 7.159 Mhz */
-			0,
 			main_readmem,main_writemem,0,0,
 			atarigen_video_int_gen,1
 		},
-		{
-			JSA_II_CPU(1)
-		},
+		JSA_II_CPU
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
@@ -405,7 +402,7 @@ static void pitfight_init(void)
  *************************************/
 
 ROM_START( hydra )
-	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "hydr3028.bin", 0x00000, 0x10000, 0x43475f73 )
 	ROM_LOAD_ODD ( "hydr3029.bin", 0x00000, 0x10000, 0x886e1de8 )
 	ROM_LOAD_EVEN( "hydr3034.bin", 0x20000, 0x10000, 0x5115aa36 )
@@ -415,7 +412,7 @@ ROM_START( hydra )
 	ROM_LOAD_EVEN( "hydr1030.bin", 0x60000, 0x10000, 0xb31fd41f )
 	ROM_LOAD_ODD ( "hydr1031.bin", 0x60000, 0x10000, 0x453d076f )
 
-	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "hydraa0.bin", 0x10000, 0x4000, 0x619d7319 )
 	ROM_CONTINUE(            0x04000, 0xc000 )
 
@@ -459,7 +456,7 @@ ROM_END
 
 
 ROM_START( hydrap )
-	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "hydhi0.bin", 0x00000, 0x10000, 0xdab2e8a2 )
 	ROM_LOAD_ODD ( "hydlo0.bin", 0x00000, 0x10000, 0xc18d4f16 )
 	ROM_LOAD_EVEN( "hydhi1.bin", 0x20000, 0x10000, 0x50c12bb9 )
@@ -469,7 +466,7 @@ ROM_START( hydrap )
 	ROM_LOAD_EVEN( "hydhi3.bin", 0x60000, 0x10000, 0x29e9e03e )
 	ROM_LOAD_ODD ( "hydlo3.bin", 0x60000, 0x10000, 0x7b5047f0 )
 
-	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "hydraa0.bin", 0x10000, 0x4000, BADCRC(0x619d7319) )
 	ROM_CONTINUE(            0x04000, 0xc000 )
 
@@ -513,13 +510,13 @@ ROM_END
 
 
 ROM_START( pitfight )
-	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "4028", 0x00000, 0x10000, 0xf7cb1a4b )
 	ROM_LOAD_ODD ( "4029", 0x00000, 0x10000, 0x13ae0d4f )
 	ROM_LOAD_EVEN( "3030", 0x20000, 0x10000, 0xb053e779 )
 	ROM_LOAD_ODD ( "3031", 0x20000, 0x10000, 0x2b8c4d13 )
 
-	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "1060", 0x10000, 0x4000, 0x231d71d7 )
 	ROM_CONTINUE(     0x04000, 0xc000 )
 
@@ -559,13 +556,13 @@ ROM_END
 
 
 ROM_START( pitfigh3 )
-	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "3028", 0x00000, 0x10000, 0x99530da4 )
 	ROM_LOAD_ODD ( "3029", 0x00000, 0x10000, 0x78c7afbf )
 	ROM_LOAD_EVEN( "3030", 0x20000, 0x10000, 0xb053e779 )
 	ROM_LOAD_ODD ( "3031", 0x20000, 0x10000, 0x2b8c4d13 )
 
-	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "1060", 0x10000, 0x4000, 0x231d71d7 )
 	ROM_CONTINUE(     0x04000, 0xc000 )
 

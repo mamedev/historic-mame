@@ -42,7 +42,7 @@ int  starwars_interrupt (void);
 
 void starwars_out_w (int offset, int data)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	switch (offset)
 	{
@@ -497,7 +497,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			1500000,					/* 1.5 Mhz CPU clock (Don't know what speed it should be) */
-			0,							/* Memory region #0 */
 			readmem,writemem,0,0,
 			interrupt,6 /* 183Hz ? */
 			/* Increasing number of interrupts per frame speeds game up */
@@ -506,7 +505,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
 			1500000,					/* 1.5 Mhz CPU clock (Don't know what speed it should be) */
-			2,							/* Memory region #2 */
 			readmem2,writemem2,0,0,
 			0, 0,
 			0, 0	/* no regular interrupts, see sndhrdw/starwars.c */
@@ -551,7 +549,6 @@ static struct MachineDriver esb_machine_driver =
 		{
 			CPU_M6809,
 			1500000,					/* 1.5 Mhz CPU clock (Don't know what speed it should be) */
-			0,							/* Memory region #0 */
 			esb_readmem, esb_writemem,0,0,
 			interrupt,6 /* 183Hz ? */
 			/* Increasing number of interrupts per frame speeds game up */
@@ -560,7 +557,6 @@ static struct MachineDriver esb_machine_driver =
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
 			1500000,					/* 1.5 Mhz CPU clock (Don't know what speed it should be) */
-			2,							/* Memory region #2 */
 			readmem2,writemem2,0,0,
 			0, 0,
 			0, 0	/* no regular interrupts, see sndhrdw/starwars.c */
@@ -606,7 +602,7 @@ static struct MachineDriver esb_machine_driver =
 ***************************************************************************/
 
 ROM_START( starwar1 )
-	ROM_REGION(0x12000)     /* 2 64k ROM spaces */
+	ROM_REGIONX( 0x12000, REGION_CPU1 )     /* 2 64k ROM spaces */
 	ROM_LOAD( "136021.105",   0x3000, 0x1000, 0x538e7d2f ) /* 3000-3fff is 4k vector rom */
 	ROM_LOAD( "136021.114",   0x6000, 0x2000, 0xe75ff867 )   /* ROM 0 bank pages 0 and 1 */
 	ROM_CONTINUE(            0x10000, 0x2000 )
@@ -628,7 +624,7 @@ ROM_START( starwar1 )
 	/* core currently always frees region #1 after initialization. */
 
 	/* Sound ROMS */
-	ROM_REGION(0x10000)     /* Really only 32k, but it looks like 64K */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* Really only 32k, but it looks like 64K */
 	ROM_LOAD( "136021.107",   0x4000, 0x2000, 0xdbf3aea2 ) /* Sound ROM 0 */
 	ROM_RELOAD(               0xc000, 0x2000 ) /* Copied again for */
 	ROM_LOAD( "136021.208",   0x6000, 0x2000, 0xe38070a8 ) /* Sound ROM 0 */
@@ -636,7 +632,7 @@ ROM_START( starwar1 )
 ROM_END
 
 ROM_START( starwars )
-	ROM_REGION(0x12000)     /* 2 64k ROM spaces */
+	ROM_REGIONX( 0x12000, REGION_CPU1 )     /* 2 64k ROM spaces */
 	ROM_LOAD( "136021.105",   0x3000, 0x1000, 0x538e7d2f ) /* 3000-3fff is 4k vector rom */
 	ROM_LOAD( "136021.214",   0x6000, 0x2000, 0x04f1876e )   /* ROM 0 bank pages 0 and 1 */
 	ROM_CONTINUE(            0x10000, 0x2000 )
@@ -658,7 +654,7 @@ ROM_START( starwars )
 	/* core currently always frees region #1 after initialization. */
 
 	/* Sound ROMS */
-	ROM_REGION(0x10000)     /* Really only 32k, but it looks like 64K */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* Really only 32k, but it looks like 64K */
 	ROM_LOAD( "136021.107",   0x4000, 0x2000, 0xdbf3aea2 ) /* Sound ROM 0 */
 	ROM_RELOAD(               0xc000, 0x2000 ) /* Copied again for */
 	ROM_LOAD( "136021.208",   0x6000, 0x2000, 0xe38070a8 ) /* Sound ROM 0 */
@@ -666,7 +662,7 @@ ROM_START( starwars )
 ROM_END
 
 ROM_START( esb )
-	ROM_REGION(0x22000)     /* 64k for code and a buttload for the banked ROMs */
+	ROM_REGIONX( 0x22000, REGION_CPU1 )     /* 64k for code and a buttload for the banked ROMs */
 	ROM_LOAD( "136031.111",   0x03000, 0x1000, 0xb1f9bd12 )    /* 3000-3fff is 4k vector rom */
 	ROM_LOAD( "136031.101",   0x06000, 0x2000, 0xef1e3ae5 )
 	ROM_CONTINUE(             0x10000, 0x2000 )
@@ -694,7 +690,7 @@ ROM_START( esb )
 	/* core currently always frees region #1 after initialization. */
 
 	/* Sound ROMS */
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "136031.113",   0x4000, 0x2000, 0x24ae3815 ) /* Sound ROM 0 */
 	ROM_CONTINUE(             0xc000, 0x2000 ) /* Copied again for */
 	ROM_LOAD( "136031.112",   0x6000, 0x2000, 0xca72d341 ) /* Sound ROM 1 */
@@ -706,7 +702,7 @@ ROM_END
 static int novram_load(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
@@ -720,7 +716,7 @@ static int novram_load(void)
 static void novram_save(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

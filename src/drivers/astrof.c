@@ -221,7 +221,6 @@ static struct MachineDriver GAMENAME##_machine_driver =						   \
 		{																	   \
 			CPU_M6502,														   \
 			10595000/16,	/* 0.66 Mhz */									   \
-			0,																   \
 			readmem,GAMENAME##_writemem,0,0,								   \
 			astrof_interrupt,1												   \
 		}																	   \
@@ -266,7 +265,7 @@ MACHINE_DRIVER(tomahawk, 32)
 ***************************************************************************/
 
 ROM_START( astrof )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "afii.6",       0xd000, 0x0800, 0xd6cd13a4 )
 	ROM_LOAD( "afii.5",       0xd800, 0x0800, 0x6fd3c4df )
 	ROM_LOAD( "afii.4",       0xe000, 0x0800, 0x9612dae3 )
@@ -279,7 +278,7 @@ ROM_START( astrof )
 ROM_END
 
 ROM_START( astrof2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "kei2",         0xd000, 0x0400, 0x9f0bd355 )
 	ROM_LOAD( "keii",         0xd400, 0x0400, 0x71f229f0 )
 	ROM_LOAD( "kei0",         0xd800, 0x0400, 0x88114f7c )
@@ -298,7 +297,7 @@ ROM_START( astrof2 )
 ROM_END
 
 ROM_START( astrof3 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "kei2",         0xd000, 0x0400, 0x9f0bd355 )
 	ROM_LOAD( "keii",         0xd400, 0x0400, 0x71f229f0 )
 	ROM_LOAD( "kei0",         0xd800, 0x0400, 0x88114f7c )
@@ -317,7 +316,7 @@ ROM_START( astrof3 )
 ROM_END
 
 ROM_START( tomahawk )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "l8-1",         0xdc00, 0x0400, 0x7c911661 )
 	ROM_LOAD( "l7-1",         0xe000, 0x0400, 0xadeffb69 )
 	ROM_LOAD( "l6-1",         0xe400, 0x0400, 0x9116e59d )
@@ -333,7 +332,7 @@ ROM_START( tomahawk )
 ROM_END
 
 ROM_START( tomahaw5 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "thawk.l8",     0xdc00, 0x0400, 0xb01dab4b )
 	ROM_LOAD( "thawk.l7",     0xe000, 0x0400, 0x3a6549e8 )
 	ROM_LOAD( "thawk.l6",     0xe400, 0x0400, 0x863e47f7 )
@@ -351,7 +350,7 @@ ROM_END
 
 static int astrof_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	static int firsttime = 0;
 
 	/* check if the hi score table has already been initialized */
@@ -384,7 +383,7 @@ static int astrof_hiload(void)
 static void astrof_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -396,7 +395,7 @@ static void astrof_hisave(void)
 
 static int tomahawk_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	static int firsttime = 0;
 
 	/* check if the hi score table has already been initialized */
@@ -430,7 +429,7 @@ static int tomahawk_hiload(void)
 static void tomahawk_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

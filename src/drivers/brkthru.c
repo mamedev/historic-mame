@@ -413,14 +413,12 @@ static struct MachineDriver brkthru_machine_driver =
 		{
 			CPU_M6809,
 			1250000,        /* 1.25 Mhz ? */
-			0,
 			readmem,writemem,0,0,
 			brkthru_interrupt,2
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
 			1250000,        /* 1.25 Mhz ? */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the YM3526 */
 		}
@@ -462,14 +460,12 @@ static struct MachineDriver darwin_machine_driver =
 		{
 			CPU_M6809,
 			1500000,        /* 1.25 Mhz ? */
-			0,
 			darwin_readmem,darwin_writemem,0,0,
 			brkthru_interrupt,2
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
 			1500000,        /* 1.25 Mhz ? */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the YM3526 */
 		}
@@ -512,7 +508,7 @@ static struct MachineDriver darwin_machine_driver =
 ***************************************************************************/
 
 ROM_START( brkthru )
-	ROM_REGION(0x20000)     /* 64k for main CPU + 64k for banked ROMs */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for main CPU + 64k for banked ROMs */
 	ROM_LOAD( "brkthru.1",    0x04000, 0x4000, 0xcfb4265f )
 	ROM_LOAD( "brkthru.2",    0x08000, 0x8000, 0xfa8246d9 )
 	ROM_LOAD( "brkthru.4",    0x10000, 0x8000, 0x8cabf252 )
@@ -544,12 +540,12 @@ ROM_START( brkthru )
 	ROM_LOAD( "brkthru.13",   0x0000, 0x0100, 0xaae44269 ) /* red and green component */
 	ROM_LOAD( "brkthru.14",   0x0100, 0x0100, 0xf2d4822a ) /* blue component */
 
-	ROM_REGION(0x10000)	/* 64K for sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64K for sound CPU */
 	ROM_LOAD( "brkthru.5",    0x8000, 0x8000, 0xc309435f )
 ROM_END
 
 ROM_START( brkthruj )
-	ROM_REGION(0x20000)     /* 64k for main CPU + 64k for banked ROMs */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for main CPU + 64k for banked ROMs */
 	ROM_LOAD( "1",            0x04000, 0x4000, 0x09bd60ee )
 	ROM_LOAD( "2",            0x08000, 0x8000, 0xf2b2cd1c )
 	ROM_LOAD( "4",            0x10000, 0x8000, 0xb42b3359 )
@@ -581,12 +577,12 @@ ROM_START( brkthruj )
 	ROM_LOAD( "brkthru.13",   0x0000, 0x0100, 0xaae44269 ) /* red and green component */
 	ROM_LOAD( "brkthru.14",   0x0100, 0x0100, 0xf2d4822a ) /* blue component */
 
-	ROM_REGION(0x10000)	/* 64K for sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64K for sound CPU */
 	ROM_LOAD( "brkthru.5",    0x8000, 0x8000, 0xc309435f )
 ROM_END
 
 ROM_START( darwin )
-	ROM_REGION(0x20000)     /* 64k for main CPU + 64k for banked ROMs */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for main CPU + 64k for banked ROMs */
 	ROM_LOAD( "darw_04.rom",  0x04000, 0x4000, 0x0eabf21c )
 	ROM_LOAD( "darw_05.rom",  0x08000, 0x8000, 0xe771f864 )
 	ROM_LOAD( "darw_07.rom",  0x10000, 0x8000, 0x97ac052c )
@@ -618,14 +614,14 @@ ROM_START( darwin )
 	ROM_LOAD( "df.12",   0x0000, 0x0100, 0x89b952ef ) /* red and green component */
 	ROM_LOAD( "df.13",   0x0100, 0x0100, 0xd595e91d ) /* blue component */
 
-	ROM_REGION(0x10000)	/* 64K for sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64K for sound CPU */
 	ROM_LOAD( "darw_08.rom",  0x8000, 0x8000, 0x6b580d58 )
 ROM_END
 
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -653,7 +649,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -665,7 +661,7 @@ static void hisave(void)
 
 static int darwin_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -693,7 +689,7 @@ static int darwin_hiload(void)
 static void darwin_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

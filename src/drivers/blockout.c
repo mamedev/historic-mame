@@ -149,13 +149,15 @@ INPUT_PORTS_START( blockout )
 	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	/* the following two are supposed to control Coin 2, but they don't work. */
+	/* This happens on the original board too. */
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )	/* unused? */
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )	/* unused? */
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x10, 0x10, "1 Coin to Continue" )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
@@ -169,12 +171,11 @@ INPUT_PORTS_START( blockout )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x03, "Normal" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Very Hard" )
 	PORT_DIPNAME( 0x04, 0x04, "Rotate Buttons" )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x04, "3" )
@@ -226,14 +227,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,
 			8760000,       /* MRH - 8.76 makes gfx/adpcm samples sync better */
-			0,
 			readmem,writemem,0,0,
 			blockout_interrupt,2
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,	/* 3.579545 Mhz (?) */
-			2,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1	/* NMIs are triggered by the main CPU, IRQs by the YM2151 */
 		}
@@ -277,7 +276,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( blockout )
-	ROM_REGION(0x40000)	/* 2*128k for 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 2*128k for 68000 code */
 	ROM_LOAD_EVEN( "bo29a0-2.bin", 0x00000, 0x20000, 0xb0103427 )
 	ROM_LOAD_ODD ( "bo29a1-2.bin", 0x00000, 0x20000, 0x5984d5a2 )
 
@@ -285,7 +284,7 @@ ROM_START( blockout )
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "bo29e3-0.bin", 0x0000, 0x8000, 0x3ea01f78 )
 
 	ROM_REGION(0x20000)	/* 128k for ADPCM samples - sound chip is OKIM6295 */
@@ -296,7 +295,7 @@ ROM_START( blockout )
 ROM_END
 
 ROM_START( blckout2 )
-	ROM_REGION(0x40000)	/* 2*128k for 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 2*128k for 68000 code */
 	ROM_LOAD_EVEN( "29a0",         0x00000, 0x20000, 0x605f931e )
 	ROM_LOAD_ODD ( "29a1",         0x00000, 0x20000, 0x38f07000 )
 
@@ -304,7 +303,7 @@ ROM_START( blckout2 )
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "bo29e3-0.bin", 0x0000, 0x8000, 0x3ea01f78 )
 
 	ROM_REGION(0x20000)	/* 128k for ADPCM samples - sound chip is OKIM6295 */

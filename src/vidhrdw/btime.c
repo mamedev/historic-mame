@@ -524,7 +524,7 @@ static void drawbackground(struct osd_bitmap *bitmap, unsigned char* tilemap)
 			}
 
 			drawgfx(bitmap, Machine->gfx[2],
-					Machine->memory_region[3][tileoffset + offs],
+					memory_region(3)[tileoffset + offs],
 					btime_palette,
 					flipscreen,flipscreen,
 					sx,sy,

@@ -171,14 +171,11 @@ static struct MachineDriver troangel_machine_driver =
 		{
 			CPU_Z80,
 			3000000,	/* 3 Mhz ??? */
-			0,
 			troangel_readmem,troangel_writemem,
 			0,0,
 			interrupt,1
 		},
-		{
-			IREM_AUDIO_CPU(3)
-		}
+		IREM_AUDIO_CPU
 	},
 	57, 1790,	/* accurate frequency, measured on a Moon Patrol board, is 56.75Hz. */
 				/* the Lode Runner manual (similar but different hardware) */
@@ -210,7 +207,7 @@ static struct MachineDriver troangel_machine_driver =
 
 
 ROM_START( troangel )
-	ROM_REGION( 0x10000 )	/* main CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* main CPU */
 	ROM_LOAD( "ta-a-3k",	0x0000, 0x2000, 0xf21f8196 )
 	ROM_LOAD( "ta-a-3m",	0x2000, 0x2000, 0x58801e55 )
 	ROM_LOAD( "ta-a-3n",	0x4000, 0x2000, 0xde3dea44 )
@@ -233,7 +230,7 @@ ROM_START( troangel )
 	ROM_LOAD( "ta-b-1b",	0x0200, 0x0020, 0xf94911ea ) /* sprites palette */
 	ROM_LOAD( "ta-b-3d",	0x0220,	0x0100, 0xed3e2aa4 ) /* sprites lookup table */
 
-	ROM_REGION( 0x10000 )	/* sound CPU */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 )	/* sound CPU */
 	ROM_LOAD( "ta-s-1a",	0xe000, 0x2000, 0x15a83210 )
 ROM_END
 

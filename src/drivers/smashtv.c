@@ -1092,12 +1092,11 @@ static struct MachineDriver smashtv_machine_driver =
 		{
 			CPU_TMS34010,
 			50000000/TMS34010_CLOCK_DIVIDER,	/* 50 Mhz */
-			0,
 			smashtv_readmem,smashtv_writemem,0,0,
 			ignore_interrupt,0,
 			0,0,&cpu_config
 		},
-		SOUND_CPU_WILLIAMS_CVSD(2)
+		SOUND_CPU_WILLIAMS_CVSD
 	},
 	57, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
@@ -1131,12 +1130,11 @@ static struct MachineDriver narc_machine_driver =
 		{
 			CPU_TMS34010,
 			48000000/TMS34010_CLOCK_DIVIDER,	/* 48 Mhz */
-			0,
 			smashtv_readmem,smashtv_writemem,0,0,
 			ignore_interrupt,0,
 			0,0,&cpu_config
 		},
-		SOUND_CPU_WILLIAMS_NARC(2,3)
+		SOUND_CPU_WILLIAMS_NARC
 	},
 	57, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
@@ -1169,12 +1167,11 @@ static struct MachineDriver trog_machine_driver =
 		{
 			CPU_TMS34010,
 			50000000/TMS34010_CLOCK_DIVIDER,	/* 50 Mhz */
-			0,
 			smashtv_readmem,smashtv_writemem,0,0,
 			ignore_interrupt,0,
 			0,0,&cpu_config
 		},
-		SOUND_CPU_WILLIAMS_CVSD(2)
+		SOUND_CPU_WILLIAMS_CVSD
 	},
 	57, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
@@ -1208,12 +1205,11 @@ static struct MachineDriver mk_machine_driver =
 		{
 			CPU_TMS34010,
 			48000000/TMS34010_CLOCK_DIVIDER,	/* 48 Mhz */
-			0,
 			smashtv_readmem,smashtv_writemem,0,0,
 			ignore_interrupt,0,
 			0,0,&cpu_config
 		},
-		SOUND_CPU_WILLIAMS_ADPCM(2)
+		SOUND_CPU_WILLIAMS_ADPCM
 	},
 	57, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1, /* cpu slices */
@@ -1247,12 +1243,11 @@ static struct MachineDriver term2_machine_driver =
 		{
 			CPU_TMS34010,
 			50000000/TMS34010_CLOCK_DIVIDER,	/* 50 Mhz */
-			0,
 			smashtv_readmem,smashtv_writemem,0,0,
 			ignore_interrupt,0,
 			0,0,&cpu_config
 		},
-		SOUND_CPU_WILLIAMS_ADPCM(2)
+		SOUND_CPU_WILLIAMS_ADPCM
 	},
 	57, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1, /* cpu slices */
@@ -1286,7 +1281,6 @@ static struct MachineDriver mk2_machine_driver =
 		{
 			CPU_TMS34010,
 			50000000/TMS34010_CLOCK_DIVIDER,	/* 50 Mhz */
-			0,
 			mk2_readmem,mk2_writemem,0,0,
 			ignore_interrupt,0,
 			0,0,&cpu_config
@@ -1321,12 +1315,11 @@ static struct MachineDriver nbajam_machine_driver =
 		{
 			CPU_TMS34010,
 			50000000/TMS34010_CLOCK_DIVIDER,	/* 50 Mhz */
-			0,
 			mk2_readmem,mk2_writemem,0,0,
 			ignore_interrupt,0,
 			0,0,&cpu_config
 		},
-		SOUND_CPU_WILLIAMS_ADPCM(2)
+		SOUND_CPU_WILLIAMS_ADPCM
 	},
 	57, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
@@ -1426,13 +1419,13 @@ void wms_statesave(void)
 ***************************************************************************/
 
 ROM_START( narc )
-	ROM_REGION(0x100000)     /*34010 code */
+	ROM_REGIONX( 0x100000, REGION_CPU1 )     /*34010 code */
 	ROM_LOAD_ODD ( "u42",  0x80000, 0x20000, 0xd1111b76 )  /* even */
 	ROM_LOAD_EVEN( "u24",  0x80000, 0x20000, 0xaa0d3082 )  /* odd  */
 	ROM_LOAD_ODD ( "u41",  0xc0000, 0x20000, 0x3903191f )  /* even */
 	ROM_LOAD_EVEN( "u23",  0xc0000, 0x20000, 0x7a316582 )  /* odd  */
 
-	ROM_REGION(0x800000)      /* graphics (mapped as code) */
+	ROM_REGION( 0x800000 )      /* graphics (mapped as code) */
 	ROM_LOAD ( "u94",  0x000000, 0x10000, 0xca3194e4 )  /* even */
 	ROM_LOAD ( "u76",  0x200000, 0x10000, 0x1cd897f4 )  /* odd  */
 	ROM_LOAD ( "u93",  0x010000, 0x10000, 0x0ed7f7f5 )  /* even */
@@ -1495,11 +1488,11 @@ ROM_START( narc )
 	ROM_LOAD ( "u44",  0x4e0000, 0x10000, 0x93b8eaa4 )  /* even */
 	ROM_LOAD ( "u26",  0x6e0000, 0x10000, 0xcb19f784 )  /* odd  */
 
-	ROM_REGION(0x30000)     /* sound CPU */
+	ROM_REGIONX( 0x30000, REGION_CPU2 )     /* sound CPU */
 	ROM_LOAD ( "u4-snd", 0x10000, 0x10000, 0x450a591a )
 	ROM_LOAD ( "u5-snd", 0x20000, 0x10000, 0xe551e5e3 )
 
-	ROM_REGION(0x50000)     /* slave sound CPU */
+	ROM_REGIONX( 0x50000, REGION_CPU3 )     /* slave sound CPU */
 	ROM_LOAD ( "u35-snd", 0x10000, 0x10000, 0x81295892 )
 	ROM_LOAD ( "u36-snd", 0x20000, 0x10000, 0x16cdbb13 )
 	ROM_LOAD ( "u37-snd", 0x30000, 0x10000, 0x29dbeffd )
@@ -1507,7 +1500,7 @@ ROM_START( narc )
 ROM_END
 
 ROM_START( narc3 )
-	ROM_REGION(0x100000)     /*34010 code */
+	ROM_REGIONX( 0x100000, REGION_CPU1 )     /*34010 code */
 	ROM_LOAD_ODD ( "narcrev3.u78",  0x80000, 0x10000, 0x388581b0 )  /* even */
 	ROM_LOAD_EVEN( "narcrev3.u60",  0x80000, 0x10000, 0xf273bc04 )  /* odd  */
 	ROM_LOAD_ODD ( "narcrev3.u77",  0xa0000, 0x10000, 0xbdafaccc )  /* even */
@@ -1517,7 +1510,7 @@ ROM_START( narc3 )
 	ROM_LOAD_ODD ( "narcrev3.u41",  0xe0000, 0x10000, 0x6142fab7 )  /* even */
 	ROM_LOAD_EVEN( "narcrev3.u23",  0xe0000, 0x10000, 0x98cdd178 )  /* odd  */
 
-	ROM_REGION(0x800000)      /* graphics (mapped as code) */
+	ROM_REGION( 0x800000 )      /* graphics (mapped as code) */
 	ROM_LOAD ( "u94",  0x000000, 0x10000, 0xca3194e4 )  /* even */
 	ROM_LOAD ( "u76",  0x200000, 0x10000, 0x1cd897f4 )  /* odd  */
 	ROM_LOAD ( "u93",  0x010000, 0x10000, 0x0ed7f7f5 )  /* even */
@@ -1580,11 +1573,11 @@ ROM_START( narc3 )
 	ROM_LOAD ( "u44",  0x4e0000, 0x10000, 0x93b8eaa4 )  /* even */
 	ROM_LOAD ( "u26",  0x6e0000, 0x10000, 0xcb19f784 )  /* odd  */
 
-	ROM_REGION(0x30000)     /* sound CPU */
+	ROM_REGIONX( 0x30000, REGION_CPU2 )     /* sound CPU */
 	ROM_LOAD ( "u4-snd", 0x10000, 0x10000, 0x450a591a )
 	ROM_LOAD ( "u5-snd", 0x20000, 0x10000, 0xe551e5e3 )
 
-	ROM_REGION(0x50000)     /* slave sound CPU */
+	ROM_REGIONX( 0x50000, REGION_CPU3 )     /* slave sound CPU */
 	ROM_LOAD ( "u35-snd", 0x10000, 0x10000, 0x81295892 )
 	ROM_LOAD ( "u36-snd", 0x20000, 0x10000, 0x16cdbb13 )
 	ROM_LOAD ( "u37-snd", 0x30000, 0x10000, 0x29dbeffd )
@@ -1592,11 +1585,11 @@ ROM_START( narc3 )
 ROM_END
 
 ROM_START( trog )	/* released version */
-	ROM_REGION(0x100000)     /* 34010 code */
+	ROM_REGIONX( 0x100000, REGION_CPU1 )     /* 34010 code */
 	ROM_LOAD_ODD ( "trogu105.bin",  0xc0000, 0x20000, 0xe6095189 ) /* even */
 	ROM_LOAD_EVEN( "trogu89.bin",   0xc0000, 0x20000, 0xfdd7cc65 ) /* odd */
 
-	ROM_REGION(0x800000)      /* graphics */
+	ROM_REGION( 0x800000 )      /* graphics */
 	ROM_LOAD ( "trogu111.bin",  0x000000, 0x20000, 0x9ded08c1 )  /* even */
 	ROM_LOAD ( "trogu112.bin",  0x020000, 0x20000, 0x42293843 )  /* even */
 	ROM_LOAD ( "trogu113.bin",  0x040000, 0x20000, 0x77f50cbb )  /* even */
@@ -1611,18 +1604,18 @@ ROM_START( trog )	/* released version */
 	ROM_LOAD (  "trogu90.bin",  0x280000, 0x20000, 0x16e06753 )  /* odd  */
 	ROM_LOAD (  "trogu91.bin",  0x2a0000, 0x20000, 0x880a02c7 )  /* odd  */
 
-	ROM_REGION(0x70000) /* sound CPU */
+	ROM_REGIONX( 0x70000, REGION_CPU2 ) /* sound CPU */
 	ROM_LOAD (   "trogu4.bin", 0x10000, 0x10000, 0x759d0bf4 )
 	ROM_LOAD (  "trogu19.bin", 0x30000, 0x10000, 0x960c333d )
 	ROM_LOAD (  "trogu20.bin", 0x50000, 0x10000, 0x67f1658a )
 ROM_END
 
 ROM_START( trog3 )	/* released version */
-	ROM_REGION(0x100000)     /* 34010 code */
+	ROM_REGIONX( 0x100000, REGION_CPU1 )     /* 34010 code */
 	ROM_LOAD_ODD ( "u105-la3",  0xc0000, 0x20000, 0xd09cea97 ) /* even */
 	ROM_LOAD_EVEN( "u89-la3",   0xc0000, 0x20000, 0xa61e3572 ) /* odd */
 
-	ROM_REGION(0x800000)      /* graphics */
+	ROM_REGION( 0x800000 )      /* graphics */
 	ROM_LOAD ( "trogu111.bin",  0x000000, 0x20000, 0x9ded08c1 )  /* even */
 	ROM_LOAD ( "trogu112.bin",  0x020000, 0x20000, 0x42293843 )  /* even */
 	ROM_LOAD ( "trogu113.bin",  0x040000, 0x20000, 0x77f50cbb )  /* even */
@@ -1637,18 +1630,18 @@ ROM_START( trog3 )	/* released version */
 	ROM_LOAD (  "trogu90.bin",  0x280000, 0x20000, 0x16e06753 )  /* odd  */
 	ROM_LOAD (  "trogu91.bin",  0x2a0000, 0x20000, 0x880a02c7 )  /* odd  */
 
-	ROM_REGION(0x70000) /* sound CPU */
+	ROM_REGIONX( 0x70000, REGION_CPU2 ) /* sound CPU */
 	ROM_LOAD (   "trogu4.bin", 0x10000, 0x10000, 0x759d0bf4 )
 	ROM_LOAD (  "trogu19.bin", 0x30000, 0x10000, 0x960c333d )
 	ROM_LOAD (  "trogu20.bin", 0x50000, 0x10000, 0x67f1658a )
 ROM_END
 
 ROM_START( trogp )   /* prototype version */
-	ROM_REGION(0x100000)     /* 34010 code */
+	ROM_REGIONX( 0x100000, REGION_CPU1 )     /* 34010 code */
 	ROM_LOAD_ODD ( "trog105.dat",  0xc0000, 0x20000, 0x526a3f5b ) /* even */
 	ROM_LOAD_EVEN( "trog89.dat",   0xc0000, 0x20000, 0x38d68685 ) /* odd */
 
-	ROM_REGION(0x800000)      /* graphics */
+	ROM_REGION( 0x800000 )      /* graphics */
 	ROM_LOAD ( "trogu111.bin",  0x000000, 0x20000, 0x9ded08c1 )  /* even */
 	ROM_LOAD ( "trogu112.bin",  0x020000, 0x20000, 0x42293843 )  /* even */
 	ROM_LOAD ( "trog113.dat",  0x040000, 0x20000, 0x2980a56f )  /* even */
@@ -1663,18 +1656,18 @@ ROM_START( trogp )   /* prototype version */
 	ROM_LOAD (  "trogu90.bin",  0x280000, 0x20000, 0x16e06753 )  /* odd  */
 	ROM_LOAD (  "trogu91.bin",  0x2a0000, 0x20000, 0x880a02c7 )  /* odd  */
 
-	ROM_REGION(0x70000) /* sound CPU */
+	ROM_REGIONX( 0x70000, REGION_CPU2 ) /* sound CPU */
 	ROM_LOAD (   "trogu4.bin", 0x10000, 0x10000, 0x759d0bf4 )
 	ROM_LOAD (  "trogu19.bin", 0x30000, 0x10000, 0x960c333d )
 	ROM_LOAD (  "trogu20.bin", 0x50000, 0x10000, 0x67f1658a )
 ROM_END
 
 ROM_START( smashtv )
-	ROM_REGION(0x100000)     /* 34010 code */
+	ROM_REGIONX( 0x100000, REGION_CPU1 )     /* 34010 code */
 	ROM_LOAD_ODD ( "u105.l8",  0xc0000, 0x20000, 0x48cd793f ) /* even */
 	ROM_LOAD_EVEN( "u89.l8",   0xc0000, 0x20000, 0x8e7fe463 ) /* odd */
 
-	ROM_REGION(0x800000)      /* graphics */
+	ROM_REGION( 0x800000 )      /* graphics */
 	ROM_LOAD ( "u111.gam",  0x000000, 0x20000, 0x72f0ba84 )  /* even */
 	ROM_LOAD ( "u112.gam",  0x020000, 0x20000, 0x436f0283 )  /* even */
 	ROM_LOAD ( "u113.gam",  0x040000, 0x20000, 0x4a4b8110 )  /* even */
@@ -1687,18 +1680,18 @@ ROM_START( smashtv )
  	ROM_LOAD ( "u107.gam",  0x420000, 0x20000, 0x0fba1e36 )  /* even */
  	ROM_LOAD ( "u108.gam",  0x440000, 0x20000, 0xcb0a092f )  /* even */
 
-	ROM_REGION(0x70000) /* sound CPU */
+	ROM_REGIONX( 0x70000, REGION_CPU2 ) /* sound CPU */
 	ROM_LOAD (  "u4.snd", 0x10000, 0x10000, 0x29d3f6c8 )
 	ROM_LOAD ( "u19.snd", 0x30000, 0x10000, 0xac5a402a )
 	ROM_LOAD ( "u20.snd", 0x50000, 0x10000, 0x875c66d9 )
 ROM_END
 
 ROM_START( smashtv6 )
-	ROM_REGION(0x100000)     /* 34010 code */
+	ROM_REGIONX( 0x100000, REGION_CPU1 )     /* 34010 code */
 	ROM_LOAD_ODD ( "la6-u105",  0xc0000, 0x20000, 0xf1666017 ) /* even */
 	ROM_LOAD_EVEN( "la6-u89",   0xc0000, 0x20000, 0x908aca5d ) /* odd */
 
-	ROM_REGION(0x800000)      /* graphics */
+	ROM_REGION( 0x800000 )      /* graphics */
 	ROM_LOAD ( "u111.gam",  0x000000, 0x20000, 0x72f0ba84 )  /* even */
 	ROM_LOAD ( "u112.gam",  0x020000, 0x20000, 0x436f0283 )  /* even */
 	ROM_LOAD ( "u113.gam",  0x040000, 0x20000, 0x4a4b8110 )  /* even */
@@ -1711,18 +1704,18 @@ ROM_START( smashtv6 )
  	ROM_LOAD ( "u107.gam",  0x420000, 0x20000, 0x0fba1e36 )  /* even */
  	ROM_LOAD ( "u108.gam",  0x440000, 0x20000, 0xcb0a092f )  /* even */
 
-	ROM_REGION(0x70000) /* sound CPU */
+	ROM_REGIONX( 0x70000, REGION_CPU2 ) /* sound CPU */
 	ROM_LOAD (  "u4.snd", 0x10000, 0x10000, 0x29d3f6c8 )
 	ROM_LOAD ( "u19.snd", 0x30000, 0x10000, 0xac5a402a )
 	ROM_LOAD ( "u20.snd", 0x50000, 0x10000, 0x875c66d9 )
 ROM_END
 
 ROM_START( smashtv5 )
-	ROM_REGION(0x100000)     /* 34010 code */
+	ROM_REGIONX( 0x100000, REGION_CPU1 )     /* 34010 code */
 	ROM_LOAD_ODD ( "u105-v5",  0xc0000, 0x20000, 0x81f564b9 ) /* even */
 	ROM_LOAD_EVEN( "u89-v5",   0xc0000, 0x20000, 0xe5017d25 ) /* odd */
 
-	ROM_REGION(0x800000)      /* graphics */
+	ROM_REGION( 0x800000 )      /* graphics */
 	ROM_LOAD ( "u111.gam",  0x000000, 0x20000, 0x72f0ba84 )  /* even */
 	ROM_LOAD ( "u112.gam",  0x020000, 0x20000, 0x436f0283 )  /* even */
 	ROM_LOAD ( "u113.gam",  0x040000, 0x20000, 0x4a4b8110 )  /* even */
@@ -1735,18 +1728,18 @@ ROM_START( smashtv5 )
  	ROM_LOAD ( "u107.gam",  0x420000, 0x20000, 0x0fba1e36 )  /* even */
  	ROM_LOAD ( "u108.gam",  0x440000, 0x20000, 0xcb0a092f )  /* even */
 
-	ROM_REGION(0x70000) /* sound CPU */
+	ROM_REGIONX( 0x70000, REGION_CPU2 ) /* sound CPU */
 	ROM_LOAD (  "u4.snd", 0x10000, 0x10000, 0x29d3f6c8 )
 	ROM_LOAD ( "u19.snd", 0x30000, 0x10000, 0xac5a402a )
 	ROM_LOAD ( "u20.snd", 0x50000, 0x10000, 0x875c66d9 )
 ROM_END
 
 ROM_START( smashtv4 )
-	ROM_REGION(0x100000)     /* 34010 code */
+	ROM_REGIONX( 0x100000, REGION_CPU1 )     /* 34010 code */
 	ROM_LOAD_ODD ( "la4-u105",  0xc0000, 0x20000, 0xa50ccb71 ) /* even */
 	ROM_LOAD_EVEN( "la4-u89",   0xc0000, 0x20000, 0xef0b0279 ) /* odd */
 
-	ROM_REGION(0x800000)      /* graphics */
+	ROM_REGION( 0x800000 )      /* graphics */
 	ROM_LOAD ( "u111.gam",  0x000000, 0x20000, 0x72f0ba84 )  /* even */
 	ROM_LOAD ( "u112.gam",  0x020000, 0x20000, 0x436f0283 )  /* even */
 	ROM_LOAD ( "u113.gam",  0x040000, 0x20000, 0x4a4b8110 )  /* even */
@@ -1759,18 +1752,18 @@ ROM_START( smashtv4 )
  	ROM_LOAD ( "u107.gam",  0x420000, 0x20000, 0x0fba1e36 )  /* even */
  	ROM_LOAD ( "u108.gam",  0x440000, 0x20000, 0xcb0a092f )  /* even */
 
-	ROM_REGION(0x70000) /* sound CPU */
+	ROM_REGIONX( 0x70000, REGION_CPU2 ) /* sound CPU */
 	ROM_LOAD (  "u4.snd", 0x10000, 0x10000, 0x29d3f6c8 )
 	ROM_LOAD ( "u19.snd", 0x30000, 0x10000, 0xac5a402a )
 	ROM_LOAD ( "u20.snd", 0x50000, 0x10000, 0x875c66d9 )
 ROM_END
 
 ROM_START( hiimpact )
-	ROM_REGION(0x100000)     /* 34010 code */
+	ROM_REGIONX( 0x100000, REGION_CPU1 )     /* 34010 code */
 	ROM_LOAD_ODD ( "la3u105.bin",  0xc0000, 0x20000, 0xb9190c4a ) /* even */
 	ROM_LOAD_EVEN( "la3u89.bin",   0xc0000, 0x20000, 0x1cbc72a5 ) /* odd */
 
-	ROM_REGION(0x800000)      /* graphics */
+	ROM_REGION( 0x800000 )      /* graphics */
 	ROM_LOAD ( "la1u111.bin",  0x000000, 0x20000, 0x49560560 )  /* even */
 	ROM_LOAD ( "la1u112.bin",  0x020000, 0x20000, 0x4dd879dc )  /* even */
 	ROM_LOAD ( "la1u113.bin",  0x040000, 0x20000, 0xb67aeb70 )  /* even */
@@ -1786,18 +1779,18 @@ ROM_START( hiimpact )
 	ROM_LOAD ( "la1u108.bin",  0x440000, 0x20000, 0x5f363e12 )  /* even */
 	ROM_LOAD ( "la1u109.bin",  0x460000, 0x20000, 0x3689fbbc )  /* even */
 
-	ROM_REGION(0x70000) /* sound CPU */
+	ROM_REGIONX( 0x70000, REGION_CPU2 ) /* sound CPU */
 	ROM_LOAD (  "sl1u4.bin", 0x10000, 0x20000, 0x28effd6a )
 	ROM_LOAD ( "sl1u19.bin", 0x30000, 0x20000, 0x0ea22c89 )
 	ROM_LOAD ( "sl1u20.bin", 0x50000, 0x20000, 0x4e747ab5 )
 ROM_END
 
 ROM_START( shimpact )
-	ROM_REGION(0x100000)     /* 34010 code */
+	ROM_REGIONX( 0x100000, REGION_CPU1 )     /* 34010 code */
 	ROM_LOAD_ODD ( "shiu105.bin",  0xc0000, 0x20000, 0xf2cf8de3 ) /* even */
 	ROM_LOAD_EVEN( "shiu89.bin",   0xc0000, 0x20000, 0xf97d9b01 ) /* odd */
 
-	ROM_REGION(0x800000)      /* graphics */
+	ROM_REGION( 0x800000 )      /* graphics */
 	ROM_LOAD ( "shiu111.bin",  0x000000, 0x40000, 0x80ae2a86 ) /* even */
 	ROM_LOAD ( "shiu112.bin",  0x040000, 0x40000, 0x3ffc27e9 ) /* even */
 	ROM_LOAD ( "shiu113.bin",  0x080000, 0x40000, 0x01549d00 ) /* even */
@@ -1813,18 +1806,18 @@ ROM_START( shimpact )
 	ROM_LOAD ( "shiu108.bin",  0x480000, 0x40000, 0xd39685a3 ) /* even */
 	ROM_LOAD ( "shiu109.bin",  0x4c0000, 0x40000, 0x36e0b2b2 ) /* even */
 
-	ROM_REGION(0x70000) /* sound CPU */
+	ROM_REGIONX( 0x70000, REGION_CPU2 ) /* sound CPU */
 	ROM_LOAD (   "shiu4.bin", 0x10000, 0x20000, 0x1e5a012c )
 	ROM_LOAD (  "shiu19.bin", 0x30000, 0x20000, 0x10f9684e )
 	ROM_LOAD (  "shiu20.bin", 0x50000, 0x20000, 0x1b4a71c1 )
 ROM_END
 
 ROM_START( strkforc )
-	ROM_REGION(0x100000)     /* 34010 code */
+	ROM_REGIONX( 0x100000, REGION_CPU1 )     /* 34010 code */
 	ROM_LOAD_ODD ( "sfu105.bin",  0xc0000, 0x20000, 0x7895e0e3 ) /* even */
 	ROM_LOAD_EVEN( "sfu89.bin",   0xc0000, 0x20000, 0x26114d9e ) /* odd */
 
-	ROM_REGION(0x800000)      /* graphics */
+	ROM_REGION( 0x800000 )      /* graphics */
 	ROM_LOAD ( "sfu111.bin",  0x000000, 0x20000, 0x878efc80 )  /* even */
 	ROM_LOAD ( "sfu112.bin",  0x020000, 0x20000, 0x93394399 )  /* even */
 	ROM_LOAD ( "sfu113.bin",  0x040000, 0x20000, 0x9565a79b )  /* even */
@@ -1841,18 +1834,18 @@ ROM_START( strkforc )
 	ROM_LOAD (  "sfu90.bin",  0x280000, 0x20000, 0x607bcdc0 )  /* odd  */
 	ROM_LOAD (  "sfu91.bin",  0x2a0000, 0x20000, 0xda02547e )  /* odd  */
 
-	ROM_REGION(0x70000) /* sound CPU */
+	ROM_REGIONX( 0x70000, REGION_CPU2 ) /* sound CPU */
 	ROM_LOAD (  "sfu4.bin", 0x10000, 0x10000, 0x8f747312 )
 	ROM_LOAD ( "sfu19.bin", 0x30000, 0x10000, 0xafb29926 )
 	ROM_LOAD ( "sfu20.bin", 0x50000, 0x10000, 0x1bc9b746 )
 ROM_END
 
 ROM_START( mk )
-	ROM_REGION(0x100000)     /* 34010 code */
+	ROM_REGIONX( 0x100000, REGION_CPU1 )     /* 34010 code */
 	ROM_LOAD_ODD ( "mkg-u105.rom",  0x00000, 0x80000, 0x2ce843c5 )  /* even */
 	ROM_LOAD_EVEN(  "mkg-u89.rom",  0x00000, 0x80000, 0x49a46e10 )  /* odd  */
 
-    ROM_REGION(0x800000)      /* graphics */
+    ROM_REGION( 0x800000 )      /* graphics */
 	ROM_LOAD ( "mkg-u111.rom",  0x000000, 0x80000, 0xd17096c4 )  /* even */
 	ROM_LOAD ( "mkg-u112.rom",  0x080000, 0x80000, 0x993bc2e4 )  /* even */
 	ROM_LOAD ( "mkg-u113.rom",  0x100000, 0x80000, 0x6fb91ede )  /* even */
@@ -1868,7 +1861,7 @@ ROM_START( mk )
   	ROM_LOAD ( "mkg-u108.rom",  0x500000, 0x80000, 0x23308979 )  /* even */
  	ROM_LOAD ( "mkg-u109.rom",  0x580000, 0x80000, 0xcafc47bb )  /* even */
 
-	ROM_REGION(0x50000) /* sound CPU */
+	ROM_REGIONX( 0x50000, REGION_CPU2 ) /* sound CPU */
 	ROM_LOAD (  "mks-u3.rom", 0x10000, 0x40000, 0xc615844c )
 
 	ROM_REGION(0xc0000) /* ADPCM samples */
@@ -1877,11 +1870,11 @@ ROM_START( mk )
 ROM_END
 
 ROM_START( mkla1 )
-	ROM_REGION(0x100000)     /* 34010 code */
+	ROM_REGIONX( 0x100000, REGION_CPU1 )     /* 34010 code */
 	ROM_LOAD_ODD ( "mkg-u105.la1",  0x00000, 0x80000, 0xe1f7b4c9 )  /* even */
 	ROM_LOAD_EVEN(  "mkg-u89.la1",  0x00000, 0x80000, 0x9d38ac75 )  /* odd  */
 
-    ROM_REGION(0x800000)      /* graphics */
+    ROM_REGION( 0x800000 )      /* graphics */
 	ROM_LOAD ( "mkg-u111.rom",  0x000000, 0x80000, 0xd17096c4 )  /* even */
 	ROM_LOAD ( "mkg-u112.rom",  0x080000, 0x80000, 0x993bc2e4 )  /* even */
 	ROM_LOAD ( "mkg-u113.rom",  0x100000, 0x80000, 0x6fb91ede )  /* even */
@@ -1897,7 +1890,7 @@ ROM_START( mkla1 )
   	ROM_LOAD ( "mkg-u108.rom",  0x500000, 0x80000, 0x23308979 )  /* even */
  	ROM_LOAD ( "mkg-u109.rom",  0x580000, 0x80000, 0xcafc47bb )  /* even */
 
-	ROM_REGION(0x50000) /* sound CPU */
+	ROM_REGIONX( 0x50000, REGION_CPU2 ) /* sound CPU */
 	ROM_LOAD (  "mks-u3.rom", 0x10000, 0x40000, 0xc615844c )
 
 	ROM_REGION(0xc0000) /* ADPCM samples */
@@ -1906,11 +1899,11 @@ ROM_START( mkla1 )
 ROM_END
 
 ROM_START( mkla2 )
-	ROM_REGION(0x100000)     /* 34010 code */
+	ROM_REGIONX( 0x100000, REGION_CPU1 )     /* 34010 code */
 	ROM_LOAD_ODD ( "mkg-u105.la2",  0x00000, 0x80000, 0x8531d44e )  /* even */
 	ROM_LOAD_EVEN(  "mkg-u89.la2",  0x00000, 0x80000, 0xb88dc26e )  /* odd  */
 
-    ROM_REGION(0x800000)      /* graphics */
+    ROM_REGION( 0x800000 )      /* graphics */
 	ROM_LOAD ( "mkg-u111.rom",  0x000000, 0x80000, 0xd17096c4 )  /* even */
 	ROM_LOAD ( "mkg-u112.rom",  0x080000, 0x80000, 0x993bc2e4 )  /* even */
 	ROM_LOAD ( "mkg-u113.rom",  0x100000, 0x80000, 0x6fb91ede )  /* even */
@@ -1926,7 +1919,7 @@ ROM_START( mkla2 )
   	ROM_LOAD ( "mkg-u108.rom",  0x500000, 0x80000, 0x23308979 )  /* even */
  	ROM_LOAD ( "mkg-u109.rom",  0x580000, 0x80000, 0xcafc47bb )  /* even */
 
-	ROM_REGION(0x50000) /* sound CPU */
+	ROM_REGIONX( 0x50000, REGION_CPU2 ) /* sound CPU */
 	ROM_LOAD (  "mks-u3.rom", 0x10000, 0x40000, 0xc615844c )
 
 	ROM_REGION(0xc0000) /* ADPCM samples */
@@ -1935,11 +1928,11 @@ ROM_START( mkla2 )
 ROM_END
 
 ROM_START( term2 )
-	ROM_REGION(0x100000)     /* 34010 code */
+	ROM_REGIONX( 0x100000, REGION_CPU1 )     /* 34010 code */
 	ROM_LOAD_ODD ( "t2.105",  0x00000, 0x80000, 0x34142b28 )  /* even */
 	ROM_LOAD_EVEN( "t2.89",   0x00000, 0x80000, 0x5ffea427 )  /* odd  */
 
-	ROM_REGION(0x800000)      /* graphics */
+	ROM_REGION( 0x800000 )      /* graphics */
 	ROM_LOAD ( "t2.111",  0x000000, 0x80000, 0x916d0197 )  /* even */
 	ROM_LOAD ( "t2.112",  0x080000, 0x80000, 0x39ae1c87 )  /* even */
 	ROM_LOAD ( "t2.113",  0x100000, 0x80000, 0xcb5084e5 )  /* even */
@@ -1955,7 +1948,7 @@ ROM_START( term2 )
  	ROM_LOAD ( "t2.108",  0x500000, 0x80000, 0x379fdaed )  /* even */
  	ROM_LOAD ( "t2.109",  0x580000, 0x80000, 0x306a9366 )  /* even */
 
-	ROM_REGION(0x50000) /* sound CPU */
+	ROM_REGIONX( 0x50000, REGION_CPU2 ) /* sound CPU */
 	ROM_LOAD (  "t2_snd.3", 0x10000, 0x20000, 0x73c3f5c4 )
 	ROM_RELOAD (            0x30000, 0x20000 )
 
@@ -1965,11 +1958,11 @@ ROM_START( term2 )
 ROM_END
 
 ROM_START( totcarn )
-	ROM_REGION(0x100000)     /* 34010 code */
+	ROM_REGIONX( 0x100000, REGION_CPU1 )     /* 34010 code */
 	ROM_LOAD_ODD ( "tcu105.bin",  0x80000, 0x40000, 0x7c651047 )  /* even */
 	ROM_LOAD_EVEN( "tcu89.bin",   0x80000, 0x40000, 0x6761daf3 )  /* odd  */
 
-	ROM_REGION(0x800000)      /* graphics */
+	ROM_REGION( 0x800000 )      /* graphics */
 	ROM_LOAD ( "tcu111.bin",  0x000000, 0x40000, 0x13f3f231 )  /* even */
 	ROM_LOAD ( "tcu112.bin",  0x040000, 0x40000, 0x72e45007 )  /* even */
 	ROM_LOAD ( "tcu113.bin",  0x080000, 0x40000, 0x2c8ec753 )  /* even */
@@ -1985,7 +1978,7 @@ ROM_START( totcarn )
  	ROM_LOAD ( "tcu108.bin",  0x480000, 0x40000, 0xed152acc )  /* even */
  	ROM_LOAD ( "tcu109.bin",  0x4c0000, 0x40000, 0x80715252 )  /* even */
 
-	ROM_REGION(0x50000) /* sound CPU */
+	ROM_REGIONX( 0x50000, REGION_CPU2 ) /* sound CPU */
 	ROM_LOAD (  "tcu3.bin", 0x10000, 0x20000, 0x5bdb4665 )
 	ROM_RELOAD (            0x30000, 0x20000 )
 
@@ -1995,11 +1988,11 @@ ROM_START( totcarn )
 ROM_END
 
 ROM_START( totcarnp )
-	ROM_REGION(0x100000)     /* 34010 code */
+	ROM_REGIONX( 0x100000, REGION_CPU1 )     /* 34010 code */
 	ROM_LOAD_ODD ( "u105",  0x80000, 0x40000, 0x7a782cae )  /* even */
 	ROM_LOAD_EVEN( "u89",   0x80000, 0x40000, 0x1c899a8d )  /* odd  */
 
-	ROM_REGION(0x800000)      /* graphics */
+	ROM_REGION( 0x800000 )      /* graphics */
 	ROM_LOAD ( "tcu111.bin",  0x000000, 0x40000, 0x13f3f231 )  /* even */
 	ROM_LOAD ( "tcu112.bin",  0x040000, 0x40000, 0x72e45007 )  /* even */
 	ROM_LOAD ( "tcu113.bin",  0x080000, 0x40000, 0x2c8ec753 )  /* even */
@@ -2015,7 +2008,7 @@ ROM_START( totcarnp )
  	ROM_LOAD ( "tcu108.bin",  0x480000, 0x40000, 0xed152acc )  /* even */
  	ROM_LOAD ( "tcu109.bin",  0x4c0000, 0x40000, 0x80715252 )  /* even */
 
-	ROM_REGION(0x50000) /* sound CPU */
+	ROM_REGIONX( 0x50000, REGION_CPU2 ) /* sound CPU */
 	ROM_LOAD (  "tcu3.bin", 0x10000, 0x20000, 0x5bdb4665 )
 	ROM_RELOAD (            0x30000, 0x20000 )
 
@@ -2025,11 +2018,11 @@ ROM_START( totcarnp )
 ROM_END
 
 ROM_START( mk2 )
-	ROM_REGION(0x100000)     /* 34010 code */
+	ROM_REGIONX( 0x100000, REGION_CPU1 )     /* 34010 code */
 	ROM_LOAD_ODD ( "uj12.l31",  0x00000, 0x80000, 0xcf100a75 )  /* even */
 	ROM_LOAD_EVEN( "ug12.l31",  0x00000, 0x80000, 0x582c7dfd )  /* odd  */
 
-	ROM_REGION(0xc00000)      /* graphics */
+	ROM_REGION( 0xc00000 )      /* graphics */
 	ROM_LOAD ( "ug14-vid",  0x000000, 0x100000, 0x01e73af6 )  /* even */
 	ROM_LOAD ( "ug16-vid",  0x200000, 0x100000, 0x8ba6ae18 )  /* even */
 	ROM_LOAD ( "ug17-vid",  0x100000, 0x100000, 0x937d8620 )  /* even */
@@ -2056,11 +2049,11 @@ ROM_START( mk2 )
 ROM_END
 
 ROM_START( mk2r32 )
-	ROM_REGION(0x100000)     /* 34010 code */
+	ROM_REGIONX( 0x100000, REGION_CPU1 )     /* 34010 code */
 	ROM_LOAD_ODD ( "uj12.l32",  0x00000, 0x80000, 0x43f773a6 )  /* even */
 	ROM_LOAD_EVEN( "ug12.l32",  0x00000, 0x80000, 0xdcde9619 )  /* odd  */
 
-	ROM_REGION(0xc00000)      /* graphics */
+	ROM_REGION( 0xc00000 )      /* graphics */
 	ROM_LOAD ( "ug14-vid",  0x000000, 0x100000, 0x01e73af6 )  /* even */
 	ROM_LOAD ( "ug16-vid",  0x200000, 0x100000, 0x8ba6ae18 )  /* even */
 	ROM_LOAD ( "ug17-vid",  0x100000, 0x100000, 0x937d8620 )  /* even */
@@ -2087,11 +2080,11 @@ ROM_START( mk2r32 )
 ROM_END
 
 ROM_START( mk2r14 )
-	ROM_REGION(0x100000)     /* 34010 code */
+	ROM_REGIONX( 0x100000, REGION_CPU1 )     /* 34010 code */
 	ROM_LOAD_ODD ( "uj12.l14",  0x00000, 0x80000, 0x6d43bc6d )  /* even */
 	ROM_LOAD_EVEN( "ug12.l14",  0x00000, 0x80000, 0x42b0da21 )  /* odd  */
 
-	ROM_REGION(0xc00000)      /* graphics */
+	ROM_REGION( 0xc00000 )      /* graphics */
 	ROM_LOAD ( "ug14-vid",  0x000000, 0x100000, 0x01e73af6 )  /* even */
 	ROM_LOAD ( "ug16-vid",  0x200000, 0x100000, 0x8ba6ae18 )  /* even */
 	ROM_LOAD ( "ug17-vid",  0x100000, 0x100000, 0x937d8620 )  /* even */
@@ -2151,11 +2144,11 @@ ROM_END
 
 
 ROM_START( nbajam )
-	ROM_REGION(0x100000)     /* 34010 code */
+	ROM_REGIONX( 0x100000, REGION_CPU1 )     /* 34010 code */
 	ROM_LOAD_ODD ( "nbauj12.bin",  0x00000, 0x80000, 0xb93e271c )  /* even */
 	ROM_LOAD_EVEN( "nbaug12.bin",  0x00000, 0x80000, 0x407d3390 )  /* odd  */
 
-	ROM_REGION(0xc00000)      /* graphics */
+	ROM_REGION( 0xc00000 )      /* graphics */
 	ROM_LOAD ( "nbaug14.bin",  0x000000, 0x80000, 0x04bb9f64 )  /* even */
 	ROM_LOAD ( "nbaug16.bin",  0x080000, 0x80000, 0x8591c572 )  /* even */
 	ROM_LOAD ( "nbaug17.bin",  0x100000, 0x80000, 0x6f921886 )  /* even */
@@ -2176,7 +2169,7 @@ ROM_START( nbajam )
 	ROM_LOAD ( "nbauj22.bin",  0xa00000, 0x80000, 0x59a95878 )  /* odd  */
 	ROM_LOAD ( "nbauj23.bin",  0xa80000, 0x80000, 0x427d2eee )  /* odd  */
 
-	ROM_REGION(0x50000) /* sound CPU */
+	ROM_REGIONX( 0x50000, REGION_CPU2 ) /* sound CPU */
 	ROM_LOAD (  "nbau3.bin",  0x010000, 0x20000, 0x3a3ea480 )
 	ROM_RELOAD (              0x030000, 0x20000 )
 

@@ -485,7 +485,7 @@ INPUT_PORTS_END
 
 static int asteroid1_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -509,7 +509,7 @@ static int asteroid1_hiload(void)
 
 static int asteroid_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -536,7 +536,7 @@ static int asteroid_hiload(void)
 static void asteroid1_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -549,7 +549,7 @@ static void asteroid1_hisave(void)
 static void asteroid_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -599,7 +599,6 @@ static struct MachineDriver asteroid_machine_driver =
 		{
 			CPU_M6502,
 			1500000,	/* 1.5 Mhz */
-			0,
 			asteroid_readmem,asteroid_writemem,0,0,
 			asteroid_interrupt,4	/* 250 Hz */
 		}
@@ -654,6 +653,7 @@ static struct POKEYinterface pokey_interface =
 
 static const char *astdelux_sample_names[] =
 {
+	"*astdelux",
 	"explode1.wav",
 	"explode2.wav",
 	"explode3.wav",
@@ -676,7 +676,6 @@ static struct MachineDriver astdelux_machine_driver =
 		{
 			CPU_M6502,
 			1500000,	/* 1.5 Mhz */
-			0,
 			astdelux_readmem,astdelux_writemem,0,0,
 			asteroid_interrupt,4	/* 250 Hz */
 		}
@@ -727,7 +726,6 @@ static struct MachineDriver llander_machine_driver =
 		{
 			CPU_M6502,
 			1500000,			/* 1.5 Mhz */
-			0,
 			llander_readmem, llander_writemem,0,0,
 			llander_interrupt,6	/* 250 Hz */
 		}
@@ -765,7 +763,7 @@ static struct MachineDriver llander_machine_driver =
 ***************************************************************************/
 
 ROM_START( asteroi1 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "035145.01",    0x6800, 0x0800, 0xe9bfda64 )
 	ROM_LOAD( "035144.01",    0x7000, 0x0800, 0xe53c28a9 )
 	ROM_LOAD( "035143.01",    0x7800, 0x0800, 0x7d4e3d05 )
@@ -775,7 +773,7 @@ ROM_START( asteroi1 )
 ROM_END
 
 ROM_START( asteroid )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "035145.02",    0x6800, 0x0800, 0x0cc75459 )
 	ROM_LOAD( "035144.02",    0x7000, 0x0800, 0x096ed35c )
 	ROM_LOAD( "035143.02",    0x7800, 0x0800, 0x312caa02 )
@@ -839,7 +837,7 @@ struct GameDriver driver_asteroi1 =
 };
 
 ROM_START( astdelux )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "036430.02",    0x6000, 0x0800, 0xa4d7a525 )
 	ROM_LOAD( "036431.02",    0x6800, 0x0800, 0xd4004aae )
 	ROM_LOAD( "036432.02",    0x7000, 0x0800, 0x6d720c41 )
@@ -851,7 +849,7 @@ ROM_START( astdelux )
 ROM_END
 
 ROM_START( astdelu1 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "036430.01",    0x6000, 0x0800, 0x8f5dabc6 )
 	ROM_LOAD( "036431.01",    0x6800, 0x0800, 0x157a8516 )
 	ROM_LOAD( "036432.01",    0x7000, 0x0800, 0xfdea913c )
@@ -918,7 +916,7 @@ struct GameDriver driver_astdelu1 =
 
 
 ROM_START( llander )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "034572.02",    0x6000, 0x0800, 0xb8763eea )
 	ROM_LOAD( "034571.02",    0x6800, 0x0800, 0x77da4b2f )
 	ROM_LOAD( "034570.01",    0x7000, 0x0800, 0x2724e591 )
@@ -933,7 +931,7 @@ ROM_START( llander )
 ROM_END
 
 ROM_START( llander1 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "034572.01",    0x6000, 0x0800, 0x2aff3140 )
 	ROM_LOAD( "034571.01",    0x6800, 0x0800, 0x493e24b7 )
 	ROM_LOAD( "034570.01",    0x7000, 0x0800, 0x2724e591 )

@@ -421,14 +421,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz (?) */
-			0,
 			readmem,writemem,0,mario_writeport,
 			nmi_interrupt,1
 		},
 		{
 			CPU_I8039 | CPU_AUDIO_CPU,
                         730000,         /* 730 khz */
-			3,
 			readmem_sound,writemem_sound,readport_sound,writeport_sound,
 			ignore_interrupt,1
 		}
@@ -470,14 +468,12 @@ static struct MachineDriver masao_machine_driver =
 		{
 			CPU_Z80,
 			4000000,        /* 4.000 Mhz (?) */
-			0,
 			readmem,masao_writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			24576000/16,	/* ???? */
-			3,
 			masao_sound_readmem,masao_sound_writemem,0,0,
 			ignore_interrupt,1
 		}
@@ -518,7 +514,7 @@ static struct MachineDriver masao_machine_driver =
 ***************************************************************************/
 
 ROM_START( mario )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "mario.7f",     0x0000, 0x2000, 0xc0c6e014 )
 	ROM_LOAD( "mario.7e",     0x2000, 0x2000, 0x116b3856 )
 	ROM_LOAD( "mario.7d",     0x4000, 0x2000, 0xdcceb6c1 )
@@ -537,12 +533,12 @@ ROM_START( mario )
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "mario.4p",     0x0000, 0x0200, 0xafc9bd41 )
 
-	ROM_REGION(0x1000)	/* sound */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound */
 	ROM_LOAD( "tma1c-a.6k",   0x0000, 0x1000, 0x06b9ff85 )
 ROM_END
 
 ROM_START( mariojp )
-	ROM_REGION(0x10000) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "tma1c-a1.7f",  0x0000, 0x2000, 0xb64b6330 )
 	ROM_LOAD( "tma1c-a2.7e",  0x2000, 0x2000, 0x290c4977 )
 	ROM_LOAD( "tma1c-a1.7d",  0x4000, 0x2000, 0xf8575f31 )
@@ -561,12 +557,12 @@ ROM_START( mariojp )
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "mario.4p",     0x0000, 0x0200, 0xafc9bd41 )
 
-	ROM_REGION(0x1000)	/* sound */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound */
 	ROM_LOAD( "tma1c-a.6k",   0x0000, 0x1000, 0x06b9ff85 )
 ROM_END
 
 ROM_START( masao )
-	ROM_REGION(0x10000) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "masao-4.rom",  0x0000, 0x2000, 0x07a75745 )
 	ROM_LOAD( "masao-3.rom",  0x2000, 0x2000, 0x55c629b6 )
 	ROM_LOAD( "masao-2.rom",  0x4000, 0x2000, 0x42e85240 )
@@ -585,7 +581,7 @@ ROM_START( masao )
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "mario.4p",     0x0000, 0x0200, 0xafc9bd41 )
 
-	ROM_REGION(0x10000) /* 64k for sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for sound */
 	ROM_LOAD( "masao-5.rom",  0x0000, 0x1000, 0xbd437198 )
 ROM_END
 
@@ -593,7 +589,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -623,7 +619,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

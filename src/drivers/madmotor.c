@@ -323,14 +323,12 @@ static struct MachineDriver madmotor_machine_driver =
 	 	{
 			CPU_M68000, /* Custom chip 59 */
 			12000000, /* 24 MHz crystal */
-			0,
 			madmotor_readmem,madmotor_writemem,0,0,
 			m68_level6_irq,1 /* VBL */
 		},
 		{
 			CPU_H6280 | CPU_AUDIO_CPU, /* Custom chip 45 */
 			8053000/2, /* Crystal near CPU is 8.053 MHz */
-			2,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -373,7 +371,7 @@ static struct MachineDriver madmotor_machine_driver =
 /******************************************************************************/
 
 ROM_START( madmotor )
-	ROM_REGION(0x80000) /* 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "02", 0x00000, 0x20000, 0x50b554e0 )
 	ROM_LOAD_ODD ( "00", 0x00000, 0x20000, 0x2d6a1b3f )
 	ROM_LOAD_EVEN( "03", 0x40000, 0x20000, 0x442a0a52 )
@@ -402,7 +400,7 @@ ROM_START( madmotor )
 	ROM_LOAD( "21",    0x1e0000, 0x20000, 0x9c72d364 )
 	ROM_LOAD( "22",    0x200000, 0x20000, 0x1e78aa60 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "14",    0x00000, 0x10000, 0x1c28a7e5 )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -416,7 +414,7 @@ ROM_END
 
 static void madmotor_decrypt(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int i;
 
 	for (i=0x00000; i<0x80000; i++) {

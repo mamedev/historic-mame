@@ -221,14 +221,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz (?) */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3072000,	/* 3.072 Mhz ? */
-			3,	/* memory region #2 */
 			readmem2,writemem2,0,0,
 			ignore_interrupt,1
 		}
@@ -272,7 +270,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( champbas )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "champbb.1",    0x0000, 0x2000, 0x218de21e )
 	ROM_LOAD( "champbb.2",    0x2000, 0x2000, 0x5ddd872e )
 	ROM_LOAD( "champbb.3",    0x4000, 0x2000, 0xf39a7046 )
@@ -285,14 +283,14 @@ ROM_START( champbas )
 	ROM_LOAD( "champbb.pr2",  0x0000, 0x020, 0x2585ffb0 ) /* palette */
 	ROM_LOAD( "champbb.pr1",  0x0020, 0x100, 0x872dd450 ) /* look-up table */
 
-	ROM_REGION(0x10000)	/* 64k for the speech CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the speech CPU */
 	ROM_LOAD( "champbb.6",    0x0000, 0x2000, 0x26ab3e16 )
 	ROM_LOAD( "champbb.7",    0x2000, 0x2000, 0x7c01715f )
 	ROM_LOAD( "champbb.8",    0x4000, 0x2000, 0x3c911786 )
 ROM_END
 
 ROM_START( champbb2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "epr5932",      0x0000, 0x2000, 0x528e3c78 )
 	ROM_LOAD( "epr5929",      0x2000, 0x2000, 0x17b6057e )
 	ROM_LOAD( "epr5930",      0x4000, 0x2000, 0xb6570a90 )
@@ -306,7 +304,7 @@ ROM_START( champbb2 )
 	ROM_LOAD( "pr5957",       0x0000, 0x020, 0xf5ce825e ) /* palette */
 	ROM_LOAD( "pr5956",       0x0020, 0x100, 0x872dd450 ) /* look-up table */
 
-	ROM_REGION(0x10000)	/* 64k for the speech CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the speech CPU */
 	ROM_LOAD( "epr5933",      0x0000, 0x2000, 0x26ab3e16 )
 	ROM_LOAD( "epr5934",      0x2000, 0x2000, 0x7c01715f )
 	ROM_LOAD( "epr5935",      0x4000, 0x2000, 0x3c911786 )
@@ -314,7 +312,7 @@ ROM_END
 
 static int hiload(void) /* hsc 10/10/98 */
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
     /* check if the hi score table has already been initialized */
@@ -337,7 +335,7 @@ static int hiload(void) /* hsc 10/10/98 */
 static void hisave(void)
 {
     void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

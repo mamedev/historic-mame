@@ -551,14 +551,12 @@ static struct MachineDriver ddragon3_machine_driver =
 		{
 			CPU_M68000,
 			12000000, /* Guess */
-			0,
 			readmem,writemem,0,0,
 			ddragon3_cpu_interrupt,2
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,	/* Guess */
-			1,
 			readmem_sound,writemem_sound,0,0,
 			ignore_interrupt,0
 		},
@@ -600,14 +598,12 @@ static struct MachineDriver ddrago3b_machine_driver =
 		{
 			CPU_M68000,
 			12000000, /* Guess */
-			0,
 			dd3b_readmem,dd3b_writemem,0,0,
 			ddragon3_cpu_interrupt,2
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,	/* Guess */
-			1,
 			readmem_sound,writemem_sound,0,0,
 			ignore_interrupt,0
 		},
@@ -649,14 +645,12 @@ static struct MachineDriver ctribe_machine_driver =
 		{
 			CPU_M68000,
 			12000000, /* Guess */
-			0,
 			ctribe_readmem,ctribe_writemem,0,0,
 			ddragon3_cpu_interrupt,2
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,	/* Guess */
-			1,
 			ctribe_readmem_sound,ctribe_writemem_sound,0,0,
 			ignore_interrupt,0
 		},
@@ -695,11 +689,11 @@ static struct MachineDriver ctribe_machine_driver =
 /**************************************************************************/
 
 ROM_START( ddragon3 )
-	ROM_REGION(0x80000)	/* 64k for cpu code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 64k for cpu code */
 	ROM_LOAD_ODD ( "30a14" ,  0x00000, 0x40000, 0xf42fe016 )
 	ROM_LOAD_EVEN( "30a15" ,  0x00000, 0x20000, 0xad50e92c )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu code */
 	ROM_LOAD( "dd3.06" ,   0x00000, 0x10000, 0x1e974d9b )
 
 	ROM_REGION_DISPOSE(  0x600000 ) /* GFX */
@@ -739,13 +733,13 @@ ROM_START( ddragon3 )
 ROM_END
 
 ROM_START( ddrago3b )
-	ROM_REGION(0x80000)	/* 64k for cpu code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 64k for cpu code */
 	ROM_LOAD_ODD ( "dd3.01" ,  0x00000, 0x20000, 0x68321d8b )
 	ROM_LOAD_EVEN( "dd3.03" ,  0x00000, 0x20000, 0xbc05763b )
 	ROM_LOAD_ODD ( "dd3.02" ,  0x40000, 0x20000, 0x38d9ae75 )
 	/* No EVEN rom! */
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu code */
 	ROM_LOAD( "dd3.06" ,   0x00000, 0x10000, 0x1e974d9b )
 
 	ROM_REGION_DISPOSE(  0x600000 ) /* GFX */
@@ -786,13 +780,13 @@ ROM_START( ddrago3b )
 ROM_END
 
 ROM_START( ctribe )
-	ROM_REGION(0x80000)	/* 64k for cpu code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 64k for cpu code */
 	ROM_LOAD_ODD ( "ic-26",      0x00000, 0x20000, 0xc46b2e63 )
 	ROM_LOAD_EVEN( "ic-25",      0x00000, 0x20000, 0x3221c755 )
 	ROM_LOAD_ODD ( "ct_ep2.rom", 0x40000, 0x10000, 0x8c2c6dbd )
 	/* No EVEN rom! */
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu code */
 	ROM_LOAD( "ct_ep4.rom",   0x00000, 0x8000, 0x4346de13 )
 
 	ROM_REGION_DISPOSE(  0x600000 ) /* GFX */
@@ -816,13 +810,13 @@ ROM_START( ctribe )
 ROM_END
 
 ROM_START( ctribeb )
-	ROM_REGION(0x80000)	/* 64k for cpu code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 64k for cpu code */
 	ROM_LOAD_ODD ( "ct_ep1.rom", 0x00000, 0x20000, 0x9cfa997f )
 	ROM_LOAD_EVEN( "ct_ep3.rom", 0x00000, 0x20000, 0x2ece8681 )
 	ROM_LOAD_ODD ( "ct_ep2.rom", 0x40000, 0x10000, 0x8c2c6dbd )
 	/* No EVEN rom! */
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu code */
 	ROM_LOAD( "ct_ep4.rom",   0x00000, 0x8000, 0x4346de13 )
 
 	ROM_REGION_DISPOSE(  0x600000 ) /* GFX */

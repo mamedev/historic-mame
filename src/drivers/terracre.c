@@ -336,14 +336,12 @@ static struct MachineDriver ym3526_machine_driver =
 		{
 			CPU_M68000,
 			8000000, /* 8 Mhz?? */
-			0,
 			readmem,writemem,0,0,
 			terracre_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 MHz???? */
-			3,
 			sound_readmem,sound_writemem,sound_readport,sound_writeport_3526,
 			interrupt,128	/* ??? */
 		},
@@ -384,14 +382,12 @@ static struct MachineDriver ym2203_machine_driver =
 		{
 			CPU_M68000,
 			8000000, /* 8 Mhz?? */
-			0,
 			readmem,writemem,0,0,
 			terracre_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 MHz???? */
-			3,
 			sound_readmem,sound_writemem,sound_readport,sound_writeport_2203,
 			interrupt,128	/* ??? */
 		},
@@ -429,7 +425,7 @@ static struct MachineDriver ym2203_machine_driver =
 
 
 ROM_START( terracre )
-	ROM_REGION(0x20000)	/* 128K for 68000 code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128K for 68000 code */
 	ROM_LOAD_ODD ( "1a_4b.rom",    0x00000, 0x4000, 0x76f17479 )
 	ROM_LOAD_EVEN( "1a_4d.rom",    0x00000, 0x4000, 0x8119f06e )
 	ROM_LOAD_ODD ( "1a_6b.rom",    0x08000, 0x4000, 0xba4b5822 )
@@ -455,7 +451,7 @@ ROM_START( terracre )
 	ROM_LOAD( "tc2a_2g.bin",  0x0300, 0x0100, 0x08609bad )	/* sprite lookup table */
 	ROM_LOAD( "tc2a_4e.bin",  0x0400, 0x0100, 0x2c43991f )	/* sprite palette bank */
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "2a_15b.rom",   0x0000, 0x4000, 0x604c3b11 )
 	ROM_LOAD( "2a_17b.rom",   0x4000, 0x4000, 0xaffc898d )
 	ROM_LOAD( "2a_18b.rom",   0x8000, 0x4000, 0x302dc0ab )
@@ -466,7 +462,7 @@ ROM_END
 /**********************************************************/
 
 ROM_START( terracrb )
-	ROM_REGION(0x20000)	/* 128K for 68000 code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128K for 68000 code */
 	ROM_LOAD_ODD ( "1a_4b.rom",    0x00000, 0x4000, 0x76f17479 )
 	ROM_LOAD_EVEN( "1a_4d.rom",    0x00000, 0x4000, 0x8119f06e )
 	ROM_LOAD_ODD ( "1a_6b.rom",    0x08000, 0x4000, 0xba4b5822 )
@@ -492,7 +488,7 @@ ROM_START( terracrb )
 	ROM_LOAD( "tc2a_2g.bin",  0x0300, 0x0100, 0x08609bad )	/* sprite lookup table */
 	ROM_LOAD( "tc2a_4e.bin",  0x0400, 0x0100, 0x2c43991f )	/* sprite palette bank */
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "2a_15b.rom",   0x0000, 0x4000, 0x604c3b11 )
 	ROM_LOAD( "dg.12",        0x4000, 0x4000, 0x9e9b3808 )
 	ROM_LOAD( "2a_18b.rom",   0x8000, 0x4000, 0x302dc0ab )
@@ -503,7 +499,7 @@ ROM_END
 /**********************************************************/
 
 ROM_START( terracra )
-	ROM_REGION(0x20000)	/* 128K for 68000 code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128K for 68000 code */
 	ROM_LOAD_ODD ( "1a_4b.rom",    0x00000, 0x4000, 0x76f17479 )
 	ROM_LOAD_EVEN( "1a_4d.rom",    0x00000, 0x4000, 0x8119f06e )
 	ROM_LOAD_ODD ( "1a_6b.rom",    0x08000, 0x4000, 0xba4b5822 )
@@ -529,7 +525,7 @@ ROM_START( terracra )
 	ROM_LOAD( "tc2a_2g.bin",  0x0300, 0x0100, 0x08609bad )	/* sprite lookup table */
 	ROM_LOAD( "tc2a_4e.bin",  0x0400, 0x0100, 0x2c43991f )	/* sprite palette bank */
 
-	ROM_REGION(0x10000)	/* 64k to sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k to sound cpu */
 	ROM_LOAD( "tc2a_15b.bin", 0x0000, 0x4000, 0x790ddfa9 )
 	ROM_LOAD( "tc2a_17b.bin", 0x4000, 0x4000, 0xd4531113 )
 ROM_END

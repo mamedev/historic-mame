@@ -278,14 +278,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* 4 Mhz? */
-			0,
 			readmem,writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3072000,	/* 3.072 Mhz (?????) */
-			2,
 			sound_readmem,sound_writemem,0,sound_writeport,
 			pbaction_interrupt,2	/* ??? */
 									/* IRQs are caused by the main CPU */
@@ -326,7 +324,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( pbaction )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "b-p7.bin",     0x0000, 0x4000, 0x8d6dcaae )
 	ROM_LOAD( "b-n7.bin",     0x4000, 0x4000, 0xd54d5402 )
 	ROM_LOAD( "b-l7.bin",     0x8000, 0x2000, 0xe7412d68 )
@@ -345,13 +343,13 @@ ROM_START( pbaction )
 	ROM_LOAD( "b-d7.bin",     0x18000, 0x2000, 0xf28df203 )
 	ROM_LOAD( "b-f7.bin",     0x1a000, 0x2000, 0xaf6e9817 )
 
-	ROM_REGION(0x10000)	/* 64k for sound board */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound board */
 	ROM_LOAD( "a-e3.bin",     0x0000,  0x2000, 0x0e53a91f )
 ROM_END
 
 
 ROM_START( pbactio2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "pba16.bin",     0x0000, 0x4000, 0x4a239ebd )
 	ROM_LOAD( "pba15.bin",     0x4000, 0x4000, 0x3afef03a )
 	ROM_LOAD( "pba14.bin",     0x8000, 0x2000, 0xc0a98c8a )
@@ -370,7 +368,7 @@ ROM_START( pbactio2 )
 	ROM_LOAD( "b-d7.bin",     0x18000, 0x2000, 0xf28df203 )
 	ROM_LOAD( "b-f7.bin",     0x1a000, 0x2000, 0xaf6e9817 )
 
-	ROM_REGION(0x10000)	/* 64k for sound board */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound board */
 	ROM_LOAD( "pba1.bin",     0x0000,  0x2000, 0x8b69b933 )
 
 	ROM_REGION(0x10000)	/* 64k for a third Z80 (not emulated) */
@@ -381,7 +379,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -405,7 +403,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

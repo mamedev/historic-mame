@@ -744,14 +744,12 @@ static struct MachineDriver cninja_machine_driver =
 		{
 			CPU_M68000,
 			12000000,
-			0,
 			cninja_readmem,cninja_writemem,0,0,
 			m68_level5_irq,1
 		},
 		{
 			CPU_H6280 | CPU_AUDIO_CPU,
 			32220000/8,	/* Accurate */
-			2,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -798,14 +796,12 @@ static struct MachineDriver stoneage_machine_driver =
 		{
 			CPU_M68000,
 			12000000,
-			0,
 			cninja_readmem,cninja_writemem,0,0,
 			m68_level5_irq,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,
-			2,
 			stoneage_s_readmem,stoneage_s_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -848,14 +844,12 @@ static struct MachineDriver edrandy_machine_driver =
 		{
 			CPU_M68000,
 			12000000,
-			0,
 			edrandy_readmem,edrandy_writemem,0,0,
 			m68_level5_irq,1
 		},
 		{
 			CPU_H6280 | CPU_AUDIO_CPU,
 			32220000/8,	/* Accurate */
-			2,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -898,7 +892,7 @@ static struct MachineDriver edrandy_machine_driver =
 /**********************************************************************************/
 
 ROM_START( cninja )
-	ROM_REGION(0xc0000) /* 68000 code */
+	ROM_REGIONX( 0xc0000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "gn02rev3.bin", 0x00000, 0x20000, 0x39aea12a )
 	ROM_LOAD_ODD ( "gn05rev2.bin", 0x00000, 0x20000, 0x0f4360ef )
 	ROM_LOAD_EVEN( "gn01rev2.bin", 0x40000, 0x20000, 0xf740ef7e )
@@ -906,7 +900,7 @@ ROM_START( cninja )
 	ROM_LOAD_EVEN( "gn-00.rom",    0x80000, 0x20000, 0x0b110b16 )
 	ROM_LOAD_ODD ( "gn-03.rom",    0x80000, 0x20000, 0x1e28e697 )
 
-	ROM_REGION(0x3a0000) /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x3a0000) /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "gl-08.rom",  0x00000,  0x10000,  0x33a2b400 )	/* chars */
 	ROM_LOAD( "gl-09.rom",  0x10000,  0x10000,  0x5a2d4752 )
 
@@ -919,7 +913,7 @@ ROM_START( cninja )
 	ROM_LOAD( "mag-05.rom", 0x2a0000, 0x80000,  0x56a53254 )
 	ROM_LOAD( "mag-06.rom", 0x320000, 0x80000,  0x82d44749 )
 
-	ROM_REGION(0x10000) /* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Sound CPU */
 	ROM_LOAD( "gl-07.rom",  0x00000,  0x10000,  0xca8bef96 )
 
 	ROM_REGION(0x20000) /* Oki samples */
@@ -930,7 +924,7 @@ ROM_START( cninja )
 ROM_END
 
 ROM_START( cninja0 )
-	ROM_REGION(0xc0000) /* 68000 code */
+	ROM_REGIONX( 0xc0000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "gn-02.rom", 0x00000, 0x20000, 0xccc59524 )
 	ROM_LOAD_ODD ( "gn-05.rom", 0x00000, 0x20000, 0xa002cbe4 )
 	ROM_LOAD_EVEN( "gn-01.rom", 0x40000, 0x20000, 0x18f0527c )
@@ -938,7 +932,7 @@ ROM_START( cninja0 )
 	ROM_LOAD_EVEN( "gn-00.rom", 0x80000, 0x20000, 0x0b110b16 )
 	ROM_LOAD_ODD ( "gn-03.rom", 0x80000, 0x20000, 0x1e28e697 )
 
-	ROM_REGION(0x3a0000) /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x3a0000) /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "gl-08.rom",  0x00000,  0x10000,  0x33a2b400 )	/* chars */
 	ROM_LOAD( "gl-09.rom",  0x10000,  0x10000,  0x5a2d4752 )
 
@@ -951,7 +945,7 @@ ROM_START( cninja0 )
 	ROM_LOAD( "mag-05.rom", 0x2a0000, 0x80000,  0x56a53254 )
 	ROM_LOAD( "mag-06.rom", 0x320000, 0x80000,  0x82d44749 )
 
-	ROM_REGION(0x10000) /* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Sound CPU */
 	ROM_LOAD( "gl-07.rom",  0x00000,  0x10000,  0xca8bef96 )
 
 	ROM_REGION(0x20000) /* Oki samples */
@@ -962,7 +956,7 @@ ROM_START( cninja0 )
 ROM_END
 
 ROM_START( cninjau )
-	ROM_REGION(0xc0000) /* 68000 code */
+	ROM_REGIONX( 0xc0000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "gm02-3.1k", 0x00000, 0x20000, 0xd931c3b1 )
 	ROM_LOAD_ODD ( "gm05-2.3k", 0x00000, 0x20000, 0x7417d3fb )
 	ROM_LOAD_EVEN( "gm01-2.1j", 0x40000, 0x20000, 0x72041f7e )
@@ -970,7 +964,7 @@ ROM_START( cninjau )
 	ROM_LOAD_EVEN( "gn-00.rom", 0x80000, 0x20000, 0x0b110b16 )
 	ROM_LOAD_ODD ( "gn-03.rom", 0x80000, 0x20000, 0x1e28e697 )
 
-	ROM_REGION(0x3a0000) /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x3a0000) /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "gl-08.rom",  0x00000,  0x10000,  0x33a2b400 )	/* chars */
 	ROM_LOAD( "gl-09.rom",  0x10000,  0x10000,  0x5a2d4752 )
 
@@ -983,7 +977,7 @@ ROM_START( cninjau )
 	ROM_LOAD( "mag-05.rom", 0x2a0000, 0x80000,  0x56a53254 )
 	ROM_LOAD( "mag-06.rom", 0x320000, 0x80000,  0x82d44749 )
 
-	ROM_REGION(0x10000) /* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Sound CPU */
 	ROM_LOAD( "gl-07.rom",  0x00000,  0x10000,  0xca8bef96 )
 
 	ROM_REGION(0x20000) /* Oki samples */
@@ -994,7 +988,7 @@ ROM_START( cninjau )
 ROM_END
 
 ROM_START( joemac )
-	ROM_REGION(0xc0000) /* 68000 code */
+	ROM_REGIONX( 0xc0000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "gl02-2.k1", 0x00000, 0x20000,  0x80da12e2 )
 	ROM_LOAD_ODD ( "gl05-2.k3", 0x00000, 0x20000,  0xfe4dbbbb )
 	ROM_LOAD_EVEN( "gl01-2.j1", 0x40000, 0x20000,  0x0b245307 )
@@ -1002,7 +996,7 @@ ROM_START( joemac )
 	ROM_LOAD_EVEN( "gn-00.rom", 0x80000, 0x20000,  0x0b110b16 )
 	ROM_LOAD_ODD ( "gn-03.rom", 0x80000, 0x20000,  0x1e28e697 )
 
-	ROM_REGION(0x3a0000) /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x3a0000) /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "gl-08.rom",  0x00000,  0x10000,  0x33a2b400 )	/* chars */
 	ROM_LOAD( "gl-09.rom",  0x10000,  0x10000,  0x5a2d4752 )
 
@@ -1015,7 +1009,7 @@ ROM_START( joemac )
 	ROM_LOAD( "mag-05.rom", 0x2a0000, 0x80000,  0x56a53254 )
 	ROM_LOAD( "mag-06.rom", 0x320000, 0x80000,  0x82d44749 )
 
-	ROM_REGION(0x10000) /* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Sound CPU */
 	ROM_LOAD( "gl-07.rom",  0x00000,  0x10000,  0xca8bef96 )
 
 	ROM_REGION(0x20000) /* Oki samples */
@@ -1026,7 +1020,7 @@ ROM_START( joemac )
 ROM_END
 
 ROM_START( stoneage )
-	ROM_REGION(0xc0000) /* 68000 code */
+	ROM_REGIONX( 0xc0000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "sa_1_019.bin", 0x00000, 0x20000,  0x7fb8c44f )
 	ROM_LOAD_ODD ( "sa_1_033.bin", 0x00000, 0x20000,  0x961c752b )
 	ROM_LOAD_EVEN( "sa_1_018.bin", 0x40000, 0x20000,  0xa4043022 )
@@ -1034,7 +1028,7 @@ ROM_START( stoneage )
 	ROM_LOAD_EVEN( "sa_1_017.bin", 0x80000, 0x20000,  0x08d6397a )
 	ROM_LOAD_ODD ( "sa_1_031.bin", 0x80000, 0x20000,  0x103079f5 )
 
-	ROM_REGION(0x3a0000) /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x3a0000) /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "gl-08.rom",  0x00000,  0x10000,  0x33a2b400 )	/* chars */
 	ROM_LOAD( "gl-09.rom",  0x10000,  0x10000,  0x5a2d4752 )
 
@@ -1050,7 +1044,7 @@ ROM_START( stoneage )
 	ROM_LOAD( "mag-05.rom", 0x2a0000, 0x80000,  0x56a53254 )
 	ROM_LOAD( "mag-06.rom", 0x320000, 0x80000,  0x82d44749 )
 
-	ROM_REGION(0x10000) /* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Sound CPU */
 	ROM_LOAD( "sa_1_012.bin",  0x00000,  0x10000, 0x56058934 )
 
 	ROM_REGION(0x40000) /* Oki samples */
@@ -1060,7 +1054,7 @@ ROM_START( stoneage )
 ROM_END
 
 ROM_START( edrandy )
-	ROM_REGION(0x100000) /* 68000 code */
+	ROM_REGIONX( 0x100000, REGION_CPU1 ) /* 68000 code */
   	ROM_LOAD_EVEN( "gg-00-2", 0x00000, 0x20000, 0xce1ba964 )
   	ROM_LOAD_ODD ( "gg-04-2", 0x00000, 0x20000, 0x24caed19 )
 	ROM_LOAD_EVEN( "gg-01-2", 0x40000, 0x20000, 0x33677b80 )
@@ -1090,7 +1084,7 @@ ROM_START( edrandy )
 	ROM_LOAD( "mad-11", 0x5a0000, 0x80000, 0x03c1f982 )
 	ROM_LOAD( "mad-12", 0x620000, 0x80000, 0xa0bd62b6 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "ge-09",    0x00000, 0x10000, 0x9f94c60b )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -1101,7 +1095,7 @@ ROM_START( edrandy )
 ROM_END
 
 ROM_START( edrandyj )
-	ROM_REGION(0x100000) /* 68000 code */
+	ROM_REGIONX( 0x100000, REGION_CPU1 ) /* 68000 code */
   	ROM_LOAD_EVEN( "ge-00-2",   0x00000, 0x20000, 0xb3d2403c )
   	ROM_LOAD_ODD ( "ge-04-2",   0x00000, 0x20000, 0x8a9624d6 )
 	ROM_LOAD_EVEN( "ge-01-2",   0x40000, 0x20000, 0x84360123 )
@@ -1131,7 +1125,7 @@ ROM_START( edrandyj )
 	ROM_LOAD( "mad-11", 0x5a0000, 0x80000, 0x03c1f982 )
 	ROM_LOAD( "mad-12", 0x620000, 0x80000, 0xa0bd62b6 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "ge-09",    0x00000, 0x10000, 0x9f94c60b )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -1211,7 +1205,7 @@ static void cninja0_hisave(void)
 
 static void cninja_patch(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int i;
 
 	for (i=0; i<0x80000; i+=2) {
@@ -1236,7 +1230,7 @@ static void cninja_patch(void)
 #if 0
 static void edrandyj_patch(void)
 {
-//	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+//	unsigned char *RAM = memory_region(REGION_CPU1);
 
 //	WRITE_WORD (&RAM[0x98cc],0x4E71);
 //	WRITE_WORD (&RAM[0x98ce],0x4E71);

@@ -25,7 +25,7 @@ void pcktgal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static void pcktgal_bank_w(int offset,int data)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if (data & 1) { cpu_setbank(1,&RAM[0x4000]); }
 	else { cpu_setbank(1,&RAM[0x10000]); }
@@ -36,7 +36,7 @@ static void pcktgal_bank_w(int offset,int data)
 
 static void pcktgal_sound_bank_w(int offset,int data)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU2);
 
 	if (data & 4) { cpu_setbank(3,&RAM[0x14000]); }
 	else { cpu_setbank(3,&RAM[0x10000]); }
@@ -273,14 +273,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
 			2000000,
-			0,
 			readmem,writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			2000000,
-			2,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 							/* IRQs are caused by the ADPCM chip */
@@ -328,14 +326,12 @@ static struct MachineDriver bootleg_machine_driver =
 		{
 			CPU_M6502,
 			2000000,
-			0,
 			readmem,writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			2000000,
-			2,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 							/* IRQs are caused by the ADPCM chip */
@@ -379,7 +375,7 @@ static struct MachineDriver bootleg_machine_driver =
 /***************************************************************************/
 
 ROM_START( pcktgal )
-    ROM_REGION(0x14000)     /* 64k for code + 16k for banks */
+    ROM_REGIONX( 0x14000, REGION_CPU1 )     /* 64k for code + 16k for banks */
     ROM_LOAD( "eb04.rom",     0x10000, 0x4000, 0x8215d60d )
 	ROM_CONTINUE(             0x04000, 0xc000)
 	/* 4000-7fff is banked but code falls through from 7fff to 8000, so */
@@ -390,7 +386,7 @@ ROM_START( pcktgal )
     ROM_LOAD( "eb02.rom",     0x10000, 0x10000, 0xa9dcd339 )
     ROM_LOAD( "eb00.rom",     0x20000, 0x10000, 0x6c1a14a8 )
 
-    ROM_REGION(0x18000)     /* audio cpu */
+    ROM_REGIONX( 0x18000, REGION_CPU2 )     /* audio cpu */
 	ROM_LOAD( "eb03.rom",     0x10000, 0x8000, 0xcb029b02 )
 	ROM_CONTINUE(             0x08000, 0x8000)
 
@@ -400,7 +396,7 @@ ROM_START( pcktgal )
 ROM_END
 
 ROM_START( pcktgalb )
-    ROM_REGION(0x14000)     /* 64k for code + 16k for banks */
+    ROM_REGIONX( 0x14000, REGION_CPU1 )     /* 64k for code + 16k for banks */
     ROM_LOAD( "sexybill.001", 0x10000, 0x4000, 0x4acb3e84 )
 	ROM_CONTINUE(             0x04000, 0xc000)
 	/* 4000-7fff is banked but code falls through from 7fff to 8000, so */
@@ -412,7 +408,7 @@ ROM_START( pcktgalb )
     ROM_LOAD( "sexybill.003", 0x20000, 0x08000, 0x58182daa )
     ROM_LOAD( "sexybill.004", 0x28000, 0x08000, 0x33a67af6 )
 
-    ROM_REGION(0x18000)     /* audio cpu */
+    ROM_REGIONX( 0x18000, REGION_CPU2 )     /* audio cpu */
 	ROM_LOAD( "eb03.rom",     0x10000, 0x8000, 0xcb029b02 )
 	ROM_CONTINUE(             0x08000, 0x8000)
 
@@ -422,7 +418,7 @@ ROM_START( pcktgalb )
 ROM_END
 
 ROM_START( pcktgal2 )
-    ROM_REGION(0x14000)     /* 64k for code + 16k for banks */
+    ROM_REGIONX( 0x14000, REGION_CPU1 )     /* 64k for code + 16k for banks */
     ROM_LOAD( "eb04-2.rom",   0x10000, 0x4000, 0x0c7f2905 )
 	ROM_CONTINUE(             0x04000, 0xc000)
 	/* 4000-7fff is banked but code falls through from 7fff to 8000, so */
@@ -433,7 +429,7 @@ ROM_START( pcktgal2 )
     ROM_LOAD( "eb02-2.rom",   0x10000, 0x10000, 0xf30d965d )
     ROM_LOAD( "eb00.rom",     0x20000, 0x10000, 0x6c1a14a8 )
 
-    ROM_REGION(0x18000)     /* audio cpu */
+    ROM_REGIONX( 0x18000, REGION_CPU2 )     /* audio cpu */
 	ROM_LOAD( "eb03-2.rom",   0x10000, 0x8000, 0x9408ffb4 )
 	ROM_CONTINUE(             0x08000, 0x8000)
 
@@ -443,7 +439,7 @@ ROM_START( pcktgal2 )
 ROM_END
 
 ROM_START( spool3 )
-    ROM_REGION(0x14000)     /* 64k for code + 16k for banks */
+    ROM_REGIONX( 0x14000, REGION_CPU1 )     /* 64k for code + 16k for banks */
     ROM_LOAD( "eb04-2.rom",   0x10000, 0x4000, 0x0c7f2905 )
 	ROM_CONTINUE(             0x04000, 0xc000)
 	/* 4000-7fff is banked but code falls through from 7fff to 8000, so */
@@ -454,7 +450,7 @@ ROM_START( spool3 )
     ROM_LOAD( "deco3.bin",    0x10000, 0x10000, 0x55ea7c45 )
     ROM_LOAD( "eb00.rom",     0x20000, 0x10000, 0x6c1a14a8 )
 
-    ROM_REGION(0x18000)     /* audio cpu */
+    ROM_REGIONX( 0x18000, REGION_CPU2 )     /* audio cpu */
 	ROM_LOAD( "eb03-2.rom",   0x10000, 0x8000, 0x9408ffb4 )
 	ROM_CONTINUE(             0x08000, 0x8000)
 
@@ -464,7 +460,7 @@ ROM_START( spool3 )
 ROM_END
 
 ROM_START( spool3i )
-    ROM_REGION(0x14000)     /* 64k for code + 16k for banks */
+    ROM_REGIONX( 0x14000, REGION_CPU1 )     /* 64k for code + 16k for banks */
     ROM_LOAD( "de1.bin",      0x10000, 0x4000, 0xa59980fe )
 	ROM_CONTINUE(             0x04000, 0xc000)
 	/* 4000-7fff is banked but code falls through from 7fff to 8000, so */
@@ -475,7 +471,7 @@ ROM_START( spool3i )
     ROM_LOAD( "deco3.bin",    0x10000, 0x10000, 0x55ea7c45 )
     ROM_LOAD( "eb00.rom",     0x20000, 0x10000, 0x6c1a14a8 )
 
-    ROM_REGION(0x18000)     /* audio cpu */
+    ROM_REGIONX( 0x18000, REGION_CPU2 )     /* audio cpu */
 	ROM_LOAD( "eb03-2.rom",   0x10000, 0x8000, 0x9408ffb4 )
 	ROM_CONTINUE(             0x08000, 0x8000)
 
@@ -493,7 +489,7 @@ static void deco222_decode(void)
 	extern int encrypted_cpu;
 
 	/* bits 5 and 6 of the opcodes are swapped */
-	RAM = memory_region(Machine->drv->cpu[1].memory_region);
+	RAM = memory_region(REGION_CPU2);
 	encrypted_cpu = 1;
 	for (A = 0;A < 0x10000;A++)
 		ROM[A] = (RAM[A] & 0x9f) | ((RAM[A] & 0x20) << 1) | ((RAM[A] & 0x40) >> 1);
@@ -501,7 +497,7 @@ static void deco222_decode(void)
 
 static void graphics_decode(void)
 {
-	unsigned char *RAM = Machine->memory_region[1];
+	unsigned char *RAM = memory_region(1);
 	int i,j,temp[16];
 
 	/* Tile graphics roms have some swapped lines, original version only */

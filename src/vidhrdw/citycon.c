@@ -121,8 +121,8 @@ for (offs = videoram_size - 1;offs >= 0;offs--)
 {
 	int code,color;
 
-	code = Machine->memory_region[2][0x1000 * bg_image + offs];
-	color = Machine->memory_region[2][0xc000 + 0x100 * bg_image + code],
+	code = memory_region(2)[0x1000 * bg_image + offs];
+	color = memory_region(2)[0xc000 + 0x100 * bg_image + code],
 	memset(&palette_used_colors[256 + 16 * color],PALETTE_COLOR_USED,16);
 }
 for (offs = 0;offs < 256;offs++)
@@ -167,11 +167,11 @@ if (palette_recalc())
 				sy = 31 - sy;
 			}
 
-			code = Machine->memory_region[2][0x1000 * bg_image + offs];
+			code = memory_region(2)[0x1000 * bg_image + offs];
 
 			drawgfx(tmpbitmap2,Machine->gfx[3 + bg_image],
 					code,
-					Machine->memory_region[2][0xc000 + 0x100 * bg_image + code],
+					memory_region(2)[0xc000 + 0x100 * bg_image + code],
 					flipscreen,flipscreen,
 					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);

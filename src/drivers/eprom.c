@@ -418,20 +418,16 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,
 			7159160,		/* 7.159 Mhz */
-			0,
 			main_readmem,main_writemem,0,0,
 			atarigen_video_int_gen,1
 		},
 		{
 			CPU_M68000,
 			7159160,		/* 7.159 Mhz */
-			1,
 			extra_readmem,extra_writemem,0,0,
 			ignore_interrupt,1
 		},
-		{
-			JSA_I_CPU(2)
-		}
+		JSA_I_CPU
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	10,
@@ -467,10 +463,10 @@ static void rom_decode(void)
 
 	/* invert the graphics bits on the playfield and motion objects */
 	for (i = 0; i < 0x100000; i++)
-		Machine->memory_region[3][i] ^= 0xff;
+		memory_region(3)[i] ^= 0xff;
 
 	/* copy the shared ROM from region 0 to region 1 */
-	memcpy(&Machine->memory_region[1][0x60000], &memory_region(Machine->drv->cpu[0].memory_region)[0x60000], 0x20000);
+	memcpy(&memory_region(1)[0x60000], &memory_region(REGION_CPU1)[0x60000], 0x20000);
 }
 
 
@@ -482,7 +478,7 @@ static void rom_decode(void)
  *************************************/
 
 ROM_START( eprom )
-	ROM_REGION(0xa0000)	/* 10*64k for 68000 code */
+	ROM_REGIONX( 0xa0000, REGION_CPU1 )	/* 10*64k for 68000 code */
 	ROM_LOAD_EVEN( "136069.50a",   0x00000, 0x10000, 0x08888dec )
 	ROM_LOAD_ODD ( "136069.40a",   0x00000, 0x10000, 0x29cb1e97 )
 	ROM_LOAD_EVEN( "136069.50b",   0x20000, 0x10000, 0x702241c9 )
@@ -492,11 +488,11 @@ ROM_START( eprom )
 	ROM_LOAD_EVEN( "136069.40k",   0x60000, 0x10000, 0x130650f6 )
 	ROM_LOAD_ODD ( "136069.50k",   0x60000, 0x10000, 0x1da21ed8 )
 
-	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU2 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "136069.10s",   0x00000, 0x10000, 0xdeff6469 )
 	ROM_LOAD_ODD ( "136069.10u",   0x00000, 0x10000, 0x5d7afca2 )
 
-	ROM_REGION(0x14000)	/* 64k + 16k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU3 )	/* 64k + 16k for 6502 code */
 	ROM_LOAD( "136069.7b",    0x10000, 0x4000, 0x86e93695 )
 	ROM_CONTINUE(             0x04000, 0xc000 )
 
@@ -522,7 +518,7 @@ ROM_END
 
 
 ROM_START( eprom2 )
-	ROM_REGION(0xa0000)	/* 10*64k for 68000 code */
+	ROM_REGIONX( 0xa0000, REGION_CPU1 )	/* 10*64k for 68000 code */
 	ROM_LOAD_EVEN( "1025.50a",   0x00000, 0x10000, 0xb0c9a476 )
 	ROM_LOAD_ODD ( "1024.40a",   0x00000, 0x10000, 0x4cc2c50c )
 	ROM_LOAD_EVEN( "1027.50b",   0x20000, 0x10000, 0x84f533ea )
@@ -534,11 +530,11 @@ ROM_START( eprom2 )
 	ROM_LOAD_EVEN( "1037.50e",   0x80000, 0x10000, 0xad39a3dd )
 	ROM_LOAD_ODD ( "1036.40e",   0x80000, 0x10000, 0x34fc8895 )
 
-	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU2 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "1035.10s",   0x00000, 0x10000, 0xffeb5647 )
 	ROM_LOAD_ODD ( "1034.10u",   0x00000, 0x10000, 0xc68f58dd )
 
-	ROM_REGION(0x14000)	/* 64k + 16k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU3 )	/* 64k + 16k for 6502 code */
 	ROM_LOAD( "136069.7b",    0x10000, 0x4000, 0x86e93695 )
 	ROM_CONTINUE(             0x04000, 0xc000 )
 

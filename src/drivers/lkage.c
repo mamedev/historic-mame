@@ -20,11 +20,8 @@ MCU (used by original version): not hooked up
 #include "cpu/z80/z80.h"
 #include "cpu/m6805/m6805.h"
 
-#define MEM_CPU_MAIN	0
 #define MEM_DATA		1
-#define MEM_CPU_SOUND	2
 #define MEM_GFX			3
-#define MEM_MCU			4
 
 #define CREDITS "Phil Stroffolino"
 
@@ -120,7 +117,7 @@ static struct MemoryWriteAddress writemem[] = {
 
 static int port_fetch_r( int offset )
 {
-	return Machine->memory_region[MEM_DATA][offset];
+	return memory_region(MEM_DATA)[offset];
 }
 
 static struct IOReadPort readport[] = {
@@ -326,19 +323,18 @@ static struct GfxDecodeInfo gfxdecodeinfo[] = {
 	{ -1 }
 };
 
-static struct MachineDriver machine_driver = {
+static struct MachineDriver machine_driver =
+{
 	{
 		{
 			CPU_Z80 | CPU_16BIT_PORT,
 			6000000,	/* ??? */
-			MEM_CPU_MAIN,
 			readmem,writemem,readport,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			6000000,	/* ??? */
-			MEM_CPU_SOUND,
 			readmem_sound,writemem_sound,0,0,
 			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
 								/* IRQs are triggered by the YM2203 */
@@ -346,7 +342,6 @@ static struct MachineDriver machine_driver = {
 //		{
 //			CPU_M68705,
 //			4000000/2,	/* ??? */
-//			MEM_MCU,
 //			m68705_readmem,m68705_writemem,0,0,
 //			ignore_interrupt,1
 //		},
@@ -381,14 +376,14 @@ static struct MachineDriver machine_driver = {
 };
 
 ROM_START( lkage )
-	ROM_REGION( 0x14000 ) /* Z80 code (main CPU) */
+	ROM_REGIONX( 0x14000, REGION_CPU1 ) /* Z80 code (main CPU) */
 	ROM_LOAD( "a54-01-1.37", 0x00000, 0x8000, 0x973da9c5 )
 	ROM_LOAD( "a54-02-1.38", 0x08000, 0x8000, 0x27b509da )
 
 	ROM_REGION( 0x4000 ) /* data */
 	ROM_LOAD( "a54-03.51",   0x00000, 0x4000, 0x493e76d8 )
 
-	ROM_REGION( 0x10000 ) /* Z80 code (sound CPU) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Z80 code (sound CPU) */
 	ROM_LOAD( "a54-04.54",   0x00000, 0x8000, 0x541faf9a )
 
 	ROM_REGION_DISPOSE( 0x10000 ) /* GFX: tiles & sprites */
@@ -402,14 +397,14 @@ ROM_START( lkage )
 ROM_END
 
 ROM_START( lkageb )
-	ROM_REGION( 0x10000 ) /* Z80 code (main CPU) */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* Z80 code (main CPU) */
 	ROM_LOAD( "lok.a",     0x0000, 0x8000, 0x866df793 )
 	ROM_LOAD( "lok.b",     0x8000, 0x8000, 0xfba9400f )
 
 	ROM_REGION( 0x4000 ) /* data */
 	ROM_LOAD( "a54-03.51", 0x0000, 0x4000, 0x493e76d8 ) // LOK.C
 
-	ROM_REGION( 0x10000 ) /* Z80 code (sound CPU) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Z80 code (sound CPU) */
 	ROM_LOAD( "a54-04.54", 0x0000, 0x8000, 0x541faf9a ) // LOK.D
 
 	ROM_REGION_DISPOSE( 0x10000 ) /* GFX: tiles & sprites */
@@ -424,7 +419,7 @@ ROM_END
 /****  Legend of Kage high score save routine - RJF (July 29, 1999)  ****/
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0xe287],"\x4b\x21\x53",3) == 0)
@@ -451,7 +446,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -463,7 +458,7 @@ static void hisave(void)
 /** Legend of Kage (bootleg) high score save routine - RJF (July 30, 1999) **/
 static int lkageb_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0xe287],"\x4b\x21\x53",3) == 0)

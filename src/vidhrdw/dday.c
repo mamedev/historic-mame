@@ -295,7 +295,7 @@ void dday_vh_convert_color_prom(unsigned char *palette, unsigned short *colortab
 void dday_decode(void)
 {
 	int i;
-	UINT8 *mask = Machine->memory_region[3];
+	UINT8 *mask = memory_region(3);
 	UINT8 data;
 
 
@@ -324,7 +324,7 @@ int dday_colorram_r(int offset)
 
 void dday_searchlight_w(int offset, int data)
 {
-	searchlight_image = &Machine->memory_region[3][0x200*(data & 0x07)];
+	searchlight_image = &memory_region(3)[0x200*(data & 0x07)];
 	searchlight_flipx = (data >> 3) & 0x01;
 }
 
@@ -389,7 +389,7 @@ void dday_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			code &= 0x3f;
 		}
 
-		searchlight_bitmap = &Machine->memory_region[3][(flipx ? 0x1800 : 0x1000) | (code << 3)];
+		searchlight_bitmap = &memory_region(3)[(flipx ? 0x1800 : 0x1000) | (code << 3)];
 
 		sx *= 8;
 		sy *= 8;
@@ -406,7 +406,7 @@ void dday_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			UINT8* layer_bitmap;
 
 
-			layer_bitmap = &Machine->memory_region[4][code_background << 3];
+			layer_bitmap = &memory_region(4)[code_background << 3];
 
 			/* draw part of background appearing behind the vehicles
 			   skipping characters totally in the foreground */

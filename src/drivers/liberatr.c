@@ -341,7 +341,6 @@ static struct MachineDriver NAME##_machine_driver =		\
 		{												\
 			CPU_M6502,									\
 			1250000,		/* 1.25 Mhz */				\
-			0,											\
 			NAME##_readmem,NAME##_writemem,0,0,			\
 			interrupt, 4								\
 		}												\
@@ -383,7 +382,7 @@ MACHINE_DRIVER(liberat2)
 ***************************************************************************/
 
 ROM_START( liberatr )
-	ROM_REGION(0x10000)	/* 64k for code and data  */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code and data  */
 	ROM_LOAD( "136012.206",   0x8000, 0x1000, 0x1a0cb4a0 )
 	ROM_LOAD( "136012.205",   0x9000, 0x1000, 0x2f071920 )
 	ROM_LOAD( "136012.204",   0xa000, 0x1000, 0xbcc91827 )
@@ -393,7 +392,7 @@ ROM_START( liberatr )
 	ROM_LOAD( "136012.200",   0xe000, 0x1000, 0x1e98d21a )
 	ROM_RELOAD(				  0xf000, 0x1000 )		/* for interrupt/reset vectors  */
 
-	ROM_REGION(0x4000)	/* 16k for planet image  */
+	ROM_REGION( 0x4000 )	/* 16k for planet image  */
 	ROM_LOAD( "136012.110",   0x0000, 0x1000, 0x6eb11221 )
 	ROM_LOAD( "136012.107",   0x1000, 0x1000, 0x8a616a63 )
 	ROM_LOAD( "136012.108",   0x2000, 0x1000, 0x3f8e4cf6 )
@@ -401,7 +400,7 @@ ROM_START( liberatr )
 ROM_END
 
 ROM_START( liberat2 )
-	ROM_REGION(0x10000)	/* 64k for code and data  */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code and data  */
 	ROM_LOAD( "l6.bin",       0x6000, 0x1000, 0x78093d06 )
 	ROM_LOAD( "l5.bin",       0x7000, 0x1000, 0x988db636 )
 	ROM_LOAD( "l4.bin",       0x8000, 0x1000, 0xec114540 )
@@ -410,7 +409,7 @@ ROM_START( liberat2 )
 	ROM_LOAD( "l1.bin",       0xb000, 0x1000, 0xef6e9f9e )
 	ROM_RELOAD(				  0xf000, 0x1000 )		/* for interrupt/reset vectors  */
 
-	ROM_REGION(0x4000)	/* 16k for planet image  */
+	ROM_REGION( 0x4000 )	/* 16k for planet image  */
 	ROM_LOAD( "136012.110",   0x0000, 0x1000, 0x6eb11221 )
 	ROM_LOAD( "136012.107",   0x1000, 0x1000, 0x8a616a63 )
 	ROM_LOAD( "136012.108",   0x2000, 0x1000, 0x3f8e4cf6 )

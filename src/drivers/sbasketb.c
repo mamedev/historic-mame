@@ -255,14 +255,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			1400000,        /* 1.400 Mhz ??? */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318000/4,	/* 3.5795 Mhz */
-			3,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -310,7 +308,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( sbasketb )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "sbb_j13.bin",  0x6000, 0x2000, 0x263ec36b )
 	ROM_LOAD( "sbb_j11.bin",  0x8000, 0x4000, 0x0a4d7a82 )
 	ROM_LOAD( "sbb_j09.bin",  0xc000, 0x4000, 0x4f9dd9a0 )
@@ -328,7 +326,7 @@ ROM_START( sbasketb )
 	ROM_LOAD( "405e20",       0x0300, 0x0100, 0x8ca6de2f ) /* character lookup table */
 	ROM_LOAD( "405e19",       0x0400, 0x0100, 0xe0bc782f ) /* sprite lookup table */
 
-	ROM_REGION(0x10000)     /* 64k for audio cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio cpu */
 	ROM_LOAD( "sbb_e13.bin",  0x0000, 0x2000, 0x1ec7458b )
 
 	ROM_REGION(0x10000)     /* 64k for speech rom */
@@ -338,7 +336,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -361,7 +359,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

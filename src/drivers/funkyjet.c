@@ -337,14 +337,12 @@ static struct MachineDriver funkyjet_machine_driver =
 	 	{
 			CPU_M68000,
 			14000000, /* 28 MHz crystal */
-			0,
 			funkyjet_readmem,funkyjet_writemem,0,0,
 			m68_level6_irq,1
 		},
 		{
 			CPU_H6280 | CPU_AUDIO_CPU, /* Custom chip 45 */
 			32220000/8, /* Audio section crystal is 32.220 MHz */
-			2,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -383,7 +381,7 @@ static struct MachineDriver funkyjet_machine_driver =
 /******************************************************************************/
 
 ROM_START( funkyjet )
-	ROM_REGION(0x80000) /* 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "jk00.12f", 0x00000, 0x40000, 0x712089c1 )
 	ROM_LOAD_ODD ( "jk01.13f", 0x00000, 0x40000, 0xbe3920d7 )
 
@@ -392,7 +390,7 @@ ROM_START( funkyjet )
 	ROM_LOAD( "mat01", 0x080000, 0x80000, 0x24093a8d )
 	ROM_LOAD( "mat02", 0x100000, 0x80000, 0xe4b94c7e ) /* chars */
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "jk02.16f",    0x00000, 0x10000, 0x748c0bd8 )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */

@@ -335,7 +335,6 @@ static struct MachineDriver machine_driver =
         {
             CPU_Z80,
 			4000000,	/* 4 Mhz */
-            0,
             readmem,writemem,
             readport,writeport,
             interrupt,1
@@ -343,7 +342,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3000000,	/* 3 Mhz */
-			2,
 			sound_readmem,sound_writemem,0,0,
 			/* interrupts (from Jungle King hardware, might be wrong): */
 			/* - no interrupts synced with vblank */
@@ -391,7 +389,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( bking2 )
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU1 )
 	ROM_LOAD( "01.13f",       0x0000, 0x1000, 0x078ada3f )
 	ROM_LOAD( "02.11f",       0x1000, 0x1000, 0xc37d110a )
 	ROM_LOAD( "03.10f",       0x2000, 0x1000, 0x2ba5c681 )
@@ -412,7 +410,7 @@ ROM_START( bking2 )
 	ROM_LOAD( "18",           0x6800, 0x0800, 0xfc9cec31 )	/* ball 1 graphics. Only the first 128 bytes used */
 	ROM_LOAD( "19",           0x7000, 0x0800, 0xfc9cec31 )  /* ball 2 graphics. Only the first 128 bytes used */
 
-	ROM_REGION(0x10000)         /* Sound ROMs */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )         /* Sound ROMs */
 	ROM_LOAD( "15",           0x0000, 0x1000, 0xf045d0fe )
 	ROM_LOAD( "16",           0x1000, 0x1000, 0x92d50410 )
 

@@ -168,12 +168,12 @@ typedef struct ym2151_v{
 #define MIN_VOL_INDEX	((1<<ENV_SH)-1)
 #define VOLUME_OFF		(ENV_LEN<<ENV_SH)
 
-#define SIN_BITS		10
+#define SIN_BITS		11
 #define SIN_LEN			(1<<SIN_BITS)
 #define SIN_MASK		(SIN_LEN-1)
 #define SIN_AMPLITUDE_BITS (SIN_BITS+2+FREQ_SH)
 /*
-** SIN_AMPLITUDE_BITS = 10+2+16=28 bits
+** SIN_AMPLITUDE_BITS = 11+2+16=29 bits
 */
 
 #define LFO_BITS		8
@@ -258,22 +258,7 @@ static FILE *sample[9];
  *   This table is converted while initialization...
 */
 static unsigned char DT1Tab[4*32]={ /* 4*32 DT1 values */
-#if 1
-/*DT_TABLE based on YM-2151 User's Manual*/
-/* DT1=0 */
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* DT1=1 */
-  0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2,
-  2, 3, 3, 3, 4, 4, 4, 5, 5, 6, 6, 7, 8, 8, 9,10,
-/* DT1=2 */
-  1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5,
-  5, 6, 6, 7, 8, 8, 9,10,11,12,13,14,16,17,19,20,
-/* DT1=3 */
-  2, 2, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 6, 6, 7,
-  8, 8, 9,10,11,12,13,14,16,17,19,20,22,22,22,22
-#else
-/*DT_TABLE based on YM2608 docs*/
+/*DT_TABLE based on YM2608 docs (which is correct)*/
 /* DT1=0 */
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -286,7 +271,6 @@ static unsigned char DT1Tab[4*32]={ /* 4*32 DT1 values */
 /* DT1=3 */
   2, 2, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 6, 6, 7,
   8, 8, 9,10,11,12,13,14,16,17,19,20,22,22,22,22
-#endif
 };
 
 /*
@@ -316,7 +300,7 @@ static unsigned int DT2Tab[4]={ 0, 384, 500, 608 };
  * 10-bits decibel values with bits weighting:
  *
  * bit | 9  | 8  | 7  | 6 | 5 | 4   | 3    | 2     | 1      | 0       |
- * ----|----|----|----|---|---|-----|------|-------|--------|---------|
+ * ----+----+----+----+---+---+-----+------|-------|--------|---------|
  * dB  | 48 | 24 | 12 | 6 | 3 | 1.5 | 0.75 | 0.375 | 0.1875 | 0.09375 |
  *
 */
@@ -389,7 +373,7 @@ void init_tables(void)
 #ifdef NEW_WAY
 			m = ( (1<<SIN_AMPLITUDE_BITS) ) / pow(2, x * ENV_STEPN / 8.0);
 #else
-			m = ( (1<<SIN_AMPLITUDE_BITS) ) / pow(10, x * ENV_STEP / 20.0);
+			m = ( ( (1<<(SIN_AMPLITUDE_BITS-FREQ_SH)) -1) << FREQ_SH ) / pow(10, x * ENV_STEP / 20.0);
 #endif
 		}
 		else
@@ -508,24 +492,6 @@ void init_chip_tables(YM2151 *chip)
 	}
 #endif
 
-#if 0
-	fprintf(errorlog,"YM2151 cross frequency check\n");
-	for (j=1; j<11; j++ )
-	{
-		fprintf(errorlog,"oct %02i / oct %02i       ",10,10-j );
-	}
-	fprintf(errorlog,"\n" );
-
-	for (i=10*768; i<11*768; i++)
-	{
-		for (j=1; j<11; j++ )
-		{
-			fprintf(errorlog,"%20.15f  ",(double)chip->freq[i] / (double)chip->freq[i-j*768] );
-		}
-		fprintf(errorlog,"\n" );
-	}
-#endif
-
 	mult = (1<<FREQ_SH);
 	for (j=0; j<4; j++)
 	{
@@ -592,7 +558,7 @@ void init_chip_tables(YM2151 *chip)
 				}
 			}
 		}
-		if (i==63) pom=(ENV_LEN<<ENV_SH);
+		if (i>=62) pom=(ENV_LEN<<ENV_SH);
 		pom2 = pom2 / 385303.47656;		/*DR scale value*/
 		chip->A_Time[i] = pom;
 		chip->D_Time[i] = pom2;
@@ -611,61 +577,6 @@ void init_chip_tables(YM2151 *chip)
 		chip->A_Time[ 64+i ] = chip->A_Time[63];
 		chip->D_Time[ 64+i ] = chip->D_Time[63];
 	}
-
-#if 0
-/*CUT*/
-{
-unsigned int clck[]={3580000,3600000,4000000};
-unsigned int a_Time[300];
-unsigned int d_Time[300];
-int clknum;
-
-if (errorlog)
-fprintf(errorlog,"YM2151 ENVELOPE TIMING TEST FOR CLOCKS:\n                        3580000       3600000       4000000\n");
-
-	for (i=4; i<64; i++){
-		pom2 = 1.0;
-		if (i<60) pom2 *= ( 1.0 + (i&3)*0.25 );
-		pom2 *= 1<<((i>>2)-1);
-		pom2 *= (double)(1<<ENV_SH);
-		if (i<52){
-			pom  = pom2 / 27876.0;   		/*AR scale value 0-12*/
-		}else{
-			if ( (i>=52) && (i<56) ){
-				pom  = pom2 / 30600.0;   	/*AR scale value 13*/
-			}else{
-				if ( (i>=56) && (i<60) ){
-					pom  = pom2 / 32200.0;	/*AR scale value 14*/
-				}else{
-					pom  = pom2 / 30400.0;	/*AR scale value 15*/
-				}
-			}
-		}
-		if (i==63) pom=(ENV_LEN<<ENV_SH);
-		pom2 = pom2 / 385303.47656;		/*DR scale value*/
-
-		for(clknum=0; clknum<3; clknum++)
-		{
-			a_Time[i + clknum*100] = pom  * (double)clck[clknum] / (double)chip->sampfreq;
-			d_Time[i + clknum*100] = pom2 * (double)clck[clknum] / (double)chip->sampfreq;
-		}
-	}
-
-	for (i=4; i<64; i++){
-	    if (errorlog)
-		fprintf(errorlog,"Rate %2i %1i  Attack [emul %9.4f  | %9.4f  | %9.4f  ]  Decay [emul %11.4f  | %11.4f  | %11.4f ]\n",i>>2, i&3,
-		( ((double)(ENV_LEN<<ENV_SH)) / (double)a_Time[i]     ) * (1000.0 / (double)chip->sampfreq),
-		( ((double)(ENV_LEN<<ENV_SH)) / (double)a_Time[i+100] ) * (1000.0 / (double)chip->sampfreq),
-		( ((double)(ENV_LEN<<ENV_SH)) / (double)a_Time[i+200] ) * (1000.0 / (double)chip->sampfreq),
-
-		( ((double)(ENV_LEN<<ENV_SH)) / (double)d_Time[i]     ) * (1000.0 / (double)chip->sampfreq),
-		( ((double)(ENV_LEN<<ENV_SH)) / (double)d_Time[i+100] ) * (1000.0 / (double)chip->sampfreq),
-		( ((double)(ENV_LEN<<ENV_SH)) / (double)d_Time[i+200] ) * (1000.0 / (double)chip->sampfreq) );
-	}
-
-}
-/*CUT END*/
-#endif
 
 
 	/* precalculate timers' deltas */
@@ -695,7 +606,7 @@ fprintf(errorlog,"YM2151 ENVELOPE TIMING TEST FOR CLOCKS:\n                     
 }
 
 
-/*#define RESET_VOLUME_ON_KEYON*/
+#define RESET_VOLUME_ON_KEYON
 
 /*
 ** This switch is defined here because I'm not _really_ sure if YM2151
@@ -745,7 +656,6 @@ INLINE void envelope_KONKOFF(OscilRec * op, int v)
 		#else
 			op->a_volume = op->volume;              /*don't reset volume*/
 		#endif
-			op->OscilFB = 0;
 			op->phase   = 0;      /*clear feedback and phase */
 			op->state   = EG_ATT; /*KEY ON = attack*/
 		}
@@ -769,7 +679,6 @@ INLINE void envelope_KONKOFF(OscilRec * op, int v)
 		#else
 			op->a_volume = op->volume;              /*don't reset volume*/
 		#endif
-			op->OscilFB = 0;
 			op->phase   = 0;      /*clear feedback and phase */
 			op->state   = EG_ATT; /*KEY ON = attack*/
 		}
@@ -793,7 +702,6 @@ INLINE void envelope_KONKOFF(OscilRec * op, int v)
 		#else
 			op->a_volume = op->volume;              /*don't reset volume*/
 		#endif
-			op->OscilFB = 0;
 			op->phase   = 0;      /*clear feedback and phase */
 			op->state   = EG_ATT; /*KEY ON = attack*/
 		}
@@ -979,7 +887,7 @@ void YM2151WriteReg(int n, int r, int v)
 		case 0x01: /*LFO Reset(bit 1), Test Register (other bits)*/
 			if (v&2) chip->LFOphase = 0;
 			if (errorlog && (v&0xfd) )
-				fprintf(errorlog,"\nYM2151 TEST MODE ON (%02x)\n PLEASE INFORM JAREK BURCZYNSKI ABOUT THIS !!!\nIt is **VERY** important\n\n",v);
+				fprintf(errorlog,"\nYM2151 TEST MODE ON (%02x)\n",v);
 			break;
 		case 0x08:
 			envelope_KONKOFF(&chip->Oscils[ (v&7) ], v );
@@ -1007,7 +915,7 @@ void YM2151WriteReg(int n, int r, int v)
 			break;
 		case 0x14: /*CSM, irq flag reset, irq enable, timer start/stop*/
 			if (errorlog && (v&0x80) )
-				fprintf(errorlog,"\nYM2151 CSM MODE ON\n PLEASE INFORM JAREK BURCZYNSKI ABOUT THIS !!!\nIt is **VERY** important\n\n");
+				fprintf(errorlog,"\nYM2151 CSM MODE ON\n");
 			chip->IRQenable = v;	/*bit 3-timer B, bit 2-timer A*/
 			if (v&0x20)	/*FRESET B*/
 			{

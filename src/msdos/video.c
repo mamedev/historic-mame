@@ -74,6 +74,7 @@ void blitscreen_dirty1_vesa_2x_2x_8bpp(void);
 void blitscreen_dirty1_vesa_2x_2xs_8bpp(void);
 void blitscreen_dirty1_vesa_2x_3x_8bpp(void);
 void blitscreen_dirty1_vesa_2x_3xs_8bpp(void);
+void blitscreen_dirty1_vesa_3x_1x_8bpp(void);
 void blitscreen_dirty1_vesa_3x_2x_8bpp(void);
 void blitscreen_dirty1_vesa_3x_2xs_8bpp(void);
 void blitscreen_dirty1_vesa_3x_3x_8bpp(void);
@@ -84,19 +85,29 @@ void blitscreen_dirty1_vesa_4x_3x_8bpp(void);
 void blitscreen_dirty1_vesa_4x_3xs_8bpp(void);
 
 void blitscreen_dirty1_vesa_1x_1x_16bpp(void);
-void blitscreen_dirty1_vesa_2x_2x_16bpp(void);
-void blitscreen_dirty1_vesa_2x_2xs_16bpp(void);
 void blitscreen_dirty1_vesa_1x_2x_16bpp(void);
 void blitscreen_dirty1_vesa_1x_2xs_16bpp(void);
-
-/* additional blitters - to handle double width mode(s) */
-void blitscreen_dirty1_vesa_3x_1x_8bpp(void);
 void blitscreen_dirty1_vesa_2x_1x_16bpp(void);
+void blitscreen_dirty1_vesa_2x_2x_16bpp(void);
+void blitscreen_dirty1_vesa_2x_2xs_16bpp(void);
 void blitscreen_dirty1_vesa_3x_1x_16bpp(void);
-void blitscreen_dirty1_vesa_4x_2x_16bpp(void);
-void blitscreen_dirty1_vesa_4x_2xs_16bpp(void);
 void blitscreen_dirty1_vesa_3x_2x_16bpp(void);
 void blitscreen_dirty1_vesa_3x_2xs_16bpp(void);
+void blitscreen_dirty1_vesa_4x_2x_16bpp(void);
+void blitscreen_dirty1_vesa_4x_2xs_16bpp(void);
+
+void blitscreen_dirty1_vesa_1x_1x_16bpp_palettized(void);
+void blitscreen_dirty1_vesa_1x_2x_16bpp_palettized(void);
+void blitscreen_dirty1_vesa_1x_2xs_16bpp_palettized(void);
+void blitscreen_dirty1_vesa_2x_1x_16bpp_palettized(void);
+void blitscreen_dirty1_vesa_2x_2x_16bpp_palettized(void);
+void blitscreen_dirty1_vesa_2x_2xs_16bpp_palettized(void);
+void blitscreen_dirty1_vesa_3x_1x_16bpp_palettized(void);
+void blitscreen_dirty1_vesa_3x_2x_16bpp_palettized(void);
+void blitscreen_dirty1_vesa_3x_2xs_16bpp_palettized(void);
+void blitscreen_dirty1_vesa_4x_2x_16bpp_palettized(void);
+void blitscreen_dirty1_vesa_4x_2xs_16bpp_palettized(void);
+
 
 /* dirty mode 0 (no osd_mark_dirty calls) */
 void blitscreen_dirty0_vga(void);
@@ -109,6 +120,7 @@ void blitscreen_dirty0_vesa_2x_2x_8bpp(void);
 void blitscreen_dirty0_vesa_2x_2xs_8bpp(void);
 void blitscreen_dirty0_vesa_2x_3x_8bpp(void);
 void blitscreen_dirty0_vesa_2x_3xs_8bpp(void);
+void blitscreen_dirty0_vesa_3x_1x_8bpp(void);
 void blitscreen_dirty0_vesa_3x_2x_8bpp(void);
 void blitscreen_dirty0_vesa_3x_2xs_8bpp(void);
 void blitscreen_dirty0_vesa_3x_3x_8bpp(void);
@@ -121,17 +133,28 @@ void blitscreen_dirty0_vesa_4x_3xs_8bpp(void);
 void blitscreen_dirty0_vesa_1x_1x_16bpp(void);
 void blitscreen_dirty0_vesa_1x_2x_16bpp(void);
 void blitscreen_dirty0_vesa_1x_2xs_16bpp(void);
+void blitscreen_dirty0_vesa_2x_1x_16bpp(void);
 void blitscreen_dirty0_vesa_2x_2x_16bpp(void);
 void blitscreen_dirty0_vesa_2x_2xs_16bpp(void);
-
-/* additional blitters - to handle double width mode(s) */
-void blitscreen_dirty0_vesa_3x_1x_8bpp(void);
-void blitscreen_dirty0_vesa_2x_1x_16bpp(void);
 void blitscreen_dirty0_vesa_3x_1x_16bpp(void);
-void blitscreen_dirty0_vesa_4x_2x_16bpp(void);
-void blitscreen_dirty0_vesa_4x_2xs_16bpp(void);
 void blitscreen_dirty0_vesa_3x_2x_16bpp(void);
 void blitscreen_dirty0_vesa_3x_2xs_16bpp(void);
+void blitscreen_dirty0_vesa_4x_2x_16bpp(void);
+void blitscreen_dirty0_vesa_4x_2xs_16bpp(void);
+
+void blitscreen_dirty0_vesa_1x_1x_16bpp_palettized(void);
+void blitscreen_dirty0_vesa_1x_2x_16bpp_palettized(void);
+void blitscreen_dirty0_vesa_1x_2xs_16bpp_palettized(void);
+void blitscreen_dirty0_vesa_2x_1x_16bpp_palettized(void);
+void blitscreen_dirty0_vesa_2x_2x_16bpp_palettized(void);
+void blitscreen_dirty0_vesa_2x_2xs_16bpp_palettized(void);
+void blitscreen_dirty0_vesa_3x_1x_16bpp_palettized(void);
+void blitscreen_dirty0_vesa_3x_2x_16bpp_palettized(void);
+void blitscreen_dirty0_vesa_3x_2xs_16bpp_palettized(void);
+void blitscreen_dirty0_vesa_4x_2x_16bpp_palettized(void);
+void blitscreen_dirty0_vesa_4x_2xs_16bpp_palettized(void);
+
+
 
 static void update_screen_dummy(void);
 void (*update_screen)(void) = update_screen_dummy;
@@ -142,90 +165,126 @@ void (*update_screen)(void) = update_screen_dummy;
 #define MAX_Y_MULTIPLY16 2
 
 static void (*updaters8[MAX_X_MULTIPLY][MAX_Y_MULTIPLY][2][2])(void) =
-{                       /* 1 x 1 */
-	{       {       { blitscreen_dirty0_vesa_1x_1x_8bpp, blitscreen_dirty1_vesa_1x_1x_8bpp },
+{			/* 1 x 1 */
+	{	{	{ blitscreen_dirty0_vesa_1x_1x_8bpp, blitscreen_dirty1_vesa_1x_1x_8bpp },
 			{ blitscreen_dirty0_vesa_1x_1x_8bpp, blitscreen_dirty1_vesa_1x_1x_8bpp }
-		},      /* 1 x 2 */
-		{       { blitscreen_dirty0_vesa_1x_2x_8bpp,  blitscreen_dirty1_vesa_1x_2x_8bpp },
+		},	/* 1 x 2 */
+		{	{ blitscreen_dirty0_vesa_1x_2x_8bpp,  blitscreen_dirty1_vesa_1x_2x_8bpp },
 			{ blitscreen_dirty0_vesa_1x_2xs_8bpp, blitscreen_dirty1_vesa_1x_2xs_8bpp }
-		},      /* 1 x 3 */
-		{       { update_screen_dummy, update_screen_dummy },
+		},	/* 1 x 3 */
+		{	{ update_screen_dummy, update_screen_dummy },
 			{ update_screen_dummy, update_screen_dummy },
 		}
-	},              /* 2 x 1 */
-	{       {       { blitscreen_dirty0_vesa_2x_1x_8bpp, blitscreen_dirty1_vesa_2x_1x_8bpp },
+	},		/* 2 x 1 */
+	{	{	{ blitscreen_dirty0_vesa_2x_1x_8bpp, blitscreen_dirty1_vesa_2x_1x_8bpp },
 			{ blitscreen_dirty0_vesa_2x_1x_8bpp, blitscreen_dirty1_vesa_2x_1x_8bpp }
-		},      /* 2 x 2 */
-		{       { blitscreen_dirty0_vesa_2x_2x_8bpp,  blitscreen_dirty1_vesa_2x_2x_8bpp },
+		},	/* 2 x 2 */
+		{	{ blitscreen_dirty0_vesa_2x_2x_8bpp,  blitscreen_dirty1_vesa_2x_2x_8bpp },
 			{ blitscreen_dirty0_vesa_2x_2xs_8bpp, blitscreen_dirty1_vesa_2x_2xs_8bpp }
-		},      /* 2 x 3 */
-		{       { blitscreen_dirty0_vesa_2x_3x_8bpp,  blitscreen_dirty1_vesa_2x_3x_8bpp },
+		},	/* 2 x 3 */
+		{	{ blitscreen_dirty0_vesa_2x_3x_8bpp,  blitscreen_dirty1_vesa_2x_3x_8bpp },
 			{ blitscreen_dirty0_vesa_2x_3xs_8bpp, blitscreen_dirty1_vesa_2x_3xs_8bpp }
 		}
-	},              /* 3 x 1 */
-	{       {       { blitscreen_dirty0_vesa_3x_1x_8bpp,  blitscreen_dirty1_vesa_3x_1x_8bpp },
+	},		/* 3 x 1 */
+	{	{	{ blitscreen_dirty0_vesa_3x_1x_8bpp,  blitscreen_dirty1_vesa_3x_1x_8bpp },
 			{ update_screen_dummy, update_screen_dummy }
-		},      /* 3 x 2 */
-		{       { blitscreen_dirty0_vesa_3x_2x_8bpp,  blitscreen_dirty1_vesa_3x_2x_8bpp },
+		},	/* 3 x 2 */
+		{	{ blitscreen_dirty0_vesa_3x_2x_8bpp,  blitscreen_dirty1_vesa_3x_2x_8bpp },
 			{ blitscreen_dirty0_vesa_3x_2xs_8bpp, blitscreen_dirty1_vesa_3x_2xs_8bpp }
-		},      /* 3 x 3 */
-		{       { blitscreen_dirty0_vesa_3x_3x_8bpp,  blitscreen_dirty1_vesa_3x_3x_8bpp },
+		},	/* 3 x 3 */
+		{	{ blitscreen_dirty0_vesa_3x_3x_8bpp,  blitscreen_dirty1_vesa_3x_3x_8bpp },
 			{ blitscreen_dirty0_vesa_3x_3xs_8bpp, blitscreen_dirty1_vesa_3x_3xs_8bpp }
 		}
-	},              /* 4 x 1 */
-	{       {       { update_screen_dummy, update_screen_dummy },
+	},		/* 4 x 1 */
+	{	{	{ update_screen_dummy, update_screen_dummy },
 			{ update_screen_dummy, update_screen_dummy }
-		},      /* 4 x 2 */
-		{       { blitscreen_dirty0_vesa_4x_2x_8bpp,  blitscreen_dirty1_vesa_4x_2x_8bpp },
+		},	/* 4 x 2 */
+		{	{ blitscreen_dirty0_vesa_4x_2x_8bpp,  blitscreen_dirty1_vesa_4x_2x_8bpp },
 			{ blitscreen_dirty0_vesa_4x_2xs_8bpp, blitscreen_dirty1_vesa_4x_2xs_8bpp }
-		},      /* 4 x 3 */
-		{       { blitscreen_dirty0_vesa_4x_3x_8bpp,  blitscreen_dirty1_vesa_4x_3x_8bpp },
+		},	/* 4 x 3 */
+		{	{ blitscreen_dirty0_vesa_4x_3x_8bpp,  blitscreen_dirty1_vesa_4x_3x_8bpp },
 			{ blitscreen_dirty0_vesa_4x_3xs_8bpp, blitscreen_dirty1_vesa_4x_3xs_8bpp }
 		}
 	}
 };
 
 static void (*updaters16[MAX_X_MULTIPLY16][MAX_Y_MULTIPLY16][2][2])(void) =
-{                       /* 1 x 1 */
-	{       {       { blitscreen_dirty0_vesa_1x_1x_16bpp, blitscreen_dirty1_vesa_1x_1x_16bpp },
+{				/* 1 x 1 */
+	{	{	{ blitscreen_dirty0_vesa_1x_1x_16bpp, blitscreen_dirty1_vesa_1x_1x_16bpp },
 			{ blitscreen_dirty0_vesa_1x_1x_16bpp, blitscreen_dirty1_vesa_1x_1x_16bpp }
-		},      /* 1 x 2 */
-		{       { blitscreen_dirty0_vesa_1x_2x_16bpp,  blitscreen_dirty1_vesa_1x_2x_16bpp },
+		},	/* 1 x 2 */
+		{	{ blitscreen_dirty0_vesa_1x_2x_16bpp,  blitscreen_dirty1_vesa_1x_2x_16bpp },
 			{ blitscreen_dirty0_vesa_1x_2xs_16bpp, blitscreen_dirty1_vesa_1x_2xs_16bpp }
 		}
-	},              /* 2 x 1 */
-	{       {       { blitscreen_dirty0_vesa_2x_1x_16bpp,  blitscreen_dirty1_vesa_2x_1x_16bpp },
+	},		/* 2 x 1 */
+	{	{	{ blitscreen_dirty0_vesa_2x_1x_16bpp,  blitscreen_dirty1_vesa_2x_1x_16bpp },
 			{ blitscreen_dirty0_vesa_2x_1x_16bpp,  blitscreen_dirty1_vesa_2x_1x_16bpp }
-		},      /* 2 x 2 */
-		{       { blitscreen_dirty0_vesa_2x_2x_16bpp,  blitscreen_dirty1_vesa_2x_2x_16bpp },
+		},	/* 2 x 2 */
+		{	{ blitscreen_dirty0_vesa_2x_2x_16bpp,  blitscreen_dirty1_vesa_2x_2x_16bpp },
 			{ blitscreen_dirty0_vesa_2x_2xs_16bpp, blitscreen_dirty1_vesa_2x_2xs_16bpp }
 		}
-	},	           /* 3 x 1 */
-	{       {       { blitscreen_dirty0_vesa_3x_1x_16bpp, blitscreen_dirty1_vesa_3x_1x_16bpp },
+	},		/* 3 x 1 */
+	{	{	{ blitscreen_dirty0_vesa_3x_1x_16bpp, blitscreen_dirty1_vesa_3x_1x_16bpp },
 			{ update_screen_dummy, update_screen_dummy }
 		},	/* 3 x 2 */
-		{       { blitscreen_dirty0_vesa_3x_2x_16bpp, blitscreen_dirty1_vesa_3x_2x_16bpp },
+		{	{ blitscreen_dirty0_vesa_3x_2x_16bpp, blitscreen_dirty1_vesa_3x_2x_16bpp },
 			{ blitscreen_dirty0_vesa_3x_2xs_16bpp, blitscreen_dirty1_vesa_3x_2xs_16bpp }
 		}
-	},             /* 4 x 1 */
-	{       {       { update_screen_dummy, update_screen_dummy },
+	},		/* 4 x 1 */
+	{	{	{ update_screen_dummy, update_screen_dummy },
 			{ update_screen_dummy, update_screen_dummy }
 		},	/* 4 x 2 */
-		{       { blitscreen_dirty0_vesa_4x_2x_16bpp,  blitscreen_dirty1_vesa_4x_2x_16bpp },
+		{	{ blitscreen_dirty0_vesa_4x_2x_16bpp,  blitscreen_dirty1_vesa_4x_2x_16bpp },
 			{ blitscreen_dirty0_vesa_4x_2xs_16bpp, blitscreen_dirty1_vesa_4x_2xs_16bpp }
 		}
 	}
 
 };
 
+static void (*updaters16_palettized[MAX_X_MULTIPLY16][MAX_Y_MULTIPLY16][2][2])(void) =
+{				/* 1 x 1 */
+	{	{	{ blitscreen_dirty0_vesa_1x_1x_16bpp_palettized, blitscreen_dirty1_vesa_1x_1x_16bpp_palettized },
+			{ blitscreen_dirty0_vesa_1x_1x_16bpp_palettized, blitscreen_dirty1_vesa_1x_1x_16bpp_palettized }
+		},	/* 1 x 2 */
+		{	{ blitscreen_dirty0_vesa_1x_2x_16bpp_palettized,  blitscreen_dirty1_vesa_1x_2x_16bpp_palettized },
+			{ blitscreen_dirty0_vesa_1x_2xs_16bpp_palettized, blitscreen_dirty1_vesa_1x_2xs_16bpp_palettized }
+		}
+	},		/* 2 x 1 */
+	{	{	{ blitscreen_dirty0_vesa_2x_1x_16bpp_palettized,  blitscreen_dirty1_vesa_2x_1x_16bpp_palettized },
+			{ blitscreen_dirty0_vesa_2x_1x_16bpp_palettized,  blitscreen_dirty1_vesa_2x_1x_16bpp_palettized }
+		},	/* 2 x 2 */
+		{	{ blitscreen_dirty0_vesa_2x_2x_16bpp_palettized,  blitscreen_dirty1_vesa_2x_2x_16bpp_palettized },
+			{ blitscreen_dirty0_vesa_2x_2xs_16bpp_palettized, blitscreen_dirty1_vesa_2x_2xs_16bpp_palettized }
+		}
+	},		/* 3 x 1 */
+	{	{	{ blitscreen_dirty0_vesa_3x_1x_16bpp_palettized, blitscreen_dirty1_vesa_3x_1x_16bpp_palettized },
+			{ update_screen_dummy, update_screen_dummy }
+		},	/* 3 x 2 */
+		{	{ blitscreen_dirty0_vesa_3x_2x_16bpp_palettized, blitscreen_dirty1_vesa_3x_2x_16bpp_palettized },
+			{ blitscreen_dirty0_vesa_3x_2xs_16bpp_palettized, blitscreen_dirty1_vesa_3x_2xs_16bpp_palettized }
+		}
+	},		/* 4 x 1 */
+	{	{	{ update_screen_dummy, update_screen_dummy },
+			{ update_screen_dummy, update_screen_dummy }
+		},	/* 4 x 2 */
+		{	{ blitscreen_dirty0_vesa_4x_2x_16bpp_palettized,  blitscreen_dirty1_vesa_4x_2x_16bpp_palettized },
+			{ blitscreen_dirty0_vesa_4x_2xs_16bpp_palettized, blitscreen_dirty1_vesa_4x_2xs_16bpp_palettized }
+		}
+	}
+
+};
 
 struct osd_bitmap *scrbitmap;
-static unsigned char current_palette[256][3];
-static PALETTE adjusted_palette;
-static unsigned char dirtycolor[256];
+static int modifiable_palette;
+static int total_colors;
+static unsigned char *current_palette;
+static unsigned int *dirtycolor;
 static int dirtypalette;
+static int dirty_bright;
+static int bright_lookup[256];
 extern unsigned int doublepixel[256];
 extern unsigned int quadpixel[256]; /* for quadring pixels */
+extern UINT32 *palette_16bit_lookup;
 
 int frameskip,autoframeskip;
 #define FRAMESKIP_LEVELS 12
@@ -1054,6 +1113,7 @@ struct osd_bitmap *osd_create_display(int width,int height,int depth,int attribu
 
 	brightness = 100;
 	brightness_paused_adjust = 1.0;
+	dirty_bright = 1;
 
 	if (frameskip < 0) frameskip = 0;
 	if (frameskip >= FRAMESKIP_LEVELS) frameskip = FRAMESKIP_LEVELS-1;
@@ -1139,48 +1199,6 @@ struct osd_bitmap *osd_create_display(int width,int height,int depth,int attribu
 			scanlines=1;
 	}
 
-	if (use_vesa == 0)
-	{
-		if (use_dirty) /* supports dirty ? */
-		{
-			if (unchained)
-			{
-				update_screen = blitscreen_dirty1_unchained_vga;
-				if (errorlog) fprintf (errorlog, "blitscreen_dirty1_unchained_vga\n");
-			}
-			else
-			{
-				update_screen = blitscreen_dirty1_vga;
-				if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vga\n");
-			}
-		}
-		else
-		{
-			/* check for unchained modes */
-			if (unchained)
-			{
-				update_screen = blitscreen_dirty0_unchained_vga;
-				if (errorlog) fprintf (errorlog, "blitscreen_dirty0_unchained_vga\n");
-			}
-			else
-			{
-				update_screen = blitscreen_dirty0_vga;
-				if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vga\n");
-			}
-		}
-	}
-	else
-	{
-		if (scrbitmap->depth == 16)
-		{
-			update_screen = updaters16[xmultiply-1][ymultiply-1][scanlines?1:0][use_dirty?1:0];
-		}
-		else
-		{
-			update_screen = updaters8[xmultiply-1][ymultiply-1][scanlines?1:0][use_dirty?1:0];
-		}
-	}
-
     return scrbitmap;
 }
 
@@ -1219,11 +1237,12 @@ int osd_set_display(int width,int height, int attributes)
 		swap_dirty();
 		init_dirty(1);
 	}
-	for (i = 0;i < 256;i++)
+	if (dirtycolor)
 	{
-		dirtycolor[i] = 1;
+		for (i = 0;i < total_colors;i++)
+			dirtycolor[i] = 1;
+		dirtypalette = 1;
 	}
-	dirtypalette = 1;
 	/* handle special 15.75KHz modes, these now include SVGA modes */
 	found = 0;
 	/*move video freq set to here, as we need to set it explicitly for the 15.75KHz modes */
@@ -1708,6 +1727,12 @@ void osd_close_display(void)
 			printf("Average FPS: %f\n",(double)UCLOCKS_PER_SEC/(end_time-start_time)*(frames_displayed-FRAMES_TO_SKIP));
 	}
 
+	free(dirtycolor);
+	dirtycolor = 0;
+	free(current_palette);
+	current_palette = 0;
+	free(palette_16bit_lookup);
+	palette_16bit_lookup = 0;
 	if (scrbitmap)
 	{
 		osd_free_bitmap(scrbitmap);
@@ -1717,31 +1742,39 @@ void osd_close_display(void)
 
 
 
-
-/* palette is an array of 'totalcolors' R,G,B triplets. The function returns */
-/* in *pens the pen values corresponding to the requested colors. */
-/* If 'totalcolors' is 32768, 'palette' is ignored and the *pens array is filled */
-/* with pen values corresponding to a 5-5-5 15-bit palette */
-void osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,unsigned short *pens)
+int osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,unsigned short *pens,int modifiable)
 {
-	if (totalcolors == 32768)
+	int i;
+
+	modifiable_palette = modifiable;
+	total_colors = totalcolors;
+	if (scrbitmap->depth != 8)
+		total_colors += 2;
+	else total_colors = 256;
+
+	dirtycolor = malloc(total_colors * sizeof(int));
+	current_palette = malloc(3 * total_colors * sizeof(unsigned char));
+	palette_16bit_lookup = malloc(total_colors * sizeof(UINT32));
+	if (dirtycolor == 0 || current_palette == 0 || palette_16bit_lookup == 0)
+		return 1;
+
+	for (i = 0;i < total_colors;i++)
+		dirtycolor[i] = 1;
+	dirtypalette = 1;
+	for (i = 0;i < total_colors;i++)
+		current_palette[3*i+0] = current_palette[3*i+1] = current_palette[3*i+2] = 0;
+
+	if (scrbitmap->depth != 8 && modifiable == 0)
 	{
-		int r1,g1,b1;
 		int r,g,b;
 
 
-		for (r1 = 0; r1 < 32; r1++)
+		for (i = 0;i < totalcolors;i++)
 		{
-			for (g1 = 0; g1 < 32; g1++)
-			{
-				for (b1 = 0; b1 < 32; b1++)
-				{
-					r = 255 * brightness * brightness_paused_adjust * pow(r1 / 31.0, 1 / osd_gamma_correction) / 100;
-					g = 255 * brightness * brightness_paused_adjust * pow(g1 / 31.0, 1 / osd_gamma_correction) / 100;
-					b = 255 * brightness * brightness_paused_adjust * pow(b1 / 31.0, 1 / osd_gamma_correction) / 100;
-					*pens++ = makecol(r,g,b);
-				}
-			}
+			r = 255 * brightness * pow(palette[3*i+0] / 255.0, 1 / osd_gamma_correction) / 100;
+			g = 255 * brightness * pow(palette[3*i+1] / 255.0, 1 / osd_gamma_correction) / 100;
+			b = 255 * brightness * pow(palette[3*i+2] / 255.0, 1 / osd_gamma_correction) / 100;
+			*pens++ = makecol(r,g,b);
 		}
 
 		Machine->uifont->colortable[0] = makecol(0x00,0x00,0x00);
@@ -1751,14 +1784,7 @@ void osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,u
 	}
 	else
 	{
-		int i;
-
-
-		/* initialize the palette */
-		for (i = 0;i < 256;i++)
-			current_palette[i][0] = current_palette[i][1] = current_palette[i][2] = 0;
-
-		if (totalcolors >= 255)
+		if (scrbitmap->depth == 8 && totalcolors >= 255)
 		{
 			int bestblack,bestwhite;
 			int bestblackscore,bestwhitescore;
@@ -1771,7 +1797,7 @@ void osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,u
 			{
 				int r,g,b,score;
 
-				r = palette[3*i];
+				r = palette[3*i+0];
 				g = palette[3*i+1];
 				b = palette[3*i+2];
 				score = r*r + g*g + b*b;
@@ -1803,7 +1829,7 @@ void osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,u
 		else
 		{
 			/* reserve color 1 for the user interface text */
-			current_palette[1][0] = current_palette[1][1] = current_palette[1][2] = 0xff;
+			current_palette[3*1+0] = current_palette[3*1+1] = current_palette[3*1+2] = 0xff;
 			Machine->uifont->colortable[0] = 0;
 			Machine->uifont->colortable[1] = 1;
 			Machine->uifont->colortable[2] = 1;
@@ -1812,35 +1838,82 @@ void osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,u
 			/* fill the palette starting from the end, so we mess up badly written */
 			/* drivers which don't go through Machine->pens[] */
 			for (i = 0;i < totalcolors;i++)
-				pens[i] = 255-i;
+				pens[i] = (total_colors-1)-i;
 		}
 
 		for (i = 0;i < totalcolors;i++)
 		{
-			current_palette[pens[i]][0] = palette[3*i];
-			current_palette[pens[i]][1] = palette[3*i+1];
-			current_palette[pens[i]][2] = palette[3*i+2];
+			current_palette[3*pens[i]+0] = palette[3*i];
+			current_palette[3*pens[i]+1] = palette[3*i+1];
+			current_palette[3*pens[i]+2] = palette[3*i+2];
 		}
 	}
+
+	if (use_vesa == 0)
+	{
+		if (use_dirty) /* supports dirty ? */
+		{
+			if (unchained)
+			{
+				update_screen = blitscreen_dirty1_unchained_vga;
+				if (errorlog) fprintf (errorlog, "blitscreen_dirty1_unchained_vga\n");
+			}
+			else
+			{
+				update_screen = blitscreen_dirty1_vga;
+				if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vga\n");
+			}
+		}
+		else
+		{
+			/* check for unchained modes */
+			if (unchained)
+			{
+				update_screen = blitscreen_dirty0_unchained_vga;
+				if (errorlog) fprintf (errorlog, "blitscreen_dirty0_unchained_vga\n");
+			}
+			else
+			{
+				update_screen = blitscreen_dirty0_vga;
+				if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vga\n");
+			}
+		}
+	}
+	else
+	{
+		if (scrbitmap->depth == 16)
+		{
+			if (modifiable_palette)
+				update_screen = updaters16_palettized[xmultiply-1][ymultiply-1][scanlines?1:0][use_dirty?1:0];
+			else
+				update_screen = updaters16[xmultiply-1][ymultiply-1][scanlines?1:0][use_dirty?1:0];
+		}
+		else
+		{
+			update_screen = updaters8[xmultiply-1][ymultiply-1][scanlines?1:0][use_dirty?1:0];
+		}
+	}
+
+	return 0;
 }
 
 
 void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned char blue)
 {
-	if (scrbitmap->depth != 8)
+	if (modifiable_palette == 0)
 	{
-		if (errorlog) fprintf(errorlog,"error: osd_modify_pen() doesn't work with %d bit video modes.\n",scrbitmap->depth);
+		if (errorlog) fprintf(errorlog,"error: osd_modify_pen() called with modifiable_palette == 0\n");
 		return;
 	}
 
 
-	if (current_palette[pen][0] != red ||
-			current_palette[pen][1] != green ||
-			current_palette[pen][2] != blue)
+	if (	current_palette[3*pen+0] != red ||
+			current_palette[3*pen+1] != green ||
+			current_palette[3*pen+2] != blue)
 	{
-		current_palette[pen][0] = red;
-		current_palette[pen][1] = green;
-		current_palette[pen][2] = blue;
+		current_palette[3*pen+0] = red;
+		current_palette[3*pen+1] = green;
+		current_palette[3*pen+2] = blue;
 
 		dirtycolor[pen] = 1;
 		dirtypalette = 1;
@@ -1851,17 +1924,17 @@ void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned cha
 
 void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char *blue)
 {
-	if (scrbitmap->depth == 16)
+	if (scrbitmap->depth != 8 && modifiable_palette == 0)
 	{
-		*red = getr(pen);
+		*red =   getr(pen);
 		*green = getg(pen);
-		*blue = getb(pen);
+		*blue =  getb(pen);
 	}
 	else
 	{
-		*red = current_palette[pen][0];
-		*green = current_palette[pen][1];
-		*blue = current_palette[pen][2];
+		*red =   current_palette[3*pen+0];
+		*green = current_palette[3*pen+1];
+		*blue =  current_palette[3*pen+2];
 	}
 }
 
@@ -2128,29 +2201,74 @@ void osd_update_video_and_audio(void)
 			}
 		}
 
-
 		if (scrbitmap->depth == 8)
 		{
+			if (dirty_bright)
+			{
+				dirty_bright = 0;
+				for (i = 0;i < 256;i++)
+				{
+					float rate = brightness * brightness_paused_adjust * pow(i / 255.0, 1 / osd_gamma_correction) / 100;
+					bright_lookup[i] = 63 * rate + 0.5;
+				}
+			}
 			if (dirtypalette)
 			{
 				dirtypalette = 0;
-
-				for (i = 0;i < 256;i++)
+				for (i = 0;i < total_colors;i++)
 				{
 					if (dirtycolor[i])
 					{
-						dirtycolor[i] = 0;
+						RGB adjusted_palette;
 
-						adjusted_palette[i].r = 63 * brightness * brightness_paused_adjust * pow(current_palette[i][0] / 255.0, 1 / osd_gamma_correction) / 100;
-						adjusted_palette[i].g = 63 * brightness * brightness_paused_adjust * pow(current_palette[i][1] / 255.0, 1 / osd_gamma_correction) / 100;
-						adjusted_palette[i].b = 63 * brightness * brightness_paused_adjust * pow(current_palette[i][2] / 255.0, 1 / osd_gamma_correction) / 100;
-
-						set_color(i,&adjusted_palette[i]);
+						adjusted_palette.r = current_palette[3*i+0];
+						adjusted_palette.g = current_palette[3*i+1];
+						adjusted_palette.b = current_palette[3*i+2];
+						if (i != Machine->uifont->colortable[1])	/* don't adjust the user interface text */
+						{
+							adjusted_palette.r = bright_lookup[adjusted_palette.r];
+							adjusted_palette.g = bright_lookup[adjusted_palette.g];
+							adjusted_palette.b = bright_lookup[adjusted_palette.b];
+						}
+						set_color(i,&adjusted_palette);
 					}
 				}
 			}
 		}
+		else
+		{
+			if (dirty_bright)
+			{
+				dirty_bright = 0;
+				for (i = 0;i < 256;i++)
+				{
+					float rate = brightness * brightness_paused_adjust * pow(i / 255.0, 1 / osd_gamma_correction) / 100;
+					bright_lookup[i] = 255 * rate + 0.5;
+				}
+			}
+			if (dirtypalette)
+			{
+				dirtypalette = 0;
+				for (i = 0;i < total_colors;i++)
+				{
+					if (dirtycolor[i])
+					{
+						int r,g,b;
 
+						r = current_palette[3*i+0];
+						g = current_palette[3*i+1];
+						b = current_palette[3*i+2];
+						if (i != Machine->uifont->colortable[1])	/* don't adjust the user interface text */
+						{
+							r = bright_lookup[r];
+							g = bright_lookup[g];
+							b = bright_lookup[b];
+						}
+						palette_16bit_lookup[i] = makecol(r,g,b) * 0x10001;
+					}
+				}
+			}
+		}
 
 		/* copy the bitmap to screen memory */
 		profiler_mark(PROFILER_BLIT);
@@ -2283,20 +2401,14 @@ void osd_update_video_and_audio(void)
 
 void osd_set_gamma(float _gamma)
 {
-	if (scrbitmap->depth == 8)
-	{
-		int i;
+	int i;
 
+	osd_gamma_correction = _gamma;
 
-		osd_gamma_correction = _gamma;
-
-		for (i = 0;i < 256;i++)
-		{
-			if (i != Machine->uifont->colortable[1])        /* don't touch the user interface text */
-				dirtycolor[i] = 1;
-		}
-		dirtypalette = 1;
-	}
+	for (i = 0;i < total_colors;i++)
+		dirtycolor[i] = 1;
+	dirtypalette = 1;
+	dirty_bright = 1;
 }
 
 float osd_get_gamma(void)
@@ -2307,20 +2419,14 @@ float osd_get_gamma(void)
 /* brightess = percentage 0-100% */
 void osd_set_brightness(int _brightness)
 {
-	if (scrbitmap->depth == 8)
-	{
-		int i;
+	int i;
 
+	brightness = _brightness;
 
-		brightness = _brightness;
-
-		for (i = 0;i < 256;i++)
-		{
-			if (i != Machine->uifont->colortable[1])        /* don't touch the user interface text */
-				dirtycolor[i] = 1;
-		}
-		dirtypalette = 1;
-	}
+	for (i = 0;i < total_colors;i++)
+		dirtycolor[i] = 1;
+	dirtypalette = 1;
+	dirty_bright = 1;
 }
 
 int osd_get_brightness(void)
@@ -2336,20 +2442,15 @@ void osd_save_snapshot(void)
 
 void osd_pause(int paused)
 {
-	if (scrbitmap->depth == 8)
-	{
-		int i;
+	int i;
 
-		if (paused) brightness_paused_adjust = 0.65;
-		else brightness_paused_adjust = 1.0;
+	if (paused) brightness_paused_adjust = 0.65;
+	else brightness_paused_adjust = 1.0;
 
-		for (i = 0;i < 256;i++)
-		{
-			if (i != Machine->uifont->colortable[1])        /* don't touch the user interface text */
-				dirtycolor[i] = 1;
-		}
-		dirtypalette = 1;
-	}
+	for (i = 0;i < total_colors;i++)
+		dirtycolor[i] = 1;
+	dirtypalette = 1;
+	dirty_bright = 1;
 }
 
 Register *make_scanline_mode(Register *inreg,int entries)

@@ -688,7 +688,7 @@ if (keyboard_pressed(KEYCODE_0))
 	char buf[20];
 	int trueorientation;
 	struct osd_bitmap *mybitmap = Machine->scrbitmap;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	trueorientation = Machine->orientation;
 	Machine->orientation = ORIENTATION_DEFAULT;

@@ -314,7 +314,7 @@ void pacnpal_interrupt_enable_2_w(int offset,int data)
 
 void superpac_cpu_enable_w(int offset,int data)
 {
-	cpu_halt(1, offset);
+	cpu_set_halt_line(1, offset ? CLEAR_LINE : ASSERT_LINE);
 }
 
 

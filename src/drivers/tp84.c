@@ -379,21 +379,18 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			1500000,	/* ??? */
-			0,					/* memory region */
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_M6809,
 			1500000,	/* ??? */
-			3,	/* memory region #3 */
 			readmem_cpu2,writemem_cpu2,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318180/4,
-			4,	/* memory region #4 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -434,7 +431,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( tp84 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "tp84_7j.bin",  0x8000, 0x2000, 0x605f61c7 )
 	ROM_LOAD( "tp84_8j.bin",  0xa000, 0x2000, 0x4b4629a4 )
 	ROM_LOAD( "tp84_9j.bin",  0xc000, 0x2000, 0xdbd5333b )
@@ -455,15 +452,15 @@ ROM_START( tp84 )
 	ROM_LOAD( "tp84_1f.bin",  0x0300, 0x0100, 0x61d2d398 ) /* char lookup table */
 	ROM_LOAD( "tp84_16c.bin", 0x0400, 0x0100, 0x13c4e198 ) /* sprite lookup table */
 
-	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "tp84_10d.bin", 0xe000, 0x2000, 0x36462ff1 )
 
-	ROM_REGION(0x10000)	/* 64k for code of sound cpu Z80 */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for code of sound cpu Z80 */
 	ROM_LOAD( "tp84s_6a.bin", 0x0000, 0x2000, 0xc44414da )
 ROM_END
 
 ROM_START( tp84a )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "tp84_7j.bin",  0x8000, 0x2000, 0x605f61c7 )
 	ROM_LOAD( "f05",          0xa000, 0x2000, 0xe97d5093 )
 	ROM_LOAD( "tp84_9j.bin",  0xc000, 0x2000, 0xdbd5333b )
@@ -484,10 +481,10 @@ ROM_START( tp84a )
 	ROM_LOAD( "tp84_1f.bin",  0x0300, 0x0100, 0x61d2d398 ) /* char lookup table */
 	ROM_LOAD( "tp84_16c.bin", 0x0400, 0x0100, 0x13c4e198 ) /* sprite lookup table */
 
-	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "tp84_10d.bin", 0xe000, 0x2000, 0x36462ff1 )
 
-	ROM_REGION(0x10000)	/* 64k for code of sound cpu Z80 */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for code of sound cpu Z80 */
 	ROM_LOAD( "tp84s_6a.bin", 0x0000, 0x2000, 0xc44414da )
 ROM_END
 
@@ -495,7 +492,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f;
 
 	/* Wait for hiscore table initialization to be done. */
@@ -518,7 +515,7 @@ static int hiload(void)
 
 static void hisave(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

@@ -363,7 +363,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
 			750000, 	   /* 750 KHz */
-			0,
 			readmem,writemem,0,0,
 			bsktball_interrupt,8
 		}
@@ -402,7 +401,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( bsktball )
-	ROM_REGION(0x10000) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 		ROM_LOAD( "034765.d1",    0x2000, 0x0800, 0x798cea39 )
 		ROM_LOAD( "034764.c1",    0x2800, 0x0800, 0xa087109e )
 		ROM_LOAD( "034766.f1",    0x3000, 0x0800, 0xa82e9a9f )

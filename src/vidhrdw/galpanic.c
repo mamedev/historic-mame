@@ -8,6 +8,29 @@ int galpanic_fgvideoram_size;
 
 
 
+void galpanic_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+	int i;
+
+	palette += 3*1024;	/* first 1024 colors are dynamic */
+
+	/* initialize 555 RGB lookup */
+	for (i = 0;i < 32768;i++)
+	{
+		int r,g,b;
+
+		r = (i >>  5) & 0x1f;
+		g = (i >> 10) & 0x1f;
+		b = (i >>  0) & 0x1f;
+
+		(*palette++) = (r << 3) | (r >> 2);
+		(*palette++) = (g << 3) | (g >> 2);
+		(*palette++) = (b << 3) | (b >> 2);
+	}
+}
+
+
+
 int galpanic_bgvideoram_r(int offset)
 {
 	return READ_WORD(&galpanic_bgvideoram[offset]);
@@ -15,28 +38,17 @@ int galpanic_bgvideoram_r(int offset)
 
 void galpanic_bgvideoram_w(int offset,int data)
 {
-	int sx,sy,color,r,g,b;
-#define rgbpenindex(r,g,b) ((Machine->scrbitmap->depth==16) ? ((((r)>>3)<<10)+(((g)>>3)<<5)+((b)>>3)) : ((((r)>>5)<<5)+(((g)>>5)<<2)+((b)>>6)))
-extern unsigned short *shrinked_pens;
+	int sx,sy,color;
 
 
 	COMBINE_WORD_MEM(&galpanic_bgvideoram[offset],data);
-
 
 	sy = (offset/2) / 256;
 	sx = (offset/2) % 256;
 
 	color = READ_WORD(&galpanic_bgvideoram[offset]);
 
-	r = (color >>  6) & 0x1f;
-	g = (color >> 11) & 0x1f;
-	b = (color >>  1) & 0x1f;
-
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-
-	plot_pixel(tmpbitmap, sx, sy, shrinked_pens[rgbpenindex(r,g,b)]);
+	plot_pixel(tmpbitmap, sx, sy, Machine->pens[1024 + (color >> 1)]);
 }
 
 int galpanic_fgvideoram_r(int offset)

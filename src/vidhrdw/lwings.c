@@ -420,7 +420,7 @@ void trojan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
               scrolly = 0; /* Y doesn't scroll ??? */
               if (oldoffsy != offsy || oldoffsx != offsx)
               {
-                  unsigned char *p=Machine->memory_region[4];
+                  unsigned char *p=memory_region(4);
                   oldoffsx=offsx;
                   oldoffsy=offsy;
 

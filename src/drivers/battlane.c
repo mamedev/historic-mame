@@ -40,14 +40,14 @@ int battlane_cpu_control;
 void battlane_shared_ram_w(int offset, int data)
 {
 	unsigned char *RAM =
-		memory_region(Machine->drv->cpu[0].memory_region);
+		memory_region(REGION_CPU1);
 	RAM[offset]=data;
 }
 
 int battlane_shared_ram_r(int offset)
 {
 	unsigned char *RAM =
-		memory_region(Machine->drv->cpu[0].memory_region);
+		memory_region(REGION_CPU1);
 	return RAM[offset];
 }
 
@@ -154,7 +154,7 @@ int battlane_cpu1_interrupt(void)
 		if (fp)
 		{
 			unsigned char *RAM =
-			memory_region(Machine->drv->cpu[0].memory_region);
+			memory_region(REGION_CPU1);
 
 			fwrite(RAM, 0x4000, 1, fp);
 			fclose(fp);
@@ -322,14 +322,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
             1250000,        /* 1.25 Mhz ? */
-			0,
             battlane_readmem, battlane_writemem,0,0,
             battlane_cpu1_interrupt,2
 		},
 		{
 			CPU_M6809,
             1250000,        /* 1.25 Mhz ? */
-			2,      /* memory region #2 */
             battlane_readmem, battlane_writemem,0,0,
             battlane_cpu2_interrupt,1
 		}
@@ -368,7 +366,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( battlane )
-	ROM_REGION(0x10000)     /* 64k for main CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
 	/* first half of da00-5 will be copied at 0x4000-0x7fff */
 	ROM_LOAD( "da01-5",    0x8000, 0x8000, 0x7a6c3f02 )
 
@@ -380,7 +378,7 @@ ROM_START( battlane )
 	ROM_LOAD( "da06",      0x18000, 0x8000, 0x9c6a51b3 ) /* Tiles*/
 	ROM_LOAD( "da07",      0x20000, 0x4000, 0x56df4077 ) /* Tiles*/
 
-	ROM_REGION(0x10000)     /* 64K for slave CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64K for slave CPU */
 	ROM_LOAD( "da00-5",    0x00000, 0x8000, 0x85b4ed73 )	/* ...second half goes here */
 	ROM_LOAD( "da02-2",    0x08000, 0x8000, 0x69d8dafe )
 
@@ -390,7 +388,7 @@ ROM_START( battlane )
 ROM_END
 
 ROM_START( battlan2 )
-	ROM_REGION(0x10000)     /* 64k for main CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
 	/* first half of da00-3 will be copied at 0x4000-0x7fff */
 	ROM_LOAD( "da01-3",    0x8000, 0x8000, 0xd9e40800 )
 
@@ -402,7 +400,7 @@ ROM_START( battlan2 )
 	ROM_LOAD( "da06",      0x18000, 0x8000, 0x9c6a51b3 ) /* Tiles*/
 	ROM_LOAD( "da07",      0x20000, 0x4000, 0x56df4077 ) /* Tiles*/
 
-	ROM_REGION(0x10000)     /* 64K for slave CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64K for slave CPU */
 	ROM_LOAD( "da00-3",    0x00000, 0x8000, 0x7a0a5d58 )
 	ROM_LOAD( "da02-2",    0x08000, 0x8000, 0x69d8dafe )
 
@@ -412,7 +410,7 @@ ROM_START( battlan2 )
 ROM_END
 
 ROM_START( battlan3 )
-	ROM_REGION(0x10000)     /* 64k for main CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
 	/* first half of bl_04.rom will be copied at 0x4000-0x7fff */
 	ROM_LOAD( "bl_05.rom", 0x8000, 0x8000, 0x001c4bbe )
 
@@ -424,7 +422,7 @@ ROM_START( battlan3 )
 	ROM_LOAD( "da06",      0x18000, 0x8000, 0x9c6a51b3 ) /* Tiles*/
 	ROM_LOAD( "da07",      0x20000, 0x4000, 0x56df4077 ) /* Tiles*/
 
-	ROM_REGION(0x10000)     /* 64K for slave CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64K for slave CPU */
 	ROM_LOAD( "bl_04.rom", 0x00000, 0x8000, 0x5681564c )	/* ...second half goes here */
 	ROM_LOAD( "da02-2",    0x08000, 0x8000, 0x69d8dafe )
 
@@ -440,8 +438,8 @@ static void battlane_decode(void)
 
 	/* no encryption, but one ROM is shared among two CPUs. We loaded it into the */
 	/* second CPU address space, let's copy it to the first CPU's one */
-	src = memory_region(Machine->drv->cpu[1].memory_region);
-	dest = memory_region(Machine->drv->cpu[0].memory_region);
+	src = memory_region(REGION_CPU2);
+	dest = memory_region(REGION_CPU1);
 
 	for(A = 0;A < 0x4000;A++)
 		dest[A + 0x4000] = src[A];

@@ -40,8 +40,8 @@ void exprraid_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 static void drawbg(struct osd_bitmap *bitmap,int priority)
 {
-	unsigned char *map1 = &Machine->memory_region[3][0x0000];
-	unsigned char *map2 = &Machine->memory_region[3][0x4000];
+	unsigned char *map1 = &memory_region(3)[0x0000];
+	unsigned char *map2 = &memory_region(3)[0x4000];
 	int offs,scrolly,scrollx1,scrollx2;
 
 

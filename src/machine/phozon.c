@@ -18,8 +18,8 @@ static int credits, coincounter1, coincounter2;
 void phozon_init_machine( void )
 {
     credits = coincounter1 = coincounter2 = 0;
-	cpu_halt(1, 1);
-	cpu_halt(2, 1);
+	cpu_set_halt_line(1, CLEAR_LINE);
+	cpu_set_halt_line(2, CLEAR_LINE);
 }
 
 /* memory handlers */
@@ -41,11 +41,11 @@ void phozon_snd_sharedram_w( int offset,int data ){
 
 /* cpu control functions */
 void phozon_cpu2_enable_w(int offset,int data){
-	cpu_halt(1, offset);
+	cpu_set_halt_line(1, offset ? CLEAR_LINE : ASSERT_LINE);
 }
 
 void phozon_cpu3_enable_w(int offset,int data){
-	cpu_halt(2, offset);
+	cpu_set_halt_line(2, offset ? CLEAR_LINE : ASSERT_LINE);
 }
 
 void phozon_cpu3_reset_w(int offset,int data){

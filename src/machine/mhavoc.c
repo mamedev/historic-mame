@@ -24,7 +24,7 @@ int bank1;
 void mhavoc_ram_banksel_w (int offset,int data)
 {
 	static int bank[2] = { 0x20200, 0x20800 };
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	data&=0x01;
 	if (errorlog) fprintf (errorlog, "Alpha RAM select: %02x\n",data);
@@ -34,7 +34,7 @@ void mhavoc_ram_banksel_w (int offset,int data)
 void mhavoc_rom_banksel_w (int offset,int data)
 {
 	static int bank[4] = { 0x10000, 0x12000, 0x14000, 0x16000 };
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	data &= 0x03;

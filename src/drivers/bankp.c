@@ -189,7 +189,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3867120,	/* ?? the main oscillator is 15.46848 Mhz */
-			0,
 			readmem,writemem,readport,writeport,
 			nmi_interrupt,1
 		},
@@ -229,7 +228,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( bankp )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "epr6175.bin",  0x0000, 0x4000, 0x044552b8 )
 	ROM_LOAD( "epr6174.bin",  0x4000, 0x4000, 0xd29b1598 )
 	ROM_LOAD( "epr6173.bin",  0x8000, 0x4000, 0xb8405d38 )
@@ -256,7 +255,7 @@ ROM_END
 static int hiload(void)
 {
 	static int firsttime = 0;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -294,7 +293,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

@@ -38,6 +38,20 @@ int run_machine(void);
 static int validitychecks(void)
 {
 	int i,j;
+	UINT8 a,b;
+
+	a = 0xff;
+	b = a + 1;
+	if (b > a)	{ printf("UINT8 must be 8 bits\n"); return 1; }
+
+	if (sizeof(INT8)   != 1)	{ printf("INT8 must be 8 bits\n"); return 1; }
+	if (sizeof(UINT8)  != 1)	{ printf("UINT8 must be 8 bits\n"); return 1; }
+	if (sizeof(INT16)  != 2)	{ printf("INT16 must be 16 bits\n"); return 1; }
+	if (sizeof(UINT16) != 2)	{ printf("UINT16 must be 16 bits\n"); return 1; }
+	if (sizeof(INT32)  != 4)	{ printf("INT32 must be 32 bits\n"); return 1; }
+	if (sizeof(UINT32) != 4)	{ printf("UINT32 must be 32 bits\n"); return 1; }
+	if (sizeof(INT64)  != 8)	{ printf("INT64 must be 64 bits\n"); return 1; }
+	if (sizeof(UINT64) != 8)	{ printf("UINT64 must be 64 bits\n"); return 1; }
 
 	for (i = 0;drivers[i];i++)
 	{
@@ -316,7 +330,7 @@ int init_machine(void)
 
 	{
 		extern unsigned char *RAM;
-		RAM = memory_region(drv->cpu[0].memory_region);
+		RAM = memory_region(REGION_CPU1);
 		ROM = RAM;
 	}
 
@@ -334,7 +348,7 @@ int init_machine(void)
 		while (Machine->memory_region[j]) j++;
 
 		/* allocate a ROM array of the same length of cpu #0 memory region */
-		if ((ROM = malloc(memory_region_length(drv->cpu[0].memory_region))) == 0)
+		if ((ROM = malloc(memory_region_length(REGION_CPU1))) == 0)
 		{
 			free(Machine->input_ports);
 			Machine->input_ports = 0;
@@ -343,7 +357,7 @@ int init_machine(void)
 		}
 
 		Machine->memory_region[j] = ROM;
-		Machine->memory_region_length[j] = memory_region_length(drv->cpu[0].memory_region);
+		Machine->memory_region_length[j] = memory_region_length(REGION_CPU1);
 
 		encrypted_cpu = 0;
 		(*gamedrv->opcode_decode)();
@@ -528,7 +542,11 @@ static int vh_open(void)
 	}
 
 	/* initialize the palette - must be done after osd_create_display() */
-	palette_init();
+	if (palette_init())
+	{
+		vh_close();
+		return 1;
+	}
 
 	return 0;
 }

@@ -258,14 +258,12 @@ static struct MachineDriver prehisle_machine_driver =
  		{
 			CPU_M68000,
 			12000000,
-			0,
 			prehisle_readmem,prehisle_writemem,0,0,
 			m68_level4_irq,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,
-			2,
 			prehisle_sound_readmem,prehisle_sound_writemem,
 			prehisle_sound_readport,prehisle_sound_writeport,
 			ignore_interrupt,0
@@ -305,7 +303,7 @@ static struct MachineDriver prehisle_machine_driver =
 /******************************************************************************/
 
 ROM_START( prehisle )
-	ROM_REGION(0x40000)
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "gt.2", 0x00000, 0x20000, 0x7083245a )
 	ROM_LOAD_ODD ( "gt.3", 0x00000, 0x20000, 0x6d8cdf58 )
 
@@ -316,7 +314,7 @@ ROM_START( prehisle )
 	ROM_LOAD( "pi8910.k14", 0x088000, 0x80000, 0x5a101b0b )
 	ROM_LOAD( "gt.5",       0x108000, 0x20000, 0x3d3ab273 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "gt.1",  0x000000, 0x10000, 0x80a4c093 )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -327,7 +325,7 @@ ROM_START( prehisle )
 ROM_END
 
 ROM_START( prehislu )
-	ROM_REGION(0x40000)
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "gt-u2.2h", 0x00000, 0x20000, 0xa14f49bb )
 	ROM_LOAD_ODD ( "gt-u3.3h", 0x00000, 0x20000, 0xf165757e )
 
@@ -338,7 +336,7 @@ ROM_START( prehislu )
 	ROM_LOAD( "pi8910.k14", 0x088000, 0x80000, 0x5a101b0b )
 	ROM_LOAD( "gt.5",       0x108000, 0x20000, 0x3d3ab273 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "gt.1",  0x000000, 0x10000, 0x80a4c093 )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -349,7 +347,7 @@ ROM_START( prehislu )
 ROM_END
 
 ROM_START( prehislj )
-	ROM_REGION(0x40000)
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "gt2j.bin", 0x00000, 0x20000, 0xa2da0b6b )
 	ROM_LOAD_ODD ( "gt3j.bin", 0x00000, 0x20000, 0xc1a0ae8e )
 
@@ -360,7 +358,7 @@ ROM_START( prehislj )
 	ROM_LOAD( "pi8910.k14", 0x088000, 0x80000, 0x5a101b0b )
 	ROM_LOAD( "gt.5",       0x108000, 0x20000, 0x3d3ab273 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "gt.1",  0x000000, 0x10000, 0x80a4c093 )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */

@@ -361,7 +361,7 @@ int C140_sh_start( const struct MachineSound *msound )
 
 	stream = stream_init_multi(2,stereo_names,vol,sample_rate,sample_bits,0,update_stereo);
 
-	pRom=Machine->memory_region[intf->region];
+	pRom=memory_region(intf->region);
 
 	memset(REG,0,0x200 );
 	{

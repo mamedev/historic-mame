@@ -257,14 +257,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			2000000,	/* 2 Mhz (?) */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
 			2000000,	/* 2 Mhz (?) */
-			3,
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4	/* FIRQs are triggered by the main CPU */
 		},
@@ -304,7 +302,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( sonson )
-	ROM_REGION(0x10000)	/* 64k for code + 3*16k for the banked ROMs images */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "ss.01e",       0x4000, 0x4000, 0xcd40cc54 )
 	ROM_LOAD( "ss.02e",       0x8000, 0x4000, 0xc3476527 )
 	ROM_LOAD( "ss.03e",       0xc000, 0x4000, 0x1fd0e729 )
@@ -322,7 +320,7 @@ ROM_START( sonson )
 	ROM_LOAD( "ssb2.bin",     0x0040, 0x0100, 0x6ce8ac39 )	/* character lookup table */
 	ROM_LOAD( "ssb.bin",      0x0140, 0x0100, 0xd4f7bfb5 )	/* sprite lookup table */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ss3.v12",      0xe000, 0x2000, 0x1135c48a )
 ROM_END
 
@@ -330,7 +328,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -363,7 +361,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

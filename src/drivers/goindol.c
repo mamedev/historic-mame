@@ -28,7 +28,7 @@ extern int 	 	goindol_char_bank;
 void goindol_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	bankaddress = 0x10000 + ((data & 3) * 0x4000);
 	cpu_setbank(1,&RAM[bankaddress]);
@@ -310,14 +310,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			6000000,        /* 6 Mhz (?) */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 Mhz (?) */
-			2,
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
 		}
@@ -357,7 +355,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( goindol )
-	ROM_REGION(0x20000)     /* 2*64k for code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 2*64k for code */
 	ROM_LOAD( "r1", 0x00000, 0x8000, 0x3111c61b ) /* Code 0000-7fff */
 	ROM_LOAD( "r2", 0x10000, 0x8000, 0x1ff6e3a2 ) /* Paged data */
 	ROM_LOAD( "r3", 0x18000, 0x8000, 0xe9eec24a ) /* Paged data */
@@ -371,7 +369,7 @@ ROM_START( goindol )
 	ROM_LOAD( "r8", 0x20000, 0x8000, 0x9fc7946e )
 	ROM_LOAD( "r9", 0x28000, 0x8000, 0xe6212fe4 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "r10", 0x00000, 0x8000, 0x72e1add1 )
 
 	ROM_REGIONX( 0x0300, REGION_PROMS )
@@ -382,7 +380,7 @@ ROM_START( goindol )
 ROM_END
 
 ROM_START( homo )
-	ROM_REGION(0x20000)     /* 2*64k for code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 2*64k for code */
 	ROM_LOAD( "homo.01", 0x00000, 0x8000, 0x28c539ad ) /* Code 0000-7fff */
 	ROM_LOAD( "r2", 0x10000, 0x8000, 0x1ff6e3a2 ) /* Paged data */
 	ROM_LOAD( "r3", 0x18000, 0x8000, 0xe9eec24a ) /* Paged data */
@@ -396,7 +394,7 @@ ROM_START( homo )
 	ROM_LOAD( "r8", 0x20000, 0x8000, 0x9fc7946e )
 	ROM_LOAD( "r9", 0x28000, 0x8000, 0xe6212fe4 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "r10", 0x00000, 0x8000, 0x72e1add1 )
 
 	ROM_REGIONX( 0x0300, REGION_PROMS )
@@ -408,7 +406,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0xc076],"\x05\x00\x27",3) == 0)
@@ -434,7 +432,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

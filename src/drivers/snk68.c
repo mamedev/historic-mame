@@ -808,14 +808,12 @@ static struct MachineDriver ikari3_machine_driver =
  		{
 			CPU_M68000,
 			10000000,	/* Accurate */
-			0,
 			searchar_readmem,searchar_writemem,0,0,
 			m68_level1_irq,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* Accurate */
-			2,
 			sound_readmem,sound_writemem,
 			sound_readport,sound_writeport,
 			ignore_interrupt,0
@@ -859,14 +857,12 @@ static struct MachineDriver pow_machine_driver =
  		{
 			CPU_M68000,
 			10000000,	/* Accurate */
-			0,
 			pow_readmem,pow_writemem,0,0,
 			m68_level1_irq,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* Accurate */
-			2,
 			sound_readmem,sound_writemem,
 			sound_readport,sound_writeport,
 			ignore_interrupt,0
@@ -910,14 +906,12 @@ static struct MachineDriver searchar_machine_driver =
  		{
 			CPU_M68000,
 			12000000,
-			0,
 			searchar_readmem,searchar_writemem,0,0,
 			m68_level1_irq,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,
-			2,
 			sound_readmem,sound_writemem,
 			sound_readport,sound_writeport,
 			ignore_interrupt,0
@@ -961,14 +955,12 @@ static struct MachineDriver streets2_machine_driver =
  		{
 			CPU_M68000,
 			10000000,	/* Accurate */
-			0,
 			pow_readmem,pow_writemem,0,0,
 			m68_level1_irq,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* Accurate */
-			2,
 			sound_readmem,sound_writemem,
 			sound_readport,sound_writeport,
 			ignore_interrupt,0
@@ -1008,7 +1000,7 @@ static struct MachineDriver streets2_machine_driver =
 /******************************************************************************/
 
 ROM_START( pow )
-	ROM_REGION(0x40000)
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "dg1",   0x000000, 0x20000, 0x8e71a8af )
 	ROM_LOAD_ODD ( "dg2",   0x000000, 0x20000, 0x4287affc )
 
@@ -1032,7 +1024,7 @@ ROM_START( pow )
 	ROM_LOAD( "snk880.25a", 0x1d0000, 0x20000, 0x055759ad )
 	ROM_LOAD( "snk880.26a", 0x1f0000, 0x20000, 0x9bc261c5 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "dg8",        0x000000, 0x10000, 0xd1d61da3 )
 
 	ROM_REGION(0x10000)	/* UPD7759 samples */
@@ -1040,7 +1032,7 @@ ROM_START( pow )
 ROM_END
 
 ROM_START( powj )
-	ROM_REGION(0x40000)
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "1-2",   0x000000, 0x20000, 0x2f17bfb0 )
 	ROM_LOAD_ODD ( "2-2",   0x000000, 0x20000, 0xbaa32354 )
 
@@ -1064,7 +1056,7 @@ ROM_START( powj )
 	ROM_LOAD( "snk880.25a", 0x1d0000, 0x20000, 0x055759ad )
 	ROM_LOAD( "snk880.26a", 0x1f0000, 0x20000, 0x9bc261c5 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "dg8",        0x000000, 0x10000, 0xd1d61da3 )
 
 	ROM_REGION(0x10000)	/* UPD7759 samples */
@@ -1072,7 +1064,7 @@ ROM_START( powj )
 ROM_END
 
 ROM_START( searchar )
-	ROM_REGION(0x40000)
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "bhw.2", 0x000000, 0x20000, 0xe1430138 )
 	ROM_LOAD_ODD ( "bhw.3", 0x000000, 0x20000, 0xee1f9374 )
 
@@ -1087,7 +1079,7 @@ ROM_START( searchar )
 	ROM_LOAD( "bh.c4",      0x210000, 0x80000, 0xeede7c43 )
 	ROM_LOAD( "bh.c6",      0x290000, 0x80000, 0x9f785cd9 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "bh.5",       0x000000, 0x10000, 0x53e2fa76 )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -1099,7 +1091,7 @@ ROM_START( searchar )
 ROM_END
 
 ROM_START( sercharu )
-	ROM_REGION(0x40000)
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "bh.2",  0x000000, 0x20000, 0xc852e2e2 )
 	ROM_LOAD_ODD ( "bh.3",  0x000000, 0x20000, 0xbc04a4a1 )
 
@@ -1114,7 +1106,7 @@ ROM_START( sercharu )
 	ROM_LOAD( "bh.c4",      0x210000, 0x80000, 0xeede7c43 )
 	ROM_LOAD( "bh.c6",      0x290000, 0x80000, 0x9f785cd9 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "bh.5",       0x000000, 0x10000, 0x53e2fa76 )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -1126,7 +1118,7 @@ ROM_START( sercharu )
 ROM_END
 
 ROM_START( streetsm )
-	ROM_REGION(0x40000)
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "s2-1ver1.9c",  0x00000, 0x20000, 0xb59354c5 )
 	ROM_LOAD_ODD ( "s2-2ver1.10c", 0x00000, 0x20000, 0xe448b68b )
 
@@ -1141,7 +1133,7 @@ ROM_START( streetsm )
 	ROM_LOAD( "stsmart.903", 0x210000, 0x80000, 0x73c16d35 )
 	ROM_LOAD( "stsmart.905", 0x290000, 0x80000, 0xa5beb4e2 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "s2-5.16c",    0x000000, 0x10000, 0xca4b171e )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -1149,7 +1141,7 @@ ROM_START( streetsm )
 ROM_END
 
 ROM_START( streets2 )
-	ROM_REGION(0x40000)
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "s2-1ver2.14h", 0x00000, 0x20000, 0x655f4773 )
 	ROM_LOAD_ODD ( "s2-2ver2.14k", 0x00000, 0x20000, 0xefae4823 )
 
@@ -1164,7 +1156,7 @@ ROM_START( streets2 )
 	ROM_LOAD( "stsmart.903", 0x210000, 0x80000, 0x73c16d35 )
 	ROM_LOAD( "stsmart.905", 0x290000, 0x80000, 0xa5beb4e2 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "s2-5.16c",    0x000000, 0x10000, 0xca4b171e )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -1172,7 +1164,7 @@ ROM_START( streets2 )
 ROM_END
 
 ROM_START( streetsj )
-	ROM_REGION(0x40000)
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "s2v1j_01.bin", 0x00000, 0x20000, 0xf031413c )
 	ROM_LOAD_ODD ( "s2v1j_02.bin", 0x00000, 0x20000, 0xe403a40b )
 
@@ -1187,7 +1179,7 @@ ROM_START( streetsj )
 	ROM_LOAD( "stsmart.903", 0x210000, 0x80000, 0x73c16d35 )
 	ROM_LOAD( "stsmart.905", 0x290000, 0x80000, 0xa5beb4e2 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "s2-5.16c",    0x000000, 0x10000, 0xca4b171e )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -1195,7 +1187,7 @@ ROM_START( streetsj )
 ROM_END
 
 ROM_START( ikari3 )
-	ROM_REGION(0x40000)
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "ik3-2.bin", 0x000000, 0x20000, 0xa7b34dcd )
 	ROM_LOAD_ODD ( "ik3-3.bin", 0x000000, 0x20000, 0x50f2b83d )
 
@@ -1227,7 +1219,7 @@ ROM_START( ikari3 )
 	ROM_LOAD( "ik3-27.bin", 0x250000, 0x20000, 0x16dd227e )
 	ROM_LOAD( "ik3-28.bin", 0x270000, 0x20000, 0x711715ae )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "ik3-5.bin",  0x000000, 0x10000, 0xce6706fc )
 
 	ROM_REGION(0x20000)	/* UPD7759 samples */
@@ -1281,20 +1273,20 @@ static void custom_memory(void)
 
 static void searchar_memory(void)
 {
-	cpu_setbank(8, Machine->memory_region[4]);
+	cpu_setbank(8, memory_region(4));
 	custom_memory();
 }
 
 static void streetsm_patch(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	WRITE_WORD (&RAM[0x107d0],0x4245); /* Clear D5 (Sprite ram error!?) */
 }
 
 static void streetsj_patch(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	WRITE_WORD (&RAM[0x10710],0x4245); /* Clear D5 (Sprite ram error!?) */
 }

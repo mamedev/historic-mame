@@ -649,14 +649,12 @@ static struct MachineDriver tigerh_machine_driver =
 		{
 			CPU_Z80,
 			6000000,
-			0,
 			tigerh_readmem,writemem,readport,tigerh_writeport,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
 			6000000,
-			3,
 			sound_readmem,sound_writemem,0,0,
 			nmi_interrupt,6,    /* ??? */
 		}
@@ -696,14 +694,12 @@ static struct MachineDriver slapfigh_machine_driver =
 		{
 			CPU_Z80,
 			6000000,
-			0,
 			readmem,writemem,readport,writeport,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
 			6000000,
-			3,
 			sound_readmem,sound_writemem,0,0,
 				getstar_interrupt/*nmi_interrupt*/, 3,    /* p'tit Seb 980926 this way it sound much better ! */
 			0,0                  /* I think music is not so far from correct speed */
@@ -747,14 +743,12 @@ static struct MachineDriver slapbtuk_machine_driver =
 		{
 			CPU_Z80,
 			6000000,
-			0,
 			readmem,slapbtuk_writemem,readport,writeport,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
 			6000000,
-			3,
 			sound_readmem,sound_writemem,0,0,
 			getstar_interrupt/*nmi_interrupt*/, 3,    /* p'tit Seb 980926 this way it sound much better ! */
 			0,0                  /* I think music is not so far from correct speed */
@@ -793,7 +787,7 @@ static struct MachineDriver slapbtuk_machine_driver =
 
 
 ROM_START( tigerh )
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU1 )
 	ROM_LOAD( "0.4",          0x00000, 0x4000, 0x4be73246 )
 	ROM_LOAD( "1.4",          0x04000, 0x4000, 0xaad04867 )
 	ROM_LOAD( "2.4",          0x08000, 0x4000, 0x4843f15c )
@@ -815,14 +809,14 @@ ROM_START( tigerh )
 	ROM_LOAD( "82s129.12m",   0x0100, 0x0100, 0x7142e972 )
 	ROM_LOAD( "82s129.12n",   0x0200, 0x0100, 0x25f273f2 )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "3.4",          0x0000, 0x2000, 0xd105260f )
 
 	/* The 68705 ROM is missing! */
 ROM_END
 
 ROM_START( tigerh2 )
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU1 )
 	ROM_LOAD( "b0.5",         0x00000, 0x4000, 0x6ae7e13c )
 	ROM_LOAD( "a-1.5",        0x04000, 0x4000, 0x65df2152 )
 	ROM_LOAD( "a-2.5",        0x08000, 0x4000, 0x633d324b )
@@ -844,14 +838,14 @@ ROM_START( tigerh2 )
 	ROM_LOAD( "82s129.12m",   0x0100, 0x0100, 0x7142e972 )
 	ROM_LOAD( "82s129.12n",   0x0200, 0x0100, 0x25f273f2 )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "3.4",          0x0000, 0x2000, 0xd105260f )
 
 	/* Is there a 68705 ROM missing? */
 ROM_END
 
 ROM_START( tigerhb1 )
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU1 )
 	ROM_LOAD( "14",           0x00000, 0x4000, 0xca59dd73 )
 	ROM_LOAD( "13",           0x04000, 0x4000, 0x38bd54db )
 	ROM_LOAD( "a-2.5",        0x08000, 0x4000, 0x633d324b )
@@ -873,12 +867,12 @@ ROM_START( tigerhb1 )
 	ROM_LOAD( "82s129.12m",   0x0100, 0x0100, 0x7142e972 )
 	ROM_LOAD( "82s129.12n",   0x0200, 0x0100, 0x25f273f2 )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "3.4",          0x0000, 0x2000, 0xd105260f )
 ROM_END
 
 ROM_START( tigerhb2 )
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU1 )
 	ROM_LOAD( "rom00_09.bin", 0x00000, 0x4000, 0xef738c68 )
 	ROM_LOAD( "a-1.5",        0x04000, 0x4000, 0x65df2152 )
 	ROM_LOAD( "rom02_07.bin", 0x08000, 0x4000, 0x36e250b9 )
@@ -900,12 +894,12 @@ ROM_START( tigerhb2 )
 	ROM_LOAD( "82s129.12m",   0x0100, 0x0100, 0x7142e972 )
 	ROM_LOAD( "82s129.12n",   0x0200, 0x0100, 0x25f273f2 )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "3.4",          0x0000, 0x2000, 0xd105260f )
 ROM_END
 
 ROM_START( slapfigh )
-	ROM_REGION(0x18000)
+	ROM_REGIONX( 0x18000, REGION_CPU1 )
 	ROM_LOAD( "sf_r19.bin",   0x00000, 0x8000, 0x674c0e0f )
 	ROM_LOAD( "sf_rh.bin",    0x10000, 0x8000, 0x3c42e4a7 )	/* banked at 8000 */
 
@@ -926,12 +920,12 @@ ROM_START( slapfigh )
 	ROM_LOAD( "sf_col20.bin", 0x0100, 0x0100, 0xa56d57e5 )
 	ROM_LOAD( "sf_col19.bin", 0x0200, 0x0100, 0x5cbf9fbf )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "sf_r05.bin",   0x0000, 0x2000, 0x87f4705a )
 ROM_END
 
 ROM_START( slapbtjp )
-	ROM_REGION(0x18000)
+	ROM_REGIONX( 0x18000, REGION_CPU1 )
 	ROM_LOAD( "sf_r19jb.bin", 0x00000, 0x8000, 0x9a7ac8b3 )
 	ROM_LOAD( "sf_rh.bin",    0x10000, 0x8000, 0x3c42e4a7 )	/* banked at 8000 */
 
@@ -952,12 +946,12 @@ ROM_START( slapbtjp )
 	ROM_LOAD( "sf_col20.bin", 0x0100, 0x0100, 0xa56d57e5 )
 	ROM_LOAD( "sf_col19.bin", 0x0200, 0x0100, 0x5cbf9fbf )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "sf_r05.bin",   0x0000, 0x2000, 0x87f4705a )
 ROM_END
 
 ROM_START( slapbtuk )
-	ROM_REGION(0x18000)
+	ROM_REGIONX( 0x18000, REGION_CPU1 )
 	ROM_LOAD( "sf_r19eb.bin", 0x00000, 0x4000, 0x2efe47af )
 	ROM_LOAD( "sf_r20eb.bin", 0x04000, 0x4000, 0xf42c7951 )
 	ROM_LOAD( "sf_rh.bin",    0x10000, 0x8000, 0x3c42e4a7 )	/* banked at 8000 */
@@ -979,12 +973,12 @@ ROM_START( slapbtuk )
 	ROM_LOAD( "sf_col20.bin", 0x0100, 0x0100, 0xa56d57e5 )
 	ROM_LOAD( "sf_col19.bin", 0x0200, 0x0100, 0x5cbf9fbf )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "sf_r05.bin",   0x0000, 0x2000, 0x87f4705a )
 ROM_END
 
 ROM_START( alcon )
-	ROM_REGION(0x18000)
+	ROM_REGIONX( 0x18000, REGION_CPU1 )
 	ROM_LOAD( "00",           0x00000, 0x8000, 0x2ba82d60 )
 	ROM_LOAD( "01",           0x10000, 0x8000, 0x18bb2f12 )	/* banked at 8000 */
 
@@ -1005,13 +999,13 @@ ROM_START( alcon )
 	ROM_LOAD( "sf_col20.bin", 0x0100, 0x0100, 0xa56d57e5 )
 	ROM_LOAD( "sf_col19.bin", 0x0200, 0x0100, 0x5cbf9fbf )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "sf_r05.bin",   0x0000, 0x2000, 0x87f4705a )
 ROM_END
 
 
 ROM_START( getstar )
-	ROM_REGION(0x18000)		/* Region 0 - main cpu code */
+	ROM_REGIONX( 0x18000, REGION_CPU1 )		/* Region 0 - main cpu code */
 	ROM_LOAD( "gs_14.rom", 0x00000, 0x4000, 0x1a57a920 )
 	ROM_LOAD( "gs_13.rom", 0x04000, 0x4000, 0x805f8e77 )
 	ROM_LOAD( "gs_12.rom", 0x10000, 0x8000, 0x3567da17 )
@@ -1033,7 +1027,7 @@ ROM_START( getstar )
     ROM_LOAD( "prom_2.bin", 0x0100, 0x0100, 0x00000000 )
     ROM_LOAD( "prom_3.bin", 0x0200, 0x0100, 0x00000000 )
 
-	ROM_REGION(0x10000)		/* Region 3 - sound cpu code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* Region 3 - sound cpu code */
 	ROM_LOAD( "gs_05.rom", 0x0000, 0x2000, 0x18daa44c)
 ROM_END
 
@@ -1044,7 +1038,7 @@ ROM_END
 /* 10 * 1 byte for level reached ( area ) 		*/
 static int slapfigh_hiload(void)
 {
-unsigned char	*RAM = memory_region(Machine->drv->cpu[0].memory_region);
+unsigned char	*RAM = memory_region(REGION_CPU1);
 
 	/* check to see if high scores initialised */
 	if ((memcmp(&RAM[0xc060],"\x50\x30\x00",3) == 0) &&
@@ -1114,7 +1108,7 @@ unsigned char	*RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 static void slapfigh_hisave(void)
 {
-unsigned char	*RAM = memory_region(Machine->drv->cpu[0].memory_region);
+unsigned char	*RAM = memory_region(REGION_CPU1);
 void	*f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1135,7 +1129,7 @@ void	*f;
 /* 10 * 1 byte for level reached		 				*/
 static int tigerh_hiload(void)
 {
-        unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+        unsigned char *RAM = memory_region(REGION_CPU1);
 
         if (memcmp(&RAM[0xc0db],"\x00\x20\x00\x00\x20\x00",6) == 0)
         {
@@ -1171,7 +1165,7 @@ static int tigerh_hiload(void)
 static void tigerh_hisave(void)
 {
         void *f;
-        unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+        unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
         {
@@ -1191,7 +1185,7 @@ static void tigerh_hisave(void)
 
 static int getstar_hiload(void)
 {
-unsigned char	*RAM = memory_region(Machine->drv->cpu[0].memory_region);
+unsigned char	*RAM = memory_region(REGION_CPU1);
 static int phase = 0;
 
 /* phase 0: dirty memory just 1 byte ahead of hi-scores */
@@ -1244,7 +1238,7 @@ static int phase = 0;
 
 static void getstar_hisave(void)
 {
-unsigned char	*RAM = memory_region(Machine->drv->cpu[0].memory_region);
+unsigned char	*RAM = memory_region(REGION_CPU1);
 void	*f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

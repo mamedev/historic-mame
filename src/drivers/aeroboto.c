@@ -233,14 +233,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			1250000,        /* 1.25 Mhz ? */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
 			1250000,        /* 1.25 Mhz ? */
-			3,
 			readmem_sound,writemem_sound,0,0,
 			interrupt,1
 		}
@@ -278,7 +276,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( formatz )
-	ROM_REGION(0x10000)     /* 64k for main CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
 	ROM_LOAD( "format_z.8",   0x4000, 0x4000, 0x81a2416c )
 	ROM_LOAD( "format_z.7",   0x8000, 0x4000, 0x986e6052 )
 	ROM_LOAD( "format_z.6",   0xc000, 0x4000, 0xbaa0d745 )
@@ -293,12 +291,12 @@ ROM_START( formatz )
 	ROM_REGIONX( 0x0300, REGION_PROMS )
 	/* 10A, 10B, 10C - missing! */
 
-	ROM_REGION(0x10000)     /* 64k for sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for sound CPU */
 	ROM_LOAD( "format_z.9",   0xf000, 0x1000, 0x6b9215ad )
 ROM_END
 
 ROM_START( aeroboto )
-	ROM_REGION(0x10000)     /* 64k for main CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
 	ROM_LOAD( "aeroboto.8",   0x4000, 0x4000, 0x4d3fc049 )
 	ROM_LOAD( "aeroboto.7",   0x8000, 0x4000, 0x522f51c1 )
 	ROM_LOAD( "aeroboto.6",   0xc000, 0x4000, 0x1a295ffb )
@@ -313,7 +311,7 @@ ROM_START( aeroboto )
 	ROM_REGIONX( 0x0300, REGION_PROMS )
 	/* 10A, 10B, 10C - missing! */
 
-	ROM_REGION(0x10000)     /* 64k for sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for sound CPU */
 	ROM_LOAD( "format_z.9",   0xf000, 0x1000, 0x6b9215ad )
 ROM_END
 

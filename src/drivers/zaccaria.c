@@ -468,21 +468,18 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3000000,	/* 3 Mhz ????? */
-			0,
 			readmem,writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_M6802 | CPU_AUDIO_CPU,
 			6000000/4,	/* ????? */
-			3,
 			sound_readmem1,sound_writemem1,0,0,
 			ignore_interrupt,1
 		},
 		{
 			CPU_M6802 | CPU_AUDIO_CPU,
 			6000000/4,	/* ????? */
-			4,
 			sound_readmem2,sound_writemem2,0,0,
 			ignore_interrupt,1
 		}
@@ -516,7 +513,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( monymony )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "1a",           0x0000, 0x1000, 0x13c227ca )
 	ROM_CONTINUE(             0x8000, 0x1000 )
 	ROM_LOAD( "1b",           0x1000, 0x1000, 0x87372545 )
@@ -539,11 +536,11 @@ ROM_START( monymony )
 	ROM_LOAD( "monymony.9g",  0x0000, 0x0200, 0xfc9a0f21 )
 	ROM_LOAD( "monymony.9f",  0x0200, 0x0200, 0x93106704 )
 
-	ROM_REGION(0x10000)	/* 64k for first 6802 */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for first 6802 */
 	ROM_LOAD( "1i",           0x7000, 0x1000, 0x94e3858b )	/* ?? */
 	ROM_CONTINUE(             0xf000, 0x1000 )
 
-	ROM_REGION(0x10000)	/* 64k for second 6802 */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for second 6802 */
 	ROM_LOAD( "1h",           0x6000, 0x1000, 0xaad76193 )	/* ?? */
 	ROM_CONTINUE(             0xe000, 0x1000 )
 	ROM_LOAD( "1g",           0x7000, 0x1000, 0x1e8ffe3e )	/* ?? */
@@ -554,7 +551,7 @@ ROM_START( monymony )
 ROM_END
 
 ROM_START( jackrabt )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "cpu-01.1a",    0x0000, 0x1000, 0x499efe97 )
 	ROM_CONTINUE(             0x8000, 0x1000 )
 	ROM_LOAD( "cpu-01.2l",    0x1000, 0x1000, 0x4772e557 )
@@ -577,11 +574,11 @@ ROM_START( jackrabt )
 	ROM_LOAD( "jr-ic9g",      0x0000, 0x0200, 0x85577107 )
 	ROM_LOAD( "jr-ic9f",      0x0200, 0x0200, 0x085914d1 )
 
-	ROM_REGION(0x10000)	/* 64k for first 6802 */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for first 6802 */
 	ROM_LOAD( "9snd.1i",      0x7000, 0x1000, 0x3dab977f )	/* ?? */
 	ROM_CONTINUE(             0xf000, 0x1000 )
 
-	ROM_REGION(0x10000)	/* 64k for second 6802 */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for second 6802 */
 	ROM_LOAD( "8snd.1h",      0x6000, 0x1000, 0xf4507111 )	/* ?? */
 	ROM_CONTINUE(             0xe000, 0x1000 )
 	ROM_LOAD( "7snd.1g",      0x7000, 0x1000, 0xc722eff8 )	/* ?? */
@@ -592,7 +589,7 @@ ROM_START( jackrabt )
 ROM_END
 
 ROM_START( jackrab2 )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "1cpu2.1a",     0x0000, 0x1000, 0xf9374113 )
 	ROM_CONTINUE(             0x8000, 0x1000 )
 	ROM_LOAD( "2cpu2.1b",     0x1000, 0x1000, 0x0a0eea4a )
@@ -615,11 +612,11 @@ ROM_START( jackrab2 )
 	ROM_LOAD( "jr-ic9g",      0x0000, 0x0200, 0x85577107 )
 	ROM_LOAD( "jr-ic9f",      0x0200, 0x0200, 0x085914d1 )
 
-	ROM_REGION(0x10000)	/* 64k for first 6802 */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for first 6802 */
 	ROM_LOAD( "9snd.1i",      0x7000, 0x1000, 0x3dab977f )	/* ?? */
 	ROM_CONTINUE(             0xf000, 0x1000 )
 
-	ROM_REGION(0x10000)	/* 64k for second 6802 */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for second 6802 */
 	ROM_LOAD( "8snd.1h",      0x6000, 0x1000, 0xf4507111 )	/* ?? */
 	ROM_CONTINUE(             0xe000, 0x1000 )
 	ROM_LOAD( "7snd.1g",      0x7000, 0x1000, 0xc722eff8 )	/* ?? */
@@ -630,7 +627,7 @@ ROM_START( jackrab2 )
 ROM_END
 
 ROM_START( jackrabs )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "1cpu.1a",      0x0000, 0x1000, 0x6698dc65 )
 	ROM_CONTINUE(             0x8000, 0x1000 )
 	ROM_LOAD( "2cpu.1b",      0x1000, 0x1000, 0x42b32929 )
@@ -653,11 +650,11 @@ ROM_START( jackrabs )
 	ROM_LOAD( "jr-ic9g",      0x0000, 0x0200, 0x85577107 )
 	ROM_LOAD( "jr-ic9f",      0x0200, 0x0200, 0x085914d1 )
 
-	ROM_REGION(0x10000)	/* 64k for first 6802 */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for first 6802 */
 	ROM_LOAD( "9snd.1i",      0x7000, 0x1000, 0x3dab977f )	/* ?? */
 	ROM_CONTINUE(             0xf000, 0x1000 )
 
-	ROM_REGION(0x10000)	/* 64k for second 6802 */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for second 6802 */
 	ROM_LOAD( "8snd.1h",      0x6000, 0x1000, 0xf4507111 )	/* ?? */
 	ROM_CONTINUE(             0xe000, 0x1000 )
 	ROM_LOAD( "7snd.1g",      0x7000, 0x1000, 0xc722eff8 )	/* ?? */
@@ -669,7 +666,7 @@ ROM_END
 
 static int monymony_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -697,7 +694,7 @@ static int monymony_hiload(void)
 static void monymony_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -711,7 +708,7 @@ static void monymony_hisave(void)
 
 static int jackrabt_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -739,7 +736,7 @@ static int jackrabt_hiload(void)
 static void jackrabt_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

@@ -152,7 +152,7 @@ void tehkanwc_adpcm_int (int data)
 {
 	static int toggle;
 
-	unsigned char *SAMPLES = Machine->memory_region[4];
+	unsigned char *SAMPLES = memory_region(4);
 	int msm_data = SAMPLES[msm_data_offs & 0x7fff];
 
 	if (toggle == 0)
@@ -659,21 +659,18 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4608000,	/* 18.432000 / 4 */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
 			4608000,	/* 18.432000 / 4 */
-			2,
 			readmem_sub,writemem_sub,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,	/* communication is bidirectional, can't mark it as AUDIO_CPU */
 			4608000,	/* 18.432000 / 4 */
-			3,
 			readmem_sound,writemem_sound,sound_readport,sound_writeport,
 			interrupt,1
 		}
@@ -717,7 +714,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( tehkanwc )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "twc-1.bin",    0x0000, 0x4000, 0x34d6d5ff )
 	ROM_LOAD( "twc-2.bin",    0x4000, 0x4000, 0x7017a221 )
 	ROM_LOAD( "twc-3.bin",    0x8000, 0x4000, 0x8b662902 )
@@ -729,10 +726,10 @@ ROM_START( tehkanwc )
 	ROM_LOAD( "twc-11.bin",   0x14000, 0x8000, 0x669389fc )	/* bg tiles */
 	ROM_LOAD( "twc-9.bin",    0x1c000, 0x8000, 0x347ef108 )
 
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
 	ROM_LOAD( "twc-4.bin",    0x0000, 0x8000, 0x70a9f883 )
 
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for code */
 	ROM_LOAD( "twc-6.bin",    0x0000, 0x4000, 0xe3112be2 )
 
 	ROM_REGION(0x8000)	/* 32k for adpcm sounds */
@@ -740,7 +737,7 @@ ROM_START( tehkanwc )
 ROM_END
 
 ROM_START( gridiron )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "gfight1.bin",  0x0000, 0x4000, 0x51612741 )
 	ROM_LOAD( "gfight2.bin",  0x4000, 0x4000, 0xa678db48 )
 	ROM_LOAD( "gfight3.bin",  0x8000, 0x4000, 0x8c227c33 )
@@ -755,10 +752,10 @@ ROM_START( gridiron )
 	ROM_LOAD( "gfight12.bin", 0x18000, 0x4000, 0x1b615eae )
 	/* 1c000-23fff empty */
 
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
 	ROM_LOAD( "gfight4.bin",  0x0000, 0x4000, 0x8821415f )
 
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for code */
 	ROM_LOAD( "gfight5.bin",  0x0000, 0x4000, 0x92ca3c07 )
 
 	ROM_REGION(0x8000)	/* 32k for adpcm sounds */
@@ -766,7 +763,7 @@ ROM_START( gridiron )
 ROM_END
 
 ROM_START( teedoff )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "to-1.bin",     0x0000, 0x4000, 0xcc2aebc5 )
 	ROM_LOAD( "to-2.bin",     0x4000, 0x4000, 0xf7c9f138 )
 	ROM_LOAD( "to-3.bin",     0x8000, 0x4000, 0xa0f0a6da )
@@ -778,10 +775,10 @@ ROM_START( teedoff )
 	ROM_LOAD( "to-11.bin",    0x14000, 0x8000, 0x1ec00cb5 )	/* bg tiles */
 	ROM_LOAD( "to-9.bin",     0x1c000, 0x8000, 0xa14347f0 )
 
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
 	ROM_LOAD( "to-4.bin",     0x0000, 0x8000, 0xe922cbd2 )
 
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for code */
 	ROM_LOAD( "to-6.bin",     0x0000, 0x4000, 0xd8dfe1c8 )
 
 	ROM_REGION(0x8000)	/* 32k for adpcm sounds */
@@ -791,7 +788,7 @@ ROM_END
 
 static int tehkanwc_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -814,7 +811,7 @@ static int tehkanwc_hiload(void)
 static void tehkanwc_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

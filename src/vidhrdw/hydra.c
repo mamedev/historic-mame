@@ -152,7 +152,7 @@ int hydra_vh_start(void)
 	/* add the top bit to the playfield graphics */
 	if (Machine->gfx[0])
 	{
-		const UINT8 *src = &Machine->memory_region[4][0x80000];
+		const UINT8 *src = &memory_region(4)[0x80000];
 		unsigned int *pen_usage = Machine->gfx[0]->pen_usage;
 		int n, h, w;
 		UINT8 *dst = Machine->gfx[0]->gfxdata;

@@ -1,18 +1,32 @@
 /***************************************************************************
 
 	Raiden							(c) 1990 Seibu Kaihatsu
-	Raiden (Alternate)				(c) 1990 Seibu Kaihatsu
+	Raiden (Alternate Hardware)		(c) 1990 Seibu Kaihatsu
+	Raiden (Korean license)			(c) 1990 Seibu Kaihatsu
 
-	There is an additional romset with a decrypted sound cpu but encrypted
-	program roms (same as the alternate set above).
+	The alternate hardware version is probably earlier than the main set.
+	It looks closer to Dynamite Duke (1989 game), while the main set looks
+	closer to the newer 68000 games in terms of graphics registers used, etc.
+
+	As well as different graphics registers the alternate set has a
+	different memory map, and different fix char layer memory layout!
 
 	To access test mode, reset with both start buttons held.
 
 	Coins are controlled by the sound cpu, there is a small kludge to allow
 	the game to coin up if sound is off.
 
-	Raiden (Alternate) has a different memory map, and different fix char
-	layer memory layout!
+	The country byte is stored at 0xffffd in the main cpu region,
+	(that's 0x1fffe in program rom 4).
+
+		0x80  = World/Japan version? (Seibu Kaihatsu)
+		0x81  = USA version (Fabtek license)
+		0x82  = Taiwan version (Liang HWA Electronics license)
+		0x83  = Hong Kong version (Wah Yan Electronics license)
+		0x84  = Korean version (IBL Corporation license)
+
+		There are also strings for Spanish, Greece, Mexico, Middle &
+		South America though it's not clear if they are used.
 
 	Todo: add support for Coin Mode B
 
@@ -23,6 +37,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "sndhrdw/seibu.h"
 
 int raiden_background_r(int offset);
 int raiden_foreground_r(int offset);
@@ -34,7 +49,7 @@ int raiden_vh_start(void);
 void raiden_control_w(int offset, int data);
 void raiden_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-static unsigned char *raiden_shared_ram,*sound_shared_ram;
+static unsigned char *raiden_shared_ram;
 extern unsigned char *raiden_back_data,*raiden_fore_data,*raiden_scroll_ram;
 
 /***************************************************************************/
@@ -42,61 +57,27 @@ extern unsigned char *raiden_back_data,*raiden_fore_data,*raiden_scroll_ram;
 static int raiden_shared_r(int offset) { return raiden_shared_ram[offset]; }
 static void raiden_shared_w(int offset,int data) { raiden_shared_ram[offset]=data; }
 
-static int raiden_soundcpu_r(int offset)
+static int raiden_sound_r(int offset)
 {
-	int erg,orig;
-	orig=sound_shared_ram[offset];
+	static int latch=0;
+	int erg,orig,coin=readinputport(4);
+	orig=seibu_shared_sound_ram[offset];
 
 	/* Small kludge to allows coins with sound off */
-	if (offset==4 && (!Machine->sample_rate) && (readinputport(4)&1)==1) return 1;
+	if (coin==0) latch=0;
+	if (offset==4 && (!Machine->sample_rate) && coin && latch==0) {
+		latch=1;
+		return coin;
+ 	}
 
 	switch (offset)
 	{/* misusing $d006 as a latch...but it works !*/
-		case 0x04:{erg=sound_shared_ram[6];sound_shared_ram[6]=0;break;} /* just 1 time */
+		case 0x04:{erg=seibu_shared_sound_ram[6];seibu_shared_sound_ram[6]=0;break;} /* just 1 time */
 		case 0x06:{erg=0xa0;break;}
 		case 0x0a:{erg=0;break;}
-		default: erg=sound_shared_ram[offset];
+		default: erg=seibu_shared_sound_ram[offset];
 	}
-	if (errorlog) fprintf(errorlog,"Main <- Sound from $d0%02x %04x (%04x)\n",offset,erg,orig);
 	return erg;
-}
-
-static void raiden_soundcpu_w(int offset, int data)
-{
-	sound_shared_ram[offset]=data;
-	// if write to $d00c cause irq
-	if (offset==0xc && data!=0xff) {
-		if (errorlog) fprintf(errorlog,"Sound latch %02x %02x\n",sound_shared_ram[0],sound_shared_ram[2]);
-		cpu_cause_interrupt(2,0xdf); /* RST 18 */
-	}
-}
-
-static int maincpu_data_r(int offset)
-{
-	if (errorlog) fprintf(errorlog,"Sound <- Main from $d0%02x %4x\n",offset<<1,sound_shared_ram[offset<<1]);
-	return sound_shared_ram[offset<<1];
-	// main: $d000 + offset*2
-	// 4010 -> d000
-	// 4011 -> d002
-}
-
-static void maincpu_data_w(int offset, int data)
-{
-	if (errorlog) fprintf(errorlog,"Sound -> Main at $d0%02x %4x\n",offset<<1,data);
-	sound_shared_ram[offset<<1]=data;
-}
-
-static void sound_bank_w(int offset,int data)
-{
-	unsigned char *RAM = Machine->memory_region[2];
-
-	if (data&1) { cpu_setbank(1,&RAM[0x0000]); }
-	else { cpu_setbank(1,&RAM[0x8000]); }
-}
-
-static void sound_clear_w(int offset,int data)
-{
-	sound_shared_ram[0]=data;
 }
 
 /******************************************************************************/
@@ -109,7 +90,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0b001, 0x0b001, input_port_1_r },
 	{ 0x0b002, 0x0b002, input_port_2_r },
 	{ 0x0b003, 0x0b003, input_port_3_r },
-	{ 0x0d000, 0x0d00f, raiden_soundcpu_r },
+	{ 0x0d000, 0x0d00f, raiden_sound_r },
 	{ 0xa0000, 0xfffff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -117,11 +98,11 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x00000, 0x06fff, MWA_RAM },
-	{ 0x07000, 0x07fff, MWA_RAM, &spriteram },
+	{ 0x07000, 0x07fff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x0a000, 0x0afff, raiden_shared_w, &raiden_shared_ram },
 	{ 0x0b000, 0x0b007, raiden_control_w },
 	{ 0x0c000, 0x0c7ff, raiden_text_w, &videoram },
-	{ 0x0d000, 0x0d00f, raiden_soundcpu_w, &sound_shared_ram },
+	{ 0x0d000, 0x0d00f, seibu_soundlatch_w, &seibu_shared_sound_ram },
 	{ 0x0d060, 0x0d067, MWA_RAM, &raiden_scroll_ram },
 	{ 0xa0000, 0xfffff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -156,11 +137,11 @@ static struct MemoryReadAddress alt_readmem[] =
 {
 	{ 0x00000, 0x07fff, MRA_RAM },
 	{ 0x08000, 0x08fff, raiden_shared_r },
+	{ 0x0a000, 0x0a00f, raiden_sound_r },
 	{ 0x0e000, 0x0e000, input_port_0_r },
 	{ 0x0e001, 0x0e001, input_port_1_r },
 	{ 0x0e002, 0x0e002, input_port_2_r },
 	{ 0x0e003, 0x0e003, input_port_3_r },
-	{ 0x0d000, 0x0d00f, MWA_NOP },
 	{ 0xa0000, 0xfffff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -168,11 +149,11 @@ static struct MemoryReadAddress alt_readmem[] =
 static struct MemoryWriteAddress alt_writemem[] =
 {
 	{ 0x00000, 0x06fff, MWA_RAM },
-	{ 0x07000, 0x07fff, MWA_RAM, &spriteram },
+	{ 0x07000, 0x07fff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x08000, 0x08fff, raiden_shared_w, &raiden_shared_ram },
+	{ 0x0a000, 0x0a00f, seibu_soundlatch_w, &seibu_shared_sound_ram },
 	{ 0x0b000, 0x0b007, raiden_control_w },
 	{ 0x0c000, 0x0c7ff, raidena_text_w, &videoram },
-	{ 0x0d000, 0x0d00f, MWA_NOP },
 	{ 0x0f000, 0x0f035, MWA_RAM, &raiden_scroll_ram },
 	{ 0xa0000, 0xfffff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -180,32 +161,7 @@ static struct MemoryWriteAddress alt_writemem[] =
 
 /******************************************************************************/
 
-static struct MemoryReadAddress sound_readmem[] =
-{
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x2000, 0x27ff, MRA_RAM },
-	{ 0x4008, 0x4008, YM3812_status_port_0_r },
-	{ 0x4010, 0x4011, maincpu_data_r }, /* Soundlatch (16 bits) */
-	{ 0x4013, 0x4013, input_port_4_r }, /* Coins */
-	{ 0x6000, 0x6000, OKIM6295_status_0_r },
-	{ 0x8000, 0xffff, MRA_BANK1 },
-	{ -1 }	/* end of table */
-};
-
-static struct MemoryWriteAddress sound_writemem[] =
-{
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2000, 0x27ff, MWA_RAM },
-	{ 0x4000, 0x4000, sound_clear_w }, /* Or command ack?? */
-	{ 0x4002, 0x4002, MWA_NOP }, /* RST 10h interrupt ack */
-	{ 0x4003, 0x4003, MWA_NOP }, /* RST 18h interrupt ack */
-	{ 0x4007, 0x4007, sound_bank_w },
-	{ 0x4008, 0x4008, YM3812_control_port_0_w },
-	{ 0x4009, 0x4009, YM3812_write_port_0_w },
-	{ 0x4018, 0x401f, maincpu_data_w },
-	{ 0x6000, 0x6000, OKIM6295_data_0_w },
-	{ -1 }	/* end of table */
-};
+SEIBU_SOUND_SYSTEM_YM3812_MEMORY_MAP(input_port_4_r); /* Coin port */
 
 /******************************************************************************/
 
@@ -234,18 +190,18 @@ INPUT_PORTS_START( raiden )
 	PORT_DIPNAME( 0x01, 0x01, "Coin Mode" )
 	PORT_DIPSETTING(    0x01, "A" )
 	PORT_DIPSETTING(    0x00, "B" )
-/* Coin Mode A */
+	/* Coin Mode A */
 	PORT_DIPNAME( 0x1e, 0x1e, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x02, "8 Coins/3 Credits" )
 	PORT_DIPSETTING(    0x14, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(    0x04, "5 Coins/3 Credits" )
 	PORT_DIPSETTING(    0x16, DEF_STR( 5C_1C ) )
 	PORT_DIPSETTING(    0x18, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x1a, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x02, "8 Coins/3 Credit" )
-	PORT_DIPSETTING(    0x1c, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x04, "5 Coins/3 Credirs" )
 	PORT_DIPSETTING(    0x06, DEF_STR( 3C_2C ) )
-	PORT_DIPSETTING(    0x1e, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x1c, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x1e, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x12, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_4C ) )
@@ -253,7 +209,7 @@ INPUT_PORTS_START( raiden )
 	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 
-/* Coin Mode B */
+	/* Coin Mode B */
 /*	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, "5C/1C or Free if Coin B too" )
 	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
@@ -299,8 +255,8 @@ INPUT_PORTS_START( raiden )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START	/* Coins */
-	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
-	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
 INPUT_PORTS_END
 
 /******************************************************************************/
@@ -345,32 +301,17 @@ static struct GfxDecodeInfo raiden_gfxdecodeinfo[] =
 
 /******************************************************************************/
 
-/* handler called by the 3812 emulator when the internal timers cause an IRQ */
-static void YM3812_irqhandler(int linestate)
-{
-	cpu_irq_line_vector_w(2,0,0xd7); /* RST 10h */
-	cpu_set_irq_line(2,0,linestate);
-}
-
-static struct YM3812interface ym3812_interface =
-{
-	1,
-	14318180/4,
-	{ 50 },
-	{ YM3812_irqhandler },
-};
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,
-	{ 8000 },
-	{ 4 },
-	{ 40 }
-};
+/* Parameters: YM3812 frequency, Oki frequency, Oki memory region */
+SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(14318180/4,8000,4);
 
 static int raiden_interrupt(void)
 {
 	return 0xc8/4;	/* VBL */
+}
+
+static void raiden_eof_callback(void)
+{
+	buffer_spriteram_w(0,0); /* Could be a memory location instead */
 }
 
 static struct MachineDriver raiden_machine_driver =
@@ -380,28 +321,22 @@ static struct MachineDriver raiden_machine_driver =
 		{
 			CPU_V30, /* NEC V30 CPU */
 			19000000, /* 20MHz is correct, but glitched!? */
-			0,
 			readmem,writemem,0,0,
 			raiden_interrupt,1
 		},
 		{
 			CPU_V30, /* NEC V30 CPU */
 			19000000, /* 20MHz is correct, but glitched!? */
-			3,
 			sub_readmem,sub_writemem,0,0,
 			raiden_interrupt,1
 		},
 		{
-			CPU_Z80 | CPU_AUDIO_CPU, /* Also controls coins */
-			14318180/4,
-			2,
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
+			SEIBU_SOUND_SYSTEM_CPU(14318180/4)
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION*2,	/* frames per second, vblank duration */
 	70,	/* CPU interleave  */
-	0,
+	seibu_sound_init_2,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
@@ -409,8 +344,8 @@ static struct MachineDriver raiden_machine_driver =
 	2048, 2048,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	raiden_eof_callback,
 	raiden_vh_start,
 	0,
 	raiden_vh_screenrefresh,
@@ -418,14 +353,7 @@ static struct MachineDriver raiden_machine_driver =
 	/* sound hardware */
 	0,0,0,0,
 	{
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
+		SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
 	}
 };
 
@@ -435,29 +363,23 @@ static struct MachineDriver raidena_machine_driver =
 	{
 		{
 			CPU_V30, /* NEC V30 CPU */
-			14000000, /* 10MHz, but cycle counts are wrong in the core */
-			0,
+			19000000, /* 20MHz is correct, but glitched!? */
 			alt_readmem,alt_writemem,0,0,
 			raiden_interrupt,1
 		},
 		{
 			CPU_V30, /* NEC V30 CPU */
-			14000000, /* 10MHz, but cycle counts are wrong in the core */
-			3,
+			19000000, /* 20MHz is correct, but glitched!? */
 			sub_readmem,sub_writemem,0,0,
 			raiden_interrupt,1
 		},
 		{
-			CPU_Z80 | CPU_AUDIO_CPU, /* Don't remove the CPU_AUDIO_CPU :P */
-			4000000, /* Although it controls coins, there is a free play dipswitch */
-			2,
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
+			SEIBU_SOUND_SYSTEM_CPU(14318180/4)
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	120,	/* CPU interleave  */
-	0,
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION*2,	/* frames per second, vblank duration */
+	60,	/* CPU interleave  */
+	seibu_sound_init_2,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
@@ -465,8 +387,8 @@ static struct MachineDriver raidena_machine_driver =
 	2048, 2048,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	raiden_eof_callback,
 	raiden_vh_start,
 	0,
 	raiden_vh_screenrefresh,
@@ -474,21 +396,14 @@ static struct MachineDriver raidena_machine_driver =
 	/* sound hardware */
 	0,0,0,0,
 	{
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
+		SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
 	}
 };
 
 /***************************************************************************/
 
 ROM_START( raiden )
-	ROM_REGION(0x100000) /* Region 0 - v30 main cpu */
+	ROM_REGIONX(0x100000, REGION_CPU1) /* Region 0 - v30 main cpu */
 	ROM_LOAD_V20_ODD ( "rai1.bin",   0x0a0000, 0x10000, 0xa4b12785 )
 	ROM_LOAD_V20_EVEN( "rai2.bin",   0x0a0000, 0x10000, 0x17640bd5 )
 	ROM_LOAD_V20_ODD ( "rai3.bin",   0x0c0000, 0x20000, 0x9d735bf5 )
@@ -502,10 +417,11 @@ ROM_START( raiden )
 	ROM_LOAD( "raiu0920.bin", 0x0a0000, 0x80000, 0xac1f57ac ) /* tiles */
 	ROM_LOAD( "raiu165.bin",  0x120000, 0x80000, 0x946d7bde ) /* sprites */
 
-	ROM_REGION(0x10000)	 /* Region 2 - 64k code for sound Z80 */
-	ROM_LOAD( "rai6.bin", 0x000000, 0x10000, 0x723a483b )
+	ROM_REGIONX(0x18000, REGION_CPU3) /* Region 2 - 64k code for sound Z80 */
+	ROM_LOAD( "rai6.bin", 0x000000, 0x08000, 0x723a483b )
+	ROM_CONTINUE(         0x010000, 0x08000 )
 
-	ROM_REGION(0x100000) /* Region 3 - v30 sub cpu */
+	ROM_REGIONX(0x100000, REGION_CPU2) /* Region 3 - v30 sub cpu */
 	ROM_LOAD_V20_ODD ( "rai5.bin",   0x0c0000, 0x20000, 0x7aca6d61 )
 	ROM_LOAD_V20_EVEN( "rai6a.bin",  0x0c0000, 0x20000, 0xe3d35cc2 )
 
@@ -514,13 +430,11 @@ ROM_START( raiden )
 ROM_END
 
 ROM_START( raidena )
-	ROM_REGION(0x100000) /* Region 0 - v20 main cpu */
+	ROM_REGIONX(0x100000, REGION_CPU1) /* Region 0 - v30 main cpu */
 	ROM_LOAD_V20_ODD ( "rai1.bin",     0x0a0000, 0x10000, 0xa4b12785 )
 	ROM_LOAD_V20_EVEN( "rai2.bin",     0x0a0000, 0x10000, 0x17640bd5 )
-//	ROM_LOAD_GFX_EVEN( "raiden03.rom", 0x0c0000, 0x20000, 0xffffffff )
-//	ROM_LOAD_GFX_ODD ( "raiden04.rom", 0x0c0000, 0x20000, 0xffffffff )
-
-	ROM_LOAD("dec.out",               0x0c0000, 0x40000, 0xffffffff )
+	ROM_LOAD_V20_ODD ( "raiden03.rom", 0x0c0000, 0x20000, 0xf6af09d0 )
+	ROM_LOAD_V20_EVEN( "raiden04.rom", 0x0c0000, 0x20000, 0x6bdfd416 )
 
 	ROM_REGION_DISPOSE(0x1a0000)	/* Region 1 - Graphics */
 	ROM_LOAD( "rai9.bin",     0x000000, 0x08000, 0x1922b25e ) /* chars */
@@ -530,14 +444,40 @@ ROM_START( raidena )
 	ROM_LOAD( "raiu0920.bin", 0x0a0000, 0x80000, 0xac1f57ac )
 	ROM_LOAD( "raiu165.bin",  0x120000, 0x80000, 0x946d7bde )
 
-	ROM_REGION(0x10000)	 /* Region 2 - 64k code for sound Z80 */
-	ROM_LOAD( "raiden08.rom", 0x000000, 0x10000, 0xffffffff )
+	ROM_REGIONX(0x18000, REGION_CPU3) /* Region 2 - 64k code for sound Z80 */
+	ROM_LOAD( "raiden08.rom", 0x000000, 0x08000, 0x731adb43 )
+	ROM_CONTINUE(             0x010000, 0x08000 )
 
-	ROM_REGION(0x100000) /* Region 3 - v20 sub cpu */
-//	ROM_LOAD_GFX_EVEN( "raiden05.rom",   0x0c0000, 0x20000, 0xffffffff )
-//	ROM_LOAD_GFX_ODD ( "raiden06.rom",   0x0c0000, 0x20000, 0xffffffff )
-	ROM_LOAD_V20_ODD ( "rai5.bin",   0x0c0000, 0x20000, 0x7aca6d61 )
-	ROM_LOAD_V20_EVEN( "rai6a.bin",  0x0c0000, 0x20000, 0xe3d35cc2 )
+	ROM_REGIONX(0x100000, REGION_CPU2) /* Region 3 - v30 sub cpu */
+	ROM_LOAD_V20_ODD ( "raiden05.rom",   0x0c0000, 0x20000, 0xed03562e )
+	ROM_LOAD_V20_EVEN( "raiden06.rom",   0x0c0000, 0x20000, 0xa19d5b5d )
+
+	ROM_REGION(0x10000)	 /* Region 4 - ADPCM samples */
+	ROM_LOAD( "rai7.bin", 0x000000, 0x10000, 0x8f927822 )
+ROM_END
+
+ROM_START( raidenk )
+	ROM_REGIONX(0x100000, REGION_CPU1) /* Region 0 - v30 main cpu */
+	ROM_LOAD_V20_ODD ( "rai1.bin",     0x0a0000, 0x10000, 0xa4b12785 )
+	ROM_LOAD_V20_EVEN( "rai2.bin",     0x0a0000, 0x10000, 0x17640bd5 )
+	ROM_LOAD_V20_ODD ( "raiden03.rom", 0x0c0000, 0x20000, 0xf6af09d0 )
+	ROM_LOAD_V20_EVEN( "1i",           0x0c0000, 0x20000, 0xfddf24da )
+
+	ROM_REGION_DISPOSE(0x1a0000)	/* Region 1 - Graphics */
+	ROM_LOAD( "rai9.bin",     0x000000, 0x08000, 0x1922b25e ) /* chars */
+	ROM_LOAD( "rai10.bin",    0x008000, 0x08000, 0x5f90786a )
+
+	ROM_LOAD( "raiu0919.bin", 0x020000, 0x80000, 0xda151f0b )
+	ROM_LOAD( "raiu0920.bin", 0x0a0000, 0x80000, 0xac1f57ac )
+	ROM_LOAD( "raiu165.bin",  0x120000, 0x80000, 0x946d7bde )
+
+	ROM_REGIONX(0x18000, REGION_CPU3) /* Region 2 - 64k code for sound Z80 */
+	ROM_LOAD( "8b",           0x000000, 0x08000, 0x99ee7505 )
+	ROM_CONTINUE(             0x010000, 0x08000 )
+
+	ROM_REGIONX(0x100000, REGION_CPU2) /* Region 3 - v30 sub cpu */
+	ROM_LOAD_V20_ODD ( "raiden05.rom",   0x0c0000, 0x20000, 0xed03562e )
+	ROM_LOAD_V20_EVEN( "raiden06.rom",   0x0c0000, 0x20000, 0xa19d5b5d )
 
 	ROM_REGION(0x10000)	 /* Region 4 - ADPCM samples */
 	ROM_LOAD( "rai7.bin", 0x000000, 0x10000, 0x8f927822 )
@@ -545,12 +485,73 @@ ROM_END
 
 /***************************************************************************/
 
-static void raidena_decrypt(void)
+/* This is based on code by Niclas Karlsson Mate, who figured out the
+encryption method! The technique is a combination of a XOR table plus
+bit-swapping */
+static void raiden_decrypt(void)
 {
-	/* Not finished yet! Gimme time */
+	unsigned char *RAM = memory_region(REGION_CPU1);
+	int i,a;
+
+	int xor_table[4][16]={
+	  {0xF1,0xF9,0xF5,0xFD,0xF1,0xF1,0x3D,0x3D,   /* rom 3 */
+	   0x73,0xFB,0x77,0xFF,0x73,0xF3,0x3F,0x3F},
+	  {0xDF,0xFF,0xFF,0xFF,0xDB,0xFF,0xFB,0xFF,   /* rom 4 */
+	   0xFF,0xFF,0xFF,0xFF,0xFB,0xFF,0xFB,0xFF},
+	  {0x7F,0x7F,0xBB,0x77,0x77,0x77,0xBE,0xF6,   /* rom 5 */
+	   0x7F,0x7F,0xBB,0x77,0x77,0x77,0xBE,0xF6},
+	  {0xFF,0xFF,0xFD,0xFD,0xFD,0xFD,0xEF,0xEF,   /* rom 6 */
+	   0xFF,0xFF,0xFD,0xFD,0xFD,0xFD,0xEF,0xEF}
+	};
+
+	/* Rom 3 - main cpu even bytes */
+	for (i=0xc0000; i<0x100000; i+=2) {
+		a=RAM[i];
+		a^=xor_table[0][(i/2) & 0x0f];
+    	a^=0xff;
+   		a=(a & 0x31) | ((a<<1) & 0x04) | ((a>>5) & 0x02)
+		| ((a<<4) & 0x40) | ((a<<4) & 0x80) | ((a>>4) & 0x08);
+		RAM[i]=a;
+	}
+
+	/* Rom 4 - main cpu odd bytes */
+	for (i=0xc0001; i<0x100000; i+=2) {
+		a=RAM[i];
+		a^=xor_table[1][(i/2) & 0x0f];
+    	a^=0xff;
+   		a=(a & 0xdb) | ((a>>3) & 0x04) | ((a<<3) & 0x20);
+		RAM[i]=a;
+	}
+
+	RAM = memory_region(REGION_CPU2);
+
+	/* Rom 5 - sub cpu even bytes */
+	for (i=0xc0000; i<0x100000; i+=2) {
+		a=RAM[i];
+		a^=xor_table[2][(i/2) & 0x0f];
+    	a^=0xff;
+   		a=(a & 0x32) | ((a>>1) & 0x04) | ((a>>4) & 0x08)
+		| ((a<<5) & 0x80) | ((a>>6) & 0x01) | ((a<<6) & 0x40);
+		RAM[i]=a;
+	}
+
+	/* Rom 6 - sub cpu odd bytes */
+	for (i=0xc0001; i<0x100000; i+=2) {
+		a=RAM[i];
+		a^=xor_table[3][(i/2) & 0x0f];
+    	a^=0xff;
+   		a=(a & 0xed) | ((a>>3) & 0x02) | ((a<<3) & 0x10);
+		RAM[i]=a;
+	}
 }
 
-/* Spin the 2nd cpu if it is waiting on the master cpu */
+static void raidena_decrypt(void)
+{
+	raiden_decrypt();
+	seibu_sound_decrypt();
+}
+
+/* Spin the sub-cpu if it is waiting on the master cpu */
 static int sub_cpu_spin(int offset)
 {
 	int pc=cpu_get_pc();
@@ -564,9 +565,29 @@ static int sub_cpu_spin(int offset)
 	return ret;
 }
 
+static int sub_cpu_spina(int offset)
+{
+	int pc=cpu_get_pc();
+	int ret=raiden_shared_ram[0x8];
+
+	if (offset==1) return raiden_shared_ram[0x9];
+
+	if (pc==0xfcde8 && ret!=0x40)
+		cpu_spin();
+
+	return ret;
+}
+
 static void memory_patch(void)
 {
-//	install_mem_read_handler(1, 0x4008, 0x4009, sub_cpu_spin);
+	install_mem_read_handler(1, 0x4008, 0x4009, sub_cpu_spin);
+	install_seibu_sound_speedup(2);
+}
+
+static void memory_patcha(void)
+{
+	install_mem_read_handler(1, 0x4008, 0x4009, sub_cpu_spina);
+	install_seibu_sound_speedup(2);
 }
 
 /***************************************************************************/
@@ -595,22 +616,45 @@ struct GameDriver driver_raiden =
 	0, 0
 };
 
-/* Don't add this yet */
 struct GameDriver driver_raidena =
 {
 	__FILE__,
 	&driver_raiden,
 	"raidena",
-	"Raiden (Alternate)",
+	"Raiden (Alternate Hardware)",
 	"1990",
 	"Seibu Kaihatsu",
 	"Oliver Bergmann\nBryan McPhail\nRandy Mongenel",
 	0,
 	&raidena_machine_driver,
-	0,
+	memory_patcha,
 
 	rom_raidena,
 	raidena_decrypt, 0,
+	0, 0,
+	input_ports_raiden,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_NO_SOUND,
+
+	0, 0
+};
+
+struct GameDriver driver_raidenk =
+{
+	__FILE__,
+	&driver_raiden,
+	"raidenk",
+	"Raiden (Korea)",
+	"1990",
+	"Seibu Kaihatsu (IBL Corporation license)",
+	"Oliver Bergmann\nBryan McPhail\nRandy Mongenel",
+	0,
+	&raidena_machine_driver,
+	memory_patcha,
+
+	rom_raidenk,
+	raiden_decrypt, 0,
 	0, 0,
 	input_ports_raiden,
 

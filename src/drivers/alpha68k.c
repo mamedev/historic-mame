@@ -422,7 +422,7 @@ static struct MemoryWriteAddress alpha68k_V_writemem[] =
 static void sound_bank_w(int offset, int data)
 {
 	int bankaddress;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU2);
 
 	bankaddress = 0x10000 + (data) * 0x4000;
 	cpu_setbank(7,&RAM[bankaddress]);
@@ -1128,14 +1128,12 @@ static struct MachineDriver kyros_machine_driver =
  		{
 			CPU_M68000,
 			6000000, /* 24MHz/4? */
-			0,
 			kyros_readmem,kyros_writemem,0,0,
 			kyros_interrupt,2
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545, /* ? */
-			2,
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			interrupt,1
 		}
@@ -1175,14 +1173,12 @@ static struct MachineDriver alpha68k_I_machine_driver =
  		{
 			CPU_M68000,
 			6000000, /* 24MHz/4? */
-			0,
 			alpha68k_I_readmem,alpha68k_I_writemem,0,0,
 			m68_level1_irq,1 /* VBL */
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545, /* ? */
-			2,
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			interrupt,1
 		}
@@ -1221,7 +1217,6 @@ static struct MachineDriver alpha68k_II_machine_driver =
 		{
 			CPU_M68000,
 			8000000, /* Correct */
-			0,
 			alpha68k_II_readmem,alpha68k_II_writemem,0,0,
 			m68_level3_irq,1 /* VBL */
 		},
@@ -1229,7 +1224,6 @@ static struct MachineDriver alpha68k_II_machine_driver =
 			CPU_Z80 | CPU_AUDIO_CPU,
 			//3579545, /* Correct?? */
 			3579545*2, /* Unlikely but needed to stop nested NMI's */
-			2,
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			nmi_interrupt,112
 		}
@@ -1276,7 +1270,6 @@ static struct MachineDriver alpha68k_V_machine_driver =
  		{
 			CPU_M68000,
 			10000000, /* ? */
-			0,
 			alpha68k_V_readmem,alpha68k_V_writemem,0,0,
 			m68_level3_irq,1 /* VBL */
 		},
@@ -1284,7 +1277,6 @@ static struct MachineDriver alpha68k_V_machine_driver =
 			CPU_Z80 | CPU_AUDIO_CPU,
 //			3579545,
 			3579545*2, /* Unlikely but needed to stop nested NMI's */
-			2,
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			nmi_interrupt,112
 		}
@@ -1331,7 +1323,6 @@ static struct MachineDriver alpha68k_V_sb_machine_driver =
  		{
 			CPU_M68000,
 			10000000, /* ? */
-			0,
 			alpha68k_V_readmem,alpha68k_V_writemem,0,0,
 			m68_level3_irq,1 /* VBL */
 		},
@@ -1339,7 +1330,6 @@ static struct MachineDriver alpha68k_V_sb_machine_driver =
 			CPU_Z80 | CPU_AUDIO_CPU,
 //			3579545,
 			3579545*2, /* Unlikely but needed to stop nested NMI's */
-			2,
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			nmi_interrupt,112
 		}
@@ -1382,7 +1372,7 @@ static struct MachineDriver alpha68k_V_sb_machine_driver =
 /******************************************************************************/
 
 ROM_START( kyros )
-	ROM_REGION(0x20000)
+	ROM_REGIONX( 0x20000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "2.10c", 0x0000, 0x4000, 0x4bd030b1 )
 	ROM_CONTINUE ( 0x10000, 0x4000 | ROMFLAG_ALTERNATE )
 	ROM_LOAD_ODD ( "1.13c", 0x0000, 0x4000, 0x75cfbc5e )
@@ -1403,7 +1393,7 @@ ROM_START( kyros )
 	ROM_LOAD( "ss_11.rom", 0x020000, 0x4000, 0xffffffff )
 	ROM_LOAD( "ss_09.rom", 0x028000, 0x4000, 0xffffffff )
 */
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "2s.1f", 0x000000, 0x4000, 0x800ceb27 )
 
 	ROM_REGION(0x8000)	/* ADPCM samples? */
@@ -1416,7 +1406,7 @@ ROM_START( kyros )
 ROM_END
 
 ROM_START( sstingry )
-	ROM_REGION(0x10000)     /* 68000 code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 68000 code */
 	ROM_LOAD_EVEN( "ss_05.rom",  0x00000, 0x4000, 0xbfb28d53 )
 	ROM_LOAD_ODD ( "ss_07.rom",  0x00000, 0x4000, 0xeb1b65c5 )
 	ROM_LOAD_EVEN( "ss_04.rom",  0x08000, 0x4000, 0x2e477a79 )
@@ -1432,7 +1422,7 @@ ROM_START( sstingry )
 	ROM_LOAD( "ss_11.rom", 0x020000, 0x4000, 0xd134302e )
 	ROM_LOAD( "ss_09.rom", 0x028000, 0x4000, 0x6f9d938a )
 
-	ROM_REGION(0x10000)      /* sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )      /* sound cpu */
 	ROM_LOAD( "ss_01.rom",  0x0000, 0x04000, 0xfef09a92 )
 	ROM_LOAD( "ss_02.rom",  0x4000, 0x04000, 0xab4e8c01 )
 
@@ -1443,7 +1433,7 @@ ROM_START( sstingry )
 ROM_END
 
 ROM_START( paddlema )
-	ROM_REGION(0x40000)
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "padlem.6g", 0x00000, 0x10000, 0xc227a6e8 )
 	ROM_LOAD_ODD ( "padlem.3g", 0x00000, 0x10000, 0xf11a21aa )
 	ROM_LOAD_EVEN( "padlem.6h", 0x20000, 0x10000, 0x8897555f )
@@ -1460,7 +1450,7 @@ ROM_START( paddlema )
 	ROM_LOAD( "padlem.9n",  0x050000, 0x10000, 0xa1756f15 )
 	ROM_LOAD( "padlem.9m",  0x040000, 0x10000, 0x4ee4970d )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "padlem.18c", 0x000000, 0x10000, 0x9269778d )
 
 //	ROM_REGION(0x8000)	/* ADPCM samples? */
@@ -1473,7 +1463,7 @@ ROM_START( paddlema )
 ROM_END
 
 ROM_START( timesold )
-	ROM_REGION(0x40000)
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "bf.3", 0x00000, 0x10000, 0xa491e533 )
 	ROM_LOAD_ODD ( "bf.4", 0x00000, 0x10000, 0x34ebaccc )
 	ROM_LOAD_EVEN( "bf.1", 0x20000, 0x10000, 0x158f4cb3 )
@@ -1499,7 +1489,7 @@ ROM_START( timesold )
 	ROM_LOAD( "bf.17",0x1b0000, 0x20000, 0x6b37d048 )
 	ROM_LOAD( "bf.21",0x1d0000, 0x20000, 0xbc3b3944 )
 
-	ROM_REGION(0x80000)	/* Sound CPU */
+	ROM_REGIONX( 0x80000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "bf.7", 0x000000, 0x08000, 0xf8b293b5 )
 	ROM_CONTINUE(     0x018000, 0x08000 )
 	ROM_LOAD( "bf.8", 0x030000, 0x10000, 0x8a43497b )
@@ -1507,7 +1497,7 @@ ROM_START( timesold )
 ROM_END
 
 ROM_START( timesol2 )
-	ROM_REGION(0x40000)
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "3",    0x00000, 0x10000, 0xbc069a29 )
 	ROM_LOAD_ODD ( "4",    0x00000, 0x10000, 0xac7dca56 )
 	ROM_LOAD_EVEN( "bf.1", 0x20000, 0x10000, 0x158f4cb3 )
@@ -1533,7 +1523,7 @@ ROM_START( timesol2 )
 	ROM_LOAD( "bf.17",0x1b0000, 0x20000, 0x6b37d048 )
 	ROM_LOAD( "bf.21",0x1d0000, 0x20000, 0xbc3b3944 )
 
-	ROM_REGION(0x80000)	/* Sound CPU */
+	ROM_REGIONX( 0x80000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "bf.7", 0x000000, 0x08000, 0xf8b293b5 )
 	ROM_CONTINUE(     0x018000, 0x08000 )
 	ROM_LOAD( "bf.8", 0x030000, 0x10000, 0x8a43497b )
@@ -1541,7 +1531,7 @@ ROM_START( timesol2 )
 ROM_END
 
 ROM_START( btlfield )
-	ROM_REGION(0x40000)
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "bfv1_03.bin", 0x00000, 0x10000, 0x8720af0d )
 	ROM_LOAD_ODD ( "bfv1_04.bin", 0x00000, 0x10000, 0x7dcccbe6 )
 	ROM_LOAD_EVEN( "bf.1", 0x20000, 0x10000, 0x158f4cb3 )
@@ -1567,7 +1557,7 @@ ROM_START( btlfield )
 	ROM_LOAD( "bf.17",0x1b0000, 0x20000, 0x6b37d048 )
 	ROM_LOAD( "bf.21",0x1d0000, 0x20000, 0xbc3b3944 )
 
-	ROM_REGION(0x80000)	/* Sound CPU */
+	ROM_REGIONX( 0x80000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "bf.7", 0x000000, 0x08000, 0xf8b293b5 )
 	ROM_CONTINUE(     0x018000, 0x08000 )
 	ROM_LOAD( "bf.8", 0x030000, 0x10000, 0x8a43497b )
@@ -1575,7 +1565,7 @@ ROM_START( btlfield )
 ROM_END
 
 ROM_START( skysoldr )
-	ROM_REGION(0x80000)
+	ROM_REGIONX( 0x80000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "ss.3",  0x00000, 0x10000, 0x7b88aa2e )
 	ROM_CONTINUE ( 0x40000, 0x10000 | ROMFLAG_ALTERNATE )
 	ROM_LOAD_ODD ( "ss.4",  0x00000, 0x10000, 0xf0283d43 )
@@ -1610,7 +1600,7 @@ ROM_START( skysoldr )
 	ROM_LOAD( "ss.21",0x1d0000, 0x20000, 0xcb7bf5fe )
 	ROM_LOAD( "ss.25",0x1f0000, 0x20000, 0x65138016 )
 
-	ROM_REGION(0x80000)	/* Sound CPU */
+	ROM_REGIONX( 0x80000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "ss.7",0x00000, 0x08000, 0xb711fad4 )
 	ROM_CONTINUE(    0x18000, 0x08000 )
 	ROM_LOAD( "ss.8",0x30000, 0x10000, 0xe5cf7b37 )
@@ -1629,7 +1619,7 @@ ROM_START( skysoldr )
 ROM_END
 
 ROM_START( goldmedl )
-	ROM_REGION(0x40000)
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "gm.3", 0x00000, 0x10000, 0xddf0113c )
 	ROM_LOAD_ODD ( "gm.4", 0x00000, 0x10000, 0x16db4326 )
 	ROM_LOAD_EVEN( "gm.1", 0x20000, 0x10000, 0x54a11e28 )
@@ -1644,13 +1634,13 @@ ROM_START( goldmedl )
 	ROM_LOAD( "goldchr1.c44",0x110000, 0x80000, 0x55db41cd )
 	ROM_LOAD( "goldchr0.c43",0x190000, 0x80000, 0x76572c3f )
 
-	ROM_REGION(0x90000)	/* Sound CPU */
+	ROM_REGIONX( 0x90000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "goldsnd0.c47",0x00000, 0x08000, 0x031d27dc )
 	ROM_CONTINUE(            0x18000, 0x78000 )
 ROM_END
 
 ROM_START( goldmedb )
-	ROM_REGION(0x40000)
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "l_3.bin", 0x00000, 0x10000, 0x5e106bcf)
 	ROM_LOAD_ODD ( "l_4.bin", 0x00000, 0x10000, 0xe19966af)
 	ROM_LOAD_EVEN( "l_1.bin", 0x20000, 0x08000, 0x7eec7ee5)
@@ -1668,7 +1658,7 @@ ROM_START( goldmedb )
 	ROM_LOAD( "goldchr1.c44",0x110000, 0x80000, 0x55db41cd )
 	ROM_LOAD( "goldchr0.c43",0x190000, 0x80000, 0x76572c3f )
 
-	ROM_REGION(0x88000)	/* Sound CPU */
+	ROM_REGIONX( 0x88000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "goldsnd0.c47",0x00000, 0x08000, 0x031d27dc )
 	ROM_CONTINUE(            0x10000, 0x78000 )
 
@@ -1678,7 +1668,7 @@ ROM_START( goldmedb )
 ROM_END
 
 ROM_START( skyadvnt )
-	ROM_REGION(0x40000)
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "sa_v3.1", 0x00000, 0x20000, 0x862393b5 )
 	ROM_LOAD_ODD ( "sa_v3.2", 0x00000, 0x20000, 0xfa7a14d1 )
 
@@ -1690,7 +1680,7 @@ ROM_START( skyadvnt )
 	ROM_LOAD( "sachr1",0x160000, 0x80000, 0xe734dccd )
 	ROM_LOAD( "sachr0",0x200000, 0x80000, 0xe281b204 )
 
-	ROM_REGION(0x90000)	/* Sound CPU */
+	ROM_REGIONX( 0x90000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "sa.3", 0x00000, 0x08000, 0x3d0b32e0 )
 	ROM_CONTINUE(     0x18000, 0x08000 )
 	ROM_LOAD( "sa.4", 0x30000, 0x10000, 0xc2e3c30c )
@@ -1699,11 +1689,11 @@ ROM_START( skyadvnt )
 ROM_END
 
 ROM_START( gangwars )
-	ROM_REGION(0x40000)
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "u1", 0x00000, 0x20000, 0x11433507 )
 	ROM_LOAD_ODD ( "u2", 0x00000, 0x20000, 0x44cc375f )
 
-	ROM_REGION(0x2a0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE( 0x2a0000 )	/* temporary space for graphics (disposed after conversion) */
 
 /*
 
@@ -1760,7 +1750,7 @@ the 128k ones are and match these ones.
 	ROM_LOAD( "gwb_ic.280",0x280000, 0x10000, 0x222b3dcd )
 	ROM_LOAD( "gwb_ic.315",0x290000, 0x10000, 0xe7c9b103 )
 
-	ROM_REGION(0x90000)	/* Sound CPU */
+	ROM_REGIONX( 0x90000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "u12",  0x00000, 0x08000, 0x2620caa1 )
 	ROM_CONTINUE(     0x18000, 0x08000 )
 	ROM_LOAD( "u9",   0x30000, 0x10000, 0x9136745e )
@@ -1773,11 +1763,11 @@ the 128k ones are and match these ones.
 ROM_END
 
 ROM_START( gangwarb )
-	ROM_REGION(0x40000)
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "gwb_ic.m15", 0x00000, 0x20000, 0x7752478e )
 	ROM_LOAD_ODD ( "gwb_ic.m16", 0x00000, 0x20000, 0xc2f3b85e )
 
-	ROM_REGION(0x2a0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE( 0x2a0000 )	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "gwb_ic.m19",0x000000, 0x10000, 0xb75bf1d0 )
 
 	ROM_LOAD( "gwb_ic.308",0x020000, 0x10000, 0x321a2fdd )
@@ -1824,7 +1814,7 @@ ROM_START( gangwarb )
 	ROM_LOAD( "gwb_ic.280",0x280000, 0x10000, 0x222b3dcd )
 	ROM_LOAD( "gwb_ic.315",0x290000, 0x10000, 0xe7c9b103 )
 
-	ROM_REGION(0x90000)	/* Sound CPU */
+	ROM_REGIONX( 0x90000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "gwb_ic.380",  0x00000, 0x08000, 0xe6d6c9cf )
 	ROM_CONTINUE(            0x18000, 0x08000 )
 	ROM_LOAD( "gwb_ic.419",  0x30000, 0x10000, 0x84e5c946 )
@@ -1837,7 +1827,7 @@ ROM_START( gangwarb )
 ROM_END
 
 ROM_START( sbasebal )
-	ROM_REGION(0x40000)
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "snksb1.bin", 0x00000, 0x20000, 0x304fef2d )
 	ROM_LOAD_ODD ( "snksb2.bin", 0x00000, 0x20000, 0x35821339 )
 
@@ -1849,7 +1839,7 @@ ROM_START( sbasebal )
 	ROM_LOAD( "kcbchr1.bin", 0x160000, 0x80000, 0xa5ce1e10 )
 	ROM_LOAD( "kcbchr0.bin", 0x200000, 0x80000, 0xb8a1a088 )
 
-	ROM_REGION(0x90000)	/* Sound CPU */
+	ROM_REGIONX( 0x90000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "snksb3.bin", 0x00000, 0x08000, 0x89e12f25 )
 	ROM_CONTINUE(           0x18000, 0x08000 )
 	ROM_LOAD( "snksb4.bin", 0x30000, 0x10000, 0xcca2555d )
@@ -1861,7 +1851,7 @@ ROM_END
 
 static void gangwarb_patch(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	WRITE_WORD(&RAM[0x98fa],0x4e71);	/* Alpha controller related? */
 	WRITE_WORD(&RAM[0xb76c],0x4e71);	/* Disable rom check */
@@ -1869,7 +1859,7 @@ static void gangwarb_patch(void)
 
 static void gangwars_patch(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	WRITE_WORD(&RAM[0x98e6],0x4e71);	/* Alpha controller related? */
 	WRITE_WORD(&RAM[0xb758],0x4e71);	/* Disable rom check */
@@ -1877,7 +1867,7 @@ static void gangwars_patch(void)
 
 static void btl_patch(void)
 {
-//	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+//	unsigned char *RAM = memory_region(REGION_CPU1);
 //	WRITE_WORD(&RAM[0x9da8],0x4e73);
 //	WRITE_WORD(&RAM[0x9250],0x4240); /* Clear D0 */
 }
@@ -1924,19 +1914,19 @@ static void custom_memory(void)
 	if (!strcmp(Machine->gamedrv->name,"timesold"))  install_mem_read_handler(0, 0x40008, 0x40009, timesold_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"skysoldr"))  {
 		install_mem_read_handler(0, 0x40008, 0x40009, skysoldr_cycle_r);
-		cpu_setbank(8, (Machine->memory_region[3])+0x40000);
+		cpu_setbank(8, (memory_region(3))+0x40000);
 	}
 
 	if (!strcmp(Machine->gamedrv->name,"gangwarb"))  {
 		install_mem_read_handler(0, 0x40206, 0x40207, gangwars_cycle_r);
-		cpu_setbank(8, Machine->memory_region[3]);
+		cpu_setbank(8, memory_region(3));
 	}
 	if (!strcmp(Machine->gamedrv->name,"gangwars"))  {
 		install_mem_read_handler(0, 0x40206, 0x40207, gangwars_cycle_r);
-		cpu_setbank(8, Machine->memory_region[3]);
+		cpu_setbank(8, memory_region(3));
 	}
 	if (!strcmp(Machine->gamedrv->name,"goldmedb"))
-		cpu_setbank(8, Machine->memory_region[3]);
+		cpu_setbank(8, memory_region(3));
 }
 
 /******************************************************************************/

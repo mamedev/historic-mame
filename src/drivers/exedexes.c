@@ -286,14 +286,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* 4 Mhz (?) */
-			0,
 			readmem,writemem,0,0,
 			c1942_interrupt,2
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3000000,	/* 3 Mhz ??? */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
 		}
@@ -331,7 +329,7 @@ static struct MachineDriver machine_driver =
 
 
 ROM_START( exedexes )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "11m_ee04.bin", 0x0000, 0x4000, 0x44140dbd )
 	ROM_LOAD( "10m_ee03.bin", 0x4000, 0x4000, 0xbf72cfba )
 	ROM_LOAD( "09m_ee02.bin", 0x8000, 0x4000, 0x7ad95e2f )
@@ -354,7 +352,7 @@ ROM_START( exedexes )
 	ROM_LOAD( "l09_e-11.bin", 0x0600, 0x0100, 0x2bb68710 )	/* sprite lookup table */
 	ROM_LOAD( "l10_e-12.bin", 0x0700, 0x0100, 0x173184ef )	/* sprite palette bank */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "11e_ee01.bin", 0x00000, 0x4000, 0x73cdf3b2 )
 
 	ROM_REGION(0x6000)      /* For Tile background */
@@ -363,7 +361,7 @@ ROM_START( exedexes )
 ROM_END
 
 ROM_START( savgbees )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "ee04e.11m",    0x0000, 0x4000, 0xc0caf442 )
 	ROM_LOAD( "ee03e.10m",    0x4000, 0x4000, 0x9cd70ae1 )
 	ROM_LOAD( "ee02e.9m",     0x8000, 0x4000, 0xa04e6368 )
@@ -386,7 +384,7 @@ ROM_START( savgbees )
 	ROM_LOAD( "l09_e-11.bin", 0x0600, 0x0100, 0x2bb68710 )	/* sprite lookup table */
 	ROM_LOAD( "l10_e-12.bin", 0x0700, 0x0100, 0x173184ef )	/* sprite palette bank */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ee01e.11e",    0x00000, 0x4000, 0x93d3f952 )
 
 	ROM_REGION(0x6000)      /* For Tile background */
@@ -398,7 +396,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -424,7 +422,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

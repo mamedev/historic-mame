@@ -329,7 +329,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,		/* verified */
 			7159160,		/* 7.159 Mhz */
-			0,
 			readmem,writemem,0,0,
 			atarigen_video_int_gen,1
 		}
@@ -372,14 +371,14 @@ static void arcadecl_rom_decode(void)
 {
 	int i;
 
-	for (i = 0; i < Machine->memory_region_length[1]; i++)
-		Machine->memory_region[1][i] ^= 0xff;
+	for (i = 0; i < memory_region_length(1); i++)
+		memory_region(1)[i] ^= 0xff;
 }
 
 
 static void sparkz_rom_decode(void)
 {
-	memset(Machine->memory_region[1], 0, Machine->memory_region_length[1]);
+	memset(memory_region(1), 0, memory_region_length(1));
 }
 
 
@@ -391,26 +390,26 @@ static void sparkz_rom_decode(void)
  *************************************/
 
 ROM_START( arcadecl )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "pgm0",  0x00000, 0x80000, 0xb5b93623 )
 	ROM_LOAD_ODD ( "prog1", 0x00000, 0x80000, 0xe7efef85 )
 
 	ROM_REGION_DISPOSE(0x80000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "atcl_mob",   0x00000, 0x80000, 0x0e9b3930 )
 
-	ROM_REGION(0x80000)	/* ADPCM data */
+	ROM_REGION( 0x80000 )	/* ADPCM data */
 	ROM_LOAD( "adpcm",      0x00000, 0x80000, 0x03ca7f03 )
 ROM_END
 
 
 ROM_START( sparkz )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "sparkzpg.0", 0x00000, 0x80000, 0xa75c331c )
 	ROM_LOAD_ODD ( "sparkzpg.1", 0x00000, 0x80000, 0x1af1fc04 )
 
 	ROM_REGION_DISPOSE(0x80000)	/* temporary space for graphics (disposed after conversion) */
 
-	ROM_REGION(0x80000)	/* ADPCM data */
+	ROM_REGION( 0x80000 )	/* ADPCM data */
 	ROM_LOAD( "sparkzsn",      0x00000, 0x80000, 0x87097ce2 )
 ROM_END
 

@@ -481,11 +481,11 @@ static struct GfxLayout tilelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-    { 1, 0x00000, &charlayout,   256,  8 },	/* characters */
-    { 1, 0x01000, &charlayout,   256,  8 },	/* characters */
-    { 1, 0x02000, &spritelayout,   0, 32 },	/* sprites */
-    { 1, 0x1a000, &tilelayout,     0, 32 }, /* bg tiles */
-    { -1 } /* end of array */
+	{ REGION_GFX1, 0x00000, &charlayout,   256,  8 },	/* characters */
+	{ REGION_GFX1, 0x01000, &charlayout,   256,  8 },	/* characters */
+	{ REGION_GFX2, 0x00000, &spritelayout,   0, 32 },	/* sprites */
+	{ REGION_GFX3, 0x00000, &tilelayout,     0, 32 },	/* bg tiles */
+	{ -1 } /* end of array */
 };
 
 /* Ring King */
@@ -553,12 +553,12 @@ static struct GfxLayout rk_bglayout =
 
 static struct GfxDecodeInfo rk_gfxdecodeinfo[] =
 {
-    { 1, 0x00000, &rk_charlayout1,  256,  8 },	/* characters */
-    { 1, 0x00000, &rk_charlayout2,  256,  8 },	/* characters */
-    { 1, 0x0e000, &rk_spritelayout,   0, 32 },	/* sprites */
-    { 1, 0x02000, &rk_tilelayout,     0, 32 },	/* sprites/bg tiles */
-    { 1, 0x26000, &rk_bglayout,		  0, 32 },	/* bg tiles */
-    { -1 } /* end of array */
+	{ REGION_GFX1, 0x00000, &rk_charlayout1,  256,  8 },	/* characters */
+	{ REGION_GFX1, 0x00000, &rk_charlayout2,  256,  8 },	/* characters */
+	{ REGION_GFX2, 0x00000, &rk_spritelayout,   0, 32 },	/* sprites */
+	{ REGION_GFX3, 0x00000, &rk_tilelayout,     0, 32 },	/* sprites/bg tiles */
+	{ REGION_GFX4, 0x00000, &rk_bglayout,       0, 32 },	/* bg tiles */
+	{ -1 } /* end of array */
 };
 
 static struct AY8910interface ay8910_interface =
@@ -592,33 +592,29 @@ static struct MachineDriver machine_driver =
 	/* basic machine hardware */
 	{
 		{
-		    CPU_Z80,
-		    4000000,        /* 4.0 Mhz */
-		    0,
-		    main_readmem, main_writemem,0,0,
-		    kingobox_interrupt,1
+			CPU_Z80,
+			4000000,        /* 4.0 Mhz */
+			main_readmem, main_writemem,0,0,
+			kingobox_interrupt,1
 		},
 		{
-		    CPU_Z80,
-		    4000000,        /* 4.0 Mhz */
-		    3,
-		    video_readmem, video_writemem,0,0,
-		    kingobox_interrupt,1
+			CPU_Z80,
+			4000000,        /* 4.0 Mhz */
+			video_readmem, video_writemem,0,0,
+			kingobox_interrupt,1
 		},
 		{
-		    CPU_Z80,
-		    4000000,        /* 4.0 Mhz */
-		    4,
-		    sprite_readmem, sprite_writemem,0,0,
-		    kingobox_interrupt,1
+			CPU_Z80,
+			4000000,        /* 4.0 Mhz */
+			sprite_readmem, sprite_writemem,0,0,
+			kingobox_interrupt,1
 		},
 		{
-		    CPU_Z80 | CPU_AUDIO_CPU,
-		    4000000,        /* 4.0 Mhz */
-		    5,
-		    sound_readmem, sound_writemem,sound_readport,sound_writeport,
-		    ignore_interrupt, 0,
-		    nmi_interrupt, 6000	/* Hz */
+			CPU_Z80 | CPU_AUDIO_CPU,
+			4000000,        /* 4.0 Mhz */
+			sound_readmem, sound_writemem,sound_readport,sound_writeport,
+			ignore_interrupt, 0,
+			nmi_interrupt, 6000	/* Hz */
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
@@ -658,33 +654,29 @@ static struct MachineDriver rk_machine_driver =
 	/* basic machine hardware */
 	{
 		{
-		    CPU_Z80,
-		    4000000,        /* 4.0 Mhz */
-		    0,
-		    rk_main_readmem, rk_main_writemem,0,0,
-		    kingobox_interrupt,1
+			CPU_Z80,
+			4000000,        /* 4.0 Mhz */
+			rk_main_readmem, rk_main_writemem,0,0,
+			kingobox_interrupt,1
 		},
 		{
-		    CPU_Z80,
-		    4000000,        /* 4.0 Mhz */
-		    3,
-		    rk_video_readmem, rk_video_writemem,0,0,
-		    kingobox_interrupt,1
+			CPU_Z80,
+			4000000,        /* 4.0 Mhz */
+			rk_video_readmem, rk_video_writemem,0,0,
+			kingobox_interrupt,1
 		},
 		{
-		    CPU_Z80,
-		    4000000,        /* 4.0 Mhz */
-		    4,
-		    rk_sprite_readmem, rk_sprite_writemem,0,0,
-		    kingobox_interrupt,1
+			CPU_Z80,
+			4000000,        /* 4.0 Mhz */
+			rk_sprite_readmem, rk_sprite_writemem,0,0,
+			kingobox_interrupt,1
 		},
 		{
-		    CPU_Z80 | CPU_AUDIO_CPU,
-		    4000000,        /* 4.0 Mhz */
-		    5,
-		    sound_readmem, sound_writemem,rk_sound_readport,rk_sound_writeport,
-		    ignore_interrupt, 0,
-		    nmi_interrupt, 6000	/* Hz */
+			CPU_Z80 | CPU_AUDIO_CPU,
+			4000000,        /* 4.0 Mhz */
+			sound_readmem, sound_writemem,rk_sound_readport,rk_sound_writeport,
+			ignore_interrupt, 0,
+			nmi_interrupt, 6000	/* Hz */
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
@@ -725,155 +717,167 @@ static struct MachineDriver rk_machine_driver =
 ***************************************************************************/
 
 ROM_START( kingofb )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "d09_22.bin",   0x00000, 0x4000, 0x6220bfa2 )
 	ROM_LOAD( "e09_23.bin",   0x04000, 0x4000, 0x5782fdd8 )
 
-	ROM_REGION_DISPOSE(0x26000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the video cpu */
+	ROM_LOAD( "b09_21.bin",   0x00000, 0x4000, 0x3fb39489 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU3 )     /* 64k for the sprite cpu */
+	ROM_LOAD( "j09_dcr.bin",  0x00000, 0x2000, 0x379f4f84 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU4 )     /* 64k for the audio cpu */
+	ROM_LOAD( "f05_18.bin",   0x00000, 0x4000, 0xc057e28e )
+	ROM_LOAD( "h05_19.bin",   0x04000, 0x4000, 0x060253dd )
+	ROM_LOAD( "j05_20.bin",   0x08000, 0x4000, 0x64c137a4 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "vd15_13.bin",  0x00000, 0x2000, 0xe36d4f4f ) /* characters */
-	/* sprites (top) */
-	ROM_LOAD( "vb01_01.bin",  0x02000, 0x4000, 0xce6580af ) /* plane 0 */
-	ROM_LOAD( "vb04_03.bin",  0x06000, 0x4000, 0xcf74ea50 ) /* plane 1 */
-	ROM_LOAD( "vb07_05.bin",  0x0a000, 0x4000, 0xd8b53975 ) /* plane 2 */
-    /* sprites (bottom) */
-	ROM_LOAD( "vb03_02.bin",  0x0e000, 0x4000, 0x4ab506d2 ) /* plane 0 */
-	ROM_LOAD( "vb05_04.bin",  0x12000, 0x4000, 0xecf95a2c ) /* plane 1 */
-	ROM_LOAD( "vb08_06.bin",  0x16000, 0x4000, 0x8200cb2b ) /* plane 2 */
-    /* tiles (top) */
-	ROM_LOAD( "vd01_07.bin",  0x1a000, 0x2000, 0x3d472a22 ) /* plane 0 */
-	ROM_LOAD( "vd04_09.bin",  0x1c000, 0x2000, 0xcc002ea9 ) /* plane 1 */
-	ROM_LOAD( "vd07_11.bin",  0x1e000, 0x2000, 0x23c1b3ee ) /* plane 2 */
-	/* tiles (bottom) */
-	ROM_LOAD( "vd03_08.bin",  0x20000, 0x2000, 0xd6b1b8fe ) /* plane 0 */
-	ROM_LOAD( "vd05_10.bin",  0x22000, 0x2000, 0xfce71e5a ) /* plane 1 */
-	ROM_LOAD( "vd08_12.bin",  0x24000, 0x2000, 0x3f68b991 ) /* plane 2 */
+
+	ROM_REGIONX( 0x18000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_LOAD( "vb01_01.bin",  0x00000, 0x4000, 0xce6580af )
+	ROM_LOAD( "vb04_03.bin",  0x04000, 0x4000, 0xcf74ea50 )
+	ROM_LOAD( "vb07_05.bin",  0x08000, 0x4000, 0xd8b53975 )
+	ROM_LOAD( "vb03_02.bin",  0x0c000, 0x4000, 0x4ab506d2 )
+	ROM_LOAD( "vb05_04.bin",  0x10000, 0x4000, 0xecf95a2c )
+	ROM_LOAD( "vb08_06.bin",  0x14000, 0x4000, 0x8200cb2b )
+
+	ROM_REGIONX( 0xc000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* tiles */
+	ROM_LOAD( "vd01_07.bin",  0x00000, 0x2000, 0x3d472a22 )
+	ROM_LOAD( "vd04_09.bin",  0x02000, 0x2000, 0xcc002ea9 )
+	ROM_LOAD( "vd07_11.bin",  0x04000, 0x2000, 0x23c1b3ee )
+	ROM_LOAD( "vd03_08.bin",  0x06000, 0x2000, 0xd6b1b8fe )
+	ROM_LOAD( "vd05_10.bin",  0x08000, 0x2000, 0xfce71e5a )
+	ROM_LOAD( "vd08_12.bin",  0x0a000, 0x2000, 0x3f68b991 )
 
 	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "vb14_col.bin", 0x0000, 0x0100, 0xc58e5121 )	/* red component */
 	ROM_LOAD( "vb15_col.bin", 0x0100, 0x0100, 0x5ab06f25 )	/* green component */
 	ROM_LOAD( "vb16_col.bin", 0x0200, 0x0100, 0x1171743f )	/* blue component */
-
-	ROM_REGION(0x10000)     /* 64k for the video cpu */
-	ROM_LOAD( "b09_21.bin",   0x00000, 0x4000, 0x3fb39489 )
-
-	ROM_REGION(0x10000)     /* 64k for the sprite cpu */
-	ROM_LOAD( "j09_dcr.bin",  0x00000, 0x2000, 0x379f4f84 )
-
-	ROM_REGION(0x10000)     /* 64k for the audio cpu */
-	ROM_LOAD( "f05_18.bin",   0x00000, 0x4000, 0xc057e28e )
-	ROM_LOAD( "h05_19.bin",   0x04000, 0x4000, 0x060253dd )
-	ROM_LOAD( "j05_20.bin",   0x08000, 0x4000, 0x64c137a4 )
 ROM_END
 
 /* Ring King */
 ROM_START( ringking )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "cx13.9f",      0x00000, 0x8000, 0x93e38c02 )
 	ROM_LOAD( "cx14.11f",     0x08000, 0x4000, 0xa435acb0 )
 
-	ROM_REGION_DISPOSE(0x2e000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the video cpu */
+	ROM_LOAD( "cx07.10c",     0x00000, 0x4000, 0x9f074746 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU3 )     /* 64k for the sprite cpu */
+	ROM_LOAD( "cx00.4c",      0x00000, 0x2000, 0x880b8aa7 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU4 )     /* 64k for the audio cpu */
+	ROM_LOAD( "cx12.4ef",     0x00000, 0x8000, 0x1d5d6c6b )
+	ROM_LOAD( "j05_20.bin",   0x08000, 0x4000, 0x64c137a4 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cx08.13b",     0x00000, 0x2000, 0xdbd7c1c2 )	/* characters */
-	ROM_LOAD( "cx03.9j",      0x02000, 0x4000, 0x682fd1c4 )	/* sprites */
-	ROM_LOAD( "cx01.7j",      0x06000, 0x4000, 0x85130b46 )
-	ROM_LOAD( "cx05.12j",     0x0a000, 0x4000, 0xf7c4f3dc )
-	ROM_LOAD( "cx04.11j",     0x0e000, 0x8000, 0x506a2ed9 )
-	ROM_LOAD( "cx02.8j",      0x16000, 0x8000, 0x009dde6a )
-	ROM_LOAD( "cx06.13j",     0x1e000, 0x8000, 0xd819a3b2 )
-	ROM_LOAD( "cx09.17d",     0x26000, 0x4000, 0x37a082cf )	/* tiles */
-	ROM_LOAD( "cx10.17e",     0x2a000, 0x4000, 0xab9446c5 )
+
+	ROM_REGIONX( 0x18000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cx04.11j",     0x00000, 0x8000, 0x506a2ed9 )
+	ROM_LOAD( "cx02.8j",      0x08000, 0x8000, 0x009dde6a )
+	ROM_LOAD( "cx06.13j",     0x10000, 0x8000, 0xd819a3b2 )
+
+	ROM_REGIONX( 0xc000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cx03.9j",      0x00000, 0x4000, 0x682fd1c4 )	/* sprites */
+	ROM_LOAD( "cx01.7j",      0x04000, 0x4000, 0x85130b46 )
+	ROM_LOAD( "cx05.12j",     0x08000, 0x4000, 0xf7c4f3dc )
+
+	ROM_REGIONX( 0x8000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cx09.17d",     0x00000, 0x4000, 0x37a082cf )	/* tiles */
+	ROM_LOAD( "cx10.17e",     0x04000, 0x4000, 0xab9446c5 )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "82s135.2a",    0x0000, 0x0100, 0x0e723a83 )	/* red and green component */
 	ROM_LOAD( "82s129.1a",    0x0100, 0x0100, 0xd345cbb3 )	/* blue component */
-
-	ROM_REGION(0x10000)     /* 64k for the video cpu */
-	ROM_LOAD( "cx07.10c",     0x00000, 0x4000, 0x9f074746 )
-
-	ROM_REGION(0x10000)     /* 64k for the sprite cpu */
-	ROM_LOAD( "cx00.4c",      0x00000, 0x2000, 0x880b8aa7 )
-
-	ROM_REGION(0x10000)     /* 64k for the audio cpu */
-	ROM_LOAD( "cx12.4ef",     0x00000, 0x8000, 0x1d5d6c6b )
-	ROM_LOAD( "j05_20.bin",   0x08000, 0x4000, 0x64c137a4 )
 ROM_END
 
 ROM_START( ringkin2 )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "rkngm1.bin",   0x00000, 0x8000, 0x086921ea )
 	ROM_LOAD( "rkngm2.bin",   0x08000, 0x4000, 0xc0b636a4 )
 
-	ROM_REGION_DISPOSE(0x2e000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the video cpu */
+	ROM_LOAD( "rkngtram.bin", 0x00000, 0x4000, 0xd9dc1a0a )
+
+	ROM_REGIONX( 0x10000, REGION_CPU3 )     /* 64k for the sprite cpu */
+	ROM_LOAD( "cx00.4c",      0x00000, 0x2000, 0x880b8aa7 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU4 )     /* 64k for the audio cpu */
+	ROM_LOAD( "cx12.4ef",     0x00000, 0x8000, 0x1d5d6c6b )
+	ROM_LOAD( "j05_20.bin",   0x08000, 0x4000, 0x64c137a4 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cx08.13b",     0x00000, 0x2000, 0xdbd7c1c2 )	/* characters */
-	ROM_LOAD( "cx03.9j",      0x02000, 0x4000, 0x682fd1c4 )	/* sprites */
-	ROM_LOAD( "cx01.7j",      0x06000, 0x4000, 0x85130b46 )
-	ROM_LOAD( "cx05.12j",     0x0a000, 0x4000, 0xf7c4f3dc )
-	ROM_LOAD( "cx04.11j",     0x0e000, 0x8000, 0x506a2ed9 )
-	ROM_LOAD( "cx02.8j",      0x16000, 0x8000, 0x009dde6a )
-	ROM_LOAD( "cx06.13j",     0x1e000, 0x8000, 0xd819a3b2 )
-	ROM_LOAD( "cx09.17d",     0x26000, 0x4000, 0x37a082cf )	/* tiles */
-	ROM_LOAD( "cx10.17e",     0x2a000, 0x4000, 0xab9446c5 )
+
+	ROM_REGIONX( 0x18000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cx04.11j",     0x00000, 0x8000, 0x506a2ed9 )
+	ROM_LOAD( "cx02.8j",      0x08000, 0x8000, 0x009dde6a )
+	ROM_LOAD( "cx06.13j",     0x10000, 0x8000, 0xd819a3b2 )
+
+	ROM_REGIONX( 0xc000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cx03.9j",      0x00000, 0x4000, 0x682fd1c4 )	/* sprites */
+	ROM_LOAD( "cx01.7j",      0x04000, 0x4000, 0x85130b46 )
+	ROM_LOAD( "cx05.12j",     0x08000, 0x4000, 0xf7c4f3dc )
+
+	ROM_REGIONX( 0x8000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cx09.17d",     0x00000, 0x4000, 0x37a082cf )	/* tiles */
+	ROM_LOAD( "cx10.17e",     0x04000, 0x4000, 0xab9446c5 )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "82s135.2a",    0x0000, 0x0100, 0x0e723a83 )	/* red and green component */
 	ROM_LOAD( "82s129.1a",    0x0100, 0x0100, 0xd345cbb3 )	/* blue component */
-
-	ROM_REGION(0x10000)     /* 64k for the video cpu */
-	ROM_LOAD( "rkngtram.bin", 0x00000, 0x4000, 0xd9dc1a0a )
-
-	ROM_REGION(0x10000)     /* 64k for the sprite cpu */
-	ROM_LOAD( "cx00.4c",      0x00000, 0x2000, 0x880b8aa7 )
-
-	ROM_REGION(0x10000)     /* 64k for the audio cpu */
-	ROM_LOAD( "cx12.4ef",     0x00000, 0x8000, 0x1d5d6c6b )
-	ROM_LOAD( "j05_20.bin",   0x08000, 0x4000, 0x64c137a4 )
 ROM_END
 
 ROM_START( ringkin3 )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "14.9d",        0x00000, 0x4000, 0x63627b8b )
 	ROM_LOAD( "15.9e",        0x04000, 0x4000, 0xe7557489 )
 	ROM_LOAD( "16.9f",        0x08000, 0x4000, 0xa3b3bb16 )
 
-	ROM_REGION_DISPOSE(0x26000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the video cpu */
+	ROM_LOAD( "13.9b",        0x00000, 0x4000, 0xf33f94a2 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU3 )     /* 64k for the sprite cpu */
+	ROM_LOAD( "j09_dcr.bin",  0x00000, 0x2000, 0x379f4f84 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU4 )     /* 64k for the audio cpu */
+	ROM_LOAD( "f05_18.bin",   0x00000, 0x4000, 0xc057e28e )
+	ROM_LOAD( "h05_19.bin",   0x04000, 0x4000, 0x060253dd )
+	ROM_LOAD( "j05_20.bin",   0x08000, 0x4000, 0x64c137a4 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "12.15d",       0x00000, 0x2000, 0x988a77bf ) /* characters (Japanese) */
-	/* sprites (top) */
-	ROM_LOAD( "vb01_01.bin",  0x02000, 0x4000, 0xce6580af ) /* plane 0 */
-	ROM_LOAD( "vb04_03.bin",  0x06000, 0x4000, 0xcf74ea50 ) /* plane 1 */
-	ROM_LOAD( "vb07_05.bin",  0x0a000, 0x4000, 0xd8b53975 ) /* plane 2 */
-    /* sprites (bottom) */
-	ROM_LOAD( "vb03_02.bin",  0x0e000, 0x4000, 0x4ab506d2 ) /* plane 0 */
-	ROM_LOAD( "vb05_04.bin",  0x12000, 0x4000, 0xecf95a2c ) /* plane 1 */
-	ROM_LOAD( "vb08_06.bin",  0x16000, 0x4000, 0x8200cb2b ) /* plane 2 */
-    /* tiles (top) */
-	ROM_LOAD( "7.1d",         0x1a000, 0x2000, 0x019a88b0 ) /* plane 0 */
-	ROM_LOAD( "9.4d",         0x1c000, 0x2000, 0xbfdc741a ) /* plane 1 */
-	ROM_LOAD( "11.7d",        0x1e000, 0x2000, 0x3cc7bdc5 ) /* plane 2 */
-	/* tiles (bottom) */
-	ROM_LOAD( "8.3d",         0x20000, 0x2000, 0x65f1281b ) /* plane 0 */
-	ROM_LOAD( "10.5d",        0x22000, 0x2000, 0xaf5013e7 ) /* plane 1 */
-	ROM_LOAD( "12.8d",        0x24000, 0x2000, 0x00000000 ) /* plane 2 */
+
+	ROM_REGIONX( 0x18000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_LOAD( "vb01_01.bin",  0x00000, 0x4000, 0xce6580af )
+	ROM_LOAD( "vb04_03.bin",  0x04000, 0x4000, 0xcf74ea50 )
+	ROM_LOAD( "vb07_05.bin",  0x08000, 0x4000, 0xd8b53975 )
+	ROM_LOAD( "vb03_02.bin",  0x0c000, 0x4000, 0x4ab506d2 )
+	ROM_LOAD( "vb05_04.bin",  0x10000, 0x4000, 0xecf95a2c )
+	ROM_LOAD( "vb08_06.bin",  0x14000, 0x4000, 0x8200cb2b )
+
+	ROM_REGIONX( 0xc000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* tiles */
+	ROM_LOAD( "7.1d",         0x00000, 0x2000, 0x019a88b0 )
+	ROM_LOAD( "9.4d",         0x02000, 0x2000, 0xbfdc741a )
+	ROM_LOAD( "11.7d",        0x04000, 0x2000, 0x3cc7bdc5 )
+	ROM_LOAD( "8.3d",         0x06000, 0x2000, 0x65f1281b )
+	ROM_LOAD( "10.5d",        0x08000, 0x2000, 0xaf5013e7 )
+	ROM_LOAD( "12.8d",        0x0a000, 0x2000, 0x00000000 )
 
 	ROM_REGIONX( 0x0300, REGION_PROMS )
 	/* we load the ringking PROMs and then expand the first to look like the kingobox ones... */
 	ROM_LOAD( "82s135.2a",    0x0100, 0x0100, 0x0e723a83 )	/* red and green component */
 	ROM_LOAD( "82s129.1a",    0x0200, 0x0100, 0xd345cbb3 )	/* blue component */
-
-	ROM_REGION(0x10000)     /* 64k for the video cpu */
-	ROM_LOAD( "13.9b",        0x00000, 0x4000, 0xf33f94a2 )
-
-	ROM_REGION(0x10000)     /* 64k for the sprite cpu */
-	ROM_LOAD( "j09_dcr.bin",  0x00000, 0x2000, 0x379f4f84 )
-
-	ROM_REGION(0x10000)     /* 64k for the audio cpu */
-	ROM_LOAD( "f05_18.bin",   0x00000, 0x4000, 0xc057e28e )
-	ROM_LOAD( "h05_19.bin",   0x04000, 0x4000, 0x060253dd )
-	ROM_LOAD( "j05_20.bin",   0x08000, 0x4000, 0x64c137a4 )
 ROM_END
 
 static void ringkin3_expand_color_prom(void)
 {
 	int i;
-	unsigned char *RAM = Machine->memory_region[2];
+	unsigned char *RAM = memory_region(2);
 
 	/* expand the first color PROM to look like the kingobox ones... */
 	for (i = 0;i < 0x100;i++)
@@ -883,8 +887,8 @@ static void ringkin3_expand_color_prom(void)
 
 static int kingofb_hiload(void)
 {
-	unsigned char *RAM1 = memory_region(Machine->drv->cpu[0].memory_region);
-	unsigned char *RAM2 = memory_region(Machine->drv->cpu[1].memory_region);
+	unsigned char *RAM1 = memory_region(REGION_CPU1);
+	unsigned char *RAM2 = memory_region(REGION_CPU2);
 
 
 	if  (memcmp(&RAM2[0x8048],"\x00\x15\x00",3) == 0 &&
@@ -915,7 +919,7 @@ static int kingofb_hiload(void)
 static void kingofb_hisave(void)
 {
 	void *f;
-	unsigned char *RAM2 = memory_region(Machine->drv->cpu[1].memory_region);
+	unsigned char *RAM2 = memory_region(REGION_CPU2);
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
 		osd_fwrite(f,&RAM2[0x8048],140);
@@ -926,8 +930,8 @@ static void kingofb_hisave(void)
 
 static int ringking_hiload(void)
 {
-	unsigned char *RAM1 = memory_region(Machine->drv->cpu[0].memory_region);
-	unsigned char *RAM2 = memory_region(Machine->drv->cpu[1].memory_region);
+	unsigned char *RAM1 = memory_region(REGION_CPU1);
+	unsigned char *RAM2 = memory_region(REGION_CPU2);
 
 
 	if  (memcmp(&RAM2[0x8049],"\x00\x15\x00",3) == 0 &&
@@ -960,7 +964,7 @@ static int ringking_hiload(void)
 static void ringking_hisave(void)
 {
 	void *f;
-	unsigned char *RAM2 = memory_region(Machine->drv->cpu[1].memory_region);
+	unsigned char *RAM2 = memory_region(REGION_CPU2);
 
 
 
@@ -975,8 +979,8 @@ static void ringking_hisave(void)
 
 static int ringkin2_hiload(void)
 {
-	unsigned char *RAM1 = memory_region(Machine->drv->cpu[0].memory_region);
-	unsigned char *RAM2 = memory_region(Machine->drv->cpu[1].memory_region);
+	unsigned char *RAM1 = memory_region(REGION_CPU1);
+	unsigned char *RAM2 = memory_region(REGION_CPU2);
 
 
 	if  (memcmp(&RAM2[0x8048],"\x00\x15\x00",3) == 0 &&
@@ -1007,7 +1011,7 @@ static int ringkin2_hiload(void)
 static void ringkin2_hisave(void)
 {
 	void *f;
-	unsigned char *RAM2 = memory_region(Machine->drv->cpu[1].memory_region);
+	unsigned char *RAM2 = memory_region(REGION_CPU2);
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
 

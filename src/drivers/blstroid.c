@@ -264,13 +264,10 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,		/* verified */
 			7159160,		/* 7.159 Mhz */
-			0,
 			main_readmem,main_writemem,0,0,
 			atarigen_video_int_gen,1
 		},
-		{
-			JSA_I_CPU(1)
-		},
+		JSA_I_CPU
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
@@ -302,13 +299,13 @@ static struct MachineDriver machine_driver =
  *************************************/
 
 ROM_START( blstroid )
-	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "057-4123",  0x00000, 0x10000, 0xd14badc4 )
 	ROM_LOAD_ODD ( "057-4121",  0x00000, 0x10000, 0xae3e93e8 )
 	ROM_LOAD_EVEN( "057-4124",  0x20000, 0x10000, 0xfd2365df )
 	ROM_LOAD_ODD ( "057-4122",  0x20000, 0x10000, 0xc364706e )
 
-	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "blstroid.snd", 0x10000, 0x4000, 0xbaa8b5fe )
 	ROM_CONTINUE(             0x04000, 0xc000 )
 
@@ -337,13 +334,13 @@ ROM_END
 
 
 ROM_START( blstroi2 )
-	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "blstroid.6c",  0x00000, 0x10000, 0x5a092513 )
 	ROM_LOAD_ODD ( "blstroid.6b",  0x00000, 0x10000, 0x486aac51 )
 	ROM_LOAD_EVEN( "blstroid.4c",  0x20000, 0x10000, 0xd0fa38fe )
 	ROM_LOAD_ODD ( "blstroid.4b",  0x20000, 0x10000, 0x744bf921 )
 
-	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "blstroid.snd", 0x10000, 0x4000, 0xbaa8b5fe )
 	ROM_CONTINUE(             0x04000, 0xc000 )
 

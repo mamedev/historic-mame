@@ -223,7 +223,7 @@ static int find_sample(int num, int sample_num,struct UPD7759sample *sample)
 	unsigned char *data;
 
 
-	memrom = Machine->memory_region[upd7759_intf->region[num]];
+	memrom = memory_region(upd7759_intf->region[num]);
 
 	numsam = (unsigned int)memrom[0]; /* get number of samples from sound rom */
 	header = &(memrom[1]);
@@ -248,7 +248,7 @@ static int find_sample(int num, int sample_num,struct UPD7759sample *sample)
 
 	nextoff = 2 * sample_num;
 	sample->offset = ((((unsigned int)(header[nextoff]))<<8)+(header[nextoff+1]))*2;
-	data = &Machine->memory_region[upd7759_intf->region[num]][sample->offset];
+	data = &memory_region(upd7759_intf->region[num])[sample->offset];
 	/* guesswork, probably wrong */
 	j = 0;
 	if (!data[j]) j++;
@@ -285,7 +285,7 @@ static int find_sample(int num, int sample_num,struct UPD7759sample *sample)
 
 if (errorlog)
 {
-	data = &Machine->memory_region[upd7759_intf->region[num]][sample->offset];
+	data = &memory_region(upd7759_intf->region[num])[sample->offset];
 	fprintf( errorlog,"play sample %3d, offset $%06x, length %5d, freq = %4d [data $%02x $%02x $%02x]\n",
 		sample_num,
 		sample->offset,
@@ -531,7 +531,7 @@ void UPD7759_message_w (int num, int data)
         }
 		if (offset > 0)
 		{
-			voice->base = &Machine->memory_region[upd7759_intf->region[num]][offset];
+			voice->base = &memory_region(upd7759_intf->region[num])[offset];
 			//LOG(1,(errorlog, "upd7759_message_w set base $%08x\n", offset));
 			if (errorlog)
 				fprintf(errorlog, "upd7759_message_w set base $%08x\n", offset);
@@ -692,7 +692,7 @@ void UPD7759_start_w (int num, int data)
 			voice->freq = sample.freq;
 			/* set up the voice to play this sample */
 			voice->playing = 1;
-			voice->base = &Machine->memory_region[upd7759_intf->region[num]][sample.offset];
+			voice->base = &memory_region(upd7759_intf->region[num])[sample.offset];
 			voice->sample = 0;
 			/* sample length needs to be doubled (counting nibbles) */
 			voice->count = sample.length * 2;

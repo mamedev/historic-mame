@@ -243,13 +243,10 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,		/* verified */
 			7159160,		/* 7.159 Mhz */
-			0,
 			main_readmem,main_writemem,0,0,
 			vblank_int,1
 		},
-		{
-			JSA_I_CPU(1)
-		}
+		JSA_I_CPU
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
@@ -284,8 +281,8 @@ static void rom_decode(void)
 {
 	int i;
 
-	for (i = 0; i < Machine->memory_region_length[2]; i++)
-		Machine->memory_region[2][i] ^= 0xff;
+	for (i = 0; i < memory_region_length(2); i++)
+		memory_region(2)[i] ^= 0xff;
 }
 
 
@@ -297,13 +294,13 @@ static void rom_decode(void)
  *************************************/
 
 ROM_START( badlands )
-	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "1008.20f",  0x00000, 0x10000, 0xa3da5774 )
 	ROM_LOAD_ODD ( "1006.27f",  0x00000, 0x10000, 0xaa03b4f3 )
 	ROM_LOAD_EVEN( "1009.17f",  0x20000, 0x10000, 0x0e2e807f )
 	ROM_LOAD_ODD ( "1007.24f",  0x20000, 0x10000, 0x99a20c2c )
 
-	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "1018.9c", 0x10000, 0x4000, 0xa05fd146 )
 	ROM_CONTINUE(        0x04000, 0xc000 )
 

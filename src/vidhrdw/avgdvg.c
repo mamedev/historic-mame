@@ -629,7 +629,7 @@ static void avg_generate_vector_list (void)
 						sparkle = (firstwd & 0x0800);
 						xflip = firstwd & 0x0400;
 						/* Bank switch the vector ROM for Major Havoc */
-						vectorbank[1] = &Machine->memory_region[0][0x18000 + ((firstwd & 0x300) >> 8) * 0x2000];
+						vectorbank[1] = &memory_region(REGION_CPU1)[0x18000 + ((firstwd & 0x300) >> 8) * 0x2000];
 					}
 					if (vectorEngine == USE_AVG_BZONE)
 					{
@@ -840,7 +840,7 @@ int avgdvg_init (int vgType)
 	for (i = 0; i < NUM_BANKS; i++)
 		vectorbank[i] = vectorram + (i<<BANK_BITS);
 	if (vgType == USE_AVG_MHAVOC)
-		vectorbank[1] = &Machine->memory_region[0][0x18000];
+		vectorbank[1] = &memory_region(REGION_CPU1)[0x18000];
 
 	vectorEngine = vgType;
 	if ((vectorEngine<AVGDVG_MIN) || (vectorEngine>AVGDVG_MAX))

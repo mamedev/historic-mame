@@ -622,14 +622,12 @@ static struct MachineDriver GAMENAME##_machine_driver =		\
 		{													\
 			CPU_Z80,										\
 			18432000/6,     /* 3.072 Mhz */					\
-			0,												\
 			GAMENAME##_readmem,GAMENAME##_writemem,0,0,		\
 			nmi_interrupt,1									\
 		},													\
 		{													\
 			CPU_Z80 | CPU_AUDIO_CPU,						\
 			10000000/4,     /* 2.5 Mhz */					\
-			3,												\
 			sound_readmem,sound_writemem,					\
 			sound_readport,sound_writeport,					\
 			interrupt,1										\
@@ -676,7 +674,7 @@ MACHINE_DRIVER(suprmous, 8*8)
 ***************************************************************************/
 
 ROM_START( thepit )
-	ROM_REGION(0x10000)     /* 64k for main CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
 	ROM_LOAD( "p38b",         0x0000, 0x1000, 0x7315e1bc )
 	ROM_LOAD( "p39b",         0x1000, 0x1000, 0xc9cc30fe )
 	ROM_LOAD( "p40b",         0x2000, 0x1000, 0x986738b5 )
@@ -690,12 +688,12 @@ ROM_START( thepit )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "pitclr.ic4",   0x0000, 0x0020, 0xa758b567 )
 
-	ROM_REGION(0x10000)     /* 64k for audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio CPU */
 	ROM_LOAD( "p30",          0x0000, 0x0800, 0x1b79dfb6 )
 ROM_END
 
 ROM_START( roundup )
-	ROM_REGION(0x10000)     /* 64k for main CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
 	ROM_LOAD( "roundup.u38",  0x0000, 0x1000, 0xd62c3b7a )
 	ROM_LOAD( "roundup.u39",  0x1000, 0x1000, 0x37bf554b )
 	ROM_LOAD( "roundup.u40",  0x2000, 0x1000, 0x5109d0c5 )
@@ -709,13 +707,13 @@ ROM_START( roundup )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "roundup.clr",  0x0000, 0x0020, 0xa758b567 )
 
-	ROM_REGION(0x10000)     /* 64k for audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio CPU */
 	ROM_LOAD( "roundup.u30",  0x0000, 0x0800, 0x1b18faee )
 	ROM_LOAD( "roundup.u31",  0x0800, 0x0800, 0x76cf4394 )
 ROM_END
 
 ROM_START( fitter )
-	ROM_REGION(0x10000)     /* 64k for main CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
 	ROM_LOAD( "ic38.bin",     0x0000, 0x1000, 0x6bf6cca4 )
 	ROM_LOAD( "roundup.u39",  0x1000, 0x1000, 0x37bf554b )
 	ROM_LOAD( "ic40.bin",     0x2000, 0x1000, 0x572e2157 )
@@ -729,13 +727,13 @@ ROM_START( fitter )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "roundup.clr",  0x0000, 0x0020, 0xa758b567 )
 
-	ROM_REGION(0x10000)     /* 64k for audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio CPU */
 	ROM_LOAD( "ic30.bin",     0x0000, 0x0800, 0x4055b5ca )
 	ROM_LOAD( "ic31.bin",     0x0800, 0x0800, 0xc9d8c1cc )
 ROM_END
 
 ROM_START( intrepid )
-	ROM_REGION(0x10000)     /* 64k for main CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
 	ROM_LOAD( "ic19.1",       0x0000, 0x1000, 0x7d927b23 )
 	ROM_LOAD( "ic18.2",       0x1000, 0x1000, 0xdcc22542 )
 	ROM_LOAD( "ic17.3",       0x2000, 0x1000, 0xfd11081e )
@@ -749,13 +747,13 @@ ROM_START( intrepid )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "ic3.prm",      0x0000, 0x0020, 0x927ff40a )
 
-	ROM_REGION(0x10000)     /* 64k for audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio CPU */
 	ROM_LOAD( "ic22.7",       0x0000, 0x0800, 0x1a7cc392 )
 	ROM_LOAD( "ic23.6",       0x0800, 0x0800, 0x91ca7097 )
 ROM_END
 
 ROM_START( intrepi2 )
-	ROM_REGION(0x10000)     /* 64k for main CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
 	ROM_LOAD( "intrepid.001", 0x0000, 0x1000, 0x9505df1e )
 	ROM_LOAD( "intrepid.002", 0x1000, 0x1000, 0x27e9f53f )
 	ROM_LOAD( "intrepid.003", 0x2000, 0x1000, 0xda082ed7 )
@@ -769,13 +767,13 @@ ROM_START( intrepi2 )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "ic3.prm",      0x0000, 0x0020, 0x927ff40a )
 
-	ROM_REGION(0x10000)     /* 64k for audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio CPU */
 	ROM_LOAD( "intrepid.007", 0x0000, 0x0800, 0xf85ead07 )
 	ROM_LOAD( "intrepid.006", 0x0800, 0x0800, 0x9eb6c61b )
 ROM_END
 
 ROM_START( portman )
-	ROM_REGION(0x10000)     /* 64k for main CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
 	ROM_LOAD( "pe1",          0x0000, 0x1000, 0xa5cf6083 )
 	ROM_LOAD( "pe2",          0x1000, 0x1000, 0x0b53d48a )
 	ROM_LOAD( "pe3",          0x2000, 0x1000, 0x1c923057 )
@@ -789,13 +787,13 @@ ROM_START( portman )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "ic3",          0x0000, 0x0020, 0x6440dc61 )
 
-	ROM_REGION(0x10000)     /* 64k for audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio CPU */
 	ROM_LOAD( "pe7",          0x0000, 0x0800, 0xd2094e4a )
 	ROM_LOAD( "pe6",          0x0800, 0x0800, 0x1cf447f4 )
 ROM_END
 
 ROM_START( suprmous )
-	ROM_REGION(0x10000)	    /* 64k for main CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	    /* 64k for main CPU */
 	ROM_LOAD( "sm.1",         0x0000, 0x1000, 0x9db2b786 )
 	ROM_LOAD( "sm.2",         0x1000, 0x1000, 0x0a3d91d3 )
 	ROM_LOAD( "sm.3",         0x2000, 0x1000, 0x32af6285 )
@@ -811,12 +809,12 @@ ROM_START( suprmous )
 	ROM_LOAD( "smouse2.clr",  0x0000, 0x0020, 0x8c295553 )
 	ROM_LOAD( "smouse1.clr",  0x0020, 0x0020, 0xd815504b )
 
-	ROM_REGION(0x10000)	   /* 64k for audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	   /* 64k for audio CPU */
 	ROM_LOAD( "sm.6",         0x0000, 0x1000, 0xfba71785 )
 ROM_END
 
 ROM_START( suprmou2 )
-	ROM_REGION(0x10000)	    /* 64k for main CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	    /* 64k for main CPU */
 	ROM_LOAD( "suprmous.x1",  0x0000, 0x1000, 0xad72b467 )
 	ROM_LOAD( "suprmous.x2",  0x1000, 0x1000, 0x53f5be5e )
 	ROM_LOAD( "suprmous.x3",  0x2000, 0x1000, 0xb5b8d34d )
@@ -832,12 +830,12 @@ ROM_START( suprmou2 )
 	ROM_LOAD( "smouse2.clr",  0x0000, 0x0020, 0x8c295553 )
 	ROM_LOAD( "smouse1.clr",  0x0020, 0x0020, 0xd815504b )
 
-	ROM_REGION(0x10000)	   /* 64k for audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	   /* 64k for audio CPU */
 	ROM_LOAD( "sm.6",         0x0000, 0x1000, 0xfba71785 )
 ROM_END
 
 ROM_START( machomou )
-	ROM_REGION(0x10000)	    /* 64k for main CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	    /* 64k for main CPU */
 	ROM_LOAD( "mm1.2g",       0x0000, 0x1000, 0x91f116be )
 	ROM_LOAD( "mm2.2h",       0x1000, 0x1000, 0x3aa88c9b )
 	ROM_LOAD( "mm3.2i",       0x2000, 0x1000, 0x3b66b519 )
@@ -853,7 +851,7 @@ ROM_START( machomou )
 	ROM_LOAD( "mmouse2.clr",  0x0000, 0x0020, 0x00000000 )
 	ROM_LOAD( "mmouse1.clr",  0x0020, 0x0020, 0x00000000 )
 
-	ROM_REGION(0x10000)	   /* 64k for audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	   /* 64k for audio CPU */
 	ROM_LOAD( "mm6.e6",       0x0000, 0x1000, 0x20816913 )
 ROM_END
 
@@ -861,7 +859,7 @@ ROM_END
 
 static int thepit_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -885,7 +883,7 @@ static int thepit_hiload(void)
 static void thepit_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -899,7 +897,7 @@ static void thepit_hisave(void)
 
 static int roundup_suprmous_common_hiload(int address)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -945,7 +943,7 @@ static int roundup_hiload(void)
 static void roundup_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -958,7 +956,7 @@ static void roundup_hisave(void)
 
 static int intrepid_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -984,7 +982,7 @@ static int intrepid_hiload(void)
 static void intrepid_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1003,7 +1001,7 @@ static int suprmous_hiload(void)
 static void suprmous_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

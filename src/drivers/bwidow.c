@@ -621,7 +621,6 @@ static struct MachineDriver bwidow_machine_driver =
 		{
 			CPU_M6502,
 			1500000,	/* 1.5 Mhz */
-			0,
 			bwidow_readmem,bwidow_writemem,0,0,
 			interrupt,4	/* 4.1ms */
 		}
@@ -659,7 +658,6 @@ static struct MachineDriver gravitar_machine_driver =
 		{
 			CPU_M6502,
 			1500000,	/* 1.5 Mhz */
-			0,
 			bwidow_readmem,bwidow_writemem,0,0,
 			interrupt,4 /* 4.1ms */
 		}
@@ -697,7 +695,6 @@ static struct MachineDriver spacduel_machine_driver =
 		{
 			CPU_M6502,
 			1500000,	/* 1.5 Mhz */
-			0,
 			spacduel_readmem,spacduel_writemem,0,0,
 			interrupt,4 /* 5.4ms */
 		}
@@ -744,7 +741,7 @@ static struct MachineDriver spacduel_machine_driver =
 
 static int bwidow_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -768,7 +765,7 @@ static int bwidow_hiload(void)
 static void bwidow_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -780,7 +777,7 @@ static void bwidow_hisave(void)
 
 
 ROM_START( bwidow )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	/* Vector ROM */
 	ROM_LOAD( "136017.107",   0x2800, 0x0800, 0x97f6000c )
 	ROM_LOAD( "136017.108",   0x3000, 0x1000, 0x3da354ed )
@@ -837,7 +834,7 @@ struct GameDriver driver_bwidow =
  */
 
 ROM_START( gravitar )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	/* Vector ROM */
 	ROM_LOAD( "136010.210",   0x2800, 0x0800, 0xdebcb243 )
 	ROM_LOAD( "136010.207",   0x3000, 0x1000, 0x4135629a )
@@ -854,7 +851,7 @@ ROM_START( gravitar )
 ROM_END
 
 ROM_START( gravitr2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	/* Vector ROM */
 	ROM_LOAD( "136010.210",   0x2800, 0x0800, 0xdebcb243 )
 	ROM_LOAD( "136010.207",   0x3000, 0x1000, 0x4135629a )
@@ -936,7 +933,7 @@ struct GameDriver driver_gravitr2 =
  */
 
 ROM_START( spacduel )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	/* Vector ROM */
 	ROM_LOAD( "136006.106",   0x2800, 0x0800, 0x691122fe )
 	ROM_LOAD( "136006.107",   0x3000, 0x1000, 0xd8dd0461 )

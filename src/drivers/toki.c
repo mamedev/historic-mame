@@ -66,7 +66,7 @@ void toki_adpcm_int (int data)
 void toki_adpcm_control_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU2);
 
 
 	/* the code writes either 2 or 3 in the bottom two bits */
@@ -355,7 +355,6 @@ static struct MachineDriver toki_machine_driver =
 			CPU_M68000,
 			16000000,	/* with less than 14MHz there are slowdowns and the */
 						/* title screen doesn't wave correctly */
-			0,
 			readmem,writemem,
 			0,0,
 			toki_interrupt,1
@@ -363,7 +362,6 @@ static struct MachineDriver toki_machine_driver =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 MHz (?) */
-			2,
 			sound_readmem,sound_writemem,
 			0,0,
 			ignore_interrupt,0	/* IRQs are caused by the main CPU?? */
@@ -407,7 +405,6 @@ static struct MachineDriver tokib_machine_driver =
 			CPU_M68000,
 			16000000,	/* with less than 14MHz there are slowdowns and the */
 						/* title screen doesn't wave correctly */
-			0,
 			readmem,writemem,
 			0,0,
 			toki_interrupt,1
@@ -415,7 +412,6 @@ static struct MachineDriver tokib_machine_driver =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 MHz (?) */
-			2,
 			sound_readmem,sound_writemem,
 			0,0,
 			ignore_interrupt,0	/* IRQs are caused by the main CPU?? */
@@ -460,7 +456,7 @@ static struct MachineDriver tokib_machine_driver =
 ***************************************************************************/
 
 ROM_START( toki )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "tokijp.006",   0x00000, 0x20000, 0x03d726b1 )
 	ROM_LOAD_ODD ( "tokijp.004",   0x00000, 0x20000, 0x54a45e12 )
 	ROM_LOAD_EVEN( "tokijp.005",   0x40000, 0x10000, 0xd6a82808 )
@@ -474,7 +470,7 @@ ROM_START( toki )
 	ROM_LOAD( "toki.bk1",     0x120000, 0x80000, 0xfdaa5f4b )	/* tiles 1 */
 	ROM_LOAD( "toki.bk2",     0x1a0000, 0x80000, 0xd86ac664 )	/* tiles 2 */
 
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
 	/* is this the Z80 code? maybe its encrypted */
 	ROM_LOAD( "tokijp.008",   0x00000, 0x2000, 0x6c87c4c5 )
 
@@ -486,7 +482,7 @@ ROM_START( toki )
 ROM_END
 
 ROM_START( toki2 )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "tokijp.006",   0x00000, 0x20000, 0x03d726b1 )
 	ROM_LOAD_ODD ( "4c.10k",       0x00000, 0x20000, 0xb2c345c5 )
 	ROM_LOAD_EVEN( "tokijp.005",   0x40000, 0x10000, 0xd6a82808 )
@@ -500,7 +496,7 @@ ROM_START( toki2 )
 	ROM_LOAD( "toki.bk1",     0x120000, 0x80000, 0xfdaa5f4b )	/* tiles 1 */
 	ROM_LOAD( "toki.bk2",     0x1a0000, 0x80000, 0xd86ac664 )	/* tiles 2 */
 
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
 	/* is this the Z80 code? maybe its encrypted */
 	ROM_LOAD( "tokijp.008",   0x00000, 0x2000, 0x6c87c4c5 )
 
@@ -512,7 +508,7 @@ ROM_START( toki2 )
 ROM_END
 
 ROM_START( toki3 )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "l10_6.bin",    0x00000, 0x20000, 0x94015d91 )
 	ROM_LOAD_ODD ( "k10_4e.bin",   0x00000, 0x20000, 0x531bd3ef )
 	ROM_LOAD_EVEN( "tokijp.005",   0x40000, 0x10000, 0xd6a82808 )
@@ -526,7 +522,7 @@ ROM_START( toki3 )
 	ROM_LOAD( "toki.bk1",     0x120000, 0x80000, 0xfdaa5f4b )	/* tiles 1 */
 	ROM_LOAD( "toki.bk2",     0x1a0000, 0x80000, 0xd86ac664 )	/* tiles 2 */
 
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
 	/* is this the Z80 code? maybe its encrypted */
 	ROM_LOAD( "tokijp.008",   0x00000, 0x2000, 0x6c87c4c5 )
 
@@ -538,7 +534,7 @@ ROM_START( toki3 )
 ROM_END
 
 ROM_START( tokiu )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "6b.10m",       0x00000, 0x20000, 0x3674d9fe )
 	ROM_LOAD_ODD ( "14.10k",       0x00000, 0x20000, 0xbfdd48af )
 	ROM_LOAD_EVEN( "tokijp.005",   0x40000, 0x10000, 0xd6a82808 )
@@ -552,7 +548,7 @@ ROM_START( tokiu )
 	ROM_LOAD( "toki.bk1",     0x120000, 0x80000, 0xfdaa5f4b )	/* tiles 1 */
 	ROM_LOAD( "toki.bk2",     0x1a0000, 0x80000, 0xd86ac664 )	/* tiles 2 */
 
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
 	/* is this the Z80 code? maybe its encrypted */
 	ROM_LOAD( "tokijp.008",   0x00000, 0x2000, 0x6c87c4c5 )
 
@@ -564,7 +560,7 @@ ROM_START( tokiu )
 ROM_END
 
 ROM_START( tokib )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "toki.e3",      0x00000, 0x20000, 0xae9b3da4 )
 	ROM_LOAD_ODD ( "toki.e5",      0x00000, 0x20000, 0x66a5a1d6 )
 	ROM_LOAD_EVEN( "tokijp.005",   0x40000, 0x10000, 0xd6a82808 )
@@ -600,7 +596,7 @@ ROM_START( tokib )
 	ROM_LOAD( "toki.e10",     0x200000, 0x10000, 0xe15c1d0f )
 	ROM_LOAD( "toki.e6",      0x210000, 0x10000, 0x6f4b878a )
 
-	ROM_REGION(0x18000)	/* 64k for code + 32k for banked data */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for code + 32k for banked data */
 	ROM_LOAD( "toki.e1",      0x00000, 0x8000, 0x2832ef75 )
 	ROM_CONTINUE(             0x10000, 0x8000 )	/* banked at 8000-bfff */
 ROM_END
@@ -645,14 +641,14 @@ void tokib_rom_decode (void)
 
 	/* invert the sprite data in the ROMs */
 	for (i = 0x020000; i < 0x120000; i++)
-		Machine->memory_region[1][i] ^= 0xff;
+		memory_region(1)[i] ^= 0xff;
 
 	/* merge background tile graphics together */
 	if (temp)
 	{
 		for (offs = 0x120000; offs < 0x220000; offs += 0x20000)
 		{
-			unsigned char *base = &Machine->memory_region[1][offs];
+			unsigned char *base = &memory_region(1)[offs];
 			memcpy (temp, base, 65536 * 2);
 			for (i = 0; i < 16; i++)
 			{

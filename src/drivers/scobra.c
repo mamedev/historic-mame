@@ -338,8 +338,8 @@ INPUT_PORTS_START( scobra )
 
 	PORT_START      /* IN1 */
 	PORT_DIPNAME( 0x01, 0x00, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, "No" )
-	PORT_DIPSETTING(    0x01, "Yes" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x02, "5" )
@@ -446,7 +446,7 @@ INPUT_PORTS_START( stratgyx )
 	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x06, DEF_STR( 4C_3C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x00, "1 Coin/99 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/99 Credits" )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
@@ -476,8 +476,8 @@ INPUT_PORTS_START( armorcar )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x02, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
@@ -546,6 +546,47 @@ INPUT_PORTS_START( moonwar2 )
 	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_CENTER, 25, 10, 0, 0, 0 )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( monwar2a )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x1f, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* the spinner */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START      /* IN1 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "Free Play" )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
+
+	PORT_START      /* IN2 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_4C ) )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN3 - dummy port for the dial */
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_CENTER, 25, 10, 0, 0, 0 )
+INPUT_PORTS_END
+
 INPUT_PORTS_START( spdcoin )
     PORT_START      /* IN0 */
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -558,7 +599,7 @@ INPUT_PORTS_START( spdcoin )
     PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
     PORT_START      /* IN1 */
-    PORT_DIPNAME( 0x01, 0x00, "Freeze Screen" )   /* Dip Sw #2 */
+    PORT_DIPNAME( 0x01, 0x00, "Freeze" )   /* Dip Sw #2 */
     PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
     PORT_DIPSETTING(    0x01, DEF_STR( On ) )
     PORT_DIPNAME( 0x02, 0x02, DEF_STR ( Unknown ) ) /* Dip Sw #1 */
@@ -1003,8 +1044,8 @@ INPUT_PORTS_START( hustler )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x01, "2" )
 	PORT_BITX(    0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Lives", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x02, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
@@ -1174,14 +1215,12 @@ static struct MachineDriver type1_machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
-			0,
 			type1_readmem,type1_writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318000/8,	/* 1.78975 Mhz */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -1220,14 +1259,12 @@ static struct MachineDriver armorcar_machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
-			0,
 			type1_readmem,type1_writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318000/8,	/* 1.78975 Mhz */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -1267,14 +1304,12 @@ static struct MachineDriver rescue_machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
-			0,
 			type1_readmem,type1_writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318000/8,	/* 1.78975 Mhz */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -1312,14 +1347,12 @@ static struct MachineDriver minefld_machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
-			0,
 			type1_readmem,type1_writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318000/8,	/* 1.78975 Mhz */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -1357,14 +1390,12 @@ static struct MachineDriver stratgyx_machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
-			0,
 			type2_readmem,type2_writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318000/8,	/* 1.78975 Mhz */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -1402,14 +1433,12 @@ static struct MachineDriver type2_machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
-			0,
 			type2_readmem,type2_writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318000/8,	/* 1.78975 Mhz */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -1447,14 +1476,12 @@ static struct MachineDriver hustler_machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
-			0,
 			hustler_readmem,hustler_writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318000/8,	/* 1.78975 Mhz */
-			3,	/* memory region #3 */
 			hustler_sound_readmem,hustler_sound_writemem,hustler_sound_readport,hustler_sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -1492,14 +1519,12 @@ static struct MachineDriver hustlerb_machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
-			0,
 			hustlerb_readmem,hustlerb_writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318000/8,	/* 1.78975 Mhz */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,hustlerb_sound_readport,hustlerb_sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -1537,14 +1562,12 @@ static struct MachineDriver calipso_machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
-			0,
 			type1_readmem,type1_writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318000/8,	/* 1.78975 Mhz */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -1582,7 +1605,7 @@ static struct MachineDriver calipso_machine_driver =
 ***************************************************************************/
 
 ROM_START( scobra )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "scobra2c.bin", 0x0000, 0x1000, 0xe15ade38 )
 	ROM_LOAD( "scobra2e.bin", 0x1000, 0x1000, 0xa270e44d )
 	ROM_LOAD( "scobra2f.bin", 0x2000, 0x1000, 0xbdd70346 )
@@ -1597,14 +1620,14 @@ ROM_START( scobra )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x9b87f90d )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "snd_5c.bin",   0x0000, 0x0800, 0xdeeb0dd3 )
 	ROM_LOAD( "snd_5d.bin",   0x0800, 0x0800, 0x872c1a74 )
 	ROM_LOAD( "snd_5e.bin",   0x1000, 0x0800, 0xccd7a110 )
 ROM_END
 
 ROM_START( scobrak )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "2c",           0x0000, 0x1000, 0xa0744b3f )
 	ROM_LOAD( "2e",           0x1000, 0x1000, 0x8e7245cd )
 	ROM_LOAD( "2f",           0x2000, 0x1000, 0x47a4e6fb )
@@ -1619,14 +1642,14 @@ ROM_START( scobrak )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x9b87f90d )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "5c",           0x0000, 0x0800, 0xd4346959 )
 	ROM_LOAD( "5d",           0x0800, 0x0800, 0xcc025d95 )
 	ROM_LOAD( "5e",           0x1000, 0x0800, 0x1628c53f )
 ROM_END
 
 ROM_START( scobrab )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "vid_2c.bin",   0x0000, 0x0800, 0xaeddf391 )
 	ROM_LOAD( "vid_2e.bin",   0x0800, 0x0800, 0x72b57eb7 )
 	ROM_LOAD( "scobra2e.bin", 0x1000, 0x1000, 0xa270e44d )
@@ -1642,14 +1665,14 @@ ROM_START( scobrab )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x9b87f90d )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "snd_5c.bin",   0x0000, 0x0800, 0xdeeb0dd3 )
 	ROM_LOAD( "snd_5d.bin",   0x0800, 0x0800, 0x872c1a74 )
 	ROM_LOAD( "snd_5e.bin",   0x1000, 0x0800, 0xccd7a110 )
 ROM_END
 
 ROM_START( stratgyx )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "2c_1.bin",     0x0000, 0x1000, 0xeec01237 )
 	ROM_LOAD( "2e_2.bin",     0x1000, 0x1000, 0x926cb2d5 )
 	ROM_LOAD( "2f_3.bin",     0x2000, 0x1000, 0x849e2504 )
@@ -1664,13 +1687,13 @@ ROM_START( stratgyx )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "strategy.6e",  0x0000, 0x0020, 0x51a629e1 )
 
-	ROM_REGION(0x10000)	/* 64k for sound code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound code */
 	ROM_LOAD( "s1.bin",       0x0000, 0x1000, 0x713a5db8 )
 	ROM_LOAD( "s2.bin",       0x1000, 0x1000, 0x46079411 )
 ROM_END
 
 ROM_START( stratgys )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "2c.cpu",       0x0000, 0x1000, 0xf2aaaf2b )
 	ROM_LOAD( "2e.cpu",       0x1000, 0x1000, 0x5873fdc8 )
 	ROM_LOAD( "2f.cpu",       0x2000, 0x1000, 0x532d604f )
@@ -1685,13 +1708,13 @@ ROM_START( stratgys )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "strategy.6e",  0x0000, 0x0020, 0x51a629e1 )
 
-	ROM_REGION(0x10000)	/* 64k for sound code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound code */
 	ROM_LOAD( "s1.bin",       0x0000, 0x1000, 0x713a5db8 )
 	ROM_LOAD( "s2.bin",       0x1000, 0x1000, 0x46079411 )
 ROM_END
 
 ROM_START( armorcar )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "cpu.2c",       0x0000, 0x1000, 0x0d7bfdfb )
 	ROM_LOAD( "cpu.2e",       0x1000, 0x1000, 0x76463213 )
 	ROM_LOAD( "cpu.2f",       0x2000, 0x1000, 0x2cc6d5f0 )
@@ -1705,13 +1728,13 @@ ROM_START( armorcar )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x9b87f90d )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "sound.5c",     0x0000, 0x0800, 0x54ee7753 )
 	ROM_LOAD( "sound.5d",     0x0800, 0x0800, 0x5218fec0 )
 ROM_END
 
 ROM_START( armorca2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "2c",           0x0000, 0x1000, 0xe393bd2f )
 	ROM_LOAD( "2e",           0x1000, 0x1000, 0xb7d443af )
 	ROM_LOAD( "2g",           0x2000, 0x1000, 0xe67380a4 )
@@ -1725,13 +1748,13 @@ ROM_START( armorca2 )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x9b87f90d )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "sound.5c",     0x0000, 0x0800, 0x54ee7753 )
 	ROM_LOAD( "sound.5d",     0x0800, 0x0800, 0x5218fec0 )
 ROM_END
 
 ROM_START( moonwar2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "mw2.2c",       0x0000, 0x1000, 0x7c11b4d9 )
 	ROM_LOAD( "mw2.2e",       0x1000, 0x1000, 0x1b6362be )
 	ROM_LOAD( "mw2.2f",       0x2000, 0x1000, 0x4fd8ba4b )
@@ -1744,13 +1767,13 @@ ROM_START( moonwar2 )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "mw2.clr",      0x0000, 0x0020, 0x99614c6c )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "mw2.5c",       0x0000, 0x0800, 0xc26231eb )
 	ROM_LOAD( "mw2.5d",       0x0800, 0x0800, 0xbb48a646 )
 ROM_END
 
 ROM_START( monwar2a )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "2c",           0x0000, 0x1000, 0xbc20b734 )
 	ROM_LOAD( "2e",           0x1000, 0x1000, 0xdb6ffec2 )
 	ROM_LOAD( "2f",           0x2000, 0x1000, 0x378931b8 )
@@ -1763,13 +1786,13 @@ ROM_START( monwar2a )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "mw2.clr",      0x0000, 0x0020, 0x99614c6c )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "mw2.5c",       0x0000, 0x0800, 0xc26231eb )
 	ROM_LOAD( "mw2.5d",       0x0800, 0x0800, 0xbb48a646 )
 ROM_END
 
 ROM_START( spdcoin )
-    ROM_REGION(0x10000) /* 64k for code */
+    ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
     ROM_LOAD( "spdcoin.2c",   0x0000, 0x1000, 0x65cf1e49 )
     ROM_LOAD( "spdcoin.2e",   0x1000, 0x1000, 0x1ee59232 )
 
@@ -1780,13 +1803,13 @@ ROM_START( spdcoin )
     ROM_REGIONX( 0x0020, REGION_PROMS )
     ROM_LOAD( "spdcoin.clr",  0x0000, 0x0020, 0x1a2ccc56 )
 
-    ROM_REGION(0x10000) /* 64k for the audio CPU */
+    ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
     ROM_LOAD( "spdcoin.5c",   0x0000, 0x0800, 0xb4cf64b7 )
     ROM_LOAD( "spdcoin.5d",   0x0800, 0x0800, 0x92304df0 )
 ROM_END
 
 ROM_START( darkplnt )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "drkplt2c.dat", 0x0000, 0x1000, 0x5a0ca559 )
 	ROM_LOAD( "drkplt2e.dat", 0x1000, 0x1000, 0x52e2117d )
 	ROM_LOAD( "drkplt2g.dat", 0x2000, 0x1000, 0x4093219c )
@@ -1803,12 +1826,12 @@ ROM_START( darkplnt )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "6e.cpu",       0x0000, 0x0020, 0x86b6e124 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "5c.snd",       0x0000, 0x1000, 0x672b9454 )
 ROM_END
 
 ROM_START( tazmania )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "2c.cpu",       0x0000, 0x1000, 0x932c5a06 )
 	ROM_LOAD( "2e.cpu",       0x1000, 0x1000, 0xef17ce65 )
 	ROM_LOAD( "2f.cpu",       0x2000, 0x1000, 0x43c7c39d )
@@ -1823,12 +1846,12 @@ ROM_START( tazmania )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "colr6f.cpu",   0x0000, 0x0020, 0xfce333c7 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "rom0.snd",     0x0000, 0x0800, 0xb8d741f1 )
 ROM_END
 
 ROM_START( tazmani2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "2ck.cpu",      0x0000, 0x1000, 0xbf0492bf )
 	ROM_LOAD( "2ek.cpu",      0x1000, 0x1000, 0x6636c4d0 )
 	ROM_LOAD( "2fk.cpu",      0x2000, 0x1000, 0xce59a57b )
@@ -1843,12 +1866,12 @@ ROM_START( tazmani2 )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "colr6f.cpu",   0x0000, 0x0020, 0xfce333c7 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "rom0.snd",     0x0000, 0x0800, 0xb8d741f1 )
 ROM_END
 
 ROM_START( calipso )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "calipso.2c",   0x0000, 0x1000, 0x0fcb703c )
 	ROM_LOAD( "calipso.2e",   0x1000, 0x1000, 0xc6622f14 )
 	ROM_LOAD( "calipso.2f",   0x2000, 0x1000, 0x7bacbaba )
@@ -1863,13 +1886,13 @@ ROM_START( calipso )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "calipso.clr",  0x0000, 0x0020, 0x01165832 )
 
-	ROM_REGION(0x10000)	/* 64k for sound code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound code */
 	ROM_LOAD( "calipso.5c",   0x0000, 0x0800, 0x9cbc65ab )
 	ROM_LOAD( "calipso.5d",   0x0800, 0x0800, 0xa225ee3b )
 ROM_END
 
 ROM_START( anteater )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ra1-2c",       0x0000, 0x1000, 0x58bc9393 )
 	ROM_LOAD( "ra1-2e",       0x1000, 0x1000, 0x574fc6f6 )
 	ROM_LOAD( "ra1-2f",       0x2000, 0x1000, 0x2f7c1fe5 )
@@ -1882,13 +1905,13 @@ ROM_START( anteater )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "colr6f.cpu",   0x0000, 0x0020, 0xfce333c7 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ra4-5c",       0x0000, 0x0800, 0x87300b4f )
 	ROM_LOAD( "ra4-5d",       0x0800, 0x0800, 0xaf4e5ffe )
 ROM_END
 
 ROM_START( rescue )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "rb15acpu.bin", 0x0000, 0x1000, 0xd7e654ba )
 	ROM_LOAD( "rb15bcpu.bin", 0x1000, 0x1000, 0xa93ea158 )
 	ROM_LOAD( "rb15ccpu.bin", 0x2000, 0x1000, 0x058cd3d0 )
@@ -1902,13 +1925,13 @@ ROM_START( rescue )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "rescue.clr",   0x0000, 0x0020, 0x40c6bcbd )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "rb15csnd.bin", 0x0000, 0x0800, 0x8b24bf17 )
 	ROM_LOAD( "rb15dsnd.bin", 0x0800, 0x0800, 0xd96e4fb3 )
 ROM_END
 
 ROM_START( minefld )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ma22c",        0x0000, 0x1000, 0x1367a035 )
 	ROM_LOAD( "ma22e",        0x1000, 0x1000, 0x68946d21 )
 	ROM_LOAD( "ma22f",        0x2000, 0x1000, 0x7663aee5 )
@@ -1923,13 +1946,13 @@ ROM_START( minefld )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "minefld.clr",  0x0000, 0x0020, 0x1877368e )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ma15c",        0x0000, 0x0800, 0x8bef736b )
 	ROM_LOAD( "ma15d",        0x0800, 0x0800, 0xf67b3f97 )
 ROM_END
 
 ROM_START( losttomb )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "2c",           0x0000, 0x1000, 0xd6176d2c )
 	ROM_LOAD( "2e",           0x1000, 0x1000, 0xa5f55f4a )
 	ROM_LOAD( "2f",           0x2000, 0x1000, 0x0169fa3c )
@@ -1945,13 +1968,13 @@ ROM_START( losttomb )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "ltprom",       0x0000, 0x0020, 0x1108b816 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "5c",           0x0000, 0x0800, 0xb899be2a )
 	ROM_LOAD( "5d",           0x0800, 0x0800, 0x6907af31 )
 ROM_END
 
 ROM_START( losttmbh )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "2c",           0x0000, 0x1000, 0xd6176d2c )
 	ROM_LOAD( "2e",           0x1000, 0x1000, 0xa5f55f4a )
 	ROM_LOAD( "2f",           0x2000, 0x1000, 0x0169fa3c )
@@ -1967,13 +1990,13 @@ ROM_START( losttmbh )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "ltprom",       0x0000, 0x0020, 0x1108b816 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "5c",           0x0000, 0x0800, 0xb899be2a )
 	ROM_LOAD( "5d",           0x0800, 0x0800, 0x6907af31 )
 ROM_END
 
 ROM_START( superbon )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "2d.cpu",       0x0000, 0x1000, 0x60c0ba18 )
 	ROM_LOAD( "2e.cpu",       0x1000, 0x1000, 0xddcf44bf )
 	ROM_LOAD( "2f.cpu",       0x2000, 0x1000, 0xbb66c2d5 )
@@ -1989,13 +2012,13 @@ ROM_START( superbon )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "superbon.clr", 0x0000, 0x0020, 0x00000000 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "5c",  	      0x0000, 0x0800, 0xb899be2a )
 	ROM_LOAD( "5d.snd",       0x0800, 0x0800, 0x80640a04 )
 ROM_END
 
 ROM_START( hustler )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "hustler.1",    0x0000, 0x1000, 0x94479a3e )
 	ROM_LOAD( "hustler.2",    0x1000, 0x1000, 0x3cc67bcc )
 	ROM_LOAD( "hustler.3",    0x2000, 0x1000, 0x9422226a )
@@ -2008,13 +2031,13 @@ ROM_START( hustler )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "hustler.clr",  0x0000, 0x0020, 0xaa1f7f5e )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "hustler.6",    0x0000, 0x0800, 0x7a946544 )
 	ROM_LOAD( "hustler.7",    0x0800, 0x0800, 0x3db57351 )
 ROM_END
 
 ROM_START( billiard )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "a",            0x0000, 0x1000, 0xb7eb50c0 )
 	ROM_LOAD( "b",            0x1000, 0x1000, 0x988fe1c5 )
 	ROM_LOAD( "c",            0x2000, 0x1000, 0x7b8de793 )
@@ -2027,14 +2050,14 @@ ROM_START( billiard )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "hustler.clr",  0x0000, 0x0020, 0xaa1f7f5e )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "hustler.6",    0x0000, 0x0800, 0x7a946544 )
 	ROM_LOAD( "hustler.7",    0x0800, 0x0800, 0x3db57351 )
 ROM_END
 
 /* this is identical to billiard, but with a different memory map */
 ROM_START( hustlerb )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "hustler.2c",   0x0000, 0x1000, 0x3a1ac6a9 )
 	ROM_LOAD( "hustler.2f",   0x1000, 0x1000, 0xdc6752ec )
 	ROM_LOAD( "hustler.2j",   0x2000, 0x1000, 0x27c1e0f8 )
@@ -2047,7 +2070,7 @@ ROM_START( hustlerb )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "hustler.clr",  0x0000, 0x0020, 0xaa1f7f5e )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "hustler.11d",  0x0000, 0x0800, 0xb559bfde )
 	ROM_LOAD( "hustler.10d",  0x0800, 0x0800, 0x6ef96cfb )
 ROM_END
@@ -2079,7 +2102,7 @@ static void anteater_decode(void)
 
 	/* The gfx ROMs are scrambled. Decode them. They have been loaded at 0x1000, */
 	/* we write them at 0x0000. */
-	RAM = Machine->memory_region[1];
+	RAM = memory_region(1);
 
 	for (i = 0;i < 0x1000;i++)
 	{
@@ -2103,7 +2126,7 @@ static void rescue_decode(void)
 
 	/* The gfx ROMs are scrambled. Decode them. They have been loaded at 0x1000, */
 	/* we write them at 0x0000. */
-	RAM = Machine->memory_region[1];
+	RAM = memory_region(1);
 
 	for (i = 0;i < 0x1000;i++)
 	{
@@ -2126,7 +2149,7 @@ static void minefld_decode(void)
 
 	/* The gfx ROMs are scrambled. Decode them. They have been loaded at 0x1000, */
 	/* we write them at 0x0000. */
-	RAM = Machine->memory_region[1];
+	RAM = memory_region(1);
 
 	for (i = 0;i < 0x1000;i++)
 	{
@@ -2151,7 +2174,7 @@ static void losttomb_decode(void)
 
 	/* The gfx ROMs are scrambled. Decode them. They have been loaded at 0x1000, */
 	/* we write them at 0x0000. */
-	RAM = Machine->memory_region[1];
+	RAM = memory_region(1);
 
 	for (i = 0;i < 0x1000;i++)
 	{
@@ -2172,7 +2195,7 @@ static void superbon_decode(void)
 	unsigned char *RAM;
 
 
-	RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	RAM = memory_region(REGION_CPU1);
 
 	for (i = 0;i < 0x1000;i++)
 	{
@@ -2206,7 +2229,7 @@ static void hustler_decode(void)
 		unsigned char xormask;
 		int bits[8];
 		int i;
-		unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+		unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 		for (i = 0;i < 8;i++)
@@ -2227,7 +2250,7 @@ static void hustler_decode(void)
 
 	/* the first ROM of the second CPU has data lines D0 and D1 swapped. Decode it. */
 	{
-		unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
+		unsigned char *RAM = memory_region(REGION_CPU2);
 
 
 		for (A = 0;A < 0x0800;A++)
@@ -2245,7 +2268,7 @@ static void billiard_decode(void)
 		unsigned char xormask;
 		int bits[8];
 		int i;
-		unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+		unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 		for (i = 0;i < 8;i++)
@@ -2279,7 +2302,7 @@ static void billiard_decode(void)
 
 	/* the first ROM of the second CPU has data lines D0 and D1 swapped. Decode it. */
 	{
-		unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
+		unsigned char *RAM = memory_region(REGION_CPU2);
 
 
 		for (A = 0;A < 0x0800;A++)
@@ -2291,7 +2314,7 @@ static void billiard_decode(void)
 
 static int scobra_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f;
 
 	/* Wait for machine initialization to be done. */
@@ -2312,7 +2335,7 @@ static int scobra_hiload(void)
 
 static void scobra_hisave(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2327,7 +2350,7 @@ static void scobra_hisave(void)
 static int armorcar_hiload(void)
 {
 	static int firsttime = 0;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f;
 
 	/* Wait for machine initialization to be done. */
@@ -2360,7 +2383,7 @@ static int armorcar_hiload(void)
 
 static void armorcar_hisave(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2374,7 +2397,7 @@ static void armorcar_hisave(void)
 
 static int moonwar2_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -2398,7 +2421,7 @@ static int moonwar2_hiload(void)
 static void moonwar2_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2411,7 +2434,7 @@ static void moonwar2_hisave(void)
 
 static int calipso_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -2435,7 +2458,7 @@ static int calipso_hiload(void)
 static void calipso_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2447,7 +2470,7 @@ static void calipso_hisave(void)
 
 static int stratgyx_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -2473,7 +2496,7 @@ static int stratgyx_hiload(void)
 static void stratgyx_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2487,7 +2510,7 @@ static void stratgyx_hisave(void)
 
 static int spdcoin_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f;
 
 	/* check if the hi score table has already been initialized */
@@ -2526,7 +2549,7 @@ static int spdcoin_hiload(void)
 static void spdcoin_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2542,7 +2565,7 @@ static void spdcoin_hisave(void)
 
 static int anteater_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -2566,7 +2589,7 @@ static int anteater_hiload(void)
 static void anteater_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2579,7 +2602,7 @@ static void anteater_hisave(void)
 static int darkplnt_hiload(void)
 {
 	static int firsttime = 0;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f;
 
 	if (firsttime == 0)
@@ -2609,7 +2632,7 @@ static int darkplnt_hiload(void)
 
 static void darkplnt_hisave(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2623,7 +2646,7 @@ static void darkplnt_hisave(void)
 
 static int rescue_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f;
 
 	/* Wait for machine initialization to be done. */
@@ -2645,7 +2668,7 @@ static int rescue_hiload(void)
 
 static void rescue_hisave(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2660,7 +2683,7 @@ static void rescue_hisave(void)
 static int minefld_hiload(void)
 {
 
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f;
 
 	/* Wait for machine initialization to be done. */
@@ -2682,7 +2705,7 @@ static int minefld_hiload(void)
 static int losttomb_hiload(void)
 {
 
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f;
 
 	/* Wait for machine initialization to be done. */
@@ -2705,7 +2728,7 @@ static int losttomb_hiload(void)
 
 static void losttomb_hisave(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2719,7 +2742,7 @@ static void losttomb_hisave(void)
 static int superbon_hiload(void)
 {
 
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f;
 
 	/* Wait for machine initialization to be done. */
@@ -2963,7 +2986,7 @@ struct GameDriver driver_monwar2a =
 	0,
 	0,
 
-	input_ports_moonwar2,
+	input_ports_monwar2a,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,

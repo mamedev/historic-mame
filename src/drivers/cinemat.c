@@ -161,7 +161,6 @@ static struct MachineDriver driver##_machine_driver = \
 		{ \
 			CPU_CCPU, \
 			5000000, \
-			0, \
 			readmem,writemem,readport,writeport, \
 			cinemat_clear_list, 1 \
 		} \
@@ -200,7 +199,6 @@ static struct MachineDriver driver##_machine_driver = \
 		{ \
 			CPU_CCPU, \
 			5000000, \
-			0, \
 			readmem,writemem,driver##_readport,writeport, \
 			cinemat_clear_list, 1 \
 		} \
@@ -242,14 +240,14 @@ void cinemat_interleave (int romSize, int numRoms)
 	{
 		for (i = 0; i < numRoms; i += 2)
 		{
-			src1 = &memory_region(Machine->drv->cpu[0].memory_region)[i * romSize + 0];
-			src2 = &memory_region(Machine->drv->cpu[0].memory_region)[i * romSize + romSize];
+			src1 = &memory_region(REGION_CPU1)[i * romSize + 0];
+			src2 = &memory_region(REGION_CPU1)[i * romSize + romSize];
 			dest = temp;
 
 			for (j = 0; j < romSize; j++)
 				*dest++ = *src1++, *dest++ = *src2++;
 
-			memcpy (&memory_region(Machine->drv->cpu[0].memory_region)[i * romSize + 0], temp, 2 * romSize);
+			memcpy (&memory_region(REGION_CPU1)[i * romSize + 0], temp, 2 * romSize);
 		}
 
 		free (temp);
@@ -352,7 +350,7 @@ INPUT_PORTS_END
 
 
 ROM_START( spacewar )
-	ROM_REGION(0x1000)	/* 4k for code */
+	ROM_REGIONX( 0x1000, REGION_CPU1 )	/* 4k for code */
 	ROM_LOAD( "spacewar.1l", 0x0000, 0x0800, 0xedf0fd53 )
 	ROM_LOAD( "spacewar.2r", 0x0800, 0x0800, 0x4f21328b )
 ROM_END
@@ -392,7 +390,6 @@ static struct MachineDriver spacewar_machine_driver =
 		{
 			CPU_CCPU,
 			5000000,
-			0,
 			readmem,writemem,readport,writeport,
 			cinemat_clear_list, 1
 		}
@@ -497,7 +494,7 @@ INPUT_PORTS_END
 
 
 ROM_START( barrier )
-	ROM_REGION(0x1000)	/* 4k for code */
+	ROM_REGIONX( 0x1000, REGION_CPU1 )	/* 4k for code */
 	ROM_LOAD( "barrier.t7", 0x0000, 0x0800, 0x7c3d68c8 )
 	ROM_LOAD( "barrier.p7", 0x0800, 0x0800, 0xaec142b5 )
 ROM_END
@@ -612,7 +609,7 @@ INPUT_PORTS_END
 
 
 ROM_START( starhawk )
-	ROM_REGION(0x1000)	/* 4k for code */
+	ROM_REGIONX( 0x1000, REGION_CPU1 )	/* 4k for code */
 	ROM_LOAD( "u7", 0x0000, 0x0800, 0x376e6c5c )
 	ROM_LOAD( "r7", 0x0800, 0x0800, 0xbb71144f )
 ROM_END
@@ -728,7 +725,7 @@ INPUT_PORTS_END
 
 
 ROM_START( starcas )
-	ROM_REGION(0x2000)	/* 8k for code */
+	ROM_REGIONX( 0x2000, REGION_CPU1 )	/* 8k for code */
 	ROM_LOAD( "starcas3.t7", 0x0000, 0x0800, 0xb5838b5d )
 	ROM_LOAD( "starcas3.p7", 0x0800, 0x0800, 0xf6bc2f4d )
 	ROM_LOAD( "starcas3.u7", 0x1000, 0x0800, 0x188cd97c )
@@ -736,7 +733,7 @@ ROM_START( starcas )
 ROM_END
 
 ROM_START( starcas1 )
-	ROM_REGION(0x2000)	/* 8k for code */
+	ROM_REGIONX( 0x2000, REGION_CPU1 )	/* 8k for code */
 	ROM_LOAD( "starcast.t7", 0x0000, 0x0800, 0x65d0a225 )
 	ROM_LOAD( "starcast.p7", 0x0800, 0x0800, 0xd8f58d9a )
 	ROM_LOAD( "starcast.u7", 0x1000, 0x0800, 0xd4f35b82 )
@@ -885,7 +882,7 @@ INPUT_PORTS_END
 
 
 ROM_START( tgunner )
-	ROM_REGION(0x2000)	/* 8k for code */
+	ROM_REGIONX( 0x2000, REGION_CPU1 )	/* 8k for code */
 	ROM_LOAD( "tgunner.t70", 0x0000, 0x0800, 0x21ec9a04 )
 	ROM_LOAD( "tgunner.p70", 0x0800, 0x0800, 0x8d7410b3 )
 	ROM_LOAD( "tgunner.t71", 0x1000, 0x0800, 0x2c954ab6 )
@@ -1006,7 +1003,7 @@ INPUT_PORTS_END
 
 
 ROM_START( ripoff )
-	ROM_REGION(0x2000)	/* 8k for code */
+	ROM_REGIONX( 0x2000, REGION_CPU1 )	/* 8k for code */
 	ROM_LOAD( "ripoff.t7", 0x0000, 0x0800, 0x40c2c5b8 )
 	ROM_LOAD( "ripoff.p7", 0x0800, 0x0800, 0xa9208afb )
 	ROM_LOAD( "ripoff.u7", 0x1000, 0x0800, 0x29c13701 )
@@ -1198,7 +1195,7 @@ INPUT_PORTS_END
 
 
 ROM_START( speedfrk )
-	ROM_REGION(0x2000)	/* 8k for code */
+	ROM_REGIONX( 0x2000, REGION_CPU1 )	/* 8k for code */
 	ROM_LOAD( "speedfrk.t7", 0x0000, 0x0800, 0x3552c03f )
 	ROM_LOAD( "speedfrk.p7", 0x0800, 0x0800, 0x4b90cdec )
 	ROM_LOAD( "speedfrk.u7", 0x1000, 0x0800, 0x616c7cf9 )
@@ -1314,7 +1311,7 @@ INPUT_PORTS_END
 
 
 ROM_START( sundance )
-	ROM_REGION(0x2000)	/* 8k for code */
+	ROM_REGIONX( 0x2000, REGION_CPU1 )	/* 8k for code */
 	ROM_LOAD( "sundance.t7", 0x0000, 0x0800, 0xd5b9cb19 )
 	ROM_LOAD( "sundance.p7", 0x0800, 0x0800, 0x445c4f20 )
 	ROM_LOAD( "sundance.u7", 0x1000, 0x0800, 0x67887d48 )
@@ -1438,7 +1435,7 @@ INPUT_PORTS_END
 
 
 ROM_START( warrior )
-	ROM_REGION(0x2000)	/* 8k for code */
+	ROM_REGIONX( 0x2000, REGION_CPU1 )	/* 8k for code */
 	ROM_LOAD( "warrior.t7", 0x0000, 0x0800, 0xac3646f9 )
 	ROM_LOAD( "warrior.p7", 0x0800, 0x0800, 0x517d3021 )
 	ROM_LOAD( "warrior.u7", 0x1000, 0x0800, 0x2e39340f )
@@ -1557,7 +1554,7 @@ INPUT_PORTS_END
 
 
 ROM_START( armora )
-	ROM_REGION(0x4000)	/* 16k for code */
+	ROM_REGIONX( 0x4000, REGION_CPU1 )	/* 16k for code */
 	ROM_LOAD( "ar414le.t6", 0x0000, 0x1000, 0xd7e71f84 )
 	ROM_LOAD( "ar414lo.p6", 0x1000, 0x1000, 0xdf1c2370 )
 	ROM_LOAD( "ar414ue.u6", 0x2000, 0x1000, 0xb0276118 )
@@ -1680,7 +1677,7 @@ INPUT_PORTS_END
 
 
 ROM_START( solarq )
-	ROM_REGION(0x4000)	/* 16k for code */
+	ROM_REGIONX( 0x4000, REGION_CPU1 )	/* 16k for code */
 	ROM_LOAD( "solar.6t", 0x0000, 0x1000, 0x1f3c5333 )
 	ROM_LOAD( "solar.6p", 0x1000, 0x1000, 0xd6c16bcc )
 	ROM_LOAD( "solar.6u", 0x2000, 0x1000, 0xa5970e5c )
@@ -1818,7 +1815,7 @@ INPUT_PORTS_END
 
 
 ROM_START( demon )
-	ROM_REGION(0x4000)	/* 16k for code */
+	ROM_REGIONX( 0x4000, REGION_CPU1 )	/* 16k for code */
 	ROM_LOAD( "demon.7t", 0x0000, 0x1000, 0x866596c1 )
 	ROM_LOAD( "demon.7p", 0x1000, 0x1000, 0x1109e2f1 )
 	ROM_LOAD( "demon.7u", 0x2000, 0x1000, 0xd447a3c3 )
@@ -1934,7 +1931,7 @@ INPUT_PORTS_END
 
 
 ROM_START( wotw )
-	ROM_REGION(0x4000)	/* 16k for code */
+	ROM_REGIONX( 0x4000, REGION_CPU1 )	/* 16k for code */
 	ROM_LOAD( "wow_le.t7", 0x0000, 0x1000, 0xb16440f9 )
 	ROM_LOAD( "wow_lo.p7", 0x1000, 0x1000, 0xbfdf4a5a )
 	ROM_LOAD( "wow_ue.u7", 0x2000, 0x1000, 0x9b5cea48 )
@@ -2072,7 +2069,7 @@ INPUT_PORTS_END
 
 
 ROM_START( boxingb )
-	ROM_REGION(0x8000)	/* 32k for code */
+	ROM_REGIONX( 0x8000, REGION_CPU1 )	/* 32k for code */
 	ROM_LOAD( "u1a", 0x0000, 0x1000, 0xd3115b0f )
 	ROM_LOAD( "u1b", 0x1000, 0x1000, 0x3a44268d )
 	ROM_LOAD( "u2a", 0x2000, 0x1000, 0xc97a9cbb )

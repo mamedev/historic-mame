@@ -1708,7 +1708,7 @@ static const char *name_rdmem( unsigned base )
 				sprintf(dst, "RAM%d+%04X", ram_cnt, lshift(offset) );
 				break;
 			case (FPTR)MRA_ROM:
-				name = name_rom("ROM", cpu->memory_region, &base, mr->start );
+				name = name_rom("ROM", REGION_CPU1+activecpu, &base, mr->start );
 				sprintf(dst, "%s+%04X", name, lshift(base) );
 				break;
 			case (FPTR)MRA_BANK1:
@@ -1840,11 +1840,11 @@ static const char *name_wrmem( unsigned base )
 				sprintf(dst, "RAM%d+%04X", ram_cnt, lshift(base - mw->start) );
 				break;
 			case (FPTR)MWA_ROM:
-				name = name_rom("ROM", cpu->memory_region, &base, mw->start );
+				name = name_rom("ROM", REGION_CPU1+activecpu, &base, mw->start );
 				sprintf(dst, "%s+%04X", name, lshift(base) );
 				break;
 			case (FPTR)MWA_RAMROM:
-				name = name_rom("RAMROM", cpu->memory_region, &base, mw->start);
+				name = name_rom("RAMROM", REGION_CPU1+activecpu, &base, mw->start);
 				sprintf(dst, "%s+%04X", name, lshift(base) );
 				break;
 			case (FPTR)MWA_BANK1:
@@ -5060,7 +5060,7 @@ void MAME_Debug(void)
     if( ++debug_key_delay == 0x7fff )
     {
         debug_key_delay = 0;
-        debug_key_pressed = keyboard_pressed(input_port_type_key(IPT_UI_ON_SCREEN_DISPLAY));
+        debug_key_pressed = keyboard_pressed_multi(input_port_type_key_multi(IPT_UI_ON_SCREEN_DISPLAY));
     }
 
     if( dbg_fast )

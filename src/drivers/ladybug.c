@@ -425,7 +425,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* 4 Mhz */
-			0,
 			readmem,writemem,0,0,
 			ladybug_interrupt,1
 		}
@@ -465,7 +464,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( ladybug )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "lb1.cpu",      0x0000, 0x1000, 0xd09e0adb )
 	ROM_LOAD( "lb2.cpu",      0x1000, 0x1000, 0x88bc4a0a )
 	ROM_LOAD( "lb3.cpu",      0x2000, 0x1000, 0x53e9efce )
@@ -486,7 +485,7 @@ ROM_START( ladybug )
 ROM_END
 
 ROM_START( ladybugb )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "lb1a.cpu",     0x0000, 0x1000, 0xec135e54 )
 	ROM_LOAD( "lb2a.cpu",     0x1000, 0x1000, 0x3049c5c6 )
 	ROM_LOAD( "lb3a.cpu",     0x2000, 0x1000, 0xb0fef837 )
@@ -507,7 +506,7 @@ ROM_START( ladybugb )
 ROM_END
 
 ROM_START( snapjack )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sj2a.bin",     0x0000, 0x1000, 0x6b30fcda )
 	ROM_LOAD( "sj2b.bin",     0x1000, 0x1000, 0x1f1088d1 )
 	ROM_LOAD( "sj2c.bin",     0x2000, 0x1000, 0xedd65f3a )
@@ -528,7 +527,7 @@ ROM_START( snapjack )
 ROM_END
 
 ROM_START( cavenger )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1",            0x0000, 0x1000, 0x9e0cc781 )
 	ROM_LOAD( "2",            0x1000, 0x1000, 0x5ce5b950 )
 	ROM_LOAD( "3",            0x2000, 0x1000, 0xbc28218d )
@@ -552,7 +551,7 @@ ROM_END
 
 static int ladybug_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -579,7 +578,7 @@ static int ladybug_hiload(void)
 static void ladybug_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -594,7 +593,7 @@ static void ladybug_hisave(void)
 
 static int cavenger_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -620,7 +619,7 @@ static int cavenger_hiload(void)
 static void cavenger_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -633,7 +632,7 @@ static void cavenger_hisave(void)
 
 static int snapjack_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -660,7 +659,7 @@ static int snapjack_hiload(void)
 static void snapjack_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

@@ -459,14 +459,12 @@ static struct MachineDriver fastfred_machine_driver =
 		{
 			CPU_Z80,
 			CLOCK/6,     /* 3.072 Mhz */
-			0,
 			fastfred_readmem,fastfred_writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			CLOCK/12,    /* 1.536 Mhz */
-			3,
 			sound_readmem,sound_writemem,0,0,
 			nmi_interrupt,4
 		}
@@ -504,7 +502,6 @@ static struct MachineDriver jumpcoas_machine_driver =
 		{
 			CPU_Z80,
 			CLOCK/6,     /* 3.072 Mhz */
-			0,
 			jumpcoas_readmem,jumpcoas_writemem,0,0,
 			nmi_interrupt,1
 		}
@@ -544,7 +541,7 @@ static struct MachineDriver jumpcoas_machine_driver =
 ***************************************************************************/
 
 ROM_START( fastfred )
-	ROM_REGION(0x10000)     /* 64k for main CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
 	ROM_LOAD( "ffr.01",       0x0000, 0x1000, 0x15032c13 )
 	ROM_LOAD( "ffr.02",       0x1000, 0x1000, 0xf9642744 )
 	ROM_LOAD( "ffr.03",       0x2000, 0x1000, 0xf0919727 )
@@ -570,13 +567,13 @@ ROM_START( fastfred )
 	ROM_LOAD( "flyboy.grn",   0x0100, 0x0100, 0x7da063d0 )
 	ROM_LOAD( "flyboy.blu",   0x0200, 0x0100, 0x85c05c18 )
 
-	ROM_REGION(0x10000)     /* 64k for audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio CPU */
 	ROM_LOAD( "ffr.09",       0x0000, 0x1000, 0xa1ec8d7e )
 	ROM_LOAD( "ffr.10",       0x1000, 0x1000, 0x460ca837 )
 ROM_END
 
 ROM_START( flyboy )
-	ROM_REGION(0x10000)     /* 64k for main CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
 	ROM_LOAD( "flyboy01.cpu", 0x0000, 0x1000, 0xb05aa900 )
 	ROM_LOAD( "flyboy02.cpu", 0x1000, 0x1000, 0x474867f5 )
 	ROM_LOAD( "rom3.cpu",     0x2000, 0x1000, 0xd2f8f085 )
@@ -602,13 +599,13 @@ ROM_START( flyboy )
 	ROM_LOAD( "flyboy.grn",   0x0100, 0x0100, 0x7da063d0 )
 	ROM_LOAD( "flyboy.blu",   0x0200, 0x0100, 0x85c05c18 )
 
-	ROM_REGION(0x10000)     /* 64k for audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio CPU */
 	ROM_LOAD( "rom9.cpu",     0x0000, 0x1000, 0x5d05d1a0 )
 	ROM_LOAD( "rom10.cpu",    0x1000, 0x1000, 0x7a28005b )
 ROM_END
 
 ROM_START( flyboyb )
-	ROM_REGION(0x10000)     /* 64k for main CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
 	ROM_LOAD( "rom1.cpu",     0x0000, 0x1000, 0xe9e1f527 )
 	ROM_LOAD( "rom2.cpu",     0x1000, 0x1000, 0x07fbe78c )
 	ROM_LOAD( "rom3.cpu",     0x2000, 0x1000, 0xd2f8f085 )
@@ -634,13 +631,13 @@ ROM_START( flyboyb )
 	ROM_LOAD( "flyboy.grn",   0x0100, 0x0100, 0x7da063d0 )
 	ROM_LOAD( "flyboy.blu",   0x0200, 0x0100, 0x85c05c18 )
 
-	ROM_REGION(0x10000)     /* 64k for audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio CPU */
 	ROM_LOAD( "rom9.cpu",     0x0000, 0x1000, 0x5d05d1a0 )
 	ROM_LOAD( "rom10.cpu",    0x1000, 0x1000, 0x7a28005b )
 ROM_END
 
 ROM_START( jumpcoas )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "jumpcoas.001", 0x0000, 0x2000, 0x0778c953 )
 	ROM_LOAD( "jumpcoas.002", 0x2000, 0x2000, 0x57f59ce1 )
 	ROM_LOAD( "jumpcoas.003", 0x4000, 0x2000, 0xd9fc93be )
@@ -671,7 +668,7 @@ static void jumpcoas_driver_init(void)
 
 static int fastfred_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -696,7 +693,7 @@ static int fastfred_hiload(void)
 static void fastfred_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -708,7 +705,7 @@ static void fastfred_hisave(void)
 
 static int flyboy_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -731,7 +728,7 @@ static int flyboy_hiload(void)
 static void flyboy_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -743,7 +740,7 @@ static void flyboy_hisave(void)
 
 static int jumpcoas_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* Note: the game doesn't seem to initialize the high score display
@@ -771,7 +768,7 @@ static int jumpcoas_hiload(void)
 static void jumpcoas_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

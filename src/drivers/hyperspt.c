@@ -420,14 +420,12 @@ static struct MachineDriver hyperspt_machine_driver =
 		{
 			CPU_M6809,
 			2048000,        /* 1.400 Mhz ??? */
-			0,
 			hyperspt_readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318180/4,	/* Z80 Clock is derived from a 14.31818 Mhz crystal */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -473,14 +471,12 @@ static struct MachineDriver roadf_machine_driver =
 		{
 			CPU_M6809,
 			2048000,        /* 1.400 Mhz ??? */
-			0,
 			roadf_readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318180/4,	/* Z80 Clock is derived from a 14.31818 Mhz crystal */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -527,7 +523,7 @@ static struct MachineDriver roadf_machine_driver =
 ***************************************************************************/
 
 ROM_START( hyperspt )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "c01",          0x4000, 0x2000, 0x0c720eeb )
 	ROM_LOAD( "c02",          0x6000, 0x2000, 0x560258e0 )
 	ROM_LOAD( "c03",          0x8000, 0x2000, 0x9b01c7e6 )
@@ -554,7 +550,7 @@ ROM_START( hyperspt )
 	ROM_LOAD( "j12_c28.bin",  0x0020, 0x0100, 0x2c891d59 )
 	ROM_LOAD( "a09_c29.bin",  0x0120, 0x0100, 0x811a3f3f )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "c10",          0x0000, 0x2000, 0x3dc1a6ff )
 	ROM_LOAD( "c09",          0x2000, 0x2000, 0x9b525c3e )
 
@@ -563,7 +559,7 @@ ROM_START( hyperspt )
 ROM_END
 
 ROM_START( hpolym84 )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "c01",          0x4000, 0x2000, 0x0c720eeb )
 	ROM_LOAD( "c02",          0x6000, 0x2000, 0x560258e0 )
 	ROM_LOAD( "c03",          0x8000, 0x2000, 0x9b01c7e6 )
@@ -590,7 +586,7 @@ ROM_START( hpolym84 )
 	ROM_LOAD( "j12_c28.bin",  0x0020, 0x0100, 0x2c891d59 )
 	ROM_LOAD( "a09_c29.bin",  0x0120, 0x0100, 0x811a3f3f )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "c10",          0x0000, 0x2000, 0x3dc1a6ff )
 	ROM_LOAD( "c09",          0x2000, 0x2000, 0x9b525c3e )
 
@@ -599,7 +595,7 @@ ROM_START( hpolym84 )
 ROM_END
 
 ROM_START( roadf )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "g05_g01.bin",  0x4000, 0x2000, 0xe2492a06 )
 	ROM_LOAD( "g07_f02.bin",  0x6000, 0x2000, 0x0bf75165 )
 	ROM_LOAD( "g09_g03.bin",  0x8000, 0x2000, 0xdde401f8 )
@@ -620,12 +616,12 @@ ROM_START( roadf )
 	ROM_LOAD( "j12_c28.bin",  0x0020, 0x0100, 0x2955e01f )
 	ROM_LOAD( "a09_c29.bin",  0x0120, 0x0100, 0x5b3b5f2a )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "a17_d10.bin",  0x0000, 0x2000, 0xc33c927e )
 ROM_END
 
 ROM_START( roadf2 )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "5g",           0x4000, 0x2000, 0xd8070d30 )
 	ROM_LOAD( "6g",           0x6000, 0x2000, 0x8b661672 )
 	ROM_LOAD( "8g",           0x8000, 0x2000, 0x714929e8 )
@@ -646,7 +642,7 @@ ROM_START( roadf2 )
 	ROM_LOAD( "j12_c28.bin",  0x0020, 0x0100, 0x2955e01f )
 	ROM_LOAD( "a09_c29.bin",  0x0120, 0x0100, 0x5b3b5f2a )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "a17_d10.bin",  0x0000, 0x2000, 0xc33c927e )
 ROM_END
 
@@ -655,7 +651,7 @@ ROM_END
 static void hyperspt_decode(void)
 {
 	int A;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	for (A = 0x4000;A < 0x10000;A++)
@@ -676,7 +672,7 @@ static int we_flipped_the_switch;
 static int hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
@@ -717,7 +713,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -756,7 +752,7 @@ static void hisave(void)
 
 static int roadf_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
     /* check if the hi score table has already been initialized */
@@ -781,7 +777,7 @@ static int roadf_hiload(void)
 static void roadf_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

@@ -265,7 +265,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
-			0,
 			readmem,writemem,0,writeport,
 			jrpacman_interrupt,1
 		}
@@ -305,7 +304,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( jrpacman )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "jrp8d.bin",    0x0000, 0x2000, 0xe3fa972e )
 	ROM_LOAD( "jrp8e.bin",    0x2000, 0x2000, 0xec889e94 )
 	ROM_LOAD( "jrp8h.bin",    0x8000, 0x2000, 0x35f1fc6e )
@@ -321,9 +320,9 @@ ROM_START( jrpacman )
 	ROM_LOAD( "jrpacman.9f",  0x0020, 0x0020, 0x8300178e ) /* palette high bits */
 	ROM_LOAD( "jrpacman.9p",  0x0040, 0x0100, 0x9f6ea9d8 ) /* color lookup table */
 
-	ROM_REGION(0x0100)	/* sound prom */
+	ROM_REGION( 0x0100 )	/* sound prom */
 	/* I don't know if this is correct. I'm using the Pac Man one. */
-	ROM_LOAD( "pacman.spr",   0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "pacman.spr",   0x0000, 0x0100, BADCRC( 0xa9cc86bf ) )
 ROM_END
 
 
@@ -365,7 +364,7 @@ static void jrpacman_decode(void)
 	    { 0,0 }
 	};
 	int i,j,A;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	A = 0;
@@ -385,7 +384,7 @@ static void jrpacman_decode(void)
 static int hiload(void)
 {
 	static int resetcount;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* during a reset, leave time to the game to clear the screen */
@@ -440,7 +439,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

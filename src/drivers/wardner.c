@@ -655,7 +655,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			24000000/4,			/* 6 MHz ??? - Real board crystal is 24Mhz */
-			REGION_CPU1,		/* memory region #0 */
 			readmem,writemem,
 			readport,
 			writeport,
@@ -664,7 +663,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			24000000/7,			/* 3.43 MHz ??? */
-			REGION_CPU2,		/* memory region #2 */
 			sound_readmem,sound_writemem,
 			sound_readport,sound_writeport,
 			ignore_interrupt,0	/* IRQs are caused by the YM3812 */
@@ -672,7 +670,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_TMS320C10,
 			24000000/7,			/* 3.43 MHz ??? */
-			REGION_CPU3,		/* memory region #3 */
 			DSP_readmem,DSP_writemem,
 			DSP_readport,DSP_writeport,
 			ignore_interrupt,0	/* IRQs are caused by Z80(0) */

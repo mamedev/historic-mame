@@ -333,7 +333,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,		/* verified */
 			7159160,		/* 7.159 Mhz */
-			0,
 			readmem,writemem,0,0,
 			ignore_interrupt,1
 		}
@@ -378,12 +377,12 @@ static struct MachineDriver machine_driver =
 
 static void rom_decode(void)
 {
-	UINT8 *base = Machine->memory_region[1];
+	UINT8 *base = memory_region(1);
 	int i;
 
 	/* invert the graphics bits */
-	for (i = 0; i < Machine->memory_region_length[2]; i++)
-		Machine->memory_region[2][i] ^= 0xff;
+	for (i = 0; i < memory_region_length(2); i++)
+		memory_region(2)[i] ^= 0xff;
 
 	/* expand the ADPCM data to avoid lots of memcpy's during gameplay */
 	/* the upper 128k is fixed, the lower 128k is bankswitched */
@@ -463,13 +462,13 @@ static void relief2_init(void)
  *************************************/
 
 ROM_START( relief )
-	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "0011d.19e", 0x00000, 0x20000, 0xcb3f73ad )
 	ROM_LOAD_ODD ( "0012d.19j", 0x00000, 0x20000, 0x90655721 )
 	ROM_LOAD_EVEN( "093-0013.17e", 0x40000, 0x20000, 0x1e1e82e5 )
 	ROM_LOAD_ODD ( "093-0014.17j", 0x40000, 0x20000, 0x19e5decd )
 
-	ROM_REGION(0x200000)	/* 2MB for ADPCM data */
+	ROM_REGION( 0x200000 )	/* 2MB for ADPCM data */
 	ROM_LOAD( "093-0030.9b",  0x100000, 0x80000, 0xf4c567f5 )
 	ROM_LOAD( "093-0031.10b", 0x180000, 0x80000, 0xba908d73 )
 
@@ -483,13 +482,13 @@ ROM_END
 
 
 ROM_START( relief2 )
-	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "093-0011.19e", 0x00000, 0x20000, 0x794cea33 )
 	ROM_LOAD_ODD ( "093-0012.19j", 0x00000, 0x20000, 0x577495f8 )
 	ROM_LOAD_EVEN( "093-0013.17e", 0x40000, 0x20000, 0x1e1e82e5 )
 	ROM_LOAD_ODD ( "093-0014.17j", 0x40000, 0x20000, 0x19e5decd )
 
-	ROM_REGION(0x200000)	/* 2MB for ADPCM data */
+	ROM_REGION( 0x200000 )	/* 2MB for ADPCM data */
 	ROM_LOAD( "093-0030.9b",  0x100000, 0x80000, 0xf4c567f5 )
 	ROM_LOAD( "093-0031.10b", 0x180000, 0x80000, 0xba908d73 )
 

@@ -849,6 +849,26 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 					found = 1;
 				}
 			}
+			if( !found )
+			{
+				sprintf(name, "%s/%s", artworkdir, game);
+				extension = strrchr(name, '.');
+				if( extension )
+					strcpy (extension, ".zip");
+				else
+					strcat (name, ".zip");
+				LOG((errorlog, "Trying %s in %s\n", file, name));
+				if( cache_stat (name, &stat_buffer) == 0 )
+				{
+					if( load_zipped_file (name, file, &f->data, &f->length) == 0 )
+					{
+						LOG((errorlog, "Using (osd_fopen) zip file %s\n", name));
+						f->type = kZippedFile;
+						f->offset = 0;
+						found = 1;
+					}
+				}
+            }
         }
         break;
 

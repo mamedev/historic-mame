@@ -74,7 +74,7 @@ static struct MemoryWriteAddress rastan_s_writemem[] =
 
 static void rastan_bankswitch_w(int offset, int data)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU2);
 	int banknum = ( data - 1 ) & 3;
 	cpu_setbank( 5, &RAM[ 0x10000 + ( banknum * 0x4000 ) ] );
 }
@@ -282,14 +282,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,
 			8000000,	/* 8 Mhz */
-			0,
 			rainbow_readmem,rainbow_writemem,0,0,
 			rainbow_interrupt,1
 		},
 		{
 			CPU_Z80,
 			4000000,	/* 4 Mhz */
-			3,
 			rastan_s_readmem,rastan_s_writemem,0,0,
 			ignore_interrupt,1
 		}
@@ -322,7 +320,7 @@ static struct MachineDriver machine_driver =
 };
 
 ROM_START( rainbow )
-	ROM_REGION(0x80000)			 /* 8*64k for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )			 /* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "b22-10",     0x00000, 0x10000, 0x3b013495 )
 	ROM_LOAD_ODD ( "b22-11",     0x00000, 0x10000, 0x80041a3d )
 	ROM_LOAD_EVEN( "b22-08",     0x20000, 0x10000, 0x962fb845 )
@@ -336,16 +334,16 @@ ROM_START( rainbow )
 	ROM_LOAD( "b22-13",     	 0x100000, 0x10000, 0x2fda099f )
 	ROM_LOAD( "b22-12",     	 0x110000, 0x10000, 0x67a76dc6 )
 
-    ROM_REGION(0x10000)			 /* Dump of C-Chip */
+    ROM_REGION( 0x10000 )			 /* Dump of C-Chip */
     ROM_LOAD( "jb1_f89",    	 0x0000, 0x10000, 0x0810d327 )
 
-	ROM_REGION(0x1c000)			 /* 64k for the audio CPU */
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )			 /* 64k for the audio CPU */
 	ROM_LOAD( "b22-14",     	 0x00000, 0x4000, 0x113c1a5b )
 	ROM_CONTINUE(           	 0x10000, 0xc000 )
 ROM_END
 
 ROM_START( rainbowe )
-	ROM_REGION(0x80000)			   /* 8*64k for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )			   /* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "ri_01.rom",    0x00000, 0x10000, 0x50690880 )
 	ROM_LOAD_ODD ( "ri_02.rom",    0x00000, 0x10000, 0x4dead71f )
 	ROM_LOAD_EVEN( "ri_03.rom",    0x20000, 0x10000, 0x4a4cb785 )
@@ -359,9 +357,9 @@ ROM_START( rainbowe )
 	ROM_LOAD( "b22-13",             0x100000, 0x10000, 0x2fda099f )
 	ROM_LOAD( "b22-12",             0x110000, 0x10000, 0x67a76dc6 )
 
-    ROM_REGION(0x100)				/* C-Chip for Extra (I Wish!) */
+    ROM_REGION( 0x100 )				/* C-Chip for Extra (I Wish!) */
 
-	ROM_REGION(0x1c000)				/* 64k for the audio CPU */
+	ROM_REGIONX( 0x1c000, REGION_CPU2 )				/* 64k for the audio CPU */
 	ROM_LOAD( "b22-14",      		0x00000, 0x4000, 0x113c1a5b )
 	ROM_CONTINUE(            		0x10000, 0xc000 )
 ROM_END
@@ -534,7 +532,7 @@ static void jumping_sprite_decode(void)
 
 	int Count;
 
-    for(Count=0x11ffff;Count>=0x80000;Count--) Machine->memory_region[1][Count]^=0xFF;
+    for(Count=0x11ffff;Count>=0x80000;Count--) memory_region(1)[Count]^=0xFF;
 }
 
 static struct GfxLayout jumping_tilelayout =
@@ -573,7 +571,6 @@ static struct MachineDriver jumping_machine_driver =
 		{
 			CPU_M68000,
 			8000000,	/* 8 Mhz */
-			0,
 			jumping_readmem,jumping_writemem,0,0,
 			rainbow_interrupt,1
 		},
@@ -602,7 +599,7 @@ static struct MachineDriver jumping_machine_driver =
 };
 
 ROM_START( jumping )
-	ROM_REGION(0xA0000)		/* 8*64k for code, 64k*2 for protection chip */
+	ROM_REGIONX( 0xA0000, REGION_CPU1 )		/* 8*64k for code, 64k*2 for protection chip */
     ROM_LOAD_EVEN( "jb1_h4",       0x00000, 0x10000, 0x3fab6b31 )
     ROM_LOAD_ODD ( "jb1_h8",       0x00000, 0x10000, 0x8c878827 )
     ROM_LOAD_EVEN( "jb1_i4",       0x20000, 0x10000, 0x443492cf )
@@ -634,9 +631,8 @@ ROM_START( jumping )
     ROM_LOAD( "jb2_i120",     0x108000, 0x10000, 0x7c4e893b )
     ROM_LOAD( "jb2_i119",     0x118000, 0x08000, 0x7e1d58d8 )
 
-	ROM_REGION(0x10000)		/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for the audio CPU */
 	ROM_LOAD( "jb1_cd67",     0x0000, 0x10000, 0x8527c00e )
-
 ROM_END
 
 struct GameDriver driver_jumping =
@@ -660,6 +656,6 @@ struct GameDriver driver_jumping =
 	input_ports_jumping,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NO_SOUND,
 	0, 0
 };

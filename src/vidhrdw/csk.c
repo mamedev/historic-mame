@@ -92,8 +92,8 @@ void cpk_colorram_w(int offset,int data)
 
 int  cpk_expansion_r(int offset)
 {
-        unsigned char * RAM = Machine->memory_region[2];
-        return RAM[offset];
+	unsigned char * RAM = memory_region(2);
+	return RAM[offset];
 }
 
 
@@ -207,7 +207,7 @@ void cpk_initmachine(void)
 
 int cska_interrupt(void)
 {
-	unsigned char * RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char * RAM = memory_region(REGION_CPU1);
 
 	RAM[ hopperOK ] = 1;	/* simulate hopper working! */
 

@@ -253,14 +253,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			2048000,        /* 2 Mhz */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318180/4,     /* Z80 Clock is derived from a 14.31818 Mhz crystal */
-			3,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
 		}
@@ -304,7 +302,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( circusc )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "s05",          0x6000, 0x2000, 0x48feafcf )
 	ROM_LOAD( "q04",          0x8000, 0x2000, 0xc283b887 )
 	ROM_LOAD( "q03",          0xa000, 0x2000, 0xe90c0e86 )
@@ -326,13 +324,13 @@ ROM_START( circusc )
 	ROM_LOAD( "c10_j16.bin",  0x0020, 0x100, 0xc244f2aa ) /* character lookup table */
 	ROM_LOAD( "b07_j17.bin",  0x0120, 0x100, 0x13989357 ) /* sprite lookup table */
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "cd05_l14.bin", 0x0000, 0x2000, 0x607df0fb )
 	ROM_LOAD( "cd07_l15.bin", 0x2000, 0x2000, 0xa6ad30e1 )
 ROM_END
 
 ROM_START( circusc2 )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "h03_r05.bin",  0x6000, 0x2000, 0xed52c60f )
 	ROM_LOAD( "h04_n04.bin",  0x8000, 0x2000, 0xfcc99e33 )
 	ROM_LOAD( "h05_n03.bin",  0xa000, 0x2000, 0x5ef5b3b5 )
@@ -354,13 +352,13 @@ ROM_START( circusc2 )
 	ROM_LOAD( "c10_j16.bin",  0x0020, 0x100, 0xc244f2aa ) /* character lookup table */
 	ROM_LOAD( "b07_j17.bin",  0x0120, 0x100, 0x13989357 ) /* sprite lookup table */
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "cd05_l14.bin", 0x0000, 0x2000, 0x607df0fb )
 	ROM_LOAD( "cd07_l15.bin", 0x2000, 0x2000, 0xa6ad30e1 )
 ROM_END
 
 ROM_START( circuscc )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "cc_u05.h3",    0x6000, 0x2000, 0x964c035a )
 	ROM_LOAD( "p04",          0x8000, 0x2000, 0xdd0c0ee7 )
 	ROM_LOAD( "p03",          0xa000, 0x2000, 0x190247af )
@@ -382,13 +380,13 @@ ROM_START( circuscc )
 	ROM_LOAD( "c10_j16.bin",  0x0020, 0x100, 0xc244f2aa ) /* character lookup table */
 	ROM_LOAD( "b07_j17.bin",  0x0120, 0x100, 0x13989357 ) /* sprite lookup table */
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "cd05_l14.bin", 0x0000, 0x2000, 0x607df0fb )
 	ROM_LOAD( "cd07_l15.bin", 0x2000, 0x2000, 0xa6ad30e1 )
 ROM_END
 
 ROM_START( circusce )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "p05",          0x6000, 0x2000, 0x7ca74494 )
 	ROM_LOAD( "p04",          0x8000, 0x2000, 0xdd0c0ee7 )
 	ROM_LOAD( "p03",          0xa000, 0x2000, 0x190247af )
@@ -410,7 +408,7 @@ ROM_START( circusce )
 	ROM_LOAD( "c10_j16.bin",  0x0020, 0x100, 0xc244f2aa ) /* character lookup table */
 	ROM_LOAD( "b07_j17.bin",  0x0120, 0x100, 0x13989357 ) /* sprite lookup table */
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "cd05_l14.bin", 0x0000, 0x2000, 0x607df0fb )
 	ROM_LOAD( "cd07_l15.bin", 0x2000, 0x2000, 0xa6ad30e1 )
 ROM_END
@@ -419,7 +417,7 @@ ROM_END
 static void circusc_decode(void)
 {
 	int A;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	for (A = 0x6000;A < 0x10000;A++)
@@ -432,7 +430,7 @@ static void circusc_decode(void)
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if (memcmp(&RAM[0x2163],"CBR",3) == 0 &&
@@ -468,7 +466,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

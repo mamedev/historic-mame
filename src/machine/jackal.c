@@ -21,9 +21,9 @@ unsigned char *jackal_spritebank = 0;
 
 void jackal_init_machine(void)
 {
-	cpu_setbank(1,&((Machine->memory_region[0])[0x4000]));
- 	jackal_rambank = &((Machine->memory_region[0])[0]);
-	jackal_spritebank = &((Machine->memory_region[0])[0]);
+	cpu_setbank(1,&((memory_region(REGION_CPU1))[0x4000]));
+ 	jackal_rambank = &((memory_region(REGION_CPU1))[0]);
+	jackal_spritebank = &((memory_region(REGION_CPU1))[0]);
 }
 
 
@@ -42,7 +42,7 @@ int jackal_commonram_r(int offset)
 
 int jackal_commonram1_r(int offset)
 {
-	return (Machine->memory_region[0])[0x0060+offset];
+	return (memory_region(REGION_CPU1))[0x0060+offset];
 }
 
 
@@ -60,9 +60,9 @@ int jackal_spriteram_r(int offset)
 
 void jackal_rambank_w(int offset,int data)
 {
-	jackal_rambank = &((Machine->memory_region[0])[((data & 0x10) << 12)]);
-	jackal_spritebank = &((Machine->memory_region[0])[((data & 0x08) << 13)]);
-	cpu_setbank(1,&((Machine->memory_region[0])[((data & 0x20) << 11) + 0x4000]));
+	jackal_rambank = &((memory_region(REGION_CPU1))[((data & 0x10) << 12)]);
+	jackal_spritebank = &((memory_region(REGION_CPU1))[((data & 0x08) << 13)]);
+	cpu_setbank(1,&((memory_region(REGION_CPU1))[((data & 0x20) << 11) + 0x4000]));
 }
 
 
@@ -80,8 +80,8 @@ void jackal_commonram_w(int offset,int data)
 
 void jackal_commonram1_w(int offset,int data)
 {
-	(Machine->memory_region[0])[0x0060+offset] = data;
-	(Machine->memory_region[2])[0x6060+offset] = data;
+	(memory_region(REGION_CPU1))[0x0060+offset] = data;
+	(memory_region(2))[0x6060+offset] = data;
 }
 
 

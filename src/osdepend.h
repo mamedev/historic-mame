@@ -54,11 +54,20 @@ void osd_free_bitmap(struct osd_bitmap *bitmap);
 struct osd_bitmap *osd_create_display(int width,int height,int depth,int attributes);
 int osd_set_display(int width,int height,int attributes);
 void osd_close_display(void);
-/* palette is an array of 'totalcolors' R,G,B triplets. The function returns */
-/* in *pens the pen values corresponding to the requested colors. */
-/* If 'totalcolors' is 32768, 'palette' is ignored and the *pens array is filled */
-/* with pen values corresponding to a 5-5-5 15-bit palette */
-void osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,unsigned short *pens);
+
+/*
+osd_allocate_colors() is called after osd_create_display(), to create and initialize
+the palette.
+palette is an array of 'totalcolors' R,G,B triplets. The function returns
+in *pens the pen values corresponding to the requested colors.
+When modifiable is not 0, the palette will be modified later via calls to
+osd_modify_pen(). Otherwise, the code can assume that the palette will not change,
+and activate special optimizations (e.g. direct copy for a 16-bit display).
+The function must also initialize Machine->uifont->colortable[] to get proper
+white-on-black and black-on-white text.
+Return 0 for success.
+*/
+int osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,unsigned short *pens,int modifiable);
 void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned char blue);
 void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char *blue);
 void osd_mark_dirty(int xmin, int ymin, int xmax, int ymax, int ui);    /* ASG 971011 */

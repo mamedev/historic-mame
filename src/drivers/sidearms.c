@@ -33,7 +33,7 @@ int turtship_read_ports(int offset);
 static void sidearms_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* bits 0 and 1 select the ROM bank */
@@ -546,14 +546,12 @@ static struct MachineDriver sidearms_machine_driver =
 		{
 			CPU_Z80,
 			4000000,        /* 4 Mhz (?) */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,        /* 4 Mhz (?) */
-			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0      /* IRQs are triggered by the YM2203 */
 		},
@@ -561,7 +559,6 @@ static struct MachineDriver sidearms_machine_driver =
 		{
 			CPU_Z80,
 			4000000,        /* 4 Mhz (?) */
-			4,      /* memory region #4 */
 			readmem2,writemem2,0,0,
 			nmi_interrupt,1
 		}
@@ -600,14 +597,12 @@ static struct MachineDriver turtship_machine_driver =
 		{
 			CPU_Z80,
 			4000000,        /* 4 Mhz (?) */
-			0,
 			turtship_readmem,turtship_writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,        /* 4 Mhz (?) */
-			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0      /* IRQs are triggered by the YM2203 */
 		},
@@ -640,7 +635,7 @@ static struct MachineDriver turtship_machine_driver =
 
 
 ROM_START( sidearms )
-	ROM_REGION(0x20000)     /* 64k for code + banked ROMs images */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
 	ROM_LOAD( "sa03.bin",     0x00000, 0x08000, 0xe10fe6a0 )        /* CODE */
 	ROM_LOAD( "a_14e.rom",    0x10000, 0x08000, 0x4925ed03 )        /* 0+1 */
 	ROM_LOAD( "a_12e.rom",    0x18000, 0x08000, 0x81d0ece7 )        /* 2+3 */
@@ -664,7 +659,7 @@ ROM_START( sidearms )
 	ROM_LOAD( "b_12a.rom",    0x78000, 0x8000, 0xce107f3c )
 	ROM_LOAD( "b_14a.rom",    0x80000, 0x8000, 0xdba06076 )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "a_04k.rom",    0x0000, 0x8000, 0x34efe2d2 )
 
 	ROM_REGION(0x08000)     /* 32k tile map */
@@ -677,7 +672,7 @@ ROM_START( sidearms )
 ROM_END
 
 ROM_START( sidearmr )
-	ROM_REGION(0x20000)     /* 64k for code + banked ROMs images */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
 	ROM_LOAD( "03",           0x00000, 0x08000, 0x9a799c45 )        /* CODE */
 	ROM_LOAD( "a_14e.rom",    0x10000, 0x08000, 0x4925ed03 )        /* 0+1 */
 	ROM_LOAD( "a_12e.rom",    0x18000, 0x08000, 0x81d0ece7 )        /* 2+3 */
@@ -701,7 +696,7 @@ ROM_START( sidearmr )
 	ROM_LOAD( "b_12a.rom",    0x78000, 0x8000, 0xce107f3c )
 	ROM_LOAD( "b_14a.rom",    0x80000, 0x8000, 0xdba06076 )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "a_04k.rom",    0x0000, 0x8000, 0x34efe2d2 )
 
 	ROM_REGION(0x08000)     /* 32k tile map */
@@ -714,7 +709,7 @@ ROM_START( sidearmr )
 ROM_END
 
 ROM_START( sidearjp )
-	ROM_REGION(0x20000)     /* 64k for code + banked ROMs images */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
 	ROM_LOAD( "a_15e.rom",    0x00000, 0x08000, 0x61ceb0cc )        /* CODE */
 	ROM_LOAD( "a_14e.rom",    0x10000, 0x08000, 0x4925ed03 )        /* 0+1 */
 	ROM_LOAD( "a_12e.rom",    0x18000, 0x08000, 0x81d0ece7 )        /* 2+3 */
@@ -738,7 +733,7 @@ ROM_START( sidearjp )
 	ROM_LOAD( "b_12a.rom",    0x78000, 0x8000, 0xce107f3c )
 	ROM_LOAD( "b_14a.rom",    0x80000, 0x8000, 0xdba06076 )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "a_04k.rom",    0x0000, 0x8000, 0x34efe2d2 )
 
 	ROM_REGION(0x08000)     /* 32k tile map */
@@ -751,7 +746,7 @@ ROM_START( sidearjp )
 ROM_END
 
 ROM_START( turtship )
-	ROM_REGION(0x20000)     /* 64k for code + banked ROMs images */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
 	ROM_LOAD( "turtship.003",    0x00000, 0x08000, 0xe7a7fc2e )
 	ROM_LOAD( "turtship.002",    0x10000, 0x08000, 0xe576f482 )
 	ROM_LOAD( "turtship.001",    0x18000, 0x08000, 0xa9b64240 )
@@ -769,7 +764,7 @@ ROM_START( turtship )
 	ROM_LOAD( "turtship.012",    0x88000, 0x10000, 0xfb54cd33 )
 	ROM_LOAD( "turtship.014",    0x98000, 0x10000, 0xb3ea74a3 )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "turtship.004",    0x0000, 0x8000, 0x1cbe48e8 )
 
 	ROM_REGION(0x08000)     /* 32k tile map */
@@ -777,7 +772,7 @@ ROM_START( turtship )
 ROM_END
 
 ROM_START( dyger )
-	ROM_REGION(0x20000)     /* 64k for code + banked ROMs images */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for code + banked ROMs images */
 	ROM_LOAD( "dyger.003",    0x00000, 0x08000, 0xbae9882e )
 	ROM_LOAD( "dyger.002",    0x10000, 0x08000, 0x059ac4dc )
 	ROM_LOAD( "dyger.001",    0x18000, 0x08000, 0xd8440f66 )
@@ -796,7 +791,7 @@ ROM_START( dyger )
 	ROM_LOAD( "dyger.012",    0x88000, 0x10000, 0xe345705f )
 	ROM_LOAD( "dyger.013",    0x98000, 0x10000, 0xfaf4be3a )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "dyger.004",    0x0000, 0x8000, 0x8a256c09 )
 
 	ROM_REGION(0x08000)     /* 32k tile map */
@@ -806,7 +801,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -833,7 +828,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

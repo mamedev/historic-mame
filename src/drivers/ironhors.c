@@ -161,8 +161,8 @@ INPUT_PORTS_START( ironhors )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_COCKTAIL )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
@@ -171,8 +171,8 @@ INPUT_PORTS_START( ironhors )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
@@ -242,15 +242,120 @@ INPUT_PORTS_START( ironhors )
 	PORT_DIPNAME( 0x02, 0x02, "Controls" )
 	PORT_DIPSETTING(    0x02, "Single" )
 	PORT_DIPSETTING(    0x00, "Dual" )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR ( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR ( Unknown ) )
+	PORT_DIPNAME( 0x04, 0x04, "Button Layout" )
+	PORT_DIPSETTING(    0x04, "Power Atk Squat" )
+	PORT_DIPSETTING(    0x00, "Squat Atk Power" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( dairesya )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x03, "2" )
+	PORT_DIPSETTING(    0x02, "3" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPSETTING(    0x00, "7" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x18, "30000 70000" )
+	PORT_DIPSETTING(    0x10, "40000 80000" )
+	PORT_DIPSETTING(    0x08, "40000" )
+	PORT_DIPSETTING(    0x00, "50000" )
+	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x60, "Easy" )
+	PORT_DIPSETTING(    0x40, "Normal" )
+	PORT_DIPSETTING(    0x20, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
+/* 	PORT_DIPSETTING(    0x00, "Invalid" ) */
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Controls" )
+	PORT_DIPSETTING(    0x02, "Single" )
+	PORT_DIPSETTING(    0x00, "Dual" )
+	PORT_DIPNAME( 0x04, 0x04, "Button Layout" )
+	PORT_DIPSETTING(    0x04, "Power Atk Squat" )
+	PORT_DIPSETTING(    0x00, "Squat Atk Power" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
 
 
 static struct GfxLayout ironhors_charlayout =
@@ -351,14 +456,12 @@ static struct MachineDriver ironhors_machine_driver =
 		{
 			CPU_M6809,
 			18432000/6,        /* 3.07MHz? mod by Shingo Suzuki 1999/10/15 */
-			0,
 			ironhors_readmem,ironhors_writemem,0,0,
 			ironhors_interrupt,8
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			18432000/6,        /* 3.07MHz? mod by Shingo Suzuki 1999/10/15 */
-			3,	/* memory region #3 */
 			ironhors_sound_readmem,ironhors_sound_writemem,ironhors_sound_readport,ironhors_sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -396,14 +499,12 @@ static struct MachineDriver farwest_machine_driver =
 		{
 			CPU_M6809,
 			2000000,        /* ? */
-			0,
 			ironhors_readmem,ironhors_writemem,0,0,
 			ironhors_interrupt,8
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			18432000/6,        /* 3.07MHz? mod by Shingo Suzuki 1999/10/15 */
-			3,	/* memory region #3 */
 			farwest_sound_readmem,farwest_sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -443,7 +544,7 @@ static struct MachineDriver farwest_machine_driver =
 ***************************************************************************/
 
 ROM_START( ironhors )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "13c_h03.bin",  0x4000, 0x8000, 0x24539af1 )
 	ROM_LOAD( "12c_h02.bin",  0xc000, 0x4000, 0xfab07f86 )
 
@@ -460,12 +561,12 @@ ROM_START( ironhors )
 	ROM_LOAD( "10f_h12.bin",  0x0300, 0x0100, 0x5eb33e73 ) /* character lookup table */
 	ROM_LOAD( "10f_h11.bin",  0x0400, 0x0100, 0xa63e37d8 ) /* sprite lookup table */
 
-	ROM_REGION(0x10000)     /* 64k for audio cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio cpu */
 	ROM_LOAD( "10c_h01.bin",  0x0000, 0x4000, 0x2b17930f )
 ROM_END
 
 ROM_START( dairesya )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "560-k03.13c",  0x4000, 0x8000, 0x2ac6103b )
 	ROM_LOAD( "560-k02.12c",  0xc000, 0x4000, 0x07bc13a9 )
 
@@ -482,12 +583,12 @@ ROM_START( dairesya )
 	ROM_LOAD( "10f_h12.bin",  0x0300, 0x0100, 0x5eb33e73 ) /* character lookup table */
 	ROM_LOAD( "10f_h11.bin",  0x0400, 0x0100, 0xa63e37d8 ) /* sprite lookup table */
 
-	ROM_REGION(0x10000)     /* 64k for audio cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio cpu */
 	ROM_LOAD( "560-j01.10c",  0x0000, 0x4000, 0xa203b223 )
 ROM_END
 
 ROM_START( farwest )
-	ROM_REGION(0x12000)	/* 64k for code + 8k for extra ROM */
+	ROM_REGIONX( 0x12000, REGION_CPU1 )	/* 64k for code + 8k for extra ROM */
 	ROM_LOAD( "ironhors.008", 0x04000, 0x4000, 0xb1c8246c )
 	ROM_LOAD( "ironhors.009", 0x08000, 0x8000, 0xea34ecfc )
 	ROM_LOAD( "ironhors.007", 0x10000, 0x2000, 0x471182b7 )	/* don't know what this is for */
@@ -507,14 +608,15 @@ ROM_START( farwest )
 	ROM_LOAD( "10f_h12.bin",  0x0300, 0x0100, 0x5eb33e73 ) /* character lookup table */
 	ROM_LOAD( "ironcol.005",  0x0400, 0x0100, 0x15077b9c ) /* sprite lookup table */
 
-	ROM_REGION(0x10000)     /* 64k for audio cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for audio cpu */
 	ROM_LOAD( "ironhors.010", 0x0000, 0x4000, 0xa28231a6 )
 ROM_END
 
 
+
 static int hiload(void) /* HSC 12/29/98 */
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
     /* check if the hi score table has already been initialized */
@@ -538,7 +640,7 @@ static int hiload(void) /* HSC 12/29/98 */
 static void hisave(void) /* HSC 12/29/98 */
 {
     void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -581,7 +683,7 @@ struct GameDriver driver_dairesya =
 	__FILE__,
 	&driver_ironhors,
 	"dairesya",
-	"Dai-ressya Goutou (Japan)",
+	"Dai Ressya Goutou (Japan)",
 	"1986",
 	"[Konami] (Kawakusu license)",
 	"Mirko Buffoni (MAME driver)\nPaul Swan (color info)",
@@ -594,7 +696,7 @@ struct GameDriver driver_dairesya =
 	0,
 	0,
 
-	input_ports_ironhors,
+	input_ports_dairesya,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

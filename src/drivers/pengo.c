@@ -244,7 +244,6 @@ static struct MachineDriver machine_driver =
 						/* accurate emulation speed (time for two attract mode */
 						/* cycles after power up, until the high score list appears */
 						/* for the second time: 3'39") */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		}
@@ -284,7 +283,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( pengo )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ic8",          0x0000, 0x1000, 0xf37066a8 )
 	ROM_LOAD( "ic7",          0x1000, 0x1000, 0xbaf48143 )
 	ROM_LOAD( "ic15",         0x2000, 0x1000, 0xadf0eba0 )
@@ -302,13 +301,13 @@ ROM_START( pengo )
 	ROM_LOAD( "pr1633.078",   0x0000, 0x0020, 0x3a5844ec )
 	ROM_LOAD( "pr1634.088",   0x0020, 0x0400, 0x766b139b )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "pr1635.051",   0x0000, 0x0100, 0xc29dea27 )
 	ROM_LOAD( "pr1636.070",   0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( pengo2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ic8.2",        0x0000, 0x1000, 0xe4924b7b )
 	ROM_LOAD( "ic7.2",        0x1000, 0x1000, 0x72e7775d )
 	ROM_LOAD( "ic15.2",       0x2000, 0x1000, 0x7410ef1e )
@@ -326,13 +325,13 @@ ROM_START( pengo2 )
 	ROM_LOAD( "pr1633.078",   0x0000, 0x0020, 0x3a5844ec )
 	ROM_LOAD( "pr1634.088",   0x0020, 0x0400, 0x766b139b )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "pr1635.051",   0x0000, 0x0100, 0xc29dea27 )
 	ROM_LOAD( "pr1636.070",   0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( pengo2u )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "pengo.u8",     0x0000, 0x1000, 0x3dfeb20e )
 	ROM_LOAD( "pengo.u7",     0x1000, 0x1000, 0x1db341bd )
 	ROM_LOAD( "pengo.u15",    0x2000, 0x1000, 0x7c2842d5 )
@@ -350,13 +349,13 @@ ROM_START( pengo2u )
 	ROM_LOAD( "pr1633.078",   0x0000, 0x0020, 0x3a5844ec )
 	ROM_LOAD( "pr1634.088",   0x0020, 0x0400, 0x766b139b )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "pr1635.051",   0x0000, 0x0100, 0xc29dea27 )
 	ROM_LOAD( "pr1636.070",   0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( penta )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "008_pn01.bin", 0x0000, 0x1000, 0x22f328df )
 	ROM_LOAD( "007_pn05.bin", 0x1000, 0x1000, 0x15bbc7d3 )
 	ROM_LOAD( "015_pn02.bin", 0x2000, 0x1000, 0xde82b74a )
@@ -374,7 +373,7 @@ ROM_START( penta )
 	ROM_LOAD( "pr1633.078",   0x0000, 0x0020, 0x3a5844ec )
 	ROM_LOAD( "pr1634.088",   0x0020, 0x0400, 0x766b139b )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "pr1635.051",   0x0000, 0x0100, 0xc29dea27 )
 	ROM_LOAD( "pr1636.070",   0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
@@ -424,7 +423,7 @@ static void penta_decode(void)
 		{ 0x88,0x0a,0x82,0x00,0xa0,0x22,0xaa,0x28 }		/* ...1...1...1.... */
 	};
 	int A;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	for (A = 0x0000;A < 0x8000;A++)
@@ -457,7 +456,7 @@ static void penta_decode(void)
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -483,7 +482,7 @@ static int hiload(void)
 
 static int pengo2_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -510,7 +509,7 @@ static int pengo2_hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

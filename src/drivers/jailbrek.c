@@ -235,7 +235,6 @@ static struct MachineDriver machine_driver =
 		{
 		    CPU_M6809,
 		    3000000,        /* 3 Mhz ??? */
-		    0,
 		    readmem,writemem,0,0,
 		    jb_interrupt,1,
 		    jb_interrupt_nmi, 500 /* ? */
@@ -279,7 +278,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( jailbrek )
-    ROM_REGION(0x10000)     /* 64k for code */
+    ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "jailb11d.bin", 0x8000, 0x4000, 0xa0b88dfd )
 	ROM_LOAD( "jailb9d.bin",  0xc000, 0x4000, 0x444b7d8e )
 
@@ -299,14 +298,14 @@ ROM_START( jailbrek )
 	ROM_LOAD( "jailbbl.bp2",  0x0040, 0x0100, 0xd4fe5c97 ) /* char lookup */
 	ROM_LOAD( "jailbbl.bp1",  0x0140, 0x0100, 0x0266c7db ) /* sprites lookup */
 
-	ROM_REGION(0x4000) /* speech rom */
+	ROM_REGION( 0x4000 ) /* speech rom */
 	ROM_LOAD( "jailb8c.bin",  0x0000, 0x2000, 0xd91d15e3 )
 ROM_END
 
 extern unsigned char KonamiDecode( unsigned char opcode, unsigned short address );
 
 void jailbrek_decode( void ) {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int i;
 
 	for ( i = 0x8000; i < 0x10000; i++ )
@@ -316,7 +315,7 @@ void jailbrek_decode( void ) {
 
 static int jailbrek_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if (memcmp(&RAM[0x1620],"\x00\x25\x30",3) == 0 &&
@@ -339,7 +338,7 @@ static int jailbrek_hiload(void)
 static void jailbrek_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

@@ -584,14 +584,12 @@ static struct MachineDriver galivan_machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* ?? Hz */
-			0,
 			readmem,writemem,readport,writeport,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* ?? Hz */
-			4,
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,0,
 			interrupt,7250  /* timed interrupt, ?? Hz */
@@ -638,7 +636,7 @@ static struct MachineDriver galivan_machine_driver =
 ***************************************************************************/
 
 ROM_START( galivan )
-	ROM_REGION(0x14000)		/* Region 0 - main cpu code */
+	ROM_REGIONX( 0x14000, REGION_CPU1 )		/* Region 0 - main cpu code */
 	ROM_LOAD( "gv1.1b",      0x00000, 0x08000, 0x5e480bfc )
 	ROM_LOAD( "gv2.3b",      0x08000, 0x04000, 0x0d1b3538 )
 	ROM_LOAD( "gv3.4b",      0x10000, 0x04000, 0x82f0c5e6 ) /* 2 banks at c000 */
@@ -652,7 +650,7 @@ ROM_START( galivan )
 	ROM_LOAD( "gv14.4f",     0x24000, 0x08000, 0x03e2229f ) /* sprites */
 	ROM_LOAD( "gv13.1f",     0x2c000, 0x08000, 0xbca9e66b )
 
-	ROM_REGION(0x8000)		/* Region 2 - background */
+	ROM_REGION( 0x8000 )		/* Region 2 - background */
 	ROM_LOAD( "gv6.19d",     0x00000, 0x04000, 0xda38168b )
 	ROM_LOAD( "gv5.17d",     0x04000, 0x04000, 0x22492d2a )
 
@@ -663,13 +661,13 @@ ROM_START( galivan )
 	ROM_LOAD( "mb7114e.2d",  0x0300, 0x0100, 0x75466109 )	/* sprite lookup table */
 	ROM_LOAD( "mb7114e.7f",  0x0400, 0x0100, 0x06538736 )	/* sprite palette bank */
 
-	ROM_REGION(0x10000)		/* Region 4 - sound cpu code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* Region 4 - sound cpu code */
 	ROM_LOAD( "gv11.14b",    0x00000, 0x04000, 0x05f1a0e3 )
 	ROM_LOAD( "gv12.15b",    0x04000, 0x08000, 0x5b7a0d6d )
 ROM_END
 
 ROM_START( galivan2 )
-	ROM_REGION(0x14000)		/* Region 0 - main cpu code */
+	ROM_REGIONX( 0x14000, REGION_CPU1 )		/* Region 0 - main cpu code */
 	ROM_LOAD( "e-1",         0x00000, 0x08000, 0xd8cc72b8 )
 	ROM_LOAD( "e-2",         0x08000, 0x04000, 0x9e5b3157 )
 	ROM_LOAD( "gv3.4b",      0x10000, 0x04000, 0x82f0c5e6 ) /* 2 banks at c000 */
@@ -683,7 +681,7 @@ ROM_START( galivan2 )
 	ROM_LOAD( "gv14.4f",     0x24000, 0x08000, 0x03e2229f ) /* sprites */
 	ROM_LOAD( "gv13.1f",     0x2c000, 0x08000, 0xbca9e66b )
 
-	ROM_REGION(0x8000)		/* Region 2 - background */
+	ROM_REGION( 0x8000 )		/* Region 2 - background */
 	ROM_LOAD( "gv6.19d",     0x00000, 0x04000, 0xda38168b )
 	ROM_LOAD( "gv5.17d",     0x04000, 0x04000, 0x22492d2a )
 
@@ -694,13 +692,13 @@ ROM_START( galivan2 )
 	ROM_LOAD( "mb7114e.2d",  0x0300, 0x0100, 0x75466109 )	/* sprite lookup table */
 	ROM_LOAD( "mb7114e.7f",  0x0400, 0x0100, 0x06538736 )	/* sprite palette bank */
 
-	ROM_REGION(0x10000)		/* Region 4 - sound cpu code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* Region 4 - sound cpu code */
 	ROM_LOAD( "gv11.14b",    0x00000, 0x04000, 0x05f1a0e3 )
 	ROM_LOAD( "gv12.15b",    0x04000, 0x08000, 0x5b7a0d6d )
 ROM_END
 
 ROM_START( dangar )
-	ROM_REGION(0x14000)		/* Region 0 - main cpu code */
+	ROM_REGIONX( 0x14000, REGION_CPU1 )		/* Region 0 - main cpu code */
 	ROM_LOAD( "dangar08.1b",     0x00000, 0x8000, 0xe52638f2 )
 	ROM_LOAD( "dangar09.3b",     0x08000, 0x4000, 0x809d280f )
 	ROM_LOAD( "dangar10.5b",     0x10000, 0x4000, 0x99a3591b )
@@ -714,7 +712,7 @@ ROM_START( dangar )
 	ROM_LOAD( "dangarxx.f4",  0x24000, 0x8000, 0x55711884 )  /* sprites */
 	ROM_LOAD( "dangarxx.f1",  0x2C000, 0x8000, 0x8cf11419 )
 
-	ROM_REGION(0x8000)		/* Region 2 - background */
+	ROM_REGION( 0x8000 )		/* Region 2 - background */
 	ROM_LOAD( "dangar07.19d", 0x0000, 0x4000, 0x6dba32cf )
 	ROM_LOAD( "dangar06.17d", 0x4000, 0x4000, 0x6c899071 )
 
@@ -725,13 +723,13 @@ ROM_START( dangar )
 	ROM_LOAD( "82s129.2d",   0x0300, 0x0100, 0xa4ac95a5 )	/* sprite lookup table */
 	ROM_LOAD( "82s129.7f",   0x0400, 0x0100, 0x29bc6216 )	/* sprite palette bank */
 
-	ROM_REGION(0x10000)		/* Region 4 - sound cpu code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* Region 4 - sound cpu code */
 	ROM_LOAD( "dangar13.b14", 0x0000, 0x4000, 0x3e041873 )
 	ROM_LOAD( "dangar14.b15", 0x4000, 0x8000, 0x488e3463 )
 ROM_END
 
 ROM_START( dangar2 )
-	ROM_REGION(0x14000)		/* Region 0 - main cpu code */
+	ROM_REGIONX( 0x14000, REGION_CPU1 )		/* Region 0 - main cpu code */
 	ROM_LOAD( "dangar2.016",     0x00000, 0x8000, 0x743fa2d4 )
 	ROM_LOAD( "dangar2.017",     0x08000, 0x4000, 0x1cdc60a5 )
 	ROM_LOAD( "dangar2.018",     0x10000, 0x4000, 0xdb7f6613 )
@@ -745,7 +743,7 @@ ROM_START( dangar2 )
 	ROM_LOAD( "dangarxx.f4",  0x24000, 0x8000, 0x55711884 )  /* sprites */
 	ROM_LOAD( "dangarxx.f1",  0x2C000, 0x8000, 0x8cf11419 )
 
-	ROM_REGION(0x8000)		/* Region 2 - background */
+	ROM_REGION( 0x8000 )		/* Region 2 - background */
 	ROM_LOAD( "dangar07.19d", 0x0000, 0x4000, 0x6dba32cf )
 	ROM_LOAD( "dangar06.17d", 0x4000, 0x4000, 0x6c899071 )
 
@@ -756,13 +754,13 @@ ROM_START( dangar2 )
 	ROM_LOAD( "82s129.2d",   0x0300, 0x0100, 0xa4ac95a5 )	/* sprite lookup table */
 	ROM_LOAD( "82s129.7f",   0x0400, 0x0100, 0x29bc6216 )	/* sprite palette bank */
 
-	ROM_REGION(0x10000)		/* Region 4 - sound cpu code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* Region 4 - sound cpu code */
 	ROM_LOAD( "dangar13.b14", 0x0000, 0x4000, 0x3e041873 )
 	ROM_LOAD( "dangar14.b15", 0x4000, 0x8000, 0x488e3463 )
 ROM_END
 
 ROM_START( dangarb )
-	ROM_REGION(0x14000)		/* Region 0 - main cpu code */
+	ROM_REGIONX( 0x14000, REGION_CPU1 )		/* Region 0 - main cpu code */
 	ROM_LOAD( "8",               0x00000, 0x8000, 0x8136fd10 )
 	ROM_LOAD( "9",               0x08000, 0x4000, 0x3ce5ec11 )
 	ROM_LOAD( "dangar2.018",     0x10000, 0x4000, 0xdb7f6613 )
@@ -776,7 +774,7 @@ ROM_START( dangarb )
 	ROM_LOAD( "dangarxx.f4",  0x24000, 0x8000, 0x55711884 )  /* sprites */
 	ROM_LOAD( "dangarxx.f1",  0x2C000, 0x8000, 0x8cf11419 )
 
-	ROM_REGION(0x8000)		/* Region 2 - background */
+	ROM_REGION( 0x8000 )		/* Region 2 - background */
 	ROM_LOAD( "dangar07.19d", 0x0000, 0x4000, 0x6dba32cf )
 	ROM_LOAD( "dangar06.17d", 0x4000, 0x4000, 0x6c899071 )
 
@@ -787,7 +785,7 @@ ROM_START( dangarb )
 	ROM_LOAD( "82s129.2d",   0x0300, 0x0100, 0xa4ac95a5 )	/* sprite lookup table */
 	ROM_LOAD( "82s129.7f",   0x0400, 0x0100, 0x29bc6216 )	/* sprite palette bank */
 
-	ROM_REGION(0x10000)		/* Region 4 - sound cpu code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* Region 4 - sound cpu code */
 	ROM_LOAD( "dangar13.b14", 0x0000, 0x4000, 0x3e041873 )
 	ROM_LOAD( "dangar14.b15", 0x4000, 0x8000, 0x488e3463 )
 ROM_END
@@ -797,7 +795,7 @@ ROM_END
 					 10 bytes - name (ASCII)		*/
 static int galivan_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the high scores table has already been initialized */
 	if ((memcmp(&RAM[0xe14f], "\x00\x01\x50\x4B", 4) == 0)&&
@@ -819,7 +817,7 @@ static int galivan_hiload(void)
 
 static void galivan_hisave(void)
 {
-    unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+    unsigned char *RAM = memory_region(REGION_CPU1);
     void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -832,7 +830,7 @@ static void galivan_hisave(void)
 /****  Ufo Robo Dangar high score save routine - RJF (June 19, 1999)  ****/
 static int dangar_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0xe209], "\x00\x01\x50", 3) == 0)
@@ -857,7 +855,7 @@ static int dangar_hiload(void)
 static void dangar_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{

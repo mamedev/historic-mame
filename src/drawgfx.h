@@ -70,11 +70,10 @@ struct rectangle
 
 /* drawing mode case TRANSPARENCY_PEN_TABLE */
 extern UINT8 gfx_drawmode_table[256];
-#define DRAWMODE_NONE   0
-#define DRAWMODE_SOURCE 1
-#define DRAWMODE_HALF   2
-#define DRAWMODE_DOUBLE 3
-#define DRAWMODE_MIX    4
+#define DRAWMODE_NONE		0
+#define DRAWMODE_SOURCE		1
+#define DRAWMODE_SHADOW		2
+#define DRAWMODE_HIGHLIGHT	3
 
 
 typedef void (*plot_pixel_proc)(struct osd_bitmap *bitmap,int x,int y,int pen);

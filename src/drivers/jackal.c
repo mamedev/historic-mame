@@ -435,14 +435,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			2000000,	/* 2 MHz???? */
-			0,
 			jackal_readmem,jackal_writemem,0,0,
 			jackal_interrupt,1
 		},
 		{
 			CPU_M6809,
 			2000000,	/* 2 MHz???? */
-			2,		/* memory region #2 */
 			jackal_sound_readmem,jackal_sound_writemem,0,0,
 			ignore_interrupt,1
 		}
@@ -481,14 +479,12 @@ static struct MachineDriver topgunbl_machine_driver =
 		{
 			CPU_M6809,
 			2000000,	/* 2 MHz???? */
-			0,
 			jackal_readmem,jackal_writemem,0,0,
 			jackal_interrupt,1
 		},
 		{
 			CPU_M6809,
 			2000000,	/* 2 MHz???? */
-			2,		/* memory region #2 */
 			jackal_sound_readmem,jackal_sound_writemem,0,0,
 			ignore_interrupt,1
 		}
@@ -525,7 +521,7 @@ static int hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x12F8],"\x00\x02\x00\x00\x1D\x0D\x1F\x00\x00\x01\x50\x00\x18\x0D\x1F\x00",16) == 0)
@@ -557,7 +553,7 @@ static void hisave(void)
 	void *f;
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -584,7 +580,7 @@ static void hisave(void)
 ***************************************************************************/
 
 ROM_START( jackal )
-	ROM_REGION(0x20000)	/* Banked 64k for 1st CPU */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* Banked 64k for 1st CPU */
 	ROM_LOAD( "j-v02.rom",    0x04000, 0x8000, 0x0b7e0584 )
 	ROM_CONTINUE(             0x14000, 0x8000 )
 	ROM_LOAD( "j-v03.rom",    0x0c000, 0x4000, 0x3e0dfb83 )
@@ -595,7 +591,7 @@ ROM_START( jackal )
 	ROM_LOAD( "631t05.bin",   0x40000, 0x20000, 0x732b3fc1 )
 	ROM_LOAD( "631t07.bin",   0x60000, 0x20000, 0x4961c397 )
 
-	ROM_REGION(0x10000)     /* 64k for 2nd cpu (Graphics & Sound)*/
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for 2nd cpu (Graphics & Sound)*/
 	ROM_LOAD( "631t01.bin",   0x8000, 0x8000, 0xb189af6a )
 
 	ROM_REGION(0x0400)	/* color lookup tables */
@@ -606,7 +602,7 @@ ROM_START( jackal )
 ROM_END
 
 ROM_START( topgunr )
-	ROM_REGION(0x20000)	/* Banked 64k for 1st CPU */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* Banked 64k for 1st CPU */
 	ROM_LOAD( "tgnr15d.bin",  0x04000, 0x8000, 0xf7e28426 )
 	ROM_CONTINUE(             0x14000, 0x8000 )
 	ROM_LOAD( "tgnr16d.bin",  0x0c000, 0x4000, 0xc086844e )
@@ -617,7 +613,7 @@ ROM_START( topgunr )
 	ROM_LOAD( "tgnr8h.bin",   0x40000, 0x20000, 0x6943b1a4 )
 	ROM_LOAD( "tgnr13h.bin",  0x60000, 0x20000, 0x22effcc8 )
 
-	ROM_REGION(0x10000)     /* 64k for 2nd cpu (Graphics & Sound)*/
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for 2nd cpu (Graphics & Sound)*/
 	ROM_LOAD( "631t01.bin",   0x8000, 0x8000, 0xb189af6a )
 
 	ROM_REGION(0x0400)	/* color lookup tables */
@@ -628,7 +624,7 @@ ROM_START( topgunr )
 ROM_END
 
 ROM_START( jackalj )
-	ROM_REGION(0x20000)	/* Banked 64k for 1st CPU */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* Banked 64k for 1st CPU */
 	ROM_LOAD( "631t02.bin",   0x04000, 0x8000, 0x14db6b1a )
 	ROM_CONTINUE(             0x14000, 0x8000 )
 	ROM_LOAD( "631t03.bin",   0x0c000, 0x4000, 0xfd5f9624 )
@@ -639,7 +635,7 @@ ROM_START( jackalj )
 	ROM_LOAD( "631t05.bin",   0x40000, 0x20000, 0x732b3fc1 )
 	ROM_LOAD( "631t07.bin",   0x60000, 0x20000, 0x4961c397 )
 
-	ROM_REGION(0x10000)     /* 64k for 2nd cpu (Graphics & Sound)*/
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for 2nd cpu (Graphics & Sound)*/
 	ROM_LOAD( "631t01.bin",   0x8000, 0x8000, 0xb189af6a )
 
 	ROM_REGION(0x0400)	/* color lookup tables */
@@ -650,7 +646,7 @@ ROM_START( jackalj )
 ROM_END
 
 ROM_START( topgunbl )
-	ROM_REGION(0x20000)	/* Banked 64k for 1st CPU */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* Banked 64k for 1st CPU */
 	ROM_LOAD( "t-3.c5",       0x04000, 0x8000, 0x7826ad38 )
 	ROM_LOAD( "t-4.c4",       0x14000, 0x8000, 0x976c8431 )
 	ROM_LOAD( "t-2.c6",       0x0c000, 0x4000, 0xd53172e5 )
@@ -673,7 +669,7 @@ ROM_START( topgunbl )
 	ROM_LOAD( "t-11.n6",      0x70000, 0x08000, 0x7895c22d )
 	ROM_LOAD( "t-12.n7",      0x78000, 0x08000, 0x15606dfc )
 
-	ROM_REGION(0x10000)     /* 64k for 2nd cpu (Graphics & Sound)*/
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for 2nd cpu (Graphics & Sound)*/
 	ROM_LOAD( "t-1.c14",      0x8000, 0x8000, 0x54aa2d29 )
 
 	ROM_REGION(0x0400)	/* color lookup tables */

@@ -247,21 +247,18 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4000000,
-			0,
 			readmem,writemem,z80_readport, z80_writeport,
 			samurai_interrupt,1,
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			2000000,
-			1,
 			readmem_sound1,writemem_sound1,0,0,
 			ignore_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			2000000,
-			2,
 			readmem_sound2,writemem_sound2,0,0,
 			ignore_interrupt,1
 		}
@@ -299,16 +296,16 @@ static struct MachineDriver machine_driver =
 
 
 ROM_START( tsamurai )
-	ROM_REGION( 0x10000 ) /* Z80 code  - main CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* Z80 code  - main CPU */
 	ROM_LOAD( "01.3r",      0x0000, 0x4000, 0xd09c8609 )
 	ROM_LOAD( "02.3t",      0x4000, 0x4000, 0xd0f2221c )
 	ROM_LOAD( "03.3v",      0x8000, 0x4000, 0xeee8b0c9 )
 
-	ROM_REGION( 0x10000 ) /* Z80 code - sample player#1 */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* Z80 code - sample player#1 */
 	ROM_LOAD( "14.4e",      0x0000, 0x2000, 0x220e9c04 )
 	ROM_LOAD( "a35-15.4c",  0x2000, 0x2000, 0x1e0d1e33 )
 
-	ROM_REGION( 0x10000 ) /* Z80 code - sample player#2 */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* Z80 code - sample player#2 */
 	ROM_LOAD( "13.4j",      0x0000, 0x2000, 0x73feb0e2 )
 
 	ROM_REGION_DISPOSE( 0x15000 )
@@ -329,16 +326,16 @@ ROM_START( tsamurai )
 ROM_END
 
 ROM_START( tsamura2 )
-	ROM_REGION( 0x10000 ) /* Z80 code  - main CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* Z80 code  - main CPU */
 	ROM_LOAD( "a35-01.3r",  0x0000, 0x4000, 0x282d96ad )
 	ROM_LOAD( "a35-02.3t",  0x4000, 0x4000, 0xe3fa0cfa )
 	ROM_LOAD( "a35-03.3v",  0x8000, 0x4000, 0x2fff1e0a )
 
-	ROM_REGION( 0x10000 ) /* Z80 code - sample player#1 */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* Z80 code - sample player#1 */
 	ROM_LOAD( "a35-14.4e",  0x0000, 0x2000, 0xf10aee3b )
 	ROM_LOAD( "a35-15.4c",  0x2000, 0x2000, 0x1e0d1e33 )
 
-	ROM_REGION( 0x10000 ) /* Z80 code - sample player#2 */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* Z80 code - sample player#2 */
 	ROM_LOAD( "a35-13.4j",  0x0000, 0x2000, 0x3828f4d2 )
 
 	ROM_REGION_DISPOSE( 0x15000 )
@@ -359,16 +356,16 @@ ROM_START( tsamura2 )
 ROM_END
 
 ROM_START( nunchaku )
-	ROM_REGION( 0x10000 ) /* Z80 code  - main CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* Z80 code  - main CPU */
 	ROM_LOAD( "nunchack.p1",	0x0000, 0x4000, 0x4385aca6 )
 	ROM_LOAD( "nunchack.p2",	0x4000, 0x4000, 0xf9beb72c )
 	ROM_LOAD( "nunchack.p3",	0x8000, 0x4000, 0xcde5d674 )
 
-	ROM_REGION( 0x10000 ) /* Z80 code - sample player */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* Z80 code - sample player */
 	ROM_LOAD( "nunchack.m3",	0x0000, 0x2000, 0x9036c945 )
 	ROM_LOAD( "nunchack.m4",	0x2000, 0x2000, 0xe7206724 )
 
-	ROM_REGION( 0x10000 ) /* Z80 code - sample player */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* Z80 code - sample player */
 	ROM_LOAD( "nunchack.m1",	0x0000, 0x2000, 0xb53d73f6 )
 	ROM_LOAD( "nunchack.m2",	0x2000, 0x2000, 0xf37d7c49 )
 
@@ -390,15 +387,15 @@ ROM_START( nunchaku )
 ROM_END
 
 ROM_START( yamagchi )
-	ROM_REGION( 0x10000 ) /* Z80 code  - main CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* Z80 code  - main CPU */
 	ROM_LOAD( "a38-01.3s",	0x0000, 0x4000, 0x1a6c8498 )
 	ROM_LOAD( "a38-02.3t",	0x4000, 0x4000, 0xfa66b396 )
 	ROM_LOAD( "a38-03.3v",	0x8000, 0x4000, 0x6a4239cf )
 
-	ROM_REGION( 0x10000 ) /* Z80 code - sample player */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* Z80 code - sample player */
 	ROM_LOAD( "a38-14.4e",	0x0000, 0x2000, 0x5a758992 )
 
-	ROM_REGION( 0x10000 ) /* Z80 code - sample player */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* Z80 code - sample player */
 	ROM_LOAD( "a38-13.4j",	0x0000, 0x2000, 0xa26445bb )
 
 	ROM_REGION_DISPOSE( 0x15000 )

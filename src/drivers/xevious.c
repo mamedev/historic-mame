@@ -342,13 +342,13 @@ INPUT_PORTS_START( xevious )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
 	/* TODO: bonus scores are different for 5 lives */
 	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x18, "10000 40000" )
-	PORT_DIPSETTING(    0x14, "10000 50000" )
-	PORT_DIPSETTING(    0x10, "20000 50000" )
-	PORT_DIPSETTING(    0x0c, "20000 70000" )
-	PORT_DIPSETTING(    0x08, "20000 80000" )
-	PORT_DIPSETTING(    0x1c, "20000 60000" )
-	PORT_DIPSETTING(    0x04, "20000 and 60000" )
+	PORT_DIPSETTING(    0x18, "10K 40K 40K" )
+	PORT_DIPSETTING(    0x14, "10K 50K 50K" )
+	PORT_DIPSETTING(    0x10, "20K 50K 50K" )
+	PORT_DIPSETTING(    0x0c, "20K 70K 70K" )
+	PORT_DIPSETTING(    0x08, "20K 80K 80K" )
+	PORT_DIPSETTING(    0x1c, "20K 60K 60K" )
+	PORT_DIPSETTING(    0x04, "20K 60K" )
 	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x40, "1" )
@@ -420,13 +420,13 @@ INPUT_PORTS_START( xeviousa )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
 	/* TODO: bonus scores are different for 5 lives */
 	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x18, "10000 40000" )
-	PORT_DIPSETTING(    0x14, "10000 50000" )
-	PORT_DIPSETTING(    0x10, "20000 50000" )
-	PORT_DIPSETTING(    0x0c, "20000 70000" )
-	PORT_DIPSETTING(    0x08, "20000 80000" )
-	PORT_DIPSETTING(    0x1c, "20000 60000" )
-	PORT_DIPSETTING(    0x04, "20000 and 60000" )
+	PORT_DIPSETTING(    0x18, "10K 40K 40K" )
+	PORT_DIPSETTING(    0x14, "10K 50K 50K" )
+	PORT_DIPSETTING(    0x10, "20K 50K 50K" )
+	PORT_DIPSETTING(    0x0c, "20K 70K 70K" )
+	PORT_DIPSETTING(    0x08, "20K 80K 80K" )
+	PORT_DIPSETTING(    0x1c, "20K 60K 60K" )
+	PORT_DIPSETTING(    0x04, "20K 60K" )
 	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x40, "1" )
@@ -498,13 +498,13 @@ INPUT_PORTS_START( sxevious )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
 	/* TODO: bonus scores are different for 5 lives */
 	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x18, "10000 40000" )
-	PORT_DIPSETTING(    0x14, "10000 50000" )
-	PORT_DIPSETTING(    0x10, "20000 50000" )
-	PORT_DIPSETTING(    0x0c, "20000 70000" )
-	PORT_DIPSETTING(    0x08, "20000 80000" )
-	PORT_DIPSETTING(    0x1c, "20000 60000" )
-	PORT_DIPSETTING(    0x04, "20000 and 60000" )
+	PORT_DIPSETTING(    0x18, "10K 40K 40K" )
+	PORT_DIPSETTING(    0x14, "10K 50K 50K" )
+	PORT_DIPSETTING(    0x10, "20K 50K 50K" )
+	PORT_DIPSETTING(    0x0c, "20K 70K 70K" )
+	PORT_DIPSETTING(    0x08, "20K 80K 80K" )
+	PORT_DIPSETTING(    0x1c, "20K 60K 60K" )
+	PORT_DIPSETTING(    0x04, "20K 60K" )
 	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x40, "1" )
@@ -655,21 +655,18 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3125000,	/* 3.125 Mhz (?) */
-			0,
 			readmem_cpu1,writemem_cpu1,0,0,
 			xevious_interrupt_1,1
 		},
 		{
 			CPU_Z80,
 			3125000,	/* 3.125 Mhz */
-			3,	/* memory region #3 */
 			readmem_cpu2,writemem_cpu2,0,0,
 			xevious_interrupt_2,1
 		},
 		{
 			CPU_Z80,
 			3125000,	/* 3.125 Mhz */
-			4,	/* memory region #4 */
 			readmem_cpu3,writemem_cpu3,0,0,
 			xevious_interrupt_3,2
 		}
@@ -714,7 +711,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( xevious )
-	ROM_REGION(0x10000)	/* 64k for the first CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for the first CPU */
 	ROM_LOAD( "xvi_1.3p",     0x0000, 0x1000, 0x09964dda )
 	ROM_LOAD( "xvi_2.3m",     0x1000, 0x1000, 0x60ecce84 )
 	ROM_LOAD( "xvi_3.2m",     0x2000, 0x1000, 0x79754b7d )
@@ -739,11 +736,11 @@ ROM_START( xevious )
 	ROM_LOAD( "xvi_4bpr.3l",  0x0700, 0x0200, 0xfd8b9d91 ) /* sprite lookup table low bits */
 	ROM_LOAD( "xvi_5bpr.3m",  0x0900, 0x0200, 0xbf906d82 ) /* sprite lookup table high bits */
 
-	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "xvi_5.3f",     0x0000, 0x1000, 0xc85b703f )
 	ROM_LOAD( "xvi_6.3j",     0x1000, 0x1000, 0xe18cdaad )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the audio CPU */
 	ROM_LOAD( "xvi_7.2c",     0x0000, 0x1000, 0xdd35cf1c )
 
 	ROM_REGION(0x4000)	/* gfx map */
@@ -757,7 +754,7 @@ ROM_START( xevious )
 ROM_END
 
 ROM_START( xeviousa )
-	ROM_REGION(0x10000)	/* 64k for the first CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for the first CPU */
 	ROM_LOAD( "xea-1m-a.bin", 0x0000, 0x2000, 0x8c2b50ec )
 	ROM_LOAD( "xea-1l-a.bin", 0x2000, 0x2000, 0x0821642b )
 
@@ -780,10 +777,10 @@ ROM_START( xeviousa )
 	ROM_LOAD( "xvi_4bpr.3l",  0x0700, 0x0200, 0xfd8b9d91 ) /* sprite lookup table low bits */
 	ROM_LOAD( "xvi_5bpr.3m",  0x0900, 0x0200, 0xbf906d82 ) /* sprite lookup table high bits */
 
-	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "xea-4c-a.bin", 0x0000, 0x2000, 0x14d8fa03 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the audio CPU */
 	ROM_LOAD( "xvi_7.2c",     0x0000, 0x1000, 0xdd35cf1c )
 
 	ROM_REGION(0x4000)	/* gfx map */
@@ -797,7 +794,7 @@ ROM_START( xeviousa )
 ROM_END
 
 ROM_START( xevios )
-	ROM_REGION(0x10000)	/* 64k for the first CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for the first CPU */
 	ROM_LOAD( "4.7h",         0x0000, 0x1000, 0x1f8ca4c0 )
 	ROM_LOAD( "5.6h",         0x1000, 0x1000, 0x2e47ce8f )
 	ROM_LOAD( "xvi_3.2m",     0x2000, 0x1000, 0x79754b7d )
@@ -822,11 +819,11 @@ ROM_START( xevios )
 	ROM_LOAD( "xvi_4bpr.3l",  0x0700, 0x0200, 0xfd8b9d91 ) /* sprite lookup table low bits */
 	ROM_LOAD( "xvi_5bpr.3m",  0x0900, 0x0200, 0xbf906d82 ) /* sprite lookup table high bits */
 
-	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "xvi_5.3f",     0x0000, 0x1000, 0xc85b703f )
 	ROM_LOAD( "xvi_6.3j",     0x1000, 0x1000, 0xe18cdaad )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the audio CPU */
 	ROM_LOAD( "xvi_7.2c",     0x0000, 0x1000, 0xdd35cf1c )
 
 	ROM_REGION(0x4000)	/* gfx map */
@@ -846,7 +843,7 @@ ROM_START( xevios )
 ROM_END
 
 ROM_START( sxevious )
-	ROM_REGION(0x10000)	/* 64k for the first CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for the first CPU */
 	ROM_LOAD( "cpu_3p.rom",   0x0000, 0x1000, 0x1c8d27d5 )
 	ROM_LOAD( "cpu_3m.rom",   0x1000, 0x1000, 0xfd04e615 )
 	ROM_LOAD( "cpu_2m.rom",   0x2000, 0x1000, 0x294d5404 )
@@ -871,11 +868,11 @@ ROM_START( sxevious )
 	ROM_LOAD( "xvi_4bpr.3l",  0x0700, 0x0200, 0xfd8b9d91 ) /* sprite lookup table low bits */
 	ROM_LOAD( "xvi_5bpr.3m",  0x0900, 0x0200, 0xbf906d82 ) /* sprite lookup table high bits */
 
-	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "cpu_3f.rom",   0x0000, 0x1000, 0xd4bd3d81 )
 	ROM_LOAD( "cpu_3j.rom",   0x1000, 0x1000, 0xaf06be5f )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the audio CPU */
 	ROM_LOAD( "xvi_7.2c",     0x0000, 0x1000, 0xdd35cf1c )
 
 	ROM_REGION(0x4000)	/* gfx map */
@@ -899,7 +896,7 @@ static void xevios_decode(void)
 	for (A = 0x5000;A < 0x7000;A++)
 	{
 		int bit[8];
-		unsigned char *RAM = Machine->memory_region[1];
+		unsigned char *RAM = memory_region(1);
 
 		/* 76543210 -> 13570246 bit rotation */
 		for (i = 0;i < 8;i++)
@@ -920,7 +917,7 @@ static void xevios_decode(void)
 	for (A = 0x0000;A < 0x1000;A++)
 	{
 		int bit[8];
-		unsigned char *RAM = Machine->memory_region[5];
+		unsigned char *RAM = memory_region(5);
 
 		/* 76543210 -> 37512640 bit rotation */
 		for (i = 0;i < 8;i++)
@@ -942,7 +939,7 @@ static void xevios_decode(void)
 
 static int hiload(void) /* V.V */
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -969,7 +966,7 @@ static int hiload(void) /* V.V */
 static void hisave(void) /* V.V */
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

@@ -2,7 +2,7 @@
 #include "vidhrdw/generic.h"
 #include "tilemap.h"
 
-unsigned char *textlayerram, *drgnbstr_videoram;
+unsigned char *skykid_textram, *drgnbstr_videoram;
 
 static struct tilemap *background;	/* background */
 static int game;
@@ -95,7 +95,7 @@ static int skykid_drgnbstr_common_vh_init(void)
 	background = tilemap_create(get_tile_info_bg, TILEMAP_OPAQUE, 8, 8, 64, 32);
 
 	if (background){
-		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+		unsigned char *RAM = memory_region(REGION_CPU1);
 
 		spriteram	= &RAM[0x4f80];
 		spriteram_2	= &RAM[0x4f80+0x0800];
@@ -290,8 +290,8 @@ void skykid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			else{
 				sx = mx + 2; sy = my - 2;
 			}
-			drawgfx(bitmap,Machine->gfx[0],	textlayerram[offs],
-					textlayerram[offs+0x400] & 0x3f,
+			drawgfx(bitmap,Machine->gfx[0],	skykid_textram[offs],
+					skykid_textram[offs+0x400] & 0x3f,
 					0,0,sx*8,sy*8,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
         }
@@ -328,8 +328,8 @@ void drgnbstr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			else{
 				sx = mx + 2; sy = my - 2;
 			}
-			drawgfx(bitmap,Machine->gfx[0],	textlayerram[offs],
-					textlayerram[offs+0x400] & 0x3f,
+			drawgfx(bitmap,Machine->gfx[0],	skykid_textram[offs],
+					skykid_textram[offs+0x400] & 0x3f,
 					0,0,sx*8,sy*8,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
         }

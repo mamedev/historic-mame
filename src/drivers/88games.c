@@ -303,14 +303,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_KONAMI,
 			3000000, /* ? */
-			0,
 			readmem,writemem,0,0,
 			k88games_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,
-			4,
 			sound_readmem, sound_writemem,0,0,
 			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
 		}
@@ -354,11 +352,11 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( 88games )
-	ROM_REGION( 0x21000 ) /* code + banked roms + space for banked ram */
+	ROM_REGIONX( 0x21000, REGION_CPU1 ) /* code + banked roms + space for banked ram */
     ROM_LOAD( "861m01.k18", 0x08000, 0x08000, 0x4a4e2959 )
 	ROM_LOAD( "861m02.k16", 0x10000, 0x10000, 0xe19f15f6 )
 
-	ROM_REGION( 0x080000 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGION(  0x080000 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD_GFX_EVEN( "861a08.a", 0x000000, 0x10000, 0x77a00dd6 )	/* characters */
 	ROM_LOAD_GFX_ODD ( "861a08.c", 0x000000, 0x10000, 0xb422edfc )
 	ROM_LOAD_GFX_EVEN( "861a08.b", 0x020000, 0x10000, 0x28a8304f )
@@ -392,7 +390,7 @@ ROM_START( 88games )
 	ROM_LOAD( "861a04.c", 0x020000, 0x10000, 0xa00021c5 )
 	ROM_LOAD( "861a04.d", 0x030000, 0x10000, 0xd208304c )
 
-	ROM_REGION( 0x10000 ) /* Z80 code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Z80 code */
 	ROM_LOAD( "861d01.d9", 0x00000, 0x08000, 0x0ff1dec0 )
 
 	ROM_REGION( 0x20000 ) /* samples for UPD7759 #0 */
@@ -403,16 +401,16 @@ ROM_START( 88games )
 	ROM_LOAD( "861a07.c", 0x000000, 0x10000, 0x5067a38b )
 	ROM_LOAD( "861a07.d", 0x010000, 0x10000, 0x86731451 )
 
-	ROM_REGION(0x0200)	/* PROMs */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "861.g3",   0x0000, 0x0100, 0x429785db )	/* priority encoder (not used) */
 ROM_END
 
 ROM_START( konami88 )
-	ROM_REGION( 0x21000 ) /* code + banked roms + space for banked ram */
+	ROM_REGIONX( 0x21000, REGION_CPU1 ) /* code + banked roms + space for banked ram */
 	ROM_LOAD( "861.e03", 0x08000, 0x08000, 0x55979bd9 )
 	ROM_LOAD( "861.e02", 0x10000, 0x10000, 0x5b7e98a6 )
 
-	ROM_REGION( 0x080000 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGION(  0x080000 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD_GFX_EVEN( "861a08.a", 0x000000, 0x10000, 0x77a00dd6 )	/* characters */
 	ROM_LOAD_GFX_ODD ( "861a08.c", 0x000000, 0x10000, 0xb422edfc )
 	ROM_LOAD_GFX_EVEN( "861a08.b", 0x020000, 0x10000, 0x28a8304f )
@@ -446,7 +444,7 @@ ROM_START( konami88 )
 	ROM_LOAD( "861a04.c", 0x020000, 0x10000, 0xa00021c5 )
 	ROM_LOAD( "861a04.d", 0x030000, 0x10000, 0xd208304c )
 
-	ROM_REGION( 0x10000 ) /* Z80 code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Z80 code */
 	ROM_LOAD( "861d01.d9", 0x00000, 0x08000, 0x0ff1dec0 )
 
 	ROM_REGION( 0x20000 ) /* samples for UPD7759 #0 */
@@ -457,7 +455,7 @@ ROM_START( konami88 )
 	ROM_LOAD( "861a07.c", 0x000000, 0x10000, 0x5067a38b )
 	ROM_LOAD( "861a07.d", 0x010000, 0x10000, 0x86731451 )
 
-	ROM_REGION(0x0200)	/* PROMs */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "861.g3",   0x0000, 0x0100, 0x429785db )	/* priority encoder (not used) */
 ROM_END
 
@@ -469,7 +467,7 @@ ROM_END
 
 static void k88games_banking( int lines )
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int offs;
 
 if (errorlog) fprintf(errorlog,"%04x: bank select %02x\n",cpu_get_pc(),lines);
@@ -510,7 +508,7 @@ if (errorlog) fprintf(errorlog,"%04x: bank select %02x\n",cpu_get_pc(),lines);
 static void k88games_init_machine( void )
 {
 	konami_cpu_setlines_callback = k88games_banking;
-	paletteram = &memory_region(Machine->drv->cpu[0].memory_region)[0x20000];
+	paletteram = &memory_region(REGION_CPU1)[0x20000];
 }
 
 
@@ -526,7 +524,7 @@ static void gfx_untangle(void)
 static int nvram_load(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
@@ -541,7 +539,7 @@ static int nvram_load(void)
 static void nvram_save(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

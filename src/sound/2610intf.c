@@ -122,10 +122,10 @@ int YM2610_sh_start(const struct MachineSound *msound)
 		}
 		stream[i] = stream_init_multi(YM2610_NUMBUF,name,vol,rate,FM_OUTPUT_BIT,i,YM2610UpdateOne);
 		/* setup adpcm buffers */
-		pcmbufa[i]  = (void *)(Machine->memory_region[intf->pcmroma[i]]);
-		pcmsizea[i] = Machine->memory_region_length[intf->pcmroma[i]];
-		pcmbufb[i]  = (void *)(Machine->memory_region[intf->pcmromb[i]]);
-		pcmsizeb[i] = Machine->memory_region_length[intf->pcmromb[i]];
+		pcmbufa[i]  = (void *)(memory_region(intf->pcmroma[i]));
+		pcmsizea[i] = memory_region_length(intf->pcmroma[i]);
+		pcmbufb[i]  = (void *)(memory_region(intf->pcmromb[i]));
+		pcmsizeb[i] = memory_region_length(intf->pcmromb[i]);
 	}
 
 	/**** initialize YM2610 ****/
@@ -178,10 +178,10 @@ int YM2610B_sh_start(const struct MachineSound *msound)
 		}
 		stream[i] = stream_init_multi(YM2610_NUMBUF,name,vol,rate,FM_OUTPUT_BIT,i,YM2610BUpdateOne);
 		/* setup adpcm buffers */
-		pcmbufa[i]  = (void *)(Machine->memory_region[intf->pcmroma[i]]);
-		pcmsizea[i] = Machine->memory_region_length[intf->pcmroma[i]];
-		pcmbufb[i]  = (void *)(Machine->memory_region[intf->pcmromb[i]]);
-		pcmsizeb[i] = Machine->memory_region_length[intf->pcmromb[i]];
+		pcmbufa[i]  = (void *)(memory_region(intf->pcmroma[i]));
+		pcmsizea[i] = memory_region_length(intf->pcmroma[i]);
+		pcmbufb[i]  = (void *)(memory_region(intf->pcmromb[i]));
+		pcmsizeb[i] = memory_region_length(intf->pcmromb[i]);
 	}
 
 	/**** initialize YM2610 ****/

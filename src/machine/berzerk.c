@@ -26,7 +26,7 @@ void berzerk_init_machine(void)
 
 	/* Berzerk expects locations 3800-3fff to be ff */
 	for (i = 0x3800; i < 0x4000; i++)
-		Machine->memory_region[0][i] = 0xff;
+		memory_region(REGION_CPU1)[i] = 0xff;
 
 	irq_enabled = 0;
 	nmi_enabled = 0;

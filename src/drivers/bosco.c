@@ -468,21 +468,18 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3125000,	/* 3.125 Mhz */
-			0,
 			readmem_cpu1,writemem_cpu1,0,0,
 			bosco_interrupt_1,1
 		},
 		{
 			CPU_Z80,
 			3125000,	/* 3.125 Mhz */
-			3,	/* memory region #3 */
 			readmem_cpu2,writemem_cpu2,0,0,
 			bosco_interrupt_2,1
 		},
 		{
 			CPU_Z80,
 			3125000,	/* 3.125 Mhz */
-			4,	/* memory region #4 */
 			readmem_cpu3,writemem_cpu3,0,0,
 			bosco_interrupt_3,2
 		}
@@ -533,7 +530,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( bosco )
-	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code for the first CPU  */
 	ROM_LOAD( "bos1_1.bin",   0x0000, 0x1000, 0x0d9920e7 )
 	ROM_LOAD( "bos1_2.bin",   0x1000, 0x1000, 0x2d8f3ebe )
 	ROM_LOAD( "bos1_3.bin",   0x2000, 0x1000, 0xc80ccfa5 )
@@ -551,11 +548,11 @@ ROM_START( bosco )
 	ROM_LOAD( "prom.2r",	  0x0220, 0x0020, 0xb88d5ba9 )	/* ?? */
 	ROM_LOAD( "prom.7h",	  0x0240, 0x0020, 0x87d61353 )	/* ?? */
 
-	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "bos1_5c.bin",  0x0000, 0x1000, 0xa7c8e432 )
 	ROM_LOAD( "2800.3h",	  0x1000, 0x1000, 0x31b8c648 )
 
-	ROM_REGION(0x10000)	/* 64k for the third CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the third CPU  */
 	ROM_LOAD( "2900.3e",	  0x0000, 0x1000, 0xd45a4911 )
 
 	ROM_REGION(0x3000)	/* ROMs for digitised speech */
@@ -569,7 +566,7 @@ ROM_START( bosco )
 ROM_END
 
 ROM_START( boscomd )
-	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code for the first CPU  */
 	ROM_LOAD( "2300.3n",	  0x0000, 0x1000, 0xdb6128b0 )
 	ROM_LOAD( "2400.3m",	  0x1000, 0x1000, 0x86907614 )
 	ROM_LOAD( "2500.3l",	  0x2000, 0x1000, 0xa21fae11 )
@@ -587,11 +584,11 @@ ROM_START( boscomd )
 	ROM_LOAD( "prom.2r",	  0x0220, 0x0020, 0xb88d5ba9 )	/* ?? */
 	ROM_LOAD( "prom.7h",	  0x0240, 0x0020, 0x87d61353 )	/* ?? */
 
-	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "2700.3j",	  0x0000, 0x1000, 0x7254e65e )
 	ROM_LOAD( "2800.3h",	  0x1000, 0x1000, 0x31b8c648 )
 
-	ROM_REGION(0x10000)	/* 64k for the third CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the third CPU  */
 	ROM_LOAD( "2900.3e",	  0x0000, 0x1000, 0xd45a4911 )
 
 	ROM_REGION(0x3000)	/* ROMs for digitised speech */
@@ -605,7 +602,7 @@ ROM_START( boscomd )
 ROM_END
 
 ROM_START( boscomd2 )
-	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code for the first CPU  */
 	ROM_LOAD( "3n", 	  0x0000, 0x1000, 0x441b501a )
 	ROM_LOAD( "3m", 	  0x1000, 0x1000, 0xa3c5c7ef )
 	ROM_LOAD( "3l", 	  0x2000, 0x1000, 0x6ca9a0cf )
@@ -623,11 +620,11 @@ ROM_START( boscomd2 )
 	ROM_LOAD( "prom.2r",	  0x0220, 0x0020, 0xb88d5ba9 )	/* ?? */
 	ROM_LOAD( "prom.7h",	  0x0240, 0x0020, 0x87d61353 )	/* ?? */
 
-	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "3j", 	  0x0000, 0x1000, 0x4374e39a )
 	ROM_LOAD( "3h", 	  0x1000, 0x1000, 0x04e9fcef )
 
-	ROM_REGION(0x10000)	/* 64k for the third CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the third CPU  */
 	ROM_LOAD( "2900.3e",	  0x0000, 0x1000, 0xd45a4911 )
 
 	ROM_REGION(0x3000)	/* ROMs for digitised speech */
@@ -646,7 +643,7 @@ static int hiload(void)
 {
 	void *f;
 	int		i;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -684,7 +681,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

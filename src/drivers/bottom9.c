@@ -59,7 +59,7 @@ static void bankedram2_w(int offset,int data)
 
 static void bankswitch_w(int offset,int data)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int offs;
 
 	/* bit 0 = RAM bank */
@@ -112,11 +112,11 @@ static void sound_bank_w(int offset, int data)
 	unsigned char *RAM;
 	int bank_A,bank_B;
 
-	RAM = Machine->memory_region[5];
+	RAM = memory_region(5);
 	bank_A = 0x20000 * ((data >> 0) & 0x03);
 	bank_B = 0x20000 * ((data >> 2) & 0x03);
 	K007232_bankswitch(0,RAM + bank_A,RAM + bank_B);
-	RAM = Machine->memory_region[6];
+	RAM = memory_region(6);
 	bank_A = 0x20000 * ((data >> 4) & 0x03);
 	bank_B = 0x20000 * ((data >> 6) & 0x03);
 	K007232_bankswitch(1,RAM + bank_A,RAM + bank_B);
@@ -309,14 +309,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			2000000, /* ? */
-			0,
 			readmem,writemem,0,0,
 			bottom9_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,
-			4,
 			sound_readmem, sound_writemem,0,0,
 			bottom9_sound_interrupt,8	/* irq is triggered by the main CPU */
 		}
@@ -356,7 +354,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( bottom9 )
-	ROM_REGION( 0x28000 ) /* code + banked roms + space for banked ram */
+	ROM_REGIONX( 0x28000, REGION_CPU1 ) /* code + banked roms + space for banked ram */
 	ROM_LOAD( "891n03.k17",   0x10000, 0x10000, 0x8b083ff3 )
     ROM_LOAD( "891-t02.k15",  0x20000, 0x08000, 0x2c10ced2 )
     ROM_CONTINUE(             0x08000, 0x08000 )
@@ -393,7 +391,7 @@ ROM_START( bottom9 )
 	ROM_LOAD( "891e07a",      0x00000, 0x10000, 0xb8d8b939 )	/* zoom/rotate */
 	ROM_LOAD( "891e07b",      0x10000, 0x10000, 0x83b2f92d )
 
-	ROM_REGION( 0x10000 ) /* Z80 code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Z80 code */
 	ROM_LOAD( "891j01.g8",    0x0000, 0x8000, 0x31b0a0a8 )
 
 	ROM_REGION( 0x40000 ) /* samples for 007232 #0 */
@@ -408,12 +406,12 @@ ROM_START( bottom9 )
 	ROM_LOAD( "891e04c",      0x20000, 0x10000, 0x2dbbf16b )
 	ROM_LOAD( "891e04d",      0x30000, 0x10000, 0x8b0cd2cc )
 
-	ROM_REGION(0x0200)	/* PROMs */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "891b11.f23",   0x0000, 0x0100, 0xecb854aa )	/* priority encoder (not used) */
 ROM_END
 
 ROM_START( bottom9n )
-	ROM_REGION( 0x28000 ) /* code + banked roms + space for banked ram */
+	ROM_REGIONX( 0x28000, REGION_CPU1 ) /* code + banked roms + space for banked ram */
 	ROM_LOAD( "891n03.k17",   0x10000, 0x10000, 0x8b083ff3 )
     ROM_LOAD( "891n02.k15",   0x20000, 0x08000, 0xd44d9ed4 )
     ROM_CONTINUE(             0x08000, 0x08000 )
@@ -450,7 +448,7 @@ ROM_START( bottom9n )
 	ROM_LOAD( "891e07a",      0x00000, 0x10000, 0xb8d8b939 )	/* zoom/rotate */
 	ROM_LOAD( "891e07b",      0x10000, 0x10000, 0x83b2f92d )
 
-	ROM_REGION( 0x10000 ) /* Z80 code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Z80 code */
 	ROM_LOAD( "891j01.g8",    0x0000, 0x8000, 0x31b0a0a8 )
 
 	ROM_REGION( 0x40000 ) /* samples for 007232 #0 */
@@ -465,7 +463,7 @@ ROM_START( bottom9n )
 	ROM_LOAD( "891e04c",      0x20000, 0x10000, 0x2dbbf16b )
 	ROM_LOAD( "891e04d",      0x30000, 0x10000, 0x8b0cd2cc )
 
-	ROM_REGION(0x0200)	/* PROMs */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "891b11.f23",   0x0000, 0x0100, 0xecb854aa )	/* priority encoder (not used) */
 ROM_END
 

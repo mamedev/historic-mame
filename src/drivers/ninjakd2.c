@@ -250,7 +250,7 @@ static int ninjakd2_bank_latch = 255;
 int ninjakd2_init_samples(const struct MachineSound *msound)
 {
 	int i,n;
-	unsigned char *source = Machine->memory_region[3];
+	unsigned char *source = memory_region(3);
 	struct GameSamples *samples;
 	int sample_info [9][2] = { {0x0000,0x0A00},{0x0A00,0x1D00},{0x2700,0x1700},
 	{0x3E00,0x1500},{0x5300,0x0B00},{0x5E00,0x0A00},{0x6800,0x0E00},{0x7600,0x1E00},{0xF000,0x0400} };
@@ -291,7 +291,7 @@ int ninjakd2_bankselect_r(int offset)
 
 void ninjakd2_bankselect_w(int offset, int data)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
 
 	if (data != ninjakd2_bank_latch)
@@ -541,7 +541,6 @@ static struct MachineDriver ninjakd2_machine_driver =
 		{
 			CPU_Z80,
 			6000000,		/* 12000000/2 ??? */
-			0,			/* & vbl duration since sprites are */
 			readmem,writemem,0,0,	/* very sensitive to these settings */
 			ninjakd2_interrupt,1
 		}
@@ -576,14 +575,12 @@ static struct MachineDriver ninjak2a_machine_driver =
 		{
 			CPU_Z80,
 			6000000,		/* 12000000/2 ??? */
-			0,			/* & vbl duration since sprites are */
 			readmem,writemem,0,0,	/* very sensitive to these settings */
 			ninjakd2_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,		/* 12000000/3 ??? */
-			2,
 			snd_readmem,snd_writemem,0,snd_writeport,
 			ignore_interrupt,0,
 		}
@@ -623,7 +620,7 @@ static struct MachineDriver ninjak2a_machine_driver =
 
 
 ROM_START( ninjakd2 )
-	ROM_REGION(0x30000)
+	ROM_REGIONX( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "nk2_01.rom",   0x00000, 0x8000, 0x3cdbb906 )
 	ROM_LOAD( "nk2_02.rom",   0x10000, 0x8000, 0xb5ce9a1a )
 	ROM_LOAD( "nk2_03.rom",   0x18000, 0x8000, 0xad275654 )
@@ -652,7 +649,7 @@ ROM_START( ninjakd2 )
 	ROM_CONTINUE(	        0x42000, 0x02000)
 	ROM_CONTINUE(	        0x46000, 0x02000)
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "nk2_06.rom",   0x0000, 0x10000, 0xd3a18a79 )  // sound z80 code encrypted
 
 	ROM_REGION(0x10000)
@@ -660,7 +657,7 @@ ROM_START( ninjakd2 )
 ROM_END
 
 ROM_START( ninjak2a )
-	ROM_REGION(0x30000)
+	ROM_REGIONX( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "nk2_01.bin",   0x00000, 0x8000, 0xe6adca65 )
 	ROM_LOAD( "nk2_02.bin",   0x10000, 0x8000, 0xd9284bd1 )
 	ROM_LOAD( "nk2_03.rom",   0x18000, 0x8000, 0xad275654 )
@@ -689,7 +686,7 @@ ROM_START( ninjak2a )
 	ROM_CONTINUE(	        0x42000, 0x02000)
 	ROM_CONTINUE(	        0x46000, 0x02000)
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "nk2_06.bin",   0x0000, 0x10000, 0x7bfe6c9e )  // sound z80 code encrypted
 
 	ROM_REGION(0x10000)
@@ -697,7 +694,7 @@ ROM_START( ninjak2a )
 ROM_END
 
 ROM_START( ninjak2b )
-	ROM_REGION(0x30000)
+	ROM_REGIONX( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "1.3s",         0x00000, 0x8000, 0xcb4f4624 )
 	ROM_LOAD( "2.3q",         0x10000, 0x8000, 0x0ad0c100 )
 	ROM_LOAD( "nk2_03.rom",   0x18000, 0x8000, 0xad275654 )
@@ -726,7 +723,7 @@ ROM_START( ninjak2b )
 	ROM_CONTINUE(	        0x42000, 0x02000)
 	ROM_CONTINUE(	        0x46000, 0x02000)
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "nk2_06.bin",   0x0000, 0x10000, 0x7bfe6c9e )  // sound z80 code encrypted
 
 	ROM_REGION(0x10000)
@@ -734,7 +731,7 @@ ROM_START( ninjak2b )
 ROM_END
 
 ROM_START( rdaction )
-	ROM_REGION(0x30000)
+	ROM_REGIONX( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "1.3u",  	  0x00000, 0x8000, 0x5c475611 )
 	ROM_LOAD( "2.3s",         0x10000, 0x8000, 0xa1e23bd2 )
 	ROM_LOAD( "nk2_03.rom",   0x18000, 0x8000, 0xad275654 )
@@ -763,7 +760,7 @@ ROM_START( rdaction )
 	ROM_CONTINUE(	        0x42000, 0x02000)
 	ROM_CONTINUE(	        0x46000, 0x02000)
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "nk2_06.bin",   0x0000, 0x10000, 0x7bfe6c9e )  // sound z80 code encrypted
 
 	ROM_REGION(0x10000)
@@ -775,7 +772,7 @@ ROM_END
 static int hiload(void)
 {
     void *f;
-    unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+    unsigned char *RAM = memory_region(REGION_CPU1);
 
     /* check if the hi score table has already been initialized */
     if (memcmp(&RAM[0xe0f4],"\x00\x30\x00",3) == 0 )
@@ -795,7 +792,7 @@ static int hiload(void)
 static void hisave(void)
 {
     void *f;
-    unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+    unsigned char *RAM = memory_region(REGION_CPU1);
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
     {
@@ -809,7 +806,7 @@ void ninjak2a_sound_decode(void)
 {
 	int A;
 	extern int encrypted_cpu;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU2);
 
 	encrypted_cpu = 1;
 

@@ -96,7 +96,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_V30,
 			32000000/4,	/* ??? */
-			0,
 			readmem,writemem,0,0,
 			ignore_interrupt,1
 		},
@@ -104,7 +103,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			26666666/8,	/* ??? */
-			2,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -147,7 +145,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( riskchal )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_V20_EVEN( "rc_h0.rom",    0x80000, 0x40000, 0x4c9b5344 )
 	ROM_LOAD_V20_ODD ( "rc_l0.rom",    0x80000, 0x40000, 0x0455895a )
 
@@ -157,7 +155,7 @@ ROM_START( riskchal )
 	ROM_LOAD( "rc_c2.rom",    0x100000, 0x80000, 0x687164d7 )
 	ROM_LOAD( "rc_c3.rom",    0x180000, 0x80000, 0xc86be6af )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "rc_sp.rom",    0x0000, 0x10000, 0xbb80094e )
 
 	ROM_REGION(0x40000)	/* ADPCM samples */
@@ -165,7 +163,7 @@ ROM_START( riskchal )
 ROM_END
 
 ROM_START( gussun )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_V20_EVEN( "l4_h0.rom",    0x80000, 0x40000, 0x9d585e61 )
 	ROM_LOAD_V20_ODD ( "l4_l0.rom",    0x80000, 0x40000, 0xc7b4c519 )
 
@@ -175,7 +173,7 @@ ROM_START( gussun )
 	ROM_LOAD( "rc_c2.rom",    0x100000, 0x80000, 0x687164d7 )
 	ROM_LOAD( "rc_c3.rom",    0x180000, 0x80000, 0xc86be6af )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "rc_sp.rom",    0x0000, 0x10000, 0xbb80094e )
 
 	ROM_REGION(0x40000)	/* ADPCM samples */
@@ -183,7 +181,7 @@ ROM_START( gussun )
 ROM_END
 
 ROM_START( shisen2 )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_V20_EVEN( "sis2-ho-.rom", 0x80000, 0x40000, 0x6fae0aea )
 	ROM_LOAD_V20_ODD ( "sis2-lo-.rom", 0x80000, 0x40000, 0x2af25182 )
 
@@ -193,12 +191,12 @@ ROM_START( shisen2 )
 	ROM_LOAD( "ic83.rom",     0x100000, 0x80000, 0x2bd65dc6 )
 	ROM_LOAD( "ic84.rom",     0x180000, 0x80000, 0x876d5fdb )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "sis2-sp-.rom", 0x0000, 0x10000, 0x6fc0ff3a )
 ROM_END
 
 ROM_START( quizf1 )
-	ROM_REGION(0x200000)
+	ROM_REGIONX( 0x200000, REGION_CPU1 )
 	ROM_LOAD_V20_EVEN( "qf1-h0-.77",   0x080000, 0x40000, 0x280e3049 )
 	ROM_LOAD_V20_ODD ( "qf1-l0-.79",   0x080000, 0x40000, 0x94588a6f )
 	ROM_LOAD_V20_EVEN( "qf1-h1-.78",   0x100000, 0x80000, 0xc6c2eb2b )	/* banked? */
@@ -210,7 +208,7 @@ ROM_START( quizf1 )
 	ROM_LOAD( "qf1-c2-.83",   0x100000, 0x80000, 0x0b1460ae )
 	ROM_LOAD( "qf1-c3-.84",   0x180000, 0x80000, 0x2d32ff37 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "qf1-sp-.33",   0x0000, 0x10000, 0x0664fa9f )
 
 	ROM_REGION(0x40000)	/* ADPCM samples */
@@ -218,7 +216,7 @@ ROM_START( quizf1 )
 ROM_END
 
 ROM_START( atompunk )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_V20_EVEN( "bm2-ho-a.9f",  0x080000, 0x40000, 0x7d858682 )
 	ROM_LOAD_V20_ODD ( "bm2-lo-a.9k",  0x080000, 0x40000, 0xc7568031 )
 
@@ -228,7 +226,7 @@ ROM_START( atompunk )
 	ROM_LOAD( "bbm2_c2.bin",  0x100000, 0x40000, 0x9ac2142f )
 	ROM_LOAD( "bbm2_c3.bin",  0x180000, 0x40000, 0x47af1750 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "5j",           0x0000, 0x10000, 0x6bc1689e )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
@@ -236,7 +234,7 @@ ROM_START( atompunk )
 ROM_END
 
 ROM_START( bbmanw )
-	ROM_REGION(0x100000)
+	ROM_REGIONX( 0x100000, REGION_CPU1 )
 	ROM_LOAD_V20_EVEN( "bbm2_h0.bin",  0x080000, 0x20000, 0xf694b461 )
 	ROM_LOAD_V20_ODD ( "bbm2_l0.bin",  0x080000, 0x20000, 0x755126cc )
 
@@ -246,7 +244,7 @@ ROM_START( bbmanw )
 	ROM_LOAD( "bbm2_c2.bin",  0x100000, 0x40000, 0x9ac2142f )
 	ROM_LOAD( "bbm2_c3.bin",  0x180000, 0x40000, 0x47af1750 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "bbm2sp-b.bin", 0x0000, 0x10000, 0xb8d8108c )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */

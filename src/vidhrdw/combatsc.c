@@ -357,7 +357,7 @@ static void draw_sprites( struct osd_bitmap *bitmap, const unsigned char *source
 	const struct GfxElement *gfx = Machine->gfx[circuit+2];
 	const struct rectangle *clip = &Machine->drv->visible_area;
 
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int limit = ( circuit) ? (RAM[0xc2]*256 + RAM[0xc3]) : (RAM[0xc0]*256 + RAM[0xc1]);
 	const unsigned char *finish;
 

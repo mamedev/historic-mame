@@ -538,14 +538,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4000000,        /* 4 Mhz (?) */
-			0,
 			readmem,writemem,0,0,
 			lwings_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3000000,        /* 3 Mhz (?) */
-			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
 		}
@@ -584,7 +582,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( lwings )
-	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "6c_lw01.bin",  0x00000, 0x8000, 0xb55a7f60 )
 	ROM_LOAD( "7c_lw02.bin",  0x10000, 0x8000, 0xa5efbb1b )
 	ROM_LOAD( "9c_lw03.bin",  0x18000, 0x8000, 0xec5cc201 )
@@ -604,12 +602,12 @@ ROM_START( lwings )
 	ROM_LOAD( "3h_lw16.bin",  0x60000, 0x8000, 0xe8834006 )
 	ROM_LOAD( "1h_lw10.bin",  0x68000, 0x8000, 0xb693f5a5 )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "11e_lw04.bin", 0x0000, 0x8000, 0xa20337a2 )
 ROM_END
 
 ROM_START( lwings2 )
-	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "u13-l",        0x00000, 0x8000, 0x3069c01c )
 	ROM_LOAD( "u14-k",        0x10000, 0x8000, 0x5d91c828 )
 	ROM_LOAD( "9c_lw03.bin",  0x18000, 0x8000, 0xec5cc201 )
@@ -629,12 +627,12 @@ ROM_START( lwings2 )
 	ROM_LOAD( "b_03h.rom",    0x60000, 0x8000, 0x7d58f532 )
 	ROM_LOAD( "b_01h.rom",    0x68000, 0x8000, 0x3e396eda )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "11e_lw04.bin", 0x0000, 0x8000, 0xa20337a2 )
 ROM_END
 
 ROM_START( lwingsjp )
-	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "a_06c.rom",    0x00000, 0x8000, 0x2068a738 )
 	ROM_LOAD( "a_07c.rom",    0x10000, 0x8000, 0xd6a2edc4 )
 	ROM_LOAD( "9c_lw03.bin",  0x18000, 0x8000, 0xec5cc201 )
@@ -654,7 +652,7 @@ ROM_START( lwingsjp )
 	ROM_LOAD( "b_03h.rom",    0x60000, 0x8000, 0x7d58f532 )
 	ROM_LOAD( "b_01h.rom",    0x68000, 0x8000, 0x3e396eda )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "11e_lw04.bin", 0x0000, 0x8000, 0xa20337a2 )
 ROM_END
 
@@ -662,7 +660,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -691,7 +689,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -792,7 +790,7 @@ struct GameDriver driver_lwingsjp =
 
 
 ROM_START( sectionz )
-	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "6c_sz01.bin",  0x00000, 0x8000, 0x69585125 )
 	ROM_LOAD( "7c_sz02.bin",  0x10000, 0x8000, 0x22f161b8 )
 	ROM_LOAD( "9c_sz03.bin",  0x18000, 0x8000, 0x4c7111ed )
@@ -812,12 +810,12 @@ ROM_START( sectionz )
 	ROM_LOAD( "3h_sz16.bin",  0x60000, 0x8000, 0x500ff2bb )
 	ROM_LOAD( "1h_sz10.bin",  0x68000, 0x8000, 0x00b3d244 )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "11e_sz04.bin", 0x0000, 0x8000, 0xa6073566 )
 ROM_END
 
 ROM_START( sctionza )
-	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "sz-01a.bin",   0x00000, 0x8000, 0x98df49fd )
 	ROM_LOAD( "7c_sz02.bin",  0x10000, 0x8000, 0x22f161b8 )
 	ROM_LOAD( "sz-03j.bin",   0x18000, 0x8000, 0x94547abf )
@@ -837,7 +835,7 @@ ROM_START( sctionza )
 	ROM_LOAD( "3h_sz16.bin",  0x60000, 0x8000, 0x500ff2bb )
 	ROM_LOAD( "1h_sz10.bin",  0x68000, 0x8000, 0x00b3d244 )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "11e_sz04.bin", 0x0000, 0x8000, 0xa6073566 )
 ROM_END
 
@@ -984,14 +982,12 @@ static struct MachineDriver trojan_machine_driver =
 		{
 			CPU_Z80,
 			4000000,        /* 4 Mhz (?) */
-			0,
 			readmem,trojan_writemem,0,0,
 			lwings_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3000000,        /* 3 Mhz (?) */
-			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
 		}
@@ -1030,7 +1026,7 @@ static struct MachineDriver trojan_machine_driver =
 
 
 ROM_START( trojan )
-	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "t4",           0x00000, 0x8000, 0xc1bbeb4e )
 	ROM_LOAD( "t6",           0x10000, 0x8000, 0xd49592ef )
 	ROM_LOAD( "tb05.bin",     0x18000, 0x8000, 0x9273b264 )
@@ -1056,7 +1052,7 @@ ROM_START( trojan )
 	ROM_LOAD( "tb25.bin",     0x90000, 0x8000, 0x6e38c6fa )     /* Bk Tiles */
 	ROM_LOAD( "tb24.bin",     0x98000, 0x8000, 0x14fc6cf2 )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "tb02.bin",     0x0000, 0x8000, 0x21154797 )
 
 	ROM_REGION(0x08000)     /* 64k for ADPCM CPU (CPU not emulated) */
@@ -1067,7 +1063,7 @@ ROM_START( trojan )
 ROM_END
 
 ROM_START( trojanr )
-	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "tb04.bin",     0x00000, 0x8000, 0x92670f27 )
 	ROM_LOAD( "tb06.bin",     0x10000, 0x8000, 0xa4951173 )
 	ROM_LOAD( "tb05.bin",     0x18000, 0x8000, 0x9273b264 )
@@ -1093,7 +1089,7 @@ ROM_START( trojanr )
 	ROM_LOAD( "tb25.bin",     0x90000, 0x8000, 0x6e38c6fa )     /* Bk Tiles */
 	ROM_LOAD( "tb24.bin",     0x98000, 0x8000, 0x14fc6cf2 )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "tb02.bin",     0x0000, 0x8000, 0x21154797 )
 
 	ROM_REGION(0x08000)     /* 64k for ADPCM CPU (CPU not emulated) */
@@ -1104,7 +1100,7 @@ ROM_START( trojanr )
 ROM_END
 
 ROM_START( trojanj )
-	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "troj-04.rom",  0x00000, 0x8000, 0x0b5a7f49 )
 	ROM_LOAD( "troj-06.rom",  0x10000, 0x8000, 0xdee6ed92 )
 	ROM_LOAD( "tb05.bin",     0x18000, 0x8000, 0x9273b264 )
@@ -1130,7 +1126,7 @@ ROM_START( trojanj )
 	ROM_LOAD( "tb25.bin",     0x90000, 0x8000, 0x6e38c6fa )     /* Bk Tiles */
 	ROM_LOAD( "tb24.bin",     0x98000, 0x8000, 0x14fc6cf2 )
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "tb02.bin",     0x0000, 0x8000, 0x21154797 )
 
 	ROM_REGION(0x08000)     /* 64k for ADPCM CPU (CPU not emulated) */
@@ -1144,7 +1140,7 @@ ROM_END
 
 static int trojan_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1170,7 +1166,7 @@ static int trojan_hiload(void)
 static void trojan_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1328,14 +1324,12 @@ static struct MachineDriver avengers_machine_driver =
 		{
 			CPU_Z80,
 			4000000,        /* 4 Mhz (?) */
-			0,
 			readmem,trojan_writemem,0,0,
 			avengers_interrupt,2
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3000000,        /* 3 Mhz (?) */
-			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
 		}
@@ -1415,7 +1409,7 @@ INPUT_PORTS_END
 
 
 ROM_START( avengers )
-	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "04.10n",       0x00000, 0x8000, 0xa94aadcc )
 	ROM_LOAD( "06.13n",       0x10000, 0x8000, 0x39cd80bd )
 	ROM_LOAD( "05.12n",       0x18000, 0x8000, 0x06b1cec9 )
@@ -1447,7 +1441,7 @@ ROM_START( avengers )
 	ROM_LOAD( "25.15n",       0x90000, 0x8000, 0x230d9e30 ) /* planes 0,1 */
 	ROM_LOAD( "24.13n",       0x98000, 0x8000, 0xa6354024 ) /* planes 2,3 */
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "02.15h",       0x0000, 0x8000, 0x107a2e17 ) /* ?? */
 
 	ROM_REGION(0x10000)     /* ADPCM CPU (not emulated) */
@@ -1458,7 +1452,7 @@ ROM_START( avengers )
 ROM_END
 
 ROM_START( avenger2 )
-	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "avg4.bin",     0x00000, 0x8000, 0x0fea7ac5 )
 	ROM_LOAD( "avg6.bin",     0x10000, 0x8000, 0x491a712c )
 	ROM_LOAD( "avg5.bin",     0x18000, 0x8000, 0x9a214b42 )
@@ -1490,7 +1484,7 @@ ROM_START( avenger2 )
 	ROM_LOAD( "25.15n",       0x90000, 0x8000, 0x230d9e30 ) /* planes 0,1 */
 	ROM_LOAD( "24.13n",       0x98000, 0x8000, 0xa6354024 ) /* planes 2,3 */
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 ROM_LOAD( "02.15h",       0x0000, 0x8000, 0x107a2e17 ) /* MISSING from this set */
 
 	ROM_REGION(0x10000)     /* ADPCM CPU (not emulated) */

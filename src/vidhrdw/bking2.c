@@ -214,7 +214,7 @@ int bking2_input_port_6_r(int offset)
    what the code expects, otherwise the collision detection is skipped */
 int bking2_pos_r(int offset)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	UINT16 pos, x, y;
 

@@ -119,8 +119,8 @@ static void create_background(struct osd_bitmap *dst_bm, struct osd_bitmap *src_
 			sy += 256;
 
 		drawgfx(src_bm,Machine->gfx[1],
-				Machine->memory_region[2][offs] + 256 * (Machine->memory_region[2][0x4000 + offs] & 3),
-				col + (Machine->memory_region[2][0x4000 + offs] >> 4),
+				memory_region(2)[offs] + 256 * (memory_region(2)[0x4000 + offs] & 3),
+				col + (memory_region(2)[0x4000 + offs] >> 4),
 				0,0,
 				sx,sy,
 				0,TRANSPARENCY_NONE,0);
@@ -209,11 +209,6 @@ int zaxxon_vh_start(void)
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 		osd_free_bitmap(prebitmap);
 
-	/* free the graphics ROMs, they are no longer needed */
-	free(Machine->memory_region[2]);
-	Machine->memory_region[2] = 0;
-
-
 	return 0;
 }
 
@@ -249,24 +244,19 @@ int razmataz_vh_start(void)
 		sx = 8 * (offs % 32);
 
 		drawgfx(backgroundbitmap1,Machine->gfx[1],
-				Machine->memory_region[2][offs] + 256 * (Machine->memory_region[2][0x4000 + offs] & 3),
-				Machine->memory_region[2][0x4000 + offs] >> 4,
+				memory_region(2)[offs] + 256 * (memory_region(2)[0x4000 + offs] & 3),
+				memory_region(2)[0x4000 + offs] >> 4,
 				0,0,
 				sx,sy,
 				0,TRANSPARENCY_NONE,0);
 
 		drawgfx(backgroundbitmap2,Machine->gfx[1],
-				Machine->memory_region[2][offs] + 256 * (Machine->memory_region[2][0x4000 + offs] & 3),
-				16 + (Machine->memory_region[2][0x4000 + offs] >> 4),
+				memory_region(2)[offs] + 256 * (memory_region(2)[0x4000 + offs] & 3),
+				16 + (memory_region(2)[0x4000 + offs] >> 4),
 				0,0,
 				sx,sy,
 				0,TRANSPARENCY_NONE,0);
 	}
-
-
-	/* free the graphics ROMs, they are no longer needed */
-	free(Machine->memory_region[2]);
-	Machine->memory_region[2] = 0;
 
 	return 0;
 }

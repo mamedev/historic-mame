@@ -229,7 +229,7 @@ int kageki_init_samples(const struct MachineSound *msound)
 
 	for (i = 0; i < samples->total; i++)
 	{
-		src = Machine->memory_region[3] + 0x0090;
+		src = memory_region(3) + 0x0090;
 		start = (src[(i * 2) + 1] * 256) + src[(i * 2)];
 		scan = &src[start];
 		size = 0;
@@ -1356,14 +1356,12 @@ static struct MachineDriver arkanoi2_machine_driver =
 			CPU_Z80,
 			8000000,	/* ?? Hz (only crystal is 12MHz) */
 						/* 8MHz is wrong, but extrmatn doesn't work properly at 6MHz */
-			0,			/* memory region */
 			readmem,writemem,0,0,
 			tnzs_interrupt,1
 		},
 		{
 			CPU_Z80,
 			6000000,	/* ?? Hz */
-			2,			/* memory region */
 			sub_readmem,sub_writemem,0,0,
 			interrupt,1
 		},
@@ -1401,14 +1399,12 @@ static struct MachineDriver drtoppel_machine_driver =
 		{
 			CPU_Z80,
 			12000000/2,		/* 6.0 MHz ??? - Main board Crystal is 12Mhz */
-			0,				/* memory region */
 			readmem,writemem,0,0,
 			tnzs_interrupt,1
 		},
 		{
 			CPU_Z80,
 			12000000/2,		/* 6.0 MHz ??? - Main board Crystal is 12Mhz */
-			2,				/* memory region */
 			sub_readmem,sub_writemem,0,0,
 			interrupt,1
 		},
@@ -1446,14 +1442,12 @@ static struct MachineDriver tnzs_machine_driver =
 		{
 			CPU_Z80,
 			12000000/2,		/* 6.0 MHz ??? - Main board Crystal is 12Mhz */
-			0,				/* memory_region */
 			readmem,writemem,0,0,
 			tnzs_interrupt,1
 		},
 		{
 			CPU_Z80,
 			12000000/2,		/* 6.0 MHz ??? - Main board Crystal is 12Mhz */
-			2,				/* memory_region */
 			sub_readmem,sub_writemem,0,0,
 			interrupt,1
 		}
@@ -1492,21 +1486,18 @@ static struct MachineDriver tnzsb_machine_driver =
 		{
 			CPU_Z80,
 			6000000,		/* 6 Mhz(?) */
-			0,				/* memory_region */
 			readmem,writemem,0,0,
 			tnzs_interrupt,1
 		},
 		{
 			CPU_Z80,
 			6000000,		/* 6 Mhz(?) */
-			2,				/* memory_region */
 			tnzsb_readmem1,tnzsb_writemem1,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
 			4000000,		/* 4 Mhz??? */
-			3,				/* memory_region */
 			tnzsb_readmem2,tnzsb_writemem2,tnzsb_readport,tnzsb_writeport,
 			ignore_interrupt,1
 		}
@@ -1545,14 +1536,12 @@ static struct MachineDriver insectx_machine_driver =
 		{
 			CPU_Z80,
 			6000000,	/* 6 Mhz(?) */
-			0,			/* memory_region */
 			readmem,writemem,0,0,
 			tnzs_interrupt,1
 		},
 		{
 			CPU_Z80,
 			6000000,	/* 6 Mhz(?) */
-			2,			/* memory_region */
 			sub_readmem,sub_writemem,0,0,
 			interrupt,1
 		}
@@ -1590,14 +1579,12 @@ static struct MachineDriver kageki_machine_driver =
 		{
 			CPU_Z80,
 			6000000,		/* 12000000/2 ??? */
-			0,			/* memory_region */
 			readmem, writemem, 0, 0,
 			tnzs_interrupt, 1
 		},
 		{
 			CPU_Z80,
 			4000000,		/* 12000000/3 ??? */
-			2,			/* memory_region */
 			kageki_sub_readmem, kageki_sub_writemem, 0, 0,
 			interrupt, 1
 		}
@@ -1646,7 +1633,7 @@ static struct MachineDriver kageki_machine_driver =
 ***************************************************************************/
 
 ROM_START( extrmatn )
-	ROM_REGION(0x30000)				/* Region 0 - main cpu */
+	ROM_REGIONX( 0x30000, REGION_CPU1 )				/* Region 0 - main cpu */
 	ROM_LOAD( "b06-20.bin", 0x00000, 0x08000, 0x04e3fc1f )
 	ROM_CONTINUE(           0x18000, 0x08000 )				/* banked at 8000-bfff */
 	ROM_LOAD( "b06-21.bin", 0x20000, 0x10000, 0x1614d6a2 )	/* banked at 8000-bfff */
@@ -1657,7 +1644,7 @@ ROM_START( extrmatn )
 	ROM_LOAD( "b06-03.bin", 0x40000, 0x20000, 0xee80ab9d )
 	ROM_LOAD( "b06-04.bin", 0x60000, 0x20000, 0x3697ace4 )
 
-	ROM_REGION(0x18000)				/* Region 2 - sound cpu */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )				/* Region 2 - sound cpu */
 	ROM_LOAD( "b06-06.bin", 0x00000, 0x08000, 0x744f2c84 )
 	ROM_CONTINUE(           0x10000, 0x08000 )	/* banked at 8000-9fff */
 
@@ -1667,7 +1654,7 @@ ROM_START( extrmatn )
 ROM_END
 
 ROM_START( arkanoi2 )
-	ROM_REGION(0x30000)				/* Region 0 - main cpu */
+	ROM_REGIONX( 0x30000, REGION_CPU1 )				/* Region 0 - main cpu */
 	ROM_LOAD( "a2-05.rom",  0x00000, 0x08000, 0x136edf9d )
 	ROM_CONTINUE(           0x18000, 0x08000 )			/* banked at 8000-bfff */
 	/* 20000-2ffff empty */
@@ -1678,7 +1665,7 @@ ROM_START( arkanoi2 )
 	ROM_LOAD( "a2-m03.bin", 0x40000, 0x20000, 0x274a795f )
 	ROM_LOAD( "a2-m04.bin", 0x60000, 0x20000, 0x9754f703 )
 
-	ROM_REGION(0x18000)				/* Region 2 - sound cpu */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )				/* Region 2 - sound cpu */
 	ROM_LOAD( "a2-13.rom",  0x00000, 0x08000, 0xe8035ef1 )
 	ROM_CONTINUE(           0x10000, 0x08000 )			/* banked at 8000-9fff */
 
@@ -1688,7 +1675,7 @@ ROM_START( arkanoi2 )
 ROM_END
 
 ROM_START( ark2us )
-	ROM_REGION(0x30000)				/* Region 0 - main cpu */
+	ROM_REGIONX( 0x30000, REGION_CPU1 )				/* Region 0 - main cpu */
 	ROM_LOAD( "b08-11.bin", 0x00000, 0x08000, 0x99555231 )
 	ROM_CONTINUE(           0x18000, 0x08000 )			/* banked at 8000-bfff */
 	/* 20000-2ffff empty */
@@ -1699,7 +1686,7 @@ ROM_START( ark2us )
 	ROM_LOAD( "a2-m03.bin", 0x40000, 0x20000, 0x274a795f )
 	ROM_LOAD( "a2-m04.bin", 0x60000, 0x20000, 0x9754f703 )
 
-	ROM_REGION(0x18000)				/* Region 2 - sound cpu */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )				/* Region 2 - sound cpu */
 	ROM_LOAD( "b08-12.bin", 0x00000, 0x08000, 0xdc84e27d )
 	ROM_CONTINUE(           0x10000, 0x08000 )			/* banked at 8000-9fff */
 
@@ -1709,7 +1696,7 @@ ROM_START( ark2us )
 ROM_END
 
 ROM_START( ark2jp )
-	ROM_REGION(0x30000)				/* Region 0 - main cpu */
+	ROM_REGIONX( 0x30000, REGION_CPU1 )				/* Region 0 - main cpu */
 	ROM_LOAD( "a2-05.rom",  0x00000, 0x08000, 0x136edf9d )
 	ROM_CONTINUE(           0x18000, 0x08000 )			/* banked at 8000-bfff */
 	/* 20000-2ffff empty */
@@ -1720,7 +1707,7 @@ ROM_START( ark2jp )
 	ROM_LOAD( "a2-m03.bin", 0x40000, 0x20000, 0x274a795f )
 	ROM_LOAD( "a2-m04.bin", 0x60000, 0x20000, 0x9754f703 )
 
-	ROM_REGION(0x18000)				/* Region 2 - sound cpu */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )				/* Region 2 - sound cpu */
 	ROM_LOAD( "b08-06",     0x00000, 0x08000, 0xadfcd40c )
 	ROM_CONTINUE(           0x10000, 0x08000 )			/* banked at 8000-9fff */
 
@@ -1730,7 +1717,7 @@ ROM_START( ark2jp )
 ROM_END
 
 ROM_START( drtoppel )
-	ROM_REGION(0x30000)	/* 64k + bankswitch areas for the first CPU */
+	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* 64k + bankswitch areas for the first CPU */
 	ROM_LOAD( "b19-09.bin", 0x00000, 0x08000, 0x3e654f82 )
 	ROM_CONTINUE(           0x18000, 0x08000 )				/* banked at 8000-bfff */
 	ROM_LOAD( "b19-10.bin", 0x20000, 0x10000, 0x7e72fd25 )	/* banked at 8000-bfff */
@@ -1745,7 +1732,7 @@ ROM_START( drtoppel )
 	ROM_LOAD( "b19-07.bin", 0xc0000, 0x20000, 0x8bb06f41 )
 	ROM_LOAD( "b19-08.bin", 0xe0000, 0x20000, 0x3584b491 )
 
-	ROM_REGION(0x18000)	/* 64k for the second CPU */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "b19-11.bin", 0x00000, 0x08000, 0x524dc249 )
 	ROM_CONTINUE(           0x10000, 0x08000 )		/* banked at 8000-9fff */
 
@@ -1755,7 +1742,7 @@ ROM_START( drtoppel )
 ROM_END
 
 ROM_START( chukatai )
-	ROM_REGION(0x30000)	/* 64k + bankswitch areas for the first CPU */
+	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* 64k + bankswitch areas for the first CPU */
 	ROM_LOAD( "b44.10", 0x00000, 0x08000, 0x8c69e008 )
 	ROM_CONTINUE(       0x18000, 0x08000 )				/* banked at 8000-bfff */
 	ROM_LOAD( "b44.11", 0x20000, 0x10000, 0x32484094 )  /* banked at 8000-bfff */
@@ -1770,13 +1757,13 @@ ROM_START( chukatai )
 	ROM_LOAD( "b44-07.a04", 0xc0000, 0x20000, 0x3e0e737e )
 	ROM_LOAD( "b44-08.a02", 0xe0000, 0x20000, 0x6cb1e8fc )
 
-	ROM_REGION(0x18000)	/* 64k for the second CPU */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "b44.12", 0x00000, 0x08000, 0x0600ace6 )
 	ROM_CONTINUE(       0x10000, 0x08000 )	/* banked at 8000-9fff */
 ROM_END
 
 ROM_START( tnzs )
-	ROM_REGION(0x30000)	/* 64k + bankswitch areas for the first CPU */
+	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* 64k + bankswitch areas for the first CPU */
 	ROM_LOAD( "nzsb5310.bin", 0x00000, 0x08000, 0xa73745c6 )
 	ROM_CONTINUE(             0x18000, 0x18000 )		/* banked at 8000-bfff */
 
@@ -1791,13 +1778,13 @@ ROM_START( tnzs )
 	ROM_LOAD( "nzsb5320.bin", 0xc0000, 0x20000, 0x095d0dc0 )
 	ROM_LOAD( "nzsb5321.bin", 0xe0000, 0x20000, 0x9800c54d )
 
-	ROM_REGION(0x18000)	/* 64k for the second CPU */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "nzsb5311.bin", 0x00000, 0x08000, 0x9784d443 )
 	ROM_CONTINUE(             0x10000, 0x08000 )		/* banked at 8000-9fff */
 ROM_END
 
 ROM_START( tnzsb )
-	ROM_REGION(0x30000)	/* 64k + bankswitch areas for the first CPU */
+	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* 64k + bankswitch areas for the first CPU */
 	ROM_LOAD( "nzsb5324.bin", 0x00000, 0x08000, 0xd66824c6 )
 	ROM_CONTINUE(             0x18000, 0x18000 )		/* banked at 8000-bfff */
 
@@ -1812,16 +1799,16 @@ ROM_START( tnzsb )
 	ROM_LOAD( "nzsb5320.bin", 0xc0000, 0x20000, 0x095d0dc0 )
 	ROM_LOAD( "nzsb5321.bin", 0xe0000, 0x20000, 0x9800c54d )
 
-	ROM_REGION(0x18000)	/* 64k for the second CPU */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "nzsb5325.bin", 0x00000, 0x08000, 0xd6ac4e71 )
 	ROM_CONTINUE(             0x10000, 0x08000 )		/* banked at 8000-9fff */
 
-	ROM_REGION(0x10000)	/* 64k for the third CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the third CPU */
 	ROM_LOAD( "nzsb5326.bin", 0x00000, 0x10000, 0xcfd5649c )
 ROM_END
 
 ROM_START( tnzs2 )
-	ROM_REGION(0x30000)	/* 64k + bankswitch areas for the first CPU */
+	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* 64k + bankswitch areas for the first CPU */
 	ROM_LOAD( "ns_c-11.rom",  0x00000, 0x08000, 0x3c1dae7b )
 	ROM_CONTINUE(             0x18000, 0x18000 )		/* banked at 8000-bfff */
 
@@ -1835,13 +1822,13 @@ ROM_START( tnzs2 )
 	ROM_LOAD( "ns_a04.rom",   0xc0000, 0x20000, 0xe1fd1b9d )
 	ROM_LOAD( "ns_a02.rom",   0xe0000, 0x20000, 0x2ab06bda )
 
-	ROM_REGION(0x18000)	/* 64k for the second CPU */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "ns_e-3.rom",   0x00000, 0x08000, 0xc7662e96 )
 	ROM_CONTINUE(             0x10000, 0x08000 )
 ROM_END
 
 ROM_START( insectx )
-	ROM_REGION(0x30000)	/* 64k + bankswitch areas for the first CPU */
+	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* 64k + bankswitch areas for the first CPU */
 	ROM_LOAD( "insector.u32", 0x00000, 0x08000, 0x18eef387 )
 	ROM_CONTINUE(             0x18000, 0x18000 )		/* banked at 8000-bfff */
 
@@ -1849,13 +1836,13 @@ ROM_START( insectx )
 	ROM_LOAD( "insector.r15", 0x00000, 0x80000, 0xd00294b1 )
 	ROM_LOAD( "insector.r16", 0x80000, 0x80000, 0xdb5a7434 )
 
-	ROM_REGION(0x18000)	/* 64k for the second CPU */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "insector.u38", 0x00000, 0x08000, 0x324b28c9 )
 	ROM_CONTINUE(             0x10000, 0x08000 )		/* banked at 8000-9fff */
 ROM_END
 
 ROM_START( kageki )
-	ROM_REGION(0x30000)		// main code
+	ROM_REGIONX( 0x30000, REGION_CPU1 )		// main code
 	ROM_LOAD( "b35-16.11c",  0x00000, 0x08000, 0xa4e6fd58 )	/* US ver */
 	ROM_CONTINUE(            0x18000, 0x08000 )
 	ROM_LOAD( "b35-10.9c",   0x20000, 0x10000, 0xb150457d )
@@ -1870,7 +1857,7 @@ ROM_START( kageki )
 	ROM_LOAD( "b35-07.4a",   0xc0000, 0x20000, 0x1b4af049 )
 	ROM_LOAD( "b35-08.2a",   0xe0000, 0x20000, 0xdeb2268c )
 
-	ROM_REGION(0x18000)		// sound code
+	ROM_REGIONX( 0x18000, REGION_CPU2 )		// sound code
 	ROM_LOAD( "b35-17.43e",  0x00000, 0x08000, 0xfdd9c246 )	/* US ver */
 	ROM_CONTINUE(            0x10000, 0x08000 )
 
@@ -1879,7 +1866,7 @@ ROM_START( kageki )
 ROM_END
 
 ROM_START( kagekij )
-	ROM_REGION(0x30000)		// main code
+	ROM_REGIONX( 0x30000, REGION_CPU1 )		// main code
 	ROM_LOAD( "b35-09j.11c", 0x00000, 0x08000, 0x829637d5 )	/* JP ver */
 	ROM_CONTINUE(            0x18000, 0x08000 )
 	ROM_LOAD( "b35-10.9c",   0x20000, 0x10000, 0xb150457d )
@@ -1894,7 +1881,7 @@ ROM_START( kagekij )
 	ROM_LOAD( "b35-07.4a",   0xc0000, 0x20000, 0x1b4af049 )
 	ROM_LOAD( "b35-08.2a",   0xe0000, 0x20000, 0xdeb2268c )
 
-	ROM_REGION(0x18000)		// sound code
+	ROM_REGIONX( 0x18000, REGION_CPU2 )		// sound code
 	ROM_LOAD( "b35-11j.43e", 0x00000, 0x08000, 0x64d093fc )	/* JP ver */
 	ROM_CONTINUE(            0x10000, 0x08000 )
 
@@ -1905,7 +1892,7 @@ ROM_END
 
 static int extrmatn_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	void *f;
 
@@ -1930,7 +1917,7 @@ static int extrmatn_hiload(void)
 
 static void extrmatn_hisave(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1944,7 +1931,7 @@ static void extrmatn_hisave(void)
 
 static int arkanoi2_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	void *f;
 
@@ -1972,7 +1959,7 @@ static int arkanoi2_hiload(void)
 
 static void arkanoi2_hisave(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1985,7 +1972,7 @@ static void arkanoi2_hisave(void)
 
 static int drtoppel_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	void *f;
 
@@ -2011,7 +1998,7 @@ static int drtoppel_hiload(void)
 
 static void drtoppel_hisave(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2026,7 +2013,7 @@ static void drtoppel_hisave(void)
 
 static int chukatai_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	void *f;
 
@@ -2052,7 +2039,7 @@ static int chukatai_hiload(void)
 
 static void chukatai_hisave(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2069,7 +2056,7 @@ static int tnzs_hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0xe6ad], "\x47\x55\x55", 3) == 0)
@@ -2089,7 +2076,7 @@ static int tnzs_hiload(void)
 
 static void tnzs_hisave(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2103,7 +2090,7 @@ static int tnzs2_hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0xec2a], "\x47\x55\x55", 3) == 0)
@@ -2123,7 +2110,7 @@ static int tnzs2_hiload(void)
 
 static void tnzs2_hisave(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2137,7 +2124,7 @@ static void tnzs2_hisave(void)
 
 static int insectx_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
 	if ((memcmp(&RAM[0xc604],"\x4b\x52\x59",3) == 0) &&
@@ -2163,7 +2150,7 @@ static int insectx_hiload(void)
 static void insectx_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -2174,7 +2161,7 @@ static void insectx_hisave(void)
 
 static int kageki_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
         if ((memcmp(&RAM[0xe057],"\x05\x10\x04",3) == 0) &&
@@ -2198,7 +2185,7 @@ static int kageki_hiload(void)
 static void kageki_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{

@@ -216,7 +216,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
 			12096000/8,	/* 1.512 Mhz?? */
-			0,
 			readmem,writemem,0,0,
 			interrupt,4
 		}
@@ -255,14 +254,14 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( qwakprot )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "qwak8000.bin", 0x8000, 0x1000, 0x4d002d8a )
 	ROM_LOAD( "qwak9000.bin", 0x9000, 0x1000, 0xe0c78fd7 )
 	ROM_LOAD( "qwaka000.bin", 0xa000, 0x1000, 0xe5770fc9 )
 	ROM_LOAD( "qwakb000.bin", 0xb000, 0x1000, 0x90771cc0 )
 	ROM_RELOAD(               0xf000, 0x1000 )	/* for the reset and interrupt vectors */
 
-	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x4000 )	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "qwakgfx0.bin", 0x0000, 0x1000, 0xbed2c067 )
 	ROM_LOAD( "qwakgfx1.bin", 0x1000, 0x1000, 0x73a31d28 )
 	ROM_LOAD( "qwakgfx2.bin", 0x2000, 0x1000, 0x07fd9e80 )
@@ -277,7 +276,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
 	if ((memcmp(&RAM[0x0045],"\x00\x50\x00",3) == 0) &&
@@ -300,7 +299,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{

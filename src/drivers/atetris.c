@@ -44,6 +44,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x2810, 0x281f, pokey2_r },
 	{ 0x4000, 0x7fff, atetris_slapstic_r },
 	{ 0x8000, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
@@ -162,7 +163,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
 			1750000,        /* 1.75 MHz??? */
-			0,
 			readmem,writemem,0,0,
 			interrupt,4
 		}
@@ -201,7 +201,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( atetris )
-	ROM_REGION(0x14000)     /* 80k for code */
+	ROM_REGIONX( 0x14000, REGION_CPU1 )     /* 80k for code */
 	ROM_LOAD( "1100.45f",     0x0000, 0x10000, 0x2acbdb09 )
 
 	ROM_REGION_DISPOSE(0x10000)     /* temporary space for graphics (disposed after conversion) */
@@ -209,7 +209,7 @@ ROM_START( atetris )
 ROM_END
 
 ROM_START( atetrisa )
-	ROM_REGION(0x14000)     /* 80k for code */
+	ROM_REGIONX( 0x14000, REGION_CPU1 )     /* 80k for code */
 	ROM_LOAD( "d1",           0x0000, 0x10000, 0x2bcab107 )
 
 	ROM_REGION_DISPOSE(0x10000)     /* temporary space for graphics (disposed after conversion) */
@@ -217,7 +217,7 @@ ROM_START( atetrisa )
 ROM_END
 
 ROM_START( atetrisb )
-	ROM_REGION(0x14000)     /* 80k for code */
+	ROM_REGIONX( 0x14000, REGION_CPU1 )     /* 80k for code */
 	ROM_LOAD( "tetris.01",    0x0000, 0x10000, 0x944d15f6 )
 
 	ROM_REGION_DISPOSE(0x10000)     /* temporary space for graphics (disposed after conversion) */
@@ -228,7 +228,7 @@ ROM_START( atetrisb )
 ROM_END
 
 ROM_START( atetcktl )
-	ROM_REGION(0x14000)     /* 80k for code */
+	ROM_REGIONX( 0x14000, REGION_CPU1 )     /* 80k for code */
 	ROM_LOAD( "tetcktl1.rom", 0x0000, 0x10000, 0x9afd1f4a )
 
 	ROM_REGION_DISPOSE(0x10000)     /* temporary space for graphics (disposed after conversion) */
@@ -236,7 +236,7 @@ ROM_START( atetcktl )
 ROM_END
 
 ROM_START( atetckt2 )
-	ROM_REGION(0x14000)     /* 80k for code */
+	ROM_REGIONX( 0x14000, REGION_CPU1 )     /* 80k for code */
 	ROM_LOAD( "1102.45f",     0x0000, 0x10000, 0x1bd28902 )
 
 	ROM_REGION_DISPOSE(0x10000)     /* temporary space for graphics (disposed after conversion) */
@@ -247,7 +247,7 @@ ROM_END
 
 static void atetris_rom_move (void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
     // Move the lower 16k to 0x10000
@@ -259,7 +259,7 @@ static void atetris_rom_move (void)
 static int hiload (void)
 {
    void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
    f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
@@ -282,7 +282,7 @@ static int hiload (void)
 static void hisave (void)
 {
    void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
    f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);

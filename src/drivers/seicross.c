@@ -48,7 +48,7 @@ static int nvram_size;
 static void friskyt_init_machine(void)
 {
 	/* start with the protection mcu halted */
-	cpu_halt(1,0);
+	cpu_set_halt_line(1, ASSERT_LINE);
 }
 
 static void no_nvram_init(void)
@@ -80,8 +80,8 @@ static void friskyt_portB_w(int offset,int data)
 	if (((portb & 4) == 0) && (data & 4))
 	{
 		/* reset and start the protection mcu */
-		cpu_set_reset_line(1,PULSE_LINE);
-		cpu_halt(1,1);
+		cpu_set_reset_line(1, PULSE_LINE);
+		cpu_set_halt_line(1, CLEAR_LINE);
 	}
 
 	/* other bits unknown */
@@ -418,14 +418,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 MHz? */
-			0,
 			readmem,writemem,readport,writeport,
 			interrupt,1
 		},
 		{
 			CPU_NSC8105,
 			6000000/4,	/* ??? */
-			3,
 			mcu_readmem,mcu_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -470,7 +468,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( friskyt )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ftom.01",      0x0000, 0x1000, 0xbce5d486 )
 	ROM_LOAD( "ftom.02",      0x1000, 0x1000, 0x63157d6e )
 	ROM_LOAD( "ftom.03",      0x2000, 0x1000, 0xc8d9ef2c )
@@ -490,12 +488,12 @@ ROM_START( friskyt )
 	ROM_LOAD( "ft.9c",        0x0000, 0x0020, 0x0032167e )
 	ROM_LOAD( "ft.9b",        0x0020, 0x0020, 0x6b364e69 )
 
-	ROM_REGION(0x10000)	/* 64k for the protection mcu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the protection mcu */
 	/* filled in later */
 ROM_END
 
 ROM_START( radrad )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1.3a",         0x0000, 0x1000, 0xb1e958ca )
 	ROM_LOAD( "2.3b",         0x1000, 0x1000, 0x30ba76b3 )
 	ROM_LOAD( "3.3c",         0x2000, 0x1000, 0x1c9f397b )
@@ -515,12 +513,12 @@ ROM_START( radrad )
 	ROM_LOAD( "clr.9c",       0x0000, 0x0020, 0xc9d88422 )
 	ROM_LOAD( "clr.9b",       0x0020, 0x0020, 0xee81af16 )
 
-	ROM_REGION(0x10000)	/* 64k for the protection mcu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the protection mcu */
 	/* filled in later */
 ROM_END
 
 ROM_START( seicross )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "smc1",         0x0000, 0x1000, 0xf6c3aeca )
 	ROM_LOAD( "smc2",         0x1000, 0x1000, 0x0ec6c218 )
 	ROM_LOAD( "smc3",         0x2000, 0x1000, 0xceb3c8f4 )
@@ -540,12 +538,12 @@ ROM_START( seicross )
 	ROM_LOAD( "sz73.10c",     0x0000, 0x0020, 0x4d218a3c )
 	ROM_LOAD( "sz74.10b",     0x0020, 0x0020, 0xc550531c )
 
-	ROM_REGION(0x10000)	/* 64k for the protection mcu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the protection mcu */
 	/* filled in later */
 ROM_END
 
 ROM_START( sectrzon )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sz1.3a",       0x0000, 0x1000, 0xf0a45cb4 )
 	ROM_LOAD( "sz2.3c",       0x1000, 0x1000, 0xfea68ddb )
 	ROM_LOAD( "sz3.3d",       0x2000, 0x1000, 0xbaad4294 )
@@ -565,7 +563,7 @@ ROM_START( sectrzon )
 	ROM_LOAD( "sz73.10c",     0x0000, 0x0020, 0x4d218a3c )
 	ROM_LOAD( "sz74.10b",     0x0020, 0x0020, 0xc550531c )
 
-	ROM_REGION(0x10000)	/* 64k for the protection mcu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the protection mcu */
 	/* filled in later */
 ROM_END
 
@@ -579,8 +577,8 @@ static void friskyt_decode(void)
 	/* the protection mcu shares the main program ROMs and RAM with the main CPU. */
 
 	/* copy over the ROMs */
-	src = memory_region(Machine->drv->cpu[0].memory_region);
-	dest = memory_region(Machine->drv->cpu[1].memory_region);
+	src = memory_region(REGION_CPU1);
+	dest = memory_region(REGION_CPU2);
 	for (A = 0;A < 0x8000;A++)
 		 dest[A + 0x8000] = src[A];
 }
@@ -625,7 +623,7 @@ void friskyt_nvram_save(void)
 
 static int seicross_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -648,7 +646,7 @@ static int seicross_hiload(void)
 static void seicross_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

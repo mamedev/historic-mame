@@ -595,21 +595,18 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			1250000,	/* 1.25 MHz */
-			0,			/* memory region */
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_M6809,
 			1250000,	/* 1.25 MHz */
-			1,			/* memory region #1 */
 			readmem_video,writemem_video,0,0,
 			ignore_interrupt,0
 		},
 		{
 			CPU_M6802 | CPU_AUDIO_CPU,
 			3680000/4,	/* 0.92 MHz */
-			2,			/* memory region #2 */
 			readmem_sound,writemem_sound,0,0,
 			ignore_interrupt,0
 		}
@@ -650,28 +647,24 @@ static struct MachineDriver mcu_machine_driver =
 		{
 			CPU_M6809,
 			1250000,	/* 1.25 MHz */
-			0,			/* memory region */
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_M6809,
 			1250000,	/* 1.25 MHz */
-			1,			/* memory region #1 */
 			readmem_video,writemem_video,0,0,
 			ignore_interrupt,0
 		},
 		{
 			CPU_M6802 | CPU_AUDIO_CPU,
 			3680000/4,	/* 0.92 MHz */
-			2,			/* memory region #2 */
 			readmem_sound,writemem_sound,0,0,
 			ignore_interrupt,0
 		},
 		{
 			CPU_M68705,
 			4000000/2,	/* xtal is 4MHz, I think it's divided by 2 internally */
-			3,	/* memory region #3 */
 			mcu_readmem,mcu_writemem,0,0,
 			ignore_interrupt,0      /* No periodic interrupt */
 		}
@@ -712,28 +705,24 @@ static struct MachineDriver zoo_machine_driver =
 		{
 			CPU_M6809,
 			1250000,		/* 1.25 MHz */
-			0,				/* memory region */
 			zoo_readmem,zoo_writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_M6809,
 			1250000,		/* 1.25 MHz */
-			1,				/* memory region #1 */
 			zoo_readmem_video, zoo_writemem_video, 0, 0,
 			ignore_interrupt,0
 		},
 		{
 			CPU_M6802 | CPU_AUDIO_CPU,
 			3680000/4,		/* 0.92 MHz */
-			2,				/* memory region #2 */
 			zoo_readmem_sound,zoo_writemem_sound,0,0,
 			ignore_interrupt,0
 		},
 		{
 			CPU_M68705,
 			4000000/2,	/* xtal is 4MHz, I think it's divided by 2 internally */
-			3,	/* memory region #3 */
 			mcu_readmem,mcu_writemem,0,0,
 			ignore_interrupt,0      /* No periodic interrupt */
 		}
@@ -776,7 +765,7 @@ static struct MachineDriver zoo_machine_driver =
 ***************************************************************************/
 
 ROM_START( qix )
-	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code for the first CPU (Data) */
 	ROM_LOAD( "u12",          0xC000, 0x0800, 0xaad35508 )
 	ROM_LOAD( "u13",          0xC800, 0x0800, 0x46c13504 )
 	ROM_LOAD( "u14",          0xD000, 0x0800, 0x5115e896 )
@@ -786,7 +775,7 @@ ROM_START( qix )
 	ROM_LOAD( "u18",          0xF000, 0x0800, 0xde77728b )
 	ROM_LOAD( "u19",          0xF800, 0x0800, 0xc0994776 )
 
-	ROM_REGION(0x10000)	/* 64k for code for the second CPU (Video) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code for the second CPU (Video) */
 	ROM_LOAD( "u4",           0xC800, 0x0800, 0x5b906a09 )
 	ROM_LOAD( "u5",           0xD000, 0x0800, 0x254a3587 )
 	ROM_LOAD( "u6",           0xD800, 0x0800, 0xace30389 )
@@ -795,12 +784,12 @@ ROM_START( qix )
 	ROM_LOAD( "u9",           0xF000, 0x0800, 0x26cbcd55 )
 	ROM_LOAD( "u10",          0xF800, 0x0800, 0x568be942 )
 
-	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) 	/* 64k for code for the third CPU (sound) */
 	ROM_LOAD( "u27",          0xF800, 0x0800, 0xf3782bd0 )
 ROM_END
 
 ROM_START( qixa )
-	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code for the first CPU (Data) */
 	ROM_LOAD( "qu12",         0xC000, 0x0800, 0x1c55b44d )
 	ROM_LOAD( "qu13",         0xC800, 0x0800, 0x20279e8c )
 	ROM_LOAD( "qu14",         0xD000, 0x0800, 0xbafe3ce3 )
@@ -810,7 +799,7 @@ ROM_START( qixa )
 	ROM_LOAD( "qu18",         0xF000, 0x0800, 0x353be980 )
 	ROM_LOAD( "qu19",         0xF800, 0x0800, 0xf46a69ca )
 
-	ROM_REGION(0x10000)	/* 64k for code for the second CPU (Video) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code for the second CPU (Video) */
 	ROM_LOAD( "qu3",          0xC000, 0x0800, 0x8b4c0ef0 )
 	ROM_LOAD( "qu4",          0xC800, 0x0800, 0x66a5c260 )
 	ROM_LOAD( "qu5",          0xD000, 0x0800, 0x70160ea3 )
@@ -820,29 +809,29 @@ ROM_START( qixa )
 	ROM_LOAD( "qu9",          0xF000, 0x0800, 0xc99bf94d )
 	ROM_LOAD( "qu10",         0xF800, 0x0800, 0x88b45037 )
 
-	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) 	/* 64k for code for the third CPU (sound) */
 	ROM_LOAD( "u27",          0xF800, 0x0800, 0xf3782bd0 )
 ROM_END
 
 ROM_START( qixb )
-	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code for the first CPU (Data) */
 	ROM_LOAD( "lk14.bin",     0xC000, 0x1000, 0x6d164986 )
 	ROM_LOAD( "lk15.bin",     0xD000, 0x1000, 0x16c6ce0f )
 	ROM_LOAD( "lk16.bin",     0xE000, 0x1000, 0x698b1f9c )
 	ROM_LOAD( "lk17.bin",     0xF000, 0x1000, 0x7e3adde6 )
 
-	ROM_REGION(0x10000)	/* 64k for code for the second CPU (Video) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code for the second CPU (Video) */
 	ROM_LOAD( "lk10.bin",     0xC000, 0x1000, 0x7eac67d0 )
 	ROM_LOAD( "lk11.bin",     0xD000, 0x1000, 0x90ccbb6a )
 	ROM_LOAD( "lk12.bin",     0xE000, 0x1000, 0xbe9b9f7d )
 	ROM_LOAD( "lk13.bin",     0xF000, 0x1000, 0x51c9853b )
 
-	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) 	/* 64k for code for the third CPU (sound) */
 	ROM_LOAD( "u27",          0xF800, 0x0800, 0xf3782bd0 )
 ROM_END
 
 ROM_START( qix2 )
-	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code for the first CPU (Data) */
 	ROM_LOAD( "u12.rmb",      0xC000, 0x0800, 0x484280fd )
 	ROM_LOAD( "u13.rmb",      0xC800, 0x0800, 0x3d089fcb )
 	ROM_LOAD( "u14.rmb",      0xD000, 0x0800, 0x362123a9 )
@@ -852,7 +841,7 @@ ROM_START( qix2 )
 	ROM_LOAD( "u18.rmb",      0xF000, 0x0800, 0x1f91ed7a )
 	ROM_LOAD( "u19.rmb",      0xF800, 0x0800, 0x68e8d5a6 )
 
-	ROM_REGION(0x10000)	/* 64k for code for the second CPU (Video) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code for the second CPU (Video) */
 	ROM_LOAD( "u3.rmb",       0xC000, 0x0800, 0x19cebaca )
 	ROM_LOAD( "u4.rmb",       0xC800, 0x0800, 0x6cfb4185 )
 	ROM_LOAD( "u5.rmb",       0xD000, 0x0800, 0x948f53f3 )
@@ -862,12 +851,12 @@ ROM_START( qix2 )
 	ROM_LOAD( "u9.rmb",       0xF000, 0x0800, 0xe80e9b1d )
 	ROM_LOAD( "u10.rmb",      0xF800, 0x0800, 0x9a55d360 )
 
-	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) 	/* 64k for code for the third CPU (sound) */
 	ROM_LOAD( "u27",          0xF800, 0x0800, 0xf3782bd0 )
 ROM_END
 
 ROM_START( sdungeon )
-	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code for the first CPU (Data) */
     ROM_LOAD( "sd14.u14",     0xA000, 0x1000, 0x7024b55a )
     ROM_LOAD( "sd15.u15",     0xB000, 0x1000, 0xa3ac9040 )
     ROM_LOAD( "sd16.u16",     0xC000, 0x1000, 0xcc20b580 )
@@ -875,7 +864,7 @@ ROM_START( sdungeon )
     ROM_LOAD( "sd18.u18",     0xE000, 0x1000, 0x7ef1ffc0 )
     ROM_LOAD( "sd19.u19",     0xF000, 0x1000, 0x7b20b7ac )
 
-	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
+	ROM_REGIONX( 0x12000, REGION_CPU2 )     /* 64k for code + 2 ROM banks for the second CPU (Video) */
     ROM_LOAD( "sd05.u5",      0x0A000, 0x1000, 0x0b2bf48e )
     ROM_LOAD( "sd06.u6",      0x0B000, 0x1000, 0xf86db512 )
     ROM_LOAD( "sd07.u7",      0x0C000, 0x1000, 0x7b796831 )
@@ -883,16 +872,16 @@ ROM_START( sdungeon )
     ROM_LOAD( "sd09.u9",      0x0E000, 0x1000, 0x89bc51ea )
     ROM_LOAD( "sd10.u10",     0x0F000, 0x1000, 0x754de734 )
 
-	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) 	/* 64k for code for the third CPU (sound) */
     ROM_LOAD( "sd26.u26",     0xF000, 0x0800, 0x3df8630d )
     ROM_LOAD( "sd27.u27",     0xF800, 0x0800, 0x0386f351 )
 
-	ROM_REGION(0x0800)	/* 2k for the 68705 microcontroller */
+	ROM_REGIONX( 0x0800, REGION_CPU4 )	/* 2k for the 68705 microcontroller */
 	ROM_LOAD( "sd101",        0x0000, 0x0800, 0xe255af9a )
 ROM_END
 
 ROM_START( elecyoyo )
-	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code for the first CPU (Data) */
     ROM_LOAD( "yy14",         0xA000, 0x1000, 0x0d2edcb9 )
     ROM_LOAD( "yy15",         0xB000, 0x1000, 0xa91f01e3 )
     ROM_LOAD( "yy16-1",       0xC000, 0x1000, 0x2710f360 )
@@ -900,7 +889,7 @@ ROM_START( elecyoyo )
     ROM_LOAD( "yy18",         0xE000, 0x1000, 0x0b6661c0 )
     ROM_LOAD( "yy19-1",       0xF000, 0x1000, 0x95b8b244 )
 
-	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
+	ROM_REGIONX( 0x12000, REGION_CPU2 )     /* 64k for code + 2 ROM banks for the second CPU (Video) */
     ROM_LOAD( "yy5",          0x0A000, 0x1000, 0x3793fec5 )
     ROM_LOAD( "yy6",          0x0B000, 0x1000, 0x2e8b1265 )
     ROM_LOAD( "yy7",          0x0C000, 0x1000, 0x20f93411 )
@@ -908,15 +897,15 @@ ROM_START( elecyoyo )
     ROM_LOAD( "yy9",          0x0E000, 0x1000, 0x2f999480 )
     ROM_LOAD( "yy10",         0x0F000, 0x1000, 0xb31d20e2 )
 
-	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) 	/* 64k for code for the third CPU (sound) */
     ROM_LOAD( "yy27",         0xF800, 0x0800, 0x5a2aa0f3 )
 
-	ROM_REGION(0x0800)	/* 2k for the 68705 microcontroller */
+	ROM_REGIONX( 0x0800, REGION_CPU4 )	/* 2k for the 68705 microcontroller */
 	ROM_LOAD( "yy101",        0x0000, 0x0800, 0x3cf13038 )
 ROM_END
 
 ROM_START( elecyoy2 )
-	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code for the first CPU (Data) */
     ROM_LOAD( "yy14",         0xA000, 0x1000, 0x0d2edcb9 )
     ROM_LOAD( "yy15",         0xB000, 0x1000, 0xa91f01e3 )
     ROM_LOAD( "yy16",         0xC000, 0x1000, 0xcab19f3a )
@@ -924,7 +913,7 @@ ROM_START( elecyoy2 )
     ROM_LOAD( "yy18",         0xE000, 0x1000, 0x0b6661c0 )
     ROM_LOAD( "yy19",         0xF000, 0x1000, 0xd0215d2e )
 
-	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
+	ROM_REGIONX( 0x12000, REGION_CPU2 )     /* 64k for code + 2 ROM banks for the second CPU (Video) */
     ROM_LOAD( "yy5",          0x0A000, 0x1000, 0x3793fec5 )
     ROM_LOAD( "yy6",          0x0B000, 0x1000, 0x2e8b1265 )
     ROM_LOAD( "yy7",          0x0C000, 0x1000, 0x20f93411 )
@@ -932,15 +921,15 @@ ROM_START( elecyoy2 )
     ROM_LOAD( "yy9",          0x0E000, 0x1000, 0x2f999480 )
     ROM_LOAD( "yy10",         0x0F000, 0x1000, 0xb31d20e2 )
 
-	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) 	/* 64k for code for the third CPU (sound) */
     ROM_LOAD( "yy27",         0xF800, 0x0800, 0x5a2aa0f3 )
 
-	ROM_REGION(0x0800)	/* 2k for the 68705 microcontroller */
+	ROM_REGIONX( 0x0800, REGION_CPU4 )	/* 2k for the 68705 microcontroller */
 	ROM_LOAD( "yy101",        0x0000, 0x0800, 0x3cf13038 )
 ROM_END
 
 ROM_START( kram )
-	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code for the first CPU (Data) */
     ROM_LOAD( "ks14-1",       0xA000, 0x1000, 0xfe69ac79 )
     ROM_LOAD( "ks15",         0xB000, 0x1000, 0x4b2c175e )
     ROM_LOAD( "ks16",         0xC000, 0x1000, 0x9500a05d )
@@ -948,7 +937,7 @@ ROM_START( kram )
     ROM_LOAD( "ks18",         0xE000, 0x1000, 0x79158b03 )
     ROM_LOAD( "ks19-1",       0xF000, 0x1000, 0x759ea6ce )
 
-	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
+	ROM_REGIONX( 0x12000, REGION_CPU2 )     /* 64k for code + 2 ROM banks for the second CPU (Video) */
     ROM_LOAD( "ks5",          0x0A000, 0x1000, 0x1c472080 )
     ROM_LOAD( "ks6",          0x0B000, 0x1000, 0xb8926622 )
     ROM_LOAD( "ks7",          0x0C000, 0x1000, 0xc98a7485 )
@@ -956,15 +945,15 @@ ROM_START( kram )
     ROM_LOAD( "ks9",          0x0E000, 0x1000, 0xd3bc8b5e )
     ROM_LOAD( "ks10",         0x0F000, 0x1000, 0xe0426444 )
 
-	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) 	/* 64k for code for the third CPU (sound) */
     ROM_LOAD( "ks27",         0xf800, 0x0800, 0xc46530c8 )
 
-	ROM_REGION(0x0800)	/* 2k for the 68705 microcontroller */
+	ROM_REGIONX( 0x0800, REGION_CPU4 )	/* 2k for the 68705 microcontroller */
 	ROM_LOAD( "ks101.dat",    0x0000, 0x0800, 0xe53d97b7 )
 ROM_END
 
 ROM_START( kram2 )
-	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code for the first CPU (Data) */
     ROM_LOAD( "ks14",         0xA000, 0x1000, 0xa2eac1ff )
     ROM_LOAD( "ks15",         0xB000, 0x1000, 0x4b2c175e )
     ROM_LOAD( "ks16",         0xC000, 0x1000, 0x9500a05d )
@@ -972,7 +961,7 @@ ROM_START( kram2 )
     ROM_LOAD( "ks18",         0xE000, 0x1000, 0x79158b03 )
     ROM_LOAD( "ks19",         0xF000, 0x1000, 0x053c5e09 )
 
-	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
+	ROM_REGIONX( 0x12000, REGION_CPU2 )     /* 64k for code + 2 ROM banks for the second CPU (Video) */
     ROM_LOAD( "ks5",          0x0A000, 0x1000, 0x1c472080 )
     ROM_LOAD( "ks6",          0x0B000, 0x1000, 0xb8926622 )
     ROM_LOAD( "ks7",          0x0C000, 0x1000, 0xc98a7485 )
@@ -980,15 +969,15 @@ ROM_START( kram2 )
     ROM_LOAD( "ks9",          0x0E000, 0x1000, 0xd3bc8b5e )
     ROM_LOAD( "ks10",         0x0F000, 0x1000, 0xe0426444 )
 
-	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) 	/* 64k for code for the third CPU (sound) */
     ROM_LOAD( "ks27",         0xf800, 0x0800, 0xc46530c8 )
 
-	ROM_REGION(0x0800)	/* 2k for the 68705 microcontroller */
+	ROM_REGIONX( 0x0800, REGION_CPU4 )	/* 2k for the 68705 microcontroller */
 	ROM_LOAD( "ks101.dat",    0x0000, 0x0800, 0xe53d97b7 )
 ROM_END
 
 ROM_START( zookeep )
-	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code for the first CPU (Data) */
 	ROM_LOAD( "za12",         0x8000, 0x1000, 0x4e40d8dc )
 	ROM_LOAD( "za13",         0x9000, 0x1000, 0xeebd5248 )
 	ROM_LOAD( "za14",         0xA000, 0x1000, 0xfab43297 )
@@ -998,7 +987,7 @@ ROM_START( zookeep )
 	ROM_LOAD( "za18",         0xE000, 0x1000, 0x37886afe )
 	ROM_LOAD( "za19",         0xF000, 0x1000, 0xbbfb30d9 )
 
-	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
+	ROM_REGIONX( 0x12000, REGION_CPU2 )     /* 64k for code + 2 ROM banks for the second CPU (Video) */
 	ROM_LOAD( "za5",          0x0A000, 0x1000, 0xdc0c3cbd )
 	ROM_LOAD( "za3",          0x10000, 0x1000, 0xcc4d0aee )
 	ROM_LOAD( "za6",          0x0B000, 0x1000, 0x27c787dd )
@@ -1009,17 +998,17 @@ ROM_START( zookeep )
 	ROM_LOAD( "za9",          0x0E000, 0x1000, 0xa4f7d9e0 )
 	ROM_LOAD( "za10",         0x0F000, 0x1000, 0x05df1a5a )
 
-	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) 	/* 64k for code for the third CPU (sound) */
 	ROM_LOAD( "za25",         0xD000, 0x1000, 0x779b8558 )
 	ROM_LOAD( "za26",         0xE000, 0x1000, 0x60a810ce )
 	ROM_LOAD( "za27",         0xF000, 0x1000, 0x99ed424e )
 
-	ROM_REGION(0x0800)	/* 2k for the 68705 microcontroller */
+	ROM_REGIONX( 0x0800, REGION_CPU4 )	/* 2k for the 68705 microcontroller */
 	ROM_LOAD( "za_coin.bin",  0x0000, 0x0800, 0x364d3557 )
 ROM_END
 
 ROM_START( zookeep2 )
-	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code for the first CPU (Data) */
 	ROM_LOAD( "za12",         0x8000, 0x1000, 0x4e40d8dc )
 	ROM_LOAD( "za13",         0x9000, 0x1000, 0xeebd5248 )
 	ROM_LOAD( "za14",         0xA000, 0x1000, 0xfab43297 )
@@ -1029,7 +1018,7 @@ ROM_START( zookeep2 )
 	ROM_LOAD( "za18",         0xE000, 0x1000, 0x37886afe )
 	ROM_LOAD( "za19.red",     0xF000, 0x1000, 0xec01760e )
 
-	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
+	ROM_REGIONX( 0x12000, REGION_CPU2 )     /* 64k for code + 2 ROM banks for the second CPU (Video) */
 	ROM_LOAD( "za5",          0x0A000, 0x1000, 0xdc0c3cbd )
 	ROM_LOAD( "za3",          0x10000, 0x1000, 0xcc4d0aee )
 	ROM_LOAD( "za6",          0x0B000, 0x1000, 0x27c787dd )
@@ -1040,17 +1029,17 @@ ROM_START( zookeep2 )
 	ROM_LOAD( "za9",          0x0E000, 0x1000, 0xa4f7d9e0 )
 	ROM_LOAD( "za10",         0x0F000, 0x1000, 0x05df1a5a )
 
-	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) 	/* 64k for code for the third CPU (sound) */
 	ROM_LOAD( "za25",         0xD000, 0x1000, 0x779b8558 )
 	ROM_LOAD( "za26",         0xE000, 0x1000, 0x60a810ce )
 	ROM_LOAD( "za27",         0xF000, 0x1000, 0x99ed424e )
 
-	ROM_REGION(0x0800)	/* 2k for the 68705 microcontroller */
+	ROM_REGIONX( 0x0800, REGION_CPU4 )	/* 2k for the 68705 microcontroller */
 	ROM_LOAD( "za_coin.bin",  0x0000, 0x0800, 0x364d3557 )
 ROM_END
 
 ROM_START( zookeep3 )
-	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code for the first CPU (Data) */
 	ROM_LOAD( "za12",         0x8000, 0x1000, 0x4e40d8dc )
 	ROM_LOAD( "za13",         0x9000, 0x1000, 0xeebd5248 )
 	ROM_LOAD( "za14",         0xA000, 0x1000, 0xfab43297 )
@@ -1060,7 +1049,7 @@ ROM_START( zookeep3 )
 	ROM_LOAD( "za18",         0xE000, 0x1000, 0x37886afe )
 	ROM_LOAD( "za19",         0xF000, 0x1000, 0xbbfb30d9 )
 
-	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
+	ROM_REGIONX( 0x12000, REGION_CPU2 )     /* 64k for code + 2 ROM banks for the second CPU (Video) */
 	ROM_LOAD( "za5",          0x0A000, 0x1000, 0xdc0c3cbd )
 	ROM_LOAD( "za3",          0x10000, 0x1000, 0xcc4d0aee )
 	ROM_LOAD( "za6",          0x0B000, 0x1000, 0x27c787dd )
@@ -1071,12 +1060,12 @@ ROM_START( zookeep3 )
 	ROM_LOAD( "zv35.9",       0x0E000, 0x1000, 0xd14123b7 )
 	ROM_LOAD( "zv36.10",      0x0F000, 0x1000, 0x23705777 )
 
-	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) 	/* 64k for code for the third CPU (sound) */
 	ROM_LOAD( "za25",         0xD000, 0x1000, 0x779b8558 )
 	ROM_LOAD( "za26",         0xE000, 0x1000, 0x60a810ce )
 	ROM_LOAD( "za27",         0xF000, 0x1000, 0x99ed424e )
 
-	ROM_REGION(0x0800)	/* 2k for the 68705 microcontroller */
+	ROM_REGIONX( 0x0800, REGION_CPU4 )	/* 2k for the 68705 microcontroller */
 	ROM_LOAD( "za_coin.bin",  0x0000, 0x0800, 0x364d3557 )
 ROM_END
 
@@ -1085,7 +1074,7 @@ ROM_END
 static int hiload(void)
 {
 	/* get RAM pointer (data is in second CPU's memory region) */
-	unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU2);
 	void *f;
 
 
@@ -1103,7 +1092,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	/* get RAM pointer (data is in second CPU's memory region) */
-	unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU2);
 	void *f;
 
 

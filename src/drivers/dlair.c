@@ -231,7 +231,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz ? */
-			0,
 			readmem,writemem,readport,writeport,
 			0,0, /* interrupts are made by z80 daisy chain system */
 			0,0,daisy_chain
@@ -266,7 +265,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( dlair )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "u45",          0x0000, 0x2000, 0x329b354a )
 	ROM_LOAD( "u46",          0x2000, 0x2000, 0x8479612b )
 	ROM_LOAD( "u47",          0x4000, 0x2000, 0x6a66f6b4 )

@@ -243,30 +243,36 @@ int m6502_execute(int cycles)
 
 	do
 	{
-		PPC = PCD;
+		UINT8 op;
+        PPC = PCD;
 
-		CALL_MAME_DEBUG;
+        CALL_MAME_DEBUG;
 
-		(*m6502.insn[RDOP()])();
+		op = RDOP();
+        /* if an irq is pending, take it now */
+		if( m6502.pending_irq && op == 0x78 )
+            take_irq();
 
-        /* check if the I flag was just reset (interrupts enabled) */
-		if (m6502.after_cli)
-		{
-			LOG((errorlog,"M6502#%d after_cli was >0", cpu_getactivecpu()));
+		(*m6502.insn[op])();
+
+		/* check if the I flag was just reset (interrupts enabled) */
+        if( m6502.after_cli )
+        {
+            LOG((errorlog,"M6502#%d after_cli was >0", cpu_getactivecpu()));
             m6502.after_cli = 0;
-			if (m6502.irq_state != CLEAR_LINE)
-			{
-				LOG((errorlog,": irq line is asserted: set pending IRQ\n"));
-				m6502.pending_irq = 1;
-			}
-			else
-			{
-				LOG((errorlog,": irq line is clear\n"));
+            if (m6502.irq_state != CLEAR_LINE)
+            {
+                LOG((errorlog,": irq line is asserted: set pending IRQ\n"));
+                m6502.pending_irq = 1;
             }
-		}
+            else
+            {
+                LOG((errorlog,": irq line is clear\n"));
+            }
+        }
 		else
-		if (m6502.pending_irq)
-			take_irq();
+		if( m6502.pending_irq )
+            take_irq();
 
     } while (m6502_ICount > 0);
 

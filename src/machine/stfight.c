@@ -37,7 +37,7 @@ Encryption PAL 16R4 on CPU board
 void stfight_decode(void)
 {
     int             A;
-	unsigned char   *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char   *RAM = memory_region(REGION_CPU1);
 
     for( A=0; A<0x8000; A++ )
     {
@@ -75,7 +75,7 @@ void stfight_init_machine( void )
         0x0000
     };
 
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
     int             i;
 
     // Insert NOPs into ROM code
@@ -95,7 +95,7 @@ void stfight_init_machine( void )
 // - in fact I don't even know how/where it's switched in!
 void stfight_bank_w( int offset, int data )
 {
-	unsigned char   *ROM2 = memory_region(Machine->drv->cpu[0].memory_region) + 0x10000;
+	unsigned char   *ROM2 = memory_region(REGION_CPU1) + 0x10000;
 
 	cpu_setbank( 1, &ROM2[data<<14] );
 }
@@ -203,7 +203,7 @@ static int adpcm_data_end;
 void stfight_adpcm_int( int data )
 {
 	static int toggle;
-	unsigned char *SAMPLES = Machine->memory_region[2];
+	unsigned char *SAMPLES = memory_region(2);
 	int adpcm_data = SAMPLES[adpcm_data_offs & 0x7fff];
 
     // finished playing sample?

@@ -325,6 +325,7 @@ static void print_game_rom(FILE* out, const struct GameDriver* game) {
 }
 
 static void print_game_sample(FILE* out, const struct GameDriver* game) {
+#if (HAS_SAMPLES)
 	int i;
 	for( i = 0; game->drv->sound[i].sound_type && i < MAX_SOUND; i++ )
 	{
@@ -356,6 +357,7 @@ static void print_game_sample(FILE* out, const struct GameDriver* game) {
 			}
 		}
 	}
+#endif
 }
 
 

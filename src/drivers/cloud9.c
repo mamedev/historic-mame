@@ -221,7 +221,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
 			12096000/8,	/* 1.512 Mhz?? */
-			0,
 			readmem,writemem,0,0,
 			interrupt,4
 		}
@@ -260,14 +259,14 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( cloud9 )
-	ROM_REGION(0x14000)	/* 64k for code + extra VRAM space */
+	ROM_REGIONX( 0x14000, REGION_CPU1 )	/* 64k for code + extra VRAM space */
 	ROM_LOAD( "c9_6000.bin", 0x6000, 0x2000, 0xb5d95d98 )
 	ROM_LOAD( "c9_8000.bin", 0x8000, 0x2000, 0x49af8f22 )
 	ROM_LOAD( "c9_a000.bin", 0xa000, 0x2000, 0x7cf404a6 )
 	ROM_LOAD( "c9_c000.bin", 0xc000, 0x2000, 0x26a4d7df )
 	ROM_LOAD( "c9_e000.bin", 0xe000, 0x2000, 0x6e663bce )
 
-	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION( 0x4000 )	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "c9_gfx0.bin", 0x0000, 0x1000, 0xd01a8019 )
 	ROM_LOAD( "c9_gfx1.bin", 0x1000, 0x1000, 0x514ac009 )
 	ROM_LOAD( "c9_gfx2.bin", 0x2000, 0x1000, 0x930c1ade )
@@ -282,7 +281,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	void *f;
 
@@ -299,7 +298,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{

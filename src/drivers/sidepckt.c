@@ -308,14 +308,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			2000000,        /* 2 MHz ??? */
-			0,
 			readmem,writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1500000,        /* 1.5 MHz ??? */
-			3,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are triggered by the YM3526 */
 								/* NMIs are triggered by the main cpu */
@@ -358,7 +356,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( sidepckt )
-    ROM_REGION(0x10000)     /* 64k for code */
+    ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
     ROM_LOAD( "dh00",         0x00000, 0x10000, 0x251b316e )
 
     ROM_REGION_DISPOSE(0x30000)     /* temporary space for graphics (disposed after conversion) */
@@ -369,15 +367,15 @@ ROM_START( sidepckt )
     ROM_LOAD( "sp_02.bin",    0x20000, 0x8000, 0xeeb5c3e7 ) /* sprites */
     ROM_LOAD( "sp_03.bin",    0x28000, 0x8000, 0x8e18d21d ) /* sprites */
 
-    ROM_REGION(0x0100)	/* color PROMs (missing) */
+    ROM_REGIONX( 0x0100, REGION_PROMS )	/* color PROMs (missing) */
     ROM_LOAD( "proms",        0x0000, 0x0100, 0x00000000 )
 
-    ROM_REGION(0x10000)     /* 64k for the audio cpu */
+    ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio cpu */
     ROM_LOAD( "sp_04.bin",    0x08000, 0x8000, 0xd076e62e )
 ROM_END
 
 ROM_START( sidepckb )
-    ROM_REGION(0x10000)     /* 64k for code */
+    ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
     ROM_LOAD( "sp_09.bin",    0x04000, 0x4000, 0x3c6fe54b )
     ROM_LOAD( "sp_08.bin",    0x08000, 0x8000, 0x347f81cd )
 
@@ -389,10 +387,10 @@ ROM_START( sidepckb )
     ROM_LOAD( "sp_02.bin",    0x20000, 0x8000, 0xeeb5c3e7 ) /* sprites */
     ROM_LOAD( "sp_03.bin",    0x28000, 0x8000, 0x8e18d21d ) /* sprites */
 
-    ROM_REGION(0x0100)	/* color PROMs (missing) */
+    ROM_REGIONX( 0x0100, REGION_PROMS )	/* color PROMs (missing) */
     ROM_LOAD( "proms",        0x0000, 0x0100, 0x00000000 )
 
-    ROM_REGION(0x10000)     /* 64k for the audio cpu */
+    ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio cpu */
     ROM_LOAD( "sp_04.bin",    0x08000, 0x8000, 0xd076e62e )
 ROM_END
 
@@ -405,7 +403,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if  (memcmp(&RAM[0x0A0E],"\x11\x00\x53",3) == 0 &&
@@ -427,7 +425,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

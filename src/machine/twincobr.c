@@ -197,7 +197,7 @@ void twincobr_dsp_out(int fnction,int data)
 #if LOG_DSP_CALLS
 				if (errorlog) fprintf(errorlog,"Turning %s on\n",toaplan_cpu_type[toaplan_main_cpu]);
 #endif
-				cpu_halt(0,1);
+				cpu_set_halt_line(0,CLEAR_LINE);
 				dsp_execute = 0;
 			}
 #if NEW_INTERRUPT_SYSTEM
@@ -265,13 +265,13 @@ void twincobr_7800c_w(int offset,int data)
 #if LOG_DSP_CALLS
 						if (errorlog) fprintf(errorlog,"Turning DSP on and %s off\n",toaplan_cpu_type[toaplan_main_cpu]);
 #endif
-						cpu_halt(2,1);
+						cpu_set_halt_line(2,CLEAR_LINE);
 #if NEW_INTERRUPT_SYSTEM
 						cpu_set_irq_line(2, TMS320C10_ACTIVE_INT, ASSERT_LINE);
 #else
 						cpu_cause_interrupt(2,TMS320C10_ACTIVE_INT);
 #endif
-						cpu_halt(0,0);
+						cpu_set_halt_line(0,ASSERT_LINE);
 					} break;
 		case 0x000d: if (twincobr_display_on) {
 						/* This means inhibit the INT line to the DSP */
@@ -283,7 +283,7 @@ void twincobr_7800c_w(int offset,int data)
 #else
 						cpu_clear_pending_interrupts(2)
 #endif
-						cpu_halt(2,0);
+						cpu_set_halt_line(2,ASSERT_LINE);
 					} break;
 	}
 }
@@ -320,13 +320,13 @@ void fshark_coin_dsp_w(int offset,int data)
 #if LOG_DSP_CALLS
 					if (errorlog) fprintf(errorlog,"Turning DSP on and %s off\n",toaplan_cpu_type[toaplan_main_cpu]);
 #endif
-					cpu_halt(2,1);
+					cpu_set_halt_line(2,CLEAR_LINE);
 #if NEW_INTERRUPT_SYSTEM
 					cpu_set_irq_line(2, TMS320C10_ACTIVE_INT, ASSERT_LINE);
 #else
 					cpu_cause_interrupt(2,TMS320C10_ACTIVE_INT);
 #endif
-					cpu_halt(0,0);
+					cpu_set_halt_line(0,ASSERT_LINE);
 					break;
 		case 0x01:	/* This means inhibit the INT line to the DSP */
 #if LOG_DSP_CALLS
@@ -337,7 +337,7 @@ void fshark_coin_dsp_w(int offset,int data)
 #else
 					cpu_clear_pending_interrupts(2)
 #endif
-					cpu_halt(2,0);
+					cpu_set_halt_line(2,ASSERT_LINE);
 					break;
 	}
 }

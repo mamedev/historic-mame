@@ -313,14 +313,12 @@ static struct MachineDriver stadhero_machine_driver =
 		{
 			CPU_M68000,
 			10000000,
-			0,
 			stadhero_readmem,stadhero_writemem,0,0,
 			m68_level5_irq,1 /* VBL */
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1500000,
-			2,
 			stadhero_s_readmem,stadhero_s_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -363,7 +361,7 @@ static struct MachineDriver stadhero_machine_driver =
 /******************************************************************************/
 
 ROM_START( stadhero )
-	ROM_REGION(0x20000)	/* 6*64k for 68000 code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "ef15.bin",  0x00000, 0x10000, 0xbbba364e )
 	ROM_LOAD_ODD ( "ef13.bin",  0x00000, 0x10000, 0x97c6717a )
 
@@ -384,7 +382,7 @@ ROM_START( stadhero )
 	ROM_LOAD( "ef06.bin",     0x0b0000, 0x10000, 0x9f47848f )
 	ROM_LOAD( "ef07.bin",     0x0c0000, 0x10000, 0x8859f655 )
 
-	ROM_REGION(0x10000)	/* 6502 Sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 6502 Sound */
 	ROM_LOAD( "ef18.bin",  0x8000, 0x8000, 0x20fd9668 )
 
 	ROM_REGION(0x10000)	/* ADPCM samples */

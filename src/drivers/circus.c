@@ -264,7 +264,7 @@ static struct GfxDecodeInfo robotbowl_gfxdecodeinfo[] =
 ***************************************************************************/
 
 ROM_START( circus )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "circus.1a",    0x1000, 0x0200, 0x7654ea75 ) /* Code */
 	ROM_LOAD( "circus.2a",    0x1200, 0x0200, 0xb8acdbc5 )
 	ROM_LOAD( "circus.3a",    0x1400, 0x0200, 0x901dfff6 )
@@ -285,7 +285,7 @@ ROM_START( circus )
 ROM_END
 
 ROM_START( robotbowl )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "robotbwl.1a",  0xF000, 0x0200, 0xdf387a0b ) /* Code */
 	ROM_LOAD( "robotbwl.2a",  0xF200, 0x0200, 0xc948274d )
 	ROM_LOAD( "robotbwl.3a",  0xF400, 0x0200, 0x8fdb3ec5 )
@@ -305,7 +305,7 @@ ROM_START( robotbowl )
 ROM_END
 
 ROM_START( crash )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "crash.a1",     0x1000, 0x0200, 0xb9571203 ) /* Code */
 	ROM_LOAD( "crash.a2",     0x1200, 0x0200, 0xb4581a95 )
 	ROM_LOAD( "crash.a3",     0x1400, 0x0200, 0x597555ae )
@@ -325,7 +325,7 @@ ROM_START( crash )
 ROM_END
 
 ROM_START( ripcord )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "9027.1a",      0x1000, 0x0200, 0x56b8dc06 ) /* Code */
 	ROM_LOAD( "9028.2a",      0x1200, 0x0200, 0xa8a78a30 )
 	ROM_LOAD( "9029.4a",      0x1400, 0x0200, 0xfc5c8e07 )
@@ -355,7 +355,7 @@ static void robotbowl_decode(void)
 
 	int Count;
 
-    for(Count=31;Count>=0;Count--) Machine->memory_region[1][0x800+Count]^=0xFF;
+    for(Count=31;Count>=0;Count--) memory_region(1)[0x800+Count]^=0xFF;
 }
 
 static int ripcord_interrupt (void)
@@ -380,7 +380,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
 			11289000/16,	/* 705.562kHz */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		}
@@ -419,7 +418,6 @@ static struct MachineDriver robotbowl_machine_driver =
 		{
 			CPU_M6502,
 			11289000/16,	/* 705.562kHz */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		}
@@ -457,7 +455,6 @@ static struct MachineDriver crash_machine_driver =
 		{
 			CPU_M6502,
 			11289000/16,	/* 705.562kHz */
-			0,
 			readmem,writemem,0,0,
 			interrupt,2
 		}
@@ -495,7 +492,6 @@ static struct MachineDriver ripcord_machine_driver =
 		{
 			CPU_M6502,
 			705562,        /* 11.289MHz / 16 */
-			0,
 			readmem,writemem,0,0,
 			ripcord_interrupt,1
 		}
@@ -532,7 +528,7 @@ static struct MachineDriver ripcord_machine_driver =
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -556,7 +552,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -568,7 +564,7 @@ static void hisave(void)
 
 static int crash_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -592,7 +588,7 @@ static int crash_hiload(void)
 static void crash_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

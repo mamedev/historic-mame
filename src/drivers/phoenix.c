@@ -310,7 +310,6 @@ static struct MachineDriver GAMENAME##_machine_driver =				\
 		{															\
 			CPU_8080,												\
 			3072000,	/* 3 Mhz ? */								\
-			0,														\
 			readmem,GAMENAME##_writemem,0,0,						\
 			ignore_interrupt,1										\
 		}															\
@@ -354,7 +353,7 @@ MACHINE_DRIVER(pleiads)
 ***************************************************************************/
 
 ROM_START( phoenix )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ic45",         0x0000, 0x0800, 0x9f68086b )
 	ROM_LOAD( "ic46",         0x0800, 0x0800, 0x273a4a82 )
 	ROM_LOAD( "ic47",         0x1000, 0x0800, 0x3d4284b9 )
@@ -376,7 +375,7 @@ ROM_START( phoenix )
 ROM_END
 
 ROM_START( phoenixa )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ic45.k1",      0x0000, 0x0800, 0xc7a9b499 )
 	ROM_LOAD( "ic46.k2",      0x0800, 0x0800, 0xd0e6ae1b )
 	ROM_LOAD( "ic47.k3",      0x1000, 0x0800, 0x64bf463a )
@@ -398,7 +397,7 @@ ROM_START( phoenixa )
 ROM_END
 
 ROM_START( phoenixt )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "phoenix.45",   0x0000, 0x0800, 0x5b8c55a8 )
 	ROM_LOAD( "phoenix.46",   0x0800, 0x0800, 0xdbc942fa )
 	ROM_LOAD( "phoenix.47",   0x1000, 0x0800, 0xcbbb8839 )
@@ -420,7 +419,7 @@ ROM_START( phoenixt )
 ROM_END
 
 ROM_START( phoenix3 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "phoenix3.45",  0x0000, 0x0800, 0xa362cda0 )
 	ROM_LOAD( "phoenix3.46",  0x0800, 0x0800, 0x5748f486 )
 	ROM_LOAD( "phoenix.47",   0x1000, 0x0800, 0xcbbb8839 )
@@ -442,7 +441,7 @@ ROM_START( phoenix3 )
 ROM_END
 
 ROM_START( phoenixc )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "phoenix.45",   0x0000, 0x0800, 0x5b8c55a8 )
 	ROM_LOAD( "phoenix.46",   0x0800, 0x0800, 0xdbc942fa )
 	ROM_LOAD( "phoenix.47",   0x1000, 0x0800, 0xcbbb8839 )
@@ -464,7 +463,7 @@ ROM_START( phoenixc )
 ROM_END
 
 ROM_START( pleiads )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ic47.r1",      0x0000, 0x0800, 0x960212c8 )
 	ROM_LOAD( "ic48.r2",      0x0800, 0x0800, 0xb254217c )
 	ROM_LOAD( "ic47.bin",     0x1000, 0x0800, 0x87e700bb ) /* IC 49 on real board */
@@ -486,7 +485,7 @@ ROM_START( pleiads )
 ROM_END
 
 ROM_START( pleiadbl )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ic45.bin",     0x0000, 0x0800, 0x93fc2958 )
 	ROM_LOAD( "ic46.bin",     0x0800, 0x0800, 0xe2b5b8cd )
 	ROM_LOAD( "ic47.bin",     0x1000, 0x0800, 0x87e700bb )
@@ -508,7 +507,7 @@ ROM_START( pleiadbl )
 ROM_END
 
 ROM_START( pleiadce )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "pleiades.47",  0x0000, 0x0800, 0x711e2ba0 )
 	ROM_LOAD( "pleiades.48",  0x0800, 0x0800, 0x93a36943 )
 	ROM_LOAD( "ic47.bin",     0x1000, 0x0800, 0x87e700bb )
@@ -534,7 +533,7 @@ ROM_END
 static int hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -574,7 +573,7 @@ static void hisave(void)
 {
    unsigned long score1,score2,hiscore;
    void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
    score1 = get_score(&RAM[0x4380]);

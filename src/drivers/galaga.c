@@ -177,7 +177,7 @@ INPUT_PORTS_START( galaga )
 	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 	/* TODO: bonus scores are different for 5 lives */
-	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Bonus_Life ) )
+	PORT_DIPNAME( 0x38, 0x10, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x20, "20K 60K 60K" )
 	PORT_DIPSETTING(    0x18, "20K 60K" )
 	PORT_DIPSETTING(    0x10, "20K 70K 70K" )
@@ -261,7 +261,7 @@ INPUT_PORTS_START( galaganm )
 	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 	/* TODO: bonus scores are different for 5 lives */
-	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Bonus_Life ) )
+	PORT_DIPNAME( 0x38, 0x10, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x20, "20K 60K 60K" )
 	PORT_DIPSETTING(    0x18, "20K 60K" )
 	PORT_DIPSETTING(    0x10, "20K 70K 70K" )
@@ -399,21 +399,18 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3125000,        /* 3.125 Mhz */
-			0,
 			readmem_cpu1,writemem_cpu1,0,0,
 			galaga_interrupt_1,1
 		},
 		{
 			CPU_Z80,
 			3125000,        /* 3.125 Mhz */
-			3,      /* memory region #3 */
 			readmem_cpu2,writemem_cpu2,0,0,
 			galaga_interrupt_2,1
 		},
 		{
 			CPU_Z80,
 			3125000,        /* 3.125 Mhz */
-			4,      /* memory region #4 */
 			readmem_cpu3,writemem_cpu3,0,0,
 			galaga_interrupt_3,2
 		}
@@ -457,7 +454,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( galaga )
-	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
 	ROM_LOAD( "04m_g01.bin",  0x0000, 0x1000, 0xa3a0f743 )
 	ROM_LOAD( "04k_g02.bin",  0x1000, 0x1000, 0x43bb0d5c )
 	ROM_LOAD( "04j_g03.bin",  0x2000, 0x1000, 0x753ce503 )
@@ -474,10 +471,10 @@ ROM_START( galaga )
 	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
 	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "04e_g05.bin",  0x0000, 0x1000, 0x3102fccd )
 
-	ROM_REGION(0x10000)     /* 64k for the third CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )     /* 64k for the third CPU  */
 	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, 0x8995088d )
 
 	ROM_REGION(0x0100)	/* sound prom */
@@ -485,7 +482,7 @@ ROM_START( galaga )
 ROM_END
 
 ROM_START( galagamw )
-	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
 	ROM_LOAD( "3200a.bin",    0x0000, 0x1000, 0x3ef0b053 )
 	ROM_LOAD( "3300b.bin",    0x1000, 0x1000, 0x1b280831 )
 	ROM_LOAD( "3400c.bin",    0x2000, 0x1000, 0x16233d33 )
@@ -502,10 +499,10 @@ ROM_START( galagamw )
 	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
 	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "3600e.bin",    0x0000, 0x1000, 0xbc556e76 )
 
-	ROM_REGION(0x10000)     /* 64k for the third CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )     /* 64k for the third CPU  */
 	ROM_LOAD( "3700g.bin",    0x0000, 0x1000, 0xb07f0aa4 )
 
 	ROM_REGION(0x0100)	/* sound prom */
@@ -513,7 +510,7 @@ ROM_START( galagamw )
 ROM_END
 
 ROM_START( galagads )
-	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
 	ROM_LOAD( "3200a.bin",    0x0000, 0x1000, 0x3ef0b053 )
 	ROM_LOAD( "3300b.bin",    0x1000, 0x1000, 0x1b280831 )
 	ROM_LOAD( "3400c.bin",    0x2000, 0x1000, 0x16233d33 )
@@ -530,10 +527,10 @@ ROM_START( galagads )
 	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
 	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "3600fast.bin", 0x0000, 0x1000, 0x23d586e5 )
 
-	ROM_REGION(0x10000)     /* 64k for the third CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )     /* 64k for the third CPU  */
 	ROM_LOAD( "3700g.bin",    0x0000, 0x1000, 0xb07f0aa4 )
 
 	ROM_REGION(0x0100)	/* sound prom */
@@ -541,7 +538,7 @@ ROM_START( galagads )
 ROM_END
 
 ROM_START( gallag )
-	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
 	ROM_LOAD( "04m_g01.bin",  0x0000, 0x1000, 0xa3a0f743 )
 	ROM_LOAD( "gallag.2",     0x1000, 0x1000, 0x5eda60a7 )
 	ROM_LOAD( "04j_g03.bin",  0x2000, 0x1000, 0x753ce503 )
@@ -558,10 +555,10 @@ ROM_START( gallag )
 	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
 	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "04e_g05.bin",  0x0000, 0x1000, 0x3102fccd )
 
-	ROM_REGION(0x10000)     /* 64k for the third CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )     /* 64k for the third CPU  */
 	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, 0x8995088d )
 
 	ROM_REGION(0x0100)	/* sound prom */
@@ -572,7 +569,7 @@ ROM_START( gallag )
 ROM_END
 
 ROM_START( galagab2 )
-	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
 	ROM_LOAD( "g1",           0x0000, 0x1000, 0xab036c9f )
 	ROM_LOAD( "g2",           0x1000, 0x1000, 0xd9232240 )
 	ROM_LOAD( "04j_g03.bin",  0x2000, 0x1000, 0x753ce503 )
@@ -589,10 +586,10 @@ ROM_START( galagab2 )
 	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
 	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "04e_g05.bin",  0x0000, 0x1000, 0x3102fccd )
 
-	ROM_REGION(0x10000)     /* 64k for the third CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )     /* 64k for the third CPU  */
 	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, 0x8995088d )
 
 	ROM_REGION(0x0100)	/* sound prom */
@@ -603,7 +600,7 @@ ROM_START( galagab2 )
 ROM_END
 
 ROM_START( galaga84 )
-	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
 	ROM_LOAD( "g1",           0x0000, 0x1000, 0xab036c9f )
 	ROM_LOAD( "gal84_u2",     0x1000, 0x1000, 0x4d832a30 )
 	ROM_LOAD( "04j_g03.bin",  0x2000, 0x1000, 0x753ce503 )
@@ -620,10 +617,10 @@ ROM_START( galaga84 )
 	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
 	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "gal84_u5",     0x0000, 0x1000, 0xbb5caae3 )
 
-	ROM_REGION(0x10000)     /* 64k for the third CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )     /* 64k for the third CPU  */
 	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, 0x8995088d )
 
 	ROM_REGION(0x0100)	/* sound prom */
@@ -634,7 +631,7 @@ ROM_START( galaga84 )
 ROM_END
 
 ROM_START( nebulbee )
-	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
 	ROM_LOAD( "nebulbee.01",  0x0000, 0x1000, 0xf405f2c4 )
 	ROM_LOAD( "nebulbee.02",  0x1000, 0x1000, 0x31022b60 )
 	ROM_LOAD( "04j_g03.bin",  0x2000, 0x1000, 0x753ce503 )
@@ -651,10 +648,10 @@ ROM_START( nebulbee )
 	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
 	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "04e_g05.bin",  0x0000, 0x1000, 0x3102fccd )
 
-	ROM_REGION(0x10000)     /* 64k for the third CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )     /* 64k for the third CPU  */
 	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, 0x8995088d )
 
 	ROM_REGION(0x0100)	/* sound prom */
@@ -666,7 +663,7 @@ ROM_END
 static int hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -697,7 +694,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

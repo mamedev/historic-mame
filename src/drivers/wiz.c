@@ -469,14 +469,12 @@ static struct MachineDriver NAME##_machine_driver =				\
 		{														\
 			CPU_Z80,											\
 			18432000/6,     /* 3.072 Mhz ??? */					\
-			0,													\
 			readmem,writemem,0,0,								\
 			nmi_interrupt,1										\
 		},														\
 		{														\
 			CPU_Z80 | CPU_AUDIO_CPU,							\
 			14318000/8,     /* ? */								\
-			3,													\
 			sound_readmem,sound_writemem,0,0,					\
 			nmi_interrupt,3 /* ??? */							\
 		}														\
@@ -518,7 +516,7 @@ MACHINE_DRIVER(stinger);
 ***************************************************************************/
 
 ROM_START( wiz )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "ic07_01.bin",  0x0000, 0x4000, 0xc05f2c78 )
 	ROM_LOAD( "ic05_03.bin",  0x4000, 0x4000, 0x7978d879 )
 	ROM_LOAD( "ic06_02.bin",  0x8000, 0x4000, 0x9c406ad2 )
@@ -539,12 +537,12 @@ ROM_START( wiz )
 	ROM_LOAD( "ic23_3-2.bin", 0x0100, 0x0100, 0x8c2880c9 ) /* palette green component */
 	ROM_LOAD( "ic23_3-3.bin", 0x0200, 0x0100, 0xa488d761 ) /* palette blue component */
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "ic57_10.bin",  0x0000, 0x2000, 0x8a7575bd )
 ROM_END
 
 ROM_START( stinger )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "n1.bin",       0x0000, 0x2000, 0xf2d2790c )
 	ROM_LOAD( "n2.bin",       0x2000, 0x2000, 0x8fd2d8d8 )
 	ROM_LOAD( "n3.bin",       0x4000, 0x2000, 0xf1794d36 )
@@ -564,12 +562,12 @@ ROM_START( stinger )
 	ROM_LOAD( "stinger.b7",   0x0100, 0x0100, 0x9985e575 )	/* green component */
 	ROM_LOAD( "stinger.a8",   0x0200, 0x0100, 0x76b57629 )	/* blue component */
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "6.bin",        0x0000, 0x2000, 0x79757f0c )
 ROM_END
 
 ROM_START( scion )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sc1",          0x0000, 0x2000, 0x8dcad575 )
 	ROM_LOAD( "sc2",          0x2000, 0x2000, 0xf608e0ba )
 	ROM_LOAD( "sc3",          0x4000, 0x2000, 0x915289b9 )
@@ -589,12 +587,12 @@ ROM_START( scion )
 	ROM_LOAD( "82s129.7b",    0x0100, 0x0100, 0xba151e6a )	/* green component */
 	ROM_LOAD( "82s129.8a",    0x0200, 0x0100, 0xf681ce59 )	/* blue component */
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "sc6",         0x0000, 0x2000, 0x09f5f9c1 )
 ROM_END
 
 ROM_START( scionc )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1.5j",         0x0000, 0x2000, 0x5aaf571e )
 	ROM_LOAD( "2.6j",         0x2000, 0x2000, 0xd5a66ac9 )
 	ROM_LOAD( "3.8j",         0x4000, 0x2000, 0x6e616f28 )
@@ -614,7 +612,7 @@ ROM_START( scionc )
 	ROM_LOAD( "82s129.7b",    0x0100, 0x0100, 0xba151e6a )	/* green component */
 	ROM_LOAD( "82s129.8a",    0x0200, 0x0100, 0xf681ce59 )	/* blue component */
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "6.9f",         0x0000, 0x2000, 0xa66a0ce6 )
 ROM_END
 
@@ -629,7 +627,7 @@ static void stinger_decode(void)
 		{ 0x28,0x28,0x88,0x88 }		/* .........01.1... */
 	};
 	int A;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	for (A = 0x0000;A < 0xc000;A++)
@@ -665,7 +663,7 @@ static void stinger_decode(void)
 
 static int wiz_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -688,7 +686,7 @@ static int wiz_hiload(void)
 static void wiz_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -700,7 +698,7 @@ static void wiz_hisave(void)
 
 static int stinger_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -726,7 +724,7 @@ static int stinger_hiload(void)
 static void stinger_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -739,7 +737,7 @@ static void stinger_hisave(void)
 
 static int scion_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -762,7 +760,7 @@ static int scion_hiload(void)
 static void scion_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

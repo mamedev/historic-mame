@@ -58,11 +58,10 @@ extern struct MemoryWriteAddress ssio_writemem[];
 
 extern struct AY8910interface ssio_ay8910_interface;
 
-#define SOUND_CPU_SSIO(mem)							\
+#define SOUND_CPU_SSIO								\
 	{												\
 		CPU_Z80 | CPU_AUDIO_CPU,					\
 		2000000,	/* 2 Mhz */						\
-		mem,										\
 		ssio_readmem,ssio_writemem,0,0,				\
 		interrupt,26								\
 	}
@@ -83,11 +82,10 @@ extern struct MemoryWriteAddress csdeluxe_writemem[];
 extern struct DACinterface mcr_dac_interface;
 extern struct DACinterface mcr_dual_dac_interface;
 
-#define SOUND_CPU_CHIP_SQUEAK_DELUXE(mem)			\
+#define SOUND_CPU_CHIP_SQUEAK_DELUXE				\
 	{												\
 		CPU_M68000 | CPU_AUDIO_CPU,					\
 		15000000/2,	/* 7.5 Mhz */					\
-		mem,										\
 		csdeluxe_readmem,csdeluxe_writemem,0,0,		\
 		ignore_interrupt,1							\
 	}
@@ -111,11 +109,10 @@ extern struct DACinterface mcr_dual_dac_interface;
 extern struct MemoryReadAddress soundsgood_readmem[];
 extern struct MemoryWriteAddress soundsgood_writemem[];
 
-#define SOUND_CPU_SOUNDS_GOOD(mem)					\
+#define SOUND_CPU_SOUNDS_GOOD						\
 	{												\
 		CPU_M68000 | CPU_AUDIO_CPU,					\
 		16000000/2,	/* 8.0 Mhz */					\
-		mem,										\
 		soundsgood_readmem,soundsgood_writemem,0,0,	\
 		ignore_interrupt,1							\
 	}
@@ -129,11 +126,10 @@ extern struct MemoryWriteAddress soundsgood_writemem[];
 extern struct MemoryReadAddress turbocs_readmem[];
 extern struct MemoryWriteAddress turbocs_writemem[];
 
-#define SOUND_CPU_TURBO_CHIP_SQUEAK(mem)			\
+#define SOUND_CPU_TURBO_CHIP_SQUEAK					\
 	{												\
 		CPU_M6809 | CPU_AUDIO_CPU,					\
 		9000000/4,	/* 2.25 Mhz */					\
-		mem,										\
 		turbocs_readmem,turbocs_writemem,0,0,		\
 		ignore_interrupt,1							\
 	}
@@ -149,11 +145,10 @@ extern struct MemoryWriteAddress squawkntalk_writemem[];
 
 extern struct TMS5220interface squawkntalk_tms5220_interface;
 
-#define SOUND_CPU_SQUAWK_N_TALK(mem)				\
+#define SOUND_CPU_SQUAWK_N_TALK						\
 	{												\
 		CPU_M6802 | CPU_AUDIO_CPU,					\
 		3580000/4,	/* .8 Mhz */					\
-		mem,										\
 		squawkntalk_readmem,squawkntalk_writemem,0,0,\
 		ignore_interrupt,1							\
 	}

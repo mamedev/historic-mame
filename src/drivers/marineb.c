@@ -494,7 +494,6 @@ static struct MachineDriver NAME##_machine_driver =					\
 		{															\
 			CPU_Z80,												\
 			3072000,	/* 3.072 Mhz */								\
-			0,														\
 			readmem,writemem,0,SNDHRDW##_writeport,					\
 			INTERRUPT,1	 	                                        \
 		}															\
@@ -541,7 +540,7 @@ DRIVER(hopprobo, marineb,  marineb, nmi_interrupt);
 ***************************************************************************/
 
 ROM_START( marineb )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "marineb.1",     0x0000, 0x1000, 0x661d6540 )
 	ROM_LOAD( "marineb.2",     0x1000, 0x1000, 0x922da17f )
 	ROM_LOAD( "marineb.3",     0x2000, 0x1000, 0x820a235b )
@@ -560,7 +559,7 @@ ROM_START( marineb )
 ROM_END
 
 ROM_START( changes )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "changes.1",     0x0000, 0x1000, 0x56f83813 )
 	ROM_LOAD( "changes.2",     0x1000, 0x1000, 0x0e627f0b )
 	ROM_LOAD( "changes.3",     0x2000, 0x1000, 0xff8291e9 )
@@ -578,7 +577,7 @@ ROM_START( changes )
 ROM_END
 
 ROM_START( looper )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "changes.1",     0x0000, 0x1000, 0x56f83813 )
 	ROM_LOAD( "changes.2",     0x1000, 0x1000, 0x0e627f0b )
 	ROM_LOAD( "changes.3",     0x2000, 0x1000, 0xff8291e9 )
@@ -596,7 +595,7 @@ ROM_START( looper )
 ROM_END
 
 ROM_START( springer )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "springer.1",    0x0000, 0x1000, 0x0794103a )
 	ROM_LOAD( "springer.2",    0x1000, 0x1000, 0xf4aecd9a )
 	ROM_LOAD( "springer.3",    0x2000, 0x1000, 0x2f452371 )
@@ -619,7 +618,7 @@ ROM_START( springer )
 ROM_END
 
 ROM_START( hoccer )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "hr1.cpu",       0x0000, 0x2000, 0x12e96635 )
 	ROM_LOAD( "hr2.cpu",       0x2000, 0x2000, 0xcf1fc328 )
 	ROM_LOAD( "hr3.cpu",       0x4000, 0x2000, 0x048a0659 )
@@ -636,7 +635,7 @@ ROM_START( hoccer )
 ROM_END
 
 ROM_START( hoccer2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "hr.1",          0x0000, 0x2000, 0x122d159f )
 	ROM_LOAD( "hr.2",          0x2000, 0x2000, 0x48e1efc0 )
 	ROM_LOAD( "hr.3",          0x4000, 0x2000, 0x4e67b0be )
@@ -653,7 +652,7 @@ ROM_START( hoccer2 )
 ROM_END
 
 ROM_START( wanted )
-	ROM_REGION(0x10000)       /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )       /* 64k for code */
 	ROM_LOAD( "prg-1",		   0x0000, 0x2000, 0x2dd90aed )
 	ROM_LOAD( "prg-2",		   0x2000, 0x2000, 0x67ac0210 )
 	ROM_LOAD( "prg-3",		   0x4000, 0x2000, 0x373c7d82 )
@@ -670,7 +669,7 @@ ROM_START( wanted )
 ROM_END
 
 ROM_START( hopprobo )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "hopper01.3k",   0x0000, 0x1000, 0xfd7935c0 )
 	ROM_LOAD( "hopper02.3l",   0x1000, 0x1000, 0xdf1a479a )
 	ROM_LOAD( "hopper03.3n",   0x2000, 0x1000, 0x097ac2a7 )
@@ -694,7 +693,7 @@ ROM_END
 /* the stuff is stored in videoram */
 static int marineb_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0x8979],"\x24\x18\x1b",3) == 0)
@@ -717,7 +716,7 @@ static int marineb_hiload(void)
 static void marineb_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -732,7 +731,7 @@ static void marineb_hisave(void)
 /* the stuff is stored in videoram */
 static int changes_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
         if ((memcmp(&RAM[0x899a],"\x26\x18\x1b",3) == 0) &&
@@ -761,7 +760,7 @@ static int changes_hiload(void)
 static void changes_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -779,7 +778,7 @@ static void changes_hisave(void)
 /* the stuff is stored in videoram */
 static int springer_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0x8b3a],"\x02\x1b\x02",3) == 0)
@@ -808,7 +807,7 @@ static int springer_hiload(void)
 static void springer_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -826,7 +825,7 @@ static void springer_hisave(void)
 /****  Hoccer (set 1) high score save routine - RJF (July 29, 1999)  ****/
 static int hoccer_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0x8551],"\x02\x08\x05",3) == 0)
@@ -854,7 +853,7 @@ static int hoccer_hiload(void)
 static void hoccer_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -867,7 +866,7 @@ static void hoccer_hisave(void)
 /* different values and lenght, same offset */
 static int hoccer2_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0x8551],"\x05\x08\x05",3) == 0)
@@ -895,7 +894,7 @@ static int hoccer2_hiload(void)
 static void hoccer2_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -907,7 +906,7 @@ static void hoccer2_hisave(void)
 /****  Wanted high score save routine - RJF (May 2, 1999)  ****/
 static int wanted_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x81b4],"\x00\x03\x00",3) == 0)
@@ -935,7 +934,7 @@ static int wanted_hiload(void)
 static void wanted_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -947,7 +946,7 @@ static void wanted_hisave(void)
 /****  Hopper Robo high score save routine - RJF (Aug 1, 1999)  ****/
 static int hopprobo_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0x8060],"\x01\x06\x07",3) == 0)
@@ -975,7 +974,7 @@ static int hopprobo_hiload(void)
 static void hopprobo_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{

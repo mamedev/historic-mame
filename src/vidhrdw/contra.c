@@ -246,7 +246,7 @@ static void draw_sprites( struct osd_bitmap *bitmap, int bank )
 	const struct rectangle *clip = &Machine->drv->visible_area;
 	struct GfxElement *gfx = Machine->gfx[bank];
 
-//	unsigned char *RAM = Machine->memory_region[0];
+//	unsigned char *RAM = memory_region(REGION_CPU1);
 //	int limit = (bank)? (RAM[0xc2]*256 + RAM[0xc3]) : (RAM[0xc0]*256 + RAM[0xc1]);
 
 //	const unsigned char *source = spriteram + bank*0x2000 + spriteram_offset;

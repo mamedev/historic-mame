@@ -393,14 +393,12 @@ static struct MachineDriver GAMENAME##_machine_driver =             \
 		{                                                           \
 			CPU_Z80,                                                \
 			3072000,	/* 3.072 Mhz ? */                           \
-			0,                                                      \
 			readmem,GAMENAME##_writemem,0,0,                        \
 			nmi_interrupt,1                                         \
 		},                                                          \
 		{                                                           \
 			CPU_Z80 | CPU_AUDIO_CPU,                                \
 			14318180/8,	/* 1.789772727 MHz */						\
-			3,	/* memory region #3 */                              \
 			timeplt_sound_readmem,timeplt_sound_writemem,0,0,       \
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */ \
 		}                                                           \
@@ -445,7 +443,7 @@ MACHINE_DRIVER(commsega)
 ***************************************************************************/
 
 ROM_START( locomotn )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "1a.cpu",       0x0000, 0x1000, 0xb43e689a )
 	ROM_LOAD( "2a.cpu",       0x1000, 0x1000, 0x529c823d )
 	ROM_LOAD( "3.cpu",        0x2000, 0x1000, 0xc9dbfbd1 )
@@ -463,12 +461,12 @@ ROM_START( locomotn )
 	ROM_LOAD( "7a.bpr",       0x0120, 0x0020, 0x48c8f094 ) /* ?? */
 	ROM_LOAD( "10a.bpr",      0x0140, 0x0020, 0xb8861096 ) /* ?? */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "1b_s1.bin",    0x0000, 0x1000, 0xa1105714 )
 ROM_END
 
 ROM_START( gutangtn )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "3d_1.bin",     0x0000, 0x1000, 0xe9757395 )
 	ROM_LOAD( "3e_2.bin",     0x1000, 0x1000, 0x11d21d2e )
 	ROM_LOAD( "3f_3.bin",     0x2000, 0x1000, 0x4d80f895 )
@@ -486,12 +484,12 @@ ROM_START( gutangtn )
 	ROM_LOAD( "7a.bpr",       0x0120, 0x0020, 0x48c8f094 ) /* ?? */
 	ROM_LOAD( "10a.bpr",      0x0140, 0x0020, 0xb8861096 ) /* ?? */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "1b_s1.bin",    0x0000, 0x1000, 0xa1105714 )
 ROM_END
 
 ROM_START( cottong )
-	ROM_REGION(0x10000) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "c1",           0x0000, 0x1000, 0x2c256fe6 )
 	ROM_LOAD( "c2",           0x1000, 0x1000, 0x1de5e6a0 )
 	ROM_LOAD( "c3",           0x2000, 0x1000, 0x01f909fe )
@@ -508,13 +506,13 @@ ROM_START( cottong )
 	ROM_LOAD( "7a.bpr",       0x0120, 0x0020, 0x48c8f094 ) /* ?? */
 	ROM_LOAD( "10a.bpr",      0x0140, 0x0020, 0xb8861096 ) /* ?? */
 
-	ROM_REGION(0x10000) /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
 	ROM_LOAD( "c7",           0x0000, 0x1000, 0x3d83f6d3 )
 	ROM_LOAD( "c8",           0x1000, 0x1000, 0x323e1937 )
 ROM_END
 
 ROM_START( jungler )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "jungr1",       0x0000, 0x1000, 0x5bd6ad15 )
 	ROM_LOAD( "jungr2",       0x1000, 0x1000, 0xdc99f1e3 )
 	ROM_LOAD( "jungr3",       0x2000, 0x1000, 0x3dcc03da )
@@ -532,12 +530,12 @@ ROM_START( jungler )
 	ROM_LOAD( "18s030.7a",    0x0120, 0x0020, 0x8f574815 ) /* ?? */
 	ROM_LOAD( "6331-1.10a",   0x0140, 0x0020, 0xb8861096 ) /* ?? */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "1b",           0x0000, 0x1000, 0xf86999c3 )
 ROM_END
 
 ROM_START( junglers )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "5c",           0x0000, 0x1000, 0xedd71b28 )
 	ROM_LOAD( "5a",           0x1000, 0x1000, 0x61ea4d46 )
 	ROM_LOAD( "4d",           0x2000, 0x1000, 0x557c7925 )
@@ -555,12 +553,12 @@ ROM_START( junglers )
 	ROM_LOAD( "18s030.7a",    0x0120, 0x0020, 0x8f574815 ) /* ?? */
 	ROM_LOAD( "6331-1.10a",   0x0140, 0x0020, 0xb8861096 ) /* ?? */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "1b",           0x0000, 0x1000, 0xf86999c3 )
 ROM_END
 
 ROM_START( commsega )
-	ROM_REGION(0x10000) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "csega1",       0x0000, 0x1000, 0x92de3405 )
 	ROM_LOAD( "csega2",       0x1000, 0x1000, 0xf14e2f9a )
 	ROM_LOAD( "csega3",       0x2000, 0x1000, 0x941dbf48 )
@@ -578,7 +576,7 @@ ROM_START( commsega )
 	ROM_LOAD( "gg0.bpr",      0x0120, 0x0020, 0x48c8f094 ) /* ?? */
 	ROM_LOAD( "tt3.bpr",      0x0140, 0x0020, 0xb8861096 ) /* ?? */
 
-	ROM_REGION(0x10000) /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
 	ROM_LOAD( "csega8",       0x0000, 0x1000, 0x588b4210 )
 ROM_END
 
@@ -586,7 +584,7 @@ ROM_END
 
 static int locomotn_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -615,7 +613,7 @@ static int locomotn_hiload(void)
 static void locomotn_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -627,7 +625,7 @@ static void locomotn_hisave(void)
 
 static int jungler_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -653,7 +651,7 @@ static int jungler_hiload(void)
 static void jungler_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -666,7 +664,7 @@ static void jungler_hisave(void)
 static int commsega_hiload(void)
 {
 	static int firsttime = 0;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if (firsttime == 0)
@@ -698,7 +696,7 @@ static int commsega_hiload(void)
 static void commsega_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

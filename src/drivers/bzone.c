@@ -476,7 +476,7 @@ INPUT_PORTS_END
 
 static int bzone_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -502,7 +502,7 @@ static int bzone_hiload(void)
 static void bzone_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -561,7 +561,6 @@ static struct MachineDriver bzone_machine_driver =
 		{
 			CPU_M6502,
 			1500000,	/* 1.5 Mhz */
-			0,
 			bzone_readmem,bzone_writemem,0,0,
 			bzone_interrupt,6 /* 4.1ms */
 		}
@@ -605,7 +604,7 @@ static struct MachineDriver bzone_machine_driver =
 ***************************************************************************/
 
 ROM_START( bzone )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "036414.01",  0x5000, 0x0800, 0xefbc3fa0 )
 	ROM_LOAD( "036413.01",  0x5800, 0x0800, 0x5d9d9111 )
 	ROM_LOAD( "036412.01",  0x6000, 0x0800, 0xab55cbd2 )
@@ -619,7 +618,7 @@ ROM_START( bzone )
 ROM_END
 
 ROM_START( bzone2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "036414a.01", 0x5000, 0x0800, 0x13de36d5 )
 	ROM_LOAD( "036413.01",  0x5800, 0x0800, 0x5d9d9111 )
 	ROM_LOAD( "036412.01",  0x6000, 0x0800, 0xab55cbd2 )
@@ -730,7 +729,6 @@ static struct MachineDriver redbaron_machine_driver =
 		{
 			CPU_M6502,
 			1500000,	/* 1.5 Mhz */
-			0,
 			redbaron_readmem,redbaron_writemem,0,0,
 			bzone_interrupt,4 /* 5.4ms */
 		}
@@ -774,7 +772,7 @@ static struct MachineDriver redbaron_machine_driver =
 ***************************************************************************/
 
 ROM_START( redbaron )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "037587.01",  0x4800, 0x0800, 0x60f23983 )
 	ROM_CONTINUE(           0x5800, 0x0800 )
 	ROM_LOAD( "037000.01e", 0x5000, 0x0800, 0x69bed808 )

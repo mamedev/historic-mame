@@ -16,8 +16,8 @@ static int cps2_width;
 int cps2_gfx_start(void)
 {
 	UINT32 dwval;
-	int size=Machine->memory_region_length[cps1_gfx_region];
-	unsigned char *data = Machine->memory_region[cps1_gfx_region];
+	int size=memory_region_length(cps1_gfx_region);
+	unsigned char *data = memory_region(cps1_gfx_region);
 	int i,j,nchar,penusage,gfxsize;
 
 	gfxsize=size/4;
@@ -93,10 +93,10 @@ int cps2_gfx_start(void)
            data+=4;
 		}
 
-        data = Machine->memory_region[cps1_gfx_region]+2;
+        data = memory_region(cps1_gfx_region)+2;
         for (i=0; i<gfxsize/4; i++)
 		{
-			nchar=i/8;  /* 8x8 char number */
+		   nchar=i/8+(gfxsize/4)/8;  /* 8x8 char number */
 		   dwval=0;
 		   for (j=0; j<8; j++)
 		   {

@@ -339,7 +339,7 @@ static int bank;
 
 static void bankswitch_w( int offset, int data ){
 	if( (data&1)!=bank ){
-		unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+		unsigned char *RAM = memory_region(REGION_CPU1);
 		bank = data&1;
 		cpu_setbank(1,&RAM[ bank?0x10000:0x4000 ]);
 	}
@@ -645,14 +645,12 @@ static struct MachineDriver renegade_machine_driver =
 		{
  			CPU_M6502,
 			3000000,	/* 1.5 MHz? */
-			0, /* memory region */
 			main_readmem,main_writemem,0,0,
 			renegade_interrupt,2
 		},
 		{
  			CPU_M6809 | CPU_AUDIO_CPU,
 			1200000,	/* ? */
-			2, /* memory region */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0,	/* FIRQs are caused by the YM3526 */
 								/* IRQs are caused by the main CPU */
@@ -692,7 +690,7 @@ static struct MachineDriver renegade_machine_driver =
 
 
 ROM_START( renegade )
-	ROM_REGION(0x14000)	/* 64k for code + bank switched ROM */
+	ROM_REGIONX( 0x14000, REGION_CPU1 )	/* 64k for code + bank switched ROM */
 	ROM_LOAD( "nb-5.bin",     0x8000, 0x8000, 0xba683ddf )
 	ROM_LOAD( "na-5.bin",     0x4000, 0x4000, 0xde7e7df4 )
 	ROM_CONTINUE( 0x10000, 0x4000 )
@@ -727,7 +725,7 @@ ROM_START( renegade )
 	ROM_LOAD( "ng-5.bin",     0x88000, 0x8000, 0xa8ee3720 )
 	ROM_LOAD( "nm-5.bin",     0x90000, 0x8000, 0xc100258e )
 
-	ROM_REGION(0x10000) /* audio CPU (M6809) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* audio CPU (M6809) */
 	ROM_LOAD( "n0-5.bin",     0x08000, 0x08000, 0x3587de3b )
 
 	ROM_REGION(0x20000) /* adpcm */
@@ -737,7 +735,7 @@ ROM_START( renegade )
 ROM_END
 
 ROM_START( kuniokun )
-	ROM_REGION(0x14000)	/* 64k for code + bank switched ROM */
+	ROM_REGIONX( 0x14000, REGION_CPU1 )	/* 64k for code + bank switched ROM */
 	ROM_LOAD( "nb-01.bin",	  0x8000, 0x8000, 0x93fcfdf5 ) // original
 	ROM_LOAD( "ta18-11.bin",  0x4000, 0x4000, 0xf240f5cd )
 	ROM_CONTINUE( 0x10000, 0x4000 )
@@ -772,7 +770,7 @@ ROM_START( kuniokun )
 	ROM_LOAD( "ta18-21.bin",  0x88000, 0x8000, 0xc95e009b )
 	ROM_LOAD( "ta18-15.bin",  0x90000, 0x8000, 0xa5d61d01 )
 
-	ROM_REGION(0x10000) /* audio CPU (M6809) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* audio CPU (M6809) */
 	ROM_LOAD( "n0-5.bin",     0x08000, 0x08000, 0x3587de3b )
 
 	ROM_REGION(0x20000) /* adpcm */
@@ -782,7 +780,7 @@ ROM_START( kuniokun )
 ROM_END
 
 ROM_START( kuniokub )
-	ROM_REGION(0x14000)	/* 64k for code + bank switched ROM */
+	ROM_REGIONX( 0x14000, REGION_CPU1 )	/* 64k for code + bank switched ROM */
 	ROM_LOAD( "ta18-10.bin",  0x8000, 0x8000, 0xa90cf44a ) // bootleg
 	ROM_LOAD( "ta18-11.bin",  0x4000, 0x4000, 0xf240f5cd )
 	ROM_CONTINUE( 0x10000, 0x4000 )
@@ -817,7 +815,7 @@ ROM_START( kuniokub )
 	ROM_LOAD( "ta18-21.bin",  0x88000, 0x8000, 0xc95e009b )
 	ROM_LOAD( "ta18-15.bin",  0x90000, 0x8000, 0xa5d61d01 )
 
-	ROM_REGION(0x10000) /* audio CPU (M6809) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* audio CPU (M6809) */
 	ROM_LOAD( "n0-5.bin",     0x08000, 0x08000, 0x3587de3b )
 
 	ROM_REGION(0x20000) /* adpcm */
@@ -830,7 +828,7 @@ ROM_END
 static int hiload(void){
 	if( osd_key_pressed( OSD_KEY_L ) ){
 		void *f;
-		unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+		unsigned char *RAM = memory_region(REGION_CPU1);
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
@@ -845,7 +843,7 @@ static int hiload(void){
 
 static void hisave(void){
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{

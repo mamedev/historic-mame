@@ -517,14 +517,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,
 			6000000, /* ? Main clock is 24MHz */
-			0,
 			readmem,writemem,0,0,
 			tigeroad_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,    /* 4 Mhz ??? */
-			3,  /* memory region #3 */
 			sound_readmem,sound_writemem,0,sound_writeport,
 			ignore_interrupt,0  /* NMIs are triggered by the main CPU */
 								/* IRQs are triggered by the YM2203 */
@@ -566,7 +564,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( tigeroad )
-	ROM_REGION(0x40000) /* 256K for 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 ) /* 256K for 68000 code */
 	ROM_LOAD_EVEN( "tru02.bin",    0x00000, 0x20000, 0x8d283a95 )
 	ROM_LOAD_ODD( "tru04.bin",    0x00000, 0x20000, 0x72e2ef20 )
 
@@ -588,12 +586,12 @@ ROM_START( tigeroad )
 	ROM_REGION( 0x08000 ) /* tilemap for background */
 	ROM_LOAD( "tr13.bin",     0x0000, 0x8000, 0xa79be1eb )
 
-	ROM_REGION( 0x10000 ) /* audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* audio CPU */
 	ROM_LOAD( "tru05.bin",    0x0000, 0x8000, 0xf9a7c9bf )
 ROM_END
 
 ROM_START( f1dream )
-	ROM_REGION(0x40000) /* 256K for 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 ) /* 256K for 68000 code */
 	ROM_LOAD_EVEN( "06j_02.bin",   0x00000, 0x20000, 0x3c2ec697 )
 	ROM_LOAD_ODD( "06k_03.bin",   0x00000, 0x20000, 0x85ebad91 )
 
@@ -616,15 +614,15 @@ ROM_START( f1dream )
 	/* 170000-17ffff empty */
 	ROM_LOAD( "10d_01.bin",   0x180000, 0x08000, 0x361caf00 ) /* 8x8 text */
 
-	ROM_REGION( 0x08000 ) /* tilemap for background */
+	ROM_REGION(  0x08000 ) /* tilemap for background */
 	ROM_LOAD( "07l_15.bin",   0x0000, 0x8000, 0x978758b7 )
 
-	ROM_REGION( 0x10000 ) /* audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* audio CPU */
 	ROM_LOAD( "12k_04.bin",   0x0000, 0x8000, 0x4b9a7524 )
 ROM_END
 
 ROM_START( f1dreamb )
-	ROM_REGION(0x40000) /* 256K for 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 ) /* 256K for 68000 code */
 	ROM_LOAD_EVEN( "f1d_04.bin",   0x00000, 0x10000, 0x903febad )
 	ROM_LOAD_ODD( "f1d_05.bin",   0x00000, 0x10000, 0x666fa2a7 )
 	ROM_LOAD_EVEN( "f1d_02.bin",   0x20000, 0x10000, 0x98973c4c )
@@ -652,7 +650,7 @@ ROM_START( f1dreamb )
 	ROM_REGION( 0x08000 ) /* tilemap for background */
 	ROM_LOAD( "07l_15.bin",   0x0000, 0x8000, 0x978758b7 )
 
-	ROM_REGION( 0x10000 ) /* audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* audio CPU */
 	ROM_LOAD( "12k_04.bin",   0x0000, 0x8000, 0x4b9a7524 )
 ROM_END
 

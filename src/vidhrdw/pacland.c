@@ -153,7 +153,7 @@ void pacland_scroll1_w(int offset,int data)
 void pacland_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	bankaddress = 0x10000 + ((data & 0x07) << 13);

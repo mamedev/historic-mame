@@ -619,7 +619,7 @@ void namcos1_cpu_control_w( int offset, int data )
 
 void namcos1_sound_bankswitch_w( int offset, int data )
 {
-	unsigned char *RAM = Machine->memory_region[3];
+	unsigned char *RAM = memory_region(3);
 	int bank = ( data >> 4 ) & 0x07;
 
 	cpu_setbank( 1, &RAM[ 0x0c000 + ( 0x4000 * bank ) ] );
@@ -664,13 +664,13 @@ void namcos1_mcu_bankswitch_w(int offset,int data)
 	}
 	/* bit 0-1 : address line A15-A16 */
 	addr += (data&3)*0x8000;
-	if( addr >= Machine->memory_region_length[6])
+	if( addr >= memory_region_length(6))
 	{
 		if(errorlog)
 			fprintf(errorlog,"unmapped mcu bank selected pc=%04x bank=%02x\n",cpu_get_pc(),data);
 		addr = 0x4000;
 	}
-	cpu_setbank( 4, Machine->memory_region[6]+addr );
+	cpu_setbank( 4, memory_region(6)+addr );
 }
 
 /* This pont This is very obscure, but i havent found any better way yet. */
@@ -744,7 +744,7 @@ static void namcos1_insatll_bank(int start,int end,handler_r hr,handler_w hw,
 
 static void namcos1_install_rom_bank(int start,int end,int size,int offset)
 {
-	unsigned char *BROM = Machine->memory_region[4];
+	unsigned char *BROM = memory_region(4);
 	int step = size/0x2000;
 	while(start < end)
 	{
@@ -759,7 +759,7 @@ static void namcos1_build_banks(/* int *romsize_maps,*/
 	int i;
 
 	/* S1 RAM pointer set */
-	s1ram = Machine->memory_region[NAMCO_S1_RAM_REGION];
+	s1ram = memory_region(NAMCO_S1_RAM_REGION);
 
 	/* clear all banks to unknown area */
 	for(i=0;i<NAMCOS1_MAX_BANK;i++)
@@ -887,7 +887,7 @@ static void namcos1_driver_init(const struct namcos1_specific *specific )
 
 	/* sound cpu speedup optimize (auto ditect) */
 	{
-		unsigned char *RAM = Machine->memory_region[3]; /* sound cpu */
+		unsigned char *RAM = memory_region(3); /* sound cpu */
 		int addr,flag_ptr;
 
 		for(addr=0xd000;addr<0xd0ff;addr++)

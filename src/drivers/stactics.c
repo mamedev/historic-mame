@@ -269,7 +269,6 @@ static struct MachineDriver machine_driver =
 		{
             CPU_8080,
             1933560,
-			0,
 			readmem,writemem,0,0,
             stactics_interrupt,1
 		},
@@ -307,7 +306,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( stactics )
-	ROM_REGION(0x10000) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "epr-218x",     0x0000, 0x0800, 0xb1186ad2 )
 	ROM_LOAD( "epr-219x",     0x0800, 0x0800, 0x3b86036d )
 	ROM_LOAD( "epr-220x",     0x1000, 0x0800, 0xc58702da )
@@ -329,7 +328,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	static int first_pass = 1;
@@ -364,7 +363,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

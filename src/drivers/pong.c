@@ -71,7 +71,6 @@ static struct MachineDriver pong_machine_driver =
 		{
 			CPU_GENSYNC,
 			PONG_CLOCK,
-			0,
 			0, 0, 0, 0,
 			pong_vh_scanline, PONG_MAX_V,
 			0, 0, &pong_video

@@ -23,6 +23,7 @@ the board, and no piggybacked ROMs. Board number is MDK 321 V-0    EXPRO-02
 extern unsigned char *galpanic_bgvideoram,*galpanic_fgvideoram;
 extern int galpanic_fgvideoram_size;
 
+void galpanic_init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom);
 int galpanic_bgvideoram_r(int offset);
 void galpanic_bgvideoram_w(int offset,int data);
 int galpanic_fgvideoram_r(int offset);
@@ -46,7 +47,7 @@ int galpanic_interrupt(void)
 void galpanic_6295_bankswitch_w(int offset,int data)
 {
 	static unsigned char bank[2];
-	unsigned char *RAM = Machine->memory_region[2];
+	unsigned char *RAM = memory_region(2);
 
 
 	COMBINE_WORD_MEM(bank,data);
@@ -202,7 +203,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,
 			8000000,	/* 8 Mhz ??? */
-			0,
 			readmem,writemem,0,0,
 			galpanic_interrupt,2
 		}
@@ -214,8 +214,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	256, 256, { 0, 256-1, 0, 224-1 },
 	gfxdecodeinfo,
-	1024, 1024,
-	0,
+	1024 + 32768, 1024,
+	galpanic_init_palette,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
@@ -242,7 +242,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( galpanic )
-	ROM_REGION(0x400000)	/* 68000 code */
+	ROM_REGIONX( 0x400000, REGION_CPU1 )	/* 68000 code */
 	ROM_LOAD_EVEN( "pm110.4m2",    0x000000, 0x080000, 0xae6b17a8 )
 	ROM_LOAD_ODD ( "pm109.4m1",    0x000000, 0x080000, 0xb85d792d )
 	/* The above two ROMs contain valid 68000 code, but the game doesn't */
@@ -260,7 +260,7 @@ ROM_START( galpanic )
 	ROM_REGION_DISPOSE(0x100000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "pm006e.67",    0x000000, 0x100000, 0x57aec037 )
 
-	ROM_REGION(0x140000)	/* 1024k for ADPCM samples - sound chip is OKIM6295 */
+	ROM_REGION( 0x140000 )	/* 1024k for ADPCM samples - sound chip is OKIM6295 */
 	/* 00000-2ffff is fixed, 30000-3ffff is bank switched from all the ROMs */
 	ROM_LOAD( "pm008e.l",     0x00000, 0x80000, 0xd9379ba8 )
 	ROM_RELOAD(               0x40000, 0x80000 )

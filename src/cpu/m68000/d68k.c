@@ -1467,17 +1467,17 @@ static void d68000_eori_to_sr(void)
 
 static void d68000_exg_dd(void)
 {
-   sprintf(g_dasm_str, "exg     D%d, D%d", ((g_cpu_ir>>9)&7)+1, g_cpu_ir&7);
+   sprintf(g_dasm_str, "exg     D%d, D%d", ((g_cpu_ir>>9)&7), g_cpu_ir&7);
 }
 
 static void d68000_exg_aa(void)
 {
-   sprintf(g_dasm_str, "exg     A%d, A%d", ((g_cpu_ir>>9)&7)+1, g_cpu_ir&7);
+   sprintf(g_dasm_str, "exg     A%d, A%d", ((g_cpu_ir>>9)&7), g_cpu_ir&7);
 }
 
 static void d68000_exg_da(void)
 {
-   sprintf(g_dasm_str, "exg     D%d, A%d", ((g_cpu_ir>>9)&7)+1, g_cpu_ir&7);
+   sprintf(g_dasm_str, "exg     D%d, A%d", ((g_cpu_ir>>9)&7), g_cpu_ir&7);
 }
 
 static void d68000_ext_16(void)

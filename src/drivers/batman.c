@@ -227,13 +227,10 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,		/* verified */
 			14318320,		/* 14.318 Mhz */
-			0,
 			main_readmem,main_writemem,0,0,
 			ignore_interrupt,1
 		},
-		{
-			JSA_III_CPU(1)
-		}
+		JSA_III_CPU
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
@@ -265,12 +262,12 @@ static struct MachineDriver machine_driver =
 
 static void rom_decode(void)
 {
-	UINT8 *base = Machine->memory_region[2];
+	UINT8 *base = memory_region(2);
 	int i;
 
 	/* invert the graphics bits on the playfield and motion objects */
 	for (i = 0; i < 0x200000; i++)
-		Machine->memory_region[3][i] ^= 0xff;
+		memory_region(3)[i] ^= 0xff;
 
 	/* expand the ADPCM data to avoid lots of memcpy's during gameplay */
 	/* the upper 128k is fixed, the lower 128k is bankswitched */
@@ -330,7 +327,7 @@ static void batman_init(void)
  *************************************/
 
 ROM_START( batman )
-	ROM_REGION(0xc0000)	/* 6*128k for 68000 code */
+	ROM_REGIONX( 0xc0000, REGION_CPU1 )	/* 6*128k for 68000 code */
 	ROM_LOAD_EVEN( "085-2030.10r",  0x00000, 0x20000, 0x7cf4e5bf )
 	ROM_LOAD_ODD ( "085-2031.7r",   0x00000, 0x20000, 0x7d7f3fc4 )
 	ROM_LOAD_EVEN( "085-2032.91r",  0x40000, 0x20000, 0xd80afb20 )
@@ -338,7 +335,7 @@ ROM_START( batman )
 	ROM_LOAD_EVEN( "085-2034.9r",   0x80000, 0x20000, 0x05388c62 )
 	ROM_LOAD_ODD ( "085-2035.5r",   0x80000, 0x20000, 0xe77c92dd )
 
-	ROM_REGION(0x14000)	/* 64k + 16k for 6502 code */
+	ROM_REGIONX( 0x14000, REGION_CPU2 )	/* 64k + 16k for 6502 code */
 	ROM_LOAD( "085-1040.12c",  0x10000, 0x4000, 0x080db83c )
 	ROM_CONTINUE(              0x04000, 0xc000 )
 

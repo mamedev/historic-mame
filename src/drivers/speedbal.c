@@ -277,14 +277,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* 4 MHz ??? */
-			0,
 			readmem,writemem,readport,writeport,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
 			2660000,	/* 2.66 MHz ???  Maybe yes */
-			2,
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			interrupt,8
 		}
@@ -324,7 +322,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( speedbal )
-	ROM_REGION(0x10000)     /* 64K for code: main */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64K for code: main */
 	ROM_LOAD( "sb1.bin",  0x0000,  0x8000, 0x1c242e34 )
 	ROM_LOAD( "sb3.bin",  0x8000,  0x8000, 0x7682326a )
 
@@ -337,7 +335,7 @@ ROM_START( speedbal )
 	ROM_LOAD( "sb6.bin", 0x28000, 0x08000, 0x0e2506eb )    /* sprites */
 	ROM_LOAD( "sb7.bin", 0x30000, 0x08000, 0x9f1b33d1 )
 
-	ROM_REGION(0x10000)     /* 64K for second CPU: sound */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64K for second CPU: sound */
 	ROM_LOAD( "sb2.bin",  0x0000, 0x8000, 0xe6a6d9b7 )
 ROM_END
 
@@ -348,13 +346,13 @@ static void speedbal_decode (void)
 
 	/* invert the graphics bits on the sprites */
 	for (i = 0x28000; i < 0x38000; i++)
-		Machine->memory_region[1][i] ^= 0xff;
+		memory_region(1)[i] ^= 0xff;
 }
 
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if  (memcmp(&RAM[0xF800],"\x20\x38\x76",3) == 0 &&
@@ -376,7 +374,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

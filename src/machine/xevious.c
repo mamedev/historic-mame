@@ -49,23 +49,23 @@ void xevious_init_machine(void)
 	cpu_set_reset_line(1,ASSERT_LINE);
 	cpu_set_reset_line(2,ASSERT_LINE);
 
-	Machine->memory_region[0][0x8c00] = 1;
-	Machine->memory_region[0][0x8c01] = 1;
+	memory_region(REGION_CPU1)[0x8c00] = 1;
+	memory_region(REGION_CPU1)[0x8c01] = 1;
 
-	rom2a = Machine->memory_region[5];
-	rom2b = Machine->memory_region[5]+0x1000;
-	rom2c = Machine->memory_region[5]+0x3000;
+	rom2a = memory_region(5);
+	rom2b = memory_region(5)+0x1000;
+	rom2c = memory_region(5)+0x3000;
 
 	nmi_timer = 0;
 
 	xevious_halt_w (0, 0);
 
 #if 0		/* bypass initial rom & ram test , goto hot start(namco) */
-	Machine->memory_region[0][0x15f] = 0xc3;	/* check sum break */
-	Machine->memory_region[0][0x160] = 0xee;	/* check sum break */
-	Machine->memory_region[0][0x161] = 0x01;	/* check sum break */
+	memory_region(REGION_CPU1)[0x15f] = 0xc3;	/* check sum break */
+	memory_region(REGION_CPU1)[0x160] = 0xee;	/* check sum break */
+	memory_region(REGION_CPU1)[0x161] = 0x01;	/* check sum break */
 
-	Machine->memory_region[0][0x268] = 0xfe;	/* check sum break */
+	memory_region(REGION_CPU1)[0x268] = 0xfe;	/* check sum break */
 #endif
 }
 

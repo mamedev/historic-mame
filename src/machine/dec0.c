@@ -519,7 +519,7 @@ static void hbarrel_custom_memory(void)
 	install_mem_read_handler(0, 0xff8010, 0xff8011, hbarrel_cycle_r);
 	GAME=1;
 { /* Remove this patch once processing time of i8751 is simulated */
-unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+unsigned char *RAM = memory_region(REGION_CPU1);
 WRITE_WORD (&RAM[0xb3e],0x8008);
 }
 }
@@ -530,7 +530,7 @@ static void hbarrelu_custom_memory(void)
 	GAME=1;
 
 { /* Remove this patch once processing time of i8751 is simulated */
-unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+unsigned char *RAM = memory_region(REGION_CPU1);
 WRITE_WORD (&RAM[0xb68],0x8008);
 }
 }

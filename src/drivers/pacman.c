@@ -865,7 +865,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
-			0,
 			readmem,writemem,0,writeport,
 			pacman_interrupt,1
 		}
@@ -903,7 +902,6 @@ static struct MachineDriver theglob_machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
-			0,
 			theglob_readmem,writemem,theglob_readport,writeport,
 			pacman_interrupt,1
 		}
@@ -941,7 +939,6 @@ static struct MachineDriver vanvan_machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
-			0,
 			readmem,writemem,0,vanvan_writeport,
 			nmi_interrupt,1
 		}
@@ -979,7 +976,6 @@ static struct MachineDriver alibaba_machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
-			0,
 			alibaba_readmem,alibaba_writemem,0,0,
 			interrupt,1
 		}
@@ -1017,7 +1013,7 @@ static struct MachineDriver alibaba_machine_driver =
 ***************************************************************************/
 
 ROM_START( pacman )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "namcopac.6e",  0x0000, 0x1000, 0xfee263b3 )
 	ROM_LOAD( "namcopac.6f",  0x1000, 0x1000, 0x39d1fc83 )
 	ROM_LOAD( "namcopac.6h",  0x2000, 0x1000, 0x02083b03 )
@@ -1031,13 +1027,13 @@ ROM_START( pacman )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( npacmod )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "namcopac.6e",  0x0000, 0x1000, 0xfee263b3 )
 	ROM_LOAD( "namcopac.6f",  0x1000, 0x1000, 0x39d1fc83 )
 	ROM_LOAD( "namcopac.6h",  0x2000, 0x1000, 0x02083b03 )
@@ -1051,13 +1047,13 @@ ROM_START( npacmod )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( pacmanjp )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "pacman.6e",    0x0000, 0x1000, 0xc1e6ab10 )
 	ROM_LOAD( "pacman.6f",    0x1000, 0x1000, 0x1a6fb2d4 )
 	ROM_LOAD( "pacman.6h",    0x2000, 0x1000, 0xbcdd1beb )
@@ -1073,13 +1069,13 @@ ROM_START( pacmanjp )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( pacmanm )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "pacman.6e",    0x0000, 0x1000, 0xc1e6ab10 )
 	ROM_LOAD( "pacman.6f",    0x1000, 0x1000, 0x1a6fb2d4 )
 	ROM_LOAD( "pacman.6h",    0x2000, 0x1000, 0xbcdd1beb )
@@ -1093,13 +1089,13 @@ ROM_START( pacmanm )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( pacmod )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "pacmanh.6e",   0x0000, 0x1000, 0x3b2ec270 )
 	ROM_LOAD( "pacman.6f",    0x1000, 0x1000, 0x1a6fb2d4 )
 	ROM_LOAD( "pacmanh.6h",   0x2000, 0x1000, 0x18811780 )
@@ -1113,13 +1109,13 @@ ROM_START( pacmod )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( hangly )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "hangly.6e",    0x0000, 0x1000, 0x5fe8610a )
 	ROM_LOAD( "hangly.6f",    0x1000, 0x1000, 0x73726586 )
 	ROM_LOAD( "hangly.6h",    0x2000, 0x1000, 0x4e7ef99f )
@@ -1133,13 +1129,13 @@ ROM_START( hangly )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( hangly2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "hangly.6e",    0x0000, 0x1000, 0x5fe8610a )
 	ROM_LOAD( "hangly2.6f",   0x1000, 0x0800, 0x5ba228bb )
 	ROM_LOAD( "hangly2.6m",   0x1800, 0x0800, 0xbaf5461e )
@@ -1155,13 +1151,13 @@ ROM_START( hangly2 )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( puckman )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "puckman.6e",   0x0000, 0x1000, 0xa8ae23c5 )
 	ROM_LOAD( "pacman.6f",    0x1000, 0x1000, 0x1a6fb2d4 )
 	ROM_LOAD( "puckman.6h",   0x2000, 0x1000, 0x197443f8 )
@@ -1175,13 +1171,13 @@ ROM_START( puckman )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( pacheart )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "pacheart.pg1", 0x0000, 0x0800, 0xd844b679 )
 	ROM_LOAD( "pacheart.pg2", 0x0800, 0x0800, 0xb9152a38 )
 	ROM_LOAD( "pacheart.pg3", 0x1000, 0x0800, 0x7d177853 )
@@ -1201,13 +1197,13 @@ ROM_START( pacheart )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
-	ROM_REGION(0x0200)      /* sound PROMs */
+	ROM_REGION( 0x0200 )      /* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )  /* timing - not used */
 ROM_END
 
 ROM_START( piranha )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "pr1.cpu",      0x0000, 0x1000, 0xbc5ad024 )
 	ROM_LOAD( "pacman.6f",    0x1000, 0x1000, 0x1a6fb2d4 )
 	ROM_LOAD( "pr3.cpu",      0x2000, 0x1000, 0x473c379d )
@@ -1223,13 +1219,13 @@ ROM_START( piranha )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( pacplus )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "pacplus.6e",   0x0000, 0x1000, 0xd611ef68 )
 	ROM_LOAD( "pacplus.6f",   0x1000, 0x1000, 0xc7207556 )
 	ROM_LOAD( "pacplus.6h",   0x2000, 0x1000, 0xae379430 )
@@ -1243,13 +1239,13 @@ ROM_START( pacplus )
 	ROM_LOAD( "pacplus.7f",   0x0000, 0x0020, 0x063dd53a )
 	ROM_LOAD( "pacplus.4a",   0x0020, 0x0100, 0xe271a166 )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( mspacman )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "boot1",        0x0000, 0x1000, 0xd16b31b7 )
 	ROM_LOAD( "boot2",        0x1000, 0x1000, 0x0d32de5e )
 	ROM_LOAD( "boot3",        0x2000, 0x1000, 0x1821ee0b )
@@ -1265,13 +1261,13 @@ ROM_START( mspacman )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( mspacatk )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "boot1",        0x0000, 0x1000, 0xd16b31b7 )
 	ROM_LOAD( "mspacatk.2",   0x1000, 0x1000, 0x0af09d31 )
 	ROM_LOAD( "boot3",        0x2000, 0x1000, 0x1821ee0b )
@@ -1287,13 +1283,13 @@ ROM_START( mspacatk )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( pacgal )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "boot1",        0x0000, 0x1000, 0xd16b31b7 )
 	ROM_LOAD( "boot2",        0x1000, 0x1000, 0x0d32de5e )
 	ROM_LOAD( "pacman.7fh",   0x2000, 0x1000, 0x513f4d5c )
@@ -1310,13 +1306,13 @@ ROM_START( pacgal )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s129.4a",    0x0020, 0x0100, 0x63efb927 )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( crush )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "crushkrl.6e",  0x0000, 0x1000, 0xa8dd8f54 )
 	ROM_LOAD( "crushkrl.6f",  0x1000, 0x1000, 0x91387299 )
 	ROM_LOAD( "crushkrl.6h",  0x2000, 0x1000, 0xd4455f27 )
@@ -1330,13 +1326,13 @@ ROM_START( crush )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( crush2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "tp1",          0x0000, 0x0800, 0xf276592e )
 	ROM_LOAD( "tp5a",         0x0800, 0x0800, 0x3d302abe )
 	ROM_LOAD( "tp2",          0x1000, 0x0800, 0x25f42e70 )
@@ -1356,13 +1352,13 @@ ROM_START( crush2 )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( crush3 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "unkmol.4e",    0x0000, 0x0800, 0x49150ddf )
 	ROM_LOAD( "unkmol.6e",    0x0800, 0x0800, 0x21f47e17 )
 	ROM_LOAD( "unkmol.4f",    0x1000, 0x0800, 0x9b6dd592 )
@@ -1382,13 +1378,13 @@ ROM_START( crush3 )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( maketrax )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "maketrax.6e",  0x0000, 0x1000, 0x0150fb4a )
 	ROM_LOAD( "maketrax.6f",  0x1000, 0x1000, 0x77531691 )
 	ROM_LOAD( "maketrax.6h",  0x2000, 0x1000, 0xa2cdc51e )
@@ -1402,13 +1398,13 @@ ROM_START( maketrax )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( mbrush )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "mbrush.6e",    0x0000, 0x1000, 0x750fbff7 )
 	ROM_LOAD( "mbrush.6f",    0x1000, 0x1000, 0x27eb4299 )
 	ROM_LOAD( "mbrush.6h",    0x2000, 0x1000, 0xd297108e )
@@ -1424,13 +1420,39 @@ ROM_START( mbrush )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
+	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+ROM_END
+
+ROM_START( paintrlr )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "paintrlr.1",   0x0000, 0x0800, 0x556d20b5 )
+	ROM_LOAD( "paintrlr.5",   0x0800, 0x0800, 0x4598a965 )
+	ROM_LOAD( "paintrlr.2",   0x1000, 0x0800, 0x2da29c81 )
+	ROM_LOAD( "paintrlr.6",   0x1800, 0x0800, 0x1f561c54 )
+	ROM_LOAD( "paintrlr.3",   0x2000, 0x0800, 0xe695b785 )
+	ROM_LOAD( "paintrlr.7",   0x2800, 0x0800, 0x00e6eec0 )
+	ROM_LOAD( "paintrlr.4",   0x3000, 0x0800, 0x0fd5884b )
+	ROM_LOAD( "paintrlr.8",   0x3800, 0x0800, 0x4900114a )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "tpa",          0x0000, 0x0800, 0xc7617198 )
+	ROM_LOAD( "mbrush.5h",    0x0800, 0x0800, 0xc15b6967 )
+	ROM_LOAD( "mbrush.5f",    0x1000, 0x0800, 0xd5bc5cb8 )  /* copyright sign was removed */
+	ROM_LOAD( "tpd",          0x1800, 0x0800, 0xd35d1caf )
+
+	ROM_REGIONX( 0x0120, REGION_PROMS )
+	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
+	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
+
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( ponpoko )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ppokoj1.bin",  0x0000, 0x1000, 0xffa3c004 )
 	ROM_LOAD( "ppokoj2.bin",  0x1000, 0x1000, 0x4a496866 )
 	ROM_LOAD( "ppokoj3.bin",  0x2000, 0x1000, 0x17da6ca3 )
@@ -1448,13 +1470,13 @@ ROM_START( ponpoko )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( ponpokov )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "ppoko1.bin",   0x0000, 0x1000, 0x49077667 )
 	ROM_LOAD( "ppoko2.bin",   0x1000, 0x1000, 0x5101781a )
 	ROM_LOAD( "ppoko3.bin",   0x2000, 0x1000, 0xd790ed22 )
@@ -1472,13 +1494,13 @@ ROM_START( ponpokov )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( eyes )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "d7",           0x0000, 0x1000, 0x3b09ac89 )
 	ROM_LOAD( "e7",           0x1000, 0x1000, 0x97096855 )
 	ROM_LOAD( "f7",           0x2000, 0x1000, 0x731e294e )
@@ -1492,13 +1514,13 @@ ROM_START( eyes )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s129.4a",    0x0020, 0x0100, 0xd8d78829 )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( eyes2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "g38201.7d",    0x0000, 0x1000, 0x2cda7185 )
 	ROM_LOAD( "g38202.7e",    0x1000, 0x1000, 0xb9fe4f59 )
 	ROM_LOAD( "g38203.7f",    0x2000, 0x1000, 0xd618ba66 )
@@ -1512,13 +1534,13 @@ ROM_START( eyes2 )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s129.4a",    0x0020, 0x0100, 0xd8d78829 )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( mrtnt )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "tnt.1",        0x0000, 0x1000, 0x0e836586 )
 	ROM_LOAD( "tnt.2",        0x1000, 0x1000, 0x779c4c5b )
 	ROM_LOAD( "tnt.3",        0x2000, 0x1000, 0xad6fc688 )
@@ -1532,13 +1554,13 @@ ROM_START( mrtnt )
 	ROM_LOAD( "mrtnt08.bin",  0x0000, 0x0020, 0x00000000 )	/* wrong! from Pac-Man */
 	ROM_LOAD( "mrtnt04.bin",  0x0020, 0x0100, 0x00000000 )	/* wrong! from Pac-Man */
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m"  ,  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( lizwiz )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "6e.cpu",       0x0000, 0x1000, 0x32bc1990 )
 	ROM_LOAD( "6f.cpu",       0x1000, 0x1000, 0xef24b414 )
 	ROM_LOAD( "6h.cpu",       0x2000, 0x1000, 0x30bed83d )
@@ -1554,12 +1576,12 @@ ROM_START( lizwiz )
 	ROM_LOAD( "7f.cpu",       0x0000, 0x0020, 0x7549a947 )
 	ROM_LOAD( "4a.cpu",       0x0020, 0x0100, 0x5fdca536 )
 
-	ROM_REGION(0x0100)	/* sound prom */
+	ROM_REGION( 0x0100 )	/* sound prom */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 ROM_END
 
 ROM_START( theglob )
-	ROM_REGION(0x20000)	/* 64k for code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "glob.u2",      0x0000, 0x2000, 0x829d0bea )
 	ROM_LOAD( "glob.u3",      0x2000, 0x2000, 0x31de6628 )
 
@@ -1571,12 +1593,12 @@ ROM_START( theglob )
 	ROM_LOAD( "glob.7f",      0x0000, 0x0020, 0x1f617527 )
 	ROM_LOAD( "glob.4a",      0x0020, 0x0100, 0x28faa769 )
 
-	ROM_REGION(0x0100)	/* sound prom */
+	ROM_REGION( 0x0100 )	/* sound prom */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 ROM_END
 
 ROM_START( beastf )
-	ROM_REGION(0x20000)	/* 64k for code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "bf-u2.bin",    0x0000, 0x2000, 0x3afc517b )
 	ROM_LOAD( "bf-u3.bin",    0x2000, 0x2000, 0x8dbd76d0 )
 
@@ -1588,12 +1610,12 @@ ROM_START( beastf )
 	ROM_LOAD( "glob.7f",      0x0000, 0x0020, 0x1f617527 )
 	ROM_LOAD( "glob.4a",      0x0020, 0x0100, 0x28faa769 )
 
-	ROM_REGION(0x0100)	/* sound prom */
+	ROM_REGION( 0x0100 )	/* sound prom */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 ROM_END
 
 ROM_START( jumpshot )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "6e",           0x0000, 0x1000, 0xf00def9a )
 	ROM_LOAD( "6f",           0x1000, 0x1000, 0xf70deae2 )
 	ROM_LOAD( "6h",           0x2000, 0x1000, 0x894d6f68 )
@@ -1607,13 +1629,13 @@ ROM_START( jumpshot )
 	ROM_LOAD( "prom.7f",      0x0000, 0x0020, 0x872b42f3 )
 	ROM_LOAD( "prom.4a",      0x0020, 0x0100, 0x0399f39f )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( vanvan )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "van1.bin",	  0x0000, 0x1000, 0x00f48295 )
 	ROM_LOAD( "van2.bin",     0x1000, 0x1000, 0xdf58e1cb )
 	ROM_LOAD( "van3.bin",     0x2000, 0x1000, 0x15571e24 )
@@ -1630,7 +1652,7 @@ ROM_START( vanvan )
 ROM_END
 
 ROM_START( vanvanb )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "vanvan.050",   0x0000, 0x1000, 0xcf1b2df0 )
 	ROM_LOAD( "vanvan.051",   0x1000, 0x1000, 0x80eca6a5 )
 	ROM_LOAD( "van3.bin",     0x2000, 0x1000, 0x15571e24 )
@@ -1647,7 +1669,7 @@ ROM_START( vanvanb )
 ROM_END
 
 ROM_START( alibaba )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "6e",           0x0000, 0x1000, 0x38d701aa )
 	ROM_LOAD( "6f",           0x1000, 0x1000, 0x3d0e35f3 )
 	ROM_LOAD( "6h",           0x2000, 0x1000, 0x823bee89 )
@@ -1665,7 +1687,7 @@ ROM_START( alibaba )
 	ROM_LOAD( "alibaba.7f",   0x0000, 0x0020, 0x00000000 )  /* missing */
 	ROM_LOAD( "alibaba.4a",   0x0020, 0x0100, 0x00000000 )
 
-	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_REGION( 0x0200 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0x00000000 )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
@@ -1728,7 +1750,7 @@ static void maketrax_driver_init(void)
 
 static void maketrax_rom_decode(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	memcpy(ROM,RAM,0x10000);
@@ -1754,7 +1776,7 @@ static void ponpoko_decode(void)
 	/* Here we revert it to the usual format. */
 
 	/* Characters */
-	RAM = Machine->memory_region[1];
+	RAM = memory_region(1);
 	for (i = 0; i < 0x1000; i += 0x10)
 	{
 		for (j = 0; j < 8; j++)
@@ -1787,7 +1809,7 @@ static void eyes_decode(void)
 	/* CPU ROMs */
 
 	/* Data lines D3 and D5 swapped */
-	RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	RAM = memory_region(REGION_CPU1);
 	for (i = 0; i < 0x4000; i++)
 	{
 		RAM[i] =  (RAM[i] & 0xc0) | ((RAM[i] & 0x08) << 2) |
@@ -1798,7 +1820,7 @@ static void eyes_decode(void)
 	/* Graphics ROMs */
 
 	/* Data lines D4 and D6 and address lines A0 and A2 are swapped */
-	RAM = Machine->memory_region[1];
+	RAM = memory_region(1);
 	for (i = 0; i < 0x2000; i += 8)
 	{
 		int j;
@@ -1824,7 +1846,7 @@ static void copytoscreen(int mem, int len, int screen, int direction, int numsta
 {
 	char buf[10];
 	int hi;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	hi =      (RAM[mem + direction*3] & 0x0f) +
@@ -1855,7 +1877,7 @@ static void copytoscreen(int mem, int len, int screen, int direction, int numsta
 static int pacman_alibaba_common_hiload(int numstart)
 {
 	static int resetcount;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* during a reset, leave time to the game to clear the screen */
@@ -1898,7 +1920,7 @@ static int alibaba_hiload(void)
 static void pacman_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1914,7 +1936,7 @@ static int maketrax_hiload(void)
 {
 	static int resetcount;
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* during a reset, leave time to the game to clear the screen */
@@ -1944,7 +1966,7 @@ static int maketrax_hiload(void)
 static void maketrax_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1960,7 +1982,7 @@ static void maketrax_hisave(void)
 static int crush_hiload(void)
 {
 	static int resetcount;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* during a reset, leave time to the game to clear the screen */
@@ -1993,7 +2015,7 @@ static int crush_hiload(void)
 static void crush_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2007,7 +2029,7 @@ static void crush_hisave(void)
 
 static int eyes_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if (memcmp(&RAM[0x4d30],"\x90\x52\x00",3) == 0)
@@ -2033,7 +2055,7 @@ static int eyes_hiload(void)
 static void eyes_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2047,7 +2069,7 @@ static void eyes_hisave(void)
 
 static int mrtnt_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if (memcmp(&RAM[0x4cec],"\x40\x86\x01",3) == 0)
@@ -2073,7 +2095,7 @@ static int mrtnt_hiload(void)
 static void mrtnt_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2087,7 +2109,7 @@ static void mrtnt_hisave(void)
 
 static int lizwiz_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if (memcmp(&RAM[0x4de8],"\x40\x86\x01",3) == 0)
@@ -2113,7 +2135,7 @@ static int lizwiz_hiload(void)
 static void lizwiz_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2127,7 +2149,7 @@ static void lizwiz_hisave(void)
 
 static int ponpoko_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if (memcmp(&RAM[0x406c],"\x0f\x0f\x0f\x0f\x0f\x00",6) == 0)
@@ -2154,7 +2176,7 @@ static int ponpoko_hiload(void)
 static void ponpoko_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2168,7 +2190,7 @@ static void ponpoko_hisave(void)
 
 static int theglob_beastf_common_hiload(int address)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if (memcmp(&RAM[address],"MOB",3) == 0)
@@ -2190,7 +2212,7 @@ static int theglob_beastf_common_hiload(int address)
 static void theglob_beastf_common_hisave(int address)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2225,7 +2247,7 @@ static void beastf_hisave(void)
 static int vanvan_hiload(void)
 {
 	static int firsttime = 0;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -2265,7 +2287,7 @@ static int vanvan_hiload(void)
 static void vanvan_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2762,6 +2784,32 @@ struct GameDriver driver_mbrush =
 	0,
 
 	rom_mbrush,
+	0, 0,
+	0,
+	0,
+
+	input_ports_mbrush,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	crush_hiload, crush_hisave
+};
+
+struct GameDriver driver_paintrlr =
+{
+	__FILE__,
+	&driver_crush,
+	"paintrlr",
+	"Paint Roller",
+	"1981",
+	"bootleg",
+	BASE_CREDITS"\nGary Walton (color info)\nSimon Walls (color info)",
+	0,
+	&machine_driver,
+	0,
+
+	rom_paintrlr,
 	0, 0,
 	0,
 	0,

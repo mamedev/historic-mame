@@ -178,7 +178,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
 			1500000,
-			0,
 			eggs_readmem,eggs_writemem,0,0,
 			interrupt,1
 		}
@@ -212,7 +211,7 @@ static struct MachineDriver machine_driver =
 
 
 ROM_START( scregg )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "scregg.e14",   0x3000, 0x1000, 0x29226d77 )
 	ROM_LOAD( "scregg.d14",   0x4000, 0x1000, 0xeb143880 )
 	ROM_LOAD( "scregg.c14",   0x5000, 0x1000, 0x4455f262 )
@@ -234,7 +233,7 @@ ROM_START( scregg )
 ROM_END
 
 ROM_START( eggs )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "e14.bin",      0x3000, 0x1000, 0x4e216f9d )
 	ROM_LOAD( "d14.bin",      0x4000, 0x1000, 0x4edb267f )
 	ROM_LOAD( "c14.bin",      0x5000, 0x1000, 0x15a5c48c )
@@ -259,7 +258,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -284,7 +283,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

@@ -92,7 +92,7 @@ void demonwld_dsp_out(int fnction,int data)
 		if (data == 0) {
 			if (dsp_execute) {
 				if (errorlog) fprintf(errorlog,"Turning Main 68000 on\n");
-				cpu_halt(0,1);
+				cpu_set_halt_line(0,CLEAR_LINE);
 				dsp_execute = 0;
 			}
 			cpu_set_irq_line(2, TMS320C10_ACTIVE_BIO, ASSERT_LINE);
@@ -109,14 +109,14 @@ void demonwld_dsp_w(int offset,int data)
 	switch (data) {
 		case 0x0000: 	/* This means assert the INT line to the DSP */
 						if (errorlog) fprintf(errorlog,"Turning DSP on and 68000 off\n");
-						cpu_halt(2,1);
+						cpu_set_halt_line(2,CLEAR_LINE);
 						cpu_set_irq_line(2, TMS320C10_ACTIVE_INT, ASSERT_LINE);
-						cpu_halt(0,0);
+						cpu_set_halt_line(0,ASSERT_LINE);
 						break;
 		case 0x0001: 	/* This means inhibit the INT line to the DSP */
 						if (errorlog) fprintf(errorlog,"Turning DSP off\n");
 						cpu_set_irq_line(2, TMS320C10_ACTIVE_INT, CLEAR_LINE);
-						cpu_halt(2,0);
+						cpu_set_halt_line(2,ASSERT_LINE);
 						break;
 		default:		if (errorlog)
 							fprintf(errorlog,"68000:%04x  writing unknown command %08x to %08x\n",cpu_getpreviouspc() ,data ,0xe0000a + offset);

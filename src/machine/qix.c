@@ -180,7 +180,7 @@ void qix_sharedram_w(int offset,int data)
 
 void zoo_bankswitch_w(int offset,int data)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU2);
 
 
 	if (data & 0x04) cpu_setbank (1, &RAM[0x10000])

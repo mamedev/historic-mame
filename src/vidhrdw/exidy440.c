@@ -242,7 +242,7 @@ void exidy440_control_w(int offset, int data)
 	palettebank_vis = data & 1;
 
 	/* set the memory bank for the main CPU from the upper 4 bits */
-	cpu_setbank(1, &Machine->memory_region[0][0x10000 + exidy440_bank * 0x4000]);
+	cpu_setbank(1, &memory_region(REGION_CPU1)[0x10000 + exidy440_bank * 0x4000]);
 
 	/* update the FIRQ in case we enabled something */
 	exidy440_update_firq();

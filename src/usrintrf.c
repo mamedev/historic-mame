@@ -1431,11 +1431,10 @@ static int setdipswitches(int selected)
 	return sel + 1;
 }
 
-
-
 static int setdefkeysettings(int selected)
 {
 	const char *menu_item[400];
+	char menu_subitem_buffer[400][64];
 	const char *menu_subitem[400];
 	struct ipd *entry[400];
 	char flag[400];
@@ -1456,7 +1455,7 @@ static int setdefkeysettings(int selected)
 	total = 0;
 	while (in->type != IPT_END)
 	{
-		if (in->name != 0 && in->keyboard != IP_KEY_NONE && (in->type & IPF_UNUSED) == 0
+		if (in->name != 0 && in->keyboard_code[0] != IP_KEY_NONE && (in->type & IPF_UNUSED) == 0
 			&& !(!options.cheat && (in->type & IPF_CHEAT)))
 		{
 			entry[total] = in;
@@ -1477,29 +1476,30 @@ static int setdefkeysettings(int selected)
 	for (i = 0;i < total;i++)
 	{
 		if (i < total - 1)
-			menu_subitem[i] = keyboard_name(entry[i]->keyboard);
-		else menu_subitem[i] = 0;	/* no subitem */
+		{
+			keyboard_name_multi(entry[i]->keyboard_code,menu_subitem_buffer[i],sizeof(menu_subitem_buffer[0]));
+			menu_subitem[i] = menu_subitem_buffer[i];
+		} else
+			menu_subitem[i] = 0;	/* no subitem */
 		flag[i] = 0;
 	}
 
 	if (sel > 255)	/* are we waiting for a new key? */
 	{
-		int newkey;
-
+		int ret;
 
 		menu_subitem[sel & 0xff] = "    ";
 		displaymenu(menu_item,menu_subitem,flag,sel & 0xff,3);
-		newkey = keyboard_read_async();
-		if (newkey != KEYCODE_NONE)
-		{
-			sel &= 0xff;
 
-			if (!keyboard_pressed(input_port_type_key(IPT_UI_CANCEL)))
-				entry[sel]->keyboard = newkey;
+		ret = keyboard_record(entry[sel & 0xff]->keyboard_code);
+
+		if (ret >= 0) {
+			sel &= 0xff;
 
 			/* tell updatescreen() to clean after us (in case the window changes size) */
 			need_to_clear_bitmap = 1;
 		}
+
 
 		return sel + 1;
 	}
@@ -1524,6 +1524,8 @@ static int setdefkeysettings(int selected)
 		if (sel == total - 1) sel = -1;
 		else
 		{
+			record_start();
+
 			sel |= 0x100;	/* we'll ask for a key */
 
 			/* tell updatescreen() to clean after us (in case the window changes size) */
@@ -1551,6 +1553,7 @@ static int setdefkeysettings(int selected)
 static int setdefjoysettings(int selected)
 {
 	const char *menu_item[400];
+	char menu_subitem_buffer[400][64];
 	const char *menu_subitem[400];
 	struct ipd *entry[400];
 	char flag[400];
@@ -1571,7 +1574,7 @@ static int setdefjoysettings(int selected)
 	total = 0;
 	while (in->type != IPT_END)
 	{
-		if (in->name != 0 && in->joystick != IP_JOY_NONE && (in->type & IPF_UNUSED) == 0
+		if (in->name != 0 && in->joystick_code[0] != IP_JOY_NONE && (in->type & IPF_UNUSED) == 0
 			&& !(!options.cheat && (in->type & IPF_CHEAT)))
 		{
 			entry[total] = in;
@@ -1592,44 +1595,26 @@ static int setdefjoysettings(int selected)
 	for (i = 0;i < total;i++)
 	{
 		if (i < total - 1)
-			menu_subitem[i] = joystick_name(entry[i]->joystick);
-		else menu_subitem[i] = 0;	/* no subitem */
+		{
+			joystick_name_multi(entry[i]->joystick_code,menu_subitem_buffer[i],sizeof(menu_subitem_buffer[0]));
+			menu_subitem[i] = menu_subitem_buffer[i];
+		} else
+			menu_subitem[i] = 0;	/* no subitem */
 		flag[i] = 0;
 	}
 
 	if (sel > 255)	/* are we waiting for a new key? */
 	{
-		int newjoy;
-
+		int ret;
 
 		menu_subitem[sel & 0xff] = "    ";
 		displaymenu(menu_item,menu_subitem,flag,sel & 0xff,3);
 
-		/* Check all possible joystick values for switch or button press */
-		if (input_ui_pressed(IPT_UI_CANCEL))
+		ret = joystick_record(entry[sel & 0xff]->joystick_code);
+
+		if (ret >= 0)
 		{
 			sel &= 0xff;
-			/* don't change the setting */
-
-			/* tell updatescreen() to clean after us (in case the window changes size) */
-			need_to_clear_bitmap = 1;
-		}
-
-		/* Clears entry "None" */
-		if (keyboard_pressed_memory(KEYCODE_N))
-		{
-			sel &= 0xff;
-			entry[sel]->joystick = JOYCODE_NONE;
-
-			/* tell updatescreen() to clean after us (in case the window changes size) */
-			need_to_clear_bitmap = 1;
-		}
-
-		newjoy = joystick_read_async();
-		if (newjoy != JOYCODE_NONE)
-		{
-			sel &= 0xff;
-			entry[sel]->joystick = newjoy;
 
 			/* tell updatescreen() to clean after us (in case the window changes size) */
 			need_to_clear_bitmap = 1;
@@ -1658,7 +1643,9 @@ static int setdefjoysettings(int selected)
 		if (sel == total - 1) sel = -1;
 		else
 		{
-			sel |= 0x100;	/* we'll ask for a key */
+			record_start();
+
+			sel |= 0x100;	/* we'll ask for a joy */
 
 			/* tell updatescreen() to clean after us (in case the window changes size) */
 			need_to_clear_bitmap = 1;
@@ -1685,6 +1672,7 @@ static int setdefjoysettings(int selected)
 static int setkeysettings(int selected)
 {
 	const char *menu_item[400];
+	char menu_subitem_buffer[400][64];
 	const char *menu_subitem[400];
 	struct InputPort *entry[400];
 	char flag[400];
@@ -1704,7 +1692,7 @@ static int setkeysettings(int selected)
 	total = 0;
 	while (in->type != IPT_END)
 	{
-		if (input_port_name(in) != 0 && input_port_key(in) != IP_KEY_NONE)
+		if (input_port_name(in) != 0 && input_port_key_multi(in)[0] != IP_KEY_NONE)
 		{
 			entry[total] = in;
 			menu_item[total] = input_port_name(in);
@@ -1725,33 +1713,35 @@ static int setkeysettings(int selected)
 	{
 		if (i < total - 1)
 		{
-			menu_subitem[i] = keyboard_name(input_port_key(entry[i]));
+			keyboard_name_multi(input_port_key_multi(entry[i]),menu_subitem_buffer[i],sizeof(menu_subitem_buffer[0]));
+			menu_subitem[i] = menu_subitem_buffer[i];
+
 			/* If the key isn't the default, flag it */
-			if (entry[i]->keyboard != IP_KEY_DEFAULT)
+			if (entry[i]->keyboard_code[0] != IP_KEY_DEFAULT)
 				flag[i] = 1;
 			else
 				flag[i] = 0;
 
-		}
-		else menu_subitem[i] = 0;	/* no subitem */
+		} else
+			menu_subitem[i] = 0;	/* no subitem */
 	}
 
 	if (sel > 255)	/* are we waiting for a new key? */
 	{
-		int newkey;
-
+		int ret;
 
 		menu_subitem[sel & 0xff] = "    ";
 		displaymenu(menu_item,menu_subitem,flag,sel & 0xff,3);
-		newkey = keyboard_read_async();
-		if (newkey != KEYCODE_NONE)
+
+		ret = keyboard_record(entry[sel & 0xff]->keyboard_code);
+
+		if (ret >= 0)
 		{
 			sel &= 0xff;
 
-			if (keyboard_pressed(input_port_type_key(IPT_UI_CANCEL)))
-				newkey = IP_KEY_DEFAULT;
-
-			entry[sel]->keyboard = newkey;
+			if (ret > 0) {
+				INPUT_KEY_CODE_SET_1(entry[sel]->keyboard_code,IP_KEY_DEFAULT);
+			}
 
 			/* tell updatescreen() to clean after us (in case the window changes size) */
 			need_to_clear_bitmap = 1;
@@ -1780,6 +1770,8 @@ static int setkeysettings(int selected)
 		if (sel == total - 1) sel = -1;
 		else
 		{
+			record_start();
+
 			sel |= 0x100;	/* we'll ask for a key */
 
 			/* tell updatescreen() to clean after us (in case the window changes size) */
@@ -1807,6 +1799,7 @@ static int setkeysettings(int selected)
 static int setjoysettings(int selected)
 {
 	const char *menu_item[40];
+	char menu_subitem_buffer[40][64];
 	const char *menu_subitem[40];
 	struct InputPort *entry[40];
 	char flag[40];
@@ -1826,7 +1819,7 @@ static int setjoysettings(int selected)
 	total = 0;
 	while (in->type != IPT_END)
 	{
-		if (input_port_name(in) != 0 && input_port_joy(in) != IP_JOY_NONE)
+		if (input_port_name(in) != 0 && input_port_joy_multi(in)[0] != IP_JOY_NONE)
 		{
 			entry[total] = in;
 			menu_item[total] = input_port_name(in);
@@ -1847,48 +1840,33 @@ static int setjoysettings(int selected)
 	{
 		if (i < total - 1)
 		{
-			menu_subitem[i] = joystick_name(input_port_joy(entry[i]));
-			if (entry[i]->joystick != IP_JOY_DEFAULT)
+			joystick_name_multi(input_port_joy_multi(entry[i]),menu_subitem_buffer[i],sizeof(menu_subitem_buffer[0]));
+			menu_subitem[i] = menu_subitem_buffer[i];
+
+			if (entry[i]->joystick_code[0] != IP_JOY_DEFAULT)
 				flag[i] = 1;
 			else
 				flag[i] = 0;
-		}
-		else menu_subitem[i] = 0;	/* no subitem */
+		} else
+			menu_subitem[i] = 0;	/* no subitem */
 	}
 
 	if (sel > 255)	/* are we waiting for a new joy direction? */
 	{
-		int newjoy;
-
+		int ret;
 
 		menu_subitem[sel & 0xff] = "    ";
 		displaymenu(menu_item,menu_subitem,flag,sel & 0xff,3);
 
-		/* Check all possible joystick values for switch or button press */
-		if (input_ui_pressed(IPT_UI_CANCEL))
+		ret = joystick_record(entry[sel & 0xff]->joystick_code);
+
+		if (ret >= 0)
 		{
 			sel &= 0xff;
-			entry[sel]->joystick = IP_JOY_DEFAULT;
 
-			/* tell updatescreen() to clean after us (in case the window changes size) */
-			need_to_clear_bitmap = 1;
-		}
-
-		/* Clears entry "None" */
-		if (keyboard_pressed_memory(KEYCODE_N))
-		{
-			sel &= 0xff;
-			entry[sel]->joystick = JOYCODE_NONE;
-
-			/* tell updatescreen() to clean after us (in case the window changes size) */
-			need_to_clear_bitmap = 1;
-		}
-
-		newjoy = joystick_read_async();
-		if (newjoy != JOYCODE_NONE)
-		{
-			sel &= 0xff;
-			entry[sel]->joystick = newjoy;
+			if (ret > 0) {
+				INPUT_JOY_CODE_SET_1(entry[sel]->joystick_code,IP_JOY_DEFAULT);
+			}
 
 			/* tell updatescreen() to clean after us (in case the window changes size) */
 			need_to_clear_bitmap = 1;
@@ -1917,6 +1895,8 @@ static int setjoysettings(int selected)
 		if (sel == total - 1) sel = -1;
 		else
 		{
+			record_start();
+
 			sel |= 0x100;	/* we'll ask for a joy */
 
 			/* tell updatescreen() to clean after us (in case the window changes size) */
@@ -3257,7 +3237,7 @@ static int setup_menu(int selected)
 
 			case UI_CHEAT:
 osd_sound_enable(0);
-while (keyboard_pressed(input_port_type_key(IPT_UI_SELECT)))
+while (keyboard_pressed_multi(input_port_type_key_multi(IPT_UI_SELECT)))
 	osd_update_video_and_audio();     /* give time to the sound hardware to apply the volume change */
 				cheat_menu();
 osd_sound_enable(1);
@@ -3546,6 +3526,38 @@ static void onscrd_gamma(int increment,int arg)
 }
 
 
+static void onscrd_overclock(int increment,int arg)
+{
+	char buf[30];
+	double overclock;
+	int cpu, doallcpus = 0, oc;
+
+	if (keyboard_pressed(KEYCODE_LSHIFT) || keyboard_pressed(KEYCODE_RSHIFT))
+		doallcpus = 1;
+	if (!keyboard_pressed(KEYCODE_LCONTROL) && !keyboard_pressed(KEYCODE_RCONTROL))
+		increment *= 5;
+	if( increment )
+	{
+		overclock = timer_get_overclock(arg);
+		overclock += 0.01 * increment;
+		if (overclock < 0.01) overclock = 0.01;
+		if (overclock > 2.0) overclock = 2.0;
+		if( doallcpus )
+			for( cpu = 0; cpu < cpu_gettotalcpu(); cpu++ )
+				timer_set_overclock(cpu, overclock);
+		else
+			timer_set_overclock(arg, overclock);
+	}
+
+	oc = 100 * timer_get_overclock(arg) + 0.5;
+
+	if( doallcpus )
+		sprintf(buf,"ALL CPUS Overclock %3d%%", oc);
+	else
+		sprintf(buf,"Overclock CPU#%d %3d%%", arg, oc);
+	displayosd(buf,oc/2);
+}
+
 #define MAX_OSD_ITEMS 30
 static void (*onscrd_fnc[MAX_OSD_ITEMS])(int increment,int arg);
 static int onscrd_arg[MAX_OSD_ITEMS];
@@ -3572,6 +3584,13 @@ static void onscrd_init(void)
 		}
 	}
 
+	for (ch = 0;ch < cpu_gettotalcpu();ch++)
+	{
+		onscrd_fnc[item] = onscrd_overclock;
+		onscrd_arg[item] = ch;
+		item++;
+	}
+
 	onscrd_fnc[item] = onscrd_brightness;
 	onscrd_arg[item] = 0;
 	item++;
@@ -3580,7 +3599,7 @@ static void onscrd_init(void)
 	onscrd_arg[item] = 0;
 	item++;
 
-	onscrd_total_items = item;
+    onscrd_total_items = item;
 }
 
 static int on_screen_display(int selected)
@@ -3681,17 +3700,16 @@ int handle_user_interface(void)
 #endif
 
 #ifdef MESS
-
- if (Machine->gamedrv->flags & GAME_COMPUTER)
- {
- 	static int ui_active = 0, ui_toggle_key = 0;
+if (Machine->gamedrv->flags & GAME_COMPUTER)
+{
+	static int ui_active = 0, ui_toggle_key = 0;
  	static int ui_display_count = 4 * 60;
 
- 	if( keyboard_pressed(KEYCODE_SCRLOCK) )
+	if( keyboard_pressed(KEYCODE_SCRLOCK) )
  	{
- 		if( !ui_toggle_key )
+		if( !ui_toggle_key )
  		{
- 			ui_toggle_key = 1;
+			ui_toggle_key = 1;
  			ui_active = !ui_active;
  			ui_display_count = 4 * 60;
  			bitmap_dirty = 1;
@@ -3718,29 +3736,29 @@ int handle_user_interface(void)
  			}
  			if( --ui_display_count == 0 )
  				bitmap_dirty = 1;
-         }
-     }
- 	else
- 	{
- 		if( ui_display_count > 0 )
-         {
- 			char text[] = "Keyboard: emulation - ScrLock to toggle";
- 			int x, x0 = (Machine->uiwidth - (sizeof(text) - 1) * Machine->uifont->width) / 2;
- 			int y0 = Machine->uiymin + Machine->uiheight - Machine->uifont->height - 2;
-             for( x = 0; text[x]; x++ )
- 			{
- 				drawgfx(Machine->scrbitmap,
- 					Machine->uifont,text[x],0,0,0,
- 					x0+x*Machine->uifont->width,
- 					y0,0,TRANSPARENCY_NONE,0);
- 			}
- 			if( --ui_display_count == 0 )
- 				bitmap_dirty = 1;
-         }
-         return 0;
-     }
- }
- #endif
+		}
+	}
+	else
+	{
+		if( ui_display_count > 0 )
+		{
+			char text[] = "Keyboard: emulation - ScrLock to toggle";
+			int x, x0 = (Machine->uiwidth - (sizeof(text) - 1) * Machine->uifont->width) / 2;
+			int y0 = Machine->uiymin + Machine->uiheight - Machine->uifont->height - 2;
+			for( x = 0; text[x]; x++ )
+			{
+				drawgfx(Machine->scrbitmap,
+					Machine->uifont,text[x],0,0,0,
+					x0+x*Machine->uifont->width,
+					y0,0,TRANSPARENCY_NONE,0);
+			}
+			if( --ui_display_count == 0 )
+				bitmap_dirty = 1;
+		}
+		return 0;
+	}
+}
+#endif
 
 	/* if the user pressed F12, save the screen to a file */
 	if (input_ui_pressed(IPT_UI_SNAPSHOT))

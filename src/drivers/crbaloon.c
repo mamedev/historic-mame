@@ -291,7 +291,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz ????? */
-			0,
 			readmem,writemem,readport,writeport,
 			interrupt,1
 		}
@@ -325,7 +324,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( crbaloon )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "cl01.bin",     0x0000, 0x0800, 0x9d4eef0b )
 	ROM_LOAD( "cl02.bin",     0x0800, 0x0800, 0x10f7a6f7 )
 	ROM_LOAD( "cl03.bin",     0x1000, 0x0800, 0x44ed6030 )
@@ -339,7 +338,7 @@ ROM_START( crbaloon )
 ROM_END
 
 ROM_START( crbalon2 )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "cl01.bin",     0x0000, 0x0800, 0x9d4eef0b )
 	ROM_LOAD( "crazybal.ep2", 0x0800, 0x0800, 0x87572086 )
 	ROM_LOAD( "crazybal.ep3", 0x1000, 0x0800, 0x575fe995 )
@@ -357,7 +356,7 @@ static int hiload(void)
 {
 
 	static int firsttime =0;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	if (firsttime == 0)
 		{
 			memset(&RAM[0x4014],0xff,5); /* hi score */
@@ -386,7 +385,7 @@ static int hiload(void)
 static void hisave(void)
 {
     void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

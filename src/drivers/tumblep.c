@@ -348,14 +348,12 @@ static struct MachineDriver tumblepop_machine_driver =
 	 	{
 			CPU_M68000,
 			12000000,
-			0,
 			tumblepop_readmem,tumblepop_writemem,0,0,
 			m68_level6_irq,1
 		},
 		{
 			CPU_H6280 | CPU_AUDIO_CPU, /* Custom chip 45 */
 			32220000/8, /* Audio section crystal is 32.220 MHz */
-			2,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -398,7 +396,6 @@ static struct MachineDriver tumblepb_machine_driver =
 	 	{
 			CPU_M68000,
 			12000000,
-			0,
 			tumblepopb_readmem,tumblepopb_writemem,0,0,
 			m68_level6_irq,1
 		},
@@ -433,11 +430,11 @@ static struct MachineDriver tumblepb_machine_driver =
 /******************************************************************************/
 
 ROM_START( tumblepop )
-	ROM_REGION(0x80000) /* 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_ODD ("hl01-1.f13", 0x00000, 0x40000, 0xd5a62a3f )
 	ROM_LOAD_EVEN("hl00-1.f12", 0x00000, 0x40000, 0xfd697c1b )
 
- 	ROM_REGION(0x180000) /* temporary space for graphics (disposed after conversion) */
+ 	ROM_REGION_DISPOSE(0x180000) /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "thumbpop.15",  0x00000,  0x40000, 0xac3d8349 )
 	ROM_LOAD( "thumbpop.14",  0x40000,  0x40000, 0x79a29725 )
 	ROM_LOAD( "thumbpop.17",  0x80000,  0x40000, 0x87cffb06 )
@@ -446,7 +443,7 @@ ROM_START( tumblepop )
 	ROM_LOAD( "thumbpop.19",  0x100000, 0x40000, 0x0795aab4 )
 	ROM_LOAD( "thumbpop.18",  0x140000, 0x40000, 0xad58df43 )
 
-	ROM_REGION(0x10000) /* Sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Sound cpu */
 	ROM_LOAD( "hl02-.f16",  0x00000,  0x10000, 0xa5cab888 )
 
 	ROM_REGION(0x20000) /* Oki samples */
@@ -454,11 +451,11 @@ ROM_START( tumblepop )
 ROM_END
 
 ROM_START( tumblepb )
-	ROM_REGION(0x80000) /* 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN ("thumbpop.12", 0x00000, 0x40000, 0x0c984703 )
 	ROM_LOAD_ODD ( "thumbpop.13", 0x00000, 0x40000, 0x864c4053 )
 
- 	ROM_REGION(0x180000) /* temporary space for graphics (disposed after conversion) */
+ 	ROM_REGION_DISPOSE(0x180000) /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "thumbpop.15",  0x00000,  0x40000, 0xac3d8349 )
 	ROM_LOAD( "thumbpop.14",  0x40000,  0x40000, 0x79a29725 )
 	ROM_LOAD( "thumbpop.17",  0x80000,  0x40000, 0x87cffb06 )
@@ -472,11 +469,11 @@ ROM_START( tumblepb )
 ROM_END
 
 ROM_START( tumblepop2 )
-	ROM_REGION(0x80000) /* 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN ("thumbpop.2", 0x00000, 0x40000, 0x34b016e1 )
 	ROM_LOAD_ODD ( "thumbpop.3", 0x00000, 0x40000, 0x89501c71 )
 
-	ROM_REGION(0x180000) /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x180000) /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "thumbpop.5",   0x00000,  0x40000, 0xdda8932e )
 	ROM_LOAD( "thumbpop.14",  0x40000,  0x40000, 0x79a29725 )
 	ROM_LOAD( "thumbpop.17",  0x80000,  0x40000, 0x87cffb06 )
@@ -493,13 +490,13 @@ ROM_END
 
 static void t_patch(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int i,x,a;
     char z[64];
 
 	/* Hmm, characters are stored in wrong word endian-ness for sequential graphics
 		decode!  Very bad...  */
-	RAM = Machine->memory_region[1];
+	RAM = memory_region(1);
 
 	for (a=0; a<4; a++) {
 		for (i=32; i<0x2000; i+=32) {

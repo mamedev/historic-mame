@@ -197,7 +197,7 @@ void timeplt_sh_irqtrigger_w(int offset,int data);
 void tutankhm_bankselect_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	bankaddress = 0x10000 + (data & 0x0f) * 0x1000;
@@ -340,14 +340,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			1500000,			/* 1.5 Mhz ??? */
-			0,				/* memory region # 0 */
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318180/8,	/* 1.789772727 MHz */						\
-			1,	/* memory region #1 */
 			timeplt_sound_readmem,timeplt_sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -380,7 +378,7 @@ static struct MachineDriver machine_driver =
 
 
 ROM_START( tutankhm )
-	ROM_REGION( 0x20000 )      /* 64k for M6809 CPU code + 64k for ROM banks */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )      /* 64k for M6809 CPU code + 64k for ROM banks */
 	ROM_LOAD( "h1.bin",       0x0a000, 0x1000, 0xda18679f ) /* program ROMs */
 	ROM_LOAD( "h2.bin",       0x0b000, 0x1000, 0xa0f02c85 )
 	ROM_LOAD( "h3.bin",       0x0c000, 0x1000, 0xea03a1ab )
@@ -398,14 +396,14 @@ ROM_START( tutankhm )
 	ROM_LOAD( "j9.bin",       0x18000, 0x1000, 0x8ea9c6a6 )
 	/* the other banks (1900-1fff) are empty */
 
-	ROM_REGION( 0x10000 ) /* 64k for Z80 sound CPU code */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* 64k for Z80 sound CPU code */
 	ROM_LOAD( "11-7a.bin",    0x0000, 0x1000, 0xb52d01fa )
 	ROM_LOAD( "10-8a.bin",    0x1000, 0x1000, 0x9db5c0ce )
 ROM_END
 
 
 ROM_START( tutankst )
-	ROM_REGION( 0x20000 )      /* 64k for M6809 CPU code + 64k for ROM banks */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )      /* 64k for M6809 CPU code + 64k for ROM banks */
 	ROM_LOAD( "h1.bin",       0x0a000, 0x1000, 0xda18679f ) /* program ROMs */
 	ROM_LOAD( "h2.bin",       0x0b000, 0x1000, 0xa0f02c85 )
 	ROM_LOAD( "ra1_3h.cpu",   0x0c000, 0x1000, 0x2d62d7b1 )
@@ -423,7 +421,7 @@ ROM_START( tutankst )
 	ROM_LOAD( "j9.bin",       0x18000, 0x1000, 0x8ea9c6a6 )
 	/* the other banks (1900-1fff) are empty */
 
-	ROM_REGION( 0x10000 ) /* 64k for Z80 sound CPU code */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* 64k for Z80 sound CPU code */
 	ROM_LOAD( "11-7a.bin",    0x0000, 0x1000, 0xb52d01fa )
 	ROM_LOAD( "10-8a.bin",    0x1000, 0x1000, 0x9db5c0ce )
 ROM_END
@@ -432,7 +430,7 @@ ROM_END
 static int hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -457,7 +455,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

@@ -298,7 +298,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* 4 Mhz ? */
-			0,
 			readmem,writemem,readport,0,
 			interrupt,1
 		},
@@ -342,7 +341,6 @@ static struct MachineDriver goldstbl_machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* 4 Mhz ? */
-			0,
 			readmem,writemem,readport,0,
 			interrupt,1
 		},
@@ -387,27 +385,27 @@ static struct MachineDriver goldstbl_machine_driver =
 ***************************************************************************/
 
 ROM_START( goldstar )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "gs4-cpu.bin",  0x0000, 0x10000, 0x73e47d4d )
 
 	ROM_REGION_DISPOSE(0x28000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "gs2.bin",      0x00000, 0x20000, 0xa2d5b898 )
 	ROM_LOAD( "gs3.bin",      0x20000, 0x08000, 0x8454ce3c )
 
-	ROM_REGION(0x20000) /* Audio ADPCM */
+	ROM_REGION( 0x20000 ) /* Audio ADPCM */
 	ROM_LOAD( "gs1-snd.bin",  0x0000, 0x20000, 0x9d58960f )
 ROM_END
 
 
 ROM_START( goldstbl )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "gsb-cpu.bin",  0x0000, 0x10000, 0x82b238c3 )
 
 	ROM_REGION_DISPOSE(0x28000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "gs2.bin",      0x00000, 0x20000, 0xa2d5b898 )
 	ROM_LOAD( "gsb-spr.bin",  0x20000, 0x08000, 0x52ecd4c7 )
 
-	ROM_REGION(0x20000) /* Audio ADPCM */
+	ROM_REGION( 0x20000 ) /* Audio ADPCM */
 	ROM_LOAD( "gs1-snd.bin",  0x0000, 0x20000, 0x9d58960f )
 ROM_END
 
@@ -415,7 +413,7 @@ ROM_END
 static void goldstar_decode(void)
 {
 	int A;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	for (A = 0;A < 0x10000;A++)
@@ -432,7 +430,7 @@ static void goldstar_decode(void)
 int nvram_load(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* Try loading static RAM */
@@ -451,7 +449,7 @@ int nvram_load(void)
 void nvram_save(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

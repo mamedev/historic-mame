@@ -241,14 +241,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_8085A,
 			4000000,        /* 4.00 MHz??? */
-			0,
 			readmem,writemem,0,0,
 			meteor_interrupt,1
 		},
 		{
             CPU_I8035 | CPU_AUDIO_CPU,
             6144000/8,		/* divisor ??? */
-            2,
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
             ignore_interrupt,0  /* IRQ's are triggered by the main CPU */
         }
@@ -286,7 +284,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 ROM_START( meteor )
-	ROM_REGION(0x10000)       /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )       /* 64k for code */
 	ROM_LOAD( "vm1", 	      0x0000, 0x0800, 0x894fe9b1 )
 	ROM_LOAD( "vm2", 	      0x0800, 0x0800, 0x28685a68 )
 	ROM_LOAD( "vm3", 	      0x1000, 0x0800, 0xc88fb12a )
@@ -304,7 +302,7 @@ ROM_START( meteor )
 	ROM_LOAD( "bm1v",         0x2000, 0x0800, 0xcc97c890 )
 	ROM_LOAD( "bm2v",         0x2800, 0x0800, 0x2858cf5c )
 
-	ROM_REGION(0x1000)		/* sound MCU */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )		/* sound MCU */
 	ROM_LOAD( "vm5", 	      0x0000, 0x0800, 0xb14ccd57 )
 ROM_END
 

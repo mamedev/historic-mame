@@ -437,14 +437,12 @@ static struct MachineDriver machine_driver_##GAMENAME =		\
 		{													\
 			CPU_Z80,										\
 			4000000,        /* 4.00 MHz??? */				\
-			0,												\
 			readmem,writemem,0,0,							\
 			zodiac_master_interrupt,2						\
 		},													\
 		{													\
 			CPU_Z80,										\
 			14318000/8,	/* 1.78975 Mhz??? */				\
-			3,	/* memory region #3 */						\
 			sound_readmem,sound_writemem,0,sound_writeport,	\
 			nmi_interrupt,8	/* IRQs are triggered by the main CPU */	\
 		}													\
@@ -484,7 +482,7 @@ MACHINE_DRIVER(percuss)
 
 ***************************************************************************/
 ROM_START( zodiack )
-	ROM_REGION(0x10000)       /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )       /* 64k for code */
 	ROM_LOAD( "ovg30c.2",     0x0000, 0x2000, 0xa2125e99 )
 	ROM_LOAD( "ovg30c.3",     0x2000, 0x2000, 0xaee2b77f )
 	ROM_LOAD( "ovg30c.6",     0x4000, 0x0800, 0x1debb278 )
@@ -498,12 +496,12 @@ ROM_START( zodiack )
 	ROM_LOAD( "ovg40c.2a",    0x0000, 0x0020, 0x703821b8 )
 	ROM_LOAD( "ovg40c.2b",    0x0020, 0x0020, 0x21f77ec7 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ovg20c.1",     0x0000, 0x1000, 0x2d3c3baf )
 ROM_END
 
 ROM_START( dogfight )
-	ROM_REGION(0x10000)       /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )       /* 64k for code */
 	ROM_LOAD( "df-2",         0x0000, 0x2000, 0xad24b28b )
 	ROM_LOAD( "df-3",         0x2000, 0x2000, 0xcd172707 )
 	ROM_LOAD( "df-5",         0x4000, 0x1000, 0x874dc6bf )
@@ -518,12 +516,12 @@ ROM_START( dogfight )
 	ROM_LOAD( "1.bpr",        0x0000, 0x0020, 0x69a35aa5 )
 	ROM_LOAD( "2.bpr",        0x0020, 0x0020, 0x596ae457 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "df-1",         0x0000, 0x1000, 0xdcbb1c5b )
 ROM_END
 
 ROM_START( moguchan )
-	ROM_REGION(0x10000)       /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )       /* 64k for code */
 	ROM_LOAD( "2.5r",         0x0000, 0x1000, 0x85d0cb7e )
 	ROM_LOAD( "4.5m",         0x1000, 0x1000, 0x359ef951 )
 	ROM_LOAD( "3.5np",        0x2000, 0x1000, 0xc8776f77 )
@@ -537,12 +535,12 @@ ROM_START( moguchan )
 	ROM_LOAD( "moguchan.cl1", 0x0000, 0x0020, 0x00000000 )
 	ROM_LOAD( "moguchan.cl2", 0x0020, 0x0020, 0x00000000 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "1.7hj",        0x0000, 0x1000, 0x1a88d35f )
 ROM_END
 
 ROM_START( percuss )
-	ROM_REGION(0x10000)       /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )       /* 64k for code */
 	ROM_LOAD( "percuss.1",    0x0000, 0x1000, 0xff0364f7 )
 	ROM_LOAD( "percuss.3",    0x1000, 0x1000, 0x7f646c59 )
 	ROM_LOAD( "percuss.2",    0x2000, 0x1000, 0x6bf72dd2 )
@@ -558,7 +556,7 @@ ROM_START( percuss )
 	ROM_LOAD( "percus2a.prm", 0x0000, 0x0020, 0xe2ee9637 )
 	ROM_LOAD( "percus2b.prm", 0x0020, 0x0020, 0xe561b029 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "percuss.8",    0x0000, 0x0800, 0xd63f56f3 )
 	ROM_LOAD( "percuss.9",    0x0800, 0x0800, 0xe08fef2f )
 ROM_END
@@ -566,7 +564,7 @@ ROM_END
 
 static int zodiack_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x5875],"\x14\x12\x1d",3) == 0)
@@ -592,7 +590,7 @@ static int zodiack_hiload(void)
 static void zodiack_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -604,7 +602,7 @@ static void zodiack_hisave(void)
 
 static int dogfight_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x587e],"\x20\x35\x00",3) == 0)
@@ -630,7 +628,7 @@ static int dogfight_hiload(void)
 static void dogfight_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -642,7 +640,7 @@ static void dogfight_hisave(void)
 
 static int moguchan_hiload(void)
 {
-    unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+    unsigned char *RAM = memory_region(REGION_CPU1);
 	static int firsttime;
 
 	/* check if the hi score table has already been initialized */
@@ -671,7 +669,7 @@ static int moguchan_hiload(void)
 static void moguchan_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{

@@ -250,14 +250,12 @@ static struct MachineDriver grobda_machine_driver =
 		{
 			CPU_M6809,			/* MAIN CPU */
 			1500000,			/* 1.5 MHz? */
-			0,
 			readmem_cpu1,writemem_cpu1,0,0,
 			grobda_interrupt_1,1
 		},
 		{
 			CPU_M6809,			/* SOUND CPU */
 			1500000,			/* 1.5 MHz? */
-			2,
 			readmem_cpu2,writemem_cpu2,0,0,
 			grobda_interrupt_2,1
 		},
@@ -293,7 +291,7 @@ static struct MachineDriver grobda_machine_driver =
 };
 
 ROM_START( grobda )
-	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
 	ROM_LOAD( "gr1-3.d1",  0xa000, 0x2000, 0x4ef4a7c1 )
 	ROM_LOAD( "gr1-2.c1",  0xc000, 0x2000, 0x7dcc6e8e )
 	ROM_LOAD( "gr1-1.b1",  0xe000, 0x2000, 0x32d42f22 )
@@ -303,7 +301,7 @@ ROM_START( grobda )
 	ROM_LOAD( "gr1-5.f3",  0x1000, 0x2000, 0xeed43487 )	/* sprites */
 	ROM_LOAD( "gr1-6.e3",  0x3000, 0x2000, 0xcebb7362 )	/* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "gr1-4.k1",  0xe000, 0x2000, 0x3fe78c08 )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )
@@ -316,7 +314,7 @@ ROM_START( grobda )
 ROM_END
 
 ROM_START( grobda2 )
-	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
 	ROM_LOAD( "gr1-3.d1",  0xa000, 0x2000, 0x4ef4a7c1 )
 	ROM_LOAD( "gr2-2.a",   0xc000, 0x2000, 0xf93e82ae )
 	ROM_LOAD( "gr1-1.b1",  0xe000, 0x2000, 0x32d42f22 )
@@ -326,7 +324,7 @@ ROM_START( grobda2 )
 	ROM_LOAD( "gr1-5.f3",  0x1000, 0x2000, 0xeed43487 )	/* sprites */
 	ROM_LOAD( "gr1-6.e3",  0x3000, 0x2000, 0xcebb7362 )	/* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "gr1-4.k1",  0xe000, 0x2000, 0x3fe78c08 )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )
@@ -339,7 +337,7 @@ ROM_START( grobda2 )
 ROM_END
 
 ROM_START( grobda3 )
-	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
 	ROM_LOAD( "gr2-3",     0xa000, 0x2000, 0x8e3a23be )
 	ROM_LOAD( "gr2-2",     0xc000, 0x2000, 0x19ffa83d )
 	ROM_LOAD( "gr2-1",     0xe000, 0x2000, 0x0089b13a )
@@ -349,7 +347,7 @@ ROM_START( grobda3 )
 	ROM_LOAD( "gr1-5.f3",  0x1000, 0x2000, 0xeed43487 )	/* sprites */
 	ROM_LOAD( "gr1-6.e3",  0x3000, 0x2000, 0xcebb7362 )	/* sprites */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "gr1-4.k1",  0xe000, 0x2000, 0x3fe78c08 )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )

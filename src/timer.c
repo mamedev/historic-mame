@@ -20,6 +20,9 @@
   		from within that timer's callback; in this case, the timer won't
   		get removed (oneshot) or won't get reprimed (pulse)
 
+  Changes 12/17/99 (HJB):
+	- added overclocking factor and functions to set/get it at runtime.
+
 ***************************************************************************/
 
 #include "cpuintrf.h"
@@ -52,7 +55,7 @@ typedef struct timer_entry
 typedef struct
 {
 	int *icount;
-	int index;
+    int index;
 	int suspended;
 	int trigger;
 	int nocount;
@@ -60,6 +63,7 @@ typedef struct
 	double time;
 	double sec_to_cycles;
 	double cycles_to_sec;
+	double overclock;
 } cpu_entry;
 
 
@@ -237,18 +241,40 @@ void timer_init(void)
 		/* make a pointer to this CPU's interface functions */
 		cpu->icount = cpuintf[Machine->drv->cpu[i].cpu_type & ~CPU_FLAGS_MASK].icount;
 
-		/* everyone is active but suspended until further notice */
-		cpu->suspended = 1;
+		/* get the CPU's overclocking factor */
+		cpu->overclock = cpuintf[Machine->drv->cpu[i].cpu_type & ~CPU_FLAGS_MASK].overclock;
+
+        /* everyone is active but suspended by the reset line until further notice */
+		cpu->suspended = SUSPEND_REASON_RESET;
 
 		/* set the CPU index */
 		cpu->index = i;
 
 		/* compute the cycle times */
-		cpu->sec_to_cycles = sec_to_cycles[i] = (double)Machine->drv->cpu[i].cpu_clock;
+		cpu->sec_to_cycles = sec_to_cycles[i] = cpu->overclock * Machine->drv->cpu[i].cpu_clock;
 		cpu->cycles_to_sec = cycles_to_sec[i] = 1.0 / sec_to_cycles[i];
 	}
 }
 
+/*
+ *		get overclocking factor for a CPU
+ */
+double timer_get_overclock(int cpunum)
+{
+	cpu_entry *cpu = &cpudata[cpunum];
+	return cpu->overclock;
+}
+
+/*
+ *		set overclocking factor for a CPU
+ */
+void timer_set_overclock(int cpunum, double overclock)
+{
+	cpu_entry *cpu = &cpudata[cpunum];
+	cpu->overclock = overclock;
+	cpu->sec_to_cycles = sec_to_cycles[cpunum] = cpu->overclock * Machine->drv->cpu[cpunum].cpu_clock;
+	cpu->cycles_to_sec = cycles_to_sec[cpunum] = 1.0 / sec_to_cycles[cpunum];
+}
 
 /*
  *		allocate a pulse timer, which repeatedly calls the callback using the given period
@@ -568,7 +594,7 @@ void timer_update_cpu(int cpunum, int ran)
 /*
  *		suspend a CPU but continue to count time for it
  */
-void timer_suspendcpu(int cpunum, int suspend)
+void timer_suspendcpu(int cpunum, int suspend, int reason)
 {
 	cpu_entry *cpu = cpudata + cpunum;
 	int nocount = cpu->nocount;
@@ -580,12 +606,14 @@ void timer_suspendcpu(int cpunum, int suspend)
 	#endif
 
 	/* mark the CPU */
-	cpu->suspended = suspend;
-	cpu->trigger = 0;
+	if (suspend)
+		cpu->suspended |= reason;
+	else
+		cpu->suspended &= ~reason;
 	cpu->nocount = 0;
 
 	/* if this is the active CPU and we're halting, stop immediately */
-	if (activecpu && cpu == activecpu && !old && suspend)
+	if (activecpu && cpu == activecpu && !old && cpu->suspended)
 	{
 		#if VERBOSE
 			verbose_print("T=%.6g: Reset ICount\n", getabsolutetime() + global_offset);
@@ -600,7 +628,7 @@ void timer_suspendcpu(int cpunum, int suspend)
 	}
 
 	/* else if we're unsuspending a CPU, reset its time */
-	else if (old && !suspend && !nocount)
+	else if (old && !cpu->suspended && !nocount)
 	{
 		double time = getabsolutetime();
 
@@ -620,12 +648,12 @@ void timer_suspendcpu(int cpunum, int suspend)
 /*
  *		hold a CPU and don't count time for it
  */
-void timer_holdcpu(int cpunum, int hold)
+void timer_holdcpu(int cpunum, int hold, int reason)
 {
 	cpu_entry *cpu = cpudata + cpunum;
 
 	/* same as suspend */
-	timer_suspendcpu(cpunum, hold);
+	timer_suspendcpu(cpunum, hold, reason);
 
 	/* except that we don't count time */
 	if (hold)
@@ -637,10 +665,10 @@ void timer_holdcpu(int cpunum, int hold)
 /*
  *		query if a CPU is suspended or not
  */
-int timer_iscpususpended(int cpunum)
+int timer_iscpususpended(int cpunum, int reason)
 {
 	cpu_entry *cpu = cpudata + cpunum;
-	return cpu->suspended && !cpu->nocount;
+	return (cpu->suspended & reason) && !cpu->nocount;
 }
 
 
@@ -648,10 +676,10 @@ int timer_iscpususpended(int cpunum)
 /*
  *		query if a CPU is held or not
  */
-int timer_iscpuheld(int cpunum)
+int timer_iscpuheld(int cpunum, int reason)
 {
 	cpu_entry *cpu = cpudata + cpunum;
-	return cpu->suspended && cpu->nocount;
+	return (cpu->suspended & reason) && cpu->nocount;
 }
 
 
@@ -668,7 +696,7 @@ void timer_suspendcpu_trigger(int cpunum, int trigger)
 	#endif
 
 	/* suspend the CPU immediately if it's not already */
-	timer_suspendcpu(cpunum, 1);
+	timer_suspendcpu(cpunum, 1, SUSPEND_REASON_TRIGGER);
 
 	/* set the trigger */
 	cpu->trigger = trigger;
@@ -688,7 +716,7 @@ void timer_holdcpu_trigger(int cpunum, int trigger)
 	#endif
 
 	/* suspend the CPU immediately if it's not already */
-	timer_holdcpu(cpunum, 1);
+	timer_holdcpu(cpunum, 1, SUSPEND_REASON_TRIGGER);
 
 	/* set the trigger */
 	cpu->trigger = trigger;
@@ -723,7 +751,8 @@ void timer_trigger(int trigger)
 				verbose_print("T=%.6g: CPU %d triggered\n", getabsolutetime() + global_offset, cpu->index);
 			#endif
 
-			timer_suspendcpu(cpu->index, 0);
+			timer_suspendcpu(cpu->index, 0, SUSPEND_REASON_TRIGGER);
+			cpu->trigger = 0;
 		}
 	}
 }

@@ -32,11 +32,12 @@ typedef struct deltat_adpcm_state {
 	int volume_w_step;   /* volume with step rate */
 	int next_leveling;   /* leveling value        */
 	int sample_step;     /* step of re-sampling   */
+
+	int arrivedFlag;    /* flag of arrived end address */
 }YM_DELTAT;
 
 /* static state */
 extern unsigned char *ym_deltat_memory;       /* memory pointer */
-extern unsigned char ym_deltat_arrived_flag;  /* arrived flag   */
 
 /* before YM_DELTAT_ADPCM_CALC(YM_DELTAT *DELTAT); */
 #define YM_DELTAT_DECODE_PRESET(DELTAT) {ym_deltat_memory = DELTAT->memory;}

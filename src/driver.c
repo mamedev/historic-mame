@@ -69,6 +69,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( crush2 )	/* (c) 1981 Kural Esco Electric Ltd - bootleg? */
 	DRIVER( crush3 )	/* Kural Electric Ltd - bootleg? */
 	DRIVER( mbrush )	/* 1981 bootleg */
+	DRIVER( paintrlr )	/* 1981 bootleg */
 	DRIVER( eyes )		/* (c) 1982 Digitrex Techstar + "Rockola presents" */
 	DRIVER( eyes2 )		/* (c) 1982 Techstar + "Rockola presents" */
 	DRIVER( mrtnt )		/* (c) 1983 Telko */
@@ -315,15 +316,15 @@ const struct GameDriver *drivers[] =
 	/* 86.5  Sky Kid DX (sequel to Sky Kid) */
 	DRIVER( roishtar )	/* (c) 1986 */
 	DRIVER( genpeitd )	/* (c) 1986 */
-	DRIVER( rthunder )	/* (c) 1986 */
-	DRIVER( rthundrb )	/* (c) 1986 */
+	DRIVER( rthunder )	/* (c) 1986 new version */
+	DRIVER( rthundro )	/* (c) 1986 old version */
 	DRIVER( wndrmomo )	/* (c) 1987 */
 
 	/* Namco System 1 games */
 	DRIVER( shadowld )	/* (c) 1987 */
 	DRIVER( youkaidk )	/* (c) 1987 (Japan) */
-	DRIVER( dspirit )	/* (c) 1987 old version */
-	/* 1987 Dragon Spirit new version */
+	DRIVER( dspirit )	/* (c) 1987 new version */
+	DRIVER( dspirito )	/* (c) 1987 old version */
 	DRIVER( blazer )	/* (c) 1987 (Japan) */
 	/* 1987 Quester */
 	DRIVER( pacmania )	/* (c) 1987 */
@@ -577,6 +578,7 @@ TESTDRIVER( herocast )
 	DRIVER( spyhunt2 )	/* (c) 1987 */
 	DRIVER( blasted )	/* (c) 1988 */
 	DRIVER( archrivl )	/* (c) 1989 */
+	DRIVER( archriv2 )	/* (c) 1989 */
 	DRIVER( trisport )	/* (c) 1989 */
 	DRIVER( pigskin )	/* (c) 1990 */
 /* other possible MCR games:
@@ -626,7 +628,7 @@ Six Flags (?)
 	/* M62 */
 	DRIVER( kungfum )	/* (c) 1984 */
 	DRIVER( kungfud )	/* (c) 1984 + Data East license */
-	DRIVER( spaltanx )	/* (c) 1984 */
+	DRIVER( spartanx )	/* (c) 1984 */
 	DRIVER( kungfub )	/* bootleg */
 	DRIVER( kungfub2 )	/* bootleg */
 	DRIVER( battroad )	/* (c) 1984 */
@@ -711,7 +713,7 @@ TESTDRIVER( firebarr )	/* (c) 1993 Irem (Japan) */
 	DRIVER( krull )		/* GV-105 (c) 1983 Gottlieb */
 	DRIVER( mach3 )		/* GV-109 (c) 1983 Mylstar */
 	DRIVER( usvsthem )	/* GV-??? (c) 198? Mylstar */
-	DRIVER( stooges )	/* GV-113 (c) 1984 Mylstar */
+	DRIVER( 3stooges )	/* GV-113 (c) 1984 Mylstar */
 	DRIVER( qbertqub )	/* GV-119 (c) 1983 Mylstar */
 	DRIVER( curvebal )	/* GV-134 (c) 1984 Mylstar */
 
@@ -1021,6 +1023,7 @@ TESTDRIVER( defcomnd )	/* bootleg */
 	DRIVER( lstduela )	/*  7/1988 (c) 1988 (US) */
 	DRIVER( lstduelb )	/* bootleg */
 	DRIVER( madgear )	/*  2/1989 (c) 1989 (US) */
+	DRIVER( madgearj )	/*  2/1989 (c) 1989 (Japan) */
 	DRIVER( ledstorm )	/*  2/1989 (c) 1989 (US) */
 	/*  3/1989 Dokaben (baseball) - see below among "Mitchell" games */
 	/*  8/1989 Dokaben 2 (baseball) - see below among "Mitchell" games */
@@ -1148,7 +1151,7 @@ TESTDRIVER( sfz2j )		/*  Street Fighter Zero 2 (Japan, 960227) */ /* aka Street 
 						/*  8/1996 Street Fighter Zero 2 Alpha */
 						/*  9/1996 Quiz Naneiro Dreams */
 TESTDRIVER( xmvssfj )	/*  X-Men Vs. Street Fighter (Japan, 961004) */
-TESTDRIVER( dstlk3u )	/*  Dark Stalkers 3: Jedah's Damnation (USA 970519) */
+TESTDRIVER( vsavu )		/*  Vampire Savior: Jedah's Damnation (USA 970519) */
 TESTDRIVER( vsavj )		/*  Vampire Savior: The Lord of Vampire (Japan, 970519) */
 TESTDRIVER( batcirj )	/*  Battle Circuit (Japan 970319) */
 TESTDRIVER( mshvsfu )	/*  Marvel Super Heroes Vs. Street Fighter (USA 970625)*/
@@ -1246,6 +1249,7 @@ TESTDRIVER( cerberus )
 TESTDRIVER( indyheat )
 TESTDRIVER( wsf )
 TESTDRIVER( ataxx )
+TESTDRIVER( ataxxa )
 
 	/* Gremlin 8080 games */
 	/* the numbers listed are the range of ROM part numbers */
@@ -1571,6 +1575,7 @@ TESTDRIVER( birdtry )	/* (c) 1988 Data East Corporation (Japan) */
 	DRIVER( bouldash )	/* (c) 1990 Data East Corporation */
 /* end of similar hardware */
 	DRIVER( stadhero )	/* (c) 1988 Data East Corporation (Japan) */
+	DRIVER( madmotor )	/* (c) [1989] Mitchell */
 	/* All these games have a unique code stamped on the mask roms */
 	DRIVER( vaportra )	/* MAA (c) 1989 Data East Corporation (US) */
 	DRIVER( kuhga )		/* MAA (c) 1989 Data East Corporation (Japan) */
@@ -1687,6 +1692,7 @@ TESTDRIVER( funkyjet )	/* MAT (c) 1992 Mitchell */
 	DRIVER( mrgoemon )	/* GX621 (c) 1986 (Japan) */
 	DRIVER( jailbrek )	/* GX507 (c) 1986 */
 	DRIVER( finalizr )	/* GX523 (c) 1985 */
+	DRIVER( finalizb )	/* bootleg */
 	DRIVER( ironhors )	/* GX560 (c) 1986 */
 	DRIVER( dairesya )	/* GX560 (c) 1986 (Japan) */
 	DRIVER( farwest )
@@ -2033,10 +2039,11 @@ TESTDRIVER( liberat2 )
 	DRIVER( marvins )	/* A2003      (c) 1983 */
 	DRIVER( madcrash )	/* A2005      (c) 1984 */
 	DRIVER( vangrd2 )	/*            (c) 1984 */
-TESTDRIVER( hal21 )
+	DRIVER( hal21 )		/*            (c) 1985 */
+	DRIVER( hal21j )	/*            (c) 1985 (Japan) */
+	DRIVER( aso )		/*            (c) 1985 */
 	DRIVER( tnk3 )		/* A5001      (c) 1985 */
 	DRIVER( tnk3j )		/* A5001      (c) 1985 */
-	DRIVER( aso )		/*            (c) 1985 */
 	DRIVER( athena )	/*       'UP' (c) 1986 */
 	DRIVER( fitegolf )	/*       'GU' (c) 1988 */
 	DRIVER( ikari )		/* A5004 'IW' (c) 1986 */
@@ -2270,7 +2277,8 @@ TESTDRIVER( narc3 )		/* (c) 1988 Williams */
 	DRIVER( dynduke )	/* (c) 1989 Seibu Kaihatsu + Fabtek license */
 	DRIVER( dbldyn )	/* (c) 1989 Seibu Kaihatsu + Fabtek license */
 	DRIVER( raiden )	/* (c) 1990 Seibu Kaihatsu */
-TESTDRIVER( raidena )	/* (c) 1990 Seibu Kaihatsu */
+	DRIVER( raidena )	/* (c) 1990 Seibu Kaihatsu */
+	DRIVER( raidenk )	/* (c) 1990 Seibu Kaihatsu + IBL Corporation license */
 	DRIVER( dcon )		/* (c) 1992 Success */
 
 /* Seibu STI System games:
@@ -2426,6 +2434,7 @@ TESTDRIVER( dlair )
 	DRIVER( meteor )	/* (c) 1981 Venture Line */
 	DRIVER( bjtwin )	/* (c) 1993 NMK */
 	DRIVER( aztarac )	/* (c) 1983 Centuri (vector game) */
+	DRIVER( pinbo )		/* (c) 1985 Strike */
 
 
 #endif /* NEOMAME */
@@ -2454,6 +2463,7 @@ TESTDRIVER( dlair )
 	DRIVER( sengoku )	/* 0017 (c) 1991 SNK */
 	DRIVER( sengokh )	/* 0017 (c) 1991 SNK */
 	DRIVER( burningf )	/* 0018 (c) 1991 SNK */
+	DRIVER( burningh )	/* 0018 (c) 1991 SNK */
 	DRIVER( lbowling )	/* 0019 (c) 1990 SNK */
 	DRIVER( gpilots )	/* 0020 (c) 1991 SNK */
 	DRIVER( joyjoy )	/* 0021 (c) 1990 SNK */

@@ -23,16 +23,18 @@
  * too high.
  */
 
-#define IR_TIMING 1		/* try to emulate MB and VG running time */
+#define IR_TIMING 				1		/* try to emulate MB and VG running time */
+#define DISASSEMBLE_MB_ROM		0		/* generate a disassembly of the mathbox ROMs */
 
 #define IR_CPU_STATE \
 	if (errorlog) fprintf (errorlog, \
 			"pc: %4x, scanline: %d\n", cpu_getpreviouspc(), cpu_getscanline())
 
 
-int irvg_clear;
-static int irvg_vblank;
-static int irvg_running;
+UINT8 irvg_clear;
+static UINT8 irvg_vblank;
+static UINT8 irvg_running;
+static UINT8 irmb_running;
 static void *irscanline_timer;
 
 #if IR_TIMING
@@ -45,420 +47,64 @@ extern void irobot_poly_clear(void);
 
 extern struct osd_bitmap *polybitmapt;
 
-unsigned char *irobot_nvRAM;
-extern unsigned char *comRAM1,*comRAM2,*mbRAM,*mbROM;
-static unsigned char irobot_control_num = 0;
-static unsigned char irobot_statwr;
-static unsigned char irobot_out0;
-static unsigned char irobot_outx,irobot_mpage;
+UINT8 *irobot_nvRAM;
+static UINT8 *comRAM[2], *mbRAM, *mbROM;
+static UINT8 irobot_control_num = 0;
+static UINT8 irobot_statwr;
+static UINT8 irobot_out0;
+static UINT8 irobot_outx,irobot_mpage;
 
-unsigned char irobot_comswap;
-unsigned char irobot_bufsel;
-unsigned char irobot_alphamap;
+static UINT8 *irobot_combase_mb;
+UINT8 *irobot_combase;
+UINT8 irobot_bufsel;
+UINT8 irobot_alphamap;
 
-/* I-Robot Mathbox
-
-    Based on 4 2901 chips slice processors connected to form a 16-bit ALU
-
-    Microcode roms:
-    6N: bits 0..3: Address of ALU A register
-    5P: bits 0..3: Address of ALU B register
-    6M: bits 0..3: ALU Function bits 5..8
-    7N: bits 0..3: ALU Function bits 1..4
-    8N: bits 0,1: Memory write timing
-        bit 2: Hardware multiply mode
-        bit 3: ALU Function bit 0
-    6P: bits 0,1: Direct addressing bits 0,1
-        bits 2,3: Jump address bits 0,1
-    8M: bits 0..3: Jump address bits 6..9
-    9N: bits 0..3: Jump address bits 2..5
-    8P: bits 0..3: Memory address bits 2..5
-    9M: bit 0: Shift control
-        bits 1..3: Jump type
-            0 = No Jump
-            1 = On carry
-            2 = On zero
-            3 = On positive
-            4 = On negative
-            5 = Unconditional
-            6 = Jump to Subroutine
-            7 = Return from Subroutine
-    7M: Bit 0: Mathbox memory enable
-        Bit 1: Latch data to address bus
-        Bit 2: Carry in select
-        Bit 3: Carry in value
-        (if 2,3 = 11 then mathbox is done)
-    9P: Bit 0: Hardware divide enable
-        Bits 1,2: Memory select
-        Bit 3: Memory R/W
-    7P: Bits 0,1: Direct addressing bits 6,7
-        Bits 2,3: Unused
-*/
-
-/* Mathbox variable */
-
-static int irmb_running;
-static int irmb_PC;
-static int irmb_oldPC;
-
-static unsigned int irmb_Q;
-static unsigned int irmb_F;
-static unsigned int irmb_Y;
-static unsigned short irmb_regs[16];
-static unsigned int irmb_stack[16];
-
-static int irmb_sp;
-static unsigned int irmb_pmadd;
-static unsigned int irmb_latch;
-
-static unsigned char irmb_nflag;
-static unsigned char irmb_vflag;
-static unsigned char irmb_cflag;
-static unsigned char irmb_zflag;
-static unsigned char irmb_CI;
-
-#define FL_MULT	0x01
-#define FL_shift 0x02
-#define FL_MBMEMDEC 0x04
-#define FL_ADDEN 0x08
-#define FL_DPSEL 0x10
-#define FL_carry 0x20
-#define FL_DIV 0x40
-#define FL_MBRW 0x80
-
-/* flags:
-    0: MULT
-    1: Shift control
-    2: MBMEMDEC
-    3: ADDEN
-    4: DPSEL
-    5: Carry
-    6: DIV
-    7: MBR/W
-*/
-
-typedef struct {
-  unsigned char areg;
-  unsigned char breg;
-  int func;
-  unsigned int flags;
-  unsigned char diradd;
-  int nxtadd;
-  unsigned char mab;
-  unsigned char jtype;
-  unsigned char ramsel;
-} irmb_ops;
-
-irmb_ops mbops[1024];
-
-int irmb_exec(void);
+static void irmb_init(void);
+static void irmb_run(void);
 
 
-unsigned short irmb_din(void) {
-  unsigned int d=0;
-  unsigned int ad;
-  int diren;
-
-  if (!(mbops[irmb_PC].flags & FL_MBMEMDEC) && (mbops[irmb_PC].flags & FL_MBRW))
-  {
-    if (mbops[irmb_PC].ramsel == 0) {  /* DIREN = 1 */
-      diren = 1;
-      ad = mbops[irmb_PC].mab << 2;
-      ad = ad | (mbops[irmb_PC].diradd & 0xC0);
-      ad = ad | (irmb_latch & 0x1000);
-    }
-    else {               /* DIREN = 0 */
-      diren = 0;
-      ad = irmb_latch & 0x1FF8;
-      ad = ad | (irmb_pmadd & 0x04);
-    }
-
-    if (mbops[irmb_PC].ramsel & 0x02)
-      ad = ad | (irmb_pmadd & 0x03);
-    else
-      ad = ad | (mbops[irmb_PC].diradd & 0x03);
-
-    if (diren == 1 || (irmb_latch & 0x6000) == 0) {   /* MB RAM read */
-      ad = (ad & 0xFFF) << 1;
-      d = (mbRAM[ad] << 8) | mbRAM[ad+1];
-//      if (errorlog && logit) fprintf(errorlog,"Read Ram %x:%d(%X)\n",ad,(signed short)d,d);
-    }
-    else {      /* MB ROM read */
-      ad = (ad & 0x1FFF) << 1;
-      if (irmb_latch & 0x4000) {  /* CEMATH = 1 */
-        if (irmb_latch & 0x2000)
-          d = (mbROM[ad+0x8000] << 8) | mbROM[ad+0x8001];
-        else
-          d = (mbROM[ad+0x4000] << 8) | mbROM[ad+0x4001];
-      }
-      else {  /* CEMATH = 0 */
-        d = (mbROM[ad] << 8) | mbROM[ad+1];
-      }
-//    if (errorlog && logit) fprintf(errorlog,"Read Rom %x:%d(%X)\n",ad,(signed short)d,d);
-    }
-  }
-  return d;
-}
+/* mathbox and vector data is stored in big-endian format */
+#ifdef LSB_FIRST
+#define BYTE_XOR_LE(x)	((x) ^ 1)
+#else
+#define BYTE_XOR_LE(x)	(x)
+#endif
 
 
-void irmb_dout(unsigned int d) {
-  unsigned int ad;
-  int diren;
-
-     /* Write to video com ram */
-  if (mbops[irmb_PC].ramsel == 3) {
-    ad = irmb_latch & 0x1FF8;
-    ad = ad | (irmb_pmadd & 0x07);
-    ad = (ad & 0x7FF) << 1;
-    if (irobot_comswap) {
-      comRAM1[ad] = (d & 0xFF00) >> 8;
-      comRAM1[ad+1] = d & 0x00FF;
-    }
-    else {
-      comRAM2[ad] = (d & 0xFF00) >> 8;
-      comRAM2[ad+1] = d & 0x00FF;
-    }
-//  if (errorlog && logit) fprintf(errorlog,"Write Vid %x:%d(%X)",ad,(signed short)d,d);
-  }
-
-    /* Write to mathox ram */
-  if (!(mbops[irmb_PC].flags & FL_MBMEMDEC)) {
-    if (mbops[irmb_PC].ramsel == 0) {  /* DIREN = 1 */
-      diren = 1;
-      ad = mbops[irmb_PC].mab << 2;
-      ad = ad | (mbops[irmb_PC].diradd & 0xC0);
-      ad = ad | (irmb_latch & 0x1000);
-    }
-    else {               /* DIREN = 0 */
-      diren = 0;
-      ad = irmb_latch & 0x1FF8;
-      ad = ad | (irmb_pmadd & 0x04);
-    }
-
-    if (mbops[irmb_PC].ramsel & 0x02)
-      ad = ad | (irmb_pmadd & 0x03);
-    else
-      ad = ad | (mbops[irmb_PC].diradd & 0x03);
-
-    ad = (ad & 0xFFF) << 1;
-    if (diren == 1 || (irmb_latch & 0x6000) == 0) {   /* MB RAM write */
-      mbRAM[ad] = (d & 0xFF00) >> 8;
-      mbRAM[ad+1] = (d & 0x00FF);
-    }
-//  if (errorlog && logit) fprintf(errorlog,"Write Ram %x:%d(%X)",ad,(signed short)d,d);
-  }
-}
+/***********************************************************************/
 
 
-/* Convert microcode roms to a more usable form */
-void load_oproms(void) {
-  int i;
-  unsigned char *MB = Machine->memory_region[2];
-
-  for (i=0; i<1024; i++) {
-    mbops[i].areg = MB[0xC000 + i] & 0x0F;
-    mbops[i].breg = MB[0xC400 + i] & 0x0F;
-    mbops[i].func = (MB[0xC800 + i] & 0x0F) << 5;
-    mbops[i].func |= ((MB[0xCC00 +i] & 0x0F) << 1);
-    mbops[i].func |= (MB[0xD000 + i] & 0x08) >> 3;
-    mbops[i].flags = (MB[0xD000 + i] & 0x04) >> 2;
-    mbops[i].nxtadd = (MB[0xD400 + i] & 0x0C) >> 2;
-    mbops[i].diradd = MB[0xD400 +i] & 0x03;
-    mbops[i].nxtadd |= ((MB[0xD800 + i] & 0x0F) << 6);
-    mbops[i].nxtadd |= ((MB[0xDC00 + i] & 0x0F) << 2);
-    mbops[i].mab = (MB[0xE000 + i] & 0x0F);
-    mbops[i].jtype = (MB[0xE400 + i] & 0x0E) >> 1;
-    mbops[i].flags |= (MB[0xE400 + i] & 0x01) << 1;
-    mbops[i].flags |= (MB[0xE800 + i] & 0x0F) << 2;
-    mbops[i].flags |= ((MB[0xEC00 + i] & 0x01) << 6);
-    mbops[i].flags |= (MB[0xEC00 + i] & 0x08) << 4;
-    mbops[i].ramsel = (MB[0xEC00 + i] & 0x06) >> 1;
-    mbops[i].diradd |= (MB[0xF000 + i] & 0x03) << 6;
-
-	// uncomment this to create an assembler dump of the MB roms
-/*    if (errorlog)
-    {
-      int lp;
-      if (i==0)
-        fprintf(errorlog," Address  a b func stor: Q :Y, R, S RDCSAESM da m rs\n");
-      fprintf(errorlog,"%04X    : ",i);
-      fprintf(errorlog,"%X ",mbops[i].areg);
-      fprintf(errorlog,"%X ",mbops[i].breg);
-
-      lp=(mbops[i].func & 0x38)>>3;
-      if ((lp&1)==0)
-        lp|=1;
-      else
-        if((mbops[i].flags & FL_DIV) != 0)
-          lp&=6;
-        else
-          fprintf(errorlog,"*");
-
-      switch (lp)
-      {
-        case 0:
-          fprintf(errorlog,"ADD  ");
-          break;
-        case 1:
-          fprintf(errorlog,"SUBR ");
-          break;
-        case 2:
-          fprintf(errorlog,"SUB  ");
-          break;
-        case 3:
-          fprintf(errorlog,"OR   ");
-          break;
-        case 4:
-          fprintf(errorlog,"AND  ");
-          break;
-        case 5:
-          fprintf(errorlog,"AND  ");
-          break;
-        case 6:
-          fprintf(errorlog,"XOR  ");
-          break;
-        case 7:
-          fprintf(errorlog,"XNOR ");
-          break;
-      }
-
-      switch ((mbops[i].func & 0x1c0)>>6)
-      {
-        case 0:
-          fprintf(errorlog,"  - : Q :F,");
-          break;
-        case 1:
-          fprintf(errorlog,"  - : - :F,");
-          break;
-        case 2:
-          fprintf(errorlog,"  R%x: - :A,",mbops[i].breg);
-          break;
-        case 3:
-          fprintf(errorlog,"  R%x: - :F,",mbops[i].breg);
-          break;
-        case 4:
-          fprintf(errorlog,">>R%x:>>Q:F,",mbops[i].breg);
-          break;
-        case 5:
-          fprintf(errorlog,">>R%x: - :F,",mbops[i].breg);
-          break;
-        case 6:
-          fprintf(errorlog,"<<R%x:<<Q:F,",mbops[i].breg);
-          break;
-        case 7:
-          fprintf(errorlog,"<<R%x: - :F,",mbops[i].breg);
-        break;
-      }
-
-      lp=(mbops[i].func & 0x7);
-      if ((lp&2)==0)
-        lp|=2;
-      else
-        if((mbops[i].flags & FL_MULT) == 0)
-          lp&=5;
-        else
-          fprintf(errorlog,"*");
-
-      switch (lp)
-      {
-        case 0:
-          fprintf(errorlog,"R%x, Q ",mbops[i].areg);
-          break;
-        case 1:
-          fprintf(errorlog,"R%x,R%x ",mbops[i].areg,mbops[i].breg);
-          break;
-        case 2:
-          fprintf(errorlog,"00, Q ");
-          break;
-        case 3:
-          fprintf(errorlog,"00,R%x ",mbops[i].breg);
-          break;
-        case 4:
-          fprintf(errorlog,"00,R%x ",mbops[i].areg);
-          break;
-        case 5:
-          fprintf(errorlog," D,R%x ",mbops[i].areg);
-          break;
-        case 6:
-          fprintf(errorlog," D, Q ");
-          break;
-        case 7:
-          fprintf(errorlog," D,00 ");
-        break;
-      }
-
-      for (lp=0;lp<8;lp++)
-        if (mbops[i].flags & (0x80>>lp))
-          fprintf(errorlog,"1");
-        else
-          fprintf(errorlog,"0");
-
-      fprintf(errorlog," %02X ",mbops[i].diradd);
-      fprintf(errorlog,"%X ",mbops[i].mab);
-      fprintf(errorlog,"%X\n",mbops[i].ramsel);
-      if (mbops[i].jtype)
-      {
-        fprintf(errorlog,"              ");
-        switch (mbops[i].jtype)
-        {
-          case 1:
-            fprintf(errorlog,"BO ");
-            break;
-          case 2:
-            fprintf(errorlog,"BZ ");
-            break;
-          case 3:
-            fprintf(errorlog,"BH ");
-            break;
-          case 4:
-            fprintf(errorlog,"BL ");
-            break;
-          case 5:
-            fprintf(errorlog,"B  ");
-            break;
-          case 6:
-            fprintf(errorlog,"Cl ");
-            break;
-          case 7:
-            fprintf(errorlog,"Return\n\n");
-            break;
-        }
-        if (mbops[i].jtype != 7) fprintf(errorlog,"  %04X    \n",mbops[i].nxtadd);
-        if (mbops[i].jtype == 5) fprintf(errorlog,"\n");
-      }
-    }    */
-  }
-}
-
-
-/* Init mathbox (only called once) */
-void irmb_init(void) {
-  int i;
-
-  for(i=0; i<16; i++) {
-    irmb_regs[i]=0x00;
-    irmb_stack[i]=0x00;
-  }
-  irmb_PC=0;
-  irmb_Q=0;
-  irmb_F=0;
-  irmb_Y=0;
-  irmb_sp=0;
-  irmb_nflag=0;
-  irmb_cflag=0;
-  irmb_zflag=0;
-  irmb_pmadd=0;
-  irmb_oldPC=0;
-  load_oproms();
-}
-
-static void irmb_done_callback (int param)
+void irobot_nvram_w(int offset,int data)
 {
-    if (errorlog)
-		fprintf (errorlog, "mb done. ");
-	IR_CPU_STATE;
-	irmb_running = 0;
-	cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
+	irobot_nvRAM[offset] = data & 0x0F;
+}
+
+
+int irobot_sharedmem_r(int offset)
+{
+	if (irobot_outx == 3)
+		return mbRAM[BYTE_XOR_LE(offset)];
+
+	if (irobot_outx == 2)
+		return irobot_combase[BYTE_XOR_LE(offset & 0xFFF)];
+
+	if (irobot_outx == 0)
+		return mbROM[((irobot_mpage & 1) << 13) + BYTE_XOR_LE(offset)];
+
+	if (irobot_outx == 1)
+		return mbROM[0x4000 + ((irobot_mpage & 3) << 13) + BYTE_XOR_LE(offset)];
+
+	return 0xFF;
+}
+
+/* Comment out the mbRAM =, comRAM2 = or comRAM1 = and it will start working */
+void irobot_sharedmem_w(int offset,int data)
+{
+	if (irobot_outx == 3)
+		mbRAM[BYTE_XOR_LE(offset)] = data;
+
+	if (irobot_outx == 2)
+		irobot_combase[BYTE_XOR_LE(offset & 0xFFF)] = data;
 }
 
 static void irvg_done_callback (int param)
@@ -469,546 +115,24 @@ static void irvg_done_callback (int param)
 	irvg_running = 0;
 }
 
-// Update PC
-INLINE void do_jump(void) {
-  irmb_PC = mbops[irmb_PC].nxtadd;
-}
-
-#define LOGMB 0
-
-/* Run mathbox */
-void irmb_run(void)
+void irobot_statwr_w(int offset, int data)
 {
-	int fu;
-	unsigned int R,S,F;
-	unsigned int MDB;
-	signed long result;
-	int icount;
-
-#if LOGMB
-	char mybuffer[30];
-	char sub[31] = "                              ";
-  	static int depth=30;
-#endif
-
-	irmb_oldPC = irmb_PC = irmb_sp = 0;
-	result = R = S = F= 0; /* Move into the loop? */
-	icount = 0;
-
-	while (!((mbops[irmb_PC].flags & FL_DPSEL) && (mbops[irmb_PC].flags & FL_carry)))
-	{
-		icount++;
-
-		/* Get function code */
-		fu = mbops[irmb_PC].func;
-
-		/*  if (errorlog && logit)
-			if (j++ > 2999)
-			fclose(errorlog); */
-
-		/* Modify function for MULT */
-		if (!(mbops[irmb_oldPC].flags & FL_MULT))
-			fu = fu ^ 0x02;
-		else
-		{
-			if (!(irmb_Q & 0x01))
-				fu = fu | 0x02;
-			else
-				fu = fu ^ 0x02;
-		}
-
-		/* Modify function for DIV */
-		if ((mbops[irmb_oldPC].flags & FL_DIV) || irmb_nflag)
-			fu = fu ^ 0x08;
-		else
-			fu = fu | 0x08;
-
-
-		/* Get registers to work on */
-
-		switch (fu & 0x07) {
-			case 0:
-				R = irmb_regs[mbops[irmb_PC].areg];
-				S = irmb_Q;
-#if LOGMB
-		        sprintf(mybuffer,"R%d,q",(signed short)mbops[irmb_PC].areg);
-#endif
-
-				break;
-			case 1:
-				R = irmb_regs[mbops[irmb_PC].areg];
-				S = irmb_regs[mbops[irmb_PC].breg];
-#if LOGMB
-				sprintf(mybuffer,"R%d,R%d",(signed short)mbops[irmb_PC].areg,(signed short)mbops[irmb_PC].breg);
-#endif
-
-				break;
-			case 2:
-				R = 0;
-				S = irmb_Q;
-#if LOGMB
-				sprintf(mybuffer,"0,q");
-#endif
-
-				break;
-			case 3:
-				R = 0;
-				S = irmb_regs[mbops[irmb_PC].breg];
-#if LOGMB
-				sprintf(mybuffer,"0,R%d",(signed short)mbops[irmb_PC].breg);
-#endif
-
-				break;
-			case 4:
-				R = 0;
-				S = irmb_regs[mbops[irmb_PC].areg];
-#if LOGMB
-				sprintf(mybuffer,"0,R%d",(signed short)mbops[irmb_PC].areg);
-#endif
-
-				break;
-			case 5:
-				R = irmb_din();
-				S = irmb_regs[mbops[irmb_PC].areg];
-#if LOGMB
-				sprintf(mybuffer,"%d,R%d",(signed short)R,(signed short)mbops[irmb_PC].areg);
-#endif
-
-				break;
-			case 6:
-				R = irmb_din();
-				S = irmb_Q;
-#if LOGMB
-				sprintf(mybuffer,"%x,q(%x)",R,S);
-#endif
-				break;
-			case 7:
-				R = irmb_din();
-				S = 0;
-#if LOGMB
-				sprintf(mybuffer,"%d,0",(signed short)R);
-#endif
-
-				break;
-		}
-
-		/* determine carry in */
-		irmb_CI=0;
-		if (mbops[irmb_PC].flags & FL_DPSEL)
-			irmb_CI = irmb_cflag;
-		else
-		{
-			if (mbops[irmb_PC].flags & FL_carry)
-				irmb_CI = 1;
-			if (!(mbops[irmb_oldPC].flags & FL_DIV) && !irmb_nflag)
-				irmb_CI = 1;
-		}
-
-#if LOGMB
-		if (errorlog)
-			fprintf(errorlog,"%s%03x:",&sub[depth],irmb_PC);
-#endif
-
-		/* Do the function */
-		irmb_cflag = 0;
-		irmb_vflag = 0;
-		switch ((fu & 0x38) >> 3) {
-			case 0:
-				result = R + S + irmb_CI;
-				irmb_vflag = (((R & 0x7fff) + (S & 0x7fff) + irmb_CI) >> 15) ^ ((result & 0x10000) >>16);
-
-#if LOGMB
-				if (errorlog) {
-					fprintf(errorlog,"ADD  ");
-					fprintf(errorlog,mybuffer);
-					fprintf(errorlog,"  (%d+%d=",(signed short)R,(signed short)S);
-				}
-#endif
-				break;
-			case 1:
-				result = (R ^ 0xFFFF) + S + irmb_CI;         //S - R + irmb_CI - 1;
-				irmb_vflag = (((S & 0x7fff) + ((R^0xffff) & 0x7fff)+ irmb_CI ) >> 15) ^ ((result & 0x10000) >>16);
-
-#if LOGMB
-				if (errorlog) {
-					fprintf(errorlog,"SUBR ");
-					fprintf(errorlog,mybuffer);
-					fprintf(errorlog,"  (%d-%d=",(signed short)S,(signed short)R);
-				}
-#endif
-				break;
-			case 2:
-				result = R + (S ^ 0xFFFF) + irmb_CI;      //R - S + irmb_CI - 1;
-				irmb_vflag = (((R & 0x7fff) + ((S^0xffff) & 0x7fff) + irmb_CI ) >> 15) ^ ((result & 0x10000) >>16);
-
-#if LOGMB
-				if (errorlog) {
-					fprintf(errorlog,"SUB  ");
-					fprintf(errorlog,mybuffer);
-					fprintf(errorlog,"  (%d-%d=",(signed short)R,(signed short)S);
-				}
-#endif
-				break;
-			case 3:
-				result = R | S;
-#if LOGMB
-				if (errorlog) {
-					fprintf(errorlog,"OR   ");
-					fprintf(errorlog,mybuffer);
-					fprintf(errorlog,"  (%d|%d=",(signed short)R,(signed short)S);
-				}
-#endif
-				break;
-			case 4:
-				result = R & S;
-#if LOGMB
-				if (errorlog) {
-					fprintf(errorlog,"AND  ");
-					fprintf(errorlog,mybuffer);
-					fprintf(errorlog,"  (%d&%d=",(signed short)R,(signed short)S);
-				}
-#endif
-				break;
-			case 5:
-				result = (R ^ 0xFFFF) & S;
-#if LOGMB
-				if (errorlog) {
-					fprintf(errorlog,"IAND ");
-					fprintf(errorlog,mybuffer);
-					fprintf(errorlog,"  (^%d&%d=",(signed short)R,(signed short)S);
-				}
-#endif
-				break;
-			case 6:
-				result = R ^ S;
-#if LOGMB
-				if (errorlog) {
-					fprintf(errorlog,"XOR  ");
-					fprintf(errorlog,mybuffer);
-					fprintf(errorlog,"  (%d^%d=",(signed short)R,(signed short)S);
-				}
-#endif
-				break;
-			case 7:
-				result = (R ^ S) ^ 0xFFFF;
-#if LOGMB
-				if (errorlog) {
-					fprintf(errorlog,"IXOR ");
-					fprintf(errorlog,mybuffer);
-					fprintf(errorlog,"  (^[%d&%d]=",(signed short)R,(signed short)S);
-				}
-#endif
-				break;
-		}
-
-		F = result & 0xFFFF;
-#if LOGMB
-		if (errorlog) fprintf(errorlog,"%d(%X)) ",(signed short)F,F);
-#endif
-
-		/* Evaluate flags */
-		if (F == 0) {
-			irmb_zflag = 1;
-#if LOGMB
-			if (errorlog) fprintf(errorlog,"Zero ");
-#endif
-		} else
-			irmb_zflag = 0;
-
-		if (F & 0x8000) {
-			irmb_nflag = 1;
-#if LOGMB
-			if (errorlog) fprintf(errorlog,"Neg ");
-#endif
-		} else
-			irmb_nflag = 0;
-
-		if (result & 0x10000) {
-			irmb_cflag = 1;
-#if LOGMB
-			if (errorlog) fprintf(errorlog,"Carry(%ld) ",result);
-#endif
-		} else
-			irmb_cflag = 0;
-
-
-#if LOGMB
-		if (irmb_vflag) {
-			if (errorlog) fprintf(errorlog,"Overflow ");
-		}
-#endif
-
-
-
-		/* Do destination */
-		switch ((fu & 0x1C0) >> 6) {
-			case 0:
-				irmb_Q = F;
-				irmb_Y = F;
-#if LOGMB
-				if (errorlog) fprintf(errorlog,"q,y=F ");
-#endif
-				break;
-			case 1:
-				irmb_Y = F;
-#if LOGMB
-				if (errorlog) fprintf(errorlog,"y=F ");
-#endif
-				break;
-			case 2:
-				irmb_Y = irmb_regs[mbops[irmb_PC].areg];
-				irmb_regs[mbops[irmb_PC].breg] = F;
-#if LOGMB
-				if (errorlog) fprintf(errorlog,"y=A, B=F ");
-#endif
-				break;
-			case 3:
-				irmb_regs[mbops[irmb_PC].breg] = F;
-				irmb_Y = F;
-#if LOGMB
-				if (errorlog) fprintf(errorlog,"B,y=F ");
-#endif
-				break;
-			case 4:
-				irmb_regs[mbops[irmb_PC].breg] = F >> 1;
-				irmb_Q = irmb_Q >> 1;
-#if LOGMB
-				if (errorlog) fprintf(errorlog,"q=q/2,B=F/2 ");
-#endif
-				if (mbops[irmb_PC].flags & FL_shift)
-				{
-					irmb_Q |= ((F & 0x01) << 15);
-					irmb_regs[mbops[irmb_PC].breg] |= ((irmb_nflag ^ irmb_vflag) << 15);
-				}
-				else
-				{
-					irmb_Q |= ((mbops[irmb_PC].flags & 0x20) << 10);
-					irmb_regs[mbops[irmb_PC].breg] |= ((mbops[irmb_PC].flags & 0x20) << 10);
-				}
-#if LOGMB
-				if (errorlog) fprintf(errorlog,"%d",irmb_Q);
-#endif
-				irmb_Y = F;
-				break;
-			case 5:
-				irmb_regs[mbops[irmb_PC].breg] = F >> 1;
-				if (mbops[irmb_PC].flags & FL_shift) {
-					irmb_regs[mbops[irmb_PC].breg] |= ((irmb_nflag ^ irmb_vflag) << 15);
-				}
-				else {
-					irmb_regs[mbops[irmb_PC].breg] |= ((mbops[irmb_PC].flags & 0x20) << 10);
-				}
-				irmb_Y = F;
-				break;
-			case 6:
-				irmb_regs[mbops[irmb_PC].breg] = F << 1;
-				if (mbops[irmb_PC].flags & FL_shift) {
-					irmb_regs[mbops[irmb_PC].breg] |= ((irmb_Q & 0x8000) >> 15);
-				}
-				irmb_Q = (irmb_Q << 1) & 0xffff;
-				if ((mbops[irmb_PC].flags & FL_shift)==0)
-				{
-					irmb_Q |= (!irmb_nflag);
-				}
-				irmb_Y = F;
-				break;
-			case 7:
-				irmb_regs[mbops[irmb_PC].breg] = F << 1;
-				if (mbops[irmb_PC].flags & FL_shift) {
-					irmb_regs[mbops[irmb_PC].breg] |= ((irmb_Q & 0x8000) >> 15);
-				}
-				irmb_Y = F;
-				break;
-		}
-
-		/* Do write */
-		if (!(mbops[irmb_PC].flags & FL_MBRW)) {
-			irmb_dout(irmb_Y);
-		}
-
-		/* ADDEN */
-		if (!(mbops[irmb_PC].flags & FL_ADDEN)) {
-			if (mbops[irmb_PC].flags & FL_MBRW)
-				MDB = irmb_din();
-			else
-				MDB = irmb_Y;
-
-			irmb_pmadd = MDB & 0x07;
-			irmb_latch = MDB & 0xFFF8;
-		}
-
-		irmb_oldPC=irmb_PC;
-		/* handle jump */
-
-#if LOGMB
-		if (errorlog) fprintf(errorlog,"jmp:%x\n",mbops[irmb_PC].jtype);
-#endif
-
-		switch (mbops[irmb_PC].jtype) {
-			case 1:
-				if (irmb_cflag)
-					do_jump();
-				else
-					irmb_PC=irmb_PC+1;
-				break;
-			case 2:
-				if (irmb_zflag)
-					do_jump();
-				else
-					irmb_PC=irmb_PC+1;
-				break;
-			case 3:
-				if (!irmb_nflag)
-					do_jump();
-				else
-					irmb_PC=irmb_PC+1;
-				break;
-			case 4:
-				if (irmb_nflag)
-					do_jump();
-				else
-					irmb_PC=irmb_PC+1;
-				break;
-			case 5:
-				do_jump();
-				break;
-			case 6:
-				irmb_stack[irmb_sp] = irmb_PC + 1;
-				irmb_sp++;
-				if (irmb_sp > 15) irmb_sp=0;
-				do_jump();
-#if 0
-				if (depth>1)
-					depth-=2;
-				else
-					if (errorlog)
-						fprintf(errorlog,"Stack overflow\n");
-#endif
-				break;
-			case 7:
-				if (irmb_sp == 0)
-					irmb_sp = 15;
-				else
-					irmb_sp--;
-				irmb_PC = irmb_stack[irmb_sp];
-#if 0
-				if (depth<29)
-					depth+=2;
-				else
-					if (errorlog) fprintf(errorlog,"Stack underflow\n");
-#endif
-				break;
-			default:
-				irmb_PC=irmb_PC+1;
-		}
-	}
-
-	if (errorlog)
-	{
-		fprintf (errorlog, "%d instructions for Mathbox \n", icount);
-	}
-
-
-#if IR_TIMING
-	if (irmb_running == 0)
-	{
-		irmb_timer = timer_set (TIME_IN_NSEC(200) * icount, 0, irmb_done_callback);
-		if (errorlog)
-			fprintf (errorlog, "mb start ");
-		IR_CPU_STATE;
-	}
-	else
-	{
-		if (errorlog)
-			fprintf (errorlog, "mb start [busy!] ");
-		IR_CPU_STATE;
-		timer_reset (irmb_timer, TIME_IN_NSEC(200) * icount);
-	}
-#else
-	cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
-#endif
-	irmb_running=1;
-}
-
-
-
-
-/***********************************************************************/
-
-void irobot_nvram_w(int offset,int data)
-{
-	irobot_nvRAM[offset] = data & 0x0F;
-}
-
-
-int irobot_sharedmem_r(int offset) {
-
-	if (irobot_outx == 3) {
-		return mbRAM[offset];
-	}
-
-	if (irobot_outx == 2) {
-		if (irobot_comswap)
-			return comRAM2[offset & 0xFFF];
-		else
-			return comRAM1[offset & 0xFFF];
-	}
-
-	if (irobot_outx == 0) {
-		if (!(irobot_mpage & 0x01))
-			return mbROM[offset];
-		else
-			return mbROM[0x2000 + offset];
-	}
-	if (irobot_outx == 1) {
-		switch (irobot_mpage) {
-			case 0x00:
-				return mbROM[0x4000 + offset];
-			case 0x01:
-				return mbROM[0x6000 + offset];
-			case 0x02:
-				return mbROM[0x8000 + offset];
-			case 0x03:
-				return mbROM[0xA000 + offset];
-		}
-	}
-	return 0xFF;
-}
-
-/* Comment out the mbRAM =, comRAM2 = or comRAM1 = and it will start working */
-void irobot_sharedmem_w(int offset,int data) {
-
-	if (irobot_outx == 3) {
-		mbRAM[offset] = (unsigned char)data;
-	}
-
-	if (irobot_outx == 2) {
-		if (irobot_comswap) {
-			comRAM2[offset & 0xFFF] = (unsigned char)data;
-		}
-		else {
-			comRAM1[offset & 0xFFF] = (unsigned char)data;
-		}
-	}
-}
-
-void irobot_statwr_w(int offset, int data) {
-
 	if (errorlog)
 	{
 		fprintf (errorlog, "write %2x ", data);
 		IR_CPU_STATE;
 	}
 
-	irobot_comswap = data & 0x80;
+	irobot_combase = comRAM[data >> 7];
+	irobot_combase_mb = comRAM[(data >> 7) ^ 1];
 	irobot_bufsel = data & 0x02;
-	if (((data & 0x01) == 0x01) && (irvg_clear == 0)) {
+	if (((data & 0x01) == 0x01) && (irvg_clear == 0))
 		irobot_poly_clear();
-	}
 
 	irvg_clear = data & 0x01;
 
-	if ((data & 0x04) && !(irobot_statwr & 0x04)) {
+	if ((data & 0x04) && !(irobot_statwr & 0x04))
+	{
 		run_video();
 #if IR_TIMING
 		if (irvg_running == 0)
@@ -1026,18 +150,18 @@ void irobot_statwr_w(int offset, int data) {
 #endif
 		irvg_running=1;
 	}
-	if ((data & 0x10) && !(irobot_statwr & 0x10)) {
+	if ((data & 0x10) && !(irobot_statwr & 0x10))
 		irmb_run();
-	}
 	irobot_statwr = data;
 }
 
 void irobot_out0_w(int offset, int data)
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 
 	irobot_out0 = data;
-	switch (data & 0x60) {
+	switch (data & 0x60)
+	{
 		case 0:
 			cpu_setbank(2, &RAM[0x1C000]);
 			break;
@@ -1053,11 +177,12 @@ void irobot_out0_w(int offset, int data)
 	irobot_alphamap = (data & 0x80);
 }
 
-void irobot_rom_banksel( int offset, int data)
+void irobot_rom_banksel(int offset, int data)
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 
-	switch ((data & 0x0E) >> 1) {
+	switch ((data & 0x0E) >> 1)
+	{
 		case 0:
 			cpu_setbank(1, &RAM[0x10000]);
 			break;
@@ -1095,9 +220,15 @@ static void scanline_callback(int scanline)
     irscanline_timer = timer_set(cpu_getscanlinetime(scanline), scanline, scanline_callback);
 }
 
-void irobot_init_machine (void) {
-	int i,p;
-	unsigned char *MB = Machine->memory_region[2];
+void irobot_init_machine(void)
+{
+	UINT8 *MB = memory_region(2);
+
+	/* initialize the memory regions */
+	mbROM 		= MB + 0x00000;
+	mbRAM 		= MB + 0x0c000;
+	comRAM[0]	= MB + 0x0e000;
+	comRAM[1]	= MB + 0x0f000;
 
 	if (errorlog) fprintf(errorlog,"INIT_MACHINE\n");
 	irvg_vblank=0;
@@ -1109,24 +240,22 @@ void irobot_init_machine (void) {
 
 	irobot_rom_banksel(0,0);
 	irobot_out0_w(0,0);
-	irobot_comswap = 0;
-	irobot_outx=0;
+	irobot_combase = comRAM[0];
+	irobot_combase_mb = comRAM[1];
+	irobot_outx = 0;
 
 	/* Convert Mathbox Proms */
-	p=0;
-	for (i=0; i<16384; i+=2) mbROM[i+1] = MB[p++];
-	for (i=0; i<16384; i+=2) mbROM[i] = MB[p++];
-	for (i=0; i<32768; i+=2) mbROM[i + 0x4001] = MB[p++];
-	for (i=0; i<32768; i+=2) mbROM[i + 0x4000] = MB[p++];
 	irmb_init();
 }
 
-void irobot_control_w (int offset, int data) {
+void irobot_control_w (int offset, int data)
+{
 
 	irobot_control_num = offset & 0x03;
 }
 
-int irobot_control_r (int offset) {
+int irobot_control_r (int offset)
+{
 
 	if (irobot_control_num == 0)
 		return readinputport (5);
@@ -1162,3 +291,780 @@ int irobot_status_r(int offset)
 	return d;
 }
 
+
+/***********************************************************************
+
+	I-Robot Mathbox
+
+    Based on 4 2901 chips slice processors connected to form a 16-bit ALU
+
+    Microcode roms:
+    6N: bits 0..3: Address of ALU A register
+    5P: bits 0..3: Address of ALU B register
+    6M: bits 0..3: ALU Function bits 5..8
+    7N: bits 0..3: ALU Function bits 1..4
+    8N: bits 0,1: Memory write timing
+        bit 2: Hardware multiply mode
+        bit 3: ALU Function bit 0
+    6P: bits 0,1: Direct addressing bits 0,1
+        bits 2,3: Jump address bits 0,1
+    8M: bits 0..3: Jump address bits 6..9
+    9N: bits 0..3: Jump address bits 2..5
+    8P: bits 0..3: Memory address bits 2..5
+    9M: bit 0: Shift control
+        bits 1..3: Jump type
+            0 = No Jump
+            1 = On carry
+            2 = On zero
+            3 = On positive
+            4 = On negative
+            5 = Unconditional
+            6 = Jump to Subroutine
+            7 = Return from Subroutine
+    7M: Bit 0: Mathbox memory enable
+        Bit 1: Latch data to address bus
+        Bit 2: Carry in select
+        Bit 3: Carry in value
+        (if 2,3 = 11 then mathbox is done)
+    9P: Bit 0: Hardware divide enable
+        Bits 1,2: Memory select
+        Bit 3: Memory R/W
+    7P: Bits 0,1: Direct addressing bits 6,7
+        Bits 2,3: Unused
+
+***********************************************************************/
+
+#define FL_MULT	0x01
+#define FL_shift 0x02
+#define FL_MBMEMDEC 0x04
+#define FL_ADDEN 0x08
+#define FL_DPSEL 0x10
+#define FL_carry 0x20
+#define FL_DIV 0x40
+#define FL_MBRW 0x80
+
+typedef struct irmb_ops
+{
+	const struct irmb_ops *nxtop;
+	UINT32 func;
+	UINT32 diradd;
+	UINT32 latchmask;
+	UINT32 *areg;
+	UINT32 *breg;
+	UINT8 cycles;
+	UINT8 diren;
+	UINT8 flags;
+	UINT8 ramsel;
+} irmb_ops;
+
+static irmb_ops *mbops;
+
+static const irmb_ops *irmb_stack[16];
+static UINT32 irmb_regs[16];
+static UINT32 irmb_latch;
+
+#if DISASSEMBLE_MB_ROM
+void disassemble_instruction(irmb_ops *op);
+#endif
+
+
+UINT32 irmb_din(const irmb_ops *curop)
+{
+	UINT32 d = 0;
+
+	if (!(curop->flags & FL_MBMEMDEC) && (curop->flags & FL_MBRW))
+	{
+		UINT32 ad = curop->diradd | (irmb_latch & curop->latchmask);
+
+		if (curop->diren || (irmb_latch & 0x6000) == 0)
+			d = READ_WORD(&mbRAM[(ad << 1) & 0x1fff]);		/* MB RAM read */
+		else if (irmb_latch & 0x4000)
+			d = READ_WORD(&mbROM[(ad << 1) + 0x4000]);		/* MB ROM read, CEMATH = 1 */
+		else
+			d = READ_WORD(&mbROM[(ad << 1) & 0x3fff]);		/* MB ROM read, CEMATH = 0 */
+	}
+	return d;
+}
+
+
+void irmb_dout(const irmb_ops *curop, UINT32 d)
+{
+	/* Write to video com ram */
+	if (curop->ramsel == 3)
+		WRITE_WORD(&irobot_combase_mb[(irmb_latch << 1) & 0xfff], d);
+
+    /* Write to mathox ram */
+	if (!(curop->flags & FL_MBMEMDEC))
+	{
+		UINT32 ad = curop->diradd | (irmb_latch & curop->latchmask);
+
+		if (curop->diren || (irmb_latch & 0x6000) == 0)
+			WRITE_WORD(&mbRAM[(ad << 1) & 0x1fff], d);		/* MB RAM write */
+	}
+}
+
+
+/* Convert microcode roms to a more usable form */
+void load_oproms(void)
+{
+	UINT8 *MB = memory_region(2);
+	int i;
+
+	/* allocate RAM */
+	mbops = malloc(sizeof(irmb_ops) * 1024);
+	if (!mbops) return;
+
+	for (i = 0; i < 1024; i++)
+	{
+		int nxtadd, func, ramsel, diradd, latchmask, dirmask, time;
+
+		mbops[i].areg = &irmb_regs[MB[0xC000 + i] & 0x0F];
+		mbops[i].breg = &irmb_regs[MB[0xC400 + i] & 0x0F];
+		func = (MB[0xC800 + i] & 0x0F) << 5;
+		func |= ((MB[0xCC00 +i] & 0x0F) << 1);
+		func |= (MB[0xD000 + i] & 0x08) >> 3;
+		time = MB[0xD000 + i] & 0x03;
+		mbops[i].flags = (MB[0xD000 + i] & 0x04) >> 2;
+		nxtadd = (MB[0xD400 + i] & 0x0C) >> 2;
+		diradd = MB[0xD400 + i] & 0x03;
+		nxtadd |= ((MB[0xD800 + i] & 0x0F) << 6);
+		nxtadd |= ((MB[0xDC00 + i] & 0x0F) << 2);
+		diradd |= (MB[0xE000 + i] & 0x0F) << 2;
+		func |= (MB[0xE400 + i] & 0x0E) << 9;
+		mbops[i].flags |= (MB[0xE400 + i] & 0x01) << 1;
+		mbops[i].flags |= (MB[0xE800 + i] & 0x0F) << 2;
+		mbops[i].flags |= ((MB[0xEC00 + i] & 0x01) << 6);
+		mbops[i].flags |= (MB[0xEC00 + i] & 0x08) << 4;
+		ramsel = (MB[0xEC00 + i] & 0x06) >> 1;
+		diradd |= (MB[0xF000 + i] & 0x03) << 6;
+
+		if (mbops[i].flags & FL_shift) func |= 0x200;
+
+		mbops[i].func = func;
+		mbops[i].nxtop = &mbops[nxtadd];
+
+		/* determine the number of 12MHz cycles for this operation */
+		if (time == 3)
+			mbops[i].cycles = 2;
+		else
+			mbops[i].cycles = 3 + time;
+
+		/* precompute the hardcoded address bits and the mask to be used on the latch value */
+		if (ramsel == 0)
+		{
+			dirmask = 0x00FC;
+			latchmask = 0x3000;
+		}
+		else
+		{
+			dirmask = 0x0000;
+			latchmask = 0x3FFC;
+		}
+		if (ramsel & 2)
+			latchmask |= 0x0003;
+		else
+			dirmask |= 0x0003;
+
+		mbops[i].ramsel = ramsel;
+		mbops[i].diradd = diradd & dirmask;
+		mbops[i].latchmask = latchmask;
+		mbops[i].diren = (ramsel == 0);
+
+#if DISASSEMBLE_MB_ROM
+		disassemble_instruction(&mbops[i]);
+#endif
+	}
+}
+
+
+/* Init mathbox (only called once) */
+void irmb_init(void)
+{
+	int i;
+	for (i = 0; i < 16; i++)
+	{
+		irmb_stack[i] = &mbops[0];
+		irmb_regs[i] = 0;
+	}
+	irmb_latch=0;
+	load_oproms();
+}
+
+static void irmb_done_callback (int param)
+{
+    if (errorlog)
+		fprintf (errorlog, "mb done. ");
+	IR_CPU_STATE;
+	irmb_running = 0;
+	cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
+}
+
+
+#define COMPUTE_CI \
+	CI = 0;\
+	if (curop->flags & FL_DPSEL)\
+		CI = cflag;\
+	else\
+	{\
+		if (curop->flags & FL_carry)\
+			CI = 1;\
+		if (!(prevop->flags & FL_DIV) && !nflag)\
+			CI = 1;\
+	}
+
+#define ADD(r,s) \
+	COMPUTE_CI;\
+	result = r + s + CI;\
+	cflag = (result >> 16) & 1;\
+	vflag = (((r & 0x7fff) + (s & 0x7fff) + CI) >> 15) ^ cflag
+
+#define SUBR(r,s) \
+	COMPUTE_CI;\
+	result = (r ^ 0xFFFF) + s + CI;         /*S - R + CI - 1*/ \
+	cflag = (result >> 16) & 1;\
+	vflag = (((s & 0x7fff) + ((r ^ 0xffff) & 0x7fff) + CI) >> 15) ^ cflag
+
+#define SUB(r,s) \
+	COMPUTE_CI;\
+	result = r + (s ^ 0xFFFF) + CI;      /*R - S + CI - 1*/ \
+	cflag = (result >> 16) & 1;\
+	vflag = (((r & 0x7fff) + ((s ^ 0xffff) & 0x7fff) + CI) >> 15) ^ cflag
+
+#define OR(r,s) \
+	result = r | s;\
+	vflag = cflag = 0
+
+#define AND(r,s) \
+	result = r & s;\
+	vflag = cflag = 0
+
+#define IAND(r,s) \
+	result = (r ^ 0xFFFF) & s;\
+	vflag = cflag = 0
+
+#define XOR(r,s) \
+	result = r ^ s;\
+	vflag = cflag = 0
+
+#define IXOR(r,s) \
+	result = (r ^ s) ^ 0xFFFF;\
+	vflag = cflag = 0
+
+
+#define DEST0 \
+	Q = Y = zresult
+
+#define DEST1 \
+	Y = zresult
+
+#define DEST2 \
+	Y = *curop->areg;\
+	*curop->breg = zresult
+
+#define DEST3 \
+	*curop->breg = zresult;\
+	Y = zresult
+
+#define DEST4_NOSHIFT \
+	*curop->breg = (zresult >> 1) | ((curop->flags & 0x20) << 10);\
+	Q = (Q >> 1) | ((curop->flags & 0x20) << 10);\
+	Y = zresult
+
+#define DEST4_SHIFT \
+	*curop->breg = (zresult >> 1) | ((nflag ^ vflag) << 15);\
+	Q = (Q >> 1) | ((zresult & 0x01) << 15);\
+	Y = zresult
+
+#define DEST5_NOSHIFT \
+	*curop->breg = (zresult >> 1) | ((curop->flags & 0x20) << 10);\
+	Y = zresult
+
+#define DEST5_SHIFT \
+	*curop->breg = (zresult >> 1) | ((nflag ^ vflag) << 15);\
+	Y = zresult
+
+#define DEST6_NOSHIFT \
+	*curop->breg = zresult << 1;\
+	Q = ((Q << 1) & 0xffff) | (nflag ^ 1);\
+	Y = zresult
+
+#define DEST6_SHIFT \
+	*curop->breg = (zresult << 1) | ((Q & 0x8000) >> 15);\
+	Q = (Q << 1) & 0xffff;\
+	Y = zresult
+
+#define DEST7_NOSHIFT \
+	*curop->breg = zresult << 1;\
+	Y = zresult
+
+#define DEST7_SHIFT \
+	*curop->breg = (zresult << 1) | ((Q & 0x8000) >> 15);\
+	Y = zresult
+
+
+#define JUMP0 	curop++;
+#define JUMP1	if (cflag) curop = curop->nxtop; else curop++;
+#define JUMP2	if (!zresult) curop = curop->nxtop; else curop++;
+#define JUMP3	if (!nflag) curop = curop->nxtop; else curop++;
+#define JUMP4	if (nflag) curop = curop->nxtop; else curop++;
+#define JUMP5	curop = curop->nxtop;
+#define JUMP6	irmb_stack[SP] = curop + 1; SP = (SP + 1) & 15; curop = curop->nxtop;
+#define JUMP7	SP = (SP - 1) & 15; curop = irmb_stack[SP];
+
+
+/* Run mathbox */
+void irmb_run(void)
+{
+	const irmb_ops *prevop = &mbops[0];
+	const irmb_ops *curop = &mbops[0];
+
+	UINT32 Q = 0;
+	UINT32 Y = 0;
+	UINT32 nflag = 0;
+	UINT32 vflag = 0;
+	UINT32 cflag = 0;
+	UINT32 zresult = 1;
+	UINT32 CI = 0;
+	UINT32 SP = 0;
+	UINT32 icount = 0;
+
+	profiler_mark(PROFILER_USER1);
+
+	while ((prevop->flags & (FL_DPSEL | FL_carry)) != (FL_DPSEL | FL_carry))
+	{
+		UINT32 result;
+		UINT32 fu;
+		UINT32 tmp;
+
+		icount += curop->cycles;
+
+		/* Get function code */
+		fu = curop->func;
+
+		/* Modify function for MULT */
+		if (!(prevop->flags & FL_MULT) || (Q & 1))
+			fu = fu ^ 0x02;
+		else
+			fu = fu | 0x02;
+
+		/* Modify function for DIV */
+		if ((prevop->flags & FL_DIV) || nflag)
+			fu = fu ^ 0x08;
+		else
+			fu = fu | 0x08;
+
+		/* Do source and operation */
+		switch (fu & 0x03f)
+		{
+			case 0x00:	ADD(*curop->areg, Q);								break;
+			case 0x01:	ADD(*curop->areg, *curop->breg);					break;
+			case 0x02:	ADD(0, Q);											break;
+			case 0x03:	ADD(0, *curop->breg);								break;
+			case 0x04:	ADD(0, *curop->areg);								break;
+			case 0x05:	tmp = irmb_din(curop); ADD(tmp, *curop->areg);		break;
+			case 0x06:	tmp = irmb_din(curop); ADD(tmp, Q);					break;
+			case 0x07:	tmp = irmb_din(curop); ADD(tmp, 0);					break;
+			case 0x08:	SUBR(*curop->areg, Q);								break;
+			case 0x09:	SUBR(*curop->areg, *curop->breg);					break;
+			case 0x0a:	SUBR(0, Q);											break;
+			case 0x0b:	SUBR(0, *curop->breg);								break;
+			case 0x0c:	SUBR(0, *curop->areg);								break;
+			case 0x0d:	tmp = irmb_din(curop); SUBR(tmp, *curop->areg);		break;
+			case 0x0e:	tmp = irmb_din(curop); SUBR(tmp, Q);				break;
+			case 0x0f:	tmp = irmb_din(curop); SUBR(tmp, 0);				break;
+			case 0x10:	SUB(*curop->areg, Q);								break;
+			case 0x11:	SUB(*curop->areg, *curop->breg);					break;
+			case 0x12:	SUB(0, Q);											break;
+			case 0x13:	SUB(0, *curop->breg);								break;
+			case 0x14:	SUB(0, *curop->areg);								break;
+			case 0x15:	tmp = irmb_din(curop); SUB(tmp, *curop->areg);		break;
+			case 0x16:	tmp = irmb_din(curop); SUB(tmp, Q);					break;
+			case 0x17:	tmp = irmb_din(curop); SUB(tmp, 0);					break;
+			case 0x18:	OR(*curop->areg, Q);								break;
+			case 0x19:	OR(*curop->areg, *curop->breg);						break;
+			case 0x1a:	OR(0, Q);											break;
+			case 0x1b:	OR(0, *curop->breg);								break;
+			case 0x1c:	OR(0, *curop->areg);								break;
+			case 0x1d:	OR(irmb_din(curop), *curop->areg);					break;
+			case 0x1e:	OR(irmb_din(curop), Q);								break;
+			case 0x1f:	OR(irmb_din(curop), 0);								break;
+			case 0x20:	AND(*curop->areg, Q);								break;
+			case 0x21:	AND(*curop->areg, *curop->breg);					break;
+			case 0x22:	AND(0, Q);											break;
+			case 0x23:	AND(0, *curop->breg);								break;
+			case 0x24:	AND(0, *curop->areg);								break;
+			case 0x25:	AND(irmb_din(curop), *curop->areg);					break;
+			case 0x26:	AND(irmb_din(curop), Q);							break;
+			case 0x27:	AND(irmb_din(curop), 0);							break;
+			case 0x28:	IAND(*curop->areg, Q);								break;
+			case 0x29:	IAND(*curop->areg, *curop->breg);					break;
+			case 0x2a:	IAND(0, Q);											break;
+			case 0x2b:	IAND(0, *curop->breg);								break;
+			case 0x2c:	IAND(0, *curop->areg);								break;
+			case 0x2d:	IAND(irmb_din(curop), *curop->areg);				break;
+			case 0x2e:	IAND(irmb_din(curop), Q);							break;
+			case 0x2f:	IAND(irmb_din(curop), 0);							break;
+			case 0x30:	XOR(*curop->areg, Q);								break;
+			case 0x31:	XOR(*curop->areg, *curop->breg);					break;
+			case 0x32:	XOR(0, Q);											break;
+			case 0x33:	XOR(0, *curop->breg);								break;
+			case 0x34:	XOR(0, *curop->areg);								break;
+			case 0x35:	XOR(irmb_din(curop), *curop->areg);					break;
+			case 0x36:	XOR(irmb_din(curop), Q);							break;
+			case 0x37:	XOR(irmb_din(curop), 0);							break;
+			case 0x38:	IXOR(*curop->areg, Q);								break;
+			case 0x39:	IXOR(*curop->areg, *curop->breg);					break;
+			case 0x3a:	IXOR(0, Q);											break;
+			case 0x3b:	IXOR(0, *curop->breg);								break;
+			case 0x3c:	IXOR(0, *curop->areg);								break;
+			case 0x3d:	IXOR(irmb_din(curop), *curop->areg);				break;
+			case 0x3e:	IXOR(irmb_din(curop), Q);							break;
+default:	case 0x3f:	IXOR(irmb_din(curop), 0);							break;
+		}
+
+		/* Evaluate flags */
+		zresult = result & 0xFFFF;
+		nflag = zresult >> 15;
+
+		prevop = curop;
+
+		/* Do destination and jump */
+		switch (fu >> 6)
+		{
+			case 0x00:
+			case 0x08:	DEST0;			JUMP0;	break;
+			case 0x01:
+			case 0x09:	DEST1;			JUMP0;	break;
+			case 0x02:
+			case 0x0a:	DEST2;			JUMP0;	break;
+			case 0x03:
+			case 0x0b:	DEST3;			JUMP0;	break;
+			case 0x04:	DEST4_NOSHIFT;	JUMP0;	break;
+			case 0x05:	DEST5_NOSHIFT;	JUMP0;	break;
+			case 0x06:	DEST6_NOSHIFT;	JUMP0;	break;
+			case 0x07:	DEST7_NOSHIFT;	JUMP0;	break;
+			case 0x0c:	DEST4_SHIFT;	JUMP0;	break;
+			case 0x0d:	DEST5_SHIFT;	JUMP0;	break;
+			case 0x0e:	DEST6_SHIFT;	JUMP0;	break;
+			case 0x0f:	DEST7_SHIFT;	JUMP0;	break;
+
+			case 0x10:
+			case 0x18:	DEST0;			JUMP1;	break;
+			case 0x11:
+			case 0x19:	DEST1;			JUMP1;	break;
+			case 0x12:
+			case 0x1a:	DEST2;			JUMP1;	break;
+			case 0x13:
+			case 0x1b:	DEST3;			JUMP1;	break;
+			case 0x14:	DEST4_NOSHIFT;	JUMP1;	break;
+			case 0x15:	DEST5_NOSHIFT;	JUMP1;	break;
+			case 0x16:	DEST6_NOSHIFT;	JUMP1;	break;
+			case 0x17:	DEST7_NOSHIFT;	JUMP1;	break;
+			case 0x1c:	DEST4_SHIFT;	JUMP1;	break;
+			case 0x1d:	DEST5_SHIFT;	JUMP1;	break;
+			case 0x1e:	DEST6_SHIFT;	JUMP1;	break;
+			case 0x1f:	DEST7_SHIFT;	JUMP1;	break;
+
+			case 0x20:
+			case 0x28:	DEST0;			JUMP2;	break;
+			case 0x21:
+			case 0x29:	DEST1;			JUMP2;	break;
+			case 0x22:
+			case 0x2a:	DEST2;			JUMP2;	break;
+			case 0x23:
+			case 0x2b:	DEST3;			JUMP2;	break;
+			case 0x24:	DEST4_NOSHIFT;	JUMP2;	break;
+			case 0x25:	DEST5_NOSHIFT;	JUMP2;	break;
+			case 0x26:	DEST6_NOSHIFT;	JUMP2;	break;
+			case 0x27:	DEST7_NOSHIFT;	JUMP2;	break;
+			case 0x2c:	DEST4_SHIFT;	JUMP2;	break;
+			case 0x2d:	DEST5_SHIFT;	JUMP2;	break;
+			case 0x2e:	DEST6_SHIFT;	JUMP2;	break;
+			case 0x2f:	DEST7_SHIFT;	JUMP2;	break;
+
+			case 0x30:
+			case 0x38:	DEST0;			JUMP3;	break;
+			case 0x31:
+			case 0x39:	DEST1;			JUMP3;	break;
+			case 0x32:
+			case 0x3a:	DEST2;			JUMP3;	break;
+			case 0x33:
+			case 0x3b:	DEST3;			JUMP3;	break;
+			case 0x34:	DEST4_NOSHIFT;	JUMP3;	break;
+			case 0x35:	DEST5_NOSHIFT;	JUMP3;	break;
+			case 0x36:	DEST6_NOSHIFT;	JUMP3;	break;
+			case 0x37:	DEST7_NOSHIFT;	JUMP3;	break;
+			case 0x3c:	DEST4_SHIFT;	JUMP3;	break;
+			case 0x3d:	DEST5_SHIFT;	JUMP3;	break;
+			case 0x3e:	DEST6_SHIFT;	JUMP3;	break;
+			case 0x3f:	DEST7_SHIFT;	JUMP3;	break;
+
+			case 0x40:
+			case 0x48:	DEST0;			JUMP4;	break;
+			case 0x41:
+			case 0x49:	DEST1;			JUMP4;	break;
+			case 0x42:
+			case 0x4a:	DEST2;			JUMP4;	break;
+			case 0x43:
+			case 0x4b:	DEST3;			JUMP4;	break;
+			case 0x44:	DEST4_NOSHIFT;	JUMP4;	break;
+			case 0x45:	DEST5_NOSHIFT;	JUMP4;	break;
+			case 0x46:	DEST6_NOSHIFT;	JUMP4;	break;
+			case 0x47:	DEST7_NOSHIFT;	JUMP4;	break;
+			case 0x4c:	DEST4_SHIFT;	JUMP4;	break;
+			case 0x4d:	DEST5_SHIFT;	JUMP4;	break;
+			case 0x4e:	DEST6_SHIFT;	JUMP4;	break;
+			case 0x4f:	DEST7_SHIFT;	JUMP4;	break;
+
+			case 0x50:
+			case 0x58:	DEST0;			JUMP5;	break;
+			case 0x51:
+			case 0x59:	DEST1;			JUMP5;	break;
+			case 0x52:
+			case 0x5a:	DEST2;			JUMP5;	break;
+			case 0x53:
+			case 0x5b:	DEST3;			JUMP5;	break;
+			case 0x54:	DEST4_NOSHIFT;	JUMP5;	break;
+			case 0x55:	DEST5_NOSHIFT;	JUMP5;	break;
+			case 0x56:	DEST6_NOSHIFT;	JUMP5;	break;
+			case 0x57:	DEST7_NOSHIFT;	JUMP5;	break;
+			case 0x5c:	DEST4_SHIFT;	JUMP5;	break;
+			case 0x5d:	DEST5_SHIFT;	JUMP5;	break;
+			case 0x5e:	DEST6_SHIFT;	JUMP5;	break;
+			case 0x5f:	DEST7_SHIFT;	JUMP5;	break;
+
+			case 0x60:
+			case 0x68:	DEST0;			JUMP6;	break;
+			case 0x61:
+			case 0x69:	DEST1;			JUMP6;	break;
+			case 0x62:
+			case 0x6a:	DEST2;			JUMP6;	break;
+			case 0x63:
+			case 0x6b:	DEST3;			JUMP6;	break;
+			case 0x64:	DEST4_NOSHIFT;	JUMP6;	break;
+			case 0x65:	DEST5_NOSHIFT;	JUMP6;	break;
+			case 0x66:	DEST6_NOSHIFT;	JUMP6;	break;
+			case 0x67:	DEST7_NOSHIFT;	JUMP6;	break;
+			case 0x6c:	DEST4_SHIFT;	JUMP6;	break;
+			case 0x6d:	DEST5_SHIFT;	JUMP6;	break;
+			case 0x6e:	DEST6_SHIFT;	JUMP6;	break;
+			case 0x6f:	DEST7_SHIFT;	JUMP6;	break;
+
+			case 0x70:
+			case 0x78:	DEST0;			JUMP7;	break;
+			case 0x71:
+			case 0x79:	DEST1;			JUMP7;	break;
+			case 0x72:
+			case 0x7a:	DEST2;			JUMP7;	break;
+			case 0x73:
+			case 0x7b:	DEST3;			JUMP7;	break;
+			case 0x74:	DEST4_NOSHIFT;	JUMP7;	break;
+			case 0x75:	DEST5_NOSHIFT;	JUMP7;	break;
+			case 0x76:	DEST6_NOSHIFT;	JUMP7;	break;
+			case 0x77:	DEST7_NOSHIFT;	JUMP7;	break;
+			case 0x7c:	DEST4_SHIFT;	JUMP7;	break;
+			case 0x7d:	DEST5_SHIFT;	JUMP7;	break;
+			case 0x7e:	DEST6_SHIFT;	JUMP7;	break;
+			case 0x7f:	DEST7_SHIFT;	JUMP7;	break;
+		}
+
+		/* Do write */
+		if (!(prevop->flags & FL_MBRW))
+			irmb_dout(prevop, Y);
+
+		/* ADDEN */
+		if (!(prevop->flags & FL_ADDEN))
+		{
+			if (prevop->flags & FL_MBRW)
+				irmb_latch = irmb_din(prevop);
+			else
+				irmb_latch = Y;
+		}
+	}
+	profiler_mark(PROFILER_END);
+
+	if (errorlog)
+	{
+		fprintf (errorlog, "%d instructions for Mathbox \n", icount);
+	}
+
+
+#if IR_TIMING
+	if (irmb_running == 0)
+	{
+		irmb_timer = timer_set (TIME_IN_HZ(12000000) * icount, 0, irmb_done_callback);
+		if (errorlog)
+			fprintf (errorlog, "mb start ");
+		IR_CPU_STATE;
+	}
+	else
+	{
+		if (errorlog)
+			fprintf (errorlog, "mb start [busy!] ");
+		IR_CPU_STATE;
+		timer_reset (irmb_timer, TIME_IN_NSEC(200) * icount);
+	}
+#else
+	cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
+#endif
+	irmb_running=1;
+}
+
+
+
+
+#if DISASSEMBLE_MB_ROM
+void disassemble_instruction(irmb_ops *op)
+{
+	int lp;
+
+	if (!errorlog)
+		return;
+
+	if (i==0)
+		fprintf(errorlog," Address  a b func stor: Q :Y, R, S RDCSAESM da m rs\n");
+	fprintf(errorlog,"%04X    : ",i);
+	fprintf(errorlog,"%X ",op->areg);
+	fprintf(errorlog,"%X ",op->breg);
+
+	lp=(op->func & 0x38)>>3;
+	if ((lp&1)==0)
+		lp|=1;
+	else if((op->flags & FL_DIV) != 0)
+		lp&=6;
+	else
+		fprintf(errorlog,"*");
+
+	switch (lp)
+	{
+		case 0:
+			fprintf(errorlog,"ADD  ");
+			break;
+		case 1:
+			fprintf(errorlog,"SUBR ");
+			break;
+		case 2:
+			fprintf(errorlog,"SUB  ");
+			break;
+		case 3:
+			fprintf(errorlog,"OR   ");
+			break;
+		case 4:
+			fprintf(errorlog,"AND  ");
+			break;
+		case 5:
+			fprintf(errorlog,"AND  ");
+			break;
+		case 6:
+			fprintf(errorlog,"XOR  ");
+			break;
+		case 7:
+			fprintf(errorlog,"XNOR ");
+			break;
+	}
+
+	switch ((op->func & 0x1c0)>>6)
+	{
+		case 0:
+			fprintf(errorlog,"  - : Q :F,");
+			break;
+		case 1:
+			fprintf(errorlog,"  - : - :F,");
+			break;
+		case 2:
+			fprintf(errorlog,"  R%x: - :A,",op->breg);
+			break;
+		case 3:
+			fprintf(errorlog,"  R%x: - :F,",op->breg);
+			break;
+		case 4:
+			fprintf(errorlog,">>R%x:>>Q:F,",op->breg);
+			break;
+		case 5:
+			fprintf(errorlog,">>R%x: - :F,",op->breg);
+			break;
+		case 6:
+			fprintf(errorlog,"<<R%x:<<Q:F,",op->breg);
+			break;
+		case 7:
+			fprintf(errorlog,"<<R%x: - :F,",op->breg);
+			break;
+	}
+
+	lp=(op->func & 0x7);
+	if ((lp&2)==0)
+		lp|=2;
+	else if((op->flags & FL_MULT) == 0)
+		lp&=5;
+	else
+		fprintf(errorlog,"*");
+
+	switch (lp)
+	{
+		case 0:
+			fprintf(errorlog,"R%x, Q ",op->areg);
+			break;
+		case 1:
+			fprintf(errorlog,"R%x,R%x ",op->areg,op->breg);
+			break;
+		case 2:
+			fprintf(errorlog,"00, Q ");
+			break;
+		case 3:
+			fprintf(errorlog,"00,R%x ",op->breg);
+			break;
+		case 4:
+			fprintf(errorlog,"00,R%x ",op->areg);
+			break;
+		case 5:
+			fprintf(errorlog," D,R%x ",op->areg);
+			break;
+		case 6:
+			fprintf(errorlog," D, Q ");
+			break;
+		case 7:
+			fprintf(errorlog," D,00 ");
+			break;
+	}
+
+	for (lp=0;lp<8;lp++)
+		if (op->flags & (0x80>>lp))
+			fprintf(errorlog,"1");
+		else
+			fprintf(errorlog,"0");
+
+	fprintf(errorlog," %02X ",op->diradd);
+	fprintf(errorlog,"%X\n",op->ramsel);
+	if (op->jtype)
+	{
+		fprintf(errorlog,"              ");
+		switch (op->jtype)
+		{
+			case 1:
+				fprintf(errorlog,"BO ");
+				break;
+			case 2:
+				fprintf(errorlog,"BZ ");
+				break;
+			case 3:
+				fprintf(errorlog,"BH ");
+				break;
+			case 4:
+				fprintf(errorlog,"BL ");
+				break;
+			case 5:
+				fprintf(errorlog,"B  ");
+				break;
+			case 6:
+				fprintf(errorlog,"Cl ");
+				break;
+			case 7:
+				fprintf(errorlog,"Return\n\n");
+				break;
+		}
+		if (op->jtype != 7) fprintf(errorlog,"  %04X    \n",op->nxtadd);
+		if (op->jtype == 5) fprintf(errorlog,"\n");
+		}
+	}
+}
+#endif

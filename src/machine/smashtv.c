@@ -1294,7 +1294,7 @@ int wms_cmos_r(int offset)
 
 void wms_load_code_roms(void)
 {
-	memcpy(CODE_ROM,memory_region(Machine->drv->cpu[0].memory_region),wms_code_rom_size);
+	memcpy(CODE_ROM,memory_region(REGION_CPU1),wms_code_rom_size);
 }
 
 
@@ -1903,7 +1903,7 @@ static void load_gfx_roms_4bit(void)
 	UINT8 d1,d2,d3,d4;
 	UINT8 *mem_rom;
 	memset(GFX_ROM,0,wms_gfx_rom_size);
-	mem_rom = Machine->memory_region[1];
+	mem_rom = memory_region(1);
 	/* load the graphics ROMs -- quadruples 2 bits each */
 	for (i=0;i<wms_gfx_rom_size;i+=2)
 	{
@@ -1922,7 +1922,7 @@ static void load_gfx_roms_6bit(void)
 	UINT8 d1,d2,d3,d4,d5,d6;
 	UINT8 *mem_rom;
 	memset(GFX_ROM,0,wms_gfx_rom_size);
-	mem_rom = Machine->memory_region[1];
+	mem_rom = memory_region(1);
 	/* load the graphics ROMs -- quadruples 2 bits each */
 	for (i=0;i<wms_gfx_rom_size;i+=2)
 	{
@@ -1943,7 +1943,7 @@ static void load_gfx_roms_8bit(void)
 	UINT8 d1,d2;
 	UINT8 *mem_rom;
 	memset(GFX_ROM,0,wms_gfx_rom_size);
-	mem_rom = Machine->memory_region[1];
+	mem_rom = memory_region(1);
 	/* load the graphics ROMs -- quadruples */
 	for (i=0;i<wms_gfx_rom_size;i+=4)
 	{
@@ -1960,7 +1960,7 @@ static void load_gfx_roms_8bit(void)
 
 static void load_adpcm_roms_512k(void)
 {
-	UINT8 *base = Machine->memory_region[3];
+	UINT8 *base = memory_region(3);
 
 	memcpy(base + 0xa0000, base + 0x20000, 0x20000);
 	memcpy(base + 0x80000, base + 0x60000, 0x20000);
@@ -2126,9 +2126,9 @@ void trog_driver_init(void)
 	wms_autoerase_reset = 0;
 
 	/* expand the sound ROMs */
-	memcpy(&Machine->memory_region[2][0x20000], &Machine->memory_region[2][0x10000], 0x10000);
-	memcpy(&Machine->memory_region[2][0x40000], &Machine->memory_region[2][0x30000], 0x10000);
-	memcpy(&Machine->memory_region[2][0x60000], &Machine->memory_region[2][0x50000], 0x10000);
+	memcpy(&memory_region(2)[0x20000], &memory_region(2)[0x10000], 0x10000);
+	memcpy(&memory_region(2)[0x40000], &memory_region(2)[0x30000], 0x10000);
+	memcpy(&memory_region(2)[0x60000], &memory_region(2)[0x50000], 0x10000);
 }
 void trog3_driver_init(void)
 {
@@ -2141,9 +2141,9 @@ void trog3_driver_init(void)
 	wms_autoerase_reset = 0;
 
 	/* expand the sound ROMs */
-	memcpy(&Machine->memory_region[2][0x20000], &Machine->memory_region[2][0x10000], 0x10000);
-	memcpy(&Machine->memory_region[2][0x40000], &Machine->memory_region[2][0x30000], 0x10000);
-	memcpy(&Machine->memory_region[2][0x60000], &Machine->memory_region[2][0x50000], 0x10000);
+	memcpy(&memory_region(2)[0x20000], &memory_region(2)[0x10000], 0x10000);
+	memcpy(&memory_region(2)[0x40000], &memory_region(2)[0x30000], 0x10000);
+	memcpy(&memory_region(2)[0x60000], &memory_region(2)[0x50000], 0x10000);
 }
 void trogp_driver_init(void)
 {
@@ -2154,9 +2154,9 @@ void trogp_driver_init(void)
 	wms_autoerase_reset = 0;
 
 	/* expand the sound ROMs */
-	memcpy(&Machine->memory_region[2][0x20000], &Machine->memory_region[2][0x10000], 0x10000);
-	memcpy(&Machine->memory_region[2][0x40000], &Machine->memory_region[2][0x30000], 0x10000);
-	memcpy(&Machine->memory_region[2][0x60000], &Machine->memory_region[2][0x50000], 0x10000);
+	memcpy(&memory_region(2)[0x20000], &memory_region(2)[0x10000], 0x10000);
+	memcpy(&memory_region(2)[0x40000], &memory_region(2)[0x30000], 0x10000);
+	memcpy(&memory_region(2)[0x60000], &memory_region(2)[0x50000], 0x10000);
 }
 void smashtv_driver_init(void)
 {
@@ -2167,9 +2167,9 @@ void smashtv_driver_init(void)
 	wms_autoerase_reset = 0;
 
 	/* expand the sound ROMs */
-	memcpy(&Machine->memory_region[2][0x20000], &Machine->memory_region[2][0x10000], 0x10000);
-	memcpy(&Machine->memory_region[2][0x40000], &Machine->memory_region[2][0x30000], 0x10000);
-	memcpy(&Machine->memory_region[2][0x60000], &Machine->memory_region[2][0x50000], 0x10000);
+	memcpy(&memory_region(2)[0x20000], &memory_region(2)[0x10000], 0x10000);
+	memcpy(&memory_region(2)[0x40000], &memory_region(2)[0x30000], 0x10000);
+	memcpy(&memory_region(2)[0x60000], &memory_region(2)[0x50000], 0x10000);
 }
 void smashtv4_driver_init(void)
 {
@@ -2180,9 +2180,9 @@ void smashtv4_driver_init(void)
 	wms_autoerase_reset = 0;
 
 	/* expand the sound ROMs */
-	memcpy(&Machine->memory_region[2][0x20000], &Machine->memory_region[2][0x10000], 0x10000);
-	memcpy(&Machine->memory_region[2][0x40000], &Machine->memory_region[2][0x30000], 0x10000);
-	memcpy(&Machine->memory_region[2][0x60000], &Machine->memory_region[2][0x50000], 0x10000);
+	memcpy(&memory_region(2)[0x20000], &memory_region(2)[0x10000], 0x10000);
+	memcpy(&memory_region(2)[0x40000], &memory_region(2)[0x30000], 0x10000);
+	memcpy(&memory_region(2)[0x60000], &memory_region(2)[0x50000], 0x10000);
 }
 void hiimpact_driver_init(void)
 {
@@ -2215,9 +2215,9 @@ void strkforc_driver_init(void)
 	wms_autoerase_reset = 0;
 
 	/* expand the sound ROMs */
-	memcpy(&Machine->memory_region[2][0x20000], &Machine->memory_region[2][0x10000], 0x10000);
-	memcpy(&Machine->memory_region[2][0x40000], &Machine->memory_region[2][0x30000], 0x10000);
-	memcpy(&Machine->memory_region[2][0x60000], &Machine->memory_region[2][0x50000], 0x10000);
+	memcpy(&memory_region(2)[0x20000], &memory_region(2)[0x10000], 0x10000);
+	memcpy(&memory_region(2)[0x40000], &memory_region(2)[0x30000], 0x10000);
+	memcpy(&memory_region(2)[0x60000], &memory_region(2)[0x50000], 0x10000);
 }
 void mk_driver_init(void)
 {

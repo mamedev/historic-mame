@@ -59,7 +59,7 @@ static int zero_ret(int offset)
 
 void mainevt_bankswitch_w(int offset, int data)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
 
 	/* bit 0-1 ROM bank select */
@@ -110,7 +110,7 @@ void mainevt_sh_irqcontrol_w(int offset,int data)
 void mainevt_sh_bankswitch_w(int offset,int data)
 {
 	unsigned char *src,*dest;
-	unsigned char *RAM = Machine->memory_region[4];
+	unsigned char *RAM = memory_region(4);
 	int bank_A,bank_B;
 
 //if (errorlog) fprintf(errorlog,"CPU #1 PC: %04x bank switch = %02x\n",cpu_get_pc(),data);
@@ -121,14 +121,14 @@ void mainevt_sh_bankswitch_w(int offset,int data)
 	K007232_bankswitch(0,RAM+bank_A,RAM+bank_B);
 
 	/* bits 4-5 select the UPD7759 bank */
-	src = &Machine->memory_region[5][0x20000];
-	dest = Machine->memory_region[5];
+	src = &memory_region(5)[0x20000];
+	dest = memory_region(5);
 	memcpy(dest,&src[((data >> 4) & 0x03) * 0x20000],0x20000);
 }
 
 void dv_sh_bankswitch_w(int offset,int data)
 {
-	unsigned char *RAM = Machine->memory_region[4];
+	unsigned char *RAM = memory_region(4);
 	int bank_A,bank_B;
 
 //if (errorlog) fprintf(errorlog,"CPU #1 PC: %04x bank switch = %02x\n",cpu_get_pc(),data);
@@ -634,14 +634,12 @@ static struct MachineDriver machine_driver =
  		{
 			CPU_HD6309,
 			3000000,	/* ?? */
-			0,
 			readmem,writemem,0,0,
 			mainevt_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,	/* 3.579545 MHz */
-			3,
 			sound_readmem,sound_writemem,0,0,
 			nmi_interrupt,8	/* ??? */
 		}
@@ -683,14 +681,12 @@ static struct MachineDriver dv_machine_driver =
  		{
 			CPU_HD6309,
 			3000000,	/* ?? */
-			0,
 			dv_readmem,dv_writemem,0,0,
 			dv_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,	/* 3.579545 MHz */
-			3,
 			dv_sound_readmem,dv_sound_writemem,0,0,
 			interrupt,4
 		}
@@ -734,7 +730,7 @@ static struct MachineDriver dv_machine_driver =
 ***************************************************************************/
 
 ROM_START( mainevt )
-	ROM_REGION(0x40000)
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD( "799c02.k11",   0x10000, 0x08000, 0xe2e7dbd5 )
 	ROM_CONTINUE(             0x08000, 0x08000 )
 
@@ -748,7 +744,7 @@ ROM_START( mainevt )
 	ROM_LOAD( "799b04.h4",    0x00000, 0x80000, 0x323e0c2b )
 	ROM_LOAD( "799b05.k4",    0x80000, 0x80000, 0x571c5831 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "799c01.f7",    0x00000, 0x08000, 0x447c4c5c )
 
 	ROM_REGION(0x80000)	/* 512k for 007232 samples */
@@ -758,12 +754,12 @@ ROM_START( mainevt )
 	/* 00000-1ffff space where the following ROM is bank switched */
 	ROM_LOAD( "799b06.c22",   0x20000, 0x80000, 0x2c8c47d7 )
 
-	ROM_REGION(0x0100)	/* PROMs */
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "63s141n.bin",  0x0000, 0x0100, 0x61f6c8d1 )	/* priority encoder (not used) */
 ROM_END
 
 ROM_START( mainevt2 )
-	ROM_REGION(0x40000)
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD( "02",           0x10000, 0x08000, 0xc143596b )
 	ROM_CONTINUE(             0x08000, 0x08000 )
 
@@ -777,7 +773,7 @@ ROM_START( mainevt2 )
 	ROM_LOAD( "799b04.h4",    0x00000, 0x80000, 0x323e0c2b )
 	ROM_LOAD( "799b05.k4",    0x80000, 0x80000, 0x571c5831 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "799c01.f7",    0x00000, 0x08000, 0x447c4c5c )
 
 	ROM_REGION(0x80000)	/* 512k for 007232 samples */
@@ -787,12 +783,12 @@ ROM_START( mainevt2 )
 	/* 00000-1ffff space where the following ROM is bank switched */
 	ROM_LOAD( "799b06.c22",   0x20000, 0x80000, 0x2c8c47d7 )
 
-	ROM_REGION(0x0100)	/* PROMs */
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "63s141n.bin",  0x0000, 0x0100, 0x61f6c8d1 )	/* priority encoder (not used) */
 ROM_END
 
 ROM_START( ringohja )
-	ROM_REGION(0x40000)
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD( "799n02.k11",   0x10000, 0x08000, 0xf9305dd0 )
 	ROM_CONTINUE(             0x08000, 0x08000 )
 
@@ -806,7 +802,7 @@ ROM_START( ringohja )
 	ROM_LOAD( "799b04.h4",    0x00000, 0x80000, 0x323e0c2b )
 	ROM_LOAD( "799b05.k4",    0x80000, 0x80000, 0x571c5831 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "799c01.f7",    0x00000, 0x08000, 0x447c4c5c )
 
 	ROM_REGION(0x80000)	/* 512k for 007232 samples */
@@ -816,12 +812,12 @@ ROM_START( ringohja )
 	/* 00000-1ffff space where the following ROM is bank switched */
 	ROM_LOAD( "799b06.c22",   0x20000, 0x80000, 0x2c8c47d7 )
 
-	ROM_REGION(0x0100)	/* PROMs */
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "63s141n.bin",  0x0000, 0x0100, 0x61f6c8d1 )	/* priority encoder (not used) */
 ROM_END
 
 ROM_START( devstors )
-	ROM_REGION(0x40000)
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD( "890-z02.k11",  0x10000, 0x08000, 0xebeb306f )
 	ROM_CONTINUE(             0x08000, 0x08000 )
 
@@ -835,18 +831,18 @@ ROM_START( devstors )
 	ROM_LOAD( "dev-f04.rom",  0x00000, 0x80000, 0xf16cd1fa )
 	ROM_LOAD( "dev-f05.rom",  0x80000, 0x80000, 0xda37db05 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "dev-k01.rom",  0x00000, 0x08000, 0xd44b3eb0 )
 
 	ROM_REGION(0x80000)	/* 512k for 007232 samples */
  	ROM_LOAD( "dev-f03.rom",  0x00000, 0x80000, 0x19065031 )
 
-	ROM_REGION(0x0100)	/* PROMs */
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "devaprom.bin", 0x0000, 0x0100, 0xd3620106 )	/* priority encoder (not used) */
 ROM_END
 
 ROM_START( devstor2 )
-	ROM_REGION(0x40000)
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD( "dev-x02.rom",  0x10000, 0x08000, 0xe58ebb35 )
 	ROM_CONTINUE(             0x08000, 0x08000 )
 
@@ -860,18 +856,18 @@ ROM_START( devstor2 )
 	ROM_LOAD( "dev-f04.rom",  0x00000, 0x80000, 0xf16cd1fa )
 	ROM_LOAD( "dev-f05.rom",  0x80000, 0x80000, 0xda37db05 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "dev-k01.rom",  0x00000, 0x08000, 0xd44b3eb0 )
 
 	ROM_REGION(0x80000)	/* 512k for 007232 samples */
  	ROM_LOAD( "dev-f03.rom",  0x00000, 0x80000, 0x19065031 )
 
-	ROM_REGION(0x0100)	/* PROMs */
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "devaprom.bin", 0x0000, 0x0100, 0xd3620106 )	/* priority encoder (not used) */
 ROM_END
 
 ROM_START( garuka )
-	ROM_REGION(0x40000)
+	ROM_REGIONX( 0x40000, REGION_CPU1 )
 	ROM_LOAD( "890w02.bin",   0x10000, 0x08000, 0xb2f6f538 )
 	ROM_CONTINUE(             0x08000, 0x08000 )
 
@@ -885,13 +881,13 @@ ROM_START( garuka )
 	ROM_LOAD( "dev-f04.rom",  0x00000, 0x80000, 0xf16cd1fa )
 	ROM_LOAD( "dev-f05.rom",  0x80000, 0x80000, 0xda37db05 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "dev-k01.rom",  0x00000, 0x08000, 0xd44b3eb0 )
 
 	ROM_REGION(0x80000)	/* 512k for 007232 samples */
  	ROM_LOAD( "dev-f03.rom",  0x00000, 0x80000, 0x19065031 )
 
-	ROM_REGION(0x0100)	/* PROMs */
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "devaprom.bin", 0x0000, 0x0100, 0xd3620106 )	/* priority encoder (not used) */
 ROM_END
 
@@ -899,7 +895,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if  (memcmp(&RAM[0x415C],"\xFF\xAE\xCA",3) == 0 &&
@@ -921,7 +917,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

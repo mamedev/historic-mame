@@ -67,7 +67,7 @@ static int yamyam_interrupt(void)
 	{
 		if (input_ports_hack)
 		{
-			unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+			unsigned char *RAM = memory_region(REGION_CPU1);
 			RAM[0xe004] = readinputport(4);	/* COIN */
 			RAM[0xe005] = readinputport(3);	/* IN1 */
 			RAM[0xe006] = readinputport(2);	/* IN0 */
@@ -81,7 +81,7 @@ static int yamyam_interrupt(void)
 static void yamyam_bankswitch_w(int offset, int data)
 {
  	int bankaddress;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	bankaddress = 0x10000 + (data & 0x07) * 0x4000;
 	cpu_setbank(1,&RAM[bankaddress]);
@@ -89,7 +89,7 @@ static void yamyam_bankswitch_w(int offset, int data)
 
 static void yamyam_protection_w(int offset,int data)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 if (errorlog) fprintf(errorlog,"e000 = %02x\n",RAM[0xe000]);
 	RAM[0xe000] = data;
@@ -423,7 +423,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			8000000,	/* 8 Mhz ??? */
-			0,
 			readmem,writemem,readport,writeport,
 			yamyam_interrupt,4	/* ? */
 		}
@@ -463,7 +462,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( gundealr )
-	ROM_REGION(0x30000)	/* 64k for code + 128k for banks */
+	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* 64k for code + 128k for banks */
 	ROM_LOAD( "gundealr.1",   0x00000, 0x10000, 0x5797e830 )
 	ROM_RELOAD(               0x10000, 0x10000 )	/* banked at 0x8000-0xbfff */
 
@@ -473,7 +472,7 @@ ROM_START( gundealr )
 ROM_END
 
 ROM_START( gundeala )
-	ROM_REGION(0x30000)	/* 64k for code + 128k for banks */
+	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* 64k for code + 128k for banks */
 	ROM_LOAD( "gundeala.1",   0x00000, 0x10000, 0xd87e24f1 )
 	ROM_RELOAD(               0x10000, 0x10000 )	/* banked at 0x8000-0xbfff */
 
@@ -483,7 +482,7 @@ ROM_START( gundeala )
 ROM_END
 
 ROM_START( yamyam )
-	ROM_REGION(0x30000)	/* 64k for code + 128k for banks */
+	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* 64k for code + 128k for banks */
 	ROM_LOAD( "b3.f10",       0x00000, 0x20000, 0x96ae9088 )
 	ROM_RELOAD(               0x10000, 0x20000 )	/* banked at 0x8000-0xbfff */
 
@@ -493,7 +492,7 @@ ROM_START( yamyam )
 ROM_END
 
 ROM_START( wiseguy )
-	ROM_REGION(0x30000)	/* 64k for code + 128k for banks */
+	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* 64k for code + 128k for banks */
 	ROM_LOAD( "b3.f10",       0x00000, 0x20000, 0x96ae9088 )
 	ROM_RELOAD(               0x10000, 0x20000 )	/* banked at 0x8000-0xbfff */
 

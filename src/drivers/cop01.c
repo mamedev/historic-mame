@@ -286,14 +286,12 @@ static struct MachineDriver cop01_machine_driver =
 		{
 			CPU_Z80,
 			3500000,        /* 3.5 Mhz (?) */
-			0,
 			readmem,writemem,readport,writeport,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3000000,        /* 3.0 Mhz (?) */
-			3,
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,0	/* IRQs are caused by the main CPU */
 		},
@@ -327,7 +325,7 @@ static struct MachineDriver cop01_machine_driver =
 static int cop01_hiload(void)
 {
 
-      unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+      unsigned char *RAM = memory_region(REGION_CPU1);
 
       if (memcmp(&RAM[0xC46E],"\x02\x50\x00",3) == 0 &&
               memcmp(&RAM[0xC491],"\x52\x03\x59",3) == 0 )
@@ -350,7 +348,7 @@ static int cop01_hiload(void)
 static void cop01_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -363,7 +361,7 @@ static void cop01_hisave(void)
 static int cop01a_hiload(void)
 {
 
-      unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+      unsigned char *RAM = memory_region(REGION_CPU1);
 
       if (memcmp(&RAM[0xC46F],"\x02\x50\x00",3) == 0 &&
               memcmp(&RAM[0xC492],"\x52\x03\x59",3) == 0 )
@@ -386,7 +384,7 @@ static int cop01a_hiload(void)
 static void cop01a_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -404,7 +402,7 @@ static void cop01a_hisave(void)
 
 
 ROM_START( cop01 )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "cop01.2b",     0x0000, 0x4000, 0x5c2734ab )
 	ROM_LOAD( "cop02.4b",     0x4000, 0x4000, 0x9c7336ef )
 	ROM_LOAD( "cop03.5b",     0x8000, 0x4000, 0x2566c8bf )
@@ -429,13 +427,13 @@ ROM_START( cop01 )
 	ROM_LOAD( "coppromd.19d", 0x0300, 0x0100, 0x6a63dbb8 )	/* lookup table? (not implemented) */
 	ROM_LOAD( "copprome.2e",  0x0400, 0x0100, 0x214392fa )	/* sprite lookup table */
 
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for code */
 	ROM_LOAD( "cop15.17b",    0x0000, 0x4000, 0x6a5f08fa )
 	ROM_LOAD( "cop16.18b",    0x4000, 0x4000, 0x56bf6946 )
 ROM_END
 
 ROM_START( cop01a )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "cop01alt.001", 0x0000, 0x4000, 0xa13ee0d3 )
 	ROM_LOAD( "cop01alt.002", 0x4000, 0x4000, 0x20bad28e )
 	ROM_LOAD( "cop01alt.003", 0x8000, 0x4000, 0xa7e10b79 )
@@ -460,7 +458,7 @@ ROM_START( cop01a )
 	ROM_LOAD( "coppromd.19d", 0x0300, 0x0100, 0x6a63dbb8 )	/* lookup table? (not implemented) */
 	ROM_LOAD( "copprome.2e",  0x0400, 0x0100, 0x214392fa )	/* sprite lookup table */
 
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for code */
 	ROM_LOAD( "cop01alt.015", 0x0000, 0x4000, 0x95be9270 )
 	ROM_LOAD( "cop01alt.016", 0x4000, 0x4000, 0xc20bf649 )
 ROM_END

@@ -428,14 +428,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
 			2500000,	/* 2.5 Mhz */
-			0,
 			readmem,writemem,0,0,
 			interrupt,8 /* 2.4576 ms period */
 		},
 		{
 			CPU_M6502,
 			1250000,	/* 1.25 Mhz */
-			2,		/* CPU #2 */
 			gamma_readmem,gamma_writemem,0,0,
 			0, 0, /* no vblank interrupt */
 			interrupt, 305 /* 3.2768 ms period */
@@ -480,7 +478,7 @@ static struct MachineDriver machine_driver =
 
 ROM_START( mhavoc )
 	/* Alpha Processor ROMs */
-	ROM_REGION(0x21000)	/* 152KB for ROMs */
+	ROM_REGIONX( 0x21000, REGION_CPU1 )	/* 152KB for ROMs */
 	/* Vector Generator ROM */
 	ROM_LOAD( "136025.210",   0x05000, 0x2000, 0xc67284ca )
 
@@ -499,14 +497,14 @@ ROM_START( mhavoc )
 	ROM_REGION_DISPOSE(0x100) /* Dummy area to be disposed by engine */
 
 	/* Gamma Processor ROM */
-	ROM_REGION(0x10000) /* 16k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 16k for code */
 	ROM_LOAD( "136025.108",   0x08000, 0x4000, 0x93faf210 )
 	ROM_RELOAD(               0x0c000, 0x4000 ) /* reset+interrupt vectors */
 ROM_END
 
 ROM_START( mhavoc2 )
 	/* Alpha Processor ROMs */
-	ROM_REGION(0x21000)
+	ROM_REGIONX( 0x21000, REGION_CPU1 )
 	/* Vector Generator ROM */
 	ROM_LOAD( "136025.110",   0x05000, 0x2000, 0x16eef583 )
 
@@ -526,14 +524,14 @@ ROM_START( mhavoc2 )
 	ROM_REGION_DISPOSE(0x100)	/* Dummy area to be disposed by engine */
 
 	/* Gamma Processor ROM */
-	ROM_REGION(0x10000)	/* 16k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 16k for code */
 	ROM_LOAD( "136025.108",   0x08000, 0x4000, 0x93faf210 )
 	ROM_RELOAD(               0x0c000, 0x4000 ) /* reset+interrupt vectors */
 ROM_END
 
 ROM_START( mhavocrv )
 	/* Alpha Processor ROMs */
-	ROM_REGION(0x21000)	/* 152KB for ROMs */
+	ROM_REGIONX( 0x21000, REGION_CPU1 )	/* 152KB for ROMs */
 	/* Vector Generator ROM */
 	ROM_LOAD( "136025.210",   0x05000, 0x2000, 0xc67284ca )
 
@@ -552,14 +550,14 @@ ROM_START( mhavocrv )
 	ROM_REGION_DISPOSE(0x100)	/* Dummy area to be disposed by engine */
 
 	/* Gamma Processor ROM */
-	ROM_REGION(0x10000) /* 16k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 16k for code */
 	ROM_LOAD( "136025.908",   0x08000, 0x4000, 0xc52ec664 )
 	ROM_RELOAD(               0x0c000, 0x4000 ) /* reset+interrupt vectors */
 ROM_END
 
 ROM_START( mhavocp )
  /* Alpha Processor ROMs */
- ROM_REGION(0x21000)
+ ROM_REGIONX( 0x21000, REGION_CPU1 )
  /* Vector Generator ROM */
  ROM_LOAD( "136025.010",   0x05000, 0x2000, 0x3050c0e6 )
 
@@ -579,7 +577,7 @@ ROM_START( mhavocp )
  ROM_REGION_DISPOSE(0x100) /* Dummy area to be disposed by engine */
 
  /* Gamma Processor ROM */
- ROM_REGION(0x10000) /* 16k for code */
+ ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 16k for code */
  ROM_LOAD( "136025.008",   0x8000, 0x4000, 0x22ea7399 )
  ROM_RELOAD(               0xc000, 0x4000 )/* reset+interrupt vectors */
 ROM_END
@@ -589,7 +587,7 @@ static int hiload(void)
 {
 	void *f;
 	/* get RAM pointer (this game is multiCPU) */
-	unsigned char *RAM = Machine->memory_region[2];
+	unsigned char *RAM = memory_region(2);
 
 	/* no reason to check hiscore table. It's an NV_RAM! */
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
@@ -604,7 +602,7 @@ void hisave(void)
 {
 	void *f;
 	/* get RAM pointer (this game is multiCPU) */
-	unsigned char *RAM = Machine->memory_region[2];
+	unsigned char *RAM = memory_region(2);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{

@@ -3,12 +3,10 @@ Preliminary MAME driver for various SNK 3xZ80 games
 
 New:
 - colors are now working in older SNK games; many thanks to Nicola
-- ASO tile/color bank select mapped, but it's unoptimized
 - high scores save support in all games.
 
 Known issues:
 - Ikari and earlier games don't use ADPCM
-- Alpha Mission 'p3.6d' is a bad dump
 - there are sound problems: you cannot hear music in tdfever
 - we are waiting on dual YM3812 chip emulation
 
@@ -34,7 +32,7 @@ dsw2
 	test mode:off/on
 
 Video Hardware #1
-Aso (US/JP), Athena, TNK3, Fighting Golf
+Athena, TNK3, Fighting Golf
   512 chars			(4 bitplanes)
  1024 tiles			(4 bitplanes)
  1024 16x16 sprites	(3 bitplanes) (TNK3 has only 512 different sprites)
@@ -60,9 +58,6 @@ Chopper I/The Legend of Air Cavalry
  1024 16x16 sprites	(4 bitplanes) - Guerilla War has 2048 16x16 sprites
  1024 32x32 sprites	(4 bitplanes)
 
-other possible SNK games for this driver:
-	S.A.R (Search and Rescue)
-
 Notes:
 Chopper I sound uses YM3812 and YM8950
 
@@ -70,7 +65,7 @@ Some of the games are not supposed to have ADPCM at all.
 These games are TNK3 (1- YM3526), and Ikari Warriors (Dual YM3526).
 And I'm sure of this 100%.
 
-There might be others. Not sure about Alpha Mission or Athena.
+There might be others. Not sure about Athena.
 Touchdown Fever uses Y8950 and so does Psycho Soldier, Chopper I,
 Bermuda Triangle.
 
@@ -102,7 +97,6 @@ extern void ikari_vh_convert_color_prom(unsigned char *palette, unsigned short *
 extern int snk_vh_start( void );
 extern void snk_vh_stop( void );
 
-extern void aso_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern void tnk3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern void ikari_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern void tdfever_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -433,24 +427,6 @@ static struct MemoryWriteAddress tnk3_writemem_sound[] =
 	{ -1 }
 };
 
-static struct MemoryReadAddress aso_readmem_sound[] =
-{
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xd000, 0xd000, snk_soundcommand_r },
-	{ 0xf000, 0xf000, YM3526_status_port_0_r },
-	{ -1 }
-};
-
-static struct MemoryWriteAddress aso_writemem_sound[] =
-{
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xf000, 0xf000, YM3526_control_port_0_w }, /* YM3526 #1 control port? */
-	{ 0xf001, 0xf001, YM3526_write_port_0_w },   /* YM3526 #1 write port?  */
-	{ -1 }
-};
-
 /* Chopper I, T.D.Fever, Psycho S., Bermuda T. */
 
 static struct MemoryReadAddress readmem_cpuA[] =
@@ -525,47 +501,6 @@ static struct MemoryWriteAddress writemem_sound[] =
 	{ 0xf400, 0xf400, YM3526_write_port_0_w },
 #endif
 	{ 0xf800, 0xf800, MWA_RAM }, /* wrong */
-	{ -1 }
-};
-
-/**************************** ASO/Alpha Mission *************************/
-// Notes: Sound (Read: d000, f000, f002, f004, f006 : Write: f001)
-
-static struct MemoryReadAddress aso_readmem_cpuA[] =
-{
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xcfff, cpuA_io_r },
-	{ 0xd000, 0xd7ff, MRA_RAM },
-	{ 0xd800, 0xf7ff, MRA_RAM },
-	{ 0xf800, 0xffff, MRA_RAM },
-	{ -1 }
-};
-
-static struct MemoryWriteAddress aso_writemem_cpuA[] =
-{
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, cpuA_io_w, &io_ram },
-	{ 0xd800, 0xf7ff, MWA_RAM, &shared_auxram },
-	{ 0xf800, 0xffff, MWA_RAM, &shared_ram },
-	{ -1 }
-};
-
-static struct MemoryReadAddress aso_readmem_cpuB[] =
-{
-	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xc7ff, cpuB_io_r },
-	{ 0xc800, 0xe7ff, shared_auxram_r },
-	{ 0xe800, 0xf7ff, MRA_RAM },
-	{ 0xf800, 0xffff, shared_ram_r },
-	{ -1 }
-};
-static struct MemoryWriteAddress aso_writemem_cpuB[] =
-{
-	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, cpuB_io_w },
-	{ 0xc800, 0xe7ff, shared_auxram_w },
-	{ 0xe800, 0xf7ff, MWA_RAM },
-	{ 0xf800, 0xffff, shared_ram_w },
 	{ -1 }
 };
 
@@ -1164,94 +1099,6 @@ COINAGE
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( aso )
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_VBLANK )  /* VBLANK??? */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN  )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, "Allow Continue" )
-	PORT_DIPSETTING(    0x01, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Cocktail ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x04, "3" )
-	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 4C_1C) )
-	PORT_DIPSETTING(    0x28, DEF_STR( 3C_1C) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 2C_1C) )
-	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C) )
-	PORT_DIPSETTING(    0x18, DEF_STR( 1C_2C) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 1C_3C) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 1C_4C) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C) )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0xc0, "50k 100k" )
-	PORT_DIPSETTING(    0x80, "60k 120k" )
-	PORT_DIPSETTING(    0x40, "100k 200k" )
-	PORT_DIPSETTING(    0x00, "None" )
-
-	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, "Bonus Occurrance" )
-	PORT_DIPSETTING(    0x01, "1st & every 2nd" )
-	PORT_DIPSETTING(    0x00, "1st & 2nd only" )
-	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x06, "Easy" )
-	PORT_DIPSETTING(    0x04, "Normal" )
-	PORT_DIPSETTING(    0x02, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX( 0x10,    0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Cheat of some kind", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0xc0, 0xc0, "Start Area" )
-	PORT_DIPSETTING(    0xc0, "1" )
-	PORT_DIPSETTING(    0x80, "2" )
-	PORT_DIPSETTING(    0x40, "3" )
-	PORT_DIPSETTING(    0x00, "4" )
-INPUT_PORTS_END
-
-
 INPUT_PORTS_START( chopper1 )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )  /* sound related */
@@ -1814,21 +1661,18 @@ static struct MachineDriver tnk3_machine_driver =
 		{
 			CPU_Z80,
 			4000000, /* ? */
-			0,
 			o_readmem_cpuA,o_writemem_cpuA,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
 			4000000, /* ? */
-			1,
 			o_readmem_cpuB,o_writemem_cpuB,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 Mhz (?) */
-			2,
 			tnk3_readmem_sound,tnk3_writemem_sound,0,0,
 			interrupt,2	/* ?? generated by the ym3526 maybe? */
 		},
@@ -1872,21 +1716,18 @@ static struct MachineDriver athena_machine_driver =
 		{
 			CPU_Z80,
 			4000000, /* ? */
-			0,
 			o_readmem_cpuA,o_writemem_cpuA,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
 			4000000, /* ? */
-			1,
 			o_readmem_cpuB,o_writemem_cpuB,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 Mhz (?) */
-			2,
 			readmem_sound,writemem_sound,0,0,
 			interrupt,1
 		},
@@ -1924,84 +1765,24 @@ static struct MachineDriver athena_machine_driver =
 	}
 };
 
-static struct MachineDriver aso_machine_driver =
-{
-	{
-		{
-			CPU_Z80,
-			4000000, /* ? */
-			0,
-			aso_readmem_cpuA,aso_writemem_cpuA,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000, /* ? */
-			1,
-			aso_readmem_cpuB,aso_writemem_cpuB,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 Mhz (?) */
-			2,
-       			aso_readmem_sound,aso_writemem_sound,0,0,
-			interrupt,1
-		},
-
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100,	/* CPU slices per frame */
-	0, /* init machine */
-
-	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 1*8, 28*8-1 },
-
-	athena_gfxdecodeinfo,
-	1024,1024,
-	aso_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	snk_vh_start,
-	snk_vh_stop,
-	aso_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3526,
-			&ym3526_interface
-	    },
-		{
-			SOUND_ADPCM,
-			&adpcm_interface
-		}
-	}
-};
-
 static struct MachineDriver ikari_machine_driver =
 {
 	{
 		{
 			CPU_Z80,
 			4000000,	/* 4.0 Mhz (?) */
-			0,
 			readmem2_cpuA,writemem_cpuA,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
 			4000000,	/* 4.0 Mhz (?) */
-			1,
 			readmem_cpuB,writemem_cpuB,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 Mhz (?) */
-			2,
 			readmem_sound,writemem_sound,0,0,
 			interrupt,1
 		},
@@ -2043,21 +1824,18 @@ static struct MachineDriver gwar_machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* 4.0 Mhz (?) */
-			0,
 			readmem2_cpuA,writemem_cpuA,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
 			4000000,	/* 4.0 Mhz (?) */
-			1,
 			readmem_cpuB,writemem_cpuB,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 Mhz (?) */
-			2,
 			readmem_sound,writemem_sound,0,0,
 			interrupt,1
 		},
@@ -2098,21 +1876,18 @@ static struct MachineDriver bermudat_machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* 4.0 Mhz (?) */
-			0,
 			readmem_cpuA,writemem_cpuA,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
 			4000000,	/* 4.0 Mhz (?) */
-			1,
 			readmem_cpuB,writemem_cpuB,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 Mhz (?) */
-			2,
 			readmem_sound,writemem_sound,0,0,
 			interrupt,1
 		},
@@ -2153,21 +1928,18 @@ static struct MachineDriver psychos_machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* 4.0 Mhz (?) */
-			0,
 			readmem_cpuA,writemem_cpuA,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
 			4000000,	/* 4.0 Mhz (?) */
-			1,
 			readmem_cpuB,writemem_cpuB,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 Mhz (?) */
-			2,
 			readmem_sound,writemem_sound,0,0,
 			interrupt,1
 		},
@@ -2208,21 +1980,18 @@ static struct MachineDriver tdfever_machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* 4.0 Mhz (?) */
-			0,
 			readmem_cpuA,writemem_cpuA,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
 			4000000,	/* 4.0 Mhz (?) */
-			1,
 			readmem_cpuB,writemem_cpuB,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 Mhz (?) */
-			2,
 		        readmem_sound, writemem_sound,0,0,
 			interrupt,1
 		},
@@ -2261,17 +2030,17 @@ static struct MachineDriver tdfever_machine_driver =
 /***********************************************************************/
 
 ROM_START( tnk3 )
-	ROM_REGION(0x10000)	/* 64k for cpuA code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for cpuA code */
 	ROM_LOAD( "tnk3-p1.bin",  0x0000, 0x4000, 0x0d2a8ca9 )
 	ROM_LOAD( "tnk3-p2.bin",  0x4000, 0x4000, 0x0ae0a483 )
 	ROM_LOAD( "tnk3-p3.bin",  0x8000, 0x4000, 0xd16dd4db )
 
-	ROM_REGION(0x10000)	/* 64k for cpuB code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for cpuB code */
 	ROM_LOAD( "tnk3-p4.bin",  0x0000, 0x4000, 0x01b45a90 )
 	ROM_LOAD( "tnk3-p5.bin",  0x4000, 0x4000, 0x60db6667 )
 	ROM_LOAD( "tnk3-p6.bin",  0x8000, 0x4000, 0x4761fde7 )
 
-	ROM_REGION(0x10000)	/* 64k for sound code */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for sound code */
 	ROM_LOAD( "tnk3-p10.bin",  0x0000, 0x4000, 0x7bf0a517 )
 	ROM_LOAD( "tnk3-p11.bin",  0x4000, 0x4000, 0x0569ce27 )
 
@@ -2295,17 +2064,17 @@ ROM_START( tnk3 )
 ROM_END
 
 ROM_START( tnk3j )
-	ROM_REGION(0x10000)	/* 64k for cpuA code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for cpuA code */
 	ROM_LOAD( "p1.4e",  0x0000, 0x4000, 0x03aca147 )
 	ROM_LOAD( "tnk3-p2.bin",  0x4000, 0x4000, 0x0ae0a483 )
 	ROM_LOAD( "tnk3-p3.bin",  0x8000, 0x4000, 0xd16dd4db )
 
-	ROM_REGION(0x10000)	/* 64k for cpuB code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for cpuB code */
 	ROM_LOAD( "tnk3-p4.bin",  0x0000, 0x4000, 0x01b45a90 )
 	ROM_LOAD( "tnk3-p5.bin",  0x4000, 0x4000, 0x60db6667 )
 	ROM_LOAD( "tnk3-p6.bin",  0x8000, 0x4000, 0x4761fde7 )
 
-	ROM_REGION(0x10000)	/* 64k for sound code */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for sound code */
 	ROM_LOAD( "tnk3-p10.bin",  0x0000, 0x4000, 0x7bf0a517 )
 	ROM_LOAD( "tnk3-p11.bin",  0x4000, 0x4000, 0x0569ce27 )
 
@@ -2330,49 +2099,16 @@ ROM_END
 
 /***********************************************************************/
 
-ROM_START( aso )
-	ROM_REGION(0x10000)	/* 64k for cpuA code */
-	ROM_LOAD( "aso.1",    0x0000, 0x8000, 0x3fc9d5e4 )
-	ROM_LOAD( "aso.3",    0x8000, 0x4000, 0x39a666d2 )
-
-	ROM_REGION(0x10000)	/* 64k for cpuB code */
-	ROM_LOAD( "aso.4",    0x0000, 0x8000, 0x2429792b )
-	ROM_LOAD( "aso.6",    0x8000, 0x4000, 0xc0bfdf1f )
-
-	ROM_REGION(0x10000)	/* 64k for sound code */
-	ROM_LOAD( "aso.7",    0x0000, 0x8000, 0x49258162 )  /* YM3526 */
-	ROM_LOAD( "aso.9",    0x8000, 0x4000, 0xaef5a4f4 )
-
-	ROM_REGIONX( 0x0c00, REGION_PROMS )
-	ROM_LOAD( "up02_f12.rom",  0x00000, 0x00400, 0x5b0a0059 )
-	ROM_LOAD( "up02_f13.rom",  0x00400, 0x00400, 0x37e28dd8 )
-	ROM_LOAD( "up02_f14.rom",  0x00800, 0x00400, 0xc3fd1dd3 )
-
-	ROM_REGION_DISPOSE(0x4000) /* characters */
-	ROM_LOAD( "aso.14",   0x0000, 0x2000, 0x8baa2253 )
-//	ROM_LOAD( "aso.14",   0x2000, 0x2000, 0x8baa2253 )
-
-	ROM_REGION_DISPOSE( 0x8000 ) /* background tiles */
-	ROM_LOAD( "aso.10",  0x0000, 0x8000, 0x00dff996 )
-
-	ROM_REGION_DISPOSE( 0x18000 ) /* 16x16 sprites */
-	ROM_LOAD( "aso.11",  0x00000, 0x8000, 0x7feac86c )
-	ROM_LOAD( "aso.12",  0x08000, 0x8000, 0x6895990b )
-	ROM_LOAD( "aso.13",  0x10000, 0x8000, 0x87a81ce1 )
-ROM_END
-
-/***********************************************************************/
-
 ROM_START( athena )
-	ROM_REGION( 0x10000 ) /* 64k for cpuA code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for cpuA code */
 	ROM_LOAD( "up02_p4.rom",  0x0000, 0x4000,  0x900a113c )
 	ROM_LOAD( "up02_m4.rom",  0x4000, 0x8000,  0x61c69474 )
 
-	ROM_REGION( 0x10000 ) /* 64k for cpuB code */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* 64k for cpuB code */
 	ROM_LOAD( "up02_p8.rom",  0x0000, 0x4000, 0xdf50af7e )
 	ROM_LOAD( "up02_m8.rom",  0x4000, 0x8000, 0xf3c933df )
 
-	ROM_REGION( 0x10000 ) /* 64k for sound code */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* 64k for sound code */
 	ROM_LOAD( "up02_g6.rom",  0x0000, 0x4000, 0x42dbe029 )
 	ROM_LOAD( "up02_k6.rom",  0x4000, 0x8000, 0x596f1c8a )
 
@@ -2396,15 +2132,15 @@ ROM_END
 /***********************************************************************/
 
 ROM_START( fitegolf )
-	ROM_REGION(0x10000)	/* 64k for cpuA code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for cpuA code */
 	ROM_LOAD( "gu2",    0x0000, 0x4000, 0x19be7ad6 )
 	ROM_LOAD( "gu1",    0x4000, 0x8000, 0xbc32568f )
 
-	ROM_REGION(0x10000)	/* 64k for cpuB code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for cpuB code */
 	ROM_LOAD( "gu6",    0x0000, 0x4000, 0x2b9978c5 )
 	ROM_LOAD( "gu5",    0x4000, 0x8000, 0xea3d138c )
 
-	ROM_REGION(0x10000)	/* 64k for sound code */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for sound code */
 	ROM_LOAD( "gu3",    0x0000, 0x4000, 0x811b87d7 )
 	ROM_LOAD( "gu4",    0x4000, 0x8000, 0x2d998e2b )
 
@@ -2427,52 +2163,14 @@ ROM_END
 
 /***********************************************************************/
 
-#if 0
-ROM_START( alphmiss ) /* BAD DUMP! */
-	ROM_REGION(0x10000)	/* 64k for cpuA code */
-	ROM_LOAD( "p1.8d",     0x0000, 0x4000, 0x00000000 )
-	ROM_LOAD( "p2.7d",     0x4000, 0x4000, 0x00000000 )
-	ROM_LOAD( "p3.6d",     0x8000, 0x4000, 0x00000000 )  /* BAD DUMP */
-
-	ROM_REGION(0x10000)	/* 64k for cpuB code */
-	ROM_LOAD( "p4.3d",    0x0000, 0x4000, 0x00000000 )
-	ROM_LOAD( "p5.2d",    0x4000, 0x4000, 0x00000000 )
-	ROM_LOAD( "p6.1d",    0x8000, 0x4000, 0x00000000 )
-
-	ROM_REGION(0x10000)	/* 64k for sound code */
-	ROM_LOAD( "p7.4f",    0x0000, 0x4000, 0x00000000 ) /* YM3526 */
-	ROM_LOAD( "p8.3f",    0x4000, 0x4000, 0x00000000 )
-	ROM_LOAD( "p9.2f",    0x8000, 0x4000, 0x00000000 )
-
-	ROM_REGIONX( 0x0c00, REGION_PROMS )
-	ROM_LOAD( "mb7122e.12f",  0x00000, 0x00400, 0x00000000 )
-	ROM_LOAD( "mb7122e.13f",  0x00400, 0x00400, 0x00000000 )
-	ROM_LOAD( "mb7122e.14f",  0x00800, 0x00400, 0x00000000 )
-
-	ROM_REGION_DISPOSE( 0x4000 ) /* characters */
-	ROM_LOAD( "p14.1h",   0x0000, 0x2000, 0x00000000 )
-//	ROM_LOAD( "p14.1h",   0x2000, 0x2000, 0x00000000 )
-
-	ROM_REGION_DISPOSE( 0x8000 ) /* background tiles */
-	ROM_LOAD( "p10.14h",  0x0000, 0x8000, 0x00000000 )
-
-	ROM_REGION_DISPOSE( 0x18000 ) /* 16x16 sprites */
-	ROM_LOAD( "p11.11h",  0x00000, 0x8000, 0x00000000 )
-	ROM_LOAD( "p12.9h",   0x08000, 0x8000, 0x00000000 )
-	ROM_LOAD( "p13.8h",   0x10000, 0x8000, 0x00000000 )
-ROM_END
-#endif
-
-/***********************************************************************/
-
 ROM_START( ikarius )
-	ROM_REGION(0x10000)	/* CPU A */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* CPU A */
 	ROM_LOAD( "1.rom",  0x0000, 0x10000, 0x52a8b2dd )
 
-	ROM_REGION(0x10000)	/* CPU B */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* CPU B */
 	ROM_LOAD( "2.rom",  0x0000, 0x10000, 0x45364d55 )
 
-	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* Sound CPU */
 	ROM_LOAD( "3.rom",  0x0000, 0x10000, 0x56a26699 )
 
 	ROM_REGIONX( 0x0c00, REGION_PROMS )
@@ -2504,15 +2202,15 @@ ROM_START( ikarius )
 ROM_END
 
 ROM_START( ikarijp ) /* unconfirmed */
-	ROM_REGION(0x10000)	/* 64k for cpuA code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for cpuA code */
 	ROM_LOAD( "up03_l4.rom",  0x0000, 0x4000, 0xcde006be )
 	ROM_LOAD( "up03_k4.rom",  0x4000, 0x8000, 0x26948850 )
 
-	ROM_REGION(0x10000)	/* 64k for cpuB code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for cpuB code */
 	ROM_LOAD( "ik3",  0x0000, 0x4000, 0x9bb385f8 )
 	ROM_LOAD( "ik4",  0x4000, 0x8000, 0x3a144bca )
 
-	ROM_REGION(0x10000)	/* 64k for sound code */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for sound code */
 	ROM_LOAD( "ik5",  0x0000, 0x4000, 0x863448fa )
 	ROM_LOAD( "ik6",  0x4000, 0x8000, 0x9b16aa57 )
 
@@ -2545,15 +2243,15 @@ ROM_START( ikarijp ) /* unconfirmed */
 ROM_END
 
 ROM_START( ikarijpb )
-	ROM_REGION(0x10000) /* CPU A */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* CPU A */
 	ROM_LOAD( "ik1",	  0x00000, 0x4000, 0x2ef87dce )
 	ROM_LOAD( "up03_k4.rom",  0x04000, 0x8000, 0x26948850 )
 
-	ROM_REGION(0x10000) /* CPU B code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* CPU B code */
 	ROM_LOAD( "ik3",    0x0000, 0x4000, 0x9bb385f8 )
 	ROM_LOAD( "ik4",    0x4000, 0x8000, 0x3a144bca )
 
-	ROM_REGION(0x10000)				/* 64k for sound code */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for sound code */
 	ROM_LOAD( "ik5",    0x0000, 0x4000, 0x863448fa )
 	ROM_LOAD( "ik6",    0x4000, 0x8000, 0x9b16aa57 )
 
@@ -2588,13 +2286,13 @@ ROM_END
 /***********************************************************************/
 
 ROM_START( victroad )
-	ROM_REGION( 0x10000 )	/* CPU A code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* CPU A code */
 	ROM_LOAD( "p1",  0x0000, 0x10000,  0xe334acef )
 
-	ROM_REGION( 0x10000 )	/* CPU B code */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 )	/* CPU B code */
 	ROM_LOAD( "p2",  0x00000, 0x10000, 0x907fac83 )
 
-	ROM_REGION( 0x10000 )	/* sound code */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* sound code */
 	ROM_LOAD( "p3",  0x00000, 0x10000, 0xbac745f6 )
 
 	ROM_REGIONX( 0x0c00, REGION_PROMS )
@@ -2630,13 +2328,13 @@ ROM_START( victroad )
 ROM_END
 
 ROM_START( dogosoke ) /* Victory Road Japan */
-	ROM_REGION(0x10000)	/* CPU A code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* CPU A code */
 	ROM_LOAD( "up03_p4.rom",  0x0000, 0x10000,  0x37867ad2 )
 
-	ROM_REGION(0x10000)	/* CPU B code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* CPU B code */
 	ROM_LOAD( "p2",  0x00000, 0x10000, 0x907fac83 )
 
-	ROM_REGION(0x10000)	/* sound code */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* sound code */
 	ROM_LOAD( "up03_k7.rom",  0x00000, 0x10000, 0x173fa571 )
 
 	ROM_REGIONX( 0x0c00, REGION_PROMS )
@@ -2674,13 +2372,13 @@ ROM_END
 /***********************************************************************/
 
 ROM_START( gwar )
-	ROM_REGION(0x10000)	/* 64k for cpuA code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for cpuA code */
 	ROM_LOAD( "g01",  0x00000, 0x10000, 0xce1d3c80 )
 
-	ROM_REGION(0x10000)	/* 64k for cpuB code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for cpuB code */
 	ROM_LOAD( "g02",  0x00000, 0x10000, 0x86d931bf )
 
-	ROM_REGION(0x10000)	/* 64k for sound code */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for sound code */
 	ROM_LOAD( "g03",  0x00000, 0x10000, 0xeb544ab9 )
 
 	ROM_REGIONX( 0x0c00, REGION_PROMS )
@@ -2720,13 +2418,13 @@ ROM_END
 /***********************************************************************/
 
 ROM_START( bermudat )
-	ROM_REGION(0x10000)	/* 64k for cpuA code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for cpuA code */
 	ROM_LOAD( "bt_p1.rom",  0x0000, 0x10000,  0x43dec5e9 )
 
-	ROM_REGION(0x10000)	/* 64k for cpuB code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for cpuB code */
 	ROM_LOAD( "bt_p2.rom",  0x00000, 0x10000, 0x0e193265 )
 
-	ROM_REGION(0x10000)	/* 64k for sound code */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for sound code */
 	ROM_LOAD( "bt_p3.rom",  0x00000, 0x10000, 0x53a82e50 )    /* YM3526 */
 
 	ROM_REGIONX( 0x1400, REGION_PROMS )
@@ -2769,13 +2467,13 @@ ROM_END
 /***********************************************************************/
 
 ROM_START( bermudaj )
-	ROM_REGION(0x10000)	/* 64k for cpuA code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for cpuA code */
 	ROM_LOAD( "btj_p01.bin", 0x0000, 0x10000,  0xeda75f36 )
 
-	ROM_REGION(0x10000)	/* 64k for cpuB code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for cpuB code */
 	ROM_LOAD( "bt_p2.rom",   0x00000, 0x10000, 0x0e193265 )
 
-	ROM_REGION(0x10000)	/* 64k for sound code */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for sound code */
 	ROM_LOAD( "btj_p03.bin", 0x00000, 0x10000, 0xfea8a096 )    /* YM3526 */
 
 	ROM_REGIONX( 0x1400, REGION_PROMS )
@@ -2818,13 +2516,13 @@ ROM_END
 /***********************************************************************/
 
 ROM_START( psychos )
-	ROM_REGION(0x10000)	/* 64k for cpuA code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for cpuA code */
 	ROM_LOAD( "p7",  0x00000, 0x10000, 0x562809f4 )
 
-	ROM_REGION(0x10000)	/* 64k for cpuB code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for cpuB code */
 	ROM_LOAD( "up03_m8.rom",  0x00000, 0x10000, 0x5f426ddb )
 
-	ROM_REGION(0x10000)	/* 64k for sound code */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for sound code */
 	ROM_LOAD( "p5",  0x0000, 0x10000,  0x64503283 )
 
 	ROM_REGIONX( 0x1400, REGION_PROMS )
@@ -2867,13 +2565,13 @@ ROM_START( psychos )
 ROM_END
 
 ROM_START( psychosa ) /* USA set */
-	ROM_REGION(0x10000)	/* 64k for cpuA code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for cpuA code */
 	ROM_LOAD( "up03_m4.rom",  0x0000, 0x10000,  0x05dfb409 )
 
-	ROM_REGION(0x10000)	/* 64k for cpuB code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for cpuB code */
 	ROM_LOAD( "up03_m8.rom",  0x00000, 0x10000, 0x5f426ddb )
 
-	ROM_REGION(0x10000)	/* 64k for sound code */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for sound code */
 	ROM_LOAD( "up03_j6.rom",  0x00000, 0x10000, 0xbbd0a8e3 )
 
 	ROM_REGIONX( 0x1400, REGION_PROMS )
@@ -2918,13 +2616,13 @@ ROM_END
 /***********************************************************************/
 
 ROM_START( chopper )
-	ROM_REGION(0x10000)	/* 64k for cpuA code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for cpuA code */
 	ROM_LOAD( "kk_01.rom",  0x0000, 0x10000,  0x8fa2f839 )
 
-	ROM_REGION(0x10000)	/* 64k for cpuB code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for cpuB code */
 	ROM_LOAD( "kk_04.rom",  0x00000, 0x10000, 0x004f7d9a )
 
-	ROM_REGION(0x10000)	/* 64k for sound code */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for sound code */
 	ROM_LOAD( "kk_03.rom",  0x00000, 0x10000, 0xdbaafb87 )   /* YM3526 */
 
 	ROM_REGIONX( 0x0c00, REGION_PROMS )
@@ -2962,13 +2660,13 @@ ROM_START( chopper )
 ROM_END
 
 ROM_START( legofair ) /* ChopperI (Japan) */
-	ROM_REGION(0x10000)	/* 64k for cpuA code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for cpuA code */
 	ROM_LOAD( "up03_m4.rom",  0x0000, 0x10000,  0x79a485c0 )
 
-	ROM_REGION(0x10000)	/* 64k for cpuB code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for cpuB code */
 	ROM_LOAD( "up03_m8.rom",  0x00000, 0x10000, 0x96d3a4d9 )
 
-	ROM_REGION(0x10000)	/* 64k for sound code */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for sound code */
 	ROM_LOAD( "kk_03.rom",  0x00000, 0x10000, 0xdbaafb87 )
 
 	ROM_REGIONX( 0x0c00, REGION_PROMS )
@@ -3008,53 +2706,53 @@ ROM_END
 /***********************************************************************/
 
 ROM_START( ftsoccer )
-        ROM_REGION(0x10000)     /* 64k for cpuA code */
-        ROM_LOAD( "ft-003.bin",  0x00000, 0x10000, 0x649d4448 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for cpuA code */
+	ROM_LOAD( "ft-003.bin",  0x00000, 0x10000, 0x649d4448 )
 
-        ROM_REGION(0x10000)     /* 64k for cpuB code */
-        ROM_LOAD( "ft-001.bin",  0x00000, 0x10000, 0x2f68e38b )
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for cpuB code */
+	ROM_LOAD( "ft-001.bin",  0x00000, 0x10000, 0x2f68e38b )
 
-        ROM_REGION(0x10000)     /* 64k for sound code */
-        ROM_LOAD( "ft-002.bin",  0x00000, 0x10000, 0x9ee54ea1 )
+	ROM_REGIONX( 0x10000, REGION_CPU3 )     /* 64k for sound code */
+	ROM_LOAD( "ft-002.bin",  0x00000, 0x10000, 0x9ee54ea1 )
 
-        ROM_REGIONX( 0x0c00, REGION_PROMS )
-        ROM_LOAD( "prom2.bin", 0x000, 0x400, 0xbf4ac706 ) /* red */
-        ROM_LOAD( "prom1.bin", 0x400, 0x400, 0x1bac8010 ) /* green */
-        ROM_LOAD( "prom3.bin", 0x800, 0x400, 0xdbeddb14 ) /* blue */
+	ROM_REGIONX( 0x0c00, REGION_PROMS )
+	ROM_LOAD( "prom2.bin", 0x000, 0x400, 0xbf4ac706 ) /* red */
+	ROM_LOAD( "prom1.bin", 0x400, 0x400, 0x1bac8010 ) /* green */
+	ROM_LOAD( "prom3.bin", 0x800, 0x400, 0xdbeddb14 ) /* blue */
 
-        ROM_REGION_DISPOSE(0x8000) /* characters */
-        ROM_LOAD( "ft-013.bin",  0x0000, 0x08000, 0x0de7b7ad )
+	ROM_REGION_DISPOSE(0x8000) /* characters */
+	ROM_LOAD( "ft-013.bin",  0x0000, 0x08000, 0x0de7b7ad )
 
-        ROM_REGION_DISPOSE(0x40000) /* background tiles */
-        ROM_LOAD( "ft-014.bin",  0x00000, 0x10000, 0x38c38b40 )
-        ROM_LOAD( "ft-015.bin",  0x10000, 0x10000, 0xa614834f )
+	ROM_REGION_DISPOSE(0x40000) /* background tiles */
+	ROM_LOAD( "ft-014.bin",  0x00000, 0x10000, 0x38c38b40 )
+	ROM_LOAD( "ft-015.bin",  0x10000, 0x10000, 0xa614834f )
 
-        ROM_REGION_DISPOSE( 0x40000 ) /* 16x16 sprites */
+	ROM_REGION_DISPOSE( 0x40000 ) /* 16x16 sprites */
 
-        ROM_REGION_DISPOSE( 0x80000 ) /* 32x32 sprites */
-        ROM_LOAD( "ft-005.bin",  0x70000, 0x10000, 0xdef2f1d8 )
-        ROM_LOAD( "ft-006.bin",  0x60000, 0x10000, 0x588d14b3 )
-        ROM_LOAD( "ft-007.bin",  0x50000, 0x10000, 0xd584964b )
-        ROM_LOAD( "ft-008.bin",  0x40000, 0x10000, 0x11156a7d )
-        ROM_LOAD( "ft-009.bin",  0x30000, 0x10000, 0xd8112aa6 )
-        ROM_LOAD( "ft-010.bin",  0x20000, 0x10000, 0xe42864d8 )
-        ROM_LOAD( "ft-011.bin",  0x10000, 0x10000, 0x022f3e96 )
-        ROM_LOAD( "ft-012.bin",  0x00000, 0x10000, 0xb2442c30 )
+	ROM_REGION_DISPOSE( 0x80000 ) /* 32x32 sprites */
+	ROM_LOAD( "ft-005.bin",  0x70000, 0x10000, 0xdef2f1d8 )
+	ROM_LOAD( "ft-006.bin",  0x60000, 0x10000, 0x588d14b3 )
+	ROM_LOAD( "ft-007.bin",  0x50000, 0x10000, 0xd584964b )
+	ROM_LOAD( "ft-008.bin",  0x40000, 0x10000, 0x11156a7d )
+	ROM_LOAD( "ft-009.bin",  0x30000, 0x10000, 0xd8112aa6 )
+	ROM_LOAD( "ft-010.bin",  0x20000, 0x10000, 0xe42864d8 )
+	ROM_LOAD( "ft-011.bin",  0x10000, 0x10000, 0x022f3e96 )
+	ROM_LOAD( "ft-012.bin",  0x00000, 0x10000, 0xb2442c30 )
 
-        ROM_REGION(0x10000)     /* Samples?? */
-        ROM_LOAD( "ft-004.bin",  0x00000, 0x10000, 0x435c3716 )
+	ROM_REGION(0x10000)     /* Samples?? */
+	ROM_LOAD( "ft-004.bin",  0x00000, 0x10000, 0x435c3716 )
 ROM_END
 
 /***********************************************************************/
 
 ROM_START( tdfever ) /* USA set - unconfirmed! */
-	ROM_REGION(0x10000)	/* 64k for cpuA code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for cpuA code */
 	ROM_LOAD( "td2-ver3.6c",  0x0000, 0x10000,  0x92138fe4 )
 
-	ROM_REGION(0x10000)	/* 64k for cpuB code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for cpuB code */
 	ROM_LOAD( "td1-ver3.2c",  0x00000, 0x10000, 0x798711f5 )
 
-	ROM_REGION(0x10000)	/* 64k for sound code */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for sound code */
 	ROM_LOAD( "td3-ver3.3j",  0x00000, 0x10000, 0x5d13e0b1 )
 
 	ROM_REGIONX( 0x0c00, REGION_PROMS )
@@ -3090,13 +2788,13 @@ ROM_START( tdfever ) /* USA set - unconfirmed! */
 ROM_END
 
 ROM_START( tdfeverj )
-	ROM_REGION(0x10000)	/* 64k for cpuA code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for cpuA code */
 	ROM_LOAD( "up02_c6.rom",  0x0000, 0x10000,  0x88d88ec4 )
 
-	ROM_REGION(0x10000)	/* 64k for cpuB code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for cpuB code */
 	ROM_LOAD( "up02_c2.rom",  0x00000, 0x10000, 0x191e6442 )
 
-	ROM_REGION(0x10000)	/* 64k for sound code */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for sound code */
 	ROM_LOAD( "up02_j3.rom",  0x00000, 0x10000, 0x4e4d71c7 )
 
 	ROM_REGIONX( 0x0c00, REGION_PROMS )
@@ -3137,7 +2835,7 @@ ROM_END
 	static void NAME##_hisave(void)										\
 	{																	\
 		void *f;														\
-                unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);                                                                    \
+                unsigned char *RAM = memory_region(REGION_CPU1);                                                                    \
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0) \
 		{																\
 			osd_fwrite(f,&RAM[address],length);							\
@@ -3146,7 +2844,6 @@ ROM_END
 	}
 
 HI_SAVE(tnk3, 0xfed1, 10*13)
-HI_SAVE(aso, 0xd83b, 10*13)
 HI_SAVE(athena, 0xfe50, 6*19)
 HI_SAVE(fitegolf, 0xff70, 10*8)
 HI_SAVE(gwar, 0xe4b9, 10*8)
@@ -3159,7 +2856,7 @@ HI_SAVE(tdfever, 0xdf28, 10*4)
 /****  TNK3 high score save routine  -  RJF (Mar 26, 1999)  ****/
 static int tnk3_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
         if (memcmp(&RAM[0xfed1],"\x13\x29\x00",3) == 0)
 		{
@@ -3179,33 +2876,10 @@ static int tnk3_hiload(void)
 	return 0;  /* we can't load the hi scores yet */
 }
 
-/****  ASO high score save routine  -  RJF (Apr 05, 1999)  ****/
-static int aso_hiload(void)
-{
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
-
-        if (memcmp(&RAM[0xd83b],"\x00\x50\x00",3) == 0)
-		{
-		void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
-		if (f)
-		{
-                        osd_fread(f,&RAM[0xd83b], 10*13);
-			osd_fclose(f);
-
-                        /* copy the high score to ram */
-                        RAM[0xe777] = RAM[0xd83d];
-                        RAM[0xe778] = RAM[0xd83c];
-                        RAM[0xe779] = RAM[0xd83b];
-		}
-		return 1;
-	}
-	return 0;  /* we can't load the hi scores yet */
-}
-
 /****  Athena high score save routine  -  RJF (Apr 5, 1999)  ****/
 static int athena_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
         if (memcmp(&RAM[0xfe52],"\x41\x54\x48",3) == 0)
 		{
@@ -3224,7 +2898,7 @@ static int athena_hiload(void)
 /****  Fighting Golf high score save routine  -  RJF (Apr 5, 1999)  ****/
 static int fitegolf_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
         if (memcmp(&RAM[0xff70],"\x53\x4e\x4b",3) == 0)
 		{
@@ -3241,7 +2915,7 @@ static int fitegolf_hiload(void)
 
 static int ikari_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if (memcmp(&RAM[0xfc5f],"\x00\x30\x00",3) == 0)
 	{
@@ -3264,7 +2938,7 @@ static int ikari_hiload(void)
 
 static int victroad_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if (memcmp(&RAM[0xfc5f],"\x00\x30\x00",3) == 0)
 	{
@@ -3287,7 +2961,7 @@ static int victroad_hiload(void)
 
 static void ikari_hisave(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
 
 	/* The game clears hi score table after reset, */
@@ -3305,7 +2979,7 @@ static void ikari_hisave(void)
 
 static void victroad_hisave(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
 
 	/* The game clears hi score table after reset, */
@@ -3324,7 +2998,7 @@ static void victroad_hisave(void)
 /****  Guerrilla War high score save routine  -  RJF (Apr 5, 1999)  ****/
 static int gwar_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
         if (memcmp(&RAM[0xe4b9],"\x00\x30\x00",3) == 0)
 		{
@@ -3347,7 +3021,7 @@ static int gwar_hiload(void)
 /****  Bermuda Triangle high score save routine  -  RJF (Apr 5, 1999)  ****/
 static int bermudat_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
         if (memcmp(&RAM[0xfec1],"\x54\x4f\x4b",3) == 0)
 		{
@@ -3370,7 +3044,7 @@ static int bermudat_hiload(void)
 /*** Psycho Soldier (2 sets) high score save routine - RJF (Apr 5, 1999) ***/
 static int psychos_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
         if (memcmp(&RAM[0xdd09],"\x38\x30\x30",3) == 0)
 		{
@@ -3398,7 +3072,7 @@ static int psychos_hiload(void)
 /** Chopper I / Legend of Air high score save routine - RJF (Apr 5, 1999) **/
 static int chopper_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
         if (memcmp(&RAM[0xe4c8],"\x53\x4e\x4b",3) == 0)
 		{
@@ -3421,7 +3095,7 @@ static int chopper_hiload(void)
 /***  Fighting Soccer high score save routine - RJF (May 22, 1999)  ***/
 static int ftsoccer_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
         if (memcmp(&RAM[0xe349],"\x48\x41\x4d",3) == 0)
 		{
@@ -3440,7 +3114,7 @@ static int ftsoccer_hiload(void)
 /** TouchDown Fever (2 sets) high score save routine - RJF (Apr 5, 1999) **/
 static int tdfever_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
         if (memcmp(&RAM[0xdf28],"\xc5\xa0\xb8",3) == 0)
 		{
@@ -3461,7 +3135,7 @@ static int tdfever_hiload(void)
 
 static void ikarius_decode(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/*  Hack ROM test */
 	RAM[0x11a6] = 0x00;
@@ -3479,7 +3153,7 @@ static void ikarius_decode(void)
 
 static void ikarijp_decode(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	RAM[0x190b] = 0xc9; /* faster test */
 
 	dial_type = DIAL_NORMAL;
@@ -3488,23 +3162,16 @@ static void ikarijp_decode(void)
 
 static void ikarijpb_decode( void )
 {
-        unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+        unsigned char *RAM = memory_region(REGION_CPU1);
        	RAM[0x190b] = 0xc9; /* faster test */
 
 	dial_type = DIAL_BOOTLEG;
 	hard_flags = 1;
 }
 
-static void aso_decode(void)
-{
-
-	dial_type = DIAL_NONE;
-	hard_flags = 0;
-}
-
 static void victroad_decode(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* Hack ROM test */
 	RAM[0x17bd] = 0x00;
@@ -3522,7 +3189,7 @@ static void victroad_decode(void)
 
 static void dogosoke_decode(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	/* Hack ROM test */
 	RAM[0x179f] = 0x00;
 	RAM[0x17a0] = 0x00;
@@ -3539,7 +3206,7 @@ static void dogosoke_decode(void)
 
 static void gwar_decode(void)
 {
-//	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+//	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* Hack ROM Test */
 //	RAM[0x0ce1] = 0x00;
@@ -3550,7 +3217,7 @@ static void gwar_decode(void)
 //	RAM[0x008c] = 0x00;
 
 	/* Hack strange loop */
-//	RAM = Machine->memory_region[2];
+//	RAM = memory_region(2);
 //	RAM[0x05] = 0x8c;
 
 	dial_type = DIAL_NORMAL;
@@ -3559,7 +3226,7 @@ static void gwar_decode(void)
 
 static void chopper_decode(void)
 {
-//	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+//	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* Hack ROM Test */
 //	RAM[0x0d43] = 0x00;
@@ -3570,7 +3237,7 @@ static void chopper_decode(void)
 //	RAM[0x0089] = 0x00;
 
 	/* Hack strange loop */
-//	RAM = Machine->memory_region[2];
+//	RAM = memory_region(2);
 //	RAM[0x05] = 0x80;
 
 	dial_type = DIAL_NONE;
@@ -3580,7 +3247,7 @@ static void chopper_decode(void)
 static void bermudat_decode(void)
 {
 	/* Bermuda Triangle  (NOT WORKING)*/
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	// Patch Turbo Error
 	RAM[0x127e] = 0xc9;
@@ -3667,32 +3334,6 @@ struct GameDriver driver_tnk3j =
 	ORIENTATION_ROTATE_270 | GAME_IMPERFECT_SOUND,
 
 	tnk3_hiload, tnk3_hisave
-};
-
-struct GameDriver driver_aso =
-{
-	__FILE__,
-	0,
-	"aso",
-	"ASO - Armored Scrum Object",
-	"1985",
-	"SNK",
-	CREDITS,
-	0,
-	&aso_machine_driver,
-	0,
-
-	rom_aso,
-	aso_decode, 0,
-	0,
-	0,
-
-	input_ports_aso,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT | GAME_IMPERFECT_SOUND,
-
-	aso_hiload, aso_hisave
 };
 
 struct GameDriver driver_athena =

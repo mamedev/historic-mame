@@ -221,8 +221,8 @@ int wiping_sh_start(const struct MachineSound *msound)
 	num_voices = 8;
 	last_channel = channel_list + num_voices;
 
-	sound_rom = Machine->memory_region[4];
-	sound_prom = Machine->memory_region[5];
+	sound_rom = memory_region(4);
+	sound_prom = memory_region(5);
 
 	/* start with sound enabled, many games don't have a sound enable register */
 	sound_enable = 1;

@@ -180,7 +180,7 @@ static void machine_init(void)
 		cpu_setbank(2+i, current_base[i]);
 	}
 	cur_rombank = cur_rombank2 = 0;
-	cpu_setbank(1, memory_region(Machine->drv->cpu[0].memory_region) + 0x10000);
+	cpu_setbank(1, memory_region(REGION_CPU1) + 0x10000);
 
 	for(i=0;i<512;i++) {
 		decodechar(Machine->gfx[2], i, taitol_rambanks,
@@ -327,7 +327,7 @@ static void rombankswitch_w(int offset, int data)
 		if(0 && errorlog)
 			fprintf(errorlog, "robs %d, %02x (%04x)\n", offset, data, cpu_get_pc());
 		cur_rombank = data;
-		cpu_setbank(1, memory_region(Machine->drv->cpu[0].memory_region)+0x10000+0x2000*cur_rombank);
+		cpu_setbank(1, memory_region(REGION_CPU1)+0x10000+0x2000*cur_rombank);
 	}
 }
 
@@ -348,7 +348,7 @@ static void rombank2switch_w(int offset, int data)
 			fprintf(errorlog, "robs2 %02x (%04x)\n", data, cpu_get_pc());
 
 		cur_rombank2 = data;
-		cpu_setbank(6, Machine->memory_region[2]+0x10000+0x4000*cur_rombank2);
+		cpu_setbank(6, memory_region(2)+0x10000+0x4000*cur_rombank2);
 	}
 }
 
@@ -1573,7 +1573,6 @@ static struct MachineDriver name ## _machine_driver =	\
 		{												\
 			CPU_Z80,									\
 			3332640,	/* ? xtal is 13.33056 */		\
-			0,											\
 			name ## _readmem, name ## _writemem, 0, 0,	\
 			vbl_interrupt, 1							\
 		}												\
@@ -1608,21 +1607,18 @@ static struct MachineDriver name ## _machine_driver =		\
 		{													\
 			CPU_Z80,										\
 			3332640,	/* ? xtal is 13.33056 */			\
-			0,												\
 			name ## _readmem, name ## _writemem, 0, 0,		\
 			vbl_interrupt, 1								\
 		},													\
 		{													\
 			CPU_Z80,										\
 			3332640,	/* ? xtal is 13.33056 */			\
-			2,												\
 			name ## _2_readmem, name ## _2_writemem, 0, 0,	\
 			interrupt, 1									\
 		},													\
 		{													\
 			CPU_Z80 | CPU_AUDIO_CPU,						\
 			3332640,	/* ? xtal is 13.33056 */			\
-			3,												\
 			name ## _3_readmem, name ## _3_writemem, 0, 0,	\
 			ignore_interrupt, 0								\
 		}													\
@@ -1664,7 +1660,7 @@ MCH_SINGLE(cachat)
 
 
 ROM_START( fhawk )
-	ROM_REGION(0xb0000)
+	ROM_REGIONX( 0xb0000, REGION_CPU1 )
 	ROM_LOAD( "b70-07.bin", 0x00000, 0x20000, 0x939114af )
 	ROM_RELOAD(             0x10000, 0x20000 )
 	ROM_LOAD( "b70-03.bin", 0x30000, 0x80000, 0x42d5a9b8 )
@@ -1673,16 +1669,16 @@ ROM_START( fhawk )
 	ROM_LOAD( "b70-01.bin", 0x00000, 0x80000, 0xfcdf67e2 )
 	ROM_LOAD( "b70-02.bin", 0x80000, 0x80000, 0x35f7172e )
 
-	ROM_REGION(0x30000)
+	ROM_REGIONX( 0x30000, REGION_CPU2 )
 	ROM_LOAD( "b70-08.bin", 0x00000, 0x20000, 0x4d795f48 )
 	ROM_RELOAD(             0x10000, 0x20000 )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU3 )
 	ROM_LOAD( "b70-09.bin", 0x00000, 0x10000, 0x85cccaa2 )
 ROM_END
 
 ROM_START( raimais )
-	ROM_REGION(0xb0000)
+	ROM_REGIONX( 0xb0000, REGION_CPU1 )
 	ROM_LOAD( "b36-08-1.bin", 0x00000, 0x20000, 0x6cc8f79f )
 	ROM_RELOAD(               0x10000, 0x20000 )
 	ROM_LOAD( "b36-03.bin",   0x30000, 0x80000, 0x96166516 )
@@ -1691,15 +1687,15 @@ ROM_START( raimais )
 	ROM_LOAD( "b36-01.bin",   0x00000, 0x80000, 0x89355cb2 )
 	ROM_LOAD( "b36-02.bin",   0x80000, 0x80000, 0xe71da5db )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "b36-07.bin",   0x00000, 0x10000, 0x4f3737e6 )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX(0x10000, REGION_CPU3 )
 	ROM_LOAD( "b36-06.bin",   0x00000, 0x10000, 0x29bbc4f8 )
 ROM_END
 
 ROM_START( champwr )
-	ROM_REGION(0xf0000)
+	ROM_REGIONX( 0xf0000, REGION_CPU1 )
 	ROM_LOAD( "c01-13.rom", 0x00000, 0x20000, 0x7ef47525 )
 	ROM_RELOAD(             0x10000, 0x20000 )
 	ROM_LOAD( "c01-04.rom", 0x30000, 0x20000, 0x358bd076 )
@@ -1710,17 +1706,17 @@ ROM_START( champwr )
 	ROM_LOAD( "c01-02.rom", 0x080000, 0x80000, 0x1e0476c4 )
 	ROM_LOAD( "c01-03.rom", 0x100000, 0x80000, 0x2a142dbc )
 
-	ROM_REGION(0x30000)
+	ROM_REGIONX( 0x30000, REGION_CPU2 )
 	ROM_LOAD( "c01-07.rom", 0x00000, 0x20000, 0x5117c98f )
 	ROM_RELOAD(             0x10000, 0x20000 )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU3 )
 	ROM_LOAD( "c01-08.rom", 0x00000, 0x10000, 0x810efff8 )
 ROM_END
 
 
 ROM_START( puzznic )
-	ROM_REGION(0x30000)
+	ROM_REGIONX( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "u11.rom",  0x00000, 0x20000, 0xa4150b6c )
 	ROM_RELOAD(           0x10000, 0x20000 )
 
@@ -1728,12 +1724,12 @@ ROM_START( puzznic )
 	ROM_LOAD( "u10.rom",  0x00000, 0x20000, 0x4264056c )
 	ROM_LOAD( "u09.rom",  0x40000, 0x20000, 0x3c115f8b )
 
-	ROM_REGION(0x0800)	/* 2k for the microcontroller */
+	ROM_REGIONX( 0x0800, REGION_CPU2 )	/* 2k for the microcontroller */
 	ROM_LOAD( "mc68705p", 0x0000, 0x0800, 0x00000000 )
 ROM_END
 
 ROM_START( plotting )
-	ROM_REGION(0x20000)
+	ROM_REGIONX( 0x20000, REGION_CPU1 )
 	ROM_LOAD( "plot01.bin", 0x00000, 0x10000, 0x5b30bc25 )
 	ROM_RELOAD(             0x10000, 0x10000 )
 
@@ -1743,7 +1739,7 @@ ROM_START( plotting )
 ROM_END
 
 ROM_START( palamed )
-	ROM_REGION(0x30000)
+	ROM_REGIONX( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "c63.02", 0x00000, 0x20000, 0x55a82bb2 )
 	ROM_RELOAD(         0x10000, 0x20000 )
 
@@ -1753,7 +1749,7 @@ ROM_START( palamed )
 ROM_END
 
 ROM_START( horshoes )
-	ROM_REGION(0x30000)
+	ROM_REGIONX( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "c47.03", 0x00000, 0x20000, 0x37e15b20 )
 	ROM_RELOAD(         0x10000, 0x20000 )
 
@@ -1769,7 +1765,7 @@ ROM_START( horshoes )
 ROM_END
 
 ROM_START( cachat )
-	ROM_REGION(0x30000)
+	ROM_REGIONX( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "cac6",  0x00000, 0x20000, 0x8105cf5f )
 	ROM_RELOAD(        0x10000, 0x20000 )
 
@@ -1796,7 +1792,7 @@ static void plotting_decode(void)
 				v |= 1<<(7-j);
 		tab[i] = v;
 	}
-	p = memory_region(Machine->drv->cpu[0].memory_region);
+	p = memory_region(REGION_CPU1);
 	for(i=0;i<0x20000;i++) {
 		*p = tab[*p];
 		p++;

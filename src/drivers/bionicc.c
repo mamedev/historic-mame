@@ -363,14 +363,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,
 			10000000, /* ?? MHz ? */
-			0,
 			readmem,writemem,0,0,
 			bionicc_interrupt,8
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,  /* 4 Mhz ??? TODO: find real FRQ */
-			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			nmi_interrupt,4	/* ??? */
 		}
@@ -403,7 +401,7 @@ static struct MachineDriver machine_driver =
 
 
 ROM_START( bionicc )
-	ROM_REGION(0x40000)      /* 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )      /* 68000 code */
 	ROM_LOAD_EVEN( "tsu_02b.rom",  0x00000, 0x10000, 0xcf965a0a ) /* 68000 code */
 	ROM_LOAD_ODD ( "tsu_04b.rom",  0x00000, 0x10000, 0xc9884bfb ) /* 68000 code */
 	ROM_LOAD_EVEN( "tsu_03b.rom",  0x20000, 0x10000, 0x4e157ae2 ) /* 68000 code */
@@ -430,12 +428,12 @@ ROM_START( bionicc )
 	ROM_LOAD( "ts_23.rom",    0x088000, 0x08000, 0xbbfbe58a )
 	ROM_LOAD( "ts_24.rom",    0x090000, 0x08000, 0xf156e564 )
 
-	ROM_REGION(0x10000) /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
 	ROM_LOAD( "tsu_01b.rom",  0x00000, 0x8000, 0xa9a6cafa )
 ROM_END
 
 ROM_START( bionicc2 )
-	ROM_REGION(0x40000)      /* 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )      /* 68000 code */
 	ROM_LOAD_EVEN( "02",      0x00000, 0x10000, 0xf2528f08 ) /* 68000 code */
 	ROM_LOAD_ODD ( "04",      0x00000, 0x10000, 0x38b1c7e4 ) /* 68000 code */
 	ROM_LOAD_EVEN( "03",      0x20000, 0x10000, 0x72c3b76f ) /* 68000 code */
@@ -462,12 +460,12 @@ ROM_START( bionicc2 )
 	ROM_LOAD( "ts_23.rom",    0x088000, 0x08000, 0xbbfbe58a )
 	ROM_LOAD( "ts_24.rom",    0x090000, 0x08000, 0xf156e564 )
 
-	ROM_REGION(0x10000) /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
 	ROM_LOAD( "tsu_01b.rom",  0x00000, 0x8000, 0xa9a6cafa )
 ROM_END
 
 ROM_START( topsecrt )
-	ROM_REGION(0x40000)      /* 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )      /* 68000 code */
 	ROM_LOAD_EVEN( "ts_02.rom",  0x00000, 0x10000, 0xb2fe1ddb ) /* 68000 code */
 	ROM_LOAD_ODD ( "ts_04.rom",  0x00000, 0x10000, 0x427a003d ) /* 68000 code */
 	ROM_LOAD_EVEN( "ts_03.rom",  0x20000, 0x10000, 0x27f04bb6 ) /* 68000 code */
@@ -494,7 +492,7 @@ ROM_START( topsecrt )
 	ROM_LOAD( "ts_23.rom",    0x088000, 0x08000, 0xbbfbe58a )
 	ROM_LOAD( "ts_24.rom",    0x090000, 0x08000, 0xf156e564 )
 
-	ROM_REGION(0x10000) /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
 	ROM_LOAD( "ts_01.rom",    0x00000, 0x8000, 0x8ea07917 )
 ROM_END
 

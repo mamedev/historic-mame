@@ -35,7 +35,7 @@ void taitosj_init_machine(void)
 
 void taitosj_bankswitch_w(int offset,int data)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	cpu_setbank(1,&RAM[(data & 0x80) ? 0x10000 : 0x6000]);
 }
@@ -79,14 +79,27 @@ if (errorlog) fprintf(errorlog,"%04x: protection status read\n",cpu_get_pc());
 }
 
 
+/* timer callback : */
+void taitosj_mcu_real_data_r(int param)
+{
+	zaccept = 1;
+}
+
 int taitosj_mcu_data_r(int offset)
 {
 #if DEBUG_MCU
 if (errorlog) fprintf(errorlog,"%04x: protection read %02x\n",cpu_get_pc(),toz80);
 #endif
-
-	zaccept = 1;
+	timer_set(TIME_NOW,0,taitosj_mcu_real_data_r);
 	return toz80;
+}
+
+/* timer callback : */
+void taitosj_mcu_real_data_w(int data)
+{
+	zready = 1;
+	cpu_set_irq_line(2,0,ASSERT_LINE);
+	fromz80 = data;
 }
 
 void taitosj_mcu_data_w(int offset,int data)
@@ -94,19 +107,18 @@ void taitosj_mcu_data_w(int offset,int data)
 #if DEBUG_MCU
 if (errorlog) fprintf(errorlog,"%04x: protection write %02x\n",cpu_get_pc(),data);
 #endif
-
-	zready = 1;
-	cpu_set_irq_line(2,0,ASSERT_LINE);
-	fromz80 = data;
+	timer_set(TIME_NOW,data,taitosj_mcu_real_data_w);
 }
 
 int taitosj_mcu_status_r(int offset)
 {
+	/* mcu synchronization */
+	cpu_yielduntil_time (TIME_IN_USEC(5));
+
 	/* bit 0 = the 68705 has read data from the Z80 */
 	/* bit 1 = the 68705 has written data for the Z80 */
 	return ~((zready << 0) | (zaccept << 1));
 }
-
 
 static unsigned char portA_in,portA_out;
 
@@ -155,6 +167,19 @@ int taitosj_68705_portB_r(int offset)
 
 static int address;
 
+/* timer callback : 68705 is going to read data from the Z80 */
+void taitosj_mcu_data_real_r(int param)
+{
+	zready = 0;
+}
+
+/* timer callback : 68705 is writing data for the Z80 */
+void taitosj_mcu_status_real_w(int data)
+{
+	toz80 = data;
+	zaccept = 0;
+}
+
 void taitosj_68705_portB_w(int offset,int data)
 {
 #if DEBUG_MCU
@@ -169,7 +194,8 @@ if (errorlog) fprintf(errorlog,"%04x: 68705  68INTRQ **NOT SUPPORTED**!\n",cpu_g
 	}
 	if (~data & 0x02)
 	{
-		zready = 0;	/* 68705 is going to read data from the Z80 */
+		/* 68705 is going to read data from the Z80 */
+		timer_set(TIME_NOW,0,taitosj_mcu_data_real_r);
 		cpu_set_irq_line(2,0,CLEAR_LINE);
 		portA_in = fromz80;
 #if DEBUG_MCU
@@ -181,8 +207,8 @@ if (errorlog) fprintf(errorlog,"%04x: 68705 <- Z80 %02x\n",cpu_get_pc(),portA_in
 #if DEBUG_MCU
 if (errorlog) fprintf(errorlog,"%04x: 68705 -> Z80 %02x\n",cpu_get_pc(),portA_out);
 #endif
-		zaccept = 0;	/* 68705 is writing data for the Z80 */
-		toz80 = portA_out;
+		/* 68705 is writing data for the Z80 */
+		timer_set(TIME_NOW,portA_out,taitosj_mcu_status_real_w);
 	}
 	if (~data & 0x10)
 	{

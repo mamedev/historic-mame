@@ -135,7 +135,7 @@ static void noise_timer_cb(int param)
 void mooncrst_noise_w(int offset,int data)
 {
 #if SAMPLES
-    if (deathsampleloaded)
+	if (deathsampleloaded)
 	{
 		if (data & 1 && !(LastPort1 & 1))
 			mixer_play_sample(channelnoise,Machine->samples->sample[1]->data,
@@ -146,12 +146,12 @@ void mooncrst_noise_w(int offset,int data)
 	}
 	else
 #endif
-    {
+	{
 		if( noisetimer )
 			timer_remove(noisetimer);
 		noisetimer = NULL;
 		if( data & 1 )
-        {
+		{
 			noisevolume = 100;
 			mixer_set_volume(channelnoise,noisevolume);
 		}
@@ -168,7 +168,7 @@ void mooncrst_shoot_w(int offset,int data)
 	if( data & 1 && !(LastPort2 & 1) )
 	{
 #if SAMPLES
-        if( shootsampleloaded )
+		if( shootsampleloaded )
 		{
 			mixer_play_sample(channelshoot,Machine->samples->sample[0]->data,
 					Machine->samples->sample[0]->length,
@@ -177,15 +177,15 @@ void mooncrst_shoot_w(int offset,int data)
 		}
 		else
 #endif
-        {
+		{
 #if NEW_SHOOT
 			mixer_play_sample_16(channelshoot, shootwave, shoot_length,shoot_rate, 0);
 #else
 			mixer_play_sample_16(channelshoot, shootwave, SHOOT_LENGTH, 10*SHOOT_RATE, 0);
 #endif
-            mixer_set_volume(channelshoot,SHOOT_VOLUME);
+			mixer_set_volume(channelshoot,SHOOT_VOLUME);
 		}
-    }
+	}
 	LastPort2=data;
 }
 
@@ -206,10 +206,10 @@ int mooncrst_sh_start(const struct MachineSound *msound)
 	int lfovol[3] = {LFO_VOLUME,LFO_VOLUME,LFO_VOLUME};
 
 #if SAMPLES
-    Machine->samples = readsamples(mooncrst_sample_names,Machine->gamedrv->name);
+	Machine->samples = readsamples(mooncrst_sample_names,Machine->gamedrv->name);
 #endif
 
-    channelnoise = mixer_allocate_channel(NOISE_VOLUME);
+	channelnoise = mixer_allocate_channel(NOISE_VOLUME);
 	mixer_set_name(channelnoise,"Noise");
 	channelshoot = mixer_allocate_channel(SHOOT_VOLUME);
 	mixer_set_name(channelshoot,"Shoot");
@@ -219,12 +219,12 @@ int mooncrst_sh_start(const struct MachineSound *msound)
 	mixer_set_name(channellfo+2,"Background #2");
 
 #if SAMPLES
-    if (Machine->samples != 0 && Machine->samples->sample[0] != 0)    /* We should check also that Samplename[0] = 0 */
+	if (Machine->samples != 0 && Machine->samples->sample[0] != 0)	/* We should check also that Samplename[0] = 0 */
 		shootsampleloaded = 1;
 	else
 		shootsampleloaded = 0;
 
-	if (Machine->samples != 0 && Machine->samples->sample[1] != 0)    /* We should check also that Samplename[0] = 0 */
+	if (Machine->samples != 0 && Machine->samples->sample[1] != 0)	/* We should check also that Samplename[0] = 0 */
 		deathsampleloaded = 1;
 	else
 		deathsampleloaded = 0;
@@ -243,19 +243,19 @@ int mooncrst_sh_start(const struct MachineSound *msound)
 #else
 	if( (shootwave = malloc(SHOOT_LENGTH * sizeof(INT16))) == 0 )
 #endif
-    {
-        free(noisewave);
-        return 1;
-    }
+	{
+		free(noisewave);
+		return 1;
+	}
 
 	/*
 	 * The RNG shifter is clocked with RNG_RATE, bit 17 is
 	 * latched every 2V cycles (every 2nd scanline).
 	 * This signal is used as a noise source.
 	 */
-    generator = 0;
+	generator = 0;
 	countdown = NOISE_RATE / 2;
-    for( i = 0; i < NOISE_LENGTH; i++ )
+	for( i = 0; i < NOISE_LENGTH; i++ )
 	{
 		countdown -= RNG_RATE;
 		while( countdown < 0 )
@@ -304,28 +304,28 @@ int mooncrst_sh_start(const struct MachineSound *msound)
 #define NE555_FM_ADJUST_RATE 0.80
 		/* discharge : 100K * 1uF */
 		double v  = 5.0;
-		double vK = exp(-1 / (R41__*C25__) / shoot_rate);
+		double vK = (shoot_rate) ? exp(-1 / (R41__*C25__) / shoot_rate) : 0;
 		/* -- SHOOT KEY port -- */
 		double IC8L3 = IC8L3_L; /* key on */
 		int IC8Lcnt = SHOOT_KEYON_TIME * shoot_rate; /* count for key off */
 		/* C28 : KEY port capaciry */
 		/*       connection : 8L-3 - R47(2.2K) - C28(47u) - R48(2.2K) - C29 */
 		double c28v = IC8L3_H - (IC8L3_H-(NOISE_H+NOISE_L)/2)/(R46__+R47__+R48__)*R47__;
-		double c28K = exp(-1 / (22000 * 0.000047 ) / shoot_rate);
+		double c28K = (shoot_rate) ? exp(-1 / (22000 * 0.000047 ) / shoot_rate) : 0;
 		/* C29 : NOISE capacity */
 		/*       connection : NOISE - R46(10K) - C29(0.1u) - R48(2.2K) - C28 */
 		double c29v  = IC8L3_H - (IC8L3_H-(NOISE_H+NOISE_L)/2)/(R46__+R47__+R48__)*(R47__+R48__);
-		double c29K1 = exp(-1 / (22000  * 0.00000001 ) / shoot_rate); /* form C28   */
-		double c29K2 = exp(-1 / (100000 * 0.00000001 ) / shoot_rate); /* from noise */
+		double c29K1 = (shoot_rate) ? exp(-1 / (22000  * 0.00000001 ) / shoot_rate) : 0; /* form C28   */
+		double c29K2 = (shoot_rate) ? exp(-1 / (100000 * 0.00000001 ) / shoot_rate) : 0; /* from noise */
 		/* NE555 timer */
 		/* RA = 10K , RB = 22K , C=.01u ,FM = C29 */
 		double ne555cnt = 0;
-		double ne555step = (1.44/((R44__+R45__*2)*C27__)) / shoot_rate;
+		double ne555step = (shoot_rate) ? ((1.44/((R44__+R45__*2)*C27__)) / shoot_rate) : 0;
 		double ne555duty = (double)(R44__+R45__)/(R44__+R45__*2); /* t1 duty */
-		double ne555sr;    /* threshhold (FM) rate */
+		double ne555sr;		/* threshhold (FM) rate */
 		/* NOISE source */
 		double ncnt  = 0.0;
-		double nstep = (double)NOISE_RATE / shoot_rate;
+		double nstep = (shoot_rate) ? ((double)NOISE_RATE / shoot_rate) : 0;
 		double noise_sh2; /* voltage level */
 
 		for( i = 0; i < shoot_length; i++ )
@@ -349,11 +349,11 @@ int mooncrst_sh_start(const struct MachineSound *msound)
 			else
 				shootwave[i] = 0;
 			/* C28 charde/discharge */
-			c28v += (IC8L3-c28v) - (IC8L3-c28v)*c28K; /* from R47 */
-			c28v += (c29v-c28v) - (c29v-c28v)*c28K;     /* from R48 */
+			c28v += (IC8L3-c28v) - (IC8L3-c28v)*c28K;	/* from R47 */
+			c28v += (c29v-c28v) - (c29v-c28v)*c28K;		/* from R48 */
 			/* C29 charge/discharge */
-			c29v += (c28v-c29v) - (c28v-c29v)*c29K1;    /* from R48 */
-			c29v += (noise_sh2-c29v) - (noise_sh2-c29v)*c29K2; /* from R46 */
+			c29v += (c28v-c29v) - (c28v-c29v)*c29K1;	/* from R48 */
+			c29v += (noise_sh2-c29v) - (noise_sh2-c29v)*c29K2;	/* from R46 */
 			/* key off */
 			if(IC8L3==IC8L3_L && --IC8Lcnt==0)
 				IC8L3=IC8L3_H;
@@ -403,7 +403,7 @@ int mooncrst_sh_start(const struct MachineSound *msound)
 	}
 #endif
 
-    memset(tonewave, 0, sizeof(tonewave));
+	memset(tonewave, 0, sizeof(tonewave));
 
 	for( i = 0; i < TOOTHSAW_LENGTH; i++ )
 	{
@@ -423,7 +423,7 @@ int mooncrst_sh_start(const struct MachineSound *msound)
 		{
 			r0a += 1.0/33000;
 			r0b += 1.0/33000;
-        }
+		}
 		if( i & 4 )
 		{
 			r1a += 1.0/22000;
@@ -433,22 +433,22 @@ int mooncrst_sh_start(const struct MachineSound *msound)
 		{
 			r0a += 1.0/22000;
 			r0b += 1.0/22000;
-        }
+		}
 		tonewave[0][i] = V(1.0/r0a, 1.0/r1a);
 
 		/* #1: VOL1=1 and VOL2=0
 		 * add the 10k resistor R49 for bit QC
 		 */
-        if( i & 4 )
+		if( i & 4 )
 			r1a += 1.0/10000;
-        else
+		else
 			r0a += 1.0/10000;
 		tonewave[1][i] = V(1.0/r0a, 1.0/r1a);
 
 		/* #2: VOL1=0 and VOL2=1
 		 * add the 15k resistor R52 for bit QD
 		 */
-        if( i & 8 )
+		if( i & 8 )
 			r1b += 1.0/15000;
 		else
 			r0b += 1.0/15000;
@@ -457,13 +457,13 @@ int mooncrst_sh_start(const struct MachineSound *msound)
 		/* #3: VOL1=1 and VOL2=1
 		 * add the 10k resistor R49 for QC
 		 */
-        if( i & 4 )
+		if( i & 4 )
 			r0b += 1.0/10000;
 		else
 			r1b += 1.0/10000;
 		tonewave[3][i] = V(1.0/r0b, 1.0/r1b);
 		LOG((errorlog, "tone[%2d]: $%02x $%02x $%02x $%02x\n", i, tonewave[0][i]&0xff, tonewave[1][i]&0xff, tonewave[2][i]&0xff, tonewave[3][i]&0xff));
-    }
+	}
 
 	pitch = 0;
 	vol = 0;
@@ -471,7 +471,7 @@ int mooncrst_sh_start(const struct MachineSound *msound)
 	tone_stream = stream_init("Tone",TOOTHSAW_VOLUME,SOUND_CLOCK/STEPS,16,0,tone_update);
 
 #if SAMPLES
-    if (!deathsampleloaded)
+	if (!deathsampleloaded)
 #endif
 	{
 		mixer_set_volume(channelnoise,0);
@@ -483,7 +483,7 @@ int mooncrst_sh_start(const struct MachineSound *msound)
 	{
 		mixer_set_volume(channelshoot,0);
 		mixer_play_sample_16(channelshoot,shootwave,SHOOT_LENGTH,SHOOT_RATE,1);
-    }
+	}
 
 	mixer_set_volume(channellfo+0,0);
 	mixer_play_sample_16(channellfo+0,backgroundwave,sizeof(backgroundwave),1000,1);
@@ -503,12 +503,12 @@ void mooncrst_sh_stop(void)
 	{
 		timer_remove( lfotimer );
 		lfotimer = NULL;
-    }
+	}
 	if( noisetimer )
-    {
-        timer_remove(noisetimer);
-        noisetimer = NULL;
-    }
+	{
+		timer_remove(noisetimer);
+		noisetimer = NULL;
+	}
 	free(noisewave);
 	noisewave = NULL;
 	osd_stop_sample(channelnoise);
@@ -537,7 +537,7 @@ static void lfo_timer_cb(int param)
 void mooncrst_lfo_freq_w(int offset,int data)
 {
 #if NEW_LFO
-    static int lfobit[4];
+	static int lfobit[4];
 
 	/* R18 1M,R17 470K,R16 220K,R15 100K */
 	const int rv[4] = { 1000000,470000,220000,100000};
@@ -548,19 +548,19 @@ void mooncrst_lfo_freq_w(int offset,int data)
 		return;
 
 	/*
-     * NE555 9R is setup as astable multivibrator
-     * - this circuit looks LINEAR RAMP V-F converter
-       I  = 1/Re * ( R1/(R1+R2)-Vbe)
-       td = (2/3VCC*Re*(R1+R2)*C) / (R1*VCC-Vbe*(R1+R2))
-      parts assign
-       R1  : (R15* L1)|(R16* L2)|(R17* L3)|(R18* L1)
-       R2  : (R15*~L1)|(R16*~L2)|(R17*~L3)|(R18*~L4)|R??(330K)
-       Re  : R21(100K)
-       Vbe : Q2(2SA1015)-Vbe
-     * - R20(15K) and Q1 is unknown,maybe current booster.
+	 * NE555 9R is setup as astable multivibrator
+	 * - this circuit looks LINEAR RAMP V-F converter
+	   I  = 1/Re * ( R1/(R1+R2)-Vbe)
+	   td = (2/3VCC*Re*(R1+R2)*C) / (R1*VCC-Vbe*(R1+R2))
+	  parts assign
+	   R1  : (R15* L1)|(R16* L2)|(R17* L3)|(R18* L1)
+	   R2  : (R15*~L1)|(R16*~L2)|(R17*~L3)|(R18*~L4)|R??(330K)
+	   Re  : R21(100K)
+	   Vbe : Q2(2SA1015)-Vbe
+	 * - R20(15K) and Q1 is unknown,maybe current booster.
 	*/
 
-    lfobit[offset] = data & 1;
+	lfobit[offset] = data & 1;
 
 	/* R20 15K */
 	r1 = 1e12;
@@ -585,8 +585,8 @@ void mooncrst_lfo_freq_w(int offset,int data)
 	}
 
 #define Vcc 5.0
-#define Vbe 0.65     /* 2SA1015 */
-#define Cap 0.000001 /* C15 1uF */
+#define Vbe 0.65		/* 2SA1015 */
+#define Cap 0.000001	/* C15 1uF */
 	td = (Vcc*2/3*Re*(r1+r2)*Cap) / (r1*Vcc - Vbe*(r1+r2) );
 #undef Cap
 #undef Vbe
@@ -594,25 +594,25 @@ void mooncrst_lfo_freq_w(int offset,int data)
 	if( errorlog ) fprintf(errorlog, "lfo timer bits:%d%d%d%d r1:%d, r2:%d, re: %d, td: %9.2fsec\n", lfobit[0], lfobit[1], lfobit[2], lfobit[3], (int)r1, (int)r2, (int)Re, td);
 	lfotimer = timer_pulse( TIME_IN_SEC(td / (MAXFREQ-MINFREQ)), 0, lfo_timer_cb);
 #else
-    static int lfobit[4];
+	static int lfobit[4];
 	double r0, r1, rx = 100000.0;
 
 	if( (data & 1) == lfobit[offset] )
 		return;
 
 	/*
-     * NE555 9R is setup as astable multivibrator
-     * - Ra is between 100k and ??? (open?)
-     * - Rb is zero here (bridge between pins 6 and 7)
-     * - C is 1uF
-     * charge time t1 = 0.693 * (Ra + Rb) * C
-     * discharge time t2 = 0.693 * (Rb) *  C
-     * period T = t1 + t2 = 0.693 * (Ra + 2 * Rb) * C
-     * -> min period: 0.693 * 100 kOhm * 1uF -> 69300 us = 14.4Hz
-     * -> max period: no idea, since I don't know the max. value for Ra :(
-     */
+	 * NE555 9R is setup as astable multivibrator
+	 * - Ra is between 100k and ??? (open?)
+	 * - Rb is zero here (bridge between pins 6 and 7)
+	 * - C is 1uF
+	 * charge time t1 = 0.693 * (Ra + Rb) * C
+	 * discharge time t2 = 0.693 * (Rb) *  C
+	 * period T = t1 + t2 = 0.693 * (Ra + 2 * Rb) * C
+	 * -> min period: 0.693 * 100 kOhm * 1uF -> 69300 us = 14.4Hz
+	 * -> max period: no idea, since I don't know the max. value for Ra :(
+	 */
 
-    lfobit[offset] = data & 1;
+	lfobit[offset] = data & 1;
 
 	/* R?? 330k to gnd */
 	r0 = 1.0/330000;
@@ -625,19 +625,19 @@ void mooncrst_lfo_freq_w(int offset,int data)
 	else
 		r0 += 1.0/1000000;
 
-    /* R17 470k */
+	/* R17 470k */
 	if( lfobit[1] )
 		r1 += 1.0/470000;
 	else
 		r0 += 1.0/470000;
 
-    /* R16 220k */
+	/* R16 220k */
 	if( lfobit[2] )
 		r1 += 1.0/220000;
 	else
 		r0 += 1.0/220000;
 
-    /* R15 100k */
+	/* R15 100k */
 	if( lfobit[3] )
 		r1 += 1.0/100000;
 	else

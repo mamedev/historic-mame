@@ -494,19 +494,23 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 	{
 		while (defaults->type != IPT_END)
 		{
-			if (defaults->keyboard == KEYCODE_UP) defaults->keyboard = KEY_8_PAD;
-			if (defaults->keyboard == KEYCODE_DOWN) defaults->keyboard = KEY_2_PAD;
-			if (defaults->keyboard == KEYCODE_LEFT) defaults->keyboard = KEY_4_PAD;
-			if (defaults->keyboard == KEYCODE_RIGHT) defaults->keyboard = KEY_6_PAD;
-			if (defaults->type == IPT_UI_SELECT) defaults->keyboard = KEY_LCONTROL;
-			if (defaults->type == (IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER1)) defaults->keyboard = KEY_R;
-			if (defaults->type == (IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER1)) defaults->keyboard = KEY_F;
-			if (defaults->type == (IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER1)) defaults->keyboard = KEY_D;
-			if (defaults->type == (IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER1)) defaults->keyboard = KEY_G;
-			if (defaults->type == (IPT_JOYSTICKLEFT_UP     | IPF_PLAYER1)) defaults->keyboard = KEY_8_PAD;
-			if (defaults->type == (IPT_JOYSTICKLEFT_DOWN   | IPF_PLAYER1)) defaults->keyboard = KEY_2_PAD;
-			if (defaults->type == (IPT_JOYSTICKLEFT_LEFT   | IPF_PLAYER1)) defaults->keyboard = KEY_4_PAD;
-			if (defaults->type == (IPT_JOYSTICKLEFT_RIGHT  | IPF_PLAYER1)) defaults->keyboard = KEY_6_PAD;
+			int j;
+			for(j=0;j<INPUT_KEY_CODE_MAX;++j)
+			{
+				if (defaults->keyboard_code[j] == KEYCODE_UP) defaults->keyboard_code[j] = KEY_8_PAD;
+				if (defaults->keyboard_code[j] == KEYCODE_DOWN) defaults->keyboard_code[j] = KEY_2_PAD;
+				if (defaults->keyboard_code[j] == KEYCODE_LEFT) defaults->keyboard_code[j] = KEY_4_PAD;
+				if (defaults->keyboard_code[j] == KEYCODE_RIGHT) defaults->keyboard_code[j] = KEY_6_PAD;
+			}
+			if (defaults->type == IPT_UI_SELECT) INPUT_KEY_CODE_SET_1(defaults->keyboard_code, KEY_LCONTROL);
+			if (defaults->type == (IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER1)) INPUT_KEY_CODE_SET_1(defaults->keyboard_code,KEY_R);
+			if (defaults->type == (IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER1)) INPUT_KEY_CODE_SET_1(defaults->keyboard_code,KEY_F);
+			if (defaults->type == (IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER1)) INPUT_KEY_CODE_SET_1(defaults->keyboard_code,KEY_D);
+			if (defaults->type == (IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER1)) INPUT_KEY_CODE_SET_1(defaults->keyboard_code,KEY_G);
+			if (defaults->type == (IPT_JOYSTICKLEFT_UP     | IPF_PLAYER1)) INPUT_KEY_CODE_SET_1(defaults->keyboard_code,KEY_8_PAD);
+			if (defaults->type == (IPT_JOYSTICKLEFT_DOWN   | IPF_PLAYER1)) INPUT_KEY_CODE_SET_1(defaults->keyboard_code,KEY_2_PAD);
+			if (defaults->type == (IPT_JOYSTICKLEFT_LEFT   | IPF_PLAYER1)) INPUT_KEY_CODE_SET_1(defaults->keyboard_code,KEY_4_PAD);
+			if (defaults->type == (IPT_JOYSTICKLEFT_RIGHT  | IPF_PLAYER1)) INPUT_KEY_CODE_SET_1(defaults->keyboard_code,KEY_6_PAD);
 
 			defaults++;
 		}

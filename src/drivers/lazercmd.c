@@ -521,9 +521,7 @@ static struct MachineDriver lazercmd_machine_driver =
 			but memory and IO access is only possible
 			within the line and frame blanking period
 			thus requiring an extra loading of approx 3-5 */
-			0,
-			lazercmd_readmem, lazercmd_writemem,
-			lazercmd_readport, lazercmd_writeport,
+			lazercmd_readmem, lazercmd_writemem, lazercmd_readport, lazercmd_writeport,
 			lazercmd_timer, 128		/* 7680 Hz */
 		}
 	},
@@ -568,9 +566,7 @@ static struct MachineDriver medlanes_machine_driver =
 			but memory and IO access is only possible
 			within the line and frame blanking period
 			thus requiring an extra loading of approx 3-5 */
-			0,
-			medlanes_readmem, medlanes_writemem,
-			lazercmd_readport, lazercmd_writeport,
+			medlanes_readmem, medlanes_writemem, lazercmd_readport, lazercmd_writeport,
 			lazercmd_timer, 128		/* 7680 Hz */
 		}
 	},
@@ -611,7 +607,7 @@ static struct MachineDriver medlanes_machine_driver =
 ***************************************************************************/
 
 	ROM_START( lazercmd )
-	ROM_REGION(0x8000)			   /* 32K cpu, 4K for ROM/RAM */
+	ROM_REGIONX( 0x8000, REGION_CPU1 )			   /* 32K cpu, 4K for ROM/RAM */
 	ROM_LOAD( "lc.e5",        0x0000, 0x0400, 0x56dc7a40 )
 	ROM_LOAD( "lc.e6",        0x0400, 0x0400, 0xb1ef0aa2 )
 	ROM_LOAD( "lc.e7",        0x0800, 0x0400, 0x8e6ffc97 )
@@ -623,7 +619,7 @@ static struct MachineDriver medlanes_machine_driver =
 	ROM_END
 
 	ROM_START( medlanes )
-	ROM_REGION(0x8000)			   /* 32K cpu, 4K for ROM/RAM */
+	ROM_REGIONX( 0x8000, REGION_CPU1 )			   /* 32K cpu, 4K for ROM/RAM */
 	ROM_LOAD("medlanes.2a", 0x0000, 0x0400, 0x9c77566a)
 	ROM_LOAD("medlanes.2b", 0x0400, 0x0400, 0x7841b1a9)
 	ROM_LOAD("medlanes.2c", 0x0800, 0x0400, 0xa359b5b8)
@@ -648,9 +644,9 @@ int i, y;
  ******************************************************************/
 	for (i = 0; i < 0x0c00; i++)
 	{
-		memory_region(Machine->drv->cpu[0].memory_region)[i + 0x0000] =
-			((memory_region(Machine->drv->cpu[0].memory_region)[i + 0x0000] << 4) |
-			 (memory_region(Machine->drv->cpu[0].memory_region)[i + 0x1000] & 15)) ^ 0xff;
+		memory_region(REGION_CPU1)[i + 0x0000] =
+			((memory_region(REGION_CPU1)[i + 0x0000] << 4) |
+			 (memory_region(REGION_CPU1)[i + 0x1000] & 15)) ^ 0xff;
 	}
 /******************************************************************
  * To show the maze bit #6 and #7 of the video ram are used.
@@ -662,8 +658,8 @@ int i, y;
  ******************************************************************/
 	for (i = 0; i < 0x40; i++)
 	{
-unsigned char *d = &Machine->memory_region[1][0 * 64 * 10 + i * VERT_CHR];
-unsigned char *s = &Machine->memory_region[1][4 * 64 * 10 + i * VERT_FNT];
+unsigned char *d = &memory_region(1)[0 * 64 * 10 + i * VERT_CHR];
+unsigned char *s = &memory_region(1)[4 * 64 * 10 + i * VERT_FNT];
 
 		for (y = 0; y < VERT_CHR; y++)
 		{
@@ -686,9 +682,9 @@ int i, y;
  ******************************************************************/
 	for (i = 0; i < 0x4000; i++)
 	{
-		memory_region(Machine->drv->cpu[0].memory_region)[i + 0x0000] =
-			~((memory_region(Machine->drv->cpu[0].memory_region)[i + 0x0000] << 4) |
-			  (memory_region(Machine->drv->cpu[0].memory_region)[i + 0x4000] & 15));
+		memory_region(REGION_CPU1)[i + 0x0000] =
+			~((memory_region(REGION_CPU1)[i + 0x0000] << 4) |
+			  (memory_region(REGION_CPU1)[i + 0x4000] & 15));
 	}
 /******************************************************************
  * To show the maze bit #6 and #7 of the video ram are used.
@@ -700,8 +696,8 @@ int i, y;
  ******************************************************************/
 	for (i = 0; i < 0x40; i++)
 	{
-unsigned char *d = &Machine->memory_region[1][0 * 64 * 10 + i * VERT_CHR];
-unsigned char *s = &Machine->memory_region[1][4 * 64 * 10 + i * VERT_FNT];
+unsigned char *d = &memory_region(1)[0 * 64 * 10 + i * VERT_CHR];
+unsigned char *s = &memory_region(1)[4 * 64 * 10 + i * VERT_FNT];
 
 		for (y = 0; y < VERT_CHR; y++)
 		{

@@ -136,14 +136,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,
 			8000000, /* 8 MHz */
-			0,
 			readmem, writemem,0,0,
             aztarac_vg_interrupt, 1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			2000000,	/* 2 MHz */
-			1,
 			sound_readmem,sound_writemem, 0, 0,
 			0,0,
             aztarac_snd_timed_irq, 100
@@ -182,7 +180,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( aztarac )
-	ROM_REGION(0xc000)
+	ROM_REGIONX( 0xc000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "l8_6.bin", 0x000000, 0x001000, 0x25f8da18 )
 	ROM_LOAD_ODD ( "n8_0.bin", 0x000000, 0x001000, 0x04e20626 )
 	ROM_LOAD_EVEN( "l7_7.bin", 0x002000, 0x001000, 0x230e244c )
@@ -196,7 +194,7 @@ ROM_START( aztarac )
 	ROM_LOAD_EVEN( "l3_b.bin", 0x00a000, 0x001000, 0x8cc7f7fa )
 	ROM_LOAD_ODD ( "n3_5.bin", 0x00a000, 0x001000, 0x40452376 )
 
-	ROM_REGION(0x10000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )
 	ROM_LOAD( "j4_c.bin", 0x0000, 0x1000, 0xe897dfcd )
 	ROM_LOAD( "j3_d.bin", 0x1000, 0x1000, 0x4016de77 )
 ROM_END

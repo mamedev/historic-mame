@@ -317,12 +317,10 @@ void atarisys1_bankselect_w(int offset, int data)
 	WRITE_WORD(&atarisys1_bankselect[offset], newword);
 
 	/* sound CPU reset */
-	if (diff & 0x80)
+	if (diff & 0x0080)
 	{
-		if (data & 0x80)
-			atarigen_sound_reset_w(0, 0);
-		else
-			cpu_halt(1, 0);
+		cpu_set_reset_line(1, (newword & 0x0080) ? CLEAR_LINE : ASSERT_LINE);
+		if (!(newword & 0x0080)) atarigen_sound_reset();
 	}
 
 	/* motion object bank select */
@@ -932,8 +930,8 @@ static void mo_render_callback(const UINT16 *data, const struct rectangle *clip,
 
 static int decode_gfx(void)
 {
-	UINT8 *prom1 = &Machine->memory_region[3][0x000];
-	UINT8 *prom2 = &Machine->memory_region[3][0x200];
+	UINT8 *prom1 = &memory_region(3)[0x000];
+	UINT8 *prom2 = &memory_region(3)[0x200];
 	int obj, i;
 
 	/* reset the globals */
@@ -1021,7 +1019,7 @@ static int get_bank(UINT8 prom1, UINT8 prom2, int bpp)
 		return bank_gfx[bpp - 4][bank_index];
 
 	/* if the bank is out of range, call it 0 */
-	if (bank_offset[bank_index] >= Machine->memory_region_length[4])
+	if (bank_offset[bank_index] >= memory_region_length(4))
 		return 0;
 
 	/* don't have one? let's make it ... first find any empty slot */
@@ -1037,7 +1035,7 @@ static int get_bank(UINT8 prom1, UINT8 prom2, int bpp)
 		objlayout.planeoffset[i] = (bpp - i - 1) * 0x8000 * 8;
 
 	/* decode the graphics */
-	Machine->gfx[gfx_index] = decodegfx(&Machine->memory_region[4][bank_offset[bank_index]], &objlayout);
+	Machine->gfx[gfx_index] = decodegfx(&memory_region(4)[bank_offset[bank_index]], &objlayout);
 	if (!Machine->gfx[gfx_index])
 		return -1;
 

@@ -85,7 +85,7 @@ static void appoooh_adpcm_int (int num)
 /* adpcm address write */
 static void appoooh_adpcm_w (int offset,int data)
 {
-	unsigned char *RAM = Machine->memory_region[APPOOOH_ADPCM_REGION];
+	unsigned char *RAM = memory_region(APPOOOH_ADPCM_REGION);
 	adpcmptr  = &RAM[data*256];
 	MSM5205_reset_w(0,0);
 	appoooh_adpcm_data=-1;
@@ -254,7 +254,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* ??? the main xtal is 18.432 MHz */
-			0,
 			readmem,writemem,readport,writeport,
 			nmi_interrupt,1
 		},
@@ -298,7 +297,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( appoooh )
-	ROM_REGION(0x14000)	/* 64k for code + 16k bank */
+	ROM_REGIONX( 0x14000, REGION_CPU1 )	/* 64k for code + 16k bank */
 	ROM_LOAD( "epr-5906.bin", 0x00000, 0x2000, 0xfffae7fe )
 	ROM_LOAD( "epr-5907.bin", 0x02000, 0x2000, 0x57696cd6 )
 	ROM_LOAD( "epr-5908.bin", 0x04000, 0x2000, 0x4537cddc )
@@ -322,7 +321,7 @@ ROM_START( appoooh )
 	ROM_LOAD( "pr5922.prm",   0x0020, 0x100, 0x85c542bf ) 	/* charset #1 lookup table */
 	ROM_LOAD( "pr5923.prm",   0x0120, 0x100, 0x16acbd53 ) 	/* charset #2 lookup table */
 
-	ROM_REGION(0xa000)	/* adpcm voice data */
+	ROM_REGION( 0xa000 )	/* adpcm voice data */
 	ROM_LOAD( "epr-5901.bin", 0x0000, 0x2000, 0x170a10a4 )
 	ROM_LOAD( "epr-5902.bin", 0x2000, 0x2000, 0xf6981640 )
 	ROM_LOAD( "epr-5903.bin", 0x4000, 0x2000, 0x0439df50 )
@@ -333,7 +332,7 @@ ROM_END
 /****  Appoooh high score save routine - RJF (Aug 3, 1999)  ****/
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0xe029],"\x53\x41\x4d",3) == 0)
@@ -356,7 +355,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{

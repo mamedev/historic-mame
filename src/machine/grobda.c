@@ -20,7 +20,7 @@ void grobda_init_machine( void )
 {
     int_enable_1 = int_enable_2 = 1;
     credits = coincounter1 = coincounter2 = 0;
-	cpu_halt(1, 1);
+	cpu_set_halt_line(1, CLEAR_LINE);
 }
 
 /* memory handlers */
@@ -69,10 +69,7 @@ int grobda_interrupt_2( void ){
 
 void grobda_cpu2_enable_w(int offset,int data)
 {
-	if (offset)
-		cpu_set_reset_line(1,CLEAR_LINE);
-	else
-		cpu_set_reset_line(1,ASSERT_LINE);
+	cpu_set_halt_line(1, offset ? CLEAR_LINE : ASSERT_LINE);
 }
 
 /************************************************************************************

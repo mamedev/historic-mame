@@ -990,28 +990,24 @@ static struct MachineDriver _shortname_##_machine_driver = \
 		{ \
 			CPU_M68000, \
 			_cpu_1_clock_, \
-			0, \
 			_shortname_##_readmem,_shortname_##_writemem,0,0, \
 			cischeat_interrupt, CISCHEAT_INTERRUPT_NUM \
 		}, \
 		{ \
 			CPU_M68000, \
 			_cpu_2_clock_, \
-			3, \
 			_shortname_##_readmem2,_shortname_##_writemem2,0,0, \
 			cischeat_sub_interrupt, CISCHEAT_SUB_INTERRUPT_NUM \
 		}, \
 		{ \
 			CPU_M68000, \
 			_cpu_3_clock_, \
-			4, \
 			_shortname_##_readmem3,_shortname_##_writemem3,0,0, \
 			cischeat_sub_interrupt, CISCHEAT_SUB_INTERRUPT_NUM \
 		}, \
 		{ \
 			CPU_M68000 | CPU_AUDIO_CPU, \
 			_cpu_4_clock_, \
-			5, \
 			_shortname_##_sound_readmem,_shortname_##_sound_writemem,0,0, \
 			cischeat_sound_interrupt, CISCHEAT_SOUND_INTERRUPT_NUM \
 		}, \
@@ -1089,8 +1085,8 @@ struct GameDriver driver_##_shortname_ = \
 */
 void cischeat_untangle_sprites(int region)
 {
-	unsigned char		*src = Machine->memory_region[region];
-	const unsigned char	*end = Machine->memory_region[region] + Machine->memory_region_length[region];
+	unsigned char		*src = memory_region(region);
+	const unsigned char	*end = memory_region(region) + memory_region_length(region);
 
 	while (src < end)
 	{
@@ -1161,8 +1157,7 @@ Sound:		Amplified Stereo (two channel)
 ***************************************************************************/
 
 ROM_START( cischeat )
-
-	ROM_REGION(0x080000)			/* Region 0 - cpu #1 */
+	ROM_REGIONX( 0x080000, REGION_CPU1 )			/* Region 0 - cpu #1 */
 	ROM_LOAD_EVEN( "ch9071v2.03", 0x000000, 0x040000, 0xdd1bb26f )
 	ROM_LOAD_ODD(  "ch9071v2.01", 0x000000, 0x040000, 0x7b65276a )
 
@@ -1183,19 +1178,19 @@ ROM_START( cischeat )
 	ROM_LOAD_GFX_EVEN( "ch9072.r19",  0x300000, 0x080000, 0x4e996fa8 )
 	ROM_LOAD_GFX_ODD(  "ch9072.r20",  0x300000, 0x080000, 0xfa70b92d )
 
-	ROM_REGION(0x80000)				/* Region 3 - cpu #2 */
+	ROM_REGIONX( 0x80000, REGION_CPU2 )				/* Region 3 - cpu #2 */
 	ROM_LOAD_EVEN( "ch9073.01",  0x000000, 0x040000, 0xba331526 )
 	ROM_LOAD_ODD(  "ch9073.02",  0x000000, 0x040000, 0xb45ff10f )
 
-	ROM_REGION(0x80000)				/* Region 4 - cpu #3 */
+	ROM_REGIONX( 0x80000, REGION_CPU3 )				/* Region 4 - cpu #3 */
 	ROM_LOAD_EVEN( "ch9073v1.03", 0x000000, 0x040000, 0xbf1d1cbf )
 	ROM_LOAD_ODD(  "ch9073v1.04", 0x000000, 0x040000, 0x1ec8a597 )
 
-	ROM_REGION(0x40000)				/* Region 5 - cpu #4 (sound cpu) */
+	ROM_REGIONX( 0x40000, REGION_CPU4 )				/* Region 5 - cpu #4 (sound cpu) */
 	ROM_LOAD_EVEN( "ch9071.11", 0x000000, 0x020000, 0xbc137bea )
 	ROM_LOAD_ODD(  "ch9071.10", 0x000000, 0x020000, 0xbf7b634d )
 
-	ROM_REGION(0x80000)				/* Region 6 - samples */
+	ROM_REGION( 0x80000 )				/* Region 6 - samples */
 	ROM_LOAD( "ch9071.r23", 0x000000, 0x080000, 0xc7dbb992 ) // 2 x 0x40000
 
 	ROM_REGION(0x80000)				/* Region 7 - samples */
@@ -1211,7 +1206,6 @@ ROM_START( cischeat )
 //	ROM_LOAD( "ch9072.01",  0x000000, 0x080000, 0xb2efed33 ) // FIXED BITS (xxxxxxxx0xxxxxxx)
 //	ROM_LOAD( "ch9072.02",  0x000000, 0x080000, 0x536edde4 )
 //	ROM_LOAD( "ch9072.03",  0x000000, 0x080000, 0x7e79151a )
-
 ROM_END
 
 
@@ -1221,36 +1215,36 @@ void cischeat_rom_decode(void)
 unsigned char *RAM;
 
 /* cpu #1 patches */
-	RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	RAM = memory_region(REGION_CPU1);
 
 /* cpu #2 patches */
-	RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	RAM = memory_region(REGION_CPU2);
 
 /* cpu #3 patches */
-	RAM = Machine->memory_region[Machine->drv->cpu[2].memory_region];
+	RAM = memory_region(REGION_CPU3);
 
 /* sound cpu patches */
-	RAM = Machine->memory_region[Machine->drv->cpu[3].memory_region];
+	RAM = memory_region(REGION_CPU4);
 
 /* Split ROMs */
-	rom_1 = Machine->memory_region[8] + 0x00000;
+	rom_1 = memory_region(8) + 0x00000;
 
-	rom_2 = Machine->memory_region[Machine->drv->cpu[1].memory_region] + 0x40000;
-	memcpy(Machine->memory_region[8] + 0x80000, rom_2, 0x40000);
+	rom_2 = memory_region(REGION_CPU2) + 0x40000;
+	memcpy(memory_region(8) + 0x80000, rom_2, 0x40000);
 	memset(rom_2, 0, 0x40000);
-	rom_2 = Machine->memory_region[8] + 0x80000;
+	rom_2 = memory_region(8) + 0x80000;
 
-	rom_3 = Machine->memory_region[Machine->drv->cpu[2].memory_region] + 0x40000;
-	memcpy(Machine->memory_region[8] + 0xc0000, rom_3, 0x40000);
+	rom_3 = memory_region(REGION_CPU3) + 0x40000;
+	memcpy(memory_region(8) + 0xc0000, rom_3, 0x40000);
 	memset(rom_3, 0, 0x40000);
-	rom_3 = Machine->memory_region[8] + 0xc0000;
+	rom_3 = memory_region(8) + 0xc0000;
 
 #if 0
 /* Sprites unpacking - For the Sprite Manager */
 {
-	unsigned int   len = Machine->memory_region_length[2];
-	unsigned char *src = Machine->memory_region[2] + len / 2 - 1;
-	unsigned char *dst = Machine->memory_region[2] + len - 1;
+	unsigned int   len = memory_region_length(2);
+	unsigned char *src = memory_region(2) + len / 2 - 1;
+	unsigned char *dst = memory_region(2) + len - 1;
 
 	while(dst > src)
 	{
@@ -1406,8 +1400,7 @@ GFX & Misc       - GS90015-02 (100 pin PQFP),  uses ROM 90015-31-R56
 ***************************************************************************/
 
 ROM_START( f1gpstar )
-
-	ROM_REGION(0x100000)			/* Region 0 - cpu #1 */
+	ROM_REGIONX( 0x100000, REGION_CPU1 )			/* Region 0 - cpu #1 */
 	ROM_LOAD_EVEN( "9188a-27.v20", 0x000000, 0x040000, 0x0a9d3896 )
 	ROM_LOAD_ODD(  "9188a-22.v20", 0x000000, 0x040000, 0xde15c9ca )
 
@@ -1434,21 +1427,21 @@ ROM_START( f1gpstar )
 	ROM_LOAD_GFX_EVEN( "90015-29.r54",  0x400000, 0x080000, 0x2cdec370 )
 	ROM_LOAD_GFX_ODD(  "90015-30.r55",  0x400000, 0x080000, 0x47e37604 )
 
-	ROM_REGION(0x80000)				/* Region 3 - cpu #2 */
+	ROM_REGIONX( 0x80000, REGION_CPU2 )				/* Region 3 - cpu #2 */
 	/* Should Use ROMs:	90015-01.W06, 90015-02.W07, 90015-03.W08, 90015-04.W09 */
 	ROM_LOAD_EVEN( "9188a-16.v10",  0x000000, 0x020000, 0xef0f7ca9 )
 	ROM_LOAD_ODD(  "9188a-11.v10",  0x000000, 0x020000, 0xde292ea3 )
 
-	ROM_REGION(0x80000)				/* Region 4 - cpu #3 */
+	ROM_REGIONX( 0x80000, REGION_CPU3 )				/* Region 4 - cpu #3 */
 	/* Should Use ROMs:	90015-01.W06, 90015-02.W07, 90015-03.W08, 90015-04.W09 */
 	ROM_LOAD_EVEN( "9188a-6.v10",  0x000000, 0x020000, 0x18ba0340 )
 	ROM_LOAD_ODD(  "9188a-1.v10",  0x000000, 0x020000, 0x109d2913 )
 
-	ROM_REGION(0x40000)				/* Region 5 - cpu #4 (sound cpu) */
+	ROM_REGIONX( 0x40000, REGION_CPU4 )				/* Region 5 - cpu #4 (sound cpu) */
 	ROM_LOAD_EVEN( "9190a-2.v11", 0x000000, 0x020000, 0xacb2fd80 )
 	ROM_LOAD_ODD(  "9190a-1.v11", 0x000000, 0x020000, 0x7cccadaf )
 
-	ROM_REGION(0x80000)				/* Region 6 - samples */
+	ROM_REGION( 0x80000 )				/* Region 6 - samples */
 	ROM_LOAD( "90015-34.w32", 0x000000, 0x080000, 0x2ca9b062 ) // 2 x 0x40000
 
 	ROM_REGION(0x80000)				/* Region 7 - samples */
@@ -1481,8 +1474,6 @@ ROM_START( f1gpstar )
 
 //	ROM_LOAD( "pr90015a",  0x000000, 0x000800, 0x777583db )	// FIXED BITS (00000xxx0000xxxx)
 //	ROM_LOAD( "pr90015b",  0x000000, 0x000100, 0xbe240dac )	// FIXED BITS (000xxxxx000xxxx1)
-
-
 ROM_END
 
 
@@ -1492,19 +1483,19 @@ void f1gpstar_rom_decode(void)
 unsigned char *RAM;
 
 /* cpu #1 patches */
-	RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	RAM = memory_region(REGION_CPU1);
 
 /* cpu #2 patches */
-	RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	RAM = memory_region(REGION_CPU2);
 
 /* cpu #3 patches */
-	RAM = Machine->memory_region[Machine->drv->cpu[2].memory_region];
+	RAM = memory_region(REGION_CPU3);
 
 /* sound cpu patches */
-	RAM = Machine->memory_region[Machine->drv->cpu[3].memory_region];
+	RAM = memory_region(REGION_CPU4);
 
 /* Split ROMs */
-	rom_1 = Machine->memory_region[8] + 0x00000;
+	rom_1 = memory_region(8) + 0x00000;
 
 	cischeat_untangle_sprites(2);
 }

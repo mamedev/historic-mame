@@ -212,7 +212,7 @@ static struct TAITO8741interface gsword_8741interface=
 
 void machine_init(void)
 {
-	unsigned char *ROM2 = Machine->memory_region[3];
+	unsigned char *ROM2 = memory_region(3);
 
 	ROM2[0x1da] = 0xc3; /* patch for rom self check */
 	ROM2[0x726] = 0;    /* patch for sound protection or time out function */
@@ -578,7 +578,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3000000,
-			0,
 			gsword_readmem,gsword_writemem,
 			readport,writeport,
 			interrupt,1
@@ -586,7 +585,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3000000,
-			3,
 			readmem_cpu2,writemem_cpu2,
 			readport_cpu2,writeport_cpu2,
 			gsword_snd_interrupt,4
@@ -594,7 +592,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3000000,
-			4,
 			readmem_cpu3,writemem_cpu3,
 			0,0,
 			ignore_interrupt,0
@@ -638,7 +635,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( gsword )
-	ROM_REGION(0x10000)	/* 64K for main CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64K for main CPU */
 	ROM_LOAD( "gs1",          0x0000, 0x2000, 0x565c4d9e )
 	ROM_LOAD( "gs2",          0x2000, 0x2000, 0xd772accf )
 	ROM_LOAD( "gs3",          0x4000, 0x2000, 0x2cee1871 )
@@ -660,11 +657,11 @@ ROM_START( gsword )
 	ROM_LOAD( "004",          0x0320, 0x0020, 0x43a548b8 )	/* address decoder? not used */
 	ROM_LOAD( "005",          0x0340, 0x0020, 0xe8d6dec0 )	/* address decoder? not used */
 
-	ROM_REGION(0x10000)	/* 64K for 2nd CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64K for 2nd CPU */
 	ROM_LOAD( "gs15",         0x0000, 0x2000, 0x1aa4690e )
 	ROM_LOAD( "gs16",         0x2000, 0x2000, 0x10accc10 )
 
-	ROM_REGION(0x10000)	/* 64K for 3nd z80 */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64K for 3nd z80 */
 	ROM_LOAD( "gs12",         0x0000, 0x2000, 0xa6589068 )
 	ROM_LOAD( "gs13",         0x2000, 0x2000, 0x4ee79796 )
 	ROM_LOAD( "gs14",         0x4000, 0x2000, 0x455364b6 )
@@ -675,7 +672,7 @@ static int gsword_hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
         /* Work RAM - 9c00 (3*10 for scores), 9c78(6*10 for names)*/
         /* check if the hi score table has already been initialized */
@@ -699,7 +696,7 @@ static void gsword_hisave(void)
     	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
 
 	if (f)

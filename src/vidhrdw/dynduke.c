@@ -212,10 +212,10 @@ void dynduke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int colmask[32],i,pal_base;
 
 	/* Setup the tilemaps */
-	tilemap_set_scrolly( background_layer,0, ((dynduke_scroll_ram[0x02]<<8)+dynduke_scroll_ram[0x04]) );
+	tilemap_set_scrolly( background_layer,0, ((dynduke_scroll_ram[0x02]&0x30)<<4)+((dynduke_scroll_ram[0x04]&0x7f)<<1)+((dynduke_scroll_ram[0x04]&0x80)>>7) );
 	tilemap_set_scrollx( background_layer,0, ((dynduke_scroll_ram[0x12]&0x30)<<4)+((dynduke_scroll_ram[0x14]&0x7f)<<1)+((dynduke_scroll_ram[0x14]&0x80)>>7) );
-	tilemap_set_scrolly( foreground_layer,0, ((dynduke_scroll_ram[0x22]<<8)+dynduke_scroll_ram[0x24]) );
-	tilemap_set_scrollx( foreground_layer,0, ((dynduke_scroll_ram[0x32]&0x30)<<4)+((dynduke_scroll_ram[0x34]&0x7f)<<1)+((dynduke_scroll_ram[0x14]&0x80)>>7) );
+	tilemap_set_scrolly( foreground_layer,0, ((dynduke_scroll_ram[0x22]&0x30)<<4)+((dynduke_scroll_ram[0x24]&0x7f)<<1)+((dynduke_scroll_ram[0x24]&0x80)>>7) );
+	tilemap_set_scrollx( foreground_layer,0, ((dynduke_scroll_ram[0x32]&0x30)<<4)+((dynduke_scroll_ram[0x34]&0x7f)<<1)+((dynduke_scroll_ram[0x34]&0x80)>>7) );
 	tilemap_set_enable( background_layer,back_enable);
 	tilemap_set_enable( foreground_layer,fore_enable);
 	tilemap_update(ALL_TILEMAPS);

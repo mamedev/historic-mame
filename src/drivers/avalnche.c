@@ -136,7 +136,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
 			12096000/16, 	   /* clock input is the "2H" signal divided by two */
-			0,
 			readmem,writemem,0,0,
 			avalnche_interrupt,32	/* interrupt at a 4V frequency for sound */
 		}
@@ -191,7 +190,7 @@ static void avalnche_rom_init(void)
 ***************************************************************************/
 
 ROM_START( avalnche )
-	ROM_REGION(0x10000) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	/* Note: These are being loaded into a bogus location, */
 	/*		 They are nibble wide rom images which will be */
 	/*		 merged and loaded into the proper place by    */
@@ -215,7 +214,7 @@ static int hiload(void)
 {
 	static int firsttime = 0;
 
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	if (firsttime == 0)
 	{
 		memset(&RAM[0x009b],0xff,2);
@@ -243,7 +242,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

@@ -317,7 +317,7 @@ static void bankselect_w(int offset, int data)
 
 	int oldword = READ_WORD(&bankselect[offset]);
 	int newword = COMBINE_WORD(oldword, data);
-	UINT8 *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 	UINT8 *base = &RAM[bankoffset[(newword >> 10) & 0x3f]];
 
 	WRITE_WORD(&bankselect[offset], newword);
@@ -1195,14 +1195,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_T11,
 			10000000,	/* 10 MHz */
-			0,
 			main_readmem,main_writemem,0,0,
 			vblank_interrupt,1
 		},
 		{
 			CPU_M6502,
 			7159160/4,
-			1,
 			sound_readmem,sound_writemem,0,0,
 			atarigen_6502_irq_gen,4
 		},
@@ -1249,14 +1247,12 @@ static struct MachineDriver a720_machine_driver =
 		{
 			CPU_T11,
 			10000000,	/* 10 MHz */
-			0,
 			main_readmem,main_writemem,0,0,
 			vblank_interrupt,1
 		},
 		{
 			CPU_M6502,
 			2000000,	/* artifically high to prevent deadlock at startup 7159160/4,*/
-			1,
 			sound_readmem,sound_writemem,0,0,
 			atarigen_6502_irq_gen,4
 		},
@@ -1303,14 +1299,12 @@ static struct MachineDriver sprint_machine_driver =
 		{
 			CPU_T11,
 			10000000,	/* 10 MHz */
-			0,
 			main_readmem,main_writemem,0,0,
 			vblank_interrupt,1
 		},
 		{
 			CPU_M6502,
 			7159160/4,
-			1,
 			sound_readmem,sound_writemem,0,0,
 			atarigen_6502_irq_gen,4
 		},
@@ -1359,7 +1353,7 @@ static void rom_decode(void)
 
 	/* invert the bits of the sprites */
 	for (i = 0x80000; i < 0x180000; i++)
-		Machine->memory_region[2][i] ^= 0xff;
+		memory_region(2)[i] ^= 0xff;
 }
 
 
@@ -1406,9 +1400,9 @@ static void paperboy_init(void)
 	/* expand the 16k program ROMs into full 64k chunks */
 	for (i = 0x10000; i < 0x90000; i += 0x20000)
 	{
-		memcpy(&memory_region(Machine->drv->cpu[0].memory_region)[i + 0x08000], &memory_region(Machine->drv->cpu[0].memory_region)[i], 0x8000);
-		memcpy(&memory_region(Machine->drv->cpu[0].memory_region)[i + 0x10000], &memory_region(Machine->drv->cpu[0].memory_region)[i], 0x8000);
-		memcpy(&memory_region(Machine->drv->cpu[0].memory_region)[i + 0x18000], &memory_region(Machine->drv->cpu[0].memory_region)[i], 0x8000);
+		memcpy(&memory_region(REGION_CPU1)[i + 0x08000], &memory_region(REGION_CPU1)[i], 0x8000);
+		memcpy(&memory_region(REGION_CPU1)[i + 0x10000], &memory_region(REGION_CPU1)[i], 0x8000);
+		memcpy(&memory_region(REGION_CPU1)[i + 0x18000], &memory_region(REGION_CPU1)[i], 0x8000);
 	}
 
 	atarigen_eeprom_default = compressed_default_eeprom;
@@ -1478,7 +1472,7 @@ static void ssprint_init(void)
 
 	/* expand the 32k program ROMs into full 64k chunks */
 	for (i = 0x10000; i < 0x90000; i += 0x20000)
-		memcpy(&memory_region(Machine->drv->cpu[0].memory_region)[i + 0x10000], &memory_region(Machine->drv->cpu[0].memory_region)[i], 0x10000);
+		memcpy(&memory_region(REGION_CPU1)[i + 0x10000], &memory_region(REGION_CPU1)[i], 0x10000);
 
 	atarigen_eeprom_default = compressed_default_eeprom;
 	slapstic_init(108);
@@ -1532,7 +1526,7 @@ static void csprint_init(void)
 
 	/* expand the 32k program ROMs into full 64k chunks */
 	for (i = 0x10000; i < 0x90000; i += 0x20000)
-		memcpy(&memory_region(Machine->drv->cpu[0].memory_region)[i + 0x10000], &memory_region(Machine->drv->cpu[0].memory_region)[i], 0x10000);
+		memcpy(&memory_region(REGION_CPU1)[i + 0x10000], &memory_region(REGION_CPU1)[i], 0x10000);
 
 	atarigen_eeprom_default = compressed_default_eeprom;
 	slapstic_init(109);
@@ -1576,7 +1570,7 @@ static void apb_init(void)
  *************************************/
 
 ROM_START( paperboy )
-	ROM_REGION(0x90000)	/* 9*64k for T11 code */
+	ROM_REGIONX( 0x90000, REGION_CPU1 )	/* 9*64k for T11 code */
 	ROM_LOAD_ODD ( "cpu_l07.bin",  0x08000, 0x04000, 0x4024bb9b )
 	ROM_LOAD_EVEN( "cpu_n07.bin",  0x08000, 0x04000, 0x0260901a )
 	ROM_LOAD_ODD ( "cpu_f06.bin",  0x10000, 0x04000, 0x3fea86ac )
@@ -1588,7 +1582,7 @@ ROM_START( paperboy )
 	ROM_LOAD_ODD ( "cpu_l06.bin",  0x70000, 0x04000, 0x8a754466 )
 	ROM_LOAD_EVEN( "cpu_s06.bin",  0x70000, 0x04000, 0x224209f9 )
 
-	ROM_REGION(0x10000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "cpu_a02.bin",  0x04000, 0x04000, 0x4a759092 )
 	ROM_LOAD( "cpu_b02.bin",  0x08000, 0x04000, 0xe4e7a8b9 )
 	ROM_LOAD( "cpu_c02.bin",  0x0c000, 0x04000, 0xd44c2aa2 )
@@ -1613,7 +1607,7 @@ ROM_END
 
 
 ROM_START( 720 )
-	ROM_REGION(0x90000)     /* 9 * 64k T11 code */
+	ROM_REGIONX( 0x90000, REGION_CPU1 )     /* 9 * 64k T11 code */
 	ROM_LOAD_ODD ( "3126.rom",     0x08000, 0x04000, 0x43abd367 )
 	ROM_LOAD_EVEN( "3127.rom",     0x08000, 0x04000, 0x772e1e5b )
 	ROM_LOAD_ODD ( "3128.rom",     0x10000, 0x10000, 0xbf6f425b )
@@ -1623,7 +1617,7 @@ ROM_START( 720 )
 	ROM_LOAD_ODD ( "1130.rom",     0x50000, 0x10000, 0x93fba845 )
 	ROM_LOAD_EVEN( "1133.rom",     0x50000, 0x10000, 0x53c177be )
 
-	ROM_REGION(0x10000)     /* 64k for 6502 code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for 6502 code */
 	ROM_LOAD( "1134.rom",     0x04000, 0x04000, 0x09a418c2 )
 	ROM_LOAD( "1135.rom",     0x08000, 0x04000, 0xb1f157d0 )
 	ROM_LOAD( "1136.rom",     0x0c000, 0x04000, 0xdad40e6d )
@@ -1676,7 +1670,7 @@ ROM_END
 
 
 ROM_START( 720b )
-	ROM_REGION(0x90000)     /* 9 * 64k T11 code */
+	ROM_REGIONX( 0x90000, REGION_CPU1 )     /* 9 * 64k T11 code */
 	ROM_LOAD_ODD ( "2126.7l",      0x08000, 0x04000, 0xd07e731c )
 	ROM_LOAD_EVEN( "2127.7n",      0x08000, 0x04000, 0x2d19116c )
 	ROM_LOAD_ODD ( "2128.6f",      0x10000, 0x10000, 0xedad0bc0 )
@@ -1686,7 +1680,7 @@ ROM_START( 720b )
 	ROM_LOAD_ODD ( "1130.rom",     0x50000, 0x10000, 0x93fba845 )
 	ROM_LOAD_EVEN( "1133.rom",     0x50000, 0x10000, 0x53c177be )
 
-	ROM_REGION(0x10000)     /* 64k for 6502 code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for 6502 code */
 	ROM_LOAD( "1134.rom",     0x04000, 0x04000, 0x09a418c2 )
 	ROM_LOAD( "1135.rom",     0x08000, 0x04000, 0xb1f157d0 )
 	ROM_LOAD( "1136.rom",     0x0c000, 0x04000, 0xdad40e6d )
@@ -1739,7 +1733,7 @@ ROM_END
 
 
 ROM_START( ssprint )
-	ROM_REGION(0x90000)	/* 9*64k for T11 code */
+	ROM_REGIONX( 0x90000, REGION_CPU1 )	/* 9*64k for T11 code */
 	ROM_LOAD_ODD ( "136042.330",   0x08000, 0x04000, 0xee312027 )
 	ROM_LOAD_EVEN( "136042.331",   0x08000, 0x04000, 0x2ef15354 )
 	ROM_LOAD_ODD ( "136042.329",   0x10000, 0x08000, 0xed1d6205 )
@@ -1749,7 +1743,7 @@ ROM_START( ssprint )
 	ROM_LOAD_ODD ( "136042.126",   0x70000, 0x08000, 0x92f5392c )
 	ROM_LOAD_EVEN( "136042.122",   0x70000, 0x08000, 0x0381f362 )
 
-	ROM_REGION(0x10000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "136042.419",   0x08000, 0x4000, 0xb277915a )
 	ROM_LOAD( "136042.420",   0x0c000, 0x4000, 0x170b2c53 )
 
@@ -1781,7 +1775,7 @@ ROM_END
 
 
 ROM_START( csprint )
-	ROM_REGION(0x90000)	/* 9*64k for T11 code */
+	ROM_REGIONX( 0x90000, REGION_CPU1 )	/* 9*64k for T11 code */
 	ROM_LOAD_ODD ( "045-2126.7l",  0x08000, 0x04000, 0x0ff83de8 )
 	ROM_LOAD_EVEN( "045-1127.7mn", 0x08000, 0x04000, 0xe3e37258 )
 	ROM_LOAD_ODD ( "045-1125.6f",  0x10000, 0x08000, 0x650623d2 )
@@ -1791,7 +1785,7 @@ ROM_START( csprint )
 	ROM_LOAD_ODD ( "045-1123.6l",  0x70000, 0x08000, 0x0a4d216a )
 	ROM_LOAD_EVEN( "045-1120.6s",  0x70000, 0x08000, 0x103f3fde )
 
-	ROM_REGION(0x10000)	/* 64k for 6502 code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for 6502 code */
 	ROM_LOAD( "045-1118.2bc", 0x08000, 0x4000, 0xeba41b2f )
 	ROM_LOAD( "045-1119.2d",  0x0c000, 0x4000, 0x9e49043a )
 
@@ -1821,7 +1815,7 @@ ROM_END
 
 
 ROM_START( apb )
-	ROM_REGION(0x90000)     /* 9 * 64k T11 code */
+	ROM_REGIONX( 0x90000, REGION_CPU1 )     /* 9 * 64k T11 code */
 	ROM_LOAD_ODD ( "2126",    0x08000, 0x04000, 0x8edf4726 )
 	ROM_LOAD_EVEN( "2127",    0x08000, 0x04000, 0xe2b2aff2 )
 	ROM_LOAD_ODD ( "5128",    0x10000, 0x10000, 0x4b4ff365 )
@@ -1831,7 +1825,7 @@ ROM_START( apb )
 	ROM_LOAD_ODD ( "1132",    0x70000, 0x10000, 0x6d0e7a4e )
 	ROM_LOAD_EVEN( "1133",    0x70000, 0x10000, 0xaf88d429 )
 
-	ROM_REGION(0x10000)     /* 64k for 6502 code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for 6502 code */
 	ROM_LOAD( "4134",         0x04000, 0x04000, 0x45e03b0e )
 	ROM_LOAD( "4135",         0x08000, 0x04000, 0xb4ca24b2 )
 	ROM_LOAD( "4136",         0x0c000, 0x04000, 0x11efaabf )
@@ -1890,7 +1884,7 @@ ROM_END
 
 
 ROM_START( apb2 )
-	ROM_REGION(0x90000)     /* 9 * 64k T11 code */
+	ROM_REGIONX( 0x90000, REGION_CPU1 )     /* 9 * 64k T11 code */
 	ROM_LOAD_ODD ( "2126",         0x08000, 0x04000, 0x8edf4726 )
 	ROM_LOAD_EVEN( "2127",         0x08000, 0x04000, 0xe2b2aff2 )
 	ROM_LOAD_ODD ( "4128",         0x10000, 0x10000, 0x46009f6b )
@@ -1900,7 +1894,7 @@ ROM_START( apb2 )
 	ROM_LOAD_ODD ( "1132",         0x70000, 0x10000, 0x6d0e7a4e )
 	ROM_LOAD_EVEN( "1133",         0x70000, 0x10000, 0xaf88d429 )
 
-	ROM_REGION(0x10000)     /* 64k for 6502 code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for 6502 code */
 	ROM_LOAD( "5134",         0x04000, 0x04000, 0x1c8bdeed )
 	ROM_LOAD( "5135",         0x08000, 0x04000, 0xed6adb91 )
 	ROM_LOAD( "5136",         0x0c000, 0x04000, 0x341f8486 )

@@ -151,7 +151,7 @@ static int sound_status_r(int offset)
 
 static void sound_bankswitch_w(int offset, int data)
 {
-	cpu_setbank(3, Machine->memory_region[2] + 0x10000 + (data&7)*0x2000);
+	cpu_setbank(3, memory_region(2) + 0x10000 + (data&7)*0x2000);
 }
 
 static int back_ctrla_r(int offset)
@@ -188,7 +188,7 @@ static int backrom_r(int offset)
 {
 	if(errorlog && !(cur_back_ctrla & 1))
 		fprintf(errorlog, "Back: Reading rom memory with enable=0\n");
-	return *(Machine->memory_region[3] + 2048*cur_back_select + (offset>>2));
+	return *(memory_region(3) + 2048*cur_back_select + (offset>>2));
 }
 
 static int nvram_load(void)
@@ -342,7 +342,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,
 			16000000,	/* 16 MHz ? (xtal is 32MHz) */
-			0,
 			readmem, writemem, 0, 0,
 			xexex_interrupt, 3	/* ??? */
 		},
@@ -350,7 +349,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			2000000,	/* 2 MHz ? (xtal is 32MHz/19.432Mhz) */
-			4,
 			sound_readmem, sound_writemem, 0, 0,
 			ignore_interrupt, 1
 		},
@@ -379,13 +377,13 @@ static struct MachineDriver machine_driver =
 
 
 ROM_START( xexex )
-	ROM_REGION(0x180000)
+	ROM_REGIONX( 0x180000, REGION_CPU1 )
 	ROM_LOAD_EVEN("xex_a01.rom", 0x000000,  0x40000, 0x3ebcb066 )
 	ROM_LOAD_ODD ("xex_a02.rom", 0x000000,  0x40000, 0x36ea7a48 )
 	ROM_LOAD_EVEN("xex_b03.rom", 0x100000,  0x40000, 0x97833086 )
 	ROM_LOAD_ODD ("xex_b04.rom", 0x100000,  0x40000, 0x26ec5dc8 )
 
-	ROM_REGION(0x200000)
+	ROM_REGION( 0x200000 )
 	ROM_LOAD     ("xex_b14.rom", 0x000000, 0x100000, 0x02a44bfa )
 	ROM_LOAD     ("xex_b13.rom", 0x100000, 0x100000, 0x633c8eb5 )
 

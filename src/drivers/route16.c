@@ -260,14 +260,12 @@ static struct MachineDriver GAMENAME##_machine_driver =		\
 		{													\
 			CPU_Z80 | CPU_16BIT_PORT,						\
 			2500000,	/* 10Mhz / 4 = 2.5Mhz */			\
-			0,												\
 			cpu1_readmem,cpu1_writemem,0,cpu1_writeport,	\
 			interrupt,1										\
 		},													\
 		{													\
 			CPU_Z80,										\
 			2500000,	/* 10Mhz / 4 = 2.5Mhz */			\
-			2,												\
 			cpu2_readmem,cpu2_writemem,0,0,					\
 			ignore_interrupt,0								\
 		}													\
@@ -325,7 +323,7 @@ MACHINE_DRIVER(stratvox, STRATVOX_AUDIO_INTERFACE)
 ***************************************************************************/
 
 ROM_START( route16 )
-	ROM_REGION(0x10000)  // 64k for the first CPU
+	ROM_REGIONX( 0x10000, REGION_CPU1 )  // 64k for the first CPU
 	ROM_LOAD( "route16.a0",   0x0000, 0x0800, 0x8f9101bd )
 	ROM_LOAD( "route16.a1",   0x0800, 0x0800, 0x389bc077 )
 	ROM_LOAD( "route16.a2",   0x1000, 0x0800, 0x1065a468 )
@@ -338,7 +336,7 @@ ROM_START( route16 )
 	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
 	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
 
-	ROM_REGION(0x10000)  // 64k for the second CPU
+	ROM_REGIONX( 0x10000, REGION_CPU2 )  // 64k for the second CPU
 	ROM_LOAD( "route16.b0",   0x0000, 0x0800, 0x0f9588a7 )
 	ROM_LOAD( "route16.b1",   0x0800, 0x0800, 0x2b326cf9 )
 	ROM_LOAD( "route16.b2",   0x1000, 0x0800, 0x529cad13 )
@@ -346,7 +344,7 @@ ROM_START( route16 )
 ROM_END
 
 ROM_START( route16b )
-	ROM_REGION(0x10000)  // 64k for the first CPU
+	ROM_REGIONX( 0x10000, REGION_CPU1 )  // 64k for the first CPU
 	ROM_LOAD( "rt16.0",       0x0000, 0x0800, 0xb1f0f636 )
 	ROM_LOAD( "rt16.1",       0x0800, 0x0800, 0x3ec52fe5 )
 	ROM_LOAD( "rt16.2",       0x1000, 0x0800, 0xa8e92871 )
@@ -359,7 +357,7 @@ ROM_START( route16b )
 	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
 	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
 
-	ROM_REGION(0x10000)  // 64k for the second CPU
+	ROM_REGIONX( 0x10000, REGION_CPU2 )  // 64k for the second CPU
 	ROM_LOAD( "rt16.6",       0x0000, 0x0800, 0xfef605f3 )
 	ROM_LOAD( "rt16.7",       0x0800, 0x0800, 0xd0d6c189 )
 	ROM_LOAD( "rt16.8",       0x1000, 0x0800, 0xdefc5797 )
@@ -367,7 +365,7 @@ ROM_START( route16b )
 ROM_END
 
 ROM_START( stratvox )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "ls01.bin",     0x0000, 0x0800, 0xbf4d582e )
 	ROM_LOAD( "ls02.bin",     0x0800, 0x0800, 0x16739dd4 )
 	ROM_LOAD( "ls03.bin",     0x1000, 0x0800, 0x083c28de )
@@ -380,13 +378,13 @@ ROM_START( stratvox )
 	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
 	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "ls07.bin",     0x0000, 0x0800, 0x4d333985 )
 	ROM_LOAD( "ls08.bin",     0x0800, 0x0800, 0x35b753fc )
 ROM_END
 
 ROM_START( stratvxb )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "ls01.bin",     0x0000, 0x0800, 0xbf4d582e )
 	ROM_LOAD( "ls02.bin",     0x0800, 0x0800, 0x16739dd4 )
 	ROM_LOAD( "ls03.bin",     0x1000, 0x0800, 0x083c28de )
@@ -399,13 +397,13 @@ ROM_START( stratvxb )
 	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
 	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "ls07.bin",     0x0000, 0x0800, 0x4d333985 )
 	ROM_LOAD( "ls08.bin",     0x0800, 0x0800, 0x35b753fc )
 ROM_END
 
 ROM_START( speakres )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "speakres.1",   0x0000, 0x0800, 0x6026e4ea )
 	ROM_LOAD( "speakres.2",   0x0800, 0x0800, 0x93f0d4da )
 	ROM_LOAD( "speakres.3",   0x1000, 0x0800, 0xa3874304 )
@@ -418,7 +416,7 @@ ROM_START( speakres )
 	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
 	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
 
-	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
 	ROM_LOAD( "speakres.7",   0x0000, 0x0800, 0xd417be13 )
 	ROM_LOAD( "speakres.8",   0x0800, 0x0800, 0x52485d60 )
 ROM_END
@@ -427,7 +425,7 @@ ROM_END
 
 static int route16_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	static int firsttime = 0;
 
 	if (firsttime == 0)
@@ -455,7 +453,7 @@ static int route16_hiload(void)
 static void route16_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -468,7 +466,7 @@ static void route16_hisave(void)
 
 static int stratvox_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	static int firsttime = 0;
 
 	if (firsttime == 0)
@@ -497,7 +495,7 @@ static int stratvox_hiload(void)
 static void stratvox_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -510,7 +508,7 @@ static void stratvox_hisave(void)
 
 static int speakres_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	static int firsttime = 0;
 
 	if (firsttime == 0)
@@ -540,7 +538,7 @@ static int speakres_hiload(void)
 static void speakres_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

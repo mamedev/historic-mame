@@ -44,7 +44,7 @@ static void cbasebal_bankswitch_w(int offset,int data)
 	if ((data & 0x1f) != olddata)
 	{
 		int bankaddress;
-		unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+		unsigned char *RAM = memory_region(REGION_CPU1);
 
 //if (errorlog) fprintf(errorlog,"%04x: bankswitch %02x\n",cpu_get_pc(),data);
 		bankaddress = 0x10000 + (data & 0x1f) * 0x4000;
@@ -317,7 +317,6 @@ static struct MachineDriver cbasebal_machine_driver =
 		{
 			CPU_Z80,
 			6000000,	/* ??? */
-			0,
 			cbasebal_readmem,cbasebal_writemem,cbasebal_readport,cbasebal_writeport,
 			interrupt,1	/* ??? */
 		},
@@ -351,7 +350,7 @@ static struct MachineDriver cbasebal_machine_driver =
 
 
 ROM_START( cbasebal )
-	ROM_REGION(0x90000)
+	ROM_REGIONX( 0x90000, REGION_CPU1 )
 	ROM_LOAD( "cbj10.11j",    0x00000, 0x08000, 0xbbff0acc )
 	ROM_LOAD( "cbj07.16f",    0x10000, 0x20000, 0x8111d13f )
 	ROM_LOAD( "cbj06.14f",    0x30000, 0x20000, 0x9aaa0e37 )
@@ -369,7 +368,7 @@ ROM_START( cbasebal )
 	ROM_LOAD( "cbj15.2n",     0x0e0000, 0x20000, 0x74756de5 )
 	ROM_LOAD( "cbj13.16m",    0x100000, 0x10000, 0x2359fa0a )	/* text */
 
-	ROM_REGION(0x80000)	/* OKIM */
+	ROM_REGION( 0x80000 )	/* OKIM */
 	ROM_LOAD( "cbj01.1e",     0x00000, 0x20000, 0x1d8968bd )
 ROM_END
 

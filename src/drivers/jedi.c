@@ -284,14 +284,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
             2500000,    /* 2.5 Mhz */
-			0,
 			readmem,writemem,0,0,
             interrupt,4
 		},
 		{
             CPU_M6502,
             1500000,        /* 1.5 Mhz */
-            2,
 			readmem2,writemem2,0,0,
             interrupt,4
 		}
@@ -336,7 +334,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( jedi )
-	ROM_REGION(0x1C000)	/* 64k for code + 48k for banked ROMs */
+	ROM_REGIONX( 0x1C000, REGION_CPU1 )	/* 64k for code + 48k for banked ROMs */
 	ROM_LOAD( "14f_221.bin",  0x08000, 0x4000, 0x414d05e3 )
 	ROM_LOAD( "13f_222.bin",  0x0c000, 0x4000, 0x7b3f21be )
 	ROM_LOAD( "13d_123.bin",  0x10000, 0x4000, 0x877f554a )	/* Page 0 */
@@ -352,7 +350,7 @@ ROM_START( jedi )
 	ROM_LOAD( "01m_128.bin",  0x22000, 0x8000, 0x24663184 )
 	ROM_LOAD( "01k_129.bin",  0x2a000, 0x8000, 0xac86b98c )
 
-	ROM_REGION(0x10000)	/* space for the sound ROMs */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* space for the sound ROMs */
 	ROM_LOAD( "01c_133.bin",  0x8000, 0x4000, 0x6c601c69 )
 	ROM_LOAD( "01a_134.bin",  0xC000, 0x4000, 0x5e36c564 )
 ROM_END
@@ -360,7 +358,7 @@ ROM_END
 static int novram_load(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
@@ -374,7 +372,7 @@ static int novram_load(void)
 static void novram_save(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

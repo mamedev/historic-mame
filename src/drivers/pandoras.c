@@ -432,28 +432,24 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,		/* CPU A */
 			3000000,		/* ? */
-			0,
 			pandoras_readmem_a,pandoras_writemem_a,0,0,
             pandoras_interrupt_a,1,
         },
 		{
 			CPU_M6809,		/* CPU B */
 			3000000,		/* ? */
-			3,
 			pandoras_readmem_b,pandoras_writemem_b,0,0,
             pandoras_interrupt_b,1,
         },
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,		/* ? */
-			4,
 			pandoras_readmem_snd,pandoras_writemem_snd,0,0,
 			ignore_interrupt,1
 		},
 		{
 			CPU_I8039 | CPU_AUDIO_CPU,
 			8000000/15,		/* ? */
-			5,
 			i8039_readmem,i8039_writemem,i8039_readport,i8039_writeport,
 			ignore_interrupt,1
 		},
@@ -496,7 +492,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( pandoras )
-	ROM_REGION( 0x10000 ) /* 64K for the CPU A */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64K for the CPU A */
 	ROM_LOAD( "pand_j13.cpu",	0x08000, 0x02000, 0x7a0fe9c5 )
 	ROM_LOAD( "pand_j12.cpu",	0x0a000, 0x02000, 0x7dc4bfe1 )
 	ROM_LOAD( "pand_j10.cpu",	0x0c000, 0x02000, 0xbe3af3b7 )
@@ -514,15 +510,14 @@ ROM_START( pandoras )
 	ROM_LOAD( "pandora.17g",	0x0020, 0x100, 0xc1a90cfc ) /* sprite lookup table */
 	ROM_LOAD( "pandora.16b",	0x0120, 0x100, 0xc89af0c3 ) /* character lookup table */
 
-	ROM_REGION( 0x10000 ) /* 64K for the CPU B */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64K for the CPU B */
 	ROM_LOAD( "pand_j5.cpu",	0x0e000, 0x02000, 0x4aab190b )
 
-	ROM_REGION( 0x10000 ) /* 64K for the Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* 64K for the Sound CPU */
 	ROM_LOAD( "pand_6c.snd",	0x00000, 0x02000, 0x0c1f109d )
 
-	ROM_REGION( 0x1000 ) /* 4K for the Sound CPU 2 */
+	ROM_REGIONX( 0x1000, REGION_CPU4 ) /* 4K for the Sound CPU 2 */
 	ROM_LOAD( "pand_7e.snd",	0x00000, 0x01000, 0x18b0f9d0 )
-
 ROM_END
 
 /***************************************************************************

@@ -507,14 +507,12 @@ static struct MachineDriver NAME##_machine_driver =                       \
 		{                                                                 \
 			CPU_Z80,                                                      \
 			4000000,	/* 4 Mhz? */                                      \
-			0,                                                            \
 			readmem,writemem,0,0,                                         \
 			senjyo_interrupt,1                                            \
 		},                                                                \
 		{                                                                 \
 			CPU_Z80 | CPU_AUDIO_CPU,                                      \
 			2000000,	/* 2 Mhz? */                                      \
-			2,                                                            \
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,  \
 			0,0, /* interrupts are made by z80 daisy chain system */      \
 			0,0,daisy_chain                                               \
@@ -562,13 +560,13 @@ MACHINE_DRV(starforc);
 ***************************************************************************/
 
 ROM_START( senjyo )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "08m_05t.bin", 0x0000, 0x2000, 0xb1f3544d )
 	ROM_LOAD( "08k_04t.bin", 0x2000, 0x2000, 0xe34468a8 )
 	ROM_LOAD( "08j_03t.bin", 0x4000, 0x2000, 0xc33aedee )
 	ROM_LOAD( "08f_02t.bin", 0x6000, 0x2000, 0x0ef4db9e )
 
-	ROM_REGION(0x18000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x18000)     /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "08h_08b.bin", 0x00000, 0x1000, 0x0c875994 )	/* fg */
 	ROM_LOAD( "08f_07b.bin", 0x01000, 0x1000, 0x497bea8e )
 	ROM_LOAD( "08d_06b.bin", 0x02000, 0x1000, 0x4ef69b00 )
@@ -585,7 +583,7 @@ ROM_START( senjyo )
 	ROM_LOAD( "08j_09b.bin", 0x14000, 0x2000, 0x1ee63b5c )
 	ROM_LOAD( "08k_10b.bin", 0x16000, 0x2000, 0xa9f41ec9 )
 
-	ROM_REGION(0x10000)     /* 64k for sound board */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for sound board */
 	ROM_LOAD( "02h_01t.bin", 0x0000, 0x2000, 0xc1c24455 )
 
 	ROM_REGION(0x0020)     /* PROMs */
@@ -593,7 +591,7 @@ ROM_START( senjyo )
 ROM_END
 
 ROM_START( starforc )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "starforc.3",   0x0000, 0x4000, 0x8ba27691 )
 	ROM_LOAD( "starforc.2",   0x4000, 0x4000, 0x0fc4d2d6 )
 
@@ -614,7 +612,7 @@ ROM_START( starforc )
 	ROM_LOAD( "starforc.5",   0x16000, 0x4000, 0xf71717f8 )
 	ROM_LOAD( "starforc.4",   0x1a000, 0x4000, 0xdd9d68a4 )
 
-	ROM_REGION(0x10000)     /* 64k for sound board */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for sound board */
 	ROM_LOAD( "starforc.1",   0x0000, 0x2000, 0x2735bb22 )
 
 	ROM_REGION(0x0020)     /* PROMs */
@@ -622,7 +620,7 @@ ROM_START( starforc )
 ROM_END
 
 ROM_START( starfore )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "starfore.005", 0x0000, 0x2000, 0x825f7ebe )
 	ROM_LOAD( "starfore.004", 0x2000, 0x2000, 0xfbcecb65 )
 	ROM_LOAD( "starfore.003", 0x4000, 0x2000, 0x9f8013b9 )
@@ -645,7 +643,7 @@ ROM_START( starfore )
 	ROM_LOAD( "starforc.5",   0x16000, 0x4000, 0xf71717f8 )
 	ROM_LOAD( "starforc.4",   0x1a000, 0x4000, 0xdd9d68a4 )
 
-	ROM_REGION(0x10000)     /* 64k for sound board */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for sound board */
 	ROM_LOAD( "starfore.000", 0x0000, 0x2000, 0xa277c268 )
 
 	ROM_REGION(0x0020)     /* PROMs */
@@ -653,7 +651,7 @@ ROM_START( starfore )
 ROM_END
 
 ROM_START( megaforc )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "mf3.bin",      0x0000, 0x4000, 0xd3ea82ec )
 	ROM_LOAD( "mf2.bin",      0x4000, 0x4000, 0xaa320718 )
 
@@ -674,7 +672,7 @@ ROM_START( megaforc )
 	ROM_LOAD( "starforc.5",   0x16000, 0x4000, 0xf71717f8 )
 	ROM_LOAD( "starforc.4",   0x1a000, 0x4000, 0xdd9d68a4 )
 
-	ROM_REGION(0x10000)     /* 64k for sound board */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for sound board */
 	ROM_LOAD( "starforc.1",   0x0000, 0x2000, 0x2735bb22 )
 
 	ROM_REGION(0x0020)     /* PROMs */
@@ -685,7 +683,7 @@ ROM_END
 
 static int starforc_hiload(void)
 {
-        unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+        unsigned char *RAM = memory_region(REGION_CPU1);
 
 
         if (memcmp(&RAM[0x8348],"\x00\x08\x05\x00",4) == 0 &&
@@ -737,7 +735,7 @@ static void starforc_hisave(void)
 {
         void *f;
         int i;
-        unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+        unsigned char *RAM = memory_region(REGION_CPU1);
 
 
         /* Bug to solve the problem about resetting in the hi-score screen */

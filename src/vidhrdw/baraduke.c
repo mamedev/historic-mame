@@ -2,7 +2,7 @@
 #include "vidhrdw/generic.h"
 #include "tilemap.h"
 
-unsigned char *textlayerram, *baraduke_videoram;
+unsigned char *baraduke_textram, *baraduke_videoram;
 
 static struct tilemap *tilemap[2];	/* backgrounds */
 static int xscroll[2], yscroll[2];	/* scroll registers */
@@ -150,7 +150,7 @@ void baraduke_scroll1_w(int offset,int data)
 
 ***************************************************************************/
 
-static void draw_sprites( struct osd_bitmap *bitmap )
+static void draw_sprites(struct osd_bitmap *bitmap, int priority)
 {
 	const struct rectangle *clip = &Machine->drv->visible_area;
 
@@ -163,7 +163,7 @@ static void draw_sprites( struct osd_bitmap *bitmap )
 	while( source<finish )
 	{
 /*
-	source[4]	S-FT ----
+	source[4]	S-FT ---P
 	source[5]	TTTT TTTT
 	source[6]   CCCC CCCX
 	source[7]	XXXX XXXX
@@ -171,43 +171,47 @@ static void draw_sprites( struct osd_bitmap *bitmap )
 	source[9]   YYYY YYYY
 */
 		{
-			unsigned char priority = source[8];
 			unsigned char attrs = source[4];
+			unsigned char attr2 = source[8];
 			unsigned char color = source[6];
 			int sx = source[7] + (color & 0x01)*256; /* need adjust for left clip */
 			int sy = -source[9];
 			int flipx = attrs & 0x20;
-			int flipy = priority & 0x01;
-			int tall = (priority & 0x04) ? 1 : 0;
+			int flipy = attr2 & 0x01;
+			int tall = (attr2 & 0x04) ? 1 : 0;
 			int wide = (attrs & 0x80) ? 1 : 0;
+			int pri = attrs & 0x01;
 			int sprite_number = (source[5] & 0xff)*4;
 			int row,col;
 
-			if ((attrs & 0x10) && !wide) sprite_number += 1;
-			if ((priority & 0x10) && !tall) sprite_number += 2;
-			color = color >> 1;
-
-			if( sx > 512 - 32 ) sx -= 512;
-
-			if( flipx && !wide ) sx -= 16;
-			if( !tall ) sy += 16;
-			if( !tall && (priority & 0x10) && flipy ) sy -= 16;
-
-			sx += sprite_xoffs;
-			sy -= sprite_yoffs;
-
-			for( row=0; row<=tall; row++ )
+			if (pri == priority)
 			{
-				for( col=0; col<=wide; col++ )
+				if ((attrs & 0x10) && !wide) sprite_number += 1;
+				if ((attr2 & 0x10) && !tall) sprite_number += 2;
+				color = color >> 1;
+
+				if( sx > 512 - 32 ) sx -= 512;
+
+				if( flipx && !wide ) sx -= 16;
+				if( !tall ) sy += 16;
+				if( !tall && (attr2 & 0x10) && flipy ) sy -= 16;
+
+				sx += sprite_xoffs;
+				sy -= sprite_yoffs;
+
+				for( row=0; row<=tall; row++ )
 				{
-					drawgfx( bitmap, Machine->gfx[5],
-							sprite_number+2*row+col,
-							color,
-							flipx,flipy,
-							-87 + (sx+16*(flipx ? 1-col : col)),
-							209 + (sy+16*(flipy ? 1-row : row)),
-							clip,
-							TRANSPARENCY_PEN, 0x0f );
+					for( col=0; col<=wide; col++ )
+					{
+						drawgfx( bitmap, Machine->gfx[5],
+								sprite_number+2*row+col,
+								color,
+								flipx,flipy,
+								-87 + (sx+16*(flipx ? 1-col : col)),
+								209 + (sy+16*(flipy ? 1-row : row)),
+								clip,
+								TRANSPARENCY_PEN, 0x0f );
+					}
 				}
 			}
 		}
@@ -223,7 +227,7 @@ static void mark_textlayer_colors(void)
 	memset (palette_map, 0, sizeof (palette_map));
 
 	for (offs = 0; offs < 0x400; offs++){
-		palette_map[(textlayerram[offs+0x400] << 2) & 0x1ff] |= 0xffff;
+		palette_map[(baraduke_textram[offs+0x400] << 2) & 0x1ff] |= 0xffff;
 	}
 
 	/* now build the final table */
@@ -279,8 +283,9 @@ void baraduke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_render(ALL_TILEMAPS);
 
 	tilemap_draw(bitmap,tilemap[1],TILEMAP_IGNORE_TRANSPARENCY);
+	draw_sprites(bitmap,0);
 	tilemap_draw(bitmap,tilemap[0],0);
-	draw_sprites(bitmap);
+	draw_sprites(bitmap,1);
 
 	for (offs = 0x400 - 1; offs > 0; offs--){
 		int mx,my,sx,sy;
@@ -299,8 +304,8 @@ void baraduke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		else{
 			sx = mx + 2; sy = my - 2;
 		}
-		drawgfx(bitmap,Machine->gfx[0],	textlayerram[offs],
-				(textlayerram[offs+0x400] << 2) & 0x1ff,
+		drawgfx(bitmap,Machine->gfx[0],	baraduke_textram[offs],
+				(baraduke_textram[offs+0x400] << 2) & 0x1ff,
 				0,0,sx*8,sy*8,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,3);
 	}
@@ -318,8 +323,9 @@ void metrocrs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_render(ALL_TILEMAPS);
 
 	tilemap_draw(bitmap,tilemap[0],TILEMAP_IGNORE_TRANSPARENCY);
-	draw_sprites(bitmap);
+	draw_sprites(bitmap,0);
 	tilemap_draw(bitmap,tilemap[1],0);
+	draw_sprites(bitmap,1);
 	for (offs = 0x400 - 1; offs > 0; offs--){
 		int mx,my,sx,sy;
 
@@ -337,8 +343,8 @@ void metrocrs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		else{
 			sx = mx + 2; sy = my - 2;
 		}
-		drawgfx(bitmap,Machine->gfx[0],	textlayerram[offs],
-				(textlayerram[offs+0x400] << 2) & 0x1ff,
+		drawgfx(bitmap,Machine->gfx[0],	baraduke_textram[offs],
+				(baraduke_textram[offs+0x400] << 2) & 0x1ff,
 				0,0,sx*8,sy*8,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,3);
 	}

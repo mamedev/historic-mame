@@ -216,14 +216,12 @@ static struct MachineDriver solomon_machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* 4.0 Mhz (?????) */
-			0,
 			readmem,writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3072000,	/* 3.072 Mhz (?????) */
-			2,
 			solomon_sound_readmem,solomon_sound_writemem,0,solomon_sound_writeport,
 			interrupt,2	/* ??? */
 						/* NMIs are caused by the main CPU */
@@ -262,7 +260,7 @@ static struct MachineDriver solomon_machine_driver =
 ***************************************************************************/
 
 ROM_START( solomon )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "slmn_06.bin",  0x00000, 0x4000, 0xe4d421ff )
 	ROM_LOAD( "slmn_07.bin",  0x08000, 0x4000, 0xd52d7e38 )
 	ROM_CONTINUE(             0x04000, 0x4000 )
@@ -278,14 +276,14 @@ ROM_START( solomon )
 	ROM_LOAD( "slmn_04.bin",  0x28000, 0x04000, 0x088fe5d9 )
 	ROM_LOAD( "slmn_05.bin",  0x2c000, 0x04000, 0x8366232a )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "slmn_01.bin",  0x0000, 0x4000, 0xfa6e562e )
 ROM_END
 
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -310,7 +308,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

@@ -321,8 +321,8 @@ static int emu_YM3812_sh_start(const struct MachineSound *msound)
 		/* ADPCM ROM DATA */
 		if(chiptype == OPL_TYPE_Y8950)
 		{
-			F3812[i]->deltat->memory = (unsigned char *)(Machine->memory_region[intf->rom_region[i]]);
-			F3812[i]->deltat->memory_size = Machine->memory_region_length[intf->rom_region[i]];
+			F3812[i]->deltat->memory = (unsigned char *)(memory_region(intf->rom_region[i]));
+			F3812[i]->deltat->memory_size = memory_region_length(intf->rom_region[i]);
 			//F3812[i].porthandler_r = intf->portread[i];
 			//F3812[i].porthandler_w = intf->portwrite[i];
 			//F3812[i].keyboardhandler_r = intf-keyboardread[i];

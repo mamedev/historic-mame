@@ -429,14 +429,12 @@ static struct MachineDriver actfan_machine_driver =
 		{
 			CPU_H6280,
 			21477200/3, /* Should be accurate */
-			0,
 			actfan_readmem,actfan_writemem,0,0,
 			actfan_interrupt,1 /* VBL */
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1500000, /* Should be accurate */
-			2,
 			dec0_s_readmem,dec0_s_writemem,0,0,
 			ignore_interrupt,0	/* Interrupts from OPL chip */
 		}
@@ -483,14 +481,12 @@ static struct MachineDriver triothep_machine_driver =
 		{
 			CPU_H6280,
 			21477200/3, /* Should be accurate */
-			0,
 			triothep_readmem,triothep_writemem,0,0,
 			actfan_interrupt,1 /* VBL */
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1500000, /* Should be accurate */
-			2,
 			dec0_s_readmem,dec0_s_writemem,0,0,
 			ignore_interrupt,0	/* Interrupts from OPL chip */
 		}
@@ -533,7 +529,7 @@ static struct MachineDriver triothep_machine_driver =
 /******************************************************************************/
 
 ROM_START( actfan )
-	ROM_REGION(0x200000) /* Need to allow full RAM allocation for now */
+	ROM_REGIONX( 0x200000, REGION_CPU1 ) /* Need to allow full RAM allocation for now */
 	ROM_LOAD( "08-1", 0x00000, 0x10000, 0x3bf214a4 )
 	ROM_LOAD( "09-1", 0x10000, 0x10000, 0x13ae78d5 )
 	ROM_LOAD( "10",   0x20000, 0x10000, 0xcabad137 )
@@ -556,7 +552,7 @@ ROM_START( actfan )
 	ROM_LOAD( "13", 0xa0000, 0x10000, 0xc30c37dc )
 	ROM_LOAD( "14", 0x80000, 0x10000, 0xd6457420 )
 
-	ROM_REGION(0x10000) /* 6502 Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 6502 Sound CPU */
 	ROM_LOAD( "17-1", 0x08000, 0x8000, 0x289ad106 )
 
 	ROM_REGION(0x10000) /* ADPCM sounds */
@@ -564,7 +560,7 @@ ROM_START( actfan )
 ROM_END
 
 ROM_START( actfanj )
-	ROM_REGION(0x200000) /* Need to allow full RAM allocation for now */
+	ROM_REGIONX( 0x200000, REGION_CPU1 ) /* Need to allow full RAM allocation for now */
 	ROM_LOAD( "fd08-1.bin", 0x00000, 0x10000, 0x69004b60 )
 	ROM_LOAD( "fd09-1.bin", 0x10000, 0x10000, 0xa455ae3e )
 	ROM_LOAD( "10",   0x20000, 0x10000, 0xcabad137 )
@@ -587,7 +583,7 @@ ROM_START( actfanj )
 	ROM_LOAD( "13", 0xa0000, 0x10000, 0xc30c37dc )
 	ROM_LOAD( "14", 0x80000, 0x10000, 0xd6457420 )
 
-	ROM_REGION(0x10000) /* 6502 Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 6502 Sound CPU */
 	ROM_LOAD( "17-1", 0x08000, 0x8000, 0x289ad106 )
 
 	ROM_REGION(0x10000) /* ADPCM sounds */
@@ -595,7 +591,7 @@ ROM_START( actfanj )
 ROM_END
 
 ROM_START( triothep )
-	ROM_REGION(0x200000) /* Need to allow full RAM allocation for now */
+	ROM_REGIONX( 0x200000, REGION_CPU1 ) /* Need to allow full RAM allocation for now */
 	ROM_LOAD( "ff16",     0x00000, 0x20000, 0x84d7e1b6 )
 	ROM_LOAD( "ff15.bin", 0x20000, 0x10000, 0x6eada47c )
 	ROM_LOAD( "ff14.bin", 0x30000, 0x10000, 0x4ba7de4a )
@@ -618,7 +614,7 @@ ROM_START( triothep )
 	ROM_LOAD( "ff05.bin", 0xa0000, 0x10000, 0x8bb13f05 )
 	ROM_LOAD( "ff07.bin", 0xb0000, 0x10000, 0x0d7affc3 )
 
-	ROM_REGION(0x10000) /* 6502 Sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 6502 Sound CPU */
 	ROM_LOAD( "ff18.bin", 0x00000, 0x10000, 0x9de9ee63 )
 
 	ROM_REGION(0x10000) /* ADPCM sounds */

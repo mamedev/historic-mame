@@ -363,21 +363,18 @@ static struct MachineDriver NAME##_machine_driver = 								\
 		{																			\
 			CPU_Z80,																\
 			6000000,		/* 6 MHz??? */											\
-			0,																		\
 			readmem,writemem,0,0,													\
 			ignore_interrupt,0	/* IRQs are triggered by the 68705 */				\
 		},																			\
 		{																			\
 			CPU_Z80,																\
 			6000000,		/* 6 MHz??? */											\
-			3,																		\
 			sound_readmem,sound_writemem,0,0,										\
 			interrupt,1																\
 		},																			\
 		{																			\
 			CPU_M68705,																\
 			4000000/2,	/* xtal is 4MHz (????) I think it's divided by 2 internally */	\
-			4,																		\
 			m68705_readmem,m68705_writemem,0,0,										\
 			mexico86_m68705_interrupt,2												\
 		}																			\
@@ -421,7 +418,7 @@ MACHINEDRIVER( kikikai )
 ***************************************************************************/
 
 ROM_START( kicknrun )
-	ROM_REGION(0x28000)	 /* 196k for code */
+	ROM_REGIONX( 0x28000, REGION_CPU1 )	 /* 196k for code */
 	ROM_LOAD( "a87-08.bin", 0x00000, 0x08000, 0x715e1b04 ) /* 1st half, main code		 */
 	ROM_CONTINUE(           0x20000, 0x08000 )			   /* 2nd half, banked at 0x8000 */
 	ROM_LOAD( "a87-07.bin", 0x10000, 0x10000, 0x6cb6ebfe ) /* banked at 0x8000			 */
@@ -441,15 +438,15 @@ ROM_START( kicknrun )
 	ROM_LOAD( "a87-12.bin", 0x0100, 0x0100, 0x3e953444 )
 	ROM_LOAD( "a87-11.bin", 0x0200, 0x0100, 0x14f6c28d )
 
-	ROM_REGION(0x10000)	 /* 64k for the audio cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	 /* 64k for the audio cpu */
 	ROM_LOAD( "a87-06.bin", 0x0000, 0x8000, 0x1625b587 )
 
-	ROM_REGION(0x0800)	/* 2k for the microcontroller */
+	ROM_REGIONX( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
 	ROM_LOAD( "knrmcu.bin",   0x0000, 0x0800, BADCRC(0x8e821fa0) )	/* manually crafted from the Mexico '86 one */
 ROM_END
 
 ROM_START( mexico86 )
-	ROM_REGION(0x28000)	 /* 196k for code */
+	ROM_REGIONX( 0x28000, REGION_CPU1 )	 /* 196k for code */
 	ROM_LOAD( "2_g.bin",    0x00000, 0x08000, 0x2bbfe0fb ) /* 1st half, main code		 */
 	ROM_CONTINUE(           0x20000, 0x08000 )			   /* 2nd half, banked at 0x8000 */
 	ROM_LOAD( "1_f.bin",    0x10000, 0x10000, 0x0b93e68e ) /* banked at 0x8000			 */
@@ -469,15 +466,15 @@ ROM_START( mexico86 )
 	ROM_LOAD( "a87-12.bin", 0x0100, 0x0100, 0x3e953444 )
 	ROM_LOAD( "a87-11.bin", 0x0200, 0x0100, 0x14f6c28d )
 
-	ROM_REGION(0x10000)	 /* 64k for the audio cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	 /* 64k for the audio cpu */
 	ROM_LOAD( "a87-06.bin", 0x0000, 0x8000, 0x1625b587 )
 
-	ROM_REGION(0x0800)	/* 2k for the microcontroller */
+	ROM_REGIONX( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
 	ROM_LOAD( "68_h.bin",   0x0000, 0x0800, 0xff92f816 )
 ROM_END
 
 ROM_START( kikikai )
-	ROM_REGION(0x28000)	 /* 196k for code */
+	ROM_REGIONX( 0x28000, REGION_CPU1 )	 /* 196k for code */
 	ROM_LOAD( "a85-17.rom", 0x00000, 0x08000, 0xc141d5ab ) /* 1st half, main code		 */
 	ROM_CONTINUE(           0x20000, 0x08000 )			   /* 2nd half, banked at 0x8000 */
 	ROM_LOAD( "a85-16.rom", 0x10000, 0x10000, 0x4094d750 ) /* banked at 0x8000			 */
@@ -493,10 +490,10 @@ ROM_START( kikikai )
 	ROM_LOAD( "a85-10.rom", 0x0100, 0x0100, 0x8fc3fa86 )
 	ROM_LOAD( "a85-09.rom", 0x0200, 0x0100, 0xb931c94d )
 
-	ROM_REGION(0x10000)	 /* 64k for the audio cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	 /* 64k for the audio cpu */
 	ROM_LOAD( "a85-11.rom", 0x0000, 0x8000, 0xcc3539db )
 
-	ROM_REGION(0x0800)	/* 2k for the microcontroller */
+	ROM_REGIONX( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
 	ROM_LOAD( "knightb.uc", 0x0000, 0x0800, 0x3cc2bbe4 )
 ROM_END
 
@@ -505,7 +502,7 @@ ROM_END
 /** Kick and Run & Mexico 86 high score save routine - RJF (Nov 10, 1999) **/
 static int kicknrun_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
 	if ((memcmp(&RAM[0xee18],"\x17\x00\x00",3) == 0) &&
@@ -533,7 +530,7 @@ static int kicknrun_hiload(void)
 static void kicknrun_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -545,7 +542,7 @@ static void kicknrun_hisave(void)
 /****  Kiki Kaikai high score save routine - RJF (Nov 18, 1999)  ****/
 static int kikikai_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0xe2fc],"\x00\x49\x00",3) == 0)
@@ -571,7 +568,7 @@ static int kikikai_hiload(void)
 static void kikikai_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{

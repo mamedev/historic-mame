@@ -1097,7 +1097,7 @@ static struct GfxDecodeInfo spaceod_gfxdecodeinfo[] =
 ***************************************************************************/
 
 ROM_START( astrob )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "829b",	 0x0000, 0x0800, 0x14ae953c ) /* U25 */
 	ROM_LOAD( "888",	  0x0800, 0x0800, 0x42601744 ) /* U1 */
 	ROM_LOAD( "889",	  0x1000, 0x0800, 0xdd9ab173 ) /* U2 */
@@ -1123,7 +1123,7 @@ ROM_START( astrob )
 
 	ROM_REGION(0x10)      /* background charmap (unused) */
 
-	ROM_REGION(0x10000)     /* 64k for speech code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for speech code */
 	ROM_LOAD( "808b",	 0x0000, 0x0800, 0x5988c767 ) /* U7 */
 	ROM_LOAD( "809a",	 0x0800, 0x0800, 0x893f228d ) /* U6 */
 	ROM_LOAD( "810",	  0x1000, 0x0800, 0xff0163c5 ) /* U5 */
@@ -1132,7 +1132,7 @@ ROM_START( astrob )
 ROM_END
 
 ROM_START( astrob1 )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "829",	  0x0000, 0x0800, 0x5f66046e ) /* U25 */
 	ROM_LOAD( "837",	  0x0800, 0x0800, 0xce9c3763 ) /* U1 */
 	ROM_LOAD( "838",	  0x1000, 0x0800, 0x3557289e ) /* U2 */
@@ -1155,7 +1155,7 @@ ROM_START( astrob1 )
 
 	ROM_REGION(0x10)      /* background charmap (unused) */
 
-	ROM_REGION(0x10000)     /* 64k for speech code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for speech code */
 	ROM_LOAD( "808b",	 0x0000, 0x0800, 0x5988c767 ) /* U7 */
 	ROM_LOAD( "809a",	 0x0800, 0x0800, 0x893f228d ) /* U6 */
 	ROM_LOAD( "810",	  0x1000, 0x0800, 0xff0163c5 ) /* U5 */
@@ -1164,7 +1164,7 @@ ROM_START( astrob1 )
 ROM_END
 
 ROM_START( 005 )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "1346b.u25",    0x0000, 0x0800, 0x8e68533e ) /* U25 */
 	ROM_LOAD( "5092.u1",      0x0800, 0x0800, 0x29e10a81 ) /* U1 */
 	ROM_LOAD( "5093.u2",      0x1000, 0x0800, 0xe1edc3df ) /* U2 */
@@ -1191,12 +1191,12 @@ ROM_START( 005 )
 
 	ROM_REGION(0x10)      /* background charmap (unused) */
 
-	ROM_REGION(0x800)       /* 2k for sound */
+	ROM_REGION( 0x800 )       /* 2k for sound */
 	ROM_LOAD( "epr-1286.16",  0x0000, 0x0800, 0xfbe0d501 )
 ROM_END
 
 ROM_START( monsterb )
-	ROM_REGION(0x14000)     /* 64k for code + space for background */
+	ROM_REGIONX( 0x14000, REGION_CPU1 )     /* 64k for code + space for background */
 	ROM_LOAD( "1778cpu.bin",  0x0000, 0x0800, 0x19761be3 ) /* U25 */
 	ROM_LOAD( "1779.bin",     0x0800, 0x0800, 0x5b67dc4c ) /* U1 */
 	ROM_LOAD( "1780.bin",     0x1000, 0x0800, 0xfac5aac6 ) /* U2 */
@@ -1229,7 +1229,7 @@ ROM_START( monsterb )
 	ROM_REGION(0x2000)			      /* background charmaps */
 	ROM_LOAD( "1518a.bin",    0x0000, 0x2000, 0x2d5932fe ) /* ??? */
 
-	ROM_REGION(0x1000)      /* 4k for 7751 onboard ROM */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )      /* 4k for 7751 onboard ROM */
 	ROM_LOAD( "7751.bin",     0x0000, 0x0400, 0x6a9534fc ) /* 7751 - U34 */
 
 	ROM_REGION(0x2000)      /* 8k for sound */
@@ -1241,7 +1241,7 @@ ROM_START( monsterb )
 ROM_END
 
 ROM_START( spaceod )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "so-959.dat",   0x0000, 0x0800, 0xbbae3cd1 ) /* U25 */
 	ROM_LOAD( "so-941.dat",   0x0800, 0x0800, 0x8b63585a ) /* U1 */
 	ROM_LOAD( "so-942.dat",   0x1000, 0x0800, 0x93e7d900 ) /* U2 */
@@ -1279,7 +1279,7 @@ ROM_START( spaceod )
 ROM_END
 
 ROM_START( pignewt )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "cpu.u25",    0x0000, 0x0800, 0x00000000 ) /* U25 */
 	ROM_LOAD( "1888c",      0x0800, 0x0800, 0xfd18ed09 ) /* U1 */
 	ROM_LOAD( "1889c",      0x1000, 0x0800, 0xf633f5ff ) /* U2 */
@@ -1316,7 +1316,7 @@ ROM_START( pignewt )
 ROM_END
 
 ROM_START( pignewta )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "cpu.u25",    0x0000, 0x0800, 0x00000000 ) /* U25 */
 	ROM_LOAD( "1888a",      0x0800, 0x0800, 0x491c0835 ) /* U1 */
 	ROM_LOAD( "1889a",      0x1000, 0x0800, 0x0dcf0af2 ) /* U2 */
@@ -1355,7 +1355,7 @@ ROM_END
 
 
 ROM_START( sindbadm )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "epr5393.new",  0x0000, 0x2000, 0x51f2e51e )
 	ROM_LOAD( "epr5394.new",  0x2000, 0x2000, 0xd39ce2ee )
 	ROM_LOAD( "epr5395.new",  0x4000, 0x2000, 0xb1d15c82 )
@@ -1373,7 +1373,7 @@ ROM_START( sindbadm )
 	ROM_LOAD( "epr5426.new",  0x4000, 0x2000, 0x9de0da28 )
 	ROM_LOAD( "epr5427.new",  0x6000, 0x2000, 0xa94f4d41 )
 
-	ROM_REGION(0x10000)     /* 64k for sound cpu (Z80) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for sound cpu (Z80) */
 	ROM_LOAD( "epr5400.new",  0x0000, 0x2000, 0x5114f18e )
 ROM_END
 
@@ -1418,7 +1418,7 @@ static void pignewt_decode(void)
 
 static int astrob_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1443,7 +1443,7 @@ static int astrob_hiload(void)
 static void astrob_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* Hi score memory gets corrupted by the self test */
 	if (memcmp(&RAM[0xCB3F],"\xFF\xFF\xFF\xFF",4)==0)
@@ -1459,7 +1459,7 @@ static void astrob_hisave(void)
 
 static int monsterb_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 		static int firsttime = 0;
 
@@ -1491,7 +1491,7 @@ static int monsterb_hiload(void)
 static void monsterb_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* Hi score memory gets corrupted by the self test */
@@ -1508,7 +1508,7 @@ static void monsterb_hisave(void)
 
 static int s005_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 		static int firsttime = 0;
 
 		if (firsttime == 0)
@@ -1540,7 +1540,7 @@ static int s005_hiload(void)
 static void s005_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* Hi score memory gets corrupted by the self test */
 	if (memcmp(&RAM[0xC911],"\xFF\xFF\xFF\xFF",4)==0)
@@ -1556,7 +1556,7 @@ static void s005_hisave(void)
 
 static int spaceod_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if memory has already been initialized */
 	if (memcmp(&RAM[0xC8F1],"\xE2\x00\x04\x03",4) == 0)
@@ -1579,7 +1579,7 @@ static int spaceod_hiload(void)
 static void spaceod_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* Hi score memory gets corrupted by the self test */
 	if (memcmp(&RAM[0xC906],"\xFF\xFF\xFF\xFF",4)==0)
@@ -1596,7 +1596,7 @@ static void spaceod_hisave(void)
 
 static int pignewt_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	/* check if memory has already been initialized */
 	if (memcmp(&RAM[0xCFE7],"PIGNEWTON",9) == 0 && memcmp(&RAM[0xce0c],"\x12\x54\x83",3)==0)
 	{
@@ -1617,7 +1617,7 @@ static int pignewt_hiload(void)
 
 static int pignewta_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	/* check if memory has already been initialized */
 	if (memcmp(&RAM[0xCFE7],"PIGNEWTON",9) == 0 && memcmp(&RAM[0xce0c],"\x02\x90\x00",3)==0)
 	{
@@ -1640,7 +1640,7 @@ static int pignewta_hiload(void)
 static void pignewt_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* Hi score memory gets corrupted by the self test */
@@ -1659,7 +1659,7 @@ static void pignewt_hisave(void)
 /**** Sindbad Mystery high score save - RJF (April 02, 1999) ****/
 static int sindbadm_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if memory has already been initialized */
@@ -1686,7 +1686,7 @@ static int sindbadm_hiload(void)
 static void sindbadm_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -1723,14 +1723,12 @@ static struct MachineDriver astrob_machine_driver =
 		{
 			CPU_Z80,
 			3867120,	/* 3.86712 Mhz ??? */
-			0,
 			readmem,writemem,readport,astrob_writeport,
 			segar_interrupt,1
 		},
 		{
 			CPU_I8035 | CPU_AUDIO_CPU,
 			3120000/15,	/* 3.12Mhz crystal ??? */
-			3,
 			speech_readmem,speech_writemem,speech_readport,speech_writeport,
 			ignore_interrupt,1
 		}
@@ -1779,7 +1777,6 @@ static struct MachineDriver spaceod_machine_driver =
 		{
 			CPU_Z80,
 			3867120,	/* 3.86712 Mhz ??? */
-			0,
 			readmem,writemem,readport,spaceod_writeport,
 			segar_interrupt,1
 		}
@@ -1824,7 +1821,6 @@ static struct MachineDriver s005_machine_driver =
 		{
 			CPU_Z80,
 			3867120,	/* 3.86712 Mhz ??? */
-			0,
 			readmem,writemem,readport,s005_writeport,
 			segar_interrupt,1
 		}
@@ -1882,14 +1878,12 @@ static struct MachineDriver monsterb_machine_driver =
 		{
 			CPU_Z80,
 			3867120,	/* 3.86712 Mhz ??? */
-			0,
 			readmem,writemem,readport,monsterb_writeport,
 			segar_interrupt,1
 		},
 		{
 			CPU_N7751 | CPU_AUDIO_CPU,
 			6000000/15,	/* 6Mhz crystal */
-			3,
 			monsterb_7751_readmem,monsterb_7751_writemem,monsterb_7751_readport,monsterb_7751_writeport,
 			ignore_interrupt,1
 		}
@@ -1935,7 +1929,6 @@ static struct MachineDriver pignewt_machine_driver =
 		{
 			CPU_Z80,
 			3867120,	/* 3.86712 Mhz ??? */
-			0,
 			readmem,writemem,readport,pignewt_writeport,
 			segar_interrupt,1
 		}
@@ -1975,14 +1968,12 @@ static struct MachineDriver sindbadm_machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz ? */
-			0,
 			sindbadm_readmem,sindbadm_writemem,readport,sindbadm_writeport,
 			segar_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 Mhz ? - see system1.c */
-			3,      /* memory region #3 */
 			sindbadm_sound_readmem,sindbadm_sound_writemem,0,0,
 			interrupt,4		     /* NMIs are caused by the main CPU */
 		}

@@ -459,7 +459,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,		/* verified */
 			7159160,		/* 7.159 Mhz */
-			0,
 			readmem,writemem,0,0,
 			atarigen_video_int_gen,1
 		}
@@ -506,10 +505,10 @@ static void rom_decode(void)
 {
 	int i;
 
-	memcpy(&memory_region(Machine->drv->cpu[0].memory_region)[0x140000], &memory_region(Machine->drv->cpu[0].memory_region)[0x40000], 0x8000);
+	memcpy(&memory_region(REGION_CPU1)[0x140000], &memory_region(REGION_CPU1)[0x40000], 0x8000);
 
-	for (i = 0; i < Machine->memory_region_length[1]; i++)
-		Machine->memory_region[1][i] ^= 0xff;
+	for (i = 0; i < memory_region_length(1); i++)
+		memory_region(1)[i] ^= 0xff;
 }
 
 
@@ -521,7 +520,7 @@ static void rom_decode(void)
  *************************************/
 
 ROM_START( rampart )
-	ROM_REGION(0x148000)
+	ROM_REGIONX( 0x148000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "082-1033.13l", 0x00000, 0x80000, 0x5c36795f )
 	ROM_LOAD_ODD ( "082-1032.13j", 0x00000, 0x80000, 0xec7bc38c )
 	ROM_LOAD_EVEN( "082-2031.13l", 0x00000, 0x10000, 0x07650c7e )
@@ -530,14 +529,14 @@ ROM_START( rampart )
 	ROM_REGION_DISPOSE(0x20000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "082-1009.2n",   0x000000, 0x20000, 0x23b95f59 )
 
-	ROM_REGION(0x40000)	/* ADPCM data */
+	ROM_REGION( 0x40000 )	/* ADPCM data */
 	ROM_LOAD( "082-1007.2d", 0x00000, 0x20000, 0xc96a0fc3 )
 	ROM_LOAD( "082-1008.1d", 0x20000, 0x20000, 0x518218d9 )
 ROM_END
 
 
 ROM_START( ramprt2p )
-	ROM_REGION(0x148000)
+	ROM_REGIONX( 0x148000, REGION_CPU1 )
 	ROM_LOAD_EVEN( "082-1033.13l", 0x00000, 0x80000, 0x5c36795f )
 	ROM_LOAD_ODD ( "082-1032.13j", 0x00000, 0x80000, 0xec7bc38c )
 	ROM_LOAD_EVEN( "205113kl.rom", 0x00000, 0x20000, 0xd4e26d0f )
@@ -546,7 +545,7 @@ ROM_START( ramprt2p )
 	ROM_REGION_DISPOSE(0x20000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "10192n.rom",   0x000000, 0x20000, 0xefa38bef )
 
-	ROM_REGION(0x40000)	/* ADPCM data */
+	ROM_REGION( 0x40000 )	/* ADPCM data */
 	ROM_LOAD( "082-1007.2d", 0x00000, 0x20000, 0xc96a0fc3 )
 	ROM_LOAD( "082-1008.1d", 0x20000, 0x20000, 0x518218d9 )
 ROM_END

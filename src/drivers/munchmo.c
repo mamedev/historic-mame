@@ -145,7 +145,7 @@ static void draw_background( struct osd_bitmap *bitmap ){
 	ROM B1.2C contains 256 tilemaps defining 4x4 configurations of
 	the 4x8 tiles in ROM B2.2B
 */
-	unsigned char *tile_data = Machine->memory_region[3];
+	unsigned char *tile_data = memory_region(3);
 	const struct GfxElement *gfx = Machine->gfx[GFX_TILES];
 	int offs;
 	for( offs=0; offs<0x100; offs++ ){
@@ -244,7 +244,7 @@ void mnchmobl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 //	if( keyboard_pressed( KEYCODE_Q ) ){
 //		FILE *f = fopen( "munch.ram", "wb" );
 //		if( f ){
-//			fwrite( &memory_region(Machine->drv->cpu[0].memory_region)[0], 0x10000, 1, f );
+//			fwrite( &memory_region(REGION_CPU1)[0], 0x10000, 1, f );
 //			fclose( f );
 //		}
 //		while( keyboard_pressed( KEYCODE_Q ) ){};
@@ -547,14 +547,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			8000000,	/* 15 MHz crystal */
-			0,	/* memory region */
 			readmem_cpuA,writemem_cpuA,0,0,
 			mnchmobl_interrupt_cpu0,2
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			6000000,//1789750,	/* 1.78975 MHz? */
-			1,	/* memory region */
 			readmem_cpuB,writemem_cpuB,0,0,
 			mnchmobl_interrupt_cpu1,2
 		}
@@ -588,11 +586,11 @@ static struct MachineDriver machine_driver =
 
 
 ROM_START( joyfulr )
-	ROM_REGION(0x10000) /* 64k for CPUA */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for CPUA */
 	ROM_LOAD( "m1j.10e", 0x0000, 0x2000, 0x1fe86e25 )
 	ROM_LOAD( "m2j.10d", 0x2000, 0x2000, 0xb144b9a6 )
 
-	ROM_REGION(0x10000) /* 64k for sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for sound CPU */
 	ROM_LOAD( "mu.2j",	 0x0000, 0x2000, 0x420adbd4 )
 
 	ROM_REGION_DISPOSE( 0x1000 ) /* 4x8 partial tiles */
@@ -617,11 +615,11 @@ ROM_START( joyfulr )
 ROM_END
 
 ROM_START( mnchmobl )
-	ROM_REGION(0x10000) /* 64k for CPUA */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for CPUA */
 	ROM_LOAD( "m1.10e",	 0x0000, 0x2000, 0xa4bebc6a )
 	ROM_LOAD( "m2.10d",	 0x2000, 0x2000, 0xf502d466 )
 
-	ROM_REGION(0x10000) /* 64k for sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for sound CPU */
 	ROM_LOAD( "mu.2j",	 0x0000, 0x2000, 0x420adbd4 )
 
 	ROM_REGION_DISPOSE( 0x1000 ) /* 4x8 partial tiles */

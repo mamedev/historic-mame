@@ -85,6 +85,7 @@ CPUS+=TMS9900@
 CPUS+=Z8000@
 CPUS+=TMS320C10@
 CPUS+=CCPU@
+CPUS+=ADSP2100@
 #CPUS+=PDP1@
 
 # uncomment the following lines to include a sound core
@@ -464,6 +465,13 @@ CPUOBJS += obj/cpu/ccpu/ccpu.o obj/vidhrdw/cinemat.o
 DBGOBJS += obj/cpu/ccpu/ccpudasm.o
 endif
 
+CPU=$(strip $(findstring ADSP2100@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_ADSP2100=1
+CPUOBJS += obj/cpu/adsp2100/adsp2100.o
+DBGOBJS += obj/cpu/adsp2100/2100dasm.o
+endif
+
 CPU=$(strip $(findstring PDP1@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_PDP1=1
@@ -517,19 +525,19 @@ endif
 SOUND=$(strip $(findstring YM2608@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_YM2608=1
-SOUNDOBJS += obj/sound/2608intf.o obj/sound/ay8910.o obj/sound/fm.o
+SOUNDOBJS += obj/sound/2608intf.o obj/sound/ay8910.o obj/sound/fm.o obj/sound/ymdeltat.o
 endif
 
 SOUND=$(strip $(findstring YM2610@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_YM2610=1
-SOUNDOBJS += obj/sound/2610intf.o obj/sound/ay8910.o obj/sound/fm.o
+SOUNDOBJS += obj/sound/2610intf.o obj/sound/ay8910.o obj/sound/fm.o obj/sound/ymdeltat.o
 endif
 
 SOUND=$(strip $(findstring YM2610B@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_YM2610B=1
-SOUNDOBJS += obj/sound/2610intf.o obj/sound/ay8910.o obj/sound/fm.o
+SOUNDOBJS += obj/sound/2610intf.o obj/sound/ay8910.o obj/sound/fm.o obj/sound/ymdeltat.o
 endif
 
 SOUND=$(strip $(findstring YM2612@,$(SOUNDS)))
@@ -706,6 +714,7 @@ ifdef DEBUG
 DEBUGDEF = -DMAME_DEBUG
 else
 DEBUGDEF =
+DBGOBJS =
 endif
 
 DEFS = -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__
@@ -830,7 +839,7 @@ obj/%.og: obj/%.c
 
 # generate asm source files for the 68000 emulator
 obj/cpu/m68000/68kem.asm:  src/cpu/m68000/make68k.c
-	$(CC) $(CDEFS) $(CFLAGS) -DDOS -o obj/cpu/m68000/make68k.exe $<
+	$(CC) $(CDEFS) $(CFLAGS) -O0 -DDOS -o obj/cpu/m68000/make68k.exe $<
 	obj/cpu/m68000/make68k $@
 
 # generated asm files for the 68000 emulator
@@ -1201,6 +1210,7 @@ obj/rockola.a: \
 obj/snk.a: \
          obj/drivers/munchmo.o \
          obj/vidhrdw/marvins.o obj/drivers/marvins.o \
+		 obj/drivers/hal21.o \
          obj/vidhrdw/snk.o obj/drivers/snk.o \
          obj/vidhrdw/snk68.o obj/drivers/snk68.o \
          obj/vidhrdw/prehisle.o obj/drivers/prehisle.o \
@@ -1258,6 +1268,7 @@ obj/valadon.a: \
 obj/seibu.a: \
          obj/vidhrdw/wiz.o obj/drivers/wiz.o \
          obj/machine/stfight.o obj/vidhrdw/stfight.o obj/drivers/stfight.o \
+         obj/sndhrdw/seibu.o \
          obj/vidhrdw/dynduke.o obj/drivers/dynduke.o \
          obj/vidhrdw/raiden.o obj/drivers/raiden.o \
          obj/vidhrdw/dcon.o obj/drivers/dcon.o \
@@ -1325,22 +1336,29 @@ obj/other.a: \
          obj/vidhrdw/meteor.o obj/drivers/meteor.o \
          obj/vidhrdw/bjtwin.o obj/drivers/bjtwin.o \
          obj/vidhrdw/aztarac.o obj/sndhrdw/aztarac.o obj/drivers/aztarac.o \
+		 obj/vidhrdw/pinbo.o obj/drivers/pinbo.o \
 
 # dependencies
-obj/cpu/z80/z80.o:  z80.c z80.h z80daa.h
+obj/cpu/z80/z80.o: z80.c z80.h z80daa.h
+obj/cpu/z8000/z8000.o: z8000.c z8000.h z8000cpu.h z8000dab.h z8000ops.c z8000tbl.c
+obj/cpu/s2650/s2650.o: s2650.c s2650.h s2650cpu.h
+obj/cpu/h6280/h6280.o: h6280.c h6280.h h6280ops.h tblh6280.c
+obj/cpu/i8039/i8039.o: i8039.c i8039.h
 obj/cpu/i8085/i8085.o: i8085.c i8085.h i8085cpu.h i8085daa.h
+obj/cpu/i86/i86.o: i86.c i86.h i86intrf.h ea.h host.h instr.h modrm.h
+obj/cpu/nec/nec.o: nec.c nec.h necintrf.h necea.h nechost.h necinstr.h necmodrm.h
 obj/cpu/m6502/m6502.o: m6502.c m6502.h m6502ops.h tbl6502.c tbl65c02.c tbl6510.c
-obj/cpu/m6502/h6280.o: h6280.c h6280.h h6280ops.h tblh6280.c
-obj/cpu/i86/i86.o:  i86.c i86.h i86intrf.h ea.h host.h instr.h modrm.h
-obj/cpu/m6800/m6800.o:	m6800.c m6800.h 6800ops.c
-obj/cpu/m6805/m6805.o:	m6805.c m6805.h 6805ops.c
-obj/cpu/m6809/m6809.o:	m6809.c m6809.h 6809ops.c 6809tbl.c
+obj/cpu/m6800/m6800.o: m6800.c m6800.h 6800ops.c 6800tbl.c
+obj/cpu/m6805/m6805.o: m6805.c m6805.h 6805ops.c
+obj/cpu/m6809/m6809.o: m6809.c m6809.h 6809ops.c 6809tbl.c
+obj/cpu/tms32010/tms32010.o: tms32010.c tms32010.h
 obj/cpu/tms34010/tms34010.o: tms34010.c tms34010.h 34010ops.c 34010tbl.c
 obj/cpu/tms9900/tms9900.o: tms9900.c tms9900.h 9900stat.h
-obj/cpu/z8000/z8000.o: z8000.c z8000.h z8000cpu.h z8000dab.h z8000ops.c z8000tbl.c
-obj/cpu/tms32010/tms32010.o: tms32010.c tms32010.h
-obj/cpu/ccpu/ccpu.o: ccpu.h ccpudasm.c
-obj/cpu/m68000/m68kcpu.o: obj/cpu/m68000/m68kops.c m68kmake.c m68k_in.c
+obj/cpu/t11/t11.o: t11.c t11.h t11ops.c t11table.c
+obj/cpu/m68000/m68kcpu.o: m68kops.c m68kmake.c m68k_in.c
+obj/cpu/ccpu/ccpu.o: ccpu.c ccpu.h ccputabl.c
+obj/cpu/konami/konami.o: konami.c konami.h konamops.c konamtbl.c
+obj/cpu/gensync/gensync.o: gensync.c gensync.h
 
 
 makedir:
@@ -1369,6 +1387,7 @@ maketree:
 	md obj\cpu\z8000
 	md obj\cpu\tms32010
 	md obj\cpu\ccpu
+	md obj\cpu\adsp2100
 	md obj\cpu\pdp1
 	md obj\sound
 	md obj\drivers
@@ -1415,6 +1434,7 @@ cleandebug:
 	del obj\cpu\z8000\*.o
 	del obj\cpu\tms32010\*.o
 	del obj\cpu\ccpu\*.o
+	del obj\cpu\adsp2100\*.o
 	del obj\cpu\pdp1\*.o
 	del $(EMULATOR_EXE)
 

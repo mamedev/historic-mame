@@ -359,21 +359,18 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			2048000,        /* 2 Mhz */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
 			18432000/6,     /* Z80 Clock is derived from the H1 signal */
-			3,      /* memory region #3 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			interrupt,1
 		},
 		{
 			CPU_I8039 | CPU_AUDIO_CPU,
 			14318000/2/15,	/* 1/2 14MHz crystal */
-			4,	/* memory region #4 */
 			i8039_readmem,i8039_writemem,i8039_readport,i8039_writeport,
 			ignore_interrupt,1
 		}
@@ -417,7 +414,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( megazone )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "319i07.bin",    0x6000, 0x2000, 0x94b22ea8 )
 	ROM_LOAD( "319i06.bin",    0x8000, 0x2000, 0x0468b619 )
 	ROM_LOAD( "319i05.bin",    0xa000, 0x2000, 0xac59000c )
@@ -439,15 +436,15 @@ ROM_START( megazone )
 	ROM_LOAD( "319b14.e7",   0x0220, 0x020, 0x55044268 ) /* timing (not used) */
 	ROM_LOAD( "319b15.e8",   0x0240, 0x020, 0x31fd7ab9 ) /* timing (not used) */
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "319e02.bin",   0x0000, 0x2000, 0xd5d45edb )
 
-	ROM_REGION(0x1000)     /* 4k for the 8039 DAC CPU */
+	ROM_REGIONX( 0x1000, REGION_CPU3 )     /* 4k for the 8039 DAC CPU */
 	ROM_LOAD( "319e01.bin",   0x0000, 0x1000, 0xed5725a0 )
 ROM_END
 
 ROM_START( megaznik )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "ic59_cpu.bin",  0x6000, 0x2000, 0xf41922a0 )
 	ROM_LOAD( "ic58_cpu.bin",  0x8000, 0x2000, 0x7fd7277b )
 	ROM_LOAD( "ic57_cpu.bin",  0xa000, 0x2000, 0xa4b33b51 )
@@ -469,10 +466,10 @@ ROM_START( megaznik )
 	ROM_LOAD( "319b14.e7",   0x0220, 0x020, 0x55044268 ) /* timing (not used) */
 	ROM_LOAD( "319b15.e8",   0x0240, 0x020, 0x31fd7ab9 ) /* timing (not used) */
 
-	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "319e02.bin",   0x0000, 0x2000, 0xd5d45edb )
 
-	ROM_REGION(0x1000)     /* 4k for the 8039 DAC CPU */
+	ROM_REGIONX( 0x1000, REGION_CPU3 )     /* 4k for the 8039 DAC CPU */
 	ROM_LOAD( "319e01.bin",   0x0000, 0x1000, 0xed5725a0 )
 ROM_END
 
@@ -481,7 +478,7 @@ ROM_END
 /****  Mega Zone high score save routine - RJF (July 24, 1999)  ****/
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0x244a],"\x4b\x4f\x5a",3) == 0)
@@ -511,7 +508,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -527,7 +524,7 @@ static void hisave(void)
 static void megazone_decode(void)
 {
 	int A;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	for (A = 0x6000;A < 0x10000;A++)

@@ -87,7 +87,7 @@ struct GameDriver driver_##NAME =  \
 
 void cps2_decode(void)
 {
-    unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+    unsigned char *RAM = memory_region(REGION_CPU1);
     FILE *fp;
     int i;
     const int decode=CODE_SIZE/2;
@@ -149,14 +149,12 @@ static struct MachineDriver CPS1_DRVNAME##_machine_driver =              \
         {                                                                \
             CPU_M68000,                                                  \
             CPS1_CPU_FRQ,                                                \
-            0,                                                           \
             cps1_readmem,cps1_writemem,0,0,                              \
             cps1_qsound_interrupt, 1  /* ??? interrupts per frame */     \
         },                                                               \
         {                                                                \
             CPU_Z80 | CPU_AUDIO_CPU,                                     \
             8000000,  /* 4 Mhz ??? TODO: find real FRQ */                \
-            2,      /* memory region #2 */                               \
             qsound_readmem,qsound_writemem,0,0,                          \
             interrupt,4                                                  \
         }                                                                \
@@ -266,7 +264,7 @@ CPS2_MACHINE_DRIVER( xmcotaj, 	  CPS2_DEFAULT_CPU_SPEED )
 CPS2_MACHINE_DRIVER( xmvssfj,  	  CPS2_DEFAULT_CPU_SPEED )
 
 ROM_START( armwara )
-    ROM_REGION(CODE_SIZE)      /* 68000 code */
+    ROM_REGIONX( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
     ROM_LOAD_WIDE_SWAP("armwar_a.c03", 0x000000, 0x80000, 0x8d474ab1 )
     ROM_LOAD_WIDE_SWAP("armwar_a.c04", 0x080000, 0x80000, 0x81b5aec7 )
     ROM_LOAD_WIDE_SWAP("armwar_a.c05", 0x100000, 0x80000, 0x2618e819 )
@@ -286,7 +284,7 @@ ROM_START( armwara )
     ROM_LOAD( "armwar.g16",   0x0f00000, 0x100000, 0x815b0e7b )
     ROM_LOAD( "armwar.g15",   0x1000000, 0x400000, 0xdb560f58 )
 
-    ROM_REGION(QSOUND_SIZE) /* 64k for the audio CPU (+banks) */
+    ROM_REGIONX( QSOUND_SIZE, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "armwar.01",         0x00000, 0x08000, 0x18a5c0e4 )
     ROM_CONTINUE(                  0x10000, 0x18000 )
     ROM_LOAD( "armwar.02",         0x28000, 0x20000, 0xc9dfffa6 )
@@ -297,7 +295,7 @@ ROM_START( armwara )
 ROM_END
 
 ROM_START( avspj )
-    ROM_REGION(CODE_SIZE)      /* 68000 code */
+    ROM_REGIONX( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
     ROM_LOAD_WIDE_SWAP("avsp_j.c03", 0x000000, 0x80000, 0x42757950 )
     ROM_LOAD_WIDE_SWAP("avsp_j.c04", 0x080000, 0x80000, 0x5abcdee6 )
     ROM_LOAD_WIDE_SWAP("avsp_j.c05", 0x100000, 0x80000, 0xfbfb5d7a )
@@ -313,7 +311,7 @@ ROM_START( avspj )
     ROM_LOAD( "avsp.g16",    0xc00000, 0x200000, 0xfb228297 )
     ROM_LOAD( "avsp.g15",    0xe00000, 0x200000, 0xb00280df )
 
-    ROM_REGION(QSOUND_SIZE) /* 64k for the audio CPU (+banks) */
+    ROM_REGIONX( QSOUND_SIZE, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "avsp.01",         0x00000, 0x08000, 0x2d3b4220 )
     ROM_CONTINUE(               0x10000, 0x18000 )
 
@@ -323,7 +321,7 @@ ROM_START( avspj )
 ROM_END
 
 ROM_START( batcirj )
-    ROM_REGION(CODE_SIZE)      /* 68000 code */
+    ROM_REGIONX( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
     ROM_LOAD_WIDE_SWAP("batcir_j.c03", 0x000000, 0x80000, 0x6b7e168d )
     ROM_LOAD_WIDE_SWAP("batcir_j.c04", 0x080000, 0x80000, 0x46ba3467 )
     ROM_LOAD_WIDE_SWAP("batcir_j.c05", 0x100000, 0x80000, 0x0e23a859 )
@@ -338,7 +336,7 @@ ROM_START( batcirj )
     ROM_LOAD( "batcir.g19",   0x800000, 0x400000, 0xa6fcdb7e )
     ROM_LOAD( "batcir.g15",   0xC00000, 0x400000, 0xe5779a3c )
 
-    ROM_REGION(QSOUND_SIZE) /* 64k for the audio CPU (+banks) */
+    ROM_REGIONX( QSOUND_SIZE, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "batcir.01",         0x00000, 0x08000, 0x1e194310 )
     ROM_CONTINUE(                  0x10000, 0x18000 )
     ROM_LOAD( "batcir.02",         0x28000, 0x20000, 0x01aeb8e6 )
@@ -349,24 +347,24 @@ ROM_START( batcirj )
 ROM_END
 
 ROM_START( ddtodu )
-    ROM_REGION(CODE_SIZE)      /* 68000 code */
+    ROM_REGIONX( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
     ROM_LOAD_WIDE_SWAP("ddtod_u.c03", 0x000000, 0x80000, 0xa519905f )
     ROM_LOAD_WIDE_SWAP("ddtod_u.c04", 0x080000, 0x80000, 0x52562d38 )
     ROM_LOAD_WIDE_SWAP("ddtod_u.c05", 0x100000, 0x80000, 0xee1cfbfe )
     ROM_LOAD_WIDE_SWAP("ddtod_u.c06", 0x180000, 0x80000, 0x13aa3e56 )
     ROM_LOAD_WIDE_SWAP("ddtod_u.c07", 0x200000, 0x80000, 0x431cb6dd )
 
-    ROM_REGION_DISPOSE(0x1000000)     /* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD( "ddtod.g18",      0x000000, 0x200000, 0x12261f05 )
-    ROM_LOAD( "ddtod.g17",      0x200000, 0x200000, 0xb98757f5 )
-    ROM_LOAD( "ddtod.g14",      0x400000, 0x200000, 0x53901447 )
-    ROM_LOAD( "ddtod.g13",      0x600000, 0x200000, 0xda3cb7d6 )
-    ROM_LOAD( "ddtod.g20",      0x800000, 0x200000, 0x4d170077 )
-    ROM_LOAD( "ddtod.g19",      0xa00000, 0x200000, 0x8121ce46 )
-    ROM_LOAD( "ddtod.g16",      0xc00000, 0x200000, 0x86e149fd )
-    ROM_LOAD( "ddtod.g15",      0xe00000, 0x200000, 0x92b63172 )
+	ROM_REGION_DISPOSE(0xc00000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ddtod.g18",      0x000000, 0x100000, 0xcef393ef )
+	ROM_LOAD( "ddtod.g17",      0x100000, 0x200000, 0xb98757f5 )
+	ROM_LOAD( "ddtod.g14",      0x300000, 0x100000, 0x837e6f3f )
+	ROM_LOAD( "ddtod.g13",      0x400000, 0x200000, 0xda3cb7d6 )
+	ROM_LOAD( "ddtod.g20",      0x600000, 0x100000, 0x8953fe9e )
+	ROM_LOAD( "ddtod.g19",      0x700000, 0x200000, 0x8121ce46 )
+	ROM_LOAD( "ddtod.g16",      0x900000, 0x100000, 0xf0916bdb )
+	ROM_LOAD( "ddtod.g15",      0xa00000, 0x200000, 0x92b63172 )
 
-    ROM_REGION(QSOUND_SIZE) /* 64k for the audio CPU (+banks) */
+    ROM_REGIONX( QSOUND_SIZE, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "ddtod.01",    0x00000, 0x08000, 0x3f5e2424 )
 	ROM_CONTINUE(              0x10000, 0x18000 )
 
@@ -376,24 +374,24 @@ ROM_START( ddtodu )
 ROM_END
 
 ROM_START( ddtoda )
-    ROM_REGION(CODE_SIZE)      /* 68000 code */
+    ROM_REGIONX( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
     ROM_LOAD_WIDE_SWAP("ddtod_a.c03", 0x000000, 0x80000, 0xfc6f2dd7 )
     ROM_LOAD_WIDE_SWAP("ddtod_a.c04", 0x080000, 0x80000, 0xd4be4009 )
     ROM_LOAD_WIDE_SWAP("ddtod_a.c05", 0x100000, 0x80000, 0x6712d1cf )
     ROM_LOAD_WIDE_SWAP("ddtod_u.c06", 0x180000, 0x80000, 0x13aa3e56 )
     ROM_LOAD_WIDE_SWAP("ddtod_u.c07", 0x200000, 0x80000, 0x431cb6dd )
 
-    ROM_REGION_DISPOSE(0x1000000)     /* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD( "ddtod.g18",      0x000000, 0x200000, 0x12261f05 )
-    ROM_LOAD( "ddtod.g17",      0x200000, 0x200000, 0xb98757f5 )
-    ROM_LOAD( "ddtod.g14",      0x400000, 0x200000, 0x53901447 )
-    ROM_LOAD( "ddtod.g13",      0x600000, 0x200000, 0xda3cb7d6 )
-    ROM_LOAD( "ddtod.g20",      0x800000, 0x200000, 0x4d170077 )
-    ROM_LOAD( "ddtod.g19",      0xa00000, 0x200000, 0x8121ce46 )
-    ROM_LOAD( "ddtod.g16",      0xc00000, 0x200000, 0x86e149fd )
-    ROM_LOAD( "ddtod.g15",      0xe00000, 0x200000, 0x92b63172 )
+	ROM_REGION_DISPOSE(0xc00000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ddtod.g18",      0x000000, 0x100000, 0xcef393ef )
+	ROM_LOAD( "ddtod.g17",      0x100000, 0x200000, 0xb98757f5 )
+	ROM_LOAD( "ddtod.g14",      0x300000, 0x100000, 0x837e6f3f )
+	ROM_LOAD( "ddtod.g13",      0x400000, 0x200000, 0xda3cb7d6 )
+	ROM_LOAD( "ddtod.g20",      0x600000, 0x100000, 0x8953fe9e )
+	ROM_LOAD( "ddtod.g19",      0x700000, 0x200000, 0x8121ce46 )
+	ROM_LOAD( "ddtod.g16",      0x900000, 0x100000, 0xf0916bdb )
+	ROM_LOAD( "ddtod.g15",      0xa00000, 0x200000, 0x92b63172 )
 
-    ROM_REGION(QSOUND_SIZE) /* 64k for the audio CPU (+banks) */
+    ROM_REGIONX( QSOUND_SIZE, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "ddtod.01",    0x00000, 0x08000, 0x3f5e2424 )
 	ROM_CONTINUE(              0x10000, 0x18000 )
 
@@ -403,7 +401,7 @@ ROM_START( ddtoda )
 ROM_END
 
 ROM_START( mshj )
-    ROM_REGION(CODE_SIZE)      /* 68000 code */
+    ROM_REGIONX( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
     ROM_LOAD_WIDE_SWAP("msh_j.c03", 0x000000, 0x80000, 0xd2805bdd )
     ROM_LOAD_WIDE_SWAP("msh_j.c04", 0x080000, 0x80000, 0x743f96ff )
     ROM_LOAD_WIDE_SWAP("msh_j.c05", 0x100000, 0x80000, 0x6a091b9e )
@@ -423,7 +421,7 @@ ROM_START( mshj )
     ROM_LOAD( "msh.g16",        0x1800000, 0x400000, 0x438da4a0 )
     ROM_LOAD( "msh.g15",        0x1c00000, 0x400000, 0xee962057 )
 
-    ROM_REGION(QSOUND_SIZE) /* 64k for the audio CPU (+banks) */
+    ROM_REGIONX( QSOUND_SIZE, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "msh.01",         0x00000, 0x08000, 0xc976e6f9 )
     ROM_CONTINUE(                0x10000, 0x18000 )
     ROM_LOAD( "msh.02",         0x28000, 0x20000, 0xce67d0d9 )
@@ -434,7 +432,7 @@ ROM_START( mshj )
 ROM_END
 
 ROM_START( mshvsfu )
-    ROM_REGION(CODE_SIZE)      /* 68000 code */
+    ROM_REGIONX( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
     ROM_LOAD_WIDE_SWAP("mshvsf_u.c03", 0x000000, 0x80000, 0xae60a66a )
     ROM_LOAD_WIDE_SWAP("mshvsf_u.c04", 0x080000, 0x80000, 0x91f67d8a )
     ROM_LOAD_WIDE_SWAP("mshvsf_u.c05", 0x100000, 0x80000, 0x1a5de0cb )
@@ -454,7 +452,7 @@ ROM_START( mshvsfu )
     ROM_LOAD( "mshvsf.g16",        0x1800000, 0x400000, 0x08aadb5d )
     ROM_LOAD( "mshvsf.g15",        0x1c00000, 0x400000, 0xfaddccf1 )
 
-    ROM_REGION(QSOUND_SIZE) /* 64k for the audio CPU (+banks) */
+    ROM_REGIONX( QSOUND_SIZE, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "mshvsf.01",         0x00000, 0x08000, 0x68252324 )
     ROM_CONTINUE(               0x10000, 0x18000 )
     ROM_LOAD( "mshvsf.02",         0x28000, 0x20000, 0xb34e773d )
@@ -465,7 +463,7 @@ ROM_START( mshvsfu )
 ROM_END
 
 ROM_START( sfzj )
-    ROM_REGION(CODE_SIZE)      /* 68000 code */
+    ROM_REGIONX( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
     ROM_LOAD_WIDE_SWAP("sfz_j.c03",  0x000000, 0x80000, 0xf5444120 )
     ROM_LOAD_WIDE_SWAP("sfz_j.c04",  0x080000, 0x80000, 0x8b73b0e5 )
     ROM_LOAD_WIDE_SWAP("sfz_j.c05",  0x100000, 0x80000, 0x0810544d )
@@ -477,7 +475,7 @@ ROM_START( sfzj )
     ROM_LOAD( "sfz.g20",     0x400000, 0x200000, 0xa549df98 )
     ROM_LOAD( "sfz.g16",     0x600000, 0x200000, 0x5354c948 )
 
-    ROM_REGION(QSOUND_SIZE) /* 64k for the audio CPU (+banks) */
+    ROM_REGIONX( QSOUND_SIZE, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "sfz.01",          0x00000, 0x08000, 0xffffec7d )
 	ROM_CONTINUE(              0x10000, 0x18000 )
     ROM_LOAD( "sfz.02",          0x28000, 0x20000, 0x45f46a08 )
@@ -488,7 +486,7 @@ ROM_START( sfzj )
 ROM_END
 
 ROM_START( sfau )
-    ROM_REGION(CODE_SIZE)      /* 68000 code */
+    ROM_REGIONX( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
     ROM_LOAD_WIDE_SWAP("sfa_u.c03",  0x000000, 0x80000, 0xebf2054d )
     ROM_LOAD_WIDE_SWAP("sfz_j.c04",  0x080000, 0x80000, 0x8b73b0e5 )
     ROM_LOAD_WIDE_SWAP("sfz_j.c05",  0x100000, 0x80000, 0x0810544d )
@@ -500,7 +498,7 @@ ROM_START( sfau )
     ROM_LOAD( "sfz.g20",     0x400000, 0x200000, 0xa549df98 )
     ROM_LOAD( "sfz.g16",     0x600000, 0x200000, 0x5354c948 )
 
-    ROM_REGION(QSOUND_SIZE) /* 64k for the audio CPU (+banks) */
+    ROM_REGIONX( QSOUND_SIZE, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "sfz.01",          0x00000, 0x08000, 0xffffec7d )
 	ROM_CONTINUE(              0x10000, 0x18000 )
     ROM_LOAD( "sfz.02",          0x28000, 0x20000, 0x45f46a08 )
@@ -511,7 +509,7 @@ ROM_START( sfau )
 ROM_END
 
 ROM_START( sfzj1 )
-    ROM_REGION(CODE_SIZE)      /* 68000 code */
+    ROM_REGIONX( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
     ROM_LOAD_WIDE_SWAP("sfz_j1.c03", 0x000000, 0x80000, 0x844220c2 )
     ROM_LOAD_WIDE_SWAP("sfz_j1.c04", 0x080000, 0x80000, 0x5f99e9a5 )
     ROM_LOAD_WIDE_SWAP("sfz_j.c05",  0x100000, 0x80000, 0x0810544d )
@@ -523,7 +521,7 @@ ROM_START( sfzj1 )
     ROM_LOAD( "sfz.g20",     0x400000, 0x200000, 0xa549df98 )
     ROM_LOAD( "sfz.g16",     0x600000, 0x200000, 0x5354c948 )
 
-    ROM_REGION(QSOUND_SIZE) /* 64k for the audio CPU (+banks) */
+    ROM_REGIONX( QSOUND_SIZE, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "sfz.01",          0x00000, 0x08000, 0xffffec7d )
 	ROM_CONTINUE(              0x10000, 0x18000 )
     ROM_LOAD( "sfz.02",          0x28000, 0x20000, 0x45f46a08 )
@@ -534,7 +532,7 @@ ROM_START( sfzj1 )
 ROM_END
 
 ROM_START( sfz2j )
-    ROM_REGION(CODE_SIZE)      /* 68000 code */
+    ROM_REGIONX( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
     ROM_LOAD_WIDE_SWAP("sfz2_j.c03", 0x000000, 0x80000, 0x97461e28 )
     ROM_LOAD_WIDE_SWAP("sfz2_j.c04", 0x080000, 0x80000, 0xae4851a9 )
     ROM_LOAD_WIDE_SWAP("sfz2_j.c05", 0x100000, 0x80000, 0x98e8e992 )
@@ -553,7 +551,7 @@ ROM_START( sfz2j )
     ROM_LOAD( "sfz2.g16",    0x0f00000, 0x100000, 0xca161c9c )
     ROM_LOAD( "sfz2.g15",    0x1000000, 0x400000, 0x96fcf35c )
 
-    ROM_REGION(QSOUND_SIZE) /* 64k for the audio CPU (+banks) */
+    ROM_REGIONX( QSOUND_SIZE, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "sfz2.01",         0x00000, 0x08000, 0x1bc323cf )
     ROM_CONTINUE(                0x10000, 0x18000 )
     ROM_LOAD( "sfz2.02",         0x28000, 0x20000, 0xba6a5013 )
@@ -564,7 +562,7 @@ ROM_START( sfz2j )
 ROM_END
 
 ROM_START( ssf2j )
-    ROM_REGION(CODE_SIZE)      /* 68000 code */
+    ROM_REGIONX( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
     ROM_LOAD_WIDE_SWAP("ssf2_j.c03", 0x000000, 0x80000, 0x7eb0efed )
     ROM_LOAD_WIDE_SWAP("ssf2_j.c04", 0x080000, 0x80000, 0xd7322164 )
     ROM_LOAD_WIDE_SWAP("ssf2_j.c05", 0x100000, 0x80000, 0x0918d19a )
@@ -581,7 +579,7 @@ ROM_START( ssf2j )
     ROM_LOAD( "ssf2.g16",   0x900000, 0x100000, 0x8376ad18 )
     ROM_LOAD( "ssf2.g15",   0xa00000, 0x200000, 0x9073a0d4 )
 
-    ROM_REGION(QSOUND_SIZE) /* 64k for the audio CPU (+banks) */
+    ROM_REGIONX( QSOUND_SIZE, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "ssf2.01",         0x00000, 0x08000, 0xeb247e8c )
 	ROM_CONTINUE(              0x10000, 0x18000 )
 
@@ -597,7 +595,7 @@ ROM_START( ssf2j )
 ROM_END
 
 ROM_START( ssf2xj )
-    ROM_REGION(CODE_SIZE)      /* 68000 code */
+    ROM_REGIONX( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
     ROM_LOAD_WIDE_SWAP("ssf2x_j.c03", 0x000000, 0x80000, 0xa7417b79 )
     ROM_LOAD_WIDE_SWAP("ssf2x_j.c04", 0x080000, 0x80000, 0xaf7767b4 )
     ROM_LOAD_WIDE_SWAP("ssf2x_j.c05", 0x100000, 0x80000, 0xf4ff18f5 )
@@ -621,7 +619,7 @@ ROM_START( ssf2xj )
     ROM_LOAD( "ssf2x.g15",    0x0e00000, 0x200000, 0x9073a0d4 )
 
 
-    ROM_REGION(QSOUND_SIZE) /* 64k for the audio CPU (+banks) */
+    ROM_REGIONX( QSOUND_SIZE, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "ssf2x.01",         0x00000, 0x08000, 0xb47b8835 )
     ROM_CONTINUE(                0x10000, 0x18000 )
     ROM_LOAD( "ssf2x.02",         0x28000, 0x20000, 0x0022633f )
@@ -632,7 +630,7 @@ ROM_START( ssf2xj )
 ROM_END
 
 ROM_START( vampj )
-    ROM_REGION(CODE_SIZE)      /* 68000 code */
+    ROM_REGIONX( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
     ROM_LOAD_WIDE_SWAP("vamp_j.c03", 0x000000, 0x80000, 0xf55d3722 )
     ROM_LOAD_WIDE_SWAP("vamp_j.c04", 0x080000, 0x80000, 0x4d9c43c4 )
     ROM_LOAD_WIDE_SWAP("vamp_j.c05", 0x100000, 0x80000, 0x6c497e92 )
@@ -652,7 +650,7 @@ ROM_START( vampj )
     ROM_LOAD( "vamp.g16",   0x0f00000, 0x100000, 0xafec855f )
     ROM_LOAD( "vamp.g15",   0x1000000, 0x400000, 0xe87837ad )
 
-    ROM_REGION(QSOUND_SIZE) /* 64k for the audio CPU (+banks) */
+    ROM_REGIONX( QSOUND_SIZE, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "vamp.01",         0x00000, 0x08000, 0x64b685d5 )
     ROM_CONTINUE(                  0x10000, 0x18000 )
     ROM_LOAD( "vamp.02",         0x28000, 0x20000, 0xcf7c97c7 )
@@ -663,7 +661,7 @@ ROM_START( vampj )
 ROM_END
 
 ROM_START( dstlka )
-    ROM_REGION(CODE_SIZE)      /* 68000 code */
+    ROM_REGIONX( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
     ROM_LOAD_WIDE_SWAP("dstlk_a.c03", 0x000000, 0x80000, 0x294e0bec )
     ROM_LOAD_WIDE_SWAP("dstlk_a.c04", 0x080000, 0x80000, 0xbc18e128 )
     ROM_LOAD_WIDE_SWAP("dstlk_a.c05", 0x100000, 0x80000, 0xe709fa59 )
@@ -683,7 +681,7 @@ ROM_START( dstlka )
     ROM_LOAD( "vamp.g16",    0x0f00000, 0x100000, 0xafec855f )
     ROM_LOAD( "dstlk_a.g15", 0x1000000, 0x400000, 0x3ce83c77 )
 
-    ROM_REGION(QSOUND_SIZE) /* 64k for the audio CPU (+banks) */
+    ROM_REGIONX( QSOUND_SIZE, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "vamp.01",         0x00000, 0x08000, 0x64b685d5 )
     ROM_CONTINUE(                  0x10000, 0x18000 )
     ROM_LOAD( "vamp.02",         0x28000, 0x20000, 0xcf7c97c7 )
@@ -694,7 +692,7 @@ ROM_START( dstlka )
 ROM_END
 
 ROM_START( vhuntj )
-    ROM_REGION(CODE_SIZE)      /* 68000 code */
+    ROM_REGIONX( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
     ROM_LOAD_WIDE_SWAP("vhunt_j.c03", 0x000000, 0x80000, 0x679c3fa9 )
     ROM_LOAD_WIDE_SWAP("vhunt_j.c04", 0x080000, 0x80000, 0xeb6e71e4 )
     ROM_LOAD_WIDE_SWAP("vhunt_j.c05", 0x100000, 0x80000, 0xeaf634ea )
@@ -714,7 +712,7 @@ ROM_START( vhuntj )
     ROM_LOAD( "vhunt.g16",   0x1800000, 0x400000, 0x2f41ca75 )
     ROM_LOAD( "vhunt.g15",   0x1c00000, 0x400000, 0x3ce83c77 )
 
-    ROM_REGION(QSOUND_SIZE) /* 64k for the audio CPU (+banks) */
+    ROM_REGIONX( QSOUND_SIZE, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "vhunt.01",         0x00000, 0x08000, 0x5045dcac )
     ROM_CONTINUE(                  0x10000, 0x18000 )
     ROM_LOAD( "vhunt.02",         0x28000, 0x20000, 0x86b60e59 )
@@ -725,7 +723,7 @@ ROM_START( vhuntj )
 ROM_END
 
 ROM_START( vhunt2j )
-    ROM_REGION(CODE_SIZE)      /* 68000 code */
+    ROM_REGIONX( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
     ROM_LOAD_WIDE_SWAP("vhunt2_j.c03", 0x000000, 0x80000, 0x1a5feb13 )
     ROM_LOAD_WIDE_SWAP("vhunt2_j.c04", 0x080000, 0x80000, 0x434611a5 )
     ROM_LOAD_WIDE_SWAP("vhunt2_j.c05", 0x100000, 0x80000, 0xffe3edbc )
@@ -745,7 +743,7 @@ ROM_START( vhunt2j )
     ROM_LOAD( "vhunt2.g16",   0x1800000, 0x400000, 0x70698843 )
     ROM_LOAD( "vhunt2.g15",   0x1c00000, 0x400000, 0x2dc777f0 )
 
-    ROM_REGION(QSOUND_SIZE) /* 64k for the audio CPU (+banks) */
+    ROM_REGIONX( QSOUND_SIZE, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "vhunt2.01",         0x00000, 0x08000, 0x67b9f779 )
     ROM_CONTINUE(                  0x10000, 0x18000 )
     ROM_LOAD( "vhunt2.02",         0x28000, 0x20000, 0xaaf15fcb )
@@ -757,7 +755,7 @@ ROM_END
 
 
 ROM_START( vsavj )
-    ROM_REGION(CODE_SIZE)      /* 68000 code */
+    ROM_REGIONX( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
     ROM_LOAD_WIDE_SWAP("vsav_j.c03", 0x000000, 0x80000, 0x2a2e74a4 )
     ROM_LOAD_WIDE_SWAP("vsav_j.c04", 0x080000, 0x80000, 0x1c2427bc )
     ROM_LOAD_WIDE_SWAP("vsav_j.c05", 0x100000, 0x80000, 0x95ce88d5 )
@@ -777,7 +775,7 @@ ROM_START( vsavj )
     ROM_LOAD( "vsav.g16",   0x1800000, 0x400000, 0x194a7304 )
     ROM_LOAD( "vsav.g15",   0x1c00000, 0x400000, 0xdd1e7d4e )
 
-    ROM_REGION(QSOUND_SIZE) /* 64k for the audio CPU (+banks) */
+    ROM_REGIONX( QSOUND_SIZE, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "vsav.01",         0x00000, 0x08000, 0xf778769b )
     ROM_CONTINUE(              0x10000, 0x18000 )
     ROM_LOAD( "vsav.02",         0x28000, 0x20000, 0xcc09faa1 )
@@ -787,16 +785,16 @@ ROM_START( vsavj )
     ROM_LOAD( "vsav.s12",   0x400000, 0x400000, 0x9cd71557 )
 ROM_END
 
-ROM_START( dstlk3u )
-    ROM_REGION(CODE_SIZE)      /* 68000 code */
-    ROM_LOAD_WIDE_SWAP("dstlk3_u.c03", 0x000000, 0x80000, 0x1f295274 )
-    ROM_LOAD_WIDE_SWAP("dstlk3_u.c04", 0x080000, 0x80000, 0xc46adf81 )
-    ROM_LOAD_WIDE_SWAP("dstlk3_u.c05", 0x100000, 0x80000, 0x4118e00f )
-    ROM_LOAD_WIDE_SWAP("dstlk3_u.c06", 0x180000, 0x80000, 0x2f4fd3a9 )
-    ROM_LOAD_WIDE_SWAP("dstlk3_u.c07", 0x200000, 0x80000, 0xcbda91b8 )
-    ROM_LOAD_WIDE_SWAP("dstlk3_u.c08", 0x280000, 0x80000, 0x6ca47259 )
-    ROM_LOAD_WIDE_SWAP("dstlk3_u.c09", 0x300000, 0x80000, 0xf4a339e3 )
-    ROM_LOAD_WIDE_SWAP("dstlk3_u.c10", 0x380000, 0x80000, 0xfffbb5b8 )
+ROM_START( vsavu )
+    ROM_REGIONX( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
+	ROM_LOAD_WIDE_SWAP("vsav_u.c03", 0x000000, 0x80000, 0x1f295274 )
+	ROM_LOAD_WIDE_SWAP("vsav_u.c04", 0x080000, 0x80000, 0xc46adf81 )
+	ROM_LOAD_WIDE_SWAP("vsav_u.c05", 0x100000, 0x80000, 0x4118e00f )
+	ROM_LOAD_WIDE_SWAP("vsav_u.c06", 0x180000, 0x80000, 0x2f4fd3a9 )
+	ROM_LOAD_WIDE_SWAP("vsav_u.c07", 0x200000, 0x80000, 0xcbda91b8 )
+	ROM_LOAD_WIDE_SWAP("vsav_u.c08", 0x280000, 0x80000, 0x6ca47259 )
+	ROM_LOAD_WIDE_SWAP("vsav_u.c09", 0x300000, 0x80000, 0xf4a339e3 )
+	ROM_LOAD_WIDE_SWAP("vsav_u.c10", 0x380000, 0x80000, 0xfffbb5b8 )
 
     ROM_REGION_DISPOSE(0x2000000)     /* temporary space for graphics (disposed after conversion) */
     ROM_LOAD( "vsav.g18",   0x0000000, 0x400000, 0xdf9a9f47 )
@@ -808,7 +806,7 @@ ROM_START( dstlk3u )
     ROM_LOAD( "vsav.g16",   0x1800000, 0x400000, 0x194a7304 )
     ROM_LOAD( "vsav.g15",   0x1c00000, 0x400000, 0xdd1e7d4e )
 
-    ROM_REGION(QSOUND_SIZE) /* 64k for the audio CPU (+banks) */
+    ROM_REGIONX( QSOUND_SIZE, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "vsav.01",         0x00000, 0x08000, 0xf778769b )
     ROM_CONTINUE(              0x10000, 0x18000 )
     ROM_LOAD( "vsav.02",         0x28000, 0x20000, 0xcc09faa1 )
@@ -819,7 +817,7 @@ ROM_START( dstlk3u )
 ROM_END
 
 ROM_START( xmcotaj )
-    ROM_REGION(CODE_SIZE)      /* 68000 code */
+    ROM_REGIONX( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
     ROM_LOAD_WIDE_SWAP("xmcota_j.c03", 0x000000, 0x80000, 0x0bafeb0e )
     ROM_LOAD_WIDE_SWAP("xmcota_j.c04", 0x080000, 0x80000, 0xc29bdae3 )
     ROM_LOAD_WIDE_SWAP("xmcota_j.c05", 0x100000, 0x80000, 0xac0d7759 )
@@ -839,7 +837,7 @@ ROM_START( xmcotaj )
     ROM_LOAD( "xmcota.g16",   0x1800000, 0x400000, 0x67b36948 )
     ROM_LOAD( "xmcota.g15",   0x1c00000, 0x400000, 0x4d7e4cef )
 
-    ROM_REGION(QSOUND_SIZE) /* 64k for the audio CPU (+banks) */
+    ROM_REGIONX( QSOUND_SIZE, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "xmcota.01",         0x00000, 0x08000, 0x40f479ea )
     ROM_CONTINUE(              0x10000, 0x18000 )
     ROM_LOAD( "xmcota.02",         0x28000, 0x20000, 0x39d9b5ad )
@@ -850,7 +848,7 @@ ROM_START( xmcotaj )
 ROM_END
 
 ROM_START( xmvssfj )
-    ROM_REGION(CODE_SIZE)      /* 68000 code */
+    ROM_REGIONX( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
     ROM_LOAD_WIDE_SWAP("xmvssf_j.c03", 0x000000, 0x80000, 0x5481155a )
     ROM_LOAD_WIDE_SWAP("xmvssf_j.c04", 0x080000, 0x80000, 0x1e236388 )
     ROM_LOAD_WIDE_SWAP("xmvssf_j.c05", 0x100000, 0x80000, 0x7db6025d )
@@ -869,7 +867,7 @@ ROM_START( xmvssfj )
     ROM_LOAD( "xmvssf.g16",   0x1800000, 0x400000, 0xea04a272 )
     ROM_LOAD( "xmvssf.g15",   0x1c00000, 0x400000, 0x29109221 )
 
-    ROM_REGION(QSOUND_SIZE) /* 64k for the audio CPU (+banks) */
+    ROM_REGIONX( QSOUND_SIZE, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "xmvssf.01",     0x00000, 0x08000, 0x3999e93a )
     ROM_CONTINUE(              0x10000, 0x18000 )
     ROM_LOAD( "xmvssf.02",     0x28000, 0x20000, 0x19272e4c )
@@ -879,31 +877,31 @@ ROM_START( xmvssfj )
     ROM_LOAD( "xmvssf.s12",   0x200000, 0x200000, 0x7b11e460 )
 ROM_END
 
-   CPS2_GAME_DRIVER(armwara,                "Armoured Warriors (Asia 940920)"							, "1994", "Capcom", ORIENTATION_DEFAULT)
-   CPS2_GAME_DRIVER(avspj,                  "Aliens Vs. Predator (Japan 940520)"						, "1994", "Capcom", ORIENTATION_DEFAULT)
-   CPS2_GAME_DRIVER(batcirj,                "Battle Circuit (Japan 970319)"							, "1997", "Capcom", ORIENTATION_DEFAULT)
-   CPS2_GAME_DRIVER(ddtodu,                 "Dungeons & Dragons: Tower of Doom (USA 940125)"				, "1994", "Capcom", ORIENTATION_DEFAULT)
-   CLONE_CPS2_GAME_DRIVER(ddtoda,  ddtodu , "Dungeons & Dragons: Tower of Doom (Asia 940113)"   			, "1994", "Capcom", ORIENTATION_DEFAULT)
-   CPS2_GAME_DRIVER(mshj,                   "Marvel Super Heroes (Japan 951024)"                 			, "1995", "Capcom", ORIENTATION_DEFAULT)
-   CPS2_GAME_DRIVER(mshvsfu,                "Marvel Super Heroes Vs. Street Fighter (USA 970625)"			, "1997", "Capcom", ORIENTATION_DEFAULT)
-//   CPS2_GAME_DRIVER(mvsc,                   "Marvel Super Heroes vs. Capcom: Clash of Super Heroes (??? ??????)"    , "199?", "Capcom", ORIENTATION_DEFAULT)
-//   CPS2_GAME_DRIVER(rckman2,                "Rockman 2: The Power Fighters (??? ??????)"                    , "199?", "Capcom", ORIENTATION_DEFAULT)
-   CPS2_GAME_DRIVER(sfzj,                   "Street Fighter Zero (Japan, 950727)"						, "1995", "Capcom", ORIENTATION_DEFAULT)
-   CLONE_CPS2_GAME_DRIVER(sfzj1, sfzj,      "Street Fighter Zero (Japan, 950627)"						, "1995", "Capcom", ORIENTATION_DEFAULT)
-   CLONE_CPS2_GAME_DRIVER(sfau, sfzj,       "Street Fighter Alpha: The Warriors Dream (USA, 950727)"			, "1995", "Capcom", ORIENTATION_DEFAULT)
-   CPS2_GAME_DRIVER(sfz2j,                  "Street Fighter Zero 2 (Japan, 960227)"						, "1996", "Capcom", ORIENTATION_DEFAULT)
-// CPS2_GAME_DRIVER(sfa3,                   "Street Fighter Alpha 3 (??? ??????)"                       , "199?", "Capcom", ORIENTATION_DEFAULT)
-   CPS2_GAME_DRIVER(ssf2j,                  "Super Street Fighter 2: The New Challengers (Japan 930910)"		, "1993", "Capcom", ORIENTATION_DEFAULT)
-   CPS2_GAME_DRIVER(ssf2xj,                 "Super Street Fighter 2X: Grand Master Challenge (Japan 940223)"	, "1994", "Capcom", ORIENTATION_DEFAULT)
-   CPS2_GAME_DRIVER(vampj,                  "Vampire: The Night Warriors (Japan, 940705)"					, "1994", "Capcom", ORIENTATION_DEFAULT)
-   CLONE_CPS2_GAME_DRIVER(dstlka, vampj,    "Dark Stalkers (Asia, 940705)"							, "1994", "Capcom", ORIENTATION_DEFAULT)
-   CPS2_GAME_DRIVER(vhuntj,                 "Vampire Hunter: Darkstalkers 2 (Japan, 950302)"				, "1995", "Capcom", ORIENTATION_DEFAULT)
-   CPS2_GAME_DRIVER(vhunt2j,                "Vampire Hunter 2: Darkstalkers Revenge (Japan, 970828)"			, "1997", "Capcom", ORIENTATION_DEFAULT)
-   CPS2_GAME_DRIVER(vsavj,                  "Vampire Savior: The Lord of Vampire (Japan, 970519)"			, "1997", "Capcom", ORIENTATION_DEFAULT)
-   CLONE_CPS2_GAME_DRIVER(dstlk3u, vsavj,   "Dark Stalkers 3: Jedah's Damnation (USA 970519)"				, "1997", "Capcom", ORIENTATION_DEFAULT)
-// CPS2_GAME_DRIVER(vsav2,                  "Vampire Savior 2: The Lord of Vampire (??? ??????)"            , "199?", "Capcom", ORIENTATION_DEFAULT)
-   CPS2_GAME_DRIVER(xmcotaj,                "X-Men: Children of the Atom (Japan, 950105)"					, "1995", "Capcom", ORIENTATION_DEFAULT)
-   CPS2_GAME_DRIVER(xmvssfj,                "X-Men Vs. Street Fighter (Japan, 961004)"					, "1996", "Capcom", ORIENTATION_DEFAULT)
+CPS2_GAME_DRIVER(armwara,                "Armoured Warriors (Asia 940920)"							, "1994", "Capcom", ORIENTATION_DEFAULT)
+CPS2_GAME_DRIVER(avspj,                  "Aliens Vs. Predator (Japan 940520)"						, "1994", "Capcom", ORIENTATION_DEFAULT)
+CPS2_GAME_DRIVER(batcirj,                "Battle Circuit (Japan 970319)"							, "1997", "Capcom", ORIENTATION_DEFAULT)
+CPS2_GAME_DRIVER(ddtodu,                 "Dungeons & Dragons: Tower of Doom (USA 940125)"				, "1994", "Capcom", ORIENTATION_DEFAULT)
+CLONE_CPS2_GAME_DRIVER(ddtoda,  ddtodu , "Dungeons & Dragons: Tower of Doom (Asia 940113)"   			, "1994", "Capcom", ORIENTATION_DEFAULT)
+CPS2_GAME_DRIVER(mshj,                   "Marvel Super Heroes (Japan 951024)"                 			, "1995", "Capcom", ORIENTATION_DEFAULT)
+CPS2_GAME_DRIVER(mshvsfu,                "Marvel Super Heroes Vs. Street Fighter (USA 970625)"			, "1997", "Capcom", ORIENTATION_DEFAULT)
+//CPS2_GAME_DRIVER(mvsc,                   "Marvel Super Heroes vs. Capcom: Clash of Super Heroes (??? ??????)"    , "199?", "Capcom", ORIENTATION_DEFAULT)
+//CPS2_GAME_DRIVER(rckman2,                "Rockman 2: The Power Fighters (??? ??????)"                    , "199?", "Capcom", ORIENTATION_DEFAULT)
+CPS2_GAME_DRIVER(sfzj,                   "Street Fighter Zero (Japan, 950727)"						, "1995", "Capcom", ORIENTATION_DEFAULT)
+CLONE_CPS2_GAME_DRIVER(sfzj1, sfzj,      "Street Fighter Zero (Japan, 950627)"						, "1995", "Capcom", ORIENTATION_DEFAULT)
+CLONE_CPS2_GAME_DRIVER(sfau, sfzj,       "Street Fighter Alpha: The Warriors Dream (USA, 950727)"			, "1995", "Capcom", ORIENTATION_DEFAULT)
+CPS2_GAME_DRIVER(sfz2j,                  "Street Fighter Zero 2 (Japan, 960227)"						, "1996", "Capcom", ORIENTATION_DEFAULT)
+//CPS2_GAME_DRIVER(sfa3,                   "Street Fighter Alpha 3 (??? ??????)"                       , "199?", "Capcom", ORIENTATION_DEFAULT)
+CPS2_GAME_DRIVER(ssf2j,                  "Super Street Fighter 2: The New Challengers (Japan 930910)"		, "1993", "Capcom", ORIENTATION_DEFAULT)
+CPS2_GAME_DRIVER(ssf2xj,                 "Super Street Fighter 2X: Grand Master Challenge (Japan 940223)"	, "1994", "Capcom", ORIENTATION_DEFAULT)
+CPS2_GAME_DRIVER(vampj,                  "Vampire: The Night Warriors (Japan, 940705)"					, "1994", "Capcom", ORIENTATION_DEFAULT)
+CLONE_CPS2_GAME_DRIVER(dstlka, vampj,    "Dark Stalkers (Asia, 940705)"							, "1994", "Capcom", ORIENTATION_DEFAULT)
+CPS2_GAME_DRIVER(vhuntj,                 "Vampire Hunter: Darkstalkers 2 (Japan, 950302)"				, "1995", "Capcom", ORIENTATION_DEFAULT)
+CPS2_GAME_DRIVER(vhunt2j,                "Vampire Hunter 2: Darkstalkers Revenge (Japan, 970828)"			, "1997", "Capcom", ORIENTATION_DEFAULT)
+CPS2_GAME_DRIVER(vsavj,                  "Vampire Savior: The Lord of Vampire (Japan, 970519)"			, "1997", "Capcom", ORIENTATION_DEFAULT)
+CLONE_CPS2_GAME_DRIVER(vsavu, vsavj,     "Vampire Savior: Jedah's Damnation (USA 970519)"				, "1997", "Capcom", ORIENTATION_DEFAULT)
+//CPS2_GAME_DRIVER(vsav2,                  "Vampire Savior 2: The Lord of Vampire (??? ??????)"            , "199?", "Capcom", ORIENTATION_DEFAULT)
+CPS2_GAME_DRIVER(xmcotaj,                "X-Men: Children of the Atom (Japan, 950105)"					, "1995", "Capcom", ORIENTATION_DEFAULT)
+CPS2_GAME_DRIVER(xmvssfj,                "X-Men Vs. Street Fighter (Japan, 961004)"					, "1996", "Capcom", ORIENTATION_DEFAULT)
 
 /***************************************************************************
 
@@ -949,7 +947,6 @@ static struct MachineDriver CPS1_DRVNAME##_machine_driver =            \
 		{                                                        \
 			CPU_Z80 | CPU_AUDIO_CPU,                         \
 			4000000,  /* 4 Mhz ??? TODO: find real FRQ */    \
-			2,      /* memory region #2 */                   \
 			qsound_readmem,qsound_writemem,0,0,              \
 			interrupt,1                               \
 	}                                                        \
@@ -982,7 +979,7 @@ static struct MachineDriver CPS1_DRVNAME##_machine_driver =            \
 CPSX_MACHINE_DRIVER( sfex,       CPS2_DEFAULT_CPU_SPEED )
 
 ROM_START( sfex )
-    ROM_REGION(CODE_SIZE)      /* PSX code */
+    ROM_REGION( CODE_SIZE )      /* PSX code */
     ROM_LOAD("sfe-04",  0x000000, 0x80000, 0xffffffff )
     ROM_LOAD("sfe-05m", 0x080000, 0x80000, 0xffffffff )
     ROM_LOAD("sfe-06m", 0x100000, 0x80000, 0xffffffff )
@@ -993,7 +990,7 @@ ROM_START( sfex )
 
     ROM_REGION_DISPOSE(0x10000)     /* temporary space for graphics (disposed after conversion) */
 
-    ROM_REGION(QSOUND_SIZE) /* 64k for the audio CPU (+banks) */
+    ROM_REGIONX( QSOUND_SIZE, REGION_CPU1 ) /* 64k for the audio CPU (+banks) */
     ROM_LOAD( "sfe-02",         0x00000, 0x08000, 0xffffffff )
     ROM_CONTINUE(               0x10000, 0x18000 )
     ROM_LOAD( "sfe-03",         0x28000, 0x20000, 0xffffffff )

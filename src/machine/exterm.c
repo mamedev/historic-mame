@@ -102,7 +102,7 @@ void exterm_slave_speedup_w(int offset, int data)
 
 int exterm_sound_dac_speedup_r(int offset)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[2].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU3);
 	int value = RAM[0x0007];
 
 	/* Suspend cpu if it's waiting for an interrupt */
@@ -119,7 +119,7 @@ int exterm_sound_ym2151_speedup_r(int offset)
 	/* Doing this won't flash the LED, but we're not emulating that anyhow, so
 	   it doesn't matter */
 
-	unsigned char *RAM = memory_region(Machine->drv->cpu[3].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU4);
 	int value = RAM[0x02b6];
 
 	/* Suspend cpu if it's waiting for an interrupt */

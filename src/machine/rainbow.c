@@ -57,7 +57,7 @@ extern int mrh_bank1(int address);
 
 int  rainbow_c_chip_r(int offset)
 {
-  unsigned char *CROM = Machine->memory_region[2];	/* C-Chip Dump */
+  unsigned char *CROM = memory_region(2);	/* C-Chip Dump */
 
   int Address;
   int Data1,Data2;

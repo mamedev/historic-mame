@@ -205,7 +205,7 @@ static int  dkong_sh_gett0(int offset)   { return t[0]; }
 static int  dkong_sh_gett1(int offset)   { return t[1]; }
 static int  dkong_sh_gettune(int offset)
 {
-	unsigned char *SND = memory_region(Machine->drv->cpu[1].memory_region);
+	unsigned char *SND = memory_region(REGION_CPU2);
 	if (page & 0x40)
 	{
 		switch (offset)
@@ -542,9 +542,9 @@ static struct MemoryWriteAddress dkong3_sound2_writemem[] =
 INPUT_PORTS_START( dkong )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -552,18 +552,19 @@ INPUT_PORTS_START( dkong )
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START      /* IN2 */
-	PORT_DIPNAME( 0x01, 0x00, "Self Test" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+//	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Service_Mode ) )
+//	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+//	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
@@ -601,26 +602,27 @@ INPUT_PORTS_END
 INPUT_PORTS_START( dkong3 )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN3 )
+
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
 	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
@@ -638,9 +640,7 @@ INPUT_PORTS_START( dkong3 )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, "Self Test" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
@@ -668,6 +668,125 @@ INPUT_PORTS_START( dkong3 )
 	PORT_DIPSETTING(    0xc0, "Hardest" )
 INPUT_PORTS_END
 
+
+INPUT_PORTS_START( hunchbdk )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* IN2 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x01, "On" )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "10000" )
+	PORT_DIPSETTING(    0x04, "20000" )
+	PORT_DIPSETTING(    0x08, "40000" )
+	PORT_DIPSETTING(    0x0c, "80000" )
+	PORT_DIPNAME( 0x70, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( herbiedk )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* IN2 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x70, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+INPUT_PORTS_END
 
 
 static struct GfxLayout dkong_charlayout =
@@ -787,14 +906,12 @@ static struct MachineDriver dkong_machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz (?) */
-			0,
 			readmem,dkong_writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_I8035 | CPU_AUDIO_CPU,
 			6000000/15,	/* 6Mhz crystal */
-			3,
 			readmem_sound,writemem_sound,readport_sound,writeport_sound,
 			ignore_interrupt,1
 		}
@@ -841,14 +958,12 @@ static struct MachineDriver hunchbkd_machine_driver =
 		{
 			CPU_S2650,
 			3072000,
-			0,
 			hunchbkd_readmem,hunchbkd_writemem,hunchbkd_readport,hunchbkd_writeport,
 			hunchbkd_interrupt,1
 		},
         {
 			CPU_I8035 | CPU_AUDIO_CPU,
 			6000000/15,	/* 6Mhz crystal */
-			3,
 			readmem_sound,writemem_sound,readport_hunchbkd_sound,writeport_sound,
 			ignore_interrupt,1
 		}
@@ -892,14 +1007,12 @@ static struct MachineDriver herbiedk_machine_driver =
 		{
 			CPU_S2650,
 			3072000,
-			0,
 			hunchbkd_readmem,hunchbkd_writemem,herbiedk_readport,hunchbkd_writeport,
 			herbiedk_interrupt,1
 		},
         {
 			CPU_I8035 | CPU_AUDIO_CPU,
 			6000000/15,	/* 6Mhz crystal */
-			3,
 			readmem_sound,writemem_sound,readport_hunchbkd_sound,writeport_sound,
 			ignore_interrupt,1
 		}
@@ -937,14 +1050,12 @@ static struct MachineDriver dkongjr_machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz (?) */
-			0,
 			readmem,dkongjr_writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_I8035 | CPU_AUDIO_CPU,
 			6000000/15,	/* 6Mhz crystal */
-			3,
 			readmem_sound,writemem_sound,readport_sound,writeport_sound,
 			ignore_interrupt,1
 		}
@@ -1002,7 +1113,6 @@ static struct MachineDriver dkong3_machine_driver =
 		{
 			CPU_Z80,
 			8000000/2,	/* 4 Mhz */
-			0,
 			readmem,dkong3_writemem,0,dkong3_writeport,
 			nmi_interrupt,1
 		},
@@ -1010,7 +1120,6 @@ static struct MachineDriver dkong3_machine_driver =
 			CPU_N2A03 | CPU_AUDIO_CPU,
 			21477270/16,	/* ??? the external clock is right, I assume it is */
 							/* demultiplied internally by the CPU */
-			3,
 			dkong3_sound1_readmem,dkong3_sound1_writemem,0,0,
 			nmi_interrupt,1
 		},
@@ -1018,7 +1127,6 @@ static struct MachineDriver dkong3_machine_driver =
 			CPU_N2A03 | CPU_AUDIO_CPU,
 			21477270/16,	/* ??? the external clock is right, I assume it is */
 							/* demultiplied internally by the CPU */
-			4,
 			dkong3_sound2_readmem,dkong3_sound2_writemem,0,0,
 			nmi_interrupt,1
 		}
@@ -1062,7 +1170,7 @@ static struct MachineDriver dkong3_machine_driver =
 ***************************************************************************/
 
 ROM_START( radarscp )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "trs2c5fc",     0x0000, 0x1000, 0x40949e0d )
 	ROM_LOAD( "trs2c5gc",     0x1000, 0x1000, 0xafa8c49f )
 	ROM_LOAD( "trs2c5hc",     0x2000, 0x1000, 0x51b8263d )
@@ -1082,14 +1190,14 @@ ROM_START( radarscp )
 	ROM_LOAD( "rs2-c.xxx",    0x0100, 0x0100, 0x79a7d831 ) /* palette high 4 bits (inverted) */
 	ROM_LOAD( "rs2-v.1hc",    0x0200, 0x0100, 0x1b828315 ) /* character color codes on a per-column basis */
 
-	ROM_REGION(0x1000)	/* sound */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound */
 	ROM_LOAD( "trs2s3i",      0x0000, 0x0800, 0x78034f14 )	/* ??? */
 	ROM_LOAD( "trs2v3ec",     0x0800, 0x0800, 0x0eca8d6b )	/* ??? */
 ROM_END
 
 static void radarscp_unprotect(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* Radarscope does some checks with bit 6 of 7d00 which prevent it from working. */
@@ -1099,7 +1207,7 @@ static void radarscp_unprotect(void)
 }
 
 ROM_START( dkong )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "dk.5e",        0x0000, 0x1000, 0xba70b88b )
 	ROM_LOAD( "dk.5c",        0x1000, 0x1000, 0x5ec461ec )
 	ROM_LOAD( "dk.5b",        0x2000, 0x1000, 0x1c97d324 )
@@ -1119,13 +1227,13 @@ ROM_START( dkong )
 	ROM_LOAD( "dkong.2j",     0x0100, 0x0100, 0x2ab01dc8 ) /* palette high 4 bits (inverted) */
 	ROM_LOAD( "dkong.5f",     0x0200, 0x0100, 0x44988665 ) /* character color codes on a per-column basis */
 
-	ROM_REGION(0x1000)	/* sound */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound */
 	ROM_LOAD( "dk.3h",        0x0000, 0x0800, 0x45a4ed06 )
 	ROM_LOAD( "dk.3f",        0x0800, 0x0800, 0x4743fe92 )
 ROM_END
 
 ROM_START( dkongjp )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "5f.cpu",       0x0000, 0x1000, 0x424f2b11 )
 	ROM_LOAD( "5g.cpu",       0x1000, 0x1000, 0xd326599b )
 	ROM_LOAD( "5h.cpu",       0x2000, 0x1000, 0xff31ac89 )
@@ -1144,13 +1252,13 @@ ROM_START( dkongjp )
 	ROM_LOAD( "dkong.2j",     0x0100, 0x0100, 0x2ab01dc8 ) /* palette high 4 bits (inverted) */
 	ROM_LOAD( "dkong.5f",     0x0200, 0x0100, 0x44988665 ) /* character color codes on a per-column basis */
 
-	ROM_REGION(0x1000)	/* sound */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound */
 	ROM_LOAD( "dk.3h",        0x0000, 0x0800, 0x45a4ed06 )
 	ROM_LOAD( "dk.3f",        0x0800, 0x0800, 0x4743fe92 )
 ROM_END
 
 ROM_START( dkongjr )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "dkj.5b",       0x0000, 0x1000, 0xdea28158 )
 	ROM_CONTINUE(             0x3000, 0x1000 )
 	ROM_LOAD( "dkj.5c",       0x2000, 0x0800, 0x6fb5faf6 )
@@ -1175,12 +1283,12 @@ ROM_START( dkongjr )
 	ROM_LOAD( "dkjrprom.2f",  0x0100, 0x0100, 0x47ba0042 )	/* palette high 4 bits (inverted) */
 	ROM_LOAD( "dkjrprom.2n",  0x0200, 0x0100, 0xdbf185bf )	/* character color codes on a per-column basis */
 
-	ROM_REGION(0x1000)	/* sound? */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound? */
 	ROM_LOAD( "dkj.3h",       0x0000, 0x1000, 0x715da5f8 )
 ROM_END
 
 ROM_START( dkngjrjp )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "dkjr1",        0x0000, 0x1000, 0xec7e097f )
 	ROM_CONTINUE(             0x3000, 0x1000 )
 	ROM_LOAD( "dkjr2",        0x2000, 0x0800, 0xc0a18f0d )
@@ -1205,12 +1313,12 @@ ROM_START( dkngjrjp )
 	ROM_LOAD( "dkjrprom.2f",  0x0100, 0x0100, 0x47ba0042 )	/* palette high 4 bits (inverted) */
 	ROM_LOAD( "dkjrprom.2n",  0x0200, 0x0100, 0xdbf185bf )	/* character color codes on a per-column basis */
 
-	ROM_REGION(0x1000)	/* sound? */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound? */
 	ROM_LOAD( "dkj.3h",       0x0000, 0x1000, 0x715da5f8 )
 ROM_END
 
 ROM_START( dkjrjp )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "dkjp.5b",      0x0000, 0x1000, 0x7b48870b )
 	ROM_CONTINUE(             0x3000, 0x1000 )
 	ROM_LOAD( "dkjp.5c",      0x2000, 0x0800, 0x12391665 )
@@ -1235,12 +1343,12 @@ ROM_START( dkjrjp )
 	ROM_LOAD( "dkjrprom.2f",  0x0100, 0x0100, 0x47ba0042 )	/* palette high 4 bits (inverted) */
 	ROM_LOAD( "dkjrprom.2n",  0x0200, 0x0100, 0xdbf185bf )	/* character color codes on a per-column basis */
 
-	ROM_REGION(0x1000)	/* sound? */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound? */
 	ROM_LOAD( "dkj.3h",       0x0000, 0x1000, 0x715da5f8 )
 ROM_END
 
 ROM_START( dkjrbl )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "djr1-c.5b",    0x0000, 0x1000, 0xffe9e1a5 )
 	ROM_CONTINUE(             0x3000, 0x1000 )
 	ROM_LOAD( "djr1-c.5c",    0x2000, 0x0800, 0x982e30e8 )
@@ -1266,12 +1374,12 @@ ROM_START( dkjrbl )
 	ROM_LOAD( "dkjrprom.2f",  0x0100, 0x0100, 0x47ba0042 )	/* palette high 4 bits (inverted) */
 	ROM_LOAD( "dkjrprom.2n",  0x0200, 0x0100, 0xdbf185bf )	/* character color codes on a per-column basis */
 
-	ROM_REGION(0x1000)	/* sound? */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound? */
 	ROM_LOAD( "dkj.3h",       0x0000, 0x1000, 0x715da5f8 )
 ROM_END
 
 ROM_START( dkong3 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "dk3c.7b",      0x0000, 0x2000, 0x38d5f38e )
 	ROM_LOAD( "dk3c.7c",      0x2000, 0x2000, 0xc9134379 )
 	ROM_LOAD( "dk3c.7d",      0x4000, 0x2000, 0xd22e2921 )
@@ -1290,15 +1398,15 @@ ROM_START( dkong3 )
 	ROM_LOAD( "dkc1-c.1c",    0x0100, 0x0200, 0x66a77f40 ) /* palette blue component */
 	ROM_LOAD( "dkc1-v.2n",    0x0200, 0x0100, 0x50e33434 )	/* character color codes on a per-column basis */
 
-	ROM_REGION(0x10000)	/* sound #1 */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* sound #1 */
 	ROM_LOAD( "dk3c.5l",      0xe000, 0x2000, 0x7ff88885 )
 
-	ROM_REGION(0x10000)	/* sound #2 */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* sound #2 */
 	ROM_LOAD( "dk3c.6h",      0xe000, 0x2000, 0x36d7200c )
 ROM_END
 
 ROM_START( dkong3j )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "dk3c.7b",      0x0000, 0x2000, 0x38d5f38e )
 	ROM_LOAD( "dk3c.7c",      0x2000, 0x2000, 0xc9134379 )
 	ROM_LOAD( "dk3c.7d",      0x4000, 0x2000, 0xd22e2921 )
@@ -1317,15 +1425,15 @@ ROM_START( dkong3j )
 	ROM_LOAD( "dkc1-c.1c",    0x0100, 0x0200, 0x66a77f40 ) /* palette blue component */
 	ROM_LOAD( "dkc1-v.2n",    0x0200, 0x0100, 0x50e33434 )	/* character color codes on a per-column basis */
 
-	ROM_REGION(0x10000)	/* sound #1 */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* sound #1 */
 	ROM_LOAD( "dk3c.5l",      0xe000, 0x2000, 0x7ff88885 )
 
-	ROM_REGION(0x10000)	/* sound #2 */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* sound #2 */
 	ROM_LOAD( "dk3c.6h",      0xe000, 0x2000, 0x36d7200c )
 ROM_END
 
 ROM_START( hunchbkd )
-	ROM_REGION(0x8000)	/* 32k for code */
+	ROM_REGIONX( 0x8000, REGION_CPU1 )	/* 32k for code */
 	ROM_LOAD( "hb.5e",        0x0000, 0x1000, 0x4c3ac070 )
 	ROM_LOAD( "hbsc-1.5c",    0x2000, 0x1000, 0x9b0e6234 )
 	ROM_LOAD( "hb.5b",        0x4000, 0x1000, 0x4cde80f3 )
@@ -1344,12 +1452,12 @@ ROM_START( hunchbkd )
 	ROM_LOAD( "hbprom.2f",    0x0100, 0x0100, 0x845b8dcc )	/* palette high 4 bits (inverted) */
 	ROM_LOAD( "hbprom.2n",    0x0200, 0x0100, 0xdff9070a )	/* character color codes on a per-column basis */
 
-	ROM_REGION(0x1000)	/* sound */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound */
 	ROM_LOAD( "hb.3h",        0x0000, 0x0800, 0xa3c240d4 )
 ROM_END
 
 ROM_START( herbiedk )
-	ROM_REGION(0x8000)	/* 32k for code */
+	ROM_REGIONX( 0x8000, REGION_CPU1 )	/* 32k for code */
 	ROM_LOAD( "5f.cpu",        0x0000, 0x1000, 0xc7ab3ac6 )
 	ROM_LOAD( "5g.cpu",        0x2000, 0x1000, 0xd1031aa6 )
 	ROM_LOAD( "5h.cpu",        0x4000, 0x1000, 0xc0daf551 )
@@ -1368,12 +1476,12 @@ ROM_START( herbiedk )
 	ROM_LOAD( "74s287.2j",     0x0100, 0x0100, 0x0a440c00 ) /* palette low 4 bits (inverted) */
 	ROM_LOAD( "74s287.vid",    0x0200, 0x0100, 0x5a3446cc ) /* character color codes on a per-column basis */
 
-	ROM_REGION(0x1000)	/* sound */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound */
 	ROM_LOAD( "3i.snd",        0x0000, 0x0800, 0x20e30406 )
 ROM_END
 
 ROM_START( herocast )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	/* the loading addresses are most likely wrong */
 	/* the ROMs are probably not conriguous. */
 	/* For example there's a table which suddenly stops at */
@@ -1397,14 +1505,14 @@ ROM_START( herocast )
 	ROM_LOAD( "82s126.2f",    0x0100, 0x0100, 0x47ba0042 )	/* palette high 4 bits (inverted) */
 	ROM_LOAD( "82s126.2n",    0x0200, 0x0100, 0x37aece4b )	/* character color codes on a per-column basis */
 
-	ROM_REGION(0x1000)	/* sound */
+	ROM_REGIONX( 0x1000, REGION_CPU2 )	/* sound */
 	ROM_LOAD( "silver.3h",    0x0000, 0x0800, 0x67863ce9 )
 ROM_END
 
 static void herocast_decode(void)
 {
 	int A;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* swap data lines D3 and D4, this fixes the text but nothing more. */
@@ -1421,7 +1529,7 @@ static void herocast_decode(void)
 
 static int radarscp_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
 	if (	memcmp(&RAM[0x6307],"\x00\x00\x07",3) == 0 &&
@@ -1456,7 +1564,7 @@ static int radarscp_hiload(void)
 static void radarscp_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1470,7 +1578,7 @@ static void radarscp_hisave(void)
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1506,7 +1614,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1518,7 +1626,7 @@ static void hisave(void)
 
 static int dkong3_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	static int firsttime;
 	/* check if the hi score table has already been initialized */
 	/* the high score table is intialized to all 0, so first of all */
@@ -1559,7 +1667,7 @@ static int dkong3_hiload(void)
 static void dkong3_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1575,7 +1683,7 @@ static void dkong3_hisave(void)
 static int dkngjrjp_hiload(void)
 {
 
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x611d],"\x00\x18\x01",3) == 0 &&
@@ -1863,7 +1971,7 @@ struct GameDriver driver_hunchbkd =
 	0,
 	0,
 
-	input_ports_dkong,
+	input_ports_hunchbdk,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90 | GAME_WRONG_COLORS,
@@ -1889,7 +1997,7 @@ struct GameDriver driver_herbiedk =
 	0,
 	0,
 
-	input_ports_dkong,
+	input_ports_herbiedk,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90 | GAME_WRONG_COLORS,

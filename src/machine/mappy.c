@@ -660,5 +660,5 @@ int mappy_interrupt_2(void)
 
 void mappy_cpu_enable_w(int offset,int data)
 {
-	cpu_halt(1, offset);
+	cpu_set_halt_line(1, offset ? CLEAR_LINE : ASSERT_LINE);
 }

@@ -394,7 +394,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz (?) */
-			0,
 			readmem,writemem,readport,writeport,
 			interrupt,1
 		}
@@ -432,7 +431,6 @@ static struct MachineDriver pickin_machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz (?) */
-			0,
 			pickin_readmem,pickin_writemem,readport,writeport,
 			interrupt,1
 		}
@@ -471,7 +469,7 @@ static struct MachineDriver pickin_machine_driver =
 ***************************************************************************/
 
 ROM_START( bagman )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "e9_b05.bin",   0x0000, 0x1000, 0xe0156191 )
 	ROM_LOAD( "f9_b06.bin",   0x1000, 0x1000, 0x7b758982 )
 	ROM_LOAD( "f9_b07.bin",   0x2000, 0x1000, 0x302a077b )
@@ -489,13 +487,13 @@ ROM_START( bagman )
 	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
 
-	ROM_REGION(0x2000)	/* data for the TMS5110 speech chip */
+	ROM_REGION( 0x2000 )	/* data for the TMS5110 speech chip */
 	ROM_LOAD( "r9_b11.bin",   0x0000, 0x1000, 0x2e0057ff )
 	ROM_LOAD( "t9_b12.bin",   0x1000, 0x1000, 0xb2120edd )
 ROM_END
 
 ROM_START( bagnard )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "e9_b05.bin",   0x0000, 0x1000, 0xe0156191 )
 	ROM_LOAD( "f9_b06.bin",   0x1000, 0x1000, 0x7b758982 )
 	ROM_LOAD( "f9_b07.bin",   0x2000, 0x1000, 0x302a077b )
@@ -513,13 +511,13 @@ ROM_START( bagnard )
 	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
 
-	ROM_REGION(0x2000)	/* data for the TMS5110 speech chip */
+	ROM_REGION( 0x2000 )	/* data for the TMS5110 speech chip */
 	ROM_LOAD( "r9_b11.bin",   0x0000, 0x1000, 0x2e0057ff )
 	ROM_LOAD( "t9_b12.bin",   0x1000, 0x1000, 0xb2120edd )
 ROM_END
 
 ROM_START( bagmans )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "a4_9e.bin",    0x0000, 0x1000, 0x5fb0a1a3 )
 	ROM_LOAD( "a5-9f",        0x1000, 0x1000, 0x2ddf6bb9 )
 	ROM_LOAD( "a4_9j.bin",    0x2000, 0x1000, 0xb2da8b77 )
@@ -537,13 +535,13 @@ ROM_START( bagmans )
 	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
 
-	ROM_REGION(0x2000)	/* data for the TMS5110 speech chip */
+	ROM_REGION( 0x2000 )	/* data for the TMS5110 speech chip */
 	ROM_LOAD( "r9_b11.bin",   0x0000, 0x1000, 0x2e0057ff )
 	ROM_LOAD( "t9_b12.bin",   0x1000, 0x1000, 0xb2120edd )
 ROM_END
 
 ROM_START( bagmans2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "a4_9e.bin",    0x0000, 0x1000, 0x5fb0a1a3 )
 	ROM_LOAD( "a4_9f.bin",    0x1000, 0x1000, 0x7871206e )
 	ROM_LOAD( "a4_9j.bin",    0x2000, 0x1000, 0xb2da8b77 )
@@ -561,13 +559,13 @@ ROM_START( bagmans2 )
 	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
 
-	ROM_REGION(0x2000)	/* data for the TMS5110 speech chip */
+	ROM_REGION( 0x2000 )	/* data for the TMS5110 speech chip */
 	ROM_LOAD( "r9_b11.bin",   0x0000, 0x1000, 0x2e0057ff )
 	ROM_LOAD( "t9_b12.bin",   0x1000, 0x1000, 0xb2120edd )
 ROM_END
 
 ROM_START( sbagman )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "5.9e",         0x0000, 0x1000, 0x1b1d6b0a )
 	ROM_LOAD( "6.9f",         0x1000, 0x1000, 0xac49cb82 )
 	ROM_LOAD( "7.9j",         0x2000, 0x1000, 0x9a1c778d )
@@ -595,13 +593,13 @@ ROM_START( sbagman )
 	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
 
-	ROM_REGION(0x2000)	/* data for the TMS5110 speech chip */
+	ROM_REGION( 0x2000 )	/* data for the TMS5110 speech chip */
 	ROM_LOAD( "11.9r",        0x0000, 0x1000, 0x2e0057ff )
 	ROM_LOAD( "12.9t",        0x1000, 0x1000, 0xb2120edd )
 ROM_END
 
 ROM_START( sbagmans )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "sbag_9e.bin",  0x0000, 0x1000, 0xc19696f2 )
 	ROM_LOAD( "6.9f",         0x1000, 0x1000, 0xac49cb82 )
 	ROM_LOAD( "7.9j",         0x2000, 0x1000, 0x9a1c778d )
@@ -629,13 +627,13 @@ ROM_START( sbagmans )
 	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
 
-	ROM_REGION(0x2000)	/* data for the TMS5110 speech chip */
+	ROM_REGION( 0x2000 )	/* data for the TMS5110 speech chip */
 	ROM_LOAD( "11.9r",        0x0000, 0x1000, 0x2e0057ff )
 	ROM_LOAD( "12.9t",        0x1000, 0x1000, 0xb2120edd )
 ROM_END
 
 ROM_START( pickin )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "9e",           0x0000, 0x1000, 0xefd0bd43 )
 	ROM_LOAD( "9f",           0x1000, 0x1000, 0xb5785a23 )
 	ROM_LOAD( "9j",           0x2000, 0x1000, 0x65ee9fd4 )
@@ -659,7 +657,7 @@ static int hiload(void)
 {
 
 
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 		/* wait for "HIGH SCORE" to be on screen */
         if (memcmp(&RAM[0x6257],"\x00\x89\x01",3) == 0&& memcmp(&RAM[0x6217],"\x00\x42\x01",3) == 0)
@@ -687,7 +685,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -701,7 +699,7 @@ static void hisave(void)
 
 static int pickin_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 		/* wait for "HIGH SCORE" to be on screen */
 
@@ -731,7 +729,7 @@ static int pickin_hiload(void)
 static void pickin_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

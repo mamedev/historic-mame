@@ -257,7 +257,6 @@ static struct MachineDriver bogeyman_machine_driver =
  		{
 			CPU_M6502,
 			2000000, /* 12 MHz clock on board */
-			0,
 			bogeyman_readmem,bogeyman_writemem,0,0,
 			interrupt,16 /* Controls sound */
 		}
@@ -292,7 +291,7 @@ static struct MachineDriver bogeyman_machine_driver =
 /******************************************************************************/
 
 ROM_START( bogeyman )
-	ROM_REGION(0x58000)
+	ROM_REGIONX( 0x58000, REGION_CPU1 )
  	ROM_LOAD( "j20.c14",  0x04000, 0x04000, 0xea90d637 )
 	ROM_LOAD( "j10.c15",  0x08000, 0x04000, 0x0a8f218d )
 	ROM_LOAD( "j00.c17",  0x0c000, 0x04000, 0x5d486de9 )

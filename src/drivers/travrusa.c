@@ -274,13 +274,10 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4000000,	/* 4 Mhz (?) */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
-		{
-			IREM_AUDIO_CPU(3)
-		}
+		IREM_AUDIO_CPU
 	},
 	57, 1790,	/* accurate frequency, measured on a Moon Patrol board, is 56.75Hz. */
 				/* the Lode Runner manual (similar but different hardware) */
@@ -316,7 +313,7 @@ static struct MachineDriver machine_driver =
 
 
 ROM_START( travrusa )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "zippyrac.000", 0x0000, 0x2000, 0xbe066c0a )
 	ROM_LOAD( "zippyrac.005", 0x2000, 0x2000, 0x145d6b34 )
 	ROM_LOAD( "zippyrac.006", 0x4000, 0x2000, 0xe1b51383 )
@@ -335,12 +332,12 @@ ROM_START( travrusa )
 	ROM_LOAD( "tbp18s.2",     0x0100, 0x0020, 0xa1130007 ) /* sprite palette */
 	ROM_LOAD( "tbp24s10.3",   0x0120, 0x0100, 0x76062638 ) /* sprite lookup table */
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "mr10.1a",      0xf000, 0x1000, 0xa02ad8a0 )
 ROM_END
 
 ROM_START( motorace )
-	ROM_REGION(0x12000)	/* 64k for code */
+	ROM_REGIONX( 0x12000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "mr.cpu",       0x10000, 0x2000, 0x89030b0c )	/* we load the ROM at 10000-11fff, */
 														/* it will be decrypted at 0000 */
 	ROM_LOAD( "mr1.3l",       0x2000, 0x2000, 0x0904ed58 )
@@ -360,7 +357,7 @@ ROM_START( motorace )
 	ROM_LOAD( "tbp18s.2",     0x0100, 0x0020, 0xa1130007 ) /* sprite palette */
 	ROM_LOAD( "tbp24s10.3",   0x0120, 0x0100, 0x76062638 ) /* sprite lookup table */
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "mr10.1a",      0xf000, 0x1000, 0xa02ad8a0 )
 ROM_END
 
@@ -369,7 +366,7 @@ ROM_END
 void motorace_decode(void)
 {
 	int A,i,j;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* The first CPU ROM has the address and data lines scrambled */
@@ -415,7 +412,7 @@ void motorace_decode(void)
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -441,7 +438,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

@@ -231,14 +231,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			4000000,        /* 4 Mhz (?) */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3000000,	/* 3 Mhz (?) */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
 		}
@@ -278,7 +276,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( gunsmoke )
-	ROM_REGION(0x20000)     /* 2*64k for code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 2*64k for code */
 	ROM_LOAD( "09n_gs03.bin", 0x00000, 0x8000, 0x40a06cef ) /* Code 0000-7fff */
 	ROM_LOAD( "10n_gs04.bin", 0x10000, 0x8000, 0x8d4b423f ) /* Paged code */
 	ROM_LOAD( "12n_gs05.bin", 0x18000, 0x8000, 0x2b5667fb ) /* Paged code */
@@ -312,7 +310,7 @@ ROM_START( gunsmoke )
 	ROM_LOAD( "09f_g-09.bin", 0x0600, 0x0100, 0x3cee181e )	/* sprite lookup table */
 	ROM_LOAD( "08f_g-08.bin", 0x0700, 0x0100, 0xef91cdd2 )	/* sprite palette bank */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "14h_gs02.bin", 0x00000, 0x8000, 0xcd7a2c38 )
 
 	ROM_REGION(0x8000)
@@ -320,7 +318,7 @@ ROM_START( gunsmoke )
 ROM_END
 
 ROM_START( gunsmrom )
-	ROM_REGION(0x20000)     /* 2*64k for code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 2*64k for code */
 	ROM_LOAD( "9n_gs03.bin",  0x00000, 0x8000, 0x592f211b ) /* Code 0000-7fff */
 	ROM_LOAD( "10n_gs04.bin", 0x10000, 0x8000, 0x8d4b423f ) /* Paged code */
 	ROM_LOAD( "12n_gs05.bin", 0x18000, 0x8000, 0x2b5667fb ) /* Paged code */
@@ -354,7 +352,7 @@ ROM_START( gunsmrom )
 	ROM_LOAD( "09f_g-09.bin", 0x0600, 0x0100, 0x3cee181e )	/* sprite lookup table */
 	ROM_LOAD( "08f_g-08.bin", 0x0700, 0x0100, 0xef91cdd2 )	/* sprite palette bank */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "14h_gs02.bin", 0x00000, 0x8000, 0xcd7a2c38 )
 
 	ROM_REGION(0x8000)
@@ -362,7 +360,7 @@ ROM_START( gunsmrom )
 ROM_END
 
 ROM_START( gunsmokj )
-	ROM_REGION(0x20000)     /* 2*64k for code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 2*64k for code */
 	ROM_LOAD( "gs03_9n.rom",  0x00000, 0x8000, 0xb56b5df6 ) /* Code 0000-7fff */
 	ROM_LOAD( "10n_gs04.bin", 0x10000, 0x8000, 0x8d4b423f ) /* Paged code */
 	ROM_LOAD( "12n_gs05.bin", 0x18000, 0x8000, 0x2b5667fb ) /* Paged code */
@@ -396,7 +394,7 @@ ROM_START( gunsmokj )
 	ROM_LOAD( "09f_g-09.bin", 0x0600, 0x0100, 0x3cee181e )	/* sprite lookup table */
 	ROM_LOAD( "08f_g-08.bin", 0x0700, 0x0100, 0xef91cdd2 )	/* sprite palette bank */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "14h_gs02.bin", 0x00000, 0x8000, 0xcd7a2c38 )
 
 	ROM_REGION(0x8000)
@@ -404,7 +402,7 @@ ROM_START( gunsmokj )
 ROM_END
 
 ROM_START( gunsmoka )
-	ROM_REGION(0x20000)     /* 2*64k for code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )     /* 2*64k for code */
 	ROM_LOAD( "gs03.9n",      0x00000, 0x8000, 0x51dc3f76 ) /* Code 0000-7fff */
 	ROM_LOAD( "gs04.10n",     0x10000, 0x8000, 0x5ecf31b8 ) /* Paged code */
 	ROM_LOAD( "gs05.12n",     0x18000, 0x8000, 0x1c9aca13 ) /* Paged code */
@@ -438,7 +436,7 @@ ROM_START( gunsmoka )
 	ROM_LOAD( "09f_g-09.bin", 0x0600, 0x0100, 0x3cee181e )	/* sprite lookup table */
 	ROM_LOAD( "08f_g-08.bin", 0x0700, 0x0100, 0xef91cdd2 )	/* sprite palette bank */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "14h_gs02.bin", 0x00000, 0x8000, 0xcd7a2c38 )
 
 	ROM_REGION(0x8000)
@@ -449,7 +447,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -477,7 +475,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

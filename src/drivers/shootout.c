@@ -30,7 +30,7 @@ static void shootout_decode_bank (void) {
 	*  Code taken from "Lock'n Chase" driver by Zsolt Vasvari. Seems faster than
 	*  the one in Bump 'N Jump.
 	*/
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
     int A;
 
     for (A = 0x4000;A < 0x8000;A++)
@@ -41,7 +41,7 @@ static void shootout_bankswitch_w( int offset, int v ) {
 	int bankaddress;
 	unsigned char *RAM;
 
-	RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	RAM = memory_region(REGION_CPU1);
 	bankaddress = 0x10000 + ( 0x4000 * v );
 
 	/*
@@ -245,14 +245,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502,
 			2000000,	/* 2 Mhz? */
-			0,	/* memory region #0 */
 			readmem,writemem,0,0,
 			shootout_interrupt,1 /* nmi's are triggered at coin up */
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			2000000,	/* 2 Mhz? */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,8 /* this is a guess, but sounds just about right */
 		}
@@ -286,7 +284,7 @@ static struct MachineDriver machine_driver =
 
 
 ROM_START( shootout )
-	ROM_REGION(0x20000)	/* 64k for code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "cu00.b1",        0x08000, 0x8000, 0x090edeb6 ) /* opcodes encrypted */
 	/* banked at 0x4000-0x8000 */
 	ROM_LOAD( "cu02.c3",        0x10000, 0x8000, 0x2a913730 ) /* opcodes encrypted */
@@ -308,7 +306,7 @@ ROM_START( shootout )
 	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "gb08.k10",       0x0000, 0x0100, 0x509c65b6 )
 
-	ROM_REGION(0x10000) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for code */
 	ROM_LOAD( "cu09.j1",        0x0c000, 0x4000, 0xc4cbd558 ) /* Sound CPU */
 
 	ROM_REGION(0x0100) /* unknown prom */
@@ -318,7 +316,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -340,7 +338,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -358,7 +356,7 @@ static void shootout_decode (void)
 	 *  Code taken from "Lock'n Chase" driver by Zsolt Vasvari. Seems faster than
 	 *  the one in Bump 'N Jump.
 	 */
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
     int A;
 
     for (A = 0;A < 0x10000;A++)

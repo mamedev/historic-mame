@@ -334,7 +334,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6800,
 			3000000/4,	   /* ???? */
-			0,
 			readmem,writemem,0,0,
 			skydiver_interrupt,8
 		}
@@ -371,7 +370,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( skydiver )
-	ROM_REGION(0x10000) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "33167-02.f1", 0x2800, 0x0800, 0x25a5c976 )
 	ROM_LOAD( "33164-02.e1", 0x3000, 0x0800, 0xa348ac39 )
 	ROM_LOAD( "33165-02.d1", 0x3800, 0x0800, 0xa1fc5504 )

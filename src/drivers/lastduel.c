@@ -171,7 +171,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 static void mg_bankswitch_w(int offset, int data)
 {
 	int bankaddress;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU2);
 
 	bankaddress = 0x10000 + (data & 0x01) * 0x4000;
 	cpu_setbank(3,&RAM[bankaddress]);
@@ -374,14 +374,12 @@ static struct MachineDriver lastduel_machine_driver =
 		{
 			CPU_M68000,
 			10000000, /* Could be 8 MHz */
-			0,
 			lastduel_readmem, lastduel_writemem, 0,0,
 			lastduel_interrupt,3	/* 1 for vbl, 2 for control reads?? */
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545, /* Accurate */
-			2,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the YM2203 */
 		}
@@ -420,14 +418,12 @@ static struct MachineDriver madgear_machine_driver =
 		{
 			CPU_M68000,
 			10000000, /* Accurate */
-			0,
 			madgear_readmem, madgear_writemem, 0,0,
 			madgear_interrupt,3	/* 1 for vbl, 2 for control reads?? */
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545, /* Accurate */
-			2,
 			mg_sound_readmem,mg_sound_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the YM2203 */
 		}
@@ -691,7 +687,7 @@ INPUT_PORTS_END
 /******************************************************************************/
 
 ROM_START( lastduel )
-	ROM_REGION(0x60000)	/* 68000 code */
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 68000 code */
 	ROM_LOAD_EVEN( "ldu-06.rom",   0x00000, 0x20000, 0x4228a00b )
 	ROM_LOAD_ODD ( "ldu-05.rom",   0x00000, 0x20000, 0x7260434f )
 	ROM_LOAD_EVEN( "ldu-04.rom",   0x40000, 0x10000, 0x429fb964 )
@@ -720,12 +716,12 @@ ROM_START( lastduel )
 	ROM_LOAD( "ld_23.bin",    0x128000, 0x10000, 0xd817332c )
 	ROM_LOAD( "ld_21.bin",    0x138000, 0x10000, 0xb74f0c0e )
 
-	ROM_REGION( 0x10000 ) /* audio CPU */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* audio CPU */
 	ROM_LOAD( "ld_02.bin",    0x0000, 0x10000, 0x91834d0c )
 ROM_END
 
 ROM_START( lstduela )
-	ROM_REGION(0x60000)	/* 68000 code */
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 68000 code */
 	ROM_LOAD_EVEN( "06",   0x00000, 0x20000, 0x0e71acaf )
 	ROM_LOAD_ODD ( "05",   0x00000, 0x20000, 0x47a85bea )
 	ROM_LOAD_EVEN( "04",   0x40000, 0x10000, 0xaa4bf001 )
@@ -754,12 +750,12 @@ ROM_START( lstduela )
 	ROM_LOAD( "ld_23.bin",    0x128000, 0x10000, 0xd817332c )
 	ROM_LOAD( "ld_21.bin",    0x138000, 0x10000, 0xb74f0c0e )
 
-	ROM_REGION( 0x10000 ) /* audio CPU */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* audio CPU */
 	ROM_LOAD( "ld_02.bin",    0x0000, 0x10000, 0x91834d0c )
 ROM_END
 
 ROM_START( lstduelb )
-	ROM_REGION(0x60000)	/* 68000 code */
+	ROM_REGIONX( 0x60000, REGION_CPU1 )	/* 68000 code */
 	ROM_LOAD_EVEN( "ld_08.bin",    0x00000, 0x10000, 0x43811a96 )
 	ROM_LOAD_ODD ( "ld_07.bin",    0x00000, 0x10000, 0x63c30946 )
 	ROM_LOAD_EVEN( "ld_04.bin",    0x20000, 0x10000, 0x46a4e0f8 )
@@ -790,12 +786,12 @@ ROM_START( lstduelb )
 	ROM_LOAD( "ld_23.bin",    0x128000, 0x10000, 0xd817332c )
 	ROM_LOAD( "ld_21.bin",    0x138000, 0x10000, 0xb74f0c0e )
 
-	ROM_REGION( 0x10000 ) /* audio CPU */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* audio CPU */
 	ROM_LOAD( "ld_02.bin",    0x0000, 0x10000, 0x91834d0c )
 ROM_END
 
 ROM_START( madgear )
-	ROM_REGION(0x80000)	/* 256K for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 256K for 68000 code */
 	ROM_LOAD_EVEN( "mg_04.rom",    0x00000, 0x20000, 0xb112257d )
 	ROM_LOAD_ODD ( "mg_03.rom",    0x00000, 0x20000, 0xb2672465 )
 	ROM_LOAD_EVEN( "mg_02.rom",    0x40000, 0x20000, 0x9f5ebe16 )
@@ -814,7 +810,36 @@ ROM_START( madgear )
 	ROM_LOAD( "mg_06.rom",    0x0c0000, 0x08000, 0x382ee59b )	/* 8x8 text */
 	ROM_LOAD( "ls-11",        0x0c8000, 0x80000, 0x6bf81c64 )
 
-	ROM_REGION( 0x18000 ) /* audio CPU */
+	ROM_REGIONX(  0x18000 , REGION_CPU2 ) /* audio CPU */
+	ROM_LOAD( "mg_05.rom",    0x00000,  0x08000, 0x2fbfc945 )
+	ROM_CONTINUE(             0x10000,  0x08000 )
+
+	ROM_REGION( 0x40000 ) /* ADPCM */
+	ROM_LOAD( "ls-06",        0x00000, 0x20000, 0x88d39a5b )
+	ROM_LOAD( "ls-05",        0x20000, 0x20000, 0xb06e03b5 )
+ROM_END
+
+ROM_START( madgearj )
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 256K for 68000 code */
+	ROM_LOAD_EVEN( "mdj_04.rom",   0x00000, 0x20000, 0x9ebbebb1 )
+	ROM_LOAD_ODD ( "mdj_03.rom",   0x00000, 0x20000, 0xa5579c2d )
+	ROM_LOAD_EVEN( "mg_02.rom",    0x40000, 0x20000, 0x9f5ebe16 )
+	ROM_LOAD_ODD ( "mg_01.rom",    0x40000, 0x20000, 0x1cea2af0 )
+
+	ROM_REGION_DISPOSE(0x148000) /* temporary space for graphics */
+	ROM_LOAD( "ls-12",        0x000000, 0x40000, 0x6c1b2c6c )
+	ROM_LOAD( "mg_m11.rom",   0x040000, 0x10000, 0xee319a64 )	/* Interleaved sprites */
+	ROM_LOAD( "mg_m07.rom",   0x050000, 0x10000, 0xe5c0b211 )
+	ROM_LOAD( "mg_m12.rom",   0x060000, 0x10000, 0x887ef120 )
+	ROM_LOAD( "mg_m08.rom",   0x070000, 0x10000, 0x59709aa3 )
+	ROM_LOAD( "mg_m13.rom",   0x080000, 0x10000, 0xeae07db4 )
+	ROM_LOAD( "mg_m09.rom",   0x090000, 0x10000, 0x40ee83eb )
+	ROM_LOAD( "mg_m14.rom",   0x0a0000, 0x10000, 0x21e5424c )
+	ROM_LOAD( "mg_m10.rom",   0x0b0000, 0x10000, 0xb64afb54 )
+	ROM_LOAD( "mg_06.rom",    0x0c0000, 0x08000, 0x382ee59b )	/* 8x8 text */
+	ROM_LOAD( "ls-11",        0x0c8000, 0x80000, 0x6bf81c64 )
+
+	ROM_REGIONX(  0x18000 , REGION_CPU2 ) /* audio CPU */
 	ROM_LOAD( "mg_05.rom",    0x00000,  0x08000, 0x2fbfc945 )
 	ROM_CONTINUE(             0x10000,  0x08000 )
 
@@ -824,7 +849,7 @@ ROM_START( madgear )
 ROM_END
 
 ROM_START( ledstorm )
-	ROM_REGION(0x80000)	/* 256K for 68000 code */
+	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 256K for 68000 code */
 	ROM_LOAD_EVEN( "mdu.04",    0x00000, 0x20000, 0x7f7f8329 )
 	ROM_LOAD_ODD ( "mdu.03",    0x00000, 0x20000, 0x11fa542f )
 	ROM_LOAD_EVEN( "mg_02.rom", 0x40000, 0x20000, 0x9f5ebe16 )
@@ -843,7 +868,7 @@ ROM_START( ledstorm )
 	ROM_LOAD( "06",           0x0c0000, 0x08000, 0x54bfdc02 )	/* 8x8 text */
 	ROM_LOAD( "ls-11",        0x0c8000, 0x80000, 0x6bf81c64 )
 
-	ROM_REGION( 0x18000 ) /* audio CPU */
+	ROM_REGIONX(  0x18000 , REGION_CPU2 ) /* audio CPU */
 	ROM_LOAD( "mg_05.rom",    0x00000,  0x08000, 0x2fbfc945 )
 	ROM_CONTINUE(             0x10000,  0x08000 )
 
@@ -1064,6 +1089,29 @@ struct GameDriver driver_madgear =
 	0,
 
 	rom_madgear,
+	0,0,0,0,
+
+	input_ports_madgear,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+	madgear_hiload, madgear_hisave
+};
+
+struct GameDriver driver_madgearj =
+{
+	__FILE__,
+	&driver_madgear,
+	"madgearj",
+	"Mad Gear (Japan)",
+	"1989",
+	"Capcom",
+	"Bryan McPhail",
+	0,
+	&madgear_machine_driver,
+	0,
+
+	rom_madgearj,
 	0,0,0,0,
 
 	input_ports_madgear,

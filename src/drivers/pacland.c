@@ -314,7 +314,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			1500000,	/* 1.500 Mhz (?) */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
@@ -322,7 +321,6 @@ static struct MachineDriver machine_driver =
 			CPU_HD63701,	/* or compatible 6808 with extra instructions */
 //			6000000/4,		/* ??? */
 			6000000/3.9,		/* ??? */
-			3,
 			mcu_readmem,mcu_writemem,mcu_readport,mcu_writeport,
 			interrupt,1
 		},
@@ -361,7 +359,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( pacland )
-	ROM_REGION(0x20000)	/* 128k for code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128k for code */
 	ROM_LOAD( "pl5_01b.bin",  0x08000, 0x4000, 0xb0ea7631 )
 	ROM_LOAD( "pl5_02.bin",   0x0C000, 0x4000, 0xd903e84e )
 	/* all the following are banked at 0x4000-0x5fff */
@@ -385,13 +383,13 @@ ROM_START( pacland )
 	ROM_LOAD( "pl1-5.bin",    0x0c00, 0x0400, 0x4b7ee712 )	/* foreground lookup table */
 	ROM_LOAD( "pl1-4.bin",    0x1000, 0x0400, 0x3a7be418 )	/* background lookup table */
 
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
 	ROM_LOAD( "pl1-7",        0x8000, 0x2000, 0x8c5becae ) /* sub program for the mcu */
 	ROM_LOAD( "pl1-mcu.bin",  0xf000, 0x1000, 0x6ef08fb3 ) /* microcontroller */
 ROM_END
 
 ROM_START( pacland2 )
-	ROM_REGION(0x20000)	/* 128k for code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128k for code */
 	ROM_LOAD( "pl6_01.bin",   0x08000, 0x4000, 0x4c96e11c )
 	ROM_LOAD( "pl6_02.bin",   0x0C000, 0x4000, 0x8cf5bd8d )
 	/* all the following are banked at 0x4000-0x5fff */
@@ -415,13 +413,13 @@ ROM_START( pacland2 )
 	ROM_LOAD( "pl1-5.bin",    0x0c00, 0x0400, 0x4b7ee712 )	/* foreground lookup table */
 	ROM_LOAD( "pl1-4.bin",    0x1000, 0x0400, 0x3a7be418 )	/* background lookup table */
 
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
 	ROM_LOAD( "pl1-7",        0x8000, 0x2000, 0x8c5becae ) /* sub program for the mcu */
 	ROM_LOAD( "pl1-mcu.bin",  0xf000, 0x1000, 0x6ef08fb3 ) /* microcontroller */
 ROM_END
 
 ROM_START( pacland3 )
-	ROM_REGION(0x20000)	/* 128k for code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128k for code */
 	ROM_LOAD( "pln1-1",       0x08000, 0x4000, 0xf729fb94 )
 	ROM_LOAD( "pln1-2",       0x0C000, 0x4000, 0x5c66eb6f )
 	/* all the following are banked at 0x4000-0x5fff */
@@ -445,13 +443,13 @@ ROM_START( pacland3 )
 	ROM_LOAD( "pl1-5.bin",    0x0c00, 0x0400, 0x4b7ee712 )	/* foreground lookup table */
 	ROM_LOAD( "pl1-4.bin",    0x1000, 0x0400, 0x3a7be418 )	/* background lookup table */
 
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
 	ROM_LOAD( "pl1-7",        0x8000, 0x2000, 0x8c5becae ) /* sub program for the mcu */
 	ROM_LOAD( "pl1-mcu.bin",  0xf000, 0x1000, 0x6ef08fb3 ) /* microcontroller */
 ROM_END
 
 ROM_START( paclandm )
-	ROM_REGION(0x20000)	/* 128k for code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 128k for code */
 	ROM_LOAD( "pl1-1",        0x08000, 0x4000, 0xa938ae99 )
 	ROM_LOAD( "pl1-2",        0x0C000, 0x4000, 0x3fe43bb5 )
 	/* all the following are banked at 0x4000-0x5fff */
@@ -475,7 +473,7 @@ ROM_START( paclandm )
 	ROM_LOAD( "pl1-5.bin",    0x0c00, 0x0400, 0x4b7ee712 )	/* foreground lookup table */
 	ROM_LOAD( "pl1-4.bin",    0x1000, 0x0400, 0x3a7be418 )	/* background lookup table */
 
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for code */
 	ROM_LOAD( "pl1-7",        0x8000, 0x2000, 0x8c5becae ) /* sub program for the mcu */
 	ROM_LOAD( "pl1-mcu.bin",  0xf000, 0x1000, 0x6ef08fb3 ) /* microcontroller */
 ROM_END
@@ -484,7 +482,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if  (memcmp(&RAM[0x2140],"\x00\x08\x00",3) == 0 &&
@@ -510,7 +508,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

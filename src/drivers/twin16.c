@@ -86,8 +86,7 @@ enum {
 };
 
 enum {
-	MEM_CPU_SOUND = 0,
-	MEM_SOUND_SAMPLES1,
+	MEM_SOUND_SAMPLES1 = 1,
 	MEM_SOUND_SAMPLES2,
 	MEM_GFX_CHARS,
 	MEM_GFX_SPRITES,
@@ -154,7 +153,7 @@ static void cuebrick_hisave(void){
 /******************************************************************************************/
 
 static int extra_rom_r( int offset ){
-	return ((UINT16 *)Machine->memory_region[MEM_GFX_EXTRA])[offset/2];
+	return ((UINT16 *)memory_region(MEM_GFX_EXTRA))[offset/2];
 }
 
 static int twin16_gfx_rom1_r( int offset ){
@@ -200,7 +199,7 @@ static void gfx_untangle( void ){ /* sprite, tile data */
 	int i;
 	UINT16 *temp = (UINT16 *)malloc(0x200000);
 	if( temp ){
-		twin16_gfx_rom = (UINT16 *)Machine->memory_region[MEM_GFX_SPRITES];
+		twin16_gfx_rom = (UINT16 *)memory_region(MEM_GFX_SPRITES);
 		memcpy( temp, twin16_gfx_rom, 0x200000 );
 
 		for( i=0; i<0x080000; i++ ){
@@ -495,23 +494,18 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,
-			MEM_CPU_SOUND,
 			readmem_sound,writemem_sound,0,0,
 			ignore_interrupt,1
 		},
-
 		{
 			CPU_M68000,
 			10000000,
-			MEM_CPU_B,
 			readmem_sub,writemem_sub,0,0,
 			CPUB_interrupt,1
 		},
-
 		{
 			CPU_M68000,
 			10000000,
-			MEM_CPU_A,
 			readmem,writemem,0,0,
 			CPUA_interrupt,1
 		},
@@ -533,7 +527,7 @@ static struct MachineDriver machine_driver =
 	twin16_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151,
@@ -556,23 +550,18 @@ static struct MachineDriver heavysync_machine_driver =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,
-			MEM_CPU_SOUND,
 			readmem_sound,writemem_sound,0,0,
 			ignore_interrupt,1
 		},
-
 		{
 			CPU_M68000,
 			10000000,
-			MEM_CPU_B,
 			readmem_sub,writemem_sub,0,0,
 			CPUB_interrupt,1
 		},
-
 		{
 			CPU_M68000,
 			10000000,
-			MEM_CPU_A,
 			readmem,writemem,0,0,
 			CPUA_interrupt,1
 		},
@@ -594,7 +583,7 @@ static struct MachineDriver heavysync_machine_driver =
 	twin16_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151,
@@ -617,14 +606,12 @@ static struct MachineDriver fround_machine_driver =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,
-			MEM_CPU_SOUND,
 			readmem_sound,writemem_sound,0,0,
 			ignore_interrupt,1
 		},
 		{
 			CPU_M68000,
 			10000000,
-			MEM_CPU_A,
 			fround_readmem,fround_writemem,0,0,
 			CPUA_interrupt,1
 		},
@@ -646,7 +633,7 @@ static struct MachineDriver fround_machine_driver =
 	twin16_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151,
@@ -666,9 +653,9 @@ static struct MachineDriver fround_machine_driver =
 /******************************************************************************************/
 
 ROM_START( devilw )
-	ROM_REGION( 0x10000 ) /* Z80 code (sound CPU) */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* Z80 code (sound CPU) */
 	ROM_LOAD( "dw-m03.rom",	0x00000,  0x8000, 0x7201983c )
-	ROM_REGION(0x20000) /* samples */
+	ROM_REGION( 0x20000 ) /* samples */
 	ROM_LOAD( "dw-ic5a.rom",	0x00000, 0x20000, 0xd4992dfb )
 	ROM_REGION(0x20000) /* samples */
 	ROM_LOAD( "dw-ic7c.rom",	0x00000, 0x20000, 0xe5947501 )
@@ -682,13 +669,13 @@ ROM_START( devilw )
 	ROM_LOAD_WIDE_SWAP(	"dw-10l.rom",	0x100000, 0x80000, 0xeec8c5b2 )
 	ROM_LOAD_WIDE_SWAP(	"dw-10m.rom",	0x180000, 0x80000, 0x746cf48b )
 
-	ROM_REGION( 0x40000 ) /* 68000 code (CPU A) */
+	ROM_REGIONX( 0x40000, REGION_CPU3 ) /* 68000 code (CPU A) */
 	ROM_LOAD_EVEN( "dw-t05.rom",	0x00000, 0x10000, 0x8ab7dc61 )
 	ROM_LOAD_ODD(  "dw-t04.rom",	0x00000, 0x10000, 0xc69924da )
 	ROM_LOAD_EVEN( "dw-t09.rom",   0x20000, 0x10000, 0xfae97de0 )
 	ROM_LOAD_ODD(  "dw-t08.rom",   0x20000, 0x10000, 0x8c898d67 )
 
-	ROM_REGION( 0x40000 ) /* 68000 code (CPU B) */
+	ROM_REGIONX( 0x40000, REGION_CPU2 ) /* 68000 code (CPU B) */
 	ROM_LOAD_EVEN( "dw-r07.rom",	0x00000, 0x10000, 0x53110c0b )
 	ROM_LOAD_ODD(  "dw-r06.rom",	0x00000, 0x10000, 0x9c53a0c5 )
 	ROM_LOAD_EVEN( "dw-r13.rom",	0x20000, 0x10000, 0x36ae6014 )
@@ -700,9 +687,9 @@ ROM_START( devilw )
 ROM_END
 
 ROM_START( majuu )
-	ROM_REGION( 0x10000 ) /* Z80 code (sound CPU) */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* Z80 code (sound CPU) */
 	ROM_LOAD( "dw-m03.rom",	0x00000,  0x8000, 0x7201983c )
-	ROM_REGION(0x20000) /* samples */
+	ROM_REGION( 0x20000 ) /* samples */
 	ROM_LOAD( "dw-ic5a.rom",	0x00000, 0x20000, 0xd4992dfb )
 	ROM_REGION(0x20000) /* samples */
 	ROM_LOAD( "dw-ic7c.rom",	0x00000, 0x20000, 0xe5947501 )
@@ -716,13 +703,13 @@ ROM_START( majuu )
 	ROM_LOAD_WIDE_SWAP(	"dw-10l.rom",	0x100000, 0x80000, 0xeec8c5b2 )
 	ROM_LOAD_WIDE_SWAP(	"dw-10m.rom",	0x180000, 0x80000, 0x746cf48b )
 
-	ROM_REGION( 0x40000 ) /* 68000 code (CPU A) */
+	ROM_REGIONX( 0x40000, REGION_CPU3 ) /* 68000 code (CPU A) */
 	ROM_LOAD_EVEN( "687-s05.6n",	0x00000, 0x10000, 0xbd99b434 )
 	ROM_LOAD_ODD(  "687-s04.4n",	0x00000, 0x10000, 0x3df732e2 )
 	ROM_LOAD_EVEN( "687-s09.6r",	0x20000, 0x10000, 0x1f6efec3 )
 	ROM_LOAD_ODD(  "687-s08.4r",	0x20000, 0x10000, 0x8a16c8c6 )
 
-	ROM_REGION( 0x40000 ) /* 68000 code (CPU B) */
+	ROM_REGIONX( 0x40000, REGION_CPU2 ) /* 68000 code (CPU B) */
 	ROM_LOAD_EVEN( "dw-r07.rom",	0x00000, 0x10000, 0x53110c0b )
 	ROM_LOAD_ODD(  "dw-r06.rom",	0x00000, 0x10000, 0x9c53a0c5 )
 	ROM_LOAD_EVEN( "dw-r13.rom",	0x20000, 0x10000, 0x36ae6014 )
@@ -734,9 +721,9 @@ ROM_START( majuu )
 ROM_END
 
 ROM_START( darkadv ) /* this set is incomplete */
-	ROM_REGION( 0x10000 ) /* Z80 code (sound CPU) */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* Z80 code (sound CPU) */
 	ROM_LOAD( "n03.10a",	0x00000,  0x8000, 0xa24c682f )
-	ROM_REGION(0x20000) /* samples */
+	ROM_REGION( 0x20000 ) /* samples */
 	ROM_LOAD( "dw-ic5a.rom",	0x00000, 0x20000, 0 )
 	ROM_REGION(0x20000) /* samples */
 	ROM_LOAD( "dw-ic7c.rom",	0x00000, 0x20000, 0 )
@@ -750,13 +737,13 @@ ROM_START( darkadv ) /* this set is incomplete */
 	ROM_LOAD_WIDE_SWAP(	"dw-10l.rom",	0x100000, 0x80000, 0xeec8c5b2 )
 	ROM_LOAD_WIDE_SWAP(	"dw-10m.rom",	0x180000, 0x80000, 0x746cf48b )
 
-	ROM_REGION( 0x40000 ) /* 68000 code (CPU A) */
+	ROM_REGIONX( 0x40000, REGION_CPU3 ) /* 68000 code (CPU A) */
 	ROM_LOAD_EVEN( "n05.6n",	0x00000, 0x10000, 0xa9195b0b )
 	ROM_LOAD_ODD(  "n04.4n",	0x00000, 0x10000, 0x65b55105 )
 	ROM_LOAD_EVEN( "9.rom",		0x20000, 0x10000, 0 ) /* missing! */
 	ROM_LOAD_ODD(  "n08.4r",	0x20000, 0x10000, 0xa9603196 )
 
-	ROM_REGION( 0x40000 ) /* 68000 code (CPU B) */
+	ROM_REGIONX( 0x40000, REGION_CPU2 ) /* 68000 code (CPU B) */
 	ROM_LOAD_EVEN( "n07.10n",	0x00000, 0x10000, 0x6154322a )
 	ROM_LOAD_ODD(  "n06.8n",	0x00000, 0x10000, 0x37a72e8b )
 	ROM_LOAD_EVEN( "n13.10s",	0x20000, 0x10000, 0xf1c252af )
@@ -770,7 +757,7 @@ ROM_END
 /******************************************************************************************/
 
 ROM_START( cuebrick )
-	ROM_REGION( 0x10000 ) /* Z80 code (sound CPU) */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* Z80 code (sound CPU) */
 	ROM_LOAD( "903-d03.10a",	0x00000,  0x8000, 0x455e855a )
 
 	ROM_REGION( 0x20000 ) /* unpopulated */
@@ -781,13 +768,13 @@ ROM_START( cuebrick )
 
 	ROM_REGION( 0x200000 ) /* gfx data */
 
-	ROM_REGION( 0x40000 ) /* 68000 code (CPU A) */
+	ROM_REGIONX( 0x40000, REGION_CPU3 ) /* 68000 code (CPU A) */
 	ROM_LOAD_EVEN( "903-e05.6n",	0x00000, 0x10000, 0x8b556220 )
 	ROM_LOAD_ODD(  "903-e04.4n",	0x00000, 0x10000, 0xbf9c7927 )
 	ROM_LOAD_EVEN( "903-e09.6r",	0x20000, 0x10000, 0x2a77554d )
 	ROM_LOAD_ODD(  "903-e08.4r",	0x20000, 0x10000, 0xc0a430c1 )
 
-	ROM_REGION( 0x40000 ) /* 68000 code (CPU B) */
+	ROM_REGIONX( 0x40000, REGION_CPU2 ) /* 68000 code (CPU B) */
 	ROM_LOAD_EVEN( "903-d07.10n",	0x00000, 0x10000, 0xfc0edce7 )
 	ROM_LOAD_ODD(  "903-d06.8n",	0x00000, 0x10000, 0xb2cef6fe )
 	ROM_LOAD_EVEN( "903-e13.10s",	0x20000, 0x10000, 0x4fb5fb80 )
@@ -799,7 +786,7 @@ ROM_START( cuebrick )
 ROM_END
 
 ROM_START( vulcan )
-	ROM_REGION( 0x10000 ) /* Z80 code (sound CPU) */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* Z80 code (sound CPU) */
 	ROM_LOAD( "vulcan.g03",	0x00000,  0x8000, 0x67a3b50d )
 	ROM_REGION( 0x20000 )
 	ROM_LOAD( "vulcan.f01",	0x00000, 0x20000, 0xa0d8d69e )
@@ -815,13 +802,13 @@ ROM_START( vulcan )
 	ROM_LOAD_WIDE( "vulcan.f15",	0x100000, 0x80000, 0xaf96aef3 )
 	ROM_LOAD_WIDE( "vulcan.f16",	0x180000, 0x80000, 0xb858df1f )
 
-	ROM_REGION( 0x40000 ) /* 68000 code (CPU A) */
+	ROM_REGIONX( 0x40000, REGION_CPU3 ) /* 68000 code (CPU A) */
 	ROM_LOAD_EVEN( "vulcan.w05", 0x00000, 0x10000, 0x6e0e99cd )
 	ROM_LOAD_ODD(  "vulcan.w04", 0x00000, 0x10000, 0x23ec74ca )
 	ROM_LOAD_EVEN( "vulcan.w09", 0x20000, 0x10000, 0x377e4f28 )
 	ROM_LOAD_ODD(  "vulcan.w08", 0x20000, 0x10000, 0x813d41ea )
 
-	ROM_REGION( 0x40000 ) /* 68000 code (CPU B) */
+	ROM_REGIONX( 0x40000, REGION_CPU2 ) /* 68000 code (CPU B) */
 	ROM_LOAD_EVEN( "vulcan.p07", 0x00000, 0x10000, 0x686d549d )
 	ROM_LOAD_ODD(  "vulcan.p06", 0x00000, 0x10000, 0x70c94bee )
 	ROM_LOAD_EVEN( "vulcan.p13", 0x20000, 0x10000, 0x478fdb0a )
@@ -831,7 +818,7 @@ ROM_START( vulcan )
 ROM_END
 
 ROM_START( gradius2 )
-	ROM_REGION( 0x10000 ) /* Z80 code (sound CPU) */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* Z80 code (sound CPU) */
 	ROM_LOAD( "vulcan.g03",	0x00000,  0x8000, 0x67a3b50d )
 	ROM_REGION( 0x20000 )
 	ROM_LOAD( "vulcan.f01",	0x00000, 0x20000, 0xa0d8d69e )
@@ -847,13 +834,13 @@ ROM_START( gradius2 )
 	ROM_LOAD_WIDE( "vulcan.f15",	0x100000, 0x80000, 0xaf96aef3 )
 	ROM_LOAD_WIDE( "vulcan.f16",	0x180000, 0x80000, 0xb858df1f )
 
-	ROM_REGION( 0x40000 ) /* 68000 code (CPU A) */
+	ROM_REGIONX( 0x40000, REGION_CPU3 ) /* 68000 code (CPU A) */
 	ROM_LOAD_EVEN( "785x05.bin", 0x00000, 0x10000, 0x8a23a7b8 )
 	ROM_LOAD_ODD(  "785x04.bin", 0x00000, 0x10000, 0x88e466ce )
 	ROM_LOAD_EVEN( "785x09.bin", 0x20000, 0x10000, 0x3f3d7d7a )
 	ROM_LOAD_ODD(  "785x08.bin", 0x20000, 0x10000, 0xc39c8efd )
 
-	ROM_REGION( 0x40000 ) /* 68000 code (CPU B) */
+	ROM_REGIONX( 0x40000, REGION_CPU2 ) /* 68000 code (CPU B) */
 	ROM_LOAD_EVEN( "vulcan.p07", 0x00000, 0x10000, 0x686d549d )
 	ROM_LOAD_ODD(  "vulcan.p06", 0x00000, 0x10000, 0x70c94bee )
 	ROM_LOAD_EVEN( "vulcan.p13", 0x20000, 0x10000, 0x478fdb0a )
@@ -863,7 +850,7 @@ ROM_START( gradius2 )
 ROM_END
 
 ROM_START( grdius2a )
-	ROM_REGION( 0x10000 ) /* Z80 code (sound CPU) */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* Z80 code (sound CPU) */
 	ROM_LOAD( "vulcan.g03",	0x00000,  0x8000, 0x67a3b50d )
 	ROM_REGION( 0x20000 )
 	ROM_LOAD( "vulcan.f01",	0x00000, 0x20000, 0xa0d8d69e )
@@ -879,13 +866,13 @@ ROM_START( grdius2a )
 	ROM_LOAD_WIDE( "vulcan.f15",	0x100000, 0x80000, 0xaf96aef3 )
 	ROM_LOAD_WIDE( "vulcan.f16",	0x180000, 0x80000, 0xb858df1f )
 
-	ROM_REGION( 0x40000 ) /* 68000 code (CPU A) */
+	ROM_REGIONX( 0x40000, REGION_CPU3 ) /* 68000 code (CPU A) */
 	ROM_LOAD_EVEN( "gradius2.p05", 0x00000, 0x10000, 0x4db0e736 )
 	ROM_LOAD_ODD(  "gradius2.p04", 0x00000, 0x10000, 0x765b99e6 )
 	ROM_LOAD_EVEN( "785t09.bin",   0x20000, 0x10000, 0x4e3f4965 )
 	ROM_LOAD_ODD(  "gradius2.j08", 0x20000, 0x10000, 0x2b1c9108 )
 
-	ROM_REGION( 0x40000 ) /* 68000 code (CPU B) */
+	ROM_REGIONX( 0x40000, REGION_CPU2 ) /* 68000 code (CPU B) */
 	ROM_LOAD_EVEN( "vulcan.p07", 0x00000, 0x10000, 0x686d549d )
 	ROM_LOAD_ODD(  "vulcan.p06", 0x00000, 0x10000, 0x70c94bee )
 	ROM_LOAD_EVEN( "vulcan.p13", 0x20000, 0x10000, 0x478fdb0a )
@@ -895,7 +882,7 @@ ROM_START( grdius2a )
 ROM_END
 
 ROM_START( grdius2b )
-	ROM_REGION( 0x10000 ) /* Z80 code (sound CPU) */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* Z80 code (sound CPU) */
 	ROM_LOAD( "vulcan.g03",	0x00000,  0x8000, 0x67a3b50d )
 	ROM_REGION( 0x20000 )
 	ROM_LOAD( "vulcan.f01",	0x00000, 0x20000, 0xa0d8d69e )
@@ -911,13 +898,13 @@ ROM_START( grdius2b )
 	ROM_LOAD_WIDE( "vulcan.f15",	0x100000, 0x80000, 0xaf96aef3 )
 	ROM_LOAD_WIDE( "vulcan.f16",	0x180000, 0x80000, 0xb858df1f )
 
-	ROM_REGION( 0x40000 ) /* 68000 code (CPU A) */
+	ROM_REGIONX( 0x40000, REGION_CPU3 ) /* 68000 code (CPU A) */
 	ROM_LOAD_EVEN( "gradius2.p05", 0x00000, 0x10000, 0x4db0e736 )
 	ROM_LOAD_ODD(  "gradius2.p04", 0x00000, 0x10000, 0x765b99e6 )
 	ROM_LOAD_EVEN( "gradius2.j09", 0x20000, 0x10000, 0x6d96a7e3 )
 	ROM_LOAD_ODD(  "gradius2.j08", 0x20000, 0x10000, 0x2b1c9108 )
 
-	ROM_REGION( 0x40000 ) /* 68000 code (CPU B) */
+	ROM_REGIONX( 0x40000, REGION_CPU2 ) /* 68000 code (CPU B) */
 	ROM_LOAD_EVEN( "vulcan.p07", 0x00000, 0x10000, 0x686d549d )
 	ROM_LOAD_ODD(  "vulcan.p06", 0x00000, 0x10000, 0x70c94bee )
 	ROM_LOAD_EVEN( "vulcan.p13", 0x20000, 0x10000, 0x478fdb0a )
@@ -929,7 +916,7 @@ ROM_END
 /******************************************************************************************/
 
 ROM_START( hpuncher )
-	ROM_REGION( 0x10000 ) /* Z80 code (sound CPU) */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* Z80 code (sound CPU) */
 	ROM_LOAD( "870g03.10a",	0x00000,  0x8000, 0xdb9c10c8 )
 	ROM_REGION( 0x20000 )
 	ROM_LOAD( "870c01.5a",	0x00000, 0x20000, 0x6af96546 )
@@ -945,19 +932,19 @@ ROM_START( hpuncher )
 	ROM_LOAD_WIDE_SWAP(	"870c15.p13",	0x100000, 0x80000, 0x8c9281df )
 	ROM_LOAD_WIDE_SWAP(	"870c16.p15",	0x180000, 0x80000, 0x41df6a1b )
 
-	ROM_REGION( 0x40000 ) /* 68000 code (CPU A) */
+	ROM_REGIONX( 0x40000, REGION_CPU3 ) /* 68000 code (CPU A) */
 	ROM_LOAD_EVEN( "870h05.6n", 0x00000, 0x10000, 0x2bcfeef3 )
 	ROM_LOAD_ODD(  "870h04.4n", 0x00000, 0x10000, 0xb9f97fd3 )
 	ROM_LOAD_EVEN( "870h09.6r", 0x20000, 0x10000, 0x96a4f8b1 )
 	ROM_LOAD_ODD(  "870h08.4r", 0x20000, 0x10000, 0x46d65156 )
 
-	ROM_REGION( 0x40000 ) /* 68000 code (CPU B) */
+	ROM_REGIONX( 0x40000, REGION_CPU2 ) /* 68000 code (CPU B) */
 	ROM_LOAD_EVEN( "870h07.10n",	0x00000, 0x10000, 0xb4dda612 )
 	ROM_LOAD_ODD(  "870h06.8n",	0x00000, 0x10000, 0x696ba702 )
 ROM_END
 
 ROM_START( fround )
-	ROM_REGION( 0x10000 ) /* Z80 code (sound CPU) */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* Z80 code (sound CPU) */
 	ROM_LOAD( "frf03.bin",	0x00000,  0x8000, 0xa645c727 )
 	ROM_REGION( 0x20000 )
 	ROM_LOAD( "870c01.5a",	0x00000, 0x20000, 0x6af96546 )
@@ -973,7 +960,7 @@ ROM_START( fround )
 	ROM_LOAD_WIDE_SWAP(	"870c15.p13",	0x180000, 0x80000, 0x8c9281df )
 	ROM_LOAD_WIDE_SWAP(	"870c16.p15",	0x100000, 0x80000, 0x41df6a1b )
 
-	ROM_REGION( 0x40000 ) /* 68000 code (CPU A) */
+	ROM_REGIONX( 0x40000, REGION_CPU2 ) /* 68000 code (CPU A) */
 	ROM_LOAD_EVEN( "frl21.bin", 0x00000, 0x20000, 0xe21a3a19 )
 	ROM_LOAD_ODD(  "frl20.bin", 0x00000, 0x20000, 0x0ce9786f )
 ROM_END
@@ -981,7 +968,7 @@ ROM_END
 /******************************************************************************************/
 
 ROM_START( miaj )
-	ROM_REGION( 0x10000 ) /* Z80 code (sound CPU) */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* Z80 code (sound CPU) */
 	ROM_LOAD( "808e03.f4",	0x00000,  0x8000, 0x3d93a7cd )
 	ROM_REGION( 0x20000 ) /* samples */
 	ROM_LOAD(	"808d01.d4",	0x00000, 0x20000, 0xfd4d37c0 )
@@ -994,13 +981,13 @@ ROM_START( miaj )
 	ROM_LOAD_WIDE_SWAP(	"808d17.j4",	0x000000, 0x80000, 0xd1299082 )
 	ROM_LOAD_WIDE_SWAP(	"808d15.h4",	0x100000, 0x80000, 0x2b22a6b6 )
 
-	ROM_REGION( 0x40000 ) /* 68000 code (CPU A) */
+	ROM_REGIONX( 0x40000, REGION_CPU3 ) /* 68000 code (CPU A) */
 	ROM_LOAD_EVEN(	"808r05.bin", 0x00000, 0x10000, 0x91fd83f4 )
 	ROM_LOAD_ODD(	"808r04.bin", 0x00000, 0x10000, 0xf1c8c597 )
 	ROM_LOAD_EVEN(	"808r09.bin", 0x20000, 0x10000, 0xf74d4467 )
 	ROM_LOAD_ODD(	"808r08.bin", 0x20000, 0x10000, 0x26f21704 )
 
-	ROM_REGION( 0x40000 ) /* 68000 code (CPU B) */
+	ROM_REGIONX( 0x40000, REGION_CPU2 ) /* 68000 code (CPU B) */
 	ROM_LOAD_EVEN(	"808e07.bin",	0x00000, 0x10000, 0x297bdcea )
 	ROM_LOAD_ODD(	"808e06.bin",	0x00000, 0x10000, 0x8f576b33 )
 	ROM_LOAD_EVEN(	"808e13.h28",	0x20000, 0x10000, 0x1fa708f4 )
@@ -1202,8 +1189,7 @@ INPUT_PORTS_START( fround )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-/* note, these input ports are tested for Vulcan Venture only! */
-INPUT_PORTS_START( gradius2 )
+INPUT_PORTS_START( vulcan )
 	PORT_START      /* 0xa0001 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -1252,6 +1238,80 @@ INPUT_PORTS_START( gradius2 )
 	PORT_DIPSETTING(    0x08, "20K" )
 	PORT_DIPSETTING(    0x18, "20K/70K" )
 	PORT_DIPSETTING(    0x10, "30K/80K" )
+	PORT_DIPSETTING(    0x00, "70K" )
+	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x60, "Easy" )
+	PORT_DIPSETTING(    0x40, "Normal" )
+	PORT_DIPSETTING(    0x20, "Difficult" )
+	PORT_DIPSETTING(    0x00, "Very Difficult" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* DSW3 0xa0018 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, "Controls" )
+	PORT_DIPSETTING(    0x02, "Single" )
+	PORT_DIPSETTING(    0x00, "Dual" )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x08, 0x08, "Reserved" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
+/* same as vulcan, different bonus */
+INPUT_PORTS_START( gradius2 )
+	PORT_START      /* 0xa0001 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 ) /* advances through tests */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* 0xa0003 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* 0xa0005 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* 0xa0007 */
+	PORT_BIT( 0xff, 0xff, IPT_UNUSED )
+
+	KONAMI_TWIN_COINAGE
+
+	PORT_START	/* DSW2 */
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x03, "2" )
+	PORT_DIPSETTING(    0x02, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x00, "7" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x18, 0x18, "Bonus" )
+	PORT_DIPSETTING(    0x08, "20K" )
+	PORT_DIPSETTING(    0x18, "20K/150K" )
+	PORT_DIPSETTING(    0x10, "30K/200K" )
 	PORT_DIPSETTING(    0x00, "70K" )
 	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x60, "Easy" )
@@ -1538,7 +1598,7 @@ struct GameDriver driver_vulcan =  {
 	0,
 	0,
 
-	input_ports_gradius2,
+	input_ports_vulcan,
 
 	0, 0, 0, /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

@@ -629,7 +629,6 @@ static struct MachineDriver mooncrst_machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
-			0,
 			readmem,writemem,0,0,
 			galaxian_vh_interrupt,1
 		}
@@ -668,7 +667,6 @@ static struct MachineDriver moonal2_machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
-			0,
 			readmem,moonal2_writemem,0,0,
 			galaxian_vh_interrupt,1
 		}
@@ -707,7 +705,6 @@ static struct MachineDriver moonqsr_machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 MHz */
-			0,
 			readmem,writemem,0,0,
 			galaxian_vh_interrupt,1
 		}
@@ -759,14 +756,12 @@ static struct MachineDriver checkman_machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 MHz */
-			0,
 			readmem,writemem,0,writeport,
 			galaxian_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			1620000,	/* 1.62 MHz */
-			3,
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			interrupt,1	/* NMIs are triggered by the main CPU */
 		}
@@ -814,14 +809,12 @@ static struct MachineDriver kingball_machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz? */
-			0,
 			kingball_readmem,kingball_writemem,0,0,
 			galaxian_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			2500000,	/* 2.5 MHz */
-			3,
 			kingball_sound_readmem,kingball_sound_writemem,
 			kingball_sound_readport,kingball_sound_writeport,
 			interrupt,1	/* NMIs are triggered by the main CPU */
@@ -866,7 +859,7 @@ static struct MachineDriver kingball_machine_driver =
 ***************************************************************************/
 
 ROM_START( mooncrst )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "mc1",          0x0000, 0x0800, 0x7d954a7a )
 	ROM_LOAD( "mc2",          0x0800, 0x0800, 0x44bb7cfa )
 	ROM_LOAD( "mc3",          0x1000, 0x0800, 0x9c412104 )
@@ -887,7 +880,7 @@ ROM_START( mooncrst )
 ROM_END
 
 ROM_START( mooncrsg )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "epr194",       0x0000, 0x0800, 0x0e5582b1 )
 	ROM_LOAD( "epr195",       0x0800, 0x0800, 0x12cb201b )
 	ROM_LOAD( "epr196",       0x1000, 0x0800, 0x18255614 )
@@ -908,7 +901,7 @@ ROM_START( mooncrsg )
 ROM_END
 
 ROM_START( smooncrs )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "927",          0x0000, 0x0800, 0x55c5b994 )
 	ROM_LOAD( "928a",         0x0800, 0x0800, 0x77ae26d3 )
 	ROM_LOAD( "929",          0x1000, 0x0800, 0x716eaa10 )
@@ -929,7 +922,7 @@ ROM_START( smooncrs )
 ROM_END
 
 ROM_START( mooncrsb )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "bepr194",      0x0000, 0x0800, 0x6a23ec6d )
 	ROM_LOAD( "bepr195",      0x0800, 0x0800, 0xee262ff2 )
 	ROM_LOAD( "f03.bin",      0x1000, 0x0800, 0x29a2b0ab )
@@ -950,7 +943,7 @@ ROM_START( mooncrsb )
 ROM_END
 
 ROM_START( mooncrs2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "f8.bin",       0x0000, 0x0800, 0xd36003e5 )
 	ROM_LOAD( "bepr195",      0x0800, 0x0800, 0xee262ff2 )
 	ROM_LOAD( "f03.bin",      0x1000, 0x0800, 0x29a2b0ab )
@@ -977,7 +970,7 @@ ROM_START( mooncrs2 )
 ROM_END
 
 ROM_START( fantazia )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "f01.bin",      0x0000, 0x0800, 0xd3e23863 )
 	ROM_LOAD( "f02.bin",      0x0800, 0x0800, 0x63fa4149 )
 	ROM_LOAD( "f03.bin",      0x1000, 0x0800, 0x29a2b0ab )
@@ -1000,7 +993,7 @@ ROM_START( fantazia )
 ROM_END
 
 ROM_START( eagle )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "e1",           0x0000, 0x0800, 0x224c9526 )
 	ROM_LOAD( "e2",           0x0800, 0x0800, 0xcc538ebd )
 	ROM_LOAD( "f03.bin",      0x1000, 0x0800, 0x29a2b0ab )
@@ -1027,7 +1020,7 @@ ROM_START( eagle )
 ROM_END
 
 ROM_START( eagle2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "e1.7f",        0x0000, 0x0800, 0x45aab7a3 )
 	ROM_LOAD( "e2",           0x0800, 0x0800, 0xcc538ebd )
 	ROM_LOAD( "f03.bin",      0x1000, 0x0800, 0x29a2b0ab )
@@ -1054,7 +1047,7 @@ ROM_START( eagle2 )
 ROM_END
 
 ROM_START( moonqsr )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "mq1",          0x0000, 0x0800, 0x132c13ec )
 	ROM_LOAD( "mq2",          0x0800, 0x0800, 0xc8eb74f1 )
 	ROM_LOAD( "mq3",          0x1000, 0x0800, 0x33965a89 )
@@ -1075,7 +1068,7 @@ ROM_START( moonqsr )
 ROM_END
 
 ROM_START( checkman )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "cm1",          0x0000, 0x0800, 0xe8cbdd28 )
 	ROM_LOAD( "cm2",          0x0800, 0x0800, 0xb8432d4d )
 	ROM_LOAD( "cm3",          0x1000, 0x0800, 0x15a97f61 )
@@ -1091,13 +1084,13 @@ ROM_START( checkman )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "checkman.clr", 0x0000, 0x0020, 0x57a45057 )
 
-	ROM_REGION(0x10000)	/* 64k for sound code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound code */
 	ROM_LOAD( "cm13",         0x0000, 0x0800, 0x0b09a3e8 )
 	ROM_LOAD( "cm14",         0x0800, 0x0800, 0x47f043be )
 ROM_END
 
 ROM_START( moonal2 )
-	ROM_REGION(0x10000) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "ali1",         0x0000, 0x0400, 0x0dcecab4 )
 	ROM_LOAD( "ali2",         0x0400, 0x0400, 0xc6ee75a7 )
 	ROM_LOAD( "ali3",         0x0800, 0x0400, 0xcd1be7e9 )
@@ -1121,7 +1114,7 @@ ROM_START( moonal2 )
 ROM_END
 
 ROM_START( moonal2b )
-	ROM_REGION(0x10000) /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
 	ROM_LOAD( "ali1",         0x0000, 0x0400, 0x0dcecab4 )
 	ROM_LOAD( "ali2",         0x0400, 0x0400, 0xc6ee75a7 )
 	ROM_LOAD( "md-2",         0x0800, 0x0800, 0x8318b187 )
@@ -1144,7 +1137,7 @@ ROM_START( moonal2b )
 ROM_END
 
 ROM_START( kingball )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "prg1.7f",      0x0000, 0x1000, 0x6cb49046 )
 	ROM_LOAD( "prg2.7j",      0x1000, 0x1000, 0xc223b416 )
 	ROM_LOAD( "prg3.7l",      0x2000, 0x0800, 0x453634c0 )
@@ -1158,7 +1151,7 @@ ROM_START( kingball )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "kb2-1",        0x0000, 0x0020, 0x15dd5b16 )
 
-	ROM_REGION(0x10000)	/* 64k for sound code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound code */
 	ROM_LOAD( "kbe1.ic4",     0x0000, 0x0800, 0x5be2c80a )
 	ROM_LOAD( "kbe2.ic5",     0x0800, 0x0800, 0xbb59e965 )
 	ROM_LOAD( "kbe3.ic6",     0x1000, 0x0800, 0x1c94dd31 )
@@ -1166,7 +1159,7 @@ ROM_START( kingball )
 ROM_END
 
 ROM_START( kingbalj )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "prg1.7f",      0x0000, 0x1000, 0x6cb49046 )
 	ROM_LOAD( "prg2.7j",      0x1000, 0x1000, 0xc223b416 )
 	ROM_LOAD( "prg3.7l",      0x2000, 0x0800, 0x453634c0 )
@@ -1180,7 +1173,7 @@ ROM_START( kingbalj )
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "kb2-1",        0x0000, 0x0020, 0x15dd5b16 )
 
-	ROM_REGION(0x10000)	/* 64k for sound code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound code */
 	ROM_LOAD( "kbj1.ic4",     0x0000, 0x0800, 0xba16beb7 )
 	ROM_LOAD( "kbj2.ic5",     0x0800, 0x0800, 0x56686a63 )
 	ROM_LOAD( "kbj3.ic6",     0x1000, 0x0800, 0xfbc570a5 )
@@ -1204,7 +1197,7 @@ static unsigned char decode(int data,int addr)
 static void mooncrst_decode(void)
 {
 	int A;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	for (A = 0;A < 0x10000;A++)
@@ -1214,7 +1207,7 @@ static void mooncrst_decode(void)
 static void moonqsr_decode(void)
 {
 	int A;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	for (A = 0;A < 0x10000;A++)
@@ -1260,7 +1253,7 @@ Pin layout is such that links can replace the PAL if encryption is not used.
 */
 	int A;
 	int data_xor=0;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	for (A = 0;A < 0x2800;A++)
@@ -1284,7 +1277,7 @@ Pin layout is such that links can replace the PAL if encryption is not used.
 
 static int mooncrst_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1308,7 +1301,7 @@ static int mooncrst_hiload(void)
 static void mooncrst_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1320,7 +1313,7 @@ static void mooncrst_hisave(void)
 
 static int mooncrsg_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1344,7 +1337,7 @@ static int mooncrsg_hiload(void)
 static void mooncrsg_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1356,7 +1349,7 @@ static void mooncrsg_hisave(void)
 
 static int moonqsr_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1380,7 +1373,7 @@ static int moonqsr_hiload(void)
 static void moonqsr_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1392,7 +1385,7 @@ static void moonqsr_hisave(void)
 
 static int checkman_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1416,7 +1409,7 @@ static int checkman_hiload(void)
 static void checkman_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1428,7 +1421,7 @@ static void checkman_hisave(void)
 
 static int kingball_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1452,7 +1445,7 @@ static int kingball_hiload(void)
 static void kingball_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

@@ -191,7 +191,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			18432000/6,		/* 3.072 MHz (probably) */
-			0,
 			readmem,writemem,0,0,
 			pingpong_interrupt,16	/* 1 IRQ + 8 NMI */
 		}
@@ -229,7 +228,7 @@ static struct MachineDriver machine_driver =
 static int hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -263,7 +262,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -282,7 +281,7 @@ static void hisave(void)
 ***************************************************************************/
 
 ROM_START( pingpong )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "pp_e04.rom",   0x0000, 0x4000, 0x18552f8f )
 	ROM_LOAD( "pp_e03.rom",   0x4000, 0x4000, 0xae5f01e8 )
 

@@ -63,16 +63,16 @@ void neogeo_init_machine(void)
 	if (src & 0x04)	res |= 0x8000;
 
 	/* write the ID in the system BIOS ROM */
-	WRITE_WORD(&Machine->memory_region[MEM_BIOS][0x0400],res);
+	WRITE_WORD(&memory_region(MEM_BIOS)[0x0400],res);
 
 	if (memcard_manager==1)
 	{
 		memcard_manager=0;
-		WRITE_WORD(&Machine->memory_region[MEM_BIOS][0x11b1a], 0x500a);
+		WRITE_WORD(&memory_region(MEM_BIOS)[0x11b1a], 0x500a);
 	}
 	else
 	{
-		WRITE_WORD(&Machine->memory_region[MEM_BIOS][0x11b1a],0x1b6a);
+		WRITE_WORD(&memory_region(MEM_BIOS)[0x11b1a],0x1b6a);
 	}
 
 	time(&ltime);
@@ -91,10 +91,10 @@ void neogeo_init_machine(void)
 /* This function is only called once per game. */
 void neogeo_onetime_init_machine(void)
 {
-	unsigned char *RAM = Machine->memory_region[MEM_CPU0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	extern struct YM2610interface neogeo_ym2610_interface;
 
-	if (Machine->memory_region_length[MEM_SAMPLE1] > 1)
+	if (memory_region_length(MEM_SAMPLE1) > 1)
 	{
 		if (errorlog) fprintf(errorlog,"using memory region %d for Delta T samples\n",MEM_SAMPLE1);
 		neogeo_ym2610_interface.pcmroma[0] = MEM_SAMPLE1;
@@ -110,11 +110,11 @@ void neogeo_onetime_init_machine(void)
 	cpu_setbank(1, neogeo_ram);
 
 	/* Set the biosbank */
-	cpu_setbank(3, Machine->memory_region[MEM_BIOS]);
+	cpu_setbank(3, memory_region(MEM_BIOS));
 
 	/* Set the 2nd ROM bank */
-    RAM = Machine->memory_region[MEM_CPU0];
-	if (Machine->memory_region_length[MEM_CPU0] > 0x100000)
+    RAM = memory_region(REGION_CPU1);
+	if (memory_region_length(REGION_CPU1) > 0x100000)
 	{
 		cpu_setbank(4, &RAM[0x100000]);
 	}
@@ -124,7 +124,7 @@ void neogeo_onetime_init_machine(void)
 	}
 
 	/* Set the sound CPU ROM banks */
-	RAM = Machine->memory_region[MEM_CPU1];
+	RAM = memory_region(REGION_CPU2);
 	cpu_setbank(5,&RAM[0x08000]);
 	cpu_setbank(6,&RAM[0x0c000]);
 	cpu_setbank(7,&RAM[0x0e000]);
@@ -136,7 +136,7 @@ void neogeo_onetime_init_machine(void)
 	memcard_number=0;
 
 
-	RAM = Machine->memory_region[MEM_BIOS];
+	RAM = memory_region(MEM_BIOS);
 
 	if (READ_WORD(&RAM[0x11b00]) == 0x4eba)
 	{
@@ -371,7 +371,7 @@ NEO_CYCLE_R(irrmaze,    0x104e,0,       READ_WORD(&neogeo_ram[0x4b6e]))
  */
 static int cycle_v3_sr(int offset)
 {
-	unsigned char *RAM = Machine->memory_region[MEM_CPU1];
+	unsigned char *RAM = memory_region(REGION_CPU2);
 
 	if (cpu_get_pc()==0x0137) {
 		cpu_spinuntil_int();
@@ -385,7 +385,7 @@ static int cycle_v3_sr(int offset)
  */
 static int ssideki_cycle_sr(int offset)
 {
-	unsigned char *RAM = Machine->memory_region[MEM_CPU1];
+	unsigned char *RAM = memory_region(REGION_CPU2);
 
 	if (cpu_get_pc()==0x015A) {
 		cpu_spinuntil_int();
@@ -396,7 +396,7 @@ static int ssideki_cycle_sr(int offset)
 
 static int aof_cycle_sr(int offset)
 {
-	unsigned char *RAM = Machine->memory_region[MEM_CPU1];
+	unsigned char *RAM = memory_region(REGION_CPU2);
 
 	if (cpu_get_pc()==0x0143) {
 		cpu_spinuntil_int();
@@ -414,7 +414,7 @@ static int aof_cycle_sr(int offset)
 
 static int cycle_v2_sr(int offset)
 {
-	unsigned char *RAM = Machine->memory_region[MEM_CPU1];
+	unsigned char *RAM = memory_region(REGION_CPU2);
 
 	if (cpu_get_pc()==0x0143) {
 		cpu_spinuntil_int();
@@ -425,7 +425,7 @@ static int cycle_v2_sr(int offset)
 
 static int vwpoint_cycle_sr(int offset)
 {
-	unsigned char *RAM = Machine->memory_region[MEM_CPU1];
+	unsigned char *RAM = memory_region(REGION_CPU2);
 
 	if (cpu_get_pc()==0x0143) {
 		cpu_spinuntil_int();
@@ -443,7 +443,7 @@ static int vwpoint_cycle_sr(int offset)
 /*
 static int cycle_v15_sr(int offset)
 {
-	unsigned char *RAM = Machine->memory_region[MEM_CPU1];
+	unsigned char *RAM = memory_region(REGION_CPU2);
 
 	if (cpu_get_pc()==0x013D) {
 		cpu_spinuntil_int();
@@ -460,7 +460,7 @@ static int cycle_v15_sr(int offset)
 
 static int maglord_cycle_sr(int offset)
 {
-	unsigned char *RAM = Machine->memory_region[MEM_CPU1];
+	unsigned char *RAM = memory_region(REGION_CPU2);
 
 	if (cpu_get_pc()==0xd487) {
 		cpu_spinuntil_int();
@@ -686,7 +686,7 @@ static void neogeo_custom_memory(void)
 		/* Fix a really weird problem. The game clears the video RAM but goes */
 		/* beyond the tile RAM, corrupting the zoom control RAM. After that it */
 		/* initializes the control RAM, but then corrupts it again! */
-		unsigned char *RAM = Machine->memory_region[MEM_CPU0];
+		unsigned char *RAM = memory_region(REGION_CPU1);
 		WRITE_WORD(&RAM[0x1328],0x4e71);
 		WRITE_WORD(&RAM[0x132a],0x4e71);
 		WRITE_WORD(&RAM[0x132c],0x4e71);
@@ -727,7 +727,7 @@ static void neogeo_custom_memory(void)
 		/* patch out protection check */
 		/* the protection routines are at 0x25dcc and involve reading and writing */
 		/* addresses in the 0x2xxxxx range */
-		unsigned char *RAM = Machine->memory_region[MEM_CPU0];
+		unsigned char *RAM = memory_region(REGION_CPU1);
 		WRITE_WORD(&RAM[0x2240],0x4e71);
 	}
 
@@ -740,7 +740,7 @@ static void neogeo_custom_memory(void)
 		/* here (or maybe the SRAM location to protect is different), so I patch out */
 		/* the routine which trashes memory. Without this, the game goes nuts after */
 		/* the first bonus stage. */
-		unsigned char *RAM = Machine->memory_region[MEM_CPU0];
+		unsigned char *RAM = memory_region(REGION_CPU1);
 		WRITE_WORD(&RAM[0xb820],0x4e71);
 		WRITE_WORD(&RAM[0xb822],0x4e71);
 
@@ -753,7 +753,7 @@ static void neogeo_custom_memory(void)
 	if (!strcmp(Machine->gamedrv->name,"fatfury3"))
 	{
 		/* patch the first word, it must be 0x0010 not 0x0000 (initial stack pointer) */
-		unsigned char *RAM = Machine->memory_region[MEM_CPU0];
+		unsigned char *RAM = memory_region(REGION_CPU1);
 		WRITE_WORD(&RAM[0x0000],0x0010);
 	}
 
@@ -761,7 +761,7 @@ static void neogeo_custom_memory(void)
 	{
 		/* patch out protection checks */
 		int i;
-		unsigned char *RAM = Machine->memory_region[MEM_CPU0];
+		unsigned char *RAM = memory_region(REGION_CPU1);
 
 		for (i = 0;i < 0x100000;i+=2)
 		{

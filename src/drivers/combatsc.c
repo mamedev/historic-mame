@@ -589,14 +589,12 @@ static struct MachineDriver cmbatscb_machine_driver =
 		{
 			CPU_HD6309,
 			5000000,	/* 5 MHz? */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			1500000,
-			1,
 			combatsc_readmem_sound,combatsc_writemem_sound,0,0, /* FAKE */
 			ignore_interrupt,0 	/* IRQs are caused by the main CPU */
 		},
@@ -636,14 +634,12 @@ static struct MachineDriver combatsc_machine_driver =
 		{
 			CPU_HD6309,
 			5000000,	/* 5 MHz? */
-			0,
 			combatsc_readmem,combatsc_writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			1500000,	/* 1.5 MHz? */
-			1,
 			combatsc_readmem_sound,combatsc_writemem_sound,0,0,
 			ignore_interrupt,1 	/* IRQs are caused by the main CPU */
 		}
@@ -679,13 +675,13 @@ static struct MachineDriver combatsc_machine_driver =
 
 
 ROM_START( combatscb )
-	ROM_REGION( 0x48000 ) /* 6809 code */
+	ROM_REGIONX( 0x48000, REGION_CPU1 ) /* 6809 code */
 	ROM_LOAD( "combat.002",	0x10000, 0x10000, 0x0996755d )
 	ROM_LOAD( "combat.003",	0x20000, 0x10000, 0x229c93b2 )
 	ROM_LOAD( "combat.004",	0x30000, 0x10000, 0xa069cb84 )
 	/* extra 0x8000 for banked RAM */
 
-	ROM_REGION( 0x10000 ) /* sound CPU */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* sound CPU */
 	ROM_LOAD( "combat.001", 0x00000, 0x10000, 0x61456b3b )
 	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 ) /* FAKE - from Konami set! */
 
@@ -721,12 +717,12 @@ ROM_START( combatscb )
 ROM_END
 
 ROM_START( combatsc )
-	ROM_REGION( 0x48000 ) /* 6309 code */
+	ROM_REGIONX( 0x48000, REGION_CPU1 ) /* 6309 code */
 	ROM_LOAD( "611g01.rom",	0x10000, 0x10000, 0x857ffffe )
 	ROM_LOAD( "611g02.rom",	0x20000, 0x20000, 0x9ba05327 )
 	/* extra 0x8000 for banked RAM */
 
-	ROM_REGION( 0x10000 ) /* sound CPU */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* sound CPU */
 	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 )
 
 	ROM_REGION_DISPOSE( 0x100000 )
@@ -746,12 +742,12 @@ ROM_START( combatsc )
 ROM_END
 
 ROM_START( combatsct )
-	ROM_REGION( 0x48000 ) /* 6309 code */
+	ROM_REGIONX( 0x48000, REGION_CPU1 ) /* 6309 code */
 	ROM_LOAD( "g01.rom",	0x10000, 0x10000, 0x489c132f )
 	ROM_LOAD( "611g02.rom",	0x20000, 0x20000, 0x9ba05327 )
 	/* extra 0x8000 for banked RAM */
 
-	ROM_REGION( 0x10000 ) /* sound CPU */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* sound CPU */
 	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 )
 
 	ROM_REGION_DISPOSE( 0x100000 )
@@ -772,12 +768,12 @@ ROM_START( combatsct )
 ROM_END
 
 ROM_START( combatscj )
-	ROM_REGION( 0x48000 ) /* 6309 code */
+	ROM_REGIONX( 0x48000, REGION_CPU1 ) /* 6309 code */
 	ROM_LOAD( "611p01.a14",	0x10000, 0x10000, 0xd748268e )
 	ROM_LOAD( "611g02.rom",	0x20000, 0x20000, 0x9ba05327 )
 	/* extra 0x8000 for banked RAM */
 
-	ROM_REGION( 0x10000 ) /* sound CPU */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* sound CPU */
 	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 )
 
 	ROM_REGION_DISPOSE( 0x100000 )
@@ -797,12 +793,12 @@ ROM_START( combatscj )
 ROM_END
 
 ROM_START( bootcamp )
-	ROM_REGION( 0x48000 ) /* 6309 code */
+	ROM_REGIONX( 0x48000, REGION_CPU1 ) /* 6309 code */
 	ROM_LOAD( "xxx-v01.12a", 0x10000, 0x10000, 0xc10dca64 )
 	ROM_LOAD( "611g02.rom",  0x20000, 0x20000, 0x9ba05327 )
 	/* extra 0x8000 for banked RAM */
 
-	ROM_REGION( 0x10000 ) /* sound CPU */
+	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* sound CPU */
 	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 )
 
 	ROM_REGION_DISPOSE( 0x100000 )
@@ -824,7 +820,7 @@ ROM_END
 
 
 static void gfx_untangle( void ){
-	unsigned char *gfx = Machine->memory_region[2];
+	unsigned char *gfx = memory_region(2);
 	int i;
 	for( i=0; i<0x80000; i++ ){
 		gfx[i] = ~gfx[i];
@@ -835,7 +831,7 @@ static void gfx_untangle( void ){
 static int combatsc_hiload( void )
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	unsigned char temp []={ 0x4b, 0x3d, 0x41, 0x07 };
 
 	/* check if the hi score table has already been initialized */
@@ -856,7 +852,7 @@ static int combatsc_hiload( void )
 static void combatsc_hisave( void )
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen( Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1 )) != 0)
 	{

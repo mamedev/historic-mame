@@ -357,7 +357,7 @@ void cclimbr2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrollx( background, 0, armedf_bg_scrollx+104);
 	tilemap_set_scrolly( background, 0, armedf_bg_scrolly );
 
-	RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	RAM = memory_region(REGION_CPU1);
 	tilemap_set_scrollx( foreground, 0, READ_WORD(&RAM[0x6123c]) - (160 + 256 * 3)+8);	// ???
 	tilemap_set_scrolly( foreground, 0, READ_WORD(&RAM[0x6123e]) - 1);			// ???
 

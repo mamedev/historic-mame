@@ -81,7 +81,7 @@ static int rt_decode_sample( void ) {
 
 	/* get amount of samples */
 	for ( j = 0; j < decode_mode; j++ ) {
-		src = Machine->memory_region[MEM_SAMPLES]+ ( j * 0x10000 );
+		src = memory_region(MEM_SAMPLES)+ ( j * 0x10000 );
 		rt_totalsamples[j] = ( ( src[0] << 8 ) + src[1] ) / 2;
 		n += rt_totalsamples[j];
 		if ( errorlog ) fprintf( errorlog, "rt_totalsamples[%d]:%d\n", j, rt_totalsamples[j] );
@@ -101,30 +101,30 @@ static int rt_decode_sample( void ) {
 		int indx, start, offs;
 
 		if ( n < rt_totalsamples[0] ) {
-			src = Machine->memory_region[MEM_SAMPLES];
+			src = memory_region(MEM_SAMPLES);
 			indx = n;
 		} else
 			if ( ( n - rt_totalsamples[0] ) < rt_totalsamples[1] ) {
-				src = Machine->memory_region[MEM_SAMPLES]+0x10000;
+				src = memory_region(MEM_SAMPLES)+0x10000;
 				indx = n - rt_totalsamples[0];
 			} else
 				if ( ( n - ( rt_totalsamples[0] + rt_totalsamples[1] ) ) < rt_totalsamples[2] ) {
-					src = Machine->memory_region[MEM_SAMPLES]+0x20000;
+					src = memory_region(MEM_SAMPLES)+0x20000;
 					indx = n - ( rt_totalsamples[0] + rt_totalsamples[1] );
 				} else
 					if ( ( n - ( rt_totalsamples[0] + rt_totalsamples[1] + rt_totalsamples[2] ) ) < rt_totalsamples[3] ) {
-						src = Machine->memory_region[MEM_SAMPLES]+0x30000;
+						src = memory_region(MEM_SAMPLES)+0x30000;
 						indx = n - ( rt_totalsamples[0] + rt_totalsamples[1] + rt_totalsamples[2] );
 					} else
 						if ( ( n - ( rt_totalsamples[0] + rt_totalsamples[1] + rt_totalsamples[2] + rt_totalsamples[3] ) ) < rt_totalsamples[4] ) {
-							src = Machine->memory_region[MEM_SAMPLES]+0x40000;
+							src = memory_region(MEM_SAMPLES)+0x40000;
 							indx = n - ( rt_totalsamples[0] + rt_totalsamples[1] + rt_totalsamples[2] + rt_totalsamples[3] );
 						} else
 							if ( ( n - ( rt_totalsamples[0] + rt_totalsamples[1] + rt_totalsamples[2] + rt_totalsamples[3] + rt_totalsamples[4] ) ) < rt_totalsamples[5] ) {
-								src = Machine->memory_region[MEM_SAMPLES]+0x50000;
+								src = memory_region(MEM_SAMPLES)+0x50000;
 								indx = n - ( rt_totalsamples[0] + rt_totalsamples[1] + rt_totalsamples[2] + rt_totalsamples[3] + rt_totalsamples[4] );
 							} else {
-								src = Machine->memory_region[MEM_SAMPLES]+0x60000;
+								src = memory_region(MEM_SAMPLES)+0x60000;
 								indx = n - ( rt_totalsamples[0] + rt_totalsamples[1] + rt_totalsamples[2] + rt_totalsamples[3] + rt_totalsamples[4] + rt_totalsamples[5] );
 							}
 
@@ -336,7 +336,7 @@ static int spriteram_r( int offset )
 
 static void bankswitch1_w( int offset, int data )
 {
-	unsigned char *base = Machine->memory_region[MEM_DATA1];
+	unsigned char *base = memory_region(MEM_DATA1);
 //if (errorlog) fprintf(errorlog,"bank 1 select %02x\n",data);
 	cpu_setbank( 1, base + ((data&0x1f)*0x2000) );
 	if( data&0xe0 && errorlog ) fprintf( errorlog, "big bank\n" );
@@ -523,7 +523,7 @@ CPU2_MEMORY( rthunder, 0x0000, 0x2000, 0x4000, 0x6000, 0xd800, 0x8000, 0x8800 )
 CPU2_MEMORY( wndrmomo, 0x2000, 0x4000, 0x6000, UNUSED, UNUSED, 0xc000, 0xc800 )
 
 
-#define MCU_MEMORY(NAME,ADDR_INPUT,ADDR_UNK1,ADDR_UNK2)						\
+#define MCU_MEMORY(NAME,ADDR_LOWROM,ADDR_INPUT,ADDR_UNK1,ADDR_UNK2)			\
 static struct MemoryReadAddress NAME##_mcu_readmem[] =						\
 {																			\
 	{ 0x0000, 0x001f, hd63701_internal_registers_r },						\
@@ -537,7 +537,8 @@ static struct MemoryReadAddress NAME##_mcu_readmem[] =						\
 	{ ADDR_INPUT+0x21, ADDR_INPUT+0x21, input_port_1_r },					\
 	{ ADDR_INPUT+0x30, ADDR_INPUT+0x30, dsw_r0 },							\
 	{ ADDR_INPUT+0x31, ADDR_INPUT+0x31, dsw_r1 },							\
-	{ 0x4000, 0xbfff, MRA_ROM },											\
+	{ ADDR_LOWROM, ADDR_LOWROM+0x3fff, MRA_ROM },							\
+	{ 0x8000, 0xbfff, MRA_ROM },											\
 	{ 0xf000, 0xffff, MRA_ROM },											\
 	{ -1 } /* end of table */												\
 };																			\
@@ -553,16 +554,17 @@ static struct MemoryWriteAddress NAME##_mcu_writemem[] =					\
 	{ ADDR_INPUT+0x01, ADDR_INPUT+0x01, YM2151_data_port_0_w },				\
 	{ ADDR_UNK1, ADDR_UNK1, MWA_NOP }, /* ??? written (not always) at end of interrupt */	\
 	{ ADDR_UNK2, ADDR_UNK2, MWA_NOP }, /* ??? written (not always) at end of interrupt */	\
-	{ 0x4000, 0xbfff, MWA_ROM },											\
+	{ ADDR_LOWROM, ADDR_LOWROM+0x3fff, MWA_ROM },							\
+	{ 0x8000, 0xbfff, MWA_ROM },											\
 	{ 0xf000, 0xffff, MWA_ROM },											\
 	{ -1 } /* end of table */												\
 };
 
-/*                     INPUT    UNK1    UNK2 */
-MCU_MEMORY( roishtar, 0x6000, 0x8000, 0x9800 )
-MCU_MEMORY( genpeitd, 0x2800, 0xa000, 0xa800 )
-MCU_MEMORY( rthunder, 0x2000, 0xb000, 0xb800 )
-MCU_MEMORY( wndrmomo, 0x3800, 0xc000, 0xc800 )
+/*                    LOWROM   INPUT    UNK1    UNK2 */
+MCU_MEMORY( roishtar, 0x0000, 0x6000, 0x8000, 0x9800 )
+MCU_MEMORY( genpeitd, 0x4000, 0x2800, 0xa000, 0xa800 )
+MCU_MEMORY( rthunder, 0x4000, 0x2000, 0xb000, 0xb800 )
+MCU_MEMORY( wndrmomo, 0x4000, 0x3800, 0xc000, 0xc800 )
 
 static struct IOReadPort mcu_readport[] =
 {
@@ -819,7 +821,7 @@ INPUT_PORTS_START( rthunder )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_PLAYER2 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( rthundrb )
+INPUT_PORTS_START( rthundro )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 player 2 */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -1131,21 +1133,18 @@ static struct MachineDriver roishtar_machine_driver =
 			CPU_M6809,
 //			6000000/4,
 			49152000/32, 		/* ? */
-			REGION_CPU1,
 			readmem1,writemem1,0,0,
 			rt_interrupt1,1
 		},
 		{
 			CPU_M6809,
 			49152000/32, 		/* ? */
-			REGION_CPU2,
 			roishtar_readmem2,roishtar_writemem2,0,0,
 			rt_interrupt2,1
 		},
 		{
 			CPU_HD63701,	/* or compatible 6808 with extra instructions */
 			49152000/32, 		/* ? */
-			REGION_CPU3,
 			roishtar_mcu_readmem,roishtar_mcu_writemem,mcu_readport,mcu_writeport,
 			interrupt, 1	/* ??? */
 		}
@@ -1195,21 +1194,18 @@ static struct MachineDriver genpeitd_machine_driver =
 			CPU_M6809,
 			6000000/4,
 //			49152000/32, 		/* ? */
-			REGION_CPU1,
 			readmem1,writemem1,0,0,
 			rt_interrupt1,1
 		},
 		{
 			CPU_M6809,
 			49152000/32, 		/* ? */
-			REGION_CPU2,
 			genpeitd_readmem2,genpeitd_writemem2,0,0,
 			rt_interrupt2,1
 		},
 		{
 			CPU_HD63701,	/* or compatible 6808 with extra instructions */
 			49152000/32, 		/* ? */
-			REGION_CPU3,
 			genpeitd_mcu_readmem,genpeitd_mcu_writemem,mcu_readport,mcu_writeport,
 			interrupt, 1	/* ??? */
 		}
@@ -1259,21 +1255,18 @@ static struct MachineDriver rthunder_machine_driver =
 			CPU_M6809,
 			6000000/4,
 //			49152000/32, 		/* ? */
-			REGION_CPU1,
 			readmem1,writemem1,0,0,
 			rt_interrupt1,1
 		},
 		{
 			CPU_M6809,
 			49152000/32, 		/* ? */
-			REGION_CPU2,
 			rthunder_readmem2,rthunder_writemem2,0,0,
 			rt_interrupt2,1
 		},
 		{
 			CPU_HD63701,	/* or compatible 6808 with extra instructions */
 			49152000/32, 		/* ? */
-			REGION_CPU3,
 			rthunder_mcu_readmem,rthunder_mcu_writemem,mcu_readport,mcu_writeport,
 			interrupt, 1	/* ??? */
 		}
@@ -1323,21 +1316,18 @@ static struct MachineDriver wndrmomo_machine_driver =
 			CPU_M6809,
 			6000000/4,
 //			49152000/32, 		/* ? */
-			REGION_CPU1,
 			readmem1,writemem1,0,0,
 			rt_interrupt1,1
 		},
 		{
 			CPU_M6809,
 			49152000/32, 		/* ? */
-			REGION_CPU2,
 			wndrmomo_readmem2,wndrmomo_writemem2,0,0,
 			rt_interrupt2,1
 		},
 		{
 			CPU_HD63701,	/* or compatible 6808 with extra instructions */
 			49152000/32, 		/* ? */
-			REGION_CPU3,
 			wndrmomo_mcu_readmem,wndrmomo_mcu_writemem,mcu_readport,mcu_writeport,
 			interrupt, 1	/* ??? */
 		}
@@ -1424,10 +1414,11 @@ ROM_START( roishtar )
 	ROM_LOAD( "ri1-5.6u", 0x1400, 0x0020, 0xe2188075 )	/* tile address decoder (used at runtime) */
 
 	ROM_REGIONX( 0x10000, REGION_CPU3 )
-	ROM_LOAD( "ri1-4.6b",    0x04000, 0x8000, 0x552172b8 )
+	ROM_LOAD( "ri1-4.6b",    0x00000, 0x4000, 0x552172b8 )
+	ROM_CONTINUE(            0x08000, 0x4000 )
 	ROM_LOAD( "rt1-mcu.bin", 0x0f000, 0x1000, 0x6ef08fb3 )
 
-	ROM_REGION( 0x40000 ) /* PCM samples for Hitachi CPU */
+	ROM_REGION(  0x40000 ) /* PCM samples for Hitachi CPU */
 	/* the expansion board is not present in this game */
 ROM_END
 
@@ -1533,7 +1524,7 @@ ROM_START( rthunder )
 	/* m3 empty */
 ROM_END
 
-ROM_START( rthundrb )
+ROM_START( rthundro )
 	ROM_REGIONX( 0x18000, REGION_CPU1 )
 	ROM_LOAD( "r1",         0x8000, 0x8000, 0x6f8c1252 )
 	/* 9d empty */
@@ -1713,7 +1704,7 @@ static void rthunder_init_driver( void ) {
 
 static int hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if  (memcmp(&RAM[0x5400],"\x00\x30\x00",3) == 0 &&
@@ -1739,7 +1730,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1749,6 +1740,21 @@ static void hisave(void)
 	}
 }
 
+
+
+static void roishtar_semaphore(int offset, int data)
+{
+    rthunder_videoram1_w(0x7e24-0x6000+offset,data);
+
+    if (data == 0x02)
+	    cpu_spinuntil_int();
+}
+
+static void roishtar_kludge(void)
+{
+	/* install hook to avoid hang at game over */
+    install_mem_write_handler(1, 0x7e24, 0x7e24, roishtar_semaphore);
+}
 
 
 struct GameDriver driver_roishtar =
@@ -1762,7 +1768,7 @@ struct GameDriver driver_roishtar =
 	"Jimmy Hamm\nPhil Stroffolino\nErnesto Corvi",
 	0,
 	&roishtar_machine_driver,
-	0,
+	roishtar_kludge,
 
 	rom_roishtar,
 	gfx_untangle, 0,
@@ -1827,11 +1833,11 @@ struct GameDriver driver_rthunder =
 	hiload, hisave
 };
 
-struct GameDriver driver_rthundrb =
+struct GameDriver driver_rthundro =
 {
 	__FILE__,
 	&driver_rthunder,
-	"rthundrb",
+	"rthundro",
 	"Rolling Thunder (old version)",
 	"1986",
 	"Namco",
@@ -1840,11 +1846,11 @@ struct GameDriver driver_rthundrb =
 	&rthunder_machine_driver,
 	0,
 
-	rom_rthundrb,
+	rom_rthundro,
 	gfx_untangle, 0,
 	0,
 	0, /* sound prom */
-	input_ports_rthundrb,
+	input_ports_rthundro,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

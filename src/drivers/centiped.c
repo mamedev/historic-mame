@@ -475,7 +475,6 @@ static struct MachineDriver GAMENAME##_machine_driver =							\
 		{																		\
 			CPU_M6502,															\
 			12096000/8,	/* 1.512 Mhz (slows down to 0.75MHz while accessing playfield RAM) */	\
-			0,																	\
 			GAMENAME##_readmem,GAMENAME##_writemem,0,0,							\
 			centiped_interrupt,4												\
 		}																		\
@@ -521,7 +520,7 @@ DRIVER(centipb2, SOUND_AY8910, &centipb2_ay8910_interface)
 ***************************************************************************/
 
 ROM_START( centiped )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "centiped.307", 0x2000, 0x0800, 0x5ab0d9de )
 	ROM_LOAD( "centiped.308", 0x2800, 0x0800, 0x4c07fd3e )
 	ROM_LOAD( "centiped.309", 0x3000, 0x0800, 0xff69b424 )
@@ -534,7 +533,7 @@ ROM_START( centiped )
 ROM_END
 
 ROM_START( centipd2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "centiped.207", 0x2000, 0x0800, 0xb2909e2f )
 	ROM_LOAD( "centiped.208", 0x2800, 0x0800, 0x110e04ff )
 	ROM_LOAD( "centiped.209", 0x3000, 0x0800, 0xcc2edb26 )
@@ -547,7 +546,7 @@ ROM_START( centipd2 )
 ROM_END
 
 ROM_START( centipdb )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "olympia.c28",  0x2000, 0x0800, 0x8a744e57 )
 	ROM_LOAD( "olympia.c29",  0x2800, 0x0800, 0xbb897b10 )
 	ROM_LOAD( "olympia.c30",  0x3000, 0x0800, 0x2297c2ac )
@@ -560,7 +559,7 @@ ROM_START( centipdb )
 ROM_END
 
 ROM_START( centipb2 )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "d1",  		  0x2000, 0x0800, 0xb17b8e0b )
 	ROM_LOAD( "e1",  		  0x2800, 0x0800, 0x7684398e )
 	ROM_LOAD( "h1",  		  0x3000, 0x0800, 0x74580fe4 )

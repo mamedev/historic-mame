@@ -725,7 +725,7 @@ int sys18_vh_start( void ){
 static void get_sprite_info( void ){
 //	const struct rectangle *clip = &Machine->drv->visible_area;
 	const unsigned short *base_pal = Machine->gfx[0]->colortable + 1024;
-	const unsigned char *base_gfx = Machine->memory_region[2];
+	const unsigned char *base_gfx = memory_region(2);
 
 	UINT16 *source = (UINT16 *)sys16_spriteram;
 	struct sprite *sprite = sprite_list->sprite;
@@ -2057,7 +2057,7 @@ static void gr_colors(void)
 static void render_gr(struct osd_bitmap *bitmap,int priority)
 {
 	int i,j;
-	UINT8 *data = Machine->memory_region[5];
+	UINT8 *data = memory_region(5);
 	UINT8 *source;
 	UINT8 *line;
 	UINT32 *line32;
@@ -2298,7 +2298,7 @@ static void grv2_colors(void)
 static void render_grv2(struct osd_bitmap *bitmap,int priority)
 {
 	int i,j;
-	UINT8 *data = Machine->memory_region[5];
+	UINT8 *data = memory_region(5);
 	UINT8 *source,*source2,*temp;
 	UINT8 *line;
 	UINT32 *line32;

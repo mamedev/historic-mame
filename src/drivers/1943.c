@@ -266,14 +266,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			6000000,	/* 6 Mhz */
-			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3000000,	/* 3 Mhz */
-			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
 		}
@@ -313,7 +311,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( 1943 )
-	ROM_REGION(0x30000)	/* 64k for code + 128k for the banked ROMs images */
+	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* 64k for code + 128k for the banked ROMs images */
 	ROM_LOAD( "1943.01",      0x00000, 0x08000, 0xc686cc5c )
 	ROM_LOAD( "1943.02",      0x10000, 0x10000, 0xd8880a41 )
 	ROM_LOAD( "1943.03",      0x20000, 0x10000, 0x3f0ee26c )
@@ -351,7 +349,7 @@ ROM_START( 1943 )
 	ROM_LOAD( "bmprom.08",    0x0800, 0x0100, 0xc2010a9e )	/* sprite lookup table */
 	ROM_LOAD( "bmprom.07",    0x0900, 0x0100, 0xb56f30c3 )	/* sprite palette bank */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "1943.05",      0x00000, 0x8000, 0xee2bd2d7 )
 
 	ROM_REGION(0x10000)
@@ -360,7 +358,7 @@ ROM_START( 1943 )
 ROM_END
 
 ROM_START( 1943j )
-	ROM_REGION(0x30000)	/* 64k for code + 128k for the banked ROMs images */
+	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* 64k for code + 128k for the banked ROMs images */
 	ROM_LOAD( "1943jap.001",  0x00000, 0x08000, 0xf6935937 )
 	ROM_LOAD( "1943jap.002",  0x10000, 0x10000, 0xaf971575 )
 	ROM_LOAD( "1943jap.003",  0x20000, 0x10000, 0x300ec713 )
@@ -398,7 +396,7 @@ ROM_START( 1943j )
 	ROM_LOAD( "bmprom.08",    0x0800, 0x0100, 0xc2010a9e )	/* sprite lookup table */
 	ROM_LOAD( "bmprom.07",    0x0900, 0x0100, 0xb56f30c3 )	/* sprite palette bank */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "1943.05",      0x00000, 0x8000, 0xee2bd2d7 )
 
 	ROM_REGION(0x10000)
@@ -407,7 +405,7 @@ ROM_START( 1943j )
 ROM_END
 
 ROM_START( 1943kai )
-	ROM_REGION(0x30000)	/* 64k for code + 128k for the banked ROMs images */
+	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* 64k for code + 128k for the banked ROMs images */
 	ROM_LOAD( "1943kai.01",   0x00000, 0x08000, 0x7d2211db )
 	ROM_LOAD( "1943kai.02",   0x10000, 0x10000, 0x2ebbc8c5 )
 	ROM_LOAD( "1943kai.03",   0x20000, 0x10000, 0x475a6ac5 )
@@ -445,7 +443,7 @@ ROM_START( 1943kai )
 	ROM_LOAD( "bmk08.bin",    0x0800, 0x0100, 0xdad17e2d )	/* sprite lookup table */
 	ROM_LOAD( "bmk07.bin",    0x0900, 0x0100, 0x76307f8d )	/* sprite palette bank */
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "1943kai.05",   0x00000, 0x8000, 0x25f37957 )
 
 	ROM_REGION(0x10000)
@@ -457,7 +455,7 @@ ROM_END
 
 static int c1943_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -493,7 +491,7 @@ static int c1943_hiload(void)
 static void c1943_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -520,7 +518,7 @@ static void c1943_hisave(void)
 
 static int c1943kai_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -556,7 +554,7 @@ static int c1943kai_hiload(void)
 static void c1943kai_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

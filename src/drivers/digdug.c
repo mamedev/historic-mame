@@ -352,21 +352,18 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3125000,	/* 3.125 Mhz */
-			0,
 			readmem_cpu1,writemem_cpu1,0,0,
 			digdug_interrupt_1,1
 		},
 		{
 			CPU_Z80,
 			3125000,	/* 3.125 Mhz */
-			3,	/* memory region #3 */
 			readmem_cpu2,writemem_cpu2,0,0,
 			digdug_interrupt_2,1
 		},
 		{
 			CPU_Z80,
 			3125000,	/* 3.125 Mhz */
-			4,	/* memory region #4 */
 			readmem_cpu3,writemem_cpu3,0,0,
 			digdug_interrupt_3,2
 		}
@@ -408,7 +405,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( digdug )
-	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code for the first CPU  */
 	ROM_LOAD( "136007.101",   0x0000, 0x1000, 0xb9198079 )
 	ROM_LOAD( "136007.102",   0x1000, 0x1000, 0xb2acbe49 )
 	ROM_LOAD( "136007.103",   0x2000, 0x1000, 0xd6407b49 )
@@ -427,11 +424,11 @@ ROM_START( digdug )
 	ROM_LOAD( "digdug.1c",    0x0020, 0x0100, 0x00c7c419 )
 	ROM_LOAD( "digdug.2n",    0x0120, 0x0100, 0xe9b3e08e )
 
-	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "dd1.5b",       0x0000, 0x1000, 0x370ef9b4 )
 	ROM_LOAD( "dd1.6b",       0x1000, 0x1000, 0x361eeb71 )
 
-	ROM_REGION(0x10000)	/* 64k for the third CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the third CPU  */
 	ROM_LOAD( "136007.107",   0x0000, 0x1000, 0xa41bce72 )
 
 	ROM_REGION(0x01000)	/* 4k for the playfield graphics */
@@ -442,7 +439,7 @@ ROM_START( digdug )
 ROM_END
 
 ROM_START( digdugb )
-	ROM_REGION(0x10000) /* 64k for code for the first CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code for the first CPU  */
 	ROM_LOAD( "dd1a.1",       0x0000, 0x1000, 0xa80ec984 )
 	ROM_LOAD( "dd1a.2",       0x1000, 0x1000, 0x559f00bd )
 	ROM_LOAD( "dd1a.3",       0x2000, 0x1000, 0x8cbc6fe1 )
@@ -461,11 +458,11 @@ ROM_START( digdugb )
 	ROM_LOAD( "digdug.1c",    0x0020, 0x0100, 0x00c7c419 )
 	ROM_LOAD( "digdug.2n",    0x0120, 0x0100, 0xe9b3e08e )
 
-	ROM_REGION(0x10000) /* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the second CPU */
 	ROM_LOAD( "dd1a.5",       0x0000, 0x1000, 0x6687933b )
 	ROM_LOAD( "dd1a.6",       0x1000, 0x1000, 0x843d857f )
 
-	ROM_REGION(0x10000) /* 64k for the third CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU3 ) /* 64k for the third CPU  */
 	ROM_LOAD( "136007.107",   0x0000, 0x1000, 0xa41bce72 )
 
 	ROM_REGION(0x01000) /* 4k for the playfield graphics */
@@ -476,7 +473,7 @@ ROM_START( digdugb )
 ROM_END
 
 ROM_START( digdugat )
-	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code for the first CPU  */
 	ROM_LOAD( "136007.101",   0x0000, 0x1000, 0xb9198079 )
 	ROM_LOAD( "136007.102",   0x1000, 0x1000, 0xb2acbe49 )
 	ROM_LOAD( "136007.103",   0x2000, 0x1000, 0xd6407b49 )
@@ -495,11 +492,11 @@ ROM_START( digdugat )
 	ROM_LOAD( "digdug.1c",    0x0020, 0x0100, 0x00c7c419 )
 	ROM_LOAD( "digdug.2n",    0x0120, 0x0100, 0xe9b3e08e )
 
-	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "136007.105",   0x0000, 0x1000, 0x0a2aef4a )
 	ROM_LOAD( "136007.106",   0x1000, 0x1000, 0xa2876d6e )
 
-	ROM_REGION(0x10000)	/* 64k for the third CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the third CPU  */
 	ROM_LOAD( "136007.107",   0x0000, 0x1000, 0xa41bce72 )
 
 	ROM_REGION(0x01000)	/* 4k for the playfield graphics */
@@ -510,7 +507,7 @@ ROM_START( digdugat )
 ROM_END
 
 ROM_START( dzigzag )
-	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code for the first CPU  */
 	ROM_LOAD( "136007.101",   0x0000, 0x1000, 0xb9198079 )
 	ROM_LOAD( "136007.102",   0x1000, 0x1000, 0xb2acbe49 )
 	ROM_LOAD( "136007.103",   0x2000, 0x1000, 0xd6407b49 )
@@ -529,10 +526,10 @@ ROM_START( dzigzag )
 	ROM_LOAD( "digdug.1c",    0x0020, 0x0100, 0x00c7c419 )
 	ROM_LOAD( "digdug.2n",    0x0120, 0x0100, 0xe9b3e08e )
 
-	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "zigzag5",      0x0000, 0x2000, 0xf803c748 )
 
-	ROM_REGION(0x10000)	/* 64k for the third CPU  */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the third CPU  */
 	ROM_LOAD( "136007.107",   0x0000, 0x1000, 0xa41bce72 )
 
 	ROM_REGION(0x01000)	/* 4k for the playfield graphics */
@@ -549,7 +546,7 @@ ROM_END
 static int hiload(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized (works for Namco & Atari) */
@@ -572,7 +569,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

@@ -32,7 +32,7 @@ inserts, I don't know if West Story does the same..Ê Anyway, plug
 this lot in:
 
 static void sound_bank_w(int offset,int data){
-	unsigned char *RAM = Machine->memory_region[2];
+	unsigned char *RAM = memory_region(2);
 	if (data&1) { cpu_setbank(1,&RAM[0x0000]); }
 	else { cpu_setbank(1,&RAM[0x8000]); }
 }
@@ -104,7 +104,7 @@ extern unsigned char *bloodbro_scroll;
 /***************************************************************************/
 
 void bloodbro_playsample(int offset, int number){
-	/*unsigned char *RAM = Machine->memory_region[5];*/
+	/*unsigned char *RAM = memory_region(5);*/
 	int start,end;
 
         /* List getten from offset 0 of the sample file */
@@ -495,14 +495,12 @@ static struct MachineDriver bloodbro_machine_driver = {
 		{
 			CPU_M68000,
 			12000000, /* 12 Mhz */
-			0,
 			readmem_cpu,writemem_cpu,0,0,
 		        bloodbro_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* ? */
-			1,
 			readmem_sound,writemem_sound,0,0,
 			snd_interrupt,2
 		},
@@ -549,14 +547,12 @@ static struct MachineDriver weststry_machine_driver = {
 		{
 			CPU_M68000,
 			10000000, /* 12 Mhz */
-			0,
 			weststry_readmem_cpu,weststry_writemem_cpu,0,0,
 		        weststry_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* ? */
-			1,
 			readmem_sound,writemem_sound,0,0,
 			snd_interrupt,1
 		},
@@ -585,13 +581,13 @@ static struct MachineDriver weststry_machine_driver = {
 };
 
 ROM_START( bloodbro )
-	ROM_REGION(0x90000)	/* 64k for cpu code */
+	ROM_REGIONX( 0x90000, REGION_CPU1 )	/* 64k for cpu code */
 	ROM_LOAD_ODD ( "bb_02.bin" ,   0x00000, 0x20000, 0xc0fdc3e4 )
 	ROM_LOAD_EVEN( "bb_01.bin" ,   0x00000, 0x20000, 0x2d7e0fdf )
 	ROM_LOAD_ODD ( "bb_04.bin" ,   0x40000, 0x20000, 0xfd951c2c )
 	ROM_LOAD_EVEN( "bb_03.bin" ,   0x40000, 0x20000, 0x18d3c460 )
 
-	ROM_REGION(0x10000)	/* 64k for sound cpu code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound cpu code */
 	ROM_LOAD( "bb_07.bin" ,   0x00000, 0x10000, 0x411b94e8 )
 
 	ROM_REGION_DISPOSE(0x20000)	/* characters */
@@ -609,13 +605,13 @@ ROM_START( bloodbro )
 ROM_END
 
 ROM_START( weststry )
-	ROM_REGION(0x90000)	/* 64k for cpu code */
+	ROM_REGIONX( 0x90000, REGION_CPU1 )	/* 64k for cpu code */
 	ROM_LOAD_ODD ( "ws13.bin" ,   0x00000, 0x20000, 0x158e302a )
 	ROM_LOAD_EVEN( "ws15.bin" ,   0x00000, 0x20000, 0x672e9027 )
 	ROM_LOAD_ODD ( "bb_04.bin" ,   0x40000, 0x20000, 0xfd951c2c )
 	ROM_LOAD_EVEN( "bb_03.bin" ,   0x40000, 0x20000, 0x18d3c460 )
 
-	ROM_REGION(0x30000)	/* 64k for sound cpu code */
+	ROM_REGIONX( 0x30000, REGION_CPU2 )	/* 64k for sound cpu code */
 	ROM_LOAD( "ws17.bin" ,   0x00000, 0x10000, 0xe00a8f09 )
 
 	ROM_REGION_DISPOSE(0x20000)	/* characters */
@@ -656,7 +652,7 @@ ROM_START( weststry )
 ROM_END
 
 static void gfx_untangle( void ){
-       unsigned char *gfx = Machine->memory_region[4];
+       unsigned char *gfx = memory_region(4);
        int i;
        for( i=0; i< 0x100000; i++ ){
             gfx[i] = ~gfx[i];

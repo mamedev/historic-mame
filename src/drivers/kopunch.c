@@ -173,7 +173,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz ? */
-			0,
 			readmem,writemem,readport,writeport,
 			kopunch_interrupt,1
 		}
@@ -207,7 +206,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( kopunch )
-	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "epr1105.x",    0x0000, 0x1000, 0x34ef5e79 )
 	ROM_LOAD( "epr1106.x",    0x1000, 0x1000, 0x25a5c68b )
 
@@ -231,7 +230,7 @@ ROM_END
 
 static void patch(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* patch out bad instruction, either the ROM is bad, or there is */
 	/* a security chip */

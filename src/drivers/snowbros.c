@@ -259,14 +259,12 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M68000,
 			8000000,	/* 8 Mhz ????? */
-			0,
 			readmem,writemem,0,0,
 			snowbros_interrupt,3
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3600000,	/* 3.6 Mhz ??? */
-			2,
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,0	/* IRQs are caused by the YM3812 */
 		}
@@ -306,7 +304,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( snowbros )
-	ROM_REGION(0x40000)	/* 6*64k for 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "sn6.bin",  0x00000, 0x20000, 0x4899ddcf )
 	ROM_LOAD_ODD ( "sn5.bin",  0x00000, 0x20000, 0xad310d3f )
 
@@ -316,12 +314,12 @@ ROM_START( snowbros )
 	ROM_LOAD( "ch2",          0x40000, 0x20000, 0xfdaa634c )
 	ROM_LOAD( "ch3",          0x60000, 0x20000, 0x34024aef )
 
-	ROM_REGION(0x10000)	/* 64k for z80 sound code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for z80 sound code */
 	ROM_LOAD( "snowbros.4",   0x0000, 0x8000, 0xe6eab4e4 )
 ROM_END
 
 ROM_START( snowbroa )
-	ROM_REGION(0x40000)	/* 6*64k for 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "snowbros.3a",  0x00000, 0x20000, 0x10cb37e1 )
 	ROM_LOAD_ODD ( "snowbros.2a",  0x00000, 0x20000, 0xab91cc1e )
 
@@ -331,12 +329,12 @@ ROM_START( snowbroa )
 	ROM_LOAD( "ch2",          0x40000, 0x20000, 0xfdaa634c )
 	ROM_LOAD( "ch3",          0x60000, 0x20000, 0x34024aef )
 
-	ROM_REGION(0x10000)	/* 64k for z80 sound code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for z80 sound code */
 	ROM_LOAD( "snowbros.4",   0x0000, 0x8000, 0xe6eab4e4 )
 ROM_END
 
 ROM_START( snowbrob )
-	ROM_REGION(0x40000)	/* 6*64k for 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "sbros3-a",     0x00000, 0x20000, 0x301627d6 )
 	ROM_LOAD_ODD ( "sbros2-a",     0x00000, 0x20000, 0xf6689f41 )
 
@@ -346,12 +344,12 @@ ROM_START( snowbrob )
 	ROM_LOAD( "ch2",          0x40000, 0x20000, 0xfdaa634c )
 	ROM_LOAD( "ch3",          0x60000, 0x20000, 0x34024aef )
 
-	ROM_REGION(0x10000)	/* 64k for z80 sound code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for z80 sound code */
 	ROM_LOAD( "snowbros.4",   0x0000, 0x8000, 0xe6eab4e4 )
 ROM_END
 
 ROM_START( snowbroj )
-	ROM_REGION(0x40000)	/* 6*64k for 68000 code */
+	ROM_REGIONX( 0x40000, REGION_CPU1 )	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "snowbros.3",   0x00000, 0x20000, 0x3f504f9e )
 	ROM_LOAD_ODD ( "snowbros.2",   0x00000, 0x20000, 0x854b02bc )
 
@@ -362,7 +360,7 @@ ROM_START( snowbroj )
 	ROM_LOAD( "ch2",          0x40000, 0x20000, 0xfdaa634c )
 	ROM_LOAD( "ch3",          0x60000, 0x20000, 0x34024aef )
 
-	ROM_REGION(0x10000)	/* 64k for z80 sound code */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for z80 sound code */
 	ROM_LOAD( "snowbros.4",   0x0000, 0x8000, 0xe6eab4e4 )
 ROM_END
 

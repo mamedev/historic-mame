@@ -443,7 +443,6 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 MHz */
-			0,
 			readmem,writemem,readport,writeport,
 			nmi_interrupt,1
 		}
@@ -487,7 +486,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( cclimber )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "cc11",         0x0000, 0x1000, 0x217ec4ff )
 	ROM_LOAD( "cc10",         0x1000, 0x1000, 0xb3c26cef )
 	ROM_LOAD( "cc09",         0x2000, 0x1000, 0x6db0879c )
@@ -511,7 +510,7 @@ ROM_START( cclimber )
 	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, 0xab1940fa )
 	ROM_LOAD( "cclimber.pr3", 0x0040, 0x0020, 0x71317756 )
 
-	ROM_REGION(0x2000)      /* samples */
+	ROM_REGION( 0x2000 )      /* samples */
 	ROM_LOAD( "cc13",         0x0000, 0x1000, 0xe0042f75 )
 	ROM_LOAD( "cc12",         0x1000, 0x1000, 0x5da13aaa )
 ROM_END
@@ -568,7 +567,7 @@ static void cclimber_decode(void)
 		}
 	};
 	int A;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	for (A = 0x0000;A < 0x10000;A++)
@@ -591,7 +590,7 @@ static void cclimber_decode(void)
 }
 
 ROM_START( cclimbrj )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "cc11j.bin",    0x0000, 0x1000, 0x89783959 )
 	ROM_LOAD( "cc10j.bin",    0x1000, 0x1000, 0x14eda506 )
 	ROM_LOAD( "cc09j.bin",    0x2000, 0x1000, 0x26489069 )
@@ -615,13 +614,13 @@ ROM_START( cclimbrj )
 	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, 0xab1940fa )
 	ROM_LOAD( "cclimber.pr3", 0x0040, 0x0020, 0x71317756 )
 
-	ROM_REGION(0x2000)      /* samples */
+	ROM_REGION( 0x2000 )      /* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
 	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
 ROM_START( ccboot )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "m11.bin",      0x0000, 0x1000, 0x5efbe180 )
 	ROM_LOAD( "m10.bin",      0x1000, 0x1000, 0xbe2748c7 )
 	ROM_LOAD( "cc09j.bin",    0x2000, 0x1000, 0x26489069 )
@@ -645,13 +644,13 @@ ROM_START( ccboot )
 	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, 0xab1940fa )
 	ROM_LOAD( "cclimber.pr3", 0x0040, 0x0020, 0x71317756 )
 
-	ROM_REGION(0x2000)      /* samples */
+	ROM_REGION( 0x2000 )      /* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
 	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
 ROM_START( ccboot2 )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "11.4k",        0x0000, 0x1000, 0xb2b17e24 )
 	ROM_LOAD( "10.4j",        0x1000, 0x1000, 0x8382bc0f )
 	ROM_LOAD( "cc09j.bin",    0x2000, 0x1000, 0x26489069 )
@@ -675,7 +674,7 @@ ROM_START( ccboot2 )
 	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, 0xab1940fa )
 	ROM_LOAD( "cclimber.pr3", 0x0040, 0x0020, 0x71317756 )
 
-	ROM_REGION(0x2000)      /* samples */
+	ROM_REGION( 0x2000 )      /* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
 	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
@@ -731,7 +730,7 @@ static void cclimbrj_decode(void)
 		}
 	};
 	int A;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	for (A = 0x0000;A < 0x10000;A++)
@@ -754,7 +753,7 @@ static void cclimbrj_decode(void)
 }
 
 ROM_START( ckong )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "d05-07.bin",   0x0000, 0x1000, 0xb27df032 )
 	ROM_LOAD( "f05-08.bin",   0x1000, 0x1000, 0x5dc1aaba )
 	ROM_LOAD( "h05-09.bin",   0x2000, 0x1000, 0xc9054c94 )
@@ -775,13 +774,13 @@ ROM_START( ckong )
 	ROM_LOAD( "prom.u6",      0x0020, 0x0020, 0x26aada9e )
 	ROM_LOAD( "prom.t6",      0x0040, 0x0020, 0x676b3166 )
 
-	ROM_REGION(0x2000)      /* samples */
+	ROM_REGION( 0x2000 )      /* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
 	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
 ROM_START( ckonga )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "d05-07.bin",   0x0000, 0x1000, 0xb27df032 )
 	ROM_LOAD( "f05-08.bin",   0x1000, 0x1000, 0x5dc1aaba )
 	ROM_LOAD( "h05-09.bin",   0x2000, 0x1000, 0xc9054c94 )
@@ -802,13 +801,13 @@ ROM_START( ckonga )
 	ROM_LOAD( "prom.u6",      0x0020, 0x0020, 0x26aada9e )
 	ROM_LOAD( "prom.t6",      0x0040, 0x0020, 0x676b3166 )
 
-	ROM_REGION(0x2000)      /* samples */
+	ROM_REGION( 0x2000 )      /* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
 	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
 ROM_START( ckongjeu )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "d05-07.bin",   0x0000, 0x1000, 0xb27df032 )
 	ROM_LOAD( "f05-08.bin",   0x1000, 0x1000, 0x5dc1aaba )
 	ROM_LOAD( "h05-09.bin",   0x2000, 0x1000, 0xc9054c94 )
@@ -829,13 +828,13 @@ ROM_START( ckongjeu )
 	ROM_LOAD( "prom.u6",      0x0020, 0x0020, 0x26aada9e )
 	ROM_LOAD( "prom.t6",      0x0040, 0x0020, 0x676b3166 )
 
-	ROM_REGION(0x2000)      /* samples */
+	ROM_REGION( 0x2000 )      /* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
 	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
 ROM_START( ckongo )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "o55a-1",       0x0000, 0x1000, 0x8bfb4623 )
 	ROM_LOAD( "o55a-2",       0x1000, 0x1000, 0x9ae8089b )
 	ROM_LOAD( "o55a-3",       0x2000, 0x1000, 0xe82b33c8 )
@@ -861,13 +860,13 @@ ROM_START( ckongo )
 	ROM_LOAD( "prom.u6",      0x0020, 0x0020, 0x26aada9e )
 	ROM_LOAD( "prom.t6",      0x0040, 0x0020, 0x676b3166 )
 
-	ROM_REGION(0x2000)      /* samples */
+	ROM_REGION( 0x2000 )      /* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
 	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
 ROM_START( ckongalc )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "ck7.bin",      0x0000, 0x1000, 0x2171cac3 )
 	ROM_LOAD( "ck8.bin",      0x1000, 0x1000, 0x88b83ff7 )
 	ROM_LOAD( "ck9.bin",      0x2000, 0x1000, 0xcff2af47 )
@@ -888,13 +887,13 @@ ROM_START( ckongalc )
 	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, 0xab1940fa )
 	ROM_LOAD( "ck6t.bin",     0x0040, 0x0020, 0xb4e827a5 )
 
-	ROM_REGION(0x2000)      /* samples */
+	ROM_REGION( 0x2000 )      /* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
 	ROM_LOAD( "ck12.bin",     0x1000, 0x1000, 0x2eb23b60 )
 ROM_END
 
 ROM_START( monkeyd )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "ck7.bin",      0x0000, 0x1000, 0x2171cac3 )
 	ROM_LOAD( "ck8.bin",      0x1000, 0x1000, 0x88b83ff7 )
 	ROM_LOAD( "ck9.bin",      0x2000, 0x1000, 0xcff2af47 )
@@ -915,13 +914,13 @@ ROM_START( monkeyd )
 	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, 0x00000000 )
 	ROM_LOAD( "ck6t.bin",     0x0040, 0x0020, 0x00000000 )
 
-	ROM_REGION(0x2000)      /* samples */
+	ROM_REGION( 0x2000 )      /* samples */
 	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
 	ROM_LOAD( "ck12.bin",     0x1000, 0x1000, 0x2eb23b60 )
 ROM_END
 
 ROM_START( rpatrolb )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "rp1.4l",       0x0000, 0x1000, 0xbfd7ae7a )
 	ROM_LOAD( "rp2.4j",       0x1000, 0x1000, 0x03f53340 )
 	ROM_LOAD( "rp3.4f",       0x2000, 0x1000, 0x8fa300df )
@@ -947,12 +946,12 @@ ROM_START( rpatrolb )
 	ROM_LOAD( "bprom2.9p",    0x0020, 0x0020, 0x1743bd26 )
 	ROM_LOAD( "bprom3.9c",    0x0040, 0x0020, 0xee03bc96 )
 
-	ROM_REGION(0x2000)      /* samples */
+	ROM_REGION( 0x2000 )      /* samples */
 	/* not used by this game */
 ROM_END
 
 ROM_START( silvland )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "7.2r",         0x0000, 0x1000, 0x57e6be62 )
 	ROM_LOAD( "8.1n",         0x1000, 0x1000, 0xbbb2b287 )
 	ROM_LOAD( "rp3.4f",       0x2000, 0x1000, 0x8fa300df )
@@ -978,7 +977,7 @@ ROM_START( silvland )
 	ROM_LOAD( "mb7051.1u",    0x0020, 0x0020, 0xc174753c )
 	ROM_LOAD( "mb7051.1t",    0x0040, 0x0020, 0x04a1be01 )
 
-	ROM_REGION(0x2000)      /* samples */
+	ROM_REGION( 0x2000 )      /* samples */
 	/* not used by this game */
 ROM_END
 
@@ -986,7 +985,7 @@ ROM_END
 
 static int cclimber_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1010,7 +1009,7 @@ static int cclimber_hiload(void)
 static void cclimber_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1023,7 +1022,7 @@ static void cclimber_hisave(void)
 
 static int ckong_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1050,7 +1049,7 @@ static int ckong_hiload(void)
 static void ckong_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1062,7 +1061,7 @@ static void ckong_hisave(void)
 
 static int rpatrolb_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1092,7 +1091,7 @@ static int rpatrolb_hiload(void)
 static void rpatrolb_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1707,14 +1706,12 @@ static struct MachineDriver swimmer_machine_driver =
 		{
 			CPU_Z80,
 			3072000,	/* 3.072 MHz */
-			0,
 			swimmer_readmem,swimmer_writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000/2,	/* 2 MHz */
-			3,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,sound_writeport,
 			0,0,
 			nmi_interrupt,4000000/16384 /* IRQs are triggered by the main CPU */
@@ -1749,7 +1746,7 @@ static struct MachineDriver swimmer_machine_driver =
 
 
 ROM_START( swimmer )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "sw1",          0x0000, 0x1000, 0xf12481e7 )
 	ROM_LOAD( "sw2",          0x1000, 0x1000, 0xa0b6fdd2 )
 	ROM_LOAD( "sw3",          0x2000, 0x1000, 0xec93d7de )
@@ -1775,12 +1772,12 @@ ROM_START( swimmer )
 	ROM_LOAD( "8212.clr",     0x0100, 0x100, 0x39037799 )
 	ROM_LOAD( "8221.clr",     0x0200, 0x020, 0x3b2deb3a )
 
-	ROM_REGION(0x10000)     /* 64k for sound board */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for sound board */
 	ROM_LOAD( "sw12",         0x0000, 0x1000, 0x2eee9bcb )
 ROM_END
 
 ROM_START( swimmera )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "swa1",         0x0000, 0x1000, 0x42c2b6c5 )
 	ROM_LOAD( "swa2",         0x1000, 0x1000, 0x49bac195 )
 	ROM_LOAD( "swa3",         0x2000, 0x1000, 0xa6d8cb01 )
@@ -1806,12 +1803,12 @@ ROM_START( swimmera )
 	ROM_LOAD( "8212.clr",     0x0100, 0x100, 0x39037799 )
 	ROM_LOAD( "8221.clr",     0x0200, 0x020, 0x3b2deb3a )
 
-	ROM_REGION(0x10000)     /* 64k for sound board */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for sound board */
 	ROM_LOAD( "sw12",         0x0000, 0x1000, 0x2eee9bcb )
 ROM_END
 
 ROM_START( guzzler )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "guzz-01.bin",  0x0000, 0x2000, 0x58aaa1e9 )
 	ROM_LOAD( "guzz-02.bin",  0x2000, 0x2000, 0xf80ceb17 )
 	ROM_LOAD( "guzz-03.bin",  0x4000, 0x2000, 0xe63c65a2 )
@@ -1831,7 +1828,7 @@ ROM_START( guzzler )
 	ROM_LOAD( "guzzler.002",  0x0100, 0x100, 0xb566ea9e )
 	ROM_LOAD( "guzzler.001",  0x0200, 0x020, 0x69089495 )
 
-	ROM_REGION(0x10000)     /* 64k for sound board */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for sound board */
 	ROM_LOAD( "guzz-12.bin",  0x0000, 0x1000, 0xf3754d9e )
 ROM_END
 
@@ -1839,7 +1836,7 @@ ROM_END
 
 static int swimmer_hiload(void)
 {
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1871,7 +1868,7 @@ static int swimmer_hiload(void)
 static void swimmer_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1885,7 +1882,7 @@ static void swimmer_hisave(void)
 
 static int guzzler_hiload(void)
 {
-	unsigned char *RAM=memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM=memory_region(REGION_CPU1);
 	static int firsttime;
 
 
@@ -1924,7 +1921,7 @@ static int guzzler_hiload(void)
 static void guzzler_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

@@ -398,7 +398,7 @@ INLINE void set_dac_address(UINT16 address)
 
 INLINE UINT8 *get_cvsd_bank_base(int data)
 {
-	UINT8 *RAM = memory_region(Machine->drv->cpu[williams_cpunum].memory_region);
+	UINT8 *RAM = memory_region(REGION_CPU1+williams_cpunum);
 	int bank = data & 3;
 	int quarter = (data >> 2) & 3;
 	if (bank == 3) bank = 0;
@@ -407,14 +407,14 @@ INLINE UINT8 *get_cvsd_bank_base(int data)
 
 INLINE UINT8 *get_adpcm_bank_base(int data)
 {
-	UINT8 *RAM = memory_region(Machine->drv->cpu[williams_cpunum].memory_region);
+	UINT8 *RAM = memory_region(REGION_CPU1+williams_cpunum);
 	int bank = data & 7;
 	return &RAM[0x10000 + (bank * 0x8000)];
 }
 
 INLINE UINT8 *get_narc_master_bank_base(int data)
 {
-	UINT8 *RAM = memory_region(Machine->drv->cpu[williams_cpunum].memory_region);
+	UINT8 *RAM = memory_region(REGION_CPU1+williams_cpunum);
 	int bank = data & 3;
 	if (!(data & 4)) bank = 0;
 	return &RAM[0x10000 + (bank * 0x8000)];
@@ -422,7 +422,7 @@ INLINE UINT8 *get_narc_master_bank_base(int data)
 
 INLINE UINT8 *get_narc_slave_bank_base(int data)
 {
-	UINT8 *RAM = memory_region(Machine->drv->cpu[williams_cpunum + 1].memory_region);
+	UINT8 *RAM = memory_region(REGION_CPU1+williams_cpunum + 1);
 	int bank = data & 7;
 	return &RAM[0x10000 + (bank * 0x8000)];
 }
@@ -450,7 +450,7 @@ void williams_cvsd_init(int cpunum, int pianum)
 	williams_cvsd_reset_w(0);
 
 	/* determine the entry point; from there, we can choose the speedup addresses */
-	RAM = memory_region(Machine->drv->cpu[cpunum].memory_region);
+	RAM = memory_region(REGION_CPU1+cpunum);
 	entry_point = RAM[0x17ffe] * 256 + RAM[0x17fff];
 	switch (entry_point)
 	{
@@ -541,7 +541,7 @@ void williams_adpcm_init(int cpunum)
 	williams_audio_type = WILLIAMS_ADPCM;
 
 	/* install the fixed ROM */
-	RAM = memory_region(Machine->drv->cpu[cpunum].memory_region);
+	RAM = memory_region(REGION_CPU1+cpunum);
 	memcpy(&RAM[0xc000], &RAM[0x4c000], 0x4000);
 
 	/* reset the chip */
@@ -597,9 +597,9 @@ void williams_narc_init(int cpunum)
 	williams_audio_type = WILLIAMS_NARC;
 
 	/* install the fixed ROM */
-	RAM = memory_region(Machine->drv->cpu[cpunum + 1].memory_region);
+	RAM = memory_region(REGION_CPU1+cpunum + 1);
 	memcpy(&RAM[0xc000], &RAM[0x4c000], 0x4000);
-	RAM = memory_region(Machine->drv->cpu[cpunum].memory_region);
+	RAM = memory_region(REGION_CPU1+cpunum);
 	memcpy(&RAM[0xc000], &RAM[0x2c000], 0x4000);
 
 	/* reset the chip */

@@ -406,7 +406,7 @@ int mcr_port_04_dispatch_r(int offset)
 
 int mcr_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* don't bother if 0 length */
 	if (mcr_hiscore_length != 0)
@@ -437,7 +437,7 @@ void mcr_hisave(void)
 	/* don't bother if 0 length */
 	if (mcr_hiscore_length != 0)
 	{
-		unsigned char *RAM = Machine->memory_region[0];
+		unsigned char *RAM = memory_region(REGION_CPU1);
 		void *f = osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
 
 		/* write data if we succeed */
