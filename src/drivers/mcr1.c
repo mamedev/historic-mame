@@ -45,6 +45,8 @@ DSW1
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+void kick_init(void);
+void solarfox_init(void);
 void mcr1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void mcr_init_machine(void);
@@ -369,30 +371,6 @@ static void solarfox_hisave(void) {        mcr1_hisave(0x7000, 0x86); }
 
 ***************************************************************************/
 
-ROM_START( kick_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "cpu_b3", 0x0000, 0x1000, 0xb8eacdee )
-	ROM_LOAD( "cpu_b4", 0x1000, 0x1000, 0x34b3c82d )
-	ROM_LOAD( "cpu_b5", 0x2000, 0x1000, 0x962e11c0 )
-	ROM_LOAD( "cpu_d4", 0x3000, 0x1000, 0xb8cf9c4b )
-	ROM_LOAD( "cpu_d5", 0x4000, 0x1000, 0x59d87236 )
-	ROM_LOAD( "cpu_d6", 0x5000, 0x1000, 0x59cd7833 )
-
-	ROM_REGION(0x0a000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "cpu_g4", 0x0000, 0x1000, 0x4bdb4c47 )
-	ROM_LOAD( "cpu_g5", 0x1000, 0x1000, 0xbfe7b19f )
-	ROM_LOAD( "vid_a1", 0x2000, 0x2000, 0x7dbb39e5 )
-	ROM_LOAD( "vid_b1", 0x4000, 0x2000, 0xdc44b7e0 )
-	ROM_LOAD( "vid_d1", 0x6000, 0x2000, 0x9abb5055 )
-	ROM_LOAD( "vid_e1", 0x8000, 0x2000, 0x6d2149ad )
-
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "sio_a7",  0x0000, 0x1000, 0x02d981f3 )
-	ROM_LOAD( "sio_a8",  0x1000, 0x1000, 0xc5223442 )
-	ROM_LOAD( "sio_a9",  0x2000, 0x1000, 0xbe9ef560 )
-	ROM_LOAD( "sio_a10", 0x3000, 0x1000, 0x1667420b )
-ROM_END
-
 ROM_START( solarfox_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "sfcpu.3b", 0x0000, 0x1000, 0x1b63bbb9 )
@@ -417,6 +395,58 @@ ROM_START( solarfox_rom )
 	ROM_LOAD( "sfsnd.9a", 0x2000, 0x1000, 0x9f5bd101 )
 ROM_END
 
+ROM_START( kick_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "cpu_b3", 0x0000, 0x1000, 0xb8eacdee )
+	ROM_LOAD( "cpu_b4", 0x1000, 0x1000, 0x34b3c82d )
+	ROM_LOAD( "cpu_b5", 0x2000, 0x1000, 0x962e11c0 )
+	ROM_LOAD( "cpu_d4", 0x3000, 0x1000, 0xb8cf9c4b )
+	ROM_LOAD( "cpu_d5", 0x4000, 0x1000, 0x59d87236 )
+	ROM_LOAD( "cpu_d6", 0x5000, 0x1000, 0x59cd7833 )
+
+	ROM_REGION(0x0a000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "cpu_g4", 0x0000, 0x1000, 0x4bdb4c47 )
+	ROM_LOAD( "cpu_g5", 0x1000, 0x1000, 0xbfe7b19f )
+	ROM_LOAD( "vid_a1", 0x2000, 0x2000, 0x7dbb39e5 )
+	ROM_LOAD( "vid_b1", 0x4000, 0x2000, 0xdc44b7e0 )
+	ROM_LOAD( "vid_d1", 0x6000, 0x2000, 0x9abb5055 )
+	ROM_LOAD( "vid_e1", 0x8000, 0x2000, 0x6d2149ad )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "sio_a7",  0x0000, 0x1000, 0x02d981f3 )
+	ROM_LOAD( "sio_a8",  0x1000, 0x1000, 0xc5223442 )
+	ROM_LOAD( "sio_a9",  0x2000, 0x1000, 0xbe9ef560 )
+	ROM_LOAD( "sio_a10", 0x3000, 0x1000, 0x1667420b )
+ROM_END
+
+ROM_START( kicka_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "mccpua2", 0x0000, 0x1000, 0x04581d20 )
+	ROM_LOAD( "mccpub2", 0x1000, 0x1000, 0x16695047 )
+	ROM_LOAD( "mccpuc2", 0x2000, 0x1000, 0x43109576 )
+	ROM_LOAD( "mccpud2", 0x3000, 0x1000, 0xf9771753 )
+	ROM_LOAD( "mccpue2", 0x4000, 0x1000, 0x6c3fedbb )
+	ROM_LOAD( "mccpuf2", 0x5000, 0x1000, 0xa98b1d6b )
+
+	ROM_REGION(0x0a000)	/* temporary space for graphics (disposed after conversion) */
+ROM_LOAD( "cpu_g4", 0x0000, 0x1000, 0x4bdb4c47 )
+ROM_LOAD( "cpu_g5", 0x1000, 0x1000, 0xbfe7b19f )
+	ROM_LOAD( "lmcvgd3", 0x2000, 0x1000, 0x2044da80 )
+	ROM_LOAD( "hmcvgd3", 0x3000, 0x1000, 0x1d77e365 )
+	ROM_LOAD( "lmcvgc3", 0x4000, 0x1000, 0xbc8a3350 )
+	ROM_LOAD( "hmcvgc3", 0x5000, 0x1000, 0xb912a690 )
+	ROM_LOAD( "lmcvgb3", 0x6000, 0x1000, 0xa5307d78 )
+	ROM_LOAD( "hmcvgb3", 0x7000, 0x1000, 0x43ea028a )
+	ROM_LOAD( "lmcvga3", 0x8000, 0x1000, 0x5c2030e6 )
+	ROM_LOAD( "hmcvga3", 0x9000, 0x1000, 0x1101794b )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "sio_a7",  0x0000, 0x1000, 0x02d981f3 )
+	ROM_LOAD( "sio_a8",  0x1000, 0x1000, 0xc5223442 )
+	ROM_LOAD( "sio_a9",  0x2000, 0x1000, 0xbe9ef560 )
+	ROM_LOAD( "sio_a10", 0x3000, 0x1000, 0x1667420b )
+ROM_END
+
 
 
 struct GameDriver solarfox_driver =
@@ -432,7 +462,7 @@ struct GameDriver solarfox_driver =
 	&machine_driver,
 
 	solarfox_rom,
-	0, 0,
+	solarfox_init, 0,
 	0,
 	0,	/* sound_prom */
 
@@ -449,7 +479,7 @@ struct GameDriver kick_driver =
 	__FILE__,
 	0,
 	"kick",
-	"Kick",
+	"Kick (mirror version)",
 	"1981",
 	"Midway",
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver\nJohn Butler",
@@ -457,7 +487,7 @@ struct GameDriver kick_driver =
 	&machine_driver,
 
 	kick_rom,
-	0, 0,
+	kick_init, 0,
 	0,
 	0,	/* sound_prom */
 
@@ -465,6 +495,31 @@ struct GameDriver kick_driver =
 
 	0, 0, 0,
 	ORIENTATION_SWAP_XY,
+
+	kick_hiload,kick_hisave
+};
+
+struct GameDriver kicka_driver =
+{
+	__FILE__,
+	&kick_driver,
+	"kicka",
+	"Kick (upright version)",
+	"1981",
+	"bootleg?",
+	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver\nJohn Butler",
+	0,
+	&machine_driver,
+
+	kicka_rom,
+	kick_init, 0,
+	0,
+	0,	/* sound_prom */
+
+	kick_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_90,
 
 	kick_hiload,kick_hisave
 };

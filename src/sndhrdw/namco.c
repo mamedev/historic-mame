@@ -24,6 +24,7 @@ static int sound_enable;
 
 static int freq[MAX_VOICES],volume[MAX_VOICES];
 static const unsigned char *wave[MAX_VOICES];
+static const unsigned char *sound_prom;
 static int counter[MAX_VOICES];
 
 
@@ -136,11 +137,13 @@ int namco_sh_start(struct namco_interface *intf)
 	interface = intf;
 	sound_enable = 1;	/* start with sound enabled, many games don't have a sound enable register */
 
+	sound_prom = Machine->memory_region[intf->region];
+
 	for (voice = 0;voice < intf->voices;voice++)
 	{
 		freq[voice] = 0;
 		volume[voice] = 0;
-		wave[voice] = &Machine->gamedrv->sound_prom[0];
+		wave[voice] = &sound_prom[0];
 		counter[voice] = 0;
 	}
 
@@ -213,7 +216,7 @@ void pengo_sound_w(int offset,int data)
 
 		volume[voice] = pengo_soundregs[0x15 + 5 * voice];
 
-		wave[voice] = &Machine->gamedrv->sound_prom[32 * (pengo_soundregs[0x05 + 5 * voice] & 7)];
+		wave[voice] = &sound_prom[32 * (pengo_soundregs[0x05 + 5 * voice] & 7)];
 	}
 }
 
@@ -243,7 +246,7 @@ void mappy_sound_w(int offset,int data)
 
 		volume[voice] = mappy_soundregs[0x03 + 8 * voice];
 
-		wave[voice] = &Machine->gamedrv->sound_prom[32 * ((mappy_soundregs[0x06 + 8 * voice] >> 4) & 7)];
+		wave[voice] = &sound_prom[32 * ((mappy_soundregs[0x06 + 8 * voice] >> 4) & 7)];
 	}
 }
 

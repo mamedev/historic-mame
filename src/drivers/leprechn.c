@@ -253,18 +253,18 @@ static struct MachineDriver leprechn_machine_driver =
 	    // should stop before the display switches to the name of the
 	    // next level
 	    {
-		CPU_M6502,
-		1250000,	/* 1.25 Mhz ??? */
-		0,
-		readmem,writemem,0,0,
-		interrupt,1
+			CPU_M6502,
+			1250000,	/* 1.25 Mhz ??? */
+			0,
+			readmem,writemem,0,0,
+			interrupt,1
 	    },
 	    {
-		CPU_M6502 | CPU_AUDIO_CPU,
-		1500000,	/* 1.5 Mhz ??? */
-		2,
-		sound_readmem,sound_writemem,0,0,
-		ignore_interrupt,1      /* interrupts are triggered by the main CPU */
+			CPU_M6502 | CPU_AUDIO_CPU,
+			1500000,	/* 1.5 Mhz ??? */
+			2,
+			sound_readmem,sound_writemem,0,0,
+			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
 	    }
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
@@ -301,23 +301,43 @@ static struct MachineDriver leprechn_machine_driver =
 ***************************************************************************/
 
 ROM_START( leprechn_rom )
-	ROM_REGION(0x10000)  // 64k for the main CPU
-	ROM_LOAD( "lep1",     0x8000, 0x1000, 0x25cd602d )
-	ROM_LOAD( "lep2",     0x9000, 0x1000, 0x128b9183 )
-	ROM_LOAD( "lep3",     0xa000, 0x1000, 0x558efc6e )
-	ROM_LOAD( "lep4",     0xb000, 0x1000, 0xe3828c84 )
-	ROM_LOAD( "lep5",     0xc000, 0x1000, 0x5feda70d )
-	ROM_LOAD( "lep6",     0xd000, 0x1000, 0x8d7a408e )
-	ROM_LOAD( "lep7",     0xe000, 0x1000, 0xff916657 )
-	ROM_LOAD( "lep8",     0xf000, 0x1000, 0x3e225334 )
+	ROM_REGION(0x10000)  /* 64k for the main CPU */
+	ROM_LOAD( "lep1", 0x8000, 0x1000, 0x25cd602d )
+	ROM_LOAD( "lep2", 0x9000, 0x1000, 0x128b9183 )
+	ROM_LOAD( "lep3", 0xa000, 0x1000, 0x558efc6e )
+	ROM_LOAD( "lep4", 0xb000, 0x1000, 0xe3828c84 )
+	ROM_LOAD( "lep5", 0xc000, 0x1000, 0x5feda70d )
+	ROM_LOAD( "lep6", 0xd000, 0x1000, 0x8d7a408e )
+	ROM_LOAD( "lep7", 0xe000, 0x1000, 0xff916657 )
+	ROM_LOAD( "lep8", 0xf000, 0x1000, 0x3e225334 )
 
 	ROM_REGION(0x1000)
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
-	ROM_REGION(0x10000)  // 64k for the audio CPU
+	ROM_REGION(0x10000)  /* 64k for the audio CPU */
 	ROM_LOAD( "lepsound", 0xf000, 0x1000, 0x0c313739 )
 ROM_END
+
+ROM_START( potogold_rom )
+	ROM_REGION(0x10000)  /* 64k for the main CPU */
+	ROM_LOAD( "pog.pg1", 0x8000, 0x1000, 0xb8d14389 )
+	ROM_LOAD( "pog.pg2", 0x9000, 0x1000, 0xfe87fd8f )
+	ROM_LOAD( "pog.pg3", 0xa000, 0x1000, 0x6fec6fee )
+	ROM_LOAD( "pog.pg4", 0xb000, 0x1000, 0x8bea990c )
+	ROM_LOAD( "pog.pg5", 0xc000, 0x1000, 0x404c8e58 )
+	ROM_LOAD( "pog.pg6", 0xd000, 0x1000, 0xb8f0895a )
+	ROM_LOAD( "pog.pg7", 0xe000, 0x1000, 0xa31dc1d9 )
+	ROM_LOAD( "pog.pg8", 0xf000, 0x1000, 0xf8d44778 )
+
+	ROM_REGION(0x1000)
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x10000)  /* 64k for the audio CPU */
+	ROM_LOAD( "pog.snd", 0xf000, 0x1000, 0x193bd8b3 )
+ROM_END
+
 
 
 static int hiload(void)
@@ -372,6 +392,32 @@ struct GameDriver leprechn_driver =
 	&leprechn_machine_driver,
 
 	leprechn_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	input_ports,
+
+	0, leprechn_palette, 0,
+
+	ORIENTATION_DEFAULT,  // Upright game
+
+	hiload, hisave
+};
+
+struct GameDriver potogold_driver =
+{
+	__FILE__,
+	&leprechn_driver,
+	"potogold",
+	"Pot of Gold",
+	"1982",
+	"GamePlan",
+	"Zsolt Vasvari",
+	0,
+	&leprechn_machine_driver,
+
+	potogold_rom,
 	0, 0,
 	0,
 	0,      /* sound_prom */

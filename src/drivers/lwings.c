@@ -3,6 +3,7 @@
   Legendary Wings
   Section Z
   Trojan
+  Avengers
 
   Driver provided by Paul Leaman (paull@vortexcomputing.demon.co.uk)
 
@@ -23,6 +24,7 @@
 void lwings_bankswitch_w(int offset,int data);
 int lwings_bankedrom_r(int offset);
 int lwings_interrupt(void);
+int avengers_protection_r(int offset);
 
 extern unsigned char *lwings_backgroundram;
 extern unsigned char *lwings_backgroundattribram;
@@ -50,19 +52,19 @@ void trojan_sound_cmd_w(int offset, int data)
        soundlatch_w(offset, data);
        if (data != 0xff && (data & 0x08))
        {
-              /*
-              I assume that Trojan's ADPCM output is directly derived
-              from the sound code. I can't find an output port that
-              does this on either the sound board or main board.
-              */
-              ADPCM_trigger(0, data & 0x07);
-        }
+	      /*
+	      I assume that Trojan's ADPCM output is directly derived
+	      from the sound code. I can't find an output port that
+	      does this on either the sound board or main board.
+	      */
+	      ADPCM_trigger(0, data & 0x07);
+	}
 
 #if 0
-        if (errorlog)
-        {
-               fprintf(errorlog, "Sound Code=%02x\n", data);
-        }
+	if (errorlog)
+	{
+	       fprintf(errorlog, "Sound Code=%02x\n", data);
+	}
 #endif
 }
 
@@ -77,7 +79,8 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xf80a, 0xf80a, input_port_2_r },
 	{ 0xf80b, 0xf80b, input_port_3_r },
 	{ 0xf80c, 0xf80c, input_port_4_r },
-	{ -1 }	/* end of table */
+	{ 0xf80d, 0xf80d, avengers_protection_r },
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
@@ -100,7 +103,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xf80c, 0xf80c, soundlatch_w },
 	{ 0xf80d, 0xf80d, watchdog_reset_w },
 	{ 0xf80e, 0xf80e, lwings_bankswitch_w },
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
 };
 
 /* TROJAN - intercept sound command write for ADPCM samples */
@@ -125,62 +128,64 @@ static struct MemoryWriteAddress trojan_writemem[] =
 	{ 0xf80c, 0xf80c, trojan_sound_cmd_w },
 	{ 0xf80d, 0xf80d, watchdog_reset_w },
 	{ 0xf80e, 0xf80e, lwings_bankswitch_w },
-	{ -1 }	/* end of table */
+	{ -1 }  /* end of table */
 };
 
 
 
 static struct MemoryReadAddress sound_readmem[] =
 {
-        { 0xc000, 0xc7ff, MRA_RAM },
-        { 0xc800, 0xc800, soundlatch_r },
-        { 0x0000, 0x7fff, MRA_ROM },
-	{ -1 }	/* end of table */
+	{ 0xc000, 0xc7ff, MRA_RAM },
+	{ 0xc800, 0xc800, soundlatch_r },
+	{ 0xe006, 0xe006, MRA_RAM },    /* Avengers - ADPCM status?? */
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
-        { 0xc000, 0xc7ff, MWA_RAM },
-        { 0xe000, 0xe000, AY8910_control_port_0_w },
-        { 0xe001, 0xe001, AY8910_write_port_0_w },
-        { 0xe002, 0xe002, AY8910_control_port_1_w },
-        { 0xe003, 0xe003, AY8910_write_port_1_w },
-        { 0x0000, 0x7fff, MWA_ROM },
-	{ -1 }	/* end of table */
+	{ 0xc000, 0xc7ff, MWA_RAM },
+	{ 0xe000, 0xe000, AY8910_control_port_0_w },
+	{ 0xe001, 0xe001, AY8910_write_port_0_w },
+	{ 0xe002, 0xe002, AY8910_control_port_1_w },
+	{ 0xe003, 0xe003, AY8910_write_port_1_w },
+	{ 0xe006, 0xe006, MWA_RAM },    /* Avengers - ADPCM output??? */
+	{ 0x0000, 0x7fff, MWA_ROM },
+	{ -1 }  /* end of table */
 };
 
 INPUT_PORTS_START( sectionz_input_ports )
-	PORT_START	/* IN0 */
+	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
-	PORT_START	/* IN1 */
+	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
 
-	PORT_START	/* IN2 */
+	PORT_START      /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
 
-	PORT_START	/* DSW0 */
+	PORT_START      /* DSW0 */
 	PORT_BITX(    0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x01, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
@@ -224,42 +229,42 @@ INPUT_PORTS_START( sectionz_input_ports )
 	PORT_DIPNAME( 0xc0, 0x00, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Upright One Player" )
 	PORT_DIPSETTING(    0x40, "Upright Two Players" )
-/*	PORT_DIPSETTING(    0x80, "???" )	probably unused */
+/*      PORT_DIPSETTING(    0x80, "???" )       probably unused */
 	PORT_DIPSETTING(    0xc0, "Cocktail" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( lwings_input_ports )
-	PORT_START	/* IN0 */
+	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
-	PORT_START	/* IN1 */
+	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
 
-	PORT_START	/* IN2 */
+	PORT_START      /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
 
-	PORT_START	/* DSW0 */
+	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x03, 0x03, "Unknown 1/2", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "0" )
 	PORT_DIPSETTING(    0x01, "1" )
@@ -308,17 +313,17 @@ INPUT_PORTS_START( lwings_input_ports )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( trojan_input_ports )
-	PORT_START	/* IN0 */
+	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
-	PORT_START	/* IN1 */
+	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -326,9 +331,9 @@ INPUT_PORTS_START( trojan_input_ports )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
 
-	PORT_START	/* IN2 */
+	PORT_START      /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
@@ -336,9 +341,9 @@ INPUT_PORTS_START( trojan_input_ports )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
 
-	PORT_START	/* DSW0 */
+	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x03, 0x00, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Upright 1 Joystick" )
 	PORT_DIPSETTING(    0x02, "Upright 2 Joysticks" )
@@ -362,7 +367,7 @@ INPUT_PORTS_START( trojan_input_ports )
 	PORT_DIPSETTING(    0x40, "6" )
 /* 0x00 and 0x20 start at level 6 */
 
-	PORT_START	/* DSW1 */
+	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x03, 0x03, "Coin A", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
@@ -390,18 +395,18 @@ INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 characters */
+	8,8,    /* 8*8 characters */
 	1024,   /* 1024 characters */
-	2,	/* 2 bits per pixel */
+	2,      /* 2 bits per pixel */
 	{ 0, 4 },
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	16*8	/* every char takes 16 consecutive bytes */
+	16*8    /* every char takes 16 consecutive bytes */
 };
 
 static struct GfxLayout tilelayout =
 {
-	16,16,	/* 16*16 tiles */
+	16,16,  /* 16*16 tiles */
 	2048,   /* 2048 tiles */
 	4,      /* 4 bits per pixel */
 	{ 0x30000*8, 0x20000*8, 0x10000*8, 0x00000*8  },  /* the bitplanes are separated */
@@ -409,37 +414,37 @@ static struct GfxLayout tilelayout =
 			16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	32*8	/* every tile takes 32 consecutive bytes */
+	32*8    /* every tile takes 32 consecutive bytes */
 };
 
 static struct GfxLayout spritelayout =
 {
-	16,16,	/* 16*16 sprites */
+	16,16,  /* 16*16 sprites */
 	1024,   /* 1024 sprites */
-	4,	/* 4 bits per pixel */
+	4,      /* 4 bits per pixel */
 	{ 0x10000*8+4, 0x10000*8+0, 4, 0 },
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
 			32*8+0, 32*8+1, 32*8+2, 32*8+3, 33*8+0, 33*8+1, 33*8+2, 33*8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
 			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	64*8	/* every sprite takes 64 consecutive bytes */
+	64*8    /* every sprite takes 64 consecutive bytes */
 };
 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,   512, 16 },	/* colors 512-575 */
-	{ 1, 0x10000, &tilelayout,     0,  8 },	/* colors   0-127 */
-	{ 1, 0x50000, &spritelayout, 384,  8 },	/* colors 384-511 */
- 	{ -1 } /* end of array */
+	{ 1, 0x00000, &charlayout,   512, 16 }, /* colors 512-575 */
+	{ 1, 0x10000, &tilelayout,     0,  8 }, /* colors   0-127 */
+	{ 1, 0x50000, &spritelayout, 384,  8 }, /* colors 384-511 */
+	{ -1 } /* end of array */
 };
 
 
 
 static struct YM2203interface ym2203_interface =
 {
-	2,			/* 2 chips */
-	1500000,	/* 1.5 MHz (?) */
+	2,                      /* 2 chips */
+	1500000,        /* 1.5 MHz (?) */
 	{ YM2203_VOL(100,255), YM2203_VOL(100,255) },
 	{ 0 },
 	{ 0 },
@@ -455,21 +460,21 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_Z80,
-			4000000,	/* 4 Mhz (?) */
+			4000000,        /* 4 Mhz (?) */
 			0,
 			readmem,writemem,0,0,
-                        lwings_interrupt,2
+			lwings_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* 3 Mhz (?) */
-			2,	/* memory region #2 */
+			3000000,        /* 3 Mhz (?) */
+			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
@@ -508,8 +513,8 @@ ROM_START( lwings_rom )
 	ROM_LOAD( "9c_lw03.bin", 0x18000, 0x8000, 0x45a255a0 )
 
 	ROM_REGION(0x70000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "9h_lw05.bin", 0x00000, 0x4000, 0x0bf1930f )	/* characters */
-	ROM_LOAD( "3e_lw14.bin", 0x10000, 0x8000, 0xf796da02 )	/* tiles */
+	ROM_LOAD( "9h_lw05.bin", 0x00000, 0x4000, 0x0bf1930f )  /* characters */
+	ROM_LOAD( "3e_lw14.bin", 0x10000, 0x8000, 0xf796da02 )  /* tiles */
 	ROM_LOAD( "1e_lw08.bin", 0x18000, 0x8000, 0xcc211065 )
 	ROM_LOAD( "3d_lw13.bin", 0x20000, 0x8000, 0x4dd132db )
 	ROM_LOAD( "1d_lw07.bin", 0x28000, 0x8000, 0x5fee27d2 )
@@ -517,12 +522,12 @@ ROM_START( lwings_rom )
 	ROM_LOAD( "1b_lw06.bin", 0x38000, 0x8000, 0x2bd30a6f )
 	ROM_LOAD( "3f_lw15.bin", 0x40000, 0x8000, 0x27502d44 )
 	ROM_LOAD( "1f_lw09.bin", 0x48000, 0x8000, 0xe7f59523 )
-	ROM_LOAD( "3j_lw17.bin", 0x50000, 0x8000, 0xabcd8c3f )	/* sprites */
+	ROM_LOAD( "3j_lw17.bin", 0x50000, 0x8000, 0xabcd8c3f )  /* sprites */
 	ROM_LOAD( "1j_lw11.bin", 0x58000, 0x8000, 0x7f560e0a )
 	ROM_LOAD( "3h_lw16.bin", 0x60000, 0x8000, 0xfe4fb851 )
 	ROM_LOAD( "1h_lw10.bin", 0x68000, 0x8000, 0xbce45b9e )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
 	ROM_LOAD( "11e_lw04.bin", 0x0000, 0x8000, 0x314df447 )
 ROM_END
 
@@ -533,8 +538,8 @@ ROM_START( lwingsjp_rom )
 	ROM_LOAD( "9c_lw03.bin", 0x18000, 0x8000, 0x45a255a0 )
 
 	ROM_REGION(0x70000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "9h_lw05.bin", 0x00000, 0x4000, 0x0bf1930f )	/* characters */
-	ROM_LOAD( "b_03e.rom",   0x10000, 0x8000, 0x017ac406 )	/* tiles */
+	ROM_LOAD( "9h_lw05.bin", 0x00000, 0x4000, 0x0bf1930f )  /* characters */
+	ROM_LOAD( "b_03e.rom",   0x10000, 0x8000, 0x017ac406 )  /* tiles */
 	ROM_LOAD( "b_01e.rom",   0x18000, 0x8000, 0xc34943cf )
 	ROM_LOAD( "b_03d.rom",   0x20000, 0x8000, 0x346ad050 )
 	ROM_LOAD( "b_01d.rom",   0x28000, 0x8000, 0xadc849d6 )
@@ -542,12 +547,12 @@ ROM_START( lwingsjp_rom )
 	ROM_LOAD( "b_01b.rom",   0x38000, 0x8000, 0x31c18a63 )
 	ROM_LOAD( "b_03f.rom",   0x40000, 0x8000, 0xb2962e04 )
 	ROM_LOAD( "b_01f.rom",   0x48000, 0x8000, 0x871dc5eb )
-	ROM_LOAD( "b_03j.rom",   0x50000, 0x8000, 0x6c24efb0 )	/* sprites */
+	ROM_LOAD( "b_03j.rom",   0x50000, 0x8000, 0x6c24efb0 )  /* sprites */
 	ROM_LOAD( "b_01j.rom",   0x58000, 0x8000, 0xf3715fe3 )
 	ROM_LOAD( "b_03h.rom",   0x60000, 0x8000, 0x17d60134 )
 	ROM_LOAD( "b_01h.rom",   0x68000, 0x8000, 0xd92720a7 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
 	ROM_LOAD( "11e_lw04.bin", 0x0000, 0x8000, 0x314df447 )
 ROM_END
 
@@ -559,8 +564,8 @@ static int hiload(void)
 
 
 	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0xce00],"\x00\x30\x00",3) == 0 &&
-                        memcmp(&RAM[0xce4e],"\x00\x08\x00",3) == 0)
+	if (memcmp(&RAM[0xce00],"\x00\x30\x00",3) == 0 &&
+			memcmp(&RAM[0xce4e],"\x00\x08\x00",3) == 0)
 	{
 		void *f;
 
@@ -576,7 +581,7 @@ static int hiload(void)
 
 		return 1;
 	}
-	else return 0;	/* we can't load the hi scores yet */
+	else return 0;  /* we can't load the hi scores yet */
 }
 
 
@@ -611,7 +616,7 @@ struct GameDriver lwings_driver =
 	lwings_rom,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,      /* sound_prom */
 
 	lwings_input_ports,
 
@@ -635,7 +640,7 @@ struct GameDriver lwingsjp_driver =
 	lwingsjp_rom,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,      /* sound_prom */
 
 	lwings_input_ports,
 
@@ -662,8 +667,8 @@ ROM_START( sectionz_rom )
 	ROM_LOAD( "9c_sz03.bin",  0x18000, 0x8000, 0x7d3980a1 )
 
 	ROM_REGION(0x70000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "9h_sz05.bin", 0x00000, 0x4000, 0xb8520000 )	/* characters */
-	ROM_LOAD( "3e_SZ14.bin", 0x10000, 0x8000, 0xd40d5373 )	/* tiles */
+	ROM_LOAD( "9h_sz05.bin", 0x00000, 0x4000, 0xb8520000 )  /* characters */
+	ROM_LOAD( "3e_SZ14.bin", 0x10000, 0x8000, 0xd40d5373 )  /* tiles */
 	ROM_LOAD( "1e_SZ08.bin", 0x18000, 0x8000, 0xdfcbf461 )
 	ROM_LOAD( "3d_SZ13.bin", 0x20000, 0x8000, 0xb5d7a0ad )
 	ROM_LOAD( "1d_SZ07.bin", 0x28000, 0x8000, 0x031e915a )
@@ -671,12 +676,12 @@ ROM_START( sectionz_rom )
 	ROM_LOAD( "1b_SZ06.bin", 0x38000, 0x8000, 0x0324323a )
 	ROM_LOAD( "3f_SZ15.bin", 0x40000, 0x8000, 0xa332ea3c )
 	ROM_LOAD( "1f_SZ09.bin", 0x48000, 0x8000, 0x27b80a1c )
-	ROM_LOAD( "3j_sz17.bin", 0x50000, 0x8000, 0x1a7d3f2b )	/* sprites */
+	ROM_LOAD( "3j_sz17.bin", 0x50000, 0x8000, 0x1a7d3f2b )  /* sprites */
 	ROM_LOAD( "1j_sz11.bin", 0x58000, 0x8000, 0xfd420ebc )
 	ROM_LOAD( "3h_sz16.bin", 0x60000, 0x8000, 0x3a32ae7c )
 	ROM_LOAD( "1h_sz10.bin", 0x68000, 0x8000, 0x750adac0 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
 	ROM_LOAD( "11e_sz04.bin", 0x0000, 0x8000, 0x44b6a7dc )
 ROM_END
 
@@ -695,7 +700,7 @@ struct GameDriver sectionz_driver =
 	sectionz_rom,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,      /* sound_prom */
 
 	sectionz_input_ports,
 
@@ -712,7 +717,7 @@ struct GameDriver sectionz_driver =
 
    Similar to Legendary Wings apart from:
    1) More sprites
-   2) 3rd Z80
+   2) 3rd Z80 (ADPCM)
    3) Different palette layout
    4) Third Background tile layer
 
@@ -721,37 +726,37 @@ struct GameDriver sectionz_driver =
 
 static struct GfxLayout spritelayout_trojan = /* LWings, with more sprites */
 {
-	16,16,	/* 16*16 sprites */
+	16,16,  /* 16*16 sprites */
 	2048,   /* 2048 sprites */
-	4,	/* 4 bits per pixel */
+	4,      /* 4 bits per pixel */
 	{ 0x20000*8+4, 0x20000*8+0, 4, 0 },
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
 			32*8+0, 32*8+1, 32*8+2, 32*8+3, 33*8+0, 33*8+1, 33*8+2, 33*8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
 			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	64*8	/* every sprite takes 64 consecutive bytes */
+	64*8    /* every sprite takes 64 consecutive bytes */
 };
 
 static struct GfxLayout bktilelayout_trojan =
 {
-	16,16,	/* 16*16 sprites */
+	16,16,  /* 16*16 sprites */
 	512,   /* 512 sprites */
-	4,	/* 4 bits per pixel */
+	4,      /* 4 bits per pixel */
 	{ 0x08000*8+0, 0x08000*8+4, 0, 4 },
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
 			32*8+0, 32*8+1, 32*8+2, 32*8+3, 33*8+0, 33*8+1, 33*8+2, 33*8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
 			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	64*8	/* every sprite takes 64 consecutive bytes */
+	64*8    /* every sprite takes 64 consecutive bytes */
 };
 
 
 static struct GfxDecodeInfo gfxdecodeinfo_trojan[] =
 {
-	{ 1, 0x00000, &charlayout,          768, 16 },	/* colors 768-831 */
-	{ 1, 0x10000, &tilelayout,          256,  8 },	/* colors 256-383 */
-	{ 1, 0x50000, &spritelayout_trojan, 640,  8 },	/* colors 640-767 */
-	{ 1, 0x90000, &bktilelayout_trojan,   0,  8 },	/* colors   0-127 */
+	{ 1, 0x00000, &charlayout,          768, 16 },  /* colors 768-831 */
+	{ 1, 0x10000, &tilelayout,          256,  8 },  /* colors 256-383 */
+	{ 1, 0x50000, &spritelayout_trojan, 640,  8 },  /* colors 640-767 */
+	{ 1, 0x90000, &bktilelayout_trojan,   0,  8 },  /* colors   0-127 */
 	{ -1 } /* end of array */
 };
 
@@ -775,10 +780,10 @@ ADPCM_SAMPLES_END
 
 static struct ADPCMinterface adpcm_interface =
 {
-	1,			/* 1 channel */
+	1,                      /* 1 channel */
 	4000,                   /* 4000Hz playback */
-	3,			/* memory region 3 */
-	0,			/* init function */
+	3,                      /* memory region 3 */
+	0,                      /* init function */
 	{ 255 }
 };
 
@@ -790,22 +795,22 @@ static struct MachineDriver trojan_machine_driver =
 	{
 		{
 			CPU_Z80,
-			4000000,	/* 4 Mhz (?) */
+			4000000,        /* 4 Mhz (?) */
 			0,
 			readmem,trojan_writemem,0,0,
-			lwings_interrupt,2
+			lwings_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* 3 Mhz (?) */
-			2,	/* memory region #2 */
+			3000000,        /* 3 Mhz (?) */
+			2,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
 		}
 	},
-	60, 2500,	/* frames per second, vblank duration */
+	60, 2500,       /* frames per second, vblank duration */
 				/* hand tuned to get rid of sprite lag */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
@@ -843,8 +848,8 @@ ROM_START( trojan_rom )
 	ROM_LOAD( "TB05.bin", 0x18000, 0x8000, 0x8c67a865 )
 
 	ROM_REGION(0xa0000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "TB03.bin", 0x00000, 0x4000, 0x6f676329 )	/* characters */
-	ROM_LOAD( "TB13.bin", 0x10000, 0x8000, 0x488526a9 )	/* tiles */
+	ROM_LOAD( "TB03.bin", 0x00000, 0x4000, 0x6f676329 )     /* characters */
+	ROM_LOAD( "TB13.bin", 0x10000, 0x8000, 0x488526a9 )     /* tiles */
 	ROM_LOAD( "TB09.bin", 0x18000, 0x8000, 0x941934f9 )
 	ROM_LOAD( "TB12.bin", 0x20000, 0x8000, 0xca0be2e1 )
 	ROM_LOAD( "TB08.bin", 0x28000, 0x8000, 0x67b20808 )
@@ -852,7 +857,7 @@ ROM_START( trojan_rom )
 	ROM_LOAD( "TB07.bin", 0x38000, 0x8000, 0x167327d9 )
 	ROM_LOAD( "TB14.bin", 0x40000, 0x8000, 0x343d4711 )
 	ROM_LOAD( "TB10.bin", 0x48000, 0x8000, 0x7ebd6a7d )
-	ROM_LOAD( "TB18.bin", 0x50000, 0x8000, 0xcbeaef2c )	/* sprites */
+	ROM_LOAD( "TB18.bin", 0x50000, 0x8000, 0xcbeaef2c )     /* sprites */
 	ROM_LOAD( "TB16.bin", 0x58000, 0x8000, 0xb276f758 )
 	ROM_LOAD( "TB17.bin", 0x60000, 0x8000, 0xc7ad3a3d )
 	ROM_LOAD( "TB15.bin", 0x68000, 0x8000, 0x9db50319 )
@@ -860,13 +865,13 @@ ROM_START( trojan_rom )
 	ROM_LOAD( "TB20.bin", 0x78000, 0x8000, 0x0156ce22 )
 	ROM_LOAD( "TB21.bin", 0x80000, 0x8000, 0x3c8ece14 )
 	ROM_LOAD( "TB19.bin", 0x88000, 0x8000, 0x5034e812 )
-	ROM_LOAD( "TB25.bin", 0x90000, 0x8000, 0x6592283e )	/* Bk Tiles */
+	ROM_LOAD( "TB25.bin", 0x90000, 0x8000, 0x6592283e )     /* Bk Tiles */
 	ROM_LOAD( "TB24.bin", 0x98000, 0x8000, 0x24efb007 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
 	ROM_LOAD( "TB02.bin", 0x0000, 0x8000, 0x04af8521 )
 
-	ROM_REGION(0x08000)	/* 64k for ADPCM CPU (CPU not emulated) */
+	ROM_REGION(0x08000)     /* 64k for ADPCM CPU (CPU not emulated) */
 	ROM_LOAD( "TB01.bin", 0x0000, 0x4000, 0xdc22d83e )
 
 	ROM_REGION(0x08000)
@@ -880,8 +885,8 @@ ROM_START( trojanj_rom )
 	ROM_LOAD( "TB05.bin", 0x18000, 0x8000, 0x8c67a865 )
 
 	ROM_REGION(0xa0000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "TB03.bin", 0x00000, 0x4000, 0x6f676329 )	/* characters */
-	ROM_LOAD( "TB13.bin", 0x10000, 0x8000, 0x488526a9 )	/* tiles */
+	ROM_LOAD( "TB03.bin", 0x00000, 0x4000, 0x6f676329 )     /* characters */
+	ROM_LOAD( "TB13.bin", 0x10000, 0x8000, 0x488526a9 )     /* tiles */
 	ROM_LOAD( "TB09.bin", 0x18000, 0x8000, 0x941934f9 )
 	ROM_LOAD( "TB12.bin", 0x20000, 0x8000, 0xca0be2e1 )
 	ROM_LOAD( "TB08.bin", 0x28000, 0x8000, 0x67b20808 )
@@ -889,7 +894,7 @@ ROM_START( trojanj_rom )
 	ROM_LOAD( "TB07.bin", 0x38000, 0x8000, 0x167327d9 )
 	ROM_LOAD( "TB14.bin", 0x40000, 0x8000, 0x343d4711 )
 	ROM_LOAD( "TB10.bin", 0x48000, 0x8000, 0x7ebd6a7d )
-	ROM_LOAD( "TB18.bin", 0x50000, 0x8000, 0xcbeaef2c )	/* sprites */
+	ROM_LOAD( "TB18.bin", 0x50000, 0x8000, 0xcbeaef2c )     /* sprites */
 	ROM_LOAD( "TB16.bin", 0x58000, 0x8000, 0xb276f758 )
 	ROM_LOAD( "TB17.bin", 0x60000, 0x8000, 0xc7ad3a3d )
 	ROM_LOAD( "TB15.bin", 0x68000, 0x8000, 0x9db50319 )
@@ -897,13 +902,13 @@ ROM_START( trojanj_rom )
 	ROM_LOAD( "TB20.bin", 0x78000, 0x8000, 0x0156ce22 )
 	ROM_LOAD( "TB21.bin", 0x80000, 0x8000, 0x3c8ece14 )
 	ROM_LOAD( "TB19.bin", 0x88000, 0x8000, 0x5034e812 )
-	ROM_LOAD( "TB25.bin", 0x90000, 0x8000, 0x6592283e )	/* Bk Tiles */
+	ROM_LOAD( "TB25.bin", 0x90000, 0x8000, 0x6592283e )     /* Bk Tiles */
 	ROM_LOAD( "TB24.bin", 0x98000, 0x8000, 0x24efb007 )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
 	ROM_LOAD( "TB02.bin", 0x0000, 0x8000, 0x04af8521 )
 
-	ROM_REGION(0x08000)	/* 64k for ADPCM CPU (CPU not emulated) */
+	ROM_REGION(0x08000)     /* 64k for ADPCM CPU (CPU not emulated) */
 	ROM_LOAD( "TB01.bin", 0x0000, 0x4000, 0xdc22d83e )
 
 	ROM_REGION(0x08000)
@@ -998,4 +1003,282 @@ struct GameDriver trojanj_driver =
 	NULL, 0, 0,
 	ORIENTATION_DEFAULT,
 	trojan_hiload, trojan_hisave
+};
+
+/***************************************************************************
+ Avengers - Doesn't work due to copy protection
+
+ Function at 0x2ec1 writes to an output port (0xf809 = scroll y),
+ peforms a short delay then reads 0xf80d.
+
+ There are also two interrupts (0x10 and NMI)
+
+ ***************************************************************************/
+
+extern int avengers_interrupt(void);
+
+int avengers_protection_r(int offset)
+{
+	int value;
+	value=lwings_scrolly[1];
+	if (errorlog)
+	{
+		fprintf(errorlog, "Protection read: %02x PC=%04x\n",
+			value, cpu_getpc());
+	}
+
+	/*
+	I have no idea what the protection chip does with this value.
+	*/
+
+	return value;
+}
+
+/*
+E2 00 E4 03 E6 0C E8 10 EA 19 EC 25 EE 38 F0 3B F2 3E F4 49 F4 s
+*/
+ADPCM_SAMPLES_START(avengers_samples)
+	ADPCM_SAMPLE(0x00, 0x00e2, (0x03e4 -0x00e2)*2 )
+	ADPCM_SAMPLE(0x01, 0x03e4, (0x0ce6 -0x03e4)*2 )
+	ADPCM_SAMPLE(0x02, 0x0ce6, (0x10e8 -0x0ce6)*2 )
+	ADPCM_SAMPLE(0x03, 0x10e8, (0x19ea -0x10e8)*2 )
+	ADPCM_SAMPLE(0x04, 0x19ea, (0x25ec -0x19ea)*2 )
+	ADPCM_SAMPLE(0x05, 0x25ec, (0x38ee -0x25ec)*2 )
+	ADPCM_SAMPLE(0x06, 0x38ee, (0x3bf0 -0x38ee)*2 )
+	ADPCM_SAMPLE(0x07, 0x3bf0, (0x3ef2 -0x3bf0)*2 )
+	ADPCM_SAMPLE(0x08, 0x3ef2, (0x49f4 -0x3ef2)*2 )
+ADPCM_SAMPLES_END
+
+/*
+machine driver is exactly the same as trojan apart from
+a new custom interrupt handler
+*/
+
+static struct MachineDriver avengers_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			4000000,        /* 4 Mhz (?) */
+			0,
+			readmem,trojan_writemem,0,0,
+			avengers_interrupt,2
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			3000000,        /* 3 Mhz (?) */
+			2,      /* memory region #2 */
+			sound_readmem,sound_writemem,0,0,
+			interrupt,4
+		}
+	},
+	60, 2500,       /* frames per second, vblank duration */
+				/* hand tuned to get rid of sprite lag */
+	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+	gfxdecodeinfo_trojan,
+	1024, 1024,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	trojan_vh_start,
+	trojan_vh_stop,
+	trojan_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2203,
+			&ym2203_interface,
+		},
+		{
+			SOUND_ADPCM,
+			&adpcm_interface
+		}
+	}
+};
+
+INPUT_PORTS_START( avengers_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0xff, 0x00, "DSW 0", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0xff, "Off" )
+
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0xff, 0x00, "DSW 1", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0xff, "Off" )
+INPUT_PORTS_END
+
+
+ROM_START( avengers_rom )
+	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
+	ROM_LOAD( "04.10N", 0x00000, 0x8000, 0x0cf1e15d )
+	ROM_LOAD( "06.13N", 0x10000, 0x8000, 0x0790663c )
+	ROM_LOAD( "05.12N", 0x18000, 0x8000, 0x5723ac35 )
+
+	ROM_REGION(0xa0000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "03.8K", 0x00000, 0x4000, 0xa8b6ade2 )  /* characters */
+	/* tiles */
+	ROM_LOAD( "13.6B", 0x10000, 0x8000, 0xfa13ce7d ) /* plane 1 */
+	ROM_LOAD( "09.6A", 0x18000, 0x8000, 0x518b5c29 )
+	ROM_LOAD( "12.4B", 0x20000, 0x8000, 0xfdbac4c6 ) /* plane 2 */
+	ROM_LOAD( "08.4A", 0x28000, 0x8000, 0xf45a0f5c )
+	ROM_LOAD( "11.3B", 0x30000, 0x8000, 0x47eb4c5f ) /* plane 3 */
+	ROM_LOAD( "07.3A", 0x38000, 0x8000, 0xf3a26db0 )
+	ROM_LOAD( "14.8B", 0x40000, 0x8000, 0xae2af7a4 ) /* plane 4 */
+	ROM_LOAD( "10.8A", 0x48000, 0x8000, 0x0ca3ba19 )
+
+	/* sprites */
+	ROM_LOAD( "18.7L", 0x50000, 0x8000, 0x0b72e170 ) /* planes 0,1 */
+	ROM_LOAD( "16.3L", 0x58000, 0x8000, 0x549d5d2d )
+	ROM_LOAD( "17.5L", 0x60000, 0x8000, 0x6e83b349 )
+	ROM_LOAD( "15.2L", 0x68000, 0x8000, 0xd130aa88 )
+
+	ROM_LOAD( "22.7N", 0x70000, 0x8000, 0xc6ccd622 ) /* planes 2,3 */
+	ROM_LOAD( "20.3N", 0x78000, 0x8000, 0x49db875f )
+	ROM_LOAD( "21.5N", 0x80000, 0x8000, 0x89ed4609 )
+	ROM_LOAD( "19.2N", 0x88000, 0x8000, 0x603d1b9f )
+
+	/* ROMs 24 and 25 contains tiles in same format as sprites, used for title screen */
+	ROM_LOAD( "25.15N", 0x90000, 0x8000, 0x8434cad6 ) /* planes 0,1 */
+	ROM_LOAD( "24.13N", 0x98000, 0x8000, 0x5dd8faa8 ) /* planes 2,3 */
+
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_LOAD( "02.15H", 0x0000, 0x8000, 0xbed70d6b ) /* ?? */
+
+	ROM_REGION(0x10000)     /* ADPCM CPU (not emulated) */
+	ROM_LOAD( "01.6D", 0x0000, 0x8000,  0xd3ab206d ) /* adpcm player - "Talker" ROM */
+
+	ROM_REGION(0x08000)
+	ROM_LOAD( "23.9N", 0x0000, 0x08000, 0xdf0afa8e )  /* Tile Map */
+ROM_END
+
+ROM_START( avenger2_rom )
+	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
+	ROM_LOAD( "avg4.bin", 0x00000, 0x8000, 0xf2777ef3 )
+	ROM_LOAD( "avg6.bin", 0x10000, 0x8000, 0x25dba925 )
+	ROM_LOAD( "avg5.bin", 0x18000, 0x8000, 0xde9b8a01 )
+
+	ROM_REGION(0xa0000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "03.8K", 0x00000, 0x4000, 0xa8b6ade2 )  /* characters */
+	/* tiles */
+	ROM_LOAD( "13.6B", 0x10000, 0x8000, 0xfa13ce7d ) /* plane 1 */
+	ROM_LOAD( "09.6A", 0x18000, 0x8000, 0x518b5c29 )
+	ROM_LOAD( "12.4B", 0x20000, 0x8000, 0xfdbac4c6 ) /* plane 2 */
+	ROM_LOAD( "08.4A", 0x28000, 0x8000, 0xf45a0f5c )
+	ROM_LOAD( "11.3B", 0x30000, 0x8000, 0x47eb4c5f ) /* plane 3 */
+	ROM_LOAD( "07.3A", 0x38000, 0x8000, 0xf3a26db0 )
+	ROM_LOAD( "14.8B", 0x40000, 0x8000, 0xae2af7a4 ) /* plane 4 */
+	ROM_LOAD( "10.8A", 0x48000, 0x8000, 0x0ca3ba19 )
+
+	/* sprites */
+	ROM_LOAD( "18.7L", 0x50000, 0x8000, 0x0b72e170 ) /* planes 0,1 */
+	ROM_LOAD( "16.3L", 0x58000, 0x8000, 0x549d5d2d )
+	ROM_LOAD( "17.5L", 0x60000, 0x8000, 0x6e83b349 )
+	ROM_LOAD( "15.2L", 0x68000, 0x8000, 0xd130aa88 )
+
+	ROM_LOAD( "22.7N", 0x70000, 0x8000, 0xc6ccd622 ) /* planes 2,3 */
+	ROM_LOAD( "20.3N", 0x78000, 0x8000, 0x49db875f )
+	ROM_LOAD( "21.5N", 0x80000, 0x8000, 0x89ed4609 )
+	ROM_LOAD( "19.2N", 0x88000, 0x8000, 0x603d1b9f )
+
+	/* ROMs 24 and 25 contains tiles in same format as sprites, used for title screen */
+	ROM_LOAD( "25.15N",    0x90000, 0x8000, 0x8434cad6 ) /* planes 0,1 */
+	ROM_LOAD( "24.13N", 0x98000, 0x8000, 0x5dd8faa8 ) /* planes 2,3 */
+
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+ROM_LOAD( "02.15H", 0x0000, 0x8000, 0xbed70d6b ) /* MISSING from this set */
+
+	ROM_REGION(0x10000)     /* ADPCM CPU (not emulated) */
+	ROM_LOAD( "01.6D", 0x0000, 0x8000,  0xd3ab206d ) /* adpcm player - "Talker" ROM */
+
+	ROM_REGION(0x08000)
+	ROM_LOAD( "23.9N", 0x0000, 0x08000, 0xdf0afa8e )  /* Tile Map */
+ROM_END
+
+
+
+struct GameDriver avengers_driver =
+{
+	__FILE__,
+	0,
+	"avengers",
+	"Avengers (set 1)",
+	"1987",
+	"Capcom",
+	"Paul Leaman\nPhil Stroffolino",
+	GAME_NOT_WORKING,
+	&avengers_machine_driver,
+
+	avengers_rom,
+	0, 0,
+	0,
+	(void *)avengers_samples, /* sound_prom */
+
+	avengers_input_ports,
+
+	NULL, 0, 0,
+	ORIENTATION_ROTATE_270,
+	0,0 /* high score load/save */
+};
+
+struct GameDriver avenger2_driver =
+{
+	__FILE__,
+	&avengers_driver,
+	"avenger2",
+	"Avengers (set 2)",
+	"1987",
+	"Capcom",
+	"Paul Leaman\nPhil Stroffolino",
+	GAME_NOT_WORKING,
+	&avengers_machine_driver,
+
+	avenger2_rom,
+	0, 0,
+	0,
+	(void *)avengers_samples, /* sound_prom */
+
+	avengers_input_ports,
+
+	NULL, 0, 0,
+	ORIENTATION_ROTATE_270,
+	0,0 /* high score load/save */
 };

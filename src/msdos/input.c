@@ -49,6 +49,34 @@ void msdos_init_input (void)
 /* defined in osdepend.h. Return 0 if the key is not pressed, nonzero otherwise. */
 int osd_key_pressed(int keycode)
 {
+	if (keycode > OSD_MAX_KEY)
+	{
+		switch (keycode)
+		{
+			case OSD_KEY_FAST_EXIT:
+			case OSD_KEY_UNPAUSE:
+				return key[OSD_KEY_ESC];
+
+			case OSD_KEY_RESET_MACHINE:
+				return key[OSD_KEY_F3];
+
+			case OSD_KEY_VOLUME_DOWN:
+				return (key[OSD_KEY_MINUS_PAD] && !key[OSD_KEY_LSHIFT]);
+
+			case OSD_KEY_VOLUME_UP:
+				return (key[OSD_KEY_PLUS_PAD] && !key[OSD_KEY_LSHIFT]);
+
+			case OSD_KEY_PAUSE:
+				return key[OSD_KEY_P];
+
+			case OSD_KEY_CONFIGURE:
+				return key[OSD_KEY_TAB];
+
+			case OSD_KEY_SHOW_GFX:
+				return key[OSD_KEY_F4];
+		}
+	}
+
 	if (keycode == OSD_KEY_RCONTROL) keycode = KEY_RCONTROL;
 	if (keycode == OSD_KEY_ALTGR) keycode = KEY_ALTGR;
 

@@ -7,6 +7,7 @@ struct namco_interface
 	int voices;		/* number of voices */
 	int gain;		/* 16 * gain adjustment */
 	int volume;		/* playback volume */
+	int region;		/* memory region */
 };
 
 int namco_sh_start(struct namco_interface *intf);

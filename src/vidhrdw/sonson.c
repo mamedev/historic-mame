@@ -145,10 +145,10 @@ void sonson_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
 		drawgfx(bitmap,Machine->gfx[1],
-			spriteram[offs + 2] + ((spriteram[offs + 1] & 0x20) << 3),
-			spriteram[offs + 1] & 0x1f,
-			~spriteram[offs + 1] & 0x40,~spriteram[offs + 1] & 0x80,
-			spriteram[offs + 3],spriteram[offs + 0],
-			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				spriteram[offs + 2] + ((spriteram[offs + 1] & 0x20) << 3),
+				spriteram[offs + 1] & 0x1f,
+				~spriteram[offs + 1] & 0x40,~spriteram[offs + 1] & 0x80,
+				spriteram[offs + 3],spriteram[offs + 0],
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

@@ -69,6 +69,8 @@ int frontend_help (int argc, char **argv)
 	int verify = 0;
 	int help = 1;    /* by default is TRUE */
 	char gamename[9];
+	extern struct GameDriver neogeo_bios;
+
 
 	/* covert '/' in '-' */
 	for (i = 1;i < argc;i++) if (argv[i][0] == '/') argv[i][0] = '-';
@@ -100,6 +102,7 @@ int frontend_help (int argc, char **argv)
 
 #ifdef MAME_DEBUG /* do not put this into a public release! */
 		if (!stricmp(argv[i],"-lmr")) list = 6;
+		if (!stricmp(argv[i],"-wrongorientation")) list = 10;
 #endif
 		if (!stricmp(argv[i],"-noclones")) listclones = 0;
 
@@ -142,7 +145,7 @@ int frontend_help (int argc, char **argv)
 			i = 0; j = 0;
 			while (drivers[i])
 			{
-				if ((listclones || drivers[i]->clone_of == 0) &&
+				if ((listclones || drivers[i]->clone_of == 0 || drivers[i]->clone_of == &neogeo_bios) &&
 						!strwildcmp(gamename, drivers[i]->name))
 				{
 					printf("%10s",drivers[i]->name);
@@ -163,7 +166,7 @@ int frontend_help (int argc, char **argv)
 			i = 0;
 			while (drivers[i])
 			{
-				if ((listclones || drivers[i]->clone_of == 0) &&
+				if ((listclones || drivers[i]->clone_of == 0 || drivers[i]->clone_of == &neogeo_bios) &&
 						!strwildcmp(gamename, drivers[i]->name))
 					printf("%-10s\"%s\"\n",drivers[i]->name,drivers[i]->description);
 				i++;
@@ -176,7 +179,7 @@ int frontend_help (int argc, char **argv)
 			i = 0;
 			while (drivers[i])
 			{
-				if ((listclones || drivers[i]->clone_of == 0) &&
+				if ((listclones || drivers[i]->clone_of == 0 || drivers[i]->clone_of == &neogeo_bios) &&
 						!strwildcmp(gamename, drivers[i]->name))
 					if (drivers[i]->samplenames != 0 && drivers[i]->samplenames[0] != 0)
 					{
@@ -351,7 +354,7 @@ int frontend_help (int argc, char **argv)
 			i = 0;
 			while (drivers[i])
 			{
-				if ((listclones || drivers[i]->clone_of == 0) &&
+				if ((listclones || drivers[i]->clone_of == 0 || drivers[i]->clone_of == &neogeo_bios) &&
 						!strwildcmp(gamename, drivers[i]->description))
 					printf("%-5s%-32s %s\n",drivers[i]->year,drivers[i]->manufacturer,drivers[i]->description);
 				i++;
@@ -372,6 +375,19 @@ int frontend_help (int argc, char **argv)
 			return 0;
 			break;
 
+		case 10: /* list drivers which incorrectly use the orientation and visible area fields */
+			while (drivers[i])
+			{
+				if ((drivers[i]->drv->video_attributes & VIDEO_TYPE_VECTOR) == 0 &&
+						drivers[i]->drv->visible_area.max_x - drivers[i]->drv->visible_area.min_x + 1 <=
+						drivers[i]->drv->visible_area.max_y - drivers[i]->drv->visible_area.min_y + 1)
+					printf("%s %dx%d\n",drivers[i]->name,
+							drivers[i]->drv->visible_area.max_x - drivers[i]->drv->visible_area.min_x + 1,
+							drivers[i]->drv->visible_area.max_y - drivers[i]->drv->visible_area.min_y + 1);
+				i++;
+			}
+			return 0;
+			break;
 	}
 
 	if (verify)  /* "verify" utilities */

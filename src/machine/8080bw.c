@@ -164,3 +164,25 @@ int seawolf_port_0_r (int offset)
 {
 	return (input_port_0_r(0) & 0xe0) + ControllerTable[input_port_0_r(0) & 0x1f];
 }
+
+
+int midbowl_shift_data_r(int offset)
+{
+return ((~(((shift_data1 << 8) | shift_data2) << shift_amount) >> 8)) & 0xff;
+}
+
+int midbowl_shift_data_rev_r(int offset)
+{
+int reverse_data;
+
+reverse_data  = ((~(((shift_data1 << 8) | shift_data2) << shift_amount) >> 8)) & 0xff;
+reverse_data  = ((reverse_data & 0x01) << 7)
+              | ((reverse_data & 0x02) << 5)
+              | ((reverse_data & 0x04) << 3)
+              | ((reverse_data & 0x08) << 1)
+              | ((reverse_data & 0x10) >> 1)
+              | ((reverse_data & 0x20) >> 3)
+              | ((reverse_data & 0x40) >> 5)
+              | ((reverse_data & 0x80) >> 7);
+return reverse_data;
+}

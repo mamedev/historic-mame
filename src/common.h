@@ -76,7 +76,7 @@ struct GameSamples
 struct GfxLayout
 {
 	unsigned short width,height; /* width and height of chars/sprites */
-	unsigned short total; /* total numer of chars/sprites in the rom */
+	unsigned int total; /* total numer of chars/sprites in the rom */
 	unsigned short planes; /* number of bitplanes */
 	int planeoffset[8]; /* start of every bitplane */
 	int xoffset[32]; /* coordinates of the bit corresponding to the pixel */
@@ -89,7 +89,7 @@ struct GfxElement
 	int width,height;
 
 	struct osd_bitmap *gfxdata;	/* graphic data */
-	int total_elements;	/* total number of characters/sprites */
+	unsigned int total_elements;	/* total number of characters/sprites */
 
 	int color_granularity;	/* number of colors for each color code */
 							/* (for example, 4 for 2 bitplanes gfx) */

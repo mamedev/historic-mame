@@ -93,6 +93,10 @@ void spyhunt_writeport(int port,int value);
 void rampage_init_machine(void);
 void rampage_writeport(int port,int value);
 
+void maxrpm_writeport(int port,int value);
+int maxrpm_IN1_r(int offset);
+int maxrpm_IN2_r(int offset);
+
 void sarge_init_machine(void);
 int sarge_IN1_r(int offset);
 int sarge_IN2_r(int offset);
@@ -547,6 +551,70 @@ INPUT_PORTS_START( rampage_input_ports )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( maxrpm_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
+
+	PORT_START	/* IN3 -- dipswitches */
+	PORT_DIPNAME( 0x08, 0x08, "Free Play", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x30, 0x30, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x30, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x10, "1 Coin/2 Credits" )
+/* 0x00 says 2 Coins/2 Credits in service mode, but gives 1 Coin/1 Credit */
+	PORT_BIT( 0xc7, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN4 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* AIN0 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* new fake for acceleration */
+	PORT_ANALOGX( 0xff, 0x30, IPT_AD_STICK_Y | IPF_PLAYER2, 100, 0, 0x30, 0xff, OSD_KEY_UP, OSD_KEY_DOWN, IPT_JOYSTICK_UP, IPT_JOYSTICK_DOWN, 1 )
+
+	PORT_START	/* new fake for acceleration */
+	PORT_ANALOGX( 0xff, 0x30, IPT_AD_STICK_Y | IPF_PLAYER1, 100, 0, 0x30, 0xff, OSD_KEY_UP, OSD_KEY_DOWN, IPT_JOYSTICK_UP, IPT_JOYSTICK_DOWN, 1 )
+
+	PORT_START	/* new fake for steering */
+	PORT_ANALOGX( 0xff, 0x74, IPT_AD_STICK_X | IPF_PLAYER2 | IPF_REVERSE, 80, 0, 0x34, 0xb4, OSD_KEY_LEFT, OSD_KEY_RIGHT, IPT_JOYSTICK_LEFT, IPT_JOYSTICK_RIGHT, 2 )
+
+	PORT_START	/* new fake for steering */
+	PORT_ANALOGX( 0xff, 0x74, IPT_AD_STICK_X | IPF_PLAYER1 | IPF_REVERSE, 80, 0, 0x34, 0xb4, OSD_KEY_LEFT, OSD_KEY_RIGHT, IPT_JOYSTICK_LEFT, IPT_JOYSTICK_RIGHT, 2 )
+
+	PORT_START	/* fake for shifting */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+
 INPUT_PORTS_START( sarge_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -716,6 +784,17 @@ static struct IOReadPort destderb_readport[] =
    { -1 }
 };
 
+static struct IOReadPort maxrpm_readport[] =
+{
+   { 0x00, 0x00, input_port_0_r },
+   { 0x01, 0x01, maxrpm_IN1_r },
+   { 0x02, 0x02, maxrpm_IN2_r },
+   { 0x03, 0x03, input_port_3_r },
+   { 0x04, 0x04, input_port_4_r },
+   { 0x05, 0xff, mcr_readport },
+   { -1 }
+};
+
 static struct IOReadPort sarge_readport[] =
 {
    { 0x00, 0x00, input_port_0_r },
@@ -759,6 +838,12 @@ static struct IOWritePort cr_writeport[] =
 static struct IOWritePort rm_writeport[] =
 {
    { 0, 0xff, rampage_writeport },
+   { -1 }	/* end of table */
+};
+
+static struct IOWritePort mr_writeport[] =
+{
+   { 0, 0xff, maxrpm_writeport },
    { -1 }	/* end of table */
 };
 
@@ -1217,6 +1302,44 @@ static struct MachineDriver rampage_machine_driver =
 			2,
 			sg_readmem,sg_writemem,0,0,
 			ignore_interrupt,1
+		}
+	},
+	30, DEFAULT_30HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - sound CPU synchronization is done via timers */
+	rampage_init_machine,
+
+	/* video hardware */
+	32*16, 30*16, { 0, 32*16-1, 0, 30*16-1 },
+	rampage_gfxdecodeinfo,
+	8*16, 8*16,
+	mcr3_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
+	0,
+	generic_vh_start,
+	generic_vh_stop,
+	rampage_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
+};
+
+static struct MachineDriver maxrpm_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			5000000,	/* 5 Mhz */
+			0,
+			rampage_readmem,rampage_writemem,maxrpm_readport,mr_writeport,
+			mcr_interrupt,1
 		}
 	},
 	30, DEFAULT_30HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -1847,6 +1970,46 @@ struct GameDriver rampage_driver =
 	0,	/* sound_prom */
 
 	rampage_input_ports,
+
+	0, 0,0,
+	ORIENTATION_DEFAULT,
+
+	rampage_hiload, rampage_hisave
+};
+
+
+ROM_START( maxrpm_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "pro.0", 0x0000, 0x8000, 0x2f9e7072 )
+	ROM_LOAD( "pro.1", 0x8000, 0x6000, 0x76c31e97 )
+
+	ROM_REGION(0x48000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "bg-0", 0x00000, 0x4000, 0x2d713ab1 )
+	ROM_LOAD( "bg-1", 0x04000, 0x4000, 0xf0edd9cb )
+	ROM_LOAD( "fg-3", 0x08000, 0x8000, 0x359a200c )
+	ROM_LOAD( "fg-2", 0x18000, 0x8000, 0x70bf1f8f )
+	ROM_LOAD( "fg-1", 0x28000, 0x8000, 0x66780952 )
+	ROM_LOAD( "fg-0", 0x38000, 0x8000, 0xf09fe6f3 )
+ROM_END
+
+struct GameDriver maxrpm_driver =
+{
+	__FILE__,
+	0,
+	"maxrpm",
+	"Max RPM",
+	"1986",
+	"Bally Midway",
+	"Aaron Giles\nChristopher Kirmse\nNicola Salmoria\nBrad Oliver",
+	0,
+	&maxrpm_machine_driver,
+
+	maxrpm_rom,
+	rampage_rom_decode, 0,
+	0,
+	0,	/* sound_prom */
+
+	maxrpm_input_ports,
 
 	0, 0,0,
 	ORIENTATION_DEFAULT,

@@ -18,11 +18,12 @@ int slapfight_bg_ram_size;
 unsigned char *slapfight_dpram;
 int slapfight_dpram_size;
 
-
 int slapfight_scroll_char_x;
 int slapfight_scroll_pixel_x;
+int slapfight_status;
 static int tmp_scroll_char_x;
 static int tmp_scroll_pixel_x;
+int scroll_en;
 
 static int bankaddress;
 static int cpu_int_enable;
@@ -40,6 +41,8 @@ void slapfight_init_machine(void)
 	slapfight_scroll_char_x=0;
 	slapfight_scroll_pixel_x=0;
 	slapfight_status_state=0;
+	slapfight_status = 0xc7;
+	scroll_en = 0;
 
 	/* SOUND CPU */
 
@@ -64,6 +67,7 @@ int slapfight_cpu_interrupt(void)
 int slapfight_sound_interrupt(void)
 {
 	return Z80_IGNORE_INT;
+
 }
 
 void slapfight_dpram_w(int offset, int data)
@@ -149,22 +153,32 @@ void slapfight_port_07_w(int offset, int data)
 void slapfight_port_08_w(int offset, int data)
 {
 	// What a cludge !!! but it stops erroneus values being selected
-	if(!tmp_scroll_pixel_x)
-	{
-		if(data || (!data && tmp_scroll_char_x==63))
-			tmp_scroll_char_x=data;
-		else
-			tmp_scroll_char_x++;
-	}
+
+	if (scroll_en == 1)
+	 {
+	  if(!tmp_scroll_pixel_x)
+	   {
+	    if (data) tmp_scroll_char_x=data;
+	    else      tmp_scroll_char_x++;
+	    tmp_scroll_char_x &= 0x3F;
+	   }
+	 }
+
+	scroll_en--;
 
 	bankaddress=0x10000;
+
 }
 
 void slapfight_port_09_w(int offset, int data)
 {
-	tmp_scroll_pixel_x=data;
+	if (scroll_en == 2)
+	  tmp_scroll_pixel_x=data;
+
+	scroll_en--;
 
 	bankaddress=0x14000;
+
 }
 
 void slapfight_port_0a_w(int offset, int data) {}
@@ -178,15 +192,16 @@ void slapfight_port_0f_w(int offset, int data) {}
 
 int  slapfight_port_00_r(int offset)
 {
-	int states[3]={0xc7,0x55,0x00};
-	int retval;
+	int states[3]={ 0xc7, 0x55, 0x00 };
 
-	retval=states[slapfight_status_state];
+	slapfight_status = states[slapfight_status_state];
 
 	slapfight_status_state++;
-	if(slapfight_status_state>=3) slapfight_status_state=0;
+	if (slapfight_status_state > 2) slapfight_status_state = 0;
 
-	return retval;
+	if (slapfight_status == 0x00) scroll_en = 2;
+
+	return slapfight_status;
 }
 
 int  slapfight_port_01_r(int offset) { return 0; }

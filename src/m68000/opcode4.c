@@ -1305,8 +1305,13 @@ void op_4600(void) /* NOT */
 {       ULONG dst = ~src;
         regs.d[srcreg].B.l = dst;
         CLEARFLGS;
-        ZFLG = ((BYTE)(dst)) == 0;
-        NFLG = ((BYTE)(dst)) < 0;
+		if ((BYTE)dst <= 0 )
+		{
+			if ((BYTE)dst == 0 )
+				ZFLG = ZTRUE ;
+			else
+				NFLG = NTRUE ;
+		}
 }}}}
 void op_4610(void) /* NOT */
 {
@@ -1316,12 +1321,12 @@ void op_4610(void) /* NOT */
 {       ULONG dst = ~src;
         put_byte(srca,dst);
         CLEARFLGS;
-	if ( dst <= 0 )
+		if ((BYTE)dst <= 0 )
 		{
-		if ( dst == 0 )
-			ZFLG = ZTRUE ;
-		else
-			NFLG = NTRUE ;
+			if ((BYTE)dst == 0 )
+				ZFLG = ZTRUE ;
+			else
+				NFLG = NTRUE ;
 		}
 }}}}
 void op_4618(void) /* NOT */
@@ -1333,12 +1338,12 @@ void op_4618(void) /* NOT */
 {       ULONG dst = ~src;
         put_byte(srca,dst);
         CLEARFLGS;
-	if ( dst <= 0 )
+		if ((BYTE)dst <= 0 )
 		{
-		if ( dst == 0 )
-			ZFLG = ZTRUE ;
-		else
-			NFLG = NTRUE ;
+			if ((BYTE)dst == 0 )
+				ZFLG = ZTRUE ;
+			else
+				NFLG = NTRUE ;
 		}
 }}}}}
 void op_4620(void) /* NOT */
@@ -1350,12 +1355,12 @@ void op_4620(void) /* NOT */
 {       ULONG dst = ~src;
         put_byte(srca,dst);
         CLEARFLGS;
-	if ( dst <= 0 )
+		if ((BYTE)dst <= 0 )
 		{
-		if ( dst == 0 )
-			ZFLG = ZTRUE ;
-		else
-			NFLG = NTRUE ;
+			if ((BYTE)dst == 0 )
+				ZFLG = ZTRUE ;
+			else
+				NFLG = NTRUE ;
 		}
 }}}}}
 void op_4628(void) /* NOT */
@@ -1366,12 +1371,12 @@ void op_4628(void) /* NOT */
 {       ULONG dst = ~src;
         put_byte(srca,dst);
         CLEARFLGS;
-	if ( dst <= 0 )
+		if ((BYTE)dst <= 0 )
 		{
-		if ( dst == 0 )
-			ZFLG = ZTRUE ;
-		else
-			NFLG = NTRUE ;
+			if ((BYTE)dst == 0 )
+				ZFLG = ZTRUE ;
+			else
+				NFLG = NTRUE ;
 		}
 }}}}
 void op_4630(void) /* NOT */
@@ -1382,12 +1387,12 @@ void op_4630(void) /* NOT */
 {       ULONG dst = ~src;
         put_byte(srca,dst);
         CLEARFLGS;
-	if ( dst <= 0 )
+		if ((BYTE)dst <= 0 )
 		{
-		if ( dst == 0 )
-			ZFLG = ZTRUE ;
-		else
-			NFLG = NTRUE ;
+			if ((BYTE)dst == 0 )
+				ZFLG = ZTRUE ;
+			else
+				NFLG = NTRUE ;
 		}
 }}}}}
 void op_4638(void) /* NOT */
@@ -1397,12 +1402,12 @@ void op_4638(void) /* NOT */
 {       ULONG dst = ~src;
         put_byte(srca,dst);
         CLEARFLGS;
-	if ( dst <= 0 )
+		if ((BYTE)dst <= 0 )
 		{
-		if ( dst == 0 )
-			ZFLG = ZTRUE ;
-		else
-			NFLG = NTRUE ;
+			if ((BYTE)dst == 0 )
+				ZFLG = ZTRUE ;
+			else
+				NFLG = NTRUE ;
 		}
 }}}}
 void op_4639(void) /* NOT */
@@ -1412,12 +1417,12 @@ void op_4639(void) /* NOT */
 {       ULONG dst = ~src;
         put_byte(srca,dst);
         CLEARFLGS;
-	if ( dst <= 0 )
+		if ((BYTE)dst <= 0 )
 		{
-		if ( dst == 0 )
-			ZFLG = ZTRUE ;
-		else
-			NFLG = NTRUE ;
+			if ((BYTE)dst == 0 )
+				ZFLG = ZTRUE ;
+			else
+				NFLG = NTRUE ;
 		}
 }}}}
 void op_4640(void) /* NOT */
@@ -1427,12 +1432,12 @@ void op_4640(void) /* NOT */
 {       ULONG dst = ~src;
         regs.d[srcreg].W.l = dst;
         CLEARFLGS;
-	if ( dst <= 0 )
+		if ((WORD)dst <= 0 )
 		{
-		if ( dst == 0 )
-			ZFLG = ZTRUE ;
-		else
-			NFLG = NTRUE ;
+			if ((WORD)dst == 0 )
+				ZFLG = ZTRUE ;
+			else
+				NFLG = NTRUE ;
 		}
 }}}}
 void op_4650(void) /* NOT */
@@ -1443,12 +1448,12 @@ void op_4650(void) /* NOT */
 {       ULONG dst = ~src;
         put_word(srca,dst);
         CLEARFLGS;
-	if ( dst <= 0 )
+		if ((WORD)dst <= 0 )
 		{
-		if ( dst == 0 )
-			ZFLG = ZTRUE ;
-		else
-			NFLG = NTRUE ;
+			if ((WORD)dst == 0 )
+				ZFLG = ZTRUE ;
+			else
+				NFLG = NTRUE ;
 		}
 }}}}
 void op_4658(void) /* NOT */
@@ -1460,12 +1465,12 @@ void op_4658(void) /* NOT */
 {       ULONG dst = ~src;
         put_word(srca,dst);
         CLEARFLGS;
-	if ( dst <= 0 )
+		if ((WORD)dst <= 0 )
 		{
-		if ( dst == 0 )
-			ZFLG = ZTRUE ;
-		else
-			NFLG = NTRUE ;
+			if ((WORD)dst == 0 )
+				ZFLG = ZTRUE ;
+			else
+				NFLG = NTRUE ;
 		}
 }}}}}
 void op_4660(void) /* NOT */
@@ -1477,12 +1482,12 @@ void op_4660(void) /* NOT */
 {       ULONG dst = ~src;
         put_word(srca,dst);
         CLEARFLGS;
-	if ( dst <= 0 )
+		if ((WORD)dst <= 0 )
 		{
-		if ( dst == 0 )
-			ZFLG = ZTRUE ;
-		else
-			NFLG = NTRUE ;
+			if ((WORD)dst == 0 )
+				ZFLG = ZTRUE ;
+			else
+				NFLG = NTRUE ;
 		}
 }}}}}
 void op_4668(void) /* NOT */
@@ -1493,9 +1498,9 @@ void op_4668(void) /* NOT */
 {       ULONG dst = ~src;
         put_word(srca,dst);
         CLEARFLGS;
-	if ( dst <= 0 )
+		if ((WORD)dst <= 0 )
 		{
-		if ( dst == 0 )
+		if ((WORD)dst == 0 )
 			ZFLG = ZTRUE ;
 		else
 			NFLG = NTRUE ;
@@ -1509,12 +1514,12 @@ void op_4670(void) /* NOT */
 {       ULONG dst = ~src;
         put_word(srca,dst);
         CLEARFLGS;
-	if ( dst <= 0 )
+		if ((WORD)dst <= 0 )
 		{
-		if ( dst == 0 )
-			ZFLG = ZTRUE ;
-		else
-			NFLG = NTRUE ;
+			if ((WORD)dst == 0 )
+				ZFLG = ZTRUE ;
+			else
+				NFLG = NTRUE ;
 		}
 }}}}}
 void op_4678(void) /* NOT */
@@ -1523,13 +1528,13 @@ void op_4678(void) /* NOT */
         WORD src = get_word(srca);
 {       ULONG dst = ~src;
         put_word(srca,dst);
-        CLEARFLGS;
-	if ( dst <= 0 )
+	    CLEARFLGS;
+		if ((WORD)dst <= 0 )
 		{
-		if ( dst == 0 )
-			ZFLG = ZTRUE ;
-		else
-			NFLG = NTRUE ;
+			if ((WORD)dst == 0 )
+				ZFLG = ZTRUE ;
+			else
+				NFLG = NTRUE ;
 		}
 }}}}
 void op_4679(void) /* NOT */
@@ -1539,12 +1544,12 @@ void op_4679(void) /* NOT */
 {       ULONG dst = ~src;
         put_word(srca,dst);
         CLEARFLGS;
-	if ( dst <= 0 )
+		if ((WORD)dst <= 0 )
 		{
-		if ( dst == 0 )
-			ZFLG = ZTRUE ;
-		else
-			NFLG = NTRUE ;
+			if ((WORD)dst == 0 )
+				ZFLG = ZTRUE ;
+			else
+				NFLG = NTRUE ;
 		}
 }}}}
 void op_4680(void) /* NOT */
@@ -1554,12 +1559,12 @@ void op_4680(void) /* NOT */
 {       ULONG dst = ~src;
         regs.d[srcreg].D = (dst);
         CLEARFLGS;
-	if ( dst <= 0 )
+		if ((LONG)dst <= 0 )
 		{
-		if ( dst == 0 )
-			ZFLG = ZTRUE ;
-		else
-			NFLG = NTRUE ;
+			if ((LONG)dst == 0 )
+				ZFLG = ZTRUE ;
+			else
+				NFLG = NTRUE ;
 		}
 }}}}
 void op_4690(void) /* NOT */
@@ -1570,12 +1575,12 @@ void op_4690(void) /* NOT */
 {       ULONG dst = ~src;
         put_long(srca,dst);
         CLEARFLGS;
-	if ( dst <= 0 )
+		if ((LONG)dst <= 0 )
 		{
-		if ( dst == 0 )
-			ZFLG = ZTRUE ;
-		else
-			NFLG = NTRUE ;
+			if ((LONG)dst == 0 )
+				ZFLG = ZTRUE ;
+			else
+				NFLG = NTRUE ;
 		}
 }}}}
 void op_4698(void) /* NOT */
@@ -1587,12 +1592,12 @@ void op_4698(void) /* NOT */
 {       ULONG dst = ~src;
         put_long(srca,dst);
         CLEARFLGS;
-	if ( dst <= 0 )
+		if ((LONG)dst <= 0 )
 		{
-		if ( dst == 0 )
-			ZFLG = ZTRUE ;
-		else
-			NFLG = NTRUE ;
+			if ((LONG)dst == 0 )
+				ZFLG = ZTRUE ;
+			else
+				NFLG = NTRUE ;
 		}
 }}}}}
 void op_46a0(void) /* NOT */
@@ -1604,12 +1609,12 @@ void op_46a0(void) /* NOT */
 {       ULONG dst = ~src;
         put_long(srca,dst);
         CLEARFLGS;
-	if ( dst <= 0 )
+		if ((LONG)dst <= 0 )
 		{
-		if ( dst == 0 )
-			ZFLG = ZTRUE ;
-		else
-			NFLG = NTRUE ;
+			if ((LONG)dst == 0 )
+				ZFLG = ZTRUE ;
+			else
+				NFLG = NTRUE ;
 		}
 }}}}}
 void op_46a8(void) /* NOT */
@@ -1620,12 +1625,12 @@ void op_46a8(void) /* NOT */
 {       ULONG dst = ~src;
         put_long(srca,dst);
         CLEARFLGS;
-	if ( dst <= 0 )
+		if ((LONG)dst <= 0 )
 		{
-		if ( dst == 0 )
-			ZFLG = ZTRUE ;
-		else
-			NFLG = NTRUE ;
+			if ((LONG)dst == 0 )
+				ZFLG = ZTRUE ;
+			else
+				NFLG = NTRUE ;
 		}
 }}}}
 void op_46b0(void) /* NOT */
@@ -1636,12 +1641,12 @@ void op_46b0(void) /* NOT */
 {       ULONG dst = ~src;
         put_long(srca,dst);
         CLEARFLGS;
-	if ( dst <= 0 )
+		if ((LONG)dst <= 0 )
 		{
-		if ( dst == 0 )
-			ZFLG = ZTRUE ;
-		else
-			NFLG = NTRUE ;
+			if ((LONG)dst == 0 )
+				ZFLG = ZTRUE ;
+			else
+				NFLG = NTRUE ;
 		}
 }}}}}
 void op_46b8(void) /* NOT */
@@ -1651,12 +1656,12 @@ void op_46b8(void) /* NOT */
 {       ULONG dst = ~src;
         put_long(srca,dst);
         CLEARFLGS;
-	if ( dst <= 0 )
+		if ((LONG)dst <= 0 )
 		{
-		if ( dst == 0 )
-			ZFLG = ZTRUE ;
-		else
-			NFLG = NTRUE ;
+			if ((LONG)dst == 0 )
+				ZFLG = ZTRUE ;
+			else
+				NFLG = NTRUE ;
 		}
 }}}}
 void op_46b9(void) /* NOT */
@@ -1666,12 +1671,12 @@ void op_46b9(void) /* NOT */
 {       ULONG dst = ~src;
         put_long(srca,dst);
         CLEARFLGS;
-	if ( dst <= 0 )
+		if ((LONG)dst <= 0 )
 		{
-		if ( dst == 0 )
-			ZFLG = ZTRUE ;
-		else
-			NFLG = NTRUE ;
+			if ((LONG)dst == 0 )
+				ZFLG = ZTRUE ;
+			else
+				NFLG = NTRUE ;
 		}
 }}}}
 void op_46c0(void) /* MV2SR */
@@ -2084,7 +2089,7 @@ void op_49c0(void) /* EXT */
 {       ULONG dst = (LONG)(BYTE)src;
         regs.d[srcreg].D = (dst);
         CLEARFLGS;
-	if ( dst <= 0 )
+	if ( (LONG)dst <= 0 )
 		{
 		if ( dst == 0 )
 			ZFLG = ZTRUE ;

@@ -284,7 +284,7 @@ void m6805_GetRegs(m6805_Regs *Regs)
 /****************************************************************************/
 unsigned m6805_GetPC(void)
 {
-	return pcreg;
+	return pcreg & 0x7ff;	/* NS 980731 */
 }
 
 

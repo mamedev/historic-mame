@@ -294,14 +294,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static unsigned char color_prom[] =
-{
-	0x00,0x49,0xE0,0xFD,0x06,0xA7,0x5D,0x2E,0x3F,0xAE,0xBF,0xB7,0x3D,0x72,0xAD,0xFF,
-	0x00,0xF5,0x5E,0x66,0xA5,0x70,0xFE,0x2E,0x29,0x20,0x00,0x80,0xA0,0xE3,0xAD,0xFF
-};
-
-
-
 struct SN76496interface sn76496_interface =
 {
 	1,	/* 1 chip */
@@ -313,7 +305,7 @@ struct VLM5030interface vlm5030_interface =
 {
 	3580000,    /* master clock  */
 	255,        /* volume        */
-	2,         /* memory region  */
+	3,         /* memory region  */
 	0,         /* VCU            */
 };
 
@@ -387,6 +379,9 @@ ROM_START( yiear_rom )
 	ROM_LOAD( "G04_5.BIN", 0x0c000, 0x4000, 0x35ca933a )
 	ROM_LOAD( "G03_6.BIN", 0x10000, 0x4000, 0x9e25b6cb )
 
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "yiear.clr", 0x00000, 0x0020, 0xab6c8ad8 )
+
 	ROM_REGION(0x2000)	/* 8k for the VLM5030 data */
 	ROM_LOAD( "A12_9.BIN", 0x0000, 0x2000, 0x1e331185 )
 ROM_END
@@ -399,7 +394,7 @@ static int hiload(void)
 
 
 	/* check if the hi score table has already been initialized */
-        if ((memcmp(&RAM[0x5520],"\x00\x36\x70",3) == 0) &&
+	if ((memcmp(&RAM[0x5520],"\x00\x36\x70",3) == 0) &&
 		(memcmp(&RAM[0x55A9],"\x10\x10\x10",3) == 0))
 	{
 		void *f;
@@ -408,7 +403,7 @@ static int hiload(void)
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
 			/* Read the scores */
-                        osd_fread(f,&RAM[0x5520],14*10);
+			osd_fread(f,&RAM[0x5520],14*10);
 			/* reset score at top */
 			memcpy(&RAM[0x521C],&RAM[0x5520],3);
 			osd_fclose(f);
@@ -428,7 +423,7 @@ static void hisave(void)
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
 		/* Save the scores */
-                osd_fwrite(f,&RAM[0x5520],14*10);
+		osd_fwrite(f,&RAM[0x5520],14*10);
 		osd_fclose(f);
 	}
 }
@@ -454,7 +449,7 @@ struct GameDriver yiear_driver =
 
 	input_ports,
 
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave

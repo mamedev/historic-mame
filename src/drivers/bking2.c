@@ -129,12 +129,12 @@ INPUT_PORTS_START( bking2_input_ports )
     PORT_DIPSETTING(    0x10, "4" )
     PORT_DIPSETTING(    0x18, "3" )
     PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-    PORT_DIPNAME( 0x40, 0x40, "Screen Inversion", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x00, "On" )
+    PORT_DIPNAME( 0x40, 0x40, "Flip Screen", IP_KEY_NONE )
     PORT_DIPSETTING(    0x40, "Off" )
-    PORT_DIPNAME( 0x80, 0x00, "Game Style", IP_KEY_NONE )
+    PORT_DIPSETTING(    0x00, "On" )
+    PORT_DIPNAME( 0x80, 0x00, "Cabinet", IP_KEY_NONE )
     PORT_DIPSETTING(    0x00, "Upright" )
-    PORT_DIPSETTING(    0x80, "Table" )
+    PORT_DIPSETTING(    0x80, "Cocktail" )
 
 
     PORT_START  /* IN3 - DIP Switch B */

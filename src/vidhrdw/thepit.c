@@ -11,6 +11,7 @@
 
 extern unsigned char *galaxian_attributesram;
 
+static int graphics_bank = 0;
 static int sound_enabled = 0;
 
 static struct rectangle spritevisiblearea =
@@ -23,7 +24,6 @@ static struct rectangle spritevisibleareaflipx =
 	0*8, 30*8-2,
 	2*8, 30*8-1
 };
-
 
 
 /***************************************************************************
@@ -68,6 +68,16 @@ void thepit_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 	for (i = 0;i < 4 * 8;i++)
 	{
 		colortable[i] = i;
+	}
+}
+
+
+void intrepid_graphics_bank_select_w(int offset, int data)
+{
+	if (graphics_bank != (data << 1))
+	{
+		graphics_bank = data << 1;
+		memset(dirtybuffer,1,videoram_size);
 	}
 }
 
@@ -117,19 +127,31 @@ void thepit_sound_enable_w(int offset, int data)
 	sound_enabled = data;
 }
 
-void thepit_AY8910_0_w(int offset, int data)
+static void common_AY8910_w(int offset, int data,
+				            void (*write_port)(int, int),
+				            void (*control_port)(int, int))
 {
 	/* Get out if sound is off */
 	if (!sound_enabled) return;
 
 	if (offset & 1)
 	{
-		AY8910_write_port_0_w(0, data);
+		write_port(0, data);
 	}
 	else
 	{
-		AY8910_control_port_0_w(0, data);
+		control_port(0, data);
 	}
+}
+
+void thepit_AY8910_0_w(int offset, int data)
+{
+	common_AY8910_w(offset, data, AY8910_write_port_0_w, AY8910_control_port_0_w);
+}
+
+void thepit_AY8910_1_w(int offset, int data)
+{
+	common_AY8910_w(offset, data, AY8910_write_port_1_w, AY8910_control_port_1_w);
 }
 
 /***************************************************************************
@@ -142,7 +164,6 @@ void thepit_AY8910_0_w(int offset, int data)
 void thepit_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
-
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
@@ -160,7 +181,7 @@ void thepit_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			if (*flip_screen_x) sx = 31 - sx;
 			if (*flip_screen_y) sy = 31 - sy;
 
-			drawgfx(tmpbitmap,Machine->gfx[0],
+			drawgfx(tmpbitmap,Machine->gfx[graphics_bank],
 					videoram[offs],
 					colorram[offs] & 0x07,
 					*flip_screen_x,*flip_screen_y,
@@ -172,27 +193,26 @@ void thepit_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* copy the temporary bitmap to the screen */
 	{
-			int i, scroll[32];
+		int i, scroll[32];
 
-
-			if (*flip_screen_x)
+		if (*flip_screen_x)
+		{
+			for (i = 0;i < 32;i++)
 			{
-					for (i = 0;i < 32;i++)
-					{
-							scroll[31-i] = -galaxian_attributesram[2 * i];
-							if (*flip_screen_y) scroll[31-i] = -scroll[31-i];
-					}
+				scroll[31-i] = -galaxian_attributesram[2 * i];
+				if (*flip_screen_y) scroll[31-i] = -scroll[31-i];
 			}
-			else
+		}
+		else
+		{
+			for (i = 0;i < 32;i++)
 			{
-					for (i = 0;i < 32;i++)
-					{
-							scroll[i] = -galaxian_attributesram[2 * i];
-							if (*flip_screen_y) scroll[i] = -scroll[i];
-					}
+				scroll[i] = -galaxian_attributesram[2 * i];
+				if (*flip_screen_y) scroll[i] = -scroll[i];
 			}
+		}
 
-			copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -228,7 +248,7 @@ void thepit_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		/* Sprites 0-3 are drawn one pixel to the left */
 		if (offs <= 3*4) sy++;
 
-		drawgfx(bitmap,Machine->gfx[1],
+		drawgfx(bitmap,Machine->gfx[graphics_bank | 1],
 				spriteram[offs + 1] & 0x3f,
 				spriteram[offs + 2] & 0x07,
 				flipx,flipy,

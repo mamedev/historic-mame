@@ -581,7 +581,7 @@ ROM_START( gypsyjug_rom )
 	ROM_REGION_DISPOSE(0x1400)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "GJ.E15", 0x0000, 0x0400, 0x7947c4b9 )
 	ROM_LOAD( "GJ.A",   0x0400, 0x0400, 0x25898ed5 )
-	ROM_LOAD( "GJ.A",   0x0800, 0x0400, 0x25898ed5 )
+	ROM_RELOAD(         0x0800, 0x0400 )
 
 	ROM_REGION(0x08000) 	/* 32K for code for the sound cpu */
 	ROM_LOAD( "GJ.A4S", 0x0000, 0x0400, 0xa61fe099 )

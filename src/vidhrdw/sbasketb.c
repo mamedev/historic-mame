@@ -13,6 +13,9 @@
 
 unsigned char *sbasketb_scroll;
 unsigned char *sbasketb_palettebank;
+unsigned char *sbasketb_spriteram_select;
+
+static int flipscreen = 0;
 static struct rectangle scroll_area = { 0*8, 32*8-1, 0*8, 32*8-1 };
 
 
@@ -85,6 +88,15 @@ void sbasketb_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 }
 
 
+void sbasketb_flipscreen_w(int offset,int data)
+{
+	if (flipscreen != data)
+	{
+		flipscreen = data;
+		memset(dirtybuffer,1,videoram_size);
+	}
+}
+
 
 /***************************************************************************
 
@@ -95,8 +107,8 @@ void sbasketb_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 ***************************************************************************/
 void sbasketb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int offs;
-	int sx,sy;
+	int offs,i;
+	int sx,sy,code,color,flipx,flipy;
 
 
 	/* for every character in the Video RAM, check if it has been modified */
@@ -107,14 +119,27 @@ void sbasketb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		{
 			dirtybuffer[offs] = 0;
 
-			sx = 8 * (31 - offs / 32);
-			sy = 8 * (offs % 32);
+			sx = offs % 32;
+			sy = offs / 32;
+
+			code  = videoram[offs] + ((colorram[offs] & 0x20) << 3);
+			color = colorram[offs] & 0x0f;
+			flipx = colorram[offs] & 0x40;
+			flipy = colorram[offs] & 0x80;
+
+			if (flipscreen)
+			{
+				flipx = !flipx;
+				flipy = !flipy;
+
+				sx = 31 - sx;
+				sy = 31 - sy;
+			}
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + ((colorram[offs] & 0x20) << 3),
-					colorram[offs] & 0x0f,
-					colorram[offs] & 0x80,colorram[offs] & 0x40,
-					sx,sy,
+					code, color,
+					flipx, flipy,
+					8*sx,8*sy,
 					&scroll_area,TRANSPARENCY_NONE,0);
 		}
 	}
@@ -122,26 +147,57 @@ void sbasketb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* copy the temporary bitmap to the screen */
 	{
-		int scroll[32], i;
+		int scroll[32];
 
-		for (i = 0;i < 6;i++)
-			scroll[i] = 0;
+		if (!flipscreen)
+		{
+			for (i = 0;i < 6;i++)
+				scroll[i] = 0;
 
-		for (i = 6;i < 32;i++)
-			scroll[i] = *sbasketb_scroll + 1;
+			for (i = 6;i < 32;i++)
+				scroll[i] = -*sbasketb_scroll - 1;
+		}
+		else
+		{
+			for (i = 26;i < 32;i++)
+				scroll[i] = 0;
 
-		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+			for (i = 0;i < 26;i++)
+				scroll[i] = *sbasketb_scroll + 1;
+		}
+
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
-	/* Draw the sprites. */
-	for (offs = spriteram_size - 16;offs >= 0;offs -= 16)
+	/* Draw the sprites */
+	offs = (*sbasketb_spriteram_select & 0x01) * 0x100;
+
+	for (i = 0; i < 64; i++, offs += 4)
 	{
-		if (spriteram[offs + 4] || spriteram[offs + 6])
+		sx = spriteram[offs + 2];
+		sy = spriteram[offs + 3];
+
+		if (sx || sy)
+		{
+			code  =  spriteram[offs + 0] | ((spriteram[offs + 1] & 0x20) << 3);
+			color = (spriteram[offs + 1] & 0x0f) + 16 * *sbasketb_palettebank;
+			flipx =  spriteram[offs + 1] & 0x40;
+			flipy =  spriteram[offs + 1] & 0x80;
+
+			if (flipscreen)
+			{
+				flipx = !flipx;
+				flipy = !flipy;
+
+				sx = 240 - sx;
+				sy = 240 - sy;
+			}
+
 			drawgfx(bitmap,Machine->gfx[1],
-					spriteram[offs + 0x0e] | ((spriteram[offs + 0x0f] & 0x20) << 3),
-					(spriteram[offs + 0x0f] & 0x0f) + 16 * *sbasketb_palettebank,
-					spriteram[offs + 0x0f] & 0x80,spriteram[offs + 0x0f] & 0x40,
-					spriteram[offs + 6],spriteram[offs + 4],
+					code, color,
+					flipx, flipy,
+					sx, sy,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+		}
 	}
 }

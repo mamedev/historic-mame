@@ -1,6 +1,8 @@
 #ifndef _CPS1_H_
 #define _CPS1_H_
 
+extern unsigned char * cps1_eeprom;
+extern int cps1_eeprom_size;
 extern unsigned char * cps1_ram;        /* M68000 RAM */
 extern unsigned char * cps1_gfxram;     /* Video RAM */
 extern unsigned char * cps1_output;     /* Output ports */
@@ -32,7 +34,6 @@ struct CPS1config
         int   space_scroll3;    /* Space character code for scroll 3 */
         int   cpsb_addr;        /* CPS board B test register address */
         int   cpsb_value;       /* CPS board B test register expected value */
-        int   size_obj;         /* Size of obj RAM */
         int   gng_sprite_kludge;  /* Ghouls n Ghosts sprite kludge */
 };
 

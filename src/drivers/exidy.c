@@ -750,6 +750,264 @@ static unsigned short pepper2_colortable[] =
 
 };
 
+
+
+/***************************************************************************
+  Game drivers
+***************************************************************************/
+
+static const char *targ_sample_names[] =
+{
+	"*targ",
+	"expl.sam",
+	"shot.sam",
+	"sexpl.sam",
+	"spslow.sam",
+	"spfast.sam",
+	0	/* end of array */
+};
+
+static struct Samplesinterface targ_samples_interface=
+{
+	3	/* 3 Channels */
+};
+
+static struct CustomSound_interface targ_custom_interface =
+{
+	targ_sh_start,
+	targ_sh_stop,
+	0
+};
+
+static struct DACinterface targ_DAC_interface =
+{
+	1,
+	441000,
+	{255,255 },
+	{  1,  1 }
+};
+
+static struct MachineDriver machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6502,
+			1000000,	/* 1 Mhz ???? */
+			0,
+			readmem,writemem,0,0,
+			exidy_interrupt,1
+		},
+		{
+			CPU_M6502 | CPU_AUDIO_CPU,
+			1000000,	/* 1 Mhz ???? */
+			2,	/* memory region #2 */
+			sound_readmem,sound_writemem,0,0,
+			interrupt,1
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	10, /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	exidy_init_machine,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
+	gfxdecodeinfo,
+	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
+	0,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
+	0,
+	exidy_vh_start,
+	exidy_vh_stop,
+	exidy_vh_screenrefresh,
+
+	/* sound hardware */
+	0,
+	0,
+	0,
+	0,
+
+};
+
+static struct MachineDriver venture_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6502,
+			1000000,	/* 1 Mhz ???? */
+			0,
+			readmem,writemem,0,0,
+			venture_interrupt,32 /* Need to have multiple IRQs per frame if there's a collision */
+		},
+		{
+			CPU_M6502 | CPU_AUDIO_CPU,
+			1000000,	/* 1 Mhz ???? */
+			2,	/* memory region #2 */
+			sound_readmem,sound_writemem,0,0,
+			interrupt,1
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	10, /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	exidy_init_machine,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
+	gfxdecodeinfo,
+	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
+	0,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
+	0,
+	exidy_vh_start,
+	exidy_vh_stop,
+	exidy_vh_screenrefresh,
+
+	/* sound hardware */
+	0,
+	0,
+	0,
+	0
+};
+
+
+
+static struct MachineDriver pepper2_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6502,
+			1000000,	/* 1 Mhz ???? */
+			0,
+			readmem,pepper2_writemem,0,0,
+			exidy_interrupt,1
+		},
+		{
+			CPU_M6502 | CPU_AUDIO_CPU,
+			1000000,	/* 1 Mhz ???? */
+			2,
+			sound_readmem,sound_writemem,0,0,
+			interrupt,1
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	10, /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	exidy_init_machine,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
+	pepper2_gfxdecodeinfo,
+	sizeof(palette)/3,sizeof(pepper2_colortable)/sizeof(unsigned short),
+	0,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
+	0,
+	exidy_vh_start,
+	exidy_vh_stop,
+	exidy_vh_screenrefresh,
+
+	/* sound hardware */
+	0,
+	0,
+	0,
+	0
+};
+
+
+static struct MachineDriver targ_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6502,
+			704000,    /* .7Mhz */
+			0,
+			readmem,targ_writemem,0,0,
+			exidy_interrupt,1
+		},
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,
+	exidy_init_machine,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
+	targ_gfxdecodeinfo,
+	sizeof(targ_palette)/3,sizeof(colortable)/sizeof(unsigned short),
+	0,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	0,
+	exidy_vh_start,
+	exidy_vh_stop,
+	exidy_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_CUSTOM,
+			&targ_custom_interface
+		},
+		{
+			SOUND_SAMPLES,
+			&targ_samples_interface
+        },
+        {
+            SOUND_DAC,
+            &targ_DAC_interface
+        }
+	}
+};
+
+
+static struct MachineDriver fax_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6502,
+			1000000,	/* 1 Mhz ???? */
+			0,
+			fax_readmem,fax_writemem,0,0,
+			exidy_interrupt,1
+		},
+		{
+			CPU_M6502 | CPU_AUDIO_CPU,
+			1000000,	/* 1 Mhz ???? */
+			2,
+			sound_readmem,sound_writemem,0,0,
+			interrupt,1
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	10, /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	exidy_init_machine,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
+	pepper2_gfxdecodeinfo,
+	sizeof(palette)/3,sizeof(pepper2_colortable)/sizeof(unsigned short),
+	0,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
+	0,
+	exidy_vh_start,
+	exidy_vh_stop,
+	exidy_vh_screenrefresh,
+
+	/* sound hardware */
+	0,
+	0,
+	0,
+	0
+};
+
+
+
 /***************************************************************************
   Game ROMs
 ***************************************************************************/
@@ -820,7 +1078,6 @@ ROM_START( venture2_rom )
 	ROM_RELOAD( 	  0xF800, 0x0800 )
 ROM_END
 
-
 ROM_START( pepper2_rom )
 	ROM_REGION(0x10000) /* 64k for code */
 	ROM_LOAD( "main_12a", 0x9000, 0x1000, 0x0a47e1e3 )
@@ -839,6 +1096,25 @@ ROM_START( pepper2_rom )
 	ROM_LOAD( "audio_6a", 0x7000, 0x0800, 0xf2685a2c )
 	ROM_LOAD( "audio_7a", 0x7800, 0x0800, 0xe5a6f8ec )
 	ROM_RELOAD(    0xF800, 0x0800 )
+ROM_END
+
+ROM_START( hardhat_rom )
+	ROM_REGION(0x10000) /* 64k for code */
+	ROM_LOAD( "HHL-2.11A", 0xA000, 0x1000, 0xb62f7867 )
+	ROM_LOAD( "HHL-2.10A", 0xB000, 0x1000, 0x35c476c0 )
+	ROM_LOAD( "HHL-2.9A",  0xC000, 0x1000, 0xa922cf30 )
+	ROM_LOAD( "HHL-2.8A",  0xD000, 0x1000, 0x11b91333 )
+	ROM_LOAD( "HHL-2.7A",  0xE000, 0x1000, 0x18112e49 )
+	ROM_LOAD( "HHL-2.6A",  0xF000, 0x1000, 0x6700b512 )
+
+	ROM_REGION(0x0800) /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "HHL-1.11D", 0x0000, 0x0800, 0x3c7e9a26 )
+
+	ROM_REGION(0x10000) /* 64k for audio */
+	ROM_LOAD( "HHA-1.5A", 0x6800, 0x0800, 0x352a47fc )
+	ROM_LOAD( "HHA-1.6A", 0x7000, 0x0800, 0xeebb3ca3 )
+	ROM_LOAD( "HHA-1.7A", 0x7800, 0x0800, 0xf2510c27 )
+	ROM_RELOAD(           0xF800, 0x0800 )
 ROM_END
 
 ROM_START( targ_rom )
@@ -1096,260 +1372,6 @@ static void fax_hisave(void)
 
 
 /***************************************************************************
-  Game drivers
-***************************************************************************/
-
-static const char *targ_sample_names[] =
-{
-	"*targ",
-	"expl.sam",
-	"shot.sam",
-	"sexpl.sam",
-	"spslow.sam",
-	"spfast.sam",
-	0	/* end of array */
-};
-
-static struct Samplesinterface targ_samples_interface=
-{
-	3	/* 3 Channels */
-};
-
-static struct CustomSound_interface targ_custom_interface =
-{
-	targ_sh_start,
-	targ_sh_stop,
-	0
-};
-
-static struct DACinterface targ_DAC_interface =
-{
-	1,
-	441000,
-	{255,255 },
-	{  1,  1 }
-};
-
-static struct MachineDriver machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1000000,	/* 1 Mhz ???? */
-			0,
-			readmem,writemem,0,0,
-			exidy_interrupt,1
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			1000000,	/* 1 Mhz ???? */
-			2,	/* memory region #2 */
-			sound_readmem,sound_writemem,0,0,
-			interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10, /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	exidy_init_machine,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
-
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
-	0,
-	exidy_vh_start,
-	exidy_vh_stop,
-	exidy_vh_screenrefresh,
-
-	/* sound hardware */
-	0,
-	0,
-	0,
-	0,
-
-};
-
-static struct MachineDriver venture_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1000000,	/* 1 Mhz ???? */
-			0,
-			readmem,writemem,0,0,
-			venture_interrupt,32 /* Need to have multiple IRQs per frame if there's a collision */
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			1000000,	/* 1 Mhz ???? */
-			2,	/* memory region #2 */
-			sound_readmem,sound_writemem,0,0,
-			interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10, /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	exidy_init_machine,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
-
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
-	0,
-	exidy_vh_start,
-	exidy_vh_stop,
-	exidy_vh_screenrefresh,
-
-	/* sound hardware */
-	0,
-	0,
-	0,
-	0
-};
-
-
-
-static struct MachineDriver pepper2_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1000000,	/* 1 Mhz ???? */
-			0,
-			readmem,pepper2_writemem,0,0,
-			exidy_interrupt,1
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			1000000,	/* 1 Mhz ???? */
-			2,
-			sound_readmem,sound_writemem,0,0,
-			interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10, /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	exidy_init_machine,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
-	pepper2_gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(pepper2_colortable)/sizeof(unsigned short),
-	0,
-
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
-	0,
-	exidy_vh_start,
-	exidy_vh_stop,
-	exidy_vh_screenrefresh,
-
-	/* sound hardware */
-	0,
-	0,
-	0,
-	0
-};
-
-
-static struct MachineDriver targ_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			704000,    /* .7Mhz */
-			0,
-			readmem,targ_writemem,0,0,
-			exidy_interrupt,1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	exidy_init_machine,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
-	targ_gfxdecodeinfo,
-	sizeof(targ_palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
-
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-	0,
-	exidy_vh_start,
-	exidy_vh_stop,
-	exidy_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_CUSTOM,
-			&targ_custom_interface
-		},
-		{
-			SOUND_SAMPLES,
-			&targ_samples_interface
-        },
-        {
-            SOUND_DAC,
-            &targ_DAC_interface
-        }
-	}
-};
-
-
-static struct MachineDriver fax_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1000000,	/* 1 Mhz ???? */
-			0,
-			fax_readmem,fax_writemem,0,0,
-			exidy_interrupt,1
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			1000000,	/* 1 Mhz ???? */
-			2,
-			sound_readmem,sound_writemem,0,0,
-			interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10, /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	exidy_init_machine,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
-	pepper2_gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(pepper2_colortable)/sizeof(unsigned short),
-	0,
-
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
-	0,
-	exidy_vh_start,
-	exidy_vh_stop,
-	exidy_vh_screenrefresh,
-
-	/* sound hardware */
-	0,
-	0,
-	0,
-	0
-};
-
-/***************************************************************************
 Game Driver
 ***************************************************************************/
 
@@ -1429,8 +1451,6 @@ struct GameDriver venture2_driver =
 	venture_hiload,venture_hisave
 };
 
-
-
 struct GameDriver pepper2_driver =
 {
 	__FILE__,
@@ -1454,6 +1474,31 @@ struct GameDriver pepper2_driver =
 	ORIENTATION_DEFAULT,
 
 	pepper2_hiload,pepper2_hisave
+};
+
+struct GameDriver hardhat_driver =
+{
+	__FILE__,
+	0,
+	"hardhat",
+	"Hard Hat",
+	"1982",
+	"Exidy",
+	"Marc LaFontaine\nBrian Levine\nMike Balfour",
+	0,
+	&pepper2_machine_driver,
+
+	hardhat_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	pepper2_input_ports,
+
+	0, palette, pepper2_colortable,
+	ORIENTATION_DEFAULT,
+
+	0, 0
 };
 
 struct GameDriver targ_driver =

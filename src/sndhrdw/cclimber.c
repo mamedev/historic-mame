@@ -38,10 +38,10 @@ int cclimber_sh_start(void)
 	/* decode the rom samples */
 	for (i = 0;i < 0x2000;i++)
 	{
-		bits = Machine->memory_region[2][i] & 0xf0;
+		bits = Machine->memory_region[3][i] & 0xf0;
 		samples[2 * i] = AUDIO_CONV((bits | (bits >> 4)));
 
-		bits = Machine->memory_region[2][i] & 0x0f;
+		bits = Machine->memory_region[3][i] & 0x0f;
 		samples[2 * i + 1] = AUDIO_CONV(((bits << 4) | bits));
 	}
 

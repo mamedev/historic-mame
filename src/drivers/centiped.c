@@ -154,6 +154,7 @@ void centiped_paletteram_w (int offset, int data);
 void centiped_vh_flipscreen_w (int offset,int data);
 void centiped_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
+void centiped_init_machine(void);	/* in vidhrdw */
 int centiped_interrupt(void);	/* in vidhrdw */
 
 
@@ -359,7 +360,7 @@ static struct MachineDriver machine_driver =
 	},
 	60, 1460,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
-	0,
+	centiped_init_machine,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
@@ -397,7 +398,7 @@ ROM_START( centiped_rom )
 	ROM_LOAD( "centiped.308", 0x2800, 0x0800, 0x209922dd )
 	ROM_LOAD( "centiped.309", 0x3000, 0x0800, 0x57cee11e )
 	ROM_LOAD( "centiped.310", 0x3800, 0x0800, 0xb959c639 )
-	ROM_RELOAD(         0xf800, 0x0800 )	/* for the reset and interrupt vectors */
+	ROM_RELOAD(               0xf800, 0x0800 )	/* for the reset and interrupt vectors */
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "centiped.211", 0x0000, 0x0800, 0x704a2608 )
@@ -410,7 +411,7 @@ ROM_START( centipd2_rom )
 	ROM_LOAD( "centiped.208", 0x2800, 0x0800, 0xb7c2dd22 )
 	ROM_LOAD( "centiped.209", 0x3000, 0x0800, 0xc4549966 )
 	ROM_LOAD( "centiped.210", 0x3800, 0x0800, 0xd6b0956a )
-	ROM_RELOAD(         0xf800, 0x0800 )	/* for the reset and interrupt vectors */
+	ROM_RELOAD(               0xf800, 0x0800 )	/* for the reset and interrupt vectors */
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "centiped.211", 0x0000, 0x0800, 0x704a2608 )

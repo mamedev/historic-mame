@@ -289,12 +289,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static unsigned char colorprom[] =
-{
-	0x00,0x17,0x27,0xD0,0x00,0xA4,0xC0,0x16,0x00,0x07,0xC7,0x37,0x00,0x3F,0xD8,0x07,
-	0x00,0x3B,0xC0,0x16,0x00,0xDB,0xC0,0xC7,0x00,0x07,0xC7,0x37,0x00,0x3F,0xD8,0x07
-};
-
 static struct DACinterface dac_interface =
 {
 	1,
@@ -317,7 +311,7 @@ static struct MachineDriver machine_driver =
 		{
             CPU_I8035 | CPU_AUDIO_CPU,
             6000000/15,
-            2,
+            3,
 			readmem_sound,writemem_sound,readport_sound,writeport_sound,
             ignore_interrupt,0
         }
@@ -366,6 +360,9 @@ ROM_START( spacefb_rom )
 	ROM_LOAD( "5k.vid", 0x0000, 0x0800, 0xe945e879 )
 	ROM_LOAD( "6k.vid", 0x0800, 0x0800, 0x5076d18e )
 	ROM_LOAD( "4i.vid", 0x1000, 0x0100, 0x75c90c07 )
+
+	ROM_REGION(0x0020)	/* color proms */
+	ROM_LOAD( "spacefb.clr", 0x0000, 0x0020, 0xa99ce744 )
 
 	ROM_REGION(0x1000)	/* sound */
     ROM_LOAD( "IC20.SND",  0x0000, 0x0400, 0x3ee4a80c )
@@ -466,7 +463,7 @@ struct GameDriver spacefb_driver =
 	"1980",
 	"Nintendo",
 	"Chris Hardy\nAndy Clark\nPaul Johnson\nChris Moore (high score save)\nMarco Cassili\nDan Boris (sound)",
-	0,
+	GAME_IMPERFECT_COLORS,
 	&machine_driver,
 
 	spacefb_rom,
@@ -476,7 +473,7 @@ struct GameDriver spacefb_driver =
 
 	input_ports,
 
-	colorprom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave

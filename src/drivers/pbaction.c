@@ -347,6 +347,45 @@ ROM_END
 
 
 
+static int hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0xc093],"\x07\x02\x05",3) == 0)
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0xc093],8*10);
+			osd_fread(f,&RAM[0xc12f],4*10);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+static void hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0xc093],8*10);
+		osd_fwrite(f,&RAM[0xc12f],4*10);
+		osd_fclose(f);
+	}
+}
+
+
+
 struct GameDriver pbaction_driver =
 {
 	__FILE__,
@@ -355,7 +394,7 @@ struct GameDriver pbaction_driver =
 	"Pinball Action",
 	"1985",
 	"Tehkan",
-	"Nicola Salmoria (MAME driver)\nMirko Buffoni (sound)",
+	"Nicola Salmoria (MAME driver)\nMirko Buffoni (sound)\nDani Portillo (high score save)",
 	0,
 	&machine_driver,
 
@@ -369,5 +408,5 @@ struct GameDriver pbaction_driver =
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	hiload, hisave
 };

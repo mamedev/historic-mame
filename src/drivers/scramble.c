@@ -468,16 +468,11 @@ static struct GfxDecodeInfo theend_gfxdecodeinfo[] =
 
 
 
-static unsigned char scramble_color_prom[] =
+/* this is NOT the original color PROM - it's the Scramble one */
+static unsigned char wrong_color_prom[] =
 {
 	0x00,0x17,0xC7,0xF6,0x00,0x17,0xC0,0x3F,0x00,0x07,0xC0,0x3F,0x00,0xC0,0xC4,0x07,
 	0x00,0xC7,0x31,0x17,0x00,0x31,0xC7,0x3F,0x00,0xF6,0x07,0xF0,0x00,0x3F,0x07,0xC4
-};
-
-static unsigned char amidars_color_prom[] =
-{
-	0x00,0x07,0xC0,0xB6,0x00,0x38,0xC5,0x67,0x00,0x30,0x07,0x3F,0x00,0x07,0x30,0x3F,
-	0x00,0x3F,0x30,0x07,0x00,0x38,0x67,0x3F,0x00,0xFF,0x07,0xDF,0x00,0xF8,0x07,0xFF
 };
 
 
@@ -520,7 +515,7 @@ static struct MachineDriver scramble_machine_driver =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318000/8,	/* 1.78975 MHz */
-			2,	/* memory region #2 */
+			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -566,7 +561,7 @@ static struct MachineDriver theend_machine_driver =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318000/8,	/* 1.78975 MHz */
-			2,	/* memory region #2 */
+			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -665,6 +660,9 @@ ROM_START( scramble_rom )
 	ROM_LOAD( "5f", 0x0000, 0x0800, 0x86bcba72 )
 	ROM_LOAD( "5h", 0x0800, 0x0800, 0x973cedc4 )
 
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "scramble.clr", 0x0000, 0x0020, 0x17a7f515 )
+
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "5c", 0x0000, 0x0800, 0xbbc47658 )
 	ROM_LOAD( "5d", 0x0800, 0x0800, 0x7b9aac98 )
@@ -684,6 +682,8 @@ ROM_START( atlantis_rom )
 	ROM_LOAD( "5f", 0x0000, 0x0800, 0x7f47e177 )
 	ROM_LOAD( "5h", 0x0800, 0x0800, 0x30396a17 )
 
+	ROM_REGION(0x0020)	/* color prom */
+
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "5c", 0x0000, 0x0800, 0xbbc47658 )
 	ROM_LOAD( "5d", 0x0800, 0x0800, 0x7b9aac98 )
@@ -698,12 +698,12 @@ ROM_START( theend_rom )
 	ROM_LOAD( "IC16", 0x1800, 0x0800, 0x9f72edda )
 	ROM_LOAD( "IC17", 0x2000, 0x0800, 0xb2a13167 )
 	ROM_LOAD( "IC18", 0x2800, 0x0800, 0x253049da )
-	ROM_LOAD( "IC56", 0x3000, 0x0800, 0xe8f380ab )
-	ROM_LOAD( "IC55", 0x3800, 0x0800, 0xe0c27de2 )
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "IC30", 0x0000, 0x0800, 0x83c615b6 )
 	ROM_LOAD( "IC31", 0x0800, 0x0800, 0xad579d45 )
+
+	ROM_REGION(0x0020)	/* color prom */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "IC56", 0x0000, 0x0800, 0xe8f380ab )
@@ -746,6 +746,9 @@ ROM_START( amidars_rom )
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "am5f", 0x0000, 0x0800, 0xe09ed6c8 )
 	ROM_LOAD( "am5h", 0x0800, 0x0800, 0x3355a22f )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "amidar.clr", 0x0000, 0x0020, 0x67a365c1 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "am5c", 0x0000, 0x1000, 0x2fd961f7 )
@@ -968,7 +971,7 @@ struct GameDriver scramble_driver =
 
 	scramble_input_ports,
 
-	scramble_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	scramble_hiload, scramble_hisave
@@ -993,7 +996,7 @@ struct GameDriver atlantis_driver =
 
 	atlantis_input_ports,
 
-	scramble_color_prom, 0, 0,
+	wrong_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	atlantis_hiload, atlantis_hisave
@@ -1018,7 +1021,7 @@ struct GameDriver theend_driver =
 
 	theend_input_ports,
 
-	scramble_color_prom, 0, 0,
+	wrong_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	theend_hiload, theend_hisave
@@ -1070,7 +1073,7 @@ struct GameDriver amidars_driver =
 
 	amidars_input_ports,
 
-	amidars_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	0,0
@@ -1191,14 +1194,6 @@ INPUT_PORTS_END
 
 
 
-static unsigned char triplep_color_prom[] =
-{
-	0x00,0x14,0xF0,0x3F,0x00,0xF8,0x9F,0x3F,0x00,0x80,0x3D,0xFB,0x00,0x07,0x00,0xA5,
-	0x00,0x24,0xFF,0x3F,0x00,0x1E,0x2F,0x07,0x00,0x5E,0xD9,0xBF,0x00,0x07,0xFF,0x3F
-};
-
-
-
 static struct AY8910interface triplep_ay8910_interface =
 {
 	1,	/* 1 chip */
@@ -1261,6 +1256,9 @@ ROM_START( triplep_rom )
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "triplep.5f", 0x0000, 0x0800, 0x5c3c843c )
 	ROM_LOAD( "triplep.5h", 0x0800, 0x0800, 0x4c6246e0 )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "tripprom.6e", 0x0000, 0x0020, 0xd79ca4ee )
 ROM_END
 
 struct GameDriver triplep_driver =
@@ -1282,7 +1280,7 @@ struct GameDriver triplep_driver =
 
 	triplep_input_ports,
 
-	triplep_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	scramble_hiload, scramble_hisave

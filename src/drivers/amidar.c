@@ -479,7 +479,7 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318000/8,	/* 1.78975 Mhz */
-			2,	/* memory region #2 */
+			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -530,6 +530,9 @@ ROM_START( amidar_rom )
 	ROM_LOAD( "amidarus.5f", 0x0000, 0x0800, 0xa114cb34 )
 	ROM_LOAD( "amidarus.5h", 0x0800, 0x0800, 0x0d1cafd2 )
 
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "amidar.clr", 0x0000, 0x20, 0x67a365c1 )
+
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "amidarus.5c", 0x0000, 0x1000, 0x2fd961f7 )
 	ROM_LOAD( "amidarus.5d", 0x1000, 0x1000, 0xfa4bd265 )
@@ -546,6 +549,9 @@ ROM_START( amidarjp_rom )
 	ROM_LOAD( "amidar.5f", 0x0000, 0x0800, 0x1e31bc69 )
 	ROM_LOAD( "amidar.5h", 0x0800, 0x0800, 0x8b6560db )
 
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "amidar.clr", 0x0000, 0x20, 0x67a365c1 )
+
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "amidar.5c", 0x0000, 0x1000, 0xcdfaa8be )
 	ROM_LOAD( "amidar.5d", 0x1000, 0x1000, 0xc84cdcfc )
@@ -561,6 +567,9 @@ ROM_START( amigo_rom )
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "2716.a6", 0x0000, 0x0800, 0xe09ed6c8 )
 	ROM_LOAD( "2716.a5", 0x0800, 0x0800, 0x3355a22f )
+
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "amidar.clr", 0x0000, 0x20, 0x67a365c1 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "2732.a7", 0x0000, 0x1000, 0x2fd961f7 )
@@ -579,6 +588,9 @@ ROM_START( turtles_rom )
 	ROM_LOAD( "turt_vid.5h", 0x0000, 0x0800, 0x077a3a46 )
 	ROM_LOAD( "turt_vid.5f", 0x0800, 0x0800, 0xd1107d84 )
 
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "turtles.clr", 0x0000, 0x20, 0xa01e77ea )
+
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "turt_snd.5c", 0x0000, 0x1000, 0x90ecc748 )
 	ROM_LOAD( "turt_snd.5d", 0x1000, 0x1000, 0xad8bffad )
@@ -596,27 +608,13 @@ ROM_START( turpin_rom )
 	ROM_LOAD( "turt_vid.5h", 0x0000, 0x0800, 0x077a3a46 )
 	ROM_LOAD( "turt_vid.5f", 0x0800, 0x0800, 0xd1107d84 )
 
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "turtles.clr", 0x0000, 0x20, 0xa01e77ea )
+
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "turt_snd.5c", 0x0000, 0x1000, 0x90ecc748 )
 	ROM_LOAD( "turt_snd.5d", 0x1000, 0x1000, 0xad8bffad )
 ROM_END
-
-
-
-static unsigned char amidar_color_prom[] =
-{
-	/* palette */
-	0x00,0x07,0xC0,0xB6,0x00,0x38,0xC5,0x67,0x00,0x30,0x07,0x3F,0x00,0x07,0x30,0x3F,
-	0x00,0x3F,0x30,0x07,0x00,0x38,0x67,0x3F,0x00,0xFF,0x07,0xDF,0x00,0xF8,0x07,0xFF
-};
-
-static unsigned char turtles_color_prom[] =
-{
-	/* palette */
-	0x00,0xC0,0x57,0xFF,0x00,0x66,0xF2,0xFE,0x00,0x2D,0x12,0xBF,0x00,0x2F,0x7D,0xB8,
-	0x00,0x72,0xD2,0x06,0x00,0x94,0xFF,0xE8,0x00,0x54,0x2F,0xF6,0x00,0x24,0xBF,0xC6
-};
-
 
 
 static int amidar_hiload(void)
@@ -732,7 +730,7 @@ struct GameDriver amidar_driver =
 
 	amidar_input_ports,
 
-	amidar_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	amidar_hiload, amidar_hisave
@@ -757,7 +755,7 @@ struct GameDriver amidarjp_driver =
 
 	amidarjp_input_ports,
 
-	amidar_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	amidar_hiload, amidar_hisave
@@ -782,7 +780,7 @@ struct GameDriver amigo_driver =
 
 	amidar_input_ports,
 
-	amidar_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	amidar_hiload, amidar_hisave
@@ -807,7 +805,7 @@ struct GameDriver turtles_driver =
 
 	turtles_input_ports,
 
-	turtles_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	turtles_hiload, amidar_hisave
@@ -832,7 +830,7 @@ struct GameDriver turpin_driver =
 
 	turpin_input_ports,
 
-	turtles_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	turtles_hiload, amidar_hisave

@@ -370,7 +370,9 @@ struct GameDriver
 
 
 /* values for the flags field */
-#define GAME_NOT_WORKING	0x0001
+#define GAME_NOT_WORKING		0x0001
+#define GAME_WRONG_COLORS		0x0002	/* colors are totally wrong */
+#define GAME_IMPERFECT_COLORS	0x0004	/* colors are not 100% accurate, but close */
 
 
 #define PROM_MEMORY_REGION(region) ((const unsigned char *)-region-1)

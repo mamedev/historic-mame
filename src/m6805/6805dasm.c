@@ -2,7 +2,7 @@
  *   A quick-hack 68(7)05 disassembler
  *
  *   Note: this is not the good and proper way to disassemble anything, but it works
- * 
+ *
  *   I'm afraid to put my name on it, but I feel obligated:
  *   This code written by Aaron Giles (agiles@sirius.com) for the MAME project
  *
@@ -15,8 +15,8 @@ static char *opcode_strings[0x0100] =
 {
 	"brset0", 	"brclr0", 	"brset1", 	"brclr1", 	"brset2", 	"brclr2",	"brset3",	"brclr3",		/*00*/
 	"brset4",	"brclr4",	"brset5",	"brclr5",	"brset6",	"brclr6",	"brset7",	"brclr7",
-	"bset0",		"bclr0",		"bset1", 	"bclr1", 	"bset2", 	"bclr2", 	"bset3",		"bclr3",			/*10*/
-	"bset4", 	"bclr4",		"bset5", 	"bclr5",		"bset6", 	"bclr6", 	"bset7", 	"bclr7", 	
+	"bset0",	"bclr0",	"bset1", 	"bclr1", 	"bset2", 	"bclr2", 	"bset3",	"bclr3",		/*10*/
+	"bset4", 	"bclr4",	"bset5", 	"bclr5",	"bset6", 	"bclr6", 	"bset7", 	"bclr7",
 	"bra",		"brn",		"bhi",		"bls",		"bcc",		"bcs",		"bne",		"beq",			/*20*/
 	"bhcc",		"bhcs",		"bpl",		"bmi",		"bmc",		"bms",		"bil",		"bih",
 	"neg_di",	"illegal", 	"illegal", 	"com_di",	"lsr_di",	"illegal", 	"ror_di",	"asr_di",		/*40*/
@@ -30,7 +30,7 @@ static char *opcode_strings[0x0100] =
 	"neg_ix",	"illegal", 	"illegal", 	"com_ix",	"lsr_ix",	"illegal", 	"ror_ix",	"asr_ix",		/*70*/
 	"asl_ix",	"rol_ix",	"dec_ix",	"illegal", 	"inc_ix",	"tst_ix",	"jmp_ix",	"clr_ix",
 	"rti",		"rts",		"illegal",	"swi",		"illegal",	"illegal",	"illegal",	"illegal",		/*80*/
-	"illegal",	"illegal",	"illegal",	"illegal",	"illegal",	"illegal",	"illegal",	"illegal",	
+	"illegal",	"illegal",	"illegal",	"illegal",	"illegal",	"illegal",	"illegal",	"illegal",
 	"illegal",	"illegal",	"illegal",	"illegal",	"illegal",	"illegal",	"illegal",	"tax",			/*90*/
 	"clc",		"sec",		"cli",		"sei",		"rsp",		"nop",		"illegal",	"txa",
 	"suba_im",	"cmpa_im",	"sbca_im",	"cpx_im", 	"anda_im",	"bita_im",	"lda_im",	"illegal",		/*A0*/
@@ -54,7 +54,7 @@ int Dasm6805 (unsigned char *base, char *buf, int pc)
 	char *opptr = opcode_strings[code];
 	char opstr[20];
 	char *p, *s;
-	
+
 	strcpy (opstr, opptr);
 	p = opstr + 3;
 	if (*p != '_')
@@ -71,7 +71,7 @@ int Dasm6805 (unsigned char *base, char *buf, int pc)
 				sprintf (buf, "%-7s$%02x", opstr, *base);
 				return 2;
 			}
-			if ((code < 0x30) || code == 0x8d)
+			if ((code < 0x30) || code == 0xad)
 			{
 				sprintf (buf, "%-7s$%04x", opstr, (pc + 2 + *(signed char *)base) & 0xffff);
 				return 2;
@@ -83,7 +83,7 @@ int Dasm6805 (unsigned char *base, char *buf, int pc)
 			}
 		}
 	}
-	
+
 	s = p - 1;
 	*p++ = 0;
 	if (*p == 'i')

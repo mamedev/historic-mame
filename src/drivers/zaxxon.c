@@ -72,10 +72,20 @@ extern int zaxxon_vid_type;
 
 void zaxxon_sound_w(int offset, int data);
 
+/* in machine/segacrpt.c */
+void szaxxon_decode(void);
+void futspy_decode(void);
+
+
 
 void zaxxon_init_machine(void)
 {
 	zaxxon_vid_type = 0;
+}
+
+void futspy_init_machine(void)
+{
+	zaxxon_vid_type = 2;
 }
 
 
@@ -99,6 +109,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x6000, 0x6fff, MWA_RAM },
 	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
 	{ 0xa000, 0xa0ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0xc000, 0xc002, MWA_NOP },	/* coin enables */
 	{ 0xff3c, 0xff3e, zaxxon_sound_w },
 	{ 0xfff0, 0xfff0, interrupt_enable_w },
 	{ 0xfff1, 0xfff1, MWA_RAM, &zaxxon_char_color_bank },
@@ -108,6 +119,21 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }  /* end of table */
 };
 
+static struct MemoryWriteAddress futspy_writemem[] =
+{
+	{ 0x0000, 0x4fff, MWA_ROM },
+	{ 0x6000, 0x6fff, MWA_RAM },
+	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
+	{ 0xa000, 0xa0ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0xc000, 0xc002, MWA_NOP },	/* coin enables */
+	{ 0xe03c, 0xe03e, zaxxon_sound_w },
+	{ 0xe0f0, 0xe0f0, interrupt_enable_w },
+	{ 0xe0f1, 0xe0f1, MWA_RAM, &zaxxon_char_color_bank },
+	{ 0xe0f8, 0xe0f9, MWA_RAM, &zaxxon_background_position },
+	{ 0xe0fa, 0xe0fa, MWA_RAM, &zaxxon_background_color_bank },
+	{ 0xe0fb, 0xe0fb, MWA_RAM, &zaxxon_background_enable },
+	{ -1 }  /* end of table */
+};
 
 
 /***************************************************************************
@@ -123,7 +149,7 @@ static int zaxxon_interrupt(void)
 	else return interrupt();
 }
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( zaxxon_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
@@ -225,6 +251,107 @@ INPUT_PORTS_START( input_ports )
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( futspy_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )	/* the self test calls this UP */
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )	/* the self test calls this DOWN */
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )	/* the self test calls this UP */
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )	/* the self test calls this DOWN */
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
+	/* the coin inputs must stay active for exactly one frame, otherwise */
+	/* the game will keep inserting coins. */
+	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE,
+			"Coin A", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_COIN2 | IPF_IMPULSE,
+			"Coin B", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_COIN3 | IPF_IMPULSE,
+			"Coin Aux", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+
+	PORT_START	/* DSW1 */
+ 	PORT_DIPNAME( 0x0f, 0x00, "A Coin/Cred", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "4/1" )
+	PORT_DIPSETTING(    0x07, "3/1" )
+	PORT_DIPSETTING(    0x06, "2/1" )
+	PORT_DIPSETTING(    0x0a, "2/1+Bonus each 5" )
+	PORT_DIPSETTING(    0x0b, "2/1+Bonus each 4" )
+	PORT_DIPSETTING(    0x00, "1/1" )
+	PORT_DIPSETTING(    0x0c, "1/1+Bonus each 5" )
+	PORT_DIPSETTING(    0x0d, "1/1+Bonus each 4" )
+	PORT_DIPSETTING(    0x0e, "1/1+Bonus each 2" )
+	PORT_DIPSETTING(    0x09, "2/3" )
+	PORT_DIPSETTING(    0x01, "1/2" )
+	PORT_DIPSETTING(    0x0f, "1/2+Bonus each 5" )
+	PORT_DIPSETTING(    0x02, "1/3" )
+	PORT_DIPSETTING(    0x03, "1/4" )
+	PORT_DIPSETTING(    0x04, "1/5" )
+	PORT_DIPSETTING(    0x05, "1/6" )
+	PORT_DIPNAME( 0xf0, 0x00, "B Coin/Cred", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "4/1" )
+	PORT_DIPSETTING(    0x70, "3/1" )
+	PORT_DIPSETTING(    0x60, "2/1" )
+	PORT_DIPSETTING(    0xa0, "2/1+Bonus each 5" )
+	PORT_DIPSETTING(    0xb0, "2/1+Bonus each 4" )
+	PORT_DIPSETTING(    0x00, "1/1" )
+	PORT_DIPSETTING(    0xc0, "1/1+Bonus each 5" )
+	PORT_DIPSETTING(    0xd0, "1/1+Bonus each 4" )
+	PORT_DIPSETTING(    0xe0, "1/1+Bonus each 2" )
+	PORT_DIPSETTING(    0x90, "2/3" )
+	PORT_DIPSETTING(    0x10, "1/2" )
+	PORT_DIPSETTING(    0xf0, "1/2+Bonus each 5" )
+	PORT_DIPSETTING(    0x20, "1/3" )
+	PORT_DIPSETTING(    0x30, "1/4" )
+	PORT_DIPSETTING(    0x40, "1/5" )
+	PORT_DIPSETTING(    0x50, "1/6" )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x01, 0x01, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x0c, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x08, "5" )
+	PORT_BITX( 0,       0x0c, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPNAME( 0x30, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "20k 40k 60k" )
+	PORT_DIPSETTING(    0x10, "30k 60k 90k" )
+	PORT_DIPSETTING(    0x20, "40k 70k 100k" )
+	PORT_DIPSETTING(    0x30, "40k 80k 120k" )
+	PORT_DIPNAME( 0xc0, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x40, "Medium" )
+	PORT_DIPSETTING(    0x80, "Hard" )
+	PORT_DIPSETTING(    0xc0, "Hardest" )
+
+	PORT_START	/* FAKE */
+	/* This fake input port is used to get the status of the F2 key, */
+	/* and activate the test mode, which is triggered by a NMI */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+INPUT_PORTS_END
+
 
 
 struct GfxLayout zaxxon_charlayout1 =
@@ -266,6 +393,23 @@ static struct GfxLayout spritelayout =
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
 
+static struct GfxLayout futspy_spritelayout =
+{
+	32,32,	/* 32*32 sprites */
+	128,	/* 128 sprites */
+	3,	/* 3 bits per pixel */
+	{ 2*128*128*8, 128*128*8, 0 },	/* the bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
+			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7,
+			16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7,
+			24*8+0, 24*8+1, 24*8+2, 24*8+3, 24*8+4, 24*8+5, 24*8+6, 24*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			32*8, 33*8, 34*8, 35*8, 36*8, 37*8, 38*8, 39*8,
+			64*8, 65*8, 66*8, 67*8, 68*8, 69*8, 70*8, 71*8,
+			96*8, 97*8, 98*8, 99*8, 100*8, 101*8, 102*8, 103*8 },
+	128*8	/* every sprite takes 128 consecutive bytes */
+};
+
 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
@@ -276,48 +420,17 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-
-
-static unsigned char zaxxon_color_prom[] =
+static struct GfxDecodeInfo futspy_gfxdecodeinfo[] =
 {
-	/* U98 - palette */
-	0x00,0x00,0xF0,0xF0,0x36,0x26,0x00,0xFF,0x00,0x00,0xF0,0xF6,0x26,0x36,0x00,0xFF,
-	0x00,0x00,0xF0,0x36,0x00,0x06,0x00,0xFF,0x00,0x00,0xF0,0x06,0x06,0x00,0x00,0x00,
-	0x00,0x00,0xF0,0x30,0x06,0x06,0x00,0x00,0x00,0x00,0x36,0xC6,0x46,0x86,0x00,0xFF,
-	0x00,0x00,0x36,0x06,0x06,0x06,0x06,0x00,0x00,0xC0,0xDB,0xF6,0xF0,0xE0,0x80,0x06,
-	0x00,0x04,0x02,0xF0,0x06,0x06,0x06,0x06,0x00,0x00,0x9B,0xA3,0xA4,0xEC,0xA3,0xA4,
-	0x00,0xF6,0xE0,0xEC,0xA3,0xA4,0x9B,0x00,0x00,0x80,0xC0,0xAC,0xA4,0xA2,0x85,0xE0,
-	0x00,0xDB,0xC0,0x80,0x82,0x00,0x04,0xE0,0x00,0x00,0xF6,0x80,0x40,0xAC,0xA4,0xA2,
-	0x00,0xAC,0xA4,0xE0,0x80,0x40,0xA2,0x00,0x00,0xA4,0xAC,0x36,0xF6,0xA2,0x00,0x80,
-	0x00,0xC6,0x06,0xF0,0x36,0x26,0x04,0x36,0x00,0xF6,0x36,0x2D,0x24,0x1B,0xFF,0xFF,
-	0x00,0x00,0x20,0x06,0x26,0x34,0x32,0x30,0x00,0xF6,0x00,0xAC,0xA4,0xA2,0x51,0x06,
-	0x00,0xA4,0x00,0x05,0x04,0x16,0x26,0xF6,0x00,0xA3,0x36,0x34,0x30,0xA4,0x16,0x20,
-	0x00,0xF6,0xA3,0xF0,0xE0,0xDB,0xD2,0x00,0x00,0xC0,0x84,0xF6,0xF0,0xE0,0x80,0x03,
-	0x00,0xF6,0xEE,0x86,0x46,0x06,0x04,0x00,0x00,0xA3,0x26,0x06,0x04,0xA4,0x16,0x5D,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x16,0x07,0xEE,0x9C,0x03,0x5D,0x00,
-	0x00,0xEE,0x9C,0xC6,0x05,0x05,0x5D,0x16,0x00,0x00,0x36,0x16,0x05,0xEE,0x9C,0x03,
-	0x00,0xEE,0x9C,0xC6,0x16,0x05,0x03,0x00,0x00,0x9C,0xEE,0x86,0x36,0x03,0x00,0x16,
-	/* U72 - character color lookup table */
-	/* this is the Super Zaxxon one, but they should be the same */
-	0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x00,0x04,0x00,0x03,0x03,0x02,0x01,
-	0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x06,0x06,0x06,0x01,
-	0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x00,0x04,0x00,0x03,0x03,0x02,0x01,
-	0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x06,0x06,0x06,0x01,
-	0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x00,0x04,0x00,0x03,0x03,0x02,0x01,
-	0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x01,0x01,0x01,0x03,0x06,0x06,0x06,0x01,
-	0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x00,0x04,0x00,0x03,0x03,0x02,0x01,
-	0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x02,0x02,0x02,0x02,0x05,0x05,0x06,0x01,
-	0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x00,0x04,0x00,0x03,0x03,0x02,0x01,
-	0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x02,0x02,0x02,0x02,0x05,0x05,0x06,0x01,
-	0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x00,0x04,0x00,0x03,0x03,0x02,0x01,
-	0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x02,0x02,0x02,0x02,0x05,0x05,0x06,0x01,
-	0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x00,0x04,0x00,0x03,0x03,0x02,0x01,
-	0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x02,0x02,0x02,0x02,0x05,0x05,0x04,0x01,
-	0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x00,0x04,0x00,0x03,0x03,0x02,0x01,
-	0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x02,0x02,0x02,0x02,0x05,0x05,0x04,0x01
+	{ 1, 0x0000, &zaxxon_charlayout1,   0, 32 },	/* characters */
+	{ 1, 0x1800, &zaxxon_charlayout2,   0, 32 },	/* background tiles */
+	{ 1, 0x7800, &futspy_spritelayout,  0, 32 },			/* sprites */
+	{ -1 } /* end of array */
 };
 
-static unsigned char szaxxon_color_prom[] =
+
+/* these are the proms from Super Zaxxon */
+static unsigned char wrong_color_prom[] =
 {
 	/* U98 - palette */
 	0x00,0x00,0xF0,0xF0,0x36,0x26,0x00,0xFF,0x00,0x00,0xF0,0xF6,0x26,0x36,0x00,0xFF,
@@ -361,7 +474,7 @@ static struct Samplesinterface zaxxon_samples_interface =
 };
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver zaxxon_machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -380,6 +493,44 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1,2*8, 30*8-1 },
 	gfxdecodeinfo,
+	256,32*8,
+	zaxxon_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	zaxxon_vh_start,
+	zaxxon_vh_stop,
+	zaxxon_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_SAMPLES,
+			&zaxxon_samples_interface
+		}
+	}
+};
+
+static struct MachineDriver futspy_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz ?? */
+			0,
+			readmem,futspy_writemem,0,0,
+			zaxxon_interrupt,1
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* single CPU, no need for interleaving */
+	futspy_init_machine,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1,2*8, 30*8-1 },
+	futspy_gfxdecodeinfo,
 	256,32*8,
 	zaxxon_vh_convert_color_prom,
 
@@ -447,6 +598,10 @@ ROM_START( zaxxon_rom )
 	ROM_LOAD( "zaxxon.7",  0x2000, 0x2000, 0xa9dc2e00 )
 	ROM_LOAD( "zaxxon.10", 0x4000, 0x2000, 0x46743110 )
 	ROM_LOAD( "zaxxon.9",  0x6000, 0x2000, 0x6be85050 )
+
+	ROM_REGION(0x0200)	/* color proms */
+	ROM_LOAD( "zaxxon.u98", 0x0000, 0x0100, 0xef8c094c ) /* palette */
+	ROM_LOAD( "zaxxon.u72", 0x0100, 0x0100, 0x51b70301 ) /* char lookup table */
 ROM_END
 
 ROM_START( szaxxon_rom )
@@ -471,6 +626,10 @@ ROM_START( szaxxon_rom )
 	ROM_LOAD( "suzaxxon.7",  0x2000, 0x2000, 0x67046918 )
 	ROM_LOAD( "suzaxxon.10", 0x4000, 0x2000, 0x9d8b2333 )
 	ROM_LOAD( "suzaxxon.9",  0x6000, 0x2000, 0xb0d97103 )
+
+	ROM_REGION(0x0200)	/* color proms */
+	ROM_LOAD( "suzaxxon.u98", 0x0000, 0x0100, 0x60a5c643 ) /* palette */
+	ROM_LOAD( "suzaxxon.u72", 0x0100, 0x0100, 0x51b70301 ) /* char lookup table */
 ROM_END
 
 ROM_START( futspy_rom )
@@ -486,7 +645,6 @@ ROM_START( futspy_rom )
 	ROM_LOAD( "fs_vid.113", 0x1800, 0x2000, 0x8fc6d336 )	/* background tiles */
 	ROM_LOAD( "fs_vid.112", 0x3800, 0x2000, 0x1fdb0ad1 )
 	ROM_LOAD( "fs_vid.111", 0x5800, 0x2000, 0xd739fde1 )
-/* Future Spy has 128 sprites, this is different from Zaxxon */
 	ROM_LOAD( "fs_vid.u77", 0x7800, 0x4000, 0x0c546754 )	/* sprites */
 	ROM_LOAD( "fs_vid.u78", 0xb800, 0x4000, 0x65348620 )
 	ROM_LOAD( "fs_vid.u79", 0xf800, 0x4000, 0x9df771f5 )
@@ -496,106 +654,11 @@ ROM_START( futspy_rom )
 	ROM_LOAD( "fs_vid.u90", 0x2000, 0x2000, 0x794d9111 )
 	ROM_LOAD( "fs_vid.u93", 0x4000, 0x2000, 0xa5cb5131 )
 	ROM_LOAD( "fs_vid.u92", 0x6000, 0x2000, 0xc7693001 )
+
+	ROM_REGION(0x0200)	/* color proms */
+	ROM_LOAD( "futrprom.u98", 0x0000, 0x0100, 0x581fac07 ) /* palette */
+	ROM_LOAD( "futrprom.u72", 0x0100, 0x0100, 0x46460000 ) /* char lookup table */
 ROM_END
-
-
-
-static void szaxxon_decode(void)
-{
-/*
-	the values vary, but the translation mask is always layed out like this:
-
-	  0 1 2 3 4 5 6 7 8 9 a b c d e f
-	0 A A A A A A A A B B B B B B B B
-	1 A A A A A A A A B B B B B B B B
-	2 C C C C C C C C D D D D D D D D
-	3 C C C C C C C C D D D D D D D D
-	4 A A A A A A A A B B B B B B B B
-	5 A A A A A A A A B B B B B B B B
-	6 C C C C C C C C D D D D D D D D
-	7 C C C C C C C C D D D D D D D D
-	8 D D D D D D D D C C C C C C C C
-	9 D D D D D D D D C C C C C C C C
-	a B B B B B B B B A A A A A A A A
-	b B B B B B B B B A A A A A A A A
-	c D D D D D D D D C C C C C C C C
-	d D D D D D D D D C C C C C C C C
-	e B B B B B B B B A A A A A A A A
-	f B B B B B B B B A A A A A A A A
-
-	(e.g. 0xc0 is XORed with D)
-	therefore in the following tables we only keep track of A, B, C and D.
-*/
-
-	/* THE TABLES ARE NOT ACCURATELY VERIFIED - SOME VALUES COULD BE WRONG */
-	static const unsigned char data_xortable[16][4] =
-	{
-		{ 0x28,0x28,0x88,0x88 },	/* ...0...0...0...0 */
-		{ 0x88,0x88,0x28,0x28 },	/* ...0...0...0...1 */
-		{ 0x20,0xa8,0x20,0xA8 },	/* ...0...0...1...0 */
-		{ 0x28,0x28,0x88,0x88 },	/* ...0...0...1...1 */
-		{ 0x88,0x88,0x28,0x28 },	/* ...0...1...0...0 */
-		{ 0x28,0x28,0x88,0x88 },	/* ...0...1...0...1 */
-		{ 0x20,0xA8,0x20,0xA8 },	/* ...0...1...1...0 */
-		{ 0x88,0x88,0x28,0x28 },	/* ...0...1...1...1 */
-		{ 0x88,0x88,0x28,0x28 },	/* ...1...0...0...0 */
-		{ 0x28,0x28,0x88,0x88 },	/* ...1...0...0...1 */
-		{ 0x28,0x28,0x88,0x88 },	/* ...1...0...1...0 */
-		{ 0x20,0xa8,0x20,0xa8 },	/* ...1...0...1...1 */
-		{ 0x20,0xa8,0x20,0xa8 },	/* ...1...1...0...0 */
-		{ 0x20,0xa8,0x20,0xa8 },	/* ...1...1...0...1 */
-		{ 0x88,0x88,0x28,0x28 },	/* ...1...1...1...0 */
-		{ 0x28,0x28,0x88,0x88 }		/* ...1...1...1...1 */
-	};
-	static const unsigned char opcode_xortable[16][4] =
-	{
-		{ 0x88,0xA0,0xA0,0x88 },	/* ...0...0...0...0 */
-		{ 0x08,0x20,0xA8,0x80 },	/* ...0...0...0...1 */
-		{ 0xA8,0x20,0x80,0x08 },	/* ...0...0...1...0 */
-		{ 0x88,0xA0,0xA0,0x88 },	/* ...0...0...1...1 */
-		{ 0x08,0x20,0xA8,0x80 },	/* ...0...1...0...0 */
-//                       ^^^^ at 0x010A, this should be 0x28
-		{ 0x88,0xA0,0xA0,0x88 },	/* ...0...1...0...1 */
-		{ 0xA8,0x20,0x80,0x08 },	/* ...0...1...1...0 */
-		{ 0x08,0x20,0xA8,0x80 },	/* ...0...1...1...1 */
-		{ 0x08,0x20,0xA8,0x80 },	/* ...1...0...0...0 */
-//                       ^^^^ at 0x1020 and 0x1022, this should be 0x28
-		{ 0x88,0xA0,0xA0,0x88 },	/* ...1...0...0...1 */
-		{ 0x88,0xA0,0xA0,0x88 },	/* ...1...0...1...0 */
-		{ 0xA8,0x20,0x80,0x08 },	/* ...1...0...1...1 */
-		{ 0xA8,0x20,0x80,0x08 },	/* ...1...1...0...0 */
-		{ 0xA8,0x20,0x80,0x08 },	/* ...1...1...0...1 */
-		{ 0x08,0x20,0xA8,0x80 },	/* ...1...1...1...0 */
-		{ 0x88,0xA0,0xA0,0x88 }		/* ...1...1...1...1 */
-	};
-	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	for (A = 0x0000;A < 0x5000;A++)
-	{
-		int i,j;
-		unsigned char src;
-
-
-		src = RAM[A];
-
-		/* pick the translation table from bits 0, 4, 8 and 12 of the address */
-		i = (A & 1) + (((A >> 4) & 1) << 1) + (((A >> 8) & 1) << 2) + (((A >> 12) & 1) << 3);
-
-		/* pick the offset in the table from bits 1 and 3 of the source data */
-		j = ((src >> 3) & 1) + (((src >> 5) & 1) << 1);
-
-		/* the bottom half of the translation table is the mirror image of the top */
-		if (src & 0x80) j = 3 - j;
-
-		/* decode the ROM data */
-		RAM[A] = src ^ data_xortable[i][j];
-
-		/* now decode the opcodes */
-		ROM[A] = src ^ opcode_xortable[i][j];
-	}
-}
 
 
 
@@ -659,16 +722,16 @@ struct GameDriver zaxxon_driver =
 	"Sega",
 	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nAlex Judd (sound)\nGerald Vanderick (color info)\nFrank Palazzolo (sound info)\nRiek Gladys (sound info)\nJohn Butler (video)",
 	0,
-	&machine_driver,
+	&zaxxon_machine_driver,
 
 	zaxxon_rom,
 	0, 0,
 	zaxxon_sample_names,
 	0,	/* sound_prom */
 
-	input_ports,
+	zaxxon_input_ports,
 
-	zaxxon_color_prom, 0, 0,
+	PROM_MEMORY_REGION(3), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
@@ -684,43 +747,41 @@ struct GameDriver szaxxon_driver =
 	"Sega",
 	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nAlex Judd (sound)\nTim Lindquist (encryption and color info)\nFrank Palazzolo (sound info)\nRiek Gladys (sound info)",
 	0,
-	&machine_driver,
+	&zaxxon_machine_driver,
 
 	szaxxon_rom,
 	0, szaxxon_decode,
 	zaxxon_sample_names,
 	0,	/* sound_prom */
 
-	input_ports,
+	zaxxon_input_ports,
 
-	szaxxon_color_prom, 0, 0,
+	PROM_MEMORY_REGION(3), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-/* Future Spy runs on hardware similar to Zaxxon, but the program ROMs are encrypted */
-/* so it isn't working. */
 struct GameDriver futspy_driver =
 {
 	__FILE__,
 	0,
 	"futspy",
 	"Future Spy",
-	"????",
-	"?????",
+	"1984",
+	"Sega",
 	"Nicola Salmoria",
 	0,
-	&machine_driver,
+	&futspy_machine_driver,
 
 	futspy_rom,
-	0, 0,
+	0, futspy_decode,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	futspy_input_ports,
 
-	szaxxon_color_prom, 0, 0,
+	PROM_MEMORY_REGION(3), 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	0, 0

@@ -4,7 +4,7 @@ struct VLM5030interface konami_vlm5030_interface =
 {
     3580000,    /* master clock  */
     255,        /* volume        */
-    3,         /* memory region  */
+    4,         /* memory region  */
     0,         /* VCU            */
 };
 
@@ -24,6 +24,7 @@ struct DACinterface konami_dac_interface =
 };
 
 unsigned char *konami_dac;
+static int SN76496_latch;
 
 /* The timer port on TnF and HyperSports sound hardware is derived from
    a 14.318 mhz clock crystal which is passed  through a couple of 74ls393
@@ -120,9 +121,7 @@ void konami_sh_irqtrigger_w(int offset,int data)
 {
 	static int last;
 
-
-//	if (last == 0 && data == 1)
-	if (last == 0 && (data))
+	if (last == 0 && data)
 	{
 		/* setting bit 0 low then high triggers IRQ on the sound CPU */
 		cpu_cause_interrupt(1,0xff);
@@ -130,3 +129,17 @@ void konami_sh_irqtrigger_w(int offset,int data)
 
 	last = data;
 }
+
+
+void konami_SN76496_latch_w(int offset,int data)
+{
+	SN76496_latch = data;
+}
+
+
+void konami_SN76496_0_w(int offset,int data)
+{
+	SN76496_0_w(offset, SN76496_latch);
+}
+
+

@@ -185,7 +185,9 @@ INLINE void bil( void )
 INLINE void bih( void )
 {
 	byte t;
-	BRANCH(!(pending_interrupts&M6805_INT_IRQ));
+extern int taito_68705_ih(void);
+	BRANCH(taito_68705_ih());
+//	BRANCH(!(pending_interrupts&M6805_INT_IRQ));
 }
 
 
@@ -767,7 +769,7 @@ INLINE void rti( void )
 /* $81 RTS inherent ---- */
 INLINE void rts( void )
 {
-	PULLWORD(pcreg); 
+	PULLWORD(pcreg);
 }
 
 /* $82 ILLEGAL */

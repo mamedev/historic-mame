@@ -261,21 +261,21 @@ INPUT_PORTS_START( tnzs_input_ports )
 
  /* DIP switch settings supplied by Greg Best <gregbest98@hotmail.com> */
 	PORT_START      /* DSW A - ef0e */
-    PORT_DIPNAME( 0x01, 0x01, "Game style", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x01, "Table" )
+    PORT_DIPNAME( 0x01, 0x01, "Cabinet", IP_KEY_NONE )
     PORT_DIPSETTING(    0x00, "Upright" )
-    PORT_DIPNAME( 0x02, 0x02, "Flip screen", IP_KEY_NONE )
+    PORT_DIPSETTING(    0x01, "Cocktail" )
+    PORT_DIPNAME( 0x02, 0x02, "Flip Screen", IP_KEY_NONE )
     PORT_DIPSETTING(    0x02, "Off" )
     PORT_DIPSETTING(    0x00, "On" )
-    PORT_DIPNAME( 0x04, 0x04, "Test mode", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x04, "Off" )
-    PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
     PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED ) /* Always off */
     PORT_DIPNAME( 0x30, 0x30, "Coin A", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x30, "1 Coin/1 Credit" )
-    PORT_DIPSETTING(    0x20, "2 Coins/1 Credit" )
-    PORT_DIPSETTING(    0x10, "3 Coins/1 Credit" )
     PORT_DIPSETTING(    0x00, "4 Coins/1 Credit" )
+    PORT_DIPSETTING(    0x10, "3 Coins/1 Credit" )
+    PORT_DIPSETTING(    0x20, "2 Coins/1 Credit" )
+    PORT_DIPSETTING(    0x30, "1 Coin/1 Credit" )
     PORT_DIPNAME( 0xc0, 0xc0, "Coin B", IP_KEY_NONE )
     PORT_DIPSETTING(    0xc0, "1 Coin/2 Credits" )
     PORT_DIPSETTING(    0x80, "1 Coin/3 Credits" )
@@ -289,18 +289,18 @@ INPUT_PORTS_START( tnzs_input_ports )
     PORT_DIPSETTING(    0x01, "Hard" )
     PORT_DIPSETTING(    0x00, "Hardest" )
     PORT_DIPNAME( 0x0C, 0x00, "Bonus Life", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x00, "at 10k and 100k" )
-    PORT_DIPSETTING(    0x0C, "at 10k and 150k" )
-    PORT_DIPSETTING(    0x08, "at 10k and 200k" )
-    PORT_DIPSETTING(    0x04, "at 10k and 300k" )
+    PORT_DIPSETTING(    0x00, "10000 100000" )
+    PORT_DIPSETTING(    0x0C, "10000 150000" )
+    PORT_DIPSETTING(    0x08, "10000 200000" )
+    PORT_DIPSETTING(    0x04, "10000 300000" )
     PORT_DIPNAME( 0x30, 0x30, "Lives", IP_KEY_NONE )
     PORT_DIPSETTING(    0x20, "2" )
     PORT_DIPSETTING(    0x30, "3" )
     PORT_DIPSETTING(    0x00, "4" )
     PORT_DIPSETTING(    0x10, "5" )
-    PORT_DIPNAME( 0x40, 0x40, "Continues", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x00, "Off" )
-    PORT_DIPSETTING(    0x40, "On" )
+    PORT_DIPNAME( 0x40, 0x40, "Allow Continue", IP_KEY_NONE )
+    PORT_DIPSETTING(    0x00, "No" )
+    PORT_DIPSETTING(    0x40, "Yes" )
     PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED ) /* Always off */
 
 INPUT_PORTS_END
@@ -414,14 +414,15 @@ ROM_START( tnzs_rom )
 #endif
 
     ROM_REGION(0x100000)	/* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD( "NZSB5308.BIN", 0x00000, 0x10000, 0x2d871843 )
-    ROM_LOAD( "NZSB5307.BIN", 0x20000, 0x10000, 0xe6f8be50 )
-    ROM_LOAD( "NZSB5306.BIN", 0x40000, 0x10000, 0x4465123b )
-    ROM_LOAD( "NZSB5305.BIN", 0x60000, 0x10000, 0x8b0eff5e )
-    ROM_LOAD( "NZSB5304.BIN", 0x80000, 0x10000, 0x1b5e0a3c )
-    ROM_LOAD( "NZSB5303.BIN", 0xa0000, 0x10000, 0x59b5cbf1 )
-    ROM_LOAD( "NZSB5302.BIN", 0xc0000, 0x10000, 0xb3fab8ac )
-    ROM_LOAD( "NZSB5301.BIN", 0xe0000, 0x10000, 0x030d388d )
+	/* ROMs taken from another set (the ones from this set were read incorrectly) */
+	ROM_LOAD( "NZSB5316.BIN", 0x00000, 0x20000, 0x29e31231 )
+	ROM_LOAD( "NZSB5317.BIN", 0x20000, 0x20000, 0x0b69d21b )
+	ROM_LOAD( "NZSB5318.BIN", 0x40000, 0x20000, 0x9f5d4531 )
+	ROM_LOAD( "NZSB5319.BIN", 0x60000, 0x20000, 0x045a4abc )
+	ROM_LOAD( "NZSB5322.BIN", 0x80000, 0x20000, 0xa390cc10 )
+	ROM_LOAD( "NZSB5323.BIN", 0xa0000, 0x20000, 0xc8841c06 )
+	ROM_LOAD( "NZSB5320.BIN", 0xc0000, 0x20000, 0x1325159d )
+	ROM_LOAD( "NZSB5321.BIN", 0xe0000, 0x20000, 0xd29db545 )
 
     ROM_REGION(0x10000)	/* 64k for the second CPU */
     ROM_LOAD( "NZSB5311.BIN", 0x00000, 0x10000, 0xcc5f8183 )
@@ -531,7 +532,7 @@ struct GameDriver tnzs_driver =
 	"1988",
 	"Taito",
     "Chris Moore\nMartin Scragg\nRichard Mitton\nSanteri Saarimaa (hi-scores)",
-	GAME_NOT_WORKING,
+	0,
 	&tnzs_machine_driver,
 
 	tnzs_rom,

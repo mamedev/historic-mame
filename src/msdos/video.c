@@ -1363,6 +1363,12 @@ static void save_screen(void)
 
 }
 
+
+int osd_skip_this_frame(int recommend)
+{
+	return recommend;
+}
+
 /* Update the display. */
 void osd_update_display(void)
 {

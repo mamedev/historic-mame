@@ -70,6 +70,13 @@ void centiped_paletteram_w(int offset,int data)
 	}
 }
 
+static int powerup_counter;
+
+void centiped_init_machine(void)
+{
+	powerup_counter = 10;
+}
+
 int centiped_interrupt(void)
 {
 	int offset;
@@ -82,7 +89,16 @@ int centiped_interrupt(void)
 	for (offset = 4;offset < 8;offset++)
 		setcolor(4 * slice + start + (offset - 4),paletteram[offset]);
 
-	return interrupt();
+	/* Centipede doesn't like to receive interrupts just after a reset. */
+	/* The only workaround I've found is to wait a little before starting */
+	/* to generate them. */
+	if (powerup_counter == 0)
+		return interrupt();
+	else
+	{
+		powerup_counter--;
+		return ignore_interrupt();
+	}
 }
 
 

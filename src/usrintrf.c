@@ -1365,32 +1365,46 @@ int showgameinfo(void)
 	};
 
 
-	if (Machine->gamedrv->flags & GAME_NOT_WORKING)
+	if (Machine->gamedrv->flags)
 	{
-		const struct GameDriver *main;
-		int foundworking;
+		strcpy(buf, "There are known problems with this game:\n\n");
 
-
-		strcpy(buf,"THIS GAME DOESN'T WORK PROPERLY");
-		if (Machine->gamedrv->clone_of) main = Machine->gamedrv->clone_of;
-		else main = Machine->gamedrv;
-
-		foundworking = 0;
-		i = 0;
-		while (drivers[i])
+		if (Machine->gamedrv->flags & GAME_IMPERFECT_COLORS)
 		{
-			if (drivers[i] == main || drivers[i]->clone_of == main)
-			{
-				if ((drivers[i]->flags & GAME_NOT_WORKING) == 0)
-				{
-					if (foundworking == 0)
-						strcat(buf,"\n\n\nThere are clones of this game which work. They are:\n\n");
-					foundworking = 1;
+			strcat(buf, "The colors aren't 100% accurate.\n");
+		}
 
-					sprintf(&buf[strlen(buf)],"%s\n",drivers[i]->name);
+		if (Machine->gamedrv->flags & GAME_WRONG_COLORS)
+		{
+			strcat(buf, "The colors are completely wrong.\n");
+		}
+
+		if (Machine->gamedrv->flags & GAME_NOT_WORKING)
+		{
+			const struct GameDriver *main;
+			int foundworking;
+
+			strcpy(buf,"THIS GAME DOESN'T WORK PROPERLY");
+			if (Machine->gamedrv->clone_of) main = Machine->gamedrv->clone_of;
+			else main = Machine->gamedrv;
+
+			foundworking = 0;
+			i = 0;
+			while (drivers[i])
+			{
+				if (drivers[i] == main || drivers[i]->clone_of == main)
+				{
+					if ((drivers[i]->flags & GAME_NOT_WORKING) == 0)
+					{
+						if (foundworking == 0)
+							strcat(buf,"\n\n\nThere are clones of this game which work. They are:\n\n");
+						foundworking = 1;
+
+						sprintf(&buf[strlen(buf)],"%s\n",drivers[i]->name);
+					}
 				}
+				i++;
 			}
-			i++;
 		}
 
 		strcat(buf,"\n\n\nType OK to continue");
@@ -1402,9 +1416,18 @@ int showgameinfo(void)
 		dt[1].text = 0;
 		displaytext(dt,1);
 
-		while (!osd_key_pressed(OSD_KEY_O)) ;
-		while (!osd_key_pressed(OSD_KEY_K)) ;
-		while (osd_key_pressed(OSD_KEY_K)) ;
+		do
+		{
+			key = osd_read_key();
+			if (key == OSD_KEY_ESC)
+			{
+				while (osd_key_pressed(key)) ;	/* wait for key release */
+				return 1;
+			}
+		} while (key != OSD_KEY_O && key != OSD_KEY_LEFT);
+
+		while (osd_key_pressed(OSD_KEY_K) == 0 && osd_key_pressed(OSD_KEY_RIGHT) == 0) ;
+		while (osd_key_pressed(OSD_KEY_K) || osd_key_pressed(OSD_KEY_RIGHT)) ;
 	}
 
 
@@ -1479,6 +1502,7 @@ int showgameinfo(void)
 
 	key = osd_read_key();
 	while (osd_key_pressed(key)) ;	/* wait for key release */
+	if (key == OSD_KEY_ESC) return 1;
 
 	osd_clearbitmap(Machine->scrbitmap);
 	osd_update_display();

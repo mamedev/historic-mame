@@ -104,12 +104,18 @@ void slapfight_vh_stop(void)
 
              Lower 4 colour bits are taken from the tile pixel
 
+//  Sprite ram byte decode
+//  ----------------------
+//  Byte 0 : NNNN NNNN   Number of tile
+//  Byte 1 : XXXX XXXX   X
+//  Byte 2 : NN?C CCCO   Hi-Number + Upper 4 colour bits + Sprite On/Off
+//  Byte 3 : YYYY YYYY   Y
 
   Sprite ram byte decode
   ----------------------
-  Byte 0 : NNNN NNNN   Number of tile
+  Byte 0 : NNNN NNNN   Number of sprite
   Byte 1 : XXXX XXXX   X
-  Byte 2 : NNCC CC?O   Hi-Number + Upper 4 colour bits + Sprite On/Off
+  Byte 2 : NN?C CCCX   Hi-Number + Upper 4 colour bits + X high bit
   Byte 3 : YYYY YYYY   Y
 
 ***************************************************************************/
@@ -122,10 +128,11 @@ void slapfight_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	for (scry = 2 ; scry < 32 ; scry++)
 	{
-		for (scrx = 0 ; scrx < 0x37 ; scrx++)
+		for (scrx = 0 ; scrx < 37 ; scrx++)
 		{
-			scrollx=(scrx+27+slapfight_scroll_char_x)%64;
-//			scrollx=scrx;
+			scrollx=slapfight_scroll_char_x+27;
+			scrollx=(scrollx+scrx) % 64;
+
 			if(flipscreen) addr =((31-(scry-2))*64)+(63-scrollx) ; else addr = ((scry-2)*64)+scrollx;
 
 			drawgfx(bitmap,Machine->gfx[1],
@@ -133,7 +140,6 @@ void slapfight_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				(slapfight_bg_ram2[addr]>>4)&0x0f,
 				flipscreen,flipscreen,
 				(8*scrx)-slapfight_scroll_pixel_x,8*scry,
-//				8*scrx,8*scry,
 				&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
@@ -142,28 +148,25 @@ void slapfight_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	for (offs = 0 ; offs<spriteram_size ;  offs+=4)
 	{
-		if (!(spriteram[offs+2]&1)) /* Not sure about it */
-		{
-			drawgfx(bitmap,Machine->gfx[2],
-				spriteram[offs] + ((spriteram[offs+2]&0xC0)<<2),
-				(spriteram[offs+2]>>1)&0x0f,
-				flipscreen,flipscreen,  /* flip not found*/
-				spriteram[offs+1]-12,spriteram[offs+3],		/* Mysterious fudge factor sprite offset */
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-		}
+		drawgfx(bitmap,Machine->gfx[2],
+			spriteram[offs] + ((spriteram[offs+2]&0xC0)<<2),
+			(spriteram[offs+2]>>1)&0x0f,
+			flipscreen,flipscreen,  /* flip not found*/
+			(spriteram[offs+1]-12+((spriteram[offs+2] & 0x01)<<8)), spriteram[offs+3],		/* Mysterious fudge factor sprite offset */
+			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
 
-	for (scry = 2 ; scry < 0x20 ; scry++)
+	for (scry = 2 ; scry < 32 ; scry++)
 	{
-		for (scrx = 0 ; scrx < 0x25 ; scrx++)
+		for (scrx = 0 ; scrx < 37 ; scrx++)
 		{
-			if(flipscreen) addr =((31-scry)*64)+(63-scrx) ; else addr = (scry*64)+scrx;
+			if(flipscreen) addr =((31-(scry))*64)+(63-scrx) ; else addr = (scry*64)+scrx;
 
 			drawgfx(bitmap,Machine->gfx[0],
 				videoram[addr] + ((colorram[addr]&0x03)<<8) ,
-				(colorram[addr]&0x7e)>>2,	// Was 0x7f
+				(colorram[addr]&0xFC)>>2,	// Was 0x7f
 				flipscreen,flipscreen,
 				8*scrx,8*scry,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
@@ -191,4 +194,13 @@ void slapfight_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 	}
 #endif
+
+#if 0
+	if (osd_key_pressed(OSD_KEY_N))
+	 {
+	  while(osd_key_pressed(OSD_KEY_N));
+	  while(!osd_key_pressed(OSD_KEY_N));
+	 }
+#endif
+
 }

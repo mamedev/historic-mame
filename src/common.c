@@ -141,6 +141,7 @@ int readroms(void)
 			printf("Unable to allocate %d bytes of RAM\n",region_size);
 			goto getout;
 		}
+		Machine->memory_region_length[region] = region_size;
 
 		/* some games (i.e. Pleiades) want the memory clear on startup */
 		memset(Machine->memory_region[region],0,region_size);

@@ -73,6 +73,8 @@ static unsigned char *cps1_palette;
 static unsigned char *cps1_unknown;
 static unsigned char *cps1_old_palette;
 
+static int cps1_last_sprite_offset;     /* Offset of the last sprite */
+
 int scroll1x, scroll1y, scroll2x, scroll2y, scroll3x, scroll3y;
 struct CPS1config *cps1_game_config;
 
@@ -209,7 +211,7 @@ int cps1_vh_start(void)
 			cps1_game_config->cpsb_value);
 		}
 		WRITE_WORD(&cps1_output[cps1_game_config->cpsb_addr],
-		           cps1_game_config->cpsb_value);
+			   cps1_game_config->cpsb_value);
 	}
 
 	return 0;
@@ -308,7 +310,7 @@ INLINE void cps1_palette_scroll1(unsigned short *base)
 			offs=offsy+offsx;
 			offs &= 0x3fff;
 
-			code=READ_WORD(&cps1_scroll1[offs])&0x0fff;
+                        code=READ_WORD(&cps1_scroll1[offs]);
 
 			if (code >= base_scroll1 && code != space_char)
 			{
@@ -346,7 +348,7 @@ INLINE void cps1_render_scroll1(struct osd_bitmap *bitmap)
 			offs=offsy+offsx;
 			offs &= 0x3fff;
 
-			code=READ_WORD(&cps1_scroll1[offs])&0x0fff;
+                        code=READ_WORD(&cps1_scroll1[offs]);
 
 			if (code >= base_scroll1 && code != space_char)
 			{
@@ -368,61 +370,71 @@ INLINE void cps1_render_scroll1(struct osd_bitmap *bitmap)
 
 /***************************************************************************
 
-  Sprites
+								Sprites
+								=======
 
-  Attribute word layout:
-  0x0001        colour
-  0x0002        colour
-  0x0004        colour
-  0x0008        colour
-  0x0010        colour
-  0x0020        X Flip
-  0x0040        Y Flip
-  0x0080        unknown
-  0x0100        X block size (in sprites)
-  0x0200        X block size
-  0x0400        X block size
-  0x0800        X block size
-  0x1000        Y block size (in sprites)
-  0x2000        Y block size
-  0x4000        Y block size
-  0x8000        Y block size
+  Sprites are represented by a number of 8 byte values
 
+  xx xx yy yy nn nn aa aa
+
+  where xxxx = x position
+		yyyy = y position
+		nnnn = tile number
+		aaaa = attribute word
+					0x0001        colour
+					0x0002        colour
+					0x0004        colour
+					0x0008        colour
+					0x0010        colour
+					0x0020        X Flip
+					0x0040        Y Flip
+					0x0080        unknown
+					0x0100        X block size (in sprites)
+					0x0200        X block size
+					0x0400        X block size
+					0x0800        X block size
+					0x1000        Y block size (in sprites)
+					0x2000        Y block size
+					0x4000        Y block size
+					0x8000        Y block size
+
+  The end of the table (may) be marked by an attribute value of 0xff00.
 
 ***************************************************************************/
 
+INLINE void cps1_find_last_sprite(void)    /* Find the offset of last sprite */
+{
+	int offset=6;
+	/* Locate the end of table marker */
+	while (offset < cps1_obj_size)
+	{
+		int colour=READ_WORD(&cps1_obj[offset]);
+		if (colour == 0xff00)
+		{
+			/* Marker found. This is the last sprite. */
+			cps1_last_sprite_offset=offset-6-8;
+			return;
+		}
+		offset+=8;
+	}
+	/* Sprites must use full sprite RAM */
+	cps1_last_sprite_offset=cps1_obj_size-8;
+}
+
+/* Find used colours */
 INLINE void cps1_palette_sprites(unsigned short *base)
 {
 	int i;
 	int base_obj=cps1_game_config->base_obj;
-	int obj_size=cps1_obj_size;
 
-	int gng_obj_kludge=cps1_game_config->gng_sprite_kludge;
-	int bank;
-	if (cps1_game_config->size_obj)
-	{
-		obj_size=cps1_game_config->size_obj;
-	}
-
-	if (gng_obj_kludge)
-	{
-		/*
-		Ghouls and Ghosts splits the sprites over two separate
-		graphics layouts */
-		bank=4;
-	}
-
-	/* Draw the sprites */
-	for (i=obj_size-8; i>=0; i-=8)
+	for (i=cps1_last_sprite_offset; i>=0; i-=8)
 	{
 		int x=READ_WORD(&cps1_obj[i]);
 		int y=READ_WORD(&cps1_obj[i+2]);
 		if (x && y)
 		{
 			int code=READ_WORD(&cps1_obj[i+4]);
-			int colour=READ_WORD(&cps1_obj[i+6]);
-			int col=colour&0x1f;
-			x-=0x40;
+			int col=READ_WORD(&cps1_obj[i+6])& 0x1f;
 			code &= 0x3fff;
 			if (code >= base_obj)
 			{
@@ -432,40 +444,29 @@ INLINE void cps1_palette_sprites(unsigned short *base)
 	}
 }
 
+
+
 INLINE void cps1_render_sprites(struct osd_bitmap *bitmap)
 {
 	int i;
-	int base_obj=cps1_game_config->base_obj;
-	int obj_size=cps1_obj_size;
-
+	int base_obj=cps1_game_config->base_obj;    /* Start tile number for objects */
 	int gng_obj_kludge=cps1_game_config->gng_sprite_kludge;
 	int bank;
-	if (cps1_game_config->size_obj)
-	{
-		obj_size=cps1_game_config->size_obj;
-	}
-
-	if (gng_obj_kludge)
-	{
-		/*
-		Ghouls and Ghosts splits the sprites over two separate
-		graphics layouts */
-		bank=4;
-	}
 
 	/* Draw the sprites */
-	for (i=obj_size-8; i>=0; i-=8)
+	for (i=cps1_last_sprite_offset; i>=0; i-=8)
 	{
 		int x=READ_WORD(&cps1_obj[i]);
 		int y=READ_WORD(&cps1_obj[i+2]);
-		if (x && y)
+		if (x && y )
 		{
 			int code=READ_WORD(&cps1_obj[i+4]);
 			int colour=READ_WORD(&cps1_obj[i+6]);
 			int col=colour&0x1f;
+
 			x-=0x40;
 			code &= 0x3fff;
-			if (code >= base_obj)
+			if (code >= base_obj && !(colour & 0x8000))
 			{
 				code -= base_obj;
 				bank=1;
@@ -494,11 +495,11 @@ INLINE void cps1_render_sprites(struct osd_bitmap *bitmap)
 								for (nxs=0; nxs<nx; nxs++)
 								{
 									drawgfx(bitmap,Machine->gfx[bank],
-									    code+(nx-1)-nxs+0x10*(ny-1-nys),
-									    col&0x1f,
-									    1,1,
-									    x+nxs*16,y+nys*16,
-									    &Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+										code+(nx-1)-nxs+0x10*(ny-1-nys),
+										col&0x1f,
+										1,1,
+										x+nxs*16,y+nys*16,
+										&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
 								}
 							}
 						}
@@ -509,11 +510,11 @@ INLINE void cps1_render_sprites(struct osd_bitmap *bitmap)
 								for (nxs=0; nxs<nx; nxs++)
 								{
 									drawgfx(bitmap,Machine->gfx[bank],
-									    code+nxs+0x10*(ny-1-nys),
-									    col&0x1f,
-									    0,1,
-									    x+nxs*16,y+nys*16,
-									    &Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+										code+nxs+0x10*(ny-1-nys),
+										col&0x1f,
+										0,1,
+										x+nxs*16,y+nys*16,
+										&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
 								}
 							}
 						}
@@ -527,11 +528,11 @@ INLINE void cps1_render_sprites(struct osd_bitmap *bitmap)
 								for (nxs=0; nxs<nx; nxs++)
 								{
 									drawgfx(bitmap,Machine->gfx[bank],
-									    code+(nx-1)-nxs+0x10*nys,
-									    col&0x1f,
-									    1,0,
-									    x+nxs*16,y+nys*16,
-									    &Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+										code+(nx-1)-nxs+0x10*nys,
+										col&0x1f,
+										1,0,
+										x+nxs*16,y+nys*16,
+										&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
 								}
 							}
 						}
@@ -542,11 +543,11 @@ INLINE void cps1_render_sprites(struct osd_bitmap *bitmap)
 								for (nxs=0; nxs<nx; nxs++)
 								{
 									drawgfx(bitmap,Machine->gfx[bank],
-									    code+nxs+0x10*nys,
-									    col&0x1f,
-									    0,0,
-									    x+nxs*16,y+nys*16,
-									    &Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+										code+nxs+0x10*nys,
+										col&0x1f,
+										0,0,
+										x+nxs*16,y+nys*16,
+										&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
 								}
 							}
 						}
@@ -556,12 +557,12 @@ INLINE void cps1_render_sprites(struct osd_bitmap *bitmap)
 				{
 					/* Simple case... 1 sprite */
 					drawgfx(bitmap,Machine->gfx[bank],
-					       code,
-					       col&0x1f,
-					       colour&0x20,colour&0x40,
-					       x,y,
-					       &Machine->drv->visible_area,
-					       TRANSPARENCY_PEN,15);
+						   code,
+						   col&0x1f,
+						   colour&0x20,colour&0x40,
+						   x,y,
+						   &Machine->drv->visible_area,
+						   TRANSPARENCY_PEN,15);
 				}
 			}
 		}
@@ -577,7 +578,7 @@ void cps1_debug(int colour)
 	int n=0;
 	int i;
 	int keys[]={OSD_KEY_1, OSD_KEY_2, OSD_KEY_3, OSD_KEY_4,
-	            OSD_KEY_5, OSD_KEY_6, OSD_KEY_7, OSD_KEY_8};
+			OSD_KEY_5, OSD_KEY_6, OSD_KEY_7, OSD_KEY_8};
 
 	for (i=0; i<8; i++)
 	{
@@ -589,7 +590,7 @@ void cps1_debug(int colour)
 				no+=8;
 			}
 			s++;
-//			setgfxcolorentry (Machine->gfx[2], colour*16+i-1+no, s,s,s);
+//                      setgfxcolorentry (Machine->gfx[2], colour*16+i-1+no, s,s,s);
 			reset=1;
 			pressed=1;
 		}
@@ -1247,12 +1248,12 @@ INLINE void cps1_render_scroll2(struct osd_bitmap *bitmap, int priority)
 				{
 					/* Draw entire tile */
 					drawgfx(bitmap,Machine->gfx[2],
-					        code,
-					        colour&0x1f,
-					        colour&0x20,colour&0x40,
-					        16*sx-nxoffset,16*sy-nyoffset,
-					        &Machine->drv->visible_area,
-					        TRANSPARENCY_PEN,15);
+						code,
+						colour&0x1f,
+						colour&0x20,colour&0x40,
+						16*sx-nxoffset,16*sy-nyoffset,
+						&Machine->drv->visible_area,
+						TRANSPARENCY_PEN,15);
 				}
 			}
 		}
@@ -1369,24 +1370,26 @@ INLINE void cps1_render_scroll3(struct osd_bitmap *bitmap, int priority)
 						if (transp)
 						{
 							drawgfx(bitmap,Machine->gfx[3],
-							     code,
-							    colour&0x1f,
-							    colour&0x20,colour&0x40,
-							    32*sx-nxoffset,32*sy-nyoffset,
-							    &Machine->drv->visible_area,
-							    TRANSPARENCY_PENS,transp);
+								 code,
+								colour&0x1f,
+								colour&0x20,colour&0x40,
+								32*sx-nxoffset,32*sy-nyoffset,
+								&Machine->drv->visible_area,
+								TRANSPARENCY_PENS,transp);
 						}
 					}
 				}
 				else
 				{
+
 					drawgfx(bitmap,Machine->gfx[3],
-					    code,
-					    colour&0x1f,
-					    colour&0x20,colour&0x40,
-					    32*sx-nxoffset,32*sy-nyoffset,
-					    &Machine->drv->visible_area,
-					    TRANSPARENCY_PEN,15);
+						code,
+						colour&0x1f,
+						colour&0x20,colour&0x40,
+						32*sx-nxoffset,32*sy-nyoffset,
+						&Machine->drv->visible_area,
+						TRANSPARENCY_PEN,15);
+
 				}
 			}
 		}
@@ -1396,7 +1399,7 @@ INLINE void cps1_render_scroll3(struct osd_bitmap *bitmap, int priority)
 
 /***************************************************************************
 
-        Refresh screen
+	Refresh screen
 
 ***************************************************************************/
 
@@ -1420,6 +1423,7 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	scroll2y=cps1_port(CPS1_SCROLL2_SCROLLY);
 	scroll3x=cps1_port(CPS1_SCROLL3_SCROLLX);
 	scroll3y=cps1_port(CPS1_SCROLL3_SCROLLY);
+
 
 	/*
 	 Welcome to kludgesville... I have no idea how this is supposed
@@ -1457,8 +1461,8 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			layercontrol=READ_WORD(&cps1_output[layercontrolport]);
 			/* Layers on / off */
 			scrl1on=1;
-			scrl2on=layercontrol&0x08;      /* Not quite should probably */
-			scrl3on=layercontrol&0x08;      /* be individually turn-offable  */
+                        scrl2on=layercontrol&0x08;      /* Not quite should probably */
+                        scrl3on=layercontrol&0x08;      /* be individually turn-offable  */
 
 			/* Scroll 2 / 3 priority */
 			scroll2priority=(layercontrol&0x040);
@@ -1477,7 +1481,7 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			scroll2priority=(layercontrol&0x060)==0x40;
 			if (layercontrol == 0x0e4e )
 			{
-			    scroll2priority=0;
+				scroll2priority=0;
 			}
 
 			break;
@@ -1492,9 +1496,9 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			scrl3on=layercontrol&0x08;
 			scroll2priority=(layercontrol&0x060)==0x40;
 			if (layercontrol == 0x12ca ||
-			        layercontrol == 0x3948)
+				layercontrol == 0x3948)
 			{
-			        scroll2priority=0;
+				scroll2priority=0;
 			}
 			break;
 		case 6: /* 1941 */
@@ -1529,6 +1533,19 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			scroll2priority=(layercontrol&0x040);
 			break;
 
+                case 9:
+                        layercontrolport=0x6c;
+			layercontrol=READ_WORD(&cps1_output[layercontrolport]);
+			/* Layers on / off */
+			scrl1on=1;
+                        scrl2on=layercontrol&0x04;      /* Not quite should probably */
+                        scrl3on=layercontrol&0x08;      /* be individually turn-offable  */
+
+			/* Scroll 2 / 3 priority */
+			scroll2priority=(layercontrol&0x040);
+			break;
+
+
 		default:
 			layercontrolport=0;
 			layercontrol=0xffff;
@@ -1542,6 +1559,9 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			scroll2priority=1;
 			break;
 	}
+
+	/* Find the offset of the last sprite in the sprite table */
+	cps1_find_last_sprite();
 
 	/* Build palette */
 	cps1_build_palette();

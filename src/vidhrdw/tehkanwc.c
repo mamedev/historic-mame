@@ -19,7 +19,7 @@ int tehkanwc_videoram1_size;
 static struct osd_bitmap *tmpbitmap1 = 0;
 static unsigned char *dirtybuffer1;
 static unsigned char scroll_x[2],scroll_y;
-
+static unsigned char led0,led1;
 
 
 int tehkanwc_vh_start(void)
@@ -82,6 +82,72 @@ void tehkanwc_scroll_x_w(int offset,int data)
 void tehkanwc_scroll_y_w(int offset,int data)
 {
 	scroll_y = data;
+}
+
+
+
+void gridiron_led0_w(int offset,int data)
+{
+	led0 = data;
+}
+void gridiron_led1_w(int offset,int data)
+{
+	led1 = data;
+}
+
+/*
+   Gridiron Fight has a LED display on the control panel, to let each player
+   choose the formation without letting the other know.
+   We emulate it by showing a character on the corner of the screen; the
+   association between the bits of the port and the led segments is:
+
+    ---0---
+   |       |
+   5       1
+   |       |
+    ---6---
+   |       |
+   4       2
+   |       |
+    ---3---
+
+   bit 7 = enable (0 = display off)
+ */
+
+static void gridiron_drawled(struct osd_bitmap *bitmap,unsigned char led,int player)
+{
+	int i;
+
+
+	static unsigned char ledvalues[] =
+			{ 0x86, 0xdb, 0xcf, 0xe6, 0xed, 0xfd, 0x87, 0xff, 0xf3, 0xf1 };
+
+
+	if ((led & 0x80) == 0) return;
+
+	for (i = 0;i < 10;i++)
+	{
+		if (led == ledvalues[i] ) break;
+	}
+
+	if (i < 10)
+	{
+		if (player == 0)
+			drawgfx(bitmap,Machine->gfx[0],
+					0xc0 + i,
+					0x0a,
+					0,0,
+					0,232,
+					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		else
+			drawgfx(bitmap,Machine->gfx[0],
+					0xc0 + i,
+					0x03,
+					1,1,
+					0,16,
+					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	}
+else if (errorlog) fprintf(errorlog,"unknown LED %02x for player %d\n",led,player);
 }
 
 
@@ -202,6 +268,27 @@ memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * siz
 	}
 
 
+	/* draw the foreground chars which don't have priority over sprites */
+	for (offs = videoram_size - 1;offs >= 0;offs--)
+	{
+		int sx,sy;
+
+
+		dirtybuffer[offs] = 0;
+
+		sx = offs % 32;
+		sy = offs / 32;
+
+		if ((colorram[offs] & 0x20))
+			drawgfx(bitmap,Machine->gfx[0],
+					videoram[offs] + ((colorram[offs] & 0x10) << 4),
+					colorram[offs] & 0x0f,
+					colorram[offs] & 0x40, colorram[offs] & 0x80,
+					sx*8,sy*8,
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+	}
+
+
 	/* draw sprites */
 	for (offs = 0;offs < spriteram_size;offs += 4)
 	{
@@ -214,28 +301,26 @@ memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * siz
 	}
 
 
-	/* draw the foreground */
+	/* draw the foreground chars which have priority over sprites */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy;
+		int sx,sy;
 
 
-			dirtybuffer[offs] = 0;
+		dirtybuffer[offs] = 0;
 
-			sx = offs % 32;
-			sy = offs / 32;
+		sx = offs % 32;
+		sy = offs / 32;
 
-			drawgfx(tmpbitmap,Machine->gfx[0],
+		if (!(colorram[offs] & 0x20))
+			drawgfx(bitmap,Machine->gfx[0],
 					videoram[offs] + ((colorram[offs] & 0x10) << 4),
 					colorram[offs] & 0x0f,
 					colorram[offs] & 0x40, colorram[offs] & 0x80,
 					sx*8,sy*8,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-		}
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+	gridiron_drawled(bitmap,led0,0);
+	gridiron_drawled(bitmap,led1,1);
 }

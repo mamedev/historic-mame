@@ -1,16 +1,16 @@
 /***************************************************************************
 
-The Pit/Round Up memory map (preliminary)
+The Pit/Round Up/Intrepid memory map (preliminary)
 
 
 Main CPU:
 
 0000-4fff ROM
-8000-83ff RAM
-8800-8bff Color RAM
-8c00-8fff Mirror for above
+8000-87ff RAM
+8800-8bff Color RAM        (Not used in Intrepid)
+8c00-8fff Mirror for above (Not used in Intrepid)
 9000-93ff Video RAM
-9400-97ff Mirror for above
+9400-97ff Mirror for above (Color RAM in Intrepid)
 9800-983f Attributes RAM
 9840-985f Sprite RAM
 
@@ -24,8 +24,9 @@ b800      Watchdog Reset
 Write:
 
 b000      NMI Enable
-b002      Marked as LOCKOUT, but I can't find where it goes to
+b002      Coin Lockout
 b003	  Sound Enable
+b005      Intrepid graphics bank select
 b006      Flip Screen X
 b007      Flip Screen Y
 b800      Sound Command
@@ -45,8 +46,10 @@ Port I/O Read:
 Port I/O Write:
 
 00  Reset Sound Command
-8e  AY8910 Control Port
-8f  AY8910 Write Port
+8c  AY8910 #2 Control Port    (Intrepid only)
+8d  AY8910 #2 Write Port	  (Intrepid only)
+8e  AY8910 #1 Control Port
+8f  AY8910 #1 Write Port
 
 
 ***************************************************************************/
@@ -55,6 +58,7 @@ Port I/O Write:
 #include "vidhrdw/generic.h"
 
 extern unsigned char *galaxian_attributesram;
+extern unsigned char *intrepid_sprite_bank_select;
 void galaxian_attributes_w(int offset,int data);
 
 void thepit_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -64,13 +68,17 @@ void thepit_flipy_w(int offset,int data);
 int  thepit_input_port_0_r(int offset);
 void thepit_sound_enable_w(int offset, int data);
 void thepit_AY8910_0_w(int offset, int data);
+void thepit_AY8910_1_w(int offset, int data);
+void intrepid_graphics_bank_select_w(int offset, int data);
 
 
-static struct MemoryReadAddress readmem[] =
+static struct MemoryReadAddress thepit_readmem[] =
 {
 	{ 0x0000, 0x4fff, MRA_ROM },
-	{ 0x8000, 0x83ff, MRA_RAM },
-	{ 0x8800, 0x98ff, MRA_RAM },
+	{ 0x8000, 0x87ff, MRA_RAM },
+	{ 0x8800, 0x93ff, MRA_RAM },
+	{ 0x9400, 0x97ff, videoram_r },
+	{ 0x9800, 0x98ff, MRA_RAM },
 	{ 0xa000, 0xa000, thepit_input_port_0_r },
 	{ 0xa800, 0xa800, input_port_1_r },
 	{ 0xb000, 0xb000, input_port_2_r },
@@ -78,22 +86,55 @@ static struct MemoryReadAddress readmem[] =
 	{ -1 }  /* end of table */
 };
 
-static struct MemoryWriteAddress writemem[] =
+static struct MemoryWriteAddress thepit_writemem[] =
 {
-	{ 0x8000, 0x83ff, MWA_RAM },
+	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x8800, 0x8bff, colorram_w, &colorram },
 	{ 0x8c00, 0x8fff, colorram_w },
 	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
 	{ 0x9400, 0x97ff, videoram_w },
 	{ 0x9800, 0x983f, galaxian_attributes_w, &galaxian_attributesram },
 	{ 0x9840, 0x985f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x9860, 0x98ff, MWA_NOP }, // Probably unused
+	{ 0x9860, 0x98ff, MWA_RAM }, // Probably unused
 	{ 0xa000, 0xa000, MWA_NOP }, // Not hooked up according to the schematics
 	{ 0xb000, 0xb000, interrupt_enable_w },
 	{ 0xb001, 0xb001, MWA_NOP }, // Unused, but initialized
 	{ 0xb002, 0xb002, MWA_NOP }, // See memory map
 	{ 0xb003, 0xb003, thepit_sound_enable_w },
 	{ 0xb004, 0xb005, MWA_NOP }, // Unused, but initialized
+	{ 0xb006, 0xb006, thepit_flipx_w, &flip_screen_x },
+	{ 0xb007, 0xb007, thepit_flipy_w, &flip_screen_y },
+	{ 0xb800, 0xb800, soundlatch_w },
+	{ -1 }  /* end of table */
+};
+
+
+static struct MemoryReadAddress intrepid_readmem[] =
+{
+	{ 0x0000, 0x4fff, MRA_ROM },
+	{ 0x8000, 0x87ff, MRA_RAM },
+	{ 0x9000, 0x98ff, MRA_RAM },
+	{ 0xa000, 0xa000, thepit_input_port_0_r },
+	{ 0xa800, 0xa800, input_port_1_r },
+	{ 0xb000, 0xb000, input_port_2_r },
+	{ 0xb800, 0xb800, watchdog_reset_r },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress intrepid_writemem[] =
+{
+	{ 0x8000, 0x87ff, MWA_RAM },
+	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
+	{ 0x9400, 0x97ff, colorram_w, &colorram },
+	{ 0x9800, 0x983f, galaxian_attributes_w, &galaxian_attributesram },
+	{ 0x9840, 0x985f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x9860, 0x98ff, MWA_RAM }, // Probably unused
+	{ 0xb000, 0xb000, interrupt_enable_w },
+	{ 0xb001, 0xb001, MWA_NOP }, // Unused, but initialized
+	{ 0xb002, 0xb002, MWA_NOP }, // See memory map
+	{ 0xb003, 0xb003, thepit_sound_enable_w },
+	{ 0xb004, 0xb004, MWA_NOP }, // Unused, but initialized
+	{ 0xb005, 0xb005, intrepid_graphics_bank_select_w },
 	{ 0xb006, 0xb006, thepit_flipx_w, &flip_screen_x },
 	{ 0xb007, 0xb007, thepit_flipy_w, &flip_screen_y },
 	{ 0xb800, 0xb800, soundlatch_w },
@@ -123,6 +164,7 @@ static struct IOReadPort sound_readport[] =
 static struct IOWritePort sound_writeport[] =
 {
 	{ 0x00, 0x00, soundlatch_clear_w },
+	{ 0x8c, 0x8d, thepit_AY8910_1_w },
 	{ 0x8e, 0x8f, thepit_AY8910_0_w },
 	{ -1 }  /* end of table */
 };
@@ -247,13 +289,73 @@ INPUT_PORTS_START( roundup_input_ports )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( intrepid_input_ports )
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Starts a timer, which, */
+  												  /* after it runs down, doesn't */
+	PORT_START      /* IN2 */                     /* seem to do anything. See $0105 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* DSW0 */
+	PORT_BITX(    0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x02, "On" )
+	PORT_DIPNAME( 0x04, 0x04, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_DIPNAME( 0x08, 0x08, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Easy" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x10, 0x00, "Bonus Life At", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "10,000" )
+	PORT_DIPSETTING(    0x10, "30,000" )
+	PORT_DIPNAME( 0x20, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0xc0, 0x40, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x40, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
+
+	/* Since the real inputs are multiplexed, we used this fake port
+	   to read the 2nd player controls when the screen is flipped */
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL)
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+
 
 static struct GfxLayout charlayout =
 {
 	8,8,    /* 8*8 characters */
 	256,    /* 256 characters */
 	2,      /* 2 bits per pixel */
-	{ 0, 0x0800*8 }, /* the two bitplanes are separated */
+	{ 0, 0x1000*8 }, /* the two bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8     /* every char takes 8 consecutive bytes */
@@ -265,7 +367,7 @@ static struct GfxLayout spritelayout =
 	16,16,  /* 16*16 sprites */
 	64,     /* 64 sprites */
 	2,      /* 2 bits per pixel */
-	{ 0, 0x0800*8 },	/* the two bitplanes are separated */
+	{ 0, 0x1000*8 },	/* the two bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7,
 	  8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
@@ -274,74 +376,84 @@ static struct GfxLayout spritelayout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static struct GfxDecodeInfo thepit_gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &charlayout,     0, 8 },
 	{ 1, 0x0000, &spritelayout,   0, 8 },
 	{ -1 } /* end of array */
 };
 
+static struct GfxDecodeInfo intrepid_gfxdecodeinfo[] =
+{
+	{ 1, 0x0000, &charlayout,     0, 8 },
+	{ 1, 0x0000, &spritelayout,   0, 8 },
+	{ 1, 0x0800, &charlayout,     0, 8 },
+	{ 1, 0x0800, &spritelayout,   0, 8 },
+	{ -1 } /* end of array */
+};
 
 
 static struct AY8910interface ay8910_interface =
 {
-	1,      /* 1 chip */
+	2,      /* 1 or 2 chips */
 	18432000/12,     /* 1.536Mhz */
-	{ 255 },
-	{ soundlatch_r },
-	{ 0 },
-	{ 0 },
-	{ 0 }
+	{ 255, 255 },
+	{ soundlatch_r, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 }
 };
 
 
-static struct MachineDriver machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,     /* 3.072 Mhz */
-			0,
-			readmem,writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			10000000/4,     /* 2.5 Mhz */
-			3,
-			sound_readmem,sound_writemem,
-			sound_readport,sound_writeport,
-			interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	32,32,
-	thepit_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	thepit_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
+#define MACHINE_DRIVER(GAMENAME)							\
+static struct MachineDriver GAMENAME##_machine_driver =		\
+{									  			            \
+	/* basic machine hardware */							\
+	{														\
+		{													\
+			CPU_Z80,										\
+			18432000/6,     /* 3.072 Mhz */					\
+			0,												\
+			GAMENAME##_readmem,GAMENAME##_writemem,0,0,		\
+			nmi_interrupt,1									\
+		},													\
+		{													\
+			CPU_Z80 | CPU_AUDIO_CPU,						\
+			10000000/4,     /* 2.5 Mhz */					\
+			3,												\
+			sound_readmem,sound_writemem,					\
+			sound_readport,sound_writeport,					\
+			interrupt,1										\
+		}													\
+	},														\
+	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */ \
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */ \
+	0,														\
+															\
+	/* video hardware */									\
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },				\
+	GAMENAME##_gfxdecodeinfo,								\
+	32,32,													\
+	thepit_vh_convert_color_prom,							\
+															\
+	VIDEO_TYPE_RASTER,										\
+	0,														\
+	generic_vh_start,										\
+	generic_vh_stop,										\
+	thepit_vh_screenrefresh,								\
+															\
+	/* sound hardware */									\
+	0,0,0,0,												\
+	{														\
+		{													\
+			SOUND_AY8910,									\
+			&ay8910_interface								\
+		}													\
+	}														\
 };
 
-
+MACHINE_DRIVER(thepit)
+MACHINE_DRIVER(intrepid)
 
 /***************************************************************************
 
@@ -357,9 +469,9 @@ ROM_START( thepit_rom )
 	ROM_LOAD( "p41b",       0x3000, 0x1000, 0x8d962efe )
 	ROM_LOAD( "p33b",       0x4000, 0x1000, 0x04776851 )
 
-	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION(0x1800)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "p8",         0x0000, 0x0800, 0x878e996c )
-	ROM_LOAD( "p9",         0x0800, 0x0800, 0x57841574 )
+	ROM_LOAD( "p9",         0x1000, 0x0800, 0x57841574 )
 
 	ROM_REGION(0x0020)      /* Color PROM */
 	ROM_LOAD( "pitclr.ic4", 0x0000, 0x0020, 0x480d8e59 )
@@ -376,9 +488,9 @@ ROM_START( roundup_rom )
 	ROM_LOAD( "roundup.u41",0x3000, 0x1000, 0x3bd6e3ce )
 	ROM_LOAD( "roundup.u33",0x4000, 0x1000, 0xde80606e )
 
-	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION(0x1800)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "roundup.u10",0x0000, 0x0800, 0xbc970d0d )
-	ROM_LOAD( "roundup.u9", 0x0800, 0x0800, 0xe9351d81 )
+	ROM_LOAD( "roundup.u9", 0x1000, 0x0800, 0xe9351d81 )
 
 	ROM_REGION(0x0020)      /* Color PROM */
 	ROM_LOAD( "roundup.clr",0x0000, 0x0020, 0x480d8e59 )
@@ -386,6 +498,26 @@ ROM_START( roundup_rom )
 	ROM_REGION(0x10000)     /* 64k for audio CPU */
 	ROM_LOAD( "roundup.u30",0x0000, 0x0800, 0xf51031e2 )
 	ROM_LOAD( "roundup.u31",0x0800, 0x0800, 0xfcb31285 )
+ROM_END
+
+ROM_START( intrepid_rom )
+	ROM_REGION(0x10000)     /* 64k for main CPU */
+	ROM_LOAD( "ic19.1", 0x0000, 0x1000, 0x06858f25 )
+	ROM_LOAD( "ic18.2", 0x1000, 0x1000, 0x4ed85476 )
+	ROM_LOAD( "ic17.3", 0x2000, 0x1000, 0x63fb89a7 )
+	ROM_LOAD( "ic16.4", 0x3000, 0x1000, 0xb2416897 )
+	ROM_LOAD( "ic15.5", 0x4000, 0x1000, 0x3a8fe683 )
+
+	ROM_REGION(0x2000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ic8.8",  0x0000, 0x1000, 0x26d682a4 )
+	ROM_LOAD( "ic9.9",  0x1000, 0x1000, 0x70ca7462 )
+
+	ROM_REGION(0x0020)      /* Color PROM */
+	ROM_LOAD( "ic3.prm",0x0000, 0x0020, 0xcfdfb04b )
+
+	ROM_REGION(0x10000)     /* 64k for audio CPU */
+	ROM_LOAD( "ic22.7", 0x0000, 0x0800, 0x31d27c00 )
+	ROM_LOAD( "ic23.6", 0x0800, 0x0800, 0x8016223e )
 ROM_END
 
 
@@ -411,8 +543,6 @@ static int thepit_hiload(void)
 	}
 	else return 0;  /* we can't load the hi scores yet */
 }
-
-
 
 static void thepit_hisave(void)
 {
@@ -469,8 +599,6 @@ static int roundup_hiload(void)
 	else return 0;  /* we can't load the hi scores yet */
 }
 
-
-
 static void roundup_hisave(void)
 {
 	void *f;
@@ -485,6 +613,44 @@ static void roundup_hisave(void)
 }
 
 
+static int intrepid_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x8078],"\xfd",1) == 0)
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x803d],0x3c);
+			RAM[0x8035] = RAM[0x803d];
+			RAM[0x8036] = RAM[0x803e];
+			RAM[0x8037] = RAM[0x803f];
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+static void intrepid_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x803d],0x3c);
+		osd_fclose(f);
+	}
+}
+
 
 struct GameDriver thepit_driver =
 {
@@ -496,7 +662,7 @@ struct GameDriver thepit_driver =
 	"Centuri",
 	"Zsolt Vasvari",
 	0,
-	&machine_driver,
+	&thepit_machine_driver,
 
 	thepit_rom,
 	0, 0,
@@ -522,7 +688,7 @@ struct GameDriver roundup_driver =
 	"Amenip/Centuri",
 	"Zsolt Vasvari",
 	0,
-	&machine_driver,
+	&thepit_machine_driver,
 
 	roundup_rom,
 	0, 0,
@@ -535,4 +701,31 @@ struct GameDriver roundup_driver =
 	ORIENTATION_ROTATE_90,
 
 	roundup_hiload, roundup_hisave
+};
+
+
+
+struct GameDriver intrepid_driver =
+{
+	__FILE__,
+	0,
+	"intrepid",
+	"Intrepid",
+	"1983",
+	"Nova Games Ltd.",
+	"Zsolt Vasvari",
+	0,
+	&intrepid_machine_driver,
+
+	intrepid_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	intrepid_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	intrepid_hiload, intrepid_hisave
 };

@@ -547,56 +547,6 @@ static struct GfxDecodeInfo pacmanbl_gfxdecodeinfo[] =
 
 
 
-static unsigned char galaxian_color_prom[] =
-{
-	/* palette */
-	0x00,0x00,0x00,0xF6,0x00,0x16,0xC0,0x3F,0x00,0xD8,0x07,0x3F,0x00,0xC0,0xC4,0x07,
-	0x00,0xC0,0xA0,0x07,0x00,0x00,0x00,0x07,0x00,0xF6,0x07,0xF0,0x00,0x76,0x07,0xC6
-};
-
-static unsigned char japirem_color_prom[] =
-{
-	/* palette */
-	0x00,0x7A,0x36,0x07,0x00,0xF0,0x38,0x1F,0x00,0xC7,0xF0,0x3F,0x00,0xDB,0xC6,0x38,
-	0x00,0x36,0x07,0xF0,0x00,0x33,0x3F,0xDB,0x00,0x3F,0x57,0xC6,0x00,0xC6,0x3F,0xFF
-};
-
-static unsigned char uniwars_color_prom[] =
-{
-	/* palette */
-	0x00,0xe8,0x17,0x3f,0x00,0x2f,0x87,0x20,0x00,0xff,0x3f,0x38,0x00,0x83,0x3f,0x06,
-	0x00,0xdc,0x1f,0xd0,0x00,0xef,0x20,0x96,0x00,0x3f,0x17,0xf0,0x00,0x3f,0x17,0x14
-};
-
-static unsigned char warofbug_color_prom[] =
-{
-	/* palette */
-	0x00,0xFF,0x07,0xC0,0x00,0x07,0xC0,0x3F,0x00,0x38,0x07,0xC0,0x00,0x07,0xC0,0x38,
-	0x00,0x3F,0x38,0x07,0x00,0xC0,0x3F,0x07,0x00,0xF8,0x07,0x38,0x00,0xC0,0x38,0xC7,
-};
-
-static unsigned char pacmanbl_color_prom[] =
-{
-	/* palette */
-	0x00,0x00,0x00,0xF6,0x00,0x16,0xC0,0x3F,0x00,0xD8,0x07,0x3F,0x00,0xC0,0xC4,0x07,
-	0x00,0xC0,0xA0,0x0C,0x00,0x00,0x00,0x07,0x00,0xF6,0x07,0xF0,0x00,0x76,0x07,0xC6
-};
-
-static unsigned char digger_color_prom[] =
-{
-	0x00,0xC7,0xF0,0x3F,0x00,0xDB,0xC6,0x38,0x00,0xF0,0x15,0x1F,0x00,0xF6,0x06,0x07,
-	0x00,0x91,0x07,0xF6,0x00,0xF0,0xFE,0x07,0x00,0x38,0x07,0xFE,0x00,0x07,0x3F,0xFE,
-};
-
-static unsigned char mooncrgx_color_prom[] =
-{
-	/* palette */
-	0x00,0x7a,0x36,0x07,0x00,0xf0,0x38,0x1f,0x00,0xc7,0xf0,0x3f,0x00,0xdb,0xc6,0x38,
-	0x00,0x36,0x07,0xf0,0x00,0x33,0x3f,0xdb,0x00,0x3f,0x57,0xc6,0x00,0xc6,0x3f,0xff
-};
-
-
-
 static struct CustomSound_interface custom_interface =
 {
 	mooncrst_sh_start,
@@ -743,6 +693,9 @@ ROM_START( galaxian_rom )
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "1h", 0x0000, 0x0800, 0x4852a7c2 )
 	ROM_LOAD( "1k", 0x0800, 0x0800, 0x17902ece )
+
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "galaxian.clr", 0x0000, 0x020, 0x4019a389 )
 ROM_END
 
 ROM_START( galmidw_rom )
@@ -756,6 +709,9 @@ ROM_START( galmidw_rom )
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "galmidw.1j", 0x0000, 0x0800, 0xc05187c1 )
 	ROM_LOAD( "galmidw.1k", 0x0800, 0x0800, 0x8f8f0ecd )
+
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "galaxian.clr", 0x0000, 0x020, 0x4019a389 )
 ROM_END
 
 ROM_START( galnamco_rom )
@@ -769,6 +725,9 @@ ROM_START( galnamco_rom )
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "galnamco.1h", 0x0000, 0x0800, 0x4852a7c2 )
 	ROM_LOAD( "galnamco.1k", 0x0800, 0x0800, 0x17902ece )
+
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "galaxian.clr", 0x0000, 0x020, 0x4019a389 )
 ROM_END
 
 ROM_START( superg_rom )
@@ -782,6 +741,9 @@ ROM_START( superg_rom )
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "superg.1h", 0x0000, 0x0800, 0xc05187c1 )
 	ROM_LOAD( "superg.1k", 0x0800, 0x0800, 0x8f8f0ecd )
+
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "galaxian.clr", 0x0000, 0x020, 0x4019a389 )
 ROM_END
 
 ROM_START( galapx_rom )
@@ -795,6 +757,9 @@ ROM_START( galapx_rom )
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "galx.1h", 0x0000, 0x0800, 0xea88446e )
 	ROM_LOAD( "galx.1k", 0x0800, 0x0800, 0x4aeef848 )
+
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "galaxian.clr", 0x0000, 0x020, 0x4019a389 )
 ROM_END
 
 ROM_START( galap1_rom )
@@ -804,6 +769,9 @@ ROM_START( galap1_rom )
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "galx_1c1.rom", 0x0000, 0x0800, 0xc05187c1 )
 	ROM_LOAD( "galx_1c2.rom", 0x0800, 0x0800, 0x8f8f0ecd )
+
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "galaxian.clr", 0x0000, 0x020, 0x4019a389 )
 ROM_END
 
 ROM_START( galap4_rom )
@@ -813,6 +781,9 @@ ROM_START( galap4_rom )
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "galx_4c1.rom", 0x0000, 0x0800, 0xe3934181 )
 	ROM_LOAD( "galx_4c2.rom", 0x0800, 0x0800, 0x8cf8cc7c )
+
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "galaxian.clr", 0x0000, 0x020, 0x4019a389 )
 ROM_END
 
 ROM_START( galturbo_rom )
@@ -826,6 +797,9 @@ ROM_START( galturbo_rom )
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "galturbo.1h", 0x0000, 0x0800, 0xb545ede3 )
 	ROM_LOAD( "galturbo.1k", 0x0800, 0x0800, 0xcfbf64ef )
+
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "galaxian.clr", 0x0000, 0x020, 0x4019a389 )
 ROM_END
 
 ROM_START( pisces_rom )
@@ -840,6 +814,9 @@ ROM_START( pisces_rom )
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "pisces.1j", 0x0000, 0x1000, 0x1a5c1d66 )
 	ROM_LOAD( "pisces.1k", 0x1000, 0x1000, 0x3a8d10fb )
+
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "pis_l6.bin", 0x0000, 0x020, 0x401ea382 ) /* very close to Galaxian */
 ROM_END
 
 ROM_START( japirem_rom )
@@ -858,6 +835,9 @@ ROM_START( japirem_rom )
 	ROM_LOAD( "h01_2.bin",   0x0800, 0x0800, 0xc2870825 )
 	ROM_LOAD( "k01_1.bin",   0x1000, 0x0800, 0x79b1be9f )
 	ROM_LOAD( "k01_2.bin",   0x1800, 0x0800, 0xa42e795c )
+
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "l06_prom.bin", 0x0000, 0x020, 0x08a76867 )	/* same as Moon Cresta */
 ROM_END
 
 ROM_START( uniwars_rom )
@@ -876,6 +856,9 @@ ROM_START( uniwars_rom )
 	ROM_LOAD( "h01_2.bin",   0x0800, 0x0800, 0xc2870825 )
 	ROM_LOAD( "u9",          0x1000, 0x0800, 0x2acb176d )
 	ROM_LOAD( "k01_2.bin",   0x1800, 0x0800, 0xa42e795c )
+
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "uniwars.clr", 0x0000, 0x020, 0x90e9af0b )
 ROM_END
 
 ROM_START( warofbug_rom )
@@ -889,6 +872,9 @@ ROM_START( warofbug_rom )
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "warofbug.1k", 0x0000, 0x0800, 0x9dd46522 )
 	ROM_LOAD( "warofbug.1j", 0x0800, 0x0800, 0x50dd974f )
+
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "warofbug.clr", 0x0000, 0x020, 0x4b0038f8 )
 ROM_END
 
 ROM_START( redufo_rom )
@@ -903,6 +889,9 @@ ROM_START( redufo_rom )
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "ruhja", 0x0000, 0x0800, 0xbdc668f6 )
 	ROM_LOAD( "rukla", 0x0800, 0x0800, 0xa902210e )
+
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "rucp",  0x0000, 0x0020, 0x4019a389 ) /* same as galaxian */
 ROM_END
 
 ROM_START( pacmanbl_rom )
@@ -920,6 +909,9 @@ ROM_START( pacmanbl_rom )
 	ROM_LOAD( "blpac11b", 0x0800, 0x0800, 0x068fcb5b )
 	ROM_LOAD( "blpac10b", 0x1000, 0x0800, 0x93c21554 )
 	ROM_LOAD( "blpac9b",  0x1800, 0x0800, 0x9df6dba6 )
+
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "blpaccp",  0x0000, 0x0020, 0x401ea382 ) /* same as pisces */
 ROM_END
 
 ROM_START( digger_rom )
@@ -932,6 +924,9 @@ ROM_START( digger_rom )
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "z5", 0x0000, 0x1000, 0xb9732537 )
 	ROM_LOAD( "z6", 0x1000, 0x1000, 0x24b20f8e )
+
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "clr.bpr", 0x0000, 0x0020, 0x00000000 )
 ROM_END
 
 ROM_START( zigzag_rom )
@@ -944,6 +939,9 @@ ROM_START( zigzag_rom )
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "zz5", 0x0000, 0x1000, 0xb9732537 )
 	ROM_LOAD( "zz6", 0x1000, 0x1000, 0x24b20f8e )
+
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "clr.bpr", 0x0000, 0x0020, 0x00000000 )
 ROM_END
 
 ROM_START( mooncrgx_rom )
@@ -962,6 +960,9 @@ ROM_START( mooncrgx_rom )
 	ROM_LOAD( "12.chr", 0x0800, 0x0800, 0xdfbc68ba )
 	ROM_LOAD( "9.chr",  0x1000, 0x0800, 0x377a137c )
 	ROM_LOAD( "11.chr", 0x1800, 0x0800, 0xc1dc1cde )
+
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "mooncrst.clr", 0x0000, 0x0020, 0x08a76867 )
 ROM_END
 
 
@@ -1155,7 +1156,7 @@ struct GameDriver galaxian_driver =
 
 	galaxian_input_ports,
 
-	galaxian_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	galaxian_hiload, galaxian_hisave
@@ -1180,7 +1181,7 @@ struct GameDriver galmidw_driver =
 
 	galaxian_input_ports,
 
-	galaxian_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	galaxian_hiload, galaxian_hisave
@@ -1205,7 +1206,7 @@ struct GameDriver galnamco_driver =
 
 	galnamco_input_ports,
 
-	galaxian_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	galaxian_hiload, galaxian_hisave
@@ -1230,7 +1231,7 @@ struct GameDriver superg_driver =
 
 	galnamco_input_ports,
 
-	galaxian_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	galaxian_hiload, galaxian_hisave
@@ -1255,7 +1256,7 @@ struct GameDriver galapx_driver =
 
 	galnamco_input_ports,
 
-	galaxian_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	galaxian_hiload, galaxian_hisave
@@ -1280,7 +1281,7 @@ struct GameDriver galap1_driver =
 
 	galnamco_input_ports,
 
-	galaxian_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	galaxian_hiload, galaxian_hisave
@@ -1305,7 +1306,7 @@ struct GameDriver galap4_driver =
 
 	galnamco_input_ports,
 
-	galaxian_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	galaxian_hiload, galaxian_hisave
@@ -1330,7 +1331,7 @@ struct GameDriver galturbo_driver =
 
 	galnamco_input_ports,
 
-	galaxian_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	galaxian_hiload, galaxian_hisave
@@ -1355,7 +1356,7 @@ struct GameDriver pisces_driver =
 
 	pisces_input_ports,
 
-	galaxian_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	pisces_hiload, pisces_hisave
@@ -1380,7 +1381,7 @@ struct GameDriver japirem_driver =
 
 	galnamco_input_ports,
 
-	japirem_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	galaxian_hiload, galaxian_hisave
@@ -1405,7 +1406,7 @@ struct GameDriver uniwars_driver =
 
 	galnamco_input_ports,
 
-	uniwars_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	galaxian_hiload, galaxian_hisave
@@ -1430,7 +1431,7 @@ struct GameDriver warofbug_driver =
 
 	warofbug_input_ports,
 
-	warofbug_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	warofbug_hiload, warofbug_hisave
@@ -1455,7 +1456,7 @@ struct GameDriver redufo_driver =
 
 	redufo_input_ports,
 
-	galaxian_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	galaxian_hiload, galaxian_hisave
@@ -1481,7 +1482,7 @@ struct GameDriver pacmanbl_driver =
 
 	pacmanbl_input_ports,
 
-	pacmanbl_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	pacmanbl_hiload, pacmanbl_hisave
@@ -1506,7 +1507,7 @@ struct GameDriver digger_driver =
 
 	pisces_input_ports,
 
-	digger_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	0, 0
@@ -1531,7 +1532,7 @@ struct GameDriver zigzag_driver =
 
 	pisces_input_ports,
 
-	digger_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	0, 0
@@ -1557,7 +1558,7 @@ struct GameDriver mooncrgx_driver =
 
 	mooncrgx_input_ports,
 
-	mooncrgx_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	0, 0

@@ -381,7 +381,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static unsigned char color_prom[] =
+static unsigned char wrong_color_prom[] =
 {
 	/* brkthru.13 - palette red and green component */
 	0x00,0x0F,0xCF,0xFC,0x00,0xF0,0x00,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -462,7 +462,7 @@ static struct MachineDriver brkthru_machine_driver =
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
 			1250000,        /* 1.25 Mhz ? */
-			2,	/* memory region #2 */
+			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the YM3526 */
 		}
@@ -511,7 +511,7 @@ static struct MachineDriver darwin_machine_driver =
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
 			1200000,        /* 1.25 Mhz ? */
-			2,	/* memory region #2 */
+			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the YM3526 */
 		}
@@ -582,6 +582,10 @@ ROM_START( brkthru_rom )
 	ROM_LOAD( "brkthru.10", 0x2a000, 0x8000, 0x50691d89 )
 	ROM_LOAD( "brkthru.11", 0x32000, 0x8000, 0x92f174b5 )
 
+	ROM_REGION(0x200)	/* color proms */
+	ROM_LOAD( "brkthru.13", 0x0000, 0x100, 0x086024c4 ) /* red and green component */
+	ROM_LOAD( "brkthru.14", 0x0100, 0x100, 0xe2f60e06 ) /* blue component */
+
 	ROM_REGION(0x10000)	/* 64K for sound CPU */
 	ROM_LOAD( "brkthru.5", 0x8000, 0x8000, 0x364efd26 )
 ROM_END
@@ -615,6 +619,8 @@ ROM_START( darwin_rom )
 	ROM_LOAD( "darw_11.rom", 0x2a000, 0x8000, 0xb3db09a3 )
 	ROM_LOAD( "darw_12.rom", 0x32000, 0x8000, 0xebb10a19 )
 
+	ROM_REGION(0x200)	/* color proms - missing! */
+
 	ROM_REGION(0x10000)	/* 64K for sound CPU */
 	ROM_LOAD( "darw_08.rom", 0x8000, 0x8000, 0x5ad39fb7 )
 ROM_END
@@ -626,7 +632,7 @@ static int hiload(void)
 
 
 	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x0531],"\x00\x01\x50\x00",4) == 0)
+	if (memcmp(&RAM[0x0531],"\x00\x01\x50\x00",4) == 0)
 	{
 		void *f;
 
@@ -634,10 +640,10 @@ static int hiload(void)
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
 
-                        osd_fread(f,&RAM[0x0531],4*5+3*5);
+			osd_fread(f,&RAM[0x0531],4*5+3*5);
 
-                        memcpy(&RAM[0x0402], &RAM[0x0531], 4);
-                        osd_fclose(f);
+			memcpy(&RAM[0x0402], &RAM[0x0531], 4);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -655,7 +661,7 @@ static void hisave(void)
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-                osd_fwrite(f,&RAM[0x0531],4*5+3*5);
+		osd_fwrite(f,&RAM[0x0531],4*5+3*5);
 		osd_fclose(f);
 	}
 }
@@ -666,8 +672,8 @@ static int darwin_hiload(void)
 
 
 	/* check if the hi score table has already been initialized */
-        if ((memcmp(&RAM[0x1b6c],"\x00\x04\x48\x30",4) == 0 )&& \
-		(memcmp(&RAM[0x1b93],"\x8b\x8b\x8b\x8a\x8a\x8a\x89\x89\x89" ,9) == 0))
+	if ((memcmp(&RAM[0x1b6c],"\x00\x04\x48\x30",4) == 0 )&& \
+	    (memcmp(&RAM[0x1b93],"\x8b\x8b\x8b\x8a\x8a\x8a\x89\x89\x89" ,9) == 0))
 	{
 		void *f;
 
@@ -675,9 +681,9 @@ static int darwin_hiload(void)
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
 
-                        osd_fread(f,&RAM[0x1b6c],0x10);
+			osd_fread(f,&RAM[0x1b6c],0x10);
 			osd_fread(f,&RAM[0x1b93],0x09);
-                        osd_fclose(f);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -722,7 +728,7 @@ struct GameDriver brkthru_driver =
 
 	input_ports,
 
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
@@ -736,7 +742,7 @@ struct GameDriver darwin_driver =
 	"1986",
 	"Data East Corporation",
 	"Phil Stroffolino (MAME driver)\nCarlos Lozano (Breakthru hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili\nBryan McPhail (sound)\nVille Laitinen (MAME driver)",
-	0,
+	GAME_WRONG_COLORS,
 	&darwin_machine_driver,
 
 	darwin_rom,
@@ -746,7 +752,7 @@ struct GameDriver darwin_driver =
 
 	darwin_input_ports,
 
-	color_prom, 0, 0,	/* wrong! */
+	wrong_color_prom, 0, 0,	/* wrong! */
 	ORIENTATION_ROTATE_270,
 
 	darwin_hiload, darwin_hisave

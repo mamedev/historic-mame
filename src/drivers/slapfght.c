@@ -140,6 +140,7 @@ PSG2-F -> $c80a - DIP Switch Bank 2 (Test mode is here)
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+/* #define FASTSLAPBOOT */
 
 /* VIDHRDW */
 
@@ -440,7 +441,7 @@ static struct MachineDriver machine_driver =
 			6000000,
 			0,
 			readmem,writemem,readport,writeport,
-			slapfight_cpu_interrupt,1,			/* 2 gives approx correct sound but game is too fast */
+			slapfight_cpu_interrupt, 1,			/* 2 gives approx correct sound but game is too fast */
 			0,0
 		},
 		{
@@ -448,11 +449,11 @@ static struct MachineDriver machine_driver =
 			6000000,
 			3,
 			sound_readmem,sound_writemem,0,0,
-			interrupt,0,
-			slapfight_sound_interrupt,0
+			interrupt, 0,
+			slapfight_sound_interrupt, 27306667
 		}
 	},
-	60,
+	60,				/* fps - frames per second */
 	DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	slapfight_init_machine,
@@ -567,7 +568,6 @@ ROM_START( slapbtuk_rom )
 	ROM_LOAD( "sf_r05.bin",  0x0000, 0x2000, 0xa330146a )
 ROM_END
 
-
 static void slapfigh_decode(void)
 {
 #ifdef FASTSLAPBOOT
@@ -637,6 +637,93 @@ static void slapbtuk_decode(void)
 
 }
 
+/* High scores are at location C060 - C0A5 ( 70 bytes )	*/
+/* 10 * 3 bytes for score				*/
+/* 10 * 3 bytes for initials				*/
+/* 10 * 1 byte for level reached ( area ) 		*/
+static int slap_load(void)
+{
+unsigned char	*RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	/* check to see if high scores initialised */
+	if ((memcmp(&RAM[0xc060],"\x50\x30\x00",3) == 0) &&
+	    (memcmp(&RAM[0xc0a3],"\x06\x05\x04",3) == 0))
+	 {
+	  void	*f;
+	  int	lead0;
+
+	  if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+	   {
+	    osd_fread(f,&RAM[0xc060],10*7);
+	    RAM[0xc05d] = RAM[0xc060];
+	    RAM[0xc05e] = RAM[0xc061];
+	    RAM[0xc05f] = RAM[0xc062];
+	// patch in high score in screen display ...
+	    lead0 = 0;
+	    if ((RAM[0xc062]>>4) == 0)
+	      RAM[0xc118] = 0x2D;
+	    else
+	     {
+	      RAM[0xc118] = RAM[0xc062]>>4;
+	      lead0 = 1;		/* don't throw away 0 anymore ... */
+	     }
+	    if (((RAM[0xc062]&0x0f) == 0) && (lead0 == 0))
+	      RAM[0xc119] = 0x2D;
+	    else
+	     {
+	      RAM[0xc119] = RAM[0xc062]&0x0f;
+	      lead0 = 1;		/* don't throw away 0 anymore ... */
+	     }
+	    if (((RAM[0xc061]>>4) == 0) && (lead0 == 0))
+	      RAM[0xc11A] = 0x2D;
+	    else
+	     {
+	      RAM[0xc11A] = RAM[0xc061]>>4;
+	      lead0 = 1;		/* don't throw away 0 anymore ... */
+	     }
+	    if (((RAM[0xc061]&0x0f) == 0) && (lead0 == 0))
+	      RAM[0xc11B] = 0x2D;
+	    else
+	     {
+	      RAM[0xc11B] = RAM[0xc061]&0x0F;
+	      lead0 = 1;		/* don't throw away 0 anymore ... */
+	     }
+	    if (((RAM[0xc060]>>4) == 0) && (lead0 == 0))
+	      RAM[0xc11C] = 0x2D;
+	    else
+	     {
+	      RAM[0xc11C] = RAM[0xc060]>>4;
+	      lead0 = 1;		/* don't throw away 0 anymore ... */
+	     }
+	    if (((RAM[0xc060]&0x0F) == 0) && (lead0 == 0))
+	      RAM[0xc11D] = 0x2D;
+	    else
+	     {
+	      RAM[0xc11D] = RAM[0xc060]&0x0F;
+	      lead0 = 1;		/* don't throw away 0 anymore ... */
+	     }
+
+	    osd_fclose(f);
+	   }
+	  return 1;	/* hi scores loaded */
+	 }
+	else
+	  return 0;	/* high scores not loaded yet */
+}
+
+static void slap_save(void)
+{
+unsigned char	*RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+void	*f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	 {
+	  osd_fwrite(f,&RAM[0xc060],10*7);
+	  osd_fclose(f);
+	 }
+
+}
+
 struct GameDriver slapfigh_driver =
 {
 	__FILE__,
@@ -659,7 +746,7 @@ struct GameDriver slapfigh_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_270,
 
-	0,0
+	slap_load, slap_save
 };
 
 struct GameDriver slapbtjp_driver =
@@ -684,7 +771,7 @@ struct GameDriver slapbtjp_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_270,
 
-	0,0
+	slap_load, slap_save
 };
 
 struct GameDriver slapbtuk_driver =
@@ -709,5 +796,5 @@ struct GameDriver slapbtuk_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_270,
 
-	0,0
+	slap_load, slap_save
 };

@@ -1215,7 +1215,10 @@ static void cpu_updatecallback (int param)
 	/* check the watchdog */
 	if (watchdog_counter > 0)
 		if (--watchdog_counter == 0)
+		{
+if (errorlog) fprintf(errorlog,"Reset caused by the watchdog\n");
 			machine_reset ();
+		}
 
 	/* reset the refresh timer */
 	timer_reset (refresh_timer, TIME_NEVER);

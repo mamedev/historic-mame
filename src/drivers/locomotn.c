@@ -66,16 +66,16 @@ void commsega_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 /* instead of the lower ones, so there is a good      */
 /* chance it's the right one. */
 
-/* The timer clock which feeds the lower 4 bits of    */
-/* AY-3-8910 port A is based on the same clock        */
-/* feeding the sound CPU Z80.  It is a divide by      */
+/* The timer clock which feeds the lower 4 bits of    */
+/* AY-3-8910 port A is based on the same clock        */
+/* feeding the sound CPU Z80.  It is a divide by      */
 /* 10240, formed by a standard divide by 1024,        */
-/* followed by a divide by 10 using a 4 bit           */
-/* bi-quinary count sequence. (See LS90 data sheet    */
+/* followed by a divide by 10 using a 4 bit           */
+/* bi-quinary count sequence. (See LS90 data sheet    */
 /* for an example).                                   */
 /* Bits 1-3 come directly from the upper three bits   */
 /* of the bi-quinary counter. Bit 0 comes from the    */
-/* output of the divide by 1024.                      */
+/* output of the divide by 1024.                      */
 
 static int locomotn_timer[20] = {
 0x00, 0x01, 0x00, 0x01, 0x02, 0x03, 0x02, 0x03, 0x04, 0x05,
@@ -425,13 +425,13 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &charlayout,        0, 64 },
 	{ 1, 0x0000, &spritelayout,      0, 64 },
-	{ 1, 0x0000, &radardotlayout, 64*4, 4 },
+	{ 1, 0x0000, &radardotlayout,  64*4, 4 },
 	{ -1 } /* end of array */
 };
 
 
 
-static unsigned char color_prom[] =
+static unsigned char wrong_color_prom[] =
 {
 	/* 8b.cpu - palette */
 	0x00,0x07,0xA0,0x97,0x67,0x3F,0x7D,0x38,0xF0,0xA8,0xC0,0x18,0x5E,0xA8,0x1B,0xFF,
@@ -486,7 +486,7 @@ static struct MachineDriver GAMENAME##_machine_driver =             \
 		{                                                           \
 			CPU_Z80 | CPU_AUDIO_CPU,                                \
 			14318180/4,	/* ???? same as other Konami games */       \
-			2,	/* memory region #2 */                              \
+			3,	/* memory region #3 */                              \
 			sound_readmem,sound_writemem,0,0,                       \
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */ \
 		}                                                           \
@@ -540,6 +540,10 @@ ROM_START( locomotn_rom )
 	ROM_LOAD( "c1.cpu", 0x0000, 0x1000, 0x3a668900 )
 	ROM_LOAD( "c2.cpu", 0x1000, 0x1000, 0xfd68fc8c )
 
+	ROM_REGION(0x0120)	/* color proms */
+	ROM_LOAD( "8b.cpu", 0x0000, 0x0020, 0x9078cf70 ) /* palette */
+	ROM_LOAD( "9d.cpu", 0x0020, 0x0100, 0xd6e50501 ) /* loookup table */
+
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "s1.snd", 0x0000, 0x1000, 0xf8aff0dd )
 ROM_END
@@ -554,6 +558,8 @@ ROM_START( jungler_rom )
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "jungr9",  0x0000, 0x1000, 0x7c800000 )
 	ROM_LOAD( "jungr10", 0x1000, 0x1000, 0xb07a0000 )
+
+	ROM_REGION(0x0120)	/* color proms */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "jungb1t", 0x0000, 0x1000, 0x42b75fa9 )
@@ -571,6 +577,8 @@ ROM_START( commsega_rom )
 	ROM_LOAD( "csega7", 0x0000, 0x1000, 0xdae5dd0b )
 	ROM_LOAD( "csega6", 0x1000, 0x1000, 0xfda0a576 )
 
+	ROM_REGION(0x0120)	/* color proms */
+
 	ROM_REGION(0x10000) /* 64k for the audio CPU */
 	ROM_LOAD( "csega8", 0x0000, 0x1000, 0x5ec17f47 )
 ROM_END
@@ -584,21 +592,21 @@ static int locomotn_hiload(void)
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x9f00],"\x00\x00\x01",3) == 0 &&
-					memcmp(&RAM[0x99c6],"\x00\x00\x01",3) == 0)
+	    memcmp(&RAM[0x99c6],"\x00\x00\x01",3) == 0)
 	{
-			void *f;
+		void *f;
 
 
-			if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-			{
-					osd_fread(f,&RAM[0x9f00],12*10);
-					RAM[0x99c6] = RAM[0x9f00];
-					RAM[0x99c7] = RAM[0x9f01];
-					RAM[0x99c8] = RAM[0x9f02];
-					osd_fclose(f);
-			}
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x9f00],12*10);
+			RAM[0x99c6] = RAM[0x9f00];
+			RAM[0x99c7] = RAM[0x9f01];
+			RAM[0x99c8] = RAM[0x9f02];
+			osd_fclose(f);
+		}
 
-			return 1;
+		return 1;
 	}
 	else return 0;  /* we can't load the hi scores yet */
 }
@@ -613,8 +621,8 @@ static void locomotn_hisave(void)
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-			osd_fwrite(f,&RAM[0x9f00],12*10);
-			osd_fclose(f);
+		osd_fwrite(f,&RAM[0x9f00],12*10);
+		osd_fclose(f);
 	}
 }
 
@@ -626,19 +634,19 @@ static int jungler_hiload(void)
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x991c],"\x00\x00\x02",3) == 0)
 	{
-			void *f;
+		void *f;
 
 
-			if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-			{
-					osd_fread(f,&RAM[0x9940],16*10);
-					RAM[0x991c] = RAM[0x9940];
-					RAM[0x991d] = RAM[0x9941];
-					RAM[0x991e] = RAM[0x9942];
-					osd_fclose(f);
-			}
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x9940],16*10);
+			RAM[0x991c] = RAM[0x9940];
+			RAM[0x991d] = RAM[0x9941];
+			RAM[0x991e] = RAM[0x9942];
+			osd_fclose(f);
+		}
 
-			return 1;
+		return 1;
 	}
 	else return 0;  /* we can't load the hi scores yet */
 }
@@ -651,8 +659,8 @@ static void jungler_hisave(void)
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-			osd_fwrite(f,&RAM[0x9940],16*10);
-			osd_fclose(f);
+		osd_fwrite(f,&RAM[0x9940],16*10);
+		osd_fclose(f);
 	}
 }
 
@@ -664,16 +672,16 @@ static int commsega_hiload(void)
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x9c60],"\x1d\x1c",2) == 0)
 	{
-			void *f;
+		void *f;
 
 
-			if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-			{
-					osd_fread(f,&RAM[0x9c6d],6);
-					osd_fclose(f);
-			}
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x9c6d],6);
+			osd_fclose(f);
+		}
 
-			return 1;
+		return 1;
 	}
 	else return 0;  /* we can't load the hi scores yet */
 }
@@ -686,8 +694,8 @@ static void commsega_hisave(void)
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-			osd_fwrite(f,&RAM[0x9c6d],6);
-			osd_fclose(f);
+		osd_fwrite(f,&RAM[0x9c6d],6);
+		osd_fclose(f);
 	}
 }
 
@@ -712,7 +720,7 @@ struct GameDriver locomotn_driver =
 
 	locomotn_input_ports,
 
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	locomotn_hiload, locomotn_hisave
@@ -727,7 +735,7 @@ struct GameDriver jungler_driver =
 	"1981",
 	"Konami",
 	"Nicola Salmoria",
-	0,
+	GAME_WRONG_COLORS,
 	&jungler_machine_driver,
 
 	jungler_rom,
@@ -737,7 +745,7 @@ struct GameDriver jungler_driver =
 
 	jungler_input_ports,
 
-	color_prom, 0, 0,	/* wrong */
+	wrong_color_prom, 0, 0,	/* wrong */
 	ORIENTATION_ROTATE_90,
 
 	jungler_hiload, jungler_hisave
@@ -752,7 +760,7 @@ struct GameDriver commsega_driver =
 	"1983",
 	"Sega",
 	"Nicola Salmoria\nBrad Oliver",
-	0,
+	GAME_WRONG_COLORS,
 	&commsega_machine_driver,
 
 	commsega_rom,
@@ -761,7 +769,8 @@ struct GameDriver commsega_driver =
 	0, /* sound_prom */
 
 	commsega_input_ports,
-	color_prom, 0, 0,	/* wrong */
+
+	wrong_color_prom, 0, 0,	/* wrong */
 	ORIENTATION_ROTATE_90,
 
 	commsega_hiload, commsega_hisave

@@ -13,7 +13,7 @@
 
 static int gfx_bank,palette_bank;
 
-
+unsigned char *mario_scrolly;
 
 /***************************************************************************
 
@@ -134,22 +134,27 @@ void mario_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			dirtybuffer[offs] = 0;
 
-			sx = 31 - offs % 32;
-			sy = 31 - offs / 32;
+			sx = offs % 32;
+			sy = offs / 32;
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs] + 256 * gfx_bank,
 					(videoram[offs] >> 5) + 8 * palette_bank,
 					0,0,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					0,TRANSPARENCY_NONE,0);
 		}
 	}
 
 
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	/* copy the temporary bitmap to the screen */
+	{
+		int scrolly;
 
+		/* I'm not positive the scroll direction is right */
+		scrolly = -*mario_scrolly - 17;
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	}
 
 	/* Draw the sprites. */
 	for (offs = 0;offs < spriteram_size;offs += 4)
@@ -158,9 +163,9 @@ void mario_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		{
 			drawgfx(bitmap,Machine->gfx[1],
 					spriteram[offs + 2],
-					(spriteram[offs + 1] & 0x0f) + 0x10 * palette_bank,
+					(spriteram[offs + 1] & 0x0f) + 16 * palette_bank,
 					spriteram[offs + 1] & 0x80,spriteram[offs + 1] & 0x40,
-					248 - spriteram[offs + 3],spriteram[offs] - 8,
+					spriteram[offs + 3] - 8,240 - spriteram[offs] + 8,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}

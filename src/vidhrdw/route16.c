@@ -23,13 +23,21 @@ static int video_disable_1 = 0;
 static int video_disable_2 = 0;
 static int video_remap_1;
 static int video_remap_2;
-
+static const unsigned char *route16_color_prom;
 static int route16;
 
 /* Local functions */
 static void modify_pen(int pen, int colorindex);
 static void common_videoram_w(int offset,int data,
                               int coloroffset, struct osd_bitmap *bitmap);
+
+
+
+void route16_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+	route16_color_prom = color_prom;	/* we'll need this later */
+}
+
 
 /***************************************************************************
 
@@ -325,7 +333,7 @@ static void modify_pen(int pen, int colorindex)
 {
 	int r,g,b,color;
 
-	color = Machine->gamedrv->color_prom[colorindex];
+	color = route16_color_prom[colorindex];
 	r = ((color & 1) ? 0xff : 0x00);
 	g = ((color & 2) ? 0xff : 0x00);
 	b = ((color & 4) ? 0xff : 0x00);

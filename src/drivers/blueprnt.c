@@ -448,7 +448,7 @@ struct GameDriver blueprnt_driver =
 	"1982",
 	"Bally Midway",
 	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
-	0,
+	GAME_WRONG_COLORS,
 	&machine_driver,
 
 	blueprnt_rom,

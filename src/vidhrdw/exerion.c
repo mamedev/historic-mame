@@ -97,10 +97,8 @@ void exerion_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		dirtybuffer[offs] = 0;
 
-		{
-			sx = 29 - offs / 64;
-			sy = offs % 64 - 12;
-		}
+		sx = offs % 64;
+		sy = offs / 64;
 
 		drawgfx(tmpbitmap,Machine->gfx[0],
 			videoram[offs] + 256*bankreg,
@@ -134,13 +132,13 @@ void exerion_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		int doubled;
 		int color;
 
-		x = spriteram[i+1]-32;
-		y = spriteram[i+3]*2-32;
+		x = spriteram[i+3]*2 + 64 + 8;	/* ??? */
+		y = 255 - spriteram[i+1];
 		s = spriteram[i+2];
 		/* decode the sprite number */
 		s = s2 = ((s & 0x07) << 5) | ((s & 0xf0) >> 4) | ((s & 0x08) << 1);
-		xflip = spriteram[i] & 0x40;
-		yflip = spriteram[i] & 0x80;
+		xflip = spriteram[i] & 0x80;
+		yflip = spriteram[i] & 0x40;
 		wide = spriteram[i] & 0x08;
 		doubled = spriteram[i] & 0x10;
 
@@ -148,7 +146,7 @@ void exerion_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		if (wide)
 		{
-			if (xflip)
+			if (yflip)
 				s++;
 			else
 				s2++;
@@ -159,7 +157,7 @@ void exerion_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					s2,
 					color,
 					xflip,yflip,
-					x-48,y,
+					x,y+32,
 					0, TRANSPARENCY_PEN,0);
 			}
 			else
@@ -168,7 +166,7 @@ void exerion_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					s2,
 					color,
 					xflip,yflip,
-					x-16,y,
+					x,y+16,
 					0, TRANSPARENCY_PEN,0);
 			}
 		}
@@ -179,7 +177,7 @@ void exerion_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			s,
 			color,
 			xflip,yflip,
-			x-16,y,
+			x,y,
 			0, TRANSPARENCY_PEN,0);
 		}
 		else

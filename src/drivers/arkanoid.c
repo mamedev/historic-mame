@@ -345,8 +345,8 @@ ROM_START( arkanoid_rom )
 	ROM_LOAD( "08.bpr", 0x0200, 0x0200, 0xf5250905 )	/* green component */
 	ROM_LOAD( "09.bpr", 0x0400, 0x0200, 0x27af0c05 )	/* blue component */
 
-	ROM_REGION(0x00800)	/* 8k for the microcontroller */
-	ROM_LOAD( "arkanoid.uc", 0x00080, 0x0780, 0xf0366d4e )
+	ROM_REGION(0x0800)	/* 8k for the microcontroller */
+	ROM_LOAD( "arkanoid.uc", 0x0080, 0x0780, 0xf0366d4e )
 ROM_END
 
 ROM_START( arknoidu_rom )
@@ -364,8 +364,8 @@ ROM_START( arknoidu_rom )
 	ROM_LOAD( "08.bpr", 0x0200, 0x0200, 0xf5250905 )	/* green component */
 	ROM_LOAD( "09.bpr", 0x0400, 0x0200, 0x27af0c05 )	/* blue component */
 
-	ROM_REGION(0x00800)	/* 8k for the microcontroller */
-	ROM_LOAD( "arkanoid.uc", 0x00080, 0x0780, 0xf0366d4e )
+	ROM_REGION(0x0800)	/* 8k for the microcontroller */
+	ROM_LOAD( "arkanoid.uc", 0x0080, 0x0780, 0xf0366d4e )
 ROM_END
 
 ROM_START( arkbl2_rom )
@@ -383,8 +383,8 @@ ROM_START( arkbl2_rom )
 	ROM_LOAD( "08.bpr", 0x0200, 0x0200, 0xf5250905 )	/* green component */
 	ROM_LOAD( "09.bpr", 0x0400, 0x0200, 0x27af0c05 )	/* blue component */
 
-	ROM_REGION(0x00800)	/* 8k for the microcontroller */
-	ROM_LOAD( "68705p3.6i", 0x00080, 0x0780, 0xe53f6dcd )
+	ROM_REGION(0x0800)	/* 8k for the microcontroller */
+	ROM_LOAD( "68705p3.6i", 0x0080, 0x0780, 0xe53f6dcd )
 ROM_END
 
 ROM_START( arkatayt_rom )

@@ -21,6 +21,7 @@ struct osd_bitmap
 };
 
 
+#define OSD_KEY_NONE		0
 #define OSD_KEY_ESC         1        /* keyboard scan codes */
 #define OSD_KEY_1           2        /* (courtesy of allegro.h) */
 #define OSD_KEY_2           3
@@ -131,6 +132,18 @@ struct osd_bitmap
 
 #define OSD_MAX_KEY         115
 
+/* ASG 980730: these are pseudo-keys that the os-dependent code can map to whatever they see fit */
+
+#define OSD_KEY_FAST_EXIT		(OSD_MAX_KEY+1)
+#define OSD_KEY_RESET_MACHINE	(OSD_MAX_KEY+2)
+#define OSD_KEY_VOLUME_DOWN		(OSD_MAX_KEY+3)
+#define OSD_KEY_VOLUME_UP		(OSD_MAX_KEY+4)
+#define OSD_KEY_PAUSE			(OSD_MAX_KEY+5)
+#define OSD_KEY_UNPAUSE			(OSD_MAX_KEY+6)
+#define OSD_KEY_CONFIGURE		(OSD_MAX_KEY+7)
+#define OSD_KEY_SHOW_GFX		(OSD_MAX_KEY+8)
+
+
 
 #define OSD_JOY_LEFT    1
 #define OSD_JOY_RIGHT   2
@@ -207,7 +220,6 @@ void osd_exit(void);
 /* routines don't clip at boundaries of the bitmap. */
 struct osd_bitmap *osd_new_bitmap(int width,int height,int depth);	/* ASG 980209 */
 #define osd_create_bitmap(w,h) osd_new_bitmap((w),(h),8)		/* ASG 980209 */
-/* ASG 980209 struct osd_bitmap *osd_create_bitmap(int width,int height);*/
 void osd_clearbitmap(struct osd_bitmap *bitmap);
 void osd_free_bitmap(struct osd_bitmap *bitmap);
 /* Create a display screen, or window, large enough to accomodate a bitmap */
@@ -224,6 +236,7 @@ void osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,u
 void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned char blue);
 void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char *blue);
 void osd_mark_dirty(int xmin, int ymin, int xmax, int ymax, int ui);    /* ASG 971011 */
+int osd_skip_this_frame(int recommend);
 void osd_update_display(void);
 void osd_update_audio(void);
 void osd_play_sample(int channel,signed char *data,int len,int freq,int volume,int loop);

@@ -120,46 +120,51 @@ void tecmo_colorram_w(int offset,int data)
 
 ***************************************************************************/
 
-void tecmo_draw_sprites( struct osd_bitmap *bitmap, int priority );
-void tecmo_draw_sprites( struct osd_bitmap *bitmap, int priority ){
-  int offs;
+void tecmo_draw_sprites( struct osd_bitmap *bitmap, int priority )
+{
+	int offs;
 
-  /* draw all visible sprites of specified priority */
-  for (offs = 0;offs < spriteram_size;offs += 8){
-    int flags = spriteram[offs+3];
-    if( (flags>>6) == priority ){
-      int bank = spriteram[offs+0];
-      if( bank & 4 ){ /* visible */
-	int size = (spriteram[offs + 2] & 3);
-	/* 0 = 8x8 1 = 16x16 2 = 32x32 */
+	/* draw all visible sprites of specified priority */
+	for (offs = 0;offs < spriteram_size;offs += 8)
+	{
+		int flags = spriteram[offs+3];
 
-	int which = spriteram[offs+1];
 
-	int code;
+		if( (flags>>6) == priority )
+		{
+			int bank = spriteram[offs+0];
+			if( bank & 4 )
+			{ /* visible */
+				int size = (spriteram[offs + 2] & 3);
+				/* 0 = 8x8 1 = 16x16 2 = 32x32 */
 
-	if( video_type != 0)
-	  code = (which) + ((bank&0xf8)<<5); /* silkworm */
-	else
-	  code = (which)+((bank&0xf0)<<4); /* rygar */
+				int which = spriteram[offs+1];
 
-	if (size == 1) code >>= 2;
-	else if (size == 2) code >>= 4;
+				int code;
 
-	drawgfx(bitmap,Machine->gfx[size+1],
-		code,
-		flags&0xf, /* color */
-		bank&1, /* flipx */
-		bank&2, /* flipy */
+				if( video_type != 0)
+				  code = (which) + ((bank&0xf8)<<5); /* silkworm */
+				else
+				  code = (which)+((bank&0xf0)<<4); /* rygar */
 
-		spriteram[offs + 5] - ((flags & 0x10) << 4), /* sx */
-		spriteram[offs + 4] - ((flags & 0x20) << 3), /* sy */
+				if (size == 1) code >>= 2;
+				else if (size == 2) code >>= 4;
 
-		&Machine->drv->visible_area,
-		priority == 3 ? TRANSPARENCY_THROUGH : TRANSPARENCY_PEN,
-		priority == 3 ? palette_transparent_pen : 0);
-	  }
+				drawgfx(bitmap,Machine->gfx[size+1],
+						code,
+						flags&0xf, /* color */
+						bank&1, /* flipx */
+						bank&2, /* flipy */
+
+						spriteram[offs + 5] - ((flags & 0x10) << 4), /* sx */
+						spriteram[offs + 4] - ((flags & 0x20) << 3), /* sy */
+
+						&Machine->drv->visible_area,
+						priority == 3 ? TRANSPARENCY_THROUGH : TRANSPARENCY_PEN,
+						priority == 3 ? palette_transparent_pen : 0);
+			}
+		}
 	}
-  }
 }
 
 void tecmo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)

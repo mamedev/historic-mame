@@ -12,14 +12,14 @@ c800-cbff Video RAM: middle playfield
 cc00-cfff Video RAM: back playfield
 d100-d17f Sprites
 d200-d27f Palette (64 pairs: xxxxxxxR RRGGGBBB. bits are inverted, i.e. 0x01ff = black)
-e000-efff ROM (Front Line only)
+e000-efff ROM (on the protection board with the 68705)
 
 read:
 
-8800      Protection data read
-8801      Protection port Timming port
-			bit 0 protection port read ready
-			bit 1 protection port write ready
+8800      68705 data read
+8801      68705 status read
+            bit 0 = the 68705 has read data from the Z80
+            bit 1 = the 68705 has written data for the Z80
 d404      returns contents of graphic ROM, pointed by d509-d50a
 d408      IN0
           bit 5 = jump player 1
@@ -50,7 +50,7 @@ d40a      DSW1
           bit 3-4 = lives
 		  bit 2   = ?
           bit 0-1 = finish bonus
-d40b      IN2 - comes from a protection chip
+d40b      IN2 - can come from a ROM or PAL chip
           bit 7 = start 2
           bit 6 = start 1
 d40c      COIN
@@ -74,7 +74,7 @@ d40f      8910 #0 read
               bit 2-4 ?
               bit 0-1 bonus  none /10000 / 20000 /30000
 write
-8800      Protection data write
+8800      68705 data write
 d000-d01f front playfield column scroll
 d020-d03f middle playfield column scroll
 d040-d05f back playfield column scroll
@@ -105,7 +105,7 @@ d509-d50a pointer to graphic ROM to read from d404
 d50b      command for the audio CPU
 d50d      watchdog reset
 d50e      bit 7 = ROM bank selector
-d50f      goes to a protection chip, I think; the result is read from d40b
+d50f      can go to a ROM or PAL; the result is read from d40b
 d600      bit 0 horizontal screen flip
           bit 1 vertical screen flip
           bit 2 ? sprite related, called OBJEX
@@ -143,12 +143,20 @@ write:
 
 
 
-extern unsigned char *elevator_protection;
-int elevator_protection_r(int offset);
-int elevator_protection_t_r(int offset);
 void taito_init_machine(void);
 void taito_bankswitch_w(int offset,int data);
 void taito_digital_out(int offset,int data);
+int taito_fake_data_r(int offset);
+int taito_fake_status_r(int offset);
+void taito_fake_data_w(int offset,int data);
+int taito_mcu_data_r(int offset);
+int taito_mcu_status_r(int offset);
+void taito_mcu_data_w(int offset,int data);
+int taito_68705_portA_r(int offset);
+int taito_68705_portB_r(int offset);
+int taito_68705_portC_r(int offset);
+void taito_68705_portA_w(int offset,int data);
+void taito_68705_portB_w(int offset,int data);
 
 extern unsigned char *taito_videoram2,*taito_videoram3;
 extern unsigned char *taito_characterram;
@@ -191,8 +199,8 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0x6000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0x8800, 0x8800, elevator_protection_r },
-	{ 0x8801, 0x8801, elevator_protection_t_r },
+	{ 0x8800, 0x8800, taito_fake_data_r },
+	{ 0x8801, 0x8801, taito_fake_status_r },
 	{ 0xc400, 0xcfff, MRA_RAM },
 	{ 0xd404, 0xd404, taito_gfxrom_r },
 	{ 0xd408, 0xd408, input_port_0_r },	/* IN0 */
@@ -209,7 +217,60 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x8800, 0x8800, MWA_RAM, &elevator_protection },
+	{ 0x8800, 0x8800, taito_fake_data_w },
+	{ 0x9000, 0xbfff, taito_characterram_w, &taito_characterram },
+	{ 0xc400, 0xc7ff, videoram_w, &videoram, &videoram_size },
+	{ 0xc800, 0xcbff, taito_videoram2_w, &taito_videoram2 },
+	{ 0xcc00, 0xcfff, taito_videoram3_w, &taito_videoram3 },
+	{ 0xd000, 0xd01f, MWA_RAM, &taito_colscrolly1 },
+	{ 0xd020, 0xd03f, MWA_RAM, &taito_colscrolly2 },
+	{ 0xd040, 0xd05f, MWA_RAM, &taito_colscrolly3 },
+	{ 0xd100, 0xd17f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0xd200, 0xd27f, taito_paletteram_w, &paletteram },
+	{ 0xd300, 0xd300, MWA_RAM, &taito_video_priority },
+	{ 0xd40e, 0xd40e, AY8910_control_port_0_w },
+	{ 0xd40f, 0xd40f, AY8910_write_port_0_w },
+	{ 0xd500, 0xd500, MWA_RAM, &taito_scrollx1 },
+	{ 0xd501, 0xd501, MWA_RAM, &taito_scrolly1 },
+	{ 0xd502, 0xd502, MWA_RAM, &taito_scrollx2 },
+	{ 0xd503, 0xd503, MWA_RAM, &taito_scrolly2 },
+	{ 0xd504, 0xd504, MWA_RAM, &taito_scrollx3 },
+	{ 0xd505, 0xd505, MWA_RAM, &taito_scrolly3 },
+	{ 0xd506, 0xd507, taito_colorbank_w, &taito_colorbank },
+	{ 0xd509, 0xd50a, MWA_RAM, &taito_gfxpointer },
+	{ 0xd50b, 0xd50b, taito_soundcommand_w },
+	{ 0xd50d, 0xd50d, watchdog_reset_w },
+	{ 0xd50e, 0xd50e, taito_bankswitch_w },
+	{ 0xd600, 0xd600, taito_videoenable_w, &taito_video_enable },
+	{ 0xe000, 0xefff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+/* only difference is taito_fake_ replaced with taito_mcu_ */
+static struct MemoryReadAddress mcu_readmem[] =
+{
+	{ 0x0000, 0x5fff, MRA_ROM },
+	{ 0x6000, 0x7fff, MRA_BANK1 },
+	{ 0x8000, 0x87ff, MRA_RAM },
+	{ 0x8800, 0x8800, taito_mcu_data_r },
+	{ 0x8801, 0x8801, taito_mcu_status_r },
+	{ 0xc400, 0xcfff, MRA_RAM },
+	{ 0xd404, 0xd404, taito_gfxrom_r },
+	{ 0xd408, 0xd408, input_port_0_r },	/* IN0 */
+	{ 0xd409, 0xd409, input_port_1_r },	/* IN1 */
+	{ 0xd40a, 0xd40a, input_port_4_r },	/* DSW1 */
+	{ 0xd40b, 0xd40b, input_port_2_r },	/* IN2 */
+	{ 0xd40c, 0xd40c, input_port_3_r },	/* Service */
+	{ 0xd40f, 0xd40f, AY8910_read_port_0_r },	/* DSW2 and DSW3 */
+	{ 0xe000, 0xefff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress mcu_writemem[] =
+{
+	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0x8000, 0x87ff, MWA_RAM },
+	{ 0x8800, 0x8800, taito_mcu_data_w },
 	{ 0x9000, 0xbfff, taito_characterram_w, &taito_characterram },
 	{ 0xc400, 0xc7ff, videoram_w, &videoram, &videoram_size },
 	{ 0xc800, 0xcbff, taito_videoram2_w, &taito_videoram2 },
@@ -262,6 +323,26 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x4803, 0x4803, AY8910_write_port_2_w },
 	{ 0x4804, 0x4804, AY8910_control_port_3_w },
 	{ 0x4805, 0x4805, AY8910_write_port_3_w },
+	{ -1 }	/* end of table */
+};
+
+
+static struct MemoryReadAddress m68705_readmem[] =
+{
+	{ 0x0000, 0x0000, taito_68705_portA_r },
+	{ 0x0001, 0x0001, taito_68705_portB_r },
+	{ 0x0002, 0x0002, taito_68705_portC_r },
+	{ 0x0003, 0x007f, MRA_RAM },
+	{ 0x0080, 0x07ff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress m68705_writemem[] =
+{
+	{ 0x0000, 0x0000, taito_68705_portA_w },
+	{ 0x0001, 0x0001, taito_68705_portB_w },
+	{ 0x0003, 0x007f, MWA_RAM },
+	{ 0x0080, 0x07ff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -894,6 +975,70 @@ static struct MachineDriver machine_driver =
 	}
 };
 
+/* same as above, but with additional 68705 MCU */
+static struct MachineDriver mcu_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			8000000/2,	/* 4 Mhz */
+			0,
+			mcu_readmem,mcu_writemem,0,0,
+			interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			6000000/2,	/* 3 Mhz */
+			3,	/* memory region #3 */
+			sound_readmem,sound_writemem,0,0,
+			/* interrupts: */
+			/* - no interrupts synced with vblank */
+			/* - NMI triggered by the main CPU */
+			/* - periodic IRQ, with frequency 6000000/(4*16*16*10*16) = 36.621 Hz, */
+			/*   that is a period of 27306666.6666 ns */
+			0,0,
+			interrupt,27306667
+		},
+		{
+			CPU_M6805,
+			3000000,	/* xtal is 3MHz, is it demultiplied internally? */
+			4,
+			m68705_readmem,m68705_writemem,0,0,
+			ignore_interrupt,0	/* IRQs are caused by the main CPU */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	100,	/* 100 CPU slices per frame - an high value to ensure proper */
+			/* synchronization of the CPUs */
+	taito_init_machine,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	gfxdecodeinfo,
+	64, 16*8,
+	taito_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	0,
+	taito_vh_start,
+	taito_vh_stop,
+	taito_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		},
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
+};
+
 
 
 /***************************************************************************
@@ -931,6 +1076,9 @@ ROM_START( elevator_rom )
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "ea-ic70.bin", 0x0000, 0x1000, 0x30ddb2e3 )
 	ROM_LOAD( "ea-ic71.bin", 0x1000, 0x1000, 0x34e16eb3 )
+
+	ROM_REGION(0x0800)	/* 8k for the microcontroller */
+	ROM_LOAD( "ba3.11", 0x0080, 0x0780, 0x0ffa88c2 )
 ROM_END
 
 ROM_START( elevatob_rom )
@@ -1060,26 +1208,73 @@ ROM_END
 
 ROM_START( frontlin_rom )
 	ROM_REGION(0x12000)	/* 64k for code */
-	ROM_LOAD( "aa1.05", 0x00000, 0x2000, 0x0f3ae054 )
-	ROM_LOAD( "aa1.06", 0x02000, 0x2000, 0xcc3889f8 )
-	ROM_LOAD( "aa1.07", 0x04000, 0x2000, 0x90402de4 )
-	ROM_LOAD( "aa1.08", 0x06000, 0x2000, 0xd0239e27 )
-	ROM_LOAD( "aa1.10", 0x0e000, 0x1000, 0xe8cfe99f )
-	ROM_LOAD( "aa1.09", 0x10000, 0x2000, 0xaebb291b )	/* banked at 6000 */
+	ROM_LOAD( "fl69.u69", 0x00000, 0x1000, 0x47ecded6 )
+	ROM_LOAD( "fl68.u68", 0x01000, 0x1000, 0xc74e3e82 )
+	ROM_LOAD( "fl67.u67", 0x02000, 0x1000, 0x4389a559 )
+	ROM_LOAD( "fl66.u66", 0x03000, 0x1000, 0x88af2ca1 )
+	ROM_LOAD( "fl65.u65", 0x04000, 0x1000, 0xb967f409 )
+	ROM_LOAD( "fl64.u64", 0x05000, 0x1000, 0xd6d9d9ed )
+	ROM_LOAD( "fl55.u55", 0x06000, 0x1000, 0xdb2d0343 )
+	ROM_LOAD( "fl54.u54", 0x07000, 0x1000, 0xf4f69d64 )
+	ROM_LOAD( "aa1_10.8", 0x0e000, 0x1000, 0xe8cfe99f )
+	ROM_LOAD( "fl53.u53", 0x10000, 0x1000, 0xa70845ca )	/* banked at 6000 */
+	ROM_LOAD( "fl52.u52", 0x11000, 0x1000, 0x07b36cd1 )	/* banked at 6000 */
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x8000)	/* graphic ROMs */
-	ROM_LOAD( "aa1.01", 0x0000, 0x2000, 0x7e801008 )
-	ROM_LOAD( "aa1.02", 0x2000, 0x2000, 0x7ed0424c )
-	ROM_LOAD( "aa1.03", 0x4000, 0x2000, 0xfee60766 )
-	ROM_LOAD( "aa1.04", 0x6000, 0x2000, 0xd64f3991 )
+	ROM_LOAD( "fl1.u1", 0x0000, 0x1000, 0x1bf92b41 )
+	ROM_LOAD( "fl2.u2", 0x1000, 0x1000, 0x62873b49 )
+	ROM_LOAD( "fl3.u3", 0x2000, 0x1000, 0xb11a5754 )
+	ROM_LOAD( "fl4.u4", 0x3000, 0x1000, 0xcdb61518 )
+	ROM_LOAD( "fl5.u5", 0x4000, 0x1000, 0x549b0c0d )
+	ROM_LOAD( "fl6.u6", 0x5000, 0x1000, 0xaa4b0b6b )
+	ROM_LOAD( "fl7.u7", 0x6000, 0x1000, 0xe84b353f )
+	ROM_LOAD( "fl8.u8", 0x7000, 0x1000, 0xee040cae )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "aa1.11", 0x0000, 0x1000, 0x047afe22 )
-	ROM_LOAD( "aa1.12", 0x1000, 0x1000, 0xd09423e4 )	/* ? */
+	ROM_LOAD( "fl70.u70", 0x0000, 0x1000, 0x047afe22 )
+	ROM_LOAD( "fl71.u71", 0x1000, 0x1000, 0xd09423e4 )
+
+	ROM_REGION(0x0800)	/* 8k for the microcontroller */
+	ROM_LOAD( "aa1.13", 0x0080, 0x0780, 0x06a7a329 )
+ROM_END
+
+ROM_START( tinstar_rom )
+	ROM_REGION(0x12000)	/* 64k for code */
+	ROM_LOAD( "ts.69", 0x00000, 0x1000, 0x595e6596 )
+	ROM_LOAD( "ts.68", 0x01000, 0x1000, 0x1877ab43 )
+	ROM_LOAD( "ts.67", 0x02000, 0x1000, 0x6d21852d )
+	ROM_LOAD( "ts.66", 0x03000, 0x1000, 0xb6219113 )
+	ROM_LOAD( "ts.65", 0x04000, 0x1000, 0x53a7c20b )
+	ROM_LOAD( "ts.64", 0x05000, 0x1000, 0x597af18a )
+	ROM_LOAD( "ts.55", 0x06000, 0x1000, 0xe01c88c0 )
+	ROM_LOAD( "ts.54", 0x07000, 0x1000, 0xf5471ef1 )
+	/* 10000-11fff space for banked ROMs (not used) */
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x8000)	/* graphic ROMs */
+	ROM_LOAD( "ts.1", 0x0000, 0x1000, 0x8410df3a )
+	ROM_LOAD( "ts.2", 0x1000, 0x1000, 0x4601074f )
+	ROM_LOAD( "ts.3", 0x2000, 0x1000, 0xabec7bfa )
+	ROM_LOAD( "ts.4", 0x3000, 0x1000, 0xb4da6a9e )
+	ROM_LOAD( "ts.5", 0x4000, 0x1000, 0xece61cb6 )
+	ROM_LOAD( "ts.6", 0x5000, 0x1000, 0x0eae1c4a )
+	ROM_LOAD( "ts.7", 0x6000, 0x1000, 0x38f23490 )
+	ROM_LOAD( "ts.8", 0x7000, 0x1000, 0x8465e92f )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "ts.70", 0x0000, 0x1000, 0x221e7afc )
+	ROM_LOAD( "ts.71", 0x1000, 0x1000, 0xe8279929 )
+	ROM_LOAD( "ts.72", 0x2000, 0x1000, 0xee635847 )
+
+	ROM_REGION(0x0800)	/* 8k for the microcontroller */
+	ROM_LOAD( "a10-12", 0x0080, 0x0780, 0xfe53b941 )
 ROM_END
 
 ROM_START( alpine_rom )
@@ -1103,6 +1298,32 @@ ROM_START( alpine_rom )
 	ROM_LOAD( "rh25.002",  0x1000, 0x1000, 0x0956646e )
 	ROM_LOAD( "rh26.003",  0x2000, 0x1000, 0x8e860562 )
 	ROM_LOAD( "rh27.004",  0x3000, 0x1000, 0x65d13bc5 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "rh13.070", 0x0000, 0x1000, 0xf53a66fe )
+ROM_END
+
+ROM_START( alpinea_rom )
+	ROM_REGION(0x12000)	/* 64k for code */
+	ROM_LOAD( "rh01-1.69", 0x0000, 0x1000, 0x85d11c9d )
+	ROM_LOAD( "rh02.68",   0x1000, 0x1000, 0x5f2250ec )
+	ROM_LOAD( "rh03.67",   0x2000, 0x1000, 0x8564ee96 )
+	ROM_LOAD( "rh04-1.66", 0x3000, 0x1000, 0xbe8a93ee )
+	ROM_LOAD( "rh05.65",   0x4000, 0x1000, 0x3913f0bd )
+	ROM_LOAD( "rh06.64",   0x5000, 0x1000, 0x456d3a61 )
+	ROM_LOAD( "rh07.55",   0x6000, 0x1000, 0xc9121dd2 )
+	ROM_LOAD( "rh08.54",   0x7000, 0x1000, 0x23727232 )
+	/* 10000-11fff space for banked ROMs (not used) */
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x8000)	/* graphic ROMs */
+	ROM_LOAD( "rh24.001",  0x0000, 0x1000, 0xd7c8f324 )
+	ROM_LOAD( "rh25.002",  0x1000, 0x1000, 0x0956646e )
+	ROM_LOAD( "rh26.003",  0x2000, 0x1000, 0x8e860562 )
+	ROM_LOAD( "rh12.4",    0x3000, 0x1000, 0x65d13bc5 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "rh13.070", 0x0000, 0x1000, 0xf53a66fe )
@@ -1263,8 +1484,8 @@ struct GameDriver elevator_driver =
 	"1983",
 	"Taito",
 	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)\nMike Balfour (high score save)\nMarco Cassili",
-	GAME_NOT_WORKING,
-	&machine_driver,
+	0,
+	&mcu_machine_driver,
 
 	elevator_rom,
 	0, 0,
@@ -1364,7 +1585,7 @@ struct GameDriver frontlin_driver =
 	"Taito",
 	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)\nMarco Cassili",
 	GAME_NOT_WORKING,
-	&machine_driver,
+	&mcu_machine_driver,
 
 	frontlin_rom,
 	0, 0,
@@ -1379,6 +1600,30 @@ struct GameDriver frontlin_driver =
 	frontlin_hiload, frontlin_hisave
 };
 
+struct GameDriver tinstar_driver =
+{
+	__FILE__,
+	0,
+	"tinstar",
+	"The Tin Star",
+	"1983",
+	"Taito",
+	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)",
+	GAME_NOT_WORKING,
+	&mcu_machine_driver,
+
+	tinstar_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	frontlin_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};
 
 struct GameDriver wwestern_driver =
 {
@@ -1410,9 +1655,34 @@ struct GameDriver alpine_driver =
 	__FILE__,
 	0,
 	"alpine",
-	"Alpine Ski",
+	"Alpine Ski (set 1)",
 	"????",
-	"?????",
+	"Taito",
+	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)",
+	GAME_NOT_WORKING,
+	&machine_driver,
+
+	alpine_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	elevator_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	0, 0
+};
+
+struct GameDriver alpinea_driver =
+{
+	__FILE__,
+	&alpine_driver,
+	"alpinea",
+	"Alpine Ski (set 2)",
+	"????",
+	"Taito",
 	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)",
 	GAME_NOT_WORKING,
 	&machine_driver,

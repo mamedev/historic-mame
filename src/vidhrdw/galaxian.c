@@ -55,6 +55,8 @@ static int total_stars;
 static int gfx_bank;	/* used by Pisces and "japirem" only */
 static int gfx_extend;	/* used by Moon Cresta only */
 static int bank_mask;	/* different games have different gfx bank switching */
+static int char_bank;	/* used by Moon Quasar only */
+static int sprite_bank;	/* used by Calipso only */
 static int flipscreen[2];
 
 static int BackGround;					/* MJC 051297 */
@@ -269,28 +271,28 @@ static int common_vh_start(void)
 
 int galaxian_vh_start(void)
 {
-	gfx_bank = 0;
-	gfx_extend = 0;
 	bank_mask = 0;
 	stars_type = 0;
+	char_bank = 0;
+	sprite_bank = 0;
 	return common_vh_start();
 }
 
 int moonqsr_vh_start(void)
 {
-	gfx_bank = 0;
-	gfx_extend = 0;
 	bank_mask = 0x20;
 	stars_type = 0;
+	char_bank = 1;
+	sprite_bank = 0;
 	return common_vh_start();
 }
 
 int scramble_vh_start(void)
 {
-	gfx_bank = 0;
-	gfx_extend = 0;
 	bank_mask = 0;
 	stars_type = 1;
+	char_bank = 0;
+	sprite_bank = 0;
 	return common_vh_start();
 }
 
@@ -298,10 +300,10 @@ int rescue_vh_start(void)
 {
 	int ans,x;
 
-	gfx_bank = 0;
-	gfx_extend = 0;
 	bank_mask = 0;
 	stars_type = 2;
+	char_bank = 0;
+	sprite_bank = 0;
 	ans = common_vh_start();
 
     /* Setup background colour array (blue sky, blue sea, black bottom line) */
@@ -327,10 +329,10 @@ int minefield_vh_start(void)
 {
 	int ans,x;
 
-	gfx_bank = 0;
-	gfx_extend = 0;
 	bank_mask = 0;
 	stars_type = 2;
+	char_bank = 0;
+	sprite_bank = 0;
 	ans = common_vh_start();
 
     /* Setup background colour array (blue sky, brown earth, black bottom line) */
@@ -354,10 +356,19 @@ int minefield_vh_start(void)
 
 int ckongs_vh_start(void)
 {
-	gfx_bank = 0;
-	gfx_extend = 0;
 	bank_mask = 0x10;
 	stars_type = 1;
+	char_bank = 0;
+	sprite_bank = 0;
+	return common_vh_start();
+}
+
+int calipso_vh_start(void)
+{
+	bank_mask = 0;
+	stars_type = 1;
+	char_bank = 0;
+	sprite_bank = 1;
 	return common_vh_start();
 }
 
@@ -453,8 +464,11 @@ void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			charcode = videoram[offs];
 
 			/* bit 5 of [2*(offs%32)+1] is used only by Moon Quasar */
-			if (galaxian_attributesram[2 * (offs % 32) + 1] & 0x20)
-				charcode += 256;
+			if (char_bank)
+			{
+				if (galaxian_attributesram[2 * (offs % 32) + 1] & 0x20)
+					charcode += 256;
+			}
 
 			/* gfx_bank is used by Pisces and japirem/Uniwars only */
 			if (gfx_bank)
@@ -614,8 +628,15 @@ void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		sx = (spriteram[offs + 3] + 1) & 0xff;	/* ??? */
 		sy = 240 - spriteram[offs];
-		flipx = spriteram[offs + 1] & 0x40;
-		flipy = spriteram[offs + 1] & 0x80;
+		if (!sprite_bank)
+		{
+			flipx = spriteram[offs + 1] & 0x40;
+			flipy = spriteram[offs + 1] & 0x80;
+		}
+		else
+		{
+			flipx = flipy = 0;
+		}
 
 		if (flipscreen[0])
 		{
@@ -632,13 +653,14 @@ void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		/* Sprites #0, #1 and #2 need to be offset one pixel to be correctly */
 		/* centered on the ladders in Turtles (we move them down, but since this */
 		/* is a rotated game, we actually move them left). */
-		/* Note that the adjustement must be done AFTER handling flipscreen, thus */
+		/* Note that the adjustment must be done AFTER handling flipscreen, thus */
 		/* proving that this is a hardware related "feature" */
 		/* This is not Amidar, it is Galaxian/Scramble/hundreds of clones, and I'm */
 		/* not sure it should be the same. A good game to test alignment is Armored Car */
 //		if (offs <= 2*4) sy++;
 
-		spritecode = spriteram[offs + 1] & 0x3f;
+		spritecode = spriteram[offs + 1];
+		if (!sprite_bank) spritecode &= 0x3f;
 
 		/* Moon Quasar and Crazy Kong have different bank selection bits*/
 		if (spriteram[offs + 2] & bank_mask)

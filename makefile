@@ -8,7 +8,7 @@ ASM = nasm
 ASMFLAGS = -f coff
 
 # uncomment next line to use Assembler 6808 engine
-#X86_ASM_6808 = 1
+X86_ASM_6808 = 1
 # uncomment next line to use Assembler 68k engine
 #X86_ASM_68K = 1
 
@@ -33,8 +33,8 @@ M68KDEF  =
 endif
 
 # add -DMAME_DEBUG to include the debugger
-DEFS   = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES -Dinline=__inline__ -Dasm=__asm__
-#DEFS   = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES -Dinline=__inline__ -Dasm=__asm__ \
+#DEFS   = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES -Dinline=__inline__ -Dasm=__asm__
+DEFS   = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES -Dinline=__inline__ -Dasm=__asm__ \
 	-DBETA_VERSION
 #DEFS   = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES -Dinline=__inline__ -Dasm=__asm__ \
 	-DMAME_DEBUG
@@ -76,7 +76,7 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/machine/theglob.o \
          obj/drivers/maketrax.o \
          obj/machine/jrpacman.o obj/drivers/jrpacman.o obj/vidhrdw/jrpacman.o \
-         obj/vidhrdw/pengo.o obj/drivers/pengo.o \
+         obj/vidhrdw/pengo.o obj/drivers/pengo.o obj/machine/segacrpt.o \
          obj/vidhrdw/ladybug.o obj/drivers/ladybug.o \
          obj/vidhrdw/mrdo.o obj/drivers/mrdo.o \
          obj/machine/docastle.o obj/vidhrdw/docastle.o obj/drivers/docastle.o \
@@ -105,6 +105,7 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/sndhrdw/pleiads.o \
          obj/vidhrdw/vicdual.o obj/sndhrdw/vicdual.o obj/drivers/vicdual.o \
          obj/machine/8080bw.o obj/vidhrdw/8080bw.o obj/sndhrdw/8080bw.o obj/drivers/8080bw.o \
+         obj/vidhrdw/m79amb.o obj/drivers/m79amb.o \
          obj/machine/z80bw.o obj/vidhrdw/z80bw.o obj/sndhrdw/z80bw.o obj/drivers/z80bw.o \
          obj/vidhrdw/mario.o obj/sndhrdw/mario.o obj/drivers/mario.o \
          obj/vidhrdw/zaxxon.o obj/sndhrdw/zaxxon.o obj/drivers/zaxxon.o \
@@ -132,6 +133,8 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/vidhrdw/gng.o obj/drivers/gng.o \
          obj/vidhrdw/sonson.o obj/drivers/sonson.o \
          obj/vidhrdw/exedexes.o obj/drivers/exedexes.o \
+         obj/vidhrdw/higemaru.o obj/drivers/higemaru.o \
+         obj/vidhrdw/bionicc.o obj/drivers/bionicc.o \
          obj/sndhrdw/gyruss.o obj/vidhrdw/gyruss.o obj/drivers/gyruss.o \
          obj/machine/superpac.o obj/vidhrdw/superpac.o obj/drivers/superpac.o \
          obj/machine/galaga.o obj/vidhrdw/galaga.o obj/drivers/galaga.o \
@@ -246,7 +249,7 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/vidhrdw/route16.o obj/drivers/route16.o \
          obj/vidhrdw/wc90.o obj/drivers/wc90.o \
          obj/vidhrdw/wc90b.o obj/drivers/wc90b.o \
-         obj/drivers/twincobr.o \
+         obj/vidhrdw/twincobr.o obj/drivers/twincobr.o \
          obj/machine/dec0.o obj/vidhrdw/dec0.o obj/drivers/dec0.o \
          obj/vidhrdw/dec8.o obj/drivers/dec8.o \
          obj/vidhrdw/karnov.o obj/drivers/karnov.o \
@@ -278,7 +281,7 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/machine/spiders.o obj/vidhrdw/crtc6845.o obj/vidhrdw/spiders.o obj/drivers/spiders.o \
          obj/vidhrdw/lastduel.o obj/drivers/lastduel.o \
          obj/machine/avalnche.o obj/vidhrdw/avalnche.o obj/drivers/avalnche.o \
-         obj/machine/gladiatr.o obj/vidhrdw/gladiatr.o obj/drivers/gladiatr.o \
+         obj/vidhrdw/gladiatr.o obj/drivers/gladiatr.o \
          obj/drivers/lazercmd.o obj/vidhrdw/lazercmd.o \
          obj/drivers/meadows.o obj/sndhrdw/meadows.o obj/vidhrdw/meadows.o \
          obj/machine/jackal.o obj/vidhrdw/jackal.o obj/drivers/jackal.o \
@@ -291,6 +294,11 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/vidhrdw/darkseal.o obj/drivers/darkseal.o \
          obj/vidhrdw/goldstar.o obj/drivers/goldstar.o \
          obj/vidhrdw/ninjakd2.o obj/drivers/ninjakd2.o \
+         obj/vidhrdw/tagteam.o obj/drivers/tagteam.o \
+         obj/vidhrdw/suprmous.o obj/drivers/suprmous.o \
+         obj/vidhrdw/psychic5.o obj/drivers/psychic5.o \
+         obj/vidhrdw/gsword.o obj/drivers/gsword.o \
+         obj/machine/neogeo.o obj/machine/pd4990a.o obj/vidhrdw/neogeo.o obj/drivers/neogeo.o \
          obj/Z80/Z80.o obj/M6502/M6502.o obj/I86/I86.o obj/I8039/I8039.o obj/I8085/I8085.o \
 		 obj/M6809/m6809.o obj/M6805/m6805.o \
          obj/S2650/s2650.o obj/T11/t11.o \

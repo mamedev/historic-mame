@@ -1,8 +1,7 @@
 #include "driver.h"
 
-/* Mame frontend interface rountines by Maurizio Zanello */
 
-char mameversion[] = "0.33 ("__DATE__")";
+char mameversion[] = "0.34 ("__DATE__")";
 
 static struct RunningMachine machine;
 struct RunningMachine *Machine = &machine;
@@ -165,7 +164,7 @@ int init_machine(void)
 		while (Machine->memory_region[j]) j++;
 
 		/* allocate a ROM array of the same length of memory region #0 */
-		if ((ROM = malloc(gamedrv->rom->offset)) == 0)
+		if ((ROM = malloc(Machine->memory_region_length[0])) == 0)
 		{
 			free(Machine->input_ports);
 			/* TODO: should also free the allocated memory regions */
@@ -173,6 +172,7 @@ int init_machine(void)
 		}
 
 		Machine->memory_region[j] = ROM;
+		Machine->memory_region_length[j] = Machine->memory_region_length[0];
 
 		(*gamedrv->opcode_decode)();
 	}
@@ -337,6 +337,7 @@ static int vh_open(void)
   and throttling the emulation speed to obtain the required frames per second.
 
 ***************************************************************************/
+
 int updatescreen(void)
 {
 	static int framecount = 0, showvoltemp = 0; /* M.Z.: new options */
@@ -345,15 +346,11 @@ int updatescreen(void)
 	static int beta_count;
 #endif
 
+	int skipme = 1;
 
-#ifndef macintosh /* LBO 061497 */
+
 	/* if the user pressed ESC, stop the emulation */
-	if (osd_key_pressed(OSD_KEY_ESC))
-#else
-	/* LBO - moved most of the key-handling stuff to the OS routines so menu selections       */
-	/* can get trapped as well rather than having a sick hack in the osd_key_pressed routine  */
-	if (osd_handle_event() == true)
-#endif
+	if (osd_key_pressed(OSD_KEY_FAST_EXIT))
 	{
 #ifdef BETA_VERSION
 		beta_count = 0;
@@ -363,15 +360,14 @@ int updatescreen(void)
 
 
 	/* if the user pressed F3, reset the emulation */
-	if (osd_key_pressed(OSD_KEY_F3))
+	if (osd_key_pressed(OSD_KEY_RESET_MACHINE))
 	{
-		while (osd_key_pressed(OSD_KEY_F3)) ;
+		while (osd_key_pressed(OSD_KEY_RESET_MACHINE)) ;
 		machine_reset();
 	}
 
 
-#ifndef macintosh /* LBO 061497 */
-	if (osd_key_pressed(OSD_KEY_MINUS_PAD) && osd_key_pressed(OSD_KEY_LSHIFT) == 0)
+	if (osd_key_pressed(OSD_KEY_VOLUME_DOWN)/* do we really need this?  && osd_key_pressed(OSD_KEY_LSHIFT) == 0*/)
 	{
 		/* decrease volume */
 		if (CurrentVolume > 0) CurrentVolume--;
@@ -379,7 +375,7 @@ int updatescreen(void)
 		showvoltemp = 50;
 	}
 
-	if (osd_key_pressed(OSD_KEY_PLUS_PAD) && osd_key_pressed(OSD_KEY_LSHIFT) == 0)
+	if (osd_key_pressed(OSD_KEY_VOLUME_UP)/* do we really need this? && osd_key_pressed(OSD_KEY_LSHIFT) == 0*/)
 	{
 		/* increase volume */
 		if (CurrentVolume < 100) CurrentVolume++;
@@ -387,7 +383,7 @@ int updatescreen(void)
 		showvoltemp = 50;
 	}                                          /* MAURY_END: new options */
 
-	if (osd_key_pressed(OSD_KEY_P)) /* pause the game */
+	if (osd_key_pressed(OSD_KEY_PAUSE)) /* pause the game */
 	{
 		struct DisplayText dt[2];
 		int count = 0;
@@ -401,12 +397,12 @@ int updatescreen(void)
 
 		osd_set_mastervolume(0);
 
-		while (osd_key_pressed(OSD_KEY_P))
+		while (osd_key_pressed(OSD_KEY_PAUSE))
 			osd_update_audio();     /* give time to the sound hardware to apply the volume change */
 
-		while (osd_key_pressed(OSD_KEY_P) == 0 && osd_key_pressed(OSD_KEY_ESC) == 0)
+		while (osd_key_pressed(OSD_KEY_PAUSE) == 0 && osd_key_pressed(OSD_KEY_UNPAUSE) == 0)
 		{
-			if (osd_key_pressed(OSD_KEY_TAB)) setup_menu(); /* call the configuration menu */
+			if (osd_key_pressed(OSD_KEY_CONFIGURE)) setup_menu(); /* call the configuration menu */
 
 			osd_clearbitmap(Machine->scrbitmap);
 			(*drv->vh_update)(Machine->scrbitmap,1);  /* redraw screen */
@@ -419,19 +415,19 @@ int updatescreen(void)
 			count = (count + 1) % (Machine->drv->frames_per_second / 1);
 		}
 
-		while (osd_key_pressed(OSD_KEY_ESC));   /* wait for jey release */
-		while (osd_key_pressed(OSD_KEY_P));     /* ditto */
+		while (osd_key_pressed(OSD_KEY_UNPAUSE)) ;   /* wait for key release */
+		while (osd_key_pressed(OSD_KEY_PAUSE)) ;     /* ditto */
 
 		osd_set_mastervolume(CurrentVolume);
 		osd_clearbitmap(Machine->scrbitmap);
 	}
 
 	/* if the user pressed TAB, go to the setup menu */
-	if (osd_key_pressed(OSD_KEY_TAB))
+	if (osd_key_pressed(OSD_KEY_CONFIGURE))
 	{
 		osd_set_mastervolume(0);
 
-		while (osd_key_pressed(OSD_KEY_TAB))
+		while (osd_key_pressed(OSD_KEY_CONFIGURE))
 			osd_update_audio();     /* give time to the sound hardware to apply the volume change */
 
 		if (setup_menu()) return 1;
@@ -440,30 +436,34 @@ int updatescreen(void)
 	}
 
 	/* if the user pressed F4, show the character set */
-	if (osd_key_pressed(OSD_KEY_F4))
+	if (osd_key_pressed(OSD_KEY_SHOW_GFX))
 	{
 		osd_set_mastervolume(0);
 
-		while (osd_key_pressed(OSD_KEY_F4))
+		while (osd_key_pressed(OSD_KEY_SHOW_GFX))
 			osd_update_audio();     /* give time to the sound hardware to apply the volume change */
 
 		if (showcharset()) return 1;
 
 		osd_set_mastervolume(CurrentVolume);
 	}
-#endif /* LBO 061497 */
 
-
+	/* see if we recomend skipping this frame */
 	if (++framecount > frameskip)
 	{
 		framecount = 0;
+		skipme = 0;
+	}
+	skipme = osd_skip_this_frame (skipme);
 
+	/* if not, go for it */
+	if (!skipme)
+	{
 		if (need_to_clear_bitmap)
 		{
 			osd_clearbitmap(Machine->scrbitmap);
 			need_to_clear_bitmap = 0;
 		}
-
 
 		(*drv->vh_update)(Machine->scrbitmap,bitmap_dirty);  /* update screen */
 		bitmap_dirty = 0;
@@ -533,10 +533,6 @@ int updatescreen(void)
 		osd_update_display();
 	}
 
-	/* update audio. Do it after the speed throttling to be in better sync. */
-/*	ASG 980417 -- moved to the update function in cpuintrf.c
-	sound_update();*/
-
 	return 0;
 }
 
@@ -573,16 +569,17 @@ int run_machine(void)
 					showcredits();
 				}
 
-				showgameinfo();  /* show info about the game */
+				if (showgameinfo() == 0)  /* show info about the game */
+				{
+					if (nocheat == 0) InitCheat();
 
-				if (nocheat == 0) InitCheat();
+					cpu_run();      /* run the emulation! */
 
-				cpu_run();      /* run the emulation! */
+					if (nocheat == 0) StopCheat();
 
-				if (nocheat == 0) StopCheat();
-
-				/* save input ports settings */
-				save_input_port_settings();
+					/* save input ports settings */
+					save_input_port_settings();
+				}
 
 				/* the following MUST be done after hiscore_save() otherwise */
 				/* some 68000 games will not work */

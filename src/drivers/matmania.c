@@ -332,7 +332,7 @@ static struct GfxDecodeInfo maniach_gfxdecodeinfo[] =
 };
 
 
-static unsigned char matmania_color_prom[] =
+static unsigned char wrong_color_prom[] =
 {
 	/* prom 1 - char palette red and green components */
 	0x00,0x0F,0xAF,0xFF,0xA0,0xBA,0xF0,0xFF,0x00,0x4F,0xB4,0xF8,0xFF,0xD0,0xC4,0xFF,
@@ -363,7 +363,7 @@ static struct DACinterface dac_interface =
 {
 	1,
 	441000,
-	{255,255 },
+	{ 255,255 },
 	{  1,  1 }
 };
 
@@ -383,7 +383,7 @@ static struct MachineDriver matmania_machine_driver =
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1200000,	/* 1.2 Mhz ???? */
-			2,
+			3,
 			sound_readmem,sound_writemem,0,0,
 			nmi_interrupt,15	/* ???? */
 		},
@@ -432,7 +432,7 @@ static struct MachineDriver maniach_machine_driver =
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1200000,	/* 1.2 Mhz ???? */
-			2,
+			3,
 			maniach_sound_readmem,maniach_sound_writemem,0,0,
 			nmi_interrupt,15	/* ???? */
 		},
@@ -498,6 +498,12 @@ ROM_START( matmania_rom )
 	ROM_LOAD( "kp-00", 0x5e000, 0x4000, 0x04ae3d8a )
 	ROM_LOAD( "kq-00", 0x62000, 0x4000, 0x824b4449 )
 
+	ROM_REGION(0x0080)	/* color proms */
+	ROM_LOAD( "matmania.1",  0x0000, 0x0020, 0x5cca130e ) /* char palette red and green components */
+	ROM_LOAD( "matmania.5",  0x0020, 0x0020, 0xf6a970b1 ) /* tile palette red and green components */
+	ROM_LOAD( "matmania.2",  0x0040, 0x0020, 0x716b0503 ) /* char palette blue component */
+	ROM_LOAD( "matmania.16", 0x0060, 0x0020, 0x7f6a010a ) /* tile palette blue component */
+
 	ROM_REGION(0x10000)	/* 64k for audio code */
 	ROM_LOAD( "k4-0", 0x8000, 0x4000, 0x3ad35dff )
 	ROM_LOAD( "k5-0", 0xc000, 0x4000, 0x1ebde7cb )
@@ -538,6 +544,12 @@ ROM_START( excthour_rom )
 	ROM_LOAD( "ko-00", 0x5a000, 0x4000, 0x8b4989ad )
 	ROM_LOAD( "kp-00", 0x5e000, 0x4000, 0x04ae3d8a )
 	ROM_LOAD( "kq-00", 0x62000, 0x4000, 0x824b4449 )
+
+	ROM_REGION(0x0080)	/* color proms */
+	ROM_LOAD( "matmania.1",  0x0000, 0x0020, 0x5cca130e ) /* char palette red and green components */
+	ROM_LOAD( "matmania.5",  0x0020, 0x0020, 0xf6a970b1 ) /* tile palette red and green components */
+	ROM_LOAD( "matmania.2",  0x0040, 0x0020, 0x716b0503 ) /* char palette blue component */
+	ROM_LOAD( "matmania.16", 0x0060, 0x0020, 0x7f6a010a ) /* tile palette blue component */
 
 	ROM_REGION(0x10000)	/* 64k for audio code */
 	ROM_LOAD( "k4-0", 0x8000, 0x4000, 0x3ad35dff )
@@ -582,6 +594,8 @@ ROM_START( maniach_rom )
 	ROM_LOAD( "mc-mv0.bin",  0x6a000, 0x4000, 0x808d32ff )
 	ROM_LOAD( "mc-mw0.bin",  0x6e000, 0x4000, 0xcb2c45a2 )
 
+	ROM_REGION(0x0080)	/* color proms */
+
 	ROM_REGION(0x10000)	/* 64k for audio code */
 	ROM_LOAD( "mc-m50.bin",   0x4000, 0x4000, 0x2743f17d )
 	ROM_LOAD( "mc-m40.bin",   0x8000, 0x4000, 0xfb1440d8 )
@@ -597,7 +611,7 @@ static int matmania_hiload(void)
 
 	/* check if the hi score table has already been initialized */
 	if ((memcmp(&RAM[0x0700],"\x00\x30\x00",3) == 0) &&
-		(memcmp(&RAM[0x074d],"\xb0\xb0\xb0",3) == 0))
+	    (memcmp(&RAM[0x074d],"\xb0\xb0\xb0",3) == 0))
 	{
 		void *f;
 
@@ -623,7 +637,7 @@ static int excthour_hiload(void)
 
 	/* check if the hi score table has already been initialized */
 	if ((memcmp(&RAM[0x0700],"\x00\x30\x00",3) == 0) &&
-		(memcmp(&RAM[0x074d],"\xc9\xcd\xb0",3) == 0))
+	    (memcmp(&RAM[0x074d],"\xc9\xcd\xb0",3) == 0))
 	{
 		void *f;
 
@@ -675,7 +689,7 @@ struct GameDriver matmania_driver =
 
 	matmania_input_ports,
 
-	matmania_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	matmania_hiload, matmania_hisave
@@ -701,7 +715,7 @@ struct GameDriver excthour_driver =
 
 	matmania_input_ports,
 
-	matmania_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	excthour_hiload, matmania_hisave
@@ -716,7 +730,7 @@ struct GameDriver maniach_driver =
 	"1986",
 	"Technos (Taito America license)",
 	"Brad Oliver (MAME driver)\nTim Lindquist (color info)",
-	GAME_NOT_WORKING,
+	GAME_NOT_WORKING | GAME_WRONG_COLORS,
 	&maniach_machine_driver,
 
 	maniach_rom,
@@ -726,7 +740,7 @@ struct GameDriver maniach_driver =
 
 	matmania_input_ports,
 
-	matmania_color_prom, 0, 0,
+	wrong_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	0, 0

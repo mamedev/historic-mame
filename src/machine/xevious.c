@@ -53,9 +53,9 @@ void xevious_init_machine(void)
 	Machine->memory_region[0][0x8c00] = 1;
 	Machine->memory_region[0][0x8c01] = 1;
 
-	rom2a = Machine->memory_region[4];
-	rom2b = Machine->memory_region[4]+0x1000;
-	rom2c = Machine->memory_region[4]+0x3000;
+	rom2a = Machine->memory_region[5];
+	rom2b = Machine->memory_region[5]+0x1000;
+	rom2c = Machine->memory_region[5]+0x3000;
 
 	nmi_timer = 0;
 

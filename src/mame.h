@@ -17,6 +17,7 @@ extern FILE *errorlog;
 struct RunningMachine
 {
 	unsigned char *memory_region[MAX_MEMORY_REGIONS];
+	unsigned int memory_region_length[MAX_MEMORY_REGIONS];	/* some drivers might find this useful */
 	struct GfxElement *gfx[MAX_GFX_ELEMENTS];	/* graphic sets (chars, sprites) */
 	struct osd_bitmap *scrbitmap;	/* bitmap to draw into */
 	struct GfxLayer *dirtylayer;	/* for GfxLayer games: keep track of dirty portions of scrbitmap */

@@ -153,7 +153,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M6502,
-			1000000,        /* Slow down a bit */
+			11289000/16,	/* 705.562kHz */
 			0,
 			readmem,writemem,0,0,
 			interrupt,1
@@ -364,7 +364,7 @@ static struct MachineDriver robotbowl_machine_driver =
 	{
 		{
 			CPU_M6502,
-			1411125,        /* 11.289 / 8 Mhz */
+			11289000/16,	/* 705.562kHz */
 			0,
 			readmem,writemem,0,0,
 			interrupt,1
@@ -517,7 +517,7 @@ static struct MachineDriver crash_machine_driver =
 	{
 		{
 			CPU_M6502,
-			1411125,        /* 11.289 / 8 Mhz */
+			11289000/16,	/* 705.562kHz */
 			0,
 			readmem,writemem,0,0,
 			interrupt,2

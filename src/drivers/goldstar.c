@@ -288,7 +288,7 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	64*8, 32*8, { 0*8, 64*8-1, 0*8, 32*8-1 },
+	64*8, 32*8, { 0*8, 64*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	256, 256,
 	0,
@@ -324,7 +324,7 @@ static struct MachineDriver machine_driver =
 
 ROM_START( goldstar_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "GS4-CPU.BIN", 0x0000, 0x10000, 0x31e24804 )		/* This was encrypted.  I will provide decryption scheme as soon this game is running. */
+	ROM_LOAD( "GS4-CPU.BIN", 0x0000, 0x10000, 0x13264804 )
 
 	ROM_REGION(0x28000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "GS2.BIN", 0x00000, 0x20000, 0xe2f8263c )
@@ -333,6 +333,23 @@ ROM_START( goldstar_rom )
 	ROM_REGION(0x20000) /* Audio ADPCM */
 	ROM_LOAD( "GS1-SND.BIN", 0x0000, 0x20000, 0xc9872331 )
 ROM_END
+
+
+
+static void goldstar_decode(void)
+{
+	int A;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	for (A = 0;A < 0x10000;A++)
+	{
+		if ((A & 0x30) == 0)
+			RAM[A] ^= 0x82;
+		else
+			RAM[A] ^= 0xcc;
+	}
+}
 
 
 
@@ -383,7 +400,7 @@ struct GameDriver goldstar_driver =
 	&machine_driver,
 
 	goldstar_rom,
-	0, 0,
+	goldstar_decode, 0,
 	0,
 	0,	/* sound_prom */
 

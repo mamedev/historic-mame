@@ -312,7 +312,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 /* these are NOT the original color PROMs */
-static unsigned char color_prom[] =
+static unsigned char wrong_color_prom[] =
 {
 	0x00,0xFE,0xA4,0x52,0x00,0x17,0x05,0x03,0x00,0x2F,0x1F,0x0F,0x00,0x22,0x19,0x10,
 	0x00,0x2B,0x20,0x18,0x00,0xD8,0xD1,0x80,0x00,0xE9,0xD8,0xC8,0x00,0x6F,0xD8,0x80,
@@ -466,7 +466,7 @@ struct GameDriver vastar_driver =
 	"1983",
 	"Sesame Japan",
 	"Allard van der Bas\nNicola Salmoria\nDani Portillo (hi score)",
-	0,
+	GAME_WRONG_COLORS,
 	&machine_driver,
 
 	vastar_rom,
@@ -476,7 +476,7 @@ struct GameDriver vastar_driver =
 
 	input_ports,
 
-	color_prom, 0, 0,
+	wrong_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave

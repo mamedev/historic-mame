@@ -28,6 +28,11 @@ int spyhunt_lamp[8];
 extern int spyhunt_scrollx,spyhunt_scrolly;
 static int spyhunt_mux;
 
+static int maxrpm_mux;
+static int maxrpm_last_shift;
+static int maxrpm_p1_shift;
+static int maxrpm_p2_shift;
+
 static unsigned char soundlatch[4];
 static unsigned char soundstatus;
 
@@ -452,6 +457,32 @@ void rampage_writeport(int port,int value)
 
 
 
+void maxrpm_writeport(int port,int value)
+{
+	switch (port)
+	{
+		case 0x04:
+			break;
+
+		case 0x05:
+			maxrpm_mux = (value >> 1) & 3;
+			break;
+
+		case 0x06:
+			timer_set (TIME_NOW, value, rampage_delayed_write);
+			break;
+
+		case 0x07:
+		   break;
+
+		default:
+			mcr_writeport(port,value);
+			break;
+	}
+}
+
+
+
 void sarge_delayed_write (int param)
 {
 	pia_1_portb_w (0, (param >> 1) & 0x0f);
@@ -536,6 +567,56 @@ void crater_writeport(int port,int value)
   Game-specific input handlers
 
 ***************************************************************************/
+
+/* Max RPM -- multiplexed steering wheel/gas pedals */
+int maxrpm_IN1_r(int offset)
+{
+	return readinputport (6 + maxrpm_mux);
+}
+
+int maxrpm_IN2_r(int offset)
+{
+	static int shift_bits[5] = { 0x00, 0x05, 0x06, 0x01, 0x02 };
+	int start = readinputport (0);
+	int shift = readinputport (10);
+
+	/* reset on a start */
+	if (!(start & 0x08))
+		maxrpm_p1_shift = 0;
+	if (!(start & 0x04))
+		maxrpm_p2_shift = 0;
+
+	/* increment, decrement on falling edge */
+	if (!(shift & 0x01) && (maxrpm_last_shift & 0x01))
+	{
+		maxrpm_p1_shift++;
+		if (maxrpm_p1_shift > 4)
+			maxrpm_p1_shift = 4;
+	}
+	if (!(shift & 0x02) && (maxrpm_last_shift & 0x02))
+	{
+		maxrpm_p1_shift--;
+		if (maxrpm_p1_shift < 0)
+			maxrpm_p1_shift = 0;
+	}
+	if (!(shift & 0x04) && (maxrpm_last_shift & 0x04))
+	{
+		maxrpm_p2_shift++;
+		if (maxrpm_p2_shift > 4)
+			maxrpm_p2_shift = 4;
+	}
+	if (!(shift & 0x08) && (maxrpm_last_shift & 0x08))
+	{
+		maxrpm_p2_shift--;
+		if (maxrpm_p2_shift < 0)
+			maxrpm_p2_shift = 0;
+	}
+
+	maxrpm_last_shift = shift;
+
+	return ~((shift_bits[maxrpm_p1_shift] << 4) + shift_bits[maxrpm_p2_shift]);
+}
+
 
 /* Spy Hunter -- normal port plus CSD status bits */
 int spyhunt_port_1_r(int offset)

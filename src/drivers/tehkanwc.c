@@ -9,6 +9,10 @@ ernesto@imagina.com
 Roberto Juan Fresca
 robbiex@rocketmail.com
 
+TODO:
+- ADPCM samples for Gridiron and Tee'd Off
+- dip switches and input ports for Gridiron and Tee'd Off
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -27,6 +31,8 @@ int tehkanwc_scroll_x_r(int offset);
 int tehkanwc_scroll_y_r(int offset);
 void tehkanwc_scroll_x_w(int offset,int data);
 void tehkanwc_scroll_y_w(int offset,int data);
+void gridiron_led0_w(int offset,int data);
+void gridiron_led1_w(int offset,int data);
 
 
 static unsigned char *shared_ram;
@@ -54,10 +60,6 @@ static void sub_cpu_halt_w(int offset,int data)
 }
 
 
-static int test_r(int offset)
-{
-	return 0x7f;
-}
 
 static int track0[2],track1[2];
 
@@ -84,10 +86,25 @@ static void tehkanwc_track_1_reset_w(int offset,int data)
 }
 
 
+
 static void sound_command_w(int offset,int data)
 {
 	soundlatch_w(offset,data);
 	cpu_cause_interrupt(2,Z80_NMI_INT);
+}
+
+static void reset_callback(int param)
+{
+	cpu_reset(2);
+}
+
+static void sound_answer_w(int offset,int data)
+{
+	soundlatch2_w(0,data);
+
+	/* in Gridiron, the sound CPU goes in a tight loop after the self test, */
+	/* probably waiting to be reset by a watchdog */
+	if (cpu_getpc() == 0x08bc) timer_set(TIME_IN_SEC(1),0,reset_callback);
 }
 
 
@@ -101,7 +118,8 @@ static int tehkanwc_portA_r(int offset)
 	return ADPCM_playing(0);
 }
 
-static int tehkanwc_portB_r( int offset ) {
+static int tehkanwc_portB_r( int offset )
+{
 	return ADPCM_playing( 0 );
 }
 
@@ -132,6 +150,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xd000, 0xd3ff, videoram_r },
 	{ 0xd400, 0xd7ff, colorram_r },
 	{ 0xd800, 0xddff, paletteram_r },
+	{ 0xde00, 0xdfff, MRA_RAM },	/* unused part of the palette RAM, I think? Gridiron uses it */
 	{ 0xe000, 0xe7ff, tehkanwc_videoram1_r },
 	{ 0xe800, 0xebff, spriteram_r }, /* sprites */
 	{ 0xec00, 0xec01, tehkanwc_scroll_x_r },
@@ -141,7 +160,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xf803, 0xf803, input_port_5_r }, /* joy0 - button */
 	{ 0xf810, 0xf811, tehkanwc_track_1_r }, /* track 1 x/y */
 	{ 0xf813, 0xf813, input_port_8_r }, /* joy1 - button */
-//	{ 0xf820, 0xf820, test_r }, /* must be set, otherwise the game locks up */
+	{ 0xf820, 0xf820, soundlatch2_r },	/* answer from the sound CPU */
 	{ 0xf840, 0xf840, input_port_0_r }, /* DSW1 */
 	{ 0xf850, 0xf850, input_port_1_r },	/* DSW2 */
 	{ 0xf860, 0xf860, watchdog_reset_r },
@@ -157,12 +176,15 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
 	{ 0xd400, 0xd7ff, colorram_w, &colorram },
 	{ 0xd800, 0xddff, paletteram_xxxxBBBBGGGGRRRR_swap_w, &paletteram },
+	{ 0xde00, 0xdfff, MWA_RAM },	/* unused part of the palette RAM, I think? Gridiron uses it */
 	{ 0xe000, 0xe7ff, tehkanwc_videoram1_w, &tehkanwc_videoram1, &tehkanwc_videoram1_size },
 	{ 0xe800, 0xebff, spriteram_w, &spriteram, &spriteram_size }, /* sprites */
 	{ 0xec00, 0xec01, tehkanwc_scroll_x_w },
 	{ 0xec02, 0xec02, tehkanwc_scroll_y_w },
 	{ 0xf800, 0xf801, tehkanwc_track_0_reset_w },
+	{ 0xf802, 0xf802, gridiron_led0_w },
 	{ 0xf810, 0xf811, tehkanwc_track_1_reset_w },
+	{ 0xf812, 0xf812, gridiron_led1_w },
 	{ 0xf820, 0xf820, sound_command_w },
 	{ 0xf840, 0xf840, sub_cpu_halt_w },
 	{ -1 }	/* end of table */
@@ -176,6 +198,7 @@ static struct MemoryReadAddress readmem_sub[] =
 	{ 0xd000, 0xd3ff, videoram_r },
 	{ 0xd400, 0xd7ff, colorram_r },
 	{ 0xd800, 0xddff, paletteram_r },
+	{ 0xde00, 0xdfff, MRA_RAM },	/* unused part of the palette RAM, I think? Gridiron uses it */
 	{ 0xe000, 0xe7ff, tehkanwc_videoram1_r },
 	{ 0xe800, 0xebff, spriteram_r }, /* sprites */
 	{ 0xec00, 0xec01, tehkanwc_scroll_x_r },
@@ -192,6 +215,7 @@ static struct MemoryWriteAddress writemem_sub[] =
 	{ 0xd000, 0xd3ff, videoram_w },
 	{ 0xd400, 0xd7ff, colorram_w },
 	{ 0xd800, 0xddff, paletteram_xxxxBBBBGGGGRRRR_swap_w, &paletteram },
+	{ 0xde00, 0xdfff, MWA_RAM },	/* unused part of the palette RAM, I think? Gridiron uses it */
 	{ 0xe000, 0xe7ff, tehkanwc_videoram1_w },
 	{ 0xe800, 0xebff, spriteram_w }, /* sprites */
 	{ 0xec00, 0xec01, tehkanwc_scroll_x_w },
@@ -211,7 +235,10 @@ static struct MemoryWriteAddress writemem_sound[] =
 {
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x8001, 0x8001, MWA_NOP },
+	{ 0x8001, 0x8001, MWA_NOP },	/* ???? */
+	{ 0x8002, 0x8002, MWA_NOP },	/* ?? written in the IRQ handler */
+	{ 0x8003, 0x8003, MWA_NOP },	/* ?? written in the NMI handler */
+	{ 0xc000, 0xc000, sound_answer_w },	/* answer for main CPU */
 	{ -1 }	/* end of table */
 };
 
@@ -392,7 +419,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct ADPCMinterface adpcm_interface =
 {
 	1,			/* 1 channel */
-	8000,       	/* 8000Hz playback */
+	8000,		/* 8000Hz playback */
 	4,			/* memory region 4 */
 	0,			/* init function */
 	{ 255 }
@@ -430,7 +457,7 @@ static struct MachineDriver machine_driver =
 			interrupt,1
 		},
 		{
-			CPU_Z80 | CPU_AUDIO_CPU,
+			CPU_Z80,	/* communication is bidirectional, can't mark it as AUDIO_CPU */
 			4608000,	/* 18.432000 / 4 */
 			3,
 			readmem_sound,writemem_sound,sound_readport,sound_writeport,
@@ -477,49 +504,76 @@ static struct MachineDriver machine_driver =
 
 ROM_START( tehkanwc_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "TWC-1.BIN", 0x00000, 0x04000, 0xbf8ac078 )
-	ROM_LOAD( "TWC-2.BIN", 0x04000, 0x04000, 0x75a41fb0 )
-	ROM_LOAD( "TWC-3.BIN", 0x08000, 0x04000, 0xf0e98f11 )
+	ROM_LOAD( "TWC-1.BIN", 0x0000, 0x4000, 0xbf8ac078 )
+	ROM_LOAD( "TWC-2.BIN", 0x4000, 0x4000, 0x75a41fb0 )
+	ROM_LOAD( "TWC-3.BIN", 0x8000, 0x4000, 0xf0e98f11 )
 
-	ROM_REGION(0x2c000)	/* 64k for graphics (disposed after conversion) */
-	ROM_LOAD( "TWC-12.BIN", 0x00000, 0x04000, 0xaa4b72a3 )	/* fg tiles */
-	ROM_LOAD( "TWC-8.BIN",  0x04000, 0x08000, 0x75636cf3 )	/* sprites */
-	ROM_LOAD( "TWC-7.BIN",  0x0c000, 0x08000, 0x769572b5 )
-	ROM_LOAD( "TWC-11.BIN", 0x14000, 0x08000, 0xeea545a1 )	/* bg tiles */
-	ROM_LOAD( "TWC-9.BIN",  0x1c000, 0x08000, 0x6d4f0a05 )
-
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "TWC-4.BIN", 0x00000, 0x08000, 0xff8f3651 )
+	ROM_REGION(0x24000)	/* 64k for graphics (disposed after conversion) */
+	ROM_LOAD( "TWC-12.BIN", 0x00000, 0x4000, 0xaa4b72a3 )	/* fg tiles */
+	ROM_LOAD( "TWC-8.BIN",  0x04000, 0x8000, 0x75636cf3 )	/* sprites */
+	ROM_LOAD( "TWC-7.BIN",  0x0c000, 0x8000, 0x769572b5 )
+	ROM_LOAD( "TWC-11.BIN", 0x14000, 0x8000, 0xeea545a1 )	/* bg tiles */
+	ROM_LOAD( "TWC-9.BIN",  0x1c000, 0x8000, 0x6d4f0a05 )
 
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "TWC-6.BIN", 0x00000, 0x04000, 0xccbc61e8 )
+	ROM_LOAD( "TWC-4.BIN", 0x0000, 0x8000, 0xff8f3651 )
+
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "TWC-6.BIN", 0x0000, 0x4000, 0xccbc61e8 )
 
 	ROM_REGION(0x4000)	/* 64k for adpcm sounds */
-	ROM_LOAD( "TWC-5.BIN", 0x00000, 0x04000, 0x425783fb )
+	ROM_LOAD( "TWC-5.BIN", 0x0000, 0x4000, 0x425783fb )
+ROM_END
+
+ROM_START( gridiron_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "GFIGHT1.BIN", 0x0000, 0x4000, 0xd620e7e0 )
+	ROM_LOAD( "GFIGHT2.BIN", 0x4000, 0x4000, 0x1a9d4459 )
+	ROM_LOAD( "GFIGHT3.BIN", 0x8000, 0x4000, 0x4f3af468 )
+
+	ROM_REGION(0x24000)	/* 64k for graphics (disposed after conversion) */
+	ROM_LOAD( "GFIGHT7.BIN",  0x00000, 0x4000, 0x3937e885 )	/* fg tiles */
+	ROM_LOAD( "GFIGHT8.BIN",  0x04000, 0x4000, 0xd38a3450 )	/* sprites */
+	ROM_LOAD( "GFIGHT9.BIN",  0x08000, 0x4000, 0xa01e61fc )
+	ROM_LOAD( "GFIGHT10.BIN", 0x0c000, 0x4000, 0xac85ae41 )
+	/* 10000-13fff empty */
+	ROM_LOAD( "GFIGHT11.BIN", 0x14000, 0x4000, 0x6fc495e4 )	/* bg tiles */
+	ROM_LOAD( "GFIGHT12.BIN", 0x18000, 0x4000, 0xe071fec3 )
+	/* 1c000-23fff empty */
+
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "GFIGHT4.BIN", 0x0000, 0x4000, 0xce164204 )
+
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "GFIGHT5.BIN", 0x0000, 0x4000, 0x4986b4ca )
+
+	ROM_REGION(0x8000)	/* 64k for adpcm sounds */
+	ROM_LOAD( "GFIGHT6.BIN", 0x0000, 0x4000, 0x1a15a82b )
 ROM_END
 
 ROM_START( teedoff_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "TO-1.BIN", 0x00000, 0x04000, 0xaaa9ebd7 )
-	ROM_LOAD( "TO-2.BIN", 0x04000, 0x04000, 0x0132ca22 )
-	ROM_LOAD( "TO-3.BIN", 0x08000, 0x04000, 0x05a337a1 )
+	ROM_LOAD( "TO-1.BIN", 0x0000, 0x4000, 0xaaa9ebd7 )
+	ROM_LOAD( "TO-2.BIN", 0x4000, 0x4000, 0x0132ca22 )
+	ROM_LOAD( "TO-3.BIN", 0x8000, 0x4000, 0x05a337a1 )
 
-	ROM_REGION(0x2c000)	/* 64k for graphics (disposed after conversion) */
-	ROM_LOAD( "TO-12.BIN", 0x00000, 0x04000, 0x6ba92983 )	/* fg tiles */
-	ROM_LOAD( "TO-8.BIN",  0x04000, 0x08000, 0x7f159985 )	/* sprites */
-	ROM_LOAD( "TO-7.BIN",  0x0c000, 0x08000, 0x125ba6ef )
-	ROM_LOAD( "TO-11.BIN", 0x14000, 0x08000, 0x3e826868 )	/* bg tiles */
-	ROM_LOAD( "TO-9.BIN",  0x1c000, 0x08000, 0x30a3b693 )
-
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "TO-4.BIN", 0x00000, 0x08000, 0x9cafeca9 )
+	ROM_REGION(0x24000)	/* 64k for graphics (disposed after conversion) */
+	ROM_LOAD( "TO-12.BIN", 0x00000, 0x4000, 0x6ba92983 )	/* fg tiles */
+	ROM_LOAD( "TO-8.BIN",  0x04000, 0x8000, 0x7f159985 )	/* sprites */
+	ROM_LOAD( "TO-7.BIN",  0x0c000, 0x8000, 0x125ba6ef )
+	ROM_LOAD( "TO-11.BIN", 0x14000, 0x8000, 0x3e826868 )	/* bg tiles */
+	ROM_LOAD( "TO-9.BIN",  0x1c000, 0x8000, 0x30a3b693 )
 
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "TO-6.BIN", 0x00000, 0x04000, 0xa6e01ccc )
+	ROM_LOAD( "TO-4.BIN", 0x0000, 0x8000, 0x9cafeca9 )
+
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "TO-6.BIN", 0x0000, 0x4000, 0xa6e01ccc )
 
 	ROM_REGION(0x8000)	/* 64k for adpcm sounds */
-	ROM_LOAD( "TO-5.BIN", 0x00000, 0x08000, 0x379b170b )
+	ROM_LOAD( "TO-5.BIN", 0x0000, 0x8000, 0x379b170b )
 ROM_END
+
 
 /* This table was recreated from the sound rom */
 /* Originally it uses a OKI M51xx with counters */
@@ -599,6 +653,31 @@ struct GameDriver tehkanwc_driver =
 	ORIENTATION_DEFAULT,
 
 	tehkanwc_hiload, tehkanwc_hisave
+};
+
+struct GameDriver gridiron_driver =
+{
+	__FILE__,
+	0,
+	"gridiron",
+	"Gridiron",
+	"1985",
+	"Tehkan",
+	"Ernesto Corvi\nRoberto Fresca",
+	0,
+	&machine_driver,
+
+	gridiron_rom,
+	0, 0,
+	0,
+	(void*)twc_samples,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
 };
 
 struct GameDriver teedoff_driver =

@@ -245,15 +245,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static unsigned char color_prom[] =
-{
-	/* palette */
-	0x00,0xFF,0xFF,0xFF,0x00,0x38,0xF8,0x07,0x00,0xC0,0x3F,0x38,0x00,0xF8,0xC7,0x3F,
-	0x00,0x07,0x38,0xC0,0x00,0x38,0x3F,0xC7,0x00,0xC7,0xFF,0xF8,0x00,0xC0,0x07,0xFF,
-};
-
-
-
 static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
@@ -281,7 +272,7 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			1789750,	/* 1.78975 Mhz */
-			2,	/* memory region #2 */
+			3,	/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -333,6 +324,9 @@ ROM_START( ckongs_rom )
 	ROM_LOAD( "vid_5f.bin", 0x0000, 0x1000, 0x53668c92 )
 	ROM_LOAD( "vid_5h.bin", 0x1000, 0x1000, 0xad49dd9b )
 
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "vid_6e.bin", 0x0000, 0x20, 0x83b00038 )
+
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "snd_5c.bin", 0x0000, 0x1000, 0x90ecc748 )
 	ROM_LOAD( "snd_5d.bin", 0x1000, 0x1000, 0x657118a1 )
@@ -360,7 +354,7 @@ struct GameDriver ckongs_driver =
 
 	input_ports,
 
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	0, 0

@@ -9,8 +9,20 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *mcr1_paletteram_bg,*mcr1_paletteram_r;
 
+unsigned char *mcr1_paletteram_bg,*mcr1_paletteram_r;
+static int spriteoffset;
+
+
+void solarfox_init(void)
+{
+	spriteoffset = 3;
+}
+
+void kick_init(void)
+{
+	spriteoffset = -3;
+}
 
 
 /***************************************************************************
@@ -55,7 +67,7 @@ void mcr1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		if (spriteram[offs] == 0) continue;
 
-		x = (spriteram[offs+2]+3)*2;
+		x = (spriteram[offs+2]+spriteoffset)*2;
 		y = (241-spriteram[offs])*2;
 		code = spriteram[offs+1] & 0x3f;
 

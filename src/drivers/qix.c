@@ -149,6 +149,13 @@ QIX NONVOLATILE CMOS MEMORY MAP (CPU #2 -- Video) $8400-$87ff
 					$87E9: ATTRACT SOUND (Default: 01)
 					$87EA: TABLE MODE (Default: 00)
 
+
+TODO:
+  Space Dungeon and Electric Yo-Yo have an additiona "Coin Processor Board"
+  with a 68705 on it. The lack of its emulation is responsible for the strange
+  behaviour of Space Dungeon (6 cresits at reset, reset at game over) and
+  probably for Yo-Yo not working as well.
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -366,14 +373,14 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( sdungeon_input_ports )
 	PORT_START	/* IN0 */
-    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP | IPF_8WAY )
-    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY )
-    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN | IPF_8WAY )
-    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT | IPF_8WAY )
-    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP | IPF_8WAY )
-    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT | IPF_8WAY )
-    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN | IPF_8WAY )
-    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT | IPF_8WAY )
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP | IPF_8WAY )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT | IPF_8WAY )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN | IPF_8WAY )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT | IPF_8WAY )
+    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP | IPF_8WAY )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY )
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN | IPF_8WAY )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT | IPF_8WAY )
 
 	PORT_START	/* IN1 */
 	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_SERVICE, "Test Advance", OSD_KEY_F1, IP_JOY_DEFAULT, 0)
@@ -653,8 +660,11 @@ ROM_START( sdungeon_rom )
     ROM_LOAD( "sd10.u10", 0x0F000, 0x1000, 0x85f6cf42 )
 
 	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
-    ROM_LOAD( "SD26.U26", 0xF000, 0x0800, 0xa078ff04)
-    ROM_LOAD( "SD27.U27", 0xF800, 0x0800, 0x51c8f2e2 )
+    ROM_LOAD( "sd26.u26", 0xF000, 0x0800, 0xa078ff04)
+    ROM_LOAD( "sd27.u27", 0xF800, 0x0800, 0x51c8f2e2 )
+
+	ROM_REGION(0x0800)	/* 8k for the 68705 microcontroller (currently not emulated) */
+	ROM_LOAD( "sd101", 0x0000, 0x0800, 0x6de00de8 )
 ROM_END
 
 ROM_START( zookeep_rom )
@@ -719,6 +729,60 @@ ROM_START( zookeepa_rom )
 	ROM_LOAD( "ZA25", 0xD000, 0x1000, 0x6b0469ba )
 	ROM_LOAD( "ZA26", 0xE000, 0x1000, 0x1b46045a )
 	ROM_LOAD( "ZA27", 0xF000, 0x1000, 0xd583f705 )
+ROM_END
+
+ROM_START( elecyoyo_rom )
+	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
+    ROM_LOAD( "yy14",   0xA000, 0x1000, 0xfcbb8e07 )
+    ROM_LOAD( "yy15",   0xB000, 0x1000, 0xf030cd9c )
+    ROM_LOAD( "yy16-1", 0xC000, 0x1000, 0xff28ad70 )
+    ROM_LOAD( "yy17",   0xD000, 0x1000, 0x5f35d715 )
+    ROM_LOAD( "yy18",   0xE000, 0x1000, 0xa1a90507 )
+    ROM_LOAD( "yy19-1", 0xF000, 0x1000, 0x6032737e )
+
+	ROM_REGION(0x1000)
+	/* empty memory region - not used by the game, but needed bacause the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
+    ROM_LOAD(  "yy5", 0x0A000, 0x1000, 0xdde1afdd )
+    ROM_LOAD(  "yy6", 0x0B000, 0x1000, 0x49b01744 )
+
+    ROM_LOAD(  "yy7", 0x0C000, 0x1000, 0x5a3d84f3 )
+    ROM_LOAD(  "yy8", 0x0D000, 0x1000, 0x02d55101 )
+    ROM_LOAD(  "yy9", 0x0E000, 0x1000, 0x881fe68f )
+    ROM_LOAD( "yy10", 0x0F000, 0x1000, 0x6c1cad38 )
+
+	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
+    ROM_LOAD( "yy27", 0xF800, 0x0800, 0x58bb94af )
+
+	ROM_REGION(0x0800)	/* 8k for the 68705 microcontroller (currently not emulated) */
+	ROM_LOAD( "yy101", 0x000d, 0x07f3, 0x059b280b )
+ROM_END
+
+ROM_START( kram_rom )
+	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
+    ROM_LOAD( "ks14", 0xA000, 0x1000, 0x26ff9aff )
+    ROM_LOAD( "ks15", 0xB000, 0x1000, 0xb17cf28c )
+    ROM_LOAD( "ks16", 0xC000, 0x1000, 0xa07e5b9a )
+    ROM_LOAD( "ks17", 0xD000, 0x1000, 0xf3510c63 )
+    ROM_LOAD( "ks18", 0xE000, 0x1000, 0xe0ece654 )
+    ROM_LOAD( "ks19", 0xF000, 0x1000, 0x0ff8b6a8 )
+
+	ROM_REGION(0x1000)
+	/* empty memory region - not used by the game, but needed bacause the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
+    ROM_LOAD(  "ks5", 0x0A000, 0x1000, 0x46c6cafa )
+    ROM_LOAD(  "ks6", 0x0B000, 0x1000, 0xef34edd8 )
+    ROM_LOAD(  "ks7", 0x0C000, 0x1000, 0xa41f29dd )
+    ROM_LOAD(  "ks8", 0x0D000, 0x1000, 0x4eb32b49 )
+    ROM_LOAD(  "ks9", 0x0E000, 0x1000, 0x42a2104a )
+    ROM_LOAD( "ks10", 0x0F000, 0x1000, 0x8dbbb0c7 )
+
+	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
+    ROM_LOAD( "ks27", 0xF800, 0x0800, 0xf4f57c05 )
 ROM_END
 
 
@@ -881,4 +945,54 @@ struct GameDriver zookeepa_driver =
 	ORIENTATION_DEFAULT,
 
 	hiload,hisave		/* High score load and save */
+};
+
+struct GameDriver elecyoyo_driver =
+{
+	__FILE__,
+	0,
+	"elecyoyo",
+	"Electric Yo-Yo",
+	"????",
+	"Taito",
+	"John Butler\nEd Mueller\nAaron Giles\nCallan Hendricks",
+	GAME_NOT_WORKING,
+	&machine_driver,
+
+	elecyoyo_rom,
+	0, 0,   /* ROM decode and opcode decode functions */
+	0,      /* Sample names */
+	0,		/* sound_prom */
+
+	sdungeon_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_ROTATE_270,
+
+	hiload, hisave	       /* High score load and save */
+};
+
+struct GameDriver kram_driver =
+{
+	__FILE__,
+	0,
+	"kram",
+	"Kram",
+	"????",
+	"Taito",
+	"John Butler\nEd Mueller\nAaron Giles",
+	GAME_NOT_WORKING,
+	&machine_driver,
+
+	kram_rom,
+	0, 0,   /* ROM decode and opcode decode functions */
+	0,      /* Sample names */
+	0,		/* sound_prom */
+
+	sdungeon_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_ROTATE_270,
+
+	hiload, hisave	       /* High score load and save */
 };

@@ -11,6 +11,8 @@
 
 
 extern unsigned char *galaxian_attributesram;
+static const unsigned char *fastfred_color_prom;
+
 
 static struct rectangle spritevisiblearea =
 {
@@ -48,7 +50,7 @@ void jumpcoas_init_machine(void)
 static void convert_color(int i, int* r, int* g, int* b)
 {
 	int bit0, bit1, bit2, bit3;
-	const unsigned char* prom = Machine->gamedrv->color_prom;
+	const unsigned char *prom = fastfred_color_prom;
 	int total = Machine->drv->total_colors;
 
 	bit0 = (prom[i + 0*total] >> 0) & 0x01;
@@ -74,6 +76,8 @@ void fastfred_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
         #define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
         #define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
+
+		fastfred_color_prom = color_prom;	/* we'll need this later */
 
         for (i = 0;i < Machine->drv->total_colors;i++)
         {
@@ -171,6 +175,10 @@ void fastfred_flipy_w(int offset,int data)
 void fastfred_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
         int offs, charbank, colorbank;
+
+
+	if (palette_recalc())
+		memset(dirtybuffer,1,videoram_size);
 
         charbank   = ((character_bank[1] << 9) | (character_bank[0] << 8));
         colorbank  = ((color_bank[1]     << 4) | (color_bank[0]     << 3));

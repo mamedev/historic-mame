@@ -234,7 +234,7 @@ static int DasmZ80 (char *dest,int PC)
    {
     case 0xcb:
      i++;
-     Offset=Z80_RDOP(i++);
+     Offset=Z80_RDOP_ARG(i++);
      S=mnemonic_xx_cb[Z80_RDOP_ARG(i++)];
      break;
     default:
@@ -249,7 +249,7 @@ static int DasmZ80 (char *dest,int PC)
    {
     case 0xcb:
      i++;
-     Offset=Z80_RDOP(i++);
+     Offset=Z80_RDOP_ARG(i++);
      S=mnemonic_xx_cb[Z80_RDOP_ARG(i++)];
      break;
     default:

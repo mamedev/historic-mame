@@ -27,10 +27,10 @@ int bosco_sh_start(void)
 	/* decode the rom samples */
 	for (i = 0;i < 0x3000;i++)
 	{
-		bits = Machine->memory_region[4][i] & 0x0f;
+		bits = Machine->memory_region[5][i] & 0x0f;
 		speech[2 * i] = AUDIO_CONV ((bits << 4) | bits);
 
-		bits = Machine->memory_region[4][i] & 0xf0;
+		bits = Machine->memory_region[5][i] & 0xf0;
 		speech[2 * i + 1] = AUDIO_CONV (bits | (bits >> 4));
 	}
 

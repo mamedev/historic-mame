@@ -485,10 +485,14 @@ void osd_set_mastervolume(int volume)
 
 void osd_ym3812_control(int reg)
 {
+	if (Machine->sample_rate == 0) return;
+
 	outportb(0x388,reg);
 }
 
 void osd_ym3812_write(int data)
 {
+	if (Machine->sample_rate == 0) return;
+
 	outportb(0x389,data);
 }

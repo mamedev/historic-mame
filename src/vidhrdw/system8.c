@@ -17,7 +17,6 @@ extern int system8_bank;
 unsigned char 	*system8_scroll_y;
 unsigned char 	*system8_scroll_x;
 unsigned char 	*system8_videoram;
-unsigned char 	*system8_spriteram;
 unsigned char 	*system8_backgroundram;
 unsigned char 	*system8_sprites_collisionram;
 unsigned char 	*system8_background_collisionram;
@@ -28,17 +27,15 @@ int 	system8_backgroundram_size;
 static unsigned char	*bg_ram;
 static unsigned char 	*bg_dirtybuffer;
 static unsigned char 	*tx_dirtybuffer;
-static unsigned char 	*SpritesData = NULL;
 static unsigned char 	*SpritesCollisionTable;
-static unsigned char 	scrollx=0,scrolly=0,system8_supports_banks=0,bg_bank=0,bg_bank_latch=0;
+static int	background_scrollx=0,background_scrolly=0;
+static unsigned char bg_bank=0,bg_bank_latch=0;
 
 static int		scrollx_row[32];
 static struct osd_bitmap *bitmap1;
 static struct osd_bitmap *bitmap2;
 
-static int  system8_pixel_mode = 0;
-static void (*Check_SpriteRAM_for_Clear)(void) = NULL;
-
+static int  system8_pixel_mode = 0,system8_video_mode=0;
 
 static unsigned char palette_lookup[256*3];
 
@@ -48,10 +45,12 @@ static unsigned char palette_lookup[256*3];
 
   Convert the color PROMs into a more useable format.
 
-  There are two kind of color handling in System 8 games: in some, values in
-  the palette RAM are directly mapped to colors with the usual BBGGGRRR format;
-  in others, the value in the palette RAM is a lookup offset for three palette
-  PROMs in RRRRGGGGBBBB format.
+  There are two kind of color handling in System 8 games: in the older ones,
+  values in the palette RAM are directly mapped to colors with the usual
+  BBGGGRRR format; in the newer ones (Choplifter, WBML), the value in the
+  palette RAM is a lookup offset for three palette PROMs in RRRRGGGGBBBB
+  format.
+
   It's hard to tell for sure because they use resistor packs, but here's
   what I think the values are from measurment with a volt meter:
 
@@ -136,9 +135,9 @@ void system8_paletteram_w(int offset,int data)
 
 int system8_vh_start(void)
 {
-	if ((SpritesCollisionTable = malloc(0x10000)) == 0)
+	if ((SpritesCollisionTable = malloc(256*256)) == 0)
 		return 1;
-	memset(SpritesCollisionTable,255,0x10000);
+	memset(SpritesCollisionTable,255,256*256);
 
 	if ((bg_dirtybuffer = malloc(1024)) == 0)
 	{
@@ -161,20 +160,11 @@ int system8_vh_start(void)
 		return 1;
 	}
 	memset(bg_ram,0,0x4000);
-	if ((SpritesData = malloc(0x40000)) == 0)	/* Allocate a maximum for 512k of 16 colors sprites */
-	{
-		free(bg_ram);
-		free(bg_dirtybuffer);
-		free(tx_dirtybuffer);
-		free(SpritesCollisionTable);
-		return 1;
-	}
 	if ((bitmap1 = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
 		free(bg_ram);
 		free(bg_dirtybuffer);
 		free(tx_dirtybuffer);
-		free(SpritesData);
 		free(SpritesCollisionTable);
 		return 1;
 	}
@@ -184,7 +174,6 @@ int system8_vh_start(void)
 		free(bg_ram);
 		free(bg_dirtybuffer);
 		free(tx_dirtybuffer);
-		free(SpritesData);
 		free(SpritesCollisionTable);
 		return 1;
 	}
@@ -199,14 +188,24 @@ void system8_vh_stop(void)
 	free(bg_ram);
 	free(bg_dirtybuffer);
 	free(tx_dirtybuffer);
-	free(SpritesData);
 	free(SpritesCollisionTable);
 }
 
-
-void system8_define_checkspriteram(void	(*check)(void))
+void system8_videomode_w(int offset,int data)
 {
-	Check_SpriteRAM_for_Clear = check;
+if (errorlog && (data & 0xef)) fprintf(errorlog,"videomode = %02x\n",data);
+
+	/* bit 0 is coin counter */
+
+	/* bit 3 is ??? */
+
+	/* bit 4 is screen blank */
+	system8_video_mode = data;
+}
+
+int system8_videomode_r(int offset)
+{
+	return system8_video_mode;
 }
 
 void system8_define_sprite_pixelmode(int Mode)
@@ -214,42 +213,24 @@ void system8_define_sprite_pixelmode(int Mode)
 	system8_pixel_mode = Mode;
 }
 
-void system8_define_spritememsize(int region, int size)
-{
-	unsigned char *SpritesPackedData = Machine->memory_region[region];
-
-	if (!SpritesData)
-		SpritesData = malloc(size*2);
-
-	if (SpritesData)
-	{
-		int a;
-		for (a=0; a < size; a++)
-		{
-			SpritesData[a*2  ] = SpritesPackedData[a] >> 4;
-			SpritesData[a*2+1] = SpritesPackedData[a] & 0xF;
-		}
-	}
-}
-
-void system8_define_banksupport(int support)
-{
-	system8_supports_banks = support;
-}
-
 static int GetSpriteBottomY(int spr_number)
 {
-	return  system8_spriteram[(spr_number<<4) + SPR_Y_BOTTOM];
+	return  spriteram[0x10 * spr_number + SPR_Y_BOTTOM];
 }
 
 
-extern struct GameDriver wbml_driver;
 static void Pixel(struct osd_bitmap *bitmap,int x,int y,int spr_number,int color)
 {
 	int xr,yr,spr_y1,spr_y2;
 	int SprOnScreen;
 	int adjx = x, adjy = y;
 
+
+	if (x < Machine->drv->visible_area.min_x ||
+			x > Machine->drv->visible_area.max_x ||
+			y < Machine->drv->visible_area.min_y ||
+			y > Machine->drv->visible_area.max_y)
+		return;
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
@@ -270,8 +251,7 @@ static void Pixel(struct osd_bitmap *bitmap,int x,int y,int spr_number,int color
 	else
 	{
 		SprOnScreen=SpritesCollisionTable[256*y+x];
-if (Machine->gamedrv != &wbml_driver)
-		system8_sprites_collisionram[SprOnScreen + (spr_number<<5)] = 0xff;
+		system8_sprites_collisionram[SprOnScreen + 32 * spr_number] = 0xff;
 		if (system8_pixel_mode==SYSTEM8_SPRITE_PIXEL_MODE1)
 		{
 			spr_y1 = GetSpriteBottomY(spr_number);
@@ -287,137 +267,124 @@ if (Machine->gamedrv != &wbml_driver)
 			SpritesCollisionTable[256*y+x]=spr_number;
 		}
 	}
-	xr = (x>>3);
-	yr = (y>>3);
-if (Machine->gamedrv != &wbml_driver)
-	if (system8_backgroundram[((yr%32)<<6) + ((xr%32)<<1) + 1] & 0x10)
-		system8_background_collisionram[spr_number] = 0xff;
+
+	xr = ((x - background_scrollx) & 0xff) / 8;
+	yr = ((y - background_scrolly) & 0xff) / 8;
+	/* TODO: bits 5 and 6 of backgroundram are also used (e.g. Pitfall2, Mr. Viking) */
+	/* what's the difference? Bit 7 is used in Choplifter/WBML for extra char bank */
+	/* selection, but it is also set in Pitfall2 */
+	if (system8_backgroundram[2 * (32 * yr + xr) + 1] & 0x10)
+		system8_background_collisionram[0x20 + spr_number] = 0xff;
+}
+
+void system8_background_collisionram_w(int offset,int data)
+{
+	/* to do the RAM check, Mister Viking writes 0xff and immediately */
+	/* reads it back, expecting bit 0 to be NOT set. */
+	system8_background_collisionram[offset] = 0x7e;
+}
+
+void system8_sprites_collisionram_w(int offset,int data)
+{
+	/* to do the RAM check, Mister Viking write 0xff and immediately */
+	/* reads it back, expecting bit 0 to be NOT set. */
+	/* Up'n Down expects to find 0x7e at f800 before doing the whole */
+	/* collision test */
+	system8_sprites_collisionram[offset] = 0x7e;
 }
 
 
-static void MarkBackgroundDirtyBufferBySprite(int x,int y,int width,int height)
+
+extern struct GameDriver wbml_driver;
+
+static void RenderSprite(struct osd_bitmap *bitmap,int spr_number)
 {
-	int xr,yr,wr,hr,row,col;
-
-	x  = (unsigned char)((x - scrollx) % 256);
-	y  = (unsigned char)((scrolly + y) % 256);
-	xr = (x>>3);
-	yr = (y>>3);
-	wr = (width>>3)  + ((x & 7) ? 1:0) +  ((width & 7) ? 1:0);
-	hr = (height>>3) + ((y & 7) ? 1:0) + ((height & 7) ? 1:0);
-
-	for (row=0;row<hr;row++)
-	{
-		int sumrow = (((row+yr)%32)<<5);
-		for (col=0;col<wr;col++)
-		{
-//			tx_dirtybuffer[sumrow+((col+xr)%32)] = 1;
-			bg_dirtybuffer[sumrow+((col+xr)%32)] = 1;
-		}
-	}
-}
-
-
-static void RenderSprite(struct osd_bitmap *bitmap,int spr_number,const struct rectangle *clip)
-{
-	int SprX,SprY,Col,Row,Height,DataOffset,FlipX;
-	int Color,scrx,scry,Bank;
+	int SprX,SprY,Col,Row,Height,src;
+	int bank;
 	unsigned char *SprReg;
 	unsigned short *SprPalette;
-	unsigned short NextLine,Width,Offset16;
-	struct rectangle myclip = { 0, 255, 0, 255 };
+	short skip;	/* bytes to skip before drawing each row (can be negative) */
 
-	if (clip == 0) clip = &myclip;
 
-	SprReg		= system8_spriteram + (spr_number<<4);
-	Bank		= ((((SprReg[SPR_BANK] & 0x80)>>7)+((SprReg[SPR_BANK] & 0x40)>>5))<<16) * system8_supports_banks;
-	Width 		= SprReg[SPR_WIDTH_LO] + (SprReg[SPR_WIDTH_HI]<<8);
+	SprReg		= spriteram + 0x10 * spr_number;
+
+	src = SprReg[SPR_GFXOFS_LO] + (SprReg[SPR_GFXOFS_HI] << 8);
+	bank = 0x8000 * (((SprReg[SPR_X_HI] & 0x80) >> 7) + ((SprReg[SPR_X_HI] & 0x40) >> 5));
+	bank &= (Machine->memory_region_length[2]-1);	/* limit to the range of available ROMs */
+	skip = SprReg[SPR_SKIP_LO] + (SprReg[SPR_SKIP_HI] << 8);
+
 	Height		= SprReg[SPR_Y_BOTTOM] - SprReg[SPR_Y_TOP];
-	FlipX 	    = SprReg[SPR_FLIP_X] & 0x80;
-	DataOffset 	= SprReg[SPR_GFXOFS_LO]+((SprReg[SPR_GFXOFS_HI] & 0x7F)<<8)+Width;
-	SprPalette	= Machine->colortable + (spr_number<<4);
-	SprX 		= (SprReg[SPR_X_LO] >> 1) + ((SprReg[SPR_X_HI] & 1) << 7) + 1;
-if (Machine->gamedrv == &wbml_driver) SprX += 6;
-	SprY 		= SprReg[SPR_Y_TOP] + 1;
-	NextLine	= Width;
+	SprPalette	= Machine->colortable + 0x10 * spr_number;
+	SprX = SprReg[SPR_X_LO] + ((SprReg[SPR_X_HI] & 1) << 8);
+	SprX /= 2;	/* the hardware has sub-pixel placement, it seems */
+if (Machine->gamedrv == &wbml_driver) SprX += 7;
+	SprY = SprReg[SPR_Y_TOP] + 1;
 
-	if (DataOffset & 0x8000) FlipX^=0x80;
-	if (Width & 0x8000) Width = (~Width)+1;		// width isn't positive
-							// and this means that sprite will has fliped Y
-	Width<<=1;
-
-	MarkBackgroundDirtyBufferBySprite(SprX,SprY,Width,Height);
-
-	for(Row=0; Row<Height; Row++)
+	for (Row = 0;Row < Height;Row++)
 	{
-		Offset16 = (DataOffset+(Row*NextLine)) << 1;
-		scry = (unsigned char)(((SprY+Row) + scrolly) % 256);
-		if ((clip->min_y <= SprY+Row) && (clip->max_y >= SprY+Row))
+		src += skip;
+
+		Col = 0;
+		while (Col < 256)	/* this is only a safety check, */
+							/* drawing is stopped by color == 15 */
 		{
-			for(Col=0; Col<Width; Col++)
+			int color1,color2;
+
+			if (src & 0x8000)	/* flip x */
 			{
-				Color = (FlipX) ? SpritesData[Bank+Offset16-Col+1]
-						: SpritesData[Bank+Offset16+Col];
-				if (Color == 15) break;
-				if (Color && (clip->min_x <= SprX+Col) && (clip->max_x >= SprX+Col))
-				{
-					scrx = (unsigned char)(((SprX+Col) - scrollx) % 256);
-					Pixel(bitmap,scrx,scry,spr_number,SprPalette[Color]);
-				}
+				int offs,data;
+
+				offs = ((src - Col / 2) & 0x7fff) + bank;
+
+				/* memory region #2 contains the packed sprite data */
+				data = Machine->memory_region[2][offs];
+				color1 = data & 0x0f;
+				color2 = data >> 4;
 			}
+			else
+			{
+				int offs,data;
+
+				offs = ((src + Col / 2) & 0x7fff) + bank;
+
+				/* memory region #2 contains the packed sprite data */
+				data = Machine->memory_region[2][offs];
+				color1 = data >> 4;
+				color2 = data & 0x0f;
+			}
+
+			if (color1 == 15) break;
+			if (color1)
+				Pixel(bitmap,SprX+Col,SprY+Row,spr_number,SprPalette[color1]);
+
+			Col++;
+
+			if (color2 == 15) break;
+			if (color2)
+				Pixel(bitmap,SprX+Col,SprY+Row,spr_number,SprPalette[color2]);
+
+			Col++;
 		}
 	}
 }
 
 
-static void ClearSpritesCollisionTable(void)
-{
-	int col,row,i,sx,sy;
-
-	for (i = 0; i<1024; i++)
-	{
-		if (bg_dirtybuffer[i])
-		{
-			sx = (i % 32)<<3;
-			sy = (i >> 5)<<3;
-			for(row=sy; row<sy+8; row++)
-				for(col=sx; col<sx+8; col++)
-					SpritesCollisionTable[256*row+col] = 255;
-		}
-	}
-}
-
-
-void pitfall2_clear_spriteram(void)
-{
-	if (!*system8_backgroundram && system8_videoram[212] != 'M' &&
-			system8_spriteram[SPR_GFXOFS_LO] != 0xDD &&
-				system8_spriteram[SPR_GFXOFS_HI] != 0x2C)
-		memset(system8_spriteram,0,0x200);		/* Workaround for Pitfall!  TODO BETTER! */
-}
-
-static void DrawSprites(struct osd_bitmap *bitmap,const struct rectangle *clip)
+static void DrawSprites(struct osd_bitmap *bitmap)
 {
 	int spr_number,SprBottom,SprTop;
 	unsigned char *SprReg;
 
 
-	if (Check_SpriteRAM_for_Clear)
-		Check_SpriteRAM_for_Clear();
+	memset(SpritesCollisionTable,255,256*256);
 
-if (Machine->gamedrv != &wbml_driver)
-	memset(system8_sprites_collisionram,0,0x400);
-
-	for(spr_number=0; spr_number<32; spr_number++)
+	for (spr_number = 0;spr_number < 32;spr_number++)
 	{
-		SprReg 		= system8_spriteram + (spr_number<<4);
+		SprReg 		= spriteram + 0x10 * spr_number;
 		SprTop		= SprReg[SPR_Y_TOP];
 		SprBottom	= SprReg[SPR_Y_BOTTOM];
 		if (SprBottom && (SprBottom-SprTop > 0))
-			RenderSprite(bitmap,spr_number,clip);
+			RenderSprite(bitmap,spr_number);
 	}
-
-	ClearSpritesCollisionTable();
 }
 
 
@@ -454,7 +421,7 @@ void system8_compute_palette (void)
 		unsigned char *reg;
 		int top, bottom;
 
-		reg 	= system8_spriteram + (i<<4);
+		reg 	= spriteram + 0x10 * i;
 		top		= reg[SPR_Y_TOP];
 		bottom	= reg[SPR_Y_BOTTOM];
 		if (bottom && (bottom - top > 0))
@@ -506,92 +473,141 @@ void system8_backgroundram_w(int offset,int data)
 
 void system8_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int scroll_x,scroll_y, sx,sy, i;
+	int sx,sy,offs;
 
 
-	system8_compute_palette ();
+	system8_compute_palette();
 
-
-	scrollx = (system8_scroll_x[0] >> 1) + ((system8_scroll_x[1] & 1) << 7) + 15;
-	scrolly = *system8_scroll_y;
+	background_scrollx = ((system8_scroll_x[0] >> 1) + ((system8_scroll_x[1] & 1) << 7) + 14) & 0xff;
+	background_scrolly = (-*system8_scroll_y) & 0xff;
 
 	/* for every character in the background video RAM, check if it has
 	 * been modified since last time and update it accordingly.
 	 */
 
-	for (i = 0; i<system8_backgroundram_size; i+=2)
+	for (offs = 0;offs < system8_backgroundram_size;offs += 2)
 	{
-		int code = (system8_backgroundram[i] + (system8_backgroundram[i+1] << 8)) & 0x7FF;
-		int palette = code >> 5;
-
-		if (bg_dirtybuffer[i>>1])
+		if (bg_dirtybuffer[offs / 2])
 		{
-			bg_dirtybuffer[i>>1] = 0;
-			sx = (i % 64) << 2;
-			sy = (i >> 6) << 3;
+			int code;
+
+			bg_dirtybuffer[offs / 2] = 0;
+
+			code = (system8_backgroundram[offs] + (system8_backgroundram[offs+1] << 8)) & 0x7ff;
+			sx = (offs/2) % 32;
+			sy = (offs/2) / 32;
+
 			drawgfx(bitmap1,Machine->gfx[0],
-					code,palette + 64,
+					code,
+					((code >> 5) & 0x3f) + 0x40,
 					0,0,
-					sx,sy,
+					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-	DrawSprites(bitmap1,0);
-
-
-	/* for every character in the background video RAM,
-	 * check if it has clip attribute and update it accordingly.
-	 */
-
-	for (i = 0; i<system8_backgroundram_size; i+=2)
-	{
-		if (system8_backgroundram[i+1] & 8)
-		{
-			int code = (system8_backgroundram[i] + (system8_backgroundram[i+1] << 8)) & 0x7FF;
-			int palette = code >> 5;
-			sx = (i % 64) << 2;
-			sy = (i >> 6) << 3;
-
-			drawgfx(bitmap1,Machine->gfx[0],
-					code,palette + 64,
-					0,0,
-					sx,sy,
-					0,TRANSPARENCY_PEN,0);
 		}
 	}
 
 
 	/* copy the temporary bitmap to the screen */
-
-	scroll_x = scrollx;
-	scroll_y = -scrolly;
-	copyscrollbitmap(bitmap,bitmap1,1,&scroll_x,1,&scroll_y,
-			&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copyscrollbitmap(bitmap,bitmap1,1,&background_scrollx,1,&background_scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 
-	/* for every character in the text video RAM,
-	 * check if it different than 0 and update it accordingly.
-	 */
-
-	for (i = 0; i<system8_videoram_size; i+=2)
+	for (offs = 0;offs < system8_videoram_size;offs += 2)
 	{
-		int code = (system8_videoram[i] + (system8_videoram[i+1] << 8)) & 0x7FF;
-
-		if (code)
+		if ((system8_videoram[offs+1] & 0x08) == 0)
 		{
-			int palette = code>>5;
-			sx = (i % 64)<<2;
-			sy = ((i >> 6)<<3);
+			int code;
+
+			code = (system8_videoram[offs] | (system8_videoram[offs+1] << 8)) & 0x7ff;
+			sx = (offs/2) % 32;
+			sy = (offs/2) / 32;
+
 			drawgfx(bitmap,Machine->gfx[0],
-					code,palette,
+					code,
+					(code >> 5) & 0x3f,
 					0,0,
-					sx,sy,
+					8*sx,8*sy,
 					0,TRANSPARENCY_PEN,0);
 		}
 	}
 
+
+	DrawSprites(bitmap);
+
+
+	/* redraw tiles which have priority over sprites */
+	for (offs = 0;offs < system8_backgroundram_size;offs += 2)
+	{
+		if (system8_backgroundram[offs+1] & 0x08)
+		{
+			int code,color;
+
+
+			code = (system8_backgroundram[offs] + (system8_backgroundram[offs+1] << 8)) & 0x7ff;
+			color = ((code >> 5) & 0x3f) + 0x40;
+			sx = (offs/2) % 32;
+			sy = (offs/2) / 32;
+
+			sx = 8*sx + background_scrollx;
+			sy = 8*sy + background_scrolly;
+
+			drawgfx(bitmap,Machine->gfx[0],
+					code,
+					color,
+					0,0,
+					sx,sy,
+					0,TRANSPARENCY_PEN,0);
+			if (sx > 248)
+				drawgfx(bitmap,Machine->gfx[0],
+						code,
+						color,
+						0,0,
+						sx-256,sy,
+						0,TRANSPARENCY_PEN,0);
+			if (sy > 248)
+			{
+				drawgfx(bitmap,Machine->gfx[0],
+						code,
+						color,
+						0,0,
+						sx,sy-256,
+						0,TRANSPARENCY_PEN,0);
+				if (sx > 248)
+					drawgfx(bitmap,Machine->gfx[0],
+							code,
+							color,
+							0,0,
+							sx-256,sy-256,
+							0,TRANSPARENCY_PEN,0);
+			}
+		}
+	}
+
+
+	for (offs = 0;offs < system8_videoram_size;offs += 2)
+	{
+		if ((system8_videoram[offs+1] & 0x08) != 0)
+		{
+			int code;
+
+			code = (system8_videoram[offs] | (system8_videoram[offs+1] << 8)) & 0x7ff;
+			sx = (offs/2) % 32;
+			sy = (offs/2) / 32;
+
+			drawgfx(bitmap,Machine->gfx[0],
+					code,
+					(code >> 5) & 0x3f,
+					0,0,
+					8*sx,8*sy,
+					0,TRANSPARENCY_PEN,0);
+		}
+	}
+
+
+	/* even if screen is off, sprites must still be drawn to update the collision table */
+	if (system8_video_mode & 0x10)  /* screen off */
+		fillbitmap(bitmap,palette_transparent_color,&Machine->drv->visible_area);
 }
+
 
 
 void choplifter_scroll_x_w(int offset,int data)
@@ -710,12 +726,17 @@ void choplifter_textrefresh(struct osd_bitmap *bitmap, int layer)
 void choplifter_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	system8_compute_palette ();
+
 	choplifter_backgroundrefresh(bitmap,0);
 	choplifter_textrefresh(bitmap,0);
 	choplifter_backgroundrefresh(bitmap,2);
-	DrawSprites(bitmap,&Machine->drv->visible_area);
+	DrawSprites(bitmap);
 	choplifter_backgroundrefresh(bitmap,1);
 	choplifter_textrefresh(bitmap,1);
+
+	/* even if screen is off, sprites must still be drawn to update the collision table */
+	if (system8_video_mode & 0x10)  /* screen off */
+		fillbitmap(bitmap,palette_transparent_color,&Machine->drv->visible_area);
 
 #ifdef MAME_DEBUG
 	if (osd_key_pressed(OSD_KEY_SPACE))		// goto next level
@@ -724,10 +745,6 @@ void choplifter_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 #endif
 }
-
-
-
-
 
 
 
@@ -825,8 +842,13 @@ void wbml_textrefresh(struct osd_bitmap *bitmap)
 void wbml_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	palette_recalc();
+
 	wbml_backgroundrefresh(bitmap,0);
-	DrawSprites(bitmap,&Machine->drv->visible_area);
+	DrawSprites(bitmap);
 	wbml_backgroundrefresh(bitmap,1);
 	wbml_textrefresh(bitmap);
+
+	/* even if screen is off, sprites must still be drawn to update the collision table */
+	if (system8_video_mode & 0x10)  /* screen off */
+		fillbitmap(bitmap,palette_transparent_color,&Machine->drv->visible_area);
 }

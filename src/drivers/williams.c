@@ -2407,19 +2407,19 @@ struct GameDriver stargate_driver =
 
 ROM_START( defender_rom )
 	ROM_REGION(0x14000)
+	ROM_LOAD( "defend.1",  0x0d000, 0x0800, 0x4aa8c614 )
+	ROM_LOAD( "defend.4",  0x0d800, 0x0800, 0x99e9bb31 )
+	ROM_LOAD( "defend.2",  0x0e000, 0x1000, 0x8991dceb )
+	ROM_LOAD( "defend.3",  0x0f000, 0x1000, 0x3f6e9fe2 )
 	/* bank 0 is the place for CMOS ram */
-	ROM_LOAD( "defend.9", 0x10000, 0x0800, 0x3e2646ae )
-	ROM_LOAD( "defend.12",0x10800, 0x0800, 0xd13eeb4a )
-	ROM_LOAD( "defend.8", 0x11000, 0x0800, 0x67afa299 )
-	ROM_LOAD( "defend.11",0x11800, 0x0800, 0x287572ed )
-	ROM_LOAD( "defend.7", 0x12000, 0x0800, 0x344c9bd0 )
-	ROM_LOAD( "defend.10",0x12800, 0x0800, 0xee30b06e )
-	ROM_LOAD( "defend.6", 0x13000, 0x0800, 0x8c7b2da3 )
-	ROM_LOAD( "defend.10",0x13800, 0x0800, 0xee30b06e )
-	ROM_LOAD( "defend.1", 0xd000, 0x0800, 0x4aa8c614 )
-	ROM_LOAD( "defend.4", 0xd800, 0x0800, 0x99e9bb31 )
-	ROM_LOAD( "defend.2", 0xe000, 0x1000, 0x8991dceb )
-	ROM_LOAD( "defend.3", 0xf000, 0x1000, 0x3f6e9fe2 )
+	ROM_LOAD( "defend.9",  0x10000, 0x0800, 0x3e2646ae )
+	ROM_LOAD( "defend.12", 0x10800, 0x0800, 0xd13eeb4a )
+	ROM_LOAD( "defend.8",  0x11000, 0x0800, 0x67afa299 )
+	ROM_LOAD( "defend.11", 0x11800, 0x0800, 0x287572ed )
+	ROM_LOAD( "defend.7",  0x12000, 0x0800, 0x344c9bd0 )
+	ROM_LOAD( "defend.10", 0x12800, 0x0800, 0xee30b06e )
+	ROM_RELOAD(            0x13800, 0x0800 )
+	ROM_LOAD( "defend.6",  0x13000, 0x0800, 0x8c7b2da3 )
 
 	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */

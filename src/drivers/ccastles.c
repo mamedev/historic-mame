@@ -20,7 +20,7 @@ Crystal Castles memory map.
 -------------------------------------------------------------------------------
 8F00-8FFF 1 0 0 0 1 1 1 1 A A A A A A A A R/W D D D D D D D D  MOB BUF 1
                                       0 0 R/W D D D D D D D D  MOB Picture
-                                      0 1 R/W D D D D D D D D  MOB Vertial
+                                      0 1 R/W D D D D D D D D  MOB Vertical
                                       1 0 R/W D D D D D D D D  MOB Priority
                                       1 1 R/W D D D D D D D D  MOB Horizontal
 -------------------------------------------------------------------------------
@@ -71,10 +71,6 @@ Crystal Castles memory map.
 9F80-9FBF 1 0 0 1 1 1 1 1 1 X A A A A A A  W  D D D D D D D D  COLORAM
 A000-FFFF 1 A A A A A A A A A A A A A A A  R  D D D D D D D D  Program ROM
 
-Things to do:
-1) Sound.  It's better! The game sounds are slightly slow.....
-7) Vertical scrolling is wrong.  Is horizontal scrolling right?
-
 ***************************************************************************/
 
 #include "driver.h"
@@ -82,26 +78,21 @@ Things to do:
 
 
 
-extern unsigned char *ccastles_bitmapram;
-extern unsigned char *ccastles_mobram1;
-extern unsigned char *ccastles_mobram2;
+extern unsigned char *screen_addr;
+extern unsigned char *screen_inc;
+extern unsigned char *screen_inc_enable;
+extern unsigned char *sprite_bank;
+extern unsigned char *ccastles_scrollx;
+extern unsigned char *ccastles_scrolly;
 
 void ccastles_paletteram_w(int offset,int data);
 int ccastles_vh_start(void);
 void ccastles_vh_stop(void);
 void ccastles_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-int ccastles_trakball_x(int data);
-int ccastles_trakball_y(int data);
-
-int ccastles_trakball_r(int offset);
-int ccastles_xy_r(int offset);
 int ccastles_bitmode_r(int offset);
-
-void ccastles_xy_w(int offset, int data);
-void ccastles_axy_w(int offset, int data);
 void ccastles_bitmode_w(int offset, int data);
-void ccastles_bitmapram_w(int offset,int data);
+
 void ccastles_flipscreen_w(int offset,int data);
 
 
@@ -134,31 +125,37 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x9600, 0x9600, input_port_0_r },	/* IN0 */
 	{ 0x9800, 0x980f, pokey1_r }, /* Random # generator on a Pokey */
 	{ 0x9a00, 0x9a0f, pokey2_r }, /* Random #, IN1 */
-	{ 0xA000, 0xDFFF, MRA_BANK1 },
-	{ 0xE000, 0xFFFF, MRA_ROM },	/* ROMs/interrupt vectors */
+	{ 0xa000, 0xdfff, MRA_BANK1 },
+	{ 0xe000, 0xffff, MRA_ROM },	/* ROMs/interrupt vectors */
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x0000, 0x0001, ccastles_xy_w },
+	{ 0x0000, 0x0001, MWA_RAM, &screen_addr },
 	{ 0x0002, 0x0002, ccastles_bitmode_w },
-	{ 0x0003, 0x90ff, MWA_RAM },  /* All RAM */
-	{ 0x9800, 0x980F, pokey1_w },
-	{ 0x9A00, 0x9A0F, pokey2_w },
-	{ 0x9C80, 0x9C80, MWA_RAM },    /* Horizontal Scroll */
-	{ 0x9D00, 0x9D00, MWA_RAM },    /* Vertical Scroll */
-	{ 0x9D80, 0x9D80, MWA_NOP },
-	{ 0x9E00, 0x9E00, MWA_NOP },
-	{ 0x9E80, 0x9E81, ccastles_led_w },
+	{ 0x0003, 0x0bff, MWA_RAM },
+	{ 0x0c00, 0x7fff, MWA_RAM, &videoram },
+	{ 0x8000, 0x8dff, MWA_RAM },
+	{ 0x8e00, 0x8eff, MWA_RAM, &spriteram_2, &spriteram_size },
+	{ 0x8f00, 0x8fff, MWA_RAM, &spriteram },
+	{ 0x9000, 0x90ff, MWA_RAM },  /* NVRAM */
+	{ 0x9800, 0x980f, pokey1_w },
+	{ 0x9a00, 0x9a0f, pokey2_w },
+	{ 0x9c80, 0x9c80, MWA_RAM, &ccastles_scrollx },
+	{ 0x9d00, 0x9d00, MWA_RAM, &ccastles_scrolly },
+	{ 0x9d80, 0x9d80, MWA_NOP },
+	{ 0x9e00, 0x9e00, MWA_NOP },
+	{ 0x9e80, 0x9e81, ccastles_led_w },
+	{ 0x9e85, 0x9e86, MWA_NOP },
+	{ 0x9e87, 0x9e87, ccastles_bankswitch_w },
+	{ 0x9f00, 0x9f01, MWA_RAM, &screen_inc_enable },
+	{ 0x9f02, 0x9f03, MWA_RAM, &screen_inc },
 	{ 0x9f04, 0x9f04, ccastles_flipscreen_w },
-	{ 0x9E85, 0x9E86, MWA_NOP },
-	{ 0x9E87, 0x9E87, ccastles_bankswitch_w },
-	{ 0x9F00, 0x9F01, ccastles_axy_w },
-	{ 0x9F02, 0x9F03, MWA_RAM },
-	{ 0x9F05, 0x9F07, MWA_RAM },
-	{ 0x9F80, 0x9FBF, ccastles_paletteram_w },
-	{ 0xA000, 0xFFFF, MWA_ROM },
+	{ 0x9f05, 0x9f06, MWA_RAM },
+	{ 0x9f07, 0x9f07, MWA_RAM, &sprite_bank },
+	{ 0x9f80, 0x9fbf, ccastles_paletteram_w },
+	{ 0xa000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
