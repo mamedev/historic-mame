@@ -23,18 +23,24 @@ Donkey Kong                    Yes             No              No
 Donkey Kong Jr.                Yes             No              No
 Bagman                    Yes (slowdowns)      No          Music only
 Wizard of Wor               Partially        Maybe             No
-The Adventures of Robby Roto         not implemented yet
-Galaxians                      Yes            Yes           Limited
+The Adventures of Robby Roto    No             No              No
+Gorf                            No             No              No
+Galaxian                       Yes            Yes           Limited
 Pisces                         Yes            Yes           Limited
 "Japanese Irem game"           Yes             No           Limited
 War of the Bugs                Yes             No           Limited
 Moon Cresta                    Yes             No           Limited
+Moon Quasar                           not implemented yet
 The End                        Yes             No              No
-Scramble                       Yes             No              No
+Scramble                       Yes            Yes              No
+Super Cobra                    Yes             ?               No
 Frogger                        Yes             No              No
 Amidar                         Yes             No              No
 Turtles                        Yes             No              No
 Rally X                   Yes (slowdowns)      No              No
+Pooyan                         Yes             No              No
+Phoenix                        Yes           Close             No
+Pleiades                       Yes             No              No
 
 
 
@@ -65,14 +71,20 @@ Thanks to Paul Swan for the information on the Lady Bug sound hardware and
    Mr.Do! colors.
 Thanks to Gary Walton for his help in making the Crush Roller colors better.
 Information about the Crazy Climber machine hardware (including palette) and
-   ROM encryption scheme provided by Lionel Theunissen (lionelth@ozemail.com.au).
+   ROM encryption scheme provided by Lionel Theunissen
+   (lionelth@ozemail.com.au).
 Thanks to Andy Milne (andy@canetics.com) for the information on the Crazy
    Climber sound roms.
 Crazy Kong emulation set up by Ville Laitinen (ville@sms.fi).
 Special thanks to Brad Thomas (bradt@nol.net) and Gary Shepherdson for the
    extensive information on Donkey Kong and Donkey Kong Jr.
-Info on Bagman, Galaxians, Moon Cresta and many other games taken from Arcade
+Info on Bagman, Galaxian, Moon Cresta and many other games taken from Arcade
    Emulator by Robert Anschuetz.
+Pooyan information provided by Michael Cuddy and Allard van der Bas
+Phoenix driver provided by Brad Oliver (bradman@primenet.com) and Mirko
+   Buffoni (mix@lim.dsi.unimi.it)
+Thanks to Mike@Dissfulfils.co.uk for the information on the Moon Quasar
+   encryption scheme.
 Many thanks to Jim Hernandez for the information on Wizard of Wor hardware.
 Thanks to Dave W. for all his help.
 
@@ -230,6 +242,7 @@ I,J,K,L Right joystick
 F1      Skip level
 
 Clones supported:
+  Japanese version ("ccjap")
   bootleg version ("ccboot")
 
 
@@ -314,8 +327,16 @@ still haven to check the loading address of the ROMs.
 
 
 
-Galaxians ("galaxian")
-----------------------
+Gorf ("gorf")
+--------------------------------------
+
+This game runs on the same hardware as Wizard of Wor, but doesn't work yet.
+It boots, shows some text on the screen and that's all.
+
+
+
+Galaxian ("galaxian")
+---------------------
 
 Arrows  Move around
 CTRL    Fire
@@ -323,12 +344,12 @@ F2      Test mode
 
 There are so many clones here that I'm not even sure which is the "original"
 one. The dip switch menu might display wrong settings.
-  Namco Galaxians ("galnamco")
-  Super Galaxians ("superg")
-  Galaxians Part X ("galapx")
-  Galaxians Part 1 ("galap1")
-  Galaxians Part 4 ("galap4")
-  Galaxians Turbo ("galturbo")
+  Namco Galaxian ("galnamco")
+  Super Galaxian ("superg")
+  Galaxian Part X ("galapx")
+  Galaxian Part 1 ("galap1")
+  Galaxian Part 4 ("galap4")
+  Galaxian Turbo ("galturbo")
 
 Known issues:
 - Only one sound channel is emulated, and I'm not sure it's correct
@@ -339,7 +360,7 @@ Known issues:
 Pisces ("pisces")
 -----------------
 
-This runs on a modified Galaxians board.
+This runs on a modified Galaxian board.
 
 Arrows  Move around
 CTRL    Fire
@@ -353,7 +374,7 @@ Known issues:
 "Japanese Irem game" ("japirem")
 --------------------------------
 
-This runs on a modified Galaxians board.
+This runs on a modified Galaxian board.
 
 Arrows  Move around
 CTRL    Fire
@@ -370,7 +391,7 @@ Known issues:
 War of the Bugs ("warofbug")
 ----------------------------
 
-This runs on the same hardware as Galaxians.
+This runs on the same hardware as Galaxian.
 
 Arrows  Move around
 CTRL    Fire
@@ -384,7 +405,7 @@ Known issues:
 Moon Cresta ("mooncrst")
 ------------------------
 
-This runs on a hardware very similar to Galaxians.
+This runs on a hardware very similar to Galaxian.
 
 Arrows  Move around
 CTRL    Fire
@@ -398,7 +419,7 @@ Known issues:
 The End ("theend")
 ------------------
 
-This runs on a hardware very similar to Galaxians.
+This runs on a hardware very similar to Galaxian.
 
 Arrows  Move around
 CTRL    Fire
@@ -413,7 +434,7 @@ Known issues:
 Scramble ("scramble")
 ---------------------
 
-The video hardware is very similar to Galaxians, main differences being that
+The video hardware is very similar to Galaxian, main differences being that
 bullets are not vertical lines and the star background doesn't scroll.
 
 Arrows  Move around
@@ -421,7 +442,23 @@ CTRL    Fire
 ALT     Bomb
 
 Known issues:
-- The background stars don't blink. Maybe it should also be clipped to the top
+- The background stars don't blink. Maybe they should also be clipped to the top
+  and bottom of the screen?
+- Two players mode doesn't work
+
+
+
+Super Cobra ("scobra")
+----------------------
+
+The version suported runs on a modified Scramble board.
+
+Arrows  Move around
+CTRL    Fire
+ALT     Bomb
+
+Known issues:
+- The background stars don't blink. Maybe they should also be clipped to the top
   and bottom of the screen?
 - Two players mode doesn't work
 
@@ -442,6 +479,10 @@ Amidar ("amidar")
 
 Arrows  Move around
 CTRL    Jump
+
+Clones supported:
+  US version ("amidarus"). This version is quite different, it has a better
+    attract mode and displayes the number of jumps left.
 
 Known issues:
 - What do the dip switches do?
@@ -471,3 +512,31 @@ F2      Test
 
 Known issues:
 - Graphic glitches, slowdowns, small screen
+
+
+
+Pooyan ("pooyan")
+-----------------
+
+Arrows  Move around
+CTRL    Fire
+
+
+
+Phoenix ("phoenix")
+-------------------
+
+Arrows  Move around
+CTRL    Fire
+ALT     Barrier
+
+
+
+Pleiades ("pleiades")
+---------------------
+
+This runs on the same hardware as Phoenix.
+
+Arrows  Move around
+CTRL    Fire
+ALT     Teleport

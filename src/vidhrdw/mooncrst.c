@@ -310,13 +310,8 @@ void mooncrst_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			clip.min_y = i;
 			clip.max_y = i + 7;
-			if (scroll)
-			{
-				copybitmap(bitmap,tmpbitmap,0,0,scroll,0,&clip,TRANSPARENCY_NONE,0);
-				copybitmap(bitmap,tmpbitmap,0,0,scroll - 256,0,&clip,TRANSPARENCY_NONE,0);
-			}
-			else
-				copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_NONE,0);
+			copybitmap(bitmap,tmpbitmap,0,0,scroll,0,&clip,TRANSPARENCY_NONE,0);
+			copybitmap(bitmap,tmpbitmap,0,0,scroll - 256,0,&clip,TRANSPARENCY_NONE,0);
 		}
 	}
 

@@ -211,32 +211,35 @@ void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap)
 	}
 
 	/* copy the character mapped graphics */
-	i = 0;
-	while (i < 8 * 32)
+	/* copy the temporary bitmap to the screen */
 	{
-		int cons,y,y1;
+		struct rectangle clip;
 
 
-		/* count consecutive columns scrolled by the same amount */
-		cons = 8;
-		while (i + cons < 8 * 32 &&	cclimber_column_scroll[(i + cons) / 8]
-				== cclimber_column_scroll[i / 8])
-			cons += 8;
+		clip.min_y = visiblearea.min_y;
+		clip.max_y = visiblearea.max_y;
 
-		/* copy all visible lines */
-		y = 2*8;
-		y1 = (y + cclimber_column_scroll[i / 8]) % tmpbitmap->height;
-		while (y < 8*30)
+		i = 0;
+		while (i < 8 * 32)
 		{
-			memcpy(bitmap->line[y] + i,tmpbitmap->line[y1] + i,cons);
+			int cons,scroll;
 
-			y++;
-			y1++;
-			if (y1 == tmpbitmap->height) y1 = 0;
+
+			/* count consecutive columns scrolled by the same amount */
+			scroll = cclimber_column_scroll[i / 8];
+			cons = 8;
+			while (i + cons < 8 * 32 &&	cclimber_column_scroll[(i + cons) / 8] == scroll)
+				cons += 8;
+
+			clip.min_x = i;
+			clip.max_x = i + cons - 1;
+			copybitmap(bitmap,tmpbitmap,0,0,0,-scroll,&clip,TRANSPARENCY_NONE,0);
+			copybitmap(bitmap,tmpbitmap,0,0,0,256 - scroll,&clip,TRANSPARENCY_NONE,0);
+
+			i += cons;
 		}
-
-		i += cons;
 	}
+
 
 	/* draw the "big sprite" */
 	{
@@ -276,7 +279,7 @@ void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap)
 	}
 
 	/* draw sprites (must be done after the "big sprite" to obtain the correct priority) */
-	for (i = 0;i < 8*4;i+=4)
+	for (i = 0;i < 8*4;i += 4)
 	{
 		drawgfx(bitmap,Machine->gfx[cclimber_spriteram[i + 1] & 0x10 ? 4 : 3],
 				cclimber_spriteram[i] & 0x3f,cclimber_spriteram[i + 1] & 0x0f,

@@ -116,7 +116,6 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa181, 0xa181, interrupt_enable_w },
 	{ 0xa130, 0xa130, MWA_RAM, &rallyx_scrollx },
 	{ 0xa140, 0xa140, MWA_RAM, &rallyx_scrolly },
-	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0xa004, 0xa00c, MWA_NOP },	/* ????? */
 	{ 0xa105, 0xa105, MWA_NOP },	/* ????? */
 	{ 0xa10a, 0xa10a, MWA_NOP },	/* ????? */
@@ -124,6 +123,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa170, 0xa170, MWA_NOP },	/* ????? */
 	{ 0xa180, 0xa180, MWA_NOP },	/* ????? */
 	{ 0xa182, 0xa186, MWA_NOP },	/* ????? */
+	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x8014, 0x801f, MWA_RAM, &rallyx_spriteram1 },
 	{ 0x8814, 0x881f, MWA_RAM, &rallyx_spriteram2 },
 	{ -1 }	/* end of table */

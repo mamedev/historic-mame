@@ -29,17 +29,19 @@ extern void mooncrst_sh_update(void);
 
 static struct MemoryReadAddress readmem[] =
 {
+	{ 0x8000, 0x83ff, MRA_RAM },
 	{ 0x9000, 0x9fff, MRA_RAM },	/* video RAM, screen attributes, sprites, bullets */
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0xa000, 0xa000, input_port_0_r },	/* IN0 */
 	{ 0xa800, 0xa800, input_port_1_r },	/* IN1 */
-	{ 0xb000, 0xb000, input_port_2_r },	/* DSW */
+	{ 0xb000, 0xb000, input_port_2_r },	/* DSW (coins per play) */
 	{ 0xb800, 0xb800, MRA_NOP },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
+	{ 0x8000, 0x83ff, MWA_RAM },
 	{ 0x9000, 0x93ff, mooncrst_videoram_w, &mooncrst_videoram },
 	{ 0x9800, 0x983f, mooncrst_attributes_w, &mooncrst_attributesram },
 	{ 0x9840, 0x985f, MWA_RAM, &mooncrst_spriteram },
@@ -64,7 +66,7 @@ static struct InputPort input_ports[] =
 				OSD_JOY_FIRE, 0, 0, 0 }
 	},
 	{	/* IN1 */
-		0x00,
+		0x80,
 		{ OSD_KEY_1, OSD_KEY_2, 0, 0, 0, 0, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
@@ -80,10 +82,8 @@ static struct InputPort input_ports[] =
 
 static struct DSW dsw[] =
 {
+	{ 1, 0x80, "LANGUAGE", { "JAPANESE", "ENGLISH" } },
 	{ 1, 0x40, "SW1", { "OFF", "ON" } },
-	{ 2, 0x80, "SW2", { "OFF", "ON" } },
-	{ 2, 0x01, "SW3", { "OFF", "ON" } },
-	{ 2, 0x02, "SW4", { "OFF", "ON" } },
 	{ -1 }
 };
 

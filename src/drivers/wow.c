@@ -82,9 +82,9 @@ blitter registers:
 extern unsigned char *wow_videoram;
 extern int wow_collision_r(int offset);
 extern void wow_videoram_w(int offset,int data);
+extern void wow_mask_w(int offset,int data);
+extern void wow_unknown_w(int offset,int data);
 extern void wow_masked_videoram_w(int offset,int data);
-extern void wow_blitter_mask_w(int offset,int data);
-extern void wow_blitter_unknown_w(int offset,int data);
 extern void wow_blitter_w(int offset,int data);
 extern int wow_vh_start(void);
 extern void wow_vh_stop(void);
@@ -127,8 +127,8 @@ static struct IOReadPort readport[] =
 static struct IOWritePort writeport[] =
 {
 	{ 0x0d, 0x0d, interrupt_vector_w },
-	{ 0x19, 0x19, wow_blitter_mask_w },
-	{ 0x0c, 0x0c, wow_blitter_unknown_w },
+	{ 0x19, 0x19, wow_mask_w },
+	{ 0x0c, 0x0c, wow_unknown_w },
 	{ 0x78, 0x7e, wow_blitter_w },
 	{ -1 }	/* end of table */
 };

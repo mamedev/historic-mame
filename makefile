@@ -21,8 +21,11 @@ OBJS   = obj/mame.o obj/common.o obj/machine.o obj/driver.o obj/osdepend.o \
          obj/drivers/theend.o \
          obj/vidhrdw/frogger.o obj/drivers/frogger.o \
          obj/machine/scramble.o obj/vidhrdw/scramble.o obj/drivers/scramble.o \
+         obj/drivers/scobra.o \
          obj/vidhrdw/amidar.o obj/drivers/amidar.o \
          obj/vidhrdw/rallyx.o obj/drivers/rallyx.o \
+         obj/vidhrdw/pooyan.o obj/drivers/pooyan.o \
+         obj/machine/phoenix.o obj/vidhrdw/phoenix.o obj/drivers/phoenix.o \
          obj/Z80/Z80.o
 
 VPATH = src src/z80

@@ -168,7 +168,7 @@ void ckong_vh_screenrefresh(struct osd_bitmap *bitmap)
 	for (i = 0;i < 8*4;i+=4)
 	{
 		drawgfx(bitmap,Machine->gfx[ckong_spriteram[i + 1] & 0x10 ? 4 : 3],
-				(ckong_spriteram[i] & 0x3f) + 2 * (ckong_spriteram[i +1] & 0x20),
+				(ckong_spriteram[i] & 0x3f) + 2 * (ckong_spriteram[i + 1] & 0x20),
 				ckong_spriteram[i + 1] & 0x0f,
 				ckong_spriteram[i] & 0x80,ckong_spriteram[i] & 0x40,
 				ckong_spriteram[i + 2] + 1,ckong_spriteram[i + 3],

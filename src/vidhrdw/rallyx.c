@@ -137,7 +137,7 @@ void rallyx_colorram2_w(int offset,int data)
 ***************************************************************************/
 void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	int i,offs,sx,sy;
+	int offs,sx,sy;
 
 
 	/* for every character in the Video RAM, check if it has been modified */
@@ -195,12 +195,12 @@ void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 	/* draw the sprites */
-	for (i = 0;i < 6;i++)
+	for (offs = 0;offs < 6*2;offs += 2)
 	{
 		drawgfx(bitmap,Machine->gfx[1],
-				rallyx_spriteram1[2*i] >> 2,rallyx_spriteram2[2*i + 1],
-				rallyx_spriteram1[2*i] & 1,rallyx_spriteram1[2*i] & 2,
-				rallyx_spriteram1[2*i + 1] + 8,240 - rallyx_spriteram2[2*i],
+				rallyx_spriteram1[offs] >> 2,rallyx_spriteram2[offs + 1],
+				rallyx_spriteram1[offs] & 1,rallyx_spriteram1[offs] & 2,
+				rallyx_spriteram1[offs + 1] + 8,240 - rallyx_spriteram2[offs],
 				&visiblearea,TRANSPARENCY_PEN,0);
 	}
 }

@@ -2,7 +2,7 @@
 
 Amidar memory map (preliminary)
 
-0000-3fff ROM (Turtles: 0000-4fff)
+0000-3fff ROM (Amidar US version and Turtles: 0000-4fff)
 8000-87ff RAM
 9000-93ff Video RAM
 9800-983f Screen attributes
@@ -83,12 +83,12 @@ extern void amidar_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
 
-static struct MemoryReadAddress amidar_readmem[] =
+static struct MemoryReadAddress readmem[] =
 {
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x9000, 0x93ff, MRA_RAM },
 	{ 0x9800, 0x985f, MRA_RAM },
-	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x0000, 0x4fff, MRA_ROM },
 	{ 0xb000, 0xb000, input_port_0_r },	/* IN0 */
 	{ 0xb010, 0xb010, input_port_1_r },	/* IN1 */
 	{ 0xb020, 0xb020, input_port_2_r },	/* IN2 */
@@ -96,20 +96,8 @@ static struct MemoryReadAddress amidar_readmem[] =
 	{ 0xa800, 0xa800, MRA_NOP },
 	{ -1 }	/* end of table */
 };
-static struct MemoryReadAddress turtles_readmem[] =
-{
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0x9000, 0x93ff, MRA_RAM },
-	{ 0x9800, 0x985f, MRA_RAM },
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0xb000, 0xb000, input_port_0_r },	/* IN0 */
-	{ 0xb010, 0xb010, input_port_1_r },	/* IN1 */
-	{ 0xb020, 0xb020, input_port_2_r },	/* IN2 */
-	{ 0xa800, 0xa800, MRA_NOP },
-	{ -1 }	/* end of table */
-};
 
-static struct MemoryWriteAddress amidar_writemem[] =
+static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x9000, 0x93ff, amidar_videoram_w, &amidar_videoram },
@@ -117,18 +105,7 @@ static struct MemoryWriteAddress amidar_writemem[] =
 	{ 0x9840, 0x985f, MWA_RAM, &amidar_spriteram },
 	{ 0x9860, 0x987f, MWA_NOP },
 	{ 0xa008, 0xa008, interrupt_enable_w },
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
-static struct MemoryWriteAddress turtles_writemem[] =
-{
-	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x9000, 0x93ff, amidar_videoram_w, &amidar_videoram },
-	{ 0x9800, 0x983f, amidar_attributes_w, &amidar_attributesram },
-	{ 0x9840, 0x985f, MWA_RAM, &amidar_spriteram },
-	{ 0x9860, 0x987f, MWA_NOP },
-	{ 0xa008, 0xa008, interrupt_enable_w },
-	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x0000, 0x4fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -230,31 +207,32 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static unsigned char palette[] =
 {
-    0, 0, 0,                    // BLACK
-    63*4, 0, 0,                   // RED
-    238, 162, 173,              // PURPLE
-    0, 63*4, 63*4,                  // CYAN,
-    63*4, 63*4, 0,                  // YELLOW,
-    9, 9, 63*4,                   // BLUE
-    0, 63*4, 0,                   // GREEN
-    54*4, 54*4, 54*4                  // WHITE
+	0x00,0x00,0x00,	/* BLACK */
+	0xff,0x00,0x00,	/* RED */
+	0xdb,0x92,0xdb, /* PINK */
+	0x00,0xff,0xdb,	/* CYAN, */
+	0xff,0xff,0x00,	/* YELLOW, */
+	0x24,0x24,0xdb,	/* BLUE */
+	0x00,0xff,0x00,	/* GREEN */
+	0xdb,0xdb,0xdb,	/* WHITE */
+	0xff,0xb6,0x49,	/* ORANGE */
 };
 
 enum
 {
-    black, red, purple, cyan, yellow, blue, green, white
+	black, red, pink, cyan, yellow, blue, green, white, orange
 };
 
 static unsigned char colortable[] =
 {
-    black, red, blue, white,    // white text
-    black, green, yellow, purple,   // yellow gorilla
-    black, green, red, yellow,  // yellow line on title screen
-    black, red, purple, green,
-    black, yellow, green, red,
-    black, red, yellow, green,
-    black, white, red, purple,  // purple pig
-    black, cyan, red, white    // white pig
+	black, red, blue, white,	/* white text */
+	black, green, pink, orange,	/* fruit */
+	black, green, red, yellow,	/* yellow line on title screen */
+	black, red, green, yellow,	/* enemy vulnerable body, mouth, eyes */
+	black, yellow, green, red,	/* monkey body, stomach, arms */
+	black, green, orange, yellow,	/* enemy body, mouth, eyes */
+	black, white, red, pink,	/* pink pig */
+	black, cyan, red, white	/* white pig */
 };
 
 
@@ -264,7 +242,7 @@ const struct MachineDriver amidar_driver =
 	/* basic machine hardware */
 	3072000,	/* 3.072 Mhz */
 	60,
-	amidar_readmem,amidar_writemem,0,0,
+	readmem,writemem,0,0,
 	input_ports,amidar_dsw,
 	0,
 	nmi_interrupt,
@@ -297,7 +275,7 @@ const struct MachineDriver turtles_driver =
 	/* basic machine hardware */
 	3072000,	/* 3.072 Mhz */
 	60,
-	turtles_readmem,turtles_writemem,0,0,
+	readmem,writemem,0,0,
 	input_ports,turtles_dsw,
 	0,
 	nmi_interrupt,

@@ -54,9 +54,10 @@ static struct rectangle visiblearea =
         -- 470 ohm resistor  -- RED
   bit 0 -- 1  kohm resistor  -- RED
 
-  Additionally, there is a bit which is 1 in the upper 136 lines of the
-  display; it is connected to blue through a 470 ohm resistor. It is used
-  to make the river blue instead of black.
+  Additionally, there is a bit which is 1 in the upper half of the display
+  (136 lines? I'm not sure of the exact value); it is connected to blue
+  through a 470 ohm resistor. It is used to make the river blue instead of
+  black.
 
 ***************************************************************************/
 void frogger_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
@@ -214,13 +215,8 @@ void frogger_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			clip.min_y = i;
 			clip.max_y = i + 7;
-			if (scroll)
-			{
-				copybitmap(bitmap,tmpbitmap,0,0,scroll,0,&clip,TRANSPARENCY_NONE,0);
-				copybitmap(bitmap,tmpbitmap,0,0,scroll - 256,0,&clip,TRANSPARENCY_NONE,0);
-			}
-			else
-				copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_NONE,0);
+			copybitmap(bitmap,tmpbitmap,0,0,scroll,0,&clip,TRANSPARENCY_NONE,0);
+			copybitmap(bitmap,tmpbitmap,0,0,scroll - 256,0,&clip,TRANSPARENCY_NONE,0);
 		}
 	}
 

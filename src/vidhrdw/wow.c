@@ -105,6 +105,22 @@ void wow_videoram_w(int offset,int data)
 
 
 
+void wow_mask_w(int offset,int data)
+{
+if (errorlog) fprintf(errorlog,"%04x: mask = %02x\n",Z80_GetPC(),data);
+	mask = data;
+}
+
+
+
+void wow_unknown_w(int offset,int data)
+{
+if (errorlog) fprintf(errorlog,"%04x: unknown = %02x\n",Z80_GetPC(),data);
+	unknown = data;
+}
+
+
+
 static void copywithflip(int offset,int data)
 {
 	if (unknown & 0x40)	/* copy backwards */
@@ -170,11 +186,15 @@ static void copywithflip(int offset,int data)
 		if ((mask & wow_videoram[offset]) || (~mask & wow_videoram[offset+1])) collision = 1;
 		else collision = 0;
 
-		if (unknown & 0x20) data ^= wow_videoram[offset];	/* draw in XOR mode */
-		else data |= ~mask & wow_videoram[offset];	/* draw in copy mode */
+		if (unknown & 0x20)
+			data ^= wow_videoram[offset];	/* draw in XOR mode */
+		else
+			data |= ~mask & wow_videoram[offset];	/* draw in copy mode */
 		wow_videoram_w(offset,data);
-		if (unknown & 0x20) data1 ^= wow_videoram[offset+1];	/* draw in XOR mode */
-		else data1 |= mask & wow_videoram[offset+1];	/* draw in copy mode */
+		if (unknown & 0x20)
+			data1 ^= wow_videoram[offset+1];	/* draw in XOR mode */
+		else
+			data1 |= mask & wow_videoram[offset+1];	/* draw in copy mode */
 		wow_videoram_w(offset+1,data1);
 	}
 }
@@ -183,12 +203,15 @@ static void copywithflip(int offset,int data)
 
 void wow_masked_videoram_w(int offset,int data)
 {
-	if (offset < 0 || offset >= 0x4000) return;
-
-	if ((unknown & 0x9c) == 0x08)	/* copy 1 bitplane with color */
+	if ((unknown & 0x9c) == 0x08	/* copy 1 bitplane with color */
+			|| (unknown & 0x9c) == 0x18)
 	{
 		int bits,bibits,k;
 
+static int count;
+
+count ^= 1;
+if (!count) return;
 
 		bits = data;
 		bibits = 0;
@@ -224,48 +247,10 @@ void wow_masked_videoram_w(int offset,int data)
 		else
 			copywithflip(offset+1,bibits);
 	}
-	else if ((unknown & 0x9c) == 0x18)	/* copy 1 bitplane with color, but copy only the first byte */
-	{
-		int bits,bibits,k;
-
-
-		bits = data;
-		bibits = 0;
-		for (k = 0;k < 4;k++)
-		{
-			bibits <<= 2;
-			if (bits & 0x80) bibits |= 0x03;
-			bits <<= 1;
-		}
-		if (mask == 0) bibits = 0;
-		else if (mask == 4) bibits &= 0x55;
-		else if (mask == 8) bibits &= 0xaa;
-
-		if (unknown & 0x40)	/* copy backwards */
-			copywithflip(offset+1,bibits);
-		else
-			copywithflip(offset,bibits);
-	}
 	else
 	{
 		copywithflip(offset,data);
 	}
-}
-
-
-
-void wow_blitter_mask_w(int offset,int data)
-{
-if (errorlog) fprintf(errorlog,"%04x: mask = %02x\n",Z80_GetPC(),data);
-	mask = data;
-}
-
-
-
-void wow_blitter_unknown_w(int offset,int data)
-{
-if (errorlog) fprintf(errorlog,"%04x: unknown = %02x\n",Z80_GetPC(),data);
-	unknown = data;
 }
 
 
@@ -310,51 +295,55 @@ void wow_blitter_w(int offset,int data)
 		int i,j;
 
 
-		skip = (int)((signed char)skip);	/* extend the sign */
-
 if (errorlog) fprintf(errorlog,"%04x: blit src %04x mode %02x skip %d dest %04x length %d loops %d\n",
 		Z80_GetPC(),src,mode,skip,dest,length,loops);
 
-		if ((mode & 0xdf) == 0x02)	/* fill */
+//		if ((mode & 0x09) == 0x00)	/* copy from 1 bitplane */
+//		else if ((mode & 0x09) == 0x08)	/* copy from 2 bitplanes */
+
+		for (i = 0; i <= loops;i++)
 		{
-			for (i = 0; i <= loops;i++)
+			for (j = 0;j <= length;j++)
 			{
-				for (j = 0;j < length;j++)
-				{
-					wow_masked_videoram_w(dest,RAM[src]);
-					if (mode & 0x20) dest++;	/* copy forwards */
-					else dest--;				/* backwards */
-				}
-				dest += skip;
+if (!(mode & 0x08) || j < length)
+				Z80_WRMEM(dest,RAM[src]);
+				if (mode & 0x20) dest++;	/* copy forwards */
+				else dest--;				/* backwards */
+
+				if ((j & 1) || !(mode & 0x02))	/* don't increment source on odd loops */
+					if (mode & 0x04) src++;
 			}
-		}
-		else if ((mode & 0xdf) == 0x06)	/* copy from 1 bitplane */
-		{
-			for (i = 0; i <= loops;i++)
+
+			if ((j & 1) && (mode & 0x02))	/* always increment source at end of line */
+				if (mode & 0x04) src++;
+if (mode & 0x08) src--;
+
+if (mode & 0x20) dest--;	/* copy forwards */
+else dest++;				/* backwards */
+
+			dest += (int)((signed char)skip);	/* extend the sign of the skip register */
+
+		/* Note: actually the hardware doesn't handle the sign of the skip register, */
+		/* when incrementing the destination address the carry bit is taken from the */
+		/* mode register. To faithfully emulate the hardware I should do: */
+#if 0
 			{
-				for (j = 0;j < length;j++)
+				int lo,hi;
+
+				lo = dest & 0x00ff;
+				hi = dest & 0xff00;
+				lo += skip;
+				if (mode & 0x10)
 				{
-					wow_masked_videoram_w(dest,RAM[src]);
-					if (mode & 0x20) dest++;	/* copy forwards */
-					else dest--;				/* backwards */
-					src++;
+					if (lo < 0x100) hi -= 0x100;
 				}
-				dest += skip;
-			}
-		}
-		else if ((mode & 0xdf) == 0x0c || (mode & 0xdf) == 0x1c)	/* copy from 2 bitplanes */
-		{
-			for (i = 0; i <= loops;i++)
-			{
-				for (j = 0;j < length;j++)
+				else
 				{
-					wow_masked_videoram_w(dest,RAM[src]);
-					if (mode & 0x20) dest++;	/* copy forwards */
-					else dest--;				/* backwards */
-					src++;
+					if (lo > 0xff) hi += 0x100;
 				}
-				dest += skip;
+				dest = hi | (lo & 0xff);
 			}
+#endif
 		}
 	}
 }

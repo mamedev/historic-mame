@@ -1,21 +1,21 @@
 /***************************************************************************
 
-Scramble memory map (preliminary)
+Super Cobra memory map (preliminary)
 
-0000-3fff ROM
-4000-47ff RAM
-4800-4bff Video RAM
-5000-50ff Object RAM
-  5000-503f  screen attributes
-  5040-505f  sprites
-  5060-507f  bullets
-  5080-50ff  unused?
+0000-5fff ROM
+8000-87ff RAM
+8800-8bff Video RAM
+9000-90ff Object RAM
+  9000-903f  screen attributes
+  9040-905f  sprites
+  9060-907f  bullets
+  9080-90ff  unused?
 
 read:
-7000      Watchdog Reset
-8100      IN0
-8101      IN1
-8102      IN2
+b000      Watchdog Reset
+9800      IN0
+9801      IN1
+9802      IN2
 
 *
  * IN0 (all bits are inverted)
@@ -36,8 +36,8 @@ read:
  * bit 4 : RIGHT player 2 (TABLE only)
  * bit 3 : SHOOT 1 player 2 (TABLE only)
  * bit 2 : SHOOT 2 player 2 (TABLE only)
- * bit 1 :\ nr of lives
- * bit 0 :/ 00 = 3  01 = 4  10 = 5  11 = 256
+ * bit 1 : nr of lives  0 = 3  1 = 5
+ * bit 0 : allow continue 0 = NO  1 = YES
 *
  * IN2 (all bits are inverted)
  * bit 7 : protection check?
@@ -46,20 +46,20 @@ read:
  * bit 4 : UP player 1
  * bit 3 : COCKTAIL or UPRIGHT cabinet (0 = UPRIGHT)
  * bit 2 :\ coins per play
- * bit 1 :/
+ * bit 1 :/ (00 = 99 credits!)
  * bit 0 : DOWN player 2 (TABLE only)
  *
 
 write:
-6801      interrupt enable
-6802      coin counter
-6803      ? (POUT1)
-6804      stars on
-6805      ? (POUT2)
-6806      screen vertical flip
-6807      screen horizontal flip
-8200      To AY-3-8910 port A (commands for the second Z80?)
-8202      protection check control?
+a801      interrupt enable
+a802      coin counter
+a803      ? (POUT1)
+a804      stars on
+a805      ? (POUT2)
+a806      screen vertical flip
+a807      screen horizontal flip
+a000      To AY-3-8910 port A (commands for the second Z80?)
+a002      protection check control?
 
 ***************************************************************************/
 
@@ -87,27 +87,27 @@ extern void scramble_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x4000, 0x4bff, MRA_RAM },	/* RAM and Video RAM */
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x7000, 0x7000, MRA_NOP },
-	{ 0x8100, 0x8100, input_port_0_r },	/* IN0 */
-	{ 0x8101, 0x8101, input_port_1_r },	/* IN1 */
-	{ 0x8102, 0x8102, scramble_IN2_r },	/* IN2 */
-	{ 0x5000, 0x507f, MRA_RAM },	/* screen attributes, sprites, bullets */
-	{ 0x8202, 0x8202, scramble_protection_r },
+	{ 0x8000, 0x8bff, MRA_RAM },	/* RAM and Video RAM */
+	{ 0x0000, 0x5fff, MRA_ROM },
+	{ 0xb000, 0xb000, MRA_NOP },
+	{ 0x9800, 0x9800, input_port_0_r },	/* IN0 */
+	{ 0x9801, 0x9801, input_port_1_r },	/* IN1 */
+	{ 0x9802, 0x9802, scramble_IN2_r },	/* IN2 */
+	{ 0x9000, 0x907f, MRA_RAM },	/* screen attributes, sprites, bullets */
+	{ 0xa002, 0xa002, scramble_protection_r },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x4800, 0x4bff, scramble_videoram_w, &scramble_videoram },
-	{ 0x5000, 0x503f, scramble_attributes_w, &scramble_attributesram },
-	{ 0x5040, 0x505f, MWA_RAM, &scramble_spriteram },
-	{ 0x5060, 0x507f, MWA_RAM, &scramble_bulletsram },
-	{ 0x6801, 0x6801, interrupt_enable_w },
-	{ 0x6804, 0x6804, scramble_stars_w },
-	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x8000, 0x87ff, MWA_RAM },
+	{ 0x8800, 0x8bff, scramble_videoram_w, &scramble_videoram },
+	{ 0x9000, 0x903f, scramble_attributes_w, &scramble_attributesram },
+	{ 0x9040, 0x905f, MWA_RAM, &scramble_spriteram },
+	{ 0x9060, 0x907f, MWA_RAM, &scramble_bulletsram },
+	{ 0xa801, 0xa801, interrupt_enable_w },
+	{ 0xa804, 0xa804, scramble_stars_w },
+	{ 0x0000, 0x5fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -121,12 +121,12 @@ static struct InputPort input_ports[] =
 		{ 0, OSD_JOY_FIRE2, 0, OSD_JOY_FIRE1, OSD_JOY_RIGHT, OSD_JOY_LEFT, 0, 0 }
 	},
 	{	/* IN1 */
-		0xfc,
+		0xfd,
 		{ 0, 0, 0, 0, 0, 0, OSD_KEY_2, OSD_KEY_1 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{	/* IN2 */
-		0xf1,
+		0xf3,
 		{ 0, 0, 0, 0, OSD_KEY_UP, 0, OSD_KEY_DOWN, 0 },
 		{ 0, 0, 0, 0, OSD_JOY_UP, 0, OSD_JOY_DOWN, 0 }
 	},
@@ -137,7 +137,8 @@ static struct InputPort input_ports[] =
 
 static struct DSW dsw[] =
 {
-	{ 1, 0x03, "LIVES", { "3", "4", "5", "256" } },
+	{ 1, 0x02, "LIVES", { "3", "5" } },
+	{ 1, 0x01, "ALLOW CONTINUE", { "NO", "YES" } },
 	{ -1 }
 };
 
@@ -199,7 +200,7 @@ static unsigned char color_prom[] =
 
 
 
-const struct MachineDriver scramble_driver =
+const struct MachineDriver scobra_driver =
 {
 	/* basic machine hardware */
 	3072000,	/* 3.072 Mhz */
