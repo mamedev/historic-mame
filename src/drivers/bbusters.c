@@ -242,6 +242,8 @@ static READ16_HANDLER( control_3_r )
 
 static WRITE16_HANDLER( gun_select_w )
 {
+	logerror("%08x: gun r\n",activecpu_get_pc());
+
 	gun_select=5 + (data&0xff);
 }
 
@@ -264,8 +266,18 @@ static WRITE16_HANDLER( sound_cpu_w )
 
 static READ16_HANDLER( mechatt_gun_r )
 {
-	if (offset) return readinputport(4)|(readinputport(5)<<8);
-	return readinputport(2)|(readinputport(3)<<8);
+	int baseport=2,x,y;
+	if (offset) baseport=4; /* Player 2 */
+
+	x=readinputport(baseport);
+	y=readinputport(baseport+1);
+
+	/* Todo - does the hardware really clamp like this? */
+	x+=0x18;
+	if (x>0xff) x=0xff;
+	if (y>0xef) y=0xef;
+
+	return x|(y<<8);
 }
 
 /*******************************************************************************/
@@ -489,15 +501,15 @@ INPUT_PORTS_START( mechatt )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_COIN4 )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON3 )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )	// "Fire"
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )	// "Grenade"
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON3 )
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )	// "Fire"
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )	// "Grenade"
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_BUTTON3 )
 
 	PORT_START	/* Dip switch bank 1 */
 	PORT_DIPNAME( 0x0001, 0x0001, "Coin Slots" )		// See notes

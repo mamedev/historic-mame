@@ -50,7 +50,7 @@ READ_HANDLER( scramble_portB_r )
 
 	int current_totalcycles;
 
-	current_totalcycles = cpu_gettotalcycles();
+	current_totalcycles = activecpu_gettotalcycles();
 	clock = (clock + (current_totalcycles-last_totalcycles)) % 5120;
 
 	last_totalcycles = current_totalcycles;
@@ -92,7 +92,7 @@ READ_HANDLER( frogger_portB_r )
 
 	int current_totalcycles;
 
-	current_totalcycles = cpu_gettotalcycles();
+	current_totalcycles = activecpu_gettotalcycles();
 	clock = (clock + (current_totalcycles-last_totalcycles)) % 5120;
 
 	last_totalcycles = current_totalcycles;
@@ -109,6 +109,13 @@ WRITE_HANDLER( scramble_sh_irqtrigger_w )
 
 	/* bit 4 is sound disable */
 	mixer_sound_enable_global_w(~data & 0x10);
+}
+
+WRITE_HANDLER( mrkougar_sh_irqtrigger_w )
+{
+	/* the complement of bit 3 is connected to the flip-flop's clock */
+	TTL7474_clock_w(0, ~data & 0x08);
+	TTL7474_update(0);
 }
 
 WRITE_HANDLER( froggrmc_sh_irqtrigger_w )

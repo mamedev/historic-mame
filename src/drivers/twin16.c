@@ -53,6 +53,7 @@ WRITE16_HANDLER( twin16_video_register_w );
 
 extern VIDEO_START( twin16 );
 extern VIDEO_UPDATE( twin16 );
+extern VIDEO_EOF( twin16 );
 
 extern void twin16_spriteram_process( void );
 
@@ -107,7 +108,6 @@ static NVRAM_HANDLER( cuebrick )
 }
 
 /******************************************************************************************/
-
 
 static READ16_HANDLER( videoram16_r )
 {
@@ -337,7 +337,7 @@ static MEMORY_WRITE16_START( writemem )
 	{ 0x0c0000, 0x0c000f, twin16_video_register_w },
 	{ 0x100000, 0x103fff, MWA16_RAM, &twin16_fixram },
 	{ 0x120000, 0x123fff, MWA16_RAM, &videoram16 },
-	{ 0x140000, 0x143fff, MWA16_RAM, &spriteram16 },
+	{ 0x140000, 0x143fff, MWA16_RAM, &spriteram16, &spriteram_size },
 MEMORY_END
 
 static MEMORY_READ16_START( readmem_sub )
@@ -391,7 +391,7 @@ static MEMORY_WRITE16_START( fround_writemem )
 	{ 0x0e0000, 0x0e0001, fround_gfx_bank_w },
 	{ 0x100000, 0x103fff, MWA16_RAM, &twin16_fixram },
 	{ 0x120000, 0x123fff, MWA16_RAM, &videoram16 },
-	{ 0x140000, 0x143fff, MWA16_RAM, &spriteram16 },
+	{ 0x140000, 0x143fff, MWA16_RAM, &spriteram16, &spriteram_size },
 MEMORY_END
 
 /******************************************************************************************/
@@ -1062,6 +1062,7 @@ static void volume_callback(int v)
 static struct K007232_interface k007232_interface =
 {
 	1,		/* number of chips */
+	3579545,	/* clock */
 	{ REGION_SOUND1 }, /* memory regions */
 	{ K007232_VOL(20,MIXER_PAN_CENTER,20,MIXER_PAN_CENTER) },	/* volume */
 	{ volume_callback }	/* external port callback */
@@ -1098,7 +1099,7 @@ static MACHINE_DRIVER_START( twin16 )
 	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
 	MDRV_SCREEN_SIZE(320, 256)
 	MDRV_VISIBLE_AREA(0, 319, 0+16, 255-16)
 	MDRV_GFXDECODE(gfxdecodeinfo)
@@ -1106,6 +1107,7 @@ static MACHINE_DRIVER_START( twin16 )
 
 	MDRV_VIDEO_START(twin16)
 	MDRV_VIDEO_UPDATE(twin16)
+	MDRV_VIDEO_EOF(twin16)
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
@@ -1143,7 +1145,7 @@ static MACHINE_DRIVER_START( heavysync )
 	MDRV_INTERLEAVE(1000)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
 	MDRV_SCREEN_SIZE(320, 256)
 	MDRV_VISIBLE_AREA(0, 319, 0+16, 255-16)
 	MDRV_GFXDECODE(gfxdecodeinfo)
@@ -1151,6 +1153,7 @@ static MACHINE_DRIVER_START( heavysync )
 
 	MDRV_VIDEO_START(twin16)
 	MDRV_VIDEO_UPDATE(twin16)
+	MDRV_VIDEO_EOF(twin16)
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
@@ -1176,7 +1179,7 @@ static MACHINE_DRIVER_START( fround )
 	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
 	MDRV_SCREEN_SIZE(320, 256)
 	MDRV_VISIBLE_AREA(0, 319, 0+16, 255-16)
 	MDRV_GFXDECODE(gfxdecodeinfo)
@@ -1184,6 +1187,7 @@ static MACHINE_DRIVER_START( fround )
 
 	MDRV_VIDEO_START(twin16)
 	MDRV_VIDEO_UPDATE(twin16)
+	MDRV_VIDEO_EOF(twin16)
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)

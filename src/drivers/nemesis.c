@@ -332,7 +332,7 @@ static READ_HANDLER( nemesis_portA_r )
    bit 7:     unused by this software version. Bubble Memory version uses this bit.
 */
 
-	int res = (cpu_gettotalcycles() / 1024) & 0x2f; // this should be 0x0f, but it doesn't work
+	int res = (activecpu_gettotalcycles() / 1024) & 0x2f; // this should be 0x0f, but it doesn't work
 
 	res |= 0xd0;
 
@@ -741,11 +741,9 @@ static READ_HANDLER( wd_r )
 
 static WRITE_HANDLER( city_sound_bank_w )
 {
-	unsigned char *RAM = memory_region(REGION_SOUND2);
-	int bank_A=0x20000 * (data&0x3);
-	int bank_B=0x20000 * ((data>>2)&0x3);
-
-	K007232_bankswitch(0,RAM+bank_A,RAM+bank_B);
+	int bank_A=(data&0x3);
+	int bank_B=((data>>2)&0x3);
+	K007232_set_bank( 0, bank_A, bank_B );
 }
 
 static MEMORY_READ_START( sal_sound_readmem )
@@ -2008,6 +2006,7 @@ static void volume_callback(int v)
 static struct K007232_interface k007232_interface =
 {
 	1,		/* number of chips */
+	3579545,	/* clock */
 	{ REGION_SOUND2 },	/* memory regions */
 	{ K007232_VOL(10,MIXER_PAN_CENTER,10,MIXER_PAN_CENTER) },	/* volume */
 	{ volume_callback }	/* external port callback */

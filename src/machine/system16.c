@@ -2224,6 +2224,7 @@ struct YM2612interface sys18_ym3438_interface =
 {
 	2,	/* 2 chips */
 	8000000,
-	{ 40,40 },
+	{ YM3012_VOL(40,MIXER_PAN_CENTER,40,MIXER_PAN_CENTER),
+			YM3012_VOL(40,MIXER_PAN_CENTER,40,MIXER_PAN_CENTER) },	/* Volume */
 	{ 0 },	{ 0 },	{ 0 },	{ 0 }
 };

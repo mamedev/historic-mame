@@ -279,6 +279,8 @@ READ_HANDLER( polepos_mcu_data_r )
 										if (coin1inserted >= polepos_mcu.coin1_coinpercred)
 										{
 											polepos_mcu.credits += polepos_mcu.coin1_credpercoin;
+											if (polepos_mcu.credits > 99)
+												polepos_mcu.credits = 99;
 											coin1inserted = 0;
 										}
 									}
@@ -291,6 +293,8 @@ READ_HANDLER( polepos_mcu_data_r )
 										if (coin2inserted >= polepos_mcu.coin2_coinpercred)
 										{
 											polepos_mcu.credits += polepos_mcu.coin2_credpercoin;
+											if (polepos_mcu.credits > 99)
+												polepos_mcu.credits = 99;
 											coin2inserted = 0;
 										}
 									}

@@ -104,15 +104,14 @@ interrupt_enable_w(0,data & 4);
 
 WRITE_HANDLER( mainevt_sh_bankswitch_w )
 {
-	unsigned char *RAM = memory_region(REGION_SOUND1);
 	int bank_A,bank_B;
 
 //logerror("CPU #1 PC: %04x bank switch = %02x\n",activecpu_get_pc(),data);
 
 	/* bits 0-3 select the 007232 banks */
-	bank_A=0x20000 * (data&0x3);
-	bank_B=0x20000 * ((data>>2)&0x3);
-	K007232_bankswitch(0,RAM+bank_A,RAM+bank_B);
+	bank_A=(data&0x3);
+	bank_B=((data>>2)&0x3);
+	K007232_set_bank( 0, bank_A, bank_B );
 
 	/* bits 4-5 select the UPD7759 bank */
 	UPD7759_set_bank_base(0, ((data >> 4) & 0x03) * 0x20000);
@@ -120,15 +119,14 @@ WRITE_HANDLER( mainevt_sh_bankswitch_w )
 
 WRITE_HANDLER( dv_sh_bankswitch_w )
 {
-	unsigned char *RAM = memory_region(REGION_SOUND1);
 	int bank_A,bank_B;
 
 //logerror("CPU #1 PC: %04x bank switch = %02x\n",activecpu_get_pc(),data);
 
 	/* bits 0-3 select the 007232 banks */
-	bank_A=0x20000 * (data&0x3);
-	bank_B=0x20000 * ((data>>2)&0x3);
-	K007232_bankswitch(0,RAM+bank_A,RAM+bank_B);
+	bank_A=(data&0x3);
+	bank_B=((data>>2)&0x3);
+	K007232_set_bank( 0, bank_A, bank_B );
 }
 
 
@@ -583,6 +581,7 @@ static void volume_callback(int v)
 static struct K007232_interface k007232_interface =
 {
 	1,		/* number of chips */
+	3579545,	/* clock */
 	{ REGION_SOUND1 },	/* memory regions */
 	{ K007232_VOL(20,MIXER_PAN_CENTER,20,MIXER_PAN_CENTER) },	/* volume */
 	{ volume_callback }	/* external port callback */

@@ -9,11 +9,6 @@
 void pacplus_decode(void);
 
 
-/*----------- defined in machine/shootbul.c -----------*/
-
-void shootbul_decode(void);
-
-
 /*----------- defined in machine/jumpshot.c -----------*/
 
 void jumpshot_decode(void);

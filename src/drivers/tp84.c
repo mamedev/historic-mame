@@ -119,7 +119,7 @@ static READ_HANDLER( tp84_sh_timer_r )
 	/* divided by 2048 to get this timer */
 	/* (divide by (2048/2), and not 1024, because the CPU cycle counter is */
 	/* incremented every other state change of the clock) */
-	return (cpu_gettotalcycles() / (2048/2)) & 0x0f;
+	return (activecpu_gettotalcycles() / (2048/2)) & 0x0f;
 }
 
 static WRITE_HANDLER( tp84_filter_w )
@@ -385,7 +385,7 @@ static MACHINE_DRIVER_START( tp84 )
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(256)
 	MDRV_COLORTABLE_LENGTH(4096)
-	
+
 	MDRV_PALETTE_INIT(tp84)
 	MDRV_VIDEO_START(tp84)
 	MDRV_VIDEO_UPDATE(tp84)

@@ -2,6 +2,19 @@
   GOINDOL
 
   Driver provided by Jarek Parchanski (jpdev@friko6.onet.pl)
+
+Notes:
+- byte at 7f87 controls region:
+  0 = Japan
+  1 = USA
+  2 = World
+  Regardless of the setting of this byte, the startup notice in Korean is
+  always displayed.
+  After the title screen, depending on the byte you get "for use only in Japan",
+  "for use only in USA", or the Korean notice again! So 2 might actually mean
+  Korea instead of World... but that version surely got to Europe since Gerald
+  has three boards with this ROM.
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -40,13 +53,55 @@ WRITE_HANDLER( goindol_bankswitch_w )
 
 
 
+static READ_HANDLER( prot_f422_r )
+{
+	static int toggle;
+
+	/* bit 7 = vblank? */
+	toggle ^= 0x80;
+
+	return toggle;
+}
+
+
+static data8_t *ram;
+
+static WRITE_HANDLER( prot_fc44_w )
+{
+logerror("%04x: prot_fc44_w(%02x)\n",activecpu_get_pc(),data);
+	ram[0x0419] = 0x5b;
+	ram[0x041a] = 0x3f;
+	ram[0x041b] = 0x6d;
+}
+
+static WRITE_HANDLER( prot_fd99_w )
+{
+logerror("%04x: prot_fd99_w(%02x)\n",activecpu_get_pc(),data);
+	ram[0x0421] = 0x3f;
+}
+
+static WRITE_HANDLER( prot_fc66_w )
+{
+logerror("%04x: prot_fc66_w(%02x)\n",activecpu_get_pc(),data);
+	ram[0x0423] = 0x06;
+}
+
+static WRITE_HANDLER( prot_fcb0_w )
+{
+logerror("%04x: prot_fcb0_w(%02x)\n",activecpu_get_pc(),data);
+	ram[0x0425] = 0x06;
+}
+
+
+
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xc800, 0xc800, MRA_NOP },
+	{ 0xc800, 0xc800, MRA_NOP },	// watchdog?
 	{ 0xd000, 0xefff, MRA_RAM },
 	{ 0xf000, 0xf000, input_port_3_r },
+	{ 0xf422, 0xf422, prot_f422_r },
 	{ 0xf800, 0xf800, input_port_4_r },
 	{ 0xc834, 0xc834, input_port_1_r },
 	{ 0xc820, 0xc820, input_port_2_r },
@@ -56,7 +111,7 @@ MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM },
+	{ 0xc000, 0xc7ff, MWA_RAM, &ram },
 	{ 0xc810, 0xc810, goindol_bankswitch_w },
 	{ 0xc820, 0xd820, MWA_RAM, &goindol_fg_scrolly },
 	{ 0xc830, 0xd830, MWA_RAM, &goindol_fg_scrollx },
@@ -67,6 +122,10 @@ static MEMORY_WRITE_START( writemem )
 	{ 0xe000, 0xe03f, MWA_RAM, &spriteram_2 },
 	{ 0xe040, 0xe7ff, MWA_RAM },
 	{ 0xe800, 0xefff, goindol_fg_videoram_w, &goindol_fg_videoram, &goindol_fg_videoram_size },
+	{ 0xfc44, 0xfc44, prot_fc44_w },
+	{ 0xfc66, 0xfc66, prot_fc66_w },
+	{ 0xfcb0, 0xfcb0, prot_fcb0_w },
+	{ 0xfd99, 0xfd99, prot_fd99_w },
 MEMORY_END
 
 static MEMORY_READ_START( sound_readmem )
@@ -304,9 +363,59 @@ MACHINE_DRIVER_END
 
 ROM_START( goindol )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )     /* 2*64k for code */
+	ROM_LOAD( "r1w", 0x00000, 0x8000, 0xdf77c502 ) /* Code 0000-7fff */
+	ROM_LOAD( "r2",  0x10000, 0x8000, 0x1ff6e3a2 ) /* Paged data */
+	ROM_LOAD( "r3",  0x18000, 0x8000, 0xe9eec24a ) /* Paged data */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "r10", 0x00000, 0x8000, 0x72e1add1 )
+
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "r4", 0x00000, 0x8000, 0x1ab84225 ) /* Characters */
+	ROM_LOAD( "r5", 0x08000, 0x8000, 0x4997d469 )
+	ROM_LOAD( "r6", 0x10000, 0x8000, 0x752904b0 )
+
+	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "r7", 0x00000, 0x8000, 0x362f2a27 )
+	ROM_LOAD( "r8", 0x08000, 0x8000, 0x9fc7946e )
+	ROM_LOAD( "r9", 0x10000, 0x8000, 0xe6212fe4 )
+
+	ROM_REGION( 0x0300, REGION_PROMS, 0 )
+	ROM_LOAD( "am27s21.pr1", 0x0000, 0x0100, 0x361f0868 )	/* palette red bits   */
+	ROM_LOAD( "am27s21.pr2", 0x0100, 0x0100, 0xe355da4d )	/* palette green bits */
+	ROM_LOAD( "am27s21.pr3", 0x0200, 0x0100, 0x8534cfb5 )	/* palette blue bits  */
+ROM_END
+
+ROM_START( goindolu )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )     /* 2*64k for code */
 	ROM_LOAD( "r1", 0x00000, 0x8000, 0x3111c61b ) /* Code 0000-7fff */
 	ROM_LOAD( "r2", 0x10000, 0x8000, 0x1ff6e3a2 ) /* Paged data */
 	ROM_LOAD( "r3", 0x18000, 0x8000, 0xe9eec24a ) /* Paged data */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "r10", 0x00000, 0x8000, 0x72e1add1 )
+
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "r4", 0x00000, 0x8000, 0x1ab84225 ) /* Characters */
+	ROM_LOAD( "r5", 0x08000, 0x8000, 0x4997d469 )
+	ROM_LOAD( "r6", 0x10000, 0x8000, 0x752904b0 )
+
+	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "r7", 0x00000, 0x8000, 0x362f2a27 )
+	ROM_LOAD( "r8", 0x08000, 0x8000, 0x9fc7946e )
+	ROM_LOAD( "r9", 0x10000, 0x8000, 0xe6212fe4 )
+
+	ROM_REGION( 0x0300, REGION_PROMS, 0 )
+	ROM_LOAD( "am27s21.pr1", 0x0000, 0x0100, 0x361f0868 )	/* palette red bits   */
+	ROM_LOAD( "am27s21.pr2", 0x0100, 0x0100, 0xe355da4d )	/* palette green bits */
+	ROM_LOAD( "am27s21.pr3", 0x0200, 0x0100, 0x8534cfb5 )	/* palette blue bits  */
+ROM_END
+
+ROM_START( goindolj )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )     /* 2*64k for code */
+	ROM_LOAD( "r1j", 0x00000, 0x8000, 0xdde33ad3 ) /* Code 0000-7fff */
+	ROM_LOAD( "r2",  0x10000, 0x8000, 0x1ff6e3a2 ) /* Paged data */
+	ROM_LOAD( "r3",  0x18000, 0x8000, 0xe9eec24a ) /* Paged data */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "r10", 0x00000, 0x8000, 0x72e1add1 )
@@ -361,36 +470,31 @@ DRIVER_INIT( goindol )
 
 	/* I hope that's all patches to avoid protection */
 
+	rom[0x18e9] = 0x18;	// ROM 1 check
+	rom[0x1964] = 0x00; // ROM 9 error (MCU?)
+	rom[0x1965] = 0x00; //
+	rom[0x1966] = 0x00; //
+//	rom[0x17c7] = 0x00;	// c421 == 3f
+//	rom[0x17c8] = 0x00;	//
+//	rom[0x16f0] = 0x18;	// c425 == 06
+//	rom[0x172c] = 0x18;	// c423 == 06
+//	rom[0x1779] = 0x00;	// c419 == 5b 3f 6d
+//	rom[0x177a] = 0x00;	//
+	rom[0x063f] = 0x18;	//->fc55
+	rom[0x0b30] = 0x00;	// verify code at 0601-064b
+	rom[0x1bdf] = 0x18;	//->fc49
+
 	rom[0x04a7] = 0xc9;
-	rom[0x0641] = 0xc9;
 	rom[0x0831] = 0xc9;
-	rom[0x0b30] = 0x00;
+	rom[0x3365] = 0x00;	// verify code at 081d-0876
 	rom[0x0c13] = 0xc9;
 	rom[0x134e] = 0xc9;
-	rom[0x172e] = 0xc9;
-	rom[0x1785] = 0xc9;
-	rom[0x17cc] = 0xc9;
-	rom[0x1aa5] = 0x7b;
-	rom[0x1aa6] = 0x17;
-	rom[0x1bee] = 0xc9;
-	rom[0x218c] = 0x00;
-	rom[0x218d] = 0x00;
-	rom[0x218e] = 0x00;
 	rom[0x333d] = 0xc9;
-	rom[0x3365] = 0x00;
-}
-
-DRIVER_INIT( homo )
-{
-	unsigned char *rom = memory_region(REGION_CPU1);
-
-
-	rom[0x218c] = 0x00;
-	rom[0x218d] = 0x00;
-	rom[0x218e] = 0x00;
 }
 
 
 
-GAMEX( 1987, goindol, 0,       goindol, goindol, goindol, ROT90, "Sun a Electronics", "Goindol", GAME_NO_COCKTAIL )
-GAMEX( 1987, homo,    goindol, goindol, homo,    homo,    ROT90, "bootleg", "Homo", GAME_NO_COCKTAIL )
+GAMEX( 1987, goindol,  0,       goindol, goindol, goindol, ROT90, "Sun a Electronics", "Goindol (World)", GAME_UNEMULATED_PROTECTION | GAME_NO_COCKTAIL )
+GAMEX( 1987, goindolu, goindol, goindol, goindol, goindol, ROT90, "Sun a Electronics", "Goindol (US)", GAME_UNEMULATED_PROTECTION | GAME_NO_COCKTAIL )
+GAMEX( 1987, goindolj, goindol, goindol, goindol, goindol, ROT90, "Sun a Electronics", "Goindol (Japan)", GAME_UNEMULATED_PROTECTION | GAME_NO_COCKTAIL )
+GAMEX( 1987, homo,     goindol, goindol, homo,    0,       ROT90, "bootleg", "Homo", GAME_NO_COCKTAIL )

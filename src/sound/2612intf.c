@@ -86,7 +86,7 @@ void YM2612UpdateRequest(int chip)
 }
 
 /***********************************************************/
-/*    YM2612 (fm4ch type)                                  */
+/*    YM2612                                               */
 /***********************************************************/
 int YM2612_sh_start(const struct MachineSound *msound)
 {
@@ -106,11 +106,14 @@ int YM2612_sh_start(const struct MachineSound *msound)
 	{
 		int vol[YM2612_NUMBUF];
 		/* stream setup */
+		int mixed_vol = intf->mixing_level[i];
+		/* stream setup */
 		for (j = 0 ; j < YM2612_NUMBUF ; j++)
 		{
-			vol[j] = intf->mixing_level[i];
+			vol[j] = mixed_vol&0xffff;
 			name[j] = buf[j];
-			sprintf(buf[j],"YM2612(%s) #%d",j < 2 ? "FM" : "ADPCM",i);
+			mixed_vol >>= 16;
+			sprintf(buf[j],"%s #%d Ch%d",sound_name(msound), i, j+1 );
 		}
 		stream[i] = stream_init_multi(YM2612_NUMBUF,
 			name,vol,rate,

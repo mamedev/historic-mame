@@ -7,8 +7,8 @@ These values turned out to be alpha for sprites. -pjp
 
 is this table of 256 16-bit values (of the series 1/x) being used correctly as a slope for sprite zoom? -pjp
 
-rowscroll / column scroll (s1945ii test and level 7 uses a whole block of ram for scrolling,  -dh
-(224 values for both x and y scroll) Also used for daraku text layers, again only yscroll differ
+rowscroll / column scroll (s1945ii test and level 7 uses a whole block of ram for scrolling/zooming,  -dh
+(224 values for both x and y scroll + zoom) Also used for daraku text layers, again only yscroll differ
 Also, xscroll values are always the same, maybe the hw can't do simultaneous line/columnscroll. -pjp
 
 figure out how the text layers work correctly, dimensions are different (even more tilemaps needed)
@@ -131,7 +131,7 @@ static void psikyosh_drawbglayer( int layer, struct mame_bitmap *bitmap, const s
 	}
 }
 
-/* Line Scroll and/or Column Scroll, don't think it can have alpha. This isn't correct, just testing */
+/* Line Scroll/Zoom and/or Column Scroll/Zoom, don't think it can have alpha. This isn't correct, just testing */
 static void psikyosh_drawbglayerscroll( int layer, struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	struct GfxElement *gfx;
@@ -566,7 +566,7 @@ static void psikyo4_drawsprites( struct mame_bitmap *bitmap, const struct rectan
 
 	**- End Sprite Format -*/
 
-	const struct GfxElement *gfx = Machine->gfx[1];
+	const struct GfxElement *gfx = Machine->gfx[0];
 	data32_t *source = spriteram32;
 	data16_t *list = (data16_t *)spriteram32 + 0x2c00/2 + 0x04/2; /* 0x2c00/0x2c02 what are these for, pointers? one for each screen */
 	data16_t listlen=(0xc00/2 - 0x04/2), listcntr=0;
@@ -603,8 +603,8 @@ static void psikyo4_drawsprites( struct mame_bitmap *bitmap, const struct rectan
 
 			tnum = (source[sprnum+1] & 0x0007ffff) >> 00;
 
-			colr = (source[sprnum+1] & 0x3f800000) >> 23;
-			if(scr)	colr += 0x80; /* Use second copy of palette which is dimmed appropriately */
+			colr = (source[sprnum+1] & 0x3f000000) >> 24;
+			if(scr) colr += 0x40; /* Use second copy of palette which is dimmed appropriately */
 
 			flipx = (source[sprnum+1] & 0x40000000);
 
@@ -680,7 +680,7 @@ VIDEO_UPDATE( psikyo4 )
 
 VIDEO_START( psikyo4 )
 {
-	Machine->gfx[1]->color_granularity=16; /* 256 colour sprites with palette selectable on 16 colour boundaries */
+	Machine->gfx[0]->color_granularity=32; /* 256 colour sprites with palette selectable on 32 colour boundaries */
 	screen = 0;
 	return 0;
 }

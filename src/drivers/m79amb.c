@@ -181,4 +181,4 @@ ROM_END
 
 
 
-GAME( 1977, m79amb, 0, m79amb, m79amb, m79amb, ROT0, "Ramtek", "M79 Ambush" )
+GAMEX( 1977, m79amb, 0, m79amb, m79amb, m79amb, ROT0, "Ramtek", "M79 Ambush", GAME_NO_SOUND )

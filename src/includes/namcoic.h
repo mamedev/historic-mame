@@ -99,8 +99,11 @@ READ16_HANDLER( namco_obj16_r );
 WRITE32_HANDLER( namco_obj32_w );
 READ32_HANDLER( namco_obj32_r );
 
-/* hack; games really should be passing in base xpos,ypos to namco_obj_draw */
-extern data32_t *namconb1_spritepos32;
+WRITE16_HANDLER( namco_spritepos16_w );
+READ16_HANDLER( namco_spritepos16_r );
+
+WRITE32_HANDLER( namco_spritepos32_w );
+READ32_HANDLER( namco_spritepos32_r );
 
 /***********************************************************************************/
 /* C169 ROZ Layer Emulation */

@@ -1250,26 +1250,26 @@ static MACHINE_DRIVER_START( btime )
 	MDRV_CPU_ADD_TAG("main", M6502, 1500000)
 	MDRV_CPU_MEMORY(btime_readmem,btime_writemem)
 	MDRV_CPU_VBLANK_INT(btime_irq_interrupt,1)
-	
+
 	MDRV_CPU_ADD_TAG("sound", M6502, 500000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,16)
-	
+
 	MDRV_FRAMES_PER_SECOND(57)
 	MDRV_VBLANK_DURATION(3072)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(1*8, 31*8-1, 1*8, 31*8-1)
 	MDRV_GFXDECODE(btime_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(16)
-	
+
 	MDRV_PALETTE_INIT(btime)
 	MDRV_VIDEO_START(btime)
 	MDRV_VIDEO_UPDATE(btime)
-	
+
 	/* sound hardware */
 	MDRV_SOUND_ADD(AY8910, ay8910_interface)
 MACHINE_DRIVER_END
@@ -1282,14 +1282,14 @@ static MACHINE_DRIVER_START( cookrace )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(cookrace_readmem,cookrace_writemem)
 	MDRV_CPU_VBLANK_INT(btime_nmi_interrupt,1)
-	
+
 	MDRV_CPU_MODIFY("sound")
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 
 	/* video hardware */
 	MDRV_GFXDECODE(cookrace_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(16)
-	
+
 	MDRV_VIDEO_UPDATE(cookrace)
 MACHINE_DRIVER_END
 
@@ -1301,16 +1301,16 @@ static MACHINE_DRIVER_START( lnc )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(lnc_readmem,lnc_writemem)
 	MDRV_CPU_VBLANK_INT(btime_nmi_interrupt,1)
-	
+
 	MDRV_CPU_MODIFY("sound")
 	MDRV_CPU_VBLANK_INT(lnc_sound_interrupt,16)
 
 	MDRV_MACHINE_INIT(lnc)
-	
+
 	/* video hardware */
 	MDRV_GFXDECODE(lnc_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(8)
-	
+
 	MDRV_PALETTE_INIT(lnc)
 	MDRV_VIDEO_UPDATE(lnc)
 MACHINE_DRIVER_END
@@ -1344,11 +1344,11 @@ static MACHINE_DRIVER_START( bnj )
 	MDRV_CPU_REPLACE("main", M6502, 750000)
 	MDRV_CPU_MEMORY(bnj_readmem,bnj_writemem)
 	MDRV_CPU_VBLANK_INT(btime_nmi_interrupt,1)
-	
+
 	/* video hardware */
 	MDRV_GFXDECODE(bnj_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(16)
-	
+
 	MDRV_VIDEO_START(bnj)
 	MDRV_VIDEO_UPDATE(bnj)
 MACHINE_DRIVER_END
@@ -1361,11 +1361,11 @@ static MACHINE_DRIVER_START( zoar )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(zoar_readmem,zoar_writemem)
 	MDRV_CPU_VBLANK_INT(zoar_irq_interrupt,1)
-	
+
 	/* video hardware */
 	MDRV_GFXDECODE(zoar_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(64)
-	
+
 	MDRV_VIDEO_UPDATE(zoar)
 MACHINE_DRIVER_END
 
@@ -1376,14 +1376,14 @@ static MACHINE_DRIVER_START( disco )
 	MDRV_IMPORT_FROM(btime)
 	MDRV_CPU_REPLACE("main", M6502, 750000)
 	MDRV_CPU_MEMORY(disco_readmem,disco_writemem)
-	
+
 	MDRV_CPU_MODIFY("sound")
 	MDRV_CPU_MEMORY(disco_sound_readmem,disco_sound_writemem)
 
 	/* video hardware */
 	MDRV_GFXDECODE(disco_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32)
-	
+
 	MDRV_VIDEO_UPDATE(disco)
 MACHINE_DRIVER_END
 
@@ -1776,7 +1776,7 @@ GAME( 1982, wtennis,  0,       wtennis,  wtennis,  wtennis, ROT270, "bootleg", "
 GAME( 1982, mmonkey,  0,       mmonkey,  mmonkey,  lnc,     ROT270, "Technos + Roller Tron", "Minky Monkey" )
 GAME( 1982, brubber,  0,       bnj,      bnj,      lnc,     ROT270, "Data East", "Burnin' Rubber" )
 GAME( 1982, bnj,      brubber, bnj,      bnj,      lnc,     ROT270, "Data East USA (Bally Midway license)", "Bump 'n' Jump" )
-GAME( 1983, caractn,  brubber, bnj,      bnj,      lnc,     ROT270, "bootleg", "Car Action" )
+GAME( 1982, caractn,  brubber, bnj,      bnj,      lnc,     ROT270, "bootleg", "Car Action" )
 GAME( 1982, zoar,     0,       zoar,     zoar,     zoar,    ROT270, "Data East USA", "Zoar" )
 GAME( 1982, disco,    0,       disco,    disco,    btime,   ROT270, "Data East", "Disco No.1" )
 GAME( 1982, discof,   disco,   disco,    disco,    btime,   ROT270, "Data East", "Disco No.1 (Rev.F)" )

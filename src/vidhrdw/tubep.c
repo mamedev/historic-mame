@@ -700,10 +700,10 @@ VIDEO_UPDATE( tubep )
 
 				UINT32 romB_addr = (((h>>1)&0x3f)^((h&0x80)?0x00:0x3f)) | (((v&0x7f)^((v&0x80)?0x00:0x7f))<<6);
 
-				UINT8  select = (h&0x01) ^ (((h&0x80)>>7)^1);
+				UINT8  rom_select = (h&0x01) ^ (((h&0x80)>>7)^1);
 
 				/* read from ROMs: B3/4 or B5/6 */
-				UINT8 romB_data_h = romBxx[ 0x4000 + 0x4000*select + romB_addr ];
+				UINT8 romB_data_h = romBxx[ 0x4000 + 0x4000*rom_select + romB_addr ];
 				/* romB_data_h = output of LS374 @B3 or @B4 */
 
 				UINT32 VR_addr = ((romB_data_h + ls175_b7) & 0xfe) << 2;
@@ -715,7 +715,7 @@ VIDEO_UPDATE( tubep )
 				UINT8 romB_data_l = romBxx[ romB_addr ] ^ (xor_logic?0xff:0x00);
 				/* romB_data_l = output of LS273 @B10 */
 
-				UINT8 ls157_b11 = (romB_data_l >> ((select==0)?4:0))&0x0f;
+				UINT8 ls157_b11 = (romB_data_l >> ((rom_select==0)?4:0))&0x0f;
 
 				UINT8 ls283_b12 = (ls157_b11 + ls175_e8) & 0x0f;
 

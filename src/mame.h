@@ -83,7 +83,7 @@ struct RunningMachine
 	/* video color depth: 16, 15 or 32 */
 	int						color_depth;
 
-	/* video orientation; see #defines in driver.h */
+	/* video orientation; obsolete; always set to 0 */
 	int						orientation;
 
 
@@ -99,41 +99,41 @@ struct RunningMachine
 	/* ----- input-related information ----- */
 
 	/* the input ports definition from the driver is copied here and modified */
-	struct InputPort *input_ports;
+	struct InputPort *		input_ports;
 
 	/* original input_ports without modifications */
-	struct InputPort *input_ports_default;
+	struct InputPort *		input_ports_default;
 
 
 	/* ----- user interface-related information ----- */
 
 	/* font used by the user interface */
-	struct GfxElement *uifont;
+	struct GfxElement *		uifont;
 
 	/* font parameters */
-	int uifontwidth, uifontheight;
+	int 					uifontwidth, uifontheight;
 
 	/* user interface visible area */
-	int uixmin, uiymin;
-	int uiwidth, uiheight;
+	int 					uixmin, uiymin;
+	int 					uiwidth, uiheight;
 
 	/* user interface orientation */
-	int ui_orientation;
+	int 					ui_orientation;
 
 
 	/* ----- debugger-related information ----- */
 
 	/* bitmap where the debugger is rendered */
-	struct mame_bitmap *debug_bitmap;
+	struct mame_bitmap *	debug_bitmap;
 
 	/* pen array for the debugger, analagous to the pens above */
-	pen_t *debug_pens;
+	pen_t *					debug_pens;
 
 	/* colortable mapped through the pens, as for the game */
-	pen_t *debug_remapped_colortable;
+	pen_t *					debug_remapped_colortable;
 
 	/* font used by the debugger */
-	struct GfxElement *debugger_font;
+	struct GfxElement *		debugger_font;
 };
 
 
@@ -185,11 +185,6 @@ struct GameOptions
 	int		color_depth;	/* 15, 16, or 32, any other value means auto */
 	int		vector_width;	/* requested width for vector games; 0 means default (640) */
 	int		vector_height;	/* requested height for vector games; 0 means default (480) */
-	int		norotate;		/* 1 to disable rotaton */
-	int		ror;			/* 1 to rotate the game 90 degrees to the right (clockwise) */
-	int		rol;			/* 1 to rotate the game 90 degrees to the left (counterclockwise) */
-	int		flipx;			/* 1 to mirror video in the X direction */
-	int		flipy;			/* 1 to mirror video in the Y direction */
 	int		ui_orientation;	/* orientation of the UI relative to the video */
 
 	int		beam;			/* vector beam width */
@@ -313,10 +308,6 @@ void mame_pause(int pause);
 
 /* ----- screen rendering and management ----- */
 
-/* rectangle orientation helpers */
-void orient_rect(struct rectangle *rect, struct mame_bitmap *bitmap);
-void disorient_rect(struct rectangle *rect, struct mame_bitmap *bitmap);
-
 /* set the current visible area of the screen bitmap */
 void set_visible_area(int min_x, int max_x, int min_y, int max_y);
 
@@ -351,6 +342,9 @@ void set_led_status(int num, int on);
 
 /* return current performance data */
 const struct performance_info *mame_get_performance_info(void);
+
+/* return the index of the given CPU, or -1 if not found */
+int mame_find_cpu_index(const char *tag);
 
 
 #endif

@@ -196,7 +196,7 @@ static READ_HANDLER( tempest_IN0_r )
 		res |= 0x40;
 
 	/* Emulate the 3kHz source on bit 7 (divide 1.5MHz by 512) */
-	if (cpu_gettotalcycles() & 0x100)
+	if (activecpu_gettotalcycles() & 0x100)
 		res |= 0x80;
 
 	return res;

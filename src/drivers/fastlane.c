@@ -60,8 +60,7 @@ static WRITE_HANDLER( fastlane_bankswitch_w )
 	cpu_setbank(1,&RAM[bankaddress]);
 
 	/* bit 4: bank # for the 007232 (chip 2) */
-	RAM = memory_region(REGION_SOUND2);
-	K007232_bankswitch(1,RAM + 0x40000*((data & 0x10) >> 4),RAM + 0x40000*((data & 0x10) >> 4));
+	K007232_set_bank(1,0 + ((data & 0x10) >> 4),2 + ((data & 0x10) >> 4));
 
 	/* other bits seems to be unused */
 }
@@ -268,6 +267,7 @@ static void volume_callback1(int v)
 static struct K007232_interface k007232_interface =
 {
 	2,			/* number of chips */
+	3579545,	/* clock */
 	{ REGION_SOUND1, REGION_SOUND2 },	/* memory regions */
 	{ K007232_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER),
 			K007232_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },	/* volume */

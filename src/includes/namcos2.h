@@ -23,11 +23,6 @@
 
 /* VIDHRDW */
 
-#define GFX_OBJ1	0
-#define GFX_OBJ2	1
-#define GFX_CHR 	2
-#define GFX_ROZ 	3
-
 /*********************************************/
 /* IF GAME SPECIFIC HACKS ARE REQUIRED THEN  */
 /* USE THE namcos2_gametype VARIABLE TO FIND */
@@ -45,7 +40,6 @@ enum {
 	NAMCOS2_DIRT_FOX,
 	NAMCOS2_DIRT_FOX_JP,
 	NAMCOS2_DRAGON_SABER,
-	NAMCOS2_DRAGON_SABER_JP,
 	NAMCOS2_FINAL_LAP,
 	NAMCOS2_FINAL_LAP_2,
 	NAMCOS2_FINAL_LAP_3,
@@ -79,6 +73,7 @@ enum {
 	NAMCONB1_NEBULRAY,
 	NAMCONB1_GUNBULET,
 	NAMCONB1_GSLGR94U,
+	NAMCONB1_SWS95,
 	NAMCONB1_SWS96,
 	NAMCONB1_SWS97,
 	NAMCONB1_VSHOOT,
@@ -100,22 +95,29 @@ VIDEO_UPDATE( namcos21_default );
 
 VIDEO_START( namcos2 );
 VIDEO_UPDATE( namcos2_default );
-VIDEO_UPDATE( namcos2_finallap );
+
+VIDEO_START( finallap );
+VIDEO_UPDATE( finallap );
 
 VIDEO_START( luckywld );
 VIDEO_UPDATE( luckywld );
+
+VIDEO_START( metlhawk );
+VIDEO_UPDATE( metlhawk );
+
+VIDEO_START( sgunner );
+VIDEO_UPDATE( sgunner );
 
 /* MACHINE */
 
 MACHINE_INIT( namcos2 );
 
-
-
-
 WRITE16_HANDLER( namcos2_gfx_ctrl_w );
+READ16_HANDLER( namcos2_gfx_ctrl_r );
 
 extern data16_t *namcos2_sprite_ram;
 WRITE16_HANDLER( namcos2_sprite_ram_w );
+READ16_HANDLER( namcos2_sprite_ram_r );
 
 
 /**************************************************************/
@@ -176,15 +178,6 @@ extern data16_t *namcos2_68k_serial_comms_ram;
 READ16_HANDLER( namcos2_68k_key_r );
 WRITE16_HANDLER( namcos2_68k_key_w );
 
-extern data16_t namcos2_68k_key[];
-
-READ16_HANDLER( namcos2_68k_protect_r );
-WRITE16_HANDLER( namcos2_68k_protect_w );
-
-extern int namcos2_68k_protect;
-
-
-
 /**************************************************************/
 /* Non-shared memory custom IO device - IRQ/Inputs/Outputs	 */
 /**************************************************************/
@@ -242,25 +235,6 @@ READ16_HANDLER( namcos2_68k_roz_ctrl_r );
 WRITE16_HANDLER( namcos2_68k_roz_ram_w );
 READ16_HANDLER( namcos2_68k_roz_ram_r );
 extern data16_t *namcos2_68k_roz_ram;
-
-
-/**************************************************************/
-/* FINAL LAP road generator definitions.....				  */
-/**************************************************************/
-
-WRITE16_HANDLER( namcos2_68k_roadtile_ram_w );
-READ16_HANDLER( namcos2_68k_roadtile_ram_r );
-extern data16_t *namcos2_68k_roadtile_ram;
-extern size_t namcos2_68k_roadtile_ram_size;
-
-WRITE16_HANDLER( namcos2_68k_roadgfx_ram_w );
-READ16_HANDLER( namcos2_68k_roadgfx_ram_r );
-extern data16_t *namcos2_68k_roadgfx_ram;
-extern size_t namcos2_68k_roadgfx_ram_size;
-
-WRITE16_HANDLER( namcos2_68k_road_ctrl_w );
-READ16_HANDLER( namcos2_68k_road_ctrl_r );
-
 
 /**************************************************************/
 /*															  */

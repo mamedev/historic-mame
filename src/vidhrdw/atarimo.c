@@ -29,7 +29,7 @@ struct atarimo_data
 	int					gfxchanged;			/* true if the gfx info has changed */
 	struct GfxElement	gfxelement[MAX_GFX_ELEMENTS]; /* local copy of graphics elements */
 	int					gfxgranularity[MAX_GFX_ELEMENTS];
-	
+
 	struct mame_bitmap *bitmap;				/* temporary bitmap to render to */
 
 	int					linked;				/* are the entries linked? */
@@ -95,11 +95,11 @@ struct atarimo_data
 	struct atarimo_entry *activelist[ATARIMO_MAXPERBANK];	/* pointers to active motion objects */
 	struct atarimo_entry **activelast;		/* pointer to the last pointer in the active list */
 	int					last_link;			/* previous starting point */
-	
+
 	UINT8 *				dirtygrid;			/* grid of dirty rects for blending */
 	int					dirtywidth;			/* width of dirty grid */
 	int					dirtyheight;		/* height of dirty grid */
-	
+
 	struct rectangle	rectlist[ATARIMO_MAXPERBANK];	/* list of bounding rectangles */
 	int					rectcount;
 
@@ -259,7 +259,7 @@ static void force_update(int scanline)
 {
 	if (scanline > 0)
 		force_partial_update(scanline - 1);
-	
+
 	scanline += 64;
 	if (scanline >= Machine->visible_area.max_y)
 		scanline = 0;
@@ -298,7 +298,7 @@ int atarimo_init(int map, const struct atarimo_desc *desc)
 
 	/* copy in the basic data */
 	mo->gfxchanged    = 0;
-	
+
 	mo->linked        = desc->linked;
 	mo->split         = desc->split;
 	mo->reverse       = desc->reverse;
@@ -311,16 +311,8 @@ int atarimo_init(int map, const struct atarimo_desc *desc)
 	mo->entrybits     = compute_log(mo->entrycount);
 	mo->bankcount     = desc->banks;
 
-	if ((Machine->orientation & ORIENTATION_SWAP_XY) && !(gfx->flags & GFX_SWAPXY))
-	{
-		mo->tilewidth     = gfx->height;
-		mo->tileheight    = gfx->width;
-	}
-	else
-	{
-		mo->tilewidth     = gfx->width;
-		mo->tileheight    = gfx->height;
-	}
+	mo->tilewidth     = gfx->width;
+	mo->tileheight    = gfx->height;
 	mo->tilexshift    = compute_log(mo->tilewidth);
 	mo->tileyshift    = compute_log(mo->tileheight);
 	mo->bitmapwidth   = round_to_powerof2(mo->xposmask.mask);
@@ -377,7 +369,7 @@ int atarimo_init(int map, const struct atarimo_desc *desc)
 	/* initialize it 1:1 */
 	for (i = 0; i < round_to_powerof2(mo->colormask.mask); i++)
 		mo->colorlookup[i] = i;
-	
+
 	/* allocate dirty grid */
 	mo->dirtywidth = (Machine->drv->screen_width >> mo->tilexshift) + 2;
 	mo->dirtyheight = (Machine->drv->screen_height >> mo->tileyshift) + 2;
@@ -391,10 +383,10 @@ int atarimo_init(int map, const struct atarimo_desc *desc)
 	/* initialize it with the gfxindex we were passed in */
 	for (i = 0; i < round_to_powerof2(mo->gfxmask.mask); i++)
 		mo->gfxlookup[i] = desc->gfxindex;
-	
+
 	/* initialize the gfx elements so we have full control over colors */
 	init_gfxelement(mo, desc->gfxindex);
-	
+
 	/* start a timer to update a few times during refresh */
 	timer_set(cpu_getscanlinetime(0), 0, force_update);
 
@@ -466,7 +458,7 @@ static void update_active_list(struct atarimo_data *mo, int link)
 
 	/* reset the visit map */
 	memset(movisit, 0, mo->entrycount);
-	
+
 	/* remember the last link */
 	mo->last_link = link;
 
@@ -485,51 +477,9 @@ static void update_active_list(struct atarimo_data *mo, int link)
 		else
 			link = (link + 1) & mo->linkmask.mask;
 	}
-	
+
 	/* note the last entry */
 	mo->activelast = current;
-}
-
-
-/*---------------------------------------------------------------
-	reorient_rects: Adjust the rectlist for the current
-	orientation.
----------------------------------------------------------------*/
-
-static void reorient_and_clip_rects(struct atarimo_rect_list *rectlist, const struct rectangle *cliprect)
-{
-	struct rectangle *rect;
-	int i;
-
-	/* loop over rects */
-	for (i = 0, rect = rectlist->rect; i < rectlist->numrects; i++, rect++)
-	{
-		/* first clamp to the cliprect */
-		sect_rect(rect, cliprect);
-	
-		/* adjust for orientation */
-		if (Machine->orientation & ORIENTATION_SWAP_XY)
-		{
-			int temp = rect->min_x;
-			rect->min_x = rect->min_y;
-			rect->min_y = temp;
-			temp = rect->max_x;
-			rect->max_x = rect->max_y;
-			rect->max_y = temp;
-		}
-		if (Machine->orientation & ORIENTATION_FLIP_X)
-		{
-			int temp = rect->min_x;
-			rect->min_x = Machine->scrbitmap->width-1 - rect->max_x;
-			rect->max_x = Machine->scrbitmap->width-1 - temp;
-		}
-		if (Machine->orientation & ORIENTATION_FLIP_Y)
-		{
-			int temp = rect->min_y;
-			rect->min_y = Machine->scrbitmap->height-1 - rect->max_y;
-			rect->max_y = Machine->scrbitmap->height-1 - temp;
-		}
-	}
 }
 
 
@@ -559,7 +509,7 @@ static void erase_dirty_grid(struct atarimo_data *mo, const struct rectangle *cl
 	int sy = cliprect->min_y >> mo->tileyshift;
 	int ey = cliprect->max_y >> mo->tileyshift;
 	int y;
-	
+
 	/* loop over all grid rows that intersect our cliprect */
 	for (y = sy; y <= ey; y++)
 	{
@@ -596,7 +546,7 @@ static void convert_dirty_grid_to_rects(struct atarimo_data *mo, const struct re
 	{
 		UINT8 *dirtybase = get_dirty_base(mo, cliprect->min_x, y << mo->tileyshift);
 		int can_add_to_existing = 0;
-		
+
 		/* loop over all grid columns that intersect our cliprect */
 		for (x = sx; x <= ex; x++)
 		{
@@ -609,22 +559,22 @@ static void convert_dirty_grid_to_rects(struct atarimo_data *mo, const struct re
 					/* advance pointers */
 					rectlist->numrects++;
 					rect++;
-					
+
 					/* make a rect describing this grid square */
 					rect->min_x = x << mo->tilexshift;
 					rect->max_x = rect->min_x + tilewidth - 1;
 					rect->min_y = y << mo->tileyshift;
 					rect->max_y = rect->min_y + tileheight - 1;
-					
+
 					/* neighboring grid squares can add to this one */
 					can_add_to_existing = 1;
 				}
-				
+
 				/* if we can add to the previous rect, just expand its width */
 				else
 					rect->max_x += tilewidth;
 			}
-			
+
 			/* once we hit a non-dirty square, we can no longer add on */
 			else
 				can_add_to_existing = 0;
@@ -641,12 +591,12 @@ static void convert_dirty_grid_to_rects(struct atarimo_data *mo, const struct re
 struct mame_bitmap *atarimo_render(int map, const struct rectangle *cliprect, struct atarimo_rect_list *rectlist)
 {
 	struct atarimo_data *mo = &atarimo[map];
-	int startband, stopband, band;
-	
+	int startband, stopband, band, i;
+	struct rectangle *rect;
+
 	/* if the graphics info has changed, recompute */
 	if (mo->gfxchanged)
 	{
-		int i;
 		mo->gfxchanged = 0;
 		for (i = 0; i < round_to_powerof2(mo->gfxmask.mask); i++)
 			init_gfxelement(mo, mo->gfxlookup[i]);
@@ -659,17 +609,17 @@ struct mame_bitmap *atarimo_render(int map, const struct rectangle *cliprect, st
 		startband -= mo->bitmapheight >> mo->slipshift;
 	if (!mo->slipshift)
 		stopband = startband;
-	
+
 	/* erase the dirty grid */
 	erase_dirty_grid(mo, cliprect);
-		
+
 	/* loop over SLIP bands */
 	for (band = startband; band <= stopband; band++)
 	{
 		struct atarimo_entry **first, **current, **last;
 		struct rectangle bandclip;
 		int link, step;
-	
+
 		/* if we don't use SLIPs, just recapture from 0 */
 		if (!mo->slipshift)
 		{
@@ -682,22 +632,22 @@ struct mame_bitmap *atarimo_render(int map, const struct rectangle *cliprect, st
 		{
 			int slipentry = band & mo->sliprammask;
 			link = ((*mo->slipram)[slipentry] >> mo->linkmask.shift) & mo->linkmask.mask;
-			
+
 			/* start with the cliprect */
 			bandclip = *cliprect;
-			
+
 			/* compute minimum Y and wrap around if necessary */
 			bandclip.min_y = ((band << mo->slipshift) - mo->yscroll + mo->slipoffset) & mo->bitmapymask;
 			if (bandclip.min_y > Machine->visible_area.max_y)
 				bandclip.min_y -= mo->bitmapheight;
-			
+
 			/* maximum Y is based on the minimum */
 			bandclip.max_y = bandclip.min_y + (1 << mo->slipshift) - 1;
-			
+
 			/* keep within the cliprect */
 			sect_rect(&bandclip, cliprect);
 		}
-		
+
 		/* if this matches the last link, we don't need to re-process the list */
 		if (link != mo->last_link)
 			update_active_list(mo, link);
@@ -723,13 +673,14 @@ struct mame_bitmap *atarimo_render(int map, const struct rectangle *cliprect, st
 		for (current = first; current != last; current += step)
 			mo_render_object(mo, *current, &bandclip);
 	}
-	
+
 	/* convert the dirty grid to a rectlist */
 	convert_dirty_grid_to_rects(mo, cliprect, rectlist);
-	
-	/* reorient the rectlist */
-	reorient_and_clip_rects(rectlist, cliprect);
-	
+
+	/* clip the rectlist */
+	for (i = 0, rect = rectlist->rect; i < rectlist->numrects; i++, rect++)
+		sect_rect(rect, cliprect);
+
 	/* return the bitmap */
 	return mo->bitmap;
 }
@@ -760,7 +711,20 @@ static int mo_render_object(struct atarimo_data *mo, const struct atarimo_entry 
 	int priority = EXTRACT_DATA(entry, mo->prioritymask);
 	int xadv, yadv, rendered = 0;
 	UINT8 *dirtybase;
-	
+
+#ifdef TEMPDEBUG
+int temp = EXTRACT_DATA(entry, mo->codemask);
+if ((temp & 0xff00) == 0xc800)
+{
+	static UINT8 hits[256];
+	if (!hits[temp & 0xff])
+	{
+		fprintf(stderr, "code = %04X\n", temp);
+		hits[temp & 0xff] = 1;
+	}
+}
+#endif
+
 	/* compute the effective color, merging in priority */
 	color = (color * mo->gfxgranularity[gfxindex]) | (priority << ATARIMO_PRIORITY_SHIFT);
 	color += mo->palettebase;
@@ -845,7 +809,7 @@ static int mo_render_object(struct atarimo_data *mo, const struct atarimo_entry 
 				/* draw the sprite */
 				drawgfx(bitmap, gfx, code, color, hflip, vflip, sx, sy, cliprect, TRANSPARENCY_PEN_RAW, mo->transpen);
 				rendered = 1;
-				
+
 				/* mark the grid dirty */
 				dirtybase = get_dirty_base(mo, sx, sy);
 				dirtybase[0] = 1;
@@ -882,7 +846,7 @@ static int mo_render_object(struct atarimo_data *mo, const struct atarimo_entry 
 				/* draw the sprite */
 				drawgfx(bitmap, gfx, code, color, hflip, vflip, sx, sy, cliprect, TRANSPARENCY_PEN_RAW, mo->transpen);
 				rendered = 1;
-				
+
 				/* mark the grid dirty */
 				dirtybase = get_dirty_base(mo, sx, sy);
 				dirtybase[0] = 1;
@@ -892,7 +856,7 @@ static int mo_render_object(struct atarimo_data *mo, const struct atarimo_entry 
 			}
 		}
 	}
-	
+
 	return rendered;
 }
 

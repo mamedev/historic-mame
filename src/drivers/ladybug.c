@@ -544,6 +544,6 @@ ROM_END
 
 
 GAME( 1981, ladybug,  0,       ladybug, ladybug,  0, ROT270, "Universal", "Lady Bug" )
-GAME( 1982, ladybugb, ladybug, ladybug, ladybug,  0, ROT270, "bootleg", "Lady Bug (bootleg)" )
+GAME( 1981, ladybugb, ladybug, ladybug, ladybug,  0, ROT270, "bootleg", "Lady Bug (bootleg)" )
 GAME( 1981?,snapjack, 0,       ladybug, snapjack, 0, ROT0,   "Universal", "Snap Jack" )
 GAME( 1981, cavenger, 0,       ladybug, cavenger, 0, ROT0,   "Universal", "Cosmic Avenger" )

@@ -52,7 +52,7 @@ extern UINT8 win_trying_to_quit;
 #define DEBUG_WINDOW_STYLE_EX	0
 
 // full screen window styles
-#define FULLSCREEN_STYLE		WS_OVERLAPPED
+#define FULLSCREEN_STYLE		WS_POPUP
 #define FULLSCREEN_STYLE_EX		WS_EX_TOPMOST
 
 // menu items
@@ -658,6 +658,12 @@ static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam,
 	// handle a few messages
 	switch (message)
 	{
+		// non-client paint: punt if full screen
+		case WM_NCPAINT:
+			if (win_window_mode)
+				return DefWindowProc(wnd, message, wparam, lparam);
+			break;
+
 		// paint: redraw the last bitmap
 		case WM_PAINT:
 		{
@@ -1532,6 +1538,8 @@ static LRESULT CALLBACK debug_window_proc(HWND wnd, UINT message, WPARAM wparam,
 
 void win_set_debugger_focus(int focus)
 {
+	static int temp_afs, temp_fs, temp_throttle;
+
 	debug_focus = focus;
 
 	// if focused, make sure the window is visible
@@ -1540,6 +1548,16 @@ void win_set_debugger_focus(int focus)
 		// if full screen, turn it off
 		if (!win_window_mode)
 			win_toggle_full_screen();
+
+		// store frameskip/throttle settings
+		temp_fs       = frameskip;
+		temp_afs      = autoframeskip;
+		temp_throttle = throttle;
+
+		// temporarily set them to usable values for the debugger
+		frameskip     = 0;
+		autoframeskip = 0;
+		throttle      = 1;
 
 		// show and restore the window
 		ShowWindow(win_debug_window, SW_SHOW);
@@ -1555,6 +1573,11 @@ void win_set_debugger_focus(int focus)
 	// if not focuessed, bring the game frontmost
 	else if (!debug_focus && win_debug_window)
 	{
+		// restore frameskip/throttle settings
+		frameskip     = temp_fs;
+		autoframeskip = temp_afs;
+		throttle      = temp_throttle;
+
 		// hide the window
 		ShowWindow(win_debug_window, SW_HIDE);
 

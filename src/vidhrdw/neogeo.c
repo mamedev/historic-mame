@@ -68,7 +68,6 @@ static int no_of_tiles;
 static int palette_swap_pending;
 static int fix_bank;
 
-extern data16_t *neogeo_ram16;
 extern unsigned int neogeo_frame_counter;
 
 int neogeo_fix_bank_type;

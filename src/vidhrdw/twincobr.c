@@ -13,42 +13,51 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "state.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/crtc6845.h"
+
+
+static void twincobr_restore_screen(void);
 
 
 static data16_t *twincobr_bgvideoram16;
 static data16_t *twincobr_fgvideoram16;
 
-int wardner_sprite_hack = 0;	/* Required for weird sprite priority in wardner  */
-								/* when hero is in shop. Hero should cover shop owner */
+int wardner_sprite_hack;	/* Required for weird sprite priority in wardner  */
+							/* when hero is in shop. Hero should cover shop owner */
 
 extern int toaplan_main_cpu;	/* Main CPU type.  0 = 68000, 1 = Z80 */
 
 static size_t twincobr_bgvideoram_size,twincobr_fgvideoram_size;
-static int txscrollx = 0;
-static int txscrolly = 0;
-static int fgscrollx = 0;
-static int fgscrolly = 0;
-static int bgscrollx = 0;
-static int bgscrolly = 0;
-int twincobr_fg_rom_bank = 0;
-int twincobr_bg_ram_bank = 0;
-int twincobr_display_on = 1;
-int twincobr_flip_screen = 0;
-int twincobr_flip_x_base = 0x37;	/* value to 0 the X scroll offsets (non-flip) */
-int twincobr_flip_y_base = 0x1e;	/* value to 0 the Y scroll offsets (non-flip) */
+static int txscrollx;
+static int txscrolly;
+static int fgscrollx;
+static int fgscrolly;
+static int bgscrollx;
+static int bgscrolly;
+int twincobr_fg_rom_bank;
+int twincobr_bg_ram_bank;
+int twincobr_display_on;
+int twincobr_flip_screen;
+int twincobr_flip_x_base;
+int twincobr_flip_y_base;
 
 static int txoffs = 0;
-static int bgoffs = 0;
 static int fgoffs = 0;
+static int bgoffs = 0;
 static int scroll_x = 0;
 static int scroll_y = 0;
 
-static int vidbaseaddr = 0;
-static int scroll_realign_x = 0;
+static int vidbaseaddr;
+static int scroll_realign_x;
 
-/************************* Wardner variables *******************************/
+
+/***************************************************************************
+
+  Start the video hardware emulation.
+
+***************************************************************************/
 
 VIDEO_START( toaplan0 )
 {
@@ -76,8 +85,40 @@ VIDEO_START( toaplan0 )
 	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
 		return 1;
 
+	state_save_register_UINT16("toaplan0", 0, "Text_Field", videoram16, videoram_size);
+	state_save_register_UINT16("toaplan0", 0, "FG_PlayField", twincobr_fgvideoram16, twincobr_fgvideoram_size);
+	state_save_register_UINT16("toaplan0", 0, "BG_PlayField", twincobr_bgvideoram16, twincobr_bgvideoram_size);
+	state_save_register_int("toaplan0", 0, "txoffs", &txoffs);
+	state_save_register_int("toaplan0", 0, "fgoffs", &fgoffs);
+	state_save_register_int("toaplan0", 0, "bgoffs", &bgoffs);
+	state_save_register_int("toaplan0", 0, "scroll_x", &scroll_x);
+	state_save_register_int("toaplan0", 0, "scroll_y", &scroll_y);
+	state_save_register_int("toaplan0", 0, "txscrollx", &txscrollx);
+	state_save_register_int("toaplan0", 0, "fgscrollx", &fgscrollx);
+	state_save_register_int("toaplan0", 0, "bgscrollx", &bgscrollx);
+	state_save_register_int("toaplan0", 0, "txscrolly", &txscrolly);
+	state_save_register_int("toaplan0", 0, "fgscrolly", &fgscrolly);
+	state_save_register_int("toaplan0", 0, "bgscrolly", &bgscrolly);
+	state_save_register_int("toaplan0", 0, "Display_On", &twincobr_display_on);
+	state_save_register_int("toaplan0", 0, "twincobr_fg_rom_bank", &twincobr_fg_rom_bank);
+	state_save_register_int("toaplan0", 0, "twincobr_bg_ram_bank", &twincobr_bg_ram_bank);
+	state_save_register_int("toaplan0", 0, "twincobr_flip_screen", &twincobr_flip_screen);
+	state_save_register_int("toaplan0", 0, "twincobr_flip_x_base", &twincobr_flip_x_base);
+	state_save_register_int("toaplan0", 0, "twincobr_flip_y_base", &twincobr_flip_y_base);
+	state_save_register_int("wardner", 0, "wardner_sprite_hack", &wardner_sprite_hack);
+	state_save_register_func_postload(twincobr_restore_screen);	/* Restore the background */
+
 	return 0;
 }
+
+
+static void twincobr_restore_screen(void)
+{
+	/* Mark the background layer cache as dirty, to force a redraw */
+	memset(dirtybuffer,1,twincobr_bgvideoram_size*2);
+}
+
+
 
 
 WRITE16_HANDLER( twincobr_crtc_reg_sel_w )
@@ -255,7 +296,7 @@ VIDEO_UPDATE( toaplan0 )
 	static int offs,code,tile,color;
 
 
-	if (!twincobr_display_on)
+	if (twincobr_display_on != 1)
 	{
 		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 		return;

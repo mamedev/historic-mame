@@ -6,11 +6,27 @@
 
 /*----------- defined in machine/harddriv.c -----------*/
 
+extern INT8 hdcpu_main;
+extern INT8 hdcpu_gsp;
+extern INT8 hdcpu_msp;
+extern INT8 hdcpu_adsp;
+extern INT8 hdcpu_sound;
+extern INT8 hdcpu_sounddsp;
+extern INT8 hdcpu_jsa;
+extern INT8 hdcpu_dsp32;
+
+extern UINT8 hd34010_host_access;
+extern UINT8 hddsk_pio_access;
+
 extern data16_t *hdmsp_ram;
-extern data16_t *hd68k_slapstic_base;
 extern data16_t *hddsk_ram;
 extern data16_t *hddsk_rom;
 extern data16_t *hddsk_zram;
+extern data16_t *hd68k_slapstic_base;
+extern data16_t *st68k_sloop_alt_base;
+
+extern data16_t *hdgsp_protection;
+extern data16_t *stmsp_sync[2];
 
 extern data16_t *hdgsp_speedup_addr[2];
 extern offs_t hdgsp_speedup_pc;
@@ -18,18 +34,23 @@ extern offs_t hdgsp_speedup_pc;
 extern data16_t *hdmsp_speedup_addr;
 extern offs_t hdmsp_speedup_pc;
 
-extern offs_t hdadsp_speedup_pc;
+extern data16_t *hdds3_speedup_addr;
+extern offs_t hdds3_speedup_pc;
+extern offs_t hdds3_transfer_pc;
 
+extern data32_t *rddsp32_sync[2];
+
+extern UINT32 gsp_speedup_count[4];
+extern UINT32 msp_speedup_count[4];
+extern UINT32 adsp_speedup_count[4];
+
+/* Driver/Multisync board */
 MACHINE_INIT( harddriv );
 
-INTERRUPT_GEN( hd68k_vblank_gen );
 INTERRUPT_GEN( hd68k_irq_gen );
 WRITE16_HANDLER( hd68k_irq_ack_w );
 void hdgsp_irq_gen(int state);
 void hdmsp_irq_gen(int state);
-
-READ16_HANDLER( hd68k_port0_r );
-WRITE16_HANDLER( hdgsp_io_w );
 
 READ16_HANDLER( hd68k_gsp_io_r );
 WRITE16_HANDLER( hd68k_gsp_io_w );
@@ -37,100 +58,156 @@ WRITE16_HANDLER( hd68k_gsp_io_w );
 READ16_HANDLER( hd68k_msp_io_r );
 WRITE16_HANDLER( hd68k_msp_io_w );
 
-READ16_HANDLER( hd68k_adsp_program_r );
-WRITE16_HANDLER( hd68k_adsp_program_w );
-READ16_HANDLER( hd68k_adsp_data_r );
-WRITE16_HANDLER( hd68k_adsp_data_w );
-READ16_HANDLER( hd68k_adsp_buffer_r );
-WRITE16_HANDLER( hd68k_adsp_buffer_w );
-WRITE16_HANDLER( hd68k_adsp_irq_clear_w );
-WRITE16_HANDLER( hd68k_adsp_control_w );
-READ16_HANDLER( hd68k_adsp_irq_state_r );
-
-WRITE16_HANDLER( hd68k_ds3_control_w );
-READ16_HANDLER( hd68k_ds3_irq_state_r );
-READ16_HANDLER( hdds3_special_r );
-WRITE16_HANDLER( hdds3_special_w );
-READ16_HANDLER( hd68k_ds3_program_r );
-WRITE16_HANDLER( hd68k_ds3_program_w );
-
-READ16_HANDLER( hd68k_sound_reset_r );
-WRITE16_HANDLER( hd68k_nwr_w );
-
+READ16_HANDLER( hd68k_port0_r );
 READ16_HANDLER( hd68k_adc8_r );
 READ16_HANDLER( hd68k_adc12_r );
+READ16_HANDLER( hdc68k_port1_r );
+READ16_HANDLER( hda68k_port1_r );
+READ16_HANDLER( hdc68k_wheel_r );
+READ16_HANDLER( hd68k_sound_reset_r );
+
+WRITE16_HANDLER( hd68k_adc_control_w );
+WRITE16_HANDLER( hd68k_wr0_write );
+WRITE16_HANDLER( hd68k_wr1_write );
+WRITE16_HANDLER( hd68k_wr2_write );
+WRITE16_HANDLER( hd68k_nwr_w );
+WRITE16_HANDLER( hdc68k_wheel_edge_reset_w );
 
 READ16_HANDLER( hd68k_zram_r );
 WRITE16_HANDLER( hd68k_zram_w );
 
-READ16_HANDLER( hdadsp_special_r );
-WRITE16_HANDLER( hdadsp_special_w );
-
 READ16_HANDLER( hd68k_duart_r );
 WRITE16_HANDLER( hd68k_duart_w );
 
-WRITE16_HANDLER( hd68k_wr0_write );
-WRITE16_HANDLER( hd68k_wr1_write );
-WRITE16_HANDLER( hd68k_wr2_write );
-WRITE16_HANDLER( hd68k_adc_control_w );
+WRITE16_HANDLER( hdgsp_io_w );
 
-READ16_HANDLER( hddsk_ram_r );
-WRITE16_HANDLER( hddsk_ram_w );
-READ16_HANDLER( hddsk_zram_r );
-WRITE16_HANDLER( hddsk_zram_w );
-READ16_HANDLER( hddsk_rom_r );
+WRITE16_HANDLER( hdgsp_protection_w );
 
-WRITE16_HANDLER( racedriv_68k_slapstic_w );
-READ16_HANDLER( racedriv_68k_slapstic_r );
+WRITE16_HANDLER( stmsp_sync0_w );
+WRITE16_HANDLER( stmsp_sync1_w );
+WRITE16_HANDLER( stmsp_sync2_w );
 
-WRITE16_HANDLER( racedriv_asic65_w );
-READ16_HANDLER( racedriv_asic65_r );
-READ16_HANDLER( racedriv_asic65_io_r );
+/* ADSP board */
+READ16_HANDLER( hd68k_adsp_program_r );
+WRITE16_HANDLER( hd68k_adsp_program_w );
 
-WRITE16_HANDLER( racedriv_asic61_w );
-READ16_HANDLER( racedriv_asic61_r );
+READ16_HANDLER( hd68k_adsp_data_r );
+WRITE16_HANDLER( hd68k_adsp_data_w );
 
-WRITE16_HANDLER( steeltal_68k_slapstic_w );
-READ16_HANDLER( steeltal_68k_slapstic_r );
+READ16_HANDLER( hd68k_adsp_buffer_r );
+WRITE16_HANDLER( hd68k_adsp_buffer_w );
 
-READ16_HANDLER( hdadsp_speedup_r );
-READ16_HANDLER( hdadsp_speedup2_r );
-WRITE16_HANDLER( hdadsp_speedup2_w );
+WRITE16_HANDLER( hd68k_adsp_control_w );
+WRITE16_HANDLER( hd68k_adsp_irq_clear_w );
+READ16_HANDLER( hd68k_adsp_irq_state_r );
 
+READ16_HANDLER( hdadsp_special_r );
+WRITE16_HANDLER( hdadsp_special_w );
+
+/* DS III board */
+WRITE16_HANDLER( hd68k_ds3_control_w );
+READ16_HANDLER( hd68k_ds3_girq_state_r );
+READ16_HANDLER( hd68k_ds3_sirq_state_r );
+READ16_HANDLER( hd68k_ds3_gdata_r );
+WRITE16_HANDLER( hd68k_ds3_gdata_w );
+READ16_HANDLER( hd68k_ds3_sdata_r );
+WRITE16_HANDLER( hd68k_ds3_sdata_w );
+
+READ16_HANDLER( hdds3_special_r );
+WRITE16_HANDLER( hdds3_special_w );
+READ16_HANDLER( hdds3_control_r );
+WRITE16_HANDLER( hdds3_control_w );
+
+READ16_HANDLER( hd68k_ds3_program_r );
+WRITE16_HANDLER( hd68k_ds3_program_w );
+
+/* DSK board */
+void hddsk_update_pif(UINT32 pins);
+WRITE16_HANDLER( hd68k_dsk_control_w );
+READ16_HANDLER( hd68k_dsk_ram_r );
+WRITE16_HANDLER( hd68k_dsk_ram_w );
+READ16_HANDLER( hd68k_dsk_zram_r );
+WRITE16_HANDLER( hd68k_dsk_zram_w );
+READ16_HANDLER( hd68k_dsk_rom_r );
+WRITE16_HANDLER( hd68k_dsk_dsp32_w );
+READ16_HANDLER( hd68k_dsk_dsp32_r );
+WRITE32_HANDLER( rddsp32_sync0_w );
+WRITE32_HANDLER( rddsp32_sync1_w );
+
+/* DSPCOM board */
+WRITE16_HANDLER( hddspcom_control_w );
+
+WRITE16_HANDLER( rd68k_slapstic_w );
+READ16_HANDLER( rd68k_slapstic_r );
+
+/* Game-specific protection */
+WRITE16_HANDLER( st68k_sloop_w );
+READ16_HANDLER( st68k_sloop_r );
+READ16_HANDLER( st68k_sloop_alt_r );
+
+/* GSP optimizations */
 READ16_HANDLER( hdgsp_speedup_r );
 WRITE16_HANDLER( hdgsp_speedup1_w );
 WRITE16_HANDLER( hdgsp_speedup2_w );
+READ16_HANDLER( rdgsp_speedup1_r );
+WRITE16_HANDLER( rdgsp_speedup1_w );
 
+/* MSP optimizations */
 READ16_HANDLER( hdmsp_speedup_r );
 WRITE16_HANDLER( hdmsp_speedup_w );
+READ16_HANDLER( stmsp_speedup_r );
+
+/* ADSP optimizations */
+READ16_HANDLER( hdadsp_speedup_r );
+READ16_HANDLER( hdds3_speedup_r );
 
 
 /*----------- defined in sndhrdw/harddriv.c -----------*/
 
-READ_HANDLER( hdsnd_68k_r );
-WRITE_HANDLER( hdsnd_68k_w );
+void hdsnd_init(void);
 
-READ_HANDLER( hdsnd_data_r );
-WRITE_HANDLER( hdsnd_data_w );
+extern data16_t *hdsnddsp_ram;
 
-READ_HANDLER( hdsnd_320port_r );
-READ_HANDLER( hdsnd_switches_r );
-READ_HANDLER( hdsnd_status_r );
-READ_HANDLER( hdsnd_320ram_r );
-READ_HANDLER( hdsnd_320com_r );
+READ16_HANDLER( hd68k_snd_data_r );
+READ16_HANDLER( hd68k_snd_status_r );
+WRITE16_HANDLER( hd68k_snd_data_w );
+WRITE16_HANDLER( hd68k_snd_reset_w );
 
-WRITE_HANDLER( hdsnd_latches_w );
-WRITE_HANDLER( hdsnd_speech_w );
-WRITE_HANDLER( hdsnd_irqclr_w );
-WRITE_HANDLER( hdsnd_320ram_w );
-WRITE_HANDLER( hdsnd_320com_w );
+READ16_HANDLER( hdsnd68k_data_r );
+WRITE16_HANDLER( hdsnd68k_data_w );
+
+READ16_HANDLER( hdsnd68k_switches_r );
+READ16_HANDLER( hdsnd68k_320port_r );
+READ16_HANDLER( hdsnd68k_status_r );
+
+WRITE16_HANDLER( hdsnd68k_latches_w );
+WRITE16_HANDLER( hdsnd68k_speech_w );
+WRITE16_HANDLER( hdsnd68k_irqclr_w );
+
+READ16_HANDLER( hdsnd68k_320ram_r );
+WRITE16_HANDLER( hdsnd68k_320ram_w );
+READ16_HANDLER( hdsnd68k_320ports_r );
+WRITE16_HANDLER( hdsnd68k_320ports_w );
+READ16_HANDLER( hdsnd68k_320com_r );
+WRITE16_HANDLER( hdsnd68k_320com_w );
+
+READ16_HANDLER( hdsnddsp_get_bio );
+
+WRITE16_HANDLER( hdsnddsp_dac_w );
+WRITE16_HANDLER( hdsnddsp_comport_w );
+WRITE16_HANDLER( hdsnddsp_mute_w );
+WRITE16_HANDLER( hdsnddsp_gen68kirq_w );
+WRITE16_HANDLER( hdsnddsp_soundaddr_w );
+
+READ16_HANDLER( hdsnddsp_rom_r );
+READ16_HANDLER( hdsnddsp_comram_r );
+READ16_HANDLER( hdsnddsp_compare_r );
 
 
 /*----------- defined in vidhrdw/harddriv.c -----------*/
 
 extern UINT8 hdgsp_multisync;
 extern UINT8 *hdgsp_vram;
-extern data16_t *hdgsp_vram_2bpp;
 extern data16_t *hdgsp_control_lo;
 extern data16_t *hdgsp_control_hi;
 extern data16_t *hdgsp_paletteram_lo;

@@ -8,7 +8,9 @@
 
 #include "driver.h"
 #include "png.h"
+#include "harddisk.h"
 #include <stdarg.h>
+#include <ctype.h>
 
 
 //#define LOG_LOAD
@@ -86,6 +88,9 @@ int resource_tracking_tag = 0;
 /* generic NVRAM */
 size_t generic_nvram_size;
 data8_t *generic_nvram;
+
+/* hard disks */
+static void *hard_disk_handle[4];
 
 
 
@@ -518,17 +523,9 @@ struct mame_bitmap *bitmap_alloc_core(int width,int height,int depth,int use_aut
 {
 	struct mame_bitmap *bitmap;
 
-	/* cheesy kludge: pass in negative depth to prevent orientation swapping */
+	/* obsolete kludge: pass in negative depth to prevent orientation swapping */
 	if (depth < 0)
-	{
 		depth = -depth;
-	}
-
-	/* adjust for orientation */
-	else if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		int temp = width; width = height; height = temp;
-	}
 
 	/* verify it's a depth we can handle */
 	if (depth != 8 && depth != 15 && depth != 16 && depth != 32)
@@ -774,15 +771,8 @@ void save_screen_snapshot_as(void *fp,struct mame_bitmap *bitmap,const struct re
 			struct rectangle temprect = *bounds;
 			int x,y,sx,sy;
 
-			orient_rect(&temprect, bitmap);
 			sx = temprect.min_x;
 			sy = temprect.min_y;
-			if (Machine->orientation & ORIENTATION_SWAP_XY)
-			{
-				int t;
-
-				t = scalex; scalex = scaley; scaley = t;
-			}
 
 			switch (bitmap->depth)
 			{
@@ -852,6 +842,19 @@ void save_screen_snapshot(struct mame_bitmap *bitmap,const struct rectangle *bou
 		save_screen_snapshot_as(fp,bitmap,bounds);
 		osd_fclose(fp);
 	}
+}
+
+
+
+/***************************************************************************
+
+	Hard disk handling
+
+***************************************************************************/
+
+void *get_disk_handle(int diskindex)
+{
+	return hard_disk_handle[diskindex];
 }
 
 
@@ -1064,6 +1067,45 @@ static void verify_length_and_crc(struct rom_load_data *romdata, const char *nam
 			sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s WRONG CRC (expected: %08x found: %08x)\n", name, expcrc, actcrc);
 		romdata->warnings++;
 	}
+}
+
+
+/*-------------------------------------------------
+	extract_md5 - extract the hidden MD5 string
+	from behind a ROM filename
+-------------------------------------------------*/
+
+static int extract_md5(const struct RomModule *romp, UINT8 *md5)
+{
+	const char *p = ROM_GETNAME(romp);
+	int i;
+
+	/* the MD5 is stored as a string past the filename (icky, but it works) */
+	p += strlen(p) + 1;
+
+	/* the MD5 must begin with 0x and must be exactly 34 characters long */
+	if (p[0] != '0' || p[1] != 'x' || strlen(p) != 34)
+		return 0;
+	p += 2;
+
+	/* extract the raw data */
+	for (i = 0; i < 32; i++)
+	{
+		int digit = tolower(*p++);
+
+		if (digit >= '0' && digit <= '9')
+			digit -= '0';
+		else if (digit >= 'a' && digit <= 'f')
+			digit -= 'a' - 10;
+		else
+			return 0;
+
+		if (i % 2 == 0)
+			md5[i / 2] = digit << 4;
+		else
+			md5[i / 2] |= digit;
+	}
+	return 1;
 }
 
 
@@ -1535,6 +1577,125 @@ fatalerror:
 }
 
 
+
+/*-------------------------------------------------
+	process_disk_entries - process all disk entries
+	for a region
+-------------------------------------------------*/
+
+static int process_disk_entries(struct rom_load_data *romdata, const struct RomModule *romp)
+{
+	/* loop until we hit the end of this region */
+	while (!ROMENTRY_ISREGIONEND(romp))
+	{
+		/* handle files */
+		if (ROMENTRY_ISFILE(romp))
+		{
+			struct hard_disk_header header;
+			char filename[1024], *c;
+			void *source, *diff;
+			UINT8 md5[16];
+			int err;
+
+			/* make the filename of the source */
+			strcpy(filename, ROM_GETNAME(romp));
+			c = strrchr(filename, '.');
+			if (c)
+				strcpy(c, ".chd");
+			else
+				strcat(filename, ".chd");
+
+			/* first open the source drive */
+			debugload("Opening disk image: %s\n", filename);
+			source = hard_disk_open(filename, 0, NULL);
+			if (!source)
+			{
+				sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s NOT FOUND\n", filename);
+				romdata->errors++;
+				romp++;
+				continue;
+			}
+
+			/* get the header and extract the MD5 */
+			header = *hard_disk_get_header(source);
+			if (!extract_md5(romp, md5))
+			{
+				printf("%-12s INVALID MD5 IN SOURCE\n", filename);
+				goto fatalerror;
+			}
+
+			/* verify the MD5 */
+			if (memcmp(md5, header.md5, sizeof(md5)))
+			{
+				sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s WRONG MD5 (expected: %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x found: %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x)\n",
+					filename,
+					md5[0], md5[1], md5[2], md5[3], md5[4], md5[5], md5[6], md5[7],
+					md5[8], md5[9], md5[10], md5[11], md5[12], md5[13], md5[14], md5[15],
+					header.md5[0], header.md5[1], header.md5[2], header.md5[3],
+					header.md5[4], header.md5[5], header.md5[6], header.md5[7],
+					header.md5[8], header.md5[9], header.md5[10], header.md5[11],
+					header.md5[12], header.md5[13], header.md5[14], header.md5[15]);
+				romdata->warnings++;
+			}
+
+			/* make the filename of the diff */
+			strcpy(filename, ROM_GETNAME(romp));
+			c = strrchr(filename, '.');
+			if (c)
+				strcpy(c, ".dif");
+			else
+				strcat(filename, ".dif");
+
+			/* try to open the diff */
+			debugload("Opening differencing image: %s\n", filename);
+			diff = hard_disk_open(filename, 1, source);
+			if (!diff)
+			{
+				/* didn't work; try creating it instead */
+
+				/* first get the parent's header and modify that */
+				header.flags |= HDFLAGS_HAS_PARENT | HDFLAGS_IS_WRITEABLE;
+				header.compression = HDCOMPRESSION_NONE;
+				memcpy(header.parentmd5, header.md5, sizeof(header.parentmd5));
+				memset(header.md5, 0, sizeof(header.md5));
+
+				/* then do the create; if it fails, we're in trouble */
+				debugload("Creating differencing image: %s\n", filename);
+				err = hard_disk_create(filename, &header);
+				if (err != HDERR_NONE)
+				{
+					sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s: CAN'T CREATE DIFF FILE\n", filename);
+					romdata->errors++;
+					romp++;
+					continue;
+				}
+
+				/* open the newly-created diff file */
+				debugload("Opening differencing image: %s\n", filename);
+				diff = hard_disk_open(filename, 1, source);
+				if (!diff)
+				{
+					sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s: CAN'T OPEN DIFF FILE\n", filename);
+					romdata->errors++;
+					romp++;
+					continue;
+				}
+			}
+
+			/* we're okay, set the handle */
+			debugload("Assigning to handle %d\n", DISK_GETINDEX(romp));
+			hard_disk_handle[DISK_GETINDEX(romp)] = diff;
+			romp++;
+		}
+	}
+	return 1;
+
+	/* error case */
+fatalerror:
+	return 0;
+}
+
+
 /*-------------------------------------------------
 	rom_load - new, more flexible ROM
 	loading system
@@ -1554,6 +1715,9 @@ int rom_load(const struct RomModule *romp)
 	/* reset the romdata struct */
 	memset(&romdata, 0, sizeof(romdata));
 	romdata.romstotal = count_roms(romp);
+
+	/* reset the disk list */
+	memset(hard_disk_handle, 0, sizeof(hard_disk_handle));
 
 	/* loop until we hit the end */
 	for (region = romp, regnum = 0; region; region = rom_next_region(region), regnum++)
@@ -1600,8 +1764,16 @@ int rom_load(const struct RomModule *romp)
 #endif
 
 		/* now process the entries in the region */
-		if (!process_rom_entries(&romdata, region + 1))
-			return 1;
+		if (ROMREGION_ISROMDATA(region))
+		{
+			if (!process_rom_entries(&romdata, region + 1))
+				return 1;
+		}
+		else if (ROMREGION_ISDISKDATA(region))
+		{
+			if (!process_disk_entries(&romdata, region + 1))
+				return 1;
+		}
 
 		/* add this region to the list */
 		if (regiontype < REGION_MAX)

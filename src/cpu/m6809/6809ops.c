@@ -277,7 +277,8 @@ INLINE void sex( void )
 	UINT16 t;
 	t = SIGNED(B);
 	D = t;
-	CLR_NZV;
+//	CLR_NZV;	Tim Lindner 20020905: verified that V flag is not affected
+	CLR_NZ;
 	SET_NZ16(t);
 }
 

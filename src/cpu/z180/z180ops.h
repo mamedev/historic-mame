@@ -62,10 +62,13 @@ INLINE void z180_mmu( void )
 	}
 }
 
+
+#define MMU_REMAP_ADDR(addr) (Z180.mmu[((addr)>>12)&15]|((addr)&4095))
+
 /***************************************************************
  * Read a byte from given memory location
  ***************************************************************/
-#define RM(addr)	cpu_readmem20(Z180.mmu[((addr)>>12)&15]|((addr)&4095))
+#define RM(addr)	cpu_readmem20(MMU_REMAP_ADDR(addr))
 data8_t cpu_readmemz180(offs_t offset)
 {
 	return RM(offset);
@@ -74,7 +77,7 @@ data8_t cpu_readmemz180(offs_t offset)
 /***************************************************************
  * Write a byte to given memory location
  ***************************************************************/
-#define WM(addr,value) cpu_writemem20(Z180.mmu[((addr)>>12)&15]|((addr)&4095),value)
+#define WM(addr,value) cpu_writemem20(MMU_REMAP_ADDR(addr),value)
 void cpu_writememz180(offs_t offset, data8_t data)
 {
 	WM(offset, data);
@@ -107,7 +110,7 @@ INLINE UINT8 ROP(void)
 {
 	offs_t addr = _PCD;
 	_PC++;
-	return cpu_readop(Z180.mmu[(addr>>12)&15]|(addr&4095));
+	return cpu_readop(MMU_REMAP_ADDR(addr));
 }
 
 /****************************************************************
@@ -120,20 +123,20 @@ INLINE UINT8 ARG(void)
 {
 	offs_t addr = _PCD;
 	_PC++;
-	return cpu_readop_arg(Z180.mmu[(addr>>12)&15]|(addr&4095));
+	return cpu_readop_arg(MMU_REMAP_ADDR(addr));
 }
 
 INLINE UINT32 ARG16(void)
 {
 	offs_t addr = _PCD;
 	_PC += 2;
-	return cpu_readop_arg(addr) | (cpu_readop_arg(addr+1) << 8);
+	return cpu_readop_arg(MMU_REMAP_ADDR(addr)) | (cpu_readop_arg(MMU_REMAP_ADDR(addr+1)) << 8);
 }
 
 /****************************************************************************
  * Change program counter - MMU lookup
  ****************************************************************************/
-#define z180_change_pc(addr) change_pc20(Z180.mmu[((addr)>>12)&15]|((addr)&4095))
+#define z180_change_pc(addr) change_pc20(MMU_REMAP_ADDR(addr))
 void cpu_setOPbasez180(int pc)
 {
 	z180_change_pc(pc);

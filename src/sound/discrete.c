@@ -110,10 +110,12 @@ struct discrete_module module_list[]=
 	{ DSS_SINEWAVE    ,"DSS_SINEWAVE"    ,dss_sinewave_init    ,dss_sinewave_kill    ,dss_sinewave_reset    ,dss_sinewave_step    },
 	{ DSS_NOISE       ,"DSS_NOISE"       ,dss_noise_init       ,dss_noise_kill       ,dss_noise_reset       ,dss_noise_step       },
 	{ DSS_ONESHOT     ,"DSS_ONESHOT"     ,dss_oneshot_init     ,dss_oneshot_kill     ,dss_oneshot_reset     ,dss_oneshot_step     },
+        { DSS_TRIANGLEWAVE,"DSS_TRIANGLEWAVE",dss_trianglewave_init,dss_trianglewave_kill,dss_trianglewave_reset,dss_trianglewave_step},
 
 	{ DST_GAIN        ,"DST_GAIN"        ,NULL                 ,NULL                 ,NULL                  ,dst_gain_step        },
 	{ DST_ADDER       ,"DST_ADDER"       ,NULL                 ,NULL                 ,NULL                  ,dst_adder_step       },
 	{ DST_RCFILTER    ,"DST_RCFILTER"    ,dst_rcfilter_init    ,NULL                 ,dst_rcfilter_reset    ,dst_rcfilter_step    },
+        { DST_RCDISC      ,"DST_RCDISC"      ,dst_rcdisc_init      ,dst_rcdisc_kill      ,dst_rcdisc_reset      ,dst_rcdisc_step      },
 
 	{ DSD_NE555       ,"DSD_NE555"       ,dsd_ne555_init       ,dsd_ne555_kill       ,dsd_ne555_reset       ,dsd_ne555_step       },
 
@@ -400,4 +402,3 @@ void discrete_sh_update(void)
 	/* Bring stream upto the present time */
 	stream_update(discrete_stream, 0);
 }
-

@@ -498,7 +498,7 @@ const char *i286_info(void *context, int regnum)
 				r->flags & 0x0001 ? 'C':'.');
 		break;
 	case CPU_INFO_REG+I286_EMPTY: sprintf(buffer[which]," ");break;
-	case CPU_INFO_NAME: return "I286";
+	case CPU_INFO_NAME: return "I80286";
 	case CPU_INFO_FAMILY: return "Intel 80286";
 	case CPU_INFO_VERSION: return "1.4";
 	case CPU_INFO_FILE: return __FILE__;

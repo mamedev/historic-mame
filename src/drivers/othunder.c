@@ -477,11 +477,6 @@ INPUT_PORTS_START( othundu )
 
 	PORT_START
 	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_Y | IPF_PLAYER2, 25, 13, 0, 0xff)
-
-	PORT_START	/* Fake DSW */
-	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Show gun target", KEYCODE_F1, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
 INPUT_PORTS_END
 
 
@@ -661,4 +656,3 @@ static DRIVER_INIT( othunder )
 
 GAME( 1988, othunder, 0,        othunder, othunder, othunder, ORIENTATION_FLIP_X, "Taito Corporation Japan", "Operation Thunderbolt (World)" )
 GAME( 1988, othundu,  othunder, othunder, othundu,  othunder, ORIENTATION_FLIP_X, "Taito America Corporation", "Operation Thunderbolt (US)" )
-

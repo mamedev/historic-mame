@@ -320,9 +320,11 @@ static void draw_sprite(
 	}
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int b3d ){
+static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int b3d )
+{
 	const pen_t *base_pal = Machine->gfx[0]->colortable;
 	const unsigned char *base_gfx = memory_region(REGION_GFX2);
+	int gfx_rom_size=memory_region_length(REGION_GFX2);
 
 	struct sys16_sprite_attributes sprite;
 	const data16_t *source = sys16_spriteram;
@@ -380,6 +382,9 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 			else {
 				screen_width = width*(0x800-sprite.zoomx)/0x800;
 			}
+
+			if (gfx>=gfx_rom_size)
+				gfx%=gfx_rom_size;
 
 			draw_sprite(
 				bitmap,cliprect,

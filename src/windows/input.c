@@ -8,6 +8,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <conio.h>
+#include <winioctl.h>
 
 // undef WINNT for dinput.h to prevent duplicate definition
 #undef WINNT
@@ -17,6 +18,7 @@
 #include "driver.h"
 #include "window.h"
 #include "rc.h"
+#include "input.h"
 
 
 
@@ -27,6 +29,7 @@
 extern int verbose;
 extern int win_physical_width;
 extern int win_physical_height;
+extern int win_window_mode;
 
 
 //============================================================
@@ -128,6 +131,10 @@ static DIDEVCAPS			joystick_caps[MAX_JOYSTICKS];
 static DIJOYSTATE			joystick_state[MAX_JOYSTICKS];
 static DIPROPRANGE			joystick_range[MAX_JOYSTICKS][MAX_AXES];
 
+// led states
+static int original_leds;
+static HANDLE hKbdDev;
+static OSVERSIONINFO osinfo = { sizeof(OSVERSIONINFO) };
 
 
 //============================================================
@@ -1407,6 +1414,10 @@ void osd_lightgun_read(int player,int *deltax,int *deltay)
 		return;
 	}
 
+	// Warning message to users - design wise this probably isn't the best function to put this in...
+	if (win_window_mode)
+		usrintf_showmessage("Lightgun not supported in windowed mode");
+
 	// I would much prefer to use DirectInput to read the gun values but there seem to be
 	// some problems...  DirectInput (8.0 tested) on Win98 returns garbage for both buffered
 	// and immediate, absolute and relative axis modes.  Win2k (DX 8.1) returns good data
@@ -1553,6 +1564,27 @@ void process_ctrlr_game(struct rc_struct *iptrc, const char *ctype, const struct
 		process_ctrlr_file (iptrc, ctype, drv->name);
 }
 
+// nice hack: load source_file.ini (omit if referenced later any)
+void process_ctrlr_system(struct rc_struct *iptrc, const char *ctype, const struct GameDriver *drv)
+{
+	char buffer[128];
+	const struct GameDriver *tmp_gd;
+
+	sprintf(buffer, "%s", drv->source_file+12);
+	buffer[strlen(buffer) - 2] = 0;
+
+	tmp_gd = drv;
+	while (tmp_gd != NULL)
+	{
+		if (strcmp(tmp_gd->name, buffer) == 0) break;
+		tmp_gd = tmp_gd->clone_of;
+	}
+
+	// not referenced later, so load it here
+	if (tmp_gd == NULL)
+		// now process this system
+		process_ctrlr_file (iptrc, ctype, buffer);
+}
 
 static int ipdef_custom_rc_func(struct rc_option *option, const char *arg, int priority)
 {
@@ -1739,8 +1771,12 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 		// process the controller-specific default file
 		process_ctrlr_file (rc, ctrlrtype, "default");
 
+		// process the system-specific files for this controller
+		process_ctrlr_system (rc, ctrlrtype, Machine->gamedrv);
+
 		// process the game-specific files for this controller
 		process_ctrlr_game (rc, ctrlrtype, Machine->gamedrv);
+
 
 		while ((input->type & ~IPF_MASK) != IPT_END)
 		{
@@ -1826,25 +1862,51 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 }
 
 
+
 //============================================================
 //	osd_get_leds
 //============================================================
 
 int osd_get_leds(void)
 {
-	BYTE key_states[256];
 	int result = 0;
 
 	if (!use_keyboard_leds)
 		return 0;
 
-	// get the current state
-	GetKeyboardState(&key_states[0]);
+	// if we're on Win9x, use GetKeyboardState
+	if (osinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS)
+	{
+		BYTE key_states[256];
 
-	// set the numl0ck bit
-	result |= (key_states[VK_NUMLOCK] & 1);
-	result |= (key_states[VK_CAPITAL] & 1) << 1;
-	result |= (key_states[VK_SCROLL] & 1) << 2;
+		// get the current state
+		GetKeyboardState(&key_states[0]);
+
+		// set the numlock bit
+		result |= (key_states[VK_NUMLOCK] & 1);
+		result |= (key_states[VK_CAPITAL] & 1) << 1;
+		result |= (key_states[VK_SCROLL] & 1) << 2;
+	}
+	else // WinNT/2K/XP, use DeviceIoControl
+	{
+		KEYBOARD_INDICATOR_PARAMETERS OutputBuffer;	  // Output buffer for DeviceIoControl
+		ULONG				DataLength = sizeof(KEYBOARD_INDICATOR_PARAMETERS);
+		ULONG				ReturnedLength; // Number of bytes returned in output buffer
+
+		// Address first keyboard
+		OutputBuffer.UnitId = 0;
+
+		DeviceIoControl(hKbdDev, IOCTL_KEYBOARD_QUERY_INDICATORS,
+						NULL, 0,
+						&OutputBuffer, DataLength,
+						&ReturnedLength, NULL);
+
+		// Demangle lights to match 95/98
+		if (OutputBuffer.LedFlags & KEYBOARD_NUM_LOCK_ON) result |= 0x1;
+		if (OutputBuffer.LedFlags & KEYBOARD_CAPS_LOCK_ON) result |= 0x2;
+		if (OutputBuffer.LedFlags & KEYBOARD_SCROLL_LOCK_ON) result |= 0x4;
+	}
+
 	return result;
 }
 
@@ -1856,65 +1918,127 @@ int osd_get_leds(void)
 
 void osd_set_leds(int state)
 {
-	static OSVERSIONINFO osinfo = { sizeof(OSVERSIONINFO) };
-	static int version_ready = 0;
-	BYTE key_states[256];
-	int oldstate, newstate;
+	if (!use_keyboard_leds)
+		return;
+
+	// if we're on Win9x, use SetKeyboardState
+	if (osinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS)
+	{
+		// thanks to Lee Taylor for the original version of this code
+		BYTE key_states[256];
+
+		// get the current state
+		GetKeyboardState(&key_states[0]);
+
+		// mask states and set new states
+		key_states[VK_NUMLOCK] = (key_states[VK_NUMLOCK] & ~1) | ((state >> 0) & 1);
+		key_states[VK_CAPITAL] = (key_states[VK_NUMLOCK] & ~1) | ((state >> 1) & 1);
+		key_states[VK_SCROLL] = (key_states[VK_NUMLOCK] & ~1) | ((state >> 2) & 1);
+
+		SetKeyboardState(&key_states[0]);
+	}
+	else // WinNT/2K/XP, use DeviceIoControl
+	{
+		KEYBOARD_INDICATOR_PARAMETERS InputBuffer;	  // Input buffer for DeviceIoControl
+		ULONG				DataLength = sizeof(KEYBOARD_INDICATOR_PARAMETERS);
+		ULONG				ReturnedLength; // Number of bytes returned in output buffer
+		UINT				LedFlags=0;
+
+		// Demangle lights to match 95/98
+		if (state & 0x1) LedFlags |= KEYBOARD_NUM_LOCK_ON;
+		if (state & 0x2) LedFlags |= KEYBOARD_CAPS_LOCK_ON;
+		if (state & 0x4) LedFlags |= KEYBOARD_SCROLL_LOCK_ON;
+
+		// Address first keyboard
+		InputBuffer.UnitId = 0;
+		InputBuffer.LedFlags = LedFlags;
+
+		DeviceIoControl(hKbdDev, IOCTL_KEYBOARD_SET_INDICATORS,
+						&InputBuffer, DataLength,
+						NULL, 0,
+						&ReturnedLength, NULL);
+	}
+
+	return;
+}
+
+
+
+//============================================================
+//	start_led
+//============================================================
+
+void start_led(void)
+{
+	if (!use_keyboard_leds)
+		return;
+
+	// retrive windows version
+	GetVersionEx(&osinfo);
+
+	// nt/2k/xp
+	if (!(osinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS))
+	{
+		int error_number;
+
+		if (!DefineDosDevice (DDD_RAW_TARGET_PATH, "Kbd",
+					"\\Device\\KeyboardClass0"))
+		{
+			error_number = GetLastError();
+			fprintf(stderr, "Unable to open the keyboard device. (error %d)\n", error_number);
+			return;
+		}
+
+		hKbdDev = CreateFile("\\\\.\\Kbd", GENERIC_WRITE, 0,
+					NULL,	OPEN_EXISTING,	0,	NULL);
+
+		if (hKbdDev == INVALID_HANDLE_VALUE)
+		{
+			error_number = GetLastError();
+			fprintf(stderr, "Unable to open the keyboard device. (error %d)\n", error_number);
+			return;
+		}
+	}
+
+	// remember the initial LED states
+	original_leds = osd_get_leds();
+
+	return;
+}
+
+
+
+//============================================================
+//	stop_led
+//============================================================
+
+void stop_led(void)
+{
+	int error_number = 0;
 
 	if (!use_keyboard_leds)
 		return;
 
-	// if we don't yet have a version number, get it
-	if (!version_ready)
+	// restore the initial LED states
+	osd_set_leds(original_leds);
+
+	// nt/2k/xp
+	if (!(osinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS))
 	{
-		version_ready = 1;
-		GetVersionEx(&osinfo);
+		if (!DefineDosDevice (DDD_REMOVE_DEFINITION, "Kbd", NULL))
+		{
+			error_number = GetLastError();
+			fprintf(stderr, "Unable to close the keyboard device. (error %d)\n", error_number);
+			return;
+		}
+
+		if (!CloseHandle(hKbdDev))
+		{
+			error_number = GetLastError();
+			fprintf(stderr, "Unable to close the keyboard device. (error %d)\n", error_number);
+			return;
+		}
 	}
 
-	// thanks to Lee Taylor for the original version of this code
-
-	// get the current state
-	GetKeyboardState(&key_states[0]);
-
-	// see if the numlock key matches the state
-	oldstate = key_states[VK_NUMLOCK] & 1;
-	newstate = state & 1;
-
-	// if not, simulate a key up/down
-	if (oldstate != newstate && osinfo.dwPlatformId != VER_PLATFORM_WIN32_WINDOWS)
-	{
-		keybd_event(VK_NUMLOCK, 0x45, KEYEVENTF_EXTENDEDKEY | 0, 0);
-		keybd_event(VK_NUMLOCK, 0x45, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, 0);
-	}
-	key_states[VK_NUMLOCK] = (key_states[VK_NUMLOCK] & ~1) | newstate;
-
-	// see if the caps lock key matches the state
-	oldstate = key_states[VK_CAPITAL] & 1;
-	newstate = (state >> 1) & 1;
-
-	// if not, simulate a key up/down
-	if (oldstate != newstate && osinfo.dwPlatformId != VER_PLATFORM_WIN32_WINDOWS)
-	{
-		keybd_event(VK_CAPITAL, 0x3a, 0, 0);
-		keybd_event(VK_CAPITAL, 0x3a, KEYEVENTF_KEYUP, 0);
-	}
-	key_states[VK_CAPITAL] = (key_states[VK_CAPITAL] & ~1) | newstate;
-
-	// see if the scroll lock key matches the state
-	oldstate = key_states[VK_SCROLL] & 1;
-	newstate = (state >> 2) & 1;
-
-	// if not, simulate a key up/down
-	if (oldstate != newstate && osinfo.dwPlatformId != VER_PLATFORM_WIN32_WINDOWS)
-	{
-		keybd_event(VK_SCROLL, 0x46, 0, 0);
-		keybd_event(VK_SCROLL, 0x46, KEYEVENTF_KEYUP, 0);
-	}
-	key_states[VK_SCROLL] = (key_states[VK_SCROLL] & ~1) | newstate;
-
-	// if we're on Win9x, use SetKeyboardState
-	if (osinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS)
-		SetKeyboardState(&key_states[0]);
+	return;
 }
-
-

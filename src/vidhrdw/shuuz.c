@@ -110,19 +110,32 @@ VIDEO_UPDATE( shuuz )
 			for (x = rectlist.rect->min_x; x <= rectlist.rect->max_x; x++)
 				if (mo[x])
 				{
-					/* not yet verified
-					*/
-					int mocolor = (mo[x] >> 4) & 0x0f;
-					int pfcolor = (pf[x] >> 4) & 0x0f;
-					
-					if (mocolor == 15)
-					{
-						if ((mo[x] & 0x0f) != 15)
-							pf[x] = mo[x];
-					}
-					else if (!(pfcolor & 8) || pfcolor < mocolor)
+					/* verified from the GALs on the real PCB; equations follow
+					 *
+					 *		--- O13 is 1 if (PFS7-4 == 0xf)
+					 *		O13=PFS6*PFS7*(PFS5&PFS4)
+					 *
+					 *		--- PF/M is 1 if MOs have priority, or 0 if playfield has priority
+					 *		MO/PF=!PFS7*!(LBD7&LBD6)*!M1*!O13
+					 *		   +!PFS7*!(LBD7&LBD6)*!M2*!O13
+					 *		   +!PFS7*!(LBD7&LBD6)*!M3*!O13
+					 *		   +PFS7*(LBD7&LBD6)*!M1*!O13
+					 *		   +PFS7*(LBD7&LBD6)*!M2*!O13
+					 *		   +PFS7*(LBD7&LBD6)*!M3*!O13
+					 *
+					 */
+					int o13 = ((pf[x] & 0xf0) == 0xf0);
+					int mopf = 0;
+
+					/* compute the MO/PF signal */
+					if ((!(pf[x] & 0x80) && ((mo[x] & 0xc0) != 0xc0) && ((mo[x] & 0x0e) != 0x00) && !o13) ||
+						((pf[x] & 0x80) && ((mo[x] & 0xc0) == 0xc0) && ((mo[x] & 0x0e) != 0x00) && !o13))
+						mopf = 1;
+
+					/* if MO/PF is 1, we draw the MO */
+					if (mopf)
 						pf[x] = mo[x];
-					
+
 					/* erase behind ourselves */
 					mo[x] = 0;
 				}

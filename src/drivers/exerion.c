@@ -313,12 +313,12 @@ static MACHINE_DRIVER_START( exerion )
 	MDRV_CPU_ADD(Z80, 10000000/3)
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(exerion_interrupt,1)
-	
+
 	MDRV_CPU_ADD(Z80, 10000000/3)
 	MDRV_CPU_MEMORY(cpu2_readmem,cpu2_writemem)
-	
+
 	MDRV_FRAMES_PER_SECOND(60)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(64*8, 32*8)
@@ -326,11 +326,11 @@ static MACHINE_DRIVER_START( exerion )
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32)
 	MDRV_COLORTABLE_LENGTH(256*3)
-	
+
 	MDRV_PALETTE_INIT(exerion)
 	MDRV_VIDEO_START(exerion)
 	MDRV_VIDEO_UPDATE(exerion)
-	
+
 	/* sound hardware */
 	MDRV_SOUND_ADD(AY8910, ay8910_interface)
 MACHINE_DRIVER_END
@@ -434,7 +434,6 @@ ROM_START( exerionb )
 ROM_END
 
 
-
 /*************************************
  *
  *	Driver initialization
@@ -447,7 +446,7 @@ static DRIVER_INIT( exerion )
 	UINT8 *src, *dst, *temp;
 
 	/* allocate some temporary space */
-	temp = malloc(0x8000);
+	temp = malloc(0x10000);
 	if (!temp)
 		return;
 
@@ -476,15 +475,15 @@ static DRIVER_INIT( exerion )
 	memcpy(src, dst, length);
 
 	/* decode the sprites */
-	/* the bits in the ROMs are ordered: n3 n7-n6 n5 n4 v3-v2 v1 v0 n2-n1 n0 h3 h2 */
-	/* we want them ordered like this:   n7 n6-n5 n4 n3 n2-n1 n0 v3 v2-v1 v0 h3 h2 */
+	/* the bits in the ROMs are ordered: n9 n8 n3 n7-n6 n5 n4 v3-v2 v1 v0 n2-n1 n0 h3 h2 */
+	/* we want them ordered like this:   n9 n8 n7 n6-n5 n4 n3 n2-n1 n0 v3 v2-v1 v0 h3 h2 */
 	for (oldaddr = 0; oldaddr < length; oldaddr++)
 	{
 		newaddr = ((oldaddr << 1) & 0x3c00) |       /* move n7-n4 */
 		          ((oldaddr >> 4) & 0x0200) |       /* move n3 */
 		          ((oldaddr << 4) & 0x01c0) |       /* move n2-n0 */
 		          ((oldaddr >> 3) & 0x003c) |       /* move v3-v0 */
-		          ((oldaddr     ) & 0x0003);        /* keep h3-h2 */
+		          ((oldaddr     ) & 0xc003);        /* keep n9-n8 h3-h2 */
 		dst[newaddr] = src[oldaddr];
 	}
 

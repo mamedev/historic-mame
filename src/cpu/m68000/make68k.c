@@ -6724,7 +6724,7 @@ void lsl_lsr(void)
 
 							Align();
 							fprintf(fp, "%s:\n",Label);
-							fprintf(fp, "\t\t and   dl,254\t\t;clear C flag\n");
+							SetFlags(Size,EAX,TRUE,FALSE,FALSE);
 							Completed();
 
 							fprintf(fp, "%s_BigShift:\n",Label);

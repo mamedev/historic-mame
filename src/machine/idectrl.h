@@ -14,7 +14,7 @@ struct ide_interface
 	void 	(*interrupt)(int state);
 };
 
-int ide_controller_init(int which, struct ide_interface *intf, const char *diskname1, const char *diskname2);
+int ide_controller_init(int which, struct ide_interface *intf);
 void ide_controller_reset(int which);
 
 READ32_HANDLER( ide_controller32_0_r );

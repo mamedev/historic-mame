@@ -628,8 +628,6 @@ void metro_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *clip
 			gfx.line_modulo = width;
 			gfx.char_modulo = 0;	/* doesn't matter */
 			gfx.flags = 0;
-			if (Machine->orientation & ORIENTATION_SWAP_XY)
-				gfx.flags |= GFX_SWAPXY;
 
 			/* Bounds checking */
 			if ( (gfxdata + width * height - 1) >= gfx_max )
@@ -658,12 +656,6 @@ void metro_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *clip
 			gfx.line_modulo = width/2;
 			gfx.char_modulo = 0;	/* doesn't matter */
 			gfx.flags = GFX_PACKED;
-			if (Machine->orientation & ORIENTATION_SWAP_XY)
-			{
-				gfx.flags |= GFX_SWAPXY;
-				gfx.width = height;
-				gfx.height = width;
-			}
 
 			/* Bounds checking */
 			if ( (gfxdata + width/2 * height - 1) >= gfx_max )

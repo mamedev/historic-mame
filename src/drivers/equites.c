@@ -134,7 +134,7 @@ Year Genre Name             Japanese Name
 // Directives
 
 #include "driver.h"
-#include "vidhrdw\generic.h"
+#include "vidhrdw/generic.h"
 
 #define HVOLTAGE_HACK	0
 #define EASY_TEST_MODE	0
@@ -306,7 +306,7 @@ static WRITE16_HANDLER(splndrbt_flip1_w)
 {
 	if (ACCESSING_LSB) splndrbt_flip = 1;
 }
-
+#if 0
 static WRITE16_HANDLER(log16_w)
 {
 	int pc = activecpu_get_pc();
@@ -314,7 +314,7 @@ static WRITE16_HANDLER(log16_w)
 	usrintf_showmessage("%04x: %04x(w)\n", pc, data);
 	logerror("%04x: %04x(w)\n", pc, data);
 }
-
+#endif
 /******************************************************************************/
 // Main CPU Memory Map
 

@@ -13,18 +13,8 @@
 
 
 
-static int flipscreen;
-
-
-WRITE_HANDLER( skychut_vh_flipscreen_w )
-{
-/*	if (flipscreen != (data & 0x8f))
-	{
-		flipscreen = (data & 0x8f);
-		memset(dirtybuffer,1,videoram_size);
-	}
-*/
-}
+UINT8 *iremm15_chargen;
+static int bottomline;
 
 
 WRITE_HANDLER( skychut_colorram_w )
@@ -37,6 +27,13 @@ WRITE_HANDLER( skychut_colorram_w )
 	}
 }
 
+WRITE_HANDLER( skychut_ctrl_w )
+{
+//usrintf_showmessage("%02x",data);
+
+	/* I have NO IDEA if this is correct or not */
+	bottomline = ~data & 0x20;
+}
 
 
 /***************************************************************************
@@ -52,31 +49,66 @@ VIDEO_UPDATE( skychut )
 	if (get_vh_global_attribute_changed())
 		memset (dirtybuffer, 1, videoram_size);
 
-	for (offs = videoram_size - 1;offs >= 0;offs--)
+	fillbitmap(bitmap,Machine->pens[7],cliprect);
+
+	for (offs = 0;offs < 0x400;offs++)
 	{
-		if (dirtybuffer[offs])
+		int mask=iremm15_chargen[offs];
+		int x = offs / 256;
+		int y = offs % 256;
+		int col = 0;
+
+		switch (x)
 		{
-			int sx,sy;
+			case 0: x = 4*8;  col = 3; break;
+			case 1: x = 26*8; col = 3; break;
+			case 2: x = 7*8;  col = 5; break;
+			case 3: x = 6*8;  col = 5; break;
+		}
 
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs],
-					 colorram[offs],
-					flipscreen,flipscreen,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
+		if (x >= cliprect->min_x && x+7 <= cliprect->max_x
+				&& y >= cliprect->min_y && y <= cliprect->max_y)
+		{
+			if (mask&0x80) plot_pixel(bitmap,x+0,y,col);
+			if (mask&0x40) plot_pixel(bitmap,x+1,y,col);
+			if (mask&0x20) plot_pixel(bitmap,x+2,y,col);
+			if (mask&0x10) plot_pixel(bitmap,x+3,y,col);
+			if (mask&0x08) plot_pixel(bitmap,x+4,y,col);
+			if (mask&0x04) plot_pixel(bitmap,x+5,y,col);
+			if (mask&0x02) plot_pixel(bitmap,x+6,y,col);
+			if (mask&0x01) plot_pixel(bitmap,x+7,y,col);
 		}
 	}
 
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	if (bottomline)
+	{
+		int y;
+
+		for (y = cliprect->min_y;y <= cliprect->max_y;y++)
+		{
+			plot_pixel(bitmap,16,y,0);
+		}
+	}
+
+	for (offs = videoram_size - 1;offs >= 0;offs--)
+	{
+		int sx,sy;
+
+
+		dirtybuffer[offs] = 0;
+
+		sx = 31 - offs / 32;
+		sy = offs % 32;
+
+		drawgfx(bitmap,Machine->gfx[0],
+				videoram[offs],
+				colorram[offs],
+				0,0,
+				8*sx,8*sy,
+				cliprect,TRANSPARENCY_PEN,0);
+	}
 }
 
-UINT8* iremm15_chargen;
 
 static void iremm15_drawgfx(struct mame_bitmap *bitmap, int ch,
 							INT16 color, INT16 back, int x, int y)
@@ -84,16 +116,16 @@ static void iremm15_drawgfx(struct mame_bitmap *bitmap, int ch,
 	UINT8 mask;
 	int i;
 
-	for (i=0; i<8; i++, x++) {
+	for (i=0; i<8; i++, y++) {
 		mask=iremm15_chargen[ch*8+i];
-		plot_pixel(bitmap,x,y+7,mask&0x80?color:back);
-		plot_pixel(bitmap,x,y+6,mask&0x40?color:back);
-		plot_pixel(bitmap,x,y+5,mask&0x20?color:back);
-		plot_pixel(bitmap,x,y+4,mask&0x10?color:back);
-		plot_pixel(bitmap,x,y+3,mask&8?color:back);
-		plot_pixel(bitmap,x,y+2,mask&4?color:back);
-		plot_pixel(bitmap,x,y+1,mask&2?color:back);
-		plot_pixel(bitmap,x,y,mask&1?color:back);
+		plot_pixel(bitmap,x+0,y,mask&0x80?color:back);
+		plot_pixel(bitmap,x+1,y,mask&0x40?color:back);
+		plot_pixel(bitmap,x+2,y,mask&0x20?color:back);
+		plot_pixel(bitmap,x+3,y,mask&0x10?color:back);
+		plot_pixel(bitmap,x+4,y,mask&0x08?color:back);
+		plot_pixel(bitmap,x+5,y,mask&0x04?color:back);
+		plot_pixel(bitmap,x+6,y,mask&0x02?color:back);
+		plot_pixel(bitmap,x+7,y,mask&0x01?color:back);
 	}
 }
 
@@ -119,8 +151,8 @@ VIDEO_UPDATE( iremm15 )
 
 			dirtybuffer[offs] = 0;
 
-			sx = offs % 32;
-			sy = offs / 32;
+			sx = 31 - offs / 32;
+			sy = offs % 32;
 
 			iremm15_drawgfx(tmpbitmap,
 							videoram[offs],

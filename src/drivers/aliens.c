@@ -77,14 +77,13 @@ WRITE_HANDLER( aliens_sh_irqtrigger_w )
 
 static WRITE_HANDLER( aliens_snd_bankswitch_w )
 {
-	unsigned char *RAM = memory_region(REGION_SOUND1);
 	/* b1: bank for chanel A */
 	/* b0: bank for chanel B */
 
-	int bank_A = 0x20000*((data >> 1) & 0x01);
-	int bank_B = 0x20000*((data) & 0x01);
+	int bank_A = ((data >> 1) & 0x01);
+	int bank_B = ((data) & 0x01);
 
-	K007232_bankswitch(0,RAM + bank_A,RAM + bank_B);
+	K007232_set_bank( 0, bank_A, bank_B );
 }
 
 
@@ -248,6 +247,7 @@ static void volume_callback(int v)
 static struct K007232_interface k007232_interface =
 {
 	1,		/* number of chips */
+	3579545,	/* clock */
 	{ REGION_SOUND1 },	/* memory regions */
 	{ K007232_VOL(20,MIXER_PAN_CENTER,20,MIXER_PAN_CENTER) },	/* volume */
 	{ volume_callback }	/* external port callback */

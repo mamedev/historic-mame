@@ -196,9 +196,11 @@ Shark	Zame
 
 /**************** Machine stuff ******************/
 MACHINE_INIT( fsharkbt_reset_8741_mcu );
+INTERRUPT_GEN  ( twincobr_interrupt );
 READ16_HANDLER ( fsharkbt_dsp_r );
 READ16_HANDLER ( twincobr_dsp_r );
 WRITE16_HANDLER( twincobr_dsp_w );
+READ16_HANDLER ( twincobr_BIO_r );
 WRITE_HANDLER  ( twincobr_coin_w );
 WRITE16_HANDLER( fshark_coin_dsp_w );
 READ16_HANDLER ( twincobr_68k_dsp_r );
@@ -207,10 +209,8 @@ WRITE16_HANDLER( twincobr_control_w );
 READ16_HANDLER ( twincobr_sharedram_r );
 WRITE16_HANDLER( twincobr_sharedram_w );
 
-
 extern data16_t *twincobr_68k_dsp_ram;
-extern unsigned char *twincobr_sharedram;
-extern int twincobr_intenable;
+extern data8_t *twincobr_sharedram;
 
 
 /**************** Video stuff ******************/
@@ -236,13 +236,6 @@ VIDEO_EOF( toaplan0 );
 
 
 
-static INTERRUPT_GEN( twincobr_interrupt )
-{
-	if (twincobr_intenable) {
-		twincobr_intenable = 0;
-		cpu_set_irq_line(0, 4, HOLD_LINE);
-	}
-}
 
 /* 68000 memory maps */
 static MEMORY_READ16_START( readmem )
@@ -311,24 +304,25 @@ PORT_END
 
 /* TMS32010 memory/port maps */
 static MEMORY_READ16_START( DSP_readmem )
-	{ 0x0000, 0x011f, MRA16_RAM },	/* 90h words internal RAM */
-	{ 0x8000, 0x8fff, MRA16_ROM },	/* 800h words. The real DSPs ROM is at */
+	{ TMS32010_DATA_ADDR_RANGE(0x000, 0x08f), MRA16_RAM },	/* 90h words internal RAM */
+	{ TMS32010_PGM_ADDR_RANGE(0x000, 0x7ff), MRA16_ROM },	/* 800h words. The real DSPs ROM is at */
 									/* address 0 */
 									/* View it at 8000h in the debugger */
 MEMORY_END
 
 static MEMORY_WRITE16_START( DSP_writemem )
-	{ 0x0000, 0x011f, MWA16_RAM },
-	{ 0x8000, 0x8fff, MWA16_ROM },
+	{ TMS32010_DATA_ADDR_RANGE(0x000, 0x08f), MWA16_RAM },
+	{ TMS32010_PGM_ADDR_RANGE(0x000, 0x7ff), MWA16_ROM },
 MEMORY_END
 
 static PORT_READ16_START( DSP_readport )
-	{ 0x0002, 0x0003, twincobr_dsp_r },
-	{ 0x0004, 0x0005, fsharkbt_dsp_r },
+	{ TMS32010_PORT_RANGE(1, 1),       twincobr_dsp_r },
+	{ TMS32010_PORT_RANGE(2, 2),       fsharkbt_dsp_r },
+	{ TMS32010_BIO, TMS32010_BIO, twincobr_BIO_r },
 PORT_END
 
 static PORT_WRITE16_START( DSP_writeport )
-	{ 0x0000, 0x0007, twincobr_dsp_w },
+	{ TMS32010_PORT_RANGE(0, 3),       twincobr_dsp_w },
 PORT_END
 
 
@@ -712,7 +706,7 @@ static void irqhandler(int linestate)
 static struct YM3812interface ym3812_interface =
 {
 	1,				/* 1 chip  */
-	28000000/8,		/* 3.5 MHz */
+	28000000/8,		/* 3.5MHz */
 	{ 100 },		/* volume */
 	{ irqhandler },
 };
@@ -722,15 +716,15 @@ static struct YM3812interface ym3812_interface =
 static MACHINE_DRIVER_START( twincobr )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000,28000000/4)			/* 7.0 MHz - Main board Crystal is 28MHz */
+	MDRV_CPU_ADD(M68000,28000000/4)			/* 7.0MHz - Main board Crystal is 28MHz */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(twincobr_interrupt,1)
 
-	MDRV_CPU_ADD(Z80,28000000/8)			/* 3.5 MHz */
+	MDRV_CPU_ADD(Z80,28000000/8)			/* 3.5MHz */
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 	MDRV_CPU_PORTS(sound_readport,sound_writeport)
 
-	MDRV_CPU_ADD(TMS320C10,28000000/8)			/* 3.5 MHz */
+	MDRV_CPU_ADD(TMS32010,28000000/2)		/* 14MHz CLKin */
 	MDRV_CPU_MEMORY(DSP_readmem,DSP_writemem)
 	MDRV_CPU_PORTS(DSP_readport,DSP_writeport)
 
@@ -774,8 +768,8 @@ ROM_START( twincobr )
 	ROM_LOAD( "tc12",			0x00000, 0x08000, 0xe37b3c44 )	/* slightly different from the other two sets */
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* Co-Processor TMS320C10 MCU code */
-	ROM_LOAD16_BYTE( "dsp_22.bin",    0x8001, 0x0800, 0x79389a71 )
-	ROM_LOAD16_BYTE( "dsp_21.bin",    0x8000, 0x0800, 0x2d135376 )
+	ROM_LOAD16_BYTE( "dsp_22.bin",	0x8001, 0x0800, 0x79389a71 )
+	ROM_LOAD16_BYTE( "dsp_21.bin",	0x8000, 0x0800, 0x2d135376 )
 /******  The following are from a bootleg board. ******
 	A0 and A1 are swapped between the TMS320C10 and these BPROMs on the board.
 	ROM_LOAD16_BYTE( "tc1b",		0x0000, 0x0800, 0x1757cc33 )
@@ -824,8 +818,8 @@ ROM_START( twincobu )
 	ROM_LOAD( "b30-05",				0x00000, 0x08000, 0x1a8f1e10 )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* Co-Processor TMS320C10 MCU code */
-	ROM_LOAD16_BYTE( "dsp_22.bin",    0x8001, 0x0800, 0x79389a71 )
-	ROM_LOAD16_BYTE( "dsp_21.bin",    0x8000, 0x0800, 0x2d135376 )
+	ROM_LOAD16_BYTE( "dsp_22.bin",	0x8001, 0x0800, 0x79389a71 )
+	ROM_LOAD16_BYTE( "dsp_21.bin",	0x8000, 0x0800, 0x2d135376 )
 
 	ROM_REGION( 0x0c000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
 	ROM_LOAD( "tc11",			0x00000, 0x04000, 0x0a254133 )
@@ -869,8 +863,8 @@ ROM_START( ktiger )
 	ROM_LOAD( "b30-05",			0x00000, 0x08000, 0x1a8f1e10 )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* Co-Processor TMS320C10 MCU code */
-	ROM_LOAD16_BYTE( "dsp-22",    0x8001, 0x0800, BADCRC( 0x8a1d48d9 ) )
-	ROM_LOAD16_BYTE( "dsp-21",    0x8000, 0x0800, BADCRC( 0x33d99bc2 ) )
+	ROM_LOAD16_BYTE( "dsp-22",	0x8001, 0x0800, BADCRC( 0x8a1d48d9 ) )
+	ROM_LOAD16_BYTE( "dsp-21",	0x8000, 0x0800, BADCRC( 0x33d99bc2 ) )
 
 	ROM_REGION( 0x0c000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
 	ROM_LOAD( "tc11",			0x00000, 0x04000, 0x0a254133 )
@@ -1108,8 +1102,8 @@ ROM_START( gulfwar2 )
 	ROM_LOAD( "06-u51.bin",			0x00000, 0x08000, 0x75504f95 )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* Co-Processor TMS320C10 MCU code */
-	ROM_LOAD16_BYTE( "02-u1.rom",    0x8001, 0x2000, 0xabefe4ca ) // Same code as Twin Cobra
-	ROM_LOAD16_BYTE( "01-u2.rom",    0x8000, 0x2000, 0x01399b65 ) // Same code as Twin Cobra
+	ROM_LOAD16_BYTE( "02-u1.rom",	0x8001, 0x2000, 0xabefe4ca ) // Same code as Twin Cobra
+	ROM_LOAD16_BYTE( "01-u2.rom",	0x8000, 0x2000, 0x01399b65 ) // Same code as Twin Cobra
 
 	ROM_REGION( 0x0c000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
 	ROM_LOAD( "03-u9.bin",			0x00000, 0x04000, 0x1b7934b3 )
@@ -1145,7 +1139,7 @@ ROM_END
 static DRIVER_INIT( fshark )
 {
 	data8_t *source = memory_region(REGION_USER1);
-	data16_t *dest = (data16_t *)&memory_region(REGION_CPU3)[TMS320C10_PGM_OFFSET];
+	data16_t *dest = (data16_t *)&memory_region(REGION_CPU3)[TMS32010_PGM_OFFSET];
 	int A;
 
 	/* The ROM loader fixes the nibble images. Here we fix the byte ordering. */

@@ -12,13 +12,19 @@ static int layerpri[3];
 
 ***************************************************************************/
 
-static void tile_callback(int layer,int bank,int *code,int *color)
+static void vendetta_tile_callback(int layer,int bank,int *code,int *color)
 {
 	*code |= ((*color & 0x03) << 8) | ((*color & 0x30) << 6) |
 			((*color & 0x0c) << 10) | (bank << 14);
 	*color = layer_colorbase[layer] + ((*color & 0xc0) >> 6);
 }
 
+static void esckids_tile_callback(int layer,int bank,int *code,int *color)
+{
+	*code |= ((*color & 0x03) << 8) | ((*color & 0x10) << 6) |
+			((*color & 0x0c) <<  9) | (bank << 13);
+	*color = layer_colorbase[layer] + ((*color & 0xe0) >>  5);
+}
 
 
 /***************************************************************************
@@ -50,9 +56,20 @@ VIDEO_START( vendetta )
 {
 	K053251_vh_start();
 
-	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,tile_callback))
+	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,vendetta_tile_callback))
 		return 1;
 	if (K053247_vh_start(REGION_GFX2,53,6,NORMAL_PLANE_ORDER,sprite_callback))
+		return 1;
+	return 0;
+}
+
+VIDEO_START( esckids )
+{
+    K053251_vh_start();
+
+    if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,esckids_tile_callback))
+		return 1;
+	if (K053247_vh_start(REGION_GFX2,101,6,NORMAL_PLANE_ORDER,sprite_callback))
 		return 1;
 	return 0;
 }

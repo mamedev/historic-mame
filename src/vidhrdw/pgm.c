@@ -28,7 +28,7 @@ static void pgm_drawsprite(int wide, int high, int xpos, int ypos, int palt, int
 	aoffset = (bdata[(boffset+3) & bdatasize] << 24) | (bdata[(boffset+2) & bdatasize] << 16) | (bdata[(boffset+1) & bdatasize] << 8) | (bdata[(boffset+0) & bdatasize] << 0);
 	aoffset = aoffset >> 2; aoffset *= 3;
 
- 	if(aoffset)	logerror ("aoffset %08x boffset %08x\n",aoffset,boffset);
+// 	if(aoffset)	logerror ("aoffset %08x boffset %08x\n",aoffset,boffset);
 
 	boffset += 4; /* because the first dword is the a data offset */
 	if (!(flip & 0x02)) { /* NO Y FLIP */
@@ -158,6 +158,8 @@ static void pgm_drawsprite(int wide, int high, int xpos, int ypos, int palt, int
 	}
 }
 
+static UINT16 *pgm_sprite_source;
+
 static void pgm_drawsprites(int priority)
 {
 	/* ZZZZ Zxxx xxxx xxxx
@@ -167,7 +169,6 @@ static void pgm_drawsprites(int priority)
 	   wwww wwwh hhhh hhhh
 	*/
 
-	const UINT16 *source = pgm_mainram;
 	const UINT16 *finish = pgm_mainram+0xa00;
 	int y;
 
@@ -175,18 +176,18 @@ static void pgm_drawsprites(int priority)
 	for (y = 0; y < 224*(448+32+32); y++)
 		sprite_bitmap[y] = 0x400;
 
-	while( source<finish )
+	while( pgm_sprite_source<finish )
 	{
-		int xpos = source[0] & 0x07ff;
-		int ypos = source[1] & 0x03ff;
-//		int xzom = (source[0] & 0xf800) >> 11;
-//		int yzom = (source[1] & 0xf800) >> 11;
-		int palt = (source[2] & 0x1f00) >> 8;
-		int flip = (source[2] & 0x6000) >> 13;
-		int boff = ((source[2] & 0x007f) << 16) | (source[3] & 0xffff);
-		int wide = (source[4] & 0xfe00) >> 9;
-		int high = source[4] & 0x01ff;
-		int pri = (source[2] & 0x0080) >>  7;
+		int xpos = pgm_sprite_source[0] & 0x07ff;
+		int ypos = pgm_sprite_source[1] & 0x03ff;
+//		int xzom = (pgm_sprite_source[0] & 0xf800) >> 11;
+//		int yzom = (pgm_sprite_source[1] & 0xf800) >> 11;
+		int palt = (pgm_sprite_source[2] & 0x1f00) >> 8;
+		int flip = (pgm_sprite_source[2] & 0x6000) >> 13;
+		int boff = ((pgm_sprite_source[2] & 0x007f) << 16) | (pgm_sprite_source[3] & 0xffff);
+		int wide = (pgm_sprite_source[4] & 0xfe00) >> 9;
+		int high = pgm_sprite_source[4] & 0x01ff;
+		int pri = (pgm_sprite_source[2] & 0x0080) >>  7;
 
 		boff *= 2;
 		if (xpos > 0x3ff) xpos -=0x800;
@@ -194,10 +195,11 @@ static void pgm_drawsprites(int priority)
 
 		if (high == 0) break; /* is this right? */
 
-		if (priority == pri)
+		if ((priority == 1) && (pri == 0)) break;
+
 		pgm_drawsprite(wide, high, xpos, ypos, palt, boff, flip);
 
-		source += 5;
+		pgm_sprite_source += 5;
 	}
 }
 
@@ -276,7 +278,7 @@ VIDEO_START( pgm )
 
 	pgm_bg_tilemap = tilemap_create(get_pgm_bg_tilemap_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 32, 32,64,64);
 	tilemap_set_transparent_pen(pgm_bg_tilemap,31);
-//	tilemap_set_scroll_rows(pgm_bg_tilemap,64*32);
+	tilemap_set_scroll_rows(pgm_bg_tilemap,64*32);
 
 	sprite_bitmap		= auto_malloc((448+32+32) * 224 * sizeof(UINT16));
 	if (!sprite_bitmap) return 1;
@@ -289,16 +291,17 @@ VIDEO_UPDATE( pgm )
 
 	fillbitmap(bitmap,get_black_pen(),&Machine->visible_area);
 
+	pgm_sprite_source = pgm_mainram;
 	pgm_drawsprites(1);
+
 	/* copy the sprite bitmap to the screen */
 	for (y = 0; y < 224; y++)
 		draw_scanline16(bitmap, 0, y, 448, &sprite_bitmap[y * (448+32+32)+32], Machine->pens, 0x400);
 
 	tilemap_set_scrolly(pgm_bg_tilemap,0, pgm_videoregs[0x2000/2]);
 
-//	for (y = 0; y < 64*32; y++)
-	//	tilemap_set_scrollx(pgm_bg_tilemap,y, pgm_videoregs[0x3000/2]+pgm_rowscrollram[y]);
-tilemap_set_scrollx(pgm_bg_tilemap,0, pgm_videoregs[0x3000/2]);
+	for (y = 0; y < 224; y++)
+		tilemap_set_scrollx(pgm_bg_tilemap,(y+pgm_videoregs[0x2000/2])&0x7ff, pgm_videoregs[0x3000/2]+pgm_rowscrollram[y]);
 
 	tilemap_draw(bitmap,cliprect,pgm_bg_tilemap,0,0);
 

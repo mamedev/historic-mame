@@ -115,6 +115,8 @@ DRIVER_INIT( mars );
 DRIVER_INIT( devilfsh );
 DRIVER_INIT( hotshock );
 DRIVER_INIT( cavelon );
+DRIVER_INIT( mrkougar );
+DRIVER_INIT( mrkougb );
 
 MACHINE_INIT( scramble );
 
@@ -1883,8 +1885,8 @@ GAME( 1981, ckongs,   ckong,    ckongs,   ckongs,   ckongs,       ROT90, "bootle
 GAME( 1981, mars,     0,        mars,     mars,     mars,         ROT90, "Artic", "Mars" )
 GAME( 1982, devilfsh, 0,        devilfsh, devilfsh, devilfsh,     ROT90, "Artic", "Devil Fish" )
 GAMEX(1983, newsin7,  0,        newsin7,  newsin7,  mars,         ROT90, "ATW USA, Inc.", "New Sinbad 7", GAME_IMPERFECT_COLORS )
-GAMEX(1984, mrkougar, 0,        mrkougar, mrkougar, devilfsh,     ROT90, "ATW", "Mr. Kougar", GAME_NO_SOUND )
-GAMEX(1984, mrkougb,  mrkougar, mrkougb,  mrkougar, scramble_ppi, ROT90, "bootleg", "Mr. Kougar (bootleg)", GAME_NO_SOUND )
+GAME( 1984, mrkougar, 0,        mrkougar, mrkougar, mrkougar,     ROT90, "ATW", "Mr. Kougar" )
+GAME( 1984, mrkougb,  mrkougar, mrkougb,  mrkougar, mrkougb,      ROT90, "bootleg", "Mr. Kougar (bootleg)" )
 GAME( 1982, hotshock, 0,        hotshock, hotshock, hotshock,     ROT90, "E.G. Felaco", "Hot Shocker" )
 GAME( 1983, hunchbks, hunchbak, hunchbks, hunchbks, scramble_ppi, ROT90, "Century", "Hunchback (Scramble hardware)" )
 GAME( 1983, cavelon,  0,        cavelon,  cavelon,  cavelon,      ROT90, "Jetsoft", "Cavelon" )

@@ -63,7 +63,7 @@ struct tilemap
 	int transparent_pen;
 	UINT32 fgmask[4], bgmask[4]; /* for TILEMAP_SPLIT */
 
-	UINT32 *pPenToPixel[8];
+	UINT32 *pPenToPixel[4];
 
 	UINT8 (*draw_tile)( struct tilemap *tilemap, UINT32 col, UINT32 row, UINT32 flags );
 
@@ -148,7 +148,7 @@ static int PenToPixel_Init( struct tilemap *tilemap )
 	int lError;
 
 	lError = 0;
-	for( i=0; i<8; i++ )
+	for( i=0; i<4; i++ )
 	{
 		pPenToPixel = malloc( tilemap->num_pens*sizeof(UINT32) );
 		if( pPenToPixel==NULL )
@@ -162,16 +162,8 @@ static int PenToPixel_Init( struct tilemap *tilemap )
 			{
 				for( tx=0; tx<tilemap->cached_tile_width; tx++ )
 				{
-					if( i&TILE_SWAPXY )
-					{
-						x = ty;
-						y = tx;
-					}
-					else
-					{
-						x = tx;
-						y = ty;
-					}
+					x = tx;
+					y = ty;
 					if( i&TILE_FLIPX ) x = tilemap->cached_tile_width-1-x;
 					if( i&TILE_FLIPY ) y = tilemap->cached_tile_height-1-y;
 					*pPenToPixel++ = x+y*MAX_TILESIZE;
@@ -185,7 +177,7 @@ static int PenToPixel_Init( struct tilemap *tilemap )
 static void PenToPixel_Term( struct tilemap *tilemap )
 {
 	int i;
-	for( i=0; i<8; i++ )
+	for( i=0; i<4; i++ )
 	{
 		free( tilemap->pPenToPixel[i] );
 	}
@@ -1397,50 +1389,59 @@ void tilemap_draw_roz(struct mame_bitmap *dest,const struct rectangle *cliprect,
 		int wraparound,
 		UINT32 flags, UINT32 priority )
 {
-	int mask,value;
+	if( (incxx == 1<<16) && !incxy & !incyx && (incyy == 1<<16) )
+	{
+		tilemap_set_scrollx( tilemap, 0, startx >> 16 );
+		tilemap_set_scrolly( tilemap, 0, starty >> 16 );
+		tilemap_draw( dest, cliprect, tilemap, flags, priority );
+	}
+	else
+	{
+		int mask,value;
 
 profiler_mark(PROFILER_TILEMAP_DRAW_ROZ);
-	if( tilemap->enable )
-	{
-		/* tile priority */
-		mask		= TILE_FLAG_TILE_PRIORITY;
-		value		= TILE_FLAG_TILE_PRIORITY&flags;
-
-		tilemap_get_pixmap( tilemap ); /* force update */
-
-		if( !(tilemap->type==TILEMAP_OPAQUE || (flags&TILEMAP_IGNORE_TRANSPARENCY)) )
+		if( tilemap->enable )
 		{
-			if( flags&TILEMAP_BACK )
+			/* tile priority */
+			mask		= TILE_FLAG_TILE_PRIORITY;
+			value		= TILE_FLAG_TILE_PRIORITY&flags;
+
+			tilemap_get_pixmap( tilemap ); /* force update */
+
+			if( !(tilemap->type==TILEMAP_OPAQUE || (flags&TILEMAP_IGNORE_TRANSPARENCY)) )
 			{
-				mask	|= TILE_FLAG_BG_OPAQUE;
-				value	|= TILE_FLAG_BG_OPAQUE;
+				if( flags&TILEMAP_BACK )
+				{
+					mask	|= TILE_FLAG_BG_OPAQUE;
+					value	|= TILE_FLAG_BG_OPAQUE;
+				}
+				else
+				{
+					mask	|= TILE_FLAG_FG_OPAQUE;
+					value	|= TILE_FLAG_FG_OPAQUE;
+				}
 			}
-			else
+
+			switch( dest->depth )
 			{
-				mask	|= TILE_FLAG_FG_OPAQUE;
-				value	|= TILE_FLAG_FG_OPAQUE;
+
+			case 32:
+				copyrozbitmap_core32BPP(dest,tilemap,startx,starty,incxx,incxy,incyx,incyy,
+					wraparound,cliprect,mask,value,priority);
+				break;
+
+			case 15:
+			case 16:
+				copyrozbitmap_core16BPP(dest,tilemap,startx,starty,incxx,incxy,incyx,incyy,
+					wraparound,cliprect,mask,value,priority);
+				break;
+
+			default:
+				exit(1);
 			}
-		}
-
-		switch( dest->depth )
-		{
-
-		case 32:
-			copyrozbitmap_core32BPP(dest,tilemap,startx,starty,incxx,incxy,incyx,incyy,
-				wraparound,cliprect,mask,value,priority);
-			break;
-
-		case 15:
-		case 16:
-			copyrozbitmap_core16BPP(dest,tilemap,startx,starty,incxx,incxy,incyx,incyy,
-				wraparound,cliprect,mask,value,priority);
-			break;
-
-		default:
-			exit(1);
-		}
-	} /* tilemap->enable */
+		} /* tilemap->enable */
 profiler_mark(PROFILER_END);
+	}
 }
 
 
@@ -2002,7 +2003,7 @@ static UINT8 TRANSP(HandleTransparencyBitmask)(struct tilemap *tilemap, UINT32 x
 	bWhollyOpaque = 1;
 	bWhollyTransparent = 1;
 
-	pPenToPixel = tilemap->pPenToPixel[flags&(TILE_SWAPXY|TILE_FLIPY|TILE_FLIPX)];
+	pPenToPixel = tilemap->pPenToPixel[flags&(TILE_FLIPY|TILE_FLIPX)];
 
 	if( flags&TILE_4BPP )
 	{
@@ -2045,12 +2046,7 @@ static UINT8 TRANSP(HandleTransparencyBitmask)(struct tilemap *tilemap, UINT32 x
 		}
 	}
 
-	if( Machine->orientation & ORIENTATION_SWAP_XY )
-	{
-		flags ^= TILE_SWAPXY;
-	}
-
-	pPenToPixel = tilemap->pPenToPixel[flags&(TILE_SWAPXY|TILE_FLIPY|TILE_FLIPX)];
+	pPenToPixel = tilemap->pPenToPixel[flags&(TILE_FLIPY|TILE_FLIPX)];
 	bitoffs = 0;
 	for( ty=tile_height; ty!=0; ty-- )
 	{
@@ -2084,7 +2080,7 @@ static UINT8 TRANSP(HandleTransparencyColor)(struct tilemap *tilemap, UINT32 x0,
 	struct mame_bitmap *transparency_bitmap = tilemap->transparency_bitmap;
 	int pitch = tile_width + tile_info.skip;
 	PAL_INIT;
-	UINT32 *pPenToPixel = tilemap->pPenToPixel[flags&(TILE_SWAPXY|TILE_FLIPY|TILE_FLIPX)];
+	UINT32 *pPenToPixel = tilemap->pPenToPixel[flags&(TILE_FLIPY|TILE_FLIPX)];
 	const UINT8 *pPenData = tile_info.pen_data;
 	const UINT8 *pSource;
 	UINT32 code_transparent = tile_info.priority;
@@ -2184,7 +2180,7 @@ static UINT8 TRANSP(HandleTransparencyPen)(struct tilemap *tilemap, UINT32 x0, U
 	struct mame_bitmap *transparency_bitmap = tilemap->transparency_bitmap;
 	int pitch = tile_width + tile_info.skip;
 	PAL_INIT;
-	UINT32 *pPenToPixel = tilemap->pPenToPixel[flags&(TILE_SWAPXY|TILE_FLIPY|TILE_FLIPX)];
+	UINT32 *pPenToPixel = tilemap->pPenToPixel[flags&(TILE_FLIPY|TILE_FLIPX)];
 	const UINT8 *pPenData = tile_info.pen_data;
 	const UINT8 *pSource;
 	UINT32 code_transparent = tile_info.priority;
@@ -2282,7 +2278,7 @@ static UINT8 TRANSP(HandleTransparencyPenBit)(struct tilemap *tilemap, UINT32 x0
 	struct mame_bitmap *transparency_bitmap = tilemap->transparency_bitmap;
 	int pitch = tile_width + tile_info.skip;
 	PAL_INIT;
-	UINT32 *pPenToPixel = tilemap->pPenToPixel[flags&(TILE_SWAPXY|TILE_FLIPY|TILE_FLIPX)];
+	UINT32 *pPenToPixel = tilemap->pPenToPixel[flags&(TILE_FLIPY|TILE_FLIPX)];
 	const UINT8 *pPenData = tile_info.pen_data;
 	const UINT8 *pSource;
 	UINT32 tx;
@@ -2362,7 +2358,7 @@ static UINT8 TRANSP(HandleTransparencyPens)(struct tilemap *tilemap, UINT32 x0, 
 	struct mame_bitmap *transparency_bitmap = tilemap->transparency_bitmap;
 	int pitch = tile_width + tile_info.skip;
 	PAL_INIT;
-	UINT32 *pPenToPixel = tilemap->pPenToPixel[flags&(TILE_SWAPXY|TILE_FLIPY|TILE_FLIPX)];
+	UINT32 *pPenToPixel = tilemap->pPenToPixel[flags&(TILE_FLIPY|TILE_FLIPX)];
 	const UINT8 *pPenData = tile_info.pen_data;
 	const UINT8 *pSource;
 	UINT32 code_transparent = tile_info.priority;
@@ -2448,7 +2444,7 @@ static UINT8 TRANSP(HandleTransparencyNone)(struct tilemap *tilemap, UINT32 x0, 
 	struct mame_bitmap *transparency_bitmap = tilemap->transparency_bitmap;
 	int pitch = tile_width + tile_info.skip;
 	PAL_INIT;
-	UINT32 *pPenToPixel = tilemap->pPenToPixel[flags&(TILE_SWAPXY|TILE_FLIPY|TILE_FLIPX)];
+	UINT32 *pPenToPixel = tilemap->pPenToPixel[flags&(TILE_FLIPY|TILE_FLIPX)];
 	const UINT8 *pPenData = tile_info.pen_data;
 	const UINT8 *pSource;
 	UINT32 code_opaque = tile_info.priority;

@@ -1,16 +1,50 @@
-/****************************************************************************
- *					Texas Instruments TMS320C10 DSP Emulator				*
+ /**************************************************************************\
+ *				   Texas Instruments TMS32010 DSP Emulator					*
  *																			*
- *						Copyright (C) 1999 by Quench						*
+ *					Copyright (C) 1999-2002+ Tony La Porta					*
  *		You are not allowed to distribute this software commercially.		*
  *						Written for the MAME project.						*
  *																			*
- *		NOTES : The term 'DMA' within this document, is in reference		*
+ *																			*
+ *		Notes : The term 'DMA' within this document, is in reference		*
  *					to Direct Memory Addressing, and NOT the usual term		*
  *					of Direct Memory Access.								*
- *				This is a word based microcontroller.						*
+ *				This is a word based microcontroller, with addressing		*
+ *					architecture based on the Harvard addressing scheme.	*
  *																			*
- **************************************************************************/
+ *																			*
+ *																			*
+ *	**** Change Log ****													*
+ *																			*
+ *	TLP (13-Jul-2002)														*
+ *	 - Added Save-State support												*
+ *	 - Converted the pending_irq flag to INTF (a real flag in this device)	*
+ *	 - Fixed the ignore Interrupt Request for previous critical				*
+ *	   instructions requiring an extra instruction to be processed. For		*
+ *	   this reason, instant IRQ servicing cannot be supported here, so		*
+ *	   INTF needs to be polled within the instruction execution loop		*
+ *	 - Removed IRQ callback (IRQ ACK not supported on this device)			*
+ *	 - A pending IRQ will remain pending until it's serviced. De-asserting	*
+ *	   the IRQ Pin does not remove a pending IRQ state						*
+ *	 - BIO is no longer treated as an IRQ line. It's polled when required.	*
+ *	   This is the true behaviour of the device								*
+ *	 - Removed the Clear OV flag from overflow instructions. Overflow		*
+ *	   instructions can only set the flag. Flag test instructions clear it	*
+ *	 - Fixed the ABST, SUBC and SUBH instructions							*
+ *	 - Fixed the signedness in many equation based instructions				*
+ *	 - Added the missing Previous PC to the get_register function			*
+ *	 - Changed Cycle timings to include clock ticks							*
+ *	 - Converted some registers from ints to pairs for much cleaner code	*
+ *	TLP (20-Jul-2002) Ver 1.10												*
+ *	 - Fixed the dissasembly from the debugger								*
+ *	 - Changed all references from TMS320C10 to TMS32010					*
+ *	ASG (24-Sep-2002) Ver 1.20												*
+ *	 - Fixed overflow handling												*
+ *	 - Simplified logic in a few locations									*
+ *	 - Added macros for specifying address and port ranges					*
+ *																			*
+ \**************************************************************************/
+
 
 
 #include <stdio.h>
@@ -19,35 +53,70 @@
 #include "driver.h"
 #include "cpuintrf.h"
 #include "mamedbg.h"
+#include "state.h"
 #include "tms32010.h"
 
 
-#define M_RDROM(A)		TMS320C10_ROM_RDMEM(A)
-#define M_WRTROM(A,V)	TMS320C10_ROM_WRMEM(A,V)
-#define M_RDRAM(A)		TMS320C10_RAM_RDMEM(A)
-#define M_WRTRAM(A,V)	TMS320C10_RAM_WRMEM(A,V)
-#define M_RDOP(A)		TMS320C10_RDOP(A)
-#define M_RDOP_ARG(A)	TMS320C10_RDOP_ARG(A)
-#define M_IN(A)			TMS320C10_In(A)
-#define M_OUT(A,V)		TMS320C10_Out(A,V)
+#define CLK 4	/* 1 cycle equals 4 clock ticks */
 
-#define ADDR_MASK		TMS320C10_ADDR_MASK
 
 #ifndef INLINE
 #define INLINE static inline
 #endif
-typedef struct
+
+
+#define M_RDROM(A)		TMS32010_ROM_RDMEM(A)
+#define M_WRTROM(A,V)	TMS32010_ROM_WRMEM(A,V)
+#define M_RDRAM(A)		TMS32010_RAM_RDMEM(A)
+#define M_WRTRAM(A,V)	TMS32010_RAM_WRMEM(A,V)
+#define M_RDOP(A)		TMS32010_RDOP(A)
+#define M_RDOP_ARG(A)	TMS32010_RDOP_ARG(A)
+#define P_IN(A)			TMS32010_In(A)
+#define P_OUT(A,V)		TMS32010_Out(A,V)
+#define BIO_IN			TMS32010_BIO_In
+#define ADDR_MASK		TMS32010_ADDR_MASK
+
+
+static UINT8 tms32010_reg_layout[] = {
+	TMS32010_PC,  TMS32010_SP,  TMS32010_STR, TMS32010_ACC,-1,
+	TMS32010_PREG,TMS32010_TREG,TMS32010_AR0, TMS32010_AR1,-1,
+	TMS32010_STK0,TMS32010_STK1,TMS32010_STK2,TMS32010_STK3,0
+};
+
+static UINT8 tms32010_win_layout[] = {
+	28, 0,52, 4,	/* register window (top rows) */
+	 0, 0,27,22,	/* disassembler window (left colums) */
+	28, 5,52, 8,	/* memory #1 window (right, upper middle) */
+	28,14,52, 8,	/* memory #2 window (right, lower middle) */
+	 0,23,80, 1,	/* command line window (bottom rows) */
+};
+
+
+
+
+typedef struct			/* Page 3-6 shows all registers */
 {
-	UINT16	PREPC;		/* previous program counter */
-	UINT16  PC;
-	INT32   ACC, Preg;
-	INT32   ALU;
-	UINT16  Treg;
-	UINT16  AR[2], STACK[4], STR;
-	int     pending_irq, BIO_pending_irq;
-	int     irq_state;
-	int     (*irq_callback)(int irqline);
-} tms320c10_Regs;
+	/******************** CPU Internal Registers *******************/
+	UINT16	PC;
+	UINT16	PREVPC;		/* previous program counter */
+	UINT16	STR;
+	PAIR	ACC;
+	PAIR	ALU;
+	PAIR	Preg;
+	UINT16	Treg;
+	UINT16	AR[2];
+	UINT16	STACK[4];
+
+	/********************** Status data ****************************/
+	PAIR	opcode;
+	int		INTF;		/* Pending Interrupt flag */
+} tms32010_Regs;
+
+static tms32010_Regs R;
+static PAIR oldacc;
+static UINT16 memaccess;
+int    tms32010_icount;
+typedef void (*opcode_fn) (void);
 
 
 /********  The following is the Status (Flag) register definition.  *********/
@@ -59,519 +128,549 @@ typedef struct
 #define ARP_REG		0x0100	/* ARP	(Auxiliary Register Pointer) */
 #define DP_REG		0x0001	/* DP	(Data memory Pointer (bank) bit) */
 
-static UINT8 tms320c10_reg_layout[] = {
-	TMS320C10_PC,TMS320C10_SP,TMS320C10_STR,TMS320C10_ACC,-1,
-	TMS320C10_PREG,TMS320C10_TREG,TMS320C10_AR0,TMS320C10_AR1,-1,
-	TMS320C10_STK0,TMS320C10_STK1,TMS320C10_STK2,TMS320C10_STK3,0
-};
+#define OV		( R.STR & OV_FLAG)			/* OV	(Overflow flag) */
+#define OVM		( R.STR & OVM_FLAG)			/* OVM	(Overflow Mode bit) 1 indicates an overflow */
+#define INTM	( R.STR & INTM_FLAG)		/* INTM	(Interrupt enable flag) 0 enables maskable interrupts */
+#define ARP		((R.STR & ARP_REG) >> 8)	/* ARP	(Auxiliary Register Pointer) */
+#define DP		((R.STR & DP_REG) << 7)		/* DP	(Data memory Pointer bit) */
 
-static UINT8 tms320c10_win_layout[] = {
-	28, 0,52, 4,	/* register window (top rows) */
-	 0, 0,27,22,	/* disassembler window (left colums) */
-	28, 5,52, 8,	/* memory #1 window (right, upper middle) */
-	28,14,52, 8,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
-static UINT16   opcode=0;
-static UINT8	opcode_major=0, opcode_minor, opcode_minr;	/* opcode split into MSB and LSB */
-static tms320c10_Regs R;
-int tms320c10_icount;
-static INT32 tmpacc;
-typedef void (*opcode_fn) (void);
+#define DMA_DP	(DP | (R.opcode.b.l & 0x7f))	/* address used in direct memory access operations */
+#define DMA_DP1	(0x80 | R.opcode.b.l)			/* address used in direct memory access operations for sst instruction */
+#define IND		(R.AR[ARP] & 0xff)				/* address used in indirect memory access operations */
 
 
-#define OV		 ( R.STR & OV_FLAG)			/* OV	(Overflow flag) */
-#define OVM		 ( R.STR & OVM_FLAG)		/* OVM	(Overflow Mode bit) 1 indicates an overflow */
-#define INTM	 ( R.STR & INTM_FLAG)		/* INTM	(Interrupt enable flag) 0 enables maskable interrupts */
-#define ARP		 ((R.STR & ARP_REG) >> 8 )	/* ARP	(Auxiliary Register Pointer) */
-#define DP		 ((R.STR & DP_REG) << 7)	/* DP	(Data memory Pointer bit) */
-
-#define dma		 (DP | (opcode_minor & 0x07f))	/* address used in direct memory access operations */
-#define dmapage1 (0x80 | opcode_minor)			/* address used in direct memory access operations for sst instruction */
-
-#define ind		 (R.AR[ARP] & 0x00ff)			/* address used in indirect memory access operations */
-UINT16			 memaccess;
-#define memacc	 (memaccess = (opcode_minor & 0x80) ? ind : dma)
 
 
+/************************************************************************
+ *	Shortcuts
+ ************************************************************************/
 
 INLINE void CLR(UINT16 flag) { R.STR &= ~flag; R.STR |= 0x1efe; }
 INLINE void SET(UINT16 flag) { R.STR |=  flag; R.STR |= 0x1efe; }
 
-INLINE void getdata(UINT8 shift,UINT8 signext)
+
+INLINE void CALCULATE_ADD_OVERFLOW(INT32 addval)
 {
-	if (opcode_minor & 0x80) memaccess = ind;
-	else memaccess = dma;
-	R.ALU = M_RDRAM(memaccess);
-	if ((signext) && (R.ALU & 0x8000)) R.ALU |= 0xffff0000;
-	else R.ALU &= 0x0000ffff;
-	R.ALU <<= shift;
-	if (opcode_minor & 0x80) {
-		if ((opcode_minor & 0x20) || (opcode_minor & 0x10)) {
-			UINT16 tmpAR = R.AR[ARP];
-			if (opcode_minor & 0x20) tmpAR++ ;
-			if (opcode_minor & 0x10) tmpAR-- ;
-			R.AR[ARP] = (R.AR[ARP] & 0xfe00) | (tmpAR & 0x01ff);
-		}
-		if (~opcode_minor & 0x08) {
-			if (opcode_minor & 1) SET(ARP_REG);
-			else CLR(ARP_REG);
-		}
+	if ((INT32)(~(oldacc.d ^ addval) & (oldacc.d ^ R.ACC.d)) < 0) {
+		SET(OV_FLAG);
+		if (OVM)
+			R.ACC.d = ((INT32)oldacc.d < 0) ? 0x80000000 : 0x7fffffff;
 	}
 }
-INLINE void getdata_lar(void)
+INLINE void CALCULATE_SUB_OVERFLOW(INT32 subval)
 {
-	if (opcode_minor & 0x80) memaccess = ind;
-	else memaccess = dma;
-	R.ALU = M_RDRAM(memaccess);
-	if (opcode_minor & 0x80) {
-		if ((opcode_minor & 0x20) || (opcode_minor & 0x10)) {
-			if ((opcode_major & 1) != ARP) {
-				UINT16 tmpAR = R.AR[ARP];
-				if (opcode_minor & 0x20) tmpAR++ ;
-				if (opcode_minor & 0x10) tmpAR-- ;
-				R.AR[ARP] = (R.AR[ARP] & 0xfe00) | (tmpAR & 0x01ff);
-			}
-		}
-		if (~opcode_minor & 0x08) {
-			if (opcode_minor & 1) SET(ARP_REG);
-			else CLR(ARP_REG);
-		}
+	if ((INT32)((oldacc.d ^ subval) & (oldacc.d ^ R.ACC.d)) < 0) {
+		SET(OV_FLAG);
+		if (OVM)
+			R.ACC.d = ((INT32)oldacc.d < 0) ? 0x80000000 : 0x7fffffff;
+	}
+}
+
+INLINE UINT16 POP_STACK(void)
+{
+	UINT16 data = R.STACK[3];
+	R.STACK[3] = R.STACK[2];
+	R.STACK[2] = R.STACK[1];
+	R.STACK[1] = R.STACK[0];
+	return (data & ADDR_MASK);
+}
+INLINE void PUSH_STACK(UINT16 data)
+{
+	R.STACK[0] = R.STACK[1];
+	R.STACK[1] = R.STACK[2];
+	R.STACK[2] = R.STACK[3];
+	R.STACK[3] = (data & ADDR_MASK);
+}
+
+INLINE void GET_MEM_ADDR(UINT16 DMA)
+{
+	if (R.opcode.b.l & 0x80)
+		memaccess = IND;
+	else
+		memaccess = DMA;
+}
+INLINE void UPDATE_AR(void)
+{
+	if (R.opcode.b.l & 0x30) {
+		UINT16 tmpAR = R.AR[ARP];
+		if (R.opcode.b.l & 0x20) tmpAR++ ;
+		if (R.opcode.b.l & 0x10) tmpAR-- ;
+		R.AR[ARP] = (R.AR[ARP] & 0xfe00) | (tmpAR & 0x01ff);
+	}
+}
+INLINE void UPDATE_ARP(void)
+{
+	if (~R.opcode.b.l & 0x08) {
+		if (R.opcode.b.l & 0x01) SET(ARP_REG);
+		else CLR(ARP_REG);
+	}
+}
+
+
+INLINE void getdata(UINT8 shift,UINT8 signext)
+{
+	GET_MEM_ADDR(DMA_DP);
+	R.ALU.d = (UINT16)M_RDRAM(memaccess);
+	if (signext) R.ALU.d = (INT16)R.ALU.d;
+	R.ALU.d <<= shift;
+	if (R.opcode.b.l & 0x80) {
+		UPDATE_AR();
+		UPDATE_ARP();
 	}
 }
 
 INLINE void putdata(UINT16 data)
 {
-	if (opcode_minor & 0x80) memaccess = ind;
-	else memaccess = dma;
-	if (opcode_minor & 0x80) {
-		if ((opcode_minor & 0x20) || (opcode_minor & 0x10)) {
-			UINT16 tmpAR = R.AR[ARP];
-			if (opcode_minor & 0x20) tmpAR++ ;
-			if (opcode_minor & 0x10) tmpAR-- ;
-			R.AR[ARP] = (R.AR[ARP] & 0xfe00) | (tmpAR & 0x01ff);
-		}
-		if (~opcode_minor & 0x08) {
-			if (opcode_minor & 1) SET(ARP_REG);
-			else CLR(ARP_REG);
-		}
+	GET_MEM_ADDR(DMA_DP);
+	if (R.opcode.b.l & 0x80) {
+		UPDATE_AR();
+		UPDATE_ARP();
 	}
-	if ((opcode_major == 0x30) || (opcode_major == 0x31)) {
-		M_WRTRAM(memaccess,(R.AR[data])); }
-	else M_WRTRAM(memaccess,(data&0xffff));
+	M_WRTRAM(memaccess,data);
+}
+INLINE void putdata_sar(UINT8 data)
+{
+	GET_MEM_ADDR(DMA_DP);
+	if (R.opcode.b.l & 0x80) {
+		UPDATE_AR();
+		UPDATE_ARP();
+	}
+	M_WRTRAM(memaccess,R.AR[data]);
 }
 INLINE void putdata_sst(UINT16 data)
 {
-	if (opcode_minor & 0x80) memaccess = ind;
-	else memaccess = dmapage1;
-	if (opcode_minor & 0x80) {
-		if ((opcode_minor & 0x20) || (opcode_minor & 0x10)) {
-			UINT16 tmpAR = R.AR[ARP];
-			if (opcode_minor & 0x20) tmpAR++ ;
-			if (opcode_minor & 0x10) tmpAR-- ;
-			R.AR[ARP] = (R.AR[ARP] & 0xfe00) | (tmpAR & 0x01ff);
-		}
+	GET_MEM_ADDR(DMA_DP1);		/* Page 1 only */
+	if (R.opcode.b.l & 0x80) {
+		UPDATE_AR();
 	}
-	M_WRTRAM(memaccess,(data&0xffff));
+	M_WRTRAM(memaccess,data);
 }
 
 
-void M_ILLEGAL(void)
-{
-	logerror("TMS320C10:  PC = %04x,  Illegal opcode = %04x\n", (R.PC-1), opcode);
-}
 
+/************************************************************************
+ *	Emulate the Instructions
+ ************************************************************************/
 
 /* This following function is here to fill in the void for */
 /* the opcode call function. This function is never called. */
+
 static void other_7F_opcodes(void)  { }
 
-static void illegal(void)	{ M_ILLEGAL(); }
+
+static void illegal(void)
+{
+		logerror("TMS32010:  PC=%04x,  Illegal opcode = %04x\n", (R.PC-1), R.opcode.w.l);
+}
+
 static void abst(void)
-		{
-			if (R.ACC >= 0x80000000) {
-				R.ACC = ~R.ACC;
-				R.ACC++ ;
-				if (OVM && (R.ACC == 0x80000000)) R.ACC-- ;
-			}
+{
+		if ( (INT32)(R.ACC.d) < 0 ) {
+			R.ACC.d = -R.ACC.d;
+			if (OVM && (R.ACC.d == 0x80000000)) R.ACC.d-- ;
 		}
+}
 
-/* ** The manual does not mention overflow with the ADD? instructions *****
-   ** however i implelemted overflow, coz it doesnt make sense otherwise **
-   ** and newer generations of this type of chip supported it. I think ****
-   ** the manual is wrong (apart from other errors the manual has). *******
+/*** The manual does not mention overflow with the ADD? instructions *****
+ *** however i implelemted overflow, coz it doesnt make sense otherwise **
+ *** and newer generations of this type of chip supported it. I think ****
+ *** the manual is wrong (apart from other errors the manual has). *******
 
-static void add_sh(void)	{ getdata(opcode_major,1); R.ACC += R.ALU; }
-static void addh(void)		{ getdata(0,0); R.ACC += (R.ALU << 16); }
-*/
+static void add_sh(void)	{ getdata(R.opcode.b.h,1); R.ACC.d += R.ALU.d; }
+static void addh(void)		{ getdata(0,0); R.ACC.d += (R.ALU.d << 16); }
+ ***/
 
 static void add_sh(void)
-		{
-			tmpacc = R.ACC;
-			getdata(opcode_major,1);
-			R.ACC += R.ALU;
-			if (tmpacc > R.ACC) {
-				SET(OV_FLAG);
-				if (OVM) R.ACC = 0x7fffffff;
-			}
-			else CLR(OV_FLAG);
-		}
+{
+		oldacc.d = R.ACC.d;
+		getdata((R.opcode.b.h & 0xf),1);
+		R.ACC.d += R.ALU.d;
+		CALCULATE_ADD_OVERFLOW(R.ALU.d);
+}
 static void addh(void)
-		{
-			tmpacc = R.ACC;
-			getdata(0,0);
-			R.ACC += (R.ALU << 16);
-			R.ACC &= 0xffff0000;
-			R.ACC += (tmpacc & 0x0000ffff);
-			if (tmpacc > R.ACC) {
-				SET(OV_FLAG);
-				if (OVM) {
-					R.ACC &= 0x0000ffff; R.ACC |= 0x7fff0000;
-				}
-			}
-			else CLR(OV_FLAG);
-		}
+{
+		oldacc.d = R.ACC.d;
+		getdata(16,0);
+		R.ACC.d += R.ALU.d;
+		CALCULATE_ADD_OVERFLOW(R.ALU.d);
+}
 static void adds(void)
-		{
-			tmpacc = R.ACC;
-			getdata(0,0);
-			R.ACC += R.ALU;
-			if (tmpacc > R.ACC) {
-				SET(OV_FLAG);
-				if (OVM) R.ACC = 0x7fffffff;
-			}
-			else CLR(OV_FLAG);
-		}
+{
+		oldacc.d = R.ACC.d;
+		getdata(0,0);
+		R.ACC.d += R.ALU.d;
+		CALCULATE_ADD_OVERFLOW(R.ALU.d);
+}
 static void and(void)
-		{
-			getdata(0,0);
-			R.ACC &= R.ALU;
-			R.ACC &= 0x0000ffff;
-		}
+{
+		getdata(0,0);
+		R.ACC.d &= R.ALU.d;
+}
 static void apac(void)
-		{
-			tmpacc = R.ACC;
-			R.ACC += R.Preg;
-			if (tmpacc > R.ACC) {
-				SET(OV_FLAG);
-				if (OVM) R.ACC = 0x7fffffff;
-			}
-			else CLR(OV_FLAG);
-		}
-static void br(void)		{ R.PC = M_RDOP_ARG(R.PC); }
+{
+		oldacc.d = R.ACC.d;
+		R.ACC.d += R.Preg.d;
+		CALCULATE_ADD_OVERFLOW(R.Preg.d);
+}
+static void br(void)
+{
+		R.PC = M_RDOP_ARG(R.PC);
+}
 static void banz(void)
-		{
-			if ((R.AR[ARP] & 0x01ff) == 0) R.PC++ ;
-			else R.PC = M_RDOP_ARG(R.PC);
-			R.ALU = R.AR[ARP]; R.ALU-- ;
-			R.AR[ARP] = (R.AR[ARP] & 0xfe00) | (R.ALU & 0x01ff);
-		}
-static void bgez(void)
-		{
-			if (R.ACC >= 0) R.PC = M_RDOP_ARG(R.PC);
-			else R.PC++ ;
-		}
-static void bgz(void)
-		{
-			if (R.ACC >  0) R.PC = M_RDOP_ARG(R.PC);
-			else R.PC++ ;
-		}
-static void bioz(void)
-		{
-			if (R.BIO_pending_irq) R.PC = M_RDOP_ARG(R.PC);
-			else R.PC++ ;
-		}
-static void blez(void)
-		{
-			if (R.ACC <= 0) R.PC = M_RDOP_ARG(R.PC);
-			else R.PC++ ;
-		}
-static void blz(void)
-		{
-			if (R.ACC <  0) R.PC = M_RDOP_ARG(R.PC);
-			else R.PC++ ;
-		}
-static void bnz(void)
-		{
-			if (R.ACC != 0) R.PC = M_RDOP_ARG(R.PC);
-			else R.PC++ ;
-		}
-static void bv(void)
-		{
-			if (OV) {
-				R.PC = M_RDOP_ARG(R.PC);
-				CLR(OV_FLAG);
-			}
-			else R.PC++ ;
-		}
-static void bz(void)
-		{
-			if (R.ACC == 0) R.PC = M_RDOP_ARG(R.PC);
-			else R.PC++ ;
-		}
-static void cala(void)
-		{
-			R.STACK[0] = R.STACK[1];
-			R.STACK[1] = R.STACK[2];
-			R.STACK[2] = R.STACK[3];
-			R.STACK[3] = R.PC & ADDR_MASK;
-			R.PC = R.ACC & ADDR_MASK;
-		}
-static void call(void)
-		{
+{
+		if (R.AR[ARP] & 0x01ff)
+			R.PC = M_RDOP_ARG(R.PC);
+		else
 			R.PC++ ;
-			R.STACK[0] = R.STACK[1];
-			R.STACK[1] = R.STACK[2];
-			R.STACK[2] = R.STACK[3];
-			R.STACK[3] = R.PC & ADDR_MASK;
-			R.PC = M_RDOP_ARG((R.PC-1)) & ADDR_MASK;
+		R.ALU.w.l = R.AR[ARP];
+		R.ALU.w.l-- ;
+		R.AR[ARP] = (R.AR[ARP] & 0xfe00) | (R.ALU.w.l & 0x01ff);
+}
+static void bgez(void)
+{
+		if ( (INT32)(R.ACC.d) >= 0 )
+			R.PC = M_RDOP_ARG(R.PC);
+		else
+			R.PC++ ;
+}
+static void bgz(void)
+{
+		if ( (INT32)(R.ACC.d) > 0 )
+			R.PC = M_RDOP_ARG(R.PC);
+		else
+			R.PC++ ;
+}
+static void bioz(void)
+{
+		if (BIO_IN != CLEAR_LINE)
+			R.PC = M_RDOP_ARG(R.PC);
+		else
+			R.PC++ ;
+}
+static void blez(void)
+{
+		if ( (INT32)(R.ACC.d) <= 0 )
+			R.PC = M_RDOP_ARG(R.PC);
+		else
+			R.PC++ ;
+}
+static void blz(void)
+{
+		if ( (INT32)(R.ACC.d) <  0 )
+			R.PC = M_RDOP_ARG(R.PC);
+		else
+			R.PC++ ;
+}
+static void bnz(void)
+{
+		if (R.ACC.d != 0)
+			R.PC = M_RDOP_ARG(R.PC);
+		else
+			R.PC++ ;
+}
+static void bv(void)
+{
+		if (OV) {
+			R.PC = M_RDOP_ARG(R.PC);
+			CLR(OV_FLAG);
 		}
-static void dint(void)		{ SET(INTM_FLAG); }
-static void dmov(void)		{ getdata(0,0); M_WRTRAM((memaccess+1),R.ALU); }
-static void eint(void)		{ CLR(INTM_FLAG); }
+		else
+			R.PC++ ;
+}
+static void bz(void)
+{
+		if (R.ACC.d == 0)
+			R.PC = M_RDOP_ARG(R.PC);
+		else
+			R.PC++ ;
+}
+static void cala(void)
+{
+		PUSH_STACK(R.PC);
+		R.PC = R.ACC.w.l & ADDR_MASK;
+}
+static void call(void)
+{
+		R.PC++ ;
+		PUSH_STACK(R.PC);
+		R.PC = M_RDOP_ARG((R.PC - 1)) & ADDR_MASK;
+}
+static void dint(void)
+{
+		SET(INTM_FLAG);
+}
+static void dmov(void)
+{
+		getdata(0,0);
+		M_WRTRAM((memaccess + 1),R.ALU.w.l);
+}
+static void eint(void)
+{
+		CLR(INTM_FLAG);
+}
 static void in_p(void)
-		{
-			R.ALU = M_IN((opcode_major & 7));
-			putdata((R.ALU & 0x0000ffff));
-		}
+{
+		R.ALU.w.l = P_IN( (R.opcode.b.h & 7) );
+		putdata(R.ALU.w.l);
+}
 static void lac_sh(void)
-		{
-			getdata((opcode_major & 0x0f),1);
-			R.ACC = R.ALU;
-		}
-static void lack(void)		{ R.ACC = (opcode_minor & 0x000000ff); }
-static void lar_ar0(void)	{ getdata_lar(); R.AR[0] = R.ALU; }
-static void lar_ar1(void)	{ getdata_lar(); R.AR[1] = R.ALU; }
-static void lark_ar0(void)	{ R.AR[0] = (opcode_minor & 0x00ff); }
-static void lark_ar1(void)	{ R.AR[1] = (opcode_minor & 0x00ff); }
+{
+		getdata((R.opcode.b.h & 0x0f),1);
+		R.ACC.d = R.ALU.d;
+}
+static void lack(void)
+{
+		R.ACC.d = R.opcode.b.l;
+}
+static void lar_ar0(void)
+{
+		getdata(0,0);
+		R.AR[0] = R.ALU.w.l;
+}
+static void lar_ar1(void)
+{
+		getdata(0,0);
+		R.AR[1] = R.ALU.w.l;
+}
+static void lark_ar0(void)
+{
+		R.AR[0] = R.opcode.b.l;
+}
+static void lark_ar1(void)
+{
+		R.AR[1] = R.opcode.b.l;
+}
 static void larp_mar(void)
-		{
-			if (opcode_minor & 0x80) {
-				if ((opcode_minor & 0x20) || (opcode_minor & 0x10)) {
-					UINT16 tmpAR = R.AR[ARP];
-					if (opcode_minor & 0x20) tmpAR++ ;
-					if (opcode_minor & 0x10) tmpAR-- ;
-					R.AR[ARP] = (R.AR[ARP] & 0xfe00) | (tmpAR & 0x01ff);
-				}
-				if (~opcode_minor & 0x08) {
-					if (opcode_minor & 0x01) SET(ARP_REG) ;
-					else CLR(ARP_REG);
-				}
-			}
+{
+		if (R.opcode.b.l & 0x80) {
+			UPDATE_AR();
+			UPDATE_ARP();
 		}
+}
 static void ldp(void)
-		{
-			getdata(0,0);
-			if (R.ALU & 1) SET(DP_REG);
-			else CLR(DP_REG);
-		}
+{
+		getdata(0,0);
+		if (R.ALU.d & 1)
+			SET(DP_REG);
+		else
+			CLR(DP_REG);
+}
 static void ldpk(void)
-		{
-			if (opcode_minor & 1) SET(DP_REG);
-			else CLR(DP_REG);
-		}
+{
+		if (R.opcode.b.l & 1)
+			SET(DP_REG);
+		else
+			CLR(DP_REG);
+}
 static void lst(void)
-		{
-			tmpacc = R.STR;
-			opcode_minor |= 0x08; /* This dont support next arp, so make sure it dont happen */
-			getdata(0,0);
-			R.STR = R.ALU;
-			tmpacc &= INTM_FLAG;
-			R.STR |= tmpacc;
-			R.STR |= 0x1efe;
-		}
-static void lt(void)		{ getdata(0,0); R.Treg = R.ALU; }
+{
+		R.opcode.b.l |= 0x08; /* Next arp not supported here, so mask it */
+		getdata(0,0);
+		R.ALU.w.l &= (~INTM_FLAG);	/* Must not affect INTM */
+		R.STR &= INTM_FLAG;
+		R.STR |= R.ALU.w.l;
+		R.STR |= 0x1efe;
+}
+static void lt(void)
+{
+		getdata(0,0);
+		R.Treg = R.ALU.w.l;
+}
 static void lta(void)
-		{
-			tmpacc = R.ACC;
-			getdata(0,0);
-			R.Treg = R.ALU;
-			R.ACC += R.Preg;
-			if (tmpacc > R.ACC) {
-				SET(OV_FLAG);
-				if (OVM) R.ACC = 0x7fffffff;
-			}
-			else CLR(OV_FLAG);
-		}
+{
+		oldacc.d = R.ACC.d;
+		getdata(0,0);
+		R.Treg = R.ALU.w.l;
+		R.ACC.d += R.Preg.d;
+		CALCULATE_ADD_OVERFLOW(R.Preg.d);
+}
 static void ltd(void)
-		{
-			tmpacc = R.ACC;
-			getdata(0,0);
-			R.Treg = R.ALU;
-			R.ACC += R.Preg;
-			if (tmpacc > R.ACC) {
-				SET(OV_FLAG);
-				if (OVM) R.ACC = 0x7fffffff;
-			}
-			else CLR(OV_FLAG);
-			M_WRTRAM((memaccess+1),R.ALU);
-		}
+{
+		oldacc.d = R.ACC.d;
+		getdata(0,0);
+		R.Treg = R.ALU.w.l;
+		M_WRTRAM((memaccess + 1),R.ALU.w.l);
+		R.ACC.d += R.Preg.d;
+		CALCULATE_ADD_OVERFLOW(R.Preg.d);
+}
 static void mpy(void)
-		{
-			getdata(0,0);
-			if ((R.ALU == 0x00008000) && (R.Treg == 0x8000))
-				R.Preg = 0xc0000000;
-			else R.Preg = R.ALU * R.Treg;
-		}
+{
+		getdata(0,0);
+		R.Preg.d = (INT16)R.ALU.w.l * (INT16)R.Treg;
+		if (R.Preg.d == 0x40000000) R.Preg.d = 0xc0000000;
+}
 static void mpyk(void)
-		{
-			if (opcode & 0x1000)
-				R.Preg = R.Treg * ((opcode & 0x1fff) | 0xe000);
-			else R.Preg = R.Treg * (opcode & 0x1fff);
-		}
-static void nop(void)		{ }
+{
+		R.Preg.d = (INT16)R.Treg * ((INT16)(R.opcode.w.l << 3) >> 3);
+}
+static void nop(void)
+{
+		/* Nothing to do */
+}
 static void or(void)
-		{
-			getdata(0,0);
-			R.ALU &= 0x0000ffff;
-			R.ACC |= R.ALU;
-		}
+{
+		getdata(0,0);
+		R.ACC.w.l |= R.ALU.w.l;
+}
 static void out_p(void)
-		{
-			getdata(0,0);
-			M_OUT((opcode_major & 7), (R.ALU & 0x0000ffff));
-		}
-static void pac(void)		{ R.ACC = R.Preg; }
+{
+		getdata(0,0);
+		P_OUT( (R.opcode.b.h & 7), R.ALU.w.l );
+}
+static void pac(void)
+{
+		R.ACC.d = R.Preg.d;
+}
 static void pop(void)
-		{
-			R.ACC = R.STACK[3] & ADDR_MASK;
-			R.STACK[3] = R.STACK[2];
-			R.STACK[2] = R.STACK[1];
-			R.STACK[1] = R.STACK[0];
-		}
+{
+		R.ACC.w.l = POP_STACK();
+		R.ACC.w.h = 0x0000;
+}
 static void push(void)
-		{
-			R.STACK[0] = R.STACK[1];
-			R.STACK[1] = R.STACK[2];
-			R.STACK[2] = R.STACK[3];
-			R.STACK[3] = R.ACC & ADDR_MASK;
-		}
+{
+		PUSH_STACK(R.ACC.w.l);
+}
 static void ret(void)
-		{
-			R.PC = R.STACK[3] & ADDR_MASK;
-			R.STACK[3] = R.STACK[2];
-			R.STACK[2] = R.STACK[1];
-			R.STACK[1] = R.STACK[0];
-		}
-static void rovm(void)		{ CLR(OVM_FLAG); }
-static void sach_sh(void)	{ putdata(((R.ACC << (opcode_major & 7)) >> 16)); }
-static void sacl(void)		{ putdata((R.ACC & 0x0000ffff)); }
-static void sar_ar0(void)	{ putdata(0); }
-static void sar_ar1(void)	{ putdata(1); }
-static void sovm(void)		{ SET(OVM_FLAG); }
+{
+		R.PC = POP_STACK();
+}
+static void rovm(void)
+{
+		CLR(OVM_FLAG);
+}
+static void sach_sh(void)
+{
+		R.ALU.d = (R.ACC.d << (R.opcode.b.h & 7));
+		putdata(R.ALU.w.h);
+}
+static void sacl(void)
+{
+		putdata(R.ACC.w.l);
+}
+static void sar_ar0(void)
+{
+		putdata_sar(0);
+}
+static void sar_ar1(void)
+{
+		putdata_sar(1);
+}
+static void sovm(void)
+{
+		SET(OVM_FLAG);
+}
 static void spac(void)
-		{
-			INT32 tmpPreg = R.Preg;
-			tmpacc = R.ACC ;
-			/* if (tmpPreg & 0x8000) tmpPreg |= 0xffff0000; */
-			R.ACC -= tmpPreg ;
-			if (tmpacc < R.ACC) {
-				SET(OV_FLAG);
-				if (OVM) R.ACC = 0x80000000;
-			}
-			else CLR(OV_FLAG);
-		}
-static void sst(void)		{ putdata_sst(R.STR); }
+{
+		oldacc.d = R.ACC.d;
+		R.ACC.d -= R.Preg.d;
+		CALCULATE_SUB_OVERFLOW(R.Preg.d);
+}
+static void sst(void)
+{
+		putdata_sst(R.STR);
+}
 static void sub_sh(void)
-		{
-			tmpacc = R.ACC;
-			getdata((opcode_major & 0x0f),1);
-			R.ACC -= R.ALU;
-			if (tmpacc < R.ACC) {
-				SET(OV_FLAG);
-				if (OVM) R.ACC = 0x80000000;
-			}
-			else CLR(OV_FLAG);
-		}
+{
+		oldacc.d = R.ACC.d;
+		getdata((R.opcode.b.h & 0x0f),1);
+		R.ACC.d -= R.ALU.d;
+		CALCULATE_SUB_OVERFLOW(R.ALU.d);
+}
 static void subc(void)
-		{
-			tmpacc = R.ACC;
-			getdata(15,0);
-			tmpacc -= R.ALU;
-			if (tmpacc < 0) {
-				R.ACC <<= 1;
-				SET(OV_FLAG);
-			}
-			else R.ACC = ((tmpacc << 1) + 1);
-		}
+{
+		oldacc.d = R.ACC.d;
+		getdata(15,0);
+		R.ALU.d -= R.ALU.d;
+		if ((INT32)((oldacc.d ^ R.ALU.d) & (oldacc.d ^ R.ACC.d)) < 0)
+			SET(OV_FLAG);
+		if ( (INT32)(R.ALU.d) >= 0 )
+			R.ACC.d = ((R.ALU.d << 1) + 1);
+		else
+			R.ACC.d = (R.ACC.d << 1);
+}
 static void subh(void)
-		{
-			tmpacc = R.ACC;
-			getdata(0,0);
-			R.ACC -= (R.ALU << 16);
-			R.ACC &= 0xffff0000;
-			R.ACC += (tmpacc & 0x0000ffff);
-			if ((tmpacc & 0xffff0000) < (R.ACC & 0xffff0000)) {
-				SET(OV_FLAG);
-				if (OVM) {
-					R.ACC = (tmpacc & 0x0000ffff);
-					R.ACC |= 0x80000000 ;
-				}
-			}
-			else CLR(OV_FLAG);
-		}
+{
+		oldacc.d = R.ACC.d;
+		getdata(16,0);
+		R.ACC.d -= R.ALU.d;
+		CALCULATE_SUB_OVERFLOW(R.ALU.d);
+}
 static void subs(void)
-		{
-			tmpacc = R.ACC;
-			getdata(0,0);
-			R.ACC -= R.ALU;
-			if (tmpacc < R.ACC) {
-				SET(OV_FLAG);
-				if (OVM) R.ACC = 0x80000000;
-			}
-			else CLR(OV_FLAG);
-		}
+{
+		oldacc.d = R.ACC.d;
+		getdata(0,0);
+		R.ACC.d -= R.ALU.d;
+		CALCULATE_SUB_OVERFLOW(R.ALU.d);
+}
 static void tblr(void)
-		{
-			R.ALU = M_RDROM((R.ACC & ADDR_MASK));
-			putdata(R.ALU);
-			R.STACK[0] = R.STACK[1];
-		}
+{
+		R.ALU.d = M_RDROM((R.ACC.w.l & ADDR_MASK));
+		putdata(R.ALU.w.l);
+		R.STACK[0] = R.STACK[1];
+}
 static void tblw(void)
-		{
-			getdata(0,0);
-			M_WRTROM(((R.ACC & ADDR_MASK)),R.ALU);
-			R.STACK[0] = R.STACK[1];
-		}
+{
+		getdata(0,0);
+		M_WRTROM(((R.ACC.w.l & ADDR_MASK)),R.ALU.w.l);
+		R.STACK[0] = R.STACK[1];
+}
 static void xor(void)
-		{
-			tmpacc = (R.ACC & 0xffff0000);
-			getdata(0,0);
-			R.ACC ^= R.ALU;
-			R.ACC &= 0x0000ffff;
-			R.ACC |= tmpacc;
-		}
-static void zac(void)		{ R.ACC = 0; }
-static void zalh(void)		{ getdata(16,0); R.ACC = R.ALU; }
-static void zals(void)		{ getdata(0 ,0); R.ACC = R.ALU; }
+{
+		getdata(0,0);
+		R.ACC.w.l ^= R.ALU.w.l;
+}
+static void zac(void)
+{
+		R.ACC.d = 0;
+}
+static void zalh(void)
+{
+		getdata(0,0);
+		R.ACC.w.h = R.ALU.w.l;
+		R.ACC.w.l = 0x0000;
+}
+static void zals(void)
+{
+		getdata(0,0);
+		R.ACC.w.l = R.ALU.w.l;
+		R.ACC.w.h = 0x0000;
+}
 
+
+/***********************************************************************
+ *	Cycle Timings
+ ***********************************************************************/
 
 static unsigned cycles_main[256]=
 {
-/*00*/		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-/*10*/		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-/*20*/		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-/*30*/		1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0,
-/*40*/		2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-/*50*/		1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
-/*60*/		1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1,
-/*70*/		1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 3, 1, 0,
-/*80*/		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-/*90*/		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-/*A0*/		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/*B0*/		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/*C0*/		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/*D0*/		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/*E0*/		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/*F0*/		0, 0, 0, 0, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2, 2
+/*00*/	1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK,
+/*10*/	1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK,
+/*20*/	1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK,
+/*30*/	1*CLK, 1*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 1*CLK, 1*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK,
+/*40*/	2*CLK, 2*CLK, 2*CLK, 2*CLK, 2*CLK, 2*CLK, 2*CLK, 2*CLK, 2*CLK, 2*CLK, 2*CLK, 2*CLK, 2*CLK, 2*CLK, 2*CLK, 2*CLK,
+/*50*/	1*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK,
+/*60*/	1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 3*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK,
+/*70*/	1*CLK, 1*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 3*CLK, 1*CLK, 0*CLK,
+/*80*/	1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK,
+/*90*/	1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK,
+/*A0*/	0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK,
+/*B0*/	0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK,
+/*C0*/	0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK,
+/*D0*/	0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK,
+/*E0*/	0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK,
+/*F0*/	0*CLK, 0*CLK, 0*CLK, 0*CLK, 2*CLK, 2*CLK, 2*CLK, 0*CLK, 2*CLK, 2*CLK, 2*CLK, 2*CLK, 2*CLK, 2*CLK, 2*CLK, 2*CLK
 };
 
 static unsigned cycles_7F_other[32]=
 {
-/*80*/		1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 1, 1,
-/*90*/		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 1, 1,
+/*80*/	1*CLK, 1*CLK, 1*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 2*CLK, 2*CLK, 1*CLK, 1*CLK,
+/*90*/	1*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 2*CLK, 2*CLK, 1*CLK, 1*CLK
 };
+
+
+/***********************************************************************
+ *	Opcode Table
+ ***********************************************************************/
 
 static opcode_fn opcode_main[256]=
 {
@@ -620,145 +719,148 @@ static opcode_fn opcode_7F_other[32]=
 
 
 /****************************************************************************
- * Inits CPU emulation
+ *	Inits CPU emulation
  ****************************************************************************/
-void tms320c10_init (void)
+void tms32010_init (void)
 {
+	int cpu = cpu_getactivecpu();
+
+	state_save_register_UINT16("tms32010", cpu, "PC", &R.PC, 1);
+	state_save_register_UINT16("tms32010", cpu, "PrevPC", &R.PREVPC, 1);
+	state_save_register_UINT16("tms32010", cpu, "STR", &R.STR, 1);
+	state_save_register_UINT32("tms32010", cpu, "ACC", &R.ACC.d, 1);
+	state_save_register_UINT32("tms32010", cpu, "ALU", &R.ALU.d, 1);
+	state_save_register_UINT32("tms32010", cpu, "Preg", &R.Preg.d, 1);
+	state_save_register_UINT16("tms32010", cpu, "Treg", &R.Treg, 1);
+	state_save_register_UINT16("tms32010", cpu, "AR0", &R.AR[0], 1);
+	state_save_register_UINT16("tms32010", cpu, "AR1", &R.AR[1], 1);
+	state_save_register_UINT16("tms32010", cpu, "Stack0", &R.STACK[0], 1);
+	state_save_register_UINT16("tms32010", cpu, "Stack1", &R.STACK[1], 1);
+	state_save_register_UINT16("tms32010", cpu, "Stack2", &R.STACK[2], 1);
+	state_save_register_UINT16("tms32010", cpu, "Stack3", &R.STACK[3], 1);
+	state_save_register_INT32("tms32010",  cpu, "IRQ_Flag", &R.INTF, 1);
+	state_save_register_UINT32("tms32010", cpu, "Opcode", &R.opcode.d, 1);
 }
 
 /****************************************************************************
- * Reset registers to their initial values
+ *	Reset registers to their initial values
  ****************************************************************************/
-void tms320c10_reset (void *param)
+void tms32010_reset (void *param)
 {
-	R.PC  = 0;
-	R.STR  = 0x0fefe;
-	R.ACC = 0;
-	R.pending_irq		= TMS320C10_NOT_PENDING;
-	R.BIO_pending_irq	= TMS320C10_NOT_PENDING;
+	R.PC    = 0;
+	R.STR   = 0xfefe;
+	R.ACC.d = 0;
+	R.INTF  = TMS32010_INT_NONE;
 }
 
 
 /****************************************************************************
- * Shut down CPU emulation
+ *	Shut down CPU emulation
  ****************************************************************************/
-void tms320c10_exit (void)
+void tms32010_exit (void)
 {
 	/* nothing to do ? */
 }
 
 
 /****************************************************************************
- * Issue an interrupt if necessary
+ *	Issue an interrupt if necessary
  ****************************************************************************/
-
 static int Ext_IRQ(void)
 {
 	if (INTM == 0)
 	{
-		logerror("TMS320C10:  EXT INTERRUPT\n");
+		logerror("TMS32010:  EXT INTERRUPT\n");
+		R.INTF = TMS32010_INT_NONE;
 		SET(INTM_FLAG);
-		R.STACK[0] = R.STACK[1];
-		R.STACK[1] = R.STACK[2];
-		R.STACK[2] = R.STACK[3];
-		R.STACK[3] = R.PC & ADDR_MASK;
+		PUSH_STACK(R.PC);
 		R.PC = 0x0002;
-		R.pending_irq = TMS320C10_NOT_PENDING;
-		return 3;  /* 3 clock cycles used due to PUSH and DINT operation ? */
+		return (3*CLK);  /* 3 cycles used due to PUSH and DINT operation ? */
 	}
-	return 0;
+	return (0*CLK);
 }
 
 
 
-
 /****************************************************************************
- * Execute IPeriod. Return 0 if emulation should be stopped
+ *	Execute IPeriod. Return 0 if emulation should be stopped
  ****************************************************************************/
-int tms320c10_execute(int cycles)
+int tms32010_execute(int cycles)
 {
-	tms320c10_icount = cycles;
+	tms32010_icount = cycles;
 
 	do
 	{
-		if (R.pending_irq & TMS320C10_PENDING)
-		{
-			int type = (*R.irq_callback)(0);
-			R.pending_irq |= type;
-		}
-
-		if (R.pending_irq) {
+		if (R.INTF) {
 			/* Dont service INT if prev instruction was MPY, MPYK or EINT */
-			if ((opcode_major != 0x6d) || ((opcode_major & 0xe0) != 0x80) || (opcode != 0x7f82))
-				tms320c10_icount -= Ext_IRQ();
+			if ((R.opcode.b.h != 0x6d) && ((R.opcode.b.h & 0xe0) != 0x80) && (R.opcode.w.l != 0x7f82))
+				tms32010_icount -= Ext_IRQ();
 		}
 
-		R.PREPC = R.PC;
+		R.PREVPC = R.PC;
 
 		CALL_MAME_DEBUG;
 
-		opcode=M_RDOP(R.PC);
-		opcode_major = ((opcode & 0x0ff00) >> 8);
-		opcode_minor = (opcode & 0x0ff);
-
+		R.opcode.d = M_RDOP(R.PC);
 		R.PC++;
-		if (opcode_major != 0x07f) { /* Do all opcodes except the 7Fxx ones */
-			tms320c10_icount -= cycles_main[opcode_major];
-			(*(opcode_main[opcode_major]))();
+
+		if (R.opcode.b.h != 0x7f)	{ /* Do all opcodes except the 7Fxx ones */
+			tms32010_icount -= cycles_main[R.opcode.b.h];
+			(*(opcode_main[R.opcode.b.h]))();
 		}
 		else { /* Opcode major byte 7Fxx has many opcodes in its minor byte */
-			opcode_minr = (opcode & 0x001f);
-			tms320c10_icount -= cycles_7F_other[opcode_minr];
-			(*(opcode_7F_other[opcode_minr]))();
+			tms32010_icount -= cycles_7F_other[(R.opcode.b.l & 0x1f)];
+			(*(opcode_7F_other[(R.opcode.b.l & 0x1f)]))();
 		}
-	} while (tms320c10_icount>0);
+	} while (tms32010_icount>0);
 
-	return cycles - tms320c10_icount;
+	return cycles - tms32010_icount;
 }
 
 /****************************************************************************
- * Get all registers in given buffer
+ *	Get all registers in given buffer
  ****************************************************************************/
-unsigned tms320c10_get_context (void *dst)
+unsigned tms32010_get_context (void *dst)
 {
-    if( dst )
-        *(tms320c10_Regs*)dst = R;
-    return sizeof(tms320c10_Regs);
+	if( dst )
+		*(tms32010_Regs*)dst = R;
+	return sizeof(tms32010_Regs);
 }
 
 /****************************************************************************
- * Set all registers to given values
+ *	Set all registers to given values
  ****************************************************************************/
-void tms320c10_set_context (void *src)
+void tms32010_set_context (void *src)
 {
-	if( src )
-		R = *(tms320c10_Regs*)src;
+	if (src)
+		R = *(tms32010_Regs*)src;
 }
 
 
 /****************************************************************************
- * Return a specific register
+ *	Return a specific register
  ****************************************************************************/
-unsigned tms320c10_get_reg(int regnum)
+unsigned tms32010_get_reg(int regnum)
 {
-	switch( regnum )
+	switch (regnum)
 	{
 		case REG_PC:
-		case TMS320C10_PC: return R.PC;
+		case TMS32010_PC: return R.PC;
 		/* This is actually not a stack pointer, but the stack contents */
 		case REG_SP:
-		case TMS320C10_STK3: return R.STACK[3];
-		case TMS320C10_ACC: return R.ACC;
-		case TMS320C10_STR: return R.STR;
-		case TMS320C10_PREG: return R.Preg;
-		case TMS320C10_TREG: return R.Treg;
-		case TMS320C10_AR0: return R.AR[0];
-		case TMS320C10_AR1: return R.AR[1];
+		case TMS32010_STK3: return R.STACK[3];
+		case TMS32010_ACC:  return R.ACC.d;
+		case TMS32010_STR:  return R.STR;
+		case TMS32010_PREG: return R.Preg.d;
+		case TMS32010_TREG: return R.Treg;
+		case TMS32010_AR0:  return R.AR[0];
+		case TMS32010_AR1:  return R.AR[1];
+		case REG_PREVIOUSPC: return R.PREVPC;
 		default:
-			if( regnum <= REG_SP_CONTENTS )
+			if (regnum <= REG_SP_CONTENTS)
 			{
 				unsigned offset = (REG_SP_CONTENTS - regnum);
-				if( offset < 4 )
+				if (offset < 4)
 					return R.STACK[offset];
 			}
 	}
@@ -767,90 +869,82 @@ unsigned tms320c10_get_reg(int regnum)
 
 
 /****************************************************************************
- * Set a specific register
+ *	Set a specific register
  ****************************************************************************/
-void tms320c10_set_reg(int regnum, unsigned val)
+void tms32010_set_reg(int regnum, unsigned val)
 {
-	switch( regnum )
+	switch (regnum)
 	{
 		case REG_PC:
-		case TMS320C10_PC: R.PC = val; break;
+		case TMS32010_PC: R.PC = val; break;
 		/* This is actually not a stack pointer, but the stack contents */
+		/* Stack is a 4 level First In Last Out stack */
 		case REG_SP:
-		case TMS320C10_STK3: R.STACK[3] = val; break;
-		case TMS320C10_STR: R.STR = val; break;
-		case TMS320C10_ACC: R.ACC = val; break;
-		case TMS320C10_PREG: R.Preg = val; break;
-		case TMS320C10_TREG: R.Treg = val; break;
-		case TMS320C10_AR0: R.AR[0] = val; break;
-		case TMS320C10_AR1: R.AR[1] = val; break;
+		case TMS32010_STK3: R.STACK[3] = val; break;
+		case TMS32010_STR:  R.STR    = val; break;
+		case TMS32010_ACC:  R.ACC.d  = val; break;
+		case TMS32010_PREG: R.Preg.d = val; break;
+		case TMS32010_TREG: R.Treg   = val; break;
+		case TMS32010_AR0:  R.AR[0]  = val; break;
+		case TMS32010_AR1:  R.AR[1]  = val; break;
 		default:
-			if( regnum <= REG_SP_CONTENTS )
+			if (regnum <= REG_SP_CONTENTS)
 			{
 				unsigned offset = (REG_SP_CONTENTS - regnum);
-				if( offset < 4 )
+				if (offset < 4)
 					R.STACK[offset] = val;
 			}
-    }
+	}
 }
 
 
 /****************************************************************************
- * Set IRQ line state
+ *	Set IRQ line state
  ****************************************************************************/
-void tms320c10_set_irq_line(int irqline, int state)
+void tms32010_set_irq_line(int irqline, int state)
 {
-	if (irqline == TMS320C10_ACTIVE_INT)
-	{
-		R.irq_state = state;
-		if (state == CLEAR_LINE) R.pending_irq &= ~TMS320C10_PENDING;
-		if (state == ASSERT_LINE) R.pending_irq |= TMS320C10_PENDING;
-	}
-	if (irqline == TMS320C10_ACTIVE_BIO)
-	{
-		if (state == CLEAR_LINE) R.BIO_pending_irq &= ~TMS320C10_PENDING;
-		if (state == ASSERT_LINE) R.BIO_pending_irq |= TMS320C10_PENDING;
-	}
+	/* Pending Interrupts cannot be cleared! */
+	if (state == ASSERT_LINE) R.INTF |=  TMS32010_INT_PENDING;
 }
 
-void tms320c10_set_irq_callback(int (*callback)(int irqline))
+void tms32010_set_irq_callback(int (*callback)(int irqline))
 {
-	R.irq_callback = callback;
+	/* There are no IRQ Acknowledge Pins on this device */
 }
 
 /****************************************************************************
- * Return a formatted string for a register
+ *	Return a formatted string for a register
  ****************************************************************************/
-const char *tms320c10_info(void *context, int regnum)
+const char *tms32010_info(void *context, int regnum)
 {
 	static char buffer[16][47+1];
-	static int which;
-	tms320c10_Regs *r = context;
+	static int which = 0;
+	tms32010_Regs *r = context;
 
 	which = (which+1) % 16;
 	buffer[which][0] = '\0';
-	if( !context )
+	if (!context)
 		r = &R;
 
-    switch( regnum )
+	switch (regnum)
 	{
-		case CPU_INFO_REG+TMS320C10_PC: sprintf(buffer[which], "PC:%04X",  r->PC); break;
-		case CPU_INFO_REG+TMS320C10_SP: sprintf(buffer[which], "SP:%X", 0); /* fake stack pointer */ break;
-        case CPU_INFO_REG+TMS320C10_STR: sprintf(buffer[which], "STR:%04X", r->STR); break;
-		case CPU_INFO_REG+TMS320C10_ACC: sprintf(buffer[which], "ACC:%08X", r->ACC); break;
-		case CPU_INFO_REG+TMS320C10_PREG: sprintf(buffer[which], "P:%08X",   r->Preg); break;
-		case CPU_INFO_REG+TMS320C10_TREG: sprintf(buffer[which], "T:%04X",   r->Treg); break;
-		case CPU_INFO_REG+TMS320C10_AR0: sprintf(buffer[which], "AR0:%04X", r->AR[0]); break;
-		case CPU_INFO_REG+TMS320C10_AR1: sprintf(buffer[which], "AR1:%04X", r->AR[1]); break;
-		case CPU_INFO_REG+TMS320C10_STK0: sprintf(buffer[which], "STK0:%04X", r->STACK[0]); break;
-		case CPU_INFO_REG+TMS320C10_STK1: sprintf(buffer[which], "STK1:%04X", r->STACK[1]); break;
-		case CPU_INFO_REG+TMS320C10_STK2: sprintf(buffer[which], "STK2:%04X", r->STACK[2]); break;
-        case CPU_INFO_REG+TMS320C10_STK3: sprintf(buffer[which], "STK3:%04X", r->STACK[3]); break;
-        case CPU_INFO_FLAGS:
-            sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
-                r->STR & 0x8000 ? 'O':'.',
-                r->STR & 0x4000 ? 'M':'.',
-                r->STR & 0x2000 ? 'I':'.',
+		case CPU_INFO_REG+TMS32010_PC:   sprintf(buffer[which], "PC:%04X",   r->PC); break;
+		case CPU_INFO_REG+TMS32010_SP:   sprintf(buffer[which], "SP:%X", 0); /* fake stack pointer */ break;
+		case CPU_INFO_REG+TMS32010_STR:  sprintf(buffer[which], "STR:%04X",  r->STR); break;
+		case CPU_INFO_REG+TMS32010_ACC:  sprintf(buffer[which], "ACC:%08X",  r->ACC.d); break;
+		case CPU_INFO_REG+TMS32010_PREG: sprintf(buffer[which], "P:%08X",    r->Preg.d); break;
+		case CPU_INFO_REG+TMS32010_TREG: sprintf(buffer[which], "T:%04X",    r->Treg); break;
+		case CPU_INFO_REG+TMS32010_AR0:  sprintf(buffer[which], "AR0:%04X",  r->AR[0]); break;
+		case CPU_INFO_REG+TMS32010_AR1:  sprintf(buffer[which], "AR1:%04X",  r->AR[1]); break;
+		case CPU_INFO_REG+TMS32010_STK0: sprintf(buffer[which], "STK0:%04X", r->STACK[0]); break;
+		case CPU_INFO_REG+TMS32010_STK1: sprintf(buffer[which], "STK1:%04X", r->STACK[1]); break;
+		case CPU_INFO_REG+TMS32010_STK2: sprintf(buffer[which], "STK2:%04X", r->STACK[2]); break;
+		case CPU_INFO_REG+TMS32010_STK3: sprintf(buffer[which], "STK3:%04X", r->STACK[3]); break;
+		case CPU_INFO_FLAGS:
+			sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+				r->STR & 0x8000 ? 'O':'.',
+				r->STR & 0x4000 ? 'M':'.',
+				r->STR & 0x2000 ? 'I':'.',
 				r->STR & 0x1000 ? '.':'?',
 				r->STR & 0x0800 ? 'a':'?',
 				r->STR & 0x0400 ? 'r':'?',
@@ -864,25 +958,24 @@ const char *tms320c10_info(void *context, int regnum)
 				r->STR & 0x0004 ? 'd':'?',
 				r->STR & 0x0002 ? 'p':'?',
 				r->STR & 0x0001 ? '1':'0');
-            break;
-		case CPU_INFO_NAME: return "320C10";
-        case CPU_INFO_FAMILY: return "Texas Instruments 320C10";
-		case CPU_INFO_VERSION: return "1.02";
-        case CPU_INFO_FILE: return __FILE__;
-        case CPU_INFO_CREDITS: return "Copyright (C) 1999 by Quench";
-        case CPU_INFO_REG_LAYOUT: return (const char*)tms320c10_reg_layout;
-        case CPU_INFO_WIN_LAYOUT: return (const char*)tms320c10_win_layout;
-    }
+			break;
+		case CPU_INFO_NAME: return "TMS32010";
+		case CPU_INFO_FAMILY: return "Texas Instruments TMS32010";
+		case CPU_INFO_VERSION: return "1.20";
+		case CPU_INFO_FILE: return __FILE__;
+		case CPU_INFO_CREDITS: return "Copyright (C)1999-2002+ by Tony La Porta";
+		case CPU_INFO_REG_LAYOUT: return (const char*)tms32010_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char*)tms32010_win_layout;
+	}
 	return buffer[which];
 }
 
-unsigned tms320c10_dasm(char *buffer, unsigned pc)
+unsigned tms32010_dasm(char *buffer, unsigned pc)
 {
 #ifdef MAME_DEBUG
-    return Dasm32010( buffer, pc );
+	return Dasm32010( buffer, pc );
 #else
-	sprintf( buffer, "$%04X", TMS320C10_RDOP(pc) );
+	sprintf( buffer, "$%04X", TMS32010_RDOP(pc) );
 	return 2;
 #endif
 }
-

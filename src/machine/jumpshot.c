@@ -1,161 +1,41 @@
-
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
 
-static unsigned char decrypt1(unsigned char e)
-{
-	return e;
-}
-
-static unsigned char decrypt2(unsigned char e)
-{
-	unsigned char d;
-
-	d  = (e & 0x80) >> 3;
-	d |= ((~e) & 0x40) >> 4;
-	d |= (e & 0x20) >> 5;
-	d |= ((~e) & 0x10) >> 1;
-	d |= ((~e) & 0x08) << 3;
-	d |= (e & 0x04) << 5;
-	d |= ((~e) & 0x02) << 4;
-	d |= ((~e) & 0x01) << 1;
-
-	return d;
-}
-
-static unsigned char decrypt3(unsigned char e)
-{
-	unsigned char d;
-
-	d  = (e & 0x80) >> 4;
-	d |= (e & 0x40) >> 6;
-	d |= ((~e) & 0x20) << 2;
-	d |= ((~e) & 0x10) << 1;
-	d |= (e & 0x08) << 1;
-	d |= (e & 0x04) >> 1;
-	d |= ((~e) & 0x02) << 1;
-	d |= (e & 0x01) << 6;
-
-	return d;
-}
-
-static unsigned char decrypt4(unsigned char e)
-{
-	unsigned char d;
-
-	d  = (e & 0x80) >> 0;
-	d |= (e & 0x40) >> 0;
-	d |= (e & 0x20) >> 2;
-	d |= (e & 0x10) >> 0;
-	d |= ((~e) & 0x08) << 2;
-	d |= (e & 0x04) >> 0;
-	d |= (e & 0x02) >> 0;
-	d |= (e & 0x01) >> 0;
-
-	return d;
-}
-
-static unsigned char decrypt5(unsigned char e)
-{
-	unsigned char d;
-
-	d  = (e & 0x80) >> 3;
-	d |= ((~e) & 0x40) >> 4;
-	d |= (e & 0x20) >> 5;
-	d |= (e & 0x10) << 1;
-	d |= ((~e) & 0x08) << 3;
-	d |= (e & 0x04) << 5;
-	d |= ((~e)  & 0x02) << 2;
-	d |= ((~e) & 0x01) << 1;
-
-	return d;
-}
-
-static unsigned char decrypt6(unsigned char e)
-{
-	unsigned char d;
-
-	d  = ((~e) & 0x80) >> 4;
-	d |= (e & 0x40) >> 6;
-	d |= ((~e) & 0x20) << 2;
-	d |= (e & 0x10) << 1;
-	d |= (e & 0x08) << 1;
-	d |= (e & 0x04) >> 1;
-	d |= ((~e) & 0x02) <<1;
-	d |= (e & 0x01) << 6;
-
-	return d;
-}
-
 static unsigned char decrypt(int addr, unsigned char e)
 {
-	unsigned int method = 1;
-
-	switch (addr & 0x2A5)
+	static const unsigned char swap_xor_table[6][9] =
 	{
-		case 0x004:
-		case 0x005:
-		case 0x020:
-		case 0x085:
-		case 0x0A0:
-			method = 2;
-			break;
-		case 0x001:
-		case 0x021:
-		case 0x025:
-		case 0x080:
-		case 0x084:
-		case 0x0A1:
-		case 0x0A5:
-			method = 3;
-			break;
-		case 0x205:
-		case 0x280:
-		case 0x284:
-			method = 4;
-			break;
-		case 0x200:
-		case 0x204:
-		case 0x220:
-		case 0x224:
-		case 0x281:
-		case 0x285:
-		case 0x2A0:
-		case 0x2A4:
-			method = 5;
-			break;
-		case 0x201:
-		case 0x221:
-		case 0x225:
-		case 0x2A1:
-		case 0x2A5:
-			method = 6;
-			break;
+		{ 7,6,5,4,3,2,1,0, 0x00 },
+		{ 7,6,3,4,5,2,1,0, 0x20 },
+		{ 5,0,4,3,7,1,2,6, 0xa4 },
+		{ 5,0,4,3,7,1,2,6, 0x8c },
+		{ 2,3,1,7,4,6,0,5, 0x6e },
+		{ 2,3,4,7,1,6,0,5, 0x4e }
+	};
+	static const int picktable[32] =
+	{
+		0,2,4,4,4,2,0,2,2,0,2,4,4,2,0,2,
+		5,3,5,1,5,3,5,3,1,5,1,5,5,3,5,3
+	};
+	unsigned int method = 0;
+	const unsigned char *tbl;
 
 
+	/* pick method from bits 0 2 5 7 9 of the address */
+	method = picktable[
+		(addr & 0x001) |
+		((addr & 0x004) >> 1) |
+		((addr & 0x020) >> 3) |
+		((addr & 0x080) >> 4) |
+		((addr & 0x200) >> 5)];
 
-
-
-
-
-	}
-
+	/* switch method if bit 11 of the address is set */
 	if ((addr & 0x800) == 0x800)
-		method = method + 3;
-	if (method > 6) method=method-6;
+		method ^= 1;
 
-	switch (method)
-	{
-		case 1:		return decrypt1(e);
-		case 2:		return decrypt2(e);
-		case 3:		return decrypt3(e);
-		case 4:		return decrypt4(e);
-		case 5:		return decrypt5(e);
-		case 6:		return decrypt6(e);
-	}
-
-	return 0;
+	tbl = swap_xor_table[method];
+	return BITSWAP8(e,tbl[0],tbl[1],tbl[2],tbl[3],tbl[4],tbl[5],tbl[6],tbl[7]) ^ tbl[8];
 }
 
 

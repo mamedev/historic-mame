@@ -26,6 +26,7 @@
 #include "mamedbg.h"
 #include "window.h"
 
+
 #ifndef INVALID
 #define INVALID -1
 #endif
@@ -524,8 +525,6 @@ struct GfxElement *build_debugger_font(void)
 {
 	struct GfxElement *font;
 
-	switch_debugger_orientation(NULL);
-
 	font = decodegfx(fontdata,&fontlayout);
 
 	if (font)
@@ -534,8 +533,6 @@ struct GfxElement *build_debugger_font(void)
 		font->total_colors = DEBUGGER_TOTAL_COLORS*DEBUGGER_TOTAL_COLORS;
 	}
 
-	switch_true_orientation(NULL);
-
 	return font;
 }
 
@@ -543,7 +540,6 @@ static void toggle_cursor(struct mame_bitmap *bitmap, struct GfxElement *font)
 {
 	int sx, sy, x, y;
 
-	switch_debugger_orientation(bitmap);
 	sx = cursor_x * font->width;
 	sy = cursor_y * font->height;
 	for (y = 0; y < font->height; y++)
@@ -563,7 +559,6 @@ static void toggle_cursor(struct mame_bitmap *bitmap, struct GfxElement *font)
 			plot_pixel(bitmap, sx+x, sy+y, pen);
 		}
 	}
-	switch_true_orientation(bitmap);
 	cursor_on ^= 1;
 
 	debugger_bitmap_changed = 1;
@@ -574,11 +569,9 @@ void dbg_put_screen_char(int ch, int attr, int x, int y)
 	struct mame_bitmap *bitmap = Machine->debug_bitmap;
 	struct GfxElement *font = Machine->debugger_font;
 
-	switch_debugger_orientation(bitmap);
 	drawgfx(bitmap, font,
 		ch, attr, 0, 0, x*font->width, y*font->height,
 		0, TRANSPARENCY_NONE, 0);
-	switch_true_orientation(bitmap);
 
 	debugger_bitmap_changed = 1;
 }
@@ -1060,22 +1053,22 @@ INLINE unsigned order( unsigned offset, unsigned size )
 /* adjust an offset by shifting it left activecpu_address_shift() times */
 INLINE unsigned lshift( unsigned offset )
 {
-	switch( ASHIFT )
-	{
-	case -1: return offset / 2;
-	case  3: return offset * 8;
-	}
+	int shift = ASHIFT;
+	if (shift > 0)
+		offset <<= shift;
+	else
+		offset >>= -shift;
 	return offset;
 }
 
 /* adjust an offset by shifting it right activecpu_address_shift() times */
 INLINE unsigned rshift( unsigned offset )
 {
-	switch( ASHIFT )
-	{
-	case -1: return offset * 2;
-	case  3: return offset / 8;
-	}
+	int shift = ASHIFT;
+	if (shift > 0)
+		offset >>= shift;
+	else
+		offset <<= -shift;
 	return offset;
 }
 
@@ -1689,7 +1682,7 @@ static void trace_output( void )
 			dst += sprintf( dst, "%0*X: ", addr_width, pc );
 			activecpu_dasm( dst, pc );
 			strcat( dst, "\n" );
-			fprintf( TRACE.file, "%s", buffer );
+			fprintf( TRACE.file, "%s", buffer);
 			memmove(
 				&TRACE.last_pc[0],
 				&TRACE.last_pc[1],

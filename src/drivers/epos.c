@@ -9,21 +9,22 @@
 
 	- To walk in IGMO, hold down button 2.
 	- Super Glob seems like a later revision of The Glob, the most obvious
-	difference being an updated service mode.
+	  difference being an updated service mode.
 	- These games don't have cocktail mode.
 	- The divisor 4 was derived using the timing loop used to split the screen
-	in the middle.  This loop takes roughly 24200 cycles, giving
-	2500 + (24200 - 2500) * 2 * 60 = 2754000 = 2.75MHz for the CPU speed,
-	assuming 60 fps and a 2500 cycle VBLANK period.  Since the schematics
-	are available, so this should be easy to check.
+	  in the middle.  This loop takes roughly 24200 cycles, giving
+	  2500 + (24200 - 2500) * 2 * 60 = 2754000 = 2.75MHz for the CPU speed,
+	  assuming 60 fps and a 2500 cycle VBLANK period.
+	  This should be easy to check since the schematics are available, .
 	- I think theglob2 is earlier than theglob.  They only differ in one routine,
-	but it appears to be a bug fix.  Also, theglob3 appears to be even older.
+	  but it appears to be a bug fix.  Also, theglob3 appears to be even older.
 
 	To Do:
 
-	- During the color test, Super Blob uses a busy loop to split the screen
-	between the two palettes.  This effect is not emulated.  See $039c.
-	The Glob has a different color test, not using the busy loop.
+	- Super Blob uses a busy loop during the color test to split the screen
+	  between the two palettes.  This effect is not emulated, but since both
+	  halfs of the palette are identical, this is not an issue.  See $039c.
+	  The other games have a different color test, not using the busy loop.
 
 ***************************************************************************/
 
@@ -86,6 +87,54 @@ PORT_END
 /* I think the upper two bits of port 1 are used as a simple form of protection,
    so that ROMs couldn't be simply swapped.  Each game checks these bits and halts
    the processor if an unexpected value is read. */
+
+INPUT_PORTS_START( megadon )
+	PORT_START      /* IN0 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x02, 0x00, "Fuel Consumption" )
+	PORT_DIPSETTING(    0x00, "Slow" )
+	PORT_DIPSETTING(    0x02, "Fast" )
+	PORT_DIPNAME( 0x04, 0x00, "Rotation" )
+	PORT_DIPSETTING(    0x04, "Slow" )
+	PORT_DIPSETTING(    0x00, "Fast" )
+	PORT_DIPNAME( 0x08, 0x08, "ERG" )
+	PORT_DIPSETTING(    0x08, "Easy" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x20, 0x20, "Enemy Fire Rate" )
+	PORT_DIPSETTING(    0x20, "Slow" )
+	PORT_DIPSETTING(    0x00, "Fast" )
+	PORT_DIPNAME( 0x50, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x10, "4" )
+	PORT_DIPSETTING(    0x40, "5" )
+	PORT_DIPSETTING(    0x50, "6" )
+	PORT_DIPNAME( 0x80, 0x00, "Game Mode" )
+	PORT_DIPSETTING(    0x00, "Arcade" )
+	PORT_DIPSETTING(    0x80, "Contest" )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START2 )
+	PORT_BITX(0x10, IP_ACTIVE_LOW,  IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_SPECIAL )	/* this has to be HI */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_SPECIAL )   /* this has to be HI */
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN3 */
+	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+INPUT_PORTS_END
+
 
 INPUT_PORTS_START( suprglob )
 	PORT_START      /* IN0 */
@@ -246,6 +295,38 @@ MACHINE_DRIVER_END
  *
  *************************************/
 
+ROM_START( megadon )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )       /* 64k for code */
+	ROM_LOAD( "2732u10b.bin",   0x0000, 0x1000, 0xaf8fbe80 )
+	ROM_LOAD( "2732u09b.bin",   0x1000, 0x1000, 0x097d1e73 )
+	ROM_LOAD( "2732u08b.bin",   0x2000, 0x1000, 0x526784da )
+	ROM_LOAD( "2732u07b.bin",   0x3000, 0x1000, 0x5b060910 )
+	ROM_LOAD( "2732u06b.bin",   0x4000, 0x1000, 0x8ac8af6d )
+	ROM_LOAD( "2732u05b.bin",   0x5000, 0x1000, 0x052bb603 )
+	ROM_LOAD( "2732u04b.bin",   0x6000, 0x1000, 0x9b8b7e92 )
+	ROM_LOAD( "2716u11b.bin",   0x7000, 0x0800, 0x599b8b61 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "74s288.bin",     0x0000, 0x0020, 0xc779ea99 )
+ROM_END
+
+
+ROM_START( catapult )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )       /* 64k for code */
+	ROM_LOAD( "co3223.u10",     0x0000, 0x1000, 0x50abcfd2 )
+	ROM_LOAD( "co3223.u09",     0x1000, 0x1000, 0xfd5a9a1c )
+	ROM_LOAD( "co3223.u08",     0x2000, 0x1000, BADCRC(0x4bfc36f3) ) /* BADADDR xxxx-xxxxxxx */
+	ROM_LOAD( "co3223.u07",     0x3000, 0x1000, 0x4113bb99 )
+	ROM_LOAD( "co3223.u06",     0x4000, 0x1000, 0x966bb9f5 )
+	ROM_LOAD( "co3223.u05",     0x5000, 0x1000, 0x65f9fb9a )
+	ROM_LOAD( "co3223.u04",     0x6000, 0x1000, 0x648453bc )
+	ROM_LOAD( "co3223.u11",     0x7000, 0x0800, 0x08fb8c28 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "co3223.u66",     0x0000, 0x0020, 0xe7de76a7 )
+ROM_END
+
+
 ROM_START( suprglob )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )       /* 64k for code */
 	ROM_LOAD( "u10",			0x0000, 0x1000, 0xc0141324 )
@@ -325,14 +406,14 @@ ROM_START( igmo )
 	ROM_LOAD( "82s123.u66",		0x0000, 0x0020, 0x00000000 )	/* missing */
 ROM_END
 
-
-
 /*************************************
  *
  *	Game drivers
  *
  *************************************/
 
+GAME ( 1982, megadon,  0,        epos, megadon,  0, ROT270, "Epos Corporation (Photar Industries license)", "Megadon" )
+GAMEX( 1982, catapult, 0,        epos, igmo,     0, ROT270, "Epos Corporation", "Catapult", GAME_NOT_WORKING) /* bad rom, hold f2 for test mode */
 GAME ( 1983, suprglob, 0,        epos, suprglob, 0, ROT270, "Epos Corporation", "Super Glob" )
 GAME ( 1983, theglob,  suprglob, epos, suprglob, 0, ROT270, "Epos Corporation", "The Glob" )
 GAME ( 1983, theglob2, suprglob, epos, suprglob, 0, ROT270, "Epos Corporation", "The Glob (earlier)" )

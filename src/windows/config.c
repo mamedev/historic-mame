@@ -23,10 +23,6 @@
  */
 
 
-// compiler options
-#define BLIT_ROTATE		1
-
-
 #include <stdarg.h>
 #include <ctype.h>
 #include <time.h>
@@ -83,6 +79,12 @@ static int use_artwork = 1;
 static int use_backdrops = -1;
 static int use_overlays = -1;
 static int use_bezels = -1;
+
+static int video_norotate = 0;
+static int video_flipy = 0;
+static int video_flipx = 0;
+static int video_ror = 0;
+static int video_rol = 0;
 
 
 static int video_set_beam(struct rc_option *option, const char *arg, int priority)
@@ -175,11 +177,11 @@ static struct rc_option opts[] = {
 	/* options supported by the mame core */
 	/* video */
 	{ "Mame CORE video options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
-	{ "norotate", NULL, rc_bool, &options.norotate, "0", 0, 0, NULL, "do not apply rotation" },
-	{ "ror", NULL, rc_bool, &options.ror, "0", 0, 0, NULL, "rotate screen clockwise" },
-	{ "rol", NULL, rc_bool, &options.rol, "0", 0, 0, NULL, "rotate screen anti-clockwise" },
-	{ "flipx", NULL, rc_bool, &options.flipx, "0", 0, 0, NULL, "flip screen upside-down" },
-	{ "flipy", NULL, rc_bool, &options.flipy, "0", 0, 0, NULL, "flip screen left-right" },
+	{ "norotate", NULL, rc_bool, &video_norotate, "0", 0, 0, NULL, "do not apply rotation" },
+	{ "ror", NULL, rc_bool, &video_ror, "0", 0, 0, NULL, "rotate screen clockwise" },
+	{ "rol", NULL, rc_bool, &video_rol, "0", 0, 0, NULL, "rotate screen anti-clockwise" },
+	{ "flipx", NULL, rc_bool, &video_flipx, "0", 0, 0, NULL, "flip screen upside-down" },
+	{ "flipy", NULL, rc_bool, &video_flipy, "0", 0, 0, NULL, "flip screen left-right" },
 	{ "debug_resolution", "dr", rc_string, &debugres, "auto", 0, 0, video_set_debugres, "set resolution for debugger window" },
 	{ "gamma", NULL, rc_float, &options.gamma, "1.0", 0.5, 2.0, NULL, "gamma correction"},
 	{ "brightness", "bright", rc_float, &options.brightness, "1.0", 0.5, 2.0, NULL, "brightness correction"},
@@ -648,7 +650,6 @@ int cli_frontend_init (int argc, char **argv)
 	if (!use_artwork)
 		options.use_artwork = ARTWORK_USE_NONE;
 
-#if BLIT_ROTATE
 {
 	/* first start with the game's built in orientation */
 	int orientation = drivers[game_index]->flags & ORIENTATION_MASK;
@@ -663,11 +664,11 @@ int cli_frontend_init (int argc, char **argv)
 	}
 
 	/* override if no rotation requested */
-	if (options.norotate)
+	if (video_norotate)
 		orientation = options.ui_orientation = ROT0;
 
 	/* rotate right */
-	if (options.ror)
+	if (video_ror)
 	{
 		/* if only one of the components is inverted, switch them */
 		if ((orientation & ROT180) == ORIENTATION_FLIP_X ||
@@ -678,7 +679,7 @@ int cli_frontend_init (int argc, char **argv)
 	}
 
 	/* rotate left */
-	if (options.rol)
+	if (video_rol)
 	{
 		/* if only one of the components is inverted, switch them */
 		if ((orientation & ROT180) == ORIENTATION_FLIP_X ||
@@ -689,20 +690,15 @@ int cli_frontend_init (int argc, char **argv)
 	}
 
 	/* flip X/Y */
-	if (options.flipx)
+	if (video_flipx)
 		orientation ^= ORIENTATION_FLIP_X;
-	if (options.flipy)
+	if (video_flipy)
 		orientation ^= ORIENTATION_FLIP_Y;
 
 	blit_flipx = ((orientation & ORIENTATION_FLIP_X) != 0);
 	blit_flipy = ((orientation & ORIENTATION_FLIP_Y) != 0);
 	blit_swapxy = ((orientation & ORIENTATION_SWAP_XY) != 0);
-
-	/* disable rotation in the core */
-	options.norotate = 1;
-	options.ror = options.rol = options.flipx = options.flipy = 0;
 }
-#endif
 
 	return game_index;
 }

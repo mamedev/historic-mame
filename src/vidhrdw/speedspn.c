@@ -19,12 +19,21 @@ static void speedspn_drawsprites( struct mame_bitmap *bitmap, const struct recta
 		int tileno = source[1];
 		int attr = source[2];
 		int ypos = source[3];
+		int color;
 
 		if (attr&0x10) xpos +=0x100;
 
-		xpos = 0x1ff-xpos;
+		xpos = 0x1f8-xpos;
 		tileno += ((attr & 0xe0) >> 5) * 0x100;
-		drawgfx(bitmap,gfx,tileno,0,0,0,xpos-8,ypos,cliprect,TRANSPARENCY_PEN,0);
+		color = attr & 0x0f;
+
+		drawgfx(bitmap,gfx,
+				tileno,
+				color,
+				0,0,
+				xpos,ypos,
+				cliprect,TRANSPARENCY_PEN,0);
+
 		source +=4;
 	}
 }

@@ -39,11 +39,18 @@ system. Taito's F3 system superceded both Taito B and F2 systems, but the
 Taito Z system was enhanced with F3 features and continued in games like
 Super Chase and Under Fire up to the mid 1990s.)
 
-The sprites are typically 16x8 tiles aggregated through a spritemap rom
-into bigger sizes. Spacegun has 64x64 sprites, but some of the games use
-different [128x128] or even multiple sizes. Some of the games aggregate
-16x16 tiles to create their sprites. The size of the sprite ram area varies
-from 0x400 to 0x4000 bytes, suggesting there is no standard object chip.
+Each Taito Z game used one of the following sprite systems - allowing the
+use of big sprites with minimal CPU overhead [*]:
+
+(i)  16x8 tiles aggregated through a spritemap rom into 128x128 sprites
+(ii) 16x16 tiles aggregated through a spritemap rom into three sprite sizes:
+      128 x 128
+       64 x 128
+       32 x 128
+(iii) 16x8 tiles aggregated through a spritemap rom into 64x64 sprites
+
+[* in Taito B/F2/F3 the CPU has to keep track of all the 16x16 tiles within
+a big sprite]
 
 The Z system has twin 68K CPUs which communicate via shared ram.
 Typically they share $4000 bytes, but Spacegun / Dbleaxle share $10000.
@@ -63,19 +70,63 @@ shuffled around: some games have different i/o because of analogue
 sticks, light guns, cockpit hardware etc.
 
 
-Contcirc custom chips (incomplete)
----------------------
+Contcirc board (B.Troha)
+--------------
 
-Cpu board: TC0100SCN, TC0150ROD, TC040IOC (DG: early port
-	based io chip)
+Taito Sound PCB J1100137A K1100314A:
 
-Video board: TC0020VRA, TC0050VDZ (three of these)
-	(DG: precursor to the 370MSO/300FLA combination ??)
+  Zilog Z0840004PSC     XTAL OSC          Yamaha
+  Z80 CPU               16.000 MHz        YM2610
 
-cc_3_01 cc_3_02 cc_3_06 cc_3_07 (234000)
-1 x lh5763j-70 (27hc64 - eeprom ?)
-cc_3_64 (234000)
-cc_3_97 (27512)
+  TC0060DCA              B33-30
+  TC0060DCA
+                                            TC0140SYT
+
+                                          B33-08
+                                          B33-09
+                                          B33-10
+
+Notes: B33-30 is a OKI M27512-15
+
+
+Taito Video Baord PCB J1100139A K1100316A:
+
+ B33-03     TC0050VDZ     TC0050VDZ                       TC0050VDZ
+ B33-04
+ B33-05
+ B33-06                      TC0020VAR
+
+     B14-31
+
+ B33-07
+
+                      B14-30
+
+Notes: B14-31 is 27HC64 (Sharp LH5763J-70)
+       B14-30 is OKI M27512-15
+DG:    TC0020VAR + 3xTC0050VDZ may be precursor to 370MSO/300FLA combo
+
+
+Taito CPU Board J110138A K1100315A:
+
+                                            XTAL OSC  XTAL OSC
+                                            24.000MHz 26.686MHz
+
+                                                 B33-02
+B33-01
+                  TC0150ROD                 TC0100SCN        NEC D43256C-10L
+                                                             NEC D43256C-10L
+
+                                                      TC0110PCR
+
+                                          TC0070RGB
+ MC6800P12 IC-25 MC68000P12 IC-35
+           IC-26            IC 36           TC0040IOC
+                                              DSWA  DSWB
+
+Notes: IC-41 Is 271001 Listed as JH1 (unsocketed / unused)
+       IC-42 Is 271001 Listed as JL1 (unsocketed / unused)
+
 
 
 Aquajack top board (Guru)
@@ -83,7 +134,7 @@ Aquajack top board (Guru)
 
 68000-12 x 2
 OSC: 26.686, 24.000, 16.000
-i dont see any recognisable sound chips, but i do see a YM3016F
+I dont see any recognisable sound chips, but I do see a YM3016F
 
 TCO110PCR
 TCO220IOC
@@ -91,7 +142,7 @@ TCO100SCN
 TCO140SYT
 TCO3200BR
 TCO150ROD
-TCO020VAR [DG: not "VRA" as contcirc dump notes claim?]
+TCO020VAR
 TCO050VDZ
 TCO050VDZ
 TCO050VDZ
@@ -292,7 +343,7 @@ Chips:	uPD72105C
 TODO Lists
 ==========
 
-Add cpu idle time skip to improve speed...
+Add cpu idle time skip to improve speed.
 
 Is the no-Z80 sound handling correct: some voices in Bshark
 aren't that clear.
@@ -301,7 +352,21 @@ Make taitosnd cpu-independent so we can restore Z80 to CPU3.
 
 Cockpit hardware
 
-DIPs
+DIPs - e.g. coinage
+
+Sprite zooming - dimensions may be got from the unused 64K rom
+on the video board (it's in the right place for it, both with
+Contcirc video chips and the chips used on later boards). These
+64K roms compare as follows - makes sense as these groups
+comprise the three sprite layout types used in TaitoZ games:
+
+   Contcirc / Enforce      =IDENTICAL
+   ChaseHQ / Nightstr      =IDENTICAL
+   Bshark / SCI / Dblaxle  =IDENTICAL
+
+   Missing from Aquajack / Spacegun dumps (I would bet they are
+   the same as Bshark). Can anyone dump these two along with any
+   proms on the video board?
 
 
 Continental Circus
@@ -322,9 +387,6 @@ outputs to subwoofer (vibration). They sound better, anyway.
 Chasehq
 -------
 
-Missing engine sound after helicopter flys up on later levels.
-(Bug fixed by S.J. September 2001)
-
 Motor CPU: appears to be identical to one in Topspeed.
 
 [Used to have junk sprites when you reach criminal car (the 'criminals
@@ -335,13 +397,11 @@ meaningless, or is some effect missing?]
 Enforce
 -------
 
-Map inputs correctly, including direction controls.
+Test mode - SHIFT: LO/HI is not understood (appears to depend on Demo
+Sound DSW)
 
-The weird rushing hillscape in the background is surely wrong.
-68000A sets $620000.w with a value from shared memory that is being
-updated by 68000B (in a hard to follow piece of code). Since high
-interleaving does not cure this maybe we have (a) incorrect
-assignation of shared / unshared memory (b) some unmapped read?
+Landscape in the background can be made to scroll rapidly with DSW.
+True to original?
 
 Some layer offsets are out a little.
 
@@ -369,9 +429,10 @@ ram by one frame to solve this?
 Night Striker
 -------------
 
-Road A/B priority problems are obvious in the choice tunnels. Please
-can someone provide a screenshot of exactly what happens at the road
-split point.
+Road A/B priority problems will manifest in the choice tunnels with,
+one or the other having higher priority in top and bottom halves. Can
+someone provide a sequence of screenshots showing exactly what happens
+at the road split point.
 
 Strange page in test mode which lets you alter all sorts of settings,
 may relate to sit-in cockpit version. Can't find a dip that disables
@@ -1179,8 +1240,8 @@ static MEMORY_READ16_START( enforce_cpub_readmem )
 	{ 0x100000, 0x103fff, MRA16_RAM },
 	{ 0x104000, 0x107fff, sharedram_r },
 	{ 0x200000, 0x200003, taitoz_sound_r },
-	{ 0x300000, 0x300001, contcirc_input_bypass_r },	// probably needs its own routine
-	{ 0x300002, 0x300003, TC0220IOC_halfword_port_r },	/* (actually game uses TC040IOC ????) */
+	{ 0x300000, 0x300001, TC0220IOC_halfword_portreg_r },
+	{ 0x300002, 0x300003, TC0220IOC_halfword_port_r },	/* (actually game uses TC040IOC ?) */
 MEMORY_END
 
 static MEMORY_WRITE16_START( enforce_cpub_writemem )
@@ -1510,11 +1571,55 @@ MEMORY_END
                    INPUT PORTS, DIPs
 ***********************************************************/
 
+#define TAITO_Z_COINAGE_JAPAN_8 \
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) ) \
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) ) \
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) ) \
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) ) \
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) ) \
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
+
+#define TAITO_Z_COINAGE_WORLD_8 \
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) ) \
+	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) ) \
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) ) \
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) ) \
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) ) \
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) ) \
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_4C ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
+
+#define TAITO_Z_COINAGE_US_8 \
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coinage ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) ) \
+	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) ) \
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) ) \
+	PORT_DIPNAME( 0xc0, 0xc0, "Price to Continue" ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) ) \
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(    0xc0, "Same as Start" )
+
+#define TAITO_Z_DIFFICULTY_8 \
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) ) \
+	PORT_DIPSETTING(    0x02, "Easy" ) \
+	PORT_DIPSETTING(    0x03, "Normal" ) \
+	PORT_DIPSETTING(    0x01, "Hard" ) \
+	PORT_DIPSETTING(    0x00, "Hardest" )
+
+
 INPUT_PORTS_START( contcirc )
 	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )	// Stops digital accelerator working, analogue pedal?
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, "Cockpit" )	// analogue accelerator pedal
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1522,39 +1627,100 @@ INPUT_PORTS_START( contcirc )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
+	TAITO_Z_COINAGE_WORLD_8
 
 	PORT_START /* DSW B */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x03, "Normal" )
+	PORT_DIPNAME( 0x03, 0x03, "Difficulty 1 (time/speed)" )
 	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x03, "Normal" )
 	PORT_DIPSETTING(    0x01, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, "Default screen type" )
-	PORT_DIPSETTING(    0x20, "3D" )
-	PORT_DIPSETTING(    0x00, "Normal" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty 2 (other cars)" )
+	PORT_DIPSETTING(    0x08, "Easy" )
+	PORT_DIPSETTING(    0x0c, "Normal" )
+	PORT_DIPSETTING(    0x04, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x10, 0x10, "Steering wheel" )	//not sure what effect this has
+	PORT_DIPSETTING(    0x10, "Free" )
+	PORT_DIPSETTING(    0x00, "Locked" )
+	PORT_DIPNAME( 0x20, 0x00, "Enable 3d alternate frames" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_SERVICE1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON6 | IPF_PLAYER1 )	/* 3 for accel [7 levels] */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON5 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )	/* main accel key */
+
+	PORT_START      /* IN1: b3 not mapped: standardized on holding b4=lo gear */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_TILT )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON4 | IPF_PLAYER1 )	/* gear shift lo/hi */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON8 | IPF_PLAYER1 )	/* 3 for brake [7 levels] */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON7 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )	/* main brake key */
+
+	PORT_START      /* IN2, unused */
+
+	PORT_START      /* IN3, "handle" i.e. steering */
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 50, 15, 0x00, 0xff)
+
+	PORT_START      /* IN4, fake allowing digital steer */
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER1 )
+	PORT_DIPNAME( 0x10, 0x00, "Steering type" )
+	PORT_DIPSETTING(    0x10, "Digital" )
+	PORT_DIPSETTING(    0x00, "Analogue" )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( contcrcu )
+	PORT_START /* DSW A */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, "Cockpit" )	// analogue accelerator pedal
+	PORT_DIPNAME( 0x02, 0x02, "Discounted continues" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	TAITO_Z_COINAGE_JAPAN_8		// confirmed
+
+	PORT_START /* DSW B */
+	PORT_DIPNAME( 0x03, 0x03, "Difficulty 1 (time/speed)" )
+	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x03, "Normal" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty 2 (other cars)" )
+	PORT_DIPSETTING(    0x08, "Easy" )
+	PORT_DIPSETTING(    0x0c, "Normal" )
+	PORT_DIPSETTING(    0x04, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x10, 0x10, "Steering wheel" )	//not sure what effect this has
+	PORT_DIPSETTING(    0x10, "Free" )
+	PORT_DIPSETTING(    0x00, "Locked" )
+	PORT_DIPNAME( 0x20, 0x00, "Enable 3d alternate frames" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )	//acc. to manual
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )	//acc. to manual
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -1602,27 +1768,14 @@ INPUT_PORTS_START( chasehq )	// IN3-6 perhaps used with cockpit setup? //
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
+	TAITO_Z_COINAGE_WORLD_8
 
 	PORT_START /* DSW B */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x03, "Normal" )
-	PORT_DIPSETTING(    0x02, "Easy" )
-	PORT_DIPSETTING(    0x01, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	TAITO_Z_DIFFICULTY_8
 	PORT_DIPNAME( 0x0c, 0x0c, "Timer Setting" )
-	PORT_DIPSETTING(    0x0c, "60 Seconds" )
 	PORT_DIPSETTING(    0x08, "70 Seconds" )
 	PORT_DIPSETTING(    0x04, "65 Seconds" )
+	PORT_DIPSETTING(    0x0c, "60 Seconds" )
 	PORT_DIPSETTING(    0x00, "55 Seconds" )
 	PORT_DIPNAME( 0x10, 0x10, "Turbos Stocked" )
 	PORT_DIPSETTING(    0x10, "3" )
@@ -1710,8 +1863,114 @@ INPUT_PORTS_START( chasehq )	// IN3-6 perhaps used with cockpit setup? //
 	PORT_DIPSETTING(    0x00, "Analogue" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( enforce )	// Preliminary, handle control not understood
-	PORT_START /* DSW A, wrong */
+INPUT_PORTS_START( chasehqj )	// IN3-6 perhaps used with cockpit setup? //
+	PORT_START /* DSW A */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x03, "Upright / Steering Lock" )
+	PORT_DIPSETTING(    0x02, "Upright / No Steering Lock" )
+	PORT_DIPSETTING(    0x01, "Full Throttle Convert, Cockpit" )
+	PORT_DIPSETTING(    0x00, "Full Throttle Convert, Deluxe" )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	TAITO_Z_COINAGE_JAPAN_8
+
+	PORT_START /* DSW B */
+	TAITO_Z_DIFFICULTY_8
+	PORT_DIPNAME( 0x0c, 0x0c, "Timer Setting" )
+	PORT_DIPSETTING(    0x08, "70 Seconds" )
+	PORT_DIPSETTING(    0x04, "65 Seconds" )
+	PORT_DIPSETTING(    0x0c, "60 Seconds" )
+	PORT_DIPSETTING(    0x00, "55 Seconds" )
+	PORT_DIPNAME( 0x10, 0x10, "Turbos Stocked" )
+	PORT_DIPSETTING(    0x10, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Damage Cleared at Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_SERVICE1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_PLAYER1 )	/* brake */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_BUTTON3 | IPF_PLAYER1 )	/* turbo */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_TILT )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON4 | IPF_PLAYER1 )	/* gear */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_BUTTON1 | IPF_PLAYER1 )	/* accel */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+
+	PORT_START      /* IN2, unused */
+
+	PORT_START      /* IN3, ??? */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN4, ??? */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN5, ??? */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN6, ??? */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN7, steering */
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_PLAYER1, 50, 15, 0x00, 0xff )
+
+	PORT_START      /* IN8, fake allowing digital steer */
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER1 )
+	PORT_DIPNAME( 0x10, 0x00, "Steering type" )
+	PORT_DIPSETTING(    0x10, "Digital" )
+	PORT_DIPSETTING(    0x00, "Analogue" )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( enforce )
+	PORT_START /* DSW A */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
@@ -1720,37 +1979,24 @@ INPUT_PORTS_START( enforce )	// Preliminary, handle control not understood
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )	// Says SHIFT HI in test mode !?
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )		// Says SHIFT LO in test mode !?
+	TAITO_Z_COINAGE_JAPAN_8
 
-	PORT_START /* DSW B, wrong */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x03, "Normal" )
-	PORT_DIPSETTING(    0x02, "Easy" )
-	PORT_DIPSETTING(    0x01, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_START /* DSW B */
+	TAITO_Z_DIFFICULTY_8
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, "Default screen type" )
-	PORT_DIPSETTING(    0x20, "3D" )
+	PORT_DIPNAME( 0x10, 0x00, "Background scenery" )
+	PORT_DIPSETTING(    0x10, "Crazy scrolling" )
 	PORT_DIPSETTING(    0x00, "Normal" )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1764,9 +2010,9 @@ INPUT_PORTS_START( enforce )	// Preliminary, handle control not understood
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_SERVICE1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON5 | IPF_PLAYER1 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON4 | IPF_PLAYER1 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_PLAYER1 )	/* Bomb */
@@ -1776,22 +2022,79 @@ INPUT_PORTS_START( enforce )	// Preliminary, handle control not understood
 	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON6 | IPF_PLAYER1 )
-
-	PORT_START      /* IN2 ??? */
-
-	PORT_START      /* IN3 ??? */
-	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 50, 15, 0x00, 0xff)
-
-	PORT_START      /* IN4, fake allowing digital steer */
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER1 )
-	PORT_DIPNAME( 0x10, 0x00, "Steering type" )
-	PORT_DIPSETTING(    0x10, "Digital" )
-	PORT_DIPSETTING(    0x00, "Analogue" )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( bshark )
+	PORT_START /* DSW A */
+	PORT_DIPNAME( 0x01, 0x01, "Mirror screen" )	// manual says first two must be off
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	TAITO_Z_COINAGE_US_8
+
+	PORT_START /* DSW B */
+	TAITO_Z_DIFFICULTY_8
+	PORT_DIPNAME( 0x0c, 0x04, "Speed of Sight" )
+	PORT_DIPSETTING(    0x0c, "Slow" )
+	PORT_DIPSETTING(    0x08, "Medium" )
+	PORT_DIPSETTING(    0x04, "Fast" )
+	PORT_DIPSETTING(    0x00, "Fastest" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )	// manual says all these must be off
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN1, unused */
+
+	PORT_START      /* IN2, b2-5 affect sound num in service mode but otherwise useless (?) */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )	/* "Fire" */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1 )	/* same as "Fire" */
+
+	PORT_START	/* values chosen to match allowed crosshair area */
+	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 20, 4, 0xcc, 0x35)
+
+	PORT_START	/* "X adjust" */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* values chosen to match allowed crosshair area */
+	PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_Y | IPF_PLAYER1, 20, 4, 0xd5, 0x32)
+
+	PORT_START	/* "Y adjust" */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( bsharkj )
 	PORT_START /* DSW A */
 	PORT_DIPNAME( 0x01, 0x01, "Mirror screen" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
@@ -1803,35 +2106,21 @@ INPUT_PORTS_START( bshark )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
+	TAITO_Z_COINAGE_JAPAN_8
 
 	PORT_START /* DSW B */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x03, "Normal" )
-	PORT_DIPSETTING(    0x02, "Easy" )
-	PORT_DIPSETTING(    0x01, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
+	TAITO_Z_DIFFICULTY_8
+	PORT_DIPNAME( 0x0c, 0x04, "Speed of Sight" )
+	PORT_DIPSETTING(    0x0c, "Slow" )
+	PORT_DIPSETTING(    0x08, "Medium" )
+	PORT_DIPSETTING(    0x04, "Fast" )
+	PORT_DIPSETTING(    0x00, "Fastest" )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1886,27 +2175,81 @@ INPUT_PORTS_START( sci )	// dsws may be slightly wrong
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
+	TAITO_Z_COINAGE_WORLD_8
 
 	PORT_START /* DSW B */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x03, "Normal" )
-	PORT_DIPSETTING(    0x02, "Easy" )
-	PORT_DIPSETTING(    0x01, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	TAITO_Z_DIFFICULTY_8
 	PORT_DIPNAME( 0x0c, 0x0c, "Timer Setting" )
-	PORT_DIPSETTING(    0x0c, "60 Seconds" )
 	PORT_DIPSETTING(    0x08, "70 Seconds" )
 	PORT_DIPSETTING(    0x04, "65 Seconds" )
+	PORT_DIPSETTING(    0x0c, "60 Seconds" )
+	PORT_DIPSETTING(    0x00, "55 Seconds" )
+	PORT_DIPNAME( 0x10, 0x10, "Turbos Stocked" )
+	PORT_DIPSETTING(    0x10, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x20, 0x20, "Respond to Controls" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Damage Cleared at Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Siren Volume" )
+	PORT_DIPSETTING(    0x80, "Normal" )
+	PORT_DIPSETTING(    0x00, "Low" )
+
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )	/* fire */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )	/* brake */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_BUTTON5 | IPF_PLAYER1 )	/* turbo */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_TILT )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_BUTTON6 | IPF_PLAYER1 )	/* "center" */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON4 | IPF_PLAYER1 )	/* gear */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_BUTTON1 | IPF_PLAYER1 )	/* accel */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+
+	PORT_START      /* IN2, unused */
+
+	PORT_START      /* IN3, steering */
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_PLAYER1, 50, 15, 0x00, 0xff )
+
+	PORT_START      /* IN4, fake allowing digital steer */
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER1 )
+	PORT_DIPNAME( 0x10, 0x00, "Steering type" )
+	PORT_DIPSETTING(    0x10, "Digital" )
+	PORT_DIPSETTING(    0x00, "Analogue" )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( sciu )	// dsws may be slightly wrong
+	PORT_START /* DSW A */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x01, "Cockpit" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	TAITO_Z_COINAGE_US_8
+
+	PORT_START /* DSW B */
+	TAITO_Z_DIFFICULTY_8
+	PORT_DIPNAME( 0x0c, 0x0c, "Timer Setting" )
+	PORT_DIPSETTING(    0x08, "70 Seconds" )
+	PORT_DIPSETTING(    0x04, "65 Seconds" )
+	PORT_DIPSETTING(    0x0c, "60 Seconds" )
 	PORT_DIPSETTING(    0x00, "55 Seconds" )
 	PORT_DIPNAME( 0x10, 0x10, "Turbos Stocked" )
 	PORT_DIPSETTING(    0x10, "3" )
@@ -1966,34 +2309,26 @@ INPUT_PORTS_START( nightstr )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
+	TAITO_Z_COINAGE_US_8
 
 	PORT_START /* DSW B */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x03, "Normal" )
-	PORT_DIPSETTING(    0x02, "Easy" )
-	PORT_DIPSETTING(    0x01, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	TAITO_Z_DIFFICULTY_8
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0c, 0x0c, "Bonus Shields" )
+	PORT_DIPSETTING(    0x08, "3" )
+	PORT_DIPSETTING(    0x04, "2" )
+	PORT_DIPSETTING(    0x0c, "1" )
+	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPNAME( 0x30, 0x30, "Shields" )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
-	PORT_DIPSETTING(    0x20, "6" )
 	PORT_DIPSETTING(    0x30, "5" )
+	PORT_DIPSETTING(    0x20, "6" )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
@@ -2050,30 +2385,100 @@ INPUT_PORTS_START( aquajack )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_B ) )	/* Actually "Price to Continue" */
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_2C ) )	/* Actually "Same as current Coin A" */
-	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
 
 	PORT_START /* DSW B */
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0xc0, "Normal" )
 	PORT_DIPSETTING(    0x40, "Easy" )
+	PORT_DIPSETTING(    0xc0, "Normal" )
 	PORT_DIPSETTING(    0x80, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "30k" )
 	PORT_DIPSETTING(    0x30, "50k" )
 	PORT_DIPSETTING(    0x10, "80k" )
 	PORT_DIPSETTING(    0x20, "100k" )
-	PORT_DIPSETTING(    0x00, "30k" )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x0c, "3" )
-	PORT_DIPSETTING(    0x04, "2" )
 	PORT_DIPSETTING(    0x08, "1" )
+	PORT_DIPSETTING(    0x04, "2" )
+	PORT_DIPSETTING(    0x0c, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) ) /* Dips 7 & 8 shown as "Do Not Touch" in manual */
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN2, what is it ??? */
+	PORT_ANALOG( 0xff, 0x80, IPT_DIAL | IPF_PLAYER1, 50, 10, 0, 0 )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( aquajckj )
+	PORT_START /* DSW A */
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x80, "Cockpit" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x20, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+
+	PORT_START /* DSW B */
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x40, "Easy" )
+	PORT_DIPSETTING(    0xc0, "Normal" )
+	PORT_DIPSETTING(    0x80, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "30k" )
+	PORT_DIPSETTING(    0x30, "50k" )
+	PORT_DIPSETTING(    0x10, "80k" )
+	PORT_DIPSETTING(    0x20, "100k" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x08, "1" )
+	PORT_DIPSETTING(    0x04, "2" )
+	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) ) /* Dips 7 & 8 shown as "Do Not Touch" in manual */
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
@@ -2108,7 +2513,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( spacegun )
 	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )	// Manual says Always Off
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, "Always have gunsight power up" )
@@ -2118,35 +2523,22 @@ INPUT_PORTS_START( spacegun )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
+	TAITO_Z_COINAGE_WORLD_8
 
 	PORT_START /* DSW B */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x03, "Normal" )
-	PORT_DIPSETTING(    0x02, "Easy" )
-	PORT_DIPSETTING(    0x01, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	TAITO_Z_DIFFICULTY_8
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )	// Manual lists dips 3 through 6 and 8 as Always off
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
@@ -2201,23 +2593,78 @@ INPUT_PORTS_START( dblaxle )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
+	TAITO_Z_COINAGE_US_8
 
 	PORT_START /* DSW B */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x03, "Normal" )
-	PORT_DIPSETTING(    0x02, "Easy" )
-	PORT_DIPSETTING(    0x01, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	TAITO_Z_DIFFICULTY_8
+	PORT_DIPNAME( 0x04, 0x00, "Multi-machine hookup ?" )	// doesn't boot if on
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "Player Truck" )
+	PORT_DIPSETTING(    0x08, "Red" )
+	PORT_DIPSETTING(    0x00, "Blue" )
+	PORT_DIPNAME( 0x10, 0x10, "Back button" )
+	PORT_DIPSETTING(    0x10, "Normal" )
+	PORT_DIPSETTING(    0x00, "Inverted" )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )	// causes "Root CPU Error" on "Icy Road" (Tourniquet)
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )	/* shift */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )	/* brake */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1 )	/* "back" */
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )	/* nitro */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1 )	/* "center" */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )	/* accel */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN2, unused */
+
+	PORT_START      /* IN3, steering */
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_PLAYER1, 40, 10, 0x00, 0xff )
+
+	PORT_START      /* IN4, fake allowing digital steer */
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER1 )
+	PORT_DIPNAME( 0x10, 0x00, "Steering type" )
+	PORT_DIPSETTING(    0x10, "Digital" )
+	PORT_DIPSETTING(    0x00, "Analogue" )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( pwheelsj )
+	PORT_START /* DSW A */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Gear shift" )
+	PORT_DIPSETTING(    0x02, "Normal" )
+	PORT_DIPSETTING(    0x00, "Inverted" )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	TAITO_Z_COINAGE_JAPAN_8
+
+	PORT_START /* DSW B */
+	TAITO_Z_DIFFICULTY_8
 	PORT_DIPNAME( 0x04, 0x00, "Multi-machine hookup ?" )	// doesn't boot if on
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
@@ -2779,30 +3226,30 @@ ROM_START( contcirc )
 	ROM_LOAD16_BYTE( "cc_36.bin", 0x00001, 0x20000, 0xa1732ea5 )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* Z80 sound cpu */
-	ROM_LOAD( "b33_30",   0x00000, 0x04000, 0xd8746234 )
+	ROM_LOAD( "b33-30",   0x00000, 0x04000, 0xd8746234 )
 	ROM_CONTINUE(         0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "b33_02", 0x00000, 0x80000, 0xf6fb3ba2 )	/* SCR 8x8 */
+	ROM_LOAD( "b33-02", 0x00000, 0x80000, 0xf6fb3ba2 )	/* SCR 8x8 */
 
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD32_BYTE( "b33_06", 0x000000, 0x080000, 0x2cb40599 )	/* OBJ 16x8 */
-	ROM_LOAD32_BYTE( "b33_05", 0x000001, 0x080000, 0xbddf9eea )
-	ROM_LOAD32_BYTE( "b33_04", 0x000002, 0x080000, 0x8df866a2 )
-	ROM_LOAD32_BYTE( "b33_03", 0x000003, 0x080000, 0x4f6c36d9 )
+	ROM_LOAD32_BYTE( "b33-06", 0x000000, 0x080000, 0x2cb40599 )	/* OBJ 16x8 */
+	ROM_LOAD32_BYTE( "b33-05", 0x000001, 0x080000, 0xbddf9eea )
+	ROM_LOAD32_BYTE( "b33-04", 0x000002, 0x080000, 0x8df866a2 )
+	ROM_LOAD32_BYTE( "b33-03", 0x000003, 0x080000, 0x4f6c36d9 )
 
 	ROM_REGION( 0x80000, REGION_GFX3, 0 )	/* don't dispose */
-	ROM_LOAD( "b33_01", 0x00000, 0x80000, 0xf11f2be8 )	/* ROD, road lines */
+	ROM_LOAD( "b33-01", 0x00000, 0x80000, 0xf11f2be8 )	/* ROD, road lines */
 
 	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
-	ROM_LOAD16_WORD( "b33_07", 0x00000, 0x80000, 0x151e1f52 )	/* STY spritemap */
+	ROM_LOAD16_WORD( "b33-07", 0x00000, 0x80000, 0x151e1f52 )	/* STY spritemap */
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples */
-	ROM_LOAD( "b33_09", 0x00000, 0x80000, 0x1e6724b5 )
-	ROM_LOAD( "b33_10", 0x80000, 0x80000, 0xe9ce03ab )
+	ROM_LOAD( "b33-09", 0x00000, 0x80000, 0x1e6724b5 )
+	ROM_LOAD( "b33-10", 0x80000, 0x80000, 0xe9ce03ab )
 
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
-	ROM_LOAD( "b33_08", 0x00000, 0x80000, 0xcaa1c4c8 )
+	ROM_LOAD( "b33-08", 0x00000, 0x80000, 0xcaa1c4c8 )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )
 	ROM_LOAD( "b14-30", 0x00000, 0x10000, 0xdccb0c7f )	/* unused roms */
@@ -2819,30 +3266,30 @@ ROM_START( contcrcu )
 	ROM_LOAD16_BYTE( "ic36", 0x00001, 0x20000, 0xd6741e33 )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* Z80 sound cpu */
-	ROM_LOAD( "b33_30",   0x00000, 0x04000, 0xd8746234 )
+	ROM_LOAD( "b33-30",   0x00000, 0x04000, 0xd8746234 )
 	ROM_CONTINUE(         0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "b33_02", 0x00000, 0x80000, 0xf6fb3ba2 )	/* SCR 8x8 */
+	ROM_LOAD( "b33-02", 0x00000, 0x80000, 0xf6fb3ba2 )	/* SCR 8x8 */
 
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD32_BYTE( "b33_06", 0x000000, 0x080000, 0x2cb40599 )	/* OBJ 16x8 */
-	ROM_LOAD32_BYTE( "b33_05", 0x000001, 0x080000, 0xbddf9eea )
-	ROM_LOAD32_BYTE( "b33_04", 0x000002, 0x080000, 0x8df866a2 )
-	ROM_LOAD32_BYTE( "b33_03", 0x000003, 0x080000, 0x4f6c36d9 )
+	ROM_LOAD32_BYTE( "b33-06", 0x000000, 0x080000, 0x2cb40599 )	/* OBJ 16x8 */
+	ROM_LOAD32_BYTE( "b33-05", 0x000001, 0x080000, 0xbddf9eea )
+	ROM_LOAD32_BYTE( "b33-04", 0x000002, 0x080000, 0x8df866a2 )
+	ROM_LOAD32_BYTE( "b33-03", 0x000003, 0x080000, 0x4f6c36d9 )
 
 	ROM_REGION( 0x80000, REGION_GFX3, 0 )	/* don't dispose */
-	ROM_LOAD( "b33_01", 0x00000, 0x80000, 0xf11f2be8 )	/* ROD, road lines */
+	ROM_LOAD( "b33-01", 0x00000, 0x80000, 0xf11f2be8 )	/* ROD, road lines */
 
 	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
-	ROM_LOAD16_WORD( "b33_07", 0x00000, 0x80000, 0x151e1f52 )	/* STY spritemap */
+	ROM_LOAD16_WORD( "b33-07", 0x00000, 0x80000, 0x151e1f52 )	/* STY spritemap */
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples */
-	ROM_LOAD( "b33_09", 0x00000, 0x80000, 0x1e6724b5 )
-	ROM_LOAD( "b33_10", 0x80000, 0x80000, 0xe9ce03ab )
+	ROM_LOAD( "b33-09", 0x00000, 0x80000, 0x1e6724b5 )
+	ROM_LOAD( "b33-10", 0x80000, 0x80000, 0xe9ce03ab )
 
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
-	ROM_LOAD( "b33_08", 0x00000, 0x80000, 0xcaa1c4c8 )
+	ROM_LOAD( "b33-08", 0x00000, 0x80000, 0xcaa1c4c8 )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )
 	ROM_LOAD( "b14-30", 0x00000, 0x10000, 0xdccb0c7f )	/* unused roms */
@@ -2984,7 +3431,7 @@ ROM_START( enforce )
 
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD32_BYTE( "b58-04.7",  0x000000, 0x080000, 0x9482f08d )
-	ROM_LOAD32_BYTE( "b58-03.6",  0x000001, 0x080000, 0x158bc440 )	/* OBJ 16x16 */
+	ROM_LOAD32_BYTE( "b58-03.6",  0x000001, 0x080000, 0x158bc440 )	/* OBJ 16x8 */
 	ROM_LOAD32_BYTE( "b58-02.2",  0x000002, 0x080000, 0x6a6e307c )
 	ROM_LOAD32_BYTE( "b58-01.1",  0x000003, 0x080000, 0x01e9f0a8 )
 
@@ -3522,18 +3969,18 @@ static DRIVER_INIT( bshark )
 /* Release date order: contcirc 1989 (c) date is bogus */
 
 GAMEX( 1989, contcirc, 0,        contcirc, contcirc, taitoz,   ROT0,               "Taito Corporation Japan", "Continental Circus (World)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1987, contcrcu, contcirc, contcirc, contcirc, taitoz,   ROT0,               "Taito America Corporation", "Continental Circus (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1987, contcrcu, contcirc, contcirc, contcrcu, taitoz,   ROT0,               "Taito America Corporation", "Continental Circus (US)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1988, chasehq,  0,        chasehq,  chasehq,  taitoz,   ROT0,               "Taito Corporation Japan", "Chase HQ (World)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1988, chasehqj, chasehq,  chasehq,  chasehq,  taitoz,   ROT0,               "Taito Corporation", "Chase HQ (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1988, chasehqj, chasehq,  chasehq,  chasehqj, taitoz,   ROT0,               "Taito Corporation", "Chase HQ (Japan)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1988, enforce,  0,        enforce,  enforce,  taitoz,   ROT0,               "Taito Corporation", "Enforce (Japan)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1989, bshark,   0,        bshark,   bshark,   bshark,   ORIENTATION_FLIP_X, "Taito America Corporation", "Battle Shark (US)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1989, bsharkj,  bshark,   bshark,   bshark,   bshark,   ORIENTATION_FLIP_X, "Taito Corporation", "Battle Shark (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1989, bsharkj,  bshark,   bshark,   bsharkj,  bshark,   ORIENTATION_FLIP_X, "Taito Corporation", "Battle Shark (Japan)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1989, sci,      0,        sci,      sci,      taitoz,   ROT0,               "Taito Corporation Japan", "Special Criminal Investigation (World set 1)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1989, scia,     sci,      sci,      sci,      taitoz,   ROT0,               "Taito Corporation Japan", "Special Criminal Investigation (World set 2)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1989, sciu,     sci,      sci,      sci,      taitoz,   ROT0,               "Taito America Corporation", "Special Criminal Investigation (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1989, sciu,     sci,      sci,      sciu,     taitoz,   ROT0,               "Taito America Corporation", "Special Criminal Investigation (US)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1989, nightstr, 0,        nightstr, nightstr, taitoz,   ROT0,               "Taito America Corporation", "Night Striker (US)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1990, aquajack, 0,        aquajack, aquajack, taitoz,   ROT0,               "Taito Corporation Japan", "Aqua Jack (World)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1990, aquajckj, aquajack, aquajack, aquajack, taitoz,   ROT0,               "Taito Corporation", "Aqua Jack (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1990, aquajckj, aquajack, aquajack, aquajckj, taitoz,   ROT0,               "Taito Corporation", "Aqua Jack (Japan)", GAME_IMPERFECT_GRAPHICS )
 GAME ( 1990, spacegun, 0,        spacegun, spacegun, bshark,   ORIENTATION_FLIP_X, "Taito Corporation Japan", "Space Gun (World)" )
 GAMEX( 1991, dblaxle,  0,        dblaxle,  dblaxle,  taitoz,   ROT0,               "Taito America Corporation", "Double Axle (US)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1991, pwheelsj, dblaxle,  dblaxle,  dblaxle,  taitoz,   ROT0,               "Taito Corporation", "Power Wheels (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1991, pwheelsj, dblaxle,  dblaxle,  pwheelsj, taitoz,   ROT0,               "Taito Corporation", "Power Wheels (Japan)", GAME_IMPERFECT_GRAPHICS )

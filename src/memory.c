@@ -710,6 +710,7 @@ int CLIB_DECL fatalerror(const char *string, ...)
 	va_start(arg, string);
 	vprintf(string, arg);
 	va_end(arg);
+	exit(1);
 	return 0;
 }
 
@@ -1312,6 +1313,10 @@ static int allocate_memory(void)
 			/* prepare for the next loop */
 			size = ext->end + 1;
 			ext++;
+
+			/* check for wraparound */
+			if (size < ext->end)
+				break;
 		}
 	}
 	return 1;
@@ -1459,7 +1464,9 @@ static void rg_add_entry(UINT32 start, UINT32 end, int mode)
 			*cur = e;
 			cur = &(*cur)->next;
 			start = e->end + 1;
-			if(start > end)
+
+			/* check for wraparound */
+			if(start == 0 || start > end)
 				return;
 		}
 
@@ -1496,6 +1503,10 @@ static void rg_add_entry(UINT32 start, UINT32 end, int mode)
 		(*cur)->flags = ((*cur)->flags & ~mask) | mode;
 		start = (*cur)->end + 1;
 		cur = &(*cur)->next;
+
+		/* check for wraparound */
+		if (start == 0)
+			break;
 	}
 }
 
@@ -2338,6 +2349,7 @@ GENERATE_MEM_HANDLERS_32BIT_BE(24)
 GENERATE_MEM_HANDLERS_32BIT_BE(29)
 GENERATE_MEM_HANDLERS_32BIT_BE(32)
 
+GENERATE_MEM_HANDLERS_32BIT_LE(24)
 GENERATE_MEM_HANDLERS_32BIT_LE(26)
 GENERATE_MEM_HANDLERS_32BIT_LE(29)
 GENERATE_MEM_HANDLERS_32BIT_LE(32)
@@ -2366,6 +2378,7 @@ static const struct memory_address_table readmem_to_bits[] =
 	{ 29, cpu_readmem29bedw },
 	{ 32, cpu_readmem32bedw },
 
+	{ 24, cpu_readmem24ledw },
 	{ 26, cpu_readmem26ledw },
 	{ 29, cpu_readmem29ledw },
 	{ 32, cpu_readmem32ledw },
@@ -2389,6 +2402,7 @@ GENERATE_PORT_HANDLERS_32BIT_BE(16)
 
 GENERATE_PORT_HANDLERS_32BIT_LE(16)
 GENERATE_PORT_HANDLERS_32BIT_LE(24)
+GENERATE_PORT_HANDLERS_32BIT_LE(32)
 
 
 /*-------------------------------------------------

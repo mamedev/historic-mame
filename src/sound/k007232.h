@@ -10,6 +10,7 @@
 struct K007232_interface
 {
 	int num_chips;			/* Number of chips */
+	int baseclock;          /* chip clock */
 	int bank[MAX_K007232];	/* memory regions */
 	int volume[MAX_K007232];/* volume */
 	void (*portwritehandler[MAX_K007232])(int);
@@ -26,7 +27,7 @@ READ_HANDLER( K007232_read_port_0_r );
 READ_HANDLER( K007232_read_port_1_r );
 READ_HANDLER( K007232_read_port_2_r );
 
-void K007232_bankswitch(int chip,unsigned char *ptr_A,unsigned char *ptr_B);
+void K007232_set_bank( int chip, int chABank, int chBBank );
 
 /*
   The 007232 has two channels and produces two outputs. The volume control

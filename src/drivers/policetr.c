@@ -162,7 +162,7 @@ static WRITE32_HANDLER( speedup_w )
 	/* see if the PC matches */
 	if ((activecpu_get_previouspc() & 0x1fffffff) == 0x1fc028ac)
 	{
-		UINT32 curr_cycles = cpu_gettotalcycles();
+		UINT32 curr_cycles = activecpu_gettotalcycles();
 
 		/* if less than 50 cycles from the last time, count it */
 		if (curr_cycles - last_cycles < 50)

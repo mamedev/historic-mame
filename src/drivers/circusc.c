@@ -33,7 +33,7 @@ static READ_HANDLER( circusc_sh_timer_r )
 	int clock;
 #define CIRCUSCHALIE_TIMER_RATE (14318180/6144)
 
-	clock = (cpu_gettotalcycles()*4) / CIRCUSCHALIE_TIMER_RATE;
+	clock = (activecpu_gettotalcycles()*4) / CIRCUSCHALIE_TIMER_RATE;
 
 	return clock & 0xF;
 }

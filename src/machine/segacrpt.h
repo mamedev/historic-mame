@@ -24,4 +24,6 @@ void lvcards_decode(void);
 void fdwarrio_decode(void);
 void astrofl_decode(void);
 void wboy2_decode(void);
+void spcpostn_decode(void);
 void gardia_decode(void);
+void gardiab_decode(void);

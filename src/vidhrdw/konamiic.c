@@ -82,6 +82,7 @@ Aliens              GX875*1990  052526 052109 051962 051960 051937  PROM
 Gang Busters        GX878*1988  052526 052109 051962 051960 051937  PROM
 Devastators         GX890*1988    6309 052109 051962 051960 051937  PROM         007324 051733 (protection)
 Bottom of the Ninth GX891*1989    6809 052109 051962 051960 051937  PROM         051316 (roz)
+Cue Brick           GX903*1989   68000 052109 051962 051960 051937  PROM
 Cue Brick           GX903*1989 2x68000           TWIN16
 Punk Shot           GX907*1990   68000 052109 051962 051960 051937 053251
 Ultraman            GX910*1991   68000 ------ ------ 051960 051937  PROM         051316(x3) (roz) 051550
@@ -92,7 +93,7 @@ Gradius 3           GX945*1989 2x68000 052109 051962 051960 051937  PROM
 Parodius            GX955*1990  053248 052109 051962 053245 053244 053251
 TMNT                GX963*1989   68000 052109 051962 051960 051937  PROM
 Block Hole          GX973*1989  052526 052109 051962 051960 051937  PROM
-Escape Kids         GX975 1991  053248 052109 051962 053247 053246 053251        053252(*) - same board as Vendetta
+Escape Kids         GX975*1991  053248 052109 051962 053247 053246 053251        053252(*)
 Rollergames         GX999*1991  053248 ------ ------ 053245 053244               051316 (roz) 053252(*)
 Bells & Whistles /  GX060*1991   68000 052109 051962 053245 053244 053251        054000 (collision)
   Detana!! Twin Bee
@@ -169,6 +170,7 @@ Gradius 3           pass
 Parodius            pass
 TMNT                pass
 Block Hole          pass
+Escape Kids         pass
 Rollergames         pass
 Bells & Whistles    pass
 Golfing Greats      pass
@@ -3681,6 +3683,27 @@ void K053247_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 		mirrorx = K053247_ram[offs+6] & 0x4000;
 		mirrory = K053247_ram[offs+6] & 0x8000;
 		shadow = K053247_ram[offs+6] & 0x0400;
+
+
+//*************************************************************************************
+//  for Escape Kids (GX975)
+//*************************************************************************************
+//    Escape Kids use 053246 #5 register's UNKNOWN Bit #5, #3 and #2.
+//    Bit #5, #3, #2 always set "1".
+//    Maybe, Bit #5 or #3 or #2 or combination means "FIX SPRITE WIDTH TO HALF" ?????
+//    Below 7 lines supports this 053246's(???) function.
+//    Don't rely on it, Please.  But, Escape Kids works correctly!
+//*************************************************************************************
+		if ( K053246_regs[5] & 0x08 ) // Check only "Bit #3 is '1'?"
+		{
+			zoomx = zoomx / 2;	// Fix sprite width to HALF size
+			ox = ox / 2 + 1;	// Fix sprite draw position
+
+			if (flipscreenx)
+				ox = ox + Machine->drv->screen_width;
+		}
+
+
 
 		if (flipscreenx)
 		{

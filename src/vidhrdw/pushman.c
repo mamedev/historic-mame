@@ -27,7 +27,7 @@ static void get_back_tile_info( int tile_index )
 			2,
 			(tile&0xff)|((tile&0x4000)>>6),
 			(tile>>8)&0xf,
-			((tile&0x2000) >> 13))	/* flip x*/
+			(tile&0x2000)?TILE_FLIPX:0)
 }
 
 static void get_text_tile_info( int tile_index )
@@ -35,9 +35,9 @@ static void get_text_tile_info( int tile_index )
 	int tile = videoram16[tile_index];
 	SET_TILE_INFO(
 			0,
-			(tile&0xff)|((tile&0x8000)>>6)|((tile&0x4000)>>6)|((tile&0x2000)>>4),
+			(tile&0xff)|((tile&0xc000)>>6)|((tile&0x2000)>>3),
 			(tile>>8)&0xf,
-			0)
+			(tile&0x1000)?TILE_FLIPY:0)	/* not used? from Tiger Road */
 }
 
 
@@ -93,7 +93,7 @@ WRITE16_HANDLER( pushman_videoram_w )
 
 static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
-	int offs,x,y,color,sprite;
+	int offs,x,y,color,sprite,flipx,flipy;
 
 	for (offs = 0x0800-4;offs >=0;offs -= 4)
 	{
@@ -104,10 +104,13 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 		y = 240-spriteram16[offs+2];
 		color = ((spriteram16[offs+1]>>2)&0xf);
 		sprite = spriteram16[offs]&0x7ff;
+		/* ElSemi - Sprite flip info */
+		flipx=spriteram16[offs+1]&2;
+		flipy=spriteram16[offs+1]&1;	/* flip y untested */
 
 		drawgfx(bitmap,Machine->gfx[1],
 				sprite,
-				color,0,0,x,y,
+                color,flipx,flipy,x,y,
 				cliprect,TRANSPARENCY_PEN,15);
 	}
 }

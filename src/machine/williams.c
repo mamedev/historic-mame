@@ -185,6 +185,14 @@ struct pia6821_interface playball_pia_1_intf =
 	/*irqs   : A/B             */ williams_main_irq, williams_main_irq
 };
 
+/* extra PIA 3 for Speed Ball */
+struct pia6821_interface spdball_pia_3_intf =
+{
+	/*inputs : A/B,CA/B1,CA/B2 */ input_port_3_r, input_port_4_r, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
+	/*irqs   : A/B             */ 0, 0
+};
+
 
 
 /*************************************

@@ -79,7 +79,7 @@ static READ_HANDLER( timeplt_portB_r )
 
 	int current_totalcycles;
 
-	current_totalcycles = cpu_gettotalcycles();
+	current_totalcycles = activecpu_gettotalcycles();
 	clock = (clock + (current_totalcycles-last_totalcycles)) % 5120;
 
 	last_totalcycles = current_totalcycles;

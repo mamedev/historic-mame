@@ -5,6 +5,7 @@
   Tumblepop             (c) 1991 Data East Corporation (Bootleg 1)
   Tumblepop             (c) 1991 Data East Corporation (Bootleg 2)
   Jump Kids	            (c) 1993 Comad
+  Fancy World			(c) 1996 Unico
 
   Bootleg sound is not quite correct yet (Nothing on bootleg 2).
 
@@ -85,12 +86,16 @@ Stephh's notes (based on the games M68000 code and some tests) :
 #define TUMBLEP_HACK	0
 
 VIDEO_START( tumblep );
+VIDEO_START( fncywld );
 VIDEO_UPDATE( tumblep );
 VIDEO_UPDATE( tumblepb );
 VIDEO_UPDATE( jumpkids );
+VIDEO_UPDATE( fncywld );
 
 WRITE16_HANDLER( tumblep_pf1_data_w );
 WRITE16_HANDLER( tumblep_pf2_data_w );
+WRITE16_HANDLER( fncywld_pf1_data_w );
+WRITE16_HANDLER( fncywld_pf2_data_w );
 WRITE16_HANDLER( tumblep_control_0_w );
 
 extern data16_t *tumblep_pf1_data,*tumblep_pf2_data;
@@ -195,6 +200,43 @@ static MEMORY_WRITE16_START( tumblepopb_writemem )
 	{ 0x340400, 0x34047f, MWA16_NOP }, /* Unused col scroll */
 	{ 0x342000, 0x3421ff, MWA16_NOP },
 	{ 0x342400, 0x34247f, MWA16_NOP },
+MEMORY_END
+
+
+static MEMORY_READ16_START( fncywld_readmem )
+	{ 0x000000, 0x0fffff, MRA16_ROM },
+	{ 0x100000, 0x100001, YM2151_status_port_0_lsb_r },
+	{ 0x100002, 0x100003, MRA16_NOP }, // ym?
+	{ 0x100004, 0x100005, OKIM6295_status_0_lsb_r },
+	{ 0x140000, 0x140fff, MRA16_RAM },
+	{ 0x160000, 0x1607ff, MRA16_RAM },
+	{ 0x180000, 0x180001, input_port_1_word_r },
+	{ 0x180002, 0x180003, input_port_2_word_r },
+	{ 0x180008, 0x180009, input_port_0_word_r },
+	{ 0x320000, 0x321fff, MRA16_RAM },
+	{ 0x322000, 0x323fff, MRA16_RAM },
+	{ 0x1a0000, 0x1a07ff, MRA16_RAM },
+	{ 0xff0000, 0xffffff, MRA16_RAM }, // RAM
+MEMORY_END
+
+static MEMORY_WRITE16_START( fncywld_writemem )
+	{ 0x000000, 0x0fffff, MWA16_ROM },
+	{ 0x100000, 0x100001, YM2151_register_port_0_lsb_w },
+	{ 0x100002, 0x100003, YM2151_data_port_0_lsb_w },
+	{ 0x100004, 0x100005, OKIM6295_data_0_lsb_w },
+	{ 0x140000, 0x140fff, paletteram16_xxxxRRRRGGGGBBBB_word_w, &paletteram16 },
+	{ 0x160000, 0x1607ff, MWA16_RAM, &spriteram16 }, /* sprites */
+	{ 0x160800, 0x16080f, MWA16_RAM }, /* goes slightly past the end of spriteram? */
+	{ 0x18000c, 0x18000d, MWA16_NOP },
+	{ 0x1a0000, 0x1a07ff, MWA16_RAM },
+	{ 0x300000, 0x30000f, tumblep_control_0_w },
+	{ 0x320000, 0x321fff, fncywld_pf1_data_w, &tumblep_pf1_data },
+	{ 0x322000, 0x323fff, fncywld_pf2_data_w, &tumblep_pf2_data },
+	{ 0x340000, 0x3401ff, MWA16_NOP }, /* Unused row scroll */
+	{ 0x340400, 0x34047f, MWA16_NOP }, /* Unused col scroll */
+	{ 0x342000, 0x3421ff, MWA16_NOP },
+	{ 0x342400, 0x34247f, MWA16_NOP },
+	{ 0xff0000, 0xffffff, MWA16_RAM }, // RAM
 MEMORY_END
 
 /******************************************************************************/
@@ -325,6 +367,88 @@ INPUT_PORTS_START( tumblep )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( fncywld )
+	PORT_START	/* Credits */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	/* 0xff00 not read? */
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 - unused */
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 - unused */
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+INPUT_PORTS_END
+
 /******************************************************************************/
 
 static struct GfxLayout tcharlayout =
@@ -360,6 +484,15 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+static struct GfxDecodeInfo fncywld_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &tcharlayout, 0x400, 0x40 },	/* Characters 8x8 */
+	{ REGION_GFX1, 0, &tlayout,     0x400, 0x40 },	/* Tiles 16x16 */
+	{ REGION_GFX1, 0, &tlayout,     0x200, 0x40 },	/* Tiles 16x16 */
+	{ REGION_GFX2, 0, &tlayout,       0, 0x40 },	/* Sprites 16x16 */
+	{ -1 } /* end of array */
+};
+
 /******************************************************************************/
 
 static struct OKIM6295interface okim6295_interface2 =
@@ -389,6 +522,22 @@ static struct YM2151interface ym2151_interface =
 	32220000/9, /* May not be correct, there is another crystal near the ym2151 */
 	{ YM3012_VOL(45,MIXER_PAN_LEFT,45,MIXER_PAN_RIGHT) },
 	{ sound_irq }
+};
+
+static struct OKIM6295interface fncy_okim6295_interface =
+{
+	1,          /* 1 chip */
+	{ 7757 },	/* Frequency */
+	{ REGION_SOUND1 },	/* memory region */
+	{ 100 }
+};
+
+static struct YM2151interface fncy_ym2151_interface =
+{
+	1,
+	32220000/9,
+	{ YM3012_VOL(20,MIXER_PAN_LEFT,20,MIXER_PAN_RIGHT) },
+	{ 0 }
 };
 
 static MACHINE_DRIVER_START( tumblep )
@@ -470,6 +619,31 @@ static MACHINE_DRIVER_START( jumpkids )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(OKIM6295, okim6295_interface2)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( fncywld )
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_MEMORY(fncywld_readmem,fncywld_writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(529)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(fncywld_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x800)
+
+	MDRV_VIDEO_START(fncywld)
+	MDRV_VIDEO_UPDATE(fncywld)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, fncy_ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, fncy_okim6295_interface)
 MACHINE_DRIVER_END
 
 /******************************************************************************/
@@ -571,6 +745,27 @@ ROM_START( jumpkids )
 	ROM_LOAD( "22.2c", 0x00000, 0x20000, 0xfae44fbf )
 ROM_END
 
+ROM_START( fncywld )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "01_fw02.bin", 0x000000, 0x080000, 0xecb978c1 )
+	ROM_LOAD16_BYTE( "02_fw03.bin", 0x000001, 0x080000, 0x2d233b42 )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE  )
+	ROM_LOAD16_BYTE( "05_fw06.bin",  0x00000, 0x40000, 0xe141ecdc )
+	ROM_LOAD16_BYTE( "06_fw07.bin",  0x00001, 0x40000, 0x0058a812 )
+	ROM_LOAD16_BYTE( "03_fw04.bin",  0x80000, 0x40000, 0x6ad38c14 )
+	ROM_LOAD16_BYTE( "04_fw05.bin",  0x80001, 0x40000, 0xb8d079a6 )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "08_fw09.bin", 0x00000, 0x40000, 0xa4a00de9 )
+	ROM_LOAD16_BYTE( "07_fw08.bin", 0x00001, 0x40000, 0xb48cd1d4 )
+	ROM_LOAD16_BYTE( "10_fw11.bin", 0x80000, 0x40000, 0xf21bab48 )
+	ROM_LOAD16_BYTE( "09_fw10.bin", 0x80001, 0x40000, 0x6aea8e0f )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "00_fw01.bin", 0x000000, 0x040000, 0xb395fe01 )
+ROM_END
+
 /******************************************************************************/
 
 void tumblep_patch_code(UINT16 offset)
@@ -638,3 +833,4 @@ GAME( 1991, tumblepj, tumblep, tumblep,   tumblep,  tumblep,  ROT0, "Data East C
 GAMEX(1991, tumblepb, tumblep, tumblepb,  tumblep,  tumblepb, ROT0, "bootleg", "Tumble Pop (bootleg set 1)", GAME_IMPERFECT_SOUND )
 GAMEX(1991, tumblep2, tumblep, tumblepb,  tumblep,  tumblepb, ROT0, "bootleg", "Tumble Pop (bootleg set 2)", GAME_IMPERFECT_SOUND )
 GAMEX(1993, jumpkids, 0,       jumpkids,  tumblep,  jumpkids, ROT0, "Comad", "Jump Kids", GAME_NO_SOUND )
+GAME (1996, fncywld,  0,       fncywld,   fncywld,  jumpkids, ROT0, "Unico", "Fancy World - Earth of Crisis" ) // game says 1996, testmode 1995?

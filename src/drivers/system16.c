@@ -419,7 +419,7 @@ ROM_START( alexkidd )
 	ROM_LOAD( "10432.94", 0x08000, 0x08000, 0xdb8cd24e )
 	ROM_LOAD( "10433.93", 0x10000, 0x08000, 0xe163c8c2 )
 
-	ROM_REGION( 0x050000, REGION_GFX2, 0 ) /* sprites */
+	ROM_REGION( 0x040000, REGION_GFX2, 0 ) /* sprites */
 	ROM_LOAD16_BYTE( "10437.10", 0x000001, 0x8000, 0x522f7618 )
 	ROM_LOAD16_BYTE( "10441.11", 0x000000, 0x8000, 0x74e3a35c )
 	ROM_LOAD16_BYTE( "10438.17", 0x010001, 0x8000, 0x738a6362 )
@@ -428,8 +428,6 @@ ROM_START( alexkidd )
 	ROM_LOAD16_BYTE( "10443.24", 0x020000, 0x8000, 0x95d32635 )
 	ROM_LOAD16_BYTE( "10440.29", 0x030001, 0x8000, 0x23939508 )
 	ROM_LOAD16_BYTE( "10444.30", 0x030000, 0x8000, 0x82115823 )
-//	ROM_LOAD16_BYTE( "10437.10", 0x040001, 0x8000, 0x522f7618 ) twice?
-//	ROM_LOAD16_BYTE( "10441.11", 0x040000, 0x8000, 0x74e3a35c ) twice?
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* sound CPU */
 	ROM_LOAD( "10434.12", 0x0000, 0x8000, 0x77141cce )
@@ -454,7 +452,7 @@ ROM_START( alexkida )
 	ROM_LOAD( "10432.94", 0x08000, 0x08000, 0xdb8cd24e )
 	ROM_LOAD( "10433.93", 0x10000, 0x08000, 0xe163c8c2 )
 
-	ROM_REGION( 0x050000, REGION_GFX2, 0 ) /* sprites */
+	ROM_REGION( 0x040000, REGION_GFX2, 0 ) /* sprites */
 	ROM_LOAD16_BYTE( "10437.10", 0x000001, 0x8000, 0x522f7618 )
 	ROM_LOAD16_BYTE( "10441.11", 0x000000, 0x8000, 0x74e3a35c )
 	ROM_LOAD16_BYTE( "10438.17", 0x010001, 0x8000, 0x738a6362 )
@@ -463,8 +461,6 @@ ROM_START( alexkida )
 	ROM_LOAD16_BYTE( "10443.24", 0x020000, 0x8000, 0x95d32635 )
 	ROM_LOAD16_BYTE( "10440.29", 0x030001, 0x8000, 0x23939508 )
 	ROM_LOAD16_BYTE( "10444.30", 0x030000, 0x8000, 0x82115823 )
-//	ROM_LOAD16_BYTE( "10437.10", 0x040001, 0x8000, 0x522f7618 ) twice?
-//	ROM_LOAD16_BYTE( "10441.11", 0x040000, 0x8000, 0x74e3a35c ) twice?
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* sound CPU */
 	ROM_LOAD( "10434.12", 0x0000, 0x8000, 0x77141cce )
@@ -1679,11 +1675,9 @@ ROM_START( bodyslam )
 	ROM_LOAD( "epr10322.c10", 0x08000, 0x8000, 0xb53d3217 ) /* plane 2 */
 	ROM_LOAD( "epr10323.c11", 0x10000, 0x8000, 0x915a3e61 ) /* plane 3 */
 
-	ROM_REGION( 0x50000, REGION_GFX2, 0 ) /* sprites */
+	ROM_REGION( 0x40000, REGION_GFX2, 0 ) /* sprites */
 	ROM_LOAD16_BYTE( "epr10012.c5",  0x00001, 0x08000, 0x990824e8 )
-//	ROM_RELOAD(             		   0x40000, 0x08000 )
 	ROM_LOAD16_BYTE( "epr10016.b2",  0x00000, 0x08000, 0xaf5dc72f )
-//	ROM_RELOAD(              		   0x40000, 0x08000 )
 	ROM_LOAD16_BYTE( "epr10013.c6",  0x10001, 0x08000, 0x9a0919c5 )
 	ROM_LOAD16_BYTE( "epr10017.b3",  0x10000, 0x08000, 0x62aafd95 )
 	ROM_LOAD16_BYTE( "epr10027.c7",  0x20001, 0x08000, 0x3f1c57c7 )
@@ -1719,11 +1713,9 @@ ROM_START( dumpmtmt )
 	ROM_LOAD( "7708a.bin",  0x08000, 0x8000, 0x411be9a4 ) /* plane 2 */
 	ROM_LOAD( "7709a.bin",  0x10000, 0x8000, 0x74ceb5a8 ) /* plane 3 */
 
-	ROM_REGION( 0x50000, REGION_GFX2, 0 ) /* sprites */
+	ROM_REGION( 0x40000, REGION_GFX2, 0 ) /* sprites */
 	ROM_LOAD16_BYTE( "7715.bin",  	0x000001, 0x08000, 0xbf47e040 )
-//	ROM_RELOAD(               			0x040000, 0x08000 )
 	ROM_LOAD16_BYTE( "7719.bin",  	0x000000, 0x08000, 0xfa5c5d6c )
-//	ROM_RELOAD(            		 		0x040000, 0x08000 )
 	ROM_LOAD16_BYTE( "epr10013.c6",	0x010001, 0x08000, 0x9a0919c5 )	/* 7716 */
 	ROM_LOAD16_BYTE( "epr10017.b3",	0x010000, 0x08000, 0x62aafd95 )	/* 7720 */
 	ROM_LOAD16_BYTE( "7717.bin",  	0x020001, 0x08000, 0xfa64c86d )
@@ -3970,11 +3962,9 @@ ROM_START( quartet )
 	ROM_LOAD( "epr7462.10c", 0x08000, 0x08000, 0x7914af28 )
 	ROM_LOAD( "epr7463.11c", 0x10000, 0x08000, 0x827c5603 )
 
-	ROM_REGION( 0x50000, REGION_GFX2, 0 ) /* sprites  - the same as quartet 2 */
+	ROM_REGION( 0x40000, REGION_GFX2, 0 ) /* sprites  - the same as quartet 2 */
 	ROM_LOAD16_BYTE( "epr7465.5c",  0x000001, 0x8000, 0x8a1ab7d7 )
-//	ROM_RELOAD(             		  0x040000, 0x8000 ) //twice? - fixes a sprite glitch
 	ROM_LOAD16_BYTE( "epr-7469.2b", 0x000000, 0x8000, 0xcb65ae4f )
-//	ROM_RELOAD(              		  0x040000, 0x8000 ) //twice?
 	ROM_LOAD16_BYTE( "epr7466.6c",  0x010001, 0x8000, 0xb2d3f4f3 )
 	ROM_LOAD16_BYTE( "epr-7470.3b", 0x010000, 0x8000, 0x16fc67b1 )
 	ROM_LOAD16_BYTE( "epr7467.7c",  0x020001, 0x8000, 0x0af68de2 )
@@ -4009,11 +3999,9 @@ ROM_START( quartetj )
 	ROM_LOAD( "epr7462.10c", 0x08000, 0x08000, 0x7914af28 )
 	ROM_LOAD( "epr7463.11c", 0x10000, 0x08000, 0x827c5603 )
 
-	ROM_REGION( 0x050000, REGION_GFX2, 0 ) /* sprites  - the same as quartet 2 */
+	ROM_REGION( 0x040000, REGION_GFX2, 0 ) /* sprites  - the same as quartet 2 */
 	ROM_LOAD16_BYTE( "epr7465.5c",  0x000001, 0x8000, 0x8a1ab7d7 )
-//	ROM_RELOAD(         		      0x040000, 0x8000 ) //twice? - fixes a sprite glitch
 	ROM_LOAD16_BYTE( "epr-7469.2b", 0x000000, 0x8000, 0xcb65ae4f )
-//	ROM_RELOAD(      		          0x040000, 0x8000 ) //twice?
 	ROM_LOAD16_BYTE( "epr7466.6c",  0x010001, 0x8000, 0xb2d3f4f3 )
 	ROM_LOAD16_BYTE( "epr-7470.3b", 0x010000, 0x8000, 0x16fc67b1 )
 	ROM_LOAD16_BYTE( "epr7467.7c",  0x020001, 0x8000, 0x0af68de2 )
@@ -4055,7 +4043,7 @@ static MEMORY_READ16_START( quartet_readmem )
 	{ 0xc41006, 0xc41007, input_port_3_word_r }, // p4
 	{ 0xc42000, 0xc42001, input_port_3_word_r }, // dip1
 	{ 0xc42002, 0xc42003, input_port_5_word_r }, // dip2
-	{ 0xffc800, 0xffc801, quartet_skip_r },
+//	{ 0xffc800, 0xffc801, quartet_skip_r },
 	{ 0xffc000, 0xffffff, SYS16_MRA16_WORKINGRAM },
 MEMORY_END
 
@@ -4078,9 +4066,9 @@ static void quartet_update_proc( void ){
 	sys16_fg_scrolly = sys16_textram[0x0f24/2] & 0x00ff;
 	sys16_bg_scrolly = sys16_textram[0x0f26/2] & 0x01ff;
 
-	if(((*(UINT16 *)(&sys16_extraram[4])) & 0xff) == 1)
-		sys16_quartet_title_kludge=1;
-	else
+//	if(((*(UINT16 *)(&sys16_extraram[4])) & 0xff) == 1)
+//		\=1;
+//	else
 		sys16_quartet_title_kludge=0;
 
 	set_fg_page1( sys16_workingram[0x0d1c/2] );
@@ -4201,11 +4189,9 @@ ROM_START( quartet2 )
 	ROM_LOAD( "quartet2.c10", 0x08000, 0x08000, 0x77ec901d )
 	ROM_LOAD( "quartet2.c11", 0x10000, 0x08000, 0x7e348cce )
 
-	ROM_REGION( 0x050000, REGION_GFX2, 0 ) /* sprites */
+	ROM_REGION( 0x040000, REGION_GFX2, 0 ) /* sprites */
 	ROM_LOAD16_BYTE( "epr7465.5c",  0x000001, 0x8000, 0x8a1ab7d7 )
-//	ROM_RELOAD(           		      0x040000, 0x8000 ) //twice? - fixes a sprite glitch
 	ROM_LOAD16_BYTE( "epr-7469.2b", 0x000000, 0x8000, 0xcb65ae4f )
-//	ROM_RELOAD(         		      0x040000, 0x8000 ) //twice?
 	ROM_LOAD16_BYTE( "epr7466.6c",  0x010001, 0x8000, 0xb2d3f4f3 )
 	ROM_LOAD16_BYTE( "epr-7470.3b", 0x010000, 0x8000, 0x16fc67b1 )
 	ROM_LOAD16_BYTE( "epr7467.7c",  0x020001, 0x8000, 0x0af68de2 )
@@ -4245,7 +4231,7 @@ static MEMORY_READ16_START( quartet2_readmem )
 	{ 0xc41000, 0xc41001, input_port_2_word_r }, // service
 	{ 0xc42000, 0xc42001, input_port_3_word_r }, // dip1
 	{ 0xc42002, 0xc42003, input_port_4_word_r }, // dip2
-	{ 0xffc800, 0xffc801, quartet2_skip_r },
+//	{ 0xffc800, 0xffc801, quartet2_skip_r },
 	{ 0xffc000, 0xffffff, SYS16_MRA16_WORKINGRAM },
 MEMORY_END
 

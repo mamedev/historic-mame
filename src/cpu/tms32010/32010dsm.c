@@ -1,13 +1,14 @@
-/****************************************************************************
- *				Texas Instruments TMS320C10 DSP Disassembler				*
+ /**************************************************************************\
+ *				  Texas Instruments TMS32010 DSP Disassembler				*
  *																			*
- *						Copyright (C) 1999 by Quench						*
+ *					Copyright (C) 1999-2002+ Tony La Porta					*
+ *				 To be used with TMS32010 DSP Emulator engine.				*
  *		You are not allowed to distribute this software commercially.		*
  *						Written for the MAME project.						*
- *			Many thanks to those involved in the i8039 Disassembler			*
- *					as this was borrowed from it (and modified)				*
  *																			*
- *				To be used with TMS320C10 DSP Emulator engine.				*
+ *		   Many thanks to those involved in the i8039 Disassembler			*
+ *						  as this was based on it.							*
+ *																			*
  *																			*
  *																			*
  * A Memory address															*
@@ -20,19 +21,32 @@
  * P I/O port address number												*
  * R AR[R] register to use													*
  * S Shift ALU left															*
- ***************************************************************************/
+ *																			*
+ \**************************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
+#ifdef MAME_DEBUG					/* Compile interface to MAME */
 #include "memory.h"
 #include "tms32010.h"
-
-#ifdef  MAME_DEBUG
 #include "mamedbg.h"
+#define READOP16(A)  (cpu_readop16((A)     | TMS32010_PGM_OFFSET))
+#define READARG16(A) (cpu_readop_arg16((A) | TMS32010_PGM_OFFSET))
+#else								/* Compile interface for standalone */
+extern unsigned char *Buffer;
+#ifdef MSB_FIRST
+#define READOP16(A)  ( ((Buffer[A+1]<<8) | Buffer[A]) )
+#define READARG16(A) ( ((Buffer[A+1]<<8) | Buffer[A]) )
+#else
+#define READOP16(A)  ( ((Buffer[A]<<8) | Buffer[A+1]) )
+#define READARG16(A) ( ((Buffer[A]<<8) | Buffer[A+1]) )
 #endif
+#endif
+
+
 
 typedef unsigned char byte;
 typedef unsigned short int word;
@@ -40,13 +54,11 @@ typedef unsigned short int word;
 #define FMT(a,b) a, b
 #define PTRS_PER_FORMAT 2
 
-#define READOP16(A) (cpu_readop16((A)+TMS320C10_PGM_OFFSET))
-#define READARG16(A) (cpu_readop_arg16((A)+TMS320C10_PGM_OFFSET))
+static char *arith[4] = { "*" , "*-" , "*+" , "??" } ;
+static char *nextar[4] = { ",AR0" , ",AR1" , "" , "" } ;
 
-char *arith[4] = { "*" , "*-" , "*+" , "??" } ;
-char *nextar[4] = { ",AR0" , ",AR1" , "" , "" } ;
 
-char *TMSFormats[] = {
+static char *TMS32010Formats[] = {
 	FMT("0000ssss0aaaaaaa", "add  %A%S"),
 	FMT("0000ssss10mmn00n", "add  %M%S%N"),
 	FMT("0001ssss0aaaaaaa", "sub  %A%S"),
@@ -158,7 +170,7 @@ char *TMSFormats[] = {
 	NULL
 };
 
-#define MAX_OPS (((sizeof(TMSFormats) / sizeof(TMSFormats[0])) - 1) / PTRS_PER_FORMAT)
+#define MAX_OPS (((sizeof(TMS32010Formats) / sizeof(TMS32010Formats[0])) - 1) / PTRS_PER_FORMAT)
 
 typedef struct opcode {
 	word mask;			/* instruction mask */
@@ -178,7 +190,7 @@ static void InitDasm32010(void)
 	int bit;
 	int i;
 
-	ops = TMSFormats; i = 0;
+	ops = TMS32010Formats; i = 0;
 	while (*ops)
 	{
 		p = *ops;
@@ -304,7 +316,7 @@ unsigned Dasm32010(char *str, unsigned pc)
 	{
 		if (*cp == '%')
 		{
-			char num[15], *q;
+			char num[20], *q;
 			cp++;
 			switch (*cp++)
 			{

@@ -1,15 +1,11 @@
 /* vidhrdw/twin16.c
 
 	Known Issues:
-		sprite-tilemap priority isn't right (see Devil's World intro)
 		some rogue sprites in Devil's World
-
-	to do:
-		8BPP support
-		assorted optimizations
+		Corrupt sprites in end sequence of Vulcan Venture
+		Sprite lag bad in Devil's World, sprite lag in Y axis only in Vulcan Venture
+		'Shadow' sprites (alpha blending) on at least Devil's World.
 */
-
-#define USE_16BIT
 
 #include "vidhrdw/generic.h"
 
@@ -33,10 +29,6 @@ enum {
 	TWIN16_PLANE_ORDER		= 0x08,	/* confirmed: Devil Worlds */
 	TWIN16_TILE_FLIPY		= 0x20	/* confirmed? Vulcan Venture */
 };
-
-VIDEO_START( twin16 ){
-	return 0;
-}
 
 /******************************************************************************************/
 
@@ -98,15 +90,16 @@ static void draw_sprite( /* slow slow slow, but it's ok for now */
 	const pen_t *pal_data,
 	int xpos, int ypos,
 	int width, int height,
-	int flipx, int flipy ){
+	int flipx, int flipy, int pri )
+{
 
-	int x,y;
-	if( xpos>=320 ) xpos -= 512;
-	if( ypos>=256 ) ypos -= 512;
+	int x,y,pval;
+	if( xpos>=320 ) xpos -= 65536;
+	if( ypos>=256 ) ypos -= 65536;
 
-	if( xpos+width>=0 && xpos<320 && ypos+height>16 && ypos<256-16 )
+	if (pri) pval=2; else pval=8;
+
 	{
-		if (bitmap->depth == 16)
 		{
 			for( y=0; y<height; y++ )
 			{
@@ -114,6 +107,8 @@ static void draw_sprite( /* slow slow slow, but it's ok for now */
 				if( sy>=16 && sy<256-16 )
 				{
 					UINT16 *dest = (UINT16 *)bitmap->line[sy];
+					UINT8 *pdest = (UINT8 *)priority_bitmap->line[sy];
+
 					for( x=0; x<width; x++ )
 					{
 						int sx = (flipx)?(xpos+width-1-x):(xpos+x);
@@ -127,35 +122,7 @@ static void draw_sprite( /* slow slow slow, but it's ok for now */
 							case 2: pen = (pen>>4)&0xf; break;
 							case 3: pen = pen&0xf; break;
 							}
-							if( pen ) dest[sx] = pal_data[pen];
-						}
-					}
-				}
-				pen_data += width/4;
-			}
-		}
-		else
-		{
-			for( y=0; y<height; y++ )
-			{
-				int sy = (flipy)?(ypos+height-1-y):(ypos+y);
-				if( sy>=16 && sy<256-16 )
-				{
-					UINT8 *dest = (UINT8 *)bitmap->line[sy];
-					for( x=0; x<width; x++ )
-					{
-						int sx = (flipx)?(xpos+width-1-x):(xpos+x);
-						if( sx>=0 && sx<320 )
-						{
-							UINT16 pen = pen_data[x/4];
-							switch( x%4 )
-							{
-							case 0: pen = pen>>12; break;
-							case 1: pen = (pen>>8)&0xf; break;
-							case 2: pen = (pen>>4)&0xf; break;
-							case 3: pen = pen&0xf; break;
-							}
-							if( pen ) dest[sx] = pal_data[pen];
+							if( pen && pdest[sx]<pval) { dest[sx] = pal_data[pen]; pdest[sx]|=0x10; }
 						}
 					}
 				}
@@ -165,7 +132,8 @@ static void draw_sprite( /* slow slow slow, but it's ok for now */
 	}
 }
 
-void twin16_spriteram_process( void ){
+void twin16_spriteram_process( void )
+{
 	data16_t dx = scrollx[0];
 	data16_t dy = scrolly[0];
 
@@ -183,6 +151,7 @@ void twin16_spriteram_process( void ){
 
 			data16_t attributes = source[2]&0x03ff; /* scale,size,color */
 			if( priority & 0x0200 ) attributes |= 0x4000;
+			/* Todo:  priority & 0x0100 is also used */
 			attributes |= 0x8000;
 
 			dest[0] = source[3]; /* gfx data */
@@ -214,19 +183,23 @@ void twin16_spriteram_process( void ){
  *   3  | --------xx------ | height
  *   3  | ----------xx---- | width
  *   3  | ------------xxxx | color
+
+shadow bit?
+
  */
 
-static void draw_sprites( struct mame_bitmap *bitmap, int pri ){
+static void draw_sprites( struct mame_bitmap *bitmap)
+{
 	int count = 0;
-	const data16_t *source = 0x1800+spriteram16;
-	const data16_t *finish = source + 0x800;
-	pri = pri?0x4000:0x0000;
 
-	while( source<finish ){
+	const data16_t *source = 0x1800+buffered_spriteram16 + 0x800 -4;
+	const data16_t *finish = 0x1800+buffered_spriteram16;
+
+	while( source>=finish ){
 		data16_t attributes = source[3];
 		data16_t code = source[0];
 
-		if( code!=0xffff && (attributes&0x8000) && (attributes&0x4000)==pri ){
+		if( code!=0xffff && (attributes&0x8000)){
 			int xpos = source[1];
 			int ypos = source[2];
 
@@ -264,34 +237,23 @@ static void draw_sprites( struct mame_bitmap *bitmap, int pri ){
 			pen_data += code*0x40;
 
 			if( video_register&TWIN16_SCREEN_FLIPY ){
+				if (ypos>65000) ypos=ypos-65536; /* Bit hacky */
 				ypos = 256-ypos-height;
 				flipy = !flipy;
 			}
 			if( video_register&TWIN16_SCREEN_FLIPX ){
+				if (xpos>65000) xpos=xpos-65536; /* Bit hacky */
 				xpos = 320-xpos-width;
 				flipx = !flipx;
 			}
 
 			//if( sprite_which==count || !keyboard_pressed( KEYCODE_B ) )
-			draw_sprite( bitmap, pen_data, pal_data, xpos, ypos, width, height, flipx, flipy );
+			draw_sprite( bitmap, pen_data, pal_data, xpos, ypos, width, height, flipx, flipy, (attributes&0x4000) );
 		}
-			count++;
-		source += 4;
-	}
-}
 
-static void show_video_register( struct mame_bitmap *bitmap ){
-#if 0
-	int n;
-	for( n=0; n<4; n++ ){
-		drawgfx( bitmap, Machine->uifont,
-			"0123456789abcdef"[(video_register>>(12-4*n))&0xf],
-			0,
-			0,0,
-			n*6+8,16,
-			0,TRANSPARENCY_NONE,0);
+		count++;
+		source -= 4;
 	}
-#endif
 }
 
 static void draw_layer( struct mame_bitmap *bitmap, int opaque ){
@@ -381,11 +343,12 @@ static void draw_layer( struct mame_bitmap *bitmap, int opaque ){
 				{
 					if( opaque )
 					{
-						if (bitmap->depth == 16)
 						{
 							for( y=y1; y!=y2; y+=yd )
 							{
 								UINT16 *dest = ((UINT16 *)bitmap->line[ypos+y])+xpos;
+								UINT8 *pdest = ((UINT8 *)priority_bitmap->line[ypos+y])+xpos;
+
 								data = *gfx_data++;
 								dest[7] = pal_data[(data>>4*3)&0xf];
 								dest[6] = pal_data[(data>>4*2)&0xf];
@@ -396,71 +359,41 @@ static void draw_layer( struct mame_bitmap *bitmap, int opaque ){
 								dest[2] = pal_data[(data>>4*2)&0xf];
 								dest[1] = pal_data[(data>>4*1)&0xf];
 								dest[0] = pal_data[(data>>4*0)&0xf];
-							}
-						}
-						else
-						{
-							for( y=y1; y!=y2; y+=yd )
-							{
-								UINT8 *dest = ((UINT8 *)bitmap->line[ypos+y])+xpos;
-								data = *gfx_data++;
-								dest[7] = pal_data[(data>>4*3)&0xf];
-								dest[6] = pal_data[(data>>4*2)&0xf];
-								dest[5] = pal_data[(data>>4*1)&0xf];
-								dest[4] = pal_data[(data>>4*0)&0xf];
-								data = *gfx_data++;
-								dest[3] = pal_data[(data>>4*3)&0xf];
-								dest[2] = pal_data[(data>>4*2)&0xf];
-								dest[1] = pal_data[(data>>4*1)&0xf];
-								dest[0] = pal_data[(data>>4*0)&0xf];
+
+								pdest[7]|=1;
+								pdest[6]|=1;
+								pdest[5]|=1;
+								pdest[4]|=1;
+								pdest[3]|=1;
+								pdest[2]|=1;
+								pdest[1]|=1;
+								pdest[0]|=1;
 							}
 						}
 					}
 					else
 					{
-						if (bitmap->depth == 16)
-						{
-							for( y=y1; y!=y2; y+=yd )
-							{
-								UINT8 *dest = ((UINT8 *)bitmap->line[ypos+y])+xpos;
-								data = *gfx_data++;
-								if( data )
-								{
-									pen = (data>>4*3)&0xf; if( pen ) dest[7] = pal_data[pen];
-									pen = (data>>4*2)&0xf; if( pen ) dest[6] = pal_data[pen];
-									pen = (data>>4*1)&0xf; if( pen ) dest[5] = pal_data[pen];
-									pen = (data>>4*0)&0xf; if( pen ) dest[4] = pal_data[pen];
-								}
-								data = *gfx_data++;
-								if( data )
-								{
-									pen = (data>>4*3)&0xf; if( pen ) dest[3] = pal_data[pen];
-									pen = (data>>4*2)&0xf; if( pen ) dest[2] = pal_data[pen];
-									pen = (data>>4*1)&0xf; if( pen ) dest[1] = pal_data[pen];
-									pen = (data>>4*0)&0xf; if( pen ) dest[0] = pal_data[pen];
-								}
-							}
-						}
-						else
 						{
 							for( y=y1; y!=y2; y+=yd )
 							{
 								data16_t *dest = ((data16_t *)bitmap->line[ypos+y])+xpos;
+								UINT8 *pdest = ((UINT8 *)priority_bitmap->line[ypos+y])+xpos;
+
 								data = *gfx_data++;
 								if( data )
 								{
-									pen = (data>>4*3)&0xf; if( pen ) dest[7] = pal_data[pen];
-									pen = (data>>4*2)&0xf; if( pen ) dest[6] = pal_data[pen];
-									pen = (data>>4*1)&0xf; if( pen ) dest[5] = pal_data[pen];
-									pen = (data>>4*0)&0xf; if( pen ) dest[4] = pal_data[pen];
+									pen = (data>>4*3)&0xf; if( pen ) { dest[7] = pal_data[pen]; pdest[7]|=4; }
+									pen = (data>>4*2)&0xf; if( pen ) { dest[6] = pal_data[pen]; pdest[6]|=4; }
+									pen = (data>>4*1)&0xf; if( pen ) { dest[5] = pal_data[pen]; pdest[5]|=4; }
+									pen = (data>>4*0)&0xf; if( pen ) { dest[4] = pal_data[pen]; pdest[4]|=4; }
 								}
 								data = *gfx_data++;
 								if( data )
 								{
-									pen = (data>>4*3)&0xf; if( pen ) dest[3] = pal_data[pen];
-									pen = (data>>4*2)&0xf; if( pen ) dest[2] = pal_data[pen];
-									pen = (data>>4*1)&0xf; if( pen ) dest[1] = pal_data[pen];
-									pen = (data>>4*0)&0xf; if( pen ) dest[0] = pal_data[pen];
+									pen = (data>>4*3)&0xf; if( pen ) { dest[3] = pal_data[pen]; pdest[3]|=4; }
+									pen = (data>>4*2)&0xf; if( pen ) { dest[2] = pal_data[pen]; pdest[2]|=4; }
+									pen = (data>>4*1)&0xf; if( pen ) { dest[1] = pal_data[pen]; pdest[1]|=4; }
+									pen = (data>>4*0)&0xf; if( pen ) { dest[0] = pal_data[pen]; pdest[0]|=4; }
 								}
 							}
 						}
@@ -470,11 +403,12 @@ static void draw_layer( struct mame_bitmap *bitmap, int opaque ){
 				{
 					if( opaque )
 					{
-						if (bitmap->depth == 16)
 						{
 							for( y=y1; y!=y2; y+=yd )
 							{
 								data16_t *dest = ((data16_t *)bitmap->line[ypos+y])+xpos;
+								UINT8 *pdest = ((UINT8 *)priority_bitmap->line[ypos+y])+xpos;
+
 								data = *gfx_data++;
 								*dest++ = pal_data[(data>>4*3)&0xf];
 								*dest++ = pal_data[(data>>4*2)&0xf];
@@ -485,71 +419,42 @@ static void draw_layer( struct mame_bitmap *bitmap, int opaque ){
 								*dest++ = pal_data[(data>>4*2)&0xf];
 								*dest++ = pal_data[(data>>4*1)&0xf];
 								*dest++ = pal_data[(data>>4*0)&0xf];
-							}
-						}
-						else
-						{
-							for( y=y1; y!=y2; y+=yd )
-							{
-								UINT8 *dest = ((UINT8 *)bitmap->line[ypos+y])+xpos;
-								data = *gfx_data++;
-								*dest++ = pal_data[(data>>4*3)&0xf];
-								*dest++ = pal_data[(data>>4*2)&0xf];
-								*dest++ = pal_data[(data>>4*1)&0xf];
-								*dest++ = pal_data[(data>>4*0)&0xf];
-								data = *gfx_data++;
-								*dest++ = pal_data[(data>>4*3)&0xf];
-								*dest++ = pal_data[(data>>4*2)&0xf];
-								*dest++ = pal_data[(data>>4*1)&0xf];
-								*dest++ = pal_data[(data>>4*0)&0xf];
+
+								pdest[7]|=1;
+								pdest[6]|=1;
+								pdest[5]|=1;
+								pdest[4]|=1;
+								pdest[3]|=1;
+								pdest[2]|=1;
+								pdest[1]|=1;
+								pdest[0]|=1;
+
 							}
 						}
 					}
 					else
 					{
-						if (bitmap->depth == 16)
 						{
 							for( y=y1; y!=y2; y+=yd )
 							{
 								data16_t *dest = ((data16_t *)bitmap->line[ypos+y])+xpos;
+								UINT8 *pdest = ((UINT8 *)priority_bitmap->line[ypos+y])+xpos;
+
 								data = *gfx_data++;
 								if( data )
 								{
-									pen = (data>>4*3)&0xf; if( pen ) dest[0] = pal_data[pen];
-									pen = (data>>4*2)&0xf; if( pen ) dest[1] = pal_data[pen];
-									pen = (data>>4*1)&0xf; if( pen ) dest[2] = pal_data[pen];
-									pen = (data>>4*0)&0xf; if( pen ) dest[3] = pal_data[pen];
+									pen = (data>>4*3)&0xf; if( pen ) { dest[0] = pal_data[pen]; pdest[0]|=4; }
+									pen = (data>>4*2)&0xf; if( pen ) { dest[1] = pal_data[pen]; pdest[1]|=4; }
+									pen = (data>>4*1)&0xf; if( pen ) { dest[2] = pal_data[pen]; pdest[2]|=4; }
+									pen = (data>>4*0)&0xf; if( pen ) { dest[3] = pal_data[pen]; pdest[3]|=4; }
 								}
 								data = *gfx_data++;
 								if( data )
 								{
-									pen = (data>>4*3)&0xf; if( pen ) dest[4] = pal_data[pen];
-									pen = (data>>4*2)&0xf; if( pen ) dest[5] = pal_data[pen];
-									pen = (data>>4*1)&0xf; if( pen ) dest[6] = pal_data[pen];
-									pen = (data>>4*0)&0xf; if( pen ) dest[7] = pal_data[pen];
-								}
-							}
-						}
-						else
-						{
-							for( y=y1; y!=y2; y+=yd )
-							{
-								UINT8 *dest = ((UINT8 *)bitmap->line[ypos+y])+xpos;
-								data = *gfx_data++;
-								if( data )
-								{
-									pen = (data>>4*3)&0xf; if( pen ) dest[0] = pal_data[pen];
-									pen = (data>>4*2)&0xf; if( pen ) dest[1] = pal_data[pen];
-									pen = (data>>4*1)&0xf; if( pen ) dest[2] = pal_data[pen];
-									pen = (data>>4*0)&0xf; if( pen ) dest[3] = pal_data[pen];
-								}
-								data = *gfx_data++;
-								if( data )
-								{
-									pen = (data>>4*3)&0xf; if( pen ) dest[4] = pal_data[pen];
-									pen = (data>>4*2)&0xf; if( pen ) dest[5] = pal_data[pen];
-									pen = (data>>4*1)&0xf; if( pen ) dest[6] = pal_data[pen];
-									pen = (data>>4*0)&0xf; if( pen ) dest[7] = pal_data[pen];
+									pen = (data>>4*3)&0xf; if( pen ) { dest[4] = pal_data[pen]; pdest[4]|=4; }
+									pen = (data>>4*2)&0xf; if( pen ) { dest[5] = pal_data[pen]; pdest[5]|=4; }
+									pen = (data>>4*1)&0xf; if( pen ) { dest[6] = pal_data[pen]; pdest[6]|=4; }
+									pen = (data>>4*0)&0xf; if( pen ) { dest[7] = pal_data[pen]; pdest[7]|=4; }
 								}
 							}
 						}
@@ -560,15 +465,26 @@ static void draw_layer( struct mame_bitmap *bitmap, int opaque ){
 	}
 }
 
-VIDEO_UPDATE( twin16 ){
+VIDEO_START( twin16 )
+{
+	return 0;
+}
+
+VIDEO_EOF( twin16 )
+{
 	if( twin16_spriteram_process_enable() && need_process_spriteram ) twin16_spriteram_process();
 	need_process_spriteram = 1;
 
+	buffer_spriteram16_w(0,0,0);
+}
+
+VIDEO_UPDATE( twin16 )
+{
+	fillbitmap(priority_bitmap,0,cliprect);
 	draw_layer( bitmap,1 );
-	draw_sprites( bitmap, 1 );
 	draw_layer( bitmap,0 );
-	draw_sprites( bitmap, 0 );
+	draw_sprites( bitmap );
 	draw_text( bitmap );
 
-	show_video_register( bitmap );
+//	usrintf_showmessage("%08x",video_register);
 }

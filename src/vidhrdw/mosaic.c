@@ -28,7 +28,7 @@ static void get_fg_tile_info(int tile_index)
 	tile_index *= 2;
 	SET_TILE_INFO(
 			0,
-			mosaic_fgvideoram[tile_index] + ((mosaic_fgvideoram[tile_index+1] & 0x0f) << 8),
+			mosaic_fgvideoram[tile_index] + (mosaic_fgvideoram[tile_index+1] << 8),
 			0,
 			0)
 }
@@ -38,7 +38,7 @@ static void get_bg_tile_info(int tile_index)
 	tile_index *= 2;
 	SET_TILE_INFO(
 			1,
-			mosaic_bgvideoram[tile_index] + ((mosaic_bgvideoram[tile_index+1] & 0x0f) << 8),
+			mosaic_bgvideoram[tile_index] + (mosaic_bgvideoram[tile_index+1] << 8),
 			0,
 			0)
 }

@@ -141,10 +141,45 @@ static WRITE16_HANDLER( zeropnt_sound_bank_w )
 }
 
 /* Light Gun - need to wiggle the input slightly otherwise fire doesn't work */
-READ16_HANDLER( unico16_gunx_0_msb_r )	{	return ((readinputport(4)&0xff) ^ (cpu_getcurrentframe()&1))<<8;	}
-READ16_HANDLER( unico16_guny_0_msb_r )	{	return ((readinputport(3)&0xff) ^ (cpu_getcurrentframe()&1))<<8;	}
-READ16_HANDLER( unico16_gunx_1_msb_r )	{	return ((readinputport(6)&0xff) ^ (cpu_getcurrentframe()&1))<<8;	}
-READ16_HANDLER( unico16_guny_1_msb_r )	{	return ((readinputport(5)&0xff) ^ (cpu_getcurrentframe()&1))<<8;	}
+static READ16_HANDLER( unico16_gunx_0_msb_r )
+{
+	int x=readinputport(4);
+
+	x=x*384/256; /* On screen pixel X */
+	if (x<0x160) x=0x30 + (x*0xd0/0x15f);
+	else x=((x-0x160) * 0x20)/0x1f;
+
+	return ((x&0xff) ^ (cpu_getcurrentframe()&1))<<8;
+}
+
+static READ16_HANDLER( unico16_guny_0_msb_r )
+{
+	int y=readinputport(3);
+
+	y=0x18+((y*0xe0)/0xff);
+
+	return ((y&0xff) ^ (cpu_getcurrentframe()&1))<<8;
+}
+
+static READ16_HANDLER( unico16_gunx_1_msb_r )
+{
+	int x=readinputport(6);
+
+	x=x*384/256; /* On screen pixel X */
+	if (x<0x160) x=0x30 + (x*0xd0/0x15f);
+	else x=((x-0x160) * 0x20)/0x1f;
+
+	return ((x&0xff) ^ (cpu_getcurrentframe()&1))<<8;
+}
+
+static READ16_HANDLER( unico16_guny_1_msb_r )
+{
+	int y=readinputport(5);
+
+	y=0x18+((y*0xe0)/0xff);
+
+	return ((y&0xff) ^ (cpu_getcurrentframe()&1))<<8;
+}
 
 static MEMORY_READ16_START( readmem_zeropnt )
 	{ 0x000000, 0x0fffff, MRA16_ROM						},	// ROM
@@ -366,16 +401,16 @@ INPUT_PORTS_START( zeropnt )
 	PORT_DIPSETTING(      0xc000, "5" )
 
 	PORT_START	// IN3 - $800170.b
-	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_Y | IPF_PLAYER2, 35, 15, 0x18, 0xf8 )
+	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_Y | IPF_PLAYER2, 35, 15, 0, 0xff )
 
 	PORT_START	// IN4 - $800174.b
-	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_X | IPF_PLAYER2, 35, 15, 0x30, 0x118 )
+	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_X | IPF_PLAYER2, 35, 15, 0, 0xff )
 
 	PORT_START	// IN5 - $800178.b
-	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_Y | IPF_PLAYER1, 35, 15, 0x18, 0xf8 )
+	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_Y | IPF_PLAYER1, 35, 15, 0, 0xff )
 
 	PORT_START	// IN6 - $80017c.b
-	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_X | IPF_PLAYER1, 35, 15, 0x30, 0x118 )
+	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_X | IPF_PLAYER1, 35, 15, 0, 0xff )
 
 INPUT_PORTS_END
 

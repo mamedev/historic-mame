@@ -140,7 +140,7 @@ void palette_set_brightness(pen_t pen, double bright);
 void palette_set_shadow_factor(double factor);
 void palette_set_highlight_factor(double factor);
 
-void palette_set_global_gamma(double gamma);
+void palette_set_global_gamma(double _gamma);
 double palette_get_global_gamma(void);
 
 void palette_set_global_brightness(double brightness);
@@ -209,6 +209,14 @@ WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBIIII_word_w );
 WRITE16_HANDLER( paletteram16_xrgb_word_w );
 WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBRGBx_word_w );
 
+
+/******************************************************************************
+
+ Commonly used color PROM handling functions
+
+******************************************************************************/
+
+void palette_init_black_and_white(UINT16 *colortable, const UINT8 *color_prom);
 void palette_init_RRRR_GGGG_BBBB(UINT16 *colortable, const UINT8 *color_prom);
 
 #ifdef __cplusplus

@@ -386,7 +386,7 @@ static READ_HANDLER( pandoras_portA_r )
 
 static READ_HANDLER( pandoras_portB_r )
 {
-	return (cpu_gettotalcycles() / 512) & 0x0f;
+	return (activecpu_gettotalcycles() / 512) & 0x0f;
 }
 
 static struct AY8910interface ay8910_interface =

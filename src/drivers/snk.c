@@ -29,6 +29,77 @@ Bryan McPhail, 27/01/00:
   this may also be the cause of the title screen corruption in Bermuda
   Triangle (main set).
 
+
+Stephh's notes (based on the games Z80 code and some tests) :
+
+1)  'ftsoccer'
+
+  - The code to support the rotary jotsticks has been removed and/or patched
+    in this version (check the 'jmp' instruction at 0x00f1).
+    I'm SURE that I've played a version in France with the rotary joysticks,
+    and IMO it isn't dumped at the moment 8(
+
+  - "Game Time" Dip Switch is the time for match type A. Here is what you
+    have to add for games B to E :
+
+      Match Type       B        C        D        E
+      Time to add    00:30    01:00    01:30    02:00
+
+  - When "Game Mode" Dip Switch is set to "Win Match Against CPU", this has an
+    effect on matches types A and B : player is awarded 99 goals at the end of
+    the round, which is enough to win all matches then see the ending credits.
+
+  - Here are the buttons mapped to start a game :
+      * IPT_START1    : starts game A
+      * IPT_START2    : starts game B
+      * IPT_START3    : starts game C
+      * IPT_START4    : starts game D
+      * IPT_SERVICE2  : starts game E
+
+
+2a) 'bermudat'
+
+  - Japan version (5 letters when entering initials, and "TOKYO" as default names)
+
+  - How to enter the "test mode" : while "front turbo check" is displayed on screen,
+    press '1' (start player 1) until a grid is displayed. You can then press '1'
+    to go to the next part or press '2' to reset the game.
+
+  - The typo bug from 'bermudao' "test mode" is fixed.
+
+
+2b) 'bermudao'
+
+  - Japan version (5 letters when entering initials, and "TOKYO" as default names)
+
+  - How to enter the "test mode" : while "front turbo check" is displayed on screen,
+    press '1' (start player 1) until a grid is displayed. You can then press '1'
+    to go to the next part or press '2' to reset the game.
+
+  - There is typo bug in the "test mode" : when "Bonus Life" Dip Switch is set to
+    "60k 120k", it is written "80000P  160000P every".
+
+
+2c) 'bermudaa'
+
+  - US version (3 letters when entering initials, and "SNK  " as default names)
+
+  - How to enter the "test mode" : reset the game and press F2 until is a grid is
+    displayed. You can then press F2 again to go to the next part.
+
+
+2d) 'worldwar'
+
+  - World version (5 letters when entering initials, and "WORLD" as default names)
+    And this had been confirmed by the guy who loant the PCB.
+
+  - How to enter the "test mode" : reset the game and press F2 until is a grid is
+    displayed. You can then press F2 again to go to the next part.
+
+  - Don't trust the "test mode" for the Dip Switches ! The infos which are
+    displayed are the one from 'bermudao' (see what the "unknown" Dip Switches do).
+
+
 ****************************************************************************
 
 ym3526
@@ -60,6 +131,7 @@ Credits (in alphabetical order)
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 
+
 extern PALETTE_INIT( aso );
 extern PALETTE_INIT( snk_3bpp_shadow );
 extern PALETTE_INIT( snk_4bpp_shadow );
@@ -86,14 +158,14 @@ extern int snk_bg_tilemap_baseaddr, gwar_sprite_placement;
 
 static int hard_flags;
 
-#define SNK_MAX_INPUT_PORTS 12
+#define SNK_MAX_INPUT_PORTS 13
 
 typedef enum {
 	SNK_UNUSED,
 	SNK_INP0,
 	SNK_INP1,SNK_INP2,SNK_INP3,SNK_INP4,
 	SNK_INP5,SNK_INP6,SNK_INP7,SNK_INP8,
-	SNK_INP9,SNK_INP10,
+	SNK_INP9,SNK_INP10,SNK_INP11,
 	SNK_ROT8_PLAYER1, SNK_ROT8_PLAYER2,
 	SNK_ROT12_PLAYER1, SNK_ROT12_PLAYER2
 } SNK_INPUT_PORT_TYPE;
@@ -186,6 +258,7 @@ static int snk_input_port_r( int which ){
 		case SNK_INP8: return input_port_8_r(0);
 		case SNK_INP9: return input_port_9_r(0);
 		case SNK_INP10: return input_port_10_r(0);
+		case SNK_INP11: return input_port_11_r(0);
 
 		default:
 		logerror("read from unmapped input port:%d\n", which );
@@ -360,18 +433,19 @@ static WRITE_HANDLER( shared_ram2_w ){
 
 static READ_HANDLER( cpuA_io_r ){
 	switch( offset ){
-		case 0x000: return snk_input_port_r( 0 ); // coin input, player start
-		case 0x100: return snk_input_port_r( 1 ); // joy1
-		case 0x180: return snk_input_port_r( 2 ); // joy2
-		case 0x200: return snk_input_port_r( 3 ); // joy3
-		case 0x280: return snk_input_port_r( 4 ); // joy4
-		case 0x300: return snk_input_port_r( 5 ); // aim1
-		case 0x380: return snk_input_port_r( 6 ); // aim2
-		case 0x400: return snk_input_port_r( 7 ); // aim3
-		case 0x480: return snk_input_port_r( 8 ); // aim4
-		case 0x500: return snk_input_port_r( 9 ); // unused by tdfever
-		case 0x580: return snk_input_port_r( 10); // dsw
-		case 0x600: return snk_input_port_r( 11 ); // dsw
+		case 0x000: return snk_input_port_r( 0 );	// coin input, player start
+		case 0x100: return snk_input_port_r( 1 );	// joy1
+		case 0x180: return snk_input_port_r( 2 );	// joy2
+		case 0x200: return snk_input_port_r( 3 );	// joy3
+		case 0x280: return snk_input_port_r( 4 );	// joy4
+		case 0x300: return snk_input_port_r( 5 );	// aim1
+		case 0x380: return snk_input_port_r( 6 );	// aim2
+		case 0x400: return snk_input_port_r( 7 );	// aim3
+		case 0x480: return snk_input_port_r( 8 );	// aim4
+		case 0x500: return snk_input_port_r( 9 );	// unused by tdfever
+		case 0x580: return snk_input_port_r( 10 );// dsw
+		case 0x600: return snk_input_port_r( 11 );// dsw
+		case 0x080: return snk_input_port_r( 12 );// player start (types C and D in 'ftsoccer')
 
 		case 0x700:
 		if( cpuB_latch & SNK_NMI_ENABLE ){
@@ -1684,53 +1758,6 @@ ROM_END
 
 ROM_START( bermudat )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for cpuA code */
-	ROM_LOAD( "bt_p1.rom",  0x0000, 0x10000,  0x43dec5e9 )
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for cpuB code */
-	ROM_LOAD( "bt_p2.rom",  0x00000, 0x10000, 0x0e193265 )
-
-	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for sound code */
-	ROM_LOAD( "bt_p3.rom",  0x00000, 0x10000, 0x53a82e50 )    /* YM3526 */
-
-	ROM_REGION( 0x1400, REGION_PROMS, 0 )
-	ROM_LOAD( "btj_01r.prm", 0x0000, 0x0400, 0xf4b54d06 ) /* red */
-	ROM_LOAD( "btj_02g.prm", 0x0400, 0x0400, 0xbaac139e ) /* green */
-	ROM_LOAD( "btj_03b.prm", 0x0800, 0x0400, 0x2edf2e0b ) /* blue */
-	ROM_LOAD( "btj_h.prm",   0x0c00, 0x0400, 0xc20b197b ) /* ? */
-	ROM_LOAD( "btj_v.prm",   0x1000, 0x0400, 0x5d0c617f ) /* ? */
-
-	ROM_REGION( 0x8000, REGION_GFX1, ROMREGION_DISPOSE ) /* characters */
-	ROM_LOAD( "bt_p10.rom", 0x0000, 0x8000,  0xd3650211 )
-
-	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE ) /* tiles */
-	ROM_LOAD( "bt_p22.rom", 0x00000, 0x10000, 0x8daf7df4 )
-	ROM_LOAD( "bt_p21.rom", 0x10000, 0x10000, 0xb7689599 )
-	ROM_LOAD( "bt_p20.rom", 0x20000, 0x10000, 0xab6217b7 )
-	ROM_LOAD( "bt_p19.rom", 0x30000, 0x10000, 0x8ed759a0 )
-
-	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE ) /* 16x16 sprites */
-	ROM_LOAD( "bt_p6.rom",  0x00000, 0x8000, 0x8ffdf969 )
-	ROM_LOAD( "bt_p7.rom",  0x10000, 0x8000, 0x268d10df )
-	ROM_LOAD( "bt_p8.rom",  0x20000, 0x8000, 0x3e39e9dd )
-	ROM_LOAD( "bt_p9.rom",  0x30000, 0x8000, 0xbf56da61 )
-
-	ROM_REGION( 0x80000, REGION_GFX4, ROMREGION_DISPOSE ) /* 32x32 sprites */
-	ROM_LOAD( "bt_p11.rom", 0x00000, 0x10000, 0xaae7410e )
-	ROM_LOAD( "bt_p12.rom", 0x10000, 0x10000, 0x18914f70 )
-	ROM_LOAD( "bt_p13.rom", 0x20000, 0x10000, 0xcd79ce81 )
-	ROM_LOAD( "bt_p14.rom", 0x30000, 0x10000, 0xedc57117 )
-	ROM_LOAD( "bt_p15.rom", 0x40000, 0x10000, 0x448bf9f4 )
-	ROM_LOAD( "bt_p16.rom", 0x50000, 0x10000, 0x119999eb )
-	ROM_LOAD( "bt_p17.rom", 0x60000, 0x10000, 0xb5462139 )
-	ROM_LOAD( "bt_p18.rom", 0x70000, 0x10000, 0xcb416227 )
-
-	ROM_REGION( 0x20000, REGION_SOUND1, 0 )
-	ROM_LOAD( "bt_p4.rom",  0x00000, 0x10000, 0x4bc83229 )
-	ROM_LOAD( "bt_p5.rom",  0x10000, 0x10000, 0x817bd62c )
-ROM_END
-
-ROM_START( bermudaj )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for cpuA code */
 	ROM_LOAD( "btj_p01.bin", 0x0000, 0x10000,  0xeda75f36 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for cpuB code */
@@ -1774,6 +1801,53 @@ ROM_START( bermudaj )
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )
 	ROM_LOAD( "btj_p04.bin", 0x00000, 0x10000, 0xb2e01129 )
 	ROM_LOAD( "btj_p05.bin", 0x10000, 0x10000, 0x924c24f7 )
+ROM_END
+
+ROM_START( bermudao )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for cpuA code */
+	ROM_LOAD( "bt_p1.rom",  0x0000, 0x10000,  0x43dec5e9 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for cpuB code */
+	ROM_LOAD( "bt_p2.rom",  0x00000, 0x10000, 0x0e193265 )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for sound code */
+	ROM_LOAD( "bt_p3.rom",  0x00000, 0x10000, 0x53a82e50 )    /* YM3526 */
+
+	ROM_REGION( 0x1400, REGION_PROMS, 0 )
+	ROM_LOAD( "btj_01r.prm", 0x0000, 0x0400, 0xf4b54d06 ) /* red */
+	ROM_LOAD( "btj_02g.prm", 0x0400, 0x0400, 0xbaac139e ) /* green */
+	ROM_LOAD( "btj_03b.prm", 0x0800, 0x0400, 0x2edf2e0b ) /* blue */
+	ROM_LOAD( "btj_h.prm",   0x0c00, 0x0400, 0xc20b197b ) /* ? */
+	ROM_LOAD( "btj_v.prm",   0x1000, 0x0400, 0x5d0c617f ) /* ? */
+
+	ROM_REGION( 0x8000, REGION_GFX1, ROMREGION_DISPOSE ) /* characters */
+	ROM_LOAD( "bt_p10.rom", 0x0000, 0x8000,  0xd3650211 )
+
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "bt_p22.rom", 0x00000, 0x10000, 0x8daf7df4 )
+	ROM_LOAD( "bt_p21.rom", 0x10000, 0x10000, 0xb7689599 )
+	ROM_LOAD( "bt_p20.rom", 0x20000, 0x10000, 0xab6217b7 )
+	ROM_LOAD( "bt_p19.rom", 0x30000, 0x10000, 0x8ed759a0 )
+
+	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE ) /* 16x16 sprites */
+	ROM_LOAD( "bt_p6.rom",  0x00000, 0x8000, 0x8ffdf969 )
+	ROM_LOAD( "bt_p7.rom",  0x10000, 0x8000, 0x268d10df )
+	ROM_LOAD( "bt_p8.rom",  0x20000, 0x8000, 0x3e39e9dd )
+	ROM_LOAD( "bt_p9.rom",  0x30000, 0x8000, 0xbf56da61 )
+
+	ROM_REGION( 0x80000, REGION_GFX4, ROMREGION_DISPOSE ) /* 32x32 sprites */
+	ROM_LOAD( "bt_p11.rom", 0x00000, 0x10000, 0xaae7410e )
+	ROM_LOAD( "bt_p12.rom", 0x10000, 0x10000, 0x18914f70 )
+	ROM_LOAD( "bt_p13.rom", 0x20000, 0x10000, 0xcd79ce81 )
+	ROM_LOAD( "bt_p14.rom", 0x30000, 0x10000, 0xedc57117 )
+	ROM_LOAD( "bt_p15.rom", 0x40000, 0x10000, 0x448bf9f4 )
+	ROM_LOAD( "bt_p16.rom", 0x50000, 0x10000, 0x119999eb )
+	ROM_LOAD( "bt_p17.rom", 0x60000, 0x10000, 0xb5462139 )
+	ROM_LOAD( "bt_p18.rom", 0x70000, 0x10000, 0xcb416227 )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )
+	ROM_LOAD( "bt_p4.rom",  0x00000, 0x10000, 0x4bc83229 )
+	ROM_LOAD( "bt_p5.rom",  0x10000, 0x10000, 0x817bd62c )
 ROM_END
 
 ROM_START( worldwar )
@@ -2189,10 +2263,10 @@ ROM_END
 
 #define SNK_JOY1_PORT \
 	PORT_START \
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY ) \
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY ) \
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY ) \
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY ) \
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 ) \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 ) \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 ) \
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 ) \
 	PORT_ANALOGX( 0xf0, 0x00, IPT_DIAL, 25, 10, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 ) \
 
 #define SNK_JOY2_PORT \
@@ -2205,8 +2279,8 @@ ROM_END
 
 #define SNK_BUTTON_PORT \
 	PORT_START \
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) \
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) \
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 ) \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 ) \
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 ) \
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 ) \
@@ -2626,7 +2700,9 @@ INPUT_PORTS_START( bermudat )
 	SNK_BUTTON_PORT
 
 	PORT_START  /* DSW 1 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2666,7 +2742,7 @@ INPUT_PORTS_START( bermudaa )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* sound CPU status */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* tile? */
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
@@ -2694,6 +2770,9 @@ INPUT_PORTS_START( bermudaa )
 	SNK_COINAGE
 
 	PORT_START  /* DSW 2 */
+	PORT_DIPNAME( 0x01, 0x00, "Allow Continue" )
+	PORT_DIPSETTING(    0x01, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x03, "Easy" )
 	PORT_DIPSETTING(    0x02, "Normal" )
@@ -2709,7 +2788,12 @@ INPUT_PORTS_START( bermudaa )
 	PORT_DIPSETTING(    0x20, "35k 70k" )
 	PORT_DIPSETTING(    0x10, "50K 100k" )
 	PORT_DIPSETTING(    0x00, "None" )
-	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 /* Same as Bermudaa, but has different Bonus Life */
@@ -2718,7 +2802,7 @@ INPUT_PORTS_START( worldwar )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* sound CPU status */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* tile? */
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
@@ -2758,10 +2842,15 @@ INPUT_PORTS_START( worldwar )
 	PORT_BITX( 0,       0x04, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite Lives", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x30, "50k 100k" )
-	PORT_DIPSETTING(    0x20, "80k 120k" )
+	PORT_DIPSETTING(    0x20, "80k 160k" )
 	PORT_DIPSETTING(    0x10, "100k 200k" )
 	PORT_DIPSETTING(    0x00, "None" )
-	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( psychos )
@@ -2982,18 +3071,18 @@ INPUT_PORTS_START( ftsoccer )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* sound CPU status */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_START1, "Start Game A", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_START2, "Start Game B", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
 
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
@@ -3009,7 +3098,7 @@ INPUT_PORTS_START( ftsoccer )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) // START5?
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_SERVICE2, "Start Game E", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER3 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER3 )
@@ -3018,33 +3107,33 @@ INPUT_PORTS_START( ftsoccer )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER4 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER4 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER4 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER4 )
 
-	PORT_START
-	PORT_ANALOGX( 0x7f, 0x00, IPT_DIAL, 25, 10, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 )
+	PORT_START	/* Only used in the "test mode" in this version */
+	PORT_ANALOGX( 0x7f, 0x00, IPT_DIAL | IPF_PLAYER1, 25, 10, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START
+	PORT_START	/* Only used in the "test mode" in this version */
 	PORT_ANALOGX( 0x7f, 0x00, IPT_DIAL | IPF_PLAYER2, 25, 10, 0, 0, KEYCODE_N, KEYCODE_M, 0, 0 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START
+	PORT_START	/* Only used in the "test mode" in this version */
 	PORT_ANALOGX( 0x7f, 0x00, IPT_DIAL | IPF_PLAYER3, 25, 10, 0, 0, 0, 0, 0, 0 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START
+	PORT_START	/* Only used in the "test mode" in this version */
 	PORT_ANALOGX( 0x7f, 0x00, IPT_DIAL | IPF_PLAYER4, 25, 10, 0, 0, 0, 0, 0, 0 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x03, "Upright (with vs)" )
-	PORT_DIPSETTING(    0x02, "Upright (without vs)" )
+	PORT_DIPSETTING(    0x03, "Upright (With VS)" )
+	PORT_DIPSETTING(    0x02, "Upright (Without VS)" )
 	PORT_DIPSETTING(    0x00, "Cocktail (2 Players)" )
 	PORT_DIPSETTING(    0x01, "Cocktail (4 Players)" )
 	PORT_DIPNAME( 0x0c, 0x04, "Version" )
@@ -3065,8 +3154,8 @@ INPUT_PORTS_START( ftsoccer )
 	PORT_DIPSETTING(    0x08, "Demo Sound Off" )
 	PORT_DIPSETTING(    0x0c, "Demo Sound On" )
 	PORT_DIPSETTING(    0x00, "Freeze" )
-	PORT_BITX( 0,       0x04, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Never Finish", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPNAME( 0x70, 0x70, "Play Time" )
+	PORT_BITX( 0,       0x04, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Win Match Against CPU", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x70, 0x70, "Game Time" )	/* See notes */
 	PORT_DIPSETTING(    0x10, "1:00" )
 	PORT_DIPSETTING(    0x60, "1:10" )
 	PORT_DIPSETTING(    0x50, "1:20" )
@@ -3076,6 +3165,16 @@ INPUT_PORTS_START( ftsoccer )
 	PORT_DIPSETTING(    0x70, "2:00" )
 	PORT_DIPSETTING(    0x00, "2:10" )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_START3, "Start Game C", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_START4, "Start Game D", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( tdfever )
@@ -3206,27 +3305,40 @@ const SNK_INPUT_PORT_TYPE athena_io[SNK_MAX_INPUT_PORTS] = {
 	/* c300 */ SNK_UNUSED,	SNK_UNUSED,
 	/* c400 */ SNK_UNUSED,	SNK_UNUSED,
 	/* c500 */ SNK_INP3,	SNK_UNUSED,
-	/* c600 */ SNK_INP4
+	/* c600 */ SNK_INP4,
+	/* c080 */ SNK_UNUSED
 };
 
 const SNK_INPUT_PORT_TYPE ikari_io[SNK_MAX_INPUT_PORTS] = {
 	/* c000 */ SNK_INP0,
 	/* c100 */ SNK_ROT12_PLAYER1,	SNK_UNUSED,
 	/* c200 */ SNK_ROT12_PLAYER2,	SNK_UNUSED,
-	/* c300 */ SNK_INP3,			SNK_UNUSED,
-	/* c400 */ SNK_UNUSED,			SNK_UNUSED,
-	/* c500 */ SNK_INP4,			SNK_UNUSED,
-	/* c600 */ SNK_INP5
+	/* c300 */ SNK_INP3,	SNK_UNUSED,
+	/* c400 */ SNK_UNUSED,	SNK_UNUSED,
+	/* c500 */ SNK_INP4,	SNK_UNUSED,
+	/* c600 */ SNK_INP5,
+	/* c080 */ SNK_UNUSED
 };
 
 const SNK_INPUT_PORT_TYPE ikarijpb_io[SNK_MAX_INPUT_PORTS] = {
 	/* c000 */ SNK_INP0,
 	/* c100 */ SNK_ROT8_PLAYER1,	SNK_UNUSED,
 	/* c200 */ SNK_ROT8_PLAYER2,	SNK_UNUSED,
-	/* c300 */ SNK_INP3,			SNK_UNUSED,
-	/* c400 */ SNK_UNUSED,			SNK_UNUSED,
-	/* c500 */ SNK_INP4,			SNK_UNUSED,
-	/* c600 */ SNK_INP5
+	/* c300 */ SNK_INP3,		SNK_UNUSED,
+	/* c400 */ SNK_UNUSED,		SNK_UNUSED,
+	/* c500 */ SNK_INP4,		SNK_UNUSED,
+	/* c600 */ SNK_INP5,
+	/* c080 */ SNK_UNUSED
+};
+
+const SNK_INPUT_PORT_TYPE ftsoccer_io[SNK_MAX_INPUT_PORTS] = {
+	/* c000 */ SNK_INP0,
+	/* c100 */ SNK_INP1, SNK_INP2, SNK_INP3, SNK_INP4, /* joy1..joy4 */
+	/* c300 */ SNK_INP5, SNK_INP6, SNK_INP7, SNK_INP8, /* aim1..aim4 */
+	/* c500 */ SNK_UNUSED,
+	/* c580 */ SNK_INP9,	/* DSW1 */
+	/* c600 */ SNK_INP10,	/* DSW2 */
+	/* c080 */ SNK_INP11	/* Start games type C & D */
 };
 
 const SNK_INPUT_PORT_TYPE tdfever_io[SNK_MAX_INPUT_PORTS] = {
@@ -3235,7 +3347,8 @@ const SNK_INPUT_PORT_TYPE tdfever_io[SNK_MAX_INPUT_PORTS] = {
 	/* c300 */ SNK_INP5, SNK_INP6, SNK_INP7, SNK_INP8, /* aim1..aim4 */
 	/* c500 */ SNK_UNUSED,
 	/* c580 */ SNK_INP9,	/* DSW1 */
-	/* c600 */ SNK_INP10	/* DSW2 */
+	/* c600 */ SNK_INP10,	/* DSW2 */
+	/* c080 */ SNK_UNUSED
 };
 
 static DRIVER_INIT( ikari ){
@@ -3374,7 +3487,7 @@ static DRIVER_INIT( tdfever ){
 
 static DRIVER_INIT( ftsoccer ){
 	snk_sound_busy_bit = 0x08;
-	snk_io = tdfever_io;
+	snk_io = ftsoccer_io;
 	hard_flags = 0;
 	gwar_sprite_placement=0;
 	snk_bg_tilemap_baseaddr = 0xd800;
@@ -3427,10 +3540,10 @@ GAMEX( 1987, gwar,     0,        gwar,     gwar,     gwar,     ROT270, "SNK", "G
 GAMEX( 1987, gwarj,    gwar,     gwar,     gwar,     gwar,     ROT270, "SNK", "Guevara (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1987, gwara,    gwar,     gwar,     gwar,     gwara,    ROT270, "SNK", "Guerrilla War (Version 1)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX( 1987, gwarb,    gwar,     gwar,     gwar,     gwar,     ROT270, "bootleg", "Guerrilla War (bootleg)", GAME_NO_COCKTAIL )
-GAMEX( 1987, bermudat, 0,        bermudat, bermudat, bermudat, ROT270, "SNK", "Bermuda Triangle (US)", GAME_NO_COCKTAIL )
-GAMEX( 1987, bermudaj, bermudat, bermudat, bermudat, bermudat, ROT270, "SNK", "Bermuda Triangle (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1987, bermudaa, bermudat, bermudat, bermudaa, worldwar, ROT270, "SNK", "Bermuda Triangle (US early version)", GAME_NO_COCKTAIL )
-GAMEX( 1987, worldwar, bermudat, bermudat, worldwar, worldwar, ROT270, "SNK", "World Wars (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1987, bermudat, 0,        bermudat, bermudat, bermudat, ROT270, "SNK", "Bermuda Triangle (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1987, bermudao, bermudat, bermudat, bermudat, bermudat, ROT270, "SNK", "Bermuda Triangle (Japan old version)", GAME_NO_COCKTAIL )
+GAMEX( 1987, bermudaa, bermudat, bermudat, bermudaa, worldwar, ROT270, "SNK", "Bermuda Triangle (US older version)", GAME_NO_COCKTAIL )
+GAMEX( 1987, worldwar, bermudat, bermudat, worldwar, worldwar, ROT270, "SNK", "World Wars (World)", GAME_NO_COCKTAIL )
 GAMEX( 1987, psychos,  0,        psychos,  psychos,  psychos,  ROT0,   "SNK", "Psycho Soldier (US)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
 GAMEX( 1987, psychosj, psychos,  psychos,  psychos,  psychos,  ROT0,   "SNK", "Psycho Soldier (Japan)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
 GAMEX( 1988, chopper,  0,        chopper1, legofair, chopper,  ROT270, "SNK", "Chopper I", GAME_NO_COCKTAIL )

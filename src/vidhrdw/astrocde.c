@@ -83,7 +83,9 @@ PALETTE_INIT( astrocde )
 		if (i == 0)
 			BY = 0;
 		else
-			BY = C*cos(i*2.0*3.14159/32.0);
+//			BY = C*cos(i*2.0*3.14159/32.0);
+			BY = 1.15*cos(i*2.0*3.14159/32.0);
+
 
 		for(j=0;j<8;j++)
 		{

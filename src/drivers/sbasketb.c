@@ -105,7 +105,7 @@ INPUT_PORTS_START( sbasketb )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -281,6 +281,39 @@ MACHINE_DRIVER_END
 
 ROM_START( sbasketb )
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for the decrypted opcodes */
+	ROM_LOAD( "405g05",  0x6000, 0x2000, 0x336dc0ab )
+	ROM_LOAD( "405g04",  0x8000, 0x2000, 0xf064a9bc )
+	ROM_LOAD( "405g03",  0xa000, 0x2000, 0xb9de7d53 )
+	ROM_LOAD( "405g02",  0xc000, 0x2000, 0xe98470a0 )
+	ROM_LOAD( "405g01",  0xe000, 0x2000, 0x1bd0cd2e )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for audio cpu */
+	ROM_LOAD( "405e13",       0x0000, 0x2000, 0x1ec7458b )
+
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "405e12",       0x0000, 0x4000, 0xe02c54da )
+
+	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "405e06",       0x0000, 0x2000, 0x7e2f5bb2 )
+	ROM_LOAD( "405e07",       0x2000, 0x2000, 0x963a44f9 )
+	ROM_LOAD( "405e08",       0x4000, 0x2000, 0x63901deb )
+	ROM_LOAD( "405e09",       0x6000, 0x2000, 0xe1873677 )
+	ROM_LOAD( "405e10",       0x8000, 0x2000, 0x824815e8 )
+	ROM_LOAD( "405e11",       0xa000, 0x2000, 0xdca9b447 )
+
+	ROM_REGION( 0x0500, REGION_PROMS, 0 )
+	ROM_LOAD( "405e17",       0x0000, 0x0100, 0xb4c36d57 ) /* palette red component */
+	ROM_LOAD( "405e16",       0x0100, 0x0100, 0x0b7b03b8 ) /* palette green component */
+	ROM_LOAD( "405e18",       0x0200, 0x0100, 0x9e533bad ) /* palette blue component */
+	ROM_LOAD( "405e20",       0x0300, 0x0100, 0x8ca6de2f ) /* character lookup table */
+	ROM_LOAD( "405e19",       0x0400, 0x0100, 0xe0bc782f ) /* sprite lookup table */
+
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 )     /* 64k for speech rom */
+	ROM_LOAD( "405e15",       0x0000, 0x2000, 0x01bb5ce9 )
+ROM_END
+
+ROM_START( sbasketo )
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for the decrypted opcodes */
 	ROM_LOAD( "405e05",  0x6000, 0x2000, 0x32ea5b71 )
 	ROM_LOAD( "405e04",  0x8000, 0x2000, 0x7abf3087 )
 	ROM_LOAD( "405e03",  0xa000, 0x2000, 0x9c6fcdcd )
@@ -350,5 +383,6 @@ static DRIVER_INIT( sbasketb )
 }
 
 
-GAME( 1984, sbasketb, 0,        sbasketb, sbasketb, sbasketb, ROT90, "Konami", "Super Basketball" )
+GAME( 1984, sbasketb, 0,        sbasketb, sbasketb, sbasketb, ROT90, "Konami", "Super Basketball (version G)" )
+GAME( 1984, sbasketo, sbasketb, sbasketb, sbasketb, sbasketb, ROT90, "Konami", "Super Basketball (version E)" )
 GAME( 1984, sbasketu, sbasketb, sbasketb, sbasketb, 0,        ROT90, "Konami", "Super Basketball (not encrypted)" )

@@ -255,6 +255,7 @@ INLINE void YM_DELTAT_ADPCM_CALC(YM_DELTAT *DELTAT)
 					DELTAT->eos = 1; //AT: raise EOS flag at the end of sample playback
 					DELTAT->adpcml = 0;
 					now_leveling = 0;
+                    DELTAT->next_leveling = 0;
 					return;
 				}
 			}
@@ -283,28 +284,28 @@ INLINE void YM_DELTAT_ADPCM_CALC(YM_DELTAT *DELTAT)
 			YM_DELTAT_Limit(DELTAT->adpcmd,YM_DELTAT_DELTA_MAX, YM_DELTAT_DELTA_MIN );
 			/* calulate new leveling value */
 			now_leveling      = DELTAT->next_leveling;
-			DELTAT->next_leveling = prev_acc + ((DELTAT->acc - prev_acc) / 2 );
+
+//            DELTAT->next_leveling = prev_acc + ((DELTAT->acc - prev_acc) / 2 );
+//ElSemi: Fix interpolator. I'll keep the names, although next_leveling should
+//be last_acc
+            DELTAT->next_leveling = prev_acc;
 
 		}while(--step);
 
-/* #define YM_DELTAT_CUT_RE_SAMPLING */
-#ifdef YM_DELTAT_CUT_RE_SAMPLING
-		DELTAT->adpcml  = DELTAT->next_leveling * DELTAT->volume;
-		DELTAT->adpcml  = DELTAT->acc * DELTAT->volume;
-	}
-#else
-		/* delta step of resampling */
+/*
 		DELTAT->resample_step = (DELTAT->next_leveling - now_leveling) * DELTAT->volume_w_step;
-//		DELTAT->resample_step = (DELTAT->next_leveling - now_leveling) *
-//							((double)DELTAT->volume * DELTAT->step / (1<<YM_DELTAT_SHIFT));
-
-		/* output of start point */
 		DELTAT->adpcml  = now_leveling * DELTAT->volume;
-		/* adjust to now */
 		DELTAT->adpcml += (int)((double)DELTAT->resample_step * ((double)DELTAT->now_step/(double)DELTAT->step));
+*/
+
 	}
-	DELTAT->adpcml += DELTAT->resample_step;
-#endif
+    //DELTAT->adpcml += DELTAT->resample_step;
+
+    DELTAT->adpcml  = (DELTAT->next_leveling*(int) ((1<<YM_DELTAT_SHIFT)-DELTAT->now_step));
+    DELTAT->adpcml  += (DELTAT->acc *(int) DELTAT->now_step);
+    DELTAT->adpcml = (DELTAT->adpcml>>YM_DELTAT_SHIFT)*(int) DELTAT->volume;
+
+
 	/* output for work of output channels (outd[OPNxxxx])*/
 	*(DELTAT->pan) += DELTAT->adpcml;
 }

@@ -30,6 +30,8 @@ extern UINT8 ui_dirty;
 struct GfxElement *builduifont(void);
 void pick_uifont_colors(void);
 void displaytext(struct mame_bitmap *bitmap,const struct DisplayText *dt);
+
+void ui_drawchar(struct mame_bitmap *dest, int ch, int color, int sx, int sy);
 void ui_text(struct mame_bitmap *bitmap,const char *buf,int x,int y);
 void ui_drawbox(struct mame_bitmap *bitmap,int leftx,int topy,int width,int height);
 void ui_displaymessagewindow(struct mame_bitmap *bitmap,const char *text);

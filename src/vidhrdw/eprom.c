@@ -139,7 +139,7 @@ VIDEO_UPDATE( eprom )
 
 	/* draw the playfield */
 	tilemap_draw(bitmap, cliprect, atarigen_playfield_tilemap, 0, 0);
-	
+
 	/* draw and merge the MO */
 	mobitmap = atarimo_render(0, cliprect, &rectlist);
 	for (r = 0; r < rectlist.numrects; r++, rectlist.rect++)
@@ -150,40 +150,102 @@ VIDEO_UPDATE( eprom )
 			for (x = rectlist.rect->min_x; x <= rectlist.rect->max_x; x++)
 				if (mo[x])
 				{
-					/* partially verified via schematics (there are a lot of PALs involved!):
-					
-						SHADE = PAL(MPR1-0, LB7-0, PFX6-3, PF/M)
-						
-						if (SHADE)
-							CRA |= 0x100
-					*/
-					int mopriority = mo[x] >> ATARIMO_PRIORITY_SHIFT;
-					int pfcolor = (pf[x] >> 4) & 0x0f;
-					
+					/* verified from the GALs on the real PCB; equations follow
+					 *
+					 *		--- FORCEMC0 forces 3 bits of the MO color to 0 under some conditions
+					 *		FORCEMC0=!PFX3*PFX4*PFX5*!MPR0
+					 *		    +!PFX3*PFX5*!MPR1
+					 *		    +!PFX3*PFX4*!MPR0*!MPR1
+					 *
+					 *		--- SHADE selects an alternate color bank for the playfield
+					 *		!SHADE=!MPX0
+					 *		    +MPX1
+					 *		    +MPX2
+					 *		    +MPX3
+					 *		    +!MPX4*!MPX5*!MPX6*!MPX7
+					 *		    +FORCEMC0
+					 *
+					 *		--- PF/M is 1 if playfield has priority, or 0 if MOs have priority
+					 *		!PF/M=MPR0*MPR1
+					 *		    +PFX3
+					 *		    +!PFX4*MPR1
+					 *		    +!PFX5*MPR1
+					 *		    +!PFX5*MPR0
+					 *		    +!PFX4*!PFX5*!MPR0*!MPR1
+					 *
+					 *		--- M7 is passed as the upper MO bit to the GPC ASIC
+					 *		M7=MPX0*!MPX1*!MPX2*!MPX3
+					 *
+					 *		--- CL10-9 are outputs from the GPC, specifying which layer to render
+					 *		CL10 = 1 if pf
+					 *		CL9 = 1 if mo
+					 *
+					 *		--- CRA10 is the 0x200 bit of the color RAM index; it comes directly from the GPC
+					 *		CRA10 = CL10
+					 *
+					 *		--- CRA9 is the 0x100 bit of the color RAM index; is comes directly from the GPC
+					 *			or if the SHADE flag is set, it affects the playfield color bank
+					 *		CRA9 = SHADE*CL10
+					 *			+CL9
+					 *
+					 *		--- CRA8-1 are the low 8 bits of the color RAM index; set as expected
+					 */
+					int mopriority = (mo[x] >> ATARIMO_PRIORITY_SHIFT) & 7;
+					int pfpriority = (pf[x] >> 4) & 3;
+					int forcemc0 = 0, shade = 1, pfm = 1, m7 = 0;
+
 					/* upper bit of MO priority signals special rendering and doesn't draw anything */
 					if (mopriority & 4)
 						continue;
 
-					/* MO pen 1 doesn't draw, but it sets the SHADE flag and bumps the palette offset */
+					/* compute the FORCEMC signal */
+					if (!(pf[x] & 8))
+					{
+						if (((pfpriority == 3) && !(mopriority & 1)) ||
+							((pfpriority & 2) && !(mopriority & 2)) ||
+							((pfpriority & 1) && (mopriority == 0)))
+							forcemc0 = 1;
+					}
+
+					/* compute the SHADE signal */
+					if (((mo[x] & 0x0f) != 1) ||
+						((mo[x] & 0xf0) == 0) ||
+						forcemc0)
+						shade = 0;
+
+					/* compute the PF/M signal */
+					if ((mopriority == 3) ||
+						(pf[x] & 8) ||
+						(!(pfpriority & 1) && (mopriority & 2)) ||
+						(!(pfpriority & 2) && (mopriority & 2)) ||
+						(!(pfpriority & 2) && (mopriority & 1)) ||
+						((pfpriority == 0) && (mopriority == 0)))
+						pfm = 0;
+
+					/* compute the M7 signal */
 					if ((mo[x] & 0x0f) == 1)
-						pf[x] |= 0x100;
-					
-					/* max priority always draws */
-					else if (mopriority == 3)
-						pf[x] = mo[x] & ATARIMO_DATA_MASK;
-					
-					/* otherwise, we compare against the playfield color */
-					else if (pfcolor < 13 + mopriority)
-						pf[x] = mo[x] & ATARIMO_DATA_MASK;
-					
-					/* if the playfield gets priority, it's only for the lower pens */
-					else if (pf[x] & 8)
-						pf[x] = mo[x] & ATARIMO_DATA_MASK;
-					
+						m7 = 1;
+
+					/* PF/M and M7 go in the GPC ASIC and select playfield or MO layers */
+					if (!pfm && !m7)
+					{
+						if (!forcemc0)
+							pf[x] = mo[x] & ATARIMO_DATA_MASK;
+						else
+							pf[x] = mo[x] & ATARIMO_DATA_MASK & ~0x70;
+					}
+					else
+					{
+						if (shade)
+							pf[x] |= 0x100;
+						if (m7)
+							pf[x] |= 0x080;
+					}
+
 					/* don't erase yet -- we need to make another pass later */
 				}
 		}
-	
+
 	/* add the alpha on top */
 	tilemap_draw(bitmap, cliprect, atarigen_alpha_tilemap, 0, 0);
 
@@ -198,7 +260,7 @@ VIDEO_UPDATE( eprom )
 				if (mo[x])
 				{
 					int mopriority = mo[x] >> ATARIMO_PRIORITY_SHIFT;
-					
+
 					/* upper bit of MO priority might mean palette kludges */
 					if (mopriority & 4)
 					{
@@ -206,7 +268,7 @@ VIDEO_UPDATE( eprom )
 						if (mo[x] & 2)
 							thunderj_mark_high_palette(bitmap, pf, mo, x, y);
 					}
-					
+
 					/* erase behind ourselves */
 					mo[x] = 0;
 				}

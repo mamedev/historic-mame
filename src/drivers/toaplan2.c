@@ -1044,6 +1044,10 @@ static void bbakraid_irqhandler (int state)
 	logerror("YMZ280 is generating an interrupt. State=%08x\n",state);
 }
 
+static INTERRUPT_GEN( bbakraid_snd_interrupt )
+{
+	cpu_set_irq_line(1, 0, HOLD_LINE);
+}
 
 
 
@@ -3992,10 +3996,10 @@ static MACHINE_DRIVER_START( bbakraid )
 	MDRV_CPU_MEMORY(bbakraid_readmem,bbakraid_writemem)
 	MDRV_CPU_VBLANK_INT(irq3_line_hold,1)
 
-	MDRV_CPU_ADD(Z80,32000000/8)
+	MDRV_CPU_ADD(Z80,32000000/4)
 	MDRV_CPU_MEMORY(bbakraid_sound_readmem,bbakraid_sound_writemem)
 	MDRV_CPU_PORTS(bbakraid_sound_readport,bbakraid_sound_writeport)
-
+	MDRV_CPU_PERIODIC_INT(bbakraid_snd_interrupt, 388)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)
@@ -4015,7 +4019,6 @@ static MACHINE_DRIVER_START( bbakraid )
 	MDRV_VIDEO_UPDATE(batrider_0)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YMZ280B, ymz280b_interface)
 MACHINE_DRIVER_END
 
@@ -4451,9 +4454,9 @@ ROM_START( bbakraid )
 	ROM_LOAD( "gfxu0513.bin", 0xc00000, 0x400000, 0x8bb635a0 )
 
 	ROM_REGION( 0x0c00000, REGION_SOUND1, 0 )	/* YMZ280B Samples */
-	ROM_LOAD( "pcmu0829.bin", 0x000000, 0x400000, 0xe5d07ce7 )
-	ROM_LOAD( "pcmu0830.bin", 0x400000, 0x400000, 0xa5db2fca )
-	ROM_LOAD( "pcmu0831.bin", 0x800000, 0x400000, 0xc98dadd5 )
+	ROM_LOAD( "rom6.829", 0x000000, 0x400000, 0x8848b4a0 )
+	ROM_LOAD( "rom7.830", 0x400000, 0x400000, 0xd6224267 )
+	ROM_LOAD( "rom8.831", 0x800000, 0x400000, 0xa101dfb0 )
 ROM_END
 
 ROM_START( bbakrada )
@@ -4474,9 +4477,9 @@ ROM_START( bbakrada )
 	ROM_LOAD( "gfxu0513.bin", 0xc00000, 0x400000, 0x8bb635a0 )
 
 	ROM_REGION( 0x0c00000, REGION_SOUND1, 0 )	/* YMZ280B Samples */
-	ROM_LOAD( "pcmu0829.bin", 0x000000, 0x400000, 0xe5d07ce7 )
-	ROM_LOAD( "pcmu0830.bin", 0x400000, 0x400000, 0xa5db2fca )
-	ROM_LOAD( "pcmu0831.bin", 0x800000, 0x400000, 0xc98dadd5 )
+	ROM_LOAD( "rom6.829", 0x000000, 0x400000, 0x8848b4a0 )
+	ROM_LOAD( "rom7.830", 0x400000, 0x400000, 0xd6224267 )
+	ROM_LOAD( "rom8.831", 0x800000, 0x400000, 0xa101dfb0 )
 ROM_END
 
 
@@ -4507,5 +4510,5 @@ GAME ( 1996, battleg,  0,        battleg,  battleg,  battleg,  ROT270, "Raizing/
 GAME ( 1996, battlega, battleg,  battleg,  battlega, battleg,  ROT270, "Raizing/8ing", "Battle Garegga (Europe / USA / Japan / Asia)" )
 GAME ( 1998, batrider, 0,        batrider, batrider, battleg,  ROT270, "Raizing/8ing", "Armed Police Batrider (Japan, version B)" )
 GAME ( 1998, batridra, batrider, batrider, batrider, battleg,  ROT270, "Raizing/8ing", "Armed Police Batrider (Japan, version A)" )
-GAMEX( 1999, bbakraid, 0,        bbakraid, bbakraid, T2_Z80,   ROT270, "8ing", "Battle Bakraid - unlimited version (Japan)", GAME_IMPERFECT_SOUND )
-GAMEX( 1999, bbakrada, bbakraid, bbakraid, bbakraid, T2_Z80,   ROT270, "8ing", "Battle Bakraid (Japan)", GAME_IMPERFECT_SOUND )
+GAME ( 1999, bbakraid, 0,        bbakraid, bbakraid, T2_Z80,   ROT270, "8ing", "Battle Bakraid - unlimited version (Japan)")
+GAME ( 1999, bbakrada, bbakraid, bbakraid, bbakraid, T2_Z80,   ROT270, "8ing", "Battle Bakraid (Japan)")

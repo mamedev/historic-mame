@@ -316,9 +316,6 @@ static void aerofgt_drawsprites(struct mame_bitmap *bitmap,const struct rectangl
 		{
 			int map_start;
 			int ox,oy,x,y,xsize,ysize,zoomx,zoomy,flipx,flipy,color;
-			/* table hand made by looking at the ship explosion in attract mode */
-			/* it's almost a logarithmic scale but not exactly */
-			int zoomtable[16] = { 0,7,14,20,25,30,34,38,42,46,49,52,54,57,59,61 };
 
 			ox = aerofgt_spriteram3[attr_start + 1] & 0x01ff;
 			xsize = (aerofgt_spriteram3[attr_start + 1] & 0x0e00) >> 9;
@@ -331,22 +328,25 @@ static void aerofgt_drawsprites(struct mame_bitmap *bitmap,const struct rectangl
 			color = (aerofgt_spriteram3[attr_start + 2] & 0x0f00) >> 8;
 			map_start = aerofgt_spriteram3[attr_start + 3] & 0x3fff;
 
-			zoomx = 16 - zoomtable[zoomx]/8;
-			zoomy = 16 - zoomtable[zoomy]/8;
+			ox += (xsize*zoomx+2)/4;
+			oy += (ysize*zoomy+2)/4;
+
+			zoomx = 32 - zoomx;
+			zoomy = 32 - zoomy;
 
 			for (y = 0;y <= ysize;y++)
 			{
 				int sx,sy;
 
-				if (flipy) sy = ((oy + zoomy * (ysize - y) + 16) & 0x1ff) - 16;
-				else sy = ((oy + zoomy * y + 16) & 0x1ff) - 16;
+				if (flipy) sy = ((oy + zoomy * (ysize - y)/2 + 16) & 0x1ff) - 16;
+				else sy = ((oy + zoomy * y / 2 + 16) & 0x1ff) - 16;
 
 				for (x = 0;x <= xsize;x++)
 				{
 					int code;
 
-					if (flipx) sx = ((ox + zoomx * (xsize - x) + 16) & 0x1ff) - 16;
-					else sx = ((ox + zoomx * x + 16) & 0x1ff) - 16;
+					if (flipx) sx = ((ox + zoomx * (xsize - x) / 2 + 16) & 0x1ff) - 16;
+					else sx = ((ox + zoomx * x / 2 + 16) & 0x1ff) - 16;
 
 					if (map_start < 0x2000)
 						code = aerofgt_spriteram1[map_start & 0x1fff] & 0x1fff;
@@ -359,7 +359,7 @@ static void aerofgt_drawsprites(struct mame_bitmap *bitmap,const struct rectangl
 							flipx,flipy,
 							sx,sy,
 							cliprect,TRANSPARENCY_PEN,15,
-							0x1000 * zoomx,0x1000 * zoomy);
+							zoomx << 11, zoomy << 11);
 					map_start++;
 				}
 			}

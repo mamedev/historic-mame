@@ -1433,7 +1433,7 @@ static struct YM2612interface ym3438_intf =
 {
 	1,								/* One chip */
 	MASTER_CLOCK/7,					/* Clock: 7.67 MHz */
-	{ MIXER(50,MIXER_PAN_CENTER) },	/* Volume */
+	{ YM3012_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },	/* Volume */
 	{ 0 },							/* port I/O */
 	{ 0 },							/* port I/O */
 	{ 0 },							/* port I/O */

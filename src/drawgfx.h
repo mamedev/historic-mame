@@ -143,7 +143,7 @@ enum
 extern int pdrawgfx_shadow_lowpri;
 
 
-/* pointers to pixel functions.  They're set based on orientation and depth */
+/* pointers to pixel functions.  They're set based on depth */
 #define plot_pixel(bm,x,y,p)	(*(bm)->plot)(bm,x,y,p)
 #define read_pixel(bm,x,y)		(*(bm)->read)(bm,x,y)
 #define plot_box(bm,x,y,w,h,p)	(*(bm)->plot_box)(bm,x,y,w,h,p)

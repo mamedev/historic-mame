@@ -35,7 +35,7 @@ added together (=873b), subtracted [f840] (=87d9)
 ***************************************************************************/
 #include "driver.h"
 
-extern unsigned char *devram, *sharedram;
+static data8_t *sharedram;
 
 /* Variables defined in vidhrdw */
 unsigned char *spdbuggy_bgram, *spdbuggy_fgram;

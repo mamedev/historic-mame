@@ -846,12 +846,14 @@ INPUT_PORTS_START( m660 )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
+
+
 static struct GfxLayout char_layout =
 {
 	8,8,
-	0x400,
+	RGN_FRAC(1,3),
 	3,
-	{ 2*0x2000*8, 1*0x2000*8, 0*0x2000*8 },
+	{ RGN_FRAC(2,3), RGN_FRAC(1,3), RGN_FRAC(0,3) },
 	{ 0,1,2,3, 4,5,6,7 },
 	{ 0*8,1*8,2*8,3*8,4*8,5*8,6*8,7*8 },
 	8*8
@@ -860,9 +862,9 @@ static struct GfxLayout char_layout =
 static struct GfxLayout sprite_layout =
 {
 	32,32,
-	0x80,
+	RGN_FRAC(1,3),
 	3,
-	{ 2*0x4000*8, 1*0x4000*8, 0*0x4000*8 },
+	{ RGN_FRAC(2,3), RGN_FRAC(1,3), RGN_FRAC(0,3) },
 	{
 		0,1,2,3,4,5,6,7,
 		64+0,64+1,64+2,64+3,64+4,64+5,64+6,64+7,
@@ -881,9 +883,9 @@ static struct GfxLayout sprite_layout =
 static struct GfxLayout tile_layout =
 {
 	8,8,
-	0x800,
+	RGN_FRAC(1,3),
 	3,
-	{ 2*0x4000*8, 1*0x4000*8, 0*0x4000*8 },
+	{ RGN_FRAC(2,3), RGN_FRAC(1,3), RGN_FRAC(0,3) },
 	{ 0,1,2,3,4,5,6,7 },
 	{ 0*8,1*8,2*8,3*8,4*8,5*8,6*8,7*8 },
 	8*8
@@ -896,6 +898,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ REGION_GFX3, 0, &sprite_layout, 0, 32 },
 	{ -1 }
 };
+
 
 /*******************************************************************************/
 
@@ -1023,13 +1026,10 @@ ROM_START( tsamurai )
 	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Z80 code - sample player#2 */
 	ROM_LOAD( "13.4j",      0x0000, 0x2000, 0x73feb0e2 )
 
-	ROM_REGION( 0xC000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "a35-04.10a", 0x0000, 0x2000, 0xb97ce9b1 ) // tiles
-	ROM_RELOAD( 			0x2000, 0x2000 )
-	ROM_LOAD( "a35-05.10b", 0x4000, 0x2000, 0x55a17b08 )
-	ROM_RELOAD( 			0x6000, 0x2000 )
-	ROM_LOAD( "a35-06.10d", 0x8000, 0x2000, 0xf5ee6f8f )
-	ROM_RELOAD( 			0xa000, 0x2000 )
+	ROM_LOAD( "a35-05.10b", 0x2000, 0x2000, 0x55a17b08 )
+	ROM_LOAD( "a35-06.10d", 0x4000, 0x2000, 0xf5ee6f8f )
 
 	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "a35-10.11n", 0x0000, 0x1000, 0x0b5a0c45 ) // characters
@@ -1060,20 +1060,17 @@ ROM_START( tsamura2 )
 	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Z80 code - sample player#2 */
 	ROM_LOAD( "a35-13.4j",  0x0000, 0x2000, 0x3828f4d2 )
 
-	ROM_REGION( 0xC000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "a35-04.10a", 0x0000, 0x2000, 0xb97ce9b1 ) // tiles
-	ROM_RELOAD( 			0x2000, 0x2000 )
-	ROM_LOAD( "a35-05.10b", 0x4000, 0x2000, 0x55a17b08 )
-	ROM_RELOAD( 			0x6000, 0x2000 )
-	ROM_LOAD( "a35-06.10d", 0x8000, 0x2000, 0xf5ee6f8f )
-	ROM_RELOAD( 			0xa000, 0x2000 )
+	ROM_LOAD( "a35-05.10b", 0x2000, 0x2000, 0x55a17b08 )
+	ROM_LOAD( "a35-06.10d", 0x4000, 0x2000, 0xf5ee6f8f )
 
 	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "a35-10.11n", 0x0000, 0x1000, 0x0b5a0c45 ) // characters
 	ROM_LOAD( "a35-11.11q", 0x2000, 0x1000, 0x93346d75 )
 	ROM_LOAD( "a35-12.11r", 0x4000, 0x1000, 0xf4c69d8a )
 
-	ROM_REGION( 0xC000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_REGION( 0xc000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "a35-07.12h", 0x0000, 0x4000, 0x38fc349f ) // sprites
 	ROM_LOAD( "a35-08.12j", 0x4000, 0x4000, 0xa07d6dc3 )
 	ROM_LOAD( "a35-09.12k", 0x8000, 0x4000, 0xc0784a0e )
@@ -1098,20 +1095,17 @@ ROM_START( nunchaku )
 	ROM_LOAD( "nunchack.m1", 0x0000, 0x2000, 0xb53d73f6 )
 	ROM_LOAD( "nunchack.m2", 0x2000, 0x2000, 0xf37d7c49 )
 
-	ROM_REGION( 0x0C000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "nunchack.b1", 0x0000, 0x2000, 0x48c88fea ) // tiles
-	ROM_RELOAD( 			 0x2000, 0x2000 )
-	ROM_LOAD( "nunchack.b2", 0x4000, 0x2000, 0xeec818e4 )
-	ROM_RELOAD( 			 0x6000, 0x2000 )
-	ROM_LOAD( "nunchack.b3", 0x8000, 0x2000, 0x5f16473f )
-	ROM_RELOAD( 			 0xa000, 0x2000 )
+	ROM_LOAD( "nunchack.b2", 0x2000, 0x2000, 0xeec818e4 )
+	ROM_LOAD( "nunchack.b3", 0x4000, 0x2000, 0x5f16473f )
 
-	ROM_REGION( 0x06000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "nunchack.v1", 0x0000, 0x1000, 0x358a3714 ) // characters
 	ROM_LOAD( "nunchack.v2", 0x2000, 0x1000, 0x54c18d8e )
 	ROM_LOAD( "nunchack.v3", 0x4000, 0x1000, 0xf7ac203a )
 
-	ROM_REGION( 0x0C000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_REGION( 0xc000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "nunchack.c1", 0x0000, 0x4000, 0x797cbc8a ) // sprites
 	ROM_LOAD( "nunchack.c2", 0x4000, 0x4000, 0x701a0cc3 )
 	ROM_LOAD( "nunchack.c3", 0x8000, 0x4000, 0xffb841fc )
@@ -1134,20 +1128,17 @@ ROM_START( yamagchi )
 	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Z80 code - sample player */
 	ROM_LOAD( "a38-13.4j", 0x0000, 0x2000, 0xa26445bb )
 
-	ROM_REGION( 0x0C000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "a38-04.10a", 0x0000, 0x2000, 0x6bc69d4d ) // tiles
-	ROM_RELOAD( 			0x2000, 0x2000 )
-	ROM_LOAD( "a38-05.10b", 0x4000, 0x2000, 0x047fb315 )
-	ROM_RELOAD( 			0x6000, 0x2000 )
-	ROM_LOAD( "a38-06.10d", 0x8000, 0x2000, 0xa636afb2 )
-	ROM_RELOAD( 			0xa000, 0x2000 )
+	ROM_LOAD( "a38-05.10b", 0x2000, 0x2000, 0x047fb315 )
+	ROM_LOAD( "a38-06.10d", 0x4000, 0x2000, 0xa636afb2 )
 
-	ROM_REGION( 0x06000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "a38-10.11n", 0x0000, 0x1000, 0x51ab4671 ) // characters
 	ROM_LOAD( "a38-11.11p", 0x2000, 0x1000, 0x27890169 )
 	ROM_LOAD( "a38-12.11r", 0x4000, 0x1000, 0xc98d5cf2 )
 
-	ROM_REGION( 0x0C000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_REGION( 0xc000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "a38-07.12h", 0x0000, 0x4000, 0xa3a521b6 ) // sprites
 	ROM_LOAD( "a38-08.12j", 0x4000, 0x4000, 0x553afc66 )
 	ROM_LOAD( "a38-09.12l", 0x8000, 0x4000, 0x574156ae )
@@ -1173,17 +1164,17 @@ ROM_START( m660 )
 	ROM_REGION( 0x10000, REGION_CPU4, 0 ) /* Z80 code AY driver */
 	ROM_LOAD( "660x.bin",    0x0000, 0x8000, 0xb82f0cfa )
 
-	ROM_REGION( 0x0C000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "4.7k",        0x0000, 0x4000, 0xe24e431a ) // tiles
 	ROM_LOAD( "5.6k",        0x4000, 0x4000, 0xb2c93d46 )
 	ROM_LOAD( "6.5k",        0x8000, 0x4000, 0x763c5983 )
 
-	ROM_REGION( 0x06000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "660u.bin",    0x0000, 0x2000, 0x030af716 ) // characters
 	ROM_LOAD( "660v.bin",    0x2000, 0x2000, 0x51a6e160 )
 	ROM_LOAD( "660w.bin",    0x4000, 0x2000, 0x8a45b469 )
 
-	ROM_REGION( 0x0C000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_REGION( 0xc000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "7.15e",       0x0000, 0x4000, 0x990c0cee ) // sprites
 	ROM_LOAD( "8.15d",       0x4000, 0x4000, 0xd9aa7834 )
 	ROM_LOAD( "9.15b",       0x8000, 0x4000, 0x27b26905 )
@@ -1210,17 +1201,17 @@ ROM_START( m660j )
 	ROM_LOAD( "d.4e",        0x0000, 0x4000, 0x93f3d852 )
 	ROM_LOAD( "e.4d",        0x4000, 0x4000, 0x12f5c077 )
 
-	ROM_REGION( 0x0C000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "4.7k",        0x0000, 0x4000, 0xe24e431a ) // tiles
 	ROM_LOAD( "5.6k",        0x4000, 0x4000, 0xb2c93d46 )
 	ROM_LOAD( "6.5k",        0x8000, 0x4000, 0x763c5983 )
 
-	ROM_REGION( 0x06000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "a.16j",       0x0000, 0x2000, 0x06f44c8c ) // characters
 	ROM_LOAD( "b.16k",       0x2000, 0x2000, 0x94b8b69f )
 	ROM_LOAD( "c.16m",       0x4000, 0x2000, 0xd6768c68 )
 
-	ROM_REGION( 0x0C000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_REGION( 0xc000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "7.15e",       0x0000, 0x4000, 0x990c0cee ) // sprites
 	ROM_LOAD( "8.15d",       0x4000, 0x4000, 0xd9aa7834 )
 	ROM_LOAD( "9.15b",       0x8000, 0x4000, 0x27b26905 )
@@ -1246,17 +1237,17 @@ ROM_START( m660b )
 	ROM_REGION( 0x10000, REGION_CPU4, 0 ) /* Z80 code AY driver */
 	ROM_LOAD( "660x.bin",    0x0000, 0x8000, 0xb82f0cfa )
 
-	ROM_REGION( 0x0C000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "4.7k",        0x0000, 0x4000, 0xe24e431a ) // tiles
 	ROM_LOAD( "5.6k",        0x4000, 0x4000, 0xb2c93d46 )
 	ROM_LOAD( "6.5k",        0x8000, 0x4000, 0x763c5983 )
 
-	ROM_REGION( 0x06000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "m660-10.bin", 0x0000, 0x2000, 0xb11405a6 ) // characters
 	ROM_LOAD( "b.16k",       0x2000, 0x2000, 0x94b8b69f )
 	ROM_LOAD( "c.16m",       0x4000, 0x2000, 0xd6768c68 )
 
-	ROM_REGION( 0x0C000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_REGION( 0xc000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "7.15e",       0x0000, 0x4000, 0x990c0cee ) // sprites
 	ROM_LOAD( "8.15d",       0x4000, 0x4000, 0xd9aa7834 )
 	ROM_LOAD( "9.15b",       0x8000, 0x4000, 0x27b26905 )
@@ -1282,7 +1273,7 @@ ROM_START( alphaxz )
 	ROM_REGION( 0x10000, REGION_CPU4, 0 ) /* Z80 code AY driver */
 	ROM_LOAD( "660x.bin",    0x0000, 0x8000, 0xb82f0cfa )
 
-	ROM_REGION( 0xC000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "az-04.bin",   0x00000, 0x4000, 0x23da4e3d ) // tiles
 	ROM_LOAD( "az-05.bin",   0x04000, 0x4000, 0x8746ff69 )
 	ROM_LOAD( "az-06.bin",   0x08000, 0x4000, 0x6e494964 )
@@ -1292,7 +1283,7 @@ ROM_START( alphaxz )
 	ROM_LOAD( "az-11.bin",   0x02000, 0x2000, 0xd91993f6 )
 	ROM_LOAD( "az-12.bin",   0x04000, 0x2000, 0x8ea48ef3 )
 
-	ROM_REGION( 0xC000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_REGION( 0xc000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "az-07.bin",   0x00000, 0x4000, 0x5f9cc65e ) // sprites
 	ROM_LOAD( "az-08.bin",   0x04000, 0x4000, 0x23e3a6ba )
 	ROM_LOAD( "az-09.bin",   0x08000, 0x4000, 0x7096fa71 )
@@ -1314,17 +1305,17 @@ ROM_START( vsgongf )
 	ROM_LOAD( "6.5n",	0x0000, 0x2000, 0x785b9000 )
 	ROM_LOAD( "5.5l",	0x2000, 0x2000, 0x76dbfde9 )
 
-	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles (N/A) */
+	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles (N/A) */
 
-	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
+	ROM_REGION( 0x3000, REGION_GFX2, ROMREGION_DISPOSE ) /* characters */
 	ROM_LOAD( "7.6f",	0x0000, 0x1000, 0x6ec68692 )
-	ROM_LOAD( "8.7f",	0x2000, 0x1000, 0xafba16c8 )
-	ROM_LOAD( "9.8f",	0x4000, 0x1000, 0x536bf710 )
+	ROM_LOAD( "8.7f",	0x1000, 0x1000, 0xafba16c8 )
+	ROM_LOAD( "9.8f",	0x2000, 0x1000, 0x536bf710 )
 
-	ROM_REGION( 0xc000, REGION_GFX3, ROMREGION_DISPOSE ) /* sprites */
+	ROM_REGION( 0x6000, REGION_GFX3, ROMREGION_DISPOSE ) /* sprites */
 	ROM_LOAD( "13.15j",  0x0000, 0x2000, 0xa2451a31 )
-	ROM_LOAD( "14.15h",  0x4000, 0x2000, 0xb387403e )
-	ROM_LOAD( "15.15f",  0x8000, 0x2000, 0x0e649334 )
+	ROM_LOAD( "14.15h",  0x2000, 0x2000, 0xb387403e )
+	ROM_LOAD( "15.15f",  0x4000, 0x2000, 0x0e649334 )
 
 	ROM_REGION( 0x300, REGION_PROMS, 0 )
 	ROM_LOAD( "clr.6s",  0x000, 0x0100, 0x578bfbea )
@@ -1332,13 +1323,15 @@ ROM_START( vsgongf )
 	ROM_LOAD( "clr.6p",  0x200, 0x0100, 0x0e4fd17a )
 ROM_END
 
+
+
 GAMEX(1984, vsgongf,  0,        vsgongf,  vsgongf,  0, ROT90, "Kaneko", "VS Gong Fight", GAME_IMPERFECT_COLORS )
 GAME( 1985, tsamurai, 0,        tsamurai, tsamurai, 0, ROT90, "Taito", "Samurai Nihon-ichi (set 1)" )
 GAME( 1985, tsamura2, tsamurai, tsamurai, tsamurai, 0, ROT90, "Taito", "Samurai Nihon-ichi (set 2)" )
 GAMEX(1985, nunchaku, 0,        tsamurai, nunchaku, 0, ROT90, "Taito", "Nunchackun", GAME_IMPERFECT_COLORS )
 GAMEX(1985, yamagchi, 0,        tsamurai, yamagchi, 0, ROT90, "Taito", "Go Go Mr. Yamaguchi / Yuke Yuke Yamaguchi-kun", GAME_IMPERFECT_COLORS )
 
-GAME( 1986, m660,     0,        m660,     m660    , 0, ROT90, "[Wood Place] Taito America Corporation", "Mission 660" )
-GAME( 1986, m660j,    m660,     m660,     m660    , 0, ROT90, "[Wood Place] Taito Corporation", "Mission 660 (Japan)" )
-GAME( 1986, m660b,    m660,     m660,     m660    , 0, ROT90, "bootleg", "Mission 660 (bootleg)" )
-GAME( 1986, alphaxz,  m660,     m660,     m660    , 0, ROT90, "Ed/Wood Place", "Alphax Z" )
+GAME( 1986, m660,     0,        m660,     m660,     0, ROT90, "[Wood Place] Taito America Corporation", "Mission 660 (US)" )
+GAME( 1986, m660j,    m660,     m660,     m660,     0, ROT90, "[Wood Place] Taito Corporation", "Mission 660 (Japan)" )
+GAME( 1986, m660b,    m660,     m660,     m660,     0, ROT90, "bootleg", "Mission 660 (bootleg)" )
+GAME( 1986, alphaxz,  m660,     m660,     m660,     0, ROT90, "Ed/Wood Place", "The Alphax Z (Japan)" )

@@ -5,11 +5,60 @@
 
   Driver provided by Paul Leaman
 
+
+Stephh's notes (based on the games Z80 code and some tests) :
+
+0) all games
+
+  - There is some code that allows you to select your starting level
+    (at 0x08dc in 'gunsmoka' and at 0x08d2 in the other sets).
+    To do so, once the game has booted (after the "notice" screen),
+    turn the "service" mode Dip Switch ON, and change Dip Switches
+    DSW 1-0 to 1-3 (which are used by coinage). You can also set
+    GUNSMOKE_HACK to 1 and change the fake "Starting Level" Dip Switch.
+  - About the ingame bug at the end of level 2 : enemy's energy
+    (stored at 0xf790) is in fact not infinite, but it turns back to
+    0xff, so when it reaches 0 again, the boss is dead.
+
+
+1) 'gunsmoke'
+
+  - World version.
+    You can enter 3 chars for your initials.
+
+
+2) 'gunsmokj'
+
+  - Japan version (but English text though).
+    You can enter 8 chars for your initials.
+
+
+3) 'gunsmoku'
+
+  - US version licenced to Romstar.
+    You can enter 3 chars for your initials.
+
+
+4) 'gunsmoku'
+
+  - US version licenced to Romstar.
+    You can enter 3 chars for your initials.
+  - This is probably a later version of the game because some code
+    has been added for the "Lives" Dip Switch that replaces the
+    "Demonstation" one (so demonstration is always OFF).
+  - Other changes :
+      * Year is 1986 instead of 1985.
+      * High score is 110000 instead of 100000.
+      * Levels 3 and 6 are swapped.
+
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+
+#define GUNSMOKE_HACK	0
 
 
 READ_HANDLER( gunsmoke_bankedrom_r );
@@ -24,6 +73,19 @@ PALETTE_INIT( gunsmoke );
 VIDEO_UPDATE( gunsmoke );
 VIDEO_START( gunsmoke );
 
+
+#if GUNSMOKE_HACK
+static READ_HANDLER( gunsmoke_input_r )
+{
+	if ((activecpu_get_pc() == 0x0173) || (activecpu_get_pc() == 0x0181))	// to get correct coinage
+		return (readinputport(4));
+
+	if ((readinputport(3) & 0x80) == 0x00)	// "debug mode" ?
+		return ((readinputport(4) & 0xc0) | (readinputport(5) & 0x3f));
+	else
+		return (readinputport(4));
+}
+#endif
 
 
 static READ_HANDLER( gunsmoke_unknown_r )
@@ -55,10 +117,14 @@ static MEMORY_READ_START( readmem )
 	{ 0xc001, 0xc001, input_port_1_r },
 	{ 0xc002, 0xc002, input_port_2_r },
 	{ 0xc003, 0xc003, input_port_3_r },
+#if GUNSMOKE_HACK
+	{ 0xc004, 0xc004, gunsmoke_input_r },
+#else
 	{ 0xc004, 0xc004, input_port_4_r },
-    { 0xc4c9, 0xc4cb, gunsmoke_unknown_r },
-    { 0xd000, 0xd3ff, videoram_r },
-    { 0xd400, 0xd7ff, colorram_r },
+#endif
+	{ 0xc4c9, 0xc4cb, gunsmoke_unknown_r },
+	{ 0xd000, 0xd3ff, videoram_r },
+	{ 0xd400, 0xd7ff, colorram_r },
 	{ 0xe000, 0xffff, MRA_RAM }, /* Work + sprite RAM */
 MEMORY_END
 
@@ -101,16 +167,16 @@ INPUT_PORTS_START( gunsmoke )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
@@ -118,9 +184,9 @@ INPUT_PORTS_START( gunsmoke )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_COCKTAIL )
@@ -128,29 +194,29 @@ INPUT_PORTS_START( gunsmoke )
 
 	PORT_START	/* DSW0 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x03, "30k, 100k & every 100k")
-	PORT_DIPSETTING(    0x02, "30k, 80k & every 80k" )
-	PORT_DIPSETTING(    0x01, "30k & 100K only")
-	PORT_DIPSETTING(    0x00, "30k, 100k & every 150k" )
+	PORT_DIPSETTING(    0x01, "30k, 80k then every 80k" )
+	PORT_DIPSETTING(    0x03, "30k, 100k then every 100k" )
+	PORT_DIPSETTING(    0x00, "30k, 100k then every 150k" )
+	PORT_DIPSETTING(    0x02, "30k and 100K only")
 	PORT_DIPNAME( 0x04, 0x04, "Demonstration" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ))
-	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ))
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x20, "Easy" )
 	PORT_DIPSETTING(    0x30, "Normal" )
 	PORT_DIPSETTING(    0x10, "Difficult" )
 	PORT_DIPSETTING(    0x00, "Very Difficult" )
 	PORT_DIPNAME( 0x40, 0x40, "Freeze" )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )				// Also "debug mode"
 
 	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ))
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
@@ -159,7 +225,7 @@ INPUT_PORTS_START( gunsmoke )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_6C ) )
 	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ))
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )
@@ -168,12 +234,145 @@ INPUT_PORTS_START( gunsmoke )
 	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x18, DEF_STR( 1C_6C ) )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ))
-	PORT_DIPSETTING(    0x40, DEF_STR( Yes ))
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ))
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START      /* Fake DSW */
+	PORT_DIPNAME( 0x0f, 0x0f, "Starting Level" )
+	PORT_DIPSETTING(    0x0f, "Demonstration" )
+	PORT_DIPSETTING(    0x0e, "Level 1" )
+	PORT_DIPSETTING(    0x0d, "Level 2" )
+	PORT_DIPSETTING(    0x0c, "Level 3" )
+	PORT_DIPSETTING(    0x0b, "Level 4" )
+	PORT_DIPSETTING(    0x0a, "Level 5" )
+	PORT_DIPSETTING(    0x09, "Level 6" )
+	PORT_DIPSETTING(    0x08, "Level 7" )
+	PORT_DIPSETTING(    0x07, "Level 8" )
+	PORT_DIPSETTING(    0x06, "Level 9" )
+	PORT_DIPSETTING(    0x05, "Level 10" )
+	PORT_DIPSETTING(    0x04, "Ending message" )
+//	PORT_DIPSETTING(    0x03, "Demonstration" )
+//	PORT_DIPSETTING(    0x02, "Demonstration" )
+//	PORT_DIPSETTING(    0x01, "Demonstration" )
+//	PORT_DIPSETTING(    0x00, "Invalid Level" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
+
+/* Same as 'gunsmoke', but "Lives" Dip Switch instead of "Demonstration" Dip Switch */
+/* And swapped starting levels 3 and 6 in the fake Dip Switch */
+INPUT_PORTS_START( gunsmoka )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x01, "30k, 80k then every 80k" )
+	PORT_DIPSETTING(    0x03, "30k, 100k then every 100k" )
+	PORT_DIPSETTING(    0x00, "30k, 100k then every 150k" )
+	PORT_DIPSETTING(    0x02, "30k and 100K only")
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x04, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x20, "Easy" )
+	PORT_DIPSETTING(    0x30, "Normal" )
+	PORT_DIPSETTING(    0x10, "Difficult" )
+	PORT_DIPSETTING(    0x00, "Very Difficult" )
+	PORT_DIPNAME( 0x40, 0x40, "Freeze" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )				// Also "debug mode"
+
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START      /* Fake DSW */
+	PORT_DIPNAME( 0x0f, 0x0f, "Starting Level" )
+	PORT_DIPSETTING(    0x0f, "Demonstration" )
+	PORT_DIPSETTING(    0x0e, "Level 1" )
+	PORT_DIPSETTING(    0x0d, "Level 2" )
+	PORT_DIPSETTING(    0x09, "Level 3" )
+	PORT_DIPSETTING(    0x0b, "Level 4" )
+	PORT_DIPSETTING(    0x0a, "Level 5" )
+	PORT_DIPSETTING(    0x0c, "Level 6" )
+	PORT_DIPSETTING(    0x08, "Level 7" )
+	PORT_DIPSETTING(    0x07, "Level 8" )
+	PORT_DIPSETTING(    0x06, "Level 9" )
+	PORT_DIPSETTING(    0x05, "Level 10" )
+	PORT_DIPSETTING(    0x04, "Ending message" )
+//	PORT_DIPSETTING(    0x03, "Demonstration" )
+//	PORT_DIPSETTING(    0x02, "Demonstration" )
+//	PORT_DIPSETTING(    0x01, "Demonstration" )
+//	PORT_DIPSETTING(    0x00, "Invalid Level" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
 
 static struct GfxLayout charlayout =
 {
@@ -326,9 +525,9 @@ ROM_START( gunsmoke )
 	ROM_LOAD( "01f_g-05.bin", 0x0900, 0x0100, 0x25c90c2a )	/* priority? (not used) */
 ROM_END
 
-ROM_START( gunsmrom )
+ROM_START( gunsmokj )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )     /* 2*64k for code */
-	ROM_LOAD( "9n_gs03.bin",  0x00000, 0x8000, 0x592f211b ) /* Code 0000-7fff */
+	ROM_LOAD( "gs03_9n.rom",  0x00000, 0x8000, 0xb56b5df6 ) /* Code 0000-7fff */
 	ROM_LOAD( "10n_gs04.bin", 0x10000, 0x8000, 0x8d4b423f ) /* Paged code */
 	ROM_LOAD( "12n_gs05.bin", 0x18000, 0x8000, 0x2b5667fb ) /* Paged code */
 
@@ -374,9 +573,9 @@ ROM_START( gunsmrom )
 	ROM_LOAD( "01f_g-05.bin", 0x0900, 0x0100, 0x25c90c2a )	/* priority? (not used) */
 ROM_END
 
-ROM_START( gunsmokj )
+ROM_START( gunsmoku )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )     /* 2*64k for code */
-	ROM_LOAD( "gs03_9n.rom",  0x00000, 0x8000, 0xb56b5df6 ) /* Code 0000-7fff */
+	ROM_LOAD( "9n_gs03.bin",  0x00000, 0x8000, 0x592f211b ) /* Code 0000-7fff */
 	ROM_LOAD( "10n_gs04.bin", 0x10000, 0x8000, 0x8d4b423f ) /* Paged code */
 	ROM_LOAD( "12n_gs05.bin", 0x18000, 0x8000, 0x2b5667fb ) /* Paged code */
 
@@ -471,13 +670,7 @@ ROM_START( gunsmoka )
 ROM_END
 
 
-
-/*
-  All the sets are almost identical apart from gunsmoka which is quite
-  different: the levels are in a different order, and the "Demonstration" dip
-  switch has no effect.
- */
 GAME( 1985, gunsmoke, 0,        gunsmoke, gunsmoke, 0, ROT270, "Capcom", "Gun.Smoke (World)" )
-GAME( 1985, gunsmrom, gunsmoke, gunsmoke, gunsmoke, 0, ROT270, "Capcom (Romstar license)", "Gun.Smoke (US set 1)" )
-GAME( 1986, gunsmoka, gunsmoke, gunsmoke, gunsmoke, 0, ROT270, "Capcom", "Gun.Smoke (US set 2)" )
 GAME( 1985, gunsmokj, gunsmoke, gunsmoke, gunsmoke, 0, ROT270, "Capcom", "Gun.Smoke (Japan)" )
+GAME( 1985, gunsmoku, gunsmoke, gunsmoke, gunsmoke, 0, ROT270, "Capcom (Romstar license)", "Gun.Smoke (US set 1)" )
+GAME( 1986, gunsmoka, gunsmoke, gunsmoke, gunsmoka, 0, ROT270, "Capcom (Romstar license)", "Gun.Smoke (US set 2)" )

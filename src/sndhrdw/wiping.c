@@ -13,8 +13,8 @@
 #define MAX_VOICES 8
 
 
-const int samplerate = 48000;
-const int defgain = 48;
+static const int samplerate = 48000;
+static const int defgain = 48;
 
 
 /* this structure defines the parameters for a channel */
@@ -22,7 +22,7 @@ typedef struct
 {
 	int frequency;
 	int counter;
-	int volume[2];
+	int volume;
 	const unsigned char *wave;
 	int oneshot;
 	int oneshotplaying;
@@ -31,7 +31,6 @@ typedef struct
 
 /* globals available to everyone */
 unsigned char *wiping_soundregs;
-unsigned char *wiping_wavedata;
 
 /* data about the sound system */
 static sound_channel channel_list[MAX_VOICES];
@@ -99,7 +98,7 @@ static void wiping_update_mono(int ch, INT16 *buffer, int length)
 	for (voice = channel_list; voice < last_channel; voice++)
 	{
 		int f = 16*voice->frequency;
-		int v = voice->volume[0];
+		int v = voice->volume;
 
 		/* only update if we have non-zero volume and frequency */
 		if (v && f)
@@ -192,7 +191,7 @@ int wiping_sh_start(const struct MachineSound *msound)
 	for (voice = channel_list; voice < last_channel; voice++)
 	{
 		voice->frequency = 0;
-		voice->volume[0] = voice->volume[1] = 0;
+		voice->volume = 0;
 		voice->wave = &sound_prom[0];
 		voice->counter = 0;
 	}
@@ -228,7 +227,7 @@ WRITE_HANDLER( wiping_sound_w )
 			voice->frequency = voice->frequency * 16 + ((wiping_soundregs[0x01 + base]) & 0x0f);
 			voice->frequency = voice->frequency * 16 + ((wiping_soundregs[0x00 + base]) & 0x0f);
 
-			voice->volume[0] = wiping_soundregs[0x07 + base] & 0x0f;
+			voice->volume = wiping_soundregs[0x07 + base] & 0x0f;
 			if (wiping_soundregs[0x5 + base] & 0x0f)
 			{
 				voice->wave = &sound_rom[128 * (16 * (wiping_soundregs[0x5 + base] & 0x0f)

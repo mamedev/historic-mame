@@ -1,7 +1,13 @@
 #include "driver.h"
 #include "osinline.h"
 
+
+/* in usrintf.c */
+extern int uirotcharwidth, uirotcharheight;
+
+
 static int use_profiler;
+
 
 /*
  * Versions of GNU C earlier that 2.7 have big problems with the UINT64
@@ -178,7 +184,7 @@ void profiler_show(struct mame_bitmap *bitmap)
 			else
 				sprintf(buf,"%s%3d%%",names[i],
 						(int)((computed * 100 + total/2) / total));
-			ui_text(bitmap,buf,0,(line++)*Machine->uifontheight);
+			ui_text(bitmap,buf,0,(line++)*uirotcharheight);
 		}
 	}
 
@@ -186,7 +192,7 @@ void profiler_show(struct mame_bitmap *bitmap)
 	for (j = 0;j < MEMORY;j++)
 		i += profile.cpu_context_switches[j];
 	sprintf(buf,"CPU switches%4d",i / MEMORY);
-	ui_text(bitmap,buf,0,(line++)*Machine->uifontheight);
+	ui_text(bitmap,buf,0,(line++)*uirotcharheight);
 
 	/* reset the counters */
 	memory = (memory + 1) % MEMORY;

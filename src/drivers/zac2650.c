@@ -162,6 +162,10 @@ INPUT_PORTS_START( sinvader )
 
 INPUT_PORTS_END
 
+INPUT_PORTS_START( embargo )
+/* TODO */
+INPUT_PORTS_END
+
 static PALETTE_INIT( zac2650 )
 {
 	palette_set_color(0,0x00,0x00,0x00); /* BLACK */
@@ -292,11 +296,15 @@ static MEMORY_WRITE_START( emb_writemem )
 	{ 0x2000, 0x3dff, c8080bw_videoram_w, &videoram, &videoram_size },
 MEMORY_END
 
+static PORT_READ_START( emb_readport )
+PORT_END
+
 static MACHINE_DRIVER_START( embargo )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(S2650, 625000)
 	MDRV_CPU_MEMORY(emb_readmem,emb_writemem)
+	MDRV_CPU_PORTS(emb_readport,0)
 
 	MDRV_FRAMES_PER_SECOND(55)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -304,8 +312,9 @@ static MACHINE_DRIVER_START( embargo )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
+	MDRV_VISIBLE_AREA(0*8, 32*8-2, 0*8, 32*8-1)
 	MDRV_PALETTE_LENGTH(2)
+	MDRV_COLORTABLE_LENGTH(4)
 
 	MDRV_PALETTE_INIT(zac2650)
 	MDRV_VIDEO_START(generic_bitmapped)
@@ -321,9 +330,9 @@ ROM_START( embargo )
 	ROM_LOAD( "emb3", 0x0400, 0x0200, 0x1af7a966 )
 	ROM_LOAD( "emb4", 0x0600, 0x0200, 0xd9c75da0 )
 	ROM_LOAD( "emb5", 0x0800, 0x0200, 0x15960b58 )
-	ROM_LOAD( "emb6", 0x0A00, 0x0200, 0x7ba23058 )
-	ROM_LOAD( "emb7", 0x0C00, 0x0200, 0x6d46a593 )
-	ROM_LOAD( "emb8", 0x0E00, 0x0200, 0xf0b00634 )
+	ROM_LOAD( "emb6", 0x0a00, 0x0200, 0x7ba23058 )
+	ROM_LOAD( "emb7", 0x0c00, 0x0200, 0x6d46a593 )
+	ROM_LOAD( "emb8", 0x0e00, 0x0200, 0xf0b00634 )
 ROM_END
 
 
@@ -336,4 +345,4 @@ static DRIVER_INIT( tinvader )
 
 GAMEX( 19??, sia2650,  0,       tinvader, sinvader, 0,        ROT270, "Zaccaria/Zelco", "Super Invader Attack", GAME_NO_SOUND )
 GAMEX( 19??, tinv2650, sia2650, tinvader, tinvader, tinvader, ROT270, "Zaccaria/Zelco", "The Invaders", GAME_NO_SOUND )
-GAMEX( 1977, embargo,  0,       embargo,  tinvader, 8080bw,   ROT0,   "Cinematronics",  "Embargo", GAME_NO_SOUND )
+GAMEX( 1977, embargo,  0,       embargo,  embargo,  8080bw,   ROT0,   "Cinematronics",  "Embargo", GAME_NO_SOUND )

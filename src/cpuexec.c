@@ -409,31 +409,38 @@ static void handle_save(void)
 	name[0] = loadsave_schedule_id;
 	file = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_STATE, 1);
 
-	/* write the save state */
-	state_save_save_begin(file);
-
-	/* write tag 0 */
-	state_save_set_current_tag(0);
-	state_save_save_continue();
-
-	/* loop over CPUs */
-	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
+	if (file)
 	{
-		cpuintrf_push_context(cpunum);
+		/* write the save state */
+		state_save_save_begin(file);
 
-		/* make sure banking is set */
-		activecpu_reset_banking();
-
-		/* save the CPU data */
-		state_save_set_current_tag(cpunum + 1);
+		/* write tag 0 */
+		state_save_set_current_tag(0);
 		state_save_save_continue();
 
-		cpuintrf_pop_context();
-	}
+		/* loop over CPUs */
+		for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
+		{
+			cpuintrf_push_context(cpunum);
 
-	/* finish and close */
-	state_save_save_finish();
-	osd_fclose(file);
+			/* make sure banking is set */
+			activecpu_reset_banking();
+
+			/* save the CPU data */
+			state_save_set_current_tag(cpunum + 1);
+			state_save_save_continue();
+
+			cpuintrf_pop_context();
+		}
+
+		/* finish and close */
+		state_save_save_finish();
+		osd_fclose(file);
+	}
+	else
+	{
+		usrintf_showmessage("Error: Failed to save state");
+	}
 
 	/* unschedule the save */
 	loadsave_schedule = LOADSAVE_NONE;
@@ -486,6 +493,10 @@ static void handle_load(void)
 			state_save_load_finish();
 		}
 		osd_fclose(file);
+	}
+	else
+	{
+		usrintf_showmessage("Error: Failed to load state");
 	}
 
 	/* unschedule the load */
@@ -733,7 +744,7 @@ int cycles_left_to_run(void)
 /*************************************
  *
  *	Return total number of CPU cycles
- *	for the active CPU.
+ *	for the active CPU or for a given CPU.
  *
  *************************************/
 
@@ -748,10 +759,18 @@ int cycles_left_to_run(void)
 
 --------------------------------------------------------------*/
 
-int cpu_gettotalcycles(void)
+int activecpu_gettotalcycles(void)
 {
 	VERIFY_ACTIVECPU(0, cpu_gettotalcycles);
 	return cpu[activecpu].totalcycles + cycles_currently_ran();
+}
+
+int cpu_gettotalcycles(int _cpu)
+{
+	if(_cpu == cpu_getactivecpu())
+		return cpu[_cpu].totalcycles + cycles_currently_ran();
+	else
+		return cpu[_cpu].totalcycles;
 }
 
 
@@ -763,7 +782,7 @@ int cpu_gettotalcycles(void)
  *
  *************************************/
 
-int cpu_geticount(void)
+int activecpu_geticount(void)
 {
 	int result;
 

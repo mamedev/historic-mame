@@ -274,6 +274,17 @@ else
 CPUDEFS += -DHAS_V60=0
 endif
 
+CPU=$(strip $(findstring V70@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/v60
+CPUDEFS += -DHAS_V70=1
+CPUOBJS += $(OBJ)/cpu/v60/v60.o
+DBGOBJS += $(OBJ)/cpu/v60/v60d.o
+$(OBJ)/cpu/v60/v60.o: am.c am1.c am2.c am3.c op12.c op2.c op3.c op4.c op5.c op6.c op7a.c optable.c v60.c v60.h v60d.c
+else
+CPUDEFS += -DHAS_V70=0
+endif
+
 CPU=$(strip $(findstring I8035@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/i8039
@@ -693,15 +704,15 @@ else
 CPUDEFS += -DHAS_Z8000=0
 endif
 
-CPU=$(strip $(findstring TMS320C10@,$(CPUS)))
+CPU=$(strip $(findstring TMS32010@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/tms32010
-CPUDEFS += -DHAS_TMS320C10=1
+CPUDEFS += -DHAS_TMS32010=1
 CPUOBJS += $(OBJ)/cpu/tms32010/tms32010.o
 DBGOBJS += $(OBJ)/cpu/tms32010/32010dsm.o
 $(OBJ)/cpu/tms32010/tms32010.o: tms32010.c tms32010.h
 else
-CPUDEFS += -DHAS_TMS320C10=0
+CPUDEFS += -DHAS_TMS32010=0
 endif
 
 CPU=$(strip $(findstring CCPU@,$(CPUS)))
@@ -724,6 +735,17 @@ DBGOBJS += $(OBJ)/cpu/adsp2100/2100dasm.o
 $(OBJ)/cpu/adsp2100/adsp2100.o: adsp2100.c adsp2100.h 2100ops.c
 else
 CPUDEFS += -DHAS_ADSP2100=0
+endif
+
+CPU=$(strip $(findstring ADSP2101@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/adsp2100
+CPUDEFS += -DHAS_ADSP2101=1
+CPUOBJS += $(OBJ)/cpu/adsp2100/adsp2100.o
+DBGOBJS += $(OBJ)/cpu/adsp2100/2100dasm.o
+$(OBJ)/cpu/adsp2100/adsp2100.o: adsp2100.c adsp2100.h 2100ops.c
+else
+CPUDEFS += -DHAS_ADSP2101=0
 endif
 
 CPU=$(strip $(findstring ADSP2105@,$(CPUS)))
@@ -803,15 +825,15 @@ else
 CPUDEFS += -DHAS_R3000=0
 endif
 
-CPU=$(strip $(findstring TMS320C31@,$(CPUS)))
+CPU=$(strip $(findstring TMS32031@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/tms32031
-CPUDEFS += -DHAS_TMS320C31=1
+CPUDEFS += -DHAS_TMS32031=1
 CPUOBJS += $(OBJ)/cpu/tms32031/tms32031.o
 DBGOBJS += $(OBJ)/cpu/tms32031/dis32031.o
 $(OBJ)/cpu/tms32031/tms32031.o: tms32031.c tms32031.h
 else
-CPUDEFS += -DHAS_TMS320C31=0
+CPUDEFS += -DHAS_TMS32031=0
 endif
 
 CPU=$(strip $(findstring SH2@,$(CPUS)))
@@ -823,6 +845,17 @@ DBGOBJS += $(OBJ)/cpu/sh2/sh2dasm.o
 $(OBJ)/cpu/sh2/sh2.o: sh2.c sh2.h
 else
 CPUDEFS += -DHAS_SH2=0
+endif
+
+CPU=$(strip $(findstring DSP32C@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/dsp32
+CPUDEFS += -DHAS_DSP32C=1
+CPUOBJS += $(OBJ)/cpu/dsp32/dsp32.o
+DBGOBJS += $(OBJ)/cpu/dsp32/dsp32dis.o
+$(OBJ)/cpu/dsp32/dsp32.o: dsp32.c dsp32.h
+else
+CPUDEFS += -DHAS_DSP32C=0
 endif
 
 
@@ -1222,4 +1255,12 @@ SOUNDDEFS += -DHAS_BSMT2000=1
 SOUNDOBJS += $(OBJ)/sound/bsmt2000.o
 else
 SOUNDDEFS += -DHAS_BSMT2000=0
+endif
+
+SOUND=$(strip $(findstring YMF278B@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_YMF278B=1
+SOUNDOBJS += $(OBJ)/sound/ymf278b.o
+else
+SOUNDDEFS += -DHAS_YMF278B=0
 endif

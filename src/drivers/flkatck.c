@@ -28,12 +28,7 @@ extern int flkatck_irq_enabled;
 
 static MACHINE_INIT( flkatck )
 {
-	unsigned char *RAM = memory_region(REGION_SOUND1);
-	int bank_A, bank_B;
-
-	bank_A = 0x20000 * 0;
-	bank_B = 0x20000 * 1;
-	K007232_bankswitch(0,RAM + bank_A,RAM + bank_B);
+	K007232_set_bank( 0, 0, 1 );
 }
 
 static INTERRUPT_GEN( flkatck_interrupt )
@@ -275,6 +270,7 @@ static void volume_callback0(int v)
 static struct K007232_interface k007232_interface =
 {
 	1,			/* number of chips */
+	3579545,	/* clock */
 	{ REGION_SOUND1 },		/* memory region */
 	{ K007232_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },	/* volume */
 	{ volume_callback0 }	/* external port callback */

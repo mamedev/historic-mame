@@ -88,6 +88,15 @@ Location      Setting       Alt. Setting
 
 *****************************************************
 
+Super World Stadium '95 (JPN Ver.)
+(c)1986-1993 1995 Namco
+
+Namco NB-1 system
+
+KeyCus.:C393
+
+*****************************************************
+
 Super World Stadium '96 (JPN Ver.)
 (c)1986-1993 1995 1996 Namco
 
@@ -323,6 +332,11 @@ static DRIVER_INIT( gslgr94u )
 	namcos2_gametype = NAMCONB1_GSLGR94U;
 }
 
+static DRIVER_INIT( sws95 )
+{
+	namcos2_gametype = NAMCONB1_SWS95;
+}
+
 static DRIVER_INIT( sws96 )
 {
 	namcos2_gametype = NAMCONB1_SWS96;
@@ -355,11 +369,12 @@ static DRIVER_INIT( vshoot )
 static void
 ShuffleDataROMs( void )
 {
+	size_t len = memory_region_length(REGION_USER1)/4;
 	data8_t *pMem8 = (data8_t *)memory_region( REGION_USER1 );
 	data32_t *pMem32 = (data32_t *)pMem8;
 	int i;
 
-	for( i=0; i<0x80000/4; i++ )
+	for( i=0; i<len; i++ )
 	{
 		pMem32[i] = (pMem8[0]<<16)|(pMem8[1]<<24)|(pMem8[2]<<0)|(pMem8[3]<<8);
 		pMem8+=4;
@@ -394,6 +409,14 @@ static READ32_HANDLER( custom_key_r )
 	{
 	case NAMCONB1_GUNBULET:
 		return 0; /* no protection */
+
+	case NAMCONB1_SWS95:
+		switch( offset )
+		{
+		case 0: return 0x0189;
+		case 1: return  count<<16;
+		}
+		break;
 
 	case NAMCONB1_SWS96:
 		switch( offset )
@@ -499,19 +522,6 @@ static struct GfxLayout roz_layout =
 	16*128
 };
 
-/*
-static struct GfxLayout mask_layout =
-{
-	16,16,
-	RGN_FRAC(1,1),
-	1,
-	{ 0 },
-	{ 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 },
-	{ 0*16,1*16,2*16,3*16,4*16,5*16,6*16,7*16,8*16,9*16,10*16,11*16,12*16,13*16,14*16,15*16 },
-	16*16
-};
-*/
-
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ NAMCONB1_TILEGFXREGION,	0, &tile_layout,	0x1000, 0x10 },
@@ -554,7 +564,7 @@ static MEMORY_READ32_START( namconb1_readmem )
 	{ 0x400000, 0x40001f, MRA32_RAM }, /* ? */
 	{ 0x580000, 0x5807ff, MRA32_RAM }, /* nvmem */
 	{ 0x600000, 0x6141ff, namco_obj32_r },
-	{ 0x620000, 0x620007, MRA32_RAM }, /* spritepos */
+	{ 0x620000, 0x620007, namco_spritepos32_r },
 	{ 0x640000, 0x64ffff, MRA32_RAM }, /* videoram (4 scrolling + 2 fixed) */
 	{ 0x660000, 0x66003f, MRA32_RAM }, /* scrollram */
 	{ 0x680000, 0x68000f, MRA32_RAM }, /* spritebank */
@@ -572,7 +582,7 @@ static MEMORY_WRITE32_START( namconb1_writemem )
 	{ 0x580000, 0x5807ff, MWA32_RAM, &nvmem32 },
 	{ 0x600000, 0x6141ff, namco_obj32_w },
 	{ 0x618000, 0x618003, MWA32_NOP }, /* spriteram latch */
-	{ 0x620000, 0x620007, MWA32_RAM, &namconb1_spritepos32 },
+	{ 0x620000, 0x620007, namco_spritepos32_w },
 	{ 0x640000, 0x64ffff, namconb1_videoram_w, &videoram32 },
 	{ 0x660000, 0x66003f, MWA32_RAM, &namconb1_scrollram32 },
 	/*	660000..66001f: tilemap scroll/flip
@@ -595,7 +605,7 @@ static MEMORY_READ32_START( namconb2_readmem )
 	{ 0x602400, 0x60247f, MRA32_RAM }, /* ? */
 	{ 0x602480, 0x603fff, MRA32_RAM }, /* ? */
 	{ 0x600000, 0x6141ff, namco_obj32_r },
-	{ 0x620000, 0x620007, MRA32_RAM }, /* spritepos */
+	{ 0x620000, 0x620007, namco_spritepos32_r },
 	{ 0x640000, 0x64000f, MRA32_RAM }, /* unknown xy offset */
 	{ 0x680000, 0x68ffff, MRA32_RAM }, /* videoram (4 scrolling + 2 fixed) */
 	{ 0x6c0000, 0x6c003f, MRA32_RAM }, /* scrollram, color, pri */
@@ -616,7 +626,7 @@ static MEMORY_WRITE32_START( namconb2_writemem )
 	{ 0x200000, 0x2fffff, MWA32_RAM, &namconb1_workram32 },
 	{ 0x600000, 0x6141ff, namco_obj32_w },
 	{ 0x618000, 0x618003, MWA32_NOP }, /* written when spriteram has been updated */
-	{ 0x620000, 0x620007, MWA32_RAM, &namconb1_spritepos32 },
+	{ 0x620000, 0x620007, namco_spritepos32_w },
 	{ 0x640000, 0x64000f, MWA32_RAM }, /* ? */
 	{ 0x680000, 0x68ffff, namconb1_videoram_w, &videoram32 },
 	{ 0x6c0000, 0x6c003f, MWA32_RAM, &namconb1_scrollram32 },
@@ -857,6 +867,34 @@ ROM_START( gslgr94u )
 
 	ROM_REGION( 0x80000, NAMCONB1_TILEMASKREGION, 0 )
 	ROM_LOAD( "gse-sha0.bin", 0, 0x80000, 0x6b2beabb )
+ROM_END
+
+ROM_START( sws95 )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* main program */
+	ROM_LOAD32_WORD( "ss51mprl.bin", 0x00002, 0x80000, 0xc9e0107d )
+	ROM_LOAD32_WORD( "ss51mpru.bin", 0x00000, 0x80000, 0x0d93d261 )
+
+// Dump did _NOT_ include a sound program ROM or voice ROM, so SWS96's
+// for now:
+	ROM_REGION( 0x80000, REGION_CPU2, 0 ) /* sound program */
+	ROM_LOAD( "ss61spr0.bin", 0, 0x80000, BADCRC(0x71cb12f5) )
+
+	ROM_REGION( 0x200000, REGION_SOUND1, 0 )
+	ROM_LOAD( "ss61voi0.bin", 0, 0x200000, BADCRC(0x2740ec72) )
+
+
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "ss51ob0l.bin", 0x000001, 0x200000, 0xe0395694 )
+	ROM_LOAD16_BYTE( "ss51ob0u.bin", 0x000000, 0x200000, 0xb0745ca0 )
+
+	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "ss51chr0.bin", 0x000000, 0x100000, 0x86dd3280 )
+	ROM_LOAD( "ss51chr1.bin", 0x100000, 0x100000, 0x2ba0fb9e )
+	ROM_LOAD( "ss51chr2.bin", 0x200000, 0x100000, 0xca0e6c1a )
+	ROM_LOAD( "ss51chr3.bin", 0x300000, 0x100000, 0x73ca58f6 )
+
+	ROM_REGION( 0x80000, REGION_GFX3, 0 )
+	ROM_LOAD( "ss51sha0.bin", 0, 0x80000, 0x3bf4d081 )
 ROM_END
 
 ROM_START( sws96 )
@@ -1157,6 +1195,7 @@ GAMEX( 1994, nebulryj, nebulray, namconb1, namconb1, nebulray, ROT90, "Namco", "
 GAMEX( 1994, ptblank,  0,        namconb1, gunbulet, gunbulet, ROT0,  "Namco", "Point Blank", GAME_NO_SOUND )
 GAMEX( 1994, gunbulet, ptblank,  namconb1, gunbulet, gunbulet, ROT0,  "Namco", "Gun Bullet (Japan)", GAME_NO_SOUND )
 GAMEX( 1994, gslgr94u, 0,        namconb1, namconb1, gslgr94u, ROT0,  "Namco", "Great Sluggers '94", GAME_NO_SOUND )
+GAMEX( 1995, sws95,    0,        namconb1, namconb1, sws95,    ROT0,  "Namco", "Super World Stadium '95 (Japan)", GAME_NO_SOUND )
 GAMEX( 1996, sws96,    0,        namconb1, namconb1, sws96,    ROT0,  "Namco", "Super World Stadium '96 (Japan)", GAME_NO_SOUND )
 GAMEX( 1997, sws97,    0,        namconb1, namconb1, sws97,    ROT0,  "Namco", "Super World Stadium '97 (Japan)", GAME_NO_SOUND )
 GAMEX( 1994, vshoot,   0,        namconb1, namconb1, vshoot,   ROT0,  "Namco", "VShoot", GAME_NOT_WORKING )

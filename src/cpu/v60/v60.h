@@ -68,7 +68,10 @@ extern int v60_ICount;
 extern const char *v60_reg_names[];
 void v60_dasm_init(void);
 
+#if HAS_V60
 void v60_init(void);
+#endif
+
 void v60_reset(void *param);
 void v60_exit(void);
 int v60_execute(int cycles);
@@ -80,5 +83,23 @@ void v60_set_irq_line(int irqline, int state);
 void v60_set_irq_callback(int (*callback)(int irqline));
 const char *v60_info(void *context, int regnum);
 unsigned v60_dasm(char *buffer, unsigned pc);
-
 #endif
+
+#if HAS_V70
+#define v70_ICount v60_ICount
+
+void v70_init(void);
+unsigned v70_dasm(char *buffer, unsigned pc);
+const char *v70_info(void *context, int regnum);
+
+#define v70_reset v60_reset
+#define v70_exit v60_exit
+#define v70_execute v60_execute
+#define v70_get_context v60_get_context
+#define v70_set_context v60_set_context
+#define v70_get_reg v60_get_reg
+#define v70_set_reg v60_set_reg
+#define v70_set_irq_line v60_set_irq_line
+#define v70_set_irq_callback v60_set_irq_callback
+#endif
+

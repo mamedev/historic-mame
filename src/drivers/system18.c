@@ -651,25 +651,25 @@ static MACHINE_DRIVER_START( system18 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M68000, 10000000)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
-	
+
 	MDRV_CPU_ADD_TAG("sound", Z80, 4096000*2) /* overclocked to fix sound, but wrong! */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(sound_readmem_18,sound_writemem_18)
 	MDRV_CPU_PORTS(sound_readport_18,sound_writeport_18)
-	
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(40*8, 28*8)
 	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
 	MDRV_GFXDECODE(sys16_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2048*ShadowColorsMultiplier)
-	
+
 	MDRV_VIDEO_START(system18)
 	MDRV_VIDEO_UPDATE(system18)
-	
+
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD_TAG("3438", YM3438, sys18_ym3438_interface)
@@ -683,7 +683,7 @@ static MACHINE_DRIVER_START( astorm )
 	MDRV_IMPORT_FROM(system18)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(astorm_readmem,astorm_writemem)
-	
+
 	MDRV_MACHINE_INIT(astorm)
 MACHINE_DRIVER_END
 
@@ -694,7 +694,7 @@ static MACHINE_DRIVER_START( moonwalk )
 	MDRV_IMPORT_FROM(system18)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(moonwalk_readmem,moonwalk_writemem)
-	
+
 	MDRV_MACHINE_INIT(moonwalk)
 MACHINE_DRIVER_END
 
@@ -705,7 +705,7 @@ static MACHINE_DRIVER_START( shdancer )
 	MDRV_IMPORT_FROM(system18)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(shdancer_readmem,shdancer_writemem)
-	
+
 	MDRV_MACHINE_INIT(shdancer)
 MACHINE_DRIVER_END
 
@@ -716,7 +716,7 @@ static MACHINE_DRIVER_START( shdancbl )
 	MDRV_IMPORT_FROM(system18)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(shdancbl_readmem,shdancbl_writemem)
-	
+
 	MDRV_MACHINE_INIT(shdancbl)
 MACHINE_DRIVER_END
 
@@ -725,7 +725,7 @@ static MACHINE_DRIVER_START( shdancrj )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(shdancer)
-	
+
 	MDRV_MACHINE_INIT(shdancrj)
 MACHINE_DRIVER_END
 
@@ -1336,8 +1336,8 @@ GAME( 1989, shdancer, 0,        shdancer, shdancer, shdancer, ROT0, "Sega",    "
 GAMEX(1989, shdancbl, shdancer, shdancbl, shdancer, shdancbl, ROT0, "bootleg", "Shadow Dancer (bootleg)", GAME_NOT_WORKING )
 GAME( 1989, shdancrj, shdancer, shdancrj, shdancer, shdancrj, ROT0, "Sega",    "Shadow Dancer (Japan)" )
 
-GAMEX(????, aceattac, 0,        shdancer, shdancer, shdancer, ROT0, "Sega", "Ace Attacker", GAME_NOT_WORKING )
-GAMEX(????, bloxeed,  0,        shdancer, shdancer, shdancer, ROT0, "Sega", "Bloxeed", GAME_NOT_WORKING )
-GAMEX(????, cltchitr, 0,        shdancer, shdancer, shdancer, ROT0, "Sega", "Clutch Hitter", GAME_NOT_WORKING )
-GAMEX(????, ddcrew,   0,        shdancer, shdancer, shdancer, ROT0, "Sega", "DD Crew", GAME_NOT_WORKING )
-GAMEX(????, lghost,   0,        shdancer, shdancer, shdancer, ROT0, "Sega", "Laser Ghost", GAME_NOT_WORKING )
+GAMEX(19??, aceattac, 0,        shdancer, shdancer, shdancer, ROT0, "Sega", "Ace Attacker", GAME_NOT_WORKING )
+GAMEX(19??, bloxeed,  0,        shdancer, shdancer, shdancer, ROT0, "Sega", "Bloxeed", GAME_NOT_WORKING )
+GAMEX(19??, cltchitr, 0,        shdancer, shdancer, shdancer, ROT0, "Sega", "Clutch Hitter", GAME_NOT_WORKING )
+GAMEX(19??, ddcrew,   0,        shdancer, shdancer, shdancer, ROT0, "Sega", "DD Crew", GAME_NOT_WORKING )
+GAMEX(19??, lghost,   0,        shdancer, shdancer, shdancer, ROT0, "Sega", "Laser Ghost", GAME_NOT_WORKING )

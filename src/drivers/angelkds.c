@@ -129,6 +129,7 @@ Dumped by Chackn
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "machine/segacrpt.h"
 
 static READ_HANDLER( angelkds_sound_r );
 static WRITE_HANDLER( angelkds_sound_w );
@@ -589,7 +590,7 @@ ROM_END
 
 ROM_START( spcpostn )
 	/* X090-PC-A 171-5383 */
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* D317-0005 (NEC Z80 Custom) */
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 ) /* D317-0005 (NEC Z80 Custom) */
 	ROM_LOAD( "epr10125.c10", 0x00000, 0x08000, 0xbffd38c6 ) /* encrypted */
 
 	ROM_REGION( 0x28000, REGION_USER1, 0 ) /* Banked Code */
@@ -623,5 +624,8 @@ ROM_START( spcpostn )
 ROM_END
 
 
-GAME( 1988, angelkds, 0, angelkds, angelkds,    0,  ROT90,  "Sega / Nasco?", "Angel Kids (Japan)" ) /* Nasco not displayed but 'Exa Planning' is */
-GAMEX(1986, spcpostn, 0, angelkds, angelkds,    0,  ROT90,  "Sega / Nasco", "Space Position (Japan)", GAME_NOT_WORKING ) /* encrypted */
+static DRIVER_INIT( spcpostn )	{ spcpostn_decode(); }
+
+
+GAME( 1988, angelkds, 0, angelkds, angelkds,        0,  ROT90,  "Sega / Nasco?", "Angel Kids (Japan)" ) /* Nasco not displayed but 'Exa Planning' is */
+GAMEX(1986, spcpostn, 0, angelkds, angelkds, spcpostn,  ROT90,  "Sega / Nasco", "Space Position (Japan)", GAME_NOT_WORKING ) /* encrypted */

@@ -262,6 +262,7 @@ int m6809_ICount=50000;
 
 #define CLR_HNZVC   CC&=~(CC_H|CC_N|CC_Z|CC_V|CC_C)
 #define CLR_NZV 	CC&=~(CC_N|CC_Z|CC_V)
+#define CLR_NZ		CC&=~(CC_N|CC_Z)
 #define CLR_HNZC	CC&=~(CC_H|CC_N|CC_Z|CC_C)
 #define CLR_NZVC	CC&=~(CC_N|CC_Z|CC_V|CC_C)
 #define CLR_Z		CC&=~(CC_Z)

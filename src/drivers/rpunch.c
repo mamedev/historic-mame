@@ -694,7 +694,6 @@ ROM_START( rpunch )
 //	ROM_LOAD( "rpunch.91", 0x00000, 0x0f000, 0x7512cc59 )
 ROM_END
 
-
 ROM_START( rabiolep )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "rl_e2.bin", 0x00000, 0x08000, 0x7d936a12 )
@@ -770,13 +769,53 @@ ROM_START( svolley )
 	ROM_LOAD( "sps_15.bin", 0x40000, 0x10000, 0xf33f415f )
 ROM_END
 
-
 ROM_START( svolleyk )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "a14.bin", 0x00000, 0x10000, 0xdbab3bf9 )
 	ROM_LOAD16_BYTE( "a11.bin", 0x00001, 0x10000, 0x92afd56f )
 	ROM_LOAD16_BYTE( "a15.bin", 0x20000, 0x08000, 0xd8f89c4a )
 	ROM_LOAD16_BYTE( "a12.bin", 0x20001, 0x08000, 0xde3dd5cb )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "sps_17.bin", 0x00000, 0x10000, 0x48b89688 )
+
+	ROM_REGION( 0x60000, REGION_GFX1, 0 )
+	ROM_LOAD( "sps_02.bin", 0x00000, 0x10000, 0x1a0abe75 )
+	ROM_LOAD( "sps_03.bin", 0x10000, 0x10000, 0x36279075 )
+	ROM_LOAD( "sps_04.bin", 0x20000, 0x10000, 0x7cede7d9 )
+	ROM_LOAD( "sps_01.bin", 0x30000, 0x08000, 0x6425e6d7 )
+	ROM_FILL(               0x38000, 0x08000, 0xff )
+	ROM_LOAD( "sps_10.bin", 0x40000, 0x08000, 0xa12b1589 )
+	ROM_FILL(               0x48000, 0x18000, 0xff )
+
+	ROM_REGION( 0x60000, REGION_GFX2, 0 )
+	ROM_LOAD( "sps_05.bin", 0x00000, 0x10000, 0xb0671d12 )
+	ROM_LOAD( "sps_06.bin", 0x10000, 0x10000, 0xc231957e )
+	ROM_LOAD( "sps_07.bin", 0x20000, 0x10000, 0x904b7709 )
+	ROM_LOAD( "sps_08.bin", 0x30000, 0x10000, 0x5430ffac )
+	ROM_LOAD( "sps_09.bin", 0x40000, 0x10000, 0x414a6278 )
+	ROM_LOAD( "a09.bin",    0x50000, 0x08000, 0xdd92dfe1 )
+	ROM_FILL(               0x58000, 0x08000, 0xff )
+
+	ROM_REGION( 0x60000, REGION_GFX3, 0 )
+	ROM_LOAD16_BYTE( "sps_20.bin", 0x00000, 0x10000, 0xc9e7206d )
+	ROM_LOAD16_BYTE( "sps_23.bin", 0x00001, 0x10000, 0x7b15c805 )
+	ROM_LOAD16_BYTE( "sps_19.bin", 0x20000, 0x08000, 0x8ac2f232 )
+	ROM_LOAD16_BYTE( "sps_22.bin", 0x20001, 0x08000, 0xfcc754e3 )
+	ROM_LOAD16_BYTE( "sps_18.bin", 0x30000, 0x08000, 0x4d6c8f0c )
+	ROM_LOAD16_BYTE( "sps_21.bin", 0x30001, 0x08000, 0x9dd28b42 )
+
+	ROM_REGION( 0x60000, REGION_SOUND1, 0 )
+	ROM_LOAD( "sps_16.bin", 0x20000, 0x20000, 0x456d0f36 )
+	ROM_LOAD( "sps_15.bin", 0x40000, 0x10000, 0xf33f415f )
+ROM_END
+
+ROM_START( svolleyu )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "svb-du8.137", 0x00000, 0x10000, 0xffd5d261 )
+	ROM_LOAD16_BYTE( "svb-du5.136", 0x00001, 0x10000, 0xc1e943f5 )
+	ROM_LOAD16_BYTE( "svb-du9.127", 0x20000, 0x08000, 0x70e04a2e )
+	ROM_LOAD16_BYTE( "svb-du6.126", 0x20001, 0x08000, 0xacb3872b )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "sps_17.bin", 0x00000, 0x10000, 0x48b89688 )
@@ -846,3 +885,4 @@ GAME( 1987, rabiolep, 0,        rpunch,   rabiolep, rabiolep, ROT0, "V-System Co
 GAME( 1987, rpunch,   rabiolep, rpunch,   rpunch,   rabiolep, ROT0, "V-System Co. (Bally/Midway/Sente license)", "Rabbit Punch (US)" )
 GAME( 1989, svolley,  0,        rpunch,   svolley,  svolley,  ROT0, "V-System Co.", "Super Volleyball (Japan)" )
 GAME( 1989, svolleyk, svolley,  rpunch,   svolley,  svolley,  ROT0, "V-System Co.", "Super Volleyball (Korea)" )
+GAME( 1989, svolleyu, svolley,  rpunch,   svolley,  svolley,  ROT0, "V-System Co. (Data East license)", "Super Volleyball (US)" )

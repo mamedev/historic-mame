@@ -81,7 +81,7 @@ static READ_HANDLER( cop01_sound_command_r )
 	res = (soundlatch_r(offset) & 0x7f) << 1;
 
 	/* bit 0 seems to be a timer */
-	if ((cpu_gettotalcycles() / TIMER_RATE) & 1)
+	if ((activecpu_gettotalcycles() / TIMER_RATE) & 1)
 	{
 		if (pulse == 0) res |= 1;
 		pulse = 1;

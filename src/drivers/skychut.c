@@ -1,14 +1,19 @@
 /***************************************************************************
-  ? (M10 m10 hardware)
+
+  IPM Invader (M10 m10 hardware)
   Sky Chuter By IREM
   Space Beam (M15 m15 hardware)
   Green Beret (?M15 ?m15 hardware)
 
-  vidhrdw.c
-
-  Functions to emulate the video hardware of the machine.
-
   (c) 12/2/1998 Lee Taylor
+
+Notes:
+- Colors are close to screen shots for IPM Invader. The other games have not
+  been verified.
+- The bitmap strips in IPM Invader might be slightly misplaced
+
+TODO:
+- Dip switches
 
 ***************************************************************************/
 
@@ -20,38 +25,31 @@ extern UINT8* iremm15_chargen;
 VIDEO_UPDATE( skychut );
 VIDEO_UPDATE( iremm15 );
 WRITE_HANDLER( skychut_colorram_w );
-WRITE_HANDLER( skychut_vh_flipscreen_w );
+WRITE_HANDLER( skychut_ctrl_w );
 
 static UINT8 *memory;
 
-static unsigned short colortable_source[] =
-{
-	0,1,0,2,0,3,0,4,0,5,0,6
-};
 
 static PALETTE_INIT( skychut )
 {
-	palette_set_color(0,0x00,0x00,0x00); /* BLACK */
-	palette_set_color(1,0xff,0x20,0x20); /* RED */
-	palette_set_color(2,0x20,0xff,0x20); /* GREEN */
-	palette_set_color(3,0xff,0xff,0x20); /* YELLOW */
-	palette_set_color(4,0x20,0xff,0xff); /* CYAN */
-	palette_set_color(5,0xff,0x20,0xff);  /* PURPLE */
-	palette_set_color(6,0xff,0xff,0xff); /* WHITE */
-	memcpy(colortable,colortable_source,sizeof(colortable_source));
+	int i;
+
+	palette_set_color(0,0xff,0xff,0xff);
+	palette_set_color(1,0xff,0xff,0x00);
+	palette_set_color(2,0xff,0x00,0xff);
+	palette_set_color(3,0xff,0x00,0x00);
+	palette_set_color(4,0x00,0xff,0xff);
+	palette_set_color(5,0x00,0xff,0x00);
+	palette_set_color(6,0x00,0x00,0xff);
+	palette_set_color(7,0x00,0x00,0x00);
+
+	for (i = 0;i < 8;i++)
+	{
+		colortable[2*i+0] = 7;
+		colortable[2*i+1] = i;
+	}
 }
 
-static PALETTE_INIT( greenber )
-{
-	palette_set_color(0,0xff,0xff,0xff); /* WHITE */
-	palette_set_color(1,0xff,0x20,0x20); /* RED */
-	palette_set_color(2,0x20,0xff,0x20); /* GREEN */
-	palette_set_color(3,0xff,0xff,0x20); /* YELLOW */
-	palette_set_color(4,0x20,0xff,0xff); /* CYAN */
-	palette_set_color(5,0xff,0x20,0xff);  /* PURPLE */
-	palette_set_color(6,0x00,0x00,0xf0); /* blue */
-	palette_set_color(7,0x00,0x00,0x00); /* BLACK */
-}
 
 static MEMORY_READ_START( skychut_readmem )
 	{ 0x0000, 0x02ff, MRA_RAM }, /* scratch ram */
@@ -72,8 +70,8 @@ static MEMORY_WRITE_START( skychut_writemem )
 	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
 	{ 0x4800, 0x4bff, skychut_colorram_w, &colorram }, /* foreground colour  */
 	{ 0x5000, 0x53ff, MWA_RAM, &iremm15_chargen }, /* background ????? */
-	{ 0xa100, 0xa1ff, MWA_RAM }, /* Sound writes????? */
-	{ 0xa400, 0xa400, skychut_vh_flipscreen_w },
+//	{ 0xa100, 0xa1ff, MWA_RAM }, /* Sound writes????? */
+	{ 0xa400, 0xa400, skychut_ctrl_w },	/* line at bottom of screen?, sound, flip screen */
 	{ 0xfc00, 0xffff, MWA_ROM },	/* for the reset / interrupt vectors */
 MEMORY_END
 
@@ -96,7 +94,7 @@ static MEMORY_WRITE_START( greenberet_writemem )
 	{ 0x4800, 0x4bff, skychut_colorram_w, &colorram }, /* foreground colour  */
 	{ 0x5000, 0x57ff, MWA_RAM, &iremm15_chargen },
 	{ 0xa100, 0xa1ff, MWA_RAM }, /* Sound writes????? */
-	{ 0xa400, 0xa400, skychut_vh_flipscreen_w },
+	{ 0xa400, 0xa400, MWA_NOP },	/* sound, flip screen */
 	{ 0xfc00, 0xffff, MWA_ROM },	/* for the reset / interrupt vectors */
 MEMORY_END
 
@@ -112,18 +110,20 @@ INTERRUPT_GEN( skychut_interrupt )
 INPUT_PORTS_START( skychut )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2)
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL)
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT  )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_COCKTAIL )
+
 	PORT_START	/* IN1 */
 	PORT_DIPNAME(0x03, 0x00, DEF_STR( Lives ) )
-	PORT_DIPSETTING (   0x00, "3" )
-	PORT_DIPSETTING (   0x01, "4" )
-	PORT_DIPSETTING (   0x02, "5" )
+	PORT_DIPSETTING (  0x00, "3" )
+	PORT_DIPSETTING (  0x01, "4" )
+	PORT_DIPSETTING (  0x02, "5" )
+
 	PORT_START	/* FAKE */
 	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
 INPUT_PORTS_END
@@ -131,30 +131,33 @@ INPUT_PORTS_END
 INPUT_PORTS_START( spacebeam )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2)
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
+
 	PORT_START	/* IN1 */
 	PORT_DIPNAME(0x03, 0x01, DEF_STR( Lives ) )
-	PORT_DIPSETTING (   0x00, "2" )
-	PORT_DIPSETTING (   0x01, "3" )
-	PORT_DIPSETTING (   0x02, "4" )
-	PORT_DIPSETTING (   0x03, "5" )
+	PORT_DIPSETTING (  0x00, "2" )
+	PORT_DIPSETTING (  0x01, "3" )
+	PORT_DIPSETTING (  0x02, "4" )
+	PORT_DIPSETTING (  0x03, "5" )
 	PORT_DIPNAME(0x08, 0x00, "?" )
-	PORT_DIPSETTING (   0x00, DEF_STR(Off) )
-	PORT_DIPSETTING (   0x08, DEF_STR(On) )
+	PORT_DIPSETTING (  0x00, DEF_STR(Off) )
+	PORT_DIPSETTING (  0x08, DEF_STR(On) )
 	PORT_DIPNAME(0x30, 0x10, DEF_STR(Coinage))
-	PORT_DIPSETTING (   0x00, "Testmode" )
-	PORT_DIPSETTING (   0x10, "1 Coin 1 Play" )
-	PORT_DIPSETTING (   0x20, "1 Coin 2 Plays" )
+	PORT_DIPSETTING (  0x00, "Testmode" )
+	PORT_DIPSETTING (  0x10, "1 Coin 1 Play" )
+	PORT_DIPSETTING (  0x20, "1 Coin 2 Plays" )
+
 	PORT_START	/* FAKE */
 	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+
 	PORT_START	/* IN3 */
 	PORT_BIT( 0x03, 0, IPT_UNUSED )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1|IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT |IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT|IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL )
 INPUT_PORTS_END
 
 
@@ -164,15 +167,15 @@ static struct GfxLayout charlayout =
 	256,	/* 256 characters */
 	1,	/* 1 bits per pixel */
 	{ 0 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	{ 7, 6, 5, 4, 3, 2, 1, 0 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x0000, &charlayout,   0, 7 },	/* 4 color codes to support midframe */
+	{ REGION_GFX1, 0x0000, &charlayout, 0, 8 },
 	{ -1 } /* end of array */
 };
 
@@ -190,10 +193,10 @@ static MACHINE_DRIVER_START( skychut )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(7)
-	MDRV_COLORTABLE_LENGTH(sizeof(colortable_source) / sizeof(colortable_source[0]))
+	MDRV_PALETTE_LENGTH(8)
+	MDRV_COLORTABLE_LENGTH(2*8)
 
 	MDRV_PALETTE_INIT(skychut)
 	MDRV_VIDEO_START(generic)
@@ -216,10 +219,11 @@ static MACHINE_DRIVER_START( greenberet )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 2*8, 30*8-1)
 	MDRV_PALETTE_LENGTH(8)
+	MDRV_COLORTABLE_LENGTH(2*8)
 
-	MDRV_PALETTE_INIT(greenber)
+	MDRV_PALETTE_INIT(skychut)
 	MDRV_VIDEO_START(generic)
 	MDRV_VIDEO_UPDATE(iremm15)
 
@@ -235,20 +239,20 @@ MACHINE_DRIVER_END
 
 ***************************************************************************/
 
-ROM_START( iremm10 )
+ROM_START( ipminvad )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "b1r",  0x1000, 0x0400, 0xf9a7eb9b ) // code, ok
-	ROM_LOAD( "b2r",  0x1400, 0x0400, 0xaf11c1aa ) // code ok
-	ROM_LOAD( "b3r",  0x1800, 0x0400, 0xed49e481 ) // code, ok
-	ROM_LOAD( "b4r",  0x1c00, 0x0400, 0x6d5db95b ) // code, vectors ok,
+	ROM_LOAD( "b1r",  0x1000, 0x0400, 0xf9a7eb9b )
+	ROM_LOAD( "b2r",  0x1400, 0x0400, 0xaf11c1aa )
+	ROM_LOAD( "b3r",  0x1800, 0x0400, 0xed49e481 )
+	ROM_LOAD( "b4r",  0x1c00, 0x0400, 0x6d5db95b )
 	ROM_RELOAD(       0xfc00, 0x0400 )	/* for the reset and interrupt vectors */
-	ROM_LOAD( "b5r",  0x2000, 0x0400, 0xeabba7aa ) // graphic
-	ROM_LOAD( "b6r",  0x2400, 0x0400, BADCRC( 0x9b7d6e77 ) ) // ?? bad dump
-	ROM_LOAD( "b7r",  0x2800, 0x0400, 0x32045580 ) // code, graphic ok,
+	ROM_LOAD( "b5r",  0x2000, 0x0400, 0xeabba7aa )
+	ROM_LOAD( "b6r",  0x2400, 0x0400, 0x3d0e7fa6 )
+	ROM_LOAD( "b7r",  0x2800, 0x0400, 0xcf04864f )
 
 	ROM_REGION( 0x0800, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "b9r",  0x0000, 0x0400, 0x56942cab ) // ok
-	ROM_LOAD( "b10r", 0x0400, 0x0400, 0xbe4b8585 ) // ok
+	ROM_LOAD( "b9r",  0x0000, 0x0400, 0x56942cab )
+	ROM_LOAD( "b10r", 0x0400, 0x0400, 0xbe4b8585 )
 ROM_END
 
 ROM_START( skychut )
@@ -295,7 +299,7 @@ ROM_END
 
 
 
-GAMEX( 19??, iremm10,  0, skychut,    skychut,   0, ROT0, "Irem", "? (irem m10 hardware)", GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_NOT_WORKING )
-GAMEX( 1980, skychut,  0, skychut,    skychut,   0, ROT0, "Irem", "Sky Chuter", GAME_NO_SOUND | GAME_WRONG_COLORS )
-GAMEX( 19??, spacbeam, 0, greenberet, spacebeam, 0, ROT0, "Irem", "Space Beam", GAME_NO_SOUND | GAME_WRONG_COLORS )
-GAMEX( 1980, greenber, 0, greenberet, spacebeam, 0, ROT0, "Irem", "Green Beret (IREM)", GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_NOT_WORKING )
+GAMEX( 19??, ipminvad, 0, skychut,    skychut,   0, ROT270, "Irem", "IPM Invader", GAME_NO_COCKTAIL | GAME_NO_SOUND | GAME_IMPERFECT_COLORS )
+GAMEX( 1980, skychut,  0, skychut,    skychut,   0, ROT270, "Irem", "Sky Chuter", GAME_NO_COCKTAIL | GAME_NO_SOUND | GAME_IMPERFECT_COLORS )
+GAMEX( 19??, spacbeam, 0, greenberet, spacebeam, 0, ROT270, "Irem", "Space Beam", GAME_NO_COCKTAIL | GAME_NO_SOUND | GAME_IMPERFECT_COLORS )
+GAMEX( 1980, greenber, 0, greenberet, spacebeam, 0, ROT270, "Irem", "Green Beret (Irem)", GAME_NO_COCKTAIL | GAME_NO_SOUND | GAME_IMPERFECT_COLORS | GAME_NOT_WORKING )

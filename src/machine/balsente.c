@@ -269,7 +269,7 @@ READ_HANDLER( balsente_random_num_r )
 	unsigned int cc;
 
 	/* CPU runs at 1.25MHz, noise source at 100kHz --> multiply by 12.5 */
-	cc = cpu_gettotalcycles();
+	cc = activecpu_gettotalcycles();
 
 	/* 12.5 = 8 + 4 + 0.5 */
 	cc = (cc << 3) + (cc << 2) + (cc >> 1);

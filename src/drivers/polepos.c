@@ -58,9 +58,13 @@ NOTES:
 because they had to accomodate the hardware from Pole Position I to allow
 track selection.
 
+Change POLEPOS_TOGGLE to 0 if you are using the original gearshift
+
 ***************************************************************************/
 
 #include "driver.h"
+
+#define POLEPOS_TOGGLE	IPF_TOGGLE
 
 
 /* from machine */
@@ -196,7 +200,7 @@ MEMORY_END
 INPUT_PORTS_START( polepos )
 	PORT_START	/* IN0 - Mostly Fake - Handled by the MCU */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_TOGGLE, "Gear Change", KEYCODE_SPACE, IP_JOY_DEFAULT ) /* Gear */
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 | POLEPOS_TOGGLE, "Gear Change", KEYCODE_SPACE, IP_JOY_DEFAULT ) /* Gear */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME( 0x08, 0x08, "Display Shift" )
 	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
@@ -270,7 +274,7 @@ INPUT_PORTS_END
 INPUT_PORTS_START( polepos2 )
 	PORT_START	/* IN0 - Mostly Fake - Handled by the MCU */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_TOGGLE, "Gear Change", KEYCODE_SPACE, IP_JOY_DEFAULT ) /* Gear */
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 | POLEPOS_TOGGLE, "Gear Change", KEYCODE_SPACE, IP_JOY_DEFAULT ) /* Gear */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME( 0x08, 0x08, "Display Shift" )
 	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )

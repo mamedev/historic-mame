@@ -103,6 +103,9 @@ enum
 #if (HAS_V60)
 	CPU_V60,
 #endif
+#if (HAS_V70)
+	CPU_V70,
+#endif
 #if (HAS_I8035)
 	CPU_I8035,
 #endif
@@ -208,14 +211,17 @@ enum
 #if (HAS_Z8000)
 	CPU_Z8000,
 #endif
-#if (HAS_TMS320C10)
-	CPU_TMS320C10,
+#if (HAS_TMS32010)
+	CPU_TMS32010,
 #endif
 #if (HAS_CCPU)
 	CPU_CCPU,
 #endif
 #if (HAS_ADSP2100)
 	CPU_ADSP2100,
+#endif
+#if (HAS_ADSP2101)
+ CPU_ADSP2101,
 #endif
 #if (HAS_ADSP2105)
 	CPU_ADSP2105,
@@ -237,14 +243,17 @@ enum
 	CPU_R3000BE,
 	CPU_R3000LE,
 #endif
-#if (HAS_TMS320C31)
-	CPU_TMS320C31,
+#if (HAS_TMS32031)
+	CPU_TMS32031,
 #endif
 #if (HAS_ARM)
 	CPU_ARM,
 #endif
 #if (HAS_SH2)
 	CPU_SH2,
+#endif
+#if (HAS_DSP32C)
+ CPU_DSP32C,
 #endif
 
 #ifdef MESS

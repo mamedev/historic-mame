@@ -65,7 +65,7 @@
 #if (HAS_V20 || HAS_V30 || HAS_V33)
 #include "cpu/nec/necintrf.h"
 #endif
-#if (HAS_V60)
+#if (HAS_V60 || HAS_V70)
 #include "cpu/v60/v60.h"
 #endif
 #if (HAS_I8035 || HAS_I8039 || HAS_I8048 || HAS_N7751)
@@ -107,13 +107,13 @@
 #if (HAS_Z8000)
 #include "cpu/z8000/z8000.h"
 #endif
-#if (HAS_TMS320C10)
+#if (HAS_TMS32010)
 #include "cpu/tms32010/tms32010.h"
 #endif
 #if (HAS_CCPU)
 #include "cpu/ccpu/ccpu.h"
 #endif
-#if (HAS_ADSP2100 || HAS_ADSP2105)
+#if (HAS_ADSP2100 || HAS_ADSP2101 || HAS_ADSP2105)
 #include "cpu/adsp2100/adsp2100.h"
 #endif
 #if (HAS_PSXCPU)
@@ -131,7 +131,7 @@
 #if (HAS_R3000)
 #include "cpu/mips/r3000.h"
 #endif
-#if (HAS_TMS320C31)
+#if (HAS_TMS32031)
 #include "cpu/tms32031/tms32031.h"
 #endif
 #if (HAS_ARM)
@@ -139,6 +139,9 @@
 #endif
 #if (HAS_SH2)
 #include "cpu/sh2/sh2.h"
+#endif
+#if (HAS_DSP32C)
+#include "cpu/dsp32/dsp32.h"
 #endif
 
 
@@ -350,7 +353,7 @@ static unsigned dummy_dasm(char *buffer, unsigned pc);
 		name##_info, name##_dasm, 										   \
 		nirq, dirq, &name##_icount, oc, 							   \
 		datawidth,																   \
-		(mem_read_handler)cpu_readmem##mem, (mem_write_handler)cpu_writemem##mem, name##_internal_r, name##_internal_w, \
+		(mem_read_handler)cpu_readmem##mem, (mem_write_handler)cpu_writemem##mem, (mem_read_handler)name##_internal_r, (mem_write_handler)name##_internal_w, \
 		0, cpu_setopbase##mem,													   \
 		shift, bits, CPU_IS_##endian, align, maxinst							   \
 	}
@@ -440,6 +443,9 @@ const struct cpu_interface cpuintrf[] =
 #endif
 #if (HAS_V60)
 	CPU0(V60,	   v60, 	 1,  0,1.00,16, 24lew, 0,24,LE,1, 11	),
+#endif
+#if (HAS_V70)
+	CPU0(V70,	   v70, 	 1,  0,1.00,32, 32ledw,0,32,LE,1, 11	),
 #endif
 #if (HAS_I8035)
 	CPU0(I8035,    i8035,	 1,  0,1.00, 8, 16,	  0,16,LE,1, 2	),
@@ -546,17 +552,20 @@ const struct cpu_interface cpuintrf[] =
 #if (HAS_Z8000)
 	CPU0(Z8000,    z8000,	 2,  0,1.00,16,16bew,  0,16,BE,2, 6	),
 #endif
-#if (HAS_TMS320C10)
-	CPU3(TMS320C10,tms320c10,2,  0,1.00,16,16bew, -1,16,BE,2, 4	),
+#if (HAS_TMS32010)
+	CPU3(TMS32010,tms32010,  1,  0,1.00,16,16bew, -1,16,BE,2, 4 ),
 #endif
 #if (HAS_CCPU)
 	CPU3(CCPU,	   ccpu,	 2,  0,1.00,16,16bew,  0,15,BE,2, 3	),
 #endif
 #if (HAS_ADSP2100)
-	CPU3(ADSP2100, adsp2100, 4,  0,1.00,16,17lew, -1,14,LE,2, 4	),
+	CPU3(ADSP2100, adsp2100, 4,  0,1.00,16,17lew, -1,15,LE,2, 4 ),
+#endif
+#if (HAS_ADSP2101)
+	CPU3(ADSP2101, adsp2101, 4,  0,1.00,16,17lew, -1,15,LE,2, 4 ),
 #endif
 #if (HAS_ADSP2105)
-	CPU3(ADSP2105, adsp2105, 4,  0,1.00,16,17lew, -1,14,LE,2, 4	),
+	CPU3(ADSP2105, adsp2105, 4,  0,1.00,16,17lew, -1,15,LE,2, 4 ),
 #endif
 #if (HAS_PSXCPU)
 	CPU0(PSXCPU,   mips,	 8, -1,1.00,16,32lew,  0,32,LE,4, 4	),
@@ -570,10 +579,10 @@ const struct cpu_interface cpuintrf[] =
 	CPU0(UPD7810,  upd7810,  2,  0,1.00, 8, 16,	  0,16,LE,1, 4	),
 #endif
 #if (HAS_JAGUAR)
-	#define jaguargp_ICount jaguar_icount
-	#define jaguards_ICount jaguar_icount
-	CPU0(JAGUARGPU,jaguargp, 6,  0,1.00,32,24bedw, 0,24,BE,4, 12 ),
-	CPU0(JAGUARDSP,jaguards, 6,  0,1.00,32,24bedw, 0,24,BE,4, 12 ),
+	#define jaguargpu_ICount jaguar_icount
+	#define jaguardsp_ICount jaguar_icount
+	CPU0(JAGUARGPU,jaguargpu,6,  0,1.00,32,24bedw, 0,24,BE,4, 12 ),
+	CPU0(JAGUARDSP,jaguardsp,6,  0,1.00,32,24bedw, 0,24,BE,4, 12 ),
 #endif
 #if (HAS_R3000)
 	#define r3000be_ICount r3000_icount
@@ -581,15 +590,19 @@ const struct cpu_interface cpuintrf[] =
 	CPU0(R3000BE,  r3000be,  1,  0,1.00,32,29bedw, 0,29,BE,4, 4 ),
 	CPU0(R3000LE,  r3000le,  1,  0,1.00,32,29ledw, 0,29,LE,4, 4 ),
 #endif
-#if (HAS_TMS320C31)
-	#define tms320c31_ICount tms320c31_icount
-	CPU0(TMS320C31,tms320c31,4,  0,1.00,32,26ledw,-2,26,LE,4, 4 ),
+#if (HAS_TMS32031)
+	#define tms32031_ICount tms32031_icount
+	CPU0(TMS32031,tms32031,  4,  0,1.00,32,26ledw,-2,26,LE,4, 4 ),
 #endif
 #if (HAS_ARM)
 	CPU0(ARM,	   arm, 	 2,  0,1.00,32,26ledw, 0,26,LE,4, 4	),
 #endif
 #if (HAS_SH2)
 	CPU4(SH2,	   sh2, 	16,  0,1.00,32,32bedw,   0,32,BE,2, 2  ),
+#endif
+#if (HAS_DSP32C)
+	#define dsp32c_ICount dsp32_icount
+	CPU0(DSP32C,   dsp32c,   4,  0,1.00,32,24ledw, 0,24,LE,4, 4 ),
 #endif
 
 #ifdef MESS

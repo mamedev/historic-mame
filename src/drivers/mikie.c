@@ -35,7 +35,7 @@ static READ_HANDLER( mikie_sh_timer_r )
 
 #define TIMER_RATE 512
 
-	clock = cpu_gettotalcycles() / TIMER_RATE;
+	clock = activecpu_gettotalcycles() / TIMER_RATE;
 
 	return clock;
 }

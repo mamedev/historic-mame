@@ -23,7 +23,7 @@ VIDEO_UPDATE( bottom9 );
 
 static INTERRUPT_GEN( bottom9_interrupt )
 {
-	if (K052109_is_IRQ_enabled())	
+	if (K052109_is_IRQ_enabled())
 		cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
@@ -114,17 +114,14 @@ static WRITE_HANDLER( nmi_enable_w )
 
 static WRITE_HANDLER( sound_bank_w )
 {
-	unsigned char *RAM;
 	int bank_A,bank_B;
 
-	RAM = memory_region(REGION_SOUND1);
-	bank_A = 0x20000 * ((data >> 0) & 0x03);
-	bank_B = 0x20000 * ((data >> 2) & 0x03);
-	K007232_bankswitch(0,RAM + bank_A,RAM + bank_B);
-	RAM = memory_region(REGION_SOUND2);
-	bank_A = 0x20000 * ((data >> 4) & 0x03);
-	bank_B = 0x20000 * ((data >> 6) & 0x03);
-	K007232_bankswitch(1,RAM + bank_A,RAM + bank_B);
+	bank_A = ((data >> 0) & 0x03);
+	bank_B = ((data >> 2) & 0x03);
+	K007232_set_bank( 0, bank_A, bank_B );
+	bank_A = ((data >> 4) & 0x03);
+	bank_B = ((data >> 6) & 0x03);
+	K007232_set_bank( 1, bank_A, bank_B );
 }
 
 
@@ -389,6 +386,7 @@ static void volume_callback1(int v)
 static struct K007232_interface k007232_interface =
 {
 	2,			/* number of chips */
+	3579545,	/* clock */
 	{ REGION_SOUND1, REGION_SOUND2 },	/* memory regions */
 	{ K007232_VOL(40,MIXER_PAN_CENTER,40,MIXER_PAN_CENTER),
 			K007232_VOL(40,MIXER_PAN_CENTER,40,MIXER_PAN_CENTER) },	/* volume */

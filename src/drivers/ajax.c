@@ -227,20 +227,17 @@ static struct YM2151interface ym2151_interface =
 
 static WRITE_HANDLER( sound_bank_w )
 {
-	unsigned char *RAM;
 	int bank_A, bank_B;
 
 	/* banks # for the 007232 (chip 1) */
-	RAM = memory_region(REGION_SOUND1);
-	bank_A = 0x20000 * ((data >> 1) & 0x01);
-	bank_B = 0x20000 * ((data >> 0) & 0x01);
-	K007232_bankswitch(0,RAM + bank_A,RAM + bank_B);
+	bank_A = ((data >> 1) & 0x01);
+	bank_B = ((data >> 0) & 0x01);
+	K007232_set_bank( 0, bank_A, bank_B );
 
 	/* banks # for the 007232 (chip 2) */
-	RAM = memory_region(REGION_SOUND2);
-	bank_A = 0x20000 * ((data >> 4) & 0x03);
-	bank_B = 0x20000 * ((data >> 2) & 0x03);
-	K007232_bankswitch(1,RAM + bank_A,RAM + bank_B);
+	bank_A = ((data >> 4) & 0x03);
+	bank_B = ((data >> 2) & 0x03);
+	K007232_set_bank( 1, bank_A, bank_B );
 }
 
 static void volume_callback0(int v)
@@ -264,6 +261,7 @@ static void volume_callback1(int v)
 static struct K007232_interface k007232_interface =
 {
 	2,			/* number of chips */
+	3579545,	/* clock */
 	{ REGION_SOUND1, REGION_SOUND2 },	/* memory regions */
 	{ K007232_VOL(20,MIXER_PAN_CENTER,20,MIXER_PAN_CENTER),
 		K007232_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },/* volume */

@@ -151,10 +151,13 @@ int cycles_currently_ran(void);
 int cycles_left_to_run(void);
 
 /* Returns the number of CPU cycles which take place in one video frame */
-int cpu_gettotalcycles(void);
+int activecpu_gettotalcycles(void);
+
+/* Returns the number of CPU cycles which take place in one video frame for a given cpu */
+int cpu_gettotalcycles(int cpu);
 
 /* Returns the number of CPU cycles before the next interrupt handler call */
-int cpu_geticount(void);
+int activecpu_geticount(void);
 
 /* Scales a given value by the ratio of fcount / fperiod */
 int cpu_scalebyfcount(int value);

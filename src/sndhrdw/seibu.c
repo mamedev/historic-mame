@@ -37,6 +37,7 @@
 /*
 	Games using encrypted sound cpu:
 
+	Air Raid         1987	"START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
 	Cabal            1988	"Michel/Seibu    sound 11/04/88"
 	Dead Angle       1988?	"START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
 	Dynamite Duke    1989	"START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
@@ -64,84 +65,35 @@
 
 static UINT8 decrypt_data(int a,int src)
 {
-	int xor = 0;
+	if ( BIT(a,9)  &  BIT(a,8))             src ^= 0x80;
+	if ( BIT(a,11) &  BIT(a,4) &  BIT(a,1)) src ^= 0x40;
+	if ( BIT(a,11) & ~BIT(a,8) &  BIT(a,1)) src ^= 0x04;
+	if ( BIT(a,13) & ~BIT(a,6) &  BIT(a,4)) src ^= 0x02;
+	if (~BIT(a,11) &  BIT(a,9) &  BIT(a,2)) src ^= 0x01;
 
-	//80 =  ADDR_9  &  ADDR_8
-	//40 =  ADDR_11 &  ADDR_4  & ADDR_1
-	//04 =  ADDR_11 & !ADDR_8  & ADDR_1
-	//02 =  ADDR_13 & !ADDR_11 & ADDR_9 &  ADDR_4 & ADDR_2
-	//01 =  ADDR_13 & !ADDR_11 & ADDR_9 & !ADDR_4 & ADDR_2
-	//01 = !ADDR_13 & !ADDR_11 & ADDR_9 &  ADDR_2
-	//01 =  ADDR_13 & !ADDR_6  & ADDR_4
-	if ( BIT(a,9)  &  BIT(a,8))                                    xor |= 0x80;
-	if ( BIT(a,11) &  BIT(a,4)  & BIT(a,1))                        xor |= 0x40;
-	if ( BIT(a,11) & ~BIT(a,8)  & BIT(a,1))                        xor |= 0x04;
-	if ( BIT(a,13) & ~BIT(a,11) & BIT(a,9) &  BIT(a,4) & BIT(a,2)) xor |= 0x02;
-	if ( BIT(a,13) & ~BIT(a,11) & BIT(a,9) & ~BIT(a,4) & BIT(a,2)) xor |= 0x01;
-	if (~BIT(a,13) & ~BIT(a,11) & BIT(a,9) &  BIT(a,2))            xor |= 0x01;
-	if ( BIT(a,13) & ~BIT(a,6)  & BIT(a,4))                        xor |= 0x01;
+	if (BIT(a,13) &  BIT(a,4)) src = BITSWAP8(src,7,6,5,4,3,2,0,1);
+	if (BIT(a, 8) &  BIT(a,4)) src = BITSWAP8(src,7,6,5,4,2,3,1,0);
 
-	//03 = ADDR_13 & ADDR_4 & (SRC_0 ^ SRC_1)
-	//0C = ADDR_8  & ADDR_4 & (SRC_2 ^ SRC_3)
-	if (BIT(a,13) & BIT(a,4) & (BIT(src,0) ^ BIT(src,1))) xor ^= 0x03;
-	if (BIT(a, 8) & BIT(a,4) & (BIT(src,2) ^ BIT(src,3))) xor ^= 0x0C;
-
-	return src ^ xor;
+	return src;
 }
 
 static UINT8 decrypt_opcode(int a,int src)
 {
-	int xor = 0;
+	if ( BIT(a,9)  &  BIT(a,8))             src ^= 0x80;
+	if ( BIT(a,11) &  BIT(a,4) &  BIT(a,1)) src ^= 0x40;
+	if ( BIT(a,12))                         src ^= 0x20;
+	if (~BIT(a,6)  &  BIT(a,1))             src ^= 0x10;
+	if (~BIT(a,12) &  BIT(a,2))             src ^= 0x08;
+	if ( BIT(a,11) & ~BIT(a,8) &  BIT(a,1)) src ^= 0x04;
+//	if ( BIT(a,13) & ~BIT(a,6) &  BIT(a,4)) src ^= 0x02; might be (as for data), but there's no code there
+	if (~BIT(a,11) &  BIT(a,9) &  BIT(a,2)) src ^= 0x01;
 
-	//80 = !ADDR_11 &  ADDR_9 & ADDR_8
-	//80 = !ADDR_12 &  ADDR_11 &  ADDR_9 & ADDR_8 &  ADDR_6
-	//80 = !ADDR_12 &  ADDR_11 & !ADDR_6 & ADDR_4 &  ADDR_1
-	//40 = !ADDR_12 &  ADDR_11 &  ADDR_9 & ADDR_8 & !ADDR_6
-	//40 = !ADDR_12 &  ADDR_11 &  ADDR_6 & ADDR_4 &  ADDR_1
-	//20 =  ADDR_12 & !ADDR_9
-	//20 =  ADDR_12 &  ADDR_9  & !ADDR_6 & ADDR_1
-	//10 = !ADDR_12 & !ADDR_11 & !ADDR_6 & ADDR_1
-	//10 = !ADDR_12 &  ADDR_11 & !ADDR_6 & ADDR_1
-	//10 =  ADDR_12 &  ADDR_9
-	//10 =  ADDR_12 & !ADDR_9  & !ADDR_6 & ADDR_1
-	//08 = !ADDR_12 & !ADDR_11 & !ADDR_4 & ADDR_2
-	//08 = !ADDR_12 & !ADDR_11 & !ADDR_8 & ADDR_4 & ADDR_2
-	//08 = !ADDR_12 &  ADDR_11 & !ADDR_8 & ADDR_2
-	//08 = !ADDR_12 &  ADDR_11 & !ADDR_4 & ADDR_2
-	//04 = !ADDR_12 & !ADDR_11 &  ADDR_8 & ADDR_4 & ADDR_2
-	//04 = !ADDR_12 &  ADDR_11 & !ADDR_8 & ADDR_1
-	//04 = !ADDR_12 &  ADDR_11 &  ADDR_8 & ADDR_4 & ADDR_2
-	//01 = !ADDR_12 & !ADDR_11 &  ADDR_9 & ADDR_2
-	//01 =  ADDR_12 &  ADDR_9  &  ADDR_2
-	if (~BIT(a,11) &  BIT(a,9) &  BIT(a,8))                          xor |= 0x80;
-	if (~BIT(a,12) &  BIT(a,11) &  BIT(a,9) &  BIT(a,8) &  BIT(a,6)) xor |= 0x80;
-	if (~BIT(a,12) &  BIT(a,11) & ~BIT(a,6) &  BIT(a,4) &  BIT(a,1)) xor |= 0x80;
-	if (~BIT(a,12) &  BIT(a,11) &  BIT(a,9) &  BIT(a,8) & ~BIT(a,6)) xor |= 0x40;
-	if (~BIT(a,12) &  BIT(a,11) &  BIT(a,6) &  BIT(a,4) &  BIT(a,1)) xor |= 0x40;
-	if ( BIT(a,12) & ~BIT(a,9))                                      xor |= 0x20;
-	if ( BIT(a,12) &  BIT(a,9)  & ~BIT(a,6) &  BIT(a,1))             xor |= 0x20;
-	if (~BIT(a,12) & ~BIT(a,11) & ~BIT(a,6) &  BIT(a,1))             xor |= 0x10;
-	if (~BIT(a,12) &  BIT(a,11) & ~BIT(a,6) &  BIT(a,1))             xor |= 0x10;
-	if ( BIT(a,12) &  BIT(a,9))                                      xor |= 0x10;
-	if ( BIT(a,12) & ~BIT(a,9)  & ~BIT(a,6) &  BIT(a,1))             xor |= 0x10;
-	if (~BIT(a,12) & ~BIT(a,11) & ~BIT(a,4) &  BIT(a,2))             xor |= 0x08;
-	if (~BIT(a,12) & ~BIT(a,11) & ~BIT(a,8) &  BIT(a,4) &  BIT(a,2)) xor |= 0x08;
-	if (~BIT(a,12) &  BIT(a,11) & ~BIT(a,8) &  BIT(a,2))             xor |= 0x08;
-	if (~BIT(a,12) &  BIT(a,11) & ~BIT(a,4) &  BIT(a,2))             xor |= 0x08;
-	if (~BIT(a,12) & ~BIT(a,11) &  BIT(a,8) &  BIT(a,4) &  BIT(a,2)) xor |= 0x04;
-	if (~BIT(a,12) &  BIT(a,11) & ~BIT(a,8) &  BIT(a,1))             xor |= 0x04;
-	if (~BIT(a,12) &  BIT(a,11) &  BIT(a,8) &  BIT(a,4) &  BIT(a,2)) xor |= 0x04;
-	if (~BIT(a,12) & ~BIT(a,11) &  BIT(a,9) &  BIT(a,2))             xor |= 0x01;
-	if ( BIT(a,12) &  BIT(a,9)  &  BIT(a,2))                         xor |= 0x01;
+//	if (BIT(a,13) &  BIT(a,4)) src = BITSWAP8(src,7,6,5,4,3,2,0,1); might be (as for data), but there's no code there
+	if (BIT(a, 8) &  BIT(a,4)) src = BITSWAP8(src,7,6,5,4,2,3,1,0);
+	if (BIT(a,12) &  BIT(a,9)) src = BITSWAP8(src,7,6,4,5,3,2,1,0);
+	if (BIT(a,11) & ~BIT(a,6)) src = BITSWAP8(src,6,7,5,4,3,2,1,0);
 
-	//0C = ADDR_8  &  ADDR_4 & (SRC_2 ^ SRC_3)
-	//30 = ADDR_12 &  ADDR_9 & (SRC_4 ^ SRC_5)
-	//C0 = ADDR_11 & !ADDR_6 & (SRC_6 ^ SRC_7)
-	if (BIT(a, 8) &  BIT(a,4) & (BIT(src,2) ^ BIT(src,3))) xor ^= 0x0C;
-	if (BIT(a,12) &  BIT(a,9) & (BIT(src,4) ^ BIT(src,5))) xor ^= 0x30;
-	if (BIT(a,11) & ~BIT(a,6) & (BIT(src,6) ^ BIT(src,7))) xor ^= 0xC0;
-
-	return src ^ xor;
+	return src;
 }
 
 void seibu_sound_decrypt(int cpu_region,int length)
@@ -346,6 +298,16 @@ READ_HANDLER( seibu_main_v30_r )
 WRITE_HANDLER( seibu_main_v30_w )
 {
 	seibu_main_word_w(offset/2,data << (8 * (offset & 1)),0xff00 >> (8 * (offset & 1)));
+}
+
+WRITE16_HANDLER( seibu_main_mustb_w )
+{
+	main2sub[0] = data&0xff;
+	main2sub[1] = data>>8;
+
+//	logerror("seibu_main_mustb_w: %x -> %x %x\n", data, main2sub[0], main2sub[1]);
+
+	timer_set(TIME_NOW,RST18_ASSERT,setvector_callback);
 }
 
 /***************************************************************************/

@@ -10,7 +10,7 @@
 #ifndef RECURSIVE_INCLUDE
 
 #if 0
-#define LOGGFX(x) logerror x
+#define LOGGFX(x) do { if (keyboard_pressed(KEYCODE_L)) logerror x ; } while (0)
 #else
 #define LOGGFX(x)
 #endif

@@ -10,6 +10,80 @@ Notes:
 - collision detection is handled by a protection chip. Its emulation might
   not be 100% accurate.
 
+// ********************************************************************************
+//   Game driver for "ESCAPE KIDS (TM)"  (KONAMI, 1991)
+// --------------------------------------------------------------------------------
+//
+//            This driver was made on the basis of 'src/drivers/vendetta.c' file.
+//                                         Driver by OHSAKI Masayuki (2002/08/13)
+//
+// ********************************************************************************
+
+
+// ***** NOTES *****
+//      -------
+//  1) ESCAPE KIDS uses 053246's unknown function. (see vidhrdw/konamiic.c)
+//                   (053246 register #5  UnKnown Bit #5, #3, #2 always set "1")
+
+
+// ***** On the "error.log" *****
+//      --------------------
+//  1) "YM2151 Write 00 to undocumented register #xx" (xx=00-1f)
+//                Why???
+
+//  2) "xxxx: read from unknown 052109 address yyyy"
+//  3) "xxxx: write zz to unknown 052109 address yyyy"
+//                These are vidhrdw/konamiic.c's message.
+//                "vidhrdw/konamiic.c" checks 052109 RAM area access.
+//                If accessed over 0x1800 (0x3800), logged 2) or 3) messages.
+//                Escape Kids use 0x1800-0x19ff and 0x3800-0x39ff area.
+
+
+// ***** UnEmulated *****
+//      ------------
+//  1) 0x3fc0-0x3fcf (052109 RAM area) access (053252 ???)
+//  2) 0x7c00 (Banked ROM area) access to data WRITE (???)
+//  3) 0x3fda (053248 RAM area) access to data WRITE (Watchdog ???)
+
+
+// ***** ESCAPE KIDS PCB layout/ Need to dump *****
+//      --------------------------------------
+//   (Parts side view)
+//   +-------------------------------------------------------+
+//   |   R          ROM9                               [CN1] |  CN1:Player4 Input?
+//   |   O                                             [CN2] |           (Labeled '4P')
+//   |   M          ROM8                       ROM1    [SW1] |  CN2:Player3 Input?
+//   |   7                              [CUS1]             +-+           (Labeled '3P')
+//   |        [CUS7]   [CUS8]                              +-+  CN3:Stereo sound out
+//   | R                                       [CUS2]        |
+//   | O                                                   J |  SW1:Test Switch
+//   | M                                                   A |
+//   | 6    [CUS6]                                         M | ***  Custom Chips  ***
+//   |                                                     M |      CUS1: 053248
+//   | R                                                   A |      CUS2: 053252
+//   | O    [CUS5]                                        56P|      CUS3: 053260
+//   | M                                                     |      CUS4: 053246
+//   | 5                           ROM2  [ Z80 ]           +-+      CUS5: 053247
+//   |                                                     +-+      CUS6: 053251
+//   | R    [CUS4]                     [CUS3] [YM2151] [CN3] |      CUS7: 051962
+//   | O                                                     |      CUS8: 052109
+//   | M                                 ROM3                |
+//   | 4                                         [Sound AMP] |
+//   +-------------------------------------------------------+
+//
+//  ***  Dump ROMs  ***
+//     1) ROM1 (17C)  32Pin 1Mbit UV-EPROM          -> save "975r01" file
+//     2) ROM2 ( 5F)  28Pin 512Kbit One-Time PROM   -> save "975f02" file
+//     3) ROM3 ( 1D)  40Pin 4Mbit MASK ROM          -> save "975c03" file
+//     4) ROM4 ( 3K)  42Pin 8Mbit MASK ROM          -> save "975c04" file
+//     5) ROM5 ( 8L)  42Pin 8Mbit MASK ROM          -> save "975c05" file
+//     6) ROM6 (12M)  42Pin 8Mbit MASK ROM          -> save "975c06" file
+//     7) ROM7 (16K)  42Pin 8Mbit MASK ROM          -> save "975c07" file
+//     8) ROM8 (16I)  40Pin 4Mbit MASK ROM          -> save "975c08" file
+//     9) ROM9 (18I)  40Pin 4Mbit MASK ROM          -> save "975c09" file
+//                                                        vvvvvvvvvvvv
+//                                                        esckidsj.zip
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -24,6 +98,7 @@ static void vendetta_banking( int lines );
 static void vendetta_video_banking( int select );
 
 VIDEO_START( vendetta );
+VIDEO_START( esckids );
 VIDEO_UPDATE( vendetta );
 
 
@@ -112,7 +187,15 @@ static WRITE_HANDLER( vendetta_eeprom_w )
 /********************************************/
 
 static READ_HANDLER( vendetta_K052109_r ) { return K052109_r( offset + 0x2000 ); }
-static WRITE_HANDLER( vendetta_K052109_w ) { K052109_w( offset + 0x2000, data ); }
+//static WRITE_HANDLER( vendetta_K052109_w ) { K052109_w( offset + 0x2000, data ); }
+static WRITE_HANDLER( vendetta_K052109_w ) {
+	// *************************************************************************************
+	// *  Escape Kids uses 052109's mirrored Tilemap ROM bank selector, but only during    *
+	// *  Tilemap MASK-ROM Test       (0x1d80<->0x3d80, 0x1e00<->0x3e00, 0x1f00<->0x3f00)  *
+	// *************************************************************************************
+	if ( ( offset == 0x1d80 ) || ( offset == 0x1e00 ) || ( offset == 0x1f00 ) )		K052109_w( offset, data );
+	K052109_w( offset + 0x2000, data );
+}
 
 static void vendetta_video_banking( int select )
 {
@@ -134,10 +217,6 @@ static void vendetta_video_banking( int select )
 
 static WRITE_HANDLER( vendetta_5fe0_w )
 {
-//char baf[40];
-//sprintf(baf,"5fe0 = %02x",data);
-//usrintf_showmessage(baf);
-
 	/* bit 0,1 coin counters */
 	coin_counter_w(0,data & 0x01);
 	coin_counter_w(1,data & 0x02);
@@ -151,23 +230,6 @@ static WRITE_HANDLER( vendetta_5fe0_w )
 
 	/* bit 5 = enable sprite ROM reading */
 	K053246_set_OBJCHA_line((data & 0x20) ? ASSERT_LINE : CLEAR_LINE);
-}
-
-static READ_HANDLER( speedup_r )
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	int data = ( RAM[0x28d2] << 8 ) | RAM[0x28d3];
-
-	if ( data < memory_region_length(REGION_CPU1) )
-	{
-		data = ( RAM[data] << 8 ) | RAM[data + 1];
-
-		if ( data == 0xffff )
-			cpu_spinuntil_int();
-	}
-
-	return RAM[0x28d2];
 }
 
 static void z80_nmi_callback( int param )
@@ -211,7 +273,6 @@ READ_HANDLER( vendetta_sound_r )
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x1fff, MRA_BANK1	},
-	{ 0x28d2, 0x28d2, speedup_r },
 	{ 0x2000, 0x3fff, MRA_RAM },
 	{ 0x5f80, 0x5f9f, K054000_r },
 	{ 0x5fc0, 0x5fc0, input_port_0_r },
@@ -245,6 +306,42 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x4000, 0x7fff, K052109_w },
 	{ 0x8000, 0xffff, MWA_ROM },
 MEMORY_END
+
+static MEMORY_READ_START( esckids_readmem )
+	{ 0x0000, 0x1fff, MRA_RAM },			// 053248 64K SRAM
+	{ 0x3f80, 0x3f80, input_port_0_r },		// Player 1 Control
+	{ 0x3f81, 0x3f81, input_port_1_r },		// Player 2 Control
+	{ 0x3f82, 0x3f82, input_port_4_r }, 	// Player 3 Control ???  (But not used)
+	{ 0x3f83, 0x3f83, input_port_5_r },		// Player 4 Control ???  (But not used)
+	{ 0x3f92, 0x3f92, vendetta_eeprom_r },	// vblank, TEST SW on PCB
+	{ 0x3f93, 0x3f93, input_port_2_r },		// Start, Service
+	{ 0x3fd4, 0x3fd4, vendetta_sound_interrupt_r },		// Sound
+	{ 0x3fd6, 0x3fd7, vendetta_sound_r },				// Sound
+	{ 0x3fd8, 0x3fd9, K053246_r },			// 053246 (Sprite)
+	{ 0x2000, 0x2fff, MRA_BANK3 },			// 052109 (Tilemap) 0x0000-0x0fff
+	{ 0x4000, 0x5fff, MRA_BANK2 },			// 052109 (Tilemap) 0x2000-0x3fff, Tilemap MASK-ROM bank selector (MASK-ROM Test)
+	{ 0x2000, 0x5fff, K052109_r },			// 052109 (Tilemap)
+	{ 0x6000, 0x7fff, MRA_BANK1 },			// 053248 '975r01' 1M ROM (Banked)
+	{ 0x8000, 0xffff, MRA_ROM },			// 053248 '975r01' 1M ROM (0x18000-0x1ffff)
+MEMORY_END
+
+static MEMORY_WRITE_START( esckids_writemem )
+	{ 0x0000, 0x1fff, MWA_RAM },			// 053248 64K SRAM
+	{ 0x3fa0, 0x3fa7, K053246_w },			// 053246 (Sprite)
+	{ 0x3fb0, 0x3fbf, K053251_w },			// 053251 (Priority Encoder)
+	{ 0x3fc0, 0x3fcf, MWA_NOP },			// Not Emulated (053252 ???)
+	{ 0x3fd0, 0x3fd0, vendetta_5fe0_w },	// Coin Counter, 052109 RMRD, 053246 OBJCHA
+	{ 0x3fd2, 0x3fd2, vendetta_eeprom_w },	// EEPROM, Video banking
+	{ 0x3fd4, 0x3fd4, z80_irq_w },			// Sound
+	{ 0x3fd6, 0x3fd7, K053260_0_w },		// Sound
+	{ 0x3fda, 0x3fda, MWA_NOP },			// Not Emulated (Watchdog ???)
+	{ 0x2000, 0x2fff, MWA_BANK3 },			// 052109 (Tilemap) 0x0000-0x0fff
+	{ 0x4000, 0x5fff, MWA_BANK2 },			// 052109 (Tilemap) 0x2000-0x3fff, Tilemap MASK-ROM bank selector (MASK-ROM Test)
+	{ 0x2000, 0x5fff, K052109_w },			// 052109 (Tilemap)
+	{ 0x6000, 0x7fff, MWA_ROM },			// 053248 '975r01' 1M ROM (Banked)
+	{ 0x8000, 0xffff, MWA_ROM },			// 053248 '975r01' 1M ROM (0x18000-0x1ffff)
+MEMORY_END
+
 
 static MEMORY_READ_START( readmem_sound )
 	{ 0x0000, 0xefff, MRA_ROM },
@@ -367,6 +464,67 @@ INPUT_PORTS_START( vendetta )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( esckids )
+	PORT_START		// Player 1 Control
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START		// Player 2 Control
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START		// Start, Service
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* EEPROM data */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* EEPROM ready */
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK ) /* not really vblank, object related. Its timed, otherwise sprites flicker */
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+#if 0
+	PORT_START		// Player 3 Control ???  (Not used)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
+
+	PORT_START		// Player 4 Control ???  (Not used)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN4 )
+#endif
+INPUT_PORTS_END
+
 
 
 /***************************************************************************
@@ -401,14 +559,14 @@ static INTERRUPT_GEN( vendetta_irq )
 static MACHINE_DRIVER_START( vendetta )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(KONAMI, 3000000)		/* ? */
+	MDRV_CPU_ADD_TAG("main", KONAMI, 6000000)		/* ? */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(vendetta_irq,1)
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
-
+                            /* interrupts are triggered by the main CPU */
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
@@ -429,6 +587,20 @@ static MACHINE_DRIVER_START( vendetta )
 	MDRV_SOUND_ADD(YM2151, ym2151_interface)
 	MDRV_SOUND_ADD(K053260, k053260_interface)
 MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( esckids )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(vendetta)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(esckids_readmem,esckids_writemem)
+
+	MDRV_VIDEO_START(esckids)
+
+MACHINE_DRIVER_END
+
+
 
 /***************************************************************************
 
@@ -458,9 +630,31 @@ ROM_START( vendetta )
 	ROM_LOAD( "081a03", 0x000000, 0x100000, 0x14b6baea )
 ROM_END
 
-ROM_START( vendetar )
+ROM_START( vendetao )
 	ROM_REGION( 0x49000, REGION_CPU1, 0 ) /* code + banked roms + banked ram */
 	ROM_LOAD( "081r01", 0x10000, 0x38000, 0x84796281 )
+	ROM_CONTINUE(		0x08000, 0x08000 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the sound CPU */
+	ROM_LOAD( "081b02", 0x000000, 0x10000, 0x4c604d9b )
+
+	ROM_REGION( 0x100000, REGION_GFX1, 0 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_LOAD( "081a09", 0x000000, 0x080000, 0xb4c777a9 ) /* characters */
+	ROM_LOAD( "081a08", 0x080000, 0x080000, 0x272ac8d9 ) /* characters */
+
+	ROM_REGION( 0x400000, REGION_GFX2, 0 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_LOAD( "081a04", 0x000000, 0x100000, 0x464b9aa4 ) /* sprites */
+	ROM_LOAD( "081a05", 0x100000, 0x100000, 0x4e173759 ) /* sprites */
+	ROM_LOAD( "081a06", 0x200000, 0x100000, 0xe9fe6d80 ) /* sprites */
+	ROM_LOAD( "081a07", 0x300000, 0x100000, 0x8a22b29a ) /* sprites */
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 ) /* 053260 samples */
+	ROM_LOAD( "081a03", 0x000000, 0x100000, 0x14b6baea )
+ROM_END
+
+ROM_START( vendet2p )
+	ROM_REGION( 0x49000, REGION_CPU1, 0 ) /* code + banked roms + banked ram */
+	ROM_LOAD( "081w01", 0x10000, 0x38000, 0xcee57132 )
 	ROM_CONTINUE(		0x08000, 0x08000 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the sound CPU */
@@ -502,7 +696,7 @@ ROM_START( vendetas )
 	ROM_LOAD( "081a03", 0x000000, 0x100000, 0x14b6baea )
 ROM_END
 
-ROM_START( vendeta2 )
+ROM_START( vendtaso )
 	ROM_REGION( 0x49000, REGION_CPU1, 0 ) /* code + banked roms + banked ram */
 	ROM_LOAD( "081d01", 0x10000, 0x38000, 0x335da495 )
 	ROM_CONTINUE(		0x08000, 0x08000 )
@@ -547,6 +741,29 @@ ROM_START( vendettj )
 ROM_END
 
 
+ROM_START( esckids )
+	ROM_REGION( 0x049000, REGION_CPU1, 0 )		// Main CPU (053248) Code & Banked (1M x 1)
+	ROM_LOAD( "975r01", 0x010000, 0x018000, 0x7b5c5572 )
+	ROM_CONTINUE(		0x008000, 0x008000 )
+
+	ROM_REGION( 0x010000, REGION_CPU2, 0 )		// Sound CPU (Z80) Code (512K x 1)
+	ROM_LOAD( "975f02", 0x000000, 0x010000, 0x994fb229 )
+
+	ROM_REGION( 0x100000, REGION_GFX1, 0 )		// Tilemap MASK-ROM (4M x 2)
+	ROM_LOAD( "975c09", 0x000000, 0x080000, 0xbc52210e )
+	ROM_LOAD( "975c08", 0x080000, 0x080000, 0xfcff9256 )
+
+	ROM_REGION( 0x400000, REGION_GFX2, 0 )		// Sprite MASK-ROM (8M x 4)
+	ROM_LOAD( "975c04", 0x000000, 0x100000, 0x15688a6f )
+	ROM_LOAD( "975c05", 0x100000, 0x100000, 0x1ff33bb7 )
+	ROM_LOAD( "975c06", 0x200000, 0x100000, 0x36d410f9 )
+	ROM_LOAD( "975c07", 0x300000, 0x100000, 0x97ec541e )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	// Samples MASK-ROM (4M x 1)
+	ROM_LOAD( "975c03", 0x000000, 0x080000, 0xdc4a1707 )
+ROM_END
+
+
 /***************************************************************************
 
   Game driver(s)
@@ -577,6 +794,7 @@ static MACHINE_INIT( vendetta )
 	vendetta_video_banking( 0 );
 }
 
+
 static DRIVER_INIT( vendetta )
 {
 	konami_rom_deinterleave_2(REGION_GFX1);
@@ -585,8 +803,10 @@ static DRIVER_INIT( vendetta )
 
 
 
-GAME( 1991, vendetta, 0,        vendetta, vendet4p, vendetta, ROT0, "Konami", "Vendetta (US ver. T)" )
-GAME( 1991, vendetar, vendetta, vendetta, vendet4p, vendetta, ROT0, "Konami", "Vendetta (US ver. R)" )
-GAME( 1991, vendetas, vendetta, vendetta, vendetta, vendetta, ROT0, "Konami", "Vendetta (Asia ver. U)" )
-GAME( 1991, vendeta2, vendetta, vendetta, vendetta, vendetta, ROT0, "Konami", "Vendetta (Asia ver. D)" )
-GAME( 1991, vendettj, vendetta, vendetta, vendetta, vendetta, ROT0, "Konami", "Crime Fighters 2 (Japan ver. P)" )
+GAME( 1991, vendetta, 0,        vendetta, vendet4p, vendetta, ROT0, "Konami", "Vendetta (World 4 Players ver. T)" )
+GAME( 1991, vendetao, vendetta, vendetta, vendet4p, vendetta, ROT0, "Konami", "Vendetta (World 4 Players ver. R)" )
+GAME( 1991, vendet2p, vendetta, vendetta, vendetta, vendetta, ROT0, "Konami", "Vendetta (World 2 Players ver. W)" )
+GAME( 1991, vendetas, vendetta, vendetta, vendetta, vendetta, ROT0, "Konami", "Vendetta (Asia 2 Players ver. U)" )
+GAME( 1991, vendtaso, vendetta, vendetta, vendetta, vendetta, ROT0, "Konami", "Vendetta (Asia 2 Players ver. D)" )
+GAME( 1991, vendettj, vendetta, vendetta, vendetta, vendetta, ROT0, "Konami", "Crime Fighters 2 (Japan 2 Players ver. P)" )
+GAME( 1991, esckids,  0,        esckids,  esckids,  vendetta, ROT0, "Konami", "Escape Kids (Japan 2 Players)" )

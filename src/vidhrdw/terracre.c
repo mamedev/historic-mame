@@ -9,29 +9,98 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
-data16_t *terrac_videoram2;
-size_t terrac_videoram2_size;
-data16_t *terrac_scrolly;
-
-static struct mame_bitmap *tmpbitmap2;
-static unsigned char *dirtybuffer2;
-
+static data16_t xscroll;
+static data16_t yscroll;
+static struct tilemap *background, *foreground;
 static const unsigned char *spritepalettebank;
 
+data16_t *amazon_videoram;
 
-/***************************************************************************
-  Convert color prom.
-***************************************************************************/
-
-PALETTE_INIT( terrac )
+static void
+get_bg_tile_info(int tile_index)
 {
+	/* xxxx.----.----.----
+	 * ----.xx--.----.----
+	 * ----.--xx.xxxx.xxxx */
+	unsigned data = amazon_videoram[tile_index];
+	unsigned color = data>>11;
+	SET_TILE_INFO( 1,data&0x3ff,color,0 );
+}
+
+static void
+get_fg_tile_info(int tile_index)
+{
+	int data = videoram16[tile_index];
+	SET_TILE_INFO( 0,data&0xff,0,0 );
+}
+
+static void
+draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+{
+	const struct GfxElement *pGfx = Machine->gfx[2];
+	const data16_t *pSource = spriteram16;
 	int i;
+	int transparent_pen;
+
+	if( pGfx->total_elements > 0x200 )
+	{ /* HORE HORE Kid */
+		transparent_pen = 0xf;
+	}
+	else
+	{
+		transparent_pen = 0x0;
+	}
+	for( i=0; i<0x200; i+=8 )
+	{
+		int tile = pSource[1]&0xff;
+		int attrs = pSource[2];
+		int flipx = attrs&0x04;
+		int flipy = attrs&0x08;
+		int color = (attrs&0xf0)>>4;
+		int sx = (pSource[3] & 0xff) - 0x80 + 256 * (attrs & 1);
+		int sy = 240 - (pSource[0] & 0xff);
+
+		if( transparent_pen )
+		{
+			int bank;
+
+			if( attrs&0x02 ) tile |= 0x200;
+			if( attrs&0x10 ) tile |= 0x100;
+
+			bank = (tile&0xfc)>>1;
+			if( tile&0x200 ) bank |= 0x80;
+			if( tile&0x100 ) bank |= 0x01;
+
+			color &= 0xe;
+			color += 16*(spritepalettebank[bank]&0xf);
+		}
+		else
+		{
+			if( attrs&0x02 ) tile|= 0x100;
+			color += 16 * (spritepalettebank[(tile>>1)&0xff] & 0x0f);
+		}
+
+		if (flip_screen)
+		{
+				sx=240-sx;
+				sy=240-sy;
+				flipx = !flipx;
+				flipy = !flipy;
+		}
+
+		drawgfx(
+			bitmap,pGfx,tile, color,flipx,flipy,sx,sy,cliprect,TRANSPARENCY_PEN,transparent_pen );
+
+		pSource += 4;
+	}
+}
+
+PALETTE_INIT( amazon )
+{
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
-
-
-	for (i = 0;i < Machine->drv->total_colors;i++)
+	int i;
+	for( i = 0; i<Machine->drv->total_colors; i++)
 	{
 		int bit0,bit1,bit2,bit3,r,g,b;
 
@@ -96,131 +165,62 @@ PALETTE_INIT( terrac )
 	spritepalettebank = color_prom;	/* we'll need it at run time */
 }
 
-
-
-WRITE16_HANDLER( terrac_videoram2_w )
+WRITE16_HANDLER( amazon_background_w )
 {
-	int oldword = terrac_videoram2[offset];
-	COMBINE_DATA(&terrac_videoram2[offset]);
-	if (oldword != terrac_videoram2[offset])
+	COMBINE_DATA( &amazon_videoram[offset] );
+	tilemap_mark_tile_dirty( background, offset );
+}
+
+WRITE16_HANDLER( amazon_foreground_w )
+{
+	COMBINE_DATA( &videoram16[offset] );
+	tilemap_mark_tile_dirty( foreground, offset );
+}
+
+WRITE16_HANDLER( amazon_flipscreen_w )
+{
+	if( ACCESSING_LSB )
 	{
-		dirtybuffer2[offset] = 1;
+		coin_counter_w( 0, data&0x01 );
+		coin_counter_w( 1, (data&0x02)>>1 );
+		flip_screen_set(data&0x04);
 	}
 }
 
-READ16_HANDLER( terrac_videoram2_r )
+WRITE16_HANDLER( amazon_scrolly_w )
 {
-   return terrac_videoram2[offset];
+	COMBINE_DATA(&yscroll);
+	tilemap_set_scrolly(background,0,yscroll);
 }
 
-
-/***************************************************************************
-  Start the video hardware emulation.
-***************************************************************************/
-
-
-VIDEO_START( terrac )
+WRITE16_HANDLER( amazon_scrollx_w )
 {
-	if (video_start_generic() != 0)
-		return 1;
-
-	if ((dirtybuffer2 = auto_malloc(terrac_videoram2_size/2)) == 0)
-		return 1;
-	memset(dirtybuffer2,1,terrac_videoram2_size/2);
-
-	/* the background area is 4 x 1 (90 Rotated!) */
-	if ((tmpbitmap2 = auto_bitmap_alloc(4*Machine->drv->screen_width,
-			1*Machine->drv->screen_height)) == 0)
-		return 1;
-
-	return 0;
+	COMBINE_DATA(&xscroll);
+	tilemap_set_scrollx(background,0,xscroll);
 }
 
-
-
-/***************************************************************************
-
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
-VIDEO_UPDATE( terracre )
+VIDEO_START( amazon )
 {
-	int offs,x,y;
-
-
-	for (y = 0; y < 64; y++)
+	background = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,16,16,64,32);
+	foreground = tilemap_create(get_fg_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,64,32);
+	if( background && foreground )
 	{
-		for (x = 0; x < 16; x++)
-		{
-			if (dirtybuffer2[x + y*32])
-			{
-				int code = terrac_videoram2[x + y*32] & 0x01ff;
-				int color = (terrac_videoram2[x + y*32]&0x7800)>>11;
-
-				dirtybuffer2[x + y*32] = 0;
-
-				drawgfx(tmpbitmap2,Machine->gfx[1],
-						code,
-						color,
-						0,0,
-						16 * y,16 * x,
-						0,TRANSPARENCY_NONE,0);
-			}
-		}
+		tilemap_set_transparent_pen(foreground,0xf);
+		return 0;
 	}
+	return 1;
+}
 
-	/* copy the background graphics */
-	if (*terrac_scrolly & 0x2000)	/* background disable */
-		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+VIDEO_UPDATE( amazon )
+{
+	if( xscroll&0x2000 )
+	{
+		fillbitmap( bitmap,get_black_pen(),cliprect );
+	}
 	else
 	{
-		int scrollx;
-
-		scrollx = -*terrac_scrolly;
-
-		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+		tilemap_draw( bitmap,cliprect, background, 0, 0 );
 	}
-
-
-
-	for (x = 0;x <spriteram_size/2;x += 4)
-	{
-		int code;
-		int attr = spriteram16[x+2] & 0xff;
-		int color = (attr & 0xf0) >> 4;
-		int flipx = attr & 0x04;
-		int flipy = attr & 0x08;
-		int sx,sy;
-
-		sx = (spriteram16[x+3] & 0xff) - 0x80 + 256 * (attr & 1);
-		sy = 240 - (spriteram16[x] & 0xff);
-
-		code = (spriteram16[x+1] & 0xff) + ((attr & 0x02) << 7);
-
-		drawgfx(bitmap,Machine->gfx[2],
-				code,
-				color + 16 * (spritepalettebank[code >> 1] & 0x0f),
-				flipx,flipy,
-				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
-	}
-
-
-	for (offs = videoram_size/2 - 1;offs >= 0;offs--)
-	{
-		int sx,sy;
-
-
-		sx = offs / 32;
-		sy = offs % 32;
-
-		drawgfx(bitmap,Machine->gfx[0],
-				videoram16[offs] & 0xff,
-				0,
-				0,0,
-				8*sx,8*sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,15);
-	}
+	draw_sprites( bitmap,cliprect );
+	tilemap_draw( bitmap,cliprect, foreground, 0, 0 );
 }

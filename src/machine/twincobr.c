@@ -4,6 +4,8 @@
  ****************************************************************************/
 
 #include "driver.h"
+#include "state.h"
+#include "cpu/m68000/m68000.h"
 #include "cpu/tms32010/tms32010.h"
 #include "vidhrdw/generic.h"
 
@@ -29,33 +31,67 @@ extern int wardner_sprite_hack;
 static int dsp_execute;
 static unsigned int dsp_addr_w, main_ram_seg;
 int toaplan_main_cpu;	/* Main CPU type.  0 = 68000, 1 = Z80 */
+
 #if LOG_DSP_CALLS
 static char *toaplan_cpu_type[2] = { "68K"   , "Z80" };
 static int  toaplan_port_type[2] = { 0x7800c , 0x5c  };
 #endif
 
 int twincobr_intenable;
-int fsharkbt_8741;
+int wardner_membank;
+static int twincobr_dsp_BIO;
+static int fsharkbt_8741;
 
 
-MACHINE_INIT( fsharkbt_reset_8741_mcu )
+MACHINE_INIT( fsharkbt_reset_8741_mcu )	/* machine_init_fsharkbt_reset_8741_mcu */
 {
 	toaplan_main_cpu = 0;		/* 68000 */
 	twincobr_display_on = 0;
-	fsharkbt_8741 = -1;
 	twincobr_intenable = 0;
 	dsp_addr_w = dsp_execute = 0;
 	main_ram_seg = 0;
+	fsharkbt_8741 = -1;
+	twincobr_dsp_BIO = CLEAR_LINE;
+
+	state_save_register_UINT32("toaplan0", 0, "DSP_to_68K_RAM_bank", &main_ram_seg, 1);
+	state_save_register_UINT32("toaplan0", 0, "DSP_out_addr", &dsp_addr_w, 1);
+	state_save_register_int("toaplan0", 0, "Int_enable", &twincobr_intenable);
+	state_save_register_int("toaplan0", 0, "DSP_BIO_pin", &twincobr_dsp_BIO);
+	state_save_register_int("toaplan0", 0, "DSP_execute", &dsp_execute);
+	state_save_register_int("toaplan0", 0, "CPU#0_type", &toaplan_main_cpu);
+	state_save_register_int("fsharkbt", 0, "MCU_Output", &fsharkbt_8741);
 }
 
 MACHINE_INIT( wardner )
 {
 	toaplan_main_cpu = 1;		/* Z80 */
-	twincobr_intenable = 0;
 	twincobr_display_on = 1;
+	twincobr_intenable = 0;
 	dsp_addr_w = dsp_execute = 0;
 	main_ram_seg = 0;
+	twincobr_dsp_BIO = CLEAR_LINE;
+	wardner_membank = 0;
+
+	state_save_register_UINT32("wardner", 0, "DSP_to_Z80_RAM_bank", &main_ram_seg, 1);
+	state_save_register_UINT32("wardner", 0, "DSP_out_addr", &dsp_addr_w, 1);
+	state_save_register_int("wardner", 0, "Int_enable", &twincobr_intenable);
+	state_save_register_int("wardner", 0, "DSP_BIO_pin", &twincobr_dsp_BIO);
+	state_save_register_int("wardner", 0, "DSP_execute", &dsp_execute);
+	state_save_register_int("wardner", 0, "CPU#0_type", &toaplan_main_cpu);
+	state_save_register_int("wardner", 0, "Wardner_MemBank", &wardner_membank);
 }
+
+
+
+INTERRUPT_GEN( twincobr_interrupt )
+{
+	if (twincobr_intenable) {
+		twincobr_intenable = 0;
+		cpu_set_irq_line(0, MC68000_IRQ_4, HOLD_LINE);
+	}
+}
+
+
 
 
 READ16_HANDLER( twincobr_dsp_r )
@@ -150,7 +186,7 @@ WRITE16_HANDLER( twincobr_dsp_w )
 		logerror("DSP PC:%04x IO write %04x at port 3\n",activecpu_get_previouspc(),data);
 #endif
 		if (data & 0x8000) {
-			cpu_set_irq_line(2, TMS320C10_ACTIVE_BIO, CLEAR_LINE);
+			twincobr_dsp_BIO = CLEAR_LINE;
 		}
 		if (data == 0) {
 			if (dsp_execute) {
@@ -160,7 +196,7 @@ WRITE16_HANDLER( twincobr_dsp_w )
 				timer_suspendcpu(0, CLEAR, SUSPEND_REASON_HALT);
 				dsp_execute = 0;
 			}
-			cpu_set_irq_line(2, TMS320C10_ACTIVE_BIO, ASSERT_LINE);
+			twincobr_dsp_BIO = ASSERT_LINE;
 		}
 	}
 }
@@ -176,6 +212,12 @@ WRITE16_HANDLER( twincobr_68k_dsp_w )
 	if (offset < 5) logerror("%s:%08x write %08x at %08x\n",toaplan_cpu_type[toaplan_main_cpu],activecpu_get_pc(),data,0x30000+offset);
 #endif
 	COMBINE_DATA(&twincobr_68k_dsp_ram[offset]);
+}
+
+
+READ16_HANDLER ( twincobr_BIO_r )
+{
+	return twincobr_dsp_BIO;
 }
 
 
@@ -195,7 +237,7 @@ READ_HANDLER( wardner_mainram_r )
 
 static void toaplan0_control_w(int offset, int data)
 {
-#if 0
+#if LOG_DSP_CALLS
 	logerror("%s:%08x  Writing %08x to %08x.\n",toaplan_cpu_type[toaplan_main_cpu],activecpu_get_pc(),data,toaplan_port_type[toaplan_main_cpu] - offset);
 #endif
 
@@ -221,7 +263,7 @@ static void toaplan0_control_w(int offset, int data)
 						logerror("Turning DSP on and %s off\n",toaplan_cpu_type[toaplan_main_cpu]);
 #endif
 						timer_suspendcpu(2, CLEAR, SUSPEND_REASON_HALT);
-						cpu_set_irq_line(2, TMS320C10_ACTIVE_INT, ASSERT_LINE);
+						cpu_set_irq_line(2, 0, ASSERT_LINE); /* TMS32010 INT */
 						timer_suspendcpu(0, ASSERT, SUSPEND_REASON_HALT);
 					} break;
 		case 0x000d: if (twincobr_display_on) {
@@ -229,7 +271,7 @@ static void toaplan0_control_w(int offset, int data)
 #if LOG_DSP_CALLS
 						logerror("Turning DSP off\n");
 #endif
-						cpu_set_irq_line(2, TMS320C10_ACTIVE_INT, CLEAR_LINE);
+						cpu_set_irq_line(2, 0, CLEAR_LINE); /* TMS32010 INT */
 						timer_suspendcpu(2, ASSERT, SUSPEND_REASON_HALT);
 					} break;
 	}
@@ -262,7 +304,7 @@ WRITE16_HANDLER( twincobr_sharedram_w )
 
 static void toaplan0_coin_dsp_w(int offset, int data)
 {
-#if 0
+#if LOG_DSP_CALLS
 	if (data > 1)
 		logerror("%s:%08x  Writing %08x to %08x.\n",toaplan_cpu_type[toaplan_main_cpu],activecpu_get_pc(),data,toaplan_port_type[toaplan_main_cpu] - offset);
 #endif
@@ -281,14 +323,14 @@ static void toaplan0_coin_dsp_w(int offset, int data)
 					logerror("Turning DSP on and %s off\n",toaplan_cpu_type[toaplan_main_cpu]);
 #endif
 					timer_suspendcpu(2, CLEAR, SUSPEND_REASON_HALT);
-					cpu_set_irq_line(2, TMS320C10_ACTIVE_INT, ASSERT_LINE);
+					cpu_set_irq_line(2, 0, ASSERT_LINE); /* TMS32010 INT */
 					timer_suspendcpu(0, ASSERT, SUSPEND_REASON_HALT);
 					break;
 		case 0x01:	/* This means inhibit the INT line to the DSP */
 #if LOG_DSP_CALLS
 					logerror("Turning DSP off\n");
 #endif
-					cpu_set_irq_line(2, TMS320C10_ACTIVE_INT, CLEAR_LINE);
+					cpu_set_irq_line(2, 0, CLEAR_LINE); /* TMS32010 INT */
 					timer_suspendcpu(2, ASSERT, SUSPEND_REASON_HALT);
 					break;
 	}

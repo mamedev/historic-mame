@@ -16,6 +16,7 @@ Unmapped registers:
 */
 /*
 	2000.06.26	CAB		fixed compressed pcm playback
+	2002.07.20	R.Belmont	added support for multiple banking types
 */
 
 
@@ -43,7 +44,7 @@ struct voice_registers
 
 static int sample_rate;
 static int stream;
-
+static int banking_type;
 /* internal buffers */
 static INT16 *mixer_buffer_left;
 static INT16 *mixer_buffer_right;
@@ -97,12 +98,57 @@ READ_HANDLER( C140_r )
 	return REG[offset];
 }
 
+/*
+   find_sample: compute the actual address of a sample given it's
+   address and banking registers, as well as the board type.
+
+   I suspect in "real life" this works like the Sega MultiPCM where the banking 
+   is done by a small PAL or GAL external to the sound chip, which can be switched
+   per-game or at least per-PCB revision as addressing range needs grow.
+ */
 static long find_sample( long adrs, long bank)
 {
-	adrs=(bank<<16)+adrs;
-	return ((adrs&0x200000)>>2)|(adrs&0x7ffff);		//SYSTEM2 mapping
-}
+	long newadr = 0;
 
+	adrs=(bank<<16)+adrs;
+
+	switch (banking_type)
+	{
+		case C140_TYPE_SYSTEM2:
+			// System 2 banking
+			newadr = ((adrs&0x200000)>>2)|(adrs&0x7ffff);
+			break;
+
+		case C140_TYPE_SYSTEM21_A:
+			// System 21 type A (simple) banking.
+			// similar to System 2's.
+			newadr = ((adrs&0x300000)>>1)+(adrs&0x7ffff);
+			break;
+
+		case C140_TYPE_SYSTEM21_B:
+			// System 21 type B (chip select) banking
+
+			// get base address of sample inside the bank
+			newadr = ((adrs&0x100000)>>2) + (adrs&0x3ffff); 
+
+			// now add the starting bank offsets based on the 2 
+			// chip select bits.
+			// 0x40000 picks individual 512k ROMs
+			if (adrs & 0x40000)
+			{
+				newadr += 0x80000;
+			}
+			
+			// and 0x200000 which group of chips...
+			if (adrs & 0x200000)
+			{
+				newadr += 0x100000;
+			}
+			break;
+	}
+
+	return (newadr);
+}
 WRITE_HANDLER( C140_w )
 {
 	stream_update(stream, 0);
@@ -331,6 +377,8 @@ int C140_sh_start( const struct MachineSound *msound )
 
 	sample_rate=baserate=intf->frequency;
 
+	banking_type = intf->banking_type;
+
 	stream = stream_init_multi(2,stereo_names,vol,sample_rate,0,update_stereo);
 
 	pRom=memory_region(intf->region);
@@ -366,4 +414,3 @@ void C140_sh_stop( void )
 {
 	free( mixer_buffer_left );
 }
-

@@ -947,7 +947,7 @@ MEMORY_END
 
 /******************************************************************************/
 
-/* Used for Cobra Command, Maze Hunter, Super Real Darwin, Gondomania, etc */
+/* Used for Cobra Command, Maze Hunter, Super Real Darwin etc */
 static MEMORY_READ_START( dec8_s_readmem )
 	{ 0x0000, 0x05ff, MRA_RAM},
 	{ 0x6000, 0x6000, soundlatch_r },
@@ -960,6 +960,16 @@ static MEMORY_WRITE_START( dec8_s_writemem )
 	{ 0x2001, 0x2001, YM2203_write_port_0_w },
 	{ 0x4000, 0x4000, YM3812_control_port_0_w }, /* OPL */
 	{ 0x4001, 0x4001, YM3812_write_port_0_w },
+	{ 0x8000, 0xffff, MWA_ROM },
+MEMORY_END
+
+/* Used by Gondomania, Psycho-Nics Oscar & Garyo Retsuden */
+static MEMORY_WRITE_START( oscar_s_writemem )
+	{ 0x0000, 0x05ff, MWA_RAM},
+	{ 0x2000, 0x2000, YM2203_control_port_0_w }, /* OPN */
+	{ 0x2001, 0x2001, YM2203_write_port_0_w },
+	{ 0x4000, 0x4000, YM3526_control_port_0_w }, /* OPL */
+	{ 0x4001, 0x4001, YM3526_write_port_0_w },
 	{ 0x8000, 0xffff, MWA_ROM },
 MEMORY_END
 
@@ -992,8 +1002,8 @@ static MEMORY_WRITE_START( csilver_s_writemem )
 	{ 0x0000, 0x07ff, MWA_RAM },
 	{ 0x0800, 0x0800, YM2203_control_port_0_w },
 	{ 0x0801, 0x0801, YM2203_write_port_0_w },
-	{ 0x1000, 0x1000, YM3812_control_port_0_w },
-	{ 0x1001, 0x1001, YM3812_write_port_0_w },
+	{ 0x1000, 0x1000, YM3526_control_port_0_w },
+	{ 0x1001, 0x1001, YM3526_write_port_0_w },
 	{ 0x1800, 0x1800, csilver_adpcm_data_w },	/* ADPCM data for the MSM5205 chip */
 	{ 0x2000, 0x2000, csilver_sound_bank_w },
 	{ 0x4000, 0xffff, MWA_ROM },
@@ -2181,7 +2191,7 @@ static MACHINE_DRIVER_START( gondo )
 
 	MDRV_CPU_ADD(M6502, 1500000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(dec8_s_readmem,dec8_s_writemem)
+	MDRV_CPU_MEMORY(dec8_s_readmem,oscar_s_writemem)
 								/* NMIs are caused by the main CPU */
 	MDRV_FRAMES_PER_SECOND(58)
 	MDRV_VBLANK_DURATION(529) /* 58Hz, 529ms Vblank duration */
@@ -2214,7 +2224,7 @@ static MACHINE_DRIVER_START( oscar )
 
 	MDRV_CPU_ADD(M6502, 1500000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(dec8_s_readmem,dec8_s_writemem)
+	MDRV_CPU_MEMORY(dec8_s_readmem,oscar_s_writemem)
 								/* NMIs are caused by the main CPU */
 	MDRV_FRAMES_PER_SECOND(58)
 	MDRV_VBLANK_DURATION(2500) /* 58Hz, 529ms Vblank duration */
@@ -2342,7 +2352,7 @@ static MACHINE_DRIVER_START( garyoret )
 
 	MDRV_CPU_ADD(M6502, 1500000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(dec8_s_readmem,dec8_s_writemem)
+	MDRV_CPU_MEMORY(dec8_s_readmem,oscar_s_writemem)
 								/* NMIs are caused by the main CPU */
 	MDRV_FRAMES_PER_SECOND(58)
 	MDRV_VBLANK_DURATION(529) /* 58Hz, 529ms Vblank duration */

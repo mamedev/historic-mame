@@ -21,6 +21,8 @@ Year + Game						Notes
 98 Bubble 2000                  By Tuning, but it seems to be the same HW
 ---------------------------------------------------------------------------
 
+The Sen Jin protection supplies some 68k code seen in the 2760-29cf range
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -52,6 +54,12 @@ VIDEO_UPDATE( bubl2000 );
 
 ***************************************************************************/
 
+READ16_HANDLER( afega_unknown_r )
+{
+	/* This fixes the text in Service Mode. */
+	return 0x0100;
+}
+
 WRITE16_HANDLER( afega_soundlatch_w )
 {
 	if (ACCESSING_LSB && Machine->sample_rate)
@@ -69,11 +77,12 @@ static MEMORY_READ16_START( afega_readmem )
 	{ 0x080000, 0x080001, input_port_0_word_r		},	// Buttons
 	{ 0x080002, 0x080003, input_port_1_word_r		},	// P1 + P2
 	{ 0x080004, 0x080005, input_port_2_word_r		},	// 2 x DSW
+	{ 0x080012, 0x080013, afega_unknown_r           },
 /**/{ 0x088000, 0x0885ff, MRA16_RAM					},	// Palette
 /**/{ 0x08c000, 0x08c003, MRA16_RAM					},	// Scroll
 /**/{ 0x08c004, 0x08c007, MRA16_RAM					},	//
 /**/{ 0x090000, 0x091fff, MRA16_RAM					},	// Layer 0
-/**/{ 0x092000, 0x093fff, MRA16_RAM					},	// ?
+/**/{ 0x092000, 0x093fff, MRA16_RAM           		},	// ?
 /**/{ 0x09c000, 0x09c7ff, MRA16_RAM					},	// Layer 1
 	{ 0x3c0000, 0x3c7fff, MRA16_RAM					},	// RAM
 	{ 0x3c8000, 0x3c8fff, MRA16_RAM					},	// Sprites
@@ -792,14 +801,7 @@ ROM_END
 
 static DRIVER_INIT( grdnstrm )
 {
-	data16_t *RAM = (data16_t *)memory_region( REGION_CPU1 );
-
 	decryptcode( 23, 22, 21, 20, 19, 18, 16, 17, 14, 15, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 );
-
-	/* Patch Protection (that supplies some 68k code seen in the
-	   2760-29cf range */
-	RAM[0x0027a/2] = 0x4e71;
-	RAM[0x02760/2] = 0x4e75;
 }
 
 

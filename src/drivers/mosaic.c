@@ -50,7 +50,45 @@ static READ_HANDLER( protection_r )
 {
 	int res = (prot_val >> 8) & 0xff;
 
+	logerror("%06x: protection_r %02x\n",activecpu_get_pc(),res);
+
 	prot_val <<= 8;
+
+	return res;
+}
+
+static WRITE_HANDLER( gfire2_protection_w )
+{
+	logerror("%06x: protection_w %02x\n",activecpu_get_pc(),data);
+
+	switch(data)
+	{
+		case 0x01:
+			/* written repeatedly; no effect?? */
+			break;
+		case 0x02:
+			prot_val = 0x0a10;
+			break;
+		case 0x04:
+			prot_val = 0x0a15;
+			break;
+		case 0x06:
+			prot_val = 0x80e3;
+			break;
+		case 0x08:
+			prot_val = 0x0965;
+			break;
+		case 0x0a:
+			prot_val = 0x04b4;
+			break;
+	}
+}
+
+static READ_HANDLER( gfire2_protection_r )
+{
+	int res = prot_val & 0xff;
+
+	prot_val >>= 8;
 
 	return res;
 }
@@ -72,7 +110,23 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x24000, 0x241ff, paletteram_xRRRRRGGGGGBBBBB_w, &paletteram },
 MEMORY_END
 
+static MEMORY_READ_START( gfire2_readmem )
+	{ 0x00000, 0x0ffff, MRA_ROM },
+	{ 0x10000, 0x17fff, MRA_RAM },
+	{ 0x22000, 0x23fff, MRA_RAM },
+	{ 0x24000, 0x241ff, MRA_RAM },
+MEMORY_END
+
+static MEMORY_WRITE_START( gfire2_writemem )
+	{ 0x00000, 0x0ffff, MWA_ROM },
+	{ 0x10000, 0x17fff, MWA_RAM },
+	{ 0x22000, 0x22fff, mosaic_bgvideoram_w, &mosaic_bgvideoram },
+	{ 0x23000, 0x23fff, mosaic_fgvideoram_w, &mosaic_fgvideoram },
+	{ 0x24000, 0x241ff, paletteram_xRRRRRGGGGGBBBBB_w, &paletteram },
+MEMORY_END
+
 static PORT_READ_START( readport )
+	{ 0x30, 0x30, IORP_NOP },	/* Z180 internal registers */
 	{ 0x70, 0x70, YM2203_status_port_0_r },
 	{ 0x71, 0x71, YM2203_read_port_0_r },
 	{ 0x72, 0x72, protection_r },
@@ -85,6 +139,22 @@ static PORT_WRITE_START( writeport )
 	{ 0x70, 0x70, YM2203_control_port_0_w },
 	{ 0x71, 0x71, YM2203_write_port_0_w },
 	{ 0x72, 0x72, protection_w },
+PORT_END
+
+static PORT_READ_START( gfire2_readport )
+	{ 0x30, 0x30, IORP_NOP },	/* Z180 internal registers */
+	{ 0x70, 0x70, YM2203_status_port_0_r },
+	{ 0x71, 0x71, YM2203_read_port_0_r },
+	{ 0x72, 0x72, gfire2_protection_r },
+	{ 0x74, 0x74, input_port_0_r },
+	{ 0x76, 0x76, input_port_1_r },
+PORT_END
+
+static PORT_WRITE_START( gfire2_writeport )
+	{ 0x00, 0x3f, IOWP_NOP },	/* Z180 internal registers */
+	{ 0x70, 0x70, YM2203_control_port_0_w },
+	{ 0x71, 0x71, YM2203_write_port_0_w },
+	{ 0x72, 0x72, gfire2_protection_w },
 PORT_END
 
 
@@ -134,6 +204,50 @@ INPUT_PORTS_START( mosaic )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( gfire2 )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x80, 0x00, "Language" )
+	PORT_DIPSETTING(    0x00, "English" )
+	PORT_DIPSETTING(    0x80, "Korean" )
+	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x0c, "Easy" )
+	PORT_DIPSETTING(    0x08, "Normal" )
+	PORT_DIPSETTING(    0x04, "Hard" )
+//	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x02, 0x02, "Bonus Time" )
+	PORT_DIPSETTING(    0x00, "*2 +30" )
+	PORT_DIPSETTING(    0x02, "*2 +50" )
+	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
+INPUT_PORTS_END
+
 
 
 static struct GfxLayout charlayout =
@@ -172,9 +286,7 @@ static struct YM2203interface ym2203_interface =
 
 
 static MACHINE_DRIVER_START( mosaic )
-
-	/* basic machine hardware */
-	MDRV_CPU_ADD(Z180, 7000000)	/* ??? */
+	MDRV_CPU_ADD_TAG("main", Z180, 7000000)	/* ??? */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_PORTS(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
@@ -194,6 +306,13 @@ static MACHINE_DRIVER_START( mosaic )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( gfire2 )
+	MDRV_IMPORT_FROM(mosaic)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(gfire2_readmem,gfire2_writemem)
+	MDRV_CPU_PORTS(gfire2_readport,gfire2_writeport)
 MACHINE_DRIVER_END
 
 
@@ -238,7 +357,25 @@ ROM_START( mosaica )
 	ROM_LOAD( "mosaic.8", 0x30000, 0x10000, 0x6299c376 )
 ROM_END
 
+ROM_START( gfire2 )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )	/* 1024k for Z180 address space */
+	ROM_LOAD( "goldf2_i.7e",         0x00000, 0x10000, 0xa102f7d0 )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "goldf2_a.1k",         0x00000, 0x40000, 0x1f086472 )
+	ROM_LOAD( "goldf2_b.1j",         0x40000, 0x40000, 0xedb0d40c )
+	ROM_LOAD( "goldf2_c.1i",         0x80000, 0x40000, 0xd0ebd486 )
+	ROM_LOAD( "goldf2_d.1h",         0xc0000, 0x40000, 0x2b56ae2c )
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "goldf2_e.1e",         0x00000, 0x20000, 0x61b8accd )
+	ROM_LOAD( "goldf2_f.1d",         0x20000, 0x20000, 0x49f77e53 )
+	ROM_LOAD( "goldf2_g.1b",         0x40000, 0x20000, 0xaa79f3bf )
+	ROM_LOAD( "goldf2_h.1a",         0x60000, 0x20000, 0xa3519259 )
+ROM_END
+
 
 
 GAME( 1990, mosaic,  0,      mosaic, mosaic, 0, ROT0, "Space", "Mosaic" )
 GAME( 1990, mosaica, mosaic, mosaic, mosaic, 0, ROT0, "Space (Fuuki license)", "Mosaic (Fuuki)" )
+GAME( 1992, gfire2,  0,      gfire2, gfire2, 0, ROT0, "Topis Corp", "Golden Fire II" )

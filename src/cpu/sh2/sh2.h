@@ -65,7 +65,6 @@ extern unsigned sh2_get_context (void *dst);  /* Get registers, return context s
 extern void sh2_set_context (void *src);	  /* Set registers */
 extern unsigned sh2_get_reg (int regnum);
 extern void sh2_set_reg (int regnum, unsigned val);
-extern void sh2_set_nmi_line(int state);
 extern void sh2_set_irq_line(int irqline, int state);
 extern void sh2_set_irq_callback(int (*callback)(int irqline));
 extern void sh2_state_save(void *file);
@@ -73,8 +72,8 @@ extern void sh2_state_load(void *file);
 extern const char *sh2_info(void *context, int regnum);
 extern unsigned sh2_dasm(char *buffer, unsigned pc);
 
-WRITE_HANDLER( sh2_internal_w );
-READ_HANDLER( sh2_internal_r );
+WRITE32_HANDLER( sh2_internal_w );
+READ32_HANDLER( sh2_internal_r );
 
 #ifdef MAME_DEBUG
 extern unsigned DasmSH2( char *dst, unsigned pc );

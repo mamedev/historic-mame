@@ -2,6 +2,8 @@
 
 	Seibu Sound System v1.02, games using this include:
 
+	Cross Shooter    1987	* "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC." (YM2151 substituted for YM3812)
+	Cabal            1988	* "Michel/Seibu    sound 11/04/88" (YM2151 substituted for YM3812, unknown ADPCM)
 	Dead Angle       1988?	* "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
 	Dynamite Duke    1989	* "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
 	Toki             1989	* "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
@@ -11,8 +13,6 @@
 
 	Related sound programs (not implemented yet):
 
-	Cross Shooter    1986?	* "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC." (YM2151 substituted for YM3812)
-	Cabal            1988	* "Michel/Seibu    sound 11/04/88" (YM2151 substituted for YM3812, unknown ADPCM)
 	Zero Team            	  "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
 	Legionaire           	  "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC." (YM2151 substituted for YM3812)
 	Raiden 2             	  "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC." (YM2151 substituted for YM3812, plus extra MSM6205)
@@ -32,6 +32,8 @@ READ16_HANDLER( seibu_main_word_r );
 READ_HANDLER( seibu_main_v30_r );
 WRITE16_HANDLER( seibu_main_word_w );
 WRITE_HANDLER( seibu_main_v30_w );
+
+WRITE16_HANDLER( seibu_main_mustb_w );
 
 WRITE_HANDLER( seibu_irq_clear_w );
 WRITE_HANDLER( seibu_rst10_ack_w );

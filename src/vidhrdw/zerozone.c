@@ -9,8 +9,6 @@
 
 data16_t *zerozone_videoram;
 
-static unsigned char *video_dirty;
-
 
 
 WRITE16_HANDLER( zerozone_videoram_w )
@@ -29,7 +27,7 @@ VIDEO_UPDATE( zerozone )
 	int offs;
 
 	if (get_vh_global_attribute_changed())
-		memset(video_dirty,1,videoram_size/2);
+		memset(dirtybuffer,1,videoram_size/2);
 
 	for (offs = 0;offs < videoram_size/2;offs++)
 	{

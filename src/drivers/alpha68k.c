@@ -1210,10 +1210,10 @@ INPUT_PORTS_START( skysoldr )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Easy" )					// "4"
-	PORT_DIPSETTING(    0x18, "Normal" )				// "3"
-	PORT_DIPSETTING(    0x10, "Hard" )					// "2"
-	PORT_DIPSETTING(    0x08, "Hardest" )				// "1"
+	PORT_DIPSETTING(    0x08, "Easy" )					// "1"
+	PORT_DIPSETTING(    0x10, "Normal" )				// "2"
+	PORT_DIPSETTING(    0x18, "Hard" )					// "3"
+	PORT_DIPSETTING(    0x00, "Hardest" )				// "4"
 	PORT_DIPNAME( 0x20, 0x00, "Language" )
 	PORT_DIPSETTING(    0x00, "English" )
 	PORT_DIPSETTING(    0x20, "Japanese" )

@@ -772,23 +772,24 @@ ROM_END
 
 static DRIVER_INIT( stinger )
 {
-	static const unsigned char xortable[4][4] =
+	static const unsigned char swap_xor_table[4][4] =
 	{
-		{ 0xa0,0x88,0x88,0xa0 },	/* .........00.0... */
-		{ 0x88,0x00,0xa0,0x28 },	/* .........00.1... */
-		{ 0x80,0xa8,0x20,0x08 },	/* .........01.0... */
-		{ 0x28,0x28,0x88,0x88 }		/* .........01.1... */
+		{ 7,3,5, 0xa0 },
+		{ 3,7,5, 0x88 },
+		{ 5,3,7, 0x80 },
+		{ 5,7,3, 0x28 }
 	};
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int diff = memory_region_length(REGION_CPU1) / 2;
 	int A;
+	const unsigned char *tbl;
 
 
 	memory_set_opcode_base(0,rom+diff);
 
 	for (A = 0x0000;A < 0x10000;A++)
 	{
-		int row,col;
+		int row;
 		unsigned char src;
 
 
@@ -801,16 +802,12 @@ static DRIVER_INIT( stinger )
 		{
 			src = rom[A];
 
-			/* pick the translation table from bits 3 and 5 */
+			/* pick the translation table from bits 3 and 5 of the address */
 			row = ((A >> 3) & 1) + (((A >> 5) & 1) << 1);
 
-			/* pick the offset in the table from bits 3 and 5 of the source data */
-			col = ((src >> 3) & 1) + (((src >> 5) & 1) << 1);
-			/* the bottom half of the translation table is the mirror image of the top */
-			if (src & 0x80) col = 3 - col;
-
 			/* decode the opcodes */
-			rom[A+diff] = src ^ xortable[row][col];
+			tbl = swap_xor_table[row];
+			rom[A+diff] = BITSWAP8(src,tbl[0],6,tbl[1],4,tbl[2],2,1,0) ^ tbl[3];
 		}
 	}
 }

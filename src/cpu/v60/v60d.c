@@ -7,19 +7,21 @@
 #include <stdio.h>
 #include "v60.h"
 
+static UINT8 (*readop)(offs_t adr);
+
 static signed char read8(unsigned pc)
 {
-	return cpu_readmem24lew(pc);
+	return readop(pc);
 }
 
 static signed short read16(unsigned pc)
 {
-	return cpu_readmem24lew(pc) | (cpu_readmem24lew(pc+1) << 8);
+	return readop(pc) | (readop(pc+1) << 8);
 }
 
 static signed int read32(unsigned pc)
 {
-	return cpu_readmem24lew(pc) | (cpu_readmem24lew(pc+1) << 8)| (cpu_readmem24lew(pc+2) << 16)| (cpu_readmem24lew(pc+3) << 24);
+	return readop(pc) | (readop(pc+1) << 8)| (readop(pc+2) << 16)| (readop(pc+3) << 24);
 }
 
 static void out_AM_Register(int reg, char *out)
@@ -174,7 +176,7 @@ static void out_AM_Immediate(unsigned value, int opsize, char *out)
 
 static int decode_AM(unsigned ipc, unsigned pc, int m, int opsize, char *out)
 {
-	unsigned char mod = cpu_readmem24lew(pc);
+	unsigned char mod = readop(pc);
 	if(m) {
 		switch(mod>>5) {
 		case 0: // Double displacement (8 bit)
@@ -202,38 +204,38 @@ static int decode_AM(unsigned ipc, unsigned pc, int m, int opsize, char *out)
 			return 1;
 
 		case 6:
-			switch (cpu_readmem24lew(pc+1)>>5)
+			switch (readop(pc+1)>>5)
 				{
 				case 0: // Displacement indexed (8 bit)
-					out_AM_DisplacementIndexed(cpu_readmem24lew(pc+1)&0x1F, mod&0x1F, read8(pc+2), opsize, out);
+					out_AM_DisplacementIndexed(readop(pc+1)&0x1F, mod&0x1F, read8(pc+2), opsize, out);
 					return 3;
 
 				case 1: // Displacement indexed (16 bit)
-					out_AM_DisplacementIndexed(cpu_readmem24lew(pc+1)&0x1F, mod&0x1F, read16(pc+2), opsize, out);
+					out_AM_DisplacementIndexed(readop(pc+1)&0x1F, mod&0x1F, read16(pc+2), opsize, out);
 					return 4;
 
 				case 2: // Displacement indexed (32 bit)
-					out_AM_DisplacementIndexed(cpu_readmem24lew(pc+1)&0x1F, mod&0x1F, read32(pc+2), opsize, out);
+					out_AM_DisplacementIndexed(readop(pc+1)&0x1F, mod&0x1F, read32(pc+2), opsize, out);
 					return 6;
 
 				case 3:	// Register indirect indexed
-					out_AM_RegisterIndirectIndexed(cpu_readmem24lew(pc+1)&0x1F, mod&0x1F, opsize, out);
+					out_AM_RegisterIndirectIndexed(readop(pc+1)&0x1F, mod&0x1F, opsize, out);
 					return 2;
 
 				case 4: // Displacement indirect indexed (8 bit)
-					out_AM_DisplacementIndirectIndexed(cpu_readmem24lew(pc+1)&0x1F, mod&0x1F, read8(pc+2), opsize, out);
+					out_AM_DisplacementIndirectIndexed(readop(pc+1)&0x1F, mod&0x1F, read8(pc+2), opsize, out);
 					return 3;
 
 				case 5: // Displacement indirect indexed (16 bit)
-					out_AM_DisplacementIndirectIndexed(cpu_readmem24lew(pc+1)&0x1F, mod&0x1F, read16(pc+2), opsize, out);
+					out_AM_DisplacementIndirectIndexed(readop(pc+1)&0x1F, mod&0x1F, read16(pc+2), opsize, out);
 					return 4;
 
 				case 6: // Displacement indirect indexed (32 bit)
-					out_AM_DisplacementIndirectIndexed(cpu_readmem24lew(pc+1)&0x1F, mod&0x1F, read32(pc+2), opsize, out);
+					out_AM_DisplacementIndirectIndexed(readop(pc+1)&0x1F, mod&0x1F, read32(pc+2), opsize, out);
 					return 6;
 
 				case 7:
-					switch (cpu_readmem24lew(pc+1)&0x1F)
+					switch (readop(pc+1)&0x1F)
 						{
 						case 16: // PC Displacement Indexed (8 bit)
 							out_AM_PCDisplacementIndexed(ipc, read8(pc+2), mod&0x1F, opsize, out);
@@ -411,7 +413,7 @@ static int decode_AM(unsigned ipc, unsigned pc, int m, int opsize, char *out)
 
 static int decode_F1(const char *opnm, int opsize1, int opsize2, unsigned ipc, unsigned pc, char *out)
 {
-	unsigned char code = cpu_readmem24lew(pc);
+	unsigned char code = readop(pc);
 	sprintf(out, "%s ", opnm);
 	if(code & 0x20) {
 		int ret = decode_AM(ipc, pc+1, code & 0x40, opsize1, out + strlen(out)) + 2;
@@ -428,7 +430,7 @@ static int decode_F1(const char *opnm, int opsize1, int opsize2, unsigned ipc, u
 static int decode_F2(const char *opnm, int opsize1, int opsize2, unsigned ipc, unsigned pc, char *out)
 {
 	int ret;
-	unsigned char code = cpu_readmem24lew(pc);
+	unsigned char code = readop(pc);
 	sprintf(out, "%s ", opnm);
 	ret = decode_AM(ipc, pc+1, code & 0x40, opsize1, out + strlen(out));
 	strcat(out, ", ");
@@ -438,7 +440,7 @@ static int decode_F2(const char *opnm, int opsize1, int opsize2, unsigned ipc, u
 
 static int decode_F1F2(const char *opnm, int opsize1, int opsize2, unsigned ipc, unsigned pc, char *out)
 {
-	if(cpu_readmem24lew(pc) & 0x80)
+	if(readop(pc) & 0x80)
 		return decode_F2(opnm, opsize1, opsize2, ipc, pc, out);
 	else
 		return decode_F1(opnm, opsize1, opsize2, ipc, pc, out);
@@ -447,7 +449,7 @@ static int decode_F1F2(const char *opnm, int opsize1, int opsize2, unsigned ipc,
 static int decode_F3(const char *opnm, int opsize1, int opsize2, unsigned ipc, unsigned pc, char *out)
 {
 	sprintf(out, "%s ", opnm);
-	return decode_AM(ipc, pc, cpu_readmem24lew(pc-1) & 1, opsize1, out + strlen(out)) + 1;
+	return decode_AM(ipc, pc, readop(pc-1) & 1, opsize1, out + strlen(out)) + 1;
 }
 
 static int decode_F4a(const char *opnm, int opsize1, int opsize2, unsigned ipc, unsigned pc, char *out)
@@ -470,21 +472,21 @@ static int decode_F5(const char *opnm, int opsize1, int opsize2, unsigned ipc, u
 
 static int decode_F6(const char *opnm, int opsize1, int opsize2, unsigned ipc, unsigned pc, char *out)
 {
-	sprintf(out, "%s %s, %X[PC]", opnm, v60_reg_names[cpu_readmem24lew(pc) & 0x1f], ipc+read16(pc+1));
+	sprintf(out, "%s %s, %X[PC]", opnm, v60_reg_names[readop(pc) & 0x1f], ipc+read16(pc+1));
 	return 4;
 }
 
 static int decode_F7a(const char *opnm, int opsize1, int opsize2, unsigned ipc, unsigned pc, char *out)
 {
 	int ret;
-	unsigned char code = cpu_readmem24lew(pc);
+	unsigned char code = readop(pc);
 	unsigned char code2;
 
 	sprintf(out, "%s ", opnm);
 	ret = decode_AM(ipc, pc+1, code & 0x40, opsize1, out + strlen(out));
 	strcat(out, ", ");
 
-	code2 = cpu_readmem24lew(pc+1+ret);
+	code2 = readop(pc+1+ret);
 	if(code2 & 0x80)
 		out_AM_Register(code2 & 0x1f, out + strlen(out));
 	else
@@ -494,7 +496,7 @@ static int decode_F7a(const char *opnm, int opsize1, int opsize2, unsigned ipc, 
 	ret += decode_AM(ipc, pc+2+ret, code & 0x20, opsize2, out + strlen(out));
 	strcat(out, ", ");
 
-	code2 = cpu_readmem24lew(pc+2+ret);
+	code2 = readop(pc+2+ret);
 	if(code2 & 0x80)
 		out_AM_Register(code2 & 0x1f, out + strlen(out));
 	else
@@ -506,14 +508,14 @@ static int decode_F7a(const char *opnm, int opsize1, int opsize2, unsigned ipc, 
 static int decode_F7b(const char *opnm, int opsize1, int opsize2, unsigned ipc, unsigned pc, char *out)
 {
 	int ret;
-	unsigned char code = cpu_readmem24lew(pc);
+	unsigned char code = readop(pc);
 	unsigned char code2;
 
 	sprintf(out, "%s ", opnm);
 	ret = decode_AM(ipc, pc+1, code & 0x40, opsize1, out + strlen(out));
 	strcat(out, ", ");
 
-	code2 = cpu_readmem24lew(pc+1+ret);
+	code2 = readop(pc+1+ret);
 	if(code2 & 0x80)
 		out_AM_Register(code2 & 0x1f, out + strlen(out));
 	else
@@ -528,7 +530,7 @@ static int decode_F7b(const char *opnm, int opsize1, int opsize2, unsigned ipc, 
 static int decode_F7c(const char *opnm, int opsize1, int opsize2, unsigned ipc, unsigned pc, char *out)
 {
 	int ret;
-	unsigned char code = cpu_readmem24lew(pc);
+	unsigned char code = readop(pc);
 	unsigned char code2;
 
 	sprintf(out, "%s ", opnm);
@@ -538,7 +540,7 @@ static int decode_F7c(const char *opnm, int opsize1, int opsize2, unsigned ipc, 
 	ret += decode_AM(ipc, pc+1+ret, code & 0x20, opsize2, out + strlen(out));
 	strcat(out, ", ");
 
-	code2 = cpu_readmem24lew(pc+1+ret);
+	code2 = readop(pc+1+ret);
 	if(code2 & 0x80)
 		out_AM_Register(code2 & 0x1f, out + strlen(out));
 	else
@@ -560,7 +562,7 @@ static int (*dasm_optable_C7[64])(unsigned ipc, unsigned pc, char *out);
 
 static int dopUNHANDLED(unsigned ipc, unsigned pc, char *out)
 {
-	sprintf(out, "$%02X", cpu_readmem24lew(pc));
+	sprintf(out, "$%02X", readop(pc));
 	return 1;
 }
 
@@ -620,47 +622,47 @@ static int dopC7UNHANDLED(unsigned ipc, unsigned pc, char *out)
 
 static int dop58(unsigned ipc, unsigned pc, char *out)
 {
-	return dasm_optable_58[cpu_readmem24lew(pc) & 0x1f](ipc, pc, out);
+	return dasm_optable_58[readop(pc) & 0x1f](ipc, pc, out);
 }
 
 static int dop5A(unsigned ipc, unsigned pc, char *out)
 {
-	return dasm_optable_5A[cpu_readmem24lew(pc) & 0x1f](ipc, pc, out);
+	return dasm_optable_5A[readop(pc) & 0x1f](ipc, pc, out);
 }
 
 static int dop5B(unsigned ipc, unsigned pc, char *out)
 {
-	return dasm_optable_5B[cpu_readmem24lew(pc) & 0x1f](ipc, pc, out);
+	return dasm_optable_5B[readop(pc) & 0x1f](ipc, pc, out);
 }
 
 static int dop5C(unsigned ipc, unsigned pc, char *out)
 {
-	return dasm_optable_5C[cpu_readmem24lew(pc) & 0x1f](ipc, pc, out);
+	return dasm_optable_5C[readop(pc) & 0x1f](ipc, pc, out);
 }
 
 static int dop5D(unsigned ipc, unsigned pc, char *out)
 {
-	return dasm_optable_5D[cpu_readmem24lew(pc) & 0x1f](ipc, pc, out);
+	return dasm_optable_5D[readop(pc) & 0x1f](ipc, pc, out);
 }
 
 static int dop5E(unsigned ipc, unsigned pc, char *out)
 {
-	return dasm_optable_5E[cpu_readmem24lew(pc) & 0x1f](ipc, pc, out);
+	return dasm_optable_5E[readop(pc) & 0x1f](ipc, pc, out);
 }
 
 static int dop5F(unsigned ipc, unsigned pc, char *out)
 {
-	return dasm_optable_5F[cpu_readmem24lew(pc) & 0x1f](ipc, pc, out);
+	return dasm_optable_5F[readop(pc) & 0x1f](ipc, pc, out);
 }
 
 static int dopC6(unsigned ipc, unsigned pc, char *out)
 {
-	return dasm_optable_C6[cpu_readmem24lew(pc) >> 5](ipc, pc, out);
+	return dasm_optable_C6[readop(pc) >> 5](ipc, pc, out);
 }
 
 static int dopC7(unsigned ipc, unsigned pc, char *out)
 {
-	return dasm_optable_C7[cpu_readmem24lew(pc) >> 5](ipc, pc, out);
+	return dasm_optable_C7[readop(pc) >> 5](ipc, pc, out);
 }
 
 #define DEFINE_EASY_OPCODE(name, opnm, ftype, opsize1, opsize2) \
@@ -1217,8 +1219,15 @@ void v60_dasm_init(void)
 }
 
 #ifdef MAME_DEBUG
-unsigned v60_dasm(char *buffer,  unsigned pc)
+unsigned v60_dasm(char *buffer, unsigned pc)
 {
-	return dasm_optable[cpu_readmem24lew(pc)](pc, pc+1, buffer);
+	readop = cpu_readmem24lew;
+	return dasm_optable[readop(pc)](pc, pc+1, buffer);
+}
+
+unsigned v70_dasm(char *buffer, unsigned pc)
+{
+	readop = cpu_readmem32ledw;
+	return dasm_optable[readop(pc)](pc, pc+1, buffer);
 }
 #endif

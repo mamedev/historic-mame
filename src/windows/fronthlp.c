@@ -15,13 +15,17 @@ enum { LIST_SHORT = 1, LIST_INFO, LIST_FULL, LIST_SAMDIR, LIST_ROMS, LIST_SAMPLE
 		LIST_LMR, LIST_DETAILS, LIST_GAMELIST,
 		LIST_GAMES, LIST_CLONES,
 		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_CRC, LIST_DUPCRC, LIST_WRONGMERGE,
-		LIST_ROMSIZE, LIST_PALETTESIZE, LIST_CPU, LIST_SOURCEFILE };
+		LIST_ROMSIZE, LIST_ROMDISTRIBUTION, LIST_ROMNUMBER, LIST_PALETTESIZE,
+		LIST_CPU, LIST_CPUCLASS, LIST_NOSOUND, LIST_SOUND, LIST_NVRAM, LIST_SOURCEFILE,
+		LIST_GAMESPERSOURCEFILE };
 #else
 enum { LIST_SHORT = 1, LIST_INFO, LIST_FULL, LIST_SAMDIR, LIST_ROMS, LIST_SAMPLES,
 		LIST_LMR, LIST_DETAILS, LIST_GAMELIST,
 		LIST_GAMES, LIST_CLONES,
 		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_CRC, LIST_DUPCRC, LIST_WRONGMERGE,
-		LIST_ROMSIZE, LIST_PALETTESIZE, LIST_CPU, LIST_SOURCEFILE, LIST_MESSINFO };
+		LIST_ROMSIZE, LIST_ROMDISTRIBUTION, LIST_ROMNUMBER, LIST_PALETTESIZE,
+		LIST_CPU, LIST_CPUCLASS, LIST_NOSOUND, LIST_SOUND, LIST_NVRAM, LIST_SOURCEFILE,
+		LIST_GAMESPERSOURCEFILE, LIST_MESSINFO };
 #endif
 
 #define VERIFY_ROMS		0x00000001
@@ -54,15 +58,22 @@ struct rc_option frontend_opts[] = {
 	{ "listdetails", NULL, rc_set_int, &list, NULL, LIST_DETAILS, 0, NULL, "detailed info" },
 	{ "gamelist", NULL, rc_set_int, &list, NULL, LIST_GAMELIST, 0, NULL, "output gamelist.txt main body" },
 	{ "listsourcefile",	NULL, rc_set_int, &list, NULL, LIST_SOURCEFILE, 0, NULL, "driver sourcefile" },
+	{ "listgamespersourcefile",	NULL, rc_set_int, &list, NULL, LIST_GAMESPERSOURCEFILE, 0, NULL, "games per sourcefile" },
 	{ "listinfo", "li", rc_set_int, &list, NULL, LIST_INFO, 0, NULL, "all available info on driver" },
 	{ "listclones", "lc", rc_set_int, &list, NULL, LIST_CLONES, 0, NULL, "show clones" },
 	{ "listsamdir", NULL, rc_set_int, &list, NULL, LIST_SAMDIR, 0, NULL, "shared sample directory" },
 	{ "listcrc", NULL, rc_set_int, &list, NULL, LIST_CRC, 0, NULL, "checksums" },
 	{ "listdupcrc", NULL, rc_set_int, &list, NULL, LIST_DUPCRC, 0, NULL, "duplicate crc's" },
 	{ "listwrongmerge", "lwm", rc_set_int, &list, NULL, LIST_WRONGMERGE, 0, NULL, "wrong merge attempts" },
-	{ "listromsize", "lrs", rc_set_int, &list, NULL, LIST_ROMSIZE, 0, NULL, "rom size" },
+	{ "listromsize", NULL, rc_set_int, &list, NULL, LIST_ROMSIZE, 0, NULL, "rom size" },
+	{ "listromdistribution", NULL, rc_set_int, &list, NULL, LIST_ROMDISTRIBUTION, 0, NULL, "rom distribution" },
+	{ "listromnumber", NULL, rc_set_int, &list, NULL, LIST_ROMNUMBER, 0, NULL, "rom size" },
 	{ "listpalettesize", "lps", rc_set_int, &list, NULL, LIST_PALETTESIZE, 0, NULL, "palette size" },
 	{ "listcpu", NULL, rc_set_int, &list, NULL, LIST_CPU, 0, NULL, "cpu's used" },
+	{ "listcpuclass", NULL, rc_set_int, &list, NULL, LIST_CPUCLASS, 0, NULL, "class of cpu's used by year" },
+	{ "listnosound", NULL, rc_set_int, &list, NULL, LIST_NOSOUND, 0, NULL, "drivers missing sound support" },
+	{ "listsound", NULL, rc_set_int, &list, NULL, LIST_SOUND, 0, NULL, "sound chips used" },
+	{ "listnvram",	NULL, rc_set_int, &list, NULL, LIST_NVRAM, 0, NULL, "games with nvram" },
 #ifdef MAME_DEBUG /* do not put this into a public release! */
 	{ "lmr", NULL, rc_set_int, &list, NULL, LIST_LMR, 0, NULL, "missing roms" },
 #endif
@@ -148,11 +159,62 @@ int strwildcmp(const char *sp1, const char *sp2)
 	return stricmp(s1, s2);
 }
 
+
+static void namecopy(char *name_ref,const char *desc)
+{
+	char name[200];
+
+	strcpy(name,desc);
+
+	/* remove details in parenthesis */
+	if (strstr(name," (")) *strstr(name," (") = 0;
+
+	/* Move leading "The" to the end */
+	if (strncmp(name,"The ",4) == 0)
+	{
+		sprintf(name_ref,"%s, The",name+4);
+	}
+	else
+		sprintf(name_ref,"%s",name);
+}
+
+
 /* Identifies a rom from from this checksum */
+static void match_roms(const struct GameDriver *driver,int checksum,int *found)
+{
+	const struct RomModule *region, *rom;
+
+	for (region = rom_first_region(driver); region; region = rom_next_region(region))
+	{
+		for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
+		{
+			if (checksum == ROM_GETCRC(rom))
+			{
+				if (!silentident)
+				{
+					if (*found != 0)
+						printf("             ");
+					printf("= %-12s  %s\n",ROM_GETNAME(rom),driver->description);
+				}
+				(*found)++;
+			}
+			if (BADCRC(checksum) == ROM_GETCRC(rom))
+			{
+				if (!silentident)
+				{
+					if (*found != 0)
+						printf("             ");
+					printf("= (BAD) %-12s  %s\n",ROM_GETNAME(rom),driver->description);
+				}
+				(*found)++;
+			}
+		}
+	}
+}
+
+
 void identify_rom(const char* name, int checksum, int length)
 {
-/* Nicola output format */
-#if 1
 	int found = 0;
 
 	/* remove directory name */
@@ -169,34 +231,11 @@ void identify_rom(const char* name, int checksum, int length)
 		printf("%s ",&name[0]);
 
 	for (i = 0; drivers[i]; i++)
-	{
-		const struct RomModule *region, *rom;
+		match_roms(drivers[i],checksum,&found);
 
-		for (region = rom_first_region(drivers[i]); region; region = rom_next_region(region))
-			for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
-			{
-				if (checksum == ROM_GETCRC(rom))
-				{
-					if (!silentident)
-					{
-						if (found != 0)
-							printf("             ");
-						printf("= %-12s  %s\n",ROM_GETNAME(rom),drivers[i]->description);
-					}
-					found++;
-				}
-				if (BADCRC(checksum) == ROM_GETCRC(rom))
-				{
-					if (!silentident)
-					{
-						if (found != 0)
-							printf("             ");
-						printf("= (BAD) %-12s  %s\n",ROM_GETNAME(rom),drivers[i]->description);
-					}
-					found++;
-				}
-			}
-	}
+	for (i = 0; test_drivers[i]; i++)
+		match_roms(test_drivers[i],checksum,&found);
+
 	if (found == 0)
 	{
 		unsigned size = length;
@@ -223,29 +262,9 @@ void identify_rom(const char* name, int checksum, int length)
 		else if (knownstatus == KNOWN_NONE)
 			knownstatus = KNOWN_SOME;
 	}
-#else
-/* New output format */
-	int i;
-	printf("%s\n",name);
-
-	for (i = 0; drivers[i]; i++)
-	{
-		const struct RomModule *region, *rom;
-
-		for (region = rom_first_region(drivers[i]; region; region = rom_next_region(region))
-			for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
-				if (checksum == ROM_GETCRC(romp))
-				{
-					printf("\t%s/%s %s, %s, %s\n",drivers[i]->name,ROM_GETNAME(rom),
-						drivers[i]->description,
-						drivers[i]->manufacturer,
-						drivers[i]->year);
-				}
-	}
-#endif
 }
 
-/* Identifies a file from from this checksum */
+/* Identifies a file from this checksum */
 void identify_file(const char* name)
 {
 	FILE *f;
@@ -382,7 +401,10 @@ int CLIB_DECL compare_names(const void *elem1, const void *elem2)
 {
 	struct GameDriver *drv1 = *(struct GameDriver **)elem1;
 	struct GameDriver *drv2 = *(struct GameDriver **)elem2;
-	return strcmp(drv1->description, drv2->description);
+	char name1[200],name2[200];
+	namecopy(name1,drv1->description);
+	namecopy(name2,drv2->description);
+	return strcmp(name1,name2);
 }
 
 
@@ -504,17 +526,8 @@ int frontend_help (char *gamename)
 
 					printf("%-10s",drivers[i]->name);
 
-					strcpy(name,drivers[i]->description);
-
-					/* Move leading "The" to the end */
-					if (strstr(name," (")) *strstr(name," (") = 0;
-					if (strncmp(name,"The ",4) == 0)
-					{
-						printf("\"%s",name+4);
-						printf(", The");
-					}
-					else
-						printf("\"%s",name);
+					namecopy(name,drivers[i]->description);
+					printf("\"%s",name);
 
 					/* print the additional description only if we are listing clones */
 					if (listclones)
@@ -762,18 +775,11 @@ int frontend_help (char *gamename)
 						|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)
 						) && !strwildcmp(gamename, drivers[i]->name))
 				{
-					char name[200],name_ref[200];
+					char name_ref[200];
 
-					strcpy(name,drivers[i]->description);
+					namecopy(name_ref,drivers[i]->description);
 
-					/* Move leading "The" to the end */
-					if (strstr(name," (")) *strstr(name," (") = 0;
-					if (strncmp(name,"The ",4) == 0)
-					{
-						sprintf(name_ref,"%s, The ",name+4);
-					}
-					else
-						sprintf(name_ref,"%s ",name);
+					strcat(name_ref," ");
 
 					/* print the additional description only if we are listing clones */
 					if (listclones)
@@ -882,17 +888,8 @@ int frontend_help (char *gamename)
 
 					printf("%-5s%-36s ",drivers[i]->year,drivers[i]->manufacturer);
 
-					strcpy(name,drivers[i]->description);
-
-					/* Move leading "The" to the end */
-					if (strstr(name," (")) *strstr(name," (") = 0;
-					if (strncmp(name,"The ",4) == 0)
-					{
-						printf("%s",name+4);
-						printf(", The");
-					}
-					else
-						printf("%s",name);
+					namecopy(name,drivers[i]->description);
+					printf("%s",name);
 
 					/* print the additional description only if we are listing clones */
 					if (listclones)
@@ -1010,6 +1007,64 @@ int frontend_help (char *gamename)
 			return 0;
 			break;
 
+		case LIST_GAMESPERSOURCEFILE:
+			{
+				#define MAXCOUNT 8
+
+				int numcount[MAXCOUNT],gamescount[MAXCOUNT];
+
+				for (i = 0;i < MAXCOUNT;i++) numcount[i] = gamescount[i] = 0;
+
+				for (i = 0; drivers[i]; i++)
+				{
+					if (drivers[i]->clone_of == 0 ||
+							(drivers[i]->clone_of->flags & NOT_A_DRIVER))
+					{
+						const char *sf = drivers[i]->source_file;
+						int total = 0;
+
+						for (j = 0; drivers[j]; j++)
+						{
+							if (drivers[j]->clone_of == 0 ||
+									(drivers[j]->clone_of->flags & NOT_A_DRIVER))
+							{
+								if (drivers[j]->source_file == sf)
+								{
+									if (j < i) break;
+
+									total++;
+								}
+							}
+						}
+
+						if (total)
+						{
+							if (total == 1)							{ numcount[0]++; gamescount[0] += total; }
+							else if (total >= 2 && total <= 3)		{ numcount[1]++; gamescount[1] += total; }
+							else if (total >= 4 && total <= 7)		{ numcount[2]++; gamescount[2] += total; }
+							else if (total >= 8 && total <= 12)		{ numcount[3]++; gamescount[3] += total; }
+							else if (total >= 13 && total <= 17)	{ numcount[4]++; gamescount[4] += total; }
+							else if (total >= 18 && total <= 25)	{ numcount[5]++; gamescount[5] += total; }
+							else if (total >= 26 && total <= 39)	{ numcount[6]++; gamescount[6] += total; }
+							else if (total >= 40)					{ numcount[7]++; gamescount[7] += total; }
+						}
+					}
+				}
+
+				printf("1\t%d\t%d\n",		numcount[0],gamescount[0]);
+				printf("2-3\t%d\t%d\n",		numcount[1],gamescount[1]);
+				printf("4-7\t%d\t%d\n",		numcount[2],gamescount[2]);
+				printf("8-12\t%d\t%d\n",	numcount[3],gamescount[3]);
+				printf("13-17\t%d\t%d\n",	numcount[4],gamescount[4]);
+				printf("18-25\t%d\t%d\n",	numcount[5],gamescount[5]);
+				printf("26-39\t%d\t%d\n",	numcount[6],gamescount[6]);
+				printf("40+\t%d\t%d\n",		numcount[7],gamescount[7]);
+
+				#undef MAXCOUNT
+			}
+			return 0;
+			break;
+
 		case LIST_CRC: /* list all crc-32 */
 			for (i = 0; drivers[i]; i++)
 			{
@@ -1118,18 +1173,113 @@ int frontend_help (char *gamename)
 
 		case LIST_ROMSIZE: /* I used this for statistical analysis */
 			for (i = 0; drivers[i]; i++)
+			{
 				if (drivers[i]->clone_of == 0 || (drivers[i]->clone_of->flags & NOT_A_DRIVER))
 				{
 					const struct RomModule *region, *rom, *chunk;
+					int romtotal = 0,romcpu = 0,romgfx = 0,romsound = 0;
 
-					j = 0;
 					for (region = rom_first_region(drivers[i]); region; region = rom_next_region(region))
-						for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
-							for (chunk = rom_first_chunk(rom); chunk; chunk = rom_next_chunk(chunk))
-								j += ROM_GETLENGTH(chunk);
+					{
+						int type = ROMREGION_GETTYPE(region);
 
-					printf("%-8s\t%-5s\t%u\n",drivers[i]->name,drivers[i]->year,j);
+						for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
+						{
+							for (chunk = rom_first_chunk(rom); chunk; chunk = rom_next_chunk(chunk))
+							{
+								romtotal += ROM_GETLENGTH(chunk);
+								if (type >= REGION_CPU1 && type <= REGION_CPU8) romcpu += ROM_GETLENGTH(chunk);
+								if (type >= REGION_GFX1 && type <= REGION_GFX8) romgfx += ROM_GETLENGTH(chunk);
+								if (type >= REGION_SOUND1 && type <= REGION_SOUND8) romsound += ROM_GETLENGTH(chunk);
+							}
+						}
+					}
+
+//					printf("%-8s\t%-5s\t%u\t%u\t%u\t%u\n",drivers[i]->name,drivers[i]->year,romtotal,romcpu,romgfx,romsound);
+					printf("%-8s\t%-5s\t%u\n",drivers[i]->name,drivers[i]->year,romtotal);
 				}
+			}
+			return 0;
+			break;
+
+		case LIST_ROMDISTRIBUTION: /* I used this for statistical analysis */
+			{
+				int year;
+
+				for (year = 1975;year <= 2000;year++)
+				{
+					int gamestotal = 0,romcpu = 0,romgfx = 0,romsound = 0;
+
+					for (i = 0; drivers[i]; i++)
+					{
+						if (atoi(drivers[i]->year) == year)
+						{
+							if (drivers[i]->clone_of == 0 || (drivers[i]->clone_of->flags & NOT_A_DRIVER))
+							{
+								const struct RomModule *region, *rom, *chunk;
+
+								gamestotal++;
+
+								for (region = rom_first_region(drivers[i]); region; region = rom_next_region(region))
+								{
+									int type = ROMREGION_GETTYPE(region);
+
+									for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
+									{
+										for (chunk = rom_first_chunk(rom); chunk; chunk = rom_next_chunk(chunk))
+										{
+											if (type >= REGION_CPU1 && type <= REGION_CPU8) romcpu += ROM_GETLENGTH(chunk);
+											if (type >= REGION_GFX1 && type <= REGION_GFX8) romgfx += ROM_GETLENGTH(chunk);
+											if (type >= REGION_SOUND1 && type <= REGION_SOUND8) romsound += ROM_GETLENGTH(chunk);
+										}
+									}
+								}
+							}
+						}
+					}
+
+					printf("%-5d\t%u\t%u\t%u\t%u\n",year,gamestotal,romcpu,romgfx,romsound);
+				}
+			}
+			return 0;
+			break;
+
+		case LIST_ROMNUMBER: /* I used this for statistical analysis */
+			{
+				#define MAXCOUNT 100
+
+				int numcount[MAXCOUNT];
+
+				for (i = 0;i < MAXCOUNT;i++) numcount[i] = 0;
+
+				for (i = 0; drivers[i]; i++)
+				{
+					if (drivers[i]->clone_of == 0 || (drivers[i]->clone_of->flags & NOT_A_DRIVER))
+					{
+						const struct RomModule *region, *rom;
+						int romnum = 0;
+
+						for (region = rom_first_region(drivers[i]); region; region = rom_next_region(region))
+						{
+							for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
+							{
+								romnum++;
+							}
+						}
+
+						if (romnum)
+						{
+							if (romnum > MAXCOUNT) romnum = MAXCOUNT;
+							numcount[romnum-1]++;
+						}
+					}
+				}
+
+				for (i = 0;i < MAXCOUNT;i++)
+					printf("%d\t%d\n",i+1,numcount[i]);
+
+				#undef MAXCOUNT
+			}
 			return 0;
 			break;
 
@@ -1145,6 +1295,48 @@ int frontend_help (char *gamename)
 
 		case LIST_CPU: /* I used this for statistical analysis */
 			{
+				int type;
+
+				for (type = 1;type < CPU_COUNT;type++)
+				{
+					int count_main = 0,count_slave = 0;
+
+					i = 0;
+					while (drivers[i])
+					{
+						if (drivers[i]->clone_of == 0 || (drivers[i]->clone_of->flags & NOT_A_DRIVER))
+						{
+							struct InternalMachineDriver x_driver;
+							const struct MachineCPU *x_cpu;
+
+							expand_machine_driver(drivers[i]->drv, &x_driver);
+							x_cpu = x_driver.cpu;
+
+							for (j = 0;j < MAX_CPU;j++)
+							{
+								if ((x_cpu[j].cpu_type & ~CPU_FLAGS_MASK) == type)
+								{
+									if (j == 0) count_main++;
+									else count_slave++;
+									break;
+								}
+							}
+						}
+
+						i++;
+					}
+
+					printf("%s\t%d\n",cputype_name(type),count_main+count_slave);
+//					printf("%s\t%d\t%d\n",cputype_name(type),count_main,count_slave);
+				}
+			}
+
+			return 0;
+			break;
+
+
+		case LIST_CPUCLASS: /* I used this for statistical analysis */
+			{
 				int year;
 
 //				for (j = 1;j < CPU_COUNT;j++)
@@ -1153,7 +1345,7 @@ int frontend_help (char *gamename)
 					printf("\t%d",8<<j);
 				printf("\n");
 
-				for (year = 1980;year <= 2000;year++)
+				for (year = 1975;year <= 2000;year++)
 				{
 					int count[CPU_COUNT];
 					int count_buswidth[3];
@@ -1204,6 +1396,122 @@ j = 0;	// count only the main cpu
 
 			return 0;
 			break;
+
+
+		case LIST_NOSOUND: /* I used this for statistical analysis */
+			{
+				int year;
+
+				for (year = 1975;year <= 2000;year++)
+				{
+					int games=0,nosound=0;
+
+					i = 0;
+					while (drivers[i])
+					{
+						if (drivers[i]->clone_of == 0 || (drivers[i]->clone_of->flags & NOT_A_DRIVER))
+						{
+							if (atoi(drivers[i]->year) == year)
+							{
+								games++;
+								if (drivers[i]->flags & GAME_NO_SOUND) nosound++;
+							}
+						}
+
+						i++;
+					}
+
+					printf("%d\t%d\t%d\n",year,nosound,games);
+				}
+			}
+
+			return 0;
+			break;
+
+
+		case LIST_SOUND: /* I used this for statistical analysis */
+			{
+				int type;
+
+				for (type = 1;type < SOUND_COUNT;type++)
+				{
+					int count = 0,minyear = 3000,maxyear = 0;
+
+					i = 0;
+					while (drivers[i])
+					{
+						if (drivers[i]->clone_of == 0 || (drivers[i]->clone_of->flags & NOT_A_DRIVER))
+						{
+							struct InternalMachineDriver x_driver;
+							const struct MachineSound *x_sound;
+
+							expand_machine_driver(drivers[i]->drv, &x_driver);
+							x_sound = x_driver.sound;
+
+							for (j = 0;j < MAX_SOUND;j++)
+							{
+								if (x_sound[j].sound_type == type)
+								{
+									int year = atoi(drivers[i]->year);
+
+									count++;
+
+									if (year > 1900)
+									{
+										if (year > maxyear) maxyear = year;
+										if (year < minyear) minyear = year;
+									}
+								}
+							}
+						}
+
+						i++;
+					}
+
+					if (count)
+//						printf("%s (%d-%d)\t%d\n",soundtype_name(type),minyear,maxyear,count);
+						printf("%s\t%d\n",soundtype_name(type),count);
+				}
+			}
+
+			return 0;
+			break;
+
+
+		case LIST_NVRAM: /* I used this for statistical analysis */
+			{
+				int year;
+
+				for (year = 1975;year <= 2000;year++)
+				{
+					int games=0,nvram=0;
+
+					i = 0;
+					while (drivers[i])
+					{
+						if (drivers[i]->clone_of == 0 || (drivers[i]->clone_of->flags & NOT_A_DRIVER))
+						{
+							struct InternalMachineDriver x_driver;
+
+							expand_machine_driver(drivers[i]->drv, &x_driver);
+
+							if (atoi(drivers[i]->year) == year)
+							{
+								games++;
+								if (x_driver.nvram_handler) nvram++;
+							}
+						}
+
+						i++;
+					}
+
+					printf("%d\t%d\t%d\n",year,nvram,games);
+				}
+			}
+
+			return 0;
+			break;
+
 
 		case LIST_INFO: /* list all info */
 			print_mame_info( stdout, drivers );

@@ -387,6 +387,23 @@ VIDEO_START( seta_no_layers )
 	return 0;
 }
 
+VIDEO_START( seta_2_layers_y_offset_0x10 )
+{
+	if (video_start_seta_2_layers())
+		return 1;
+
+	tilemap_set_scrolldx(tilemap_0, 0x00, 0x00);
+	tilemap_set_scrolldx(tilemap_1, 0x00, 0x00);
+	tilemap_set_scrolldx(tilemap_2, 0x00, 0x00);
+	tilemap_set_scrolldx(tilemap_3, 0x00, 0x00);
+
+	tilemap_set_scrolldy(tilemap_0, 0x10, 0x00);
+	tilemap_set_scrolldy(tilemap_1, 0x10, 0x00);
+	tilemap_set_scrolldy(tilemap_2, 0x10, 0x00);
+	tilemap_set_scrolldy(tilemap_3, 0x10, 0x00);
+	return 0;
+}
+
 VIDEO_START( seta_2_layers_offset_0x02 )
 {
 	if (video_start_seta_2_layers())

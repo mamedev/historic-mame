@@ -120,7 +120,7 @@ VIDEO_UPDATE( relief )
 	fillbitmap(priority_bitmap, 0, cliprect);
 	tilemap_draw(bitmap, cliprect, atarigen_playfield_tilemap, 0, 0);
 	tilemap_draw(bitmap, cliprect, atarigen_playfield2_tilemap, 0, 1);
-	
+
 	/* draw and merge the MO */
 	mobitmap = atarimo_render(0, cliprect, &rectlist);
 	for (r = 0; r < rectlist.numrects; r++, rectlist.rect++)
@@ -132,14 +132,45 @@ VIDEO_UPDATE( relief )
 			for (x = rectlist.rect->min_x; x <= rectlist.rect->max_x; x++)
 				if (mo[x])
 				{
-					/* verified on real hardware:
-					
-						MO always sandwiched between the two playfields
-						except MO colors E and F, which are above all
-					*/
-					if (!pri[x] || (mo[x] & 0xf0) >= 0xe0)
+					/* verified from the GALs on the real PCB; equations follow
+					 *
+					 *		--- PF/M is 1 if playfield has priority, or 0 if MOs have priority
+					 *		PF/M = PFXS
+					 *
+					 *		--- CS0 is set to 1 if the MO is transparent
+					 *		CS0=!MPX0*!MPX1*!MPX2*!MPX3
+					 *
+					 *		--- CS1 is 1 to select playfield pixels or 0 to select MO pixels
+					 *		!CS1=MPX5*MPX6*MPX7*!CS0
+					 *		    +!MPX4*MPX5*MPX6*MPX7
+					 *		    +PFXS*!CS0
+					 *		    +!MPX4*PFXS
+					 *
+					 *		--- CRA10 is the 0x200 bit of the color RAM index; set for the top playfield only
+					 *		CRA10:=CS1*PFXS
+					 *
+					 *		--- CRA9 is the 0x100 bit of the color RAM index; set for MOs only
+					 *		!CA9:=CS1
+					 *
+					 *		--- CRA8-1 are the low 8 bits of the color RAM index; set as expected
+					 */
+					int cs0 = 0;
+					int cs1 = 1;
+
+					/* compute the CS0 signal */
+					cs0 = ((mo[x] & 0x0f) == 0);
+
+					/* compute the CS1 signal */
+					if ((!cs0 && (mo[x] & 0xe0) == 0xe0) ||
+						((mo[x] & 0xf0) == 0xe0) ||
+						(!pri[x] && !cs0) ||
+						(!pri[x] && !(mo[x] & 0x10)))
+						cs1 = 0;
+
+					/* MO is displayed if cs1 == 0 */
+					if (!cs1)
 						pf[x] = mo[x];
-					
+
 					/* erase behind ourselves */
 					mo[x] = 0;
 				}

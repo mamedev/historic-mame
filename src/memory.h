@@ -723,9 +723,11 @@ DECLARE_MEM_HANDLERS_32BIT_BE(32)
 #define change_pc32bedw(pc)		change_pc_generic(pc, 32, 2, cpu_setopbase32bedw)
 
 /* ----- declare 32-bit littleendian handlers ----- */
+DECLARE_MEM_HANDLERS_32BIT_LE(24)
 DECLARE_MEM_HANDLERS_32BIT_LE(26)
 DECLARE_MEM_HANDLERS_32BIT_LE(29)
 DECLARE_MEM_HANDLERS_32BIT_LE(32)
+#define change_pc24ledw(pc)		change_pc_generic(pc, 24, 2, cpu_setopbase24ledw)
 #define change_pc26ledw(pc)		change_pc_generic(pc, 26, 2, cpu_setopbase26ledw)
 #define change_pc29ledw(pc)		change_pc_generic(pc, 29, 2, cpu_setopbase29ledw)
 #define change_pc32ledw(pc)		change_pc_generic(pc, 32, 2, cpu_setopbase32ledw)
@@ -757,6 +759,7 @@ DECLARE_PORT_HANDLERS_32BIT_BE(16)
 /* ----- declare 32-bit littleendian handlers ----- */
 DECLARE_PORT_HANDLERS_32BIT_LE(16)
 DECLARE_PORT_HANDLERS_32BIT_LE(24)
+DECLARE_PORT_HANDLERS_32BIT_LE(32)
 
 
 /***************************************************************************

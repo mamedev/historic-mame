@@ -39,14 +39,13 @@ STA-0001B	VISCO-001B	94	Drift Out '94							Visco
 ?			P1-112C		98	Pachinko Sexy Reaction					Sammy
 -----------------------------------------------------------------------------------
 
-Games not yet dumped:	?	Change Air Blade						Sammy
+Games not yet dumped:
 						?	Kidou Senshi Gundam Final Shooting		Visco / Banpresto
 						?	Koi Koi Shimasyo 2 Super Real Hanafuda	Visco
 						?	Pachinko Sexy Reaction 2				Sammy
-						?	Storm Blade								Visco
 						97	Joryuu Syougi Kyoushitsu				Visco
-						00	Basara									Visco
-						01	Basara 2								Visco
+						00	Vasara									Visco
+						01	Vasara 2								Visco
 
 
 To Do:
@@ -66,6 +65,13 @@ To Do:
 - srmp4		:	Backgrounds are offset by $60 pixels, so they're kludged to work
 
 - srmp7		:	Needs interrupts by the sound chip (unsupported yet). Kludged to work.
+
+- mslider   :   V60 issues?  the correct tiles don't always vanish, depending on
+                the layout of the 3 tiles you put together sometimes only 2 vanish
+                and a blank are off the bottom of the game board flashes instead
+                of the correct 3rd tile
+
+- eaglshot  :   GOLF rom board still needs mapping correctly.
 
 ***************************************************************************/
 
@@ -1928,6 +1934,86 @@ INPUT_PORTS_START( stmblade )
 	PORT_BIT(  0x00f0, IP_ACTIVE_LOW, IPT_UNKNOWN  )
 INPUT_PORTS_END
 
+/***************************************************************************
+                       Change Air Blade
+***************************************************************************/
+
+INPUT_PORTS_START( cairblad )
+	PORT_START	// IN0
+	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0005, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0006, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0007, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x0038, 0x0038, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0028, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0030, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0038, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x0040, 0x0040, "Unknown 1-6" )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, "Rapid Fire" )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_START	// IN1
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
+	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0008, "Easy" )
+	PORT_DIPSETTING(      0x000c, "Normal" )
+	PORT_DIPSETTING(      0x0004, "Hard" )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPNAME( 0x0030, 0x0030, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0020, "1" )
+	PORT_DIPSETTING(      0x0010, "2" )
+	PORT_DIPSETTING(      0x0030, "3" )
+	PORT_DIPSETTING(      0x0000, "4" )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(      0x0040, "600000" )
+	PORT_DIPSETTING(      0x0000, "800000" )
+	PORT_SERVICE( 0x0080, IP_ACTIVE_LOW )
+
+	PORT_START	// IN2
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER1 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER1 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER1 )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
+
+	PORT_START	// IN3
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER2 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
+
+	PORT_START	// IN4
+	PORT_BIT_IMPULSE( 0x0001, IP_ACTIVE_LOW, IPT_COIN1, 10 )
+	PORT_BIT_IMPULSE( 0x0002, IP_ACTIVE_LOW, IPT_COIN2, 10 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_TILT     )
+	PORT_BIT(  0x00f0, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+INPUT_PORTS_END
 
 /***************************************************************************
 
@@ -2225,7 +2311,7 @@ static MACHINE_DRIVER_START( survarts )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(ssv)
-	MDRV_CPU_REPLACE("main", V60, CLOCK_12MHz_UNK)
+	MDRV_CPU_REPLACE("main", V60, CLOCK_16MHz)
 	MDRV_CPU_MEMORY(survarts_readmem, survarts_writemem)
 
 	/* video hardware */
@@ -2265,9 +2351,8 @@ static MACHINE_DRIVER_START( stmblade )
 	MDRV_CPU_MEMORY(drifto94_readmem, drifto94_writemem)
 
 	MDRV_NVRAM_HANDLER(ssv)
-
 	/* video hardware */
-	MDRV_VISIBLE_AREA(0, 0x150-1, 4, 0xf0-1)
+	MDRV_VISIBLE_AREA(0, 0x158-1, 2, 0xf0-1)
 MACHINE_DRIVER_END
 
 
@@ -2762,10 +2847,64 @@ ROM_END
 
 /***************************************************************************
 
-								Survival Arts
+         Survival Arts
 
-Manufacturer: Sammy USA
-System Type: System SSV
+ Manufacturer: Sammy USA
+ System Type: System SSV
+
+ ----------------------
+ System SSV (STA-0001)
+ ----------------------
+ CPU  : NEC D70615GD-16 (V60)
+ Sound: Ensoniq ES5506 (OTTOR2)
+ OSC  : 42.9545MHz(X2) 48.0000MHz(X3)
+
+ Custom chips:
+ ST-0004 (Video DAC)
+ ST-0005 (Parallel I/O)
+ ST-0006 (Video controller)
+ ST-0007 (System controller)
+
+ Program Work RAM  : 256Kbitx2 (expandable to 1Mx2)
+ Object Work RAM   : 1Mbitx2
+ Color Palette RAM : 256Kbitx3 (expandable to 1Mx3)
+
+ -------------------------
+ SSV Subboard (SAM-5127)
+ -------------------------
+ ROMs:
+ USA-PR-H.u3 - V60 Program (27C4001)
+ USA-PR-L.u4 /
+
+ si001-10.s0 - Samples (16M-Mask)
+ si001-12.s2 /
+
+ si001-11.s1 - Samples (8M-Mask)
+ si001-13.s3 /
+
+ si001-01.a0 - Graphics (16M-Mask)
+ si001-04.a1 |
+ si001-05.a2 |
+ si001-02.b0 |
+ si001-05.b1 |
+ si001-07.b2 |
+ si001-03.c0 |
+ si001-06.c1 |
+ si001-09.c2 /
+
+ Empty Sockets:
+ DATA --- 16M-Mask
+ A3     |
+ B3     |
+ C3     |
+ D0-D3 /
+
+ GAL:
+ si003-14.u5 (16V8B)
+
+ MISC:
+ Pin Header for P3 (used)
+ Pin Header for P4 (unused)
 
 ***************************************************************************/
 
@@ -2923,7 +3062,123 @@ ROM_START( stmblade )
 	ROM_LOAD16_BYTE( "sb-snd0.u22", 0x000000, 0x200000, 0x4efd605b )
 ROM_END
 
+/***************************************************************************
 
+						Change Air Blade (Japan)
+
+Change Air Blade
+Sammy, 1999
+
+ROM board for use with System SSV Main Board
+PCB No: P1-112C
+
+Fairly sparsely populated board containing not much except....
+
+RAM   : 6262 (x1)
+OTHER : 3.6V Ni-Cd Battery
+PALs  : (x1, labelled AC412G00)
+
+ROMs  : (Filename  = ROM Label)
+        (Extension = PCB Location)
+------------------------------
+AC1801M01.U6    32M Mask
+AC1802M01.U9    32M Mask
+
+AC1805M01.U8    32M Mask
+AC1806M01.U11   32M Mask
+
+AC1803M01.U7    32M Mask
+AC1804M01.U10   32M Mask
+
+AC1807M01.U41   32M Mask
+AC1810E01.U32   27C160
+
+Developers:
+           More Info Reqd? Redump needed? Email me....
+           theguru@emuunlim.com
+
+***************************************************************************/
+
+ROM_START( cairblad )
+	ROM_REGION16_LE( 0x200000, REGION_USER1, 0 )		/* V60 Code */
+	ROM_LOAD16_WORD( "ac1810e0.u32",  0x000000, 0x200000, 0x13a0b4c2  ) // AC1810E01.U32    27C160
+
+	ROM_REGION( 0x2000000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD( "ac1801m0.u6",  0x0000000, 0x400000, 0x1b2b6943  ) // AC1801M01.U6    32M Mask
+	ROM_LOAD( "ac1802m0.u9",  0x0400000, 0x400000, 0xe053b087  ) // AC1802M01.U9    32M Mask
+
+	ROM_LOAD( "ac1803m0.u7",  0x0800000, 0x400000, 0x45484866  ) // AC1803M01.U7    32M Mask
+	ROM_LOAD( "ac1804m0.u10", 0x0c00000, 0x400000, 0x5e0b2285  ) // AC1804M01.U10   32M Mask
+
+	ROM_LOAD( "ac1805m0.u8",  0x1000000, 0x400000, 0x19771f43  ) // AC1805M01.U8    32M Mask
+	ROM_LOAD( "ac1806m0.u11", 0x1400000, 0x400000, 0x816b97dc  ) // AC1806M01.U11   32M Mask
+
+	ROM_FILL(                 0x1800000, 0x800000, 0          )
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD16_WORD_SWAP( "ac1410m0.u41", 0x000000, 0x400000, 0xecf1f255  ) // AC1807M01.U41   32M Mask
+ROM_END
+
+/***************************************************************************
+
+						Eagle Shot Golf
+Eagle Shot Golf
+Sammy, 199x
+
+Lower PCB
+PCB Number: GOLF ROM PCB
+RAM       : HM514400 (x8)
+PALs      : GAL16V8 (x2) labelled SI3-11 & SI3-12
+OTHER     : NEC D4701AC
+            Controls probably trackball, has 6 pin connector hooked up to a
+            4584 Logic IC. Joystick appears to be used also for selecting
+            stance, club and direction.
+
+ROMs      : U18 & U20 are used for main program.
+            All rest are 16M Mask
+            U23 & U24 are sound related, all others for GFX.
+
+***************************************************************************/
+
+ROM_START( eaglshot )
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 )		/* V60 Code */
+	ROM_LOAD16_BYTE( "si003-10.u20",  0x000001, 0x080000, 0xc8872e48 )
+	ROM_LOAD16_BYTE( "si003-09.u18",  0x000000, 0x080000, 0x219c71ce )
+
+	ROM_REGION( 0x0c00000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD( "si003-04.u10", 0x0000000, 0x200000, 0x4c65d1a1 )
+	ROM_LOAD( "si003-02.u12", 0x0200000, 0x200000, 0x92b4d50d )
+	ROM_LOAD( "si003-05.u30", 0x0400000, 0x200000, 0xdaf52d56 )
+	ROM_LOAD( "si003-03.u11", 0x0600000, 0x200000, 0x6ede4012 )
+	ROM_LOAD( "si003-01.u13", 0x0800000, 0x200000, 0xd7df0d52 )
+	ROM_LOAD( "si003-06.u31", 0x0a00000, 0x200000, 0x449f9ae5 )
+
+	ROM_REGION16_BE( 0x200000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD16_WORD_SWAP( "si003-07.u23", 0x000000, 0x200000, 0x81679fd6 )
+
+	ROM_REGION16_BE( 0x200000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD16_WORD_SWAP( "si003-08.u24", 0x000000, 0x200000, 0xd0122ba2 )
+ROM_END
+
+ROM_START( eaglshta )
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 )		/* V60 Code */
+	ROM_LOAD16_BYTE( "si003-10.prh",  0x000001, 0x080000, 0x2060c304 )
+	ROM_LOAD16_BYTE( "si003-09.prl",  0x000000, 0x080000, 0x36989004 )
+
+	ROM_REGION( 0x0c00000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD( "si003-04.u10", 0x0000000, 0x200000, 0x4c65d1a1 )
+	ROM_LOAD( "si003-02.u12", 0x0200000, 0x200000, 0x92b4d50d )
+	ROM_LOAD( "si003-05.u30", 0x0400000, 0x200000, 0xdaf52d56 )
+	ROM_LOAD( "si003-03.u11", 0x0600000, 0x200000, 0x6ede4012 )
+	ROM_LOAD( "si003-01.u13", 0x0800000, 0x200000, 0xd7df0d52 )
+	ROM_LOAD( "si003-06.u31", 0x0a00000, 0x200000, 0x449f9ae5 )
+
+	ROM_REGION16_BE( 0x200000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD16_WORD_SWAP( "si003-07.u23", 0x000000, 0x200000, 0x81679fd6 )
+
+	ROM_REGION16_BE( 0x200000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD16_WORD_SWAP( "si003-08.u24", 0x000000, 0x200000, 0xd0122ba2 )
+ROM_END
 
 /***************************************************************************
 
@@ -2943,18 +3198,21 @@ GAMEX( 1995,  hypreact, 0,        hypreact, hypreact, hypreact, ROT0,   "Sammy",
 GAMEX( 1996?, meosism,  0,        meosism,  meosism,  meosism,  ROT0,   "Sammy",              "Meosis Magic (Japan)",                         GAME_NO_COCKTAIL )
 GAMEX( 1997,  hypreac2, 0,        hypreac2, hypreac2, hypreac2, ROT0,   "Sammy",              "Mahjong Hyper Reaction 2 (Japan)",             GAME_NO_COCKTAIL )
 GAMEX( 1998,  sxyreact, 0,        sxyreact, sxyreact, sxyreact, ROT0,   "Sammy",              "Pachinko Sexy Reaction (Japan)",               GAME_NO_COCKTAIL )
+GAMEX( 1999,  cairblad, 0,        sxyreact, cairblad, sxyreact, ROT270, "Sammy",              "Change Air Blade (Japan)",                     GAME_NO_COCKTAIL )
 
 GAMEX( 1993,  keithlcy, 0,        keithlcy, keithlcy, keithlcy, ROT0,   "Visco",              "Dramatic Adventure Quiz Keith & Lucy (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1994,  drifto94, 0,        drifto94, drifto94, drifto94, ROT0,   "Visco",              "Drift Out '94 - The Hard Order (Japan)",       GAME_NO_COCKTAIL )
 GAMEX( 1996,  janjans1, 0,        janjans1, janjans1, janjans1, ROT0,   "Visco",              "Lovely Pop Mahjong Jan Jan Shimasyo (Japan)",  GAME_NO_COCKTAIL )
-GAMEX( 1997,  mslider,  0,        mslider,  mslider,  mslider,  ROT0,   "Visco / Datt Japan", "Monster Slider (Japan)",                       GAME_NO_COCKTAIL )
+GAMEX( 1996,  stmblade, 0,        stmblade, stmblade, stmblade, ROT270, "Visco",              "Storm Blade (US)",                             GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
 GAMEX( 1998,  ryorioh,  0,        ryorioh,  ryorioh,  ryorioh,  ROT0,   "Visco",              "Gourmet Battle Quiz Ryorioh CooKing (Japan)",  GAME_NO_COCKTAIL )
 
 // Games not working properly:
 
-GAMEX( 1996,  stmblade, 0,        stmblade, stmblade, stmblade, ROT270, "Visco",              "Storm Blade (US)",                             GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
+GAMEX( 1997,  mslider,  0,        mslider,  mslider,  mslider,  ROT0,   "Visco / Datt Japan", "Monster Slider (Japan)",                       GAME_NO_COCKTAIL ) // game logic?
 
 // Games not working at all:
 
 // Breaks immediately (on the first interrupt the core should use ISP!)
 GAMEX( 1994,  twineag2, 0,        twineag2, twineag2, twineag2, ROT270, "Seta",               "Twin Eagle II - The Rescue Mission",           GAME_NO_COCKTAIL | GAME_NOT_WORKING )
+GAMEX( 1994,  eaglshot, 0,        survarts, survarts, survarts, ROT0,   "Sammy",   			  "Eagle Shot Golf",                              GAME_NO_COCKTAIL | GAME_NOT_WORKING)
+GAMEX( 1994,  eaglshta, eaglshot, survarts, survarts, survarts, ROT0,   "Sammy",   			  "Eagle Shot Golf (alt)",                        GAME_NO_COCKTAIL | GAME_NOT_WORKING)

@@ -27,7 +27,16 @@
 #define FB_WNOISE 0x14002	/* (16bits) bit16 = bit0(out) ^ bit2 ^ bit15 */
 
 /* noise feedback for periodic noise mode */
-#define FB_PNOISE 0x08000	/* 15bit rotate */
+//#define FB_PNOISE 0x10000 /* 16bit rorate */
+#define FB_PNOISE 0x08000   /* JH 981127 - fixes Do Run Run */
+
+/*
+0x08000 is definitely wrong. The Master System conversion of Marble Madness
+uses periodic noise as a baseline. With a 15-bit rotate, the bassline is
+out of tune.
+The 16-bit rotate has been confirmed against a real PAL Sega Master System 2.
+Hope that helps the System E stuff, more news on the PSG as and when!
+*/
 
 /* noise generator start preset (for periodic noise) */
 #define NG_PRESET 0x0f35

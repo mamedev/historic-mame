@@ -238,7 +238,7 @@ READ_HANDLER( bzone_IN0_r )
 
 	res = readinputport(0);
 
-	if (cpu_gettotalcycles() & 0x100)
+	if (activecpu_gettotalcycles() & 0x100)
 		res |= IN0_3KHZ;
 	else
 		res &= ~IN0_3KHZ;
@@ -589,30 +589,35 @@ INPUT_PORTS_START( bradley )
 	PORT_DIPSETTING (  0x80, "6 credits/5 coins" )
 
 	PORT_START	/* IN3 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON3 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON4 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON5 )
+	PORT_BIT( 0x1f, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON6 )
+	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-	PORT_START	/* IN4 */
+	PORT_START	/* 1808 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BITX( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2, "Armor Piercing, Single Shot", KEYCODE_A, IP_JOY_DEFAULT )
+	PORT_BITX( 0x08, IP_ACTIVE_LOW, IPT_BUTTON3, "High Explosive, Single Shot", KEYCODE_Z, IP_JOY_DEFAULT )
+	PORT_BITX( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4, "Armor Piercing, Low Rate", KEYCODE_S, IP_JOY_DEFAULT )
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_BUTTON5, "High Explosive, Low Rate", KEYCODE_X, IP_JOY_DEFAULT )
+	PORT_BITX( 0x40, IP_ACTIVE_LOW, IPT_BUTTON6, "Armor Piercing, High Rate", KEYCODE_D, IP_JOY_DEFAULT )
+	PORT_BITX( 0x80, IP_ACTIVE_LOW, IPT_BUTTON7, "High Explosive, High Rate", KEYCODE_C, IP_JOY_DEFAULT )
+
+	PORT_START	/* 1809 */
 	PORT_BIT( 0x03, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_TOGGLE, "Range Finder", KEYCODE_R, IP_JOY_DEFAULT )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BITX( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_TOGGLE, "Magnification Toggle", KEYCODE_M, IP_JOY_DEFAULT )
+	PORT_BITX( 0x04, IP_ACTIVE_LOW, IPT_BUTTON9, "Select TOW Missiles", KEYCODE_T, IP_JOY_DEFAULT )
+	PORT_BITX( 0x08, IP_ACTIVE_LOW, IPT_BUTTON8, "7.62 mm Machine Gun", KEYCODE_V, IP_JOY_DEFAULT )
+	PORT_BITX( 0x10, IP_ACTIVE_LOW, IPT_BUTTON10 | IPF_TOGGLE, "Magnification Toggle", KEYCODE_M, IP_JOY_DEFAULT )
 	PORT_BIT( 0xe0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-	PORT_START	/* analog 0 */
-	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X, 25, 10, 64, 192 )
+	PORT_START	/* analog 0 = turret rotation */
+	PORT_ANALOG( 0xff, 0x88, IPT_AD_STICK_X, 25, 10, 0x48, 0xc8 )
 
-	PORT_START	/* analog 1 */
-	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y, 25, 10, 64, 192 )
+	PORT_START	/* analog 1 = turret elevation */
+	PORT_ANALOG( 0xff, 0x86, IPT_AD_STICK_Y, 25, 10, 0x46, 0xc6 )
 
-	PORT_START	/* analog 2 */
-	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_PLAYER2, 25, 10, 64, 192 )
+	PORT_START	/* analog 2 = shell firing range */
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_PLAYER2 | IPF_REVERSE, 25, 10, 0x10, 0xf0 )
 INPUT_PORTS_END
 
 
@@ -864,7 +869,7 @@ static READ_HANDLER( analog_data_r )
 static WRITE_HANDLER( analog_select_w )
 {
 	if (offset <= 2)
-		analog_data = readinputport(5 + offset);
+		analog_data = readinputport(6 + offset);
 }
 
 
@@ -879,7 +884,8 @@ static DRIVER_INIT( bradley )
 	install_mem_read_handler(0, 0x400, 0x7ff, MRA_RAM);
 	install_mem_write_handler(0, 0x400, 0x7ff, MWA_RAM);
 
-	install_mem_read_handler(0, 0x1809, 0x1809, input_port_4_r);
+	install_mem_read_handler(0, 0x1808, 0x1808, input_port_4_r);
+	install_mem_read_handler(0, 0x1809, 0x1809, input_port_5_r);
 	install_mem_read_handler(0, 0x180a, 0x180a, analog_data_r);
 	install_mem_write_handler(0, 0x1848, 0x1850, analog_select_w);
 }
@@ -905,5 +911,5 @@ static DRIVER_INIT( redbaron )
 GAME( 1980, bzone,    0,     bzone,    bzone,    bzone,    ROT0, "Atari", "Battle Zone (set 1)" )
 GAME( 1980, bzone2,   bzone, bzone,    bzone,    bzone,    ROT0, "Atari", "Battle Zone (set 2)" )
 GAMEX(1980, bzonec,   bzone, bzone,    bzone,    bzone,    ROT0, "Atari", "Battle Zone (cocktail)", GAME_NO_COCKTAIL )
-GAMEX(1980, bradley,  bzone, bradley,  bradley,  bradley,  ROT0, "Atari", "Bradley Trainer", GAME_NOT_WORKING )
+GAME( 1980, bradley,  0,     bradley,  bradley,  bradley,  ROT0, "Atari", "Bradley Trainer" )
 GAME( 1980, redbaron, 0,     redbaron, redbaron, redbaron, ROT0, "Atari", "Red Baron" )

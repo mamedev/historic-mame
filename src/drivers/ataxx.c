@@ -9,6 +9,7 @@
 		* World Soccer Finals
 		* Danny Sullivan's Indy Heat
 		* Brute Force
+		* Asylum (prototype)
 
 ****************************************************************************
 
@@ -294,8 +295,8 @@ INPUT_PORTS_START( brutforc )
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER3 )
     PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER3 )
     PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER3 )
-    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
     PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START3 )
     PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
@@ -372,7 +373,7 @@ static MACHINE_DRIVER_START( ataxx )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION((1000000*16)/(256*60))
-	
+
 	MDRV_MACHINE_INIT(ataxx)
 	MDRV_NVRAM_HANDLER(ataxx)
 
@@ -396,7 +397,7 @@ static MACHINE_DRIVER_START( wsf )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(ataxx)
-	
+
 	/* sound hardware */
 	MDRV_SOUND_ADD(YM2151, ym2151_interface)
 MACHINE_DRIVER_END
@@ -651,6 +652,62 @@ ROM_START( brutforc )
 ROM_END
 
 
+ROM_START( asylum )
+	ROM_REGION( 0x90000, REGION_CPU1, 0 )
+	ROM_LOAD( "asy-m0.64",   0x00000, 0x20000, 0xf5ca36fd )
+	ROM_RELOAD(              0x10000, 0x20000 )
+	ROM_LOAD( "asy-m1.65",   0x30000, 0x20000, 0x14d91d09 )
+	ROM_LOAD( "asy-m2.66",   0x50000, 0x20000, 0xa34a6ef9 )
+	ROM_LOAD( "asy-m3.67",   0x70000, 0x20000, 0x9db4c2b1 )
+
+	ROM_REGION( 0x1e0000, REGION_CPU2, 0 )
+	ROM_LOAD( "asy-sp0.151",  0x00000, 0x20000, 0x5ad5e3b0 )
+	ROM_LOAD( "asy-sp2.152",  0x20000, 0x20000, 0x6d2997ec )
+	ROM_CONTINUE(            0x120000, 0x20000 )
+	ROM_LOAD( "asy-sp4.153",  0x40000, 0x20000, 0x7c61973c )
+	ROM_CONTINUE(            0x140000, 0x20000 )
+	ROM_LOAD( "asy-sp6.154",  0x60000, 0x20000, 0xf0a4f9d3 )
+	ROM_CONTINUE(            0x160000, 0x20000 )
+	ROM_LOAD( "asy-sp8.155",  0x80000, 0x20000, 0x2ad0640e )
+	ROM_CONTINUE(            0x180000, 0x20000 )
+	ROM_LOAD( "asy-spa.156",  0xa0000, 0x20000, 0x9d584fb4 )
+	ROM_CONTINUE(            0x1a0000, 0x20000 )
+	ROM_LOAD( "asy-spc.157",  0xc0000, 0x20000, 0x8485e48c )
+	ROM_CONTINUE(            0x1c0000, 0x20000 )
+	ROM_LOAD( "asy-spe.158",  0xe0000, 0x20000, 0x49d19520 )
+
+	ROM_REGION( 0x100000, REGION_CPU3, 0 )
+	ROM_LOAD16_BYTE( "asy-65.3",  0x20001, 0x20000, 0x709bdc78 )
+	ROM_LOAD16_BYTE( "asy-65.6",  0x20000, 0x20000, 0xd019fb2e )
+	ROM_LOAD16_BYTE( "asy-65.4",  0x60001, 0x20000, 0x1882c3b2 )
+	ROM_RELOAD(             0xc0001, 0x20000 )
+	ROM_LOAD16_BYTE( "asy-65.5",  0x60000, 0x20000, 0x5814b307 )
+	ROM_RELOAD(             0xc0000, 0x20000 )
+
+	ROM_REGION( 0x180000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "asy-chr0.145",  0x000000, 0x40000, 0x4dbcae49 )
+	ROM_LOAD( "asy-chr1.146",  0x040000, 0x40000, 0x34e7762d )
+	ROM_LOAD( "asy-chr2.147",  0x080000, 0x40000, 0xf9b0d375 )
+	ROM_LOAD( "asy-chr3.148",  0x0c0000, 0x40000, 0x5efcae94 )
+	ROM_LOAD( "asy-chr4.149",  0x100000, 0x40000, 0xdbc2b155 )
+	ROM_LOAD( "asy-chr5.150",  0x140000, 0x40000, 0x9675e44f )
+
+	ROM_REGION( 0x40000, REGION_USER1, 0 ) /* X-ROM (data used by main processor) */
+	ROM_LOAD( "asy-m4.68",   0x00000, 0x10000, 0x77c8de62 )
+	ROM_CONTINUE(            0x20000, 0x10000 )
+	ROM_LOAD( "asy-m5.69",   0x10000, 0x10000, 0xbfc50d6c )
+	ROM_CONTINUE(            0x30000, 0x10000 )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 ) /* externally clocked DAC data */
+	ROM_LOAD( "asy-65.8",  0x00000, 0x20000, 0x624ad02f )
+	ROM_LOAD( "asy-65.9",  0x20000, 0x20000, 0xc92ff376 )
+	ROM_LOAD( "asy-65.10", 0x40000, 0x20000, 0x744dbf25 )
+	ROM_LOAD( "asy-65.11", 0x60000, 0x20000, 0x4b185d22 )
+
+	ROM_REGION( LELAND_BATTERY_RAM_SIZE + ATAXX_EXTRA_TRAM_SIZE, REGION_USER2, 0 ) /* extra RAM regions */
+ROM_END
+
+
 
 /*************************************
  *
@@ -800,6 +857,34 @@ static DRIVER_INIT( brutforc )
 }
 
 
+static DRIVER_INIT( asylum )
+{
+	/* initialize the default EEPROM state */
+	static const UINT16 asylum_eeprom_data[] =
+	{
+		0x02,0x0101,
+		0x03,0x0101,
+		0x04,0x0101,
+		0x05,0xffff,
+		0x06,0x0403,
+		0x07,0x0400,
+		0xffff
+	};
+	ataxx_init_eeprom(0x00, asylum_eeprom_data, 0x00);
+
+	leland_rotate_memory(0);
+	leland_rotate_memory(1);
+
+	/* set up additional input ports */
+	install_port_read_handler(0, 0x0d, 0x0d, input_port_3_r);
+	install_port_read_handler(0, 0x0e, 0x0e, input_port_4_r);
+	install_port_read_handler(0, 0x0f, 0x0f, input_port_5_r);
+
+	/* optimize the sound */
+	leland_i86_optimize_address(0x613);
+}
+
+
 
 /*************************************
  *
@@ -813,3 +898,4 @@ GAME( 1990, ataxxj,   ataxx,  ataxx,   ataxx,    ataxxj,   ROT0,   "Leland Corp.
 GAME( 1990, wsf,      0,      wsf,     wsf,      wsf,      ROT0,   "Leland Corp.", "World Soccer Finals" )
 GAME( 1991, indyheat, 0,      wsf,     indyheat, indyheat, ROT0,   "Leland Corp.", "Danny Sullivan's Indy Heat" )
 GAME( 1991, brutforc, 0,      wsf,     brutforc, brutforc, ROT0,   "Leland Corp.", "Brute Force" )
+GAME( 1991, asylum,   0,      wsf,     brutforc, asylum,   ROT270, "Leland Corp.", "Asylum (prototype)" )

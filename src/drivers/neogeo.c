@@ -14,6 +14,8 @@
 
 	- Effects created using the Raster Interrupt are probably not 100% correct,
 	  e.g.:
+	  - full screen zoom in trally and tpgolf is broken again :-( I think this was
+	    caused by the fix for kof94 japan stage.
 	  - Tests on the hardware show that there are 264 raster lines; however, there
 	    are one or two line alignemnt issues with some games, SCANLINE_ADJUST is
 	    a kludge to get the alignment almost right in most cases.
@@ -47,7 +49,7 @@
 	  confuses the emulated one. This is fixed by patching the bugged code.
 
 	- Some rather bad sounding parts in a couple of Games
-		(doubledr Intro Sequence, shocktro End of Intro)
+		(shocktro End of Intro)
 
 	- In mahretsu music should stop when you begin play (correct after a continue) *untested*
 
@@ -436,7 +438,7 @@ static WRITE16_HANDLER( neo_z80_w )
 	pending_command = 1;
 	cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
 	/* spin for a while to let the Z80 read the command (fixes hanging sound in pspikes2) */
-	cpu_spinuntil_time(TIME_IN_USEC(50));
+	cpu_spinuntil_time(TIME_IN_USEC(10));
 }
 
 
@@ -718,7 +720,7 @@ static READ_HANDLER( z80_port_r )
 
 	case 0x08:
 		{
-			UINT8 *mem08 = memory_region(REGION_CPU2);
+			UINT8 *mem08 = memory_region(REGION_CPU2)+0x10000;
 			bank[3] = 0x0800 * ((offset >> 8) & 0x7f);
 			cpu_setbank(8,&mem08[bank[3]]);
 			return 0;
@@ -727,7 +729,7 @@ static READ_HANDLER( z80_port_r )
 
 	case 0x09:
 		{
-			UINT8 *mem08 = memory_region(REGION_CPU2);
+			UINT8 *mem08 = memory_region(REGION_CPU2)+0x10000;
 			bank[2] = 0x1000 * ((offset >> 8) & 0x3f);
 			cpu_setbank(7,&mem08[bank[2]]);
 			return 0;
@@ -736,7 +738,7 @@ static READ_HANDLER( z80_port_r )
 
 	case 0x0a:
 		{
-			UINT8 *mem08 = memory_region(REGION_CPU2);
+			UINT8 *mem08 = memory_region(REGION_CPU2)+0x10000;
 			bank[1] = 0x2000 * ((offset >> 8) & 0x1f);
 			cpu_setbank(6,&mem08[bank[1]]);
 			return 0;
@@ -745,7 +747,7 @@ static READ_HANDLER( z80_port_r )
 
 	case 0x0b:
 		{
-			UINT8 *mem08 = memory_region(REGION_CPU2);
+			UINT8 *mem08 = memory_region(REGION_CPU2)+0x10000;
 			bank[0] = 0x4000 * ((offset >> 8) & 0x0f);
 			cpu_setbank(5,&mem08[bank[0]]);
 			return 0;
@@ -1081,36 +1083,40 @@ MACHINE_DRIVER_END
 #define NEO_BIOS_SOUND_512K(name,sum) \
 	ROM_REGION16_BE( 0x20000, REGION_USER1, 0 ) \
 	ROM_LOAD16_WORD_SWAP( "neo-geo.rom", 0x00000, 0x020000, 0x9036d879 ) \
-	ROM_REGION( 0x80000, REGION_CPU2, 0 ) \
+	ROM_REGION( 0x90000, REGION_CPU2, 0 ) \
 	ROM_LOAD( "ng-sm1.rom", 0x00000, 0x20000, 0x97cf998b )  /* we don't use the BIOS anyway... */ \
 	ROM_LOAD( name, 		0x00000, 0x80000, sum ) /* so overwrite it with the real thing */ \
+	ROM_RELOAD(             0x10000, 0x80000 ) \
 	ROM_REGION( 0x10000, REGION_GFX4, 0 ) \
 	ROM_LOAD( "ng-lo.rom", 0x00000, 0x10000, 0xe09e253c )  /* Y zoom control */
 
 #define NEO_BIOS_SOUND_256K(name,sum) \
 	ROM_REGION16_BE( 0x20000, REGION_USER1, 0 ) \
 	ROM_LOAD16_WORD_SWAP( "neo-geo.rom", 0x00000, 0x020000, 0x9036d879 ) \
-	ROM_REGION( 0x40000, REGION_CPU2, 0 ) \
+	ROM_REGION( 0x50000, REGION_CPU2, 0 ) \
 	ROM_LOAD( "ng-sm1.rom", 0x00000, 0x20000, 0x97cf998b )  /* we don't use the BIOS anyway... */ \
 	ROM_LOAD( name, 		0x00000, 0x40000, sum ) /* so overwrite it with the real thing */ \
+	ROM_RELOAD(             0x10000, 0x40000 ) \
 	ROM_REGION( 0x10000, REGION_GFX4, 0 ) \
 	ROM_LOAD( "ng-lo.rom", 0x00000, 0x10000, 0xe09e253c )  /* Y zoom control */
 
 #define NEO_BIOS_SOUND_128K(name,sum) \
 	ROM_REGION16_BE( 0x20000, REGION_USER1, 0 ) \
 	ROM_LOAD16_WORD_SWAP( "neo-geo.rom", 0x00000, 0x020000, 0x9036d879 ) \
-	ROM_REGION( 0x40000, REGION_CPU2, 0 ) \
+	ROM_REGION( 0x50000, REGION_CPU2, 0 ) \
 	ROM_LOAD( "ng-sm1.rom", 0x00000, 0x20000, 0x97cf998b )  /* we don't use the BIOS anyway... */ \
 	ROM_LOAD( name, 		0x00000, 0x20000, sum ) /* so overwrite it with the real thing */ \
+	ROM_RELOAD(             0x10000, 0x20000 ) \
 	ROM_REGION( 0x10000, REGION_GFX4, 0 ) \
 	ROM_LOAD( "ng-lo.rom", 0x00000, 0x10000, 0xe09e253c )  /* Y zoom control */
 
 #define NEO_BIOS_SOUND_64K(name,sum) \
 	ROM_REGION16_BE( 0x20000, REGION_USER1, 0 ) \
 	ROM_LOAD16_WORD_SWAP( "neo-geo.rom", 0x00000, 0x020000, 0x9036d879 ) \
-	ROM_REGION( 0x40000, REGION_CPU2, 0 ) \
+	ROM_REGION( 0x50000, REGION_CPU2, 0 ) \
 	ROM_LOAD( "ng-sm1.rom", 0x00000, 0x20000, 0x97cf998b )  /* we don't use the BIOS anyway... */ \
 	ROM_LOAD( name, 		0x00000, 0x10000, sum ) /* so overwrite it with the real thing */ \
+	ROM_RELOAD(             0x10000, 0x10000 ) \
 	ROM_REGION( 0x10000, REGION_GFX4, 0 ) \
 	ROM_LOAD( "ng-lo.rom", 0x00000, 0x10000, 0xe09e253c )  /* Y zoom control */
 
@@ -1633,11 +1639,11 @@ ROM_START( bjourney )
 
 	NEO_BIOS_SOUND_64K( "022-m1.bin",  0xa9e30496 )
 
-	ROM_REGION( 0x100000, REGION_SOUND1, ROMREGION_SOUNDONLY )
-	ROM_LOAD( "022-v11.bin", 0x000000, 0x100000, 0x2cb4ad91 )
+	ROM_REGION( 0x200000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_LOAD( "022-v1.bin", 0x000000, 0x100000, 0x2cb4ad91 )
+	ROM_LOAD( "022-v2.bin", 0x100000, 0x100000, 0x65a54d13 )
 
-	ROM_REGION( 0x100000, REGION_SOUND2, ROMREGION_SOUNDONLY )
-	ROM_LOAD( "022-v22.bin", 0x000000, 0x100000, 0x65a54d13 )
+	NO_DELTAT_REGION
 
 	ROM_REGION( 0x300000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "022-c1.bin", 0x000000, 0x100000, 0x4d47a48c )
@@ -3918,9 +3924,10 @@ ROM_START( irrmaze )
 	ROM_REGION16_BE( 0x20000, REGION_USER1, 0 )
 	/* special BIOS with trackball support */
 	ROM_LOAD16_WORD_SWAP( "236-bios.bin", 0x00000, 0x020000, 0x853e6b96 )
-	ROM_REGION( 0x40000, REGION_CPU2, 0 )
+	ROM_REGION( 0x50000, REGION_CPU2, 0 )
 	ROM_LOAD( "ng-sm1.rom", 0x00000, 0x20000, 0x97cf998b )  /* we don't use the BIOS anyway... */
-	ROM_LOAD( "236-m1.bin",  0x00000, 0x20000, 0x880a1abd )  /* so overwrite it with the real thing */
+	ROM_LOAD( "236-m1.bin", 0x00000, 0x20000, 0x880a1abd )  /* so overwrite it with the real thing */
+	ROM_RELOAD(             0x10000, 0x20000 )
 	ROM_REGION( 0x10000, REGION_GFX4, 0 )
 	ROM_LOAD( "ng-lo.rom", 0x00000, 0x10000, 0xe09e253c )  /* Y zoom control */
 
@@ -4939,7 +4946,7 @@ ROM_START( neogeo )
 	ROM_REGION16_BE( 0x020000, REGION_USER1, 0 )
 	ROM_LOAD16_WORD_SWAP( "neo-geo.rom", 0x00000, 0x020000, 0x9036d879 )
 
-	ROM_REGION( 0x40000, REGION_CPU2, 0 )
+	ROM_REGION( 0x50000, REGION_CPU2, 0 )
 	ROM_LOAD( "ng-sm1.rom", 0x00000, 0x20000, 0x97cf998b )
 
 	ROM_REGION( 0x10000, REGION_GFX4, 0 )
@@ -5212,19 +5219,6 @@ DRIVER_INIT( kof2001 )
 	neogeo_fix_bank_type = 0;
 	kof2000_neogeo_gfx_decrypt(0x1e);
 	init_neogeo();
-#if 0
-	/* the S data comes from the end of the C data */
-	/* thanks to Elsemi for the info */
-	int rom_size = memory_region_length(REGION_GFX3);
-	int i;
-	int tx_size = memory_region_length(REGION_GFX1);
-	UINT8 *src = memory_region(REGION_GFX3)+rom_size-tx_size;
-	UINT8 *dst = memory_region(REGION_GFX1);
-	for (i = 0;i < tx_size;i++)
-		dst[i] = src[((i & 0x1fff0) << 1) + ((i & 0x7) << 2) + ((i & 0x8) >> 2) + ((i & 0x20000)>>17)];
-	neogeo_fix_bank_type = 0;
-	init_neogeo();
-#endif
 }
 
 DRIVER_INIT( mslug4 )

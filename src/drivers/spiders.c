@@ -295,7 +295,7 @@ INPUT_PORTS_START( spiders )
     PORT_BIT( 0xFF, IP_ACTIVE_HIGH, IPT_VBLANK )
 
     PORT_START      /* Connected to PIA0 CB1 input */
-    PORT_BITX(0xff, 0xff, IP_ACTIVE_LOW, "PS1 (Crosshatch)", KEYCODE_F2, IP_JOY_NONE )
+    PORT_BITX(0xff, 0xff, IP_ACTIVE_LOW, "PS1 (Crosshatch)", KEYCODE_F1, IP_JOY_NONE )
 
 INPUT_PORTS_END
 

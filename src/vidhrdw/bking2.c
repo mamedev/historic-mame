@@ -7,22 +7,34 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
-static UINT8 xld1=0;
-static UINT8 xld2=0;
-static UINT8 xld3=0;
-static UINT8 yld1=0;
-static UINT8 yld2=0;
-static UINT8 yld3=0;
-static int msk=0;
+extern UINT8* bking2_playfield_ram;
+
+
+static int pc3259_output[4];
+static int pc3259_mask;
+
+static UINT8 xld1;
+static UINT8 xld2;
+static UINT8 xld3;
+static UINT8 yld1;
+static UINT8 yld2;
+static UINT8 yld3;
+
 static int ball1_pic;
 static int ball2_pic;
 static int crow_pic;
 static int crow_flip;
 static int palette_bank;
 static int controller;
-static int hitclr=0;
+static int hit;
+static int flip_screen;
+
+static struct mame_bitmap* helper0;
+static struct mame_bitmap* helper1;
+
+static struct tilemap* tilemap;
+
 
 /***************************************************************************
 
@@ -94,75 +106,68 @@ PALETTE_INIT( bking2 )
 	}
 }
 
+
 WRITE_HANDLER( bking2_xld1_w )
 {
-    xld1 = -data;
+	xld1 = -data;
 }
 
 WRITE_HANDLER( bking2_yld1_w )
 {
-    yld1 = -data;
+	yld1 = -data;
 }
 
 WRITE_HANDLER( bking2_xld2_w )
 {
-    xld2 = -data;
+	xld2 = -data;
 }
 
 WRITE_HANDLER( bking2_yld2_w )
 {
-    yld2 = -data;
+	yld2 = -data;
 }
 
 WRITE_HANDLER( bking2_xld3_w )
 {
-    xld3 = -data;
+	xld3 = -data;
 }
 
 WRITE_HANDLER( bking2_yld3_w )
 {
-    yld3 = -data;
+	yld3 = -data;
 }
 
-WRITE_HANDLER( bking2_msk_w )
-{
-    msk = data;
-}
 
 WRITE_HANDLER( bking2_cont1_w )
 {
-    /* D0 = COIN LOCK */
-    /* D1 =  BALL 5 (Controller selection) */
-    /* D2 = VINV (flip screen) */
-    /* D3 = Not Connected */
-    /* D4-D7 = CROW0-CROW3 (selects crow picture) */
+	/* D0 = COIN LOCK */
+	/* D1 = BALL 5 (Controller selection) */
+	/* D2 = VINV (flip screen) */
+	/* D3 = Not Connected */
+	/* D4-D7 = CROW0-CROW3 (selects crow picture) */
 
 	coin_lockout_global_w(~data & 0x01);
 
-	flip_screen_set(data & 0x04);
+	flip_screen = data & 0x04;
+
+	tilemap_set_flip(ALL_TILEMAPS, flip_screen ? TILEMAP_FLIPX | TILEMAP_FLIPY : 0);
 
 	controller = data & 0x02;
 
-    crow_pic = (data >> 4) & 0x0f;
+	crow_pic = (data >> 4) & 0x0f;
 }
 
 WRITE_HANDLER( bking2_cont2_w )
 {
-	static int last = -1;
+	/* D0-D2 = BALL10 - BALL12 (Selects player 1 ball picture) */
+	/* D3-D5 = BALL20 - BALL22 (Selects player 2 ball picture) */
+	/* D6 = HIT1 */
+	/* D7 = HIT2 */
 
-    /* D0-D2 = BALL10 - BALL12 (Selects player 1 ball picture) */
-    /* D3-D5 = BALL20 - BALL22 (Selects player 2 ball picture) */
-    /* D6 = HIT1 */
-    /* D7 = HIT2 */
+	ball1_pic = (data >> 0) & 0x07;
+	ball2_pic = (data >> 3) & 0x07;
 
-    ball1_pic = data & 0x07;
-    ball2_pic = (data >> 3) & 0x07;
-
-	if ((last & 0xc0) != (data & 0xc0))
-	{
-		//debug_key_pressed = 1;
-		last = data;
-	}
+	hit = data >> 6;
 }
 
 WRITE_HANDLER( bking2_cont3_w )
@@ -173,139 +178,208 @@ WRITE_HANDLER( bking2_cont3_w )
 
 	crow_flip = ~data & 0x01;
 
-	set_vh_global_attribute(&palette_bank, (data >> 1) & 0x03);
+	if (palette_bank != ((data >> 1) & 0x03))
+	{
+		tilemap_mark_all_tiles_dirty(tilemap);
+	}
+
+	palette_bank = (data >> 1) & 0x03;
 
 	mixer_sound_enable_global_w(~data & 0x08);
 }
 
 
+WRITE_HANDLER( bking2_msk_w )
+{
+	pc3259_mask++;
+}
+
+
 WRITE_HANDLER( bking2_hitclr_w )
 {
-    hitclr = data;
+	pc3259_mask = 0;
+
+	pc3259_output[0] = 0;
+	pc3259_output[1] = 0;
+	pc3259_output[2] = 0;
+	pc3259_output[3] = 0;
+}
+
+
+WRITE_HANDLER( bking2_playfield_w )
+{
+	if (bking2_playfield_ram[offset] != data)
+	{
+		tilemap_mark_tile_dirty(tilemap, offset / 2);
+	}
+
+	bking2_playfield_ram[offset] = data;
 }
 
 
 READ_HANDLER( bking2_input_port_5_r )
 {
-	return controller ? input_port_7_r(0) : input_port_5_r(0);
+	return readinputport(controller ? 7 : 5);
 }
 
 READ_HANDLER( bking2_input_port_6_r )
 {
-	return controller ? input_port_8_r(0) : input_port_6_r(0);
+	return readinputport(controller ? 8 : 6);
 }
 
-
-/* Hack alert.  I don't know how to upper bits work, so I'm just returning
-   what the code expects, otherwise the collision detection is skipped */
 READ_HANDLER( bking2_pos_r )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	UINT16 pos, x, y;
-
-
-	if (hitclr & 0x04)
-	{
-		x = xld2;
-		y = yld2;
-	}
-	else
-	{
-		x = xld1;
-		y = yld1;
-	}
-
-	pos = ((y >> 3 << 5) | (x >> 3)) + 2;
-
-	switch (offset)
-	{
-	case 0x00:
-		return (pos & 0x0f) << 4;
-	case 0x08:
-		return (pos & 0xf0);
-	case 0x10:
-		return ((pos & 0x0300) >> 4) | (RAM[0x804c] & 0xc0);
-	default:
-		return 0;
-	}
+	return pc3259_output[offset / 8] << 4;
 }
 
-/***************************************************************************
 
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+static UINT32 get_memory_offset(UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows)
+{
+	return num_cols * row + col;
+}
 
-***************************************************************************/
+
+static void get_tile_info(int tile_index)
+{
+	UINT8 code0 = bking2_playfield_ram[2 * tile_index + 0];
+	UINT8 code1 = bking2_playfield_ram[2 * tile_index + 1];
+
+	int flags = 0;
+
+	if (code1 & 4) flags |= TILE_FLIPX;
+	if (code1 & 8) flags |= TILE_FLIPY;
+
+	SET_TILE_INFO(0, code0 + 256 * code1, palette_bank, flags)
+}
+
+
+VIDEO_START( bking2 )
+{
+	if ((tilemap = tilemap_create(get_tile_info, get_memory_offset, 0, 8, 8, 32, 32)) == NULL)
+	{
+		return 1;
+	}
+	if ((helper0 = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == NULL)
+	{
+		return 1;
+	}
+	if ((helper1 = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == NULL)
+	{
+		return 1;
+	}
+
+	return 0;
+}
+
+
 VIDEO_UPDATE( bking2 )
 {
-	int offs;
-
-
-	if (get_vh_global_attribute_changed())
-	{
-		memset(dirtybuffer,1,videoram_size);
-	}
-
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 2;offs >= 0;offs -= 2)
-	{
-		if (dirtybuffer[offs] || dirtybuffer[offs + 1])
-		{
-			int sx,sy;
-			int flipx,flipy;
-
-			dirtybuffer[offs] = dirtybuffer[offs + 1] = 0;
-
-			sx = (offs/2) % 32;
-			sy = (offs/2) / 32;
-			flipx = videoram[offs + 1] & 0x04;
-			flipy = videoram[offs + 1] & 0x08;
-
-			if (flip_screen)
-			{
-				flipx = !flipx;
-				flipy = !flipy;
-
-				sx = 31 - sx;
-				sy = 31 - sy;
-			}
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + ((videoram[offs + 1] & 0x03) << 8),
-					palette_bank,
-					flipx,flipy,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
-		}
-	}
-
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	tilemap_draw(bitmap, cliprect, tilemap, 0, 0);
 
 	/* draw the balls */
-	drawgfx(bitmap,Machine->gfx[2],
-			ball1_pic,
-			palette_bank,
-			0,0,
-			xld1,yld1,
-			&Machine->visible_area,TRANSPARENCY_PEN,0);
 
-	drawgfx(bitmap,Machine->gfx[3],
-			ball2_pic,
-			palette_bank,
-			0,0,
-			xld2,yld2,
-			&Machine->visible_area,TRANSPARENCY_PEN,0);
+	drawgfx(bitmap, Machine->gfx[2],
+		ball1_pic,
+		palette_bank,
+		0, 0,
+		xld1, yld1,
+		cliprect, TRANSPARENCY_PEN, 0);
+
+	drawgfx(bitmap, Machine->gfx[3],
+		ball2_pic,
+		palette_bank,
+		0, 0,
+		xld2, yld2,
+		cliprect, TRANSPARENCY_PEN, 0);
 
 	/* draw the crow */
-	drawgfx(bitmap,Machine->gfx[1],
-			crow_pic,
-			palette_bank,
-			crow_flip,crow_flip,
-			crow_flip ? xld3-16 : 256-xld3, crow_flip ? yld3-16 : 256-yld3,
-			&Machine->visible_area,TRANSPARENCY_PEN,0);
+
+	drawgfx(bitmap, Machine->gfx[1],
+		crow_pic,
+		palette_bank,
+		crow_flip, crow_flip,
+		crow_flip ? xld3 - 16 : 256 - xld3, crow_flip ? yld3 - 16 : 256 - yld3,
+		cliprect, TRANSPARENCY_PEN, 0);
+}
+
+
+VIDEO_EOF( bking2 )
+{
+	static struct rectangle rect = { 0, 7, 0, 15 };
+
+	int xld = 0;
+	int yld = 0;
+
+	UINT32 latch = 0;
+
+	if (pc3259_mask == 6)	/* player 1 */
+	{
+		xld = xld1;
+		yld = yld1;
+
+		drawgfx(helper1, Machine->gfx[2],
+			ball1_pic,
+			0,
+			0, 0,
+			0, 0,
+			&rect, TRANSPARENCY_NONE, 0);
+
+		latch = 0x0C00;
+	}
+
+	if (pc3259_mask == 3)	/* player 2 */
+	{
+		xld = xld2;
+		yld = yld2;
+
+		drawgfx(helper1, Machine->gfx[3],
+			ball2_pic,
+			0,
+			0, 0,
+			0, 0,
+			&rect, TRANSPARENCY_NONE, 0);
+
+		latch = 0x0400;
+	}
+
+	tilemap_set_scrollx(tilemap, 0, flip_screen ? -xld : xld);
+	tilemap_set_scrolly(tilemap, 0, flip_screen ? -yld : yld);
+
+	tilemap_draw(helper0, &rect, tilemap, 0, 0);
+
+	tilemap_set_scrollx(tilemap, 0, 0);
+	tilemap_set_scrolly(tilemap, 0, 0);
+
+	if (latch != 0)
+	{
+		const UINT8* MASK = memory_region(REGION_USER1) + 8 * hit;
+
+		int x;
+		int y;
+
+		for (y = rect.min_y; y <= rect.max_y; y++)
+		{
+			const UINT16* p0 = helper0->line[y];
+			const UINT16* p1 = helper1->line[y];
+
+			for (x = rect.min_x; x <= rect.max_x; x++)
+			{
+				if (MASK[p0[x] & 7] && p1[x])
+				{
+					int col = (xld + x) / 8 + 1;
+					int row = (yld + y) / 8 + 0;
+
+					latch |= (flip_screen ? 31 - col : col) << 0;
+					latch |= (flip_screen ? 31 - row : row) << 5;
+
+					pc3259_output[0] = (latch >> 0x0) & 0xf;
+					pc3259_output[1] = (latch >> 0x4) & 0xf;
+					pc3259_output[2] = (latch >> 0x8) & 0xf;
+					pc3259_output[3] = (latch >> 0xc) & 0xf;
+
+					return;
+				}
+			}
+		}
+	}
 }

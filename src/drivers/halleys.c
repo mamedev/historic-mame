@@ -1,11 +1,19 @@
-/***************************************************************************
-
+/*
 Halley's Comet, 1986 Taito
 
-Notes:
-	- video hardware uses independent two bitmapped layers
-	- source graphics can be 2bpp or 4bpp
+  Issues:
+	- many unknown registers
+	- the starfield isn't being drawn correctly
+	- there may be scroll registers for the background planes
+	- main CPU resets a few seconds after starting a game
+	- there don't appear to be any blitter commands for the player's ship or shots
 
+
+
+According to the KLOV, Halley's Comet was created by the
+Pacific Manufacturing Company, Ltd. and licensed to Taito.
+This isn't true: Halley's Comet was created by Fukio Mitsuji (MTJ),
+who also created Bubble Bobble, Rainbow Islands, Syvalion, etc.
 
 CPU:	MC68B09EP Z80A(SOUND)
 Sound:	YM2149F x 4
@@ -108,73 +116,25 @@ Video sync   6 F   Video sync                 Post   6 F   Post
 
 
 
-DIP switch 2      Option            1    2    3    4    5    6    7    8
------------------------------------------------------------------------------
-Free play         *off             off  off                 off       off
-                   on                   on
------------------------------------------------------------------------------
-Start round        *1                        off  off  off
-                    4                        on
-                    7                        off  on
-                   10                        on
-                   13                        off  off  on
-                   16                        on
-                   19                        off  on
-                   22                        on
------------------------------------------------------------------------------
-Collision         Normal                                        off
-detection         No hit                                        on
------------------------------------------------------------------------------
-
-
-
-
-DIP switch 3      Option            1    2    3    4    5    6    7    8
------------------------------------------------------------------------------
-Difficulty           B             off  off                      off  off
-                     A             on
-                    *C             off  on
-                     D             on
------------------------------------------------------------------------------
-Bonus ships  20000/60000/680000              off  off
-             20000/80000/840000              on
-            *20000/100000/920000             off  on
-             10000/50000/560000              on
------------------------------------------------------------------------------
-Ships at start      *3                                 off  off
-                     2                                 on
-                     4                                 off  on
-                     4 with no bonus ships             on
------------------------------------------------------------------------------
-
-
-
-DIP switch 4      Option            1    2    3    4    5    6    7    8
------------------------------------------------------------------------------
-Cabinet type      Table            off
-                  Upright          on
------------------------------------------------------------------------------
-Screen flip                             off
-                                        on
------------------------------------------------------------------------------
-Test mode                                    off
-                                             on
------------------------------------------------------------------------------
-Demo sound                                   off
-                                                  on
------------------------------------------------------------------------------
-Coin A           1 coin / 1 credit                     off  off
-                 1 coin / 2 credits                    on
-                 2 coins / 1 credit                    off  on
-                 2 coins / 3 credits                   on
------------------------------------------------------------------------------
-Coin B           1 coin / 1 credit                               off  off
-                 1 coin / 2 credits                              on
-                 2 coins / 1 credit                              off  on
-                 2 coins / 3 credits                             on
------------------------------------------------------------------------------
-
-***************************************************************************/
+  color test layout:
+	 +------+-------+------+------+
+	 |      |       |      |      |
+	 | White| Blue  |Green | Red  | 1 (brightest)
+	 |      |       |      |      |
+	 +------+-------+------+------+
+	 |      |       |      |      |
+	 |      |       |      |      | 2
+	 |      |       |      |      |
+	 +------+-------+------+------+
+	 |      |       |      |      |
+	 |      |       |      |      | 3
+	 |      |       |      |      |
+	 +------+-------+------+------+
+	 |      |       |      |      |
+	 |      |       |      |      | 4 (darkest)
+	 |      |       |      |      |
+	 +------+-------+------+------+
+*/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -186,8 +146,8 @@ static data8_t *blitter_ram;
 
 PALETTE_INIT( halleys )
 {
+	/* note: the colors in this driver are totally wrong. */
 	int i;
-
 	for (i = 0; i < 32; i++)
 	{
 		int bit0,bit1,bit2,r,g,b;
@@ -229,17 +189,7 @@ VIDEO_UPDATE( halleys )
 {
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,cliprect,TRANSPARENCY_NONE,0);
 	copybitmap(bitmap,tmpbitmap2,0,0,0,0,cliprect,TRANSPARENCY_PEN,0);
-
-	/* There are several busy loops that poll 0xff0b, expecting it to increment.
-	 * I haven't found any interrupt code which writes to 0xff0b, so do change it
-	 * here as a side effect of each vblank.
-	 */
-	memory_region( REGION_CPU1 )[0xff0b]++;
 } /* halleys */
-
-
-
-
 
 static READ_HANDLER( vector_r )
 {
@@ -268,13 +218,9 @@ static READ_HANDLER( vector_r )
 	the only vector that varies is the one for IRQ (and both routines do very
 	little).
 	*/
-	int vector_base = 0xffe0;
-
-	if ((offset & ~1) == 6)
-	{
-		if (rand()&1) vector_base = 0xfff0;
-	}
-
+	int vector_base;
+	vector_base = 0xffe0;
+//	vector_base = 0xfff0;
 	return memory_region(REGION_CPU1)[vector_base + offset];
 } /* vector_r */
 
@@ -292,23 +238,17 @@ blit( const data8_t *pMem )
 	struct mame_bitmap *pDest;
 	const data8_t *pGfx1 = memory_region( REGION_GFX1 );
 	const data8_t *pGfx2 = &pGfx1[0x10000];
-
-//	pMem[0x5]	?
-//	pMem[0x6]	color
-//	pMem[0x7]	bit 0x80 selects layer to draw to
-
+	int mode	= pMem[0x5];
+	int color	= pMem[0x6];
+	int code	= pMem[0x7];
 	int y		= pMem[0x8];
 	int x		= pMem[0x9];
-	int w		= pMem[0xa];
-	int h		= pMem[0xb];
-	int bitOffs = pMem[0xf]+pMem[0xe]*256;
-
+	int h		= pMem[0xa];
+	int w		= pMem[0xb];
+	int bit0	= pMem[0xd]+pMem[0xc]*256;
+	int bit1	= pMem[0xf]+pMem[0xe]*256;
 	int xpos,ypos,pen;
-	int clut[4] = { 0x0,0xf,0xe,0x6 };
-	int code;
 
-	bitOffs &= 0x3fff; /* ? */
-	code = pMem[0x7];
 	if( code&0x80 )
 	{
 		pDest = tmpbitmap;
@@ -318,20 +258,34 @@ blit( const data8_t *pMem )
 		pDest = tmpbitmap2;
 	}
 
-	if( bitOffs ) bitOffs = 8*(0x10000 - bitOffs);
+	bit0 &= 0x3fff;
+	bit1 &= 0x3fff;
+	if( color&0x80 )
+	{
+		bit0 |= 0x8000;
+		bit1 |= 0x8000;
+	}
+	if( code&0x40 )
+	{
+		bit0 |= 0x4000;
+		bit1 |= 0x4000;
+	}
+
+	bit1 = 8*(0x10000 - bit1);
+	bit0 = 8*(0x10000 - bit0);
 
 	for( ypos=0; ypos<h; ypos++ )
 	{
-		for( xpos=0; xpos<w; xpos++ )
+		for( xpos=0; xpos<=w; xpos++ )
 		{
 			pen = 0;
-			if( bitOffs )
+			if( mode!=0x80 )
 			{
-				--bitOffs;
-				if( nthbit( pGfx1, bitOffs ) ) pen+=1;
-				if( nthbit( pGfx2, bitOffs ) ) pen+=2;
+				if( nthbit( pGfx1, --bit1 ) ) pen|=1|4;
+				if( nthbit( pGfx2, --bit0 ) ) pen|=2|4;
+				if( mode==0x87 && pen==0 ) continue;
 			}
-			plot_pixel( pDest, (x+xpos)&0xff, (y+ypos)&0xff, clut[pen] );
+			plot_pixel( pDest, (x+xpos)&0xff, (y+ypos)&0xff, pen );
 		}
 	}
 } /* blit */
@@ -341,28 +295,34 @@ static WRITE_HANDLER( blitter_w )
 	int pc = activecpu_get_pc();
 
 	blitter_ram[offset] = data;
-	if( pc==0x8025 ) return; /* return if this is part of the memory wipe on startup */
+	if( pc==0x8025 ) return; /* HACK: return if this is part of the memory wipe on startup */
 
 	if( (offset&0xf)==0 )
 	{
 		blit( &blitter_ram[offset] );
-
-		logerror( "%04x BLT[%04x]: %02x:%02x:%02x y=%02x x=%02x w=%02x h=%02x %02x%02x.%02x%02x\n",
+		logerror( "%04x BLT[%04x]: "
+			"%02x %02x %02x %02x %02x %02x:%02x:%02x %02x %02x %02x %02x %02x%02x.%02x%02x\n",
 			activecpu_get_pc(),
 			offset,
+			blitter_ram[offset+0x0],
+			blitter_ram[offset+0x1],blitter_ram[offset+0x2], // unused?
+			blitter_ram[offset+0x3],blitter_ram[offset+0x4], // unused?
 			blitter_ram[offset+0x5],
-			blitter_ram[offset+0x6],
+			blitter_ram[offset+0x6], // color
 			blitter_ram[offset+0x7],
-			blitter_ram[offset+0x8],
-			blitter_ram[offset+0x9],
-			blitter_ram[offset+0xa],
-			blitter_ram[offset+0xb],
-			blitter_ram[offset+0xc],
-			blitter_ram[offset+0xd],
-			blitter_ram[offset+0xe],
-			blitter_ram[offset+0xf] );
+			blitter_ram[offset+0x8], // y
+			blitter_ram[offset+0x9], // x
+			blitter_ram[offset+0xa], // h
+			blitter_ram[offset+0xb], // w
+			blitter_ram[offset+0xc],blitter_ram[offset+0xd],
+			blitter_ram[offset+0xe],blitter_ram[offset+0xf] );
 	}
 } /* blitter_w */
+
+static READ_HANDLER( blitter_status_r )
+{
+	return rand()&0xff; /* ??? see IRQ */
+}
 
 static READ_HANDLER( zero_r )
 {
@@ -373,12 +333,19 @@ static READ_HANDLER( zero_r )
 	return 0x00;
 } /* zero_r */
 
-static READ_HANDLER( unk_r )
+static READ_HANDLER( coin_lockout_r )
 {
-	return rand();
-} /* unk_r */
+	/* This is a hack, but it lets you coin up when COIN1 or COIN2 are signaled.
+	 * See NMI for the twisted logic that is involved in handling coin input.
+	 */
+	int inp = readinputport(3);
+	int result = 0x01; /* dual coin slots */
+	if( inp&0x80 ) result |= 0x02;
+	if( inp&0x40 ) result |= 0x04;
+	return result;
+}
 
-static READ_HANDLER( mirror_r )
+static READ_HANDLER( io_mirror_r )
 {
 	switch( offset )
 	{
@@ -387,16 +354,7 @@ static READ_HANDLER( mirror_r )
 	case 2: return readinputport(5);
 	default: return 0x00;
 	}
-} /* mirror_r */
-
-
-
-static WRITE_HANDLER( halleys_nmi_line_clear_w )
-{
-	cpu_set_irq_line(0, IRQ_LINE_NMI, CLEAR_LINE);
 }
-
-
 
 static WRITE_HANDLER( halleys_sndnmi_msk_w )
 {
@@ -406,82 +364,14 @@ static WRITE_HANDLER( halleys_sndnmi_msk_w )
 static WRITE_HANDLER( halleys_soundcommand_w )
 {
 	soundlatch_w(offset,data);
-	/*if (!sndnmi_disable)*/ cpu_set_irq_line(1,IRQ_LINE_NMI,ASSERT_LINE);
+	/*if (!sndnmi_disable)*/
+	cpu_set_irq_line(1,IRQ_LINE_NMI,ASSERT_LINE);
 }
 static READ_HANDLER( halleys_soundcommand_r )
 {
 	cpu_set_irq_line(1,IRQ_LINE_NMI,CLEAR_LINE);
 	return soundlatch_r(offset);
 }
-
-static WRITE_HANDLER( bank_control_w )
-{
-	memory_region( REGION_CPU1 )[0xff8d] = data;	/*store in RAM*/
-	logerror("bank_ctrl_w: data=%2x\n",data);
-}
-
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x0fff, MRA_RAM },		/* blitter RAM */
-	{ 0x1000, 0xefff, MRA_ROM },
-	{ 0xf000, 0xfeff, MRA_RAM },		/* work ram */
-	/* note that SRAM is tested from 0xf000 to 0xff7f,
-	 * but several of the addresses in 0xff00..0xff7f
-	 * behave as ports during normal game operation.
-	 */
-
-
-	{ 0xff16, 0xff16, zero_r },			/* blitter busy */
-	{ 0xff71, 0xff71, zero_r },			/* blitter busy */
-
-
-	{ 0xff80, 0xff83, mirror_r },
-	{ 0xff8b, 0xff8b, MRA_RAM },		/* IRQ enable */
-
-	{ 0xff90, 0xff90, input_port_3_r }, /* coin/start */
-	{ 0xff91, 0xff91, input_port_4_r }, /* player 1 */
-	{ 0xff92, 0xff92, input_port_5_r }, /* player 2 */
-	{ 0xff93, 0xff93, zero_r },
-	{ 0xff94, 0xff94, unk_r }, // important!
-		// 0x01 ?
-		// 0x02 ?
-		// 0x04 ?
-		// 0x08 ?
-	{ 0xff95, 0xff95, input_port_0_r }, /* dipswitch 4 */
-	{ 0xff96, 0xff96, input_port_1_r }, /* dipswitch 3 */
-	{ 0xff97, 0xff97, input_port_2_r }, /* dipswitch 2 */
-
-	{ 0xff00, 0xffef, MRA_RAM },	/* RAM - all other addresses (comment this line for debugging) */
-
-	{ 0xfff0, 0xffff, vector_r },
-MEMORY_END
-
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x0fff, blitter_w, &blitter_ram },
-	{ 0x1000, 0xefff, MWA_ROM },
-	{ 0xf000, 0xfeff, MWA_RAM }, /* work ram */
-	/* note that SRAM is tested from 0xf000 to 0xff7f,
-	 * but several of the addresses in 0xff00..0xff7f
-	 * behave as ports during normal game operation.
-	 */
-
-	{ 0xff00, 0xff7f, MWA_RAM },
-
-	//{ 0xff72, 0xff72, MWA_RAM },
-	//{ 0xff76, 0xff76, watchdog_w },
-
-	{ 0xff8a, 0xff8a, halleys_soundcommand_w },
-
-	{ 0xff8d, 0xff8d, bank_control_w },	//bank AND ram simulateously
-
-	{ 0xffa2, 0xffa2, MWA_RAM }, // bg scrolly?
-	{ 0xffa3, 0xffa3, MWA_RAM }, // bg scrollx?
-	{ 0xff98, 0xff98, MWA_RAM },		// IRQ ack
-	{ 0xff9b, 0xff9b, halleys_nmi_line_clear_w },	// NMI line reset
-	{ 0xff9c, 0xff9c, MWA_RAM },			//FIRQ line reset
-	{ 0xff9e, 0xff9e, MWA_RAM }, // flipscreen
-	{ 0xfff0, 0xffff, MWA_ROM },
-MEMORY_END
-
 
 static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
@@ -505,6 +395,95 @@ static MEMORY_WRITE_START( sound_writemem )
 	{ 0xe000, 0xefff, MWA_ROM },
 MEMORY_END
 
+static MEMORY_READ_START( readmem )
+	{ 0x0000, 0x0fff, MRA_RAM }, /* blitter RAM */
+	{ 0x1000, 0xefff, MRA_ROM },
+	{ 0xf000, 0xfeff, MRA_RAM }, /* work ram */
+	/* note that SRAM is tested from 0xf000 to 0xff7f,
+	 * but several of the addresses in 0xff00..0xff7f
+	 * behave as ports during normal game operation.
+	 */
+	{ 0xff16, 0xff16, zero_r }, /* blitter busy */
+	{ 0xff71, 0xff71, zero_r }, /* blitter busy */
+	{ 0xff00, 0xff7f, MRA_RAM },
+
+	{ 0xff80, 0xff83, io_mirror_r },
+	{ 0xff8b, 0xff8b, blitter_status_r },
+	{ 0xff8c, 0xff8c, MRA_RAM }, /* unknown */
+	{ 0xff8d, 0xff8d, MRA_RAM }, /* unknown */
+	{ 0xff8e, 0xff8e, MRA_RAM }, /* unknown */
+	{ 0xff90, 0xff90, input_port_3_r }, /* coin/start */
+	{ 0xff91, 0xff91, input_port_4_r }, /* player 1 */
+	{ 0xff92, 0xff92, input_port_5_r }, /* player 2 */
+	{ 0xff93, 0xff93, zero_r },
+	{ 0xff94, 0xff94, coin_lockout_r },
+	{ 0xff95, 0xff95, input_port_0_r }, /* dipswitch 4 */
+	{ 0xff96, 0xff96, input_port_1_r }, /* dipswitch 3 */
+	{ 0xff97, 0xff97, input_port_2_r }, /* dipswitch 2 */
+	{ 0xff9a, 0xff9a, MRA_RAM },
+	{ 0xff9d, 0xff9d, MRA_RAM },
+	{ 0xff9e, 0xff9e, MRA_RAM },
+	{ 0xffa2, 0xffa2, MRA_RAM }, /* unknown; see pc = 9785 */
+	{ 0xffa3, 0xffa3, MRA_RAM }, /* unknown; see pc = 977F */
+	{ 0xfff0, 0xffff, vector_r },
+MEMORY_END
+
+static MEMORY_WRITE_START( writemem )
+	{ 0x0000, 0x0fff, blitter_w, &blitter_ram },
+	{ 0x1000, 0xefff, MWA_ROM },
+	{ 0xf000, 0xfeff, MWA_RAM }, /* work ram */
+	/* note that SRAM is tested from 0xf000 to 0xff7f,
+	 * but several of the addresses in 0xff00..0xff7f
+	 * behave as ports during normal game operation.
+	 */
+	//{ 0xff76, 0xff76, watchdog_w },
+	{ 0xff00, 0xff7f, MWA_RAM },
+	{ 0xff8a, 0xff8a, halleys_soundcommand_w },
+	{ 0xff8c, 0xff8c, MWA_RAM }, /* unknown; see pc = 83a4 */
+	{ 0xff8d, 0xff8d, MWA_RAM }, /* unknown */
+	{ 0xff8e, 0xff8e, MWA_RAM }, /* unknown; see pc = 97A0 */
+	{ 0xff98, 0xff98, MWA_RAM }, /* unknown; see IRQ ack */
+	{ 0xff9a, 0xff9a, MWA_RAM }, /* unknown; see pc = 979A */
+	{ 0xff9b, 0xff9b, MWA_RAM }, /* unknown; NMI-related */
+	{ 0xff9c, 0xff9c, MWA_RAM }, /* unknown; FIRQ-related */
+	{ 0xff9d, 0xff9d, MWA_RAM }, /* unknown */
+	{ 0xff9e, 0xff9e, MWA_RAM }, /* flipscreen? */
+	{ 0xffa0, 0xffa0, MWA_RAM }, /* unknown */
+	{ 0xffa1, 0xffa1, MWA_RAM }, /* unknown */
+	{ 0xffa2, 0xffa2, MWA_RAM }, /* unknown */
+	{ 0xffa3, 0xffa3, MWA_RAM }, /* unknown */
+	{ 0xffc0, 0xffdf, MWA_RAM }, /* unknown; see pc = 8373 */
+	{ 0xfff0, 0xffff, MWA_ROM },
+MEMORY_END
+
+
+static INTERRUPT_GEN( halleys_interrupt )
+{
+	switch( cpu_getiloops() )
+	{
+	case 0:
+		/* NMI is used exclusively to handle coin input */
+		cpu_set_nmi_line(0, PULSE_LINE);
+		break;
+
+	case 1:
+		/* IRQ is blitter related; I don't know what triggers it. */
+		cpu_set_irq_line(0, M6809_IRQ_LINE, HOLD_LINE);
+
+		/* There are several busy loops that poll 0xff0b, expecting it to increment.
+		 * I haven't found any interrupt code which writes to 0xff0b, so do change it
+		 * here as a side effect of each vblank.
+		 */
+		memory_region( REGION_CPU1 )[0xff0b]++;
+		break;
+
+	default:
+		/* FIRQ drives gameplay. */
+		cpu_set_irq_line(0, M6809_FIRQ_LINE, HOLD_LINE);
+		break;
+	}
+}
+
 /*
 Halley's Comet
 Taito/Coin-it 1986
@@ -519,72 +498,74 @@ INPUT_PORTS_START( halleys )
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
-	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x04, 0x04, "Test Mode" )
+	PORT_DIPSETTING(    0x04, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 
 	PORT_START /* 0xff96 */
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x02, "Easiest" )
+	PORT_DIPSETTING(    0x03, "Easy" )
 	PORT_DIPSETTING(    0x01, "Normal" )
-	PORT_DIPSETTING(    0x02, "Hard" )
-	PORT_DIPSETTING(    0x03, "Hardest" )
-	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x00, "200k/500k" )
-	PORT_DIPSETTING(    0x04, "200k/800k" )
-	PORT_DIPSETTING(    0x08, "200k/1000k" )
-	PORT_DIPSETTING(    0x0c, "100k/500k" )
-	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x10, "2" )
-	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x0c, "20k/60k/680k" )
+	PORT_DIPSETTING(    0x08, "20k/80k/840k" )
+	PORT_DIPSETTING(    0x04, "20k/100k/920k" )
+	PORT_DIPSETTING(    0x00, "10k/50k/560k" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x20, "2" )
 	PORT_DIPSETTING(    0x30, "3" )
-	PORT_DIPSETTING(    0x20, "4" )
-	PORT_DIPNAME( 0x40, 0x00, "Record Data" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x10, "4" )
+	PORT_DIPSETTING(    0x00, "4 (no bonus ships)" )
+	PORT_DIPNAME( 0x40, 0x40, "Record Data" )
+	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START /* 0xff97 */
-	PORT_DIPNAME( 0x01, 0x00, "Unknown1" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Free_Play ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1c, 0x00, "Start Round" )
-	PORT_DIPSETTING( 0x00, "1" )
-	PORT_DIPSETTING( 0x04, "4" )
-	PORT_DIPSETTING( 0x08, "7" )
-	PORT_DIPSETTING( 0x0c, "10" )
-	PORT_DIPSETTING( 0x10, "13" )
-	PORT_DIPSETTING( 0x14, "16" )
-	PORT_DIPSETTING( 0x18, "19" )
-	PORT_DIPSETTING( 0x1c, "22" )
-	PORT_DIPNAME( 0x20, 0x00, "Invulnerability" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, "Unknown7" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, "Unknown8" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPNAME( 0x01, 0x01, "Unknown1" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1c, 0x1c, "Start Round" )
+	PORT_DIPSETTING( 0x1c, "1" )
+	PORT_DIPSETTING( 0x18, "4" )
+	PORT_DIPSETTING( 0x14, "7" )
+	PORT_DIPSETTING( 0x10, "10" )
+	PORT_DIPSETTING( 0x0c, "13" )
+	PORT_DIPSETTING( 0x08, "16" )
+	PORT_DIPSETTING( 0x04, "19" )
+	PORT_DIPSETTING( 0x00, "22" )
+	PORT_DIPNAME( 0x20, 0x20, "Invulnerability" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown7" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown8" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START /* 0xff90 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -592,9 +573,9 @@ INPUT_PORTS_START( halleys )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_TILT )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_SERVICE1 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW,   IPT_SERVICE1, 0xb )
+	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_HIGH,  IPT_COIN2,    0xb )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_HIGH,  IPT_COIN1,    0xb )
 
 	PORT_START /* 0xff91 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
@@ -617,35 +598,6 @@ INPUT_PORTS_START( halleys )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 |IPF_PLAYER2 )
 INPUT_PORTS_END
 
-/* we don't actually use gfx elements; we unpack only to help visualize the gfxdata roms */
-static struct GfxLayout gfx_layout1 =
-{
-	8,8,
-	RGN_FRAC(1,2),
-	2,
-	{ RGN_FRAC(1,2), RGN_FRAC(0,2) },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8
-};
-static struct GfxLayout gfx_layout2 =
-{
-	8,8,
-	RGN_FRAC(1,2),
-	4,
-	{ RGN_FRAC(1,2),RGN_FRAC(1,2)+1,RGN_FRAC(0,2),RGN_FRAC(0,2)+1 },
-	{ 0*2, 1*2, 2*2, 3*2, 4*2, 5*2, 6*2, 7*2 },
-	{ 0*8*2, 1*8*2, 2*8*2, 3*8*2, 4*8*2, 5*8*2, 6*8*2, 7*8*2 },
-	8*8*2
-};
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0, &gfx_layout1, 0, 32/4 },
-	{ REGION_GFX1, 0, &gfx_layout2, 0, 32/16 },
-	{ -1 }
-};
-
 static struct AY8910interface ay8910_interface =
 {
 	4,      /* 4 chips */
@@ -657,35 +609,10 @@ static struct AY8910interface ay8910_interface =
 	{ 0, 0, 0, halleys_sndnmi_msk_w }       /* port Bwrite */
 };
 
-static INTERRUPT_GEN( halleys_interrupt )
-{
-	static int which;
-
-	which = 1-which;
-
-
-	if ((readinputport(3) & 0xc0) != 0x00)
-		cpu_set_irq_line(0, IRQ_LINE_NMI, ASSERT_LINE);
-
-
-//	if( which )
-//	if( cpu_getiloops()==0 )
-//	{
-//		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
-//	}
-//	else
-	{
-		cpu_set_irq_line(0, M6809_FIRQ_LINE, HOLD_LINE);
-	}
-}
-
 static MACHINE_DRIVER_START( halleys )
-
-	/* basic machine hardware */
-	MDRV_CPU_ADD(M6809,2000000)		/* 2 MHz ? */
+	MDRV_CPU_ADD(M6809,6000000)		/* 2 MHz ? */
 	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
-	MDRV_CPU_PERIODIC_INT(halleys_interrupt,1)
+	MDRV_CPU_VBLANK_INT(halleys_interrupt,3)
 
 	MDRV_CPU_ADD(Z80,6000000/2)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)      /* 3 MHz */
@@ -704,7 +631,6 @@ static MACHINE_DRIVER_START( halleys )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
-	MDRV_GFXDECODE(gfxdecodeinfo)
 
 	MDRV_PALETTE_LENGTH(32)
 	MDRV_PALETTE_INIT(halleys)
@@ -714,13 +640,9 @@ static MACHINE_DRIVER_START( halleys )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-
 MACHINE_DRIVER_END
 
-
-
 /**************************************************************************/
-
 
 ROM_START( benberob )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) //MAIN PRG
@@ -762,12 +684,12 @@ ROM_START( halleys )
 	ROM_LOAD( "a62_12.78",   0x00000, 0x4000, 0xc5834a7a )
 	ROM_LOAD( "a62_10.77",   0x04000, 0x4000, 0x3ae7231e )
 	ROM_LOAD( "a62_08.80",   0x08000, 0x4000, 0xb9210dbe )
-	ROM_LOAD( "a62-16.79",   0x0c000, 0x4000, 0x1165a622 ) /* alpha */
+	ROM_LOAD( "a62-16.79",   0x0c000, 0x4000, 0x1165a622 ) /* alpha(bad?) */
 
 	ROM_LOAD( "a62_11.89",   0x10000, 0x4000, 0xd0e9974e )
 	ROM_LOAD( "a62_09.88",   0x14000, 0x4000, 0xe93ef281 )
 	ROM_LOAD( "a62_07.91",   0x18000, 0x4000, 0x64c95e8b )
-	ROM_LOAD( "a62_05.90",   0x1c000, 0x4000, 0xc3c877ef )
+	ROM_LOAD( "a62_05.90",   0x1c000, 0x4000, 0xc3c877ef ) /* alpha */
 
 	ROM_REGION( 0x0060, REGION_PROMS, 0 ) //COLOR (all identical!)
 	ROM_LOAD( "a26-13.109",  0x0000, 0x0020, 0xec449aee )
@@ -787,14 +709,15 @@ ROM_START( halleycj )
 	ROM_LOAD( "a62_14.4",    0x2000, 0x2000, 0xea74b1a2 )
 
 	ROM_REGION( 0x20000, REGION_GFX1, 0 ) //CHR
-	ROM_LOAD( "a62_08.80",   0x00000, 0x4000, 0xb9210dbe )
-	ROM_LOAD( "a62_06.79",   0x04000, 0x4000, 0x600be9ca )
-	ROM_LOAD( "a62_12.78",   0x08000, 0x4000, 0xc5834a7a )
-	ROM_LOAD( "a62_10.77",   0x0c000, 0x4000, 0x3ae7231e )
-	ROM_LOAD( "a62_07.91",   0x10000, 0x4000, 0x64c95e8b )
-	ROM_LOAD( "a62_05.90",   0x14000, 0x4000, 0xc3c877ef )
-	ROM_LOAD( "a62_11.89",   0x18000, 0x4000, 0xd0e9974e )
-	ROM_LOAD( "a62_09.88",   0x1c000, 0x4000, 0xe93ef281 )
+	ROM_LOAD( "a62_12.78",   0x00000, 0x4000, 0xc5834a7a )
+	ROM_LOAD( "a62_10.77",   0x04000, 0x4000, 0x3ae7231e )
+	ROM_LOAD( "a62_08.80",   0x08000, 0x4000, 0xb9210dbe )
+	ROM_LOAD( "a62_06.79",   0x0c000, 0x4000, 0x600be9ca )
+
+	ROM_LOAD( "a62_11.89",   0x10000, 0x4000, 0xd0e9974e )
+	ROM_LOAD( "a62_09.88",   0x14000, 0x4000, 0xe93ef281 )
+	ROM_LOAD( "a62_07.91",   0x18000, 0x4000, 0x64c95e8b )
+	ROM_LOAD( "a62_05.90",   0x1c000, 0x4000, 0xc3c877ef )
 
 	ROM_REGION( 0x0060, REGION_PROMS, 0 ) //COLOR
 	ROM_LOAD( "a26-13.109",  0x0000, 0x0020, 0xec449aee )
@@ -814,21 +737,21 @@ ROM_START( halleysc )
 	ROM_LOAD( "a62_14.4",    0x2000, 0x2000, 0xea74b1a2 )
 
 	ROM_REGION( 0x20000, REGION_GFX1, 0 ) //CHR
-	ROM_LOAD( "a62_08.80",   0x00000, 0x4000, 0xb9210dbe )
-	ROM_LOAD( "a62_06.79",   0x04000, 0x4000, 0x600be9ca )
-	ROM_LOAD( "a62_12.78",   0x08000, 0x4000, 0xc5834a7a )
-	ROM_LOAD( "a62_10.77",   0x0c000, 0x4000, 0x3ae7231e )
-	ROM_LOAD( "a62_07.91",   0x10000, 0x4000, 0x64c95e8b )
-	ROM_LOAD( "a62_05.90",   0x14000, 0x4000, 0xc3c877ef )
-	ROM_LOAD( "a62_11.89",   0x18000, 0x4000, 0xd0e9974e )
-	ROM_LOAD( "a62_09.88",   0x1c000, 0x4000, 0xe93ef281 )
+	ROM_LOAD( "a62_12.78",   0x00000, 0x4000, 0xc5834a7a )
+	ROM_LOAD( "a62_10.77",   0x04000, 0x4000, 0x3ae7231e )
+	ROM_LOAD( "a62_08.80",   0x08000, 0x4000, 0xb9210dbe )
+	ROM_LOAD( "a62_06.79",   0x0c000, 0x4000, 0x600be9ca ) /* alpha */
+
+	ROM_LOAD( "a62_11.89",   0x10000, 0x4000, 0xd0e9974e )
+	ROM_LOAD( "a62_09.88",   0x14000, 0x4000, 0xe93ef281 )
+	ROM_LOAD( "a62_07.91",   0x18000, 0x4000, 0x64c95e8b )
+	ROM_LOAD( "a62_05.90",   0x1c000, 0x4000, 0xc3c877ef ) /* alpha */
 
 	ROM_REGION( 0x0060, REGION_PROMS, 0 ) //COLOR
 	ROM_LOAD( "a26-13.109",  0x0000, 0x0020, 0xec449aee )
 	ROM_LOAD( "a26-13.110",  0x0020, 0x0020, 0xec449aee )
 	ROM_LOAD( "a26-13.111",  0x0040, 0x0020, 0xec449aee )
 ROM_END
-
 
 static DRIVER_INIT( halleys )
 {
@@ -868,7 +791,6 @@ static DRIVER_INIT( halleys )
 	A14	n/a
 	A15	n/a
 */
-
 	buf = malloc(0x10000);
 	if (buf)
 	{

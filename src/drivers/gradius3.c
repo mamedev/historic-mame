@@ -173,13 +173,12 @@ static WRITE16_HANDLER( sound_irq_w )
 
 static WRITE_HANDLER( sound_bank_w )
 {
-	unsigned char *RAM = memory_region(REGION_SOUND1);
 	int bank_A, bank_B;
 
 	/* banks # for the 007232 (chip 1) */
-	bank_A = 0x20000 * ((data >> 0) & 0x03);
-	bank_B = 0x20000 * ((data >> 2) & 0x03);
-	K007232_bankswitch(0,RAM + bank_A,RAM + bank_B);
+	bank_A = ((data >> 0) & 0x03);
+	bank_B = ((data >> 2) & 0x03);
+	K007232_set_bank( 0, bank_A, bank_B );
 }
 
 
@@ -379,6 +378,7 @@ static void volume_callback(int v)
 static struct K007232_interface k007232_interface =
 {
 	1,		/* number of chips */
+	3579545,	/* clock */
 	{ REGION_SOUND1 },	/* memory regions */
 	{ K007232_VOL(20,MIXER_PAN_CENTER,20,MIXER_PAN_CENTER) },	/* volume */
 	{ volume_callback }	/* external port callback */

@@ -8,6 +8,9 @@
 #include "cpu/tms34010/tms34010.h"
 #include "cpu/tms34010/34010ops.h"
 #include "cpu/adsp2100/adsp2100.h"
+#include "cpu/m68000/m68000.h"
+#include "cpu/dsp32/dsp32.h"
+#include "machine/asic65.h"
 #include "sndhrdw/atarijsa.h"
 #include "harddriv.h"
 
@@ -32,11 +35,27 @@
  *************************************/
 
 /* externally accessible */
+INT8 hdcpu_main;
+INT8 hdcpu_gsp;
+INT8 hdcpu_msp;
+INT8 hdcpu_adsp;
+INT8 hdcpu_sound;
+INT8 hdcpu_sounddsp;
+INT8 hdcpu_jsa;
+INT8 hdcpu_dsp32;
+
+UINT8 hd34010_host_access;
+UINT8 hddsk_pio_access;
+
 data16_t *hdmsp_ram;
-data16_t *hd68k_slapstic_base;
 data16_t *hddsk_ram;
 data16_t *hddsk_rom;
 data16_t *hddsk_zram;
+data16_t *hd68k_slapstic_base;
+data16_t *st68k_sloop_alt_base;
+
+data16_t *hdgsp_protection;
+data16_t *stmsp_sync[2];
 
 data16_t *hdgsp_speedup_addr[2];
 offs_t hdgsp_speedup_pc;
@@ -44,7 +63,15 @@ offs_t hdgsp_speedup_pc;
 data16_t *hdmsp_speedup_addr;
 offs_t hdmsp_speedup_pc;
 
-offs_t hdadsp_speedup_pc;
+data16_t *hdds3_speedup_addr;
+offs_t hdds3_speedup_pc;
+offs_t hdds3_transfer_pc;
+
+data32_t *rddsp32_sync[2];
+
+UINT32 gsp_speedup_count[4];
+UINT32 msp_speedup_count[4];
+UINT32 adsp_speedup_count[4];
 
 
 /* from slapstic.c */
@@ -63,10 +90,6 @@ extern UINT8 *hdgsp_vram;
  *
  *************************************/
 
-static UINT8 gsp_cpu;
-static UINT8 msp_cpu;
-static UINT8 adsp_cpu;
-
 static UINT8 irq_state;
 static UINT8 gsp_irq_state;
 static UINT8 msp_irq_state;
@@ -77,8 +100,6 @@ static UINT8 duart_read_data[16];
 static UINT8 duart_write_data[16];
 static UINT8 duart_output_port;
 static void *duart_timer;
-
-static UINT8 pedal_value;
 
 static UINT8 last_gsp_shiftreg;
 
@@ -94,13 +115,16 @@ static UINT32 adsp_eprom_base;
 
 static data16_t *sim_memory;
 static data16_t *som_memory;
+static UINT32 sim_memory_size;
 static data16_t *adsp_data_memory;
 static data32_t *adsp_pgm_memory;
 static data16_t *adsp_pgm_memory_word;
 
-static UINT8 ds3_gcmd, ds3_gflag, ds3_g68irqs, ds3_g68flag, ds3_send;
+static UINT8 ds3_gcmd, ds3_gflag, ds3_g68irqs, ds3_gfirqs, ds3_g68flag, ds3_send, ds3_reset;
 static UINT16 ds3_gdata, ds3_g68data;
 static UINT32 ds3_sim_address;
+static void *ds3_timer;
+static INT32 ds3_timer_count;
 
 static UINT16 adc_control;
 static UINT8 adc8_select;
@@ -109,6 +133,28 @@ static UINT8 adc12_select;
 static UINT8 adc12_byte;
 static UINT16 adc12_data;
 
+static UINT16 hdc68k_last_wheel;
+static UINT16 hdc68k_last_port1;
+static UINT8 hdc68k_wheel_edge;
+static UINT8 hdc68k_shifter_state;
+
+static UINT8 st68k_sloop_bank = 0;
+static offs_t st68k_last_alt_sloop_offset;
+
+#define MAX_MSP_SYNC	16
+static data32_t *dataptr[MAX_MSP_SYNC];
+static data32_t dataval[MAX_MSP_SYNC];
+static int next_msp_sync;
+
+static void hd68k_update_interrupts(void);
+static void duart_callback(int param);
+static void ds3_interleave_callback(int param);
+
+
+
+#if 0
+#pragma mark * DRIVER/MULTISYNC BOARD
+#endif
 
 
 /*************************************
@@ -117,7 +163,77 @@ static UINT16 adc12_data;
  *
  *************************************/
 
-static void update_interrupts(void)
+MACHINE_INIT( harddriv )
+{
+	/* ensure invalid memory accesses return all 0xff's */
+	memory_set_unmap_value(0xffffffff);
+
+	/* generic reset */
+	atarigen_eeprom_reset();
+	slapstic_reset();
+	atarigen_interrupt_reset(hd68k_update_interrupts);
+
+	/* set up the mirrored GSP banks */
+	if (hdcpu_gsp != -1)
+		cpu_setbank(1, hdgsp_vram);
+
+	/* set up the mirrored MSP banks */
+	if (hdcpu_msp != -1)
+	{
+		cpu_setbank(2, hdmsp_ram);
+		cpu_setbank(3, hdmsp_ram);
+	}
+
+	/* set up DSP32C ROM */
+	if (hdcpu_dsp32 != -1 && memory_region(REGION_USER4))
+		cpu_setbank(4, memory_region(REGION_USER4));
+
+	/* halt several of the DSPs to start */
+	if (hdcpu_adsp != -1) cpu_set_halt_line(hdcpu_adsp, ASSERT_LINE);
+	if (hdcpu_dsp32 != -1) cpu_set_halt_line(hdcpu_dsp32, ASSERT_LINE);
+	if (hdcpu_sounddsp != -1) cpu_set_halt_line(hdcpu_sounddsp, ASSERT_LINE);
+
+	/* if we found a 6502, reset the JSA board */
+	if (hdcpu_jsa != -1)
+		atarijsa_reset();
+
+	/* predetermine memory regions */
+	sim_memory = (data16_t *)memory_region(REGION_USER1);
+	som_memory = (data16_t *)memory_region(REGION_USER2);
+	sim_memory_size = memory_region_length(REGION_USER1) / 2;
+	adsp_data_memory = (data16_t *)(memory_region(REGION_CPU1 + hdcpu_adsp) + ADSP2100_DATA_OFFSET);
+	adsp_pgm_memory = (data32_t *)(memory_region(REGION_CPU1 + hdcpu_adsp) + ADSP2100_PGM_OFFSET);
+	adsp_pgm_memory_word = (data16_t *)((UINT8 *)adsp_pgm_memory + 1);
+
+	last_gsp_shiftreg = 0;
+
+	m68k_adsp_buffer_bank = 0;
+
+	/* reset IRQ states */
+	irq_state = gsp_irq_state = msp_irq_state = adsp_irq_state = duart_irq_state = 0;
+
+	/* reset the DUART */
+	memset(duart_read_data, 0, sizeof(duart_read_data));
+	memset(duart_write_data, 0, sizeof(duart_write_data));
+	duart_output_port = 0;
+	duart_timer = timer_alloc(duart_callback);
+
+	/* reset the ADSP/DSIII/DSIV boards */
+	adsp_halt = 1;
+	adsp_br = 0;
+	adsp_xflag = 0;
+	ds3_timer = timer_alloc(ds3_interleave_callback);
+}
+
+
+
+/*************************************
+ *
+ *	68000 interrupt handling
+ *
+ *************************************/
+
+static void hd68k_update_interrupts(void)
 {
 	int newstate = 0;
 
@@ -135,113 +251,9 @@ static void update_interrupts(void)
 		newstate = 6;
 
 	if (newstate)
-		cpu_set_irq_line(0, newstate, ASSERT_LINE);
+		cpu_set_irq_line(hdcpu_main, newstate, ASSERT_LINE);
 	else
-		cpu_set_irq_line(0, 7, CLEAR_LINE);
-}
-
-
-static void duart_callback(int param);
-
-MACHINE_INIT( harddriv )
-{
-	int has_6502 = 0;
-	int i;
-
-	/* generic reset */
-	atarigen_eeprom_reset();
-	slapstic_reset();
-	atarigen_interrupt_reset(update_interrupts);
-
-	/* determine the CPU numbers */
-	gsp_cpu = msp_cpu = adsp_cpu = 0;
-	for (i = 1; i < MAX_CPU; i++)
-		switch (Machine->drv->cpu[i].cpu_type & ~CPU_FLAGS_MASK)
-		{
-			case CPU_TMS34010:
-				if (gsp_cpu == 0)
-					gsp_cpu = i;
-				else
-					msp_cpu = i;
-				break;
-
-			case CPU_ADSP2100:
-			case CPU_ADSP2105:
-				adsp_cpu = i;
-				break;
-
-			case CPU_M6502:
-				has_6502 = 1;
-				break;
-		}
-
-	/* if we found a 6502, reset the JSA board */
-	if (has_6502)
-		atarijsa_reset();
-
-	/* predetermine memory regions */
-	sim_memory = (data16_t *)memory_region(REGION_USER1);
-	som_memory = (data16_t *)memory_region(REGION_USER2);
-	adsp_data_memory = (data16_t *)(memory_region(REGION_CPU1 + adsp_cpu) + ADSP2100_DATA_OFFSET);
-	adsp_pgm_memory = (data32_t *)(memory_region(REGION_CPU1 + adsp_cpu) + ADSP2100_PGM_OFFSET);
-	adsp_pgm_memory_word = (data16_t *)((UINT8 *)adsp_pgm_memory + 1);
-
-	/* set up the mirrored GSP banks */
-	if (gsp_cpu)
-	{
-		cpu_setbank(1, hdgsp_vram);
-	}
-
-	/* set up the mirrored MSP banks */
-	if (msp_cpu)
-	{
-		cpu_setbank(2, hdmsp_ram);
-		cpu_setbank(3, hdmsp_ram);
-	}
-
-	/* halt the ADSP to start */
-	cpu_set_halt_line(adsp_cpu, ASSERT_LINE);
-
-	last_gsp_shiftreg = 0;
-
-	m68k_adsp_buffer_bank = 0;
-
-	irq_state = gsp_irq_state = msp_irq_state = adsp_irq_state = duart_irq_state = 0;
-
-	memset(duart_read_data, 0, sizeof(duart_read_data));
-	memset(duart_write_data, 0, sizeof(duart_write_data));
-	duart_output_port = 0;
-	duart_timer = timer_alloc(duart_callback);
-
-	adsp_halt = 1;
-	adsp_br = 0;
-	adsp_xflag = 0;
-
-	pedal_value = 0;
-}
-
-
-
-/*************************************
- *
- *	Interrupt handling
- *
- *************************************/
-
-INTERRUPT_GEN( hd68k_vblank_gen )
-{
-	/* update the pedals once per frame */
-	if (readinputport(5) & 1)
-	{
-		if (pedal_value < 255 - 16)
-			pedal_value += 16;
-	}
-	else
-	{
-		if (pedal_value > 16)
-			pedal_value -= 16;
-	}
-	atarigen_video_int_gen();
+		cpu_set_irq_line(hdcpu_main, 7, CLEAR_LINE);
 }
 
 
@@ -276,7 +288,64 @@ void hdmsp_irq_gen(int state)
 
 /*************************************
  *
- *	I/O read dispatch.
+ *	68000 access to GSP
+ *
+ *************************************/
+
+READ16_HANDLER( hd68k_gsp_io_r )
+{
+	data16_t result;
+	offset = (offset / 2) ^ 1;
+	hd34010_host_access = 1;
+	result = tms34010_host_r(hdcpu_gsp, offset);
+	hd34010_host_access = 0;
+	return result;
+}
+
+
+WRITE16_HANDLER( hd68k_gsp_io_w )
+{
+	offset = (offset / 2) ^ 1;
+	hd34010_host_access = 1;
+	tms34010_host_w(hdcpu_gsp, offset, data);
+	hd34010_host_access = 0;
+}
+
+
+
+/*************************************
+ *
+ *	68000 access to MSP
+ *
+ *************************************/
+
+READ16_HANDLER( hd68k_msp_io_r )
+{
+	data16_t result;
+	offset = (offset / 2) ^ 1;
+	hd34010_host_access = 1;
+	result = (hdcpu_msp != -1) ? tms34010_host_r(hdcpu_msp, offset) : 0xffff;
+	hd34010_host_access = 0;
+	return result;
+}
+
+
+WRITE16_HANDLER( hd68k_msp_io_w )
+{
+	offset = (offset / 2) ^ 1;
+	if (hdcpu_msp != -1)
+	{
+		hd34010_host_access = 1;
+		tms34010_host_w(hdcpu_msp, offset, data);
+		hd34010_host_access = 0;
+	}
+}
+
+
+
+/*************************************
+ *
+ *	68000 input handlers
  *
  *************************************/
 
@@ -304,502 +373,64 @@ READ16_HANDLER( hd68k_port0_r )
 }
 
 
-
-/*************************************
- *
- *	GSP I/O register writes
- *
- *************************************/
-
-WRITE16_HANDLER( hdgsp_io_w )
+READ16_HANDLER( hdc68k_port1_r )
 {
-	/* detect an enabling of the shift register and force yielding */
-	if (offset == REG_DPYCTL)
-	{
-		UINT8 new_shiftreg = (data >> 11) & 1;
-		if (new_shiftreg != last_gsp_shiftreg)
-		{
-			last_gsp_shiftreg = new_shiftreg;
-			if (new_shiftreg)
-				cpu_yield();
-		}
-	}
-	tms34010_io_register_w(offset, data, mem_mask);
-}
+	data16_t result = readinputport(1);
+	data16_t diff = result ^ hdc68k_last_port1;
 
+	/* if a new shifter position is selected, use it */
+	/* if it's the same shifter position as last time, go back to neutral */
+	if ((diff & 0x0100) && !(result & 0x0100))
+		hdc68k_shifter_state = (hdc68k_shifter_state == 1) ? 0 : 1;
+	if ((diff & 0x0200) && !(result & 0x0200))
+		hdc68k_shifter_state = (hdc68k_shifter_state == 2) ? 0 : 2;
+	if ((diff & 0x0400) && !(result & 0x0400))
+		hdc68k_shifter_state = (hdc68k_shifter_state == 4) ? 0 : 4;
+	if ((diff & 0x0800) && !(result & 0x0800))
+		hdc68k_shifter_state = (hdc68k_shifter_state == 8) ? 0 : 8;
 
+	/* merge in the new shifter value */
+	result = (result | 0x0f00) ^ (hdc68k_shifter_state << 8);
 
-/*************************************
- *
- *	GSP I/O memory handlers
- *
- *************************************/
+	/* merge in the wheel edge latch bit */
+	if (hdc68k_wheel_edge)
+		result ^= 0x4000;
 
-READ16_HANDLER( hd68k_gsp_io_r )
-{
-	offset = (offset / 2) ^ 1;
-	return tms34010_host_r(gsp_cpu, offset);
-}
-
-WRITE16_HANDLER( hd68k_gsp_io_w )
-{
-	offset = (offset / 2) ^ 1;
-	tms34010_host_w(gsp_cpu, offset, data);
-}
-
-
-
-/*************************************
- *
- *	MSP I/O memory handlers
- *
- *************************************/
-
-READ16_HANDLER( hd68k_msp_io_r )
-{
-	offset = (offset / 2) ^ 1;
-	return msp_cpu ? tms34010_host_r(msp_cpu, offset) : 0xffff;
-}
-
-WRITE16_HANDLER( hd68k_msp_io_w )
-{
-	offset = (offset / 2) ^ 1;
-	if (msp_cpu)
-		tms34010_host_w(msp_cpu, offset, data);
-}
-
-
-
-/*************************************
- *
- *	ADSP program memory handlers
- *
- *************************************/
-
-READ16_HANDLER( hd68k_adsp_program_r )
-{
-	UINT32 word = adsp_pgm_memory[offset/2];
-	return (!(offset & 1)) ? (word >> 16) : (word & 0xffff);
-}
-
-WRITE16_HANDLER( hd68k_adsp_program_w )
-{
-	UINT32 *base = &adsp_pgm_memory[offset/2];
-	UINT32 oldword = *base;
-	data16_t temp;
-
-	if (!(offset & 1))
-	{
-		temp = oldword >> 16;
-		COMBINE_DATA(&temp);
-		oldword = (oldword & 0x0000ffff) | (temp << 16);
-	}
-	else
-	{
-		temp = oldword & 0xffff;
-		COMBINE_DATA(&temp);
-		oldword = (oldword & 0xffff0000) | temp;
-	}
-	ADSP2100_WRPGM(base, oldword);
-}
-
-
-
-/*************************************
- *
- *	ADSP data memory handlers
- *
- *************************************/
-
-READ16_HANDLER( hd68k_adsp_data_r )
-{
-	return adsp_data_memory[offset];
-}
-
-WRITE16_HANDLER( hd68k_adsp_data_w )
-{
-	COMBINE_DATA(&adsp_data_memory[offset]);
-
-	/* any write to $1FFF is taken to be a trigger; synchronize the CPUs */
-	if (offset == 0x1fff)
-	{
-		logerror("ADSP sync address written (%04X)\n", data);
-		timer_set(TIME_NOW, 0, 0);
-		cpu_trigger(554433);
-	}
-}
-
-
-
-/*************************************
- *
- *	ADSP buffer memory handlers
- *
- *************************************/
-
-READ16_HANDLER( hd68k_adsp_buffer_r )
-{
-/*	logerror("hd68k_adsp_buffer_r(%04X)\n", offset);*/
-	return som_memory[m68k_adsp_buffer_bank * 0x2000 + offset];
-}
-
-WRITE16_HANDLER( hd68k_adsp_buffer_w )
-{
-	COMBINE_DATA(&som_memory[m68k_adsp_buffer_bank * 0x2000 + offset]);
-}
-
-
-
-/*************************************
- *
- *	ADSP control memory handlers
- *
- *************************************/
-
-static void deferred_adsp_bank_switch(int data)
-{
-#if LOG_COMMANDS
-	if (m68k_adsp_buffer_bank != data && keyboard_pressed(KEYCODE_L))
-	{
-		static FILE *commands;
-		if (!commands) commands = fopen("commands.log", "w");
-		if (commands)
-		{
-			INT16 *base = (INT16 *)&som_memory[data * 0x2000];
-			INT16 *end = base + (UINT16)*base++;
-			INT16 *current = base;
-			INT16 *table = base + (UINT16)*current++;
-
-			fprintf(commands, "\n---------------\n");
-
-			while ((current + 5) < table)
-			{
-				int offset = (int)(current - base);
-				int c1 = *current++;
-				int c2 = *current++;
-				int c3 = *current++;
-				int c4 = *current++;
-				fprintf(commands, "Cmd @ %04X = %04X  %d-%d @ %d\n", offset, c1, c2, c3, c4);
-				while (current < table)
-				{
-					UINT32 rslope, lslope;
-					rslope = (UINT16)*current++,
-					rslope |= *current++ << 16;
-					if (rslope == 0xffffffff)
-					{
-						fprintf(commands, "  (end)\n");
-						break;
-					}
-					lslope = (UINT16)*current++,
-					lslope |= *current++ << 16;
-					fprintf(commands, "  L=%08X R=%08X count=%d\n",
-							(int)lslope, (int)rslope, (int)*current++);
-				}
-			}
-			fprintf(commands, "\nTable:\n");
-			current = table;
-			while (current < end)
-				fprintf(commands, "  %04X\n", *current++);
-		}
-	}
-#endif
-	m68k_adsp_buffer_bank = data;
-}
-
-WRITE16_HANDLER( hd68k_adsp_irq_clear_w )
-{
-	adsp_irq_state = 0;
-	atarigen_update_interrupts();
-}
-
-WRITE16_HANDLER( hd68k_adsp_control_w )
-{
-	int val = (offset >> 3) & 1;
-
-	switch (offset & 7)
-	{
-		case 0:
-		case 1:
-			/* LEDs */
-			break;
-
-		case 3:
-			timer_set(TIME_NOW, val, deferred_adsp_bank_switch);
-			break;
-
-		case 5:
-			/* connected to the /BR (bus request) line; this effectively halts */
-			/* the ADSP at the next instruction boundary */
-			adsp_br = !val;
-			if (adsp_br || adsp_halt)
-				cpu_set_halt_line(adsp_cpu, ASSERT_LINE);
-			else
-			{
-				cpu_set_halt_line(adsp_cpu, CLEAR_LINE);
-				/* a yield in this case is not enough */
-				/* we would need to increase the interleaving otherwise */
-				/* note that this only affects the test mode */
-				cpu_spin();
-			}
-			break;
-
-		case 6:
-			/* connected to the /HALT line; this effectively halts */
-			/* the ADSP at the next instruction boundary */
-			adsp_halt = !val;
-			if (adsp_br || adsp_halt)
-				cpu_set_halt_line(adsp_cpu, ASSERT_LINE);
-			else
-			{
-				cpu_set_halt_line(adsp_cpu, CLEAR_LINE);
-				/* a yield in this case is not enough */
-				/* we would need to increase the interleaving otherwise */
-				/* note that this only affects the test mode */
-				cpu_spin();
-			}
-			break;
-
-		case 7:
-			cpu_set_reset_line(adsp_cpu, val ? CLEAR_LINE : ASSERT_LINE);
-			cpu_yield();
-			break;
-
-		default:
-			logerror("ADSP control %02X = %04X\n", offset, data);
-			break;
-	}
-}
-
-READ16_HANDLER( hd68k_adsp_irq_state_r )
-{
-	int result = 0xfffd;
-	if (adsp_xflag) result ^= 2;
-	if (adsp_irq_state) result ^= 1;
+	hdc68k_last_port1 = result;
 	return result;
 }
 
 
-/*************************************
- *
- *	DS III I/O
- *
- *************************************/
-
-WRITE16_HANDLER( hd68k_ds3_control_w )
+READ16_HANDLER( hda68k_port1_r )
 {
-	int val = (offset >> 3) & 1;
+	data16_t result = readinputport(1);
 
-	switch (offset & 7)
-	{
-		case 2:
-			/* connected to the /BR (bus request) line; this effectively halts */
-			/* the ADSP at the next instruction boundary */
-			adsp_br = !val;
-			if (adsp_br)
-				cpu_set_halt_line(adsp_cpu, ASSERT_LINE);
-			else
-			{
-				cpu_set_halt_line(adsp_cpu, CLEAR_LINE);
-				/* a yield in this case is not enough */
-				/* we would need to increase the interleaving otherwise */
-				/* note that this only affects the test mode */
-				cpu_spin();
-			}
-			break;
+	/* merge in the wheel edge latch bit */
+	if (hdc68k_wheel_edge)
+		result ^= 0x4000;
 
-		case 3:
-			cpu_set_reset_line(adsp_cpu, val ? CLEAR_LINE : ASSERT_LINE);
-			cpu_yield();
-			break;
-
-		case 7:
-			/* LED */
-			break;
-
-		default:
-			logerror("DS III control %02X = %04X\n", offset, data);
-			break;
-	}
-}
-
-READ16_HANDLER( hd68k_ds3_irq_state_r )
-{
-	int result = 0x0fff;
-	if (ds3_g68flag) result ^= 0x8000;
-	if (ds3_gflag) result ^= 0x4000;
-	if (ds3_g68irqs) result ^= 0x2000;
-	if (!adsp_irq_state) result ^= 0x1000;
 	return result;
 }
 
 
-/*************************************
- *
- *	DS III internal I/O
- *
- *************************************/
-
-static void update_ds3_irq(void)
+READ16_HANDLER( hdc68k_wheel_r )
 {
-	if ((ds3_g68flag || !ds3_g68irqs) && (!ds3_gflag || ds3_g68irqs))
-		cpu_set_irq_line(adsp_cpu, ADSP2100_IRQ2, ASSERT_LINE);
-	else
-		cpu_set_irq_line(adsp_cpu, ADSP2100_IRQ2, CLEAR_LINE);
+	/* grab the new wheel value and upconvert to 12 bits */
+	UINT16 new_wheel = readinputport(10) << 4;
+
+	/* hack to display the wheel position */
+	if (keyboard_pressed(KEYCODE_LSHIFT))
+		usrintf_showmessage("%04X", new_wheel);
+
+	/* if we crossed the center line, latch the edge bit */
+	if ((hdc68k_last_wheel / 0xf0) != (new_wheel / 0xf0))
+		hdc68k_wheel_edge = 1;
+
+	/* remember the last value and return the low 8 bits */
+	hdc68k_last_wheel = new_wheel;
+	return (new_wheel << 8) | 0xff;
 }
 
-READ16_HANDLER( hdds3_special_r )
-{
-	int result;
-
-	switch (offset)
-	{
-		case 0:
-			ds3_g68flag = 0;
-			update_ds3_irq();
-			return ds3_g68data;
-
-		case 1:
-			result = 0x0fff;
-			if (ds3_gcmd) result ^= 0x8000;
-			if (ds3_g68flag) result ^= 0x4000;
-			if (ds3_gflag) result ^= 0x2000;
-			return result;
-
-		case 6:
-			return sim_memory[ds3_sim_address];
-	}
-	return 0;
-}
-
-WRITE16_HANDLER( hdds3_special_w )
-{
-	switch (offset)
-	{
-		case 0:
-			ds3_gdata = data;
-			ds3_gflag = 1;
-			update_ds3_irq();
-			break;
-
-		case 1:
-			adsp_irq_state = (data >> 9) & 1;
-			update_interrupts();
-			break;
-
-		case 2:
-			ds3_send = (data >> 8) & 1;
-			break;
-
-		case 3:
-			ds3_g68irqs = (~data >> 9) & 1;
-			break;
-
-		case 4:
-			ds3_sim_address = (ds3_sim_address & 0xffff0000) | (data & 0xffff);
-			break;
-
-		case 5:
-			ds3_sim_address = (ds3_sim_address & 0xffff) | ((data << 16) & 0x00070000);
-			break;
-	}
-}
-
-
-
-/*************************************
- *
- *	DS III program memory handlers
- *
- *************************************/
-
-READ16_HANDLER( hd68k_ds3_program_r )
-{
-	UINT32 *base = &adsp_pgm_memory[offset & 0x1fff];
-	UINT32 word = *base;
-	return (!(offset & 0x2000)) ? (word >> 16) : (word & 0xffff);
-}
-
-WRITE16_HANDLER( hd68k_ds3_program_w )
-{
-	UINT32 *base = &adsp_pgm_memory[offset & 0x1fff];
-	UINT32 oldword = *base;
-	UINT16 temp;
-
-	if (!(offset & 0x2000))
-	{
-		temp = oldword >> 16;
-		COMBINE_DATA(&temp);
-		oldword = (oldword & 0x0000ffff) | (temp << 16);
-	}
-	else
-	{
-		temp = oldword & 0xffff;
-		COMBINE_DATA(&temp);
-		oldword = (oldword & 0xffff0000) | temp;
-	}
-	ADSP2100_WRPGM(base, oldword);
-}
-
-
-
-/*************************************
- *
- *	I/O write latches
- *
- *************************************/
-
-READ16_HANDLER( hd68k_sound_reset_r )
-{
-	atarijsa_reset();
-	return ~0;
-}
-
-
-WRITE16_HANDLER( hd68k_nwr_w )
-{
-	data = (offset >> 3) & 1;
-
-	switch (offset & 7)
-	{
-		case 0:	/* CR2 */
-			set_led_status(0, data);
-/*			logerror("Write to CR2(%d)\n", data);*/
-			break;
-		case 1:	/* CR1 */
-			set_led_status(1, data);
-/*			logerror("Write to CR1(%d)\n", data);*/
-			break;
-		case 2:	/* LC1 */
-/*			logerror("Write to LC1(%d)\n", data);*/
-			break;
-		case 3:	/* LC2 */
-			logerror("Write to LC2(%d)\n", data);
-			break;
-		case 4:	/* ZP1 */
-			m68k_zp1 = data;
-			break;
-		case 5:	/* ZP2 */
-			m68k_zp2 = data;
-			break;
-		case 6:	/* /GSPRES */
-			logerror("Write to /GSPRES(%d)\n", data);
-			cpu_set_reset_line(gsp_cpu, data ? CLEAR_LINE : ASSERT_LINE);
-			break;
-		case 7:	/* /MSPRES */
-			logerror("Write to /MSPRES(%d)\n", data);
-			if (msp_cpu)
-				cpu_set_reset_line(msp_cpu, data ? CLEAR_LINE : ASSERT_LINE);
-			break;
-	}
-}
-
-
-
-/*************************************
- *
- *	Input reading
- *
- *************************************/
 
 READ16_HANDLER( hd68k_adc8_r )
 {
@@ -813,10 +444,133 @@ READ16_HANDLER( hd68k_adc12_r )
 }
 
 
+READ16_HANDLER( hd68k_sound_reset_r )
+{
+	if (hdcpu_jsa != -1)
+		atarijsa_reset();
+	return ~0;
+}
+
+
 
 /*************************************
  *
- *	ZRAM I/O
+ *	68000 output handlers
+ *
+ *************************************/
+
+WRITE16_HANDLER( hd68k_adc_control_w )
+{
+	COMBINE_DATA(&adc_control);
+
+	/* handle a write to the 8-bit ADC address select */
+	if (adc_control & 0x08)
+	{
+		adc8_select = adc_control & 0x07;
+		adc8_data = readinputport(2 + adc8_select);
+	}
+
+	/* handle a write to the 12-bit ADC address select */
+	if (adc_control & 0x40)
+	{
+		adc12_select = (adc_control >> 4) & 0x03;
+		adc12_data = readinputport(10 + adc12_select) << 4;
+	}
+
+	/* bit 7 selects which byte of the 12 bit data to read */
+	adc12_byte = (adc_control >> 7) & 1;
+}
+
+
+WRITE16_HANDLER( hd68k_wr0_write )
+{
+	/* bit 3 selects the value; data is ignored */
+	data = (offset >> 3) & 1;
+
+	/* low 3 bits select the function */
+	offset &= 7;
+	switch (offset)
+	{
+		case 1:	/* SEL1 */
+		case 2:	/* SEL2 */
+		case 3:	/* SEL3 */
+		case 4:	/* SEL4 */
+		default:
+			/* just ignore */
+			break;
+
+		case 6:	/* CC1 */
+		case 7:	/* CC2 */
+			coin_counter_w(offset - 6, data);
+			break;
+	}
+}
+
+
+WRITE16_HANDLER( hd68k_wr1_write )
+{
+	if (offset == 0) { //	logerror("Shifter Interface Latch = %02X\n", data);
+	} else { 				logerror("/WR1(%04X)=%02X\n", offset, data);
+	}
+}
+
+
+WRITE16_HANDLER( hd68k_wr2_write )
+{
+	if (offset == 0) { //	logerror("Steering Wheel Latch = %02X\n", data);
+	} else { 				logerror("/WR2(%04X)=%02X\n", offset, data);
+	}
+}
+
+
+WRITE16_HANDLER( hd68k_nwr_w )
+{
+	/* bit 3 selects the value; data is ignored */
+	data = (offset >> 3) & 1;
+
+	/* low 3 bits select the function */
+	offset &= 7;
+	switch (offset)
+	{
+		case 0:	/* CR2 */
+		case 1:	/* CR1 */
+			set_led_status(offset, data);
+			break;
+		case 2:	/* LC1 */
+			break;
+		case 3:	/* LC2 */
+			break;
+		case 4:	/* ZP1 */
+			m68k_zp1 = data;
+			break;
+		case 5:	/* ZP2 */
+			m68k_zp2 = data;
+			break;
+		case 6:	/* /GSPRES */
+			logerror("Write to /GSPRES(%d)\n", data);
+			if (hdcpu_gsp != -1)
+				cpu_set_reset_line(hdcpu_gsp, data ? CLEAR_LINE : ASSERT_LINE);
+			break;
+		case 7:	/* /MSPRES */
+			logerror("Write to /MSPRES(%d)\n", data);
+			if (hdcpu_msp != -1)
+				cpu_set_reset_line(hdcpu_msp, data ? CLEAR_LINE : ASSERT_LINE);
+			break;
+	}
+}
+
+
+WRITE16_HANDLER( hdc68k_wheel_edge_reset_w )
+{
+	/* reset the edge latch */
+	hdc68k_wheel_edge = 0;
+}
+
+
+
+/*************************************
+ *
+ *	68000 ZRAM access
  *
  *************************************/
 
@@ -836,74 +590,7 @@ WRITE16_HANDLER( hd68k_zram_w )
 
 /*************************************
  *
- *	ADSP memory-mapped I/O
- *
- *************************************/
-
-READ16_HANDLER( hdadsp_special_r )
-{
-	switch (offset)
-	{
-		case 0:	/* /SIMBUF */
-			return sim_memory[adsp_eprom_base + adsp_sim_address++];
-
-		case 1:	/* /SIMLD */
-			break;
-
-		case 2:	/* /SOMO */
-			break;
-
-		case 3:	/* /SOMLD */
-			break;
-
-		default:
-			logerror("%04X:hdadsp_special_r(%04X)\n", activecpu_get_previouspc(), offset);
-			break;
-	}
-	return 0;
-}
-
-
-WRITE16_HANDLER( hdadsp_special_w )
-{
-	switch (offset)
-	{
-		case 1:	/* /SIMCLK */
-			adsp_sim_address = data;
-			break;
-
-		case 2:	/* SOMLATCH */
-			som_memory[(m68k_adsp_buffer_bank ^ 1) * 0x2000 + (adsp_som_address++ & 0x1fff)] = data;
-			break;
-
-		case 3:	/* /SOMCLK */
-			adsp_som_address = data;
-			break;
-
-		case 5:	/* /XOUT */
-			adsp_xflag = data & 1;
-			break;
-
-		case 6:	/* /GINT */
-			logerror("%04X:ADSP signals interrupt\n", activecpu_get_previouspc());
-			adsp_irq_state = 1;
-			atarigen_update_interrupts();
-			break;
-
-		case 7:	/* /MP */
-			adsp_eprom_base = 0x10000 * data;
-			break;
-
-		default:
-			logerror("%04X:hdadsp_special_w(%04X)=%04X\n", activecpu_get_previouspc(), offset, data);
-			break;
-	}
-}
-
-
-/*************************************
- *
- *	DUART memory handlers
+ *	68000 DUART interface
  *
  *************************************/
 
@@ -931,6 +618,7 @@ WRITE16_HANDLER( hdadsp_special_w )
 	0x1c = Start-Counter Command 3				Output Port Register (OPR): Bit Set Command 3
 	0x1e = Stop-Counter Command 3				Output Port Register (OPR): Bit Reset Command 3
 */
+
 
 INLINE double duart_clock_period(void)
 {
@@ -1040,100 +728,789 @@ WRITE16_HANDLER( hd68k_duart_w )
 
 /*************************************
  *
- *	Misc. I/O and latches
+ *	GSP I/O register writes
  *
  *************************************/
 
-WRITE16_HANDLER( hd68k_wr0_write )
+WRITE16_HANDLER( hdgsp_io_w )
 {
-	if (offset == 1) 		{ //	logerror("SEL1 low\n");
-	} else if (offset == 2) { //	logerror("SEL2 low\n");
-	} else if (offset == 3) { //	logerror("SEL3 low\n");
-	} else if (offset == 4) { //	logerror("SEL4 low\n");
-	} else if (offset == 6) { //	logerror("CC1 off\n");
-	} else if (offset == 7) { //	logerror("CC2 off\n");
-	} else if (offset == 9) { //	logerror("SEL1 high\n");
-	} else if (offset == 10) { //	logerror("SEL2 high\n");
-	} else if (offset == 11) { //	logerror("SEL3 high\n");
-	} else if (offset == 12) { //	logerror("SEL4 high\n");
-	} else if (offset == 14) { //	logerror("CC1 on\n");
-	} else if (offset == 15) { //	logerror("CC2 on\n");
-	} else { 				logerror("/WR1(%04X)=%02X\n", offset, data);
-	}
-}
-
-
-WRITE16_HANDLER( hd68k_wr1_write )
-{
-	if (offset == 0) { //	logerror("Shifter Interface Latch = %02X\n", data);
-	} else { 				logerror("/WR1(%04X)=%02X\n", offset, data);
-	}
-}
-
-
-WRITE16_HANDLER( hd68k_wr2_write )
-{
-	if (offset == 0) { //	logerror("Steering Wheel Latch = %02X\n", data);
-	} else { 				logerror("/WR2(%04X)=%02X\n", offset, data);
-	}
-}
-
-
-WRITE16_HANDLER( hd68k_adc_control_w )
-{
-	COMBINE_DATA(&adc_control);
-
-	/* handle a write to the 8-bit ADC address select */
-	if (adc_control & 0x08)
+	/* detect an enabling of the shift register and force yielding */
+	if (offset == REG_DPYCTL)
 	{
-		adc8_select = adc_control & 0x07;
-		adc8_data = readinputport(2 + adc8_select);
-//		logerror("8-bit ADC select %d\n", adc8_select, data);
+		UINT8 new_shiftreg = (data >> 11) & 1;
+		if (new_shiftreg != last_gsp_shiftreg)
+		{
+			last_gsp_shiftreg = new_shiftreg;
+			if (new_shiftreg)
+				cpu_yield();
+		}
 	}
 
-	/* handle a write to the 12-bit ADC address select */
-	if (adc_control & 0x40)
-	{
-		adc12_select = (adc_control >> 4) & 0x03;
-		adc12_data = readinputport(10 + adc12_select) << 4;
-//		logerror("12-bit ADC select %d\n", adc12_select);
-	}
-	adc12_byte = (adc_control >> 7) & 1;
+	/* detect changes to HEBLNK and HSBLNK and force an update before they change */
+	if ((offset == REG_HEBLNK || offset == REG_HSBLNK) && data != tms34010_io_register_r(offset, 0))
+		force_partial_update(cpu_getscanline() - 1);
+
+	tms34010_io_register_w(offset, data, mem_mask);
 }
 
 
 
 /*************************************
  *
- *	Race Drivin' RAM handlers
+ *	GSP protection workarounds
  *
  *************************************/
 
-READ16_HANDLER( hddsk_ram_r )
+WRITE16_HANDLER( hdgsp_protection_w )
+{
+	/* this memory address is incremented whenever a protection check fails */
+	/* after it reaches a certain value, the GSP will randomly trash a */
+	/* register; we just prevent it from ever going above 0 */
+	*hdgsp_protection = 0;
+}
+
+
+
+/*************************************
+ *
+ *	MSP synchronization helpers
+ *
+ *************************************/
+
+static void stmsp_sync_update(int param)
+{
+	int which = param >> 28;
+	offs_t offset = (param >> 16) & 0xfff;
+	data16_t data = param;
+	stmsp_sync[which][offset] = data;
+	cpu_triggerint(hdcpu_msp);
+}
+
+
+INLINE void stmsp_sync_w(int which, offs_t offset, data16_t data, data16_t mem_mask)
+{
+	data16_t newdata = stmsp_sync[which][offset];
+	COMBINE_DATA(&newdata);
+
+	/* if being written from the 68000, synchronize on it */
+	if (hd34010_host_access)
+		timer_set(TIME_NOW, newdata | (offset << 16) | (which << 28), stmsp_sync_update);
+
+	/* otherwise, just update */
+	else
+		stmsp_sync[which][offset] = newdata;
+}
+
+
+WRITE16_HANDLER( stmsp_sync0_w )
+{
+	stmsp_sync_w(0, offset, data, mem_mask);
+}
+
+
+WRITE16_HANDLER( stmsp_sync1_w )
+{
+	stmsp_sync_w(1, offset, data, mem_mask);
+}
+
+
+WRITE16_HANDLER( stmsp_sync2_w )
+{
+	stmsp_sync_w(2, offset, data, mem_mask);
+}
+
+
+
+#if 0
+#pragma mark -
+#pragma mark * ADSP BOARD
+#endif
+
+/*************************************
+ *
+ *	68000 access to ADSP program memory
+ *
+ *************************************/
+
+READ16_HANDLER( hd68k_adsp_program_r )
+{
+	UINT32 word = adsp_pgm_memory[offset/2];
+	return (!(offset & 1)) ? (word >> 16) : (word & 0xffff);
+}
+
+
+WRITE16_HANDLER( hd68k_adsp_program_w )
+{
+	UINT32 *base = &adsp_pgm_memory[offset/2];
+	UINT32 oldword = *base;
+	data16_t temp;
+
+	if (!(offset & 1))
+	{
+		temp = oldword >> 16;
+		COMBINE_DATA(&temp);
+		oldword = (oldword & 0x0000ffff) | (temp << 16);
+	}
+	else
+	{
+		temp = oldword & 0xffff;
+		COMBINE_DATA(&temp);
+		oldword = (oldword & 0xffff0000) | temp;
+	}
+	ADSP2100_WRPGM(base, oldword);
+}
+
+
+
+/*************************************
+ *
+ *	68000 access to ADSP data memory
+ *
+ *************************************/
+
+READ16_HANDLER( hd68k_adsp_data_r )
+{
+	return adsp_data_memory[offset];
+}
+
+
+WRITE16_HANDLER( hd68k_adsp_data_w )
+{
+	COMBINE_DATA(&adsp_data_memory[offset]);
+
+	/* any write to $1FFF is taken to be a trigger; synchronize the CPUs */
+	if (offset == 0x1fff)
+	{
+		logerror("%06X:ADSP sync address written (%04X)\n", activecpu_get_previouspc(), data);
+		timer_set(TIME_NOW, 0, 0);
+		cpu_triggerint(hdcpu_adsp);
+	}
+}
+
+
+
+/*************************************
+ *
+ *	68000 access to ADSP output memory
+ *
+ *************************************/
+
+READ16_HANDLER( hd68k_adsp_buffer_r )
+{
+/*	logerror("hd68k_adsp_buffer_r(%04X)\n", offset);*/
+	return som_memory[m68k_adsp_buffer_bank * 0x2000 + offset];
+}
+
+
+WRITE16_HANDLER( hd68k_adsp_buffer_w )
+{
+	COMBINE_DATA(&som_memory[m68k_adsp_buffer_bank * 0x2000 + offset]);
+}
+
+
+
+/*************************************
+ *
+ *	68000 access to ADSP control regs
+ *
+ *************************************/
+
+static void deferred_adsp_bank_switch(int data)
+{
+#if LOG_COMMANDS
+	if (m68k_adsp_buffer_bank != data && keyboard_pressed(KEYCODE_L))
+	{
+		static FILE *commands;
+		if (!commands) commands = fopen("commands.log", "w");
+		if (commands)
+		{
+			INT16 *base = (INT16 *)&som_memory[data * 0x2000];
+			INT16 *end = base + (UINT16)*base++;
+			INT16 *current = base;
+			INT16 *table = base + (UINT16)*current++;
+
+			fprintf(commands, "\n---------------\n");
+
+			while ((current + 5) < table)
+			{
+				int offset = (int)(current - base);
+				int c1 = *current++;
+				int c2 = *current++;
+				int c3 = *current++;
+				int c4 = *current++;
+				fprintf(commands, "Cmd @ %04X = %04X  %d-%d @ %d\n", offset, c1, c2, c3, c4);
+				while (current < table)
+				{
+					UINT32 rslope, lslope;
+					rslope = (UINT16)*current++,
+					rslope |= *current++ << 16;
+					if (rslope == 0xffffffff)
+					{
+						fprintf(commands, "  (end)\n");
+						break;
+					}
+					lslope = (UINT16)*current++,
+					lslope |= *current++ << 16;
+					fprintf(commands, "  L=%08X R=%08X count=%d\n",
+							(int)lslope, (int)rslope, (int)*current++);
+				}
+			}
+			fprintf(commands, "\nTable:\n");
+			current = table;
+			while (current < end)
+				fprintf(commands, "  %04X\n", *current++);
+		}
+	}
+#endif
+	m68k_adsp_buffer_bank = data;
+}
+
+
+WRITE16_HANDLER( hd68k_adsp_control_w )
+{
+	/* bit 3 selects the value; data is ignored */
+	int val = (offset >> 3) & 1;
+
+	/* low 3 bits select the function */
+	offset &= 7;
+	switch (offset)
+	{
+		case 0:
+		case 1:
+			/* LEDs */
+			break;
+
+		case 3:
+			timer_set(TIME_NOW, val, deferred_adsp_bank_switch);
+			break;
+
+		case 5:
+			/* connected to the /BR (bus request) line; this effectively halts */
+			/* the ADSP at the next instruction boundary */
+			adsp_br = !val;
+			if (adsp_br || adsp_halt)
+				cpu_set_halt_line(hdcpu_adsp, ASSERT_LINE);
+			else
+			{
+				cpu_set_halt_line(hdcpu_adsp, CLEAR_LINE);
+				/* a yield in this case is not enough */
+				/* we would need to increase the interleaving otherwise */
+				/* note that this only affects the test mode */
+				cpu_spin();
+			}
+			break;
+
+		case 6:
+			/* connected to the /HALT line; this effectively halts */
+			/* the ADSP at the next instruction boundary */
+			adsp_halt = !val;
+			if (adsp_br || adsp_halt)
+				cpu_set_halt_line(hdcpu_adsp, ASSERT_LINE);
+			else
+			{
+				cpu_set_halt_line(hdcpu_adsp, CLEAR_LINE);
+				/* a yield in this case is not enough */
+				/* we would need to increase the interleaving otherwise */
+				/* note that this only affects the test mode */
+				cpu_spin();
+			}
+			break;
+
+		case 7:
+			cpu_set_reset_line(hdcpu_adsp, val ? CLEAR_LINE : ASSERT_LINE);
+			cpu_yield();
+			break;
+
+		default:
+			logerror("ADSP control %02X = %04X\n", offset, data);
+			break;
+	}
+}
+
+
+WRITE16_HANDLER( hd68k_adsp_irq_clear_w )
+{
+	adsp_irq_state = 0;
+	atarigen_update_interrupts();
+}
+
+
+READ16_HANDLER( hd68k_adsp_irq_state_r )
+{
+	int result = 0xfffd;
+	if (adsp_xflag) result ^= 2;
+	if (adsp_irq_state) result ^= 1;
+	return result;
+}
+
+
+
+/*************************************
+ *
+ *	ADSP memory-mapped I/O
+ *
+ *************************************/
+
+READ16_HANDLER( hdadsp_special_r )
+{
+	switch (offset & 7)
+	{
+		case 0:	/* /SIMBUF */
+			if (adsp_eprom_base + adsp_sim_address < sim_memory_size)
+				return sim_memory[adsp_eprom_base + adsp_sim_address++];
+			else
+				return 0xff;
+
+		case 1:	/* /SIMLD */
+			break;
+
+		case 2:	/* /SOMO */
+			break;
+
+		case 3:	/* /SOMLD */
+			break;
+
+		default:
+			logerror("%04X:hdadsp_special_r(%04X)\n", activecpu_get_previouspc(), offset);
+			break;
+	}
+	return 0;
+}
+
+
+WRITE16_HANDLER( hdadsp_special_w )
+{
+	switch (offset & 7)
+	{
+		case 1:	/* /SIMCLK */
+			adsp_sim_address = data;
+			break;
+
+		case 2:	/* SOMLATCH */
+			som_memory[(m68k_adsp_buffer_bank ^ 1) * 0x2000 + (adsp_som_address++ & 0x1fff)] = data;
+			break;
+
+		case 3:	/* /SOMCLK */
+			adsp_som_address = data;
+			break;
+
+		case 5:	/* /XOUT */
+			adsp_xflag = data & 1;
+			break;
+
+		case 6:	/* /GINT */
+			logerror("%04X:ADSP signals interrupt\n", activecpu_get_previouspc());
+			adsp_irq_state = 1;
+			atarigen_update_interrupts();
+			break;
+
+		case 7:	/* /MP */
+			adsp_eprom_base = 0x10000 * data;
+			break;
+
+		default:
+			logerror("%04X:hdadsp_special_w(%04X)=%04X\n", activecpu_get_previouspc(), offset, data);
+			break;
+	}
+}
+
+
+
+#if 0
+#pragma mark -
+#pragma mark * DS III BOARD
+#endif
+
+/*************************************
+ *
+ *	General DS III I/O
+ *
+ *************************************/
+
+static void ds3_interleave_callback(int param)
+{
+	if (--ds3_timer_count < 0)
+		timer_adjust(ds3_timer, TIME_NEVER, 0, TIME_NEVER);
+}
+
+
+static void update_ds3_irq(void)
+{
+	/* update the IRQ2 signal to the ADSP2101 */
+	if (!(!ds3_g68flag && ds3_g68irqs) && !(ds3_gflag && ds3_gfirqs))
+		cpu_set_irq_line(hdcpu_adsp, ADSP2100_IRQ2, ASSERT_LINE);
+	else
+		cpu_set_irq_line(hdcpu_adsp, ADSP2100_IRQ2, CLEAR_LINE);
+}
+
+
+WRITE16_HANDLER( hd68k_ds3_control_w )
+{
+	int val = (offset >> 3) & 1;
+
+	switch (offset & 7)
+	{
+		case 0:
+			/* SRES - reset sound CPU */
+			break;
+
+		case 1:
+			/* XRES - reset sound helper CPU */
+			break;
+
+		case 2:
+			/* connected to the /BR (bus request) line; this effectively halts */
+			/* the ADSP at the next instruction boundary */
+			adsp_br = !val;
+			if (adsp_br)
+				cpu_set_halt_line(hdcpu_adsp, ASSERT_LINE);
+			else
+			{
+				cpu_set_halt_line(hdcpu_adsp, CLEAR_LINE);
+				/* a yield in this case is not enough */
+				/* we would need to increase the interleaving otherwise */
+				/* note that this only affects the test mode */
+				cpu_spin();
+			}
+			break;
+
+		case 3:
+			cpu_set_reset_line(hdcpu_adsp, val ? CLEAR_LINE : ASSERT_LINE);
+			if (val && !ds3_reset)
+			{
+				ds3_gflag = 0;
+				ds3_gcmd = 0;
+				ds3_gfirqs = 0;
+				ds3_g68irqs = !ds3_gfirqs;
+				ds3_send = 0;
+				update_ds3_irq();
+			}
+			ds3_reset = val;
+			cpu_yield();
+			logerror("DS III reset = %d\n", val);
+			break;
+
+		case 7:
+			/* LED */
+			break;
+
+		default:
+			logerror("DS III control %02X = %04X\n", offset, data);
+			break;
+	}
+}
+
+
+
+/*************************************
+ *
+ *	DS III graphics I/O
+ *
+ *************************************/
+
+READ16_HANDLER( hd68k_ds3_girq_state_r )
+{
+	int result = 0x0fff;
+	if (ds3_g68flag) result ^= 0x8000;
+	if (ds3_gflag) result ^= 0x4000;
+	if (ds3_g68irqs) result ^= 0x2000;
+	if (!adsp_irq_state) result ^= 0x1000;
+	return result;
+}
+
+
+READ16_HANDLER( hd68k_ds3_gdata_r )
+{
+	offs_t pc = activecpu_get_pc();
+
+	ds3_gflag = 0;
+	update_ds3_irq();
+
+	ds3_timer_count = 5;
+
+	/* attempt to optimize the transfer if conditions are right */
+	if (cpu_getactivecpu() == 0 && pc == hdds3_transfer_pc &&
+		!(!ds3_g68flag && ds3_g68irqs) && !(ds3_gflag && ds3_gfirqs))
+	{
+		data32_t destaddr = activecpu_get_reg(M68K_A1);
+		data16_t count68k = activecpu_get_reg(M68K_D1);
+		data16_t mstat = cpunum_get_reg(hdcpu_adsp, ADSP2100_MSTAT);
+		data16_t i6 = cpunum_get_reg(hdcpu_adsp, (mstat & 1) ? ADSP2100_MR0 : ADSP2100_MR0_SEC);
+		data16_t l6 = cpunum_get_reg(hdcpu_adsp, ADSP2100_L6) - 1;
+		data16_t m7 = cpunum_get_reg(hdcpu_adsp, ADSP2100_M7);
+
+		while (count68k > 0 && adsp_data_memory[0x16e6] > 0)
+		{
+			cpu_writemem24bew_word(destaddr, ds3_gdata);
+			{
+				adsp_data_memory[0x16e6]--;
+				ds3_gdata = adsp_pgm_memory[i6] >> 8;
+				i6 = (i6 & ~l6) | ((i6 + m7) & l6);
+			}
+			count68k--;
+		}
+		activecpu_set_reg(M68K_D1, count68k);
+		cpunum_set_reg(hdcpu_adsp, (mstat & 1) ? ADSP2100_MR0 : ADSP2100_MR0_SEC, i6);
+		adsp_speedup_count[1]++;
+	}
+
+	timer_adjust(ds3_timer, 4 * TIME_IN_HZ(8000000), 0, 4 * TIME_IN_HZ(8000000));
+	return ds3_gdata;
+}
+
+
+WRITE16_HANDLER( hd68k_ds3_gdata_w )
+{
+	COMBINE_DATA(&ds3_g68data);
+	ds3_g68flag = 1;
+	ds3_gcmd = offset & 1;
+	cpu_triggerint(hdcpu_adsp);
+	update_ds3_irq();
+
+	ds3_timer_count = 20;
+	timer_adjust(ds3_timer, TIME_IN_USEC(50), 0, TIME_IN_USEC(50));
+}
+
+
+
+/*************************************
+ *
+ *	DS III sound I/O
+ *
+ *************************************/
+
+READ16_HANDLER( hd68k_ds3_sirq_state_r )
+{
+	return 0x4000;
+}
+
+
+READ16_HANDLER( hd68k_ds3_sdata_r )
+{
+	return 0;
+}
+
+
+WRITE16_HANDLER( hd68k_ds3_sdata_w )
+{
+}
+
+
+/*************************************
+ *
+ *	DS III internal I/O
+ *
+ *************************************/
+
+READ16_HANDLER( hdds3_special_r )
+{
+	int result;
+
+	switch (offset & 7)
+	{
+		case 0:
+			ds3_g68flag = 0;
+			update_ds3_irq();
+			return ds3_g68data;
+
+		case 1:
+			result = 0x0fff;
+			if (ds3_gcmd) result ^= 0x8000;
+			if (ds3_g68flag) result ^= 0x4000;
+			if (ds3_gflag) result ^= 0x2000;
+			return result;
+
+		case 6:
+			if (ds3_sim_address < sim_memory_size)
+				return sim_memory[ds3_sim_address];
+			else
+				return 0xff;
+	}
+	return 0;
+}
+
+
+WRITE16_HANDLER( hdds3_special_w )
+{
+	/* IMPORTANT! these data values also write through to the underlying RAM */
+	adsp_data_memory[offset] = data;
+
+	switch (offset & 7)
+	{
+		case 0:
+			ds3_gdata = data;
+			ds3_gflag = 1;
+			update_ds3_irq();
+			break;
+
+		case 1:
+			adsp_irq_state = (data >> 1) & 1;
+			hd68k_update_interrupts();
+			break;
+
+		case 2:
+			ds3_send = (data >> 0) & 1;
+			break;
+
+		case 3:
+			ds3_gfirqs = (data >> 1) & 1;
+			ds3_g68irqs = !ds3_gfirqs;
+			update_ds3_irq();
+			break;
+
+		case 4:
+			ds3_sim_address = (ds3_sim_address & 0xffff0000) | (data & 0xffff);
+			break;
+
+		case 5:
+			ds3_sim_address = (ds3_sim_address & 0xffff) | ((data << 16) & 0x00070000);
+			break;
+	}
+}
+
+
+READ16_HANDLER( hdds3_control_r )
+{
+	logerror("adsp2101 control r @ %04X\n", 0x3fe0 + offset);
+	return 0;
+}
+
+
+WRITE16_HANDLER( hdds3_control_w )
+{
+	if (offset != 0x1e && offset != 0x1f)
+		logerror("adsp2101 control w @ %04X = %04X\n", 0x3fe0 + offset, data);
+}
+
+
+
+/*************************************
+ *
+ *	DS III program memory handlers
+ *
+ *************************************/
+
+READ16_HANDLER( hd68k_ds3_program_r )
+{
+	UINT32 *base = &adsp_pgm_memory[offset & 0x1fff];
+	UINT32 word = *base;
+	return (!(offset & 0x2000)) ? (word >> 8) : (word & 0xff);
+}
+
+
+WRITE16_HANDLER( hd68k_ds3_program_w )
+{
+	UINT32 *base = &adsp_pgm_memory[offset & 0x1fff];
+	UINT32 oldword = *base;
+	UINT16 temp;
+
+	if (!(offset & 0x2000))
+	{
+		temp = oldword >> 8;
+		COMBINE_DATA(&temp);
+		oldword = (oldword & 0x000000ff) | (temp << 8);
+	}
+	else
+	{
+		temp = oldword & 0xff;
+		COMBINE_DATA(&temp);
+		oldword = (oldword & 0xffffff00) | (temp & 0xff);
+	}
+	ADSP2100_WRPGM(base, oldword);
+}
+
+
+
+#if 0
+#pragma mark -
+#pragma mark * DSK BOARD
+#endif
+
+/*************************************
+ *
+ *	DSK board IRQ generation
+ *
+ *************************************/
+
+void hddsk_update_pif(UINT32 pins)
+{
+	atarigen_sound_int_state = ((pins & DSP32_OUTPUT_PIF) != 0);
+	hd68k_update_interrupts();
+}
+
+
+
+/*************************************
+ *
+ *	DSK board control handlers
+ *
+ *************************************/
+
+WRITE16_HANDLER( hd68k_dsk_control_w )
+{
+	int val = (offset >> 3) & 1;
+	switch (offset & 7)
+	{
+		case 0:	/* DSPRESTN */
+			cpu_set_reset_line(hdcpu_dsp32, val ? CLEAR_LINE : ASSERT_LINE);
+			break;
+
+		case 1:	/* DSPZN */
+			cpu_set_halt_line(hdcpu_dsp32, val ? CLEAR_LINE : ASSERT_LINE);
+			break;
+
+		case 2:	/* ZW1 */
+			break;
+
+		case 3:	/* ZW2 */
+			break;
+
+		case 4:	/* ASIC65 reset */
+			asic65_reset(!val);
+			break;
+
+		case 7:	/* LED */
+			break;
+
+		default:
+			logerror("hd68k_dsk_control_w(%d) = %d\n", offset & 7, val);
+			break;
+	}
+}
+
+
+
+/*************************************
+ *
+ *	DSK board RAM/ZRAM/ROM handlers
+ *
+ *************************************/
+
+READ16_HANDLER( hd68k_dsk_ram_r )
 {
 	return hddsk_ram[offset];
 }
 
 
-WRITE16_HANDLER( hddsk_ram_w )
+WRITE16_HANDLER( hd68k_dsk_ram_w )
 {
 	COMBINE_DATA(&hddsk_ram[offset]);
 }
 
 
-READ16_HANDLER( hddsk_zram_r )
+READ16_HANDLER( hd68k_dsk_zram_r )
 {
 	return hddsk_zram[offset];
 }
 
 
-WRITE16_HANDLER( hddsk_zram_w )
+WRITE16_HANDLER( hd68k_dsk_zram_w )
 {
 	COMBINE_DATA(&hddsk_zram[offset]);
 }
 
 
-READ16_HANDLER( hddsk_rom_r )
+READ16_HANDLER( hd68k_dsk_rom_r )
 {
 	return hddsk_rom[offset];
 }
@@ -1142,17 +1519,119 @@ READ16_HANDLER( hddsk_rom_r )
 
 /*************************************
  *
+ *	DSK board DSP32C I/O handlers
+ *
+ *************************************/
+
+WRITE16_HANDLER( hd68k_dsk_dsp32_w )
+{
+	hddsk_pio_access = 1;
+	dsp32c_pio_w(hdcpu_dsp32, offset, data);
+	hddsk_pio_access = 0;
+}
+
+
+READ16_HANDLER( hd68k_dsk_dsp32_r )
+{
+	data16_t result;
+	hddsk_pio_access = 1;
+	result = dsp32c_pio_r(hdcpu_dsp32, offset);
+	hddsk_pio_access = 0;
+	return result;
+}
+
+
+/*************************************
+ *
+ *	DSP32C synchronization
+ *
+ *************************************/
+
+static void rddsp32_sync_cb(int param)
+{
+	*dataptr[param] = dataval[param];
+}
+
+
+WRITE32_HANDLER( rddsp32_sync0_w )
+{
+	if (hddsk_pio_access)
+	{
+		data32_t *dptr = &rddsp32_sync[0][offset];
+		data32_t newdata = *dptr;
+		COMBINE_DATA(&newdata);
+		dataptr[next_msp_sync % MAX_MSP_SYNC] = dptr;
+		dataval[next_msp_sync % MAX_MSP_SYNC] = newdata;
+		timer_set(TIME_NOW, next_msp_sync++ % MAX_MSP_SYNC, rddsp32_sync_cb);
+	}
+	else
+		COMBINE_DATA(&rddsp32_sync[0][offset]);
+}
+
+
+WRITE32_HANDLER( rddsp32_sync1_w )
+{
+	if (hddsk_pio_access)
+	{
+		data32_t *dptr = &rddsp32_sync[1][offset];
+		data32_t newdata = *dptr;
+		COMBINE_DATA(&newdata);
+		dataptr[next_msp_sync % MAX_MSP_SYNC] = dptr;
+		dataval[next_msp_sync % MAX_MSP_SYNC] = newdata;
+		timer_set(TIME_NOW, next_msp_sync++ % MAX_MSP_SYNC, rddsp32_sync_cb);
+	}
+	else
+		COMBINE_DATA(&rddsp32_sync[1][offset]);
+}
+
+
+
+#if 0
+#pragma mark -
+#pragma mark * DSPCOM BOARD
+#endif
+
+/*************************************
+ *
+ *	DSPCOM control handlers
+ *
+ *************************************/
+
+WRITE16_HANDLER( hddspcom_control_w )
+{
+	int val = (offset >> 3) & 1;
+	switch (offset & 7)
+	{
+		case 2:	/* ASIC65 reset */
+			asic65_reset(!val);
+			break;
+
+		default:
+			logerror("hddspcom_control_w(%d) = %d\n", offset & 7, val);
+			break;
+	}
+}
+
+
+
+#if 0
+#pragma mark -
+#pragma mark * GAME-SPECIFIC PROTECTION
+#endif
+
+/*************************************
+ *
  *	Race Drivin' slapstic handling
  *
  *************************************/
 
-WRITE16_HANDLER( racedriv_68k_slapstic_w )
+WRITE16_HANDLER( rd68k_slapstic_w )
 {
 	slapstic_tweak(offset & 0x3fff);
 }
 
 
-READ16_HANDLER( racedriv_68k_slapstic_r )
+READ16_HANDLER( rd68k_slapstic_r )
 {
 	int bank = slapstic_tweak(offset & 0x3fff) * 0x4000;
 	return hd68k_slapstic_base[bank + (offset & 0x3fff)];
@@ -1162,483 +1641,87 @@ READ16_HANDLER( racedriv_68k_slapstic_r )
 
 /*************************************
  *
- *	Race Drivin' ASIC 65 handling
- *
- *	(ASIC 65 is actually a TMS32C015
- *	DSP chip clocked at 20MHz)
+ *	Steel Talons SLOOP handling
  *
  *************************************/
 
-static UINT16 asic65_command;
-static UINT16 asic65_param[32];
-static UINT8  asic65_param_index;
-static UINT16 asic65_result[32];
-static UINT8  asic65_result_index;
-
-static FILE * asic65_log;
-
-WRITE16_HANDLER( racedriv_asic65_w )
-{
-	if (!asic65_log) asic65_log = fopen("asic65.log", "w");
-
-	if (!ACCESSING_LSB || !ACCESSING_MSB)
-		return;
-
-	/* parameters go to offset 0 */
-	if (offset == 0)
-	{
-		if (asic65_log) fprintf(asic65_log, " W=%04X", data);
-
-		asic65_param[asic65_param_index++] = data;
-		if (asic65_param_index >= 32)
-			asic65_param_index = 32;
-	}
-
-	/* commands go to offset 1 */
-	else
-	{
-		if (asic65_log) fprintf(asic65_log, "\n(%06X) %04X:", activecpu_get_previouspc(), data);
-
-		asic65_command = data;
-		asic65_result_index = asic65_param_index = 0;
-	}
-
-	/* update results */
-	switch (asic65_command)
-	{
-		case 0x01:	/* reflect data */
-			if (asic65_param_index >= 1)
-			{
-				asic65_result[0] = asic65_param[0];
-				asic65_result_index = asic65_param_index = 0;
-			}
-			break;
-
-		case 0x02:	/* compute checksum (should be XX27) */
-			asic65_result[0] = 0x0027;
-			asic65_result_index = asic65_param_index = 0;
-			break;
-
-		case 0x03:	/* get version (returns 1.3) */
-			asic65_result[0] = 0x0013;
-			asic65_result_index = asic65_param_index = 0;
-			break;
-
-		case 0x04:	/* internal RAM test (result should be 0) */
-			asic65_result[0] = 0;
-			asic65_result_index = asic65_param_index = 0;
-			break;
-
-		case 0x10:	/* matrix multiply */
-			if (asic65_param_index >= 9+6)
-			{
-				INT64 element, result;
-
-				element = (INT32)((asic65_param[9] << 16) | asic65_param[10]);
-				result = element * (INT16)asic65_param[0] +
-						 element * (INT16)asic65_param[1] +
-						 element * (INT16)asic65_param[2];
-				result >>= 14;
-				asic65_result[0] = result >> 16;
-				asic65_result[1] = result & 0xffff;
-
-				element = (INT32)((asic65_param[11] << 16) | asic65_param[12]);
-				result = element * (INT16)asic65_param[3] +
-						 element * (INT16)asic65_param[4] +
-						 element * (INT16)asic65_param[5];
-				result >>= 14;
-				asic65_result[2] = result >> 16;
-				asic65_result[3] = result & 0xffff;
-
-				element = (INT32)((asic65_param[13] << 16) | asic65_param[14]);
-				result = element * (INT16)asic65_param[6] +
-						 element * (INT16)asic65_param[7] +
-						 element * (INT16)asic65_param[8];
-				result >>= 14;
-				asic65_result[4] = result >> 16;
-				asic65_result[5] = result & 0xffff;
-			}
-			break;
-
-		case 0x14:	/* ??? */
-			if (asic65_param_index >= 1)
-			{
-				asic65_result[0] = asic65_param[0];
-				asic65_result_index = asic65_param_index = 0;
-			}
-			break;
-
-		case 0x15:	/* ??? */
-			if (asic65_param_index >= 1)
-			{
-				asic65_result[0] = asic65_param[0];
-				asic65_result_index = asic65_param_index = 0;
-			}
-			break;
-	}
-}
-
-
-READ16_HANDLER( racedriv_asic65_r )
-{
-	int result;
-
-	if (!asic65_log) asic65_log = fopen("asic65.log", "w");
-	if (asic65_log) fprintf(asic65_log, " (R=%04X)", asic65_result[asic65_result_index]);
-
-	/* return the next result */
-	result = asic65_result[asic65_result_index++];
-	if (asic65_result_index >= 32)
-		asic65_result_index = 32;
-	return result;
-}
-
-
-READ16_HANDLER( racedriv_asic65_io_r )
-{
-	/* indicate that we always are ready to accept data and always ready to send */
-	return 0x4000;
-}
-
-
-
-/*************************************
- *
- *	Race Drivin' ASIC 61 handling
- *
- *	(ASIC 61 is actually an AT&T/Lucent
- *	DSP32 chip clocked at 40MHz)
- *
- *************************************/
-
-static UINT32 asic61_addr;
-static FILE *asic61_log;
-
-/* remove these when we get a real CPU to work with */
-static UINT16 *asic61_ram_low;
-static UINT16 *asic61_ram_mid;
-static UINT16 *asic61_ram_high;
-
-static WRITE16_HANDLER( asic61_w )
-{
-	if (!asic61_ram_low)
-	{
-		asic61_ram_low = auto_malloc(2 * 0x1000);
-		asic61_ram_mid = auto_malloc(2 * 0x20000);
-		asic61_ram_high = auto_malloc(2 * 0x00800);
-		if (!asic61_ram_low || !asic61_ram_mid || !asic61_ram_high)
-			return;
-	}
-	if (offset >= 0x000000 && offset < 0x001000)
-		asic61_ram_low[offset & 0xfff] = data;
-	else if (offset >= 0x600000 && offset < 0x620000)
-		asic61_ram_mid[offset & 0x1ffff] = data;
-	else if (offset >= 0xfff800 && offset < 0x1000000)
-		asic61_ram_high[offset & 0x7ff] = data;
-	else
-		logerror("Unexpected ASIC61 write to %06X\n", offset);
-}
-
-
-static READ16_HANDLER( asic61_r )
-{
-	if (!asic61_ram_low)
-	{
-		asic61_ram_low = auto_malloc(2 * 0x1000);
-		asic61_ram_mid = auto_malloc(2 * 0x20000);
-		asic61_ram_high = auto_malloc(2 * 0x00800);
-		if (!asic61_ram_low || !asic61_ram_mid || !asic61_ram_high)
-			return 0;
-	}
-	if (offset >= 0x000000 && offset < 0x001000)
-		return asic61_ram_low[offset & 0xfff];
-	else if (offset >= 0x600000 && offset < 0x620000)
-		return asic61_ram_mid[offset & 0x1ffff];
-	else if (offset >= 0xfff800 && offset < 0x1000000)
-		return asic61_ram_high[offset & 0x7ff];
-	else
-	{
-		logerror("Unexpected ASIC61 read from %06X\n", offset);
-		if (asic61_log) fprintf(asic61_log, "Unexpected ASIC61 read from %06X\n", offset);
-	}
-	return 0;
-}
-
-
-WRITE16_HANDLER( racedriv_asic61_w )
-{
-	if (!asic61_log) asic61_log = fopen("asic61.log", "w");
-
-	switch (offset)
-	{
-		case 0x00:
-//			if (asic61_log) fprintf(asic61_log, "%06X:mem addr lo = %04X\n", activecpu_get_previouspc(), data);
-			asic61_addr = (asic61_addr & 0x00ff0000) | (data & 0xfffe);
-			break;
-
-		case 0x02:
-//			if (asic61_log) fprintf(asic61_log, "%06X:mem W @ %08X=%04X\n", activecpu_get_previouspc(), asic61_addr, data);
-			asic61_w(asic61_addr, data, mem_mask);
-			asic61_addr = (asic61_addr & 0xffff0000) | ((asic61_addr+1) & 0x0000ffff);
-			break;
-
-		case 0x0b:
-//			if (asic61_log) fprintf(asic61_log, "%06X:mem addr hi = %04X\n", activecpu_get_previouspc(), data);
-			asic61_addr = ((data << 16) & 0x00ff0000) | (asic61_addr & 0xfffe);
-			break;
-
-		default:
-			if (asic61_log) fprintf(asic61_log, "%06X:W@%02X = %04X\n", activecpu_get_previouspc(), offset, data);
-			break;
-	}
-}
-
-
-READ16_HANDLER( racedriv_asic61_r )
-{
-	UINT32 orig_addr = asic61_addr;
-
-	if (!asic61_log) asic61_log = fopen("asic61.log", "w");
-
-	switch (offset)
-	{
-		case 0x00:
-//			if (asic61_log) fprintf(asic61_log, "%06X:read mem addr lo = %04X\n", activecpu_get_previouspc(), asic61_addr & 0xffff);
-			return (asic61_addr & 0xfffe) | 1;
-
-		case 0x02:
-//			if (asic61_log) fprintf(asic61_log, "%06X:mem R @ %08X=%04X\n", activecpu_get_previouspc(), asic61_addr, asic61_r(asic61_addr));
-			asic61_addr = (asic61_addr & 0xffff0000) | ((asic61_addr+1) & 0x0000ffff);
-
-			/* special case: reading from 0x613e08 seems to be a flag */
-			if (orig_addr == 0x613e08 && asic61_r(orig_addr,0) == 1)
-				return 0;
-			return asic61_r(orig_addr,0);
-
-		default:
-//			if (asic61_log) fprintf(asic61_log, "%06X:R@%02X\n", activecpu_get_previouspc(), offset);
-			break;
-	}
-	return 0;
-}
-
-
-
-/*************************************
- *
- *	Steel Talons slapstic handling
- *
- *************************************/
-
-static int steeltal_slapstic_tweak(offs_t offset)
+static int st68k_sloop_tweak(offs_t offset)
 {
 	static int last_offset;
-	static int bank = 0;
 
 	if (last_offset == 0)
 	{
 		switch (offset)
 		{
 			case 0x78e8:
-				bank = 0;
+				st68k_sloop_bank = 0;
 				break;
 			case 0x6ca4:
-				bank = 1;
+				st68k_sloop_bank = 1;
 				break;
 			case 0x15ea:
-				bank = 2;
+				st68k_sloop_bank = 2;
 				break;
 			case 0x6b28:
-				bank = 3;
+				st68k_sloop_bank = 3;
 				break;
 		}
 	}
 	last_offset = offset;
-	return bank;
+	return st68k_sloop_bank;
 }
 
 
-WRITE16_HANDLER( steeltal_68k_slapstic_w )
+WRITE16_HANDLER( st68k_sloop_w )
 {
-	steeltal_slapstic_tweak(offset & 0x3fff);
+	st68k_sloop_tweak(offset & 0x3fff);
 }
 
 
-READ16_HANDLER( steeltal_68k_slapstic_r )
+READ16_HANDLER( st68k_sloop_r )
 {
-	int bank = steeltal_slapstic_tweak(offset) * 0x4000;
+	int bank = st68k_sloop_tweak(offset) * 0x4000;
 	return hd68k_slapstic_base[bank + (offset & 0x3fff)];
 }
 
 
+READ16_HANDLER( st68k_sloop_alt_r )
+{
+	if (st68k_last_alt_sloop_offset == 0x00fe)
+	{
+		switch (offset*2)
+		{
+			case 0x22c:
+				st68k_sloop_bank = 0;
+				break;
+			case 0x1e2:
+				st68k_sloop_bank = 1;
+				break;
+			case 0x1fa:
+				st68k_sloop_bank = 2;
+				break;
+			case 0x206:
+				st68k_sloop_bank = 3;
+				break;
+		}
+	}
+	st68k_last_alt_sloop_offset = offset*2;
+	return st68k_sloop_alt_base[offset];
+}
+
+
+
+#if 0
+#pragma mark -
+#pragma mark * GSP OPTIMIZATIONS
+#endif
 
 /*************************************
  *
- *	ADSP Optimizations
- *
- *************************************/
-
-#define READ_DATA(o) 	(adsp_data_memory[(o) & 0x3fff])
-#ifndef ALIGN_SHORTS
-#define READ_PGM(o)		(adsp_pgm_memory_word[((o) & 0x3fff) * 2])
-#else
-#define READ_PGM(o)		((adsp_pgm_memory[(o) & 0x3fff] >> 8) & 0xffff)
-#endif
-
-
-READ16_HANDLER( hdadsp_speedup_r )
-{
-	int data = READ_DATA(0x1fff);
-
-	if (data == 0xffff && activecpu_get_pc() <= 0x14 && cpu_getactivecpu() == adsp_cpu)
-		cpu_spinuntil_trigger(554433);
-
-	return data;
-}
-
-
-READ16_HANDLER( hdadsp_speedup2_r )
-{
-	UINT32 i5 = READ_DATA(0x0958);
-
-	int pc = activecpu_get_pc();
-	if (pc >= 0x07c7 && pc <= 0x7d5)
-	{
-		UINT32 i4 = activecpu_get_reg(ADSP2100_I4);
-		INT32 ay = (READ_PGM(i4++) << 16) | (UINT16)activecpu_get_reg(ADSP2100_AY1);
-		INT32 sr = (activecpu_get_reg(ADSP2100_SR1) << 16) | (UINT16)activecpu_get_reg(ADSP2100_SR0);
-		INT32 last_ay;
-
-		if (ay < sr)
-		{
-			do
-			{
-				last_ay = ay;
-				i4 = (UINT16)READ_PGM(i4);
-				i5++;
-				ay = (UINT16)READ_PGM(i4) | (READ_PGM(i4 + 1) << 16);
-				i4 += 2;
-			} while (sr >= last_ay);
-			activecpu_set_reg(ADSP2100_I4, i4);
-			activecpu_set_reg(ADSP2100_PC, pc + 0x7d0 - 0x7c7);
-		}
-		else
-		{
-			i4++;
-			do
-			{
-				last_ay = ay;
-				i4 = (UINT16)READ_PGM(i4);
-				i5++;
-				ay = (UINT16)READ_PGM(i4) | (READ_PGM(i4 + 1) << 16);
-				i4 += 3;
-			} while (last_ay >= sr);
-			activecpu_set_reg(ADSP2100_I4, i4);
-			activecpu_set_reg(ADSP2100_AR, i4 - 3);
-			activecpu_set_reg(ADSP2100_M4, 2);
-			activecpu_set_reg(ADSP2100_PC, pc + 0x7ec - 0x7c7);
-		}
-	}
-
-	return i5;
-}
-
-#ifndef ALIGN_SHORTS
-#define MATRIX(n)	(*(INT16 *)((UINT8 *)matrix + (n)*4 + 1))
-#else
-#define MATRIX(n)	((INT16)((matrix[n] >> 8) & 0xffff))
-#endif
-
-WRITE16_HANDLER( hdadsp_speedup2_w )
-{
-	int se = (INT8)activecpu_get_reg(ADSP2100_SE);
-	UINT32 pc = activecpu_get_pc();
-	data32_t *matrix;
-	INT16 *vector;
-	INT16 *trans;
-	INT16 *result;
-	INT64 mr;
-	int count;
-
-	COMBINE_DATA(&adsp_data_memory[0x0033]);
-	if (pc != hdadsp_speedup_pc)
-		return;
-	adsp2100_icount -= 8;
-
-	matrix = &adsp_pgm_memory[0x1010];
-	trans  = (INT16 *)&adsp_data_memory[0x000c];
-	result = (INT16 *)&adsp_data_memory[0x010d];
-	vector = (INT16 *)&sim_memory[adsp_eprom_base + adsp_sim_address];
-
-	count = READ_DATA(0x0032);
-	adsp2100_icount -= (9 + 6*3) * count;
-	while (count--)
-	{
-		INT16 temp[3];
-
-		if (se < 0)
-		{
-			temp[0] = vector[0] >> -se;
-			temp[1] = vector[1] >> -se;
-			temp[2] = vector[2] >> -se;
-		}
-		else
-		{
-			temp[0] = vector[0] << se;
-			temp[1] = vector[1] << se;
-			temp[2] = vector[2] << se;
-		}
-
-		mr = temp[0] * MATRIX(0);
-		mr += temp[1] * MATRIX(1);
-		mr += temp[2] * MATRIX(2);
-		*result++ = ((INT32)mr >> (16 - 1)) + trans[0];
-
-		mr = temp[0] * MATRIX(3);
-		mr += temp[1] * MATRIX(4);
-		mr += temp[2] * MATRIX(5);
-		*result++ = ((INT32)mr >> (16 - 1)) + trans[1];
-
-		mr = temp[0] * MATRIX(6);
-		mr += temp[1] * MATRIX(7);
-		mr += temp[2] * MATRIX(8);
-		*result++ = ((INT32)mr >> (16 - 1)) + trans[2];
-
-		vector += 3;
-	}
-
-	count = READ_DATA(0x08da);
-	adsp2100_icount -= (9 + 9*3) * count;
-	while (count--)
-	{
-		mr = vector[0] * MATRIX(0);
-		mr += vector[1] * MATRIX(1);
-		mr += vector[2] * MATRIX(2);
-		*result++ = ((INT32)(mr << 1) + 0x4000) >> 15;
-
-		mr = vector[0] * MATRIX(3);
-		mr += vector[1] * MATRIX(4);
-		mr += vector[2] * MATRIX(5);
-		*result++ = ((INT32)(mr << 1) + 0x4000) >> 15;
-
-		mr = vector[0] * MATRIX(6);
-		mr += vector[1] * MATRIX(7);
-		mr += vector[2] * MATRIX(8);
-		*result++ = ((INT32)(mr << 1) + 0x4000) >> 15;
-
-		vector += 3;
-	}
-	activecpu_set_reg(ADSP2100_SI, *vector++);
-	adsp_sim_address = ((data16_t *)vector - sim_memory) - adsp_eprom_base;
-
-	activecpu_set_reg(ADSP2100_PC, pc + 0x165 - 0x139);
-}
-
-
-
-/*************************************
- *
- *	GSP Optimizations
+ *	GSP Optimizations - case 1
+ *	Works for:
+ *		Hard Drivin'
+ *		STUN Runner
  *
  *************************************/
 
@@ -1646,11 +1729,14 @@ READ16_HANDLER( hdgsp_speedup_r )
 {
 	int result = hdgsp_speedup_addr[0][offset];
 
-	if (offset != 0 || result == 0xffff)
-		return result;
-
-	if (activecpu_get_pc() == hdgsp_speedup_pc && hdgsp_speedup_addr[1][0] != 0xffff && cpu_getactivecpu() == gsp_cpu)
+	/* if both this address and the other important address are not $ffff */
+	/* then we can spin until something gets written */
+	if (result != 0xffff && hdgsp_speedup_addr[1][0] != 0xffff &&
+		cpu_getactivecpu() == hdcpu_gsp && activecpu_get_pc() == hdgsp_speedup_pc)
+	{
+		gsp_speedup_count[0]++;
 		cpu_spinuntil_int();
+	}
 
 	return result;
 }
@@ -1659,19 +1745,61 @@ READ16_HANDLER( hdgsp_speedup_r )
 WRITE16_HANDLER( hdgsp_speedup1_w )
 {
 	COMBINE_DATA(&hdgsp_speedup_addr[0][offset]);
-	if (offset == 0 && hdgsp_speedup_addr[0][offset] == 0xffff)
-		cpu_trigger(-2000 + gsp_cpu);
+
+	/* if $ffff is written, send an "interrupt" trigger to break us out of the spin loop */
+	if (hdgsp_speedup_addr[0][offset] == 0xffff)
+		cpu_triggerint(hdcpu_gsp);
 }
 
 
 WRITE16_HANDLER( hdgsp_speedup2_w )
 {
 	COMBINE_DATA(&hdgsp_speedup_addr[1][offset]);
-	if (offset == 0 && hdgsp_speedup_addr[1][offset] == 0xffff)
-		cpu_trigger(-2000 + gsp_cpu);
+
+	/* if $ffff is written, send an "interrupt" trigger to break us out of the spin loop */
+	if (hdgsp_speedup_addr[1][offset] == 0xffff)
+		cpu_triggerint(hdcpu_gsp);
 }
 
 
+
+/*************************************
+ *
+ *	GSP Optimizations - case 2
+ *	Works for:
+ *		Race Drivin'
+ *
+ *************************************/
+
+READ16_HANDLER( rdgsp_speedup1_r )
+{
+	int result = hdgsp_speedup_addr[0][offset];
+
+	/* if this address is equal to $f000, spin until something gets written */
+	if (cpu_getactivecpu() == hdcpu_gsp && activecpu_get_pc() == hdgsp_speedup_pc &&
+		(result & 0xff) < activecpu_get_reg(TMS34010_A1))
+	{
+		gsp_speedup_count[0]++;
+		cpu_spinuntil_int();
+	}
+
+	return result;
+}
+
+
+WRITE16_HANDLER( rdgsp_speedup1_w )
+{
+	COMBINE_DATA(&hdgsp_speedup_addr[0][offset]);
+	if (cpu_getactivecpu() != hdcpu_gsp)
+		cpu_triggerint(hdcpu_gsp);
+}
+
+
+
+#if 0
+#pragma mark -
+#pragma mark * MSP OPTIMIZATIONS
+#endif
 
 /*************************************
  *
@@ -1681,15 +1809,15 @@ WRITE16_HANDLER( hdgsp_speedup2_w )
 
 READ16_HANDLER( hdmsp_speedup_r )
 {
-	int result = hdmsp_speedup_addr[offset];
+	int data = hdmsp_speedup_addr[offset];
 
-	if (offset != 0 || result != 0)
-		return result;
-
-	if (activecpu_get_pc() == hdmsp_speedup_pc && cpu_getactivecpu() == msp_cpu)
+	if (data == 0 && activecpu_get_pc() == hdmsp_speedup_pc && cpu_getactivecpu() == hdcpu_msp)
+	{
+		msp_speedup_count[0]++;
 		cpu_spinuntil_int();
+	}
 
-	return result;
+	return data;
 }
 
 
@@ -1697,5 +1825,68 @@ WRITE16_HANDLER( hdmsp_speedup_w )
 {
 	COMBINE_DATA(&hdmsp_speedup_addr[offset]);
 	if (offset == 0 && hdmsp_speedup_addr[offset] != 0)
-		cpu_trigger(-2000 + msp_cpu);
+		cpu_triggerint(hdcpu_msp);
+}
+
+
+READ16_HANDLER( stmsp_speedup_r )
+{
+	/* assumes: stmsp_sync[0] -> $80010, stmsp_sync[1] -> $99680, stmsp_sync[2] -> $99d30 */
+	if (stmsp_sync[0][0] == 0 &&		/* 80010 */
+		stmsp_sync[0][1] == 0 &&		/* 80020 */
+		stmsp_sync[0][2] == 0 &&		/* 80030 */
+		stmsp_sync[0][3] == 0 &&		/* 80040 */
+		stmsp_sync[0][4] == 0 &&		/* 80050 */
+		stmsp_sync[0][5] == 0 && 		/* 80060 */
+		stmsp_sync[0][6] == 0 && 		/* 80070 */
+		stmsp_sync[1][0] == 0 && 		/* 99680 */
+		stmsp_sync[2][0] == 0xffff && 	/* 99d30 */
+		stmsp_sync[2][1] == 0xffff && 	/* 99d40 */
+		stmsp_sync[2][2] == 0 &&	 	/* 99d50 */
+		activecpu_get_pc() == 0x3c0)
+	{
+		msp_speedup_count[0]++;
+		cpu_spinuntil_int();
+	}
+	return stmsp_sync[0][1];
+}
+
+
+
+#if 0
+#pragma mark -
+#pragma mark * ADSP OPTIMIZATIONS
+#endif
+
+/*************************************
+ *
+ *	ADSP Optimizations
+ *
+ *************************************/
+
+READ16_HANDLER( hdadsp_speedup_r )
+{
+	int data = adsp_data_memory[0x1fff];
+
+	if (data == 0xffff && activecpu_get_pc() <= 0x3b && cpu_getactivecpu() == hdcpu_adsp)
+	{
+		adsp_speedup_count[0]++;
+		cpu_spinuntil_int();
+	}
+
+	return data;
+}
+
+
+READ16_HANDLER( hdds3_speedup_r )
+{
+	int data = *hdds3_speedup_addr;
+
+	if (data != 0 && activecpu_get_pc() == hdds3_speedup_pc && cpu_getactivecpu() == hdcpu_adsp)
+	{
+		adsp_speedup_count[2]++;
+		cpu_spinuntil_int();
+	}
+
+	return data;
 }

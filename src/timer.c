@@ -196,11 +196,11 @@ INLINE void timer_list_insert(timer_entry *timer)
 		tnum ++;
 		if (t == timer)
 		{
-			printf ("This timer is already inserted in the list!");
+			printf ("This timer is already inserted in the list!\n");
 		}
 		if (tnum == MAX_TIMERS-1)
 		{
-			printf ("Timer list is full!");
+			printf ("Timer list is full!\n");
 		}
 	}
 }

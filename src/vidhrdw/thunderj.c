@@ -135,51 +135,21 @@ VIDEO_START( thunderj )
  *	until a stop or the end of line
  *
  *************************************/
- 
+
 void thunderj_mark_high_palette(struct mame_bitmap *bitmap, UINT16 *pf, UINT16 *mo, int x, int y)
 {
-	#define END_MARKER	((4 << ATARIMO_PRIORITY_SHIFT) | 4)
-	
-	/* advance forward to the X position given */
-	pf += x;
-	mo += x;
-	
-	/* handle non-swapped case */
-	if (!(Machine->orientation & ORIENTATION_SWAP_XY))
-	{
-		/* standard orientation: move forward along X */
-		if (!(Machine->orientation & ORIENTATION_FLIP_X))
-		{
-			for ( ; x < bitmap->width && (*mo & END_MARKER) != END_MARKER; mo++, pf++, x++)
-				*pf |= 0x400;
-		}
+	#define START_MARKER	((4 << ATARIMO_PRIORITY_SHIFT) | 2)
+	#define END_MARKER		((4 << ATARIMO_PRIORITY_SHIFT) | 4)
+	int offnext = 0;
 
-		/* flipped orientation: move backward along X */
-		else
-		{
-			for ( ; x >= 0 && (*mo & END_MARKER) != END_MARKER; mo--, pf--, x--)
-				*pf |= 0x400;
-		}
-	}
-	
-	/* handle swapped case */
-	else
+	for ( ; x < bitmap->width; x++)
 	{
-		/* standard orientation: move forward along Y */
-		if (!(Machine->orientation & ORIENTATION_FLIP_Y))
-		{
-			for ( ; (*mo & END_MARKER) != END_MARKER && y < bitmap->height; mo += bitmap->rowpixels, pf += bitmap->rowpixels, y++)
-				*pf |= 0x400;
-		}
-
-		/* flipped orientation: move backward along Y */
-		else
-		{
-			for ( ; (*mo & END_MARKER) != END_MARKER && y >= 0; mo -= bitmap->rowpixels, pf -= bitmap->rowpixels, y--)
-				*pf |= 0x400;
-		}
+		pf[x] |= 0x400;
+		if (offnext && (mo[x] & START_MARKER) != START_MARKER)
+			break;
+		offnext = ((mo[x] & END_MARKER) == END_MARKER);
 	}
-}
+ }
 
 
 
@@ -188,16 +158,9 @@ void thunderj_mark_high_palette(struct mame_bitmap *bitmap, UINT16 *pf, UINT16 *
  *	Main refresh
  *
  *************************************/
- 
+
 VIDEO_UPDATE( thunderj )
 {
-	static const UINT16 transparency_mask[4] =
-	{
-		0xffff,
-		0x00ff,
-		0x00ff,
-		0x00ff
-	};
 	struct atarimo_rect_list rectlist;
 	struct mame_bitmap *mobitmap;
 	int x, y, r;
@@ -212,7 +175,7 @@ VIDEO_UPDATE( thunderj )
 	tilemap_draw(bitmap, cliprect, atarigen_playfield2_tilemap, 1, 0x84);
 	tilemap_draw(bitmap, cliprect, atarigen_playfield2_tilemap, 2, 0x88);
 	tilemap_draw(bitmap, cliprect, atarigen_playfield2_tilemap, 3, 0x8c);
-	
+
 	/* draw and merge the MO */
 	mobitmap = atarimo_render(0, cliprect, &rectlist);
 	for (r = 0; r < rectlist.numrects; r++, rectlist.rect++)
@@ -224,40 +187,91 @@ VIDEO_UPDATE( thunderj )
 			for (x = rectlist.rect->min_x; x <= rectlist.rect->max_x; x++)
 				if (mo[x])
 				{
-					/* not yet verified; all logic controlled via PAL
-					*/
+					/* verified from the GALs on the real PCB; equations follow
+					 *
+					 *		--- PF/M is 1 if playfield has priority, or 0 if MOs have priority
+					 *		PF/M=MPX0*!MPX1*!MPX2*!MPX3*!MPX4*!MPX5*!MPX6*!MPX7
+					 *		    +PFX3*PFX8*PFX9*!MPR0
+					 *		    +PFX3*PFX8*!MPR0*!MPR1
+					 *		    +PFX3*PFX9*!MPR1
+					 *
+					 *		--- CS1 is 1 if the playfield should be displayed
+					 *		CS1=PF/M*!ALBG*!APIX0*!APIX1
+					 *		   +!MPX0*!MPX1*!MPX2*!MPX3*!ALBG*!APIX0*!APIX1
+					 *
+					 *		--- CS0 is 1 if the MOs should be displayed
+					 *		CS0=!PF/M*MPX0*!ALBG*!APIX0*!APIX1
+					 *		   +!PF/M*MPX1*!ALBG*!APIX0*!APIX1
+					 *		   +!PF/M*MPX2*!ALBG*!APIX0*!APIX1
+					 *		   +!PF/M*MPX3*!ALBG*!APIX0*!APIX1
+					 *
+					 *		--- CRA10 is the 0x200 bit of the color RAM index; set if pf is displayed
+					 *		CRA10:=CS1
+					 *
+					 *		--- CRA9 is the 0x100 bit of the color RAM index; set if mo is displayed
+					 *		    or if the playfield selected is playfield #2
+					 *		CRA9:=PFXS*CS1
+					 *		    +!CS1*CS0
+					 *
+					 *		--- CRA8-1 are the low 8 bits of the color RAM index; set as expected
+					 *		CRA8:=CS1*PFX7
+					 *		    +!CS1*MPX7*CS0
+					 *		    +!CS1*!CS0*ALC4
+					 *
+					 *		CRA7:=CS1*PFX6
+					 *		    +!CS1*MPX6*CS0
+					 *
+					 *		CRA6:=CS1*PFX5
+					 *		    +MPX5*!CS1*CS0
+					 *		    +!CS1*!CS0*ALC3
+					 *
+					 *		CRA5:=CS1*PFX4
+					 *		    +MPX4*!CS1*CS0
+					 *		    +!CS1*ALC2*!CS0
+					 *
+					 *		CRA4:=CS1*PFX3
+					 *		    +!CS1*MPX3*CS0
+					 *		    +!CS1*!CS0*ALC1
+					 *
+					 *		CRA3:=CS1*PFX2
+					 *		    +MPX2*!CS1*CS0
+					 *		    +!CS1*!CS0*ALC0
+					 *
+					 *		CRA2:=CS1*PFX1
+					 *		    +MPX1*!CS1*CS0
+					 *		    +!CS1*!CS0*APIX1
+					 *
+					 *		CRA1:=CS1*PFX0
+					 *		    +MPX0*!CS1*CS0
+					 *		    +!CS1*!CS0*APIX0
+					 */
 					int mopriority = mo[x] >> ATARIMO_PRIORITY_SHIFT;
-					
+					int pfm = 0;
+
 					/* upper bit of MO priority signals special rendering and doesn't draw anything */
 					if (mopriority & 4)
 						continue;
 
-					/* MO priority 3 always displays */
-					if (mopriority == 3)
-						pf[x] = mo[x] & ATARIMO_DATA_MASK;
-					
-					/* MO priority 0, color 0, pen 1 is playfield priority */
-					else if (mopriority == 0 && (mo[x] & 0xf0) == 0)
-					{
-						if ((mo[x] & 0x0f) != 1)
-							pf[x] = mo[x] & ATARIMO_DATA_MASK;
-					}
-					
-					/* everything else depends on the playfield priority */
-					else
+					/* determine pf/m signal */
+					if ((mo[x] & 0xff) == 1)
+						pfm = 1;
+					else if (pf[x] & 8)
 					{
 						int pfpriority = (pri[x] & 0x80) ? ((pri[x] >> 2) & 3) : (pri[x] & 3);
-						
-						if (mopriority >= pfpriority)
-							pf[x] = mo[x] & ATARIMO_DATA_MASK;
-						else if (transparency_mask[pfpriority] & (1 << (pf[x] & 0x0f)))
-							pf[x] = mo[x] & ATARIMO_DATA_MASK;
+						if (((pfpriority == 3) && !(mopriority & 1)) ||
+							((pfpriority & 1) && (mopriority == 0)) ||
+							((pfpriority & 2) && !(mopriority & 2)))
+							pfm = 1;
 					}
-					
+
+					/* if pfm is low, we display the mo */
+					if (!pfm)
+						pf[x] = mo[x] & ATARIMO_DATA_MASK;
+
 					/* don't erase yet -- we need to make another pass later */
 				}
 		}
-	
+
 	/* add the alpha on top */
 	tilemap_draw(bitmap, cliprect, atarigen_alpha_tilemap, 0, 0);
 
@@ -272,7 +286,7 @@ VIDEO_UPDATE( thunderj )
 				if (mo[x])
 				{
 					int mopriority = mo[x] >> ATARIMO_PRIORITY_SHIFT;
-					
+
 					/* upper bit of MO priority might mean palette kludges */
 					if (mopriority & 4)
 					{
@@ -280,7 +294,7 @@ VIDEO_UPDATE( thunderj )
 						if (mo[x] & 2)
 							thunderj_mark_high_palette(bitmap, pf, mo, x, y);
 					}
-					
+
 					/* erase behind ourselves */
 					mo[x] = 0;
 				}

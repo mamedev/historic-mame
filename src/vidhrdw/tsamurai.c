@@ -16,7 +16,6 @@ static int textbank1, textbank2;
 static struct tilemap *background, *foreground;
 
 
-
 /***************************************************************************
 
   Callbacks for the TileMap code
@@ -164,8 +163,27 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 		int sy = 240-source[0];
 		int sprite_number = source[1];
 		int color = attributes&0x1f;
-		//color = 0x2d - color; nunchakun fix?
+
+#if 0
+		/* VS Gong Fight */
+		if (attributes == 0xe)
+			attributes = 4;
+		if (attributes > 7 || attributes < 4 || attributes == 5 )
+			attributes = 6;
+		color = attributes&0x1f;
+#endif
+
+#if 0
+		/* Nunchakun */
+		color = 0x2d - (attributes&0x1f);
+#endif
+
 		if( sy<-16 ) sy += 256;
+
+		/* 240-source[0] seems nice,but some dangling sprites appear on the left      */
+		/* side in Mission 660.Setting it to 242 fixes it,but will break other games. */
+		/* So I'm using this specific check. -kal 11 jul 2002 */
+//		if(sprite_type == 1) sy=sy+2;
 
 		if( flip_screen )
 		{
@@ -233,6 +251,7 @@ WRITE_HANDLER( vsgongf_color_w )
 	}
 }
 
+
 static void get_vsgongf_tile_info(int tile_index)
 {
 	int tile_number = videoram[tile_index];
@@ -254,13 +273,16 @@ VIDEO_START( vsgongf )
 
 VIDEO_UPDATE( vsgongf )
 {
+	#ifdef MAME_DEBUG
 	static int k;
 	if( keyboard_pressed( KEYCODE_Q ) ){
-		while( keyboard_pressed( KEYCODE_Q ) ){}
-		k++;
-		vsgongf_color = k;
-		tilemap_mark_all_tiles_dirty( foreground );
+		while( keyboard_pressed( KEYCODE_Q ) ){
+			k++;
+			vsgongf_color = k;
+			tilemap_mark_all_tiles_dirty( foreground );
+			}
 	}
+	#endif
 
 	tilemap_draw(bitmap,cliprect,foreground,0,0);
 	draw_sprites(bitmap,cliprect);

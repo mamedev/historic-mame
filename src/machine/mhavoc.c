@@ -230,7 +230,7 @@ READ_HANDLER( mhavoc_port_0_r )
 		res |= 0x04;
 
 	/* Bit 1 = 2.4kHz (divide 2.5MHz by 1024) */
-	if (!(cpu_gettotalcycles() & 0x400))
+	if (!(activecpu_gettotalcycles() & 0x400))
 		res |= 0x02;
 
 	/* Bit 0 = Vector generator halt flag */
@@ -247,7 +247,7 @@ READ_HANDLER( alphaone_port_0_r )
 	data8_t res = readinputport(0) & 0xfc;
 
 	/* Bit 1 = 2.4kHz (divide 2.5MHz by 1024) */
-	if (!(cpu_gettotalcycles() & 0x400))
+	if (!(activecpu_gettotalcycles() & 0x400))
 		res |= 0x02;
 
 	/* Bit 0 = Vector generator halt flag */

@@ -116,7 +116,7 @@ static READ_HANDLER( junofrst_portA_r )
 	/* divided by 1024 to get this timer */
 	/* (divide by (1024/2), and not 1024, because the CPU cycle counter is */
 	/* incremented every other state change of the clock) */
-	timer = (cpu_gettotalcycles() / (1024/2)) & 0x0f;
+	timer = (activecpu_gettotalcycles() / (1024/2)) & 0x0f;
 
 	/* low three bits come from the 8039 */
 

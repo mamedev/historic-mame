@@ -108,6 +108,7 @@ enum
 	REGION_USER6,
 	REGION_USER7,
 	REGION_USER8,
+	REGION_DISKS,
 	REGION_MAX
 };
 
@@ -186,6 +187,10 @@ enum
 #define		ROMREGION_ERASE00		ROMREGION_ERASEVAL(0)
 #define		ROMREGION_ERASEFF		ROMREGION_ERASEVAL(0xff)
 
+#define ROMREGION_DATATYPEMASK		0x00010000			/* inherit all flags from previous definition */
+#define		ROMREGION_DATATYPEROM	0x00000000
+#define		ROMREGION_DATATYPEDISK	0x00010000
+
 /* ----- per-region macros ----- */
 #define ROMREGION_GETTYPE(r)		((r)->_crc)
 #define ROMREGION_GETLENGTH(r)		((r)->_length)
@@ -199,6 +204,9 @@ enum
 #define ROMREGION_ISLOADUPPER(r)	((ROMREGION_GETFLAGS(r) & ROMREGION_LOADUPPERMASK) == ROMREGION_LOADUPPER)
 #define ROMREGION_ISERASE(r)		((ROMREGION_GETFLAGS(r) & ROMREGION_ERASEMASK) == ROMREGION_ERASE)
 #define ROMREGION_GETERASEVAL(r)	((ROMREGION_GETFLAGS(r) & ROMREGION_ERASEVALMASK) >> 8)
+#define ROMREGION_GETDATATYPE(r)	(ROMREGION_GETFLAGS(r) & ROMREGION_DATATYPEMASK)
+#define ROMREGION_ISROMDATA(r)		(ROMREGION_GETDATATYPE(r) == ROMREGION_DATATYPEROM)
+#define ROMREGION_ISDISKDATA(r)		(ROMREGION_GETDATATYPE(r) == ROMREGION_DATATYPEDISK)
 
 
 /* ----- per-ROM constants ----- */
@@ -252,6 +260,9 @@ enum
 #define ROM_INHERITSFLAGS(r)		((ROM_GETFLAGS(r) & ROM_INHERITFLAGSMASK) == ROM_INHERITFLAGS)
 #define ROM_NOGOODDUMP(r)			(ROM_GETCRC(r) == 0)
 
+/* ----- per-disk macros ----- */
+#define DISK_GETINDEX(r)			((r)->_offset)
+
 
 
 /***************************************************************************
@@ -293,6 +304,10 @@ enum
 #define ROM_LOAD32_BYTE(name,offset,length,crc)		ROMX_LOAD(name, offset, length, crc, ROM_SKIP(3))
 #define ROM_LOAD32_WORD(name,offset,length,crc)		ROMX_LOAD(name, offset, length, crc, ROM_GROUPWORD | ROM_SKIP(2))
 #define ROM_LOAD32_WORD_SWAP(name,offset,length,crc)ROMX_LOAD(name, offset, length, crc, ROM_GROUPWORD | ROM_REVERSE | ROM_SKIP(2))
+
+/* ----- disk loading macros ----- */
+#define DISK_REGION(type)							ROM_REGION(1, type, ROMREGION_DATATYPEDISK)
+#define DISK_IMAGE(name,idx,md5)					ROMX_LOAD(name "\0" #md5, idx, 0, 0, 0)
 
 
 
@@ -353,6 +368,9 @@ struct mame_bitmap *auto_bitmap_alloc_depth(int width,int height,int depth);
 /* screen snapshots */
 void save_screen_snapshot_as(void *fp,struct mame_bitmap *bitmap,const struct rectangle *bounds);
 void save_screen_snapshot(struct mame_bitmap *bitmap,const struct rectangle *bounds);
+
+/* hard disk handling */
+void *get_disk_handle(int diskindex);
 
 /* ROM processing */
 int rom_load(const struct RomModule *romp);

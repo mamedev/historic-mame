@@ -109,6 +109,112 @@ READ16_HANDLER( wms_wolfu_cmos_r )
 
 /*************************************
  *
+ *	Serial number encoding
+ *
+ *************************************/
+
+void wms_serial_generate(int upper)
+{
+	int year = atoi(Machine->gamedrv->year), month = 12, day = 11;
+	UINT32 serial_number, temp;
+	UINT8 serial_digit[9];
+
+	serial_number = 123456;
+	serial_number += upper * 1000000;
+
+	serial_digit[0] = (serial_number / 100000000) % 10;
+	serial_digit[1] = (serial_number / 10000000) % 10;
+	serial_digit[2] = (serial_number / 1000000) % 10;
+	serial_digit[3] = (serial_number / 100000) % 10;
+	serial_digit[4] = (serial_number / 10000) % 10;
+	serial_digit[5] = (serial_number / 1000) % 10;
+	serial_digit[6] = (serial_number / 100) % 10;
+	serial_digit[7] = (serial_number / 10) % 10;
+	serial_digit[8] = (serial_number / 1) % 10;
+
+	security_data[12] = rand() & 0xff;
+	security_data[13] = rand() & 0xff;
+
+	security_data[14] = 0; /* ??? */
+	security_data[15] = 0; /* ??? */
+
+	temp = 0x174 * (year - 1980) + 0x1f * (month - 1) + day;
+	security_data[10] = (temp >> 8) & 0xff;
+	security_data[11] = temp & 0xff;
+
+	temp = serial_digit[4] + serial_digit[7] * 10 + serial_digit[1] * 100;
+	temp = (temp + 5 * security_data[13]) * 0x1bcd + 0x1f3f0;
+	security_data[7] = temp & 0xff;
+	security_data[8] = (temp >> 8) & 0xff;
+	security_data[9] = (temp >> 16) & 0xff;
+
+	temp = serial_digit[6] + serial_digit[8] * 10 + serial_digit[0] * 100 + serial_digit[2] * 10000;
+	temp = (temp + 2 * security_data[13] + security_data[12]) * 0x107f + 0x71e259;
+	security_data[3] = temp & 0xff;
+	security_data[4] = (temp >> 8) & 0xff;
+	security_data[5] = (temp >> 16) & 0xff;
+	security_data[6] = (temp >> 24) & 0xff;
+
+	temp = serial_digit[5] * 10 + serial_digit[3] * 100;
+	temp = (temp + security_data[12]) * 0x245 + 0x3d74;
+	security_data[0] = temp & 0xff;
+	security_data[1] = (temp >> 8) & 0xff;
+	security_data[2] = (temp >> 16) & 0xff;
+}
+
+
+
+/*************************************
+ *
+ *	Serial number I/O writes
+ *
+ *************************************/
+
+void wms_serial_reset(void)
+{
+	security_index = 0;
+	security_status = 0;
+	security_buffer = 0;
+}
+
+
+UINT8 wms_serial_status(void)
+{
+	return security_status;
+}
+
+
+UINT8 wms_serial_data_r(void)
+{
+	logerror("%08X:security R = %04X\n", activecpu_get_pc(), security_buffer);
+	security_status = 1;
+	return security_buffer;
+}
+
+
+void wms_serial_data_w(UINT8 data)
+{
+	logerror("%08X:security W = %04X\n", activecpu_get_pc(), data);
+
+	/* status seems to reflect the clock bit */
+	security_status = (data >> 4) & 1;
+
+	/* on the falling edge, clock the next data byte through */
+	if (!(data & 0x10))
+	{
+		/* the self-test writes 1F, 0F, and expects to read an F in the low 4 bits */
+		/* Cruis'n World expects the high bit to be set as well */
+		if (data & 0x0f)
+			security_buffer = 0x80 | data;
+		else
+			security_buffer = security_data[security_index++ % sizeof(security_data)];
+	}
+}
+
+
+
+/*************************************
+ *
  *	General I/O writes
  *
  *************************************/
@@ -132,11 +238,7 @@ WRITE16_HANDLER( wms_wolfu_io_w )
 
 			/* bit 5 (active low) reset security chip */
 			if (!(oldword & 0x20) && (newword & 0x20))
-			{
-				security_index = 0;
-				security_status = 0;
-				security_buffer = 0;
-			}
+				wms_serial_reset();
 			break;
 
 		case 3:
@@ -206,7 +308,7 @@ READ16_HANDLER( wms_wolfu_io_r )
 			return readinputport(offset);
 
 		case 4:
-			return (security_status << 12) | wms_wolfu_sound_state_r(0,0);
+			return (wms_serial_status() << 12) | wms_wolfu_sound_state_r(0,0);
 
 		default:
 			logerror("%08X:Unknown I/O read from %d\n", activecpu_get_pc(), offset);
@@ -252,7 +354,7 @@ WRITE16_HANDLER( revx_analog_select_w )
 READ16_HANDLER( revx_status_r )
 {
 	/* low bit indicates whether the ADC is done reading the current input */
-	return (security_status << 1) | 1;
+	return (wms_serial_status() << 1) | 1;
 }
 
 
@@ -378,63 +480,6 @@ WRITE16_HANDLER( revx_uart_w )
 
 /*************************************
  *
- *	Serial number encoding
- *
- *************************************/
-
-static void generate_serial(int upper)
-{
-	int year = atoi(Machine->gamedrv->year), month = 12, day = 11;
-	UINT32 serial_number, temp;
-	UINT8 serial_digit[9];
-
-	serial_number = 123456;
-	serial_number += upper * 1000000;
-
-	serial_digit[0] = (serial_number / 100000000) % 10;
-	serial_digit[1] = (serial_number / 10000000) % 10;
-	serial_digit[2] = (serial_number / 1000000) % 10;
-	serial_digit[3] = (serial_number / 100000) % 10;
-	serial_digit[4] = (serial_number / 10000) % 10;
-	serial_digit[5] = (serial_number / 1000) % 10;
-	serial_digit[6] = (serial_number / 100) % 10;
-	serial_digit[7] = (serial_number / 10) % 10;
-	serial_digit[8] = (serial_number / 1) % 10;
-
-	security_data[12] = rand() & 0xff;
-	security_data[13] = rand() & 0xff;
-
-	security_data[14] = 0; /* ??? */
-	security_data[15] = 0; /* ??? */
-
-	temp = 0x174 * (year - 1980) + 0x1f * (month - 1) + day;
-	security_data[10] = (temp >> 8) & 0xff;
-	security_data[11] = temp & 0xff;
-
-	temp = serial_digit[4] + serial_digit[7] * 10 + serial_digit[1] * 100;
-	temp = (temp + 5 * security_data[13]) * 0x1bcd + 0x1f3f0;
-	security_data[7] = temp & 0xff;
-	security_data[8] = (temp >> 8) & 0xff;
-	security_data[9] = (temp >> 16) & 0xff;
-
-	temp = serial_digit[6] + serial_digit[8] * 10 + serial_digit[0] * 100 + serial_digit[2] * 10000;
-	temp = (temp + 2 * security_data[13] + security_data[12]) * 0x107f + 0x71e259;
-	security_data[3] = temp & 0xff;
-	security_data[4] = (temp >> 8) & 0xff;
-	security_data[5] = (temp >> 16) & 0xff;
-	security_data[6] = (temp >> 24) & 0xff;
-
-	temp = serial_digit[5] * 10 + serial_digit[3] * 100;
-	temp = (temp + security_data[12]) * 0x245 + 0x3d74;
-	security_data[0] = temp & 0xff;
-	security_data[1] = (temp >> 8) & 0xff;
-	security_data[2] = (temp >> 16) & 0xff;
-}
-
-
-
-/*************************************
- *
  *	Generic driver init
  *
  *************************************/
@@ -484,7 +529,7 @@ static void init_mk3_common(void)
 	init_wolfu_generic();
 
 	/* serial prefixes 439, 528 */
-	generate_serial(528);
+	wms_serial_generate(528);
 }
 
 DRIVER_INIT( mk3 )
@@ -526,7 +571,7 @@ DRIVER_INIT( openice )
 	init_wolfu_generic();
 
 	/* serial prefixes 438, 528 */
-	generate_serial(528);
+	wms_serial_generate(528);
 }
 
 
@@ -538,7 +583,7 @@ DRIVER_INIT( nbahangt )
 	init_wolfu_generic();
 
 	/* serial prefixes 459, 470, 528 */
-	generate_serial(528);
+	wms_serial_generate(528);
 
 	INSTALL_SPEEDUP_1_16BIT(0x10731f0, 0xff8a5510, 0x1002040, 0xd0, 0xb0);
 }
@@ -619,7 +664,7 @@ DRIVER_INIT( wwfmania )
 	install_mem_write16_handler(0, TOBYTE(0x01800000), TOBYTE(0x0180000f), wwfmania_io_0_w);
 
 	/* serial prefixes 430, 528 */
-	generate_serial(528);
+	wms_serial_generate(528);
 
 	INSTALL_SPEEDUP_1_ADDRESS(0x105c250, 0xff8189d0);
 }
@@ -633,7 +678,7 @@ DRIVER_INIT( rmpgwt )
 	init_wolfu_generic();
 
 	/* serial prefixes 465, 528 */
-	generate_serial(528);
+	wms_serial_generate(528);
 }
 
 
@@ -666,7 +711,7 @@ DRIVER_INIT( revx )
 	williams_dcs_init();
 
 	/* serial prefixes 419, 420 */
-	generate_serial(419);
+	wms_serial_generate(419);
 }
 
 
@@ -707,31 +752,14 @@ MACHINE_INIT( revx )
 
 READ16_HANDLER( wms_wolfu_security_r )
 {
-	logerror("%08X:security R = %04X\n", activecpu_get_pc(), security_buffer);
-	security_status = 1;
-	return security_buffer;
+	return wms_serial_data_r();
 }
 
 
 WRITE16_HANDLER( wms_wolfu_security_w )
 {
 	if (offset == 0 && ACCESSING_LSB)
-	{
-		logerror("%08X:security W = %04X\n", activecpu_get_pc(), data);
-
-		/* status seems to reflect the clock bit */
-		security_status = (data >> 4) & 1;
-
-		/* on the falling edge, clock the next data byte through */
-		if (!(data & 0x10))
-		{
-			/* the self-test writes 1F, 0F, and expects to read an F in the low 4 bits */
-			if (data & 0x0f)
-				security_buffer = data;
-			else
-				security_buffer = security_data[security_index++ % sizeof(security_data)];
-		}
-	}
+		wms_serial_data_w(data);
 }
 
 
@@ -745,7 +773,7 @@ WRITE16_HANDLER( revx_security_w )
 WRITE16_HANDLER( revx_security_clock_w )
 {
 	if (ACCESSING_LSB)
-		wms_wolfu_security_w(offset, ((~data & 2) << 3) | security_bits, 0);
+		wms_serial_data_w(((~data & 2) << 3) | security_bits);
 }
 
 

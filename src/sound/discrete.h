@@ -114,6 +114,7 @@
 /* DISCRETE_ADDER3(NODE,IN0,IN1,IN2,IN3)                                */
 /*                                                                      */
 /* DISCRETE_RCFILTER(NODE,ENAB,IN0,RVAL,CVAL)                           */
+/* DISCRETE_RCDISC(NODE,ENAB,IN0,RVAL,CVAL)                             */
 /*                                                                      */
 /* DISCRETE_NE555(NODE,RESET,TRIGR,THRSH,CTRLV,VCC)                     */
 /*                                                                      */
@@ -337,6 +338,37 @@
 /*                                                                      */
 /************************************************************************/
 /*                                                                      */
+/* DISCRETE_RCDISC - Simple single pole RC discharge network             */
+/*                                                                      */
+/*                         ------------                                 */
+/*                        |            |                                */
+/*    ENAB       -0------}| RC         |                                */
+/*                        |            |                                */
+/*    INPUT1     -1------}| -ZZZZ----  |                                */
+/*                        |   R   |    |----}   Netlist node            */
+/*    RVAL       -2------}|      ---   |                                */
+/*                        |      ---C  |                                */
+/*    CVAL       -3------}|       |    |                                */
+/*                        |            |                                */
+/*                         ------------                                 */
+/*                                                                      */
+/*  Declaration syntax                                                  */
+/*                                                                      */
+/*     DISCRETE_RCFILTER(name of node,                                  */
+/*                       enable                                         */
+/*                       input node (or value)                          */
+/*                       resistor value in OHMS                         */
+/*                       capacitor value in FARADS)                     */
+/*                                                                      */
+/*  Example config line                                                 */
+/*                                                                      */
+/*     DISCRETE_RCDISC(NODE_11,NODE_10,10,100,1e-6)                     */
+/*                                                                      */
+/*  When enabled by NODE_10, C dischanges from 10v as indicated by RC   */
+/*  of 100R & 1uF.                                                      */
+/*                                                                      */
+/************************************************************************/
+/*                                                                      */
 /* DISCRETE_NE555 - NE555 Chip simulation                               */
 /*                                                                      */
 /*                         ------------                                 */
@@ -496,10 +528,11 @@ enum {
 		DSS_SQUAREWAVE,                          /* Square Wave generator */
 		DSS_SINEWAVE,                            /* Sine Wave generator */
 		DSS_ONESHOT,                             /* One-shot pulse generator */
-//		DSS_TRIANGLEWAVE,                        /* Triangle wave generator */
+                DSS_TRIANGLEWAVE,                        /* Triangle wave generator */
 //		DSS_SAWTOOTHWAVE,                        /* Sawtooth wave generator
 	/* Transforms */
 		DST_RCFILTER,							 /* Simple RC Filter network */
+                DST_RCDISC,                              /* Simple RC discharge */
 //		DST_LPF,                                 /* Low Pass Filter */
 //		DST_HPF,                                 /* High Pass Filter */
 		DST_GAIN,                                /* Gain Block */
@@ -531,8 +564,10 @@ enum {
 #define DISCRETE_NOISE(NODE,ENAB,FREQ,AMPL)                      { NODE   , DSS_NOISE      ,ENAB   ,FREQ   ,AMPL   ,NODE_NC,NODE_NC,NODE_NC,ENAB  ,FREQ  ,AMPL  ,0     ,0     ,0     },
 #define DISCRETE_ONESHOTR(NODE,ENAB,TRIG,AMPL,WIDTH)             { NODE   , DSS_ONESHOT    ,ENAB   ,TRIG   ,NODE_NC,AMPL   ,WIDTH  ,NODE_NC,ENAB  ,TRIG  ,1     ,AMPL  ,WIDTH ,0     },
 #define DISCRETE_ONESHOT(NODE,ENAB,TRIG,RESET,AMPL,WIDTH)        { NODE   , DSS_ONESHOT    ,ENAB   ,TRIG   ,RESET  ,AMPL   ,WIDTH  ,NODE_NC,ENAB  ,TRIG  ,RESET ,AMPL  ,WIDTH ,0     },
+#define DISCRETE_TRIANGLEWAVE(NODE,ENAB,FREQ,AMPL)               { NODE   , DSS_TRIANGLEWAVE,ENAB  ,FREQ   ,AMPL   ,NODE_NC,NODE_NC,NODE_NC,ENAB  ,FREQ  ,AMPL  ,0     ,0     ,0     },
 
 #define DISCRETE_RCFILTER(NODE,ENAB,INP0,RVAL,CVAL)              { NODE   , DST_RCFILTER   ,ENAB   ,INP0   ,NODE_NC,NODE_NC,NODE_NC,NODE_NC,ENAB  ,INP0  ,RVAL  ,CVAL  ,0     ,0     },
+#define DISCRETE_RCDISC(NODE,ENAB,INP0,RVAL,CVAL)                { NODE   , DST_RCDISC     ,ENAB   ,INP0   ,NODE_NC,NODE_NC,NODE_NC,NODE_NC,ENAB  ,INP0  ,RVAL  ,CVAL  ,0     ,0     },
 #define DISCRETE_INVERT(NODE,INP0)                               { NODE   , DST_GAIN       ,NODE_NC,INP0   ,NODE_NC,NODE_NC,NODE_NC,NODE_NC,1     ,0     ,-1    ,0     ,0     ,0     },
 #define DISCRETE_GAIN(NODE,INP0,GAIN)                            { NODE   , DST_GAIN       ,NODE_NC,INP0   ,GAIN   ,NODE_NC,NODE_NC,NODE_NC,1     ,0     ,GAIN  ,0     ,0     ,0     },
 #define DISCRETE_ONOFF(NODE,ENAB,INP0)                           { NODE   , DST_GAIN       ,ENAB   ,INP0   ,NODE_NC,NODE_NC,NODE_NC,NODE_NC,ENAB  ,0     ,1     ,0     ,0     ,0     },

@@ -15,6 +15,7 @@ READ16_HANDLER( wms_tunit_cmos_r );
 READ16_HANDLER( wms_tunit_input_r );
 
 DRIVER_INIT( mk );
+DRIVER_INIT( mkr4 );
 DRIVER_INIT( jdredd );
 DRIVER_INIT( nbajam );
 DRIVER_INIT( nbajam20 );

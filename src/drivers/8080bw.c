@@ -3472,8 +3472,8 @@ ROM_START( schaser )
 	ROM_LOAD( "rt21.bin",     0x4000, 0x0400, 0xb368ac98 )
 	ROM_LOAD( "rt22.bin",     0x4400, 0x0400, 0x6e060dfb )
 
-	ROM_REGION( 0x0400, REGION_PROMS, 0 )		/* background color map (missing) */
-	ROM_LOAD( "schaser.prm",  0x0000, 0x0400, 0x00000000 )
+	ROM_REGION( 0x0400, REGION_PROMS, 0 )		/* background color map */
+	ROM_LOAD( "rt06.ic2",     0x0000, 0x0400, 0x950cf973 )
 ROM_END
 
 ROM_START( schasrcv )
@@ -3957,7 +3957,7 @@ ROM_END
 		  GAMEX(1980, lupin3,   0,        lupin3,   lupin3,   lupin3,   ROT270, "Taito", "Lupin III", GAME_NO_SOUND | GAME_NO_COCKTAIL )
 		  GAMEX(1980, polaris,  0,        polaris,  polaris,  polaris,  ROT270, "Taito", "Polaris (set 1)", GAME_NO_SOUND )
 		  GAMEX(1980, polarisa, polaris,  polaris,  polaris,  polaris,  ROT270, "Taito", "Polaris (set 2)", GAME_NO_SOUND )
-		  GAME( 1980, ballbomb, 0,        ballbomb, ballbomb, invadpt2, ROT270, "Taito", "Balloon Bomber" )
+		  GAMEX( 1980, ballbomb, 0,        ballbomb, ballbomb, invadpt2, ROT270, "Taito", "Balloon Bomber", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )	/* missing clouds and blue background */
 
 /* Nintendo games */
 

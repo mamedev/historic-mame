@@ -183,7 +183,7 @@ MACHINE_INIT( gottlieb )
 	UINT8 *ram = memory_region(REGION_CPU1);
 	cpu_setbank(1, &ram[0x8000]);
 	cpu_setbank(2, &ram[0x0000]);
-	audiobuffer_region = memory_region(REGION_SOUND1);
+	audiobuffer_region = memory_region(REGION_USER1);
 }
 
 
@@ -1785,7 +1785,7 @@ ROM_START( mach3 )
 	ROM_LOAD( "mach3fg1.bin", 0x4000, 0x2000, 0x9b88767b )
 	ROM_LOAD( "mach3fg0.bin", 0x6000, 0x2000, 0x0bae12a5 )
 
-	ROM_REGION( 1024*1024, REGION_SOUND1, 0)	/* about 30 min of target data */
+	ROM_REGION( 1024*1024, REGION_USER1, 0)	/* about 30 min of target data from laserdisc */
 	ROM_LOAD( "m3target.bin", 0, 1024*1024, 0x6e779a6f )
 ROM_END
 

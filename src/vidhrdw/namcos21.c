@@ -2,303 +2,276 @@
 
 Namco System 21 Video Hardware
 
-Sprite Hardware is identical to Namco System NB1
+- sprite Hardware is identical to Namco System NB1
+- there are no tilemaps
+- polygons are drawn by DSP processors
 
-Polygons are rendered by DSP Processors.
-The behavior in this driver is based on an ongoing study of Air Combat and Starblade.
-It is possible that other games on this hardware use different DSP programs.
+The main CPUs populate a chunk of shared RAM with an object display list.
+The object display list contains references to specific 3d objects and their
+position/orientation in 3d space.
 
-0x200000..0x2000ff	populated with ASCII Text during self-tests:
-	ROM:
-	RAM:
-	PTR:
-	SMU:
-	IDC:
-	CPU:ABORT
-	DSP:
-	CRC:OK  from cpu
-	CRC:    from dsp
-	ID:
-	B-M:	P-M:	S-M:	SET UP
+The main CPUs also specify attributes for a master camera which provides
+additional (optional) global transformations.
 
-0x200202	current page
-0x200206	page select
+---------------------------------------------------------------------------
+memory map for DSP RAM (shared with the 68000 CPUs):
 
-Page#0
-0x208000..0x2080ff	camera attributes
-0x208200..0x208fff	3d object attribute list
+	0x200000..0x2000ff	populated with ASCII Text during self-tests:
+		ROM:
+		RAM:
+		PTR:
+		SMU:
+		IDC:
+		CPU:ABORT
+		DSP:
+		CRC:OK  from cpu
+		CRC:    from dsp
+		ID:
+		B-M:	P-M:	S-M:	SET UP
 
-Page#1
-0x20c000..0x2080ff	camera attributes
-0x20c200..0x208fff	3d object attribute list
+	0x200100	status
+	0x200102	status
+	0x20010a	checksum (starblade expects 0xed53)
+	0x20010c	checksum (starblade expects 0xd5df)
+	0x20010e	ack
+	0x200110	status
+	0x200112	status
+	0x200202	status
+	0x200206	work page select
 
-To do:
-- remaining camera attributes
-- clipping
-- filled polygons & zbuffer
+	0x208000..0x2080ff	camera attributes for page#0
+	0x208200..0x208fff	3d object attribute list for page#0
 
-***************************************************************************/
+	0x20c000..0x20c0ff	camera attributes for page#1
+	0x20c200..0x20cfff	3d object attribute list for page#1
+---------------------------------------------------------------------------
+
+Thanks to Aaron Giles for originally making sense of the Point ROM data:
+
+Point data in ROMS (signed 24 bit words) encodes the 3d primitives.
+
+The first part of the Point ROMs is an address table.  The first entry serves
+a special (unknown) purpose.
+
+Given an object index, this table provides an address into the second part of
+the ROM.
+
+The second part of the ROM is a series of display lists.
+This is a sequence of pointers to actual polygon data. There may be
+more than one, and the list is terminated by $ffffff.
+
+The remainder of the ROM is a series of polygon data. The first word of each
+entry is the length of the entry (in words, not counting the length word).
+
+The rest of the data in each entry is organized as follows:
+
+length (1 word)
+unknown value (1 word) - this increments with each entry
+vertex count (1 word) - the number of vertices encoded
+unknown value (1 word) - almost always 0; possibly depth bias
+vertex list (n x 3 words)
+quad count (1 word) - the number of quads to draw
+quad primitives (n x 5 words) - indices of four verticies plus color code
+*/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "namcos2.h"
 #include "namcoic.h"
 #include <math.h>
+#include <assert.h>
+#include "namcos3d.h"
 
 #define MAX_SURFACE 64
 #define MAX_VERTEX	64
-struct vertex
-{
-	double x,y,z;
-	int xpos, ypos;
-	int bValid;
-};
-
-static void draw_pixel( struct mame_bitmap *bitmap, int sx, int sy, int color )
-{
-	((UINT16 *)bitmap->line[sy])[sx] = color;
-}
 
 #define kScreenWidth	62*8
 #define kScreenHeight	60*8
 
+static int mbDspError;
+
+static data16_t namcos21_polyattr0[1]; /* ??? */
+static data16_t namcos21_polyattr1[1]; /* ??? */
+
+static data16_t namcos21_objattr[8];
+/* fff0 0000 during startup tests (all)
+ * 0000 8000 (starblade)
+ * ffff 0080 (solvalou)
+ * 0000 0000 (cybersled, aircombat)
+ */
+
+WRITE16_HANDLER( namcos21_polyattr0_w )
+{
+	COMBINE_DATA( &namcos21_polyattr0[offset] );
+}
+WRITE16_HANDLER( namcos21_polyattr1_w )
+{
+	COMBINE_DATA( &namcos21_polyattr1[offset] );
+}
+WRITE16_HANDLER( namcos21_objattr_w )
+{
+	COMBINE_DATA( &namcos21_objattr[offset] );
+}
 
 static void
-draw_tri( struct mame_bitmap *pBitmap, struct vertex pVertex[3], UINT16 pen )
+DrawQuad( struct mame_bitmap *pBitmap, struct VerTex *verTex, int vi[4], unsigned color )
 {
-	INT32 xshort,xlong,dxdyshort,dxdylong;
-	INT32 sy,bottom,clip,sx,width,height;
-	int iTop, iMid, iBot, i, iTemp;
-	UINT16 *pDest;
+	struct VerTex vertex[5];
+	int i;
+	for( i=0; i<5; i++ )
+	{
+		vertex[i] = verTex[vi[i&3]];
+	}
+	BlitTriFlat( pBitmap, &vertex[0], color );
+	BlitTriFlat( pBitmap, &vertex[2], color );
+} /* DrawQuad */
 
-	iTop = 0;
-	iMid = 1;
-	iBot = 2;
-	for( i=0; i<2; i++ )
-	{
-		if( pVertex[iMid].ypos < pVertex[iTop].ypos )
-		{
-			iTemp = iMid;
-			iMid = iTop;
-			iTop = iTemp;
-		}
-		if( pVertex[iBot].ypos < pVertex[iMid].ypos )
-		{
-			iTemp = iMid;
-			iMid = iBot;
-			iBot = iTemp;
-		}
+static void
+BlitPolyObject( struct mame_bitmap *bitmap, int code, double M[4][4] )
+{
+	const INT32 *pPointData = (INT32 *)memory_region( REGION_USER2 );
+	INT32 masterAddr = pPointData[code];
+	struct VerTex vertex[MAX_VERTEX];
+	int vi[4];
+
+	if( code<3 || code>=pPointData[0] )
+	{ /* Trap out-of-range polyobj reference; otherwise we may read illegal memory during
+	   * self test.  There's probably a master DSP enable/disable register involved,
+	   * but I don't know it.
+	   */
+		mbDspError = 1;
+		return;
 	}
 
-	xshort = xlong = pVertex[iTop].xpos<<16;
-	sy = pVertex[iTop].ypos;
-	height = pVertex[iBot].ypos-sy;
-	if( height == 0 )
-	{
-		dxdylong = 0;
-	}
-	else
-	{
-		dxdylong = ((pVertex[iBot].xpos<<16) - xlong)/height;
-	}
-	i = iMid;
 	for(;;)
 	{
-		bottom = pVertex[i].ypos;
-		height = bottom - sy;
-		if( height == 0 )
-		{
-			dxdyshort = 0;
-		}
-		else
-		{
-			dxdyshort = ((pVertex[i].xpos<<16) - xshort)/height;
-		}
-		if( sy<0 )
-		{
-			clip = -sy;
-			if( clip>bottom-sy )
-			{
-				clip = bottom-sy;
-			}
-			xshort += dxdyshort*clip;
-			xlong += dxdylong*clip;
-			sy+=clip;
-		}
-		if( bottom>pBitmap->height )
-		{
-			bottom = pBitmap->height;
-		}
-		while( sy<bottom )
-		{
-			if( xshort<xlong )
-			{
-				sx = xshort>>16;
-				width = (xlong-xshort)>>16;
-			}
-			else
-			{
-				sx = xlong>>16;
-				width = (xshort-xlong)>>16;
-			}
-			if( sx<0 )
-			{
-				width += sx;
-				sx = 0;
-			}
-			if( sx+width>pBitmap->width )
-			{
-				width = pBitmap->width-sx;
-			}
-			pDest = sx+(UINT16*)pBitmap->line[sy];
-			while( width>0 )
-			{
-				*pDest++ = pen;
-				width--;
-			}
-			xshort += dxdyshort;
-			xlong += dxdylong;
-			sy++;
-		} /* while( sy<bottom ) */
-		if( i==iMid )
-		{
-			i = iBot;
-		}
-		else
+		INT32 subAddr = pPointData[masterAddr++];
+		if( subAddr<0 )
 		{
 			break;
 		}
-	}
-}
-
-static int onscreen( int x,int y )
-{
-	return x>=0 && y>=0 && x<kScreenWidth && y<kScreenHeight;
-}
-
-static void draw_line( struct mame_bitmap *bitmap, int xpos1, int ypos1, int xpos2, int ypos2, int color )
-{
-	int dx,dy,sx,sy,cx,cy;
-
-	if( onscreen(xpos1,ypos1) && onscreen(xpos2,ypos2) ) /* all-or-nothing clip */
-	{
-		dx = xpos2 - xpos1;
-		dy = ypos2 - ypos1;
-
-		dx = abs(dx);
-		dy = abs(dy);
-		sx = (xpos1 <= xpos2) ? 1: -1;
-		sy = (ypos1 <= ypos2) ? 1: -1;
-		cx = dx/2;
-		cy = dy/2;
-
-		if (dx>=dy)
-		{
-			for (;;)
-			{
-				draw_pixel( bitmap, xpos1, ypos1, color );
-				if (xpos1 == xpos2) break;
-				xpos1 += sx;
-				cx -= dy;
-				if (cx < 0)
-				{
-					ypos1 += sy;
-					cx += dx;
-				}
-			}
-		}
 		else
 		{
-			for (;;)
+			INT32 vertexCount, surfaceCount;
+			unsigned color;
+			int count;
+
+			subAddr++; /* number of subsequant words in this chunk */
+			subAddr++; /* unique id tag */
+			vertexCount	= pPointData[subAddr++]&0xff;
+			subAddr++; /* unknown */
+
+			if( vertexCount>MAX_VERTEX )
 			{
-				draw_pixel( bitmap, xpos1, ypos1, color );
-				if (ypos1 == ypos2) break;
-				ypos1 += sy;
-				cy -= dx;
-				if (cy < 0)
+				logerror( "vertex overflow: %d\n", vertexCount );
+				return;
+			}
+			for( count=0; count<vertexCount; count++ )
+			{
+				double x = (INT16)(pPointData[subAddr++]&0xffff);
+				double y = (INT16)(pPointData[subAddr++]&0xffff);
+				double z = (INT16)(pPointData[subAddr++]&0xffff);
+				struct VerTex *pVertex = &vertex[count];
+				pVertex->x = M[0][0]*x + M[1][0]*y + M[2][0]*z + M[3][0];
+				pVertex->y = M[0][1]*x + M[1][1]*y + M[2][1]*z + M[3][1];
+				pVertex->z = M[0][2]*x + M[1][2]*y + M[2][2]*z + M[3][2];
+			}
+			surfaceCount = pPointData[subAddr++]&0xff;
+			if( surfaceCount > MAX_SURFACE )
+			{
+				mbDspError = 1;
+				logerror( "surface overflow: %d\n", surfaceCount );
+				return;
+			}
+			for( count=0; count<surfaceCount; count++ )
+			{
+				if( subAddr>=0x400000/4 )
 				{
-					xpos1 += sx;
-					cy += dy;
+					return;
 				}
+				vi[0] = pPointData[subAddr++]&0xff;
+				vi[1] = pPointData[subAddr++]&0xff;
+				vi[2] = pPointData[subAddr++]&0xff;
+				vi[3] = pPointData[subAddr++]&0xff;
+				color = pPointData[subAddr++]&0x1ff;
+				//color = 0x8000 - 0x400 + color;
+				//color = 0x6000 - 0x400 + color;
+				color = 0x4000 - 0x400 + color;
+				DrawQuad( bitmap,vertex,vi,color );
 			}
 		}
 	}
-}
+} /* BlitPolyObject */
 
-static void draw_quad( struct mame_bitmap *bitmap, struct vertex *vertex, int vi[4], int color )
-{
-	int i;
-	struct vertex *pv1, *pv2;
-
-	/* should be flat shaded; for now just draw wireframe */
-	pv1 = &vertex[vi[3]];
-	for( i=0; i<4; i++ )
-	{
-		pv2 = &vertex[vi[i]];
-		if( pv1->bValid && pv2->bValid )
-		{
-			draw_line( bitmap, pv1->xpos,pv1->ypos,pv2->xpos,pv2->ypos,color );
-		}
-		pv1 = pv2;
-	}
-}
-
-#define MATRIX_SIZE 4
-
-/* A := A*B */
 static void
-multiply_matrix(
-	double A[MATRIX_SIZE][MATRIX_SIZE],
-	double B[MATRIX_SIZE][MATRIX_SIZE] )
+ApplyRotation( const INT16 *pSource, double M[4][4] )
 {
-	double temp[MATRIX_SIZE][MATRIX_SIZE];
-	double sum;
-	int row,col;
-	int i;
+	struct RotParam param;
+	param.thx_sin = pSource[0]/(double)0x7fff;
+	param.thx_cos = pSource[1]/(double)0x7fff;
+	param.thy_sin = pSource[2]/(double)0x7fff;
+	param.thy_cos = pSource[3]/(double)0x7fff;
+	param.thz_sin = pSource[4]/(double)0x7fff;
+	param.thz_cos = pSource[5]/(double)0x7fff;
+	param.rolt = pSource[6];
+	matrix_NamcoRot( M, &param );
+} /* ApplyRotation */
 
-	for( row=0;row<MATRIX_SIZE;row++ )
+static void
+ApplyCameraTransformation( const INT16 *pCamera, double M[4][4] )
+{
+	ApplyRotation( &pCamera[0x40/2], M );
+} /* ApplyCameraTransformation */
+
+static int
+DrawPolyObject0( struct mame_bitmap *bitmap, const INT16 *pDSPRAM, const INT16 *pCamera )
+{
+	INT16 code = 1 + pDSPRAM[1];
+	//INT16 window = pDSPRAM[2];
+	double M[4][4];
+
+	matrix_Identity( M );
+	matrix_Translate( M,pDSPRAM[3],pDSPRAM[4],pDSPRAM[5] );
+	ApplyCameraTransformation( pCamera, M );
+	BlitPolyObject( bitmap, code, M );
+	return 6;
+} /* DrawPolyObject0 */
+
+static int
+DrawPolyObject1( struct mame_bitmap *bitmap, const INT16 *pDSPRAM, const INT16 *pCamera )
+{
+	INT16 code = 1 + pDSPRAM[1];
+	//INT16 window = pDSPRAM[2];
+	double M[4][4];
+
+	matrix_Identity( M );
+	ApplyRotation( &pDSPRAM[6], M );
+	matrix_Translate( M,pDSPRAM[3],pDSPRAM[4],pDSPRAM[5] );
+
+	if( pCamera )
 	{
-		for(col=0;col<MATRIX_SIZE;col++)
-		{
-			sum = 0.0;
-			for( i=0; i<MATRIX_SIZE; i++ )
-			{
-				sum += A[row][i]*B[i][col];
-			}
-			temp[row][col] = sum;
-		}
+		ApplyCameraTransformation( pCamera, M );
 	}
-	memcpy( A, temp, sizeof(temp) );
-}
+	/* correct for rolt==4 */
+	BlitPolyObject( bitmap, code, M );
+	return 13;
+} /* DrawPolyObject1 */
 
-static void draw_polygons( struct mame_bitmap *bitmap )
+static void
+DrawPolygons( struct mame_bitmap *bitmap )
 {
-	int i;
+	int i,size;
+	const INT16 *pCamera;
 	const INT16 *pDSPRAM;
-	const data32_t *pPointData;
-	data16_t enable,code,depth;
-	INT16 xpos0,ypos0,zpos0;
-	double thx_sin,thx_cos;
-	double thy_sin,thy_cos;
-	double thz_sin,thz_cos;
-	double m[MATRIX_SIZE][MATRIX_SIZE];
-	double M[MATRIX_SIZE][MATRIX_SIZE];
-	double camera_matrix[MATRIX_SIZE][MATRIX_SIZE];
-	UINT32 MasterAddr,SubAddr;
-	UINT32 NumWords, VertexCount, SurfaceCount;
-	struct vertex vertex[MAX_VERTEX], *pVertex;
-	int vi[4];
-	INT32 x,y,z;
-	int color;
-	UINT32 count;
-	data16_t unk,unk2;
 	int bDebug;
 
-	bDebug = keyboard_pressed( KEYCODE_D );
+	if( namcos21_dspram16[0x200/2]==0 ) return; /* hack */
 
-//	namcos21_dspram16[0x202/2] |= 1;
+	namcos3d_Start( bitmap ); /* wipe zbuffer */
 
-	if( namcos21_dspram16[0x206/2]&1 )
+	namcos21_dspram16[0x202/2] = 0; /* clear busy signal */
+
+	if( namcos21_dspram16[0x206/2]&1 ) /* work page select */
 	{
 		pDSPRAM = (INT16 *)&namcos21_dspram16[0xc000/2];
 	}
@@ -307,287 +280,153 @@ static void draw_polygons( struct mame_bitmap *bitmap )
 		pDSPRAM = (INT16 *)&namcos21_dspram16[0x8000/2];
 	}
 
-	if( bDebug ) logerror( "\nDSPRAM:\n" );
-
 /*
-Camera Attributes
-	The first chunk might be a pre-multiplier.
-	The second is definitely paramaters for a final multiplier.
-
-0x00	0001 0001 1c71
-	    [  THX  ] [  THY  ] [  THZ  ]
-		0000 7fff 0000 7fff 0000 7fff <- haven't seen these change
-		*000 *000
-		0000 0000
-		00f8 00f2
-		0003 0004
-		0108 0064
-
-		[  THX  ] [  THY  ] [  THZ  ]
-0x40	EACF 7E3B 8F1E C3AA 0000 7FFF
-		0002 0004
-		000F FFA0
-		02F0 02F0
-		0000 0017?
-
+	0000:	0002 0001 2000
+	0006:	ffe7 7fff
+	000a:	0298 7ff9
+	000e:	0000 7fff
+	0012:	1000 1000 0000 0000
+	001a:	00f8		// WIDTH
+	001c:	00f2		// HEIGHT
+	001e:	0003
+	0020:	0004 008e 0014 0000 0000 0000 0000 0000
+	0030:	0000 0000 0000 0000 0000 0000 0000 0000
+	0040:	073c 7fcb	// ROLX
+	0044:	0045 7fff	// ROLY
+	0048:	edb5 7eae	// ROLZ
+	004c:	0002		// ROLT
 */
-	thx_sin =  pDSPRAM[0x20]/(double)0x7fff;
-	thx_cos =  pDSPRAM[0x21]/(double)0x7fff;
+	pCamera = pDSPRAM;
 
-	thy_sin =  pDSPRAM[0x22]/(double)0x7fff;
-	thy_cos =  pDSPRAM[0x23]/(double)0x7fff;
-
-	thz_sin =  pDSPRAM[0x24]/(double)0x7fff;
-	thz_cos =  pDSPRAM[0x25]/(double)0x7fff;
-
+	/* press "U" to dump camera attributes and formatted object list */
+	bDebug = keyboard_pressed( KEYCODE_U );
 	if( bDebug )
 	{
-		logerror( "thx=%f,%f; thy=%f,%f; thz=%f,%f\n",thx_sin,thx_cos,thy_sin,thy_cos,thz_sin,thz_cos );
+		while( keyboard_pressed( KEYCODE_U ) ){}
+		logerror( "\nDSPRAM:\n" );
+		for( i=0; i<0x30*1; i++ )
+		{
+			if( (i&0x7)==0 ) logerror( "\n\t%04x: ",i*2 );
+			logerror( "%04x ", (UINT16)pDSPRAM[i] );
+		}
+		logerror( "\n" );
 	}
 
-/*
-	0xc046	0002 0000
-	0xc048	0000 ffa0
-	0xc04a	02f0 02f0
-	0xc04c	0000 fffc
-*/
-	xpos0 = 0;
-	ypos0 = 0;
-	zpos0 = 0;
-
-	/* identity */
-	m[0][0] = 1.0;			m[0][1] = 0.0;			m[0][2] = 0.0;			m[0][3] = 0.0;
-	m[1][0] = 0.0;			m[1][1] = 1.0;			m[1][2] = 0.0;			m[1][3] = 0.0;
-	m[2][0] = 0.0;			m[2][1] = 0.0;			m[2][2] = 1.0;			m[2][3] = 0.0;
-	m[3][0] = 0.0;			m[3][1] = 0.0;			m[3][2] = 0.0;			m[3][3] = 1.0;
-	memcpy( camera_matrix, m, sizeof(m) );
-
-	/* rotate x-axis */
-	m[0][0] = 1.0;			m[0][1] = 0.0;			m[0][2] = 0.0;			m[0][3] = 0.0;
-	m[1][0] = 0.0;			m[1][1] =  thx_cos;		m[1][2] = thx_sin;		m[1][3] = 0.0;
-	m[2][0] = 0.0;			m[2][1] = -thx_sin;		m[2][2] = thx_cos;		m[2][3] = 0.0;
-	m[3][0] = 0.0;			m[3][1] = 0.0;			m[3][2] = 0.0;			m[3][3] = 1.0;
-	multiply_matrix(camera_matrix,m);
-
-	/* rotate y-axis */
-	m[0][0] = thy_cos;		m[0][1] = 0.0;			m[0][2] = -thy_sin;		m[0][3] = 0.0;
-	m[1][0] = 0.0;			m[1][1] = 1.0;			m[1][2] = 0.0;			m[1][3] = 0.0;
-	m[2][0] = thy_sin;		m[2][1] = 0.0;			m[2][2] = thy_cos;		m[2][3] = 0.0;
-	m[3][0] = 0.0;			m[3][1] = 0.0;			m[3][2] = 0.0;			m[3][3] = 1.0;
-	multiply_matrix(camera_matrix,m);
-
-	/* rotate z-axis */
-	m[0][0] = thz_cos;		m[0][1] = thz_sin;		m[0][2] = 0.0;			m[0][3] = 0.0;
-	m[1][0] = -thz_sin;		m[1][1] = thz_cos;		m[1][2] = 0.0;			m[1][3] = 0.0;
-	m[2][0] = 0.0;			m[2][1] = 0.0;			m[2][2] = 1.0;			m[2][3] = 0.0;
-	m[3][0] = 0.0;			m[3][1] = 0.0;			m[3][2] = 0.0;			m[3][3] = 1.0;
-	multiply_matrix(camera_matrix,m);
-
-	/* translate */
-	m[0][0] = 1.0;			m[0][1] = 0.0;			m[0][2] = 0.0;			m[0][3] = 0.0;
-	m[1][0] = 0.0;			m[1][1] = 1.0;			m[1][2] = 0.0;			m[1][3] = 0.0;
-	m[2][0] = 0.0;			m[2][1] = 0.0;			m[2][2] = 1.0;			m[2][3] = 0.0;
-	m[3][0] = xpos0;		m[3][1] = ypos0;		m[3][2] = zpos0;		m[3][3] = 1.0;
-	multiply_matrix(camera_matrix,m);
-
-	pPointData = (data32_t *)memory_region( REGION_USER2 );
-
-	for( i=0x200/2; i<0x500/2; i+=13 )
+	pDSPRAM += 0x200/2;
+	mbDspError = 0;
+	for(;;)
 	{
-		enable	= (UINT16)pDSPRAM[i+0x0];
-
-		if( enable == 0xffff )
+		switch( pDSPRAM[0] )
 		{
-			/* end of object list */
-			if( bDebug ) logerror( "END-OF-LIST\n" );
+		case 0x0000: /* starblade */
+			/* code, win, tx,ty,tz
+			 *	[use camera transform]
+			 */
+			size = DrawPolyObject0( bitmap, pDSPRAM, pCamera );
+			break;
+
+		case 0x0001: /* starblade */
+			/* code, win, tx,ty,tz, rolx(2), roly(2), rolz(2), rolt
+			 *	[use camera transform]
+			 */
+			size = DrawPolyObject1( bitmap, pDSPRAM, pCamera );
+			break;
+
+		case 0x0002: /* starblade */
+			/* code, win, tx,ty,tz, rolx(2), roly(2), rolz(2), rolt
+			 *	[local transform only]
+			 */
+			size = DrawPolyObject1( bitmap, pDSPRAM, NULL );
+			break;
+
+		case 0x0004: /* air combat */
+			size = DrawPolyObject1( bitmap, pDSPRAM, pCamera );
+			size += 3; /* unknown: 0x8000 0x8000 0x8000 */
+			break;
+
+		case 0x0005: /* air combat */
+			size = DrawPolyObject0( bitmap, pDSPRAM, pCamera );
+			break;
+
+		case 0x0006: /* air combat */
+			size = DrawPolyObject1( bitmap, pDSPRAM, pCamera );
+			break;
+
+		case 0x0007: /* air combat */
+			size = DrawPolyObject1( bitmap, pDSPRAM, pCamera );
+			/* 0x00af 0x0003
+			 * 0x3518 0xe889 0xe39c
+			 * 0x0000 0x7fff 0x70e0 0xc3a7 0x0000 0x7fff 0x0004
+			 */
+			break;
+
+		case 0x100: /* special end-marker for CyberSled? */
+		case (INT16)0xffff: /* end-of-list marker */
+			if( bDebug )
+			{
+				logerror( "\n\n" );
+			}
+			return;
+
+		default:
+			logerror( "***unknown obj type! %04x %04x %04x %04x %04x %04x %04x %04x %04x %04x %04x %04x\n",
+				(UINT16)pDSPRAM[0],(UINT16)pDSPRAM[0],(UINT16)pDSPRAM[0],(UINT16)pDSPRAM[0],
+				(UINT16)pDSPRAM[0],(UINT16)pDSPRAM[0],(UINT16)pDSPRAM[0],(UINT16)pDSPRAM[0],
+				(UINT16)pDSPRAM[0],(UINT16)pDSPRAM[0],(UINT16)pDSPRAM[0],(UINT16)pDSPRAM[0]);
 			return;
 		}
-
-		code	= 1 + (UINT16)pDSPRAM[i+0x1];
-		/* The first table entry doesn't reference a polyobject.
-		 * Rather, it contains the first address beyond the polyobject lookup table.
-		 * This address in turn contains a linked list (header information?)
-		 *	In Starblade:
-		 *		000000:	0018e3
-		 *		0018e3:	0048cd 0048cf 0048d1 0048d3 ------
-		 *		0048cd:	000001 000000
-		 *		0048cf:	000001 000001
-		 *		0048d1:	000001 000002
-		 *		0048d3:	000001 000003
-		 */
-		if( code >= pPointData[0] )
+		if( mbDspError ) return;
+		if( bDebug )
 		{
-			/* out of range */
-			continue;
-		}
-
-		depth	= pDSPRAM[i+0x2]; /* always zero? */
-
-		xpos0	= pDSPRAM[i+0x3];
-		ypos0	= pDSPRAM[i+0x4];
-		zpos0	= pDSPRAM[i+0x5];
-
-		thx_sin =  pDSPRAM[i+0x6]/(double)0x7fff;
-		thx_cos =  pDSPRAM[i+0x7]/(double)0x7fff;
-
-		thy_sin =  pDSPRAM[i+0x8]/(double)0x7fff;
-		thy_cos =  pDSPRAM[i+0x9]/(double)0x7fff;
-
-		thz_sin =  pDSPRAM[i+0xa]/(double)0x7fff;
-		thz_cos =  pDSPRAM[i+0xb]/(double)0x7fff;
-
-		unk	= pDSPRAM[i+0xc]; /* always 4? */
-
-		if( bDebug ) logerror( "code=%04x depth=%04x unk=%04x (%d,%d,%d)\n",
-			code,depth,unk,zpos0,ypos0,zpos0 );
-
-		/* identity */
-		M[0][0] = 1.0;			M[0][1] = 0.0;			M[0][2] = 0.0;			M[0][3] = 0.0;
-		M[1][0] = 0.0;			M[1][1] = 1.0;			M[1][2] = 0.0;			M[1][3] = 0.0;
-		M[2][0] = 0.0;			M[2][1] = 0.0;			M[2][2] = 1.0;			M[2][3] = 0.0;
-		M[3][0] = 0.0;			M[3][1] = 0.0;			M[3][2] = 0.0;			M[3][3] = 1.0;
-
-		/* rotate x-axis */
-		m[0][0] = 1.0;			m[0][1] = 0.0;			m[0][2] = 0.0;			m[0][3] = 0.0;
-		m[1][0] = 0.0;			m[1][1] =  thx_cos;		m[1][2] = thx_sin;		m[1][3] = 0.0;
-		m[2][0] = 0.0;			m[2][1] = -thx_sin;		m[2][2] = thx_cos;		m[2][3] = 0.0;
-		m[3][0] = 0.0;			m[3][1] = 0.0;			m[3][2] = 0.0;			m[3][3] = 1.0;
-		multiply_matrix(M,m);
-
-		/* rotate y-axis */
-		m[0][0] = thy_cos;		m[0][1] = 0.0;			m[0][2] = -thy_sin;		m[0][3] = 0.0;
-		m[1][0] = 0.0;			m[1][1] = 1.0;			m[1][2] = 0.0;			m[1][3] = 0.0;
-		m[2][0] = thy_sin;		m[2][1] = 0.0;			m[2][2] = thy_cos;		m[2][3] = 0.0;
-		m[3][0] = 0.0;			m[3][1] = 0.0;			m[3][2] = 0.0;			m[3][3] = 1.0;
-		multiply_matrix(M,m);
-
-		/* rotate z-axis */
-		m[0][0] = thz_cos;		m[0][1] = thz_sin;		m[0][2] = 0.0;			m[0][3] = 0.0;
-		m[1][0] = -thz_sin;		m[1][1] = thz_cos;		m[1][2] = 0.0;			m[1][3] = 0.0;
-		m[2][0] = 0.0;			m[2][1] = 0.0;			m[2][2] = 1.0;			m[2][3] = 0.0;
-		m[3][0] = 0.0;			m[3][1] = 0.0;			m[3][2] = 0.0;			m[3][3] = 1.0;
-		multiply_matrix(M,m);
-
-		/* translate */
-		m[0][0] = 1.0;			m[0][1] = 0.0;			m[0][2] = 0.0;			m[0][3] = 0.0;
-		m[1][0] = 0.0;			m[1][1] = 1.0;			m[1][2] = 0.0;			m[1][3] = 0.0;
-		m[2][0] = 0.0;			m[2][1] = 0.0;			m[2][2] = 1.0;			m[2][3] = 0.0;
-		m[3][0] = xpos0;		m[3][1] = ypos0;		m[3][2] = zpos0;		m[3][3] = 1.0;
-		multiply_matrix(M,m);
-
-		multiply_matrix(M,camera_matrix);
-
-		MasterAddr = pPointData[code];
-		if( MasterAddr>=0x400000/4 || MasterAddr == 0 )
-		{
-			logerror( "bad code\n" );
-			return;
-		}
-
-		for(;;)
-		{
-			SubAddr = pPointData[MasterAddr++];
-			if( bDebug ) logerror( "Master=%08x; SubAddr=%08x\n", MasterAddr,SubAddr );
-
-			if( ~SubAddr == 0 ) break;
-			if( SubAddr>=0x400000/4 ) return;
-			if( MasterAddr>=0x400000/4 ) return;
-
-			NumWords	= pPointData[SubAddr++];
-			unk 		= pPointData[SubAddr++];
-			VertexCount	= pPointData[SubAddr++]&0xff;
-			unk2		= pPointData[SubAddr++];
-
-			if( bDebug ) logerror( "NumWords=%08x; unk1=%08x; unk2=%08x; VertexCount=%d\n",
-				NumWords,unk,unk2,VertexCount );
-
-			if( VertexCount>MAX_VERTEX )
+			logerror( "obj: ");
+			for( i=0; i<size; i++ )
 			{
-				logerror( "Max Vertex exceeded(%d) %08x;%08x\n", code,MasterAddr,SubAddr);
-				return;
+				logerror( "%04x ", (UINT16)pDSPRAM[i] );
 			}
-
-			for( count=0; count<VertexCount; count++ )
-			{
-				x = (INT16)(pPointData[SubAddr++]&0xffff);
-				y = (INT16)(pPointData[SubAddr++]&0xffff);
-				z = (INT16)(pPointData[SubAddr++]&0xffff);
-				if( bDebug ) logerror( "Vertex#%d: (%d,%d,%d)\n", count,x,y,z );
-
-				pVertex = &vertex[count];
-				pVertex->x = M[0][0]*x + M[1][0]*y + M[2][0]*z + M[3][0];
-				pVertex->y = M[0][1]*x + M[1][1]*y + M[2][1]*z + M[3][1];
-				pVertex->z = M[0][2]*x + M[1][2]*y + M[2][2]*z + M[3][2];
-
-				/* Project to screen coordinates. */
-				if( pVertex->z>1 )
-				{
-					pVertex->xpos = 0x2f0*pVertex->x/pVertex->z + bitmap->width/2;
-					pVertex->ypos = -0x2f0*pVertex->y/pVertex->z + bitmap->height/2;
-					pVertex->bValid = 1;
-				}
-				else
-				{
-					pVertex->bValid = 0;
-				}
-
-			} /* next vertex */
-
-			SurfaceCount = pPointData[SubAddr++]&0xff;
-			if( SurfaceCount>MAX_SURFACE )
-			{
-				logerror( "Max Surface exceeded(%d)\n", SurfaceCount );
-				return;
-			}
-			for( count=0; count<SurfaceCount; count++ )
-			{
-				if( bDebug ) logerror( "Surface#%d: ",count );
-				if( SubAddr>=0x400000/4 ) return;
-
-				vi[0] = pPointData[SubAddr++]&0xff;
-				vi[1] = pPointData[SubAddr++]&0xff;
-				vi[2] = pPointData[SubAddr++]&0xff;
-				vi[3] = pPointData[SubAddr++]&0xff;
-				color = pPointData[SubAddr++]&0xff; /* ignore for now */
-				if( bDebug ) logerror( "%d,%d,%d,%d; color=%d\n", vi[0],vi[1],vi[2],vi[3],color );
-				draw_quad( bitmap,vertex,vi,Machine->pens[0x1000]/*color*/ );
-			} /* next surface */
-		} /* next component */
+			logerror( "\n" );
+		}
+		pDSPRAM += size;
 	} /* next object */
-} /* draw_polygons */
+} /* DrawPolygons */
 
 static int objcode2tile( int code )
-{
+{ /* callback for sprite drawing code in namcoic.c */
 	return code;
 }
 
 VIDEO_START( namcos21 )
 {
+	namcos3d_Init( kScreenWidth, kScreenHeight );
+
 	namco_obj_init(
 		0,		/* gfx bank */
 		0xf,	/* reverse palette mapping */
 		objcode2tile );
 
-	/*	int i;
-	UINT32 *pMem;
-
-	pMem = (UINT32 *)memory_region(REGION_USER2);
-	for( i=0; i<0x400000/4; i++ )
-	{
-		if( (i&0xf)==0 ) logerror( "\n%08x: ", i );
-		logerror( "%06x ", pMem[i]&0xffffff );
-	}
-	*/
 	return 0;
 }
 
-VIDEO_UPDATE( namcos21_default )
+static void
+update_palette( void )
 {
-	int i,pri;
-	data16_t data1,data2;
+	int i;
+	INT16 data1,data2;
 	int r,g,b;
 
-	/* stuff the palette */
+	/*
+	Palette:
+		0x0000..0x1fff	sprite palettes (0x10 sets of 0x100 colors)
+
+		0x2000..0x3fff	polygon palette bank0 (0x10 sets of 0x200 colors)
+			(in starblade, some palette animation effects are performed here)
+		0x4000..0x5fff	polygon palette bank1 (0x10 sets of 0x200 colors)
+		0x6000..0x7fff	polygon palette bank2 (0x10 sets of 0x200 colors)
+
+		The polygon-dedicated color sets within a bank typically increase in
+		intensity from very dark to full intensity.
+
+		Probably the selected palette is determined by polygon view angle.
+	*/
 	for( i=0; i<NAMCOS21_NUM_COLORS; i++ )
 	{
 		data1 = paletteram16[0x00000/2+i];
@@ -599,25 +438,78 @@ VIDEO_UPDATE( namcos21_default )
 
 		palette_set_color( i, r,g,b );
 	}
+} /* update_palette */
+
+VIDEO_UPDATE( namcos21_default )
+{
+	int pri;
+
+	update_palette();
 
 	/* paint background */
-	fillbitmap( bitmap,Machine->pens[0xff],NULL );
+	fillbitmap( bitmap, get_black_pen(), cliprect );
 
-	for( pri=0; pri<8; pri++ )
+	/* draw low priority 2d sprites */
+	for( pri=0; pri<3; pri++ ) namco_obj_draw( bitmap, pri );
+
+	DrawPolygons( bitmap );
+
+	/* draw high priority 2d sprites */
+	for( pri=3; pri<8; pri++ ) namco_obj_draw( bitmap, pri );
+
+#if 0
+	/* debug some video attributes */
 	{
-		namco_obj_draw( bitmap,pri );
-	}
+		int i,data;
 
-	draw_polygons( bitmap );
-
-	if(0){
-		struct vertex Pt[3];
-		Pt[0].xpos = 64;
-		Pt[0].ypos = 0;
-		Pt[1].xpos = 128;
-		Pt[1].ypos = 64;
-		Pt[2].xpos = 0;
-		Pt[2].ypos = 128;
-		draw_tri( bitmap, Pt, Machine->pens[0x1004] );
+		for( i=0; i<4; i++ )
+		{
+			data = 0xf&(namcos21_polyattr0[i/4]>>(4*(3-(i&3))));
+			drawgfx( bitmap, Machine->uifont, "0123456789abcdef"[data], 0,0,0,
+				i*12,16*0,cliprect,TRANSPARENCY_NONE,0 );
+		}
+		for( i=0; i<4; i++ )
+		{
+			data = 0xf&(namcos21_polyattr1[i/4]>>(4*(3-(i&3))));
+			drawgfx( bitmap, Machine->uifont, "0123456789abcdef"[data], 0,0,0,
+				i*12,16*1,cliprect,TRANSPARENCY_NONE,0 );
+		}
+		for( i=0; i<4*8; i++ )
+		{
+			data = 0xf&(namcos21_objattr[i/4]>>(4*(3-(i&3))));
+			drawgfx( bitmap, Machine->uifont, "0123456789abcdef"[data], 0,0,0,
+				i*12,16*2,cliprect,TRANSPARENCY_NONE,0 );
+		}
 	}
-}
+#endif
+
+	/* some DSP witchery follows; it's an attempt to simulate the DSP behavior that
+	 * Starblade expects during setup.
+	  */
+	{
+		const data16_t cmd1[] =
+		{
+			0x0000,0x0001,0x0002,0x000a,0xcca3,0x0000,0x0000,0x0000,
+			0x0000,0x0002,0x0000,0x0000,0x0001,0x0000,0x0000,0x0000,
+			0x0080,0x0004,0xffff,0xffff
+		};
+		if( memcmp( &namcos21_dspram16[0x100/2], cmd1, sizeof(cmd1) )==0 )
+		{ /* the check above is done so we don't interfere with the DSPRAM test */
+			namcos21_dspram16[0x112/2] = 0; /* status to fake working DSP */
+			namcos21_dspram16[0x100/2] = 2; /* status to fake working DSP */
+			namcos21_dspram16[0x102/2] = 2; /* status to fake working DSP */
+			namcos21_dspram16[0x110/2] = 2; /* status to fake working DSP */
+			namcos21_dspram16[0x10c/2] = 0xd5df; /* checksum computed by DSP */
+			namcos21_dspram16[0x10a/2] = 0xed53; /* checksum computed by DSP */
+		}
+		else if( namcos21_dspram16[0x10e/2] == 0x0001 )
+		{
+			/* This signals that a large chunk of code/data has been written by the main CPU.
+			 *
+			 * Presumably the DSP processor(s) copy it to private RAM at this point.
+			 * The main CPU waits for this flag to be cleared.
+			 */
+			namcos21_dspram16[0x10e/2] = 0; /* ack */
+		}
+	}
+} /* namcos21_default */

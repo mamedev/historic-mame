@@ -1,7 +1,7 @@
 /**********************************************************************
 
-Armed Formation
-(c)1988 Nichibutsu
+Legion
+(c)1986 Nichibutsu
 
 Terra Force
 (c)1987 Nichibutsu
@@ -12,10 +12,128 @@ Kodure Ookami
 Crazy Climber 2
 (c)1988 Nichibutsu
 
+Armed Formation
+(c)1988 Nichibutsu
+
 68000 + Z80
 
 TODO:
-- simulate the mcu/blitter (particularly needed in terrafu)
+- simulate the mcu/blitter (particularly needed in terrafu and legion)
+
+
+Stephh's notes (based on the games M68000 code and some tests) :
+
+1a) 'legion'
+
+  - The ROM test (code at 0x00046e) checks range 0x000102-0x01ffff (!)
+    and reports an error if the checksum isn't correct.
+
+  - 3 Dip Switches which are told to be unused have an effect if
+    [0x062d53] != 0x00 (check code at 0x00d9b2).
+    As this value is ALWAYS set to 0x00 via code at 0x0001d4, I've
+    added a #define LEGION_HACK you need to change to 1 if you want
+    get the benefits of these Dip Switches.
+    Here is what these "unused" Dip Switch do :
+
+      * 1st unused Dip Switch (DSW0 bit 6) remains unused
+      * 2nd unused Dip Switch (DSW0 bit 7) determines if the "Invulnerability"
+        Dip Switches will be tested
+      * 3rd unused Dip Switch (DSW1 bit 6) gives invulnerability or not
+        to player 1 (DSW0 bit 7 must be ON too !)
+      * 4th unused Dip Switch (DSW1 bit 7) gives invulnerability or not
+        to player 2 (DSW0 bit 7 must be ON too !)
+
+    Also note bit 1 of 0x062d53 is also tested but I haven't been able
+    to find its purpose (any more infos are welcome)
+
+
+1b) 'legiono'
+
+  - The ROM test (code at 0x000466) checks range 0x000102-0x03ffff
+    but NEVER reports an error if the checksum isn't correct due
+    to the instruction at 0x000480 (see where it branches) :
+
+	000466: 7000                     moveq   #$0, D0
+	000468: 41FA FC98                lea     (-$368,PC), A0; ($102)
+	00046C: D058                     add.w   (A0)+, D0
+	00046E: B1FC 0004 0000           cmpa.l  #$40000, A0
+	000474: 66F6                     bne     46c
+	000476: 33C0 0006 2CAE           move.w  D0, $62cae.l
+	00047C: B078 0100                cmp.w   $100.w, D0
+	000480: 6600 0002                bne     484
+	000484: 41FA FF86                lea     (-$7a,PC), A0; ($40c)
+
+  - 3 Dip Switches which are told to be unused have an effect if
+    [0x062d53] != 0x00 (check code at 0x00d7ea).
+    As this value is ALWAYS set to 0x00 via code at 0x0001d4, I've
+    added a #define LEGION_HACK you need to change to 1 if you want
+    get the benefits of these Dip Switches.
+    Here is what these "unused" Dip Switch do :
+
+      * 1st unused Dip Switch (DSW0 bit 6) remains unused
+      * 2nd unused Dip Switch (DSW0 bit 7) determines if the "Invulnerability"
+        Dip Switches will be tested
+      * 3rd unused Dip Switch (DSW1 bit 6) gives invulnerability or not
+        to player 1 (DSW0 bit 7 must be ON too !)
+      * 4th unused Dip Switch (DSW1 bit 7) gives invulnerability or not
+        to player 2 (DSW0 bit 7 must be ON too !)
+
+    Also note bit 1 of 0x062d53 is also tested but I haven't been able
+    to find its purpose (any more infos are welcome)
+
+
+2a) 'terraf'
+
+  - The ROM test (code at 0x000292) ALWAYS displays "OK", but memory is
+    in fact NEVER scanned ! Original behaviour or is the game a bootleg ?
+
+	000292: 45F8 0000                lea     $0.w, A2
+	000296: 303C 7FFF                move.w  #$7fff, D0
+	00029A: 7200                     moveq   #$0, D1
+	00029C: D29A                     add.l   (A2)+, D1
+	00029E: 0C81 0000 0000           cmpi.l  #$0, D1
+	0002A4: 4E71                     nop
+	0002A6: 23FC 004F 004B 0006 83AA move.l  #$4f004b, $683aa.l
+	0002B0: 4EF9 0000 0124           jmp     $124.l
+	...
+	0002C2: 4EF9 0000 0124           jmp     $124.l
+
+
+2b) 'terrafu'
+
+  - The ROM test (code at 0x000292) NEVER displays "OK", but memory is
+    in fact NEVER scanned ! Original behaviour or is the game a bootleg ?
+
+	000292: 45F8 0000                lea     $0.w, A2
+	000296: 303C 7FFF                move.w  #$7fff, D0
+	00029A: 7200                     moveq   #$0, D1
+	00029C: D29A                     add.l   (A2)+, D1
+	00029E: 0C81 0000 0000           cmpi.l  #$0, D1
+	0002A4: 661C                     bne     2c2
+	0002A6: 23FC 004F 004B 0006 83AA move.l  #$4f004b, $683aa.l
+	0002B0: 4EF9 0000 0124           jmp     $124.l
+	...
+	0002C2: 4EF9 0000 0124           jmp     $124.l
+
+
+3)  'kodure'
+
+  - The ROM test (code at 0x004fac) checks range 0x000000-0x05ffff
+    and reports an error if the checksum isn't correct.
+
+
+4)  'cclimbr2'
+
+  - The ROM test (code at 0x012f6e) checks ranges 0x000100-0x014fff,
+    and 0x020000-0x024fff, and reports an error if the checksum isn't
+    correct.
+
+
+5)  'armedf'
+
+  - The ROM test (code at 0x00df5e) checks ranges 0x000100-0x014fff,
+    0x020000-0x024fff and 0x040000-0x04ffff, and reports an error if
+    the checksum isn't correct.
 
 ***********************************************************************/
 
@@ -24,16 +142,17 @@ TODO:
 #include "cpu/m68000/m68000.h"
 #include "cpu/z80/z80.h"
 
+#define LEGION_HACK	0
+
+
+extern void armedf_setgfxtype( int type );
+
 VIDEO_UPDATE( armedf );
 VIDEO_EOF( armedf );
-VIDEO_START( terraf );
 VIDEO_START( armedf );
-VIDEO_START( kodure );
-VIDEO_START( cclimbr2 );
 
 WRITE16_HANDLER( armedf_bg_videoram_w );
 WRITE16_HANDLER( armedf_fg_videoram_w );
-WRITE16_HANDLER( terraf_text_videoram_w );
 WRITE16_HANDLER( armedf_text_videoram_w );
 WRITE16_HANDLER( terraf_fg_scrollx_w );
 WRITE16_HANDLER( terraf_fg_scrolly_w );
@@ -53,12 +172,14 @@ static WRITE16_HANDLER( io_w )
 {
 	COMBINE_DATA(&armedf_vreg);
 	/* bits 0 and 1 of armedf_vreg are coin counters */
+	/* bit 12 seems to handle screen flipping */
 }
 
 static WRITE16_HANDLER( kodure_io_w )
 {
 	COMBINE_DATA(&armedf_vreg);
 	/* bits 0 and 1 of armedf_vreg are coin counters */
+	/* bit 12 seems to handle screen flipping */
 
 	/* This is a temporary condition specification. */
 	if (!(armedf_vreg & 0x0080))
@@ -66,7 +187,7 @@ static WRITE16_HANDLER( kodure_io_w )
 		int i;
 		for (i = 0; i < 0x1000; i++)
 		{
-			terraf_text_videoram_w(i, ' ', 0);
+			armedf_text_videoram_w(i, ' ', 0);
 		}
 	}
 }
@@ -99,7 +220,7 @@ static MEMORY_WRITE16_START( terraf_writemem )
 	{ 0x060000, 0x0603ff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0x060400, 0x063fff, MWA16_RAM },
 	{ 0x064000, 0x064fff, paletteram16_xxxxRRRRGGGGBBBB_word_w, &paletteram16 },
-	{ 0x068000, 0x069fff, terraf_text_videoram_w, &terraf_text_videoram },
+	{ 0x068000, 0x069fff, armedf_text_videoram_w, &terraf_text_videoram },
 	{ 0x06a000, 0x06a9ff, MWA16_RAM },
 	{ 0x06C000, 0x06C9ff, MWA16_RAM },
 	{ 0x070000, 0x070fff, armedf_fg_videoram_w, &armedf_fg_videoram },
@@ -133,7 +254,7 @@ static MEMORY_WRITE16_START( kodure_writemem )
 	{ 0x060000, 0x060fff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0x061000, 0x063fff, MWA16_RAM },
 	{ 0x064000, 0x064fff, paletteram16_xxxxRRRRGGGGBBBB_word_w, &paletteram16 },
-	{ 0x068000, 0x069fff, terraf_text_videoram_w, &terraf_text_videoram },
+	{ 0x068000, 0x069fff, armedf_text_videoram_w, &terraf_text_videoram },
 	{ 0x06a000, 0x06a9ff, MWA16_RAM },
 	{ 0x06C000, 0x06C9ff, MWA16_RAM },
 	{ 0x070000, 0x070fff, armedf_fg_videoram_w, &armedf_fg_videoram },
@@ -144,6 +265,38 @@ static MEMORY_WRITE16_START( kodure_writemem )
 	{ 0x07c00a, 0x07c00b, sound_command_w },
 	{ 0x0c0000, 0x0c0001, MWA16_NOP }, /* watchdog? */
 	{ 0xffd000, 0xffd001, MWA16_NOP }, /* ? */
+MEMORY_END
+
+static MEMORY_READ16_START( cclimbr2_readmem )
+	{ 0x000000, 0x05ffff, MRA16_ROM },
+	{ 0x060000, 0x063fff, MRA16_RAM },
+	{ 0x064000, 0x064fff, MRA16_RAM },
+	{ 0x068000, 0x069fff, MRA16_RAM },
+	{ 0x06a000, 0x06a9ff, MRA16_RAM },
+	{ 0x06c000, 0x06c9ff, MRA16_RAM },
+	{ 0x070000, 0x070fff, MRA16_RAM },
+	{ 0x074000, 0x074fff, MRA16_RAM },
+	{ 0x078000, 0x078001, input_port_0_word_r },
+	{ 0x078002, 0x078003, input_port_1_word_r },
+	{ 0x078004, 0x078005, input_port_2_word_r },
+	{ 0x078006, 0x078007, input_port_3_word_r },
+MEMORY_END
+
+static MEMORY_WRITE16_START( cclimbr2_writemem )
+	{ 0x000000, 0x05ffff, MWA16_ROM },
+	{ 0x060000, 0x060fff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x061000, 0x063fff, MWA16_RAM },
+	{ 0x064000, 0x064fff, paletteram16_xxxxRRRRGGGGBBBB_word_w, &paletteram16 },
+	{ 0x068000, 0x069fff, armedf_text_videoram_w, &terraf_text_videoram },
+	{ 0x06a000, 0x06a9ff, MWA16_RAM },
+	{ 0x06c000, 0x06c9ff, MWA16_RAM },
+	{ 0x06ca00, 0x06cbff, MWA16_RAM },
+	{ 0x070000, 0x070fff, armedf_fg_videoram_w, &armedf_fg_videoram },
+	{ 0x074000, 0x074fff, armedf_bg_videoram_w, &armedf_bg_videoram },
+	{ 0x07c000, 0x07c001, io_w },
+	{ 0x07c002, 0x07c003, armedf_bg_scrollx_w },
+	{ 0x07c004, 0x07c005, armedf_bg_scrolly_w },
+	{ 0x07c00a, 0x07c00b, sound_command_w },
 MEMORY_END
 
 static MEMORY_READ16_START( armedf_readmem )
@@ -177,38 +330,6 @@ static MEMORY_WRITE16_START( armedf_writemem )
 	{ 0x06d006, 0x06d007, armedf_fg_scrollx_w },
 	{ 0x06d008, 0x06d009, armedf_fg_scrolly_w },
 	{ 0x06d00a, 0x06d00b, sound_command_w },
-MEMORY_END
-
-static MEMORY_READ16_START( cclimbr2_readmem )
-	{ 0x000000, 0x05ffff, MRA16_ROM },
-	{ 0x060000, 0x063fff, MRA16_RAM },
-	{ 0x064000, 0x064fff, MRA16_RAM },
-	{ 0x068000, 0x069fff, MRA16_RAM },
-	{ 0x06a000, 0x06a9ff, MRA16_RAM },
-	{ 0x06c000, 0x06c9ff, MRA16_RAM },
-	{ 0x070000, 0x070fff, MRA16_RAM },
-	{ 0x074000, 0x074fff, MRA16_RAM },
-	{ 0x078000, 0x078001, input_port_0_word_r },
-	{ 0x078002, 0x078003, input_port_1_word_r },
-	{ 0x078004, 0x078005, input_port_2_word_r },
-	{ 0x078006, 0x078007, input_port_3_word_r },
-MEMORY_END
-
-static MEMORY_WRITE16_START( cclimbr2_writemem )
-	{ 0x000000, 0x05ffff, MWA16_ROM },
-	{ 0x060000, 0x060fff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x061000, 0x063fff, MWA16_RAM },
-	{ 0x064000, 0x064fff, paletteram16_xxxxRRRRGGGGBBBB_word_w, &paletteram16 },
-	{ 0x068000, 0x069fff, terraf_text_videoram_w, &terraf_text_videoram },
-	{ 0x06a000, 0x06a9ff, MWA16_RAM },
-	{ 0x06c000, 0x06c9ff, MWA16_RAM },
-	{ 0x06ca00, 0x06cbff, MWA16_RAM },
-	{ 0x070000, 0x070fff, armedf_fg_videoram_w, &armedf_fg_videoram },
-	{ 0x074000, 0x074fff, armedf_bg_videoram_w, &armedf_bg_videoram },
-	{ 0x07c000, 0x07c001, io_w },
-	{ 0x07c002, 0x07c003, armedf_bg_scrollx_w },
-	{ 0x07c004, 0x07c005, armedf_bg_scrolly_w },
-	{ 0x07c00a, 0x07c00b, sound_command_w },
 MEMORY_END
 
 
@@ -307,7 +428,7 @@ PORT_END
 	PORT_DIPSETTING(    0x00, "6" )
 
 
-INPUT_PORTS_START( armedf )
+INPUT_PORTS_START( legion )
 	PORT_START	/* IN0 */
 	NIHON_SINGLE_JOYSTICK(1)
 	NIHON_COINS
@@ -318,47 +439,57 @@ INPUT_PORTS_START( armedf )
 
 	PORT_START	/* DSW0 */
 	NIHON_LIVES
-	/* This is how the Bonus Life are defined in Service Mode */
-	/* However, to keep the way Bonus Life are defined in MAME, */
-	/* below are the same values, but using the MAME way */
-//	PORT_DIPNAME( 0x04, 0x04, "1st Bonus Life" )
-//	PORT_DIPSETTING(    0x04, "20k" )
-//	PORT_DIPSETTING(    0x00, "40k" )
-//	PORT_DIPNAME( 0x08, 0x08, "2nd Bonus Life" )
-//	PORT_DIPSETTING(    0x08, "every 60k" )
-//	PORT_DIPSETTING(    0x00, "every 80k" )
-	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x0c, "20k and every 60k" )
-	PORT_DIPSETTING(    0x04, "20k and every 80k" )
-	PORT_DIPSETTING(    0x08, "40k and every 60k" )
-	PORT_DIPSETTING(    0x00, "40k and every 80k" )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0xc0, "Easy" )
-	PORT_DIPSETTING(    0x80, "Normal" )
-	PORT_DIPSETTING(    0x40, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x04, "30k then every 100k" )
+	PORT_DIPSETTING(    0x00, "50k only" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+#if LEGION_HACK
+	PORT_DIPNAME( 0x80, 0x80, "Allow Invulnerability" )		// see notes
+	PORT_DIPSETTING(    0x80, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+#else
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+#endif
 
 	PORT_START	/* DSW1 */
 	NIHON_COINAGE_A
 	NIHON_COINAGE_B
-	PORT_DIPNAME( 0x30, 0x00, "Allow Continue" )
-	PORT_DIPSETTING(    0x30, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x20, "3 Times" )
-	PORT_DIPSETTING(    0x10, "5 Times" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x40, 0x40, "Flip Screen ?" )
+	PORT_DIPNAME( 0x10, 0x10, "Coin Slots" )
+	PORT_DIPSETTING(    0x10, "Common" )
+	PORT_DIPSETTING(    0x00, "Individual" )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x20, "Easy" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+#if LEGION_HACK
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "P1 Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_CHEAT, "P2 Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+#else
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+#endif
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( terraf )
 	PORT_START	/* IN0 */
@@ -371,11 +502,17 @@ INPUT_PORTS_START( terraf )
 
 	PORT_START	/* DSW0 */
 	NIHON_LIVES
+//	PORT_DIPNAME( 0x04, 0x04, "1st Bonus Life" )
+//	PORT_DIPSETTING(    0x04, "20k" )
+//	PORT_DIPSETTING(    0x00, "50k" )
+//	PORT_DIPNAME( 0x08, 0x08, "2nd Bonus Life" )
+//	PORT_DIPSETTING(    0x08, "60k" )
+//	PORT_DIPSETTING(    0x00, "90k" )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x0c, "20k and every 60k" )
-	PORT_DIPSETTING(    0x04, "20k and every 90k" )
-	PORT_DIPSETTING(    0x08, "50k and every 60k" )
-	PORT_DIPSETTING(    0x00, "50k and every 90k" )
+	PORT_DIPSETTING(    0x0c, "20k then every 60k" )
+	PORT_DIPSETTING(    0x04, "20k then every 90k" )
+	PORT_DIPSETTING(    0x08, "50k then every 60k" )
+	PORT_DIPSETTING(    0x00, "50k then every 90k" )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -391,7 +528,7 @@ INPUT_PORTS_START( terraf )
 	PORT_START	/* DSW1 */
 	NIHON_COINAGE_A
 	NIHON_COINAGE_B
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
@@ -416,16 +553,16 @@ INPUT_PORTS_START( kodure )
 	PORT_START	/* DSW0 */
 	NIHON_LIVES
 //	PORT_DIPNAME( 0x04, 0x04, "1st Bonus Life" )
-//	PORT_DIPSETTING(    0x04, "None" )
+//	PORT_DIPSETTING(    0x04, "00k" )
 //	PORT_DIPSETTING(    0x00, "50k" )
 //	PORT_DIPNAME( 0x08, 0x08, "2nd Bonus Life" )
 //	PORT_DIPSETTING(    0x08, "60k" )
 //	PORT_DIPSETTING(    0x00, "90k" )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x08, "50k and every 60k" )
-	PORT_DIPSETTING(    0x00, "50k and every 90k" )
-	PORT_DIPSETTING(    0x0c, "every 60k" )
-	PORT_DIPSETTING(    0x04, "every 90k" )
+	PORT_DIPSETTING(    0x08, "50k then every 60k" )
+	PORT_DIPSETTING(    0x00, "50k then every 90k" )
+	PORT_DIPSETTING(    0x0c, "Every 60k" )
+	PORT_DIPSETTING(    0x04, "Every 90k" )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -435,14 +572,14 @@ INPUT_PORTS_START( kodure )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x40, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* DSW1 */
 	NIHON_COINAGE_A
 	NIHON_COINAGE_B_ALT
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
@@ -451,7 +588,7 @@ INPUT_PORTS_START( kodure )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -485,13 +622,13 @@ INPUT_PORTS_START( cclimbr2 )
 //	PORT_DIPSETTING(    0x04, "30k" )
 //	PORT_DIPSETTING(    0x00, "60k" )
 //	PORT_DIPNAME( 0x08, 0x08, "2nd Bonus Life" )
-//	PORT_DIPSETTING(    0x08, "70k only" )
-//	PORT_DIPSETTING(    0x00, "None" )
+//	PORT_DIPSETTING(    0x08, "70k" )
+//	PORT_DIPSETTING(    0x00, "00k" )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x0c, "30K and 70k" )
+	PORT_DIPSETTING(    0x0c, "30K and 100k" )
+	PORT_DIPSETTING(    0x08, "60k and 130k" )
 	PORT_DIPSETTING(    0x04, "30k only" )
 	PORT_DIPSETTING(    0x00, "60k only" )
-	PORT_DIPSETTING(    0x08, "70k only" )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
@@ -501,7 +638,7 @@ INPUT_PORTS_START( cclimbr2 )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x40, "Easy" )
 	PORT_DIPSETTING(    0x00, "Normal" )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -514,10 +651,61 @@ INPUT_PORTS_START( cclimbr2 )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Partial Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( armedf )
+	PORT_START	/* IN0 */
+	NIHON_SINGLE_JOYSTICK(1)
+	NIHON_COINS
+
+	PORT_START	/* IN1 */
+	NIHON_SINGLE_JOYSTICK(2)
+	NIHON_SYSTEM
+
+	PORT_START	/* DSW0 */
+	NIHON_LIVES
+//	PORT_DIPNAME( 0x04, 0x04, "1st Bonus Life" )
+//	PORT_DIPSETTING(    0x04, "20k" )
+//	PORT_DIPSETTING(    0x00, "40k" )
+//	PORT_DIPNAME( 0x08, 0x08, "2nd Bonus Life" )
+//	PORT_DIPSETTING(    0x08, "60k" )
+//	PORT_DIPSETTING(    0x00, "80k" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x0c, "20k then every 60k" )
+	PORT_DIPSETTING(    0x04, "20k then every 80k" )
+	PORT_DIPSETTING(    0x08, "40k then every 60k" )
+	PORT_DIPSETTING(    0x00, "40k then every 80k" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0xc0, "Easy" )
+	PORT_DIPSETTING(    0x80, "Normal" )
+	PORT_DIPSETTING(    0x40, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+
+	PORT_START	/* DSW1 */
+	NIHON_COINAGE_A
+	NIHON_COINAGE_B
+	PORT_DIPNAME( 0x30, 0x00, "Allow Continue" )		// not in the "test mode"
+	PORT_DIPSETTING(    0x30, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x20, "3 Times" )
+	PORT_DIPSETTING(    0x10, "5 Times" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )	// not in the "test mode"
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -617,7 +805,7 @@ static MACHINE_DRIVER_START( terraf )
 	MDRV_PALETTE_LENGTH(2048)
 
 	MDRV_VIDEO_EOF(armedf)
-	MDRV_VIDEO_START(terraf)
+	MDRV_VIDEO_START(armedf)
 	MDRV_VIDEO_UPDATE(armedf)
 
 	/* sound hardware */
@@ -649,7 +837,7 @@ static MACHINE_DRIVER_START( kodure )
 	MDRV_PALETTE_LENGTH(2048)
 
 	MDRV_VIDEO_EOF(armedf)
-	MDRV_VIDEO_START(kodure)
+	MDRV_VIDEO_START(armedf)
 	MDRV_VIDEO_UPDATE(armedf)
 
 	/* sound hardware */
@@ -713,7 +901,7 @@ static MACHINE_DRIVER_START( cclimbr2 )
 	MDRV_PALETTE_LENGTH(2048)
 
 	MDRV_VIDEO_EOF(armedf)
-	MDRV_VIDEO_START(cclimbr2)
+	MDRV_VIDEO_START(armedf)
 	MDRV_VIDEO_UPDATE(armedf)
 
 	/* sound hardware */
@@ -722,6 +910,66 @@ static MACHINE_DRIVER_START( cclimbr2 )
 MACHINE_DRIVER_END
 
 
+ROM_START( legion )
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* 64K*8 for 68000 code */
+	ROM_LOAD16_BYTE( "lg1.bin", 0x000001, 0x010000, 0xc4aeb724 )
+	ROM_LOAD16_BYTE( "lg3.bin", 0x000000, 0x010000, 0x777e4935 )
+	ROM_LOAD16_BYTE( "legion.1b", 0x020001, 0x010000, 0xc306660a  ) // lg2
+	ROM_LOAD16_BYTE( "legion.1d", 0x020000, 0x010000, 0xc2e45e1e  ) // lg4
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Z80 code (sound) */
+	ROM_LOAD( "legion.1h", 0x00000, 0x04000, 0x2ca4f7f0 ) // lg9
+
+	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "lg8.bin", 0x00000, 0x08000, 0xe0596570 )
+
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "legion.1e", 0x00000, 0x10000, 0xa9d70faf ) // lg5
+	ROM_LOAD( "legion.1f", 0x10000, 0x08000, 0xf018313b ) // lg6
+
+	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "legion.1l", 0x00000, 0x10000, 0x29b8adaa ) // lg13
+
+	ROM_REGION( 0x20000, REGION_GFX4, ROMREGION_DISPOSE )
+	ROM_LOAD( "legion.1k", 0x000000, 0x010000, 0xff5a0db9 ) // lg12
+	ROM_LOAD( "legion.1j", 0x010000, 0x010000, 0xbae220c8 ) // lg11
+
+	ROM_REGION( 0x4000, REGION_GFX5, 0 )	/* data for mcu/blitter */
+	ROM_LOAD ( "lg7.bin", 0x0000, 0x4000, 0x533e2b58 )
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 )	/* ? */
+	ROM_LOAD( "legion.1i",        0x0000, 0x8000, 0x79f4a827 ) // lg10
+ROM_END
+
+ROM_START( legiono )
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* 64K*8 for 68000 code */
+	ROM_LOAD16_BYTE( "legion.1a", 0x000001, 0x010000, 0x8c0cda1d  )
+	ROM_LOAD16_BYTE( "legion.1c", 0x000000, 0x010000, 0x21226660  )
+	ROM_LOAD16_BYTE( "legion.1b", 0x020001, 0x010000, 0xc306660a  )
+	ROM_LOAD16_BYTE( "legion.1d", 0x020000, 0x010000, 0xc2e45e1e  )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Z80 code (sound) */
+	ROM_LOAD( "legion.1h", 0x00000, 0x04000, 0x2ca4f7f0 )
+
+	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "legion.1g", 0x00000, 0x08000, 0xc50b0125 )
+
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "legion.1e", 0x00000, 0x10000, 0xa9d70faf )
+	ROM_LOAD( "legion.1f", 0x10000, 0x08000, 0xf018313b )
+
+	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "legion.1l", 0x00000, 0x10000, 0x29b8adaa )
+
+	ROM_REGION( 0x20000, REGION_GFX4, ROMREGION_DISPOSE )
+	ROM_LOAD( "legion.1k", 0x000000, 0x010000, 0xff5a0db9 )
+	ROM_LOAD( "legion.1j", 0x010000, 0x010000, 0xbae220c8 )
+
+	/* should lg7.bin be loaded here too? The ROM wasn't included in this set */
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 )	/* ? */
+	ROM_LOAD( "legion.1i",        0x0000, 0x8000, 0x79f4a827 )
+ROM_END
 
 ROM_START( terraf )
 	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* 64K*8 for 68000 code */
@@ -887,9 +1135,59 @@ ROM_START( armedf )
 ROM_END
 
 
+DRIVER_INIT( terraf )
+{
+	armedf_setgfxtype(0);
+}
 
-GAMEX( 1987, terraf,   0,      terraf,   terraf,   0, ROT0,   "Nichibutsu", "Terra Force", GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1987, terrafu,  terraf, terraf,   terraf,   0, ROT0,   "Nichibutsu USA", "Terra Force (US)", GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1987, kodure,   0,      kodure,   kodure,   0, ROT0,   "Nichibutsu", "Kodure Ookami (Japan)", GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1988, cclimbr2, 0,      cclimbr2, cclimbr2, 0, ROT0,   "Nichibutsu", "Crazy Climber 2 (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1988, armedf,   0,      armedf,   armedf,   0, ROT270, "Nichibutsu", "Armed Formation", GAME_NO_COCKTAIL )
+DRIVER_INIT( armedf )
+{
+	armedf_setgfxtype(1);
+}
+
+DRIVER_INIT( kodure )
+{
+	armedf_setgfxtype(2);
+}
+
+DRIVER_INIT( legion )
+{
+#if LEGION_HACK
+	/* This is a hack to allow you to use the extra features
+         of 3 of the "Unused" Dip Switches (see notes above). */
+	data16_t *RAM = (data16_t *)memory_region(REGION_CPU1);
+	RAM[0x0001d6/2] = 0x0001;
+	/* To avoid checksum error */
+	RAM[0x000488/2] = 0x4e71;
+#endif
+
+	armedf_setgfxtype(3);
+}
+
+DRIVER_INIT( legiono )
+{
+#if LEGION_HACK
+	/* This is a hack to allow you to use the extra features
+         of 3 of the "Unused" Dip Switches (see notes above). */
+	data16_t *RAM = (data16_t *)memory_region(REGION_CPU1);
+	RAM[0x0001d6/2] = 0x0001;
+	/* No need to patch the checksum routine (see notes) ! */
+#endif
+
+	armedf_setgfxtype(3);
+}
+
+DRIVER_INIT( cclimbr2 )
+{
+	armedf_setgfxtype(4);
+}
+
+
+/*     YEAR, NAME,   PARENT,   MACHINE,  INPUT,    INIT,     MONITOR, COMPANY,     FULLNAME, FLAGS */
+GAMEX( 1986, legion,   0,      cclimbr2, legion,   legion,   ROT270, "Nichibutsu", "Legion (ver 2.03)", GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
+GAMEX( 1986, legiono,  legion, cclimbr2, legion,   legiono,  ROT270, "Nichibutsu", "Legion (ver 1.05)", GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
+GAMEX( 1987, terraf,   0,      terraf,   terraf,   terraf,   ROT0,   "Nichibutsu", "Terra Force", GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
+GAMEX( 1987, terrafu,  terraf, terraf,   terraf,   terraf,   ROT0,   "Nichibutsu USA", "Terra Force (US)", GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
+GAMEX( 1987, kodure,   0,      kodure,   kodure,   kodure,   ROT0,   "Nichibutsu", "Kodure Ookami (Japan)", GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
+GAMEX( 1988, cclimbr2, 0,      cclimbr2, cclimbr2, cclimbr2, ROT0,   "Nichibutsu", "Crazy Climber 2 (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1988, armedf,   0,      armedf,   armedf,   armedf,   ROT270, "Nichibutsu", "Armed Formation", GAME_NO_COCKTAIL )

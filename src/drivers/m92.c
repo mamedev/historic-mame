@@ -1997,7 +1997,7 @@ static READ_HANDLER( hook_cycle_r )
 
 static READ_HANDLER( bmaster_cycle_r )
 {
-	int d=cpu_geticount();
+	int d=activecpu_geticount();
 
 	/* If possible skip this cpu segment - idle loop */
 	if (d>159 && d<0xf0000000) {
@@ -2040,7 +2040,7 @@ static READ_HANDLER( psoldier_snd_cycle_r )
 
 static READ_HANDLER( inthunt_cycle_r )
 {
-	int d=cpu_geticount();
+	int d=activecpu_geticount();
 	int line = 256 - cpu_getiloops();
 
 	/* If possible skip this cpu segment - idle loop */
@@ -2066,7 +2066,7 @@ static READ_HANDLER( uccops_cycle_r )
 	int a=m92_ram[0x3f28]+(m92_ram[0x3f29]<<8);
 	int b=m92_ram[0x3a00]+(m92_ram[0x3a01]<<8);
 	int c=m92_ram[0x3a02]+(m92_ram[0x3a03]<<8);
-	int d=cpu_geticount();
+	int d=activecpu_geticount();
 	int line = 256 - cpu_getiloops();
 
 	/* If possible skip this cpu segment - idle loop */
@@ -2103,7 +2103,7 @@ static READ_HANDLER( gunforce_cycle_r )
 {
 	int a=m92_ram[0x6542]+(m92_ram[0x6543]<<8);
 	int b=m92_ram[0x61d0]+(m92_ram[0x61d1]<<8);
-	int d=cpu_geticount();
+	int d=activecpu_geticount();
 	int line = 256 - cpu_getiloops();
 
 	/* If possible skip this cpu segment - idle loop */
@@ -2123,7 +2123,7 @@ static READ_HANDLER( gunforce_cycle_r )
 static READ_HANDLER( dsccr94j_cycle_r )
 {
 	int a=m92_ram[0x965a]+(m92_ram[0x965b]<<8);
-	int d=cpu_geticount();
+	int d=activecpu_geticount();
 
 	if (activecpu_get_pc()==0x988 && m92_ram[0x8636]==0 && offset==0) {
 		cpu_spinuntil_int();
@@ -2142,7 +2142,7 @@ static READ_HANDLER( gunforc2_cycle_r )
 	int a=m92_ram[0x9fa0]+(m92_ram[0x9fa1]<<8);
 	int b=m92_ram[0x9fa2]+(m92_ram[0x9fa3]<<8);
 	int c=m92_ram[0xa6aa]+(m92_ram[0xa6ab]<<8);
-	int d=cpu_geticount();
+	int d=activecpu_geticount();
 
 	if (activecpu_get_pc()==0x510 && a==b && offset==0) {
 		cpu_spinuntil_int();

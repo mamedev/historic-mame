@@ -28,7 +28,8 @@ There is no rom for the Z80, the program is uploaded by the 68k
 Known Games on this Platform
 ----------------------------
 
-Oriental Legends
+Oriental Legend
+Oriental Legend Super
 Sengoku Senki / Knights of Valour Series
 -
 Sangoku Senki (c)1999 IGS
@@ -46,7 +47,7 @@ Dragon World 2+3
 To Do / Notes:
 
 sprite zooming (zoom table is contained in vidram)
-sprite masking (lower priority sprites under bg layers can mask higher ones)
+sprite masking (lower priority sprites under bg layers can mask higher ones) -? no?
 calender
 better protection emulation in orlegend
 hook up the z80 + emulate sound chip (Farfetch'd is working on this)
@@ -54,13 +55,13 @@ optimize?
 layer enables?
 sprites use dma?
 verify some things
-other 2 interrupts - one is sound rleated
+other 2 interrupts - one is sound rleated *dragon world 2 uses one of them for inputs
 the 'encryption' info came from unknown 3rd party
 see notes at bottom of driver, protection emulation by ElSemi
 
 Sango / Kov level 2 'bridge' is drawn with bg sprites but needs to appear OVER the bg layer,
 ElSemi believes that bg sprites are drawn as fg sprites if the first sprite in the sprite
-list doesn't have the bg bit set.
+list doesn't have the bg bit set. -fixed-
 
 the protection determines the region in both the supported games, however the 'china' board
 of orlegend is the same revision one of the other sets, but of an earlier build date.
@@ -69,6 +70,17 @@ the current 'kov' sets were from 'sango' boards but the protection determines th
 it makes more sense to name them kov since the roms are probably the same on the various
 boards.  The current sets were taken from taiwan boards incase somebody finds
 it not to be the case however due to the previous note.
+
+the dragon world 2 set is china only (whats the real chinese name?) there is an english
+version, however this set doesn't allow for that without hacks at least.
+
+dragon world 2 still has strange protection issues, we have to patch the code for now, what
+should really happen, it jumps to invalid code, should the protection device cause the 68k
+to see valid code there or something?
+
+kov superheroes uses a different protection chip / different protection commands and doesn't
+work, some of the gfx also need redumping to check they're the same as kov, its using invalid
+codes for the ones we have (could just be protection tho)
 
 */
 
@@ -79,7 +91,9 @@ WRITE16_HANDLER( pgm_tx_videoram_w );
 WRITE16_HANDLER( pgm_bg_videoram_w );
 VIDEO_START( pgm );
 VIDEO_UPDATE( pgm );
-void pgm_p_decrypt(void);
+void pgm_kov_decrypt(void);
+void pgm_kovsh_decrypt(void);
+void pgm_dw2_decrypt(void);
 
 READ16_HANDLER ( orlegend_kludge_r )
 {
@@ -210,13 +224,13 @@ static unsigned short ASIC28RCNT=0;
 static unsigned int B0TABLE[16]={2,0,1,4,3}; //maps char portraits to tables
 
 //Not sure if BATABLE is complete
-static unsigned int BATABLE[0x40]={0,0x29,0x2c,0x35,0x3a,0x41,0x4a,0x4e,		//0x00
-							0x57,0x5e,0x77,0x79,0x7a,0x7b,0x7c,0x7d,	//0x08
-							0x7e,0x7f,0x80,0x81,0x82,0x83,0x86,0x87,	//0x10
-							0x88,0x89,0x8a,0x8b,0x8c,0x8d,0x8e,0x90,	//0x18
-							0x95,0x96,0x97,0x98,0x99,0x9a,0x9b,0x9c,
-							0x9e,0xa3,0xd4,0xa9,0xaf,0xb5,0xbb,0xc1
-							};
+static unsigned int BATABLE[0x40]=
+	{0x00,0x29,0x2c,0x35,0x3a,0x41,0x4a,0x4e,  //0x00
+     0x57,0x5e,0x77,0x79,0x7a,0x7b,0x7c,0x7d, //0x08
+     0x7e,0x7f,0x80,0x81,0x82,0x85,0x86,0x87, //0x10
+     0x88,0x89,0x8a,0x8b,0x8c,0x8d,0x8e,0x90,  //0x18
+     0x95,0x96,0x97,0x98,0x99,0x9a,0x9b,0x9c,
+     0x9e,0xa3,0xd4,0xa9,0xaf,0xb5,0xbb,0xc1};
 
 static unsigned int E0REGS[16];
 
@@ -305,11 +319,14 @@ READ16_HANDLER (ASIC28_r16)
 		case 0xf8:
 			val=E0REGS[ASIC28REGS[0]&0xf]&0xffffff;
 			break;
-		case 0xcc:	//BG
-			{
-				val=0x900000+(((ASICPARAMS[0xcb]+ASICPARAMS[0xcc]*64)*4)&0x1fff);
-			}
-			break;
+		case 0xcc: //BG
+   			{
+   	 		int y=ASICPARAMS[0xcc];
+    		if(y&0x400)    //y is signed (probably x too and it also applies to TXT, but I've never seen it used)
+     			y=-(0x400-(y&0x3ff));
+    		val=0x900000+(((ASICPARAMS[0xcb]+(y)*64)*4)/*&0x1fff*/);
+   			}
+   			break;
 		case 0xf0:
 			{
 				val=0x00C000;
@@ -419,6 +436,32 @@ WRITE16_HANDLER (ASIC28_w16)
 	}
 }
 
+/* Dragon World 2 */
+
+#define DW2BITSWAP(s,d,bs,bd)  d=((d&(~(1<<bd)))|(((s>>bs)&1)<<bd))
+//Use this handler for reading from 0xd80000-0xd80002
+READ16_HANDLER (dw2_d80000_r )
+{
+//addr&=0xff;
+// if(dw2reg<0x20) //NOT SURE!!
+	{
+		//The value at 0x80EECE is computed in the routine at 0x107c18
+		data16_t d=pgm_mainram[0xEECE/2];
+		data16_t d2=0;
+		d=(d>>8)|(d<<8);
+		DW2BITSWAP(d,d2,7 ,0);
+		DW2BITSWAP(d,d2,4 ,1);
+		DW2BITSWAP(d,d2,5 ,2);
+		DW2BITSWAP(d,d2,2 ,3);
+		DW2BITSWAP(d,d2,15,4);
+		DW2BITSWAP(d,d2,1 ,5);
+		DW2BITSWAP(d,d2,10,6);
+		DW2BITSWAP(d,d2,13,7);
+		// ... missing bitswaps here (8-15) there is not enough data to know them
+		// the code only checks the lowest 8 bytes
+		return d2;
+	}
+}
 
 
 /*** Input Ports *************************************************************/
@@ -849,12 +892,19 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*** Machine Driver **********************************************************/
 
+static INTERRUPT_GEN( pgm_interrupt ) {
+	if( cpu_getiloops() == 0 )
+		cpu_set_irq_line(0, 6, HOLD_LINE);
+	else
+		cpu_set_irq_line(0, 4, HOLD_LINE);
+}
+
 static MACHINE_DRIVER_START( pgm )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 20000000) /* 20 mhz! verified on real board */
 	MDRV_CPU_MEMORY(pgm_readmem,pgm_writemem)
-	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
+	MDRV_CPU_VBLANK_INT(pgm_interrupt,2)
 
 	/* theres also a z80, program is uploaded by the 68k */
 
@@ -955,7 +1005,40 @@ static DRIVER_INIT( orlegnde )
 	remove_orlegnde_prot(); /* removes  bsr 145b66 */
 }
 
-static DRIVER_INIT( sango )
+static DRIVER_INIT( dragwld2 )
+{
+	data16_t *mem16 = (data16_t *)memory_region(REGION_CPU1);
+
+	expand_32x32x5bpp();
+	expand_colourdata();
+
+ 	pgm_dw2_decrypt();
+
+/* this seems to be some strange protection, its not right yet ..
+
+<ElSemi> patch the jmp (a0) to jmp(a3) (otherwise they jump to illegal code)
+<ElSemi> there are 3 (consecutive functions)
+<ElSemi> 303bc
+<ElSemi> 30462
+<ElSemi> 304f2
+
+*/
+	mem16[0x1303bc/2]=0x4e93;
+	mem16[0x130462/2]=0x4e93;
+	mem16[0x1304F2/2]=0x4e93;
+
+/*
+
+<ElSemi> Here is how to "bypass" the dw2 hang protection, it fixes the mode
+select and after failing in the 2nd stage (probably there are other checks
+out there).
+
+*/
+	install_mem_read16_handler(0, 0xd80000, 0xd80003, dw2_d80000_r);
+
+}
+
+static DRIVER_INIT( kov )
 {
 	unsigned char *ROM = memory_region(REGION_CPU1);
 	cpu_setbank(1,&ROM[0x100000]);
@@ -970,9 +1053,26 @@ static DRIVER_INIT( sango )
 	  the protection device provides the region code */
 	install_mem_read16_handler(0, 0x4f0000, 0x4fffff, sango_protram_r);
 
- 	pgm_p_decrypt();
+ 	pgm_kov_decrypt();
 }
 
+static DRIVER_INIT( kovsh )
+{
+	unsigned char *ROM = memory_region(REGION_CPU1);
+	cpu_setbank(1,&ROM[0x100000]);
+
+	expand_32x32x5bpp();
+	expand_colourdata();
+
+	install_mem_read16_handler(0, 0x500000, 0x500003, ASIC28_r16);
+	install_mem_write16_handler(0, 0x500000, 0x500003, ASIC28_w16);
+
+	/* 0x4f0000 - ? is actually ram shared with the protection device,
+	  the protection device provides the region code */
+	install_mem_read16_handler(0, 0x4f0000, 0x4fffff, sango_protram_r);
+
+ 	pgm_kovsh_decrypt();
+}
 
 /*** Rom Loading *************************************************************/
 
@@ -982,7 +1082,7 @@ static DRIVER_INIT( sango )
 /* The Bios - NOT A GAME */
 ROM_START( pgm )
 	ROM_REGION( 0x520000, REGION_CPU1, 0 ) /* 68000 Code */
-	ROM_LOAD16_WORD_SWAP( "pgm_bios.rom", 0x00000, 0x20000, 0xe42b166e )
+	ROM_LOAD16_WORD_SWAP( "pgm_p01s.rom", 0x00000, 0x20000, 0xe42b166e )
 
 	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* 8x8 Text Layer Tiles */
 	ROM_LOAD( "pgm_t01s.rom", 0x000000, 0x200000, 0x1a7123a0 )
@@ -993,7 +1093,7 @@ ROM_END
 
 ROM_START( orlegend )
 	ROM_REGION( 0x600000, REGION_CPU1, 0 ) /* 68000 Code  */
-	ROM_LOAD16_WORD_SWAP( "pgm_bios.rom", 0x000000, 0x020000, 0xe42b166e )// (BIOS)
+	ROM_LOAD16_WORD_SWAP( "pgm_p01s.rom", 0x000000, 0x020000, 0xe42b166e )// (BIOS)
 	ROM_LOAD16_WORD_SWAP( "p0103.rom",    0x100000, 0x200000, 0xd5e93543 )
 
 	ROM_REGION( 0x800000, REGION_GFX1,  ROMREGION_DISPOSE ) /* 8x8 Text Tiles + 32x32 BG Tiles */
@@ -1028,7 +1128,7 @@ ROM_END
 
 ROM_START( orlegnde )
 	ROM_REGION( 0x600000, REGION_CPU1, 0 ) /* 68000 Code  */
-	ROM_LOAD16_WORD_SWAP( "pgm_bios.rom", 0x000000, 0x020000, 0xe42b166e )// (BIOS)
+	ROM_LOAD16_WORD_SWAP( "pgm_p01s.rom", 0x000000, 0x020000, 0xe42b166e )// (BIOS)
 	ROM_LOAD16_WORD_SWAP( "p0102.rom",    0x100000, 0x200000, 0x4d0f6cc5 )
 
 	ROM_REGION( 0x800000, REGION_GFX1,  ROMREGION_DISPOSE ) /* 8x8 Text Tiles + 32x32 BG Tiles */
@@ -1063,7 +1163,7 @@ ROM_END
 
 ROM_START( orlegndc )
 	ROM_REGION( 0x600000, REGION_CPU1, 0 ) /* 68000 Code  */
-	ROM_LOAD16_WORD_SWAP( "pgm_bios.rom", 0x000000, 0x020000, 0xe42b166e )// (BIOS)
+	ROM_LOAD16_WORD_SWAP( "pgm_p01s.rom", 0x000000, 0x020000, 0xe42b166e )// (BIOS)
 	ROM_LOAD16_WORD_SWAP( "p0101.160",    0x100000, 0x200000, 0xb24f0c1e )
 
 	ROM_REGION( 0x800000, REGION_GFX1,  ROMREGION_DISPOSE ) /* 8x8 Text Tiles + 32x32 BG Tiles */
@@ -1096,39 +1196,34 @@ ROM_START( orlegndc )
 	ROM_LOAD( "m0100.rom",    0x200000, 0x200000, 0xe5c36c83 )
 ROM_END
 
-ROM_START( kovplus )
-	ROM_REGION( 0x600000, REGION_CPU1, 0 ) /* 68000 Code */
-	ROM_LOAD16_WORD_SWAP( "pgm_bios.rom", 0x000000, 0x020000, 0xe42b166e ) // (BIOS)
-	ROM_LOAD16_WORD_SWAP( "p0600.119",    0x100000, 0x400000, 0xe4b0875d )
+ROM_START( dragwld2 )
+	ROM_REGION( 0x600000, REGION_CPU1, 0 ) /* 68000 Code  */
+	ROM_LOAD16_WORD_SWAP( "pgm_p01s.rom", 0x000000, 0x020000, 0xe42b166e )// (BIOS)
+	ROM_LOAD16_WORD_SWAP( "v-100c.u2",    0x100000, 0x080000, 0x67467981 )
 
-	ROM_REGION( 0xc00000, REGION_GFX1, 0 ) /* 8x8 Text Tiles + 32x32 BG Tiles */
+	ROM_REGION( 0x800000, REGION_GFX1,  ROMREGION_DISPOSE ) /* 8x8 Text Tiles + 32x32 BG Tiles */
 	ROM_LOAD( "pgm_t01s.rom", 0x000000, 0x200000, 0x1a7123a0 ) // (BIOS)
-	ROM_LOAD( "t0600.rom",    0x400000, 0x800000, 0x4acc1ad6 )
+	ROM_LOAD( "pgmt0200.u7",    0x400000, 0x400000, 0xb0f6534d )
 
-	ROM_REGION( 0xc00000/5*8, REGION_GFX2, ROMREGION_DISPOSE ) /* Region for 32x32 BG Tiles */
+	ROM_REGION( 0x800000/5*8, REGION_GFX2, ROMREGION_DISPOSE ) /* Region for 32x32 BG Tiles */
 	/* 32x32 Tile Data is put here for easier Decoding */
 
-	ROM_REGION( 0x1c00000, REGION_GFX3, 0 ) /* Sprite Colour Data */
-	ROM_LOAD( "a0600.rom",    0x0000000, 0x0800000, 0xd8167834 ) // FIXED BITS (xxxxxxxx1xxxxxxx)
-	ROM_LOAD( "a0601.rom",    0x0800000, 0x0800000, 0xff7a4373 ) // FIXED BITS (xxxxxxxx1xxxxxxx)
-	ROM_LOAD( "a0602.rom",    0x1000000, 0x0800000, 0xe7a32959 ) // FIXED BITS (xxxxxxxx1xxxxxxx)
-	ROM_LOAD( "a0603.rom",    0x1800000, 0x0400000, 0xec31abda )
+	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_DISPOSE ) /* Sprite Colour Data */
+	ROM_LOAD( "pgma0200.u5",    0x0000000, 0x400000, 0x13b95069 )
 
-	ROM_REGION( 0x4000000, REGION_GFX4, 0 ) /* Sprite Colour Data */
+	ROM_REGION( 0x800000, REGION_GFX4, 0 ) /* Sprite Colour Data */
 	/* Sprite Colour Data is Unpacked Here */
 
-	ROM_REGION( 0x1000000, REGION_GFX5, 0 ) /* Sprite Masks + Colour Indexes */
-	ROM_LOAD( "b0600.rom",    0x0000000, 0x0800000, 0x7d3cd059 )
-	ROM_LOAD( "b0601.rom",    0x0800000, 0x0400000, 0xa0bb1c2f )
+	ROM_REGION( 0x400000, REGION_GFX5, 0 ) /* Sprite Masks + Colour Indexes */
+	ROM_LOAD( "pgmb0200.u9",    0x0000000, 0x400000, 0x932d0f13 )
 
-	ROM_REGION( 0x600000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
 	ROM_LOAD( "pgm_m01s.rom", 0x000000, 0x200000, 0x45ae7159 ) // (BIOS)
-	ROM_LOAD( "m0600.rom",    0x200000, 0x400000, 0x3ada4fd6 )
 ROM_END
 
 ROM_START( kov )
 	ROM_REGION( 0x600000, REGION_CPU1, 0 ) /* 68000 Code */
-	ROM_LOAD16_WORD_SWAP( "pgm_bios.rom", 0x000000, 0x020000, 0xe42b166e )  // (BIOS)
+	ROM_LOAD16_WORD_SWAP( "pgm_p01s.rom", 0x000000, 0x020000, 0xe42b166e )  // (BIOS)
 	ROM_LOAD16_WORD_SWAP( "p0600.117",    0x100000, 0x400000, 0xc4d19fe6 )
 
 	ROM_REGION( 0xc00000, REGION_GFX1, 0 ) /* 8x8 Text Tiles + 32x32 BG Tiles */
@@ -1158,7 +1253,7 @@ ROM_END
 
 ROM_START( kov115 )
 	ROM_REGION( 0x600000, REGION_CPU1, 0 ) /* 68000 Code  */
-	ROM_LOAD16_WORD_SWAP( "pgm_bios.rom", 0x000000, 0x020000, 0xe42b166e )// (BIOS)
+	ROM_LOAD16_WORD_SWAP( "pgm_p01s.rom", 0x000000, 0x020000, 0xe42b166e )// (BIOS)
 	ROM_LOAD16_WORD_SWAP( "p0600.115",    0x100000, 0x400000, 0x527a2924 )
 
 	ROM_REGION( 0xc00000, REGION_GFX1, 0 ) /* 8x8 Text Tiles + 32x32 BG Tiles */
@@ -1186,6 +1281,67 @@ ROM_START( kov115 )
 	ROM_LOAD( "m0600.rom",    0x200000, 0x400000, 0x3ada4fd6 )
 ROM_END
 
+ROM_START( kovplus )
+	ROM_REGION( 0x600000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_WORD_SWAP( "pgm_p01s.rom", 0x000000, 0x020000, 0xe42b166e ) // (BIOS)
+	ROM_LOAD16_WORD_SWAP( "p0600.119",    0x100000, 0x400000, 0xe4b0875d )
+
+	ROM_REGION( 0xc00000, REGION_GFX1, 0 ) /* 8x8 Text Tiles + 32x32 BG Tiles */
+	ROM_LOAD( "pgm_t01s.rom", 0x000000, 0x200000, 0x1a7123a0 ) // (BIOS)
+	ROM_LOAD( "t0600.rom",    0x400000, 0x800000, 0x4acc1ad6 )
+
+	ROM_REGION( 0xc00000/5*8, REGION_GFX2, ROMREGION_DISPOSE ) /* Region for 32x32 BG Tiles */
+	/* 32x32 Tile Data is put here for easier Decoding */
+
+	ROM_REGION( 0x1c00000, REGION_GFX3, 0 ) /* Sprite Colour Data */
+	ROM_LOAD( "a0600.rom",    0x0000000, 0x0800000, 0xd8167834 ) // FIXED BITS (xxxxxxxx1xxxxxxx)
+	ROM_LOAD( "a0601.rom",    0x0800000, 0x0800000, 0xff7a4373 ) // FIXED BITS (xxxxxxxx1xxxxxxx)
+	ROM_LOAD( "a0602.rom",    0x1000000, 0x0800000, 0xe7a32959 ) // FIXED BITS (xxxxxxxx1xxxxxxx)
+	ROM_LOAD( "a0603.rom",    0x1800000, 0x0400000, 0xec31abda )
+
+	ROM_REGION( 0x4000000, REGION_GFX4, 0 ) /* Sprite Colour Data */
+	/* Sprite Colour Data is Unpacked Here */
+
+	ROM_REGION( 0x1000000, REGION_GFX5, 0 ) /* Sprite Masks + Colour Indexes */
+	ROM_LOAD( "b0600.rom",    0x0000000, 0x0800000, 0x7d3cd059 )
+	ROM_LOAD( "b0601.rom",    0x0800000, 0x0400000, 0xa0bb1c2f )
+
+	ROM_REGION( 0x600000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
+	ROM_LOAD( "pgm_m01s.rom", 0x000000, 0x200000, 0x45ae7159 ) // (BIOS)
+	ROM_LOAD( "m0600.rom",    0x200000, 0x400000, 0x3ada4fd6 )
+ROM_END
+
+ROM_START( kovsh )
+	ROM_REGION( 0x600000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_WORD_SWAP( "pgm_p01s.rom", 0x000000, 0x020000, 0xe42b166e )  // (BIOS)
+	ROM_LOAD16_WORD_SWAP( "p0600.322",    0x100000, 0x400000, 0x7c78e5f3 )
+
+	ROM_REGION( 0xc00000, REGION_GFX1, 0 ) /* 8x8 Text Tiles + 32x32 BG Tiles */
+	ROM_LOAD( "pgm_t01s.rom", 0x000000, 0x200000, 0x1a7123a0 ) // (BIOS)
+	ROM_LOAD( "t0600.320",    0x400000, 0x400000, 0x164b3c94 ) // bad? its half the size of the kov one
+
+	ROM_REGION( 0xc00000/5*8, REGION_GFX2, ROMREGION_DISPOSE ) /* Region for 32x32 BG Tiles */
+	/* 32x32 Tile Data is put here for easier Decoding */
+
+	/* all roms below need checking to see if they're the same on this board */
+	ROM_REGION( 0x1c00000, REGION_GFX3, 0 ) /* Sprite Colour Data */
+	ROM_LOAD( "a0600.rom",    0x0000000, 0x0800000, 0xd8167834 ) // FIXED BITS (xxxxxxxx1xxxxxxx)
+	ROM_LOAD( "a0601.rom",    0x0800000, 0x0800000, 0xff7a4373 ) // FIXED BITS (xxxxxxxx1xxxxxxx)
+	ROM_LOAD( "a0602.rom",    0x1000000, 0x0800000, 0xe7a32959 ) // FIXED BITS (xxxxxxxx1xxxxxxx)
+	ROM_LOAD( "a0603.rom",    0x1800000, 0x0400000, 0xec31abda )
+
+	ROM_REGION( 0x4000000, REGION_GFX4, 0 ) /* Sprite Colour Data */
+	/* Sprite Colour Data is Unpacked Here */
+
+	ROM_REGION( 0x1000000, REGION_GFX5, 0 ) /* Sprite Masks + Colour Indexes */
+	ROM_LOAD( "b0600.rom",    0x0000000, 0x0800000, 0x7d3cd059 )
+	ROM_LOAD( "b0601.rom",    0x0800000, 0x0400000, 0xa0bb1c2f )
+
+	ROM_REGION( 0x600000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
+	ROM_LOAD( "pgm_m01s.rom", 0x000000, 0x200000, 0x45ae7159 ) // (BIOS)
+	ROM_LOAD( "m0600.rom",    0x200000, 0x400000, 0x3ada4fd6 )
+ROM_END
+
 /*** GAME ********************************************************************/
 
 GAMEX( 1997, pgm,      0,          pgm, pgm,   0,          ROT0, "IGS", "PGM (Polygame Master) System BIOS", NOT_A_DRIVER )
@@ -1193,9 +1349,11 @@ GAMEX( 1997, pgm,      0,          pgm, pgm,   0,          ROT0, "IGS", "PGM (Po
 GAMEX( 1997, orlegend, pgm,        pgm, pgm,   orlegend,   ROT0, "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 126)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND  )
 GAMEX( 1997, orlegnde, orlegend,   pgm, pgm,   orlegnde,   ROT0, "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 112)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND  )
 GAMEX( 1997, orlegndc, orlegend,   pgm, pgm,   orlegnde,   ROT0, "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 112, Chinese Board)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND  )
-GAMEX( 1999, kovplus,  kov,        pgm, sango, sango,	   ROT0, "IGS", "Knights of Valour Plus / Sangoku Senki Plus (ver. 119)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1999, kov,      pgm,        pgm, sango, sango,	   ROT0, "IGS", "Knights of Valour / Sangoku Senki (ver. 117)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND ) /* ver # provided by protection? */
-GAMEX( 1999, kov115,   kov,        pgm, sango, sango,	   ROT0, "IGS", "Knights of Valour / Sangoku Senki (ver. 115)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND ) /* ver # provided by protection? */
+GAMEX( 1997, dragwld2, pgm,        pgm, pgm,   dragwld2,   ROT0, "IGS", "Dragon World II (ver. 100C, China)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1999, kov,      pgm,        pgm, sango, kov, 	   ROT0, "IGS", "Knights of Valour / Sangoku Senki (ver. 117)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND ) /* ver # provided by protection? */
+GAMEX( 1999, kov115,   kov,        pgm, sango, kov, 	   ROT0, "IGS", "Knights of Valour / Sangoku Senki (ver. 115)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND ) /* ver # provided by protection? */
+GAMEX( 1999, kovplus,  kov,        pgm, sango, kov, 	   ROT0, "IGS", "Knights of Valour Plus / Sangoku Senki Plus (ver. 119)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1999, kovsh,    kov,        pgm, sango, kovsh,	   ROT0, "IGS", "Knights of Valour Superheroes / Sangoku Senki Superheroes (ver. 322)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 
 /*
 

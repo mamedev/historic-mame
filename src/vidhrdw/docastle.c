@@ -259,13 +259,58 @@ VIDEO_UPDATE( docastle )
 		int sx,sy,flipx,flipy,code,color;
 
 
-		code = spriteram[offs + 3];
-		color = spriteram[offs + 2] & 0x1f;
-		sx = spriteram[offs + 1];
-		sy = spriteram[offs];
-		flipx = spriteram[offs + 2] & 0x40;
-		flipy = spriteram[offs + 2] & 0x80;
+		if (Machine->gfx[1]->total_elements > 256)
+		{
+			/* spriteram
 
+			 indoor soccer appears to have a slightly different spriteram
+			 format to the other games, allowing a larger number of sprite
+			 tiles
+
+			 yyyy yyyy  xxxx xxxx  TX-T pppp  tttt tttt
+
+			 y = ypos
+			 x = xpos
+			 X = x-flip
+			 T = extra tile number bits
+			 p = palette
+			 t = tile number
+
+			 */
+
+			code = spriteram[offs + 3];
+			color = spriteram[offs + 2] & 0x0f;
+			sx = ((spriteram[offs + 1] + 8) & 0xff) - 8;
+			sy = spriteram[offs];
+			flipx = spriteram[offs + 2] & 0x40;
+			flipy = 0;
+			if (spriteram[offs + 2] & 0x10) code += 0x100;
+			if (spriteram[offs + 2] & 0x80) code += 0x200;
+		}
+		else
+		{
+			/* spriteram
+
+			this is the standard spriteram layout, used by most games
+
+			 yyyy yyyy  xxxx xxxx  YX-p pppp  tttt tttt
+
+			 y = ypos
+			 x = xpos
+			 X = x-flip
+			 Y = y-flip
+			 p = palette
+			 t = tile number
+
+			 */
+
+			code = spriteram[offs + 3];
+			color = spriteram[offs + 2] & 0x1f;
+			sx = ((spriteram[offs + 1] + 8) & 0xff) - 8;
+			sy = spriteram[offs];
+			flipx = spriteram[offs + 2] & 0x40;
+			flipy = spriteram[offs + 2] & 0x80;
+		}
 
 		if (flip_screen)
 		{

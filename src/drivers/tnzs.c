@@ -1477,9 +1477,9 @@ static MACHINE_DRIVER_START( tnzs )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(200)	/* 200 CPU slices per frame - an high value to ensure proper */
-							/* synchronization of the CPUs */
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(500)	/* 500 CPU slices per frame - heavy sync required in order to*/
+							/* avoid crashes/hangs -kal 14 jul 2002 */
 	MDRV_MACHINE_INIT(tnzs)
 
 	/* video hardware */

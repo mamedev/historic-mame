@@ -7,7 +7,6 @@ Notes:
 Banking is a bit hackish at the moment.
 Colours
 Tile Attributes (needs flipping on the championship table)
-DIP Mapping (listed in test mode)
 Unknown Port Writes:
 cpu #0 (PC=00000D88): unmapped port byte write to 00000001 = 02
 cpu #0 (PC=00006974): unmapped port byte write to 00000010 = 10
@@ -74,71 +73,29 @@ static READ_HANDLER(speedspn_irq_ack_r)
 static WRITE_HANDLER(speedspn_banked_rom_change)
 {
 	/* this is currently a hack I guess (or is it some odd protection?) :-/
-	   not sure what (data == 8) should be .. maybe 8 and 0 are some commands
-	   to select which bank of banks .. something crazy?  I don't know...
 	*/
 
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	int bankaddress_w;
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int addr;
 
-	bankaddress_w = -1;
+	addr = -1;
 
-	if (data == 0x00) bankaddress_w = 0x30000; // mmk
-	if (data == 0x01) bankaddress_w = 0x1c000;
-	if (data == 0x02) bankaddress_w = 0x24000;
-	if (data == 0x03) bankaddress_w = 0x5c000;
-	if (data == 0x04) bankaddress_w = 0x50000;
-	if (data == 0x05) bankaddress_w = 0x44000;
+	if (data == 0x00) addr = 0x28000; // mmk
+	if (data == 0x01) addr = 0x14000;
+	if (data == 0x02) addr = 0x1c000;
+	if (data == 0x03) addr = 0x54000;
+	if (data == 0x04) addr = 0x48000;
+	if (data == 0x05) addr = 0x3c000;
+	if (data == 0x08) addr = 0x50000;
 
-	if (data == 0x08) bankaddress_w = 0x00000; // ???
-
-	if (bankaddress_w == -1)
+	if (addr == -1)
 	{
 		usrintf_showmessage ("Unmapped Bank Write %02x", data);
-		bankaddress_w = bankaddress_w;
+		addr = 0;
 	}
 
-	cpu_setbank(1,&RAM[bankaddress_w]);
+	cpu_setbank(1,&rom[addr + 0x8000]);
 }
-
-/*** GFX DECODE **************************************************************/
-
-static struct GfxLayout speedspn_charlayout =
-{
-	8,8,
-	RGN_FRAC(1,4),
-	4,
-	{ 0,RGN_FRAC(1,4),RGN_FRAC(2,4),RGN_FRAC(3,4) },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
-	8*8
-};
-
-static struct GfxLayout speedspn_spritelayout =
-{
-	16,16,
-	RGN_FRAC(1,2),
-	4,
-
-	{ 0,4,	RGN_FRAC(1,2)+0,	RGN_FRAC(1,2)+4 },
-
-	{ 16*16+11, 16*16+10, 16*16+9, 16*16+8, 16*16+3, 16*16+2, 16*16+1, 16*16+0,
-	        11,       10,       9,       8,       3,       2,       1,       0  },
-
-	{ 8*16+7*16, 8*16+6*16, 8*16+5*16, 8*16+4*16, 8*16+3*16, 8*16+2*16, 8*16+1*16, 8*16+0*16,
-	       7*16,      6*16,      5*16,      4*16,      3*16,      2*16,      1*16,      0*16  },
-
-	32*16
-};
-
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0, &speedspn_charlayout,   0, 1 },
-	{ REGION_GFX2, 0, &speedspn_spritelayout, 0, 1 },
-
-	{ -1 } /* end of array */
-};
 
 /*** SOUND RELATED ***********************************************************/
 
@@ -162,27 +119,28 @@ static struct OKIM6295interface okim6295_interface =
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87FF, MRA_RAM },
-	{ 0x8800, 0x8FFF, MRA_RAM },
-	{ 0x9000, 0x9FFF, speedspn_vidram_r }, /* banked? */
-	{ 0xa000, 0xa7FF, MRA_RAM },
-	{ 0xa800, 0xaFFF, MRA_RAM },
-	{ 0xb000, 0xBFFF, MRA_RAM },
-	{ 0xc000, 0xffFF, MRA_BANK1 }, /* banked rom? */
+	{ 0x8000, 0x87ff, MRA_RAM },
+	{ 0x8800, 0x8fff, MRA_RAM },
+	{ 0x9000, 0x9fff, speedspn_vidram_r }, /* banked? */
+	{ 0xa000, 0xa7ff, MRA_RAM },
+	{ 0xa800, 0xafff, MRA_RAM },
+	{ 0xb000, 0xbfff, MRA_RAM },
+	{ 0xc000, 0xffff, MRA_BANK1 }, /* banked rom? */
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x8FFF, MWA_RAM },
-	{ 0x9000, 0x9FFF, speedspn_vidram_w },
-	{ 0xa000, 0xa7FF, MWA_RAM },
-	{ 0xa800, 0xaFFF, MWA_RAM },
-	{ 0xb000, 0xBFFF, MWA_RAM },
-	{ 0xc000, 0xffFF, MWA_ROM }, /* banked rom? */
+	{ 0x8000, 0x87ff, paletteram_xxxxBBBBGGGGRRRR_w, &paletteram },	/* RAM COLOUR */
+	{ 0x8800, 0x8fff, MWA_RAM },
+	{ 0x9000, 0x9fff, speedspn_vidram_w },	/* RAM FIX / RAM OBJECTS (selected by bit 0 of port 07?)*/
+	{ 0xa000, 0xa7ff, MWA_RAM },
+	{ 0xa800, 0xafff, MWA_RAM },
+	{ 0xb000, 0xbfff, MWA_RAM },	/* RAM PROGRAM */
+	{ 0xc000, 0xffff, MWA_ROM },	/* banked rom? */
 MEMORY_END
 
 static PORT_WRITE_START( writeport )
-	{ 0x7, 0x7, speedspn_global_display_w },
+	{ 0x07, 0x07, speedspn_global_display_w },
 	{ 0x12, 0x12, speedspn_banked_rom_change },
 	{ 0x13, 0x13, speedspn_sound_w },
 	{ 0x17, 0x17, speedspn_banked_vidram_change },
@@ -247,55 +205,97 @@ INPUT_PORTS_START( speedspn )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
 
 	PORT_START /* Dips */
-	PORT_DIPNAME( 0x01, 0x01, "Port 13" )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x00, "5 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 4C_5C ) )
+	PORT_DIPSETTING(    0x05, "3 Coins/5 Credits" )
+	PORT_DIPSETTING(    0x09, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x00, "5 Coins/2 Credits" )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 4C_5C ) )
+	PORT_DIPSETTING(    0x50, "3 Coins/5 Credits" )
+	PORT_DIPSETTING(    0x90, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 
 	PORT_START /* Dips */
-	PORT_DIPNAME( 0x01, 0x01, "Port 14" )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x01, 0x01, "World Cup" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Backhand" )
+	PORT_DIPSETTING(    0x02, "Automatic" )
+	PORT_DIPSETTING(    0x00, "Manual" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Points to Win" )
+	PORT_DIPSETTING(    0x0c, "11 Points and 1 Advantage" )
+	PORT_DIPSETTING(    0x08, "11 Points and 2 Advantage" )
+	PORT_DIPSETTING(    0x04, "21 Points and 1 Advantage" )
+	PORT_DIPSETTING(    0x00, "21 Points and 2 Advantage" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x20, "Easy" )
+	PORT_DIPSETTING(    0x30, "Normal" )
+	PORT_DIPSETTING(    0x10, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
+
+/*** GFX DECODE **************************************************************/
+
+static struct GfxLayout speedspn_charlayout =
+{
+	8,8,
+	RGN_FRAC(1,4),
+	4,
+	{ RGN_FRAC(2,4), RGN_FRAC(3,4), RGN_FRAC(0,4), RGN_FRAC(1,4) },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
+	8*8
+};
+
+static struct GfxLayout speedspn_spritelayout =
+{
+	16,16,
+	RGN_FRAC(1,2),
+	4,
+	{ 0, 4, RGN_FRAC(1,2)+0, RGN_FRAC(1,2)+4 },
+	{ 16*16+11, 16*16+10, 16*16+9, 16*16+8, 16*16+3, 16*16+2, 16*16+1, 16*16+0,
+	        11,       10,       9,       8,       3,       2,       1,       0  },
+	{ 8*16+7*16, 8*16+6*16, 8*16+5*16, 8*16+4*16, 8*16+3*16, 8*16+2*16, 8*16+1*16, 8*16+0*16,
+	       7*16,      6*16,      5*16,      4*16,      3*16,      2*16,      1*16,      0*16  },
+	32*16
+};
+
+
+static struct GfxDecodeInfo gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &speedspn_charlayout,   0x000, 0x40 },
+	{ REGION_GFX2, 0, &speedspn_spritelayout, 0x000, 0x40 },
+	{ -1 } /* end of array */
+};
 
 /*** MACHINE DRIVER **********************************************************/
 
@@ -317,9 +317,9 @@ static MACHINE_DRIVER_START( speedspn )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER )
 	MDRV_SCREEN_SIZE(64*8, 32*8)
-	MDRV_VISIBLE_AREA(8*8, 56*8-1, 8, 31*8-1)
+	MDRV_VISIBLE_AREA(8*8, 56*8-1, 1*8, 31*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(0x800)
+	MDRV_PALETTE_LENGTH(0x400)
 
 	MDRV_VIDEO_START(speedspn)
 	MDRV_VIDEO_UPDATE(speedspn)
@@ -355,4 +355,4 @@ ROM_END
 
 /*** GAME DRIVERS ************************************************************/
 
-GAMEX( 1994, speedspn, 0, speedspn, speedspn, 0, ROT180, "TCH", "Speed Spin", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1994, speedspn, 0, speedspn, speedspn, 0, ROT180, "TCH", "Speed Spin", GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS )

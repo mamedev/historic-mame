@@ -772,6 +772,29 @@ ROM_START( intrepi2 )
 	ROM_LOAD( "ic3.prm",      0x0000, 0x0020, 0x927ff40a )
 ROM_END
 
+ROM_START( zaryavos )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for main CPU */
+	ROM_LOAD( "zv1.rom",      0x0000, 0x1000, 0xb7eec75d )
+	ROM_LOAD( "zv2.rom",      0x1000, 0x1000, 0x000aa722 )
+	ROM_LOAD( "zv3.rom",      0x2000, 0x1000, 0x9b8b431a )
+	ROM_LOAD( "zv4.rom",      0x3000, 0x1000, 0x3636d5bf )
+	ROM_LOAD( "zv5.rom",      0x4000, 0x1000, 0xc5d405a7 )
+	ROM_LOAD( "zv6.rom",      0x5000, 0x1000, 0xd07778a1 )
+	ROM_LOAD( "zv7.rom",      0x6000, 0x1000, 0x63d75e5e )
+	ROM_LOAD( "zv8.rom",      0x7000, 0x1000, 0xb87a286a )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for audio CPU */
+	ROM_LOAD( "ic22.7",       0x0000, 0x0800, 0x00000000 )
+	ROM_LOAD( "ic23.6",       0x0800, 0x0800, 0x00000000 )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE ) /* chars and sprites */
+	ROM_LOAD( "ic9.9",        0x0000, 0x1000, 0x00000000 )
+	ROM_LOAD( "ic8.8",        0x1000, 0x1000, 0x00000000 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "zvprom.rom",   0x0000, 0x0020, 0x364e5700 )
+ROM_END
+
 ROM_START( portman )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for main CPU */
 	ROM_LOAD( "pe1",          0x0000, 0x1000, 0xa5cf6083 )
@@ -866,3 +889,4 @@ GAME( 1982, suprmous, funnymou, suprmous, suprmous, 0, ROT90, "Taito", "Super Mo
 GAME( 1982, machomou, 0,        suprmous, suprmous, 0, ROT90, "Techstar", "Macho Mouse" )
 GAME( 1983, intrepid, 0,        intrepid, intrepid, 0, ROT90, "Nova Games Ltd.", "Intrepid (set 1)" )
 GAME( 1983, intrepi2, intrepid, intrepid, intrepid, 0, ROT90, "Nova Games Ltd.", "Intrepid (set 2)" )
+GAME( 1984, zaryavos, 0,        intrepid, intrepid, 0, ROT90, "Nova Games of Canada", "Zarya Vostoka" )

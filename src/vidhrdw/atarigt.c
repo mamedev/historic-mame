@@ -7,11 +7,11 @@
 	MO data has 12 bits total: MVID0-11
 	MVID9-11 form the priority
 	MVID0-9 form the color bits
-	
+
 	PF data has 13 bits total: PF.VID0-12
 	PF.VID10-12 form the priority
 	PF.VID0-9 form the color bits
-	
+
 	Upper bits come from the low 5 bits of the HSCROLL value in alpha RAM
 	Playfield bank comes from low 2 bits of the VSCROLL value in alpha RAM
 	For GX2, there are 4 bits of bank
@@ -108,7 +108,7 @@ static UINT32 atarigt_playfield_scan(UINT32 col, UINT32 row, UINT32 num_cols, UI
 	int bank = 1 - (col / (num_cols / 2));
 	return bank * (num_rows * num_cols / 2) + row * (num_cols / 2) + (col % (num_cols / 2));
 }
- 
+
 
 
 /*************************************
@@ -119,7 +119,7 @@ static UINT32 atarigt_playfield_scan(UINT32 col, UINT32 row, UINT32 num_cols, UI
 
 VIDEO_START( atarigt )
 {
-	extern UINT32 direct_rgb_components[];
+	extern UINT32 direct_rgb_components[3];
 	static const struct atarirle_desc modesc =
 	{
 		REGION_GFX3,/* region where the GFX data lives */
@@ -143,10 +143,10 @@ VIDEO_START( atarigt )
 	struct atarirle_desc adjusted_modesc = modesc;
 	UINT32 temp;
 	int i;
-	
+
 	/* blend the playfields and free the temporary one */
 	atarigen_blend_gfx(0, 2, 0x0f, 0x30);
-	
+
 	/* initialize the playfield */
 	atarigen_playfield_tilemap = tilemap_create(get_playfield_tile_info, atarigt_playfield_scan, TILEMAP_OPAQUE, 8,8, 128,64);
 	if (!atarigen_playfield_tilemap)
@@ -163,19 +163,19 @@ VIDEO_START( atarigt )
 		return 1;
 	tilemap_set_transparent_pen(atarigen_alpha_tilemap, 0);
 	tilemap_set_palette_offset(atarigen_alpha_tilemap, 0x8000);
-	
+
 	/* allocate temp bitmaps */
 	pf_bitmap = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
 	if (!pf_bitmap)
 		return 1;
-	
+
 	/* allocate memory */
 	expanded_mram = auto_malloc(sizeof(*expanded_mram) * MRAM_ENTRIES * 3);
 
 	/* map pens 1:1 */
 	for (i = 0; i < Machine->drv->total_colors; i++)
 		Machine->pens[i] = i;
-	
+
 	/* compute shift values */
 	rshift = gshift = bshift = 0;
 	for (temp = direct_rgb_components[0]; (temp & 1) == 0; temp >>= 1) rshift++;
@@ -203,7 +203,7 @@ VIDEO_START( atarigt )
 void atarigt_colorram_w(offs_t address, data16_t data, data16_t mem_mask)
 {
 	data16_t olddata;
-	
+
 	/* update the raw data */
 	address = (address & 0x7ffff) / 2;
 	olddata = atarigt_colorram[address];
@@ -212,7 +212,7 @@ void atarigt_colorram_w(offs_t address, data16_t data, data16_t mem_mask)
 	/* update the TRAM checksum */
 	if (address >= 0x10000 && address < 0x14000)
 		tram_checksum += atarigt_colorram[address] - olddata;
-	
+
 	/* update expanded MRAM */
 	else if (address >= 0x20000 && address < 0x28000)
 	{
@@ -304,11 +304,11 @@ INLINE UINT32 blend_pixels(UINT32 craw, UINT32 traw)
 {
 	UINT32 rgb1, rgb2;
 	int r, g, b;
-	
+
 	/* do the first-level lookups */
 	rgb1 = cram[craw];
 	rgb2 = tram[traw];
-	
+
 	/* build the final lookups */
 	if (rgb1 & 0x8000)
 	{
@@ -328,10 +328,10 @@ INLINE UINT32 blend_pixels(UINT32 craw, UINT32 traw)
 		g = ((rgb1 >> 5) & 0x1f) | (rgb2 & 0x3e0);
 		b = (rgb1 & 0x1f) | ((rgb2 << 5) & 0x3e0);
 	}
-	
+
 	/* do the final lookups */
-	return mram[0 * MRAM_ENTRIES + r] | 
-	       mram[1 * MRAM_ENTRIES + g] | 
+	return mram[0 * MRAM_ENTRIES + r] |
+	       mram[1 * MRAM_ENTRIES + g] |
 	       mram[2 * MRAM_ENTRIES + b];
 }
 
@@ -340,18 +340,18 @@ INLINE UINT32 blend_pixels_no_tram(UINT32 craw)
 {
 	UINT32 rgb1;
 	int r, g, b;
-	
+
 	/* do the first-level lookups */
 	rgb1 = cram[craw];
-	
+
 	/* build the final lookups */
 	r = (rgb1 >> 10) & 0x1f;
 	g = (rgb1 >> 5) & 0x1f;
 	b = rgb1 & 0x1f;
-	
+
 	/* do the final lookups */
-	return mram[0 * MRAM_ENTRIES + r] | 
-	       mram[1 * MRAM_ENTRIES + g] | 
+	return mram[0 * MRAM_ENTRIES + r] |
+	       mram[1 * MRAM_ENTRIES + g] |
 	       mram[2 * MRAM_ENTRIES + b];
 }
 
@@ -404,7 +404,7 @@ VIDEO_UPDATE( atarigt )
 		UINT16 *pf = (UINT16 *)pf_bitmap->base + y * pf_bitmap->rowpixels;
 		UINT16 *mo = (UINT16 *)mo_bitmap->base + y * mo_bitmap->rowpixels;
 		UINT32 *dst = (UINT32 *)bitmap->base + y * bitmap->rowpixels;
-		
+
 		/* fast case: no TRAM, no effects */
 		if (tram_checksum == 0 && (color_latch & 7) == 0)
 		{
@@ -412,17 +412,17 @@ VIDEO_UPDATE( atarigt )
 			{
 				/* start with the playfield/alpha value */
 				UINT16 cra = pf[x] & 0xfff;
-			
+
 				/* alpha always gets priority, but MO's override playfield */
 				if (!(pf[x] & 0x8000))
 					if (mo[x])
 						cra = 0x1000 | (mo[x] & ATARIRLE_DATA_MASK);
-				
+
 				/* do the lookups and store the result */
 				dst[x] = blend_pixels_no_tram(cra);
 			}
 		}
-		
+
 		/* slow case: TRAM blending, no effects */
 		else if ((color_latch & 7) == 0)
 		{
@@ -432,7 +432,7 @@ VIDEO_UPDATE( atarigt )
 				/* start with the playfield/alpha value */
 				UINT16 cra = pf[x] & 0xfff;
 				UINT16 tra = cra;
-			
+
 				/* alpha always gets priority, but MO's override playfield */
 				if (!(pf[x] & 0x8000))
 				{
@@ -441,12 +441,12 @@ VIDEO_UPDATE( atarigt )
 					if (tm[x])
 						tra = tm[x] & ATARIRLE_DATA_MASK;
 				}
-				
+
 				/* do the lookups and store the result */
 				dst[x] = blend_pixels(cra, tra);
 			}
 		}
-		
+
 		/* slowest case: TRAM blending, with effects */
 		else
 		{
@@ -456,7 +456,7 @@ VIDEO_UPDATE( atarigt )
 				/* start with the playfield/alpha value */
 				UINT16 cra = pf[x] & 0xfff;
 				UINT16 tra = cra;
-			
+
 				/* alpha always gets priority, but MO's override playfield */
 				if ((cra & 0x3f) == 0 || !(pf[x] & 0x1000))
 					dst[x] = (0xff << rshift) | (0xff << gshift) | (0xff << bshift);
@@ -469,7 +469,7 @@ VIDEO_UPDATE( atarigt )
 						if (tm[x])
 							tra = tm[x] & ATARIRLE_DATA_MASK;
 					}
-					
+
 					/* do the lookups and store the result */
 					dst[x] = blend_pixels(cra, tra);
 				}
@@ -491,7 +491,7 @@ static void dump_video_memory(struct mame_bitmap *mo_bitmap, struct mame_bitmap 
 {
 	int i, x, y;
 	FILE *f;
-	
+
 	f = fopen("gt.log", "w");
 	fprintf(f, "\n\nCRAM:\n");
 	for (i = 0; i < 0x4000 / 2; i += 16)
@@ -517,22 +517,22 @@ static void dump_video_memory(struct mame_bitmap *mo_bitmap, struct mame_bitmap 
 	for (i = 0; i < 0x10000 / 2; i += 32)
 	{
 		fprintf(f, "%04X: %02X %02X %02X %02X %02X %02X %02X %02X - %02X %02X %02X %02X %02X %02X %02X %02X", i,
-				mram[0 * MRAM_ENTRIES + i+0] >> rshift, mram[0 * MRAM_ENTRIES + i+1] >> rshift, 
-				mram[0 * MRAM_ENTRIES + i+2] >> rshift, mram[0 * MRAM_ENTRIES + i+3] >> rshift, 
+				mram[0 * MRAM_ENTRIES + i+0] >> rshift, mram[0 * MRAM_ENTRIES + i+1] >> rshift,
+				mram[0 * MRAM_ENTRIES + i+2] >> rshift, mram[0 * MRAM_ENTRIES + i+3] >> rshift,
 				mram[0 * MRAM_ENTRIES + i+4] >> rshift, mram[0 * MRAM_ENTRIES + i+5] >> rshift,
-				mram[0 * MRAM_ENTRIES + i+6] >> rshift, mram[0 * MRAM_ENTRIES + i+7] >> rshift, 
-				mram[0 * MRAM_ENTRIES + i+8] >> rshift, mram[0 * MRAM_ENTRIES + i+9] >> rshift, 
-				mram[0 * MRAM_ENTRIES + i+10] >> rshift, mram[0 * MRAM_ENTRIES + i+11] >> rshift, 
-				mram[0 * MRAM_ENTRIES + i+12] >> rshift, mram[0 * MRAM_ENTRIES + i+13] >> rshift, 
+				mram[0 * MRAM_ENTRIES + i+6] >> rshift, mram[0 * MRAM_ENTRIES + i+7] >> rshift,
+				mram[0 * MRAM_ENTRIES + i+8] >> rshift, mram[0 * MRAM_ENTRIES + i+9] >> rshift,
+				mram[0 * MRAM_ENTRIES + i+10] >> rshift, mram[0 * MRAM_ENTRIES + i+11] >> rshift,
+				mram[0 * MRAM_ENTRIES + i+12] >> rshift, mram[0 * MRAM_ENTRIES + i+13] >> rshift,
 				mram[0 * MRAM_ENTRIES + i+14] >> rshift, mram[0 * MRAM_ENTRIES + i+15] >> rshift);
 		fprintf(f, " - %02X %02X %02X %02X %02X %02X %02X %02X - %02X %02X %02X %02X %02X %02X %02X %02X\n",
-				mram[0 * MRAM_ENTRIES + i+16] >> rshift, mram[0 * MRAM_ENTRIES + i+17] >> rshift, 
-				mram[0 * MRAM_ENTRIES + i+18] >> rshift, mram[0 * MRAM_ENTRIES + i+19] >> rshift, 
-				mram[0 * MRAM_ENTRIES + i+20] >> rshift, mram[0 * MRAM_ENTRIES + i+21] >> rshift, 
-				mram[0 * MRAM_ENTRIES + i+22] >> rshift, mram[0 * MRAM_ENTRIES + i+23] >> rshift, 
-				mram[0 * MRAM_ENTRIES + i+24] >> rshift, mram[0 * MRAM_ENTRIES + i+25] >> rshift, 
-				mram[0 * MRAM_ENTRIES + i+26] >> rshift, mram[0 * MRAM_ENTRIES + i+27] >> rshift, 
-				mram[0 * MRAM_ENTRIES + i+28] >> rshift, mram[0 * MRAM_ENTRIES + i+29] >> rshift, 
+				mram[0 * MRAM_ENTRIES + i+16] >> rshift, mram[0 * MRAM_ENTRIES + i+17] >> rshift,
+				mram[0 * MRAM_ENTRIES + i+18] >> rshift, mram[0 * MRAM_ENTRIES + i+19] >> rshift,
+				mram[0 * MRAM_ENTRIES + i+20] >> rshift, mram[0 * MRAM_ENTRIES + i+21] >> rshift,
+				mram[0 * MRAM_ENTRIES + i+22] >> rshift, mram[0 * MRAM_ENTRIES + i+23] >> rshift,
+				mram[0 * MRAM_ENTRIES + i+24] >> rshift, mram[0 * MRAM_ENTRIES + i+25] >> rshift,
+				mram[0 * MRAM_ENTRIES + i+26] >> rshift, mram[0 * MRAM_ENTRIES + i+27] >> rshift,
+				mram[0 * MRAM_ENTRIES + i+28] >> rshift, mram[0 * MRAM_ENTRIES + i+29] >> rshift,
 				mram[0 * MRAM_ENTRIES + i+30] >> rshift, mram[0 * MRAM_ENTRIES + i+31] >> rshift);
 	}
 
@@ -540,22 +540,22 @@ static void dump_video_memory(struct mame_bitmap *mo_bitmap, struct mame_bitmap 
 	for (i = 0; i < 0x10000 / 2; i += 32)
 	{
 		fprintf(f, "%04X: %02X %02X %02X %02X %02X %02X %02X %02X - %02X %02X %02X %02X %02X %02X %02X %02X", i,
-				mram[1 * MRAM_ENTRIES + i+0] >> gshift, mram[1 * MRAM_ENTRIES + i+1] >> gshift, 
-				mram[1 * MRAM_ENTRIES + i+2] >> gshift, mram[1 * MRAM_ENTRIES + i+3] >> gshift, 
+				mram[1 * MRAM_ENTRIES + i+0] >> gshift, mram[1 * MRAM_ENTRIES + i+1] >> gshift,
+				mram[1 * MRAM_ENTRIES + i+2] >> gshift, mram[1 * MRAM_ENTRIES + i+3] >> gshift,
 				mram[1 * MRAM_ENTRIES + i+4] >> gshift, mram[1 * MRAM_ENTRIES + i+5] >> gshift,
-				mram[1 * MRAM_ENTRIES + i+6] >> gshift, mram[1 * MRAM_ENTRIES + i+7] >> gshift, 
-				mram[1 * MRAM_ENTRIES + i+8] >> gshift, mram[1 * MRAM_ENTRIES + i+9] >> gshift, 
-				mram[1 * MRAM_ENTRIES + i+10] >> gshift, mram[1 * MRAM_ENTRIES + i+11] >> gshift, 
-				mram[1 * MRAM_ENTRIES + i+12] >> gshift, mram[1 * MRAM_ENTRIES + i+13] >> gshift, 
+				mram[1 * MRAM_ENTRIES + i+6] >> gshift, mram[1 * MRAM_ENTRIES + i+7] >> gshift,
+				mram[1 * MRAM_ENTRIES + i+8] >> gshift, mram[1 * MRAM_ENTRIES + i+9] >> gshift,
+				mram[1 * MRAM_ENTRIES + i+10] >> gshift, mram[1 * MRAM_ENTRIES + i+11] >> gshift,
+				mram[1 * MRAM_ENTRIES + i+12] >> gshift, mram[1 * MRAM_ENTRIES + i+13] >> gshift,
 				mram[1 * MRAM_ENTRIES + i+14] >> gshift, mram[1 * MRAM_ENTRIES + i+15] >> gshift);
 		fprintf(f, " - %02X %02X %02X %02X %02X %02X %02X %02X - %02X %02X %02X %02X %02X %02X %02X %02X\n",
-				mram[1 * MRAM_ENTRIES + i+16] >> gshift, mram[1 * MRAM_ENTRIES + i+17] >> gshift, 
-				mram[1 * MRAM_ENTRIES + i+18] >> gshift, mram[1 * MRAM_ENTRIES + i+19] >> gshift, 
-				mram[1 * MRAM_ENTRIES + i+20] >> gshift, mram[1 * MRAM_ENTRIES + i+21] >> gshift, 
-				mram[1 * MRAM_ENTRIES + i+22] >> gshift, mram[1 * MRAM_ENTRIES + i+23] >> gshift, 
-				mram[1 * MRAM_ENTRIES + i+24] >> gshift, mram[1 * MRAM_ENTRIES + i+25] >> gshift, 
-				mram[1 * MRAM_ENTRIES + i+26] >> gshift, mram[1 * MRAM_ENTRIES + i+27] >> gshift, 
-				mram[1 * MRAM_ENTRIES + i+28] >> gshift, mram[1 * MRAM_ENTRIES + i+29] >> gshift, 
+				mram[1 * MRAM_ENTRIES + i+16] >> gshift, mram[1 * MRAM_ENTRIES + i+17] >> gshift,
+				mram[1 * MRAM_ENTRIES + i+18] >> gshift, mram[1 * MRAM_ENTRIES + i+19] >> gshift,
+				mram[1 * MRAM_ENTRIES + i+20] >> gshift, mram[1 * MRAM_ENTRIES + i+21] >> gshift,
+				mram[1 * MRAM_ENTRIES + i+22] >> gshift, mram[1 * MRAM_ENTRIES + i+23] >> gshift,
+				mram[1 * MRAM_ENTRIES + i+24] >> gshift, mram[1 * MRAM_ENTRIES + i+25] >> gshift,
+				mram[1 * MRAM_ENTRIES + i+26] >> gshift, mram[1 * MRAM_ENTRIES + i+27] >> gshift,
+				mram[1 * MRAM_ENTRIES + i+28] >> gshift, mram[1 * MRAM_ENTRIES + i+29] >> gshift,
 				mram[1 * MRAM_ENTRIES + i+30] >> gshift, mram[1 * MRAM_ENTRIES + i+31] >> gshift);
 	}
 
@@ -563,25 +563,25 @@ static void dump_video_memory(struct mame_bitmap *mo_bitmap, struct mame_bitmap 
 	for (i = 0; i < 0x10000 / 2; i += 32)
 	{
 		fprintf(f, "%04X: %02X %02X %02X %02X %02X %02X %02X %02X - %02X %02X %02X %02X %02X %02X %02X %02X", i,
-				mram[2 * MRAM_ENTRIES + i+0] >> bshift, mram[2 * MRAM_ENTRIES + i+1] >> bshift, 
-				mram[2 * MRAM_ENTRIES + i+2] >> bshift, mram[2 * MRAM_ENTRIES + i+3] >> bshift, 
+				mram[2 * MRAM_ENTRIES + i+0] >> bshift, mram[2 * MRAM_ENTRIES + i+1] >> bshift,
+				mram[2 * MRAM_ENTRIES + i+2] >> bshift, mram[2 * MRAM_ENTRIES + i+3] >> bshift,
 				mram[2 * MRAM_ENTRIES + i+4] >> bshift, mram[2 * MRAM_ENTRIES + i+5] >> bshift,
-				mram[2 * MRAM_ENTRIES + i+6] >> bshift, mram[2 * MRAM_ENTRIES + i+7] >> bshift, 
-				mram[2 * MRAM_ENTRIES + i+8] >> bshift, mram[2 * MRAM_ENTRIES + i+9] >> bshift, 
-				mram[2 * MRAM_ENTRIES + i+10] >> bshift, mram[2 * MRAM_ENTRIES + i+11] >> bshift, 
-				mram[2 * MRAM_ENTRIES + i+12] >> bshift, mram[2 * MRAM_ENTRIES + i+13] >> bshift, 
+				mram[2 * MRAM_ENTRIES + i+6] >> bshift, mram[2 * MRAM_ENTRIES + i+7] >> bshift,
+				mram[2 * MRAM_ENTRIES + i+8] >> bshift, mram[2 * MRAM_ENTRIES + i+9] >> bshift,
+				mram[2 * MRAM_ENTRIES + i+10] >> bshift, mram[2 * MRAM_ENTRIES + i+11] >> bshift,
+				mram[2 * MRAM_ENTRIES + i+12] >> bshift, mram[2 * MRAM_ENTRIES + i+13] >> bshift,
 				mram[2 * MRAM_ENTRIES + i+14] >> bshift, mram[2 * MRAM_ENTRIES + i+15] >> bshift);
 		fprintf(f, " - %02X %02X %02X %02X %02X %02X %02X %02X - %02X %02X %02X %02X %02X %02X %02X %02X\n",
-				mram[2 * MRAM_ENTRIES + i+16] >> bshift, mram[2 * MRAM_ENTRIES + i+17] >> bshift, 
-				mram[2 * MRAM_ENTRIES + i+18] >> bshift, mram[2 * MRAM_ENTRIES + i+19] >> bshift, 
-				mram[2 * MRAM_ENTRIES + i+20] >> bshift, mram[2 * MRAM_ENTRIES + i+21] >> bshift, 
-				mram[2 * MRAM_ENTRIES + i+22] >> bshift, mram[2 * MRAM_ENTRIES + i+23] >> bshift, 
-				mram[2 * MRAM_ENTRIES + i+24] >> bshift, mram[2 * MRAM_ENTRIES + i+25] >> bshift, 
-				mram[2 * MRAM_ENTRIES + i+26] >> bshift, mram[2 * MRAM_ENTRIES + i+27] >> bshift, 
-				mram[2 * MRAM_ENTRIES + i+28] >> bshift, mram[2 * MRAM_ENTRIES + i+29] >> bshift, 
+				mram[2 * MRAM_ENTRIES + i+16] >> bshift, mram[2 * MRAM_ENTRIES + i+17] >> bshift,
+				mram[2 * MRAM_ENTRIES + i+18] >> bshift, mram[2 * MRAM_ENTRIES + i+19] >> bshift,
+				mram[2 * MRAM_ENTRIES + i+20] >> bshift, mram[2 * MRAM_ENTRIES + i+21] >> bshift,
+				mram[2 * MRAM_ENTRIES + i+22] >> bshift, mram[2 * MRAM_ENTRIES + i+23] >> bshift,
+				mram[2 * MRAM_ENTRIES + i+24] >> bshift, mram[2 * MRAM_ENTRIES + i+25] >> bshift,
+				mram[2 * MRAM_ENTRIES + i+26] >> bshift, mram[2 * MRAM_ENTRIES + i+27] >> bshift,
+				mram[2 * MRAM_ENTRIES + i+28] >> bshift, mram[2 * MRAM_ENTRIES + i+29] >> bshift,
 				mram[2 * MRAM_ENTRIES + i+30] >> bshift, mram[2 * MRAM_ENTRIES + i+31] >> bshift);
 	}
-	
+
 	fprintf(f, "\n\nPF:\n");
 	for (y = Machine->visible_area.min_y; y <= Machine->visible_area.max_y; y++)
 	{
@@ -590,7 +590,7 @@ static void dump_video_memory(struct mame_bitmap *mo_bitmap, struct mame_bitmap 
 			fprintf(f, "%04X ", pf[x]);
 		fprintf(f, "\n");
 	}
-	
+
 	fprintf(f, "\n\nMO:\n");
 	for (y = Machine->visible_area.min_y; y <= Machine->visible_area.max_y; y++)
 	{
@@ -599,7 +599,7 @@ static void dump_video_memory(struct mame_bitmap *mo_bitmap, struct mame_bitmap 
 			fprintf(f, "%04X ", mo[x]);
 		fprintf(f, "\n");
 	}
-	
+
 	fprintf(f, "\n\nTM:\n");
 	for (y = Machine->visible_area.min_y; y <= Machine->visible_area.max_y; y++)
 	{
@@ -608,7 +608,7 @@ static void dump_video_memory(struct mame_bitmap *mo_bitmap, struct mame_bitmap 
 			fprintf(f, "%04X ", tm[x]);
 		fprintf(f, "\n");
 	}
-	
+
 	fclose(f);
 }
 

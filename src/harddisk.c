@@ -29,6 +29,7 @@
 
 #define STACK_ENTRIES		1024		/* 16-bit array size on stack */
 #define COOKIE_VALUE		0xbaadf00d
+#define MAX_ZLIB_ALLOCS		64
 
 #define END_OF_LIST_COOKIE	"EndOfListCookie"
 
@@ -76,6 +77,7 @@ struct zlib_codec_data
 {
 	z_stream				inflater;
 	z_stream				deflater;
+	UINT32 *				allocptr[MAX_ZLIB_ALLOCS];
 };
 
 
@@ -1028,6 +1030,75 @@ cleanup:
 
 /*************************************
  *
+ *	ZLIB memory hooks
+ *
+ *************************************/
+
+/*
+	Because ZLIB allocates and frees memory frequently (once per compression cycle),
+	we don't call malloc/free, but instead keep track of our own memory.
+*/
+
+static voidpf fast_alloc(voidpf opaque, uInt items, uInt size)
+{
+	struct zlib_codec_data *data = opaque;
+	UINT32 *ptr;
+	int i;
+
+	/* compute the size, rounding to the nearest 1k */
+	size = (size * items + 0x3ff) & ~0x3ff;
+
+	/* reuse a block if we can */
+	for (i = 0; i < MAX_ZLIB_ALLOCS; i++)
+	{
+		ptr = data->allocptr[i];
+		if (ptr && size == *ptr)
+		{
+			/* set the low bit of the size so we don't match next time */
+			*ptr |= 1;
+			return ptr + 1;
+		}
+	}
+
+	/* alloc a new one */
+	ptr = malloc(size + sizeof(UINT32));
+	if (!ptr)
+		return NULL;
+
+	/* put it into the list */
+	for (i = 0; i < MAX_ZLIB_ALLOCS; i++)
+		if (!data->allocptr[i])
+		{
+			data->allocptr[i] = ptr;
+			break;
+		}
+
+	/* set the low bit of the size so we don't match next time */
+	*ptr = size | 1;
+	return ptr + 1;
+}
+
+
+static void fast_free(voidpf opaque, voidpf address)
+{
+	struct zlib_codec_data *data = opaque;
+	UINT32 *ptr = (UINT32 *)address - 1;
+	int i;
+
+	/* find the block */
+	for (i = 0; i < MAX_ZLIB_ALLOCS; i++)
+		if (ptr == data->allocptr[i])
+		{
+			/* clear the low bit of the size to allow matches */
+			*ptr &= ~1;
+			return;
+		}
+}
+
+
+
+/*************************************
+ *
  *	Compression init
  *
  *************************************/
@@ -1059,11 +1130,17 @@ static int init_codec(struct hard_disk_info *info)
 			/* init the first for decompression and the second for compression */
 			data->inflater.next_in = info->compressed;
 			data->inflater.avail_in = 0;
+			data->inflater.zalloc = fast_alloc;
+			data->inflater.zfree = fast_free;
+			data->inflater.opaque = data;
 			err = inflateInit2(&data->inflater, -MAX_WBITS);
 			if (err == Z_OK)
 			{
 				data->deflater.next_in = info->compressed;
 				data->deflater.avail_in = 0;
+				data->deflater.zalloc = fast_alloc;
+				data->deflater.zfree = fast_free;
+				data->deflater.opaque = data;
 				err = deflateInit2(&data->deflater, Z_BEST_COMPRESSION, Z_DEFLATED, -MAX_WBITS, 8, Z_DEFAULT_STRATEGY);
 			}
 
@@ -1110,8 +1187,15 @@ static void free_codec(struct hard_disk_info *info)
 			/* deinit the streams */
 			if (data)
 			{
+				int i;
+
 				inflateEnd(&data->inflater);
 				deflateEnd(&data->deflater);
+
+				/* free our fast memory */
+				for (i = 0; i < MAX_ZLIB_ALLOCS; i++)
+					if (data->allocptr[i])
+						free(data->allocptr[i]);
 				free(data);
 			}
 			break;

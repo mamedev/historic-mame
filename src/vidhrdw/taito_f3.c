@@ -203,7 +203,7 @@ data32_t *f3_pf_data,*f3_pivot_ram;
 extern int f3_game;
 #if DEBUG_F3
 static int sprite_pri_word;
-#endif
+#endif	//DEBUG_F3
 static int scroll_dirty,skip_this_frame;
 
 /* Game specific data, some of this can be
@@ -215,11 +215,11 @@ struct F3config
 	int sx;
 	int sy;
 	int pivot;
-	int sprite_lag;//ks
+	int sprite_lag;
 };
 
 const struct F3config *f3_game_config;
-//ks s
+
 static const struct F3config f3_config_table[] =
 {
 	/* Name    Extend  X Offset, Y Offset  Flip Pivot Sprite Lag */  /* Uses 5000, uses control bits,works with line X zoom */
@@ -255,7 +255,7 @@ static const struct F3config f3_config_table[] =
 	{ LANDMAKR,  1,      0,        -23,         0,          1/**/},
 	{0}
 };
-//ks e
+
 
 struct tempsprite
 {
@@ -263,22 +263,22 @@ struct tempsprite
 	int flipx,flipy;
 	int x,y;
 	int zoomx,zoomy;
-	int pri;	//ks
+	int pri;
 };
 static struct tempsprite *spritelist;
 
-//ks s
-//ksdeb s
-static int deb_enable=0;  //TODO
-static int deb_alpha_disable=0;
+static int alpha_disable=0;
+#if DEBUG_F3
+static char deb_buf[10][80];
+static int deb_enable=0;
 static int deb_tileflag=0;
 static int deb_tile_code=0;
-//ksdeb e
+#endif	//DEBUG_F3
 
 static const struct tempsprite *sprite_end;
 static void get_sprite_info(const data32_t *spriteram32_ptr);
-static struct mame_bitmap *sprite_bitmap;
 static int sprite_lag=1;
+static UINT8 sprite_pri_usage=0;
 
 struct f3_line_inf
 {
@@ -286,27 +286,36 @@ struct f3_line_inf
 	int alpha_level[256];
 	int pri[256];
 	int spri[256];
+	UINT8 sprite_alpha[256];
 
 	/* use for draw_scanlines */
 	UINT16 *src[256],*src_s[256],*src_e[256];
-	UINT8 *tsrc[256],*tsrc_s[256],*tsrc_e[256];
-	int src_inc,tsrc_inc;
+	UINT8 *tsrc[256],*tsrc_s[256];
 	int x_count[256];
 	UINT32 x_zoom[256];
 };
+/*
+alpha_mode
+---- --xx    0:disable 1:nomal 2:alpha 7000 3:alpha b000
+---1 ----    alpha level a
+--1- ----    alpha level b
+1--------    opaque line
+*/
+
 static struct f3_line_inf *line_inf;
 static struct mame_bitmap *pri_alp_bitmap;
 /*
 pri_alp_bitmap
----- --xx    sprite priority 0-3
----- -1--    sprite
----- 1---    alpha level a 7000
----1 ----    alpha level b 7000
---1- ----    alpha level a b000
--1-- ----    alpha level b b000
+---- ---1    sprite priority 0
+---- --1-    sprite priority 1
+---- -1--    sprite priority 2
+---- 1---    sprite priority 3
+---1 ----    alpha level a 7000
+--1- ----    alpha level b 7000
+-1-- ----    alpha level a b000
+1--- ----    alpha level b b000
 1111 1111    opaque pixcel
 */
-static int width_mask=0x1ff;
 static int f3_alpha_level_2as=127;
 static int f3_alpha_level_2ad=127;
 static int f3_alpha_level_3as=127;
@@ -315,7 +324,14 @@ static int f3_alpha_level_2bs=127;
 static int f3_alpha_level_2bd=127;
 static int f3_alpha_level_3bs=127;
 static int f3_alpha_level_3bd=127;
-//ks e
+
+static void init_alpha_blend_func(void);
+
+static int width_mask=0x1ff;
+static int twidth_mask=0x1f,twidth_mask_bit=5;
+static UINT8 *tile_opaque_sp;
+static UINT8 *tile_opaque_pf;
+
 
 /******************************************************************************/
 
@@ -439,36 +455,39 @@ static void print_debug_info(int t0, int t1, int t2, int t3, int c0, int c1, int
 
 	Machine->orientation = trueorientation;
 }
-#endif
+#endif	//DEBUG_F3
 
 /******************************************************************************/
 
 INLINE void get_tile_info(int tile_index, data32_t *gfx_base)
 {
 	data32_t tile=gfx_base[tile_index];
-//ksdeb s
-if(deb_tileflag)
-{
-	int c=tile&0xffff;
-	if(((tile>>(16+9))&0x1f)==deb_tile_code) c=0;
+	UINT8 abtype=(tile>>(16+9))&0x1f;
 
-	SET_TILE_INFO(
-			1,
-			c,
-			(tile>>16)&0x1ff,
-			TILE_FLIPYX( tile >> 30 ))
-	tile_info.priority = (tile>>(16+9))&0xf;	/* alpha blending type? */	//ks
-}
-else
-{
-	SET_TILE_INFO(
-			1,
-			tile&0xffff,
-			(tile>>16)&0x1ff,
-			TILE_FLIPYX( tile >> 30 ))
-	tile_info.priority = (tile>>(16+9))&0xf;	/* alpha blending type? */	//ks
-}
-//ksdeb e
+#if DEBUG_F3
+//if((tile&0xffff)>Machine->gfx[1]->total_elements) printf("tile code:%04x\n",tile&0xffff);
+	if(deb_tileflag)
+	{
+		int c=tile&0xffff;
+		if(abtype==deb_tile_code) c=0;
+
+		SET_TILE_INFO(
+				1,
+				c,
+				(tile>>16)&0x1ff,
+				TILE_FLIPYX( tile >> 30 ))
+		tile_info.priority = abtype&1;		/* alpha blending type? */
+	}
+	else
+#endif	//DEBUG_F3
+	{
+		SET_TILE_INFO(
+				1,
+				tile&0xffff,
+				(tile>>16)&0x1ff,
+				TILE_FLIPYX( tile >> 30 ))
+		tile_info.priority =  abtype&1;		/* alpha blending type? */
+	}
 }
 
 static void get_tile_info1(int tile_index)
@@ -540,6 +559,7 @@ VIDEO_EOF( f3 )
 
 VIDEO_STOP( f3 )
 {
+#if DEBUG_F3
 #define FWRITE32(pRAM,len,file)	\
 {								\
 	int i;						\
@@ -562,7 +582,7 @@ VIDEO_STOP( f3 )
 	}							\
 }
 
-	if (/*DEBUG_F3*/deb_enable) {//ksdeb
+	if (deb_enable) {
 		FILE *fp;
 
 		fp=fopen("line.dmp","wb");
@@ -582,6 +602,7 @@ VIDEO_STOP( f3 )
 		}
 	}
 #undef FWRITE32
+#endif	//DEBUG_F3
 }
 
 VIDEO_START( f3 )
@@ -593,9 +614,10 @@ VIDEO_START( f3 )
 	spriteram32_buffered=0;
 	pivot_dirty=0;
 	pixel_layer_clip=Machine->visible_area;
-	line_inf=0;			//ks
-	pri_alp_bitmap=0;	//ks
-	sprite_bitmap=0;	//ks
+	line_inf=0;
+	pri_alp_bitmap=0;
+	tile_opaque_sp=0;
+	tile_opaque_pf=0;
 
 	/* Setup individual game */
 	do {
@@ -618,7 +640,11 @@ VIDEO_START( f3 )
 		f3_pf_data_2=f3_pf_data+0x0800;
 		f3_pf_data_3=f3_pf_data+0x1000;
 		f3_pf_data_4=f3_pf_data+0x1800;
+
 		width_mask=0x3ff;
+		twidth_mask=0x3f;
+		twidth_mask_bit=6;
+
 	} else {
 		pf1_tilemap = tilemap_create(get_tile_info1,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 		pf2_tilemap = tilemap_create(get_tile_info2,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
@@ -629,7 +655,10 @@ VIDEO_START( f3 )
 		f3_pf_data_2=f3_pf_data+0x0400;
 		f3_pf_data_3=f3_pf_data+0x0800;
 		f3_pf_data_4=f3_pf_data+0x0c00;
+
 		width_mask=0x1ff;
+		twidth_mask=0x1f;
+		twidth_mask_bit=5;
 	}
 
 	spriteram32_buffered = (UINT32 *)auto_malloc(0x10000);
@@ -637,12 +666,13 @@ VIDEO_START( f3 )
 	sprite_end = spritelist;
 	pixel_layer = tilemap_create(get_tile_info_pixel,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,64,32);
 	pivot_dirty = (UINT8 *)auto_malloc(2048);
-	line_inf = auto_malloc(4 * sizeof(struct f3_line_inf));//ks
-	pri_alp_bitmap = auto_bitmap_alloc_depth( Machine->scrbitmap->width, Machine->scrbitmap->height, -8 );//ks
-	sprite_bitmap = auto_bitmap_alloc_depth( Machine->scrbitmap->width, Machine->scrbitmap->height, -16 );//ks
+	line_inf = auto_malloc(4 * sizeof(struct f3_line_inf));
+	pri_alp_bitmap = auto_bitmap_alloc_depth( Machine->scrbitmap->width, Machine->scrbitmap->height, -8 );
+	tile_opaque_sp = (UINT8 *)auto_malloc(Machine->gfx[2]->total_elements);
+	tile_opaque_pf = (UINT8 *)auto_malloc(Machine->gfx[1]->total_elements);
 
-	if (!pf1_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap || !line_inf || !pri_alp_bitmap					//ks
-		 || !spritelist || !pixel_layer || !spriteram32_buffered || !pivot_dirty || !sprite_bitmap)	//ks
+	if (!pf1_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap || !line_inf || !pri_alp_bitmap
+		 || !spritelist || !pixel_layer || !spriteram32_buffered || !pivot_dirty || !tile_opaque_sp || !tile_opaque_pf)
 		return 1;
 
 	tilemap_set_transparent_pen(pf1_tilemap,0);
@@ -686,6 +716,76 @@ VIDEO_START( f3 )
 	skip_this_frame=0;
 
 	sprite_lag=f3_game_config->sprite_lag;
+
+	init_alpha_blend_func();
+
+	{
+		const struct GfxElement *sprite_gfx = Machine->gfx[2];
+		int c;
+#if DEBUG_F3
+		int deb_count_opa=0,deb_count_tra=0,deb_tra_code=-1;
+#endif	//DEBUG_F3
+
+		for (c = 0;c < sprite_gfx->total_elements;c++)
+		{
+			int x,y;
+			int chk_trans_or_opa=0;
+			UINT8 *dp = sprite_gfx->gfxdata + c * sprite_gfx->char_modulo;
+			for (y = 0;y < sprite_gfx->height;y++)
+			{
+				for (x = 0;x < sprite_gfx->width;x++)
+				{
+					if(!dp[x]) chk_trans_or_opa|=2;
+					else	   chk_trans_or_opa|=1;
+				}
+				dp += sprite_gfx->line_modulo;
+			}
+			if(chk_trans_or_opa==1) tile_opaque_sp[c]=1;
+			else					tile_opaque_sp[c]=0;
+#if DEBUG_F3
+			if     (chk_trans_or_opa==2){deb_count_tra++;deb_tra_code=c;}
+			else if(chk_trans_or_opa==1) deb_count_opa++;
+#endif	//DEBUG_F3
+		}
+#if DEBUG_F3
+		printf("tile_opaque_sp: t=%d o=%d total=%d tra_code=%d\n",deb_count_tra,deb_count_opa,
+		sprite_gfx->total_elements,deb_tra_code);
+#endif	//DEBUG_F3
+	}
+
+
+	{
+		const struct GfxElement *pf_gfx = Machine->gfx[1];
+		int c;
+#if DEBUG_F3
+		int deb_count_opa=0,deb_count_tra=0,deb_tra_code=-1;
+#endif	//DEBUG_F3
+
+		for (c = 0;c < pf_gfx->total_elements;c++)
+		{
+			int x,y;
+			int chk_trans_or_opa=0;
+			UINT8 *dp = pf_gfx->gfxdata + c * pf_gfx->char_modulo;
+			for (y = 0;y < pf_gfx->height;y++)
+			{
+				for (x = 0;x < pf_gfx->width;x++)
+				{
+					if(!dp[x]) chk_trans_or_opa|=2;
+					else	   chk_trans_or_opa|=1;
+				}
+				dp += pf_gfx->line_modulo;
+			}
+			tile_opaque_pf[c]=chk_trans_or_opa;
+#if DEBUG_F3
+			if     (chk_trans_or_opa==2){deb_count_tra++;deb_tra_code=c;}
+			else if(chk_trans_or_opa==1) deb_count_opa++;
+#endif	//DEBUG_F3
+		}
+#if DEBUG_F3
+		printf("tile_opaque_pf: t=%d o=%d total=%d tra_code=%d\n",deb_count_tra,deb_count_opa,
+		pf_gfx->total_elements,deb_tra_code);
+#endif	//DEBUG_F3
+	}
 
 	return 0;
 }
@@ -828,19 +928,15 @@ WRITE32_HANDLER( f3_palette_24bit_w )
 	palette_set_color(offset,r,g,b);
 }
 
-//ks s
 /******************************************************************************/
-/* alpha_blend */
-//ksdebA s
+
 #if DEBUG_F3
 static int deb_alpha_level_a=0;
 static int deb_alpha_level_b=0;
 static int deb_alp_mode=0;
-#endif
 static int deb_loop=0;
-//ksdebA e
-
-static int alpha_limit=1;
+static int deb_alpha_cnt=0;
+#endif	//DEBUG_F3
 
 static const UINT8 *alpha_s_1_1;
 static const UINT8 *alpha_s_1_2;
@@ -867,6 +963,60 @@ static const UINT8 *alpha_s_3b_0;
 static const UINT8 *alpha_s_3b_1;
 static const UINT8 *alpha_s_3b_2;
 
+static int dval;
+static int pval;
+static int tval;
+static UINT8 pdest_2a = 0x10;
+static UINT8 pdest_2b = 0x20;
+static int tr_2a = 0;
+static int tr_2b = 1;
+static UINT8 pdest_3a = 0x40;
+static UINT8 pdest_3b = 0x80;
+static int tr_3a = 0;
+static int tr_3b = 1;
+
+static int (*dpix_n[8])(UINT32 s_pix);
+static int (*dpix_sn[4])(UINT32 s_pix);
+static int (*dpix_sp[9])(UINT32 s_pix);
+static int (*dpix_lp[4])(UINT32 s_pix);
+static void (*f3_alpha_blend_s)( const UINT8 *alphas, UINT32 s );
+static void (*f3_alpha_blend_d)( const UINT8 *alphas, UINT32 s );
+static void (*f3_alpha_blend_d_lmt)( const UINT8 *alphas, UINT32 s );
+static void (*f3_alpha_blend_d_nml)( const UINT8 *alphas, UINT32 s );
+
+/*============================================================================*/
+
+static void f3_alpha_blend32_s( const UINT8 *alphas, UINT32 s )
+{
+	dval = alphas[s & 0xff] | (alphas[(s>>8) & 0xff]<<8) | (alphas[(s>>16) & 0xff]<<16);
+}
+
+static void f3_alpha_blend32_d_lmt( const UINT8 *alphas, UINT32 s )
+{
+	int d=dval;
+	if(d)
+	{
+		int c1,c2,c3;
+		c1=alphas[s & 0xff]+(d & 0xff);
+		if(c1&~0xff) c1=0xff;
+
+		c2=alphas[(s>>8) & 0xff]+((d>>8) & 0xff);
+		if(c2&~0xff) c2=0xff;
+
+		c3=alphas[(s>>16) & 0xff]+((d>>16) & 0xff);
+		if(c3&~0xff) c3=0xff;
+
+		dval = c1 | (c2<<8) | (c3<<16);
+	}
+	else dval = alphas[s & 0xff] | (alphas[(s>>8) & 0xff]<<8) | (alphas[(s>>16) & 0xff]<<16);
+}
+
+static void f3_alpha_blend32_d_nml( const UINT8 *alphas, UINT32 s )
+{
+	dval += alphas[s & 0xff] | (alphas[(s>>8) & 0xff] << 8) | (alphas[(s>>16) & 0xff] << 16);
+}
+
+/*============================================================================*/
 
 #define SET_ALPHA_LEVEL(d,s)			\
 {										\
@@ -877,7 +1027,11 @@ static const UINT8 *alpha_s_3b_2;
 
 INLINE void f3_alpha_set_level(void)
 {
-	alpha_limit = (f3_alpha_level_2as+f3_alpha_level_2ad>255 || f3_alpha_level_2bs+f3_alpha_level_2bd>255);
+	if(f3_alpha_level_2as+f3_alpha_level_2ad>255 || f3_alpha_level_2bs+f3_alpha_level_2bd>255 ||
+		f3_alpha_level_3as+f3_alpha_level_3ad>255 || f3_alpha_level_3bs+f3_alpha_level_3bd>255   )
+		f3_alpha_blend_d = f3_alpha_blend_d_lmt;
+	else
+		f3_alpha_blend_d = f3_alpha_blend_d_nml;
 
 //	SET_ALPHA_LEVEL(alpha_s_1_1, f3_alpha_level_2ad)
 	SET_ALPHA_LEVEL(alpha_s_1_1, 255-f3_alpha_level_2as)
@@ -912,821 +1066,515 @@ INLINE void f3_alpha_set_level(void)
 }
 #undef SET_ALPHA_LEVEL
 
+/*============================================================================*/
 
-INLINE UINT32 f3_alpha_blend32_0( const UINT8 *alphas, UINT32 s )
-{
-	return  alphas[s & 0xff] | (alphas[(s>>8) & 0xff]<<8) | (alphas[(s>>16) & 0xff]<<16);
-}
+INLINE void f3_alpha_blend_1_1( UINT32 s ){f3_alpha_blend_d(alpha_s_1_1,s);}
+INLINE void f3_alpha_blend_1_2( UINT32 s ){f3_alpha_blend_d(alpha_s_1_2,s);}
+INLINE void f3_alpha_blend_1_4( UINT32 s ){f3_alpha_blend_d(alpha_s_1_4,s);}
+INLINE void f3_alpha_blend_1_5( UINT32 s ){f3_alpha_blend_d(alpha_s_1_5,s);}
+INLINE void f3_alpha_blend_1_6( UINT32 s ){f3_alpha_blend_d(alpha_s_1_6,s);}
+INLINE void f3_alpha_blend_1_8( UINT32 s ){f3_alpha_blend_d(alpha_s_1_8,s);}
+INLINE void f3_alpha_blend_1_9( UINT32 s ){f3_alpha_blend_d(alpha_s_1_9,s);}
+INLINE void f3_alpha_blend_1_a( UINT32 s ){f3_alpha_blend_d(alpha_s_1_a,s);}
 
-INLINE UINT32 f3_alpha_blend32_1( const UINT8 *alphas, UINT32 d, UINT32 s )
+INLINE void f3_alpha_blend_2a_0( UINT32 s ){f3_alpha_blend_s(alpha_s_2a_0,s);}
+INLINE void f3_alpha_blend_2a_4( UINT32 s ){f3_alpha_blend_d(alpha_s_2a_4,s);}
+INLINE void f3_alpha_blend_2a_8( UINT32 s ){f3_alpha_blend_d(alpha_s_2a_8,s);}
+
+INLINE void f3_alpha_blend_2b_0( UINT32 s ){f3_alpha_blend_s(alpha_s_2b_0,s);}
+INLINE void f3_alpha_blend_2b_4( UINT32 s ){f3_alpha_blend_d(alpha_s_2b_4,s);}
+INLINE void f3_alpha_blend_2b_8( UINT32 s ){f3_alpha_blend_d(alpha_s_2b_8,s);}
+
+INLINE void f3_alpha_blend_3a_0( UINT32 s ){f3_alpha_blend_s(alpha_s_3a_0,s);}
+INLINE void f3_alpha_blend_3a_1( UINT32 s ){f3_alpha_blend_d(alpha_s_3a_1,s);}
+INLINE void f3_alpha_blend_3a_2( UINT32 s ){f3_alpha_blend_d(alpha_s_3a_2,s);}
+
+INLINE void f3_alpha_blend_3b_0( UINT32 s ){f3_alpha_blend_s(alpha_s_3b_0,s);}
+INLINE void f3_alpha_blend_3b_1( UINT32 s ){f3_alpha_blend_d(alpha_s_3b_1,s);}
+INLINE void f3_alpha_blend_3b_2( UINT32 s ){f3_alpha_blend_d(alpha_s_3b_2,s);}
+
+/*============================================================================*/
+
+static int dpix_1(UINT32 s_pix)
 {
-	if(alpha_limit)
+	if(s_pix)
 	{
-		int c1,c2,c3;
-		c1=alphas[s & 0xff]+(d & 0xff);
-		if(c1&~0xff) c1=0xff;
-
-		c2=alphas[(s>>8) & 0xff]+((d>>8) & 0xff);
-		if(c2&~0xff) c2=0xff;
-
-		c3=alphas[(s>>16) & 0xff]+((d>>16) & 0xff);
-		if(c3&~0xff) c3=0xff;
-
-		return  c1 | (c2<<8) | (c3<<16);
+		UINT8 p1 = pval&0xf0;
+		if(!p1)			dval = s_pix;
+		else if(p1==0x10)	f3_alpha_blend_1_1(s_pix);
+		else if(p1==0x20)	f3_alpha_blend_1_2(s_pix);
+		else if(p1==0x40)	f3_alpha_blend_1_4(s_pix);
+		else if(p1==0x50)	f3_alpha_blend_1_5(s_pix);
+		else if(p1==0x60)	f3_alpha_blend_1_6(s_pix);
+		else if(p1==0x80)	f3_alpha_blend_1_8(s_pix);
+		else if(p1==0x90)	f3_alpha_blend_1_9(s_pix);
+		else if(p1==0xa0)	f3_alpha_blend_1_a(s_pix);
 	}
-
-	return (alphas[s & 0xff] | (alphas[(s>>8) & 0xff] << 8) | (alphas[(s>>16) & 0xff] << 16))
-		+ ((d & 0xff) | (((d>>8) & 0xff) << 8) | (((d>>16) & 0xff) << 16));
+	else if(!(pval&0xf0)) dval = s_pix;
+	return 1;
 }
 
+static int dpix_2a(UINT32 s_pix)
+{
+	UINT8 p1 = pval&0xf0;
+	if(s_pix)
+	{
+		if(!p1)				{f3_alpha_blend_2a_0(s_pix);if(pdest_2a) pval |= pdest_2a;else return 1;}
+		else if(p1==0x40)	{f3_alpha_blend_2a_4(s_pix);if(pdest_2a) pval |= pdest_2a;else return 1;}
+		else if(p1==0x80)	{f3_alpha_blend_2a_8(s_pix);if(pdest_2a) pval |= pdest_2a;else return 1;}
+	}
+	else
+	{
+		if(!p1)				{dval = s_pix;if(pdest_2a) pval |= pdest_2a;else return 1;}
+		else if(p1==0x40)	{if(pdest_2a) pval |= pdest_2a;else return 1;}
+		else if(p1==0x80)	{if(pdest_2a) pval |= pdest_2a;else return 1;}
+	}
+	return 0;
+}
 
-INLINE UINT32 f3_alpha_blend_1_1( UINT32 d, UINT32 s ){return f3_alpha_blend32_1(alpha_s_1_1,d,s);}
-INLINE UINT32 f3_alpha_blend_1_2( UINT32 d, UINT32 s ){return f3_alpha_blend32_1(alpha_s_1_2,d,s);}
-INLINE UINT32 f3_alpha_blend_1_4( UINT32 d, UINT32 s ){return f3_alpha_blend32_1(alpha_s_1_4,d,s);}
-INLINE UINT32 f3_alpha_blend_1_5( UINT32 d, UINT32 s ){return f3_alpha_blend32_1(alpha_s_1_5,d,s);}
-INLINE UINT32 f3_alpha_blend_1_6( UINT32 d, UINT32 s ){return f3_alpha_blend32_1(alpha_s_1_6,d,s);}
-INLINE UINT32 f3_alpha_blend_1_8( UINT32 d, UINT32 s ){return f3_alpha_blend32_1(alpha_s_1_8,d,s);}
-INLINE UINT32 f3_alpha_blend_1_9( UINT32 d, UINT32 s ){return f3_alpha_blend32_1(alpha_s_1_9,d,s);}
-INLINE UINT32 f3_alpha_blend_1_a( UINT32 d, UINT32 s ){return f3_alpha_blend32_1(alpha_s_1_a,d,s);}
+static int dpix_3a(UINT32 s_pix)
+{
+	UINT8 p1 = pval&0xf0;
+	if(s_pix)
+	{
+		if(!p1)				{f3_alpha_blend_3a_0(s_pix);if(pdest_3a) pval |= pdest_3a;else return 1;}
+		else if(p1==0x10)	{f3_alpha_blend_3a_1(s_pix);if(pdest_3a) pval |= pdest_3a;else return 1;}
+		else if(p1==0x20)	{f3_alpha_blend_3a_2(s_pix);if(pdest_3a) pval |= pdest_3a;else return 1;}
+	}
+	else
+	{
+		if(!p1)				{dval = s_pix;if(pdest_3a) pval |= pdest_3a;else return 1;}
+		else if(p1==0x10)	{if(pdest_3a) pval |= pdest_3a;else return 1;}
+		else if(p1==0x20)	{if(pdest_3a) pval |= pdest_3a;else return 1;}
+	}
+	return 0;
+}
 
-INLINE UINT32 f3_alpha_blend_2a_0( UINT32 s ){return f3_alpha_blend32_0(alpha_s_2a_0,s);}
-INLINE UINT32 f3_alpha_blend_2a_4( UINT32 d, UINT32 s ){return f3_alpha_blend32_1(alpha_s_2a_4,d,s);}
-INLINE UINT32 f3_alpha_blend_2a_8( UINT32 d, UINT32 s ){return f3_alpha_blend32_1(alpha_s_2a_8,d,s);}
+static int dpix_2b(UINT32 s_pix)
+{
+	UINT8 p1 = pval&0xf0;
+	if(s_pix)
+	{
+		if(!p1)				{f3_alpha_blend_2b_0(s_pix);if(pdest_2b) pval |= pdest_2b;else return 1;}
+		else if(p1==0x40)	{f3_alpha_blend_2b_4(s_pix);if(pdest_2b) pval |= pdest_2b;else return 1;}
+		else if(p1==0x80)	{f3_alpha_blend_2b_8(s_pix);if(pdest_2b) pval |= pdest_2b;else return 1;}
+	}
+	else
+	{
+		if(!p1)				{dval = s_pix;if(pdest_2b) pval |= pdest_2b;else return 1;}
+		else if(p1==0x40)	{if(pdest_2b) pval |= pdest_2b;else return 1;}
+		else if(p1==0x80)	{if(pdest_2b) pval |= pdest_2b;else return 1;}
+	}
+	return 0;
+}
 
-INLINE UINT32 f3_alpha_blend_2b_0( UINT32 s ){return f3_alpha_blend32_0(alpha_s_2b_0,s);}
-INLINE UINT32 f3_alpha_blend_2b_4( UINT32 d, UINT32 s ){return f3_alpha_blend32_1(alpha_s_2b_4,d,s);}
-INLINE UINT32 f3_alpha_blend_2b_8( UINT32 d, UINT32 s ){return f3_alpha_blend32_1(alpha_s_2b_8,d,s);}
+static int dpix_3b(UINT32 s_pix)
+{
+	UINT8 p1 = pval&0xf0;
+	if(s_pix)
+	{
+		if(!p1)				{f3_alpha_blend_3b_0(s_pix);if(pdest_3b) pval |= pdest_3b;else return 1;}
+		else if(p1==0x10)	{f3_alpha_blend_3b_1(s_pix);if(pdest_3b) pval |= pdest_3b;else return 1;}
+		else if(p1==0x20)	{f3_alpha_blend_3b_2(s_pix);if(pdest_3b) pval |= pdest_3b;else return 1;}
+	}
+	else
+	{
+		if(!p1)				{dval = s_pix;if(pdest_3b) pval |= pdest_3b;else return 1;}
+		else if(p1==0x10)	{if(pdest_3b) pval |= pdest_3b;else return 1;}
+		else if(p1==0x20)	{if(pdest_3b) pval |= pdest_3b;else return 1;}
+	}
+	return 0;
+}
 
-INLINE UINT32 f3_alpha_blend_3a_0( UINT32 s ){return f3_alpha_blend32_0(alpha_s_3a_0,s);}
-INLINE UINT32 f3_alpha_blend_3a_1( UINT32 d, UINT32 s ){return f3_alpha_blend32_1(alpha_s_3a_1,d,s);}
-INLINE UINT32 f3_alpha_blend_3a_2( UINT32 d, UINT32 s ){return f3_alpha_blend32_1(alpha_s_3a_2,d,s);}
+static int dpix_2(UINT32 s_pix)
+{
+	UINT8 tr2=tval&1;
+	if(s_pix)
+	{
+		if(tr2==tr_2b)
+		{
+			UINT8 p1 = pval&0xf0;
+			if(!p1)				{f3_alpha_blend_2b_0(s_pix);if(pdest_2b) pval |= pdest_2b;else return 1;}
+			else if(p1==0x40)	{f3_alpha_blend_2b_4(s_pix);if(pdest_2b) pval |= pdest_2b;else return 1;}
+			else if(p1==0x80)	{f3_alpha_blend_2b_8(s_pix);if(pdest_2b) pval |= pdest_2b;else return 1;}
+		}
+		else if(tr2==tr_2a)
+		{
+			UINT8 p1 = pval&0xf0;
+			if(!p1)				{f3_alpha_blend_2a_0(s_pix);if(pdest_2a) pval |= pdest_2a;else return 1;}
+			else if(p1==0x40)	{f3_alpha_blend_2a_4(s_pix);if(pdest_2a) pval |= pdest_2a;else return 1;}
+			else if(p1==0x80)	{f3_alpha_blend_2a_8(s_pix);if(pdest_2a) pval |= pdest_2a;else return 1;}
+		}
+	}
+	else
+	{
+		if(tr2==tr_2b)
+		{
+			UINT8 p1 = pval&0xf0;
+			if(!p1)				{dval = s_pix;if(pdest_2b) pval |= pdest_2b;else return 1;}
+			else if(p1==0x40)	{if(pdest_2b) pval |= pdest_2b;else return 1;}
+			else if(p1==0x80)	{if(pdest_2b) pval |= pdest_2b;else return 1;}
+		}
+		else if(tr2==tr_2a)
+		{
+			UINT8 p1 = pval&0xf0;
+			if(!p1)				{dval = s_pix;if(pdest_2a) pval |= pdest_2a;else return 1;}
+			else if(p1==0x40)	{if(pdest_2a) pval |= pdest_2a;else return 1;}
+			else if(p1==0x80)	{if(pdest_2a) pval |= pdest_2a;else return 1;}
+		}
+	}
+	return 0;
+}
 
-INLINE UINT32 f3_alpha_blend_3b_0( UINT32 s ){return f3_alpha_blend32_0(alpha_s_3b_0,s);}
-INLINE UINT32 f3_alpha_blend_3b_1( UINT32 d, UINT32 s ){return f3_alpha_blend32_1(alpha_s_3b_1,d,s);}
-INLINE UINT32 f3_alpha_blend_3b_2( UINT32 d, UINT32 s ){return f3_alpha_blend32_1(alpha_s_3b_2,d,s);}
+static int dpix_3(UINT32 s_pix)
+{
+	UINT8 tr2=tval&1;
+	if(s_pix)
+	{
+		if(tr2==tr_3b)
+		{
+			UINT8 p1 = pval&0xf0;
+			if(!p1)				{f3_alpha_blend_3b_0(s_pix);if(pdest_3b) pval |= pdest_3b;else return 1;}
+			else if(p1==0x10)	{f3_alpha_blend_3b_1(s_pix);if(pdest_3b) pval |= pdest_3b;else return 1;}
+			else if(p1==0x20)	{f3_alpha_blend_3b_2(s_pix);if(pdest_3b) pval |= pdest_3b;else return 1;}
+		}
+		else if(tr2==tr_3a)
+		{
+			UINT8 p1 = pval&0xf0;
+			if(!p1)				{f3_alpha_blend_3a_0(s_pix);if(pdest_3a) pval |= pdest_3a;else return 1;}
+			else if(p1==0x10)	{f3_alpha_blend_3a_1(s_pix);if(pdest_3a) pval |= pdest_3a;else return 1;}
+			else if(p1==0x20)	{f3_alpha_blend_3a_2(s_pix);if(pdest_3a) pval |= pdest_3a;else return 1;}
+		}
+	}
+	else
+	{
+		if(tr2==tr_3b)
+		{
+			UINT8 p1 = pval&0xf0;
+			if(!p1)				{dval = s_pix;if(pdest_3b) pval |= pdest_3b;else return 1;}
+			else if(p1==0x10)	{if(pdest_3b) pval |= pdest_3b;else return 1;}
+			else if(p1==0x20)	{if(pdest_3b) pval |= pdest_3b;else return 1;}
+		}
+		else if(tr2==tr_3a)
+		{
+			UINT8 p1 = pval&0xf0;
+			if(!p1)				{dval = s_pix;if(pdest_3a) pval |= pdest_3a;else return 1;}
+			else if(p1==0x10)	{if(pdest_3a) pval |= pdest_3a;else return 1;}
+			else if(p1==0x20)	{if(pdest_3a) pval |= pdest_3a;else return 1;}
+		}
+	}
+	return 0;
+}
+
+static int dpix_1_noalpha(UINT32 s_pix)
+{
+	dval = s_pix;
+	return 1;
+}
+
+static void dpix_1_sprite(UINT32 s_pix)
+{
+	if(s_pix)
+	{
+		UINT8 p1 = pval&0xf0;
+		if     (p1==0x10)	f3_alpha_blend_1_1(s_pix);
+		else if(p1==0x20)	f3_alpha_blend_1_2(s_pix);
+		else if(p1==0x40)	f3_alpha_blend_1_4(s_pix);
+		else if(p1==0x50)	f3_alpha_blend_1_5(s_pix);
+		else if(p1==0x60)	f3_alpha_blend_1_6(s_pix);
+		else if(p1==0x80)	f3_alpha_blend_1_8(s_pix);
+		else if(p1==0x90)	f3_alpha_blend_1_9(s_pix);
+		else if(p1==0xa0)	f3_alpha_blend_1_a(s_pix);
+	}
+}
+
+INLINE void dpix_bg(UINT32 bgcolor)
+{
+	UINT8 p1 = pval&0xf0;
+	if(!p1)			dval = bgcolor;
+	else if(p1==0x10)	f3_alpha_blend_1_1(bgcolor);
+	else if(p1==0x20)	f3_alpha_blend_1_2(bgcolor);
+	else if(p1==0x40)	f3_alpha_blend_1_4(bgcolor);
+	else if(p1==0x50)	f3_alpha_blend_1_5(bgcolor);
+	else if(p1==0x60)	f3_alpha_blend_1_6(bgcolor);
+	else if(p1==0x80)	f3_alpha_blend_1_8(bgcolor);
+	else if(p1==0x90)	f3_alpha_blend_1_9(bgcolor);
+	else if(p1==0xa0)	f3_alpha_blend_1_a(bgcolor);
+}
 
 /******************************************************************************/
-/* draw scanline */
+
+static void init_alpha_blend_func(void)
+{
+	dpix_n[0]=dpix_1_noalpha;
+	dpix_n[1]=dpix_1;
+	dpix_n[2]=dpix_2a;
+	dpix_n[3]=dpix_3a;
+	dpix_n[4]=dpix_2b;
+	dpix_n[5]=dpix_3b;
+	dpix_n[6]=dpix_2;
+	dpix_n[7]=dpix_3;
+
+	dpix_sn[0]=0;
+	dpix_sn[1]=dpix_2a;
+	dpix_sn[2]=dpix_3a;
+	dpix_sn[3]=0;
+
+	f3_alpha_blend_s = f3_alpha_blend32_s;
+	f3_alpha_blend_d_lmt = f3_alpha_blend32_d_lmt;
+	f3_alpha_blend_d_nml = f3_alpha_blend32_d_nml;
+}
+
+/******************************************************************************/
+
+#define GET_PIXMAP_POINTER(pf_num) \
+{ \
+	const struct f3_line_inf *line_tmp=line_t[pf_num]; \
+	src##pf_num=line_tmp->src[y]; \
+	src_s##pf_num=line_tmp->src_s[y]; \
+	src_e##pf_num=line_tmp->src_e[y]; \
+	tsrc##pf_num=line_tmp->tsrc[y]; \
+	tsrc_s##pf_num=line_tmp->tsrc_s[y]; \
+	x_count##pf_num=line_tmp->x_count[y]; \
+	x_zoom##pf_num=line_tmp->x_zoom[y]; \
+}
+
+#define CULC_PIXMAP_POINTER(pf_num) \
+{ \
+	x_count##pf_num += x_zoom##pf_num; \
+	if(x_count##pf_num>>16) \
+	{ \
+		x_count##pf_num &= 0xffff; \
+		src##pf_num++; \
+		tsrc##pf_num++; \
+		if(src##pf_num==src_e##pf_num) {src##pf_num=src_s##pf_num; tsrc##pf_num=tsrc_s##pf_num;} \
+	} \
+}
+
+/*============================================================================*/
+
 INLINE void f3_drawscanlines(
-		struct mame_bitmap *bitmap,int x,int y,int xsize,int ysize,
-		const struct f3_line_inf *line_t,
-		int transparent,UINT32 orient,
-		int *pri_sp,int pri_sl,
-		int draw_type)
+		struct mame_bitmap *bitmap,int x,int xsize,INT16 *draw_line_num,
+		const struct f3_line_inf **line_t,
+		const int *sprite,
+		UINT32 orient,
+		int skip_layer_num)
 {
 	pen_t *clut = &Machine->remapped_colortable[0];
+	UINT32 bgcolor=clut[0];
 	int length;
-	UINT16 *src,*src_s,*src_e;
-	UINT8 *tsrc,*tsrc_s,*tsrc_e;
-	UINT32 x_count,x_zoom;
-	int src_inc=line_t->src_inc,tsrc_inc=line_t->tsrc_inc;
 
-	UINT32 *dsti0,*dsti;
+	UINT32 sprite_noalp_0=sprite[0]&0x100;
+	UINT32 sprite_noalp_1=sprite[1]&0x100;
+	UINT32 sprite_noalp_2=sprite[2]&0x100;
+	UINT32 sprite_noalp_3=sprite[3]&0x100;
+	UINT32 sprite_noalp_4=sprite[4]&0x100;
+
+	static UINT16 *src0=0,*src_s0=0,*src_e0=0;
+	static UINT8 *tsrc0=0,*tsrc_s0=0;
+	static UINT32 x_count0=0,x_zoom0=0;
+
+	static UINT16 *src1=0,*src_s1=0,*src_e1=0;
+	static UINT8 *tsrc1=0,*tsrc_s1=0;
+	static UINT32 x_count1=0,x_zoom1=0;
+
+	static UINT16 *src2=0,*src_s2=0,*src_e2=0;
+	static UINT8 *tsrc2=0,*tsrc_s2=0;
+	static UINT32 x_count2=0,x_zoom2=0;
+
+	static UINT16 *src3=0,*src_s3=0,*src_e3=0;
+	static UINT8 *tsrc3=0,*tsrc_s3=0;
+	static UINT32 x_count3=0,x_zoom3=0;
+
 	UINT8 *dstp0,*dstp;
-	UINT16 *srcs0,*srcs;
-	int yadv = bitmap->rowpixels;
-	int xadv = 1;
-	int ty=y;
 
-	if (orient & ORIENTATION_FLIP_Y) {
+	int yadv = bitmap->rowpixels;
+	int i=0,y=draw_line_num[0];
+	int ty = y;
+
+	if (orient & ORIENTATION_FLIP_Y)
+	{
 		ty = bitmap->height - 1 - ty;
 		yadv = -yadv;
 	}
 
-	dsti0 = (UINT32 *)bitmap->line[ty] + x;
 	dstp0 = (UINT8 *)pri_alp_bitmap->line[ty] + x;
-	srcs0 = (UINT16 *)sprite_bitmap->line[ty] + x;
+
+	pdest_2a = f3_alpha_level_2ad ? 0x10 : 0;
+	pdest_2b = f3_alpha_level_2bd ? 0x20 : 0;
+	tr_2a =(f3_alpha_level_2as==0 && f3_alpha_level_2ad==255) ? -1 : 0;
+	tr_2b =(f3_alpha_level_2bs==0 && f3_alpha_level_2bd==255) ? -1 : 1;
+	pdest_3a = f3_alpha_level_3ad ? 0x40 : 0;
+	pdest_3b = f3_alpha_level_3bd ? 0x80 : 0;
+	tr_3a =(f3_alpha_level_3as==0 && f3_alpha_level_3ad==255) ? -1 : 0;
+	tr_3b =(f3_alpha_level_3bs==0 && f3_alpha_level_3bd==255) ? -1 : 1;
 
 
-
-	if(draw_type==1)	/* 3000 */
+//	if (bitmap->depth == 32)
 	{
-		if (transparent!=TILEMAP_IGNORE_TRANSPARENCY)
-		{
-			while (ysize--)
-			{
-				length=xsize;
-				dsti = dsti0;
-				dstp = dstp0;
-				srcs = srcs0;
-
-				src=line_t->src[y];
-				src_s=line_t->src_s[y];
-				src_e=line_t->src_e[y];
-				tsrc=line_t->tsrc[y];
-				tsrc_s=line_t->tsrc_s[y];
-				tsrc_e=line_t->tsrc_e[y];
-				x_count=line_t->x_count[y];
-				x_zoom=line_t->x_zoom[y];
-
-				while (length--)
-				{
-					UINT8 p0=*dstp;
-					if (p0!=0xff)
-					{
-						if(p0&7 && pri_sp[p0&3]>=pri_sl)
-						{
-							UINT8 p1 = (p0&0x78)>>3;
-							if(!p1)				*dsti = clut[*srcs];
-							else if(p1==1)	*dsti = f3_alpha_blend_1_1(*dsti, clut[*srcs]);
-							else if(p1==2)	*dsti = f3_alpha_blend_1_2(*dsti, clut[*srcs]);
-							else if(p1==4)	*dsti = f3_alpha_blend_1_4(*dsti, clut[*srcs]);
-							else if(p1==5)	*dsti = f3_alpha_blend_1_5(*dsti, clut[*srcs]);
-							else if(p1==6)	*dsti = f3_alpha_blend_1_6(*dsti, clut[*srcs]);
-							else if(p1==8)	*dsti = f3_alpha_blend_1_8(*dsti, clut[*srcs]);
-							else if(p1==9)	*dsti = f3_alpha_blend_1_9(*dsti, clut[*srcs]);
-							else if(p1==10)	*dsti = f3_alpha_blend_1_a(*dsti, clut[*srcs]);
-							else usrintf_showmessage("TaitoF3: pri buff error");
-							*dstp = 0xff;
-						}
-						else if((*tsrc)&0xf0)
-						{
-							UINT8 p1 = (p0&0x78)>>3;
-							if(!p1)				*dsti = clut[*src];
-							else if(p1==1)	*dsti = f3_alpha_blend_1_1(*dsti, clut[*src]);
-							else if(p1==2)	*dsti = f3_alpha_blend_1_2(*dsti, clut[*src]);
-							else if(p1==4)	*dsti = f3_alpha_blend_1_4(*dsti, clut[*src]);
-							else if(p1==5)	*dsti = f3_alpha_blend_1_5(*dsti, clut[*src]);
-							else if(p1==6)	*dsti = f3_alpha_blend_1_6(*dsti, clut[*src]);
-							else if(p1==8)	*dsti = f3_alpha_blend_1_8(*dsti, clut[*src]);
-							else if(p1==9)	*dsti = f3_alpha_blend_1_9(*dsti, clut[*src]);
-							else if(p1==10)	*dsti = f3_alpha_blend_1_a(*dsti, clut[*src]);
-							else usrintf_showmessage("TaitoF3: pri buff error");
-							*dstp = 0xff;
-						}
-					}
-
-					dsti += xadv;
-					dstp += xadv;
-					srcs += xadv;
-					x_count += x_zoom;
-					if(x_count>>16)
-					{
-						x_count &= 0xffff;
-						src += src_inc;
-						tsrc += tsrc_inc;
-						if(src==src_e) {src=src_s; tsrc=tsrc_s;}
-					}
-				}
-
-				dsti0 += yadv;
-				dstp0 += yadv;
-				srcs0 += yadv;
-				y++;
-			}
-		}
-		else
-		{
-			while (ysize--)
-			{
-				length=xsize;
-				dsti = dsti0;
-				dstp = dstp0;
-				srcs = srcs0;
-
-				src=line_t->src[y];
-				src_s=line_t->src_s[y];
-				src_e=line_t->src_e[y];
-				tsrc=line_t->tsrc[y];
-				tsrc_s=line_t->tsrc_s[y];
-				tsrc_e=line_t->tsrc_e[y];
-				x_count=line_t->x_count[y];
-				x_zoom=line_t->x_zoom[y];
-
-				while (length--)
-				{
-					UINT8 p0=*dstp;
-					if (p0!=0xff)
-					{
-						if(p0&7 && (pri_sp[p0&3]>=pri_sl || !((*tsrc)&0xf0)))
-						{
-							UINT8 p1 = (p0&0x78)>>3;
-							if(!p1)			*dsti = clut[*srcs];
-							else if(p1==1)	*dsti = f3_alpha_blend_1_1(*dsti, clut[*srcs]);
-							else if(p1==2)	*dsti = f3_alpha_blend_1_2(*dsti, clut[*srcs]);
-							else if(p1==4)	*dsti = f3_alpha_blend_1_4(*dsti, clut[*srcs]);
-							else if(p1==5)	*dsti = f3_alpha_blend_1_5(*dsti, clut[*srcs]);
-							else if(p1==6)	*dsti = f3_alpha_blend_1_6(*dsti, clut[*srcs]);
-							else if(p1==8)	*dsti = f3_alpha_blend_1_8(*dsti, clut[*srcs]);
-							else if(p1==9)	*dsti = f3_alpha_blend_1_9(*dsti, clut[*srcs]);
-							else if(p1==10)	*dsti = f3_alpha_blend_1_a(*dsti, clut[*srcs]);
-							else usrintf_showmessage("TaitoF3: pri buff error");
-						}
-						else
-						{
-							UINT8 p1 = (p0&0x78)>>3;
-							if(!p1)			*dsti = clut[*src];
-							else if(p1==1)	*dsti = f3_alpha_blend_1_1(*dsti, clut[*src]);
-							else if(p1==2)	*dsti = f3_alpha_blend_1_2(*dsti, clut[*src]);
-							else if(p1==4)	*dsti = f3_alpha_blend_1_4(*dsti, clut[*src]);
-							else if(p1==5)	*dsti = f3_alpha_blend_1_5(*dsti, clut[*src]);
-							else if(p1==6)	*dsti = f3_alpha_blend_1_6(*dsti, clut[*src]);
-							else if(p1==8)	*dsti = f3_alpha_blend_1_8(*dsti, clut[*src]);
-							else if(p1==9)	*dsti = f3_alpha_blend_1_9(*dsti, clut[*src]);
-							else if(p1==10)	*dsti = f3_alpha_blend_1_a(*dsti, clut[*src]);
-							else usrintf_showmessage("TaitoF3: pri buff error");
-						}
-					}
-
-					dsti += xadv;
-					dstp += xadv;
-					srcs += xadv;
-					x_count += x_zoom;
-					if(x_count>>16)
-					{
-						x_count &= 0xffff;
-						src += src_inc;
-						tsrc += tsrc_inc;
-						if(src==src_e) {src=src_s; tsrc=tsrc_s;}
-					}
-				}
-
-				dsti0 += yadv;
-				dstp0 += yadv;
-				srcs0 += yadv;
-				y++;
-			}
-		}
-	}
-	else if(draw_type==2)	/* 7000 */
-	{
-		if (transparent!=TILEMAP_IGNORE_TRANSPARENCY)
-		{
-			UINT8 pdest_a = f3_alpha_level_2ad ? 0x08 : 0xff;
-			UINT8 pdest_b = f3_alpha_level_2bd ? 0x10 : 0xff;
-			int tr_a =(f3_alpha_level_2as==0 && f3_alpha_level_2ad==255) ? -1 : 0;
-			int tr_b =(f3_alpha_level_2bs==0 && f3_alpha_level_2bd==255) ? -1 : 1;
-
-			while (ysize--)
-			{
-				length=xsize;
-				dsti = dsti0;
-				dstp = dstp0;
-				srcs = srcs0;
-
-				src=line_t->src[y];
-				src_s=line_t->src_s[y];
-				src_e=line_t->src_e[y];
-				tsrc=line_t->tsrc[y];
-				tsrc_s=line_t->tsrc_s[y];
-				tsrc_e=line_t->tsrc_e[y];
-				x_count=line_t->x_count[y];
-				x_zoom=line_t->x_zoom[y];
-
-				while (length--)
-				{
-					UINT8 p0=*dstp;
-					if (p0!=0xff)
-					{
-						UINT8 tr=*tsrc;
-						if(p0&7 && pri_sp[p0&3]>=pri_sl)
-						{
-							UINT8 p1 = (p0&0x78)>>3;
-							if(!p1)			*dsti = clut[*srcs];
-							else if(p1==1)	*dsti = f3_alpha_blend_1_1(*dsti, clut[*srcs]);
-							else if(p1==2)	*dsti = f3_alpha_blend_1_2(*dsti, clut[*srcs]);
-							else if(p1==4)	*dsti = f3_alpha_blend_1_4(*dsti, clut[*srcs]);
-							else if(p1==5)	*dsti = f3_alpha_blend_1_5(*dsti, clut[*srcs]);
-							else if(p1==6)	*dsti = f3_alpha_blend_1_6(*dsti, clut[*srcs]);
-							else if(p1==8)	*dsti = f3_alpha_blend_1_8(*dsti, clut[*srcs]);
-							else if(p1==9)	*dsti = f3_alpha_blend_1_9(*dsti, clut[*srcs]);
-							else if(p1==10)	*dsti = f3_alpha_blend_1_a(*dsti, clut[*srcs]);
-							else usrintf_showmessage("TaitoF3: pri buff error");
-							*dstp = 0xff;
-						}
-						else if(tr&0xf0)
-						{
-							UINT8 tr2=tr&1;
-							if(tr2==tr_b)
-							{
-								UINT8 p1 = (p0&0x78)>>3;
-								if(!p1)			{*dsti = f3_alpha_blend_2b_0(clut[*src]);*dstp = p0|pdest_b;}
-							//	else if(p1==1)	{}
-							//	else if(p1==2)	{}
-								else if(p1==4)	{*dsti = f3_alpha_blend_2b_4(*dsti, clut[*src]);*dstp = p0|pdest_b;}
-							//	else if(p1==5)	{}
-							//	else if(p1==6)	{}
-								else if(p1==8)	{*dsti = f3_alpha_blend_2b_8(*dsti, clut[*src]);*dstp = p0|pdest_b;}
-							//	else if(p1==9)	{}
-							//	else if(p1==10)	{}
-							//	else usrintf_showmessage("TaitoF3: pri buff error");
-							}
-							else if(tr2==tr_a)
-							{
-								UINT8 p1 = (p0&0x78)>>3;
-								if(!p1)			{*dsti = f3_alpha_blend_2a_0(clut[*src]);*dstp = p0|pdest_a;}
-							//	else if(p1==1)	{}
-							//	else if(p1==2)	{}
-								else if(p1==4)	{*dsti = f3_alpha_blend_2a_4(*dsti, clut[*src]);*dstp = p0|pdest_a;}
-							//	else if(p1==5)	{}
-							//	else if(p1==6)	{}
-								else if(p1==8)	{*dsti = f3_alpha_blend_2a_8(*dsti, clut[*src]);*dstp = p0|pdest_a;}
-							//	else if(p1==9)	{}
-							//	else if(p1==10)	{}
-							//	else usrintf_showmessage("TaitoF3: pri buff error");
-							}
-						}
-					}
-
-					dsti += xadv;
-					dstp += xadv;
-					srcs += xadv;
-					x_count += x_zoom;
-					if(x_count>>16)
-					{
-						x_count &= 0xffff;
-						src += src_inc;
-						tsrc += tsrc_inc;
-						if(src==src_e) {src=src_s; tsrc=tsrc_s;}
-					}
-				}
-
-				dsti0 += yadv;
-				dstp0 += yadv;
-				srcs0 += yadv;
-				y++;
-			}
-		}
-		else
-		{
-			while (ysize--)
-			{
-				length=xsize;
-				dsti = dsti0;
-				dstp = dstp0;
-				srcs = srcs0;
-
-				src=line_t->src[y];
-				src_s=line_t->src_s[y];
-				src_e=line_t->src_e[y];
-				tsrc=line_t->tsrc[y];
-				tsrc_s=line_t->tsrc_s[y];
-				tsrc_e=line_t->tsrc_e[y];
-				x_count=line_t->x_count[y];
-				x_zoom=line_t->x_zoom[y];
-
-				while (length--)
-				{
-					UINT8 p0=*dstp;
-					if (p0!=0xff)
-					{
-						UINT8 tr=*tsrc;
-						if(p0&7 && (pri_sp[p0&3]>=pri_sl || !(tr&0xf0)))
-						{
-							UINT8 p1 = (p0&0x78)>>3;
-							if(!p1)			*dsti = clut[*srcs];
-							else if(p1==1)	*dsti = f3_alpha_blend_1_1(*dsti, clut[*srcs]);
-							else if(p1==2)	*dsti = f3_alpha_blend_1_2(*dsti, clut[*srcs]);
-							else if(p1==4)	*dsti = f3_alpha_blend_1_4(*dsti, clut[*srcs]);
-							else if(p1==5)	*dsti = f3_alpha_blend_1_5(*dsti, clut[*srcs]);
-							else if(p1==6)	*dsti = f3_alpha_blend_1_6(*dsti, clut[*srcs]);
-							else if(p1==8)	*dsti = f3_alpha_blend_1_8(*dsti, clut[*srcs]);
-							else if(p1==9)	*dsti = f3_alpha_blend_1_9(*dsti, clut[*srcs]);
-							else if(p1==10)	*dsti = f3_alpha_blend_1_a(*dsti, clut[*srcs]);
-							else usrintf_showmessage("TaitoF3: pri buff error");
-						}
-						else
-						{
-							UINT8 p1 = (p0&0x78)>>3;
-							if(tr&1)
-							{
-								if(!p1)			{*dsti = f3_alpha_blend_2b_0(clut[*src]);
-												 if(p0&7) *dsti = f3_alpha_blend_1_2(*dsti, clut[*srcs]);}
-								else if(p1==1)	{if(p0&7) *dsti = f3_alpha_blend_1_1(*dsti, clut[*srcs]);}
-								else if(p1==2)	{if(p0&7) *dsti = f3_alpha_blend_1_2(*dsti, clut[*srcs]);}
-								else if(p1==4)	{*dsti = f3_alpha_blend_2b_4(*dsti, clut[*src]);
-												 if(p0&7) *dsti = f3_alpha_blend_1_6(*dsti, clut[*srcs]);}
-								else if(p1==5)	{if(p0&7) *dsti = f3_alpha_blend_1_5(*dsti, clut[*srcs]);}
-								else if(p1==6)	{if(p0&7) *dsti = f3_alpha_blend_1_6(*dsti, clut[*srcs]);}
-								else if(p1==8)	{*dsti = f3_alpha_blend_2b_8(*dsti, clut[*src]);
-												 if(p0&7) *dsti = f3_alpha_blend_1_a(*dsti, clut[*srcs]);}
-								else if(p1==9)	{if(p0&7) *dsti = f3_alpha_blend_1_9(*dsti, clut[*srcs]);}
-								else if(p1==10)	{if(p0&7) *dsti = f3_alpha_blend_1_a(*dsti, clut[*srcs]);}
-								else usrintf_showmessage("TaitoF3: pri buff error");
-							}
-							else
-							{
-								if(!p1)			{*dsti = f3_alpha_blend_2a_0(clut[*src]);
-												 if(p0&7) *dsti = f3_alpha_blend_1_1(*dsti, clut[*srcs]);}
-								else if(p1==1)	{if(p0&7) *dsti = f3_alpha_blend_1_1(*dsti, clut[*srcs]);}
-								else if(p1==2)	{if(p0&7) *dsti = f3_alpha_blend_1_2(*dsti, clut[*srcs]);}
-								else if(p1==4)	{*dsti = f3_alpha_blend_2a_4(*dsti, clut[*src]);
-												 if(p0&7) *dsti = f3_alpha_blend_1_5(*dsti, clut[*srcs]);}
-								else if(p1==5)	{if(p0&7) *dsti = f3_alpha_blend_1_5(*dsti, clut[*srcs]);}
-								else if(p1==6)	{if(p0&7) *dsti = f3_alpha_blend_1_6(*dsti, clut[*srcs]);}
-								else if(p1==8)	{*dsti = f3_alpha_blend_2a_8(*dsti, clut[*src]);
-												 if(p0&7) *dsti = f3_alpha_blend_1_9(*dsti, clut[*srcs]);}
-								else if(p1==9)	{if(p0&7) *dsti = f3_alpha_blend_1_9(*dsti, clut[*srcs]);}
-								else if(p1==10)	{if(p0&7) *dsti = f3_alpha_blend_1_a(*dsti, clut[*srcs]);}
-								else usrintf_showmessage("TaitoF3: pri buff error");
-							}
-						}
-					}
-
-					dsti += xadv;
-					dstp += xadv;
-					srcs += xadv;
-					x_count += x_zoom;
-					if(x_count>>16)
-					{
-						x_count &= 0xffff;
-						src += src_inc;
-						tsrc += tsrc_inc;
-						if(src==src_e) {src=src_s; tsrc=tsrc_s;}
-					}
-				}
-
-				dsti0 += yadv;
-				dstp0 += yadv;
-				srcs0 += yadv;
-				y++;
-			}
-		}
-	}
-	else if(draw_type==3)	/* b000 */
-	{
-		if (transparent!=TILEMAP_IGNORE_TRANSPARENCY)
-		{
-			UINT8 pdest_a = f3_alpha_level_3ad ? 0x20 : 0xff;
-			UINT8 pdest_b = f3_alpha_level_3bd ? 0x40 : 0xff;
-			int tr_a =(f3_alpha_level_3as==0 && f3_alpha_level_3ad==255) ? -1 : 0;
-			int tr_b =(f3_alpha_level_3bs==0 && f3_alpha_level_3bd==255) ? -1 : 1;
-
-			while (ysize--)
-			{
-				length=xsize;
-				dsti = dsti0;
-				dstp = dstp0;
-				srcs = srcs0;
-
-				src=line_t->src[y];
-				src_s=line_t->src_s[y];
-				src_e=line_t->src_e[y];
-				tsrc=line_t->tsrc[y];
-				tsrc_s=line_t->tsrc_s[y];
-				tsrc_e=line_t->tsrc_e[y];
-				x_count=line_t->x_count[y];
-				x_zoom=line_t->x_zoom[y];
-
-				while (length--)
-				{
-					UINT8 p0=*dstp;
-					if (p0!=0xff)
-					{
-						UINT8 tr=*tsrc;
-						if(p0&7 && pri_sp[p0&3]>=pri_sl)
-						{
-							UINT8 p1 = (p0&0x78)>>3;
-							if(!p1)			*dsti = clut[*srcs];
-							else if(p1==1)	*dsti = f3_alpha_blend_1_1(*dsti, clut[*srcs]);
-							else if(p1==2)	*dsti = f3_alpha_blend_1_2(*dsti, clut[*srcs]);
-							else if(p1==4)	*dsti = f3_alpha_blend_1_4(*dsti, clut[*srcs]);
-							else if(p1==5)	*dsti = f3_alpha_blend_1_5(*dsti, clut[*srcs]);
-							else if(p1==6)	*dsti = f3_alpha_blend_1_6(*dsti, clut[*srcs]);
-							else if(p1==8)	*dsti = f3_alpha_blend_1_8(*dsti, clut[*srcs]);
-							else if(p1==9)	*dsti = f3_alpha_blend_1_9(*dsti, clut[*srcs]);
-							else if(p1==10)	*dsti = f3_alpha_blend_1_a(*dsti, clut[*srcs]);
-							else usrintf_showmessage("TaitoF3: pri buff error");
-							*dstp = 0xff;
-						}
-						else if(tr&0xf0)
-						{
-							UINT8 tr2=tr&1;
-							if(tr2==tr_b)
-							{
-								UINT8 p1 = (p0&0x78)>>3;
-								if(!p1)			{*dsti = f3_alpha_blend_3b_0(clut[*src]);*dstp = p0|pdest_b;}
-								else if(p1==1)	{*dsti = f3_alpha_blend_3b_1(*dsti, clut[*src]);*dstp = p0|pdest_b;}
-								else if(p1==2)	{*dsti = f3_alpha_blend_3b_2(*dsti, clut[*src]);*dstp = p0|pdest_b;}
-							//	else if(p1==4)	{}
-							//	else if(p1==5)	{}
-							//	else if(p1==6)	{}
-							//	else if(p1==8)	{}
-							//	else if(p1==9)	{}
-							//	else if(p1==10)	{}
-							//	else usrintf_showmessage("TaitoF3: pri buff error");
-							}
-							else if(tr2==tr_a)
-							{
-								UINT8 p1 = (p0&0x78)>>3;
-								if(!p1)			{*dsti = f3_alpha_blend_3a_0(clut[*src]);*dstp = p0|pdest_a;}
-								else if(p1==1)	{*dsti = f3_alpha_blend_3a_1(*dsti, clut[*src]);*dstp = p0|pdest_a;}
-								else if(p1==2)	{*dsti = f3_alpha_blend_3a_2(*dsti, clut[*src]);*dstp = p0|pdest_a;}
-							//	else if(p1==4)	{}
-							//	else if(p1==5)	{}
-							//	else if(p1==6)	{}
-							//	else if(p1==8)	{}
-							//	else if(p1==9)	{}
-							//	else if(p1==10)	{}
-							//	else usrintf_showmessage("TaitoF3: pri buff error");
-							}
-						}
-					}
-
-					dsti += xadv;
-					dstp += xadv;
-					srcs += xadv;
-					x_count += x_zoom;
-					if(x_count>>16)
-					{
-						x_count &= 0xffff;
-						src += src_inc;
-						tsrc += tsrc_inc;
-						if(src==src_e) {src=src_s; tsrc=tsrc_s;}
-					}
-				}
-
-				dsti0 += yadv;
-				dstp0 += yadv;
-				srcs0 += yadv;
-				y++;
-			}
-		}
-		else
-		{
-			while (ysize--)
-			{
-				length=xsize;
-				dsti = dsti0;
-				dstp = dstp0;
-				srcs = srcs0;
-
-				src=line_t->src[y];
-				src_s=line_t->src_s[y];
-				src_e=line_t->src_e[y];
-				tsrc=line_t->tsrc[y];
-				tsrc_s=line_t->tsrc_s[y];
-				tsrc_e=line_t->tsrc_e[y];
-				x_count=line_t->x_count[y];
-				x_zoom=line_t->x_zoom[y];
-
-				while (length--)
-				{
-					UINT8 p0=*dstp;
-					if (p0!=0xff)
-					{
-						UINT8 tr=*tsrc;
-						if(p0&7 && (pri_sp[p0&3]>=pri_sl || !(tr&0xf0)))
-						{
-							UINT8 p1 = (p0&0x78)>>3;
-							if(!p1)			*dsti = clut[*srcs];
-							else if(p1==1)	*dsti = f3_alpha_blend_1_1(*dsti, clut[*srcs]);
-							else if(p1==2)	*dsti = f3_alpha_blend_1_2(*dsti, clut[*srcs]);
-							else if(p1==4)	*dsti = f3_alpha_blend_1_4(*dsti, clut[*srcs]);
-							else if(p1==5)	*dsti = f3_alpha_blend_1_5(*dsti, clut[*srcs]);
-							else if(p1==6)	*dsti = f3_alpha_blend_1_6(*dsti, clut[*srcs]);
-							else if(p1==8)	*dsti = f3_alpha_blend_1_8(*dsti, clut[*srcs]);
-							else if(p1==9)	*dsti = f3_alpha_blend_1_9(*dsti, clut[*srcs]);
-							else if(p1==10)	*dsti = f3_alpha_blend_1_a(*dsti, clut[*srcs]);
-							else usrintf_showmessage("TaitoF3: pri buff error");
-						}
-						else
-						{
-							UINT8 p1 = (p0&0x78)>>3;
-							if(tr&1)
-							{
-								if(!p1)			{*dsti = f3_alpha_blend_3b_0(clut[*src]);
-												 if(p0&7) *dsti = f3_alpha_blend_1_8(*dsti, clut[*srcs]);}
-								else if(p1==1)	{*dsti = f3_alpha_blend_3b_1(*dsti, clut[*src]);
-												 if(p0&7) *dsti = f3_alpha_blend_1_9(*dsti, clut[*srcs]);}
-								else if(p1==2)	{*dsti = f3_alpha_blend_3b_2(*dsti, clut[*src]);
-												 if(p0&7) *dsti = f3_alpha_blend_1_a(*dsti, clut[*srcs]);}
-								else if(p1==4)	{if(p0&7) *dsti = f3_alpha_blend_1_4(*dsti, clut[*srcs]);}
-								else if(p1==5)	{if(p0&7) *dsti = f3_alpha_blend_1_5(*dsti, clut[*srcs]);}
-								else if(p1==6)	{if(p0&7) *dsti = f3_alpha_blend_1_6(*dsti, clut[*srcs]);}
-								else if(p1==8)	{if(p0&7) *dsti = f3_alpha_blend_1_8(*dsti, clut[*srcs]);}
-								else if(p1==9)	{if(p0&7) *dsti = f3_alpha_blend_1_9(*dsti, clut[*srcs]);}
-								else if(p1==10)	{if(p0&7) *dsti = f3_alpha_blend_1_a(*dsti, clut[*srcs]);}
-								else usrintf_showmessage("TaitoF3: pri buff error");
-							}
-							else
-							{
-								if(!p1)			{*dsti = f3_alpha_blend_3a_0(clut[*src]);
-												 if(p0&7) *dsti = f3_alpha_blend_1_4(*dsti, clut[*srcs]);}
-								else if(p1==1)	{*dsti = f3_alpha_blend_3a_1(*dsti, clut[*src]);
-												 if(p0&7) *dsti = f3_alpha_blend_1_5(*dsti, clut[*srcs]);}
-								else if(p1==2)	{*dsti = f3_alpha_blend_3a_2(*dsti, clut[*src]);
-												 if(p0&7) *dsti = f3_alpha_blend_1_6(*dsti, clut[*srcs]);}
-								else if(p1==4)	{if(p0&7) *dsti = f3_alpha_blend_1_4(*dsti, clut[*srcs]);}
-								else if(p1==5)	{if(p0&7) *dsti = f3_alpha_blend_1_5(*dsti, clut[*srcs]);}
-								else if(p1==6)	{if(p0&7) *dsti = f3_alpha_blend_1_6(*dsti, clut[*srcs]);}
-								else if(p1==8)	{if(p0&7) *dsti = f3_alpha_blend_1_8(*dsti, clut[*srcs]);}
-								else if(p1==9)	{if(p0&7) *dsti = f3_alpha_blend_1_9(*dsti, clut[*srcs]);}
-								else if(p1==10)	{if(p0&7) *dsti = f3_alpha_blend_1_a(*dsti, clut[*srcs]);}
-								else usrintf_showmessage("TaitoF3: pri buff error");
-							}
-						}
-					}
-
-					dsti += xadv;
-					dstp += xadv;
-					srcs += xadv;
-					x_count += x_zoom;
-					if(x_count>>16)
-					{
-						x_count &= 0xffff;
-						src += src_inc;
-						tsrc += tsrc_inc;
-						if(src==src_e) {src=src_s; tsrc=tsrc_s;}
-					}
-				}
-
-				dsti0 += yadv;
-				dstp0 += yadv;
-				srcs0 += yadv;
-				y++;
-			}
-		}
-	}
-	else if(draw_type==0)	/* disable line  TILEMAP_IGNORE_TRANSPARENCY only */
-	{
-		while (ysize--)
+		UINT32 *dsti0,*dsti;
+		dsti0 = (UINT32 *)bitmap->line[ty] + x;
+		while(1)
 		{
 			length=xsize;
 			dsti = dsti0;
 			dstp = dstp0;
-			srcs = srcs0;
-			while (length--)
+
+			switch(skip_layer_num)
 			{
-				UINT8 p0=*dstp;
-				if (p0!=0xff)
+				case 0: GET_PIXMAP_POINTER(0)
+				case 1: GET_PIXMAP_POINTER(1)
+				case 2: GET_PIXMAP_POINTER(2)
+				case 3: GET_PIXMAP_POINTER(3)
+			}
+
+			while (1)
+			{
+				pval=*dstp;
+				if (pval!=0xff)
 				{
-					if(!p0) *dsti = 0;
-					else if((p0&7))
+					UINT8 sprite_pri;
+					switch(skip_layer_num)
 					{
-						UINT8 p1 = (p0&0x78)>>3;
-						if(!p1)			*dsti = clut[*srcs];
-						else if(p1==1)	*dsti = f3_alpha_blend_1_1(*dsti, clut[*srcs]);
-						else if(p1==2)	*dsti = f3_alpha_blend_1_2(*dsti, clut[*srcs]);
-						else if(p1==4)	*dsti = f3_alpha_blend_1_4(*dsti, clut[*srcs]);
-						else if(p1==5)	*dsti = f3_alpha_blend_1_5(*dsti, clut[*srcs]);
-						else if(p1==6)	*dsti = f3_alpha_blend_1_6(*dsti, clut[*srcs]);
-						else if(p1==8)	*dsti = f3_alpha_blend_1_8(*dsti, clut[*srcs]);
-						else if(p1==9)	*dsti = f3_alpha_blend_1_9(*dsti, clut[*srcs]);
-						else if(p1==10)	*dsti = f3_alpha_blend_1_a(*dsti, clut[*srcs]);
-						else usrintf_showmessage("TaitoF3: pri buff error");
+						case 0: if((sprite_pri=sprite[0]&pval))
+								{
+									int (*dpix_sprite)(UINT32 s_pix);
+									if(sprite_noalp_0) break;
+									if(!(dpix_sprite=dpix_sp[sprite_pri])) break;
+									if(dpix_sprite(*dsti)) {*dsti=dval;break;}
+								}
+								{tval=*tsrc0;if(tval&0xf0) if(dpix_lp[0](clut[*src0])) {*dsti=dval;break;}}
+						case 1: if((sprite_pri=sprite[1]&pval))
+								{
+									int (*dpix_sprite)(UINT32 s_pix);
+									if(sprite_noalp_1) break;
+									if(!(dpix_sprite=dpix_sp[sprite_pri]))
+									{
+										if(!(pval&0xf0)) break;
+										else {dpix_1_sprite(*dsti);*dsti=dval;break;}
+									}
+									if(dpix_sprite(*dsti)) {*dsti=dval;break;}
+								}
+								{tval=*tsrc1;if(tval&0xf0) if(dpix_lp[1](clut[*src1])) {*dsti=dval;break;}}
+						case 2: if((sprite_pri=sprite[2]&pval))
+								{
+									int (*dpix_sprite)(UINT32 s_pix);
+									if(sprite_noalp_2) break;
+									if(!(dpix_sprite=dpix_sp[sprite_pri]))
+									{
+										if(!(pval&0xf0)) break;
+										else {dpix_1_sprite(*dsti);*dsti=dval;break;}
+									}
+									if(dpix_sprite(*dsti)) {*dsti=dval;break;}
+								}
+								{tval=*tsrc2;if(tval&0xf0) if(dpix_lp[2](clut[*src2])) {*dsti=dval;break;}}
+						case 3: if((sprite_pri=sprite[3]&pval))
+								{
+									int (*dpix_sprite)(UINT32 s_pix);
+									if(sprite_noalp_3) break;
+									if(!(dpix_sprite=dpix_sp[sprite_pri]))
+									{
+										if(!(pval&0xf0)) break;
+										else {dpix_1_sprite(*dsti);*dsti=dval;break;}
+									}
+									if(dpix_sprite(*dsti)) {*dsti=dval;break;}
+								}
+								{tval=*tsrc3;if(tval&0xf0) if(dpix_lp[3](clut[*src3])) {*dsti=dval;break;}}
+						case 4: if((sprite_pri=sprite[4]&pval))
+								{
+									int (*dpix_sprite)(UINT32 s_pix);
+									if(sprite_noalp_4) break;
+									if(!(dpix_sprite=dpix_sp[sprite_pri]))
+									{
+										if(!(pval&0xf0)) break;
+										else {dpix_1_sprite(*dsti);*dsti=dval;break;}
+									}
+									if(dpix_sprite(*dsti)) {*dsti=dval;break;}
+								}
+								if(!bgcolor) {if(!(pval&0xf0)) {*dsti=0;break;}}
+								else dpix_bg(bgcolor);
+								*dsti=dval;
 					}
 				}
-				dsti += xadv;
-				dstp += xadv;
-				srcs += xadv;
+
+				if(!(--length)) break;
+				dsti++;
+				dstp++;
+
+				switch(skip_layer_num)
+				{
+					case 0: CULC_PIXMAP_POINTER(0)
+					case 1: CULC_PIXMAP_POINTER(1)
+					case 2: CULC_PIXMAP_POINTER(2)
+					case 3: CULC_PIXMAP_POINTER(3)
+				}
 			}
-			dsti0 += yadv;
-			dstp0 += yadv;
-			srcs0 += yadv;
+
+			i++;
+			if(draw_line_num[i]<0) break;
+			if(draw_line_num[i]==y+1)
+			{
+				dsti0 += yadv;
+				dstp0 += yadv;
+				y++;
+				continue;
+			}
+			else
+			{
+				int dy=(draw_line_num[i]-y)*yadv;
+				dsti0 += dy;
+				dstp0 += dy;
+				y=draw_line_num[i];
+			}
 		}
 	}
-	else if(draw_type==-1)	/**/
+}
+#undef GET_PIXMAP_POINTER
+#undef CULC_PIXMAP_POINTER
+
+/******************************************************************************/
+
+INLINE void clear_scanlines(struct mame_bitmap *bitmap,int x,int xsize,INT16 *draw_line_num,UINT32 orient)
+{
+	int length;
+
+	int yadv = bitmap->rowpixels;
+	int i=0,y=draw_line_num[0];
+	int ty = y;
+
+	if (orient & ORIENTATION_FLIP_Y)
 	{
-		while (ysize--)
+		ty = bitmap->height - 1 - ty;
+		yadv = -yadv;
+	}
+
+//	if (bitmap->depth == 32)
+	{
+		UINT32 *dsti0,*dsti;
+		dsti0 = (UINT32 *)bitmap->line[ty] + x;
+
+		while (1)
 		{
 			length=xsize;
 			dsti = dsti0;
 			while (length--)
 			{
 				*dsti = 0;
-				dsti += xadv;
+				dsti++;
 			}
-			dsti0 += yadv;
-		}
-	}
-}
 
-INLINE void f3_drawscanlines_noalpha(
-		struct mame_bitmap *bitmap,int x,int y,int xsize,int ysize,
-		const struct f3_line_inf *line_t,
-		int transparent,UINT32 orient,
-		int *pri_sp,int pri_sl)
-{
-	pen_t *clut = &Machine->remapped_colortable[0];
-	int length;
-	UINT16 *src,*src_s,*src_e;
-	UINT8 *tsrc,*tsrc_s,*tsrc_e;
-	UINT32 x_count,x_zoom;
-	int src_inc=line_t->src_inc,tsrc_inc=line_t->tsrc_inc;
-
-	UINT32 *dsti0,*dsti;
-	UINT8 *dstp0,*dstp;
-	UINT16 *srcs0,*srcs;
-	int yadv = bitmap->rowpixels;
-	int xadv = 1;
-	int ty=y;
-
-	if (orient & ORIENTATION_FLIP_Y) {
-		ty = bitmap->height - 1 - ty;
-		yadv = -yadv;
-	}
-
-	dsti0 = (UINT32 *)bitmap->line[ty] + x;
-	dstp0 = (UINT8 *)pri_alp_bitmap->line[ty] + x;
-	srcs0 = (UINT16 *)sprite_bitmap->line[ty] + x;
-
-
-	{
-		if (transparent!=TILEMAP_IGNORE_TRANSPARENCY)
-		{
-			while (ysize--)
+			i++;
+			if(draw_line_num[i]<0) break;
+			if(draw_line_num[i]==y+1)
 			{
-				length=xsize;
-				dsti = dsti0;
-				dstp = dstp0;
-				srcs = srcs0;
-
-				src=line_t->src[y];
-				src_s=line_t->src_s[y];
-				src_e=line_t->src_e[y];
-				tsrc=line_t->tsrc[y];
-				tsrc_s=line_t->tsrc_s[y];
-				tsrc_e=line_t->tsrc_e[y];
-				x_count=line_t->x_count[y];
-				x_zoom=line_t->x_zoom[y];
-
-				while (length--)
-				{
-					UINT8 p0=*dstp;
-					if (p0!=0xff)
-					{
-						if(p0&7 && pri_sp[p0&3]>=pri_sl)
-						{
-							*dsti = clut[*srcs];
-							*dstp = 0xff;
-						}
-						else if((*tsrc)&0xf0)
-						{
-							*dsti = clut[*src];
-							*dstp = 0xff;
-						}
-					}
-
-					dsti += xadv;
-					dstp += xadv;
-					srcs += xadv;
-					x_count += x_zoom;
-					if(x_count>>16)
-					{
-						x_count &= 0xffff;
-						src += src_inc;
-						tsrc += tsrc_inc;
-						if(src==src_e) {src=src_s; tsrc=tsrc_s;}
-					}
-				}
-
 				dsti0 += yadv;
-				dstp0 += yadv;
-				srcs0 += yadv;
 				y++;
+				continue;
 			}
-		}
-		else
-		{
-			while (ysize--)
+			else
 			{
-				length=xsize;
-				dsti = dsti0;
-				dstp = dstp0;
-				srcs = srcs0;
-
-				src=line_t->src[y];
-				src_s=line_t->src_s[y];
-				src_e=line_t->src_e[y];
-				tsrc=line_t->tsrc[y];
-				tsrc_s=line_t->tsrc_s[y];
-				tsrc_e=line_t->tsrc_e[y];
-				x_count=line_t->x_count[y];
-				x_zoom=line_t->x_zoom[y];
-
-				while (length--)
-				{
-					UINT8 p0=*dstp;
-					if (p0!=0xff)
-					{
-						if(p0&7 && (pri_sp[p0&3]>=pri_sl || !((*tsrc)&0xf0)))
-						{
-							*dsti = clut[*srcs];
-						}
-						else
-						{
-							*dsti = clut[*src];
-						}
-					}
-
-					dsti += xadv;
-					dstp += xadv;
-					srcs += xadv;
-					x_count += x_zoom;
-					if(x_count>>16)
-					{
-						x_count &= 0xffff;
-						src += src_inc;
-						tsrc += tsrc_inc;
-						if(src==src_e) {src=src_s; tsrc=tsrc_s;}
-					}
-				}
-
-				dsti0 += yadv;
-				dstp0 += yadv;
-				srcs0 += yadv;
-				y++;
+				dsti0 += (draw_line_num[i]-y)*yadv;
+				y=draw_line_num[i];
 			}
 		}
 	}
@@ -1734,8 +1582,81 @@ INLINE void f3_drawscanlines_noalpha(
 
 /******************************************************************************/
 
+static void visible_tile_check(struct f3_line_inf *line_t,
+								int line,
+								UINT32 x_index_fx,UINT32 y_index,
+								data32_t *f3_pf_data_n)
+{
+	data32_t *pf_base;
+	int i,trans_all,tile_index,tile_num;
+	int alpha_type,alpha_mode;
+	int opaque_all;
+	int total_elements;
+
+	if(!(alpha_mode=line_t->alpha_mode[line])) return;
+
+	total_elements=Machine->gfx[1]->total_elements;
+
+	tile_index=x_index_fx>>16;
+	tile_num=(((line_t->x_zoom[line]*320+(x_index_fx & 0xffff)+0xffff)>>16)+(tile_index%16)+15)/16;
+	tile_index/=16;
+
+	if (flipscreen)
+	{
+		pf_base=f3_pf_data_n+((31-(y_index/16))<<twidth_mask_bit);
+		tile_index=(twidth_mask-tile_index)-tile_num+1;
+	}
+	else pf_base=f3_pf_data_n+((y_index/16)<<twidth_mask_bit);
+
+
+	trans_all=1;
+	opaque_all=1;
+	alpha_type=0;
+	for(i=0;i<tile_num;i++)
+	{
+		UINT32 tile=pf_base[(tile_index)&twidth_mask];
+		if(tile&0xffff)
+		{
+			trans_all=0;
+			if(opaque_all)
+			{
+				if(tile_opaque_pf[(tile&0xffff)%total_elements]!=1) opaque_all=0;
+			}
+
+			if(alpha_mode==1)
+			{
+				if(!opaque_all) return;
+			}
+			else
+			{
+				if(alpha_type!=3)
+				{
+					if((tile>>(16+9))&1) alpha_type|=2;
+					else				 alpha_type|=1;
+				}
+				else if(!opaque_all) break;
+			}
+		}
+		else if(opaque_all) opaque_all=0;
+
+		tile_index++;
+	}
+
+	if(trans_all)	{line_t->alpha_mode[line]=0;return;}
+
+	if(alpha_mode>1)
+	{
+		line_t->alpha_mode[line]|=alpha_type<<4;
+	}
+
+	if(opaque_all)
+		line_t->alpha_mode[line]|=0x80;
+}
+
+/******************************************************************************/
+
 /* sx and sy are 16.16 fixed point numbers */
-static void get_line_ram_info(struct tilemap *tilemap,int sx,int sy,int pos)
+static void get_line_ram_info(struct tilemap *tilemap,int sx,int sy,int pos,data32_t *f3_pf_data_n)
 {
 	struct f3_line_inf *line_t=&line_inf[pos];
 	const struct mame_bitmap *srcbitmap;
@@ -1753,6 +1674,7 @@ static void get_line_ram_info(struct tilemap *tilemap,int sx,int sy,int pos)
 	int alpha_level=0;
 	int bit_select0=0x10000<<pos;
 	int bit_select1=1<<pos;
+	UINT8 sprite_alpha=0;
 
 	int _colscroll[256];
 	UINT32 _x_offset[256];
@@ -1811,10 +1733,6 @@ static void get_line_ram_info(struct tilemap *tilemap,int sx,int sy,int pos)
 			}
 			if (f3_line_ram[0x000+(y>>1)]&bit_select1)
 				colscroll=(f3_line_ram[col_base/4]>> 0)&0x1ff;
-			if (f3_line_ram[(0x0600/4)+(y>>1)]&0x8)
-				spri=f3_line_ram[spri_base/4]&0xffff;
-			if (f3_line_ram[(0x0400/4)+(y>>1)]&0x2)
-				alpha_level=f3_line_ram[(spri_base-0x1400)/4]&0xffff;
 		}
 		else
 		{
@@ -1834,10 +1752,6 @@ static void get_line_ram_info(struct tilemap *tilemap,int sx,int sy,int pos)
 			}
 			if (f3_line_ram[0x000+(y>>1)]&bit_select0)
 				colscroll=(f3_line_ram[col_base/4]>>16)&0x1ff;
-			if (f3_line_ram[(0x0600/4)+(y>>1)]&0x80000)
-				spri=f3_line_ram[spri_base/4]>>16;
-			if (f3_line_ram[(0x0400/4)+(y>>1)]&0x20000)
-				alpha_level=f3_line_ram[(spri_base-0x1400)/4]>>16;
 		}
 
 		/* XYZoom? */
@@ -1846,7 +1760,8 @@ static void get_line_ram_info(struct tilemap *tilemap,int sx,int sy,int pos)
 
 //		if (line_enable)
 		{
-			if (!pri || (!flipscreen && y<24) || (flipscreen && y>231) || (pri&0xc000)==0xc000)
+			if (!pri || (!flipscreen && y<24) || (flipscreen && y>231) ||
+				(pri&0xc000)==0xc000 || !(pri&0x2000)/**/)
  				line_enable=0;
 			else if(pri&0x4000)	//alpha1
 				line_enable=2;
@@ -1861,9 +1776,33 @@ static void get_line_ram_info(struct tilemap *tilemap,int sx,int sy,int pos)
 
 		line_t->x_zoom[y]=x_zoom;
 		line_t->alpha_mode[y]=line_enable;
-		line_t->alpha_level[y]=alpha_level;
-		line_t->spri[y]=spri;
 		line_t->pri[y]=pri;
+
+		if(!pos)
+		{
+			if (y&1)
+			{
+				if (f3_line_ram[(0x0600/4)+(y>>1)]&0x8)
+					spri=f3_line_ram[spri_base/4]&0xffff;
+				if (f3_line_ram[(0x0400/4)+(y>>1)]&0x1)
+					sprite_alpha=f3_line_ram[(spri_base-0x1600)/4]&0xffff;
+				if (f3_line_ram[(0x0400/4)+(y>>1)]&0x2)
+					alpha_level=f3_line_ram[(spri_base-0x1400)/4]&0xffff;
+			}
+			else
+			{
+				if (f3_line_ram[(0x0600/4)+(y>>1)]&0x80000)
+					spri=f3_line_ram[spri_base/4]>>16;
+				if (f3_line_ram[(0x0400/4)+(y>>1)]&0x10000)
+					sprite_alpha=f3_line_ram[(spri_base-0x1600)/4]>>16;
+				if (f3_line_ram[(0x0400/4)+(y>>1)]&0x20000)
+					alpha_level=f3_line_ram[(spri_base-0x1400)/4]>>16;
+			}
+
+			line_t->alpha_level[y]=alpha_level;
+			line_t->spri[y]=spri;
+			line_t->sprite_alpha[y]=sprite_alpha;
+		}
 
 		zoom_base+=inc;
 		line_base+=inc;
@@ -1880,145 +1819,392 @@ static void get_line_ram_info(struct tilemap *tilemap,int sx,int sy,int pos)
 
 	srcbitmap = tilemap_get_pixmap(tilemap);
 	transbitmap = tilemap_get_transparency_bitmap(tilemap);
-//	if (Machine->orientation == ROT0)
+
+	y=y_start;
+	while(y!=y_end)
 	{
-		y=y_start;
-		line_t->src_inc=1;
-		line_t->tsrc_inc=1;
-		while(y!=y_end)
+		UINT32 x_index_fx;
+		UINT32 y_index;
+
+		if(line_t->alpha_mode[y]!=0)
 		{
-			UINT32 x_index_fx;
-			UINT32 y_index;
+			UINT16 *src_s;
+			UINT8 *tsrc_s;
 
-			if(line_t->alpha_mode[y]!=0)
-			{
-				UINT16 *src_s;
-				UINT8 *tsrc_s;
+			x_index_fx = (sx+_x_offset[y]-(10*0x10000)+10*line_t->x_zoom[y])&((width_mask<<16)|0xffff);
+			y_index = ((y_index_fx>>16)+_colscroll[y])&0x1ff;
 
-				/* set pixmap index */
-				x_index_fx = (sx+_x_offset[y]-(10*0x10000)+10*line_t->x_zoom[y])&((width_mask<<16)|0xffff);
-				y_index = ((y_index_fx>>16)+_colscroll[y])&0x1ff;
+			/* check tile status */
+			visible_tile_check(line_t,y,x_index_fx,y_index,f3_pf_data_n);
 
-				line_t->x_count[y]=x_index_fx & 0xffff;
-				line_t->src_s[y]=src_s=(unsigned short *)srcbitmap->line[y_index];
-				line_t->src_e[y]=&src_s[width_mask+1];
-				line_t->src[y]=&src_s[x_index_fx>>16];
+			/* set pixmap index */
+			line_t->x_count[y]=x_index_fx & 0xffff;
+			line_t->src_s[y]=src_s=(unsigned short *)srcbitmap->line[y_index];
+			line_t->src_e[y]=&src_s[width_mask+1];
+			line_t->src[y]=&src_s[x_index_fx>>16];
 
-				line_t->tsrc_s[y]=tsrc_s=(unsigned char *)transbitmap->line[y_index];
-				line_t->tsrc_e[y]=&tsrc_s[width_mask+1];
-				line_t->tsrc[y]=&tsrc_s[x_index_fx>>16];
-			}
-
-			if(y_zoom==line_t->x_zoom[y])
-				y_index_fx += y_zoom;
-			else
-				y_index_fx += 0x10000;
-
-			y +=y_inc;
+			line_t->tsrc_s[y]=tsrc_s=(unsigned char *)transbitmap->line[y_index];
+			line_t->tsrc[y]=&tsrc_s[x_index_fx>>16];
 		}
+
+		if(y_zoom==line_t->x_zoom[y])
+			y_index_fx += y_zoom;
+		else
+			y_index_fx += 0x10000;
+
+		y +=y_inc;
 	}
 }
+
+/******************************************************************************/
 
 static void f3_tilemap_draw(struct mame_bitmap *bitmap,
 							const struct rectangle *cliprect)
 {
-	int i,j,y,pos;
-	UINT32 rot=0;
-	unsigned char transparent;
-	int layer_tmp[4];
-	int enable[4];//ksdeb
+	int i,j,y,ys,ye;
+	int y_start,y_end,y_start_next,y_end_next;
+	UINT8 draw_line[256];
+	INT16 draw_line_num[256];
 
-//ksdeb s
-	enable[0]=enable[1]=enable[2]=enable[3]=1;
+	UINT32 rot=0;
+#if DEBUG_F3
+	int enable[4]={~0,~0,~0,~0};
+
 	if(deb_enable)
 	{
 		if (keyboard_pressed(KEYCODE_Z)) enable[0]=0;
 		if (keyboard_pressed(KEYCODE_X)) enable[1]=0;
 		if (keyboard_pressed(KEYCODE_C)) enable[2]=0;
 		if (keyboard_pressed(KEYCODE_V)) enable[3]=0;
+
+		if (keyboard_pressed(KEYCODE_A)) sprite_pri_usage &= ~(1<<3);
+		if (keyboard_pressed(KEYCODE_S)) sprite_pri_usage &= ~(1<<2);
+		if (keyboard_pressed(KEYCODE_D)) sprite_pri_usage &= ~(1<<1);
+		if (keyboard_pressed(KEYCODE_F)) sprite_pri_usage &= ~(1<<0);
 	}
-//ksdeb e
+#endif	//DEBUG_F3
 
 	if (flipscreen)
+	{
 		rot=ORIENTATION_FLIP_Y;
+		ys=0;
+		ye=232;
+	}
+	else
+	{
+		ys=24;
+		ye=256;
+	}
+//	ys=0;
+//	ye=256;
 
-deb_loop=0;//ksdeb
-	y=0;
-	while(y<256)
+#if DEBUG_F3
+deb_loop=0;
+deb_alpha_cnt=0;
+#endif	//DEBUG_F3
+
+	y_start=ys;
+	y_end=ye;
+	memset(draw_line,0,256);
+
+	while(1)
 	{
 		static int alpha_level_last=-1;
-		int pri[4],alpha_mode[4],alpha_level;
-		int spri,pri_sp[4],pri_sl[4];
-		int y_end;
-		int alpha,noalpha_all;
+		int pos;
+		int pri[4],alpha_mode[4],alpha_mode_flag[4],alpha_level;
+		UINT8 sprite_alpha;
+		UINT8 sprite_alpha_check;
+		UINT8 sprite_alpha_all_2a;
+		int spri;
+		int alpha;
+		int layer_tmp[4];
 
-deb_loop++;//ksdeb
+		int count_skip_layer=0;
+		int sprite[5]={0,0,0,0,0};
+		const struct f3_line_inf *line_t[4];
+
 
 		/* find same status of scanlines */
-		pri[0]=line_inf[0].pri[y];
-		pri[1]=line_inf[1].pri[y];
-		pri[2]=line_inf[2].pri[y];
-		pri[3]=line_inf[3].pri[y];
-		alpha_mode[0]=line_inf[0].alpha_mode[y];
-		alpha_mode[1]=line_inf[1].alpha_mode[y];
-		alpha_mode[2]=line_inf[2].alpha_mode[y];
-		alpha_mode[3]=line_inf[3].alpha_mode[y];
-		alpha_level=line_inf[0].alpha_level[y];
-		spri=line_inf[0].spri[y];
-		for(y_end=y+1;y_end<256;y_end++)
+		pri[0]=line_inf[0].pri[y_start];
+		pri[1]=line_inf[1].pri[y_start];
+		pri[2]=line_inf[2].pri[y_start];
+		pri[3]=line_inf[3].pri[y_start];
+		alpha_mode[0]=line_inf[0].alpha_mode[y_start];
+		alpha_mode[1]=line_inf[1].alpha_mode[y_start];
+		alpha_mode[2]=line_inf[2].alpha_mode[y_start];
+		alpha_mode[3]=line_inf[3].alpha_mode[y_start];
+		alpha_level=line_inf[0].alpha_level[y_start];
+		spri=line_inf[0].spri[y_start];
+		sprite_alpha=line_inf[0].sprite_alpha[y_start];
+
+		draw_line[y_start]=1;
+		draw_line_num[i=0]=y_start;
+		y_start_next=-1;
+		y_end_next=-1;
+		for(y=y_start+1;y<y_end;y++)
 		{
-			if(pri[0]!=line_inf[0].pri[y_end]) break;
-			if(pri[1]!=line_inf[1].pri[y_end]) break;
-			if(pri[2]!=line_inf[2].pri[y_end]) break;
-			if(pri[3]!=line_inf[3].pri[y_end]) break;
-			if(alpha_mode[0]!=line_inf[0].alpha_mode[y_end]) break;
-			if(alpha_mode[1]!=line_inf[1].alpha_mode[y_end]) break;
-			if(alpha_mode[2]!=line_inf[2].alpha_mode[y_end]) break;
-			if(alpha_mode[3]!=line_inf[3].alpha_mode[y_end]) break;
-			if(alpha_level!=line_inf[0].alpha_level[y_end]) break;
-			if(spri!=line_inf[0].spri[y_end]) break;
+			if(!draw_line[y])
+			{
+				if(pri[0]!=line_inf[0].pri[y]) y_end_next=y+1;
+				else if(pri[1]!=line_inf[1].pri[y]) y_end_next=y+1;
+				else if(pri[2]!=line_inf[2].pri[y]) y_end_next=y+1;
+				else if(pri[3]!=line_inf[3].pri[y]) y_end_next=y+1;
+				else if(alpha_mode[0]!=line_inf[0].alpha_mode[y]) y_end_next=y+1;
+				else if(alpha_mode[1]!=line_inf[1].alpha_mode[y]) y_end_next=y+1;
+				else if(alpha_mode[2]!=line_inf[2].alpha_mode[y]) y_end_next=y+1;
+				else if(alpha_mode[3]!=line_inf[3].alpha_mode[y]) y_end_next=y+1;
+				else if(alpha_level!=line_inf[0].alpha_level[y]) y_end_next=y+1;
+				else if(spri!=line_inf[0].spri[y]) y_end_next=y+1;
+				else if(sprite_alpha!=line_inf[0].sprite_alpha[y]) y_end_next=y+1;
+				else
+				{
+					draw_line[y]=1;
+					draw_line_num[++i]=y;
+					continue;
+				}
+
+				if(y_start_next<0) y_start_next=y;
+			}
 		}
+		y_end=y_end_next;
+		y_start=y_start_next;
+		draw_line_num[++i]=-1;
 
 
 		/* for clear top & bottom border */
 		if(
-			(!alpha_mode[0] && !alpha_mode[1] && !alpha_mode[2] && !alpha_mode[3]) ||
+			(!(pri[0]&0xf000) && !(pri[1]&0xf000) && !(pri[2]&0xf000) && !(pri[3]&0xf000)) ||
 			((pri[0]&0x800) && (pri[1]&0x800) && (pri[2]&0x800) && (pri[3]&0x800))		/*KTIGER2*/
 		  )
 		{
-			f3_drawscanlines(bitmap,46,y,320,y_end-y,
-							&line_inf[0],
-							0,rot,
-							0,
-							0,
-							-1);
-			y=y_end;
+			clear_scanlines(bitmap,46,320,draw_line_num,rot);
+			if(y_start<0) break;
 			continue;
 		}
 
-
-		/* set sprite priority */
-		pri_sp[0]=spri&0xf;
-		pri_sp[1]=(spri>>4)&0xf;
-		pri_sp[2]=(spri>>8)&0xf;
-		pri_sp[3]=spri>>12;
+#if DEBUG_F3
+deb_loop++;
+#endif	//DEBUG_F3
 
 
-//ksdeb
-		/* set scanline priority */
-		for(i=0;i<4;i++)
+		/* alpha blend */
+		alpha_mode_flag[0]=alpha_mode[0]&~3;
+		alpha_mode_flag[1]=alpha_mode[1]&~3;
+		alpha_mode_flag[2]=alpha_mode[2]&~3;
+		alpha_mode_flag[3]=alpha_mode[3]&~3;
+		alpha_mode[0]&=3;
+		alpha_mode[1]&=3;
+		alpha_mode[2]&=3;
+		alpha_mode[3]&=3;
+		if( alpha_mode[0]>1 ||
+			alpha_mode[1]>1 ||
+			alpha_mode[2]>1 ||
+			alpha_mode[3]>1 ||
+			sprite_alpha != 0xff  )
 		{
-			int p0=pri[i];
-			int pri_sl1=p0&0x0f;
-			int pri_sl2=(p0&0xf0)>>4;
-			if(pri_sl2)
+			/* set alpha level */
+			if(alpha_level!=alpha_level_last)
 			{
-				if(!(p0&0x200))	pri_sl1=pri_sl2>pri_sl1 ? pri_sl2 : pri_sl1;	//CLEOPATR
-				else			pri_sl1=pri_sl2<pri_sl1 ? pri_sl2 : pri_sl1;	//ARKRETRN
+				int al_s,al_d;
+				int a=alpha_level;
+				int b=(a>>8)&0xf;
+				int c=(a>>4)&0xf;
+				int d=(a>>0)&0xf;
+				a>>=12;
+
+				/* b000 7000 */
+				al_s = ( (15-d)*256) / 8;
+				al_d = ( (15-b)*256) / 8;
+				if(al_s>255) al_s = 255;
+				if(al_d>255) al_d = 255;
+				f3_alpha_level_3as = al_s;
+				f3_alpha_level_3ad = al_d;
+				f3_alpha_level_2as = al_d;
+				f3_alpha_level_2ad = al_s;
+
+				al_s = ( (15-c)*256) / 8;
+				al_d = ( (15-a)*256) / 8;
+				if(al_s>255) al_s = 255;
+				if(al_d>255) al_d = 255;
+				f3_alpha_level_3bs = al_s;
+				f3_alpha_level_3bd = al_d;
+				f3_alpha_level_2bs = al_d;
+				f3_alpha_level_2bd = al_s;
+
+				f3_alpha_set_level();
+				alpha_level_last=alpha_level;
 			}
-			pri_sl[i]=pri_sl1;
-			layer_tmp[i]=i + (pri_sl1<<2);
+
+
+			/* set sprite alpha mode */
+			sprite_alpha_check=0;
+			sprite_alpha_all_2a=1;
+			for(i=0;i<4;i++)	/* i = sprite priority offset */
+			{
+				UINT8 sprite_alpha_mode=(sprite_alpha>>(i*2))&3;
+				UINT8 sftbit=1<<i;
+				if(sprite_pri_usage&sftbit)
+				{
+					if(sprite_alpha_mode==1)
+					{
+						if(f3_alpha_level_2as==0 && f3_alpha_level_2ad==255) sprite_pri_usage&=~sftbit;
+						else sprite_alpha_check|=sftbit;
+					}
+					else if(sprite_alpha_mode==2)
+					{
+						if(f3_alpha_level_3as==0 && f3_alpha_level_3ad==255) sprite_pri_usage&=~sftbit;
+						else
+						{
+							sprite_alpha_check|=sftbit;
+							sprite_alpha_all_2a=0;
+						}
+					}
+					//else sprite_alpha_all_2a=0;
+				}
+				dpix_sp[1<<i]=dpix_sn[sprite_alpha_mode];
+			}
+
+
+			/* check alpha level */
+			for(i=0;i<4;i++)	/* i = playfield num (pos) */
+			{
+				int alpha_type = (alpha_mode_flag[i]>>4)&3;
+
+				if(alpha_mode[i]==2)
+				{
+					if(alpha_type==1)
+					{
+						if     (f3_alpha_level_2as==0   && f3_alpha_level_2ad==255) alpha_mode[i]=0;
+						else if(f3_alpha_level_2as==255 && f3_alpha_level_2ad==0  ) alpha_mode[i]=1;
+					}
+					else if(alpha_type==2)
+					{
+						if     (f3_alpha_level_2bs==0   && f3_alpha_level_2bd==255) alpha_mode[i]=0;
+						else if(f3_alpha_level_2as==255 && f3_alpha_level_2ad==0 &&
+								f3_alpha_level_2bs==255 && f3_alpha_level_2bd==0  ) alpha_mode[i]=1;
+					}
+					else if(alpha_type==3)
+					{
+						if     (f3_alpha_level_2as==0   && f3_alpha_level_2ad==255 &&
+								f3_alpha_level_2bs==0   && f3_alpha_level_2bd==255) alpha_mode[i]=0;
+						else if(f3_alpha_level_2as==255 && f3_alpha_level_2ad==0   &&
+								f3_alpha_level_2bs==255 && f3_alpha_level_2bd==0  ) alpha_mode[i]=1;
+					}
+				}
+				else if(alpha_mode[i]==3)
+				{
+					if(alpha_type==1)
+					{
+						if     (f3_alpha_level_3as==0   && f3_alpha_level_3ad==255) alpha_mode[i]=0;
+						else if(f3_alpha_level_3as==255 && f3_alpha_level_3ad==0  ) alpha_mode[i]=1;
+					}
+					else if(alpha_type==2)
+					{
+						if     (f3_alpha_level_3bs==0   && f3_alpha_level_3bd==255) alpha_mode[i]=0;
+						else if(f3_alpha_level_3as==255 && f3_alpha_level_3ad==0 &&
+								f3_alpha_level_3bs==255 && f3_alpha_level_3bd==0  ) alpha_mode[i]=1;
+					}
+					else if(alpha_type==3)
+					{
+						if     (f3_alpha_level_3as==0   && f3_alpha_level_3ad==255 &&
+								f3_alpha_level_3bs==0   && f3_alpha_level_3bd==255) alpha_mode[i]=0;
+						else if(f3_alpha_level_3as==255 && f3_alpha_level_3ad==0   &&
+								f3_alpha_level_3bs==255 && f3_alpha_level_3bd==0  ) alpha_mode[i]=1;
+					}
+				}
+			}
+
+
+			/* enable/disable alpha blend */
+			if (alpha_disable)
+			{
+				if(alpha_mode[0]>1) alpha_mode[0]=1;
+				if(alpha_mode[1]>1) alpha_mode[1]=1;
+				if(alpha_mode[2]>1) alpha_mode[2]=1;
+				if(alpha_mode[3]>1) alpha_mode[3]=1;
+				sprite_alpha_check=0;
+				dpix_sp[1]=0;
+				dpix_sp[2]=0;
+				dpix_sp[4]=0;
+				dpix_sp[8]=0;
+			}
+			else
+			{
+				if (	(alpha_mode[0]==1 || alpha_mode[0]==2 || !alpha_mode[0]) &&
+						(alpha_mode[1]==1 || alpha_mode[1]==2 || !alpha_mode[1]) &&
+						(alpha_mode[2]==1 || alpha_mode[2]==2 || !alpha_mode[2]) &&
+						(alpha_mode[3]==1 || alpha_mode[3]==2 || !alpha_mode[3]) &&
+						sprite_alpha_all_2a						)
+				{
+					int alpha_type = (alpha_mode_flag[0] | alpha_mode_flag[1] | alpha_mode_flag[2] | alpha_mode_flag[3])&0x30;
+					if(		(alpha_type==0x10 && f3_alpha_level_2as==255) ||
+							(alpha_type==0x20 && f3_alpha_level_2as==255 && f3_alpha_level_2bs==255) ||
+							(alpha_type==0x30 && f3_alpha_level_2as==255 && f3_alpha_level_2bs==255)	)
+					{
+						if(alpha_mode[0]>1) alpha_mode[0]=1;
+						if(alpha_mode[1]>1) alpha_mode[1]=1;
+						if(alpha_mode[2]>1) alpha_mode[2]=1;
+						if(alpha_mode[3]>1) alpha_mode[3]=1;
+						sprite_alpha_check=0;
+						dpix_sp[1]=0;
+						dpix_sp[2]=0;
+						dpix_sp[4]=0;
+						dpix_sp[8]=0;
+					}
+				}
+			}
 		}
+		else
+		{
+			sprite_alpha_check=0;
+			dpix_sp[1]=0;
+			dpix_sp[2]=0;
+			dpix_sp[4]=0;
+			dpix_sp[8]=0;
+		}
+
+
+
+		/* set scanline priority */
+		{
+			int pri_max_opa=-1;
+			for(i=0;i<4;i++)	/* i = playfield num (pos) */
+			{
+				int p0=pri[i];
+				int pri_sl1=p0&0x0f;
+				int pri_sl2=(p0&0xf0)>>4;
+				if(pri_sl2)
+				{
+					if(!(p0&0x200))	pri_sl1=pri_sl2>pri_sl1 ? pri_sl2 : pri_sl1;	//CLEOPATR
+					else			pri_sl1=pri_sl2<pri_sl1 ? pri_sl2 : pri_sl1;	//ARKRETRN
+				}
+
+				layer_tmp[i]=i + (pri_sl1<<2);
+
+				if(!alpha_mode[i]
+#if DEBUG_F3
+					|| !enable[i]
+#endif	//DEBUG_F3
+					/*|| !(pri[i]&0x2000)*/)
+				{
+					layer_tmp[i]|=0x40;
+					count_skip_layer++;
+				}
+				else if(alpha_mode[i]==1 && (alpha_mode_flag[i]&0x80))
+				{
+					if(layer_tmp[i]>pri_max_opa) pri_max_opa=layer_tmp[i];
+				}
+			}
+
+			if(pri_max_opa!=-1)
+			{
+				if(pri_max_opa>layer_tmp[0]) {layer_tmp[0]|=0x40;count_skip_layer++;}
+				if(pri_max_opa>layer_tmp[1]) {layer_tmp[1]|=0x40;count_skip_layer++;}
+				if(pri_max_opa>layer_tmp[2]) {layer_tmp[2]|=0x40;count_skip_layer++;}
+				if(pri_max_opa>layer_tmp[3]) {layer_tmp[3]|=0x40;count_skip_layer++;}
+			}
+		}
+
 
 		/* sort layer_tmp */
 		for(i=0;i<3;i++)
@@ -2034,89 +2220,88 @@ deb_loop++;//ksdeb
 			}
 		}
 
-//ksdeb s
-		if(!enable[0]) alpha_mode[0]=0;
-		if(!enable[1]) alpha_mode[1]=0;
-		if(!enable[2]) alpha_mode[2]=0;
-		if(!enable[3]) alpha_mode[3]=0;
-//ksdeb e
 
-
-		/* set alpha level */
-		if(alpha_level!=alpha_level_last)		//ksdebA
+		/* check sprite & layer priority */
 		{
-			int al_s,al_d;
-			int a=alpha_level;
-			int b=(a>>8)&0xf;
-			int c=(a>>4)&0xf;
-			int d=(a>>0)&0xf;
-			a>>=12;
+			int l0,l1,l2,l3;
+			int pri_sp[4];
 
-			/* b000 7000 */
-			al_s = ( (15-d)*256) / 8;
-			al_d = ( (15-b)*256) / 8;
-			if(al_s>255) al_s = 255;
-			if(al_d>255) al_d = 255;
-			f3_alpha_level_3as = al_s;
-			f3_alpha_level_3ad = al_d;
-			f3_alpha_level_2as = al_d;
-			f3_alpha_level_2ad = al_s;
+			l0=layer_tmp[0]>>2;
+			l1=layer_tmp[1]>>2;
+			l2=layer_tmp[2]>>2;
+			l3=layer_tmp[3]>>2;
 
-			al_s = ( (15-c)*256) / 8;
-			al_d = ( (15-a)*256) / 8;
-			if(al_s>255) al_s = 255;
-			if(al_d>255) al_d = 255;
-			f3_alpha_level_3bs = al_s;
-			f3_alpha_level_3bd = al_d;
-			f3_alpha_level_2bs = al_d;
-			f3_alpha_level_2bd = al_s;
+			pri_sp[0]=spri&0xf;
+			pri_sp[1]=(spri>>4)&0xf;
+			pri_sp[2]=(spri>>8)&0xf;
+			pri_sp[3]=spri>>12;
 
-			f3_alpha_set_level();
-			alpha_level_last=alpha_level;
+			for(i=0;i<4;i++)	/* i = sprite priority offset */
+			{
+				int sp,sflg=1<<i;
+				if(!(sprite_pri_usage & sflg)) continue;
+				sp=pri_sp[i];
+
+				/*
+					sprite priority==playfield priority
+						BUBSYMPH (title)       ---> sprite
+						DARIUSG (ZONE V' BOSS) ---> playfield
+				*/
+
+				if (f3_game == BUBSYMPH ) sp++;		//BUBSYMPH (title)
+
+					 if(		  sp>l0) sprite[0]|=sflg;
+				else if(sp<=l0 && sp>l1) sprite[1]|=sflg;
+				else if(sp<=l1 && sp>l2) sprite[2]|=sflg;
+				else if(sp<=l2 && sp>l3) sprite[3]|=sflg;
+				else if(sp<=l3		   ) sprite[4]|=sflg;
+			}
 		}
 
 
-		/* draw scanlines from front to back */
-		transparent=0;
+		/* draw scanlines */
 		alpha=0;
-//ksdeb
-		if (deb_alpha_disable || (alpha_mode[0]==2 && alpha_mode[1]==2 && alpha_mode[2]==2 && alpha_mode[3]==2 &&
-			f3_alpha_level_2as==255 && f3_alpha_level_2bs==255 ))
-			noalpha_all=1;			/*GUNLOCK*/
-		else
-			noalpha_all=0;
-
-		for(i=0;i<4;i++)
+		for(i=count_skip_layer;i<4;i++)
 		{
-			struct f3_line_inf *line_t;
-
 			pos=layer_tmp[i]&3;
-			line_t=&line_inf[pos];
-			if(i==3) transparent=TILEMAP_IGNORE_TRANSPARENCY;
-			if(alpha_mode[pos]==0 && transparent!=TILEMAP_IGNORE_TRANSPARENCY) continue;
-			if(!(pri[pos]&0x2000) && transparent!=TILEMAP_IGNORE_TRANSPARENCY) continue;/*BUBBLEM*/
+			line_t[i]=&line_inf[pos];
 
+			if(sprite[i]&sprite_alpha_check) alpha=1;
+			else if(!alpha) sprite[i]|=0x100;
 
-			if(!noalpha_all && alpha_mode[pos]>1) alpha=1;
-
-			if(alpha)
-				f3_drawscanlines(bitmap,46,y,320,y_end-y,
-								line_t,
-								transparent,rot,
-								pri_sp,
-								pri_sl[pos],
-								alpha_mode[pos]);
+			if(alpha_mode[pos]>1)
+			{
+				int alpha_type=(((alpha_mode_flag[pos]>>4)&3)-1)*2;
+				dpix_lp[i]=dpix_n[alpha_mode[pos]+alpha_type];
+				alpha=1;
+			}
 			else
-				f3_drawscanlines_noalpha(bitmap,46,y,320,y_end-y,
-								line_t,
-								transparent,rot,
-								pri_sp,
-								pri_sl[pos]);
+			{
+#if DEBUG_F3
+				if(!alpha_mode[pos]) usrintf_showmessage("layer priority error");
+#endif	//DEBUG_F3
+				if(alpha) dpix_lp[i]=dpix_n[1];
+				else	  dpix_lp[i]=dpix_n[0];
+			}
 		}
-		y=y_end;
+		if(sprite[4]&sprite_alpha_check) alpha=1;
+		else if(!alpha) sprite[4]|=0x100;
+
+#if DEBUG_F3
+		if(alpha) deb_alpha_cnt++;
+		if(deb_enable)
+			sprintf(deb_buf[8],"spr:%3x %3x %3x %3x %3x",sprite[0],
+														sprite[1],
+														sprite[2],
+														sprite[3],
+														sprite[4]);
+#endif	//DEBUG_F3
+
+		f3_drawscanlines(bitmap,46,320,draw_line_num,line_t,sprite,rot,count_skip_layer);
+		if(y_start<0) break;
 	}
 }
-//ks e
+
 /******************************************************************************/
 
 static void f3_update_pivot_layer(void)
@@ -2237,46 +2422,43 @@ static void f3_draw_vram_layer(struct mame_bitmap *bitmap,const struct rectangle
 }
 
 /******************************************************************************/
-//ks s
-#define CALC_ZOOM(p)	{										\
-	p##_addition = 0x100 - block_zoom_##p + p##_addition_left;	\
-	p##_addition_left = p##_addition & 0xf;						\
-	p##_addition = p##_addition >> 4;							\
-	zoom##p = p##_addition << 12;								\
-}
 
+#define PSET_T					\
+	c = *source;				\
+	if(c)						\
+	{							\
+		p=*pri;					\
+		if(!p || p==0xff)		\
+		{						\
+			*dest = pal[c];		\
+			*pri = pri_dst;		\
+		}						\
+	}
 
-INLINE void f3_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
+#define PSET_O					\
+	p=*pri;						\
+	if(!p || p==0xff)			\
+	{							\
+		*dest = pal[*source];	\
+		*pri = pri_dst;			\
+	}
+
+#define NEXT_P					\
+	source += dx;				\
+	dest++;						\
+	pri++;
+
+INLINE void f3_drawgfx( struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
 		unsigned int code,
 		unsigned int color,
 		int flipx,int flipy,
 		int sx,int sy,
 		const struct rectangle *clip,
-		int scalex, int scaley,
 		UINT8 pri_dst)
 {
 	struct rectangle myclip;
-	int transparent_color=0;
 
-	if (!scalex || !scaley) return;
-
-	pri_dst|=4;
-
-//	if (scalex == 0x10000 && scaley == 0x10000)
-//	{
-//		common_drawgfx(dest_bmp,gfx,code,color,flipx,flipy,sx,sy,clip,transparency,transparent_color,pri_alp_bitmap,pri_mask);
-//		return;
-//	}
-
-
-	/*
-	scalex and scaley are 16.16 fixed point numbers
-	1<<15 : shrink to 50%
-	1<<16 : uniform scale
-	1<<17 : double to 200%
-	*/
-
-
+	pri_dst=1<<pri_dst;
 
 	/* KW 991012 -- Added code to force clip to bitmap boundary */
 	if(clip)
@@ -2295,94 +2477,256 @@ INLINE void f3_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxElement
 	}
 
 
+	if( gfx && gfx->colortable )
 	{
-		if( gfx && gfx->colortable )
+		const pen_t *pal = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)]; /* ASG 980209 */
+//		int palBase = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)] - Machine->remapped_colortable;
+		int source_base = (code % gfx->total_elements) * 16;
+
 		{
-//			const pen_t *pal = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)]; /* ASG 980209 */
-			int palBase = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)] - Machine->remapped_colortable;
-			int source_base = (code % gfx->total_elements) * gfx->height;
+			/* compute sprite increment per screen pixel */
+			int dx = 1;
+			int dy = 1;
 
-			int sprite_screen_height = (scaley*gfx->height+0x8000)>>16;
-			int sprite_screen_width = (scalex*gfx->width+0x8000)>>16;
+			int ex = sx+16;
+			int ey = sy+16;
 
-			if (sprite_screen_width && sprite_screen_height)
+			int x_index_base;
+			int y_index;
+
+			if( flipx )
 			{
-				/* compute sprite increment per screen pixel */
-				int dx = (gfx->width<<16)/sprite_screen_width;
-				int dy = (gfx->height<<16)/sprite_screen_height;
+				x_index_base = 15;
+				dx = -1;
+			}
+			else
+			{
+				x_index_base = 0;
+			}
 
-				int ex = sx+sprite_screen_width;
-				int ey = sy+sprite_screen_height;
+			if( flipy )
+			{
+				y_index = 15;
+				dy = -1;
+			}
+			else
+			{
+				y_index = 0;
+			}
 
-				int x_index_base;
-				int y_index;
-
-				if( flipx )
-				{
-					x_index_base = (sprite_screen_width-1)*dx;
-					dx = -dx;
+			if( clip )
+			{
+				if( sx < clip->min_x)
+				{ /* clip left */
+					int pixels = clip->min_x-sx;
+					sx += pixels;
+					x_index_base += pixels*dx;
 				}
-				else
-				{
-					x_index_base = 0;
+				if( sy < clip->min_y )
+				{ /* clip top */
+					int pixels = clip->min_y-sy;
+					sy += pixels;
+					y_index += pixels*dy;
 				}
+				/* NS 980211 - fixed incorrect clipping */
+				if( ex > clip->max_x+1 )
+				{ /* clip right */
+					int pixels = ex-clip->max_x-1;
+					ex -= pixels;
+				}
+				if( ey > clip->max_y+1 )
+				{ /* clip bottom */
+					int pixels = ey-clip->max_y-1;
+					ey -= pixels;
+				}
+			}
 
-				if( flipy )
+			if( ex>sx && ey>sy)
+			{ /* skip if inner loop doesn't draw anything */
+//				if (dest_bmp->depth == 32)
 				{
-					y_index = (sprite_screen_height-1)*dy;
-					dy = -dy;
-				}
-				else
-				{
-					y_index = 0;
-				}
+					int y=ey-sy;
+					int x=(ex-sx-1)|(tile_opaque_sp[code]<<4);
+					UINT8 *source0 = gfx->gfxdata + (source_base+y_index) * 16 + x_index_base;
+					UINT32 *dest0 = (UINT32 *)dest_bmp->line[sy]+sx;
+					UINT8 *pri0 = (UINT8 *)pri_alp_bitmap->line[sy]+sx;
+					int yadv = dest_bmp->rowpixels;
+					dy=dy*16;
+					while(1)
+					{
+						UINT8 *source = source0;
+						UINT32 *dest = dest0;
+						UINT8 *pri = pri0;
 
-				if( clip )
-				{
-					if( sx < clip->min_x)
-					{ /* clip left */
-						int pixels = clip->min_x-sx;
-						sx += pixels;
-						x_index_base += pixels*dx;
+						switch(x)
+						{
+							int c;
+							UINT8 p;
+							case 31: PSET_O NEXT_P
+							case 30: PSET_O NEXT_P
+							case 29: PSET_O NEXT_P
+							case 28: PSET_O NEXT_P
+							case 27: PSET_O NEXT_P
+							case 26: PSET_O NEXT_P
+							case 25: PSET_O NEXT_P
+							case 24: PSET_O NEXT_P
+							case 23: PSET_O NEXT_P
+							case 22: PSET_O NEXT_P
+							case 21: PSET_O NEXT_P
+							case 20: PSET_O NEXT_P
+							case 19: PSET_O NEXT_P
+							case 18: PSET_O NEXT_P
+							case 17: PSET_O NEXT_P
+							case 16: PSET_O break;
+
+							case 15: PSET_T NEXT_P
+							case 14: PSET_T NEXT_P
+							case 13: PSET_T NEXT_P
+							case 12: PSET_T NEXT_P
+							case 11: PSET_T NEXT_P
+							case 10: PSET_T NEXT_P
+							case  9: PSET_T NEXT_P
+							case  8: PSET_T NEXT_P
+							case  7: PSET_T NEXT_P
+							case  6: PSET_T NEXT_P
+							case  5: PSET_T NEXT_P
+							case  4: PSET_T NEXT_P
+							case  3: PSET_T NEXT_P
+							case  2: PSET_T NEXT_P
+							case  1: PSET_T NEXT_P
+							case  0: PSET_T
+						}
+
+						if(!(--y)) break;
+						source0 += dy;
+						dest0+=yadv;
+						pri0+=yadv;
 					}
-					if( sy < clip->min_y )
-					{ /* clip top */
-						int pixels = clip->min_y-sy;
-						sy += pixels;
-						y_index += pixels*dy;
-					}
-					/* NS 980211 - fixed incorrect clipping */
-					if( ex > clip->max_x+1 )
-					{ /* clip right */
-						int pixels = ex-clip->max_x-1;
-						ex -= pixels;
-					}
-					if( ey > clip->max_y+1 )
-					{ /* clip bottom */
-						int pixels = ey-clip->max_y-1;
-						ey -= pixels;
-					}
 				}
+			}
+		}
+	}
+}
+#undef PSET_T
+#undef PSET_O
+#undef NEXT_P
 
-				if( ex>sx )
-				{ /* skip if inner loop doesn't draw anything */
+
+INLINE void f3_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
+		unsigned int code,
+		unsigned int color,
+		int flipx,int flipy,
+		int sx,int sy,
+		const struct rectangle *clip,
+		int scalex, int scaley,
+		UINT8 pri_dst)
+{
+	struct rectangle myclip;
+
+	pri_dst=1<<pri_dst;
+
+	/* KW 991012 -- Added code to force clip to bitmap boundary */
+	if(clip)
+	{
+		myclip.min_x = clip->min_x;
+		myclip.max_x = clip->max_x;
+		myclip.min_y = clip->min_y;
+		myclip.max_y = clip->max_y;
+
+		if (myclip.min_x < 0) myclip.min_x = 0;
+		if (myclip.max_x >= dest_bmp->width) myclip.max_x = dest_bmp->width-1;
+		if (myclip.min_y < 0) myclip.min_y = 0;
+		if (myclip.max_y >= dest_bmp->height) myclip.max_y = dest_bmp->height-1;
+
+		clip=&myclip;
+	}
+
+
+	if( gfx && gfx->colortable )
+	{
+		const pen_t *pal = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)]; /* ASG 980209 */
+//		int palBase = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)] - Machine->remapped_colortable;
+		int source_base = (code % gfx->total_elements) * 16;
+
+		{
+			/* compute sprite increment per screen pixel */
+			int dx = (16<<16)/scalex;
+			int dy = (16<<16)/scaley;
+
+			int ex = sx+scalex;
+			int ey = sy+scaley;
+
+			int x_index_base;
+			int y_index;
+
+			if( flipx )
+			{
+				x_index_base = (scalex-1)*dx;
+				dx = -dx;
+			}
+			else
+			{
+				x_index_base = 0;
+			}
+
+			if( flipy )
+			{
+				y_index = (scaley-1)*dy;
+				dy = -dy;
+			}
+			else
+			{
+				y_index = 0;
+			}
+
+			if( clip )
+			{
+				if( sx < clip->min_x)
+				{ /* clip left */
+					int pixels = clip->min_x-sx;
+					sx += pixels;
+					x_index_base += pixels*dx;
+				}
+				if( sy < clip->min_y )
+				{ /* clip top */
+					int pixels = clip->min_y-sy;
+					sy += pixels;
+					y_index += pixels*dy;
+				}
+				/* NS 980211 - fixed incorrect clipping */
+				if( ex > clip->max_x+1 )
+				{ /* clip right */
+					int pixels = ex-clip->max_x-1;
+					ex -= pixels;
+				}
+				if( ey > clip->max_y+1 )
+				{ /* clip bottom */
+					int pixels = ey-clip->max_y-1;
+					ey -= pixels;
+				}
+			}
+
+			if( ex>sx )
+			{ /* skip if inner loop doesn't draw anything */
+//				if (dest_bmp->depth == 32)
+				{
 					int y;
 					for( y=sy; y<ey; y++ )
 					{
-						UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
-						UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+						UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * 16;
+						UINT32 *dest = (UINT32 *)dest_bmp->line[y];
 						UINT8 *pri = pri_alp_bitmap->line[y];
 
 						int x, x_index = x_index_base;
 						for( x=sx; x<ex; x++ )
 						{
 							int c = source[x_index>>16];
-							if( c != transparent_color )
+							if(c)
 							{
 								UINT8 p=pri[x];
 								if (p == 0 || p == 0xff)
 								{
-									dest[x] = palBase+c;
+									dest[x] = pal[c];
 									pri[x] = pri_dst;
 								}
 							}
@@ -2395,11 +2739,19 @@ INLINE void f3_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxElement
 		}
 	}
 }
-//ks e
 
 
-static void get_sprite_info(const data32_t *spriteram32_ptr)	//ks
+#define CALC_ZOOM(p)	{										\
+	p##_addition = 0x100 - block_zoom_##p + p##_addition_left;	\
+	p##_addition_left = p##_addition & 0xf;						\
+	p##_addition = p##_addition >> 4;							\
+	/*zoom##p = p##_addition << 12;*/							\
+}
+
+static void get_sprite_info(const data32_t *spriteram32_ptr)
 {
+	const int min_x=Machine->visible_area.min_x,max_x=Machine->visible_area.max_x;
+	const int min_y=Machine->visible_area.min_y,max_y=Machine->visible_area.max_y;
 	int offs,spritecont,flipx,flipy,old_x,old_y,color,x,y;
 	int sprite,global_x=0,global_y=0,subglobal_x=0,subglobal_y=0;
 	int block_x=0, block_y=0;
@@ -2410,7 +2762,6 @@ static void get_sprite_info(const data32_t *spriteram32_ptr)	//ks
 	int sprite_top;
 
 	int x_addition_left = 8, y_addition_left = 8;
-	int zoomx = 0x10000, zoomy = 0x10000;
 
 	struct tempsprite *sprite_ptr = spritelist;
 
@@ -2511,16 +2862,12 @@ static void get_sprite_info(const data32_t *spriteram32_ptr)	//ks
 
 						x = block_x = this_x;
 					}
-//ks s
 					x_addition_left = 8;
 					CALC_ZOOM(x)
-//ks e
 				}
 				else if ((spritecont & 0x80) != 0) {
 					x = last_x+x_addition;
-//ks s
 					CALC_ZOOM(x)
-//ks e
 				}
 
 				/* Adjust Y Position */
@@ -2542,16 +2889,12 @@ static void get_sprite_info(const data32_t *spriteram32_ptr)	//ks
 
 						y = block_y = this_y;
 					}
-//ks s
 					y_addition_left = 8;
 					CALC_ZOOM(y)
-//ks e
 				}
 				else if ((spritecont & 0x20) != 0) {
 					y = last_y+y_addition;
-//ks s
 					CALC_ZOOM(y)
-//ks e
 				}
 			} else
 #endif
@@ -2559,30 +2902,22 @@ static void get_sprite_info(const data32_t *spriteram32_ptr)	//ks
 				/* Adjust X Position */
 				if ((spritecont & 0x40) == 0) {
 					x = block_x;
-//ks s
 					x_addition_left = 8;
 					CALC_ZOOM(x)
-//ks e
 				}
 				else if ((spritecont & 0x80) != 0) {
 					x = last_x+x_addition;
-//ks s
 					CALC_ZOOM(x)
-//ks e
 				}
 				/* Adjust Y Position */
 				if ((spritecont & 0x10) == 0) {
 					y = block_y;
-//ks s
 					y_addition_left = 8;
 					CALC_ZOOM(y)
-//ks e
 				}
 				else if ((spritecont & 0x20) != 0) {
 					y = last_y+y_addition;
-//ks s
 					CALC_ZOOM(y)
-//ks e
 				}
 				/* Both zero = reread block latch? */
 			}
@@ -2617,13 +2952,12 @@ static void get_sprite_info(const data32_t *spriteram32_ptr)	//ks
 			block_zoom_x=spriteram32_ptr[offs];
 			block_zoom_y=(block_zoom_x>>8)&0xff;
 			block_zoom_x&=0xff;
-//ks s
+
 			x_addition_left = 8;
 			CALC_ZOOM(x)
 
 			y_addition_left = 8;
 			CALC_ZOOM(y)
-//ks e
 		}
 
 		/* These features are common to sprite and block parts */
@@ -2632,84 +2966,96 @@ static void get_sprite_info(const data32_t *spriteram32_ptr)	//ks
 		multi = spritecont&0x8;
 		last_x=x;
 		last_y=y;
-//ks		if (block_zoom_x) x_addition=(0x110 - block_zoom_x) / 16; else x_addition=16;
-//ks		if (block_zoom_y) y_addition=(0x110 - block_zoom_y) / 16; else y_addition=16;
-		if (!sprite) continue;
 
-		if (flipscreen) {
-//ks s
-			sprite_ptr->x = 512-x_addition-x;
-			sprite_ptr->y = 256-y_addition-y;
-//ks e
+		if (!sprite) continue;
+		if (!x_addition || !y_addition) continue;
+
+		if (flipscreen)
+		{
+			int tx,ty;
+			if (f3_game == GSEEKER )
+			{
+				tx = 512-x_addition-x-44;
+				ty = 256-y_addition-y+17;
+			}
+			else
+			{
+				tx = 512-x_addition-x;
+				ty = 256-y_addition-y;
+			}
+			if (tx+x_addition<=min_x || tx>max_x || ty+y_addition<=min_y || ty>max_y) continue;
+			sprite_ptr->x = tx;
+			sprite_ptr->y = ty;
 			sprite_ptr->flipx = !flipx;
 			sprite_ptr->flipy = !flipy;
-		} else {
+		}
+		else
+		{
+			if (x+x_addition<=min_x || x>max_x || y+y_addition<=min_y || y>max_y) continue;
 			sprite_ptr->x = x;
 			sprite_ptr->y = y;
 			sprite_ptr->flipx = flipx;
 			sprite_ptr->flipy = flipy;
 		}
 
+
 		sprite_ptr->code = sprite;
 		sprite_ptr->color = color;
-//ks s
-		sprite_ptr->zoomx = zoomx;
-		sprite_ptr->zoomy = zoomy;
+		sprite_ptr->zoomx = x_addition;
+		sprite_ptr->zoomy = y_addition;
 		sprite_ptr->pri = (color & 0xc0) >> 6;
-//ks e
 		sprite_ptr++;
 	}
-	sprite_end = sprite_ptr;//ks
+	sprite_end = sprite_ptr;
 }
+#undef CALC_ZOOM
 
-//ks s
+
 static void f3_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	const struct tempsprite *sprite_ptr;
-
-//	for(sprite_ptr = spritelist; sprite_ptr < sprite_end; sprite_ptr++)
+	const struct GfxElement *sprite_gfx = Machine->gfx[2];
 
 	sprite_ptr = sprite_end;
+	sprite_pri_usage=0;
 	while (sprite_ptr != spritelist)
 	{
-		int col,x,y;
+		int pri;
 		sprite_ptr--;
 
-		col=sprite_ptr->color;
-		x=sprite_ptr->x;
-		y=sprite_ptr->y;
-//ksdeb s
-		if (/*DEBUG_F3*/deb_enable && keyboard_pressed(KEYCODE_A) && sprite_ptr->pri==3) {x=300;y=300;}
-		if (/*DEBUG_F3*/deb_enable && keyboard_pressed(KEYCODE_S) && sprite_ptr->pri==2) {x=300;y=300;}
-		if (/*DEBUG_F3*/deb_enable && keyboard_pressed(KEYCODE_D) && sprite_ptr->pri==1) {x=300;y=300;}
-		if (/*DEBUG_F3*/deb_enable && keyboard_pressed(KEYCODE_F) && sprite_ptr->pri==0) {x=300;y=300;}
-		if (flipscreen && f3_game == GSEEKER )
-		{
-			x += -44;
-			y += 17;
-		}
-//ksdeb e
-		f3_drawgfxzoom(bitmap,Machine->gfx[2],
-				sprite_ptr->code,
-				col,
-				sprite_ptr->flipx,sprite_ptr->flipy,
-				x,y,
-				cliprect,
-				sprite_ptr->zoomx,sprite_ptr->zoomy,
-				sprite_ptr->pri);
+		pri=sprite_ptr->pri;
+		sprite_pri_usage|=1<<pri;
+
+		if(sprite_ptr->zoomx==16 && sprite_ptr->zoomy==16)
+			f3_drawgfx(bitmap,sprite_gfx,
+					sprite_ptr->code,
+					sprite_ptr->color,
+					sprite_ptr->flipx,sprite_ptr->flipy,
+					sprite_ptr->x,sprite_ptr->y,
+					cliprect,
+					pri);
+		else
+			f3_drawgfxzoom(bitmap,sprite_gfx,
+					sprite_ptr->code,
+					sprite_ptr->color,
+					sprite_ptr->flipx,sprite_ptr->flipy,
+					sprite_ptr->x,sprite_ptr->y,
+					cliprect,
+					sprite_ptr->zoomx,sprite_ptr->zoomy,
+					pri);
 	}
 }
-//ks e
 
 /******************************************************************************/
 
-//ks s
 VIDEO_UPDATE( f3 )
 {
 	struct rectangle tempclip;
 	unsigned int sy_fix[4],sx_fix[4];
 	int tile;
-	static int deb_sc_x=0,deb_sc_y=0;//ksdeb
+#if DEBUG_F3
+	static int deb_sc_x=0,deb_sc_y=0;
+#endif	//DEBUG_F3
 	struct mame_bitmap *priority_bitmap_bak;
 
 	skip_this_frame=0;
@@ -2726,24 +3072,30 @@ VIDEO_UPDATE( f3 )
 
 //	if (scroll_dirty)
 	{
-		sy_fix[0]=deb_sc_y+((f3_control_0[2]&0xffff0000)>> 7)+(scroll_kludge_y<<16);
-		sy_fix[1]=deb_sc_y+((f3_control_0[2]&0x0000ffff)<< 9)+((scroll_kludge_y+pf23_y_kludge)<<16);
-		sy_fix[2]=deb_sc_y+((f3_control_0[3]&0xffff0000)>> 7)+((scroll_kludge_y+pf23_y_kludge)<<16);
-		sy_fix[3]=deb_sc_y+((f3_control_0[3]&0x0000ffff)<< 9)+(scroll_kludge_y<<16);
-		sx_fix[0]=deb_sc_x+((f3_control_0[0]&0xffc00000)>> 6)-((6+scroll_kludge_x)<<16);
-		sx_fix[1]=deb_sc_x+((f3_control_0[0]&0x0000ffc0)<<10)-((10+scroll_kludge_x)<<16);
-		sx_fix[2]=deb_sc_x+((f3_control_0[1]&0xffc00000)>> 6)-((14+scroll_kludge_x)<<16);
-		sx_fix[3]=deb_sc_x+((f3_control_0[1]&0x0000ffc0)<<10)-((18+scroll_kludge_x)<<16);
-
-//		sx_fix[0]+=((f3_control_0[0]&0x003f0000)>> 6)^0xfc00;
-//		sx_fix[1]+=((f3_control_0[0]&0x0000003f)<<10)^0xfc00;
-//		sx_fix[2]+=((f3_control_0[1]&0x003f0000)>> 6)^0xfc00;
-//		sx_fix[3]+=((f3_control_0[1]&0x0000003f)<<10)^0xfc00;
+		sy_fix[0]=((f3_control_0[2]&0xffff0000)>> 7)+(scroll_kludge_y<<16);
+		sy_fix[1]=((f3_control_0[2]&0x0000ffff)<< 9)+((scroll_kludge_y+pf23_y_kludge)<<16);
+		sy_fix[2]=((f3_control_0[3]&0xffff0000)>> 7)+((scroll_kludge_y+pf23_y_kludge)<<16);
+		sy_fix[3]=((f3_control_0[3]&0x0000ffff)<< 9)+(scroll_kludge_y<<16);
+		sx_fix[0]=((f3_control_0[0]&0xffc00000)>> 6)-((6+scroll_kludge_x)<<16);
+		sx_fix[1]=((f3_control_0[0]&0x0000ffc0)<<10)-((10+scroll_kludge_x)<<16);
+		sx_fix[2]=((f3_control_0[1]&0xffc00000)>> 6)-((14+scroll_kludge_x)<<16);
+		sx_fix[3]=((f3_control_0[1]&0x0000ffc0)<<10)-((18+scroll_kludge_x)<<16);
 
 		sx_fix[0]-=((f3_control_0[0]&0x003f0000)>> 6)+0x0400-0x10000;
 		sx_fix[1]-=((f3_control_0[0]&0x0000003f)<<10)+0x0400-0x10000;
 		sx_fix[2]-=((f3_control_0[1]&0x003f0000)>> 6)+0x0400-0x10000;
 		sx_fix[3]-=((f3_control_0[1]&0x0000003f)<<10)+0x0400-0x10000;
+
+#if DEBUG_F3
+		sy_fix[0]+=deb_sc_y;
+		sy_fix[1]+=deb_sc_y;
+		sy_fix[2]+=deb_sc_y;
+		sy_fix[3]+=deb_sc_y;
+		sx_fix[0]+=deb_sc_x;
+		sx_fix[1]+=deb_sc_x;
+		sx_fix[2]+=deb_sc_x;
+		sx_fix[3]+=deb_sc_x;
+#endif	//DEBUG_F3
 
 		if (flipscreen)
 		{
@@ -2764,28 +3116,38 @@ VIDEO_UPDATE( f3 )
 
 
 	fillbitmap(pri_alp_bitmap,0,cliprect);
-// fillbitmap(bitmap,255,cliprect);
+#if DEBUG_F3
+if (deb_enable) fillbitmap(bitmap,255,cliprect);
+#endif	//DEBUG_F3
 
 	/* Pixel layer */
 	tempclip = pixel_layer_clip;
 	sect_rect(&tempclip,cliprect);
-if (!deb_enable || !keyboard_pressed(KEYCODE_N))//ksdeb
+#if DEBUG_F3
+if (!deb_enable || !keyboard_pressed(KEYCODE_N))
+#endif	//DEBUG_F3
 {
 	priority_bitmap_bak=priority_bitmap;
 	priority_bitmap=pri_alp_bitmap;
-//	tilemap_draw(NULL,&tempclip,pixel_layer,0,0xff);
 	tilemap_draw(bitmap,&tempclip,pixel_layer,0,0xff);
 	priority_bitmap=priority_bitmap_bak;
 }
 
 
 	/* sprites */
-	if (sprite_lag==0) get_sprite_info(spriteram32);
-if (!deb_enable || !keyboard_pressed(KEYCODE_B))//ksdeb
-	f3_drawsprites(sprite_bitmap,cliprect);
+	if (sprite_lag==0)
+	{
+		get_sprite_info(spriteram32);
+	}
 
+#if DEBUG_F3
+if (!deb_enable || !keyboard_pressed(KEYCODE_B))
+#endif	//DEBUG_F3
+{
+	f3_drawsprites(bitmap,cliprect);
+}
 
-//ksdeb s
+#if DEBUG_F3
 deb_tileflag=0;
 if (deb_enable && keyboard_pressed(KEYCODE_G))
 {
@@ -2795,40 +3157,42 @@ if (deb_enable && keyboard_pressed(KEYCODE_G))
 	tilemap_mark_all_tiles_dirty( pf3_tilemap );
 	tilemap_mark_all_tiles_dirty( pf4_tilemap );
 }
-//ksdeb e
-
+#endif	//DEBUG_F3
 
 	/* Playfield */
-	get_line_ram_info(pf1_tilemap,sx_fix[0],sy_fix[0],0);
-	get_line_ram_info(pf2_tilemap,sx_fix[1],sy_fix[1],1);
-	get_line_ram_info(pf3_tilemap,sx_fix[2],sy_fix[2],2);
-	get_line_ram_info(pf4_tilemap,sx_fix[3],sy_fix[3],3);
+	get_line_ram_info(pf1_tilemap,sx_fix[0],sy_fix[0],0,f3_pf_data_1);
+	get_line_ram_info(pf2_tilemap,sx_fix[1],sy_fix[1],1,f3_pf_data_2);
+	get_line_ram_info(pf3_tilemap,sx_fix[2],sy_fix[2],2,f3_pf_data_3);
+	get_line_ram_info(pf4_tilemap,sx_fix[3],sy_fix[3],3,f3_pf_data_4);
+
 	f3_tilemap_draw(bitmap,cliprect);
 
 
 	/* vram layer */
-if (!deb_enable || !keyboard_pressed(KEYCODE_M))//ksdeb
+#if DEBUG_F3
+if (!deb_enable || !keyboard_pressed(KEYCODE_M))
+#endif	//DEBUG_F3
 	f3_draw_vram_layer(bitmap,cliprect);
 
+
 #if DEBUG_F3
-	if (keyboard_pressed(KEYCODE_O))
+	if (0 && keyboard_pressed(KEYCODE_O))
 		print_debug_info(0,0,0,0,0,0,0,0);
+#endif	//DEBUG_F3
 
-//ksdeb s
-	{/*******************************************************************************************/
+
+	if (!keyboard_pressed(KEYCODE_LSHIFT) && keyboard_pressed_memory(KEYCODE_F1))
+	{
+		alpha_disable=!alpha_disable;
+		if(alpha_disable)
+			usrintf_showmessage("alpha blending:off");
+		else usrintf_showmessage("alpha blending:on");
+	}
+
+#if DEBUG_F3
+	{/******************************************************************************/
 		static int debdisp = 0;
-		static char deb_buf[10][80];
 		static int cz_pos=0,cz_line=24;
-
-
-		if (!keyboard_pressed(KEYCODE_LSHIFT) && keyboard_pressed_memory(KEYCODE_F1))
-		{
-			deb_alpha_disable=!deb_alpha_disable;
-			if(deb_alpha_disable)
-				usrintf_showmessage("alpha blending:off");
-			else usrintf_showmessage("alpha blending:on");
-
-		}
 
 		if (keyboard_pressed(KEYCODE_LSHIFT) && keyboard_pressed_memory(KEYCODE_F1))
 		{
@@ -2935,7 +3299,7 @@ if (!deb_enable || !keyboard_pressed(KEYCODE_M))//ksdeb
 				if (keyboard_pressed_memory(KEYCODE_8_PAD))	deb_sc_y+=0x10000;
 				sprintf(deb_buf[5],"sc offset x:%8x y:%8x",deb_sc_x,deb_sc_y);
 
-				sprintf(deb_buf[6],"flipscreen:%d  loop:%d",flipscreen,deb_loop);
+				sprintf(deb_buf[6],"flip:%d alp/loop:%2d/%2d",!(!flipscreen),deb_alpha_cnt,deb_loop);
 
 				if (keyboard_pressed_memory(KEYCODE_H))	deb_tile_code--;
 				if (keyboard_pressed_memory(KEYCODE_J))	deb_tile_code++;
@@ -2963,7 +3327,7 @@ if (!deb_enable || !keyboard_pressed(KEYCODE_M))//ksdeb
 				sprintf(deb_buf[5],"mode:%d alpha_a:%2x alpha_b:%2x",
 									deb_alp_mode,deb_alpha_level_a,deb_alpha_level_b );
 
-				{//ksdebA
+				{
 					int al_s,al_d;
 					int deb_alpha_level_s0,deb_alpha_level_d0;
 					int deb_alpha_level_s1,deb_alpha_level_d1;
@@ -3003,10 +3367,9 @@ if (!deb_enable || !keyboard_pressed(KEYCODE_M))//ksdeb
 			ui_text(bitmap,deb_buf[5],0,Machine->uifontheight*5);
 			ui_text(bitmap,deb_buf[6],0,Machine->uifontheight*6);
 			ui_text(bitmap,deb_buf[7],0,Machine->uifontheight*7);
+			ui_text(bitmap,deb_buf[8],0,Machine->uifontheight*8);
 			memset(deb_buf, 0x00, sizeof(deb_buf));
 		}
 	}
-//ksdeb e
-#endif
+#endif	//DEBUG_F3
 }
-//ks e

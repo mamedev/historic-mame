@@ -466,7 +466,7 @@ static void init_tunit_generic(int sound)
  *
  *************************************/
 
-DRIVER_INIT( mk )
+static void init_mk_tunit_common(void)
 {
 	/* common init */
 	init_tunit_generic(SOUND_ADPCM);
@@ -478,9 +478,18 @@ DRIVER_INIT( mk )
 
 	/* sound chip protection (hidden RAM) */
 	install_mem_write_handler(1, 0xfb9c, 0xfbc6, MWA_RAM);
+}
 
-	/* speedups */
+DRIVER_INIT( mk )
+{
+	init_mk_tunit_common();
 	INSTALL_SPEEDUP_3(0x01053360, 0xffce2100, 0x104f9d0, 0x104fa10, 0x104fa30);
+}
+
+DRIVER_INIT( mkr4 )
+{
+	init_mk_tunit_common();
+	INSTALL_SPEEDUP_3(0x01053360, 0xffce2190, 0x104f9d0, 0x104fa10, 0x104fa30);
 }
 
 static void init_nbajam_common(int te_protection)

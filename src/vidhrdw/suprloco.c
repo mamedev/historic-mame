@@ -214,7 +214,7 @@ static void render_sprite(struct mame_bitmap *bitmap,const struct rectangle *cli
 	skip = spr_reg[SPR_SKIP_LO] + (spr_reg[SPR_SKIP_HI] << 8);
 
 	height		= spr_reg[SPR_Y_BOTTOM] - spr_reg[SPR_Y_TOP];
-	spr_palette	= Machine->remapped_colortable + 0x100 + 0x10 * spr_reg[SPR_COL] + ((control & 0x20)?0x100:0);
+	spr_palette	= Machine->remapped_colortable + 0x100 + 0x10 * (spr_reg[SPR_COL]&0x03) + ((control & 0x20)?0x100:0);
 	sx = spr_reg[SPR_X];
 	sy = spr_reg[SPR_Y_TOP] + 1;
 

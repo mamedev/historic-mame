@@ -3,6 +3,7 @@
 	Raiden							(c) 1990 Seibu Kaihatsu
 	Raiden (Alternate Hardware)		(c) 1990 Seibu Kaihatsu
 	Raiden (Korean license)			(c) 1990 Seibu Kaihatsu
+	Raiden (Taiwanese license)			(c) 1990 Seibu Kaihatsu
 
     driver by Oliver Bergmann, Bryan McPhail, Randy Mongenel
 
@@ -282,7 +283,7 @@ static MACHINE_DRIVER_START( raiden )
 	MDRV_CPU_ADD(V30,20000000) /* NEC V30 CPU, 20MHz */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(raiden_interrupt,1)
-	
+
 	MDRV_CPU_ADD(V30,20000000) /* NEC V30 CPU, 20MHz */
 	MDRV_CPU_MEMORY(sub_readmem,sub_writemem)
 	MDRV_CPU_VBLANK_INT(raiden_interrupt,1)
@@ -446,6 +447,39 @@ ROM_START( raidenk )
 	ROM_LOAD( "rai7.bin", 0x00000, 0x10000, 0x8f927822 )
 ROM_END
 
+ROM_START( raident )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* v30 main cpu */
+	ROM_LOAD16_BYTE( "rai1.bin",     0x0a0000, 0x10000, 0xa4b12785 )
+	ROM_LOAD16_BYTE( "rai2.bin",     0x0a0001, 0x10000, 0x17640bd5 )
+	ROM_LOAD16_BYTE( "raiden03.rom", 0x0c0000, 0x20000, 0xf6af09d0 )
+	ROM_LOAD16_BYTE( "raid04t.023",  0x0c0001, 0x20000, 0x61eefab1 )
+
+	ROM_REGION( 0x100000, REGION_CPU2, 0 ) /* v30 sub cpu */
+	ROM_LOAD16_BYTE( "raiden05.rom",   0x0c0000, 0x20000, 0xed03562e )
+	ROM_LOAD16_BYTE( "raiden06.rom",   0x0c0001, 0x20000, 0xa19d5b5d )
+
+	ROM_REGION( 0x20000*2, REGION_CPU3, 0 ) /* 64k code for sound Z80 */
+	ROM_LOAD( "raid08.212",   0x000000, 0x08000, 0xcbe055c7 )
+	ROM_CONTINUE(             0x010000, 0x08000 )
+	ROM_COPY( REGION_CPU3, 0, 0x018000, 0x08000 )
+
+	ROM_REGION( 0x010000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "rai9.bin",     0x00000, 0x08000, 0x1922b25e ) /* chars */
+	ROM_LOAD( "rai10.bin",    0x08000, 0x08000, 0x5f90786a )
+
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "raiu0919.bin", 0x00000, 0x80000, 0xda151f0b ) /* tiles */
+
+	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "raiu0920.bin", 0x00000, 0x80000, 0xac1f57ac ) /* tiles */
+
+	ROM_REGION( 0x090000, REGION_GFX4, ROMREGION_DISPOSE )
+	ROM_LOAD( "raiu165.bin",  0x00000, 0x80000, 0x946d7bde ) /* sprites */
+
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	 /* ADPCM samples */
+	ROM_LOAD( "rai7.bin", 0x00000, 0x10000, 0x8f927822 )
+ROM_END
+
 /***************************************************************************/
 
 /* Spin the sub-cpu if it is waiting on the master cpu */
@@ -563,3 +597,4 @@ static DRIVER_INIT( raidena )
 GAME( 1990, raiden,  0,      raiden,  raiden, raiden,  ROT270, "Seibu Kaihatsu", "Raiden" )
 GAME( 1990, raidena, raiden, raidena, raiden, raidena, ROT270, "Seibu Kaihatsu", "Raiden (Alternate Hardware)" )
 GAME( 1990, raidenk, raiden, raidena, raiden, raidenk, ROT270, "Seibu Kaihatsu (IBL Corporation license)", "Raiden (Korea)" )
+GAME( 1990, raident, raiden, raidena, raiden, raidena, ROT270, "Seibu Kaihatsu (Liang HWA Electronics license)", "Raiden (Taiwan)" )

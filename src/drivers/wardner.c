@@ -139,12 +139,13 @@ WRITE_HANDLER( wardner_control_w );
 WRITE_HANDLER( wardner_coin_dsp_w );
 READ16_HANDLER( twincobr_dsp_r );
 WRITE16_HANDLER( twincobr_dsp_w );
+READ16_HANDLER( twincobr_BIO_r );
 
-static int wardner_membank = 0;
+extern int wardner_membank;
 extern int twincobr_intenable;
 
-data8_t *wardner_sharedram;
-data8_t *wardner_spare_pal_ram;
+static data8_t *wardner_sharedram;
+static data8_t *wardner_spare_pal_ram;
 
 extern data8_t *wardner_mainram;
 
@@ -258,6 +259,8 @@ static WRITE_HANDLER( wardner_ramrom_banks_w )
 }
 
 
+
+/* Z80 #1 memory/port maps */
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x6fff, MRA_ROM },			/* Main CPU ROM code */
 	{ 0x7000, 0x7fff, wardner_mainram_r },	/* Main RAM */
@@ -284,33 +287,6 @@ static MEMORY_WRITE_START( writemem )
 	{ 0xc800, 0xffff, MWA_ROM },
 MEMORY_END
 
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x807f, MRA_BANK4 },
-	{ 0xc000, 0xc7ff, wardner_sharedram_r },
-	{ 0xc800, 0xcfff, MRA_BANK5 },
-MEMORY_END
-
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x807f, MWA_BANK4 },
-	{ 0xc000, 0xc7ff, wardner_sharedram_w },
-	{ 0xc800, 0xcfff, MWA_BANK5 },
-MEMORY_END
-
-static MEMORY_READ16_START( DSP_readmem )
-	{ 0x0000, 0x011f, MRA16_RAM },	/* 90h words internal RAM */
-	{ 0x8000, 0x8bff, MRA16_ROM },	/* 600h words. The real DSPs ROM is at */
-									/* address 0 */
-									/* View it at 8000h in the debugger */
-MEMORY_END
-
-static MEMORY_WRITE16_START( DSP_writemem )
-	{ 0x0000, 0x011f, MWA16_RAM },
-	{ 0x8000, 0x8bff, MWA16_ROM },
-MEMORY_END
-
-
 static PORT_READ_START( readport )
 	{ 0x50, 0x50, input_port_3_r },			/* DSW A */
 	{ 0x52, 0x52, input_port_4_r },			/* DSW B */
@@ -336,6 +312,22 @@ static PORT_WRITE_START( writeport )
 	{ 0x70, 0x70, wardner_ramrom_banks_w },	/* ROM bank select */
 PORT_END
 
+
+/* Z80 #2 memory/port maps */
+static MEMORY_READ_START( sound_readmem )
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0x807f, MRA_BANK4 },
+	{ 0xc000, 0xc7ff, wardner_sharedram_r },
+	{ 0xc800, 0xcfff, MRA_BANK5 },
+MEMORY_END
+
+static MEMORY_WRITE_START( sound_writemem )
+	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0x8000, 0x807f, MWA_BANK4 },
+	{ 0xc000, 0xc7ff, wardner_sharedram_w },
+	{ 0xc800, 0xcfff, MWA_BANK5 },
+MEMORY_END
+
 static PORT_READ_START( sound_readport )
 	{ 0x00, 0x00, YM3812_status_port_0_r },
 PORT_END
@@ -345,11 +337,27 @@ static PORT_WRITE_START( sound_writeport )
 	{ 0x01, 0x01, YM3812_write_port_0_w },
 PORT_END
 
+
+/* TMS32010 memory/port maps */
+static MEMORY_READ16_START( DSP_readmem )
+	{ TMS32010_DATA_ADDR_RANGE(0x000, 0x08f), MRA16_RAM },	/* 90h words internal RAM */
+	{ TMS32010_PGM_ADDR_RANGE(0x000, 0x5ff), MRA16_ROM },	/* 600h words. The real DSPs ROM is at */
+									/* address 0 */
+									/* View it at 8000h in the debugger */
+MEMORY_END
+
+static MEMORY_WRITE16_START( DSP_writemem )
+	{ TMS32010_DATA_ADDR_RANGE(0x000, 0x08f), MWA16_RAM },
+	{ TMS32010_PGM_ADDR_RANGE(0x000, 0x5ff), MWA16_ROM },
+MEMORY_END
+
 static PORT_READ16_START( DSP_readport )
-	{ 0x02, 0x03, twincobr_dsp_r },
+	{ TMS32010_PORT_RANGE(1, 1),  twincobr_dsp_r },
+	{ TMS32010_BIO, TMS32010_BIO, twincobr_BIO_r },
 PORT_END
+
 static PORT_WRITE16_START( DSP_writeport )
-	{ 0x00,  0x07, twincobr_dsp_w },
+	{ TMS32010_PORT_RANGE(0, 3),       twincobr_dsp_w },
 PORT_END
 
 
@@ -551,7 +559,7 @@ static void irqhandler(int linestate)
 static struct YM3812interface ym3812_interface =
 {
 	1,				/* 1 chip */
-	24000000/7,		/* 3.43 MHz ??? */
+	24000000/7,		/* 3.43MHz ??? */
 	{ 100 },		/* volume */
 	{ irqhandler },
 };
@@ -570,23 +578,23 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static MACHINE_DRIVER_START( wardner )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80,24000000/4)			/* 6 MHz ??? - Real board crystal is 24MHz */
+	MDRV_CPU_ADD(Z80,24000000/4)			/* 6MHz ??? - Real board crystal is 24MHz */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_PORTS(readport,writeport)
 	MDRV_CPU_VBLANK_INT(wardner_interrupt,1)
 
-	MDRV_CPU_ADD(Z80,24000000/7)			/* 3.43 MHz ??? */
+	MDRV_CPU_ADD(Z80,24000000/7)			/* 3.43MHz ??? */
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 	MDRV_CPU_PORTS(sound_readport,sound_writeport)
 
-	MDRV_CPU_ADD(TMS320C10,24000000/7)			/* 3.43 MHz ??? */
+	MDRV_CPU_ADD(TMS32010,14000000)			/* 14MHz Crystal CLKin */
 	MDRV_CPU_MEMORY(DSP_readmem,DSP_writemem)
 	MDRV_CPU_PORTS(DSP_readport,DSP_writeport)
 
 	MDRV_FRAMES_PER_SECOND(56)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(100)			/* 100 CPU slices per frame */
-	
+	MDRV_INTERLEAVE(100)					/* 100 CPU slices per frame */
+
 	MDRV_MACHINE_INIT(wardner)
 
 	/* video hardware */
@@ -777,7 +785,7 @@ ROM_END
 static DRIVER_INIT( wardner )
 {
 	data8_t *source = memory_region(REGION_USER1);
-	data16_t *dest = (data16_t *)&memory_region(REGION_CPU3)[TMS320C10_PGM_OFFSET];
+	data16_t *dest = (data16_t *)&memory_region(REGION_CPU3)[TMS32010_PGM_OFFSET];
 	int A;
 
 	/* The ROM loader fixes the nibble images. Here we fix the byte ordering. */
@@ -790,4 +798,3 @@ static DRIVER_INIT( wardner )
 GAME( 1987, wardner,  0,       wardner, wardner,  wardner, ROT0, "[Toaplan] Taito Corporation Japan", "Wardner (World)" )
 GAME( 1987, pyros,    wardner, wardner, pyros,    wardner, ROT0, "[Toaplan] Taito America Corporation", "Pyros (US)" )
 GAME( 1987, wardnerj, wardner, wardner, wardnerj, wardner, ROT0, "[Toaplan] Taito Corporation", "Wardna no Mori (Japan)" )
-

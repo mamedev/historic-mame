@@ -685,12 +685,12 @@ void palette_set_highlight_factor(double factor)
 	gamma factor
 -------------------------------------------------*/
 
-void palette_set_global_gamma(double gamma)
+void palette_set_global_gamma(double _gamma)
 {
 	/* if the gamma changed, recompute */
-	if (global_gamma != gamma)
+	if (global_gamma != _gamma)
 	{
-		global_gamma = gamma;
+		global_gamma = _gamma;
 		recompute_adjusted_palette(1);
 	}
 }
@@ -1411,6 +1411,21 @@ WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBRGBx_word_w )
 
 ******************************************************************************/
 
+
+/***************************************************************************
+
+	Standard black and white palette.
+	Color 0 is pure black, color 1 is pure white.
+
+***************************************************************************/
+
+PALETTE_INIT( black_and_white )
+{
+	palette_set_color(0,0x00,0x00,0x00); /* black */
+	palette_set_color(1,0xff,0xff,0xff); /* white */
+}
+
+
 /***************************************************************************
 
   This assumes the commonly used resistor values:
@@ -1421,6 +1436,7 @@ WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBRGBx_word_w )
   bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
 
 ***************************************************************************/
+
 PALETTE_INIT( RRRR_GGGG_BBBB )
 {
 	int i;

@@ -35,7 +35,7 @@ READ_HANDLER( gyruss_portA_r )
 
 	int current_totalcycles;
 
-	current_totalcycles = cpu_gettotalcycles();
+	current_totalcycles = activecpu_gettotalcycles();
 	clock = (clock + (current_totalcycles-last_totalcycles)) % 10240;
 
 	last_totalcycles = current_totalcycles;

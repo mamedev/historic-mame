@@ -15,9 +15,18 @@ Inputs get tested at $4aca2 on
 TODO
 ----
 
+Screen flipping support
+
+Understand role of bit 5 of IN1
+
 Eprom?
 
 Sound: M6295 / M6585
+
+
+Stephh's notes (based on the game M68000 code and some tests) :
+
+  - Reset the game while pressing START1 to enter the "test mode"
 
 
 ***************************************************************************/
@@ -64,7 +73,7 @@ static READ16_HANDLER( ioc_r )
 	switch (offset)
 	{
 		case 0x80/2:
-			return input_port_0_word_r(0,mem_mask);	/* DSW ??? */
+			return input_port_0_word_r(0,mem_mask);	/* DSW */
 
 		case 0x84/2:
 			return input_port_1_word_r(0,mem_mask);	/* IN0 */
@@ -89,7 +98,7 @@ static WRITE16_HANDLER( ioc_w )
 //		case 0x??:	/* */
 //			return;
 //
-//		case 0x88:	/* coin control (+ others) ??? */
+//		case 0x88/2:	/* coin control (+ others) ??? */
 //			coin_lockout_w(0, ~data & 0x01);
 //			coin_lockout_w(1, ~data & 0x02);
 //usrintf_showmessage(" address %04x value %04x",offset,data);
@@ -137,65 +146,69 @@ MEMORY_END
 ***********************************************************/
 
 INPUT_PORTS_START( gcpinbal )
-	PORT_START	/* DSW, all bogus */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, "Continuous fire" )
-	PORT_DIPSETTING(    0x02, "Normal" )
-	PORT_DIPSETTING(    0x00, "Fast" )
-	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0200, "Easy" )
-	PORT_DIPSETTING(      0x0300, "Medium" )
-	PORT_DIPSETTING(      0x0100, "Hard" )
+	PORT_START	/* DSW */
+	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0002, "Easy" )
+	PORT_DIPSETTING(      0x0003, "Normal" )
+	PORT_DIPSETTING(      0x0001, "Hard" )
 	PORT_DIPSETTING(      0x0000, "Hardest" )
-	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(      0x0000, "?K, ?K" )
-	PORT_DIPSETTING(      0x0400, "?K, ?K" )
-	PORT_DIPSETTING(      0x0800, "?K, ?K" )
-	PORT_DIPSETTING(      0x0c00, "?K, ?K" )
-	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Lives ) )
-	PORT_DIPSETTING(      0x3000, "3" )
-	PORT_DIPSETTING(      0x2000, "4" )
-	PORT_DIPSETTING(      0x1000, "5" )
-	PORT_DIPSETTING(      0x0000, "6" )
-	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(      0x0004, "300k" )
+	PORT_DIPSETTING(      0x0008, "500k" )
+	PORT_DIPSETTING(      0x000c, "1000k" )
+	PORT_DIPSETTING(      0x0000, "None" )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Flip_Screen ) )	// to be confirmed - code at 0x000508
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Demo_Sounds ) )	// to be confirmed - code at 0x00b6d0, 0x00b7e4, 0x00bae4
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0700, 0x0700, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0300, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0100, "2 Coins/1 Credit 3/2 4/3 6/5" )
+	PORT_DIPSETTING(      0x0700, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0500, "1 Coin/1 Credit 2/3" )
+	PORT_DIPSETTING(      0x0000, "1 Coin/1 Credit 5/6" )
+	PORT_DIPSETTING(      0x0600, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x3800, 0x3800, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x1800, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0800, "2 Coins/1 Credit 3/2 4/3 6/5" )
+	PORT_DIPSETTING(      0x3800, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x2800, "1 Coin/1 Credit 2/3" )
+	PORT_DIPSETTING(      0x0000, "1 Coin/1 Credit 5/6" )
+	PORT_DIPSETTING(      0x3000, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0xc000, 0xc000, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0000, "2" )
+	PORT_DIPSETTING(      0xc000, "3" )
+	PORT_DIPSETTING(      0x8000, "4" )
+	PORT_DIPSETTING(      0x4000, "5" )
 
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON8 | IPF_PLAYER1 )	// ?
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1 )	// Item right
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )	// Inner flipper right
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1 )	// Outer flipper right
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON7 | IPF_PLAYER1 )	// Tilt right ?
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )	// Outer flipper right
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON8 | IPF_PLAYER1 )	// Tilt right
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )	// ?
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1 )	// Item left
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )	// Inner flipper left
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1 )	// Outer flipper left
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )	// Tilt left ?
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )	// Outer flipper left
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON7 | IPF_PLAYER1 )	// Tilt left
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START	/* IN1 */
@@ -340,5 +353,5 @@ ROM_END
 
 
 
-GAMEX( 1994, gcpinbal, 0, gcpinbal, gcpinbal, 0, ROT270, "Excellent System", "Grand Cross", GAME_NO_SOUND )
+GAMEX( 1994, gcpinbal, 0, gcpinbal, gcpinbal, 0, ROT270, "Excellent System", "Grand Cross", GAME_NO_SOUND | GAME_NO_COCKTAIL )
 

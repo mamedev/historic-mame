@@ -990,6 +990,52 @@ INPUT_PORTS_START( heiankyo )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( alphaho )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x04, 0x00, "Alpha Fighter Lives (1/2)" )
+	PORT_DIPSETTING(    0x00, "+0" )
+	PORT_DIPSETTING(    0x04, "+1" )
+	PORT_DIPNAME( 0x08, 0x00, "Head On Lives" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x08, "4" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_DIPNAME( 0x04, 0x00, "Alpha Fighter Lives (2/2)" )
+	PORT_DIPSETTING(    0x00, "+0" )
+	PORT_DIPSETTING(    0x04, "+2" )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+
+	PORT_START	/* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_DIPNAME( 0x04, 0x00, "Alpha Fighter Unknown" )	// related to soccer frequency (code at 0x4950)
+	PORT_DIPSETTING(    0x00, DEF_STR ( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR ( On ) )
+	PORT_BIT_IMPULSE( 0x08, IP_ACTIVE_LOW, IPT_COIN1 | IPF_RESETCPU, 30 )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_TOGGLE, "Game Select", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+INPUT_PORTS_END
+
 
 
 static struct GfxLayout charlayout =
@@ -1614,6 +1660,29 @@ ROM_START( heiankyo )
 	ROM_LOAD( "316-0042.u88", 0x0020, 0x0020, 0xa1506b9d )	/* sequence PROM */
 ROM_END
 
+ROM_START( alphaho )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "c0.bin",       0x0000, 0x0400, 0xdb774c23 )
+	ROM_LOAD( "c1.bin",       0x0400, 0x0400, 0xb63f4695 )
+	ROM_LOAD( "c2.bin",       0x0800, 0x0400, 0x4ebf0ba4 )
+	ROM_LOAD( "c3.bin",       0x0c00, 0x0400, 0x126f17ec )
+	ROM_LOAD( "c4.bin",       0x1000, 0x0400, 0x52798c61 )
+	ROM_LOAD( "c5.bin",       0x1400, 0x0400, 0x4827cb36 )
+	ROM_LOAD( "c6.bin",       0x1800, 0x0400, 0x8b2ff47e )
+	ROM_LOAD( "c7.bin",       0x1c00, 0x0400, 0x44921df4 )
+	ROM_LOAD( "c8.bin",       0x2000, 0x0400, 0x9fb12fca )
+	ROM_LOAD( "c9.bin",       0x2400, 0x0400, 0xe5f622f7 )
+	ROM_LOAD( "ca.bin",       0x2800, 0x0400, 0x82b28e77 )
+	ROM_LOAD( "cb.bin",       0x2c00, 0x0400, 0x94fba0ad )
+	ROM_LOAD( "cc.bin",       0x3000, 0x0400, 0xde338b6d )
+	ROM_LOAD( "cd.bin",       0x3400, 0x0400, 0xbe76baac )
+	ROM_LOAD( "ce.bin",       0x3800, 0x0400, 0x3c409d57 )
+	ROM_LOAD( "cf.bin",       0x3c00, 0x0400, 0xd03c5a09 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "alphaho.col",  0x0000, 0x0020, 0x00000000 )
+ROM_END
+
 
 
 static void vicdual_decode(void)
@@ -1693,6 +1762,15 @@ static DRIVER_INIT( pulsar )
 	vicdual_decode();
 }
 
+static DRIVER_INIT( alphaho )
+{
+	/* install sample trigger */
+	install_port_write_handler(0, 0x01, 0x01, invinco_sh_port2_w);
+	install_port_write_handler(0, 0x02, 0x02, invinco_sh_port2_w);
+
+	vicdual_decode();
+}
+
 
 GAME( 1977, depthch,  0,        depthch,  depthch,  depthch,   ROT0,   "Gremlin", "Depthcharge" )
 GAMEX(1977, safari,   0,        safari,   safari,   nosamples, ROT0,   "Gremlin", "Safari", GAME_NO_SOUND )
@@ -1715,3 +1793,4 @@ GAME( 1980, carnvckt, carnival, carnival, carnvckt, carnival,  ROT270, "Sega", "
 GAMEX(1980, digger,   0,        3ports,   digger,   nosamples, ROT270, "Sega", "Digger", GAME_NO_SOUND )
 GAME( 1981, pulsar,   0,        pulsar,   pulsar,   pulsar,    ROT270, "Sega", "Pulsar" )
 GAMEX(1979, heiankyo, 0,        4ports,   heiankyo, nosamples, ROT270, "Denki Onkyo", "Heiankyo Alien", GAME_NO_SOUND )
+GAMEX(19??, alphaho,  0,        invinco4, alphaho,  invho2,    ROT270, "Data East Corporation", "Alpha Fighter / Head On", GAME_WRONG_COLORS )

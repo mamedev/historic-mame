@@ -845,6 +845,56 @@ INPUT_PORTS_START( robotron )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( spdball )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* IN2 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", KEYCODE_F1, IP_JOY_NONE )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 )
+	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "High Score Reset", KEYCODE_7, IP_JOY_NONE )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
+
+	PORT_START      /* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP   | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP   | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* IN4 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START2 )
+
+	PORT_START		/* analog */
+    PORT_ANALOG( 0xff, 0x80, IPT_TRACKBALL_Y | IPF_PLAYER1 | IPF_REVERSE, 25, 32, 0, 255 )
+
+	PORT_START		/* analog */
+    PORT_ANALOG( 0xff, 0x80, IPT_TRACKBALL_X | IPF_PLAYER1, 25, 32, 0, 255 )
+
+	PORT_START		/* analog */
+    PORT_ANALOG( 0xff, 0x80, IPT_TRACKBALL_Y | IPF_PLAYER2 | IPF_REVERSE, 25, 32, 0, 255 )
+
+	PORT_START		/* analog */
+    PORT_ANALOG( 0xff, 0x80, IPT_TRACKBALL_X | IPF_PLAYER2, 25, 32, 0, 255 )
+INPUT_PORTS_END
+
+
 INPUT_PORTS_START( bubbles )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
@@ -1689,6 +1739,29 @@ ROM_START( robotryo )
 ROM_END
 
 
+ROM_START( spdball )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "speedbal.01", 0x0000, 0x1000, 0x7f4801bb )
+	ROM_LOAD( "speedbal.02", 0x1000, 0x1000, 0x5cd5e489 )
+	ROM_LOAD( "speedbal.03", 0x2000, 0x1000, 0x280e11a4 )
+	ROM_LOAD( "speedbal.04", 0x3000, 0x1000, 0x3469cbbf )
+	ROM_LOAD( "speedbal.05", 0x4000, 0x1000, 0x87373c89 )
+	ROM_LOAD( "speedbal.06", 0x5000, 0x1000, 0x48779a0d )
+	ROM_LOAD( "speedbal.07", 0x6000, 0x1000, 0x2e5d8db6 )
+	ROM_LOAD( "speedbal.08", 0x7000, 0x1000, 0xc173cedf )
+	ROM_LOAD( "speedbal.09", 0x8000, 0x1000, 0x415f424b )
+	ROM_LOAD( "speedbal.10", 0xd000, 0x1000, 0x4a3add93 )
+	ROM_LOAD( "speedbal.11", 0xe000, 0x1000, 0x1fbcfaa5 )
+	ROM_LOAD( "speedbal.12", 0xf000, 0x1000, 0xf3458f41 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "speedbal.snd", 0xf000, 0x1000, 0x78de20e2 )
+
+	ROM_REGION( 0x1000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_LOAD( "mystery.rom", 0x00000, 0x1000, 0xdcb6a070 )
+ROM_END
+
+
 ROM_START( bubbles )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "bubbles.1b",   0x0000, 0x1000, 0x8234f55c )
@@ -1728,6 +1801,7 @@ ROM_START( bubblesr )
 	ROM_LOAD( "bubbles.snd",  0xf000, 0x1000, 0x689ce2aa )
 ROM_END
 
+
 ROM_START( bubblesp )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "bub_prot.1b",  0x0000, 0x1000, 0x6466a746 )
@@ -1746,6 +1820,7 @@ ROM_START( bubblesp )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "bubbles.snd",  0xf000, 0x1000, 0x689ce2aa )
 ROM_END
+
 
 ROM_START( splat )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
@@ -2225,6 +2300,28 @@ static DRIVER_INIT( robotron )
 }
 
 
+static DRIVER_INIT( spdball )
+{
+	/* CMOS configuration */
+	CONFIGURE_CMOS(0xcc00, 0x400);
+
+	/* video configuration */
+	CONFIGURE_BLITTER(4, 0, 0);
+
+	/* PIA configuration */
+	CONFIGURE_PIAS(williams_pia_0_intf, williams_pia_1_intf, williams_snd_pia_intf);
+	pia_config(3, PIA_STANDARD_ORDERING, &spdball_pia_3_intf);
+
+	/* install extra input handlers */
+	install_mem_read_handler (0, 0xc800, 0xc800, input_port_5_r);
+	install_mem_read_handler (0, 0xc801, 0xc801, input_port_6_r);
+	install_mem_read_handler (0, 0xc802, 0xc802, input_port_7_r);
+	install_mem_read_handler (0, 0xc803, 0xc803, input_port_8_r);
+	install_mem_read_handler (0, 0xc808, 0xc80b, pia_3_r);
+	install_mem_write_handler(0, 0xc808, 0xc80b, pia_3_w);
+}
+
+
 static DRIVER_INIT( bubbles )
 {
 	/* CMOS configuration */
@@ -2448,6 +2545,8 @@ GAME( 1983, playball, 0,        playball, playball, playball, ROT270, "Williams"
 
 GAME( 1983, blaster,  0,        blaster,  blaster,  blaster,  ROT0,   "Williams", "Blaster" )
 GAME( 1983, blastkit, blaster,  blaster,  blastkit, blastkit, ROT0,   "Williams", "Blaster (kit)" )
+
+GAME( 1985, spdball,  0,        williams, spdball,  spdball,  ROT0,   "Williams", "Speed Ball (prototype)" )
 
 GAME( 1983, mysticm,  0,        williams2,mysticm,  mysticm,  ROT0,   "Williams", "Mystic Marathon" )
 GAME( 1984, tshoot,   0,        williams2,tshoot,   tshoot,   ROT0,   "Williams", "Turkey Shoot" )

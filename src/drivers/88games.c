@@ -71,14 +71,32 @@ static WRITE_HANDLER( k88games_sh_irqtrigger_w )
 	cpu_set_irq_line_and_vector(1, 0, HOLD_LINE, 0xff);
 }
 
-/* handle fake button for speed cheat */
-static READ_HANDLER( cheat_r )
+/* handle fake button for speed cheat for players 1 and 2 */
+static READ_HANDLER( cheat1_r )
 {
 	int res;
 	static int cheat = 0;
 	static int bits[] = { 0xee, 0xff, 0xbb, 0xaa };
 
 	res = readinputport(1);
+
+	if ((readinputport(0) & 0x08) == 0)
+	{
+		res |= 0x55;
+		res &= bits[cheat];
+		cheat = (cheat+1)%4;
+	}
+	return res;
+}
+
+/* handle fake button for speed cheat for players 3 and 4 */
+static READ_HANDLER( cheat2_r )
+{
+	int res;
+	static int cheat = 0;
+	static int bits[] = { 0xee, 0xff, 0xbb, 0xaa };
+
+	res = readinputport(2);
 
 	if ((readinputport(0) & 0x08) == 0)
 	{
@@ -108,8 +126,9 @@ static MEMORY_READ_START( readmem )
 	{ 0x3800, 0x3fff, bankedram_r },
 	{ 0x5f94, 0x5f94, input_port_0_r },
 //	{ 0x5f95, 0x5f95, input_port_1_r },
-	{ 0x5f95, 0x5f95, cheat_r },	/* P1 IO and handle fake button for cheating */
-	{ 0x5f96, 0x5f96, input_port_2_r },
+//	{ 0x5f96, 0x5f96, input_port_2_r },
+	{ 0x5f95, 0x5f95, cheat1_r },	/* P1 and P2 IO and handle fake button for cheating */
+	{ 0x5f96, 0x5f96, cheat2_r },	/* P3 and P4 IO and handle fake button for cheating */
 	{ 0x5f97, 0x5f97, input_port_3_r },
 	{ 0x5f9b, 0x5f9b, input_port_4_r },
 	{ 0x4000, 0x7fff, K052109_051960_r },
@@ -159,9 +178,9 @@ INPUT_PORTS_START( 88games )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 //	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	/* Fake button to press buttons 1 and 3 impossibly fast. Handle via konami_IN1_r */
+	/* Fake button to press buttons 1 and 3 impossibly fast. Handle via cheat?_r */
 	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_CHEAT | IPF_PLAYER1, "Run Like Hell Cheat", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
@@ -237,9 +256,9 @@ INPUT_PORTS_START( 88games )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )

@@ -1,11 +1,8 @@
-#define DUAL_SCREEN 1 /* Display both screens simultaneously if 1 */
-
 /* defined in drivers/psikyosh.c */
 #define MASTER_CLOCK 57272700	// main oscillator frequency
-#define SOUND_HOLDERS 0	// use YM3812 stuff
 
-data32_t *psikyosh_bgram, *psikyosh_zoomram, *psikyosh_vidregs, *psh_ram, *ps4_io_select;
-data32_t *bgpen_1, *bgpen_2, *screen1_brt, *screen2_brt;
+extern data32_t *psikyosh_bgram, *psikyosh_zoomram, *psikyosh_vidregs, *psh_ram, *ps4_io_select;
+extern data32_t *bgpen_1, *bgpen_2, *screen1_brt, *screen2_brt;
 
 /* defined in vidhrdw/psiykosh.c */
 extern data32_t *psikyosh_bgram, *psikyosh_zoomram, *psikyosh_vidregs;
@@ -35,3 +32,6 @@ VIDEO_UPDATE( psikyo4 );
 #define BG_SCROLL_10   0x10 /* 224 v/h scroll values in bank 0x10; Used in s1945ii */
 #define BG_SCROLL_11   0x11 /* 224 v/h scroll values in bank 0x11; */
 #define BG_SCROLL_12   0x12 /* 224 v/h scroll values in bank 0x12; Used in s1945ii */
+
+/* Psikyo PS6807 */
+#define DUAL_SCREEN 1 /* Display both screens simultaneously if 1 */

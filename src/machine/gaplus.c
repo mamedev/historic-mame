@@ -118,137 +118,30 @@ static int monedcred [] = { 1, 2, 1, 1 };
 
 READ_HANDLER( gaplus_customio_1_r )
 {
-    int mode, val, temp1, temp2;
+    int mode;
 
     mode = gaplus_customio_1[8];
-    if (mode == 3)	/* normal mode */
+    if (mode == 1)  /* normal mode & test mode */
     {
         switch (offset)
         {
-            case 0:     /* Coin slots, high nibble of port 2 */
-            {
-                static int lastval;
-
-                val = readinputport( 2 ) >> 4;
-                temp1 = readinputport( 0 ) & 0x03;
-                temp2 = (readinputport( 0 ) >> 6) & 0x03;
-
-                /* bit 0 is a trigger for the coin slot 1 */
-                if ((val & 1) && ((val ^ lastval) & 1))
-                {
-                    coincounter1++;
-                    if (coincounter1 >= credmoned[temp1])
-                    {
-                        credits += monedcred [temp1];
-                        coincounter1 -= credmoned [temp1];
-                    }
-                }
-                /* bit 1 is a trigger for the coin slot 2 */
-                if ((val & 2) && ((val ^ lastval) & 2))
-                {
-                    coincounter2++;
-                    if (coincounter2 >= credmoned[temp2])
-                    {
-                        credits += monedcred [temp2];
-                        coincounter2 -= credmoned [temp2];
-                    }
-                }
-
-                if (credits > 99)
-                    credits = 99;
-
-                return lastval = val;
-            }
-                break;
+			case 0:
+				return (readinputport( 2 ) >> 4);	/* coin 1 & 2 */
+				break;
             case 1:
-            {
-                static int lastval;
-
-                val = readinputport( 2 ) & 0x03;
-                temp1 = readinputport( 0 ) & 0x03;
-                temp2 = (readinputport( 0 ) >> 6) & 0x03;
-
-                /* bit 0 is a trigger for the 1 player start */
-                if ((val & 1) && ((val ^ lastval) & 1))
-                {
-                    if (credits > 0)
-                        credits--;
-                    else
-                        val &= ~1;   /* otherwise you can start with no credits! */
-                }
-                /* bit 1 is a trigger for the 2 player start */
-                if ((val & 2) && ((val ^ lastval) & 2))
-                {
-                    if (credits >= 2)
-                        credits -= 2;
-                    else
-                        val &= ~2;   /* otherwise you can start with no credits! */
-                }
-                return lastval = val;
-            }
+                return (readinputport( 3 ) &0x0f);	/* 1P controls */
                 break;
             case 2:
-                return (credits / 10);      /* high BCD of credits */
+                return (readinputport( 3 ) >> 4);	/* 2P controls */
                 break;
-            case 3:
-                return (credits % 10);      /* low BCD of credits */
-                break;
-            case 4:
-                return (readinputport( 3 ) & 0x0f);   /* 1P controls */
-                break;
-            case 5:
-                return (readinputport( 4 ) & 0x03);   /* 1P button 1 */
-                break;
-            case 6:
-                return (readinputport( 3 ) >> 4);     /* 2P controls */
-                break;
-            case 7:
-                return ((readinputport( 4 ) >> 2) & 0x03);    /* 2P button 1 */
-                break;
-            default:
-                return gaplus_customio_1[offset];
-        }
-    }
-    else if (mode == 5)  /* IO tests chip 1 */
-    {
-        switch (offset)
-        {
-            case 0:
-            case 1:
-                return 0x0f;
-                break;
-            default:
-                return gaplus_customio_1[offset];
-        }
-    }
-    else if (mode == 1)	/* test mode controls */
-    {
-        switch (offset)
-        {
-			case 4:
-				return (readinputport( 2 ) & 0x03);	/* start 1 & 2 */
-				break;
-			case 5:
-				return (readinputport( 3 ) &0x0f);	/* 1P controls */
-				break;
-			case 6:
-				return (readinputport( 3 ) >> 4);	/* 2P controls */
-				break;
-			case 7:
-				return (readinputport( 4 ) & 0x0f);	/* button 1 & 2 */
+			case 3:
+				return (readinputport( 2 ) & 0x0f);	/* start 1 & 2 and button 1 & 2 */
 				break;
 			default:
 				return gaplus_customio_1[offset];
         }
     }
-    return gaplus_customio_1[offset];
-}
-READ_HANDLER( gaplus_customio_2_r )
-{
-    int val, mode;
-
-    mode = gaplus_customio_2[8];
-    if (mode == 8)  /* IO tests chip 2 */
+    else if (mode == 8)  /* IO tests chip 1 */
     {
         switch (offset)
         {
@@ -258,25 +151,45 @@ READ_HANDLER( gaplus_customio_2_r )
             case 1:
                 return 0x09;
                 break;
-            default:
-                return gaplus_customio_2[offset];
+			default:
+				return gaplus_customio_1[offset];
         }
     }
-    else    if (mode == 1)	/* this values are read only by the game on power up */
+    return gaplus_customio_1[offset];
+}
+
+READ_HANDLER( gaplus_customio_2_r )
+{
+    int val, mode;
+
+    mode = gaplus_customio_2[8];
+    if (mode == 5)  /* IO tests chip 2 */
     {
         switch (offset)
         {
             case 0:
-                val = readinputport( 0 ) & 0x0f; /* credits/coin 1P & fighters */
-                break;
             case 1:
-                val = readinputport( 1 ) >> 5;   /* bonus life */
+                return 0x0f;
+                break;
+			default:
+				return gaplus_customio_2[offset];
+        }
+    }
+    else if (mode == 4)     /* this values are read only by the game on power up */
+    {
+        switch (offset)
+        {
+            case 1:
+                val = readinputport( 0 ) & 0x0f;	/* credits/coin 1P & fighters */
                 break;
             case 2:
-                val = readinputport( 1 ) & 0x0f; /* rank & test mode */
+                val = readinputport( 1 ) >> 5;		/* bonus life */
                 break;
-            case 3:
-                val = readinputport( 0 ) >> 6;   /* credits/coin 2P */
+            case 4:
+                val = readinputport( 1 ) & 0x07;	/* rank */
+                break;
+            case 7:
+                val = readinputport( 0 ) >> 6;		/* credits/coin 2P */
                 break;
             default:
                 val = gaplus_customio_2[offset];
@@ -284,7 +197,7 @@ READ_HANDLER( gaplus_customio_2_r )
         return val;
     }
 	else
-		return gaplus_customio_2[offset];
+        return gaplus_customio_2[offset];
 }
 
 READ_HANDLER( gaplus_customio_3_r )
@@ -296,6 +209,9 @@ READ_HANDLER( gaplus_customio_3_r )
     {
         switch (offset)
         {
+            case 0:
+                return ((readinputport( 0 ) & 0x20) >> 3) ^ ~(readinputport( 1 ) & 0x08); /* cabinet & test mode */;
+                break;
             case 2:
                 return 0x0f;
                 break;
@@ -308,7 +224,7 @@ READ_HANDLER( gaplus_customio_3_r )
         switch (offset)
         {
             case 0:
-                return ((readinputport( 0 ) & 0x20) >> 3);   /* cabinet */
+                return ((readinputport( 0 ) & 0x20) >> 3) ^ ~(readinputport( 1 ) & 0x08); /* cabinet & test mode */;
                 break;
             case 1:
                 return 0x0f;
@@ -325,14 +241,13 @@ READ_HANDLER( gaplus_customio_3_r )
     }
 }
 
-
 /************************************************************************************
 *																					*
-*           Gaplus (set 2) custom I/O chips (preliminary)									*
+*           Gaplus (rev. B) custom I/O chips (preliminary)									*
 *																					*
 ************************************************************************************/
 
-READ_HANDLER( gaplusa_customio_1_r )
+READ_HANDLER( gapluso_customio_1_r )
 {
     int mode, val, temp1, temp2;
 
@@ -461,7 +376,8 @@ READ_HANDLER( gaplusa_customio_1_r )
 	}
     return gaplus_customio_1[offset];
 }
-READ_HANDLER( gaplusa_customio_2_r )
+
+READ_HANDLER( gapluso_customio_2_r )
 {
     int val, mode;
 
@@ -492,6 +408,222 @@ READ_HANDLER( gaplusa_customio_2_r )
                 val = readinputport( 1 ) & 0x0f; /* rank & test mode */
                 break;
             case 7:
+                val = readinputport( 0 ) >> 6;   /* credits/coin 2P */
+                break;
+            default:
+                val = gaplus_customio_2[offset];
+        }
+        return val;
+    }
+	else
+		return gaplus_customio_2[offset];
+}
+
+READ_HANDLER( gapluso_customio_3_r )
+{
+    int mode;
+
+    mode = gaplus_customio_3[8];
+    if (mode == 2)
+    {
+        switch (offset)
+        {
+            case 2:
+                return 0x0f;
+                break;
+            default:
+                return gaplus_customio_3[offset];
+        }
+    }
+    else
+    {
+        switch (offset)
+        {
+            case 0:
+                return ((readinputport( 0 ) & 0x20) >> 3);   /* cabinet */
+                break;
+            case 1:
+                return 0x0f;
+                break;
+            case 2:
+                return 0x0e;
+                break;
+            case 3:
+                return 0x01;
+                break;
+            default:
+                return gaplus_customio_3[offset];
+        }
+    }
+}
+
+/************************************************************************************
+*																					*
+*           Gaplus (alternate hardware) custom I/O chips (preliminary)									*
+*																					*
+************************************************************************************/
+
+READ_HANDLER( gaplusa_customio_1_r )
+{
+    int mode, val, temp1, temp2;
+
+    mode = gaplus_customio_1[8];
+    if (mode == 3)	/* normal mode */
+    {
+        switch (offset)
+        {
+            case 0:     /* Coin slots, high nibble of port 2 */
+            {
+                static int lastval;
+
+                val = readinputport( 2 ) >> 4;
+                temp1 = readinputport( 0 ) & 0x03;
+                temp2 = (readinputport( 0 ) >> 6) & 0x03;
+
+                /* bit 0 is a trigger for the coin slot 1 */
+                if ((val & 1) && ((val ^ lastval) & 1))
+                {
+                    coincounter1++;
+                    if (coincounter1 >= credmoned[temp1])
+                    {
+                        credits += monedcred [temp1];
+                        coincounter1 -= credmoned [temp1];
+                    }
+                }
+                /* bit 1 is a trigger for the coin slot 2 */
+                if ((val & 2) && ((val ^ lastval) & 2))
+                {
+                    coincounter2++;
+                    if (coincounter2 >= credmoned[temp2])
+                    {
+                        credits += monedcred [temp2];
+                        coincounter2 -= credmoned [temp2];
+                    }
+                }
+
+                if (credits > 99)
+                    credits = 99;
+
+                return lastval = val;
+            }
+                break;
+            case 1:
+            {
+                static int lastval;
+
+                val = readinputport( 2 ) & 0x03;
+                temp1 = readinputport( 0 ) & 0x03;
+                temp2 = (readinputport( 0 ) >> 6) & 0x03;
+
+                /* bit 0 is a trigger for the 1 player start */
+                if ((val & 1) && ((val ^ lastval) & 1))
+                {
+                    if (credits > 0)
+                        credits--;
+                    else
+                        val &= ~1;   /* otherwise you can start with no credits! */
+                }
+                /* bit 1 is a trigger for the 2 player start */
+                if ((val & 2) && ((val ^ lastval) & 2))
+                {
+                    if (credits >= 2)
+                        credits -= 2;
+                    else
+                        val &= ~2;   /* otherwise you can start with no credits! */
+                }
+                return lastval = val;
+            }
+                break;
+            case 2:
+                return (credits / 10);      /* high BCD of credits */
+                break;
+            case 3:
+                return (credits % 10);      /* low BCD of credits */
+                break;
+            case 4:
+                return (readinputport( 3 ) & 0x0f);   /* 1P controls */
+                break;
+            case 5:
+                return (readinputport( 4 ) & 0x03);   /* 1P button 1 */
+                break;
+            case 6:
+                return (readinputport( 3 ) >> 4);     /* 2P controls */
+                break;
+            case 7:
+                return ((readinputport( 4 ) >> 2) & 0x03);    /* 2P button 1 */
+                break;
+            default:
+                return gaplus_customio_1[offset];
+        }
+    }
+    else if (mode == 5)  /* IO tests chip 1 */
+    {
+        switch (offset)
+        {
+            case 0:
+            case 1:
+                return 0x0f;
+                break;
+            default:
+                return gaplus_customio_1[offset];
+        }
+    }
+    else if (mode == 1)	/* test mode controls */
+    {
+        switch (offset)
+        {
+			case 4:
+				return (readinputport( 2 ) & 0x03);	/* start 1 & 2 */
+				break;
+			case 5:
+				return (readinputport( 3 ) &0x0f);	/* 1P controls */
+				break;
+			case 6:
+				return (readinputport( 3 ) >> 4);	/* 2P controls */
+				break;
+			case 7:
+				return (readinputport( 4 ) & 0x0f);	/* button 1 & 2 */
+				break;
+			default:
+				return gaplus_customio_1[offset];
+        }
+    }
+    return gaplus_customio_1[offset];
+}
+
+READ_HANDLER( gaplusa_customio_2_r )
+{
+    int val, mode;
+
+    mode = gaplus_customio_2[8];
+    if (mode == 8)  /* IO tests chip 2 */
+    {
+        switch (offset)
+        {
+            case 0:
+                return 0x06;
+                break;
+            case 1:
+                return 0x09;
+                break;
+            default:
+                return gaplus_customio_2[offset];
+        }
+    }
+    else    if (mode == 1)	/* this values are read only by the game on power up */
+    {
+        switch (offset)
+        {
+            case 0:
+                val = readinputport( 0 ) & 0x0f; /* credits/coin 1P & fighters */
+                break;
+            case 1:
+                val = readinputport( 1 ) >> 5;   /* bonus life */
+                break;
+            case 2:
+                val = readinputport( 1 ) & 0x0f; /* rank & test mode */
+                break;
+            case 3:
                 val = readinputport( 0 ) >> 6;   /* credits/coin 2P */
                 break;
             default:
@@ -541,133 +673,3 @@ READ_HANDLER( gaplusa_customio_3_r )
     }
 }
 
-/************************************************************************************
-*																					*
-*           Galaga3 custom I/O chips (preliminary)									*
-*																					*
-************************************************************************************/
-
-READ_HANDLER( galaga3_customio_1_r )
-{
-    int mode;
-
-    mode = gaplus_customio_1[8];
-    if (mode == 1)  /* normal mode & test mode */
-    {
-        switch (offset)
-        {
-			case 0:
-				return (readinputport( 2 ) >> 4);	/* coin 1 & 2 */
-				break;
-            case 1:
-                return (readinputport( 3 ) &0x0f);	/* 1P controls */
-                break;
-            case 2:
-                return (readinputport( 3 ) >> 4);	/* 2P controls */
-                break;
-			case 3:
-				return (readinputport( 2 ) & 0x0f);	/* start 1 & 2 and button 1 & 2 */
-				break;
-			default:
-				return gaplus_customio_1[offset];
-        }
-    }
-    else if (mode == 8)  /* IO tests chip 1 */
-    {
-        switch (offset)
-        {
-            case 0:
-                return 0x06;
-                break;
-            case 1:
-                return 0x09;
-                break;
-			default:
-				return gaplus_customio_1[offset];
-        }
-    }
-    return gaplus_customio_1[offset];
-}
-
-READ_HANDLER( galaga3_customio_2_r )
-{
-    int val, mode;
-
-    mode = gaplus_customio_2[8];
-    if (mode == 5)  /* IO tests chip 2 */
-    {
-        switch (offset)
-        {
-            case 0:
-            case 1:
-                return 0x0f;
-                break;
-			default:
-				return gaplus_customio_2[offset];
-        }
-    }
-    else if (mode == 4)     /* this values are read only by the game on power up */
-    {
-        switch (offset)
-        {
-            case 1:
-                val = readinputport( 0 ) & 0x0f;	/* credits/coin 1P & fighters */
-                break;
-            case 2:
-                val = readinputport( 1 ) >> 5;		/* bonus life */
-                break;
-            case 4:
-                val = readinputport( 1 ) & 0x07;	/* rank */
-                break;
-            case 7:
-                val = readinputport( 0 ) >> 6;		/* credits/coin 2P */
-                break;
-            default:
-                val = gaplus_customio_2[offset];
-        }
-        return val;
-    }
-	else
-        return gaplus_customio_2[offset];
-}
-
-READ_HANDLER( galaga3_customio_3_r )
-{
-    int mode;
-
-    mode = gaplus_customio_3[8];
-    if (mode == 2)
-    {
-        switch (offset)
-        {
-            case 0:
-                return ((readinputport( 0 ) & 0x20) >> 3) ^ ~(readinputport( 1 ) & 0x08); /* cabinet & test mode */;
-                break;
-            case 2:
-                return 0x0f;
-                break;
-            default:
-                return gaplus_customio_3[offset];
-        }
-    }
-    else
-    {
-        switch (offset)
-        {
-            case 0:
-                return ((readinputport( 0 ) & 0x20) >> 3) ^ ~(readinputport( 1 ) & 0x08); /* cabinet & test mode */;
-                break;
-            case 1:
-                return 0x0f;
-                break;
-            case 2:
-                return 0x0e;
-                break;
-            case 3:
-                return 0x01;
-                break;
-            default:
-                return gaplus_customio_3[offset];
-        }
-    }
-}

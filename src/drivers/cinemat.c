@@ -1333,7 +1333,7 @@ GAME( 1980, stellcas, starcas, starcas,  starcas,  starcas,  ROT0,   "bootleg", 
 GAMEX(1979, tailg,    0,       cinemat,  tailg,    tailg,    ROT0,   "Cinematronics", "Tailgunner", GAME_NO_SOUND )
 GAME( 1979, ripoff,   0,       ripoff,   ripoff,   ripoff,   ROT0,   "Cinematronics", "Rip Off" )
 GAMEX(19??, speedfrk, 0,       cinemat,  speedfrk, speedfrk, ROT0,   "Vectorbeam", "Speed Freak", GAME_NO_SOUND )
-GAMEX(1979, sundance, 0,       cinemat,  sundance, sundance, ROT270, "Cinematronics", "Sundance", GAME_NOT_WORKING )
+GAMEX(1979, sundance, 0,       cinemat,  sundance, sundance, ROT270, "Cinematronics", "Sundance", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAME( 1978, warrior,  0,       warrior,  warrior,  warrior,  ROT0,   "Vectorbeam", "Warrior" )
 GAMEX(1980, armora,   0,       armora,   armora,   armora,   ROT0,   "Cinematronics", "Armor Attack", GAME_NO_SOUND )
 GAMEX(1980, armorap,  armora,  armora,   armora,   armora,   ROT0,   "Cinematronics", "Armor Attack (prototype)", GAME_NO_SOUND )

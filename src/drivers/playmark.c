@@ -524,26 +524,29 @@ MACHINE_DRIVER_END
 
 ROM_START( bigtwin )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )	/* 68000 code */
-	ROM_LOAD16_BYTE( "bt_02.bin",    0x000000, 0x80000, 0xe6767f60 )
-	ROM_LOAD16_BYTE( "bt_03.bin",    0x000001, 0x80000, 0x5aba6990 )
+	ROM_LOAD16_BYTE( "2.302",        0x000000, 0x80000, 0xe6767f60 )
+	ROM_LOAD16_BYTE( "3.301",        0x000001, 0x80000, 0x5aba6990 )
 
-	ROM_REGION( 0x0800, REGION_CPU2, 0 )	/* sound (missing) */
-	ROM_LOAD( "pic16c57",     0x0000, 0x0800, 0x00000000 )
+	ROM_REGION( 0x0800, REGION_CPU2, 0 )	/* sound (16C57) */
+	/* ROM will be copied here by the init code */
+
+	ROM_REGION( 0x2d4c, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_LOAD( "16c57hs.015",  0x0000, 0x2d4c, 0xc07e9375 )	/* 16C57 .HEX dump, to be converted */
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "bt_04.bin",    0x00000, 0x40000, 0x6f628fbc )
-	ROM_LOAD( "bt_05.bin",    0x40000, 0x40000, 0x6a9b1752 )
-	ROM_LOAD( "bt_06.bin",    0x80000, 0x40000, 0x411cf852 )
-	ROM_LOAD( "bt_07.bin",    0xc0000, 0x40000, 0x635c81fd )
+	ROM_LOAD( "4.311",        0x00000, 0x40000, 0x6f628fbc )
+	ROM_LOAD( "5.312",        0x40000, 0x40000, 0x6a9b1752 )
+	ROM_LOAD( "6.313",        0x80000, 0x40000, 0x411cf852 )
+	ROM_LOAD( "7.314",        0xc0000, 0x40000, 0x635c81fd )
 
 	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "bt_08.bin",    0x00000, 0x20000, 0x2749644d )
-	ROM_LOAD( "bt_09.bin",    0x20000, 0x20000, 0x1d1897af )
-	ROM_LOAD( "bt_10.bin",    0x40000, 0x20000, 0x2a03432e )
-	ROM_LOAD( "bt_11.bin",    0x60000, 0x20000, 0x2c980c4c )
+	ROM_LOAD( "8.321",        0x00000, 0x20000, 0x2749644d )
+	ROM_LOAD( "9.322",        0x20000, 0x20000, 0x1d1897af )
+	ROM_LOAD( "10.323",       0x40000, 0x20000, 0x2a03432e )
+	ROM_LOAD( "11.324",       0x60000, 0x20000, 0x2c980c4c )
 
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "bt_01.bin",    0x00000, 0x40000, 0xff6671dc )
+	ROM_LOAD( "1.013",        0x00000, 0x40000, 0xff6671dc )
 ROM_END
 
 ROM_START( wbeachvl )
@@ -575,5 +578,5 @@ ROM_END
 
 
 
-GAMEX( 1995, bigtwin,  0, bigtwin,  bigtwin,  0, ROT0, "Playmark", "Big Twin", GAME_NO_COCKTAIL | GAME_NO_SOUND )
-GAMEX( 1995, wbeachvl, 0, wbeachvl, wbeachvl, 0, ROT0, "Playmark", "World Beach Volley", GAME_NO_COCKTAIL | GAME_NO_SOUND )
+GAMEX( 1995, bigtwin,  0, bigtwin,  bigtwin,  0, ROT0, "Playmark", "Big Twin", GAME_NO_COCKTAIL | GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1995, wbeachvl, 0, wbeachvl, wbeachvl, 0, ROT0, "Playmark", "World Beach Volley", GAME_NO_COCKTAIL | GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )

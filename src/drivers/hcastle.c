@@ -104,11 +104,9 @@ MEMORY_END
 
 static WRITE_HANDLER( sound_bank_w )
 {
-	unsigned char *RAM = memory_region(REGION_SOUND1);
-	int bank_A=0x20000 * (data&0x3);
-	int bank_B=0x20000 * ((data>>2)&0x3);
-
-	K007232_bankswitch(0,RAM+bank_A,RAM+bank_B);
+	int bank_A=(data&0x3);
+	int bank_B=((data>>2)&0x3);
+	K007232_set_bank( 0, bank_A, bank_B );
 }
 
 static MEMORY_READ_START( sound_readmem )
@@ -275,6 +273,7 @@ static void volume_callback(int v)
 static struct K007232_interface k007232_interface =
 {
 	1,		/* number of chips */
+	3579545,	/* clock */
 	{ REGION_SOUND1 },	/* memory regions */
 	{ K007232_VOL(44,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },	/* volume */
 	{ volume_callback }	/* external port callback */

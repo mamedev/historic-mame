@@ -38,7 +38,7 @@ READ_HANDLER( asteroid_IN0_r )
 
 	bitmask = (1 << offset);
 
-	if (cpu_gettotalcycles() & 0x100)
+	if (activecpu_gettotalcycles() & 0x100)
 		res |= 0x02;
 	if (!avgdvg_done())
 		res |= 0x04;
@@ -58,7 +58,7 @@ READ_HANDLER( asteroib_IN0_r )
 
 	res=readinputport(0);
 
-//	if (cpu_gettotalcycles() & 0x100)
+//	if (activecpu_gettotalcycles() & 0x100)
 //		res |= 0x02;
 	if (!avgdvg_done())
 		res |= 0x80;
@@ -170,7 +170,7 @@ READ_HANDLER( llander_IN0_r )
 
 	if (avgdvg_done())
 		res |= 0x01;
-	if (cpu_gettotalcycles() & 0x100)
+	if (activecpu_gettotalcycles() & 0x100)
 		res |= 0x40;
 
 	return res;

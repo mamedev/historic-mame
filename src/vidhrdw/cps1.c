@@ -353,12 +353,14 @@ static struct CPS1config cps1_config_table[]=
 	{"xmcotaj", NOBATTRY, 4,4,4, 0x0000,0xffff,0x0000,0xffff, 8 },
 	{"xmcotaj1",NOBATTRY, 4,4,4, 0x0000,0xffff,0x0000,0xffff, 8 },
 	{"xmcotajr",NOBATTRY, 4,4,4, 0x0000,0xffff,0x0000,0xffff, 8 },
+	{"xmcotaa", NOBATTRY, 4,4,4, 0x0000,0xffff,0x0000,0xffff, 8 },
 	{0}		/* End of table */
 };
 
 static int cps_version;
 int scanline1;
 int scanline2;
+int scancalls;
 
 void cps_setversion(int v)
 {
@@ -495,9 +497,20 @@ WRITE16_HANDLER( cps1_output_w )
 
 	/* To mark scanlines for raster effects */
 	if(offset == 0x52/2)
-		scanline2 = data;
-	if(offset == 0x50/2)
-		scanline1 = data;
+	{
+		if (scancalls > 0)
+			scanline2 = (data & 0x1ff);
+		else
+			scanline2 = (data & 0x1ff) + 12;/* add 12 to account for first 12 scanlines */
+	}										/* which are not shown on screen.  Not sure */
+	if(offset == 0x50/2)					/* if it's absolutely the correct behaviour */
+	{										/* but it fixes the underground part of the */
+		if (scancalls > 0)					/* Manhattan stage in mshvsf and xmvsf      */
+			scanline1 = (data & 0x1ff);
+		else
+			scanline1 = (data & 0x1ff) + 12;
+	}
+
 
 #ifdef MAME_DEBUG
 if (cps1_game_config->control_reg && offset == cps1_game_config->control_reg/2 && data != 0x3f)

@@ -16,7 +16,7 @@ INLINE void illegal( void )
 {
 	LOG(("HD6309: illegal opcode at %04x\nVectoring to [$fff0]\n",PC));
 
-	CC |= CC_E; 				/* save entire state */
+	CC |= CC_E | CC_IF | CC_II;
 	PUSHWORD(pPC);
 	PUSHWORD(pU);
 	PUSHWORD(pY);
@@ -265,12 +265,11 @@ INLINE void sync( void )
 /* $14 sexw inherent */
 INLINE void sexw( void )
 {
-	UINT32 t;
-	t = SIGNED_16(W);
-	D = t;
-	CLR_NZV;
-	SET_N8(A);
-	if ( D == 0 && W == 0 ) SEZ;
+	UINT16 t;
+	t = SIGNED(F);
+	W = t;
+	CLR_NZ;
+	SET_NZ16(t);
 }
 
 /* $15 ILLEGAL */
@@ -339,7 +338,7 @@ INLINE void sex( void )
 	UINT16 t;
 	t = SIGNED(B);
 	D = t;
-	CLR_NZV;
+	CLR_NZ;
 	SET_NZ16(t);
 }
 
@@ -1039,7 +1038,7 @@ INLINE void tfmpp( void )
 		}
 	}
 	else
-		hd6309_ICount -= 3;   /* Needs three aditional cycles  to get the 6+3n */
+		hd6309_ICount -= 6;   /* Needs six aditional cycles to get the 6+3n */
 }
 
 /* $1139 TFM R0-,R1- */
@@ -1098,7 +1097,7 @@ INLINE void tfmmm( void )
 		}
 	}
 	else
-		hd6309_ICount -= 3;   /* Needs three aditional cycles  to get the 6+3n */
+		hd6309_ICount -= 6;   /* Needs six aditional cycles to get the 6+3n */
 }
 
 /* $113A TFM R0+,R1 */
@@ -1157,7 +1156,7 @@ INLINE void tfmpc( void )
 		}
 	}
 	else
-		hd6309_ICount -= 3;   /* Needs three aditional cycles  to get the 6+3n */
+		hd6309_ICount -= 6;   /* Needs six aditional cycles to get the 6+3n */
 }
 
 /* $113B TFM R0,R1+ */
@@ -1216,7 +1215,7 @@ INLINE void tfmcp( void )
 		}
 	}
 	else
-		hd6309_ICount -= 3;   /* Needs three aditional cycles  to get the 6+3n */
+		hd6309_ICount -= 6;   /* Needs six aditional cycles to get the 6+3n */
 }
 
 /* $30 LEAX indexed --*-- */
@@ -1440,7 +1439,6 @@ INLINE void swi( void )
 	{
 		PUSHBYTE(F);
 		PUSHBYTE(E);
-		hd6309_ICount -= 2;
 	}
 	PUSHBYTE(B);
 	PUSHBYTE(A);
@@ -1615,7 +1613,6 @@ INLINE void swi2( void )
 	{
 		PUSHBYTE(F);
 		PUSHBYTE(E);
-		hd6309_ICount -= 2;
 	}
 	PUSHBYTE(B);
 	PUSHBYTE(A);
@@ -1637,7 +1634,6 @@ INLINE void swi3( void )
 	{
 		PUSHBYTE(F);
 		PUSHBYTE(E);
-		hd6309_ICount -= 2;
 	}
 	PUSHBYTE(B);
 	PUSHBYTE(A);
@@ -2924,13 +2920,6 @@ INLINE void lda_di( void )
 	SET_NZ8(A);
 }
 
-/* $113d LDMD direct -**0- */
-INLINE void ldmd_di( void )
-{
-	DIRBYTE(MD);
-	UpdateState();
-}
-
 /* $97 STA direct -**0- */
 INLINE void sta_di( void )
 {
@@ -4104,8 +4093,7 @@ INLINE void ldb_im( void )
 INLINE void ldmd_im( void )
 {
 	IMMBYTE(MD);
-/*	CLR_NZV;	*/
-/*	SET_NZ8(B); */
+	UpdateState();
 }
 
 /* $1186 LDE immediate -**0- */

@@ -3515,6 +3515,34 @@ ROM_START( spatter )
 															 /* pr-5317.106 */
 ROM_END
 
+ROM_START( ssanchan )
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 ) /* 64k for code + 64k for decrypted opcodes */
+	ROM_LOAD( "epr-6310.116",	0x0000, 0x4000, 0x26b43701 ) /* encrypted */
+	ROM_LOAD( "epr-6311.109",	0x4000, 0x4000, 0xcb2bc620 ) /* encrypted */
+	ROM_LOAD( "epr-6312.96",	0x8000, 0x4000, 0x71b15b47 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for sound cpu */
+	ROM_LOAD( "epr-6316.120",	0x0000, 0x2000, 0x1df95511 )
+
+	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "epr-6328.62",	0x0000, 0x2000, 0xa2bf2832 )
+	ROM_LOAD( "epr-6327.61",	0x2000, 0x2000, 0x53298109 )
+	ROM_LOAD( "epr-6326.64",	0x4000, 0x2000, 0x269fbb4c )
+	ROM_LOAD( "epr-6325.63",	0x6000, 0x2000, 0xbf038745 )
+	ROM_LOAD( "epr-6324.66",	0x8000, 0x2000, 0x8ab3b563 )
+	ROM_LOAD( "epr-6323.65",	0xa000, 0x2000, 0x0394673c )
+
+	ROM_REGION( 0x10000, REGION_GFX2, 0 ) /* 64k for sprites data */
+	ROM_LOAD( "epr-6306.04",	0x0000, 0x4000, 0xe871e132 )
+	ROM_LOAD( "epr-6308.117",	0x4000, 0x4000, 0x99c2d90e )
+	ROM_LOAD( "epr-6307.05",	0x8000, 0x4000, 0x0a5ad543 )
+	ROM_LOAD( "epr-6309.110",	0xc000, 0x4000, 0x7423ad98 )
+
+	ROM_REGION( 0x0100, REGION_USER1, 0 ) /* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "pr-5317.76",		0x0000, 0x0100, 0x648350b8 ) /* timing? (not used) */
+															 /* pr-5317.106 */
+ROM_END
+
 ROM_START( wboy )
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 ) /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "epr-7489.116",	0x0000, 0x4000, 0x130f4b70 ) /* encrypted */
@@ -4063,6 +4091,8 @@ static DRIVER_INIT( 4dwarrio )	{ fdwarrio_decode(); }
 static DRIVER_INIT( wboy )		{ astrofl_decode(); }
 static DRIVER_INIT( wboy2 )		{ wboy2_decode(); }
 static DRIVER_INIT( gardia )	{ gardia_decode(); }
+static DRIVER_INIT( gardiab )	{ gardiab_decode(); }
+
 
 DRIVER_INIT( myherok )
 {
@@ -4153,6 +4183,7 @@ GAME( 1984, wmatch,   0,        system1,  wmatch,   wmatch,   ROT270, "Sega", "W
 GAME( 1984, bullfgt,  0,        system1,  bullfgt,  bullfgtj, ROT0,   "Sega / Coreland", "Bullfight" )
 GAME( 1984, thetogyu, bullfgt,  system1,  bullfgt,  bullfgtj, ROT0,   "Sega / Coreland", "The Togyu (Japan)" )
 GAME( 1984, spatter,  0,        small,    spatter,  spatter,  ROT0,   "Sega", "Spatter" )
+GAME( 1984, ssanchan, spatter,  small,    spatter,  spatter,  ROT0,   "Sega", "Sanrin San Chan (Japan)" )
 GAME( 1985, pitfall2, 0,        system1,  pitfall2, pitfall2, ROT0,   "Sega", "Pitfall II" )
 GAME( 1985, pitfallu, pitfall2, system1,  pitfallu, 0,        ROT0,   "Sega", "Pitfall II (not encrypted)" )
 GAME( 1985, seganinj, 0,        system1,  seganinj, seganinj, ROT0,   "Sega", "Sega Ninja" )
@@ -4185,7 +4216,7 @@ GAME( 1986, wboy3,    wboy,     system1,  wboy,     hvymetal, ROT0,   "Sega (Esc
 GAME( 1986, wboyu,    wboy,     system1,  wboyu,    0,        ROT0,   "Sega (Escape license)", "Wonder Boy (not encrypted)" )
 GAME( 1986, wbdeluxe, wboy,     system1,  wbdeluxe, 0,        ROT0,   "Sega (Escape license)", "Wonder Boy Deluxe" )
 GAMEX(1986, gardia,   0,        brain,    wboy,     gardia,   ROT270, "Sega / Coreland", "Gardia", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAMEX(1986, gardiab,  gardia,   brain,    wboy,     gardia,   ROT270, "bootleg", "Gardia (bootleg)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX(1986, gardiab,  gardia,   brain,    wboy,     gardiab,  ROT270, "bootleg", "Gardia (bootleg)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAME( 1986, noboranb, 0,        noboranb, noboranb, noboranb, ROT270, "bootleg", "Noboranka (Japan)" )
 GAMEX(1987, blockgal, 0,        blockgal, blockgal, 0,        ROT90,  "Sega / Vic Tokai", "Block Gal", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX(1987, blckgalb, blockgal, blockgal, blockgal, bootleg,  ROT90,  "bootleg", "Block Gal (bootleg)", GAME_NO_COCKTAIL )

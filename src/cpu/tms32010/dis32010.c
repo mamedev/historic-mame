@@ -1,89 +1,136 @@
-/****************************************************************************
- *                Texas Instruments TMS320C10 DSP Disassembler              *
- *                                                                          *
- *                      Copyright (C) 1999 by Quench                        *
- *       You are not allowed to distribute this software commercially.      *
- *                      Written for the MAME project.                       *
- *                                                                          *
- *     Note: Data is expected to be read from source file as MSB first.     *
- *           This is a word based microcontroller.                          *
- *                                                                          *
- ****************************************************************************/
+ /**************************************************************************\
+ *				 Texas Instruments TMS32010 DSP Disassembler				*
+ *																			*
+ *				   Copyright (C) 1999-2002+ Tony La Porta					*
+ *		You are not allowed to distribute this software commercially.		*
+ *						Written for the MAME project.						*
+ *																			*
+ *		Notes : Data is expected to be read from source file as MSB first.	*
+ *				This is a word based microcontroller, with addressing		*
+ *					architecture based on the Harvard addressing scheme.	*
+ *																			*
+ \**************************************************************************/
 
 #include <stdio.h>
 #include <string.h>
 
 #include "32010dsm.c"
 
+
+unsigned char *Buffer;
+
+
 int main(int argc,char *argv[])
 {
-  FILE *F;
-  byte *Buf;
-  long Counter=0;
-  int  len=0, lentodump=0, offset=0, disasm_bytes=0;
-  int  filelength=0, bytesread;
-  char S[87];
+	int  length=0, length_to_dump=0, offset=0, disasm_words=0;
+	int  filelength=0, bytes_read;
+	int  Counter=0;
 
-  if(argc<2)
-  {
-      puts("TMS32010 Disassembler 1.0 by Quench (C)1998");
-      puts("Note : Data is expected to be read from source file as MSB first.");
-      puts("Usage: dis32010 <input file> [ <start-addr> [ <num-of-opcodes> ] ]");
-      exit(0);
-  }
+	FILE *F;
+	char *String_Output;
 
-  if(!(F=fopen(argv[1],"rb"))) {
-      printf("\n%s: Can't open file %s\n",argv[0],argv[1]);exit(1);
-  }
-  argv++; argc--;
-  if (argv[1]) {
-      offset = strtol(argv[1],NULL,0);
-      argv++; argc--;
-  }
-  if (argv[1]) {
-      len = strtol(argv[1],NULL,0);
-      argv++; argc--;
-  }
-  len*=2;
-  filelength = fseek(F,0, SEEK_END);
-  filelength = ftell(F);
-  if ((len > (filelength - (offset*2))) || (len == 0)) len = filelength - (offset*2);
-  lentodump = len;
-  printf("Starting from %d, dumping %d opcodes (word size)\n",offset,(len/2));
-  Buf=calloc((len+3),sizeof(char));
-  if (Buf==NULL){
-      printf("Out of Memory !!!");
-      fclose(F);
-      exit(1);
-  }
+	if(argc<2)
+	{
+		printf("\n");
+		printf("TMS32010 Disassembler 1.1 by Tony La Porta (C)1999-2002+\n\n");
+		printf("Usage: dis32010 <input-file> [ <start-addr> [ <num-of-addr> ] ]\n");
+		printf("                <input-file>  source file data must be MSB first\n");
+		printf("                <start-addr>  starting address to disassemble from (decimal)\n");
+		printf("                <num-of-addr> number of addresses to disassemble (decimal)\n");
+		printf("                              Preceed values with 0x if HEX values preffered\n");
+		exit(1);
+	}
 
-  if (fseek(F,offset*2,0) != 0) {
-      fprintf(stderr,"Error seeking to offset %d\n",offset);
-      free(Buf);
-      fclose(F);
-      exit(1);
-  }
-  Counter = offset;
-  bytesread = fread(Buf,1,len+2,F);
-  if (bytesread >= len) {
-      for (; len > 0; len -= disasm_bytes) {
-         int ii;
-         disasm_bytes = Dasm32010(S,Buf);
-         printf("%04lX: ", Counter);
-         Counter+=disasm_bytes;
-         disasm_bytes *= 2;
-         for (ii = 0; ii < disasm_bytes; ii+=2) {
-             printf("%02.2x%02.2x ",Buf[ii],Buf[ii+1]);
-         }
-         for (; ii < 4; ii++) { printf("   "); }
-         printf("\t%s\n",S);
-         Buf += disasm_bytes;
-      }
-  }
-  else {
-        printf("ERROR length to dump was %d ", lentodump/2);
-        printf(", but bytes read from file were %d\n", bytesread/2);
-        free(Buf);fclose(F);exit(1);
-  }
-  free(Buf);fclose(F);return(0);
+	if(!(F=fopen(argv[1],"rb")))
+	{
+		printf("\n%s: Can't open file %s\n",argv[0],argv[1]);
+		exit(2);
+	}
+	argv++; argc--;
+	if (argv[1])
+	{
+		offset = strtol(argv[1],NULL,0);
+		argv++; argc--;
+	}
+	if (argv[1])
+	{
+		length = strtol(argv[1],NULL,0);
+		argv++; argc--;
+	}
+
+	fseek(F,0, SEEK_END);
+	filelength = ftell(F);
+
+	length *= 2;
+
+	if ((length > (filelength - (offset*2))) || (length == 0)) length = filelength - (offset*2);
+	printf("Length=%04Xh(words)  Offset=$%04Xh  filelength=%04Xh(words) %04Xh(bytes)\n",length/2,offset,filelength/2,filelength);
+	length_to_dump = length;
+	printf("Starting from %d, dumping %d opcodes (word size)\n",offset,length/2);
+	Buffer = calloc((filelength+1),sizeof(char));
+	if (Buffer==NULL)
+	{
+		printf("Out of Memory !!!");
+		fclose(F);
+		exit(3);
+	}
+	String_Output = calloc(80,sizeof(char));
+	if (String_Output==NULL)
+	{
+		printf("Out of Memory !!!");
+		free(Buffer);
+		fclose(F);
+		exit(4);
+	}
+
+	if (fseek(F,0,SEEK_SET) != 0)
+	{
+		printf("Error seeking to beginning of file\n");
+		free(String_Output);
+		free(Buffer);
+		fclose(F);
+		exit(5);
+	}
+
+	Counter = offset;
+	bytes_read = fread(Buffer,sizeof(char),filelength,F);
+	if (bytes_read >= length)
+	{
+		for (; length > 0; length -= (disasm_words*2))
+		{
+			int ii;
+			disasm_words = Dasm32010(String_Output,Counter);
+			printf("$%04lX: ",Counter);
+			for (ii = 0; ii < disasm_words; ii++)
+			{
+				if (((Counter*2) + ii) > filelength)	/* Past end of length to dump ? */
+				{
+					sprintf(String_Output,"???? dw %02.2X%02.2Xh (Past end of disassembly !)",Buffer[((Counter-1)*2)],Buffer[((Counter-1)*2)+1]);
+				}
+				else
+				{
+					printf("%02.2x%02.2x ",Buffer[(Counter*2)],Buffer[(Counter*2) + 1]);
+				}
+				Counter++ ;
+			}
+			for (; ii < 4; ii++)
+			{
+				printf("   ");
+			}
+			printf("\t%s\n",String_Output);
+		}
+	}
+	else
+	{
+		printf("ERROR length to dump was %d ", length_to_dump/2);
+		printf(", but bytes read from file were %d\n", bytes_read/2);
+		free(String_Output);
+		free(Buffer);
+		fclose(F);
+		exit(7);
+	}
+	free(String_Output);
+	free(Buffer);
+	fclose(F);
+	return(0);
 }

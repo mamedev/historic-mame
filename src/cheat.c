@@ -1,4 +1,4 @@
- /******************************************************************************
+/*****************************************************************************
  *
  *	cheat.c
  *	by Ian Patterson [ianpatt at pacbell dot net]
@@ -12,13 +12,17 @@
  *		- look in to adding auto-fire
  *		- bounds checks for relative address cheats
  *
+ *	Known Issues:
+ *		- signed fields displayed in hex don't accept negative values from
+ *		  direct keyboard input
+ *
  *****************************************************************************/
 
 /******	Cheat File Specification **********************************************
 
 Type Field:
 
-MSB							   LSB
+MSB						 	    LSB
 33222222 22221111 11111100 00000000
 10987654 32109876 54321098 76543210
 
@@ -49,12 +53,20 @@ MSB							   LSB
 														modification before
 														operation in seconds
 											type ==	10	decrement ignore value
-											type ==	11	none
+											type ==	11	watch options
+															display format
+												-00 =	hex
+												-01 =	decimal
+												-10 =	binary
+												-11 =	ascii
+															show label
+												0-- =	no
+												1-- =	yes, copy from comment
 									[ user-selected	value ]
 -------- -------- -------x --------		enable
--------- -------- ------x- --------		minimum	displayed value
-											0 =	0
-											1 =	1
+-------- -------- ------x- --------		displayed value
+											0 =	value
+											1 =	value + 1
 -------- -------- -----x-- --------		minimum	value
 											0 =	0
 											1 =	1
@@ -156,16 +168,28 @@ MSB								LSB
 000xxxxx 00000000 00000000 1010	0000	044	(mask used)
 000xxxxx 00000000 00000001 0000	0011	060
 000xxxxx 00000000 00000011 0000	0011	061
-000xxxxx 00000000 00000111 0000	0011	062
+000xxxxx 00000000 00000101 0000	0011	062
 000xxxxx 00000000 00001001 0000	0011	063
 000xxxxx 00000000 00001011 0000	0011	064
-000xxxxx 00000000 00001111 0000	0011	065
+000xxxxx 00000000 00001101 0000	0011	065
 000xxxxx 00000000 00000001 0000	0001	070
 000xxxxx 00000000 00000011 0000	0001	071
-000xxxxx 00000000 00000111 0000	0001	072
+000xxxxx 00000000 00000101 0000	0001	072
 000xxxxx 00000000 00001001 0000	0001	073
 000xxxxx 00000000 00001011 0000	0001	074
-000xxxxx 00000000 00001111 0000	0001	075
+000xxxxx 00000000 00001101 0000	0001	075
+000xxxxx 00000000 00000000 0000	0011	080
+000xxxxx 00000000 00000010 0000	0011	081
+000xxxxx 00000000 00000100 0000	0011	082
+000xxxxx 00000000 00001000 0000	0011	083
+000xxxxx 00000000 00001010 0000	0011	084
+000xxxxx 00000000 00001100 0000	0011	085
+000xxxxx 00000000 00000000 0000	0001	090
+000xxxxx 00000000 00000010 0000	0001	091
+000xxxxx 00000000 00000100 0000	0001	092
+000xxxxx 00000000 00001000 0000	0001	093
+000xxxxx 00000000 00001010 0000	0001	094
+000xxxxx 00000000 00001100 0000	0001	095
 001xxxxx 10000000 00000000 0000	0000	100
 001xxxxx 10000000 00000000 0000	0001	101
 001xxxxx 10000000 00000000 0000	0000	102
@@ -325,6 +349,7 @@ MSB								LSB
 -------- -------- xxxxxxxx --------		bytes to skip after each element
 -------- xxxxxxxx -------- --------		elements per line
 											0 = all on one line
+xxxxxxxx -------- -------- --------		signed value to add
 
 So, to make a watch on CPU1 address 0064407F with six elements, skipping three bytes after each element,
 showing two elements per line, you would do this:
@@ -392,7 +417,11 @@ enum
 	DEFINE_BITFIELD_ENUM(Endianness,				22,	22),
 	DEFINE_BITFIELD_ENUM(RestorePreviousValue,		23, 23),
 	DEFINE_BITFIELD_ENUM(LocationParameter,			24,	28),
-	DEFINE_BITFIELD_ENUM(LocationType,				29,	31)
+	DEFINE_BITFIELD_ENUM(LocationType,				29,	31),
+
+	DEFINE_BITFIELD_ENUM(Watch_AddValue,			0, 15),
+	DEFINE_BITFIELD_ENUM(Watch_Label,				16, 17),
+	DEFINE_BITFIELD_ENUM(Watch_DisplayType,			18, 19)
 };
 
 enum
@@ -464,12 +493,13 @@ enum
 	// set after prefill value written
 	kActionFlag_PrefillWritten =	1 << 5,
 
-	kActionFlag_StateMask =		kActionFlag_OperationDone |
-								kActionFlag_LastValueGood |
-								kActionFlag_PrefillDone |
-								kActionFlag_PrefillWritten,
-	kActionFlag_InfoMask =		kActionFlag_WasModified |
-								kActionFlag_IgnoreMask
+	kActionFlag_StateMask =			kActionFlag_OperationDone |
+									kActionFlag_LastValueGood |
+									kActionFlag_PrefillDone |
+									kActionFlag_PrefillWritten,
+	kActionFlag_InfoMask =			kActionFlag_WasModified |
+									kActionFlag_IgnoreMask,
+	kActionFlag_PersistantMask =	kActionFlag_LastValueGood
 };
 
 enum
@@ -526,6 +556,7 @@ enum
 	kWatchDisplayType_Hex = 0,
 	kWatchDisplayType_Decimal,
 	kWatchDisplayType_Binary,
+	kWatchDisplayType_ASCII,
 
 	kWatchDisplayType_MaxPlusOne
 };
@@ -659,6 +690,10 @@ struct WatchInfo
 	UINT8			displayType;
 	UINT8			skip;
 	UINT8			elementsPerLine;
+	INT8			addValue;
+	INT8			addressShift;
+	INT8			dataShift;
+	UINT32			xor;
 
 	UINT16			x, y;
 
@@ -753,6 +788,7 @@ struct CPUInfo
 	UINT8	addressCharsNeeded;
 	UINT32	addressMask;
 	UINT8	endianness;
+	UINT8	addressShift;
 };
 
 typedef struct CPUInfo	CPUInfo;
@@ -1018,6 +1054,21 @@ static const UINT32 kPrefillValueTable[] =
 	0x01
 };
 
+const char *	kWatchLabelStringList[] =
+{
+	"None",
+	"Address",
+	"String"
+};
+
+const char *	kWatchDisplayTypeStringList[] =
+{
+	"Hex",
+	"Decimal",
+	"Binary",
+	"ASCII"
+};
+
 /**** Function Prototypes ****************************************************/
 
 static int		ShiftKeyPressed(void);
@@ -1030,8 +1081,10 @@ static int		ReadHexInput(void);
 static char *	DoDynamicEditTextField(char * buf);
 static void		DoStaticEditTextField(char * buf, int size);
 static UINT32	DoEditHexField(UINT32 data);
+static UINT32	DoEditHexFieldSigned(UINT32 data, UINT32 mask);
 static INT32	DoEditDecField(INT32 data, INT32 min, INT32 max);
 
+static UINT32	DoShift(UINT32 input, INT8 shift);
 static UINT32	BCDToDecimal(UINT32 value);
 static UINT32	DecimalToBCD(UINT32 value);
 
@@ -1083,6 +1136,7 @@ static void		ResizeSearchList(UINT32 newLength);
 static void		ResizeSearchListNoDispose(UINT32 newLength);
 static void		AddSearchBefore(UINT32 idx);
 static void		DeleteSearchAt(UINT32 idx);
+static void		InitSearch(SearchInfo * info);
 static void		DisposeSearchRegions(SearchInfo * info);
 static void		DisposeSearch(UINT32 idx);
 static SearchInfo *	GetCurrentSearch(void);
@@ -1565,6 +1619,35 @@ static UINT32 DoEditHexField(UINT32 data)
 	return data;
 }
 
+static UINT32 DoEditHexFieldSigned(UINT32 data, UINT32 mask)
+{
+	INT8	key;
+	UINT32	isNegative = data & mask;
+
+	if(isNegative)
+		data |= mask;
+
+	key = ReadHexInput();
+
+	if(key != -1)
+	{
+		if(isNegative)
+			data = (~data) + 1;
+
+		data <<= 4;
+		data |= key;
+
+		if(isNegative)
+			data = (~data) + 1;
+	}
+	else if(code_pressed_memory(KEYCODE_MINUS))
+	{
+		data = (~data) + 1;
+	}
+
+	return data;
+}
+
 static INT32 DoEditDecField(INT32 data, INT32 min, INT32 max)
 {
 	char	code = osd_readkey_unicode(0) & 0xFF;
@@ -1593,8 +1676,6 @@ static INT32 DoEditDecField(INT32 data, INT32 min, INT32 max)
 
 void InitCheat(void)
 {
-	//logerror("InitCheat: OSD_READKEY_KLUDGE = %d LSB_FIRST = %d\n", OSD_READKEY_KLUDGE, LSB_FIRST);
-
 	he_did_cheat =			0;
 
 	cheatList =				NULL;
@@ -1863,6 +1944,14 @@ int cheat_menu(struct mame_bitmap * bitmap, int selection)
 	return sel + 1;
 }
 
+static UINT32 DoShift(UINT32 input, INT8 shift)
+{
+	if(shift > 0)
+		return input >> shift;
+	else
+		return input << -shift;
+}
+
 static UINT32 BCDToDecimal(UINT32 value)
 {
 	UINT32	accumulator = 0;
@@ -1923,8 +2012,6 @@ static void RebuildStringTables(void)
 		(!menuStrings.subStrings && menuStrings.numStrings) ||
 		(!menuStrings.buf && storageNeeded))
 	{
-		// memory allocation error
-
 		logerror(	"cheat: memory allocation error\n"
 					"	length =			%.8X\n"
 					"	numStrings =		%.8X\n"
@@ -2032,23 +2119,24 @@ static INT32 UserSelectValueMenu(struct mame_bitmap * bitmap, int selection, Che
 	// if we're just entering, save the value
 	if(firstTime)
 	{
-		value = action->data;
+		UINT32	min = EXTRACT_FIELD(action->type, UserSelectMinimum);
+		UINT32	max = action->originalDataField + min;
+
+		value = ReadData(action);
 
 		// and check for valid BCD values
 		if(TEST_FIELD(action->type, UserSelectBCD))
 		{
-			UINT32	min = EXTRACT_FIELD(action->type, UserSelectMinimum);
-			UINT32	max = action->originalDataField + min;
-
 			value = BCDToDecimal(value);
 			value = DecimalToBCD(value);
-
-			if(value < min)
-				value = max;
-			if(value > max)
-				value = min;
 		}
 
+		if(value < min)
+			value = max;
+		if(value > max)
+			value = min;
+
+		action->data = value;
 		firstTime = 0;
 	}
 
@@ -2679,6 +2767,11 @@ static int EnableDisableCheatMenu(struct mame_bitmap * bitmap, int selection, in
 		}
 	}
 
+	/*
+	if(code_pressed(KEYCODE_L))
+		usrintf_showmessage_secs(1, "idx %d %.8X", sel, sel);
+	*/
+
 	/* Cancel pops us up a menu level */
 	if(input_ui_pressed(IPT_UI_CANCEL))
 		sel = -1;
@@ -2846,11 +2939,17 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 				kType_IgnoreDecrementBy,//	value		TypeParameter		0 - 7
 			// if(Type == Watch)
 				kType_WatchSize,		//	value		Data				0x01 - 0xFF (stored as 0x00 - 0xFE)
-										//	NOTE: value is packed in to lower byte of data
+										//	NOTE: value is packed in to 0x000000FF
 				kType_WatchSkip,		//	value		Data				0x00 - 0xFF
 										//	NOTE: value is packed in to 0x0000FF00
 				kType_WatchPerLine,		//	value		Data				0x00 - 0xFF
 										//	NOTE: value is packed in to 0x00FF0000
+				kType_WatchAddValue,	//	value		Data				-0x80 - 0x7F
+										//	NOTE: value is packed in to 0xFF000000
+				kType_WatchFormat,		//	select		TypeParameter		Hex - Decimal - Binary - ASCII
+										//	NOTE: value is packed in to 0x03
+				kType_WatchLabel,		//	select		TypeParameter		Off - On
+										//	NOTE: value is packed in to 0x04
 				// and set operation to null
 			// else
 				kType_Operation,		//	select		Operation			Write - Add/Subtract - Force Range - Set/Clear Bits -
@@ -2868,9 +2967,9 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 										//	value		extendData			0x00000000 - 0xFFFFFFFF
 			// if((Operation == Force Range) && (LocationType != Relative Address))
 				kType_RangeMinimum,		//	value		extendData			0x00 - 0xFF
-										//	NOTE: value is packed in to upper byte of extendData
+										//	NOTE: value is packed in to upper byte of extendData (as a word)
 				kType_RangeMaximum,		//	value		extendData			0x00 - 0xFF
-										//	NOTE: value is packed in to lower byte of extendData
+										//	NOTE: value is packed in to lower byte of extendData (as a word)
 			// if(Operation == Set/Clear)
 				kType_SetClear,			//	select		OperationParameter	Set - Clear
 			// if((Operation != Null) || (Type == Watch))
@@ -2921,12 +3020,13 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 	const char			** menuItem;
 	const char			** menuSubItem;
 	char				* flagBuf;
-	char				** extendDataBuf;	// FFFFFFFF (-80000000)
-	char				** addressBuf;		// FFFFFFFF
-	char				** dataBuf;			// 80000000 (-2147483648)
-	char				** watchSizeBuf;	// FF
-	char				** watchSkipBuf;	// FF
-	char				** watchPerLineBuf;	// FF
+	char				** extendDataBuf;		// FFFFFFFF (-80000000)
+	char				** addressBuf;			// FFFFFFFF
+	char				** dataBuf;				// 80000000 (-2147483648)
+	char				** watchSizeBuf;		// FF
+	char				** watchSkipBuf;		// FF
+	char				** watchPerLineBuf;		// FF
+	char				** watchAddValueBuf;	// FF
 	INT32				i;
 	INT32				total = 0;
 	MenuItemInfoStruct	* info = NULL;
@@ -2947,7 +3047,7 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 		menuItemInfo = realloc(menuItemInfo, menuItemInfoLength * sizeof(MenuItemInfoStruct));
 	}
 
-	RequestStrings((kType_Max * entry->actionListLength) + 2, 6 * entry->actionListLength, 24, 0);
+	RequestStrings((kType_Max * entry->actionListLength) + 2, 7 * entry->actionListLength, 24, 0);
 
 	menuItem =			menuStrings.mainList;
 	menuSubItem =		menuStrings.subList;
@@ -2958,6 +3058,7 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 	watchSizeBuf =		&menuStrings.mainStrings[entry->actionListLength * 3];	// these fields are wasteful
 	watchSkipBuf =		&menuStrings.mainStrings[entry->actionListLength * 4];	// but the alternative is even more ugly
 	watchPerLineBuf =	&menuStrings.mainStrings[entry->actionListLength * 5];
+	watchAddValueBuf =	&menuStrings.mainStrings[entry->actionListLength * 6];
 
 	sel = selection - 1;
 
@@ -3181,6 +3282,48 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 
 					total++;
 				}
+
+				{
+					// do watch add value field
+
+					{
+						INT8	temp = (traverse->data >> 24) & 0xFF;
+
+						if(temp < 0)
+							sprintf(watchAddValueBuf[i], "-%.2X", -temp);
+						else
+							sprintf(watchAddValueBuf[i], "%.2X", temp);
+					}
+
+					menuItemInfo[total].subcheat = i;
+					menuItemInfo[total].fieldType = kType_WatchAddValue;
+					menuItem[total] = "Watch Add Value";
+					menuSubItem[total] = watchAddValueBuf[i];
+
+					total++;
+				}
+
+				{
+					// do watch format field
+
+					menuItemInfo[total].subcheat = i;
+					menuItemInfo[total].fieldType = kType_WatchFormat;
+					menuItem[total] = "Watch Format";
+					menuSubItem[total] = kWatchDisplayTypeStringList[(typeParameter >> 0) & 0x03];
+
+					total++;
+				}
+
+				{
+					// do watch label field
+
+					menuItemInfo[total].subcheat = i;
+					menuItemInfo[total].fieldType = kType_WatchLabel;
+					menuItem[total] = "Watch Label";
+					menuSubItem[total] = ui_getstring(((typeParameter >> 2) & 0x01) ? UI_on : UI_off);
+
+					total++;
+				}
 			}
 			else
 			{
@@ -3283,7 +3426,7 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 				{
 					// do range maximum field
 
-					sprintf(extendDataBuf[i] + 3, "%.2X", (traverse->extendData >> 8) & 0xFF);
+					sprintf(extendDataBuf[i] + 3, "%.2X", (traverse->extendData >> 0) & 0xFF);
 
 					menuItemInfo[total].subcheat = i;
 					menuItemInfo[total].fieldType = kType_RangeMaximum;
@@ -3709,6 +3852,24 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 				action->data = action->originalDataField;
 				break;
 
+			case kType_WatchAddValue:
+				action->originalDataField = (action->originalDataField & 0x00FFFFFF) | ((action->originalDataField - 0x01000000) & 0xFF000000);
+				action->data = action->originalDataField;
+				break;
+
+			case kType_WatchFormat:
+			{
+				UINT32	typeParameter = EXTRACT_FIELD(action->type, TypeParameter);
+
+				typeParameter = (typeParameter & 0xFFFFFFFC) | ((typeParameter - 0x00000001) & 0x0000003);
+				SET_FIELD(action->type, TypeParameter, typeParameter);
+			}
+			break;
+
+			case kType_WatchLabel:
+				SET_FIELD(action->type, TypeParameter, EXTRACT_FIELD(action->type, TypeParameter) ^ 0x00000004);
+				break;
+
 			case kType_Operation:
 			{
 				UINT32	operation = (EXTRACT_FIELD(action->type, Operation) - 1) & 7;
@@ -3724,8 +3885,16 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 				break;
 
 			case kType_RangeMinimum:
+				action->extendData = (action->extendData & 0xFFFF00FF) | ((action->extendData - 0x00000100) & 0x0000FF00);
+				break;
+
 			case kType_RangeMaximum:
+				action->extendData = (action->extendData & 0xFFFFFF00) | ((action->extendData - 0x00000001) & 0x000000FF);
+				break;
+
 			case kType_AddressIndex:
+			case kType_SubtractMinimum:
+			case kType_AddMaximum:
 				action->extendData -= increment;
 				break;
 
@@ -3962,6 +4131,24 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 				action->data = action->originalDataField;
 				break;
 
+			case kType_WatchAddValue:
+				action->originalDataField = (action->originalDataField & 0x00FFFFFF) | ((action->originalDataField + 0x01000000) & 0xFF000000);
+				action->data = action->originalDataField;
+				break;
+
+			case kType_WatchFormat:
+			{
+				UINT32	typeParameter = EXTRACT_FIELD(action->type, TypeParameter);
+
+				typeParameter = (typeParameter & 0xFFFFFFFC) | ((typeParameter + 0x00000001) & 0x0000003);
+				SET_FIELD(action->type, TypeParameter, typeParameter);
+			}
+			break;
+
+			case kType_WatchLabel:
+				SET_FIELD(action->type, TypeParameter, EXTRACT_FIELD(action->type, TypeParameter) ^ 0x00000004);
+				break;
+
 			case kType_Operation:
 			{
 				UINT32	operation = (EXTRACT_FIELD(action->type, Operation) + 1) & 7;
@@ -3977,8 +4164,16 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 				break;
 
 			case kType_RangeMinimum:
+				action->extendData = (action->extendData & 0xFFFF00FF) | ((action->extendData + 0x00000100) & 0x0000FF00);
+				break;
+
 			case kType_RangeMaximum:
+				action->extendData = (action->extendData & 0xFFFFFF00) | ((action->extendData + 0x00000001) & 0x000000FF);
+				break;
+
 			case kType_AddressIndex:
+			case kType_SubtractMinimum:
+			case kType_AddMaximum:
 				action->extendData += increment;
 				break;
 
@@ -4157,6 +4352,7 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 				case kType_WatchSize:
 				case kType_WatchSkip:
 				case kType_WatchPerLine:
+				case kType_WatchAddValue:
 				case kType_WriteMask:
 				case kType_AddMaximum:
 				case kType_SubtractMinimum:
@@ -4259,6 +4455,17 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 				temp = DoEditHexField(temp) & 0xFF;
 
 				action->originalDataField = (action->originalDataField & 0xFF00FFFF) | ((temp << 16) & 0x00FF0000);
+				action->data = action->originalDataField;
+			}
+			break;
+
+			case kType_WatchAddValue:
+			{
+				UINT32	temp = (action->originalDataField >> 24) & 0xFF;
+
+				temp = DoEditHexFieldSigned(temp, 0xFFFFFF80) & 0xFF;
+
+				action->originalDataField = (action->originalDataField & 0x00FFFFFF) | ((temp << 24) & 0xFF000000);
 				action->data = action->originalDataField;
 			}
 			break;
@@ -5815,22 +6022,12 @@ static int EditWatch(struct mame_bitmap * bitmap, WatchInfo * entry, int selecti
 		kMenu_YPosition,
 		kMenu_Skip,
 		kMenu_ElementsPerLine,
+		kMenu_AddValue,
+		kMenu_AddressShift,
+		kMenu_DataShift,
+		kMenu_XOR,
 
 		kMenu_Return
-	};
-
-	const char *	kWatchLabelStringList[] =
-	{
-		"None",
-		"Address",
-		"String"
-	};
-
-	const char *	kWatchDisplayTypeStringList[] =
-	{
-		"Hex",
-		"Decimal",
-		"Binary"
 	};
 
 	const char *	kWatchSizeStringList[] =
@@ -5863,7 +6060,7 @@ static int EditWatch(struct mame_bitmap * bitmap, WatchInfo * entry, int selecti
 
 	sel = selection - 1;
 
-	sprintf(buf[total], "%.*X", cpuInfoList[entry->cpu].addressCharsNeeded, entry->address);
+	sprintf(buf[total], "%.*X", cpuInfoList[entry->cpu].addressCharsNeeded, entry->address >> entry->addressShift);
 	menuItem[total] = "Address";
 	menuSubItem[total] = buf[total];
 	total++;
@@ -5921,6 +6118,32 @@ static int EditWatch(struct mame_bitmap * bitmap, WatchInfo * entry, int selecti
 	menuSubItem[total] = buf[total];
 	total++;
 
+	{
+		if(entry->addValue < 0)
+			sprintf(buf[total], "-%.2X", -entry->addValue);
+		else
+			sprintf(buf[total], "%.2X", entry->addValue);
+
+		menuItem[total] = "Add Value";
+		menuSubItem[total] = buf[total];
+		total++;
+	}
+
+	sprintf(buf[total], "%d", entry->addressShift);
+	menuItem[total] = "Address Shift";
+	menuSubItem[total] = buf[total];
+	total++;
+
+	sprintf(buf[total], "%d", entry->dataShift);
+	menuItem[total] = "Data Shift";
+	menuSubItem[total] = buf[total];
+	total++;
+
+	sprintf(buf[total], "%.*X", kSearchByteDigitsTable[kWatchSizeConversionTable[entry->elementBytes]], entry->xor);
+	menuItem[total] = "XOR";
+	menuSubItem[total] = buf[total];
+	total++;
+
 	menuItem[total] = ui_getstring(UI_returntoprior);
 	menuSubItem[total] = NULL;
 	total++;
@@ -5952,7 +6175,9 @@ static int EditWatch(struct mame_bitmap * bitmap, WatchInfo * entry, int selecti
 		switch(sel)
 		{
 			case kMenu_Address:
+				entry->address = DoShift(entry->address, entry->addressShift);
 				entry->address -= increment;
+				entry->address = DoShift(entry->address, -entry->addressShift);
 				entry->address &= cpuInfoList[entry->cpu].addressMask;
 				break;
 
@@ -5961,6 +6186,8 @@ static int EditWatch(struct mame_bitmap * bitmap, WatchInfo * entry, int selecti
 
 				if(entry->cpu >= cpu_gettotalcpu())
 					entry->cpu = cpu_gettotalcpu() - 1;
+
+				entry->address &= cpuInfoList[entry->cpu].addressMask;
 				break;
 
 			case kMenu_NumElements:
@@ -5975,6 +6202,8 @@ static int EditWatch(struct mame_bitmap * bitmap, WatchInfo * entry, int selecti
 					entry->elementBytes--;
 				else
 					entry->elementBytes = 0;
+
+				entry->xor &= kSearchByteMaskTable[kWatchSizeConversionTable[entry->elementBytes]];
 				break;
 
 			case kMenu_LabelType:
@@ -6011,6 +6240,29 @@ static int EditWatch(struct mame_bitmap * bitmap, WatchInfo * entry, int selecti
 				if(entry->elementsPerLine > 0)
 					entry->elementsPerLine--;
 				break;
+
+			case kMenu_AddValue:
+				entry->addValue = (entry->addValue - 1) & 0xFF;
+				break;
+
+			case kMenu_AddressShift:
+				if(entry->addressShift > -31)
+					entry->addressShift--;
+				else
+					entry->addressShift = 31;
+				break;
+
+			case kMenu_DataShift:
+				if(entry->dataShift > -31)
+					entry->dataShift--;
+				else
+					entry->dataShift = 31;
+				break;
+
+			case kMenu_XOR:
+				entry->xor -= increment;
+				entry->xor &= kSearchByteMaskTable[kWatchSizeConversionTable[entry->elementBytes]];
+				break;
 		}
 	}
 
@@ -6021,7 +6273,9 @@ static int EditWatch(struct mame_bitmap * bitmap, WatchInfo * entry, int selecti
 		switch(sel)
 		{
 			case kMenu_Address:
+				entry->address = DoShift(entry->address, entry->addressShift);
 				entry->address += increment;
+				entry->address = DoShift(entry->address, -entry->addressShift);
 				entry->address &= cpuInfoList[entry->cpu].addressMask;
 				break;
 
@@ -6030,6 +6284,8 @@ static int EditWatch(struct mame_bitmap * bitmap, WatchInfo * entry, int selecti
 
 				if(entry->cpu >= cpu_gettotalcpu())
 					entry->cpu = 0;
+
+				entry->address &= cpuInfoList[entry->cpu].addressMask;
 				break;
 
 			case kMenu_NumElements:
@@ -6041,6 +6297,8 @@ static int EditWatch(struct mame_bitmap * bitmap, WatchInfo * entry, int selecti
 					entry->elementBytes++;
 				else
 					entry->elementBytes = kSearchSize_32Bit;
+
+				entry->xor &= kSearchByteMaskTable[kWatchSizeConversionTable[entry->elementBytes]];
 				break;
 
 			case kMenu_LabelType:
@@ -6074,6 +6332,29 @@ static int EditWatch(struct mame_bitmap * bitmap, WatchInfo * entry, int selecti
 
 			case kMenu_ElementsPerLine:
 				entry->elementsPerLine++;
+				break;
+
+			case kMenu_AddValue:
+				entry->addValue = (entry->addValue + 1) & 0xFF;
+				break;
+
+			case kMenu_AddressShift:
+				if(entry->addressShift < 31)
+					entry->addressShift++;
+				else
+					entry->addressShift = -31;
+				break;
+
+			case kMenu_DataShift:
+				if(entry->dataShift < 31)
+					entry->dataShift++;
+				else
+					entry->dataShift = -31;
+				break;
+
+			case kMenu_XOR:
+				entry->xor += increment;
+				entry->xor &= kSearchByteMaskTable[kWatchSizeConversionTable[entry->elementBytes]];
 				break;
 		}
 	}
@@ -6118,16 +6399,6 @@ static int EditWatch(struct mame_bitmap * bitmap, WatchInfo * entry, int selecti
 		editActive = 0;
 	}
 
-	if(input_ui_pressed(IPT_UI_ADD_CHEAT))
-	{
-		AddCheatFromWatch(entry);
-	}
-
-	if(input_ui_pressed(IPT_UI_DELETE_CHEAT))
-	{
-		entry->numElements = 0;
-	}
-
 	if(input_ui_pressed(IPT_UI_SELECT))
 	{
 		if(editActive)
@@ -6144,9 +6415,14 @@ static int EditWatch(struct mame_bitmap * bitmap, WatchInfo * entry, int selecti
 
 				case kMenu_Address:
 				case kMenu_CPU:
+				case kMenu_NumElements:
 				case kMenu_TextLabel:
 				case kMenu_XPosition:
 				case kMenu_YPosition:
+				case kMenu_AddValue:
+				case kMenu_AddressShift:
+				case kMenu_DataShift:
+				case kMenu_XOR:
 					osd_readkey_unicode(1);
 					editActive = 1;
 			}
@@ -6158,12 +6434,15 @@ static int EditWatch(struct mame_bitmap * bitmap, WatchInfo * entry, int selecti
 		switch(sel)
 		{
 			case kMenu_Address:
+				entry->address = DoShift(entry->address, entry->addressShift);
 				entry->address = DoEditHexField(entry->address);
+				entry->address = DoShift(entry->address, -entry->addressShift);
 				entry->address &= cpuInfoList[entry->cpu].addressMask;
 				break;
 
 			case kMenu_CPU:
 				entry->cpu = DoEditDecField(entry->cpu, 0, cpu_gettotalcpu() - 1);
+				entry->address &= cpuInfoList[entry->cpu].addressMask;
 				break;
 
 			case kMenu_NumElements:
@@ -6181,10 +6460,50 @@ static int EditWatch(struct mame_bitmap * bitmap, WatchInfo * entry, int selecti
 			case kMenu_YPosition:
 				entry->y = DoEditDecField(entry->y, -1000, 1000);
 				break;
+
+			case kMenu_AddValue:
+				entry->addValue = DoEditHexFieldSigned(entry->addValue, 0xFFFFFF80) & 0xFF;
+				break;
+
+			case kMenu_AddressShift:
+				entry->addressShift = DoEditDecField(entry->addressShift, -31, 31);
+				break;
+
+			case kMenu_DataShift:
+				entry->dataShift = DoEditDecField(entry->dataShift, -31, 31);
+				break;
+
+			case kMenu_XOR:
+				entry->xor = DoEditHexField(entry->xor);
+				entry->xor &= kSearchByteMaskTable[kWatchSizeConversionTable[entry->elementBytes]];
+				break;
 		}
 
 		if(input_ui_pressed(IPT_UI_CANCEL))
 			editActive = 0;
+	}
+	else
+	{
+		if(input_ui_pressed(IPT_UI_ADD_CHEAT))
+		{
+			AddCheatFromWatch(entry);
+		}
+
+		if(input_ui_pressed(IPT_UI_DELETE_CHEAT))
+		{
+			entry->numElements = 0;
+		}
+
+		if(input_ui_pressed(IPT_UI_SAVE_CHEAT))
+		{
+			CheatEntry	tempEntry;
+
+			memset(&tempEntry, 0, sizeof(CheatEntry));
+
+			SetupCheatFromWatchAsWatch(&tempEntry, entry);
+			SaveCheat(&tempEntry);
+			DisposeCheat(&tempEntry);
+		}
 	}
 
 	if(input_ui_pressed(IPT_UI_CANCEL))
@@ -6772,6 +7091,39 @@ UINT32 PrintBinary(char * buf, UINT32 data, UINT32 mask)
 	return written;
 }
 
+UINT32 PrintASCII(char * buf, UINT32 data, UINT8 size)
+{
+	switch(size)
+	{
+		case kSearchSize_8Bit:
+		case kSearchSize_1Bit:
+		default:
+			buf[0] = (data >> 0) & 0xFF;
+			buf[1] = 0;
+
+			return 1;
+
+		case kSearchSize_16Bit:
+			buf[0] = (data >> 8) & 0xFF;
+			buf[1] = (data >> 0) & 0xFF;
+			buf[2] = 0;
+
+			return 2;
+
+		case kSearchSize_32Bit:
+			buf[0] = (data >> 24) & 0xFF;
+			buf[1] = (data >> 16) & 0xFF;
+			buf[2] = (data >>  8) & 0xFF;
+			buf[3] = (data >>  0) & 0xFF;
+			buf[4] = 0;
+
+			return 4;
+	}
+
+	buf[0] = 0;
+	return 0;
+}
+
 void DisplayWatches(struct mame_bitmap * bitmap)
 {
 	int		i;
@@ -6812,7 +7164,9 @@ void DisplayWatches(struct mame_bitmap * bitmap)
 			{
 				UINT32	data;
 
-				data = DoCPURead(info->cpu, address, kSearchByteIncrementTable[info->elementBytes], CPUNeedsSwap(info->cpu));
+				data = (DoCPURead(info->cpu, address, kSearchByteIncrementTable[info->elementBytes], CPUNeedsSwap(info->cpu)) + info->addValue) & kSearchByteMaskTable[info->elementBytes];
+				data = DoShift(data, info->dataShift);
+				data ^= info->xor;
 
 				if(	(lineElements >= info->elementsPerLine) &&
 					info->elementsPerLine)
@@ -6830,6 +7184,7 @@ void DisplayWatches(struct mame_bitmap * bitmap)
 
 						ui_text(bitmap, buf, xOffset * Machine->uifontwidth + info->x, yOffset * Machine->uifontheight + info->y);
 						xOffset += numChars;
+						xOffset++;
 						break;
 
 					case kWatchDisplayType_Decimal:
@@ -6837,6 +7192,7 @@ void DisplayWatches(struct mame_bitmap * bitmap)
 
 						ui_text(bitmap, buf, xOffset * Machine->uifontwidth + info->x, yOffset * Machine->uifontheight + info->y);
 						xOffset += numChars;
+						xOffset++;
 						break;
 
 					case kWatchDisplayType_Binary:
@@ -6844,11 +7200,18 @@ void DisplayWatches(struct mame_bitmap * bitmap)
 
 						ui_text(bitmap, buf, xOffset * Machine->uifontwidth + info->x, yOffset * Machine->uifontheight + info->y);
 						xOffset += numChars;
+						xOffset++;
+						break;
+
+					case kWatchDisplayType_ASCII:
+						numChars = PrintASCII(buf, data, info->elementBytes);
+
+						ui_text(bitmap, buf, xOffset * Machine->uifontwidth + info->x, yOffset * Machine->uifontheight + info->y);
+						xOffset += numChars;
 						break;
 				}
 
 				address += kSearchByteIncrementTable[info->elementBytes] + info->skip;
-				xOffset++;
 				lineElements++;
 			}
 		}
@@ -6890,6 +7253,7 @@ static void ResizeCheatList(UINT32 newLength)
 		if(!cheatList && (newLength != 0))
 		{
 			logerror("ResizeCheatList: out of memory resizing cheat list\n");
+			usrintf_showmessage_secs(2, "out of memory while loading cheat database");
 
 			cheatListLength = 0;
 
@@ -6920,6 +7284,7 @@ static void ResizeCheatListNoDispose(UINT32 newLength)
 		if(!cheatList && (newLength != 0))
 		{
 			logerror("ResizeCheatListNoDispose: out of memory resizing cheat list\n");
+			usrintf_showmessage_secs(2, "out of memory while loading cheat database");
 
 			cheatListLength = 0;
 
@@ -7018,6 +7383,7 @@ static void ResizeCheatActionList(CheatEntry * entry, UINT32 newLength)
 		if(!entry->actionList && (newLength != 0))
 		{
 			logerror("ResizeCheatActionList: out of memory resizing cheat action list\n");
+			usrintf_showmessage_secs(2, "out of memory while loading cheat database");
 
 			entry->actionListLength = 0;
 
@@ -7041,6 +7407,7 @@ static void ResizeCheatActionListNoDispose(CheatEntry * entry, UINT32 newLength)
 		if(!entry->actionList && (newLength != 0))
 		{
 			logerror("ResizeCheatActionList: out of memory resizing cheat action list\n");
+			usrintf_showmessage_secs(2, "out of memory while loading cheat database");
 
 			entry->actionListLength = 0;
 
@@ -7118,6 +7485,7 @@ static void ResizeWatchList(UINT32 newLength)
 		if(!watchList && (newLength != 0))
 		{
 			logerror("ResizeWatchList: out of memory resizing watch list\n");
+			usrintf_showmessage_secs(2, "out of memory while adding watch");
 
 			watchListLength = 0;
 
@@ -7144,18 +7512,11 @@ static void ResizeWatchListNoDispose(UINT32 newLength)
 {
 	if(newLength != watchListLength)
 	{
-		if(newLength < watchListLength)
-		{
-			int	i;
-
-			for(i = newLength; i < watchListLength; i++)
-				DisposeWatch(&watchList[i]);
-		}
-
 		watchList = realloc(watchList, newLength * sizeof(WatchInfo));
 		if(!watchList && (newLength != 0))
 		{
 			logerror("ResizeWatchList: out of memory resizing watch list\n");
+			usrintf_showmessage_secs(2, "out of memory while adding watch");
 
 			watchListLength = 0;
 
@@ -7292,12 +7653,19 @@ static void SetupCheatFromWatchAsWatch(CheatEntry * entry, WatchInfo * watch)
 		SET_FIELD(action->type, LocationParameter, watch->cpu);
 		SET_FIELD(action->type, Type, kType_Watch);
 		SET_FIELD(action->type, BytesUsed, kSearchByteIncrementTable[watch->elementBytes] - 1);
+		SET_FIELD(action->type, TypeParameter, watch->displayType | ((watch->labelType == kWatchLabel_String) ? 0x04 : 0));
+
 		action->address = watch->address;
 		action->data  =	((watch->numElements - 1) & 0xFF) |
 						((watch->skip & 0xFF) << 8) |
-						((watch->elementsPerLine & 0xFF) << 16);
+						((watch->elementsPerLine & 0xFF) << 16) |
+						((watch->addValue & 0xFF) << 24);
 		action->originalDataField = action->data;
 		action->extendData = 0xFFFFFFFF;
+
+		tempStringLength = strlen(watch->label);
+		entry->comment = realloc(entry->comment, tempStringLength + 1);
+		memcpy(entry->comment, watch->label, tempStringLength + 1);
 
 		UpdateCheatInfo(entry, 0);
 	}
@@ -7319,6 +7687,7 @@ static void ResizeSearchList(UINT32 newLength)
 		if(!searchList && (newLength != 0))
 		{
 			logerror("ResizeSearchList: out of memory resizing search list\n");
+			usrintf_showmessage_secs(2, "out of memory while adding search");
 
 			searchListLength = 0;
 
@@ -7327,7 +7696,14 @@ static void ResizeSearchList(UINT32 newLength)
 
 		if(newLength > searchListLength)
 		{
+			int	i;
+
 			memset(&searchList[searchListLength], 0, (newLength - searchListLength) * sizeof(SearchInfo));
+
+			for(i = searchListLength; i < newLength; i++)
+			{
+				InitSearch(&searchList[i]);
+			}
 		}
 
 		searchListLength = newLength;
@@ -7342,6 +7718,7 @@ static void ResizeSearchListNoDispose(UINT32 newLength)
 		if(!searchList && (newLength != 0))
 		{
 			logerror("ResizeSearchList: out of memory resizing search list\n");
+			usrintf_showmessage_secs(2, "out of memory while adding search");
 
 			searchListLength = 0;
 
@@ -7359,7 +7736,7 @@ static void ResizeSearchListNoDispose(UINT32 newLength)
 
 static void AddSearchBefore(UINT32 idx)
 {
-	ResizeSearchList(searchListLength + 1);
+	ResizeSearchListNoDispose(searchListLength + 1);
 
 	if(idx < (searchListLength - 1))
 		memmove(&searchList[idx + 1], &searchList[idx], sizeof(SearchInfo) * (searchListLength - 1 - idx));
@@ -7368,6 +7745,7 @@ static void AddSearchBefore(UINT32 idx)
 		idx = searchListLength - 1;
 
 	memset(&searchList[idx], 0, sizeof(SearchInfo));
+	InitSearch(&searchList[idx]);
 }
 
 static void DeleteSearchAt(UINT32 idx)
@@ -7383,6 +7761,14 @@ static void DeleteSearchAt(UINT32 idx)
 	}
 
 	ResizeSearchListNoDispose(searchListLength - 1);
+}
+
+static void InitSearch(SearchInfo * info)
+{
+	if(info)
+	{
+		info->searchSpeed = kSearchSpeed_Medium;
+	}
 }
 
 static void DisposeSearchRegions(SearchInfo * info)
@@ -7511,8 +7897,6 @@ static void RestoreRegionBackup(SearchRegion * region)
 	}
 }
 
-extern struct GameDriver	driver_neogeo;
-
 static UINT8 DefaultEnableRegion(SearchRegion * region, SearchInfo * info)
 {
 	mem_write_handler	handler = region->writeHandler->handler;
@@ -7522,7 +7906,20 @@ static UINT8 DefaultEnableRegion(SearchRegion * region, SearchInfo * info)
 	{
 		case kSearchSpeed_Fast:
 
-			if(handler == MWA_RAM)
+#if HAS_SH2
+			if((Machine->drv->cpu[0].cpu_type & ~CPU_FLAGS_MASK) == CPU_SH2)
+			{
+				if(	(info->targetType == kRegionType_CPU) &&
+					(info->targetIdx == 0) &&
+					(region->address == 0x06000000))
+					return 1;
+
+				return 0;
+			}
+#endif
+
+			if(	(handler == MWA_RAM) &&
+				(!region->writeHandler->base))
 				return 1;
 
 #ifndef MESS
@@ -7530,12 +7927,16 @@ static UINT8 DefaultEnableRegion(SearchRegion * region, SearchInfo * info)
 #ifndef TINY_COMPILE
 #ifndef CPSMAME
 
-			// for neogeo, search bank one
-			if(	(Machine->gamedrv->clone_of == &driver_neogeo) &&
-				(info->targetType == kRegionType_CPU) &&
-				(info->targetIdx == 0) &&
-				(handler == MWA_BANK1))
-				return 1;
+			{
+				extern struct GameDriver	driver_neogeo;
+
+				// for neogeo, search bank one
+				if(	(Machine->gamedrv->clone_of == &driver_neogeo) &&
+					(info->targetType == kRegionType_CPU) &&
+					(info->targetIdx == 0) &&
+					(handler == MWA_BANK1))
+					return 1;
+			}
 
 #endif
 #endif
@@ -7546,15 +7947,15 @@ static UINT8 DefaultEnableRegion(SearchRegion * region, SearchInfo * info)
 
 			// for exterminator, search bank one
 			if(	((Machine->drv->cpu[1].cpu_type & ~CPU_FLAGS_MASK) == CPU_TMS34010) &&
-				(info->targetType = kRegionType_CPU) &&
+				(info->targetType == kRegionType_CPU) &&
 				(info->targetIdx == 1) &&
 				(handler == MWA_BANK1))
 				return 1;
 
 			// for smashtv, search bank two
 			if(	((Machine->drv->cpu[0].cpu_type & ~CPU_FLAGS_MASK) == CPU_TMS34010) &&
-				(info->targetType = kRegionType_CPU) &&
-				(info->targetIdx == 1) &&
+				(info->targetType == kRegionType_CPU) &&
+				(info->targetIdx == 0) &&
 				(handler == MWA_BANK2))
 				return 1;
 
@@ -7816,6 +8217,7 @@ static int ConvertOldCode(int code, int cpu, int * data, int * extendData)
 		kCustomField_DontApplyCPUField =	1 << 0,
 		kCustomField_SetBit =				1 << 1,
 		kCustomField_ClearBit =				1 << 2,
+		kCustomField_SubtractOne =			1 << 3,
 
 		kCustomField_BitMask =				kCustomField_SetBit |
 											kCustomField_ClearBit,
@@ -7858,16 +8260,28 @@ static int ConvertOldCode(int code, int cpu, int * data, int * extendData)
 		{	44,		0x000000A0,	kCustomField_ClearBit },
 		{	60,		0x00000103,	kCustomField_None },
 		{	61,		0x00000303,	kCustomField_None },
-		{	62,		0x00000703,	kCustomField_None },
+		{	62,		0x00000503,	kCustomField_SubtractOne },
 		{	63,		0x00000903,	kCustomField_None },
 		{	64,		0x00000B03,	kCustomField_None },
-		{	65,		0x00000F03,	kCustomField_None },
+		{	65,		0x00000D03,	kCustomField_SubtractOne },
 		{	70,		0x00000101,	kCustomField_None },
 		{	71,		0x00000301,	kCustomField_None },
-		{	72,		0x00000701,	kCustomField_None },
+		{	72,		0x00000501,	kCustomField_SubtractOne },
 		{	73,		0x00000901,	kCustomField_None },
 		{	74,		0x00000B01,	kCustomField_None },
-		{	75,		0x00000F01,	kCustomField_None },
+		{	75,		0x00000D01,	kCustomField_SubtractOne },
+		{	80,		0x00000102,	kCustomField_None },
+		{	81,		0x00000302,	kCustomField_None },
+		{	82,		0x00000502,	kCustomField_SubtractOne },
+		{	83,		0x00000902,	kCustomField_None },
+		{	84,		0x00000B02,	kCustomField_None },
+		{	85,		0x00000D02,	kCustomField_SubtractOne },
+		{	90,		0x00000100,	kCustomField_None },
+		{	91,		0x00000300,	kCustomField_None },
+		{	92,		0x00000500,	kCustomField_SubtractOne },
+		{	93,		0x00000900,	kCustomField_None },
+		{	94,		0x00000B00,	kCustomField_None },
+		{	95,		0x00000D00,	kCustomField_SubtractOne },
 		{	100,	0x20800000,	kCustomField_None },
 		{	101,	0x20800001,	kCustomField_None },
 		{	102,	0x20800000,	kCustomField_None },
@@ -7919,6 +8333,10 @@ static int ConvertOldCode(int code, int cpu, int * data, int * extendData)
 	{
 		newCode = (newCode & ~0x1F000000) | ((cpu << 24) & 0x1F000000);
 	}
+
+	// hack-ish, subtract one from data field for x5 user select
+	if(traverse->customField & kCustomField_SubtractOne)
+		(*data)--;	// yaay for C operator precedence
 
 	//	set up the extend data
 	if(traverse->customField & kCustomField_BitMask)
@@ -8433,13 +8851,17 @@ static void AddWatchFromResult(SearchInfo * search, SearchRegion * region, UINT3
 
 		info->address =			address;
 		info->cpu =				region->targetIdx;
-		info->displayType =		kWatchDisplayType_Hex;
-		info->elementBytes =	kWatchSizeConversionTable[search->bytes];
-		info->label[0] =		0;
-		info->labelType =		kWatchLabel_None;
-		info->linkedCheat =		NULL;
 		info->numElements =		1;
+		info->elementBytes =	kWatchSizeConversionTable[search->bytes];
+		info->labelType =		kWatchLabel_None;
+		info->displayType =		kWatchDisplayType_Hex;
 		info->skip =			0;
+		info->elementsPerLine =	0;
+		info->addValue =		0;
+
+		info->linkedCheat =		NULL;
+
+		info->label[0] =		0;
 	}
 }
 
@@ -9191,10 +9613,16 @@ static UINT32 ReadData(CheatAction * action)
 		{
 			UINT32	address;
 			INT32	offset = action->extendData;
+			UINT8	cpu = (parameter >> 2) & 0x7;
+			UINT8	addressBytes = (parameter & 0x3) + 1;
+			CPUInfo	* info = GetCPUInfo(cpu);
 
-			address = DoCPURead(parameter, action->address, (parameter & 0x3) + 1, CPUNeedsSwap(parameter) ^ swapBytes) + offset;
+			address = DoCPURead(cpu, action->address, addressBytes, CPUNeedsSwap(parameter) ^ swapBytes);
+			if(info)
+				address >>= info->addressShift;
+			address += offset;
 
-			return DoCPURead(parameter, address, bytes, CPUNeedsSwap(parameter) ^ swapBytes);
+			return DoCPURead(cpu, address, bytes, CPUNeedsSwap(parameter) ^ swapBytes);
 		}
 		break;
 
@@ -9282,8 +9710,12 @@ static void WriteData(CheatAction * action, UINT32 data)
 			INT32	offset = action->extendData;
 			UINT8	cpu = (parameter >> 2) & 0x7;
 			UINT8	addressBytes = (parameter & 0x3) + 1;
+			CPUInfo	* info = GetCPUInfo(cpu);
 
-			address = DoCPURead(cpu, action->address, addressBytes, CPUNeedsSwap(cpu) ^ swapBytes) + offset;
+			address = DoCPURead(cpu, action->address, addressBytes, CPUNeedsSwap(cpu) ^ swapBytes);
+			if(info)
+				address >>= info->addressShift;
+			address += offset;
 
 			DoCPUWrite(data, cpu, address, bytes, CPUNeedsSwap(cpu) ^ swapBytes);
 		}
@@ -9352,16 +9784,31 @@ static void AddActionWatch(CheatAction * action, CheatEntry * entry)
 
 		if(EXTRACT_FIELD(action->type, Type) == kType_Watch)
 		{
+			UINT32	typeParameter = EXTRACT_FIELD(action->type, TypeParameter);
+
 			info->numElements = (action->data & 0xFF) + 1;
 
 			info->skip = (action->data >> 8) & 0xFF;
 			info->elementsPerLine = (action->data >> 16) & 0xFF;
+			info->addValue = (action->data >> 24) & 0xFF;
+			if(info->addValue & 0x80)
+				info->addValue |= ~0xFF;
 
 			if(action->extendData != 0xFFFFFFFF)
 			{
 				info->x += (action->extendData >> 16) & 0xFFFF;
 				info->y += (action->extendData >>  0) & 0xFFFF;
 			}
+
+			if(	(typeParameter & 0x04) &&
+				(entry->comment) &&
+				(strlen(entry->comment) < 256))
+			{
+				info->labelType = kWatchLabel_String;
+				strcpy(info->label, entry->comment);
+			}
+
+			info->displayType = typeParameter & 0x03;
 		}
 	}
 }
@@ -9475,7 +9922,7 @@ static void DoCheatOperation(CheatAction * action)
 
 		case kOperation_AddSubtract:
 		{
-			UINT32	temp;
+			INT32	temp, bound;
 
 			if(action->flags & kActionFlag_IgnoreMask)
 				return;
@@ -9487,14 +9934,18 @@ static void DoCheatOperation(CheatAction * action)
 			{
 				// subtract
 
-				if(temp > action->extendData + action->data)
+				bound = action->extendData + action->data;
+
+				if(temp > bound)
 					temp -= action->data;
 			}
 			else
 			{
 				// add
 
-				if(temp < action->extendData - action->data)
+				bound = action->extendData - action->data;
+
+				if(temp < bound)
 					temp += action->data;
 			}
 
@@ -9672,6 +10123,47 @@ static void DoCheatEntry(CheatEntry * entry)
 	// special handling for select cheats
 	if(entry->flags & kCheatFlag_Select)
 	{
+		if(entry->flags & kCheatFlag_HasActivationKey)
+		{
+			if(code_pressed(entry->activationKey))
+			{
+				if(!(entry->flags & kCheatFlag_ActivationKeyPressed))
+				{
+					entry->selection++;
+
+					if(entry->flags & kCheatFlag_OneShot)
+					{
+						if(entry->selection >= entry->actionListLength)
+						{
+							entry->selection = 1;
+
+							if(entry->selection >= entry->actionListLength)
+								entry->selection = 0;
+						}
+					}
+					else
+					{
+						if(entry->selection >= entry->actionListLength)
+						{
+							entry->selection = 0;
+
+							DeactivateCheat(entry);
+						}
+						else
+						{
+							ActivateCheat(entry);
+						}
+					}
+
+					entry->flags |= kCheatFlag_ActivationKeyPressed;
+				}
+			}
+			else
+			{
+				entry->flags &= ~kCheatFlag_ActivationKeyPressed;
+			}
+		}
+
 		// if a subcheat is selected and it's a legal index, handle it
 		if(entry->selection && (entry->selection < entry->actionListLength))
 		{
@@ -9754,7 +10246,7 @@ static void UpdateCheatInfo(CheatEntry * entry, UINT8 isLoadTime)
 	int		flags =		0;
 	int		i;
 
-	flags |= entry->flags & kCheatFlag_PersistantMask;
+	flags = entry->flags & kCheatFlag_PersistantMask;
 
 	if(	(EXTRACT_FIELD(entry->actionList[0].type, LocationType) == kLocation_Custom) &&
 		(EXTRACT_FIELD(entry->actionList[0].type, LocationParameter) == kCustomLocation_Select))
@@ -9766,6 +10258,7 @@ static void UpdateCheatInfo(CheatEntry * entry, UINT8 isLoadTime)
 		int			isActionNull =	0;
 		UINT32		size;
 		UINT32		operation;
+		UINT32		actionFlags = action->flags & kActionFlag_PersistantMask;
 
 		size = EXTRACT_FIELD(action->type, BytesUsed);
 		operation = EXTRACT_FIELD(action->type, Operation) | EXTRACT_FIELD(action->type, OperationExtend) << 2;
@@ -9804,6 +10297,8 @@ static void UpdateCheatInfo(CheatEntry * entry, UINT8 isLoadTime)
 		}
 
 		action->flags &= kActionFlag_InfoMask;
+		action->flags &= kActionFlag_PersistantMask;
+		action->flags |= actionFlags;
 	}
 
 	if(isOneShot)
@@ -9906,6 +10401,23 @@ static void BuildCPUInfoList(void)
 				info->addressCharsNeeded++;
 
 			info->endianness = (cputype_endianess(type) == CPU_IS_BE);
+
+			switch(type)
+			{
+#if HAS_TMS34010
+				case CPU_TMS34010:
+					info->addressShift = 3;
+					break;
+#endif
+#if HAS_TMS34020
+				case HAS_TMS34020:
+					info->addressShift = 3;
+					break;
+#endif
+				default:
+					info->addressShift = 0;
+					break;
+			}
 
 			// copy to region list
 			memcpy(regionInfo, info, sizeof(CPUInfo));

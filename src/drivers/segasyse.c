@@ -118,8 +118,7 @@
    docs..
  - hook up dsw's in riddle, stephh kindly worked them out (see notes below,
    they just need adding to the input ports
- - Decrypt Astro Flash (its the japanese version of transformer so we have a
-   decrypted version as reference, similar encryption to system 1 games
+ - Fix Astro Flash service mode (it works in Transformer)
  - Decrypt the other games (Fantasy Zone 2 & Opa Opa) looks tricky..
 
 ********************************************************************************
@@ -884,7 +883,7 @@ ROM_END
 
 GAME( 1985, hangonjr, 0,        segae, hangonjr, hangonjr, ROT0,  "Sega", "Hang-On Jr." )
 GAME( 1986, transfrm, 0,        segae, transfrm, segasyse, ROT0,  "Sega", "Transformer" )
-GAME( 1986, astrofl,  transfrm, segae, transfrm, astrofl,  ROT0,  "Sega", "Astro Flash (Japan)" )
+GAMEX(1986, astrofl,  transfrm, segae, transfrm, astrofl,  ROT0,  "Sega", "Astro Flash (Japan)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1986, ridleofp, 0,        segae, ridleofp, ridleofp, ROT90, "Sega / Nasco", "Riddle of Pythagoras (Japan)" )
 GAMEX(198?, fantzn2,  0,        segae, dummy,    segasyse, ROT0,  "????", "Fantasy Zone 2", GAME_NOT_WORKING )	/* encrypted */
 GAMEX(198?, opaopa,   0,        segae, dummy,    segasyse, ROT0,  "????", "Opa Opa", GAME_NOT_WORKING )	/* either encrypted or bad */

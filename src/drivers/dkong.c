@@ -339,16 +339,16 @@ static MEMORY_READ_START( hunchbkd_readmem )
 	{ 0x1400, 0x1400, input_port_0_r },		/* IN0 */
 	{ 0x1480, 0x1480, input_port_1_r },		/* IN1 */
 	{ 0x1500, 0x1500, input_port_2_r },		/* IN2/DSW2 */
-//  { 0x1507, 0x1507, herbiedk_iack_r },  	/* Clear Int */
+//	{ 0x1507, 0x1507, herbiedk_iack_r },  	/* Clear Int */
 	{ 0x1580, 0x1580, input_port_3_r },		/* DSW1 */
 	{ 0x1600, 0x1bff, MRA_RAM },			/* video RAM */
 	{ 0x1c00, 0x1fff, MRA_RAM },
 	{ 0x2000, 0x2fff, MRA_ROM },
-    { 0x3000, 0x3fff, hunchbks_mirror_r },
+	{ 0x3000, 0x3fff, hunchbks_mirror_r },
 	{ 0x4000, 0x4fff, MRA_ROM },
-    { 0x5000, 0x5fff, hunchbks_mirror_r },
+	{ 0x5000, 0x5fff, hunchbks_mirror_r },
 	{ 0x6000, 0x6fff, MRA_ROM },
-    { 0x7000, 0x7fff, hunchbks_mirror_r },
+	{ 0x7000, 0x7fff, hunchbks_mirror_r },
 MEMORY_END
 
 static MEMORY_WRITE_START( hunchbkd_writemem )
@@ -364,11 +364,11 @@ static MEMORY_WRITE_START( hunchbkd_writemem )
 	{ 0x1800, 0x1bff, videoram_w, &videoram, &videoram_size },
 	{ 0x1C00, 0x1fff, MWA_RAM },
 	{ 0x2000, 0x2fff, MWA_ROM },
-    { 0x3000, 0x3fff, hunchbks_mirror_w },
+	{ 0x3000, 0x3fff, hunchbks_mirror_w },
 	{ 0x4000, 0x4fff, MWA_ROM },
-    { 0x5000, 0x5fff, hunchbks_mirror_w },
+	{ 0x5000, 0x5fff, hunchbks_mirror_w },
 	{ 0x6000, 0x6fff, MWA_ROM },
-    { 0x7000, 0x7fff, hunchbks_mirror_w },
+	{ 0x7000, 0x7fff, hunchbks_mirror_w },
 MEMORY_END
 
 int hunchloopback;
@@ -1263,6 +1263,42 @@ I use more appropreate filenames for color PROMs.
 *********************************************************/
 ROM_END
 
+ROM_START( dkongo )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "c_5f_b.bin",   0x0000, 0x1000, 0x424f2b11 )	// tkg3c.5f
+	ROM_LOAD( "c_5ct_g.bin",  0x1000, 0x1000, 0x5ec461ec )	// tkg3c.5g
+	ROM_LOAD( "c_5h_b.bin",   0x2000, 0x1000, 0x1d28895d )	// tkg3c.5h
+	ROM_LOAD( "tkg3c.5k",     0x3000, 0x1000, 0x553b89bb )
+	/* space for diagnostic ROM */
+
+	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound */
+	ROM_LOAD( "s_3i_b.bin",   0x0000, 0x0800, 0x45a4ed06 )
+	ROM_LOAD( "s_3j_b.bin",   0x0800, 0x0800, 0x4743fe92 )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "v_5h_b.bin",   0x0000, 0x0800, 0x12c8c95d )
+	ROM_LOAD( "v_3pt.bin",    0x0800, 0x0800, 0x15e9c5e9 )
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "l_4m_b.bin",   0x0000, 0x0800, 0x59f8054d )
+	ROM_LOAD( "l_4n_b.bin",   0x0800, 0x0800, 0x672e4714 )
+	ROM_LOAD( "l_4r_b.bin",   0x1000, 0x0800, 0xfeaa59ee )
+	ROM_LOAD( "l_4s_b.bin",   0x1800, 0x0800, 0x20f2ef7e )
+
+	ROM_REGION( 0x0300, REGION_PROMS, 0 )
+	ROM_LOAD( "c-2k.bpr",     0x0000, 0x0100, 0xe273ede5 ) /* palette low 4 bits (inverted) */
+	ROM_LOAD( "c-2j.bpr",     0x0100, 0x0100, 0xd6412358 ) /* palette high 4 bits (inverted) */
+	ROM_LOAD( "v-5e.bpr",     0x0200, 0x0100, 0xb869b8f5 ) /* character color codes on a per-column basis */
+
+/*********************************************************
+I use more appropreate filenames for color PROMs.
+	ROM_REGION( 0x0300, REGION_PROMS, 0 )
+	ROM_LOAD( "dkong.2k",     0x0000, 0x0100, 0x1e82d375 )
+	ROM_LOAD( "dkong.2j",     0x0100, 0x0100, 0x2ab01dc8 )
+	ROM_LOAD( "dkong.5f",     0x0200, 0x0100, 0x44988665 )
+*********************************************************/
+ROM_END
+
 ROM_START( dkongjp )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "c_5f_b.bin",   0x0000, 0x1000, 0x424f2b11 )
@@ -1653,8 +1689,6 @@ ROM_START( herodk )
 	ROM_CONTINUE(             0x6000, 0x0e00 )
 	ROM_CONTINUE(             0x2e00, 0x0200 )
 
-//	ROM_LOAD( "2532.3f",      0x4000, 0x1000, 0x553b89bb )	/* ??? contains Z80 code mapped at 3000 */
-
 	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound */
 	ROM_LOAD( "silver.3h",    0x0000, 0x0800, 0x67863ce9 )
 
@@ -1740,7 +1774,8 @@ static DRIVER_INIT( radarscp )
 
 GAMEX(1980, radarscp, 0,        radarscp, dkong,    radarscp, ROT90, "Nintendo", "Radar Scope", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 
-GAME( 1981, dkong,    0,        dkong,    dkong,    0,        ROT90, "Nintendo of America", "Donkey Kong (US)" )
+GAME( 1981, dkong,    0,        dkong,    dkong,    0,        ROT90, "Nintendo of America", "Donkey Kong (US set 1)" )
+GAME( 1981, dkongo,   dkong,    dkong,    dkong,    0,        ROT90, "Nintendo", "Donkey Kong (US set 2)" )
 GAME( 1981, dkongjp,  dkong,    dkong,    dkong,    0,        ROT90, "Nintendo", "Donkey Kong (Japan set 1)" )
 GAME( 1981, dkongjo,  dkong,    dkong,    dkong,    0,        ROT90, "Nintendo", "Donkey Kong (Japan set 2)" )
 GAME( 1981, dkongjo1, dkong,    dkong,    dkong,    0,        ROT90, "Nintendo", "Donkey Kong (Japan set 3) (bad dump?)" )

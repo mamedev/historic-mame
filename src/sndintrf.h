@@ -143,6 +143,9 @@ struct MachineSound
 #if (HAS_BSMT2000)
 #include "sound/bsmt2000.h"
 #endif
+#if (HAS_YMF278B)
+#include "sound/ymf278b.h"
+#endif
 
 #ifdef MESS
 #if (HAS_BEEP)
@@ -313,6 +316,9 @@ enum
 #if (HAS_BSMT2000)
 	SOUND_BSMT2000,
 #endif
+#if (HAS_YMF278B)
+	SOUND_YMF278B,
+#endif
 
 #ifdef MESS
 #if (HAS_BEEP)
@@ -347,6 +353,7 @@ void sound_update(void);
 void sound_reset(void);
 
 /* returns name of the sound system */
+const char *soundtype_name(int soundtype);
 const char *sound_name(const struct MachineSound *msound);
 /* returns number of chips, or 0 if the sound type doesn't support multiple instances */
 int sound_num(const struct MachineSound *msound);

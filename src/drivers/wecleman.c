@@ -881,8 +881,7 @@ WRITE_HANDLER( multiply_w )
 
 WRITE_HANDLER( wecleman_K00723216_bank_w )
 {
-	K007232_bankswitch      (0, memory_region(REGION_SOUND1),
-							memory_region((data & 1) ? REGION_SOUND1 : REGION_SOUND2) );
+		K007232_set_bank( 0, 0, data&1 );
 }
 
 static MEMORY_READ_START( wecleman_sound_readmem )
@@ -924,6 +923,7 @@ WRITE16_HANDLER( hotchase_soundlatch_w )
 static struct K007232_interface hotchase_k007232_interface =
 {
 	3,
+	3579545,	/* clock */
 	{ REGION_SOUND1, REGION_SOUND2, REGION_SOUND3 },
 	{ K007232_VOL( 33,MIXER_PAN_CENTER, 33,MIXER_PAN_CENTER ),
 	  K007232_VOL( 33,MIXER_PAN_LEFT,   33,MIXER_PAN_RIGHT  ),
@@ -974,9 +974,6 @@ WRITE_HANDLER( hotchase_sound_control_w )
 //Shica
 		case 0x06:      /* Bankswitch for chips 0 & 1 */
 		{
-			unsigned char *RAM0 = memory_region(hotchase_k007232_interface.bank[0]);
-			unsigned char *RAM1 = memory_region(hotchase_k007232_interface.bank[1]);
-
 			int bank0_a = (data >> 1) & 1;
 			int bank1_a = (data >> 2) & 1;
 			int bank0_b = (data >> 3) & 1;
@@ -984,19 +981,17 @@ WRITE_HANDLER( hotchase_sound_control_w )
 			// bit 6: chip 2 - ch0 ?
 			// bit 7: chip 2 - ch1 ?
 
-			K007232_bankswitch(0, &RAM0[bank0_a*0x20000], &RAM0[bank0_b*0x20000]);
-			K007232_bankswitch(1, &RAM1[bank1_a*0x20000], &RAM1[bank1_b*0x20000]);
+			K007232_set_bank( 0, bank0_a, bank0_b );
+			K007232_set_bank( 1, bank1_a, bank1_b );
 		}
 		break;
 
 		case 0x07:      /* Bankswitch for chip 2 */
 		{
-			unsigned char *RAM2 = memory_region(hotchase_k007232_interface.bank[2]);
-
 			int bank2_a = (data >> 0) & 7;
 			int bank2_b = (data >> 3) & 7;
 
-			K007232_bankswitch(2, &RAM2[bank2_a*0x20000], &RAM2[bank2_b*0x20000]);
+			K007232_set_bank( 2, bank2_a, bank2_b );
 		}
 		break;
 	}
@@ -1391,6 +1386,7 @@ static struct YM2151interface ym2151_interface =
 static struct K007232_interface wecleman_k007232_interface =
 {
 	1,
+	3579545,	/* clock */
 	{ REGION_SOUND1 },      /* but the 2 channels use different ROMs !*/
 	{ K007232_VOL( 20,MIXER_PAN_LEFT, 20,MIXER_PAN_RIGHT ) },
 	{0}
@@ -1400,8 +1396,7 @@ static struct K007232_interface wecleman_k007232_interface =
 
 MACHINE_INIT( wecleman )
 {
-	K007232_bankswitch      (0, memory_region(REGION_SOUND1), /* the 2 channels use different ROMs */
-							memory_region(REGION_SOUND2) );
+  K007232_set_bank( 0, 0, 1 );
 }
 
 
@@ -1563,11 +1558,9 @@ ROM_START( wecleman )
 	ROM_LOAD( "602a04.11e", 0x000000, 0x08000, 0xade9f359 ) // road
 	ROM_LOAD( "602a05.13e", 0x008000, 0x04000, 0xf22b7f2b )
 
-	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* Samples (Channel A) */
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 ) /* Samples (Channel A 0x20000=Channel B) */
 	ROM_LOAD( "602a03.10a", 0x00000, 0x20000, 0x31392b01 )
-
-	ROM_REGION( 0x20000, REGION_SOUND2, 0 ) /* Samples (Channel B) */
-	ROM_LOAD( "602a02.8a",  0x00000, 0x20000, 0xe2be10ae )
+	ROM_LOAD( "602a02.8a",  0x20000, 0x20000, 0xe2be10ae )
 
 	ROM_REGION( 0x04000, REGION_USER1, 0 )
 	ROM_LOAD( "602a12.1a",  0x000000, 0x04000, 0x77b9383d ) // ??

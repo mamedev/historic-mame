@@ -220,7 +220,6 @@ INLINE void cmpu_di( void );
 INLINE void anda_di( void );
 INLINE void bita_di( void );
 INLINE void lda_di( void );
-INLINE void ldmd_di( void );
 INLINE void sta_di( void );
 INLINE void eora_di( void );
 INLINE void adca_di( void );
@@ -500,25 +499,26 @@ static UINT8 index_cycle_em[256] = {        /* Index Loopup cycle counts, emulat
 /* 0xFX */      4,    6,    5,    6,    3,    4,    4,    4,    4,    7,    4,    7,    4,    8,    7,    8
 };
 
-static UINT8 index_cycle_na[256] = {         /* Index Loopup cycle counts, native 6309 */
-/*	         0xX0, 0xX1, 0xX2, 0xX3, 0xX4, 0xX5, 0xX6, 0xX7, 0xX8, 0xX9, 0xXA, 0xXB, 0xXC, 0xXD, 0xXE, 0xXF */
+static UINT8 index_cycle_na[256] = {         /* Index Loopup cycle counts,
+native 6309 */
+/*	     X0, X1, X2, X3, X4, X5, X6, X7, X8, X9, XA, XB, XC, XD, XE, XF */
 
-/* 0x0X */      1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-/* 0x1X */      1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-/* 0x2X */      1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-/* 0x3X */      1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-/* 0x4X */      1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-/* 0x5X */      1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-/* 0x6X */      1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-/* 0x7X */      1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-/* 0x8X */      1,    2,    1,    3,    0,    1,    1,    1,    1,    3,    1,    2,    1,    3,    1,    0,
-/* 0x9X */      3,    5,    4,    5,    3,    4,    4,    4,    4,    5,    4,    7,    4,    6,    5,    5,
-/* 0xAX */      1,    2,    1,    2,    0,    1,    1,    1,    1,    3,    1,    2,    1,    3,    1,    2,
-/* 0xBX */      5,    5,    4,    5,    3,    4,    4,    4,    4,    7,    4,    5,    4,    6,    4,    7,
-/* 0xCX */      1,    2,    1,    2,    0,    1,    1,    1,    1,    3,    1,    2,    1,    3,    1,    1,
-/* 0xDX */      4,    5,    4,    5,    3,    4,    4,    4,    4,    7,    4,    5,    4,    6,    4,    7,
-/* 0xEX */      1,    2,    1,    2,    0,    1,    1,    1,    1,    3,    1,    2,    1,    3,    1,    1,
-/* 0xFX */      4,    5,    4,    5,    3,    4,    4,    4,    4,    7,    4,    5,    4,    6,    4,    7
+/* 0x0X */   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+/* 0x1X */   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+/* 0x2X */   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+/* 0x3X */   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+/* 0x4X */   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+/* 0x5X */   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+/* 0x6X */   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+/* 0x7X */   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+/* 0x8X */   1,  2,  1,  2,  0,  1,  1,  1,  1,  3,  1,  2,  1,  3,  1,  0,
+/* 0x9X */   3,  5,  4,  5,  3,  4,  4,  4,  4,  7,  4,  5,  4,  6,  4,  5,
+/* 0xAX */   1,  2,  1,  2,  0,  1,  1,  1,  1,  3,  1,  2,  1,  3,  1,  2,
+/* 0xBX */   5,  5,  4,  5,  3,  4,  4,  4,  4,  7,  4,  5,  4,  6,  4,  5,
+/* 0xCX */   1,  2,  1,  2,  0,  1,  1,  1,  1,  3,  1,  2,  1,  3,  1,  1,
+/* 0xDX */   4,  5,  4,  5,  3,  4,  4,  4,  4,  7,  4,  5,  4,  6,  4,  5,
+/* 0xEX */   1,  2,  1,  2,  0,  1,  1,  1,  1,  3,  1,  2,  1,  3,  1,  1,
+/* 0xFX */   4,  5,  4,  5,  3,  4,  4,  4,  4,  7,  4,  5,  4,  6,  4,  5
 };
 
 #define IIP0	19			/* Illegal instruction cycle count page 0 */
@@ -528,13 +528,13 @@ static UINT8 ccounts_page0_em[256] =    /* Cycle Counts Page zero, Emulated 6809
 {
 /*	         0xX0, 0xX1, 0xX2, 0xX3, 0xX4, 0xX5, 0xX6, 0xX7, 0xX8, 0xX9, 0xXA, 0xXB, 0xXC, 0xXD, 0xXE, 0xXF */
 /* 0x0X */     6,    6,    6,    6,    6,    6,    6,    6,    6,    6,    6,    6,    6,    6,    3,    6,
-/* 0x1X */     0,    0,    2,    2,    4, IIP0,    5,    9, IIP0,    2,    3, IIP0,    3,    2,    8,    6,
+/* 0x1X */     0,    0,    2,    4,    2, IIP0,    5,    9, IIP0,    2,    3, IIP0,    3,    2,    8,    6,
 /* 0x2X */     3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,
-/* 0x3X */     4,    4,    4,    4,    5,    5,    6,    5, IIP0,    5,    3,    6,   22,   11, IIP0,   19,
+/* 0x3X */     4,    4,    4,    4,    5,    5,    5,    5, IIP0,    5,    3,    6,   20,   11, IIP0,   19,
 /* 0x4X */     2, IIP0, IIP0,    2,    2, IIP0,    2,    2,    2,    2,    2, IIP0,    2,    2, IIP0,    2,
 /* 0x5X */     2, IIP0, IIP0,    2,    2, IIP0,    2,    2,    2,    2,    2, IIP0,    2,    2, IIP0,    2,
-/* 0x6X */     6,    7,    7,    6,    6,    7,    6,    6,    6,    6,    6,    7,    6,    6,    3,    6,
-/* 0x7X */     7,    7,    7,    7,    7,    7,    7,    7,    7,    7,    7,    7,    7,    7,    4,    7,
+/* 0x6X */     6,    7,    7,    6,    6,    6,    6,    6,    6,    6,    6,    7,    6,    6,    3,    6,
+/* 0x7X */     7,    7,    7,    7,    7,    7,    7,    7,    7,    7,    7,    5,    7,    7,    4,    7,
 /* 0x8X */     2,    2,    2,    4,    2,    2,    2, IIP0,    2,    2,    2,    2,    4,    7,    3, IIP0,
 /* 0x9X */     4,    4,    4,    6,    4,    4,    4,    4,    4,    4,    4,    4,    6,    7,    5,    5,
 /* 0xAX */     4,    4,    4,    6,    4,    4,    4,    4,    4,    4,    4,    4,    6,    7,    5,    5,
@@ -549,13 +549,13 @@ static UINT8 ccounts_page0_na[256] =   /* Cycle Counts Page zero, Native 6309 */
 {
 /*	         0xX0, 0xX1, 0xX2, 0xX3, 0xX4, 0xX5, 0xX6, 0xX7, 0xX8, 0xX9, 0xXA, 0xXB, 0xXC, 0xXD, 0xXE, 0xXF */
 /* 0x0X */     5,    6,    6,    5,    5,    6,    5,    5,    5,    5,    5,    6,    5,    4,    2,    5,
-/* 0x1X */     0,    0,    1,    1,    4, IIP0,    4,    7, IIP0,    1,    2, IIP0,    3,    1,    5,    4,
+/* 0x1X */     0,    0,    1,    4,    1, IIP0,    4,    7, IIP0,    1,    2, IIP0,    3,    1,    5,    4,
 /* 0x2X */     3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,    3,
-/* 0x3X */     4,    4,    4,    4,    4,    4,    4,    4, IIP0,    4,    1,    6,   20,   10, IIP0,   21,
+/* 0x3X */     4,    4,    4,    4,    4,    4,    4,    4, IIP0,    4,    1,    6,   22,   10, IIP0,   21,
 /* 0x4X */     1, IIP0, IIP0,    1,    1, IIP0,    1,    1,    1,    1,    1, IIP0,    1,    1, IIP0,    1,
 /* 0x5X */     1, IIP0, IIP0,    1,    1, IIP0,    1,    1,    1,    1,    1, IIP0,    1,    1, IIP0,    1,
-/* 0x6X */     6,    7,    7,    6,    6,    7,    6,    6,    6,    6,    6,    7,    6,    5,    3,    6,
-/* 0x7X */     6,    7,    7,    6,    6,    7,    6,    6,    6,    6,    6,    7,    6,    5,    3,    6,
+/* 0x6X */     6,    7,    7,    6,    6,    6,    6,    6,    6,    6,    6,    7,    6,    5,    3,    6,
+/* 0x7X */     6,    7,    7,    6,    6,    7,    6,    6,    6,    6,    6,    5,    6,    5,    3,    6,
 /* 0x8X */     2,    2,    2,    3,    2,    2,    2, IIP0,    2,    2,    2,    2,    3,    6,    3, IIP0,
 /* 0x9X */     3,    3,    3,    4,    3,    3,    3,    3,    3,    3,    3,    3,    4,    6,    4,    4,
 /* 0xAX */     4,    4,    4,    5,    4,    4,    4,    4,    4,    4,    4,    4,    5,    6,    5,    5,
@@ -573,11 +573,11 @@ static UINT8 ccounts_page01_em[256] =    /* Cycle Counts Page 01, Emulated 6809 
 /* 0x1X */   IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1,
 /* 0x2X */   IIP1,    5,    5,    5,    5,    5,    5,    5,    5,    5,    5,    5,    5,    5,    5,    5,
 /* 0x3X */      4,    4,    4,    4,    4,    4,    4,    4,    6,    6,    6,    6, IIP1, IIP1, IIP1,   20,
-/* 0x4X */      3,  IIP1,IIP1,    3,    3, IIP1,    3,    3,    3,    3,    3, IIP1,    3,    3, IIP1,    3,
+/* 0x4X */      2,  IIP1,IIP1,    2,    2, IIP1,    2,    2,    2,    2,    2, IIP1,    2,    2, IIP1,    2,
 /* 0x5X */   IIP1, IIP1, IIP1,    3,    3, IIP1,    3, IIP1, IIP1,    3,    3, IIP1,    3,    3, IIP1,    3,
 /* 0x6X */   IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1,
 /* 0x7X */   IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1,
-/* 0x8X */      5,    5,    5,    5,    5,    5,    4, IIP1,    5,    5,    5,    5,    5, IIP1,    5, IIP1,
+/* 0x8X */      5,    5,    5,    5,    5,    5,    4, IIP1,    5,    5,    5,    5,    5, IIP1,    4, IIP1,
 /* 0x9X */      7,    7,    7,    7,    7,    7,    6,    6,    7,    7,    7,    7,    7, IIP1,    6,    6,
 /* 0xAX */      7,    7,    7,    7,    7,    7,    6,    6,    7,    7,    7,    7,    7, IIP1,    6,    6,
 /* 0xBX */      8,    8,    8,    8,    8,    8,    7,    7,    8,    8,    8,    8,    8, IIP1,    7,    7,
@@ -593,9 +593,9 @@ static UINT8 ccounts_page01_na[256] =   /* Cycle Counts Page 01, Native 6309 */
 /* 0x0X */   IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1,
 /* 0x1X */   IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1,
 /* 0x2X */   IIP1,    5,    5,    5,    5,    5,    5,    5,    5,    5,    5,    5,    5,    5,    5,    5,
-/* 0x3X */      4,    4,    4,    4,    4,    4,    4,    4,    6,    6,    6,    6, IIP1, IIP1, IIP1,   20,
-/* 0x4X */      2, IIP1, IIP1,    2,    2, IIP1,    2,    2,    2,    2,    2, IIP1,    2,    2, IIP1,    2,
-/* 0x5X */   IIP1, IIP1, IIP1,    2,    2, IIP1,    2, IIP1, IIP1,    2,    2, IIP1,    2,    2, IIP1,    2,
+/* 0x3X */      4,    4,    4,    4,    4,    4,    4,    4,    6,    6,    6,    6, IIP1, IIP1, IIP1,   22,
+/* 0x4X */      1, IIP1, IIP1,    1,    1, IIP1,    1,    1,    1,    1,    1, IIP1,    1,    1, IIP1,    1,
+/* 0x5X */   IIP1, IIP1, IIP1,    2,    2, IIP1,    2, IIP1, IIP1,    2,    2, IIP1,    2,    2, IIP1,    1,
 /* 0x6X */   IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1,
 /* 0x7X */   IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1,
 /* 0x8X */      4,    4,    4,    4,    4,    4,    4, IIP1,    4,    4,    4,    4,    4, IIP1,    4, IIP1,
@@ -615,8 +615,8 @@ static UINT8 ccounts_page11_em[256] =    /* Cycle Counts Page 11, Emulated 6809 
 /* 0x1X */   IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1,
 /* 0x2X */   IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1,
 /* 0x3X */      7,    7,    7,    7,    7,    7,    7,    8,    3,    3,    3,    3,    4,    5, IIP1,   20,
-/* 0x4X */   IIP1, IIP1, IIP1,    3, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1,    3, IIP1,    3,    3, IIP1,    3,
-/* 0x5X */   IIP1, IIP1, IIP1,    3, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1,    3, IIP1,    3,    3, IIP1,    3,
+/* 0x4X */   IIP1, IIP1, IIP1,    2, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1,    2, IIP1,    2,    2, IIP1,    2,
+/* 0x5X */   IIP1, IIP1, IIP1,    2, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1,    2, IIP1,    2,    2, IIP1,    2,
 /* 0x6X */   IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1,
 /* 0x7X */   IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1,
 /* 0x8X */      3,    3, IIP1,    5, IIP1, IIP1,    3, IIP1, IIP1, IIP1, IIP1,    3,    5,   25,   34,   28,
@@ -635,7 +635,7 @@ static UINT8 ccounts_page11_na[256] =    /* Cycle Counts Page 11, Native 6309 */
 /* 0x0X */   IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1,
 /* 0x1X */   IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1,
 /* 0x2X */   IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1,
-/* 0x3X */      6,    6,    6,    6,    6,    6,    6,    7,    3,    3,    3,    3,    4,    5, IIP1,   20,
+/* 0x3X */      6,    6,    6,    6,    6,    6,    6,    7,    3,    3,    3,    3,    4,    5, IIP1,   22,
 /* 0x4X */   IIP1, IIP1, IIP1,    2, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1,    2, IIP1,    2,    2, IIP1,    2,
 /* 0x5X */   IIP1, IIP1, IIP1,    2, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1,    2, IIP1,    2,    2, IIP1,    2,
 /* 0x6X */   IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1, IIP1,

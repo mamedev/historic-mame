@@ -63,6 +63,11 @@ WRITE_HANDLER( mnchmobl_soundlatch_w )
 	cpu_set_irq_line( 1, 0, HOLD_LINE );
 }
 
+WRITE_HANDLER( sound_nmi_ack_w )
+{
+	cpu_set_nmi_line(1, CLEAR_LINE);
+}
+
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0x83ff, MRA_RAM }, /* working RAM */
@@ -108,6 +113,7 @@ static MEMORY_READ_START( readmem_sound )
 	{ 0x2000, 0x2000, soundlatch_r },
 	{ 0xe000, 0xe7ff, MRA_RAM },
 MEMORY_END
+
 static MEMORY_WRITE_START( writemem_sound )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x4000, 0x4000, AY8910_write_port_0_w },
@@ -116,7 +122,7 @@ static MEMORY_WRITE_START( writemem_sound )
 	{ 0x7000, 0x7000, AY8910_control_port_1_w },
 	{ 0x8000, 0x8000, MWA_NOP }, /* ? */
 	{ 0xa000, 0xa000, MWA_NOP }, /* ? */
-	{ 0xc000, 0xc000, MWA_NOP }, /* ? */
+	{ 0xc000, 0xc000, sound_nmi_ack_w },
 	{ 0xe000, 0xe7ff, MWA_RAM },
 MEMORY_END
 
@@ -294,10 +300,10 @@ static MACHINE_DRIVER_START( munchmo )
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(mnchmobl_interrupt,2)
 
-	MDRV_CPU_ADD(Z80, 3750000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* ? */
+	MDRV_CPU_ADD(Z80, 3750000) /* ? */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+	MDRV_CPU_VBLANK_INT(nmi_line_assert,1)
 
 	MDRV_FRAMES_PER_SECOND(57)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -375,5 +381,5 @@ ROM_START( mnchmobl )
 ROM_END
 
 
-GAME( 1983, joyfulr,  0,       munchmo, mnchmobl, 0, ROT270, "SNK", "Joyful Road (US)" )
-GAME( 1983, mnchmobl, joyfulr, munchmo, mnchmobl, 0, ROT270, "SNK (Centuri license)", "Munch Mobile (Japan)" )
+GAMEX( 1983, joyfulr,  0,       munchmo, mnchmobl, 0, ROT270, "SNK", "Joyful Road (US)", GAME_IMPERFECT_SOUND )
+GAMEX( 1983, mnchmobl, joyfulr, munchmo, mnchmobl, 0, ROT270, "SNK (Centuri license)", "Munch Mobile (Japan)", GAME_IMPERFECT_SOUND )

@@ -10,6 +10,12 @@
 
 extern UINT8 *wms_wolfu_decode_memory;
 
+void wms_serial_generate(int upper);
+void wms_serial_reset(void);
+UINT8 wms_serial_status(void);
+UINT8 wms_serial_data_r(void);
+void wms_serial_data_w(UINT8 data);
+
 WRITE16_HANDLER( wms_wolfu_cmos_enable_w );
 WRITE16_HANDLER( wms_wolfu_cmos_w );
 WRITE16_HANDLER( revx_cmos_w );

@@ -5,9 +5,9 @@
 **************************************************************************
 
 	Atari Slapstic FAQ
-	Version 1.11
+	Version 1.12
 	by Aaron Giles and Frank Palazzolo
-	11/15/2001
+	9/12/2002
 
 
 	What is a slapstic?
@@ -134,9 +134,10 @@
 		137412-110	Road Blasters
 		137412-110	APB
 		137412-111	Pit Fighter
+		137412-115	Race Drivin' DSK board
 		137412-116	Hydra
 		137412-116	Tournament Cyberball 2072
-		137412-117	Race Drivin'
+		137412-117	Race Drivin' main board
 		137412-118	Rampart
 		137412-118	Vindicators Part II
 
@@ -201,6 +202,7 @@ struct slapstic_data
 	struct mask_value alt1;
 	struct mask_value alt2;
 	struct mask_value alt3;
+	struct mask_value alt4;
 	int altshift;
 
 	struct mask_value bit1;
@@ -241,6 +243,8 @@ struct slapstic_data
 	{ UNKNOWN,UNKNOWN },	\
 	{ UNKNOWN,UNKNOWN },	\
 	{ UNKNOWN,UNKNOWN }
+
+#define MATCHES_MASK_VALUE(val, maskval)	(((val) & (maskval).mask) == (maskval).value)
 
 
 /*************************************
@@ -285,6 +289,7 @@ static struct slapstic_data slapstic101 =
 	{ 0x007f,UNKNOWN },				/* 1st mask/value in sequence */
 	{ 0x1fff,0x1dfe },				/* 2nd mask/value in sequence */
 	{ 0x1ffc,0x1b5c },				/* 3rd mask/value in sequence */
+	{ 0x1fcf,0x0080 },				/* 4th mask/value in sequence */
 	0,								/* shift to get bank from 3rd */
 
 	/* bitwise banking */
@@ -311,6 +316,7 @@ static struct slapstic_data slapstic103 =
 	{ 0x007f,0x002d },				/* 1st mask/value in sequence */
 	{ 0x3fff,0x3d14 },				/* 2nd mask/value in sequence */
 	{ 0x3ffc,0x3d24 },				/* 3rd mask/value in sequence */
+	{ 0x3fcf,0x0040 },				/* 4th mask/value in sequence */
 	0,								/* shift to get bank from 3rd */
 
 	/* bitwise banking */
@@ -337,6 +343,7 @@ static struct slapstic_data slapstic104 =
 	{ 0x007f,0x0069 },				/* 1st mask/value in sequence */
 	{ 0x3fff,0x3735 },				/* 2nd mask/value in sequence */
 	{ 0x3ffc,0x3764 },				/* 3rd mask/value in sequence */
+	{ 0x3fe7,0x0020 },				/* 4th mask/value in sequence */
 	0,								/* shift to get bank from 3rd */
 
 	/* bitwise banking */
@@ -363,6 +370,7 @@ static struct slapstic_data slapstic105 =
 	{ 0x007f,0x003d },				/* 1st mask/value in sequence */
 	{ 0x3fff,0x0092 },				/* 2nd mask/value in sequence */
 	{ 0x3ffc,0x00a4 },				/* 3rd mask/value in sequence */
+	{ 0x3ff3,0x0010 },				/* 4th mask/value in sequence */
 	0,								/* shift to get bank from 3rd */
 
 	/* bitwise banking */
@@ -389,6 +397,7 @@ static struct slapstic_data slapstic106 =
 	{ 0x007f,0x002b },				/* 1st mask/value in sequence */
 	{ 0x3fff,0x0052 },				/* 2nd mask/value in sequence */
 	{ 0x3ffc,0x0064 },				/* 3rd mask/value in sequence */
+	{ 0x3ff9,0x0008 },				/* 4th mask/value in sequence */
 	0,								/* shift to get bank from 3rd */
 
 	/* bitwise banking */
@@ -415,6 +424,7 @@ static struct slapstic_data slapstic107 =
 	{ 0x007f,0x006b },				/* 1st mask/value in sequence */
 	{ 0x3fff,0x3d52 },				/* 2nd mask/value in sequence */
 	{ 0x3ffc,0x3d64 },				/* 3rd mask/value in sequence */
+	{ 0x3ff9,0x0018 },				/* 4th mask/value in sequence */
 	0,								/* shift to get bank from 3rd */
 
 	/* bitwise banking */
@@ -441,6 +451,7 @@ static struct slapstic_data slapstic108 =
 	{ 0x007f,0x001f },				/* 1st mask/value in sequence */
 	{ 0x3fff,0x3772 },				/* 2nd mask/value in sequence */
 	{ 0x3ffc,0x3764 },				/* 3rd mask/value in sequence */
+	{ 0x3ff9,0x0028 },				/* 4th mask/value in sequence */
 	0,								/* shift to get bank from 3rd */
 
 	/* bitwise banking */
@@ -467,6 +478,7 @@ static struct slapstic_data slapstic109 =
 	{ 0x007f,0x002b },				/* 1st mask/value in sequence */
 	{ 0x3fff,0x0052 },				/* 2nd mask/value in sequence */
 	{ 0x3ffc,0x0064 },				/* 3rd mask/value in sequence */
+	{ 0x3ff9,0x0008 },				/* 4th mask/value in sequence */
 	0,								/* shift to get bank from 3rd */
 
 	/* bitwise banking */
@@ -493,6 +505,7 @@ static struct slapstic_data slapstic110 =
 	{ 0x007f,0x002d },				/* 1st mask/value in sequence */
 	{ 0x3fff,0x3d14 },				/* 2nd mask/value in sequence */
 	{ 0x3ffc,0x3d24 },				/* 3rd mask/value in sequence */
+	{ 0x3fcf,0x0040 },				/* 4th mask/value in sequence */
 	0,								/* shift to get bank from 3rd */
 
 	/* bitwise banking */
@@ -526,6 +539,7 @@ static struct slapstic_data slapstic111 =
 	{ 0x007f,0x000a },				/* 1st mask/value in sequence */
 	{ 0x3fff,0x28a4 },				/* 2nd mask/value in sequence */
 	{ 0x0784,0x0080 },				/* 3rd mask/value in sequence */
+	{ 0x3fcf,0x0042 },				/* 4th mask/value in sequence */
 	0,								/* shift to get bank from 3rd */
 
 	/* bitwise banking */
@@ -541,6 +555,33 @@ static struct slapstic_data slapstic111 =
 };
 
 
+/* slapstic 137412-115: Race Drivin' DSK board (confirmed) */
+static struct slapstic_data slapstic115 =
+{
+	/* basic banking */
+	0,								/* starting bank */
+	{ 0x0020,0x0022,0x0024,0x0026 },/* bank select values */
+
+	/* alternate banking */
+	{ 0x007f,0x0054 },				/* 1st mask/value in sequence */
+	{ 0x3fff,0x3e01 },				/* 2nd mask/value in sequence */
+	{ 0x3879,0x0029 },				/* 3rd mask/value in sequence */
+	{ 0x3ff9,0x0020 },				/* 4th mask/value in sequence */
+	1,								/* shift to get bank from 3rd */
+
+	/* bitwise banking */
+	NO_BITWISE,
+
+	/* additive banking */
+	{ 0x3fff,0x2591 },				/* 1st mask/value in sequence */
+	{ 0x3fff,0x2592 },				/* 2nd mask/value in sequence */
+	{ 0x3ff6,0x3402 },				/* +1 mask/value */
+	{ 0x3fb6,0x3410 },				/* +2 mask/value */
+	{ 0x3ff6,0x3412 },				/* +3 mask/value */
+	{ 0x3fff,0x34a2 }				/* final mask/value in sequence */
+};
+
+
 /* slapstic 137412-116: Hydra (confirmed) */
 static struct slapstic_data slapstic116 =
 {
@@ -552,6 +593,7 @@ static struct slapstic_data slapstic116 =
 	{ 0x007f,0x0069 },				/* 1st mask/value in sequence */
 	{ 0x3fff,0x2bab },				/* 2nd mask/value in sequence */
 	{ 0x387c,0x0808 },				/* 3rd mask/value in sequence */
+	{ 0x3fe7,0x0044 },				/* 4th mask/value in sequence */
 	0,								/* shift to get bank from 3rd */
 
 	/* bitwise banking */
@@ -567,7 +609,7 @@ static struct slapstic_data slapstic116 =
 };
 
 
-/* slapstic 137412-117: Race Drivin' (confirmed) */
+/* slapstic 137412-117: Race Drivin' main board (confirmed) */
 static struct slapstic_data slapstic117 =
 {
 	/* basic banking */
@@ -575,21 +617,22 @@ static struct slapstic_data slapstic117 =
 	{ 0x0008,0x001a,0x002c,0x003e },/* bank select values */
 
 	/* alternate banking */
-	{ UNKNOWN,UNKNOWN },			/* 1st mask/value in sequence */
-	{ UNKNOWN,UNKNOWN },			/* 2nd mask/value in sequence */
-	{ UNKNOWN,UNKNOWN },			/* 3rd mask/value in sequence */
-	0,								/* shift to get bank from 3rd */
+	{ 0x007f,0x007d },				/* 1st mask/value in sequence */
+	{ 0x3fff,0x3580 },				/* 2nd mask/value in sequence */
+	{ 0x0079,0x0020 },				/* 3rd mask/value in sequence */
+	{ 0x3fc9,0x0008 },				/* 4th mask/value in sequence */
+	1,								/* shift to get bank from 3rd */
 
 	/* bitwise banking */
 	NO_BITWISE,
 
 	/* additive banking */
-	{ UNKNOWN,UNKNOWN },			/* 1st mask/value in sequence */
-	{ UNKNOWN,UNKNOWN },			/* 2nd mask/value in sequence */
-	{ UNKNOWN,UNKNOWN },			/* +1 mask/value */
-	{ UNKNOWN,UNKNOWN },			/* +2 mask/value */
-	{ UNKNOWN,UNKNOWN },			/* +3 mask/value */
-	{ UNKNOWN,UNKNOWN }				/* final mask/value in sequence */
+	{ 0x3fff,0x0676 },				/* 1st mask/value in sequence */
+	{ 0x3fff,0x0677 },				/* 2nd mask/value in sequence */
+	{ 0x3e73,0x1a43 },				/* +1 mask/value */
+	{ 0x3e35,0x1a11 },				/* +2 mask/value */
+	{ 0x3e77,0x1a53 },				/* +3 mask/value */
+	{ 0x3fff,0x1a42 }				/* final mask/value in sequence */
 };
 
 
@@ -604,6 +647,7 @@ static struct slapstic_data slapstic118 =
 	{ 0x007f,0x0002 },				/* 1st mask/value in sequence */
 	{ 0x3fff,0x1950 },				/* 2nd mask/value in sequence */
 	{ 0x0067,0x0020 },				/* 3rd mask/value in sequence */
+	{ 0x3f9f,0x0014 },				/* 4th mask/value in sequence */
 	3,								/* shift to get bank from 3rd */
 
 	/* bitwise banking */
@@ -643,7 +687,7 @@ static struct slapstic_data *slapstic_table[] =
 	NULL,			/* never seen */
 	NULL,			/* never seen */
 	NULL,			/* never seen */
-	NULL,			/* never seen */
+	&slapstic115,
 	&slapstic116,
 	&slapstic117,
 	&slapstic118
@@ -736,13 +780,13 @@ int slapstic_bank(void)
 
 static int alt2_kludge(offs_t offset)
 {
-	UINT32 pc = activecpu_get_previouspc();
-
 	/* 68k case is fairly complex: we need to look for special triplets */
 	if (access_68k)
 	{
+		UINT32 pc = activecpu_get_previouspc();
+
 		/* first verify that the prefetched PC matches the first alternate */
-		if ((((pc + 2) >> 1) & slapstic.alt1.mask) == slapstic.alt1.value)
+		if (MATCHES_MASK_VALUE((pc + 2) >> 1, slapstic.alt1))
 		{
 			/* now look for a move.w (An),(An) or cmpm.w (An)+,(An)+ */
 			UINT16 opcode = cpu_readop16(pc & 0xffffff);
@@ -751,14 +795,18 @@ static int alt2_kludge(offs_t offset)
 				/* fetch the value of the register for the second operand, and see */
 				/* if it matches the third alternate */
 				UINT32 regval = activecpu_get_reg(M68K_A0 + ((opcode >> 9) & 7)) >> 1;
-				if ((regval & slapstic.alt3.mask) == slapstic.alt3.value)
+				if (MATCHES_MASK_VALUE(regval, slapstic.alt3))
 				{
 					alt_bank = (regval >> slapstic.altshift) & 3;
 					return ALTERNATE3;
 				}
 			}
-			return ALTERNATE2;
 		}
+
+		/* if there's no second memory hit within this instruction, the next */
+		/* opcode fetch will botch the operation, so just fall back to */
+		/* the enabled state */
+		return ENABLED;
 	}
 
 	/* kludge for ESB */
@@ -794,26 +842,26 @@ int slapstic_tweak(offs_t offset)
 			case ENABLED:
 
 				/* check for request to enter bitwise state */
-				if ((offset & slapstic.bit1.mask) == slapstic.bit1.value)
+				if (MATCHES_MASK_VALUE(offset, slapstic.bit1))
 				{
 					state = BITWISE1;
 				}
 
 				/* check for request to enter additive state */
-				else if ((offset & slapstic.add1.mask) == slapstic.add1.value)
+				else if (MATCHES_MASK_VALUE(offset, slapstic.add1))
 				{
 					state = ADDITIVE1;
 				}
 
 				/* check for request to enter alternate state */
-				else if ((offset & slapstic.alt1.mask) == slapstic.alt1.value)
+				else if (MATCHES_MASK_VALUE(offset, slapstic.alt1))
 				{
 					state = ALTERNATE1;
 				}
 
 				/* special kludge for catching the second alternate address if */
 				/* the first one was missed (since it's usually an opcode fetch) */
-				else if ((offset & slapstic.alt2.mask) == slapstic.alt2.value)
+				else if (MATCHES_MASK_VALUE(offset, slapstic.alt2))
 				{
 					state = alt2_kludge(offset);
 				}
@@ -843,7 +891,7 @@ int slapstic_tweak(offs_t offset)
 
 			/* ALTERNATE1 state: look for alternate2 offset, or else fall back to ENABLED */
 			case ALTERNATE1:
-				if ((offset & slapstic.alt2.mask) == slapstic.alt2.value)
+				if (MATCHES_MASK_VALUE(offset, slapstic.alt2))
 				{
 					state = ALTERNATE2;
 				}
@@ -855,7 +903,7 @@ int slapstic_tweak(offs_t offset)
 
 			/* ALTERNATE2 state: look for altbank offset, or else fall back to ENABLED */
 			case ALTERNATE2:
-				if ((offset & slapstic.alt3.mask) == slapstic.alt3.value)
+				if (MATCHES_MASK_VALUE(offset, slapstic.alt3))
 				{
 					state = ALTERNATE3;
 					alt_bank = (offset >> slapstic.altshift) & 3;
@@ -866,10 +914,9 @@ int slapstic_tweak(offs_t offset)
 				}
 				break;
 
-			/* ALTERNATE3 state: wait for a standard bank value to finish the transaction */
+			/* ALTERNATE3 state: wait for the final value to finish the transaction */
 			case ALTERNATE3:
-				if (offset == slapstic.bank[0] || offset == slapstic.bank[1] ||
-					offset == slapstic.bank[2] || offset == slapstic.bank[3])
+				if (MATCHES_MASK_VALUE(offset, slapstic.alt4))
 				{
 					state = DISABLED;
 					current_bank = alt_bank;
@@ -891,35 +938,35 @@ int slapstic_tweak(offs_t offset)
 			case BITWISE2:
 
 				/* check for clear bit 0 case */
-				if (((offset ^ bit_xor) & slapstic.bit2c0.mask) == slapstic.bit2c0.value)
+				if (MATCHES_MASK_VALUE(offset ^ bit_xor, slapstic.bit2c0))
 				{
 					bit_bank &= ~1;
 					bit_xor ^= 3;
 				}
 
 				/* check for set bit 0 case */
-				else if (((offset ^ bit_xor) & slapstic.bit2s0.mask) == slapstic.bit2s0.value)
+				else if (MATCHES_MASK_VALUE(offset ^ bit_xor, slapstic.bit2s0))
 				{
 					bit_bank |= 1;
 					bit_xor ^= 3;
 				}
 
 				/* check for clear bit 1 case */
-				else if (((offset ^ bit_xor) & slapstic.bit2c1.mask) == slapstic.bit2c1.value)
+				else if (MATCHES_MASK_VALUE(offset ^ bit_xor, slapstic.bit2c1))
 				{
 					bit_bank &= ~2;
 					bit_xor ^= 3;
 				}
 
 				/* check for set bit 1 case */
-				else if (((offset ^ bit_xor) & slapstic.bit2s1.mask) == slapstic.bit2s1.value)
+				else if (MATCHES_MASK_VALUE(offset ^ bit_xor, slapstic.bit2s1))
 				{
 					bit_bank |= 2;
 					bit_xor ^= 3;
 				}
 
 				/* check for escape case */
-				else if ((offset & slapstic.bit3.mask) == slapstic.bit3.value)
+				else if (MATCHES_MASK_VALUE(offset, slapstic.bit3))
 				{
 					state = BITWISE3;
 				}
@@ -937,7 +984,7 @@ int slapstic_tweak(offs_t offset)
 
 			/* ADDITIVE1 state: look for add2 offset, or else fall back to ENABLED */
 			case ADDITIVE1:
-				if ((offset & slapstic.add2.mask) == slapstic.add2.value)
+				if (MATCHES_MASK_VALUE(offset, slapstic.add2))
 				{
 					state = ADDITIVE2;
 					add_bank = current_bank;
@@ -951,26 +998,26 @@ int slapstic_tweak(offs_t offset)
 			/* ADDITIVE2 state: watch for twiddling and the escape mechanism */
 			case ADDITIVE2:
 
-				/* check for clear bit 0 case */
-				if ((offset & slapstic.addplus1.mask) == slapstic.addplus1.value)
+				/* check for add 1 case */
+				if (MATCHES_MASK_VALUE(offset, slapstic.addplus1))
 				{
 					add_bank = (add_bank + 1) & 3;
 				}
 
-				/* check for set bit 0 case */
-				else if ((offset & slapstic.addplus2.mask) == slapstic.addplus2.value)
+				/* check for add 2 case */
+				else if (MATCHES_MASK_VALUE(offset, slapstic.addplus2))
 				{
 					add_bank = (add_bank + 2) & 3;
 				}
 
-				/* check for clear bit 0 case */
-				else if ((offset & slapstic.addplus3.mask) == slapstic.addplus3.value)
+				/* check for add 3 case */
+				else if (MATCHES_MASK_VALUE(offset, slapstic.addplus3))
 				{
 					add_bank = (add_bank + 3) & 3;
 				}
 
-				/* check for escape case */
-				else if ((offset & slapstic.add3.mask) == slapstic.add3.value)
+				/* check for escape case -- can intermix with the above */
+				if (MATCHES_MASK_VALUE(offset, slapstic.add3))
 				{
 					state = ADDITIVE3;
 				}

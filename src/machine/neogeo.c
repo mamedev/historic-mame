@@ -761,11 +761,11 @@ READ16_HANDLER( neogeo_memcard16_r )
 
 WRITE16_HANDLER( neogeo_memcard16_w )
 {
-	if (ACCESSING_MSB)
-		return;
-
-	if (memcard_status==1)
-		neogeo_memcard[offset] = data & 0xff;
+	if (ACCESSING_LSB)
+	{
+		if (memcard_status==1)
+			neogeo_memcard[offset] = data & 0xff;
+	}
 }
 
 int neogeo_memcard_load(int number)

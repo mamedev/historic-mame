@@ -143,10 +143,7 @@ static UINT16 ARG16(void)
 	return w;
 }
 
-static UINT8 RM(UINT32 a)
-{
-	return cpu_readmem16(a);
-}
+#define RM(a) cpu_readmem16(a)
 
 static void WM(UINT32 a, UINT8 v)
 {
@@ -1642,7 +1639,7 @@ const char *i8085_info(void *context, int regnum)
 				r->AF.b.l & 0x02 ? 'N':'.',
 				r->AF.b.l & 0x01 ? 'C':'.');
 			break;
-		case CPU_INFO_NAME: return "8085A";
+		case CPU_INFO_NAME: return "I8085A";
 		case CPU_INFO_FAMILY: return "Intel 8080";
 		case CPU_INFO_VERSION: return "1.1";
 		case CPU_INFO_FILE: return __FILE__;
@@ -1738,7 +1735,7 @@ const char *i8080_info(void *context, int regnum)
 {
 	switch( regnum )
 	{
-		case CPU_INFO_NAME: return "8080";
+		case CPU_INFO_NAME: return "I8080";
 		case CPU_INFO_VERSION: return "1.2";
 		case CPU_INFO_REG_LAYOUT: return (const char *)i8080_reg_layout;
 		case CPU_INFO_WIN_LAYOUT: return (const char *)i8080_win_layout;

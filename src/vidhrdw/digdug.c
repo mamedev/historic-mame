@@ -278,7 +278,7 @@ VIDEO_UPDATE( digdug )
 
 			/* normal size? */
 			if (sprite < 0x80)
-				digdug_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
+				digdug_draw_sprite(bitmap,sprite,color,flipx,flipy,x+1,y+1);
 
 			/* double size? */
 			else

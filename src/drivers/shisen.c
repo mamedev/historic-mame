@@ -382,8 +382,38 @@ ROM_START( shisen )
 	ROM_LOAD( "ic05.05",      0x30000, 0x10000, 0x92ffe22a )
 ROM_END
 
+ROM_START( matchit )
+	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 64k+128k for main CPU */
+	ROM_LOAD( "2.11d",      0x00000, 0x10000, 0x299815f7 )
+	ROM_RELOAD(               0x10000, 0x10000 )
+	ROM_LOAD( "ic07.03",      0x20000, 0x10000, 0x0350f6e2 )
 
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "ic01.01",      0x00000, 0x10000, 0x51b0a26c )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic08.04",      0x00000, 0x10000, 0x1c0e221c )
+	ROM_LOAD( "ic09.05",      0x10000, 0x10000, 0x8a7d8284 )
+	ROM_LOAD( "ic12.08",      0x20000, 0x10000, 0x48e1d043 )
+	ROM_LOAD( "ic13.09",      0x30000, 0x10000, 0x3feff3f2 )
+	ROM_LOAD( "ic14.10",      0x40000, 0x10000, 0xb76a517d )
+	ROM_LOAD( "ic15.11",      0x50000, 0x10000, 0x8ff5ee7a )
+	ROM_LOAD( "ic16.12",      0x60000, 0x10000, 0x64e5d837 )
+	ROM_LOAD( "ic17.13",      0x70000, 0x10000, 0x02c1b2c4 )
+	ROM_LOAD( "ic18.14",      0x80000, 0x10000, 0xf5a8370e )
+	ROM_LOAD( "ic19.15",      0x90000, 0x10000, 0x7a9b7671 )
+	ROM_LOAD( "ic20.16",      0xa0000, 0x10000, 0x7fb396ad )
+	ROM_LOAD( "ic21.17",      0xb0000, 0x10000, 0xfb83c652 )
+	ROM_LOAD( "ic22.18",      0xc0000, 0x10000, 0xd8b689e9 )
+	ROM_LOAD( "ic23.19",      0xd0000, 0x10000, 0xe6611947 )
+	ROM_LOAD( "ic10.06",      0xe0000, 0x10000, 0x473b349a )
+	ROM_LOAD( "ic11.07",      0xf0000, 0x10000, 0xd9a60285 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* samples */
+	/* no samples on this board */
+ROM_END
 
 GAME( 1989, sichuan2, 0,        shisen, shisen, 0, ROT0, "Tamtex", "Sichuan II (hack?) (set 1)" )
-GAME( 1989, sichuana, sichuan2, shisen, shisen, 0, ROT0, "Tamtex", "Sichuan II (hack ?) (set 2)" )
+GAME( 1989, sichuana, sichuan2, shisen, shisen, 0, ROT0, "Tamtex", "Sichuan II (hack?) (set 2)" )
 GAME( 1989, shisen,   sichuan2, shisen, shisen, 0, ROT0, "Tamtex", "Shisensho - Joshiryo-Hen (Japan)" )
+GAME( 1989, matchit,  sichuan2, shisen, shisen, 0, ROT0, "Tamtex", "Match It" )

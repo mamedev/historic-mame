@@ -690,14 +690,12 @@ int artwork_create_display(struct osd_create_params *params, UINT32 *rgb_compone
 	screenrect.min_x = screenrect.min_y = 0;
 	screenrect.max_x = params->width - 1;
 	screenrect.max_y = params->height - 1;
-	orient_rect(&screenrect, final);
 
 	/* compute the game rect */
 	gamerect.min_x = (int)(-min_x * (double)(original_width * gamescale) + 0.5);
 	gamerect.min_y = (int)(-min_y * (double)(original_height * gamescale) + 0.5);
 	gamerect.max_x = gamerect.min_x + original_width * gamescale - 1;
 	gamerect.max_y = gamerect.min_y + original_height * gamescale - 1;
-	orient_rect(&gamerect, final);
 
 	/* now try to create the display */
 	if (osd_create_display(params, rgb32_components))
@@ -717,7 +715,6 @@ int artwork_create_display(struct osd_create_params *params, UINT32 *rgb_compone
 		piece->bounds.min_y = (int)((piece->top - min_y) * (double)(original_height * gamescale) + 0.5);
 		piece->bounds.max_x = (int)((piece->right - min_x) * (double)(original_width * gamescale) + 0.5) - 1;
 		piece->bounds.max_y = (int)((piece->bottom - min_y) * (double)(original_height * gamescale) + 0.5) - 1;
-		orient_rect(&piece->bounds, final);
 	}
 
 	/* now do the final prep on the artwork */
@@ -849,24 +846,23 @@ void artwork_update_video_and_audio(struct mame_display *display)
 
 void artwork_save_snapshot(struct mame_bitmap *bitmap)
 {
-	UINT32 saved_rgb_components[3];
-
-	/* snapshots require correct direct_rgb_components */
-	memcpy(saved_rgb_components, direct_rgb_components, sizeof(saved_rgb_components));
-	direct_rgb_components[0] = 0xff << rshift;
-	direct_rgb_components[1] = 0xff << gshift;
-	direct_rgb_components[2] = 0xff << bshift;
-
 	if ((bitmap == Machine->scrbitmap || bitmap == uioverlay) && artwork_list)
 	{
 		struct rectangle temprect = screenrect;
-		disorient_rect(&temprect, final);
+		UINT32 saved_rgb_components[3];
+
+		/* snapshots require correct direct_rgb_components */
+		memcpy(saved_rgb_components, direct_rgb_components, sizeof(saved_rgb_components));
+		direct_rgb_components[0] = 0xff << rshift;
+		direct_rgb_components[1] = 0xff << gshift;
+		direct_rgb_components[2] = 0xff << bshift;
+
 		osd_save_snapshot(final, &temprect);
+
+		memcpy(direct_rgb_components, saved_rgb_components, sizeof(saved_rgb_components));
 	}
 	else
 		osd_save_snapshot(bitmap, &Machine->visible_area);
-
-	memcpy(direct_rgb_components, saved_rgb_components, sizeof(saved_rgb_components));
 }
 
 
@@ -893,26 +889,7 @@ void artwork_mark_ui_dirty(int minx, int miny, int maxx, int maxy)
 	if (uioverlayhint)
 	{
 		struct rectangle rect;
-		int y, temp;
-
-		/* adjust for the UI orientation */
-		if (Machine->ui_orientation & ORIENTATION_SWAP_XY)
-		{
-			temp = minx; minx = miny; miny = temp;
-			temp = maxx; maxx = maxy; maxy = temp;
-		}
-		if (Machine->ui_orientation & ORIENTATION_FLIP_X)
-		{
-			temp = uioverlay->width - minx - 1;
-			minx = uioverlay->width - maxx - 1;
-			maxx = temp;
-		}
-		if (Machine->ui_orientation & ORIENTATION_FLIP_Y)
-		{
-			temp = uioverlay->height - miny - 1;
-			miny = uioverlay->height - maxy - 1;
-			maxy = temp;
-		}
+		int y;
 
 		/* clip to visible */
 		if (minx < 0)
@@ -941,40 +918,21 @@ void artwork_mark_ui_dirty(int minx, int miny, int maxx, int maxy)
 
 
 /*-------------------------------------------------
-	artwork_get_screensize - get the rotated
-	screensize
+	artwork_get_screensize - get the real screen
+	size
 -------------------------------------------------*/
 
 void artwork_get_screensize(int *width, int *height)
 {
-	/* non-swapped case */
-	if (!(Machine->orientation & ORIENTATION_SWAP_XY))
+	if (artwork_list)
 	{
-		if (artwork_list)
-		{
-			*width = screenrect.max_x - screenrect.min_x + 1;
-			*height = screenrect.max_y - screenrect.min_y + 1;
-		}
-		else
-		{
-			*width = Machine->drv->screen_width;
-			*height = Machine->drv->screen_height;
-		}
+		*width = screenrect.max_x - screenrect.min_x + 1;
+		*height = screenrect.max_y - screenrect.min_y + 1;
 	}
-
-	/* swapped case */
 	else
 	{
-		if (artwork_list)
-		{
-			*height = screenrect.max_x - screenrect.min_x + 1;
-			*width = screenrect.max_y - screenrect.min_y + 1;
-		}
-		else
-		{
-			*height = Machine->drv->screen_width;
-			*width = Machine->drv->screen_height;
-		}
+		*width = Machine->drv->screen_width;
+		*height = Machine->drv->screen_height;
 	}
 }
 
@@ -2718,6 +2676,11 @@ static void sort_pieces(void)
 		}
 	}
 	num_pieces = i;
+	if (num_pieces == 0)
+	{
+		artwork_list = NULL;
+		return;
+	}
 
 	/* now sort it */
 	if (num_pieces > 1)

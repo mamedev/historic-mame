@@ -17,6 +17,7 @@
 // MAME headers
 #include "driver.h"
 #include "window.h"
+#include "input.h"
 
 // from config.c
 int  cli_frontend_init (int argc, char **argv);
@@ -41,8 +42,6 @@ int _CRT_glob = 0;
 
 static char mapfile_name[MAX_PATH];
 static LPTOP_LEVEL_EXCEPTION_FILTER pass_thru_filter;
-
-static int original_leds;
 
 
 
@@ -79,11 +78,11 @@ int main(int argc, char **argv)
 		strcat(mapfile_name, ".map");
 	pass_thru_filter = SetUnhandledExceptionFilter(exception_filter);
 
-	// remember the initial LED states
-	original_leds = osd_get_leds();
-
 	// parse config and cmdline options
 	game_index = cli_frontend_init(argc, argv);
+
+	// remember the initial LED states and init keyboard handle
+	start_led();
 
 	// have we decided on a game?
 	if (game_index != -1)
@@ -105,8 +104,9 @@ int main(int argc, char **argv)
 			timeEndPeriod(caps.wPeriodMin);
 	}
 
-	// restore the original LED state
-	osd_set_leds(original_leds);
+	// restore the original LED state and close keyboard handle
+	stop_led();
+
 	win_process_events();
 
 	// close errorlog, input and playback

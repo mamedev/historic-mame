@@ -10,6 +10,7 @@ unsigned Dasm8x41(char *dst, unsigned pc)
 	unsigned PC = pc;
 	const char *sym;
     UINT8 op;
+	UINT8 arg;
 
 	op = cpu_readop(PC++);
 	switch( op )
@@ -74,7 +75,8 @@ unsigned Dasm8x41(char *dst, unsigned pc)
 	case 0xb2: /* 2: bbb1 0010 */
 	case 0xd2: /* 2: bbb1 0010 */
 	case 0xf2: /* 2: bbb1 0010 */
-		sym = set_ea_info(EA_DST, (PC & 0x700) | cpu_readop_arg(PC++), EA_UINT16, EA_ABS_PC);
+		arg = cpu_readop_arg(PC++);
+		sym = set_ea_info(EA_DST, (PC & 0x700) | arg, EA_UINT16, EA_ABS_PC);
 		sprintf(dst, "jb%d   %s", op >> 5, sym);
 		break;
 	case 0x13: /* 2: 0001 0011 */
@@ -96,7 +98,8 @@ unsigned Dasm8x41(char *dst, unsigned pc)
 		sprintf(dst, "dis   i");
 		break;
 	case 0x16: /* 2: 0001 0110 */
-		sym = set_ea_info(EA_DST, (PC & 0x700) | cpu_readop_arg(PC++), EA_UINT16, EA_ABS_PC);
+		arg = cpu_readop_arg(PC++);
+		sym = set_ea_info(EA_DST, (PC & 0x700) | arg, EA_UINT16, EA_ABS_PC);
 		sprintf(dst, "jtf   %s", sym);
 		break;
 	case 0x17: /* 1: 0001 0111 */
@@ -130,7 +133,8 @@ unsigned Dasm8x41(char *dst, unsigned pc)
 		sprintf(dst, "en    tcnti");
 		break;
 	case 0x26: /* 2: 0010 0110 */
-		sym = set_ea_info(EA_DST, (PC & 0x700) | cpu_readop_arg(PC++), EA_UINT16, EA_ABS_PC);
+		arg = cpu_readop_arg(PC++);
+		sym = set_ea_info(EA_DST, (PC & 0x700) | arg, EA_UINT16, EA_ABS_PC);
 		sprintf(dst, "jnt0  %s", sym);
 		break;
 	case 0x27: /* 1: 0010 0111 */
@@ -158,7 +162,8 @@ unsigned Dasm8x41(char *dst, unsigned pc)
         sprintf(dst, "dis   tcnti");
 		break;
 	case 0x36: /* 2: 0011 0110 */
-		sym = set_ea_info(EA_DST, (PC & 0x700) | cpu_readop_arg(PC++), EA_UINT16, EA_ABS_PC);
+		arg = cpu_readop_arg(PC++);
+		sym = set_ea_info(EA_DST, (PC & 0x700) | arg, EA_UINT16, EA_ABS_PC);
 		sprintf(dst, "jt0   %s", sym);
 		break;
 	case 0x37: /* 1: 0011 0111 */
@@ -194,7 +199,8 @@ unsigned Dasm8x41(char *dst, unsigned pc)
 		sprintf(dst, "strt  cnt");
 		break;
 	case 0x46: /* 2: 0100 0110 */
-		sym = set_ea_info(EA_DST, (PC & 0x700) | cpu_readop_arg(PC++), EA_UINT16, EA_ABS_PC);
+		arg = cpu_readop_arg(PC++);
+		sym = set_ea_info(EA_DST, (PC & 0x700) | arg, EA_UINT16, EA_ABS_PC);
 		sprintf(dst, "jnt1  %s", sym);
 		break;
 	case 0x47: /* 1: 0100 0111 */
@@ -223,7 +229,8 @@ unsigned Dasm8x41(char *dst, unsigned pc)
 		sprintf(dst, "strt  t");
 		break;
 	case 0x56: /* 2: 0101 0110 */
-		sym = set_ea_info(EA_DST, (PC & 0x700) | cpu_readop_arg(PC++), EA_UINT16, EA_ABS_PC);
+		arg = cpu_readop_arg(PC++);
+		sym = set_ea_info(EA_DST, (PC & 0x700) | arg, EA_UINT16, EA_ABS_PC);
 		sprintf(dst, "jt1   %s", sym);
 		break;
 	case 0x57: /* 1: 0101 0111 */
@@ -279,7 +286,8 @@ unsigned Dasm8x41(char *dst, unsigned pc)
 		sprintf(dst, "ill");
 		break;
 	case 0x76: /* 2: 0111 0110 */
-		sym = set_ea_info(EA_DST, (PC & 0x700) | cpu_readop_arg(PC++), EA_UINT16, EA_ABS_PC);
+		arg = cpu_readop_arg(PC++);
+		sym = set_ea_info(EA_DST, (PC & 0x700) | arg, EA_UINT16, EA_ABS_PC);
 		sprintf(dst, "jf1   %s", sym);
 		break;
 	case 0x77: /* 1: 0111 0111 */
@@ -311,7 +319,8 @@ unsigned Dasm8x41(char *dst, unsigned pc)
 		sprintf(dst, "clr   f0");
 		break;
 	case 0x86: /* 2: 1000 0110 */
-		sym = set_ea_info(EA_DST, (PC & 0x700) | cpu_readop_arg(PC++), EA_UINT16, EA_ABS_PC);
+		arg = cpu_readop_arg(PC++);
+		sym = set_ea_info(EA_DST, (PC & 0x700) | arg, EA_UINT16, EA_ABS_PC);
 		sprintf(dst, "jobf  %s", sym);
 		break;
 	case 0x87: /* 1: 1000 0111 */
@@ -345,7 +354,8 @@ unsigned Dasm8x41(char *dst, unsigned pc)
 		sprintf(dst, "cpl   f0");
 		break;
 	case 0x96: /* 2: 1001 0110 */
-		sym = set_ea_info(EA_DST, (PC & 0x700) | cpu_readop_arg(PC++), EA_UINT16, EA_ABS_PC);
+		arg = cpu_readop_arg(PC++);
+		sym = set_ea_info(EA_DST, (PC & 0x700) | arg, EA_UINT16, EA_ABS_PC);
 		sprintf(dst, "jnz   %s", sym);
 		break;
 	case 0x97: /* 1: 1001 0111 */
@@ -408,7 +418,8 @@ unsigned Dasm8x41(char *dst, unsigned pc)
 		sprintf(dst, "cpl   f1");
 		break;
 	case 0xb6: /* 2: 1011 0110 */
-		sym = set_ea_info(EA_DST, (PC & 0x700) | cpu_readop_arg(PC++), EA_UINT16, EA_ABS_PC);
+		arg = cpu_readop_arg(PC++);
+		sym = set_ea_info(EA_DST, (PC & 0x700) | arg, EA_UINT16, EA_ABS_PC);
 		sprintf(dst, "jf0   %s", sym);
 		break;
 	case 0xb7: /* 1: 1011 0111 */
@@ -441,7 +452,8 @@ unsigned Dasm8x41(char *dst, unsigned pc)
 		sprintf(dst, "sel   rb0");
 		break;
 	case 0xc6: /* 2: 1100 0110 */
-		sym = set_ea_info(EA_DST, (PC & 0x700) | cpu_readop_arg(PC++), EA_UINT16, EA_ABS_PC);
+		arg = cpu_readop_arg(PC++);
+		sym = set_ea_info(EA_DST, (PC & 0x700) | arg, EA_UINT16, EA_ABS_PC);
 		sprintf(dst, "jz    %s", sym);
 		break;
 	case 0xc7: /* 1: 1100 0111 */
@@ -469,7 +481,8 @@ unsigned Dasm8x41(char *dst, unsigned pc)
 		sprintf(dst, "sel   rb0");
 		break;
 	case 0xd6: /* 2: 1101 0110 */
-		sym = set_ea_info(EA_DST, (PC & 0x700) | cpu_readop_arg(PC++), EA_UINT16, EA_ABS_PC);
+		arg = cpu_readop_arg(PC++);
+		sym = set_ea_info(EA_DST, (PC & 0x700) | arg, EA_UINT16, EA_ABS_PC);
 		sprintf(dst, "jnibf %s", sym);
 		break;
 	case 0xd7: /* 1: 1101 0111 */
@@ -501,7 +514,8 @@ unsigned Dasm8x41(char *dst, unsigned pc)
 		sprintf(dst, "en    dma");
 		break;
 	case 0xe6: /* 2: 1110 0110 */
-		sym = set_ea_info(EA_DST, (PC & 0x700) | cpu_readop_arg(PC++), EA_UINT16, EA_ABS_PC);
+		arg = cpu_readop_arg(PC++);
+		sym = set_ea_info(EA_DST, (PC & 0x700) | arg, EA_UINT16, EA_ABS_PC);
 		sprintf(dst, "jnc   %s", sym);
 		break;
 	case 0xe7: /* 1: 1110 0111 */
@@ -515,7 +529,8 @@ unsigned Dasm8x41(char *dst, unsigned pc)
 	case 0xed: /* 2: 1110 1rrr */
 	case 0xee: /* 2: 1110 1rrr */
 	case 0xef: /* 2: 1110 1rrr */
-        sym = set_ea_info(EA_DST, (PC & 0x700) | cpu_readop_arg(PC++), EA_UINT16, EA_ABS_PC);
+	arg = cpu_readop_arg(PC++);
+        sym = set_ea_info(EA_DST, (PC & 0x700) | arg, EA_UINT16, EA_ABS_PC);
         sprintf(dst, "djnz  r%d,%s", op&7, sym);
         break;
 	case 0xf0: /* 1: 1111 000r */
@@ -529,7 +544,8 @@ unsigned Dasm8x41(char *dst, unsigned pc)
 		sprintf(dst, "en    flags");
 		break;
 	case 0xf6: /* 2: 1111 0110 */
-		sym = set_ea_info(EA_DST, (PC & 0x700) | cpu_readop_arg(PC++), EA_UINT16, EA_ABS_PC);
+		arg = cpu_readop_arg(PC++);
+		sym = set_ea_info(EA_DST, (PC & 0x700) | arg, EA_UINT16, EA_ABS_PC);
 		sprintf(dst, "jc    %s", sym);
 		break;
 	case 0xf7: /* 1: 1111 0111 */

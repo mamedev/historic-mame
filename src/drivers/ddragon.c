@@ -7,13 +7,13 @@ Driver by Carlos A. Lozano, Rob Rosenbrock, Phil Stroffolino, Ernesto Corvi
 
 Toffy / Super Toffy added by David Haywood
 Thanks to Bryan McPhail for spotting the Toffy program rom encryption
+Toffy / Super Toffy sound hooked up by R. Belmont.
 
 todo:
 
 banking in Toffy / Super toffy
 make Dangerous Dungeons work
 DIPS etc. in Toffy / Super Toffy
-sound in Toffy / Super Toffy
 
 -- Read Me --
 
@@ -54,7 +54,7 @@ extern int technos_video_hw;
 
 /* private globals */
 static int dd_sub_cpu_busy;
-static int sprite_irq, sound_irq, ym_irq;
+static int sprite_irq, sound_irq, ym_irq, snd_cpu;
 static int adpcm_pos[2],adpcm_end[2],adpcm_idle[2];
 /* end of private globals */
 
@@ -66,6 +66,17 @@ static MACHINE_INIT( ddragon )
 	technos_video_hw = 0;
 	dd_sub_cpu_busy = 0x10;
 	adpcm_idle[0] = adpcm_idle[1] = 1;
+	snd_cpu = 2;
+}
+
+static MACHINE_INIT( toffy )
+{
+	sound_irq = M6809_IRQ_LINE;
+	ym_irq = M6809_FIRQ_LINE;
+	technos_video_hw = 0;
+	dd_sub_cpu_busy = 0x10;
+	adpcm_idle[0] = adpcm_idle[1] = 1;
+	snd_cpu = 1;
 }
 
 static MACHINE_INIT( ddragonb )
@@ -76,6 +87,7 @@ static MACHINE_INIT( ddragonb )
 	technos_video_hw = 0;
 	dd_sub_cpu_busy = 0x10;
 	adpcm_idle[0] = adpcm_idle[1] = 1;
+	snd_cpu = 2;
 }
 
 static MACHINE_INIT( ddragon2 )
@@ -85,6 +97,7 @@ static MACHINE_INIT( ddragon2 )
 	ym_irq = 0;
 	technos_video_hw = 2;
 	dd_sub_cpu_busy = 0x10;
+	snd_cpu = 2;
 }
 
 static WRITE_HANDLER( ddragon_bankswitch_w )
@@ -154,7 +167,7 @@ static WRITE_HANDLER( ddragon_spriteram_w )
 static WRITE_HANDLER( cpu_sound_command_w )
 {
 	soundlatch_w( offset, data );
-	cpu_set_irq_line( 2, sound_irq, (sound_irq == IRQ_LINE_NMI) ? PULSE_LINE : HOLD_LINE );
+	cpu_set_irq_line( snd_cpu, sound_irq, (sound_irq == IRQ_LINE_NMI) ? PULSE_LINE : HOLD_LINE );
 }
 
 static WRITE_HANDLER( dd_adpcm_w )
@@ -583,7 +596,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static void irq_handler(int irq)
 {
-	cpu_set_irq_line( 2, ym_irq , irq ? ASSERT_LINE : CLEAR_LINE );
+	cpu_set_irq_line( snd_cpu, ym_irq , irq ? ASSERT_LINE : CLEAR_LINE );
 }
 
 static struct YM2151interface ym2151_interface =
@@ -734,9 +747,9 @@ static MACHINE_DRIVER_START( toffy )
 	MDRV_CPU_MEMORY(readmem,toffy_writemem)
 	MDRV_CPU_VBLANK_INT(ddragon_interrupt,1)
 
-//	MDRV_CPU_ADD(M6809, 3579545)
-//	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-//	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_ADD(M6809, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -750,6 +763,8 @@ static MACHINE_DRIVER_START( toffy )
 
 	MDRV_VIDEO_START(ddragon)
 	MDRV_VIDEO_UPDATE(ddragon)
+
+	MDRV_MACHINE_INIT(toffy)
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
@@ -1069,5 +1084,5 @@ GAME( 1988, ddragn2u, ddragon2, ddragon2, ddragon2, 0, ROT0, "Technos", "Double 
 GAMEX( 199?, ddungeon, 0, toffy, toffy, 0, ROT0, "East Coast Coin Company (Melbourne)", "Dangerous Dungeons", GAME_NOT_WORKING )
 
 /* these run on their own board but are the basically the same game, Toffy even has 'dangerous dungeons' text in it */
-GAMEX( 1993, toffy,  0, toffy, toffy, toffy, ROT0, "Midas",                 "Toffy", GAME_NO_SOUND )
-GAMEX( 1994, stoffy, 0, toffy, toffy, toffy, ROT0, "Midas (Unico license)", "Super Toffy", GAME_NO_SOUND )
+GAME( 1993, toffy,  0, toffy, toffy, toffy, ROT0, "Midas",                 "Toffy" )
+GAME( 1994, stoffy, 0, toffy, toffy, toffy, ROT0, "Midas (Unico license)", "Super Toffy" )

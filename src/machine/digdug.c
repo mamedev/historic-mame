@@ -94,7 +94,7 @@ READ_HANDLER( digdug_customio_data_r )
 				if (mode)	/* switch mode */
 				{
 					/* bit 7 is the service switch */
-                                        return readinputport(4);
+                    return readinputport(4);
 				}
 				else	/* credits mode: return number of credits in BCD format */
 				{
@@ -103,7 +103,7 @@ READ_HANDLER( digdug_customio_data_r )
 					static int rightcoininserted;
 
 
-                                        in = readinputport(4);
+                    in = readinputport(4);
 
 					/* check if the user inserted a coin */
 					if (leftcoinpercred > 0)
@@ -280,7 +280,7 @@ WRITE_HANDLER( digdug_interrupt_enable_1_w )
 
 INTERRUPT_GEN( digdug_interrupt_1 )
 {
-	if (interrupt_enable_1) 
+	if (interrupt_enable_1)
 		cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 

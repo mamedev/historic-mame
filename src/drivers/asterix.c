@@ -2,6 +2,22 @@
 
 Asterix
 
+TODO:
+on the highscore screen in attract mode, the stars are slightly off screen on
+the left side. the stars on the right should touch the edge of the visible area.
+needs to move right say 4 or 5 pixels? in the original there is no gap on either
+side, the stars touch the edge on both sides.
+
+on the attract screen with the slides (just before the konami logo), the right
+spacing of the last slide is too large. it should be about half of what it is in
+the emulation, about 8mm (or 5/16 inch for you US guys ;-) the left border of
+the first slide is too small. it should be about 3mm (or 1/8th inch) from the
+edge of the screen.
+
+the konami logo: in the original the outline is drawn, then there's a slight
+delay of 1 or 2 seconds, then it fills from the top to the bottom with the
+colour, including the word "Konami"
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -285,7 +301,7 @@ static MACHINE_DRIVER_START( asterix )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	
+
 	MDRV_NVRAM_HANDLER(asterix)
 
 	/* video hardware */
@@ -383,6 +399,6 @@ static DRIVER_INIT( asterix )
 }
 
 
-GAME( 1992, asterix,  0,       asterix, asterix, asterix, ROT0, "Konami", "Asterix (World ver. EAD)" )
-GAME( 1992, astrxeac, asterix, asterix, asterix, asterix, ROT0, "Konami", "Asterix (World ver. EAC)" )
-GAME( 1992, astrxeaa, asterix, asterix, asterix, asterix, ROT0, "Konami", "Asterix (World ver. EAA)" )
+GAMEX( 1992, asterix,  0,       asterix, asterix, asterix, ROT0, "Konami", "Asterix (World ver. EAD)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1992, astrxeac, asterix, asterix, asterix, asterix, ROT0, "Konami", "Asterix (World ver. EAC)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1992, astrxeaa, asterix, asterix, asterix, asterix, ROT0, "Konami", "Asterix (World ver. EAA)", GAME_IMPERFECT_GRAPHICS )

@@ -30,11 +30,11 @@
 				- initializes the localized strings
 				- initializes the input system
 				- parses and allocates the game's input ports
+				- initializes the hard disk system
 				- loads the game's ROMs
 				- resets the timer system
 				- starts the refresh timer
 				- initializes the CPUs
-				- initializes the hard disk system
 				- loads the configuration file
 				- initializes the memory system for the game
 				- calls the driver's DRIVER_INIT callback
@@ -214,7 +214,6 @@ static void recompute_fps(int skipped_it);
 static int vh_open(void);
 static void vh_close(void);
 static void compute_aspect_ratio(int attributes, int *aspect_x, int *aspect_y);
-static void compute_game_orientation(void);
 static int init_game_options(void);
 static int decode_graphics(const struct GfxDecodeInfo *gfxdecodeinfo);
 static void scale_vectorgames(int gfx_width, int gfx_height, int *width, int *height);
@@ -362,6 +361,9 @@ static int init_machine(void)
 		}
 	}
 
+	/* init the hard drive interface now, before attempting to load */
+	hard_disk_set_interface(&mame_hard_disk_interface);
+
 	/* load the ROMs if we have some */
 	if (gamedrv->rom && rom_load(gamedrv->rom) != 0)
 	{
@@ -385,9 +387,6 @@ static int init_machine(void)
 
 	/* now set up all the CPUs */
 	cpu_init();
-
-	/* init the hard drive interface */
-	hard_disk_set_interface(&mame_hard_disk_interface);
 
 	/* load input ports settings (keys, dip switches, and so on) */
 	settingsloaded = load_input_port_settings();
@@ -708,9 +707,7 @@ static int vh_open(void)
 		int depth = options.debug_depth ? options.debug_depth : Machine->color_depth;
 
 		/* first allocate the debugger bitmap */
-		switch_debugger_orientation(NULL);
 		Machine->debug_bitmap = auto_bitmap_alloc_depth(options.debug_width, options.debug_height, depth);
-		switch_true_orientation(NULL);
 		if (!Machine->debug_bitmap)
 			goto cant_create_debug_bitmap;
 
@@ -818,72 +815,6 @@ static void compute_aspect_ratio(int attributes, int *aspect_x, int *aspect_y)
 
 
 /*-------------------------------------------------
-	compute_game_orientation - compute the
-	effective game orientation
--------------------------------------------------*/
-
-static void compute_game_orientation(void)
-{
-	/* first start with the game's built in orientation */
-	Machine->orientation = gamedrv->flags & ORIENTATION_MASK;
-	Machine->ui_orientation = options.ui_orientation;
-
-	/* override if no rotation requested */
-	if (options.norotate)
-		Machine->orientation = ROT0;
-
-	/* rotate right */
-	if (options.ror)
-	{
-		/* if only one of the components is inverted, switch them */
-		if ((Machine->orientation & ROT180) == ORIENTATION_FLIP_X ||
-				(Machine->orientation & ROT180) == ORIENTATION_FLIP_Y)
-			Machine->orientation ^= ROT180;
-
-		Machine->orientation ^= ROT90;
-
-		/* if only one of the components is inverted, switch them */
-		if ((Machine->ui_orientation & ROT180) == ORIENTATION_FLIP_X ||
-				(Machine->ui_orientation & ROT180) == ORIENTATION_FLIP_Y)
-			Machine->ui_orientation ^= ROT180;
-
-		Machine->ui_orientation ^= ROT90;
-	}
-
-	/* rotate left */
-	if (options.rol)
-	{
-		/* if only one of the components is inverted, switch them */
-		if ((Machine->orientation & ROT180) == ORIENTATION_FLIP_X ||
-				(Machine->orientation & ROT180) == ORIENTATION_FLIP_Y)
-			Machine->orientation ^= ROT180;
-
-		Machine->orientation ^= ROT270;
-
-		/* if only one of the components is inverted, switch them */
-		if ((Machine->ui_orientation & ROT180) == ORIENTATION_FLIP_X ||
-				(Machine->ui_orientation & ROT180) == ORIENTATION_FLIP_Y)
-			Machine->ui_orientation ^= ROT180;
-
-		Machine->ui_orientation ^= ROT270;
-	}
-
-	/* flip X/Y */
-	if (options.flipx)
-	{
-		Machine->orientation ^= ORIENTATION_FLIP_X;
-		Machine->ui_orientation ^= ORIENTATION_FLIP_X;
-	}
-	if (options.flipy)
-	{
-		Machine->orientation ^= ORIENTATION_FLIP_Y;
-		Machine->ui_orientation ^= ORIENTATION_FLIP_Y;
-	}
-}
-
-
-
-/*-------------------------------------------------
 	init_game_options - initialize the various
 	game options
 -------------------------------------------------*/
@@ -923,7 +854,8 @@ static int init_game_options(void)
 	Machine->sample_rate = options.samplerate;
 
 	/* get orientation right */
-	compute_game_orientation();
+	Machine->orientation = ROT0;
+	Machine->ui_orientation = options.ui_orientation;
 
 #ifdef MESS
 	/* process some MESSy stuff */
@@ -1022,17 +954,9 @@ static void scale_vectorgames(int gfx_width, int gfx_height, int *width, int *he
 {
 	double x_scale, y_scale, scale;
 
-	/* based on the orientation, compute the scale values */
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		x_scale = (double)gfx_width / (double)(*height);
-		y_scale = (double)gfx_height / (double)(*width);
-	}
-	else
-	{
-		x_scale = (double)gfx_width / (double)(*width);
-		y_scale = (double)gfx_height / (double)(*height);
-	}
+	/* compute the scale values */
+	x_scale = (double)gfx_width / (double)(*width);
+	y_scale = (double)gfx_height / (double)(*height);
 
 	/* pick the smaller scale factor */
 	scale = (x_scale < y_scale) ? x_scale : y_scale;
@@ -1099,84 +1023,6 @@ static int init_buffered_spriteram(void)
 ***************************************************************************/
 
 /*-------------------------------------------------
-	orient_rect - apply the screen orientation to
-	the given rectangle
--------------------------------------------------*/
-
-void orient_rect(struct rectangle *rect, struct mame_bitmap *bitmap)
-{
-	int temp;
-
-	/* use the scrbitmap if none specified */
-	if (!bitmap)
-		bitmap = Machine->scrbitmap;
-
-	/* apply X/Y swap first */
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		temp = rect->min_x; rect->min_x = rect->min_y; rect->min_y = temp;
-		temp = rect->max_x; rect->max_x = rect->max_y; rect->max_y = temp;
-	}
-
-	/* apply X flip */
-	if (Machine->orientation & ORIENTATION_FLIP_X)
-	{
-		temp = bitmap->width - rect->min_x - 1;
-		rect->min_x = bitmap->width - rect->max_x - 1;
-		rect->max_x = temp;
-	}
-
-	/* apply Y flip */
-	if (Machine->orientation & ORIENTATION_FLIP_Y)
-	{
-		temp = bitmap->height - rect->min_y - 1;
-		rect->min_y = bitmap->height - rect->max_y - 1;
-		rect->max_y = temp;
-	}
-}
-
-
-
-/*-------------------------------------------------
-	disorient_rect - perform the opposite
-	transformation from orient_rect
--------------------------------------------------*/
-
-void disorient_rect(struct rectangle *rect, struct mame_bitmap *bitmap)
-{
-	int temp;
-
-	/* use the scrbitmap if none specified */
-	if (!bitmap)
-		bitmap = Machine->scrbitmap;
-
-	/* unapply Y flip */
-	if (Machine->orientation & ORIENTATION_FLIP_Y)
-	{
-		temp = bitmap->height - rect->min_y - 1;
-		rect->min_y = bitmap->height - rect->max_y - 1;
-		rect->max_y = temp;
-	}
-
-	/* unapply X flip */
-	if (Machine->orientation & ORIENTATION_FLIP_X)
-	{
-		temp = bitmap->width - rect->min_x - 1;
-		rect->min_x = bitmap->width - rect->max_x - 1;
-		rect->max_x = temp;
-	}
-
-	/* unapply X/Y swap last */
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		temp = rect->min_x; rect->min_x = rect->min_y; rect->min_y = temp;
-		temp = rect->max_x; rect->max_x = rect->max_y; rect->max_y = temp;
-	}
-}
-
-
-
-/*-------------------------------------------------
 	set_visible_area - adjusts the visible portion
 	of the bitmap area dynamically
 -------------------------------------------------*/
@@ -1201,12 +1047,9 @@ void set_visible_area(int min_x, int max_x, int min_y, int max_y)
 		Machine->absolute_visible_area.max_y = Machine->scrbitmap->height - 1;
 	}
 
-	/* raster games need to be rotated */
+	/* raster games need to use the visible area */
 	else
-	{
 		Machine->absolute_visible_area = Machine->visible_area;
-		orient_rect(&Machine->absolute_visible_area, NULL);
-	}
 }
 
 
@@ -1510,6 +1353,24 @@ const struct performance_info *mame_get_performance_info(void)
 
 
 /*-------------------------------------------------
+	mame_find_cpu_index - return the index of the
+	given CPU, or -1 if not found
+-------------------------------------------------*/
+
+int mame_find_cpu_index(const char *tag)
+{
+	int cpunum;
+
+	for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
+		if (Machine->drv->cpu[cpunum].tag && strcmp(Machine->drv->cpu[cpunum].tag, tag) == 0)
+			return cpunum;
+
+	return -1;
+}
+
+
+
+/*-------------------------------------------------
 	machine_add_cpu - add a CPU during machine
 	driver expansion
 -------------------------------------------------*/
@@ -1790,6 +1651,16 @@ static int validitychecks(void)
 					&& (drivers[j]->flags & NOT_A_DRIVER) == 0)
 			{
 				printf("%s: %s and %s use the same ROM set\n",drivers[i]->source_file,drivers[i]->name,drivers[j]->name);
+				error = 1;
+			}
+		}
+
+		if ((drivers[i]->flags & NOT_A_DRIVER) == 0)
+		{
+			if (drv.sound[0].sound_type == 0 && (drivers[i]->flags & GAME_NO_SOUND) == 0 &&
+					strcmp(drivers[i]->name,"minivadr"))
+			{
+				printf("%s: %s missing GAME_NO_SOUND flag\n",drivers[i]->source_file,drivers[i]->name);
 				error = 1;
 			}
 		}

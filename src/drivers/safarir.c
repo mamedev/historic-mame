@@ -133,7 +133,7 @@ static PALETTE_INIT( safarir )
 	palette_set_color(0,0x00,0x00,0x00); /* black */
 	palette_set_color(1,0x80,0x80,0x80); /* gray */
 	palette_set_color(2,0xff,0xff,0xff); /* white */
-	
+
 	memcpy(colortable,colortable_source,sizeof(colortable_source));
 }
 
@@ -258,4 +258,10 @@ ROM_START( safarir )
 ROM_END
 
 
-GAMEX( 19??, safarir, 0, safarir, safarir, 0, ROT90, "SNK", "Safari Rally", GAME_NO_SOUND | GAME_IMPERFECT_COLORS )
+DRIVER_INIT( safarir )
+{
+	safarir_ram = safarir_ram1;
+}
+
+
+GAMEX( 19??, safarir, 0, safarir, safarir, safarir, ROT90, "SNK", "Safari Rally", GAME_NO_SOUND | GAME_IMPERFECT_COLORS )

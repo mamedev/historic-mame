@@ -274,7 +274,8 @@ INLINE void sex( void )
 	UINT16 t;
 	t = SIGNED(B);
 	D = t;
-	CLR_NZV;
+//	CLR_NZV;	NS 20020905: applying the same fix that was applied to 6809 and 6309
+	CLR_NZ;
 	SET_NZ16(t);
 }
 

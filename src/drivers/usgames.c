@@ -4,6 +4,9 @@
 
 there is a 'Security Test' in service mode
 
+'usg82', 'usg83' and 'usg83x' don't seem to be able to record
+the changes you make in the "test mode" 8(
+
 */
 
 /* readme info
@@ -140,11 +143,11 @@ MEMORY_END
 
 INPUT_PORTS_START( usg )
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON5 )
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_BUTTON1, "Button 1", KEYCODE_Z, IP_JOY_DEFAULT )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON2, "Button 2", KEYCODE_X, IP_JOY_DEFAULT )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_BUTTON3, "Button 3", KEYCODE_C, IP_JOY_DEFAULT )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON4, "Button 4", KEYCODE_V, IP_JOY_DEFAULT )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON5, "Button 5", KEYCODE_B, IP_JOY_DEFAULT )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -154,7 +157,7 @@ INPUT_PORTS_START( usg )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, "2000" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
@@ -174,7 +177,7 @@ INPUT_PORTS_START( usg )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, "2041" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
@@ -200,7 +203,7 @@ INPUT_PORTS_START( usg )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, "2070" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
@@ -305,7 +308,20 @@ ROM_START( usg32 )
 	ROM_LOAD( "usg32-3.bin", 0x38000, 0x08000, 0x22747804 )
 ROM_END
 
+
+/* You can't change the status of "Sexy Triv I" and "Sexy Triv II" */
 ROM_START( usg83 )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )
+	ROM_LOAD( "grom08-3.rom", 0x08000, 0x08000, 0xaae84186 )
+	/* for the banked region */
+	ROM_LOAD( "usg83-1.bin", 0x18000, 0x08000, 0x7b520b6f )
+	ROM_LOAD( "usg83-2.bin", 0x28000, 0x08000, 0x29fbb23b )
+	ROM_LOAD( "grom3.rom",   0x38000, 0x10000, 0x4e110844 )
+	ROM_LOAD( "usg83-4.bin", 0x48000, 0x08000, 0x437697c4 )
+ROM_END
+
+/* Similar to 'usg83', but you can change the status of "Sexy Triv I" */
+ROM_START( usg83x )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )
 	ROM_LOAD( "usg83-0.bin", 0x08000, 0x08000, 0x4ad9b6e0 )
 	/* for the banked region */
@@ -314,6 +330,18 @@ ROM_START( usg83 )
 	ROM_LOAD( "usg83-3.bin", 0x38000, 0x08000, 0x41c475ac )
 	ROM_LOAD( "usg83-4.bin", 0x48000, 0x08000, 0x437697c4 )
 ROM_END
+
+/* Similar to 'usg83', but "Sport Triv" and "Rush Hour" aren't available by default */
+ROM_START( usg82 )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )
+	ROM_LOAD( "rom0.rom",   0x08000, 0x08000, 0x09c20b78 )
+	/* for the banked region */
+	ROM_LOAD( "grom1.rom",   0x18000, 0x08000, 0x915a9ff4 )
+	ROM_LOAD( "usg83-2.bin", 0x28000, 0x08000, 0x29fbb23b )
+	ROM_LOAD( "grom3.rom",   0x38000, 0x10000, 0x4e110844 )
+	ROM_LOAD( "usg83-4.bin", 0x48000, 0x08000, 0x437697c4 )
+ROM_END
+
 
 ROM_START( usg185 ) // an upgraded 182?
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )
@@ -324,6 +352,7 @@ ROM_START( usg185 ) // an upgraded 182?
 	ROM_LOAD( "usg185.u28",   0x30000, 0x10000, 0xc6ba8a81 ) // ROM 2
 	ROM_LOAD( "usg185.u18",   0x40000, 0x10000, 0x1cfd934d ) // ROM 1
 ROM_END
+
 
 ROM_START( usg252 )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )
@@ -348,8 +377,10 @@ ROM_START( usg252 )
 ROM_END
 
 
-/* these probably aren't really clones .. */
-GAME( 1987, usg32,  0,   usg,    usg, 0, ROT0, "U.S. Games", "Super Duper Casino (California V3.2)" )
-GAME( 1988, usg83,  0,   usg,    usg, 0, ROT0, "U.S. Games", "Super Ten V8.3" )
-GAME( 1991, usg185, 0,   usg185, usg, 0, ROT0, "U.S. Games", "Games V18.7" )
-GAME( 1992, usg252, 0,   usg185, usg, 0, ROT0, "U.S. Games", "Games V25.4" )
+
+GAME( 1987, usg32,  0,     usg,    usg, 0, ROT0, "U.S. Games", "Super Duper Casino (California V3.2)" )
+GAME( 1988, usg83,  0,     usg,    usg, 0, ROT0, "U.S. Games", "Super Ten V8.3" )
+GAME( 1988, usg83x, usg83, usg,    usg, 0, ROT0, "U.S. Games", "Super Ten V8.3X" )
+GAME( 1988, usg82,  usg83, usg,    usg, 0, ROT0, "U.S. Games", "Super Ten V8.2" )	// "Feb.08,1988"
+GAME( 1991, usg185, 0,     usg185, usg, 0, ROT0, "U.S. Games", "Games V18.7C" )
+GAME( 1992, usg252, 0,     usg185, usg, 0, ROT0, "U.S. Games", "Games V25.4X" )

@@ -6,13 +6,14 @@
 
 /************* Machine stuff ****** machine/toaplan1.c *************/
 INTERRUPT_GEN( toaplan1_interrupt );
-WRITE16_HANDLER( toaplan1_int_enable_w );
+WRITE16_HANDLER( toaplan1_intenable_w );
 READ16_HANDLER ( toaplan1_shared_r );
 WRITE16_HANDLER( toaplan1_shared_w );
 WRITE16_HANDLER( toaplan1_reset_sound );
 READ16_HANDLER ( demonwld_dsp_r );
 WRITE16_HANDLER( demonwld_dsp_w );
 WRITE16_HANDLER( demonwld_dsp_ctrl_w );
+READ16_HANDLER ( demonwld_BIO_r );
 READ16_HANDLER ( samesame_port_6_word_r );
 READ16_HANDLER ( vimana_mcu_r );
 WRITE16_HANDLER( vimana_mcu_w );

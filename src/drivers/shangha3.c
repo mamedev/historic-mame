@@ -494,7 +494,7 @@ static struct YM2612interface ym3438_interface =
 {
 	1,			/* 1 chip */
 	8000000,	/* 8 MHz ?? */
-	{ 40 },
+	{ YM3012_VOL(40,MIXER_PAN_CENTER,40,MIXER_PAN_CENTER) },	/* Volume */
 	{ 0 },
 	{ 0 },
 	{ 0 },

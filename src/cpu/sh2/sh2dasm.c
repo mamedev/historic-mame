@@ -334,11 +334,11 @@ static void op0100(char *buffer, UINT32 pc, UINT16 opcode)
 		break;
 	case 0x16:
 		set_ea_info(0, activecpu_get_reg(SH2_R0+Rn), EA_UINT32, EA_MEM_RD);
-		sprintf(buffer, "STS.L   @%s+,MACL", regname[Rn]);
+		sprintf(buffer, "LDS.L   @%s+,MACL", regname[Rn]);
 		break;
 	case 0x17:
 		set_ea_info(0, activecpu_get_reg(SH2_R0+Rn), EA_UINT32, EA_MEM_RD);
-		sprintf(buffer, "STC.L   @%s+,GBR", regname[Rn]);
+		sprintf(buffer, "LDC.L   @%s+,GBR", regname[Rn]);
 		break;
 	case 0x18:
 		sprintf(buffer, "SHLL8   %s", regname[Rn]);

@@ -115,16 +115,6 @@ static struct ide_state idestate[MAX_IDE_CONTROLLERS];
 
 /*************************************
  *
- *	Prototypes
- *
- *************************************/
-
-static void *open_source_and_diff(const char *diskname);
-
-
-
-/*************************************
- *
  *	Interrupts
  *
  *************************************/
@@ -154,7 +144,7 @@ INLINE void clear_interrupt(struct ide_state *ide)
  *
  *************************************/
 
-int ide_controller_init(int which, struct ide_interface *intf, const char *diskname1, const char *diskname2)
+int ide_controller_init(int which, struct ide_interface *intf)
 {
 	struct ide_state *ide = &idestate[which];
 	const struct hard_disk_header *header;
@@ -163,17 +153,12 @@ int ide_controller_init(int which, struct ide_interface *intf, const char *diskn
 	if (!intf)
 		return 1;
 
-	/* only one hard disk is supported currently */
-	if (diskname2)
-		return 1;
-
 	/* reset the IDE state */
 	memset(ide, 0, sizeof(*ide));
 	ide->intf = intf;
 
-	/* attempt to open the first disk */
-	if (diskname1)
-		ide->disk = open_source_and_diff(diskname1);
+	/* we only support one hard disk right now; get a handle to it */
+	ide->disk = get_disk_handle(0);
 
 	/* get and copy the geometry */
 	if (ide->disk)
@@ -203,69 +188,6 @@ void ide_controller_reset(int which)
 static void reset_callback(int param)
 {
 	ide_controller_reset(param);
-}
-
-
-
-/*************************************
- *
- *	Open source hard drive and diff
- *
- *************************************/
-
-static void *open_source_and_diff(const char *diskname)
-{
-	struct hard_disk_header header;
-	char filename[1024], *c;
-	void *source, *diff;
-	int err;
-
-	/* make the filename of the source */
-	strcpy(filename, diskname);
-	c = strrchr(filename, '.');
-	if (c)
-		strcpy(c, ".chd");
-	else
-		strcat(filename, ".chd");
-
-	/* first open the source drive */
-	source = hard_disk_open(filename, 0, NULL);
-	if (!source)
-		return NULL;
-
-	/* make the filename of the diff */
-	strcpy(filename, diskname);
-	c = strrchr(filename, '.');
-	if (c)
-		strcpy(c, ".dif");
-	else
-		strcat(filename, ".dif");
-
-	/* try to open the diff */
-	diff = hard_disk_open(filename, 1, source);
-	if (diff)
-		return diff;
-
-	/* didn't work; try creating it instead */
-
-	/* first get the parent's header and modify that */
-	header = *hard_disk_get_header(source);
-	header.flags |= HDFLAGS_HAS_PARENT | HDFLAGS_IS_WRITEABLE;
-	header.compression = HDCOMPRESSION_NONE;
-	memcpy(header.parentmd5, header.md5, sizeof(header.parentmd5));
-	memset(header.md5, 0, sizeof(header.md5));
-
-	/* then do the create; if it fails, just fall back on the source */
-	err = hard_disk_create(filename, &header);
-	if (err != HDERR_NONE)
-		return source;
-
-	/* now try opening the drive */
-	diff = hard_disk_open(filename, 1, source);
-	if (diff)
-		return diff;
-
-	return source;
 }
 
 

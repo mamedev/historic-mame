@@ -15,11 +15,11 @@ Namco System II
 #include "namcos2.h"
 #include "vidhrdw/generic.h"
 
-data16_t *namcos2_68k_master_ram=NULL;
-data16_t *namcos2_68k_slave_ram=NULL;
-data16_t *namcos2_68k_mystery_ram=NULL;
+data16_t *namcos2_68k_master_ram;
+data16_t *namcos2_68k_slave_ram;
+data16_t *namcos2_68k_mystery_ram;
 
-int namcos2_gametype=0;
+int namcos2_gametype;
 
 /*************************************************************/
 /* Perform basic machine initialisation 					 */
@@ -67,9 +67,13 @@ NVRAM_HANDLER( namcos2 ){
 	}
 	else {
 		if (file)
+		{
 			osd_fread (file, namcos2_eeprom, namcos2_eeprom_size);
+		}
 		else
+		{
 			memset (namcos2_eeprom, 0xff, namcos2_eeprom_size);
+		}
 	}
 }
 
@@ -84,7 +88,6 @@ READ16_HANDLER( namcos2_68k_eeprom_r ){
 /*************************************************************/
 /* 68000 Shared memory area - Data ROM area 				 */
 /*************************************************************/
-
 READ16_HANDLER( namcos2_68k_data_rom_r ){
 	data16_t *ROM = (data16_t *)memory_region(REGION_USER1);
 	return ROM[offset];
@@ -158,87 +161,176 @@ kyukaidk	1990	191			$00bf
 dsaber		1990	192			$00c0
 finalap2	1990	318			$013e
 rthun2		1990	319			$013f
-sgunner2	1991	346			$015a	ID out of order; gfx board is not standard
+gollygho	1990				$0143
 cosmogng	1991	330			$014a
+sgunner2	1991	346			$015a	ID out of order; gfx board is not standard
 finalap3	1992	318			$013e	same as finalap2
 suzuka8h	1992
 sws92		1992	331			$014b
 sws92g		1992	332			$014c
 suzuk8h2	1993
 sws93		1993	334			$014e
-
-$d00000	Write $7a25, read back $00b4 from $d00002 (dirtfoxj)
-$d00002	Write 13 x $0000, read back $00be from $d00008 (marvland)
-$d00004	Write 13 x $0000, read back $00bd from $d00002 (burnf)
-		Write $a713, read $00c0 (dsaber)
-$d00006	Write $b929, read $014a (cosmogng)
-		Write $ac1d, read $014b (sws92)
-		Write $f14a, read $014c (sws92g)
-		Write $1fd0, read $014e (sws93)
-		Write $8fc8, read $00b2 also from $d00004 (phelios)
-$d00008	Write $13ec, read $013f (rthun2)
-		Write 13 x $0000, read back $00c0 from $d00004 (dsaber)
-$d0000a	Write $f00f, read $f00f (phelios)
-$d0000c	Write $a2c7, read $00b0 (ordyne)
-$d0000e	Write $31ad, read $00bd (burnforc)
-		Write $b607, read $00bc (finehour)
-		Write $615e, read $00be (marvland)
-		Write $31ae, read $00b1 (mirninja)
-
-$a00008	Write $6987, read $015a (sgunner2)
  *************************************************************/
-
-data16_t namcos2_68k_key[0x08];
-
+static int sendval = 0;
 READ16_HANDLER( namcos2_68k_key_r )
 {
-/*	return namcos2_68k_key[offset]); */
-//logerror("%06x: key_r 0xd0000%x\n",activecpu_get_pc(),2*offset);
-	return rand()&0xffff;
+//      logerror("%06x: key_r 0xd0000%x\n",activecpu_get_pc(),2*offset);
+        switch (namcos2_gametype)
+        {
+        case NAMCOS2_ORDYNE:
+			switch(offset)
+			{
+			case 2: return 0x1001;
+			case 3: return 0x1;
+			case 4: return 0x110;
+			case 5: return 0x10;
+			case 6: return 0xB0;
+			case 7: return 0xB0;
+			}
+        break;
+
+        case NAMCOS2_STEEL_GUNNER_2:
+			switch( offset )
+			{
+				case 4: return 0x15a;
+			}
+	        break;
+
+        case NAMCOS2_MIRAI_NINJA:
+			switch(offset)
+			{
+			case 7: return 0xB1;
+			}
+        break;
+        case NAMCOS2_PHELIOS:
+			switch(offset)
+			{
+			case 0: return 0xF0;
+			case 1: return 0xFF0;
+			case 2: return 0xB2;
+			case 3: return 0xB2;
+			case 4: return 0xF;
+			case 5: return 0xF00F;
+			case 7: return 0xB2;
+			}
+        break;
+        case NAMCOS2_DIRT_FOX_JP:
+			switch(offset)
+			{
+			case 1: return 0xB4;
+			}
+        break;
+        case NAMCOS2_FINEST_HOUR:
+			switch(offset)
+			{
+			case 7: return 0xBC;
+			}
+        break;
+        case NAMCOS2_BURNING_FORCE:
+			switch(offset)
+			{
+			case 1: return 0xBD;
+			case 7: return 0xBD;
+			}
+        break;
+        case NAMCOS2_MARVEL_LAND:
+			switch(offset)
+			{
+			case 0: return 0x10;
+			case 1: return 0x110;
+			case 4: return 0xBE;
+			case 6: return 0x1001;
+			case 7: return (sendval==1)?0xBE:1;
+			}
+        break;
+        case NAMCOS2_DRAGON_SABER:
+			switch(offset)
+			{
+			case 2: return 0xC0;
+			}
+        break;
+        case NAMCOS2_ROLLING_THUNDER_2:
+			switch(offset)
+			{
+			case 4:
+			if (sendval == 1) {
+			        return 0x13F;
+			        sendval = 0;
+			}
+			break;
+			case 7:
+			if (sendval == 1) {
+			        return 0x13F;
+			        sendval = 0;
+			}
+			break;
+			case 2: return 0;
+			}
+        break;
+        case NAMCOS2_COSMO_GANG:
+			switch(offset)
+			{
+			case 3: return 0x14A;
+			}
+        break;
+        case NAMCOS2_SUPER_WSTADIUM_92:
+			switch(offset)
+			{
+			case 3: return 0x14B;
+			}
+        break;
+        case NAMCOS2_SUPER_WSTADIUM_92T:
+			switch(offset)
+			{
+			case 3: return 0x14C;
+			}
+        break;
+        case NAMCOS2_SUPER_WSTADIUM_93:
+			switch(offset)
+			{
+			case 3: return 0x14E;
+			}
+        break;
+        case NAMCOS2_SUZUKA_8_HOURS_2:
+			switch(offset)
+			{
+			case 3: return 0x14D;
+			case 2: return 0;
+			}
+        break;
+        case NAMCOS2_GOLLY_GHOST:
+        	switch(offset)
+        	{
+			case 0: return 2;
+			case 1: return 2;
+			case 2: return 0;
+			case 4: return 0x143;
+			}
+        break;
+        }
+		return rand()&0xffff;
 }
 
 WRITE16_HANDLER( namcos2_68k_key_w )
 {
-//logerror("%06x: key_w 0xd0000%x = %04x\n",activecpu_get_pc(),2*offset,data);
-	COMBINE_DATA(&namcos2_68k_key[offset]);
+//    logerror("%06x: key_w 0xd0000%x %x\n",activecpu_get_pc(),2*offset,data);
+    if ((namcos2_gametype == NAMCOS2_MARVEL_LAND) && (offset == 5)) {
+        if (data == 0x615E)
+            sendval = 1;
+    }
+    if ((namcos2_gametype == NAMCOS2_ROLLING_THUNDER_2) && (offset == 4)) {
+        if (data == 0x13EC)
+            sendval = 1;
+    }
+    if ((namcos2_gametype == NAMCOS2_ROLLING_THUNDER_2) && (offset == 7)) {
+        if (data == 0x13EC)
+            sendval = 1;
+    }
+    if ((namcos2_gametype == NAMCOS2_MARVEL_LAND) && (offset == 6)) {
+        if (data == 0x1001)
+            sendval = 0;
+    }
 }
-
-
-
-/**************************************************************/
-/*															  */
-/*	Final Lap 1/2/3 Roadway generator function handlers 	  */
-/*															  */
-/**************************************************************/
-
-data16_t *namcos2_68k_roadtile_ram=NULL;
-data16_t *namcos2_68k_roadgfx_ram=NULL;
-size_t namcos2_68k_roadtile_ram_size;
-size_t namcos2_68k_roadgfx_ram_size;
-
-WRITE16_HANDLER( namcos2_68k_roadtile_ram_w ){
-	COMBINE_DATA( &namcos2_68k_roadtile_ram[offset] );
-}
-
-READ16_HANDLER( namcos2_68k_roadtile_ram_r ){
-	return namcos2_68k_roadtile_ram[offset];
-}
-
-WRITE16_HANDLER( namcos2_68k_roadgfx_ram_w ){
-	COMBINE_DATA( &namcos2_68k_roadgfx_ram[offset] );
-}
-
-READ16_HANDLER( namcos2_68k_roadgfx_ram_r ){
-	return namcos2_68k_roadgfx_ram[offset];
-}
-
-WRITE16_HANDLER( namcos2_68k_road_ctrl_w ){
-}
-
-READ16_HANDLER( namcos2_68k_road_ctrl_r ){
-	return 0;
-}
-
 
 /*************************************************************/
 /* 68000 Interrupt/IO Handlers - CUSTOM 148 - NOT SHARED	 */
@@ -491,11 +583,12 @@ WRITE_HANDLER( namcos2_mcu_analog_ctrl_w )
 #if 0
 		/* Perform the offset handling on the input port */
 		/* this converts it to a twos complement number */
-		if ((namcos2_gametype==NAMCOS2_DIRT_FOX) ||
-			(namcos2_gametype==NAMCOS2_DIRT_FOX_JP))
-		namcos2_mcu_analog_data^=0x80;
+		if( namcos2_gametype==NAMCOS2_DIRT_FOX ||
+			namcos2_gametype==NAMCOS2_DIRT_FOX_JP )
+		{
+			namcos2_mcu_analog_data^=0x80;
+		}
 #endif
-
 		/* If the interrupt enable bit is set trigger an A/D IRQ */
 		if(data&0x20)
 		{

@@ -2582,12 +2582,14 @@ void init_analog_seq()
 					case IPT_DIAL:
 					case IPT_PADDLE:
 					case IPT_TRACKBALL_X:
+					case IPT_LIGHTGUN_X:
 					case IPT_AD_STICK_X:
 						axis = X_AXIS;
 						break;
 					case IPT_DIAL_V:
 					case IPT_PADDLE_V:
 					case IPT_TRACKBALL_Y:
+					case IPT_LIGHTGUN_Y:
 					case IPT_AD_STICK_Y:
 						axis = Y_AXIS;
 						break;

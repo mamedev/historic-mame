@@ -109,6 +109,11 @@ a400      sound port 2
 a800      sound port 3
 ac00      sound port 4
 
+Note:
+idsoccer seems to run on a modified version of this board which allows for
+more sprite tiles, it also has a MSM5205 chip for sample playback, this is
+not currently hooked up
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -170,6 +175,36 @@ static MEMORY_WRITE_START( dorunrun_writemem )
 	{ 0xa800, 0xa800, watchdog_reset_w },
 MEMORY_END
 
+/* what is this really, sound related? */
+static READ_HANDLER(idsoccer_c000_r)
+{
+	static int i = 0x00;
+	i ^= 0x80; return i;
+}
+
+static MEMORY_READ_START( idsoccer_readmem )
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x4000, 0x59ff, MRA_RAM },
+	{ 0x6000, 0x9fff, MRA_ROM },
+	{ 0xa000, 0xa008, docastle_shared0_r },
+	{ 0xb800, 0xbbff, videoram_r },
+	{ 0xbc00, 0xbfff, colorram_r },
+	{ 0xc000, 0xc000, idsoccer_c000_r }, /* ?? */
+MEMORY_END
+
+static MEMORY_WRITE_START( idsoccer_writemem )
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x4000, 0x57ff, MWA_RAM },
+	{ 0x5800, 0x59ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x6000, 0x9fff, MWA_ROM },
+	{ 0xa000, 0xa008, docastle_shared1_w },
+	{ 0xa800, 0xa800, watchdog_reset_w },
+	{ 0xb000, 0xb3ff, videoram_w, &videoram, &videoram_size },
+	{ 0xb400, 0xb7ff, colorram_w, &colorram },
+	{ 0xc000, 0xc000, MWA_NOP }, /* ?? */
+	{ 0xe000, 0xe000, docastle_nmitrigger_w },
+MEMORY_END
+
 static MEMORY_READ_START( docastle_readmem2 )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
@@ -198,6 +233,24 @@ static MEMORY_WRITE_START( docastle_writemem2 )
 	{ 0xec00, 0xec00, SN76496_3_w },
 	{ 0xc004, 0xc004, docastle_flipscreen_off_w },
 	{ 0xc084, 0xc084, docastle_flipscreen_on_w },
+MEMORY_END
+
+static MEMORY_READ_START( idsoccer_readmem2 )
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x8000, 0x87ff, MRA_RAM },
+	{ 0xa000, 0xa008, docastle_shared1_r },
+	{ 0xc003, 0xc003, input_port_0_r },
+	{ 0xc083, 0xc083, input_port_0_r },
+	{ 0xc005, 0xc005, input_port_1_r },
+	{ 0xc085, 0xc085, input_port_1_r },
+	{ 0xc007, 0xc007, input_port_2_r },
+	{ 0xc087, 0xc087, input_port_2_r },
+	{ 0xc002, 0xc002, input_port_3_r },
+	{ 0xc082, 0xc082, input_port_3_r },
+	{ 0xc001, 0xc001, input_port_4_r },
+	{ 0xc081, 0xc081, input_port_4_r },
+	{ 0xc004, 0xc004, input_port_5_r },
+	{ 0xc084, 0xc084, input_port_5_r },
 MEMORY_END
 
 static MEMORY_READ_START( docastle_readmem3 )
@@ -580,29 +633,103 @@ INPUT_PORTS_START( kickridr )
 	COINAGE_PORT
 INPUT_PORTS_END
 
+INPUT_PORTS_START( idsoccer )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN | IPF_8WAY | IPF_PLAYER2 )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as test */
+/* coin input must be active for 32 frames to be consistently recognized */
+	PORT_BIT_IMPULSE( 0x04, IP_ACTIVE_LOW, IPT_COIN3, 32 )
+	PORT_DIPNAME( 0x08, 0x08, "Freeze" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as not used */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as not used */
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	COINAGE_PORT
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN | IPF_8WAY | IPF_PLAYER2 )
+INPUT_PORTS_END
+
 
 
 static struct GfxLayout charlayout =
 {
-	8,8,    /* 8*8 characters */
-	512,    /* 512 characters */
-	4,      /* 4 bits per pixel */
-	{ 0, 1, 2, 3 }, /* the bitplanes are packed in one nibble */
+	8,8,
+	RGN_FRAC(1,1),
+	4,
+	{ 0, 1, 2, 3 },
 	{ 0, 4, 8, 12, 16, 20, 24, 28 },
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
-	32*8   /* every char takes 32 consecutive bytes */
+	32*8
 };
 static struct GfxLayout spritelayout =
 {
-	16,16,  /* 16*16 sprites */
-	256,    /* 256 sprites */
-	4,      /* 4 bits per pixel */
-	{ 0, 1, 2, 3 }, /* the bitplanes are packed in one nibble */
+	16,16,
+	RGN_FRAC(1,1),
+	4,
+	{ 0, 1, 2, 3 },
 	{ 0, 4, 8, 12, 16, 20, 24, 28,
 			32, 36, 40, 44, 48, 52, 56, 60 },
 	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64,
 			8*64, 9*64, 10*64, 11*64, 12*64, 13*64, 14*64, 15*64 },
-	128*8  /* every sprite takes 128 consecutive bytes */
+	128*8
 };
 
 
@@ -689,6 +816,40 @@ static MACHINE_DRIVER_START( dorunrun )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( idsoccer )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(idsoccer_readmem,idsoccer_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(idsoccer_readmem2,docastle_writemem2)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,8)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(docastle_readmem3,docastle_writemem3)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(258)
+	MDRV_COLORTABLE_LENGTH(64*16+2*32*16)
+
+	MDRV_PALETTE_INIT(dorunrun)
+	MDRV_VIDEO_START(docastle)
+	MDRV_VIDEO_UPDATE(docastle)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	/* also an MSM5205 */
 MACHINE_DRIVER_END
 
 
@@ -959,6 +1120,36 @@ ROM_START( kickridr )
 	ROM_LOAD( "kickridr.clr", 0x0000, 0x0100, 0x73ec281c )
 ROM_END
 
+ROM_START( idsoccer )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "id01",           0x0000, 0x2000, 0xf1c3bf09  )
+	ROM_LOAD( "id02",           0x2000, 0x2000, 0x184e6af0  )
+	ROM_LOAD( "id03",           0x6000, 0x2000, 0x22524661  )
+	ROM_LOAD( "id04",           0x8000, 0x2000, 0xe8cd95fd  )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "id10",           0x0000, 0x4000, 0x6c8b2037 )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )
+	ROM_LOAD( "id_8p",          0x0000, 0x0200, 0x2747ca77 )
+
+	ROM_REGION( 0x8000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "id05",          0x0000, 0x4000, 0xa57c7a11 )
+
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "id06",           0x00000, 0x8000, 0xb42a6f4a )
+	ROM_LOAD( "id07",           0x08000, 0x8000, 0xfa2b1c77 )
+	ROM_LOAD( "id08",           0x10000, 0x8000, 0x5e97eab9 )
+	ROM_LOAD( "id09",           0x18000, 0x8000, 0xa2a69223 )
+
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 )
+	ROM_LOAD( "is1",            0x0000, 0x4000, 0x9eb76196 )
+	ROM_LOAD( "is3",            0x8000, 0x4000, 0x27bebba3 )
+	ROM_LOAD( "is4",            0xc000, 0x4000, 0xdd5ffaa2 )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	ROM_LOAD( "id_3d.clr",   0x0000, 0x0200, 0xa433ff62 )
+ROM_END
 
 
 GAME( 1983, docastle, 0,        docastle, docastle, 0, ROT270, "Universal", "Mr. Do's Castle (set 1)" )
@@ -971,3 +1162,4 @@ GAME( 1987, spiero,   dorunrun, dorunrun, dorunrun, 0, ROT0,   "Universal", "Sup
 GAME( 1984, dowild,   0,        dorunrun, dowild,   0, ROT0,   "Universal", "Mr. Do's Wild Ride" )
 GAME( 1984, jjack,    0,        dorunrun, jjack,    0, ROT270, "Universal", "Jumping Jack" )
 GAME( 1984, kickridr, 0,        dorunrun, kickridr, 0, ROT0,   "Universal", "Kick Rider" )
+GAMEX(1985, idsoccer, 0,        idsoccer, idsoccer, 0, ROT0,   "Universal", "Indoor Soccer", GAME_IMPERFECT_SOUND )

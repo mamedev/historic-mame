@@ -466,6 +466,24 @@ static unsigned mixer_channel_resample_8_pan(struct mixer_channel_data *channel,
 {
 	unsigned count;
 
+#ifdef MMSND
+	if( mmsnd_stereomono ){
+	  /**** all sound mono mode ****/
+	  /* save */
+	  unsigned save_pivot = channel->pivot;
+	  unsigned save_frac = channel->frac;
+	  INT8* save_src = *src;
+	  count = mixer_channel_resample_8(channel, channel->left, volume[0], left_accum, dst_len, src, src_len);
+	  /* restore */
+	  channel->pivot = save_pivot;
+	  channel->frac = save_frac;
+	  *src = save_src;
+	  mixer_channel_resample_8(channel, channel->right, volume[1], right_accum, dst_len, src, src_len);
+	  channel->samples_available += count;
+	  return count;
+	}
+#endif
+
 	if (!is_stereo || channel->pan == MIXER_PAN_LEFT) {
 		count = mixer_channel_resample_8(channel, channel->left, volume[0], left_accum, dst_len, src, src_len);
 	} else if (channel->pan == MIXER_PAN_RIGHT) {
@@ -491,6 +509,24 @@ static unsigned mixer_channel_resample_8_pan(struct mixer_channel_data *channel,
 static unsigned mixer_channel_resample_16_pan(struct mixer_channel_data *channel, int* volume, unsigned dst_len, INT16** src, unsigned src_len)
 {
 	unsigned count;
+
+#ifdef MMSND
+	if( mmsnd_stereomono ){
+	  /**** all sound mono mode ****/
+	  /* save */
+	  unsigned save_pivot = channel->pivot;
+	  unsigned save_frac = channel->frac;
+	  INT16* save_src = *src;
+	  count = mixer_channel_resample_16(channel, channel->left, volume[0], left_accum, dst_len, src, src_len);
+	  /* restore */
+	  channel->pivot = save_pivot;
+	  channel->frac = save_frac;
+	  *src = save_src;
+	  mixer_channel_resample_16(channel, channel->right, volume[1], right_accum, dst_len, src, src_len);
+	  channel->samples_available += count;
+	  return count;
+	}
+#endif
 
 	if (!is_stereo || channel->pan == MIXER_PAN_LEFT) {
 		count = mixer_channel_resample_16(channel, channel->left, volume[0], left_accum, dst_len, src, src_len);
@@ -750,6 +786,10 @@ void mixer_sh_update(void)
 
 	profiler_mark(PROFILER_MIXER);
 
+#ifdef MMSND
+	WaveDataOutStart();
+#endif
+
 	/* update all channels (for streams this is a no-op) */
 	for (i = 0, channel = mixer_channel; i < first_free_channel; i++, channel++)
 	{
@@ -824,6 +864,9 @@ void mixer_sh_update(void)
 	}
 
 	/* play the result */
+#ifdef MMSND
+	WaveDataOutEnd( mix_buffer, samples_this_frame, is_stereo );
+#endif
 	samples_this_frame = osd_update_audio_stream(mix_buffer);
 
 	accum_base = accum_pos;

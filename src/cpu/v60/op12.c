@@ -581,7 +581,7 @@ UINT32 opDIVW(void) /* TRUSTED */
 
 UINT32 opDIVX(void)
 {
-	INT32 a,b;
+	UINT32 a,b;
 	INT64 dv;
 
 	F12DecodeOperands(ReadAM,2,ReadAMAddress,3);
@@ -597,10 +597,10 @@ UINT32 opDIVX(void)
 		b=MemRead32(f12Op2+4);
 	}
 
-	dv = (INT64)(((INT64)b<<32) | (UINT64)a);
+	dv = ((UINT64)b<<32) | ((UINT64)a);
 
-	a = (INT32)(dv / (INT64)(*(INT32*)&f12Op1));
-	b = (INT32)(dv % (INT64)(*(INT32*)&f12Op1));
+	a = dv / (INT64)(*(INT32*)&f12Op1);
+	b = dv % (INT64)(*(INT32*)&f12Op1);
 
 	_S = ((a & 0x80000000)!=0);
 	_Z = (a == 0);

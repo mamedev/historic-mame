@@ -65,10 +65,12 @@ To Do:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "cpu/tms32010/tms32010.h"
 #include "toaplan1.h"
 
 
 
+/* 68000 memory maps */
 static MEMORY_READ16_START( rallybik_readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM },
 	{ 0x080000, 0x083fff, MRA16_RAM },
@@ -81,6 +83,7 @@ static MEMORY_READ16_START( rallybik_readmem )
 	{ 0x146000, 0x1467ff, toaplan1_colorram2_r },
 	{ 0x180000, 0x180fff, toaplan1_shared_r },
 MEMORY_END
+
 static MEMORY_WRITE16_START( rallybik_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x080000, 0x083fff, MWA16_RAM },
@@ -90,7 +93,7 @@ static MEMORY_WRITE16_START( rallybik_writemem )
 	{ 0x100004, 0x100007, toaplan1_tileram16_w },
 	{ 0x100010, 0x10001f, toaplan1_scroll_regs_w },
 //	{ 0x140000, 0x140001, ?? video frame related ??  },
-	{ 0x140002, 0x140003, toaplan1_int_enable_w },
+	{ 0x140002, 0x140003, toaplan1_intenable_w },
 	{ 0x140008, 0x14000f, toaplan1_bcu_control_w },
 	{ 0x144000, 0x1447ff, toaplan1_colorram1_w, &toaplan1_colorram1, &toaplan1_colorram1_size },
 	{ 0x146000, 0x1467ff, toaplan1_colorram2_w, &toaplan1_colorram2, &toaplan1_colorram2_size },
@@ -114,6 +117,7 @@ static MEMORY_READ16_START( truxton_readmem )
 	{ 0x146000, 0x1467ff, toaplan1_colorram2_r },
 	{ 0x180000, 0x180fff, toaplan1_shared_r },
 MEMORY_END
+
 static MEMORY_WRITE16_START( truxton_writemem )
 	{ 0x000000, 0x03ffff, MWA16_ROM },
 	{ 0x080000, 0x083fff, MWA16_RAM },
@@ -125,7 +129,7 @@ static MEMORY_WRITE16_START( truxton_writemem )
 	{ 0x100004, 0x100007, toaplan1_tileram16_w },
 	{ 0x100010, 0x10001f, toaplan1_scroll_regs_w },
 //	{ 0x140000, 0x140001, ?? video frame related ??  },
-	{ 0x140002, 0x140003, toaplan1_int_enable_w },
+	{ 0x140002, 0x140003, toaplan1_intenable_w },
 	{ 0x140008, 0x14000f, toaplan1_bcu_control_w },
 	{ 0x144000, 0x1447ff, toaplan1_colorram1_w, &toaplan1_colorram1, &toaplan1_colorram1_size },
 	{ 0x146000, 0x1467ff, toaplan1_colorram2_w, &toaplan1_colorram2, &toaplan1_colorram2_size },
@@ -150,11 +154,12 @@ static MEMORY_READ16_START( hellfire_readmem )
 	{ 0x140004, 0x140005, toaplan1_spriteram16_r },
 	{ 0x140006, 0x140007, toaplan1_spritesizeram16_r },
 MEMORY_END
+
 static MEMORY_WRITE16_START( hellfire_writemem )
 	{ 0x000000, 0x03ffff, MWA16_ROM },
 	{ 0x040000, 0x047fff, MWA16_RAM },
 /*	{ 0x080000, 0x080001, ?? video frame related ??  },	*/
-	{ 0x080002, 0x080003, toaplan1_int_enable_w },
+	{ 0x080002, 0x080003, toaplan1_intenable_w },
 	{ 0x080008, 0x08000f, toaplan1_bcu_control_w },
 	{ 0x084000, 0x0847ff, toaplan1_colorram1_w, &toaplan1_colorram1, &toaplan1_colorram1_size },
 	{ 0x086000, 0x0867ff, toaplan1_colorram2_w, &toaplan1_colorram2, &toaplan1_colorram2_size },
@@ -186,13 +191,14 @@ static MEMORY_READ16_START( zerowing_readmem )
 	{ 0x4c0004, 0x4c0005, toaplan1_spriteram16_r },
 	{ 0x4c0006, 0x4c0007, toaplan1_spritesizeram16_r },
 MEMORY_END
+
 static MEMORY_WRITE16_START( zerowing_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x080000, 0x087fff, MWA16_RAM },
 	{ 0x0c0000, 0x0c0003, toaplan1_tile_offsets_w },
 	{ 0x0c0006, 0x0c0007, toaplan1_fcu_flipscreen_w },
 /*	{ 0x400000, 0x400001, ?? video frame related ??  },	*/
-	{ 0x400002, 0x400003, toaplan1_int_enable_w },
+	{ 0x400002, 0x400003, toaplan1_intenable_w },
 	{ 0x400008, 0x40000f, toaplan1_bcu_control_w },
 	{ 0x404000, 0x4047ff, toaplan1_colorram1_w, &toaplan1_colorram1, &toaplan1_colorram1_size },
 	{ 0x406000, 0x4067ff, toaplan1_colorram2_w, &toaplan1_colorram2, &toaplan1_colorram2_size },
@@ -221,10 +227,11 @@ static MEMORY_READ16_START( demonwld_readmem )
 	{ 0xa00006, 0xa00007, toaplan1_spritesizeram16_r },
 	{ 0xc00000, 0xc03fff, MRA16_RAM},
 MEMORY_END
+
 static MEMORY_WRITE16_START( demonwld_writemem )
 	{ 0x000000, 0x03ffff, MWA16_ROM },
 /*	{ 0x400000, 0x400001, ?? video frame related ??  },	*/
-	{ 0x400002, 0x400003, toaplan1_int_enable_w },
+	{ 0x400002, 0x400003, toaplan1_intenable_w },
 	{ 0x400008, 0x40000f, toaplan1_bcu_control_w },
 	{ 0x404000, 0x4047ff, toaplan1_colorram1_w, &toaplan1_colorram1, &toaplan1_colorram1_size },
 	{ 0x406000, 0x4067ff, toaplan1_colorram2_w, &toaplan1_colorram2, &toaplan1_colorram2_size },
@@ -264,6 +271,7 @@ static MEMORY_READ16_START( samesame_readmem )
 	{ 0x1c0004, 0x1c0005, toaplan1_spriteram16_r },
 	{ 0x1c0006, 0x1c0007, toaplan1_spritesizeram16_r },
 MEMORY_END
+
 static MEMORY_WRITE16_START( samesame_writemem )
 	{ 0x000000, 0x00ffff, MWA16_ROM },
 	{ 0x040000, 0x07ffff, MWA16_ROM },
@@ -271,7 +279,7 @@ static MEMORY_WRITE16_START( samesame_writemem )
 	{ 0x080006, 0x080007, toaplan1_fcu_flipscreen_w },
 	{ 0x0c0000, 0x0c3fff, MWA16_RAM },			/* Frame done at $c1ada */
 /*	{ 0x100000, 0x100001, ?? video frame related ??  },	*/
-	{ 0x100002, 0x100003, toaplan1_int_enable_w },
+	{ 0x100002, 0x100003, toaplan1_intenable_w },
 	{ 0x100008, 0x10000f, toaplan1_bcu_control_w },
 	{ 0x104000, 0x1047ff, toaplan1_colorram1_w, &toaplan1_colorram1, &toaplan1_colorram1_size },
 	{ 0x106000, 0x1067ff, toaplan1_colorram2_w, &toaplan1_colorram2, &toaplan1_colorram2_size },
@@ -302,6 +310,7 @@ static MEMORY_READ16_START( outzone_readmem )
 	{ 0x304000, 0x3047ff, toaplan1_colorram1_r },
 	{ 0x306000, 0x3067ff, toaplan1_colorram2_r },
 MEMORY_END
+
 static MEMORY_WRITE16_START( outzone_writemem )
 	{ 0x000000, 0x03ffff, MWA16_ROM },
 	{ 0x100002, 0x100003, toaplan1_spriteram_offs_w },
@@ -314,7 +323,7 @@ static MEMORY_WRITE16_START( outzone_writemem )
 	{ 0x200010, 0x20001f, toaplan1_scroll_regs_w },
 	{ 0x240000, 0x243fff, MWA16_RAM },
 /*	{ 0x300000, 0x300001, ?? video frame related ??  },	*/
-	{ 0x300002, 0x300003, toaplan1_int_enable_w },
+	{ 0x300002, 0x300003, toaplan1_intenable_w },
 	{ 0x300008, 0x30000f, toaplan1_bcu_control_w },
 	{ 0x304000, 0x3047ff, toaplan1_colorram1_w, &toaplan1_colorram1, &toaplan1_colorram1_size },
 	{ 0x306000, 0x3067ff, toaplan1_colorram2_w, &toaplan1_colorram2, &toaplan1_colorram2_size },
@@ -343,6 +352,7 @@ static MEMORY_READ16_START( vimana_readmem )
 	{ 0x4c0004, 0x4c0007, toaplan1_tileram16_r },
 	{ 0x4c0010, 0x4c001f, toaplan1_scroll_regs_r },
 MEMORY_END
+
 static MEMORY_WRITE16_START( vimana_writemem )
 	{ 0x000000, 0x03ffff, MWA16_ROM },
 	{ 0x080000, 0x080003, toaplan1_tile_offsets_w },
@@ -351,7 +361,7 @@ static MEMORY_WRITE16_START( vimana_writemem )
 	{ 0x0c0004, 0x0c0005, toaplan1_spriteram16_w },
 	{ 0x0c0006, 0x0c0007, toaplan1_spritesizeram16_w },
 /*	{ 0x400000, 0x400001, ?? video frame related ??  },	*/
-	{ 0x400002, 0x400003, toaplan1_int_enable_w },
+	{ 0x400002, 0x400003, toaplan1_intenable_w },
 	{ 0x400008, 0x40000f, toaplan1_bcu_control_w },
 	{ 0x404000, 0x4047ff, toaplan1_colorram1_w, &toaplan1_colorram1, &toaplan1_colorram1_size },
 	{ 0x406000, 0x4067ff, toaplan1_colorram2_w, &toaplan1_colorram2, &toaplan1_colorram2_size },
@@ -365,10 +375,12 @@ MEMORY_END
 
 
 
+/* Z80 memory/port maps */
 static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xffff, MRA_RAM },
 MEMORY_END
+
 static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0xffff, MWA_RAM, &toaplan1_sharedram },
@@ -384,11 +396,13 @@ static PORT_READ_START( truxton_sound_readport )
 	{ 0x60, 0x60, YM3812_status_port_0_r },
 	{ 0x70, 0x70, input_port_6_r },	/* Territory Jumper Block for Truxton */
 PORT_END
+
 static PORT_WRITE_START( truxton_sound_writeport )
 	{ 0x30, 0x30, toaplan1_coin_w },	/* Coin counter/lockout */
 	{ 0x60, 0x60, YM3812_control_port_0_w },
 	{ 0x61, 0x61, YM3812_write_port_0_w },
 PORT_END
+
 static PORT_WRITE_START( rallybik_sound_writeport )
 	{ 0x30, 0x30, rallybik_coin_w },	/* Coin counter/lockout */
 	{ 0x60, 0x60, YM3812_control_port_0_w },
@@ -404,6 +418,7 @@ static PORT_READ_START( hellfire_sound_readport )
 	{ 0x60, 0x60, input_port_5_r },	/* Coin/Start inputs */
 	{ 0x70, 0x70, YM3812_status_port_0_r },
 PORT_END
+
 static PORT_WRITE_START( hellfire_sound_writeport )
 	{ 0x30, 0x30, toaplan1_coin_w },	/* Coin counter/lockout */
 	{ 0x70, 0x70, YM3812_control_port_0_w },
@@ -419,6 +434,7 @@ static PORT_READ_START( zerowing_sound_readport )
 	{ 0x88, 0x88, input_port_6_r },	/* Territory Jumper Block */
 	{ 0xa8, 0xa8, YM3812_status_port_0_r },
 PORT_END
+
 static PORT_WRITE_START( zerowing_sound_writeport )
 	{ 0xa0, 0xa0, toaplan1_coin_w },	/* Coin counter/lockout */
 	{ 0xa8, 0xa8, YM3812_control_port_0_w },
@@ -434,6 +450,7 @@ static PORT_READ_START( demonwld_sound_readport )
 	{ 0xc0, 0xc0, input_port_2_r },
 	{ 0xe0, 0xe0, input_port_3_r },
 PORT_END
+
 static PORT_WRITE_START( demonwld_sound_writeport )
 	{ 0x00, 0x00, YM3812_control_port_0_w },
 	{ 0x01, 0x01, YM3812_write_port_0_w },
@@ -449,30 +466,35 @@ static PORT_READ_START( outzone_sound_readport )
 	{ 0x1c, 0x1c, input_port_6_r },
 	{ 0x00, 0x00, YM3812_status_port_0_r },
 PORT_END
+
 static PORT_WRITE_START( outzone_sound_writeport )
 	{ 0x00, 0x00, YM3812_control_port_0_w },
 	{ 0x01, 0x01, YM3812_write_port_0_w },
 	{ 0x04, 0x04, toaplan1_coin_w },	/* Coin counter/lockout */
 PORT_END
 
+
+/* TMS32010 memory/port maps */
 static MEMORY_READ16_START( DSP_readmem )
-	{ 0x0000, 0x011f, MRA16_RAM },	/* 90h words internal RAM */
-	{ 0x8000, 0x8fff, MRA16_ROM },	/* 800h words. The real DSPs ROM is at */
+	{ TMS32010_DATA_ADDR_RANGE(0x000, 0x08f), MRA16_RAM },	/* 90h words internal RAM */
+	{ TMS32010_PGM_ADDR_RANGE(0x000, 0x7ff), MRA16_ROM },	/* 800h words. The real DSPs ROM is at */
 									/* address 0 */
 									/* View it at 8000h in the debugger */
 MEMORY_END
 
 static MEMORY_WRITE16_START( DSP_writemem )
-	{ 0x0000, 0x011f, MWA16_RAM },
-	{ 0x8000, 0x8fff, MWA16_ROM },
+	{ TMS32010_DATA_ADDR_RANGE(0x000, 0x08f), MWA16_RAM },
+	{ TMS32010_PGM_ADDR_RANGE(0x000, 0x7ff), MWA16_ROM },
 MEMORY_END
 
+
 static PORT_READ16_START( DSP_readport )
-	{ 0x02, 0x03, demonwld_dsp_r },
+	{ TMS32010_PORT_RANGE(1, 1),  demonwld_dsp_r },
+	{ TMS32010_BIO, TMS32010_BIO, demonwld_BIO_r },
 PORT_END
 
 static PORT_WRITE16_START( DSP_writeport )
-	{ 0x00, 0x07, demonwld_dsp_w },
+	{ TMS32010_PORT_RANGE(0, 3), demonwld_dsp_w },
 PORT_END
 
 
@@ -1694,7 +1716,7 @@ static MACHINE_DRIVER_START( demonwld )
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 	MDRV_CPU_PORTS(demonwld_sound_readport,demonwld_sound_writeport)
 
-	MDRV_CPU_ADD(TMS320C10,28000000/8)		/* 3.5 MHz */
+	MDRV_CPU_ADD(TMS32010,28000000/2)	/* 14MHz CLKin */
 	MDRV_CPU_MEMORY(DSP_readmem,DSP_writemem)
 	MDRV_CPU_PORTS(DSP_readport,DSP_writeport)
 
@@ -1873,8 +1895,8 @@ ROM_END
 
 ROM_START( hellfire )
 	ROM_REGION( 0x040000, REGION_CPU1, 0 )	/* Main 68K code */
-	ROM_LOAD16_BYTE( "b90_14.0",    0x000000, 0x20000, 0x101df9f5 )
-	ROM_LOAD16_BYTE( "b90_15.1",    0x000001, 0x20000, 0xe67fd452 )
+	ROM_LOAD16_BYTE( "b90_14.0",   0x000000, 0x20000, 0x101df9f5 )
+	ROM_LOAD16_BYTE( "b90_15.1",   0x000001, 0x20000, 0xe67fd452 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound Z80 code */
 	ROM_LOAD( "b90_03.2",   0x0000, 0x8000, 0x4058fa67 )

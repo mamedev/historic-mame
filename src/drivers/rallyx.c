@@ -234,6 +234,52 @@ INPUT_PORTS_START( nrallyx )
 	PORT_DIPSETTING(	0x00, DEF_STR( Free_Play ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( nrallyv )
+	PORT_START		/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN |IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START		/* IN1 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START		/* DSW0 */
+	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
+	/* TODO: the bonus score depends on the number of lives */
+	PORT_DIPNAME( 0x06, 0x02, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(	0x02, "A" )
+	PORT_DIPSETTING(	0x04, "B" )
+	PORT_DIPSETTING(	0x06, "C" )
+	PORT_DIPSETTING(	0x00, "None" )
+	PORT_DIPNAME( 0x38, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(	0x10, "1 Car, Medium" )
+	PORT_DIPSETTING(	0x28, "1 Car, Hard" )
+	PORT_DIPSETTING(	0x18, "2 Cars, Medium" )
+	PORT_DIPSETTING(	0x30, "2 Cars, Hard" )
+	PORT_DIPSETTING(	0x00, "3 Cars, Easy" )
+	PORT_DIPSETTING(	0x20, "3 Cars, Medium" )
+	PORT_DIPSETTING(	0x38, "3 Cars, Hard" )
+	PORT_DIPSETTING(	0x08, "4 Cars, Easy" )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0xc0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Free_Play ) )
+INPUT_PORTS_END
 
 
 static struct GfxLayout charlayout =
@@ -408,9 +454,30 @@ ROM_START( nrallyx )
 	ROM_LOAD( "im5623.2m",    0x0100, 0x0100, 0x77245b66 )  /* timing - not used */
 ROM_END
 
+ROM_START( nrallyv )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "nrallyx.1b",   0x0000, 0x1000, 0x9404c8d6 )
+	ROM_LOAD( "nrallyx.1e",   0x1000, 0x1000, 0xac01bf3f )
+	ROM_LOAD( "nrallyx.1h",   0x2000, 0x1000, 0xaeba29b5 )
+	ROM_LOAD( "nrallyx.1k",   0x3000, 0x1000, 0x78f17da7 )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "nrallyv.8e",   0x0000, 0x1000, 0x031acfc5 )
+
+	ROM_REGION( 0x0100, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "im5623.8m",    0x0000, 0x0100, 0x3c16f62c )    /* dots */
+
+	ROM_REGION( 0x0120, REGION_PROMS, 0 )
+	ROM_LOAD( "nrallyx.pr1",  0x0000, 0x0020, 0xa0a49017 )
+	ROM_LOAD( "nrallyx.pr2",  0x0020, 0x0100, 0xb2b7ca15 )
+
+	ROM_REGION( 0x0200, REGION_SOUND1, 0 ) /* sound proms */
+	ROM_LOAD( "nrallyx.spr",  0x0000, 0x0100, 0xb75c4e87 )
+	ROM_LOAD( "im5623.2m",    0x0100, 0x0100, 0x77245b66 )  /* timing - not used */
+ROM_END
 
 
-GAME( 1980, rallyx,  0, 	 rallyx, rallyx,  0, ROT0, "Namco", "Rally X" )
-GAME( 1980, rallyxm, rallyx, rallyx, rallyx,  0, ROT0, "[Namco] (Midway license)", "Rally X (Midway)" )
-GAME( 1981, nrallyx, 0, 	 rallyx, nrallyx, 0, ROT0, "Namco", "New Rally X" )
-
+GAME( 1980, rallyx,  0,       rallyx, rallyx,  0, ROT0, "Namco", "Rally X" )
+GAME( 1980, rallyxm, rallyx,  rallyx, rallyx,  0, ROT0, "[Namco] (Midway license)", "Rally X (Midway)" )
+GAME( 1981, nrallyx, 0,       rallyx, nrallyx, 0, ROT0, "Namco", "New Rally X" )
+GAME( 1981, nrallyv, nrallyx, rallyx, nrallyv, 0, ROT90, "hack", "New Rally X (Vertical Screen)" )

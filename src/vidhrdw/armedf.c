@@ -15,6 +15,10 @@ static struct tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
 
 static int scroll_type,sprite_offy;
 
+void armedf_setgfxtype( int type )
+{
+	scroll_type = type;
+}
 
 /***************************************************************************
 
@@ -22,31 +26,34 @@ static int scroll_type,sprite_offy;
 
 ***************************************************************************/
 
-static UINT32 terraf_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
-{
-	/* logical (col,row) -> memory offset */
-	if (col < 32)
-		return 32*(31-row)+col;
-	else
-		return 32*(31-row)+(col-32)+0x800;
-}
+static UINT32 armedf_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
+{ /* col: 0..63; row: 0..31 */
+	switch( scroll_type )
+	{
+	case 1: /* armed formation */
+		return col*32+row;
 
+	case 3: /* legion */
+		return (col&0x1f)*32+row+0x400*(col/32);
 
-static void terraf_get_tx_tile_info(int tile_index)
-{
-	int attributes = terraf_text_videoram[tile_index+0x400]&0xff;
-	int tile_number = terraf_text_videoram[tile_index]&0xff;
-	SET_TILE_INFO(
-			0,
-			tile_number + 256 * (attributes & 0x3),
-			attributes >> 4,
-			0)
+	default:
+		return 32*(31-row)+(col&0x1f)+0x400*(col/32);
+	}
 }
 
 static void get_tx_tile_info(int tile_index)
 {
-	int attributes = terraf_text_videoram[tile_index+0x800]&0xff;
 	int tile_number = terraf_text_videoram[tile_index]&0xff;
+	int attributes;
+
+	if( scroll_type == 1 )
+	{
+		attributes = terraf_text_videoram[tile_index+0x800]&0xff;
+	}
+	else
+	{
+		attributes = terraf_text_videoram[tile_index+0x400]&0xff;
+	}
 	SET_TILE_INFO(
 			0,
 			tile_number + 256 * (attributes & 0x3),
@@ -83,74 +90,21 @@ static void get_bg_tile_info( int tile_index )
 
 ***************************************************************************/
 
-VIDEO_START( terraf )
-{
-	scroll_type = 0;
-	sprite_offy = 128;
-
-	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,16,16,64,32);
-	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,16,16,64,32);
-	tx_tilemap = tilemap_create(terraf_get_tx_tile_info,terraf_scan,TILEMAP_TRANSPARENT,8,8,64,32);
-
-	if (!bg_tilemap || !fg_tilemap || !tx_tilemap)
-		return 1;
-
-	tilemap_set_transparent_pen(fg_tilemap,0xf);
-	tilemap_set_transparent_pen(tx_tilemap,0xf);
-
-	tilemap_set_scrollx(tx_tilemap,0,-128);
-
-	return 0;
-}
-
-VIDEO_START( cclimbr2 )
-{
-	scroll_type = 2;
-	sprite_offy = 0;
-
-	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,16,16,64,32);
-	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,16,16,64,32);
-	tx_tilemap = tilemap_create(terraf_get_tx_tile_info,terraf_scan,TILEMAP_TRANSPARENT,8,8,64,32);
-
-	if (!bg_tilemap || !fg_tilemap || !tx_tilemap)
-		return 1;
-
-	tilemap_set_transparent_pen(fg_tilemap,0xf);
-	tilemap_set_transparent_pen(tx_tilemap,0xf);
-
-	tilemap_set_scrollx(tx_tilemap,0,-128);
-
-	return 0;
-}
-
-VIDEO_START( kodure )
-{
-	scroll_type = 2;
-	sprite_offy = 128;
-
-	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,16,16,64,32);
-	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,16,16,64,32);
-	tx_tilemap = tilemap_create(terraf_get_tx_tile_info,terraf_scan,TILEMAP_TRANSPARENT,8,8,64,32);
-
-	if (!bg_tilemap || !fg_tilemap || !tx_tilemap)
-		return 1;
-
-	tilemap_set_transparent_pen(fg_tilemap,0xf);
-	tilemap_set_transparent_pen(tx_tilemap,0xf);
-
-	tilemap_set_scrollx(tx_tilemap,0,-128);
-
-	return 0;
-}
-
 VIDEO_START( armedf )
 {
-	scroll_type = 1;
-	sprite_offy = 128;
+	if( scroll_type == 4 || /* cclimbr2 */
+		scroll_type == 3 )  /* legion */
+	{
+		sprite_offy = 0;
+	}
+	else
+	{
+		sprite_offy = 128;
+	}
 
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,16,16,64,32);
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,16,16,64,32);
-	tx_tilemap = tilemap_create(get_tx_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,64,32);
+	tx_tilemap = tilemap_create(get_tx_tile_info,armedf_scan,TILEMAP_TRANSPARENT,8,8,64,32);
 
 	if (!bg_tilemap || !fg_tilemap || !tx_tilemap)
 		return 1;
@@ -158,10 +112,13 @@ VIDEO_START( armedf )
 	tilemap_set_transparent_pen(fg_tilemap,0xf);
 	tilemap_set_transparent_pen(tx_tilemap,0xf);
 
+	if( scroll_type!=1 )
+	{
+		tilemap_set_scrollx(tx_tilemap,0,-128);
+	}
+
 	return 0;
 }
-
-
 
 /***************************************************************************
 
@@ -169,20 +126,21 @@ VIDEO_START( armedf )
 
 ***************************************************************************/
 
-WRITE16_HANDLER( terraf_text_videoram_w )
-{
-	int oldword = terraf_text_videoram[offset];
-	COMBINE_DATA(&terraf_text_videoram[offset]);
-	if (oldword != terraf_text_videoram[offset])
-		tilemap_mark_tile_dirty(tx_tilemap,offset & 0xbff);
-}
-
 WRITE16_HANDLER( armedf_text_videoram_w )
 {
 	int oldword = terraf_text_videoram[offset];
 	COMBINE_DATA(&terraf_text_videoram[offset]);
 	if (oldword != terraf_text_videoram[offset])
-		tilemap_mark_tile_dirty(tx_tilemap,offset & 0x7ff);
+	{
+		if( scroll_type == 1 )
+		{
+			tilemap_mark_tile_dirty(tx_tilemap,offset & 0x7ff);
+		}
+		else
+		{
+			tilemap_mark_tile_dirty(tx_tilemap,offset & 0xbff);
+		}
+	}
 }
 
 
@@ -299,17 +257,19 @@ VIDEO_UPDATE( armedf )
 
 	switch (scroll_type)
 	{
-		case	0:		/* terra force */
+		case 0: /* terra force */
 			tilemap_set_scrollx( fg_tilemap, 0, armedf_fg_scrolly + ((terraf_scroll_msb>>4)&3)*256 );
 			tilemap_set_scrolly( fg_tilemap, 0, armedf_fg_scrollx + ((terraf_scroll_msb)&3)*256 );
 			break;
 
-		case	1:		/* armed formation */
+		case 1: /* armed formation */
 			tilemap_set_scrollx( fg_tilemap, 0, armedf_fg_scrollx );
 			tilemap_set_scrolly( fg_tilemap, 0, armedf_fg_scrolly );
 			break;
 
-		case	2:		/* kodure ookami, crazy climber 2 */
+		case 2: /* kodure ookami */
+		case 3: /* legion */
+		case 4: /* crazy climber 2 */
 			{
 				int scrollx,scrolly;
 
@@ -323,15 +283,30 @@ VIDEO_UPDATE( armedf )
 	}
 
 	if( armedf_vreg & 0x0800 )
+	{
 		tilemap_draw( bitmap, cliprect, bg_tilemap, 0, 0);
+	}
 	else
-		fillbitmap( bitmap, Machine->pens[0], cliprect ); /* disabled bg_tilemap - all black? */
+	{
+		fillbitmap( bitmap, get_black_pen(), cliprect ); /* disabled bg_tilemap - all black? */
+	}
 
 	if( sprite_enable ) draw_sprites( bitmap, cliprect, 2 );
 	tilemap_draw( bitmap, cliprect, fg_tilemap, 0, 0);
 	if( sprite_enable ) draw_sprites( bitmap, cliprect, 1 );
 	tilemap_draw( bitmap, cliprect, tx_tilemap, 0, 0);
 	if( sprite_enable ) draw_sprites( bitmap, cliprect, 0 );
+
+	if( keyboard_pressed(KEYCODE_1 ) ||
+		keyboard_pressed(KEYCODE_2 ) )
+	{ /* HACK! wipe the text layer */
+		unsigned i;
+		for( i=0; i<0x800; i++ )
+		{
+			terraf_text_videoram[i] = 0x0;
+		}
+		tilemap_mark_all_tiles_dirty( tx_tilemap );
+	}
 }
 
 VIDEO_EOF( armedf )

@@ -53,7 +53,7 @@ static READ_HANDLER( timer_r )
 {
 	/* wrong! there should be no need for timer_rate, the same function */
 	/* should work for both games */
-	return cpu_gettotalcycles() / timer_rate;
+	return activecpu_gettotalcycles() / timer_rate;
 }
 
 

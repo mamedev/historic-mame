@@ -187,16 +187,12 @@ static WRITE16_HANDLER( rockn2_adpcmbank_w )
 
 static READ16_HANDLER( rockn_soundvolume_r )
 {
-//	return rockn_soundvolume;
 	return 0xffff;
 }
 
 static WRITE16_HANDLER( rockn_soundvolume_w )
 {
-//	if (ACCESSING_LSB)
-//	{
-		rockn_soundvolume = data;
-//	}
+	rockn_soundvolume = data;
 }
 
 /***************************************************************************
@@ -280,9 +276,7 @@ READ16_HANDLER( rocknms_main2sub_r )
 WRITE16_HANDLER( rocknms_main2sub_w )
 {
 	if (ACCESSING_LSB)
-	{
 		rocknms_main2sub = (data ^ 0xffff);
-	}
 }
 
 READ16_HANDLER( rocknms_port_0_r )
@@ -293,9 +287,7 @@ READ16_HANDLER( rocknms_port_0_r )
 WRITE16_HANDLER( rocknms_sub2main_w )
 {
 	if (ACCESSING_LSB)
-	{
 		rocknms_sub2main = (data ^ 0xffff);
-	}
 }
 
 
@@ -315,7 +307,6 @@ WRITE16_HANDLER( tetrisp2_coincounter_w )
 
 static MEMORY_READ16_START( tetrisp2_readmem )
 	{ 0x000000, 0x0fffff, MRA16_ROM				},	// ROM
-
 	{ 0x100000, 0x103fff, MRA16_RAM				},	// Object RAM
 	{ 0x104000, 0x107fff, MRA16_RAM				},	// Spare Object RAM
 	{ 0x108000, 0x10ffff, MRA16_RAM				},	// Work RAM
@@ -326,23 +317,19 @@ static MEMORY_READ16_START( tetrisp2_readmem )
 	{ 0x408000, 0x409fff, MRA16_RAM				},	// ???
 	{ 0x500000, 0x50ffff, MRA16_RAM				},	// Line
 	{ 0x600000, 0x60ffff, MRA16_RAM				},	// Rotation
-	{ 0x650000, 0x651fff, MRA16_RAM				},	// Rotation ?
-
+	{ 0x650000, 0x651fff, MRA16_RAM				},	// Rotation (mirror)
 	{ 0x800002, 0x800003, tetrisp2_sound_r		},	// Sound
-
-	{ 0x900000, 0x903fff, tetrisp2_nvram_r	},	// NVRAM
-	{ 0x904000, 0x907fff, tetrisp2_nvram_r	},	// NVRAM (mirror)
-
+	{ 0x900000, 0x903fff, tetrisp2_nvram_r	    },	// NVRAM
+	{ 0x904000, 0x907fff, tetrisp2_nvram_r	    },	// NVRAM (mirror)
 	{ 0xbe0000, 0xbe0001, MRA16_NOP				},	// INT-level1 dummy read
 	{ 0xbe0002, 0xbe0003, input_port_0_word_r	},	// Inputs
-	{ 0xbe0004, 0xbe0005, tetrisp2_ip_1_word_r	},	//
-	{ 0xbe0008, 0xbe0009, input_port_2_word_r	},	//
+	{ 0xbe0004, 0xbe0005, tetrisp2_ip_1_word_r	},	// Inputs & protection
+	{ 0xbe0008, 0xbe0009, input_port_2_word_r	},	// Inputs
 	{ 0xbe000a, 0xbe000b, watchdog_reset16_r	},	// Watchdog
 MEMORY_END
 
 static MEMORY_WRITE16_START( tetrisp2_writemem )
 	{ 0x000000, 0x0fffff, MWA16_ROM									},	// ROM
-
 	{ 0x100000, 0x103fff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Object RAM
 	{ 0x104000, 0x107fff, MWA16_RAM									},	// Spare Object RAM
 	{ 0x108000, 0x10ffff, MWA16_RAM									},	// Work RAM
@@ -353,17 +340,14 @@ static MEMORY_WRITE16_START( tetrisp2_writemem )
 	{ 0x408000, 0x409fff, MWA16_RAM									},	// ???
 	{ 0x500000, 0x50ffff, MWA16_RAM									},	// Line
 	{ 0x600000, 0x60ffff, tetrisp2_vram_rot_w, &tetrisp2_vram_rot	},	// Rotation
-	{ 0x650000, 0x651fff, tetrisp2_vram_rot_w						},	// Rotation ?
-
+	{ 0x650000, 0x651fff, tetrisp2_vram_rot_w						},	// Rotation (mirror)
 	{ 0x800000, 0x800003, tetrisp2_sound_w							},	// Sound
-
 	{ 0x900000, 0x903fff, tetrisp2_nvram_w, &tetrisp2_nvram, &tetrisp2_nvram_size	},	// NVRAM
 	{ 0x904000, 0x907fff, tetrisp2_nvram_w							},	// NVRAM (mirror)
-
 	{ 0xb00000, 0xb00001, tetrisp2_coincounter_w					},	// Coin Counter
 	{ 0xb20000, 0xb20001, MWA16_NOP									},	// ???
-	{ 0xb40000, 0xb4000b, MWA16_RAM, &tetrisp2_scroll_fg			},	// Scrolling
-	{ 0xb40010, 0xb4001b, MWA16_RAM, &tetrisp2_scroll_bg			},	//
+	{ 0xb40000, 0xb4000b, MWA16_RAM, &tetrisp2_scroll_fg			},	// Foreground Scrolling
+	{ 0xb40010, 0xb4001b, MWA16_RAM, &tetrisp2_scroll_bg			},	// Background Scrolling
 	{ 0xb4003e, 0xb4003f, MWA16_NOP									},	// scr_size
 	{ 0xb60000, 0xb6002f, MWA16_RAM, &tetrisp2_rotregs				},	// Rotation Registers
 	{ 0xba0000, 0xba001f, tetrisp2_systemregs_w						},	// system param
@@ -374,7 +358,6 @@ MEMORY_END
 
 static MEMORY_READ16_START( rockn1_readmem )
 	{ 0x000000, 0x0fffff, MRA16_ROM				},	// ROM
-
 	{ 0x100000, 0x103fff, MRA16_RAM				},	// Object RAM
 	{ 0x104000, 0x107fff, MRA16_RAM				},	// Spare Object RAM
 	{ 0x108000, 0x10ffff, MRA16_RAM				},	// Work RAM
@@ -385,45 +368,38 @@ static MEMORY_READ16_START( rockn1_readmem )
 	{ 0x408000, 0x409fff, MRA16_RAM				},	// ???
 	{ 0x500000, 0x50ffff, MRA16_RAM				},	// Line
 	{ 0x600000, 0x60ffff, MRA16_RAM				},	// Rotation
-
-	{ 0x900000, 0x903fff, rockn_nvram_r		},	// NVRAM
-
+	{ 0x900000, 0x903fff, rockn_nvram_r		    },	// NVRAM
 	{ 0xa30000, 0xa30001, rockn_soundvolume_r	},	// Sound Volume
 	{ 0xa40002, 0xa40003, tetrisp2_sound_r		},	// Sound
 	{ 0xa44000, 0xa44001, rockn_adpcmbank_r		},	// Sound Bank
-
 	{ 0xbe0000, 0xbe0001, MRA16_NOP				},	// INT-level1 dummy read
 	{ 0xbe0002, 0xbe0003, input_port_0_word_r	},	// Inputs
 	{ 0xbe0004, 0xbe0005, input_port_1_word_r	},	// Inputs
-	{ 0xbe0008, 0xbe0009, input_port_2_word_r	},	//
+	{ 0xbe0008, 0xbe0009, input_port_2_word_r	},	// Inputs
 	{ 0xbe000a, 0xbe000b, watchdog_reset16_r	},	// Watchdog
 MEMORY_END
 
 static MEMORY_WRITE16_START( rockn1_writemem )
 	{ 0x000000, 0x0fffff, MWA16_ROM									},	// ROM
-
 	{ 0x100000, 0x103fff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Object RAM
 	{ 0x104000, 0x107fff, MWA16_RAM									},	// Spare Object RAM
 	{ 0x108000, 0x10ffff, MWA16_RAM									},	// Work RAM
-	{ 0x200000, 0x23ffff, rockn_priority_w, &tetrisp2_priority	},	// Priority
+	{ 0x200000, 0x23ffff, rockn_priority_w, &tetrisp2_priority	    },	// Priority
 	{ 0x300000, 0x31ffff, tetrisp2_palette_w, &paletteram16			},	// Palette
 	{ 0x400000, 0x403fff, tetrisp2_vram_fg_w, &tetrisp2_vram_fg		},	// Foreground
 	{ 0x404000, 0x407fff, tetrisp2_vram_bg_w, &tetrisp2_vram_bg		},	// Background
 	{ 0x408000, 0x409fff, MWA16_RAM									},	// ???
 	{ 0x500000, 0x50ffff, MWA16_RAM									},	// Line
 	{ 0x600000, 0x60ffff, tetrisp2_vram_rot_w, &tetrisp2_vram_rot	},	// Rotation
-
 	{ 0x900000, 0x903fff, tetrisp2_nvram_w, &tetrisp2_nvram, &tetrisp2_nvram_size	},	// NVRAM
-
 	{ 0xa30000, 0xa30001, rockn_soundvolume_w						},	// Sound Volume
 	{ 0xa40000, 0xa40003, tetrisp2_sound_w							},	// Sound
 	{ 0xa44000, 0xa44001, rockn_adpcmbank_w							},	// Sound Bank
 	{ 0xa48000, 0xa48001, MWA16_NOP									},	// YMZ280 Reset
-
 	{ 0xb00000, 0xb00001, tetrisp2_coincounter_w					},	// Coin Counter
 	{ 0xb20000, 0xb20001, MWA16_NOP									},	// ???
-	{ 0xb40000, 0xb4000b, MWA16_RAM, &tetrisp2_scroll_fg			},	// Scrolling
-	{ 0xb40010, 0xb4001b, MWA16_RAM, &tetrisp2_scroll_bg			},	//
+	{ 0xb40000, 0xb4000b, MWA16_RAM, &tetrisp2_scroll_fg			},	// Foreground Scrolling
+	{ 0xb40010, 0xb4001b, MWA16_RAM, &tetrisp2_scroll_bg			},	// Background Scrolling
 	{ 0xb4003e, 0xb4003f, MWA16_NOP									},	// scr_size
 	{ 0xb60000, 0xb6002f, MWA16_RAM, &tetrisp2_rotregs				},	// Rotation Registers
 	{ 0xba0000, 0xba001f, tetrisp2_systemregs_w						},	// system param
@@ -434,7 +410,6 @@ MEMORY_END
 
 static MEMORY_READ16_START( rockn2_readmem )
 	{ 0x000000, 0x0fffff, MRA16_ROM				},	// ROM
-
 	{ 0x100000, 0x103fff, MRA16_RAM				},	// Object RAM
 	{ 0x104000, 0x107fff, MRA16_RAM				},	// Spare Object RAM
 	{ 0x108000, 0x10ffff, MRA16_RAM				},	// Work RAM
@@ -445,45 +420,38 @@ static MEMORY_READ16_START( rockn2_readmem )
 	{ 0x800000, 0x803fff, MRA16_RAM				},	// Foreground
 	{ 0x804000, 0x807fff, MRA16_RAM				},	// Background
 	{ 0x808000, 0x809fff, MRA16_RAM				},	// ???
-
-	{ 0x900000, 0x903fff, rockn_nvram_r		},	// NVRAM
-
+	{ 0x900000, 0x903fff, rockn_nvram_r		    },	// NVRAM
 	{ 0xa30000, 0xa30001, rockn_soundvolume_r	},	// Sound Volume
 	{ 0xa40002, 0xa40003, tetrisp2_sound_r		},	// Sound
 	{ 0xa44000, 0xa44001, rockn_adpcmbank_r		},	// Sound Bank
-
 	{ 0xbe0000, 0xbe0001, MRA16_NOP				},	// INT-level1 dummy read
 	{ 0xbe0002, 0xbe0003, input_port_0_word_r	},	// Inputs
 	{ 0xbe0004, 0xbe0005, input_port_1_word_r	},	// Inputs
-	{ 0xbe0008, 0xbe0009, input_port_2_word_r	},	//
+	{ 0xbe0008, 0xbe0009, input_port_2_word_r	},	// Inputs
 	{ 0xbe000a, 0xbe000b, watchdog_reset16_r	},	// Watchdog
 MEMORY_END
 
 static MEMORY_WRITE16_START( rockn2_writemem )
 	{ 0x000000, 0x0fffff, MWA16_ROM									},	// ROM
-
 	{ 0x100000, 0x103fff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Object RAM
 	{ 0x104000, 0x107fff, MWA16_RAM									},	// Spare Object RAM
 	{ 0x108000, 0x10ffff, MWA16_RAM									},	// Work RAM
-	{ 0x200000, 0x23ffff, rockn_priority_w, &tetrisp2_priority	},	// Priority
+	{ 0x200000, 0x23ffff, rockn_priority_w, &tetrisp2_priority	    },	// Priority
 	{ 0x300000, 0x31ffff, tetrisp2_palette_w, &paletteram16			},	// Palette
 	{ 0x500000, 0x50ffff, MWA16_RAM									},	// Line
 	{ 0x600000, 0x60ffff, tetrisp2_vram_rot_w, &tetrisp2_vram_rot	},	// Rotation
 	{ 0x800000, 0x803fff, tetrisp2_vram_fg_w, &tetrisp2_vram_fg		},	// Foreground
 	{ 0x804000, 0x807fff, tetrisp2_vram_bg_w, &tetrisp2_vram_bg		},	// Background
 	{ 0x808000, 0x809fff, MWA16_RAM									},	// ???
-
 	{ 0x900000, 0x903fff, tetrisp2_nvram_w, &tetrisp2_nvram, &tetrisp2_nvram_size	},	// NVRAM
-
 	{ 0xa30000, 0xa30001, rockn_soundvolume_w						},	// Sound Volume
 	{ 0xa40000, 0xa40003, tetrisp2_sound_w							},	// Sound
-	{ 0xa44000, 0xa44001, rockn2_adpcmbank_w							},	// Sound Bank
+	{ 0xa44000, 0xa44001, rockn2_adpcmbank_w					    },	// Sound Bank
 	{ 0xa48000, 0xa48001, MWA16_NOP									},	// YMZ280 Reset
-
 	{ 0xb00000, 0xb00001, tetrisp2_coincounter_w					},	// Coin Counter
 	{ 0xb20000, 0xb20001, MWA16_NOP									},	// ???
-	{ 0xb40000, 0xb4000b, MWA16_RAM, &tetrisp2_scroll_fg			},	// Scrolling
-	{ 0xb40010, 0xb4001b, MWA16_RAM, &tetrisp2_scroll_bg			},	//
+	{ 0xb40000, 0xb4000b, MWA16_RAM, &tetrisp2_scroll_fg			},	// Foreground Scrolling
+	{ 0xb40010, 0xb4001b, MWA16_RAM, &tetrisp2_scroll_bg			},	// Background Scrolling
 	{ 0xb4003e, 0xb4003f, MWA16_NOP									},	// scr_size
 	{ 0xb60000, 0xb6002f, MWA16_RAM, &tetrisp2_rotregs				},	// Rotation Registers
 	{ 0xba0000, 0xba001f, tetrisp2_systemregs_w						},	// system param
@@ -494,7 +462,6 @@ MEMORY_END
 
 static MEMORY_READ16_START( rocknms_main_readmem )
 	{ 0x000000, 0x0fffff, MRA16_ROM				},	// ROM
-
 	{ 0x100000, 0x103fff, MRA16_RAM				},	// Object RAM
 	{ 0x104000, 0x107fff, MRA16_RAM				},	// Spare Object RAM
 	{ 0x108000, 0x10ffff, MRA16_RAM				},	// Work RAM
@@ -505,46 +472,39 @@ static MEMORY_READ16_START( rocknms_main_readmem )
 	{ 0x800000, 0x803fff, MRA16_RAM				},	// Foreground
 	{ 0x804000, 0x807fff, MRA16_RAM				},	// Background
 //	{ 0x808000, 0x809fff, MRA16_RAM				},	// ???
-
-	{ 0x900000, 0x903fff, rockn_nvram_r		},	// NVRAM
-
+	{ 0x900000, 0x903fff, rockn_nvram_r	    	},	// NVRAM
 	{ 0xa30000, 0xa30001, rockn_soundvolume_r	},	// Sound Volume
 	{ 0xa40002, 0xa40003, tetrisp2_sound_r		},	// Sound
 	{ 0xa44000, 0xa44001, rockn_adpcmbank_r		},	// Sound Bank
-
 	{ 0xbe0000, 0xbe0001, MRA16_NOP				},	// INT-level1 dummy read
-	{ 0xbe0002, 0xbe0003, rocknms_port_0_r	},	// Inputs & MAIN <- SUB Communication
+	{ 0xbe0002, 0xbe0003, rocknms_port_0_r	    },	// Inputs & MAIN <- SUB Communication
 	{ 0xbe0004, 0xbe0005, input_port_1_word_r	},	// Inputs
-	{ 0xbe0008, 0xbe0009, input_port_2_word_r	},	//
+	{ 0xbe0008, 0xbe0009, input_port_2_word_r	},	// Inputs
 	{ 0xbe000a, 0xbe000b, watchdog_reset16_r	},	// Watchdog
 MEMORY_END
 
 static MEMORY_WRITE16_START( rocknms_main_writemem )
 	{ 0x000000, 0x0fffff, MWA16_ROM									},	// ROM
-
 	{ 0x100000, 0x103fff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Object RAM
 	{ 0x104000, 0x107fff, MWA16_RAM									},	// Spare Object RAM
 	{ 0x108000, 0x10ffff, MWA16_RAM									},	// Work RAM
-	{ 0x200000, 0x23ffff, rockn_priority_w, &tetrisp2_priority	},	// Priority
+	{ 0x200000, 0x23ffff, rockn_priority_w, &tetrisp2_priority	    },	// Priority
 	{ 0x300000, 0x31ffff, tetrisp2_palette_w, &paletteram16			},	// Palette
 //	{ 0x500000, 0x50ffff, MWA16_RAM									},	// Line
 	{ 0x600000, 0x60ffff, tetrisp2_vram_rot_w, &tetrisp2_vram_rot	},	// Rotation
 	{ 0x800000, 0x803fff, tetrisp2_vram_fg_w, &tetrisp2_vram_fg		},	// Foreground
 	{ 0x804000, 0x807fff, tetrisp2_vram_bg_w, &tetrisp2_vram_bg		},	// Background
 //	{ 0x808000, 0x809fff, MWA16_RAM									},	// ???
-
 	{ 0x900000, 0x903fff, tetrisp2_nvram_w, &tetrisp2_nvram, &tetrisp2_nvram_size	},	// NVRAM
-
 	{ 0xa30000, 0xa30001, rockn_soundvolume_w						},	// Sound Volume
 	{ 0xa40000, 0xa40003, tetrisp2_sound_w							},	// Sound
 	{ 0xa44000, 0xa44001, rockn_adpcmbank_w							},	// Sound Bank
 	{ 0xa48000, 0xa48001, MWA16_NOP									},	// YMZ280 Reset
-
-	{ 0xa00000, 0xa00001, rocknms_main2sub_w	},	// MAIN -> SUB Communication
+	{ 0xa00000, 0xa00001, rocknms_main2sub_w	                    },	// MAIN -> SUB Communication
 	{ 0xb00000, 0xb00001, tetrisp2_coincounter_w					},	// Coin Counter
 	{ 0xb20000, 0xb20001, MWA16_NOP									},	// ???
-	{ 0xb40000, 0xb4000b, MWA16_RAM, &tetrisp2_scroll_fg			},	// Scrolling
-	{ 0xb40010, 0xb4001b, MWA16_RAM, &tetrisp2_scroll_bg			},	//
+	{ 0xb40000, 0xb4000b, MWA16_RAM, &tetrisp2_scroll_fg			},	// Foreground Scrolling
+	{ 0xb40010, 0xb4001b, MWA16_RAM, &tetrisp2_scroll_bg			},	// Background Scrolling
 	{ 0xb4003e, 0xb4003f, MWA16_NOP									},	// scr_size
 	{ 0xb60000, 0xb6002f, MWA16_RAM, &tetrisp2_rotregs				},	// Rotation Registers
 	{ 0xba0000, 0xba001f, tetrisp2_systemregs_w						},	// system param
@@ -554,52 +514,46 @@ MEMORY_END
 
 
 static MEMORY_READ16_START( rocknms_sub_readmem )
-	{ 0x000000, 0x0fffff, MRA16_ROM				},	// ROM
-
-	{ 0x100000, 0x103fff, MRA16_RAM				},	// Object RAM
-	{ 0x104000, 0x107fff, MRA16_RAM				},	// Spare Object RAM
-	{ 0x108000, 0x10ffff, MRA16_RAM				},	// Work RAM
+	{ 0x000000, 0x0fffff, MRA16_ROM					},	// ROM
+	{ 0x100000, 0x103fff, MRA16_RAM					},	// Object RAM
+	{ 0x104000, 0x107fff, MRA16_RAM					},	// Spare Object RAM
+	{ 0x108000, 0x10ffff, MRA16_RAM					},	// Work RAM
 	{ 0x200000, 0x23ffff, rocknms_sub_priority_r	},	// Priority
-	{ 0x300000, 0x31ffff, MRA16_RAM				},	// Palette
-//	{ 0x500000, 0x50ffff, MRA16_RAM				},	// Line
-	{ 0x600000, 0x60ffff, MRA16_RAM				},	// Rotation
-	{ 0x800000, 0x803fff, MRA16_RAM				},	// Foreground
-	{ 0x804000, 0x807fff, MRA16_RAM				},	// Background
-//	{ 0x808000, 0x809fff, MRA16_RAM				},	// ???
-
-	{ 0x900000, 0x907fff, MRA16_RAM				},	// NVRAM
-
-//	{ 0xbe0000, 0xbe0001, MRA16_NOP				},	// INT-level1 dummy read
-	{ 0xbe0002, 0xbe0003, rocknms_main2sub_r	},	// MAIN -> SUB Communication
-	{ 0xbe000a, 0xbe000b, watchdog_reset16_r	},	// Watchdog
+	{ 0x300000, 0x31ffff, MRA16_RAM					},	// Palette
+//	{ 0x500000, 0x50ffff, MRA16_RAM					},	// Line
+	{ 0x600000, 0x60ffff, MRA16_RAM					},	// Rotation
+	{ 0x800000, 0x803fff, MRA16_RAM					},	// Foreground
+	{ 0x804000, 0x807fff, MRA16_RAM					},	// Background
+//	{ 0x808000, 0x809fff, MRA16_RAM					},	// ???
+	{ 0x900000, 0x907fff, MRA16_RAM					},	// NVRAM
+//	{ 0xbe0000, 0xbe0001, MRA16_NOP					},	// INT-level1 dummy read
+	{ 0xbe0002, 0xbe0003, rocknms_main2sub_r		},	// MAIN -> SUB Communication
+	{ 0xbe000a, 0xbe000b, watchdog_reset16_r		},	// Watchdog
 MEMORY_END
 
 static MEMORY_WRITE16_START( rocknms_sub_writemem )
-	{ 0x000000, 0x0fffff, MWA16_ROM									},	// ROM
-
+	{ 0x000000, 0x0fffff, MWA16_ROM										},	// ROM
 	{ 0x100000, 0x103fff, MWA16_RAM, &spriteram16_2, &spriteram_2_size	},	// Object RAM
-	{ 0x104000, 0x107fff, MWA16_RAM									},	// Spare Object RAM
-	{ 0x108000, 0x10ffff, MWA16_RAM									},	// Work RAM
+	{ 0x104000, 0x107fff, MWA16_RAM										},	// Spare Object RAM
+	{ 0x108000, 0x10ffff, MWA16_RAM										},	// Work RAM
 	{ 0x200000, 0x23ffff, rocknms_sub_priority_w, &rocknms_sub_priority	},	// Priority
-	{ 0x300000, 0x31ffff, rocknms_sub_palette_w, &paletteram16_2			},	// Palette
-//	{ 0x500000, 0x50ffff, MWA16_RAM									},	// Line
+	{ 0x300000, 0x31ffff, rocknms_sub_palette_w, &paletteram16_2		},	// Palette
+//	{ 0x500000, 0x50ffff, MWA16_RAM										},	// Line
 	{ 0x600000, 0x60ffff, rocknms_sub_vram_rot_w, &rocknms_sub_vram_rot	},	// Rotation
-	{ 0x800000, 0x803fff, rocknms_sub_vram_fg_w, &rocknms_sub_vram_fg		},	// Foreground
-	{ 0x804000, 0x807fff, rocknms_sub_vram_bg_w, &rocknms_sub_vram_bg		},	// Background
-//	{ 0x808000, 0x809fff, MWA16_RAM									},	// ???
-
-	{ 0x900000, 0x907fff, MWA16_RAM									},	// NVRAM
-
-	{ 0xb00000, 0xb00001, rocknms_sub2main_w	},	// MAIN <- SUB Communication
-	{ 0xb20000, 0xb20001, MWA16_NOP									},	// ???
-	{ 0xb40000, 0xb4000b, MWA16_RAM, &rocknms_sub_scroll_fg			},	// Scrolling
-	{ 0xb40010, 0xb4001b, MWA16_RAM, &rocknms_sub_scroll_bg			},	//
-	{ 0xb4003e, 0xb4003f, MWA16_NOP									},	// scr_size
+	{ 0x800000, 0x803fff, rocknms_sub_vram_fg_w, &rocknms_sub_vram_fg	},	// Foreground
+	{ 0x804000, 0x807fff, rocknms_sub_vram_bg_w, &rocknms_sub_vram_bg	},	// Background
+//	{ 0x808000, 0x809fff, MWA16_RAM										},	// ???
+	{ 0x900000, 0x907fff, MWA16_RAM										},	// NVRAM
+	{ 0xb00000, 0xb00001, rocknms_sub2main_w							},	// MAIN <- SUB Communication
+	{ 0xb20000, 0xb20001, MWA16_NOP										},	// ???
+	{ 0xb40000, 0xb4000b, MWA16_RAM, &rocknms_sub_scroll_fg				},	// Foreground Scrolling
+	{ 0xb40010, 0xb4001b, MWA16_RAM, &rocknms_sub_scroll_bg				},	// Background Scrolling
+	{ 0xb4003e, 0xb4003f, MWA16_NOP										},	// scr_size
 	{ 0xb60000, 0xb6002f, MWA16_RAM, &rocknms_sub_rotregs				},	// Rotation Registers
 	{ 0xba0000, 0xba001f, rocknms_sub_systemregs_w						},	// system param
-	{ 0xba001a, 0xba001b, MWA16_NOP									},	// Lev 4 irq ack
-	{ 0xba001e, 0xba001f, MWA16_NOP									},	// Lev 2 irq ack
-	{ 0xbe0002, 0xbe0003, rocknms_sub2main_w									},	//
+	{ 0xba001a, 0xba001b, MWA16_NOP										},	// Lev 4 irq ack
+	{ 0xba001e, 0xba001f, MWA16_NOP										},	// Lev 2 irq ack
+	{ 0xbe0002, 0xbe0003, rocknms_sub2main_w							},	// MAIN <- SUB Communication (mirror)
 MEMORY_END
 
 
@@ -625,7 +579,7 @@ INPUT_PORTS_START( tetrisp2 )
 	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER1 )
 	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER1 )
 	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER1 )
-	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )	// unused button
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
 	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
@@ -634,7 +588,7 @@ INPUT_PORTS_START( tetrisp2 )
 	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 )
 	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 )
 	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER2 )
-	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )	// unused button
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	// IN1 - $be0004.w
 	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN  )
@@ -687,11 +641,10 @@ INPUT_PORTS_START( tetrisp2 )
 	PORT_DIPNAME( 0x0400, 0x0400, "Vs Mode Rounds" )
 	PORT_DIPSETTING(      0x0000, "1" )
 	PORT_DIPSETTING(      0x0400, "3" )
-//	PORT_DIPNAME( 0x0800, 0x0000, "Language" )
-PORT_DIPNAME( 0x0800, 0x0800, "Language" )
+	PORT_DIPNAME( 0x0800, 0x0000, "Language" )
 	PORT_DIPSETTING(      0x0800, "Japanese" )
 	PORT_DIPSETTING(      0x0000, "English" )
-	PORT_DIPNAME( 0x1000, 0x1000, "Unknown 2-4" )	// F.B.I. Logo (in the USA set?)
+	PORT_DIPNAME( 0x1000, 0x1000, "F.B.I Logo" )
 	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x2000, 0x2000, "Voice" )
@@ -790,9 +743,7 @@ INPUT_PORTS_START( teplus2j )
 	PORT_DIPNAME( 0x0400, 0x0400, "Vs Mode Rounds" )
 	PORT_DIPSETTING(      0x0000, "1" )
 	PORT_DIPSETTING(      0x0400, "3" )
-	PORT_DIPNAME( 0x0800, 0x0800, "Language" )
-	PORT_DIPSETTING(      0x0800, "Japanese" )
-//	PORT_DIPSETTING(      0x0000, "English" )	// it does not work properly with "english"
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_UNUSED  ) // Language dip
 	PORT_DIPNAME( 0x1000, 0x1000, "Unknown 2-4" )	// F.B.I. Logo (in the USA set?)
 	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -1413,6 +1364,7 @@ Custom:	SS91022-03
 ***************************************************************************/
 
 ROM_START( rockn1 )
+
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
 	ROM_LOAD16_WORD( "live.bin", 0x000000, 0x100000, BADCRC(0xad90f2a3) )
 
@@ -1445,10 +1397,12 @@ ROM_START( rockn1 )
 	ROM_LOAD( "ajrt14ma.shp", 0x3c00000, 0x0400000, BADCRC(0xaae8d59c) ) // bank 3
 	ROM_LOAD( "ajrt15ma.shp", 0x4000000, 0x0400000, BADCRC(0x9ec1459b) ) // bank 4
 	ROM_LOAD( "ajrt16ma.shp", 0x4400000, 0x0400000, BADCRC(0xb26f9a81) ) // bank 4
+
 ROM_END
 
 
 ROM_START( rockn2 )
+
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
 	ROM_LOAD16_WORD( "live.bin", 0x000000, 0x100000, BADCRC(0x369750fd) )
 
@@ -1466,7 +1420,7 @@ ROM_START( rockn2 )
 
 	ROM_REGION( 0x7000000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "snd25.bin", 0x0000000, 0x0400000, BADCRC(0x4e9611a3) ) // COMMON AREA
-	ROM_FILL(              0x0400000, 0x0c00000, 0xffffffff ) // BANK AREA
+	ROM_FILL(              0x0400000, 0x0c00000, 0xffffffff ) 		  // BANK AREA
 	ROM_LOAD( "snd01.bin", 0x1000000, 0x0400000, BADCRC(0xec600f13) ) // bank 0
 	ROM_LOAD( "snd02.bin", 0x1400000, 0x0400000, BADCRC(0x8306f302) ) // bank 0
 	ROM_LOAD( "snd03.bin", 0x1800000, 0x0400000, BADCRC(0x3fda842c) ) // bank 0
@@ -1488,10 +1442,12 @@ ROM_START( rockn2 )
 	ROM_LOAD( "snd19.bin", 0x5800000, 0x0400000, BADCRC(0x33c89e53) ) // bank 6
 	ROM_LOAD( "snd20.bin", 0x5c00000, 0x0400000, BADCRC(0x89c1b088) ) // bank 6
 	ROM_LOAD( "snd21.bin", 0x6000000, 0x0400000, BADCRC(0x13db74bd) ) // bank 6
+
 ROM_END
 
 
 ROM_START( rockn3 )
+
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
 	ROM_LOAD16_WORD( "live.bin", 0x000000, 0x100000, BADCRC(0x31895ef5) )
 
@@ -1509,7 +1465,7 @@ ROM_START( rockn3 )
 
 	ROM_REGION( 0x7000000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "rt3rd001.bin", 0x0000000, 0x0400000, BADCRC(0xe2f69042) ) // COMMON AREA
-	ROM_FILL(                 0x0400000, 0x0c00000, 0xffffffff ) // BANK AREA
+	ROM_FILL(                 0x0400000, 0x0c00000, 0xffffffff ) 		 // BANK AREA
 	ROM_LOAD( "rt3rd002.bin", 0x1000000, 0x0400000, BADCRC(0xb328b18f) ) // bank 0
 	ROM_LOAD( "rt3rd003.bin", 0x1400000, 0x0400000, BADCRC(0xf46438e3) ) // bank 0
 	ROM_LOAD( "rt3rd004.bin", 0x1800000, 0x0400000, BADCRC(0xb979e887) ) // bank 0
@@ -1530,10 +1486,12 @@ ROM_START( rockn3 )
 	ROM_LOAD( "rt3rd019.bin", 0x5400000, 0x0400000, BADCRC(0xdbb2c228) ) // bank 5
 	ROM_LOAD( "rt3rd020.bin", 0x5800000, 0x0400000, BADCRC(0x9efdae1c) ) // bank 6
 	ROM_LOAD( "rt3rd021.bin", 0x5c00000, 0x0400000, BADCRC(0x5f301b83) ) // bank 6
+
 ROM_END
 
 
 ROM_START( rockn4 )
+
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
 	ROM_LOAD16_WORD( "live.bin", 0x000000, 0x100000, BADCRC(0xf2c9ff1c) )
 
@@ -1551,7 +1509,7 @@ ROM_START( rockn4 )
 
 	ROM_REGION( 0x7000000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "snd25.bin", 0x0000000, 0x0400000, BADCRC(0x918ea8eb) ) // COMMON AREA
-	ROM_FILL(              0x0400000, 0x0c00000, 0xffffffff ) // BANK AREA
+	ROM_FILL(              0x0400000, 0x0c00000, 0xffffffff ) 		  // BANK AREA
 	ROM_LOAD( "snd01.bin", 0x1000000, 0x0400000, BADCRC(0xc548e51e) ) // bank 0
 	ROM_LOAD( "snd02.bin", 0x1400000, 0x0400000, BADCRC(0xffda0253) ) // bank 0
 	ROM_LOAD( "snd03.bin", 0x1800000, 0x0400000, BADCRC(0x1f813af5) ) // bank 0
@@ -1561,10 +1519,12 @@ ROM_START( rockn4 )
 	ROM_LOAD( "snd07.bin", 0x2800000, 0x0400000, BADCRC(0x388e2c91) ) // bank 2
 	ROM_LOAD( "snd08.bin", 0x2c00000, 0x0400000, BADCRC(0x6e7e3f23) ) // bank 2
 	ROM_LOAD( "snd09.bin", 0x3000000, 0x0400000, BADCRC(0x39fa512f) ) // bank 2
+
 ROM_END
 
 
 ROM_START( rocknms )
+
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
 	ROM_LOAD16_WORD( "live_m.bin", 0x000000, 0x100000, BADCRC(0x857483da) )
 
@@ -1599,7 +1559,7 @@ ROM_START( rocknms )
 
 	ROM_REGION( 0x7000000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "rtdx001.bin", 0x0000000, 0x0400000, BADCRC(0x8bafae71) ) // COMMON AREA
-	ROM_FILL(                0x0400000, 0x0c00000, 0xffffffff ) // BANK AREA
+	ROM_FILL(                0x0400000, 0x0c00000, 0xffffffff ) 		// BANK AREA
 	ROM_LOAD( "rtdx002.bin", 0x1000000, 0x0400000, BADCRC(0xeec0589b) ) // bank 0
 	ROM_LOAD( "rtdx003.bin", 0x1400000, 0x0400000, BADCRC(0x564aa972) ) // bank 0
 	ROM_LOAD( "rtdx004.bin", 0x1800000, 0x0400000, BADCRC(0x940302d0) ) // bank 0
@@ -1620,6 +1580,7 @@ ROM_START( rocknms )
 	ROM_LOAD( "rtdx019.bin", 0x5400000, 0x0400000, BADCRC(0xcc595d85) ) // bank 5
 	ROM_LOAD( "rtdx020.bin", 0x5800000, 0x0400000, BADCRC(0x82b085a3) ) // bank 6
 	ROM_LOAD( "rtdx021.bin", 0x5c00000, 0x0400000, BADCRC(0xdd5e9680) ) // bank 6
+
 ROM_END
 
 
@@ -1631,7 +1592,7 @@ ROM_END
 
 ***************************************************************************/
 
-GAMEX(1997, tetrisp2, 0,        tetrisp2, tetrisp2, 0, ROT0, "Jaleco / The Tetris Company", "Tetris Plus 2 (World?)", GAME_NOT_WORKING )
+GAME( 1997, tetrisp2, 0,        tetrisp2, tetrisp2, 0, ROT0, "Jaleco / The Tetris Company", "Tetris Plus 2 (World?)" )
 GAME( 1997, teplus2j, tetrisp2, tetrisp2, teplus2j, 0, ROT0, "Jaleco / The Tetris Company", "Tetris Plus 2 (Japan)" )
 
 GAME( 1999,  rockn1, 0, rockn1,  rockn1,  rockn1, ROT270, "Jaleco", "Rock'n Tread 1 (Japan)" )

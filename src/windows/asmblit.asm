@@ -1,18 +1,42 @@
 [BITS 32]
 
+;//============================================================
+;// ELF compatibility
+;//============================================================
+
+%ifdef NO_UNDERSCORE
+%macro CGLOBAL 1
+          GLOBAL %1
+%endmacro
+
+%macro cextern 1
+          extern %1
+%endmacro
+%else
+%macro CGLOBAL 1
+          GLOBAL _%1
+%define %1 _%1
+%endmacro
+
+%macro cextern 1
+          extern _%1
+%define %1 _%1
+%endmacro
+%endif
+
 
 ;//============================================================
 ;//	IMPORTS
 ;//============================================================
 
-extern _asmblit_srcdata
-extern _asmblit_srcheight
-extern _asmblit_srclookup
+cextern asmblit_srcdata
+cextern asmblit_srcheight
+cextern asmblit_srclookup
 
-extern _asmblit_dstdata
-extern _asmblit_dstpitch
+cextern asmblit_dstdata
+cextern asmblit_dstpitch
 
-extern _asmblit_rgbmask;
+cextern asmblit_rgbmask;
 
 
 ;//============================================================
@@ -107,8 +131,8 @@ row_index:		dd	0
 ;//============================================================
 
 %macro SNIPPET_BEGIN 1
-GLOBAL _%1
-_%1:
+CGLOBAL %1
+%1:
 %endmacro
 
 %macro SNIPPET_END 0
@@ -428,7 +452,7 @@ SNIPPET_BEGIN asmblit1_16_to_16_rgb
 	movzx	eax,word [esi+FIXUPPIXEL(0)]
 	movd	mm0,[ecx+eax*4]
 
-	mov		eax,[_asmblit_srcheight]
+	mov		eax,[asmblit_srcheight]
 	movq	mm2,mm0
 	mov		ebx,FIXUPVALUE(FIXUPVAL_LASTXCOUNT)
 	movq	mm6,mm0
@@ -438,9 +462,9 @@ SNIPPET_BEGIN asmblit1_16_to_16_rgb
 	shl		eax,7
 	and		ebx,31
 	movq	mm4,mm0
-	pand	mm0,[_asmblit_rgbmask+eax+ebx+64]
-	pand	mm4,[_asmblit_rgbmask+eax+ebx]
-	mov		ebx,[_asmblit_dstpitch]
+	pand	mm0,[asmblit_rgbmask+eax+ebx+64]
+	pand	mm4,[asmblit_rgbmask+eax+ebx]
+	mov		ebx,[asmblit_dstpitch]
 	psubd	mm2,mm0
 	psubd	mm6,mm4
 	movd	[edi],mm2
@@ -462,10 +486,10 @@ SNIPPET_BEGIN asmblit16_16_to_16_rgb
 		movd	mm2,[ecx+ebx*4]
 		punpckldq mm1,mm2
 
-		mov		eax,[_asmblit_srcheight]
+		mov		eax,[asmblit_srcheight]
 		movq	mm2,mm0
 		movq	mm3,mm1
-		mov		ebx,[_asmblit_dstpitch]
+		mov		ebx,[asmblit_dstpitch]
 		movq	mm6,mm0
 		movq	mm7,mm1
 		psrlq	mm0,2
@@ -473,10 +497,10 @@ SNIPPET_BEGIN asmblit16_16_to_16_rgb
 		shl		eax,7
 		movq	mm4,mm0
 		movq	mm5,mm1
-		pand	mm0,[_asmblit_rgbmask+eax+((16*iter)&31)+64]
-		pand	mm1,[_asmblit_rgbmask+eax+((16*iter+8)&31)+64]
-		pand	mm4,[_asmblit_rgbmask+eax+((16*iter)&31)]
-		pand	mm5,[_asmblit_rgbmask+eax+((16*iter+8)&31)]
+		pand	mm0,[asmblit_rgbmask+eax+((16*iter)&31)+64]
+		pand	mm1,[asmblit_rgbmask+eax+((16*iter+8)&31)+64]
+		pand	mm4,[asmblit_rgbmask+eax+((16*iter)&31)]
+		pand	mm5,[asmblit_rgbmask+eax+((16*iter+8)&31)]
 		psubd	mm2,mm0
 		psubd	mm3,mm1
 		psubd	mm6,mm4
@@ -747,7 +771,7 @@ SNIPPET_BEGIN asmblit1_16_to_32_rgb
 	movd	mm0,[ecx+eax*4]
 	punpckldq mm0,mm0
 
-	mov		eax,[_asmblit_srcheight]
+	mov		eax,[asmblit_srcheight]
 	movq	mm2,mm0
 	mov		ebx,FIXUPVALUE(FIXUPVAL_LASTXCOUNT)
 	movq	mm6,mm0
@@ -757,9 +781,9 @@ SNIPPET_BEGIN asmblit1_16_to_32_rgb
 	shl		eax,7
 	and		ebx,63
 	movq	mm4,mm0
-	pand	mm0,[_asmblit_rgbmask+eax+ebx+64]
-	pand	mm4,[_asmblit_rgbmask+eax+ebx]
-	mov		ebx,[_asmblit_dstpitch]
+	pand	mm0,[asmblit_rgbmask+eax+ebx+64]
+	pand	mm4,[asmblit_rgbmask+eax+ebx]
+	mov		ebx,[asmblit_dstpitch]
 	psubd	mm2,mm0
 	psubd	mm6,mm4
 	movq	[edi],mm2
@@ -776,10 +800,10 @@ SNIPPET_BEGIN asmblit16_16_to_32_rgb
 		punpckldq mm0,mm0
 		punpckldq mm1,mm1
 
-		mov		eax,[_asmblit_srcheight]
+		mov		eax,[asmblit_srcheight]
 		movq	mm2,mm0
 		movq	mm3,mm1
-		mov		ebx,[_asmblit_dstpitch]
+		mov		ebx,[asmblit_dstpitch]
 		movq	mm6,mm0
 		movq	mm7,mm1
 		psrlq	mm0,2
@@ -787,10 +811,10 @@ SNIPPET_BEGIN asmblit16_16_to_32_rgb
 		shl		eax,7
 		movq	mm4,mm0
 		movq	mm5,mm1
-		pand	mm0,[_asmblit_rgbmask+eax+((16*iter)&63)+64]
-		pand	mm1,[_asmblit_rgbmask+eax+((16*iter+8)&63)+64]
-		pand	mm4,[_asmblit_rgbmask+eax+((16*iter)&63)]
-		pand	mm5,[_asmblit_rgbmask+eax+((16*iter+8)&63)]
+		pand	mm0,[asmblit_rgbmask+eax+((16*iter)&63)+64]
+		pand	mm1,[asmblit_rgbmask+eax+((16*iter+8)&63)+64]
+		pand	mm4,[asmblit_rgbmask+eax+((16*iter)&63)]
+		pand	mm5,[asmblit_rgbmask+eax+((16*iter+8)&63)]
 		psubd	mm2,mm0
 		psubd	mm3,mm1
 		psubd	mm6,mm4
@@ -1128,11 +1152,11 @@ SNIPPET_BEGIN asmblit_header
 	pushad
 
 	;// load the source/dest pointers
-	mov		esi,[_asmblit_srcdata]
-	mov		edi,[_asmblit_dstdata]
+	mov		esi,[asmblit_srcdata]
+	mov		edi,[asmblit_dstdata]
 
 	;// load the palette pointer
-	mov		ecx,[_asmblit_srclookup]
+	mov		ecx,[asmblit_srclookup]
 SNIPPET_END
 
 
@@ -1196,7 +1220,7 @@ SNIPPET_END
 ;//---------------------------------------------------------------
 
 SNIPPET_BEGIN asmblit_yloop_bottom
-	sub		dword [_asmblit_srcheight],1
+	sub		dword [asmblit_srcheight],1
 	pop		edi
 	pop		esi
 	lea		edi,[edi+FIXUPVALUE(FIXUPVAL_DSTADVANCE)]
@@ -1225,8 +1249,8 @@ SNIPPET_END
 ;//	MMX detection
 ;//============================================================
 
-GLOBAL _asmblit_has_mmx
-_asmblit_has_mmx:
+CGLOBAL asmblit_has_mmx
+asmblit_has_mmx:
 	pushad
 
 	;// attempt to change the ID flag
@@ -1265,8 +1289,8 @@ _asmblit_has_mmx:
 ;//	SSE2 detection
 ;//============================================================
 
-GLOBAL _asmblit_has_xmm
-_asmblit_has_xmm:
+CGLOBAL asmblit_has_xmm
+asmblit_has_xmm:
 	pushad
 
 	;// attempt to change the ID flag

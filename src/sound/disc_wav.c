@@ -36,6 +36,11 @@ struct dss_oneshot_context
 	int state;
 };
 
+struct dss_trianglewave_context
+{
+        double phase;
+};
+
 /************************************************************************/
 /*                                                                      */
 /* DSS_SINWAVE - Usage of node_description values for step function     */
@@ -154,7 +159,7 @@ int dss_squarewave_step(struct node_description *node)
 		if(context->phase>context->trigger)
 			node->output=node->input2;
 		else
-			node->output=0;
+                        node->output=-node->input2;
 	}
 	else
 	{
@@ -200,6 +205,90 @@ int dss_squarewave_init(struct node_description *node)
 }
 
 int dss_squarewave_kill(struct node_description *node)
+{
+	free(node->context);
+	node->context=NULL;
+	return 0;
+}
+
+
+/************************************************************************/
+/*                                                                      */
+/* DSS_TRIANGLEWAVE - Usage of node_description values for step function*/
+/*                                                                      */
+/* input0    - Enable input value                                       */
+/* input1    - Frequency input value                                    */
+/* input2    - Amplitde input value                                     */
+/* input3    - NOT USED                                                 */
+/* input4    - NOT USED                                                 */
+/* input5    - NOT USED                                                 */
+/*                                                                      */
+/************************************************************************/
+int dss_trianglewave_step(struct node_description *node)
+{
+        struct dss_trianglewave_context *context=(struct dss_trianglewave_context*)node->context;
+	double newphase;
+
+	/* Work out the phase step based on phase/freq & sample rate */
+	/* The enable input only curtails output, phase rotation     */
+	/* still occurs                                              */
+
+	/*     phase step = 2Pi/(output period/sample period)        */
+	/*                    boils out to                           */
+	/*     phase step = (2Pi*output freq)/sample freq)           */
+	newphase=context->phase+((2.0*PI*node->input1)/Machine->sample_rate);
+	/* Keep the new phasor in thw 2Pi range.*/
+        newphase=fmod(newphase,2.0*PI);
+        context->phase=newphase;
+
+	if(node->input0)
+	{
+                node->output=newphase < PI ? node->input2 * (newphase / (PI/2.0) - 1.0) :
+                                             node->input2 * (3.0 - newphase / (PI/2.0)) ;
+
+	}
+	else
+	{
+		node->output=0;
+	}
+	return 0;
+}
+
+int dss_trianglewave_reset(struct node_description *node)
+{
+        struct dss_trianglewave_context *context;
+	double start;
+
+        context=(struct dss_trianglewave_context*)node->context;
+	/* Establish starting phase, convert from degrees to radians */
+	start=(node->input5/360.0)*(2.0*PI);
+	/* Make sure its always mod 2Pi */
+	context->phase=fmod(node->input5,2.0*PI);
+	return 0;
+}
+
+int dss_trianglewave_init(struct node_description *node)
+{
+        discrete_log("dss_trianglewave_init() - Creating node %d.",node->node-NODE_00);
+
+	/* Allocate memory for the context array and the node execution order array */
+        if((node->context=malloc(sizeof(struct dss_trianglewave_context)))==NULL)
+	{
+                discrete_log("dss_trianglewave_init() - Failed to allocate local context memory.");
+		return 1;
+	}
+	else
+	{
+		/* Initialise memory */
+                memset(node->context,0,sizeof(struct dss_trianglewave_context));
+	}
+
+	/* Initialise the object */
+        dss_trianglewave_reset(node);
+	return 0;
+}
+
+int dss_trianglewave_kill(struct node_description *node)
 {
 	free(node->context);
 	node->context=NULL;

@@ -2083,6 +2083,7 @@ static void volume_callback(int v)
 static struct K007232_interface k007232_interface =
 {
 	1,		/* number of chips */
+	3579545,	/* clock */
 	{ REGION_SOUND1 },	/* memory regions */
 	{ K007232_VOL(20,MIXER_PAN_CENTER,20,MIXER_PAN_CENTER) },	/* volume */
 	{ volume_callback }	/* external port callback */
@@ -2100,7 +2101,7 @@ static struct UPD7759_interface upd7759_interface =
 static struct Samplesinterface samples_interface =
 {
 	1,	/* 1 channel for the title music */
-	25	/* volume */
+	100	/* volume */
 };
 
 static struct CustomSound_interface custom_interface =
@@ -3282,6 +3283,26 @@ ROM_START( thndrx2 )
 	ROM_LOAD( "073-b04.2d",   0x0000, 0x80000, 0x05287a0b )
 ROM_END
 
+ROM_START( thndrx2a )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "073-m02.11c", 0x000000, 0x20000, 0x5b5b4cc0 )
+	ROM_LOAD16_BYTE( "073-m03.12c", 0x000001, 0x20000, 0x320435a8 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the audio CPU */
+	ROM_LOAD( "073-c01.4f",   0x0000, 0x10000, 0x44ebe83c )
+
+    ROM_REGION( 0x100000, REGION_GFX1, 0 )	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "073-c06.16k",  0x000000, 0x080000, 0x24e22b42 )	/* tiles */
+	ROM_LOAD( "073-c05.12k",  0x080000, 0x080000, 0x952a935f )
+
+	ROM_REGION( 0x100000, REGION_GFX2, 0 )	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "073-c07.7k",   0x000000, 0x080000, 0x14e93f38 )	/* sprites */
+	ROM_LOAD( "073-c08.3k",   0x080000, 0x080000, 0x09fab3ab )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* samples for the 053260 */
+	ROM_LOAD( "073-b04.2d",   0x0000, 0x80000, 0x05287a0b )
+ROM_END
+
 ROM_START( prmrsocr )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "101jab08.1h", 0x000000, 0x40000, 0xc22b528c )
@@ -3594,5 +3615,6 @@ GAMEX(1991, ssrdrabd, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "
 GAMEX(1991, ssrdrjbd, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (Japan 2 Players ver. JBD)", GAME_IMPERFECT_GRAPHICS )
 
 GAME( 1991, thndrx2,  0,        thndrx2,  thndrx2,  gfx,      ROT0,  "Konami", "Thunder Cross II (Japan)" )
+GAME( 1991, thndrx2a, thndrx2,  thndrx2,  thndrx2,  gfx,      ROT0,  "Konami", "Thunder Cross II (Asia)" )
 
 GAME( 1993, prmrsocr, 0,        prmrsocr, prmrsocr, glfgreat, ROT0,  "Konami", "Premier Soccer (Japan)" )

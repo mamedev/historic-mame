@@ -436,7 +436,7 @@ static void printname(const struct fileinfo *file1,const struct fileinfo *file2,
 	printf("%-12s %s %-12s %s ",file1 ? file1->name : "",modenames[mode1],file2 ? file2->name : "",modenames[mode2]);
 	if (score == 0.0) printf("NO MATCH\n");
 	else if (score == 1.0) printf("IDENTICAL\n");
-	else printf("%3.3f%%\n",score*100);
+	else printf("%3.6f%%\n",score*100);
 }
 
 

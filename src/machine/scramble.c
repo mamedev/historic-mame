@@ -13,6 +13,7 @@
 
 void scramble_sh_init(void);
 WRITE_HANDLER( scramble_sh_irqtrigger_w );
+WRITE_HANDLER( mrkougar_sh_irqtrigger_w );
 WRITE_HANDLER( scramble_background_enable_w );
 WRITE_HANDLER( scramble_background_red_w );
 WRITE_HANDLER( scramble_background_green_w );
@@ -780,7 +781,7 @@ DRIVER_INIT( hustler )
 		UINT8 xormask;
 		int bits[8];
 		int i;
-		UINT8 *RAM = memory_region(REGION_CPU1);
+		UINT8 *rom = memory_region(REGION_CPU1);
 
 
 		for (i = 0;i < 8;i++)
@@ -796,16 +797,16 @@ DRIVER_INIT( hustler )
 		if (bits[0] ^ bits[7]) xormask ^= 0x40;
 		if (bits[4] ^ bits[6]) xormask ^= 0x80;
 
-		RAM[A] ^= xormask;
+		rom[A] ^= xormask;
 	}
 
 	/* the first ROM of the second CPU has data lines D0 and D1 swapped. Decode it. */
 	{
-		UINT8 *RAM = memory_region(REGION_CPU2);
+		UINT8 *rom = memory_region(REGION_CPU2);
 
 
 		for (A = 0;A < 0x0800;A++)
-			RAM[A] = BITSWAP8(RAM[A],7,6,5,4,3,2,0,1);
+			rom[A] = BITSWAP8(rom[A],7,6,5,4,3,2,0,1);
 	}
 }
 
@@ -822,7 +823,7 @@ DRIVER_INIT( billiard )
 		UINT8 xormask;
 		int bits[8];
 		int i;
-		UINT8 *RAM = memory_region(REGION_CPU1);
+		UINT8 *rom = memory_region(REGION_CPU1);
 
 
 		for (i = 0;i < 8;i++)
@@ -838,28 +839,33 @@ DRIVER_INIT( billiard )
 		if (bits[1] ^ (!bits[6] & !bits[4])) xormask ^= 0x40;
 		if (bits[7] ^ (!bits[1] &  bits[0])) xormask ^= 0x80;
 
-		RAM[A] ^= xormask;
+		rom[A] ^= xormask;
 
-		for (i = 0;i < 8;i++)
-			bits[i] = (RAM[A] >> i) & 1;
-
-		RAM[A] =
-			(bits[7] << 0) |
-			(bits[0] << 1) |
-			(bits[3] << 2) |
-			(bits[4] << 3) |
-			(bits[5] << 4) |
-			(bits[2] << 5) |
-			(bits[1] << 6) |
-			(bits[6] << 7);
+		rom[A] = BITSWAP8(rom[A],6,1,2,5,4,3,0,7);
 	}
 
 	/* the first ROM of the second CPU has data lines D0 and D1 swapped. Decode it. */
 	{
-		UINT8 *RAM = memory_region(REGION_CPU2);
+		UINT8 *rom = memory_region(REGION_CPU2);
 
 
 		for (A = 0;A < 0x0800;A++)
-			RAM[A] = BITSWAP8(RAM[A],7,6,5,4,3,2,0,1);
+			rom[A] = BITSWAP8(rom[A],7,6,5,4,3,2,0,1);
 	}
+}
+
+DRIVER_INIT( mrkougar )
+{
+	init_devilfsh();
+
+	/* no sound enabled bit */
+	ppi8255_set_portBwrite(1, mrkougar_sh_irqtrigger_w);
+}
+
+DRIVER_INIT( mrkougb )
+{
+	init_scramble_ppi();
+
+	/* no sound enabled bit */
+	ppi8255_set_portBwrite(1, mrkougar_sh_irqtrigger_w);
 }

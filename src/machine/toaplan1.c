@@ -13,7 +13,8 @@
 
 
 static int toaplan1_coin_count; /* coin count increments on startup ? , so dont count it */
-static int toaplan1_int_enable;
+static int toaplan1_intenable;
+static int demonwld_dsp_BIO;
 
 static int dsp_execute;							/* Demon world */
 static unsigned int dsp_addr_w, main_ram_seg;	/* Demon world */
@@ -24,6 +25,21 @@ int toaplan1_unk_reset_port;
 
 data8_t *toaplan1_sharedram;
 
+
+
+INTERRUPT_GEN( toaplan1_interrupt )
+{
+	if (toaplan1_intenable)
+		cpu_set_irq_line(0, 4, HOLD_LINE);
+}
+
+WRITE16_HANDLER( toaplan1_intenable_w )
+{
+	if (ACCESSING_LSB)
+	{
+		toaplan1_intenable = data & 0xff;
+	}
+}
 
 
 READ16_HANDLER( demonwld_dsp_r )
@@ -75,7 +91,7 @@ WRITE16_HANDLER( demonwld_dsp_w )
 		/*				communication to main processor*/
 		logerror("DSP PC:%04x IO write %04x at port 3\n",activecpu_get_previouspc(),data);
 		if (data & 0x8000) {
-			cpu_set_irq_line(2, TMS320C10_ACTIVE_BIO, CLEAR_LINE);
+			demonwld_dsp_BIO = CLEAR_LINE;
 		}
 		if (data == 0) {
 			if (dsp_execute) {
@@ -83,7 +99,7 @@ WRITE16_HANDLER( demonwld_dsp_w )
 				timer_suspendcpu(0, CLEAR, SUSPEND_REASON_HALT);
 				dsp_execute = 0;
 			}
-			cpu_set_irq_line(2, TMS320C10_ACTIVE_BIO, ASSERT_LINE);
+			demonwld_dsp_BIO = ASSERT_LINE;
 		}
 	}
 }
@@ -101,12 +117,12 @@ WRITE16_HANDLER( demonwld_dsp_ctrl_w )
 			case 0x00: 	/* This means assert the INT line to the DSP */
 						logerror("Turning DSP on and 68000 off\n");
 						timer_suspendcpu(2, CLEAR, SUSPEND_REASON_HALT);
-						cpu_set_irq_line(2, TMS320C10_ACTIVE_INT, ASSERT_LINE);
+						cpu_set_irq_line(2, 0, ASSERT_LINE); /* TMS32020 INT */
 						timer_suspendcpu(0, ASSERT, SUSPEND_REASON_HALT);
 						break;
 			case 0x01:	/* This means inhibit the INT line to the DSP */
 						logerror("Turning DSP off\n");
-						cpu_set_irq_line(2, TMS320C10_ACTIVE_INT, CLEAR_LINE);
+						cpu_set_irq_line(2, 0, CLEAR_LINE); /* TMS32020 INT */
 						timer_suspendcpu(2, ASSERT, SUSPEND_REASON_HALT);
 						break;
 			default:	logerror("68000:%04x  writing unknown command %08x to %08x\n",activecpu_get_previouspc() ,data ,0xe0000a + offset);
@@ -119,20 +135,11 @@ WRITE16_HANDLER( demonwld_dsp_ctrl_w )
 }
 
 
-
-INTERRUPT_GEN( toaplan1_interrupt )
+READ16_HANDLER ( demonwld_BIO_r )
 {
-	if (toaplan1_int_enable)
-		cpu_set_irq_line(0, 4, HOLD_LINE);
+	return demonwld_dsp_BIO;
 }
 
-WRITE16_HANDLER( toaplan1_int_enable_w )
-{
-	if (ACCESSING_LSB)
-	{
-		toaplan1_int_enable = data & 0xff;
-	}
-}
 
 READ16_HANDLER( samesame_port_6_word_r )
 {
@@ -214,12 +221,12 @@ WRITE16_HANDLER( toaplan1_reset_sound )
 
 MACHINE_INIT( toaplan1 )
 {
-	toaplan1_int_enable = 0;
+	toaplan1_intenable = 0;
 	toaplan1_coin_count = 0;
 	toaplan1_unk_reset_port = 0;
 	coin_lockout_global_w(0);
-	state_save_register_int("toaplan1", 0, "Int enable", &toaplan1_int_enable);
-	state_save_register_int("toaplan1", 0, "Coin counter", &toaplan1_coin_count);
+	state_save_register_INT32("toaplan1", 0, "Int_enable", &toaplan1_intenable, 1);
+	state_save_register_INT32("toaplan1", 0, "Coin_counter", &toaplan1_coin_count, 1);
 }
 
 MACHINE_INIT( zerozone )	/* Hack for ZeroWing and OutZone. See the video driver */
@@ -233,9 +240,9 @@ MACHINE_INIT( demonwld )
 	dsp_addr_w = 0;
 	dsp_execute = 0;
 	main_ram_seg = 0;
-	state_save_register_int("demonwld", 0, "DSP_execute", &dsp_execute);
-	state_save_register_UINT32("demonwld", 0, "DSP address", &dsp_addr_w, 1);
-	state_save_register_UINT32("demonwld", 0, "DSP to 68K RAM bank", &main_ram_seg, 1);
+	state_save_register_INT32("demonwld", 0, "DSP_execute", &dsp_execute, 1);
+	state_save_register_UINT32("demonwld", 0, "DSP_out_addr", &dsp_addr_w, 1);
+	state_save_register_UINT32("demonwld", 0, "DSP_to_68K_RAM_bank", &main_ram_seg, 1);
 	machine_init_toaplan1();
 }
 
@@ -243,8 +250,8 @@ MACHINE_INIT( vimana )
 {
 	credits = 0;
 	latch = 0;
-	state_save_register_int("vimana", 0, "Credits count", &credits);
-	state_save_register_int("vimana", 0, "MCU latch", &latch);
+	state_save_register_INT32("vimana", 0, "Credits count", &credits, 1);
+	state_save_register_INT32("vimana", 0, "MCU_latch", &latch, 1);
 	machine_init_toaplan1();
 }
 

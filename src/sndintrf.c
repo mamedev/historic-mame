@@ -259,6 +259,7 @@ int MSM5232_num(const struct MachineSound *msound) { return ((struct MSM5232inte
 int HC55516_num(const struct MachineSound *msound) { return ((struct hc55516_interface*)msound->sound_interface)->num; }
 #endif
 #if (HAS_K007232)
+int K007232_clock(const struct MachineSound *msound) { return ((struct K007232_interface*)msound->sound_interface)->baseclock; }
 int K007232_num(const struct MachineSound *msound) { return ((struct K007232_interface*)msound->sound_interface)->num_chips; }
 #endif
 #if (HAS_AY8910)
@@ -376,6 +377,9 @@ int ES5506_num(const struct MachineSound *msound) { return ((struct ES5506interf
 int BSMT2000_clock(const struct MachineSound *msound) { return ((struct BSMT2000interface*)msound->sound_interface)->baseclock[0]; }
 int BSMT2000_num(const struct MachineSound *msound) { return ((struct BSMT2000interface*)msound->sound_interface)->num; }
 #endif
+#if (HAS_YMF278B)
+int YMF278B_num(const struct MachineSound *msound) { return ((struct YMF278B_interface*)msound->sound_interface)->num; }
+#endif
 
 #ifdef MESS
 #if (HAS_BEEP)
@@ -455,7 +459,7 @@ struct snd_interface sndintf[] =
 #if (HAS_AY8910)
     {
 		SOUND_AY8910,
-		"AY-8910",
+		"AY-3-8910",
 		AY8910_num,
 		AY8910_clock,
 		AY8910_sh_start,
@@ -816,7 +820,7 @@ struct snd_interface sndintf[] =
 		SOUND_K007232,
 		"007232",
 		K007232_num,
-		0,
+		K007232_clock,
 		K007232_sh_start,
 		0,
 		0,
@@ -977,6 +981,18 @@ struct snd_interface sndintf[] =
 		BSMT2000_sh_stop,
 		0,
 		0
+	},
+#endif
+#if (HAS_YMF278B)
+	{
+		 SOUND_YMF278B,
+		 "YMF278B",
+		 YMF278B_num,
+		 0,
+		 YMF278B_sh_start,
+		 YMF278B_sh_stop,
+		 0,
+		 0
 	},
 #endif
 
@@ -1148,12 +1164,17 @@ void sound_reset(void)
 
 
 
-const char *sound_name(const struct MachineSound *msound)
+const char *soundtype_name(int soundtype)
 {
-	if (msound->sound_type < SOUND_COUNT)
-		return sndintf[msound->sound_type].name;
+	if (soundtype < SOUND_COUNT)
+		return sndintf[soundtype].name;
 	else
 		return "";
+}
+
+const char *sound_name(const struct MachineSound *msound)
+{
+	return soundtype_name(msound->sound_type);
 }
 
 int sound_num(const struct MachineSound *msound)

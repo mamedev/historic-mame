@@ -300,7 +300,7 @@ static WRITE16_HANDLER( sound_reset_w )
 static READ16_HANDLER( speedup_68010_r )
 {
 	int result = speed_check[offset];
-	int time = cpu_gettotalcycles();
+	int time = activecpu_gettotalcycles();
 	int delta = time - last_speed_check;
 
 	last_speed_check = time;
@@ -692,13 +692,13 @@ static MACHINE_DRIVER_START( gauntlet )
 	MDRV_CPU_ADD(M68010, ATARI_CLOCK_14MHz/2)
 	MDRV_CPU_MEMORY(main_readmem,main_writemem)
 	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
-	
+
 	MDRV_CPU_ADD(M6502, ATARI_CLOCK_14MHz/8)
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	
+
 	MDRV_MACHINE_INIT(gauntlet)
 	MDRV_NVRAM_HANDLER(atarigen)
 
@@ -708,7 +708,7 @@ static MACHINE_DRIVER_START( gauntlet )
 	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(1024)
-	
+
 	MDRV_VIDEO_START(gauntlet)
 	MDRV_VIDEO_UPDATE(gauntlet)
 
