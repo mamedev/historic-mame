@@ -1495,6 +1495,52 @@ struct GameDriver topsecex_driver =
 /* ROM loader description */
 ROM_START( hitnmiss_rom )
 	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
+	ROM_LOAD( "hml3.a1",   0x08000, 0x2000, 0xd79ae18e )
+	ROM_LOAD( "hml3.a3",   0x0a000, 0x2000, 0x61baf38b )
+	ROM_LOAD( "hml3.a4",   0x0c000, 0x2000, 0x60ca260b )
+	ROM_LOAD( "hml3.a6",   0x0e000, 0x2000, 0x073305d8 )
+	ROM_LOAD( "hml3.d6",   0x26000, 0x2000, 0x79578952 )
+	ROM_LOAD( "hml3.d7",   0x28000, 0x2000, 0x8043b78e )
+	ROM_LOAD( "hml3.d8",   0x2a000, 0x2000, 0xa6494e2e )
+	ROM_LOAD( "hml3.d10",  0x2c000, 0x2000, 0x0810cc84 )
+	ROM_LOAD( "hml3.d11",  0x2e000, 0x2000, 0x9f5c3799 )
+	ROM_LOAD( "hml3.c1",   0x30000, 0x2000, 0x6606d5a8 )
+	ROM_LOAD( "hml3.c3",   0x32000, 0x2000, 0xf6b12e48 )
+	ROM_LOAD( "hml3.c4",   0x34000, 0x2000, 0xe5031d44 )
+	ROM_LOAD( "hml3.c6",   0x36000, 0x2000, 0x1b0f2f28 )
+	ROM_LOAD( "hml3.c7",   0x38000, 0x2000, 0x44920233 )
+	ROM_LOAD( "hml3.c8",   0x3a000, 0x2000, 0x7db26fad )
+	ROM_LOAD( "hml3.c10",  0x3c000, 0x2000, 0xb8f99481 )
+	ROM_LOAD( "hml3.c11",  0x3e000, 0x2000, 0xc2a0d170 )
+	ROM_LOAD( "hml3.b1",   0x40000, 0x2000, 0x945cb27c )
+	ROM_LOAD( "hml3.b3",   0x42000, 0x2000, 0x3f022689 )
+	ROM_LOAD( "hml3.b4",   0x44000, 0x2000, 0xd63fd250 )
+	ROM_LOAD( "hml3.b6",   0x46000, 0x2000, 0xafc89eed )
+	ROM_LOAD( "hml3.b7",   0x48000, 0x2000, 0xf3a12a58 )
+	ROM_LOAD( "hml3.b8",   0x4a000, 0x2000, 0xe0a5a6aa )
+	ROM_LOAD( "hml3.b10",  0x4c000, 0x2000, 0xde65dfdc )
+
+	ROM_REGION(0x10000)
+	ROM_LOAD( "hma3.1h",  0x0e000, 0x2000, 0xf718da36 )
+
+	ROM_REGION(0x20000)
+	ROM_LOAD( "hm2.2k",   0x00000, 0x2000, 0xd3583b62 )
+	ROM_LOAD( "hm2.2l",   0x02000, 0x2000, 0xc059d51e )
+	ROM_LOAD( "hma.2m",   0x04000, 0x2000, 0x09bb8495 )
+	ROM_LOAD( "hma.2n",   0x06000, 0x2000, 0xe3d290df )
+	ROM_LOAD( "hma.2p",   0x08000, 0x2000, 0xf93d1ac0 )
+	ROM_LOAD( "hma.2r",   0x0a000, 0x2000, 0x0f3a090e )
+	ROM_LOAD( "hma.2s",   0x0c000, 0x2000, 0xc5d35f84 )
+	ROM_LOAD( "hma.2t",   0x0e000, 0x2000, 0x9aa71457 )
+	ROM_LOAD( "xba.1n",   0x16000, 0x2000, 0x2e855698 )
+	ROM_LOAD( "hma.1p",   0x18000, 0x2000, 0x021d89dd )
+	ROM_LOAD( "hma.1r",   0x1a000, 0x2000, 0xe8bb33bc )
+	ROM_LOAD( "hma.1s",   0x1c000, 0x2000, 0x65f1aa6e )
+	ROM_LOAD( "hma.1t",   0x1e000, 0x2000, 0xeb35dfcc )
+ROM_END
+
+ROM_START( hitnmis2_rom )
+	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "hml2.a1",   0x08000, 0x2000, 0x322f7e83 )
 	ROM_LOAD( "hml2.a3",   0x0a000, 0x2000, 0x0e12a721 )
 	ROM_LOAD( "hml2.a4",   0x0c000, 0x2000, 0x6cec8ad2 )
@@ -1615,7 +1661,7 @@ struct GameDriver hitnmiss_driver =
 	__FILE__,
 	0,
 	"hitnmiss",
-	"Hit 'n Miss (version 2.0)",
+	"Hit 'n Miss (version 3.0)",
 	"1987",
 	"Exidy",
 	"Aaron Giles",
@@ -1624,6 +1670,32 @@ struct GameDriver hitnmiss_driver =
 	hitnmiss_init,
 
 	hitnmiss_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	hitnmiss_input_ports,
+
+	0,0,0,
+	ORIENTATION_DEFAULT,
+
+	exidy440_hiload,exidy440_hisave
+};
+
+struct GameDriver hitnmis2_driver =
+{
+	__FILE__,
+	&hitnmiss_driver,
+	"hitnmis2",
+	"Hit 'n Miss (version 2.0)",
+	"1987",
+	"Exidy",
+	"Aaron Giles",
+	0,
+	&exidy440_machine_driver,
+	hitnmiss_init,
+
+	hitnmis2_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

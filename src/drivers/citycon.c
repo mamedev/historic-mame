@@ -187,11 +187,14 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
+/* actually there is on1 AY8910 and one YM2203, but the sound core doesn't */
+/* support that so we use 2 YM2203 */
 static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
 	2000000,	/* 2.0 MHz ??? */
-	{ YM2203_VOL(20,0x2014), YM2203_VOL(20,0x2014) },
+	{ YM2203_VOL(20,20), YM2203_VOL(20,20) },
+	{ 0x20, 0x20 },	/* 8910 gain */
 	{ soundlatch_r },
 	{ soundlatch2_r },
 	{ 0 },
@@ -299,6 +302,29 @@ ROM_START( citycona_rom )
 	ROM_LOAD( "c1",           0x8000, 0x8000, 0x1fad7589 )
 ROM_END
 
+ROM_START( cruisin_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "cr10",         0x4000, 0x4000, 0xcc7c52f3 )
+	ROM_LOAD( "cr11",         0x8000, 0x8000, 0x5422f276 )
+
+	ROM_REGION_DISPOSE(0x1e000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "cr4",          0x00000, 0x2000, 0x8cd0308e )	/* Characters */
+	ROM_LOAD( "c12",          0x02000, 0x2000, 0x08eaaccd )	/* Sprites    */
+	ROM_LOAD( "c13",          0x04000, 0x2000, 0x1819aafb )
+	ROM_LOAD( "c9",           0x06000, 0x8000, 0x8aeb47e6 )	/* Background tiles */
+	ROM_LOAD( "c8",           0x0e000, 0x4000, 0x0d7a1eeb )
+	ROM_LOAD( "c6",           0x12000, 0x8000, 0x2246fe9d )
+	ROM_LOAD( "c7",           0x1a000, 0x4000, 0xe8b97de9 )
+
+	ROM_REGION(0xe000)
+	ROM_LOAD( "c2",           0x0000, 0x8000, 0xf2da4f23 )	/* background maps */
+	ROM_LOAD( "c3",           0x8000, 0x4000, 0x7ef3ac1b )
+	ROM_LOAD( "c5",           0xc000, 0x2000, 0xc03d8b1b )	/* color codes for the background */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "c1",           0x8000, 0x8000, 0x1fad7589 )
+ROM_END
+
 
 
 static int hiload(void)
@@ -383,6 +409,33 @@ struct GameDriver citycona_driver =
 	0,
 
 	citycona_rom,
+	0, 0,
+	0,
+
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
+struct GameDriver cruisin_driver =
+{
+	__FILE__,
+	&citycon_driver,
+	"cruisin",
+	"Cruisin",
+	"1985",
+	"Jaleco (Kitkorp license)",
+	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)",
+	0,
+	&machine_driver,
+	0,
+
+	cruisin_rom,
 	0, 0,
 	0,
 

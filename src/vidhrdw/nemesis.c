@@ -26,6 +26,8 @@ static unsigned char *sprite3216_dirty;	/* 256 sprites */
 static unsigned char *sprite816_dirty;	/* 1024 sprites */
 static unsigned char *sprite1632_dirty;	/* 256 sprites */
 static unsigned char *sprite3232_dirty;	/* 128 sprites */
+static unsigned char *sprite168_dirty;	/* 1024 sprites */
+static unsigned char *sprite6464_dirty;	/* 32 sprites */
 
 void nemesis_palette_w(int offset,int data)
 {
@@ -153,7 +155,9 @@ void nemesis_characterram_w(int offset,int data)
 		sprite3216_dirty[offset / 256] = 1;
 		sprite1632_dirty[offset / 256] = 1;
 		sprite3232_dirty[offset / 512] = 1;
+		sprite168_dirty[offset / 64] = 1;
 		sprite816_dirty[offset / 64] = 1;
+		sprite6464_dirty[offset / 2048] = 1;
 	}
 }
 
@@ -170,7 +174,9 @@ void nemesis_vh_stop(void)
 	free (sprite3216_dirty);
 	free (sprite1632_dirty);
 	free (sprite3232_dirty);
+	free (sprite168_dirty);
 	free (sprite816_dirty);
+	free (sprite6464_dirty);
 	char_dirty = 0;
 	free (video1_dirty);
 	free (video2_dirty);
@@ -227,12 +233,26 @@ int nemesis_vh_start(void)
 	}
 	memset(sprite3232_dirty,1,128);
 
+	sprite168_dirty = malloc(1024);
+	if (!sprite168_dirty) {
+		nemesis_vh_stop();
+		return 1;
+	}
+	memset(sprite168_dirty,1,1024);
+
 	sprite816_dirty = malloc(1024);
 	if (!sprite816_dirty) {
 		nemesis_vh_stop();
 		return 1;
 	}
-	memset(sprite816_dirty,1,1024);
+	memset(sprite816_dirty,1,32);
+
+	sprite6464_dirty = malloc(32);
+	if (!sprite6464_dirty) {
+		nemesis_vh_stop();
+		return 1;
+	}
+	memset(sprite6464_dirty,1,32);
 
 	video1_dirty = malloc (0x800);
 	video2_dirty = malloc (0x800);
@@ -718,27 +738,32 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 
 				switch(size&0x38)
 				{
-					case 0x20:	/* char 8x8 */
-						char_type=0;
-						code*=2;
-						break;
 					case 0x00:	/* sprite 32x32*/
 						char_type=4;
 						code/=8;
+						break;
+					case 0x08:	/* sprite 16x32 */
+						char_type=5;
+						code/=4;
 						break;
 					case 0x10:	/* sprite 32x16 */
 						char_type=2;
 						code/=4;
 						break;
+					case 0x18:		/* sprite 64x64 */
+						char_type=7;
+						code/=32;
+						break;
+					case 0x20:	/* char 8x8 */
+						char_type=0;
+						code*=2;
+						break;
+					case 0x28:		/* sprite 16x8 */
+						char_type=6;
+						break;
 					case 0x30:	/* sprite 8x16 */
 						char_type=3;
 						break;
-					case 0x8:	/* sprite 16x32 */
-						char_type=5;
-						code/=4;
-						break;
-					case 0x18:		/* 64x64. I haven't seen it used */
-					case 0x28:		/* ??x??. I haven't seen it used */
 					case 0x38:
 					default:	/* sprite 16x16 */
 						char_type=1;
@@ -828,17 +853,6 @@ static void setup_palette(void)
 			int size=READ_WORD(&spriteram[offs+2]);
 			switch(size&0x38)
 			{
-				case 0x20:
-					/* char 8x8 */
-					char_type=0;
-					code*=2;
-					if (char_dirty[code] == 1)
-					{
-						decodechar(Machine->gfx[char_type],code,nemesis_characterram_gfx,
-						Machine->drv->gfxdecodeinfo[char_type].gfxlayout);
-						char_dirty[code] = 0;
-					}
-					break;
 				case 0x00:
 					/* sprite 32x32*/
 					char_type=4;
@@ -848,6 +862,18 @@ static void setup_palette(void)
 						decodechar(Machine->gfx[char_type],code,nemesis_characterram_gfx,
 								Machine->drv->gfxdecodeinfo[char_type].gfxlayout);
 						sprite3232_dirty[code] = 0;
+					}
+					break;
+				case 0x08:
+					/* sprite 16x32 */
+					char_type=5;
+					code/=4;
+					if (sprite1632_dirty[code] == 1)
+					{
+						decodechar(Machine->gfx[char_type],code,nemesis_characterram_gfx,
+								Machine->drv->gfxdecodeinfo[char_type].gfxlayout);
+						sprite1632_dirty[code] = 0;
+
 					}
 					break;
 				case 0x10:
@@ -861,6 +887,39 @@ static void setup_palette(void)
 						sprite3216_dirty[code] = 0;
 					}
 					break;
+				case 0x18:
+					/* sprite 64x64 */
+					char_type=7;
+					code/=32;
+					if (sprite6464_dirty[code] == 1)
+					{
+						decodechar(Machine->gfx[char_type],code,nemesis_characterram_gfx,
+								Machine->drv->gfxdecodeinfo[char_type].gfxlayout);
+						sprite6464_dirty[code] = 0;
+					}
+					break;
+				case 0x20:
+					/* char 8x8 */
+					char_type=0;
+					code*=2;
+					if (char_dirty[code] == 1)
+					{
+						decodechar(Machine->gfx[char_type],code,nemesis_characterram_gfx,
+						Machine->drv->gfxdecodeinfo[char_type].gfxlayout);
+						char_dirty[code] = 0;
+					}
+					break;
+				case 0x28:
+					/* sprite 16x8 */
+					char_type=6;
+					if (sprite168_dirty[code] == 1)
+					{
+						decodechar(Machine->gfx[char_type],code,nemesis_characterram_gfx,
+								Machine->drv->gfxdecodeinfo[char_type].gfxlayout);
+						sprite_dirty[code] = 2;
+
+					}
+					break;
 				case 0x30:
 					/* sprite 8x16 */
 					char_type=3;
@@ -871,20 +930,6 @@ static void setup_palette(void)
 						sprite816_dirty[code] = 0;
 					}
 					break;
-				case 0x8:
-					/* sprite 16x32 */
-					char_type=5;
-					code/=4;
-					if (sprite1632_dirty[code] == 1)
-					{
-						decodechar(Machine->gfx[char_type],code,nemesis_characterram_gfx,
-								Machine->drv->gfxdecodeinfo[char_type].gfxlayout);
-						sprite1632_dirty[code] = 0;
-
-					}
-					break;
-				case 0x18:		// 64x64. I haven't seen it used
-				case 0x28:		// ??x??. I haven't seen it used
 				default:
 					if(errorlog) fprintf(errorlog,"UN-SUPPORTED SPRITE SIZE %-4x\n",size&0x38);
 				case 0x38:

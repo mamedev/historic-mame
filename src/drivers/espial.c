@@ -30,20 +30,20 @@ write:
 6090      write command to sound CPU
 7000      watchdog reset
 7100      NMI interrupt acknowledge/enable
-7200      ?
+7200      flip screen
 
 Interrupts: VBlank -> NMI.
 			IRQ -> send sound commands to sound cpu. Runs in interrupt mode 1
 
 SOUND CPU:
 0000-1fff ROM
-2000-23ff RAM (?)
+2000-23ff RAM
 
 read:
 6000      read command from main CPU
 
 write:
-4000      ? watchdog ?
+4000      NMI enable
 6000      write command back to main CPU
 
 Interrupts: IRQs are triggered by writes to the sound_command location 0x6000 - im 1
@@ -63,28 +63,16 @@ B ?
 
 
 
-void espial_init_machine(void);
-void espial_interrupt_enable_w(int offset,int data);
-int espial_interrupt(void);
-
 extern unsigned char *espial_attributeram;
 extern unsigned char *espial_column_scroll;
 void espial_attributeram_w(int offset,int data);
 void espial_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void espial_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-int espial_sh_interrupt(void);
-
-
-
-/* Send sound data to the sound cpu and cause an irq */
-void espial_sound_command_w (int offset, int data)
-{
-	/* The sound cpu runs in interrupt mode 1 */
-	soundlatch_w(0,data);
-	cpu_cause_interrupt(1,0xff);
-}
-
+void espial_init_machine(void);
+void zodiac_master_interrupt_enable_w(int offset, int data);
+int  zodiac_master_interrupt(void);
+void zodiac_master_soundlatch_w(int offset, int data);
 
 
 static struct MemoryReadAddress readmem[] =
@@ -94,15 +82,14 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x7000, 0x7000, MRA_RAM },	/* ?? */
 	{ 0x8000, 0x803f, MRA_RAM },
 	{ 0x8400, 0x87ff, MRA_RAM },
-	{ 0x8c00, 0x8fff, MRA_RAM },
-	{ 0x9000, 0x903f, MRA_RAM },
+	{ 0x8c00, 0x903f, MRA_RAM },
 	{ 0x9400, 0x97ff, MRA_RAM },
-	{ 0xc000, 0xcfff, MRA_ROM },
 	{ 0x6081, 0x6081, input_port_0_r },	/* IN0 */
 	{ 0x6082, 0x6082, input_port_1_r },	/* IN1 */
 	{ 0x6083, 0x6083, input_port_2_r },	/* IN2 */
 	{ 0x6084, 0x6084, input_port_3_r },	/* IN3 */
-	{ 0x6090, 0x6090, soundlatch_r },	/* the main CPU reads the command back from the slave? */
+	{ 0x6090, 0x6090, soundlatch_r },	/* the main CPU reads the command back from the slave */
+	{ 0xc000, 0xcfff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -110,9 +97,9 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x4fff, MWA_ROM },
 	{ 0x5800, 0x5fff, MWA_RAM },
-	{ 0x6090, 0x6090, espial_sound_command_w },
-	{ 0x7000, 0x7000, MWA_RAM }, /* watchdog reset */
-	{ 0x7100, 0x7100, espial_interrupt_enable_w },
+	{ 0x6090, 0x6090, zodiac_master_soundlatch_w },
+	{ 0x7000, 0x7000, watchdog_reset_w },
+	{ 0x7100, 0x7100, zodiac_master_interrupt_enable_w },
 	{ 0x8000, 0x801f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x8400, 0x87ff, videoram_w, &videoram, &videoram_size },
 	{ 0x8800, 0x880f, MWA_RAM, &spriteram_3 },
@@ -137,7 +124,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x2000, 0x23ff, MWA_RAM },
-	{ 0x4000, 0x4000, MWA_NOP },
+	{ 0x4000, 0x4000, interrupt_enable_w },
 	{ 0x6000, 0x6000, soundlatch_w },
 	{ -1 }	/* end of table */
 };
@@ -230,7 +217,8 @@ static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
 	1500000,	/* 1.5 MHZ?????? */
-	{ 255 },
+	{ 50 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -248,17 +236,17 @@ static struct MachineDriver machine_driver =
 			3072000,	/* 3.072 Mhz */
 			0,
 			readmem,writemem,0,0,
-			espial_interrupt,2
+			zodiac_master_interrupt,2
 		},
 		{
 			CPU_Z80,
 			3072000,	/* 2 Mhz?????? */
 			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,sound_writeport,
-			espial_sh_interrupt,4
+			nmi_interrupt,4
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	espial_init_machine,
 
@@ -385,7 +373,7 @@ struct GameDriver espial_driver =
 	"espial",
 	"Espial (US?)",
 	"1983",
-	"Thunderbolt",
+	"[Orca] Thunderbolt",
 	"Brad Oliver\nNicola Salmoria\nTim Lindquist (color info)",
 	0,
 	&machine_driver,
@@ -411,7 +399,7 @@ struct GameDriver espiale_driver =
 	"espiale",
 	"Espial (Europe)",
 	"1983",
-	"Thunderbolt",
+	"[Orca] Thunderbolt",
 	"Brad Oliver\nNicola Salmoria\nTim Lindquist (color info)",
 	0,
 	&machine_driver,

@@ -40,7 +40,27 @@ static void field_interrupt(void);
 
 extern  FILE *errorlog;
 
-int 	tms9900_ICount = 0;
+static UINT8 tms9900_reg_layout[] = {
+	TMS9900_PC, TMS9900_WP, TMS9900_STATUS, TMS9900_IR
+#ifdef MAME_DEBUG
+	, -1,
+	TMS9900_R0, TMS9900_R1, TMS9900_R2, TMS9900_R3,
+	TMS9900_R4, TMS9900_R5, TMS9900_R6, TMS9900_R7, -1,
+	TMS9900_R8, TMS9900_R9, TMS9900_R10, TMS9900_R11,
+	TMS9900_R12, TMS9900_R13, TMS9900_R14, TMS9900_R15, -1,
+#endif
+};
+
+/* Layout of the debugger windows x,y,w,h */
+static UINT8 tms9900_win_layout[] = {
+	 0, 0,80, 4,	/* register window (top rows) */
+	 0, 5,31,17,	/* disassembler window (left colums) */
+	32, 5,48, 8,	/* memory #1 window (right, upper middle) */
+	32,14,48, 8,	/* memory #2 window (right, lower middle) */
+     0,23,80, 1,    /* command line window (bottom rows) */
+};
+
+int     tms9900_ICount = 0;
 
 /* TMS9900 ST register bits. */
 
@@ -397,15 +417,32 @@ const char *tms9900_info(void *context, int regnum)
     if( !context )
 		r = &I;
 
-    switch( regnum )
+	switch( regnum )
 	{
-		case CPU_INFO_NAME: return "TMS9900";
-		case CPU_INFO_FAMILY: return "Texas Instruments 9900";
-		case CPU_INFO_VERSION: return "1.01";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Converted for Mame byM.Coates (TMS9900 emulation by Edward Swartz, smoothed out by R NABET)";
+		case CPU_INFO_REG+TMS9900_PC: sprintf(buffer[which], "PC :%04X",  r->PC); break;
+		case CPU_INFO_REG+TMS9900_IR: sprintf(buffer[which], "IR :%04X",  r->IR); break;
+		case CPU_INFO_REG+TMS9900_WP: sprintf(buffer[which], "WP :%04X",  r->WP); break;
+		case CPU_INFO_REG+TMS9900_STATUS: sprintf(buffer[which], "ST :%04X",  r->STATUS); break;
+#ifdef MAME_DEBUG
+		case CPU_INFO_REG+TMS9900_R0: sprintf(buffer[which], "R0 :%04X",  r->FR[0]); break;
+		case CPU_INFO_REG+TMS9900_R1: sprintf(buffer[which], "R1 :%04X",  r->FR[1]); break;
+		case CPU_INFO_REG+TMS9900_R2: sprintf(buffer[which], "R2 :%04X",  r->FR[2]); break;
+		case CPU_INFO_REG+TMS9900_R3: sprintf(buffer[which], "R3 :%04X",  r->FR[3]); break;
+		case CPU_INFO_REG+TMS9900_R4: sprintf(buffer[which], "R4 :%04X",  r->FR[4]); break;
+		case CPU_INFO_REG+TMS9900_R5: sprintf(buffer[which], "R5 :%04X",  r->FR[5]); break;
+		case CPU_INFO_REG+TMS9900_R6: sprintf(buffer[which], "R6 :%04X",  r->FR[6]); break;
+		case CPU_INFO_REG+TMS9900_R7: sprintf(buffer[which], "R7 :%04X",  r->FR[7]); break;
+		case CPU_INFO_REG+TMS9900_R8: sprintf(buffer[which], "R8 :%04X",  r->FR[8]); break;
+		case CPU_INFO_REG+TMS9900_R9: sprintf(buffer[which], "R9 :%04X",  r->FR[9]); break;
+		case CPU_INFO_REG+TMS9900_R10: sprintf(buffer[which], "R10:%04X",  r->FR[10]); break;
+		case CPU_INFO_REG+TMS9900_R11: sprintf(buffer[which], "R11:%04X",  r->FR[11]); break;
+		case CPU_INFO_REG+TMS9900_R12: sprintf(buffer[which], "R12:%04X",  r->FR[12]); break;
+		case CPU_INFO_REG+TMS9900_R13: sprintf(buffer[which], "R13:%04X",  r->FR[13]); break;
+		case CPU_INFO_REG+TMS9900_R14: sprintf(buffer[which], "R14:%04X",  r->FR[14]); break;
+		case CPU_INFO_REG+TMS9900_R15: sprintf(buffer[which], "R15:%04X",  r->FR[15]); break;
+#endif
 		case CPU_INFO_FLAGS:
-			sprintf(buffer[which],"%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+			sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
 				r->WP & 0x8000 ? 'L':'.',
 				r->WP & 0x4000 ? 'A':'.',
 				r->WP & 0x2000 ? 'E':'.',
@@ -423,30 +460,15 @@ const char *tms9900_info(void *context, int regnum)
 				r->WP & 0x0002 ? 'I':'.',
 				r->WP & 0x0001 ? 'I':'.');
             break;
-		case CPU_INFO_REG+TMS9900_PC: sprintf(buffer[which],"PC:%04X",  r->PC); break;
-		case CPU_INFO_REG+TMS9900_IR: sprintf(buffer[which],"IR:%04X",  r->IR); break;
-		case CPU_INFO_REG+TMS9900_WP: sprintf(buffer[which],"WP:%04X",  r->WP); break;
-		case CPU_INFO_REG+TMS9900_STATUS: sprintf(buffer[which],"ST:%04X",  r->STATUS); break;
-#ifdef MAME_DEBUG
-		case CPU_INFO_REG+TMS9900_R0: sprintf(buffer[which], "R0:%04X",  r->FR[0]); break;
-		case CPU_INFO_REG+TMS9900_R1: sprintf(buffer[which], "R1 :%04X",r->FR[1]); break;
-		case CPU_INFO_REG+TMS9900_R2: sprintf(buffer[which], "R2:%04X",  r->FR[2]); break;
-		case CPU_INFO_REG+TMS9900_R3: sprintf(buffer[which], "R3:%04X",  r->FR[3]); break;
-		case CPU_INFO_REG+TMS9900_R4: sprintf(buffer[which], "R4:%04X",  r->FR[4]); break;
-		case CPU_INFO_REG+TMS9900_R5: sprintf(buffer[which], "R5:%04X",  r->FR[5]); break;
-		case CPU_INFO_REG+TMS9900_R6: sprintf(buffer[which], "R6:%04X",  r->FR[6]); break;
-		case CPU_INFO_REG+TMS9900_R7: sprintf(buffer[which], "R7:%04X",  r->FR[7]); break;
-		case CPU_INFO_REG+TMS9900_R8: sprintf(buffer[which], "R8:%04X",  r->FR[8]); break;
-		case CPU_INFO_REG+TMS9900_R9: sprintf(buffer[which], "R9:%04X",  r->FR[9]); break;
-		case CPU_INFO_REG+TMS9900_R10: sprintf(buffer[which],"R10:%04X",  r->FR[10]); break;
-		case CPU_INFO_REG+TMS9900_R11: sprintf(buffer[which],"R11:%04X",  r->FR[11]); break;
-		case CPU_INFO_REG+TMS9900_R12: sprintf(buffer[which],"R12:%04X",  r->FR[12]); break;
-		case CPU_INFO_REG+TMS9900_R13: sprintf(buffer[which],"R13:%04X",  r->FR[13]); break;
-		case CPU_INFO_REG+TMS9900_R14: sprintf(buffer[which],"R14:%04X",  r->FR[14]); break;
-		case CPU_INFO_REG+TMS9900_R15: sprintf(buffer[which],"R15:%04X",  r->FR[15]); break;
-#endif
+		case CPU_INFO_NAME: return "TMS9900";
+		case CPU_INFO_FAMILY: return "Texas Instruments 9900";
+		case CPU_INFO_VERSION: return "1.0";
+		case CPU_INFO_FILE: return __FILE__;
+		case CPU_INFO_CREDITS: return "Converted for Mame by M.Coates (C/PPC file for TMS9900 emulation by R NABET, based on work by Edward Swartz)";
+		case CPU_INFO_REG_LAYOUT: return (const char*)tms9900_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char*)tms9900_win_layout;
     }
-	return buffer[which];
+    return buffer[which];
 }
 
 unsigned tms9900_dasm(char *buffer, unsigned pc)

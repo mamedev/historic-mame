@@ -102,9 +102,9 @@ Chip #     Game                Bank Select Addresses      Disable Mask Ignore Ma
 137412-110 Road Blasters &     $0040, $0050, $0060, $0070    $34c0        $002d        $3d14   $3d24, $3d25, $3d26, $3d27
            APB?
 137412-111 Pit Fighter
-137412-116 Hydra &
+137412-116 Hydra &             $0044, $004c, $0054, $005c
            Cyberball 2072 Tournament
-137412-118 Vindicators Part II $0014, $0034, $0054, $0074    $???0        $0002        $????   $????, $????, $????, $????
+137412-118 Vindicators Part II $0014, $0034, $0054, $0074    $???0        $0002       *$1950  *$1958,*$1960,*$1968,*$1970
            & Rampart
 
 Surprisingly, the slapstic appears to have used DRAM cells to store
@@ -201,7 +201,7 @@ static struct slapstic_params slapstic_table[18] =
 	/* 137412-110 Road Blasters/APB */
 	{ 0x0000, 0x0040, 0x0050, 0x0060, 0x0070, 0x34c0, 0x002d, 0x3d14, 0x3d24, 0x3d25, 0x3d26, 0x3d27 },
 	/* 137412-111 Pit Fighter */
-	{ 0x0000,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
+	{ 0x0000, 0x0042, 0x0052, 0x0062, 0x0072,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
 	/* 137412-112 ???? */
 	{ 0x0000,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
 	/* 137412-113 ???? */
@@ -211,11 +211,11 @@ static struct slapstic_params slapstic_table[18] =
 	/* 137412-115 ???? */
 	{ 0x0000,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
 	/* 137412-116 Hydra/Cyberball 2072 Tournament */
-	{ 0x0000,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
+	{ 0x0000, 0x0044, 0x004c, 0x0054, 0x005c,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
 	/* 137412-117 ???? */
 	{ 0x0000,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
 	/* 137412-118 Vindicators II/Rampart */
-	{ 0x0000, 0x0014, 0x0034, 0x0054, 0x0074,UNKNOWN, 0x0002,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
+	{ 0x0000, 0x0014, 0x0034, 0x0054, 0x0074,UNKNOWN, 0x0002, 0x1950, 0x1958, 0x1960, 0x1968, 0x1970 },
 };
 
 
@@ -235,9 +235,8 @@ static int current_bank;
 static int version;
 
 #if LOG_SLAPSTIC
-	static void slapstic_log (int offset);
+	static void slapstic_log(int offset);
 	static FILE *slapsticlog;
-	extern FILE *errorlog;
 #else
 	#define slapstic_log(o)
 #endif
@@ -253,7 +252,7 @@ extern unsigned char *slapstic_area;
  *
  *************************************/
 
-void slapstic_init (int chip)
+void slapstic_init(int chip)
 {
 	/* only a small number of chips are known to exist */
 	if (chip < 101 || chip > 118)
@@ -274,7 +273,7 @@ void slapstic_init (int chip)
 	if (version == 101)
 	{
 		/* Super ugly hack for ESB */
-		memcpy (slapstic_area, &atarigen_slapstic[current_bank * 0x2000], 0x2000);
+		memcpy(slapstic_area, &atarigen_slapstic[current_bank * 0x2000], 0x2000);
 	}
 }
 
@@ -286,7 +285,7 @@ void slapstic_init (int chip)
  *
  *************************************/
 
-int slapstic_bank (void)
+int slapstic_bank(void)
 {
 	return current_bank;
 }
@@ -298,7 +297,7 @@ int slapstic_bank (void)
  *		Call this before every access
  *
  *************************************/
-int slapstic_tweak (int offset)
+int slapstic_tweak(int offset)
 {
 	/* switch banks now if one is pending */
 	if (next_bank != -1)
@@ -309,7 +308,7 @@ int slapstic_tweak (int offset)
 		if (version == 101)
 		{
 			/* Super ugly hack for ESB */
-			memcpy (slapstic_area, &atarigen_slapstic[current_bank * 0x2000], 0x2000);
+			memcpy(slapstic_area, &atarigen_slapstic[current_bank * 0x2000], 0x2000);
 		}
 	}
 
@@ -429,7 +428,7 @@ int slapstic_tweak (int offset)
 	}
 
 	/* log this access */
-	slapstic_log (offset);
+	slapstic_log(offset);
 
 	/* return the active bank */
 	return current_bank;
@@ -444,26 +443,26 @@ int slapstic_tweak (int offset)
  *************************************/
 
 #if LOG_SLAPSTIC
-static void slapstic_log (int offset)
+static void slapstic_log(int offset)
 {
-//	if (!slapsticlog)
-//		slapsticlog = fopen ("slapstic.log", "w");
-	if (errorlog)
+	if (!slapsticlog)
+		slapsticlog = fopen("slapstic.log", "w");
+	if (slapsticlog)
 	{
-		fprintf (errorlog, "Slapstic bank %d @ %04X (PC=%08X), STATE: ", current_bank, offset, cpu_get_pc ());
+		fprintf(slapsticlog, "%06X: %04X B=%d ", cpu_getpreviouspc(), offset, current_bank);
 		switch (state)
 		{
 			case ENABLED:
-				fprintf (errorlog, "ENABLED\n");
+				fprintf(slapsticlog, "ENABLED\n");
 				break;
 			case DISABLED:
-				fprintf (errorlog, "DISABLED\n");
+				fprintf(slapsticlog, "DISABLED\n");
 				break;
 			case SPECIAL:
-				fprintf (errorlog, "SPECIAL\n");
+				fprintf(slapsticlog, "SPECIAL\n");
 				break;
 			case IGNORE:
-				fprintf (errorlog, "IGNORE\n");
+				fprintf(slapsticlog, "IGNORE\n");
 				break;
 		}
 	}

@@ -293,6 +293,7 @@ static struct YM2203interface ym2203_interface =
 	2,			/* 2 chips */
 	3579545, /* Accurate */
 	{ YM2203_VOL(40,40), YM2203_VOL(40,40) },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },

@@ -216,6 +216,7 @@ static struct YM2203interface ym2203_interface =
 	1,			/* 1 chip */
 	4000000,	/* 4 MHz */
 	{ YM2203_VOL(40,40) },
+	AY8910_DEFAULT_GAIN,
 	{ ticket_dispenser_r },
 	{ 0 },
 	{ 0 },

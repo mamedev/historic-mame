@@ -32,7 +32,7 @@ int tia_sh_start(const struct MachineSound *msound)
 	emulation_rate = buffer_len * Machine->drv->frames_per_second;
 	sample_pos = 0;
 
-	channel = get_play_channels(1);
+	channel = mixer_allocate_channel(intf->volume);
 
 	if ((buffer = malloc(buffer_len)) == 0)
 		return 1;
@@ -56,5 +56,5 @@ void tia_sh_update (void)
 		Tia_process (buffer + sample_pos, buffer_len - sample_pos);
 	sample_pos = 0;
 
-	osd_play_streamed_sample(channel,(signed char *)buffer,buffer_len,emulation_rate,intf->volume, OSD_PAN_CENTER);
+	mixer_play_streamed_sample(channel,(signed char *)buffer,buffer_len,emulation_rate);
 }

@@ -574,7 +574,8 @@ static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
 	1500000,	/* 1.5 MHz ? */
-	{ 255 },
+	{ 25 },
+	AY8910_DEFAULT_GAIN,
 	{ soundlatch_r },
 	{ 0 },
 	{ 0 },
@@ -584,7 +585,7 @@ static struct AY8910interface ay8910_interface =
 static struct DACinterface dac_interface =
 {
 	1,
-	{ 255 }
+	{ 25 }
 };
 
 static int kingobox_interrupt( void ) {
@@ -832,8 +833,7 @@ ROM_START( ringking_rom )
     ROM_LOAD( "cx10.17e",     0x2a000, 0x4000, 0xab9446c5 )
 
 	ROM_REGION(0x0200)	/* color PROMs */
-	/* 2A is missing!!! */
-//	ROM_LOAD( "2a",           0x0000, 0x0100, 0x00000000 )	/* red and green component */
+	ROM_LOAD( "2a",           0x0000, 0x0100, 0x00000000 )	/* red and green component */
 	ROM_LOAD( "mb7052.1a",    0x0100, 0x0100, 0xd345cbb3 )	/* blue component */
 
     ROM_REGION(0x10000)     /* 64k for the video cpu */
@@ -848,6 +848,37 @@ ROM_START( ringking_rom )
 ROM_END
 
 ROM_START( ringkin2_rom )
+    ROM_REGION(0x10000)     /* 64k for code */
+    ROM_LOAD( "rkngm1.bin",   0x00000, 0x8000, 0x086921ea )
+    ROM_LOAD( "rkngm2.bin",   0x08000, 0x4000, 0xc0b636a4 )
+
+    ROM_REGION_DISPOSE(0x2e000)     /* temporary space for graphics (disposed after conversion) */
+    ROM_LOAD( "cx08.13b",     0x00000, 0x2000, 0xdbd7c1c2 )	/* characters */
+	ROM_LOAD( "cx03.9j",      0x02000, 0x4000, 0x682fd1c4 )	/* sprites */
+    ROM_LOAD( "cx01.7j",      0x06000, 0x4000, 0x85130b46 )
+    ROM_LOAD( "cx05.12j",     0x0a000, 0x4000, 0xf7c4f3dc )
+	ROM_LOAD( "cx04.11j",     0x0e000, 0x8000, 0x506a2ed9 )
+	ROM_LOAD( "cx02.8j",      0x16000, 0x8000, 0x009dde6a )
+	ROM_LOAD( "cx06.13j",     0x1e000, 0x8000, 0xd819a3b2 )
+    ROM_LOAD( "cx09.17d",     0x26000, 0x4000, 0x37a082cf )	/* tiles */
+    ROM_LOAD( "cx10.17e",     0x2a000, 0x4000, 0xab9446c5 )
+
+	ROM_REGION(0x0200)	/* color PROMs */
+	ROM_LOAD( "2a",           0x0000, 0x0100, 0x00000000 )	/* red and green component */
+	ROM_LOAD( "mb7052.1a",    0x0100, 0x0100, 0xd345cbb3 )	/* blue component */
+
+    ROM_REGION(0x10000)     /* 64k for the video cpu */
+    ROM_LOAD( "rkngtram.bin", 0x00000, 0x4000, 0xd9dc1a0a )
+
+    ROM_REGION(0x10000)     /* 64k for the sprite cpu */
+    ROM_LOAD( "cx00.4c",      0x00000, 0x2000, 0x880b8aa7 )
+
+    ROM_REGION(0x10000)     /* 64k for the audio cpu */
+    ROM_LOAD( "cx12.4ef",     0x00000, 0x8000, 0x1d5d6c6b )
+    ROM_LOAD( "cx11.2ef",     0x08000, 0x4000, 0x64c137a4 )
+ROM_END
+
+ROM_START( ringkin3_rom )
     ROM_REGION(0x10000)     /* 64k for code */
     ROM_LOAD( "14.9d",        0x00000, 0x4000, 0x63627b8b )
     ROM_LOAD( "15.9e",        0x04000, 0x4000, 0xe7557489 )
@@ -1120,13 +1151,39 @@ struct GameDriver ringkin2_driver =
 	"ringkin2",
 	"Ring King (set 2)",
 	"1985",
+	"????",
+	"Ernesto Corvi\nPhil Stroffolino\nNicola Salmoria",
+	GAME_IMPERFECT_COLORS|GAME_NOT_WORKING,
+	&rk_machine_driver,
+	0,
+
+	ringkin2_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	ringking_hiload, ringking_hisave
+};
+
+struct GameDriver ringkin3_driver =
+{
+	__FILE__,
+	&kingofb_driver,
+	"ringkin3",
+	"Ring King (set 3)",
+	"1985",
 	"Data East USA",
 	"Ernesto Corvi\nPhil Stroffolino\nNicola Salmoria",
 	GAME_IMPERFECT_COLORS,
 	&machine_driver,
 	0,
 
-	ringkin2_rom,
+	ringkin3_rom,
 	0, 0,
 	0,
 	0,      /* sound_prom */

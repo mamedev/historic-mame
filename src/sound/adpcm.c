@@ -21,8 +21,6 @@
 
 #define OVERSAMPLING	0	/* breaks 10 Yard Fight */
 
-/* signed/unsigned 8-bit conversion macros */
-#define AUDIO_CONV(A) ((A))
 
 /* struct describing a single playing ADPCM voice */
 struct ADPCMVoice
@@ -133,7 +131,7 @@ int ADPCM_sh_start (const struct MachineSound *msound)
 	}
 
 	/* reserve sound channels */
-	channel = get_play_channels (adpcm_intf->num);
+	channel = mixer_allocate_channels(adpcm_intf->num,adpcm_intf->mixing_level);
 
 	/* compute the emulation rate and buffer size */
 
@@ -150,10 +148,15 @@ int ADPCM_sh_start (const struct MachineSound *msound)
 	memset (adpcm, 0, sizeof (adpcm));
 	for (i = 0; i < adpcm_intf->num; i++)
 	{
+		char name[40];
+
+		sprintf(name,"%s #%d",sound_name(msound),i);
+		mixer_set_name(channel+i,name);
+
 		adpcm[i].channel = channel + i;
 		adpcm[i].mask = 0xffffffff;
 		adpcm[i].signal = -2;
-		adpcm[i].volume = adpcm_intf->volume[i];
+		adpcm[i].volume = 255;
 
 		/* allocate an output buffer */
 		adpcm[i].buffer = malloc (buffer_len * Machine->sample_bits / 8);
@@ -238,10 +241,10 @@ static void ADPCM_update (struct ADPCMVoice *voice, int finalpos)
                     /* antialiasing samples */
                     delta = signal - oldsignal;
 					for (i = 1; left && i <= oversampling; left--, i++)
-						*buffer++ = (oldsignal + delta * i / oversampling) * 16;
+						*buffer++ = (oldsignal + delta * i / oversampling) * voice->volume / 16;
 					oldsignal = signal;
 #else
-					*buffer++ = signal * 16;
+					*buffer++ = signal * voice->volume / 16;
 					left--;
 #endif
 
@@ -287,10 +290,10 @@ static void ADPCM_update (struct ADPCMVoice *voice, int finalpos)
 #if OVERSAMPLING
                     delta = signal - oldsignal;
 					for (i = 1; left && i <= oversampling; left--, i++)
-						*buffer++ = AUDIO_CONV((oldsignal + delta * i / oversampling) / 16);
+						*buffer++ = (oldsignal + delta * i / oversampling) * voice->volume / (16 * 256);
                     oldsignal = signal;
 #else
-					*buffer++ = AUDIO_CONV(signal / 16);
+					*buffer++ = signal * voice->volume / (16 * 256);
 					left--;
 #endif
                     /* next! */
@@ -300,7 +303,7 @@ static void ADPCM_update (struct ADPCMVoice *voice, int finalpos)
 						if (voice->base != voice->stream)
 						{
 							while (left--)
-								*buffer++ = AUDIO_CONV (0);
+								*buffer++ = 0;
 							voice->playing = 0;
 						}
 
@@ -328,7 +331,7 @@ static void ADPCM_update (struct ADPCMVoice *voice, int finalpos)
 			if (Machine->sample_bits == 16)
 				memset ((short *)voice->buffer + voice->bufpos, 0, left * 2);
 			else
-				memset ((unsigned char *)voice->buffer + voice->bufpos, AUDIO_CONV (0), left);
+				memset ((unsigned char *)voice->buffer + voice->bufpos, 0, left);
 		}
 
 		/* update the final buffer position */
@@ -360,9 +363,9 @@ void ADPCM_sh_update (void)
 
 		/* play the result */
 		if (Machine->sample_bits == 16)
-			osd_play_streamed_sample_16 (voice->channel, voice->buffer, 2*buffer_len, emulation_rate, voice->volume,OSD_PAN_CENTER);
+			mixer_play_streamed_sample_16(voice->channel,voice->buffer,2*buffer_len,emulation_rate);
 		else
-			osd_play_streamed_sample (voice->channel, voice->buffer, buffer_len, emulation_rate, voice->volume,OSD_PAN_CENTER);
+			mixer_play_streamed_sample(voice->channel,voice->buffer,buffer_len,emulation_rate);
 
 		/* reset the buffer position */
 		voice->bufpos = 0;
@@ -495,10 +498,10 @@ void ADPCM_setvol (int num, int vol)
 		return;
 	}
 
-	voice->volume = vol;
-
 	/* update the ADPCM voice */
 	ADPCM_update(voice, cpu_scalebyfcount (buffer_len));
+
+	voice->volume = vol;
 }
 
 
@@ -579,10 +582,10 @@ int OKIM6295_sh_start (const struct MachineSound *msound)
 	generic_interface.region = okim6295_interface->region[0];
 	generic_interface.init = 0;
 	for (i = 0; i < okim6295_interface->num; i++)
-		generic_interface.volume[i*4+0] =
-		generic_interface.volume[i*4+1] =
-		generic_interface.volume[i*4+2] =
-		generic_interface.volume[i*4+3] = okim6295_interface->volume[i];
+		generic_interface.mixing_level[i*4+0] =
+		generic_interface.mixing_level[i*4+1] =
+		generic_interface.mixing_level[i*4+2] =
+		generic_interface.mixing_level[i*4+3] = okim6295_interface->mixing_level[i];
 
 	/* reset the parameters */
 	for (i = 0; i < okim6295_interface->num; i++)
@@ -711,13 +714,13 @@ static void OKIM6295_data_w (int num, int data)
 
 
 					vol = data & 0x0f;
-					out = 1;
+					out = 256;
 
 					/* assume 2dB per step (most likely wrong!) */
 					while (vol-- > 0)
 						out /= 1.258925412;	/* = 10 ^ (2/20) = 2dB */
 
-					voice->volume=okim6295_interface->volume[num]*out;
+					voice->volume = out;
 				}
 			}
 			temp >>= 1;
@@ -824,7 +827,7 @@ int MSM5205_sh_start (const struct MachineSound *msound)
 	generic_interface.region = 0;
 	generic_interface.init = 0;
 	for (i = 0; i < msm5205_interface->num; i++)
-		generic_interface.volume[i] = msm5205_interface->volume[i];
+		generic_interface.mixing_level[i] = msm5205_interface->mixing_level[i];
 
 	/* initialize it in the standard fashion */
 	memcpy(&msound_copy,msound,sizeof(msound));

@@ -9,7 +9,9 @@ struct MachineSound
 };
 
 
+#include "sound/mixer.h"
 #include "sound/streams.h"
+
 #if (HAS_SAMPLES)
 #include "sound/samples.h"
 #endif
@@ -183,9 +185,6 @@ struct CustomSound_interface
 	void (*sh_update)(void);
 };
 
-
-int get_play_channels(int request);
-void reset_play_channels(void);
 
 int sound_start(void);
 void sound_stop(void);

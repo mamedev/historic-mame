@@ -423,6 +423,24 @@ ROM_START( popflame_rom )
 	ROM_LOAD( "ic54",         0x0100, 0x0100, 0x236bc771 ) /* palette high bits */
 ROM_END
 
+ROM_START( popflama_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "popflama.30",     0x0000, 0x1000, 0xa9bb0e8a )
+	ROM_LOAD( "popflama.28",     0x1000, 0x1000, 0xdebe6d03 )
+	ROM_LOAD( "popflama.26",     0x2000, 0x1000, 0x09df0d4d )
+	ROM_LOAD( "popflama.24",     0x3000, 0x1000, 0xf399d553 )
+
+	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ic13.pop",     0x0000, 0x1000, 0x2367131e )
+	ROM_LOAD( "ic3.pop",      0x1000, 0x1000, 0xdeed0a8b )
+	ROM_LOAD( "ic29.pop",     0x2000, 0x1000, 0x7b54f60f )
+	ROM_LOAD( "ic38.pop",     0x3000, 0x1000, 0xdd2d9601 )
+
+	ROM_REGION(0x0200)      /* color proms */
+	ROM_LOAD( "ic53",         0x0000, 0x0100, 0x6e66057f ) /* palette low bits */
+	ROM_LOAD( "ic54",         0x0100, 0x0100, 0x236bc771 ) /* palette high bits */
+ROM_END
+
 
 
 static int naughtyb_hiload(void)
@@ -636,7 +654,7 @@ struct GameDriver popflame_driver =
 	__FILE__,
 	0,
 	"popflame",
-	"Pop Flamer",
+	"Pop Flamer (set 1)",
 	"1982",
 	"Jaleco",
 	"Brad Oliver (MAME driver)\nSal and John Bugliarisi (Naughty Boy driver)\nMirko Buffoni (additional code)\nNicola Salmoria (additional code)\nTim Lindquist (color info)",
@@ -656,3 +674,30 @@ struct GameDriver popflame_driver =
 
 	popflame_hiload, popflame_hisave
 };
+
+struct GameDriver popflama_driver =
+{
+	__FILE__,
+	&popflame_driver,
+	"popflama",
+	"Pop Flamer (set 2)",
+	"1982",
+	"Jaleco",
+	"Brad Oliver (MAME driver)\nSal and John Bugliarisi (Naughty Boy driver)\nMirko Buffoni (additional code)\nNicola Salmoria (additional code)\nTim Lindquist (color info)",
+	0,
+	&popflame_machine_driver,
+	0,
+
+	popflama_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	popflame_hiload, popflame_hisave
+};
+

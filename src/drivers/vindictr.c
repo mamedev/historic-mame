@@ -5,13 +5,11 @@ vindictr Memory Map
 
 vindictr 68010 MEMORY MAP
 
-Program ROM             000000-05FFFF   R    D15-D0
-Program ROM shared      060000-07FFFF   R    D15-D0
-Program ROM             080000-09FFFF   R    D15-D0
+Program ROM             000000-09FFFF   R    D15-D0
 
-vindictr                0E0001-0E0FFF  R/W   D7-D0    (odd bytes only)
+EEPROM                  0E0001-0E0FFF  R/W   D7-D0    (odd bytes only)
 Program RAM             160000-16FFFF  R/W   D15-D0
-UNLOCK vindictr         1Fxxxx          W
+UNLOCK EEPROM           1Fxxxx          W
 
 Player 1 Input (left)   260000          R    D11-D8 Active lo
 Player 2 Input (right)  260010          R    D11-D8 Active lo
@@ -26,15 +24,10 @@ Input buffer full (@260030)             R    D2 Active lo
 Output buffer full (@360030)            R    D3 Active lo
 ADEOC, end of conversion                R    D4 Active hi
 
-ADC0, analog port       260020          R    D0-D7
-ADC1                    260022          R    D0-D7
-ADC2                    260024          R    D0-D7
-ADC3                    260026          R    D0-D7
+ADC0, analog port       260020          R    Start
 
 Read sound processor    260030          R    D0-D7
-
 Watch Dog               2E0000          W    xx        (128 msec. timeout)
-
 VBLANK Interrupt ack.   360000          W    xx
 
 Video off               360010          W    D5 (active hi)
@@ -42,7 +35,6 @@ Video intensity                         W    D1-D4 (0=full on)
 EXTRA cpu reset                         W    D0 (lo to reset)
 
 Sound processor reset   360020          W    xx
-
 Write sound processor   360030          W    D0-D7
 
 Color RAM Alpha         3E0000-3E01FF  R/W   D15-D0
@@ -56,7 +48,13 @@ Alphanumerics RAM       3F4000-3F4EFF  R/W   D15-D0
 Scroll and MOB config   3F4F00-3F4F70  R/W   D15-D0
 SLIP pointers           3F4F80-3F4FFF  R/W   D9-D0
 Working RAM             3F5000-3F7FFF  R/W   D15-D0
-Playfield palette RAM   3F8000-3F9FFF  R/W   D11-D8
+
+Playfield Picture RAM   FF8000-FF9FFF  R/W   D15-D0
+Motion Object RAM       FFA000-FFBFFF  R/W   D15-D0
+Alphanumerics RAM       FFC000-FFCEFF  R/W   D15-D0
+Scroll and MOB config   FFCF00-FFCF70  R/W   D15-D0
+SLIP pointers           FFCF80-FFCFFF  R/W   D9-D0
+Working RAM             FFD000-FFFFFF  R/W   D15-D0
 
 ****************************************************************************/
 
@@ -68,25 +66,37 @@ Playfield palette RAM   3F8000-3F9FFF  R/W   D11-D8
 #include "vidhrdw/generic.h"
 
 
-extern unsigned char *vindictr_playfieldpalram;
-
-extern int vindictr_playfieldpalram_size;
-
-
-int vindictr_playfieldram_r(int offset);
-int vindictr_spriteram_r(int offset);
-int vindictr_alpharam_r(int offset);
-
-void vindictr_latch_w(int offset, int data);
 void vindictr_playfieldram_w(int offset, int data);
-void vindictr_spriteram_w(int offset, int data);
-void vindictr_alpharam_w(int offset, int data);
+void vindictr_paletteram_w(int offset, int data);
 
 int vindictr_vh_start(void);
 void vindictr_vh_stop(void);
 void vindictr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-int vindictr_update_display_list(int scanline);
+void vindictr_scanline_update(int scanline);
+
+
+
+/*************************************
+ *
+ *		Shared RAM handling
+ *
+ *************************************/
+
+static unsigned char *shared_ram_1;
+static unsigned char *shared_ram_2;
+static unsigned char *shared_ram_3;
+static unsigned char *shared_ram_4;
+
+static int shared_ram_1_r(int offset) { return READ_WORD(&shared_ram_1[offset]); }
+static int shared_ram_2_r(int offset) { return READ_WORD(&shared_ram_2[offset]); }
+static int shared_ram_3_r(int offset) { return READ_WORD(&shared_ram_3[offset]); }
+static int shared_ram_4_r(int offset) { return READ_WORD(&shared_ram_4[offset]); }
+
+static void shared_ram_1_w(int offset, int data) { COMBINE_WORD_MEM(&shared_ram_1[offset], data); }
+static void shared_ram_2_w(int offset, int data) { COMBINE_WORD_MEM(&shared_ram_2[offset], data); }
+static void shared_ram_3_w(int offset, int data) { COMBINE_WORD_MEM(&shared_ram_3[offset], data); }
+static void shared_ram_4_w(int offset, int data) { COMBINE_WORD_MEM(&shared_ram_4[offset], data); }
 
 
 
@@ -96,7 +106,7 @@ int vindictr_update_display_list(int scanline);
  *
  *************************************/
 
-static void vindictr_update_interrupts(int vblank, int sound)
+static void update_interrupts(int vblank, int sound)
 {
 	int newstate = 0;
 
@@ -112,10 +122,16 @@ static void vindictr_update_interrupts(int vblank, int sound)
 }
 
 
-void vindictr_init_machine(void)
+static void init_machine(void)
 {
-	atarigen_init_machine(vindictr_update_interrupts, 0);
+	atarigen_eeprom_default = NULL;
+	atarigen_eeprom_reset();
+
+	atarigen_interrupt_init(update_interrupts, vindictr_scanline_update);
 	ataraud2_init(1, 5, 1, 0x0002);
+
+	/* speed up the 6502 */
+	atarigen_init_6502_speedup(1, 0x4150, 0x4168);
 }
 
 
@@ -158,11 +174,11 @@ static int fake_inputs(int real_port, int fake_port)
 }
 
 
-int vindictr_input_r(int offset)
+static int special_input_r(int offset)
 {
 	int result = 0;
 
-	switch (offset & 0x30)
+	switch (offset & 0x10)
 	{
 		case 0x00:
 			result = fake_inputs(0, 3);
@@ -170,13 +186,9 @@ int vindictr_input_r(int offset)
 
 		case 0x10:
 			result = fake_inputs(1, 4);
-			if (atarigen_sound_to_cpu_ready) result ^= 0x04;
-			if (atarigen_cpu_to_sound_ready) result ^= 0x08;
-			result ^= 0x10;
-			break;
-
-		case 0x20:
-			result = input_port_2_r(offset);
+			if (atarigen_sound_to_cpu_ready) result ^= 0x0004;
+			if (atarigen_cpu_to_sound_ready) result ^= 0x0008;
+			result ^= 0x0010;
 			break;
 	}
 
@@ -187,101 +199,49 @@ int vindictr_input_r(int offset)
 
 /*************************************
  *
- *		Interrupt handling
- *
- *************************************/
-
-void vindictr_update(int param)
-{
-	int yscroll;
-
-	/* update the display list */
-	yscroll = vindictr_update_display_list(param);
-
-	/* reset the timer */
-	if (!param)
-	{
-		int next = 8 - (yscroll & 7);
-		timer_set(cpu_getscanlineperiod() * (double)next, next, vindictr_update);
-	}
-	else if (param < 240)
-		timer_set(cpu_getscanlineperiod() * 8.0, param + 8, vindictr_update);
-}
-
-
-int vindictr_interrupt(void)
-{
-	timer_set(TIME_IN_USEC(Machine->drv->vblank_duration), 0, vindictr_update);
-	return atarigen_vblank_gen();
-}
-
-
-
-/*************************************
- *
- *		RAM mirroring
- *
- *************************************/
-
-static unsigned char *vindictr_ram;
-
-int vindictr_ram_r(int offset)
-{
-	return READ_WORD(&vindictr_ram[offset]);
-}
-
-
-void vindictr_ram_w(int offset, int data)
-{
-	COMBINE_WORD_MEM(&vindictr_ram[offset], data);
-}
-
-
-
-/*************************************
- *
  *		Main CPU memory handlers
  *
  *************************************/
 
-static struct MemoryReadAddress vindictr_readmem[] =
+static struct MemoryReadAddress main_readmem[] =
 {
 	{ 0x000000, 0x09ffff, MRA_ROM },
 	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_r },
-	{ 0x260000, 0x26002f, vindictr_input_r },
-	{ 0x260030, 0x260033, atarigen_sound_r },
-	{ 0x3e0000, 0x3e0fff, paletteram_word_r },
-	{ 0x3f0000, 0x3f1fff, vindictr_playfieldram_r },
-	{ 0x3f2000, 0x3f3fff, vindictr_spriteram_r },
-	{ 0x3f4000, 0x3f4fff, vindictr_alpharam_r },
-	{ 0x3f5000, 0x3f7fff, vindictr_ram_r },
-	{ 0xff8000, 0xff9fff, vindictr_playfieldram_r },
-	{ 0xffa000, 0xffbfff, vindictr_spriteram_r },
-	{ 0xffc000, 0xffcfff, vindictr_alpharam_r },
-	{ 0xffd000, 0xffffff, vindictr_ram_r },
+	{ 0x260000, 0x26001f, special_input_r },
+	{ 0x260020, 0x26002f, input_port_2_r },
+	{ 0x260030, 0x260031, atarigen_sound_r },
+	{ 0x3e0000, 0x3e0fff, MRA_BANK1 },
+	{ 0x3f0000, 0x3f1fff, shared_ram_1_r, &shared_ram_1 },
+	{ 0x3f2000, 0x3f3fff, shared_ram_2_r, &shared_ram_2 },
+	{ 0x3f4000, 0x3f4fff, shared_ram_3_r, &shared_ram_3 },
+	{ 0x3f5000, 0x3f7fff, shared_ram_4_r, &shared_ram_4 },
+	{ 0xff8000, 0xff9fff, shared_ram_1_r },
+	{ 0xffa000, 0xffbfff, shared_ram_2_r },
+	{ 0xffc000, 0xffcfff, shared_ram_3_r },
+	{ 0xffd000, 0xffffff, shared_ram_4_r },
 	{ -1 }  /* end of table */
 };
 
 
-static struct MemoryWriteAddress vindictr_writemem[] =
+static struct MemoryWriteAddress main_writemem[] =
 {
 	{ 0x000000, 0x09ffff, MWA_ROM },
 	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0x1f0000, 0x1fffff, atarigen_eeprom_enable_w },
-	{ 0x2e0000, 0x2e0003, watchdog_reset_w },
-	{ 0x360000, 0x360003, atarigen_vblank_ack_w },
-	{ 0x360010, 0x360013, vindictr_latch_w },
-	{ 0x360020, 0x360023, atarigen_sound_reset_w },
-	{ 0x360030, 0x360033, atarigen_sound_w },
-	{ 0x3e0000, 0x3e0fff, paletteram_IIIIRRRRGGGGBBBB_word_w, &paletteram },
-	{ 0x3f0000, 0x3f1fff, vindictr_playfieldram_w },
-	{ 0x3f2000, 0x3f3fff, vindictr_spriteram_w },
-	{ 0x3f4000, 0x3f4fff, vindictr_alpharam_w },
-	{ 0x3f5000, 0x3f7fff, vindictr_ram_w },
-	{ 0xff8000, 0xff9fff, vindictr_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0xffa000, 0xffbfff, vindictr_spriteram_w, &atarigen_spriteram, &atarigen_spriteram_size },
-	{ 0xffc000, 0xffcfff, vindictr_alpharam_w, &atarigen_alpharam, &atarigen_alpharam_size },
-	{ 0xffd000, 0xffffff, vindictr_ram_w, &vindictr_ram },
+	{ 0x2e0000, 0x2e0001, watchdog_reset_w },
+	{ 0x360000, 0x360001, atarigen_vblank_ack_w },
+	{ 0x360010, 0x360011, MWA_NOP },
+	{ 0x360020, 0x360021, atarigen_sound_reset_w },
+	{ 0x360030, 0x360031, atarigen_sound_w },
+	{ 0x3e0000, 0x3e0fff, vindictr_paletteram_w, &paletteram },
+	{ 0x3f0000, 0x3f1fff, vindictr_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
+	{ 0x3f2000, 0x3f3fff, shared_ram_2_w, &atarigen_spriteram, &atarigen_spriteram_size },
+	{ 0x3f4000, 0x3f4fff, shared_ram_3_w, &atarigen_alpharam, &atarigen_alpharam_size },
+	{ 0x3f5000, 0x3f7fff, shared_ram_4_w },
+	{ 0xff8000, 0xff9fff, vindictr_playfieldram_w },
+	{ 0xffa000, 0xffbfff, shared_ram_2_w },
+	{ 0xffc000, 0xffcfff, shared_ram_3_w },
+	{ 0xffd000, 0xffffff, shared_ram_4_w },
 	{ -1 }  /* end of table */
 };
 
@@ -310,9 +270,9 @@ INPUT_PORTS_START( vindictr_ports )
 	PORT_BITX(    0x0002, 0x0002, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x0002, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x0000, DEF_STR( On ))
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNUSED )	/* Input buffer full (@260030) */
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNUSED ) /* Output buffer full (@360030) */
-	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_UNUSED ) /* ADEOC, end of conversion */
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x00e0, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
@@ -330,16 +290,16 @@ INPUT_PORTS_START( vindictr_ports )
 	PORT_BIT( 0xfc00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* single joystick */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_CHEAT | IPF_PLAYER1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_CHEAT | IPF_PLAYER1 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_CHEAT | IPF_PLAYER1 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_CHEAT | IPF_PLAYER1 )
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_CHEAT | IPF_PLAYER1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_CHEAT | IPF_PLAYER1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_CHEAT | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_CHEAT | IPF_PLAYER1 )
 
 	PORT_START	/* single joystick */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_CHEAT | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_CHEAT | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_CHEAT | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_CHEAT | IPF_PLAYER2 )
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_CHEAT | IPF_PLAYER2 )
+	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_CHEAT | IPF_PLAYER2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_CHEAT | IPF_PLAYER2 )
+	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_CHEAT | IPF_PLAYER2 )
 
 	ATARI_AUDIO_2_PORT	/* audio port */
 INPUT_PORTS_END
@@ -352,7 +312,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct GfxLayout charlayout =
+static struct GfxLayout anlayout =
 {
 	8,8,	/* 8*8 chars */
 	1024,	/* 1024 chars */
@@ -364,7 +324,7 @@ static struct GfxLayout charlayout =
 };
 
 
-static struct GfxLayout spritelayout =
+static struct GfxLayout pfmolayout =
 {
 	8,8,	/* 8*8 sprites */
 	32768,	/* 32768 of them */
@@ -378,8 +338,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 2, 0x100000, &charlayout,      0, 64 },		/* characters 8x8 */
-	{ 2, 0x000000, &spritelayout,  256, 32 },		/* sprites & playfield */
+	{ 2, 0x000000, &pfmolayout,  256, 32 },		/* sprites & playfield */
+	{ 2, 0x100000, &anlayout,      0, 64 },		/* characters 8x8 */
 	{ -1 } /* end of array */
 };
 
@@ -391,29 +351,29 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct MachineDriver vindictr_machine_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
 		{
-			CPU_M68000,
+			CPU_M68010,
 			7159160,		/* 7.159 Mhz */
 			0,
-			vindictr_readmem,vindictr_writemem,0,0,
-			vindictr_interrupt,1
+			main_readmem,main_writemem,0,0,
+			atarigen_vblank_gen,1
 		},
 		{
 			ATARI_AUDIO_2_CPU(1)
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	vindictr_init_machine,
+	1,
+	init_machine,
 
 	/* video hardware */
 	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	2048, 2048,
+	2048+32, 2048+32,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
@@ -438,7 +398,7 @@ static struct MachineDriver vindictr_machine_driver =
  *
  *************************************/
 
-static void vindictr_rom_decode(void)
+static void rom_decode(void)
 {
 	int i;
 
@@ -457,31 +417,31 @@ static void vindictr_rom_decode(void)
 
 ROM_START( vindictr_rom )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
-	ROM_LOAD_EVEN( "vin.d1",       0x00000, 0x10000, 0x2e5135e4 )
-	ROM_LOAD_ODD ( "vin.d3",       0x00000, 0x10000, 0xe357fa79 )
-	ROM_LOAD_EVEN( "vin.j1",       0x20000, 0x10000, 0x44c77ee0 )
-	ROM_LOAD_ODD ( "vin.j3",       0x20000, 0x10000, 0x4deaa77f )
-	ROM_LOAD_EVEN( "vin.k1",       0x40000, 0x10000, 0x9a0444ee )
-	ROM_LOAD_ODD ( "vin.k3",       0x40000, 0x10000, 0xd5022d78 )
+	ROM_LOAD_EVEN( "vin.d1", 0x00000, 0x10000, 0x2e5135e4 )
+	ROM_LOAD_ODD ( "vin.d3", 0x00000, 0x10000, 0xe357fa79 )
+	ROM_LOAD_EVEN( "vin.j1", 0x20000, 0x10000, 0x44c77ee0 )
+	ROM_LOAD_ODD ( "vin.j3", 0x20000, 0x10000, 0x4deaa77f )
+	ROM_LOAD_EVEN( "vin.k1", 0x40000, 0x10000, 0x9a0444ee )
+	ROM_LOAD_ODD ( "vin.k3", 0x40000, 0x10000, 0xd5022d78 )
 
 	ROM_REGION(0x14000)	/* 64k + 16k for 6502 code */
-	ROM_LOAD( "vin.snd",      0x10000, 0x4000, 0xd2212c0a )
-	ROM_CONTINUE(             0x04000, 0xc000 )
+	ROM_LOAD( "vin.snd",     0x10000, 0x4000, 0xd2212c0a )
+	ROM_CONTINUE(            0x04000, 0xc000 )
 
 	ROM_REGION_DISPOSE(0x104000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "vin.p13",      0x00000, 0x20000, 0x062f8e52 )
-	ROM_LOAD( "vin.p14",      0x20000, 0x10000, 0x0e4366fa )
-	ROM_RELOAD(               0x30000, 0x10000 )
-	ROM_LOAD( "vin.p8",       0x40000, 0x20000, 0x09123b57 )
-	ROM_LOAD( "vin.p6",       0x60000, 0x10000, 0x6b757bca )
-	ROM_RELOAD(               0x70000, 0x10000 )
-	ROM_LOAD( "vin.r13",      0x80000, 0x20000, 0xa5268c4f )
-	ROM_LOAD( "vin.r14",      0xa0000, 0x10000, 0x609f619e )
-	ROM_RELOAD(               0xb0000, 0x10000 )
-	ROM_LOAD( "vin.r8",       0xc0000, 0x20000, 0x2d07fdaa )
-	ROM_LOAD( "vin.r6",       0xe0000, 0x10000, 0x0a2aba63 )
-	ROM_RELOAD(               0xf0000, 0x10000 )
-	ROM_LOAD( "vin.n17",      0x100000, 0x04000, 0xf99b631a )        /* alpha font */
+	ROM_LOAD( "vin.p13",     0x00000, 0x20000, 0x062f8e52 )
+	ROM_LOAD( "vin.p14",     0x20000, 0x10000, 0x0e4366fa )
+	ROM_RELOAD(              0x30000, 0x10000 )
+	ROM_LOAD( "vin.p8",      0x40000, 0x20000, 0x09123b57 )
+	ROM_LOAD( "vin.p6",      0x60000, 0x10000, 0x6b757bca )
+	ROM_RELOAD(              0x70000, 0x10000 )
+	ROM_LOAD( "vin.r13",     0x80000, 0x20000, 0xa5268c4f )
+	ROM_LOAD( "vin.r14",     0xa0000, 0x10000, 0x609f619e )
+	ROM_RELOAD(              0xb0000, 0x10000 )
+	ROM_LOAD( "vin.r8",      0xc0000, 0x20000, 0x2d07fdaa )
+	ROM_LOAD( "vin.r6",      0xe0000, 0x10000, 0x0a2aba63 )
+	ROM_RELOAD(              0xf0000, 0x10000 )
+	ROM_LOAD( "vin.n17",    0x100000, 0x04000, 0xf99b631a )        /* alpha font */
 ROM_END
 
 
@@ -501,12 +461,12 @@ struct GameDriver vindictr_driver =
 	"1988",
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nNeil Bradley (hardware information)",
-	GAME_IMPERFECT_COLORS,
-	&vindictr_machine_driver,
+	0,
+	&machine_driver,
 	0,
 
 	vindictr_rom,
-	vindictr_rom_decode,
+	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */

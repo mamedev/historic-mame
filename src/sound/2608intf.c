@@ -109,7 +109,7 @@ int YM2608_sh_start(const struct MachineSound *msound)
 	int rate = Machine->sample_rate;
 	char buf[YM2608_NUMBUF][40];
 	const char *name[YM2608_NUMBUF];
-	int mixed_vol,vol[YM2608_NUMBUF],pan[YM2608_NUMBUF];
+	int mixed_vol,vol[YM2608_NUMBUF];
 	void *pcmbufa[YM2608_NUMBUF],*rhythmbufb;
 	int  pcmsizea[YM2608_NUMBUF],rhythmsize;
 	char *rythmbufb;
@@ -120,7 +120,7 @@ int YM2608_sh_start(const struct MachineSound *msound)
 	intf = msound->sound_interface;
 	if( intf->num > MAX_2608 ) return 1;
 
-	if( AY8910_sh_start_ex(msound,"YM2608(SSG)") ) return 1;
+	if (AY8910_sh_start(msound)) return 1;
 
 	/* FM init */
 #if 0
@@ -139,26 +139,12 @@ int YM2608_sh_start(const struct MachineSound *msound)
 		/* stream setup */
 		for (j = 0 ; j < YM2608_NUMBUF ; j++)
 		{
-			char *chname;
 			name[j]=buf[j];
-			vol[j] = mixed_vol & 0xff;
-			pan[j] = (mixed_vol>>8) & 0xff;
+			vol[j] = mixed_vol & 0xffff;
 			mixed_vol>>=16;
-			switch( pan[j] ){
-			case OSD_PAN_CENTER:chname="Ct";break;
-			case OSD_PAN_LEFT:  chname="Lt";break;
-			case OSD_PAN_RIGHT: chname="Rt";break;
-			default:            chname="??";break;
-			}
-			sprintf(buf[j],"YM2608 #%d Ch%d(%s)",i,j+1,chname);
+			sprintf(buf[j],"%s #%d Ch%d",sound_name(msound),i,j+1);
 		}
-		stream[i] = stream_init_multi(msound,YM2608_NUMBUF,name,rate,FM_OUTPUT_BIT,i,YM2608UpdateOne);
-		/* volume setup */
-		for (j = 0 ; j < YM2608_NUMBUF ; j++)
-		{
-			stream_set_volume(stream[i]+j,vol[j]);
-			stream_set_pan(stream[i]+j,pan[j]);
-		}
+		stream[i] = stream_init_multi(YM2608_NUMBUF,name,vol,rate,FM_OUTPUT_BIT,i,YM2608UpdateOne);
 		/* setup adpcm buffers */
 		pcmbufa[i]  = NULL;
 		pcmsizea[i] = 0;

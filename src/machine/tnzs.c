@@ -5,18 +5,7 @@
   Functions to emulate general aspects of the machine (RAM, ROM, interrupts,
   I/O ports)
 
-  Commands for the MCU (i8742), written to $c001 on the 2nd CPU:
-
-  0x01: Read player 1 joystick
-  0x02: Read player 2 joystick
-  0x1a: Read status of coin slots
-  0x21: Read service & tilt switches
-  0x41: Reset credit counter
-  0xa1: Read number of credits, then player 1 buttons
-
-  On startup, the MCU returns the sequence 0x5a/0xa5/0x55
-
-  The MCU also takes care of handling the coin inputs and the tilt switch.
+  The I8742 MCU takes care of handling the coin inputs and the tilt switch.
   To simulate this, we read the status in the interrupt handler for the main
   CPU and update the counters appropriately. We also must take care of
   handling the coin/credit settings ourselves.
@@ -27,157 +16,440 @@
 
 extern unsigned char *tnzs_workram;
 
-static int tnzs_credits;
-static int tnzs_coin_a, tnzs_dip_a, tnzs_dip_b;
-static int tnzs_oldcoin_a, tnzs_oldcoin_b, tnzs_oldservice;
-static int tnzs_tilt;
+static int mcu_type;
+#define MCU_NONE 0
+#define MCU_EXTRMATN 1
+#define MCU_ARKANOID 2
+#define MCU_TNZS 3
 
-static int tnzs_inputport;
-static int tnzs_mcu_1;
-
-static void tnzs_update_mcu (void);
-
-static int current_inputport;	/* reads of c000 (sound cpu) expect a sequence of values */
-static int number_of_credits;
+static int mcu_initializing,mcu_coinage_init,mcu_command,mcu_readcredits;
+static int mcu_reportcoin;
+static unsigned char mcu_coinage[4];
+static unsigned char mcu_coinsA,mcu_coinsB,mcu_credits;
 
 
-void arkanoi2_init_machine (void)
-{
-    current_inputport = -3;
-    number_of_credits = 0;
-}
 
-
-/* number of input ports to be cycled through (coins, buttons etc.) */
-#define ip_num 2
-
-int arkanoi2_inputport_r(int offset)
-{
-	int ret;
-
-	if (offset == 0)
-	{
-        switch(current_inputport)
-		{
-			case -3: ret = 0x55; break;
-			case -2: ret = 0xaa; break;
-			case -1: ret = 0x5a; break;
-		case ip_num: current_inputport = 0; /* fall through */
-			case 0:  ret = number_of_credits; break;
-			default: ret = readinputport(current_inputport+2); break;
-		}
-	  current_inputport++;
-	  return ret;
-	}
-	else
-		return (0x01);	/* 0xE1 for tilt, 31 service ok */
-}
-
-
-void arkanoi2_inputport_w(int offset, int data)
-{
-	if (offset == 0)
-		number_of_credits -= ((~data)&0xff)+1;	/* sub data from credits */
-	else
-/* TBD: value written (or its low nibble) subtracted from sequence index? */
-		if (current_inputport>=0)	/* if the initial sequence is done */
-			current_inputport=0;	/* reset input port number */
-}
-
-
-int arkanoi2_sh_f000_r(int offs)
+int arkanoi2_sh_f000_r(int offset)
 {
 	int val;
 
-	val = readinputport(2);
-	if (offs == 0)
+	if (errorlog) fprintf (errorlog, "PC %04x: read input %04x\n", cpu_get_pc(), 0xf000 + offset);
+
+	val = readinputport(3 + offset/2);
+	if (offset & 1)
 	{
-		if (errorlog) fprintf (errorlog, "f000_r: %02x\n", val & 0xff);
-		return val & 0xff;
+		return ((val >> 8) & 0xff);
 	}
 	else
 	{
-		if (errorlog) fprintf (errorlog, "f001_r: %02x\n", (val >> 8) & 0xff);
-		return ((val >> 8) & 0xff);
+		return val & 0xff;
 	}
 }
 
-int arkanoi2_interrupt(void)
+
+static void mcu_reset(void)
+{
+	mcu_initializing = 3;
+	mcu_coinage_init = 0;
+	mcu_coinage[0] = 1;
+	mcu_coinage[1] = 1;
+	mcu_coinage[2] = 1;
+	mcu_coinage[3] = 1;
+	mcu_coinsA = 0;
+	mcu_coinsB = 0;
+	mcu_credits = 0;
+	mcu_reportcoin = 0;
+	mcu_command = 0;
+}
+
+static void mcu_handle_coins(int coin)
 {
 	static int insertcoin;
-	int t;
 
-    /* Update credit counter. The game somehow tells the hardware when
-       to decrease the counter. (maybe by writing to c001 on the 2nd cpu?) */
-	t = (readinputport(2) & 0x7000) ^ 0x5000;
-	if (t && !insertcoin)
-		number_of_credits++;
-	insertcoin = t;
+	/* The coin inputs and coin counter is managed by the i8742 mcu. Here we */
+	/* simulate it. */
+	if (coin & 0x08)	/* tilt */
+		mcu_reportcoin = coin;
+	else if (coin && coin != insertcoin)
+	{
+		if (coin & 0x01)	/* coin A */
+		{
+			mcu_coinsA++;
+			if (mcu_coinsA >= mcu_coinage[0])
+			{
+				mcu_coinsA -= mcu_coinage[0];
+				mcu_credits += mcu_coinage[1];
+			}
+		}
+		if (coin & 0x02)	/* coin B */
+		{
+			mcu_coinsB++;
+			if (mcu_coinsB >= mcu_coinage[2])
+			{
+				mcu_coinsB -= mcu_coinage[2];
+				mcu_credits += mcu_coinage[3];
+			}
+		}
+		if (coin & 0x04)	/* service */
+			mcu_credits++;
+		mcu_reportcoin = coin;
+	}
+	else
+		mcu_reportcoin = 0;
 
-	return 0;
+	insertcoin = coin;
 }
 
 
 
-
-int tnzs_interrupt (void)
+static int mcu_arkanoi2_r(int offset)
 {
-	static int insertcoin;
-	int t;
+	char *mcu_startup = "\x55\xaa\x5a";
 
-    /* Update credit counter. The game somehow tells the hardware when
-       to decrease the counter. (maybe by writing to c001 on the 2nd cpu?) */
-	t = osd_key_pressed(OSD_KEY_3);
-	if (t && !insertcoin)
-		number_of_credits++;
-	insertcoin = t;
+//if (errorlog) fprintf (errorlog, "PC %04x: read mcu %04x\n", cpu_get_pc(), 0xc000 + offset);
 
-	tnzs_update_mcu ();
-	return 0;
+	if (offset == 0)
+	{
+		/* if the mcu has just been reset, return startup code */
+		if (mcu_initializing)
+		{
+			mcu_initializing--;
+			return mcu_startup[2 - mcu_initializing];
+		}
+
+		switch (mcu_command)
+		{
+			case 0x41:
+				return mcu_credits;
+
+			case 0xc1:
+				/* Read the credit counter or the inputs */
+				if (mcu_readcredits == 0)
+				{
+					mcu_readcredits = 1;
+					if (mcu_reportcoin & 0x08)
+					{
+						mcu_initializing = 3;
+						return 0xee;	/* tilt */
+					}
+					else return mcu_credits;
+				}
+				else return readinputport(2);	/* buttons */
+
+			default:
+if (errorlog) fprintf (errorlog, "error, unknown mcu command\n");
+				/* should not happen */
+				return 0xff;
+				break;
+		}
+	}
+	else
+	{
+		/*
+		status bits:
+		0 = mcu is ready to send data (read from c000)
+		1 = mcu has read data (from c000)
+		2 = unused
+		3 = unused
+		4-7 = coin code
+		      0 = nothing
+		      1,2,3 = coin switch pressed
+		      e = tilt
+		*/
+		if (mcu_reportcoin & 0x08) return 0xe1;	/* tilt */
+		if (mcu_reportcoin & 0x01) return 0x11;	/* coin 1 (will trigger "coin inserted" sound) */
+		if (mcu_reportcoin & 0x02) return 0x21;	/* coin 2 (will trigger "coin inserted" sound) */
+		if (mcu_reportcoin & 0x04) return 0x31;	/* coin 3 (will trigger "coin inserted" sound) */
+		return 0x01;
+	}
 }
 
-void tnzs_bankswitch_w (int offset, int data)
+static void mcu_arkanoi2_w(int offset, int data)
+{
+	if (offset == 0)
+	{
+//		if (errorlog) fprintf (errorlog, "PC %04x (re %04x): write %02x to mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
+		if (mcu_command == 0x41)
+		{
+			mcu_credits = (mcu_credits + data) & 0xff;
+		}
+	}
+	else
+	{
+		/*
+		0xc1: read number of credits, then buttons
+		0x54+0x41: add value to number of credits
+		0x84: coin 1 lockout (issued only in test mode)
+		0x88: coin 2 lockout (issued only in test mode)
+		0x80: release coin lockout (issued only in test mode)
+		during initialization, a sequence of 4 bytes sets coin/credit settings
+		*/
+
+//		if (errorlog) fprintf (errorlog, "PC %04x (re %04x): write %02x to mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
+
+		if (mcu_initializing)
+		{
+			/* set up coin/credit settings */
+			mcu_coinage[mcu_coinage_init++] = data;
+			if (mcu_coinage_init == 4) mcu_coinage_init = 0;	/* must not happen */
+		}
+
+		if (data == 0xc1)
+			mcu_readcredits = 0;	/* reset input port number */
+
+		mcu_command = data;
+	}
+}
+
+
+
+static int mcu_tnzs_r(int offset)
+{
+	char *mcu_startup = "\x5a\xa5\x55";
+
+	if (errorlog) fprintf (errorlog, "PC %04x (re %04x): read mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), 0xc000 + offset);
+
+	if (offset == 0)
+	{
+		/* if the mcu has just been reset, return startup code */
+		if (mcu_initializing)
+		{
+			mcu_initializing--;
+			return mcu_startup[2 - mcu_initializing];
+		}
+
+		switch (mcu_command)
+		{
+			case 0x01:
+				return readinputport(2) ^ 0xff;	/* player 1 joystick + buttons */
+
+			case 0x02:
+				return readinputport(3) ^ 0xff;	/* player 2 joystick + buttons */
+
+			case 0x1a:
+				return readinputport(4) >> 4;
+
+			case 0x21:
+				return readinputport(4) & 0x0f;
+
+			case 0x41:
+				return mcu_credits;
+
+			case 0xa1:
+				/* Read the credit counter or the inputs */
+				if (mcu_readcredits == 0)
+				{
+					mcu_readcredits = 1;
+					if (mcu_reportcoin & 0x08)
+					{
+						mcu_initializing = 3;
+						return 0xee;	/* tilt */
+					}
+					else return mcu_credits;
+				}
+				/* buttons */
+				else return ((readinputport(2) & 0xf0) | (readinputport(3) >> 4)) ^ 0xff;
+
+			default:
+if (errorlog) fprintf (errorlog, "error, unknown mcu command\n");
+				/* should not happen */
+				return 0xff;
+				break;
+		}
+	}
+	else
+	{
+		/*
+		status bits:
+		0 = mcu is ready to send data (read from c000)
+		1 = mcu has read data (from c000)
+		2 = unused
+		3 = unused
+		4-7 = coin code
+		      0 = nothing
+		      1,2,3 = coin switch pressed
+		      e = tilt
+		*/
+		if (mcu_reportcoin & 0x08) return 0xe1;	/* tilt */
+		if (mcu_type == MCU_TNZS)
+		{
+			if (mcu_reportcoin & 0x01) return 0x31;	/* coin 1 (will trigger "coin inserted" sound) */
+			if (mcu_reportcoin & 0x02) return 0x21;	/* coin 2 (will trigger "coin inserted" sound) */
+			if (mcu_reportcoin & 0x04) return 0x11;	/* coin 3 (will NOT trigger "coin inserted" sound) */
+		}
+		else
+		{
+			if (mcu_reportcoin & 0x01) return 0x11;	/* coin 1 (will trigger "coin inserted" sound) */
+			if (mcu_reportcoin & 0x02) return 0x21;	/* coin 2 (will trigger "coin inserted" sound) */
+			if (mcu_reportcoin & 0x04) return 0x31;	/* coin 3 (will trigger "coin inserted" sound) */
+		}
+		return 0x01;
+	}
+}
+
+static void mcu_tnzs_w(int offset, int data)
+{
+	if (offset == 0)
+	{
+		if (errorlog) fprintf (errorlog, "PC %04x (re %04x): write %02x to mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
+		if (mcu_command == 0x41)
+		{
+			mcu_credits = (mcu_credits + data) & 0xff;
+		}
+	}
+	else
+	{
+		/*
+		0xa1: read number of credits, then buttons
+		0x01: read player 1 joystick + buttons
+		0x02: read player 2 joystick + buttons
+		0x1a: read coin switches
+		0x21: read service & tilt switches
+		0x4a+0x41: add value to number of credits
+		0x84: coin 1 lockout (issued only in test mode)
+		0x88: coin 2 lockout (issued only in test mode)
+		0x80: release coin lockout (issued only in test mode)
+		during initialization, a sequence of 4 bytes sets coin/credit settings
+		*/
+
+		if (errorlog) fprintf (errorlog, "PC %04x (re %04x): write %02x to mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
+
+		if (mcu_initializing)
+		{
+			/* set up coin/credit settings */
+			mcu_coinage[mcu_coinage_init++] = data;
+			if (mcu_coinage_init == 4) mcu_coinage_init = 0;	/* must not happen */
+		}
+
+		if (data == 0xa1)
+			mcu_readcredits = 0;	/* reset input port number */
+
+		mcu_command = data;
+	}
+}
+
+
+
+void extrmatn_init(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
+	mcu_type = MCU_EXTRMATN;
 
-	if (errorlog && (data < 0x10 || data > 0x17))
-	{
-		fprintf(errorlog, "WARNING: writing %02x to bankswitch\n", data);
-		return;
-	}
-
-//	if (errorlog) fprintf(errorlog, "writing %02x to bankswitch\n", data);
-	cpu_setbank (1, &RAM[0x10000 + 0x4000 * (data & 0x07)]);
+	/* there's code which falls through from the fixed ROM to bank #7, I have to */
+	/* copy it there otherwise the CPU bank switching support will not catch it. */
+	memcpy(&RAM[0x08000],&RAM[0x2c000],0x4000);
 }
 
-void tnzs_bankswitch1_w (int offset,int data)
+void arkanoi2_init(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-//	if (errorlog) fprintf (errorlog, "writing %02x to bankswitch 1\n", data);
-	cpu_setbank (2, &RAM[0x10000 + 0x2000 * (data & 3)]);
+	mcu_type = MCU_ARKANOID;
+
+	/* there's code which falls through from the fixed ROM to bank #2, I have to */
+	/* copy it there otherwise the CPU bank switching support will not catch it. */
+	memcpy(&RAM[0x08000],&RAM[0x18000],0x4000);
+}
+
+void tnzs_init(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	mcu_type = MCU_TNZS;
+
+	/* there's code which falls through from the fixed ROM to bank #7, I have to */
+	/* copy it there otherwise the CPU bank switching support will not catch it. */
+	memcpy(&RAM[0x08000],&RAM[0x2c000],0x4000);
+}
+
+void insectx_init(void)
+{
+	mcu_type = MCU_NONE;
+
+	/* this game has no mcu, replace the handler with plain input port handlers */
+	install_mem_read_handler(1, 0xc000, 0xc000, input_port_2_r );
+	install_mem_read_handler(1, 0xc001, 0xc001, input_port_3_r );
+	install_mem_read_handler(1, 0xc002, 0xc002, input_port_4_r );
+}
+
+
+int tnzs_mcu_r(int offset)
+{
+	switch (mcu_type)
+	{
+		case MCU_ARKANOID:
+			return mcu_arkanoi2_r(offset);
+			break;
+		case MCU_EXTRMATN:
+		case MCU_TNZS:
+		default:
+			return mcu_tnzs_r(offset);
+			break;
+	}
+}
+
+void tnzs_mcu_w(int offset,int data)
+{
+	switch (mcu_type)
+	{
+		case MCU_ARKANOID:
+			mcu_arkanoi2_w(offset,data);
+			break;
+		case MCU_EXTRMATN:
+		case MCU_TNZS:
+			mcu_tnzs_w(offset,data);
+			break;
+	}
+}
+
+int tnzs_interrupt(void)
+{
+	int coin;
+
+	switch (mcu_type)
+	{
+		case MCU_ARKANOID:
+			coin = ((readinputport(3) & 0xf000) ^ 0xd000) >> 12;
+			coin = (coin & 0x08) | ((coin & 0x03) << 1) | ((coin & 0x04) >> 2);
+			mcu_handle_coins(coin);
+			break;
+
+		case MCU_EXTRMATN:
+			coin = (((readinputport(4) & 0x30) >> 4) | ((readinputport(4) & 0x03) << 2)) ^ 0x0c;
+			mcu_handle_coins(coin);
+			break;
+
+		case MCU_TNZS:
+			coin = (((readinputport(4) & 0x30) >> 4) | ((readinputport(4) & 0x03) << 2)) ^ 0x0f;
+			mcu_handle_coins(coin);
+			break;
+
+		case MCU_NONE:
+		default:
+			break;
+	}
+
+	return 0;
 }
 
 void tnzs_init_machine (void)
 {
-    tnzs_credits = 0;
-    tnzs_coin_a = 0;
-    tnzs_oldcoin_a = readinputport (3) & 0x01;
-    tnzs_oldcoin_b = readinputport (3) & 0x02;
-    tnzs_oldservice = readinputport (4) & 0x01;
-    tnzs_tilt = 0;
+	/* initialize the mcu simulation */
+	mcu_reset();
 
-    tnzs_dip_a = readinputport (0) & 0x30;
-    tnzs_dip_b = readinputport (0) & 0xc0;
+	/* preset the banks */
+	{
+		unsigned char *RAM;
 
-    tnzs_inputport = -4;
-    tnzs_mcu_1 = 0;
+		RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+		cpu_setbank(1,&RAM[0x18000]);
 
-    /* Set up the banks */
-    tnzs_bankswitch_w  (0, 0);
-    tnzs_bankswitch1_w (0, 0);
+		RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+		cpu_setbank(2,&RAM[0x10000]);
+	}
 }
+
 
 int tnzs_workram_r (int offset)
 {
@@ -189,121 +461,37 @@ void tnzs_workram_w (int offset, int data)
 	tnzs_workram[offset] = data;
 }
 
-/* i8742 MCU */
-static void tnzs_update_mcu (void)
+void tnzs_bankswitch_w (int offset, int data)
 {
-	int val;
+	static int reset;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-    /* read coin switch A */
-    val = readinputport (3) & 0x01;
-    if (val && !tnzs_oldcoin_a)
-    {
-    	tnzs_coin_a ++;
+	/* bit 4 resets the second CPU */
+	if ((data & 0x10) && !reset)
+	{
+		cpu_reset(1);
+		cpu_halt(1,1);
+	}
+	else if (!(data & 0x10))
+	{
+		cpu_halt (1,0);
+	}
+	reset = data & 0x10;
 
-    	/* coin was inserted, adjust based on the dip settings */
-    	switch (tnzs_dip_a)
-    	{
-    		case 0x30: tnzs_credits ++; tnzs_coin_a = 0; break;
-    		case 0x20: if (tnzs_coin_a == 2) { tnzs_credits ++; tnzs_coin_a = 0; } break;
-    		case 0x10: if (tnzs_coin_a == 3) { tnzs_credits ++; tnzs_coin_a = 0; } break;
-    		case 0x00: if (tnzs_coin_a == 4) { tnzs_credits ++; tnzs_coin_a = 0; } break;
-    	}
-    }
-    tnzs_oldcoin_a = val;
-
-	/* read coin switch B */
-    val = readinputport (3) & 0x02;
-    if (val && !tnzs_oldcoin_b)
-    {
-    	/* coin was inserted, adjust based on the dip settings */
-    	switch (tnzs_dip_b)
-    	{
-    		case 0xc0: tnzs_credits += 2; break;
-    		case 0x80: tnzs_credits += 3; break;
-    		case 0x40: tnzs_credits += 4; break;
-    		case 0x00: tnzs_credits += 6; break;
-    	}
-    }
-    tnzs_oldcoin_b = val;
-
-	/* read the service coin switch */
-    val = readinputport (4) & 0x01;
-    if (val && !tnzs_oldservice) tnzs_credits ++;
-    tnzs_oldservice = val;
-
-	/* clamp the maximum number of credits to 9 */
-	if (tnzs_credits > 9) tnzs_credits = 9;
-
-	/* read the tilt switch */
-    if ((readinputport (4) & 0x02) == 0x00) tnzs_tilt = 1;
+	/* bits 0-2 select RAM/ROM bank */
+//	if (errorlog) fprintf(errorlog, "PC %04x: writing %02x to bankswitch\n", cpu_get_pc(),data);
+	cpu_setbank (1, &RAM[0x10000 + 0x4000 * (data & 0x07)]);
 }
 
-int tnzs_mcu_r (int offset)
+void tnzs_bankswitch1_w (int offset,int data)
 {
-	if (offset == 0)
-	{
-		tnzs_inputport ++;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
 
-		/* check for the startup sequence */
-        switch (tnzs_inputport)
-		{
-			case -3: return 0x5a;
-			case -2: return 0xa5;
-			case -1: return 0x55;
-		}
+//	if (errorlog) fprintf(errorlog, "PC %04x: writing %02x to bankswitch 1\n", cpu_get_pc(),data);
 
-		/* otherwise handle the inputs */
-		switch (tnzs_mcu_1)
-		{
-			case 0x1a: return (readinputport (3));
-			case 0x21: return (readinputport (4));
-			case 0x01: return (readinputport (5));
-			case 0x02: return (readinputport (6));
+	/* bit 2 resets the mcu */
+	if (data & 0x04) mcu_reset();
 
-			/* Reset the coin counter */
-			case 0x41: return 0xff;
-
-			/* Read the coin counter or the inputs */
-			case 0xa1:
-				if (tnzs_inputport == 1)
-					return tnzs_credits;
-				else
-					return readinputport (2);
-				break;
-
-			/* Should not be reached */
-			default:
-#ifdef macintosh
-				SysBeep (0);
-#endif
-				if (errorlog) fprintf (errorlog, "*** %02x, %02x\n", tnzs_mcu_1, tnzs_inputport);
-				return 0xff;
-				break;
-		}
-	}
-	else
-	{
-		if (tnzs_tilt) return 0xe8; /* TODO: verify this */
-		else           return 0x01;
-	}
-}
-
-void tnzs_mcu_w (int offset, int data)
-{
-	if (offset == 0)
-	{
-        tnzs_inputport = (tnzs_inputport + 5) % 6;
-		if (errorlog) fprintf(errorlog, "* $c000: %02x, count set back to %d\n", data, tnzs_inputport);
-	}
-	else
-	{
-		tnzs_mcu_1 = data;
-		if (data == 0x41)
-		{
-			tnzs_credits --;
-			if (tnzs_credits < 0) tnzs_credits = 0;
-		}
-		if (data == 0xa1) tnzs_inputport = 0;
-//		if (errorlog) fprintf (errorlog, "** $c001: %02x\n", data);
-	}
+	/* bits 0-1 select ROM bank */
+	cpu_setbank (2, &RAM[0x10000 + 0x2000 * (data & 3)]);
 }

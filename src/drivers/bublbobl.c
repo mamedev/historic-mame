@@ -640,7 +640,8 @@ static struct YM2203interface ym2203_interface =
 {
 	1,			/* 1 chip */
 	3000000,	/* 3 MHz ??? (hand tuned) */
-	{ YM2203_VOL(255,255) },
+	{ YM2203_VOL(25,25) },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -662,6 +663,7 @@ static struct YM2203interface tokio_ym2203_interface =
 	1,		/* 1 chip */
 	3000000,	/* 3 MHz ??? */
 	{ YM2203_VOL(100,20) },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },

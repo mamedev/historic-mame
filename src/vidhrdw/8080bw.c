@@ -454,7 +454,7 @@ void blueshrk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 /*                                                     */
 /*******************************************************/
 
-const unsigned char *colourrom;
+static const unsigned char *colourrom;
 
 void ballbomb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {

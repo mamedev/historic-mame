@@ -437,6 +437,7 @@ static struct AY8910interface ay8910_interface =
 	2, /* 2 chips */
 	1500000,     /* 12 Mhz / 8 = 1.5 Mhz */
 	{ 50, 50 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -466,7 +467,7 @@ static int sound_int( void ) {
 static struct DACinterface dac_interface =
 {
 	1,
-	{ 100 }
+	{ 50 }
 };
 
 

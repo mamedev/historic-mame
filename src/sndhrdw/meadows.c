@@ -14,7 +14,8 @@ unsigned char meadows_0c00 = 0;
 unsigned char meadows_0c01 = 0;
 unsigned char meadows_0c02 = 0;
 unsigned char meadows_0c03 = 0;
-unsigned char meadows_dac  = 0;
+static unsigned char meadows_dac  = 0;
+static int dac_enable;
 
 #define BASE_CLOCK		5000000
 #define BASE_CTR1       (BASE_CLOCK / 256)
@@ -35,9 +36,14 @@ static	signed char waveform[2] = { -120, 120 };
 /************************************/
 int meadows_sh_start(void)
 {
-	channel = get_play_channels(2);
-	osd_play_sample(channel, waveform, sizeof(waveform), freq1, 0, 1);
-	osd_play_sample(channel+1, waveform, sizeof(waveform), freq2, 0, 1);
+	int vol[2];
+
+	vol[0]=vol[1]=255;
+	channel = mixer_allocate_channels(2,vol);
+	mixer_set_volume(channel,0);
+	mixer_play_sample(channel,waveform,sizeof(waveform),freq1,1);
+	mixer_set_volume(channel+1,0);
+	mixer_play_sample(channel+1,waveform,sizeof(waveform),freq2,1);
     return 0;
 }
 
@@ -74,7 +80,8 @@ int preset, amp;
 			freq1 = BASE_CTR1 / (preset + 1);
 		else amp = 0;
 		if (errorlog) fprintf(errorlog, "meadows ctr1 channel #%d preset:%3d freq:%5d amp:%d\n", channel, preset, freq1, amp);
-		osd_adjust_sample(channel, freq1 * sizeof(waveform), amp);
+		osd_set_sample_freq(channel, freq1 * sizeof(waveform));
+		mixer_set_volume(channel,amp*100/255);
     }
 
 	if (latched_0c02 != meadows_0c02 || latched_0c03 != meadows_0c03)
@@ -91,15 +98,18 @@ int preset, amp;
 		}
 		else amp = 0;
 		if (errorlog) fprintf(errorlog, "meadows ctr2 channel #%d preset:%3d freq:%5d amp:%d\n", channel+1, preset, freq2, amp);
-		osd_adjust_sample(channel+1, freq2 * sizeof(waveform), amp);
+		osd_set_sample_freq(channel+1, freq2 * sizeof(waveform));
+		mixer_set_volume(channel+1,amp*100/255);
     }
 
 	if (latched_0c03 != meadows_0c03)
 	{
-		if ((meadows_0c03 & ENABLE_DAC) == 0)
-			DAC_set_volume(0,0,0);
+		dac_enable = meadows_0c03 & ENABLE_DAC;
+
+		if (dac_enable)
+			DAC_data_w(0, meadows_dac);
 		else
-			DAC_set_volume(0,255,0);
+			DAC_data_w(0, 0);
     }
 
     latched_0c01 = meadows_0c01;
@@ -113,7 +123,10 @@ int preset, amp;
 void meadows_sh_dac_w(int data)
 {
 	meadows_dac = data;
-	DAC_data_w(0, meadows_dac);
+	if (dac_enable)
+		DAC_data_w(0, meadows_dac);
+	else
+		DAC_data_w(0, 0);
 }
 
 

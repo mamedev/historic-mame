@@ -243,7 +243,8 @@ static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
 	1500000,	/* 1.5 MHz?????? */
-	{ 255 },
+	{ 50 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -300,6 +301,20 @@ static struct MachineDriver machine_driver =
 
 ROM_START( arabian_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "ic1rev2.87",       0x0000, 0x2000, 0x5e1c98b8 )
+	ROM_LOAD( "ic2rev2.88",       0x2000, 0x2000, 0x092f587e )
+	ROM_LOAD( "ic3rev2.89",       0x4000, 0x2000, 0x15145f23 )
+	ROM_LOAD( "ic4rev2.90",       0x6000, 0x2000, 0x32b77b44 )
+
+	ROM_REGION(0x10000) /* graphics roms */
+	ROM_LOAD( "ic84.91",      0x0000, 0x2000, 0xc4637822 )	/* because of very rare way */
+	ROM_LOAD( "ic85.92",      0x2000, 0x2000, 0xf7c6866d )  /* CRT controller uses these roms */
+	ROM_LOAD( "ic86.93",      0x4000, 0x2000, 0x71acd48d )  /* there's no way, but to decode */
+	ROM_LOAD( "ic87.94",      0x6000, 0x2000, 0x82160b9a )	/* it at runtime - which is SLOW */
+ROM_END
+
+ROM_START( arabiana_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ic1.87",       0x0000, 0x2000, 0x51e9a6b1 )
 	ROM_LOAD( "ic2.88",       0x2000, 0x2000, 0x1cdcc1ab )
 	ROM_LOAD( "ic3.89",       0x4000, 0x2000, 0xb7b7faa0 )
@@ -310,7 +325,6 @@ ROM_START( arabian_rom )
 	ROM_LOAD( "ic85.92",      0x2000, 0x2000, 0xf7c6866d )  /* CRT controller uses these roms */
 	ROM_LOAD( "ic86.93",      0x4000, 0x2000, 0x71acd48d )  /* there's no way, but to decode */
 	ROM_LOAD( "ic87.94",      0x6000, 0x2000, 0x82160b9a )	/* it at runtime - which is SLOW */
-
 ROM_END
 
 
@@ -358,7 +372,7 @@ struct GameDriver arabian_driver =
 	"arabian",
 	"Arabian",
 	"1983",
-	"Atari",
+	"Sun Electronics",
 	"Jarek Burczynski (MAME driver)\nMarco Cassili",
 	GAME_IMPERFECT_COLORS,
 	&machine_driver,
@@ -377,3 +391,28 @@ struct GameDriver arabian_driver =
 	arabian_hiload, arabian_hisave
 };
 
+struct GameDriver arabiana_driver =
+{
+	__FILE__,
+	&arabian_driver,
+	"arabiana",
+	"Arabian (Atari)",
+	"1983",
+	"[Sun Electronics] (Atari license)",
+	"Jarek Burczynski (MAME driver)\nMarco Cassili",
+	GAME_IMPERFECT_COLORS,
+	&machine_driver,
+	0,
+
+	arabiana_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	arabian_hiload, arabian_hisave
+};

@@ -4,7 +4,7 @@
   ===============
 
   Driver provided by:
-	Paul Leaman
+  Paul Leaman
 
   M680000 for game, Z80, YM-2151 and OKIM6295 for sound.
 
@@ -576,7 +576,7 @@ INPUT_PORTS_START( strider_input_ports )
 	/* 0x40 Cocktail */
 
 	PORT_START      /* DSWB */
-	PORT_DIPNAME( 0x07, 0x07, "Difficulty" )
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x04, "Easiest" )
 	PORT_DIPSETTING(    0x05, "Easier" )
 	PORT_DIPSETTING(    0x06, "Easy" )
@@ -704,7 +704,7 @@ INPUT_PORTS_START( dwj_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START      /* DSWB */
-	PORT_DIPNAME( 0x07, 0x07, "Difficulty" )
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x04, "Very Easy" )
 	PORT_DIPSETTING(    0x05, "Easy 2" )
 	PORT_DIPSETTING(    0x06, "Easy 1" )
@@ -813,7 +813,7 @@ INPUT_PORTS_START( willow_input_ports )
 	/* 0x40 Cocktail */
 
 	PORT_START      /* DSWB */
-	PORT_DIPNAME( 0x07, 0x07, "Difficulty" )
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x04, "Very easy" )
 	PORT_DIPSETTING(    0x05, "Easier" )
 	PORT_DIPSETTING(    0x06, "Easy" )
@@ -923,7 +923,7 @@ INPUT_PORTS_START( unsquad_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START      /* DSWB */
-	PORT_DIPNAME( 0x07, 0x07, "Difficulty" )
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x07, "Super Easy" )
 	PORT_DIPSETTING(    0x06, "Very Easy" )
 	PORT_DIPSETTING(    0x05, "Easy" )
@@ -1028,7 +1028,7 @@ INPUT_PORTS_START( ffight_input_ports )
 	PORT_DIPNAME( 0x40, 0x40, "2 Coins to Start, 1 to Continue" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x80, 0x80, "Unused" )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -1048,11 +1048,11 @@ INPUT_PORTS_START( ffight_input_ports )
 	PORT_DIPSETTING(    0x08, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x60, "100000" )
-	PORT_DIPSETTING(    0x40, "200000" )
-	PORT_DIPSETTING(    0x20, "100000 200000" )
+	PORT_DIPSETTING(    0x60, "100k" )
+	PORT_DIPSETTING(    0x40, "200k" )
+	PORT_DIPSETTING(    0x20, "100k and every 200k" )
 	PORT_DIPSETTING(    0x00, "None" )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x80, 0x80, "Unused" )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -1140,7 +1140,7 @@ INPUT_PORTS_START( c1941_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START      /* DSWB */
-	PORT_DIPNAME( 0x07, 0x07, "Difficulty" )
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x07, "0 (Easier)" )
 	PORT_DIPSETTING(    0x06, "1" )
 	PORT_DIPSETTING(    0x05, "2" )
@@ -1248,7 +1248,7 @@ INPUT_PORTS_START( mercs_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START      /* DSWB */
-	PORT_DIPNAME( 0x07, 0x04, "Difficulty" )
+	PORT_DIPNAME( 0x07, 0x04, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x07, "Easiest" )
 	PORT_DIPSETTING(    0x06, "Very Easy" )
 	PORT_DIPSETTING(    0x05, "Easy" )
@@ -1368,7 +1368,7 @@ INPUT_PORTS_START( mtwins_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START      /* DSWB */
-	PORT_DIPNAME( 0x07, 0x07, "Difficulty" )
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x07, "Super Easy" )
 	PORT_DIPSETTING(    0x06, "Very Easy" )
 	PORT_DIPSETTING(    0x05, "Easy" )
@@ -1695,7 +1695,7 @@ INPUT_PORTS_START( nemo_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START      /* DSWB */
-	PORT_DIPNAME( 0x07, 0x07, "Difficulty" )
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x07, "Very Easy" )
 	PORT_DIPSETTING(    0x06, "Easy 1" )
 	PORT_DIPSETTING(    0x05, "Easy 2" )
@@ -1803,7 +1803,7 @@ INPUT_PORTS_START( sf2_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START      /* DSWB */
-	PORT_DIPNAME( 0x07, 0x04, "Difficulty" )
+	PORT_DIPNAME( 0x07, 0x04, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x07, "Easier" )
 	PORT_DIPSETTING(    0x06, "Very Easy" )
 	PORT_DIPSETTING(    0x05, "Easy" )
@@ -2026,7 +2026,7 @@ INPUT_PORTS_START( kod_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START      /* DSWB */
-	PORT_DIPNAME( 0x07, 0x04, "Difficulty" )
+	PORT_DIPNAME( 0x07, 0x04, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x07, "Easiest" )
 	PORT_DIPSETTING(    0x06, "Very Easy" )
 	PORT_DIPSETTING(    0x05, "Easy" )
@@ -2044,12 +2044,11 @@ INPUT_PORTS_START( kod_input_ports )
 	PORT_DIPSETTING(    0x28, "3" )
 	PORT_DIPSETTING(    0x38, "2" )
 	PORT_DIPSETTING(    0x30, "1" )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x80, "80k and every 400k" )
+	PORT_DIPSETTING(    0xc0, "100k and every 450k" )
+	PORT_DIPSETTING(    0x40, "160k and every 450k" )
+	PORT_DIPSETTING(    0x00, "None" )
 
 	PORT_START      /* DSWC */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
@@ -2236,13 +2235,19 @@ INPUT_PORTS_START( knights_input_ports )
 	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0x38, 0x38, "Coin B?" )
-	PORT_DIPSETTING(    0x38, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x08, 0x08, "Unused" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "Unused" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Unused" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "2 Coins to Start, 1 to Continue" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x80, 0x80, "Unused" )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_START      /* DSWB */
@@ -2279,7 +2284,7 @@ INPUT_PORTS_START( knights_input_ports )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x08, 0x08, "Freeze" )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Flip_Screen ) )
@@ -2364,7 +2369,7 @@ INPUT_PORTS_START( varth_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START      /* DSWB */
-	PORT_DIPNAME( 0x07, 0x07, "Difficulty" )
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x07, "Very Easy" )
 	PORT_DIPSETTING(    0x06, "Easy 1" )
 	PORT_DIPSETTING(    0x05, "Easy 2" )
@@ -2374,10 +2379,10 @@ INPUT_PORTS_START( varth_input_ports )
 	PORT_DIPSETTING(    0x01, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x18, "500K & every 1.400K ?" )
-	PORT_DIPSETTING(    0x10, "500K, 2.000K, +500K ?" )
-	PORT_DIPSETTING(    0x08, "1.200K & 3.500K ?" )
-	PORT_DIPSETTING(    0x00, "2000K ?" )
+	PORT_DIPSETTING(    0x18, "600k and every 1.400k" )
+	PORT_DIPSETTING(    0x10, "600k 2.000k and 4500k" )
+	PORT_DIPSETTING(    0x08, "1.200k 3.500k" )
+	PORT_DIPSETTING(    0x00, "2000k only" )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2466,7 +2471,7 @@ INPUT_PORTS_START( cworld2j_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START      /* DSWB */
-	PORT_DIPNAME( 0x07, 0x06, "Difficulty" )
+	PORT_DIPNAME( 0x07, 0x06, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x06, "0" )
 	PORT_DIPSETTING(    0x05, "1" )
 	PORT_DIPSETTING(    0x04, "2" )
@@ -2803,7 +2808,7 @@ INPUT_PORTS_START( pnickj_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START      /* DSWB */
-	PORT_DIPNAME( 0x07, 0x04, "Difficulty" )
+	PORT_DIPNAME( 0x07, 0x04, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x07, "Easiest" )
 	PORT_DIPSETTING(    0x06, "Very Easy" )
 	PORT_DIPSETTING(    0x05, "Easy" )
@@ -2910,7 +2915,7 @@ INPUT_PORTS_START( qad_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START      /* DSWB */
-	PORT_DIPNAME( 0x07, 0x06, "Difficulty" )
+	PORT_DIPNAME( 0x07, 0x06, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x06, "Very Easy" )
 	PORT_DIPSETTING(    0x05, "Easy" )
 	PORT_DIPSETTING(    0x04, "Normal" )
@@ -3105,7 +3110,7 @@ INPUT_PORTS_START( megaman_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START      /* DSWB */
-	PORT_DIPNAME( 0x03, 0x03, "Difficulty" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x03, "Easy" )
 	PORT_DIPSETTING(    0x02, "Normal" )
 	PORT_DIPSETTING(    0x01, "Difficult" )
@@ -3269,7 +3274,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,  /* 1 chip */
 	3579580,    /* 3.579580 MHz ? */
-	{ YM3012_VOL(40,OSD_PAN_LEFT,40,OSD_PAN_RIGHT) },
+	{ YM3012_VOL(40,MIXER_PAN_LEFT,40,MIXER_PAN_RIGHT) },
 	{ cps1_irq_handler_mus }
 };
 
@@ -4360,8 +4365,8 @@ ROM_START( c3wonders_rom )
 	ROM_LOAD( "3wonders.08",  0x380000, 0x80000, 0x1f055014 )
 
 	ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
-	ROM_LOAD( "3wonders.09",  0x00000, 0x08000, 0xabfca165 )    /* could have one bad byte */
-	ROM_CONTINUE(             0x10000, 0x08000 )                /* (compare with Japan version) */
+	ROM_LOAD( "3wonders.09",  0x00000, 0x08000, 0xabfca165 )
+	ROM_CONTINUE(             0x10000, 0x08000 )
 
 	ROM_REGION(0x40000) /* Samples */
 	ROM_LOAD( "3wonders.18",  0x00000, 0x20000, 0x26b211ab )
@@ -4392,8 +4397,8 @@ ROM_START( c3wonderj_rom )
 
 	ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
 	ROM_LOAD( "rt23.bin",     0x00000, 0x08000, 0x7d5a77a7 )    /* could have one bad byte */
-	ROM_CONTINUE(             0x10000, 0x08000 )                /* (compare with US version) */
-
+	ROM_CONTINUE(             0x10000, 0x08000 )                /* (compare with US version, */
+														/* which is verified to be correct) */
 	ROM_REGION(0x40000) /* Samples */
 	ROM_LOAD( "3wonders.18",  0x00000, 0x20000, 0x26b211ab )
 	ROM_LOAD( "3wonders.19",  0x20000, 0x20000, 0xdbe64ad0 )
@@ -4703,6 +4708,35 @@ ROM_START( sf2cej_rom )
 	ROM_LOAD_WIDE( "sf2cej.23",    0x000000, 0x80000, 0x7c463f94 )
 	ROM_LOAD_WIDE( "sf2cej.22",    0x080000, 0x80000, 0x6628f6a6 )
 	ROM_LOAD_WIDE( "sf2cej.21",    0x100000, 0x80000, 0xfcb8fe8f )
+
+	ROM_REGION_DISPOSE(0x600000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "sf2.02",       0x000000, 0x80000, 0xcdb5f027 )
+	ROM_LOAD( "sf2.06",       0x080000, 0x80000, 0x21e3f87d )
+	ROM_LOAD( "sf2.11",       0x100000, 0x80000, 0xd6ec9a0a )
+	ROM_LOAD( "sf2.01",       0x180000, 0x80000, 0x03b0d852 )
+	ROM_LOAD( "sf2.05",       0x200000, 0x80000, 0xba8a2761 )
+	ROM_LOAD( "sf2.10",       0x280000, 0x80000, 0x960687d5 )
+	ROM_LOAD( "sf2.04",       0x300000, 0x80000, 0xe2799472 )
+	ROM_LOAD( "sf2.08",       0x380000, 0x80000, 0xbefc47df )
+	ROM_LOAD( "sf2.13",       0x400000, 0x80000, 0xed2c67f6 )
+	ROM_LOAD( "sf2.03",       0x480000, 0x80000, 0x840289ec )
+	ROM_LOAD( "sf2.07",       0x500000, 0x80000, 0xe584bfb5 )
+	ROM_LOAD( "sf2.12",       0x580000, 0x80000, 0x978ecd18 )
+
+	ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "sf2.09",       0x00000, 0x08000, 0x08f6b60e )
+	ROM_CONTINUE(             0x10000, 0x08000 )
+
+	ROM_REGION(0x40000) /* Samples */
+	ROM_LOAD( "sf2.18",       0x00000, 0x20000, 0x7f162009 )
+	ROM_LOAD( "sf2.19",       0x20000, 0x20000, 0xbeade53f )
+ROM_END
+
+ROM_START( sf2red_rom )
+	ROM_REGION(CODE_SIZE)      /* 68000 code */
+	ROM_LOAD_WIDE_SWAP( "sf2red.23",    0x000000, 0x80000, 0x40276abb )
+	ROM_LOAD_WIDE_SWAP( "sf2red.22",    0x080000, 0x80000, 0x18daf387 )
+	ROM_LOAD_WIDE_SWAP( "sf2red.21",    0x100000, 0x80000, 0x52c486bb )
 
 	ROM_REGION_DISPOSE(0x600000)     /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "sf2.02",       0x000000, 0x80000, 0xcdb5f027 )
@@ -5461,8 +5495,8 @@ GAME_DRIVER_CLONE(area88,  unsquad,  "Area 88 (Japan)",                   "1989"
 GAME_DRIVER      (ffight,            "Final Fight (World)",               "1989","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_CLONE(ffightu, ffight,   "Final Fight (US)",                  "1989","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_CLONE(ffightj, ffight,   "Final Fight (Japan)",               "1989","Capcom",ORIENTATION_DEFAULT)
-GAME_DRIVERX      (c1941, 1941,       "1941 (World)",                     "1990","Capcom",ORIENTATION_ROTATE_270)
-GAME_DRIVER_CLONEX(c1941j,1941j,c1941,"1941 (Japan)",                     "1990","Capcom",ORIENTATION_ROTATE_270)
+GAME_DRIVERX      (c1941, 1941,       "1941 - Counter Attack (World)",    "1990","Capcom",ORIENTATION_ROTATE_270)
+GAME_DRIVER_CLONEX(c1941j,1941j,c1941,"1941 - Counter Attack (Japan)",    "1990","Capcom",ORIENTATION_ROTATE_270)
 GAME_DRIVER      (mercs,             "Mercs (World)",                     "1990","Capcom",ORIENTATION_ROTATE_270)
 GAME_DRIVER_CLONE(mercsu,  mercs,    "Mercs (US)",                        "1990","Capcom",ORIENTATION_ROTATE_270)
 GAME_DRIVER_CLONE(mercsj,  mercs,    "Senjo no Ookami II (Japan)",        "1990","Capcom",ORIENTATION_ROTATE_270)
@@ -5475,11 +5509,11 @@ GAME_DRIVER      (cawing,            "Carrier Air Wing (World)",          "1990"
 GAME_DRIVER_CLONE(cawingj, cawing,   "U.S. Navy (Japan)",                 "1990","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER      (nemo,              "Nemo (World)",                      "1990","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_CLONE(nemoj,   nemo,     "Nemo (Japan)",                      "1990","Capcom",ORIENTATION_DEFAULT)
-GAME_DRIVER      (sf2,               "Street Fighter II (World rev B)",   "1991","Capcom",ORIENTATION_DEFAULT)
-GAME_DRIVER_CLONE(sf2a,    sf2,      "Street Fighter II (US rev A)",      "1991","Capcom",ORIENTATION_DEFAULT)
-GAME_DRIVER_CLONE(sf2b,    sf2,      "Street Fighter II (US rev B)",      "1991","Capcom",ORIENTATION_DEFAULT)
-GAME_DRIVER_CLONE(sf2e,    sf2,      "Street Fighter II (US rev E)",      "1991","Capcom",ORIENTATION_DEFAULT)
-GAME_DRIVER_CLONE(sf2j,    sf2,      "Street Fighter II (Japan)",         "1991","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER      (sf2,               "Street Fighter II - The World Warrior (World rev B)", "1991","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(sf2a,    sf2,      "Street Fighter II - The World Warrior (US rev A)",    "1991","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(sf2b,    sf2,      "Street Fighter II - The World Warrior (US rev B)",    "1991","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(sf2e,    sf2,      "Street Fighter II - The World Warrior (US rev E)",    "1991","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(sf2j,    sf2,      "Street Fighter II - The World Warrior (Japan)",       "1991","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVERX      (c3wonders,3wonders,          "Three Wonders (US)",     "1991","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_CLONEX(c3wonderj,3wonderj,c3wonders,"Three Wonders (Japan)",  "1991","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER      (kod,               "The King of Dragons (World)",       "1991","Capcom",ORIENTATION_DEFAULT)
@@ -5493,13 +5527,14 @@ GAME_DRIVER      (sf2ce,             "Street Fighter II' - Champion Edition (Wor
 GAME_DRIVER_CLONE(sf2cea,  sf2ce,    "Street Fighter II' - Champion Edition (US rev A)", "1992","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_CLONE(sf2ceb,  sf2ce,    "Street Fighter II' - Champion Edition (US rev B)", "1992","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_CLONE(sf2cej,  sf2ce,    "Street Fighter II' - Champion Edition (Japan)", "1992","Capcom",ORIENTATION_DEFAULT)
-GAME_DRIVER      (varth,             "Varth (World)",                     "1992","Capcom",ORIENTATION_ROTATE_270)
-GAME_DRIVER_CLONE(varthj,  varth,    "Varth (Japan)",                     "1992","Capcom",ORIENTATION_ROTATE_270)
+GAME_DRIVER_CLONE(sf2red,  sf2ce,    "Street Fighter II' - Champion Edition (Red Wave)", "1992","hack",ORIENTATION_DEFAULT)
+GAME_DRIVER      (varth,             "Varth - Operation Thunderstorm (World)", "1992","Capcom",ORIENTATION_ROTATE_270)
+GAME_DRIVER_CLONE(varthj,  varth,    "Varth - Operation Thunderstorm (Japan)", "1992","Capcom",ORIENTATION_ROTATE_270)
 GAME_DRIVER      (cworld2j,          "Capcom World 2 (Japan)",            "1992","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_QSOUND      (wof,               "Warriors of Fate (World)",        "1992","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_QSOUND_CLONE(wofj,    wof,      "Tenchi o Kurau 2 (Japan)",        "1992","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_CLONE(sf2t,    sf2ce,    "Street Fighter II' - Hyper Fighting (US)", "1992","Capcom",ORIENTATION_DEFAULT)
-GAME_DRIVER_CLONE(sf2tj,   sf2ce,    "Street Fighter II Turbo (Japan)",   "1992","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(sf2tj,   sf2ce,    "Street Fighter II' Turbo - Hyper Fighting (Japan)",   "1992","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_QSOUND      (dino,              "Cadillacs and Dinosaurs (World)", "1993","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_QSOUND      (punisher,          "Punisher (World)",                "1993","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_QSOUND_CLONE(punishrj,punisher, "Punisher (Japan)",                "1993","Capcom",ORIENTATION_DEFAULT)

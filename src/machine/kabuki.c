@@ -66,7 +66,7 @@ Known games:
                                        swap_key1  swap_key2  addr_key  xor_key
 Pang / Buster Bros                     32104567   76540123     6548      24
 Capcom World                                          unknown
-Adventure Quiz 2 Hatena no Dai-Bouken                 unknown
+Adventure Quiz 2 Hatena no Dai-Bouken  76540123   45673210     5751      43
 Super Pang                             76540123   45673210     5852      43
 Super Buster Bros                      76540123   45673210     2130      12
 Quiz Tonosama no Yabou                 43215670   12340765     1111      11
@@ -137,6 +137,15 @@ void bbros_decode(void)
 	kabuki_decode(RAM,ROM,RAM,0x0000,0x8000, 0x32104567,0x76540123,0x6548,0x24);
 	for (i = 0x10000;i < 0x30000;i += 0x4000)
 		kabuki_decode(RAM+i,ROM+i,RAM+i,0x8000,0x4000, 0x32104567,0x76540123,0x6548,0x24);
+}
+
+void hatena_decode(void)
+{
+	int i;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	kabuki_decode(RAM,ROM,RAM,0x0000,0x8000, 0x76540123,0x45673210,0x5751,0x43);
+	for (i = 0x10000;i < 0x50000;i += 0x4000)
+		kabuki_decode(RAM+i,ROM+i,RAM+i,0x8000,0x4000, 0x76540123,0x45673210,0x5751,0x43);
 }
 
 void spang_decode(void)

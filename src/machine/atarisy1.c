@@ -12,7 +12,7 @@
 
 int slapstic_tweak(int offset);
 
-void atarisys1_update_display_list(int scanline);
+void atarisys1_scanline_update(int scanline);
 
 
 
@@ -26,7 +26,6 @@ unsigned char *marble_speedcheck;
 
 int atarisys1_int3_state;
 
-int atarisys1_slapstic_num;
 int atarisys1_joystick_type;
 int atarisys1_trackball_type;
 
@@ -60,9 +59,12 @@ static int indytemp_setopbase(int pc);
  *
  *************************************/
 
-static void atarisys1_update_interrupts(int vblank, int sound)
+static int enable;
+static void update_interrupts(int vblank, int sound)
 {
 	int newstate = 0;
+
+if (vblank) enable = osd_key_pressed(OSD_KEY_CAPSLOCK);
 
 	/* all interrupts go through an LS148, which gives priority to the highest */
 	if (joystick_int && joystick_int_enable)
@@ -84,10 +86,13 @@ static void atarisys1_update_interrupts(int vblank, int sound)
 
 void atarisys1_init_machine(void)
 {
-	atarigen_init_machine(atarisys1_update_interrupts, atarisys1_slapstic_num);
+	/* initialize the system */
+	atarigen_eeprom_reset();
+	atarigen_slapstic_reset();
+	atarigen_interrupt_init(update_interrupts, atarisys1_scanline_update);
 
 	/* special case for the Indiana Jones slapstic */
-	if (atarisys1_slapstic_num == 105)
+	if (atarigen_slapstic_num == 105)
 		cpu_setOPbaseoverride(indytemp_setopbase);
 
 	atarisys1_int3_state = 0;
@@ -168,9 +173,6 @@ static int indytemp_setopbase(int pc)
 
 int atarisys1_interrupt(void)
 {
-	/* set a timer to reset the video parameters just before the end of VBLANK */
-	timer_set(TIME_IN_USEC(Machine->drv->vblank_duration - 10), 0, atarisys1_update_display_list);
-
 	/* update the gas pedal for RoadBlasters */
 	if (atarisys1_joystick_type == 3)
 	{
@@ -206,7 +208,7 @@ void atarisys1_sound_interrupt(int irq)
  *
  *************************************/
 
-void atarisys1_delayed_joystick_int(int param)
+static void delayed_joystick_int(int param)
 {
 	joystick_timer = NULL;
 	joystick_value = param;
@@ -241,7 +243,7 @@ int atarisys1_joystick_r(int offset)
 
 	/* clear any existing interrupt and set a timer for a new one */
 	joystick_int = 0;
-	joystick_timer = timer_set(TIME_IN_USEC(50), newval, atarisys1_delayed_joystick_int);
+	joystick_timer = timer_set(TIME_IN_USEC(50), newval, delayed_joystick_int);
 	atarigen_update_interrupts();
 
 	return joystick_value;
@@ -319,8 +321,8 @@ int atarisys1_trakball_r(int offset)
 int atarisys1_io_r(int offset)
 {
 	int temp = input_port_5_r(offset);
-	if (atarigen_cpu_to_sound_ready) temp ^= 0x80;
-	return temp | 0xff00;
+	if (atarigen_cpu_to_sound_ready) temp ^= 0x0080;
+	return temp;
 }
 
 
@@ -330,7 +332,7 @@ int atarisys1_6502_switch_r(int offset)
 
 	if (atarigen_cpu_to_sound_ready) temp ^= 0x08;
 	if (atarigen_sound_to_cpu_ready) temp ^= 0x10;
-	if (!(input_port_5_r(offset) & 0x40)) temp ^= 0x80;
+	if (!(input_port_5_r(offset) & 0x0040)) temp ^= 0x80;
 
 	return temp;
 }
@@ -460,6 +462,7 @@ int marble_speedcheck_r(int offset)
 
 	return result;
 }
+
 
 void marble_speedcheck_w(int offset, int data)
 {

@@ -723,7 +723,8 @@ static struct AY8910interface scramble_ay8910_interface =
 {
 	2,	/* 2 chips */
 	14318000/8,	/* 1.78975 MHz */
-	{ 0x30ff, 0x30ff },
+	{ 30, 30 },
+	{ 0x30, 0x30 },	/* gain */
 	{ soundlatch_r },
 	{ scramble_portB_r },
 	{ 0 },
@@ -734,7 +735,8 @@ static struct AY8910interface frogger_ay8910_interface =
 {
 	1,	/* 1 chip */
 	14318000/8,	/* 1.78975 MHz */
-	{ 0x30ff },
+	{ 80 },
+	{ 0x20 },	/* gain */
 	{ soundlatch_r },
 	{ frogger_portB_r },
 	{ 0 },
@@ -745,7 +747,8 @@ static struct AY8910interface triplep_ay8910_interface =
 {
 	1,	/* 1 chip */
 	14318000/8,	/* 1.78975 MHz */
-	{ 0x30ff },
+	{ 50 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },

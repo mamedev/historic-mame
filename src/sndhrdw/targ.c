@@ -12,7 +12,7 @@ static int tone_channel;
 unsigned char targ_spec_flag;
 static unsigned char targ_sh_ctrl0=0;
 static unsigned char targ_sh_ctrl1=0;
-static unsigned char tone_vol;
+static unsigned char tone_active;
 
 #define MAXFREQ_A_TARG 125000
 #define MAXFREQ_A_SPECTAR 525000
@@ -49,22 +49,27 @@ void targ_tone_generator(int data)
 	else maxfreq = MAXFREQ_A_SPECTAR;
 
     sound_a_freq = data;
-    if (sound_a_freq == 0xFF || sound_a_freq == 0x00) {
-        osd_adjust_sample(tone_channel,maxfreq,0);
+    if (sound_a_freq == 0xFF || sound_a_freq == 0x00)
+	{
+		mixer_set_volume(tone_channel,0);
     }
     else
-        osd_adjust_sample(tone_channel,maxfreq/(0xFF-sound_a_freq),tone_vol);
+	{
+		osd_set_sample_freq(tone_channel,maxfreq/(0xFF-sound_a_freq));
+		mixer_set_volume(tone_channel,tone_active*100);
+	}
 }
 
 int targ_sh_start(const struct MachineSound *msound)
 {
-	tone_channel = get_play_channels(1);
+	tone_channel = mixer_allocate_channel(50);
 
-    tone_pointer=0;
-    tone_offset=0;
-    tone_vol=0;
-    sound_a_freq = 0x00;
-    osd_play_sample(tone_channel,(signed char*)waveform1,32,1000,tone_vol,1);
+	tone_pointer=0;
+	tone_offset=0;
+	tone_active=0;
+	sound_a_freq = 0x00;
+	mixer_set_volume(tone_channel,0);
+	mixer_play_sample(tone_channel,(signed char*)waveform1,32,1000,1);
 	return 0;
 }
 
@@ -137,15 +142,19 @@ void targ_sh_w(int offset,int data)
         /* Game (tone generator enable) */
         if FALLING_EDGE(0x80) {
            tone_pointer=0;
-           tone_vol=0;
-           if (sound_a_freq == 0xFF || sound_a_freq == 0x00) {
-                osd_adjust_sample(tone_channel,maxfreq,0);
+           tone_active=0;
+           if (sound_a_freq == 0xFF || sound_a_freq == 0x00)
+		   {
+				mixer_set_volume(tone_channel,0);
            }
            else
-             osd_adjust_sample(tone_channel,maxfreq/(0xFF-sound_a_freq),tone_vol);
+		   {
+             osd_set_sample_freq(tone_channel,maxfreq/(0xFF-sound_a_freq));
+             mixer_set_volume(tone_channel,0);
+		   }
         }
         if RISING_EDGE(0x80) {
-            tone_vol=128;
+            tone_active=1;
         }
         targ_sh_ctrl0 = data;
     }

@@ -303,7 +303,8 @@ static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
 	14318000/8,	/* 1.78975 Mhz */
-	{ 0x2050 },
+	{ 80 },
+	{ 0x20 },	/* gain */
 	{ soundlatch_r },
 	{ frogger_portB_r },
 	{ 0 },

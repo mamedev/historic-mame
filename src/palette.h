@@ -126,8 +126,10 @@ void palette_change_color(int color,unsigned char red,unsigned char green,unsign
 /* PALETTE_COLOR_USED for all colors; this is enough in some cases. */
 extern unsigned char *palette_used_colors;
 
-void palette_increase_usage_count(int table_offset,unsigned int usage_mask);
-void palette_decrease_usage_count(int table_offset,unsigned int usage_mask);
+void palette_increase_usage_count(int table_offset,unsigned int usage_mask,int color_flags);
+void palette_decrease_usage_count(int table_offset,unsigned int usage_mask,int color_flags);
+void palette_increase_usage_countx(int table_offset,int num_pens,const unsigned char *pen_data,int color_flags);
+void palette_decrease_usage_countx(int table_offset,int num_pens,const unsigned char *pen_data,int color_flags);
 
 /* If you want to dynamically change the usage array, call palette_init_used_colors() */
 /* before setting used entries to PALETTE_COLOR_USED/PALETTE_COLOR_TRANSPARENT. */
@@ -136,16 +138,19 @@ void palette_init_used_colors(void);
 
 const unsigned char *palette_recalc(void);
 
-#define PALETTE_COLOR_UNUSED 0		/* This color is not needed for this frame */
-#define PALETTE_COLOR_USED 1		/* This color is currenly used, either in the */
-	/* visible screen itself, or for parts which are cached in temporary bitmaps */
-	/*by the driver. */
+#define PALETTE_COLOR_UNUSED	0	/* This color is not needed for this frame */
+#define PALETTE_COLOR_VISIBLE	1	/* This color is currently visible */
+#define PALETTE_COLOR_CACHED	2	/* This color is cached in temporary bitmaps */
 	/* palette_recalc() will try to use always the same pens for the used colors; */
 	/* if it is forced to rearrange the pens, it will return TRUE to signal the */
 	/* driver that it must refresh the display. */
-#define PALETTE_COLOR_TRANSPARENT 2	/* All colors using this attribute will be */
+#define PALETTE_COLOR_TRANSPARENT_FLAG	4	/* All colors using this attribute will be */
 	/* mapped to the same pen, and no other colors will be mapped to that pen. */
 	/* This way, transparencies can be handled by copybitmap(). */
+
+/* backwards compatibility */
+#define PALETTE_COLOR_USED			(PALETTE_COLOR_VISIBLE|PALETTE_COLOR_CACHED)
+#define PALETTE_COLOR_TRANSPARENT	(PALETTE_COLOR_TRANSPARENT_FLAG|PALETTE_COLOR_USED)
 
 /* if you use PALETTE_COLOR_TRANSPARENT, to do a transparency blit with copybitmap() */
 /* pass it TRANSPARENCY_PEN, palette_transparent_pen. */

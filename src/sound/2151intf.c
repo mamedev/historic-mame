@@ -73,7 +73,7 @@ static int my_YM2151_sh_start(const struct MachineSound *msound,int mode)
 	int rate = Machine->sample_rate;
 	char buf[YM2151_NUMBUF][40];
 	const char *name[YM2151_NUMBUF];
-	int mixed_vol,vol[YM2151_NUMBUF],pan[YM2151_NUMBUF];
+	int mixed_vol,vol[YM2151_NUMBUF];
 
 	if( rate == 0 ) rate = 1000;	/* kludge to prevent nasty crashes */
 
@@ -92,28 +92,13 @@ static int my_YM2151_sh_start(const struct MachineSound *msound,int mode)
 			/* stream setup */
 			for (j = 0 ; j < YM2151_NUMBUF ; j++)
 			{
-				char *chname;
-
 				name[j]=buf[j];
-				vol[j] = mixed_vol & 0xff;
-				pan[j] = (mixed_vol>>8) & 0xff;
+				vol[j] = mixed_vol & 0xffff;
 				mixed_vol>>=16;
-				switch( pan[j] ){
-				case OSD_PAN_CENTER:chname="Ct";break;
-				case OSD_PAN_LEFT:  chname="Lt";break;
-				case OSD_PAN_RIGHT: chname="Rt";break;
-				default:            chname="??";break;
-				}
-				sprintf(buf[j],"YM2151 #%d Ch%d(%s)",i,j+1,chname);
+				sprintf(buf[j],"%s #%d Ch%d",sound_name(msound),i,j+1);
 			}
-			stream[i] = stream_init_multi(msound,YM2151_NUMBUF,
-				name,rate,FM_OUTPUT_BIT,i,OPMUpdateOne);
-			/* volume setup */
-			for (j = 0 ; j < YM2151_NUMBUF ; j++)
-			{
-				stream_set_volume(stream[i]+j,vol[j]);
-				stream_set_pan(stream[i]+j,pan[j]);
-			}
+			stream[i] = stream_init_multi(YM2151_NUMBUF,
+				name,vol,rate,FM_OUTPUT_BIT,i,OPMUpdateOne);
 		}
 		/* Set Timer handler */
 		for (i = 0; i < intf->num; i++)
@@ -135,29 +120,14 @@ static int my_YM2151_sh_start(const struct MachineSound *msound,int mode)
 			mixed_vol = intf->volume[i];
 			for (j = 0 ; j < YM2151_NUMBUF ; j++)
 			{
-				char *chname;
-
 				name[j]=buf[j];
-				vol[j] = mixed_vol & 0xff;
-				pan[j] = (mixed_vol>>8) & 0xff;
+				vol[j] = mixed_vol & 0xffff;
 				mixed_vol>>=16;
-				switch( pan[j] ){
-				case OSD_PAN_CENTER:chname="Ct";break;
-				case OSD_PAN_LEFT:  chname="Lt";break;
-				case OSD_PAN_RIGHT: chname="Rt";break;
-				default:            chname="??";break;
-				}
-				sprintf(buf[j],"YM2151 #%d Ch%d(%s)",i,j+1,chname);
+				sprintf(buf[j],"%s #%d Ch%d",sound_name(msound),i,j+1);
 			}
-			stream[i] = stream_init_multi(msound,YM2151_NUMBUF,
-				name,rate,Machine->sample_bits,
+			stream[i] = stream_init_multi(YM2151_NUMBUF,
+				name,vol,rate,Machine->sample_bits,
 				i,YM2151UpdateOne);
-			/* volume setup */
-			for (j = 0 ; j < YM2151_NUMBUF ; j++)
-			{
-				stream_set_volume(stream[i]+j,vol[j]);
-				stream_set_pan(stream[i]+j,pan[j]);
-			}
 		}
 		if (YM2151Init(intf->num,intf->baseclock,Machine->sample_rate,Machine->sample_bits) == 0)
 		{

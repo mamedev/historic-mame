@@ -8,7 +8,8 @@ struct AY8910interface
 {
 	int num;	/* total number of 8910 in the machine */
 	int baseclock;
-	int volume[MAX_8910];
+	int mixing_level[MAX_8910];
+	int gain[MAX_8910];
 	int (*portAread[MAX_8910])(int offset);
 	int (*portBread[MAX_8910])(int offset);
 	void (*portAwrite[MAX_8910])(int offset,int data);
@@ -16,22 +17,11 @@ struct AY8910interface
 	void (*handler[MAX_8910])(int irq);	/* IRQ handler for the YM2203 */
 };
 
+#define AY8910_DEFAULT_GAIN { 0 }
 
 void AY8910_reset(int chip);
 
 void AY8910_set_clock(int chip,int _clock);
-
-/*
-** set output gain
-**
-** The gain is expressed in 0.2dB increments, e.g. a gain of 10 is an increase
-** of 2dB. Note that the gain only affects sounds not playing at full volume,
-** since the ones at full volume are already played at the maximum intensity
-** allowed by the sound card.
-** 0x00 is the default.
-** 0xff is the maximum allowed value.
-*/
-void AY8910_set_volume(int chip,int volume,int gain);
 
 
 void AY8910Write(int chip,int a,int data);
@@ -57,6 +47,5 @@ void AY8910_write_port_3_w(int offset,int data);
 void AY8910_write_port_4_w(int offset,int data);
 
 int AY8910_sh_start(const struct MachineSound *msound);
-int AY8910_sh_start_ex(const struct MachineSound *msound,const char *chipname);
 
 #endif

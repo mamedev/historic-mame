@@ -203,8 +203,7 @@ int wiping_sh_start(const struct MachineSound *msound)
 
 	/* get stream channels */
 	sample_bits = Machine->sample_bits;
-	stream = stream_init(msound,mono_name, samplerate, sample_bits, 0, wiping_update_mono);
-//	stream_set_volume(stream, intf->volume);
+	stream = stream_init(mono_name,100/*intf->volume*/, samplerate, sample_bits, 0, wiping_update_mono);
 
 	/* allocate a pair of buffers to mix into - 1 second's worth should be more than enough */
 	if ((mixer_buffer = malloc(2 * sizeof(short) * samplerate)) == 0)

@@ -1724,6 +1724,7 @@ static struct YM2203interface ym2203_interface =
 	1,
 	1500000,	/* Should be accurate for all games, derived from 12MHz crystal */
 	{ YM2203_VOL(20,23) },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -3024,7 +3025,7 @@ struct GameDriver cobracom_driver =
 	__FILE__,
 	0,
 	"cobracom",
-	"Cobra Command (Japan)",
+	"Cobra-Command (Japan)",
 	"1988",
 	"Data East Corporation",
 	"Bryan McPhail",

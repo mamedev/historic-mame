@@ -10,16 +10,18 @@
 /* PI isn't in the ANSI standard, so we'll define an instance here */
 #define PHX_PI (3.14159265358979323846L)
 
-#define MAX_VOLUME 20
+#define MAX_VOLUME 60
+#define NOISE_VOLUME 60
+#define SAMPLE_VOLUME 60
 
 /* A nice macro which saves us a lot of typing */
-#define M_OSD_PLAY_SAMPLE(channel, soundnum, loop) { \
+#define M_PLAY_SAMPLE(channel, soundnum, loop) { \
 	if (Machine->samples->sample[soundnum] != 0) \
-		osd_play_sample(channel, \
+		mixer_play_sample(channel, \
 			Machine->samples->sample[soundnum]->data, \
 			Machine->samples->sample[soundnum]->length, \
 			Machine->samples->sample[soundnum]->smpfreq, \
-			60,loop); }
+			loop); }
 
 
 #define SAFREQ  1400
@@ -38,7 +40,6 @@
 
 /* values needed by phoenix_sh_update */
 static int sound_a_play = 0;
-static int sound_a_vol = 0;
 static int sound_a_freq = SAFREQ;
 static int sound_a_sw = 0;
 static int sound_a_adjust=1;
@@ -47,7 +48,6 @@ static double t=0;
 static double x;
 
 static int sound_b_play = 0;
-static int sound_b_vol = 0;
 static int sound_b_freq = SBFREQ;
 static int sound_b_adjust=1;
 
@@ -57,6 +57,8 @@ static int pitch_a = 0;
 static int pitch_b = 0;
 
 static int song_playing;
+
+static int channel0,channel1,channel2,channel3;
 
 int noisemulate = 0;
 
@@ -99,16 +101,16 @@ void phoenix_sound_control_a_w(int offset,int data)
 	else sound_a_adjust=0;
 
 	sound_a_freq = freq;
-	sound_a_vol = vol;
 
 	if (freq != 0x0f)
 	{
-		osd_adjust_sample(0,MAXFREQ_A/(16-sound_a_freq),MAX_VOLUME*(3-vol));
+		osd_set_sample_freq(channel0,MAXFREQ_A/(16-sound_a_freq));
+		mixer_set_volume(channel0,100*(3-vol)/3);
 		sound_a_play = 1;
 	}
 	else
 	{
-		osd_adjust_sample(0,SAFREQ,0);
+		mixer_set_volume(channel0,0);
 		sound_a_play = 0;
 	}
 
@@ -120,10 +122,14 @@ void phoenix_sound_control_a_w(int offset,int data)
 			noise_vol = 85*noise;
 		}
 
-		if (noise) osd_adjust_sample(2,noise_freq,noise_vol/4);
+		if (noise)
+		{
+			osd_set_sample_freq(channel2,noise_freq);
+			mixer_set_volume(channel2,noise_vol*100/255);
+		}
 		else
 		{
-			osd_adjust_sample(2,1000,0);
+			mixer_set_volume(channel2,0);
 			noise_vol = 0;
 		}
 	}
@@ -133,11 +139,11 @@ void phoenix_sound_control_a_w(int offset,int data)
 		{
 			case 1 :
 				if (lastnoise != noise)
-					M_OSD_PLAY_SAMPLE (2, 0, 0);
+					M_PLAY_SAMPLE(channel2,0,0);
 				break;
 			case 2 :
 				if (lastnoise != noise)
-					M_OSD_PLAY_SAMPLE (2, 1, 0);
+					M_PLAY_SAMPLE(channel2,1,0);
 				break;
 		}
 		lastnoise = noise;
@@ -157,16 +163,16 @@ void phoenix_sound_control_b_w(int offset,int data)
 	else sound_b_adjust=0;
 
 	sound_b_freq = freq;
-	sound_b_vol = vol;
 
 	if (freq != 0x0f)
 	{
-		osd_adjust_sample(1,MAXFREQ_B/(16-sound_b_freq),MAX_VOLUME*(3-vol));
+		osd_set_sample_freq(channel1,MAXFREQ_B/(16-sound_b_freq));
+		mixer_set_volume(channel1,100*(3-vol)/3);
 		sound_b_play = 1;
 	}
 	else
 	{
-		osd_adjust_sample(1,SBFREQ,0);
+		mixer_set_volume(channel1,0);
 		sound_b_play = 0;
 	}
 
@@ -182,23 +188,23 @@ void phoenix_sound_control_b_w(int offset,int data)
 			/* it sounds wrong). */
 
 			/* This case seems to prevent the melody from repeating rather than stopping it outright */
-			/*osd_stop_sample (3);
+			/*osd_stop_sample(channel3);
 			if (song_playing != 0)
-				M_OSD_PLAY_SAMPLE (3, song_playing, 0);*/
+				M_PLAY_SAMPLE(channel3,song_playing,0);*/
 			song_playing = 0;
 			break;
 		case 2:
 			if (song_playing != 2)
 			{
 				song_playing = 2;
-				M_OSD_PLAY_SAMPLE (3, 2, 0);
+				M_PLAY_SAMPLE(channel3,2,0);
 			}
 			break;
 		case 3:
 			if (song_playing != 3)
 			{
 				song_playing = 3;
-				M_OSD_PLAY_SAMPLE (3, 3, 0);
+				M_PLAY_SAMPLE(channel3,3,0);
 			}
 			break;
 	}
@@ -208,16 +214,26 @@ void phoenix_sound_control_b_w(int offset,int data)
 
 int phoenix_sh_start(void)
 {
+	channel0 = mixer_allocate_channel(MAX_VOLUME);
+	channel1 = mixer_allocate_channel(MAX_VOLUME);
+	channel2 = mixer_allocate_channel(NOISE_VOLUME);
+	channel3 = mixer_allocate_channel(SAMPLE_VOLUME);
+
 	x = PHX_PI/2;
 
 	if (Machine->samples != 0 && Machine->samples->sample[0] != 0)    /* We should check also that Samplename[0] = 0 */
 		noisemulate = 0;
 	else
+	{
 		noisemulate = 1;
+		mixer_set_volume(channel2,0);
+		mixer_play_sample(channel2,(signed char*)waveform2,128,1000,1);
+	}
 
-	osd_play_sample(0,(signed char*)waveform1,32,1000,0,1);
-	osd_play_sample(1,(signed char*)waveform1,32,1000,0,1);
-	osd_play_sample(2,(signed char*)waveform2,128,1000,0,1);
+	mixer_set_volume(channel0,0);
+	mixer_play_sample(channel0,(signed char*)waveform1,32,1000,1);
+	mixer_set_volume(channel1,0);
+	mixer_play_sample(channel1,(signed char*)waveform1,32,1000,1);
 	song_playing = 0;
 
 	return 0;
@@ -268,15 +284,12 @@ void phoenix_sh_update(void)
 		x=3*PHX_PI/2;
 
 
-
-	if (sound_a_play)
-		osd_adjust_sample(0,pitch_a,MAX_VOLUME*(3-sound_a_vol));
-	if (sound_b_play)
-		osd_adjust_sample(1,pitch_b,MAX_VOLUME*(3-sound_b_vol));
+	osd_set_sample_freq(channel0,pitch_a);
+	osd_set_sample_freq(channel1,pitch_b);
 
 	if ((noise_vol) && (noisemulate))
 	{
-		osd_adjust_sample(2,noise_freq,noise_vol/4);
+		mixer_set_volume(channel2,noise_vol*100/255);
 		noise_vol-=3;
 	}
 

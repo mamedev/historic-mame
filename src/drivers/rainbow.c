@@ -83,7 +83,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	4000000,	/* 4 MHz ? */
-	{ YM3012_VOL(50,OSD_PAN_LEFT,50,OSD_PAN_RIGHT) },
+	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
 	{ rastan_irq_handler },
 	{ rastan_bankswitch_w }
 };
@@ -431,7 +431,7 @@ static struct MemoryReadAddress jumping_readmem[] =
 	{ 0x200000, 0x20ffff, paletteram_word_r },
     { 0x400000, 0x400001, input_port_0_r },
     { 0x400002, 0x400003, input_port_1_r },
-	{ 0x400006, 0x400007, rastan_sound_r },			/* What Chip ? */
+//	{ 0x400006, 0x400007, rastan_sound_r },			/* What Chip ? */
     { 0x401000, 0x401001, input_port_2_r },
     { 0x401002, 0x401003, input_port_3_r },
 	{ 0xc00000, 0xc03fff, rastan_videoram1_r },
@@ -456,7 +456,7 @@ static struct MemoryWriteAddress jumping_writemem[] =
     { 0x430000, 0x430003, rastan_scrollY_w, &rastan_scrolly },  /* scroll Y  1st.w plane1  2nd.w plane2 */
    	{ 0xc40000, 0xc40003, rastan_scrollX_w, &rastan_scrollx },  /* scroll X  1st.w plane1  2nd.w plane2 */
     { 0x440000, 0x4407ff, MWA_BANK4 },
-	{ 0x3e0000, 0x3e0003, rainbow_sound_w },
+//	{ 0x3e0000, 0x3e0003, rainbow_sound_w },
     { 0xd00800, 0xd00fff, MWA_BANK5 }, 				/* Needed for Attract Mode */
     { 0x3c0000, 0x3c0001, MWA_NOP },				/* Watchdog ? */
     { 0x800000, 0x80ffff, MWA_NOP },				/* Original C-Chip location (not used) */

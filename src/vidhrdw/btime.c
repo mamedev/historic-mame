@@ -15,7 +15,6 @@ unsigned char *bnj_backgroundram;
 unsigned char *zoar_scrollram;
 unsigned char *deco_charram;
 int bnj_backgroundram_size;
-int lnc_sprite_x_adjust;
 
 static int sprite_dirty[256];
 static int char_dirty[1024];
@@ -631,7 +630,7 @@ void lnc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* copy the temporary bitmap to the screen */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
-	drawsprites(bitmap, 0, lnc_sprite_x_adjust, videoram, 0x20);
+	drawsprites(bitmap, 0, 1, videoram, 0x20);
 }
 
 

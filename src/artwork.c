@@ -15,15 +15,11 @@
 *********************************************************************/
 
 #include "driver.h"
+#include "png.h"
 #include "artwork.h"
 
 #define MIN(x,y) (x)<(y)?(x):(y)
 #define MAX(x,y) (x)>(y)?(x):(y)
-
-/* from png.c */
-extern int png_read_artwork(const char *file_name, struct osd_bitmap **bitmap,
-		     unsigned char **palette, int *num_palette,
-		     unsigned char **trans, int *num_trans);
 
 /* Local variables */
 static unsigned char isblack[256];
@@ -832,6 +828,97 @@ static struct artwork *allocate_artwork_mem (int width, int height)
 }
 
 /*********************************************************************
+
+  Reads a PNG for a artwork struct and checks if it has the right
+  format.
+
+ *********************************************************************/
+static int artwork_read_bitmap(const char *file_name, struct osd_bitmap **bitmap, struct png_info *p)
+{
+	UINT8 *tmp;
+	UINT32 orientation, i;
+	UINT32 j, x, y, h, w;
+	void *fp;
+
+	if (!(fp = osd_fopen(Machine->gamedrv->name, file_name, OSD_FILETYPE_ARTWORK, 0)))
+	{
+		if (errorlog)
+			fprintf(errorlog,"Unable to open PNG %s\n", file_name);
+		return 0;
+	}
+
+	if (!png_read_file(fp, p))
+	{
+		fclose (fp);
+		return 0;
+	}
+	fclose (fp);
+
+	if (p->bit_depth > 8)
+	{
+		if (errorlog)
+			fprintf(errorlog,"Unsupported bit depth %i (8 bit max.)\n", p->bit_depth);
+		return 0;
+	}
+
+	if (p->color_type != 3)
+	{
+		if (errorlog)
+			fprintf(errorlog,"Unsupported color type %i (has to be 3)\n", p->color_type);
+		return 0;
+	}
+	if (p->interlace_method != 0)
+	{
+		if (errorlog)
+			fprintf(errorlog,"Interlace unsupported\n");
+		return 0;
+	}
+
+	/* Convert to 8 bit */
+	png_expand_buffer_8bit (p);
+
+	png_delete_unused_colors (p);
+
+	if (!(*bitmap=osd_new_bitmap(p->width,p->height,8)))
+	{
+		if (errorlog)
+			fprintf(errorlog,"Unable to allocate memory for artwork\n");
+		return 0;
+	}
+
+	orientation = Machine->orientation;
+	if (orientation != ORIENTATION_DEFAULT)
+	{
+		tmp = p->image;
+		for (i=0; i<p->height; i++)
+			for (j=0; j<p->width; j++)
+			{
+				if (orientation & ORIENTATION_SWAP_XY)
+				{
+					x=i; y=j; w=p->height; h=p->width;
+				}
+				else
+				{
+					x=j; y=i; w=p->width; h=p->height;
+				}
+				if (orientation & ORIENTATION_FLIP_X)
+					x=w-x-1;
+				if (orientation & ORIENTATION_FLIP_Y)
+					y=h-y-1;
+
+				(*bitmap)->line[y][x] = *tmp++;
+			}
+	}
+	else
+	{
+		for (i=0; i<p->height; i++)
+			memcpy ((*bitmap)->line[i], p->image+i*p->width, p->width);
+	}
+	free (p->image);
+	return 1;
+}
+
+/*********************************************************************
   artwork_load(_size)
 
   This is what loads your backdrop in from disk.
@@ -846,6 +933,7 @@ struct artwork *artwork_load_size(const char *filename, int start_pen, int max_p
 {
 	struct osd_bitmap *picture = NULL;
 	struct artwork *a = NULL;
+	struct png_info p;
 
 	/* If the user turned artwork off, bail */
 	if (!options.use_artwork) return NULL;
@@ -855,13 +943,16 @@ struct artwork *artwork_load_size(const char *filename, int start_pen, int max_p
 
 	a->start_pen = start_pen;
 
-	/* Get original picture */
-	if (png_read_artwork(filename, &picture, &a->orig_palette,
-			     &a->num_pens_used, &a->transparency, &a->num_pens_trans) == 0)
+	if (!artwork_read_bitmap(filename, &picture, &p))
 	{
 		artwork_free(a);
 		return NULL;
 	}
+
+	a->num_pens_used = p.num_palette;
+	a->num_pens_trans = p.num_trans;
+	a->orig_palette = p.palette;
+	a->transparency = p.trans;
 
 	/* Make sure we don't have too many colors */
 	if (a->num_pens_used > max_pens)

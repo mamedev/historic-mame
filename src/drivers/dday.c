@@ -311,7 +311,8 @@ static struct AY8910interface ay8910_interface =
 {
 	2,      /* 2 chips */
 	1000000,	/* 1.0 MHz ? */
-	{ 255, 255 },
+	{ 25, 25 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -428,6 +429,13 @@ ROM_END
 static int hiload(void)
 {
 	unsigned char *RAM = Machine->memory_region[0];
+	static int firsttime = 0;
+	if (firsttime == 0)
+	{
+		memset(&RAM[0x6237],0xff,0x03);	/* high score */
+		firsttime = 1;
+	}
+
 
 	/* check if the hi score table has already been initialized */
 	if (RAM[0x537d] == 0x20)
@@ -446,7 +454,7 @@ static int hiload(void)
 			RAM[0x537c] = ((RAM[0x6239] & 0xf0) >> 4) | 0x20;
 			RAM[0x537d] =  (RAM[0x6239] & 0x0f)       | 0x20;
 		}
-
+		firsttime = 0;
 		return 1;
 	}
 	else return 0;  /* we can't load the hi scores yet */

@@ -1,7 +1,7 @@
 /*****************************************************************************
  *
  *	 z80.c
- *	 Portable Z80 emulator V1.7
+ *	 Portable Z80 emulator V1.8
  *
  *	 Copyright (C) 1998,1999 Juergen Buchmueller, all rights reserved.
  *
@@ -52,12 +52,6 @@
 
 /* check for delay loops counting down BC */
 #define TIME_LOOP_HACKS 	1
-
-/* after reset set the stack pointer to F000 */
-#define SP_HACK 			0
-
-/* on entering/leaving HALT state call cpu_writeport(Z80_HALT_PORT,1/0) */
-#define HALT_HACK           0
 
 #ifdef X86_ASM
 #undef  BIG_FLAGS_ARRAY
@@ -508,37 +502,15 @@ PROTOTYPES(Z80xxcb,xxcb);
 /***************************************************************
  * Enter HALT state; write 1 to fake port on first execution
  ***************************************************************/
-#if HALT_HACK
-#define ENTER_HALT {											\
-    _PC--;                                                      \
-    if( !_HALT )                                                \
-    {                                                           \
-        _HALT = 1;                                              \
-        cpu_writeport(Z80_HALT_PORT,1);                         \
-    }                                                           \
-	if( after_EI == 0 && z80_ICount > 0 ) z80_ICount=0; 		\
-}
-#else
 #define ENTER_HALT {											\
     _PC--;                                                      \
     _HALT = 1;                                                  \
 	if( after_EI == 0 && z80_ICount > 0 ) z80_ICount=0; 		\
 }
-#endif
 
 /***************************************************************
  * Leave HALT state; write 0 to fake port
  ***************************************************************/
-#if HALT_HACK
-#define LEAVE_HALT {											\
-	if( _HALT ) 												\
-	{															\
-		_HALT = 0;												\
-		_PC++;													\
-        cpu_writeport(Z80_HALT_PORT,0);                         \
-	}															\
-}
-#else
 #define LEAVE_HALT {                                            \
 	if( _HALT ) 												\
 	{															\
@@ -546,7 +518,6 @@ PROTOTYPES(Z80xxcb,xxcb);
 		_PC++;													\
 	}															\
 }
-#endif
 
 /***************************************************************
  * Input a byte from given I/O port
@@ -3746,10 +3717,8 @@ void z80_reset(void *param)
 	_I = 0; 			/* clear interrupt vector register */
 	_R = _R2 = 0;		/* clear refres counter(s) */
 	_IM = 0;			/* clear interrupt mode register */
-#if SP_HACK
-	_SPD = 0xf000;
-#endif
-	_PCD = 0;
+
+    _PCD = 0;
 	_IFF1 = _IFF2 = 0;
 
 	Z80.irq_max = 0;	/* clear daisy chain device count */
@@ -4049,11 +4018,6 @@ void z80_set_nmi_line(int state)
 			fprintf(errorlog, "Z80#%d nested NMI %d detected!\n", cpu_getactivecpu(), Z80.nmi_nesting);
 	}
 
-    /*
-	 * Save interrupt flip flop 1 to 2. IFF1 is cleared to
-	 * mask interrupts while the NMI handler is executed.
-	 */
-	_IFF2 = _IFF1;
 	_IFF1 = 0;
     PUSH( PC );
 	_PCD = 0x0066;

@@ -13,9 +13,8 @@ DECLARE_MIDI_DRIVER_LIST()
 
 
 /* audio related stuff */
-#define NUMVOICES 16
-HAC hVoice[NUMVOICES];
-LPAUDIOWAVE lpWave[NUMVOICES];
+HAC hVoice[MIXER_MAX_CHANNELS];
+LPAUDIOWAVE lpWave[MIXER_MAX_CHANNELS];
 static int used_3812;
 int nominal_sample_rate;
 int soundcard,usestereo;
@@ -98,13 +97,13 @@ int msdos_init_sound(void)
 			info.nSampleRate);
 
 	/* open and allocate voices, allocate waveforms */
-	if (AOpenVoices(NUMVOICES) != AUDIO_ERROR_NONE)
+	if (AOpenVoices(MIXER_MAX_CHANNELS) != AUDIO_ERROR_NONE)
 	{
 		printf("voices initialization failed\n");
 		return 1;
 	}
 
-	for (i = 0; i < NUMVOICES; i++)
+	for (i = 0; i < MIXER_MAX_CHANNELS; i++)
 	{
 		if (ACreateAudioVoice(&hVoice[i]) != AUDIO_ERROR_NONE)
 		{
@@ -230,7 +229,7 @@ void msdos_shutdown_sound(void)
 		}
 
 		/* stop and release voices */
-		for (n = 0; n < NUMVOICES; n++)
+		for (n = 0; n < MIXER_MAX_CHANNELS; n++)
 		{
 			AStopVoice(hVoice[n]);
 			ADestroyAudioVoice(hVoice[n]);
@@ -250,7 +249,7 @@ void msdos_shutdown_sound(void)
 
 static void playsample(int channel,signed char *data,int len,int freq,int volume,int loop,int bits)
 {
-	if (Machine->sample_rate == 0 || channel >= NUMVOICES) return;
+	if (Machine->sample_rate == 0 || channel >= MIXER_MAX_CHANNELS) return;
 
 	/* backwards compatibility with old 0-255 volume range */
 	if (volume > 100) volume = volume * 25 / 255;
@@ -313,29 +312,29 @@ void osd_play_sample_16(int channel,signed short *data,int len,int freq,int volu
 }
 
 
-static void *stream_cache_data[NUMVOICES];
-static int stream_cache_len[NUMVOICES];
-static int stream_cache_freq[NUMVOICES];
-static int stream_cache_volume[NUMVOICES];
-static int stream_cache_pan[NUMVOICES];
-static int stream_cache_bits[NUMVOICES];
+static void *stream_cache_data[MIXER_MAX_CHANNELS];
+static int stream_cache_len[MIXER_MAX_CHANNELS];
+static int stream_cache_freq[MIXER_MAX_CHANNELS];
+static int stream_cache_volume[MIXER_MAX_CHANNELS];
+static int stream_cache_pan[MIXER_MAX_CHANNELS];
+static int stream_cache_bits[MIXER_MAX_CHANNELS];
 static int streams_playing;
 #define NUM_BUFFERS 3	/* raising this number should improve performance with frameskip, */
 						/* but also increases the latency. */
 
 static int playstreamedsample(int channel,signed char *data,int len,int freq,int volume,int pan,int bits)
 {
-	static int playing[NUMVOICES];
-	static int c[NUMVOICES];
+	static int playing[MIXER_MAX_CHANNELS];
+	static int c[MIXER_MAX_CHANNELS];
 
 
 	/* backwards compatibility with old 0-255 volume range */
 	if (volume > 100) volume = volume * 25 / 255;
 
 	/* SEAL double volume for panned channels, so we have to compensate */
-	if (pan != OSD_PAN_CENTER) volume /= 2;
+	if (pan != MIXER_PAN_CENTER) volume /= 2;
 
-	if (Machine->sample_rate == 0 || channel >= NUMVOICES) return 1;
+	if (Machine->sample_rate == 0 || channel >= MIXER_MAX_CHANNELS) return 1;
 
 	if (!playing[channel])
 	{
@@ -399,11 +398,11 @@ static int playstreamedsample(int channel,signed char *data,int len,int freq,int
 
 
 	ASetVoiceVolume(hVoice[channel],volume * 64 / 100);
-	if (pan == OSD_PAN_CENTER)
+	if (pan == MIXER_PAN_CENTER)
 		ASetVoicePanning(hVoice[channel],128);
-	else if (pan == OSD_PAN_LEFT)
+	else if (pan == MIXER_PAN_LEFT)
 		ASetVoicePanning(hVoice[channel],0);
-	else if (pan == OSD_PAN_RIGHT)
+	else if (pan == MIXER_PAN_RIGHT)
 		ASetVoicePanning(hVoice[channel],255);
 
 	return 1;
@@ -431,25 +430,29 @@ void osd_play_streamed_sample_16(int channel,signed short *data,int len,int freq
 
 
 
-void osd_adjust_sample(int channel,int freq,int volume)
+void osd_set_sample_freq(int channel,int freq)
 {
-	if (Machine->sample_rate == 0 || channel >= NUMVOICES) return;
+	if (Machine->sample_rate == 0 || channel >= MIXER_MAX_CHANNELS) return;
+
+	/* need to cast to double because freq*nominal_sample_rate can exceed the size of an int */
+	ASetVoiceFrequency(hVoice[channel],(double)freq*nominal_sample_rate/Machine->sample_rate);
+}
+
+void osd_set_sample_volume(int channel,int volume)
+{
+	if (Machine->sample_rate == 0 || channel >= MIXER_MAX_CHANNELS) return;
 
 	/* backwards compatibility with old 0-255 volume range */
 	if (volume > 100) volume = volume * 25 / 255;
 
-	/* need to cast to double because freq*nominal_sample_rate can exceed the size of an int */
-	if (freq != -1)
-		ASetVoiceFrequency(hVoice[channel],(double)freq*nominal_sample_rate/Machine->sample_rate);
-	if (volume != -1)
-		ASetVoiceVolume(hVoice[channel],volume * 64 / 100);
+	ASetVoiceVolume(hVoice[channel],volume * 64 / 100);
 }
 
 
 
 void osd_stop_sample(int channel)
 {
-	if (Machine->sample_rate == 0 || channel >= NUMVOICES) return;
+	if (Machine->sample_rate == 0 || channel >= MIXER_MAX_CHANNELS) return;
 
 	AStopVoice(hVoice[channel]);
 }
@@ -457,7 +460,7 @@ void osd_stop_sample(int channel)
 
 void osd_restart_sample(int channel)
 {
-	if (Machine->sample_rate == 0 || channel >= NUMVOICES) return;
+	if (Machine->sample_rate == 0 || channel >= MIXER_MAX_CHANNELS) return;
 
 	AStartVoice(hVoice[channel]);
 }
@@ -466,7 +469,7 @@ void osd_restart_sample(int channel)
 int osd_get_sample_status(int channel)
 {
 	int stopped=0;
-	if (Machine->sample_rate == 0 || channel >= NUMVOICES) return -1;
+	if (Machine->sample_rate == 0 || channel >= MIXER_MAX_CHANNELS) return -1;
 
 	AGetVoiceStatus(hVoice[channel], &stopped);
 	return stopped;
@@ -482,7 +485,7 @@ static int update_streams(void)
 
 	streams_playing = 0;
 
-	for (channel = 0;channel < NUMVOICES;channel++)
+	for (channel = 0;channel < MIXER_MAX_CHANNELS;channel++)
 	{
 		if (stream_cache_data[channel])
 		{

@@ -52,8 +52,36 @@ extern void namcos1_vh_stop( void );
 
 /* from machine */
 extern void namcos1_bankswitch_w( int offset, int data );
-extern int namcos1_banked_area_r( int offset );
-extern void namcos1_banked_area_w( int offset, int data );
+extern int namcos1_0_banked_area0_r(int offset);
+extern int namcos1_0_banked_area1_r(int offset);
+extern int namcos1_0_banked_area2_r(int offset);
+extern int namcos1_0_banked_area3_r(int offset);
+extern int namcos1_0_banked_area4_r(int offset);
+extern int namcos1_0_banked_area5_r(int offset);
+extern int namcos1_0_banked_area6_r(int offset);
+extern int namcos1_0_banked_area7_r(int offset);
+extern int namcos1_1_banked_area0_r(int offset);
+extern int namcos1_1_banked_area1_r(int offset);
+extern int namcos1_1_banked_area2_r(int offset);
+extern int namcos1_1_banked_area3_r(int offset);
+extern int namcos1_1_banked_area4_r(int offset);
+extern int namcos1_1_banked_area5_r(int offset);
+extern int namcos1_1_banked_area6_r(int offset);
+extern int namcos1_1_banked_area7_r(int offset);
+extern void namcos1_0_banked_area0_w( int offset, int data );
+extern void namcos1_0_banked_area1_w( int offset, int data );
+extern void namcos1_0_banked_area2_w( int offset, int data );
+extern void namcos1_0_banked_area3_w( int offset, int data );
+extern void namcos1_0_banked_area4_w( int offset, int data );
+extern void namcos1_0_banked_area5_w( int offset, int data );
+extern void namcos1_0_banked_area6_w( int offset, int data );
+extern void namcos1_1_banked_area0_w( int offset, int data );
+extern void namcos1_1_banked_area1_w( int offset, int data );
+extern void namcos1_1_banked_area2_w( int offset, int data );
+extern void namcos1_1_banked_area3_w( int offset, int data );
+extern void namcos1_1_banked_area4_w( int offset, int data );
+extern void namcos1_1_banked_area5_w( int offset, int data );
+extern void namcos1_1_banked_area6_w( int offset, int data );
 extern void namcos1_cpu_control_w( int offset, int data );
 extern void namcos1_sound_bankswitch_w( int offset, int data );
 extern void namcos1_machine_init( void );
@@ -70,13 +98,26 @@ extern void shadowld_driver_init( void );
 
 static struct MemoryReadAddress main_readmem[] =
 {
-	{ 0x0000, 0xffff, namcos1_banked_area_r },
+	{ 0x0000, 0x1fff, namcos1_0_banked_area0_r },
+	{ 0x2000, 0x3fff, namcos1_0_banked_area1_r },
+	{ 0x4000, 0x5fff, namcos1_0_banked_area2_r },
+	{ 0x6000, 0x7fff, namcos1_0_banked_area3_r },
+	{ 0x8000, 0x9fff, namcos1_0_banked_area4_r },
+	{ 0xa000, 0xbfff, namcos1_0_banked_area5_r },
+	{ 0xc000, 0xdfff, namcos1_0_banked_area6_r },
+	{ 0xe000, 0xffff, namcos1_0_banked_area7_r },
     { -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress main_writemem[] =
 {
-	{ 0x0000, 0xdfff, namcos1_banked_area_w },
+	{ 0x0000, 0x1fff, namcos1_0_banked_area0_w },
+	{ 0x2000, 0x3fff, namcos1_0_banked_area1_w },
+	{ 0x4000, 0x5fff, namcos1_0_banked_area2_w },
+	{ 0x6000, 0x7fff, namcos1_0_banked_area3_w },
+	{ 0x8000, 0x9fff, namcos1_0_banked_area4_w },
+	{ 0xa000, 0xbfff, namcos1_0_banked_area5_w },
+	{ 0xc000, 0xdfff, namcos1_0_banked_area6_w },
 	{ 0xe000, 0xefff, namcos1_bankswitch_w },
 	{ 0xf000, 0xf000, namcos1_cpu_control_w },
 	{ 0xf200, 0xf200, MWA_NOP }, /* watchdog? */
@@ -85,14 +126,27 @@ static struct MemoryWriteAddress main_writemem[] =
 
 static struct MemoryReadAddress sub_readmem[] =
 {
-	{ 0x0000, 0xffff, namcos1_banked_area_r },
-    { -1 }  /* end of table */
+	{ 0x0000, 0x1fff, namcos1_1_banked_area0_r },
+	{ 0x2000, 0x3fff, namcos1_1_banked_area1_r },
+	{ 0x4000, 0x5fff, namcos1_1_banked_area2_r },
+	{ 0x6000, 0x7fff, namcos1_1_banked_area3_r },
+	{ 0x8000, 0x9fff, namcos1_1_banked_area4_r },
+	{ 0xa000, 0xbfff, namcos1_1_banked_area5_r },
+	{ 0xc000, 0xdfff, namcos1_1_banked_area6_r },
+	{ 0xe000, 0xffff, namcos1_1_banked_area7_r },
+   { -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress sub_writemem[] =
 {
 	{ 0xe000, 0xefff, namcos1_bankswitch_w },
-	{ 0x0000, 0xdfff, namcos1_banked_area_w },
+	{ 0x0000, 0x1fff, namcos1_1_banked_area0_w },
+	{ 0x2000, 0x3fff, namcos1_1_banked_area1_w },
+	{ 0x4000, 0x5fff, namcos1_1_banked_area2_w },
+	{ 0x6000, 0x7fff, namcos1_1_banked_area3_w },
+	{ 0x8000, 0x9fff, namcos1_1_banked_area4_w },
+	{ 0xa000, 0xbfff, namcos1_1_banked_area5_w },
+	{ 0xc000, 0xdfff, namcos1_1_banked_area6_w },
 	{ 0xf000, 0xf000, MWA_NOP }, /* IO Chip */
 	{ 0xf200, 0xf200, MWA_NOP }, /* watchdog? */
     { -1 }  /* end of table */
@@ -310,7 +364,6 @@ static struct namco_interface namco_interface =
 {
 	23920/2,/* sample rate (approximate value) */
 	8,		/* number of voices */
-	16,		/* gain adjustment */
 	50,		/* playback volume */
 	-1,		/* memory region */
 	1		/* stereo */
@@ -874,7 +927,7 @@ struct GameDriver alice_driver =
     "Alice In Wonderland",
 	"????",
 	"Namco",
-    "Ernesto Corvi\nJROK",
+    "Ernesto Corvi\nJROK\nTatsuyuki Satoh(optimize)",
 	GAME_NOT_WORKING,
     &machine_driver,
 	alice_driver_init,
@@ -899,7 +952,7 @@ struct GameDriver blazer_driver =
     "Blazer",
 	"????",
 	"Namco",
-    "Ernesto Corvi\nJROK",
+    "Ernesto Corvi\nJROK\nTatsuyuki Satoh(optimize)",
 	GAME_NOT_WORKING,
     &machine_driver,
 	blazer_driver_init,
@@ -924,7 +977,7 @@ struct GameDriver dspirits_driver =
     "Dragon Spirits",
 	"1987",
 	"Namco",
-    "Ernesto Corvi\nJROK",
+    "Ernesto Corvi\nJROK\nTatsuyuki Satoh(optimize)",
 	GAME_NOT_WORKING,
     &machine_driver,
 	dspirits_driver_init,
@@ -949,7 +1002,7 @@ struct GameDriver galaga88_driver =
     "Galaga 88",
 	"1987",
 	"Namco",
-    "Ernesto Corvi\nJROK",
+    "Ernesto Corvi\nJROK\nTatsuyuki Satoh(optimize)",
 	GAME_NOT_WORKING,
     &machine_driver,
 	galaga88_driver_init,
@@ -974,7 +1027,7 @@ struct GameDriver pacmania_driver =
     "Pacmania",
 	"1987",
 	"Namco",
-    "Ernesto Corvi\nJROK",
+    "Ernesto Corvi\nJROK\nTatsuyuki Satoh(optimize)",
 	0,
     &machine_driver,
 	pacmania_driver_init,
@@ -999,7 +1052,7 @@ struct GameDriver shadowld_driver =
     "Shadowland",
 	"????",
 	"Namco",
-    "Ernesto Corvi\nJROK",
+    "Ernesto Corvi\nJROK\nTatsuyuki Satoh(optimize)",
 	0,
     &machine_driver,
 	shadowld_driver_init,
@@ -1024,7 +1077,7 @@ struct GameDriver splatter_driver =
     "Splatter House",
 	"1987",
 	"Namco",
-    "Ernesto Corvi\nJROK",
+    "Ernesto Corvi\nJROK\nTatsuyuki Satoh(optimize)",
 	0,
     &machine_driver,
 	splatter_driver_init,
@@ -1049,7 +1102,7 @@ struct GameDriver ws90_driver =
     "World Stadium 90",
 	"1990",
 	"Namco",
-    "Ernesto Corvi\nJROK",
+    "Ernesto Corvi\nJROK\nTatsuyuki Satoh(optimize)",
 	GAME_NOT_WORKING,
     &machine_driver,
 	ws90_driver_init,

@@ -639,14 +639,14 @@ static struct namco_interface namco_interface =
 {
 	3072000/32,	/* sample rate */
 	3,			/* number of voices */
-	32,			/* gain adjustment */
-	255,		/* playback volume */
+	100,		/* playback volume */
 	6			/* memory region */
 };
 
 struct Samplesinterface samples_interface =
 {
-	1	/* one channel */
+	1,	/* one channel */
+	100	/* volume */
 };
 
 

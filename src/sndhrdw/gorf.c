@@ -135,7 +135,7 @@ int gorf_speech_r(int offset)
 			 if (errorlog) fprintf(errorlog,"found a possible plural at %d\n",plural-1);
 			 if (!strcmp("S",totalword)) {		   /* Plural check */
 				 sample_start(GorfChannel, num_samples-2, 0);	   /* play the sample at position of word */
-				 sample_adjust(GorfChannel, GorfBaseFrequency, -1);    /* play at correct rate */
+				 sample_set_freq(GorfChannel, GorfBaseFrequency);    /* play at correct rate */
 				 totalword[0] = 0;				   /* Clear the total word stack */
 				 oldword[0] = 0;				   /* Clear the total word stack */
 				 return data;
@@ -158,7 +158,7 @@ int gorf_speech_r(int offset)
              plural=0;
           }
           sample_start(GorfChannel, i, 0);	                   /* play the sample at position of word */
-          sample_adjust(GorfChannel, GorfBaseFrequency, -1);       /* play at correct rate */
+          sample_set_freq(GorfChannel, GorfBaseFrequency);       /* play at correct rate */
           if (errorlog) fprintf(errorlog,"Playing sample %d",i);
           totalword[0] = 0;				   /* Clear the total word stack */
           return data;

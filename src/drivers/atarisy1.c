@@ -109,8 +109,6 @@ extern unsigned char *marble_speedcheck;
 extern unsigned char *atarisys1_bankselect;
 extern unsigned char *atarisys1_prioritycolor;
 
-extern int roadblst_screen_refresh;
-extern int atarisys1_slapstic_num;
 extern int atarisys1_joystick_type;
 extern int atarisys1_trackball_type;
 
@@ -120,8 +118,6 @@ int atarisys1_6522_r(int offset);
 int atarisys1_int3state_r(int offset);
 int atarisys1_trakball_r(int offset);
 int atarisys1_joystick_r(int offset);
-int atarisys1_playfieldram_r(int offset);
-int atarisys1_spriteram_r(int offset);
 
 void atarisys1_led_w(int offset, int data);
 void atarisys1_6522_w(int offset, int data);
@@ -145,22 +141,23 @@ void atarisys1_vh_stop(void);
 void atarisys1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
+
 /*************************************
  *
  *		Main CPU memory handlers
  *
  *************************************/
 
-static struct MemoryReadAddress atarisys1_readmem[] =
+static struct MemoryReadAddress main_readmem[] =
 {
 	{ 0x000000, 0x07ffff, MRA_ROM },
 	{ 0x080000, 0x087fff, atarigen_slapstic_r },
 	{ 0x2e0000, 0x2e0003, atarisys1_int3state_r },
 	{ 0x400000, 0x401fff, MRA_BANK1 },
-	{ 0x840000, 0x840003, MRA_BANK4, &atarisys1_prioritycolor },
-	{ 0x900000, 0x9fffff, MRA_BANK2 },
-	{ 0xa00000, 0xa01fff, atarisys1_playfieldram_r },
-	{ 0xa02000, 0xa02fff, atarisys1_spriteram_r },
+	{ 0x840000, 0x840003, MRA_BANK2, &atarisys1_prioritycolor },
+	{ 0x900000, 0x9fffff, MRA_BANK3 },
+	{ 0xa00000, 0xa01fff, MRA_BANK4 },
+	{ 0xa02000, 0xa02fff, MRA_BANK5 },
 	{ 0xa03000, 0xa03fff, MRA_BANK6 },
 	{ 0xb00000, 0xb007ff, paletteram_word_r },
 	{ 0xf00000, 0xf00fff, atarigen_eeprom_r },
@@ -172,19 +169,19 @@ static struct MemoryReadAddress atarisys1_readmem[] =
 };
 
 
-static struct MemoryWriteAddress atarisys1_writemem[] =
+static struct MemoryWriteAddress main_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
 	{ 0x080000, 0x087fff, atarigen_slapstic_w, &atarigen_slapstic },
 	{ 0x400000, 0x401fff, MWA_BANK1 },
 	{ 0x800000, 0x800003, atarisys1_hscroll_w, &atarigen_hscroll },
 	{ 0x820000, 0x820003, atarisys1_vscroll_w, &atarigen_vscroll },
-	{ 0x840000, 0x840003, MWA_BANK4 },
+	{ 0x840000, 0x840003, MWA_BANK2 },
 	{ 0x860000, 0x860003, atarisys1_bankselect_w, &atarisys1_bankselect },
 	{ 0x880000, 0x880003, watchdog_reset_w },
 	{ 0x8a0000, 0x8a0003, atarigen_vblank_ack_w },
 	{ 0x8c0000, 0x8c0003, atarigen_eeprom_enable_w },
-	{ 0x900000, 0x9fffff, MWA_BANK2 },
+	{ 0x900000, 0x9fffff, MWA_BANK3 },
 	{ 0xa00000, 0xa01fff, atarisys1_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
 	{ 0xa02000, 0xa02fff, atarisys1_spriteram_w, &atarigen_spriteram, &atarigen_spriteram_size },
 	{ 0xa03000, 0xa03fff, MWA_BANK6, &atarigen_alpharam, &atarigen_alpharam_size },
@@ -203,7 +200,7 @@ static struct MemoryWriteAddress atarisys1_writemem[] =
  *
  *************************************/
 
-static struct MemoryReadAddress atarisys1_sound_readmem[] =
+static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x0fff, MRA_RAM },
 	{ 0x1000, 0x100f, atarisys1_6522_r },
@@ -216,7 +213,7 @@ static struct MemoryReadAddress atarisys1_sound_readmem[] =
 };
 
 
-static struct MemoryWriteAddress atarisys1_sound_writemem[] =
+static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x0fff, MWA_RAM },
 	{ 0x1000, 0x100f, atarisys1_6522_w },
@@ -259,16 +256,17 @@ INPUT_PORTS_START( marble_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_VBLANK )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(  0x0040, 0x0040, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x0040, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x0000, DEF_STR( On ))
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 
@@ -297,17 +295,18 @@ INPUT_PORTS_START( peterpak_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_VBLANK )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(  0x0040, 0x0040, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x0040, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x0000, DEF_STR( On ))
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 
@@ -336,17 +335,18 @@ INPUT_PORTS_START( indytemp_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* freeze? */
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_VBLANK )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* freeze? */
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(  0x0040, 0x0040, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x0040, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x0000, DEF_STR( On ))
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 
@@ -371,17 +371,18 @@ INPUT_PORTS_START( roadrunn_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON3 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_VBLANK )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(  0x0040, 0x0040, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x0040, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x0000, DEF_STR( On ))
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 
@@ -407,16 +408,17 @@ INPUT_PORTS_START( roadblst_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_VBLANK )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(  0x0040, 0x0040, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x0040, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x0000, DEF_STR( On ))
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 
@@ -427,7 +429,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct GfxLayout atarisys1_charlayout =
+static struct GfxLayout anlayout =
 {
 	8,8,	/* 8*8 chars */
 	512,	/* 512 chars */
@@ -439,9 +441,9 @@ static struct GfxLayout atarisys1_charlayout =
 };
 
 
-static struct GfxDecodeInfo atarisys1_gfxdecodeinfo[] =
+static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 2, 0x00000, &atarisys1_charlayout,       0, 64 },
+	{ 2, 0x00000, &anlayout,       0, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -453,11 +455,20 @@ static struct GfxDecodeInfo atarisys1_gfxdecodeinfo[] =
  *
  *************************************/
 
+static struct YM2151interface ym2151_interface =
+{
+	1,			/* 1 chip */
+	7159160/2,	/* 3.58 MHZ ? */
+	{ YM3012_VOL(40,MIXER_PAN_LEFT,40,MIXER_PAN_RIGHT) },
+	{ atarisys1_sound_interrupt }
+};
+
+
 static struct POKEYinterface pokey_interface =
 {
 	1,			/* 1 chip */
 	7159160/4,	/* 1.78 MHz */
-	40,
+	{ 40 },
 	POKEY_DEFAULT_GAIN,
 	NO_CLIP
 };
@@ -471,15 +482,6 @@ static struct TMS5220interface tms5220_interface =
 };
 
 
-static struct YM2151interface ym2151_interface =
-{
-	1,			/* 1 chip */
-	7159160/2,	/* 3.58 MHZ ? */
-	{ YM3012_VOL(40,OSD_PAN_LEFT,40,OSD_PAN_RIGHT) },
-	{ atarisys1_sound_interrupt }
-};
-
-
 
 /*************************************
  *
@@ -487,33 +489,33 @@ static struct YM2151interface ym2151_interface =
  *
  *************************************/
 
-static struct MachineDriver atarisys1_machine_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
 		{
-			CPU_M68000,
+			CPU_M68010,
 			7159160,		/* 7.159 Mhz */
 			0,
-			atarisys1_readmem,atarisys1_writemem,0,0,
+			main_readmem,main_writemem,0,0,
 			atarisys1_interrupt,1
 		},
 		{
 			CPU_M6502,
 			7159160/4,		/* 1.791 Mhz */
 			1,
-			atarisys1_sound_readmem,atarisys1_sound_writemem,0,0,
+			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1	/* IRQ generated by the YM2151 */
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
+	1,
 	atarisys1_init_machine,
 
 	/* video hardware */
 	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
-	atarisys1_gfxdecodeinfo,
-	1024+64,1024+64,
+	gfxdecodeinfo,
+	1024, 1024,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
@@ -548,7 +550,7 @@ static struct MachineDriver atarisys1_machine_driver =
  *
  *************************************/
 
-static void atarisys1_rom_decode(void)
+static void rom_decode(void)
 {
 	unsigned long *data = (unsigned long *)&Machine->memory_region[4][0];
 	int chips = Machine->memory_region_length[4] / 0x8000;
@@ -585,7 +587,7 @@ static void roadblst_rom_decode(void)
 	}
 
 	/* invert the graphics bits on the playfield and motion objects */
-	atarisys1_rom_decode();
+	rom_decode();
 }
 
 
@@ -598,11 +600,16 @@ static void roadblst_rom_decode(void)
 
 static void marble_init(void)
 {
-	atarisys1_slapstic_num = 103;
+	atarigen_slapstic_num = 103;
+	atarigen_eeprom_default = NULL;
+
 	atarisys1_joystick_type = 0;	/* none */
 	atarisys1_trackball_type = 1;	/* rotated */
-	roadblst_screen_refresh = 0;
 
+	/* speed up the 6502 */
+	atarigen_init_6502_speedup(1, 0x8108, 0x8120);
+
+	/* speed up the 68010 */
 	marble_speedcheck = install_mem_read_handler(0, 0x400014, 0x400015, marble_speedcheck_r);
 	install_mem_write_handler(0, 0x400014, 0x400015, marble_speedcheck_w);
 }
@@ -610,37 +617,53 @@ static void marble_init(void)
 
 static void peterpak_init(void)
 {
-	atarisys1_slapstic_num = 107;
+	atarigen_slapstic_num = 107;
+	atarigen_eeprom_default = NULL;
+
 	atarisys1_joystick_type = 1;	/* digital */
 	atarisys1_trackball_type = 0;	/* none */
-	roadblst_screen_refresh = 0;
+
+	/* speed up the 6502 */
+	atarigen_init_6502_speedup(1, 0x8101, 0x8119);
 }
 
 
 static void indytemp_init(void)
 {
-	atarisys1_slapstic_num = 105;
+	atarigen_slapstic_num = 105;
+	atarigen_eeprom_default = NULL;
+
 	atarisys1_joystick_type = 1;	/* digital */
 	atarisys1_trackball_type = 0;	/* none */
-	roadblst_screen_refresh = 0;
+
+	/* speed up the 6502 */
+	atarigen_init_6502_speedup(1, 0x410b, 0x4123);
 }
 
 
 static void roadrunn_init(void)
 {
-	atarisys1_slapstic_num = 108;
+	atarigen_slapstic_num = 108;
+	atarigen_eeprom_default = NULL;
+
 	atarisys1_joystick_type = 2;	/* analog */
 	atarisys1_trackball_type = 0;	/* none */
-	roadblst_screen_refresh = 0;
+
+	/* speed up the 6502 */
+	atarigen_init_6502_speedup(1, 0x8106, 0x811e);
 }
 
 
 static void roadblst_init(void)
 {
-	atarisys1_slapstic_num = 110;
+	atarigen_slapstic_num = 110;
+	atarigen_eeprom_default = NULL;
+
 	atarisys1_joystick_type = 3;	/* pedal */
 	atarisys1_trackball_type = 2;	/* steering wheel */
-	roadblst_screen_refresh = 1;
+
+	/* speed up the 6502 */
+	atarigen_init_6502_speedup(1, 0x410b, 0x4123);
 }
 
 
@@ -1053,11 +1076,11 @@ struct GameDriver marble_driver =
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
 	0,
-	&atarisys1_machine_driver,
+	&machine_driver,
 	marble_init,
 
 	marble_rom,
-	atarisys1_rom_decode,
+	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
@@ -1080,11 +1103,11 @@ struct GameDriver marble2_driver =
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
 	0,
-	&atarisys1_machine_driver,
+	&machine_driver,
 	marble_init,
 
 	marble2_rom,
-	atarisys1_rom_decode,
+	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
@@ -1107,11 +1130,11 @@ struct GameDriver marblea_driver =
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
 	0,
-	&atarisys1_machine_driver,
+	&machine_driver,
 	marble_init,
 
 	marblea_rom,
-	atarisys1_rom_decode,
+	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
@@ -1134,11 +1157,11 @@ struct GameDriver peterpak_driver =
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
 	0,
-	&atarisys1_machine_driver,
+	&machine_driver,
 	peterpak_init,
 
 	peterpak_rom,
-	atarisys1_rom_decode,
+	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
@@ -1161,11 +1184,11 @@ struct GameDriver indytemp_driver =
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
 	0,
-	&atarisys1_machine_driver,
+	&machine_driver,
 	indytemp_init,
 
 	indytemp_rom,
-	atarisys1_rom_decode,
+	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
@@ -1188,11 +1211,11 @@ struct GameDriver indytem2_driver =
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
 	0,
-	&atarisys1_machine_driver,
+	&machine_driver,
 	indytemp_init,
 
 	indytem2_rom,
-	atarisys1_rom_decode,
+	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
@@ -1215,11 +1238,11 @@ struct GameDriver roadrunn_driver =
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
 	0,
-	&atarisys1_machine_driver,
+	&machine_driver,
 	roadrunn_init,
 
 	roadrunn_rom,
-	atarisys1_rom_decode,
+	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
@@ -1242,7 +1265,7 @@ struct GameDriver roadblst_driver =
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
 	0,
-	&atarisys1_machine_driver,
+	&machine_driver,
 	roadblst_init,
 
 	roadblst_rom,

@@ -621,7 +621,8 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	3579545 / 2,	/* 3.579545 / 2 MHz */
-	{ 255, 255 },
+	{ 25, 25 },
+	AY8910_DEFAULT_GAIN,
 	{ 0, tehkanwc_portA_r },
 	{ 0, tehkanwc_portB_r },
 	{ tehkanwc_portA_w, 0 },

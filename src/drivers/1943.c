@@ -252,6 +252,7 @@ static struct YM2203interface ym2203_interface =
 	2,			/* 2 chips */
 	1500000,	/* 1.5 MHz */
 	{ YM2203_VOL(10,15), YM2203_VOL(10,15) },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -588,7 +589,7 @@ struct GameDriver c1943_driver =
 	__FILE__,
 	0,
 	"1943",
-	"1943 (US)",
+	"1943 - The Battle of Midway (US)",
 	"1987",
 	"Capcom",
 	"Mirko Buffoni (MAME driver)\nPaul Leaman (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)",
@@ -614,7 +615,7 @@ struct GameDriver c1943jap_driver =
 	__FILE__,
 	&c1943_driver,
 	"1943jap",
-	"1943 (Japan)",
+	"1943 - The Battle of Midway (Japan)",
 	"1987",
 	"Capcom",
 	"Mirko Buffoni (MAME driver)\nPaul Leaman (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)",

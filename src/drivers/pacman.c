@@ -1,12 +1,12 @@
 /***************************************************************************
 
-Pac Man memory map (preliminary)
+Pac-Man memory map (preliminary)
 
 0000-3fff ROM
 4000-43ff Video RAM
 4400-47ff Color RAM
 4c00-4fff RAM
-8000-9fff ROM (Ms Pac Man and Ponpoko only)
+8000-9fff ROM (Ms Pac-Man and Ponpoko only)
 a000-bfff ROM (Ponpoko only)
 
 memory mapped ports:
@@ -164,7 +164,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x5040, 0x507f, input_port_1_r },	/* IN1 */
 	{ 0x5080, 0x50bf, input_port_2_r },	/* DSW1 */
 	{ 0x50c0, 0x50ff, input_port_3_r },	/* DSW2 */
-	{ 0x8000, 0xbfff, MRA_ROM },	/* Ms. Pac Man / Ponpoko only */
+	{ 0x8000, 0xbfff, MRA_ROM },	/* Ms. Pac-Man / Ponpoko only */
 	{ -1 }	/* end of table */
 };
 
@@ -180,12 +180,12 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5002, 0x5002, MWA_NOP },
 	{ 0x5003, 0x5003, pengo_flipscreen_w },
  	{ 0x5004, 0x5005, osd_led_w },
- 	{ 0x5006, 0x5006, pacman_coin_lockout_global_w },
+// 	{ 0x5006, 0x5006, pacman_coin_lockout_global_w },	this breaks many games
  	{ 0x5007, 0x5007, coin_counter_w },
 	{ 0x5040, 0x505f, pengo_sound_w, &pengo_soundregs },
 	{ 0x5060, 0x506f, MWA_RAM, &spriteram_2 },
 	{ 0x50c0, 0x50c0, watchdog_reset_w },
-	{ 0x8000, 0xbfff, MWA_ROM },	/* Ms. Pac Man / Ponpoko only */
+	{ 0x8000, 0xbfff, MWA_ROM },	/* Ms. Pac-Man / Ponpoko only */
 	{ 0xc000, 0xc3ff, videoram_w }, /* mirror address for video ram, */
 	{ 0xc400, 0xc7ef, colorram_w }, /* used to display HIGH SCORE and CREDITS */
 	{ 0xffff, 0xffff, MWA_NOP },	/* Eyes writes to this location to simplify code */
@@ -236,7 +236,7 @@ static struct MemoryWriteAddress alibaba_writemem[] =
 
 static struct IOWritePort writeport[] =
 {
-	{ 0x00, 0x00, interrupt_vector_w },	/* Pac Man only */
+	{ 0x00, 0x00, interrupt_vector_w },	/* Pac-Man only */
 	{ -1 }	/* end of table */
 };
 
@@ -329,7 +329,7 @@ INPUT_PORTS_START( pacman_input_ports )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 INPUT_PORTS_END
 
-/* Ms. Pac Man input ports are identical to Pac Man, the only difference is */
+/* Ms. Pac-Man input ports are identical to Pac-Man, the only difference is */
 /* the missing Ghost Names dip switch. */
 INPUT_PORTS_START( mspacman_input_ports )
 	PORT_START	/* IN0 */
@@ -854,8 +854,7 @@ static struct namco_interface namco_interface =
 {
 	3072000/32,	/* sample rate */
 	3,			/* number of voices */
-	32,			/* gain adjustment */
-	255,		/* playback volume */
+	100,		/* playback volume */
 	3			/* memory region */
 };
 
@@ -1148,6 +1147,28 @@ ROM_START( hangly_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
+ROM_START( hangly2_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "hangly.6e",    0x0000, 0x1000, 0x5fe8610a )
+	ROM_LOAD( "hangly2.6f",   0x1000, 0x0800, 0x5ba228bb )
+	ROM_LOAD( "hangly2.6m",   0x1800, 0x0800, 0xbaf5461e )
+	ROM_LOAD( "hangly.6h",    0x2000, 0x1000, 0x4e7ef99f )
+	ROM_LOAD( "hangly2.6j",   0x3000, 0x0800, 0x51305374 )
+	ROM_LOAD( "hangly2.6p",   0x3800, 0x0800, 0x427c9d4d )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "pacmanh.5e",   0x0000, 0x1000, 0x299fb17a )
+	ROM_LOAD( "pacman.5f",    0x1000, 0x1000, 0x958fedf9 )
+
+	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
+	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
+
+	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+ROM_END
+
 ROM_START( puckman_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "puckman.6e",   0x0000, 0x1000, 0xa8ae23c5 )
@@ -1303,12 +1324,12 @@ ROM_START( pacgal_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( maketrax_rom )
+ROM_START( crush_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "maketrax.6e",  0x0000, 0x1000, 0x0150fb4a )
-	ROM_LOAD( "maketrax.6f",  0x1000, 0x1000, 0x77531691 )
-	ROM_LOAD( "maketrax.6h",  0x2000, 0x1000, 0xa2cdc51e )
-	ROM_LOAD( "maketrax.6j",  0x3000, 0x1000, 0x0b4b5e0a )
+	ROM_LOAD( "crushkrl.6e",  0x0000, 0x1000, 0xa8dd8f54 )
+	ROM_LOAD( "crushkrl.6f",  0x1000, 0x1000, 0x91387299 )
+	ROM_LOAD( "crushkrl.6h",  0x2000, 0x1000, 0xd4455f27 )
+	ROM_LOAD( "crushkrl.6j",  0x3000, 0x1000, 0xd59fc251 )
 
 	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "maketrax.5e",  0x0000, 0x1000, 0x91bad2da )
@@ -1323,7 +1344,7 @@ ROM_START( maketrax_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( crush_rom )
+ROM_START( crush2_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "tp1",          0x0000, 0x0800, 0xf276592e )
 	ROM_LOAD( "tp5a",         0x0800, 0x0800, 0x3d302abe )
@@ -1349,7 +1370,7 @@ ROM_START( crush_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( crush2_rom )
+ROM_START( crush3_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "unkmol.4e",    0x0000, 0x0800, 0x49150ddf )
 	ROM_LOAD( "unkmol.6e",    0x0800, 0x0800, 0x21f47e17 )
@@ -1365,6 +1386,26 @@ ROM_START( crush2_rom )
 	ROM_LOAD( "unkmol.5h",    0x0800, 0x0800, 0x4ce9c81f )
 	ROM_LOAD( "unkmol.5f",    0x1000, 0x0800, 0x752e3780 )
 	ROM_LOAD( "unkmol.5j",    0x1800, 0x0800, 0x6e00d2ac )
+
+	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
+	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
+
+	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+ROM_END
+
+ROM_START( maketrax_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "maketrax.6e",  0x0000, 0x1000, 0x0150fb4a )
+	ROM_LOAD( "maketrax.6f",  0x1000, 0x1000, 0x77531691 )
+	ROM_LOAD( "maketrax.6h",  0x2000, 0x1000, 0xa2cdc51e )
+	ROM_LOAD( "maketrax.6j",  0x3000, 0x1000, 0x0b4b5e0a )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "maketrax.5e",  0x0000, 0x1000, 0x91bad2da )
+	ROM_LOAD( "maketrax.5f",  0x1000, 0x1000, 0xaea79f55 )
 
 	ROM_REGION(0x0120)	/* color PROMs */
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
@@ -1453,8 +1494,8 @@ ROM_START( mrtnt_rom )
 	ROM_LOAD( "tnt.6",        0x1000, 0x1000, 0x97634d8b )
 
 	ROM_REGION(0x0120)	/* color PROMs */
-	ROM_LOAD( "mrtnt08.bin",  0x0000, 0x0020, 0x00000000 )	/* wrong! from Pac Man */
-	ROM_LOAD( "mrtnt04.bin",  0x0020, 0x0100, 0x00000000 )	/* wrong! from Pac Man */
+	ROM_LOAD( "mrtnt08.bin",  0x0000, 0x0020, 0x00000000 )	/* wrong! from Pac-Man */
+	ROM_LOAD( "mrtnt04.bin",  0x0020, 0x0100, 0x00000000 )	/* wrong! from Pac-Man */
 
 	ROM_REGION(0x0200)	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
@@ -1675,7 +1716,7 @@ static void ponpoko_decode(void)
 	int i, j;
 	unsigned char *RAM, temp;
 
-	/* The gfx data is swapped wrt the other Pac Man hardware games. */
+	/* The gfx data is swapped wrt the other Pac-Man hardware games. */
 	/* Here we revert it to the usual format. */
 
 	/* Characters */
@@ -2212,7 +2253,7 @@ struct GameDriver pacman_driver =
 	__FILE__,
 	0,
 	"pacman",
-	"Pac Man (set 1)",
+	"PuckMan (Japan set 1)",
 	"1980",
 	"Namco",
 	BASE_CREDITS,
@@ -2238,7 +2279,7 @@ struct GameDriver pacmanjp_driver =
 	__FILE__,
 	&pacman_driver,
 	"pacmanjp",
-	"Pac Man (set 2)",
+	"PuckMan (Japan set 2)",
 	"1980",
 	"Namco",
 	BASE_CREDITS,
@@ -2264,7 +2305,7 @@ struct GameDriver pacmanm_driver =
 	__FILE__,
 	&pacman_driver,
 	"pacmanm",
-	"Pac Man (Midway)",
+	"Pac-Man (Midway)",
 	"1980",
 	"[Namco] (Midway license)",
 	BASE_CREDITS,
@@ -2290,7 +2331,7 @@ struct GameDriver npacmod_driver =
 	__FILE__,
 	&pacman_driver,
 	"npacmod",
-	"Pac Man (harder?)",
+	"PuckMan (harder?)",
 	"1981",					/* Notice the (c) difference */
 	"Namco",
 	BASE_CREDITS,
@@ -2316,7 +2357,7 @@ struct GameDriver pacmod_driver =
 	__FILE__,
 	&pacman_driver,
 	"pacmod",
-	"Pac Man (Midway, harder)",
+	"Pac-Man (Midway, harder)",
 	"1981",
 	"[Namco] (Midway license)",
 	BASE_CREDITS,
@@ -2342,7 +2383,7 @@ struct GameDriver hangly_driver =
 	__FILE__,
 	&pacman_driver,
 	"hangly",
-	"Hangly Man",
+	"Hangly-Man (set 1)",
 	"1981",
 	"hack",
 	BASE_CREDITS,
@@ -2363,12 +2404,38 @@ struct GameDriver hangly_driver =
 	pacman_hiload, pacman_hisave
 };
 
+struct GameDriver hangly2_driver =
+{
+	__FILE__,
+	&pacman_driver,
+	"hangly2",
+	"Hangly-Man (set 2)",
+	"1981",
+	"hack",
+	BASE_CREDITS,
+	0,
+	&machine_driver,
+	0,
+
+	hangly2_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	pacman_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	pacman_hiload, pacman_hisave
+};
+
 struct GameDriver puckman_driver =
 {
 	__FILE__,
 	&pacman_driver,
 	"puckman",
-	"Puck Man",
+	"New Puck-X",
 	"1980",
 	"hack",
 	BASE_CREDITS,
@@ -2394,7 +2461,7 @@ struct GameDriver pacheart_driver =
 	__FILE__,
 	&pacman_driver,
 	"pacheart",
-	"Pac Man (Hearts)",
+	"Pac-Man (Hearts)",
 	"1981",
 	"hack",
 	BASE_CREDITS,
@@ -2446,7 +2513,7 @@ struct GameDriver pacplus_driver =
 	__FILE__,
 	0,
 	"pacplus",
-	"Pac Man Plus",
+	"Pac-Man Plus",
 	"1982",
 	"[Namco] (Midway license)",
 	BASE_CREDITS"\nClay Cowgill (information)\nMike Balfour (information)",
@@ -2472,7 +2539,7 @@ struct GameDriver mspacman_driver =
 	__FILE__,
 	0,
 	"mspacman",
-	"Ms. Pac Man",
+	"Ms. Pac-Man",
 	"1981",
 	"bootleg",
 	BASE_CREDITS,
@@ -2498,7 +2565,7 @@ struct GameDriver mspacatk_driver =
 	__FILE__,
 	&mspacman_driver,
 	"mspacatk",
-	"Miss Pac Plus",
+	"Ms. Pac-Man Plus",
 	"1981",
 	"hack",
 	BASE_CREDITS,
@@ -2524,7 +2591,7 @@ struct GameDriver pacgal_driver =
 	__FILE__,
 	&mspacman_driver,
 	"pacgal",
-	"Pac Gal",
+	"Pac-Gal",
 	"1981",
 	"hack",
 	BASE_CREDITS,
@@ -2545,14 +2612,92 @@ struct GameDriver pacgal_driver =
 	pacman_hiload, pacman_hisave
 };
 
-struct GameDriver maketrax_driver =
+struct GameDriver crush_driver =
 {
 	__FILE__,
 	0,
+	"crush",
+	"Crush Roller (Kural Samno)",
+	"1981",
+	"Kural Samno Electric",
+	BASE_CREDITS"\nGary Walton (color info)\nSimon Walls (color info)\nJohn Bowes(info)\nMike Balfour",
+	0,
+	&machine_driver,
+	maketrax_driver_init,
+
+	crush_rom,
+	0, maketrax_rom_decode,
+	0,
+	0,     /* sound_prom */
+
+	maketrax_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	maketrax_hiload, maketrax_hisave /* hiload hisave */
+};
+
+struct GameDriver crush2_driver =
+{
+	__FILE__,
+	&crush_driver,
+	"crush2",
+	"Crush Roller (Kural Esco - bootleg?)",
+	"1981",
+	"Kural Esco Electric",
+	BASE_CREDITS"\nGary Walton (color info)\nSimon Walls (color info)",
+	0,
+	&machine_driver,
+	0,
+
+	crush2_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	maketrax_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	crush_hiload, crush_hisave
+};
+
+struct GameDriver crush3_driver =
+{
+	__FILE__,
+	&crush_driver,
+	"crush3",
+	"Crush Roller (Kural - bootleg?)",
+	"1981",
+	"Kural Electric",
+	BASE_CREDITS"\nGary Walton (color info)\nSimon Walls (color info)",
+	0,
+	&machine_driver,
+	0,
+
+	crush3_rom,
+	eyes_decode, 0,
+	0,
+	0,	/* sound_prom */
+
+	maketrax_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	crush_hiload, crush_hisave
+};
+
+struct GameDriver maketrax_driver =
+{
+	__FILE__,
+	&crush_driver,
 	"maketrax",
 	"Make Trax",
 	"1981",
-	"Williams",
+	"[Kural] (Williams license)",
 	BASE_CREDITS"\nGary Walton (color info)\nSimon Walls (color info)\nJohn Bowes(info)\nMike Balfour",
 	0,
 	&machine_driver,
@@ -2571,62 +2716,10 @@ struct GameDriver maketrax_driver =
 	maketrax_hiload, maketrax_hisave /* hiload hisave */
 };
 
-struct GameDriver crush_driver =
-{
-	__FILE__,
-	&maketrax_driver,
-	"crush",
-	"Crush Roller",
-	"1981",
-	"bootleg",
-	BASE_CREDITS"\nGary Walton (color info)\nSimon Walls (color info)",
-	0,
-	&machine_driver,
-	0,
-
-	crush_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	maketrax_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	crush_hiload, crush_hisave
-};
-
-struct GameDriver crush2_driver =
-{
-	__FILE__,
-	&maketrax_driver,
-	"crush2",
-	"Crush Roller (set 2)",
-	"1981",
-	"bootleg",
-	BASE_CREDITS"\nGary Walton (color info)\nSimon Walls (color info)",
-	0,
-	&machine_driver,
-	0,
-
-	crush2_rom,
-	eyes_decode, 0,
-	0,
-	0,	/* sound_prom */
-
-	maketrax_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	crush_hiload, crush_hisave
-};
-
 struct GameDriver mbrush_driver =
 {
 	__FILE__,
-	&maketrax_driver,
+	&crush_driver,
 	"mbrush",
 	"Magic Brush",
 	"1981",

@@ -2,6 +2,32 @@
 #ifndef MAME_PNG_H
 #define MAME_PNG_H
 
+
+#define PNG_Signature       "\x89\x50\x4E\x47\x0D\x0A\x1A\x0A"
+
+#define PNG_CN_IHDR 0x49484452L     /* Chunk names */
+#define PNG_CN_PLTE 0x504C5445L
+#define PNG_CN_IDAT 0x49444154L
+#define PNG_CN_IEND 0x49454E44L
+#define PNG_CN_gAMA 0x67414D41L
+#define PNG_CN_sBIT 0x73424954L
+#define PNG_CN_cHRM 0x6348524DL
+#define PNG_CN_tRNS 0x74524E53L
+#define PNG_CN_bKGD 0x624B4744L
+#define PNG_CN_hIST 0x68495354L
+#define PNG_CN_tEXt 0x74455874L
+#define PNG_CN_zTXt 0x7A545874L
+#define PNG_CN_pHYs 0x70485973L
+#define PNG_CN_oFFs 0x6F464673L
+#define PNG_CN_tIME 0x74494D45L
+#define PNG_CN_sCAL 0x7343414CL
+
+#define PNG_PF_None     0   /* Prediction filters */
+#define PNG_PF_Sub      1
+#define PNG_PF_Up       2
+#define PNG_PF_Average  3
+#define PNG_PF_Paeth    4
+
 /* PNG support */
 struct png_info {
 	UINT32 width, height;
@@ -34,13 +60,14 @@ struct png_info {
 	UINT8 *fimage;
 };
 
-extern int  png_read_artwork(const char *file_name, struct osd_bitmap **bitmap, UINT8 **palette, int *num_palette, UINT8 **trans, int *num_trans);
+int png_verify_signature (void *fp);
+int png_inflate_image (struct png_info *p);
+int png_read_file(void *fp, struct png_info *p);
+int png_expand_buffer_8bit (struct png_info *p);
+void png_delete_unused_colors (struct png_info *p);
+int png_unfilter(struct png_info *p);
 
-extern int  png_verify_signature (void *fp);
-extern int  png_inflate_image (struct png_info *p);
-extern int  png_read_chunks(void *fp, struct png_info *p);
-extern void png_expand_buffer (UINT8 *inbuf, UINT8 *outbuf, int width, int height, int bit_depth);
-extern int  png_unfilter(struct png_info *p);
+int png_write_bitmap(void *fp, struct osd_bitmap *bitmap);
 
 #endif
 

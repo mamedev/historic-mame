@@ -218,7 +218,8 @@ static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
 	10000000/8,     /* 10Mhz / 8 = 1.25Mhz */
-	{ 255 },
+	{ 25 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ stratvox_samples_w },  /* SN76477 commands (not used in Route 16?) */
@@ -229,13 +230,14 @@ static struct AY8910interface ay8910_interface =
 static struct DACinterface dac_interface =
 {
 	1,
-	{ 255 }
+	{ 25 }
 };
 
 
 static struct Samplesinterface samples_interface =
 {
-	1	/* 1 channel */
+	1,	/* 1 channel */
+	25	/* volume */
 };
 
 
@@ -421,10 +423,16 @@ ROM_END
 static int route16_hiload(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	static int firsttime = 0;
 
+	if (firsttime == 0)
+	{
+		memset(&RAM[0x4032],0xff,9);	/* high score */
+		firsttime = 1;
+	}
 
 	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x4028],"\x01",1) == 0)
+	if (memcmp(&RAM[0x4032],"\x00\x00\x00\x00\x00\x00\x00\x00\x00",9) == 0)
 	{
 		void *f;
 
@@ -433,7 +441,7 @@ static int route16_hiload(void)
 			osd_fread(f,&RAM[0x4032],9);
 			osd_fclose(f);
 		}
-
+		firsttime = 0;
 		return 1;
 	}
 	else return 0;  /* we can't load the hi scores yet */
@@ -456,10 +464,17 @@ static void route16_hisave(void)
 static int stratvox_hiload(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	static int firsttime = 0;
+
+	if (firsttime == 0)
+	{
+		memset(&RAM[0x4010],0xff,3);	/* high score */
+		firsttime = 1;
+	}
 
 
 	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x410f],"\x0f",1) == 0)
+	if (memcmp(&RAM[0x4010],"\x00\x00\x00",3) == 0)
 	{
 		void *f;
 
@@ -468,7 +483,7 @@ static int stratvox_hiload(void)
 			osd_fread(f,&RAM[0x4010],3);
 			osd_fclose(f);
 		}
-
+		firsttime = 0;
 		return 1;
 	}
 	else return 0;  /* we can't load the hi scores yet */
@@ -486,6 +501,51 @@ static void stratvox_hisave(void)
 		osd_fclose(f);
 	}
 }
+
+
+static int speakres_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	static int firsttime = 0;
+
+	if (firsttime == 0)
+	{
+		memset(&RAM[0x4001],0xff,3);	/* high score */
+		firsttime = 1;
+	}
+
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x4001],"\x00\x00\x00",3) == 0)
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x4001],3);
+			osd_fclose(f);
+		}
+		firsttime = 0;
+
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+static void speakres_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+//		osd_fwrite(f,&RAM[0x4000],0x3ff);
+		osd_fwrite(f,&RAM[0x4001],3);
+		osd_fclose(f);
+	}
+}
+
 
 
 struct GameDriver route16_driver =
@@ -589,5 +649,5 @@ struct GameDriver speakres_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_270,
 
-	stratvox_hiload, stratvox_hisave
+	speakres_hiload, speakres_hisave
 };

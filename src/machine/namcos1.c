@@ -2,6 +2,9 @@
 #include "vidhrdw/generic.h"
 
 #define NAMCO_S1_RAM_REGION 5
+#define NAMCOS1_MAX_BANK 0x400
+
+/* #define NAMCOS1_OPCODE_COPY */
 
 /* from vidhrdw */
 extern int namcos1_videoram_r( int offs );
@@ -10,10 +13,9 @@ extern void namcos1_playfield_control_w( int offs, int data );
 extern void namcos1_set_scroll_offsets( int *bgx, int*bgy, int negative );
 extern void namcos1_set_sprite_offsets( int x, int y );
 
-static int (*key_r)( int offset );
-static void (*key_w)( int offset, int data );
-
 static unsigned char key[0x2000];
+
+static unsigned char *s1ram;
 
 /**************************************************************************************
 *	                                                                                  *
@@ -176,181 +178,60 @@ static void rev2_key_w( int offset, int data ) {
 *	                                                                                  *
 **************************************************************************************/
 
-/* RAM handlers */
-static int rvk_r( int offset, int bank_offset ) {
-	unsigned char *RAM = Machine->memory_region[NAMCO_S1_RAM_REGION];
+static void palette_w( int offset, int data)
+{
+	int page = offset & 0xe000;
+	if(s1ram[ offset ] != data)
+	{
+		s1ram[ offset ] = data;
+		if ( (offset&0x1fff) < 0x1800 ) {
+			int color = ( offset & 0x7ff );
+			int r = s1ram[ page + color ];
+			int g = s1ram[ page + color + 0x800 ];
+			int b = s1ram[ page + color + 0x1000 ];
 
-	switch ( bank_offset ) {
-		case 0x00: /* RAM 6 banks */
-		case 0x01: /* palette goes here */
-		case 0x02:
-		case 0x03:
-			return RAM[ ( bank_offset << 13 ) + offset ];
-		break;
-
-		case 0x08: /* RAM 5 banks - Videoram */
-		case 0x09:
-		case 0x0a:
-		case 0x0b:
-			bank_offset -= 0x08;
-			return namcos1_videoram_r( ( bank_offset << 13 ) + offset );
-		break;
-
-		case 0x0c: /* Key chip bank */
-			return (*key_r)( offset );
-		break;
-
-		case 0x0e: /* RAM 1 banks */
-		case 0x0f:
-			bank_offset -= 0x0e;
-			RAM += 0x8000;
-			return RAM[ ( bank_offset << 13 ) + offset ];
-		break;
-
-		default:
-			if ( errorlog )
-				fprintf( errorlog, "RVK_r handler: Accessing unknown sub bank %02x\n", bank_offset );
-		break;
-	}
-
-	return 0;
-}
-
-static void rvk_w( int offset, int data, int bank_offset ) {
-	unsigned char *RAM = Machine->memory_region[NAMCO_S1_RAM_REGION];
-
-	switch ( bank_offset ) {
-		case 0x00: /* RAM 6 banks - Palette - sprites */
-		case 0x01: /* Palette - chars */
-		case 0x02: /* chars? */
-			RAM[ ( bank_offset << 13 ) + offset ] = data;
-
-			if ( offset < 0x1800 ) {
-				int color = ( offset & 0x7ff );
-				int r = RAM[ ( bank_offset << 13 ) + color ];
-				int g = RAM[ ( bank_offset << 13 ) + color + 0x800 ];
-				int b = RAM[ ( bank_offset << 13 ) + color + 0x1000 ];
-
-				palette_change_color( color + ( bank_offset * 0x800 ), r, g, b );
-			}
-		break;
-
-		case 0x03: /* work ram */
-			RAM[ ( bank_offset << 13 ) + offset ] = data;
-		break;
-
-		case 0x08: /* RAM 5 banks - Videoram */
-		case 0x09:
-		case 0x0a:
-		case 0x0b:
-			bank_offset -= 0x08;
-			namcos1_videoram_w( ( bank_offset << 13 ) + offset, data );
-		break;
-
-		case 0x0c: /* Key chip bank */
-			(*key_w)( offset, data );
-		break;
-
-		case 0x0e: /* RAM 1 banks */
-		case 0x0f:
-			bank_offset -= 0x0e;
-			RAM += 0x8000;
-			RAM[ ( bank_offset << 13 ) + offset ] = data;
-			if ( offset >= 0x1000 )
-				namcos1_playfield_control_w( offset - 0x1000, data );
-		break;
-
-		default:
-			if ( errorlog )
-				fprintf( errorlog, "RVK_w handler: Accessing unknown sub bank %02x\n", bank_offset );
-		break;
+			palette_change_color( color + ( page>>2 ), r, g, b );
+		}
 	}
 }
-
-static int ram3_r( int offset, int bank_offset ) {
-	unsigned char *RAM = Machine->memory_region[NAMCO_S1_RAM_REGION];
-
-	switch ( bank_offset ) {
-		case 0x00: /* RAM 3 banks */
-		case 0x01:
-		case 0x02:
-		case 0x03:
-			RAM += 0xc000;
-			return RAM[ ( bank_offset << 13 ) + offset ];
-		break;
-
-		default:
-			if ( errorlog )
-				fprintf( errorlog, "RAM3_r handler: Accessing unknown sub bank %02x\n", bank_offset );
-		break;
-	}
-
-	return 0;
-}
-
-static void ram3_w( int offset, int data, int bank_offset ) {
-	unsigned char *RAM = Machine->memory_region[NAMCO_S1_RAM_REGION];
-
-	switch ( bank_offset ) {
-		case 0x00: /* RAM 3 banks */
-		case 0x01:
-		case 0x02:
-		case 0x03:
-			RAM += 0xc000;
-			RAM[ ( bank_offset << 13 ) + offset ] = data;
-		break;
-
-		default:
-			if ( errorlog )
-				fprintf( errorlog, "RAM3_w handler: Accessing unknown sub bank %02x\n", bank_offset );
-		break;
-	}
+static void ram1_w( int offset, int data )
+{
+	s1ram[ offset ] = data;
+	if ( (offset&0x1fff) >= 0x1000 )
+		namcos1_playfield_control_w( offset & 0xfff, data );
 }
 
 /* ROM handlers */
-#define PRG_HANDLER( num, offs ) static int prg##num##_r( int offset, int bank_offset ) { \
-	unsigned char *RAM = Machine->memory_region[4] + offs; \
-	return RAM[ ( bank_offset << 13 ) + offset ]; \
-}
 
-PRG_HANDLER( 0, 0xe0000 )
-PRG_HANDLER( 1, 0xc0000 )
-PRG_HANDLER( 2, 0xa0000 )
-PRG_HANDLER( 3, 0x80000 )
-PRG_HANDLER( 4, 0x60000 )
-PRG_HANDLER( 5, 0x40000 )
-PRG_HANDLER( 6, 0x20000 )
-PRG_HANDLER( 7, 0x00000 )
-
-#undef PRG_HANDLER
-
-static void rom_w( int offset, int data, int bankoffset ) {
+static void rom_w( int offset, int data ) {
 	if ( errorlog )
 		fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to rom address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
 }
 
 /* error handlers */
-static int unknown_r( int offset, int bankoffset ) {
+static int unknown_r( int offset ) {
 	if ( errorlog )
 		fprintf(errorlog,"CPU #%d PC %04x: warning - read from unknown chip\n",cpu_getactivecpu(),cpu_get_pc() );
 	return 0;
 }
 
-static void unknown_w( int offset, int data, int bankoffset ) {
+static void unknown_w( int offset, int data) {
 	if ( errorlog )
 		fprintf(errorlog,"CPU #%d PC %04x: warning - wrote to unknown chip\n",cpu_getactivecpu(),cpu_get_pc() );
 }
 
-
 /* Bank handler definitions */
-typedef int (*handler_r)(int offset, int bank_offset);
-typedef void (*handler_w)(int offset, int data, int bank_offset);
+typedef int (*handler_r)(int offset);
+typedef void (*handler_w)(int offset, int data);
 
 typedef struct {
 	handler_r	bank_handler_r;
 	handler_w	bank_handler_w;
 	int			bank_offset;
+	unsigned char *bank_pointer;
 } bankhandler;
+
+static bankhandler namcos1_bank_element[NAMCOS1_MAX_BANK];
 
 /* This is where we store our handlers */
 /* 2 cpus with 8 banks of 8k each      */
@@ -363,181 +244,88 @@ void namcos1_bankswitch_w( int offset, int data ) {
 	if ( offset & 1 ) {
 		int bank = ( offset >> 9 ) & 0x0f;
 		int cpu = cpu_getactivecpu();
-
 		chip &= 0x0300;
 		chip |= ( data & 0xff );
-
-		switch ( chip >> 4 ) {
-			case 0x0017:	/* RAM - Video - Key */
-				namcos1_banks[cpu][bank].bank_handler_r = rvk_r;
-				namcos1_banks[cpu][bank].bank_handler_w = rvk_w;
-				namcos1_banks[cpu][bank].bank_offset = chip & 0x0f;
-			break;
-
-			case 0x0018:	/* RAM3 */
-				namcos1_banks[cpu][bank].bank_handler_r = ram3_r;
-				namcos1_banks[cpu][bank].bank_handler_w = ram3_w;
-				namcos1_banks[cpu][bank].bank_offset = chip & 0x0f;
-			break;
-
-			case 0x0020:	/* PRG0 */
-			case 0x0021:	/* PRG0 */
-			case 0x0022:	/* PRG0 */
-			case 0x0023:	/* PRG0 */
-				chip &= 0x0f;
-				namcos1_banks[cpu][bank].bank_handler_r = prg0_r;
-				namcos1_banks[cpu][bank].bank_handler_w = rom_w;
-				namcos1_banks[cpu][bank].bank_offset = chip;
-				/* Since we might be executing code, lets copy it to RAM */
-				{
-					unsigned char *src = ( Machine->memory_region[4] ) + 0xe0000;
-					unsigned char *dst = Machine->memory_region[Machine->drv->cpu[cpu].memory_region];
-					memcpy( &dst[bank << 13], &src[chip << 13], 0x2000 );
-				}
-			break;
-
-			case 0x0024:	/* PRG1 */
-			case 0x0025:	/* PRG1 */
-			case 0x0026:	/* PRG1 */
-			case 0x0027:	/* PRG1 */
-				chip &= 0x0f;
-				namcos1_banks[cpu][bank].bank_handler_r = prg1_r;
-				namcos1_banks[cpu][bank].bank_handler_w = rom_w;
-				namcos1_banks[cpu][bank].bank_offset = chip;
-				/* Since we might be executing code, lets copy it to RAM */
-				{
-					unsigned char *src = ( Machine->memory_region[4] ) + 0xc0000;
-					unsigned char *dst = Machine->memory_region[Machine->drv->cpu[cpu].memory_region];
-					memcpy( &dst[bank << 13], &src[chip << 13], 0x2000 );
-				}
-			break;
-
-			case 0x0028:	/* PRG2 */
-			case 0x0029:	/* PRG2 */
-			case 0x002a:	/* PRG2 */
-			case 0x002b:	/* PRG2 */
-				chip &= 0x0f;
-				namcos1_banks[cpu][bank].bank_handler_r = prg2_r;
-				namcos1_banks[cpu][bank].bank_handler_w = rom_w;
-				namcos1_banks[cpu][bank].bank_offset = chip;
-				/* Since we might be executing code, lets copy it to RAM */
-				{
-					unsigned char *src = ( Machine->memory_region[4] ) + 0xa0000;
-					unsigned char *dst = Machine->memory_region[Machine->drv->cpu[cpu].memory_region];
-					memcpy( &dst[bank << 13], &src[chip << 13], 0x2000 );
-				}
-			break;
-
-			case 0x002c:	/* PRG3 */
-			case 0x002d:	/* PRG3 */
-			case 0x002e:	/* PRG3 */
-			case 0x002f:	/* PRG3 */
-				chip &= 0x0f;
-				namcos1_banks[cpu][bank].bank_handler_r = prg3_r;
-				namcos1_banks[cpu][bank].bank_handler_w = rom_w;
-				namcos1_banks[cpu][bank].bank_offset = chip;
-				/* Since we might be executing code, lets copy it to RAM */
-				{
-					unsigned char *src = ( Machine->memory_region[4] ) + 0x80000;
-					unsigned char *dst = Machine->memory_region[Machine->drv->cpu[cpu].memory_region];
-					memcpy( &dst[bank << 13], &src[chip << 13], 0x2000 );
-				}
-			break;
-
-			case 0x0030:	/* PRG4 */
-			case 0x0031:	/* PRG4 */
-			case 0x0032:	/* PRG4 */
-			case 0x0033:	/* PRG4 */
-				chip &= 0x0f;
-				namcos1_banks[cpu][bank].bank_handler_r = prg4_r;
-				namcos1_banks[cpu][bank].bank_handler_w = rom_w;
-				namcos1_banks[cpu][bank].bank_offset = chip;
-				/* Since we might be executing code, lets copy it to RAM */
-				{
-					unsigned char *src = ( Machine->memory_region[4] ) + 0x60000;
-					unsigned char *dst = Machine->memory_region[Machine->drv->cpu[cpu].memory_region];
-					memcpy( &dst[bank << 13], &src[chip << 13], 0x2000 );
-				}
-			break;
-
-			case 0x0034:	/* PRG5 */
-			case 0x0035:	/* PRG5 */
-			case 0x0036:	/* PRG5 */
-			case 0x0037:	/* PRG5 */
-				chip &= 0x0f;
-				namcos1_banks[cpu][bank].bank_handler_r = prg5_r;
-				namcos1_banks[cpu][bank].bank_handler_w = rom_w;
-				namcos1_banks[cpu][bank].bank_offset = chip;
-				/* Since we might be executing code, lets copy it to RAM */
-				{
-					unsigned char *src = ( Machine->memory_region[4] ) + 0x40000;
-					unsigned char *dst = Machine->memory_region[Machine->drv->cpu[cpu].memory_region];
-					memcpy( &dst[bank << 13], &src[chip << 13], 0x2000 );
-				}
-			break;
-
-			case 0x0038:	/* PRG6 */
-			case 0x0039:	/* PRG6 */
-			case 0x003a:	/* PRG6 */
-			case 0x003b:	/* PRG6 */
-				chip &= 0x0f;
-				namcos1_banks[cpu][bank].bank_handler_r = prg6_r;
-				namcos1_banks[cpu][bank].bank_handler_w = rom_w;
-				namcos1_banks[cpu][bank].bank_offset = chip;
-				/* Since we might be executing code, lets copy it to RAM */
-				{
-					unsigned char *src = ( Machine->memory_region[4] ) + 0x20000;
-					unsigned char *dst = Machine->memory_region[Machine->drv->cpu[cpu].memory_region];
-					memcpy( &dst[bank << 13], &src[chip << 13], 0x2000 );
-				}
-			break;
-
-			case 0x003c:	/* PRG7 */
-			case 0x003d:	/* PRG7 */
-			case 0x003e:	/* PRG7 */
-			case 0x003f:	/* PRG7 */
-				chip &= 0x0f;
-				namcos1_banks[cpu][bank].bank_handler_r = prg7_r;
-				namcos1_banks[cpu][bank].bank_handler_w = rom_w;
-				namcos1_banks[cpu][bank].bank_offset = chip;
-				/* Since we might be executing code, lets copy it to RAM */
-				{
-					unsigned char *src = Machine->memory_region[4];
-					unsigned char *dst = Machine->memory_region[Machine->drv->cpu[cpu].memory_region];
-					memcpy( &dst[bank << 13], &src[chip << 13], 0x2000 );
-				}
-			break;
-
-			default:
-				if ( errorlog )
-					fprintf( errorlog, "CPU %d : Unknown chip selected ($%04x) at PC %04x\n", cpu_getactivecpu(), chip, cpu_get_pc() );
-
-				namcos1_banks[cpu][bank].bank_handler_r = unknown_r;
-				namcos1_banks[cpu][bank].bank_handler_w = unknown_w;
-				namcos1_banks[cpu][bank].bank_offset = chip;
-			break;
+		/* copy bank handler */
+		namcos1_banks[cpu][bank].bank_handler_r =  namcos1_bank_element[chip].bank_handler_r;
+		namcos1_banks[cpu][bank].bank_handler_w =  namcos1_bank_element[chip].bank_handler_w;
+		namcos1_banks[cpu][bank].bank_offset    =  namcos1_bank_element[chip].bank_offset;
+		namcos1_banks[cpu][bank].bank_pointer   =  namcos1_bank_element[chip].bank_pointer;
+		//memcpy( &namcos1_banks[cpu][bank] , &namcos1_bank_element[chip] , sizeof(bankhandler));
+#if 1
+		if( namcos1_banks[cpu][bank].bank_handler_r == unknown_r)
+		{
+			if ( errorlog )
+				fprintf( errorlog, "CPU %d : Unknown chip selected ($%04x) at PC %04x\n", cpu_getactivecpu(), chip, cpu_get_pc() );
 		}
+#endif
+		if( namcos1_banks[cpu][bank].bank_handler_w == rom_w)
+		/* Since we might be executing code, lets copy it to RAM */
+		{
+#ifdef NAMCOS1_OPCODE_COPY
+			unsigned char *src,*dst;
+			src = namcos1_banks[cpu][bank].bank_pointer;
+			dst = Machine->memory_region[Machine->drv->cpu[cpu].memory_region] + (bank<<13);
+			memcpy( dst, src, 0x2000 );
+#endif
+		}
+		/* renew pc base */
+		change_pc16(cpu_get_pc());
 	} else {
 		chip &= 0x00ff;
 		chip |= ( data & 0xff ) << 8;
 	}
 }
 
-int namcos1_banked_area_r( int offset ) {
+#define MR_HANDLER(cpu,bank) \
+int namcos1_##cpu##_banked_area##bank##_r(int offset) {\
+	if( namcos1_banks[cpu][bank].bank_handler_r) \
+		return (*namcos1_banks[cpu][bank].bank_handler_r)( offset+namcos1_banks[cpu][bank].bank_offset); \
+	return namcos1_banks[cpu][bank].bank_pointer[offset]; }
 
-	int bank = ( offset >> 13 ) & 0x07;
-	int cpu = cpu_getactivecpu();
+MR_HANDLER(0,0)
+MR_HANDLER(0,1)
+MR_HANDLER(0,2)
+MR_HANDLER(0,3)
+MR_HANDLER(0,4)
+MR_HANDLER(0,5)
+MR_HANDLER(0,6)
+MR_HANDLER(0,7)
+MR_HANDLER(1,0)
+MR_HANDLER(1,1)
+MR_HANDLER(1,2)
+MR_HANDLER(1,3)
+MR_HANDLER(1,4)
+MR_HANDLER(1,5)
+MR_HANDLER(1,6)
+MR_HANDLER(1,7)
+#undef MR_HANDLER
 
-	return (*namcos1_banks[cpu][bank].bank_handler_r)( offset & 0x1fff, namcos1_banks[cpu][bank].bank_offset );
+#define MW_HANDLER(cpu,bank) \
+void namcos1_##cpu##_banked_area##bank##_w( int offset, int data ) {\
+	if( namcos1_banks[cpu][bank].bank_handler_w) \
+	{ \
+		(*namcos1_banks[cpu][bank].bank_handler_w)( offset+ namcos1_banks[cpu][bank].bank_offset,data ); \
+		return; \
+	}\
+	namcos1_banks[cpu][bank].bank_pointer[offset]=data; \
 }
 
-void namcos1_banked_area_w( int offset, int data ) {
-
-	int bank = ( offset >> 13 ) & 0x07;
-	int cpu = cpu_getactivecpu();
-
-	(*namcos1_banks[cpu][bank].bank_handler_w)( offset & 0x1fff, data, namcos1_banks[cpu][bank].bank_offset );
-}
+MW_HANDLER(0,0)
+MW_HANDLER(0,1)
+MW_HANDLER(0,2)
+MW_HANDLER(0,3)
+MW_HANDLER(0,4)
+MW_HANDLER(0,5)
+MW_HANDLER(0,6)
+MW_HANDLER(1,0)
+MW_HANDLER(1,1)
+MW_HANDLER(1,2)
+MW_HANDLER(1,3)
+MW_HANDLER(1,4)
+MW_HANDLER(1,5)
+MW_HANDLER(1,6)
+#undef MW_HANDLER
 
 /**************************************************************************************
 *	                                                                                  *
@@ -580,16 +368,107 @@ void namcos1_sound_bankswitch_w( int offset, int data ) {
 *	                                                                                  *
 **************************************************************************************/
 
-static int namcos1_setopbase (int pc) {
 
-	/* We never really change the OP base, but this will stop MAME from reporting */
-	/* execution on mapped io when running code in our banks                      */
+static int namcos1_setopbase (int pc) {
+#ifdef NAMCOS1_OPCODE_COPY
 	return -1;
+#else
+	int cpu  = cpu_getactivecpu();
+	if( cpu < 2 )
+	{
+		int bank = (pc>>13)&7;
+		/* cpu 0 ot cpu1 */
+		OP_RAM = OP_ROM = (namcos1_banks[cpu][bank].bank_pointer) - (bank<<13);
+		/* memory.c output warning - op-code execute on mapped i/o */
+		/* but,It is neesarry to continue cpu_setOPbase16 function */
+		/* for update current operationhardware(ophw) code         */
+		return pc;
+	}
+	/* don't care other cpus */
+	return -1;
+#endif
 }
 
 /* default values for cpu start banks */
 static int cpu0_start;
 static int cpu1_start;
+
+static void namcos1_insatll_bank(int start,int end,handler_r hr,handler_w hw,
+                          int offset,unsigned char *pointer)
+{
+	int i;
+	for(i=start;i<=end;i++)
+	{
+		namcos1_bank_element[i].bank_handler_r = hr;
+		namcos1_bank_element[i].bank_handler_w = hw;
+		namcos1_bank_element[i].bank_offset    = offset;
+		namcos1_bank_element[i].bank_pointer   = pointer;
+		offset  += 0x2000;
+		if(pointer) pointer += 0x2000;
+	}
+}
+
+static void namcos1_install_rom_bank(int start,int end,int size,int offset)
+{
+	unsigned char *BROM = Machine->memory_region[4];
+	int step = size/0x2000;
+	while(start < end)
+	{
+		namcos1_insatll_bank(start,start+step-1,0,rom_w,0,&BROM[offset]);
+		start += step;
+	}
+}
+
+static void namcos1_build_banks(/* int *romsize_maps,*/
+                           handler_r key_r,handler_w key_w,
+                           int cpu0_start_bank,int cpu1_start_bank)
+{
+	unsigned char *BROM = Machine->memory_region[4];
+	int i;
+
+	/* S1 RAM pointer set */
+	s1ram = Machine->memory_region[NAMCO_S1_RAM_REGION];
+
+	/* set start bank */
+	cpu0_start = cpu0_start_bank;
+	cpu1_start = cpu1_start_bank;
+
+	/* clear all banks to unknown area */
+	for(i=0;i<NAMCOS1_MAX_BANK;i++)
+		namcos1_insatll_bank(i,i,unknown_r,unknown_w,0,0);
+
+	/* palette sprites / palette chars / chars? */
+	namcos1_insatll_bank(0x170,0x172,0,palette_w,0,s1ram);
+	/* rowk ram */
+	namcos1_insatll_bank(0x173,0x173,0,0,0x6000,&s1ram[0x6000]);
+	/* RAM 5 banks - Videoram */
+	namcos1_insatll_bank(0x178,0x17b,namcos1_videoram_r,namcos1_videoram_w,0,0);
+	/* key chip bank (rev1_key_w / rev2_key_w ) */
+	/* namcos1_insatll_bank(0x17c,0x17c,key_r,key_w,0,0); */
+	namcos1_insatll_bank(0x17c,0x17c,0,key_w,0,key);
+	/* RAM 1 banks playfield */
+	namcos1_insatll_bank(0x17e,0x17f,0,ram1_w,0x8000,&s1ram[0x8000]);
+	/* RAM3 */
+	namcos1_insatll_bank(0x180,0x183,0,0,0,&s1ram[0xc000]);
+	/* PRG0 */
+	namcos1_install_rom_bank(0x200,0x23f,0x20000 , 0xe0000);
+	/* PRG1 */
+	namcos1_install_rom_bank(0x240,0x27f,0x20000 , 0xc0000);
+	/* PRG2 */
+	namcos1_install_rom_bank(0x280,0x2bf,0x20000 , 0xa0000);
+	/* PRG3 */
+	namcos1_install_rom_bank(0x2c0,0x2ff,0x20000 , 0x80000);
+	/* PRG4 */
+	namcos1_install_rom_bank(0x300,0x33f,0x20000 , 0x60000);
+	/* PRG5 */
+	namcos1_install_rom_bank(0x340,0x37f,0x20000 , 0x40000);
+	/* PRG6 */
+	namcos1_install_rom_bank(0x380,0x3bf,0x20000 , 0x20000);
+	/* PRG7 */
+	namcos1_install_rom_bank(0x3c0,0x3ff,0x20000 , 0x00000);
+}
+
+extern int m6809_slapstic;
 
 void namcos1_machine_init( void ) {
 
@@ -639,6 +518,7 @@ void namcos1_machine_init( void ) {
 	cpu_halt( 2, 1 );
 	cpu_halt( 3, 1 );
 
+	/* m6809_slapstic = 1; */
 	cpu_setOPbaseoverride( namcos1_setopbase );
 }
 
@@ -658,9 +538,6 @@ void alice_driver_init( void ) {
 	/* Set Alice's key id */
 	key_id = alice_key_id;
 
-	key_r = rev1_key_r;
-	key_w = rev1_key_w;
-
 	/* set scrolling offsets for this game */
 	{
 		int bgx[4] = { 0x0b0, 0x0b2, 0x0b3, 0x0b4 };
@@ -672,9 +549,8 @@ void alice_driver_init( void ) {
 	/* set sprite offsets for this game */
 	namcos1_set_sprite_offsets( 4, 204 );
 
-	/* set cpu startup banks */
-	cpu0_start = 0x03ff;
-	cpu1_start = 0x03bf;
+	/* build bank elements */
+	namcos1_build_banks(rev1_key_r,rev1_key_w,0x03ff,0x03bf);
 }
 
 /**************************************************************************************
@@ -686,9 +562,6 @@ void alice_driver_init( void ) {
 /* Theres is an id check followed by some key nightmare */
 
 void blazer_driver_init( void ) {
-
-	key_r = rev2_key_r;
-	key_w = rev2_key_w;
 
 	key_id = 0x13;
 
@@ -703,9 +576,8 @@ void blazer_driver_init( void ) {
 	/* set sprite offsets for this game */
 	namcos1_set_sprite_offsets( -120, 232 );
 
-	/* set cpu startup banks */
-	cpu0_start = 0x03ff;
-	cpu1_start = 0x03fb;
+	/* build bank elements */
+	namcos1_build_banks(rev2_key_r,rev2_key_w,0x03ff,0x03fb);
 }
 
 /**************************************************************************************
@@ -717,9 +589,6 @@ void blazer_driver_init( void ) {
 /* Theres is an id check followed by some key nightmare */
 
 void dspirits_driver_init( void ) {
-
-	key_r = rev2_key_r;
-	key_w = rev2_key_w;
 
 	key_id = 0x36;
 
@@ -734,9 +603,8 @@ void dspirits_driver_init( void ) {
 	/* set sprite offsets for this game */
 	namcos1_set_sprite_offsets( -120, 232 );
 
-	/* set cpu startup banks */
-	cpu0_start = 0x03ff;
-	cpu1_start = 0x03fb;
+	/* build bank elements */
+	namcos1_build_banks(rev2_key_r,rev2_key_w,0x03ff,0x03fb);
 }
 
 /**************************************************************************************
@@ -755,9 +623,6 @@ void galaga88_driver_init( void ) {
 	/* Set Galaga 88's key id */
 	key_id = galaga88_key_id;
 
-	key_r = rev1_key_r;
-	key_w = rev1_key_w;
-
 	/* set scrolling offsets for this game */
 	{
 		int bgx[4] = { 0x1d0, 0x1d2, 0x1d3, 0x1d4 };
@@ -769,9 +634,8 @@ void galaga88_driver_init( void ) {
 	/* set sprite offsets for this game */
 	namcos1_set_sprite_offsets( -120, 232 );
 
-	/* set cpu startup banks */
-	cpu0_start = 0x03ff;
-	cpu1_start = 0x03fb;
+	/* build bank elements */
+	namcos1_build_banks(rev1_key_r,rev1_key_w,0x03ff,0x03fb);
 }
 
 /**************************************************************************************
@@ -790,9 +654,6 @@ void pacmania_driver_init( void ) {
 	/* Set Pacmania's key id */
 	key_id = pacmania_key_id;
 
-	key_r = rev1_key_r;
-	key_w = rev1_key_w;
-
 	/* set scrolling offsets for this game */
 	{
 		int bgx[4] = { 0x0b0, 0x0b2, 0x0b3, 0x0b4 };
@@ -804,9 +665,8 @@ void pacmania_driver_init( void ) {
 	/* set sprite offsets for this game */
 	namcos1_set_sprite_offsets( -56, 240 );
 
-	/* set cpu startup banks */
-	cpu0_start = 0x03ff;
-	cpu1_start = 0x03fb;
+	/* build bank elements */
+	namcos1_build_banks(rev1_key_r,rev1_key_w,0x03ff,0x03fb);
 }
 
 /**************************************************************************************
@@ -827,9 +687,6 @@ void shadowld_driver_init( void ) {
 	/* Set Shadowland's key id */
 	key_id = shadowld_key_id;
 
-	key_r = rev1_key_r;
-	key_w = rev1_key_w;
-
 	/* set scrolling offsets for this game */
 	{
 		int bgx[4] = { 0x0b0, 0x0b2, 0x0b3, 0x0b4 };
@@ -841,9 +698,8 @@ void shadowld_driver_init( void ) {
 	/* set sprite offsets for this game */
 	namcos1_set_sprite_offsets( -120, 215 );
 
-	/* set cpu startup banks */
-	cpu0_start = 0x03ff;
-	cpu1_start = 0x03fb;
+	/* build bank elements */
+	namcos1_build_banks(rev1_key_r,rev1_key_w,0x03ff,0x03fb);
 }
 
 /**************************************************************************************
@@ -856,9 +712,6 @@ void shadowld_driver_init( void ) {
 
 void splatter_driver_init( void ) {
 
-	key_r = rev2_key_r;
-	key_w = rev2_key_w;
-
 	/* set scrolling offsets for this game */
 	{
 		int bgx[4] = { 0x0b0, 0x0b2, 0x0b3, 0x0b4 };
@@ -870,8 +723,8 @@ void splatter_driver_init( void ) {
 	/* set sprite offsets for this game */
 	namcos1_set_sprite_offsets( 0, 240 );
 
-	cpu0_start = 0x03ff;
-	cpu1_start = 0x037f;
+	/* build bank elements */
+	namcos1_build_banks(rev2_key_r,rev2_key_w,0x03ff,0x037f);
 }
 
 /**************************************************************************************
@@ -883,9 +736,6 @@ void splatter_driver_init( void ) {
 /* Theres is an id check followed by some key nightmare */
 
 void ws90_driver_init( void ) {
-
-	key_r = rev1_key_r;
-	key_w = rev1_key_w;
 
 	key[0x47] = 0x36;
 	key[0x40] = 0x36;
@@ -899,9 +749,8 @@ void ws90_driver_init( void ) {
 	}
 
 	/* set sprite offsets for this game */
-	namcos1_set_sprite_offsets( 0, 240 );
+	namcos1_set_sprite_offsets( 0, 240-32 );
 
-	/* set cpu startup banks */
-	cpu0_start = 0x03ff;
-	cpu1_start = 0x03fb;
+	/* build bank elements */
+	namcos1_build_banks(rev1_key_r,rev1_key_w,0x03ff,0x03fb);
 }

@@ -87,7 +87,7 @@ int YM2203_sh_start(const struct MachineSound *msound)
 	int i;
 	int rate = Machine->sample_rate;
 
-	if( AY8910_sh_start_ex(msound,"YM2203") ) return 1;
+	if (AY8910_sh_start(msound)) return 1;
 
 	intf = msound->sound_interface;
 
@@ -99,12 +99,9 @@ int YM2203_sh_start(const struct MachineSound *msound)
 	{
 		int volume;
 		char name[20];
-		sprintf(name,"YM2203 #%d FM",i);
-		stream[i] = stream_init(msound,name,Machine->sample_rate,FM_OUTPUT_BIT,i,YM2203UpdateOne/*YM2203UpdateCallback*/);
-		/* volume setup */
-		volume = intf->volume[i]>>16; /* high 16 bit */
-		if( volume > 255 ) volume = 255;
-		stream_set_volume(stream[i],volume);
+		sprintf(name,"%s #%d FM",sound_name(msound),i);
+		volume = intf->mixing_level[i]>>16; /* high 16 bit */
+		stream[i] = stream_init(name,volume,Machine->sample_rate,FM_OUTPUT_BIT,i,YM2203UpdateOne/*YM2203UpdateCallback*/);
 	}
 	/* Initialize FM emurator */
 	if (YM2203Init(intf->num,intf->baseclock,Machine->sample_rate,TimerHandler,IRQHandler) == 0)

@@ -122,7 +122,7 @@ void zaxxon_sound_w(int offset,int data)
 					soundplaying[21] = 1;
 					sample_start(sa[21].channel,sa[21].num,sa[21].looped);
 				}
-				sample_adjust(sa[21].channel,-1,128 + 40 * (data & 0x03));
+				sample_set_volume(sa[21].channel,128 + 40 * (data & 0x03));
 				break;
 			case 0x00:
 			case 0x08:
@@ -131,7 +131,7 @@ void zaxxon_sound_w(int offset,int data)
 					soundplaying[20] = 1;
 					sample_start(sa[20].channel,sa[20].num,sa[20].looped);
 				}
-				sample_adjust(sa[20].channel,-1,128 + 40 * (data & 0x03));
+				sample_set_volume(sa[20].channel,128 + 40 * (data & 0x03));
 				soundplaying[21] = 0;
 				sample_stop(sa[21].channel);
 				break;

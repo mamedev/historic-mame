@@ -77,7 +77,8 @@ static struct DACinterface dac_interface =
 
 static struct Samplesinterface samples_interface =
 {
-	9       /* 9 channels */
+	9,       /* 9 channels */
+	25	/* volume */
 };
 
 /**************************************************/
@@ -90,12 +91,12 @@ int  panic_interrupt(void);
 
 static struct MemoryWriteAddress panic_writemem[] =
 {
-    { 0x4000, 0x43FF, MWA_RAM },
+	{ 0x4000, 0x43FF, MWA_RAM },
 	{ 0x4400, 0x5BFF, cosmic_videoram_w, &cosmic_videoram },
 	{ 0x5C00, 0x5FFF, MWA_RAM },
 	{ 0x6000, 0x601F, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x0000, 0x3fff, MWA_ROM },
-    { 0x700C, 0x700E, panic_colourmap_select },
+	{ 0x700C, 0x700E, panic_colourmap_select },
 	{ -1 }	/* end of table */
 };
 
@@ -464,20 +465,20 @@ static struct MemoryReadAddress cosmicalien_readmem[] =
 
 static struct MemoryWriteAddress cosmicalien_writemem[] =
 {
-    { 0x4000, 0x43ff, MWA_RAM },
+	{ 0x4000, 0x43ff, MWA_RAM },
 	{ 0x4400, 0x5bff, cosmic_videoram_w, &cosmic_videoram},
-    { 0x5c00, 0x5fff, MWA_RAM },
+	{ 0x5c00, 0x5fff, MWA_RAM },
 	{ 0x6000, 0x601f, MWA_RAM ,&spriteram, &spriteram_size },
-    { 0x7000, 0x700B, MWA_RAM },   			/* Sound Triggers */
-    { 0x700C, 0x700C, cosmicalien_colourmap_select },
+	{ 0x7000, 0x700B, MWA_RAM },   			/* Sound Triggers */
+	{ 0x700C, 0x700C, cosmicalien_colourmap_select },
 	{ -1 }	/* end of table */
 };
 
 INPUT_PORTS_START( cosmicalien_input_ports )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -486,8 +487,8 @@ INPUT_PORTS_START( cosmicalien_input_ports )
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -501,15 +502,16 @@ INPUT_PORTS_START( cosmicalien_input_ports )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x02, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x0c, 0x00, "Coins" )
-	PORT_DIPSETTING(    0x00, "1 Coin 1 Play" )
-	PORT_DIPSETTING(    0x08, "1 Coin 2 Plays" )
-	PORT_DIPSETTING(    0x04, "2 Coins 1 Play" )
-	PORT_DIPNAME( 0x30, 0x30, "Bonus" )
-	PORT_DIPSETTING(    0x30, "5000 pts" )
-	PORT_DIPSETTING(    0x20, "10000 pts" )
-	PORT_DIPSETTING(    0x10, "15000 pts" )
-	PORT_DIPSETTING(    0x00, "No Bonus" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
+/* 0c gives 1C_1C */
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x30, "5000" )
+	PORT_DIPSETTING(    0x20, "10000" )
+	PORT_DIPSETTING(    0x10, "15000" )
+	PORT_DIPSETTING(    0x00, "None" )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
@@ -530,8 +532,8 @@ static struct GfxLayout cosmicalien_spritelayout16 =
 	64,					/* 64 sprites */
 	2,					/* 2 bits per pixel */
 	{ 0, 64*16*16 },	/* the two bitplanes are separated */
-    { 0,1,2,3,4,5,6,7,16*8+0,16*8+1,16*8+2,16*8+3,16*8+4,16*8+5,16*8+6,16*8+7},
-  	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
+	{ 0,1,2,3,4,5,6,7,16*8+0,16*8+1,16*8+2,16*8+3,16*8+4,16*8+5,16*8+6,16*8+7},
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
 	32*8				/* every sprite takes 32 consecutive bytes */
 };
 
@@ -544,7 +546,7 @@ static struct GfxLayout cosmicalien_spritelayout32 =
 	{ 0,1,2,3,4,5,6,7,
 	  32*8+0, 32*8+1, 32*8+2, 32*8+3, 32*8+4, 32*8+5, 32*8+6, 32*8+7,
 	  64*8+0, 64*8+1, 64*8+2, 64*8+3, 64*8+4, 64*8+5, 64*8+6, 64*8+7,
-      96*8+0, 96*8+1, 96*8+2, 96*8+3, 96*8+4, 96*8+5, 96*8+6, 96*8+7 },
+  96*8+0, 96*8+1, 96*8+2, 96*8+3, 96*8+4, 96*8+5, 96*8+6, 96*8+7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8, 16*8, 17*8,18*8,19*8,20*8,21*8,22*8,23*8,24*8,25*8,26*8,27*8,28*8,29*8,30*8,31*8 },
 	128*8				/* every sprite takes 128 consecutive bytes */
 };
@@ -642,11 +644,11 @@ ROM_START( cosmicalien_rom )
 
 	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "r6",           0x0000, 0x0800, 0x431e866c )
-  	ROM_LOAD( "r7",           0x0800, 0x0800, 0xaa6c6079 )
+	ROM_LOAD( "r7",           0x0800, 0x0800, 0xaa6c6079 )
 
 	ROM_REGION(0x0420)	/* color PROMs */
-	ROM_LOAD( "BPR1",         0x0000, 0x0020, 0xdfb60f19 )
-	ROM_LOAD( "R9",           0x0020, 0x0400, 0xea4ee931 )
+	ROM_LOAD( "bpr1",         0x0000, 0x0020, 0xdfb60f19 )
+	ROM_LOAD( "r9",           0x0020, 0x0400, 0xea4ee931 )
 ROM_END
 
 struct GameDriver cosmica_driver =
@@ -717,9 +719,9 @@ static struct MemoryReadAddress cosmicguerilla_readmem[] =
 
 static struct MemoryWriteAddress cosmicguerilla_writemem[] =
 {
-  	{ 0x2000, 0x23ff, MWA_RAM },
+	{ 0x2000, 0x23ff, MWA_RAM },
 	{ 0x2400, 0x3bff, cosmic_videoram_w, &cosmic_videoram },
-  	{ 0x3C00, 0x3fff, MWA_RAM },
+	{ 0x3C00, 0x3fff, MWA_RAM },
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -737,7 +739,7 @@ static const char *cosmicguerilla_sample_names[] =
 	"CG_M7.wav",
 	"CG_ATT.wav",	/* Killer Attack */
 	"CG_CHNC.wav",	/* Bonus Chance  */
-	"CG_EXT.wav",	/* Got Bonus - have not got sound for, so use extend */
+	"CG_GOTB.wav",	/* Got Bonus - have not got correct sound for */
 	"CG_DEST.wav",	/* Gun Destroy */
 	"CG_GUN.wav",	/* Gun Shot */
 	"CG_GOTM.wav",	/* Got Monster */
@@ -849,6 +851,7 @@ void cosmicguerilla_output_w(int offset, int data)
                      break;
 
             case 14: GunDieSelect = data;
+                     break;
 
 
             /* Coin Extend (extra base) */
@@ -923,24 +926,24 @@ static void cosmicguerilla_decode(void)
 INPUT_PORTS_START( cosmicguerilla_input_ports )
 
 	PORT_START /* 4-7 */
-    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
-    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
-    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 )
-    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 
 	PORT_START /* 8-15 */
-    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
-    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL)
-    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL)
-	PORT_DIPNAME( 0x30, 0x30, "Bonus" )
-	PORT_DIPSETTING(    0x30, "2000 pts" )
-	PORT_DIPSETTING(    0x20, "1500 pts" )
-	PORT_DIPSETTING(    0x10, "1000 pts" )
-	PORT_DIPSETTING(    0x00, "No Bonus" )
-	PORT_DIPNAME( 0x40, 0x00, "Coins" )
-	PORT_DIPSETTING(    0x00, "1 Coin 1 Play" )
-	PORT_DIPSETTING(    0x40, "2 Coins 1 Play" )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL)
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x10, "1000" )
+	PORT_DIPSETTING(    0x20, "1500" )
+	PORT_DIPSETTING(    0x30, "2000" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x80, "5" )
@@ -966,9 +969,9 @@ INPUT_PORTS_START( cosmicguerilla_input_ports )
     /* and again, is not read by the program, but wired into    */
     /* the watchdog circuit. The book says to leave it off      */
 
-    PORT_DIPNAME( 0x04, 0x00, "Not used by Game" )
-    PORT_DIPSETTING(    0x00, "Default" )
-    PORT_DIPSETTING(    0x04, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
 
 INPUT_PORTS_END
 
@@ -1071,7 +1074,7 @@ ROM_START( cosmicguerilla_rom )
 	ROM_LOAD( "cosmicg7.bin",  0x1800, 0x0400, 0xf33ebae7 )
 	ROM_LOAD( "cosmicg8.bin",  0x1C00, 0x0400, 0x472e4990 )
 
-    ROM_REGION(0x0400)	/* Colour Prom */
+	ROM_REGION(0x0400)	/* Colour Prom */
 	ROM_LOAD( "cosmicg9.bin",  0x0000, 0x0400, 0x689c2c96 )
 ROM_END
 
@@ -1155,20 +1158,21 @@ static struct MemoryReadAddress magspot2_readmem[] =
 
 static struct MemoryWriteAddress magspot2_writemem[] =
 {
+	{ 0x0000, 0x2fff, MWA_ROM },
 	{ 0x4000, 0x401f, MWA_RAM, &spriteram, &spriteram_size},
 	{ 0x4800, 0x4800, DAC_data_w },
-    { 0x480D, 0x480D, magspot2_colourmap_w },
-    { 0x480F, 0x480F, cosmic_flipscreen_w },
+	{ 0x480D, 0x480D, magspot2_colourmap_w },
+	{ 0x480F, 0x480F, cosmic_flipscreen_w },
 	{ 0x6000, 0x63ff, MWA_RAM },
 	{ 0x6400, 0x7bff, cosmic_videoram_w, &cosmic_videoram, &videoram_size},
-    { 0x7c00, 0x7fff, MWA_RAM },
+	{ 0x7c00, 0x7fff, MWA_RAM },
 	{ -1 }	/* end of table */
 };
 
 INPUT_PORTS_START( magspot2_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_BIT( 0x1c, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_DIPNAME( 0xc0, 0x40, "Bonus Game" )
@@ -1179,7 +1183,7 @@ INPUT_PORTS_START( magspot2_input_ports )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x1c, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1206,7 +1210,7 @@ INPUT_PORTS_START( magspot2_input_ports )
 
 	PORT_START	/* IN3 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK )
-  	PORT_BIT( 0x3e, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x3e, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
@@ -1351,7 +1355,7 @@ static struct MemoryReadAddress devzone_readmem[] =
 	{ 0x5001, 0x5001, input_port_1_r },
 	{ 0x5002, 0x5002, input_port_2_r },
 	{ 0x5003, 0x5003, input_port_3_r },
-    { 0x6000, 0x6001, MRA_RAM },
+	{ 0x6000, 0x6001, MRA_RAM },
 	{ 0x6002, 0x6002, input_port_5_r },
 	{ 0x6003, 0x7fff, MRA_RAM },
 	{ -1 }	/* end of table */
@@ -1359,13 +1363,14 @@ static struct MemoryReadAddress devzone_readmem[] =
 
 static struct MemoryWriteAddress devzone_writemem[] =
 {
+	{ 0x0000, 0x2fff, MWA_ROM },
 	{ 0x4000, 0x401f, MWA_RAM, &spriteram, &spriteram_size},
 	{ 0x4800, 0x4800, DAC_data_w },
-    { 0x480D, 0x480D, magspot2_colourmap_w },
-    { 0x480F, 0x480F, cosmic_flipscreen_w },
+	{ 0x480D, 0x480D, magspot2_colourmap_w },
+	{ 0x480F, 0x480F, cosmic_flipscreen_w },
 	{ 0x6000, 0x63ff, MWA_RAM },
 	{ 0x6400, 0x7bff, cosmic_videoram_w, &cosmic_videoram, &videoram_size},
-    { 0x7c00, 0x7fff, MWA_RAM },
+	{ 0x7c00, 0x7fff, MWA_RAM },
 	{ -1 }	/* end of table */
 };
 
@@ -1411,45 +1416,41 @@ static struct MachineDriver devzone_machine_driver =
 INPUT_PORTS_START( devzone_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_BIT( 0x1c, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x1c, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN2 */
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPSETTING(    0x01, "4000" )
 	PORT_DIPSETTING(    0x02, "6000" )
 	PORT_DIPSETTING(    0x03, "8000" )
-
-    PORT_DIPNAME( 0x0C, 0x0C, IP_NAME_DEFAULT )
-	PORT_DIPSETTING(    0x0C, "Use Coin A & B" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x0c, 0x0c, IP_NAME_DEFAULT )
+	PORT_DIPSETTING(    0x0c, "Use Coin A & B" )
 	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
-
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x10, "3" )
-
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
-
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START	/* IN3 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
-  	PORT_BIT( 0x3e, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x3e, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
@@ -1537,3 +1538,394 @@ struct GameDriver devzone_driver =
 
 	0, 0
 };
+
+/***************************************************************************
+
+  No Mans Land
+
+***************************************************************************/
+
+void nomanland_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void nomanland_background_w(int offset, int data);
+
+static struct GfxLayout nomanland_treelayout =
+{
+	32,32,				/* 16*16 sprites */
+	4,					/* 8 sprites */
+	2,					/* 2 bits per pixel */
+	{ 0, 8*128*8 },	/* the two bitplanes are separated */
+	{ 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32, 8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32,
+	 16*32, 17*32, 18*32, 19*32, 20*32, 21*32, 22*32, 23*32, 24*32, 25*32, 26*32, 27*32, 28*32, 29*32, 30*32, 31*32 },
+	128*8				/* every sprite takes 128 consecutive bytes */
+};
+
+static struct GfxLayout nomanland_waterlayout =
+{
+	16,32,				/* 16*16 sprites */
+	4,					/* 8 sprites */
+	2,					/* 2 bits per pixel */
+	{ 0, 8*128*8 },	/* the two bitplanes are separated */
+	{ 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32, 8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32,
+	 16*32, 17*32, 18*32, 19*32, 20*32, 21*32, 22*32, 23*32, 24*32, 25*32, 26*32, 27*32, 28*32, 29*32, 30*32, 31*32 },
+	128*8				/* every sprite takes 128 consecutive bytes */
+};
+
+static struct GfxDecodeInfo nomanland_gfxdecodeinfo[] =
+{
+	{ 1, 0x0000, &cosmicalien_spritelayout16,  0,  8 },
+	{ 1, 0x1000, &nomanland_treelayout,        0,  9 },
+	{ 1, 0x1200, &nomanland_waterlayout,       0,  9 },
+	{ 1, 0x1202, &nomanland_waterlayout,       0,  9 },
+	{ -1 } /* end of array */
+};
+
+int nomanland_interrupt(void)
+{
+	if (readinputport(4) & 1)	/* Left Coin */
+		return nmi_interrupt();
+    else
+       	return ignore_interrupt();
+}
+
+/* Has 8 way joystick, remap combinations to missing directions */
+
+int nomanland_port_r(int offset)
+{
+	int control;
+    int fire = input_port_3_r(0);
+
+	if (offset)
+		control = input_port_1_r(0);
+    else
+		control = input_port_0_r(0);
+
+    /* If firing - stop tank */
+
+    if ((fire & 0xc0) == 0) return 0xff;
+
+    /* set bit according to 8 way direction */
+
+    if ((control & 0x82) == 0 ) return 0xfe;    /* Up & Left */
+    if ((control & 0x0a) == 0 ) return 0xfb;    /* Down & Left */
+    if ((control & 0x28) == 0 ) return 0xef;    /* Down & Right */
+    if ((control & 0xa0) == 0 ) return 0xbf;    /* Up & Right */
+
+    return control;
+}
+
+static struct MemoryReadAddress nomanland_readmem[] =
+{
+	{ 0x0000, 0x2fff, MRA_ROM },
+	{ 0x3800, 0x3807, magspot2_coinage_dip_r },
+	{ 0x5000, 0x5001, nomanland_port_r },
+	{ 0x5002, 0x5002, input_port_2_r },
+	{ 0x5003, 0x5003, input_port_3_r },
+	{ 0x6000, 0x7fff, MRA_RAM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryReadAddress nomanland2_readmem[] =
+{
+	{ 0x0000, 0x2fff, MRA_ROM },
+//	{ 0x3800, 0x3807, magspot2_coinage_dip_r },
+	{ 0x5000, 0x5001, nomanland_port_r },
+	{ 0x5002, 0x5002, input_port_2_r },
+	{ 0x5003, 0x5003, input_port_3_r },
+	{ 0x6000, 0x7fff, MRA_RAM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress nomanland_writemem[] =
+{
+	{ 0x0000, 0x2fff, MWA_ROM },
+	{ 0x4000, 0x401f, MWA_RAM, &spriteram, &spriteram_size},
+	{ 0x4807, 0x4807, nomanland_background_w },
+	{ 0x480A, 0x480A, DAC_data_w },
+	{ 0x480D, 0x480D, magspot2_colourmap_w },
+	{ 0x480F, 0x480F, cosmic_flipscreen_w },
+	{ 0x6000, 0x63ff, MWA_RAM },
+	{ 0x6400, 0x7bff, cosmic_videoram_w, &cosmic_videoram, &videoram_size},
+	{ 0x7c00, 0x7fff, MWA_RAM },
+	{ -1 }	/* end of table */
+};
+
+ROM_START( nomanland_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "1.bin",  0x0000, 0x0800, 0xba117ba6 )
+	ROM_LOAD( "2.bin",  0x0800, 0x0800, 0xe5ed654f )
+	ROM_LOAD( "3.bin",  0x1000, 0x0800, 0x7fc42724 )
+	ROM_LOAD( "5.bin",  0x1800, 0x0800, 0x9cc2f1d9 )
+	ROM_LOAD( "4.bin",  0x2000, 0x0800, 0x0e8cd46a )
+	ROM_LOAD( "6.bin",  0x2800, 0x0800, 0xba472ba5 )
+
+	ROM_REGION_DISPOSE(0x1800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "nml7.n1",  0x0800, 0x0800, 0xd08ed22f )
+	ROM_LOAD( "nml8.n2",  0x0000, 0x0800, 0x739009b4 )
+	ROM_LOAD( "nl11.ic7", 0x1000, 0x0400, 0xe717b241 )
+	ROM_LOAD( "nl10.ic4", 0x1400, 0x0400, 0x5b13f64e )
+
+	ROM_REGION(0x0420)	/* color proms */
+	ROM_LOAD( "nml.clr",  0x0000, 0x0020, 0x65e911f9 )
+	ROM_LOAD( "nl9.e2",   0x0020, 0x0400, 0x9e05f14e )
+ROM_END
+
+ROM_START( nomanlandg_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "nml1.e3",  0x0000, 0x0800, 0xe212ed91 )
+	ROM_LOAD( "nml2.e4",  0x0800, 0x0800, 0xf66ef3d8 )
+	ROM_LOAD( "nml3.e5",  0x1000, 0x0800, 0xd422fc8a )
+	ROM_LOAD( "nml5.e7",  0x1800, 0x0800, 0xd58952ac )
+	ROM_LOAD( "nml4.e6",  0x2000, 0x0800, 0x994c9afb )
+	ROM_LOAD( "nml6.e8",  0x2800, 0x0800, 0x01ed2d8c )
+
+	ROM_REGION_DISPOSE(0x1800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "nml7.n1",  0x0800, 0x0800, 0xd08ed22f )
+	ROM_LOAD( "nml8.n2",  0x0000, 0x0800, 0x739009b4 )
+	ROM_LOAD( "nl11.ic7", 0x1000, 0x0400, 0xe717b241 )
+	ROM_LOAD( "nl10.ic4", 0x1400, 0x0400, 0x5b13f64e )
+
+	ROM_REGION(0x0420)	/* color proms */
+	ROM_LOAD( "nml.clr",  0x0000, 0x0020, 0x65e911f9 )
+	ROM_LOAD( "nl9.e2",   0x0020, 0x0400, 0x9e05f14e )
+ROM_END
+
+static struct MachineDriver nomanland_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			18432000/6,	/* 3.072 Mhz ???? */
+			0,
+			nomanland_readmem,nomanland_writemem,0,0,
+			nomanland_interrupt,1
+		},
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame */
+	0,
+
+	/* video hardware */
+  	32*8, 24*8, { 0*8, 32*8-1, 0*8, 24*8-1 },
+	nomanland_gfxdecodeinfo,
+	16, 16*4,
+	nomanland_vh_convert_color_prom,
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	0,
+	cosmic_vh_start,
+	cosmic_vh_stop,
+	cosmic_vh_screenrefresh_sprites,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
+};
+
+static struct MachineDriver nomanland2_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			18432000/6,	/* 3.072 Mhz ???? */
+			0,
+			nomanland2_readmem,nomanland_writemem,0,0,
+			nomanland_interrupt,1
+		},
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame */
+	0,
+
+	/* video hardware */
+  	32*8, 24*8, { 0*8, 32*8-1, 0*8, 24*8-1 },
+	nomanland_gfxdecodeinfo,
+	16, 16*4,
+	nomanland_vh_convert_color_prom,
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	0,
+	cosmic_vh_start,
+	cosmic_vh_stop,
+	cosmic_vh_screenrefresh_sprites,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
+};
+
+INPUT_PORTS_START( nomanland_input_ports )
+	PORT_START	/* Controls - Remapped for game */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x55, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x55, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN2 */
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x01, "3000" )
+	PORT_DIPSETTING(    0x02, "5000" )
+	PORT_DIPSETTING(    0x03, "8000" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x10, "3" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START	/* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x3e, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
+
+	/* Fake port to handle coins */
+	PORT_START	/* IN4 */
+	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+
+	PORT_START	/* IN5 */
+	PORT_DIPNAME( 0xf0, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0xd0, "4 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x50, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0xf0, "4 Coins/4 Credits" )
+	PORT_DIPSETTING(    0xa0, "3 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x60, "2 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_5C ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( nomanland2_input_ports )
+	PORT_START	/* Controls - Remapped for game */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x55, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x55, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN2 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x01, "2000" )
+	PORT_DIPSETTING(    0x02, "3000" )
+	PORT_DIPSETTING(    0x03, "5000" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x0c, "2 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x10, "5" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START	/* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x3e, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
+
+	/* Fake port to handle coins */
+	PORT_START	/* IN4 */
+	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+INPUT_PORTS_END
+
+struct GameDriver nomnlnd_driver =
+{
+	__FILE__,
+	0,
+	"nomnlnd",
+	"No Man's Land",
+	"1980?",
+	"Universal",
+	"Mike Coates",
+	0,
+	&nomanland_machine_driver,
+	0,
+
+	nomanland_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	nomanland_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	0, 0
+};
+
+struct GameDriver nomnlndg_driver =
+{
+	__FILE__,
+	&nomnlnd_driver,
+	"nomnlndg",
+	"No Man's Land (Gottlieb)",
+	"1980?",
+	"Universal (Gottlieb license)",
+	"Mike Coates",
+	0,
+	&nomanland2_machine_driver,
+	0,
+
+	nomanlandg_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	nomanland2_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	0, 0
+};
+

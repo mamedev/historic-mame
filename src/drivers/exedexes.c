@@ -264,7 +264,8 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	1500000,	/* 1.5 MHz ? */
-	{ 128, 128 },
+	{ 15, 15 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -275,7 +276,7 @@ static struct SN76496interface sn76496_interface =
 {
 	2,	/* 2 chips */
 	3000000,	/* 3 MHz????? */
-	{ 255, 255 }
+	{ 30, 30 }
 };
 
 

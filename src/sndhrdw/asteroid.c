@@ -250,7 +250,7 @@ int llander_sh_start(const struct MachineSound *msound)
 
 	/* Allocate channel and buffer */
 
-	channel = get_play_channels(1);
+	channel = mixer_allocate_channel(25);
 
 	if ((sample_buffer = malloc((Machine->sample_bits/8)*buffer_len)) == 0) return 1;
 	memset(sample_buffer,0,(Machine->sample_bits/8)*buffer_len);
@@ -426,11 +426,11 @@ void llander_sh_update(void)
 
 	if( Machine->sample_bits == 16 )
 	{
-	        osd_play_streamed_sample_16(channel,sample_buffer,2*buffer_len,emulation_rate,0xff,OSD_PAN_CENTER);
+		mixer_play_streamed_sample_16(channel,sample_buffer,2*buffer_len,emulation_rate);
 	}
 	else
 	{
-	        osd_play_streamed_sample(channel,sample_buffer,buffer_len,emulation_rate,0xff,OSD_PAN_CENTER);
+		mixer_play_streamed_sample(channel,sample_buffer,buffer_len,emulation_rate);
 	}
 }
 

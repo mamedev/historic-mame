@@ -2239,7 +2239,7 @@ struct GameDriver kidniki_driver =
 	__FILE__,
 	0,
 	"kidniki",
-	"Kid Niki, Radical Ninja",
+	"Kid Niki - Radical Ninja",
 	"1986",
 	"Irem (Data East USA license)",
 	"Phil Stroffolino\nAaron Giles (sound)",

@@ -1,22 +1,27 @@
 #include "driver.h"
 #include "info.h"
+#include "datafile.h"
 
-
-
-/* ------------------------------------------------------------------------*/
 /* Output format indentation */
 
-/* Indent one level */
+/* Indentation */
 #define INDENT "\t"
 
-/* Level format
-  L list
-  1,2 level
-  B,S,E list Begin, list Separator, list End
+/* Possible output format */
+#define OUTPUT_FORMAT_UNFORMATTED 0
+#define OUTPUT_FORMAT_ONE_LEVEL 1
+#define OUTPUT_FORMAT_TWO_LEVEL 2
+
+/* Output format */
+#define OUTPUT_FORMAT OUTPUT_FORMAT_ONE_LEVEL
+
+/* Output format configuration
+	L list
+	1,2 levels
+	B,S,E Begin, Separator, End
 */
 
-#if 0
-/* Binary */
+#if OUTPUT_FORMAT == OUTPUT_FORMAT_UNFORMATTED
 #define L1B "("
 #define L1P " "
 #define L1N ""
@@ -25,57 +30,89 @@
 #define L2P " "
 #define L2N ""
 #define L2E ")"
-
-#else
-/* Indentation */
-
-/* One per line */
+#elif OUTPUT_FORMAT == OUTPUT_FORMAT_ONE_LEVEL
 #define L1B " (\n"
 #define L1P INDENT
 #define L1N "\n"
 #define L1E ")\n\n"
-
-#if 1
-/* All in line */
 #define L2B " ("
 #define L2P " "
 #define L2N ""
 #define L2E " )"
-#else
-/* One per line */
+#elif OUTPUT_FORMAT == OUTPUT_FORMAT_TWO_LEVEL
+#define L1B " (\n"
+#define L1P INDENT
+#define L1N "\n"
+#define L1E ")\n\n"
 #define L2B " (\n"
 #define L2P INDENT INDENT
 #define L2N "\n"
 #define L2E INDENT ")"
+#else
+#error Wrong OUTPUT_FORMAT
 #endif
 
-#endif
-
-/* ------------------------------------------------------------------------*/
-/* Print the MAME info record for a game */
-
+/* Print a string in C format */
 static void print_c_string(FILE* out, const char* s) {
 	fprintf(out, "\"");
-	while (*s) {
-		switch (*s) {
-			case '\a' : fprintf(out, "\\a"); break;
-			case '\b' : fprintf(out, "\\b"); break;
-			case '\f' : fprintf(out, "\\f"); break;
-			case '\n' : fprintf(out, "\\n"); break;
-			case '\r' : fprintf(out, "\\r"); break;
-			case '\t' : fprintf(out, "\\t"); break;
-			case '\v' : fprintf(out, "\\v"); break;
-			case '\\' : fprintf(out, "\\\\"); break;
-			case '\"' : fprintf(out, "\\\""); break;
-			default:
-				if (*s>=' ' && *s<='~')
-					fprintf(out, "%c", *s);
-				else
-					fprintf(out, "\\x%2x", (int)*s);
+	if (s) {
+		while (*s) {
+			switch (*s) {
+				case '\a' : fprintf(out, "\\a"); break;
+				case '\b' : fprintf(out, "\\b"); break;
+				case '\f' : fprintf(out, "\\f"); break;
+				case '\n' : fprintf(out, "\\n"); break;
+				case '\r' : fprintf(out, "\\r"); break;
+				case '\t' : fprintf(out, "\\t"); break;
+				case '\v' : fprintf(out, "\\v"); break;
+				case '\\' : fprintf(out, "\\\\"); break;
+				case '\"' : fprintf(out, "\\\""); break;
+				default:
+					if (*s>=' ' && *s<='~')
+						fprintf(out, "%c", *s);
+					else
+						fprintf(out, "\\x%02x", (unsigned)(unsigned char)*s);
+			}
+			++s;
 		}
-		++s;
 	}
 	fprintf(out, "\"");
+}
+
+static void print_game_switch(FILE* out, const struct GameDriver* game) {
+	const struct InputPort* input = game->input_ports;
+
+	while ((input->type & ~IPF_MASK) != IPT_END) {
+		if ((input->type & ~IPF_MASK)==IPT_DIPSWITCH_NAME) {
+			int def = input->default_value;
+			const char* def_name = 0;
+
+			fprintf(out, L1P "dipswitch" L2B);
+
+			fprintf(out, L2P "name " );
+			print_c_string(out,input->name);
+			fprintf(out, "%s", L2N);
+			++input;
+
+			while ((input->type & ~IPF_MASK)==IPT_DIPSWITCH_SETTING) {
+				if (def == input->default_value)
+					def_name = input->name;
+				fprintf(out, L2P "entry " );
+				print_c_string(out,input->name);
+				fprintf(out, "%s", L2N);
+				++input;
+			}
+
+			if (def_name) {
+				fprintf(out, L2P "default ");
+				print_c_string(out,def_name);
+				fprintf(out, "%s", L2N);
+			}
+
+			fprintf(out, L2E L1N);
+		}
+		++input;
+	}
 }
 
 static void print_game_input(FILE* out, const struct GameDriver* game) {
@@ -84,6 +121,8 @@ static void print_game_input(FILE* out, const struct GameDriver* game) {
 	const char* control = 0;
 	int nbutton = 0;
 	int ncoin = 0;
+	const char* service = 0;
+	const char* tilt = 0;
 
 	while ((input->type & ~IPF_MASK) != IPT_END) {
 		switch (input->type & IPF_PLAYERMASK) {
@@ -105,14 +144,14 @@ static void print_game_input(FILE* out, const struct GameDriver* game) {
 			case IPT_JOYSTICK_DOWN:
 			case IPT_JOYSTICK_LEFT:
 			case IPT_JOYSTICK_RIGHT:
-			case IPT_JOYSTICKRIGHT_UP:
 				if (input->type & IPF_2WAY)
 					control = "joy2way";
-				else if	(input->type & IPF_4WAY)
+				else if (input->type & IPF_4WAY)
 					control = "joy4way";
 				else
 					control = "joy8way";
 				break;
+			case IPT_JOYSTICKRIGHT_UP:
 			case IPT_JOYSTICKRIGHT_DOWN:
 			case IPT_JOYSTICKRIGHT_LEFT:
 			case IPT_JOYSTICKRIGHT_RIGHT:
@@ -122,7 +161,7 @@ static void print_game_input(FILE* out, const struct GameDriver* game) {
 			case IPT_JOYSTICKLEFT_RIGHT:
 				if (input->type & IPF_2WAY)
 					control = "doublejoy2way";
-				else if	(input->type & IPF_4WAY)
+				else if (input->type & IPF_4WAY)
 					control = "doublejoy4way";
 				else
 					control = "doublejoy8way";
@@ -177,6 +216,12 @@ static void print_game_input(FILE* out, const struct GameDriver* game) {
 			case IPT_COIN4:
 				if (ncoin < 4) ncoin = 4;
 				break;
+			case IPT_SERVICE :
+				service = "yes";
+				break;
+			case IPT_TILT :
+				tilt = "yes";
+				break;
 		}
 		++input;
 	}
@@ -189,7 +234,11 @@ static void print_game_input(FILE* out, const struct GameDriver* game) {
 		fprintf(out, L2P "buttons %d" L2N, nbutton );
 	if (ncoin)
 		fprintf(out, L2P "coins %d" L2N, ncoin );
-	fprintf(out, "%s", L2E L1N);
+	if (service)
+		fprintf(out, L2P "service %s" L2N, service );
+	if (tilt)
+		fprintf(out, L2P "tilt %s" L2N, tilt );
+	fprintf(out, L2E L1N);
 }
 
 static void print_game_rom(FILE* out, const struct GameDriver* game) {
@@ -203,17 +252,17 @@ static void print_game_rom(FILE* out, const struct GameDriver* game) {
 		rom++;
 
 		while (rom->length) {
-            char name[100];
+			char name[100];
 			int length,crc,in_parent;
 
 			sprintf(name,rom->name,game->name);
 			crc = rom->crc;
 
 			in_parent = 0;
-            length = 0;
+			length = 0;
 			do {
 				if (rom->name == (char *)-1)
-					length = 0;	/* restart */
+					length = 0; /* restart */
 				length += rom->length & ~ROMFLAG_MASK;
 				rom++;
 			} while (rom->length && (rom->name == 0 || rom->name == (char *)-1));
@@ -233,16 +282,16 @@ static void print_game_rom(FILE* out, const struct GameDriver* game) {
 						} while (!in_parent && p_rom->length && (p_rom->name == 0 || p_rom->name == (char *)-1));
 					}
 				}
-            }
+			}
 
-            fprintf(out, L1P "rom" L2B);
+			fprintf(out, L1P "rom" L2B);
 			if (*name)
 				fprintf(out, L2P "name %s" L2N, name );
-			if(in_parent && p_rom)
-                fprintf(out, L2P "merge %s" L2N, p_rom->name);
-            fprintf(out, L2P "size %d" L2N, length );
+			if(in_parent && p_rom && p_rom->name)
+				fprintf(out, L2P "merge %s" L2N, p_rom->name);
+			fprintf(out, L2P "size %d" L2N, length );
 			fprintf(out, L2P "crc %08x" L2N, crc );
-			fprintf(out, "%s", L2E L1N);
+			fprintf(out, L2E L1N);
 		}
 	}
 }
@@ -315,7 +364,7 @@ static void print_game_micro(FILE* out, const struct GameDriver* game)
 			fprintf(out, L2P "name %s" L2N, cputype_name(cpu[j].cpu_type));
 
 			fprintf(out, L2P "clock %d" L2N, cpu[j].cpu_clock);
-			fprintf(out, "%s", L2E L1N);
+			fprintf(out, L2E L1N);
 		}
 	}
 
@@ -333,9 +382,9 @@ static void print_game_micro(FILE* out, const struct GameDriver* game)
 				fprintf(out, L1P "chip" L2B);
 				fprintf(out, L2P "type audio" L2N);
 				fprintf(out, L2P "name %s" L2N, sound_name(&sound[j]));
-				if (sound_num(&sound[j]))
-					fprintf(out, L2P "clock %d" L2N, sound_num(&sound[j]));
-				fprintf(out, "%s", L2E L1N);
+				if (sound_clock(&sound[j]))
+					fprintf(out, L2P "clock %d" L2N, sound_clock(&sound[j]));
+				fprintf(out, L2E L1N);
 			}
 		}
 	}
@@ -363,7 +412,57 @@ static void print_game_video(FILE* out, const struct GameDriver* game) {
 	}
 	fprintf(out, L2P "colors %d" L2N, driver->total_colors);
 	fprintf(out, L2P "freq %d" L2N, driver->frames_per_second);
-	fprintf(out, "%s", L2E L1N);
+	fprintf(out, L2E L1N);
+}
+
+static void print_game_sound(FILE* out, const struct GameDriver* game) {
+	const struct MachineDriver* driver = game->drv;
+	const struct MachineCPU* cpu = driver->cpu;
+	const struct MachineSound* sound = driver->sound;
+
+	/* check if the game have sound emulation */
+	int has_sound = 0;
+	int i;
+
+	i = 0;
+	while (i < MAX_SOUND && !has_sound)
+	{
+		if (sound[i].sound_type)
+			has_sound = 1;
+		++i;
+	}
+	i = 0;
+	while (i < MAX_CPU && !has_sound)
+	{
+		if  ((cpu[i].cpu_type & CPU_AUDIO_CPU)!=0)
+			has_sound = 1;
+		++i;
+	}
+
+	fprintf(out, L1P "sound" L2B);
+
+	/* sound channel */
+	if (has_sound) {
+		if (driver->sound_attributes & SOUND_SUPPORTS_STEREO)
+			fprintf(out, L2P "channels 2" L2N);
+		else
+			fprintf(out, L2P "channels 1" L2N);
+	} else
+		fprintf(out, L2P "channels 0" L2N);
+
+	fprintf(out, L2E L1N);
+}
+
+#define HISTORY_BUFFER_MAX 16384
+
+static void print_game_history(FILE* out, const struct GameDriver* game) {
+	char buffer[HISTORY_BUFFER_MAX];
+
+	if (load_driver_history(game,buffer,HISTORY_BUFFER_MAX)==0) {
+		fprintf(out, L1P "history ");
+		print_c_string(out, buffer);
+		fprintf(out, "%s", L1N);
+	}
 }
 
 static void print_game_driver(FILE* out, const struct GameDriver* game) {
@@ -382,6 +481,13 @@ static void print_game_driver(FILE* out, const struct GameDriver* game) {
 	else
 		fprintf(out, L2P "color good" L2N);
 
+	if (game->flags & GAME_NO_SOUND)
+		fprintf(out, L2P "sound preliminary" L2N);
+	else if (game->flags & GAME_IMPERFECT_SOUND)
+		fprintf(out, L2P "sound imperfect" L2N);
+	else
+		fprintf(out, L2P "sound good" L2N);
+
 	if (game->hiscore_load && game->hiscore_save)
 		fprintf(out, L2P "hiscore good" L2N);
 	else
@@ -396,9 +502,10 @@ static void print_game_driver(FILE* out, const struct GameDriver* game) {
 	print_c_string(out, game->credits );
 	fprintf(out, "%s", L2N);
 
-	fprintf(out, "%s", L2E L1N);
+	fprintf(out, L2E L1N);
 }
 
+/* Print the MAME info record for a game */
 static void print_game_info(FILE* out, const struct GameDriver* game) {
 
 	fprintf(out, "game" L1B );
@@ -421,6 +528,8 @@ static void print_game_info(FILE* out, const struct GameDriver* game) {
 		fprintf(out, "%s", L1N);
 	}
 
+	print_game_history(out,game);
+
 	/* print the cloneof only if is not a neogeo game */
 	if (game->clone_of && game->clone_of != game && strcmp(game->clone_of->name,"neogeo")!=0) {
 		fprintf(out, L1P "cloneof %s" L1N, game->clone_of->name);
@@ -430,13 +539,14 @@ static void print_game_info(FILE* out, const struct GameDriver* game) {
 	print_game_sample(out,game);
 	print_game_micro(out,game);
 	print_game_video(out,game);
+	print_game_sound(out,game);
 	print_game_input(out,game);
+	print_game_switch(out,game);
 	print_game_driver(out,game);
 
-	fprintf(out, "%s", L1E);
+	fprintf(out, L1E);
 }
 
-/* ------------------------------------------------------------------------*/
 /* Print all the MAME info database */
 void print_mame_info(FILE* out, const struct GameDriver* games[]) {
 	int j;
@@ -452,18 +562,18 @@ void print_mame_info(FILE* out, const struct GameDriver* games[]) {
 	fprintf(out, L2P "name neo-geo.rom" L2N);
 	fprintf(out, L2P "size 131072" L2N);
 	fprintf(out, L2P "crc 9036d879" L2N);
-	fprintf(out, "%s", L2E L1N);
+	fprintf(out, L2E L1N);
 	fprintf(out, L1P "rom" L2B);
 	fprintf(out, L2P "name ng-sm1.rom" L2N);
 	fprintf(out, L2P "size 131072" L2N);
 	fprintf(out, L2P "crc 97cf998b" L2N);
-	fprintf(out, "%s", L2E L1N);
+	fprintf(out, L2E L1N);
 	fprintf(out, L1P "rom" L2B);
 	fprintf(out, L2P "name ng-sfix.rom" L2N);
 	fprintf(out, L2P "size 131072" L2N);
 	fprintf(out, L2P "crc 354029fc" L2N);
-	fprintf(out, "%s", L2E L1N);
-	fprintf(out, "%s", L1E);
+	fprintf(out, L2E L1N);
+	fprintf(out, L1E);
 
 	fprintf(out, "resource" L1B);
 	fprintf(out, L1P "name ym3812" L1N);
@@ -473,5 +583,5 @@ void print_mame_info(FILE* out, const struct GameDriver* games[]) {
 	fprintf(out, L1P "sample tomtom.wav" L1N);
 	fprintf(out, L1P "sample topcmbal.wav" L1N);
 	fprintf(out, L1P "sample hihat.wav" L1N);
-	fprintf(out, "%s", L1E);
+	fprintf(out, L1E);
 }

@@ -164,7 +164,6 @@ int tmnt_decode_sample(void)
 		return 1;
 
 	samples->sample[0]->length = 0x40000*2;
-	samples->sample[0]->volume = 20;
 	samples->sample[0]->smpfreq = 20000;	/* 20 kHz */
 	samples->sample[0]->resolution = 16;
 	dest = (signed short *)samples->sample[0]->data;
@@ -926,15 +925,15 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3579545,	/* 3.579545 MHz */
-	{ YM3012_VOL(35,OSD_PAN_LEFT,35,OSD_PAN_RIGHT) },
+	{ YM3012_VOL(35,MIXER_PAN_LEFT,35,MIXER_PAN_RIGHT) },
 	{ 0 }
 };
 
 
 static struct K007232_interface k007232_interface =
 {
-	5,5,	/* memory regions */
-	20		/* volume */
+	{5,5},	/* memory regions */
+	{20,20}		/* volume */
 };
 
 static struct UPD7759_interface upd7759_interface =
@@ -950,7 +949,8 @@ static struct UPD7759_interface upd7759_interface =
 
 static struct Samplesinterface samples_interface =
 {
-	1	/* 1 channel for the title music */
+	1,	/* 1 channel for the title music */
+	25	/* volume */
 };
 
 

@@ -356,7 +356,8 @@ unsigned char berzerk_palette[16 * 3] =
 
 static struct Samplesinterface berzerk_samples_interface =
 {
-	8	/* 8 channels */
+	8,	/* 8 channels */
+	25	/* volume */
 };
 
 

@@ -67,10 +67,13 @@ void votrax_w(int data)
    		osd_stop_sample(VotraxChannel);
 
     if(VotraxSamples->sample[Phoneme])
-	    osd_play_sample(VotraxChannel,VotraxSamples->sample[Phoneme]->data,
- 		                              VotraxSamples->sample[Phoneme]->length,
-                                      VotraxBaseFrequency+(256*Intonation),
-                                      VotraxBaseVolume+(8*Intonation),0);
+	{
+		mixer_set_volume(VotraxChannel,VotraxBaseVolume+(8*Intonation)*100/255);
+		mixer_play_sample(VotraxChannel,VotraxSamples->sample[Phoneme]->data,
+				  VotraxSamples->sample[Phoneme]->length,
+				  VotraxBaseFrequency+(256*Intonation),
+				  0);
+	}
 }
 
 int votrax_status_r(void)

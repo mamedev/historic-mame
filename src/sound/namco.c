@@ -53,11 +53,13 @@ static short *mixer_buffer_2;
 
 
 
-/* build a table to divide by the number of voices; gain is specified as gain*16 */
-static int make_mixer_table(int voices, int gain, int bits)
+/* build a table to divide by the number of voices */
+static int make_mixer_table(int voices, int bits)
 {
 	int count = voices * 128;
 	int i;
+	int gain = 16;
+
 
 	/* allocate memory */
 	mixer_table = malloc(256 * voices * bits / 8);
@@ -286,16 +288,15 @@ int namco_sh_start(const struct MachineSound *msound)
 	sample_bits = Machine->sample_bits;
 	if (intf->stereo)
 	{
-		stream = stream_init_multi(msound,2, stereo_names, intf->samplerate, sample_bits, 0, namco_update_stereo);
-		stream_set_volume(stream + 0, intf->volume);
-		stream_set_volume(stream + 1, intf->volume);
-		stream_set_pan(stream + 0, OSD_PAN_LEFT);
-		stream_set_pan(stream + 1, OSD_PAN_RIGHT);
+		int vol[2];
+
+		vol[0] = MIXER(intf->volume,MIXER_PAN_LEFT);
+		vol[1] = MIXER(intf->volume,MIXER_PAN_RIGHT);
+		stream = stream_init_multi(2, stereo_names, vol, intf->samplerate, sample_bits, 0, namco_update_stereo);
 	}
 	else
 	{
-		stream = stream_init(msound,mono_name, intf->samplerate, sample_bits, 0, namco_update_mono);
-		stream_set_volume(stream, intf->volume);
+		stream = stream_init(mono_name, intf->volume, intf->samplerate, sample_bits, 0, namco_update_mono);
 	}
 
 	/* allocate a pair of buffers to mix into - 1 second's worth should be more than enough */
@@ -304,7 +305,7 @@ int namco_sh_start(const struct MachineSound *msound)
 	mixer_buffer_2 = mixer_buffer + intf->samplerate;
 
 	/* build the mixer table */
-	if (make_mixer_table(intf->voices, intf->gain, Machine->sample_bits))
+	if (make_mixer_table(intf->voices, Machine->sample_bits))
 	{
 		free (mixer_buffer);
 		return 1;

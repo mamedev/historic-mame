@@ -18,7 +18,7 @@
 
 
 /* Uncomment to turn on printf code */
-// #define NET_DEBUG
+/* #define NET_DEBUG */
 
 #ifdef NET_DEBUG
 #include <ctype.h>
@@ -32,8 +32,11 @@
 static int _real_net_sync( int first, char type );
 static void net_packet_type_to_string( char type, char packet_type_str[] );
 
+static int vercmp(char *str_a, char *str_b);
+
 /* private vars */
-static char netversion[] = "Rev7.3 ("__DATE__")"; /* RevX.Y X = Protocol version, Y = Tweak/Bug fix revision */
+static char netversion[] = "Rev7.3 ()"; /* RevX.Y X = Protocol version, Y = Tweak/Bug fix revision */
+static char *mameversion = build_version; /* from mame.h and version.c */
 static int is_active = 0;   /* Set to true if the net has been initialized */
 static int in_game = 0;     /* Set to true if we are in a game */
 static int is_client = 1;
@@ -47,8 +50,8 @@ int net_init()
 {
     dprintf(("net_init() called\n"))
     in_game = 0;
-	/*TODO: move is_client setting into os-dependent settings?
-	        should os-independent stuff know about this at all?
+	/* TODO: move is_client setting into os-dependent settings?
+	         should os-independent stuff know about this at all?
 	*/
 	if ( ( is_client = osd_net_init() ) == NET_ERROR )
     {
@@ -59,7 +62,8 @@ int net_init()
 	is_active = 1; /* we're using network */
 
 	/* if we're the client we can do the version checking now
-	      server checks in net_add_player */
+	   server checks in net_add_player
+	*/
 	if ( is_client )
 	{
 		if ( net_vers_check( 0 ) )
@@ -67,10 +71,6 @@ int net_init()
             dprintf(("net_version_check() - FAILED\n"))
 			return 1;
         }
-
-		/* if ( net_game_check( 0 ) )
-		 	return 1;
-        */
 	}
 
     dprintf(("net_init() - SUCCESS\n"))
@@ -179,7 +179,7 @@ int net_vers_check( int player )
 		net_recv( player, NET_INIT_VERS, szVerPeer, NET_MAX_DATA );
 
 		/* Check the app version */
-		if ( strcmp( szVerSelf, szVerPeer ) != 0 )
+		if ( vercmp( szVerSelf, szVerPeer ) != 0 )
 		{
 			printf("Client %d does not match MAME version"
 					"\nServer:%s"
@@ -188,13 +188,13 @@ int net_vers_check( int player )
 		}
 
 		/* Check the network version */
-		else if ( strcmp( (szVerSelf+25), (szVerPeer+25) ) != 0 )
+		else if ( vercmp( (szVerSelf+25), (szVerPeer+25) ) != 0 )
 		{
 			printf("Client %d does not match network support version"
 					"\nServer:%s"
 					"\nClient:%s"
 					, player, (szVerSelf+25), (szVerPeer+25) );
-			//TODO:some sort of prompt for return value...???
+			/* TODO:some sort of prompt for return value...??? */
 		}
 
 		/* else we are successful */
@@ -209,6 +209,33 @@ int net_vers_check( int player )
 
 	return cAck;
 }
+
+
+/*
+   *** rjr *** Compare versions; ignore dates (in parentheses)
+   So recompiling doesn't bring the world to a screeching halt!
+*/
+static int vercmp(char *str_a, char *str_b)
+{
+	char string_a[NET_MAX_DATA];
+	char string_b[NET_MAX_DATA];
+
+	char *p;
+
+	strcpy(string_a, str_a);
+	strcpy(string_b, str_b);
+
+	if (p = strchr(string_a, '('))
+		*p = '\0';
+
+	if (p = strchr(string_b, '('))
+		*p = '\0';
+
+	dprintf(("vercmp(%s,%s)\n", string_a, string_b))
+
+	return strcmp(string_a, string_b);
+}
+
 
 #ifdef NET_DEBUG
 /* Dump a packet in hex and ascii */
@@ -243,7 +270,7 @@ int net_game_check( int player )
         player, (is_client) ? "Client" : "Server", Machine->gamedrv->name))
 	/* Setup rom version info */
 	strcpy( szVerSelf, Machine->gamedrv->name );
-	//TODO: strcpy checksum info?
+	/* TODO: strcpy checksum info? */
 
 	/* do comparisons */
 	if ( is_client )
@@ -343,7 +370,7 @@ static int _real_net_sync( int first, char type )
 		}
 	}
 
-	// error checking?
+	/*  error checking? */
     dprintf(("_real_net_sync() called\n"))
 	return 0;
 }
@@ -447,7 +474,7 @@ int net_input_sync( unsigned char input_port_value[], unsigned char input_port_d
 	}
     dprintf(("net_input_sync() return\n"))
 
-//TODO: error checking
+/* TODO: error checking */
 	return 0;
 }
 
@@ -516,7 +543,7 @@ net_recv_again:
 	if ( new_type != type )
 	{
 		/* if we initiated a quit, we don't care about what we received */
-		//TODO: check type against a mask to see if we care instead of long if block...
+		/* TODO: check type against a mask to see if we care instead of long if block... */
 		if ( ( type == NET_QUIT_QUIT ) || ( type == NET_QUIT_ABRT ) || ( type == NET_QUIT_OKAY ) )
 		{
 			return 0; /* leave buffer alone */
@@ -582,7 +609,7 @@ net_recv_again:
 int net_add_player()
 {
     dprintf(("net_add_player()\n"))
-	/*TODO: make this also work for client for consistency */
+	/* TODO: make this also work for client for consistency */
 
 	/* check if osd adding a client failed */
 	if ( ( num_clients = osd_net_add_player() ) < 0 )
@@ -598,13 +625,8 @@ int net_add_player()
 		return -1;
     }
 
-    /* Done in net_game_init() now */
-	/* if ( net_game_check( num_clients-1 ) )
-		return -1;
-    */
-
-	//TODO: need to shift player info around (currently just sockets - eventually input assignments too )
-	/*TODO: setup player names and such */
+	/* TODO: need to shift player info around (currently just sockets - eventually input assignments too ) */
+	/* TODO: setup player names and such */
     dprintf(("net_add_player() num_clients = %d\n", num_clients))
 	return num_clients; /* we return the new total number of clients */
 }
@@ -613,7 +635,7 @@ int net_remove_player( int player )
 {
     dprintf(("net_remove_player(%d)\n", player ))
 
-	//TODO: need to shift player info around (currently just sockets - eventually input assignments too )
+	/* TODO: need to shift player info around (currently just sockets - eventually input assignments too ) */
 	if ( is_client )
 	{
 		net_exit( NET_QUIT_OKAY );
@@ -622,7 +644,7 @@ int net_remove_player( int player )
 	else
 	{
 		int new_players = osd_net_remove_player( player );
-		//TODO: need to allow server to remain active
+		/* TODO: need to allow server to remain active */
 		if ( new_players == 0 )
 			net_exit( NET_QUIT_OKAY );
 

@@ -352,7 +352,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,                      /* 1 chip */
 	3579580,                /* 3.579580 MHz ? */
-	{ YM3012_VOL(60,OSD_PAN_LEFT,60,OSD_PAN_RIGHT) },
+	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) },
 	{ 0 }
 };
 

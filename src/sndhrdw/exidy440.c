@@ -167,9 +167,11 @@ int exidy440_sh_start(const struct MachineSound *msound)
 	sample_bits = Machine->sample_bits;
 	for (i = 0; i < 4; i++)
 	{
-		sound_channel[i].stream = stream_init_multi(msound,2, &names[i * 2], (i & 2) ? SAMPLE_RATE_SLOW : SAMPLE_RATE_FAST, sample_bits, i, channel_update);
-		stream_set_pan(sound_channel[i].stream + 0, OSD_PAN_LEFT);
-		stream_set_pan(sound_channel[i].stream + 1, OSD_PAN_RIGHT);
+		int vol[2];
+
+		vol[0] = MIXER(100,MIXER_PAN_LEFT);
+		vol[1] = MIXER(100,MIXER_PAN_RIGHT);
+		sound_channel[i].stream = stream_init_multi(2, &names[i * 2], vol, (i & 2) ? SAMPLE_RATE_SLOW : SAMPLE_RATE_FAST, sample_bits, i, channel_update);
 	}
 
 	/* allocate the sample cache */
@@ -217,15 +219,21 @@ void exidy440_sh_update(void)
 	update the two sound streams
 *************************************/
 
-unsigned char *copy_samples_8(unsigned char *dst, unsigned char *src, int count)
+unsigned char *copy_samples_8(unsigned char *dst, unsigned char *src, int count, int volume)
 {
-	memcpy(dst, src, count);
+	int i;
+
+	for (i = 0;i < count;i++)
+		dst[i] = src[i] * volume / 256;
 	return dst + count;
 }
 
-short *copy_samples_16(short *dst, short *src, int count)
+short *copy_samples_16(short *dst, short *src, int count, int volume)
 {
-	memcpy(dst, src, count * 2);
+	int i;
+
+	for (i = 0;i < count;i++)
+		dst[i] = src[i] * volume / 256;
 	return dst + count;
 }
 
@@ -255,14 +263,14 @@ void channel_update(int ch, void **buffer, int length)
 		if (sample_bits == 16)
 		{
 			srcdata = (short *)channel->base + channel->offset;
-			buf_left = copy_samples_16(buf_left, srcdata, samples);
-			buf_right = copy_samples_16(buf_right, srcdata, samples);
+			buf_left = copy_samples_16(buf_left, srcdata, samples, exidy440_sound_volume[2*ch+0]);
+			buf_right = copy_samples_16(buf_right, srcdata, samples, exidy440_sound_volume[2*ch+1]);
 		}
 		else
 		{
 			srcdata = (unsigned char *)channel->base + channel->offset;
-			buf_left = copy_samples_8(buf_left, srcdata, samples);
-			buf_right = copy_samples_8(buf_right, srcdata, samples);
+			buf_left = copy_samples_8(buf_left, srcdata, samples, exidy440_sound_volume[2*ch+0]);
+			buf_right = copy_samples_8(buf_right, srcdata, samples, exidy440_sound_volume[2*ch+1]);
 		}
 
 		/* update our counters */
@@ -317,10 +325,9 @@ void exidy440_sound_volume_w(int offset, int data)
 
 	/* update the stream */
 	stream_update(stream, 0);
-	stream_set_volume(stream + (offset & 1), (~data & 0xff) * 100 / 255);
 
 	/* set the new volume */
-	exidy440_sound_volume[offset] = data;
+	exidy440_sound_volume[offset] = ~data;
 }
 
 

@@ -9,51 +9,40 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *xain_videoram;
-unsigned char *xain_videoram2;
-int xain_videoram_size;
-int xain_videoram2_size;
+unsigned char *xain_charram, *xain_bgram0, *xain_bgram1;
 
-static struct osd_bitmap *tmpbitmap2;
-static struct osd_bitmap *tmpbitmap3;
-unsigned char *dirtybuffer2;
-
-static unsigned char xain_scrollxP2[2];
-static unsigned char xain_scrollyP2[2];
-static unsigned char xain_scrollxP3[2];
-static unsigned char xain_scrollyP3[2];
-
-void xain_vh_stop(void);
+static struct tilemap *char_tilemap, *bgram0_tilemap, *bgram1_tilemap;
+static int flipscreen;
 
 
+/***************************************************************************
 
-void xain_scrollxP2_w(int offset,int data)
+  Callbacks for the TileMap code
+
+***************************************************************************/
+
+static void get_bgram0_tile_info( int col, int row )
 {
-        xain_scrollxP2[offset] = data;
+	int addr = (col & 0xf)|((col & 0x10)<<4)|((row & 0xf)<<4)|((row & 0x10)<<5);
+	int attr = xain_bgram0[addr | 0x400];
+	SET_TILE_INFO(2,xain_bgram0[addr] | ((attr & 7) << 8),(attr & 0x70) >> 4);
+	tile_info.flags = (attr & 0x80) ? TILE_FLIPX : 0;
 }
 
-void xain_scrollyP2_w(int offset,int data)
+static void get_bgram1_tile_info( int col, int row )
 {
-        xain_scrollyP2[offset] = data;
+	int addr = (col & 0xf)|((col & 0x10)<<4)|((row & 0xf)<<4)|((row & 0x10)<<5);
+	int attr = xain_bgram1[addr | 0x400];
+	SET_TILE_INFO(1,xain_bgram1[addr] | ((attr & 7) << 8),(attr & 0x70) >> 4);
+	tile_info.flags = (attr & 0x80) ? TILE_FLIPX : 0;
 }
 
-void xain_scrollxP3_w(int offset,int data)
+static void get_char_tile_info( int col, int row )
 {
-        xain_scrollxP3[offset] = data;
+	int addr = col + row*32;
+	int attr = xain_charram[addr | 0x400];
+	SET_TILE_INFO(0,xain_charram[addr] | ((attr & 3) << 8),(attr & 0xe0) >> 5);
 }
-
-void xain_scrollyP3_w(int offset,int data)
-{
-        xain_scrollyP3[offset] = data;
-}
-
-void xain_videoram2_w(int offset,int data)
-{
-        if (xain_videoram2[offset] != data)
-        {  dirtybuffer2[offset] = 1;
-           xain_videoram2[offset] = data;}
-}
-
 
 
 /***************************************************************************
@@ -61,242 +50,182 @@ void xain_videoram2_w(int offset,int data)
   Start the video hardware emulation.
 
 ***************************************************************************/
+
 int xain_vh_start(void)
 {
-	if (generic_vh_start() != 0)
+	bgram0_tilemap = tilemap_create(
+			get_bgram0_tile_info,
+			TILEMAP_OPAQUE,
+			16,16,
+			32,32);
+	bgram1_tilemap = tilemap_create(
+			get_bgram1_tile_info,
+			TILEMAP_TRANSPARENT,
+			16,16,
+			32,32);
+	char_tilemap = tilemap_create(
+			get_char_tile_info,
+			TILEMAP_TRANSPARENT,
+			8,8,
+			32,32);
+
+	if (!bgram0_tilemap || !bgram1_tilemap || !char_tilemap)
 		return 1;
 
-        if ((dirtybuffer2 = malloc(xain_videoram2_size)) == 0)
-	{
-		xain_vh_stop();
-		return 1;
-	}
-        memset(dirtybuffer2,1,xain_videoram2_size);
-
-        /* the background area is 2 x 2 */
-        if ((tmpbitmap2 = osd_new_bitmap(2*Machine->drv->screen_width,
-                2*Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
-	{
-		xain_vh_stop();
-		return 1;
-	}
-
-        /* the background area is 2 x 2 */
-        if ((tmpbitmap3 = osd_new_bitmap(2*Machine->drv->screen_width,
-                2*Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
-	{
-		xain_vh_stop();
-		return 1;
-	}
+	bgram1_tilemap->transparent_pen = 0;
+	char_tilemap->transparent_pen = 0;
 
 	return 0;
 }
 
+
+
 /***************************************************************************
 
-  Stop the video hardware emulation.
+  Memory handlers
 
 ***************************************************************************/
-void xain_vh_stop(void)
+
+void xain_bgram0_w(int offset, int data)
 {
-        free(dirtybuffer2);
-	osd_free_bitmap(tmpbitmap2);
-        osd_free_bitmap(tmpbitmap3);
-	generic_vh_stop();
+	if (xain_bgram0[offset] != data)
+	{
+		xain_bgram0[offset] = data;
+		tilemap_mark_tile_dirty (bgram0_tilemap,
+				 ((offset>>4)&0x10)|(offset&0xf),
+				 ((offset>>5)&0x10)|((offset>>4)&0xf));
+	}
+}
+
+void xain_bgram1_w(int offset, int data)
+{
+	if (xain_bgram1[offset] != data)
+	{
+		xain_bgram1[offset] = data;
+		tilemap_mark_tile_dirty (bgram1_tilemap,
+				 ((offset>>4)&0x10)|(offset&0xf),
+				 ((offset>>5)&0x10)|((offset>>4)&0xf));
+	}
+}
+
+void xain_charram_w(int offset, int data)
+{
+	if (xain_charram[offset] != data)
+	{
+		xain_charram[offset] = data;
+		tilemap_mark_tile_dirty (char_tilemap, offset & 0x1f, (offset & 0x3e0) >> 5);
+	}
+}
+
+void xain_scrollxP0_w(int offset,int data)
+{
+	static unsigned char xain_scrollxP0[2];
+
+	xain_scrollxP0[offset] = data;
+	tilemap_set_scrollx(bgram0_tilemap, 0, xain_scrollxP0[0]|(xain_scrollxP0[1]<<8));
+}
+
+void xain_scrollyP0_w(int offset,int data)
+{
+	static unsigned char xain_scrollyP0[2];
+
+	xain_scrollyP0[offset] = data;
+	tilemap_set_scrolly(bgram0_tilemap, 0, xain_scrollyP0[0]|(xain_scrollyP0[1]<<8));
+}
+
+void xain_scrollxP1_w(int offset,int data)
+{
+	static unsigned char xain_scrollxP1[2];
+
+	xain_scrollxP1[offset] = data;
+	tilemap_set_scrollx(bgram1_tilemap, 0, xain_scrollxP1[0]|(xain_scrollxP1[1]<<8));
+}
+
+void xain_scrollyP1_w(int offset,int data)
+{
+	static unsigned char xain_scrollyP1[2];
+
+	xain_scrollyP1[offset] = data;
+	tilemap_set_scrolly(bgram1_tilemap, 0, xain_scrollyP1[0]|(xain_scrollyP1[1]<<8));
 }
 
 
+void xain_flipscreen_w(int offset,int data)
+{
+	flipscreen = data & 1;
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+}
+
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+  Display refresh
 
 ***************************************************************************/
 
-void xain_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+static void draw_sprites(struct osd_bitmap *bitmap)
 {
 	int offs;
-        struct rectangle *r = malloc(sizeof(int)*4);
 
-	if (palette_recalc())
+	for (offs = 0; offs < spriteram_size;offs += 4)
 	{
-		memset(dirtybuffer,1,videoram_size);
-		memset(dirtybuffer2,1,xain_videoram2_size);
-	}
+		int sx,sy,flipx;
+		int attr = spriteram[offs+1];
+		int numtile = spriteram[offs+2] | ((attr & 7) << 8);
+		int color = (attr & 0x38) >> 3;
 
-        /* background Plane 3 & Plane 2*/
-	for (offs = (videoram_size/2)-1;offs >= 0;offs--)
-	{
-		if ((dirtybuffer[offs]) || (dirtybuffer[offs+0x400]))
+		sx = 240 - spriteram[offs+3];
+		if (sx <= -7) sx += 256;
+		sy = 240 - spriteram[offs];
+		if (sy <= -7) sy += 256;
+		flipx = attr & 0x40;
+		if (flipscreen)
 		{
-			int sx,sy;
-                        int banktile = ((videoram[offs+0x400]&6)>>1);
-                        int numtile = videoram[offs] +
-                        ((videoram[offs+0x400]&1)<<8);
-                        int flipx = ((videoram[offs+0x400]&0x80)>>7);
-                        int color = ((videoram[offs+0x400]&0x70)>>4);
-
-			dirtybuffer[offs] = dirtybuffer[offs+0x400] = 0;
-
-                        sx = ((offs>>8)&1)*16 + (offs&0xff)%16;
-                        sy = ((offs>>9)&1)*16 + (offs&0xff)/16;
-
-			drawgfx(tmpbitmap2,Machine->gfx[5+banktile],
-                                        numtile,
-					color, // color
-					flipx,0,
-					16 * sx,16 * sy,
-					0,TRANSPARENCY_NONE,0);
+			sx = 240 - sx;
+			sy = 240 - sy;
+			flipx = !flipx;
 		}
 
-		if ((dirtybuffer2[offs]) || (dirtybuffer2[offs+0x400]))
+		if (attr & 0x80)	/* double height */
 		{
-                        int numtile = xain_videoram2[offs] +
-                        ((xain_videoram2[offs+0x400]&1)<<8);
-			int sx,sy;
-
-                        sx = ((offs>>8)&1)*16 + (offs&0xff)%16;
-                        sy = ((offs>>9)&1)*16 + (offs&0xff)/16;
-
-                        dirtybuffer2[offs] = dirtybuffer2[offs+0x400] = 0;
-
-                        if (!numtile)
-                        {
-                          r->min_x = 16*sx;
-                          r->max_x = 16*sx+15;
-                          r->min_y = 16*sy;
-                          r->max_y = 16*sy+15;
-                          fillbitmap(tmpbitmap3,0,r);
-                        } else {
-                          int banktile = ((xain_videoram2[offs+0x400]&6)>>1);
-                          int flipx = ((xain_videoram2[offs+0x400]&0x80)>>7);
-                          int color = ((xain_videoram2[offs+0x400]&0x70)>>4);
-
-                          /* Necessary to use TRANSPARENCY_PEN here */
-                          r->min_x = 16*sx;
-                          r->max_x = 16*sx+15;
-                          r->min_y = 16*sy;
-                          r->max_y = 16*sy+15;
-                          fillbitmap(tmpbitmap3,0,r);
-                          /******************************************/
-
-			  drawgfx(tmpbitmap3,Machine->gfx[1+banktile],
-                                        numtile,
-					color,
-					flipx,0,
-					16 * sx,16 * sy,
-					0,TRANSPARENCY_PEN,0);
-                        }
-		}
-	}
-
-        /* copy the background graphics */
-	{
-                int scrollx,scrolly;
-
-                scrollx = -(xain_scrollxP3[0] + 256 * xain_scrollxP3[1]);
-                scrolly = -(xain_scrollyP3[0] + 256 * xain_scrollyP3[1]);
-
-		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,
-                &scrolly,&Machine->drv->visible_area,
-                TRANSPARENCY_NONE,0);
-
-                scrollx = -(xain_scrollxP2[0] + 256 * xain_scrollxP2[1]);
-                scrolly = -(xain_scrollyP2[0] + 256 * xain_scrollyP2[1]);
-
-		copyscrollbitmap(bitmap,tmpbitmap3,1,&scrollx,1,
-                &scrolly,&Machine->drv->visible_area,
-                TRANSPARENCY_PEN,0);
-	}
-
-        /* draw the sprites */
-	for (offs = 0; offs < spriteram_size ;offs+=4)
-	{
-                int sx,sy;
-                int numtile = spriteram[offs+2] +
-                              ((spriteram[offs+1]&1)<<8);
-                int banktile = ((spriteram[offs+1]&6)>>1);
-                int color = ((spriteram[offs+1]&0x38)>>3);
-
-                sx = spriteram[offs+3];
-                sy = spriteram[offs];
-
-		if ((sx < 0xf8) && (sy <0xf8)) /* else don't draw */
-		{
-                  switch(spriteram[offs+1]&0xC0)
-                  {
-                    case 0x80: // 16x32 - NOT Flip
-                      drawgfx(bitmap,Machine->gfx[9+banktile],
-		      numtile,
-		      color,
-		      0,0,// FlipX, FlipY
-		      0xf0-sx,0xe0-sy,
-		      &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-                      drawgfx(bitmap,Machine->gfx[9+banktile],
-		      numtile+1,
-		      color,
-		      0,0,// FlipX, FlipY
-		      0xf0-sx,0xf0-sy,
-		      &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-                    break;
-                    case 0xC0: // 16x32 - Flip
-                      drawgfx(bitmap,Machine->gfx[9+banktile],
-		      numtile,
-		      color,
-		      1,0,// FlipX, FlipY
-		      0xf0-sx,0xe0-sy,
-		      &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-                      drawgfx(bitmap,Machine->gfx[9+banktile],
-		      numtile+1,
-		      color,
-		      1,0,// FlipX, FlipY
-		      0xf0-sx,0xf0-sy,
-		      &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-                    break;
-                    case 0x00: // 16x16 - NOT Flip
-                      drawgfx(bitmap,Machine->gfx[9+banktile],
-		      numtile,
-		      color,
-		      0,0,// FlipX, FlipY
-		      0xf0-sx,0xf0-sy,
-		      &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-                    break;
-                    case 0x40: // 16x16 - Flip
-                      drawgfx(bitmap,Machine->gfx[9+banktile],
-		      numtile,
-		      color,
-		      1,0,// FlipX, FlipY
-		      0xf0-sx,0xf0-sy,
-		      &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-                    break;
-                 }
-		}
-	}
-
-        /* draw the frontmost playfield. They are characters. */
-	for (offs = (xain_videoram_size/2) - 1;offs >= 0;offs--)
-	{
-                int numtile = xain_videoram[offs] +
-                              ((xain_videoram[offs+0x400]&3)<<8);
-                int color = ((xain_videoram[offs+0x400]&0xe0)>>5);
-
-		if (numtile != 0x0) 	/* don't draw 0 */
-		{
-			int sx,sy;
-
-			sx = offs % 32;
-			sy = offs / 32;
-
-			drawgfx(bitmap,Machine->gfx[0],
+			drawgfx(bitmap,Machine->gfx[3],
 					numtile,
-					color, // Color?
-					0,0,// FlipX, FlipY
-					8*sx,8*sy,
+					color,
+					flipx,flipscreen,
+					sx,flipscreen?sy+16:sy-16,
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			drawgfx(bitmap,Machine->gfx[3],
+					numtile+1,
+					color,
+					flipx,flipscreen,
+					sx,sy,
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+		}
+		else
+		{
+			drawgfx(bitmap,Machine->gfx[3],
+					numtile,
+					color,
+					flipx,flipscreen,
+					sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
+}
 
-        free(r);
+void xain_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	tilemap_update(ALL_TILEMAPS);
+
+	palette_init_used_colors();
+	memset(palette_used_colors+128,PALETTE_COLOR_USED,128);	/* sprites */
+	if (palette_recalc())
+		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+
+	tilemap_render(ALL_TILEMAPS);
+
+	tilemap_draw(bitmap,bgram0_tilemap,0);
+	tilemap_draw(bitmap,bgram1_tilemap,0);
+	draw_sprites(bitmap);
+	tilemap_draw(bitmap,char_tilemap,0);
 }

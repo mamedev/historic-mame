@@ -598,7 +598,8 @@ static void asteroid_hisave(void)
 
 static struct Samplesinterface asteroid_samples_interface =
 {
-	7	/* 7 channels */
+	7,	/* 7 channels */
+	25	/* volume */
 };
 
 static struct MachineDriver asteroid_machine_driver =
@@ -645,7 +646,7 @@ static struct POKEYinterface pokey_interface =
 {
 	1,	/* 1 chip */
 	1500000,	/* 1.5 MHz??? */
-	100,
+	{ 100 },
 	POKEY_DEFAULT_GAIN,
 	NO_CLIP,
 	/* The 8 pot handlers */
@@ -663,7 +664,8 @@ static struct POKEYinterface pokey_interface =
 
 static struct Samplesinterface astdelux_samples_interface =
 {
-	3	/* 3 channels */
+	3,	/* 3 channels */
+	25	/* volume */
 };
 
 

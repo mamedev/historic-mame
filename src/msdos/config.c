@@ -42,9 +42,13 @@ extern int use_mouse, joystick;
 /* from cheat.c */
 extern char *cheatfile;
 
+/* from datafile.c */
+extern char *history_filename,*mameinfo_filename;
+
 /* from fileio.c */
 void decompose_rom_sample_path (char *rompath, char *samplepath);
-extern char *hidir, *cfgdir, *inpdir, *pcxdir, *stadir, *memcarddir, *artworkdir, *alternate_name;
+extern char *hidir, *cfgdir, *inpdir, *stadir, *memcarddir;
+extern char *artworkdir, *screenshotdir, *alternate_name;
 
 /* from profiler.c */
 extern int use_profiler;
@@ -311,8 +315,7 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	use_double  = get_bool   ("config", "double",       NULL, -1);
 	video_sync  = get_bool   ("config", "vsync",        NULL,  0);
 	wait_vsync  = get_bool   ("config", "waitvsync",    NULL,  0);
-//	use_triplebuf  = get_bool("config", "triplebuffer",        NULL,  0);
-use_triplebuf = 1;
+	use_triplebuf  = get_bool("config", "triplebuffer",        NULL,  0);
 	options.antialias   = get_bool   ("config", "antialias",    NULL,  1);
 	use_vesa    = get_bool   ("config", "vesa",         NULL,  0);
 	options.translucency = get_bool    ("config", "translucency", NULL, 1);
@@ -360,6 +363,8 @@ use_triplebuf = 1;
 	options.cheat      = get_bool ("config", "cheat", NULL, 0);
 	options.mame_debug = get_bool ("config", "debug", NULL, 0);
 	cheatfile  = get_string ("config", "cheatfile", "cf", "CHEAT.DAT");    /* JCK 980917 */
+	history_filename  = get_string ("config", "historyfile", NULL, "HISTORY.DAT");    /* JCK 980917 */
+	mameinfo_filename  = get_string ("config", "mameinfofile", NULL, "MAMEINFO.DAT");    /* JCK 980917 */
 	use_profiler        = get_bool ("config", "profiler", NULL,  0);
 
 	/* get resolution */
@@ -368,7 +373,7 @@ use_triplebuf = 1;
 	/* set default subdirectories */
 	hidir      = get_string ("directory", "hi",      NULL, "HI");
 	cfgdir     = get_string ("directory", "cfg",     NULL, "CFG");
-	pcxdir     = get_string ("directory", "pcx",     NULL, "PCX");
+	screenshotdir = get_string ("directory", "snap",     NULL, "SNAP");
 	memcarddir = get_string ("directory", "memcard", NULL, "MEMCARD");
 	stadir     = get_string ("directory", "sta",     NULL, "STA");
 	artworkdir = get_string ("directory", "artwork", NULL, "ARTWORK");

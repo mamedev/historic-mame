@@ -902,7 +902,8 @@ static const char *targ_sample_names[] =
 
 static struct Samplesinterface targ_samples_interface=
 {
-	3       /* 3 Channels */
+	3,       /* 3 Channels */
+	25	/* volume */
 };
 
 static struct CustomSound_interface targ_custom_interface =
@@ -968,7 +969,8 @@ static struct MachineDriver targ_machine_driver =
 
 static struct Samplesinterface venture_samples_interface=
 {
-	6       /* 6 Channels */
+	6,       /* 6 Channels */
+	25	/* volume */
 };
 
 static struct CustomSound_interface exidy_custom_interface =
@@ -1301,6 +1303,44 @@ ROM_START( mtrap_rom )
 	ROM_LOAD( "mtl8a.bin",          0xD000, 0x1000, 0xcc09f7a4 )
 	ROM_LOAD( "mtl7a.bin",          0xE000, 0x1000, 0xcaafbb6d )
 	ROM_LOAD( "mtl6a.bin",          0xF000, 0x1000, 0xd85e52ca )
+
+	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "mtl11d.bin",   0x0000, 0x0800, 0xc6e4d339 )
+
+	ROM_REGION(0x10000) /* 64k for audio */
+	ROM_LOAD( "mta5a.bin",    0x6800, 0x0800, 0xdbe4ec02 )
+	ROM_LOAD( "mta6a.bin",    0x7000, 0x0800, 0xc00f0c05 )
+	ROM_LOAD( "mta7a.bin",    0x7800, 0x0800, 0xf3f16ca7 )
+	ROM_RELOAD(            0xf800, 0x0800 )
+ROM_END
+
+ROM_START( mtrap3_rom )
+	ROM_REGION(0x10000) /* 64k for code */
+	ROM_LOAD( "mtl-3.11a",   0xA000, 0x1000, 0x4091be6e )
+	ROM_LOAD( "mtl-3.10a",   0xB000, 0x1000, 0x38250c2f )
+	ROM_LOAD( "mtl-3.9a",          0xC000, 0x1000, 0x2eec988e )
+	ROM_LOAD( "mtl-3.8a",          0xD000, 0x1000, 0x744b4b1c )
+	ROM_LOAD( "mtl-3.7a",          0xE000, 0x1000, 0xea8ec479 )
+	ROM_LOAD( "mtl-3.6a",          0xF000, 0x1000, 0xd72ba72d )
+
+	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "mtl11d.bin",   0x0000, 0x0800, 0xc6e4d339 )
+
+	ROM_REGION(0x10000) /* 64k for audio */
+	ROM_LOAD( "mta5a.bin",    0x6800, 0x0800, 0xdbe4ec02 )
+	ROM_LOAD( "mta6a.bin",    0x7000, 0x0800, 0xc00f0c05 )
+	ROM_LOAD( "mta7a.bin",    0x7800, 0x0800, 0xf3f16ca7 )
+	ROM_RELOAD(            0xf800, 0x0800 )
+ROM_END
+
+ROM_START( mtrap4_rom )
+	ROM_REGION(0x10000) /* 64k for code */
+	ROM_LOAD( "mta411a.bin",   0xA000, 0x1000, 0x2879cb8d )
+	ROM_LOAD( "mta410a.bin",   0xB000, 0x1000, 0xd7378af9 )
+	ROM_LOAD( "mta49.bin",          0xC000, 0x1000, 0xbe667e64 )
+	ROM_LOAD( "mta48a.bin",          0xD000, 0x1000, 0xde0442f8 )
+	ROM_LOAD( "mta47a.bin",          0xE000, 0x1000, 0xcdf8c6a8 )
+	ROM_LOAD( "mta46a.bin",          0xF000, 0x1000, 0x77d3f2e6 )
 
 	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "mtl11d.bin",   0x0000, 0x0800, 0xc6e4d339 )
@@ -1831,7 +1871,7 @@ struct GameDriver mtrap_driver =
 	__FILE__,
 	0,
 	"mtrap",
-	"Mouse Trap",
+	"Mouse Trap (version 5)",
 	"1981",
 	"Exidy",
 	"Marc LaFontaine\nBrian Levine\nMike Balfour\nMarco Cassili",
@@ -1852,12 +1892,64 @@ struct GameDriver mtrap_driver =
 	mtrap_hiload,mtrap_hisave
 };
 
+struct GameDriver mtrap3_driver =
+{
+	__FILE__,
+	&mtrap_driver,
+	"mtrap3",
+	"Mouse Trap (version 3)",
+	"1981",
+	"Exidy",
+	"Marc LaFontaine\nBrian Levine\nMike Balfour\nMarco Cassili",
+	0,
+	&mtrap_machine_driver,
+	mtrap_driver_init,
+
+	mtrap3_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	mtrap_input_ports,
+
+	0, palette, colortable,
+	ORIENTATION_DEFAULT,
+
+	mtrap_hiload,mtrap_hisave
+};
+
+struct GameDriver mtrap4_driver =
+{
+	__FILE__,
+        &mtrap_driver,
+	"mtrap4",
+	"Mouse Trap (version 4)",
+	"1981",
+	"Exidy",
+	"Marc LaFontaine\nBrian Levine\nMike Balfour\nMarco Cassili",
+	0,
+	&mtrap_machine_driver,
+	mtrap_driver_init,
+
+	mtrap4_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	mtrap_input_ports,
+
+	0, palette, colortable,
+	ORIENTATION_DEFAULT,
+
+	mtrap_hiload,mtrap_hisave
+};
+
 struct GameDriver venture_driver =
 {
 	__FILE__,
 	0,
 	"venture",
-	"Venture (set 1)",
+	"Venture (version 5 set 1)",
 	"1981",
 	"Exidy",
 	"Marc LaFontaine\nNicola Salmoria\nBrian Levine\nMike Balfour\nBryan Smith (hardware info)",
@@ -1883,7 +1975,7 @@ struct GameDriver venture2_driver =
 	__FILE__,
 	&venture_driver,
 	"venture2",
-	"Venture (set 2)",
+	"Venture (version 5 set 2)",
 	"1981",
 	"Exidy",
 	"Marc LaFontaine\nNicola Salmoria\nBrian Levine\nMike Balfour\nBryan Smith (hardware info)",

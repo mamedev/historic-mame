@@ -7,6 +7,7 @@
 *********************************************************************/
 
 #include "driver.h"
+#include "png.h"
 
 /* These globals are only kept on a machine basis - LBO 042898 */
 unsigned int dispensed_tickets;
@@ -121,7 +122,7 @@ int readroms(void)
 	int checksumwarning = 0;
 	int lengthwarning = 0;
 	int total_roms,current_rom;
-	char buf[2048] = "";
+	char buf[4096] = "";
 
 
 	total_roms = current_rom = 0;
@@ -581,7 +582,6 @@ static struct GameSample *read_wav_sample(void *f)
 
 	/* fill in the sample data */
 	result->length = length;
-	result->volume = 100;
 	result->smpfreq = rate;
 	result->resolution = bits;
 
@@ -2742,5 +2742,53 @@ void drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
 				}
 			}
 		}
+	}
+}
+
+
+
+int snapno;
+
+void save_screen_snapshot(void)
+{
+	void *fp;
+	char name[20];
+	int y;
+
+	/* avoid overwriting existing files */
+	/* first of all try with "gamename.png" */
+	sprintf(name,"%.8s", Machine->gamedrv->name);
+	if (osd_faccess(name,OSD_FILETYPE_SCREENSHOT))
+	{
+		do
+		{
+			/* otherwise use "nameNNNN.png" */
+			sprintf(name,"%.4s%04d",Machine->gamedrv->name,snapno++);
+		} while (osd_faccess(name, OSD_FILETYPE_SCREENSHOT));
+	}
+
+	if ((fp = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_SCREENSHOT, 1)) != NULL)
+	{
+		if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
+			png_write_bitmap(fp,Machine->scrbitmap);
+		else
+		{
+			struct osd_bitmap *bitmap;
+
+			bitmap = osd_new_bitmap(
+					Machine->drv->visible_area.max_x - Machine->drv->visible_area.min_x + 1,
+					Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y + 1,
+					Machine->scrbitmap->depth);
+
+			if (bitmap)
+			{
+				copybitmap(bitmap,Machine->scrbitmap,0,0,
+						-Machine->drv->visible_area.min_x,-Machine->drv->visible_area.min_y,0,TRANSPARENCY_NONE,0);
+				png_write_bitmap(fp,bitmap);
+				osd_free_bitmap(bitmap);
+			}
+		}
+
+		osd_fclose(fp);
 	}
 }

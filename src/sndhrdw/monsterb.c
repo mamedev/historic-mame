@@ -176,7 +176,7 @@ int TMS3617_sh_start(const struct MachineSound *msound)
 	buffer_len = intf->samplerate / Machine->drv->frames_per_second;
 	emulation_rate = buffer_len * Machine->drv->frames_per_second;
 
-	channel = get_play_channels(1);
+	channel = mixer_allocate_channel(intf->volume);
 
 	if ((output_buffer = malloc(buffer_len)) == 0)
 		return 1;
@@ -224,7 +224,7 @@ void TMS3617_sh_update(void)
 	TMS3617_update(&output_buffer[sample_pos],buffer_len - sample_pos);
 	sample_pos = 0;
 
-	osd_play_streamed_sample(channel,output_buffer,buffer_len,emulation_rate,interface->volume,OSD_PAN_CENTER);
+	mixer_play_streamed_sample(channel,output_buffer,buffer_len,emulation_rate);
 }
 
 void TMS3617_voice_enable(int voice, int enable)

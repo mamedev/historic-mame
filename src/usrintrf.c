@@ -859,12 +859,6 @@ static void showcharset(void)
 #endif
 #endif
 
-	/* hack: force the display into standard orientation to avoid */
-	/* rotating the user interface */
-	trueorientation = Machine->orientation;
-	Machine->orientation = Machine->ui_orientation;
-
-
 	bank = 0;
 	color = 0;
 	firstdrawn = 0;
@@ -894,6 +888,11 @@ static void showcharset(void)
 
 			if(bank!=2 || !game_is_neogeo)
 			{
+				/* hack: force the display into standard orientation to avoid */
+				/* rotating the user interface */
+				trueorientation = Machine->orientation;
+				Machine->orientation = Machine->ui_orientation;
+
 				for (i = 0; i+firstdrawn < Machine->gfx[bank]->total_elements && i<cpx*cpy; i++)
 				{
 					drawgfx(Machine->scrbitmap,Machine->gfx[bank],
@@ -905,6 +904,8 @@ static void showcharset(void)
 
 					lastdrawn = i+firstdrawn;
 				}
+
+				Machine->orientation = trueorientation;
 			}
 #ifndef NEOFREE
 #ifndef TINY_COMPILE
@@ -1031,8 +1032,6 @@ static void showcharset(void)
 
 	/* clear the screen before returning */
 	osd_clearbitmap(Machine->scrbitmap);
-
-	Machine->orientation = trueorientation;
 
 	return;
 }
@@ -1544,10 +1543,10 @@ static int setdefjoysettings(int selected)
 
 static int setkeysettings(int selected)
 {
-	const char *menu_item[40];
-	const char *menu_subitem[40];
-	struct InputPort *entry[40];
-	char flag[40];
+	const char *menu_item[400];
+	const char *menu_subitem[400];
+	struct InputPort *entry[400];
+	char flag[400];
 	int i,sel;
 	struct InputPort *in;
 	int total;
@@ -3178,17 +3177,17 @@ static void onscrd_volume(int increment,int arg)
 	displayosd(buf,100 * (attenuation + 32) / 32);
 }
 
-static void onscrd_streamvol(int increment,int arg)
+static void onscrd_mixervol(int increment,int arg)
 {
 	static void *driver = 0;
 	char buf[40];
 	int volume,ch;
-	int doallstreams = 0;
+	int doallchannels = 0;
 	int proportional = 0;
 
 
 	if (osd_key_pressed(OSD_KEY_LSHIFT) || osd_key_pressed(OSD_KEY_RSHIFT))
-		doallstreams = 1;
+		doallchannels = 1;
 	if (!osd_key_pressed(OSD_KEY_LCONTROL) && !osd_key_pressed(OSD_KEY_RCONTROL))
 		increment *= 5;
 	if (osd_key_pressed(OSD_KEY_ALT) || osd_key_pressed(OSD_KEY_ALTGR))
@@ -3198,24 +3197,24 @@ static void onscrd_streamvol(int increment,int arg)
 	{
 		if (proportional)
 		{
-			static int old_vol[MAX_STREAM_CHANNELS];
+			static int old_vol[MIXER_MAX_CHANNELS];
 			float ratio = 1.0;
 			int overflow = 0;
 
 			if (driver != Machine->drv)
 			{
 				driver = (void *)Machine->drv;
-				for (ch = 0; ch < MAX_STREAM_CHANNELS; ch++)
-					old_vol[ch] = stream_get_volume(ch);
+				for (ch = 0; ch < MIXER_MAX_CHANNELS; ch++)
+					old_vol[ch] = mixer_get_mixing_level(ch);
 			}
 
-			volume = stream_get_volume(arg);
+			volume = mixer_get_mixing_level(arg);
 			if (old_vol[arg])
 				ratio = (float)(volume + increment) / (float)old_vol[arg];
 
-			for (ch = 0; ch < MAX_STREAM_CHANNELS; ch++)
+			for (ch = 0; ch < MIXER_MAX_CHANNELS; ch++)
 			{
-				if (stream_get_name(ch) != 0)
+				if (mixer_get_name(ch) != 0)
 				{
 					volume = ratio * old_vol[ch];
 					if (volume < 0 || volume > 100)
@@ -3225,10 +3224,10 @@ static void onscrd_streamvol(int increment,int arg)
 
 			if (!overflow)
 			{
-				for (ch = 0; ch < MAX_STREAM_CHANNELS; ch++)
+				for (ch = 0; ch < MIXER_MAX_CHANNELS; ch++)
 				{
 					volume = ratio * old_vol[ch];
-					stream_set_volume(ch, volume);
+					mixer_set_mixing_level(ch,volume);
 				}
 			}
 		}
@@ -3236,28 +3235,28 @@ static void onscrd_streamvol(int increment,int arg)
 		{
 			driver = 0; /* force reset of saved volumes */
 
-			volume = stream_get_volume(arg);
+			volume = mixer_get_mixing_level(arg);
 			volume += increment;
 			if (volume > 100) volume = 100;
 			if (volume < 0) volume = 0;
 
-			if (doallstreams)
+			if (doallchannels)
 			{
-				for (ch = 0;ch < MAX_STREAM_CHANNELS;ch++)
-					stream_set_volume(ch,volume);
+				for (ch = 0;ch < MIXER_MAX_CHANNELS;ch++)
+					mixer_set_mixing_level(ch,volume);
 			}
 			else
-				stream_set_volume(arg,volume);
+				mixer_set_mixing_level(arg,volume);
 		}
 	}
-	volume = stream_get_volume(arg);
+	volume = mixer_get_mixing_level(arg);
 
 	if (proportional)
 		sprintf(buf,"ALL CHANNELS Relative %3d%%", volume);
-	else if (doallstreams)
+	else if (doallchannels)
 		sprintf(buf,"ALL CHANNELS Volume %3d%%",volume);
 	else
-		sprintf(buf,"%s Volume %3d%%",stream_get_name(arg),volume);
+		sprintf(buf,"%s Volume %3d%%",mixer_get_name(arg),volume);
 	displayosd(buf,volume);
 }
 
@@ -3337,11 +3336,11 @@ static void onscrd_init(void)
 	onscrd_arg[item] = 0;
 	item++;
 
-	for (ch = 0;ch < MAX_STREAM_CHANNELS;ch++)
+	for (ch = 0;ch < MIXER_MAX_CHANNELS;ch++)
 	{
-		if (stream_get_name(ch) != 0)
+		if (mixer_get_name(ch) != 0)
 		{
-			onscrd_fnc[item] = onscrd_streamvol;
+			onscrd_fnc[item] = onscrd_mixervol;
 			onscrd_arg[item] = ch;
 			item++;
 		}
@@ -3655,6 +3654,10 @@ bitmap_dirty = 0;
 
 void init_user_interface(void)
 {
+	extern int snapno;	/* in common.c */
+
+	snapno = 0;	/* reset snapshot counter */
+
 	setup_menu_init();
 	setup_selected = 0;
 

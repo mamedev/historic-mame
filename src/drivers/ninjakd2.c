@@ -4,6 +4,15 @@
  *** NINJA KID II hardware ***		(by Roberto Ventura)
  *****************************
 
+Game authors:
+Game design:    Tsutomu Fuzisawa
+Program design: Satoru Kinjo
+Char. design:   Tsutomu Fizisawa
+Char. design:   Akemi Tsunoda
+Sound compose:  Tsutomu Fuzisawa
+Bgm create:     Mecano Associate
+Data make:      Takashi Hayashi
+
 General aspect.
 
 The game is driven by a fast Z80 CPU.
@@ -266,7 +275,6 @@ int ninjakd2_init_samples(void)
 			return 1;
 
 		samples->sample[i]->length = sample_info[i][1];
-		samples->sample[i]->volume = 0xff;
 		samples->sample[i]->smpfreq = 11025;	/* 11 kHz ?? */
 		samples->sample[i]->resolution = 8;
 		for (n=0; n<sample_info[i][1]; n++)
@@ -504,14 +512,16 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct Samplesinterface samples_interface =
 {
-	1	/* 1 channel */
+	1,	/* 1 channel */
+	25	/* volume */
 };
 
 static struct YM2203interface ym2203_interface =
 {
 	2, 	 /* 2 chips */
 	1250000, /* 5000000/4 MHz ???? */
-	{ YM2203_VOL(255,255), YM2203_VOL(255,255) },
+	{ YM2203_VOL(25,25), YM2203_VOL(25,25) },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -680,7 +690,79 @@ ROM_START( ninjak2a_rom )
 	ROM_LOAD( "nk2_09.rom",   0x0000, 0x10000, 0xc1d2d170 )  // raw pcm samples
 ROM_END
 
+ROM_START( ninjak2b_rom )
+	ROM_REGION(0x10000)
+	ROM_LOAD( "nk2_06.bin",   0x0000, 0x10000, 0x7bfe6c9e )  // sound z80 code encrypted
 
+	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "nk2_08.rom",   0x00000, 0x4000, 0x1b79c50a )   // sprites tiles
+	ROM_CONTINUE(	        0x10000, 0x4000)
+	ROM_CONTINUE(	        0x04000, 0x4000)
+	ROM_CONTINUE(	        0x14000, 0x4000)
+	ROM_LOAD( "nk2_07.rom",   0x08000, 0x4000, 0x0be5cd13 )
+	ROM_CONTINUE(	        0x18000, 0x4000)
+	ROM_CONTINUE(	        0x0C000, 0x4000)
+	ROM_CONTINUE(	        0x1C000, 0x4000)
+	ROM_LOAD( "nk2_11.rom",   0x20000, 0x4000, 0x41a714b3 )   // background tiles
+	ROM_CONTINUE(	        0x30000, 0x4000)
+	ROM_CONTINUE(	        0x24000, 0x4000)
+	ROM_CONTINUE(	        0x34000, 0x4000)
+	ROM_LOAD( "nk2_10.rom",   0x28000, 0x4000, 0xc913c4ab )
+	ROM_CONTINUE(	        0x38000, 0x4000)
+	ROM_CONTINUE(	        0x2C000, 0x4000)
+	ROM_CONTINUE(	        0x3C000, 0x4000)
+	ROM_LOAD( "nk2_12.rom",   0x40000, 0x02000, 0xdb5657a9 )  // foreground tiles
+	ROM_CONTINUE(	        0x44000, 0x02000)
+	ROM_CONTINUE(	        0x42000, 0x02000)
+	ROM_CONTINUE(	        0x46000, 0x02000)
+
+	ROM_REGION(0x30000)
+	ROM_LOAD( "1.3s",         0x00000, 0x8000, 0xcb4f4624 )
+	ROM_LOAD( "2.3q",         0x10000, 0x8000, 0x0ad0c100 )
+	ROM_LOAD( "nk2_03.rom",   0x18000, 0x8000, 0xad275654 )
+	ROM_LOAD( "nk2_04.rom",   0x20000, 0x8000, 0xe7692a77 )
+	ROM_LOAD( "nk2_05.rom",   0x28000, 0x8000, 0x5dac9426 )
+
+	ROM_REGION(0x10000)
+	ROM_LOAD( "nk2_09.rom",   0x0000, 0x10000, 0xc1d2d170 )  // raw pcm samples
+ROM_END
+
+ROM_START( rdaction_rom )
+	ROM_REGION(0x10000)
+	ROM_LOAD( "nk2_06.bin",   0x0000, 0x10000, 0x7bfe6c9e )  // sound z80 code encrypted
+
+	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "nk2_08.rom",   0x00000, 0x4000, 0x1b79c50a )   // sprites tiles
+	ROM_CONTINUE(	        0x10000, 0x4000)
+	ROM_CONTINUE(	        0x04000, 0x4000)
+	ROM_CONTINUE(	        0x14000, 0x4000)
+	ROM_LOAD( "nk2_07.rom",   0x08000, 0x4000, 0x0be5cd13 )
+	ROM_CONTINUE(	        0x18000, 0x4000)
+	ROM_CONTINUE(	        0x0C000, 0x4000)
+	ROM_CONTINUE(	        0x1C000, 0x4000)
+	ROM_LOAD( "nk2_11.rom",   0x20000, 0x4000, 0x41a714b3 )   // background tiles
+	ROM_CONTINUE(	        0x30000, 0x4000)
+	ROM_CONTINUE(	        0x24000, 0x4000)
+	ROM_CONTINUE(	        0x34000, 0x4000)
+	ROM_LOAD( "nk2_10.rom",   0x28000, 0x4000, 0xc913c4ab )
+	ROM_CONTINUE(	        0x38000, 0x4000)
+	ROM_CONTINUE(	        0x2C000, 0x4000)
+	ROM_CONTINUE(	        0x3C000, 0x4000)
+	ROM_LOAD( "12.5n",      0x40000, 0x02000, 0x0936b365 )  // foreground tiles
+	ROM_CONTINUE(	        0x44000, 0x02000)
+	ROM_CONTINUE(	        0x42000, 0x02000)
+	ROM_CONTINUE(	        0x46000, 0x02000)
+
+	ROM_REGION(0x30000)
+	ROM_LOAD( "1.3u",  	  0x00000, 0x8000, 0x5c475611 )
+	ROM_LOAD( "2.3s",         0x10000, 0x8000, 0xa1e23bd2 )
+	ROM_LOAD( "nk2_03.rom",   0x18000, 0x8000, 0xad275654 )
+	ROM_LOAD( "nk2_04.rom",   0x20000, 0x8000, 0xe7692a77 )
+	ROM_LOAD( "nk2_05.bin",   0x28000, 0x8000, 0x960725fb )
+
+	ROM_REGION(0x10000)
+	ROM_LOAD( "nk2_09.rom",   0x0000, 0x10000, 0xc1d2d170 )  // raw pcm samples
+ROM_END
 
 static int hiload(void)
 {
@@ -731,20 +813,10 @@ struct GameDriver ninjakd2_driver =
 	__FILE__,
 	0,
 	"ninjakd2",
-	"Ninja Kid II",
+	"Ninja Kid II (set 1)",
 	"1987",
 	"UPL",
 	"Jarek Parchanski (MAME driver)\nRoberto Ventura (hardware info)",
-#if 0
-"\n\n\nGame authors:\n\n \
-Game design:    Tsutomu Fuzisawa\n \
-Program design: Satoru Kinjo\n \
-Char. design:   Tsutomu Fizisawa\n \
-Char. design:   Akemi Tsunoda\n \
-Sound compose:  Tsutomu Fuzisawa\n \
-Bgm create:     Mecano Associate\n \
-Data make:      Takashi Hayashi\n",
-#endif
 	GAME_NOT_WORKING,
 	&ninjakd2_machine_driver,
 	0,
@@ -767,25 +839,67 @@ struct GameDriver ninjak2a_driver =
 	__FILE__,
 	&ninjakd2_driver,
 	"ninjak2a",
-	"Ninja Kid II (alternate)",
+	"Ninja Kid II (set 2)",
 	"1987",
 	"UPL",
 	"Jarek Parchanski (MAME driver)\nRoberto Ventura (hardware info)",
-#if 0
-"\n\n\nGame authors:\n\n \
-Game design:    Tsutomu Fuzisawa\n \
-Program design: Satoru Kinjo\n \
-Char. design:   Tsutomu Fizisawa\n \
-Char. design:   Akemi Tsunoda\n \
-Sound compose:  Tsutomu Fuzisawa\n \
-Bgm create:     Mecano Associate\n \
-Data make:      Takashi Hayashi\n",
-#endif
 	0,
 	&ninjak2a_machine_driver,
 	0,
 
 	ninjak2a_rom,
+	0,ninjak2a_sound_decode,
+	0,
+	0, /* sound prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload,hisave
+};
+
+struct GameDriver ninjak2b_driver =
+{
+	__FILE__,
+	&ninjakd2_driver,
+	"ninjak2b",
+	"Ninja Kid II (set 3)",
+	"1987",
+	"UPL",
+	"Jarek Parchanski (MAME driver)\nRoberto Ventura (hardware info)",
+	0,
+	&ninjak2a_machine_driver,
+	0,
+
+	ninjak2b_rom,
+	0,ninjak2a_sound_decode,
+	0,
+	0, /* sound prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload,hisave
+};
+
+struct GameDriver rdaction_driver =
+{
+	__FILE__,
+	&ninjakd2_driver,
+	"rdaction",
+	"Rad Action",
+	"1987",
+	"UPL (World Games license)",
+	"Jarek Parchanski (MAME driver)\nRoberto Ventura (hardware info)",
+	0,
+	&ninjak2a_machine_driver,
+	0,
+
+	rdaction_rom,
 	0,ninjak2a_sound_decode,
 	0,
 	0, /* sound prom */

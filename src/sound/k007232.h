@@ -7,8 +7,8 @@
 
 struct K007232_interface
 {
-	int bankA, bankB;	/* memory regions for channel A and B */
-	int volume;
+	int bank[2];	/* memory regions for channel A and B */
+	int volume[2];	/* volume for channel A and B */
 	int limit;
 };
 

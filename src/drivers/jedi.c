@@ -109,27 +109,6 @@ void jedi_rom_banksel( int offset, int data);
 
 
 
-int jedi_sh_start(void)
-{
-	int ch;
-
-
-	/* set panning for the pokey chips: 0 & 1 center, 2 left, 3 right */
-	for (ch = 0;ch < MAX_STREAM_CHANNELS;ch++)
-	{
-		if (stream_get_name(ch) != 0 &&
-				!strcmp(stream_get_name(ch),"Pokey #2"))
-			stream_set_pan(ch,OSD_PAN_LEFT);
-		if (stream_get_name(ch) != 0 &&
-				!strcmp(stream_get_name(ch),"Pokey #3"))
-			stream_set_pan(ch,OSD_PAN_RIGHT);
-	}
-
-	return 0;
-}
-
-
-
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x07ff, MRA_RAM },
@@ -275,7 +254,7 @@ static struct POKEYinterface pokey_interface =
 {
 	4,  /* 4 chips */
 	1500000,	/* 1.5 MHz? */
-	30,
+	{ 30, 30, MIXER(30,MIXER_PAN_LEFT), MIXER(30,MIXER_PAN_RIGHT) },
 	POKEY_DEFAULT_GAIN,
 	NO_CLIP,
 	/* The 8 pot handlers */
@@ -336,7 +315,7 @@ static struct MachineDriver machine_driver =
     jedi_vh_screenrefresh,
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,jedi_sh_start,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
     {
 		{
 			SOUND_POKEY,

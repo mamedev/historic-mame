@@ -1,3 +1,5 @@
+/* tilemap.h */
+
 #ifndef TILEMAP_H
 #define TILEMAP_H
 
@@ -10,9 +12,12 @@
 #define TILEMAP_OPAQUE			0x00
 #define TILEMAP_TRANSPARENT		0x01
 #define TILEMAP_SPLIT			0x02
+#define TILEMAP_BITMASK			0x04
 /*
 	TILEMAP_SPLIT should be used if the pixels from a single tile
 	can appear in more than one plane.
+
+	TILEMAP_BITMASK is needed for Namco SystemI
 */
 
 #define TILEMAP_IGNORE_TRANSPARENCY		0x10
@@ -26,6 +31,7 @@
 extern struct tile_info {
 	unsigned char *pen_data; /* pointer to gfx data */
 	unsigned short *pal_data; /* pointer to palette */
+	unsigned char *mask_data; /* pointer to mask data (for TILEMAP_BITMASK) */
 	unsigned int pen_usage;	/* used pens mask */
 	/*
 		you must set tile_info.pen_data, tile_info.pal_data and tile_info.pen_usage
@@ -42,7 +48,7 @@ extern struct tile_info {
 	int _code = (CODE) % gfx->total_elements; \
 	tile_info.pen_data = gfx->gfxdata->line[_code*gfx->height]; \
 	tile_info.pal_data = &gfx->colortable[gfx->color_granularity * (COLOR)]; \
-	tile_info.pen_usage = gfx->pen_usage[_code]; \
+	tile_info.pen_usage = gfx->pen_usage?gfx->pen_usage[_code]:0; \
 }
 
 /* tile flags, set by get_tile_info callback */
@@ -80,6 +86,7 @@ struct tilemap {
 	void (*draw_opaque)( int, int );
 
 	unsigned char **pendata;
+	unsigned char **maskdata;
 	unsigned short **paldata;
 	unsigned int *pen_usage;
 

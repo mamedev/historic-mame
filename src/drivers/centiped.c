@@ -389,7 +389,7 @@ static struct POKEYinterface pokey_interface =
 {
 	1,	/* 1 chip */
 	12096000/8,	/* 1.512 MHz */
-	100,
+	{ 100 },
 	POKEY_DEFAULT_GAIN,
 	NO_CLIP,
 	/* The 8 pot handlers */
@@ -409,7 +409,8 @@ static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chips */
 	12096000/8,	/* 1.512 MHz */
-	{ 0x30ff },
+	{ 50 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },

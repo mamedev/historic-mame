@@ -508,6 +508,8 @@ int load_input_port_settings(void)
 		if (readint(f,&dispensed_tickets) != 0)
 			goto getout;
 
+		mixer_read_config(f);
+
 getout:
 		osd_fclose(f);
 	}
@@ -812,6 +814,8 @@ void save_input_port_settings(void)
 		for (i = 0; i < COIN_COUNTERS; i ++)
 			writeint(f,coins[i]);
 		writeint(f,dispensed_tickets);
+
+		mixer_write_config(f);
 
 		osd_fclose(f);
 	}

@@ -225,7 +225,8 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	10000000/6,	/* 1.666 MHz */
-	{ 0x20ff, 0x20ff },
+	{ 30, 30 },
+	AY8910_DEFAULT_GAIN,
 	{ 0, exerion_porta_r },
 	{ 0 },
 	{ 0 },

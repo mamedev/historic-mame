@@ -253,6 +253,7 @@ static struct YM2203interface ym2203_interface =
 	1,
 	1500000,
 	{ YM2203_VOL(50,90) },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },

@@ -57,7 +57,8 @@ int tms5220_sh_start (const struct MachineSound *msound)
     tms5220_set_irq (intf->irq);
 
     /* request a sound channel */
-    channel = get_play_channels (1);
+    channel = mixer_allocate_channel(intf->mixing_level);
+	mixer_set_name(channel,sound_name(msound));
     return 0;
 }
 
@@ -94,7 +95,7 @@ void tms5220_sh_update (void)
     sample_pos = 0;
 
     /* play this sample */
-    osd_play_streamed_sample (channel, (signed char *)buffer, buffer_len, emulation_rate, intf->volume,OSD_PAN_CENTER);
+	mixer_play_streamed_sample(channel,(signed char *)buffer,buffer_len,emulation_rate);
 }
 
 

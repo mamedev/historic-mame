@@ -1175,14 +1175,14 @@ static struct YM2151interface ym2151_interface =
 {
 	1,          /* 1 chip */
 	3579545,    /* 3.579545 MHz */
-	{ YM3012_VOL(30,OSD_PAN_LEFT,30,OSD_PAN_RIGHT) },
+	{ YM3012_VOL(30,MIXER_PAN_LEFT,30,MIXER_PAN_RIGHT) },
 	{ smashtv_ym2151_int }
 };
 static struct YM2151interface narc_ym2151_interface =
 {
 	1,          /* 1 chip */
 	3579545,    /* 3.579545 MHz */
-	{ YM3012_VOL(30,OSD_PAN_LEFT,30,OSD_PAN_RIGHT) },
+	{ YM3012_VOL(30,MIXER_PAN_LEFT,30,MIXER_PAN_RIGHT) },
 	{ narc_ym2151_int }
 };
 static struct OKIM6295interface okim6295_interface =
@@ -2530,7 +2530,7 @@ struct GameDriver smashtv_driver =
 	__FILE__,
 	0,
 	"smashtv",
-	"Smash TV (rev 8.00)",
+	"Smash T.V. (rev 8.00)",
 	"1990",
 	"Williams",
 	BASE_CREDITS,
@@ -2555,7 +2555,7 @@ struct GameDriver smashtv6_driver =
 	__FILE__,
 	&smashtv_driver,
 	"smashtv6",
-	"Smash TV (rev 6.00)",
+	"Smash T.V. (rev 6.00)",
 	"1990",
 	"Williams",
 	BASE_CREDITS,
@@ -2580,7 +2580,7 @@ struct GameDriver smashtv5_driver =
 	__FILE__,
 	&smashtv_driver,
 	"smashtv5",
-	"Smash TV (rev 5.00)",
+	"Smash T.V. (rev 5.00)",
 	"1990",
 	"Williams",
 	BASE_CREDITS,
@@ -2605,7 +2605,7 @@ struct GameDriver smashtv4_driver =
 	__FILE__,
 	&smashtv_driver,
 	"smashtv4",
-	"Smash TV (rev 4.00)",
+	"Smash T.V. (rev 4.00)",
 	"1990",
 	"Williams",
 	BASE_CREDITS,
@@ -2778,7 +2778,7 @@ struct GameDriver term2_driver =
 	__FILE__,
 	0,
 	"term2",
-	"Terminator 2 (rev LA3 03/27/92)",
+	"Terminator 2 - Judgment Day (rev LA3 03/27/92)",
 	"1991",
 	"Midway",
 	BASE_CREDITS,

@@ -331,7 +331,8 @@ static struct AY8910interface ay8910_interface =
 {
 	2,
 	10000000/6, /* 1.666 MHz */
-	{ 0x20ff, 0x20ff },
+	{ 25, 25 },
+	AY8910_DEFAULT_GAIN,
 	{ leland_sound_port_r, leland_sound_port_r },
 	{ 0 },
 	{ leland_sound_port_w, leland_sound_port_w },
@@ -348,7 +349,7 @@ There are:
 static struct DACinterface dac_interface =
 {
 	MAX_DAC,  /* 8 chips */
-	{255,255,255,255,},    /* Volume */
+	{25,25,25,25,},    /* Volume */
 };
 
 /***********************************************************************
@@ -471,7 +472,7 @@ void leland_dac_w(int offset, int data)
 	if (offset & 0x01)
 	{
 		/* Writing to volume register */
-		DAC_set_volume(dacnum, data, 255);
+//		DAC_set_volume(dacnum, data, 255);
 	}
 	else
 	{

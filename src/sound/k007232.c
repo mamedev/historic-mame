@@ -276,8 +276,8 @@ int K007232_sh_start(const struct MachineSound *msound)
 	const struct K007232_interface *intf = msound->sound_interface;
 
 
-	pcmbuf[0] = (unsigned char *)Machine->memory_region[intf->bankA];
-	pcmbuf[1] = (unsigned char *)Machine->memory_region[intf->bankB];
+	pcmbuf[0] = (unsigned char *)Machine->memory_region[intf->bank[0]];
+	pcmbuf[1] = (unsigned char *)Machine->memory_region[intf->bank[1]];
 	if( !intf->limit )    pcm_limit = 0x00020000;	/* default limit */
 	else                  pcm_limit = intf->limit;
 
@@ -296,10 +296,8 @@ int K007232_sh_start(const struct MachineSound *msound)
 		name[i] = buf[i];
 		sprintf(buf[i],"Konami 007232 Ch %c",'A'+i);
 	}
-	pcm_chan = stream_init_multi(msound,2,name,Machine->sample_rate,
+	pcm_chan = stream_init_multi(2,name,intf->volume,Machine->sample_rate,
 			Machine->sample_bits,Machine->sample_bits << 8,KDAC_A_update);
-	stream_set_volume(pcm_chan,intf->volume);
-	stream_set_volume(pcm_chan+1,intf->volume);
 	KDAC_A_make_fncode();
 
 	return 0;

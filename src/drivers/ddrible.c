@@ -387,8 +387,9 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct YM2203interface ym2203_interface =
 {
 	1,			/* 1 chip */
-	3000000,	/* 3 MHz? */
-	{ YM2203_VOL(255,255) },
+	3500000,	/* 3.5 MHz? */
+	{ YM2203_VOL(25,25) },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ ddrible_vlm5030_busy_r },
 	{ ddrible_vlm5030_ctrl_w },
@@ -398,7 +399,7 @@ static struct YM2203interface ym2203_interface =
 static struct VLM5030interface vlm5030_interface =
 {
 	3580000,    /* 3.58 MHz? */
-	255,        /* volume */
+	25,        /* volume */
 	5,          /* memory region of speech rom */
 	0x8000,     /* memory size 32Kbyte * 4 bank */
 	0           /* VCU pin level (default) */

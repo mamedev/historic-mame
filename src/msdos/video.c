@@ -56,6 +56,8 @@ void blitscreen_dirty1_vesa_1x_2x_8bpp(void);
 void blitscreen_dirty1_vesa_1x_2xs_8bpp(void);
 void blitscreen_dirty1_vesa_2x_2x_8bpp(void);
 void blitscreen_dirty1_vesa_2x_2xs_8bpp(void);
+void blitscreen_dirty1_vesa_2x_3x_8bpp(void);
+void blitscreen_dirty1_vesa_2x_3xs_8bpp(void);
 void blitscreen_dirty1_vesa_3x_2x_8bpp(void);
 void blitscreen_dirty1_vesa_3x_2xs_8bpp(void);
 void blitscreen_dirty1_vesa_4x_3x_8bpp(void);
@@ -74,6 +76,8 @@ void blitscreen_dirty0_vesa_1x_2x_8bpp(void);
 void blitscreen_dirty0_vesa_1x_2xs_8bpp(void);
 void blitscreen_dirty0_vesa_2x_2x_8bpp(void);
 void blitscreen_dirty0_vesa_2x_2xs_8bpp(void);
+void blitscreen_dirty0_vesa_2x_3x_8bpp(void);
+void blitscreen_dirty0_vesa_2x_3xs_8bpp(void);
 void blitscreen_dirty0_vesa_3x_2x_8bpp(void);
 void blitscreen_dirty0_vesa_3x_2xs_8bpp(void);
 void blitscreen_dirty0_vesa_4x_3x_8bpp(void);
@@ -120,7 +124,6 @@ int use_vesa;
 int gfx_mode;
 float osd_gamma_correction = 1.0;
 int brightness = 100;
-char *pcxdir;
 char *resolution;
 char *mode_desc;
 int gfx_mode;
@@ -151,6 +154,7 @@ static int doubling = 0;
 static int vdoubling = 0;
 static int tripling = 0;
 static int quadring = 0;
+static int quadring12 = 0;
 int throttle = 1;       /* toggled by F10 */
 
 static int gone_to_gfx_mode;
@@ -362,13 +366,32 @@ static void select_display_mode(void)
 	doubling = use_double;
 	tripling = use_triple;
 	quadring = use_quadra;
+	quadring12 = 0;
 	vdoubling = 0;
 	if ((Machine->drv->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
 			== VIDEO_PIXEL_ASPECT_RATIO_1_2)
 	{
-		doubling = 0;
-		vdoubling = 1;
-		height *= 2;
+		if (stretch == 2 && width <= 512 && height <= 256 &&
+				!(Machine->orientation & ORIENTATION_SWAP_XY))
+		{
+			doubling = 0;
+			tripling = 0;
+			quadring = 0;
+			quadring12 = 1;
+			vdoubling = 0;
+			height *= 3;
+
+			gfx_mode = GFX_VESA2L;
+			gfx_width = 1024;
+			gfx_height = 768;
+			color_depth = 8;
+		}
+		else
+		{
+			doubling = 0;
+			vdoubling = 1;
+			height *= 2;
+		}
 	}
 	if (use_triple)
 	{
@@ -632,7 +655,7 @@ static void adjust_display (int xmin, int ymin, int xmax, int ymax)
 		if (gfx_display_lines > gfx_height / 2)
 			gfx_display_lines = gfx_height / 2;
 	}
-	else if (quadring)
+	else if (quadring || quadring12)
 	{
 		gfx_yoffset = (gfx_height - visheight * 3) / 2;
 		if (gfx_display_lines > gfx_height / 3)
@@ -663,6 +686,13 @@ static void adjust_display (int xmin, int ymin, int xmax, int ymax)
 		gfx_xoffset = (gfx_width - viswidth * 4) /2;
 		if (gfx_display_columns > gfx_width / 4)
 			gfx_display_columns = gfx_width / 4;
+
+	}
+	else if (quadring12)
+	{
+		gfx_xoffset = (gfx_width - viswidth * 2) /2;
+		if (gfx_display_columns > gfx_width / 2)
+			gfx_display_columns = gfx_width / 2;
 
 	}
 	else
@@ -796,18 +826,17 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 		{
 			update_screen = blitscreen_dirty1_vga;
 			if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vga\n");
-	}
-		else
-		if (scrbitmap->depth == 16)
+		}
+		else if (scrbitmap->depth == 16)
 		{
 			if (doubling) {
 				if (scanlines) {
 					update_screen = blitscreen_dirty1_vesa_2x_2xs_16bpp;
 					if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_2x_2xs_16bpp\n");
-		} else {
+				} else {
 					update_screen = blitscreen_dirty1_vesa_2x_2x_16bpp;
 					if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_2x_2x_16bpp\n");
-		}
+				}
 			} else {
 				if (vdoubling) {
 					if (scanlines) {
@@ -821,32 +850,40 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 					update_screen = blitscreen_dirty1_vesa_1x_1x_16bpp;
 					if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_1x_1x_16bpp\n");
 				}
-	    }
+		    }
 		} else {
 			if (doubling) {
 				if (scanlines) {
 					update_screen = blitscreen_dirty1_vesa_2x_2xs_8bpp;
 					if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_2x_2xs_8bpp\n");
-		} else {
+				} else {
 					update_screen = blitscreen_dirty1_vesa_2x_2x_8bpp;
 					if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_2x_2x_8bpp\n");
-		}
+				}
 			} else if (tripling) {
 				if (scanlines) {
 					update_screen = blitscreen_dirty1_vesa_3x_2xs_8bpp;
 					if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_3x_2xs_8bpp\n");
-		} else {
+				} else {
 					update_screen = blitscreen_dirty1_vesa_3x_2x_8bpp;
 					if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_3x_2x_8bpp\n");
-		}
+				}
 			} else if (quadring) {
 				if (scanlines) {
 					update_screen = blitscreen_dirty1_vesa_4x_3xs_8bpp;
 					if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_4x_3xs_8bpp\n");
-		} else {
+				} else {
 					update_screen = blitscreen_dirty1_vesa_4x_3x_8bpp;
 					if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_4x_3x_8bpp\n");
-		}
+				}
+			} else if (quadring12) {
+				if (scanlines) {
+					update_screen = blitscreen_dirty1_vesa_2x_3xs_8bpp;
+					if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_2x_3xs_8bpp\n");
+				} else {
+					update_screen = blitscreen_dirty1_vesa_2x_3x_8bpp;
+					if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_2x_3x_8bpp\n");
+				}
 			} else {
 				if (vdoubling) {
 					if (scanlines) {
@@ -877,10 +914,10 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 				if (scanlines) {
 					update_screen = blitscreen_dirty0_vesa_2x_2xs_16bpp;
 					if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vesa_2x_2xs_16bpp\n");
-		} else {
+				} else {
 					update_screen = blitscreen_dirty0_vesa_2x_2x_16bpp;
 					if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vesa_2x_2x_16bpp\n");
-		}
+				}
 			} else {
 				if (vdoubling) {
 					if (scanlines) {
@@ -894,7 +931,7 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 					update_screen = blitscreen_dirty0_vesa_1x_1x_16bpp;
 					if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vesa_1x_1x_16bpp\n");
 				}
-	    }
+	    	}
 		} else {
 			if (doubling) {
 				if (scanlines) {
@@ -920,6 +957,14 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 					update_screen = blitscreen_dirty0_vesa_4x_3x_8bpp;
 					if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vesa_4x_3x_8bpp\n");
 				}
+			} else if (quadring12) {
+				if (scanlines) {
+					update_screen = blitscreen_dirty0_vesa_2x_3xs_8bpp;
+					if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vesa_2x_3xs_8bpp\n");
+				} else {
+					update_screen = blitscreen_dirty0_vesa_2x_3x_8bpp;
+					if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vesa_2x_3x_8bpp\n");
+				}
 			} else {
 				if (vdoubling)
 				{
@@ -934,7 +979,7 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 					update_screen = blitscreen_dirty0_vesa_1x_1x_8bpp;
 					if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vesa_1x_1x_8bpp\n");
 				}
-	    }
+			}
 		}
     }
 
@@ -1651,50 +1696,6 @@ INLINE void pan_display(void)
 
 
 
-void osd_save_snapshot(void)
-{
-	BITMAP *bmp;
-	PALETTE pal;
-	char name[30];
-	FILE *f;
-	static int snapno;
-	int y;
-
-	do
-	{
-		if (snapno == 0)        /* first of all try with the "gamename.pcx" */
-			sprintf(name,"%s/%.8s.pcx", pcxdir, Machine->gamedrv->name);
-
-		else    /* otherwise use "nameNNNN.pcx" */
-			sprintf(name,"%s/%.4s%04d.pcx", pcxdir, Machine->gamedrv->name,snapno);
-		/* avoid overwriting of existing files */
-
-		if ((f = fopen(name,"rb")) != 0)
-		{
-			fclose(f);
-			snapno++;
-		}
-	} while (f != 0);
-
-	get_palette(pal);
-	bmp = create_bitmap_ex(scrbitmap->depth,gfx_display_columns,gfx_display_lines);
-	if (scrbitmap->depth == 8)
-	{
-		for (y = 0;y < gfx_display_lines;y++)
-			memcpy(bmp->line[y],scrbitmap->line[y+skiplines]+skipcolumns,gfx_display_columns);
-	}
-	else
-	{
-		for (y = 0;y < gfx_display_lines;y++)
-			memcpy(bmp->line[y],scrbitmap->line[y+skiplines]+2*skipcolumns,2*gfx_display_columns);
-	}
-	save_pcx(name,bmp,pal);
-	destroy_bitmap(bmp);
-	snapno++;
-
-}
-
-
 int osd_skip_this_frame(void)
 {
 	static const int skiptable[FRAMESKIP_LEVELS][FRAMESKIP_LEVELS] =
@@ -2112,4 +2113,9 @@ int osd_get_brightness(void)
 	return brightness;
 }
 
+
+void osd_save_snapshot(void)
+{
+	save_screen_snapshot();
+}
 

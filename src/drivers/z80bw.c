@@ -129,7 +129,8 @@ static unsigned char astinvad_palette[] = /* L.T */
 
 static struct Samplesinterface samples_interface =
 {
-	9       /* 9 channels */
+	9,       /* 9 channels */
+	25	/* volume */
 };
 
 

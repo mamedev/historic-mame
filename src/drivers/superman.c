@@ -284,6 +284,7 @@ static struct YM2610interface ym2610_interface =
 	1,	/* 1 chip */
 	8000000,	/* 8 MHz ?????? */
 	{ 30 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -291,7 +292,7 @@ static struct YM2610interface ym2610_interface =
 	{ irqhandler },
 	{ 3 },
 	{ 3 },
-	{ YM3012_VOL(60,OSD_PAN_LEFT,60,OSD_PAN_RIGHT) }
+	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) }
 };
 
 

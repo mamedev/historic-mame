@@ -199,6 +199,7 @@ static struct AY8910interface ay8910_interface =
 	1,	/* 1 chip */
 	1500000,	/* 1.5 MHz ? */
 	{ 30 },
+	AY8910_DEFAULT_GAIN,
 	{ input_port_0_r },
 	{ input_port_1_r },
 	{ 0 },
@@ -381,7 +382,7 @@ struct GameDriver champbb2_driver =
 	__FILE__,
 	0,
 	"champbb2",
-	"Champion Baseball 2",
+	"Champion Baseball II",
 	"1983",
 	"Sega / Alpha Denshi",
 	"Nicola Salmoria",

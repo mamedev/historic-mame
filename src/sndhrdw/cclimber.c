@@ -14,9 +14,10 @@ static int channel;
 
 int cclimber_sh_start(const struct MachineSound *msound)
 {
-	channel = get_play_channels(1);
+	channel = mixer_allocate_channel(50);
+	mixer_set_name(channel,"Samples");
 
-	samplebuf = malloc (2*Machine->memory_region_length[3]);
+	samplebuf = malloc(2*Machine->memory_region_length[3]);
 	if (!samplebuf)
 		return 1;
 
@@ -45,15 +46,15 @@ static void cclimber_play_sample(int start,int freq,int volume)
 		int sample;
 
 		sample = (rom[start + len] & 0xf0) >> 4;
-		samplebuf[2*len] = SAMPLE_CONV4(sample);
+		samplebuf[2*len] = SAMPLE_CONV4(sample) * volume / 31;
 
 		sample = rom[start + len] & 0x0f;
-		samplebuf[2*len + 1] = SAMPLE_CONV4(sample);
+		samplebuf[2*len + 1] = SAMPLE_CONV4(sample) * volume / 31;
 
 		len++;
 	}
 
-	osd_play_sample(channel,samplebuf,2 * len,freq,8*volume,0);
+	mixer_play_sample(channel,samplebuf,2 * len,freq,0);
 }
 
 

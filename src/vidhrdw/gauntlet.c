@@ -1,8 +1,50 @@
 /***************************************************************************
 
-  vidhrdw.c
+  vidhrdw/gauntlet.c
 
   Functions to emulate the video hardware of the machine.
+
+****************************************************************************
+
+	Playfield encoding
+	------------------
+		1 16-bit word is used
+
+		Word 1:
+			Bit  15    = horizontal flip
+			Bits 12-14 = palette
+			Bits  0-11 = image index
+
+
+	Motion Object encoding
+	----------------------
+		4 16-bit words are used
+
+		Word 1:
+			Bits  0-14 = image index
+
+		Word 2:
+			Bits  7-15 = X position
+			Bits  0-3  = palette
+
+		Word 3:
+			Bits  7-14 = Y position
+			Bit   6    = horizontal flip
+			Bits  3-5  = width in tiles
+			Bits  0-2  = height in tiles
+
+		Word 4:
+			Bits  0-9  = link to the next image to display
+
+
+	Alpha layer encoding
+	--------------------
+		1 16-bit word is used
+
+		Word 1:
+			Bit  15    = transparent/opaque
+			Bits 10-13 = palette
+			Bits  0-9  = image index
 
 ***************************************************************************/
 
@@ -15,6 +57,22 @@
 
 #define XDIM (XCHARS*8)
 #define YDIM (YCHARS*8)
+
+
+#define DEBUG_VIDEO 0
+
+
+/*************************************
+ *
+ *		Structures
+ *
+ *************************************/
+
+struct mo_data
+{
+	struct osd_bitmap *bitmap;
+	unsigned char shade_table[256];
+};
 
 
 
@@ -34,74 +92,29 @@ int vindctr2_screen_refresh;
  *
  *************************************/
 
-static struct tilemap *playfield;
-static struct tilemap *alpha;
+static struct atarigen_pf_state pf_state;
 
-static int playfield_bank;
 static int playfield_color_base;
-
-static int xscroll;
-static int yscroll;
-
-
-#if 0
-static void vindictr_debug(void);
-#endif
 
 
 
 /*************************************
  *
- *		TileMap callbacks
+ *		Prototypes
  *
  *************************************/
 
-/*-----------------------------------------------------
- * 	Playfield encoding
- *
- *		64x64 tile scrolling grid, with X/Y swapped
- *
- *		1 16-bit word is used per tile
- *
- *			Bits 0-11  = image
- *			Bits 12-14 = color
- *			Bit  15    = horizontal flip
- *---------------------------------------------------*/
+static const unsigned char *update_palette(unsigned char *shade_table);
 
-static void playfield_get_info(int col, int row)
-{
-	int tile_index = 64 * col + row;
-	int data = READ_WORD(&atarigen_playfieldram[tile_index * 2]);
-	int code = playfield_bank + ((data & 0xfff) ^ 0x800);
-	int color = playfield_color_base + ((data >> 12) & 7);
+static void pf_color_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
+static void pf_render_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
 
-	SET_TILE_INFO(1, code, color);
-	tile_info.flags = (data & 0x8000) ? TILE_FLIPX : 0;
-}
+static void mo_color_callback(const unsigned short *data, const struct rectangle *clip, void *param);
+static void mo_render_callback(const unsigned short *data, const struct rectangle *clip, void *param);
 
-
-/*-----------------------------------------------------
- * 	Alpha layer encoding
- *
- *		64x64 tile fixed grid, only 42x30 is visible
- *
- *		1 16-bit word is used per tile
- *
- *			Bits 0-9   = index of the character
- *			Bit  10-13 = color
- *			Bit  15    = transparent/opaque
- *---------------------------------------------------*/
-
-static void alpha_get_info(int col, int row)
-{
-	int tile_index = 64 * row + col;
-	int data = READ_WORD(&atarigen_alpharam[tile_index * 2]);
-	int code = data & 0x3ff;
-	int color = ((data >> 10) & 0xf) | ((data >> 9) & 0x20);
-
-	SET_TILE_INFO(0, code, color);
-	tile_info.flags = (data & 0x8000) ? TILE_IGNORE_TRANSPARENCY : 0;
-}
+#if DEBUG_VIDEO
+static void debug(void);
+#endif
 
 
 
@@ -113,7 +126,7 @@ static void alpha_get_info(int col, int row)
 
 int gauntlet_vh_start(void)
 {
-	static struct atarigen_modesc gauntlet_modesc =
+	static struct atarigen_mo_desc mo_desc =
 	{
 		1024,                /* maximum number of MO's */
 		2,                   /* number of bytes per MO entry */
@@ -123,25 +136,34 @@ int gauntlet_vh_start(void)
 		0                    /* render in reverse link order */
 	};
 
-	/* allocate playfield tilemap */
-	playfield = tilemap_create(playfield_get_info, TILEMAP_OPAQUE, 8,8, 64,64);
-	if (!playfield)
+	static struct atarigen_pf_desc pf_desc =
+	{
+		8, 8,				/* width/height of each tile */
+		64, 64				/* number of tiles in each direction */
+	};
+	
+	int i;
+	
+	/* reset statics */
+	memset(&pf_state, 0, sizeof(pf_state));
+	playfield_color_base = vindctr2_screen_refresh ? 0x10 : 0x18;
+	
+	/* initialize the shading colors */
+	for (i = 0; i < 32; i++)
+		palette_change_color(i + 1024, i * 128 / 31, i * 128 / 31, i * 128 / 31);
+	
+	/* initialize the playfield */
+	if (atarigen_pf_init(&pf_desc))
 		return 1;
-
-	/* allocate alpha tilemap */
-	alpha = tilemap_create(alpha_get_info, TILEMAP_TRANSPARENT, 8,8, 64,64);
-	if (!alpha)
+	
+	/* initialize the motion objects */
+	if (atarigen_mo_init(&mo_desc))
+	{
+		atarigen_pf_free();
 		return 1;
-	alpha->transparent_pen = 0;
-
-	/* set up the appropriate variables for Gauntlet vs. Vindicators 2 */
-	if (vindctr2_screen_refresh)
-		playfield_color_base = 0x10;
-	else
-		playfield_color_base = 0x18;
-
-	/* initialize the displaylist system */
-	return atarigen_init_display_list(&gauntlet_modesc);
+	}
+	
+	return 0;
 }
 
 
@@ -154,13 +176,15 @@ int gauntlet_vh_start(void)
 
 void gauntlet_vh_stop(void)
 {
+	atarigen_pf_free();
+	atarigen_mo_free();
 }
 
 
 
 /*************************************
  *
- *		Scroll/bank registers
+ *		Horizontal scroll register
  *
  *************************************/
 
@@ -171,39 +195,37 @@ void gauntlet_hscroll_w(int offset, int data)
 	int newword = COMBINE_WORD(oldword, data);
 	WRITE_WORD(&atarigen_hscroll[offset], newword);
 
-	/* set the new scroll */
-	xscroll = newword & 0x1ff;
-	tilemap_set_scrollx(playfield, 0, xscroll);
-}
-
-
-void gauntlet_vscroll_w(int offset, int data)
-{
-	int temp;
-
-	/* update memory */
-	int oldword = READ_WORD(&atarigen_vscroll[offset]);
-	int newword = COMBINE_WORD(oldword, data);
-	WRITE_WORD(&atarigen_vscroll[offset], newword);
-
-	/* set the new scroll */
-	yscroll = (newword >> 7) & 0x1ff;
-	tilemap_set_scrolly(playfield, 0, yscroll);
-
-	/* set the new ROM bank */
-	temp = (newword & 3) << 12;
-	if (temp != playfield_bank)
-	{
-		playfield_bank = temp;
-		tilemap_mark_all_tiles_dirty(playfield);
-	}
+	/* update parameters */
+	pf_state.hscroll = newword & 0x1ff;
+	atarigen_pf_update(&pf_state, cpu_getscanline());
 }
 
 
 
 /*************************************
  *
- *		Playfield/alpha RAM
+ *		Vertical scroll/PF bank register
+ *
+ *************************************/
+
+void gauntlet_vscroll_w(int offset, int data)
+{
+	/* update memory */
+	int oldword = READ_WORD(&atarigen_vscroll[offset]);
+	int newword = COMBINE_WORD(oldword, data);
+	WRITE_WORD(&atarigen_vscroll[offset], newword);
+
+	/* update parameters */
+	pf_state.vscroll = (newword >> 7) & 0x1ff;
+	pf_state.param[0] = newword & 3;
+	atarigen_pf_update(&pf_state, cpu_getscanline());
+}
+
+
+
+/*************************************
+ *
+ *		Playfield RAM write handler
  *
  *************************************/
 
@@ -214,19 +236,7 @@ void gauntlet_playfieldram_w(int offset, int data)
 	if (oldword != newword)
 	{
 		WRITE_WORD(&atarigen_playfieldram[offset], newword);
-		tilemap_mark_tile_dirty(playfield, (offset / 2) / 64, (offset / 2) % 64);
-	}
-}
-
-
-void gauntlet_alpharam_w(int offset, int data)
-{
-	int oldword = READ_WORD(&atarigen_alpharam[offset]);
-	int newword = COMBINE_WORD(oldword, data);
-	if (oldword != newword)
-	{
-		WRITE_WORD(&atarigen_alpharam[offset], newword);
-		tilemap_mark_tile_dirty(alpha, (offset / 2) % 64, (offset / 2) / 64);
+		atarigen_pf_dirty[offset / 2] = 0xff;
 	}
 }
 
@@ -234,91 +244,247 @@ void gauntlet_alpharam_w(int offset, int data)
 
 /*************************************
  *
- *		Motion object list handlers
+ *		Periodic scanline updater
  *
  *************************************/
 
-/*-----------------------------------------------------
- * 	Motion Object encoding
- *
- *		4 16-bit words are used
- *
- *		Word 1:
- *			Bits 0-14  = index of the image (0-32767)
- *
- *		Word 2:
- *			Bits 0-3   = color
- *			Bits 7-15  = X position
- *
- *		Word 3:
- *			Bits 0-2   = vertical tiles - 1
- *			Bits 3-5   = horizontal tiles - 1
- *			Bit  6     = horizontal flip
- *			Bits 7-14  = Y position
- *
- *		Word 4:
- *			Bits 0-9   = link to the next object
- *---------------------------------------------------*/
-
-static void render_mo(struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
+void gauntlet_scanline_update(int scanline)
 {
-	int sx, sy, x, y, xadv;
-
-	/* extract data from the various words */
-	int pict = data[0] & 0x7fff;
-	int color = data[1] & 0x0f;
-	int xpos = (data[1] >> 7) - xscroll;
-	int vsize = (data[2] & 7) + 1;
-	int hsize = ((data[2] >> 3) & 7) + 1;
-	int hflip = data[2] & 0x40;
-	int ypos = -(data[2] >> 7) - vsize * 8 - yscroll;
-
-	/* adjust for h flip */
-	if (hflip)
-		xpos += (hsize - 1) * 8, xadv = -8;
-	else
-		xadv = 8;
-
-	/* adjust the final coordinates */
-	xpos &= 0x1ff;
-	ypos &= 0x1ff;
-	if (xpos >= XDIM) xpos -= 0x200;
-	if (ypos >= YDIM) ypos -= 0x200;
-
-	/* loop over the height */
-	for (y = 0, sy = ypos; y < vsize; y++, sy += 8)
+	/* catch a fractional character off the top of the screen */
+	if (scanline == 0 && (pf_state.vscroll & 7) != 0)
 	{
-		/* clip the Y coordinate */
-		if (sy <= clip->min_y - 8)
-		{
-			pict += hsize;
-			continue;
-		}
-		else if (sy > clip->max_y)
-			break;
+		int pfscanline = pf_state.vscroll & 0x1f8;
+		int link = READ_WORD(&atarigen_alpharam[0xf80 + 2 * (pfscanline / 8)]) & 0x3ff;
+		atarigen_mo_update(atarigen_spriteram, link, 0);
+	}
 
-		/* loop over the width */
-		for (x = 0, sx = xpos; x < hsize; x++, sx += xadv, pict++)
-		{
-			/* clip the X coordinate */
-			if (sx <= -8 || sx >= XDIM)
-				continue;
-
-			/* draw the mo */
-			drawgfx(bitmap, Machine->gfx[1],
-					pict ^ 0x800, color, hflip, 0, sx, sy, clip, TRANSPARENCY_PEN, 0);
-		}
+	/* if we're within screen bounds, grab the next batch of MO's and process */
+	if (scanline < YDIM)
+	{
+		int pfscanline = (scanline + pf_state.vscroll + 7) & 0x1f8;
+		int link = READ_WORD(&atarigen_alpharam[0xf80 + 2 * (pfscanline / 8)]) & 0x3ff;
+		atarigen_mo_update(atarigen_spriteram, link, (pfscanline - pf_state.vscroll) & 0x1ff);
 	}
 }
 
 
-int gauntlet_update_display_list(int scanline)
+
+/*************************************
+ *
+ *		Main refresh
+ *
+ *************************************/
+
+void gauntlet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	/* look up the SLIP link */
-	int link = READ_WORD(&atarigen_alpharam[0xf80 + 2 * (((scanline + yscroll) / 8) & 0x3f)]) & 0x3ff;
-	atarigen_update_display_list(atarigen_spriteram, link, scanline);
-	return yscroll;
+	struct mo_data modata;
+
+#if DEBUG_VIDEO
+	debug();
+#endif
+
+	/* update the palette, and mark things dirty */
+	if (update_palette(modata.shade_table))
+		memset(atarigen_pf_dirty, 0xff, atarigen_playfieldram_size / 2);
+
+	/* draw the playfield */
+	memset(atarigen_pf_visit, 0, 64*64);
+	atarigen_pf_process(pf_render_callback, bitmap, &Machine->drv->visible_area);
+
+	/* draw the motion objects */
+	modata.bitmap = bitmap;
+	atarigen_mo_process(mo_render_callback, &modata);
+
+	/* draw the alphanumerics */
+	{
+		const struct GfxElement *gfx = Machine->gfx[1];
+		int x, y, offs;
+
+		for (y = 0; y < YCHARS; y++)
+			for (x = 0, offs = y * 64; x < XCHARS; x++, offs++)
+			{
+				int data = READ_WORD(&atarigen_alpharam[offs * 2]);
+				int code = data & 0x3ff;
+				int opaque = data & 0x8000;
+				
+				if (code || opaque)
+				{
+					int color = ((data >> 10) & 0xf) | ((data >> 9) & 0x20);
+					drawgfx(bitmap, gfx, code, color, 0, 0, 8 * x, 8 * y, 0, opaque ? TRANSPARENCY_NONE : TRANSPARENCY_PEN, 0);
+				}
+			}
+	}
 }
+
+
+
+/*************************************
+ *
+ *		Palette management
+ *
+ *************************************/
+
+static const unsigned char *update_palette(unsigned char *shade_table)
+{
+	unsigned short pf_map[32], al_map[64], mo_map[16];
+	const unsigned char *result;
+	int i, j;
+
+	/* reset color tracking */
+	memset(mo_map, 0, sizeof(mo_map));
+	memset(pf_map, 0, sizeof(pf_map));
+	memset(al_map, 0, sizeof(al_map));
+	palette_init_used_colors();
+
+	/* always count the shading colors for Vindicators */
+	if (vindctr2_screen_refresh)
+		memset(&palette_used_colors[1024], PALETTE_COLOR_USED, 32);
+
+	/* update color usage for the playfield */
+	atarigen_pf_process(pf_color_callback, pf_map, &Machine->drv->visible_area);
+
+	/* update color usage for the mo's */
+	atarigen_mo_process(mo_color_callback, mo_map);
+
+	/* update color usage for the alphanumerics */
+	{
+		const unsigned int *usage = Machine->gfx[1]->pen_usage;
+		int x, y, offs;
+
+		for (y = 0; y < YCHARS; y++)
+			for (x = 0, offs = y * 64; x < XCHARS; x++, offs++)
+			{
+				int data = READ_WORD(&atarigen_alpharam[offs * 2]);
+				int code = data & 0x3ff;
+				int color = ((data >> 10) & 0xf) | ((data >> 9) & 0x20);
+				al_map[color] |= usage[code];
+			}
+	}
+
+	/* rebuild the playfield palette */
+	for (i = 0; i < 16; i++)
+	{
+		unsigned short used = pf_map[i + 16];
+		if (used)
+			for (j = 0; j < 16; j++)
+				if (used & (1 << j))
+					palette_used_colors[0x200 + i * 16 + j] = PALETTE_COLOR_USED;
+	}
+
+	/* rebuild the motion object palette */
+	for (i = 0; i < 16; i++)
+	{
+		unsigned short used = mo_map[i];
+		if (used)
+		{
+			palette_used_colors[0x100 + i * 16 + 0] = PALETTE_COLOR_TRANSPARENT;
+			for (j = 1; j < 16; j++)
+				if (used & (1 << j))
+					palette_used_colors[0x100 + i * 16 + j] = PALETTE_COLOR_USED;
+		}
+	}
+
+	/* rebuild the alphanumerics palette */
+	for (i = 0; i < 64; i++)
+	{
+		unsigned short used = al_map[i];
+		if (used)
+			for (j = 0; j < 4; j++)
+				if (used & (1 << j))
+					palette_used_colors[0x000 + i * 4 + j] = PALETTE_COLOR_USED;
+	}
+
+	/* recalc */
+	result = palette_recalc();
+	
+	/* build the shading lookup table */
+	if (vindctr2_screen_refresh)
+	{
+		/* build the shading lookup table */
+		for (i = 0; i < 256; i++)
+		{
+			unsigned char r, g, b;
+			int y;
+			osd_get_pen(i, &r, &g, &b);
+			y = (r * 10 + g * 18 + b * 4) >> 8;
+			shade_table[i] = Machine->pens[1024 + y];
+		}
+	}
+	
+	return result;
+}
+
+
+
+/*************************************
+ *
+ *		Playfield palette
+ *
+ *************************************/
+
+static void pf_color_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *param)
+{
+	const unsigned int *usage = &Machine->gfx[0]->pen_usage[state->param[0] * 0x1000];
+	unsigned short *colormap = (unsigned short *)param;
+	int bank = state->param[0];
+	int x, y;
+	
+	for (y = tiles->min_y; y != tiles->max_y; y = (y + 1) & 63)
+		for (x = tiles->min_x; x != tiles->max_x; x = (x + 1) & 63)
+		{
+			int offs = x * 64 + y;
+			int data = READ_WORD(&atarigen_playfieldram[offs * 2]);
+			int code = bank * 0x1000 + ((data & 0xfff) ^ 0x800);
+			int color = playfield_color_base + ((data >> 12) & 7);
+			colormap[color + 0] |= usage[code];
+			
+			/* also mark unvisited tiles dirty */
+			if (!atarigen_pf_visit[offs]) atarigen_pf_dirty[offs] = 0xff;
+		}
+}
+
+
+
+/*************************************
+ *
+ *		Playfield rendering
+ *
+ *************************************/
+
+static void pf_render_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *param)
+{
+	const struct GfxElement *gfx = Machine->gfx[0];
+	struct osd_bitmap *bitmap = param;
+	int bank = state->param[0];
+	int x, y;
+
+	/* first update any tiles whose color is out of date */
+	for (y = tiles->min_y; y != tiles->max_y; y = (y + 1) & 63)
+		for (x = tiles->min_x; x != tiles->max_x; x = (x + 1) & 63)
+		{
+			int offs = x * 64 + y;
+			int data = READ_WORD(&atarigen_playfieldram[offs * 2]);
+			
+			if (atarigen_pf_dirty[offs] != bank)
+			{
+				int color = playfield_color_base + ((data >> 12) & 7);
+				int code = bank * 0x1000 + ((data & 0xfff) ^ 0x800);
+				int hflip = data & 0x8000;
+				
+				drawgfx(atarigen_pf_bitmap, gfx, code, color, hflip, 0, 8 * x, 8 * y, 0, TRANSPARENCY_NONE, 0);
+				atarigen_pf_dirty[offs] = bank;
+			}
+			
+			/* track the tiles we've visited */
+			atarigen_pf_visit[offs] = 1;
+		}
+
+	/* then blast the result */
+	x = -state->hscroll;
+	y = -state->vscroll;
+	copyscrollbitmap(bitmap, atarigen_pf_bitmap, 1, &x, 1, &y, clip, TRANSPARENCY_NONE, 0);
+}
+
 
 
 /*************************************
@@ -326,63 +492,97 @@ int gauntlet_update_display_list(int scanline)
  *		Motion object palette
  *
  *************************************/
-
-static void calc_mo_colors(struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
+ 
+static void mo_color_callback(const unsigned short *data, const struct rectangle *clip, void *param)
 {
-	unsigned char *colors = param;
-	int color = data[1] & 0x0f;
-	colors[color] = 1;
-}
-
-
-static void mark_mo_colors(void)
-{
-	unsigned char mo_map[16];
+	const unsigned int *usage = Machine->gfx[0]->pen_usage;
+	unsigned short *colormap = param;
+	int code = (data[0] & 0x7fff) ^ 0x800;
+	int hsize = ((data[2] >> 3) & 7) + 1;
+	int vsize = (data[2] & 7) + 1;
+	int color = data[1] & 0x000f;
+	int tiles = hsize * vsize;
+	unsigned short temp = 0;
 	int i;
 
-	/* update color usage for the mo's */
-	memset(mo_map, 0, sizeof(mo_map));
-	atarigen_render_display_list(NULL, calc_mo_colors, mo_map);
-
-	/* rebuild the palette */
-	for (i = 0; i < 16; i++)
-		if (mo_map[i])
-		{
-			palette_used_colors[256 + i * 16] = PALETTE_COLOR_TRANSPARENT;
-			memset(&palette_used_colors[256 + i * 16 + 1], PALETTE_COLOR_USED, 15);
-		}
+	for (i = 0; i < tiles; i++)
+		temp |= usage[code++];
+	colormap[color] |= temp;
 }
+
 
 
 /*************************************
  *
- *		Main screen refresh
+ *		Motion object rendering
  *
  *************************************/
 
-void gauntlet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+static void mo_render_callback(const unsigned short *data, const struct rectangle *clip, void *param)
 {
-#if 0
-	vindictr_debug();
-#endif
+	const struct GfxElement *gfx = Machine->gfx[0];
+	const unsigned int *usage = gfx->pen_usage;
+	const struct mo_data *modata = param;
+	struct osd_bitmap *bitmap = modata->bitmap;
+	int x, y, sx, sy;
 
-	/* update the tilemaps */
-	tilemap_update(ALL_TILEMAPS);
+	/* extract data from the various words */
+	int code = (data[0] & 0x7fff) ^ 0x800;
+	int color = data[1] & 0x000f;
+	int ypos = -pf_state.vscroll - (data[2] >> 7);
+	int hflip = data[2] & 0x0040;
+	int hsize = ((data[2] >> 3) & 7) + 1;
+	int vsize = (data[2] & 7) + 1;
+	int xpos = -pf_state.hscroll + (data[1] >> 7);
+	int xadv;
+	
+	/* adjust for height */
+	ypos -= vsize * 8;
 
-	/* handle the palette */
-	palette_init_used_colors();
-	mark_mo_colors();
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	/* adjust the final coordinates */
+	xpos &= 0x1ff;
+	ypos &= 0x1ff;
+	if (xpos >= XDIM) xpos -= 0x200;
+	if (ypos >= YDIM) ypos -= 0x200;
 
-	/* render the tilemaps */
-	tilemap_render(ALL_TILEMAPS);
+	/* adjust for h flip */
+	if (hflip)
+		xpos += (hsize - 1) * 8, xadv = -8;
+	else
+		xadv = 8;
 
-	/* draw it all */
-	tilemap_draw(bitmap, playfield, 0);
-	atarigen_render_display_list(bitmap, render_mo, NULL);
-	tilemap_draw(bitmap, alpha, 0);
+	/* loop over the height */
+	for (y = 0, sy = ypos; y < vsize; y++, sy += 8)
+	{
+		/* clip the Y coordinate */
+		if (sy <= clip->min_y - 8)
+		{
+			code += hsize;
+			continue;
+		}
+		else if (sy > clip->max_y)
+			break;
+
+		/* loop over the width */
+		for (x = 0, sx = xpos; x < hsize; x++, sx += xadv, code++)
+		{
+			/* clip the X coordinate */
+			if (sx <= -8 || sx >= XDIM)
+				continue;
+
+			/* draw the sprite */
+			if (vindctr2_screen_refresh)
+			{
+				drawgfx(bitmap, gfx, code, color, hflip, 0, sx, sy, clip, TRANSPARENCY_PENS, 0x0003);
+				if (usage[code] & 0x0002)
+					atarigen_shade_render(bitmap, gfx, code, hflip, sx, sy, clip, modata->shade_table);
+			}
+			else
+				drawgfx(bitmap, gfx, code, color, hflip, 0, sx, sy, clip, TRANSPARENCY_PEN, 0);
+		}
+	}
 }
+
 
 
 /*************************************
@@ -391,9 +591,9 @@ void gauntlet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
  *
  *************************************/
 
-#if 0
+#if DEBUG_VIDEO
 
-void vindictr_dump_mo(struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
+static void mo_print_callback(struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
 {
 	FILE *f = param;
 
@@ -411,7 +611,7 @@ void vindictr_dump_mo(struct osd_bitmap *bitmap, struct rectangle *clip, unsigne
 }
 
 
-static void vindictr_debug(void)
+static void debug(void)
 {
 	if (osd_key_pressed(OSD_KEY_9))
 	{
@@ -461,9 +661,10 @@ static void vindictr_debug(void)
 		}
 
 		fprintf(f,"\n\nMotion objects\n");
-		atarigen_render_display_list(NULL, vindictr_dump_mo, f);
+		atarigen_render_display_list(NULL, mo_print_callback, f);
 
 		fclose(f);
 	}
 }
+
 #endif

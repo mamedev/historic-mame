@@ -415,7 +415,8 @@ static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
 	1536000,	/* 1.536 MHz ?? */
-	{ 255 },
+	{ 25 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ friskyt_portB_r },
 	{ 0 },
@@ -425,7 +426,7 @@ static struct AY8910interface ay8910_interface =
 static struct DACinterface dac_interface =
 {
 	1,
-	{ 255 }
+	{ 25 }
 };
 
 

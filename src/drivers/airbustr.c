@@ -448,21 +448,21 @@ Code at 505: waits for bit 1 to go low, writes command, waits for bit
 */
 
 
-int soundcommand_status_r(int offset)
+static int soundcommand_status_r(int offset)
 {
 /* bits: 2 <-> ?	1 <-> soundlatch full	0 <-> soundlatch2 empty */
 	return 4 + soundlatch_status * 2 + (1-soundlatch2_status);
 }
 
 
-int soundcommand2_r(int offset)
+static int soundcommand2_r(int offset)
 {
 	soundlatch2_status = 0;				// soundlatch2 has been read
 	return soundlatch2_r(0);
 }
 
 
-void soundcommand_w(int offset, int data)
+static void soundcommand_w(int offset, int data)
 {
 	soundlatch_w(0,data);
 	soundlatch_status = 1;				// soundlatch has been written
@@ -707,6 +707,7 @@ static struct YM2203interface ym2203_interface =
 	1,
 	3000000,					/* ?? */
 	{ YM2203_VOL(0xff,0xff) },	/* gain,volume */
+	AY8910_DEFAULT_GAIN,
 	{ input_port_3_r },			/* DSW-1 connected to port A */
 	{ input_port_4_r },			/* DSW-2 connected to port B */
 	{ 0 },
@@ -826,8 +827,49 @@ unsigned char *RAM;
 	RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	RAM[0x37f4] = 0x00;		RAM[0x37f5] = 0x00;	// startup check. We need a reset
 												// so I patch a busy loop with jp 0
+
+	RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	RAM[0x0258] = 0x53; // include EI in the busy loop.
+						// It's an hack to repair nested nmi troubles
 }
 
+/***********************************************************************
+
+  Air Buster high score save routine - RJF (May 12, 1999)
+
+***********************************************************************/
+
+static int airbustr_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	/* check if the hi score table has already been initialized */
+        if (memcmp(&RAM[0xe160],"\x01\x68\x00",3) == 0)
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+                        osd_fread(f,&RAM[0xe160], 8*8);        /* HS table */
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+static void airbustr_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+                osd_fwrite(f,&RAM[0xe160], 8*8);       /* HS table */
+		osd_fclose(f);
+	}
+}
 
 struct GameDriver airbustr_driver =
 {
@@ -852,5 +894,5 @@ struct GameDriver airbustr_driver =
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0,0
+        airbustr_hiload, airbustr_hisave
 };

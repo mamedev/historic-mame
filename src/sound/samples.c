@@ -7,7 +7,7 @@ static int firstchannel,numchannels;
 
 /* Start one of the samples loaded from disk. Note: channel must be in the range */
 /* 0 .. Samplesinterface->channels-1. It is NOT the discrete channel to pass to */
-/* osd_play_sample() */
+/* mixer_play_sample() */
 void sample_start(int channel,int samplenum,int loop)
 {
 	if (Machine->sample_rate == 0) return;
@@ -27,26 +27,24 @@ void sample_start(int channel,int samplenum,int loop)
 	if ( Machine->samples->sample[samplenum]->resolution == 8 )
 	{
 		if (errorlog) fprintf(errorlog,"play 8 bit sample %d, channel %d\n",samplenum,channel);
-		osd_play_sample(channel + firstchannel,
+		mixer_play_sample(firstchannel + channel,
 				Machine->samples->sample[samplenum]->data,
 				Machine->samples->sample[samplenum]->length,
 				Machine->samples->sample[samplenum]->smpfreq,
-				Machine->samples->sample[samplenum]->volume,
 				loop);
 	}
 	else
 	{
 		if (errorlog) fprintf(errorlog,"play 16 bit sample %d, channel %d\n",samplenum,channel);
-		osd_play_sample_16(channel + firstchannel,
+		mixer_play_sample_16(firstchannel + channel,
 				(short *) Machine->samples->sample[samplenum]->data,
 				Machine->samples->sample[samplenum]->length,
 				Machine->samples->sample[samplenum]->smpfreq,
-				Machine->samples->sample[samplenum]->volume,
 				loop);
 	}
 }
 
-void sample_adjust(int channel,int freq,int volume)
+void sample_set_freq(int channel,int freq)
 {
 	if (Machine->sample_rate == 0) return;
 	if (Machine->samples == 0) return;
@@ -56,7 +54,20 @@ void sample_adjust(int channel,int freq,int volume)
 		return;
 	}
 
-	osd_adjust_sample(channel + firstchannel,freq,volume);
+	osd_set_sample_freq(channel + firstchannel,freq);
+}
+
+void sample_set_volume(int channel,int volume)
+{
+	if (Machine->sample_rate == 0) return;
+	if (Machine->samples == 0) return;
+	if (channel >= numchannels)
+	{
+		if (errorlog) fprintf(errorlog,"error: sample_adjust() called with channel = %d, but only %d channels allocated\n",channel,numchannels);
+		return;
+	}
+
+	mixer_set_volume(channel + firstchannel,volume * 100 / 255);
 }
 
 void sample_stop(int channel)
@@ -86,9 +97,20 @@ int sample_playing(int channel)
 
 int samples_sh_start(const struct MachineSound *msound)
 {
+	int i;
+	int vol[MIXER_MAX_CHANNELS];
 	const struct Samplesinterface *intf = msound->sound_interface;
 
 	numchannels = intf->channels;
-	firstchannel = get_play_channels(numchannels);
+	for (i = 0;i < numchannels;i++)
+		vol[i] = intf->volume;
+	firstchannel = mixer_allocate_channels(numchannels,vol);
+	for (i = 0;i < numchannels;i++)
+	{
+		char buf[40];
+
+		sprintf(buf,"Sample #%d",i);
+		mixer_set_name(firstchannel + i,buf);
+	}
 	return 0;
 }

@@ -427,7 +427,8 @@ static struct GfxDecodeInfo futspy_gfxdecodeinfo[] =
 
 static struct Samplesinterface zaxxon_samples_interface =
 {
-	12	/* 12 channels */
+	12,	/* 12 channels */
+	25	/* volume */
 };
 
 

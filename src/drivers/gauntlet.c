@@ -119,28 +119,21 @@ Program ROM (48K bytes)                   4000-FFFF   R    D0-D7
 
 
 extern unsigned char *gauntlet_speed_check;
-extern int gauntlet_slapstic_num;
 extern int vindctr2_screen_refresh;
 
 int gauntlet_control_r(int offset);
 int gauntlet_io_r(int offset);
 int gauntlet_68010_speedup_r(int offset);
-int gauntlet_6502_speedup_r(int offset);
 int gauntlet_6502_switch_r(int offset);
-int gauntlet_playfieldram_r(int offset);
-int gauntlet_alpharam_r(int offset);
 
 void gauntlet_io_w(int offset, int data);
 void gauntlet_68010_speedup_w(int offset, int data);
-void gauntlet_6502_mix_w(int offset, int data);
 void gauntlet_sound_ctl_w(int offset, int data);
+void gauntlet_mixer_w(int offset, int data);
 void gauntlet_tms_w(int offset, int data);
 void gauntlet_playfieldram_w(int offset, int data);
-void gauntlet_alpharam_w(int offset, int data);
 void gauntlet_hscroll_w(int offset, int data);
 void gauntlet_vscroll_w(int offset, int data);
-
-int gauntlet_interrupt(void);
 
 void gauntlet_init_machine(void);
 
@@ -155,7 +148,7 @@ void gauntlet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
  *
  *************************************/
 
-static struct MemoryReadAddress gauntlet_readmem[] =
+static struct MemoryReadAddress main_readmem[] =
 {
 	{ 0x000000, 0x037fff, MRA_ROM },
 	{ 0x038000, 0x03ffff, atarigen_slapstic_r },
@@ -166,8 +159,7 @@ static struct MemoryReadAddress gauntlet_readmem[] =
 	{ 0x803008, 0x80300f, gauntlet_io_r },
 	{ 0x900000, 0x901fff, MRA_BANK2 },
 	{ 0x902000, 0x903fff, MRA_BANK3 },
-	{ 0x904000, 0x904003, gauntlet_68010_speedup_r },
-	{ 0x904004, 0x904fff, MRA_BANK4 },
+	{ 0x904000, 0x904fff, MRA_BANK4 },
 	{ 0x905000, 0x905eff, MRA_BANK5 },
 	{ 0x905f00, 0x905fff, MRA_BANK6 },
 	{ 0x910000, 0x9107ff, paletteram_word_r },
@@ -176,7 +168,7 @@ static struct MemoryReadAddress gauntlet_readmem[] =
 };
 
 
-static struct MemoryWriteAddress gauntlet_writemem[] =
+static struct MemoryWriteAddress main_writemem[] =
 {
 	{ 0x000000, 0x037fff, MWA_ROM },
 	{ 0x038000, 0x03ffff, atarigen_slapstic_w, &atarigen_slapstic },
@@ -190,10 +182,9 @@ static struct MemoryWriteAddress gauntlet_writemem[] =
 	{ 0x803170, 0x803173, atarigen_sound_w },
 	{ 0x900000, 0x901fff, gauntlet_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
 	{ 0x902000, 0x903fff, MWA_BANK3, &atarigen_spriteram, &atarigen_spriteram_size },
-	{ 0x904000, 0x904003, gauntlet_68010_speedup_w, &gauntlet_speed_check },
-	{ 0x904004, 0x904fff, MWA_BANK4 },
+	{ 0x904000, 0x904fff, MWA_BANK4 },
 	{ 0x905f6e, 0x905f6f, gauntlet_vscroll_w, &atarigen_vscroll },
-	{ 0x905000, 0x905eff, gauntlet_alpharam_w, &atarigen_alpharam, &atarigen_alpharam_size },
+	{ 0x905000, 0x905eff, MWA_BANK5, &atarigen_alpharam, &atarigen_alpharam_size },
 	{ 0x905f00, 0x905fff, MWA_BANK6 },
 	{ 0x910000, 0x9107ff, paletteram_IIIIRRRRGGGGBBBB_word_w, &paletteram },
 	{ 0x930000, 0x930001, gauntlet_hscroll_w, &atarigen_hscroll },
@@ -208,9 +199,8 @@ static struct MemoryWriteAddress gauntlet_writemem[] =
  *
  *************************************/
 
-static struct MemoryReadAddress gauntlet_sound_readmem[] =
+static struct MemoryReadAddress sound_readmem[] =
 {
-	{ 0x0211, 0x0211, gauntlet_6502_speedup_r },
 	{ 0x0000, 0x0fff, MRA_RAM },
 	{ 0x1010, 0x101f, atarigen_6502_sound_r },
 	{ 0x1020, 0x102f, input_port_4_r },
@@ -223,11 +213,11 @@ static struct MemoryReadAddress gauntlet_sound_readmem[] =
 };
 
 
-static struct MemoryWriteAddress gauntlet_sound_writemem[] =
+static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x0fff, MWA_RAM },
 	{ 0x1000, 0x100f, atarigen_6502_sound_w },
-	{ 0x1020, 0x102f, MWA_NOP/*gauntlet_6502_mix_w*/ },
+	{ 0x1020, 0x102f, gauntlet_mixer_w },
 	{ 0x1030, 0x103f, gauntlet_sound_ctl_w },
 	{ 0x1800, 0x180f, pokey1_w },
 	{ 0x1810, 0x1810, YM2151_register_port_0_w },
@@ -248,44 +238,48 @@ static struct MemoryWriteAddress gauntlet_sound_writemem[] =
 
 INPUT_PORTS_START( gauntlet_ports )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 | IPF_8WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 | IPF_8WAY )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 | IPF_8WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x000c, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 | IPF_8WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 | IPF_8WAY )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 | IPF_8WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x000c, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START3 )
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
-	PORT_BIT( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER3 | IPF_8WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER3 | IPF_8WAY )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER3 | IPF_8WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER3 | IPF_8WAY )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
+	PORT_BIT( 0x000c, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER3 | IPF_8WAY )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER3 | IPF_8WAY )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER3 | IPF_8WAY )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER3 | IPF_8WAY )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN3 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START4 )
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )
-	PORT_BIT( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER4 | IPF_8WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER4 | IPF_8WAY )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER4 | IPF_8WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER4 | IPF_8WAY )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START4 )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )
+	PORT_BIT( 0x000c, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER4 | IPF_8WAY )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER4 | IPF_8WAY )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER4 | IPF_8WAY )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER4 | IPF_8WAY )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN4 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN4 )
@@ -295,51 +289,53 @@ INPUT_PORTS_START( gauntlet_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW */
-	PORT_BIT( 0x07, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BITX(    0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_BIT( 0x30, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_VBLANK )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0007, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BITX(  0x0008, 0x0008, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x0008, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x0000, DEF_STR( On ))
+	PORT_BIT( 0x0030, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW,  IPT_VBLANK )
+	PORT_BIT( 0xff80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START	/* Fake! */
-	PORT_DIPNAME( 0x03, 0x00, "Player 1 Plays" )
-	PORT_DIPSETTING(    0x00, "Red/Warrior" )
-	PORT_DIPSETTING(    0x01, "Blue/Valkyrie" )
-	PORT_DIPSETTING(    0x02, "Yellow/Wizard" )
-	PORT_DIPSETTING(    0x03, "Green/Elf" )
+	PORT_DIPNAME( 0x0003, 0x0000, "Player 1 Plays" )
+	PORT_DIPSETTING(      0x0000, "Red/Warrior" )
+	PORT_DIPSETTING(      0x0001, "Blue/Valkyrie" )
+	PORT_DIPSETTING(      0x0002, "Yellow/Wizard" )
+	PORT_DIPSETTING(      0x0003, "Green/Elf" )
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START( vindctr2_ports )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP    | IPF_PLAYER1 | IPF_2WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP   | IPF_PLAYER1 | IPF_2WAY )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN  | IPF_PLAYER1 | IPF_2WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN | IPF_PLAYER1 | IPF_2WAY )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP    | IPF_PLAYER1 | IPF_2WAY )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP   | IPF_PLAYER1 | IPF_2WAY )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN  | IPF_PLAYER1 | IPF_2WAY )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN | IPF_PLAYER1 | IPF_2WAY )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP    | IPF_PLAYER2 | IPF_2WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP   | IPF_PLAYER2 | IPF_2WAY )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN  | IPF_PLAYER2 | IPF_2WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN | IPF_PLAYER2 | IPF_2WAY )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP    | IPF_PLAYER2 | IPF_2WAY )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP   | IPF_PLAYER2 | IPF_2WAY )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN  | IPF_PLAYER2 | IPF_2WAY )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN | IPF_PLAYER2 | IPF_2WAY )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0xfffc, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN3 */
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN4 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN4 )
@@ -349,25 +345,25 @@ INPUT_PORTS_START( vindctr2_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW */
-	PORT_BIT( 0x07, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BITX(    0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_BIT( 0x30, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_VBLANK )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0007, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BITX(  0x0008, 0x0008, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x0008, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x0000, DEF_STR( On ))
+	PORT_BIT( 0x0030, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW,  IPT_VBLANK )
+	PORT_BIT( 0xff80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START	/* single joystick */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_CHEAT | IPF_PLAYER1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_CHEAT | IPF_PLAYER1 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_CHEAT | IPF_PLAYER1 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_CHEAT | IPF_PLAYER1 )
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_CHEAT | IPF_PLAYER1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_CHEAT | IPF_PLAYER1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_CHEAT | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_CHEAT | IPF_PLAYER1 )
 
 	PORT_START	/* single joystick */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_CHEAT | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_CHEAT | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_CHEAT | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_CHEAT | IPF_PLAYER2 )
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_CHEAT | IPF_PLAYER2 )
+	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_CHEAT | IPF_PLAYER2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_CHEAT | IPF_PLAYER2 )
+	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_CHEAT | IPF_PLAYER2 )
 INPUT_PORTS_END
 
 
@@ -378,7 +374,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct GfxLayout charlayout =
+static struct GfxLayout anlayout =
 {
 	8,8,	/* 8*8 chars */
 	1024,	/* 1024 chars */
@@ -390,10 +386,10 @@ static struct GfxLayout charlayout =
 };
 
 
-static struct GfxLayout spritelayout =
+static struct GfxLayout pfmolayout =
 {
-	8,8,	/* 8*8 sprites */
-	24576,	/* up to 24576 of them */
+	8,8,	/* 8*8 tiles */
+	6*4096,	/* up to 6*4096 of them */
 	4,		/* 4 bits per pixel */
 	{ 3*8*0x30000, 2*8*0x30000, 1*8*0x30000, 0*8*0x30000 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
@@ -404,8 +400,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 2, 0x00000, &charlayout,      0, 64 },		/* characters 8x8 */
-	{ 3, 0x00000, &spritelayout,  256, 32 },		/* sprites & playfield */
+	{ 3, 0x00000, &pfmolayout,  256, 32 },		/* playfield & motion objects */
+	{ 2, 0x00000, &anlayout,      0, 64 },		/* alphanumerics */
 	{ -1 } /* end of array */
 };
 
@@ -417,11 +413,20 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
+static struct YM2151interface ym2151_interface =
+{
+	1,			/* 1 chip */
+	7159160/2,
+	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) },
+	{ 0 }
+};
+
+
 static struct POKEYinterface pokey_interface =
 {
 	1,			/* 1 chip */
 	7159160/4,
-	40,
+	{ 40 },
 	POKEY_DEFAULT_GAIN,
 	NO_CLIP
 };
@@ -435,15 +440,6 @@ static struct TMS5220interface tms5220_interface =
 };
 
 
-static struct YM2151interface ym2151_interface =
-{
-	1,			/* 1 chip */
-	7159160/2,
-	{ YM3012_VOL(60,OSD_PAN_LEFT,60,OSD_PAN_RIGHT) },
-	{ 0 }
-};
-
-
 
 /*************************************
  *
@@ -451,7 +447,7 @@ static struct YM2151interface ym2151_interface =
  *
  *************************************/
 
-static struct MachineDriver gauntlet_machine_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -459,26 +455,26 @@ static struct MachineDriver gauntlet_machine_driver =
 			CPU_M68010,
 			7159160,
 			0,
-			gauntlet_readmem,gauntlet_writemem,0,0,
-			gauntlet_interrupt,1
+			main_readmem,main_writemem,0,0,
+			atarigen_vblank_gen,1
 		},
 		{
 			CPU_M6502,
 			7159160/4,
 			1,
-			gauntlet_sound_readmem,gauntlet_sound_writemem,0,0,
+			sound_readmem,sound_writemem,0,0,
 			0,0,
 			atarigen_6502_irq_gen,250
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
+	1,
 	gauntlet_init_machine,
 
 	/* video hardware */
 	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	1024,1024,
+	1024+32,1024+32,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
@@ -501,7 +497,7 @@ static struct MachineDriver gauntlet_machine_driver =
 		{
 			SOUND_TMS5220,
 			&tms5220_interface
-		},
+		}
 	}
 };
 
@@ -720,8 +716,7 @@ ROM_START( vindctr2_rom )
 	ROM_LOAD( "1172", 0x70000, 0x08000, 0x314ac268 )
 	ROM_LOAD( "1176", 0x78000, 0x08000, 0x061d79db )
 	ROM_LOAD( "1180", 0x80000, 0x08000, 0x89c1fe16 )
-	/* warning: if you find a good ROM, remove the memset from the rom_decode, below! */
-	ROM_LOAD( "1184", 0x88000, 0x08000, 0x00000000 )
+	ROM_LOAD( "1184", 0x88000, 0x08000, 0x541209d3 )
 
 	ROM_LOAD( "1104", 0x90000, 0x08000, 0x9484ba65 )
 	ROM_LOAD( "1169", 0x98000, 0x08000, 0x132d3337 )
@@ -739,9 +734,10 @@ ROM_END
  *
  *************************************/
 
-static void gauntlet_rom_decode(void)
+static void rom_decode(void)
 {
 	unsigned long *p1, *p2, temp;
+	unsigned char *data;
 	int i;
 
 	/* swap the top and bottom halves of the main CPU ROM images */
@@ -766,8 +762,19 @@ static void gauntlet_rom_decode(void)
 	for (i = 0; i < 0x8000 / 4; i++)
 		temp = *p1, *p1++ = *p2, *p2++ = temp;
 
-	/* warning: remove me once a good copy of Vindicators 2 1184 is found! */
-	memset(&Machine->memory_region[3][0x88000], 0xff, 0x8000);
+	/* highly strange -- the address bits on the chip at 2J (and only that
+	   chip) are scrambled -- this is verified on the schematics! */
+	data = malloc(0x8000);
+	if (data)
+	{
+		memcpy(data, &Machine->memory_region[3][0x88000], 0x8000);
+		for (i = 0; i < 0x8000; i++)
+		{
+			int srcoffs = (i & 0x4000) | ((i << 11) & 0x3800) | ((i >> 3) & 0x07ff);
+			Machine->memory_region[3][0x88000 + i] = data[srcoffs];
+		}
+		free(data);
+	}
 
 	/* also invert the graphics bits on the playfield and motion objects */
 	for (i = 0; i < Machine->memory_region_length[3]; i++)
@@ -784,29 +791,57 @@ static void gauntlet_rom_decode(void)
 
 void gauntlet_init(void)
 {
-	gauntlet_slapstic_num = 104;
+	atarigen_slapstic_num = 104;
+	atarigen_eeprom_default = NULL;
 	vindctr2_screen_refresh = 0;
+
+	/* speed up the 6502 */
+	atarigen_init_6502_speedup(1, 0x410f, 0x4127);
+
+	/* speed up the 68010 */
+	gauntlet_speed_check = install_mem_write_handler(0, 0x904002, 0x904003, gauntlet_68010_speedup_w);
+	install_mem_read_handler(0, 0x904002, 0x904003, gauntlet_68010_speedup_r);
 }
 
 
 void gaunt2p_init(void)
 {
-	gauntlet_slapstic_num = 107;
+	atarigen_slapstic_num = 107;
+	atarigen_eeprom_default = NULL;
 	vindctr2_screen_refresh = 0;
+
+	/* speed up the 6502 */
+	atarigen_init_6502_speedup(1, 0x410f, 0x4127);
+
+	/* speed up the 68010 */
+	gauntlet_speed_check = install_mem_write_handler(0, 0x904002, 0x904003, gauntlet_68010_speedup_w);
+	install_mem_read_handler(0, 0x904002, 0x904003, gauntlet_68010_speedup_r);
 }
 
 
 void gauntlet2_init(void)
 {
-	gauntlet_slapstic_num = 106;
+	atarigen_slapstic_num = 106;
+	atarigen_eeprom_default = NULL;
 	vindctr2_screen_refresh = 0;
+
+	/* speed up the 6502 */
+	atarigen_init_6502_speedup(1, 0x410f, 0x4127);
+
+	/* speed up the 68010 */
+	gauntlet_speed_check = install_mem_write_handler(0, 0x904002, 0x904003, gauntlet_68010_speedup_w);
+	install_mem_read_handler(0, 0x904002, 0x904003, gauntlet_68010_speedup_r);
 }
 
 
 void vindctr2_init(void)
 {
-	gauntlet_slapstic_num = 118;
+	atarigen_slapstic_num = 118;
+	atarigen_eeprom_default = NULL;
 	vindctr2_screen_refresh = 1;
+
+	/* speed up the 6502 */
+	atarigen_init_6502_speedup(1, 0x40ff, 0x4117);
 }
 
 
@@ -827,11 +862,11 @@ struct GameDriver gauntlet_driver =
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nMike Balfour (graphics info)\nFrank Palazzolo (Slapstic decoding)",
 	0,
-	&gauntlet_machine_driver,
+	&machine_driver,
 	gauntlet_init,
 
 	gauntlet_rom,
-	gauntlet_rom_decode,
+	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
@@ -854,11 +889,11 @@ struct GameDriver gauntir1_driver =
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nMike Balfour (graphics info)\nFrank Palazzolo (Slapstic decoding)",
 	0,
-	&gauntlet_machine_driver,
+	&machine_driver,
 	gauntlet_init,
 
 	gauntir1_rom,
-	gauntlet_rom_decode,
+	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
@@ -881,11 +916,11 @@ struct GameDriver gauntir2_driver =
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nMike Balfour (graphics info)\nFrank Palazzolo (Slapstic decoding)",
 	0,
-	&gauntlet_machine_driver,
+	&machine_driver,
 	gauntlet_init,
 
 	gauntir2_rom,
-	gauntlet_rom_decode,
+	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
@@ -908,11 +943,11 @@ struct GameDriver gaunt2p_driver =
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nMike Balfour (graphics info)\nFrank Palazzolo (Slapstic decoding)",
 	0,
-	&gauntlet_machine_driver,
+	&machine_driver,
 	gaunt2p_init,
 
 	gaunt2p_rom,
-	gauntlet_rom_decode,
+	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
@@ -930,16 +965,16 @@ struct GameDriver gaunt2_driver =
 	__FILE__,
 	0,
 	"gaunt2",
-	"Gauntlet 2",
+	"Gauntlet II",
 	"1986",
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nMike Balfour (graphics info)\nFrank Palazzolo (Slapstic decoding)",
 	0,
-	&gauntlet_machine_driver,
+	&machine_driver,
 	gauntlet2_init,
 
 	gaunt2_rom,
-	gauntlet_rom_decode,
+	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
@@ -957,16 +992,16 @@ struct GameDriver vindctr2_driver =
 	__FILE__,
 	0,
 	"vindctr2",
-	"Vindicators part II",
+	"Vindicators Part II",
 	"1988",
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nMike Balfour (graphics info)\nFrank Palazzolo (Slapstic decoding)",
 	GAME_IMPERFECT_COLORS,
-	&gauntlet_machine_driver,
+	&machine_driver,
 	vindctr2_init,
 
 	vindctr2_rom,
-	gauntlet_rom_decode,
+	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */

@@ -8,7 +8,7 @@ struct astrocade_interface
 {
 	int num;			/* total number of sound chips in the machine */
 	int baseclock;			/* astrocade clock rate  */
-	int volume;			/* master volume */
+	int volume[MAX_ASTROCADE_CHIPS];			/* master volume */
 };
 
 int astrocade_sh_start(const struct MachineSound *msound);

@@ -279,14 +279,12 @@ void osd_set_brightness(int brightness);
 int osd_get_brightness(void);
 void osd_save_snapshot(void);
 
-#define OSD_PAN_CENTER 0
-#define OSD_PAN_LEFT   1
-#define OSD_PAN_RIGHT  2
 void osd_play_sample(int channel,signed char *data,int len,int freq,int volume,int loop);
 void osd_play_sample_16(int channel,signed short *data,int len,int freq,int volume,int loop);
 void osd_play_streamed_sample(int channel,signed char *data,int len,int freq,int volume,int pan);
 void osd_play_streamed_sample_16(int channel,signed short *data,int len,int freq,int volume,int pan);
-void osd_adjust_sample(int channel,int freq,int volume);
+void osd_set_sample_freq(int channel,int freq);
+void osd_set_sample_volume(int channel,int volume);
 void osd_stop_sample(int channel);
 void osd_restart_sample(int channel);
 int osd_get_sample_status(int channel);
@@ -345,6 +343,7 @@ typedef struct {
 #define OSD_FILETYPE_STATE 6
 #define OSD_FILETYPE_ARTWORK 7
 #define OSD_FILETYPE_MEMCARD 8
+#define OSD_FILETYPE_SCREENSHOT 9
 
 /* gamename holds the driver name, filename is only used for ROMs and    */
 /* samples. If 'write' is not 0, the file is opened for write. Otherwise */

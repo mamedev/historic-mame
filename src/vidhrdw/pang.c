@@ -91,7 +91,7 @@ int pang_colorram_r(int offset)
 void pang_palette_bank_w(int offset, int data)
 {
 	/* Palette bank handlers (sets base pointers form memory handlers) */
-	if (data == 0x28)
+	if (data & 0x20)
 	{
 		pang_palette_base=&pang_paletteram[0x0800];
 		pang_palette_dirty_base=&pang_palette_dirty[0x0800];

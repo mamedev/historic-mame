@@ -783,7 +783,7 @@ static struct TextLine HelpLine[MAX_TEXT_LINE];
 
 #define TOTAL_CHEAT_TYPES	75                                /* JCK 990404 */
 #define CHEAT_NAME_MAXLEN	29
-#define CHEAT_FILENAME_MAXLEN	29
+#define CHEAT_FILENAME_MAXLEN	255
 
 /* JCK 990220 BEGIN */
 #define SEARCH_VALUE    1
@@ -2123,7 +2123,7 @@ int RenameCheatFile(int merge, int DisplayFileName, char *filename)
   int key;
   int done = 0;
   int EditYPos;
-  char buffer[32];
+  char buffer[CHEAT_FILENAME_MAXLEN+1];
 
   EditYPos = (MachHeight - 7 * FontHeight) / 2;
 
@@ -2136,7 +2136,7 @@ int RenameCheatFile(int merge, int DisplayFileName, char *filename)
 	xprintf (0, 0, EditYPos-(FontHeight*2),
 			"Enter the Filename to %s:",(merge ? "Add" : "Load"));
 
-  memset (buffer, '\0', 32);
+  memset (buffer, '\0', CHEAT_FILENAME_MAXLEN+1);
   strncpy (buffer, filename, CHEAT_FILENAME_MAXLEN);
 
   done = xedit(0, EditYPos, buffer, CHEAT_FILENAME_MAXLEN, 0);    /* JCK 990318 */

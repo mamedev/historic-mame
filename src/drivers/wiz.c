@@ -444,6 +444,7 @@ static struct AY8910interface wiz_ay8910_interface =
 	3,      /* 3 chips */
 	14318000/8,	/* ? */
 	{ 10, 10, 10 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -455,6 +456,7 @@ static struct AY8910interface stinger_ay8910_interface =
 	2,      /* 2 chips */
 	14318000/8,	/* ? */
 	{ 25, 25 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },

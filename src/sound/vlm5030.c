@@ -1,44 +1,73 @@
 /*
 	vlm5030.c
 
-	VLM5030 emulator
+	VLM5030 emulator (preliminary)
 
 	Written by Tatsuyuki Satoh
-	core decode program is used from MAME's TMS5220 emurator.
 
-	memory cycle(sampling rate ?) = 122.9u(440clock)
-	interpolator(LC8109 = 2.5ms)  = 20 * samples(125us)
-	frame time  (20ms)            =  8 * interpolator
-
-	version 0.33
+  note:
+	memory read cycle(sampling rate ?) = 122.9u(440clock)
+	interpolator (LC8109 = 2.5ms)      = 20 * samples(125us)
+	frame time (20ms)                  =  8 * interpolator
 
 ----------- command format (Analytical result) ----------
 
-1)end of speech (8bit/frame)
+1)end of speech (8bit)
 :00000011:
 
-2)silent        (8bit/frame)
+2)silent some frame (8bit)
 :????LL01:
 
-LL : Silent frames
-     00=2 frame
-     01=4 frame
-     10=6 frame
-     11=8 frame
+LL : number of silent frames
+   00 = 2 frame
+   01 = 4 frame
+   10 = 6 frame
+   11 = 8 frame
 
-3)play frame    (48bit/frame)
+3)play one frame (48bit/frame)
 : 1st    :   2nd  :   3rd  :   4th  :  5th   :   6th  :
-:??PPPPP0:?????EEE:????????:????????:????????:????????:
+:EEPPPPP0:99AAAEEE:67778889:44455566:22233334:11111112:
 
-EEE   : energy ( volume )
-PPPPP : pitch
-?     : unnown
+energy and pitch bits are MSB first.
+
+EEEEE  : energy ( volume 0=off,0x1f=max)
+PPPPP  : pitch  (0=noize?, 1=fast,0x1f=slow)
+1111111: stage 1?
+2222   : stage 2?
+3333   : stage 3?
+4444   : stage 4?
+555    : stage 5?
+666    : stage 6?
+777    : stage 7?
+888    : stage 8?
+999    : stage 9?
+AAA    : stage 10?
+
+ ---------- chirp table information ----------
+
+digital filter sampling rate = 88 systemclock = 40.6KHz
+sampling clock = 88systemclock(40.6KHz)
+one chirp      = 5 sampling clocks = 440systemclock(8.12KHz)
+
+chirp  0   : volume 10- 8 : with filter
+chirp  1   : volume  8- 6 : with filter
+chirp  2   : volume  6- 4 : with filter
+chirp  3   : volume   4   : no filter ??
+chirp  4- 5: volume  4- 2 : with filter
+chirp  6-11: volume  2- 0 : with filter
+chirp 12-..: vokume   0   : silent
+
+ ---------- pitch table information ----------
+0 = random
+1 = 22stage(2700usec)
+ 2-09 1stage(120usec)
+0a-11 2stage(240usec)
+12-19 4stage(480usec)
+1A-1E 8stage(960usec)
 
 */
 #include "driver.h"
 #include "vlm5030.h"
-
-#define MIN_SLICE 10
 
 #define IP_SIZE 20		/* samples per interpolator */
 #define FR_SIZE 8		/* interpolator per frame   */
@@ -92,115 +121,77 @@ static int pitch_count = 0;
 static int u[11] = {0,0,0,0,0,0,0,0,0,0,0};
 static int x[10] = {0,0,0,0,0,0,0,0,0,0};
 
-static int randbit = 0;
-
 /* ROM Tables */
 
-/* !!!!!!!!!! ROM table is not correct.        !!!!!!!!!! */
-/* !!!!!!!!!!  These are ROM tables of TMS5220 !!!!!!!!!! */
 
-/* This is the energy lookup table (4-bits -> 10-bits) */
+/* This is the energy lookup table */
+/* !!!!!!!!!! preliminary !!!!!!!!!! */
+static unsigned short energytable[0x20];
 
-static const unsigned short energytable[0x10]={
-0x0000,0x00C0,0x0140,0x01C0,0x0280,0x0380,0x0500,0x0740,
-0x0A00,0x0E40,0x1440,0x1C80,0x2840,0x38C0,0x5040,0x7FC0};
-
-/* This is the pitch lookup table (6-bits -> 8-bits) */
-
-static const unsigned short pitchtable [0x40]={
-0x0000,0x1000,0x1100,0x1200,0x1300,0x1400,0x1500,0x1600,
-0x1700,0x1800,0x1900,0x1A00,0x1B00,0x1C00,0x1D00,0x1E00,
-0x1F00,0x2000,0x2100,0x2200,0x2300,0x2400,0x2500,0x2600,
-0x2700,0x2800,0x2900,0x2A00,0x2B00,0x2D00,0x2F00,0x3100,
-0x3300,0x3500,0x3600,0x3900,0x3B00,0x3D00,0x3F00,0x4200,
-0x4500,0x4700,0x4900,0x4D00,0x4F00,0x5100,0x5500,0x5700,
-0x5C00,0x5F00,0x6300,0x6600,0x6A00,0x6E00,0x7300,0x7700,
-0x7B00,0x8000,0x8500,0x8A00,0x8F00,0x9500,0x9A00,0xA000};
+/* This is the pitch lookup table */
+static const unsigned char pitchtable [0x20]=
+{
+   0,                               /* 0     : random mode */
+   22,                              /* 1     : start=22    */
+   23, 24, 25, 26, 27, 28, 29, 30,  /*  2- 9 : 1step       */
+   32, 34, 36, 38, 40, 42, 44, 46,  /* 10-17 : 2step       */
+   50, 54, 58, 62, 66, 70, 74, 78,  /* 18-25 : 4step       */
+   86, 94, 102,110,118,             /* 26-30 : 8step       */
+   255                              /* 31    : only one time ?? */
+};
 
 /* These are the reflection coefficient lookup tables */
+/* 2's comp. */
 
-/* K1 is (5-bits -> 9 bits+sign, 2's comp. fractional (-1 < x < 1) */
+/* !!!!!!!!!! preliminary !!!!!!!!!! */
 
-static const short k1table    [0x20]={
-(short)0x82C0,(short)0x8380,(short)0x83C0,(short)0x8440,(short)0x84C0,(short)0x8540,(short)0x8600,(short)0x8780,
-(short)0x8880,(short)0x8980,(short)0x8AC0,(short)0x8C00,(short)0x8D40,(short)0x8F00,(short)0x90C0,(short)0x92C0,
-(short)0x9900,(short)0xA140,(short)0xAB80,(short)0xB840,(short)0xC740,(short)0xD8C0,(short)0xEBC0,0x0000,
-0x1440,0x2740,0x38C0,0x47C0,0x5480,0x5EC0,0x6700,0x6D40};
+/* 7bit */
+#define K1_RANGE  0x6000
+/* 4bit */
+#define K2_RANGE  0x4000
+#define K3_RANGE  0x6000
+#define K4_RANGE  0x4000
+/* 3bit */
+#define K5_RANGE  0x6000
+#define K6_RANGE  0x6000
+#define K7_RANGE  0x5000
+#define K8_RANGE  0x4000
+#define K9_RANGE  0x5000
+#define K10_RANGE 0x4000
 
-/* K2 is (5-bits -> 9 bits+sign, 2's comp. fractional (-1 < x < 1) */
-
-static const short k2table    [0x20]={
-(short)0xAE00,(short)0xB480,(short)0xBB80,(short)0xC340,(short)0xCB80,(short)0xD440,(short)0xDDC0,(short)0xE780,
-(short)0xF180,(short)0xFBC0,0x0600,0x1040,0x1A40,0x2400,0x2D40,0x3600,
-0x3E40,0x45C0,0x4CC0,0x5300,0x5880,0x5DC0,0x6240,0x6640,
-0x69C0,0x6CC0,0x6F80,0x71C0,0x73C0,0x7580,0x7700,0x7E80};
-
-/* K3 is (4-bits -> 9 bits+sign, 2's comp. fractional (-1 < x < 1) */
-
-static const short k3table    [0x10]={
-(short)0x9200,(short)0x9F00,(short)0xAD00,(short)0xBA00,(short)0xC800,(short)0xD500,(short)0xE300,(short)0xF000,
-(short)0xFE00,0x0B00,0x1900,0x2600,0x3400,0x4100,0x4F00,0x5C00};
-
-/* K4 is (4-bits -> 9 bits+sign, 2's comp. fractional (-1 < x < 1) */
-
-static const short k4table    [0x10]={
-(short)0xAE00,(short)0xBC00,(short)0xCA00,(short)0xD800,(short)0xE600,(short)0xF400,0x0100,0x0F00,
-0x1D00,0x2B00,0x3900,0x4700,0x5500,0x6300,0x7100,0x7E00};
-
-/* K5 is (4-bits -> 9 bits+sign, 2's comp. fractional (-1 < x < 1) */
-
-static const short k5table    [0x10]={
-(short)0xAE00,(short)0xBA00,(short)0xC500,(short)0xD100,(short)0xDD00,(short)0xE800,(short)0xF400,(short)0xFF00,
-0x0B00,0x1700,0x2200,0x2E00,0x3900,0x4500,0x5100,0x5C00};
-
-/* K6 is (4-bits -> 9 bits+sign, 2's comp. fractional (-1 < x < 1) */
-
-static const short k6table    [0x10]={
-(short)0xC000,(short)0xCB00,(short)0xD600,(short)0xE100,(short)0xEC00,(short)0xF700,0x0300,0x0E00,
-0x1900,0x2400,0x2F00,0x3A00,0x4500,0x5000,0x5B00,0x6600};
-
-/* K7 is (4-bits -> 9 bits+sign, 2's comp. fractional (-1 < x < 1) */
-
-static const short k7table    [0x10]={
-(short)0xB300,(short)0xBF00,(short)0xCB00,(short)0xD700,(short)0xE300,(short)0xEF00,(short)0xFB00,0x0700,
-0x1300,0x1F00,0x2B00,0x3700,0x4300,0x4F00,0x5A00,0x6600};
-
-/* K8 is (3-bits -> 9 bits+sign, 2's comp. fractional (-1 < x < 1) */
-
-static const short k8table    [0x08]={
-(short)0xC000,(short)0xD800,(short)0xF000,0x0700,0x1F00,0x3700,0x4F00,0x6600};
-
-/* K9 is (3-bits -> 9 bits+sign, 2's comp. fractional (-1 < x < 1) */
-
-static const short k9table    [0x08]={
-(short)0xC000,(short)0xD400,(short)0xE800,(short)0xFC00,0x1000,0x2500,0x3900,0x4D00};
-
-/* K10 is (3-bits -> 9 bits+sign, 2's comp. fractional (-1 < x < 1) */
-
-static const short k10table   [0x08]={
-(short)0xCD00,(short)0xDF00,(short)0xF100,0x0400,0x1600,0x2000,0x3B00,0x4D00};
+static int k1table[0x80];
+static int k2table[0x10];
+static int k3table[0x10];
+static int k4table[0x10];
+static int k5table[0x08];
+static int k6table[0x08];
+static int k7table[0x08];
+static int k8table[0x08];
+static int k9table[0x08];
+static int k10table[0x08];
 
 /* chirp table */
-
-static char chirptable[41]={
-0x00, 0x2a, (char)0xd4, 0x32,
-(char)0xb2, 0x12, 0x25, 0x14,
-0x02, (char)0xe1, (char)0xc5, 0x02,
-0x5f, 0x5a, 0x05, 0x0f,
-0x26, (char)0xfc, (char)0xa5, (char)0xa5,
-(char)0xd6, (char)0xdd, (char)0xdc, (char)0xfc,
-0x25, 0x2b, 0x22, 0x21,
-0x0f, (char)0xff, (char)0xf8, (char)0xee,
-(char)0xed, (char)0xef, (char)0xf7, (char)0xf6,
-(char)0xfa, 0x00, 0x03, 0x02,
-0x01
+static unsigned char chirptable[12]=
+{
+  0xff*9/10,
+  0xff*7/10,
+  0xff*5/10,
+  0xff*4/10, /* non digital filter ? */
+  0xff*3/10,
+  0xff*3/10,
+  0xff*1/10,
+  0xff*1/10,
+  0xff*1/10,
+  0xff*1/10,
+  0xff*1/10,
+  0xff*1/10
 };
 
 /* interpolation coefficients */
-static char interp_coeff[8] = {
+static int interp_coeff[8] = {
+//8, 8, 8, 4, 4, 2, 2, 1
 8, 8, 8, 4, 4, 2, 2, 1
 };
-
 
 /* //////////////////////////////////////////////////////// */
 
@@ -216,7 +207,6 @@ static int check_samplefile(int num)
 
 static int get_bits(int sbit,int bits)
 {
-#if 1 /* LSB FIRST */
 	int offset = VLM5030_address + (sbit>>3);
 	int data;
 
@@ -224,16 +214,6 @@ static int get_bits(int sbit,int bits)
 	       (((int)VLM5030_rom[(offset+1)&VLM5030_address_mask])<<8);
 	data >>= sbit;
 	data &= (0xff>>(8-bits));
-#else
-	int offset = VLM5030_address + (sbit>>3);
-	int data;
-
-	data = (((int)VLM5030_rom[offset&VLM5030_address_mask])<<8) |
-	              VLM5030_rom[(offset+1)&VLM5030_address_mask];
-	data <<= (sbit&0x07);
-	data &= 0xffff;
-	data >>= (16 - bits);
-#endif
 
 	return data;
 }
@@ -267,30 +247,21 @@ static int parse_frame (void)
 		}
 	}
 	/* normal frame */
-/*
-0        8        16       24       32       40
-:??PPPPP0:11111EEE:11112222:33334444:55556667:77889900:
 
-PPPPP : pitch  ( maybe )
-EEE   : volume (energy?)
-
-K10 TOTAL 35bit(+2bit)
-
-*/
-	new_pitch  = pitchtable[get_bits( 1,5)<<1] / 256;
-	new_energy = energytable[get_bits( 6,5)>>1] >> 6;
+	new_pitch  = pitchtable[get_bits( 1,5)];
+	new_energy = energytable[get_bits( 6,5)] >> 6;
 
 	/* 10 K's */
-	new_k[0] = k1table[get_bits(11,5)];
-	new_k[1] = k2table[get_bits(16,4)<<0];
-	new_k[2] = k3table[get_bits(20,4)<<0];
-	new_k[3] = k4table[get_bits(24,4)<<0];
-	new_k[4] = k5table[get_bits(28,4)<<0];
-	new_k[5] = k6table[get_bits(32,4)<<0];
-	new_k[6] = k7table[get_bits(36,4)<<0];
-	new_k[7] = k8table[get_bits(40,3)<<0];
-	new_k[8] = k9table[get_bits(43,3)<<0];
-	new_k[9] = k10table[get_bits(46,2)<<1];
+	new_k[9] = k10table[get_bits(11,3)];
+	new_k[8] = k9table[get_bits(14,3)];
+	new_k[7] = k8table[get_bits(17,3)];
+	new_k[6] = k7table[get_bits(20,3)];
+	new_k[5] = k6table[get_bits(23,3)];
+	new_k[4] = k5table[get_bits(26,3)];
+	new_k[3] = k4table[get_bits(29,4)];
+	new_k[2] = k3table[get_bits(33,4)];
+	new_k[1] = k2table[get_bits(37,4)];
+	new_k[0] = k1table[get_bits(41,7)];
 
 	VLM5030_address+=6;
 	if(errorlog) fprintf(errorlog,"VLM5030 %04X voice \n",VLM5030_address );
@@ -379,8 +350,8 @@ static void vlm5030_update_callback(int num,void *buf, int length)
 			else if (old_pitch == 0)
 			{
 				/* generate unvoiced samples here */
-				randbit = (rand () % 2) * 2 - 1;
-				current_val = (randbit * current_energy) / 4;
+				int randvol = (rand () % 10);
+				current_val = (randvol * current_energy) / 10;
 			}
 			else
 			{
@@ -578,11 +549,10 @@ void VLM5030_ST(int pin )
 				/* sampling mode */
 				int num = table>>1;
 
-				osd_play_sample(schannel,
+				mixer_play_sample(schannel,
 					Machine->samples->sample[num]->data,
 					Machine->samples->sample[num]->length,
 					Machine->samples->sample[num]->smpfreq,
-					Machine->samples->sample[num]->volume,
 					0);
 			}
 		}
@@ -603,7 +573,7 @@ int VLM5030_sh_start(const struct MachineSound *msound)
 {
 	int emulation_rate;
 
-    intf = msound->sound_interface;
+	intf = msound->sound_interface;
 
 	emulation_rate = intf->baseclock / 440;
 	pin_BSY = pin_RST = pin_ST  = 0;
@@ -617,13 +587,45 @@ int VLM5030_sh_start(const struct MachineSound *msound)
 	else
 		VLM5030_address_mask = intf->memory_size-1;
 
-	channel = stream_init(msound,
-				"VLM5030",emulation_rate /* Machine->sample_rate */,8,
+	channel = stream_init("VLM5030",intf->volume,emulation_rate /* Machine->sample_rate */,8,
 				0,vlm5030_update_callback);
 	if (channel == -1) return 1;
-	stream_set_volume(channel,intf->volume);
 
-	schannel = get_play_channels(1);
+	schannel = mixer_allocate_channel(intf->volume);
+
+#if 1
+	{
+	int i;
+
+	/* initialize energy table */
+	for(i=0;i<0x20;i++)
+	{
+		energytable[i]=0x7fff*i/0x1f;
+	}
+
+	/* initialize filter table */
+	for(i=-0x40 ; i<0x40 ; i++)
+	{
+		k1table[(i>=0) ? i : i+0x80] = i*K1_RANGE/0x40;
+	}
+	for(i=-0x08 ; i<0x08 ; i++)
+	{
+		k2table[(i>=0) ? i : i+0x10] = i*K2_RANGE/0x08;
+		k3table[(i>=0) ? i : i+0x10] = i*K3_RANGE/0x08;
+		k4table[(i>=0) ? i : i+0x10] = i*K4_RANGE/0x08;
+	}
+	for(i=-0x04 ; i<0x04 ; i++)
+	{
+		k5table[(i>=0) ? i : i+0x08] = i*K5_RANGE/0x04;
+		k6table[(i>=0) ? i : i+0x08] = i*K6_RANGE/0x04;
+		k7table[(i>=0) ? i : i+0x08] = i*K7_RANGE/0x04;
+		k8table[(i>=0) ? i : i+0x08] = i*K8_RANGE/0x04;
+		k9table[(i>=0) ? i : i+0x08] = i*K9_RANGE/0x04;
+		k10table[(i>=0) ? i : i+0x08] = i*K10_RANGE/0x04;
+	}
+
+	}
+#endif
 	return 0;
 }
 

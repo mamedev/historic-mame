@@ -255,7 +255,7 @@ static struct POKEYinterface pokey_interface =
 {
 	2,				/* 2 chips */
 	FREQ_17_APPROX,	/* 1.7 Mhz */
-	100,
+	{ 100, 100 },
 	POKEY_DEFAULT_GAIN,
 	NO_CLIP,
 	/* The 8 pot handlers */

@@ -185,10 +185,13 @@ void berzerk_sound_control_a_w(int offset,int data)
 		}
 
 		if (noise)
-			sample_adjust(2,voicefrequency,voicevolume);
+		{
+			sample_set_freq(2,voicefrequency);
+			sample_set_volume(2,voicevolume);
+		}
 		else
 		{
-			sample_adjust(2,-1,0);
+			sample_set_volume(2,0);
 			voicevolume = 0;
 		}
 	}
@@ -238,7 +241,7 @@ if (errorlog) fprintf(errorlog,"Trying death sound");
 				}
 				sample_start(VOICE_CHANNEL,voice,0);
 #ifdef VOICE_PITCH_MODULATION
-				sample_adjust(VOICE_CHANNEL,samplefrequency,-1);
+				sample_set_freq(VOICE_CHANNEL,samplefrequency);
 #endif
 				lastvoice=voice;
 			}

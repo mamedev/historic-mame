@@ -1698,7 +1698,8 @@ static void sindbadm_hisave(void)
 
 static struct Samplesinterface astrob_samples_interface =
 {
-        12      /* 12 channels */
+	12,      /* 12 channels */
+	25	/* volume */
 };
 
 /* TODO: someday this will become a speech synthesis interface */
@@ -1760,7 +1761,8 @@ static struct MachineDriver astrob_machine_driver =
 
 static struct Samplesinterface spaceod_samples_interface =
 {
-        12      /* 12 channels */
+	12,      /* 12 channels */
+	25	/* volume */
 };
 
 static struct MachineDriver spaceod_machine_driver =
@@ -1803,7 +1805,8 @@ static struct MachineDriver spaceod_machine_driver =
 
 static struct Samplesinterface s005_samples_interface =
 {
-        12      /* 12 channels */
+	12,      /* 12 channels */
+	25	/* volume */
 };
 
 static struct MachineDriver s005_machine_driver =
@@ -1846,7 +1849,8 @@ static struct MachineDriver s005_machine_driver =
 
 static struct Samplesinterface monsterb_samples_interface =
 {
-        2       /* 2 channels */
+	2,       /* 2 channels */
+	25	/* volume */
 };
 
 static struct DACinterface monsterb_dac_interface =

@@ -1,8 +1,53 @@
 /***************************************************************************
 
-  vidhrdw.c
+  vidhrdw/atarisy2.c
 
   Functions to emulate the video hardware of the machine.
+
+****************************************************************************
+
+	Playfield encoding
+	------------------
+		1 16-bit word is used
+
+		Word 1:
+			Bit  14-15 = image priority
+			Bits 11-13 = palette of the image
+			Bit  10    = index of which bank to use
+			Bits  0-9  = index of the image
+
+
+	Motion Object encoding
+	----------------------
+		4 16-bit words are used
+
+		Word 1:
+			Bits  6-14 = vertical position
+			Bits  0-2  = upper 3 bits of the image index
+
+		Word 2:
+			Bit  15    = hold X position from last MO
+			Bit  14    = horizontal flip
+			Bits 11-13 = size of the image (1..8)
+			Bits  0-10 = index of the image
+
+		Word 3:
+ 			Bits  6-15 = horizontal position
+
+		Word 4:
+			Bits 14-15 = image priority
+			Bits 12-13 = palette of the image
+			Bits  3-10 = link to the next motion object
+
+
+	Alpha layer encoding
+	--------------------
+		1 16-bit word is used
+
+		Word 1:
+			Bit  12-15 = color
+			Bit  11    = horizontal flip
+			Bits  0-10 = index of the character
 
 ***************************************************************************/
 
@@ -17,13 +62,39 @@
 #define YDIM (YCHARS*8)
 
 
-extern int slapstic_tweak(int offset);
+#define DEBUG_VIDEO 0
 
 
-struct atarisys2_mo_data
+
+/*************************************
+ *
+ *		Constants
+ *
+ *************************************/
+
+#define PFRAM_SIZE		0x4000
+#define ANRAM_SIZE		0x1800
+#define MORAM_SIZE		0x0800
+
+
+
+/*************************************
+ *
+ *		Structures
+ *
+ *************************************/
+
+struct mo_data
 {
-	int *redraw_list, *redraw;
+	struct osd_bitmap *bitmap;
 	int xhold;
+};
+
+
+struct pf_overrender_data
+{
+	struct osd_bitmap *bitmap;
+	int mo_priority;
 };
 
 
@@ -34,7 +105,7 @@ struct atarisys2_mo_data
  *
  *************************************/
 
-unsigned char *atarisys2_slapstic_base;
+int atarisys2_mo_mask;
 
 
 
@@ -47,31 +118,31 @@ unsigned char *atarisys2_slapstic_base;
 static unsigned char *playfieldram;
 static unsigned char *alpharam;
 
-static int playfieldram_size = 0x4000;
-//static int spriteram_size = 0x800;
-static int alpharam_size = 0x1800;
-
 static int videobank;
 
-static unsigned char *playfielddirty;
-
-static struct osd_bitmap *playfieldbitmap;
-
-static int *pf_bank, *mo_bank;
+static struct atarigen_pf_state pf_state;
+static int latched_vscroll;
 
 
 
 /*************************************
  *
- *		Prototypes from other modules
+ *		Prototypes
  *
  *************************************/
 
-void atarisys2_vh_stop(void);
+extern int slapstic_tweak(int offset);
 
-#if 0
-static void atarisys2_dump_video_ram(void);
+static void pf_render_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
+static void pf_check_overrender_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
+static void pf_overrender_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
+
+static void mo_render_callback(const unsigned short *data, const struct rectangle *clip, void *param);
+
+#if VIDEO_DEBUG
+static void debug(void);
 #endif
+
 
 
 /*************************************
@@ -82,7 +153,7 @@ static void atarisys2_dump_video_ram(void);
 
 int atarisys2_vh_start(void)
 {
-	static struct atarigen_modesc atarisys2_modesc =
+	static struct atarigen_mo_desc mo_desc =
 	{
 		256,                 /* maximum number of MO's */
 		8,                   /* number of bytes per MO entry */
@@ -92,37 +163,23 @@ int atarisys2_vh_start(void)
 		0                    /* render in reverse link order */
 	};
 
+	static struct atarigen_pf_desc pf_desc =
+	{
+		8, 8,				/* width/height of each tile */
+		128, 64				/* number of tiles in each direction */
+	};
+
 	/* allocate banked memory */
 	alpharam = calloc(0x8000, 1);
 	if (!alpharam)
-	{
-		atarisys2_vh_stop();
 		return 1;
-	}
-	spriteram = alpharam + alpharam_size;
+
+	spriteram = alpharam + ANRAM_SIZE;
 	playfieldram = alpharam + 0x4000;
 
 	/* reset the videoram banking */
 	videoram = alpharam;
 	videobank = 0;
-
-	/* allocate dirty buffers */
-	if (!playfielddirty)
-		playfielddirty = malloc(playfieldram_size / 2);
-	if (!playfielddirty)
-	{
-		atarisys2_vh_stop();
-		return 1;
-	}
-
-	/* allocate bitmaps */
-	if (!playfieldbitmap)
-		playfieldbitmap = osd_new_bitmap(128*8, 64*8, Machine->scrbitmap->depth);
-	if (!playfieldbitmap)
-	{
-		atarisys2_vh_stop();
-		return 1;
-	}
 
 	/*
 	 * if we are palette reducing, do the simple thing by marking everything used except for
@@ -139,178 +196,22 @@ int atarisys2_vh_start(void)
 			palette_used_colors[64 + i * 4] = PALETTE_COLOR_TRANSPARENT;
 	}
 
-	/* initialize the displaylist system */
-	return atarigen_init_display_list(&atarisys2_modesc);
-}
-
-
-int paperboy_vh_start(void)
-{
-	/* playfield bit mapping */
-	static int pf_offs[16] =
+	/* initialize the playfield */
+	if (atarigen_pf_init(&pf_desc))
 	{
-		0x0000, 0x0400,  /* PFROMSEL0 */
-		0x0800, 0x0800,  /* PFROMSEL1 */
-		0x0000, 0x0400,  /* PFROMSEL2 */
-		0x0800, 0x0800,  /* PFROMSEL3 */
-		0x0000, 0x0400,  /* PFROMSEL0 */
-		0x0800, 0x0800,  /* PFROMSEL1 */
-		0x0000, 0x0400,  /* PFROMSEL2 */
-		0x0800, 0x0800   /* PFROMSEL3 */
-	};
-
-	/* motion object bit mapping */
-	static int mo_offs[32] =
+		free(alpharam);
+		return 1;
+	}
+	
+	/* initialize the motion objects */
+	if (atarigen_mo_init(&mo_desc))
 	{
-		0x0000, 0x0200, 0x0400, 0x0600,  /* 000 */
-		0x0000, 0x0200, 0x0400, 0x0600,  /* 001 */
-		0x0000, 0x0200, 0x0400, 0x0600,  /* 010 */
-		0x0000, 0x0200, 0x0400, 0x0600,  /* 011 */
-		0x0000, 0x0200, 0x0400, 0x0600,  /* 100 */
-		0x0000, 0x0200, 0x0400, 0x0600,  /* 101 */
-		0x0000, 0x0200, 0x0400, 0x0600,  /* 110 */
-		0x0000, 0x0200, 0x0400, 0x0600   /* 111 */
-	};
-
-	pf_bank = pf_offs;
-	mo_bank = mo_offs;
-	return atarisys2_vh_start();
-}
-
-
-int apb_vh_start(void)
-{
-	/* playfield bit mapping */
-	static int pf_offs[16] =
-	{
-		0x0800, 0x0c00,  /* PFROMSEL0 */
-		0x1800, 0x1c00,  /* PFROMSEL1 */
-		0x2800, 0x2c00,  /* PFROMSEL2 */
-		0x3800, 0x3c00,  /* PFROMSEL3 */
-		0x0000, 0x0400,  /* PFROMSEL0 */
-		0x1000, 0x1400,  /* PFROMSEL1 */
-		0x2000, 0x2400,  /* PFROMSEL2 */
-		0x3000, 0x3400   /* PFROMSEL3 */
-	};
-
-	/* motion object bit mapping */
-	static int mo_offs[32] =
-	{
-		0x0200, 0x0600, 0x0a00, 0x0e00,  /* 000 */
-		0x0000, 0x0400, 0x0800, 0x0c00,  /* 001 */
-		0x1200, 0x1600, 0x1a00, 0x1e00,  /* 010 */
-		0x1000, 0x1400, 0x1800, 0x1c00,  /* 011 */
-		0x0200, 0x0600, 0x0a00, 0x0e00,  /* 100 */
-		0x0000, 0x0400, 0x0800, 0x0c00,  /* 101 */
-		0x1200, 0x1600, 0x1a00, 0x1e00,  /* 110 */
-		0x1000, 0x1400, 0x1800, 0x1c00   /* 111 */
-	};
-
-	pf_bank = pf_offs;
-	mo_bank = mo_offs;
-	return atarisys2_vh_start();
-}
-
-
-int a720_vh_start(void)
-{
-	/* playfield bit mapping */
-	static int pf_offs[16] =
-	{
-		0x0000, 0x0400,  /* PFROMSEL0 */
-		0x0800, 0x0c00,  /* PFROMSEL1 */
-		0x1000, 0x1400,  /* PFROMSEL2 */
-		0x1800, 0x1c00,  /* PFROMSEL3 */
-		0x0000, 0x0400,  /* PFROMSEL0 */
-		0x0800, 0x0c00,  /* PFROMSEL1 */
-		0x1000, 0x1400,  /* PFROMSEL2 */
-		0x1800, 0x1c00   /* PFROMSEL3 */
-	};
-
-	/* motion object bit mapping */
-	static int mo_offs[32] =
-	{
-		0x0200, 0x0600, 0x0a00, 0x0e00,  /* 000 */
-		0x0000, 0x0400, 0x0800, 0x0c00,  /* 001 */
-		0x1200, 0x1600, 0x1a00, 0x1e00,  /* 010 */
-		0x1000, 0x1400, 0x1800, 0x1c00,  /* 011 */
-		0x0200, 0x0600, 0x0a00, 0x0e00,  /* 100 */
-		0x0000, 0x0400, 0x0800, 0x0c00,  /* 101 */
-		0x1200, 0x1600, 0x1a00, 0x1e00,  /* 110 */
-		0x1000, 0x1400, 0x1800, 0x1c00   /* 111 */
-	};
-
-	pf_bank = pf_offs;
-	mo_bank = mo_offs;
-	return atarisys2_vh_start();
-}
-
-
-int ssprint_vh_start(void)
-{
-	/* playfield bit mapping */
-	static int pf_offs[16] =
-	{
-		0x0800, 0x0c00,  /* PFROMSEL0 */
-		0x1800, 0x1c00,  /* PFROMSEL1 */
-		0x2800, 0x2c00,  /* PFROMSEL2 */
-		0x3800, 0x3c00,  /* PFROMSEL3 */
-		0x0000, 0x0400,  /* PFROMSEL0 */
-		0x1000, 0x1400,  /* PFROMSEL1 */
-		0x2000, 0x2400,  /* PFROMSEL2 */
-		0x3000, 0x3400   /* PFROMSEL3 */
-	};
-
-	/* motion object bit mapping */
-	static int mo_offs[32] =
-	{
-		0x0000, 0x0200, 0x0400, 0x0600,  /* 000 */
-		0x0000, 0x0200, 0x0400, 0x0600,  /* 001 */
-		0x0000, 0x0200, 0x0400, 0x0600,  /* 010 */
-		0x0000, 0x0200, 0x0400, 0x0600,  /* 011 */
-		0x0000, 0x0200, 0x0400, 0x0600,  /* 100 */
-		0x0000, 0x0200, 0x0400, 0x0600,  /* 101 */
-		0x0000, 0x0200, 0x0400, 0x0600,  /* 110 */
-		0x0000, 0x0200, 0x0400, 0x0600   /* 111 */
-	};
-
-	pf_bank = pf_offs;
-	mo_bank = mo_offs;
-	return atarisys2_vh_start();
-}
-
-
-int csprint_vh_start(void)
-{
-	/* playfield bit mapping */
-	static int pf_offs[16] =
-	{
-		0x0800, 0x0c00,  /* PFROMSEL0 */
-		0x1800, 0x1c00,  /* PFROMSEL1 */
-		0x2800, 0x2c00,  /* PFROMSEL2 */
-		0x3800, 0x3c00,  /* PFROMSEL3 */
-		0x0000, 0x0400,  /* PFROMSEL0 */
-		0x1000, 0x1400,  /* PFROMSEL1 */
-		0x2000, 0x2400,  /* PFROMSEL2 */
-		0x3000, 0x3400   /* PFROMSEL3 */
-	};
-
-	/* motion object bit mapping */
-	static int mo_offs[32] =
-	{
-		0x0000, 0x0200, 0x0400, 0x0600,  /* 000 */
-		0x0000, 0x0200, 0x0400, 0x0600,  /* 001 */
-		0x0000, 0x0200, 0x0400, 0x0600,  /* 010 */
-		0x0000, 0x0200, 0x0400, 0x0600,  /* 011 */
-		0x0000, 0x0200, 0x0400, 0x0600,  /* 100 */
-		0x0000, 0x0200, 0x0400, 0x0600,  /* 101 */
-		0x0000, 0x0200, 0x0400, 0x0600,  /* 110 */
-		0x0000, 0x0200, 0x0400, 0x0600   /* 111 */
-	};
-
-	pf_bank = pf_offs;
-	mo_bank = mo_offs;
-	return atarisys2_vh_start();
+		atarigen_pf_free();
+		free(alpharam);
+		return 1;
+	}
+	
+	return 0;
 }
 
 
@@ -328,36 +229,17 @@ void atarisys2_vh_stop(void)
 		free(alpharam);
 	alpharam = playfieldram = spriteram = 0;
 
-	/* free bitmaps */
-	if (playfieldbitmap)
-		osd_free_bitmap(playfieldbitmap);
-	playfieldbitmap = 0;
-
-	/* free dirty buffers */
-	if (playfielddirty)
-		free(playfielddirty);
-	playfielddirty = 0;
+	atarigen_pf_free();
+	atarigen_mo_free();
 }
 
 
 
 /*************************************
  *
- *		Scroll/playfield bank w
+ *		Scroll/playfield bank write
  *
  *************************************/
-
-void atarisys2_vscroll_w(int offset, int data)
-{
-	int oldword = READ_WORD(&atarigen_vscroll[offset]);
-	int newword = COMBINE_WORD(oldword, data);
-	WRITE_WORD(&atarigen_vscroll[offset], newword);
-
-	/* if we changed the bank, we need to rerender the playfield */
-	if (offset == 0 && (oldword & 15) != (newword & 15))
-		memset(playfielddirty, 1, playfieldram_size / 2);
-}
-
 
 void atarisys2_hscroll_w(int offset, int data)
 {
@@ -365,16 +247,33 @@ void atarisys2_hscroll_w(int offset, int data)
 	int newword = COMBINE_WORD(oldword, data);
 	WRITE_WORD(&atarigen_hscroll[offset], newword);
 
-	/* if we changed the bank, we need to rerender the playfield */
-	if (offset == 0 && (oldword & 15) != (newword & 15))
-		memset(playfielddirty, 1, playfieldram_size / 2);
+	/* update the playfield parameters - hscroll is clocked on the following scanline */
+	pf_state.hscroll = (newword >> 6) & 0x03ff;
+	pf_state.param[0] = newword & 0x000f;
+	atarigen_pf_update(&pf_state, cpu_getscanline() + 1);
+}
+
+
+void atarisys2_vscroll_w(int offset, int data)
+{
+	int oldword = READ_WORD(&atarigen_vscroll[offset]);
+	int newword = COMBINE_WORD(oldword, data);
+	WRITE_WORD(&atarigen_vscroll[offset], newword);
+
+	/* if bit 4 is zero, the scroll value is clocked in right away */
+	latched_vscroll = (newword >> 6) & 0x01ff;
+	if (!(newword & 0x10)) pf_state.vscroll = latched_vscroll;
+
+	/* update the playfield parameters */
+	pf_state.param[1] = newword & 0x000f;
+	atarigen_pf_update(&pf_state, cpu_getscanline() + 1);
 }
 
 
 
 /*************************************
  *
- *		Palette RAM read/write handlers
+ *		Palette RAM write handler
  *
  *************************************/
 
@@ -424,7 +323,7 @@ int atarisys2_slapstic_r(int offset)
 	videobank = slapstic_tweak(0x1234);
 	videoram = alpharam + videobank * 0x2000;
 
-	return READ_WORD(&atarisys2_slapstic_base[offset]);
+	return READ_WORD(&atarigen_slapstic[offset]);
 }
 
 
@@ -438,13 +337,17 @@ void atarisys2_slapstic_w(int offset, int data)
 }
 
 
+
+/*************************************
+ *
+ *		Video RAM bank selection
+ *
+ *************************************/
+
 void atarisys2_vmmu_w(int offset, int data)
 {
-	if (offset == 0)
-	{
-		videobank = (data >> 12) & 3;
-		videoram = alpharam + videobank * 0x2000;
-	}
+	videobank = (data >> 12) & 3;
+	videoram = alpharam + videobank * 0x2000;
 }
 
 
@@ -467,11 +370,12 @@ void atarisys2_videoram_w(int offset, int data)
 	int newword = COMBINE_WORD(oldword, data);
 	WRITE_WORD(&videoram[offset], newword);
 
+	/* mark the playfield dirty if we write to it */
 	if (videobank >= 2)
 		if ((oldword & 0x3fff) != (newword & 0x3fff))
 		{
 			int offs = (&videoram[offset] - playfieldram) / 2;
-			playfielddirty[offs] = 1;
+			atarigen_pf_dirty[offs] = 0xff;
 		}
 }
 
@@ -479,77 +383,239 @@ void atarisys2_videoram_w(int offset, int data)
 
 /*************************************
  *
- *		Motion object list handlers
+ *		Periodic scanline updater
  *
  *************************************/
 
-void atarisys2_update_display_list(int scanline)
+void atarisys2_scanline_update(int scanline)
 {
-	atarigen_update_display_list(spriteram, 0, scanline);
+	/* update the playfield */
+	if (scanline == 0)
+	{
+		pf_state.vscroll = latched_vscroll;
+		atarigen_pf_update(&pf_state, scanline);
+	}
+
+	/* update the motion objects */
+	if (scanline < YDIM)
+		atarigen_mo_update(spriteram, 0, scanline);
 }
 
 
-/*---------------------------------------------------------------------------------
- *
- * 	Motion Object encoding
- *
- *		4 16-bit words are used total
- *
- *		Word 1: Vertical position
- *
- *			Bits 0-2   = upper 3 bits of the image index
- *			Bits 6-14  = vertical position
- *
- *		Word 2: Image
- *
- *			Bits 0-10  = index of the image
- *			Bits 11-13 = size of the image (1..8)
- *			Bit  14    = horizontal flip
- *			Bit  15    = hold X position from last MO
- *
- *		Word 3: Horizontal position
- *
- *			Bits 6-15  = horizontal position
- *
- *		Word 4: Link
- *
- *			Bits 3-10  = link to the next motion object
- *			Bits 12-13 = palette of the image
- *			Bits 14-15 = image priority
- *
- *---------------------------------------------------------------------------------
- */
 
-void atarisys2_render_mo(struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
+/*************************************
+ *
+ *		Main refresh
+ *
+ *************************************/
+
+void atarisys2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	struct atarisys2_mo_data *modata = param;
-	int *redraw_list = modata->redraw_list;
-	int *redraw = modata->redraw;
-	int *r, redraw_val;
+	struct mo_data modata;
+	int i;
+
+#if VIDEO_DEBUG
+	if (osd_key_pressed(OSD_KEY_9)) debug();
+#endif
+
+	/* recalc the palette if necessary */
+	if (palette_recalc())
+		memset(atarigen_pf_dirty, 0xff, PFRAM_SIZE / 2);
+
+	/* set up the all-transparent overrender palette */
+	for (i = 0; i < 16; i++)
+		atarigen_overrender_colortable[i] = palette_transparent_pen;
+
+	/* render the playfield */
+	atarigen_pf_process(pf_render_callback, bitmap, &Machine->drv->visible_area);
+
+	/* render the motion objects */
+	modata.xhold = 0;
+	modata.bitmap = bitmap;
+	atarigen_mo_process(mo_render_callback, &modata);
+
+	/* render the alpha layer */
+	{
+		const struct GfxElement *gfx = Machine->gfx[2];
+		int sx, sy, offs;
+
+		for (sy = 0; sy < YCHARS; sy++)
+			for (sx = 0, offs = sy * 64; sx < XCHARS; sx++, offs++)
+			{
+				int data = READ_WORD(&alpharam[offs * 2]);
+				int code = data & 0x3ff;
+	
+				/* if there's a non-zero code, draw the tile */
+				if (code)
+				{
+					int color = (data >> 13) & 7;
+	
+					/* draw the character */
+					drawgfx(bitmap, gfx, code, color, 0, 0, 8 * sx, 8 * sy, 0, TRANSPARENCY_PEN, 0);
+				}
+			}
+	}
+}
+
+
+
+/*************************************
+ *
+ *		Playfield rendering
+ *
+ *************************************/
+
+static void pf_render_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *param)
+{
+	const struct GfxElement *gfx = Machine->gfx[0];
+	struct osd_bitmap *bitmap = param;
+	int x, y;
+
+	/* standard loop over tiles */
+	for (y = tiles->min_y; y != tiles->max_y; y = (y + 1) & 63)
+		for (x = tiles->min_x; x != tiles->max_x; x = (x + 1) & 127)
+		{
+			int offs = y * 128 + x;
+			int data = READ_WORD(&playfieldram[offs * 2]);
+			int pfbank = state->param[(data >> 10) & 1];
+
+			/* update only if dirty */
+			if (atarigen_pf_dirty[offs] != pfbank)
+			{
+				int code = (pfbank << 10) + (data & 0x3ff);
+				int color = (data >> 11) & 7;
+
+				drawgfx(atarigen_pf_bitmap, gfx, code, color, 0, 0, 8 * x, 8 * y, 0, TRANSPARENCY_NONE, 0);
+				atarigen_pf_dirty[offs] = pfbank;
+			}
+		}
+
+	/* then blast the result */
+	x = -state->hscroll;
+	y = -state->vscroll;
+	copyscrollbitmap(bitmap, atarigen_pf_bitmap, 1, &x, 1, &y, clip, TRANSPARENCY_NONE, 0);
+}
+
+
+
+/*************************************
+ *
+ *		Playfield overrender check
+ *
+ *************************************/
+
+static void pf_check_overrender_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *param)
+{
+	struct pf_overrender_data *overrender_data = param;
+	const struct GfxElement *gfx = Machine->gfx[0];
+	struct osd_bitmap *bitmap = overrender_data->bitmap;
+	int mo_priority = overrender_data->mo_priority;
+	int x, y;
+	
+	/* if we've already decided, bail */
+	if (mo_priority == -1)
+		return;
+
+	/* standard loop over tiles */
+	for (y = tiles->min_y; y != tiles->max_y; y = (y + 1) & 63)
+		for (x = tiles->min_x; x != tiles->max_x; x = (x + 1) & 127)
+		{
+			int offs = y * 128 + x;
+			int data = READ_WORD(&playfieldram[offs * 2]);
+			int pf_priority = ((~data >> 13) & 6) | 1;
+
+			if ((mo_priority + pf_priority) & 4)
+			{
+				int pfbank = state->param[(data >> 10) & 1];
+				int code = (pfbank << 10) + (data & 0x3ff);
+				if (gfx->pen_usage[code] & 0xff00)
+				{
+					overrender_data->mo_priority = -1;
+					return;
+				}
+			}
+		}
+}
+
+
+
+/*************************************
+ *
+ *		Playfield overrendering
+ *
+ *************************************/
+
+static void pf_overrender_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *param)
+{
+	const struct pf_overrender_data *overrender_data = param;
+	const struct GfxElement *gfx = Machine->gfx[0];
+	struct osd_bitmap *bitmap = overrender_data->bitmap;
+	int mo_priority = overrender_data->mo_priority;
+	int x, y;
+
+	/* standard loop over tiles */
+	for (y = tiles->min_y; y != tiles->max_y; y = (y + 1) & 63)
+	{
+		int sy = (8 * y - state->vscroll) & 0x1ff;
+		if (sy >= YDIM) sy -= 0x200;
+
+		for (x = tiles->min_x; x != tiles->max_x; x = (x + 1) & 127)
+		{
+			int offs = y * 128 + x;
+			int data = READ_WORD(&playfieldram[offs * 2]);
+			int pf_priority = ((~data >> 13) & 6) | 1;
+
+			if ((mo_priority + pf_priority) & 4)
+			{
+				int pfbank = state->param[(data >> 10) & 1];
+				int code = (pfbank << 10) + (data & 0x3ff);
+				int color = (data >> 11) & 7;
+				int sx = (8 * x - state->hscroll) & 0x1ff;
+				if (sx >= XDIM) sx -= 0x400;
+
+				drawgfx(bitmap, gfx, code, color, 0, 0, sx, sy, clip, TRANSPARENCY_PENS, 0x00ff);
+			}
+		}
+	}
+}
+
+
+
+/*************************************
+ *
+ *		Motion object rendering
+ *
+ *************************************/
+
+static void mo_render_callback(const unsigned short *data, const struct rectangle *clip, void *param)
+{
+	struct GfxElement *gfx = Machine->gfx[1];
+	struct mo_data *modata = param;
+	struct osd_bitmap *bitmap = modata->bitmap;
+	struct pf_overrender_data overrender_data;
+	struct rectangle pf_clip;
 
 	/* extract data from the various words */
-	int xpos = (data[2] >> 6);
-	int vsize = ((data[1] >> 11) & 7) + 1;
-	int ypos = -(data[0] >> 6) - vsize * 16;
-	int hflip = data[1] & 0x4000;
+	int ypos = -(data[0] >> 6);
 	int hold = data[1] & 0x8000;
-	int pict = (data[1] & 0x7ff) + ((data[0] & 7) << 11);
+	int hflip = data[1] & 0x4000;
+	int vsize = ((data[1] >> 11) & 7) + 1;
+	int code = ((data[1] & 0x7ff) + ((data[0] & 7) << 11)) & atarisys2_mo_mask;
+	int xpos = (data[2] >> 6);
 	int color = (data[3] >> 12) & 3;
-	int priority = (data[3] >> 14) & 3;
-	int y, sy;
+	int priority = (data[3] >> 13) & 6;
 
-	/* shuffle the bits */
-	pict = (pict & 0x1ff) | mo_bank[pict >> 9];
+	/* adjust for height */
+	ypos -= vsize * 16;
 
 	/* adjust x position for holding */
 	if (hold)
 		xpos = modata->xhold;
 	modata->xhold = xpos + 16;
-
+	
 	/* adjust the final coordinates */
 	xpos &= 0x3ff;
 	ypos &= 0x1ff;
-	redraw_val = (xpos << 22) + (ypos << 13) + (priority << 10) + vsize;
 	if (xpos >= XDIM) xpos -= 0x400;
 	if (ypos >= YDIM) ypos -= 0x200;
 
@@ -557,221 +623,35 @@ void atarisys2_render_mo(struct osd_bitmap *bitmap, struct rectangle *clip, unsi
 	if (xpos <= -16 || xpos >= XDIM)
 		return;
 
-	/* see if we already have a redraw entry in the list for this MO */
-	for (r = redraw_list; r < redraw; )
-		if (*r++ == redraw_val)
-			break;
+	/* determine the bounding box */
+	atarigen_mo_compute_clip_16x16(pf_clip, xpos, ypos, 1, vsize, clip);
 
-	/* if not, add it */
-	if (r == redraw)
+	/* determine if we need to overrender */
+	overrender_data.mo_priority = priority;
+	atarigen_pf_process(pf_check_overrender_callback, &overrender_data, &pf_clip);
+	
+	/* if not, do it simply */
+	if (overrender_data.mo_priority == priority)
 	{
-		*redraw++ = redraw_val;
-		modata->redraw = redraw;
+		atarigen_mo_draw_16x16_strip(bitmap, gfx, code, color, hflip, 0, xpos, ypos, vsize, clip, TRANSPARENCY_PEN, 15);
 	}
-
-	/* loop over the height */
-	for (y = 0, sy = ypos; y < vsize; y++, sy += 16, pict++)
+	
+	/* otherwise, make it tricky */
+	else
 	{
-		/* clip the Y coordinate */
-		if (sy <= clip->min_y - 16)
-			continue;
-		else if (sy > clip->max_y)
-			break;
-
-		/* draw the sprite */
-		drawgfx(bitmap, Machine->gfx[2], pict, color, hflip, 0,
-			xpos, sy, clip, TRANSPARENCY_PEN, 15);
-	}
-}
-
-
-
-/***************************************************************************
-
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
-
-void atarisys2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-	int x, y, sx, sy, xoffs, yoffs, xscroll, yscroll, offs;
-	struct atarisys2_mo_data modata;
-	int redraw_list[1024], *r;
-	int bank[2];
-
-
-/*	if (osd_key_pressed(OSD_KEY_9)) atarisys2_dump_video_ram();*/
-
-
-	/* recalc the palette if necessary */
-	if (palette_recalc())
-		memset(playfielddirty, 1, playfieldram_size / 2);
-
-
-	/* compute scrolling so we know what to update */
-	xscroll = (READ_WORD(&atarigen_hscroll[0]) >> 6);
-	yscroll = (READ_WORD(&atarigen_vscroll[0]) >> 6);
-	xscroll = -(xscroll & 0x3ff);
-	yscroll = -(yscroll & 0x1ff);
-
-
-	/*
-	 *---------------------------------------------------------------------------------
-	 *
-	 * 	Playfield encoding
-	 *
-	 *		1 16-bit word is used
-	 *
-	 *			Bits 0-9   = index of the image
-	 *			Bit  10    = index of which bank to use
-	 *			Bits 11-13 = palette of the image
-	 *			Bit  14-15 = image priority
-	 *
-	 *---------------------------------------------------------------------------------
-	 */
-
-	/* update only the portion of the playfield that's visible. */
-	xoffs = -xscroll / 8;
-	yoffs = -yscroll / 8;
-
-	/* look up the banks */
-	bank[0] = pf_bank[READ_WORD(&atarigen_hscroll[0]) & 15];
-	bank[1] = pf_bank[READ_WORD(&atarigen_vscroll[0]) & 15];
-
-	/* loop over the visible Y portion */
-	for (y = yoffs + YCHARS + 1; y >= yoffs; y--)
-	{
-		sy = y & 63;
-
-		/* loop over the visible X portion */
-		for (x = xoffs + XCHARS + 1; x >= xoffs; x--)
-		{
-			int data;
-
-			/* compute the offset */
-			sx = x & 127;
-			offs = sy * 128 + sx;
-			data = READ_WORD(&playfieldram[offs * 2]);
-
-			/* redraw if dirty */
-			if (playfielddirty[offs])
-			{
-				int pfbank = bank[(data >> 10) & 1];
-				int pict = data & 0x3ff;
-				int color = (data >> 11) & 7;
-
-				drawgfx(playfieldbitmap, Machine->gfx[1], pfbank + pict, color, 0, 0,
-						8 * sx, 8 * sy, 0, TRANSPARENCY_NONE, 0);
-				playfielddirty[offs] = 0;
-			}
-		}
-	}
-
-	/* copy the playfield to the destination */
-	copyscrollbitmap(bitmap, playfieldbitmap, 1, &xscroll, 1, &yscroll, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
-
-	/* prepare the motion object data structure */
-	modata.xhold = 0;
-	modata.redraw_list = modata.redraw = redraw_list;
-
-	/* render the motion objects */
-	atarigen_render_display_list(bitmap, atarisys2_render_mo, &modata);
-
-	/* redraw playfield tiles with higher priority */
-	for (r = redraw_list; r < modata.redraw; r++)
-	{
-		int val = *r;
-		int xpos = (val >> 22) & 0x3ff;
-		int ypos = (val >> 13) & 0x1ff;
-		int pri = (val >> 9) & 6;
-		int h = val & 15;
-		struct rectangle clip;
-
-		/* wrap */
-		if (xpos > XDIM) xpos -= 0x400;
-		if (ypos > YDIM) ypos -= 0x200;
-
-		/* make a clip */
-		clip.min_x = xpos;
-		clip.max_x = xpos + 15;
-		clip.min_y = ypos;
-		clip.max_y = ypos + h * 16 - 1;
-
-		/* round the positions */
-		xpos = (xpos - xscroll) / 8;
-		ypos = (ypos - yscroll) / 8;
-
-		/* loop over the columns */
-		for (x = xpos + 2; x >= xpos; x--)
-		{
-			/* compute the scroll-adjusted x position */
-			sx = (x * 8 + xscroll) & 0x3ff;
-			if (sx > 0x3f8) sx -= 0x400;
-
-			/* loop over the rows */
-			for (y = ypos + h * 2; y >= ypos; y--)
-			{
-				int  data, pfpri;
-
-				/* compute the scroll-adjusted y position */
-				sy = (y * 8 + yscroll) & 0x1ff;
-				if (sy > 0x1f8) sy -= 0x200;
-
-				/* process the data */
-				offs = (y & 0x3f) * 128 + (x & 0x7f);
-				data = READ_WORD(&playfieldram[offs * 2]);
-				pfpri = ((~data >> 13) & 6) | 1;
-
-				/* this is the priority equation from the schematics */
-				if ((pri + pfpri) & 4)
-				{
-					int pfbank = bank[(data >> 10) & 1];
-					int pict = data & 0x3ff;
-					int color = (data >> 11) & 7;
-
-					drawgfx(bitmap, Machine->gfx[1], pfbank + pict, color, 0, 0,
-							sx, sy, &clip, TRANSPARENCY_PENS, 0x000000ff);
-				}
-			}
-		}
-	}
-
-
-	/*
-	 *---------------------------------------------------------------------------------
-	 *
-	 * 	Alpha layer encoding
-	 *
-	 *		1 16-bit word is used
-	 *
-	 *			Bits 0-10  = index of the character
-	 *			Bit  11    = horizontal flip
-	 *			Bit  12-15 = color
-	 *
-	 *---------------------------------------------------------------------------------
-	 */
-
-	/* loop over the Y coordinate */
-	for (sy = 0; sy < YCHARS; sy++)
-	{
-		/* loop over the X coordinate */
-		for (sx = 0, offs = sy * 64; sx < XCHARS; sx++, offs++)
-		{
-			int data = READ_WORD(&alpharam[offs * 2]);
-			int pict = data & 0x3ff;
-
-			/* if there's a non-zero picture or if we're fully opaque, draw the tile */
-			if (pict)
-			{
-				int color = (data >> 13) & 7;
-
-				/* draw the character */
-				drawgfx(bitmap, Machine->gfx[0], pict, color, 0, 0,
-						8 * sx, 8 * sy, 0, TRANSPARENCY_PEN, 0);
-			}
-		}
+		/* draw an instance of the object in all transparent pens */
+		atarigen_mo_draw_transparent_16x16_strip(bitmap, gfx, code, hflip, 0, xpos, ypos, vsize, clip, TRANSPARENCY_PEN, 15);
+		
+		/* and then draw it normally on the temp bitmap */
+		atarigen_mo_draw_16x16_strip(atarigen_pf_overrender_bitmap, gfx, code, color, hflip, 0, xpos, ypos, vsize, clip, TRANSPARENCY_NONE, 0);
+	
+		/* overrender the playfield on top of that that */
+		overrender_data.mo_priority = priority;
+		overrender_data.bitmap = atarigen_pf_overrender_bitmap;
+		atarigen_pf_process(pf_overrender_callback, &overrender_data, &pf_clip);
+	
+		/* finally, copy this chunk to the real bitmap */
+		copybitmap(bitmap, atarigen_pf_overrender_bitmap, 0, 0, 0, 0, &pf_clip, TRANSPARENCY_THROUGH, palette_transparent_pen);
 	}
 }
 
@@ -784,7 +664,7 @@ void atarisys2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
  *************************************/
 
 #if 0
-static void atarisys2_dump_video_ram (void)
+static void debug(void)
 {
 	static int count;
 	char name[50];
@@ -824,7 +704,7 @@ static void atarisys2_dump_video_ram (void)
 		READ_WORD(&atarigen_hscroll[0]) & 15, READ_WORD(&atarigen_vscroll[0]) & 15);
 
 	fprintf(f, "\n\nMotion Objects\n");
-	for (i = 0; i < spriteram_size; i += 8)
+	for (i = 0; i < MORAM_SIZE; i += 8)
 	{
 		int data1 = READ_WORD(&spriteram[i+0]);
 		int data2 = READ_WORD(&spriteram[i+2]);
@@ -834,7 +714,7 @@ static void atarisys2_dump_video_ram (void)
 		int ypos = (data1 >> 6) & 0x1ff;
 		int vsize = ((data1 >> 3) & 7) + 1;
 		int hsize = (data1 & 7) + 1;
-		int pict = (data2 & 0x3fff);
+		int code = (data2 & 0x3fff);
 		int vflip = ((data2 >> 15) & 1);
 		int hflip = ((data2 >> 14) & 1);
 		int link = (data3 & 0xff);
@@ -846,7 +726,7 @@ static void atarisys2_dump_video_ram (void)
 	}
 
 	fprintf(f, "\n\nPlayfield dump\n");
-	for (i = 0; i < playfieldram_size / 2; i++)
+	for (i = 0; i < PFRAM_SIZE / 2; i++)
 	{
 		fprintf(f, "%04X ", READ_WORD(&playfieldram[i*2]));
 		if ((i & 127) == 127) fprintf(f, "\n");
@@ -854,7 +734,7 @@ static void atarisys2_dump_video_ram (void)
 	}
 
 	fprintf(f, "\n\nAlpha dump\n");
-	for (i = 0; i < alpharam_size / 2; i++)
+	for (i = 0; i < ANRAM_SIZE / 2; i++)
 	{
 		fprintf(f, "%04X ", READ_WORD(&alpharam[i*2]));
 		if ((i & 63) == 63) fprintf(f, "\n");

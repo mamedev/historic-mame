@@ -1181,7 +1181,7 @@ static struct GfxLayout spritelayout1632 =
 static struct GfxLayout spritelayout3232 =
 {
 	32,32,	/* 32*32 sprites */
-	129,	/* 128 sprites */
+	128,	/* 128 sprites */
 	4,	/* 4 bits per pixel */
 	{ 0, 1, 2, 3 }, /* the two bitplanes are merged in the same nibble */
 	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
@@ -1198,7 +1198,7 @@ static struct GfxLayout spritelayout3232 =
 static struct GfxLayout spritelayout816 =
 {
 	8,16,	/* 16*16 sprites */
-	1024,	/* 512 sprites */
+	1024,	/* 1024 sprites */
 	4,	/* 4 bits per pixel */
 	{ 0, 1, 2, 3 }, /* the two bitplanes are merged in the same nibble */
 	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4},
@@ -1207,6 +1207,44 @@ static struct GfxLayout spritelayout816 =
 	64*8     /* every sprite takes 128 consecutive bytes */
 };
 
+static struct GfxLayout spritelayout168 =
+{
+	16,8,	/* 16*8 sprites */
+	1024,	/* 1024 sprites */
+	4,	/* 4 bits per pixel */
+	{ 0, 1, 2, 3 }, /* the two bitplanes are merged in the same nibble */
+	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
+			8*4, 9*4, 10*4, 11*4, 12*4, 13*4, 14*4, 15*4},
+	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64},
+	64*8     /* every sprite takes 128 consecutive bytes */
+
+};
+
+static struct GfxLayout spritelayout6464 =
+{
+	64,64,	/* 32*32 sprites */
+	32,	/* 128 sprites */
+	4,	/* 4 bits per pixel */
+	{ 0, 1, 2, 3 }, /* the two bitplanes are merged in the same nibble */
+	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
+			8*4, 9*4, 10*4, 11*4, 12*4, 13*4, 14*4, 15*4,
+		   16*4,17*4, 18*4, 19*4, 20*4, 21*4, 22*4, 23*4,
+		   24*4,25*4, 26*4, 27*4, 28*4, 29*4, 30*4, 31*4,
+		   32*4,33*4, 34*4, 35*4, 36*4, 37*4, 38*4, 39*4,
+		   40*4,41*4, 42*4, 43*4, 44*4, 45*4, 46*4, 47*4,
+		   48*4,49*4, 50*4, 51*4, 52*4, 53*4, 54*4, 55*4,
+		   56*4,57*4, 58*4, 59*4, 60*4, 61*4, 62*4, 63*4},
+
+	{ 0*256, 1*256, 2*256, 3*256, 4*256, 5*256, 6*256, 7*256,
+			8*256,  9*256, 10*256, 11*256, 12*256, 13*256, 14*256, 15*256,
+		   16*256, 17*256, 18*256, 19*256, 20*256, 21*256, 22*256, 23*256,
+		   24*256, 25*256, 26*256, 27*256, 28*256, 29*256, 30*256, 31*256,
+		   32*256, 33*256, 34*256, 35*256, 36*256, 37*256, 38*256, 39*256,
+		   40*256, 41*256, 42*256, 43*256, 44*256, 45*256, 46*256, 47*256,
+		   48*256, 49*256, 50*256, 51*256, 52*256, 53*256, 54*256, 55*256,
+		   56*256, 57*256, 58*256, 59*256, 60*256, 61*256, 62*256, 63*256},
+	2048*8     /* every sprite takes 128 consecutive bytes */
+};
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
@@ -1216,6 +1254,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
     { 0, 0x0, &spritelayout816, 0, 0x80 },	/* the game dynamically modifies this */
     { 0, 0x0, &spritelayout3232, 0, 0x80 },	/* the game dynamically modifies this */
     { 0, 0x0, &spritelayout1632, 0, 0x80 },	/* the game dynamically modifies this */
+    { 0, 0x0, &spritelayout168, 0, 0x80 },	/* the game dynamically modifies this */
+    { 0, 0x0, &spritelayout6464, 0, 0x80 },	/* the game dynamically modifies this */
 	{ -1 }
 };
 
@@ -1225,7 +1265,8 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chip */
 	14318000/8,	/* 1.78975 Mhz?? */
-	{ 0x20ff, 0x20ff },
+	{ 0xff, 0xff },
+	{ 0x20, 0x20 },	/* gain */
 	{ nemesis_portA_r, 0 },
 	{ 0, 0 },
 	{ 0, 0 },
@@ -1242,7 +1283,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,
 	3579545,
-	{ YM3012_VOL(45,OSD_PAN_LEFT,45,OSD_PAN_RIGHT) },
+	{ YM3012_VOL(45,MIXER_PAN_LEFT,45,MIXER_PAN_RIGHT) },
 	{ sound_irq }
 };
 
@@ -1256,8 +1297,8 @@ static struct VLM5030interface vlm5030_interface =
 
 static struct K007232_interface k007232_interface =
 {
-	4,4,  /* memory regions */
-	12 /* volume */
+	{4,4},  /* memory regions */
+	{12,12} /* volume */
 };
 
 /******************************************************************************/
@@ -1807,7 +1848,7 @@ struct GameDriver rf2_driver =
 	__FILE__,
 	&konamigt_driver,
 	"rf2",
-	"RF2",
+	"RF2 - Road Fighter",
 	"1985",
 	"Konami",
 	"Allard van der Bas\nNicola Salmoria\nAndrew Prime",

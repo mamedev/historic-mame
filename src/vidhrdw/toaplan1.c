@@ -52,8 +52,8 @@ typedef struct
 	{
 	UINT16 tile_num ;
 	UINT8  color ;
-	UINT16 xpos ;
-	UINT16 ypos ;
+	int xpos ;
+	int ypos ;
 	} tile_struct ;
 
 tile_struct *tile_list[16] ;
@@ -363,6 +363,72 @@ static void toaplan1_find_tiles (void)
 	}
 }
 
+static void outzone_find_tiles (void)
+{
+	int priority;
+	int layer;
+	int width;
+	tile_struct *tinfo;
+	unsigned char *t_info;
+
+	width = Machine->drv->screen_width/8 ;
+
+	for ( priority = 0 ; priority < 16 ; priority++ )
+	{
+		tile_count[priority]=0;
+	}
+
+	for ( layer = 0 ; layer <4 ; layer++ )
+	{
+		int scrolly,scrollx,offsetx,offsety;
+		int sx,sy,tattr;
+		int i;
+
+		t_info = (zerowing_videoram3+layer * VIDEORAM3_SIZE);
+		scrollx = scrollregs[layer*2];
+		scrolly = scrollregs[(layer*2)+1];
+
+		scrollx >>= 7 ;
+		scrollx += 70 ;
+       if ( layer == 2 ) scrollx += 2 ;
+		scrollx &= 0x1ff ;
+		offsetx = scrollx / 8 ;
+
+		scrolly >>= 7 ;
+		scrolly += 21  ;
+		scrolly &= 0x1ff ;
+		offsety = scrolly / 8 ;
+
+		for ( sy = 0 ; sy < 32 ; sy++ )
+		{
+			i = ((sy+offsety)&0x3f)*128 ;
+			for ( sx = 0 ; sx <= width ; sx++ )
+	    	 	{
+				tattr = READ_WORD(&t_info[2*(i+2*((sx+offsetx)&0x3f))]);
+				if ( tattr )
+		    		{
+					priority = tattr >> 12 ;
+					tinfo = (tile_struct *)&(tile_list[priority][tile_count[priority]]) ;
+					tinfo->tile_num = READ_WORD(&t_info[2*(2*(((sy+offsety)&0x3f)*64+((sx+offsetx)&0x3f))+1)]) & 0x7fff ;
+					tinfo->color = tattr & 0x3f ;
+					tinfo->xpos = (sx*8)-(scrollx&0x7) ;
+					tinfo->ypos = (sy*8)-(scrolly&0x7) ;
+					tile_count[priority]++ ;
+					if(tile_count[priority]==max_list_size[priority])
+			    		{
+						/*reallocate tile_list[priority] to larger size */
+						temp_list=(tile_struct *)malloc(sizeof(tile_struct)*(max_list_size[priority]+512)) ;
+						memcpy(temp_list,tile_list[priority],sizeof(tile_struct)*max_list_size[priority]);
+						max_list_size[priority]+=512;
+						free(tile_list[priority]);
+						tile_list[priority] = temp_list ;
+				    	}
+   				}
+	    		}
+   		}
+   	}
+}
+
 static void toaplan1_find_sprites (void)
 {
 	int sprite;
@@ -482,11 +548,71 @@ static void vimana_find_sprites (void)
 	}
 }
 
+static void outzone_find_sprites (void)
+{
+	int sprite;
+	unsigned char *s_info,*s_size;
+
+	s_size = (zerowing_videoram2);	/* sprite block size */
+	s_info = (zerowing_videoram1) ;	/* start of sprite ram */
+
+	for ( sprite = 0 ; sprite < 256 ; sprite++ )
+	{
+		int tattr;
+
+		tattr = READ_WORD (&s_info[2]);
+		if ( tattr & 0xc000 )	/* no need to render hidden sprites */
+		{
+			int sx,sy,dx,dy,s_sizex,s_sizey,tchar;
+			int sprite_size_ptr;
+			int priority;
+
+			sx=READ_WORD(&s_info[4]);
+			sx >>= 7 ;
+			if ( sx > 416 ) sx -= 512 ;
+
+			sy=READ_WORD(&s_info[6])-0x800;
+			sy >>= 7 ;
+			if ( sy > 416 ) sy -= 512 ;
+
+			priority = tattr >> 12 ;
+			tchar = READ_WORD(&s_info[0])&0x7fff;
+
+			sprite_size_ptr = (tattr>>6)&0x3f ;
+			s_sizey = (READ_WORD(&s_size[2*sprite_size_ptr])>>4)&0xf ;
+			s_sizex = (READ_WORD(&s_size[2*sprite_size_ptr]))&0xf ;
+			for ( dy = s_sizey ; dy > 0 ; dy-- )
+				for ( dx = s_sizex; dx > 0 ; dx-- )
+				{
+					tile_struct *tinfo;
+
+					tinfo = (tile_struct *)&(tile_list[priority][tile_count[priority]]) ;
+					tinfo->tile_num = tchar++ ;
+					tinfo->color = 0x80 | (tattr & 0x3f) ;
+					tinfo->xpos = sx-dx*8+s_sizex*8 ;
+					tinfo->ypos = sy-dy*8+s_sizey*8+16  ;
+					tile_count[priority]++ ;
+					if(tile_count[priority]==max_list_size[priority])
+					{
+						/*reallocate tile_list[priority] to larger size */
+						temp_list=(tile_struct *)malloc(sizeof(tile_struct)*(max_list_size[priority]+512)) ;
+						memcpy(temp_list,tile_list[priority],sizeof(tile_struct)*max_list_size[priority]);
+						max_list_size[priority]+=512;
+						free(tile_list[priority]);
+						tile_list[priority] = temp_list ;
+					}
+				}
+		}
+		s_info += 8 ;
+	}
+}
+
 static void toaplan1_render (struct osd_bitmap *bitmap)
 {
-	int i;
+	int i,sx,sy,tx,ty,c,b;
 	int priority;
 	tile_struct *tinfo;
+   struct GfxElement *gfx ;
 
 	fillbitmap (bitmap, palette_transparent_pen, &Machine->drv->visible_area);
 
@@ -495,16 +621,59 @@ static void toaplan1_render (struct osd_bitmap *bitmap)
 		tinfo = (tile_struct *)&(tile_list[priority][0]) ;
 		for ( i = 0 ; i < tile_count[priority] ; i++ )	/* draw only tiles in list */
 		{
-			drawgfx(bitmap,Machine->gfx[tinfo->color>>7], 	/* bit 7 set for sprites */
-				tinfo->tile_num,
-				tinfo->color&0x3f, 			/* bit 7 not for colour */
-				0,0,
-				tinfo->xpos,tinfo->ypos,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+/*
+           if (((tinfo->xpos < 0) || (tinfo->ypos < 0 )) )
+               {
+               gfx = Machine->gfx[tinfo->color>>7] ;
+               for ( sx=0; sx<8; sx++ )
+                   {
+                   tx = sx+tinfo->xpos ;
+                   if (tx>=0)
+                      for (sy=0; sy<8; sy++)
+                          {
+                          ty = sy+tinfo->ypos ;
+                          if (ty>=0)
+                             {
+                               if ((tx<320) && (ty<240))
+                                   {
+                                   b = (gfx->gfxdata->line[sy]+(64*tinfo->tile_num))[sx] ;
+                                   c = gfx->colortable[b+(16*tinfo->color&0x3f)+(1024*(tinfo->color>>7))];
+                                   if ( c != 0 )
+                                      Machine->scrbitmap->line[ty][tx] = c ;
+                                   }
+                             }
+                          }
+                   }
+               }
+           else
+*/
+			    drawgfx(bitmap,Machine->gfx[tinfo->color>>7], 	/* bit 7 set for sprites */
+				    tinfo->tile_num,
+	    			tinfo->color&0x3f, 			/* bit 7 not for colour */
+   				0,0,
+		    		tinfo->xpos,tinfo->ypos,
+			    	&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 			tinfo++ ;
 		}
 	}
 }
+
+/*
+               for ( sy=0; sy<8; sy++ )
+                   {
+                   ty = sy+tinfo->ypos ;
+                   for (sx=0; sx<8; sx++)
+                       {
+                       tx = sx+tinfo->xpos ;
+                       if ((tx > 0) && (ty>0))
+                           {
+                         b = (Machine->gfx[tinfo->color>>7]->gfxdata->line[sy])[sx] ;
+                         c = Machine->gfx[0]->colortable[b+(16*tinfo->color&0x3f)];
+                           Machine->scrbitmap->line[ty][tx] = Machine->pens[1] ;
+                           }
+                       }
+                   }
+*/
 
 void zerowing_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
@@ -514,6 +683,16 @@ void zerowing_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	toaplan1_update_palette ();
 	toaplan1_render (bitmap);
+}
+
+void outzone_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	/* discover what data will be drawn */
+	outzone_find_tiles ();
+	outzone_find_sprites ();
+
+	toaplan1_update_palette ();
+	toaplan1_render(bitmap);
 }
 
 /* layer and sprite offsets are different from zerowing */

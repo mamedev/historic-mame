@@ -99,13 +99,11 @@ static void CVSD_update(int num,void *buffer,int length)
 }
 
 
-void CVSD_set_volume(int num,int volume,int gain)
+static void CVSD_set_gain(int num,int gain)
 {
 	int i;
 	int out;
 
-
-	stream_set_volume(channel[num],volume);
 
 	gain &= 0xff;
 
@@ -140,14 +138,13 @@ int CVSD_sh_start(const struct MachineSound *msound)
 
 
 		sprintf(name,"CVSD #%d",i);
-		channel[i] = stream_init(msound,
-				name,Machine->sample_rate,8,
+		channel[i] = stream_init(name,intf->volume[i] & 0xff,Machine->sample_rate,8,
 				i,CVSD_update);
 
 		if (channel[i] == -1)
 			return 1;
 
-		CVSD_set_volume(i,intf->volume[i] & 0xff,(intf->volume[i] >> 8) & 0xff);
+		CVSD_set_gain(i,(intf->volume[i] >> 8) & 0xff);
 
 		latch[i] = 0;
 		current_databit[i] = 0;

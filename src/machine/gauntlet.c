@@ -8,7 +8,7 @@
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
 
-int gauntlet_update_display_list(int scanline);
+void gauntlet_scanline_update(int scanline);
 
 
 
@@ -19,8 +19,6 @@ int gauntlet_update_display_list(int scanline);
  *************************************/
 
 unsigned char *gauntlet_speed_check;
-
-int gauntlet_slapstic_num;
 
 
 
@@ -63,40 +61,12 @@ void gauntlet_init_machine(void)
 {
 	last_speed_check = 0;
 	last_speech_write = 0x80;
-	atarigen_init_machine(gauntlet_update_interrupts, gauntlet_slapstic_num);
+	
+	atarigen_eeprom_reset();
+	atarigen_slapstic_reset();
+	atarigen_interrupt_init(gauntlet_update_interrupts, gauntlet_scanline_update);
 }
 
-
-
-/*************************************
- *
- *		Interrupt handlers.
- *
- *************************************/
-
-void gauntlet_update(int param)
-{
-	int yscroll;
-
-	/* update the display list */
-	yscroll = gauntlet_update_display_list(param);
-
-	/* reset the timer */
-	if (!param)
-	{
-		int next = 8 - (yscroll & 7);
-		timer_set(cpu_getscanlineperiod() * (double)next, next, gauntlet_update);
-	}
-	else if (param < 240)
-		timer_set(cpu_getscanlineperiod() * 8.0, param + 8, gauntlet_update);
-}
-
-
-int gauntlet_interrupt(void)
-{
-	timer_set(TIME_IN_USEC(Machine->drv->vblank_duration), 0, gauntlet_update);
-	return atarigen_vblank_gen();
-}
 
 
 /*************************************
@@ -140,7 +110,7 @@ static int fake_inputs(int real_port, int fake_port)
 int gauntlet_control_r(int offset)
 {
 	/* differentiate Gauntlet input from Vindicators 2 inputs via the slapstic */
-	if (gauntlet_slapstic_num != 118)
+	if (atarigen_slapstic_num != 118)
 	{
 		/* Gauntlet case */
 		int p1 = input_port_6_r(offset);
@@ -189,9 +159,9 @@ int gauntlet_io_r(int offset)
 	{
 		case 0:
 			temp = input_port_5_r(offset);
-			if (atarigen_cpu_to_sound_ready) temp ^= 0x20;
-			if (atarigen_sound_to_cpu_ready) temp ^= 0x10;
-			return temp | 0xff00;
+			if (atarigen_cpu_to_sound_ready) temp ^= 0x0020;
+			if (atarigen_sound_to_cpu_ready) temp ^= 0x0010;
+			return temp;
 
 		case 6:
 			return atarigen_sound_r(0);
@@ -207,7 +177,7 @@ int gauntlet_6502_switch_r(int offset)
 	if (atarigen_cpu_to_sound_ready) temp ^= 0x80;
 	if (atarigen_sound_to_cpu_ready) temp ^= 0x40;
 	if (tms5220_ready_r()) temp ^= 0x20;
-	if (!(input_port_5_r(offset) & 0x08)) temp ^= 0x10;
+	if (!(input_port_5_r(offset) & 0x0008)) temp ^= 0x10;
 
 	return temp;
 }
@@ -276,6 +246,22 @@ void gauntlet_sound_ctl_w(int offset, int data)
 }
 
 
+
+/*************************************
+ *
+ *		Sound mixer write.
+ *
+ *************************************/
+
+void gauntlet_mixer_w(int offset, int data)
+{
+	atarigen_set_ym2151_vol((data & 7) * 100 / 7);
+	atarigen_set_pokey_vol(((data >> 3) & 3) * 100 / 3);
+	atarigen_set_tms5220_vol(((data >> 5) & 7) * 100 / 7);
+}
+
+
+
 /*************************************
  *
  *		Speed cheats
@@ -285,16 +271,12 @@ void gauntlet_sound_ctl_w(int offset, int data)
 int gauntlet_68010_speedup_r(int offset)
 {
 	int result = READ_WORD(&gauntlet_speed_check[offset]);
+	int time = cpu_gettotalcycles();
+	int delta = time - last_speed_check;
 
-	if (offset == 2 && gauntlet_slapstic_num != 118)	/* don't apply to Vindicators 2 */
-	{
-		int time = cpu_gettotalcycles();
-		int delta = time - last_speed_check;
-
-		last_speed_check = time;
-		if (delta <= 100 && result == 0 && delta >= 0)
-			cpu_spin();
-	}
+	last_speed_check = time;
+	if (delta <= 100 && result == 0 && delta >= 0)
+		cpu_spin();
 
 	return result;
 }
@@ -302,19 +284,6 @@ int gauntlet_68010_speedup_r(int offset)
 
 void gauntlet_68010_speedup_w(int offset, int data)
 {
-	if (offset == 2)
-		last_speed_check -= 1000;
+	last_speed_check -= 1000;
 	COMBINE_WORD_MEM(&gauntlet_speed_check[offset], data);
-}
-
-
-int gauntlet_6502_speedup_r(int offset)
-{
-	extern unsigned char *RAM;
-	int result = RAM[0x0211];
-
-	if (gauntlet_slapstic_num != 118 &&	/* don't apply to Vindicators 2 */
-		cpu_getpreviouspc() == 0x412a && RAM[0x0211] == RAM[0x0210] && RAM[0x0225] == RAM[0x0224])
-		cpu_spin();
-	return result;
 }

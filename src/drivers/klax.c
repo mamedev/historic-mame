@@ -58,73 +58,95 @@ ADPCM chip              270000         R/W   D[7:0]
 #include "vidhrdw/generic.h"
 
 
-int klax_playfieldram_r (int offset);
-int klax_paletteram_r (int offset);
+void klax_playfieldram_w(int offset, int data);
+void klax_latch_w(int offset, int data);
 
-void klax_latch_w (int offset, int data);
-void klax_playfieldram_w (int offset, int data);
-void klax_paletteram_w (int offset, int data);
-
-int klax_interrupt (void);
-
-void klax_init_machine (void);
-
-int klax_vh_start (void);
-void klax_vh_stop (void);
-
+int klax_vh_start(void);
+void klax_vh_stop(void);
 void klax_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void klax_update_display_list (int scanline);
+void klax_scanline_update(int scanline);
+
+
+static int v32_state;
+
+
+/*************************************
+ *
+ *		Interrupt handling
+ *
+ *************************************/
+
+static void update_interrupts(int vblank, int sound)
+{
+	int newstate = 0;
+
+	if (vblank || v32_state)
+		newstate = 4;
+
+	if (newstate)
+		cpu_set_irq_line(0, newstate, ASSERT_LINE);
+	else
+		cpu_set_irq_line(0, 7, CLEAR_LINE);
+}
+
+
+static void scanline_update(int scanline)
+{
+	/* update the video */
+	klax_scanline_update(scanline);
+
+	/* generate 32V signals */
+	if (scanline % 64 == 0)
+	{
+		v32_state = 1;
+		atarigen_update_interrupts();
+	}
+}
+
+
+static void interrupt_ack_w(int offset, int data)
+{
+	v32_state = 0;
+	atarigen_vblank_ack_w(offset, data);
+}
 
 
 
 /*************************************
  *
- *		Misc. functions
+ *		Initialization
  *
  *************************************/
 
-void klax_init_machine (void)
+static void init_machine(void)
 {
-	klax_latch_w (0, 0);
+	v32_state = 0;
+
+	atarigen_eeprom_default = NULL;
+	atarigen_eeprom_reset();
+
+	atarigen_interrupt_init(update_interrupts, scanline_update);
 }
 
 
-int klax_input_r (int offset)
+
+/*************************************
+ *
+ *		Sound I/O
+ *
+ *************************************/
+
+static int adpcm_r(int offset)
 {
-	if (offset == 0)
-		return input_port_0_r (offset) + (input_port_1_r (offset) << 8);
-	else
-		return input_port_2_r (offset) + (input_port_3_r (offset) << 8);
+	return OKIM6295_status_0_r(offset) | 0xff00;
 }
 
 
-int klax_adpcm_r (int offset)
-{
-	return OKIM6295_status_0_r (offset) | 0xff00;
-}
-
-
-void klax_adpcm_w (int offset, int data)
+static void adpcm_w(int offset, int data)
 {
 	if (!(data & 0x00ff0000))
-		OKIM6295_data_0_w (offset, data & 0xff);
-}
-
-
-void klax_update (int param)
-{
-	klax_update_display_list (param);
-	param += 8;
-	if (param < 240)
-		timer_set (8.0 * cpu_getscanlineperiod (), param, klax_update);
-}
-
-
-int klax_interrupt (void)
-{
-	timer_set (TIME_IN_USEC (Machine->drv->vblank_duration), 0, klax_update);
-	return 4;
+		OKIM6295_data_0_w(offset, data & 0xff);
 }
 
 
@@ -135,35 +157,37 @@ int klax_interrupt (void)
  *
  *************************************/
 
-static struct MemoryReadAddress klax_readmem[] =
+static struct MemoryReadAddress readmem[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_r, &atarigen_eeprom, &atarigen_eeprom_size },
-	{ 0x260000, 0x260003, klax_input_r },
-	{ 0x270000, 0x270003, klax_adpcm_r },
-	{ 0x3e0000, 0x3e07ff, klax_paletteram_r, &paletteram },
-	{ 0x3f0000, 0x3f1fff, klax_playfieldram_r, &atarigen_playfieldram, &atarigen_playfieldram_size },
+	{ 0x260000, 0x260001, input_port_0_r },
+	{ 0x260002, 0x260003, input_port_1_r },
+	{ 0x270000, 0x270001, adpcm_r },
+	{ 0x3e0000, 0x3e07ff, MRA_BANK1, &paletteram },
+	{ 0x3f0000, 0x3f1fff, MRA_BANK2, &atarigen_playfieldram, &atarigen_playfieldram_size },
 	{ 0x3f2000, 0x3f27ff, MRA_BANK3, &atarigen_spriteram, &atarigen_spriteram_size },
-	{ 0x3f2800, 0x3f3fff, MRA_BANK2 },
+	{ 0x3f2800, 0x3f3fff, MRA_BANK4 },
 	{ -1 }  /* end of table */
 };
 
 
-static struct MemoryWriteAddress klax_writemem[] =
+static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_w },
 	{ 0x1f0000, 0x1fffff, atarigen_eeprom_enable_w },
-	{ 0x260000, 0x260003, klax_latch_w },
-	{ 0x270000, 0x270003, klax_adpcm_w },
-	{ 0x2e0000, 0x2e0003, watchdog_reset_w },
-	{ 0x360000, 0x360003, MWA_NOP },
-	{ 0x3e0000, 0x3e07ff, klax_paletteram_w },
+	{ 0x260000, 0x260001, klax_latch_w },
+	{ 0x270000, 0x270001, adpcm_w },
+	{ 0x2e0000, 0x2e0001, watchdog_reset_w },
+	{ 0x360000, 0x360001, interrupt_ack_w },
+	{ 0x3e0000, 0x3e07ff, atarigen_expanded_666_paletteram_w },
 	{ 0x3f0000, 0x3f1fff, klax_playfieldram_w },
 	{ 0x3f2000, 0x3f27ff, MWA_BANK3 },
-	{ 0x3f2800, 0x3f3fff, MWA_BANK2 },
+	{ 0x3f2800, 0x3f3fff, MWA_BANK4 },
 	{ -1 }  /* end of table */
 };
+
 
 
 /*************************************
@@ -173,33 +197,29 @@ static struct MemoryWriteAddress klax_writemem[] =
  *************************************/
 
 INPUT_PORTS_START( klax_ports )
-	PORT_START		/* IN0 low */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x00fc, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0600, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1 )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 )
 
-	PORT_START      /* IN0 high */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0x06, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-
-	PORT_START		/* IN1 low */
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START      /* IN1 high */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
-	PORT_BITX(    0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_BIT( 0x06, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_START
+	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x0600, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(  0x0800, 0x0800, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x0800, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x0000, DEF_STR( On ))
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
 INPUT_PORTS_END
 
 
@@ -210,11 +230,11 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct GfxLayout klax_pflayout =
+static struct GfxLayout pflayout =
 {
-	8,8,	  /* 8*8 sprites */
-	8192,   /* 8192 of them */
-	4,		  /* 4 bits per pixel */
+	8,8,	/* 8*8 sprites */
+	8192,	/* 8192 of them */
+	4,		/* 4 bits per pixel */
 	{ 0, 1, 2, 3 },
 	{ 0, 4, 0x30000*8+0, 0x30000*8+4, 8, 12, 0x30000*8+8, 0x30000*8+12 },
 	{ 0*8, 2*8, 4*8, 6*8, 8*8, 10*8, 12*8, 14*8 },
@@ -222,11 +242,11 @@ static struct GfxLayout klax_pflayout =
 };
 
 
-static struct GfxLayout klax_molayout =
+static struct GfxLayout molayout =
 {
-	8,8,	  /* 8*8 sprites */
-	4096,   /* 4096 of them */
-	4,		  /* 4 bits per pixel */
+	8,8,	/* 8*8 sprites */
+	4096,	/* 4096 of them */
+	4,		/* 4 bits per pixel */
 	{ 0, 1, 2, 3 },
 	{ 0, 4, 0x30000*8+0, 0x30000*8+4, 8, 12, 0x30000*8+8, 0x30000*8+12 },
 	{ 0*8, 2*8, 4*8, 6*8, 8*8, 10*8, 12*8, 14*8 },
@@ -234,10 +254,10 @@ static struct GfxLayout klax_molayout =
 };
 
 
-static struct GfxDecodeInfo klax_gfxdecodeinfo[] =
+static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &klax_pflayout,  256, 16 },		/* sprites & playfield */
-	{ 1, 0x20000, &klax_molayout,    0, 16 },		/* sprites & playfield */
+	{ 1, 0x00000, &pflayout,  256, 16 },		/* sprites & playfield */
+	{ 1, 0x20000, &molayout,    0, 16 },		/* sprites & playfield */
 	{ -1 } /* end of array */
 };
 
@@ -251,9 +271,9 @@ static struct GfxDecodeInfo klax_gfxdecodeinfo[] =
 
 static struct OKIM6295interface okim6295_interface =
 {
-	1,			/* 1 chip */
-	7159160 / 1024,    /* ~7000 Hz */
-	{ 2 },       /* memory region 2 */
+	1,					/* 1 chip */
+	7159160 / 1024,		/* ~7000 Hz */
+	{ 2 },       		/* memory region 2 */
 	{ 100 }
 };
 
@@ -265,25 +285,25 @@ static struct OKIM6295interface okim6295_interface =
  *
  *************************************/
 
-static struct MachineDriver klax_machine_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
 		{
-			CPU_M68000,
+			CPU_M68010,
 			7159160,		/* 7.159 Mhz */
 			0,
-			klax_readmem,klax_writemem,0,0,
-			klax_interrupt,1
+			readmem,writemem,0,0,
+			atarigen_vblank_gen,1
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
-	klax_init_machine,
+	init_machine,
 
 	/* video hardware */
 	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
-	klax_gfxdecodeinfo,
+	gfxdecodeinfo,
 	512, 512,
 	0,
 
@@ -331,6 +351,7 @@ ROM_START( klax_rom )
 	ROM_LOAD( "136075-1.016", 0x10000, 0x10000, 0x12e9b4b7 )
 ROM_END
 
+
 ROM_START( klax2_rom )
 	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "136075.006",   0x00000, 0x10000, 0x05c98fc0 )
@@ -350,6 +371,7 @@ ROM_START( klax2_rom )
 	ROM_LOAD( "136075-1.015", 0x00000, 0x10000, 0x4d24c768 )
 	ROM_LOAD( "136075-1.016", 0x10000, 0x10000, 0x12e9b4b7 )
 ROM_END
+
 
 ROM_START( klax3_rom )
 	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
@@ -389,7 +411,7 @@ struct GameDriver klax_driver =
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nMike Cuddy (additional information)",
 	0,
-	&klax_machine_driver,
+	&machine_driver,
 	0,
 
 	klax_rom,
@@ -405,6 +427,7 @@ struct GameDriver klax_driver =
 	atarigen_hiload, atarigen_hisave
 };
 
+
 struct GameDriver klax2_driver =
 {
 	__FILE__,
@@ -415,7 +438,7 @@ struct GameDriver klax2_driver =
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nMike Cuddy (additional information)",
 	0,
-	&klax_machine_driver,
+	&machine_driver,
 	0,
 
 	klax2_rom,
@@ -431,6 +454,7 @@ struct GameDriver klax2_driver =
 	atarigen_hiload, atarigen_hisave
 };
 
+
 struct GameDriver klax3_driver =
 {
 	__FILE__,
@@ -441,7 +465,7 @@ struct GameDriver klax3_driver =
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nMike Cuddy (additional information)",
 	0,
-	&klax_machine_driver,
+	&machine_driver,
 	0,
 
 	klax3_rom,

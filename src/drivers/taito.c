@@ -1328,7 +1328,8 @@ static struct AY8910interface ay8910_interface =
 {
 	4,	/* 4 chips */
 	6000000/4,	/* 1.5 MHz */
-	{ 15, 15, 15, 0x200f },
+	{ 15, 15, 15, 15 },
+	{ 0, 0, 0, 0x20 },	/* gain */
 	{ input_port_6_r, 0, 0, 0 },		/* port Aread */
 	{ input_port_7_r, 0, 0, 0 },		/* port Bread */
 	{ 0, DAC_data_w, 0, 0 },		/* port Awrite */

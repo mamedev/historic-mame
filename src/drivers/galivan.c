@@ -1,6 +1,8 @@
 /***************************************************************************
 
 TODO:
+- Find out how layers are enabled\disabled
+- sprite/char priority
 - dangar input ports
 
 					Galivan
@@ -61,14 +63,6 @@ c21	draws the info layer	fab	calls routine number (e252) from those in fcd.
 			---------------------------------
 
 c00d	counter
-
-----------------------------------------------------------------------------
-
-					TO DO
-					-----
-
-- Find out how layers are enabled\disabled  and changed priority
-
 
 ***************************************************************************/
 #include "driver.h"
@@ -546,7 +540,7 @@ ROM_START( dangar_rom )
 	ROM_REGION(0x14000)		/* Region 0 - main cpu code */
 	ROM_LOAD( "dangar08.1b",     0x00000, 0x8000, 0xe52638f2 )
 	ROM_LOAD( "dangar09.3b",     0x08000, 0x4000, 0x809d280f )
-	ROM_LOAD( "dangar10.5b",     0x10000, 0x4000, 0x00000000 )
+	ROM_LOAD( "dangar10.5b",     0x10000, 0x4000, 0x99a3591b )
 
 	ROM_REGION_DISPOSE(0x34000)	/* Region 1 - temporary for gfx roms */
 	ROM_LOAD( "dangar05.13d", 0x00000, 0x4000, 0x40cb378a )	/* chars */
@@ -577,6 +571,37 @@ ROM_START( dangar2_rom )
 	ROM_REGION(0x14000)		/* Region 0 - main cpu code */
 	ROM_LOAD( "dangar2.016",     0x00000, 0x8000, 0x743fa2d4 )
 	ROM_LOAD( "dangar2.017",     0x08000, 0x4000, 0x1cdc60a5 )
+	ROM_LOAD( "dangar2.018",     0x10000, 0x4000, 0xdb7f6613 )
+
+	ROM_REGION_DISPOSE(0x34000)	/* Region 1 - temporary for gfx roms */
+	ROM_LOAD( "dangar2.011",  0x00000, 0x4000, 0xe804ffe1 )	/* chars */
+	ROM_LOAD( "dangar01.14f", 0x04000, 0x8000, 0xd59ed1f1 )  /* tiles */
+	ROM_LOAD( "dangar02.15f", 0x0c000, 0x8000, 0xdfdb931c )
+	ROM_LOAD( "dangar03.17f", 0x14000, 0x8000, 0x6954e8c3 )
+	ROM_LOAD( "dangar04.19f", 0x1c000, 0x8000, 0x4af6a8bf )
+	ROM_LOAD( "dangarxx.f4",  0x24000, 0x8000, 0x55711884 )  /* sprites */
+	ROM_LOAD( "dangarxx.f1",  0x2C000, 0x8000, 0x8cf11419 )
+
+	ROM_REGION(0x8000)		/* Region 2 - background */
+	ROM_LOAD( "dangar07.19d", 0x0000, 0x4000, 0x6dba32cf )
+	ROM_LOAD( "dangar06.17d", 0x4000, 0x4000, 0x6c899071 )
+
+	ROM_REGION(0x0500)		/* Region 3 - color proms */
+	ROM_LOAD( "82s129.9f",   0x0000, 0x0100, 0xb29f6a07 )	/* red */
+	ROM_LOAD( "82s129.10f",  0x0100, 0x0100, 0xc6de5ecb )	/* green */
+	ROM_LOAD( "82s129.11f",  0x0200, 0x0100, 0xa5bbd6dc )	/* blue */
+	ROM_LOAD( "82s129.2d",   0x0300, 0x0100, 0xa4ac95a5 )	/* sprite lookup table */
+	ROM_LOAD( "82s129.7f",   0x0400, 0x0100, 0x29bc6216 )	/* sprite palette bank */
+
+	ROM_REGION(0x10000)		/* Region 4 - sound cpu code */
+	ROM_LOAD( "dangar13.b14", 0x0000, 0x4000, 0x3e041873 )
+	ROM_LOAD( "dangar14.b15", 0x4000, 0x8000, 0x488e3463 )
+ROM_END
+
+ROM_START( dangarb_rom )
+	ROM_REGION(0x14000)		/* Region 0 - main cpu code */
+	ROM_LOAD( "8",               0x00000, 0x8000, 0x8136fd10 )
+	ROM_LOAD( "9",               0x08000, 0x4000, 0x3ce5ec11 )
 	ROM_LOAD( "dangar2.018",     0x10000, 0x4000, 0xdb7f6613 )
 
 	ROM_REGION_DISPOSE(0x34000)	/* Region 1 - temporary for gfx roms */
@@ -648,7 +673,7 @@ struct GameDriver galivan_driver =
 	__FILE__,
 	0,
 	"galivan",
-	"Cosmo Police Galivan (12/16/1985)",
+	"Galivan - Cosmo Police (12/16/1985)",
 	"1985",
 	"Nichibutsu",
 	"Luca Elia\nOlivier Galibert",
@@ -674,7 +699,7 @@ struct GameDriver galivan2_driver =
 	__FILE__,
 	&galivan_driver,
 	"galivan2",
-	"Cosmo Police Galivan (12/11/1985)",
+	"Galivan - Cosmo Police (12/11/1985)",
 	"1985",
 	"Nichibutsu",
 	"Luca Elia\nOlivier Galibert",
@@ -700,7 +725,7 @@ struct GameDriver dangar_driver =
 	__FILE__,
 	0,
 	"dangar",
-	"Ufo Robo Dangar (12/1/1986)",
+	"Dangar - Ufo Robo (12/1/1986)",
 	"1986",
 	"Nichibutsu",
 	"Luca Elia\nOlivier Galibert\nCarlos A. Lozano\nNicola Salmoria\n",
@@ -726,7 +751,7 @@ struct GameDriver dangar2_driver =
 	__FILE__,
 	&dangar_driver,
 	"dangar2",
-	"Ufo Robo Dangar (9/26/1986)",
+	"Dangar - Ufo Robo (9/26/1986)",
 	"1986",
 	"Nichibutsu",
 	"Luca Elia\nOlivier Galibert\nCarlos A. Lozano\nNicola Salmoria\n",
@@ -735,6 +760,32 @@ struct GameDriver dangar2_driver =
 	0,
 
 	dangar2_rom,
+	0, 0,
+	0,
+	0,
+
+	dangar_input_ports,
+
+	PROM_MEMORY_REGION(3), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	0, 0
+};
+
+struct GameDriver dangarb_driver =
+{
+	__FILE__,
+	&dangar_driver,
+	"dangarb",
+	"Dangar - Ufo Robo (bootleg)",
+	"1986",
+	"bootleg",
+	"Luca Elia\nOlivier Galibert\nCarlos A. Lozano\nNicola Salmoria\n",
+	0,
+	&galivan_machine_driver,
+	0,
+
+	dangarb_rom,
 	0, 0,
 	0,
 	0,

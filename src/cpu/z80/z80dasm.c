@@ -348,7 +348,7 @@ static z80dasm mnemonic_main[256]= {
 	{_0, zINC,"l"},     {_0, zDEC,"l"},     {_0, zLD,"l,B"},    {_0, zCPL,0},
 	{_JR,zJR,"nc,O"},   {_0, zLD,"sp,N"},   {_WM,zLD,"(W),a"},  {_0, zINC,"sp"},
 	{_RW,zINC,"(hl)"},  {_RW,zDEC,"(hl)"},  {_WM,zLD,"(hl),B"}, {_0, zSCF,0},
-	{_0, zJR,"c,O"},    {_0, zADD,"hl,sp"}, {_RM,zLD,"a,(W)"},  {_0, zDEC,"sp"},
+	{_JR,zJR,"c,O"},    {_0, zADD,"hl,sp"}, {_RM,zLD,"a,(W)"},  {_0, zDEC,"sp"},
 	{_0, zINC,"a"},     {_0, zDEC,"a"},     {_0, zLD,"a,B"},    {_0, zCCF,0},
 	{_0, zLD,"b,b"},    {_0, zLD,"b,c"},    {_0, zLD,"b,d"},    {_0, zLD,"b,e"},
 	{_0, zLD,"b,h"},    {_0, zLD,"b,l"},    {_RM,zLD,"b,(hl)"}, {_0, zLD,"b,a"},

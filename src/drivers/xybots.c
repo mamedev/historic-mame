@@ -27,15 +27,13 @@ XYBOTS 6502 MEMORY MAP
 #include "vidhrdw/generic.h"
 
 
-int xybots_playfieldram_r(int offset);
-
 void xybots_playfieldram_w(int offset, int data);
-void xybots_update_display_list(int scanline);
 
 int xybots_vh_start(void);
 void xybots_vh_stop(void);
-
 void xybots_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+
+void xybots_scanline_update(int scanline);
 
 
 
@@ -45,7 +43,7 @@ void xybots_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
  *
  *************************************/
 
-static void xybots_update_interrupts(int vblank, int sound)
+static void update_interrupts(int vblank, int sound)
 {
 	int newstate = 0;
 
@@ -61,32 +59,20 @@ static void xybots_update_interrupts(int vblank, int sound)
 }
 
 
-void xybots_init_machine(void)
+static void init_machine(void)
 {
-	atarigen_init_machine(xybots_update_interrupts, 107);
+	atarigen_slapstic_num = 107;
+	atarigen_slapstic_reset();
+
+	atarigen_eeprom_default = NULL;
+	atarigen_eeprom_reset();
+
+	atarigen_interrupt_init(update_interrupts, xybots_scanline_update);
+
 	ataraud2_init(1, 2, 1, 0x0100);
-}
 
-
-/*************************************
- *
- *		Interrupt handlers
- *
- *************************************/
-
-void xybots_update(int param)
-{
-	xybots_update_display_list(param);
-	param += 8;
-	if (param < 240)
-		timer_set(8.0 * cpu_getscanlineperiod(), param, xybots_update);
-}
-
-
-int xybots_interrupt(void)
-{
-	timer_set(TIME_IN_USEC(Machine->drv->vblank_duration), 0, xybots_update);
-	return atarigen_vblank_gen();
+	/* speed up the 6502 */
+	atarigen_init_6502_speedup(1, 0x4157, 0x416f);
 }
 
 
@@ -97,7 +83,7 @@ int xybots_interrupt(void)
  *
  *************************************/
 
-int xybots_sysin_r(int offset)
+int special_port1_r(int offset)
 {
 	static int h256 = 0x0400;
 
@@ -116,24 +102,24 @@ int xybots_sysin_r(int offset)
  *
  *************************************/
 
-static struct MemoryReadAddress xybots_readmem[] =
+static struct MemoryReadAddress main_readmem[] =
 {
 	{ 0x008000, 0x00ffff, atarigen_slapstic_r },
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0xff8000, 0xff8fff, MRA_BANK3 },
 	{ 0xff9000, 0xffadff, MRA_BANK2 },
 	{ 0xffae00, 0xffafff, MRA_BANK4 },
-	{ 0xffb000, 0xffbfff, xybots_playfieldram_r },
+	{ 0xffb000, 0xffbfff, MRA_BANK5 },
 	{ 0xffc000, 0xffc7ff, paletteram_word_r },
 	{ 0xffd000, 0xffdfff, atarigen_eeprom_r },
 	{ 0xffe000, 0xffe0ff, atarigen_sound_r },
 	{ 0xffe100, 0xffe1ff, input_port_0_r },
-	{ 0xffe200, 0xffe2ff, xybots_sysin_r },
+	{ 0xffe200, 0xffe2ff, special_port1_r },
 	{ -1 }  /* end of table */
 };
 
 
-static struct MemoryWriteAddress xybots_writemem[] =
+static struct MemoryWriteAddress main_writemem[] =
 {
 	{ 0x008000, 0x00ffff, atarigen_slapstic_w, &atarigen_slapstic },
 	{ 0x000000, 0x03ffff, MWA_ROM },
@@ -199,7 +185,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct GfxLayout charlayout =
+static struct GfxLayout anlayout =
 {
 	8,8,	/* 8*8 chars */
 	512,	/* 512 chars */
@@ -237,9 +223,9 @@ static struct GfxLayout molayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 2, 0xc0000, &charlayout,      0, 64 },		/* characters 8x8 */
 	{ 2, 0x00000, &pflayout,      512, 16 },		/* playfield */
 	{ 2, 0x40000, &molayout,      256, 16 },		/* sprites */
+	{ 2, 0xc0000, &anlayout,        0, 64 },		/* characters 8x8 */
 	{ -1 } /* end of array */
 };
 
@@ -251,24 +237,24 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct MachineDriver xybots_machine_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
 		{
-			CPU_M68000,
+			CPU_M68010,
 			7159160,
 			0,
-			xybots_readmem,xybots_writemem,0,0,
-			xybots_interrupt,1
+			main_readmem,main_writemem,0,0,
+			atarigen_vblank_gen,1
 		},
 		{
 			ATARI_AUDIO_2_CPU(1)
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	xybots_init_machine,
+	1,
+	init_machine,
 
 	/* video hardware */
 	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
@@ -285,8 +271,7 @@ static struct MachineDriver xybots_machine_driver =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		ATARI_AUDIO_2_YM2151,
-		ATARI_AUDIO_2_POKEY
+		ATARI_AUDIO_2_YM2151
 	}
 };
 
@@ -342,7 +327,7 @@ struct GameDriver xybots_driver =
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nAlan J. McCormick (hardware info)\nFrank Palazzolo (Slapstic decoding)",
 	0,
-	&xybots_machine_driver,
+	&machine_driver,
 	0,
 
 	xybots_rom,

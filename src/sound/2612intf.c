@@ -116,24 +116,17 @@ int YM2612_sh_start(const struct MachineSound *msound)
 	/* stream system initialize */
 	for (i = 0;i < intf->num;i++)
 	{
-		int vol;
+		int vol[YM2612_NUMBUF];
 		/* stream setup */
 		for (j = 0 ; j < YM2612_NUMBUF ; j++)
 		{
+			vol[j] = intf->mixing_level[i];
 			name[j] = buf[j];
-			sprintf(buf[j],"YM2612(%s) #%d %s",j < 2 ? "FM" : "ADPCM",i,(j&1)?"Rt":"Lt");
+			sprintf(buf[j],"YM2612(%s) #%d",j < 2 ? "FM" : "ADPCM",i);
 		}
-		stream[i] = stream_init_multi(msound,YM2612_NUMBUF,
-			name,rate,Machine->sample_bits,
+		stream[i] = stream_init_multi(YM2612_NUMBUF,
+			name,vol,rate,Machine->sample_bits,
 			i,YM2612UpdateOne);
-		/* volume setup */
-		vol = intf->volume[i]; /* high 16 bit */
-		if( vol > 255 ) vol = 255;
-		for( j=0 ; j < YM2612_NUMBUF ; j++ )
-		  {
-		    stream_set_volume(stream[i]+j,vol);
-		    stream_set_pan(stream[i]+j,(j&1)?OSD_PAN_RIGHT:OSD_PAN_LEFT);
-		  }
 	}
 
 	/**** initialize YM2612 ****/

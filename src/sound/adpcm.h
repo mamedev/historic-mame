@@ -26,7 +26,7 @@ struct ADPCMinterface
 	int frequency;             /* playback frequency */
 	int region;                /* memory region where the samples come from */
 	void (*init)(const struct ADPCMinterface *, struct ADPCMsample *, int max); /* initialization function */
-	int volume[MAX_ADPCM];     /* master volume */
+	int mixing_level[MAX_ADPCM];     /* master volume */
 };
 
 int ADPCM_sh_start (const struct MachineSound *msound);
@@ -49,7 +49,7 @@ struct OKIM6295interface
 	int num;                  /* total number of chips */
 	int frequency;            /* playback frequency */
 	int region[MAX_OKIM6295]; /* memory region where the sample ROM lives */
-	int volume[MAX_OKIM6295]; /* master volume */
+	int mixing_level[MAX_OKIM6295]; /* master volume */
 };
 
 int OKIM6295_sh_start (const struct MachineSound *msound);
@@ -72,7 +72,7 @@ struct MSM5205interface
 	int num;                  /* total number of chips */
 	int frequency;            /* playback frequency */
 	void (*interrupt)(int);   /* interrupt function (called when chip is active) */
-	int volume[MAX_OKIM6295]; /* master volume */
+	int mixing_level[MAX_MSM5205]; /* master volume */
 };
 
 int MSM5205_sh_start (const struct MachineSound *msound);

@@ -5,7 +5,6 @@ struct namco_interface
 {
 	int samplerate;	/* sample rate */
 	int voices;		/* number of voices */
-	int gain;		/* 16 * gain adjustment */
 	int volume;		/* playback volume */
 	int region;		/* memory region; -1 to use RAM (pointed to by namco_wavedata) */
 	int stereo;		/* set to 1 to indicate stereo (e.g., System 1) */

@@ -241,6 +241,30 @@ use the DMA transfer approach.
 „         „       „          „   a = Channel 5  (0=Disable, 1=Enable)      „
 
 
+The length counters keep notes active based on number of vblanks:
+
++---------+--------+ +---------+--------+
+|  $4003  | VBlank | |  $4003  | VBlank |
+|  D7-D3  | Count  | |  D7-D3  | Count  |
++---------+--------+ +---------+--------+
+|  %00000 |    5   | |  %00001 |  127   |
+|  %00010 |   10   | |  %00011 |    1   |
+|  %00100 |   20   | |  %00101 |    2   |
+|  %00110 |   40   | |  %00111 |    3   |
+|  %01000 |   80   | |  %01001 |    4   |
+|  %01010 |   30   | |  %01011 |    5   |
+|  %01100 |    7   | |  %01101 |    6   |
+|  %01110 |   13   | |  %01111 |    7   |
+|  %10000 |    6   | |  %10001 |    8   |
+|  %10010 |   12   | |  %10011 |    9   |
+|  %10100 |   24   | |  %10101 |   10   |
+|  %10110 |   48   | |  %10111 |   11   |
+|  %11000 |   96   | |  %11001 |   12   |
+|  %11010 |   36   | |  %11011 |   13   |
+|  %11100 |    8   | |  %11101 |   14   |
+|  %11110 |   16   | |  %11111 |   15   |
++---------+--------+ +---------+--------+
+
 ***************************************************************************/
 
 
@@ -268,7 +292,6 @@ struct NESPSG
 	signed char CountEnv;
 	unsigned char Hold,Alternate,Attack,Holding;
 	int RNG;
-	unsigned int VolTable[32];
 };
 
 /* register id's */
@@ -336,7 +359,6 @@ int NESInit(int num, int clk, int rate, int bitsize, int bufsiz, void **buffer )
 		memset(&NESPSG[i],0,sizeof(struct NESPSG));
 		NESSetClock(i,clk,rate);
 		NESPSG[i].Buf = buffer[i];
-		NESSetGain(i,0x00);
 		NESResetChip(i);
 	}
 
@@ -579,45 +601,4 @@ void NESUpdate(void)
 void NESSetClock(int n,int clk,int rate)
 {
 	NESPSG[n].UpdateStep = ((double)STEP * rate * 128) / clk;
-}
-
-
-
-/*
-** set output gain
-**
-** The gain is expressed in 0.2dB increments, e.g. a gain of 10 is an increase
-** of 2dB. Note that the gain aìonly affects sounds not playing at full volume,
-** since the ones at full volume are already played at the maximum intensity
-** allowed by the sound card.
-** 0x00 is the default.
-** 0xff is the maximum allowed value.
-*/
-void NESSetGain(int n,int gain)
-{
-	struct NESPSG *PSG = &NESPSG[n];
-	int i;
-	double out;
-
-
-	gain &= 0xff;
-
-	/* increase max output basing on gain (0.2 dB per step) */
-	out = MAX_OUTPUT/3;
-	while (gain-- > 0)
-		out *= 1.023292992;	/* = (10 ^ (0.2/20)) */
-
-	/* calculate the volume->voltage conversion table */
-	/* The AY-3-8910 has 16 levels, in a logarithmic scale (3dB per step) */
-	/* The YM2203 still has 16 levels for the tone generators, but 32 for */
-	/* the envelope generator (1.5dB per step). */
-	for (i = 31;i > 0;i--)
-	{
-		/* limit volume to avoid clipping */
-		if (out > MAX_OUTPUT/3) PSG->VolTable[i] = MAX_OUTPUT/3;
-		else PSG->VolTable[i] = out;
-
-		out /= 1.188502227;	/* = 10 ^ (1.5/20) */
-	}
-	PSG->VolTable[0] = 0;
 }

@@ -131,26 +131,6 @@ void soundlatch_setclearedvalue(int value)
 	cleared_value = value;
 }
 
-/***************************************************************************
-
-  This function returns top of reserved sound channels
-
-***************************************************************************/
-static int reserved_channel = 0;
-
-int get_play_channels( int request )
-{
-	int ret_value = reserved_channel;
-
-	reserved_channel += request;
-	return ret_value;
-}
-
-void reset_play_channels(void)
-{
-	reserved_channel = 0;
-}
-
 
 
 
@@ -655,7 +635,8 @@ if (errorlog) fprintf(errorlog,"Sound #%d wrong ID %d: check enum SOUND_... in s
 	}
 
 
-	reset_play_channels();
+	if (mixer_sh_start() != 0)
+		return 1;
 
 	if (streams_sh_start() != 0)
 		return 1;
@@ -673,9 +654,9 @@ if (errorlog) fprintf(errorlog,"Sound #%d wrong ID %d: check enum SOUND_... in s
 	if (Machine->drv->sh_start && (*Machine->drv->sh_start)() != 0)
 		return 1;
 
-	refresh_period = TIME_IN_HZ (Machine->drv->frames_per_second);
+	refresh_period = TIME_IN_HZ(Machine->drv->frames_per_second);
 	refresh_period_inv = 1.0 / refresh_period;
-	sound_update_timer = timer_set (TIME_NEVER, 0, NULL);
+	sound_update_timer = timer_set(TIME_NEVER,0,NULL);
 
 	return 0;
 
@@ -703,10 +684,11 @@ void sound_stop(void)
 	}
 
 	streams_sh_stop();
+	mixer_sh_stop();
 
 	if (sound_update_timer)
 	{
-		timer_remove (sound_update_timer);
+		timer_remove(sound_update_timer);
 		sound_update_timer = 0;
 	}
 }
@@ -732,7 +714,7 @@ void sound_update(void)
 
 	streams_sh_update();
 
-	timer_reset (sound_update_timer, TIME_NEVER);
+	timer_reset(sound_update_timer,TIME_NEVER);
 
 	osd_profiler(OSD_PROFILE_END);
 }

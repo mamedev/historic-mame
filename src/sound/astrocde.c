@@ -50,7 +50,6 @@ static int current_size_C[MAX_ASTROCADE_CHIPS];
 static int current_size_V[MAX_ASTROCADE_CHIPS];
 static int current_size_N[MAX_ASTROCADE_CHIPS];
 
-static int volume[MAX_ASTROCADE_CHIPS];
 static int channel;
 
 /* Registers */
@@ -185,7 +184,7 @@ int astrocade_sh_start(const struct MachineSound *msound)
 	emulation_rate = buffer_len * Machine->drv->frames_per_second;
 	div_by_N_factor = intf->baseclock/emulation_rate;
 
-	channel = get_play_channels(intf->num);
+	channel = mixer_allocate_channels(intf->num,intf->volume);
 	/* reserve buffer */
 	for (i = 0;i < intf->num;i++)
 	{
@@ -195,7 +194,6 @@ int astrocade_sh_start(const struct MachineSound *msound)
 			return 1;
 		}
 		/* reset state */
-		volume[i]  = intf->volume;
 		sample_pos[i] = 0;
 		current_count_A[i] = 0;
 		current_count_B[i] = 0;
@@ -357,10 +355,10 @@ void astrocade_sh_update(void)
 		sample_pos[num] = 0;
 		/* play sound */
 		if( Machine->sample_bits == 16 )
-			osd_play_streamed_sample_16(channel+num,astrocade_buffer[num],2*buffer_len,emulation_rate,volume[num],OSD_PAN_CENTER);
+			mixer_play_streamed_sample_16(channel+num,astrocade_buffer[num],2*buffer_len,emulation_rate);
 		else
 		{
-			osd_play_streamed_sample(channel+num,astrocade_buffer[num],buffer_len,emulation_rate,volume[num],OSD_PAN_CENTER);
+			mixer_play_streamed_sample(channel+num,astrocade_buffer[num],buffer_len,emulation_rate);
 		}
 	}
 

@@ -325,6 +325,7 @@ static struct AY8910interface ay8910_interface =
 	4,	/* 4 chips */
 	1500000,	/* 1.5 MHz ? */
 	{ 15, 15, 15, 15 }, /* volume */
+	AY8910_DEFAULT_GAIN,
 	{ 0, 0, 0, 0 },
 	{ 0, 0, 0, 0 },
 	{ 0, 0, 0, 0 }, /* it writes 0s thru port A, no clue what for */
@@ -343,6 +344,7 @@ static struct AY8910interface bl_ay8910_interface =
 	1,	/* 1 chip */
 	1500000,	/* 1.5 MHz ? */
 	{ 50 }, /* volume */
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },

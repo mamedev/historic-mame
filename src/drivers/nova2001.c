@@ -201,7 +201,8 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	1200000,	/* 1.2 MHz */
-	{ 255, 255 },
+	{ 25, 25 },
+	AY8910_DEFAULT_GAIN,
 	{ 0, input_port_3_r },
 	{ 0, input_port_4_r },
 	{ nova2001_scroll_x_w }, /* writes are connected to pf scroll */

@@ -6,7 +6,7 @@
 
     * Heavy Barrel                            (USA set)
     * Heavy Barrel                            (Japanese set)
-	* Bad Dudes vs Dragonninja                (USA set)
+	* Bad Dudes vs. Dragonninja               (USA set)
     * Dragonninja                             (Japanese version of above)
 	* Birdy Try                               (Japanese set?)
     * Robocop                                 (Japanese pirate rom set)
@@ -907,6 +907,7 @@ static struct YM2203interface ym2203_interface =
 	1,
 	1500000,	/* 12MHz clock divided by 8 = 1.50 MHz */
 	{ YM2203_VOL(40,95) },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -2253,7 +2254,7 @@ struct GameDriver baddudes_driver =
 	__FILE__,
 	0,
 	"baddudes",
-	"Bad Dudes vs Dragonninja (US)",
+	"Bad Dudes vs. Dragonninja (US)",
 	"1988",
 	"Data East USA",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
@@ -2553,7 +2554,7 @@ struct GameDriver bouldash_driver =
 	__FILE__,
 	0,
 	"bouldash",
-	"Boulderdash / Boulderdash Part 2",
+	"Boulder Dash / Boulder Dash Part 2",
 	"1990",
 	"Data East Corporation (licensed from First Star)",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",

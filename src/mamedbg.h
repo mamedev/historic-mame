@@ -22,11 +22,7 @@
 #define COLOR_PROMPT        CYAN
 #define COLOR_CHANGES       LIGHTCYAN
 #define COLOR_PC            (WHITE+BLUE*16) /* MB 980103 */
-#ifndef UNIX
 #define COLOR_CURSOR		(WHITE+RED*16)	/* MB 980103 */
-#else
-#define COLOR_CURSOR		MAGENTA
-#endif
 
 /***************************************************************************
  *

@@ -168,7 +168,7 @@ static struct POKEYinterface pokey_interface =
 {
 	2,	/* 2 chips */
 	600000,        /* .6 MHz? (hand tuned) */
-	50,
+	{ 50, 50 },
 	POKEY_DEFAULT_GAIN,
 	NO_CLIP,
 	/* The 8 pot handlers */
@@ -260,6 +260,20 @@ ROM_START( quantum1_rom )
     ROM_LOAD_ODD ( "136016.110",   0x010000, 0x002000, 0xacb50363 )
 ROM_END
 
+ROM_START( quantump_rom )
+	ROM_REGION(0x014000)
+    ROM_LOAD_EVEN( "quantump.2e",  0x000000, 0x002000, 0x176d73d3 )
+    ROM_LOAD_ODD ( "quantump.3e",  0x000000, 0x002000, 0x12fc631f )
+    ROM_LOAD_EVEN( "quantump.2f",  0x004000, 0x002000, 0xb64fab48 )
+    ROM_LOAD_ODD ( "quantump.3f",  0x004000, 0x002000, 0xa52a9433 )
+    ROM_LOAD_EVEN( "quantump.2h",  0x008000, 0x002000, 0x5b29cba3 )
+    ROM_LOAD_ODD ( "quantump.3h",  0x008000, 0x002000, 0xc64fc03a )
+    ROM_LOAD_EVEN( "quantump.2k",  0x00C000, 0x002000, 0x854f9c09 )
+    ROM_LOAD_ODD ( "quantump.3k",  0x00C000, 0x002000, 0x1aac576c )
+    ROM_LOAD_EVEN( "quantump.2l",  0x010000, 0x002000, 0x1285b5e7 )
+    ROM_LOAD_ODD ( "quantump.3l",  0x010000, 0x002000, 0xe19de844 )
+ROM_END
+
 
 
 struct GameDriver quantum_driver =
@@ -276,10 +290,10 @@ struct GameDriver quantum_driver =
 	0,
 
 	quantum_rom,
-	NULL, NULL,
+	0, 0,
 
-	NULL,
-	NULL,
+	0,
+	0,
 
 	quantum_input_ports,
 
@@ -303,10 +317,10 @@ struct GameDriver quantum1_driver =
 	0,
 
 	quantum1_rom,
-	NULL, NULL,
+	0, 0,
 
-	NULL,
-	NULL,
+	0,
+	0,
 
 	quantum_input_ports,
 
@@ -315,3 +329,31 @@ struct GameDriver quantum1_driver =
 
 	foodf_nvram_load, foodf_nvram_save
 };
+
+struct GameDriver quantump_driver =
+{
+	__FILE__,
+	&quantum_driver,
+	"quantump",
+	"Quantum (prototype)",
+	"1982",
+	"Atari",
+	"Paul Forgey (MAME driver)\nAaron Giles (MAME driver)\n"VECTOR_TEAM,
+	0,
+	&machine_driver,
+	0,
+
+	quantump_rom,
+	0, 0,
+
+	0,
+	0,
+
+	quantum_input_ports,
+
+	color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	foodf_nvram_load, foodf_nvram_save
+};
+

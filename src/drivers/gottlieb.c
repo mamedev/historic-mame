@@ -1101,25 +1101,27 @@ static struct GfxDecodeInfo qbertqub_gfxdecodeinfo[] =
 static struct DACinterface dac1_interface =
 {
 	1,
-	{ 255 }
+	{ 25 }
 };
 
 static struct DACinterface dac2_interface =
 {
 	2,
-	{ 255, 255 }
+	{ 25, 25 }
 };
 
 static struct Samplesinterface samples_interface =
 {
-	1	/* one channel */
+	1,	/* one channel */
+	25	/* volume */
 };
 
 static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	2000000,	/* 2 MHz */
-	{ 255, 255 },
+	{ 25, 25 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -1662,7 +1664,7 @@ struct GameDriver qbert_driver =
 	__FILE__,
 	0,
 	"qbert",
-	"Q*Bert (US)",
+	"Q*bert (US)",
 	"1982",
 	"Gottlieb",
 	"Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\nDedicated to:\nWarren Davis\nJeff Lee\nDavid Thiel",
@@ -1688,7 +1690,7 @@ struct GameDriver qbertjp_driver =
 	__FILE__,
 	&qbert_driver,
 	"qbertjp",
-	"Q*Bert (Japan)",
+	"Q*bert (Japan)",
 	"1982",
 	"Gottlieb (Konami license)",
 	"Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\nDedicated to:\nWarren Davis\nJeff Lee\nDavid Thiel",
@@ -1714,7 +1716,7 @@ struct GameDriver sqbert_driver =
 	__FILE__,
 	0,
 	"sqbert",
-	"FHMC Q*Bert",
+	"Faster, Harder, More Challenging Q*bert",
 	"1983",
 	"Mylstar",
 	"Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\n Special thanks to:\nFred Sookiasian\n\nDedicated to:\nWarren Davis\nJeff Lee\nDavid Thiel",
@@ -1740,7 +1742,7 @@ struct GameDriver qbertqub_driver =
 	__FILE__,
 	0,
 	"qbertqub",
-	"Q*Bert Qubes",
+	"Q*bert's Qubes",
 	"1983",
 	"Mylstar",
 	"Fabrice Frances & Rodimus Prime (MAME driver)\nMarco Cassili",

@@ -433,7 +433,8 @@ static struct AY8910interface ay8910_interface =
 {
 	1,      /* 1 chip */
 	1536000,	/* 1.536 MHz */
-	{ 255 },
+	{ 50 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ cclimber_sample_select_w },
@@ -1703,7 +1704,8 @@ static struct AY8910interface swimmer_ay8910_interface =
 {
 	2,      /* 2 chips */
 	4000000/2,	/* 2 MHz */
-	{ 255, 255 },
+	{ 25, 25 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },

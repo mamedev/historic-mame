@@ -99,8 +99,6 @@ Write sound processor   360030          W    D0-D7
 
 ****************************************************************************/
 
-
-
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "sndhrdw/ataraud2.h"
@@ -108,12 +106,7 @@ Write sound processor   360030          W    D0-D7
 
 
 extern unsigned char *eprom_playfieldpalram;
-
 extern int eprom_playfieldpalram_size;
-
-
-int eprom_playfieldram_r(int offset);
-int eprom_playfieldpalram_r(int offset);
 
 void eprom_latch_w(int offset, int data);
 void eprom_playfieldram_w(int offset, int data);
@@ -123,8 +116,10 @@ int eprom_vh_start(void);
 void eprom_vh_stop(void);
 void eprom_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-int eprom_update_display_list(int scanline);
+void eprom_scanline_update(int scanline);
 
+
+static unsigned char *sync_data;
 
 
 /*************************************
@@ -133,7 +128,7 @@ int eprom_update_display_list(int scanline);
  *
  *************************************/
 
-static void eprom_update_interrupts(int vblank, int sound)
+static void update_interrupts(int vblank, int sound)
 {
 	int newstate = 0;
 	int newstate2 = 0;
@@ -155,10 +150,16 @@ static void eprom_update_interrupts(int vblank, int sound)
 }
 
 
-void eprom_init_machine(void)
+static void init_machine(void)
 {
-	atarigen_init_machine(eprom_update_interrupts, 0);
+	atarigen_eeprom_default = NULL;
+	atarigen_eeprom_reset();
+
+	atarigen_interrupt_init(update_interrupts, eprom_scanline_update);
 	ataraud2_init(1, 6, 1, 0x0002);
+
+	/* speed up the 6502 */
+	atarigen_init_6502_speedup(1, 0x4158, 0x4170);
 }
 
 
@@ -169,60 +170,47 @@ void eprom_init_machine(void)
  *
  *************************************/
 
-int eprom_input_r(int offset)
+static int special_port1_r(int offset)
 {
-	int result;
+	int result = input_port_1_r(offset);
 
-	if (offset & 0x10)
-	{
-		result = input_port_1_r(offset);
-		if (atarigen_sound_to_cpu_ready) result ^= 0x0004;
-		if (atarigen_cpu_to_sound_ready) result ^= 0x0008;
-		result ^= 0x0010;
-	}
-	else
-		result = input_port_0_r(offset);
+	if (atarigen_sound_to_cpu_ready) result ^= 0x0004;
+	if (atarigen_cpu_to_sound_ready) result ^= 0x0008;
+	result ^= 0x0010;
 
 	return result;
 }
 
 
-int eprom_adc_r(int offset)
+static int adc_r(int offset)
 {
 	static int last_offset;
-	int result = readinputport(2 + ((last_offset / 2) & 3)) | 0xff00;
+	int result = readinputport(2 + ((last_offset / 2) & 3));
 	last_offset = offset;
 	return result;
-}
-
-
-void eprom_update(int param)
-{
-	/* update the display list */
-	int yscroll = eprom_update_display_list(param);
-
-	/* reset the timer */
-	if (!param)
-	{
-		int next = 8 - (yscroll & 7);
-		timer_set(cpu_getscanlineperiod() * (double)next, next, eprom_update);
-	}
-	else if (param < 240)
-		timer_set(cpu_getscanlineperiod() * 8.0, param + 8, eprom_update);
 }
 
 
 
 /*************************************
  *
- *		Interrupt handling
+ *		Latch write handler
  *
  *************************************/
 
-int eprom_interrupt(void)
+void eprom_latch_w(int offset, int data)
 {
-	timer_set(TIME_IN_USEC(Machine->drv->vblank_duration), 0, eprom_update);
-	return atarigen_vblank_gen();
+	/* reset extra CPU */
+	if (!(data & 0x00ff0000))
+	{
+		if (!(data & 1))
+		{
+			cpu_halt(2, 0);
+			cpu_reset(2);
+		}
+		else
+			cpu_halt(2, 1);
+	}
 }
 
 
@@ -233,19 +221,17 @@ int eprom_interrupt(void)
  *
  *************************************/
 
-unsigned char *eprom_sync;
-
-int eprom_sync_r(int offset)
+static int sync_r(int offset)
 {
-	return READ_WORD(&eprom_sync[offset]);
+	return READ_WORD(&sync_data[offset]);
 }
 
 
-void eprom_sync_w(int offset, int data)
+static void sync_w(int offset, int data)
 {
-	int oldword = READ_WORD(&eprom_sync[offset]);
+	int oldword = READ_WORD(&sync_data[offset]);
 	int newword = COMBINE_WORD(oldword, data);
-	WRITE_WORD(&eprom_sync[offset], newword);
+	WRITE_WORD(&sync_data[offset], newword);
 	if ((oldword & 0xff00) != (newword & 0xff00))
 		cpu_yield();
 }
@@ -257,37 +243,38 @@ void eprom_sync_w(int offset, int data)
  *
  *************************************/
 
-static struct MemoryReadAddress eprom_readmem[] =
+static struct MemoryReadAddress main_readmem[] =
 {
 	{ 0x000000, 0x09ffff, MRA_ROM },
 	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_r },
-	{ 0x16cc00, 0x16cc01, eprom_sync_r },
+	{ 0x16cc00, 0x16cc01, sync_r },
 	{ 0x160000, 0x16ffff, MRA_BANK1 },
-	{ 0x260000, 0x26001f, eprom_input_r },
-	{ 0x260020, 0x26002f, eprom_adc_r },
-	{ 0x260030, 0x260033, atarigen_sound_r },
+	{ 0x260000, 0x26000f, input_port_0_r },
+	{ 0x260010, 0x26001f, special_port1_r },
+	{ 0x260020, 0x26002f, adc_r },
+	{ 0x260030, 0x260031, atarigen_sound_r },
 	{ 0x3e0000, 0x3e0fff, paletteram_word_r },
-	{ 0x3f0000, 0x3f1fff, eprom_playfieldram_r },
+	{ 0x3f0000, 0x3f1fff, MRA_BANK2 },
 	{ 0x3f2000, 0x3f3fff, MRA_BANK3 },
 	{ 0x3f4000, 0x3f4fff, MRA_BANK4 },
 	{ 0x3f5000, 0x3f7fff, MRA_BANK5 },
-	{ 0x3f8000, 0x3f9fff, eprom_playfieldpalram_r },
+	{ 0x3f8000, 0x3f9fff, MRA_BANK6 },
 	{ -1 }  /* end of table */
 };
 
 
-static struct MemoryWriteAddress eprom_writemem[] =
+static struct MemoryWriteAddress main_writemem[] =
 {
 	{ 0x000000, 0x09ffff, MWA_ROM },
 	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
-	{ 0x16cc00, 0x16cc01, eprom_sync_w, &eprom_sync },
+	{ 0x16cc00, 0x16cc01, sync_w, &sync_data },
 	{ 0x160000, 0x16ffff, MWA_BANK1 },
 	{ 0x1f0000, 0x1fffff, atarigen_eeprom_enable_w },
-	{ 0x2e0000, 0x2e0003, watchdog_reset_w },
-	{ 0x360000, 0x360003, atarigen_vblank_ack_w },
-	{ 0x360010, 0x360013, eprom_latch_w },
-	{ 0x360020, 0x360023, atarigen_sound_reset_w },
-	{ 0x360030, 0x360033, atarigen_sound_w },
+	{ 0x2e0000, 0x2e0001, watchdog_reset_w },
+	{ 0x360000, 0x360001, atarigen_vblank_ack_w },
+	{ 0x360010, 0x360011, eprom_latch_w },
+	{ 0x360020, 0x360021, atarigen_sound_reset_w },
+	{ 0x360030, 0x360031, atarigen_sound_w },
 	{ 0x3e0000, 0x3e0fff, paletteram_IIIIRRRRGGGGBBBB_word_w, &paletteram },
 	{ 0x3f0000, 0x3f1fff, eprom_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
 	{ 0x3f2000, 0x3f3fff, MWA_BANK3, &atarigen_spriteram, &atarigen_spriteram_size },
@@ -305,27 +292,28 @@ static struct MemoryWriteAddress eprom_writemem[] =
  *
  *************************************/
 
-static struct MemoryReadAddress eprom_extra_readmem[] =
+static struct MemoryReadAddress extra_readmem[] =
 {
 	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x16cc00, 0x16cc01, eprom_sync_r, &eprom_sync },
+	{ 0x16cc00, 0x16cc01, sync_r, &sync_data },
 	{ 0x160000, 0x16ffff, MRA_BANK1 },
-	{ 0x260000, 0x26001f, eprom_input_r },
-	{ 0x260020, 0x26002f, eprom_adc_r },
-	{ 0x260030, 0x260033, atarigen_sound_r },
+	{ 0x260000, 0x26000f, input_port_0_r },
+	{ 0x260010, 0x26001f, special_port1_r },
+	{ 0x260020, 0x26002f, adc_r },
+	{ 0x260030, 0x260031, atarigen_sound_r },
 	{ -1 }  /* end of table */
 };
 
 
-static struct MemoryWriteAddress eprom_extra_writemem[] =
+static struct MemoryWriteAddress extra_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x16cc00, 0x16cc01, eprom_sync_w },
+	{ 0x16cc00, 0x16cc01, sync_w },
 	{ 0x160000, 0x16ffff, MWA_BANK1 },
-	{ 0x360000, 0x360003, atarigen_vblank_ack_w },
-	{ 0x360010, 0x360013, eprom_latch_w },
-	{ 0x360020, 0x360023, atarigen_sound_reset_w },
-	{ 0x360030, 0x360033, atarigen_sound_w },
+	{ 0x360000, 0x360001, atarigen_vblank_ack_w },
+	{ 0x360010, 0x360011, eprom_latch_w },
+	{ 0x360020, 0x360021, atarigen_sound_reset_w },
+	{ 0x360030, 0x360031, atarigen_sound_w },
 	{ -1 }  /* end of table */
 };
 
@@ -364,16 +352,20 @@ INPUT_PORTS_START( eprom_ports )
 	PORT_BIT( 0xf000, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* ADC0 @ 0x260020 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y | IPF_PLAYER1, 100, 0, 0x10, 0xf0 )
+	PORT_ANALOG ( 0x00ff, 0x0080, IPT_AD_STICK_Y | IPF_PLAYER1, 100, 0, 0x10, 0xf0 )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* ADC1 @ 0x260022 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 100, 0, 0x10, 0xf0 )
+	PORT_ANALOG ( 0x00ff, 0x0080, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 100, 0, 0x10, 0xf0 )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* ADC0 @ 0x260024 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y | IPF_PLAYER2, 100, 0, 0x10, 0xf0 )
+	PORT_ANALOG ( 0x00ff, 0x0080, IPT_AD_STICK_Y | IPF_PLAYER2, 100, 0, 0x10, 0xf0 )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* ADC1 @ 0x260026 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER2, 100, 0, 0x10, 0xf0 )
+	PORT_ANALOG ( 0x00ff, 0x0080, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER2, 100, 0, 0x10, 0xf0 )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	ATARI_AUDIO_2_PORT	/* audio board port */
 INPUT_PORTS_END
@@ -386,7 +378,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct GfxLayout charlayout =
+static struct GfxLayout anlayout =
 {
 	8,8,	/* 8*8 chars */
 	1024,	/* 1024 chars */
@@ -398,7 +390,7 @@ static struct GfxLayout charlayout =
 };
 
 
-static struct GfxLayout spritelayout =
+static struct GfxLayout pfmolayout =
 {
 	8,8,	/* 8*8 sprites */
 	32768,	/* 32768 of them */
@@ -412,8 +404,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 3, 0x100000, &charlayout,      0, 64 },		/* characters 8x8 */
-	{ 3, 0x000000, &spritelayout,  256, 32 },		/* sprites & playfield */
+	{ 3, 0x000000, &pfmolayout,  256, 32 },	/* sprites & playfield */
+	{ 3, 0x100000, &anlayout,      0, 64 },		/* characters 8x8 */
 	{ -1 } /* end of array */
 };
 
@@ -425,31 +417,31 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct MachineDriver eprom_machine_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
 		{
-			CPU_M68000,
+			CPU_M68010,
 			7159160,		/* 7.159 Mhz */
 			0,
-			eprom_readmem,eprom_writemem,0,0,
-			eprom_interrupt,1
+			main_readmem,main_writemem,0,0,
+			atarigen_vblank_gen,1
 		},
 		{
 			ATARI_AUDIO_2_CPU(1)
 		},
 		{
-			CPU_M68000,
+			CPU_M68010,
 			7159160,		/* 7.159 Mhz */
 			2,
-			eprom_extra_readmem,eprom_extra_writemem,0,0,
+			extra_readmem,extra_writemem,0,0,
 			ignore_interrupt,1
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	10,
-	eprom_init_machine,
+	init_machine,
 
 	/* video hardware */
 	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
@@ -467,7 +459,6 @@ static struct MachineDriver eprom_machine_driver =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		ATARI_AUDIO_2_YM2151,
-		ATARI_AUDIO_2_POKEY,
 		ATARI_AUDIO_2_TMS5220
 	}
 };
@@ -480,7 +471,7 @@ static struct MachineDriver eprom_machine_driver =
  *
  *************************************/
 
-static void eprom_rom_decode(void)
+static void rom_decode(void)
 {
 	int i;
 
@@ -600,11 +591,11 @@ struct GameDriver eprom_driver =
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nTim Lindquist (hardware information)",
 	0,
-	&eprom_machine_driver,
+	&machine_driver,
 	0,
 
 	eprom_rom,
-	eprom_rom_decode,
+	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
@@ -627,11 +618,11 @@ struct GameDriver eprom2_driver =
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nTim Lindquist (hardware information)",
 	0,
-	&eprom_machine_driver,
+	&machine_driver,
 	0,
 
 	eprom2_rom,
-	eprom_rom_decode,
+	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */

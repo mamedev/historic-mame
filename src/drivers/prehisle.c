@@ -24,7 +24,7 @@ void prehisle_vh_stop (void);
 int prehisle_vh_start (void);
 
 static unsigned char *prehisle_ram;
-unsigned char *prehisle_video;
+extern unsigned char *prehisle_video;
 
 /******************************************************************************/
 

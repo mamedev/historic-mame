@@ -1636,7 +1636,7 @@ static struct SN76496interface sn76496_interface =
 {
 	2,		/* 2 chips */
 	2000000,	/* 8 MHz / 4 ?*/
-	{ 100, 100 }
+	{ 60, 60 }
 };
 
 
@@ -4611,7 +4611,7 @@ struct GameDriver fdwarrio_driver =
 	__FILE__,
 	0,
 	"4dwarrio",
-	"4D Warriors",
+	"4-D Warriors",
 	"1985",
 	"Coreland / Sega",
 	BASE_CREDITS,
@@ -4886,7 +4886,7 @@ struct GameDriver tokisens_driver =
 	__FILE__,
 	0,
 	"tokisens",
-	"Toki no Senshi",
+	"Toki no Senshi - Chrono Soldier",
 	"1987",
 	"Sega",
 	BASE_CREDITS,

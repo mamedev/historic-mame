@@ -26,7 +26,7 @@ TINY_OBJS = obj/drivers/gundealr.o obj/vidhrdw/gundealr.o
 # SYMBOLS = 1
 
 # uncomment next line to use Assembler 68k engine
-# X86_ASM_68K = 1
+X86_ASM_68K = 1
 
 ifdef NEOMAME
 CPUS+=Z80@
@@ -101,6 +101,23 @@ SOUNDS+=UPD7759@
 SOUNDS+=HC55516@
 SOUNDS+=K007232@
 endif
+
+
+# check that the required libraries are available
+ifeq ($(wildcard $(DJDIR)/lib/liballeg.a),)
+noallegro:
+	@echo Missing Allegro library! Get it from http://www.talula.demon.co.uk/allegro/
+endif
+ifeq ($(wildcard $(DJDIR)/lib/libaudio.a),)
+noseal:
+	@echo Missing SEAL library! Get it from http://www.egerter.com/
+endif
+ifeq ($(wildcard $(DJDIR)/lib/libz.a),)
+nozlib:
+	@echo Missing zlib library! Get it from http://www.cdrom.com/pub/infozip/zlib/
+endif
+
+
 
 # List of CPU core (and, for a debug build, disassembler) object files
 CPUDEFS =
@@ -588,16 +605,16 @@ else
 LDFLAGS = -s
 endif
 
-LIBS   = -lalleg -laudio \
+LIBS   = -lalleg -laudio -lz \
 
 COREOBJS = obj/version.o obj/driver.o obj/mame.o obj/common.o obj/usrintrf.o \
          obj/cpuintrf.o obj/memory.o obj/timer.o obj/palette.o \
          obj/inptport.o obj/cheat.o obj/unzip.o obj/inflate.o \
-         obj/audit.o obj/info.o obj/crc32.o obj/png.o obj/artwork.o \
+         obj/audit.o obj/info.o obj/png.o obj/artwork.o \
          obj/tilemap.o obj/sprite.o obj/state.o obj/datafile.o \
          $(sort $(CPUOBJS)) \
          obj/sndintrf.o \
-		 obj/sound/streams.o obj/sound/exvolume.o \
+		 obj/sound/streams.o obj/sound/mixer.o \
          $(sort $(SOUNDOBJS)) \
 		 obj/sound/votrax.o \
          obj/machine/z80fmly.o obj/machine/6821pia.o \
@@ -624,7 +641,7 @@ DRVLIBS = obj/pacman.a obj/galaxian.a obj/scramble.a \
          obj/berzerk.a obj/gameplan.a obj/stratvox.a obj/zaccaria.a \
          obj/upl.a obj/tms.a obj/cinemar.a obj/cinemav.a obj/thepit.a \
          obj/valadon.a obj/seibu.a obj/jaleco.a obj/visco.a \
-         obj/toaplan.a obj/leland.a obj/tad.a obj/other.a \
+         obj/toaplan.a obj/leland.a obj/tad.a obj/orca.a obj/other.a \
 
 NEOLIBS = obj/neogeo.a \
 
@@ -737,10 +754,12 @@ obj/namco.a: \
          obj/machine/digdug.o obj/vidhrdw/digdug.o obj/drivers/digdug.o \
          obj/vidhrdw/xevious.o obj/machine/xevious.o obj/drivers/xevious.o \
          obj/machine/superpac.o obj/vidhrdw/superpac.o obj/drivers/superpac.o \
+         obj/machine/phozon.o obj/vidhrdw/phozon.o obj/drivers/phozon.o \
          obj/machine/mappy.o obj/vidhrdw/mappy.o obj/drivers/mappy.o \
+         obj/machine/grobda.o obj/vidhrdw/grobda.o obj/drivers/grobda.o \
          obj/machine/gaplus.o obj/vidhrdw/gaplus.o obj/drivers/gaplus.o \
          obj/vidhrdw/pacland.o obj/drivers/pacland.o \
-         obj/vidhrdw/rthunder.o obj/drivers/rthunder.o \
+         obj/vidhrdw/namcos86.o obj/drivers/namcos86.o \
          obj/machine/namcos1.o obj/vidhrdw/namcos1.o obj/drivers/namcos1.o \
          obj/machine/namcos2.o obj/vidhrdw/namcos2.o obj/drivers/namcos2.o \
 
@@ -804,6 +823,7 @@ obj/taito.a: \
 obj/taito2.a: \
          obj/vidhrdw/bking2.o obj/drivers/bking2.o \
          obj/vidhrdw/gsword.o obj/drivers/gsword.o \
+         obj/vidhrdw/retofinv.o obj/drivers/retofinv.o \
          obj/vidhrdw/gladiatr.o obj/drivers/gladiatr.o \
          obj/machine/bublbobl.o obj/vidhrdw/bublbobl.o obj/drivers/bublbobl.o \
          obj/drivers/mexico86.o \
@@ -879,7 +899,7 @@ obj/system16.a: \
          obj/vidhrdw/system16.o obj/drivers/system16.o \
 
 obj/btime.a: \
-         obj/vidhrdw/btime.o obj/drivers/btime.o \
+         obj/machine/btime.o obj/vidhrdw/btime.o obj/drivers/btime.o \
          obj/vidhrdw/tagteam.o obj/drivers/tagteam.o \
 
 obj/dataeast.a: \
@@ -1019,8 +1039,13 @@ obj/atari.a: \
          obj/vidhrdw/vindictr.o obj/drivers/vindictr.o \
          obj/vidhrdw/klax.o obj/drivers/klax.o \
          obj/vidhrdw/blstroid.o obj/drivers/blstroid.o \
-         obj/vidhrdw/eprom.o obj/drivers/eprom.o \
          obj/vidhrdw/xybots.o obj/drivers/xybots.o \
+         obj/vidhrdw/eprom.o obj/drivers/eprom.o \
+         obj/vidhrdw/skullxbo.o obj/drivers/skullxbo.o \
+         obj/vidhrdw/badlands.o obj/drivers/badlands.o \
+         obj/vidhrdw/cyberbal.o obj/drivers/cyberbal.o \
+         obj/vidhrdw/rampart.o obj/drivers/rampart.o \
+         obj/vidhrdw/shuuz.o obj/drivers/shuuz.o \
 
 obj/rockola.a: \
          obj/vidhrdw/rockola.o obj/sndhrdw/rockola.o obj/drivers/rockola.o \
@@ -1098,6 +1123,12 @@ obj/tad.a: \
          obj/vidhrdw/cabal.o obj/drivers/cabal.o \
          obj/vidhrdw/toki.o obj/drivers/toki.o \
 
+obj/orca.a: \
+         obj/vidhrdw/marineb.o obj/drivers/marineb.o \
+         obj/vidhrdw/funkybee.o obj/drivers/funkybee.o \
+         obj/vidhrdw/zodiack.o obj/drivers/zodiack.o \
+         obj/machine/espial.o obj/vidhrdw/espial.o obj/drivers/espial.o \
+
 obj/cinemat.a: \
          obj/vidhrdw/cinemat.o obj/drivers/cinemat.o \
 
@@ -1108,7 +1139,6 @@ obj/other.a: \
          obj/vidhrdw/spacefb.o obj/sndhrdw/spacefb.o obj/drivers/spacefb.o \
          obj/vidhrdw/blueprnt.o obj/drivers/blueprnt.o \
          obj/drivers/omegrace.o \
-         obj/machine/espial.o obj/vidhrdw/espial.o obj/drivers/espial.o \
          obj/machine/vastar.o obj/vidhrdw/vastar.o obj/drivers/vastar.o \
          obj/vidhrdw/tankbatt.o obj/drivers/tankbatt.o \
          obj/vidhrdw/dday.o obj/sndhrdw/dday.o obj/drivers/dday.o \
@@ -1118,6 +1148,7 @@ obj/other.a: \
          obj/vidhrdw/redalert.o obj/sndhrdw/redalert.o obj/drivers/redalert.o \
          obj/machine/irobot.o obj/vidhrdw/irobot.o obj/drivers/irobot.o \
          obj/machine/spiders.o obj/vidhrdw/crtc6845.o obj/vidhrdw/spiders.o obj/drivers/spiders.o \
+         obj/vidhrdw/wanted.o obj/drivers/wanted.o \
          obj/machine/stactics.o obj/vidhrdw/stactics.o obj/drivers/stactics.o \
          obj/vidhrdw/goldstar.o obj/drivers/goldstar.o \
          obj/vidhrdw/sharkatt.o obj/drivers/sharkatt.o \
@@ -1132,6 +1163,7 @@ obj/other.a: \
          obj/vidhrdw/starcrus.o obj/drivers/starcrus.o \
          obj/vidhrdw/sichuan2.o obj/sndhrdw/sichuan2.o obj/drivers/sichuan2.o \
          obj/vidhrdw/goindol.o obj/drivers/goindol.o \
+         obj/drivers/dlair.o \
 
 # dependencies
 obj/cpu/z80/z80.o:  z80.c z80.h z80daa.h
@@ -1195,7 +1227,10 @@ clean:
 	del obj\cpu\m6805\*.o
 	del obj\cpu\m6809\*.o
 	del obj\cpu\m68000\*.o
+	del obj\cpu\m68000\*.c
+	del obj\cpu\m68000\*.h
 	del obj\cpu\m68000\*.oa
+	del obj\cpu\m68000\*.og
 	del obj\cpu\m68000\*.asm
 	del obj\cpu\m68000\*.exe
 	del obj\cpu\s2650\*.o
@@ -1231,7 +1266,10 @@ cleandebug:
 	del obj\cpu\m6805\*.o
 	del obj\cpu\m6809\*.o
 	del obj\cpu\m68000\*.o
+	del obj\cpu\m68000\*.c
+	del obj\cpu\m68000\*.h
 	del obj\cpu\m68000\*.oa
+	del obj\cpu\m68000\*.og
 	del obj\cpu\m68000\*.asm
 	del obj\cpu\m68000\*.exe
 	del obj\cpu\s2650\*.o

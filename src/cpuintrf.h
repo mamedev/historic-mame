@@ -1,6 +1,7 @@
 #ifndef CPUINTRF_H
 #define CPUINTRF_H
 
+#include "osd_cpu.h"
 #include "timer.h"
 
 /* The old system is obsolete and no longer supported by the core */

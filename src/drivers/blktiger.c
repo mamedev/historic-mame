@@ -274,6 +274,7 @@ static struct YM2203interface ym2203_interface =
 	2,			/* 2 chips */
 	3500000,	/* 3.5 MHz ? (hand tuned) */
 	{ YM2203_VOL(255,255), YM2203_VOL(255,255) },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },

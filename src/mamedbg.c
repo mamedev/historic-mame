@@ -1674,7 +1674,7 @@ static const char *name_rdmem( unsigned base )
 {
 	static char buffer[16][79+1];
     static int which = 0;
-	const struct MachineCPU *cpu = Machine->drv->cpu;
+	const struct MachineCPU *cpu = &Machine->drv->cpu[activecpu];
 	const struct MemoryReadAddress *mr = cpu->memory_read;
 	int ram_cnt = 1, nop_cnt = 1;
     const char *name;
@@ -1807,7 +1807,7 @@ static const char *name_wrmem( unsigned base )
 {
     static char buffer[16][79+1];
     static int which = 0;
-	const struct MachineCPU *cpu = Machine->drv->cpu;
+	const struct MachineCPU *cpu = &Machine->drv->cpu[activecpu];
     const struct MemoryWriteAddress *mw = cpu->memory_write;
 	int ram_cnt = 1, nop_cnt = 1;
 	const char *name;

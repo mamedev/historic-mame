@@ -89,7 +89,101 @@ void bosco_customio_data_w_1 (int offset,int data)
 {
 	customio_1[offset] = data;
 
-if (errorlog) fprintf(errorlog,"%04x: custom IO offset %02x data %02x\n",cpu_get_pc(),offset,data);
+if (errorlog) fprintf(errorlog,"%04x: custom IO 1 offset %02x data %02x\n",cpu_get_pc(),offset,data);
+
+	switch (customio_command_1)
+	{
+		case 0x48:
+			if (offset == 1)
+			{
+				switch(customio_1[0])
+				{
+					case 0x20:	 //		Mid Bang
+						sample_start (0, 0, 0);
+						break;
+					case 0x10:	 //		Big Bang
+						sample_start (1, 1, 0);
+						break;
+					case 0x50:	 //		Shot
+						sample_start (2, 2, 0);
+						break;
+				}
+			}
+			break;
+
+		case 0x64:
+			if (offset == 0)
+			{
+				switch(customio_1[0])
+				{
+					case 0x01:	/*	??	*/
+						break;
+					case 0x10:	/*	??	*/
+						break;
+					case 0x40:	/*	??	*/
+						break;
+					case 0x60:	/* 1P Score */
+						Score2 = Score;
+						Score = Score1;
+						break;
+					case 0x68:	/* 2P Score */
+						Score1 = Score;
+						Score = Score2;
+						break;
+					case 0x80:	/*	??	*/
+						break;
+					case 0x81:
+						Score += 10;
+						break;
+					case 0x83:
+						Score += 20;
+						break;
+					case 0x87:
+						Score += 50;
+						break;
+					case 0x88:
+						Score += 60;
+						break;
+					case 0x89:
+						Score += 70;
+						break;
+					case 0x8D:
+						Score += 200;
+						break;
+					case 0x93:
+						Score += 200;
+						break;
+					case 0x95:
+						Score += 300;
+						break;
+					case 0x96:
+						Score += 400;
+						break;
+					case 0xA0:
+						Score += 500;
+						break;
+					case 0xA1:
+						Score += 1000;
+						break;
+					case 0xA2:
+						Score += 1500;
+						break;
+					case 0xB7:
+						Score += 500;
+						break;
+					case 0xB8:
+						Score += 600;	/* ? center ship of a V-shaped formation */
+						break;
+					case 0xC3:	/*	??	*/
+						break;
+					default:
+						if (errorlog)
+							fprintf(errorlog,"unknown score: %02x\n",customio_1[0]);
+					break;
+				}
+			}
+			break;
+	}
 }
 
 
@@ -227,6 +321,8 @@ void bosco_nmi_generate_1 (int param)
 
 void bosco_customio_w_1 (int offset,int data)
 {
+if (errorlog && data != 0x10) fprintf(errorlog,"%04x: custom IO 1 command %02x\n",cpu_get_pc(),data);
+
 	customio_command_1 = data;
 
 	switch (data)
@@ -235,92 +331,6 @@ void bosco_customio_w_1 (int offset,int data)
 			if (nmi_timer_1) timer_remove (nmi_timer_1);
 			nmi_timer_1 = 0;
 			return;
-
-		case 0x48:
-			switch( cpu_get_reg(Z80_HL2) )
-			{
-				case 0x16F0:	 //		Mid Bang
-					sample_start (0, 0, 0);
-					break;
-				case 0x16F2:	 //		Big Bang
-					sample_start (1, 1, 0);
-					break;
-				case 0x16F4:	 //		Shot
-					sample_start (2, 2, 0);
-					break;
-			}
-			break;
-
-		case 0x64:
-			switch(cpu_readmem16(cpu_get_reg(Z80_HL2)))	 /* ASG 971005 */
-			{
-				case 0x01:	/*	??	*/
-					break;
-				case 0x10:	/*	??	*/
-					break;
-				case 0x40:	/*	??	*/
-					break;
-				case 0x60:	/* 1P Score */
-					Score2 = Score;
-					Score = Score1;
-					break;
-				case 0x68:	/* 2P Score */
-					Score1 = Score;
-					Score = Score2;
-					break;
-				case 0x80:	/*	??	*/
-					break;
-				case 0x81:
-					Score += 10;
-					break;
-				case 0x83:
-					Score += 20;
-					break;
-				case 0x87:
-					Score += 50;
-					break;
-				case 0x88:
-					Score += 60;
-					break;
-				case 0x89:
-					Score += 70;
-					break;
-				case 0x8D:
-					Score += 200;
-					break;
-				case 0x93:
-					Score += 200;
-					break;
-				case 0x95:
-					Score += 300;
-					break;
-				case 0x96:
-					Score += 400;
-					break;
-				case 0xA0:
-					Score += 500;
-					break;
-				case 0xA1:
-					Score += 1000;
-					break;
-				case 0xA2:
-					Score += 1500;
-					break;
-				case 0xB7:
-					Score += 500;
-					break;
-				case 0xB8:
-					Score += 600;	/* ? center ship of a V-shaped formation */
-					break;
-				case 0xC3:	/*	??	*/
-					break;
-				default:
-					if (errorlog)
-						fprintf(errorlog,"unknown score: %02x\n",
-								cpu_readmem16(cpu_get_reg(Z80_HL2))); /* ASG 971005 */
-					break;
-			}
-			break;
 
 		case 0x61:
 			mode = 1;
@@ -364,7 +374,33 @@ void bosco_customio_data_w_2 (int offset,int data)
 {
 	customio_2[offset] = data;
 
-if (errorlog) fprintf(errorlog,"%04x: custom IO offset %02x data %02x\n",cpu_get_pc(),offset,data);
+if (errorlog) fprintf(errorlog,"%04x: custom IO 2 offset %02x data %02x\n",cpu_get_pc(),offset,data);
+	switch (customio_command_2)
+	{
+		case 0x82:
+			if (offset == 2)
+			{
+				switch(customio_2[0])
+				{
+					case 1:	// Blast Off
+						bosco_sample_play(0x0020 * 2, 0x08D7 * 2);
+						break;
+					case 2:	// Alert, Alert
+						bosco_sample_play(0x8F7 * 2, 0x0906 * 2);
+						break;
+					case 3:	// Battle Station
+						bosco_sample_play(0x11FD * 2, 0x07DD * 2);
+						break;
+					case 4:	// Spy Ship Sighted
+						bosco_sample_play(0x19DA * 2, 0x07DE * 2);
+						break;
+					case 5:	// Condition Red
+						bosco_sample_play(0x21B8 * 2, 0x079F * 2);
+						break;
+				}
+			}
+			break;
+	}
 }
 
 
@@ -396,6 +432,8 @@ void bosco_nmi_generate_2 (int param)
 
 void bosco_customio_w_2 (int offset,int data)
 {
+if (errorlog && data != 0x10) fprintf(errorlog,"%04x: custom IO 2 command %02x\n",cpu_get_pc(),data);
+
 	customio_command_2 = data;
 
 	switch (data)
@@ -404,27 +442,6 @@ void bosco_customio_w_2 (int offset,int data)
 			if (nmi_timer_2) timer_remove (nmi_timer_2);
 			nmi_timer_2 = 0;
 			return;
-
-		case 0x82:
-			switch (cpu_get_reg(Z80_HL2))
-			{
-				case 0x1BEE:	// Blast Off
-					bosco_sample_play(0x0020 * 2, 0x08D7 * 2);
-					break;
-				case 0x1BF1:	// Alert, Alert
-					bosco_sample_play(0x8F7 * 2, 0x0906 * 2);
-					break;
-				case 0x1BF4:	// Battle Station
-					bosco_sample_play(0x11FD * 2, 0x07DD * 2);
-					break;
-				case 0x1BF7:	// Spy Ship Sighted
-					bosco_sample_play(0x19DA * 2, 0x07DE * 2);
-					break;
-				case 0x1BFA:	// Condition Red
-					bosco_sample_play(0x21B8 * 2, 0x079F * 2);
-					break;
-			}
-			break;
 	}
 
 	nmi_timer_2 = timer_pulse (TIME_IN_USEC (50), 0, bosco_nmi_generate_2);

@@ -55,8 +55,6 @@ Program RAM                        FFC000-FFFFFF  R/W  D0-D15
 
 ****************************************************************************/
 
-
-
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "sndhrdw/ataraud2.h"
@@ -66,12 +64,10 @@ Program RAM                        FFC000-FFFFFF  R/W  D0-D15
 extern unsigned char *toobin_intensity;
 extern unsigned char *toobin_moslip;
 
-static unsigned char *toobin_interrupt_scan;
+static unsigned char *interrupt_scan;
 static int scanline_int_state;
 static void *interrupt_timer;
 
-
-int toobin_playfieldram_r(int offset);
 
 void toobin_moslip_w(int offset, int data);
 void toobin_paletteram_w(int offset, int data);
@@ -81,7 +77,7 @@ int toobin_vh_start(void);
 void toobin_vh_stop(void);
 void toobin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void toobin_update_display_list(int scanline);
+void toobin_scanline_update(int scanline);
 
 
 
@@ -91,7 +87,7 @@ void toobin_update_display_list(int scanline);
  *
  *************************************/
 
-static void toobin_update_interrupts(int vblank, int sound)
+static void update_interrupts(int vblank, int sound)
 {
 	int newstate = 0;
 
@@ -107,13 +103,19 @@ static void toobin_update_interrupts(int vblank, int sound)
 }
 
 
-void toobin_init_machine(void)
+static void init_machine(void)
 {
-	atarigen_init_machine(toobin_update_interrupts, 0);
-	ataraud2_init(1, 2, 1, 0x10);
+	atarigen_eeprom_default = NULL;
+	atarigen_eeprom_reset();
+
+	atarigen_interrupt_init(update_interrupts, toobin_scanline_update);
+	ataraud2_init(1, 2, 1, 0x1000);
 
 	scanline_int_state = 0;
 	interrupt_timer = 0;
+
+	/* speed up the 6502 */
+	atarigen_init_6502_speedup(1, 0x414e, 0x4166);
 }
 
 
@@ -124,48 +126,36 @@ void toobin_init_machine(void)
  *
  *************************************/
 
-int toobin_interrupt(void)
-{
-	/* set a timer to reset the video parameters just before the end of VBLANK */
-	timer_set(TIME_IN_USEC(Machine->drv->vblank_duration - 10), 0, toobin_update_display_list);
-	return ignore_interrupt();
-}
-
-
-void toobin_interrupt_callback(int param)
+static void interrupt_callback(int param)
 {
 	/* generate the interrupt */
 	scanline_int_state = 1;
 	atarigen_update_interrupts();
 
 	/* set a new timer to go off at the same scan line next frame */
-	interrupt_timer = timer_set(TIME_IN_HZ(Machine->drv->frames_per_second), 0, toobin_interrupt_callback);
+	interrupt_timer = timer_set(TIME_IN_HZ(Machine->drv->frames_per_second), 0, interrupt_callback);
 }
 
 
-void toobin_interrupt_scan_w(int offset, int data)
+static void interrupt_scan_w(int offset, int data)
 {
-	int oldword = READ_WORD(&toobin_interrupt_scan[offset]);
+	int oldword = READ_WORD(&interrupt_scan[offset]);
 	int newword = COMBINE_WORD(oldword, data);
 
 	/* if something changed, update the word in memory */
 	if (oldword != newword)
 	{
-		WRITE_WORD(&toobin_interrupt_scan[offset], newword);
+		WRITE_WORD(&interrupt_scan[offset], newword);
 
-		/* if this is offset 0, modify the timer */
-		if (!offset)
-		{
-			/* remove any previous timer and set a new one */
-			if (interrupt_timer)
-				timer_remove(interrupt_timer);
-			interrupt_timer = timer_set(cpu_getscanlinetime(newword & 0x1ff), 0, toobin_interrupt_callback);
-		}
+		/* remove any previous timer and set a new one */
+		if (interrupt_timer)
+			timer_remove(interrupt_timer);
+		interrupt_timer = timer_set(cpu_getscanlinetime(newword & 0x1ff), 0, interrupt_callback);
 	}
 }
 
 
-void toobin_interrupt_ack_w(int offset, int data)
+static void interrupt_ack_w(int offset, int data)
 {
 	scanline_int_state = 0;
 	atarigen_update_interrupts();
@@ -179,22 +169,12 @@ void toobin_interrupt_ack_w(int offset, int data)
  *
  *************************************/
 
-int toobin_io_r(int offset)
+static int special_io_r(int offset)
 {
-	static int hblank = 0x8000;
-	int result = input_port_1_r(offset) << 8;
-
-	/* fake HBLANK by just toggling it every read */
-	result ^= hblank ^= 0x8000;
+	int result = input_port_1_r(offset);
+	if (atarigen_get_hblank()) result ^= 0x8000;
 	if (atarigen_cpu_to_sound_ready) result ^= 0x2000;
-
-	return result | 0xff;
-}
-
-
-int toobin_controls_r(int offset)
-{
-	return input_port_0_r(offset);
+	return result;
 }
 
 
@@ -205,42 +185,42 @@ int toobin_controls_r(int offset)
  *
  *************************************/
 
-static struct MemoryReadAddress toobin_readmem[] =
+static struct MemoryReadAddress main_readmem[] =
 {
 	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0xc00000, 0xc07fff, toobin_playfieldram_r },
+	{ 0xc00000, 0xc07fff, MRA_BANK1 },
 	{ 0xc08000, 0xc097ff, MRA_BANK2 },
 	{ 0xc09800, 0xc09fff, MRA_BANK3 },
 	{ 0xc10000, 0xc107ff, paletteram_word_r },
-	{ 0xff6000, 0xff6003, MRA_NOP },		/* who knows? read at controls time */
-	{ 0xff8800, 0xff8803, toobin_controls_r },
-	{ 0xff9000, 0xff9003, toobin_io_r },
-	{ 0xff9800, 0xff9803, atarigen_sound_r },
+	{ 0xff6000, 0xff6001, MRA_NOP },		/* who knows? read at controls time */
+	{ 0xff8800, 0xff8801, input_port_0_r },
+	{ 0xff9000, 0xff9001, special_io_r },
+	{ 0xff9800, 0xff9801, atarigen_sound_r },
 	{ 0xffa000, 0xffafff, atarigen_eeprom_r },
-	{ 0xffc000, 0xffffff, MRA_BANK1 },
+	{ 0xffc000, 0xffffff, MRA_BANK7 },
 	{ -1 }  /* end of table */
 };
 
 
-static struct MemoryWriteAddress toobin_writemem[] =
+static struct MemoryWriteAddress main_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
 	{ 0xc00000, 0xc07fff, toobin_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
 	{ 0xc08000, 0xc097ff, MWA_BANK2, &atarigen_alpharam, &atarigen_alpharam_size },
 	{ 0xc09800, 0xc09fff, MWA_BANK3, &atarigen_spriteram, &atarigen_spriteram_size },
 	{ 0xc10000, 0xc107ff, toobin_paletteram_w, &paletteram },
-	{ 0xff8000, 0xff8003, watchdog_reset_w },
-	{ 0xff8100, 0xff8103, atarigen_sound_w },
-	{ 0xff8300, 0xff8303, MWA_BANK7, &toobin_intensity },
-	{ 0xff8340, 0xff8343, toobin_interrupt_scan_w, &toobin_interrupt_scan },
-	{ 0xff8380, 0xff8383, toobin_moslip_w, &toobin_moslip },
-	{ 0xff83c0, 0xff83c3, toobin_interrupt_ack_w },
-	{ 0xff8400, 0xff8403, atarigen_sound_reset_w },
-	{ 0xff8500, 0xff8503, atarigen_eeprom_enable_w },
-	{ 0xff8600, 0xff8603, MWA_BANK4, &atarigen_hscroll },
-	{ 0xff8700, 0xff8703, MWA_BANK5, &atarigen_vscroll },
+	{ 0xff8000, 0xff8001, watchdog_reset_w },
+	{ 0xff8100, 0xff8101, atarigen_sound_w },
+	{ 0xff8300, 0xff8301, MWA_BANK4, &toobin_intensity },
+	{ 0xff8340, 0xff8341, interrupt_scan_w, &interrupt_scan },
+	{ 0xff8380, 0xff8381, toobin_moslip_w, &toobin_moslip },
+	{ 0xff83c0, 0xff83c1, interrupt_ack_w },
+	{ 0xff8400, 0xff8401, atarigen_sound_reset_w },
+	{ 0xff8500, 0xff8501, atarigen_eeprom_enable_w },
+	{ 0xff8600, 0xff8601, MWA_BANK5, &atarigen_hscroll },
+	{ 0xff8700, 0xff8701, MWA_BANK6, &atarigen_vscroll },
 	{ 0xffa000, 0xffafff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
-	{ 0xffc000, 0xffffff, MWA_BANK1 },
+	{ 0xffc000, 0xffffff, MWA_BANK7 },
 	{ -1 }  /* end of table */
 };
 
@@ -269,15 +249,15 @@ INPUT_PORTS_START( toobin_ports )
 	PORT_BIT( 0xfc00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW */
-	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_VBLANK )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x03ff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(  0x1000, 0x1000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x1000, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x0000, DEF_STR( On ))
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	ATARI_AUDIO_2_PORT	/* audio board port */
 INPUT_PORTS_END
@@ -290,7 +270,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct GfxLayout toobin_charlayout =
+static struct GfxLayout anlayout =
 {
 	8,8,	/* 8*8 chars */
 	1024,	/* 1024 chars */
@@ -302,22 +282,22 @@ static struct GfxLayout toobin_charlayout =
 };
 
 
-static struct GfxLayout toobin_pflayout =
+static struct GfxLayout pflayout =
 {
-	8,8,	/* 8*8 sprites */
-	16384,/* 16384 of them */
+	8,8,	/* 8*8 tiles */
+	16384,	/* 16384 of them */
 	4,		/* 4 bits per pixel */
 	{ 256*1024*8, 256*1024*8+4, 0, 4 },
 	{ 0, 1, 2, 3, 8, 9, 10, 11 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	8*16	/* every sprite takes 16 consecutive bytes */
+	8*16	/* every tile takes 16 consecutive bytes */
 };
 
 
-static struct GfxLayout toobin_spritelayout =
+static struct GfxLayout molayout =
 {
-	16,16,/* 16*16 sprites */
-	16384,/* 16384 of them */
+	16,16,	/* 16*16 sprites */
+	16384,	/* 16384 of them */
 	4,		/* 4 bits per pixel */
 	{ 1024*1024*8, 1024*1024*8+4, 0, 4 },
 	{ 0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19, 24, 25, 26, 27 },
@@ -326,11 +306,11 @@ static struct GfxLayout toobin_spritelayout =
 };
 
 
-static struct GfxDecodeInfo toobin_gfxdecodeinfo[] =
+static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 2, 0x280000, &toobin_charlayout,     512, 64 },
-	{ 2, 0x000000, &toobin_pflayout,         0, 16 },
-	{ 2, 0x080000, &toobin_spritelayout,   256, 16 },
+	{ 2, 0x000000, &pflayout,     0, 16 },
+	{ 2, 0x080000, &molayout,   256, 16 },
+	{ 2, 0x280000, &anlayout,   512, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -342,28 +322,28 @@ static struct GfxDecodeInfo toobin_gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct MachineDriver toobin_machine_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
 		{
-			CPU_M68000,
+			CPU_M68010,
 			7159160,
 			0,
-			toobin_readmem,toobin_writemem,0,0,
-			toobin_interrupt,1
+			main_readmem,main_writemem,0,0,
+			atarigen_vblank_gen,1
 		},
 		{
 			ATARI_AUDIO_2_CPU(1)
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,    /* we need some interleave since the sound CPU talks to the main CPU */
-	toobin_init_machine,
+	1,
+	init_machine,
 
 	/* video hardware */
 	64*8, 48*8, { 0*8, 64*8-1, 0*8, 48*8-1 },
-	toobin_gfxdecodeinfo,
+	gfxdecodeinfo,
 	1024,1024,
 	0,
 
@@ -458,7 +438,7 @@ struct GameDriver toobin_driver =
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nTim Lindquist (hardware info)",
 	0,
-	&toobin_machine_driver,
+	&machine_driver,
 	0,
 
 	toobin_rom,

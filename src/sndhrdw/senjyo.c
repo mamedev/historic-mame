@@ -2,8 +2,6 @@
 #include "machine/Z80fmly.h"
 #include <math.h>
 
-/* mixing level */
-#define SINGLE_VOLUME 32
 
 /* z80 pio */
 static void pio_interrupt(int state)
@@ -49,7 +47,8 @@ static int channel;
 
 void senjyo_volume_w( int offset , int data )
 {
-	single_volume = ((data & 0x0f)<<4)|(data & 0x0f);
+	single_volume = data & 0x0f;
+	mixer_set_volume(channel,single_volume * 100 / 15);
 }
 
 int senjyo_sh_start(const struct MachineSound *msound)
@@ -57,7 +56,8 @@ int senjyo_sh_start(const struct MachineSound *msound)
     int i;
 
 
-	channel = get_play_channels(1);
+	channel = mixer_allocate_channel(30);
+	mixer_set_name(channel,"Tone");
 
 	/* z80 ctc init */
 	ctc_intf.baseclock[0] = Machine->drv->cpu[1].cpu_clock;
@@ -72,10 +72,11 @@ int senjyo_sh_start(const struct MachineSound *msound)
 		return 1;
 	}
 	for (i = 0;i < SINGLE_LENGTH;i++)		/* freq = ctc2 zco / 8 */
-		_single[i] = ((i/SINGLE_DIVIDER)&0x01)*(SINGLE_VOLUME/2);
+		_single[i] = ((i/SINGLE_DIVIDER)&0x01)*127;
 
 	/* CTC2 single tone generator */
-	osd_play_sample(channel,_single,SINGLE_LENGTH,single_rate,single_volume,1);
+	mixer_set_volume(channel,0);
+	mixer_play_sample(channel,_single,SINGLE_LENGTH,single_rate,1);
 
 	return 0;
 }
@@ -101,5 +102,5 @@ void senjyo_sh_update(void)
 	if( period != 0 ) single_rate = (int)(1.0 / period );
 	else single_rate = 0;
 
-	osd_adjust_sample(channel,single_rate,single_volume);
+	osd_set_sample_freq(channel,single_rate);
 }

@@ -198,7 +198,8 @@ static struct AY8910interface ay8910_interface =
 {
 	1,	/* 2 chips */
 	4608000,	/* 18.432000 / 4 (???) */
-	{ 255 },
+	{ 50 },
+	AY8910_DEFAULT_GAIN,
 	{ input_port_3_r },
 	{ input_port_4_r },
 	{ 0 },

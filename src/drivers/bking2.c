@@ -313,6 +313,7 @@ static struct AY8910interface ay8910_interface =
 	2,      /* 2 chips */
 	2000000,	/* 2 MHz */
 	{ 25, 25 },
+	AY8910_DEFAULT_GAIN,
 	{ 0, 0 },
 	{ 0, 0 },
 	{ 0, DAC_signed_data_w },

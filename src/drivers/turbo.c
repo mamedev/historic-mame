@@ -178,7 +178,8 @@ void turbo_fc00_w(int offset, int data);
 
 static struct Samplesinterface samples_interface =
 {
-        8       /* eight channels */
+	8,       /* eight channels */
+	25	/* volume */
 };
 
 const char *turbo_sample_names[]=

@@ -335,7 +335,7 @@ void AY8910_set_clock(int chip,int clock)
 
 /***************************************************************************
 
-  set output volume and gain
+  set gain
 
   The gain is expressed in 0.2dB increments, e.g. a gain of 10 is an increase
   of 2dB. Note that the gain aìonly affects sounds not playing at full volume,
@@ -345,16 +345,12 @@ void AY8910_set_clock(int chip,int clock)
   0xff is the maximum allowed value.
 
 ***************************************************************************/
-void AY8910_set_volume(int chip,int volume,int gain)
+static void AY8910_set_gain(int chip,int gain)
 {
 	struct AY8910 *PSG = &AYPSG[chip];
 	int i;
 	double out;
 
-
-	stream_set_volume(PSG->Channel,volume);
-	stream_set_volume(PSG->Channel+1,volume);
-	stream_set_volume(PSG->Channel+2,volume);
 
 	gain &= 0xff;
 
@@ -398,7 +394,8 @@ void AY8910_reset(int chip)
 								/* has not been initialized. */
 }
 
-static int AY8910_init(const struct MachineSound *msound,int chip,const char *chipname,int clock,int sample_rate,int sample_bits,
+static int AY8910_init(const struct MachineSound *msound,int chip,
+		int clock,int volume,int sample_rate,int sample_bits,
 		int (*portAread)(int offset),int (*portBread)(int offset),
 		void (*portAwrite)(int offset,int data),void (*portBwrite)(int offset,int data))
 {
@@ -406,6 +403,7 @@ static int AY8910_init(const struct MachineSound *msound,int chip,const char *ch
 	struct AY8910 *PSG = &AYPSG[chip];
 	char buf[3][40];
 	const char *name[3];
+	int vol[3];
 
 
 	memset(PSG,0,sizeof(struct AY8910));
@@ -416,18 +414,18 @@ static int AY8910_init(const struct MachineSound *msound,int chip,const char *ch
 	PSG->PortBwrite = portBwrite;
 	for (i = 0;i < 3;i++)
 	{
+		vol[i] = volume;
 		name[i] = buf[i];
-		sprintf(buf[i],"%s #%d Ch %c",chipname,chip,'A'+i);
+		sprintf(buf[i],"%s #%d Ch %c",sound_name(msound),chip,'A'+i);
 	}
-	PSG->Channel = stream_init_multi(msound,3,
-			name,sample_rate,sample_bits,
+	PSG->Channel = stream_init_multi(3,
+			name,vol,sample_rate,sample_bits,
 			chip,(sample_bits == 16) ? AY8910Update_16 : AY8910Update_8);
 
 	if (PSG->Channel == -1)
 		return 1;
 
 	AY8910_set_clock(chip,clock);
-	AY8910_set_volume(chip,255,0);
 	AY8910_reset(chip);
 
 	return 0;
@@ -435,7 +433,7 @@ static int AY8910_init(const struct MachineSound *msound,int chip,const char *ch
 
 
 
-int AY8910_sh_start_ex(const struct MachineSound *msound,const char *chipname)
+int AY8910_sh_start(const struct MachineSound *msound)
 {
 	int chip;
 	const struct AY8910interface *intf = msound->sound_interface;
@@ -443,16 +441,13 @@ int AY8910_sh_start_ex(const struct MachineSound *msound,const char *chipname)
 
 	for (chip = 0;chip < intf->num;chip++)
 	{
-		if (AY8910_init(msound,chip,chipname,intf->baseclock,Machine->sample_rate,Machine->sample_bits,
+		if (AY8910_init(msound,chip,intf->baseclock,
+				intf->mixing_level[chip] & 0xffff,
+				Machine->sample_rate,Machine->sample_bits,
 				intf->portAread[chip],intf->portBread[chip],
 				intf->portAwrite[chip],intf->portBwrite[chip]) != 0)
 			return 1;
-		AY8910_set_volume(chip,intf->volume[chip] & 0xff,(intf->volume[chip] >> 8) & 0xff);
+		AY8910_set_gain(chip,intf->gain[chip]);
 	}
 	return 0;
-}
-
-int AY8910_sh_start(const struct MachineSound *msound)
-{
-	return AY8910_sh_start_ex(msound,"AY8910");
 }

@@ -1,7 +1,7 @@
 #include "driver.h"
 
-/* signed/unsigned 8-bit conversion macros */
-#define AUDIO_CONV(A) ((A)-0x80)
+/* macro to convert 4-bit unsigned samples to 8-bit signed samples */
+#define SAMPLE_CONV4(a) (0x11*((a&0x0f))-0x80)
 
 
 static signed char *speech;	/* 24k for speech */
@@ -14,20 +14,21 @@ int bosco_sh_start(const struct MachineSound *msound)
 	int i;
 	unsigned char bits;
 
-	channel = get_play_channels(1);
+	channel = mixer_allocate_channel(25);
+	mixer_set_name(channel,"Samples");
 
-	speech = malloc(0x6000);
+	speech = malloc(2*Machine->memory_region_length[5]);
 	if (!speech)
 		return 1;
 
 	/* decode the rom samples */
-	for (i = 0;i < 0x3000;i++)
+	for (i = 0;i < Machine->memory_region_length[5];i++)
 	{
 		bits = Machine->memory_region[5][i] & 0x0f;
-		speech[2 * i] = AUDIO_CONV ((bits << 4) | bits);
+		speech[2*i] = SAMPLE_CONV4(bits);
 
-		bits = Machine->memory_region[5][i] & 0xf0;
-		speech[2 * i + 1] = AUDIO_CONV (bits | (bits >> 4));
+		bits = (Machine->memory_region[5][i] & 0xf0) >> 4;
+		speech[2*i + 1] = SAMPLE_CONV4(bits);
 	}
 
 	return 0;
@@ -47,5 +48,5 @@ void bosco_sample_play(int offset, int length)
 	if (Machine->sample_rate == 0)
 		return;
 
-	osd_play_sample(channel,speech + offset,length,4000,0xff,0);
+	mixer_play_sample(channel,speech + offset,length,4000,0);
 }

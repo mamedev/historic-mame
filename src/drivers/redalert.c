@@ -268,7 +268,8 @@ static struct AY8910interface ay8910_interface =
 {
 	1,			/* 1 chip */
 	2000000,	/* 2 MHz */
-	{ 255 },	/* Volume */
+	{ 50 },		/* Volume */
+	AY8910_DEFAULT_GAIN,
 	{ redalert_AY8910_A_r },		/* Port A Read */
 	{ 0 },		/* Port B Read */
 	{ 0 },		/* Port A Write */

@@ -437,7 +437,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3582071,	/* seems to be the standard */
-	{ YM3012_VOL(60,OSD_PAN_LEFT,60,OSD_PAN_RIGHT) },
+	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) },
 	{ dd_irq_handler }
 };
 
@@ -664,9 +664,7 @@ ROM_START( ddragon_rom )
 
 	ROM_REGION(0x10000) /* sprite cpu */
 	/* missing mcu code */
-	/* currently load the audio cpu code in this location */
-	/* because otherwise mame will loop indefinately in cpu_run */
-	ROM_LOAD( "a_s2_d01.bin", 0x08000, 0x08000, 0x9efa95bb )
+	ROM_LOAD( "63701.bin", 0xc000, 0x4000, 0x00000000 )
 
 	ROM_REGION(0x10000) /* audio cpu */
 	ROM_LOAD( "a_s2_d01.bin", 0x08000, 0x08000, 0x9efa95bb )
@@ -877,7 +875,7 @@ struct GameDriver ddragon2_driver =
 	__FILE__,
 	0,
 	"ddragon2",
-	"Double Dragon 2",
+	"Double Dragon II - The Revenge",
 	"1988",
 	"Technos",
 	"Carlos A. Lozano\nRob Rosenbrock\nPhil Stroffolino\nErnesto Corvi\n",

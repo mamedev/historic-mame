@@ -170,9 +170,9 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPNAME( 0x04, 0x04, "Coin Mode" )
 	PORT_DIPSETTING(    0x04, "Mode 1" )
 	PORT_DIPSETTING(    0x00, "Mode 2" )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "Naughty Pics" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, "Gal Select" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
@@ -251,7 +251,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3579000,	/* 3.579 MHz */
-	{ YM3012_VOL(50,OSD_PAN_LEFT,50,OSD_PAN_RIGHT) },
+	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
 	{ sichuan2_ym2151_irq_handler },
 	{ 0 }
 };
@@ -326,7 +326,40 @@ ROM_START( sichuan2_rom )
 	ROM_REGION(0x30000)	/* 64k+128k for main CPU */
 	ROM_LOAD( "ic06.06",      0x00000, 0x10000, 0x98a2459b )
 	ROM_RELOAD(               0x10000, 0x10000 )
-	ROM_LOAD( "ic07.07",      0x20000, 0x10000, 0x00000000 )
+	ROM_LOAD( "ic07.03",      0x20000, 0x10000, 0x0350f6e2 )
+
+	ROM_REGION_DISPOSE(0x100000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ic08.04",      0x00000, 0x10000, 0x1c0e221c )
+	ROM_LOAD( "ic09.05",      0x10000, 0x10000, 0x8a7d8284 )
+	ROM_LOAD( "ic12.08",      0x20000, 0x10000, 0x48e1d043 )
+	ROM_LOAD( "ic13.09",      0x30000, 0x10000, 0x3feff3f2 )
+	ROM_LOAD( "ic14.10",      0x40000, 0x10000, 0xb76a517d )
+	ROM_LOAD( "ic15.11",      0x50000, 0x10000, 0x8ff5ee7a )
+	ROM_LOAD( "ic16.12",      0x60000, 0x10000, 0x64e5d837 )
+	ROM_LOAD( "ic17.13",      0x70000, 0x10000, 0x02c1b2c4 )
+	ROM_LOAD( "ic18.14",      0x80000, 0x10000, 0xf5a8370e )
+	ROM_LOAD( "ic19.15",      0x90000, 0x10000, 0x7a9b7671 )
+	ROM_LOAD( "ic20.16",      0xa0000, 0x10000, 0x7fb396ad )
+	ROM_LOAD( "ic21.17",      0xb0000, 0x10000, 0xfb83c652 )
+	ROM_LOAD( "ic22.18",      0xc0000, 0x10000, 0xd8b689e9 )
+	ROM_LOAD( "ic23.19",      0xd0000, 0x10000, 0xe6611947 )
+	ROM_LOAD( "ic10.06",      0xe0000, 0x10000, 0x473b349a )
+	ROM_LOAD( "ic11.07",      0xf0000, 0x10000, 0xd9a60285 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "ic01.01",      0x00000, 0x10000, 0x51b0a26c )
+
+	ROM_REGION(0x40000)	/* samples */
+	ROM_LOAD( "ic02.02",      0x00000, 0x10000, 0x92f0093d )
+	ROM_LOAD( "ic03.03",      0x10000, 0x10000, 0x116a049c )
+	ROM_LOAD( "ic04.04",      0x20000, 0x10000, 0x6840692b )
+	ROM_LOAD( "ic05.05",      0x30000, 0x10000, 0x92ffe22a )
+ROM_END
+
+ROM_START( shisen_rom )
+	ROM_REGION(0x30000)	/* 64k+128k for main CPU */
+	ROM_LOAD( "a-27-a.rom",   0x00000, 0x20000, 0xde2ecf05 )
+	ROM_RELOAD(               0x10000, 0x20000 )
 
 	ROM_REGION_DISPOSE(0x100000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "ic08.04",      0x00000, 0x10000, 0x1c0e221c )
@@ -358,12 +391,49 @@ ROM_END
 
 
 
+static int sichuan2_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	/* check if the hi score table has already been initialized */
+        if (memcmp(&RAM[0xfcb0],"\x2b\x03\x0f",3) == 0)
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+                        osd_fread(f,&RAM[0xfcb0], 5*16);        /* HS table */
+
+                        RAM[0xfcae] = RAM[0xfcbd];      /* update high score */
+                        RAM[0xfcaf] = RAM[0xfcbe];      /* on top of screen */
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+static void sichuan2_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+                osd_fwrite(f,&RAM[0xfcb0], 5*16);       /* HS table */
+		osd_fclose(f);
+	}
+}
+
+
+
 struct GameDriver sichuan2_driver =
 {
 	__FILE__,
 	0,
 	"sichuan2",
-	"Sichuan II",
+	"Sichuan II (hack?)",
 	"1989",
 	"Tamtex",
 	"Nicola Salmoria",
@@ -381,5 +451,31 @@ struct GameDriver sichuan2_driver =
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	sichuan2_hiload, sichuan2_hisave
+};
+
+struct GameDriver shisen_driver =
+{
+	__FILE__,
+	&sichuan2_driver,
+	"shisen",
+	"Shisensho - Joshiryo-Hen (Japan)",
+	"1989",
+	"Tamtex",
+	"Nicola Salmoria",
+	0,
+	&machine_driver,
+	0,
+
+	shisen_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	sichuan2_hiload, sichuan2_hisave
 };

@@ -506,13 +506,12 @@ static struct GfxDecodeInfo journey_gfxdecodeinfo[] =
 
 ***************************************************************************/
 
-extern int mcr_sh_start(void);
-
 static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	2000000,	/* 2 MHz ?? */
-	{ 33, 33 },
+	{ MIXER(33,MIXER_PAN_LEFT), MIXER(33,MIXER_PAN_RIGHT) },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -569,7 +568,7 @@ static struct MachineDriver mcr2_machine_driver =
 	mcr2_vh_screenrefresh,
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,mcr_sh_start,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_AY8910,
@@ -615,7 +614,7 @@ static struct MachineDriver wacko_machine_driver =
 	mcr2_vh_screenrefresh,
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,mcr_sh_start,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_AY8910,
@@ -661,7 +660,7 @@ static struct MachineDriver kroozr_machine_driver =
 	mcr2_vh_screenrefresh,
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,mcr_sh_start,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_AY8910,
@@ -707,7 +706,7 @@ static struct MachineDriver journey_machine_driver =
 	journey_vh_screenrefresh,
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,mcr_sh_start,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_AY8910,

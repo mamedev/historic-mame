@@ -292,8 +292,7 @@ int emu_YM3812_sh_start(const struct MachineSound *msound)
 	timer1 = timer2 = 0;
 	ym->SetTimer = timer_handler;
 
-   ym_channel = stream_init(msound,
-			"OPL 1/2/L",rate,sample_bits,
+   ym_channel = stream_init("OPL 1/2/L",intf->volume[0],rate,sample_bits,
 			0,emu_ym3812_fixed_pointer_problem_update);
 	return 0;
 }

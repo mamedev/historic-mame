@@ -488,7 +488,7 @@ static struct SN76496interface sn76496_interface =
 {
 	3,	/* 3 chips */
 	2000000,	/* 2 Mhz? */
-	{ 255, 255, 255 }
+	{ 50, 50, 50 }
 };
 
 static struct CustomSound_interface custom_interface =

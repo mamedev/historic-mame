@@ -373,7 +373,8 @@ static struct YM2203interface ym2203_interface =
 	2,			/* 2 chips */
 	6000000,	/* 6 MHz ????? seems awfully fast, I don't even know if the */
 				/*  YM2203 can go at that speed */
-	{ YM2203_VOL(255,255), YM2203_VOL(255,255) },
+	{ YM2203_VOL(25,25), YM2203_VOL(25,25) },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },

@@ -17,6 +17,7 @@ struct YM2610interface{
 	int num;	/* total number of 8910 in the machine */
 	int baseclock;
 	int volumeSSG[MAX_2610]; /* for SSG sound */
+	int gainSSG[MAX_2610];
 	int ( *portAread[MAX_2610] )( int offset );
 	int ( *portBread[MAX_2610] )( int offset );
 	void ( *portAwrite[MAX_2610] )( int offset, int data );

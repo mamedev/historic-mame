@@ -316,6 +316,7 @@ static struct AY8910interface ay8910_interface =
 	3,	/* 3 chips */
 	1500000,	/* 1.5 MHz?????? */
 	{ 13, 13, 13 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -378,6 +379,32 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( bombjack_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "09_j01b.bin",  0x0000, 0x2000, 0xc668dc30 )
+	ROM_LOAD( "10_l01b.bin",  0x2000, 0x2000, 0x52a1e5fb )
+	ROM_LOAD( "11_m01b.bin",  0x4000, 0x2000, 0xb68a062a )
+	ROM_LOAD( "12_n01b.bin",  0x6000, 0x2000, 0x1d3ecee5 )
+	ROM_LOAD( "13.1r",        0xc000, 0x2000, 0x70e0244d )
+
+	ROM_REGION_DISPOSE(0xf000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "03_e08t.bin",  0x0000, 0x1000, 0x9f0470d5 )	/* chars */
+	ROM_LOAD( "04_h08t.bin",  0x1000, 0x1000, 0x81ec12e6 )
+	ROM_LOAD( "05_k08t.bin",  0x2000, 0x1000, 0xe87ec8b1 )
+	ROM_LOAD( "06_l08t.bin",  0x3000, 0x2000, 0x51eebd89 )	/* background tiles */
+	ROM_LOAD( "07_n08t.bin",  0x5000, 0x2000, 0x9dd98e9d )
+	ROM_LOAD( "08_r08t.bin",  0x7000, 0x2000, 0x3155ee7d )
+	ROM_LOAD( "16_m07b.bin",  0x9000, 0x2000, 0x94694097 )	/* sprites */
+	ROM_LOAD( "15_l07b.bin",  0xb000, 0x2000, 0x013f58f2 )
+	ROM_LOAD( "14_j07b.bin",  0xd000, 0x2000, 0x101c858d )
+
+	ROM_REGION(0x1000)	/* background graphics */
+	ROM_LOAD( "02_p04t.bin",  0x0000, 0x1000, 0x398d4a02 )
+
+	ROM_REGION(0x10000)	/* 64k for sound board */
+	ROM_LOAD( "01_h03t.bin",  0x0000, 0x2000, 0x8407917d )
+ROM_END
+
+ROM_START( bombjac2_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "09_j01b.bin",  0x0000, 0x2000, 0xc668dc30 )
 	ROM_LOAD( "10_l01b.bin",  0x2000, 0x2000, 0x52a1e5fb )
@@ -481,7 +508,7 @@ struct GameDriver bombjack_driver =
 	__FILE__,
 	0,
 	"bombjack",
-	"Bomb Jack",
+	"Bomb Jack (set 1)",
 	"1984",
 	"Tehkan",
 	"Brad Thomas (hardware info)\nJakob Frendsen (hardware info)\nConny Melin (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nJarek Burczynski (sound)\nMarco Cassili",
@@ -490,6 +517,33 @@ struct GameDriver bombjack_driver =
 	0,
 
 	bombjack_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+
+/* this one has YOU ARE LUCY instead of LUCKY, so it's probably an older version */
+struct GameDriver bombjac2_driver =
+{
+	__FILE__,
+	&bombjack_driver,
+	"bombjac2",
+	"Bomb Jack (set 2)",
+	"1984",
+	"Tehkan",
+	"Brad Thomas (hardware info)\nJakob Frendsen (hardware info)\nConny Melin (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nJarek Burczynski (sound)\nMarco Cassili",
+	0,
+	&machine_driver,
+	0,
+
+	bombjac2_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

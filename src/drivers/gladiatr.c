@@ -774,7 +774,8 @@ static struct YM2203interface ym2203_interface =
 {
 	1,		/* 1 chip */
 	1500000,	/* 1.5 MHz? */
-	{ YM2203_VOL(255,0xff) },
+	{ YM2203_VOL(25,25) },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ gladiator_dsw3_r },         /* port B read */
 	{ gladiator_int_controll_w }, /* port A write */
@@ -793,7 +794,8 @@ static struct ADPCMinterface adpcm_interface =
 
 static struct Samplesinterface	samples_interface =
 {
-        1       /* 1 channel */
+	1,       /* 1 channel */
+	25	/* volume */
 };
 
 

@@ -760,12 +760,14 @@ static struct DACinterface dkong_dac_interface =
 
 static struct Samplesinterface dkong_samples_interface =
 {
-	8	/* 8 channels */
+	8,	/* 8 channels */
+	25	/* volume */
 };
 
 static struct Samplesinterface dkongjr_samples_interface =
 {
-	8	/* 8 channels */
+	8,	/* 8 channels */
+	25	/* volume */
 };
 
 static struct MachineDriver dkong_machine_driver =

@@ -2,17 +2,14 @@
 #include "tilemap.h"
 
 /*
-New:
-Scrolling API has changed slightly
-- new: tilemap_set_scrolldx( dx, dx_flip ), tilemap_set_scrolldy( dy, dy_flip )
-- scroll_rows and scroll_cols are now 1 by default (reasonable for both XY scrolling and fixed layers)
-- tilemap_set_scroll_rows and tilemap_set_scroll_cols are guarenteed to work (no more dynamic memory (re)allocation)
-- IMPORTANT: scroll coordinates are negated, as this is by far the most common behavior
+New (additions needed for Namco System I)
+- pen management support for >4bpp tiles
+- TILEMAP_BITMASK: you must set tile_info.mask_data in the tile_get_info callback
 
-Coming Soon:
-- introspective color management when penusage bitmask isn't available (needed for Namco System1)
+To Do:
 - warnings (in debug mode, at least) for tilemap_mark_dirty using bad row/col
 - virtualization for huge tilemaps
+- notify palette manager about cached, offscreen tiles
 
 Optimizations/Features TBA:
 -	precompute spans per row (to speed up the low level code)
@@ -48,6 +45,7 @@ Optimizations/Features TBA:
 	5)	call tilemap_draw to draw the tilemaps to the screen, from back to front
 
 ********************************************************************************/
+static unsigned char flip_bit_table[0x100];
 
 static struct tilemap *first_tilemap;
 static int orientation, screen_width, screen_height;
@@ -128,6 +126,12 @@ void tilemap_set_clip( struct tilemap *tilemap, const struct rectangle *clip ){
 }
 
 void tilemap_init( void ){
+	int value, data, bit;
+	for( value=0; value<0x100; value++ ){
+		data = 0;
+		for( bit=0; bit<8; bit++ ) if( (value>>bit)&1 ) data |= 0x80>>bit;
+		flip_bit_table[value] = data;
+	}
 	orientation = Machine->orientation;
 	screen_width = Machine->scrbitmap->width;
 	screen_height = Machine->scrbitmap->height;
@@ -243,6 +247,7 @@ static void mark_visible32x32( int xpos, int ypos )
 
 static void dispose_tile_info( struct tilemap *tilemap ){
 	free( tilemap->pendata );
+	free( tilemap->maskdata );
 	free( tilemap->paldata );
 	free( tilemap->pen_usage );
 	free( tilemap->priority );
@@ -260,6 +265,7 @@ static int create_tile_info( struct tilemap *tilemap ){
 	int num_rows = tilemap->num_rows;
 
 	tilemap->pendata = malloc( sizeof( unsigned char *)*num_tiles );
+	tilemap->maskdata = malloc( sizeof( unsigned char *)*num_tiles ); /* needed only for TILEMAP_BITMASK */
 	tilemap->paldata = malloc( sizeof( unsigned short *)*num_tiles );
 	tilemap->pen_usage = malloc( sizeof( unsigned int )*num_tiles );
 	tilemap->priority = malloc( num_tiles );
@@ -273,7 +279,9 @@ static int create_tile_info( struct tilemap *tilemap ){
 	tilemap->priority_row = malloc( sizeof(char *)*num_rows );
 	tilemap->visible_row = malloc( sizeof(char *)*num_rows );
 
-	if( tilemap->pendata && tilemap->paldata && tilemap->pen_usage &&
+	if( tilemap->pendata &&
+		tilemap->maskdata &&
+		tilemap->paldata && tilemap->pen_usage &&
 		tilemap->priority && tilemap->visible &&
 		tilemap->dirty_vram && tilemap->dirty_pixels &&
 		tilemap->flags &&
@@ -288,8 +296,7 @@ static int create_tile_info( struct tilemap *tilemap ){
 		}
 
 		for( tile_index=0; tile_index<num_tiles; tile_index++ ){
-			tilemap->paldata[tile_index] = Machine->colortable;
-			tilemap->pen_usage[tile_index] = 0;
+			tilemap->paldata[tile_index] = 0;
 		}
 
 		memset( tilemap->priority, 0, num_tiles );
@@ -637,6 +644,56 @@ static void draw_mask(
 }
 
 /***********************************************************************************/
+static int draw_bitmask(
+		struct osd_bitmap *mask,
+		int col, int row, int tile_width, int tile_height,
+		const unsigned char *maskdata,
+		unsigned char flags )
+{
+	int is_opaque = 1, is_transparent = 1;
+
+	int x,sx = tile_width*col;
+	int sy,y1,y2,dy;
+
+	if( flags&TILE_FLIPY ){
+		y1 = tile_height*row+tile_height-1;
+		y2 = y1-tile_height;
+ 		dy = -1;
+ 	}
+ 	else {
+		y1 = tile_height*row;
+		y2 = y1+tile_height;
+ 		dy = 1;
+ 	}
+
+	if( flags&TILE_FLIPX ){
+		tile_width--;
+		for( sy=y1; sy!=y2; sy+=dy ){
+			unsigned char *mask_dest  = mask->line[sy]+sx/8;
+			for( x=tile_width/8; x>=0; x-- ){
+				unsigned char data = flip_bit_table[*maskdata++];
+				if( data!=0x00 ) is_transparent = 0;
+				if( data!=0xff ) is_opaque = 0;
+				mask_dest[x] = data;
+			}
+		}
+	}
+	else {
+		for( sy=y1; sy!=y2; sy+=dy ){
+			unsigned char *mask_dest  = mask->line[sy]+sx/8;
+			for( x=0; x<tile_width/8; x++ ){
+				unsigned char data = *maskdata++;
+				if( data!=0x00 ) is_transparent = 0;
+				if( data!=0xff ) is_opaque = 0;
+				mask_dest[x] = data;
+			}
+		}
+	}
+
+	if( is_transparent ) return TILE_TRANSPARENT;
+	if( is_opaque ) return TILE_OPAQUE;
+	return TILE_MASKED;
+}
 
 void tilemap_render( struct tilemap *tilemap ){
 	if( tilemap==ALL_TILEMAPS ){
@@ -672,8 +729,13 @@ void tilemap_render( struct tilemap *tilemap ){
 						pendata,
 						tilemap->paldata[tile_index],
 						flags );
-
-					if( type & TILEMAP_SPLIT ){
+					if( type & TILEMAP_BITMASK ){
+						tilemap->fg_mask_data_row[row][col] =
+							draw_bitmask( tilemap->fg_mask,
+								col, row, tile_width, tile_height,
+								tilemap->maskdata[tile_index], flags );
+					}
+					else if( type & TILEMAP_SPLIT ){
 						int pen_mask = (transparent_pen<0)?0:(1<<transparent_pen);
 
 						if( flags&TILE_IGNORE_TRANSPARENCY ){
@@ -1187,12 +1249,15 @@ void tilemap_update( struct tilemap *tilemap ){
 		}
 
 		{
+			int num_pens = tilemap->tile_width*tilemap->tile_height; /* precalc - needed for >4bpp pen management handling */
+
 			int tile_index;
 			char *visible = tilemap->visible;
 			char *dirty_vram = tilemap->dirty_vram;
 			char *dirty_pixels = tilemap->dirty_pixels;
 
 			unsigned char **pendata = tilemap->pendata;
+			unsigned char **maskdata = tilemap->maskdata;
 			unsigned short **paldata = tilemap->paldata;
 			unsigned int *pen_usage = tilemap->pen_usage;
 
@@ -1213,8 +1278,18 @@ void tilemap_update( struct tilemap *tilemap ){
 					if( orientation & ORIENTATION_FLIP_X ) col = tilemap->num_cols-1-col;
 					if( orientation & ORIENTATION_SWAP_XY ) SWAP(col,row)
 
-					palette_decrease_usage_count( (paldata[tile_index]-Machine->colortable), pen_usage[tile_index] );
-
+					{
+						unsigned short *the_color = paldata[tile_index];
+						if( the_color ){
+							unsigned int old_pen_usage = pen_usage[tile_index];
+							if( old_pen_usage ){
+								palette_decrease_usage_count( the_color-Machine->colortable, old_pen_usage, PALETTE_COLOR_VISIBLE|PALETTE_COLOR_CACHED );
+							}
+							else {
+								palette_decrease_usage_countx( the_color-Machine->colortable, num_pens, pendata[tile_index], PALETTE_COLOR_VISIBLE|PALETTE_COLOR_CACHED );
+							}
+						}
+					}
 					tilemap->tile_get_info( col, row );
 
 					flags = tile_info.flags ^ tile_flip;
@@ -1227,10 +1302,17 @@ void tilemap_update( struct tilemap *tilemap ){
 					pen_usage[tile_index] = tile_info.pen_usage;
 					pendata[tile_index] = tile_info.pen_data;
 					paldata[tile_index] = tile_info.pal_data;
+					maskdata[tile_index] = tile_info.mask_data; // needed for TILEMAP_BITMASK
 					tilemap->flags[tile_index] = flags;
 					tilemap->priority[tile_index] = tile_info.priority;
 
-					palette_increase_usage_count( (paldata[tile_index]-Machine->colortable), pen_usage[tile_index] );
+
+					if( tile_info.pen_usage ){
+						palette_increase_usage_count( tile_info.pal_data-Machine->colortable, tile_info.pen_usage, PALETTE_COLOR_VISIBLE|PALETTE_COLOR_CACHED );
+					}
+					else {
+						palette_increase_usage_countx( tile_info.pal_data-Machine->colortable, num_pens, tile_info.pen_data, PALETTE_COLOR_VISIBLE|PALETTE_COLOR_CACHED );
+					}
 
 					dirty_pixels[tile_index] = 1;
 					dirty_vram[tile_index] = 0;

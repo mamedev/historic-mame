@@ -494,14 +494,14 @@ static struct namco_interface namco_interface =
 {
 	23920,	/* sample rate (approximate value) */
 	8,	  /* number of voices */
-	48,		/* gain adjustment */
-	80,	/* playback volume */
+	100,	/* playback volume */
 	5		/* memory region */
 };
 
 static struct Samplesinterface samples_interface =
 {
-	1	/* one channel */
+	1,	/* one channel */
+	100	/* volume */
 };
 
 static const char *gaplus_sample_names[] =

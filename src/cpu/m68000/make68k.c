@@ -41,6 +41,9 @@
  *                Data and Address register mode combined for :-
  *                	movecodes
  *                  dumpx
+ * 04.05.99 MJC - Add Previous PC support to MOVE.B #X,XXXXXX.L (F1 Dream)
+ *                ABCD/SBCD could corrupt zero flag
+ *                DIVS/DIVU overflow should not update register
  *---------------------------------------------------------------
  * Known Problems / Bugs
  *
@@ -91,7 +94,7 @@ int 		DisOp;
 /* needed for NEW_INTERRUPT_SYSTEM */
 #include "cpuintrf.h"
 
-#define VERSION 	"0.13"
+#define VERSION 	"0.14"
 
 #define TRUE -1
 #define FALSE 0
@@ -5413,8 +5416,8 @@ void abcd_sbcd(void)
 			fprintf(fp, "\t\t shr   ecx, byte 9\n");
 			fprintf(fp, "\t\t and   ecx, byte 7\n");
 
-  			EffectiveAddressRead(mode,'B',EBX,EBX,"--C-S-B",FALSE);
-  			EffectiveAddressRead(mode,'B',ECX,EAX,"-BC-S-B",FALSE);
+  			EffectiveAddressRead(mode,'B',EBX,EBX,"--C-S-B",TRUE);
+  			EffectiveAddressRead(mode,'B',ECX,EAX,"-BC-S-B",TRUE);
 
             CopyX();
 
@@ -6241,6 +6244,12 @@ void divides(void)
 				Align();
 				fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
+
+                /* Save EDX (in case of overflow) */
+
+			    fprintf(fp, "\t\t mov   [%s],edx\n",REG_CCR);
+
+
                 /* Cycle Timing (if succeeds OK) */
 
                 Cycles = divide_cycles[Dest & 0x0f] + 95 + (type * 17);
@@ -6261,53 +6270,67 @@ void divides(void)
 
 				sprintf(TrapLabel, "%s", GenerateLabel(0,1) ) ;
 
+				EffectiveAddressRead(Dest,'W',EBX,EAX,"A-C-SDB",FALSE); /* source */
+
+				fprintf(fp, "\t\t test  ax,ax\n");
+				fprintf(fp, "\t\t je    near %s_ZERO\t\t;do div by zero trap\n", TrapLabel);
+
 				if ( type == 1 ) /* signed */
-					{
-					EffectiveAddressRead(Dest,'W',EBX,EAX,"A-CDSDB",FALSE); /* source */
-					fprintf(fp, "\t\t or    ax,ax\n");
-					fprintf(fp, "\t\t je    near %s\t\t;do div by zero trap\n", TrapLabel);
-					fprintf(fp, "\t\t cwde\n");
-					fprintf(fp, "\t\t mov   ebx,eax\n");
-					}
+				{
+					fprintf(fp, "\t\t movsx ebx,ax\n");
+				}
 				else
-					{
-					EffectiveAddressRead(Dest,'W',EBX,EBX,"A-CDSDB",FALSE); /* source */
-					fprintf(fp, "\t\t or    bx,bx\n");
-					fprintf(fp, "\t\t je    near %s\t\t;do div by zero trap\n", TrapLabel);
-					}
+				{
+					fprintf(fp, "\t\t movzx ebx,ax\n");
+				}
 
-				EffectiveAddressRead(0,'L',ECX,EAX,"ABCDSDB",FALSE); /* dest */
+				EffectiveAddressRead(0,'L',ECX,EAX,"ABC-SDB",FALSE); /* dest */
 
-				if ( type == 1 )
-					fprintf(fp, "\t\t cdq\n");
+				if ( type == 1 ) /* signed */
+                {
+					fprintf(fp, "\t\t cdq\n");	 			/* EDX:EAX = 64 bit signed */
+					fprintf(fp, "\t\t idiv  ebx\n");    	/* EBX = 32 bit */
+
+                	/* Check for Overflow */
+
+                    fprintf(fp, "\t\t movsx ebx,ax\n");
+                    fprintf(fp, "\t\t cmp   eax,ebx\n");
+                    fprintf(fp, "\t\t jne   short %s_OVER\n",TrapLabel);
+                }
 				else
-					{
-/*					fprintf(fp, "\t\t and   eax,0FFFFH\n");*/
-					fprintf(fp, "\t\t movzx ebx,bx\n");
-					fprintf(fp, "\t\t xor   edx,edx\n");
-					}
-
-				if ( type == 1 )
-					fprintf(fp, "\t\t idiv  ebx\n");
-				else
+				{
+					fprintf(fp, "\t\t xor   edx,edx\n");	/* EDX:EAX = 64 bit signed */
 					fprintf(fp, "\t\t div   ebx\n");
 
-				fprintf(fp, "\t\t xor   ebx,ebx\n");
-				fprintf(fp, "\t\t test  eax, 0FFFF0000H\n");
-				fprintf(fp, "\t\t setnz bl\n");
-				fprintf(fp, "\t\t shl   ebx,byte 11\n"); /* set bit 11 */
+                	/* Check for Overflow */
+
+					fprintf(fp, "\t\t test  eax, 0FFFF0000H\n");
+        	        fprintf(fp, "\t\t jnz   short %s_OVER\n",TrapLabel);
+				}
+
+                /* Sort out Result */
 
 				fprintf(fp, "\t\t shl   edx, byte 16\n");
 				fprintf(fp, "\t\t mov   dx,ax\n");
 				fprintf(fp, "\t\t mov   [%s+ECX*4],edx\n",REG_DAT);
 				SetFlags('W',EDX,TRUE,FALSE,FALSE);
 
-				/* overflow = 0800H */
-				fprintf(fp, "\t\t or    edx,ebx\t\t;V flag\n");
 				Completed();
 
+
+                /* Overflow */
+
+                Align();
+                fprintf(fp, "%s_OVER:\n",TrapLabel);
+			    fprintf(fp, "\t\t mov   edx,[%s]\n",REG_CCR);
+				fprintf(fp, "\t\t or    dh,8h\t\t;V flag\n");
+                Completed();
+
+
+                /* Division by Zero */
+
 				Align();
-				fprintf(fp, "%s:\t\t ;Do divide by zero trap\n", TrapLabel);
+				fprintf(fp, "%s_ZERO:\t\t ;Do divide by zero trap\n", TrapLabel);
 
                 /* Correct cycle counter for error */
 

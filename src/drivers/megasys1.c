@@ -1102,7 +1102,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,
 	3500000,	/* ?? */
-	{ YM3012_VOL(50,OSD_PAN_LEFT,50,OSD_PAN_RIGHT) },
+	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
 	{ 0 }
 };
 
@@ -1175,7 +1175,8 @@ static struct YM2203interface ym2203_interface =
 {
 	1,
 	1200000,	/* ?? */
-	{ YM2203_VOL(0xff,0xff) },	/* gain,volume */
+	{ YM2203_VOL(25,25) },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0	},
@@ -1361,7 +1362,7 @@ struct GameDriver street64_driver =\
 	__FILE__,\
 	0,\
 	"64street",\
-	"64th Street",\
+	"64th. Street - A Detective Story",\
 	"1991",\
 	"Jaleco",\
 	MEGASYS1_CREDITS,\
@@ -1740,7 +1741,7 @@ INPUT_PORTS_START( input_ports_p47 )
 INPUT_PORTS_END
 
 
-MEGASYS1_GAMEDRIVER(p47,0,P-47 (World),1988,A,0)
+MEGASYS1_GAMEDRIVER(p47,0,P-47 - The Phantom Fighter (World),1988,A,0)
 
 /***************************************************************************
 
@@ -1786,7 +1787,7 @@ INPUT_PORTS_START( input_ports_p47j )
 INPUT_PORTS_END
 
 
-MEGASYS1_GAMEDRIVER(p47j,&p47_driver,P-47 (Japan),1988,A,0)
+MEGASYS1_GAMEDRIVER(p47j,&p47_driver,P-47 - The Freedom Fighter (Japan),1988,A,0)
 
 
 
@@ -2028,7 +2029,8 @@ void rodlandj_fill(void)
 	for (i = 0x110000; i < 0x120000; i++)	RAM[i] = 0xFF;
 }
 
-MEGASYS1_GAMEDRIVER(rodlandj,&rodland_driver,RodLand (Japan),1990,A,rodlandj_fill)
+//MEGASYS1_GAMEDRIVER(rodlandj,&rodland_driver,RodLand (Japan),1990,A,rodlandj_fill)
+MEGASYS1_GAMEDRIVER(rodlandj,0,RodLand (Japan),1990,A,rodlandj_fill)
 
 
 

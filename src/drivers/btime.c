@@ -51,7 +51,6 @@ extern unsigned char *bnj_backgroundram;
 extern int bnj_backgroundram_size;
 extern unsigned char *zoar_scrollram;
 extern unsigned char *deco_charram;
-extern int lnc_sprite_x_adjust;
 
 void btime_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void lnc_vh_convert_color_prom  (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -93,6 +92,15 @@ int lnc_sound_interrupt(void);
 
 static void sound_command_w(int offset,int data);
 
+int  mmonkey_protection_r(int offset);
+void mmonkey_protection_w(int offset, int data);
+
+
+INLINE int swap_bits_5_6(int data)
+{
+	return (data & 0x9f) | ((data & 0x20) << 1) | ((data & 0x40) >> 1);
+}
+
 
 static void btime_decrypt(void)
 {
@@ -127,19 +135,41 @@ static void lnc_w(int offset,int data)
 {
 	extern unsigned char *RAM;
 
-	if      (offset <= 0x3bff)                       RAM[offset] = data;
+	if      (offset <= 0x3bff)                       ;
 	else if (offset >= 0x3c00 && offset <= 0x3fff) { lnc_videoram_w(offset - 0x3c00,data); return; }
 	else if (offset >= 0x7c00 && offset <= 0x7fff) { lnc_mirrorvideoram_w(offset - 0x7c00,data); return; }
 	else if (offset == 0x8000)                     { return; }  /* MWA_NOP */
 	else if (offset == 0x8001)                     { lnc_video_control_w(0,data); return; }
-	else if (offset == 0x8003)                     { RAM[offset] = data; return; }
+	else if (offset == 0x8003)                       ;
 	else if (offset == 0x9000)                     { return; }  /* MWA_NOP */
 	else if (offset == 0x9002)                     { sound_command_w(0,data); return; }
-	else if (offset >= 0xb000 && offset <= 0xb1ff)   RAM[offset] = data;
+	else if (offset >= 0xb000 && offset <= 0xb1ff)   ;
 	else if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
 
+	RAM[offset] = data;
+
 	/* Swap bits 5 & 6 for opcodes */
-	ROM[offset] = (data & 0x9f) | ((data & 0x20) << 1) | ((data & 0x40) >> 1);
+	ROM[offset] = swap_bits_5_6(data);
+}
+
+static void mmonkey_w(int offset,int data)
+{
+	extern unsigned char *RAM;
+
+	if      (offset <= 0x3bff)                       ;
+	else if (offset >= 0x3c00 && offset <= 0x3fff) { lnc_videoram_w(offset - 0x3c00,data); return; }
+	else if (offset >= 0x7c00 && offset <= 0x7fff) { lnc_mirrorvideoram_w(offset - 0x7c00,data); return; }
+	else if (offset == 0x8001)                     { lnc_video_control_w(0,data); return; }
+	else if (offset == 0x8003)                       ;
+	else if (offset == 0x9000)                     { return; }  /* MWA_NOP */
+	else if (offset == 0x9002)                     { sound_command_w(0,data); return; }
+	else if (offset >= 0xb000 && offset <= 0xbfff) { mmonkey_protection_w(offset - 0xb000, data); return; }
+	else if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
+
+	RAM[offset] = data;
+
+	/* Swap bits 5 & 6 for opcodes */
+	ROM[offset] = swap_bits_5_6(data);
 }
 
 static void btime_w(int offset,int data)
@@ -358,9 +388,40 @@ static struct MemoryWriteAddress lnc_writemem[] =
 	{ 0x8000, 0x8000, MWA_NOP },            /* ??? */
 	{ 0x8001, 0x8001, lnc_video_control_w },
 	{ 0x8003, 0x8003, MWA_RAM, &lnc_charbank },
-	{ 0x9000, 0x9000, MWA_NOP },            /* ??? */
+	{ 0x9000, 0x9000, MWA_NOP },            /* IRQ ACK ??? */
 	{ 0x9002, 0x9002, sound_command_w },
 	{ 0xb000, 0xb1ff, MWA_RAM },
+	{ -1 }  /* end of table */
+};
+
+
+static struct MemoryReadAddress mmonkey_readmem[] =
+{
+	{ 0x0000, 0x3fff, MRA_RAM },
+	{ 0x7c00, 0x7fff, btime_mirrorvideoram_r },
+	{ 0x8000, 0x8000, input_port_3_r },     /* DSW1 */
+	{ 0x8001, 0x8001, input_port_4_r },     /* DSW2 */
+	{ 0x9000, 0x9000, input_port_0_r },     /* IN0 */
+	{ 0x9001, 0x9001, input_port_1_r },     /* IN1 */
+	{ 0x9002, 0x9002, input_port_2_r },     /* coin */
+	{ 0xb000, 0xbfff, mmonkey_protection_r },
+	{ 0xc000, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress mmonkey_writemem[] =
+{
+	{ 0x0000, 0xffff, mmonkey_w },  /* override the following entries to */
+									/* support ROM decryption */
+	{ 0x0000, 0x3bff, MWA_RAM },
+	{ 0x3c00, 0x3fff, lnc_videoram_w, &videoram, &videoram_size },
+	{ 0x7800, 0x7bff, colorram_w, &colorram },  /* this is just here to initialize the pointer */
+	{ 0x7c00, 0x7fff, lnc_mirrorvideoram_w },
+	{ 0x8001, 0x8001, lnc_video_control_w },
+	{ 0x8003, 0x8003, MWA_RAM, &lnc_charbank },
+	{ 0x9000, 0x9000, MWA_NOP },            /* IRQ ACK ??? */
+	{ 0x9002, 0x9002, sound_command_w },
+	{ 0xb000, 0xbfff, mmonkey_protection_w },
 	{ -1 }  /* end of table */
 };
 
@@ -958,6 +1019,76 @@ INPUT_PORTS_START( wtennis_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( mmonkey_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unused ) )   /* almost certainly unused */
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK  )
+
+	PORT_START      /* DSW2 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x06, "Never" )
+	PORT_DIPSETTING(    0x02, "Every 15000" )
+	PORT_DIPSETTING(    0x00, "20000" )
+	PORT_DIPSETTING(    0x04, "Every 30000" )
+	PORT_DIPNAME( 0x18, 0x08, DEF_STR( Difficulty ) )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Level Skip Mode", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x18, "Easy" )
+	PORT_DIPSETTING(    0x08, "Medium" )
+	PORT_DIPSETTING(    0x10, "Hard" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unused ) )   /* almost certainly unused */
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unused ) )   /* almost certainly unused */
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
 INPUT_PORTS_START( bnj_input_ports )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -1241,7 +1372,8 @@ static struct AY8910interface ay8910_interface =
 {
 	2,      /* 2 chips */
 	1500000,        /* 1.5 MHz ? (hand tuned) */
-	{ 255, 255 },
+	{ 25, 25 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -1260,13 +1392,24 @@ static struct AY8910interface ay8910_interface =
 #define cookrace_vh_convert_color_prom   btime_vh_convert_color_prom
 #define bnj_vh_convert_color_prom        0
 #define eggs_vh_convert_color_prom       btime_vh_convert_color_prom
+#define wtennis_vh_convert_color_prom    lnc_vh_convert_color_prom
+#define mmonkey_vh_convert_color_prom    lnc_vh_convert_color_prom
 #define zoar_vh_convert_color_prom       btime_vh_convert_color_prom
 #define disco_vh_convert_color_prom      btime_vh_convert_color_prom
+
+#define wtennis_vh_screenrefresh	eggs_vh_screenrefresh
+#define mmonkey_vh_screenrefresh	eggs_vh_screenrefresh
+
+#define wtennis_readmem			lnc_readmem
+
+#define wtennis_writemem		lnc_writemem
 
 #define btime_sound_readmem		sound_readmem
 #define cookrace_sound_readmem	sound_readmem
 #define eggs_sound_readmem		sound_readmem
 #define lnc_sound_readmem		sound_readmem
+#define wtennis_sound_readmem	sound_readmem
+#define mmonkey_sound_readmem	sound_readmem
 #define bnj_sound_readmem		sound_readmem
 #define zoar_sound_readmem		sound_readmem
 
@@ -1274,12 +1417,16 @@ static struct AY8910interface ay8910_interface =
 #define cookrace_sound_writemem	sound_writemem
 #define eggs_sound_writemem		sound_writemem
 #define lnc_sound_writemem		sound_writemem
+#define wtennis_sound_writemem	sound_writemem
+#define mmonkey_sound_writemem	sound_writemem
 #define bnj_sound_writemem		sound_writemem
 #define zoar_sound_writemem		sound_writemem
 
 #define btime_init_machine     0
 #define cookrace_init_machine  0
 #define bnj_init_machine       0
+#define wtennis_init_machine   lnc_init_machine
+#define mmonkey_init_machine   lnc_init_machine
 #define zoar_init_machine      0
 #define disco_init_machine     0
 
@@ -1287,6 +1434,8 @@ static struct AY8910interface ay8910_interface =
 #define zoar_vh_start      btime_vh_start
 #define eggs_vh_start      btime_vh_start
 #define lnc_vh_start       btime_vh_start
+#define wtennis_vh_start   btime_vh_start
+#define mmonkey_vh_start   btime_vh_start
 #define disco_vh_start     btime_vh_start
 
 #define btime_vh_stop      generic_vh_stop
@@ -1294,6 +1443,8 @@ static struct AY8910interface ay8910_interface =
 #define zoar_vh_stop       generic_vh_stop
 #define eggs_vh_stop       generic_vh_stop
 #define lnc_vh_stop        generic_vh_stop
+#define wtennis_vh_stop    generic_vh_stop
+#define mmonkey_vh_stop    generic_vh_stop
 #define disco_vh_stop      generic_vh_stop
 
 
@@ -1390,6 +1541,8 @@ MACHINE_DRIVER(     btime,    1500000, btime_irq_interrupt, nmi_interrupt,      
 MACHINE_DRIVER(     cookrace, 1500000, btime_nmi_interrupt, nmi_interrupt,       cookrace_gfxdecodeinfo, 16);
 EGGS_MACHINE_DRIVER(eggs,     1500000, interrupt,           nmi_interrupt,       lnc_gfxdecodeinfo,      8);
 MACHINE_DRIVER(     lnc,      1500000, btime_nmi_interrupt, lnc_sound_interrupt, lnc_gfxdecodeinfo,      8);
+MACHINE_DRIVER(     wtennis,  1500000, btime_nmi_interrupt, nmi_interrupt,       lnc_gfxdecodeinfo,      8);
+MACHINE_DRIVER(     mmonkey,  1500000, btime_nmi_interrupt, nmi_interrupt,       lnc_gfxdecodeinfo,      8);
 MACHINE_DRIVER(     bnj,       750000, btime_nmi_interrupt, nmi_interrupt,       bnj_gfxdecodeinfo,      16);
 MACHINE_DRIVER(     zoar,     1500000, zoar_irq_interrupt,  nmi_interrupt,       zoar_gfxdecodeinfo,     64);
 MACHINE_DRIVER(     disco,     750000, btime_irq_interrupt, nmi_interrupt,       disco_gfxdecodeinfo,    32);
@@ -1592,7 +1745,30 @@ ROM_START( wtennis_rom )
 	ROM_RELOAD(               0xf000, 0x1000 )     /* for the reset/interrupt vectors */
 
     ROM_REGION(0x0040)	/* PROMs */
-    ROM_LOAD( "2.bpr",        0x0000, 0x0020, 0xf051cb28 )	/* palette */
+    ROM_LOAD( "mb7051.m5",    0x0000, 0x0020, 0xf051cb28 )	/* palette */
+    ROM_LOAD( "sb-4c",        0x0020, 0x0020, 0xa29b4204 )	/* RAS/CAS logic - not used */
+ROM_END
+
+ROM_START( mmonkey_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "mmonkey.e4",   0xc000, 0x1000, 0x8d31bf6a )
+	ROM_LOAD( "mmonkey.d4",   0xd000, 0x1000, 0xe54f584a )
+	ROM_LOAD( "mmonkey.b4",   0xe000, 0x1000, 0x399a161e )
+	ROM_LOAD( "mmonkey.a4",   0xf000, 0x1000, 0xf7d3d1e3 )
+
+	ROM_REGION_DISPOSE(0x6000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "mmonkey.l11",  0x0000, 0x1000, 0xb6aa8566 )
+	ROM_LOAD( "mmonkey.m11",  0x1000, 0x1000, 0x6cc4d0c4 )
+	ROM_LOAD( "mmonkey.l13",  0x2000, 0x1000, 0x2a343b7e )
+	ROM_LOAD( "mmonkey.m13",  0x3000, 0x1000, 0x0230b50d )
+	ROM_LOAD( "mmonkey.l14",  0x4000, 0x1000, 0x922bb3e1 )
+	ROM_LOAD( "mmonkey.m14",  0x5000, 0x1000, 0xf943e28c )
+
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_LOAD( "mmonkey.h1",   0xf000, 0x1000, 0x5bcb2e81 )
+
+    ROM_REGION(0x0040)	/* PROMs */
+    ROM_LOAD( "mmi6331.m5",   0x0000, 0x0020, 0x55e28b32 )	/* palette */
     ROM_LOAD( "sb-4c",        0x0020, 0x0020, 0xa29b4204 )	/* RAS/CAS logic - not used */
 ROM_END
 
@@ -1712,16 +1888,9 @@ static int wtennis_reset_hack_r(int offset)
 	return RAM[0xc15f];
 }
 
-static void lnc_driver_init(void)
-{
-	lnc_sprite_x_adjust = 1;
-}
-
 static void wtennis_driver_init(void)
 {
 	install_mem_read_handler(0, 0xc15f, 0xc15f, wtennis_reset_hack_r);
-
-	lnc_sprite_x_adjust = 0;
 }
 
 
@@ -1758,7 +1927,7 @@ static void lnc_decode(void)
 
 	/* Swap bits 5 & 6 for opcodes */
 	for (A = 0;A < 0x10000;A++)
-		ROM[A] = (RAM[A] & 0x9f) | ((RAM[A] & 0x20) << 1) | ((RAM[A] & 0x40) >> 1);
+		ROM[A] = swap_bits_5_6(RAM[A]);
 }
 
 
@@ -2026,8 +2195,8 @@ static int disco_hiload(void)
 	/* we dirty it, then we wait for it to be cleared again */
 	if (firsttime == 0)
 	{
-                memset(&RAM[0x0006],0xff, 3);
-                memset(&RAM[0x0400],0xff, 6*6);
+		memset(&RAM[0x0006],0xff, 3);
+		memset(&RAM[0x0400],0xff, 6*6);
 		firsttime = 1;
 	}
 
@@ -2237,7 +2406,7 @@ struct GameDriver lnc_driver =
 	"Zsolt Vasvari\nKevin Brisley (Bump 'n' Jump driver)\nMirko Buffoni (Audio/Add. code)",
 	0,
 	&lnc_machine_driver,
-	lnc_driver_init,
+	0,
 
 	lnc_rom,
 	0, lnc_decode,
@@ -2262,7 +2431,7 @@ struct GameDriver wtennis_driver =
 	"bootleg",
 	"Zsolt Vasvari\nKevin Brisley (Bump 'n' Jump driver)\nMirko Buffoni (Audio/Add. code)",
 	GAME_IMPERFECT_COLORS,
-	&lnc_machine_driver,
+	&wtennis_machine_driver,
 	wtennis_driver_init,
 
 	wtennis_rom,
@@ -2271,6 +2440,32 @@ struct GameDriver wtennis_driver =
 	0,	/* sound_prom */
 
 	wtennis_input_ports,
+
+    PROM_MEMORY_REGION(3), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	0, 0
+};
+
+struct GameDriver mmonkey_driver =
+{
+	__FILE__,
+	0,
+	"mmonkey",
+	"Minky Monkey",
+	"1982",
+	"Technos Japan + Roller Tron",
+	"Zsolt Vasvari\nKevin Brisley (Bump 'n' Jump driver)\nMirko Buffoni (Audio/Add. code)",
+	0,
+	&mmonkey_machine_driver,
+	0,
+
+	mmonkey_rom,
+	0, lnc_decode,
+	0,
+	0,	/* sound_prom */
+
+	mmonkey_input_ports,
 
     PROM_MEMORY_REGION(3), 0, 0,
 	ORIENTATION_ROTATE_270,

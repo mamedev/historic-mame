@@ -314,14 +314,16 @@ static struct DACinterface dac_interface =
 
 static struct Samplesinterface samples_interface =
 {
-	3	/* 3 channels */
+	3,	/* 3 channels */
+	25	/* volume */
 };
 
 static struct AY8910interface ay8910_interface =
 {
 	1,      /* 1 chip */
 	14318000/6,	/* ? */
-	{ 255 },
+	{ 50 },
+	AY8910_DEFAULT_GAIN,
 	{ soundlatch_r },
 	{ 0 },
 	{ 0 },

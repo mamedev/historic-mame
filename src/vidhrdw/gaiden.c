@@ -341,7 +341,7 @@ static void mark_sprite_colors( void ){
 		for( i = 0; i<16; i++ ){
 			int bit;
 			for( bit = 1; bit<16; bit++ ){
-				if( colmask[i] & (1 << bit) ) pen_used[bit] = PALETTE_COLOR_USED;
+				if( colmask[i] & (1 << bit) ) pen_used[bit] |= PALETTE_COLOR_VISIBLE;
 			}
 			pen_used += 16;
 		}

@@ -333,10 +333,25 @@ extern int neogeo_game_fix;
 /* Temporary, Todo: Figure out how this really works! :) */
 static int neo_control_r(int offset)
 {
-	if (neogeo_game_fix == 3)
-			return 0x80;            /* sam sho3 */
+	/*
+		the format of this very important location is not known.
+		From the usage lstbld2 does, it looks like:
+		AAAA AAAA B??? CDDD
+		A is most likely the video beam line
+		B is used together with A in one place, so most likely video beam position
+		C is unknown (tested in several places, in one place it does
+		  bclr    #$0, $3c000e.l
+		  when the bit is set, so it seems interrupt related
+		D is unknown (used in a couple of places)
+	*/
 
-    return ((0x0100*cpu_getscanline())+(neogeo_frame_counter & 0x0007));
+//	if (neogeo_game_fix == 3)
+//			return 0x80;            /* sam sho3 */
+
+    return (0x100 * cpu_getscanline())
+			+ (rand() & 0x0080)
+			+ (rand() & 0x0008)
+			+ (neogeo_frame_counter & 0x0007);
 
 #if 0
 if (errorlog) fprintf(errorlog,"PC %06x: read 0x3c0006\n",cpu_get_pc());
@@ -808,7 +823,8 @@ struct YM2610interface neogeo_ym2610_interface =
 {
 	1,
 	8000000,
-	{ 0x301e },
+	{ 30 },
+	{ 0x30 },	/* gain */
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -816,7 +832,7 @@ struct YM2610interface neogeo_ym2610_interface =
 	{ neogeo_sound_irq },
 	{ MEM_SAMPLE0 },
 	{ MEM_SAMPLE1 },
-	{ YM3012_VOL(60,OSD_PAN_LEFT,60,OSD_PAN_RIGHT) }
+	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) }
 };
 
 /******************************************************************************/
@@ -2398,10 +2414,10 @@ ROM_START( pspikes2_rom )
 	NO_DELTAT_REGION
 
 	ROM_REGION(0x600000)
-	ROM_LOAD_GFX_EVEN( "spike_c1.rom", 0x000000, 0x100000, 0x7f250f76 ) /* Plane 0,1 == pbobble */
-	ROM_LOAD_GFX_ODD ( "spike_c2.rom", 0x000000, 0x100000, 0x20912873 ) /* Plane 2,3 == pbobble */
-	ROM_LOAD_GFX_EVEN( "spike_c3.rom", 0x200000, 0x100000, 0x4b641ba1 ) /* Plane 0,1 == pbobble */
-	ROM_LOAD_GFX_ODD ( "spike_c4.rom", 0x200000, 0x100000, 0x35072596 ) /* Plane 2,3 == pbobble */
+	ROM_LOAD_GFX_EVEN( "spike_c1.rom", 0x000000, 0x100000, 0x7f250f76 ) /* Plane 0,1 */
+	ROM_LOAD_GFX_ODD ( "spike_c2.rom", 0x000000, 0x100000, 0x20912873 ) /* Plane 2,3 */
+	ROM_LOAD_GFX_EVEN( "spike_c3.rom", 0x200000, 0x100000, 0x4b641ba1 ) /* Plane 0,1 */
+	ROM_LOAD_GFX_ODD ( "spike_c4.rom", 0x200000, 0x100000, 0x35072596 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_EVEN( "spike_c5.rom", 0x400000, 0x100000, 0x151dd624 ) /* Plane 0,1 */
 	ROM_LOAD_GFX_ODD ( "spike_c6.rom", 0x400000, 0x100000, 0xa6722604 ) /* Plane 2,3 */
 ROM_END
@@ -2512,6 +2528,28 @@ ROM_START( kotm2_rom )
 	ROM_LOAD_GFX_EVEN( 0,              0x600000, 0x100000, 0 )
 	ROM_LOAD_GFX_ODD ( "kotm2_c4.rom", 0x200000, 0x100000, 0xb0d44111 ) /* Plane 2,3 */
 	ROM_LOAD_GFX_ODD ( 0,              0x600000, 0x100000, 0 )
+ROM_END
+
+ROM_START( quizkof_rom )
+	ROM_REGION(0x100000)
+	ROM_LOAD_WIDE_SWAP( "qkof-p1.rom", 0x000000, 0x100000, 0x4440315e )
+
+	NEO_SFIX_128K( "qkof-s1.rom", 0xd7b86102 )
+
+	NEO_BIOS_SOUND_128K( "qkof-m1.rom", 0xf5f44172 )
+
+	ROM_REGION_OPTIONAL(0x600000) /* sound samples */
+	ROM_LOAD( "qkof-v1.rom", 0x000000, 0x200000, 0x0be18f60 )
+	ROM_LOAD( "qkof-v2.rom", 0x200000, 0x200000, 0x4abde3ff )
+	ROM_LOAD( "qkof-v3.rom", 0x400000, 0x200000, 0xf02844e2 )
+
+	NO_DELTAT_REGION
+
+	ROM_REGION(0x800000)
+	ROM_LOAD_GFX_EVEN( "qkof-c1.rom",  0x000000, 0x200000, 0xea1d764a ) /* Plane 0,1 */
+	ROM_LOAD_GFX_ODD ( "qkof-c2.rom",  0x000000, 0x200000, 0xc78c49da ) /* Plane 2,3 */
+	ROM_LOAD_GFX_EVEN( "qkof-c3.rom",  0x400000, 0x200000, 0xb4851bfe ) /* Plane 0,1 */
+	ROM_LOAD_GFX_ODD ( "qkof-c4.rom",  0x400000, 0x200000, 0xca6f5460 ) /* Plane 2,3 */
 ROM_END
 
 ROM_START( stakwin_rom )
@@ -4080,10 +4118,36 @@ ROM_START( lastblad_rom )
 	ROM_LOAD_GFX_ODD ( "lb_c6.rom", 0x2000000, 0x200000, 0x5c35d541 ) /* Plane 2,3 */
 ROM_END
 
+ROM_START( lastbld2_rom )
+	ROM_REGION(0x500000)
+	ROM_LOAD_WIDE_SWAP( "lb2_p1.rom", 0x000000, 0x100000, 0xaf1e6554 )
+	ROM_LOAD_WIDE_SWAP( "lb2_p2.rom", 0x100000, 0x400000, 0xadd4a30b )
+
+	NEO_SFIX_128K( "lb2_s1.rom", 0xc9cd2298 )
+
+	NEO_BIOS_SOUND_128K( "lb2_m1.rom", 0xacf12d10 )
+
+	ROM_REGION_OPTIONAL(0x1000000) /* sound samples */
+	ROM_LOAD( "lb2_v1.rom", 0x000000, 0x400000, 0xf7ee6fbb )
+	ROM_LOAD( "lb2_v2.rom", 0x400000, 0x400000, 0xaa9e4df6 )
+	ROM_LOAD( "lb2_v3.rom", 0x800000, 0x400000, 0x4ac750b2 )
+	ROM_LOAD( "lb2_v4.rom", 0xc00000, 0x400000, 0xf5c64ba6 )
+
+	NO_DELTAT_REGION
+
+	ROM_REGION(0x3000000)
+	ROM_LOAD_GFX_EVEN( "lb2_c1.rom",  0x0000000, 0x800000, 0x5839444d ) /* Plane 0,1 */
+	ROM_LOAD_GFX_ODD ( "lb2_c2.rom",  0x0000000, 0x800000, 0xdd087428 ) /* Plane 2,3 */
+	ROM_LOAD_GFX_EVEN( "lb2_c3.rom",  0x1000000, 0x800000, 0x6054cbe0 ) /* Plane 0,1 */
+	ROM_LOAD_GFX_ODD ( "lb2_c4.rom",  0x1000000, 0x800000, 0x8bd2a9d2 ) /* Plane 2,3 */
+	ROM_LOAD_GFX_EVEN( "lb2_c5.rom",  0x2000000, 0x800000, 0x6a503dcf ) /* Plane 0,1 */
+	ROM_LOAD_GFX_ODD ( "lb2_c6.rom",  0x2000000, 0x800000, 0xec9c36d0 ) /* Plane 2,3 */
+ROM_END
+
 ROM_START( breakers_rom )
 	ROM_REGION(0x200000)
 	ROM_LOAD_WIDE_SWAP( "break_p1.rom", 0x100000, 0x100000, 0xed24a6e6 )
-	ROM_CONTINUE(             0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
     NEO_SFIX_128K( "break_s1.rom", 0x076fb64c )
 
@@ -4105,7 +4169,7 @@ ROM_END
 ROM_START( breakrev_rom )
 	ROM_REGION(0x200000)
 	ROM_LOAD_WIDE_SWAP( "brev_p1.rom", 0x100000, 0x100000, 0xc828876d )
-	ROM_CONTINUE(                      0x000000, 0x100000)
+	ROM_CONTINUE(                      0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
 
 	NEO_SFIX_128K( "brev_s1.rom", 0xe7660a5d )
 
@@ -4205,7 +4269,7 @@ void neogeo_mgd2_untangle(void)
 		data is now in the order 0 4 8 12... 2 5 9 13... 2 6 10 14... 3 7 11 15...
 		we must convert it to the MVS order 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15...
 		to do so we use a recursive function which doesn't use additional memory
-		(it could be easily conferted in an iterative one).
+		(it could be easily converted into an iterative one).
 		It's called shuffle because it mimics the shuffling of a deck of cards.
 	*/
 	shuffle(gfxdata,len);
@@ -4383,7 +4447,7 @@ NEODRIVERMGD2(alpham2, "Alpha Mission II / ASO II - Last Guardian","1991","SNK",
 NEODRIVERMGD2(eightman,"Eight Man","1991","SNK / Pallas",&neogeo_machine_driver)
 NEODRIVERMGD2(burningf,"Burning Fight","1991","SNK",&neogeo_machine_driver)
 NEODRIVERMGD2(kotm,    "King of the Monsters","1991","SNK",&neogeo_machine_driver)
-NEODRIVER(kotm2,   "King of the Monsters 2","1992","SNK",&neogeo_machine_driver)
+NEODRIVER(kotm2,   "King of the Monsters 2 - The Next Thing","1992","SNK",&neogeo_machine_driver)
 NEODRIVERMGD2(gpilots, "Ghost Pilots","1991","SNK",&neogeo_machine_driver)
 NEODRIVERMGD2(sengoku, "Sengoku / Sengoku Denshou","1991","SNK",&neogeo_machine_driver)
 NEODRIVERMGD2(sengoku2,"Sengoku 2 / Sengoku Denshou 2","1993","SNK",&neogeo_machine_driver)
@@ -4408,17 +4472,18 @@ NEODRIVER(kof96,   "The King of Fighters '96","1996","SNK",&neogeo_16bit_machine
 NEODRIVER(kof97,   "The King of Fighters '97","1997","SNK",&neogeo_16bit_machine_driver)
 NEODRIVER(kof98,   "The King of Fighters '98 - The Slugfest / King of Fighters '98 - dream match never ends","1998","SNK",&neogeo_16bit_machine_driver)
 NEODRIVER(savagere,"Savage Reign / Fu'un Mokushiroku - kakutou sousei","1995","SNK",&neogeo_16bit_machine_driver)
-NEODRIVER(kizuna,  "Kizuna Encounter Super Tag Battle / Fu'un Super Tag Battle","1996","SNK",&neogeo_16bit_machine_driver)
+NEODRIVER(kizuna,  "Kizuna Encounter - Super Tag Battle / Fu'un Super Tag Battle","1996","SNK",&neogeo_16bit_machine_driver)
 NEODRIVER(samsho,  "Samurai Shodown / Samurai Spirits","1993","SNK",&neogeo_machine_driver)
-NEODRIVER(samsho2, "Samurai Shodown 2 / Shin Samurai Spirits - Haohmaru jigokuhen","1994","SNK",&neogeo_16bit_machine_driver)
-NEODRIVER(samsho3, "Samurai Shodown 3 / Samurai Spirits - Zankurou Musouken","1995","SNK",&neogeo_16bit_machine_driver)
-NEODRIVER(samsho4, "Samurai Shodown 4 - Amakusa's Revenge / Samurai Spirits - Amakusa Kourin","1996","SNK",&neogeo_machine_driver)
-NEODRIVER(lastblad,"The Last Blade / Gekkano Kenshi - Bakumatsu Roman","1997","SNK",&neogeo_16bit_machine_driver)
+NEODRIVER(samsho2, "Samurai Shodown II / Shin Samurai Spirits - Haohmaru jigokuhen","1994","SNK",&neogeo_16bit_machine_driver)
+NEODRIVER(samsho3, "Samurai Shodown III / Samurai Spirits - Zankurou Musouken","1995","SNK",&neogeo_16bit_machine_driver)
+NEODRIVER(samsho4, "Samurai Shodown IV - Amakusa's Revenge / Samurai Spirits - Amakusa Kourin","1996","SNK",&neogeo_machine_driver)
+NEODRIVER(lastblad,"The Last Blade / Bakumatsu Roman - Gekkano Kenshi","1997","SNK",&neogeo_16bit_machine_driver)
+NEODRIVER(lastbld2,"The Last Blade 2 / Bakumatsu Roman - Dai Ni Maku Gekkano Kenshi","1998","SNK",&neogeo_16bit_machine_driver)
 NEODRIVER(ssideki, "Super Sidekicks / Tokuten Ou","1992","SNK",&neogeo_machine_driver)
 NEODRIVER(ssideki2,"Super Sidekicks 2 - The World Championship / Tokuten Ou 2 - real fight football","1994","SNK",&neogeo_machine_driver)
 NEODRIVER(ssideki3,"Super Sidekicks 3 - The Next Glory / Tokuten Ou 3 - eikoue no michi","1995","SNK",&neogeo_raster_machine_driver)
-NEODRIVER(ssideki4,"Super Sidekicks 4 - Ultimate 11 / Tokuten Ou - Honoo no Libero","1996","SNK",&neogeo_raster_machine_driver)
-NEODRIVER(mslug2,  "Metal Slug 2","1998","SNK",&neogeo_machine_driver)
+NEODRIVER(ssideki4,"The Ultimate 11 / Tokuten Ou - Honoo no Libero","1996","SNK",&neogeo_raster_machine_driver)
+NEODRIVER(mslug2,  "Metal Slug 2 - Super Vehicle-001/II","1998","SNK",&neogeo_machine_driver)
 
 /* Alpha Denshi Co / ADK (changed name in 1993) */
 NEODRIVER(bjourney,"Blue's Journey / Raguy","1990","Alpha Denshi Co",&neogeo_machine_driver)
@@ -4455,7 +4520,7 @@ NEODRIVER(miexchng,"Money Puzzle Exchanger / Money Idol Exchanger","1997","Face"
 
 /* Hudson Soft */
 NEODRIVER(panicbom,"Panic Bomber","1994","Eighting / Hudson",&neogeo_machine_driver)
-NEODRIVER(kabukikl,"Kabuki Klash - Far East of Eden / Tengai Makyou Shinden - Far East of Eden","1995","Hudson",&neogeo_machine_driver)
+NEODRIVER(kabukikl,"Kabuki Klash - Far East of Eden / Tengai Makyou Shinden - Far East of Eden","1995","Hudson",&neogeo_16bit_machine_driver)
 NEODRIVER(neobombe,"Neo Bomberman","1997","Hudson",&neogeo_machine_driver)
 
 /* Monolith Corp. */
@@ -4463,7 +4528,7 @@ NEODRIVERMGD2(minasan, "Minnasanno Okagesamadesu","1990","Monolith Corp.",&neoge
 NEODRIVERMGD2(bakatono,"Bakatonosama Mahjong Manyuki","1991","Monolith Corp.",&neogeo_machine_driver)
 
 /* Nazca */
-NEODRIVER(mslug,   "Metal Slug","1996","Nazca",&neogeo_machine_driver)
+NEODRIVER(mslug,   "Metal Slug - Super Vehicle-001","1996","Nazca",&neogeo_machine_driver)
 NEODRIVER(turfmast,"Neo Turf Masters / Big Tournament Golf","1996","Nazca",&neogeo_machine_driver)
 
 /* NMK */
@@ -4473,6 +4538,7 @@ NEODRIVER(zedblade,"Zed Blade / Operation Ragnarok","1994","NMK",&neogeo_machine
 NEODRIVER(viewpoin,"Viewpoint","1992","Sammy",&neogeo_machine_driver)
 
 /* Saurus */
+NEODRIVER(quizkof, "Quiz King of Fighters","1995","Saurus",&neogeo_machine_driver)
 NEODRIVER(stakwin, "Stakes Winner / Stakes Winner - GI kinzen seihae no michi","1995","Saurus",&neogeo_machine_driver)
 NEODRIVER(stakwin2,"Stakes Winner 2","1996","Saurus",&neogeo_machine_driver)
 NEODRIVER(ragnagrd,"Operation Ragnagard / Shin-Oh-Ken","1996","Saurus",&neogeo_16bit_machine_driver)
@@ -4490,7 +4556,7 @@ NEODRIVER(marukodq,"Chibi Marukochan Deluxe Quiz","1995","Takara",&neogeo_machin
 
 /* Technos */
 NEODRIVER(doubledr,"Double Dragon (Neo Geo)","1995","Technos",&neogeo_machine_driver)
-NEODRIVER(gowcaizr,"Voltage Fighter Gowcaizer / Choujin Gakuen Gowcaizer","1995","Technos",&neogeo_machine_driver)
+NEODRIVER(gowcaizr,"Voltage Fighter - Gowcaizer / Choujin Gakuen Gowcaizer","1995","Technos",&neogeo_16bit_machine_driver)
 
 /* Tecmo */
 NEODRIVER(tws96,   "Tecmo World Soccer '96","1996","Tecmo",&neogeo_machine_driver)
@@ -4499,13 +4565,13 @@ NEODRIVER(tws96,   "Tecmo World Soccer '96","1996","Tecmo",&neogeo_machine_drive
 NEODRIVER(blazstar,"Blazing Star","1998","Yumekobo",&neogeo_16bit_machine_driver)
 
 /* Video System Co. */
-NEODRIVER(pspikes2,"Power Spikes 2","1994","Video System Co.",&neogeo_machine_driver)
+NEODRIVER(pspikes2,"Power Spikes II","1994","Video System Co.",&neogeo_machine_driver)
 NEODRIVER(sonicwi2,"Aero Fighters 2 / Sonic Wings 2","1994","Video System Co.",&neogeo_machine_driver)
 NEODRIVER(sonicwi3,"Aero Fighters 3 / Sonic Wings 3","1995","Video System Co.",&neogeo_machine_driver)
 
 /* Visco */
 NEODRIVERMGD2(androdun,"Andro Dunos","1992","Visco",&neogeo_machine_driver)
-NEODRIVER(goalx3,  "Goal!Goal!Goal!","1995","Visco",&neogeo_machine_driver)
+NEODRIVER(goalx3,  "Goal! Goal! Goal!","1995","Visco",&neogeo_machine_driver)
 NEODRIVER(puzzledp,"Puzzle De Pon","1995","Taito (Visco license)",&neogeo_machine_driver)
 NEODRIVERCLONE(puzzldpr,puzzledp,"Puzzle De Pon R","1997","Taito (Visco license)",&neogeo_machine_driver)
 NEODRIVER(neodrift,"Neo Drift Out - New Technology","1996","Visco",&neogeo_machine_driver)

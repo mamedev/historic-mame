@@ -20,6 +20,7 @@
 
 /* in machine/kabuki.c */
 void bbros_decode(void);
+void hatena_decode(void);
 void spang_decode(void);
 void sbbros_decode(void);
 void qtono1_decode(void);
@@ -47,17 +48,22 @@ extern int pang_colorram_size;
 
 
 
-static int dial[2],dial_selected;
+static int dial[2],dial_selected,has_dial;
 
-static void init_machine(void)
+static void default_init(void)
 {
-	/* start with the dial disabled, it will be enabled only for Block Block */
+	has_dial = 0;
+}
+
+static void block_init(void)
+{
+	has_dial = 1;
 	dial_selected = 0;
 }
 
 int block_input_r(int offset)
 {
-	if (dial_selected)
+	if (has_dial && dial_selected)
 	{
 		static int dir[2];
 
@@ -104,16 +110,19 @@ int block_input_r(int offset)
 
 void block_dial_control_w(int offset,int data)
 {
-	if (data == 0x08)
+	if (has_dial)
 	{
-		/* reset the dial counters */
-		dial[0] = readinputport(4);
-		dial[1] = readinputport(5);
+		if (data == 0x08)
+		{
+			/* reset the dial counters */
+			dial[0] = readinputport(4);
+			dial[1] = readinputport(5);
+		}
+		else if (data == 0x80)
+			dial_selected = -1;
+		else
+			dial_selected = 1;
 	}
-	else if (data == 0x80)
-		dial_selected = -1;
-	else
-		dial_selected = 1;
 }
 
 
@@ -360,7 +369,7 @@ static struct IOReadPort readport[] =
 static struct IOWritePort writeport[] =
 {
 	{ 0x00, 0x00, pang_palette_bank_w },    /* Palette bank */
-	{ 0x01, 0x01, block_dial_control_w },
+	{ 0x01, 0x01, block_dial_control_w },	/* TODO: hatena writes here too, exact function unknown */
 	{ 0x02, 0x02, pang_bankswitch_w },      /* Code bank register */
 	{ 0x03, 0x03, YM2413_data_port_0_w },
 	{ 0x04, 0x04, YM2413_register_port_0_w },
@@ -559,7 +568,7 @@ static struct OKIM6295interface okim6295_interface =
 	1,	/* 1 chip */
 	8000,	/* 8000Hz ??? */
 	{ 2 },	/* memory region 2 */
-	{ 100 }
+	{ 30 }
 };
 
 
@@ -577,7 +586,7 @@ static struct MachineDriver machine_driver =
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
-	init_machine,
+	0,
 
 	64*8, 32*8, { 8*8, (64-8)*8-1, 1*8, 31*8-1 },
 	gfxdecodeinfo,
@@ -672,6 +681,28 @@ ROM_START( bbros_rom )
 	ROM_LOAD( "bb1.bin",      0x00000, 0x20000, 0xc52e5b8e )
 ROM_END
 
+ROM_START( hatena_rom )
+	ROM_REGION(0x50000)
+	ROM_LOAD( "q2-05.rom",    0x00000, 0x08000, 0x66c9e1da )
+	ROM_LOAD( "q2-06.rom",    0x10000, 0x20000, 0x5fc39916 )
+	ROM_LOAD( "q2-07.rom",    0x30000, 0x20000, 0xec6d5e5e )
+
+	ROM_REGION_DISPOSE(0x140000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "q2-08.rom",    0x000000, 0x20000, 0x6c80da3c )	/* chars */
+	ROM_LOAD( "q2-09.rom",    0x020000, 0x20000, 0xabe3e15c )
+	ROM_LOAD( "q2-10.rom",    0x040000, 0x20000, 0x6963450d )
+	ROM_LOAD( "q2-11.rom",    0x060000, 0x20000, 0x1e319fa2 )
+	ROM_LOAD( "q2-18.rom",    0x080000, 0x20000, 0xbe6ee0c9 )
+	ROM_LOAD( "q2-19.rom",    0x0a0000, 0x20000, 0x70300445 )
+	ROM_LOAD( "q2-20.rom",    0x0c0000, 0x20000, 0x21a6ff42 )
+	ROM_LOAD( "q2-21.rom",    0x0e0000, 0x20000, 0x076280c9 )
+	ROM_LOAD( "q2-16.rom",    0x100000, 0x20000, 0xec19b2f0 )	/* sprites */
+	ROM_LOAD( "q2-17.rom",    0x120000, 0x20000, 0xecd69d92 )
+
+	ROM_REGION(0x20000)     /* OKIM */
+	ROM_LOAD( "q2-01.rom",    0x00000, 0x20000, 0x149e7a89 )
+ROM_END
+
 ROM_START( spang_rom )
 	ROM_REGION(0x50000)     /* 64k for code */
 	ROM_LOAD( "spe_06.rom",   0x00000, 0x08000, 0x1af106fb )
@@ -715,8 +746,8 @@ ROM_END
 ROM_START( qtono1_rom )
 	ROM_REGION(0x50000)
 	ROM_LOAD( "q3-05.rom",    0x00000, 0x08000, 0x1dd0a344 )
-	ROM_LOAD( "q3-06.rom",    0x10000, 0x20000, 0x00000000 )
-	ROM_LOAD( "q3-07.rom",    0x30000, 0x20000, 0x00000000 )
+	ROM_LOAD( "q3-06.rom",    0x10000, 0x20000, 0xbd6a2110 )
+	ROM_LOAD( "q3-07.rom",    0x30000, 0x20000, 0x61e53c4f )
 
 	ROM_REGION_DISPOSE(0x140000)     /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "q3-08.rom",    0x000000, 0x20000, 0x1533b978 )	/* chars */
@@ -742,11 +773,13 @@ ROM_START( block_rom )
 
 	ROM_REGION_DISPOSE(0x140000)     /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "bl_08.rom",    0x000000, 0x20000, 0x00000000 )	/* chars */
+	ROM_RELOAD(               0x040000, 0x20000 )
 	ROM_LOAD( "bl_09.rom",    0x020000, 0x20000, 0x6fa8c186 )
-	/* 40000-7ffff empty */
+	ROM_RELOAD(               0x060000, 0x20000 )
 	ROM_LOAD( "bl_18.rom",    0x080000, 0x20000, 0xc0acafaf )
+	ROM_RELOAD(               0x0c0000, 0x20000 )
 	ROM_LOAD( "bl_19.rom",    0x0a0000, 0x20000, 0x1ae942f5 )
-	/* c0000-fffff empty */
+	ROM_RELOAD(               0x0e0000, 0x20000 )
 	ROM_LOAD( "bl_16.rom",    0x100000, 0x20000, 0xfadcaff7 )	/* sprites */
 	ROM_LOAD( "bl_17.rom",    0x120000, 0x20000, 0x5f8cab42 )
 
@@ -762,11 +795,13 @@ ROM_START( blockbl_rom )
 
 	ROM_REGION_DISPOSE(0x140000)     /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "m12.o10",      0x000000, 0x20000, 0x963154d9 )	/* chars */
+	ROM_RELOAD(               0x040000, 0x20000 )
 	ROM_LOAD( "m13.o14",      0x020000, 0x20000, 0x069480bb )
-	/* 40000-7ffff empty */
+	ROM_RELOAD(               0x060000, 0x20000 )
 	ROM_LOAD( "m4.j17",       0x080000, 0x20000, 0x9e3b6f4f )
+	ROM_RELOAD(               0x0c0000, 0x20000 )
 	ROM_LOAD( "m3.j20",       0x0a0000, 0x20000, 0x629d58fe )
-	/* c0000-fffff empty */
+	ROM_RELOAD(               0x0e0000, 0x20000 )
 	ROM_LOAD( "m11.o7",       0x100000, 0x10000, 0x255180a5 )	/* sprites */
 	ROM_LOAD( "m10.o5",       0x110000, 0x10000, 0x3201c088 )
 	ROM_LOAD( "m9.o3",        0x120000, 0x10000, 0x29357fe4 )
@@ -801,7 +836,7 @@ struct GameDriver pang_driver =
 	"Paul Leaman\nMario Silva",
 	0,
 	&machine_driver,
-	0,
+	default_init,
 
 	pang_rom,
 	0, bbros_decode,
@@ -826,7 +861,7 @@ struct GameDriver pangb_driver =
 	"Paul Leaman\nMario Silva",
 	0,
 	&machine_driver,
-	0,
+	default_init,
 
 	pangb_rom,
 	0, pangb_decode,
@@ -851,7 +886,7 @@ struct GameDriver bbros_driver =
 	"Paul Leaman\nMario Silva",
 	0,
 	&machine_driver,
-	0,
+	default_init,
 
 	bbros_rom,
 	0, bbros_decode,
@@ -859,6 +894,31 @@ struct GameDriver bbros_driver =
 	0,      /* sound_prom */
 
 	pang_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+	nvram_load, nvram_save
+};
+
+struct GameDriver hatena_driver =
+{
+	__FILE__,
+	0,
+	"hatena",
+	"Adventure Quiz 2 Hatena no Dai-Bouken (Japan)",
+	"1990",
+	"Capcom",
+	"Paul Leaman",
+	0,
+	&machine_driver,
+	default_init,
+
+	hatena_rom,
+	0, hatena_decode,
+	0,
+	0,      /* sound_prom */
+
+	qtono1_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -876,7 +936,7 @@ struct GameDriver spang_driver =
 	"Paul Leaman",
 	0,
 	&machine_driver,
-	0,
+	default_init,
 
 	spang_rom,
 	0, spang_decode,
@@ -901,7 +961,7 @@ struct GameDriver sbbros_driver =
 	"Paul Leaman",
 	0,
 	&machine_driver,
-	0,
+	default_init,
 
 	sbbros_rom,
 	0, sbbros_decode,
@@ -920,13 +980,13 @@ struct GameDriver qtono1_driver =
 	__FILE__,
 	0,
 	"qtono1",
-	"Quiz Tonosama no Yabou",
+	"Quiz Tonosama no Yabou (Japan)",
 	"1991",
 	"Capcom",
 	"Paul Leaman",
 	0,
 	&machine_driver,
-	0,
+	default_init,
 
 	qtono1_rom,
 	0, qtono1_decode,
@@ -951,7 +1011,7 @@ struct GameDriver block_driver =
 	"Paul Leaman",
 	0,
 	&machine_driver,
-	0,
+	block_init,
 
 	block_rom,
 	0, block_decode,
@@ -976,7 +1036,7 @@ struct GameDriver blockbl_driver =
 	"Paul Leaman",
 	0,
 	&machine_driver,
-	0,
+	block_init,
 
 	blockbl_rom,
 	0, blockbl_decode,

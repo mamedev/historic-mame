@@ -350,8 +350,7 @@ static struct namco_interface namco_interface =
 {
 	23920,	/* sample rate (approximate value) */
 	8,		/* number of voices */
-	48,		/* gain adjustment */
-	255,	/* playback volume */
+	100,	/* playback volume */
 	4		/* memory region */
 };
 

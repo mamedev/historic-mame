@@ -311,7 +311,8 @@ INPUT_PORTS_END
 
 static struct Samplesinterface samples_interface =
 {
-	9       /* 9 channels */
+	9,       /* 9 channels */
+	25	/* volume */
 };
 
 static struct MachineDriver machine_driver =
@@ -3276,7 +3277,7 @@ struct GameDriver gunfight_driver =
 	__FILE__,
 	0,
 	"gunfight",
-	"Gunfight",
+	"Gun Fight",
 	"1975",
 	"Midway",
 	"Lee Taylor\n",

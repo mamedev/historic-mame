@@ -496,21 +496,22 @@ INPUT_PORTS_END
 
 static struct Samplesinterface wow_samples_interface =
 {
-	8	/* 8 channels */
+	8,	/* 8 channels */
+	25	/* volume */
 };
 
 static struct astrocade_interface astrocade_2chip_interface =
 {
 	2,			/* Number of chips */
 	1789773,	/* Clock speed */
-	255			/* Volume */
+	{255,255}			/* Volume */
 };
 
 static struct astrocade_interface astrocade_1chip_interface =
 {
 	1,			/* Number of chips */
 	1789773,	/* Clock speed */
-	255			/* Volume */
+	{255}			/* Volume */
 };
 
 static struct MachineDriver wow_machine_driver =
@@ -977,7 +978,8 @@ INPUT_PORTS_END
 
 static struct Samplesinterface gorf_samples_interface =
 {
-	8	/* 8 channels */
+	8,	/* 8 channels */
+	25	/* volume */
 };
 
 static struct MachineDriver gorf_machine_driver =

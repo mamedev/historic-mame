@@ -365,8 +365,9 @@ static void srumbler_init_machine(void)
 static struct YM2203interface ym2203_interface =
 {
 	2,                      /* 2 chips */
-	2000000,        /* 2.0 MHz (? hand tuned to match the real board) */
-	{ YM2203_VOL(255,255), YM2203_VOL(255,255) },
+	4000000,        /* 4.0 MHz (? hand tuned to match the real board) */
+	{ YM2203_VOL(25,25), YM2203_VOL(25,25) },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },

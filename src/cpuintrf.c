@@ -1636,7 +1636,7 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 #endif
             goto reset;
 		}
-        osd_profiler(OSD_PROFILE_EXTRA);
+		osd_profiler(OSD_PROFILE_EXTRA);
 
 #if SAVE_STATE_TEST
         {

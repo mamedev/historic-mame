@@ -564,7 +564,8 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	14318000/8,	/* 1.78975 Mhz */
-	{ 0x30ff, 0x30ff },
+	{ 30, 30 },
+	{ 0x30, 0x30 },		/* gain */
 	{ soundlatch_r },
 	{ scramble_portB_r },
 	{ 0 },

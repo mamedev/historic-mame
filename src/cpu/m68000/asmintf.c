@@ -104,7 +104,11 @@ void m68000_exit(void)
 }
 
 
-int  m68000_execute(int cycles)
+#ifdef TRACE68K 							/* Trace */
+	static int skiptrace=0;
+#endif
+
+int m68000_execute(int cycles)
 {
 	if (regs.IRQ_level == 0x80) return cycles;		/* STOP with no IRQs */
 
@@ -115,7 +119,9 @@ int  m68000_execute(int cycles)
     {
 		#ifdef TRACE68K 							/* Trace */
 
-        if (errorlog)
+        skiptrace++;
+
+        if ((skiptrace > 54000000) && (errorlog))
         {
 			int mycount, areg, dreg;
 
@@ -358,7 +364,7 @@ extern int m68k_disassemble(char* str_buff, int pc);
             break;
 		case CPU_INFO_NAME: return "68000";
 		case CPU_INFO_FAMILY: return "Motorola 68K";
-		case CPU_INFO_VERSION: return "0.11";
+		case CPU_INFO_VERSION: return "0.14";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright 1998,99 Mike Coates, Darren Olafson. All rights reserved";
 		case CPU_INFO_REG_LAYOUT: return (const char*)m68k_reg_layout;

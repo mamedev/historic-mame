@@ -322,6 +322,7 @@ static struct YM2610interface ym2610_interface =
 	1,	/* 1 chip */
 	8000000,	/* 8 MHz ?????? */
 	{ 30 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -329,7 +330,7 @@ static struct YM2610interface ym2610_interface =
 	{ rastan_irq_handler },
 	{ 3 },
 	{ 3 },
-	{ YM3012_VOL(60,OSD_PAN_LEFT,60,OSD_PAN_RIGHT) }
+	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) }
 
 };
 
@@ -455,7 +456,7 @@ struct GameDriver majest12_driver =
 	__FILE__,
 	&ssi_driver,
 	"majest12",
-	"Majestic Twelve",
+	"Majestic Twelve - The Space Invaders Part IV",
 	"1990",
 	"Taito",
 	"Howie Cohen \nAlex Pasadyn \nBill Boyle (graphics info) \nRichard Bush (technical information)",

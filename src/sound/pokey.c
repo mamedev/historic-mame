@@ -316,6 +316,8 @@ static UINT32 Base_mult[MAXPOKEYS]; /* selects either 64kHz or 15kHz clock mult 
 
 static UINT8  clip; /* LBO 101297 */
 
+static void Pokey_process (int chip, void *buffer, int n);
+
 /*****************************************************************************/
 /* In my routines, I treat the sample output as another divide by N counter  */
 /* For better accuracy, the Samp_n_cnt has a fixed binary decimal point      */
@@ -441,7 +443,7 @@ UINT32 i, x = 0;
 /*****************************************************************************/
 
 /* ASG 980126 - added a return parameter to indicate failure */
-int Pokey_sound_init (const struct MachineSound *msound,int freq17, int playback_freq, int volume, int num_pokeys, int use_clip)
+static int Pokey_sound_init (const struct MachineSound *msound,int freq17, int playback_freq, const int *mixing_levels, int num_pokeys, int use_clip)
 {
 	int chip, chan;
 
@@ -505,8 +507,7 @@ int Pokey_sound_init (const struct MachineSound *msound,int freq17, int playback
 		char name[40];
 
         sprintf(name, "Pokey #%d", chip);
-        channel[chip] = stream_init(msound,name, playback_freq, 8, chip, Pokey_process);
-		stream_set_volume(channel[chip],volume);
+        channel[chip] = stream_init(name,mixing_levels[chip],playback_freq, 8, chip, Pokey_process);
 
         if (channel[chip] == -1)
             return 1;
@@ -656,7 +657,7 @@ void Pokey_SerinReady(int chip)
 /*                                                                           */
 /*****************************************************************************/
 
-void Update_pokey_sound (int addr, int val, int chip, int gain)
+static void Update_pokey_sound (int addr, int val, int chip, int gain)
 {
 	UINT32 new_val = 0;
 	UINT8 chan;
@@ -1155,7 +1156,7 @@ void Update_pokey_sound (int addr, int val, int chip, int gain)
 /*                                                                           */
 /*****************************************************************************/
 
-void Pokey_process (int chip, void *buffer, int n)
+static void Pokey_process (int chip, void *buffer, int n)
 {
 	REGISTER UINT32 *div_n_ptr;
 	REGISTER UINT32 event_min;
@@ -1365,7 +1366,7 @@ int pokey_sh_start(const struct MachineSound *msound)
 
     intf = msound->sound_interface;
 
-	res = Pokey_sound_init (msound,intf->baseclock, Machine->sample_rate, intf->volume, intf->num, intf->clip);
+	res = Pokey_sound_init (msound,intf->baseclock, Machine->sample_rate, intf->mixing_level, intf->num, intf->clip);
 
 	return res;
 }
@@ -1402,7 +1403,7 @@ static void update_pokeys(void)
 /*                                                                           */
 /*****************************************************************************/
 
-int Read_pokey_regs (int addr, int chip)
+static int Read_pokey_regs (int addr, int chip)
 {
 	int data = 0;	/* note: not returning 0 for unsupported ports breaks */
 					/* Quantum and Food Fight */

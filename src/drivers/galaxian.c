@@ -1005,7 +1005,8 @@ static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
 	1789750,	/* 1.78975 MHz? */
-	{ 255 },
+	{ 50 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },

@@ -16,9 +16,10 @@ extern struct MemoryWriteAddress ataraud2_writemem[];
 
 extern struct TMS5220interface ataraud2_tms5220_interface;
 extern struct YM2151interface ataraud2_ym2151_interface;
+extern struct YM2151interface ataraud2_ym2151_interface_mono;
 extern struct POKEYinterface ataraud2_pokey_interface;
 extern struct OKIM6295interface ataraud2_okim6295_interface_2;
-
+	
 
 #define ATARI_AUDIO_2_CPU(mem_region)						\
 		CPU_M6502,											\
@@ -33,6 +34,12 @@ extern struct OKIM6295interface ataraud2_okim6295_interface_2;
 	{														\
 		SOUND_YM2151, 										\
 		&ataraud2_ym2151_interface 							\
+	} 														\
+
+#define ATARI_AUDIO_2_YM2151_MONO							\
+	{														\
+		SOUND_YM2151, 										\
+		&ataraud2_ym2151_interface_mono						\
 	} 														\
 
 #define ATARI_AUDIO_2_POKEY									\

@@ -462,7 +462,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct Samplesinterface samples_interface =
 {
-    1   /* 1 channel */
+    1,   /* 1 channel */
+	25	/* volume */
 };
 
 static struct MachineDriver blockade_machine_driver =

@@ -43,7 +43,8 @@ struct AY8910interface timeplt_ay8910_interface =
 {
 	2,				/* 2 chips */
 	14318180/8,		/* 1.789772727 MHz */
-	{ 0x20ff, 0x20ff },
+	{ 30, 30 },
+	{ 0x20, 0x20 },		/* gain */
 	{ soundlatch_r },
 	{ timeplt_portB_r },
 	{ 0 },

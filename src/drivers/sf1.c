@@ -311,7 +311,8 @@ static struct MemoryReadAddress sound2_readmem[] =
 /* Yes, _no_ ram */
 static struct MemoryWriteAddress sound2_writemem[] =
 {
-	{ 0x0000, 0xffff, MWA_ROM },
+	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0x8000, 0xffff, MWA_ROM },
 	{ -1 }
 };
 

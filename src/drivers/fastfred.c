@@ -484,7 +484,8 @@ static struct AY8910interface fastfred_ay8910_interface =
 {
 	2,             /* 2 chips */
 	CLOCK/6,       /* 3.072 Mhz */
-	{ 255, 255 },
+	{ 25, 25 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -495,7 +496,8 @@ static struct AY8910interface jumpcoas_ay8910_interface =
 {
 	1,             /* 1 chip */
 	CLOCK/6,       /* 3.072 Mhz */
-	{ 255 },
+	{ 50 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },

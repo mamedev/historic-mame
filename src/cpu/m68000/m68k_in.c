@@ -3906,7 +3906,7 @@ void m68000_divu_d_16(void)
 		uint quotient = *d_dst / src;
 		uint remainder = *d_dst % src;
 
-		if (MAKE_INT_32(quotient) == MAKE_INT_16(quotient))
+		if (quotient < 0x10000)
 		{
 			CPU_NOT_Z = quotient;
 			CPU_N = GET_MSB_16(quotient);
@@ -3935,7 +3935,7 @@ void m68000_divu_16(void)
 		uint quotient = *d_dst / src;
 		uint remainder = *d_dst % src;
 
-		if (MAKE_INT_32(quotient) == MAKE_INT_16(quotient))
+		if (quotient < 0x10000)
 		{
 			CPU_NOT_Z = quotient;
 			CPU_N = GET_MSB_16(quotient);

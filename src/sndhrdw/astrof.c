@@ -20,12 +20,14 @@
 
 struct Samplesinterface astrof_samples_interface =
 {
-	4	/* 4 channels */
+	4,	/* 4 channels */
+	25	/* volume */
 };
 
 struct Samplesinterface tomahawk_samples_interface =
 {
-	1	/* 1 channel for now */
+	1,	/* 1 channel for now */
+	25	/* volume */
 };
 
 

@@ -86,8 +86,7 @@ struct GameSample
 {
 	int length;
 	int smpfreq;
-	unsigned char resolution;
-	unsigned char volume;
+	int resolution;
 	signed char data[1];	/* extendable */
 };
 
@@ -183,5 +182,7 @@ void fillbitmap(struct osd_bitmap *dest,int pen,const struct rectangle *clip);
 void drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,int scalex, int scaley );
+
+void save_screen_snapshot(void);
 
 #endif

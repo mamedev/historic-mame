@@ -11,6 +11,7 @@
  3. Space Panic
  4. Magic Spot II
  5. Devil Zone
+ 6. No Man's Land
 
 ***************************************************************************/
 
@@ -27,6 +28,7 @@ const unsigned char *colourrom;
 
 int ColourRegisters[3];
 int ColourMap=0;
+int BackGround=0;
 int CosmicFlipX;
 int CosmicFlipY;
 int	MachineID;
@@ -50,14 +52,24 @@ int ColourRomLookup(int ScreenX,int ScreenY)
             }
 
     	case 4 :
-        case 5 :
             {
 		        /* Magic Spot = 16 x 8 colouring */
 
-	            if ((ScreenY > 31) && (ScreenY < 40))
+  	            if ((ScreenY > 31) && (ScreenY < 40))
 			        ColourByte = colourrom[ColourMap + 26 * 16 + (ScreenX / 16)];
                 else
 			        ColourByte = colourrom[ColourMap + (31-(ScreenY / 8)) * 16 + (ScreenX / 16)];
+
+	            if (ColourRegisters[1] != 0) return Machine->pens[ColourByte >> 4];
+	            else return Machine->pens[ColourByte & 0x0F];
+            }
+
+        case 5 :
+        case 6 :
+            {
+		        /* No Mans Land, Devil Zone = 16 x 8 colouring */
+
+		        ColourByte = colourrom[ColourMap + (31-(ScreenY / 8)) * 16 + (ScreenX / 16)];
 
 	            if (ColourRegisters[1] != 0) return Machine->pens[ColourByte >> 4];
 	            else return Machine->pens[ColourByte & 0x0F];
@@ -369,6 +381,33 @@ void devzone_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 }
 
 /**************************************************/
+/* No Man's Land                                  */
+/**************************************************/
+
+/* I don't know if there are more screen layouts than this */
+/* this one seems to be OK for the start of the game       */
+
+static const signed short TreePositions[2][2] = {
+	{66,31},{66,127}
+};
+
+static const signed short WaterPositions[7][2] = {
+	{160,0},{160,64},{160,96},{160,160}
+};
+
+void nomanland_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+	magspot2_vh_convert_color_prom(palette, colortable, color_prom);
+
+	MachineID = 6;
+}
+
+void nomanland_background_w(int offset, int data)
+{
+	BackGround = data;
+}
+
+/**************************************************/
 /* Common Routines                                */
 /**************************************************/
 
@@ -377,52 +416,52 @@ void cosmic_flipscreen_w(int offset, int data)
  static int LastMode=0;
  int x,y,Safe;
 
-    if (data != LastMode)
- {
-     LastMode = data;
+ 	if (data != LastMode)
+	{
+     	LastMode = data;
 
-     if (data)
-        {
-      CosmicFlipX = ((Machine->orientation & ORIENTATION_FLIP_X) == 0);
-      CosmicFlipY = ((Machine->orientation & ORIENTATION_FLIP_Y) == 0);
-        }
-        else
-        {
-      CosmicFlipX = (Machine->orientation & ORIENTATION_FLIP_X);
-      CosmicFlipY = (Machine->orientation & ORIENTATION_FLIP_Y);
-        }
+     	if (data)
+     	{
+     		CosmicFlipX = ((Machine->orientation & ORIENTATION_FLIP_X) == 0);
+	     	CosmicFlipY = ((Machine->orientation & ORIENTATION_FLIP_Y) == 0);
+    	}
+     	else
+     	{
+      		CosmicFlipX = (Machine->orientation & ORIENTATION_FLIP_X);
+      		CosmicFlipY = (Machine->orientation & ORIENTATION_FLIP_Y);
+     	}
 
-        /* Flip Bitmap */
+     	/* Flip Bitmap */
 
-        if (!(Machine->orientation & ORIENTATION_SWAP_XY))
-        {
-            for(x=0;x<96;x++)
-      {
-                for(y=0;y<255;y++)
-                {
-                 Safe = tmpbitmap->line[x][y];
-                    tmpbitmap->line[x][y] = tmpbitmap->line[191-x][255-y];
-                    tmpbitmap->line[191-x][255-y] = Safe;
-                }
-            }
+     	if (!(Machine->orientation & ORIENTATION_SWAP_XY))
+     	{
+     		for(x=0;x<96;x++)
+      		{
+            	for(y=0;y<255;y++)
+            	{
+            		Safe = tmpbitmap->line[x][y];
+                	tmpbitmap->line[x][y] = tmpbitmap->line[191-x][255-y];
+	                tmpbitmap->line[191-x][255-y] = Safe;
+    	        }
+        	}
 
-       osd_mark_dirty(0,0,255,191,0);
-        }
-        else
-        {
-            for(x=0;x<96;x++)
-      {
-                for(y=0;y<255;y++)
-                {
-                 Safe = tmpbitmap->line[y][x];
-                    tmpbitmap->line[y][x] = tmpbitmap->line[255-y][191-x];
-                    tmpbitmap->line[255-y][191-x] = Safe;
-                }
-            }
+	       	osd_mark_dirty(0,0,255,191,0);
+	    }
+     	else
+     	{
+     		for(x=0;x<96;x++)
+      		{
+        		for(y=0;y<255;y++)
+            	{
+            		Safe = tmpbitmap->line[y][x];
+	                tmpbitmap->line[y][x] = tmpbitmap->line[255-y][191-x];
+    	            tmpbitmap->line[255-y][191-x] = Safe;
+            	}
+        	}
 
-      osd_mark_dirty(0,0,191,255,0);
-        }
-    }
+      		osd_mark_dirty(0,0,191,255,0);
+     	}
+ 	}
 }
 
 void cosmic_videoram_w(int offset,int data)
@@ -618,5 +657,47 @@ void cosmic_vh_screenrefresh_sprites(struct osd_bitmap *bitmap,int full_refresh)
             }
         }
 	}
+
+    /* Background for No Mans Land */
+
+    if ((MachineID == 6) && (BackGround))
+    {
+    	int y;
+
+        if (CosmicFlipY == (Machine->orientation & ORIENTATION_FLIP_Y))
+        	Sprite = 1;
+        else
+        	Sprite = 3;
+
+    	for(offs=0;offs<2;offs++)
+        {
+            if (CosmicFlipY == (Machine->orientation & ORIENTATION_FLIP_Y))
+        	    y = TreePositions[offs][0];
+            else
+        	    y = 225 - TreePositions[offs][0];
+
+    		drawgfx(bitmap,Machine->gfx[1],
+					Sprite,
+					8,
+					0,0,
+					y,TreePositions[offs][1],
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+        }
+
+    	for(offs=0;offs<4;offs++)
+        {
+            if (CosmicFlipY == (Machine->orientation & ORIENTATION_FLIP_Y))
+        	    y = WaterPositions[offs][0];
+            else
+        	    y = 225 - WaterPositions[offs][0];
+
+    		drawgfx(bitmap,Machine->gfx[2],
+					Sprite,
+					8,
+					0,0,
+					y,WaterPositions[offs][1],
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+        }
+    }
 }
 

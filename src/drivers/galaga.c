@@ -377,14 +377,14 @@ static struct namco_interface namco_interface =
 {
 	3072000/32,	/* sample rate */
 	3,			/* number of voices */
-	32,			/* gain adjustment */
-	255,		/* playback volume */
+	100,		/* playback volume */
 	5			/* memory region */
 };
 
 static struct Samplesinterface samples_interface =
 {
-	1	/* one channel */
+	1,	/* one channel */
+	100	/* volume */
 };
 
 
@@ -598,6 +598,37 @@ ROM_START( galagab2_rom )
 	ROM_LOAD( "10h_g07.bin",  0x0000, 0x1000, 0x035e300c )
 ROM_END
 
+ROM_START( galaga84_rom )
+	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+	ROM_LOAD( "g1",           0x0000, 0x1000, 0xab036c9f )
+	ROM_LOAD( "gal84_u2",     0x1000, 0x1000, 0x4d832a30 )
+	ROM_LOAD( "04j_g03.bin",  0x2000, 0x1000, 0x753ce503 )
+	ROM_LOAD( "g4",           0x3000, 0x1000, 0x499fcc76 )
+
+	ROM_REGION_DISPOSE(0x3000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "07m_g08.bin",  0x0000, 0x1000, 0x58b2f47c )
+	ROM_LOAD( "gal84u4d",     0x1000, 0x1000, 0x22e339d5 )
+	ROM_LOAD( "gal84u4e",     0x2000, 0x1000, 0x60dcf940 )
+
+	ROM_REGION(0x0320)	/* color PROMs */
+	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
+	ROM_LOAD( "2n.bin",       0x0020, 0x0100, 0xa547d33b )	/* char lookup table */
+	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
+	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
+
+	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_LOAD( "gal84_u5",     0x0000, 0x1000, 0xbb5caae3 )
+
+	ROM_REGION(0x10000)     /* 64k for the third CPU  */
+	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, 0x8995088d )
+
+	ROM_REGION(0x0100)	/* sound prom */
+	ROM_LOAD( "1d.bin",       0x0000, 0x0100, 0x86d92b24 )
+
+	ROM_REGION(0x10000)	/* 64k for a Z80 which emulates the custom I/O chip (not used) */
+	ROM_LOAD( "10h_g07.bin",  0x0000, 0x1000, 0x035e300c )
+ROM_END
+
 
 
 static const char *galaga_sample_names[] =
@@ -783,3 +814,30 @@ struct GameDriver galagab2_driver =
 
 	hiload, hisave
 };
+
+struct GameDriver galaga84_driver =
+{
+	__FILE__,
+	&galaga_driver,
+	"galaga84",
+	"Galaga '84",
+	"1984",
+	"hack",
+	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)",
+	0,
+	&machine_driver,
+	0,
+
+	galaga84_rom,
+	0, 0,
+	galaga_sample_names,
+	0,	/* sound_prom */
+
+	galaganm_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+

@@ -521,8 +521,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct K007232_interface k007232_interface =
 {
-	3,4,  /* memory regions */
-	20 /* volume */
+	{3,4},  /* memory regions */
+	{20,20} /* volume */
 };
 
 static struct UPD7759_interface upd7759_interface =

@@ -22,8 +22,6 @@ static const struct NESinterface *intf;
 static void *buffer[MAX_NESPSG];
 static int sample_pos[MAX_NESPSG];
 
-static int volume[MAX_NESPSG];
-
 static int channel;
 
 int NESPSG_sh_start(const struct MachineSound *msound)
@@ -54,17 +52,7 @@ int NESPSG_sh_start(const struct MachineSound *msound)
 	}
 	if (NESInit(intf->num,intf->baseclock,emulation_rate,sample_bits,buffer_len,buffer) == 0)
 	{
-		channel = get_play_channels( intf->num );
-
-		for (i = 0;i < intf->num;i++)
-		{
-			int gain;
-
-
-			volume[i] = intf->volume[i] & 0xff;
-			gain = (intf->volume[i] >> 8) & 0xff;
-			NESSetGain(i,gain);
-		}
+		channel = mixer_allocate_channels(intf->num,intf->volume);
 
 		return 0;
 	}
@@ -128,8 +116,8 @@ void NESPSG_sh_update(void)
 	{
 		sample_pos[i] = 0;
 		if( sample_bits == 16 )
-			osd_play_streamed_sample_16(channel+i,buffer[i],2*buffer_len,emulation_rate,volume[i],OSD_PAN_CENTER);
+			mixer_play_streamed_sample_16(channel+i,buffer[i],2*buffer_len,emulation_rate);
 		else
-			osd_play_streamed_sample(channel+i,buffer[i],buffer_len,emulation_rate,volume[i],OSD_PAN_CENTER);
+			mixer_play_streamed_sample(channel+i,buffer[i],buffer_len,emulation_rate);
 	}
 }

@@ -1,12 +1,10 @@
 #include "driver.h"
 
 
-#define MAX_OUTPUT 0x7fff
-
 static int channel[MAX_DAC];
-static unsigned char latch[MAX_DAC];
-static unsigned char VolTable[MAX_DAC][256];
-static unsigned char SignedVolTable[MAX_DAC][256];
+static signed char latch[MAX_DAC];
+static signed char UnsignedVolTable[256];
+static signed char SignedVolTable[256];
 
 
 static void DAC_update(int num,void *buffer,int length)
@@ -18,49 +16,36 @@ static void DAC_update(int num,void *buffer,int length)
 void DAC_data_w(int num,int data)
 {
 	/* update the output buffer before changing the registers */
-	if (latch[num] != data)
+	if (latch[num] != UnsignedVolTable[data])
+	{
 		stream_update(channel[num],0);
-
-	latch[num] = VolTable[num][data];
+		latch[num] = UnsignedVolTable[data];
+	}
 }
 
 
 void DAC_signed_data_w(int num,int data)
 {
 	/* update the output buffer before changing the registers */
-	if (latch[num] != data)
+	if (latch[num] != SignedVolTable[data])
+	{
 		stream_update(channel[num],0);
-
-	latch[num] = SignedVolTable[num][data];
+		latch[num] = SignedVolTable[data];
+	}
 }
 
 
-void DAC_set_volume(int num,int volume,int gain)
+static void DAC_build_voltable(void)
 {
 	int i;
-	int out;
 
-
-	stream_set_volume(channel[num],volume);
-
-	gain &= 0xff;
 
 	/* build volume table (linear) */
-	for (i = 255;i > 0;i--)
+	for (i = 0;i < 256;i++)
 	{
-		out = (i * (1.0 + (gain / 16))) * MAX_OUTPUT / 255;
-		/* limit volume to avoid clipping */
-		if (out > MAX_OUTPUT) VolTable[num][i] = MAX_OUTPUT / 256;
-		else VolTable[num][i] = out / 256;
+		UnsignedVolTable[i] = i / 2;	/* range    0..127 */
+		SignedVolTable[i] = i - 0x80;	/* range -128..127 */
 	}
-	VolTable[num][0] = 0;
-
-	for (i = 0;i < 128;i++)
-	{
-		SignedVolTable[num][0x80 + i] = VolTable[num][2*i];
-		SignedVolTable[num][0x80 - i] = -VolTable[num][2*i];
-	}
-	SignedVolTable[num][0] = -VolTable[num][255];
 }
 
 
@@ -70,22 +55,22 @@ int DAC_sh_start(const struct MachineSound *msound)
 	const struct DACinterface *intf = msound->sound_interface;
 
 
+	DAC_build_voltable();
+
 	for (i = 0;i < intf->num;i++)
 	{
 		char name[40];
 
 
 		sprintf(name,"DAC #%d",i);
-		channel[i] = stream_init(msound,
-				name,Machine->sample_rate,8,
+		channel[i] = stream_init(name,intf->mixing_level[i],Machine->sample_rate,8,
 				i,DAC_update);
 
 		if (channel[i] == -1)
 			return 1;
 
-		DAC_set_volume(i,intf->volume[i] & 0xff,(intf->volume[i] >> 8) & 0xff);
-
 		latch[i] = 0;
 	}
+
 	return 0;
 }

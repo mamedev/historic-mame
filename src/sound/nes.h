@@ -51,18 +51,6 @@ unsigned char NESReadReg(int n, int r);
 void NESSetClock(int n,int clk,int rate);
 
 /*
-** set output gain
-**
-** The gain is expressed in 0.2dB increments, e.g. a gain of 10 is an increase
-** of 2dB. Note that the gain only affects sounds not playing at full volume,
-** since the ones at full volume are already played at the maximum intensity
-** allowed by the sound card.
-** 0x00 is the default.
-** 0xff is the maximum allowed value.
-*/
-void NESSetGain(int n,int gain);
-
-/*
 ** You have to provide this function
 */
 unsigned char NESPortHandler(int num,int port, int iswrite, unsigned char val);

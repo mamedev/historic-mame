@@ -131,7 +131,6 @@ static int common_vh_start(void)
 	memset(vidram,0,0x20000);
 
 	neogeo_paletteram = pal_bank1;
-	palette_transparent_color = 4095;
 	palno=0;
 	modulo=1;
 	where=0;
@@ -304,12 +303,10 @@ static const unsigned char *neogeo_palette(void)
 	}
 	for (color = 0;color < 16;color++)
 	{
-		if (colmask[color] & (1 << 0))
-			palette_used_colors[pal_base + 16 * color] = PALETTE_COLOR_TRANSPARENT;
 		for (i = 1;i < 16;i++)
 		{
 			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
+				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_VISIBLE;
 		}
 	}
 
@@ -432,7 +429,8 @@ if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))			// Gururin Bodge fix
 				}
 			}
 
-//			if ( (tileatr>>8) != 0) // crap below zoomed sprite in nam1975 fix??
+			if ( (tileatr>>8) != 0) // crap below zoomed sprite in nam1975 fix??
+									// it breaks OverTop radar so it can't be right
 			if (sy<224)
 			{
 				tileatr=tileatr>>8;
@@ -449,14 +447,14 @@ if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))			// Gururin Bodge fix
 
 	for (color = 0;color < 256;color++)
 	{
-		if (colmask[color] & (1 << 0))
-			palette_used_colors[pal_base + 16 * color] = PALETTE_COLOR_TRANSPARENT;
 		for (i = 1;i < 16;i++)
 		{
 			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
+				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_VISIBLE;
 		}
 	}
+
+	palette_used_colors[4095] = PALETTE_COLOR_VISIBLE;
 
 	return palette_recalc();
 }
@@ -942,7 +940,7 @@ static void screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *clip
 	/* Do compressed palette stuff */
 	neogeo_palette();
 
-	fillbitmap(bitmap,palette_transparent_pen,clip);
+	fillbitmap(bitmap,Machine->pens[4095],clip);
 
 #ifdef NEO_DEBUG
 if (!dotiles) { 					/* debug */
@@ -1073,7 +1071,7 @@ if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))		 // Gururin Bodge fix
 				}
 			}
 
-//			if ( (tileatr>>8) != 0) // crap below zoomed sprite in nam1975 fix??
+			if ( (tileatr>>8) != 0) // crap below zoomed sprite in nam1975 fix??
 									// it breaks OverTop radar so it can't be right
 			if (sy<224)
 			{

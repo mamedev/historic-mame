@@ -94,6 +94,12 @@ static void pacland_coin_w(int offset,int data)
 	coin_counter_w(1,~data & 4);
 }
 
+static void pacland_led_w(int offset,int data)
+{
+	osd_led_w(0,data >> 3);
+	osd_led_w(1,data >> 4);
+}
+
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -166,6 +172,7 @@ static struct IOReadPort mcu_readport[] =
 static struct IOWritePort mcu_writeport[] =
 {
 	{ HD63701_PORT1, HD63701_PORT1, pacland_coin_w },
+	{ HD63701_PORT2, HD63701_PORT2, pacland_led_w },
 	{ -1 }	/* end of table */
 };
 
@@ -295,8 +302,7 @@ static struct namco_interface namco_interface =
 {
 	23920,	/* sample rate (approximate value) */
 	8,		/* number of voices */
-	16,		/* gain adjustment */
-	255,	/* playback volume */
+	100,	/* playback volume */
 	4,		/* memory region */
 	0		/* stereo */
 };

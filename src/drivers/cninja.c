@@ -375,6 +375,7 @@ static struct YM2203interface ym2203_interface =
 	1,
 	32220000/8,	/* Accurate */
 	{ YM2203_VOL(15,30) },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -395,7 +396,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,
 	32220000/8, /* Accurate */
-	{ YM3012_VOL(40,OSD_PAN_CENTER,40,OSD_PAN_CENTER) },
+	{ YM3012_VOL(40,MIXER_PAN_CENTER,40,MIXER_PAN_CENTER) },
 	{ sound_irq }
 };
 
@@ -403,7 +404,7 @@ static struct YM2151interface ym2151_interface2 =
 {
 	1,
 	32220000/8, /* Bootleg frequency - who knows.. */
-	{ YM3012_VOL(40,OSD_PAN_CENTER,40,OSD_PAN_CENTER) },
+	{ YM3012_VOL(40,MIXER_PAN_CENTER,40,MIXER_PAN_CENTER) },
 	{ sound_irq2 }
 };
 

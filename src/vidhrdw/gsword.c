@@ -37,19 +37,19 @@ void gsword_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 
 		/* red component */
-		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 1;
-		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 1;
-		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 1;
+		bit0 = (color_prom[0] >> 0) & 1;
+		bit1 = (color_prom[0] >> 1) & 1;
+		bit2 = (color_prom[0] >> 2) & 1;
 		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
-		bit0 = (color_prom[Machine->drv->total_colors] >> 3) & 1;
-		bit1 = (color_prom[0] >> 0) & 1;
-		bit2 = (color_prom[0] >> 1) & 1;
+		bit0 = (color_prom[0] >> 3) & 1;
+		bit1 = (color_prom[Machine->drv->total_colors] >> 0) & 1;
+		bit2 = (color_prom[Machine->drv->total_colors] >> 1) & 1;
 		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
 		bit0 = 0;
-		bit1 = (color_prom[0] >> 2) & 1;
-		bit2 = (color_prom[0] >> 3) & 1;
+		bit1 = (color_prom[Machine->drv->total_colors] >> 2) & 1;
+		bit2 = (color_prom[Machine->drv->total_colors] >> 3) & 1;
 		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
 		color_prom++;
@@ -62,7 +62,7 @@ void gsword_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 		COLOR(0,i) = i;
 
 	for (i = 0;i < TOTAL_COLORS(1);i++)
-		COLOR(1,i) = (*(color_prom++) & 0x0f);	/* wrong! */
+		COLOR(1,i) = (*(color_prom++) & 0x0f);	/* wrong */
 }
 
 
@@ -194,7 +194,7 @@ void render_sprites(struct osd_bitmap *bitmap)
 					gs_spritetile_ram[offs+1] & 0x3f,	/* ?? */
 					flipx,flipy,
 					sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->drv->visible_area,TRANSPARENCY_COLOR,15);
 		}
 	}
 }
@@ -231,5 +231,24 @@ void gsword_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 //		adpcm_soundcommand_w(0,31);
 //	        while (osd_key_pressed(OSD_KEY_R));
 //	}
-}
 
+#if 0
+{
+	int x,y;
+	for (x = 0;x < 16;x++)
+	{
+		for (y = 0;y < 16;y++)
+		{
+			int sx,sy;
+			for (sx = 0;sx < 4;sx++)
+			{
+				for (sy = 0;sy < 4;sy++)
+				{
+					bitmap->line[4*y+16+sy][4*x+sx] = Machine->pens[16*y+x];
+				}
+			}
+		}
+	}
+}
+#endif
+}

@@ -511,6 +511,20 @@ void sarge_writeport(int port,int value)
 	}
 }
 
+void destderb_writeport(int port,int value)
+{
+	switch (port)
+	{
+		case 0x04:
+			timer_set (TIME_NOW, value, sarge_delayed_write);
+			break;
+
+		default:
+			mcr_writeport(port,value);
+			break;
+	}
+}
+
 
 
 void dotron_delayed_write(int param)

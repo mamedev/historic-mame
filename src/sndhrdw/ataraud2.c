@@ -28,11 +28,10 @@ Effects                                   2C00-2C0F   R/W  D0-D7
 Banked Program ROM (4 pages)              3000-3FFF   R    D0-D7
 Static Program ROM (48K bytes)            4000-FFFF   R    D0-D7
 
-
 ****************************************************************************/
 
 #include "machine/atarigen.h"
-#include "ataraud2.h"
+#include "sndhrdw/ataraud2.h"
 #include "cpu/m6502/m6502.h"
 
 static unsigned char *bank_base;
@@ -166,6 +165,7 @@ int ataraud2_io_r(int offset)
 			if (atarigen_cpu_to_sound_ready) result ^= 0x40;
 			if (atarigen_sound_to_cpu_ready) result ^= 0x20;
 			if (!has_tms5220 || tms5220_ready_r()) result ^= 0x10;
+//if (errorlog) fprintf(errorlog, "%04X: read I/O port=%02X\n", cpu_getpreviouspc(), result);
 			break;
 
 		case 0x006:		/* IRQACK */
@@ -221,6 +221,10 @@ void ataraud2_io_w(int offset, int data)
 			break;
 
 		case 0x206:		/* MIX */
+			atarigen_set_ym2151_vol(((data >> 1) & 7) * 100 / 7);
+			if (has_pokey) atarigen_set_pokey_vol(((data >> 4) & 3) * 100 / 3);
+			if (has_tms5220) atarigen_set_tms5220_vol(((data >> 6) & 3) * 100 / 3);
+			if (has_okim6295) atarigen_set_oki6295_vol((data & 1) * 100);
 			break;
 	}
 }
@@ -265,7 +269,7 @@ struct MemoryWriteAddress ataraud2_writemem[] =
 struct TMS5220interface ataraud2_tms5220_interface =
 {
     640000,     /* clock speed (80*samplerate) */
-    75,         /* volume */
+    100,        /* volume */
     0 			/* irq handler */
 };
 
@@ -274,7 +278,7 @@ struct POKEYinterface ataraud2_pokey_interface =
 {
 	1,			/* 1 chip */
 	1789790,
-	40,
+	{ 40 },
 	POKEY_DEFAULT_GAIN,
 	NO_CLIP
 };
@@ -284,7 +288,16 @@ struct YM2151interface ataraud2_ym2151_interface =
 {
 	1,			/* 1 chip */
 	3579580,
-	{ YM3012_VOL(30,OSD_PAN_LEFT,30,OSD_PAN_RIGHT) },
+	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) },
+	{ ym2151_sound_interrupt }
+};
+
+
+struct YM2151interface ataraud2_ym2151_interface_mono =
+{
+	1,			/* 1 chip */
+	3579580,
+	{ YM3012_VOL(30,MIXER_PAN_CENTER,30,MIXER_PAN_CENTER) },
 	{ ym2151_sound_interrupt }
 };
 

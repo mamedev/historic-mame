@@ -85,6 +85,7 @@ void mcr_pia_1_w (int offset, int data);
 int mcr_pia_1_r (int offset);
 
 int destderb_port_r(int offset);
+void destderb_writeport(int port,int value);
 
 void spyhunt_init_machine(void);
 int spyhunt_port_1_r(int offset);
@@ -876,6 +877,12 @@ static struct IOWritePort sa_writeport[] =
    { -1 }	/* end of table */
 };
 
+static struct IOWritePort db_writeport[] =
+{
+   { 0, 0xff, destderb_writeport },
+   { -1 }	/* end of table */
+};
+
 static struct IOWritePort dt_writeport[] =
 {
    { 0, 0xff, dotron_writeport },
@@ -1083,23 +1090,12 @@ static struct GfxDecodeInfo crater_gfxdecodeinfo[] =
 
 ***************************************************************************/
 
-int mcr_sh_start(void)
-{
-	int i;
-
-
-	for (i = 0;i < 3;i++) stream_set_pan(3*0+i,OSD_PAN_LEFT);	/* AY8910 #0 */
-	for (i = 0;i < 3;i++) stream_set_pan(3*1+i,OSD_PAN_RIGHT);	/* AY8910 #1 */
-//	stream_set_pan(6,OSD_PAN_LEFT);	/* 5220 */
-	return 0;
-}
-
-
 static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	2000000,	/* 2 MHz ?? */
-	{ 33, 33 },	/* dotron clips with anything higher */
+	{ MIXER(33,MIXER_PAN_LEFT), MIXER(33,MIXER_PAN_RIGHT) },	/* dotron clips with anything higher */
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -1115,7 +1111,7 @@ static struct DACinterface dac_interface =
 static struct TMS5220interface tms5220_interface =
 {
 	640000,
-	30,
+	MIXER(60,MIXER_PAN_LEFT),
 	0
 };
 
@@ -1170,7 +1166,7 @@ static struct MachineDriver tapper_machine_driver =
 	mcr3_vh_screenrefresh,
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,mcr_sh_start,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_AY8910,
@@ -1224,7 +1220,7 @@ static struct MachineDriver dotron_machine_driver =
 	dotron_vh_screenrefresh,
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,mcr_sh_start,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_AY8910,
@@ -1245,21 +1241,21 @@ static struct MachineDriver destderb_machine_driver =
 			CPU_Z80,
 			5000000,	/* 5 Mhz */
 			0,
-			readmem,writemem,destderb_readport,writeport,
+			readmem,writemem,destderb_readport,db_writeport,
 			mcr_interrupt,1,
 			0,0,daisy_chain 	/* HJB 990314 */
         },
 		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			2000000,	/* 2 Mhz */
+			CPU_M6809 | CPU_AUDIO_CPU,
+			2250000,	/* 2.25 Mhz??? */
 			2,
-			sound_readmem,sound_writemem,0,0,
-			interrupt,26
-		}
+			tcs_readmem,tcs_writemem,0,0,
+			ignore_interrupt,1
+        }
 	},
 	30, DEFAULT_30HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - sound CPU has enough interrupts to handle synchronization */
-	mcr_init_machine,
+	sarge_init_machine,
 
 	/* video hardware */
 	32*16, 30*16, { 0, 32*16-1, 0, 30*16-1 },
@@ -1274,11 +1270,11 @@ static struct MachineDriver destderb_machine_driver =
 	mcr3_vh_screenrefresh,
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,mcr_sh_start,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
-			SOUND_AY8910,
-			&ay8910_interface
+			SOUND_DAC,
+			&dac_interface
 		}
 	}
 };
@@ -1320,7 +1316,7 @@ static struct MachineDriver timber_machine_driver =
 	mcr3_vh_screenrefresh,
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,mcr_sh_start,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_AY8910,
@@ -1504,7 +1500,7 @@ static struct MachineDriver spyhunt_machine_driver =
 	spyhunt_vh_screenrefresh,
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,mcr_sh_start,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_AY8910,
@@ -1555,7 +1551,7 @@ static struct MachineDriver crater_machine_driver =
 	spyhunt_vh_screenrefresh,
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,mcr_sh_start,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_AY8910,
@@ -1953,9 +1949,9 @@ ROM_START( destderb_rom )
 	ROM_LOAD( "dd_fg-0.a4",   0x1c000, 0x4000, 0xe57a4de6 )
 	ROM_LOAD( "dd_fg-4.a3",   0x20000, 0x4000, 0x55aa667f )
 
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "dd_ssio.a7",   0x0000, 0x1000, 0xc95cf31e )
-	ROM_LOAD( "dd_ssio.a8",   0x1000, 0x1000, 0x12aaa48e )
+	ROM_REGION(0x10000)  /* 64k for the Turbo Cheap Squeak */
+	ROM_LOAD( "tcs_u5.bin",   0xc000, 0x2000, 0xeca33b2c )
+	ROM_LOAD( "tcs_u4.bin",   0xe000, 0x2000, 0x3490289a )
 ROM_END
 
 struct GameDriver destderb_driver =

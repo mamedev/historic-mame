@@ -172,7 +172,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct AY8910interface ay8910_interface = {
 	2,		/* 2 chips */
 	1250000,	/* 1.25 MHz? */
-	{ 255, 255 },
+	{ 25, 25 },
+	AY8910_DEFAULT_GAIN,
 	{ input_port_0_r, input_port_2_r },
 	{ input_port_1_r, input_port_3_r },
 	{ 0, 0 },

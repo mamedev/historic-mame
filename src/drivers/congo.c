@@ -275,7 +275,8 @@ static struct SN76496interface sn76496_interface =
 
 static struct Samplesinterface samples_interface =
 {
-	5	/* 5 channels */
+	5,	/* 5 channels */
+	25	/* volume */
 };
 
 

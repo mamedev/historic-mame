@@ -25,6 +25,7 @@ unsigned int doublepixel[256];
 unsigned int quadpixel[256]; /* for quadring pixels */
 
 
+/* this function lifted from Allegro */
 static int vesa_scroll_async(int x, int y)
 {
    int ret, seg;
@@ -37,6 +38,7 @@ static int vesa_scroll_async(int x, int y)
 //   vesa_xscroll = x;
 //   vesa_yscroll = y;
 
+#if 0
    if (_pm_vesa_scroller) {            /* use protected mode interface? */
       seg = _mmio_segment ? _mmio_segment : _my_ds();
 
@@ -57,12 +59,15 @@ static int vesa_scroll_async(int x, int y)
 	"c" (a & 0xFFFF),              /* low word of address in ecx */
 	"d" (a >> 16)                  /* high word of address in edx */
 
-      : "memory", "%edi", "%cc"        /* clobbers edi and flags */
+//      : "memory", "%edi", "%cc"        /* clobbers edi and flags */
+		: "memory", "%ebp", "%edi", "%cc" /* clobbers ebp, edi and flags (at least) */
       );
 
       ret = 0;
    }
-   else {                              /* use a real mode interrupt call */
+   else
+#endif
+   {                              /* use a real mode interrupt call */
       _dpmi_reg.x.ax = 0x4F07;
       _dpmi_reg.x.bx = 0;
       _dpmi_reg.x.cx = x;
@@ -426,6 +431,8 @@ void blitscreen_dirty1_vesa_1x_2x_8bpp(void)   { DIRTY1(8)  DIRTY1_NX2 (1,8)  }
 void blitscreen_dirty1_vesa_1x_2xs_8bpp(void)  { DIRTY1(8)  DIRTY1_NXNS(1,2,8)  }
 void blitscreen_dirty1_vesa_2x_2x_8bpp(void)   { DIRTY1(8)  DIRTY1_NX2 (2,8)  }
 void blitscreen_dirty1_vesa_2x_2xs_8bpp(void)  { DIRTY1(8)  DIRTY1_NXNS(2,2,8)  }
+void blitscreen_dirty1_vesa_2x_3x_8bpp(void)   { DIRTY1(8)  DIRTY1_NX3 (2,8)  }
+void blitscreen_dirty1_vesa_2x_3xs_8bpp(void)  { DIRTY1(8)  DIRTY1_NXNS(2,3,8)  }
 void blitscreen_dirty1_vesa_3x_2x_8bpp(void)   { DIRTY1(8)  DIRTY1_NX2 (3,8)  }
 void blitscreen_dirty1_vesa_3x_2xs_8bpp(void)  { DIRTY1(8)  DIRTY1_NXNS(3,2,8)  }
 void blitscreen_dirty1_vesa_4x_3x_8bpp(void)   { DIRTY1(8)  DIRTY1_NX3 (4,8)  }
@@ -442,6 +449,8 @@ void blitscreen_dirty0_vesa_1x_2x_8bpp(void)   { DIRTY0(8)  DIRTY0_NX2 (1,8)  }
 void blitscreen_dirty0_vesa_1x_2xs_8bpp(void)  { DIRTY0(8)  DIRTY0_NXNS(1,2,8)  }
 void blitscreen_dirty0_vesa_2x_2x_8bpp(void)   { DIRTY0(8)  DIRTY0_NX2 (2,8)  }
 void blitscreen_dirty0_vesa_2x_2xs_8bpp(void)  { DIRTY0(8)  DIRTY0_NXNS(2,2,8)  }
+void blitscreen_dirty0_vesa_2x_3x_8bpp(void)   { DIRTY0(8)  DIRTY0_NX3 (2,8)  }
+void blitscreen_dirty0_vesa_2x_3xs_8bpp(void)  { DIRTY0(8)  DIRTY0_NXNS(2,3,8)  }
 void blitscreen_dirty0_vesa_3x_2x_8bpp(void)   { DIRTY0(8)  DIRTY0_NX2 (3,8)  }
 void blitscreen_dirty0_vesa_3x_2xs_8bpp(void)  { DIRTY0(8)  DIRTY0_NXNS(3,2,8)	}
 void blitscreen_dirty0_vesa_4x_3x_8bpp(void)   { DIRTY0(8)  DIRTY0_NX3 (4,8)  }

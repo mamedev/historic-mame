@@ -542,7 +542,7 @@ static struct POKEYinterface bzone_pokey_interface =
 {
 	1,	/* 1 chip */
 	1500000,	/* 1.5 MHz??? */
-	100,
+	{ 100 },
 	POKEY_DEFAULT_GAIN,
 	NO_CLIP,
 	/* The 8 pot handlers */
@@ -560,7 +560,8 @@ static struct POKEYinterface bzone_pokey_interface =
 
 static struct Samplesinterface bzone_samples_interface =
 {
-	2	/* 2 channels */
+	2,	/* 2 channels */
+	25	/* volume */
 };
 
 
@@ -713,7 +714,7 @@ static struct POKEYinterface redbaron_pokey_interface =
 {
 	1,	/* 1 chip */
 	1500000,	/* 1.5 MHz??? */
-	100,
+	{ 100 },
 	POKEY_DEFAULT_GAIN,
 	NO_CLIP,
 	/* The 8 pot handlers */
@@ -732,7 +733,8 @@ static struct POKEYinterface redbaron_pokey_interface =
 
 static struct Samplesinterface redbaron_samples_interface =
 {
-	2	/* 2 channels */
+	2,	/* 2 channels */
+	25	/* volume */
 };
 
 static struct MachineDriver redbaron_machine_driver =

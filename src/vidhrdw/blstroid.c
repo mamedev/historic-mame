@@ -1,8 +1,39 @@
 /***************************************************************************
 
-  vidhrdw.c
+  vidhrdw/atarisy1.c
 
   Functions to emulate the video hardware of the machine.
+
+****************************************************************************
+
+	Playfield encoding
+	------------------
+		1 16-bit word is used
+
+		Word 1:
+			Bits 13-15 = palette
+			Bits  0-12 = image number
+
+
+	Motion Object encoding
+	----------------------
+		4 16-bit words are used
+
+		Word 1:
+			Bits  7-15 = vertical position
+			Bits  0-3  = vertical size of the object, in tiles
+
+		Word 2:
+			Bit  15    = horizontal flip
+			Bit  14    = vertical flip
+			Bits  0-13 = image index
+
+		Word 3:
+			Bits  3-11 = link to the next motion object
+
+		Word 4:
+			Bits  6-15 = horizontal position
+			Bits  0-3  = motion object palette
 
 ***************************************************************************/
 
@@ -13,22 +44,11 @@
 #define XCHARS 40
 #define YCHARS 30
 
-#define XDIM (XCHARS*8)
+#define XDIM (XCHARS*16)
 #define YDIM (YCHARS*8)
 
 
-struct blstroid_mo_data
-{
-	int *redraw_list, *redraw;
-};
-
-
-
-/*************************************
- *
- *		Globals we own
- *
- *************************************/
+#define DEBUG_VIDEO 0
 
 
 
@@ -38,31 +58,33 @@ struct blstroid_mo_data
  *
  *************************************/
 
-static unsigned char *playfielddirty;
-
-static struct osd_bitmap *playfieldbitmap;
-
-static void *int1_timer[32];
-
 static unsigned long priority[8];
 
 
 
 /*************************************
  *
- *		Prototypes from other modules
+ *		Prototypes
  *
  *************************************/
 
 extern int blstroid_irq_state;
 
-void blstroid_vh_stop(void);
-void blstroid_sound_reset(void);
-void blstroid_update_display_list(int scanline);
+static const unsigned char *update_palette(void);
 
-#if 0
-static int blstroid_debug(void);
+static void pf_color_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
+static void pf_render_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
+static void pf_overrender_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
+
+static void mo_color_callback(const unsigned short *data, const struct rectangle *clip, void *param);
+static void mo_render_callback(const unsigned short *data, const struct rectangle *clip, void *param);
+
+static void irq_off(int param);
+
+#if DEBUG_VIDEO
+static int debug(void);
 #endif
+
 
 
 /*************************************
@@ -73,9 +95,9 @@ static int blstroid_debug(void);
 
 int blstroid_vh_start(void)
 {
-	static struct atarigen_modesc blstroid_modesc =
+	static struct atarigen_mo_desc mo_desc =
 	{
-		256,                 /* maximum number of MO's */
+		512,                 /* maximum number of MO's */
 		8,                   /* number of bytes per MO entry */
 		2,                   /* number of bytes between MO words */
 		0,                   /* ignore an entry if this word == 0xffff */
@@ -83,31 +105,27 @@ int blstroid_vh_start(void)
 		0                    /* render in reverse link order */
 	};
 
-	/* allocate dirty buffers */
-	if (!playfielddirty)
-		playfielddirty = malloc(atarigen_playfieldram_size / 2);
-	if (!playfielddirty)
+	static struct atarigen_pf_desc pf_desc =
 	{
-		blstroid_vh_stop();
+		16, 8,				/* width/height of each tile */
+		64, 64				/* number of tiles in each direction */
+	};
+	
+	/* reset statics */
+	memset(priority, 0, sizeof(priority));
+	
+	/* initialize the playfield */
+	if (atarigen_pf_init(&pf_desc))
+		return 1;
+	
+	/* initialize the motion objects */
+	if (atarigen_mo_init(&mo_desc))
+	{
+		atarigen_pf_free();
 		return 1;
 	}
-	memset(playfielddirty, 1, atarigen_playfieldram_size / 2);
-
-	/* allocate bitmaps */
-	if (!playfieldbitmap)
-		playfieldbitmap = osd_new_bitmap(2*XDIM, YDIM, Machine->scrbitmap->depth);
-	if (!playfieldbitmap)
-	{
-		blstroid_vh_stop();
-		return 1;
-	}
-
-	/* reset the timers */
-	memset(int1_timer, 0, sizeof(int1_timer));
-	blstroid_irq_state = 0;
-
-	/* initialize the displaylist system */
-	return atarigen_init_display_list(&blstroid_modesc);
+	
+	return 0;
 }
 
 
@@ -120,45 +138,46 @@ int blstroid_vh_start(void)
 
 void blstroid_vh_stop(void)
 {
-	/* free bitmaps */
-	if (playfieldbitmap)
-		osd_free_bitmap(playfieldbitmap);
-	playfieldbitmap = 0;
-
-	/* free dirty buffers */
-	if (playfielddirty)
-		free(playfielddirty);
-	playfielddirty = 0;
+	atarigen_pf_free();
+	atarigen_mo_free();
 }
 
 
 
 /*************************************
  *
- *		Scan line interrupt handlers
+ *		Periodic scanline updater
  *
  *************************************/
 
-void blstroid_int1_off(int param)
+void blstroid_scanline_update(int scanline)
 {
-	blstroid_irq_state = 0;
-	atarigen_update_interrupts();
+	int offset = (scanline / 8) * 0x80 + 0x50;
+	
+	/* update motion objects */
+	if (scanline == 0)
+		atarigen_mo_update(atarigen_spriteram, 0, scanline);
+
+	/* check for interrupts */
+	if (offset < atarigen_playfieldram_size)
+		if (READ_WORD(&atarigen_playfieldram[offset]) & 0x8000)
+		{
+			/* generate the interrupt */
+			blstroid_irq_state = 1;
+			atarigen_update_interrupts();
+		
+			/* also set a timer to turn ourself off */
+			timer_set(cpu_getscanlineperiod(), 0, irq_off);
+		}
 }
 
 
-void blstroid_int1_callback(int param)
-{
-	/* generate the interrupt */
-	blstroid_irq_state = 1;
-	atarigen_update_interrupts();
 
-	/* set ourselves up to go off next frame */
-	int1_timer[param] = timer_set(TIME_IN_HZ(Machine->drv->frames_per_second), param, blstroid_int1_callback);
-
-	/* also set a timer to turn ourself off */
-	timer_set(cpu_getscanlineperiod(), 0, blstroid_int1_off);
-}
-
+/*************************************
+ *
+ *		IRQ acknowledge write handler
+ *
+ *************************************/
 
 void blstroid_irq_ack_w(int offset, int data)
 {
@@ -170,15 +189,9 @@ void blstroid_irq_ack_w(int offset, int data)
 
 /*************************************
  *
- *		Playfield RAM read/write handlers
+ *		Playfield RAM write handler
  *
  *************************************/
-
-int blstroid_playfieldram_r(int offset)
-{
-	return READ_WORD(&atarigen_playfieldram[offset]);
-}
-
 
 void blstroid_playfieldram_w(int offset, int data)
 {
@@ -188,22 +201,7 @@ void blstroid_playfieldram_w(int offset, int data)
 	if (oldword != newword)
 	{
 		WRITE_WORD(&atarigen_playfieldram[offset], newword);
-
-		playfielddirty[offset / 2] = 1;
-
-		/* modifying an interrupt state? */
-		if ((offset & 0x7f) == 0x50)
-		{
-			int row = (offset >> 7) & 0x1f;
-
-			if ((newword & 0x8000) && !int1_timer[row])
-				int1_timer[row] = timer_set(cpu_getscanlinetime(8 * row), row, blstroid_int1_callback);
-			else if (!(newword & 0x8000) && int1_timer[row])
-			{
-				timer_remove(int1_timer[row]);
-				int1_timer[row] = 0;
-			}
-		}
+		atarigen_pf_dirty[offset / 2] = 1;
 	}
 }
 
@@ -234,130 +232,35 @@ void blstroid_priorityram_w(int offset, int data)
 
 /*************************************
  *
- *		Motion object list handlers
+ *		Main refresh
  *
  *************************************/
 
-void blstroid_update_display_list(int scanline)
+void blstroid_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	atarigen_update_display_list(atarigen_spriteram, 0, scanline);
-}
+	/* remap if necessary */
+	if (update_palette())
+		memset(atarigen_pf_dirty, 1, atarigen_playfieldram_size / 2);
 
+	/* draw the playfield */
+	atarigen_pf_process(pf_render_callback, bitmap, &Machine->drv->visible_area);
 
-/*---------------------------------------------------------------------------------
- *
- * 	Motion Object encoding
- *
- *		4 16-bit words are used total
- *
- *		Word 1: Vertical position
- *
- *			Bits 0-3   = vertical size of the object, in tiles
- *			Bits 7-15  = vertical position
- *
- *		Word 2: Image
- *
- *			Bits 0-13  = image index
- *			Bit  14    = vertical flip
- *			Bit  15    = horizontal flip
- *
- *		Word 3: Link
- *
- *			Bits 3-11  = link to the next motion object
- *
- *		Word 4: Horizontal position
- *
- *			Bits 0-3   = motion object palette
- *			Bits 6-15  = horizontal position
- *
- *---------------------------------------------------------------------------------
- */
-
-void blstroid_calc_mo_colors(struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
-{
-	unsigned char *colors = param;
-	int color = data[3] & 15;
-	colors[color] = 1;
-}
-
-void blstroid_render_mo(struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
-{
-	struct blstroid_mo_data *modata = param;
-	int *redraw_list = modata->redraw_list;
-	int *redraw = modata->redraw;
-	int *r, redraw_val;
-
-	/* extract data from the various words */
-	int pict = data[1] & 0x3fff;
-	int vsize = (data[0] & 15) + 1;
-	int xpos = data[3] >> 7;
-	int ypos = 256 - ((data[0] >> 7) - 256) - vsize * 8;
-	int color = data[3] & 15;
-	int hflip = data[1] & 0x8000;
-	int vflip = data[1] & 0x4000;
-	int y, sy, yadv;
-
-	/* adjust for v flip */
-	if (vflip)
-		ypos += (vsize - 1) * 8, yadv = -8;
-	else
-		yadv = 8;
-
-	/* keep them in range to start */
-	xpos &= 0x1ff;
-	ypos &= 0x1ff;
-	redraw_val = (xpos << 23) + (ypos << 14) + vsize;
-	if (xpos >= XDIM) xpos -= 0x200;
-	if (ypos >= YDIM) ypos -= 0x200;
-
-	/* clip the X coordinate */
-	if (xpos <= -8 || xpos >= XDIM)
-		return;
-
-	/* add an entry to the redraw list for later */
-	for (r = redraw_list; r < redraw; )
-		if (*r++ == redraw_val)
-			break;
-
-	/* but only add it if we don't have a matching entry already */
-	if (r == redraw)
-	{
-		*redraw++ = redraw_val;
-		modata->redraw = redraw;
-	}
-
-	/* loop over the height */
-	for (y = 0, sy = ypos; y < vsize; y++, sy += yadv, pict++)
-	{
-		/* clip the Y coordinate */
-		if (sy <= clip->min_y - 8)
-			continue;
-		else if (sy > clip->max_y)
-			break;
-
-		/* draw the sprite */
-		drawgfx(bitmap, Machine->gfx[1], pict, color, hflip, vflip,
-					2*xpos, sy, clip, TRANSPARENCY_PEN, 0);
-	}
+	/* render the motion objects */
+	atarigen_mo_process(mo_render_callback, bitmap);
 }
 
 
 
-/***************************************************************************
+/*************************************
+ *
+ *		Palette management
+ *
+ *************************************/
 
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
-
-void blstroid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+static const unsigned char *update_palette(void)
 {
-	unsigned char mo_map[16], pf_map[16];
-	struct blstroid_mo_data modata;
-	int redraw_list[1024], *r;
-	int x, y, offs, i;
-
+	unsigned short pf_map[8], mo_map[16];
+	int i, j;
 
 	/* reset color tracking */
 	memset(mo_map, 0, sizeof(mo_map));
@@ -365,133 +268,214 @@ void blstroid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	palette_init_used_colors();
 
 	/* update color usage for the playfield */
-	for (y = 0; y < YCHARS; y++)
-	{
-		offs = y * 64;
-
-		for (x = 0; x < XCHARS; x++, offs++)
-		{
-			int data = READ_WORD(&atarigen_playfieldram[offs * 2]);
-			int color = data >> 13;
-			pf_map[color] = 1;
-		}
-	}
+	atarigen_pf_process(pf_color_callback, pf_map, &Machine->drv->visible_area);
 
 	/* update color usage for the mo's */
-	atarigen_render_display_list(bitmap, blstroid_calc_mo_colors, mo_map);
+	atarigen_mo_process(mo_color_callback, mo_map);
 
-	/* rebuild the palette */
+	/* rebuild the playfield palette */
+	for (i = 0; i < 8; i++)
+	{
+		unsigned short used = pf_map[i];
+		if (used)
+			for (j = 0; j < 16; j++)
+				if (used & (1 << j))
+					palette_used_colors[0x100 + i * 16 + j] = PALETTE_COLOR_USED;
+	}
+
+	/* rebuild the motion object palette */
 	for (i = 0; i < 16; i++)
 	{
-		if (pf_map[i])
-			memset(&palette_used_colors[256 + i * 16], PALETTE_COLOR_USED, 16);
-		if (mo_map[i])
+		unsigned short used = mo_map[i];
+		if (used)
 		{
-			palette_used_colors[0 + i * 16] = PALETTE_COLOR_TRANSPARENT;
-			memset(&palette_used_colors[0 + i * 16 + 1], PALETTE_COLOR_USED, 15);
+			palette_used_colors[0x000 + i * 16 + 0] = PALETTE_COLOR_TRANSPARENT;
+			for (j = 1; j < 16; j++)
+				if (used & (1 << j))
+					palette_used_colors[0x000 + i * 16 + j] = PALETTE_COLOR_USED;
 		}
 	}
 
-	/* remap if necessary */
-	if (palette_recalc())
-		memset(playfielddirty, 1, atarigen_playfieldram_size / 2);
+	return palette_recalc();
+}
 
 
-	/*
-	 *---------------------------------------------------------------------------------
-	 *
-	 * 	Playfield encoding
-	 *
-	 *		1 16-bit word is used
-	 *
-	 *			Bits 0-12  = image number
-	 *			Bits 13-15 = palette
-	 *
-	 *---------------------------------------------------------------------------------
-	 */
 
-	/* loop over the visible Y portion */
-	for (y = 0; y < YCHARS; y++)
-	{
-		offs = y * 64;
+/*************************************
+ *
+ *		Playfield palette
+ *
+ *************************************/
 
-		/* loop over the visible X portion */
-		for (x = 0; x < XCHARS; x++, offs++)
+static void pf_color_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *param)
+{
+	const unsigned int *usage = Machine->gfx[0]->pen_usage;
+	unsigned short *colormap = param;
+	int x, y;
+	
+	/* standard loop over tiles */
+	for (y = tiles->min_y; y != tiles->max_y; y = (y + 1) & 63)
+		for (x = tiles->min_x; x != tiles->max_x; x = (x + 1) & 63)
 		{
-			/* rerender if dirty */
-			if (playfielddirty[offs])
+			int offs = y * 64 + x;
+			int data = READ_WORD(&atarigen_playfieldram[offs * 2]);
+			int code = data & 0x1fff;
+			int color = data >> 13;
+			
+			/* mark the colors used by this tile */
+			colormap[color] |= usage[code];
+		}
+}
+
+
+
+/*************************************
+ *
+ *		Playfield rendering
+ *
+ *************************************/
+
+static void pf_render_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *param)
+{
+	const struct GfxElement *gfx = Machine->gfx[0];
+	struct osd_bitmap *bitmap = param;
+	int x, y;
+
+	/* standard loop over tiles */
+	for (y = tiles->min_y; y != tiles->max_y; y = (y + 1) & 63)
+		for (x = tiles->min_x; x != tiles->max_x; x = (x + 1) & 63)
+		{
+			int offs = y * 64 + x;
+			
+			/* update only if dirty */
+			if (atarigen_pf_dirty[offs])
 			{
 				int data = READ_WORD(&atarigen_playfieldram[offs * 2]);
+				int code = data & 0x1fff;
 				int color = data >> 13;
-
-				drawgfx(playfieldbitmap, Machine->gfx[0], data & 0x1fff, color, 0, 0,
-						16 * x, 8 * y, 0, TRANSPARENCY_NONE, 0);
-				playfielddirty[offs] = 0;
+				
+				drawgfx(atarigen_pf_bitmap, gfx, code, color, 0, 0, 16 * x, 8 * y, 0, TRANSPARENCY_NONE, 0);
+				atarigen_pf_dirty[offs] = 0;
 			}
 		}
-	}
 
-	/* copy the playfield to the destination */
-	copybitmap(bitmap, playfieldbitmap, 0, 0, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+	/* then blast the result */
+	copybitmap(bitmap, atarigen_pf_bitmap, 0, 0, 0, 0, clip, TRANSPARENCY_NONE, 0);
+}
 
-	/* prepare the motion object data structure */
-	modata.redraw_list = modata.redraw = redraw_list;
 
-	/* render the motion objects */
-	atarigen_render_display_list(bitmap, blstroid_render_mo, &modata);
 
-	/* redraw playfield tiles with higher priority */
-	for (r = redraw_list; r < modata.redraw; r++)
-	{
-		int val = *r;
-		int xpos = (val >> 23) & 0x1ff;
-		int ypos = (val >> 14) & 0x1ff;
-		int h = val & 15;
-		struct rectangle clip;
-		int sx;
+/*************************************
+ *
+ *		Playfield overrendering
+ *
+ *************************************/
 
-		/* wrap */
-		if (xpos > XDIM) xpos -= 0x200;
-		if (ypos > YDIM) ypos -= 0x200;
+static void pf_overrender_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *param)
+{
+	const struct GfxElement *gfx = Machine->gfx[0];
+	struct osd_bitmap *bitmap = param;
+	int x, y;
 
-		/* make a clip */
-		clip.min_x = 2*xpos;
-		clip.max_x = 2*xpos + 15;
-		clip.min_y = ypos;
-		clip.max_y = ypos + h * 8 - 1;
-
-		/* round the positions */
-		xpos /= 8;
-		ypos /= 8;
-
-		/* loop over the columns */
-		for (x = xpos + 1; x >= xpos; x--)
+	/* standard loop over tiles */
+	for (y = tiles->min_y; y != tiles->max_y; y = (y + 1) & 63)
+		for (x = tiles->min_x; x != tiles->max_x; x = (x + 1) & 63)
 		{
-			/* compute the scroll-adjusted x position */
-			sx = (x * 8) & 0x1ff;
-			if (sx > 0x1f8) sx -= 0x200;
-
-			/* loop over the rows */
-			for (y = ypos + h; y >= ypos; y--)
+			int offs = y * 64 + x;
+			int data = READ_WORD(&atarigen_playfieldram[offs * 2]);
+			int color = data >> 13;
+			
+			/* overrender if there is a non-zero priority for this color */
+			/* not perfect, but works for the most obvious cases */
+			if (!priority[color])
 			{
-				int sy, data, color;
-
-				/* compute the scroll-adjusted y position */
-				sy = (y * 8) & 0x1ff;
-				if (sy > 0x1f8) sy -= 0x200;
-
-				/* process the data */
-				offs = (y & 0x3f) * 64 + (x & 0x3f);
-				data = READ_WORD(&atarigen_playfieldram[offs * 2]);
-				color = data >> 13;
-
-				/* the logic is more complicated than this, but this is close */
-				if (!priority[color])
-					drawgfx(bitmap, Machine->gfx[0], data & 0x1fff, color, 0, 0,
-							2*sx, sy, &clip, TRANSPARENCY_NONE, 0);
+				int code = data & 0x1fff;
+				drawgfx(bitmap, gfx, code, color, 0, 0, 16 * x, 8 * y, clip, TRANSPARENCY_NONE, 0);
 			}
 		}
-	}
+}
+
+
+
+/*************************************
+ *
+ *		Motion object palette
+ *
+ *************************************/
+
+static void mo_color_callback(const unsigned short *data, const struct rectangle *clip, void *param)
+{
+	const unsigned int *usage = Machine->gfx[1]->pen_usage;
+	unsigned short *colormap = param;
+	int vsize = (data[0] & 0x000f) + 1;
+	int code = data[1] & 0x3fff;
+	int color = data[3] & 0x000f;
+	unsigned short temp = 0;
+	int i;
+
+	for (i = 0; i < vsize; i++)
+		temp |= usage[code++];
+	colormap[color] |= temp;;
+}
+
+
+
+/*************************************
+ *
+ *		Motion object rendering
+ *
+ *************************************/
+
+static void mo_render_callback(const unsigned short *data, const struct rectangle *clip, void *param)
+{
+	const struct GfxElement *gfx = Machine->gfx[1];
+	struct osd_bitmap *bitmap = param;
+	struct rectangle pf_clip;
+
+	/* extract data from the various words */
+	int ypos = -(data[0] >> 7);
+	int vsize = (data[0] & 0x000f) + 1;
+	int hflip = data[1] & 0x8000;
+	int vflip = data[1] & 0x4000;
+	int code = data[1] & 0x3fff;
+	int xpos = (data[3] >> 7) << 1;
+	int color = data[3] & 0x000f;
+	
+	/* adjust for height */
+	ypos -= vsize * 8;
+
+	/* adjust the final coordinates */
+	xpos &= 0x3ff;
+	ypos &= 0x1ff;
+	if (xpos >= XDIM) xpos -= 0x400;
+	if (ypos >= YDIM) ypos -= 0x200;
+
+	/* clip the X coordinate */
+	if (xpos <= -16 || xpos >= XDIM)
+		return;
+
+	/* determine the bounding box */
+	atarigen_mo_compute_clip_16x8(pf_clip, xpos, ypos, 1, vsize, clip);
+
+	/* draw the motion object */
+	atarigen_mo_draw_16x8_strip(bitmap, gfx, code, color, hflip, vflip, xpos, ypos, vsize, clip, TRANSPARENCY_PEN, 0);
+	
+	/* overrender the playfield */
+	atarigen_pf_process(pf_overrender_callback, bitmap, &pf_clip);
+}
+
+
+
+/*************************************
+ *
+ *		Automatic IRQ shutoff
+ *
+ *************************************/
+
+static void irq_off(int param)
+{
+	blstroid_irq_state = 0;
+	atarigen_update_interrupts();
 }
 
 
@@ -502,8 +486,9 @@ void blstroid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
  *
  *************************************/
 
-#if 0
-static int blstroid_debug(void)
+#if DEBUG_VIDEO
+
+static int debug(void)
 {
 	static unsigned long oldpri[8];
 	int hidebank = -1;
@@ -587,4 +572,5 @@ static int blstroid_debug(void)
 
 	return hidebank;
 }
+
 #endif

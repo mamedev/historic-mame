@@ -66,7 +66,15 @@ the sample offset. The sound cpu then sends the data for the sample
 a byte(?) at a time (dac / cvsd like) which the upd7759 plays till
 it reaches the header of the next sample (FF 00 00 00 00)
 
-
+Changes:
+05/99	HJB
+	Tried to figure better index_shift and diff_lookutp tables and
+	also adjusted sample value range. It seems the 4 bits of the
+	ADPCM data are signed (0x0f == -1)! Also a signal and step
+	width fall off seems to be closer to the real thing.
+	Reduced work load by adding a wrap around buffer for slave
+	mode data that is stuffed by the sound CPU.
+	Finally removed (now obsolete) 8 bit sample support.
 
  *************************************************************/
 
@@ -86,15 +94,8 @@ it reaches the header of the next sample (FF 00 00 00 00)
 #define LOG(n,x)
 #endif
 
-
-/* signed/unsigned 8-bit conversion macros */
-#define AUDIO_CONV(A) ((A))
-
 /* number of samples stuffed into the rom */
 static unsigned char numsam;
-
-/* bits to use for the streams interface */
-static int bits;
 
 /* playback rate for the streams interface */
 /* BASE_CLOCK or a multiple (if oversampling is active) */
@@ -102,28 +103,27 @@ static int emulation_rate;
 
 static int base_rate;
 /* define the output rate */
-#define CLOCK_DIVIDER 80
+#define CLOCK_DIVIDER	80
 
 #define OVERSAMPLING	0	/* 1 use oversampling, 0 don't */
 
-#define SIGNAL_BITS 	13			/* signal range */
-#define SIGNAL_SHIFT_L	1			/* adjustment for 16bit samples */
-#define SIGNAL_SHIFT_R  (8-SIGNAL_SHIFT_L)           /* adjustment for 8bit samples */
-#define SIGNAL_MAX      (0x7fff >> (15-(SIGNAL_SHIFT_L+SIGNAL_BITS)))
-#define SIGNAL_MIN		-(SIGNAL_MAX+1)
-#define SIGNAL_ZERO 	-2
+/* signal fall off factor */
+#define FALL_OFF(n) 	((n)-(((n)+7)/8))
 
-#define STEP_MAX		48
+#define SIGNAL_BITS 	15	/* signal range */
+#define SIGNAL_MAX		(0x7fff >> (15-SIGNAL_BITS))
+#define SIGNAL_MIN		-SIGNAL_MAX
+
+#define STEP_MAX		32
 #define STEP_MIN		0
-#define STEP_ZERO		0
 
-
+#define DATA_MAX		512
 
 struct UPD7759sample
 {
-  	unsigned int offset;    	/* offset in that region */
+	unsigned int offset;	/* offset in that region */
 	unsigned int length;    /* length of the sample */
-	unsigned int freq;	   /* play back freq of sample */
+	unsigned int freq;		/* play back freq of sample */
 };
 
 
@@ -142,8 +142,12 @@ struct UPD7759voice
 	int old_signal; 		/* last ADPCM signal */
 #endif
     int step;               /* current ADPCM step */
-	int counter;			/* over sampleing counter */
+	int counter;			/* sample counter */
 	void *timer;			/* timer used in slave mode */
+	int data[DATA_MAX]; 	/* data array used in slave mode */
+	unsigned head;			/* head of data array used in slave mode */
+	unsigned tail;			/* tail of data array used in slave mode */
+	unsigned available;
 };
 
 /* global pointer to the current interface */
@@ -163,11 +167,14 @@ static int channel[MAX_UPD7759];
 static int sampnum[MAX_UPD7759];
 
 /* step size index shift table */
-//static int index_shift[8] = { -1, -1, -1, -1, 2, 4, 6, 8 };
-static int index_shift[8] = {-1, 1, 1, 2, 2, 3, 5, 7 };
+#define INDEX_SHIFT_MAX 16
+static int index_shift[INDEX_SHIFT_MAX] = {
+	0,	 1,  2,  3,  6,  7, 10, 15,
+	15, 10,  7,  6,  3,  2,  1,  0,
+};
 
 /* lookup table for the precomputed difference */
-static int diff_lookup[49*16];
+static int diff_lookup[(STEP_MAX+1)*16];
 
 static void UPD7759_update (int chip, void *buffer, int left);
 
@@ -182,24 +189,25 @@ static void ComputeTables (void)
 		{ 1, 0, 0, 0}, { 1, 0, 0, 1}, { 1, 0, 1, 0}, { 1, 0, 1, 1},
 		{ 1, 1, 0, 0}, { 1, 1, 0, 1}, { 1, 1, 1, 0}, { 1, 1, 1, 1},
 		{-1, 0, 0, 0}, {-1, 0, 0, 1}, {-1, 0, 1, 0}, {-1, 0, 1, 1},
-		{-1, 1, 0, 0}, {-1, 1, 0, 1}, {-1, 1, 1, 0}, {-1, 1, 1, 1}
+		{-1, 1, 0, 0}, {-1, 1, 0, 1}, {-1, 1, 1, 0}, {-1, 1, 1, 1},
 	};
-	int step, nib;
+    int step, nib;
 
 	/* loop over all possible steps */
-	for (step = 0; step <= STEP_MAX; step++) {
-
+	for (step = 0; step <= STEP_MAX; step++)
+	{
         /* compute the step value */
-		int stepval = floor(16.0 * pow (11.0 / 10.0, (double)step));
+		int stepval = 6 * (step+1) * (step+1);
 		LOG(1,(errorlog, "step %2d:", step));
 		/* loop over all nibbles and compute the difference */
-		for (nib = 0; nib < 16; nib++) {
+		for (nib = 0; nib < 16; nib++)
+		{
 			diff_lookup[step*16 + nib] = nbl2bit[nib][0] *
 				(stepval   * nbl2bit[nib][1] +
 				 stepval/2 * nbl2bit[nib][2] +
 				 stepval/4 * nbl2bit[nib][3] +
 				 stepval/8);
-			LOG(1,(errorlog, " %+5d", diff_lookup[step*16 + nib]));
+			LOG(1,(errorlog, " %+6d", diff_lookup[step*16 + nib]));
         }
 		LOG(1,(errorlog, "\n"));
     }
@@ -221,9 +229,12 @@ static int find_sample(int sample_num,struct UPD7759sample *sample)
 	numsam = (unsigned int)memrom[0]; /* get number of samples from sound rom */
 	header = &(memrom[1]);
 
-	if (memcmp (header, "\x5A\xA5\x69\x55",4) == 0) {
+	if (memcmp (header, "\x5A\xA5\x69\x55",4) == 0)
+	{
 		LOG(1,(errorlog,"uPD7759 header verified\n"));
-	} else {
+	}
+	else
+	{
 		LOG(1,(errorlog,"uPD7759 header verification failed\n"));
 	}
 
@@ -243,7 +254,8 @@ static int find_sample(int sample_num,struct UPD7759sample *sample)
 	j = 0;
 	if (!data[j]) j++;
 	if ((data[j] & 0xf0) != 0x50) j++;
-	switch (data[j]) {
+	switch (data[j])
+	{
 		case 0x53: sample->freq = 8000; break;
 		case 0x59: sample->freq = 6000; break;
 		default:
@@ -283,16 +295,15 @@ int UPD7759_sh_start (const struct MachineSound *msound)
 	int i, j;
 	const struct UPD7759_interface *intf = msound->sound_interface;
 
-	/* compute the difference tables */
+	if( Machine->sample_rate == 0 )
+		return 0;
+
+    /* compute the difference tables */
 	ComputeTables ();
-
-    bits = Machine->sample_bits;
-	LOG(1,(errorlog,"UPD7759 using %d bit samples\n", bits));
-
 
     /* copy the interface pointer to a global */
 	upd7759_intf = intf;
-	base_rate=intf->clock_rate/CLOCK_DIVIDER;
+	base_rate = intf->clock_rate / CLOCK_DIVIDER;
 
 #if OVERSAMPLING
 	oversampling = (Machine->sample_rate / base_rate);
@@ -309,14 +320,13 @@ int UPD7759_sh_start (const struct MachineSound *msound)
 		char name[20];
 
 		updadpcm[i].mask = 0xffffffff;
-		updadpcm[i].signal = SIGNAL_ZERO;
-		updadpcm[i].step = STEP_ZERO;
+		updadpcm[i].signal = 0;
+		updadpcm[i].step = 0;
 		updadpcm[i].counter = emulation_rate / 2;
 
 		sprintf(name,"uPD7759 #%d",i);
 
-		channel[i] = stream_init(msound,name, emulation_rate, bits, i, UPD7759_update);
-		stream_set_volume(channel[i], intf->volume[i]);
+		channel[i] = stream_init(name,intf->volume[i],emulation_rate,16,i,UPD7759_update);
 	}
 	return 0;
 }
@@ -339,189 +349,103 @@ void UPD7759_sh_stop (void)
 }
 
 
-
-/*
- *	 Update emulation of an ADPCM output stream - 8 bit case
- */
-static void update_8bit (struct UPD7759voice *voice, unsigned char *buffer, int left)
-{
-	unsigned char *base = voice->base;
-	int sample = voice->sample;
-	int signal = voice->signal;
-#if OVERSAMPLING
-	int old_signal = voice->old_signal;
-	int i, delta;
-#endif
-    int count = voice->count;
-	int step = voice->step;
-	int counter = voice->counter;
-	int mask = voice->mask;
-	int val;
-
-	while (left) {
-		/* compute the new amplitude and update the current step */
-		val = base[(sample / 2) & mask] >> (((sample & 1) << 2) ^ 4);
-		signal += diff_lookup[step * 16 + (val & 15)];
-		if (signal > SIGNAL_MAX) signal = SIGNAL_MAX;
-		else if (signal < SIGNAL_MIN) signal = SIGNAL_MIN;
-		step += index_shift[val & 7];
-		if (step > STEP_MAX) step = STEP_MAX;
-		else if (step < STEP_MIN) step = STEP_MIN;
-#if OVERSAMPLING
-		i = 0;
-		delta = (signal  << SIGNAL_SHIFT_L) - old_signal;
-        while (counter > 0 && left > 0) {
-			*buffer++ = (old_signal + delta * i / oversampling) >> 8;
-			if (++i == oversampling) i = 0;
-			counter -= voice->freq;
-			left--;
-		}
-		old_signal = (signal  << SIGNAL_SHIFT_L);
-#else
-        while (counter > 0 && left > 0) {
-			*buffer++ = AUDIO_CONV(signal >> SIGNAL_SHIFT_R);
-			counter -=voice->freq;
-			left--;
-		}
-#endif
-        counter += emulation_rate;
-
-        /* next! */
-		if (++sample > count) {
-			/* if we're not streaming, fill with silence and stop */
-			if (voice->base != voice->stream) {
-				while (left--)
-					*buffer++ = AUDIO_CONV(voice->signal >> SIGNAL_SHIFT_R);
-				voice->playing = 0;
-			} else {
-				/* if we are streaming, pad with the last sample */
-				unsigned char last = buffer[-1];
-				while (left--)
-					*buffer++ = last;
-			}
-			break;
-		}
-	}
-    /* update the parameters */
-	voice->sample = sample;
-	voice->signal = signal;
-#if OVERSAMPLING
-	voice->old_signal = old_signal;
-#endif
-    voice->step = step;
-	voice->counter = counter;
-}
-
-/*
- *	 Update emulation of an ADPCM output stream - 16 bit case
- */
-static void update_16bit (struct UPD7759voice *voice, short *buffer, int left)
-{
-	unsigned char *base = voice->base;
-	int sample = voice->sample;
-	int signal = voice->signal;
-#if OVERSAMPLING
-	int old_signal = voice->old_signal;
-	int i, delta;
-#endif
-    int count = voice->count;
-	int step = voice->step;
-	int counter = voice->counter;
-    int mask = voice->mask;
-	int val;
-
-	while (left) {
-
-		/* compute the new amplitude and update the current step */
-		val = base[(sample / 2) & mask] >> (((sample & 1) << 2) ^ 4);
-		signal += diff_lookup[step * 16 + (val & 15)];
-		if (signal > SIGNAL_MAX) signal = SIGNAL_MAX;
-		else if (signal < SIGNAL_MIN) signal = SIGNAL_MIN;
-		step += index_shift[val & 7];
-		if (step > STEP_MAX) step = STEP_MAX;
-		else if (step < STEP_MIN) step = STEP_MIN;
-#if OVERSAMPLING
-		i = 0;
-		delta = (signal  << SIGNAL_SHIFT_L) - old_signal;
-        while (counter > 0 && left > 0) {
-			*buffer++ = old_signal + delta * i / oversampling;
-			if (++i == oversampling) i = 0;
-			counter -= voice->freq;
-			left--;
-		}
-		old_signal = (signal  << SIGNAL_SHIFT_L);
-#else
-		while (counter > 0 && left > 0) {
-			*buffer++ = (signal << SIGNAL_SHIFT_L);
-			counter -= voice->freq;
-            left--;
-        }
-#endif
-		counter += emulation_rate;
-
-        /* next! */
-        if (++sample > count) {
-			/* if we're not streaming, fill with silence and stop */
-			if (voice->base != voice->stream) {
-				while (left--)
-					*buffer++ = (voice->signal << SIGNAL_SHIFT_L);
-				voice->playing = 0;
-			} else {
-				/* if we are streaming, pad with the last sample */
-				short last = buffer[-1];
-				while (left--)
-					*buffer++ = last;
-			}
-			break;
-		}
-	}
-	/* update the parameters */
-	voice->sample = sample;
-	voice->signal = signal;
-#if OVERSAMPLING
-	voice->old_signal = old_signal;
-#endif
-    voice->step = step;
-	voice->counter = counter;
-}
-
 /*
  *   Update emulation of an uPD7759 output stream
  */
 static void UPD7759_update (int chip, void *buffer, int left)
 {
 	struct UPD7759voice *voice = &updadpcm[chip];
+	short *sample = buffer;
 	int i;
 
 	/* see if there's actually any need to generate samples */
+	LOG(3,(errorlog,"UPD7759_update %d (%d)\n", left, voice->available));
 
-	if (left > 0) {
+    if (left > 0)
+	{
         /* if this voice is active */
-		if (voice->playing) {
-			if (upd7759_intf->mode == UPD7759_SLAVE_MODE) {
-				if (bits == 16) {
-					short *p = buffer;
-					while (left--)
-						*p++ = (voice->signal << SIGNAL_SHIFT_L);
-				} else {
-					 memset(buffer, AUDIO_CONV(voice->signal >> SIGNAL_SHIFT_R), left);
-                }
-            } else {
-				if (bits == 16)
-					update_16bit(voice, buffer, left);
-				else
-					update_8bit(voice, buffer, left);
+		if (voice->playing)
+		{
+			voice->available -= left;
+			if( upd7759_intf->mode == UPD7759_SLAVE_MODE )
+			{
+				while( left-- > 0 )
+				{
+					*sample++ = voice->data[voice->tail];
+#if OVERSAMPLE
+					if( (voice->counter++ % OVERSAMPLE) == 0 )
+#endif
+                    voice->tail = (voice->tail + 1) % DATA_MAX;
+				}
 			}
-		} else {
-			/* voice is not playing */
-			if (bits == 16) {
-				short *p = buffer;
-				for (i = 0; i < left; i++)
-					*p++ = (voice->signal << SIGNAL_SHIFT_L);
-			} else {
-				memset ((unsigned char *)buffer, AUDIO_CONV(voice->signal >> SIGNAL_SHIFT_R), left);
+			else
+			{
+				unsigned char *base = voice->base;
+                int val;
+#if OVERSAMPLING
+				int i, delta;
+#endif
 
-			}
+                while( left > 0 )
+				{
+					/* compute the new amplitude and update the current voice->step */
+					val = base[(voice->sample / 2) & voice->mask] >> (((voice->sample & 1) << 2) ^ 4);
+					voice->step = FALL_OFF(voice->step) + index_shift[val & (INDEX_SHIFT_MAX-1)];
+					if (voice->step > STEP_MAX) voice->step = STEP_MAX;
+					else if (voice->step < STEP_MIN) voice->step = STEP_MIN;
+					voice->signal = FALL_OFF(voice->signal) + diff_lookup[voice->step * 16 + (val & 15)];
+					if (voice->signal > SIGNAL_MAX) voice->signal = SIGNAL_MAX;
+					else if (voice->signal < SIGNAL_MIN) voice->signal = SIGNAL_MIN;
+#if OVERSAMPLING
+					i = 0;
+					delta = voice->signal - voice->old_signal;
+					while (voice->counter > 0 && left > 0)
+					{
+						*sample++ = voice->old_signal + delta * i / oversampling;
+						if (++i == oversampling) i = 0;
+						voice->counter -= voice->freq;
+						left--;
+					}
+					voice->old_signal = voice->signal;
+#else
+					while (voice->counter > 0 && left > 0)
+					{
+						*sample++ = voice->signal;
+						voice->counter -= voice->freq;
+						left--;
+					}
+#endif
+					voice->counter += emulation_rate;
+
+					/* next! */
+					if( ++voice->sample > voice->count )
+					{
+						/* if we're not streaming, fill with silence and stop */
+						if( voice->base != voice->stream )
+						{
+							while (left-- > 0)
+							{
+								*sample++ = voice->signal;
+								voice->signal = FALL_OFF(voice->signal);
+							}
+							voice->playing = 0;
+						}
+						else
+						{
+							/* if we are streaming, pad with the last voice->sample */
+							while( left-- > 0 )
+								*sample++ = voice->signal;
+						}
+						break;
+					}
+				}
+            }
+		}
+		else
+		{
+			/* voice is not playing */
+			for (i = 0; i < left; i++)
+				*sample++ = voice->signal;
 		}
 	}
 }
@@ -548,12 +472,14 @@ void UPD7759_message_w (int num, int data)
 		return;
 
 	/* range check the numbers */
-	if (num >= upd7759_intf->num) {
+	if( num >= upd7759_intf->num )
+	{
 		LOG(1,(errorlog,"error: UPD7759_SNDSELECT() called with channel = %d, but only %d channels allocated\n", num, upd7759_intf->num));
 		return;
 	}
 
-	if (upd7759_intf->mode == UPD7759_SLAVE_MODE) {
+	if (upd7759_intf->mode == UPD7759_SLAVE_MODE)
+	{
 		int offset = -1;
 
 		//LOG(1,(errorlog,"upd7759_message_w $%02x\n", data));
@@ -598,21 +524,26 @@ void UPD7759_message_w (int num, int data)
 
 				//LOG(1,(errorlog, "upd7759_message_w unhandled $%02x\n", data));
 				if (errorlog) fprintf (errorlog, "upd7759_message_w unhandled $%02x\n", data);
-				if ((data & 0xc0) == 0xc0) {
-					if (voice->timer) {
+				if ((data & 0xc0) == 0xc0)
+				{
+					if (voice->timer)
+					{
 						timer_remove(voice->timer);
 						voice->timer = 0;
 					}
 					voice->playing = 0;
 				}
         }
-		if (offset > 0) {
+		if (offset > 0)
+		{
 			voice->base = &Machine->memory_region[upd7759_intf->region][offset];
 			//LOG(1,(errorlog, "upd7759_message_w set base $%08x\n", offset));
-		if (errorlog)fprintf(errorlog, "upd7759_message_w set base $%08x\n", offset);
+			if (errorlog)
+				fprintf(errorlog, "upd7759_message_w set base $%08x\n", offset);
         }
-
-    } else {
+	}
+	else
+	{
 
 		LOG(1,(errorlog,"uPD7759 calling sample : %d\n", data));
 		sampnum[num] = data;
@@ -634,23 +565,25 @@ static void UPD7759_dac(int num)
 	struct UPD7759voice *voice = updadpcm + num;
 
 	dac_msb ^= 1;
-	if (dac_msb) {
-
-		/* conversion of the ADPCM data to a new signal value */
-		stream_update(channel[num], 0);
+	if( dac_msb )
+	{
+		LOG(3,(errorlog,"UPD7759_dac:    $%x ", voice->sample & 15));
         /* convert lower nibble */
-        voice->signal += diff_lookup[voice->step * 16 + (voice->sample & 15)];
+		voice->step = FALL_OFF(voice->step) + index_shift[voice->sample & (INDEX_SHIFT_MAX-1)];
+        if (voice->step > STEP_MAX) voice->step = STEP_MAX;
+        else if (voice->step < STEP_MIN) voice->step = STEP_MIN;
+		voice->signal = FALL_OFF(voice->signal) + diff_lookup[voice->step * 16 + (voice->sample & 15)];
 		if (voice->signal > SIGNAL_MAX) voice->signal = SIGNAL_MAX;
 		else if (voice->signal < SIGNAL_MIN) voice->signal = SIGNAL_MIN;
-		voice->step += index_shift[voice->sample & 7];
-		if (voice->step > STEP_MAX) voice->step = STEP_MAX;
-		else if (voice->step < STEP_MIN) voice->step = STEP_MIN;
-
-    } else {
-
-        if (upd7759_intf->irqcallback[num])
+		LOG(3,(errorlog,"step: %3d signal: %+5d\n", voice->step, voice->signal));
+		voice->head = (voice->head + 1) % DATA_MAX;
+		voice->data[voice->head] = voice->signal;
+		voice->available++;
+    }
+	else
+	{
+		if( upd7759_intf->irqcallback[num] )
 			(*upd7759_intf->irqcallback[num])(num);
-
     }
 }
 
@@ -674,69 +607,76 @@ void UPD7759_start_w (int num, int data)
 		return;
 
 	/* range check the numbers */
-	if (num >= upd7759_intf->num) {
+	if( num >= upd7759_intf->num )
+	{
 		LOG(1,(errorlog,"error: UPD7759_play_stop() called with channel = %d, but only %d channels allocated\n", num, upd7759_intf->num));
 		return;
 	}
 
 	/* handle the slave mode */
-    if (upd7759_intf->mode == UPD7759_SLAVE_MODE) {
-
-		if (voice->playing) {
-
+	if (upd7759_intf->mode == UPD7759_SLAVE_MODE)
+	{
+		if (voice->playing)
+		{
             /* if the chip is busy this should be the ADPCM data */
 			data &= 0xff;	/* be sure to use 8 bits value only */
-			LOG(3,(errorlog,"UPD7759_data_w: $%02x\n", data));
+			LOG(3,(errorlog,"UPD7759_data_w: $%x ", (data >> 4) & 15));
 
             /* detect end of a sample by inspection of the last 5 bytes */
 			/* FF 00 00 00 00 is the start of the next sample */
-			if (voice->count > 5 && voice->sample == 0xff000000 && data == 0x00) {
-				/* remove an old timer */
-				if (voice->timer) {
-					timer_remove(voice->timer);
-					voice->timer = 0;
+			if( voice->count > 5 && voice->sample == 0xff && data == 0x00 )
+			{
+                /* remove an old timer */
+                if (voice->timer)
+                {
+                    timer_remove(voice->timer);
+                    voice->timer = 0;
 				}
-				/* stop playing this sample */
+                /* stop playing this sample */
 				voice->playing = 0;
 				return;
             }
 
-            /* collect the data written in voice->sample */
-			voice->sample = (voice->sample << 8) | (data & 0xff);
+			/* save the data written in voice->sample */
+			voice->sample = data;
 			voice->count++;
 
-			stream_update(channel[num], 0);
             /* conversion of the ADPCM data to a new signal value */
-
-            /* convert the upper nibble */
-            voice->signal += diff_lookup[voice->step * 16 + ((voice->sample >> 4) & 15)];
-            if (voice->signal > SIGNAL_MAX) voice->signal = SIGNAL_MAX;
-            else if (voice->signal < SIGNAL_MIN) voice->signal = SIGNAL_MIN;
-			voice->step += index_shift[(voice->sample >> 4) & 7];
+			voice->step = FALL_OFF(voice->step) + index_shift[(voice->sample >> 4) & (INDEX_SHIFT_MAX-1)];
             if (voice->step > STEP_MAX) voice->step = STEP_MAX;
             else if (voice->step < STEP_MIN) voice->step = STEP_MIN;
-
-        } else {
-
+			voice->signal = FALL_OFF(voice->signal) + diff_lookup[voice->step * 16 + ((voice->sample >> 4) & 15)];
+            if (voice->signal > SIGNAL_MAX) voice->signal = SIGNAL_MAX;
+            else if (voice->signal < SIGNAL_MIN) voice->signal = SIGNAL_MIN;
+			LOG(3,(errorlog,"step: %3d signal: %+5d\n", voice->step, voice->signal));
+			voice->head = (voice->head + 1) % DATA_MAX;
+			voice->data[voice->head] = voice->signal;
+			voice->available++;
+		}
+		else
+		{
 			LOG(2,(errorlog,"UPD7759_start_w: $%02x\n", data));
-
             /* remove an old timer */
-            if (voice->timer) {
+			if (voice->timer)
+			{
                 timer_remove(voice->timer);
                 voice->timer = 0;
             }
+			/* bring the chip in sync with the CPU */
+			stream_update(channel[num], 0);
             /* start a new timer */
 			voice->timer = timer_pulse( TIME_IN_HZ(base_rate), num, UPD7759_dac );
-			/* reset the step width */
-            voice->step = STEP_ZERO;
-            /* reset count for the detection of an sample ending */
-            voice->count = 0;
-			/* this voice is now playing */
-            voice->playing = 1;
-
+			voice->signal = 0;
+			voice->step = 0;	/* reset the step width */
+			voice->count = 0;	/* reset count for the detection of an sample ending */
+			voice->playing = 1; /* this voice is now playing */
+            voice->tail = 0;
+			voice->head = 0;
+			voice->available = 0;
         }
-
-	} else {
+	}
+	else
+	{
 		struct UPD7759sample sample;
 
 		/* bail if the chip is busy */
@@ -759,7 +699,7 @@ void UPD7759_start_w (int num, int data)
 			voice->count = sample.length * 2;
 
 			/* also reset the chip parameters */
-			voice->step = STEP_ZERO;
+			voice->step = 0;
 			voice->counter = emulation_rate / 2;
 
 			return;
@@ -786,7 +726,8 @@ int UPD7759_data_r(int num, int offs)
 		return 0x00;
 
     /* range check the numbers */
-    if ( num >= upd7759_intf->num ) {
+	if( num >= upd7759_intf->num )
+	{
 		LOG(1,(errorlog,"error: UPD7759_data_r() called with channel = %d, but only %d channels allocated\n", num, upd7759_intf->num));
 		return 0x00;
     }
@@ -822,7 +763,8 @@ int UPD7759_busy_r (int num)
 		return 1;
 
 	/* range check the numbers */
-	if ( num >= upd7759_intf->num ) {
+	if( num >= upd7759_intf->num )
+	{
 		LOG(1,(errorlog,"error: UPD7759_busy_r() called with channel = %d, but only %d channels allocated\n", num, upd7759_intf->num));
 		return 1;
 	}
@@ -830,10 +772,13 @@ int UPD7759_busy_r (int num)
 	/* bring the chip in sync with the CPU */
 	stream_update(channel[num], 0);
 
-	if ( voice->playing == 0 ) {
+	if ( voice->playing == 0 )
+	{
 		LOG(1,(errorlog,"uPD7759 not busy\n"));
 		return 1;
-	} else {
+	}
+	else
+	{
 		LOG(1,(errorlog,"uPD7759 busy\n"));
 		return 0;
 	}
@@ -859,11 +804,12 @@ void UPD7759_reset_w (int num, int data)
 	struct UPD7759voice *voice = updadpcm + num;
 
 	/* If there's no sample rate, do nothing */
-	if (Machine->sample_rate == 0)
+	if( Machine->sample_rate == 0 )
 		return;
 
 	/* range check the numbers */
-	if ( num >= upd7759_intf->num ) {
+	if( num >= upd7759_intf->num )
+	{
 		LOG(1,(errorlog,"error: UPD7759_reset_w() called with channel = %d, but only %d channels allocated\n", num, upd7759_intf->num));
 		return;
 	}

@@ -5,9 +5,33 @@ The New Zealand Story driver, used for tnzs & tnzs2.
 TODO: - Find out how the hardware credit-counter works (MPU)
       - Verify dip switches
 	Arkanoid 2:
-      - Test mode 2 (press start2 when test dsw L) doesn't work\display well.
       - What do writes at f400 do ?
       - Why does the game zero the fd00 area ?
+	Extrmatn:
+      - What do reads from f600 do ? (discarded)
+
+****************************************************************************
+
+extrmatn and arkanoi2 have a special test mode. The correct procedure to make
+it succeed is as follows:
+- enter service mode
+- on the color test screen, press 2
+- set dip switch 1 so that it reads 00000001
+- press 3. Text at the bottom will change to "CHECKING NOW".
+- use all the inputs, including tilt, until all inputs are OK
+- set dip switch 1 to 00000000
+- set dip switch 1 to 10101010
+- set dip switch 1 to 11111111
+- set dip switch 2 to 00000000
+- set dip switch 2 to 10101010
+- set dip switch 2 to 11111111
+- press 1 (to confirm that coin lockout 1 works)
+- press 2 (to confirm that coin lockout 2 works)
+- press 1 (to confirm that OPN works)
+- press 1 (to confirm that SSGCH1 works)
+- press 1 (to confirm that SSGCH2 works)
+- press 1 (to confirm that SSGCH3 works)
+- finished ("CHECK ALL OK!")
 
 ****************************************************************************
 
@@ -39,9 +63,9 @@ CPU #2
 8000-9fff banked ROM
 a000      bankswitch
 b000-b001 YM2203 interface (with DIPs on YM2203 ports)
-c000-c001 input ports (and coin counter)
+c000-c001 I8742 MCU
 e000-efff RAM shared with CPU #1
-f000-f003 ???
+f000-f003 inputs (used only by Arkanoid 2)
 
 ****************************************************************************/
 /***************************************************************************
@@ -54,21 +78,8 @@ f000-f003 ???
 				Luca Elia (eliavit@unina.it)
 				Mirko Buffoni
 
-- The values making up the fixed security sequence (read at startup from
-  c000 by the sound cpu) are different.
-
-- Reads from c000 will yeld the coin counter and the input port 1 values
-  in an alternate fashion.
-
-- c000 will be reset to yeld the coin counter when c001 is written. The
-  real mechanism of this has to be more complex (for example some specific
-  values are written there in sequence: 54h 41h), and yet to be understood.
-  This goes for the handling of the coin counter as well.
-
-- Writes to c000 will modify the coin counter (the data written gets
-  subracted from it, as it seems). I don't know if tnzs acts the same.
-
 - The game doesn't write to f800-fbff (static palette)
+
 
 
 			Interesting routines (main cpu)
@@ -150,11 +161,11 @@ d23f=input port 1 value
 /* prototypes for functions in ../machine/tnzs.c */
 unsigned char *tnzs_objram, *tnzs_workram;
 unsigned char *tnzs_vdcram, *tnzs_scrollram;
-void arkanoi2_init_machine (void);
-int arkanoi2_inputport_r(int offset);
-void arkanoi2_inputport_w(int offset,int data);
+void extrmatn_init(void);
+void arkanoi2_init(void);
+void tnzs_init(void);
+void insectx_init(void);
 int arkanoi2_sh_f000_r(int offs);
-int arkanoi2_interrupt(void);
 void tnzs_init_machine(void);
 int tnzs_interrupt (void);
 int tnzs_mcu_r(int offset);
@@ -174,37 +185,18 @@ void tnzs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-static struct MemoryReadAddress arkanoi2_readmem[] =
-{
-	{ 0x0000, 0x9fff, MRA_ROM },		/* Code ROM */
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xefff, tnzs_workram_r },	/* WORK RAM (shared by the 2 z80's */
-	{ 0xf000, 0xf1ff, MRA_RAM },	/* VDC RAM */
-	{ -1 }  /* end of table */
-};
-
-static struct MemoryWriteAddress arkanoi2_writemem[] =
-{
-	{ 0x0000, 0x9fff, MWA_ROM },	/* Code ROM */
-	{ 0xc000, 0xdfff, MWA_RAM, &tnzs_objram },
-	{ 0xe000, 0xefff, tnzs_workram_w, &tnzs_workram },
-	{ 0xf000, 0xf1ff, MWA_RAM, &tnzs_vdcram },
-	{ 0xf200, 0xf3ff, MWA_RAM, &tnzs_scrollram }, /* scrolling info */
-	{ -1 }  /* end of table */
-};
-
-static struct MemoryReadAddress tnzs_readmem[] =
+static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 }, /* ROM + RAM */
 	{ 0xc000, 0xdfff, MRA_RAM },
 	{ 0xe000, 0xefff, tnzs_workram_r },	/* WORK RAM (shared by the 2 z80's */
-	{ 0xf000, 0xf1ff, MRA_RAM },   /* VDC RAM  */
-	{ 0xf800, 0xfbff, MRA_RAM },
+	{ 0xf000, 0xf1ff, MRA_RAM },	/* VDC RAM */
+	{ 0xf800, 0xfbff, MRA_RAM },	/* not in extrmatn and arkanoi2 (PROMs instead) */
 	{ -1 }  /* end of table */
 };
 
-static struct MemoryWriteAddress tnzs_writemem[] =
+static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0xbfff, MWA_BANK1 },	/* ROM + RAM */
@@ -213,118 +205,46 @@ static struct MemoryWriteAddress tnzs_writemem[] =
 	{ 0xf000, 0xf1ff, MWA_RAM, &tnzs_vdcram },
 	{ 0xf200, 0xf3ff, MWA_RAM, &tnzs_scrollram }, /* scrolling info */
 	{ 0xf600, 0xf600, tnzs_bankswitch_w },
-	{ 0xf800, 0xfbff, paletteram_xRRRRRGGGGGBBBBB_w, &paletteram },
+	{ 0xf800, 0xfbff, paletteram_xRRRRRGGGGGBBBBB_w, &paletteram },	/* not in extrmatn and arkanoi2 (PROMs instead) */
 	{ -1 }  /* end of table */
 };
 
-static struct MemoryReadAddress arkanoi2_readmem1[] =
-{
-	{ 0x0000, 0x9fff, MRA_ROM },			/* code ROM */
-	{ 0xb000, 0xb000, YM2203_status_port_0_r  },
-	{ 0xb001, 0xb001, YM2203_read_port_0_r  },
-	{ 0xc000, 0xc001, arkanoi2_inputport_r },	/* returns coins,input port, etc. */
-	{ 0xd000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xefff, tnzs_workram_r },
-	{ 0xf000, 0xf001, arkanoi2_sh_f000_r },	/* IN0 paddle */
-	{ 0xf002, 0xf003, arkanoi2_sh_f000_r },	/* IN0 paddle (the same?)*/
-	{ -1 }  /* end of table */
-};
-
-static struct MemoryWriteAddress arkanoi2_writemem1[] =
-{
-	{ 0x0000, 0x9fff, MWA_ROM },	/* code ROM */
-	{ 0xb000, 0xb000, YM2203_control_port_0_w },	/* YM control */
-	{ 0xb001, 0xb001, YM2203_write_port_0_w },	/* YM data write */
-	{ 0xc000, 0xc001, arkanoi2_inputport_w },	/* sub coins, reset input port */
-	{ 0xd000, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xefff, tnzs_workram_w },
-	{ -1 }  /* end of table */
-};
-
-static struct MemoryReadAddress tnzs_readmem1[] =
+static struct MemoryReadAddress sub_readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x9fff, MRA_BANK2 },
 	{ 0xb000, 0xb000, YM2203_status_port_0_r },
 	{ 0xb001, 0xb001, YM2203_read_port_0_r },
-	{ 0xc000, 0xc001, tnzs_mcu_r },
+	{ 0xc000, 0xc001, tnzs_mcu_r },	/* plain input ports in insectx (memory handler */
+									/* changed in insectx_init() ) */
 	{ 0xd000, 0xdfff, MRA_RAM },
 	{ 0xe000, 0xefff, tnzs_workram_r },
-	{ 0xf000, 0xf003, MRA_RAM },
+	{ 0xf000, 0xf003, arkanoi2_sh_f000_r },	/* paddles in arkanoid2; the ports are */
+						/* read but not used by the other games, and are not read at */
+						/* all by insectx. */
 	{ -1 }  /* end of table */
 };
 
-static struct MemoryWriteAddress tnzs_writemem1[] =
+static struct MemoryWriteAddress sub_writemem[] =
 {
 	{ 0x0000, 0x9fff, MWA_ROM },
 	{ 0xa000, 0xa000, tnzs_bankswitch1_w },
 	{ 0xb000, 0xb000, YM2203_control_port_0_w },
 	{ 0xb001, 0xb001, YM2203_write_port_0_w },
-	{ 0xc000, 0xc001, tnzs_mcu_w },
-	{ 0xd000, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xefff, tnzs_workram_w },
-	{ -1 }  /* end of table */
-};
-
-static struct MemoryReadAddress insectx_readmem1[] =
-{
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x9fff, MRA_BANK2 },
-	{ 0xb000, 0xb000, YM2203_status_port_0_r },
-	{ 0xb001, 0xb001, YM2203_read_port_0_r },
-	{ 0xc000, 0xc000, input_port_2_r },
-	{ 0xc001, 0xc001, input_port_3_r },
-	{ 0xc002, 0xc002, input_port_4_r },
-	{ 0xd000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xefff, tnzs_workram_r },
-//	{ 0xf000, 0xf003, MRA_RAM },
-	{ -1 }  /* end of table */
-};
-
-static struct MemoryWriteAddress insectx_writemem1[] =
-{
-	{ 0x0000, 0x9fff, MWA_ROM },
-	{ 0xa000, 0xa000, tnzs_bankswitch1_w },
-	{ 0xb000, 0xb000, YM2203_control_port_0_w },
-	{ 0xb001, 0xb001, YM2203_write_port_0_w },
-//	{ 0xc000, 0xc001, tnzs_mcu_w },
+	{ 0xc000, 0xc001, tnzs_mcu_w },	/* not present in insectx */
 	{ 0xd000, 0xdfff, MWA_RAM },
 	{ 0xe000, 0xefff, tnzs_workram_w },
 	{ -1 }  /* end of table */
 };
 
 
-/* bootleg */
+/* the bootleg board is different, it has a third CPU (and of course no mcu) */
 
 static void tnzsb_sound_command_w(int offset,int data)
 {
 	soundlatch_w(offset,data);
 	cpu_cause_interrupt(2,0xff);
 }
-
-
-static struct MemoryReadAddress tnzsb_readmem[] =
-{
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 }, /* BANK RAM */
-	{ 0xc000, 0xdfff, MRA_RAM },
-	{ 0xe000, 0xefff, MRA_RAM },   /* WORK RAM - shared with audio CPU */
-	{ 0xf000, 0xf1ff, MRA_RAM },   /* VDC RAM  */
-	{ -1 }  /* end of table */
-};
-
-static struct MemoryWriteAddress tnzsb_writemem[] =
-{
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0xbfff, MWA_BANK1 },
-	{ 0xc000, 0xdfff, MWA_RAM, &tnzs_objram },
-	{ 0xe000, 0xefff, MWA_RAM, &tnzs_workram }, /* WORK RAM - shared with audio CPU */
-	{ 0xf000, 0xf1ff, MWA_RAM, &tnzs_vdcram },
-	{ 0xf200, 0xf3ff, MWA_RAM, &tnzs_scrollram }, /* scrolling info */
-	{ 0xf600, 0xf600, tnzs_bankswitch_w },
-	{ 0xf800, 0xfbff, paletteram_xRRRRRGGGGGBBBBB_w, &paletteram },
-	{ -1 }  /* end of table */
-};
 
 static struct MemoryReadAddress tnzsb_readmem1[] =
 {
@@ -382,7 +302,159 @@ static struct IOWritePort tnzsb_writeport[] =
 
 
 
+INPUT_PORTS_START( extrmatn_input_ports )
+	PORT_START      /* DSW A */
+    PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
+    PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
+    PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+    PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
+    PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
+    PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
+    PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
+    PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
+    PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
+
+	PORT_START      /* DSW B */
+    PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
 INPUT_PORTS_START( arkanoi2_input_ports )
+	PORT_START	/* DSW1 - IN2 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
+
+	PORT_START	/* DSW2 - IN3 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x03, "Normal" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Very Hard" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "50k 150k" )
+	PORT_DIPSETTING(    0x0c, "100k 200k" )
+	PORT_DIPSETTING(    0x04, "50k Only" )
+	PORT_DIPSETTING(    0x08, "100k Only" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x20, "2" )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x10, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, "Allow Continue" )
+	PORT_DIPSETTING(    0x80, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+
+	PORT_START      /* IN1 - read at c000 (sound cpu) */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START      /* spinner 1 - read at f000/1 */
+	PORT_ANALOG( 0x0fff, 0x0000, IPT_DIAL, 100, 0, 0, 0 )
+	PORT_BIT   ( 0x1000, IP_ACTIVE_LOW,  IPT_COIN2 )
+	PORT_BIT   ( 0x2000, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT   ( 0x4000, IP_ACTIVE_LOW,  IPT_COIN1 )
+	PORT_BIT   ( 0x8000, IP_ACTIVE_LOW,  IPT_TILT )	/* arbitrarily assigned, handled by the mcu */
+
+	PORT_START      /* spinner 2 - read at f002/3 */
+	PORT_ANALOG( 0x0fff, 0x0000, IPT_DIAL | IPF_PLAYER2, 100, 0, 0, 0 )
+	PORT_BIT   ( 0xf000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( ark2us_input_ports )
 	PORT_START	/* DSW1 - IN2 */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
@@ -430,22 +502,30 @@ INPUT_PORTS_START( arkanoi2_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 
-	PORT_START      /* IN0 - spinner (1 paddle?) */
+	PORT_START      /* IN1 - read at c000 (sound cpu) */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START      /* spinner 1 - read at f000/1 */
 	PORT_ANALOG( 0x0fff, 0x0000, IPT_DIAL, 100, 0, 0, 0 )
 	PORT_BIT   ( 0x1000, IP_ACTIVE_LOW,  IPT_COIN2 )
 	PORT_BIT   ( 0x2000, IP_ACTIVE_HIGH, IPT_COIN3 )
 	PORT_BIT   ( 0x4000, IP_ACTIVE_LOW,  IPT_COIN1 )
-	PORT_BIT   ( 0x8000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT   ( 0x8000, IP_ACTIVE_LOW,  IPT_TILT )	/* arbitrarily assigned, handled by the mcu */
 
-	PORT_START      /* IN1 - read at c000 (sound cpu) */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_START      /* spinner 2 - read at f002/3 */
+	PORT_ANALOG( 0x0fff, 0x0000, IPT_DIAL | IPF_PLAYER2, 100, 0, 0, 0 )
+	PORT_BIT   ( 0xf000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( tnzs_input_ports )
-	PORT_START      /* DSW A - ef0e */
+	PORT_START      /* DSW A */
     PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
     PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
     PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
@@ -459,17 +539,17 @@ INPUT_PORTS_START( tnzs_input_ports )
     PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
     PORT_DIPSETTING(    0x00, DEF_STR( On ) )
     PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
-    PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
-    PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )
-    PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
+    PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
     PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
+    PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
     PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
-    PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) )
-    PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
-    PORT_DIPSETTING(    0x40, DEF_STR( 1C_4C ) )
-    PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
+    PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
+    PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
+    PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 
-	PORT_START      /* DSW B - ef0f */
+	PORT_START      /* DSW B */
     PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
     PORT_DIPSETTING(    0x02, "Easy" )
     PORT_DIPSETTING(    0x03, "Medium" )
@@ -493,58 +573,38 @@ INPUT_PORTS_START( tnzs_input_ports )
     PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START      /* IN1 */
-	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_LOW, IPT_COIN1, 2 )
-	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_LOW, IPT_COIN2, 2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
-	PORT_START      /* IN2 */
-	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_LOW, IPT_COIN3, 2 )
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START      /* IN3 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START      /* IN4 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( tnzsb_input_ports )
-	PORT_START      /* DSW A - ef0e */
+	PORT_START      /* DSW A */
     PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
     PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
     PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
@@ -568,7 +628,7 @@ INPUT_PORTS_START( tnzsb_input_ports )
     PORT_DIPSETTING(    0x40, DEF_STR( 1C_4C ) )
     PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
 
-	PORT_START      /* DSW B - ef0f */
+	PORT_START      /* DSW B */
     PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
     PORT_DIPSETTING(    0x02, "Easy" )
     PORT_DIPSETTING(    0x03, "Medium" )
@@ -591,7 +651,7 @@ INPUT_PORTS_START( tnzsb_input_ports )
     PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
     PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START
+	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
@@ -601,7 +661,7 @@ INPUT_PORTS_START( tnzsb_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
-	PORT_START
+	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_COCKTAIL )
@@ -611,7 +671,7 @@ INPUT_PORTS_START( tnzsb_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
-	PORT_START
+	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -623,7 +683,7 @@ INPUT_PORTS_START( tnzsb_input_ports )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( tnzs2_input_ports )
-	PORT_START      /* DSW A - ef0e */
+	PORT_START      /* DSW A */
     PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
     PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
     PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
@@ -647,7 +707,7 @@ INPUT_PORTS_START( tnzs2_input_ports )
     PORT_DIPSETTING(    0x40, DEF_STR( 1C_4C ) )
     PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
 
-	PORT_START      /* DSW B - ef0f */
+	PORT_START      /* DSW B */
     PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
     PORT_DIPSETTING(    0x02, "Easy" )
     PORT_DIPSETTING(    0x03, "Medium" )
@@ -671,52 +731,32 @@ INPUT_PORTS_START( tnzs2_input_ports )
     PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START      /* IN1 */
-	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_LOW, IPT_COIN1, 2 )
-	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_LOW, IPT_COIN2, 2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
-	PORT_START      /* IN2 */
-	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_LOW, IPT_COIN3, 2 )
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START      /* IN3 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START      /* IN4 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
@@ -845,19 +885,19 @@ static struct GfxLayout insectx_charlayout =
 
 static struct GfxDecodeInfo arkanoi2_gfxdecodeinfo[] =
 {
-	{ 1, 0, &arkanoi2_charlayout, 0, 32 },
+	{ 1, 0x0000, &arkanoi2_charlayout, 0, 32 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo tnzs_gfxdecodeinfo[] =
 {
-    { 1, 0x00000, &tnzs_charlayout, 0, 32 },
+    { 1, 0x0000, &tnzs_charlayout, 0, 32 },
 	{ -1 }	/* end of array */
 };
 
 static struct GfxDecodeInfo insectx_gfxdecodeinfo[] =
 {
-    { 1, 0x00000, &insectx_charlayout, 0, 32 },
+    { 1, 0x0000, &insectx_charlayout, 0, 32 },
 	{ -1 }	/* end of array */
 };
 
@@ -868,6 +908,7 @@ static struct YM2203interface ym2203_interface =
 	1,			/* 1 chip */
 	3000000,	/* 3 MHz ??? */
 	{ YM2203_VOL(30,30) },
+	AY8910_DEFAULT_GAIN,
 	{ input_port_0_r },		/* DSW1 connected to port A */
 	{ input_port_1_r },		/* DSW2 connected to port B */
 	{ 0 },
@@ -886,6 +927,7 @@ static struct YM2203interface ym2203b_interface =
 	1,			/* 1 chip */
 	3000000,	/* 3 MHz ??? */
 	{ YM2203_VOL(100,100) },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -894,28 +936,30 @@ static struct YM2203interface ym2203b_interface =
 };
 
 
+
 static struct MachineDriver arkanoi2_machine_driver =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
-			4000000,	/* ?? Hz (only crystal is 12MHz) */
+			8000000,	/* ?? Hz (only crystal is 12MHz) */
+						/* 8MHz is wrong, but extrmatn doesn't work properly at 6MHz */
 			0,			/* memory region */
-			arkanoi2_readmem,arkanoi2_writemem,0,0,
-			arkanoi2_interrupt,1
+			readmem,writemem,0,0,
+			tnzs_interrupt,1
 		},
 		{
 			CPU_Z80,
 			6000000,	/* ?? Hz */
 			2,			/* memory region */
-			arkanoi2_readmem1,arkanoi2_writemem1,0,0,
+			sub_readmem,sub_writemem,0,0,
 			interrupt,1
 		},
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,		/* video frequency (Hz), duration */
 	100,							/* cpu slices */
-	arkanoi2_init_machine,					/* called at startup */
+	tnzs_init_machine,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
@@ -947,21 +991,21 @@ static struct MachineDriver tnzs_machine_driver =
 			CPU_Z80,
 			6000000,		/* 6 Mhz(?) */
 			0,			/* memory_region */
-			tnzs_readmem,tnzs_writemem,0,0,
+			readmem,writemem,0,0,
 			tnzs_interrupt,1
 		},
 		{
 			CPU_Z80,
 			6000000,        /* 6 Mhz(?) */
 			2,			/* memory_region */
-			tnzs_readmem1,tnzs_writemem1,0,0,
+			sub_readmem,sub_writemem,0,0,
 			interrupt,1
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	200,	/* 100 CPU slices per frame - an high value to ensure proper */
 			/* synchronization of the CPUs */
-	tnzs_init_machine,		/* init_machine() */
+	tnzs_init_machine,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
@@ -993,7 +1037,7 @@ static struct MachineDriver tnzsb_machine_driver =
 			CPU_Z80,
 			6000000,		/* 6 Mhz(?) */
 			0,			/* memory_region */
-			tnzsb_readmem,tnzsb_writemem,0,0,
+			readmem,writemem,0,0,
 			tnzs_interrupt,1
 		},
 		{
@@ -1014,7 +1058,7 @@ static struct MachineDriver tnzsb_machine_driver =
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	200,	/* 100 CPU slices per frame - an high value to ensure proper */
 			/* synchronization of the CPUs */
-	tnzs_init_machine,		/* init_machine() */
+	tnzs_init_machine,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
@@ -1046,21 +1090,21 @@ static struct MachineDriver insectx_machine_driver =
 			CPU_Z80,
 			6000000,		/* 6 Mhz(?) */
 			0,			/* memory_region */
-			tnzs_readmem,tnzs_writemem,0,0,
+			readmem,writemem,0,0,
 			tnzs_interrupt,1
 		},
 		{
 			CPU_Z80,
 			6000000,        /* 6 Mhz(?) */
 			2,			/* memory_region */
-			insectx_readmem1,insectx_writemem1,0,0,
+			sub_readmem,sub_writemem,0,0,
 			interrupt,1
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	200,	/* 100 CPU slices per frame - an high value to ensure proper */
 			/* synchronization of the CPUs */
-	tnzs_init_machine,		/* init_machine() */
+	tnzs_init_machine,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
@@ -1092,27 +1136,32 @@ static struct MachineDriver insectx_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( arkanoi2_rom )
-	ROM_REGION(0x10000)				/* Region 0 - main cpu */
-	ROM_LOAD( "a2-05.rom", 0x00000, 0x10000, 0x136edf9d )
+ROM_START( extrmatn_rom )
+	ROM_REGION(0x30000)				/* Region 0 - main cpu */
+	ROM_LOAD( "b06-20.bin", 0x00000, 0x08000, 0x04e3fc1f )
+    ROM_CONTINUE(           0x18000, 0x08000 )				/* banked at 8000-bfff */
+	ROM_LOAD( "b06-21.bin", 0x20000, 0x10000, 0x1614d6a2 )	/* banked at 8000-bfff */
 
 	ROM_REGION_DISPOSE(0x80000)	/* Region 1 - temporary for gfx roms */
-	ROM_LOAD( "a2-m01.rom", 0x00000, 0x20000, 0x70cc559d )
-	ROM_LOAD( "a2-m02.bin", 0x20000, 0x20000, 0x056a985f )
-	ROM_LOAD( "a2-m03.rom", 0x40000, 0x20000, 0x49a21c5e )
-	ROM_LOAD( "a2-m04.rom", 0x60000, 0x20000, 0x548117c6 )
+	ROM_LOAD( "b06-01.bin", 0x00000, 0x20000, 0xd2afbf7e )
+	ROM_LOAD( "b06-02.bin", 0x20000, 0x20000, 0xe0c2757a )
+	ROM_LOAD( "b06-03.bin", 0x40000, 0x20000, 0xee80ab9d )
+	ROM_LOAD( "b06-04.bin", 0x60000, 0x20000, 0x3697ace4 )
 
-	ROM_REGION(0x10000)				/* Region 2 - sound cpu */
-	ROM_LOAD( "a2-13.rom", 0x00000, 0x10000, 0xe8035ef1 )
+	ROM_REGION(0x18000)				/* Region 2 - sound cpu */
+	ROM_LOAD( "b06-06.bin", 0x00000, 0x08000, 0x744f2c84 )
+	ROM_CONTINUE(           0x10000, 0x08000 )	/* banked at 8000-9fff */
 
 	ROM_REGION(0x400)				/* Region 3 - color proms */
-	ROM_LOAD( "b08-08.bin", 0x00000, 0x200, 0xa4f7ebd9 )	/* hi bytes */
-	ROM_LOAD( "b08-07.bin", 0x00200, 0x200, 0xea34d9f7 )	/* lo bytes */
+	ROM_LOAD( "b06-09.bin", 0x00000, 0x200, 0xf388b361 )	/* hi bytes */
+	ROM_LOAD( "b06-08.bin", 0x00200, 0x200, 0x10c9aac3 )	/* lo bytes */
 ROM_END
 
-ROM_START( ark2us_rom )
-	ROM_REGION(0x10000)				/* Region 0 - main cpu */
-	ROM_LOAD( "b08-11.bin", 0x00000, 0x10000, 0x99555231 )
+ROM_START( arkanoi2_rom )
+	ROM_REGION(0x30000)				/* Region 0 - main cpu */
+	ROM_LOAD( "a2-05.rom",  0x00000, 0x08000, 0x136edf9d )
+    ROM_CONTINUE(           0x18000, 0x08000 )				/* banked at 8000-bfff */
+	/* 20000-2ffff empty */
 
 	ROM_REGION_DISPOSE(0x80000)	/* Region 1 - temporary for gfx roms */
 	ROM_LOAD( "a2-m01.bin", 0x00000, 0x20000, 0x2ccc86b4 )
@@ -1120,8 +1169,30 @@ ROM_START( ark2us_rom )
 	ROM_LOAD( "a2-m03.bin", 0x40000, 0x20000, 0x274a795f )
 	ROM_LOAD( "a2-m04.bin", 0x60000, 0x20000, 0x9754f703 )
 
-	ROM_REGION(0x10000)				/* Region 2 - sound cpu */
-	ROM_LOAD( "b08-12.bin", 0x00000, 0x10000, 0xdc84e27d )
+	ROM_REGION(0x18000)				/* Region 2 - sound cpu */
+	ROM_LOAD( "a2-13.rom",  0x00000, 0x08000, 0xe8035ef1 )
+	ROM_CONTINUE(           0x10000, 0x08000 )	/* banked at 8000-9fff */
+
+	ROM_REGION(0x400)				/* Region 3 - color proms */
+	ROM_LOAD( "b08-08.bin", 0x00000, 0x200, 0xa4f7ebd9 )	/* hi bytes */
+	ROM_LOAD( "b08-07.bin", 0x00200, 0x200, 0xea34d9f7 )	/* lo bytes */
+ROM_END
+
+ROM_START( ark2us_rom )
+	ROM_REGION(0x30000)				/* Region 0 - main cpu */
+	ROM_LOAD( "b08-11.bin", 0x00000, 0x08000, 0x99555231 )
+    ROM_CONTINUE(           0x18000, 0x08000 )				/* banked at 8000-bfff */
+	/* 20000-2ffff empty */
+
+	ROM_REGION_DISPOSE(0x80000)	/* Region 1 - temporary for gfx roms */
+	ROM_LOAD( "a2-m01.bin", 0x00000, 0x20000, 0x2ccc86b4 )
+	ROM_LOAD( "a2-m02.bin", 0x20000, 0x20000, 0x056a985f )
+	ROM_LOAD( "a2-m03.bin", 0x40000, 0x20000, 0x274a795f )
+	ROM_LOAD( "a2-m04.bin", 0x60000, 0x20000, 0x9754f703 )
+
+	ROM_REGION(0x18000)				/* Region 2 - sound cpu */
+	ROM_LOAD( "b08-12.bin", 0x00000, 0x08000, 0xdc84e27d )
+	ROM_CONTINUE(           0x10000, 0x08000 )	/* banked at 8000-9fff */
 
 	ROM_REGION(0x400)				/* Region 3 - color proms */
 	ROM_LOAD( "b08-08.bin", 0x00000, 0x200, 0xa4f7ebd9 )	/* hi bytes */
@@ -1146,7 +1217,7 @@ ROM_START( tnzs_rom )
 
     ROM_REGION(0x18000)	/* 64k for the second CPU */
     ROM_LOAD( "nzsb5311.bin", 0x00000, 0x08000, 0x9784d443 )
-    ROM_CONTINUE(             0x10000, 0x08000 )
+	ROM_CONTINUE(             0x10000, 0x08000 )	/* banked at 8000-9fff */
 ROM_END
 
 ROM_START( tnzsb_rom )
@@ -1167,7 +1238,7 @@ ROM_START( tnzsb_rom )
 
     ROM_REGION(0x18000)	/* 64k for the second CPU */
     ROM_LOAD( "nzsb5325.bin", 0x00000, 0x08000, 0xd6ac4e71 )
-    ROM_CONTINUE(             0x10000, 0x08000 )
+	ROM_CONTINUE(             0x10000, 0x08000 )	/* banked at 8000-9fff */
 
     ROM_REGION(0x10000)	/* 64k for the third CPU */
     ROM_LOAD( "nzsb5326.bin", 0x00000, 0x10000, 0xcfd5649c )
@@ -1204,7 +1275,7 @@ ROM_START( insectx_rom )
 
     ROM_REGION(0x18000)	/* 64k for the second CPU */
     ROM_LOAD( "insector.u38", 0x00000, 0x08000, 0x324b28c9 )
-    ROM_CONTINUE(             0x10000, 0x08000 )
+	ROM_CONTINUE(             0x10000, 0x08000 )	/* banked at 8000-9fff */
 ROM_END
 
 
@@ -1357,18 +1428,46 @@ static void insectx_hisave(void)
 	}
 }
 
+
+
+struct GameDriver extrmatn_driver =
+{
+	__FILE__,
+	0,
+	"extrmatn",
+	"Extermination (US)",
+	"1987",
+	"[Taito] World Games",
+	"Luca Elia\nMirko Buffoni",
+	0,
+	&arkanoi2_machine_driver,
+	extrmatn_init,
+
+	extrmatn_rom,
+	0, 0,
+	0,
+	0,
+
+	extrmatn_input_ports,
+
+	PROM_MEMORY_REGION(3), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	0, 0
+};
+
 struct GameDriver arkanoi2_driver =
 {
 	__FILE__,
 	0,
 	"arkanoi2",
-	"Arkanoid - Revenge of DOH",
+	"Arkanoid - Revenge of DOH (World?)",
 	"1987",
 	"Taito",
 	"Luca Elia\nMirko Buffoni",
 	0,
 	&arkanoi2_machine_driver,
-	0,
+	arkanoi2_init,
 
 	arkanoi2_rom,
 	0, 0,
@@ -1383,7 +1482,6 @@ struct GameDriver arkanoi2_driver =
 	arkanoi2_hiload, arkanoi2_hisave
 };
 
-
 struct GameDriver ark2us_driver =
 {
 	__FILE__,
@@ -1395,14 +1493,14 @@ struct GameDriver ark2us_driver =
 	"Luca Elia\nMirko Buffoni",
 	0,
 	&arkanoi2_machine_driver,
-	0,
+	arkanoi2_init,
 
 	ark2us_rom,
 	0, 0,
 	0,
 	0,
 
-	arkanoi2_input_ports,
+	ark2us_input_ports,
 
 	PROM_MEMORY_REGION(3), 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -1415,13 +1513,13 @@ struct GameDriver tnzs_driver =
 	__FILE__,
 	0,
 	"tnzs",
-	"The Newzealand Story",
+	"The Newzealand Story (Japan)",
 	"1988",
 	"Taito",
     "Chris Moore\nMartin Scragg\nRichard Mitton",
 	0,
 	&tnzs_machine_driver,
-	0,
+	tnzs_init,
 
 	tnzs_rom,
 	0, 0,
@@ -1441,13 +1539,13 @@ struct GameDriver tnzsb_driver =
 	__FILE__,
 	&tnzs_driver,
 	"tnzsb",
-	"The Newzealand Story (bootleg)",
+	"The Newzealand Story (World? bootleg)",
 	"1988",
 	"bootleg",
     "Chris Moore\nMartin Scragg\nRichard Mitton",
 	0,
 	&tnzsb_machine_driver,
-	0,
+	tnzs_init,
 
 	tnzsb_rom,
 	0, 0,
@@ -1467,13 +1565,13 @@ struct GameDriver tnzs2_driver =
 	__FILE__,
 	&tnzs_driver,
 	"tnzs2",
-	"The Newzealand Story 2",
+	"The Newzealand Story 2 (World?)",
 	"1988",
 	"Taito",
     "Chris Moore\nMartin Scragg\nRichard Mitton",
 	0,
 	&tnzs_machine_driver,
-	0,
+	tnzs_init,
 
 	tnzs2_rom,
 	0, 0,
@@ -1493,13 +1591,13 @@ struct GameDriver insectx_driver =
 	__FILE__,
 	0,
 	"insectx",
-	"Insector X",
+	"Insector X (World?)",
 	"1989",
 	"Taito",
     "Chris Moore\nMartin Scragg\nRichard Mitton",
 	0,
 	&insectx_machine_driver,
-	0,
+	insectx_init,
 
 	insectx_rom,
 	0, 0,
@@ -1511,5 +1609,5 @@ struct GameDriver insectx_driver =
     0, 0, 0,
     ORIENTATION_DEFAULT,
 
-        insectx_hiload, insectx_hisave
+	insectx_hiload, insectx_hisave
 };

@@ -438,8 +438,9 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct YM2203interface ym2203_interface =
 {
 	1,							/* 1 chip */
-	3000000,					/* 3 MHz? */
+	3500000,					/* 3.5 MHz? */
 	{ YM2203_VOL(20,20) },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ combatsc_portA_w },

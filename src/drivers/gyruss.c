@@ -73,7 +73,6 @@ void gyruss_6809_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 unsigned char KonamiDecode( unsigned char opcode, unsigned short address );
 
-int gyruss_sh_start(void);
 int gyruss_portA_r(int offset);
 void gyruss_filter0_w(int offset,int data);
 void gyruss_filter1_w(int offset,int data);
@@ -478,9 +477,11 @@ static struct AY8910interface ay8910_interface =
 {
 	5,	/* 5 chips */
 	14318180/8,	/* 1.789772727 MHz */
-	{ 0x2012, 0x2012, 0x3014, 0x3014, 0x3014 },
+	{ MIXER(18,MIXER_PAN_RIGHT), MIXER(18,MIXER_PAN_LEFT),
+			MIXER(20,MIXER_PAN_RIGHT), MIXER(20,MIXER_PAN_RIGHT), MIXER(20,MIXER_PAN_LEFT) },
 	/*  R       L   |   R       R       L */
 	/*   effects    |         music       */
+	{ 0x20, 0x20, 0x30, 0x30, 0x30 },	/* gain */
 	{ 0, 0, gyruss_portA_r },
 	{ 0 },
 	{ 0 },
@@ -490,7 +491,7 @@ static struct AY8910interface ay8910_interface =
 static struct DACinterface dac_interface =
 {
 	1,
-	{ 50 }
+	{ MIXER(50,MIXER_PAN_LEFT) }
 };
 
 
@@ -556,7 +557,7 @@ static struct MachineDriver machine_driver =
 #endif
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,gyruss_sh_start,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_AY8910,

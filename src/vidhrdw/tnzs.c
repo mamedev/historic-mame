@@ -185,6 +185,10 @@ void tnzs_vh_draw_background(struct osd_bitmap *bitmap,unsigned char *m)
 	if (y > tot) tot = y;
 
 	upperbits = tnzs_scrollram[0x102] + tnzs_scrollram[0x103] * 256;
+	/* again, it's not clear why there are two areas, but Arkanoid 2 uses these */
+	/* for the end of game animation */
+	upperbits |= tnzs_scrollram[0x182] + tnzs_scrollram[0x183] * 256;
+
 	for (column = 0;column < tot;column++)
 	{
 		scrollx = tnzs_scrollram[column*16+4] - ((upperbits & 0x01) * 256);

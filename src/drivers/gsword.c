@@ -577,7 +577,8 @@ static struct AY8910interface ay8910_interface =
 {
 	2,			/* 2 chips */
 	1500000,	/* 1.5 MHZ ?????? */
-	{ 255, 255 },
+	{ 25, 25 },
+	AY8910_DEFAULT_GAIN,
 	{ 0,0 },
 	{ 0,0 },
 	{ 0,0 },
@@ -589,7 +590,7 @@ static struct MSM5205interface msm5205_interface =
 	2,		/* 2 chips */
 	4000,	/* 4000Hz playback ? */
 	0,		/* interrupt function */
-	{ 255, 255 }
+	{ 25, 25 }
 };
 
 
@@ -680,9 +681,9 @@ ROM_START( gsword_rom )
 	ROM_LOAD( "gs8",          0x8000, 0x2000, 0x46824b30 )
 
 	ROM_REGION(0x0360)	/* color PROMs */
-	ROM_LOAD( "ac0-1.bpr",    0x0000, 0x0100, 0x5c4b2adc )	/* palette high bits */
-	ROM_LOAD( "ac0-2.bpr",    0x0100, 0x0100, 0x966bda66 )	/* palette low bits */
-	ROM_LOAD( "ac0-3.bpr",    0x0200, 0x0100, 0xdae13f77 )	/* sprite lookup table? */
+	ROM_LOAD( "ac0-2.bpr",    0x0000, 0x0100, 0x966bda66 )	/* palette low bits */
+	ROM_LOAD( "ac0-1.bpr",    0x0100, 0x0100, 0x5c4b2adc )	/* palette high bits */
+	ROM_LOAD( "ac0-3.bpr",    0x0200, 0x0100, 0xdae13f77 )	/* sprite lookup table */
 	ROM_LOAD( "003",          0x0300, 0x0020, 0x43a548b8 )	/* address decoder? not used */
 	ROM_LOAD( "004",          0x0320, 0x0020, 0x43a548b8 )	/* address decoder? not used */
 	ROM_LOAD( "005",          0x0340, 0x0020, 0xe8d6dec0 )	/* address decoder? not used */

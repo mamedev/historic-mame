@@ -396,7 +396,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,
 	3580000,
-	{ YM3012_VOL(50,OSD_PAN_LEFT,50,OSD_PAN_RIGHT) },
+	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
 	{ 0 },
 };
 

@@ -307,6 +307,7 @@ static struct YM2203interface ym2203_interface =
 	1,
 	32220000/8,	/* Audio section crystal is 32.220 MHz */
 	{ YM2203_VOL(25,40) },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -323,7 +324,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,
 	32220000/8, /* Audio section crystal is 32.220 MHz */
-	{ YM3012_VOL(35,OSD_PAN_LEFT,35,OSD_PAN_RIGHT) },
+	{ YM3012_VOL(35,MIXER_PAN_LEFT,35,MIXER_PAN_RIGHT) },
 	{ sound_irq }
 };
 

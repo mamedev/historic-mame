@@ -212,12 +212,22 @@ static struct MemoryWriteAddress writemem_cpu2[] =
 /* input from the outside world */
 INPUT_PORTS_START( mappy_input_ports )
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Easy" )
-	PORT_DIPSETTING(    0x01, "Medium" )
-	PORT_DIPSETTING(    0x02, "Hard" )
-	PORT_DIPSETTING(    0x03, "Hardest" )
-	PORT_BIT( 0x1c, IP_ACTIVE_HIGH, IPT_UNUSED )
+/* According to the manual, 0x04, 0x08 and 0x10 should always be off,
+but... */
+	PORT_DIPNAME( 0x07, 0x00, "Rank" )
+	PORT_DIPSETTING(    0x00, "A" )
+	PORT_DIPSETTING(    0x01, "B" )
+	PORT_DIPSETTING(    0x02, "C" )
+	PORT_DIPSETTING(    0x03, "D" )
+	PORT_DIPSETTING(    0x04, "E" )
+	PORT_DIPSETTING(    0x05, "F" )
+	PORT_DIPSETTING(    0x06, "G" )
+	PORT_DIPSETTING(    0x07, "H" )
+	PORT_DIPNAME( 0x18, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_5C) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_7C ) )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -229,25 +239,35 @@ INPUT_PORTS_START( mappy_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x07, 0x00, "Coins" )
+	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 3C_2C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_6C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x05, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x06, "3 Coins/1 Credits" )
-	PORT_DIPSETTING(    0x07, DEF_STR( 3C_2C ) )
 	/* TODO: bonus scores are different for 5 lives */
 	PORT_DIPNAME( 0x38, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x38, "None" )
-	PORT_DIPSETTING(    0x20, "20k" )
+	PORT_DIPSETTING(    0x28, "20k 70k and every 70k" )
+	PORT_DIPSETTING(    0x30, "20k 80k and every 80k" )
 	PORT_DIPSETTING(    0x08, "20k 60k" )
 	PORT_DIPSETTING(    0x00, "20k 70k" )
 	PORT_DIPSETTING(    0x10, "20k 80k" )
 	PORT_DIPSETTING(    0x18, "30k 100k" )
-	PORT_DIPSETTING(    0x28, "20k 70k 70k" )
-	PORT_DIPSETTING(    0x30, "20k 80k 80k" )
+	PORT_DIPSETTING(    0x20, "20k" )
+	PORT_DIPSETTING(    0x38, "None" )
+/* those are the bonus with 5 lives
+	PORT_DIPNAME( 0x38, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x28, "30k 100k and every 100k" )
+	PORT_DIPSETTING(    0x30, "40k 120k and every 120k" )
+	PORT_DIPSETTING(    0x00, "30k 80k" )
+	PORT_DIPSETTING(    0x08, "30k 100k" )
+	PORT_DIPSETTING(    0x10, "30k 120k" )
+	PORT_DIPSETTING(    0x18, "30k" )
+	PORT_DIPSETTING(    0x20, "40k" )
+	PORT_DIPSETTING(    0x38, "None" ) */
 	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x80, "1" )
 	PORT_DIPSETTING(    0xc0, "2" )
@@ -256,7 +276,7 @@ INPUT_PORTS_START( mappy_input_ports )
 
 	PORT_START      /* DSW2 */
 	PORT_BIT( 0x03, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_DIPNAME( 0x04, 0x00, "Orientation" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ) )
 	PORT_BITX(    0x08, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
@@ -277,6 +297,7 @@ INPUT_PORTS_START( mappy_input_ports )
 
 	PORT_START      /* FAKE */
 	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+/* Coin 2 is not working */
 	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
 	PORT_BIT( 0x0c, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_HIGH, IPT_START1, 1 )
@@ -287,32 +308,49 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( digdug2_input_ports )
 	PORT_START      /* DSW0 */
-	PORT_BIT( 0x1f, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, "Reset" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x20, "5" )
-	PORT_DIPNAME( 0xc0, 0x00, "Coins" )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0xc0, "2 Coins/1 Credit 3C/2C" )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x40, "2 Coins/1 Credits" )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0xc0, "3 Coins/1 Credits" )
 
 	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x03, 0x00, "Extend" )
-	PORT_DIPSETTING(    0x00, "Type A" )
-	PORT_DIPSETTING(    0x02, "Type B" )
-	PORT_DIPSETTING(    0x01, "Type C" )
-	PORT_DIPSETTING(    0x03, "Type D" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "30k 80k and ..." )
+	PORT_DIPSETTING(    0x01, "30k 100k and ..." )
+	PORT_DIPSETTING(    0x02, "30k 120k and ..." )
+	PORT_DIPSETTING(    0x03, "30k 150k and..." )
 	PORT_DIPNAME( 0x04, 0x00, "Level Select" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, "Freeze" )
+	PORT_DIPNAME( 0x08, 0x00, "Freeze?" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2, 1 )
 	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_BUTTON2, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_DIPNAME( 0x80, 0x00, "Orientation" )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+//	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
@@ -326,16 +364,17 @@ INPUT_PORTS_START( digdug2_input_ports )
 	PORT_START      /* FAKE */
 	/* The player inputs are not memory mapped, they are handled by an I/O chip. */
 	/* These fake input ports are read by mappy_customio_data_r() */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1, 1 )
 	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_BUTTON1, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS )
 	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START      /* FAKE */
 	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+/* Coin 2 is not working */
 	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
 	PORT_BIT( 0x0c, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_HIGH, IPT_START1, 1 )
@@ -349,21 +388,21 @@ INPUT_PORTS_START( motos_input_ports )
 	PORT_DIPNAME( 0x01, 0x00, "Reset" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
-	PORT_DIPNAME( 0x06, 0x00, "Coins" )
+	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x06, DEF_STR( 3C_1C ) )
-	PORT_DIPNAME( 0x08, 0x00, "Motos" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x08, "5" )
 	PORT_DIPNAME( 0x10, 0x00, "Rank" )
 	PORT_DIPSETTING(    0x00, "A" )
 	PORT_DIPSETTING(    0x10, "B" )
-	PORT_DIPNAME( 0x60, 0x00, "Bonus life" )
-	PORT_DIPSETTING(    0x00, "10k 30k 50k" )
-	PORT_DIPSETTING(    0x20, "20k --  50k" )
-	PORT_DIPSETTING(    0x40, "30k --  70k" )
+	PORT_DIPNAME( 0x60, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "10k 30k and every 50k" )
+	PORT_DIPSETTING(    0x20, "20k and every 50k" )
+	PORT_DIPSETTING(    0x40, "30k and every 70k" )
 	PORT_DIPSETTING(    0x60, "20k 70k" )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
@@ -371,7 +410,7 @@ INPUT_PORTS_START( motos_input_ports )
 
 	PORT_START      /* DSW1 */
 	PORT_BIT( 0x3f, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_DIPNAME( 0x40, 0x00, "Orientation" )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
 	PORT_BITX(    0x80, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
@@ -381,10 +420,10 @@ INPUT_PORTS_START( motos_input_ports )
 	PORT_START      /* FAKE */
 	/* The player inputs are not memory mapped, they are handled by an I/O chip. */
 	/* These fake input ports are read by mappy_customio_data_r() */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1, 2 )
 	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_BUTTON1, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS )
 	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -407,11 +446,11 @@ INPUT_PORTS_START( todruaga_input_ports )
 	PORT_DIPSETTING(    0x10, "2" )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x30, "5" )
-	PORT_DIPNAME( 0xc0, 0x00, "Left Coin" )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x40, "2 Coins/1 Credits" )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0xc0, "3 Coins/1 Credits" )
 
 	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x01, 0x00, "Freeze" )
@@ -420,13 +459,13 @@ INPUT_PORTS_START( todruaga_input_ports )
 	PORT_DIPNAME( 0x02, 0x00, "Reset" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0c, 0x00, "Right Coin" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x04, "2 Coins/1 Credits" )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x0c, "3 Coins/1 Credits" )
 	PORT_BIT( 0x70, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_DIPNAME( 0x80, 0x00, "Orientation" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
@@ -440,10 +479,10 @@ INPUT_PORTS_START( todruaga_input_ports )
 	PORT_START      /* FAKE */
 	/* The player inputs are not memory mapped, they are handled by an I/O chip. */
 	/* These fake input ports are read by mappy_customio_data_r() */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1, 1 )
 	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_BUTTON1, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -458,6 +497,7 @@ INPUT_PORTS_START( todruaga_input_ports )
 
 	PORT_START      /* FAKE */
 	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+/* Coin 2 is not working */
 	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
 	PORT_BIT( 0x0c, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )	/* we take it from port 3 */
@@ -535,8 +575,7 @@ static struct namco_interface namco_interface =
 {
 	23920,	/* sample rate (approximate value) */
 	8,		/* number of voices */
-	48,		/* gain adjustment */
-	255,	/* playback volume */
+	100,	/* playback volume */
 	4		/* memory region */
 };
 
@@ -1139,7 +1178,7 @@ struct GameDriver digdug2_driver =
 	__FILE__,
 	0,
 	"digdug2",
-	"Dig Dug 2",
+	"Dig Dug II",
 	"1985",
 	"Namco",
 	"Aaron Giles\nMirko Buffoni\nJROK",

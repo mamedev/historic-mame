@@ -1206,7 +1206,8 @@ static const char *spacfury_sample_names[] =
 
 static struct Samplesinterface spacfury_samples_interface =
 {
-	9	/* 9 channels */
+	9,	/* 9 channels */
+	25	/* volume */
 };
 
 static struct MachineDriver spacfury_machine_driver =
@@ -1354,7 +1355,8 @@ static const char *zektor_sample_names[] =
 
 static struct Samplesinterface zektor_samples_interface =
 {
-        12 /* only speech for now */
+	12, /* only speech for now */
+	25	/* volume */
 };
 
 static struct MachineDriver zektor_machine_driver =
@@ -1466,7 +1468,8 @@ static const char *tacscan_sample_names[] =
 
 static struct Samplesinterface tacscan_samples_interface =
 {
-	12	/* 12 channels */
+	12,	/* 12 channels */
+	25	/* volume */
 };
 
 static struct MachineDriver tacscan_machine_driver =
@@ -1565,7 +1568,8 @@ static const char *elim_sample_names[] =
 
 static struct Samplesinterface elim2_samples_interface =
 {
-	8	/* 8 channels */
+	8,	/* 8 channels */
+	25	/* volume */
 };
 
 static struct MachineDriver elim2_machine_driver =
@@ -1800,7 +1804,8 @@ static const char *startrek_sample_names[] =
 
 static struct Samplesinterface startrek_samples_interface =
 {
-        10       /* 10 channels */
+	10,       /* 10 channels */
+	25	/* volume */
 };
 
 static struct MachineDriver startrek_machine_driver =

@@ -890,6 +890,7 @@ struct YM2610interface ym2610_interface =
 	1,
 	8000000,	/* 8 MHz??? */
 	{ 50 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -897,7 +898,7 @@ struct YM2610interface ym2610_interface =
 	{ irqhandler },
 	{ 3 },
 	{ 4 },
-	{ YM3012_VOL(50,OSD_PAN_LEFT,50,OSD_PAN_RIGHT) }
+	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) }
 };
 
 

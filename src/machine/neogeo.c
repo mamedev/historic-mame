@@ -23,7 +23,7 @@ extern int weekday;
 /***************** MEMCARD GLOBAL VARIABLES ******************/
 int			mcd_action=0;
 int			mcd_number=0;
-int			memcard_status=1;	/* 1=Inserted 0=No card */
+int			memcard_status=0;	/* 1=Inserted 0=No card */
 int			memcard_number=0;	/* 000...999, -1=None */
 int			memcard_manager=0;	/* 0=Normal boot 1=Call memcard manager */
 unsigned char	*neogeo_memcard;	/* Pointer to 2kb RAM zone */
@@ -132,7 +132,7 @@ void neogeo_onetime_init_machine(void)
 
 	/* Allocate and point to the memcard - bank 5 */
 	neogeo_memcard = calloc (0x800, 1);
-	memcard_status=1;
+	memcard_status=0;
 	memcard_number=0;
 
 
@@ -641,6 +641,7 @@ static void neogeo_custom_memory(void)
 			 !strcmp(Machine->gamedrv->name,"kof98") ||
 			 !strcmp(Machine->gamedrv->name,"kizuna") ||
 			 !strcmp(Machine->gamedrv->name,"lastblad") ||
+			 !strcmp(Machine->gamedrv->name,"lastbld2") ||
 			 !strcmp(Machine->gamedrv->name,"rbff2") ||
 			 !strcmp(Machine->gamedrv->name,"mslug2"))
 		sram_protection_hack = 0x100;

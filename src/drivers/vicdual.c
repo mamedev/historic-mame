@@ -968,7 +968,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct Samplesinterface samples_interface =
 {
-	10	/* 10 channels */
+	10,	/* 10 channels */
+	50	/* volume */
 };
 
 
@@ -1027,7 +1028,8 @@ static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chips */
 	PSG_CLOCK_CARNIVAL,
-	{ 255 },
+	{ 50 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -1169,6 +1171,23 @@ ROM_START( headon_rom )
 	ROM_LOAD( "167c",         0x1000, 0x0400, 0x2280831e )
 	ROM_LOAD( "192a",         0x1400, 0x0400, 0xed4666f2 )
 	ROM_LOAD( "193a",         0x1800, 0x0400, 0x37a1df4c )
+
+	ROM_REGION(0x0020) /* Color PROMs */
+	ROM_LOAD( "316-138",      0x0000, 0x0020, 0x67104ea9 )
+ROM_END
+
+ROM_START( headonb_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "163a",         0x0000, 0x0400, 0x4bb51259 )
+	ROM_LOAD( "164a",         0x0400, 0x0400, 0xaeac8c5f )
+	ROM_LOAD( "165a",         0x0800, 0x0400, 0xf1a0cb72 )
+	ROM_LOAD( "166b",         0x0c00, 0x0400, 0x1c59008a )
+	ROM_LOAD( "167a",         0x1000, 0x0400, 0x069e839e )
+	ROM_LOAD( "192a",         0x1400, 0x0400, 0xed4666f2 )
+	ROM_LOAD( "193a-1",       0x1800, 0x0400, 0xd3782c1d )
+
+	ROM_REGION(0x0020) /* Color PROMs */
+	ROM_LOAD( "316-138",      0x0000, 0x0020, 0x67104ea9 )
 ROM_END
 
 ROM_START( headon2_rom )
@@ -1484,7 +1503,9 @@ static unsigned char headon2_color_prom[] =
 static unsigned char sspaceat_color_prom[] =
 {
 	/* Guessed palette! */
-	0x60,0x40,0x40,0x20,0xC0,0x80,0xA0,0xE0,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+// Pongkang works
+// 6-5 2-4 A-6 E-7 8-2?
+	0x84,0xA4,0xA4,0x24,0xA4,0x04,0x64,0xE4,0xE4,0x04,0x00,0x00,0x00,0x00,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
 };
 
@@ -1712,7 +1733,7 @@ struct GameDriver headon_driver =
 	__FILE__,
 	0,
 	"headon",
-	"Head On",
+	"Head On (2 players)",
 	"1979",
 	"Gremlin",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
@@ -1727,7 +1748,33 @@ struct GameDriver headon_driver =
 
 	headon_input_ports,
 
-	headon_color_prom, 0, 0,
+	PROM_MEMORY_REGION(1), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};
+
+struct GameDriver headonb_driver =
+{
+	__FILE__,
+	&headon_driver,
+	"headonb",
+	"Head On (1 player)",
+	"1979",
+	"Gremlin",
+	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
+	0,
+	&vicdual_2Aports_machine_driver,
+	0,
+
+	headonb_rom,
+	vicdual_decode, 0,
+	0,
+	0,	/* sound_prom */
+
+	headon_input_ports,
+
+	PROM_MEMORY_REGION(1), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	0, 0

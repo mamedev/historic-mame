@@ -6,8 +6,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#define MAXPATHC 20 /* at most 20 path entries */
-#define MAXPATHL 256 /* at most 255 character path length */
+#define MAXPATHC 50 /* at most 50 path entries */
+#define MAXPATHL 2048 /* at most 2048 character path length */
 
 char buf1[MAXPATHL];
 char buf2[MAXPATHL];
@@ -16,7 +16,7 @@ char *rompathv[MAXPATHC];
 char *samplepathv[MAXPATHC];
 int rompathc;
 int samplepathc;
-char *cfgdir, *hidir, *inpdir, *stadir, *memcarddir, *artworkdir;
+char *cfgdir, *hidir, *inpdir, *stadir, *memcarddir, *artworkdir, *screenshotdir;
 
 
 char *alternate_name; /* for "-romdir" */
@@ -224,6 +224,19 @@ int osd_faccess(const char *newfilename, int filetype)
 	{
 		pathv = samplepathv;
 		pathc = samplepathc;
+	}
+	else if (filetype == OSD_FILETYPE_SCREENSHOT)
+	{
+		void *f;
+
+		sprintf(name,"%s/%s.png", screenshotdir, newfilename);
+		f = fopen(name,"rb");
+		if (f)
+		{
+			fclose(f);
+			return 1;
+		}
+		else return 0;
 	}
 	else
 		return 0;
@@ -461,6 +474,16 @@ void *osd_fopen(const char *game,const char *filename,int filetype,int _write)
 			break;
 		case OSD_FILETYPE_MEMCARD:
 			sprintf(name, "%s/%s",memcarddir,filename);
+			f->type = kPlainFile;
+			f->file = fopen(name,_write ? "wb" : "rb");
+			found = f->file!=0;
+			break;
+		case OSD_FILETYPE_SCREENSHOT:
+			/* only for writing */
+			if (!_write)
+				break;
+
+			sprintf(name,"%s/%s.png", screenshotdir, filename);
 			f->type = kPlainFile;
 			f->file = fopen(name,_write ? "wb" : "rb");
 			found = f->file!=0;

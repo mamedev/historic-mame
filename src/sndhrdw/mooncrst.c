@@ -12,6 +12,7 @@
 #define TOOTHSAW_VOLUME 36
 #define STEPS 16
 #define LFO_VOLUME 8
+#define SHOOT_VOLUME 50
 #define NOISE_VOLUME 50
 #define WAVE_AMPLITUDE 70
 #define MAXFREQ 200
@@ -41,7 +42,7 @@ static signed char waveform2[32] =
   -0x40,-0x40,-0x40,-0x40,-0x40,-0x40,-0x40,-0x40,
 };
 
-static int channel;
+static int channelnoise,channelshoot,channellfo;
 static int tone_stream;
 
 
@@ -101,40 +102,46 @@ void mooncrst_vol_w(int offset,int data)
 
 void mooncrst_noise_w(int offset,int data)
 {
-        if (deathsampleloaded)
-        {
-           if (data & 1 && !(LastPort1 & 1))
-              osd_play_sample(channel+0,Machine->samples->sample[1]->data,
-                           Machine->samples->sample[1]->length,
-                           Machine->samples->sample[1]->smpfreq,
-                           Machine->samples->sample[1]->volume,0);
-           LastPort1=data;
-        }
-        else
-        {
-  	  if (data & 1) osd_adjust_sample(channel+0,NOISE_RATE,NOISE_VOLUME);
-	  else osd_adjust_sample(channel+0,NOISE_RATE,0);
-        }
+	if (deathsampleloaded)
+	{
+		if (data & 1 && !(LastPort1 & 1))
+			mixer_play_sample(channelnoise,Machine->samples->sample[1]->data,
+					Machine->samples->sample[1]->length,
+					Machine->samples->sample[1]->smpfreq,
+					0);
+		LastPort1=data;
+	}
+	else
+	{
+		if (data & 1) mixer_set_volume(channelnoise,100);
+		else mixer_set_volume(channelnoise,0);
+	}
 }
 
 void mooncrst_shoot_w(int offset,int data)
 {
-
-      if (data & 1 && !(LastPort2 & 1) && shootsampleloaded)
-         osd_play_sample(channel+1,Machine->samples->sample[0]->data,
-                           Machine->samples->sample[0]->length,
-                           Machine->samples->sample[0]->smpfreq,
-                           Machine->samples->sample[0]->volume,0);
-      LastPort2=data;
+	if (data & 1 && !(LastPort2 & 1) && shootsampleloaded)
+		mixer_play_sample(channelshoot,Machine->samples->sample[0]->data,
+				Machine->samples->sample[0]->length,
+				Machine->samples->sample[0]->smpfreq,
+				0);
+	LastPort2=data;
 }
 
 
 int mooncrst_sh_start(const struct MachineSound *msound)
 {
 	int i;
+	int lfovol[3] = {LFO_VOLUME,LFO_VOLUME,LFO_VOLUME};
 
-
-	channel = get_play_channels(5);
+	channelnoise = mixer_allocate_channel(NOISE_VOLUME);
+	mixer_set_name(channelnoise,"Noise");
+	channelshoot = mixer_allocate_channel(SHOOT_VOLUME);
+	mixer_set_name(channelshoot,"Shoot");
+	channellfo = mixer_allocate_channels(3,lfovol);
+	mixer_set_name(channellfo+0,"Background #0");
+	mixer_set_name(channellfo+1,"Background #1");
+	mixer_set_name(channellfo+2,"Background #2");
 
 	if (Machine->samples != 0 && Machine->samples->sample[0] != 0)    /* We should check also that Samplename[0] = 0 */
 	  shootsampleloaded = 1;
@@ -172,15 +179,20 @@ int mooncrst_sh_start(const struct MachineSound *msound)
 	pitch = 0;
 	vol = 0;
 
-	tone_stream = stream_init(msound,"Tone",SOUND_CLOCK/STEPS,8,0,tone_update);
-	stream_set_volume(tone_stream,TOOTHSAW_VOLUME);
+	tone_stream = stream_init("Tone",TOOTHSAW_VOLUME,SOUND_CLOCK/STEPS,8,0,tone_update);
 
 	if (!deathsampleloaded)
-		osd_play_sample(channel+0,noise,NOISE_LENGTH,NOISE_RATE,0,1);
+	{
+		mixer_set_volume(channelnoise,0);
+		mixer_play_sample(channelnoise,noise,NOISE_LENGTH,NOISE_RATE,1);
+	}
 
-	osd_play_sample(channel+2,waveform2,32,1000,0,1);
-	osd_play_sample(channel+3,waveform2,32,1000,0,1);
-	osd_play_sample(channel+4,waveform2,32,1000,0,1);
+	mixer_set_volume(channellfo+0,0);
+	mixer_play_sample(channellfo+0,waveform2,32,1000,1);
+	mixer_set_volume(channellfo+1,0);
+	mixer_play_sample(channellfo+1,waveform2,32,1000,1);
+	mixer_set_volume(channellfo+2,0);
+	mixer_play_sample(channellfo+2,waveform2,32,1000,1);
 
 	return 0;
 }
@@ -190,16 +202,19 @@ int mooncrst_sh_start(const struct MachineSound *msound)
 void mooncrst_sh_stop(void)
 {
 	free(noise);
-	osd_stop_sample(channel+0);
-	osd_stop_sample(channel+1);
-	osd_stop_sample(channel+2);
-	osd_stop_sample(channel+3);
-	osd_stop_sample(channel+4);
+	osd_stop_sample(channelnoise);
+	osd_stop_sample(channelshoot);
+	osd_stop_sample(channellfo+0);
+	osd_stop_sample(channellfo+1);
+	osd_stop_sample(channellfo+2);
 }
 
 void mooncrst_background_w(int offset,int data)
 {
 	lfo_active[offset] = data & 1;
+
+	if (lfo_active[offset]) mixer_set_volume(channellfo+offset,100);
+	else mixer_set_volume(channellfo+offset,0);
 }
 
 void mooncrst_lfo_freq_w(int offset,int data)
@@ -213,20 +228,9 @@ void mooncrst_lfo_freq_w(int offset,int data)
 
 void mooncrst_sh_update(void)
 {
-	if (lfo_active[0])
-		osd_adjust_sample(channel+2,freq*32,LFO_VOLUME);
-	else
-		osd_adjust_sample(channel+2,1000,0);
-
-	if (lfo_active[1])
-		osd_adjust_sample(channel+3,(freq*1040/760)*32,LFO_VOLUME);
-	else
-		osd_adjust_sample(channel+3,1000,0);
-
-	if (lfo_active[2])
-		osd_adjust_sample(channel+4,(freq*1040/540)*32,LFO_VOLUME);
-	else
-		osd_adjust_sample(channel+4,1000,0);
+	osd_set_sample_freq(channellfo+0,freq*32);
+	osd_set_sample_freq(channellfo+1,(freq*1040/760)*32);
+	osd_set_sample_freq(channellfo+2,(freq*1040/540)*32);
 
 	if (t == 0) freq -= lfo_rate;
 	if (freq <= MINFREQ) freq = MAXFREQ;

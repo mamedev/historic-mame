@@ -254,7 +254,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct Samplesinterface samples_interface =
 {
-	3	/* 3 channels */
+	3,	/* 3 channels */
+	25	/* volume */
 };
 
 

@@ -504,7 +504,8 @@ static struct YM2203interface ym2203_interface =
 {
 	2,          /* 2 chips */
 	3500000,    /* 3.5 MHz ? */
-	{ YM2203_VOL(255,255), YM2203_VOL(255,255) },
+	{ YM2203_VOL(25,25), YM2203_VOL(25,25) },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -763,7 +764,7 @@ struct GameDriver f1dream_driver =
 	__FILE__,
 	0,
 	"f1dream",
-	"F1 Dream",
+	"F-1 Dream",
 	"1988",
 	"Capcom (Romstar license)",
 	"Paul Leaman\nPhil Stroffolino (MAME driver)\nTim Lindquist\nEric Hustvedt (protection)",
@@ -786,7 +787,7 @@ struct GameDriver f1dreamb_driver =
 	__FILE__,
 	&f1dream_driver,
 	"f1dreamb",
-	"F1 Dream (bootleg)",
+	"F-1 Dream (bootleg)",
 	"1988",
 	"bootleg",
 	"Paul Leaman\nPhil Stroffolino (MAME driver)\nTim Lindquist",

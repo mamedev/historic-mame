@@ -52,8 +52,8 @@ const char *DATAFILE_TAG_KEY = "$info";
 const char *DATAFILE_TAG_BIO = "$bio";
 const char *DATAFILE_TAG_MAME = "$mame";
 
-const char *HISTORY_FILENAME = "history.dat";
-const char *MAMEINFO_FILENAME = "mameinfo.dat";
+char *history_filename = "history.dat";
+char *mameinfo_filename = "mameinfo.dat";
 
 
 
@@ -542,7 +542,7 @@ int load_driver_history (const struct GameDriver *drv, char *buffer, int bufsize
 	*buffer = 0;
 
 	/* try to open history datafile */
-	if (ParseOpen (HISTORY_FILENAME))
+	if (ParseOpen (history_filename))
 	{
 		/* create index if necessary */
 		if (hist_idx)
@@ -565,7 +565,7 @@ int load_driver_history (const struct GameDriver *drv, char *buffer, int bufsize
 	}
 
 	/* try to open mameinfo datafile */
-	if (ParseOpen (MAMEINFO_FILENAME))
+	if (ParseOpen (mameinfo_filename))
 	{
 		/* create index if necessary */
 		if (mame_idx)

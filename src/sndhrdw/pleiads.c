@@ -13,6 +13,7 @@
 
 #define VOLUME_A 20
 #define VOLUME_B 80
+#define SAMPLE_VOLUME 25
 
 /* for voice A effects */
 #define SW_INTERVAL 4
@@ -27,7 +28,9 @@ static int noise_vol;
 static int noise_freq;
 
 static int noisemulate;
-static int portBstatus;
+
+static int channel0,channel1,channel23;
+
 
 /* waveforms for the audio hardware */
 static signed char waveform0[2] =
@@ -68,11 +71,12 @@ void pleiads_sound_control_a_w (int offset,int data)
 
 	if (freq != 0x0f)
 	{
-		osd_adjust_sample (0, MAXFREQ_A/2/(16-freq), VOLUME_A);
+		osd_set_sample_freq(channel0,MAXFREQ_A/2/(16-freq));
+		mixer_set_volume(channel0,VOLUME_A);
 	}
 	else
 	{
-		osd_adjust_sample (0,SAFREQ,0);
+		mixer_set_volume(channel0,0);
 	}
 
 	if (noisemulate)
@@ -83,10 +87,14 @@ void pleiads_sound_control_a_w (int offset,int data)
 			noise_vol = 85*noise;
 		}
 
-		if (noise) osd_adjust_sample (3,noise_freq,noise_vol/4);
+		if (noise)
+		{
+			osd_set_sample_freq(channel1,noise_freq);
+			mixer_set_volume(channel1,noise_vol*100/255);
+		}
 		else
 		{
-			osd_adjust_sample (3,1000,0);
+			mixer_set_volume(channel1,0);
 			noise_vol = 0;
 		}
 	}
@@ -96,17 +104,17 @@ void pleiads_sound_control_a_w (int offset,int data)
 		{
 			case 1 :
 				if (lastnoise != noise)
-					osd_play_sample(3,Machine->samples->sample[0]->data,
+					mixer_play_sample(channel1,Machine->samples->sample[0]->data,
 						Machine->samples->sample[0]->length,
 						Machine->samples->sample[0]->smpfreq,
-						Machine->samples->sample[0]->volume,0);
+						0);
 				break;
 			case 2 :
 		 		if (lastnoise != noise)
-					osd_play_sample(3,Machine->samples->sample[1]->data,
+					mixer_play_sample(channel1,Machine->samples->sample[1]->data,
 						Machine->samples->sample[1]->length,
 						Machine->samples->sample[1]->smpfreq,
-						Machine->samples->sample[1]->volume,0);
+						0);
 				break;
 		}
 		lastnoise = noise;
@@ -144,6 +152,7 @@ static int TMS3615_freq[] =
 
 void pleiads_sound_control_b_w (int offset,int data)
 {
+	static int portBstatus;
 	/* voice b1 & b2 */
 	int freq = data & 0x0f;
 	int pitch = (data & 0xc0) >> 6;
@@ -156,11 +165,12 @@ void pleiads_sound_control_b_w (int offset,int data)
 	/* freq == 0x0d and 0x0e do nothing, 0x0f does something different (SAST BIAS?) */
 	if (freq <= 0x0c)
 	{
-		osd_adjust_sample (portBstatus + 1, (1<<pitch) * TMS3615_freq[freq], VOLUME_B);
+		osd_set_sample_freq(channel23+portBstatus, (1<<pitch) * TMS3615_freq[freq]);
+		mixer_set_volume(channel23+portBstatus,VOLUME_B);
 	}
 	else
 	{
-		osd_adjust_sample (portBstatus + 1, SBFREQ, 0);
+		mixer_set_volume(channel23+portBstatus,0);
 	}
 	portBstatus ^= 0x01;
 	if (errorlog) fprintf(errorlog,"B:%X freq: %02x vol: %02x\n",data, data & 0x0f, (data & 0x30) >> 4);
@@ -170,22 +180,34 @@ void pleiads_sound_control_b_w (int offset,int data)
 
 int pleiads_sh_start (void)
 {
+	int vol[2];
+
+	channel0 = mixer_allocate_channel(VOLUME_A);
+	channel1 = mixer_allocate_channel(SAMPLE_VOLUME);
+	vol[0]=vol[1]=VOLUME_B;
+	channel23 = mixer_allocate_channels(2,vol);
+
 	if (Machine->samples != 0 && Machine->samples->sample[0] != 0)
 		noisemulate = 0;
 	else
+	{
 		noisemulate = 1;
+		mixer_set_volume(channel1,0);
+		mixer_play_sample(channel1,(signed char *)waveform2,128,1000,1);
+	}
 
 	/* Clear all the variables */
 	{
 		noise_vol = 0;
 		noise_freq = 1000;
-		portBstatus = 0;
 	}
 
-	osd_play_sample (0,(signed char *)waveform0,2,1000,0,1);
-	osd_play_sample (1,(signed char *)waveform1,32,1000,0,1);
-	osd_play_sample (2,(signed char *)waveform1,32,1000,0,1);
-	osd_play_sample (3,(signed char *)waveform2,128,1000,0,1);
+	mixer_set_volume(channel0,0);
+	mixer_play_sample(channel0,waveform0,2,1000,1);
+	mixer_set_volume(channel23+0,0);
+	mixer_play_sample(channel23+0,(signed char *)waveform1,32,1000,1);
+	mixer_set_volume(channel23+1,0);
+	mixer_play_sample(channel23+1,(signed char *)waveform1,32,1000,1);
 
 	return 0;
 }
@@ -196,7 +218,7 @@ void pleiads_sh_update (void)
 {
 	if ((noise_vol) && (noisemulate))
 	{
-		osd_adjust_sample (3,noise_freq,noise_vol/4);
+		mixer_set_volume(channel1,noise_vol*100/255);
 		noise_vol-=3;
 	}
 }

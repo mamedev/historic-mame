@@ -148,7 +148,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct Samplesinterface cinemat_samples_interface =
 {
-	7	/* 7 channels */
+	7,	/* 7 channels */
+	25	/* volume */
 };
 
 /* Note: the CPU speed is somewhat arbitrary as the cycle timings in
