@@ -63,8 +63,13 @@ int VerifyRomSet(int game,verify_printf_proc verify_printf)
 	gamedrv = drivers[game];
 	romp = gamedrv->rom;
 
-	if (!osd_faccess (gamedrv->name,OSD_FILETYPE_ROM))
-		return NOTFOUND;
+	if (!osd_faccess(gamedrv->name,OSD_FILETYPE_ROM))
+	{
+		/* if the game is a clone, try loading the ROM from the main version */
+		if (gamedrv->clone_of == 0 ||
+				!osd_faccess(gamedrv->clone_of->name,OSD_FILETYPE_ROM))
+			return NOTFOUND;
+	}
 
 	badarchive = 0;
 
@@ -92,6 +97,11 @@ int VerifyRomSet(int game,verify_printf_proc verify_printf)
 
 		/* look if we can open it */
 		f = osd_fopen(gamedrv->name,name,OSD_FILETYPE_ROM,0);
+		if (f == 0 && gamedrv->clone_of)
+		{
+			/* if the game is a clone, try loading the ROM from the main version */
+			f = osd_fopen(gamedrv->clone_of->name,name,OSD_FILETYPE_ROM,0);
+		}
 
 		if (!f)
 		{

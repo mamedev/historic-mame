@@ -402,6 +402,7 @@ ROM_END
 static void circusc_decode(void)
 {
 	int A;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	for (A = 0x6000;A < 0x10000;A++)
@@ -414,9 +415,8 @@ static void circusc_decode(void)
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if (memcmp(&RAM[0x2163],"CBR",3) == 0 &&
 		memcmp(&RAM[0x20A6],"\x01\x98\x30",3) == 0 &&
@@ -450,10 +450,9 @@ static int hiload(void)
 
 static void hisave(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -466,9 +465,14 @@ static void hisave(void)
 
 struct GameDriver circusc_driver =
 {
-	"Circus Charlie",
+	__FILE__,
+	0,
 	"circusc",
+	"Circus Charlie",
+	"????",
+	"?????",
 	"Chris Hardy (MAME driver)\nValerio Verrando (high score save)\nPaul Swan (color info)",
+	0,
 	&machine_driver,
 
 	circusc_rom,
@@ -486,9 +490,14 @@ struct GameDriver circusc_driver =
 
 struct GameDriver circusc2_driver =
 {
-	"Circus Charlie (level select)",
+	__FILE__,
+	0,
 	"circusc2",
+	"Circus Charlie (level select)",
+	"????",
+	"?????",
 	"Chris Hardy (MAME driver)\nValerio Verrando (high score save)\nPaul Swan (color info)",
+	0,
 	&machine_driver,
 
 	circusc2_rom,

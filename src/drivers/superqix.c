@@ -227,7 +227,7 @@ static struct MachineDriver machine_driver =
 	256, 256,
 	0,
 
-	VIDEO_TYPE_RASTER,// | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,// | VIDEO_SUPPORTS_DIRTY,
 	0,
 	superqix_vh_start,
 	superqix_vh_stop,
@@ -282,9 +282,14 @@ ROM_END
 
 struct GameDriver superqix_driver =
 {
-	"Super Qix",
+	__FILE__,
+	0,
 	"superqix",
+	"Super Qix",
+	"????",
+	"?????",
 	"Mirko Buffoni\nNicola Salmoria",
+	0,
 	&machine_driver,
 
 	superqix_rom,
@@ -302,9 +307,14 @@ struct GameDriver superqix_driver =
 
 struct GameDriver sqixbl_driver =
 {
-	"Super Qix (bootleg)",
+	__FILE__,
+	0,
 	"sqixbl",
+	"Super Qix (bootleg)",
+	"????",
+	"?????",
 	"Mirko Buffoni\nNicola Salmoria",
+	0,
 	&machine_driver,
 
 	sqixbl_rom,

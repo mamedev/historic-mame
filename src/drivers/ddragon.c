@@ -58,7 +58,9 @@ static void dd2_init_machine( void ) {
 	dd_sub_cpu_busy = 0x10;
 }
 
-static void dd_bankswitch_w( int offset, int data ) {
+static void dd_bankswitch_w( int offset, int data )
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 	dd_scrolly_hi = ( ( data & 0x02 ) << 7 );
 	dd_scrollx_hi = ( ( data & 0x01 ) << 8 );
@@ -390,9 +392,9 @@ TILE_LAYOUT( sprite_layout, 2048*2, 0x40000 ) /* sprites */
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0xc0000, &char_layout,	256, 8 },	/* 8x8 text */
-	{ 1, 0x40000, &sprite_layout,	128, 8 },	/* 16x16 sprites */
-	{ 1, 0x00000, &tile_layout,	0, 8 },		/* 16x16 background tiles */
+	{ 1, 0xc0000, &char_layout,	    0, 8 },	/* 8x8 text */
+	{ 1, 0x40000, &sprite_layout, 128, 8 },	/* 16x16 sprites */
+	{ 1, 0x00000, &tile_layout,	  256, 8 },		/* 16x16 background tiles */
 	{ -1 }
 };
 
@@ -403,9 +405,9 @@ TILE_LAYOUT( dd2_sprite_layout, 2048*3, 0x60000 ) /* sprites */
 
 static struct GfxDecodeInfo dd2_gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &dd2_char_layout,	256, 8 },	/* 8x8 chars */
-	{ 1, 0x50000, &dd2_sprite_layout,128, 8 },	/* 16x16 sprites */
-	{ 1, 0x10000, &tile_layout,	0, 8 },         /* 16x16 background tiles */
+	{ 1, 0x00000, &dd2_char_layout,	    0, 8 },	/* 8x8 chars */
+	{ 1, 0x50000, &dd2_sprite_layout, 128, 8 },	/* 16x16 sprites */
+	{ 1, 0x10000, &tile_layout,       256, 8 },         /* 16x16 background tiles */
 	{ -1 } // end of array
 };
 
@@ -476,9 +478,9 @@ static struct MachineDriver ddragonb_machine_driver =
 	/* video hardware */
 	32*8, 32*8,{ 1*8, 31*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256, 3*8*16,
+	384, 384,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	dd_vh_start,
 	dd_vh_stop,
@@ -531,9 +533,9 @@ static struct MachineDriver ddragon_machine_driver =
 	/* video hardware */
 	32*8, 32*8,{ 1*8, 31*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256, 3*8*16,
+	384, 384,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	dd_vh_start,
 	dd_vh_stop,
@@ -586,10 +588,10 @@ static struct MachineDriver ddragon2_machine_driver =
 	/* video hardware */
 	32*8, 32*8,{ 1*8, 31*8-1, 2*8, 30*8-1 },
 	dd2_gfxdecodeinfo,
-	256,3*8*16,
+	384, 384,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	dd_vh_start,
 	dd_vh_stop,
@@ -751,10 +753,15 @@ ADPCM_SAMPLES_END
 
 struct GameDriver ddragon_driver =
 {
-	"Double Dragon",
+	__FILE__,
+	0,
 	"ddragon",
+	"Double Dragon",
+	"????",
+	"?????",
 	"Carlos A. Lozano\nRob Rosenbrock\nChris Moore\nPhil Stroffolino\nErnesto Corvi\n\n\n"
 	"This driver does not work and we are aware of it.\nPlay with the bootleg version in the meantime.\n",
+	0,
 	&ddragon_machine_driver,
 
 	ddragon_rom,
@@ -772,9 +779,14 @@ struct GameDriver ddragon_driver =
 
 struct GameDriver ddragonb_driver =
 {
-	"Double Dragon (bootleg)",
+	__FILE__,
+	0,
 	"ddragonb",
+	"Double Dragon (bootleg)",
+	"????",
+	"?????",
 	"Carlos A. Lozano\nRob Rosenbrock\nChris Moore\nPhil Stroffolino\nErnesto Corvi\n",
+	0,
 	&ddragonb_machine_driver,
 
 	dd_rom,
@@ -792,9 +804,14 @@ struct GameDriver ddragonb_driver =
 
 struct GameDriver ddragon2_driver =
 {
-	"Double Dragon 2",
+	__FILE__,
+	0,
 	"ddragon2",
+	"Double Dragon 2",
+	"????",
+	"?????",
 	"Carlos A. Lozano\nRob Rosenbrock\nPhil Stroffolino\nErnesto Corvi\n",
+	0,
 	&ddragon2_machine_driver,
 
 	ddragon2_rom,

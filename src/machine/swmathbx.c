@@ -47,6 +47,7 @@ static int PROM_AM[1024]; /* Storage for address mode select only */
 void translate_proms(void)
 {
 int cnt,val;
+unsigned char *RAM = Machine->memory_region[0];
 
 for(cnt=0;cnt<1024;cnt++)
    {

@@ -270,6 +270,8 @@ void wow_pattern_board_w(int offset,int data)
 	static int dest;
 	static int length;	/* row length */
 	static int loops;	/* rows to copy - 1 */
+	extern unsigned char *RAM;
+
 
 	switch (offset)
 	{
@@ -566,6 +568,8 @@ void gorf_vh_screenrefresh(struct osd_bitmap *bitmap)
     int Sparkle=0;
     int SparkleLow=0;
     int SparkleHigh=0;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* copy the character mapped graphics */
 
@@ -644,6 +648,8 @@ void seawolf2_vh_screenrefresh(struct osd_bitmap *bitmap)
 	extern int Controller2;
 
     int x,y,centre,middle;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* copy the character mapped graphics */
 

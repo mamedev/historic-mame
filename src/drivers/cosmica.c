@@ -229,9 +229,14 @@ ROM_END
 
 struct GameDriver cosmica_driver =
 {
-	"Cosmic Alien",
+	__FILE__,
+	0,
 	"cosmica",
+	"Cosmic Alien",
+	"????",
+	"?????",
 	"Lee Taylor\n",
+	0,
         &cosmicalien_machine_driver,
 
 	cosmicalien_rom,

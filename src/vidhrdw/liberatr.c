@@ -146,6 +146,8 @@ void liberator_bitmap_w(int offset, int data)
 	int	d ;
 	int xt, yt ;
 	unsigned char tmb ;
+	/* TODO: get rid of this */
+	extern unsigned char *RAM;
 	int xcoor = RAM[ 0x0000 ] ;
 	int ycoor = RAM[ 0x0001 ] ;
 
@@ -191,6 +193,8 @@ void liberator_bitmap_w(int offset, int data)
 int liberator_bitmap_r (int address)
 {
 	int addr,data;
+	/* TODO: get rid of this */
+	extern unsigned char *RAM;
 	int xcoor = RAM[ 0x0000 ] ;
 	int ycoor = RAM[ 0x0001 ] ;
 

@@ -18,7 +18,6 @@ struct osd_bitmap *tmpbitmap2;
 
 static unsigned char *video1_dirty;	/* 0x800 chars - foreground */
 static unsigned char *video2_dirty;	/* 0x800 chars - background */
-static unsigned char *pal_dirty;	/* 0x80 palletes */
 static unsigned char *char_dirty;	/* 2048 chars */
 static unsigned char *sprite_dirty;	/* 512 sprites */
 
@@ -33,12 +32,18 @@ void nemesis_paletteram_w(int offset,int data)
 {
 	int oldword = READ_WORD (&nemesis_paletteram[offset]);
 	int newword = COMBINE_WORD (oldword, data);
+	int r,g,b;
 
-	if (oldword != newword)
-	{
-		WRITE_WORD (&nemesis_paletteram[offset], newword);
-		pal_dirty[offset / 32] = 1;
-	}
+
+	WRITE_WORD(&nemesis_paletteram[offset], newword);
+	r = newword & 31;
+	g = (newword >> 5) & 31;
+	b = (newword >> 10) & 31;
+
+	r = (r << 3) + (r >> 2);
+	g = (g << 3) + (g >> 2);
+	b = (b << 3) + (b >> 2);
+	palette_change_color(offset / 2,r,g,b);
 }
 
 int nemesis_videoram1_r(int offset)
@@ -113,8 +118,6 @@ void nemesis_vh_stop(void)
 	osd_free_bitmap(tmpbitmap);
 	osd_free_bitmap(tmpbitmap2);
 	tmpbitmap=0;
-	free (pal_dirty);
-	pal_dirty = 0;
 	free (char_dirty);
 	char_dirty = 0;
 	free (video1_dirty);
@@ -124,24 +127,17 @@ void nemesis_vh_stop(void)
 /* claim a palette dirty array */
 int nemesis_vh_start(void)
 {
-	if ((tmpbitmap = osd_create_bitmap(2 * Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap = osd_new_bitmap(2 * Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
 	{
 		nemesis_vh_stop();
 		return 1;
 	}
 
-	if ((tmpbitmap2 = osd_create_bitmap(2 * Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap2 = osd_new_bitmap(2 * Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
 	{
 		nemesis_vh_stop();
 		return 1;
 	}
-
-	pal_dirty = malloc(0x80);
-	if (!pal_dirty) {
-		nemesis_vh_stop();
-		return 1;
-	}
-	memset(pal_dirty,1,0x80);
 
 	char_dirty = malloc(2048);
 	if (!char_dirty) {
@@ -168,27 +164,6 @@ int nemesis_vh_start(void)
 	memset(video2_dirty,1,0x800);
 
 	return 0;
-}
-
-void dummy_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-{
-	int r,g,b;
-	for(r=0;r<8;r++)
-	{
-		for (g=0;g<8;g++)
-		{
-			for (b=0;b<4;b++)
-			{
-				*(palette++) = (r << 5) + (r << 2) + (r >> 1);
-				*(palette++) = (g << 5) + (g << 2) + (g >> 1);
-				*(palette++) = (b << 6) + (b << 4) + (b << 2) + b;
-			}
-		}
-	}
-
-	/* initialize the color table */
-	for (r = 0;r < 2048;r++)
-		colortable[r]= r&0xff;
 }
 
 
@@ -267,12 +242,20 @@ void draw_sprites(struct osd_bitmap *bitmap)
 				sx = READ_WORD(&spriteram[adress+10]);
 				sy = READ_WORD(&spriteram[adress+12]);
 				code = READ_WORD(&spriteram[adress+6]) + ((READ_WORD(&spriteram[adress+8]) & 0xc0) << 2);
+				code /= 2;
 				color = (READ_WORD(&spriteram[adress+8]) & 0x1e) >> 1;
 				flipx = READ_WORD(&spriteram[adress+2]) & 0x01;
 				flipy = READ_WORD(&spriteram[adress+8]) & 0x20;
 
+				if (sprite_dirty[code] == 1)
+				{
+					decodechar(Machine->gfx[1],code,nemesis_characterram,
+							Machine->drv->gfxdecodeinfo[1].gfxlayout);
+					sprite_dirty[code] = 2;
+				}
+
 				drawgfx(bitmap,Machine->gfx[1],
-						code/2,
+						code,
 						color,
 						flipx,flipy,
 						sx,sy,
@@ -283,66 +266,130 @@ void draw_sprites(struct osd_bitmap *bitmap)
 	} /* for loop */
 }
 
+
+
 void nemesis_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	int pom,i;
 	int offs;
 
-	for (pom = 0; pom < 2048; pom++)
+
+memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
+
+{
+	int color,code,i;
+	int colmask[0x80];
+	int pal_base;
+
+
+	pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;
+
+	for (color = 0;color < 0x80;color++) colmask[color] = 0;
+
+	for (offs = 0x1000 - 2;offs >= 0;offs -= 2)
 	{
-		if (char_dirty[pom])
+		code = READ_WORD (&nemesis_videoram1[offs + 0x1000]) & 0x7ff;
+		if (char_dirty[code] == 1)
 		{
-			decodechar(Machine->gfx[0],pom,nemesis_characterram,
+			decodechar(Machine->gfx[0],code,nemesis_characterram,
 					Machine->drv->gfxdecodeinfo[0].gfxlayout);
-			char_dirty[pom] = 0;
+			char_dirty[code] = 2;
 		}
+		color = READ_WORD (&nemesis_videoram2[offs + 0x1000]) & 0x7f;
+		colmask[color] |= Machine->gfx[0]->pen_usage[code];
 	}
-	for (pom = 0; pom < 512; pom++)
+
+	for (color = 0;color < 0x80;color++)
 	{
-		if (sprite_dirty[pom])
+		if (colmask[color] & (1 << 0))
+			palette_used_colors[pal_base + 16 * color] = PALETTE_COLOR_TRANSPARENT;
+		for (i = 1;i < 16;i++)
 		{
-			decodechar(Machine->gfx[1],pom,nemesis_characterram,
-					Machine->drv->gfxdecodeinfo[1].gfxlayout);
-			sprite_dirty[pom] = 0;
+			if (colmask[color] & (1 << i))
+				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
 		}
 	}
 
-	for (pom = 0; pom < 0x80; pom++)
+
+	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
+
+	for (color = 0;color < 0x80;color++) colmask[color] = 0;
+
+	for (offs = 0;offs < spriteram_size;offs += 16)
 	{
-		if (pal_dirty[pom])
+		if (READ_WORD(&spriteram[offs+4]) != 0xFF)
 		{
-			Machine->colortable[pom*16] = Machine->pens[0];
-			for (i = 1; i < 16; i++) {
-				int color1 = READ_WORD ( &nemesis_paletteram[pom*16*2+i*2] );
-				int r = color1 & 31;
-				int g = (color1 >> 5) & 31;
-				int b = (color1 >> 10) & 31;
-
-				r = (r << 3) + (r >> 2);
-				g = (g << 3) + (g >> 2);
-				b = (b << 3) + (b >> 2);
-				Machine->colortable[pom*16+i] = Machine->pens[((((r)>>5)<<5)+(((g)>>5)<<2)+((b)>>6))];
-			}
+			color = (READ_WORD(&spriteram[offs+8]) & 0x1e) >> 1;
+			colmask[color] |= 0xffff;
 		}
 	}
 
+	for (color = 0;color < 0x80;color++)
+	{
+		if (colmask[color] & (1 << 0))
+			palette_used_colors[pal_base + 16 * color] = PALETTE_COLOR_TRANSPARENT;
+		for (i = 1;i < 16;i++)
+		{
+			if (colmask[color] & (1 << i))
+				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
+		}
+	}
+
+
+	pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;
+
+	for (color = 0;color < 0x80;color++) colmask[color] = 0;
+
+	for (offs = 0x1000 - 2;offs >= 0;offs -= 2)
+	{
+		code = READ_WORD (&nemesis_videoram1[offs]) & 0x7ff;
+		if (char_dirty[code] == 1)
+		{
+			decodechar(Machine->gfx[0],code,nemesis_characterram,
+					Machine->drv->gfxdecodeinfo[0].gfxlayout);
+			char_dirty[code] = 2;
+		}
+		color = READ_WORD (&nemesis_videoram2[offs]) & 0x7f;
+		colmask[color] |= Machine->gfx[0]->pen_usage[code];
+	}
+
+	for (color = 0;color < 0x80;color++)
+	{
+		if (colmask[color] & (1 << 0))
+			palette_used_colors[pal_base + 16 * color] = PALETTE_COLOR_TRANSPARENT;
+		for (i = 1;i < 16;i++)
+		{
+			if (colmask[color] & (1 << i))
+				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
+		}
+	}
+
+
+	if (palette_recalc())
+	{
+		memset(video1_dirty,1,0x800);
+		memset(video2_dirty,1,0x800);
+	}
+}
 
 
 	/* Do the background first */
 	for (offs = 0x1000 - 2;offs >= 0;offs -= 2)
 	{
-		int color;
+		int code,color;
 
+
+		code = READ_WORD (&nemesis_videoram1[offs + 0x1000]) & 0x7ff;
 		color = READ_WORD (&nemesis_videoram2[offs + 0x1000]) & 0x7f;
-		if (video2_dirty[offs/2] | pal_dirty[color])
+
+		if (video2_dirty[offs/2] || char_dirty[code])
 		{
-			int sx,sy,flipx,flipy,code;
+			int sx,sy,flipx,flipy;
+
 
 			video2_dirty[offs/2] = 0;
 
 			sx = (offs/2) % 64;
 			sy = (offs/2) / 64;
-			code = READ_WORD (&nemesis_videoram1[offs + 0x1000]) & 0x7ff;
 			flipx = READ_WORD (&nemesis_videoram2[offs + 0x1000]) & 0x80;
 			flipy =  READ_WORD (&nemesis_videoram1[offs + 0x1000]) & 0x800;
 
@@ -375,18 +422,21 @@ void nemesis_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* We got a serious priority problem here :-) */
 	for (offs = 0x1000 - 2;offs >= 0;offs -= 2)
 	{
-		int color;
+		int code,color;
 
+
+		code = READ_WORD (&nemesis_videoram1[offs]) & 0x7ff;
 		color = READ_WORD (&nemesis_videoram2[offs]) & 0x7f;
-		if (video1_dirty[offs/2] | pal_dirty[color])
+
+		if (video1_dirty[offs/2] || char_dirty[code])
 		{
-			int sx,sy,flipx,flipy,code;
+			int sx,sy,flipx,flipy;
+
 
 			video1_dirty[offs/2] = 0;
 
 			sx = (offs/2) % 64;
 			sy = (offs/2) / 64;
-			code = READ_WORD (&nemesis_videoram1[offs]) & 0x7ff;
 			flipx = READ_WORD (&nemesis_videoram2[offs]) & 0x80;
 			flipy = READ_WORD (&nemesis_videoram1[offs]) & 0x800;
 
@@ -399,6 +449,7 @@ void nemesis_vh_screenrefresh(struct osd_bitmap *bitmap)
 		}
 	}
 
+
 	/* Copy the foreground bitmap */
 	{
 		int xscroll[256];
@@ -409,12 +460,23 @@ void nemesis_vh_screenrefresh(struct osd_bitmap *bitmap)
 			xscroll[offs] = -((READ_WORD(&nemesis_xscroll1[2 * offs]) & 0xff) +
 					((READ_WORD(&nemesis_xscroll1[0x200 + 2 * offs]) & 1) << 8));
 		}
-		copyscrollbitmap(bitmap,tmpbitmap2,256,xscroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+		copyscrollbitmap(bitmap,tmpbitmap2,256,xscroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 	}
+
 
 	draw_sprites(bitmap);
 
-	memset(pal_dirty,0,0x80);
+
+	for (offs = 0; offs < 2048; offs++)
+	{
+		if (char_dirty[offs] == 2)
+			char_dirty[offs] = 0;
+	}
+	for (offs = 0; offs < 512; offs++)
+	{
+		if (sprite_dirty[offs] == 2)
+			sprite_dirty[offs] = 0;
+	}
 }
 
 

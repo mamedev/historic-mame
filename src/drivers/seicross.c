@@ -327,9 +327,14 @@ ROM_END
 
 struct GameDriver seicross_driver =
 {
-	"Seicross",
+	__FILE__,
+	0,
 	"seicross",
+	"Seicross",
+	"????",
+	"?????",
 	"Mirko Buffoni\nNicola Salmoria",
+	0,
 	&machine_driver,
 
 	seicross_rom,
@@ -347,9 +352,14 @@ struct GameDriver seicross_driver =
 
 struct GameDriver friskyt_driver =
 {
-	"Frisky Tom",
+	__FILE__,
+	0,
 	"friskyt",
+	"Frisky Tom",
+	"????",
+	"?????",
 	"Mirko Buffoni\nNicola Salmoria",
+	0,
 	&machine_driver,
 
 	friskyt_rom,

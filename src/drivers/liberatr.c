@@ -357,9 +357,14 @@ ROM_END
 
 struct GameDriver liberatr_driver =
 {
-	"Liberator",		/* description			*/
+	__FILE__,
+	0,
 	"liberatr",			/* name					*/
+	"Liberator",		/* description			*/
+	"????",
+	"?????",
 	"Paul Winkler",		/* credits				*/
+	0,
 	&machine_driver,	/* MachineDriver		*/
 
 	liberator_rom,		/* RomModule			*/

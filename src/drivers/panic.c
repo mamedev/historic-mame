@@ -243,6 +243,9 @@ static struct MachineDriver machine_driver =
 
 static int panic_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* wait for default to be copied */
 	if (RAM[0x40c1] == 0x00 && RAM[0x40c2] == 0x03 && RAM[0x40c3] == 0x04)
 	{
@@ -267,6 +270,7 @@ static int panic_hiload(void)
 static void panic_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -317,9 +321,14 @@ ROM_END
 
 struct GameDriver panic_driver =
 {
-	"Space Panic",
+	__FILE__,
+	0,
 	"panic",
+	"Space Panic",
+	"????",
+	"?????",
 	"Mike Coates (MAME driver)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	panic_rom,
@@ -337,9 +346,14 @@ struct GameDriver panic_driver =
 
 struct GameDriver panica_driver =
 {
-	"Space Panic (alternate version)",
+	__FILE__,
+	0,
 	"panica",
+	"Space Panic (alternate version)",
+	"????",
+	"?????",
 	"Mike Coates (MAME driver)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	panica_rom,

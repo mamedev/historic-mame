@@ -102,7 +102,7 @@ static struct TMS3617_interface *interface;
 static int emulation_rate;
 static int buffer_len;
 static int sample_pos;
-static signed char *buffer;
+static signed char *outbuffer;
 
 static int channel;
 
@@ -154,19 +154,19 @@ int TMS3617_sh_start(struct TMS3617_interface *intf)
 
         channel = get_play_channels(1);
 
-	if ((buffer = malloc(buffer_len)) == 0)
+	if ((outbuffer = malloc(buffer_len)) == 0)
 		return 1;
 
 	if ((mixer_buffer = malloc(sizeof(short) * buffer_len)) == 0)
 	{
-		free (buffer);
+		free (outbuffer);
 		return 1;
 	}
 
         if (make_mixer_table (intf->gain))
 	{
 		free (mixer_buffer);
-		free (buffer);
+		free (outbuffer);
 		return 1;
 	}
 
@@ -190,7 +190,7 @@ void TMS3617_sh_stop(void)
 {
 	free (mixer_table);
 	free (mixer_buffer);
-	free (buffer);
+	free (outbuffer);
 }
 
 
@@ -249,10 +249,10 @@ void TMS3617_sh_update(void)
 {
 	if (Machine->sample_rate == 0) return;
 
-        TMS3617_update(&buffer[sample_pos],buffer_len - sample_pos);
+	TMS3617_update(&outbuffer[sample_pos],buffer_len - sample_pos);
 	sample_pos = 0;
 
-	osd_play_streamed_sample(channel,buffer,buffer_len,emulation_rate,interface->volume);
+	osd_play_streamed_sample(channel,outbuffer,buffer_len,emulation_rate,interface->volume);
 }
 
 
@@ -266,7 +266,7 @@ static void doupdate(void)
 
 	newpos = cpu_scalebyfcount(buffer_len);	/* get current position based on the timer */
 
-	TMS3617_update(&buffer[sample_pos],newpos - sample_pos);
+	TMS3617_update(&outbuffer[sample_pos],newpos - sample_pos);
 	sample_pos = newpos;
 }
 

@@ -201,7 +201,7 @@ void kungfum_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* Draw the sprites. */
 	for (offs = 0;offs < spriteram_size;offs += 8)
 	{
-		int bank,i,incr,code,col,flipx,flipy,sx,sy;
+		int bank,incr,code,col,flipx,flipy,sx,sy;
 		static unsigned char sprite_height_prom[] =
 		{
 			/* B-5F - sprite height, one entry per 32 sprites */

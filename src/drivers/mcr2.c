@@ -888,9 +888,14 @@ ROM_END
 
 struct GameDriver shollow_driver =
 {
-	"Satan's Hollow",
+	__FILE__,
+	0,
 	"shollow",
+	"Satan's Hollow",
+	"????",
+	"?????",
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
+	0,
 	&mcr2_machine_driver,
 
 	shollow_rom,
@@ -908,9 +913,14 @@ struct GameDriver shollow_driver =
 
 struct GameDriver tron_driver =
 {
-	"Tron",
+	__FILE__,
+	0,
 	"tron",
+	"Tron",
+	"????",
+	"?????",
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
+	0,
 	&mcr2_machine_driver,
 
 	tron_rom,
@@ -928,9 +938,14 @@ struct GameDriver tron_driver =
 
 struct GameDriver kroozr_driver =
 {
-	"Kozmik Kroozr",
+	__FILE__,
+	0,
 	"kroozr",
+	"Kozmik Kroozr",
+	"????",
+	"?????",
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
+	0,
 	&kroozr_machine_driver,
 
 	kroozr_rom,
@@ -948,9 +963,14 @@ struct GameDriver kroozr_driver =
 
 struct GameDriver domino_driver =
 {
-	"Domino Man",
+	__FILE__,
+	0,
 	"domino",
+	"Domino Man",
+	"????",
+	"?????",
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
+	0,
 	&mcr2_machine_driver,
 
 	domino_rom,
@@ -968,9 +988,14 @@ struct GameDriver domino_driver =
 
 struct GameDriver wacko_driver =
 {
-	"Wacko",
+	__FILE__,
+	0,
 	"wacko",
+	"Wacko",
+	"????",
+	"?????",
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver\nJohn Butler",
+	0,
 	&wacko_machine_driver,
 
 	wacko_rom,
@@ -988,9 +1013,14 @@ struct GameDriver wacko_driver =
 
 struct GameDriver twotiger_driver =
 {
-	"Two Tigers",
+	__FILE__,
+	0,
 	"twotiger",
+	"Two Tigers",
+	"????",
+	"?????",
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
+	0,
 	&mcr2_machine_driver,
 
 	twotiger_rom,
@@ -1037,9 +1067,14 @@ ROM_END
 
 struct GameDriver journey_driver =
 {
-	"Journey",
+	__FILE__,
+	0,
 	"journey",
+	"Journey",
+	"????",
+	"?????",
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
+	0,
 	&journey_machine_driver,
 
 	journey_rom,

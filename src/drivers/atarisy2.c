@@ -56,7 +56,7 @@ Self-Test (Active Low)                             R   D15
 Communications Port Read           1C00            R   D0-D7
 
 Alphanumerics RAM (VMMU=0)         2000-37FE      R/W  D0-D15
-Motion Object RAM (VMMU=0)         3800-3FFF      R/W  D0-D15 
+Motion Object RAM (VMMU=0)         3800-3FFF      R/W  D0-D15
 Playfield RAM Top (VMMU=2)         2000-3FFF      R/W  D0-D15
 Playfield RAM Bottom (VMMU=3)      2000-3FFF      R/W  D0-D15
 
@@ -353,13 +353,13 @@ INPUT_PORTS_START( apb_ports )
 
 	PORT_START	/* ADC1 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
-	
+
 	PORT_START	/* ADC2 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
-	
+
 	PORT_START	/* ADC3 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
-	
+
 	PORT_START	/* LETA0 */
 	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X | IPF_PLAYER1,  4, 8, 0x40, 0x3f )
 
@@ -1010,7 +1010,7 @@ ROM_START( paperboy_rom )
 	ROM_LOAD_EVEN( "CPU_R06.bin", 0x50000, 0x04000, 0x193a576e )   /* odd  */
 	ROM_LOAD_ODD ( "CPU_L06.bin", 0x70000, 0x04000, 0xe1b012a6 )   /* even */
 	ROM_LOAD_EVEN( "CPU_S06.bin", 0x70000, 0x04000, 0xda597105 )   /* odd  */
-	
+
 	ROM_REGION(0x64000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "VID_A06.bin", 0x000000, 0x08000, 0xaf1ed4f8 )  /* bank 0 (4 bpp) */
 	ROM_LOAD( "VID_B06.bin", 0x008000, 0x04000, 0x86a56783 )
@@ -1077,7 +1077,7 @@ ROM_START( apb_rom )
 	ROM_LOAD( "1116", 0x170000, 0x10000, 0xe88d9225 ) // VID H/J6   27512     1116      6BEB
 
 	ROM_LOAD( "1125", 0x180000, 0x04000, 0x5ac1b7f5 ) // VID T4     27128     1125      B722
-	
+
 	ROM_REGION(0x10000)     /* 64k for 6502 code */
 	ROM_LOAD( "4134", 0x04000, 0x04000, 0x4e3ee1de ) // CPU A2     27128     4134      B7FF
 	ROM_LOAD( "4135", 0x08000, 0x04000, 0x29be014e ) // CPU B/C2   27128     4135      66FF
@@ -1087,7 +1087,7 @@ ROM_END
 
 ROM_START( a720_rom )
 	ROM_REGION(0x90000)     /* 9 * 64k T11 code */
-	ROM_LOAD_ODD ( "3126.rom", 0x08000, 0x04000, 0xf214fc6a ) 
+	ROM_LOAD_ODD ( "3126.rom", 0x08000, 0x04000, 0xf214fc6a )
 	ROM_LOAD_EVEN( "3127.rom", 0x08000, 0x04000, 0x612ed02a )
 	ROM_LOAD_ODD ( "3128.rom", 0x10000, 0x10000, 0x83b14377 )
 	ROM_LOAD_EVEN( "4131.rom", 0x10000, 0x10000, 0x55fc3c36 )
@@ -1095,7 +1095,7 @@ ROM_START( a720_rom )
 	ROM_LOAD_EVEN( "1132.rom", 0x30000, 0x10000, 0x71c9aaf7 )
 	ROM_LOAD_ODD ( "1130.rom", 0x50000, 0x10000, 0x93c32805 )
 	ROM_LOAD_EVEN( "1133.rom", 0x50000, 0x10000, 0xc66e2344 )
-	
+
 	ROM_REGION(0x144000)
 	ROM_LOAD( "1121.rom", 0x000000, 0x08000, 0xd1e685da )  /* bank 0 (4 bpp)*/
 	ROM_LOAD( "1122.rom", 0x008000, 0x08000, 0xf9c39abb )
@@ -1222,7 +1222,7 @@ ROM_END
 void paperboy_rom_decode (void)
 {
 	int i;
-	
+
 	/* expand the 16k program ROMs into full 64k chunks */
 	for (i = 0x10000; i < 0x90000; i += 0x20000)
 	{
@@ -1240,7 +1240,7 @@ void paperboy_rom_decode (void)
 void apb_rom_decode (void)
 {
 	int i;
-	
+
 	/* invert the bits of the sprites */
 	for (i = 0x80000; i < 0x180000; i++)
 		Machine->memory_region[1][i] ^= 0xff;
@@ -1250,7 +1250,7 @@ void apb_rom_decode (void)
 void a720_rom_decode (void)
 {
 	int i;
-	
+
 	/* invert the bits of the sprites */
 	for (i = 0x40000; i < 0x140000; i++)
 		Machine->memory_region[1][i] ^= 0xff;
@@ -1260,7 +1260,7 @@ void a720_rom_decode (void)
 void ssprint_rom_decode (void)
 {
 	int i;
-	
+
 	/* expand the 32k program ROMs into full 64k chunks */
 	for (i = 0x10000; i < 0x90000; i += 0x20000)
 		memcpy (&Machine->memory_region[0][i + 0x10000], &Machine->memory_region[0][i], 0x10000);
@@ -1274,7 +1274,7 @@ void ssprint_rom_decode (void)
 void csprint_rom_decode (void)
 {
 	int i;
-	
+
 	/* expand the 32k program ROMs into full 64k chunks */
 	for (i = 0x10000; i < 0x90000; i += 0x20000)
 		memcpy (&Machine->memory_region[0][i + 0x10000], &Machine->memory_region[0][i], 0x10000);
@@ -1295,9 +1295,14 @@ void csprint_rom_decode (void)
 
 struct GameDriver paperboy_driver =
 {
-	"Paperboy",
+	__FILE__,
+	0,
 	"paperboy",
+	"Paperboy",
+	"????",
+	"?????",
 	"Aaron Giles (MAME driver)\nJuergen Buchmueller (MAME driver)\nMike Balfour (hardware info)",
+	0,
 	&paperboy_machine_driver,
 
 	paperboy_rom,
@@ -1316,9 +1321,14 @@ struct GameDriver paperboy_driver =
 
 struct GameDriver apb_driver =
 {
-	"APB",
+	__FILE__,
+	0,
 	"apb",
+	"APB",
+	"????",
+	"?????",
 	"Juergen Buchmueller (MAME driver)\nAaron Giles (MAME driver)\nMike Balfour (hardware info)",
+	0,
 	&apb_machine_driver,
 
 	apb_rom,
@@ -1337,9 +1347,14 @@ struct GameDriver apb_driver =
 
 struct GameDriver a720_driver =
 {
-	"720 Degrees",
+	__FILE__,
+	0,
 	"720",
+	"720 Degrees",
+	"????",
+	"?????",
 	"Aaron Giles (MAME driver)\nJuergen Buchmueller (MAME driver)\nMike Balfour (hardware info)",
+	0,
 	&a720_machine_driver,
 
 	a720_rom,
@@ -1358,9 +1373,14 @@ struct GameDriver a720_driver =
 
 struct GameDriver ssprint_driver =
 {
-	"Super Sprint",
+	__FILE__,
+	0,
 	"ssprint",
+	"Super Sprint",
+	"????",
+	"?????",
 	"Aaron Giles (MAME driver)\nJuergen Buchmueller (MAME driver)\nMike Balfour (hardware info)",
+	0,
 	&ssprint_machine_driver,
 
 	ssprint_rom,
@@ -1379,9 +1399,14 @@ struct GameDriver ssprint_driver =
 
 struct GameDriver csprint_driver =
 {
-	"Championship Sprint",
+	__FILE__,
+	0,
 	"csprint",
+	"Championship Sprint",
+	"????",
+	"?????",
 	"Aaron Giles (MAME driver)\nJuergen Buchmueller (MAME driver)\nMike Balfour (hardware info)",
+	0,
 	&csprint_machine_driver,
 
 	csprint_rom,

@@ -20,7 +20,22 @@ unsigned char *zaccaria_attributesram;
 
   Convert the color PROMs into a more useable format.
 
-  Just a guess.
+
+Here's the hookup from the proms (82s131) to the r-g-b-outputs
+
+     Prom 9F        74LS374
+    -----------   ____________
+       12         |  3   2   |---680 ohm----| red out
+       11         |  4   5   |---1k ohm-----|
+       10         |  7   6   |---820 ohm-------|
+        9         |  8   9   |---1k ohm--------| green out
+     Prom 9G      |          |                 |
+       12         |  13  12  |---1.2k ohm------|
+       11         |  14  15  |---820 ohm----------|
+       10         |  17  16  |---1k ohm-----------| blue out
+        9         |  18  19  |---1.2k ohm---------|
+                  |__________|
+
 
 ***************************************************************************/
 void zaccaria_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
@@ -34,20 +49,19 @@ void zaccaria_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 
 		/* red component */
-		bit0 = (color_prom[0] >> 0) & 0x01;
-		bit1 = (color_prom[0] >> 1) & 0x01;
-		bit2 = (color_prom[0] >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		bit0 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
+		bit1 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
+		*(palette++) = 0x53 * bit0 + 0x7b * bit1;
 		/* green component */
 		bit0 = (color_prom[0] >> 3) & 0x01;
 		bit1 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
 		bit2 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		*(palette++) = 0x46 * bit0 + 0x53 * bit1 + 0x66 * bit2;
 		/* blue component */
-		bit0 = 0;
-		bit1 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
-		bit2 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		bit0 = (color_prom[0] >> 0) & 0x01;
+		bit1 = (color_prom[0] >> 1) & 0x01;
+		bit2 = (color_prom[0] >> 2) & 0x01;
+		*(palette++) = 0x46 * bit0 + 0x53 * bit1 + 0x66 * bit2;
 
 		color_prom++;
 	}

@@ -12,7 +12,7 @@ static int emulation_rate;
 static struct namco_interface *interface;
 static int buffer_len;
 static int sample_pos;
-static unsigned char *output_buffer;
+static signed char *output_buffer;
 
 static int channel;
 
@@ -27,9 +27,9 @@ static const unsigned char *wave[MAX_VOICES];
 static int counter[MAX_VOICES];
 
 
-static unsigned char *mixer_table;
-static unsigned char *mixer_lookup;
-static unsigned short *mixer_buffer;
+static signed char  *mixer_table;
+static signed char  *mixer_lookup;
+static signed short *mixer_buffer;
 
 
 /* note: gain is specified as gain*16 */
@@ -64,7 +64,7 @@ static void namco_update(signed char *buffer,int len)
 	int i;
 	int voice;
 
-	short *mix;
+	signed short *mix;
 
 	/* if no sound, fill with silence */
 	if (sound_enable == 0)

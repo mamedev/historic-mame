@@ -33,6 +33,9 @@ void digdig_init_machine(void)
 
 int digdug_reset_r(int offset)
 {
+	extern unsigned char *RAM;
+
+
 	digdug_hiscoreloaded = 0;
 
 	return RAM[offset];

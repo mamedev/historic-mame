@@ -27,7 +27,8 @@ void cps1_dump_driver(void)
         if (fp)
         {
                 int i;
-                char *p=RAM;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+                unsigned char *p=RAM;
                 for (i=0; i<0x80000; i++)
                 {
                         fwrite(p+1, 1, 1, fp);

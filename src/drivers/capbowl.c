@@ -1,39 +1,37 @@
 /***************************************************************************
 
-  Coors Light Bowling/Bowl-O-Rama memory map (preliminary)
+  Coors Light Bowling/Bowl-O-Rama memory map
 
   CPU Board:
 
   0000-3fff     3 Graphics ROMS mapped in using 0x4800 (Coors Light Bowling only)
   0000-001f		Turbo board area (Bowl-O-Rama only) See Below.
-  4000          Scan line read or modified
+  4000          Display row selected
   4800          Graphics ROM select
-  5000-57ff     Static RAM (Saves machine state after shut off)
+  5000-57ff     Battery backed up RAM (Saves machine state after shut off)
                 Enter setup menu by holding down the F2 key on the
                 high score screen
-  5800-5846		TMS34061 control area
-  5900-591f		TMS34061 XY pixel area (only used on Bowl-O-Rama)
-  5b00-5bff     Graphics RAM for one scanline (0x4000)
+  5800-5fff		TMS34061 area
 
-                First 0x20 bytes provide a 16 color palette for this
-                scan line. 2 bytes per color: 0000RRRR GGGGBBBB.
+                First 0x20 bytes of each row provide a 16 color palette for this
+                row. 2 bytes per color: 0000RRRR GGGGBBBB.
 
                 Remaining 0xe0 bytes contain 2 pixels each for a total of
                 448 pixels, but only 360 seem to be displayed.
-                (Each scanline appears vertically because the monitor is rotated)
+                (Each row appears vertically because the monitor is rotated)
 
   6000          Sound command
-  6800			???
-  7000          Input port 1    Bit 0-3 Trackball Vertical,
+  6800			Trackball Reset. Double duties as a watchdog.
+  7000          Input port 1    Bit 0-3 Trackball Vertical Position
 							  	Bit 4   Player 2 Hook Left
 								Bit 5   Player 2 Hook Right
 								Bit 6   Upright/Cocktail DIP Switch
-                                Bit 7   Left Coin
-  7800          Input port 2    Bit 0-3 Trackball Horizontal
-                                Bit 4   Hook Left
-                                Bit 5   Hook Right
+                                Bit 7   Coin 2
+  7800          Input port 2    Bit 0-3 Trackball Horizontal Positon
+                                Bit 4   Player 1 Hook Left
+                                Bit 5   Player 1 Hook Right
                                 Bit 6   Start
-                                Bit 7   Right Coin
+                                Bit 7   Coin 1
   8000-ffff		ROM
 
 
@@ -41,16 +39,18 @@
 
   0000-07ff		RAM
   1000-1001		YM2203
-			  	Port A D7 Read  is ticket dispenser status
+			  	Port A D7 Read  is ticket sensor
 				Port B D7 Write is ticket dispenser enable
-				Port B D6 is pulsated continously. Don't know what it does
-  2000			???
+				Port B D6 looks like a diagnostics LED to indicate that
+				          the PCB is operating. It's pulsated by the
+						  sound CPU. It is kind of pointless to emulate it.
+  2000			Not hooked up according to the schematics
   6000			DAC write
   7000			Sound command read (0x34 is used to dispense a ticket)
   8000-ffff		ROM
 
 
-  Turbo Board Layout:
+  Turbo Board Layout (Plugs in place of GR0):
 
   Bowl-O-Rama	Copyright 1991 P&P Marketing
 				Marquee says "EXIT Entertainment"
@@ -89,10 +89,7 @@ void capbowl_vh_screenrefresh(struct osd_bitmap *bitmap);
 int  capbowl_vh_start(void);
 void capbowl_vh_stop(void);
 
-extern unsigned char *capbowl_scanline;
-
-void capbowl_videoram_w(int offset,int data);
-int  capbowl_videoram_r(int offset);
+extern unsigned char *capbowl_rowaddress;
 
 void capbowl_rom_select_w(int offset,int data);
 
@@ -111,11 +108,25 @@ static void capbowl_sndcmd_w(int offset,int data)
 }
 
 
-/* handler called by the 2203 emulator when the internal timers cause an IRQ */
-/* should be enabled with 	OPNSetIrqHandler(0,irqhandler); */
+/* Handler called by the 2203 emulator when the internal timers cause an IRQ */
 static void firqhandler(void)
 {
 	cpu_cause_interrupt(1, M6809_INT_FIRQ);
+}
+
+
+/***************************************************************************
+
+  NMI is to trigger the self test. We use a fake input port to tie that
+  event to a keypress.
+
+***************************************************************************/
+static int capbowl_interrupt(void)
+{
+	if (readinputport(2) & 1)	/* get status of the F2 key */
+		return nmi_interrupt();	/* trigger self test */
+
+	return ignore_interrupt();
 }
 
 
@@ -123,9 +134,7 @@ static struct MemoryReadAddress capbowl_readmem[] =
 {
 	{ 0x0000, 0x3fff, MRA_BANK1 },
 	{ 0x5000, 0x57ff, MRA_RAM },
-	{ 0x5800, 0x5846, tms34061_r },
-	{ 0x5b00, 0x5bff, capbowl_videoram_r },
-	{ 0x5c00, 0x5c00, MRA_NOP }, /* Off by 1 */
+	{ 0x5800, 0x5fff, TMS34061_r },
 	{ 0x7000, 0x7000, input_port_0_r },
 	{ 0x7800, 0x7800, input_port_1_r },
 	{ 0x8000, 0xffff, MRA_ROM },
@@ -136,10 +145,7 @@ static struct MemoryReadAddress bowlrama_readmem[] =
 {
 	{ 0x0000, 0x001f, bowlrama_turbo_r },
 	{ 0x5000, 0x57ff, MRA_RAM },
-	{ 0x5800, 0x5846, tms34061_r },
-	{ 0x5900, 0x591f, tms34061_xypixel_r },
-	{ 0x5b00, 0x5bff, capbowl_videoram_r },
-	{ 0x5c00, 0x5c00, MRA_NOP }, /* Off by 1 bug */
+	{ 0x5800, 0x5fff, TMS34061_r },
 	{ 0x7000, 0x7000, input_port_0_r },
 	{ 0x7800, 0x7800, input_port_1_r },
 	{ 0x8000, 0xffff, MRA_ROM },
@@ -149,15 +155,12 @@ static struct MemoryReadAddress bowlrama_readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x001f, bowlrama_turbo_w },	/* Bowl-O-Rama only */
-	{ 0x4000, 0x4000, MWA_RAM, &capbowl_scanline },
+	{ 0x4000, 0x4000, MWA_RAM, &capbowl_rowaddress },
 	{ 0x4800, 0x4800, capbowl_rom_select_w },
 	{ 0x5000, 0x57ff, MWA_RAM },
-	{ 0x5800, 0x5846, tms34061_w },
-	{ 0x5900, 0x591f, tms34061_xypixel_w }, /* Bowl-O-Rama only */
-	{ 0x5b00, 0x5bff, capbowl_videoram_w },
-	{ 0x5c00, 0x5c00, MWA_NOP }, /* Off by 1 */
+	{ 0x5800, 0x5fff, TMS34061_w },
 	{ 0x6000, 0x6000, capbowl_sndcmd_w },
-	{ 0x6800, 0x6800, MWA_NOP },	/* trackball reset? */
+	{ 0x6800, 0x6800, watchdog_reset_w },
 	{ -1 }  /* end of table */
 };
 
@@ -177,31 +180,12 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x0000, 0x07ff, MWA_RAM},
 	{ 0x1000, 0x1000, YM2203_control_port_0_w },
 	{ 0x1001, 0x1001, YM2203_write_port_0_w },
-	{ 0x2000, 0x2000, MWA_NOP },  /* ????? */
+	{ 0x2000, 0x2000, MWA_NOP },  /* Not hooked up according to the schematics */
 	{ 0x6000, 0x6000, DAC_data_w },
 	{ -1 }  /* end of table */
 };
 
 
-
-/***************************************************************************
-
-  Coors Light Bowling uses NMI to trigger the self test. We use a fake input
-  port to tie that event to a keypress.
-
-***************************************************************************/
-static int capbowl_interrupt(void)
-{
-	if (readinputport(2) & 1)	/* get status of the F2 key */
-		return nmi_interrupt();	/* trigger self test */
-
-	return ignore_interrupt();
-}
-
-static int capbowl_raster_interrupt(void)
-{
-	return M6809_INT_FIRQ;
-}
 
 INPUT_PORTS_START( input_ports )
 	PORT_START	/* IN0 */
@@ -211,14 +195,14 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPNAME( 0x40, 0x40, "Cabinet", IP_KEY_NONE ) /* This version of Bowl-O-Rama */
 	PORT_DIPSETTING(    0x40, "Upright" )			   /* is Upright only */
 	PORT_DIPSETTING(    0x00, "Cocktail" )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* IN1 */
 	PORT_ANALOG ( 0x0f, 0x00, IPT_TRACKBALL_X | IPF_CENTER, 100, 7, 0, 0 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START	/* FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
@@ -227,16 +211,16 @@ INPUT_PORTS_START( input_ports )
 INPUT_PORTS_END
 
 
-
 static struct YM2203interface ym2203_interface =
 {
 	1,			/* 1 chip */
-	2000000,	/* 2 MHz ??? */
+	4000000,	/* 4 MHz (Capcom Bowling sound is too fast, so there must
+				   be something else wrong */
 	{ YM2203_VOL(255,255) },
 	{ ticket_dispenser_r },
 	{ 0 },
 	{ 0 },
-	{ ticket_dispenser_w },
+	{ ticket_dispenser_w },  /* Also a status LED. See memory map above */
 	{ firqhandler }
 };
 
@@ -244,8 +228,8 @@ static struct DACinterface dac_interface =
 {
 	1,
 	441000,
-	{ 64, 64 },
-	{  1,  1 }
+	{ 64 },
+	{  1 }
 };
 
 
@@ -261,7 +245,6 @@ static struct MachineDriver NAME##_machine_driver =			\
 			0,												\
 			NAME##_readmem,writemem,0,0,					\
 			capbowl_interrupt, 1,       /* To check Service mode status */ \
-			capbowl_raster_interrupt, 0	/* Generated by the TMS34061 */ \
 		},													\
 		{													\
 			CPU_M6809 | CPU_AUDIO_CPU,						\
@@ -271,7 +254,7 @@ static struct MachineDriver NAME##_machine_driver =			\
 			ignore_interrupt,1	/* interrupts are generated by the sound hardware */ \
 		}													\
 	},														\
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */ \
+	60, 5000,	/* frames per second, vblank duration (guess) */ \
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */ \
 	capbowl_init_machine,									\
 															\
@@ -281,7 +264,7 @@ static struct MachineDriver NAME##_machine_driver =			\
 	16*256,16*256,											\
 	0,														\
 															\
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,				\
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_16BIT,	\
 	0,														\
 	capbowl_vh_start,										\
 	capbowl_vh_stop,										\
@@ -362,9 +345,7 @@ ROM_END
 static int hiload(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* Try loading static RAM */
@@ -388,9 +369,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -405,9 +384,14 @@ static void hisave(void)
 												\
 struct GameDriver NAME##_driver =				\
 {												\
-	DESC,  										\
+	__FILE__,                                   \
+	0,                                          \
 	#NAME,										\
+	DESC,  										\
+	"????",                                     \
+	"?????",                                    \
 	CREDITS,									\
+	0,                                          \
 	&BASE##_machine_driver,						\
 												\
 	NAME##_rom,									\
@@ -425,11 +409,10 @@ struct GameDriver NAME##_driver =				\
 };
 
 
-#define BASE_CREDITS  "Zsolt Vasvari\nMirko Buffoni\nNicola Salmoria"
 
-GAMEDRIVER(capbowl,  capbowl,  "Capcom Bowling",      BASE_CREDITS)
+GAMEDRIVER(capbowl,  capbowl,  "Capcom Bowling",      "Zsolt Vasvari\nMirko Buffoni\nNicola Salmoria\nMichael Appolo")
 
-GAMEDRIVER(clbowl,   capbowl,  "Coors Light Bowling", BASE_CREDITS)
+GAMEDRIVER(clbowl,   capbowl,  "Coors Light Bowling", "Zsolt Vasvari\nMirko Buffoni\nNicola Salmoria\nMichael Appolo")
 
-GAMEDRIVER(bowlrama, bowlrama, "Bowl-O-Rama",         "Michael Appolo\n"BASE_CREDITS)
+GAMEDRIVER(bowlrama, bowlrama, "Bowl-O-Rama",         "Michael Appolo\nZsolt Vasvari\nMirko Buffoni\nNicola Salmoria")
 

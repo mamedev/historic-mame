@@ -663,9 +663,8 @@ static const char *gyruss_sample_names[] =
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x9489],"\x00\x00\x01",3) == 0 &&
@@ -691,9 +690,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -707,9 +704,14 @@ static void hisave(void)
 
 struct GameDriver gyruss_driver =
 {
-	"Gyruss (Konami)",
+	__FILE__,
+	0,
 	"gyruss",
+	"Gyruss (Konami)",
+	"????",
+	"?????",
 	"Mike Cuddy (hardware info)\nPete Ground (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	gyruss_rom,
@@ -731,9 +733,14 @@ struct GameDriver gyruss_driver =
 
 struct GameDriver gyrussce_driver =
 {
-	"Gyruss (Centuri)",
+	__FILE__,
+	0,
 	"gyrussce",
+	"Gyruss (Centuri)",
+	"????",
+	"?????",
 	"Mike Cuddy (hardware info)\nPete Ground (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	gyrussce_rom,

@@ -62,7 +62,7 @@ static unsigned short *lfsr_buffer;
 static int volume;
 static int tone_6khz;
 static int tone_3khz;
-static int explosion;
+static int llander_explosion;
 
 
 void asteroid_explode_w (int offset,int data)
@@ -212,7 +212,7 @@ int llander_sh_start(void)
 	volume=0;
 	tone_3khz=0;
 	tone_6khz=0;
-	explosion=0;
+	llander_explosion=0;
 
 	buffer_len = Machine->sample_rate / Machine->drv->frames_per_second;
 	emulation_rate = buffer_len * Machine->drv->frames_per_second;
@@ -380,7 +380,7 @@ void llander_process(void *buffer,int start, int n)
 		{
 			sample+=sinetable[(oversampnum>>1)&0x3f];
 		}
-		if(explosion)
+		if(llander_explosion)
 		{
 			sample+=(int)(noisecurrent>>(16-2));	/* Gain of 4 */
 		}
@@ -454,6 +454,6 @@ void llander_sounds_w (int offset,int data)
 	volume    = data & 0x07;
 	tone_3khz = data & 0x10;
 	tone_6khz = data & 0x20;
-	explosion = data & 0x08;
+	llander_explosion = data & 0x08;
 }
 

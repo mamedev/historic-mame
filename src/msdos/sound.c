@@ -120,7 +120,7 @@ int msdos_init_sound(void)
 
 	{
 		uclock_t a,b;
-		DWORD start,end;
+		LONG start,end;
 
 
 		if ((lpWave[0] = (LPAUDIOWAVE)malloc(sizeof(AUDIOWAVE))) == 0)
@@ -370,7 +370,7 @@ static void playstreamedsample(int channel,signed char *data,int len,int freq,in
 	}
 	else
 	{
-		DWORD pos;
+		LONG pos;
 		extern int throttle;
 
 

@@ -409,9 +409,14 @@ ROM_END
 
 struct GameDriver spiders_driver =
 {
-	"Spiders",
+	__FILE__,
+	0,
 	"spiders",
+	"Spiders",
+	"????",
+	"?????",
 	"Keith Wilkins",
+	0,
 	&machine_driver,
 
 	spiders_rom,

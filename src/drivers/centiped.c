@@ -422,9 +422,14 @@ ROM_END
 
 struct GameDriver centiped_driver =
 {
-	"Centipede",
+	__FILE__,
+	0,
 	"centiped",
+	"Centipede",
+	"????",
+	"?????",
 	"Ivan Mackintosh (hardware info)\nEdward Massey (MageX emulator)\nPete Rittwage (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (MAME driver)\nBrad Oliver (additional code)",
+	0,
 	&machine_driver,
 
 	centiped_rom,
@@ -442,9 +447,14 @@ struct GameDriver centiped_driver =
 
 struct GameDriver centipd1_driver =
 {
-	"Centipede (rev 1)",
+	__FILE__,
+	0,
 	"centipd1",
+	"Centipede (rev 1)",
+	"????",
+	"?????",
 	"Ivan Mackintosh (hardware info)\nEdward Massey (MageX emulator)\nPete Rittwage (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (MAME driver)\nBrad Oliver (additional code)",
+	0,
 	&machine_driver,
 
 	centipd1_rom,

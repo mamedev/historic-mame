@@ -74,7 +74,7 @@ static void DAC_update(int num , int newpos )
 void DAC_data_w(int num , int data)
 {
 	/* check current data */
-	if( data == amplitude_DAC[num] ) return;
+	if( AUDIO_CONV(data) == amplitude_DAC[num] ) return;
 	/* update */
 	DAC_update(num,cpu_scalebyfcount(buffer_step) );
 	/* set new data */

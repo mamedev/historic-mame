@@ -17,6 +17,7 @@
 #include "M6808/M6808.h"
 #include "M6805/M6805.h"
 #include "M68000/M68000.h"
+#include "S2650/s2650.h"
 #include "T11/t11.h"
 #include "I86/I86intrf.h"
 #include "timer.h"
@@ -83,7 +84,7 @@ static double scanline_period_inv;
 static int usres; /* removed from cpu_run and made global */
 static int vblank;
 
-static void cpu_generate_interrupt (int cpu, int (*func)(void), int num);
+static void cpu_generate_interrupt (int _cpu, int (*func)(void), int num);
 static void cpu_vblankintcallback (int param);
 static void cpu_timedintcallback (int param);
 static void cpu_manualintcallback (int param);
@@ -317,6 +318,23 @@ struct cpu_interface cpuintf[] =
 		cpu_setOPbase16lew,                /* Update CPU opcode base */
 		16,                                /* CPU address bits */
 		ABITS1_16LEW,ABITS2_16LEW,ABITS_MIN_16LEW /* Address bits, for the memory system */
+	},
+	/* #define CPU_S2650 11 */
+	{
+		S2650_Reset,						/* Reset CPU */
+		S2650_Execute,						/* Execute a number of cycles */
+		(void (*)(void *))S2650_SetRegs,	/* Set the contents of the registers */
+		(void (*)(void *))S2650_GetRegs,	/* Get the contents of the registers */
+		(unsigned int (*)(void))S2650_GetPC,/* Return the current PC */
+		S2650_Cause_Interrupt,				/* Generate an interrupt */
+		S2650_Clear_Pending_Interrupts, 	/* Clear pending interrupts */
+		&S2650_ICount,						/* Pointer to the instruction count */
+		S2650_INT_NONE,-1,-1,				/* Interrupt types: none, IRQ, NMI */
+		cpu_readmem16,                      /* Memory read */
+		cpu_writemem16,                     /* Memory write */
+		cpu_setOPbase16,                    /* Update CPU opcode base */
+		16, 								/* CPU address bits */
+		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	}
 };
 
@@ -552,11 +570,11 @@ void cpu_reset(int cpunum)
   Use this function to stop and restart CPUs
 
 ***************************************************************************/
-void cpu_halt(int cpunum,int running)
+void cpu_halt(int cpunum,int _running)
 {
 	if (cpunum >= MAX_CPU) return;
 
-	timer_suspendcpu (cpunum, !running);
+	timer_suspendcpu (cpunum, !_running);
 }
 
 
@@ -646,11 +664,12 @@ int cpu_getreturnpc(void)
 	{
 		case CPU_Z80:
 			{
-				Z80_Regs regs;
+				Z80_Regs _regs;
+				extern unsigned char *RAM;
 
 
-				Z80_GetRegs(&regs);
-				return RAM[regs.SP.D] + (RAM[regs.SP.D+1] << 8);
+				Z80_GetRegs(&_regs);
+				return RAM[_regs.SP.D] + (RAM[_regs.SP.D+1] << 8);
 			}
 			break;
 
@@ -1361,14 +1380,14 @@ static void cpu_inittimers (void)
 
 #ifdef MAME_DEBUG
 /* JB 971019 */
-void cpu_getcontext (int activecpu, unsigned char *buf)
+void cpu_getcontext (int _activecpu, unsigned char *buf)
 {
-    memcpy (buf, cpu[activecpu].context, CPU_CONTEXT_SIZE);
+    memcpy (buf, cpu[_activecpu].context, CPU_CONTEXT_SIZE);
 }
 
-void cpu_setcontext (int activecpu, const unsigned char *buf)
+void cpu_setcontext (int _activecpu, const unsigned char *buf)
 {
-    memcpy (cpu[activecpu].context, buf, CPU_CONTEXT_SIZE);
+    memcpy (cpu[_activecpu].context, buf, CPU_CONTEXT_SIZE);
 }
 #endif
 

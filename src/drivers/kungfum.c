@@ -331,9 +331,9 @@ INPUT_PORTS_START( input_ports )
 	PORT_BITX   ( 0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Level Selection Mode", IP_KEY_NONE, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BITX   ( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Hit Mode", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x40, "Hit" )
-	PORT_DIPSETTING(    0x00, "No Hit" )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
@@ -617,9 +617,7 @@ ROM_END
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -648,9 +646,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -664,9 +660,14 @@ static void hisave(void)
 
 struct GameDriver kungfum_driver =
 {
-	"Kung Fu Master",
+	__FILE__,
+	0,
 	"kungfum",
+	"Kung Fu Master",
+	"????",
+	"?????",
 	"Mirko Buffoni\nNicola Salmoria\nIshmair\nPaul Swan\nAaron Giles (sound)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	kungfum_rom,
@@ -684,9 +685,14 @@ struct GameDriver kungfum_driver =
 
 struct GameDriver kungfub_driver =
 {
-	"Kung Fu Master (bootleg)",
+	__FILE__,
+	0,
 	"kungfub",
+	"Kung Fu Master (bootleg)",
+	"????",
+	"?????",
 	"Mirko Buffoni\nNicola Salmoria\nIshmair\nPaul Swan\nAaron Giles (sound)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	kungfub_rom,

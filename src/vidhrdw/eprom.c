@@ -17,12 +17,6 @@
 #define YDIM (YCHARS*8)
 
 
-struct eprom_mo_data
-{
-	int *sprite_map;
-};
-
-
 
 /*************************************
  *
@@ -98,9 +92,6 @@ int eprom_vh_start(void)
 		eprom_vh_stop ();
 		return 1;
 	}
-
-	/* initialize the palette remapping */
-	atarigen_init_remap (COLOR_PALETTE_4444, 1);
 
 	/* initialize the displaylist system */
 	return atarigen_init_display_list (&eprom_modesc);
@@ -199,6 +190,38 @@ void eprom_playfieldpalram_w (int offset, int data)
 
 /*************************************
  *
+ *		Palette RAM read/write handlers
+ *
+ *************************************/
+
+int eprom_paletteram_r (int offset)
+{
+	return READ_WORD (&atarigen_paletteram[offset]);
+}
+
+
+void eprom_paletteram_w (int offset, int data)
+{
+	int oldword = READ_WORD (&atarigen_paletteram[offset]);
+	int newword = COMBINE_WORD (oldword, data);
+	WRITE_WORD (&atarigen_paletteram[offset], newword);
+
+	{
+		static const int ztable[16] =
+			{ 0x0, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x10, 0x11 };
+		int inten = ztable[(newword >> 12) & 15];
+		int red =   ((newword >> 8) & 15) * inten;
+		int green = ((newword >> 4) & 15) * inten;
+		int blue =  ((newword     ) & 15) * inten;
+
+		palette_change_color ((offset / 2) & 0x7ff, red, green, blue);
+	}
+}
+
+
+
+/*************************************
+ *
  *		Motion object list handlers
  *
  *************************************/
@@ -206,13 +229,13 @@ void eprom_playfieldpalram_w (int offset, int data)
 int eprom_update_display_list (int scanline)
 {
 	/* look up the SLIP link */
-	int yscroll = (READ_WORD (&atarigen_alpharam[0xf02]) >> 7) & 0x1ff;
+	int scrolly = (READ_WORD (&atarigen_alpharam[0xf02]) >> 7) & 0x1ff;
 
-	int link = READ_WORD (&atarigen_alpharam[0xf80 + 2 * (((scanline + yscroll) / 8) & 0x3f)]) & 0x3ff;
+	int link = READ_WORD (&atarigen_alpharam[0xf80 + 2 * (((scanline + scrolly) / 8) & 0x3f)]) & 0x3ff;
 
 	atarigen_update_display_list (atarigen_spriteram, link, scanline);
 
-	return yscroll;
+	return scrolly;
 }
 
 
@@ -245,9 +268,15 @@ int eprom_update_display_list (int scanline)
  *---------------------------------------------------------------------------------
  */
 
+void eprom_calc_mo_colors (struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
+{
+	unsigned char *colors = param;
+	int color = data[2] & 15;
+	colors[color] = 1;
+}
+
 void eprom_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
 {
-	int *sprite_map = param;
 	int xadv, x, y, sx, sy;
 
 	/* extract data from the various words */
@@ -290,14 +319,6 @@ void eprom_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, unsigne
 			/* clip the X coordinate */
 			if (sx <= -8 || sx >= XDIM)
 				continue;
-
-			/* if this sprite's color has not been used yet this frame, grab it */
-			/* note that by doing it here, we don't map sprites that aren't visible */
-			if (!sprite_map[color])
-			{
-				atarigen_alloc_dynamic_colors (0x100 + 16 * color + 1, 15);
-				sprite_map[color] = 1;
-			}
 
 			/* draw the sprite */
 			drawgfx (bitmap, Machine->gfx[1], pict, color, hflip, 0,
@@ -379,11 +400,60 @@ static void redraw_playfield_chunk (struct osd_bitmap *bitmap, int xpos, int ypo
 
 void eprom_vh_screenrefresh (struct osd_bitmap *bitmap)
 {
-	int playfield_count[16], sprite_map[16], alpha_map[16];
+	unsigned char mo_map[16], al_map[32], pf_map[16];
 	int x, y, sx, sy, offs, xoffs, yoffs, i;
 
 
 	eprom_debug ();
+
+
+	/* reset color tracking */
+	memset (mo_map, 0, sizeof (mo_map));
+	memset (pf_map, 0, sizeof (pf_map));
+	memset (al_map, 0, sizeof (al_map));
+	memset (palette_used_colors, PALETTE_COLOR_UNUSED, Machine->drv->total_colors * sizeof(unsigned char));
+
+	/* update color usage for the playfield */
+	for (offs = 0; offs < 64*64; offs++)
+	{
+		int data2 = READ_WORD (&eprom_playfieldpalram[offs * 2]);
+		int color = (data2 >> 8) & 15;
+		pf_map[color] = 1;
+	}
+
+	/* update color usage for the mo's */
+	atarigen_render_display_list (bitmap, eprom_calc_mo_colors, mo_map);
+
+	/* update color usage for the alphanumerics */
+	for (sy = 0; sy < YCHARS; sy++)
+	{
+		for (sx = 0, offs = sy * 64; sx < XCHARS; sx++, offs++)
+		{
+			int data = READ_WORD (&atarigen_alpharam[offs * 2]);
+			int color = (data >> 10) & 0x1f;
+			al_map[color] = 1;
+		}
+	}
+
+	/* rebuild the palette */
+	for (i = 0; i < 16; i++)
+	{
+		if (pf_map[i])
+			memset (&palette_used_colors[512 + i * 16], PALETTE_COLOR_USED, 16);
+		if (mo_map[i])
+		{
+			palette_used_colors[256 + i * 16] = PALETTE_COLOR_TRANSPARENT;
+			memset (&palette_used_colors[256 + i * 16 + 1], PALETTE_COLOR_USED, 15);
+		}
+		if (al_map[i])
+			memset (&palette_used_colors[0 + i * 4], PALETTE_COLOR_USED, 4);
+		if (al_map[16+i])
+			memset (&palette_used_colors[0 + (i+32) * 4], PALETTE_COLOR_USED, 4);
+	}
+
+	if (palette_recalc ())
+		memset (playfielddirty, 1, atarigen_playfieldram_size / 2);
+
 
 
 	/* compute scrolling so we know what to update */
@@ -391,10 +461,6 @@ void eprom_vh_screenrefresh (struct osd_bitmap *bitmap)
 	yscroll = READ_WORD (&atarigen_alpharam[0xf02]);
 	xscroll = -((xscroll >> 7) & 0x1ff);
 	yscroll = -((yscroll >> 7) & 0x1ff);
-
-	/* reset color tracking */
-	for (i = 0; i < 16; i++)
-		sprite_map[i] = playfield_count[i] = alpha_map[i] = 0;
 
 	/*
 	 *---------------------------------------------------------------------------------
@@ -421,21 +487,16 @@ void eprom_vh_screenrefresh (struct osd_bitmap *bitmap)
 		/* loop over the visible X region */
 		for (x = xoffs + XCHARS + 1; x >= xoffs; x--)
 		{
-			int data2, color;
-
 			/* read the data word */
 			sx = x & 63;
 			offs = sx * 64 + sy;
-			data2 = READ_WORD (&eprom_playfieldpalram[offs * 2]);
-
-			/* update color statistics */
-			color = (data2 >> 8) & 15;
-			playfield_count[color] = 1;
 
 			/* rerender if dirty */
 			if (playfielddirty[offs])
 			{
 				int data1 = READ_WORD (&atarigen_playfieldram[offs * 2]);
+				int data2 = READ_WORD (&eprom_playfieldpalram[offs * 2]);
+				int color = (data2 >> 8) & 15;
 				int hflip = data1 & 0x8000;
 
 				drawgfx (playfieldbitmap, Machine->gfx[1], data1 & 0x7fff, 0x10 + color, hflip, 0,
@@ -445,15 +506,12 @@ void eprom_vh_screenrefresh (struct osd_bitmap *bitmap)
 		}
 	}
 
-	/* allocate playfield colors */
-	atarigen_alloc_fixed_colors (playfield_count, 0x200, 16, 16);
-
 	/* copy the playfield to the destination */
 	copyscrollbitmap (bitmap, playfieldbitmap, 1, &xscroll, 1, &yscroll, &Machine->drv->visible_area,
 			TRANSPARENCY_NONE, 0);
 
 	/* render the motion objects */
-	atarigen_render_display_list (bitmap, eprom_render_mo, sprite_map);
+	atarigen_render_display_list (bitmap, eprom_render_mo, NULL);
 
 	/*
 	 *---------------------------------------------------------------------------------
@@ -481,14 +539,6 @@ void eprom_vh_screenrefresh (struct osd_bitmap *bitmap)
 			{
 				int color = ((data >> 10) & 0xf) | ((data >> 9) & 0x20);
 
-				/* if this character's color has not been used yet this frame, grab it */
-				/* note that by doing it here, we don't map characters that aren't visible */
-				if (!alpha_map[color])
-				{
-					atarigen_alloc_dynamic_colors (0x000 + 4 * color, 4);
-					alpha_map[color] = 1;
-				}
-
 				drawgfx (bitmap, Machine->gfx[0],
 						pict, color,
 						0, 0,
@@ -498,9 +548,6 @@ void eprom_vh_screenrefresh (struct osd_bitmap *bitmap)
 			}
 		}
 	}
-
-	/* final color update */
-	atarigen_update_colors (-1);
 }
 
 

@@ -310,7 +310,7 @@ void xevious_vh_screenrefresh(struct osd_bitmap *bitmap)
 	{
 		if ((spriteram[offs + 1] & 0x40) == 0)	/* I'm not sure about this one */
 		{
-			int bank,code,color,flipx,flipy,sx,sy;
+			int bank,code,color,flipx,flipy;
 
 
 			bank = 2 + ((spriteram[offs] & 0x80) >> 7) + ((spriteram_3[offs] & 0x80) >> 6);

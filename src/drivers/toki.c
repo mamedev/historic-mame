@@ -236,8 +236,8 @@ static struct GfxLayout spriteslayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,       	0,  16 },
-	{ 2, 0x0000, &spriteslayout,        16*16,  16 },
+	{ 1, 0x0000, &charlayout,       	16*16,  16 },
+	{ 2, 0x0000, &spriteslayout,         0*16,  16 },
 	{ 3, 0x0000, &backgroundlayout,     32*16,  16 },
 	{ 4, 0x0000, &backgroundlayout,	    48*16,  16 },
 	{ -1 } /* end of array */
@@ -287,7 +287,6 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( toki_rom )
-
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "TOKI.E3", 0x00000, 0x20000, 0xe2f5431f )
 	ROM_LOAD_ODD ( "TOKI.E5", 0x00000, 0x20000, 0x4404439e )
@@ -295,10 +294,10 @@ ROM_START( toki_rom )
 	ROM_LOAD_ODD ( "TOKI.E4", 0x40000, 0x10000, 0x1678f760 )
 
 	ROM_REGION(0x20000)	/* 2*64k for foreground tiles */
-	ROM_LOAD( "TOKI.E21", 0x00000, 0x8000, 0x62bbb4d3 )
-	ROM_LOAD( "TOKI.E13", 0x08000, 0x8000, 0x47775ce5 )
-	ROM_LOAD( "TOKI.E22", 0x10000, 0x8000, 0xf6e030fc )
-	ROM_LOAD( "TOKI.E7" , 0x18000, 0x8000, 0xc2a6d2f0 )
+	ROM_LOAD( "TOKI.E21", 0x00000, 0x08000, 0x62bbb4d3 )
+	ROM_LOAD( "TOKI.E13", 0x08000, 0x08000, 0x47775ce5 )
+	ROM_LOAD( "TOKI.E22", 0x10000, 0x08000, 0xf6e030fc )
+	ROM_LOAD( "TOKI.E7" , 0x18000, 0x08000, 0xc2a6d2f0 )
 
 	ROM_REGION(0x100000)	/* 16*64k for sprites */
 	ROM_LOAD( "TOKI.E26", 0x00000, 0x20000, 0xf240d60a )
@@ -831,6 +830,8 @@ ROM_START( toki_rom )
 
 ROM_END
 
+
+
 static int hiload(void)
 {
 	void *f;
@@ -862,12 +863,19 @@ static void hisave(void)
 }
 
 
+
 struct GameDriver toki_driver =
 {
-	"Toki",
+	__FILE__,
+	0,
 	"toki",
+	"Toki",
+	"????",
+	"?????",
 	"Jarek Parchanski (MAME driver)\nRichard Bush     (hardware info)\nRomek Bacza      (digi-sound)\n\nGame authors:\n\nKitahara Haruki\nNishizawa Takashi\nSakuma Akira\nAoki Tsukasa\nKakiuchi Hiroyuki",
+	0,
 	&machine_driver,
+
 	toki_rom,
 	0, 0,
 	0,
@@ -877,4 +885,3 @@ struct GameDriver toki_driver =
 	ORIENTATION_DEFAULT,
 	hiload, hisave
 };
-

@@ -626,9 +626,7 @@ ROM_END
  */
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -663,9 +661,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -680,9 +676,14 @@ static void hisave(void)
 
 struct GameDriver bublbobl_driver =
 {
-	"Bubble Bobble",
+	__FILE__,
+	0,
 	"bublbobl",
+	"Bubble Bobble",
+	"????",
+	"?????",
 	"Chris Moore\nOliver White\nNicola Salmoria\nMarco Cassili",
+	0,
 	&bublbobl_machine_driver,
 
 	bublbobl_rom,
@@ -700,9 +701,14 @@ struct GameDriver bublbobl_driver =
 
 struct GameDriver boblbobl_driver =
 {
-	"Bobble Bobble (bootleg Bubble Bobble)",
+	__FILE__,
+	0,
 	"boblbobl",
+	"Bobble Bobble",
+	"????",
+	"?????",
 	"Chris Moore\nOliver White\nNicola Salmoria\nMarco Cassili",
+	0,
 	&boblbobl_machine_driver,
 
 	boblbobl_rom,
@@ -720,9 +726,14 @@ struct GameDriver boblbobl_driver =
 
 struct GameDriver sboblbob_driver =
 {
-	"Bobble Bobble (bootleg Bubble Bobble, alternate version)",
+	__FILE__,
+	0,
 	"sboblbob",
+	"Super Bobble Bobble",
+	"????",
+	"?????",
 	"Chris Moore\nOliver White\nNicola Salmoria\nMarco Cassili",
+	0,
 	&boblbobl_machine_driver,
 
 	sboblbob_rom,

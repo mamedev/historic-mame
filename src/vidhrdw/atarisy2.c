@@ -46,13 +46,11 @@ unsigned char *atarisys2_slapstic_base;
 
 static unsigned char *playfieldram;
 static unsigned char *alpharam;
-static unsigned char *spriteram;
 
 static int playfieldram_size = 0x4000;
 //static int spriteram_size = 0x800;
 static int alpharam_size = 0x1800;
 
-static unsigned char *videoram;
 static int videobank;
 
 static unsigned char *playfielddirty;
@@ -124,6 +122,21 @@ int atarisys2_vh_start(void)
 	{
 		atarisys2_vh_stop ();
 		return 1;
+	}
+
+	/*
+	 * if we are palette reducing, do the simple thing by marking everything used except for
+	 * the transparent sprite and alpha colors; this should give some leeway for machines
+	 * that can't give up all 256 colors
+	 */
+	if (palette_used_colors)
+	{
+		int i;
+		memset (palette_used_colors, PALETTE_COLOR_USED, Machine->drv->total_colors * sizeof(unsigned char));
+		for (i = 0; i < 4; i++)
+			palette_used_colors[0 + i * 16] = PALETTE_COLOR_TRANSPARENT;
+		for (i = 0; i < 8; i++)
+			palette_used_colors[64 + i * 4] = PALETTE_COLOR_TRANSPARENT;
 	}
 
 	/* initialize the displaylist system */
@@ -390,7 +403,7 @@ void atarisys2_paletteram_w (int offset, int data)
 
 	int oldword = READ_WORD (&atarigen_paletteram[offset]);
 	int newword = COMBINE_WORD (oldword, data);
-	int index = offset / 2;
+	int indx = offset / 2;
 
 	WRITE_WORD (&atarigen_paletteram[offset], newword);
 
@@ -398,7 +411,7 @@ void atarisys2_paletteram_w (int offset, int data)
 	red = (color_table[(newword >> 12) & 15] * inten) >> 4;
 	green = (color_table[(newword >> 8) & 15] * inten) >> 4;
 	blue = (color_table[(newword >> 4) & 15] * inten) >> 4;
-	palette_change_color (index, red, green, blue);
+	palette_change_color (indx, red, green, blue);
 }
 
 
@@ -598,6 +611,11 @@ void atarisys2_vh_screenrefresh(struct osd_bitmap *bitmap)
 /*	if (osd_key_pressed (OSD_KEY_9)) atarisys2_dump_video_ram ();*/
 
 
+	/* recalc the palette if necessary */
+	if (palette_recalc ())
+		memset (playfielddirty, 1, playfieldram_size / 2);
+
+
 	/* compute scrolling so we know what to update */
 	xscroll = (READ_WORD (&atarigen_hscroll[0]) >> 6);
 	yscroll = (READ_WORD (&atarigen_vscroll[0]) >> 6);
@@ -676,7 +694,6 @@ void atarisys2_vh_screenrefresh(struct osd_bitmap *bitmap)
 		int pri = (val >> 9) & 6;
 		int h = val & 15;
 		struct rectangle clip;
-		int y, sx;
 
 		/* wrap */
 		if (xpos > XDIM) xpos -= 0x400;
@@ -702,7 +719,7 @@ void atarisys2_vh_screenrefresh(struct osd_bitmap *bitmap)
 			/* loop over the rows */
 			for (y = ypos + h * 2; y >= ypos; y--)
 			{
-				int sy, offs, data, pfpri;
+				int  data, pfpri;
 
 				/* compute the scroll-adjusted y position */
 				sy = (y * 8 + yscroll) & 0x1ff;

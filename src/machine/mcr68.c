@@ -231,7 +231,7 @@ e		7 - lsb buffer
 
 void mcr68_6840_w(int offset, int data)
 {
-	int byte;
+	int byt;
 
 	/* From datasheet:
 
@@ -263,14 +263,14 @@ Write ff0a00 to 6840 00  = } Write 0a to control reg 3
 
 	*/
 
-	byte=(data>>8)&0xff;
+	byt=(data>>8)&0xff;
 
 
 	switch (offset) {
 		case 0: /* CR1/3 */
 			if (m6840_cr_select==1) {
 
-				if (byte&0x1) {
+				if (byt&0x1) {
 					int i;
 				if (errorlog) fprintf(errorlog,"MC6840: Internal reset\n");
 				for (i=0; i<3; i++) {
@@ -285,19 +285,19 @@ Write ff0a00 to 6840 00  = } Write 0a to control reg 3
 			}
 
 			else if (m6840_cr_select==3) {
-				if (byte&0x1) {
+				if (byt&0x1) {
 					if (errorlog) fprintf(errorlog,"MC6840: Divide by 8 prescaler selected\n");
 				}
 			}
 
 			/* Following bits apply to both registers */
-			if (byte&0x2) {
+			if (byt&0x2) {
 				if (errorlog) fprintf(errorlog,"MC6840: Internal clock selected on CR %d\n",m6840_cr_select);
 			else
 				if (errorlog) fprintf(errorlog,"MC6840: External clock selected on CR %d\n",m6840_cr_select);
 			}
 
-			if (byte&0x4) {
+			if (byt&0x4) {
 				if (errorlog) fprintf(errorlog,"MC6840: 16 bit count mode selected on CR %d\n",m6840_cr_select);
 			else
 				if (errorlog) fprintf(errorlog,"MC6840: Dual 8 bit count mode selected on CR %d\n",m6840_cr_select);
@@ -306,7 +306,7 @@ Write ff0a00 to 6840 00  = } Write 0a to control reg 3
 			if (errorlog) fprintf(errorlog," Write %02x to control register 1/3\n",(data&0xff00)>>8);
 			break;
 		case 2:
-			if (byte&0x1) {
+			if (byt&0x1) {
 				m6840_cr_select=1;
 //				if (errorlog) fprintf(errorlog,"MC6840: Control register 1 selected\n");
 			}
@@ -315,39 +315,39 @@ Write ff0a00 to 6840 00  = } Write 0a to control reg 3
 //				if (errorlog) fprintf(errorlog,"MC6840: Control register 3 selected\n");
 			}
 
-			if (byte&0x80)
+			if (byt&0x80)
 				if (errorlog) fprintf(errorlog,"MC6840: Cr2 Timer output enabled\n");
 
-			if (byte&0x40)
+			if (byt&0x40)
 				if (errorlog) fprintf(errorlog,"MC6840: Cr2 interrupt output enabled\n");
 
 
-//			if (byte==0xe2) cpu_cause_interrupt(0,1);
+//			if (byt==0xe2) cpu_cause_interrupt(0,1);
 
 			if (errorlog) fprintf(errorlog," Write %02x to control register 2\n",(data&0xff00)>>8);
 			break;
 		case 4:
-			m6840_timerMSB[0]=byte;
+			m6840_timerMSB[0]=byt;
 			if (errorlog) fprintf(errorlog," Write %02x to MSB of Timer 1\n",(data&0xff00)>>8);
 			break;
 		case 6:
-			m6840_timerLSB[0]=byte;
+			m6840_timerLSB[0]=byt;
 			if (errorlog) fprintf(errorlog," Write %02x to LSB of Timer 1\n",(data&0xff00)>>8);
 			break;
 		case 8:
-			m6840_timerMSB[1]=byte;
+			m6840_timerMSB[1]=byt;
 			if (errorlog) fprintf(errorlog," Write %02x to MSB of Timer 2\n",(data&0xff00)>>8);
 			break;
 		case 10:
-			m6840_timerLSB[1]=byte;
+			m6840_timerLSB[1]=byt;
 			if (errorlog) fprintf(errorlog," Write %02x to LSB of Timer 2\n",(data&0xff00)>>8);
 			break;
 		case 12:
-			m6840_timerMSB[2]=byte;
+			m6840_timerMSB[2]=byt;
 			if (errorlog) fprintf(errorlog," Write %02x to MSB of Timer 3\n",(data&0xff00)>>8);
 			break;
 		case 14:
-			m6840_timerLSB[2]=byte;
+			m6840_timerLSB[2]=byt;
 			if (errorlog) fprintf(errorlog," Write %02x to LSB of Timer 3\n",(data&0xff00)>>8);
 			break;
 	}

@@ -67,22 +67,22 @@ static int base = 0;
 static int bose = 0;
 if (osd_key_pressed(OSD_KEY_Z))
 {
-	while (osd_key_pressed(OSD_KEY_Z));
+	while (osd_key_pressed(OSD_KEY_Z)) ;
 	base -= 0x400;
 }
 if (osd_key_pressed(OSD_KEY_X))
 {
-	while (osd_key_pressed(OSD_KEY_X));
+	while (osd_key_pressed(OSD_KEY_X)) ;
 	base += 0x400;
 }
 if (osd_key_pressed(OSD_KEY_C))
 {
-	while (osd_key_pressed(OSD_KEY_C));
+	while (osd_key_pressed(OSD_KEY_C)) ;
 	bose -= 256;
 }
 if (osd_key_pressed(OSD_KEY_V))
 {
-	while (osd_key_pressed(OSD_KEY_V));
+	while (osd_key_pressed(OSD_KEY_V)) ;
 	bose += 256;
 }
 
@@ -473,9 +473,14 @@ ROM_END
 
 struct GameDriver twincobr_driver =
 {
-	"Twin Cobra",
+	__FILE__,
+	0,
 	"twincobr",
+	"Twin Cobra",
+	"????",
+	"?????",
 	"Nicola Salmoria",
+	0,
 	&machine_driver,
 
 	twincobr_rom,

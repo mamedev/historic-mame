@@ -429,6 +429,9 @@ ROM_END
 
 static int sprint1_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0x0057],"000",3) == 0)
 	{
@@ -451,6 +454,8 @@ static int sprint1_hiload(void)
 static void sprint1_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -469,9 +474,14 @@ static void sprint1_hisave(void)
 
 struct GameDriver sprint1_driver =
 {
-        "Sprint1",
+	__FILE__,
+	0,
         "sprint1",
+        "Sprint1",
+	"????",
+	"?????",
         "Mike Balfour",
+	0,
         &sprint1_machine_driver,
 
         sprint1_rom,
@@ -488,9 +498,14 @@ struct GameDriver sprint1_driver =
 
 struct GameDriver sprint2_driver =
 {
-        "Sprint2",
+	__FILE__,
+	0,
         "sprint2",
+        "Sprint2",
+	"????",
+	"?????",
         "Mike Balfour",
+	0,
 	&machine_driver,
 
         sprint2_rom,

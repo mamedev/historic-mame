@@ -774,9 +774,8 @@ ROM_END
 
 static int fastfred_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0xc41c],"\x10",1) == 0)
@@ -800,10 +799,8 @@ static int fastfred_hiload(void)
 static void fastfred_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -814,9 +811,8 @@ static void fastfred_hisave(void)
 
 static int flyboy_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0xc41c],"\x50",1) == 0)
@@ -838,10 +834,8 @@ static int flyboy_hiload(void)
 static void flyboy_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -852,6 +846,9 @@ static void flyboy_hisave(void)
 
 static int jumpcoas_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* Note: the game doesn't seem to initialize the high score display
 	   at the top of the screen. Even without high score loading, the
 	   screen says that the high score is 0, even though the high score
@@ -877,6 +874,8 @@ static int jumpcoas_hiload(void)
 static void jumpcoas_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -888,9 +887,14 @@ static void jumpcoas_hisave(void)
 
 struct GameDriver fastfred_driver =
 {
-	"Fast Freddie",
+	__FILE__,
+	0,
 	"fastfred",
+	"Fast Freddie",
+	"????",
+	"?????",
 	"Zsolt Vasvari",
+	0,
 	&fastfred_machine_driver,
 
 	fastfred_rom,
@@ -908,9 +912,14 @@ struct GameDriver fastfred_driver =
 
 struct GameDriver flyboy_driver =
 {
-	"Fly-Boy (bootleg?)",
+	__FILE__,
+	0,
 	"flyboy",
+	"Fly-Boy (bootleg?)",
+	"????",
+	"?????",
 	"Zsolt Vasvari\nBrad Oliver (additional code)\nMarco Cassili (additional code)",
+	0,
 	&fastfred_machine_driver,
 
 	flyboy_rom,
@@ -928,9 +937,14 @@ struct GameDriver flyboy_driver =
 
 struct GameDriver jumpcoas_driver =
 {
-	"Jump Coaster",
+	__FILE__,
+	0,
 	"jumpcoas",
+	"Jump Coaster",
+	"????",
+	"?????",
 	"Zsolt Vasvari",
+	0,
 	&jumpcoas_machine_driver,
 
 	jumpcoas_rom,

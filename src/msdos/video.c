@@ -75,6 +75,10 @@ static int doubling = 0;
 int throttle = 1;       /* toggled by F10 */
 
 static int gone_to_gfx_mode;
+static int frames_displayed;
+static uclock_t start_time,end_time;	/* to calculate fps average on exit */
+#define FRAMES_TO_SKIP 20	/* skip the first few frames from the FPS calculation */
+							/* to avoid counting the copyright and info screens */
 
 
 struct { int x, y; Register *reg; int reglen; int syncvgafreq; int scanlines; }
@@ -213,19 +217,19 @@ char *dirty_new=line2;
 
 
 /* ASG 971011 */
-void osd_mark_dirty(int x1, int y1, int x2, int y2, int ui)
+void osd_mark_dirty(int x1, int _y1, int x2, int y2, int ui)
 {
 	if (use_dirty == 2)	/* GfxLayer dirty handling */
 	{
-		layer_mark_rectangle_dirty_norotate(Machine->dirtylayer,x1,x2,y1,y2);
+		layer_mark_rectangle_dirty_norotate(Machine->dirtylayer,x1,x2,_y1,y2);
 	}
 	else if (use_dirty)
 	{
-		if (y1 >= MAXDIRTY || y2 < 0) return;
-		if (y1 < 0) y1 = 0;
+		if (_y1 >= MAXDIRTY || y2 < 0) return;
+		if (_y1 < 0) _y1 = 0;
 		if (y2 >= MAXDIRTY) y2 = MAXDIRTY-1;
 
-		memset(&dirty_new[y1], 1, y2-y1+1);
+		memset(&dirty_new[_y1], 1, y2-_y1+1);
 	}
 }
 
@@ -617,7 +621,7 @@ int osd_set_display(int width,int height, int attributes)
 
 	if (gfx_mode == GFX_VGA)
 	{
-		int i, found;
+		int found;
 
 		/* setup tweaked modes */
 		videofreq = vgafreq;
@@ -738,7 +742,6 @@ int osd_set_display(int width,int height, int attributes)
 	if (video_sync)
 	{
 		uclock_t a,b;
-		int i;
 		float rate;
 
 
@@ -782,7 +785,12 @@ if (errorlog) fprintf(errorlog,"sample rate adjusted to match video freq: %d\n",
 void osd_close_display(void)
 {
 	if (gone_to_gfx_mode != 0)
+	{
 		set_gfx_mode(GFX_TEXT,80,25,0,0);
+
+		if (frames_displayed > FRAMES_TO_SKIP)
+			printf("Average FPS: %f\n",(double)UCLOCKS_PER_SEC/(end_time-start_time)*(frames_displayed-FRAMES_TO_SKIP));
+	}
 
 	if (scrbitmap)
 	{
@@ -908,25 +916,24 @@ void my_textout (char *buf)
 inline void double_pixels(unsigned long *lb, short seg,
 			  unsigned long address, int width4)
 {
-	__asm__ __volatile__ ("
-	pushw %%es              \n
-	movw %%dx, %%es         \n
-	cld                     \n
-	.align 4                \n
-	0:                      \n
-	lodsl                   \n
-	movl %%eax, %%ebx       \n
-	bswap %%eax             \n
-	xchgw %%ax,%%bx         \n
-	roll $8, %%eax          \n
-	stosl                   \n
-	movl %%ebx, %%eax       \n
-	rorl $8, %%eax          \n
-	stosl                   \n
-	loop 0b                 \n
-	popw %%ax               \n
-	movw %%ax, %%es         \n
-	"
+	__asm__ __volatile__ (
+	"pushw %%es              \n"
+	"movw %%dx, %%es         \n"
+	"cld                     \n"
+	".align 4                \n"
+	"0:                      \n"
+	"lodsl                   \n"
+	"movl %%eax, %%ebx       \n"
+	"bswap %%eax             \n"
+	"xchgw %%ax,%%bx         \n"
+	"roll $8, %%eax          \n"
+	"stosl                   \n"
+	"movl %%ebx, %%eax       \n"
+	"rorl $8, %%eax          \n"
+	"stosl                   \n"
+	"loop 0b                 \n"
+	"popw %%ax               \n"
+	"movw %%ax, %%es         \n"
 	::
 	"d" (seg),
 	"c" (width4),
@@ -938,23 +945,22 @@ inline void double_pixels(unsigned long *lb, short seg,
 inline void double_pixels16(unsigned long *lb, short seg,
 			  unsigned long address, int width4)
 {
-	__asm__ __volatile__ ("
-	pushw %%es              \n
-	movw %%dx, %%es         \n
-	cld                     \n
-	.align 4                \n
-	0:                      \n
-	lodsl                   \n
-	movl %%eax, %%ebx       \n
-	roll $16, %%eax         \n
-	xchgw %%ax,%%bx         \n
-	stosl                   \n
-	movl %%ebx, %%eax       \n
-	stosl                   \n
-	loop 0b                 \n
-	popw %%ax               \n
-	movw %%ax, %%es         \n
-	"
+	__asm__ __volatile__ (
+	"pushw %%es              \n"
+	"movw %%dx, %%es         \n"
+	"cld                     \n"
+	".align 4                \n"
+	"0:                      \n"
+	"lodsl                   \n"
+	"movl %%eax, %%ebx       \n"
+	"roll $16, %%eax         \n"
+	"xchgw %%ax,%%bx         \n"
+	"stosl                   \n"
+	"movl %%ebx, %%eax       \n"
+	"stosl                   \n"
+	"loop 0b                 \n"
+	"popw %%ax               \n"
+	"movw %%ax, %%es         \n"
 	::
 	"d" (seg),
 	"c" (width4),
@@ -1289,6 +1295,13 @@ void osd_update_display(void)
 	int need_to_clear_bitmap = 0;
 
 
+	/* for the FPS average calculation */
+	if (++frames_displayed == FRAMES_TO_SKIP)
+		start_time = uclock();
+	else
+		end_time = uclock();
+
+
 	/* Check for PGUP, PGDN and pan screen */
 	if (osd_key_pressed(OSD_KEY_PGDN) || osd_key_pressed(OSD_KEY_PGUP))
 		pan_display();
@@ -1307,7 +1320,14 @@ void osd_update_display(void)
 
 	if (osd_key_pressed(OSD_KEY_F10))
 	{
-		if (f10pressed == 0) throttle ^= 1;
+		if (f10pressed == 0)
+		{
+			throttle ^= 1;
+
+			/* reset the frame counter every time the throttle key is pressed, so */
+			/* we'll measure the average FPS on a consistent status. */
+			frames_displayed = 0;
+		}
 		f10pressed = 1;
 	}
 	else f10pressed = 0;
@@ -1388,7 +1408,7 @@ void osd_update_display(void)
 	if (showfps || showfpstemp) /* MAURY: nuove opzioni */
 	{
 		int trueorientation;
-		int fps,i,l;
+		int fps,l;
 		char buf[30];
 
 
@@ -1537,5 +1557,3 @@ void osd_update_display(void)
 		while (osd_key_pressed(OSD_KEY_F12));
 	}
 }
-
-

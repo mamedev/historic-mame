@@ -1665,10 +1665,8 @@ static struct MachineDriver lottofun_machine_driver =
 
 static int cmos_load(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
@@ -1682,10 +1680,8 @@ static int cmos_load(void)
 
 static void cmos_save(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1698,10 +1694,8 @@ static void cmos_save(void)
 
 static int defender_cmos_load(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
@@ -1715,10 +1709,9 @@ static int defender_cmos_load(void)
 
 static void defender_cmos_save(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -1927,9 +1920,14 @@ ROM_END
 
 struct GameDriver robotron_driver =
 {
-	"Robotron",
+	__FILE__,
+	0,
 	"robotron",
+	"Robotron",
+	"????",
+	"?????",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
+	0,
 	&robotron_machine_driver,       /* MachineDriver * */
 
 	robotron_rom,                   /* RomModule * */
@@ -1948,9 +1946,14 @@ struct GameDriver robotron_driver =
 
 struct GameDriver robotryo_driver =
 {
-	"Robotron (Yellow/Orange label)",
+	__FILE__,
+	0,
 	"robotryo",
+	"Robotron (Yellow/Orange label)",
+	"????",
+	"?????",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nValerio Verrando",
+	0,
 	&robotron_machine_driver,       /* MachineDriver * */
 
 	robotryo_rom,                   /* RomModule * */
@@ -2067,9 +2070,14 @@ ROM_END
 
 struct GameDriver joust_driver =
 {
-	"Joust (White/Green label)",
+	__FILE__,
+	0,
 	"joust",
+	"Joust (White/Green label)",
+	"????",
+	"?????",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nValerio Verrando",
+	0,
 	&joust_machine_driver,          /* MachineDriver * */
 
 	joust_rom,                      /* White/Green version, latest */
@@ -2087,9 +2095,14 @@ struct GameDriver joust_driver =
 
 struct GameDriver joustr_driver =
 {
-	"Joust (Red label)",
+	__FILE__,
+	0,
 	"joustr",
+	"Joust (Red label)",
+	"????",
+	"?????",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
+	0,
 	&joust_machine_driver,          /* MachineDriver * */
 
 	joustr_rom,                     /* Solid Red version, has pterodactyl bug */
@@ -2107,9 +2120,14 @@ struct GameDriver joustr_driver =
 
 struct GameDriver joustg_driver =
 {
-	"Joust (Green label)",
+	__FILE__,
+	0,
 	"joustg",
+	"Joust (Green label)",
+	"????",
+	"?????",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
+	0,
 	&joust_machine_driver,          /* MachineDriver * */
 
 	joustg_rom,                     /* Solid Red version, has pterodactyl bug */
@@ -2127,9 +2145,14 @@ struct GameDriver joustg_driver =
 
 struct GameDriver joustwr_driver =
 {
-	"Joust (White/Red label)",
+	__FILE__,
+	0,
 	"joustwr",
+	"Joust (White/Red label)",
+	"????",
+	"?????",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
+	0,
 	&joust_machine_driver,          /* MachineDriver * */
 
 	joustwr_rom,                     /* Solid Red version, has pterodactyl bug */
@@ -2213,9 +2236,14 @@ const char *sinistar_sample_names[]=
 
 struct GameDriver sinistar_driver =
 {
-	"Sinistar",
+	__FILE__,
+	0,
 	"sinistar",
+	"Sinistar",
+	"????",
+	"?????",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nHowie Cohen\nSean Riddle\nPat Lawrence",
+	0,
 	&sinistar_machine_driver,       /* MachineDriver * */
 
 	sinistar_rom,                   /* RomModule * */
@@ -2233,9 +2261,14 @@ struct GameDriver sinistar_driver =
 
 struct GameDriver oldsin_driver =
 {
-	"Sinistar (prototype version)",
+	__FILE__,
+	0,
 	"oldsin",
+	"Sinistar (prototype version)",
+	"????",
+	"?????",
 	"\nSinistar team:\nMarc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nHowie Cohen\nSean Riddle\nPat Lawrence\nBrian Deuel (prototype driver)\n\nSpecial thanks to Peter Freeman",
+	0,
 	&sinistar_machine_driver, /* MachineDriver * */
 
 	oldsin_rom, /* RomModule * */
@@ -2307,9 +2340,14 @@ ROM_END
 
 struct GameDriver bubbles_driver =
 {
-	"Bubbles",
+	__FILE__,
+	0,
 	"bubbles",
+	"Bubbles",
+	"????",
+	"?????",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
+	0,
 	&bubbles_machine_driver,        /* MachineDriver * */
 
 	bubbles_rom,                    /* RomModule * */
@@ -2328,9 +2366,14 @@ struct GameDriver bubbles_driver =
 
 struct GameDriver bubblesr_driver =
 {
-	"Bubbles (Red Label)",
+	__FILE__,
+	0,
 	"bubblesr",
+	"Bubbles (Red Label)",
+	"????",
+	"?????",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nValerio Verrando",
+	0,
 	&bubbles_machine_driver,        /* MachineDriver * */
 
 	bubblesr_rom,                   /* RomModule * */
@@ -2378,9 +2421,14 @@ ROM_END
 
 struct GameDriver stargate_driver =
 {
-	"Stargate",
+	__FILE__,
+	0,
 	"stargate",
+	"Stargate",
+	"????",
+	"?????",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
+	0,
 	&stargate_machine_driver,       /* MachineDriver * */
 
 	stargate_rom,                   /* RomModule * */
@@ -2429,9 +2477,14 @@ ROM_END
 
 struct GameDriver defender_driver =
 {
-	"Defender",
+	__FILE__,
+	0,
 	"defender",
+	"Defender",
+	"????",
+	"?????",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
+	0,
 	&defender_machine_driver,       /* MachineDriver * */
 
 	defender_rom,                   /* RomModule * */
@@ -2480,9 +2533,14 @@ ROM_END
 
 struct GameDriver splat_driver =
 {
-	"Splat",
+	__FILE__,
+	0,
 	"splat",
+	"Splat",
+	"????",
+	"?????",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
+	0,
 	&splat_machine_driver,          /* MachineDriver * */
 
 	splat_rom,                      /* RomModule * */
@@ -2537,9 +2595,14 @@ ROM_END
 
 struct GameDriver blaster_driver =
 {
-	"Blaster",
+	__FILE__,
+	0,
 	"blaster",
+	"Blaster",
+	"????",
+	"?????",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
+	0,
 	&blaster_machine_driver,        /* MachineDriver * */
 
 	blaster_rom,                    /* RomModule * */
@@ -2604,9 +2667,14 @@ ROM_END
 
 struct GameDriver colony7_driver =
 {
-	"Colony 7",
+	__FILE__,
+	0,
 	"colony7",
+	"Colony 7",
+	"????",
+	"?????",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nMike Balfour",
+	0,
 	&colony7_machine_driver,       /* MachineDriver * */
 
 	colony7_rom,                   /* RomModule * */
@@ -2624,9 +2692,14 @@ struct GameDriver colony7_driver =
 
 struct GameDriver colony7a_driver =
 {
-	"Colony 7 (Alternate)",
+	__FILE__,
+	0,
 	"colony7a",
+	"Colony 7 (Alternate)",
+	"????",
+	"?????",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nMike Balfour",
+	0,
 	&colony7_machine_driver,       /* MachineDriver * */
 
 	colony7a_rom,                   /* RomModule * */
@@ -2676,9 +2749,14 @@ ROM_END
 
 struct GameDriver lottofun_driver =
 {
-	"Lotto Fun",
+	__FILE__,
+	0,
 	"lottofun",
+	"Lotto Fun",
+	"????",
+	"?????",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nMike Balfour (Ticket Dispenser)",
+	0,
 	&lottofun_machine_driver,		/* MachineDriver * */
 
 	lottofun_rom,					 /* RomModule * */

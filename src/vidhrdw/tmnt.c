@@ -539,7 +539,7 @@ static unsigned char bit_pick_table[9][8] =
 }
 
 
-static void punkshot_drawsprites(struct osd_bitmap *bitmap,int priority)
+static void punkshot_drawsprites(struct osd_bitmap *bitmap,int pri)
 {
 	int offs;
 	int pri_code;
@@ -568,12 +568,12 @@ static void punkshot_drawsprites(struct osd_bitmap *bitmap,int priority)
 
 			if ((READ_WORD(&spriteram[offs]) & 0xff00) != pri_code) continue;
 
-			if (priority == 0)
+			if (pri == 0)
 			{
 				if ((READ_WORD(&spriteram[offs+2]) & 0x20) == 0)
 					continue;
 			}
-			else if (priority == 1)
+			else if (pri == 1)
 			{
 				if ((READ_WORD(&spriteram[offs+2]) & 0x20) != 0)
 					continue;

@@ -446,7 +446,7 @@ static struct MachineDriver masao_machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,     /* ? */
+			24576000/16,	/* ???? */
 			2,
 			masao_sound_readmem,masao_sound_writemem,0,0,
 			ignore_interrupt,1
@@ -550,9 +550,7 @@ ROM_END
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -581,10 +579,8 @@ static int hiload(void)
 
 static void hisave(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -599,9 +595,14 @@ static void hisave(void)
 
 struct GameDriver mario_driver =
 {
-	"Mario Bros.",
+	__FILE__,
+	0,
 	"mario",
+	"Mario Bros.",
+	"????",
+	"?????",
 	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nDan Boris (8039 info)\nRon Fries (Audio Info)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	mario_rom,
@@ -619,9 +620,14 @@ struct GameDriver mario_driver =
 
 struct GameDriver masao_driver =
 {
-	"Masao",
+	__FILE__,
+	0,
 	"masao",
+	"Masao",
+	"????",
+	"?????",
 	"Hugh McLenaghan (MAME driver)\nMirko Buffoni (sound info)",
+	0,
 	&masao_machine_driver,
 
 	masao_rom,

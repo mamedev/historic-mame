@@ -513,9 +513,14 @@ ADPCM_SAMPLES_END
 
 struct GameDriver rastan_driver =
 {
-	"Rastan",
+	__FILE__,
+	0,
 	"rastan",
+	"Rastan",
+	"????",
+	"?????",
 	"Jarek Burczynski\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	rastan_rom,
@@ -532,9 +537,14 @@ struct GameDriver rastan_driver =
 
 struct GameDriver rastsaga_driver =
 {
-	"Rastan Saga",
+	__FILE__,
+	0,
 	"rastsaga",
+	"Rastan Saga",
+	"????",
+	"?????",
 	"Jarek Burczynski\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	rastsaga_rom,
@@ -623,9 +633,14 @@ static struct MachineDriver rastmu_driver =
 
 struct GameDriver rastmus_driver =
 {
-	"RASTAN MUSIC PLAY (YM2151)",
+	__FILE__,
+	0,
 	"rastmus",
+	"RASTAN MUSIC PLAY (YM2151)",
+	"????",
+	"?????",
 	"JAREK BURCZYNSKI",
+	0,
 	&rastmu_driver,
 
 	rastan_rom,

@@ -284,9 +284,14 @@ ROM_END
 
 struct GameDriver altbeast_driver =
 {
-	"Altered Beast",
+	__FILE__,
+	0,
 	"altbeast",
+	"Altered Beast",
+	"????",
+	"?????",
 	"Mirko Buffoni         (Mame Driver)\nThierry Lescot & Nao  (Hardware Info)",
+	0,
 	&machine_driver,
 
 	altbeast_rom,

@@ -12,13 +12,12 @@
 
 unsigned char *tnzs_objram,*tnzs_workram,*tnzs_vdcram,*tnzs_scrollram;
 unsigned char *tnzs_cpu2ram;
-unsigned char *tnzs_xxxx;
-int yyyy_count;
+int current_inputport;
 int number_of_credits = 0;
 
 void init_tnzs(void)
 {
-	yyyy_count = -3;
+    current_inputport = -3;
 }
 
 int tnzs_objram_r(int offset)
@@ -46,28 +45,28 @@ int tnzs_cpu2ram_r(int offset)
 }
 
 
-int tnzs_yyyy2_r(int offset)
+int tnzs_inputport_r(int offset)
 {
 	int ret;
 
 	if (offset == 0)
 	{
-		switch(yyyy_count)
+        switch(current_inputport)
 		{
 			case -3: ret = 0x5a; break;
 			case -2: ret = 0xa5; break;
 			case -1: ret = 0x55; break;
-			case 6: yyyy_count = 0;	/* fall through */
+            case 6: current_inputport = 0; /* fall through */
 			case 0: ret = number_of_credits;
 				break;
 			default:
-				ret = readinputport(yyyy_count); break;
+                ret = readinputport(current_inputport); break;
 		}
 #if 0
 		if (errorlog) fprintf(errorlog, "$c000 is %02x (count %d)\n",
-							  ret, yyyy_count);
+                              ret, current_inputport);
 #endif
-		yyyy_count++;
+        current_inputport++;
 		return ret;
 	}
 	else
@@ -95,10 +94,6 @@ void tnzs_vdcram_w(int offset, int data)
 
 void tnzs_scrollram_w(int offset, int data)
 {
-#if 0
-	if (errorlog) fprintf(errorlog,
-						  "write %02x to SCROLL %02x\n", data, offset);
-#endif
 	tnzs_scrollram[offset] = data;
 }
 
@@ -107,36 +102,14 @@ void tnzs_cpu2ram_w(int offset, int data)
 	tnzs_cpu2ram[offset] = data;
 }
 
-void tnzs_xxxx_w(int offset, int data)
-{
-	tnzs_xxxx[offset] = data;
-	switch (offset)
-	{
-		case 0:
-			break;
-		case 1:
-#if 0
-			if (data == 0x29)
-				cpu_halt(1, 1);
-			else
-				cpu_halt(1, 0);
-#endif
-			break;
-		case 2:
-			break;
-		case 3:
-			break;
-	}
-}
-
-void tnzs_yyyy2_w(int offset, int data)
+void tnzs_inputport_w(int offset, int data)
 {
 	if (offset == 0)
 	{
-		yyyy_count = (yyyy_count + 5) % 6;
+        current_inputport = (current_inputport + 5) % 6;
 		if (errorlog) fprintf(errorlog,
 							  "writing %02x to 0xc000: count set back to %d\n",
-							  data, yyyy_count);
+                              data, current_inputport);
 	}
 }
 
@@ -149,6 +122,9 @@ extern unsigned char *banked_rom_0, *banked_rom_1, *banked_rom_2, *banked_rom_3;
 
 void tnzs_bankswitch_w(int offset, int data)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	if (errorlog && (data < 0x10 || data > 0x17))
 	{
 		fprintf(errorlog, "WARNING: writing %02x to bankswitch\n", data);
@@ -173,6 +149,9 @@ void tnzs_bankswitch_w(int offset, int data)
 
 void tnzs_bankswitch1_w(int offset,int data)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+
+
 #ifdef MALLOC_CPU1_ROM_AREAS
 	switch (data & 3)
 	{

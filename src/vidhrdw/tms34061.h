@@ -6,40 +6,50 @@
  *																			*
  ****************************************************************************/
 
-/* Register addressing modes (DO NOT change the values!) */
+/* Callback prototypes */
 
-#define TMS34061_REG_ADDRESS_NORMAL	2	/* As laid out by the User's Guide */
+/* Return the function code (FS0-FS2) selected by this offset */
+typedef int  (*TMS34061_getfunction_t)  (int offset);
 
-#define TMS34061_REG_ADDRESS_PACKED	1	/* A0 is actually connected to the */
-										/* TMS34061 A1, so the high/lo     */
-										/* bytes of the registers can be   */
-										/* accessed by a single word operation */
+/* Return the row address (RA0-RA8) selected by this offset */
+typedef int  (*TMS34061_getrowaddress_t)(int offset);
 
-/* Callback prototypes for accessing pixels */
-typedef int  (*tms34061_getpixel_t)(int x, int y);
-typedef void (*tms34061_setpixel_t)(int x, int y, int pixel);
+/* Return the column address (CA0-CA8) selected by this offset */
+typedef int  (*TMS34061_getcoladdress_t)(int offset);
+
+/* Function called to get a pixel */
+typedef int  (*TMS34061_getpixel_t)(int col, int row);
+
+/* Function called to set a pixel */
+typedef void (*TMS34061_setpixel_t)(int col, int row, int pixel);
+
+
+
+struct TMS34061interface
+{
+	//int reg_addr_mode;               /* One of the addressing mode constants above */
+    TMS34061_getfunction_t   getfunction;
+	TMS34061_getrowaddress_t getrowaddress;
+    TMS34061_getcoladdress_t getcoladdress;
+    TMS34061_getpixel_t      getpixel;
+    TMS34061_setpixel_t      setpixel;
+    int cpu;                         /* Which CPU is the TMS34061 causing interrupts on */
+    int (*vertical_interrupt)(void); /* Function called on a vertical interrupt */
+};
+
 
 /* Initializes the emulator */
-int tms34061_start(int reg_addr_mode,  /* One of the addressing mode constants above */
-				   int cpu,			   /* Which CPU is the TMS34061 causing interrupts on */
-                   tms34061_getpixel_t getpixel,  /* Function to get a pixel in X/Y addressing */
-                   tms34061_setpixel_t setpixel); /* Function to set a pixel in X/Y addressing */
+int TMS34061_start(struct TMS34061interface *interface);
 
 /* Cleans up the emulation */
-void tms34061_stop(void);
+void TMS34061_stop(void);
 
-/* Write to a 34061 register */
-void tms34061_w(int offset, int data);
+/* Writes to the 34061 */
+void TMS34061_w(int offset, int data);
 
-/* Read a 34061 register */
-int tms34061_r(int offset);
-
-/* Write a pixel currently addressed by the XY registers */
-void tms34061_xypixel_w(int offset, int data);
-
-/* Read a pixel currently addressed by the XY registers */
-int tms34061_xypixel_r(int offset);
+/* Reads from the 34061 */
+int TMS34061_r(int offset);
 
 /* Checks whether the display is inhibited */
-int tms34061_display_blanked(void);
+int TMS34061_display_blanked(void);
 

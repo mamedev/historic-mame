@@ -65,6 +65,7 @@ int frontend_help (int argc, char **argv)
 {
 	int i, j;
 	int list = 0;
+	int listclones = 1;
 	int verify = 0;
 	int help = 1;    /* by default is TRUE */
 	char gamename[9];
@@ -92,12 +93,14 @@ int frontend_help (int argc, char **argv)
 		/* check for front-end utilities */
 		if (!stricmp(argv[i],"-list")) list = 1;
 		if (!stricmp(argv[i],"-listfull")) list = 2;
+		if (!stricmp(argv[i],"-listgames")) list = 8;
 		if (!stricmp(argv[i],"-listsamdir")) list = 3;
         if (!stricmp(argv[i],"-listdetails")) list = 7; /* A detailed MAMELIST.TXT type roms lister */
 
 #ifdef MAME_DEBUG /* do not put this into a public release! */
 		if (!stricmp(argv[i],"-lmr")) list = 6;
 #endif
+		if (!stricmp(argv[i],"-noclones")) listclones = 0;
 
 		/* these options REQUIRES gamename field to work */
 		if (strlen(gamename) > 0)
@@ -138,7 +141,8 @@ int frontend_help (int argc, char **argv)
 			i = 0; j = 0;
 			while (drivers[i])
 			{
-				if (!strwildcmp(gamename, drivers[i]->name))
+				if ((listclones || drivers[i]->clone_of == 0) &&
+						!strwildcmp(gamename, drivers[i]->name))
 				{
 					printf("%10s",drivers[i]->name);
 					j++;
@@ -152,23 +156,27 @@ int frontend_help (int argc, char **argv)
 			printf("Total ROM sets supported: %4d\n", i);
 			return 0;
 			break;
+
 		case 2: /* games list with descriptions */
 			printf("Name:     Description:\n");
 			i = 0;
 			while (drivers[i])
 			{
-				if (!strwildcmp(gamename, drivers[i]->name))
+				if ((listclones || drivers[i]->clone_of == 0) &&
+						!strwildcmp(gamename, drivers[i]->name))
 					printf("%-10s\"%s\"\n",drivers[i]->name,drivers[i]->description);
 				i++;
 			}
 			return 0;
 			break;
+
 		case 3: /* games list with samples directories */
 			printf("Name:     Samples dir:\n");
 			i = 0;
 			while (drivers[i])
 			{
-				if (!strwildcmp(gamename, drivers[i]->name))
+				if ((listclones || drivers[i]->clone_of == 0) &&
+						!strwildcmp(gamename, drivers[i]->name))
 					if (drivers[i]->samplenames != 0 && drivers[i]->samplenames[0] != 0)
 					{
 						printf("%-10s",drivers[i]->name);
@@ -181,6 +189,7 @@ int frontend_help (int argc, char **argv)
 			}
 			return 0;
 			break;
+
 		case 4: /* game roms list or */
 		case 5: /* game samples list */
 			j = 0;
@@ -208,6 +217,7 @@ int frontend_help (int argc, char **argv)
 			}
 			return 0;
 			break;
+
 		case 6:
 			for (i = 0; drivers[i]; i++)
 			{
@@ -222,8 +232,8 @@ int frontend_help (int argc, char **argv)
 
             /* First, we shall print the header */
 
-            printf(" romname   cpu 1   cpu 2   cpu 3   sound 1   sound 2   sound 3   name\n");
-            printf("--------   -----   -----   -----   -------   -------   -------   --------------------------\n");
+            printf(" romname  driver      cpu 1   cpu 2   cpu 3   sound 1   sound 2   sound 3   name\n");
+            printf("--------  ----------  -----   -----   -----   -------   -------   -------   --------------------------\n");
 
             /* Let's cycle through the drivers */
 
@@ -239,7 +249,11 @@ int frontend_help (int argc, char **argv)
 
                 /* First, the rom name */
 
-                printf("%-10s ",drivers[i]->name);
+                printf("%-8s  ",drivers[i]->name);
+
+                /* source file (skip the leading "src/drivers/" */
+
+                printf("%-10s  ",&drivers[i]->source_file[12]);
 
                 /* Then, cpus */
 
@@ -258,6 +272,7 @@ int frontend_help (int argc, char **argv)
                         case CPU_M6809: printf("M6809   "); break;
                         case CPU_M68000:printf("M68000  "); break;
                         case CPU_T11   :printf("T-11    "); break;
+						case CPU_S2650 :printf("S2650   "); break;
 
                         case CPU_Z80   |CPU_AUDIO_CPU: printf("[Z80]   "); break; /* Brackets mean that the cpu is only needed for sound. In cpu flags, 0x8000 means it */
                         case CPU_8085A |CPU_AUDIO_CPU: printf("[I8085] "); break;
@@ -269,6 +284,7 @@ int frontend_help (int argc, char **argv)
                         case CPU_M6809 |CPU_AUDIO_CPU: printf("[M6809] "); break;
                         case CPU_M68000|CPU_AUDIO_CPU: printf("[M68000]"); break;
                         case CPU_T11   |CPU_AUDIO_CPU: printf("[T-11]  "); break;
+						case CPU_S2650 |CPU_AUDIO_CPU: printf("[S2650] "); break;
                     }
                 }
 
@@ -324,6 +340,18 @@ int frontend_help (int argc, char **argv)
             }
             return 0;
             break;
+
+		case 8: /* list games, production year, manufacturer */
+			i = 0;
+			while (drivers[i])
+			{
+				if ((listclones || drivers[i]->clone_of == 0) &&
+						!strwildcmp(gamename, drivers[i]->description))
+					printf("%-5s %-28s %s\n",drivers[i]->year,drivers[i]->manufacturer,drivers[i]->description);
+				i++;
+			}
+			return 0;
+			break;
 	}
 
 	if (verify)  /* "verify" utilities */

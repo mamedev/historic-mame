@@ -37,11 +37,11 @@ static void refresh_palette(void);
 static void refresh_palette(void)
 {
 	unsigned char *dirty = system16_colordirty;
-	int index;
+	int indx;
 
-	for( index=0; index<s16_paletteram_size/2; index++ ){
-		if( dirty[index] ){
-			int offset = index*2;
+	for( indx=0; indx<s16_paletteram_size/2; indx++ ){
+		if( dirty[indx] ){
+			int offset = indx*2;
 			int palette = READ_WORD (&system16_paletteram[offset]);
 
 			/*
@@ -57,8 +57,8 @@ static void refresh_palette(void)
 			green = (green << 4) + green;
 			blue = (blue << 4) + blue;
 
-			setgfxcolorentry (Machine->gfx[0], index, red, green, blue);
-			dirty[index] = 0;
+			setgfxcolorentry (Machine->gfx[0], indx, red, green, blue);
+			dirty[indx] = 0;
 		}
 	}
 }
@@ -81,7 +81,7 @@ static void draw_background(struct osd_bitmap *bitmap)
 	else scrolly = scrolly % 512;
 
 	for (page=0; page < 4; page++){
-		const unsigned char *source = system16_backgroundram + bg_pages[page]*0x1000;
+		unsigned char *source = system16_backgroundram + bg_pages[page]*0x1000;
 
 		int startx = (page&1)*512+scrollx;
 		int starty = (page>>1)*256+scrolly;
@@ -125,7 +125,7 @@ static void draw_foreground(struct osd_bitmap *bitmap, int priority )
 	else scrolly = scrolly % 512;
 
 	for (page=0; page < 4; page++){
-		const unsigned char *source = system16_backgroundram + fg_pages[page]*0x1000;
+		unsigned char *source = system16_backgroundram + fg_pages[page]*0x1000;
 
 		int startx = (page&1)*512+scrollx;
 		int starty = (page>>1)*256+scrolly;
@@ -169,7 +169,7 @@ static void draw_text(struct osd_bitmap *bitmap)
 				drawgfx(bitmap,Machine->gfx[0],
 							tile_number,
 							(data >> 9)%8, /* color */
-							0,0, // no flip
+							0,0, /* no flip*/
 							8*sx,8*sy,
 							clip,
 							TRANSPARENCY_PEN,0);

@@ -478,6 +478,7 @@ static void exerion_decode(void)
 static void exerionb_decode(void)
 {
 	int A;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* the program ROMs have data lines D1 and D2 swapped. Decode them. */
@@ -492,9 +493,8 @@ static void exerionb_decode(void)
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x86cc],"\x5c",1) == 0) /* Look for 1UP on screen */
@@ -531,7 +531,8 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -544,9 +545,14 @@ static void hisave(void)
 
 struct GameDriver exerion_driver =
 {
-	"Exerion",
+	__FILE__,
+	0,
 	"exerion",
+	"Exerion",
+	"????",
+	"?????",
 	"Brad Oliver\nJohn Butler\nValerio Verrando (high score save)\nGerald Vanderick (color info)",
+	0,
 	&machine_driver,
 
 	exerion_rom,
@@ -564,9 +570,14 @@ struct GameDriver exerion_driver =
 
 struct GameDriver exerionb_driver =
 {
-	"Exerion (bootleg)",
+	__FILE__,
+	0,
 	"exerionb",
+	"Exerion (bootleg)",
+	"????",
+	"?????",
 	"Brad Oliver\nJohn Butler\nValerio Verrando (high score save)\nGerald Vanderick (color info)",
+	0,
 	&machine_driver,
 
 	exerionb_rom,

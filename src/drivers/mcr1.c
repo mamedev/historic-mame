@@ -424,9 +424,14 @@ ROM_END
 
 struct GameDriver solarfox_driver =
 {
-	"Solar Fox",
+	__FILE__,
+	0,
 	"solarfox",
+	"Solar Fox",
+	"????",
+	"?????",
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
+	0,
 	&machine_driver,
 
 	solarfox_rom,
@@ -444,9 +449,14 @@ struct GameDriver solarfox_driver =
 
 struct GameDriver kick_driver =
 {
-	"Kick",
+	__FILE__,
+	0,
 	"kick",
+	"Kick",
+	"????",
+	"?????",
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver\nJohn Butler",
+	0,
 	&machine_driver,
 
 	kick_rom,

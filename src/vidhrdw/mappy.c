@@ -69,7 +69,7 @@ void mappy_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
    {
       struct GfxElement *gfx;
       unsigned char *dp;
-      int i, x, y, color;
+      int x, y, color;
 
       transparency = malloc (64*256);
       if (!transparency)

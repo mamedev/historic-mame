@@ -224,9 +224,14 @@ ROM_END
 
 struct GameDriver starfire_driver =
 {
-	"Starfire (Exidy)",
+	__FILE__,
+	0,
 	"starfire",
+	"Starfire (Exidy)",
+	"????",
+	"?????",
 	"Daniel Boris\n",
+	0,
 	&machine_driver,
 
 	starfire_rom,

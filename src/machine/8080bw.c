@@ -42,18 +42,10 @@ int invaders_interrupt(void)
 
 	count++;
 
-	if (count & 1) return 0x00cf;	/* RST 08h - 8080's IRQ */
+        if (count & 1)
+                return 0x00cf;  /* RST 08h */
 	else
-	{
-		Z80_Regs R;
-
-
-		Z80_GetRegs(&R);
-		R.IFF2 = 1;	/* enable interrupts */
-		Z80_SetRegs(&R);
-
-		return 0x00d7;	/* RST 10h - 8080's NMI */
-	}
+                return 0x00d7;  /* RST 10h */
 }
 
 int seawolf_shift_data_r(int offset)

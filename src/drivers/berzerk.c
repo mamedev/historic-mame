@@ -517,9 +517,14 @@ static const char *berzerk_sample_names[] =
 
 struct GameDriver berzerk_driver =
 {
-	"Berzerk",
+	__FILE__,
+	0,
 	"berzerk",
+	"Berzerk",
+	"????",
+	"?????",
 	"Zsolt Vasvari\nChristopher Kirmse\nMirko Buffoni\nValerio Verrando\nDouglas Silfen\nAlex Judd (Sound Programming)",
+	0,
 	&berzerk_machine_driver,
 
 	berzerk_rom,
@@ -539,9 +544,14 @@ struct GameDriver berzerk_driver =
 
 struct GameDriver berzerk1_driver =
 {
-	"Berzerk (version 1)",
+	__FILE__,
+	0,
 	"berzerk1",
+	"Berzerk (version 1)",
+	"????",
+	"?????",
 	"Zsolt Vasvari\nChristopher Kirmse\nMirko Buffoni\nValerio Verrando\nDouglas Silfen\nAlex Judd (Sound Programming)",
+	0,
 	&berzerk_machine_driver,
 
 	berzerk1_rom,
@@ -561,9 +571,14 @@ struct GameDriver berzerk1_driver =
 
 struct GameDriver frenzy_driver =
 {
-	"Frenzy",
+	__FILE__,
+	0,
 	"frenzy",
+	"Frenzy",
+	"????",
+	"?????",
 	"Keith Gerdes\nMirko Buffoni\nMike Cuddy\nBrad Oliver\nZsolt Vasvari\nChristopher Kirmse",
+	0,
 	&frenzy_machine_driver,
 
 	frenzy_rom,
@@ -582,9 +597,14 @@ struct GameDriver frenzy_driver =
 
 struct GameDriver frenzy1_driver =
 {
-	"Frenzy (version 1)",
+	__FILE__,
+	0,
 	"frenzy1",
+	"Frenzy (version 1)",
+	"????",
+	"?????",
 	"Keith Gerdes\nMirko Buffoni\nMike Cuddy\nBrad Oliver\nZsolt Vasvari\nChristopher Kirmse",
+	0,
 	&frenzy_machine_driver,
 
 	frenzy1_rom,

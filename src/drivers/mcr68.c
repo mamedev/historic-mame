@@ -638,9 +638,14 @@ ROM_END
 
 struct GameDriver xenophob_driver =
 {
-	"Xenophobe",
+	__FILE__,
+	0,
 	"xenophob",
+	"Xenophobe",
+	"????",
+	"?????",
 	"Bryan McPhail\n",
+	0,
 	&mcr68_machine_driver,
 
 	xenophob_rom,
@@ -658,9 +663,14 @@ struct GameDriver xenophob_driver =
 
 struct GameDriver spyhunt2_driver =
 {
-	"Spy Hunter 2",
+	__FILE__,
+	0,
 	"spyhunt2",
+	"Spy Hunter 2",
+	"????",
+	"?????",
 	"Bryan McPhail\n",
+	0,
 	&mcr68_machine_driver,
 
 	spyhunt2_rom,
@@ -678,9 +688,14 @@ struct GameDriver spyhunt2_driver =
 
 struct GameDriver blasted_driver =
 {
-	"Blasted",
+	__FILE__,
+	0,
 	"blasted",
+	"Blasted",
+	"????",
+	"?????",
 	"Bryan McPhail\n",
+	0,
 	&mcr68_machine_driver,
 
 	blasted_rom,
@@ -699,9 +714,14 @@ struct GameDriver blasted_driver =
 
 struct GameDriver zwackery_driver =
 {
-	"Zwackery",
+	__FILE__,
+	0,
 	"zwackery",
+	"Zwackery",
+	"????",
+	"?????",
 	"Bryan McPhail\n",
+	0,
 	&zwackery_machine_driver,
 
 	zwackery_rom,

@@ -200,6 +200,7 @@ void tutankhm_init_machine(void)
 void tutankhm_bankselect_w(int offset,int data)
 {
 	int bankaddress;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	bankaddress = 0x10000 + (data & 0x0f) * 0x1000;
@@ -531,9 +532,7 @@ ROM_END
 static int hiload(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -558,9 +557,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -573,9 +570,14 @@ static void hisave(void)
 
 struct GameDriver tutankhm_driver =
 {
-	"Tutankham (Konami)",
+	__FILE__,
+	0,
 	"tutankhm",
+	"Tutankham (Konami)",
+	"????",
+	"?????",
 	"Mirko Buffoni (MAME driver)\nDavid Dahl (hardware info)\nAaron Giles\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	tutankhm_rom,
@@ -593,9 +595,14 @@ struct GameDriver tutankhm_driver =
 
 struct GameDriver tutankst_driver =
 {
-	"Tutankham (Stern)",
+	__FILE__,
+	0,
 	"tutankst",
+	"Tutankham (Stern)",
+	"????",
+	"?????",
 	"Mirko Buffoni (MAME driver)\nDavid Dahl (hardware info)\nAaron Giles\nMarco Cassili",
+	0,
 	&machine_driver,
 
         tutankst_rom,

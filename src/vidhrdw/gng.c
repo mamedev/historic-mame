@@ -54,27 +54,30 @@ void gng_paletteram_w(int offset,int data)
 
 	gng_paletteram[offset] = data;
 
-	val = gng_paletteram[offset & ~0x100];
-	bit0 = (val >> 4) & 0x01;
-	bit1 = (val >> 5) & 0x01;
-	bit2 = (val >> 6) & 0x01;
-	bit3 = (val >> 7) & 0x01;
-	r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+	if ((offset & ~0x100) < 192)	/* only 192 colors actually used */
+	{
+		val = gng_paletteram[offset & ~0x100];
+		bit0 = (val >> 4) & 0x01;
+		bit1 = (val >> 5) & 0x01;
+		bit2 = (val >> 6) & 0x01;
+		bit3 = (val >> 7) & 0x01;
+		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-	bit0 = (val >> 0) & 0x01;
-	bit1 = (val >> 1) & 0x01;
-	bit2 = (val >> 2) & 0x01;
-	bit3 = (val >> 3) & 0x01;
-	g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (val >> 0) & 0x01;
+		bit1 = (val >> 1) & 0x01;
+		bit2 = (val >> 2) & 0x01;
+		bit3 = (val >> 3) & 0x01;
+		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-	val = gng_paletteram[offset | 0x100];
-	bit0 = (val >> 4) & 0x01;
-	bit1 = (val >> 5) & 0x01;
-	bit2 = (val >> 6) & 0x01;
-	bit3 = (val >> 7) & 0x01;
-	b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		val = gng_paletteram[offset | 0x100];
+		bit0 = (val >> 4) & 0x01;
+		bit1 = (val >> 5) & 0x01;
+		bit2 = (val >> 6) & 0x01;
+		bit3 = (val >> 7) & 0x01;
+		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-	palette_change_color(offset & ~0x100,r,g,b);
+		palette_change_color(offset & ~0x100,r,g,b);
+	}
 }
 
 

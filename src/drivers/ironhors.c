@@ -670,9 +670,14 @@ ROM_END
 
 struct GameDriver ironhors_driver =
 {
-	"Iron Horse",
+	__FILE__,
+	0,
 	"ironhors",
+	"Iron Horse",
+	"????",
+	"?????",
 	"Mirko Buffoni (MAME driver)\nPaul Swan (color info)",
+	0,
 	&ironhors_machine_driver,
 
 	ironhors_rom,
@@ -690,9 +695,14 @@ struct GameDriver ironhors_driver =
 
 struct GameDriver farwest_driver =
 {
-	"Far West",
+	__FILE__,
+	0,
 	"farwest",
+	"Far West",
+	"????",
+	"?????",
 	"Mirko Buffoni (MAME driver)\nGerald Vanderick (color info)",
+	0,
 	&farwest_machine_driver,
 
 	farwest_rom,

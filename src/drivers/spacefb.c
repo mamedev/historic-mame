@@ -3,7 +3,7 @@
 Space Firebird memory map (preliminary)
 
   Memory Map figured out by Chris Hardy (chrish@kcbbs.gen.nz), Paul Johnson and Andy Clark
-  Mame driver by Chris Hardy
+  MAME driver by Chris Hardy
 
   Schematics scanned and provided by James Twine
   Thanks to Gary Walton for lending me his REAL Space Firebird
@@ -376,11 +376,10 @@ ROM_END
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 	unsigned char *from, *to;
-	int i, index, digit, started;
+	int i, j, digit, started;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
 	if (RAM[0xc0db] == 0xc1 &&	/* check that the scores have been zeroed */
@@ -404,37 +403,37 @@ static int hiload(void)
 			osd_fclose(f);
 
 			from = &RAM[0xc0a0];
-			index = 0x299;
+			j = 0x299;
 
 			for (i = 0; i < 10; i++)
 			{
 				started = 0;
 
 				if (!(digit = ((*from & 0xf0) >> 4)) && !started) digit = 10; else started = 1;
-				videoram_w(index++, digit + 5);
+				videoram_w(j++, digit + 5);
 
 				if (!(digit = (*from++ & 0x0f)) && !started) digit = 10; else started = 1;
-				videoram_w(index++, digit + 5);
+				videoram_w(j++, digit + 5);
 
 				if (!(digit = ((*from & 0xf0) >> 4)) && !started) digit = 10; else started = 1;
-				videoram_w(index++, digit + 5);
+				videoram_w(j++, digit + 5);
 
 				if (!(digit = (*from++ & 0x0f)) && !started) digit = 10; else started = 1;
-				videoram_w(index++, digit + 5);
+				videoram_w(j++, digit + 5);
 
 				if (!(digit = ((*from++ & 0xf0) >> 4)) && !started) digit = 10; else started = 1;
-				videoram_w(index++, digit + 5);
+				videoram_w(j++, digit + 5);
 			}
 
 			from = &RAM[0xc0a0];
 			to = &RAM[0xc773];
-			index = 0x251;
+			j = 0x251;
 
-			videoram_w(index++, *to++ = ((*from & 0xf0) >> 4) + 5);
-			videoram_w(index++, *to++ = (*from++ & 0x0f) + 5);
-			videoram_w(index++, *to++ = ((*from & 0xf0) >> 4) + 5);
-			videoram_w(index++, *to++ = (*from++ & 0x0f) + 5);
-			videoram_w(index++, *to++ = ((*from++ & 0xf0) >> 4) + 5);
+			videoram_w(j++, *to++ = ((*from & 0xf0) >> 4) + 5);
+			videoram_w(j++, *to++ = (*from++ & 0x0f) + 5);
+			videoram_w(j++, *to++ = ((*from & 0xf0) >> 4) + 5);
+			videoram_w(j++, *to++ = (*from++ & 0x0f) + 5);
+			videoram_w(j++, *to++ = ((*from++ & 0xf0) >> 4) + 5);
 		}
 
 		return 1;
@@ -444,10 +443,9 @@ static int hiload(void)
 
 static void hisave(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name, 0,
 					   OSD_FILETYPE_HIGHSCORE, 1)) != 0)
@@ -461,9 +459,14 @@ static void hisave(void)
 
 struct GameDriver spacefb_driver =
 {
-	"Space Firebird",
+	__FILE__,
+	0,
 	"spacefb",
+	"Space Firebird",
+	"????",
+	"?????",
     "Chris Hardy\nAndy Clark\nPaul Johnson\nChris Moore (high score save)\nMarco Cassili\nDan Boris (sound)",
+	0,
 	&machine_driver,
 
 	spacefb_rom,

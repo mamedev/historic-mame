@@ -2,20 +2,49 @@
 
 /***************************************************************************
 
+The New Zealand Story driver, used for tnzs & tnzs2.
+
+TO-DO: - Find out how the hardware credit-counter works
+       - Fix problem with sprites and tiles being a few pixels out when the
+         screen is flipped.
+
+13/6/1998: - Hi-score saving/loading for tnzs & tnzs2, by Santeri Saarimaa
+
+****************************************************************************
+
 The New Zealand Story memory map (preliminary)
 
 CPU #1
 0000-7fff ROM
 8000-bfff banked - banks 0-1 RAM; banks 2-7 ROM
-c000-dfff object RAM
+c000-dfff object RAM, including:
+  c000-c1ff sprites (code, low byte)
+  c200-c3ff sprites (x-coord, low byte)
+  c400-c5ff tiles (code, low byte)
+
+  d000-d1ff sprites (code, high byte)
+  d200-d3ff sprites (x-coord and colour, high byte)
+  d400-d5ff tiles (code, high byte)
+  d600-d7ff tiles (colour)
 e000-efff RAM shared with CPU #2
-f000-f1ff VDC (?) RAM
-f600      bankswitch
+f000-ffff VDC RAM, including:
+  f000-f1ff sprites (y-coord)
+  f200-f2ff scrolling info
+  f300-f301 vdc controller
+  f302-f303 scroll x-coords (high bits)
+  f600      bankswitch
+  f800-fbff palette
 
 CPU #2
-0000-9fff ROM (8000-9fff banked)
+0000-7fff ROM
+8000-9fff banked ROM
+a000      bankswitch
+b000-b001 YM2203 interface (with DIPs on YM2203 ports)
+c000-c001 input ports (and coin counter)
+e000-efff RAM shared with CPU #1
+f000-f003 ???
 
-***************************************************************************/
+****************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -27,27 +56,23 @@ CPU #2
 extern unsigned char *tnzs_objram, *tnzs_workram;
 extern unsigned char *tnzs_vdcram, *tnzs_scrollram;
 extern unsigned char *tnzs_cpu2ram;
-extern unsigned char *tnzs_xxxx;
 extern int tnzs_objram_size;
 void init_tnzs(void);
 int tnzs_interrupt(void){return 0;}
 int tnzs_objram_r(int offset);
 
-int tnzs_yyyy2_r(int offset);
+int tnzs_inputport_r(int offset);
 int tnzs_cpu2ram_r(int offset);
 int tnzs_workram_r(int offset);
 int tnzs_vdcram_r(int offset);
 
 void tnzs_objram_w(int offset, int data);
 void tnzs_bankswitch1_w(int offset, int data);
-void tnzs_xxxx_w(int offset, int data);
-void tnzs_yyyy2_w(int offset, int data);
+void tnzs_inputport_w(int offset, int data);
 void tnzs_cpu2ram_w(int offset, int data);
 void tnzs_workram_w(int offset, int data);
 void tnzs_vdcram_w(int offset, int data);
 void tnzs_scrollram_w(int offset, int data);
-
-#define MODIFY_ROM(addr,val) Machine->memory_region[0][addr] = val;
 
 unsigned char *banked_ram_0, *banked_ram_1;
 
@@ -131,9 +156,6 @@ static struct MemoryReadAddress readmem[] =
     { 0xc000, 0xdfff, tnzs_objram_r },
     { 0xe000, 0xefff, tnzs_workram_r }, /* WORK RAM */
     { 0xf000, 0xf1ff, tnzs_vdcram_r }, /*  VDC RAM */
-#if 0
-    { 0xf804, 0xf81e, MRA_NOP },
-#endif
     { -1 }  /* end of table */
 };
 
@@ -149,17 +171,9 @@ static struct MemoryWriteAddress writemem[] =
     { 0xe000, 0xefff, tnzs_workram_w, &tnzs_workram },
 
     { 0xf000, 0xf1ff, tnzs_vdcram_w, &tnzs_vdcram },
+    { 0xf200, 0xf3ff, tnzs_scrollram_w, &tnzs_scrollram }, /* scrolling info */
 	{ 0xf600, 0xf600, tnzs_bankswitch_w },
-
-	{ 0xf800, 0xfbff, MWA_RAM },
-	{ 0xf800, 0xf9ff, tnzs_paletteram_w, &tnzs_paletteram },
-	{ 0xfa00, 0xfaff, tnzs_paletteram_w, &tnzs_paletteram },
-	{ 0xfb00, 0xfbff, tnzs_paletteram_w, &tnzs_paletteram },
-	{ 0xf200, 0xf2ff, tnzs_scrollram_w, &tnzs_scrollram }, /* scrolling info */
-    { 0xf300, 0xf303, tnzs_xxxx_w, &tnzs_xxxx },
-#if 0
-	{ 0xf400, 0xf400, MWA_RAM },
-#endif
+    { 0xf800, 0xfbff, tnzs_paletteram_w, &tnzs_paletteram },
 	{ -1 }  /* end of table */
 };
 
@@ -169,7 +183,7 @@ static struct MemoryReadAddress readmem1[] =
     { 0x8000, 0x9fff, MRA_BANK2 },
     { 0xb000, 0xb000, YM2203_status_port_0_r  },
     { 0xb001, 0xb001, YM2203_read_port_0_r  },
-    { 0xc000, 0xc002, tnzs_yyyy2_r},
+    { 0xc000, 0xc001, tnzs_inputport_r},
     { 0xd000, 0xdfff, tnzs_cpu2ram_r },
     { 0xe000, 0xefff, tnzs_workram_r },
 	{ 0xf000, 0xf003, MRA_RAM },
@@ -182,7 +196,7 @@ static struct MemoryWriteAddress writemem1[] =
 	{ 0xa000, 0xa000, tnzs_bankswitch1_w },
     { 0xb000, 0xb000, YM2203_control_port_0_w  },
     { 0xb001, 0xb001, YM2203_write_port_0_w  },
-    { 0xc000, 0xc002, tnzs_yyyy2_w},
+    { 0xc000, 0xc001, tnzs_inputport_w},
     { 0xd000, 0xdfff, tnzs_cpu2ram_w, &tnzs_cpu2ram },
     { 0xe000, 0xefff, tnzs_workram_w },
 	{ -1 }  /* end of table */
@@ -249,67 +263,58 @@ INPUT_PORTS_START( tnzs_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
+ /* DIP switch settings supplied by Greg Best <gregbest98@hotmail.com> */
 	PORT_START      /* DSW A - ef0e */
-	PORT_DIPNAME( 0x01, 0x00, "A0", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "X" )
-	PORT_DIPSETTING(    0x01, "Y" )
-	PORT_DIPNAME( 0x02, 0x00, "A1 - X Flip (e5d8)", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "No" )
-	PORT_DIPSETTING(    0x02, "Yes" )
-	PORT_DIPNAME( 0x04, 0x04, "A2 - Service Mode", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, "No" )
-	PORT_DIPSETTING(    0x00, "Yes" )
-	PORT_DIPNAME( 0x08, 0x00, "A3", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "X" )
-	PORT_DIPSETTING(    0x08, "Y" )
-	PORT_DIPNAME( 0x10, 0x00, "A4", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "X" )
-	PORT_DIPSETTING(    0x10, "Y" )
-	PORT_DIPNAME( 0x20, 0x00, "A5", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "X" )
-	PORT_DIPSETTING(    0x20, "Y" )
-	PORT_DIPNAME( 0x40, 0x00, "A6", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "X" )
-	PORT_DIPSETTING(    0x40, "Y" )
-	PORT_DIPNAME( 0x80, 0x00, "A7", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "X" )
-	PORT_DIPSETTING(    0x80, "Y" )
+    PORT_DIPNAME( 0x01, 0x01, "Game style", IP_KEY_NONE )
+    PORT_DIPSETTING(    0x01, "Table" )
+    PORT_DIPSETTING(    0x00, "Upright" )
+    PORT_DIPNAME( 0x02, 0x02, "Flip screen", IP_KEY_NONE )
+    PORT_DIPSETTING(    0x02, "Off" )
+    PORT_DIPSETTING(    0x00, "On" )
+    PORT_DIPNAME( 0x04, 0x04, "Test mode", IP_KEY_NONE )
+    PORT_DIPSETTING(    0x04, "Off" )
+    PORT_DIPSETTING(    0x00, "On" )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED ) /* Always off */
+    PORT_DIPNAME( 0x30, 0x30, "Coin A", IP_KEY_NONE )
+    PORT_DIPSETTING(    0x30, "1 Coin/1 Credit" )
+    PORT_DIPSETTING(    0x20, "2 Coins/1 Credit" )
+    PORT_DIPSETTING(    0x10, "3 Coins/1 Credit" )
+    PORT_DIPSETTING(    0x00, "4 Coins/1 Credit" )
+    PORT_DIPNAME( 0xc0, 0xc0, "Coin B", IP_KEY_NONE )
+    PORT_DIPSETTING(    0xc0, "1 Coin/2 Credits" )
+    PORT_DIPSETTING(    0x80, "1 Coin/3 Credits" )
+    PORT_DIPSETTING(    0x40, "1 Coin/4 Credits" )
+    PORT_DIPSETTING(    0x00, "1 Coin/6 Credits" )
 
 	PORT_START      /* DSW B - ef0f */
-	PORT_DIPNAME( 0x03, 0x00, "B0/1 (-> e6b1) ???", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x02, "0" )
-	PORT_DIPSETTING(    0x03, "1" )
-	PORT_DIPSETTING(    0x01, "2" )
-	PORT_DIPSETTING(    0x00, "3" )
-	PORT_DIPNAME( 0x0C, 0x00, "B2 - bonus lives at", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "10k and 100k" )
-	PORT_DIPSETTING(    0x0C, "10k and 150k" )
-	PORT_DIPSETTING(    0x08, "10k and 200k" )
-	PORT_DIPSETTING(    0x04, "10k and 300k" )
-	PORT_DIPNAME( 0x30, 0x30, "B4/5 - lives", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x20, "2" )
-	PORT_DIPSETTING(    0x30, "3" )
-	PORT_DIPSETTING(    0x00, "4" )
-	PORT_DIPSETTING(    0x10, "5" )
-	PORT_DIPNAME( 0x40, 0x40, "B6 - allow continue", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "No" )
-	PORT_DIPSETTING(    0x40, "Yes" )
-	PORT_DIPNAME( 0x80, 0x00, "B7", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "X" )
-	PORT_DIPSETTING(    0x80, "Y" )
+    PORT_DIPNAME( 0x03, 0x02, "Difficulty", IP_KEY_NONE)
+    PORT_DIPSETTING(    0x03, "Easy" )
+    PORT_DIPSETTING(    0x02, "Medium" )
+    PORT_DIPSETTING(    0x01, "Hard" )
+    PORT_DIPSETTING(    0x00, "Hardest" )
+    PORT_DIPNAME( 0x0C, 0x00, "Bonus Life", IP_KEY_NONE )
+    PORT_DIPSETTING(    0x00, "at 10k and 100k" )
+    PORT_DIPSETTING(    0x0C, "at 10k and 150k" )
+    PORT_DIPSETTING(    0x08, "at 10k and 200k" )
+    PORT_DIPSETTING(    0x04, "at 10k and 300k" )
+    PORT_DIPNAME( 0x30, 0x30, "Lives", IP_KEY_NONE )
+    PORT_DIPSETTING(    0x20, "2" )
+    PORT_DIPSETTING(    0x30, "3" )
+    PORT_DIPSETTING(    0x00, "4" )
+    PORT_DIPSETTING(    0x10, "5" )
+    PORT_DIPNAME( 0x40, 0x40, "Continues", IP_KEY_NONE )
+    PORT_DIPSETTING(    0x00, "Off" )
+    PORT_DIPSETTING(    0x40, "On" )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED ) /* Always off */
 
 INPUT_PORTS_END
-
-
-
-#define GFX_REGIONS 1
 
 static struct GfxLayout charlayout =
 {
 	16,16,	/* the characters are 16x16 pixels */
-	0x100 * (32 / GFX_REGIONS),
+    0x100 * 32,
 	4,	/* 4 bits per pixel */
-	{ 0x00000*8, 0x40000*8, 0x80000*8, 0xc0000*8 },
+    { 0xc0000*8, 0x80000*8, 0x40000*8, 0x00000*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7, 64, 65, 66, 67, 68, 69, 70, 71 },
 	{ 0, 8, 16, 24, 32, 40, 48, 56, 128, 136, 144, 152, 160, 168, 176, 184},
 	32*8	/* every char takes 32 bytes in four ROMs */
@@ -317,7 +322,7 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout, 0, 16 }, /*  0 */
+    { 1, 0x00000, &charlayout, 0, 32 },
 	{ -1 }	/* end of array */
 };
 
@@ -349,7 +354,7 @@ static struct MachineDriver tnzs_machine_driver =
 		},
 		{
 			CPU_Z80,
-			6000000,		/* 1 Mhz??? */
+            6000000,        /* 6 Mhz??? */
 			2,			/* memory_region */
 			readmem1,writemem1,0,0,
 			interrupt,1
@@ -361,18 +366,13 @@ static struct MachineDriver tnzs_machine_driver =
     init_tnzs,		/* init_machine() */
 
     /* video hardware */
-#if 1
-    32*8, 28*8,			/* screen_width, height */
-    { 0, 32*8-1, 0*8, 28*8-1 }, /* visible_area */
-#else
-    32*8, 32*8,			/* screen_width, height */
-    { 0, 32*8-1, 2*8, 30*8-1 }, /* visible_area */
-#endif
+    16*16, 14*16,         /* screen_width, height */
+    { 0, 16*16-1, 0, 14*16-1 }, /* visible_area */
     gfxdecodeinfo,
-    256, 256,
-	0,
+    512, 512,
+    0,
 
-	VIDEO_TYPE_RASTER,
+    VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
     0,
 	tnzs_vh_start,
 	tnzs_vh_stop,
@@ -457,24 +457,85 @@ ROM_START( tnzs2_rom )
     ROM_LOAD( "NS_E-3.ROM", 0x00000, 0x10000, 0x244e8a60 )
 ROM_END
 
-static int hiload(void)
+static int tnzs_hiload(void)
 {
-	return 0;	/* we can't load the hi scores yet */
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+	/* check if the hi score table has already been initialized */
+    if (memcmp(&RAM[0xe6ad], "\x47\x55\x55", 3) == 0)
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+            osd_fread(f, &RAM[0xe68d], 35);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+    else return 0; /* we can't load the hi scores yet */
 }
 
-
-
-static void hisave(void)
+static void tnzs_hisave(void)
 {
+    unsigned char *RAM = Machine->memory_region[0];
+    void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+        osd_fwrite(f, &RAM[0xe68d], 35);
+		osd_fclose(f);
+	}
 }
 
+static int tnzs2_hiload(void)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+	/* check if the hi score table has already been initialized */
+    if (memcmp(&RAM[0xec2a], "\x47\x55\x55", 3) == 0)
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+            osd_fread(f, &RAM[0xec0a], 35);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+    else return 0; /* we can't load the hi scores yet */
+}
+
+static void tnzs2_hisave(void)
+{
+    unsigned char *RAM = Machine->memory_region[0];
+    void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+        osd_fwrite(f, &RAM[0xec0a], 35);
+		osd_fclose(f);
+	}
+}
 
 
 struct GameDriver tnzs_driver =
 {
-	"The New Zealand Story",
+	__FILE__,
+	0,
 	"tnzs",
-	"Chris Moore\nMartin Scragg",
+	"The New Zealand Story",
+	"????",
+	"?????",
+    "Chris Moore\nMartin Scragg\nRichard Mitton\nSanteri Saarimaa (hi-scores)",
+	0,
 	&tnzs_machine_driver,
 
 	tnzs_rom,
@@ -482,22 +543,24 @@ struct GameDriver tnzs_driver =
 	0,
 	0,	/* sound_prom */
 
-#ifdef VERSION_31_8
-	0/*TBR*/, tnzs_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
-#else
 	tnzs_input_ports,
-#endif
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
 
-	hiload, hisave
+    0, 0, 0,
+    ORIENTATION_DEFAULT,
+
+    tnzs_hiload, tnzs_hisave
 };
 
 struct GameDriver tnzs2_driver =
 {
-	"The New Zealand Story 2",
+	__FILE__,
+	0,
 	"tnzs2",
-	"Chris Moore\nMartin Scragg",
+	"The New Zealand Story 2",
+	"????",
+	"?????",
+    "Chris Moore\nMartin Scragg\nRichard Mitton\nSanteri Saarimaa (hi-scores)",
+	0,
 	&tnzs_machine_driver,
 
 	tnzs2_rom,
@@ -505,14 +568,10 @@ struct GameDriver tnzs2_driver =
 	0,
 	0,	/* sound_prom */
 
-#ifdef VERSION_31_8
-	0/*TBR*/, tnzs_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
-#else
 	tnzs_input_ports,
-#endif
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	hiload, hisave
+    tnzs2_hiload, tnzs2_hisave
 };

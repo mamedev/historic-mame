@@ -254,6 +254,35 @@ void qix_palettebank_w(int offset,int data)
 
 void qix_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
+	/* recalc the palette if necessary */
+	if (palette_recalc ())
+	{
+		int offs;
+
+		for (offs = 0; offs < 256*256; offs++)
+		{
+			int x = offs & 0xff;
+			int y = offs >> 8;
+			int temp;
+
+			/* rotate if necessary */
+			if (Machine->orientation & ORIENTATION_SWAP_XY)
+			{
+				temp = x; x = y; y = temp;
+			}
+			if (Machine->orientation & ORIENTATION_FLIP_X)
+				x = ~x & 0xff;
+			if (Machine->orientation & ORIENTATION_FLIP_Y)
+				y = ~y & 0xff;
+
+
+			tmpbitmap->line[y][x] = Machine->pens[screen[offs]];
+		}
+
+		osd_mark_dirty (0,0,255,255,0);
+	}
+
+
 	/* copy the screen */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 }

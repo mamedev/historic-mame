@@ -59,8 +59,6 @@ void nemesis_vh_stop(void);
 
 void salamand_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-void dummy_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-
 
 
 int irq_on = 0;
@@ -498,10 +496,10 @@ static struct MachineDriver nemesis_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256,2048,
-	dummy_color_prom,
+	2048, 2048,
+	0,
 
-	VIDEO_TYPE_RASTER /* | VIDEO_SUPPORTS_16BIT */,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	nemesis_vh_start,
 	nemesis_vh_stop,
@@ -537,9 +535,10 @@ static struct MachineDriver salamand_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	0,
-	256,2048,
-	dummy_color_prom,
-	VIDEO_TYPE_RASTER,
+	2048, 2048,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	nemesis_vh_start,
 	nemesis_vh_stop,
@@ -634,9 +633,14 @@ ROM_END
 
 struct GameDriver nemesis_driver =
 {
-	"Nemesis",
+	__FILE__,
+	0,
 	"nemesis",
+	"Nemesis",
+	"????",
+	"?????",
 	"Allard van der Bas (MAME driver)",
+	0,
 	&nemesis_machine_driver,
 
 	nemesis_rom,
@@ -654,9 +658,14 @@ struct GameDriver nemesis_driver =
 
 struct GameDriver nemesuk_driver =
 {
-	"Nemesis (UK version)",
+	__FILE__,
+	0,
 	"nemesuk",
+	"Nemesis (UK version)",
+	"????",
+	"?????",
 	"Allard van der Bas (MAME driver)",
+	0,
 	&nemesis_machine_driver,
 
 	nemesuk_rom,
@@ -674,9 +683,14 @@ struct GameDriver nemesuk_driver =
 
 struct GameDriver konamigt_driver =
 {
-	"Konami GT",
+	__FILE__,
+	0,
 	"konamigt",
+	"Konami GT",
+	"????",
+	"?????",
 	"68K test",
+	0,
 	&nemesis_machine_driver,
 
 	konamigt_rom,
@@ -694,9 +708,14 @@ struct GameDriver konamigt_driver =
 
 struct GameDriver salamand_driver =
 {
-	"Salamander",
+	__FILE__,
+	0,
 	"salamand",
+	"Salamander",
+	"????",
+	"?????",
 	"68K test",
+	0,
 	&salamand_machine_driver,
 
 	salamand_rom,

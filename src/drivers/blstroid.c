@@ -65,7 +65,7 @@ BLASTEROIDS 6502 MEMORY MAP
 Function                                  Address     R/W  Data
 ---------------------------------------------------------------
 Program RAM                               0000-1FFF   R/W  D0-D7
- 
+
 Music                                     2000-2001   R/W  D0-D7
 
 Read 68010 Port (Input Buffer)            280A        R    D0-D7
@@ -110,12 +110,14 @@ Program ROM (48K bytes)                   4000-FFFF   R    D0-D7
 int blstroid_io_r (int offset);
 int blstroid_6502_switch_r (int offset);
 int blstroid_playfieldram_r (int offset);
+int blstroid_paletteram_r (int offset);
 
 void blstroid_tms5220_w (int offset, int data);
 void blstroid_6502_ctl_w (int offset, int data);
 void blstroid_sound_reset_w (int offset, int data);
 void blstroid_priorityram_w (int offset, int data);
 void blstroid_playfieldram_w (int offset, int data);
+void blstroid_paletteram_w (int offset, int data);
 
 int blstroid_interrupt (void);
 int blstroid_sound_interrupt (void);
@@ -141,7 +143,7 @@ static struct MemoryReadAddress blstroid_readmem[] =
 	{ 0xff9800, 0xff9803, input_port_0_r },
 	{ 0xff9804, 0xff9807, input_port_1_r },
 	{ 0xff9c00, 0xff9c03, blstroid_io_r },
-	{ 0xffa000, 0xffa3ff, MRA_BANK1, &atarigen_paletteram, &atarigen_paletteram_size },
+	{ 0xffa000, 0xffa3ff, blstroid_paletteram_r, &atarigen_paletteram, &atarigen_paletteram_size },
 	{ 0xffb000, 0xffb3ff, atarigen_eeprom_r, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0xffc000, 0xffcfff, blstroid_playfieldram_r, &atarigen_playfieldram, &atarigen_playfieldram_size },
 	{ 0xffd000, 0xffdfff, MRA_BANK3, &atarigen_spriteram, &atarigen_spriteram_size },
@@ -161,7 +163,7 @@ static struct MemoryWriteAddress blstroid_writemem[] =
 	{ 0xff8a00, 0xff8a03, atarigen_sound_w },
 	{ 0xff8c00, 0xff8c03, blstroid_sound_reset_w },
 	{ 0xff8e00, 0xff8e03, MWA_NOP },		/* halt until HBLANK */
-	{ 0xffa000, 0xffa3ff, MWA_BANK1 },
+	{ 0xffa000, 0xffa3ff, blstroid_paletteram_w },
 	{ 0xffb000, 0xffb3ff, atarigen_eeprom_w },
 	{ 0xffc000, 0xffcfff, blstroid_playfieldram_w },
 	{ 0xffd000, 0xffdfff, MWA_BANK3 },
@@ -346,7 +348,7 @@ static struct MachineDriver blstroid_machine_driver =
 	/* video hardware */
 	40*8, 30*8, { 0*8, 40*8-1, 0*8, 30*8-1 },
 	blstroid_gfxdecodeinfo,
-	256,512,
+	512,512,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_SUPPORTS_DIRTY,
@@ -421,9 +423,14 @@ ROM_END
 
 struct GameDriver blstroid_driver =
 {
-	"Blasteroids",
+	__FILE__,
+	0,
 	"blstroid",
+	"Blasteroids",
+	"????",
+	"?????",
 	"Aaron Giles (MAME driver)\nNeil Bradley (Hardware Info)",
+	0,
 	&blstroid_machine_driver,
 
 	blstroid_rom,

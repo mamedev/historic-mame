@@ -72,10 +72,11 @@ void missile_init_machine(void)
 void missile_w(int address, int data)
 {
 	int pc, opcode;
+	extern unsigned char *RAM;
 
 
 	pc = cpu_getpreviouspc();
-	opcode = RAM[pc];
+	opcode = cpu_readop(pc);
 
 /* 	3 different ways to write to video ram... 		 */
 
@@ -124,6 +125,8 @@ void missile_w(int address, int data)
 int missile_r(int address)
 {
 	int pc, opcode;
+	extern unsigned char *RAM;
+
 
 	if (address < 0x1900) return (RAM[address]);
 

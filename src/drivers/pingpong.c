@@ -274,9 +274,10 @@ static struct MachineDriver machine_driver =
 static int hiload(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
-
 	if (memcmp(&RAM[0x94B1],"\x02\x00\x00",3) == 0 &&
 			memcmp(&RAM[0x94cc],"\x00\x20\x00",3) == 0 &&
 			memcmp(&RAM[0x949e],"\x02\x00\x00",3) == 0 &&	/* high score */
@@ -307,6 +308,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -338,10 +340,16 @@ ROM_END
 
 struct GameDriver pingpong_driver =
 {
-	"Ping Pong",
+	__FILE__,
+	0,
 	"pingpong",
+	"Ping Pong",
+	"????",
+	"?????",
 	"Jarek Parchanski (MAME driver)\nMartin Binder (color info)",
+	0,
 	&machine_driver,
+
 	pingpong_rom,
 	0, 0,
 	0,

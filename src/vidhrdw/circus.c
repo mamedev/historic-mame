@@ -194,7 +194,8 @@ void circus_vh_screenrefresh(struct osd_bitmap *bitmap)
                 if (dirtybuffer[offs])
                 {
                         int sx,sy;
-			            int col=SCREEN_COL;
+
+			            col=SCREEN_COL;
 
                         dirtybuffer[offs] = 0;
 

@@ -271,9 +271,14 @@ ROM_END
 
 struct GameDriver copsnrob_driver =
 {
-        "Cops'n Robbers",
+	__FILE__,
+	0,
         "copsnrob",
+        "Cops'n Robbers",
+	"????",
+	"?????",
         "Zsolt Vasvari",
+	0,
         &machine_driver,
 
         copsnrob_rom,

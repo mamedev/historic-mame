@@ -132,7 +132,7 @@ void congo_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* copy the background */
     if (*congo_background_enable)
 	{
-		int i,skew,scroll;
+		int skew,scroll;
 		struct rectangle clip;
 
 

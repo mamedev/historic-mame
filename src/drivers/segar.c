@@ -919,6 +919,9 @@ void spaceod_decode(void)
 
 static int astrob_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
         if ((memcmp(&RAM[0xCC0E],"KUV",3) == 0) &&
 		(memcmp(&RAM[0xCC16],"PS\\",3) == 0))
@@ -942,6 +945,8 @@ static int astrob_hiload(void)
 static void astrob_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
         /* Hi score memory gets corrupted by the self test */
         if (memcmp(&RAM[0xCB3F],"\xFF\xFF\xFF\xFF",4)==0)
@@ -957,6 +962,9 @@ static void astrob_hisave(void)
 
 static int monsterb_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
         /* check if memory has already been initialized */
         if (memcmp(&RAM[0xC8E8],"\x22\x0e\xd5\x0a",4) == 0)
 	{
@@ -978,6 +986,8 @@ static int monsterb_hiload(void)
 static void monsterb_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
         /* Hi score memory gets corrupted by the self test */
         if (memcmp(&RAM[0xC913],"\xFF\xFF\xFF\xFF",4)==0)
@@ -993,6 +1003,9 @@ static void monsterb_hisave(void)
 
 static int s005_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
         /* check if memory has already been initialized */
         if (memcmp(&RAM[0xC8ED],"\x10\x1B\x17",3) == 0)
 	{
@@ -1015,6 +1028,8 @@ static int s005_hiload(void)
 static void s005_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
         /* Hi score memory gets corrupted by the self test */
         if (memcmp(&RAM[0xC911],"\xFF\xFF\xFF\xFF",4)==0)
@@ -1030,6 +1045,9 @@ static void s005_hisave(void)
 
 static int spaceod_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
         /* check if memory has already been initialized */
         if (memcmp(&RAM[0xC8F1],"\xE2\x00\x04\x03",4) == 0)
 	{
@@ -1051,6 +1069,8 @@ static int spaceod_hiload(void)
 static void spaceod_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
         /* Hi score memory gets corrupted by the self test */
         if (memcmp(&RAM[0xC906],"\xFF\xFF\xFF\xFF",4)==0)
@@ -1213,9 +1233,14 @@ static struct MachineDriver monsterb_machine_driver =
 
 struct GameDriver astrob_driver =
 {
-	"Astro Blaster (version 2)",
+	__FILE__,
+	0,
 	"astrob",
+	"Astro Blaster (version 2)",
+	"????",
+	"?????",
 	"Dave Fish (security consultant)\nMike Balfour (game driver)",
+	0,
 	&astrob_machine_driver,
 
 	astrob_rom,
@@ -1233,9 +1258,14 @@ struct GameDriver astrob_driver =
 
 struct GameDriver astrob1_driver =
 {
-	"Astro Blaster (version 1)",
+	__FILE__,
+	0,
 	"astrob1",
+	"Astro Blaster (version 1)",
+	"????",
+	"?????",
 	"Dave Fish (security consultant)\nMike Balfour (game driver)",
+	0,
 	&astrob_machine_driver,
 
 	astrob1_rom,
@@ -1253,9 +1283,14 @@ struct GameDriver astrob1_driver =
 
 struct GameDriver s005_driver =
 {
+	__FILE__,
+	0,
 	"005",
 	"005",
+	"????",
+	"?????",
 	"Dave Fish (security consultant)\nMike Balfour (game driver)",
+	0,
 	&s005_machine_driver,
 
 	s005_rom,
@@ -1273,9 +1308,14 @@ struct GameDriver s005_driver =
 
 struct GameDriver monsterb_driver =
 {
-	"Monster Bash",
+	__FILE__,
+	0,
 	"monsterb",
+	"Monster Bash",
+	"????",
+	"?????",
 	"Dave Fish (security consultant)\nMike Balfour (game driver)",
+	0,
 	&monsterb_machine_driver,
 
 	monsterb_rom,
@@ -1293,9 +1333,14 @@ struct GameDriver monsterb_driver =
 
 struct GameDriver spaceod_driver =
 {
-	"Space Odyssey",
+	__FILE__,
+	0,
 	"spaceod",
+	"Space Odyssey",
+	"????",
+	"?????",
 	"Dave Fish (security consultant)\nMike Balfour (game driver)",
+	0,
 	&spaceod_machine_driver,
 
 	spaceod_rom,

@@ -1492,6 +1492,50 @@ ROM_START( hippodrm_rom )
 	ROM_LOAD( "ew03", 0x0000, 0x10000, 0x3d50a8dc )
 ROM_END
 
+ROM_START( ffantasy_rom )
+	/* there's an unused ROM, ev08. Its place is unknown. */
+
+	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
+	ROM_LOAD_EVEN( "ev02", 0x00000, 0x10000, 0x24fe7c9c )
+	ROM_LOAD_ODD ( "ev01", 0x00000, 0x10000, 0xbbb03ff4 )
+	ROM_LOAD_EVEN( "ev05", 0x20000, 0x10000, 0x8e892251 )
+	ROM_LOAD_ODD ( "ev00", 0x20000, 0x10000, 0x486c7b5a )
+
+	ROM_REGION(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ev14", 0x000000, 0x10000, 0xdf57f8d7 )	/* chars */
+	ROM_LOAD( "ev13", 0x010000, 0x10000, 0x7b13d21b )
+	ROM_LOAD( "ev19", 0x020000, 0x08000, 0x68e172bb )	/* tiles */
+	/* 28000-3ffff empty */
+	ROM_LOAD( "ev18", 0x040000, 0x08000, 0xadc9d98f )
+	/* 48000-5ffff empty */
+	ROM_LOAD( "ev20", 0x060000, 0x08000, 0x383f60fb )
+	/* 68000-7ffff empty */
+	ROM_LOAD( "ev21", 0x080000, 0x08000, 0xb8e29600 )
+	/* 88000-9ffff empty */
+	ROM_LOAD( "ev23", 0x0a0000, 0x08000, 0x8ed64ca2 )	/* tiles */
+	/* a8000-bffff empty */
+	ROM_LOAD( "ev22", 0x0c0000, 0x08000, 0xf1794dcb )
+	/* c8000-dffff empty */
+	ROM_LOAD( "ev24", 0x0e0000, 0x08000, 0xdaf2c428 )
+	/* e8000-fffff empty */
+	ROM_LOAD( "ev25", 0x100000, 0x08000, 0x529d4bed )
+	/* 108000-11ffff empty */
+	ROM_LOAD( "ev15", 0x120000, 0x10000, 0x7a187868 )	/* sprites */
+	ROM_LOAD( "ev16", 0x130000, 0x10000, 0x7a161cbc )
+	ROM_LOAD( "ev10", 0x140000, 0x10000, 0x8be36ba3 )
+	ROM_LOAD( "ev11", 0x150000, 0x10000, 0x20b53a27 )
+	ROM_LOAD( "ev06", 0x160000, 0x10000, 0x8ee79ac5 )
+	ROM_LOAD( "ev07", 0x170000, 0x10000, 0x867c30d4 )
+	ROM_LOAD( "ev17", 0x180000, 0x10000, 0x0368112e )
+	ROM_LOAD( "ev12", 0x190000, 0x10000, 0x4d39404d )
+
+	ROM_REGION(0x10000)	/* 6502 sound */
+	ROM_LOAD( "ev04", 0x8000, 0x8000, 0xb8a3b86b )
+
+	ROM_REGION(0x10000)	/* ADPCM sounds */
+	ROM_LOAD( "ev03", 0x0000, 0x10000, 0x3d50a8dc )
+ROM_END
+
 ROM_START( heavyb_rom )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "HB04.BIN", 0x00000, 0x10000, 0x3a3a153a )
@@ -1664,32 +1708,44 @@ ROM_END
 
 static void heavyb_patch(void)
 {
- WRITE_WORD (&RAM[0x8B2],0x4E71);
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	WRITE_WORD (&RAM[0x8B2],0x4E71);
 }
 
 static void heavyb2_patch(void)
 {
- WRITE_WORD (&RAM[0x8A6],0x4E71);
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	WRITE_WORD (&RAM[0x8A6],0x4E71);
 }
 
 static void drgninja_patch(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* Lamppost patch & test mode patch */
 	WRITE_WORD (&RAM[0xDF9E],0x4E71);
 
-  /* Uncomment this to make end sequence appear at end of first level *
-  WRITE_WORD (&RAM[0x1b84],0x4E71);
-  WRITE_WORD (&RAM[0x1b86],0x4E71);	 */
+	/* Uncomment this to make end sequence appear at end of first level *
+	WRITE_WORD (&RAM[0x1b84],0x4E71);
+	WRITE_WORD (&RAM[0x1b86],0x4E71);	 */
 }
 
 static void baddudes_patch(void)
 {
-  /* Gouky's amazing patch to fix lamposts and corrupt tiles!!! */
-  WRITE_WORD (&RAM[0xe32e],0x4E71);
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-  /* Uncomment this to make end sequence appear at end of first level *
-  WRITE_WORD (&RAM[0x1ba2],0x4E71);
-  WRITE_WORD (&RAM[0x1ba4],0x4E71);  */
+
+	/* Gouky's amazing patch to fix lamposts and corrupt tiles!!! */
+	WRITE_WORD (&RAM[0xe32e],0x4E71);
+
+	/* Uncomment this to make end sequence appear at end of first level *
+	WRITE_WORD (&RAM[0x1ba2],0x4E71);
+	WRITE_WORD (&RAM[0x1ba4],0x4E71);  */
 }
 
 /* Sly Spy has many areas all mixed in with one another, they need to be
@@ -1697,65 +1753,73 @@ static void baddudes_patch(void)
   is used to enable each area on it's own */
 static void slyspy_patch(void)
 {
- /* Move pf2 registers so they don't conflict */
- WRITE_WORD (&RAM[0x132E],0x0023);
- WRITE_WORD (&RAM[0x133A],0x0023);
- WRITE_WORD (&RAM[0x1346],0x0023);
- WRITE_WORD (&RAM[0x1352],0x0023);
- WRITE_WORD (&RAM[0x135E],0x0023);
- WRITE_WORD (&RAM[0x136A],0x0023);
- WRITE_WORD (&RAM[0x1376],0x0023);
- WRITE_WORD (&RAM[0x1382],0x0023);
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
- WRITE_WORD (&RAM[0xD292],0x0023);
 
- /* Move pf1 registers so they don't conflict */
- WRITE_WORD (&RAM[0x12BC],0x0023);
- WRITE_WORD (&RAM[0x12C8],0x0023);
- WRITE_WORD (&RAM[0x12D4],0x0023);
- WRITE_WORD (&RAM[0x12E0],0x0023);
- WRITE_WORD (&RAM[0x12EC],0x0023);
- WRITE_WORD (&RAM[0x12F8],0x0023);
- WRITE_WORD (&RAM[0x1304],0x0023);
- WRITE_WORD (&RAM[0x1310],0x0023);
+	/* Move pf2 registers so they don't conflict */
+	WRITE_WORD (&RAM[0x132E],0x0023);
+	WRITE_WORD (&RAM[0x133A],0x0023);
+	WRITE_WORD (&RAM[0x1346],0x0023);
+	WRITE_WORD (&RAM[0x1352],0x0023);
+	WRITE_WORD (&RAM[0x135E],0x0023);
+	WRITE_WORD (&RAM[0x136A],0x0023);
+	WRITE_WORD (&RAM[0x1376],0x0023);
+	WRITE_WORD (&RAM[0x1382],0x0023);
 
- /* Move row scroll */
- WRITE_WORD (&RAM[0xE3D8],0x0023);
- WRITE_WORD (&RAM[0xE3DE],0x0023);
- WRITE_WORD (&RAM[0xE3E4],0x0023);
- WRITE_WORD (&RAM[0xE3EA],0x0023);
- WRITE_WORD (&RAM[0xE3F0],0x0023);
+	WRITE_WORD (&RAM[0xD292],0x0023);
 
- /* Playfield 2(?) rowscroll area & 0x80 byte colscroll area */
- WRITE_WORD (&RAM[0x1162],0x0023);
- WRITE_WORD (&RAM[0x1176],0x0023);
+	/* Move pf1 registers so they don't conflict */
+	WRITE_WORD (&RAM[0x12BC],0x0023);
+	WRITE_WORD (&RAM[0x12C8],0x0023);
+	WRITE_WORD (&RAM[0x12D4],0x0023);
+	WRITE_WORD (&RAM[0x12E0],0x0023);
+	WRITE_WORD (&RAM[0x12EC],0x0023);
+	WRITE_WORD (&RAM[0x12F8],0x0023);
+	WRITE_WORD (&RAM[0x1304],0x0023);
+	WRITE_WORD (&RAM[0x1310],0x0023);
 
- /* Playfield 3(?) rowscroll area & 0x80 byte colscroll area */
- WRITE_WORD (&RAM[0x10EE],0x0023);
- WRITE_WORD (&RAM[0x1102],0x0023);
+	/* Move row scroll */
+	WRITE_WORD (&RAM[0xE3D8],0x0023);
+	WRITE_WORD (&RAM[0xE3DE],0x0023);
+	WRITE_WORD (&RAM[0xE3E4],0x0023);
+	WRITE_WORD (&RAM[0xE3EA],0x0023);
+	WRITE_WORD (&RAM[0xE3F0],0x0023);
 
- /* Text areas used by end sequence, conflicts with pf2 */
- WRITE_WORD (&RAM[0x4542],0x0023);
- WRITE_WORD (&RAM[0x48D2],0x0023);
- WRITE_WORD (&RAM[0x4900],0x0023);
- WRITE_WORD (&RAM[0x4946],0x0023);
- WRITE_WORD (&RAM[0x49D0],0x0023);
- WRITE_WORD (&RAM[0x49FC],0x0023);
- WRITE_WORD (&RAM[0x4A40],0x0023);
- WRITE_WORD (&RAM[0x4A70],0x0023);
+	/* Playfield 2(?) rowscroll area & 0x80 byte colscroll area */
+	WRITE_WORD (&RAM[0x1162],0x0023);
+	WRITE_WORD (&RAM[0x1176],0x0023);
 
-  /* Uncomment this to make end sequence appear at end of first level *
-  WRITE_WORD (&RAM[0x5e0],0x4E71);
-  WRITE_WORD (&RAM[0x5e2],0x4E71);	 */
+	/* Playfield 3(?) rowscroll area & 0x80 byte colscroll area */
+	WRITE_WORD (&RAM[0x10EE],0x0023);
+	WRITE_WORD (&RAM[0x1102],0x0023);
+
+	/* Text areas used by end sequence, conflicts with pf2 */
+	WRITE_WORD (&RAM[0x4542],0x0023);
+	WRITE_WORD (&RAM[0x48D2],0x0023);
+	WRITE_WORD (&RAM[0x4900],0x0023);
+	WRITE_WORD (&RAM[0x4946],0x0023);
+	WRITE_WORD (&RAM[0x49D0],0x0023);
+	WRITE_WORD (&RAM[0x49FC],0x0023);
+	WRITE_WORD (&RAM[0x4A40],0x0023);
+	WRITE_WORD (&RAM[0x4A70],0x0023);
+
+	/* Uncomment this to make end sequence appear at end of first level *
+	WRITE_WORD (&RAM[0x5e0],0x4E71);
+	WRITE_WORD (&RAM[0x5e2],0x4E71);	 */
 }
 
 /******************************************************************************/
 
 struct GameDriver baddudes_driver =
 {
-	"Bad Dudes",
+	__FILE__,
+	0,
 	"baddudes",
+	"Bad Dudes",
+	"????",
+	"?????",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
+	0,
 	&baddudes_machine_driver,
 
 	baddudes_rom,
@@ -1772,9 +1836,14 @@ struct GameDriver baddudes_driver =
 
 struct GameDriver drgninja_driver =
 {
-	"Dragonninja",
+	__FILE__,
+	0,
 	"drgninja",
+	"Dragonninja",
+	"????",
+	"?????",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
+	0,
 	&baddudes_machine_driver,
 
 	drgninja_rom,
@@ -1791,9 +1860,14 @@ struct GameDriver drgninja_driver =
 
 struct GameDriver robocopp_driver =
 {
-	"Robocop (bootleg)",
+	__FILE__,
+	0,
 	"robocopp",
+	"Robocop (bootleg)",
+	"????",
+	"?????",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
+	0,
 	&robocop_machine_driver,
 
 	robocopp_rom,
@@ -1810,9 +1884,14 @@ struct GameDriver robocopp_driver =
 
 struct GameDriver heavyb_driver =
 {
-	"Heavy Barrel",
+	__FILE__,
+	0,
 	"hbarrel",
+	"Heavy Barrel",
+	"????",
+	"?????",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
+	0,
 	&heavyb_machine_driver,
 
 	heavyb_rom,
@@ -1829,9 +1908,14 @@ struct GameDriver heavyb_driver =
 
 struct GameDriver heavyb2_driver =
 {
-	"Heavy Barrel (alternate)",
+	__FILE__,
+	0,
 	"hbarrel2",
+	"Heavy Barrel (alternate)",
+	"????",
+	"?????",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
+	0,
 	&heavyb_machine_driver,
 
 	heavyb2_rom,
@@ -1848,9 +1932,14 @@ struct GameDriver heavyb2_driver =
 
 struct GameDriver slyspy_driver =
 {
-	"Sly Spy",
+	__FILE__,
+	0,
 	"slyspy",
+	"Sly Spy",
+	"????",
+	"?????",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
+	0,
 	&slyspy_machine_driver,
 
 	slyspy_rom,
@@ -1867,9 +1956,14 @@ struct GameDriver slyspy_driver =
 
 struct GameDriver hippodrm_driver =
 {
-	"Hippodrome",
+	__FILE__,
+	0,
 	"hippodrm",
+	"Hippodrome",
+	"????",
+	"?????",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
+	0,
 	&hippodrm_machine_driver,
 
 	hippodrm_rom,
@@ -1884,11 +1978,40 @@ struct GameDriver hippodrm_driver =
 	0, 0
 };
 
+struct GameDriver ffantasy_driver =
+{
+	__FILE__,
+	0,
+	"ffantasy",
+	"Fighting Fantasy",
+	"????",
+	"?????",
+	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
+	0,
+	&hippodrm_machine_driver,
+
+	ffantasy_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	hippodrm_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	0, 0
+};
+
 struct GameDriver midres_driver =
 {
-	"Midnight Resistance",
+	__FILE__,
+	0,
 	"midres",
+	"Midnight Resistance",
+	"????",
+	"?????",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
+	0,
 	&midres_machine_driver,
 
 	midres_rom,

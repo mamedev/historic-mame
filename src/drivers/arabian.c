@@ -399,9 +399,14 @@ static void arabian_hisave(void)
 
 struct GameDriver arabian_driver =
 {
-	"Arabian",
+	__FILE__,
+	0,
 	"arabian",
+	"Arabian",
+	"????",
+	"?????",
 	"Jarek Burczynski (MAME driver)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	arabian_rom,

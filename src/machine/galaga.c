@@ -32,6 +32,9 @@ void galaga_init_machine(void)
 
 int galaga_hiscore_print_r(int offset)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	if ((cpu_getpc() == 0x031e || cpu_getpc() == 0xe1) && galaga_hiscoreloaded)
 	{
 		if (offset == 4)

@@ -128,8 +128,10 @@ void swimmer_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 	/* The game has 256+32 colors, plus the river background, but we are */
 	/* limited to a maximum of 256. */
 	/* Luckily, many of the colors are duplicated, so the total number of */
-	/* different colors is less than 256. We select the unique colors and */
-	/* put them in our palette. */
+	/* different colors is less than 256 (in fact, less than the 96 used  */
+	/* in Crazy Climber). We select the unique colors and put them in our */
+	/* palette. */
+	/* TODO: use the palette.c shrinking instead of doing our own. */
 
 	memset(palette,0,3 * Machine->drv->total_colors);
 

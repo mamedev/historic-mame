@@ -385,9 +385,7 @@ ROM_END
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -417,9 +415,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -433,9 +429,14 @@ static void hisave(void)
 
 struct GameDriver shaolins_driver =
 {
-	"Shao-Lin's Road",
+	__FILE__,
+	0,
 	"shaolins",
+	"Shao-Lin's Road",
+	"????",
+	"?????",
 	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (additional code)\nPhil Stroffolino (additional code)\nGerrit Van Goethem (high score save)\nGerald Vanderick (color info)",
+	0,
 	&shaolins_machine_driver,
 
 	shaolins_rom,

@@ -20,14 +20,11 @@ unsigned char *starforc_tilebackground4;
 int starforc_bgvideoram_size;
 static unsigned char *dirtybuffer2,*dirtybuffer3;
 static struct osd_bitmap *tmpbitmap2,*tmpbitmap3;
-static unsigned char dirtycolor[48];	/* keep track of modified colors */
 
 
 
 
 /***************************************************************************
-
-  Convert the color PROMs into a more useable format.
 
   Star Force doesn't have colors PROMs, it uses RAM. The meaning of the bits are
   bit 7 -- Intensity
@@ -40,23 +37,21 @@ static unsigned char dirtycolor[48];	/* keep track of modified colors */
   bit 0 -- Red
 
 ***************************************************************************/
-void starforc_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+void starforc_paletteram_w(int offset,int data)
 {
-	int i;
-
-
-	for (i = 0;i < 256;i++)
+	starforc_paletteram[offset] = data;
 	{
 		int bits,intensity;
+		int r, g, b;
 
-
-		intensity = (i >> 6) & 0x03;
-		bits = (i >> 0) & 0x03;
-		palette[3*i] = 0x44 * bits + 0x11 * intensity;
-		bits = (i >> 2) & 0x03;
-		palette[3*i + 1] = 0x44 * bits + 0x11 * intensity;
-		bits = (i >> 4) & 0x03;
-		palette[3*i + 2] = 0x44 * bits + 0x11 * intensity;
+		intensity = (data >> 6) & 0x03;
+		bits = (data >> 0) & 0x03;
+		r = 0x44 * bits + 0x11 * intensity;
+		bits = (data >> 2) & 0x03;
+		g = 0x44 * bits + 0x11 * intensity;
+		bits = (data >> 4) & 0x03;
+		b = 0x44 * bits + 0x11 * intensity;
+		palette_change_color (offset, r, g, b);
 	}
 }
 
@@ -69,6 +64,8 @@ void starforc_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 ***************************************************************************/
 int starforc_vh_start(void)
 {
+	int i;
+
 	if (generic_vh_start() != 0)
 		return 1;
 
@@ -103,6 +100,28 @@ int starforc_vh_start(void)
 		free(dirtybuffer2);
 		generic_vh_stop();
 		return 1;
+	}
+
+	/* initialize the palette used structure */
+	memset (palette_used_colors, PALETTE_COLOR_UNUSED, 48*8);
+	for (i = 0; i < 64; i++)
+	{
+		if (i % 8 == 0)
+		{
+			palette_used_colors[  0 + i] = PALETTE_COLOR_TRANSPARENT;
+			palette_used_colors[ 64 + i] = PALETTE_COLOR_TRANSPARENT;
+			palette_used_colors[128 + i] = PALETTE_COLOR_TRANSPARENT;
+			palette_used_colors[192 + i] = PALETTE_COLOR_TRANSPARENT;
+			palette_used_colors[320 + i] = PALETTE_COLOR_TRANSPARENT;
+		}
+		else
+		{
+			palette_used_colors[  0 + i] = PALETTE_COLOR_USED;
+			palette_used_colors[ 64 + i] = PALETTE_COLOR_USED;
+			palette_used_colors[128 + i] = PALETTE_COLOR_USED;
+			palette_used_colors[192 + i] = PALETTE_COLOR_USED;
+			palette_used_colors[320 + i] = PALETTE_COLOR_USED;
+		}
 	}
 
 	return 0;
@@ -155,19 +174,6 @@ void starforc_tiles4_w(int offset,int data)
 
 
 
-
-void starforc_paletteram_w(int offset,int data)
-{
-	if (starforc_paletteram[offset] != data)
-	{
-		dirtycolor[offset / 8] = 1;
-
-		starforc_paletteram[offset] = data;
-	}
-}
-
-
-
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
@@ -177,20 +183,16 @@ void starforc_paletteram_w(int offset,int data)
 ***************************************************************************/
 void starforc_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	int i,offs;
+	int offs;
 
 
-	/* rebuild the color lookup table */
-	for (i = 0;i < 48*8;i++)
+	/* recalculate the palette */
+	if (palette_recalc ())
 	{
-		int col;
-
-
-		col = starforc_paletteram[i];
-		/* avoid undesired transparency using dark gray instead of black */
-		if (col == 0x00 && i % 8 != 0) col = 0x40;
-		Machine->gfx[0]->colortable[i] = Machine->pens[col];
+		memset(dirtybuffer2,1,starforc_bgvideoram_size);
+		memset(dirtybuffer3,1,starforc_bgvideoram_size);
 	}
+
 
 	for (offs = starforc_bgvideoram_size - 1;offs >= 0;offs--)
 	{
@@ -243,7 +245,7 @@ void starforc_vh_screenrefresh(struct osd_bitmap *bitmap)
 					sx,sy,
 					0,TRANSPARENCY_PEN,0);
 		}
-		else if (code && dirtycolor[8+col])
+		else if (code)
 		{
 			int sx,sy;
 
@@ -261,10 +263,6 @@ void starforc_vh_screenrefresh(struct osd_bitmap *bitmap)
 	}
 
 
-	for (i = 0;i < 48;i++)
-		dirtycolor[i] = 0;
-
-
 	{
 		int scrollx,scrolly;
 
@@ -275,7 +273,7 @@ void starforc_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 		scrollx = starforc_scrollx3[0] + 256 * starforc_scrollx3[1] + 256;
 		scrolly = -starforc_scrolly3[0];
-		copyscrollbitmap(bitmap,tmpbitmap3,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+		copyscrollbitmap(bitmap,tmpbitmap3,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 	}
 
 

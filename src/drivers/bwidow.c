@@ -769,6 +769,9 @@ static struct MachineDriver spacduel_machine_driver =
 
 static int bwidow_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x0310],"\x00\x00\x00",3) == 0 &&
 		memcmp(&RAM[0x03a0],"\x01\x01\x11",3) == 0)
@@ -790,6 +793,7 @@ static int bwidow_hiload(void)
 static void bwidow_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -820,11 +824,14 @@ ROM_END
 
 struct GameDriver bwidow_driver =
 {
-	"Black Widow",
+	__FILE__,
+	0,
 	"bwidow",
-	"Brad Oliver (Mame driver)\n"
-	VECTOR_TEAM,
-
+	"Black Widow",
+	"????",
+	"?????",
+	"Brad Oliver (MAME driver)\n"VECTOR_TEAM,
+	0,
 	&bwidow_machine_driver,
 
 	bwidow_rom,
@@ -873,11 +880,14 @@ ROM_END
 
 struct GameDriver gravitar_driver =
 {
-	"Gravitar",
+	__FILE__,
+	0,
 	"gravitar",
-	"Brad Oliver (Mame driver)\n"
-	VECTOR_TEAM,
-
+	"Gravitar",
+	"????",
+	"?????",
+	"Brad Oliver (MAME driver)\n"VECTOR_TEAM,
+	0,
 	&gravitar_machine_driver,
 
 	gravitar_rom,
@@ -926,12 +936,14 @@ ROM_END
 
 struct GameDriver spacduel_driver =
 {
-	"Space Duel",
+	__FILE__,
+	0,
 	"spacduel",
-
-	"Brad Oliver (Mame driver)\n"
-	VECTOR_TEAM,
-
+	"Space Duel",
+	"????",
+	"?????",
+	"Brad Oliver (MAME driver)\n"VECTOR_TEAM,
+	0,
 	&spacduel_machine_driver,
 
 	spacduel_rom,

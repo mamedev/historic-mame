@@ -2,24 +2,28 @@
 
   machine.c
 
-  Functions to emulate general aspects of the machine (RAM, ROM, interrupts,
-  I/O ports)
+  Functions to emulate a prototypical ticket dispenser hardware.
 
   Right now, this is an *extremely* basic ticket dispenser.
-  TODO:  Add sound, graphical output?
+  TODO:	Active Bit may not be Bit 7 in all applications.
+  	    Add a ticket dispenser interface instead of passing a bunch
+		of arguments to ticket_dispenser_init.
+		Add sound, graphical output?
 ***************************************************************************/
 
 #include "driver.h"
 #include "machine/ticket.h"
 
-#define DEBUG_TICKET
+/*#define DEBUG_TICKET*/
 
 unsigned int dispensed_tickets = 0;
 
 static int status;
 static int power;
 static int time_msec;
-static int active;
+static int motoron;
+static int ticketdispensed;
+static int ticketnotdispensed;
 static void *timer;
 
 static int active_bit = 0x80;
@@ -32,21 +36,19 @@ static void ticket_dispenser_toggle(int parm);
   ticket_dispenser_init
 
 ***************************************************************************/
-void ticket_dispenser_init(int msec, int activehigh)
+void ticket_dispenser_init(int msec, int motoronhigh, int statusactivehigh)
 {
-	time_msec = msec;
-	active    = activehigh ? active_bit : 0;
-	status    = active;// ^ active_bit;  /* inactive */
-	power     = 0x00;
+	time_msec          = msec;
+	motoron            = motoronhigh  ? active_bit : 0;
+	ticketdispensed    = statusactivehigh ? active_bit : 0;
+	ticketnotdispensed = ticketdispensed ^ active_bit;
+
+	status = ticketnotdispensed;
+	power  = 0x00;
 }
 
 /***************************************************************************
   ticket_dispenser_r
-
-  How I think this works:
-  A status of 0x80 (or 0x00) means we're still dispensing the ticket.
-  A status of 0x00 (or 0x80) means we're in a wait cycle after dispensing the ticket.
-  A status of 0x00 (or 0x80) twice in a row means the power's off.
 ***************************************************************************/
 int ticket_dispenser_r(int offset)
 {
@@ -58,15 +60,11 @@ int ticket_dispenser_r(int offset)
 
 /***************************************************************************
   ticket_dispenser_w
-
-  How I think this works:
-  A write of 0x00 means we should turn on the power and start dispensing.
-  A write of 0x80 means we should turn off the power and stop.
 ***************************************************************************/
 void ticket_dispenser_w(int offset, int data)
 {
 	/* On an activate signal, start dispensing! */
-	if ((data & active_bit) == active)
+	if ((data & active_bit) == motoron)
 	{
 		if (!power)
 		{
@@ -76,7 +74,7 @@ void ticket_dispenser_w(int offset, int data)
 			timer = timer_set (TIME_IN_MSEC(time_msec), 0, ticket_dispenser_toggle);
 			power = 1;
 
-			status = active;// ^ active_bit;  /* inactive */
+			status = ticketnotdispensed;
 		}
 	}
 	else
@@ -114,9 +112,8 @@ static void ticket_dispenser_toggle(int parm)
 		timer = timer_set (TIME_IN_MSEC(time_msec), 0, ticket_dispenser_toggle);
 	}
 
-	if (status == active)
+	if (status == ticketdispensed)
 	{
-		/* Dispense a ticket on every time the status goes active */
 		osd_led_w(2,1);
 		dispensed_tickets++;
 
@@ -129,6 +126,3 @@ static void ticket_dispenser_toggle(int parm)
 		osd_led_w(2,0);
 	}
 }
-
-
-

@@ -798,6 +798,9 @@ ROM_END
 
 static int vanguard_hiload(void)     /* V.V */
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x0025],"\x00\x10",2) == 0)
 	{
@@ -820,6 +823,8 @@ static int vanguard_hiload(void)     /* V.V */
 static void vanguard_hisave(void)    /* V.V */
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -832,6 +837,9 @@ static void vanguard_hisave(void)    /* V.V */
 
 static int fantasy_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x0025],"\x00\x20\x00",3) == 0)
 	{
@@ -851,6 +859,8 @@ static int fantasy_hiload(void)
 static void fantasy_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -861,6 +871,9 @@ static void fantasy_hisave(void)
 
 static int nibbler_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x0290],"\x00\x50\x00\x00",4) == 0 &&
 			memcmp(&RAM[0x02b4],"\x00\x05\x00\x00",4) == 0)
@@ -883,6 +896,7 @@ static int nibbler_hiload(void)
 static void nibbler_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -897,9 +911,14 @@ static void nibbler_hisave(void)
 
 struct GameDriver satansat_driver =
 {
-    "Satan of Saturn",
+	__FILE__,
+	0,
     "satansat",
+    "Satan of Saturn",
+	"????",
+	"?????",
     "Dan Boris\nTheo Philips",
+	0,
 	&satansat_machine_driver,
 
     satansat_rom,
@@ -917,9 +936,14 @@ struct GameDriver satansat_driver =
 
 struct GameDriver zarzon_driver =
 {
-    "Zarzon",
+	__FILE__,
+	0,
     "zarzon",
+    "Zarzon",
+	"????",
+	"?????",
     "Dan Boris\nTheo Philips",
+	0,
 	&satansat_machine_driver,
 
     zarzon_rom,
@@ -937,9 +961,14 @@ struct GameDriver zarzon_driver =
 
 struct GameDriver vanguard_driver =
 {
-	"Vanguard",
+	__FILE__,
+	0,
 	"vanguard",
+	"Vanguard",
+	"????",
+	"?????",
 	"Brian Levine (Vanguard emulator)\nBrad Oliver (MAME driver)\nMirko Buffoni (MAME driver)\nAndrew Scott\nValerio Verrando (high score save)",
+	0,
 	&vanguard_machine_driver,
 
 	vanguard_rom,
@@ -957,9 +986,14 @@ struct GameDriver vanguard_driver =
 
 struct GameDriver fantasy_driver =
 {
-	"Fantasy",
+	__FILE__,
+	0,
 	"fantasy",
+	"Fantasy",
+	"????",
+	"?????",
 	"Nicola Salmoria\nBrian Levine\nMirko Buffoni\nDani Portillo (high score save)",
+	0,
 	&fantasy_machine_driver,
 
 	fantasy_rom,
@@ -977,9 +1011,14 @@ struct GameDriver fantasy_driver =
 
 struct GameDriver nibbler_driver =
 {
-	"Nibbler",
+	__FILE__,
+	0,
 	"nibbler",
+	"Nibbler",
+	"????",
+	"?????",
 	"Nicola Salmoria\nBrian Levine\nMirko Buffoni\nMarco Cassili",
+	0,
 	&fantasy_machine_driver,
 
 	nibbler_rom,
@@ -997,9 +1036,14 @@ struct GameDriver nibbler_driver =
 
 struct GameDriver nibblera_driver =
 {
-	"Nibbler (alternate)",
+	__FILE__,
+	0,
 	"nibblera",
+	"Nibbler (alternate)",
+	"????",
+	"?????",
 	"Nicola Salmoria\nBrian Levine\nMirko Buffoni\nMarco Cassili",
+	0,
 	&fantasy_machine_driver,
 
 	nibblera_rom,

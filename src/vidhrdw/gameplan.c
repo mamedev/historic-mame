@@ -109,7 +109,7 @@ int gameplan_sound_r(int offset)
 		return finished_sound;
 	}
 	else
-		exit(0);
+		return 0;
 }
 
 void gameplan_sound_w(int offset,int data)

@@ -60,7 +60,12 @@
  *		ENJOY! ;)
  */
 
+#include <stdio.h>
+
 #ifdef MAME_DEBUG
+
+#include "mamedbg.h"
+#include "mame.h"
 
 /* undefine the following if you don't want 'LEFT' and 'RIGHT' to do
    anything in the disassembly window.
@@ -73,9 +78,6 @@
    > return to the previous point.  Recursively, of course.
 */
 #define ALLOW_LEFT_AND_RIGHT_IN_DASM_WINDOW	/* CM 980428 */
-
-#include "mamedbg.h"
-#include "mame.h"
 
 static int MEM1 = MEM1DEFAULT;	/* JB 971210 */
 static int MEM2 = MEM2DEFAULT;	/* JB 971210 */
@@ -198,7 +200,7 @@ static void DrawDebugScreen16 (int TextCol, int LineCol)	/* MB 980103 */
 }
 
 /* Draw the Memory dump windows */
-static void DrawMemWindow (int Base, int Col, int Offset, int DisplayASCII)	/* JB 971210 */
+static void DrawMemWindow (int Base, int Col, int Offset, int _DisplayASCII)	/* JB 971210 */
 {
 	int     X;
 	int     Y;
@@ -217,7 +219,7 @@ static void DrawMemWindow (int Base, int Col, int Offset, int DisplayASCII)	/* J
 		{
 			value = cpuintf[cputype].memory_read(Base++ & DebugInfo[cputype].AddMask);
 			oldValue = MemWindowBackup[Y * DebugInfo[cputype].MemWindowNumBytes + X + which];
-			if (DisplayASCII)	/* MB 980103 */
+			if (_DisplayASCII)	/* MB 980103 */
 			{
 				sprintf (S, "  ");
 				if (S[0] != 0) S[0] = value; else S[0] = 32;
@@ -234,37 +236,37 @@ static void DrawMemWindow (int Base, int Col, int Offset, int DisplayASCII)	/* J
 }
 
 
-static int IsRegister(int cputype, char *src)
+static int IsRegister(int _cputype, char *src)
 {
 	int i = 0;
-	while ((i < 32) && (DebugInfo[cputype].RegList[i].Name != NULL) &&
-			(strcmp(DebugInfo[cputype].RegList[i].Name,src) != 0))
+	while ((i < 32) && (DebugInfo[_cputype].RegList[i].Name != NULL) &&
+			(strcmp(DebugInfo[_cputype].RegList[i].Name,src) != 0))
 		i++;
 
-	if ((i < 32) && (DebugInfo[cputype].RegList[i].Name != NULL))
+	if ((i < 32) && (DebugInfo[_cputype].RegList[i].Name != NULL))
 		return i;
 	return -1;
 }
 
-static unsigned long GetAddress(int cputype, char *src)
+static unsigned long GetAddress(int _cputype, char *src)
 {
-	static unsigned char rgs[CPU_CONTEXT_SIZE];	/* ASG 971105 */
-	int SrcREG = IsRegister(cputype, src);
+	static unsigned char _rgs[CPU_CONTEXT_SIZE];	/* ASG 971105 */
+	int SrcREG = IsRegister(_cputype, src);
 	unsigned long rv = 0;
 
 	if (SrcREG != -1)
 	{
-		cpuintf[cputype].get_regs(rgs);
-		switch (DebugInfo[cputype].RegList[SrcREG].Size)
+		cpuintf[_cputype].get_regs(_rgs);
+		switch (DebugInfo[_cputype].RegList[SrcREG].Size)
 		{
 			case 1:
-				rv = *(byte *)DebugInfo[cputype].RegList[SrcREG].Val;
+				rv = *(byte *)DebugInfo[_cputype].RegList[SrcREG].Val;
 				break;
 			case 2:
-				rv = *(word *)DebugInfo[cputype].RegList[SrcREG].Val;
+				rv = *(word *)DebugInfo[_cputype].RegList[SrcREG].Val;
 				break;
 			case 4:
-				rv = *(dword *)DebugInfo[cputype].RegList[SrcREG].Val;
+				rv = *(dword *)DebugInfo[_cputype].RegList[SrcREG].Val;
 				break;
 		}
 	}
@@ -894,7 +896,7 @@ int FindString (int Add, int *Target)
 }
 
 /* Edit the memory window */
-static int ScreenEdit (int XMin, int XMax, int YMin, int YMax, int Col, int BaseAdd, int *DisplayASCII)	/* JB 971210 */
+static int ScreenEdit (int XMin, int XMax, int YMin, int YMax, int Col, int BaseAdd, int *_DisplayASCII)	/* JB 971210 */
 {
 	int		Editing = TRUE;
 	int		High = TRUE;
@@ -912,7 +914,7 @@ static int ScreenEdit (int XMin, int XMax, int YMin, int YMax, int Col, int Base
 	char	info[80];
 	byte	b;
 
-	DrawMemWindow (Base, Col, YMin, *DisplayASCII);
+	DrawMemWindow (Base, Col, YMin, *_DisplayASCII);
 
 	row_bytes = DebugInfo[cputype].MemWindowNumBytes;
 
@@ -949,7 +951,7 @@ static int ScreenEdit (int XMin, int XMax, int YMin, int YMax, int Col, int Base
 				Scroll = TRUE;
 				break;
 			case OSD_KEY_LEFT:			/* Left */
-				if (*DisplayASCII)	/* MB 980103 */
+				if (*_DisplayASCII)	/* MB 980103 */
 				   X-=3;
 				else
 				{
@@ -964,7 +966,7 @@ static int ScreenEdit (int XMin, int XMax, int YMin, int YMax, int Col, int Base
 				}
 				break;
 			case OSD_KEY_RIGHT:			/* Right */
-				if (*DisplayASCII)	/* MB 980103 */
+				if (*_DisplayASCII)	/* MB 980103 */
 				   X+=3;
 				else
 				{
@@ -988,7 +990,7 @@ static int ScreenEdit (int XMin, int XMax, int YMin, int YMax, int Col, int Base
 				Scroll = TRUE;
 				break;
 			case OSD_KEY_H:
-				*DisplayASCII = !(*DisplayASCII);	/* MB 980103 */
+				*_DisplayASCII = !(*_DisplayASCII);	/* MB 980103 */
 				High = TRUE;
 				Scroll = TRUE;
 				break;
@@ -1040,7 +1042,7 @@ static int ScreenEdit (int XMin, int XMax, int YMin, int YMax, int Col, int Base
 			case OSD_KEY_D:
 			case OSD_KEY_E:
 			case OSD_KEY_F:
-				if (!(*DisplayASCII))	/* MB 980103 */
+				if (!(*_DisplayASCII))	/* MB 980103 */
 				{
 					b = cpuintf[cputype].memory_read(Add & DebugInfo[cputype].AddMask);
 
@@ -1075,7 +1077,7 @@ static int ScreenEdit (int XMin, int XMax, int YMin, int YMax, int Col, int Base
 		{
 			X = XMax;
 			Y--;
-			if (*DisplayASCII) X--;
+			if (*_DisplayASCII) X--;
 		}
 		else if (X > XMax)
 		{
@@ -1102,7 +1104,7 @@ static int ScreenEdit (int XMin, int XMax, int YMin, int YMax, int Col, int Base
 		}
 		if (Scroll)
 		{
-			DrawMemWindow (Base, Col, YMin, *DisplayASCII);
+			DrawMemWindow (Base, Col, YMin, *_DisplayASCII);
 			Scroll = FALSE;
 		}
 	}
@@ -1513,16 +1515,16 @@ static int DisplayCommandInfo(char * commandline, char * command)
 }
 
 
-static int GetSPValue(int cputype)
+static int GetSPValue(int _cputype)
 {
 	int rv = 0;
-	switch (DebugInfo[cputype].SPSize)
+	switch (DebugInfo[_cputype].SPSize)
 	{
-		case 1: rv = *(byte *)DebugInfo[cputype].SPReg;
+		case 1: rv = *(byte *)DebugInfo[_cputype].SPReg;
 				break;
-		case 2: rv = *(word *)DebugInfo[cputype].SPReg;
+		case 2: rv = *(word *)DebugInfo[_cputype].SPReg;
 				break;
-		case 4: rv = *(dword *)DebugInfo[cputype].SPReg;
+		case 4: rv = *(dword *)DebugInfo[_cputype].SPReg;
 				break;
 	}
 	return rv;

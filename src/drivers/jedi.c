@@ -86,7 +86,6 @@ void jedi_paletteram_w(int offset,int data);
 void jedi_backgroundram_w(int offset,int data);
 int  jedi_vh_start(void);
 void jedi_vh_stop(void);
-void jedi_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void jedi_vh_screenrefresh(struct osd_bitmap *bitmap);
 void jedi_vscroll_w(int offset,int data);
 void jedi_hscroll_w(int offset,int data);
@@ -307,8 +306,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
     37*8, 30*8, { 0*8, 37*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-    256,4+16+16,
-    jedi_vh_convert_color_prom,
+    4+16+16,4+16+16,
+    0,
 
     VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
@@ -363,11 +362,10 @@ ROM_END
 
 static int novram_load(void)
 {
-/* get RAM pointer (if game is multiCPU, we can't assume the global */
-/* RAM pointer is pointing to the right place) */
-unsigned char *RAM = Machine->memory_region[0];
-
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 	{
         osd_fread(f,&RAM[0x0800],256);
@@ -379,9 +377,8 @@ unsigned char *RAM = Machine->memory_region[0];
 static void novram_save(void)
 {
 	void *f;
-	/* get RAM pointer (if game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -393,9 +390,14 @@ static void novram_save(void)
 
 struct GameDriver jedi_driver =
 {
-	"Return of the Jedi",
+	__FILE__,
+	0,
 	"jedi",
+	"Return of the Jedi",
+	"????",
+	"?????",
 	"Dan Boris",
+	0,
 	&machine_driver,
 
 	jedi_rom,

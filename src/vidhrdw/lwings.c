@@ -449,8 +449,8 @@ void trojan_vh_screenrefresh(struct osd_bitmap *bitmap)
               static int oldoffsy=0xffff;
               static int oldoffsx=0xffff;
 
-              int scrollx = (trojan_bk_scrollx[0]);
-              int scrolly = (trojan_bk_scrolly[0]);
+              scrollx = (trojan_bk_scrollx[0]);
+              scrolly = (trojan_bk_scrolly[0]);
 
               offsy = 0x20 * scrolly;
               offsx = (scrollx >> 4);
@@ -493,7 +493,7 @@ void trojan_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* Draw the sprites. */
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
-                int code,sx,sy, attrib;
+                int code,attrib;
 
 		/*
 		Sprites
@@ -537,9 +537,6 @@ void trojan_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-		int sx,sy;
-
-
 		sx = offs % 32;
 		sy = offs / 32;
 

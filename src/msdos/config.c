@@ -15,7 +15,7 @@ extern int ignorecfg;
 /* from video.c */
 extern int scanlines, use_double, video_sync, antialias, use_synced, ntsc;
 extern int vgafreq, color_depth, skiplines, skipcolumns;
-extern int beam, flicker, vesa;
+extern int beam, flicker;
 extern float gamma_correction;
 extern int gfx_mode, gfx_width, gfx_height;
 
@@ -23,7 +23,7 @@ extern int gfx_mode, gfx_width, gfx_height;
 extern int usefm, soundcard;
 
 /* from input.c */
-extern int joy_type, use_mouse;
+extern int use_mouse, joystick;
 
 /* from fileio.c */
 void decompose_rom_sample_path (char *rompath, char *samplepath);
@@ -236,7 +236,7 @@ void get_rom_sample_path (int argc, char **argv, int game_index)
 void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game_index)
 {
 	static float f_beam, f_flicker;
-	static int vesa;
+	static int _vesa;
 	static char *resolution;
 	char tmpres[10];
 	int i;
@@ -251,7 +251,7 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	video_sync  = get_bool   ("config", "vsync",        NULL,  0);
 	antialias   = get_bool   ("config", "antialias",    NULL,  1);
 	use_synced  = get_bool   ("config", "syncedtweak",  NULL,  1);
-	vesa        = get_bool   ("config", "vesa",         NULL,  0);
+	_vesa       = get_bool   ("config", "vesa",         NULL,  0);
 	ntsc        = get_bool   ("config", "ntsc",         NULL,  0);
 	vgafreq     = get_int    ("config", "vgafreq",      NULL,  -1);
 	color_depth = get_int    ("config", "depth",        NULL, 16);
@@ -276,7 +276,7 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 
 	/* read input configuration */
 	use_mouse = get_bool ("config", "mouse",   NULL,  1);
-	joy_type  = get_int  ("config", "joytype", "joy", -1);
+	joystick  = get_int  ("config", "joystick", "joy", 0);
 
 	/* misc configuration */
 	options->cheat      = get_bool ("config", "cheat", NULL, 0);
@@ -307,7 +307,7 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	if (flicker > 255)
 		flicker = 255;
 
-	if (vesa == 1)
+	if (_vesa == 1)
 		gfx_mode = GFX_VESA2L;
 //	else
 //		gfx_mode = GFX_VGA;

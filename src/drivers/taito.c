@@ -1141,9 +1141,8 @@ ROM_END
 
 static int elevator_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* wait for the high score to initialize */
 	if (memcmp(&RAM[0x8350],"\x00\x00\x01",3) == 0)
@@ -1164,11 +1163,8 @@ static int elevator_hiload(void)
 
 static void elevator_hisave(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
-
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1180,9 +1176,8 @@ static void elevator_hisave(void)
 
 static int junglek_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0x816B],"\x00\x50\x00",3) == 0)
@@ -1204,10 +1199,7 @@ static int junglek_hiload(void)
 static void junglek_hisave(void)
 {
 	void *f;
-
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1221,9 +1213,8 @@ static void junglek_hisave(void)
 
 static int frontlin_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x8640],"\x01\x00\x00",3) == 0)
@@ -1252,10 +1243,8 @@ static int frontlin_hiload(void)
 static void frontlin_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -1268,9 +1257,14 @@ static void frontlin_hisave(void)
 
 struct GameDriver elevator_driver =
 {
-	"Elevator Action",
+	__FILE__,
+	0,
 	"elevator",
+	"Elevator Action",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)\nMike Balfour (high score save)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	elevator_rom,
@@ -1288,9 +1282,14 @@ struct GameDriver elevator_driver =
 
 struct GameDriver elevatob_driver =
 {
-	"Elevator Action (bootleg)",
+	__FILE__,
+	0,
 	"elevatob",
+	"Elevator Action (bootleg)",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)\nMike Balfour (high score save)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	elevatob_rom,
@@ -1308,9 +1307,14 @@ struct GameDriver elevatob_driver =
 
 struct GameDriver junglek_driver =
 {
-	"Jungle King",
+	__FILE__,
+	0,
 	"junglek",
+	"Jungle King",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)\nMike Balfour (high score save)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	junglek_rom,
@@ -1328,9 +1332,14 @@ struct GameDriver junglek_driver =
 
 struct GameDriver jhunt_driver =
 {
-	"Jungle Hunt",
+	__FILE__,
+	0,
 	"jhunt",
+	"Jungle Hunt",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)\nMike Balfour (high score save)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	jhunt_rom,
@@ -1348,9 +1357,14 @@ struct GameDriver jhunt_driver =
 
 struct GameDriver frontlin_driver =
 {
-	"Front Line",
+	__FILE__,
+	0,
 	"frontlin",
+	"Front Line",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	frontlin_rom,
@@ -1369,9 +1383,14 @@ struct GameDriver frontlin_driver =
 
 struct GameDriver wwestern_driver =
 {
-	"Wild Western",
+	__FILE__,
+	0,
 	"wwestern",
+	"Wild Western",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)",
+	0,
 	&machine_driver,
 
 	wwestern_rom,
@@ -1389,9 +1408,14 @@ struct GameDriver wwestern_driver =
 
 struct GameDriver alpine_driver =
 {
-	"Alpine Ski",
+	__FILE__,
+	0,
 	"alpine",
+	"Alpine Ski",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)",
+	0,
 	&machine_driver,
 
 	alpine_rom,
@@ -1409,9 +1433,14 @@ struct GameDriver alpine_driver =
 
 struct GameDriver spaceskr_driver =
 {
-	"Space Seeker",
+	__FILE__,
+	0,
 	"spaceskr",
+	"Space Seeker",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)",
+	0,
 	&machine_driver,
 
 	spaceskr_rom,

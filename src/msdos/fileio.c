@@ -81,18 +81,18 @@ int osd_faccess(const char *newfilename, int filetype)
 	char name[256];
 	char **pathv;
 	int  pathc;
-	static int index;
+	static int indx;
 	static const char *filename;
 	char *dirname;
 
 	/* if filename == NULL, continue the search */
 	if (newfilename != NULL)
 	{
-		index = 0;
+		indx = 0;
 		filename = newfilename;
 	}
 	else
-		index++;
+		indx++;
 
 	if (filetype == OSD_FILETYPE_ROM)
 	{
@@ -107,37 +107,37 @@ int osd_faccess(const char *newfilename, int filetype)
 	else
 		return 0;
 
-	for (; index < pathc; index++)
+	for (; indx < pathc; indx++)
 	{
-		dirname = pathv[index];
+		dirname = pathv[indx];
 
 		/* does such a directory (or file) exist? */
 		sprintf(name,"%s/%s",dirname,filename);
 		if (access(name, F_OK) == 0)
-			return index+1;
+			return indx+1;
 
 		/* try again with a .zip extension */
 		sprintf(name,"%s/%s.zip", dirname, filename);
 		if (access(name, F_OK) == 0)
-			return index+1;
+			return indx+1;
 
 		/* try again with a .zif extension */
 		sprintf(name,"%s/%s.zif", dirname, filename);
 		if (access(name, F_OK) == 0)
-			return index+1;
+			return indx+1;
 	}
 
 	/* no match */
 	return 0;
 }
 
-void *osd_fopen(const char *game,const char *filename,int filetype,int write)
+void *osd_fopen(const char *game,const char *filename,int filetype,int _write)
 {
 	char name[100];
 	char *dirname;
 	char *gamename;
 
-	int  index;
+	int  indx;
 	struct stat stat_buffer;
 	FakeFileHandle *f;
 
@@ -158,22 +158,22 @@ void *osd_fopen(const char *game,const char *filename,int filetype,int write)
 		case OSD_FILETYPE_ROM:
 		case OSD_FILETYPE_SAMPLE:
 
-			index = osd_faccess (gamename, filetype);
+			indx = osd_faccess (gamename, filetype);
 
-			while (index && !f->file)
+			while (indx && !f->file)
 			{
 				if (filetype == OSD_FILETYPE_ROM)
-					dirname = rompathv[index-1];
+					dirname = rompathv[indx-1];
 				else /* filetype == OSD_FILETYPE_SAMPLE */
-					dirname = samplepathv[index-1];
+					dirname = samplepathv[indx-1];
 
 				sprintf(name,"%s/%s/%s",dirname,gamename,filename);
-				f->file = fopen(name,write ? "wb" : "rb");
+				f->file = fopen(name,_write ? "wb" : "rb");
 				if (f->file == 0)
 				{
 					/* try with a .zip extension */
 					sprintf(name,"%s/%s.zip", dirname, gamename);
-					f->file = fopen(name, write ? "wb" : "rb");
+					f->file = fopen(name, _write ? "wb" : "rb");
 					stat(name, &stat_buffer);
 					if ((stat_buffer.st_mode & S_IFDIR))
 					{
@@ -201,58 +201,58 @@ void *osd_fopen(const char *game,const char *filename,int filetype,int write)
 				{
 					/* try with a .zip directory (if ZipMagic is installed) */
 					sprintf(name,"%s/%s.zip/%s",dirname,gamename,filename);
-					f->file = fopen(name,write ? "wb" : "rb");
+					f->file = fopen(name,_write ? "wb" : "rb");
 				}
 				if (f->file == 0)
 				{
 					/* try with a .zif directory (if ZipFolders is installed) */
 					sprintf(name,"%s/%s.zif/%s",dirname,gamename,filename);
-					f->file = fopen(name,write ? "wb" : "rb");
+					f->file = fopen(name,_write ? "wb" : "rb");
 				}
 
 				/* check next path entry */
 				if (f->file == 0)
-					index = osd_faccess (NULL, filetype);
+					indx = osd_faccess (NULL, filetype);
 			}
 			break;
 		case OSD_FILETYPE_HIGHSCORE:
 			if (mame_highscore_enabled())
 			{
 				sprintf(name,"%s/%s.hi",hidir,gamename);
-				f->file = fopen(name,write ? "wb" : "rb");
+				f->file = fopen(name,_write ? "wb" : "rb");
 				if (f->file == 0)
 				{
 					/* try with a .zip directory (if ZipMagic is installed) */
 					sprintf(name,"%s.zip/%s.hi",hidir,gamename);
-					f->file = fopen(name,write ? "wb" : "rb");
+					f->file = fopen(name,_write ? "wb" : "rb");
 				}
 				if (f->file == 0)
 				{
 					/* try with a .zif directory (if ZipFolders is installed) */
 					sprintf(name,"%s.zif/%s.hi",hidir,gamename);
-					f->file = fopen(name,write ? "wb" : "rb");
+					f->file = fopen(name,_write ? "wb" : "rb");
 				}
 			}
 			break;
 		case OSD_FILETYPE_CONFIG:
 			sprintf(name,"%s/%s.cfg",cfgdir,gamename);
-			f->file = fopen(name,write ? "wb" : "rb");
+			f->file = fopen(name,_write ? "wb" : "rb");
 			if (f->file == 0)
 			{
 				/* try with a .zip directory (if ZipMagic is installed) */
 				sprintf(name,"%s.zip/%s.cfg",cfgdir,gamename);
-				f->file = fopen(name,write ? "wb" : "rb");
+				f->file = fopen(name,_write ? "wb" : "rb");
 			}
 			if (f->file == 0)
 			{
 				/* try with a .zif directory (if ZipFolders is installed) */
 				sprintf(name,"%s.zif/%s.cfg",cfgdir,gamename);
-				f->file = fopen(name,write ? "wb" : "rb");
+				f->file = fopen(name,_write ? "wb" : "rb");
 			}
 			break;
 		case OSD_FILETYPE_INPUTLOG:
 			sprintf(name,"%s/%s.inp", inpdir, gamename);
-			f->file = fopen(name,write ? "wb" : "rb");
+			f->file = fopen(name,_write ? "wb" : "rb");
 			break;
 		default:
 			break;
@@ -272,7 +272,6 @@ void *osd_fopen(const char *game,const char *filename,int filetype,int write)
 int osd_fread(void *file,void *buffer,int length)
 {
 	FakeFileHandle *f = (FakeFileHandle *)file;
-	int read = 0;
 
 	switch (f->type)
 	{
@@ -292,7 +291,7 @@ int osd_fread(void *file,void *buffer,int length)
 			break;
 	}
 
-	return read;
+	return 0;
 }
 
 

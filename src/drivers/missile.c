@@ -431,6 +431,9 @@ ROM_END
 static int hiload(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x002C],"\x47\x4A\x4C", 3) == 0 &&
 		memcmp(&RAM[0x0044],"\x50\x69\x00", 3) == 0){
@@ -449,6 +452,8 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0){
 		osd_fwrite(f,&RAM[0x002C],6*8);
@@ -460,9 +465,14 @@ static void hisave(void)
 
 struct GameDriver missile_driver =
 {
-	"Missile Command",
+	__FILE__,
+	0,
 	"missile",
+	"Missile Command",
+	"????",
+	"?????",
 	"Ray Giarratana\nMarco Cassili\nEric Anschuetz",  /* EEA */
+	0,
 	&machine_driver,
 
 	missile_rom,
@@ -480,9 +490,14 @@ struct GameDriver missile_driver =
 
 struct GameDriver suprmatk_driver =
 {
-	"Super Missile Attack",
+	__FILE__,
+	0,
 	"suprmatk",
+	"Super Missile Attack",
+	"????",
+	"?????",
 	"Ray Giarratana\nMarco Cassili\nEric Anschuetz",  /* EEA */
+	0,
 	&machine_driver,
 
 	suprmatk_rom,

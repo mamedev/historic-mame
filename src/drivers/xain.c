@@ -39,6 +39,7 @@ unsigned char waitIRQsound;
 void xain_vh_screenrefresh(struct osd_bitmap *bitmap);
 int xain_vh_start(void);
 void xain_vh_stop(void);
+void xain_paletteram_w(int offset,int data);
 void xain_scrollxP2_w(int offset,int data);
 void xain_scrollyP2_w(int offset,int data);
 void xain_scrollxP3_w(int offset,int data);
@@ -70,14 +71,20 @@ void xain_sharedram_w(int offset, int data)
 
 void xainCPUA_bankswitch_w(int offset,int data)
 {
-        if (data&0x08) {cpu_setbank(1,&RAM[0x10000]);}
-        else {cpu_setbank(1,&RAM[0x4000]);}
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if (data&0x08) {cpu_setbank(1,&RAM[0x10000]);}
+	else {cpu_setbank(1,&RAM[0x4000]);}
 }
 
 void xainCPUB_bankswitch_w(int offset,int data)
 {
-        if (data&0x1) {cpu_setbank(2,&RAM[0x10000]);}
-        else {cpu_setbank(2,&RAM[0x4000]);}
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+
+
+	if (data&0x1) {cpu_setbank(2,&RAM[0x10000]);}
+	else {cpu_setbank(2,&RAM[0x4000]);}
 }
 
 int xain_timer_r(int offset)
@@ -126,23 +133,23 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-        { 0x0000, 0x1fff, MWA_RAM, &xain_sharedram},
-        { 0x2000, 0x27ff, MWA_RAM, &xain_videoram, &xain_videoram_size },
+	{ 0x0000, 0x1fff, MWA_RAM, &xain_sharedram},
+	{ 0x2000, 0x27ff, MWA_RAM, &xain_videoram, &xain_videoram_size },
 	{ 0x2800, 0x2fff, videoram2_w, &xain_videoram2, &xain_videoram2_size },
 	{ 0x3000, 0x37ff, videoram_w, &videoram, &videoram_size },
-        { 0x3800, 0x397f, MWA_RAM, &spriteram, &spriteram_size },
-        { 0x3980, 0x39ff, MWA_RAM },
-        { 0x3a00, 0x3a01, xain_scrollxP2_w},
-        { 0x3a02, 0x3a03, xain_scrollyP2_w},
-        { 0x3a04, 0x3a05, xain_scrollxP3_w},
-        { 0x3a06, 0x3a07, xain_scrollyP3_w},
-        { 0x3a08, 0x3a08, xainA_writesoundcommand_w},
-        { 0x3a09, 0x3a0b, MWA_RAM },
-        { 0x3a0c, 0x3a0c, xainB_forcedIRQ_w},
-        { 0x3a0d, 0x3a0e, MWA_RAM },
-        { 0x3a0f, 0x3a0f, xainCPUA_bankswitch_w},
-        { 0x3a10, 0x3bff, MWA_RAM },
-        { 0x3c00, 0x3fff, MWA_RAM, &xain_paletteram },
+	{ 0x3800, 0x397f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x3980, 0x39ff, MWA_RAM },
+	{ 0x3a00, 0x3a01, xain_scrollxP2_w},
+	{ 0x3a02, 0x3a03, xain_scrollyP2_w},
+	{ 0x3a04, 0x3a05, xain_scrollxP3_w},
+	{ 0x3a06, 0x3a07, xain_scrollyP3_w},
+	{ 0x3a08, 0x3a08, xainA_writesoundcommand_w},
+	{ 0x3a09, 0x3a0b, MWA_RAM },
+	{ 0x3a0c, 0x3a0c, xainB_forcedIRQ_w},
+	{ 0x3a0d, 0x3a0e, MWA_RAM },
+	{ 0x3a0f, 0x3a0f, xainCPUA_bankswitch_w},
+	{ 0x3a10, 0x3bff, MWA_RAM },
+	{ 0x3c00, 0x3fff, xain_paletteram_w, &xain_paletteram },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -306,25 +313,25 @@ static struct GfxLayout tileslayout =
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	/* 8x8 text */
-	{ 1, 0x00000, &charlayout,       0, 128 },
+	{ 1, 0x00000, &charlayout,    0, 8 },
 
-        /* 16x16 Background */
-        { 1, 0x08000, &tileslayout,      256, 128 },
-        { 1, 0x18000, &tileslayout,      256, 128 },
-        { 1, 0x28000, &tileslayout,      256, 128 },
-        { 1, 0x38000, &tileslayout,      256, 128 },
+	/* 16x16 Background */
+	{ 1, 0x08000, &tileslayout, 256, 8 },
+	{ 1, 0x18000, &tileslayout, 256, 8 },
+	{ 1, 0x28000, &tileslayout, 256, 8 },
+	{ 1, 0x38000, &tileslayout, 256, 8 },
 
-        /* 16x16 Background */
-        { 1, 0x48000, &tileslayout,      384, 128 },
-        { 1, 0x58000, &tileslayout,      384, 128 },
-        { 1, 0x68000, &tileslayout,      384, 128 },
-        { 1, 0x78000, &tileslayout,      384, 128 },
+	/* 16x16 Background */
+	{ 1, 0x48000, &tileslayout, 384, 8 },
+	{ 1, 0x58000, &tileslayout, 384, 8 },
+	{ 1, 0x68000, &tileslayout, 384, 8 },
+	{ 1, 0x78000, &tileslayout, 384, 8 },
 
-        /* Sprites */
-        { 1, 0x88000, &tileslayout,      128, 128 },
-        { 1, 0x98000, &tileslayout,      128, 128 },
-        { 1, 0xa8000, &tileslayout,      128, 128 },
-        { 1, 0xb8000, &tileslayout,      128, 128 },
+	/* Sprites */
+	{ 1, 0x88000, &tileslayout, 128, 8 },
+	{ 1, 0x98000, &tileslayout, 128, 8 },
+	{ 1, 0xa8000, &tileslayout, 128, 8 },
+	{ 1, 0xb8000, &tileslayout, 128, 8 },
 	{ -1 } // end of array
 };
 
@@ -373,10 +380,10 @@ static struct MachineDriver xain_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0, 32*8, 8, 30*8 },
 	gfxdecodeinfo,
-	128*4,4096,
+	512, 512,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	xain_vh_start,
 	xain_vh_stop,
@@ -487,9 +494,14 @@ ROM_END
 
 struct GameDriver xsleena_driver =
 {
-	"Xain'd Sleena",
+	__FILE__,
+	0,
 	"xsleena",
+	"Xain'd Sleena",
+	"????",
+	"?????",
 	"Carlos A. Lozano\nRob Rosenbrock\nPhil Stroffolino\n",
+	0,
 	&xain_machine_driver,
 
 	xain_rom,
@@ -507,9 +519,14 @@ struct GameDriver xsleena_driver =
 
 struct GameDriver solarwar_driver =
 {
-	"Solar Warrior",
+	__FILE__,
+	0,
 	"solarwar",
+	"Solar Warrior",
+	"????",
+	"?????",
 	"Carlos A. Lozano\nRob Rosenbrock\nPhil Stroffolino\n",
+	0,
 	&xain_machine_driver,
 
 	solarwar_rom,

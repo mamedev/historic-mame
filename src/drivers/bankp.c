@@ -293,9 +293,8 @@ ROM_END
 static int hiload(void)
 {
 	static int loop = 0;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-
-	unsigned char *RAM = Machine->memory_region[0];
 
 	/* check if the hi score table has already been initialized */
 	/* the high score table is intialized to all 0, so first of all */
@@ -332,6 +331,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -345,9 +345,14 @@ static void hisave(void)
 
 struct GameDriver bankp_driver =
 {
-	"Bank Panic",
+	__FILE__,
+	0,
 	"bankp",
+	"Bank Panic",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
+	0,
 	&machine_driver,
 
 	bankp_rom,

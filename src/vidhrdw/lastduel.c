@@ -117,8 +117,8 @@ int lastduel_vh_start(void)
 {
 	scroll1_bitmap=osd_create_bitmap(1024,1024);
   scroll2_bitmap=osd_create_bitmap(1024,1024);
-  scroll1_dirty=(char *)malloc(0x1000);
-  scroll2_dirty=(char *)malloc(0x1000);
+  scroll1_dirty=(unsigned char *)malloc(0x1000);
+  scroll2_dirty=(unsigned char *)malloc(0x1000);
 
 	return 0;
 }
@@ -150,8 +150,6 @@ void lastduel_vh_screenrefresh(struct osd_bitmap *bitmap)
   /* Text layer colours */
   for (offs = 0x1000 - 2;offs >= 0;offs -= 2)
 	{
-		int color,tile;
-
   	tile=READ_WORD (&lastduel_vram[offs]);
   	color = ((tile & 0xf000) >> 12);
   	tile=tile&0xfff;
@@ -185,8 +183,6 @@ for (offs = 0x4000 - 4;offs >= 0;offs -= 4)
 
   for (offs = 0x4000 - 4;offs >= 0;offs -= 4)
 	{
-		int color,code,i;
-
   	color=READ_WORD(&lastduel_scroll2[offs+2])&0xf;
     code=READ_WORD(&lastduel_scroll2[offs])&0xfff;
 
@@ -200,9 +196,9 @@ for (offs = 0x4000 - 4;offs >= 0;offs -= 4)
 
   for(offs=0x500-8;offs>-1;offs-=8)
   {
-   	int code=READ_WORD(&lastduel_sprites[offs]);
     int attributes = READ_WORD(&lastduel_sprites[offs+2]);
-		int color = attributes&0xf;
+   	code=READ_WORD(&lastduel_sprites[offs]);
+		color = attributes&0xf;
 
     palette_used_colors[(32*16) + (16 * color)+15] = PALETTE_COLOR_TRANSPARENT;
  		for (i = 0;i < 15;i++)

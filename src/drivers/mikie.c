@@ -428,9 +428,7 @@ ROM_END
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -463,9 +461,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -479,9 +475,14 @@ static void hisave(void)
 
 struct GameDriver mikie_driver =
 {
-	"Mikie",
+	__FILE__,
+	0,
 	"mikie",
+	"Mikie",
+	"????",
+	"?????",
 	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (MAME driver)\nStefano Mozzi (MAME driver)\nMarco Cassili (dip switches)\nAl Kossow (color info)\nGerrit Van Goethem (high score save)",
+	0,
 	&mikie_machine_driver,
 
 	mikie_rom,

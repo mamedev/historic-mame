@@ -620,138 +620,130 @@ ROM_END
 
 static int locomotn_hiload(void)
 {
-        /* get RAM pointer (this game is multiCPU, we can't assume the global */
-        /* RAM pointer is pointing to the right place) */
-        unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
-        /* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x9f00],"\x00\x00\x01",3) == 0 &&
-                        memcmp(&RAM[0x99c6],"\x00\x00\x01",3) == 0)
-        {
-                void *f;
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x9f00],"\x00\x00\x01",3) == 0 &&
+					memcmp(&RAM[0x99c6],"\x00\x00\x01",3) == 0)
+	{
+			void *f;
 
 
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        osd_fread(f,&RAM[0x9f00],12*10);
-                        RAM[0x99c6] = RAM[0x9f00];
-                        RAM[0x99c7] = RAM[0x9f01];
-                        RAM[0x99c8] = RAM[0x9f02];
-                        osd_fclose(f);
-                }
+			if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+			{
+					osd_fread(f,&RAM[0x9f00],12*10);
+					RAM[0x99c6] = RAM[0x9f00];
+					RAM[0x99c7] = RAM[0x9f01];
+					RAM[0x99c8] = RAM[0x9f02];
+					osd_fclose(f);
+			}
 
-                return 1;
-        }
-        else return 0;  /* we can't load the hi scores yet */
+			return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
 }
 
 
 
 static void locomotn_hisave(void)
 {
-        void *f;
-        /* get RAM pointer (this game is multiCPU, we can't assume the global */
-        /* RAM pointer is pointing to the right place) */
-        unsigned char *RAM = Machine->memory_region[0];
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite(f,&RAM[0x9f00],12*10);
-                osd_fclose(f);
-        }
-
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+			osd_fwrite(f,&RAM[0x9f00],12*10);
+			osd_fclose(f);
+	}
 }
 
 static int jungler_hiload(void)
 {
-        /* get RAM pointer (this game is multiCPU, we can't assume the global */
-        /* RAM pointer is pointing to the right place) */
-        unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
-        /* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x991c],"\x00\x00\x02",3) == 0)
-        {
-                void *f;
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x991c],"\x00\x00\x02",3) == 0)
+	{
+			void *f;
 
 
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        osd_fread(f,&RAM[0x9940],16*10);
-                        RAM[0x991c] = RAM[0x9940];
-                        RAM[0x991d] = RAM[0x9941];
-                        RAM[0x991e] = RAM[0x9942];
-                        osd_fclose(f);
-                }
+			if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+			{
+					osd_fread(f,&RAM[0x9940],16*10);
+					RAM[0x991c] = RAM[0x9940];
+					RAM[0x991d] = RAM[0x9941];
+					RAM[0x991e] = RAM[0x9942];
+					osd_fclose(f);
+			}
 
-                return 1;
-        }
-        else return 0;  /* we can't load the hi scores yet */
+			return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
 }
 
 static void jungler_hisave(void)
 {
-        void *f;
-        /* get RAM pointer (this game is multiCPU, we can't assume the global */
-        /* RAM pointer is pointing to the right place) */
-        unsigned char *RAM = Machine->memory_region[0];
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite(f,&RAM[0x9940],16*10);
-                osd_fclose(f);
-        }
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+			osd_fwrite(f,&RAM[0x9940],16*10);
+			osd_fclose(f);
+	}
 }
 
 static int commsega_hiload(void)
 {
-        /* get RAM pointer (this game is multiCPU, we can't assume the global */
-        /* RAM pointer is pointing to the right place) */
-        unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
-        /* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x9c60],"\x1d\x1c",2) == 0)
-        {
-                void *f;
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x9c60],"\x1d\x1c",2) == 0)
+	{
+			void *f;
 
 
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        osd_fread(f,&RAM[0x9c6d],6);
-                        osd_fclose(f);
-                }
+			if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+			{
+					osd_fread(f,&RAM[0x9c6d],6);
+					osd_fclose(f);
+			}
 
-                return 1;
-        }
-        else return 0;  /* we can't load the hi scores yet */
+			return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
 }
 
 static void commsega_hisave(void)
 {
-        void *f;
-        /* get RAM pointer (this game is multiCPU, we can't assume the global */
-        /* RAM pointer is pointing to the right place) */
-        unsigned char *RAM = Machine->memory_region[0];
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite(f,&RAM[0x9c6d],6);
-                osd_fclose(f);
-        }
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+			osd_fwrite(f,&RAM[0x9c6d],6);
+			osd_fclose(f);
+	}
 }
 
 
 
 struct GameDriver locomotn_driver =
 {
-	"Loco-Motion",
+	__FILE__,
+	0,
 	"locomotn",
+	"Loco-Motion",
+	"????",
+	"?????",
 	"Nicola Salmoria\nMike Balfour (high score save)\nKevin Klopp (color info)",
+	0,
 	&machine_driver,
 
 	locomotn_rom,
@@ -769,9 +761,14 @@ struct GameDriver locomotn_driver =
 
 struct GameDriver jungler_driver =
 {
-	"Jungler",
+	__FILE__,
+	0,
 	"jungler",
+	"Jungler",
+	"????",
+	"?????",
 	"Nicola Salmoria",
+	0,
 	&jungler_machine_driver,
 
 	jungler_rom,
@@ -789,9 +786,14 @@ struct GameDriver jungler_driver =
 
 struct GameDriver commsega_driver =
 {
-	"Commando (Sega)",
+	__FILE__,
+	0,
 	"commsega",
+	"Commando (Sega)",
+	"????",
+	"?????",
 	"Nicola Salmoria\nBrad Oliver",
+	0,
 	&machine_driver,
 
 	commsega_rom,

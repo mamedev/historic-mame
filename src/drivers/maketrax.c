@@ -143,6 +143,9 @@ int maketrax_special_r(int offset)
 
 static void maketrax_rom_decode(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	memcpy(ROM,RAM,0x10000);
 
 	ROM[0x0415]=0xC9;
@@ -161,6 +164,7 @@ static int maketrax_hiload(void)
 {
 	static int resetcount;
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* during a reset, leave time to the game to clear the screen */
@@ -192,6 +196,7 @@ static int maketrax_hiload(void)
 static void maketrax_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -457,9 +462,14 @@ static unsigned char maketrax_color_prom[] =
 
 struct GameDriver maketrax_driver =
 {
-	"Make Trax",
+	__FILE__,
+	0,
 	"maketrax",
+	"Make Trax",
+	"????",
+	"?????",
 	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nJohn Bowes(info)\nMike Balfour\nValerio Verrando (high score saving)",
+	0,
 	&maketrax_machine_driver,
 
 	maketrax_rom,

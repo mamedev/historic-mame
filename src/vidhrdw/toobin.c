@@ -19,7 +19,6 @@
 
 struct toobin_mo_data
 {
-	int *sprite_map;
 	int *redraw_list, *redraw;
 };
 
@@ -47,6 +46,8 @@ static unsigned char *playfielddirty;
 static struct osd_bitmap *playfieldbitmap;
 
 static int xscroll, yscroll;
+
+static int last_intensity;
 
 
 
@@ -100,8 +101,7 @@ int toobin_vh_start(void)
 		return 1;
 	}
 
-	/* initialize the palette remapping */
-	atarigen_init_remap (COLOR_PALETTE_555, 0);
+	last_intensity = 0;
 
 	/* initialize the displaylist system */
 	return atarigen_init_display_list (&toobin_modesc);
@@ -158,6 +158,46 @@ void toobin_playfieldram_w (int offset, int data)
 
 /*************************************
  *
+ *		Palette RAM read/write handlers
+ *
+ *************************************/
+
+int toobin_paletteram_r (int offset)
+{
+	return READ_WORD (&atarigen_paletteram[offset]);
+}
+
+
+void toobin_paletteram_w (int offset, int data)
+{
+	int oldword = READ_WORD (&atarigen_paletteram[offset]);
+	int newword = COMBINE_WORD (oldword, data);
+	WRITE_WORD (&atarigen_paletteram[offset], newword);
+
+	{
+		int red =   (((newword >> 10) & 31) * 224) >> 5;
+		int green = (((newword >>  5) & 31) * 224) >> 5;
+		int blue =  (((newword      ) & 31) * 224) >> 5;
+
+		if (red) red += 38;
+		if (green) green += 38;
+		if (blue) blue += 38;
+
+		if (!(newword & 0x8000))
+		{
+			red = (red * last_intensity) >> 5;
+			green = (green * last_intensity) >> 5;
+			blue = (blue * last_intensity) >> 5;
+		}
+
+		palette_change_color ((offset / 2) & 0x3ff, red, green, blue);
+	}
+}
+
+
+
+/*************************************
+ *
  *		Motion object list handlers
  *
  *************************************/
@@ -207,6 +247,20 @@ void toobin_moslip_w (int offset, int data)
  *
  *---------------------------------------------------------------------------------
  */
+
+void toobin_calc_mo_colors (struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
+{
+	unsigned short *colors = param;
+	int color = data[3] & 0x0f;
+	int hsize = (data[0] & 7) + 1;
+	int vsize = ((data[0] >> 3) & 7) + 1;
+	int pict = data[1] & 0x3fff;
+	int i;
+
+	colors += color;
+	for (i = hsize * vsize - 1; i >= 0; i--, pict++)
+		*colors |= Machine->gfx[2]->pen_usage[pict];
+}
 
 void toobin_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
 {
@@ -285,14 +339,6 @@ void toobin_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, unsign
 			if (sy <= clip->min_y - 16 || sy > clip->max_y)
 				continue;
 
-			/* if this sprite's color has not been used yet this frame, grab it */
-			/* note that by doing it here, we don't map sprites that aren't visible */
-			if (!modata->sprite_map[color])
-			{
-				atarigen_alloc_dynamic_colors (0x100 + 16 * color + 1, 15);
-				modata->sprite_map[color] = 1;
-			}
-
 			/* draw the sprite */
 			drawgfx (bitmap, Machine->gfx[2],
 					pict, color, hflip, vflip, sx, sy, clip, TRANSPARENCY_PEN, 0);
@@ -316,13 +362,93 @@ void toobin_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, unsign
 
 void toobin_vh_screenrefresh (struct osd_bitmap *bitmap)
 {
+	unsigned char al_map[16], pf_map[16];
+	unsigned short mo_map[16];
 	int x, y, sx, sy, xoffs, yoffs, offs, i, intensity;
-	int sprite_map[16], alpha_map[16], pf_map[16];
 	struct toobin_mo_data modata;
 	int redraw_list[1024], *r;
+	int saved = 0;
+
+
+	/* compute the intensity and modify the palette if it's different */
+	intensity = 0x1f - (READ_WORD (&toobin_intensity[0]) & 0x1f);
+	if (intensity != last_intensity)
+	{
+		last_intensity = intensity;
+		for (i = 0; i < 256+256+64; i++)
+		{
+			int newword = READ_WORD (&atarigen_paletteram[i*2]);
+			int red =   (((newword >> 10) & 31) * 224) >> 5;
+			int green = (((newword >>  5) & 31) * 224) >> 5;
+			int blue =  (((newword      ) & 31) * 224) >> 5;
+
+			if (red) red += 38;
+			if (green) green += 38;
+			if (blue) blue += 38;
+
+			if (!(newword & 0x8000))
+			{
+				red = (red * last_intensity) >> 5;
+				green = (green * last_intensity) >> 5;
+				blue = (blue * last_intensity) >> 5;
+			}
+
+			palette_change_color (i, red, green, blue);
+		}
+	}
 
 
 /*	if (osd_key_pressed (OSD_KEY_9)) toobin_dump_video_ram ();*/
+
+
+	/* reset color tracking */
+	memset (mo_map, 0, sizeof (mo_map));
+	memset (pf_map, 0, sizeof (pf_map));
+	memset (al_map, 0, sizeof (al_map));
+	memset (palette_used_colors, PALETTE_COLOR_UNUSED, Machine->drv->total_colors * sizeof(unsigned char));
+
+	/* update color usage for the playfield */
+	for (offs = 0; offs < 128*64; offs++)
+	{
+		int data1 = READ_WORD (&atarigen_playfieldram[offs * 4]);
+		int color = data1 & 15;
+		pf_map[color] = 1;
+	}
+
+	/* update color usage for the mo's */
+	atarigen_render_display_list (bitmap, toobin_calc_mo_colors, mo_map);
+
+	/* update color usage for the alphanumerics */
+	for (sy = 0; sy < YCHARS; sy++)
+	{
+		for (sx = 0, offs = sy * 64; sx < XCHARS; sx++, offs++)
+		{
+			int data = READ_WORD (&atarigen_alpharam[offs * 2]);
+			int color = (data >> 12) & 15;
+			al_map[color] = 1;
+		}
+	}
+
+	/* rebuild the palette */
+	for (i = 0; i < 16; i++)
+	{
+		if (pf_map[i])
+			memset (&palette_used_colors[0 + i * 16], PALETTE_COLOR_USED, 16);
+		if (mo_map[i])
+		{
+			int j;
+			palette_used_colors[256 + i * 16] = PALETTE_COLOR_TRANSPARENT;
+			for (j = 1; j < 16; j++)
+				if (mo_map[i] & (1 << j))
+					palette_used_colors[256 + i * 16 + j] = PALETTE_COLOR_USED;
+		}
+		if (al_map[i])
+			memset (&palette_used_colors[512 + i * 4], PALETTE_COLOR_USED, 4);
+	}
+
+	if (palette_recalc ())
+		memset (playfielddirty, 1, atarigen_playfieldram_size / 2);
+
 
 
 	/* compute scrolling so we know what to update */
@@ -330,11 +456,6 @@ void toobin_vh_screenrefresh (struct osd_bitmap *bitmap)
 	yscroll = (READ_WORD (&atarigen_vscroll[0]) >> 6);
 	xscroll = -(xscroll & 0x3ff);
 	yscroll = -(yscroll & 0x1ff);
-
-
-	/* reset color tracking */
-	for (i = 0; i < 16; i++)
-		sprite_map[i] = alpha_map[i] = pf_map[i] = 0;
 
 
 	/*
@@ -370,21 +491,16 @@ void toobin_vh_screenrefresh (struct osd_bitmap *bitmap)
 		/* loop over the visible X portion */
 		for (x = xoffs + XCHARS + 1; x >= xoffs; x--)
 		{
-			int data1, color;
-
 			/* compute the offset */
 			sx = x & 127;
 			offs = sy * 128 + sx;
-			data1 = READ_WORD (&atarigen_playfieldram[offs * 4]);
-
-			/* update color statistics */
-			color = data1 & 15;
-			pf_map[color] = 1;
 
 			/* rerender if dirty */
 			if (playfielddirty[offs])
 			{
+				int data1 = READ_WORD (&atarigen_playfieldram[offs * 4]);
 				int data2 = READ_WORD (&atarigen_playfieldram[offs * 4 + 2]);
+				int color = data1 & 15;
 				int vflip = data2 & 0x8000;
 				int hflip = data2 & 0x4000;
 				int pict = data2 & 0x3fff;
@@ -396,14 +512,10 @@ void toobin_vh_screenrefresh (struct osd_bitmap *bitmap)
 		}
 	}
 
-	/* allocate playfield colors */
-	atarigen_alloc_fixed_colors (pf_map, 0x000, 16, 16);
-
 	/* copy the playfield to the destination */
 	copyscrollbitmap (bitmap, playfieldbitmap, 1, &xscroll, 1, &yscroll, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
 
 	/* prepare the motion object data structure */
-	modata.sprite_map = sprite_map;
 	modata.redraw_list = modata.redraw = redraw_list;
 
 	/* render the motion objects */
@@ -419,7 +531,6 @@ void toobin_vh_screenrefresh (struct osd_bitmap *bitmap)
 		int w = (val >> 4) & 15;
 		int h = val & 15;
 		struct rectangle clip;
-		int y, sx;
 
 		/* wrap */
 		if (xpos > XDIM) xpos -= 0x400;
@@ -445,7 +556,7 @@ void toobin_vh_screenrefresh (struct osd_bitmap *bitmap)
 			/* loop over the rows */
 			for (y = ypos + h * 2; y >= ypos; y--)
 			{
-				int sy, offs, data1, pfpri;
+				int data1, pfpri;
 
 				/* compute the scroll-adjusted y position */
 				sy = (y * 8 + yscroll) & 0x1ff;
@@ -502,26 +613,12 @@ void toobin_vh_screenrefresh (struct osd_bitmap *bitmap)
 				int color = (data >> 12) & 15;
 				int hflip = data & 0x400;
 
-				/* if this character's color has not been used yet this frame, grab it */
-				/* note that by doing it here, we don't map characters that aren't visible */
-				if (!alpha_map[color])
-				{
-					atarigen_alloc_dynamic_colors (0x200 + 4 * color + 1, 3);
-					alpha_map[color] = 1;
-				}
-
 				/* draw the character */
 				drawgfx (bitmap, Machine->gfx[0], pict, color, hflip, 0,
 						8 * sx, 8 * sy, 0, TRANSPARENCY_PEN, 0);
 			}
 		}
 	}
-
-	/* compute the intensity */
-	intensity = 0x1f - (READ_WORD (&toobin_intensity[0]) & 0x1f);
-
-	/* update the active colors */
-	atarigen_update_colors (intensity);
 }
 
 

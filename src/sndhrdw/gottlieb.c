@@ -85,11 +85,17 @@ void gottlieb_speech_clock_DAC_w(int offset, int data)
 
 int riot_ram_r(int offset)
 {
+	extern unsigned char *RAM;
+
+
     return RAM[offset&0x7f];
 }
 
 void riot_ram_w(int offset, int data)
 {
+	extern unsigned char *RAM;
+
+
 	/* pb is that M6502.c does some memory reads directly, so we
 	  repeat the writes */
     RAM[offset&0x7F]=data;

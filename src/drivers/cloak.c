@@ -366,9 +366,14 @@ ROM_END
 
 struct GameDriver cloak_driver =
 {
-	"Cloak & Dagger",
+	__FILE__,
+	0,
 	"cloak",
+	"Cloak & Dagger",
+	"????",
+	"?????",
 	"Dan Boris        (hardware info)\nMirko Buffoni      (MAME driver)",
+	0,
 	&machine_driver,
 
 	cloak_rom,

@@ -627,10 +627,8 @@ static const char *galaga_sample_names[] =
 static int hiload(void)
 {
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
 
    /* check if the hi score table has already been initialized */
    if (memcmp(&RAM[0x8a4c],"\x18\x6e",2) == 0)
@@ -658,10 +656,8 @@ static int hiload(void)
 static void hisave(void)
 {
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
 
    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
    {
@@ -673,9 +669,14 @@ static void hisave(void)
 
 struct GameDriver galaga_driver =
 {
-	"Galaga (Midway)",
+	__FILE__,
+	0,
 	"galaga",
+	"Galaga (Midway)",
+	"????",
+	"?????",
 	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)\nValerio Verrando (high score fix)",
+	0,
 	&machine_driver,
 
 	galaga_rom,
@@ -693,9 +694,14 @@ struct GameDriver galaga_driver =
 
 struct GameDriver galaganm_driver =
 {
-	"Galaga (Namco)",
+	__FILE__,
+	0,
 	"galaganm",
+	"Galaga (Namco)",
+	"????",
+	"?????",
 	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)\nValerio Verrando (high score fix)",
+	0,
 	&machine_driver,
 
 	galaganm_rom,
@@ -713,9 +719,14 @@ struct GameDriver galaganm_driver =
 
 struct GameDriver galagabl_driver =
 {
-	"Galaga (bootleg)",
+	__FILE__,
+	0,
 	"galagabl",
+	"Galaga (bootleg)",
+	"????",
+	"?????",
 	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)\nValerio Verrando (high score fix)",
+	0,
 	&machine_driver,
 
 	galagabl_rom,
@@ -733,9 +744,14 @@ struct GameDriver galagabl_driver =
 
 struct GameDriver gallag_driver =
 {
-	"Gallag (bootleg Galaga)",
+	__FILE__,
+	0,
 	"gallag",
+	"Gallag (bootleg Galaga)",
+	"????",
+	"?????",
 	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)\nValerio Verrando (high score fix)",
+	0,
 	&machine_driver,
 
 	gallag_rom,
@@ -753,9 +769,14 @@ struct GameDriver gallag_driver =
 
 struct GameDriver galagab2_driver =
 {
-	"Galaga (NAMCO alternate)",
+	__FILE__,
+	0,
 	"galagab2",
+	"Galaga (NAMCO alternate)",
+	"????",
+	"?????",
 	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)\nValerio Verrando (high score fix)",
+	0,
 	&machine_driver,
 
 	galagab2_rom,

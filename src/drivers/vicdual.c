@@ -879,6 +879,13 @@ static unsigned char headon_color_prom[] =
 	0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,0xE1,
 };
 
+static unsigned char ho2ds_color_prom[] =
+{
+	/* 306-283: palette */
+	0x31,0xB1,0x71,0x31,0x31,0x31,0x31,0x31,0x91,0xF1,0x31,0xF1,0x51,0xB1,0x91,0xB1,
+	0xF5,0x79,0x31,0xB9,0xF5,0xF5,0xB5,0x95,0x31,0x31,0x31,0x31,0x31,0x31,0x31,0x31
+};
+
 static unsigned char invho2_color_prom[] =
 {
 	/* 306-287: palette */
@@ -952,6 +959,9 @@ static const char *carnival_sample_names[] =
 
 static int carnival_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0xE397],"\x00\x00\x00",3) == 0 &&
 			memcmp(&RAM[0xE5A2],"   ",3) == 0)
@@ -976,6 +986,7 @@ static int carnival_hiload(void)
 static void carnival_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -994,9 +1005,14 @@ static void carnival_hisave(void)
 #define GAMEDRIVER(GAMENAME,DESC,MACHINEDRIVER,SAMPLES,ORIENTATION,HILOAD,HISAVE) \
 struct GameDriver GAMENAME##_driver =				\
 {													\
-	DESC,											\
+	__FILE__,                                       \
+	0,                                              \
 	#GAMENAME,										\
+	DESC,											\
+	"????",                                         \
+	"?????",                                        \
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",	\
+	0,                                              \
 	&MACHINEDRIVER,									\
 													\
 	GAMENAME##_rom,									\
@@ -1013,14 +1029,16 @@ struct GameDriver GAMENAME##_driver =				\
 	HILOAD,HISAVE									\
 };
 
-GAMEDRIVER( depthch,  "Depth Charge",        vicdual_2Aports_machine_driver, 0, ORIENTATION_DEFAULT,    0, 0 )
-GAMEDRIVER( safari,   "Safari",              vicdual_2Bports_machine_driver, 0, ORIENTATION_DEFAULT,    0, 0 )
-GAMEDRIVER( sspaceat, "Sega Space Attack",   vicdual_3ports_machine_driver, 0, ORIENTATION_ROTATE_270, 0, 0 )
-GAMEDRIVER( headon,   "Head On",             vicdual_2Aports_machine_driver, 0, ORIENTATION_DEFAULT,    0, 0 )
-GAMEDRIVER( invho2,   "Invinco / Head On 2", vicdual_4ports_machine_driver, 0, ORIENTATION_ROTATE_270, 0, 0 )
-GAMEDRIVER( invinco,  "Invinco",             vicdual_3ports_machine_driver, 0, ORIENTATION_ROTATE_270, 0, 0 )
-GAMEDRIVER( invds,    "Invinco / Deep Scan", vicdual_4ports_machine_driver, 0, ORIENTATION_ROTATE_270, 0, 0 )
-GAMEDRIVER( tranqgun, "Tranquilizer Gun",    vicdual_4ports_machine_driver, 0, ORIENTATION_ROTATE_270, 0, 0 )
-GAMEDRIVER( spacetrk, "Space Trek",          vicdual_4ports_machine_driver, 0, ORIENTATION_ROTATE_270, 0, 0 )
-GAMEDRIVER( carnival, "Carnival",            vicdual_4ports_machine_driver, carnival_sample_names, ORIENTATION_ROTATE_270, carnival_hiload, carnival_hisave )
-GAMEDRIVER( pulsar,   "Pulsar",              vicdual_4ports_machine_driver, 0, ORIENTATION_ROTATE_270, 0, 0 )
+GAMEDRIVER( depthch,  "Depth Charge",          vicdual_2Aports_machine_driver, 0, ORIENTATION_DEFAULT,    0, 0 )
+GAMEDRIVER( safari,   "Safari",                vicdual_2Bports_machine_driver, 0, ORIENTATION_DEFAULT,    0, 0 )
+GAMEDRIVER( sspaceat, "Sega Space Attack",     vicdual_3ports_machine_driver,  0, ORIENTATION_ROTATE_270, 0, 0 )
+GAMEDRIVER( headon,   "Head On",               vicdual_2Aports_machine_driver, 0, ORIENTATION_DEFAULT,    0, 0 )
+/* No ROMs yet for the following one, but we have the color PROM. */
+//GAMEDRIVER( ho2ds,    "Head On 2 / Deep Scan", vicdual_4ports_machine_driver,  0, ORIENTATION_ROTATE_270, 0, 0 )
+GAMEDRIVER( invho2,   "Invinco / Head On 2",   vicdual_4ports_machine_driver,  0, ORIENTATION_ROTATE_270, 0, 0 )
+GAMEDRIVER( invinco,  "Invinco",               vicdual_3ports_machine_driver,  0, ORIENTATION_ROTATE_270, 0, 0 )
+GAMEDRIVER( invds,    "Invinco / Deep Scan",   vicdual_4ports_machine_driver,  0, ORIENTATION_ROTATE_270, 0, 0 )
+GAMEDRIVER( tranqgun, "Tranquilizer Gun",      vicdual_4ports_machine_driver,  0, ORIENTATION_ROTATE_270, 0, 0 )
+GAMEDRIVER( spacetrk, "Space Trek",            vicdual_4ports_machine_driver,  0, ORIENTATION_ROTATE_270, 0, 0 )
+GAMEDRIVER( carnival, "Carnival",              vicdual_4ports_machine_driver, carnival_sample_names, ORIENTATION_ROTATE_270, carnival_hiload, carnival_hisave )
+GAMEDRIVER( pulsar,   "Pulsar",                vicdual_4ports_machine_driver,  0, ORIENTATION_ROTATE_270, 0, 0 )

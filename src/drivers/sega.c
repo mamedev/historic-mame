@@ -958,6 +958,9 @@ ROM_END
 
 static int spacfury_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if ((memcmp(&RAM[0xC924],"\x90\x02",2) == 0) &&
 			(memcmp(&RAM[0xC95C],"\x10\x00",2) == 0))
@@ -980,6 +983,8 @@ static int spacfury_hiload(void)
 static void spacfury_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -992,6 +997,9 @@ static void spacfury_hisave(void)
 
 static int zektor_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if ((memcmp(&RAM[0xC924],"\x90\x02",2) == 0) &&
 			(memcmp(&RAM[0xC95C],"\x10\x00",2) == 0))
@@ -1014,6 +1022,8 @@ static int zektor_hiload(void)
 static void zektor_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -1025,6 +1035,9 @@ static void zektor_hisave(void)
 
 static int tacscan_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if ((memcmp(&RAM[0xCB44],"MCL",3) == 0) &&
 		(memcmp(&RAM[0xCB95],"\x02\x03\x00",3) == 0))
@@ -1047,6 +1060,8 @@ static int tacscan_hiload(void)
 static void tacscan_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -1059,6 +1074,9 @@ static void tacscan_hisave(void)
 
 static int elim2_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if ((memcmp(&RAM[0xC99F],"\x0C\x0B\x07",3) == 0) &&
 			(memcmp(&RAM[0xC9BA],"\x0A\x08\x03",3) == 0))
@@ -1082,6 +1100,8 @@ static int elim2_hiload(void)
 static void elim2_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -1093,6 +1113,9 @@ static void elim2_hisave(void)
 
 static int elim4_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if ((memcmp(&RAM[0xCC4D],"\x0C\x0B\x07",3) == 0) &&
 			(memcmp(&RAM[0xCC68],"\x0A\x08\x03",3) == 0))
@@ -1116,6 +1139,8 @@ static int elim4_hiload(void)
 static void elim4_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -1127,6 +1152,9 @@ static void elim4_hisave(void)
 
 static int startrek_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if ((memcmp(&RAM[0xC98B],"SLP",3) == 0) &&
 			(memcmp(&RAM[0xC910],"\x25\x06\x09",3) == 0))
@@ -1151,6 +1179,8 @@ static int startrek_hiload(void)
 static void startrek_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -1259,12 +1289,14 @@ static struct MachineDriver spacfury_machine_driver =
 
 struct GameDriver spacfury_driver =
 {
-	"Space Fury (revision A)",
+	__FILE__,
+	0,
 	"spacfury",
-	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\n"
-	"Mike Balfour (high score saving)\n"
-	VECTOR_TEAM,
-
+	"Space Fury (revision A)",
+	"????",
+	"?????",
+	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\nMike Balfour (high score saving)\n"VECTOR_TEAM,
+	0,
 	&spacfury_machine_driver,
 
 	spacfury_rom,
@@ -1282,12 +1314,14 @@ struct GameDriver spacfury_driver =
 
 struct GameDriver spacfurc_driver =
 {
-	"Space Fury (revision C)",
+	__FILE__,
+	0,
 	"spacfurc",
-	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\n"
-	"Mike Balfour (high score saving)\n"
-	VECTOR_TEAM,
-
+	"Space Fury (revision C)",
+	"????",
+	"?????",
+	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\nMike Balfour (high score saving)\n"VECTOR_TEAM,
+	0,
 	&spacfury_machine_driver,
 
 	spacfurc_rom,
@@ -1386,12 +1420,14 @@ static struct MachineDriver zektor_machine_driver =
 
 struct GameDriver zektor_driver =
 {
-	"Zektor",
+	__FILE__,
+	0,
 	"zektor",
-	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\n"
-	"Mike Balfour (high score saving)\n"
-	VECTOR_TEAM,
-
+	"Zektor",
+	"????",
+	"?????",
+	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\nMike Balfour (high score saving)\n"VECTOR_TEAM,
+	0,
 	&zektor_machine_driver,
 
 	zektor_rom,
@@ -1482,12 +1518,14 @@ static struct MachineDriver tacscan_machine_driver =
 
 struct GameDriver tacscan_driver =
 {
-	"Tac-Scan",
+	__FILE__,
+	0,
 	"tacscan",
-	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\n"
-	"Valerio Verrando (high score saving)\n"
-	VECTOR_TEAM,
-
+	"Tac-Scan",
+	"????",
+	"?????",
+	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\nValerio Verrando (high score saving)\n"VECTOR_TEAM,
+	0,
 	&tacscan_machine_driver,
 
 	tacscan_rom,
@@ -1578,12 +1616,14 @@ static struct MachineDriver elim2_machine_driver =
 
 struct GameDriver elim2_driver =
 {
-	"Eliminator (2 Player)",
+	__FILE__,
+	0,
 	"elim2",
-	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\n"
-	"Mike Balfour (high score saving)\n"
-	VECTOR_TEAM,
-
+	"Eliminator (2 Player)",
+	"????",
+	"?????",
+	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\nMike Balfour (high score saving)\n"VECTOR_TEAM,
+	0,
 	&elim2_machine_driver,
 
 	elim2_rom,
@@ -1644,12 +1684,14 @@ static struct MachineDriver elim4_machine_driver =
 
 struct GameDriver elim4_driver =
 {
-	"Eliminator (4 Player)",
+	__FILE__,
+	0,
 	"elim4",
-        "Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\n"
-	"Mike Balfour (high score saving)\n"
-	VECTOR_TEAM,
-
+	"Eliminator (4 Player)",
+	"????",
+	"?????",
+	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\nMike Balfour (high score saving)\n"VECTOR_TEAM,
+	0,
 	&elim4_machine_driver,
 
 	elim4_rom,
@@ -1780,12 +1822,14 @@ static struct MachineDriver startrek_machine_driver =
 
 struct GameDriver startrek_driver =
 {
-	"Star Trek",
+	__FILE__,
+	0,
 	"startrek",
-	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\n"
-	"Valerio Verrando (high score saving)\n"
-	VECTOR_TEAM,
-
+	"Star Trek",
+	"????",
+	"?????",
+	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\nValerio Verrando (high score saving)\n"VECTOR_TEAM,
+	0,
 	&startrek_machine_driver,
 
 	startrek_rom,

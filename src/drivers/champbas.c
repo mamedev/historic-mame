@@ -355,9 +355,14 @@ ROM_END
 
 struct GameDriver champbas_driver =
 {
-	"Champion Baseball",
+	__FILE__,
+	0,
 	"champbas",
+	"Champion Baseball",
+	"????",
+	"?????",
 	"Nicola Salmoria",
+	0,
 	&machine_driver,
 
 	champbas_rom,
@@ -376,9 +381,14 @@ struct GameDriver champbas_driver =
 /* Champion Baseball 2 doesn't work - don't know why */
 struct GameDriver champbb2_driver =
 {
-	"Champion Baseball 2",
+	__FILE__,
+	0,
 	"champbb2",
+	"Champion Baseball 2",
+	"????",
+	"?????",
 	"Nicola Salmoria",
+	0,
 	&machine_driver,
 
 	champbb2_rom,

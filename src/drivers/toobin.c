@@ -98,6 +98,7 @@ extern unsigned char *toobin_moslip;
 
 int toobin_io_r (int offset);
 int toobin_6502_switch_r (int offset);
+int toobin_paletteram_r (int offset);
 int toobin_playfieldram_r (int offset);
 int toobin_sound_r (int offset);
 int toobin_controls_r (int offset);
@@ -107,6 +108,7 @@ void toobin_interrupt_ack_w (int offset, int data);
 void toobin_sound_reset_w (int offset, int data);
 void toobin_moslip_w (int offset, int data);
 void toobin_6502_bank_w (int offset, int data);
+void toobin_paletteram_w (int offset, int data);
 void toobin_playfieldram_w (int offset, int data);
 
 int toobin_interrupt (void);
@@ -131,7 +133,7 @@ static struct MemoryReadAddress toobin_readmem[] =
 	{ 0xc00000, 0xc07fff, toobin_playfieldram_r, &atarigen_playfieldram, &atarigen_playfieldram_size },
 	{ 0xc08000, 0xc097ff, MRA_BANK2, &atarigen_alpharam, &atarigen_alpharam_size },
 	{ 0xc09800, 0xc09fff, MRA_BANK3, &atarigen_spriteram, &atarigen_spriteram_size },
-	{ 0xc10000, 0xc107ff, MRA_BANK6, &atarigen_paletteram, &atarigen_paletteram_size },
+	{ 0xc10000, 0xc107ff, toobin_paletteram_r, &atarigen_paletteram, &atarigen_paletteram_size },
 	{ 0xff6000, 0xff6003, MRA_NOP },		/* who knows? read at controls time */
 	{ 0xff8800, 0xff8803, toobin_controls_r },
 	{ 0xff9000, 0xff9003, toobin_io_r },
@@ -148,7 +150,7 @@ static struct MemoryWriteAddress toobin_writemem[] =
 	{ 0xc00000, 0xc07fff, toobin_playfieldram_w },
 	{ 0xc08000, 0xc097ff, MWA_BANK2 },
 	{ 0xc09800, 0xc09fff, MWA_BANK3 },
-	{ 0xc10000, 0xc107ff, MWA_BANK6 },
+	{ 0xc10000, 0xc107ff, toobin_paletteram_w },
 	{ 0xff8000, 0xff8003, watchdog_reset_w },
 	{ 0xff8100, 0xff8103, atarigen_sound_w },
 	{ 0xff8300, 0xff8303, MWA_BANK7, &toobin_intensity },
@@ -372,7 +374,7 @@ static struct MachineDriver toobin_machine_driver =
 	/* video hardware */
 	64*8, 48*8, { 0*8, 64*8-1, 0*8, 48*8-1 },
 	toobin_gfxdecodeinfo,
-	256,1024,
+	1024,1024,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
@@ -464,9 +466,14 @@ ROM_END
 
 struct GameDriver toobin_driver =
 {
-	"Toobin'",
+	__FILE__,
+	0,
 	"toobin",
+	"Toobin'",
+	"????",
+	"?????",
 	"Aaron Giles (MAME driver)\nTim Lindquist (hardware info)",
+	0,
 	&toobin_machine_driver,
 
 	toobin_rom,

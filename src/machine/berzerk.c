@@ -128,10 +128,16 @@ int berzerk_interrupt(void)
 
 int  frenzy_mirror_r(int offset)
 {
-        return RAM[0xf400+(offset&0x3ff)];
+	/* TODO: get rid of this */
+	extern unsigned char *RAM;
+
+	return RAM[0xf400+(offset&0x3ff)];
 }
 
 void frenzy_mirror_w(int offset, int data)
 {
-        RAM[0xf400+(offset&0x3ff)] = data;
+	/* TODO: get rid of this */
+	extern unsigned char *RAM;
+
+	RAM[0xf400+(offset&0x3ff)] = data;
 }

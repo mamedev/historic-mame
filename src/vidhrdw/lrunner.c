@@ -122,7 +122,7 @@ void lrunner_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0 ; offs < videoram_size ; offs += 2 )
+	for (offs = videoram_size-2;offs >= 0;offs -= 2)
 	{
 		if ( (dirtybuffer[offs]) || (dirtybuffer[offs+1]) )
 		{
@@ -139,8 +139,8 @@ void lrunner_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs] + 4 * (videoram[offs+1] & 0xc0) ,
-					videoram[offs+1] & 0x1F ,
-					0,0,
+					videoram[offs+1] & 0x1f,
+					videoram[offs+1] & 0x20,0,
 					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
@@ -166,7 +166,7 @@ void lrunner_vh_screenrefresh(struct osd_bitmap *bitmap)
 			flipx = spriteram[offs+5] & 0x40;
 			flipy = spriteram[offs+5] & 0x80;
 
-			if ( code < 72 )
+			if ((code & 0x80) == 0)	/* double height */
 				sy = sy - 16;
 
 			drawgfx(bitmap,Machine->gfx[1],
@@ -175,7 +175,7 @@ void lrunner_vh_screenrefresh(struct osd_bitmap *bitmap)
 					sx,sy,
 					&spritevisiblearea,TRANSPARENCY_PEN,0);
 
-			if ( code < 72 )
+			if ((code & 0x80) == 0)
 			{
 				drawgfx(bitmap,Machine->gfx[1],
 						code+1,col,

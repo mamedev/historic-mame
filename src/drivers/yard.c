@@ -546,9 +546,8 @@ ROM_END
 /* JB 971009 */
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0xe600],"\x00\x65\x03",3) == 0 &&
@@ -576,9 +575,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -592,9 +589,14 @@ static void hisave(void)
 
 struct GameDriver yard_driver =
 {
-	"10 Yard Fight",
+	__FILE__,
+	0,
 	"yard",
+	"10 Yard Fight",
+	"????",
+	"?????",
 	"Lee Taylor\nJohn Clegg\nMirko Buffoni\nNicola Salmoria\nIshmair\nTim Lindquist (color info)\nAaron Giles (sound)\nKevin Brisley (hiscores)",
+	0,
 	&machine_driver,
 
 	yard_rom,
@@ -613,9 +615,14 @@ struct GameDriver yard_driver =
 
 struct GameDriver vsyard_driver =
 {
-	"10 Yard Fight (Vs. version)",
+	__FILE__,
+	0,
 	"vsyard",
+	"10 Yard Fight (Vs. version)",
+	"????",
+	"?????",
 	"Lee Taylor\nJohn Clegg\nMirko Buffoni\nNicola Salmoria\nIshmair\nTim Lindquist (color info)\nAaron Giles (sound)\nKevin Brisley (hiscores)",
+	0,
 	&machine_driver,
 
 	vsyard_rom,

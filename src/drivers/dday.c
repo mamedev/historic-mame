@@ -427,9 +427,14 @@ static void hisave(void)
 
 struct GameDriver dday_driver =
 {
-	"D-Day",
+	__FILE__,
+	0,
 	"dday",
+	"D-Day",
+	"????",
+	"?????",
 	"Zsolt Vasvari\nHowie Cohen\nChris Moore\nBrad Oliver",
+	0,
 	&machine_driver,
 
 	dday_rom,

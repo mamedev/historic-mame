@@ -526,10 +526,8 @@ ROM_END
 static int hiload(void)
 {
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
 
    /* check if the hi score table has already been initialized (works for Namco & Atari) */
    if (RAM[0x89b1] == 0x35 && RAM[0x89b4] == 0x35)
@@ -551,10 +549,8 @@ static int hiload(void)
 static void hisave(void)
 {
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
 
    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
    {
@@ -566,9 +562,14 @@ static void hisave(void)
 
 struct GameDriver digdugnm_driver =
 {
-	"Dig Dug (Namco)",
+	__FILE__,
+	0,
 	"digdugnm",
+	"Dig Dug (Namco)",
+	"????",
+	"?????",
 	"Aaron Giles\nMartin Scragg\nNicola Salmoria\nMirko Buffoni\nAlan J McCormick",
+	0,
 	&machine_driver,
 
 	digdugnm_rom,
@@ -587,9 +588,14 @@ struct GameDriver digdugnm_driver =
 
 struct GameDriver digdugat_driver =
 {
-	"Dig Dug (Atari)",
+	__FILE__,
+	0,
 	"digdugat",
+	"Dig Dug (Atari)",
+	"????",
+	"?????",
 	"Aaron Giles\nMartin Scragg\nNicola Salmoria\nMirko Buffoni\nAlan J McCormick",
+	0,
 	&machine_driver,
 
 	digdugat_rom,

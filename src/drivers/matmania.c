@@ -598,9 +598,8 @@ ROM_END
 
 static int matmania_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
 	if ((memcmp(&RAM[0x0700],"\x00\x30\x00",3) == 0) &&
@@ -625,10 +624,7 @@ static int matmania_hiload(void)
 static void matmania_hisave(void)
 {
 	void *f;
-
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -642,9 +638,14 @@ static void matmania_hisave(void)
 
 struct GameDriver matmania_driver =
 {
-	"Mat Mania",
+	__FILE__,
+	0,
 	"matmania",
+	"Mat Mania",
+	"????",
+	"?????",
 	"Brad Oliver (MAME driver)\nTim Lindquist (color info)",
+	0,
 	&matmania_machine_driver,
 
 	matmania_rom,
@@ -663,9 +664,14 @@ struct GameDriver matmania_driver =
 
 struct GameDriver excthour_driver =
 {
-	"Exciting Hour",
+	__FILE__,
+	0,
 	"excthour",
+	"Exciting Hour",
+	"????",
+	"?????",
 	"Brad Oliver (MAME driver)\nTim Lindquist (color info)",
+	0,
 	&matmania_machine_driver,
 
 	excthour_rom,
@@ -683,9 +689,14 @@ struct GameDriver excthour_driver =
 
 struct GameDriver maniach_driver =
 {
-	"Mania Challenge",
+	__FILE__,
+	0,
 	"maniach",
+	"Mania Challenge",
+	"????",
+	"?????",
 	"Brad Oliver (MAME driver)\nTim Lindquist (color info)\n\nWARNING: This driver is still PRELIMINARY. Do not complain that it  doesn't work; we know that already!",
+	0,
 	&maniach_machine_driver,
 
 	maniach_rom,

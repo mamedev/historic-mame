@@ -34,6 +34,7 @@ void sidearms_vh_screenrefresh(struct osd_bitmap *bitmap);
 static void sidearms_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* bits 0 and 1 select the ROM bank */
@@ -354,75 +355,75 @@ static struct MachineDriver sidearms_machine_driver =
 
 
 ROM_START( sidearms_rom )
-	ROM_REGION(0x20000)     /* 64k for code + banked ROMs images */
-	ROM_LOAD( "SA03.BIN", 0x00000, 0x08000, 0x22bb6721 )  /* CODE */
-	ROM_LOAD( "SA02.BIN", 0x10000, 0x08000, 0x9ae56dc9 )  /* 0+1 */
-	ROM_LOAD( "SA01.BIN", 0x18000, 0x08000, 0xd334d882 )  /* 2+3 */
+	ROM_REGION(0x20000)	/* 64k for code + banked ROMs images */
+	ROM_LOAD( "SA03.BIN",  0x00000, 0x08000, 0x22bb6721 )	/* CODE */
+	ROM_LOAD( "a_14e.rom", 0x10000, 0x08000, 0x9ae56dc9 )	/* 0+1 */
+	ROM_LOAD( "a_12e.rom", 0x18000, 0x08000, 0xd334d882 )	/* 2+3 */
 
-	ROM_REGION(0x88000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "SA04.BIN", 0x00000, 0x8000, 0xe0d00000 )  /* characters */
-	ROM_LOAD( "SA15.BIN", 0x08000, 0x8000, 0xa0101f3e ) /* tiles */
-	ROM_LOAD( "SA17.BIN", 0x10000, 0x8000, 0x89f8efec ) /* tiles */
-	ROM_LOAD( "SA19.BIN", 0x18000, 0x8000, 0x31c9b645 ) /* tiles */
-	ROM_LOAD( "SA21.BIN", 0x20000, 0x8000, 0xceb77765 ) /* tiles */
-	ROM_LOAD( "SA16.BIN", 0x28000, 0x8000, 0xd2d2105e ) /* tiles */
-	ROM_LOAD( "SA18.BIN", 0x30000, 0x8000, 0x184ae81c ) /* tiles */
-	ROM_LOAD( "SA20.BIN", 0x38000, 0x8000, 0xf8089804 ) /* tiles */
-	ROM_LOAD( "SA22.BIN", 0x40000, 0x8000, 0xecfb6047 ) /* tiles */
-	ROM_LOAD( "SA10.BIN", 0x48000, 0x8000, 0xd21e2362 ) /* sprites */
-	ROM_LOAD( "SA12.BIN", 0x50000, 0x8000, 0xe2f99cc3 ) /* sprites */
-	ROM_LOAD( "SA06.BIN", 0x58000, 0x8000, 0xc805167b ) /* sprites */
-	ROM_LOAD( "SA08.BIN", 0x60000, 0x8000, 0x778f5043 ) /* sprites */
-	ROM_LOAD( "SA11.BIN", 0x68000, 0x8000, 0x63102ab8 ) /* sprites */
-	ROM_LOAD( "SA13.BIN", 0x70000, 0x8000, 0x863bc3f1 ) /* sprites */
-	ROM_LOAD( "SA07.BIN", 0x78000, 0x8000, 0x770e34ca ) /* sprites */
-	ROM_LOAD( "SA09.BIN", 0x80000, 0x8000, 0x70aa3e6c ) /* sprites */
+	ROM_REGION(0x88000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "a_10j.rom", 0x00000, 0x8000, 0xe0d00000 )	/* characters */
+	ROM_LOAD( "b_13d.rom", 0x08000, 0x8000, 0xa0101f3e )	/* tiles */
+	ROM_LOAD( "b_13e.rom", 0x10000, 0x8000, 0x89f8efec )
+	ROM_LOAD( "b_13f.rom", 0x18000, 0x8000, 0x31c9b645 )
+	ROM_LOAD( "b_13g.rom", 0x20000, 0x8000, 0xceb77765 )
+	ROM_LOAD( "b_14d.rom", 0x28000, 0x8000, 0xd2d2105e )
+	ROM_LOAD( "b_14e.rom", 0x30000, 0x8000, 0x184ae81c )
+	ROM_LOAD( "b_14f.rom", 0x38000, 0x8000, 0xf8089804 )
+	ROM_LOAD( "b_14g.rom", 0x40000, 0x8000, 0xecfb6047 )
+	ROM_LOAD( "b_11b.rom", 0x48000, 0x8000, 0xd21e2362 )	/* sprites */
+	ROM_LOAD( "b_13b.rom", 0x50000, 0x8000, 0xe2f99cc3 )
+	ROM_LOAD( "b_11a.rom", 0x58000, 0x8000, 0xc805167b )
+	ROM_LOAD( "b_13a.rom", 0x60000, 0x8000, 0x778f5043 )
+	ROM_LOAD( "b_12b.rom", 0x68000, 0x8000, 0x63102ab8 )
+	ROM_LOAD( "b_14b.rom", 0x70000, 0x8000, 0x863bc3f1 )
+	ROM_LOAD( "b_12a.rom", 0x78000, 0x8000, 0x770e34ca )
+	ROM_LOAD( "b_14a.rom", 0x80000, 0x8000, 0x70aa3e6c )
 
-	ROM_REGION(0x10000) /* 64k for the audio CPU */
-	ROM_LOAD( "SA05.BIN", 0x0000, 0x8000, 0xc8e97c53 )
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "a_04k.rom", 0x0000, 0x8000, 0xc8e97c53 )
 
-	ROM_REGION(0x08000) /* 32k tile map */
-	ROM_LOAD( "SA14.BIN", 0x0000, 0x8000, 0x4c6ef4e6 )
+	ROM_REGION(0x08000)	/* 32k tile map */
+	ROM_LOAD( "b_03d.rom", 0x0000, 0x8000, 0x4c6ef4e6 )
 
 #ifdef THIRD_CPU
-	ROM_REGION(0x10000) /* 64k for CPU */
-	ROM_LOAD( "SA23.BIN", 0x0000, 0x8000, 0x70faa88e )
+	ROM_REGION(0x10000)	/* 64k for CPU */
+	ROM_LOAD( "b_11j.rom", 0x0000, 0x8000, 0x70faa88e )
 #endif
 ROM_END
 
 ROM_START( sidearjp_rom )
-	ROM_REGION(0x20000)     /* 64k for code + banked ROMs images */
-	ROM_LOAD( "a_15e.rom", 0x00000, 0x08000, 0x405f5869 )  /* CODE */
-	ROM_LOAD( "a_14e.rom", 0x10000, 0x08000, 0x9ae56dc9 )  /* 0+1 */
-	ROM_LOAD( "a_12e.rom", 0x18000, 0x08000, 0xd334d882 )  /* 2+3 */
+	ROM_REGION(0x20000)	/* 64k for code + banked ROMs images */
+	ROM_LOAD( "a_15e.rom", 0x00000, 0x08000, 0x405f5869 )	/* CODE */
+	ROM_LOAD( "a_14e.rom", 0x10000, 0x08000, 0x9ae56dc9 )	/* 0+1 */
+	ROM_LOAD( "a_12e.rom", 0x18000, 0x08000, 0xd334d882 )	/* 2+3 */
 
-	ROM_REGION(0x88000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "a_10j.rom", 0x00000, 0x8000, 0xe0d00000 )  /* characters */
-	ROM_LOAD( "b_13d.rom", 0x08000, 0x8000, 0xa0101f3e ) /* tiles */
-	ROM_LOAD( "b_13e.rom", 0x10000, 0x8000, 0x89f8efec ) /* tiles */
-	ROM_LOAD( "b_13f.rom", 0x18000, 0x8000, 0x31c9b645 ) /* tiles */
-	ROM_LOAD( "b_13g.rom", 0x20000, 0x8000, 0xceb77765 ) /* tiles */
-	ROM_LOAD( "b_14d.rom", 0x28000, 0x8000, 0xd2d2105e ) /* tiles */
-	ROM_LOAD( "b_14e.rom", 0x30000, 0x8000, 0x184ae81c ) /* tiles */
-	ROM_LOAD( "b_14f.rom", 0x38000, 0x8000, 0xf8089804 ) /* tiles */
-	ROM_LOAD( "b_14g.rom", 0x40000, 0x8000, 0xecfb6047 ) /* tiles */
-	ROM_LOAD( "b_11b.rom", 0x48000, 0x8000, 0xd21e2362 ) /* sprites */
-	ROM_LOAD( "b_13b.rom", 0x50000, 0x8000, 0xe2f99cc3 ) /* sprites */
-	ROM_LOAD( "b_11a.rom", 0x58000, 0x8000, 0xc805167b ) /* sprites */
-	ROM_LOAD( "b_13a.rom", 0x60000, 0x8000, 0x778f5043 ) /* sprites */
-	ROM_LOAD( "b_12b.rom", 0x68000, 0x8000, 0x63102ab8 ) /* sprites */
-	ROM_LOAD( "b_14b.rom", 0x70000, 0x8000, 0x863bc3f1 ) /* sprites */
-	ROM_LOAD( "b_12a.rom", 0x78000, 0x8000, 0x770e34ca ) /* sprites */
-	ROM_LOAD( "b_14a.rom", 0x80000, 0x8000, 0x70aa3e6c ) /* sprites */
+	ROM_REGION(0x88000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "a_10j.rom", 0x00000, 0x8000, 0xe0d00000 )	/* characters */
+	ROM_LOAD( "b_13d.rom", 0x08000, 0x8000, 0xa0101f3e )	/* tiles */
+	ROM_LOAD( "b_13e.rom", 0x10000, 0x8000, 0x89f8efec )
+	ROM_LOAD( "b_13f.rom", 0x18000, 0x8000, 0x31c9b645 )
+	ROM_LOAD( "b_13g.rom", 0x20000, 0x8000, 0xceb77765 )
+	ROM_LOAD( "b_14d.rom", 0x28000, 0x8000, 0xd2d2105e )
+	ROM_LOAD( "b_14e.rom", 0x30000, 0x8000, 0x184ae81c )
+	ROM_LOAD( "b_14f.rom", 0x38000, 0x8000, 0xf8089804 )
+	ROM_LOAD( "b_14g.rom", 0x40000, 0x8000, 0xecfb6047 )
+	ROM_LOAD( "b_11b.rom", 0x48000, 0x8000, 0xd21e2362 )	/* sprites */
+	ROM_LOAD( "b_13b.rom", 0x50000, 0x8000, 0xe2f99cc3 )
+	ROM_LOAD( "b_11a.rom", 0x58000, 0x8000, 0xc805167b )
+	ROM_LOAD( "b_13a.rom", 0x60000, 0x8000, 0x778f5043 )
+	ROM_LOAD( "b_12b.rom", 0x68000, 0x8000, 0x63102ab8 )
+	ROM_LOAD( "b_14b.rom", 0x70000, 0x8000, 0x863bc3f1 )
+	ROM_LOAD( "b_12a.rom", 0x78000, 0x8000, 0x770e34ca )
+	ROM_LOAD( "b_14a.rom", 0x80000, 0x8000, 0x70aa3e6c )
 
-	ROM_REGION(0x10000) /* 64k for the audio CPU */
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "a_04k.rom", 0x0000, 0x8000, 0xc8e97c53 )
 
-	ROM_REGION(0x08000) /* 32k tile map */
+	ROM_REGION(0x08000)	/* 32k tile map */
 	ROM_LOAD( "b_03d.rom", 0x0000, 0x8000, 0x4c6ef4e6 )
 
 #ifdef THIRD_CPU
-	ROM_REGION(0x10000) /* 64k for CPU */
+	ROM_REGION(0x10000)	/* 64k for CPU */
 	ROM_LOAD( "b_11j.rom", 0x0000, 0x8000, 0x70faa88e )
 #endif
 ROM_END
@@ -430,9 +431,7 @@ ROM_END
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -460,9 +459,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -476,9 +473,14 @@ static void hisave(void)
 
 struct GameDriver sidearms_driver =
 {
-	"Sidearms",
+	__FILE__,
+	0,
 	"sidearms",
+	"Sidearms",
+	"1986",
+	"Capcom",
 	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)\nGerrit Van Goethem (high score save)",
+	0,
 	&sidearms_machine_driver,
 
 	sidearms_rom,
@@ -495,9 +497,14 @@ struct GameDriver sidearms_driver =
 
 struct GameDriver sidearjp_driver =
 {
-	"Sidearms (Japanese)",
+	__FILE__,
+	&sidearms_driver,
 	"sidearjp",
+	"Sidearms (Japan)",
+	"1986",
+	"Capcom",
 	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)\nGerrit Van Goethem (high score save)",
+	0,
 	&sidearms_machine_driver,
 
 	sidearjp_rom,

@@ -260,7 +260,7 @@ void srumbler_vh_screenrefresh(struct osd_bitmap *bitmap)
 			 */
 
 
-			 int code,colour,sx,sy;
+			 int code,colour;
 			 int attr=spriteram[offs+1];
 			 code = spriteram[offs];
 			 code += ( (attr&0xe0) << 3 );
@@ -294,7 +294,7 @@ void srumbler_vh_screenrefresh(struct osd_bitmap *bitmap)
 			 */
 
 
-			 int code,colour,sx,sy;
+			 int code,colour;
 			 int attr=spriteram[offs+1];
 			 code = spriteram[offs];
 			 code += ( (attr&0xe0) << 3 );
@@ -319,7 +319,7 @@ void srumbler_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 		 for (sx=0; sx<0x18; sx++)
 		 {
-		       int offs=(scrollx >>4)*0x80;
+		       offs=(scrollx >>4)*0x80;
 		       offs+=(scrolly>>4)*2;
 		       offs+=sx*0x80;
 		       offs&=0x1fff;
@@ -354,9 +354,6 @@ void srumbler_vh_screenrefresh(struct osd_bitmap *bitmap)
 		/* draw the frontmost playfield. They are characters, but draw them as sprites */
 		for (offs = videoram_size - 2;offs >= 0;offs -= 2)
 		{
-			int sx,sy;
-
-
 			sx = (offs/2) / 32;
 			sy = (offs/2) % 32;
 

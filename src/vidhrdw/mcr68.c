@@ -38,7 +38,6 @@ void mcr68_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
    /* now check our sprites and mark which ones have color 8 ('draw under') */
    {
       struct GfxElement *gfx;
-      int i,x,y;
       unsigned char *dp;
 
       gfx = Machine->gfx[1];
@@ -141,7 +140,7 @@ void xenophobe_vh_screenrefresh(struct osd_bitmap *bitmap)
    	/* Draw the sprites. */
 		for (offs = 0; offs < 0x800; offs += 8)
    	{
-   		int code,color,flipx,flipy,sx,sy,flags;
+   		int code,flipx,flipy,sx,sy,flags;
 
      	code=(READ_WORD(&mcr68_spriteram[offs+4]))&0xff;
 			flags=(READ_WORD(&mcr68_spriteram[offs+2]))&0xff;

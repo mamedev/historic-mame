@@ -564,6 +564,8 @@ void system8_vh_screenrefresh(struct osd_bitmap *bitmap)
 void system8_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	bankaddress = 0x10000 + (((data & 0x0c)>>2) * 0x4000);
 	cpu_setbank(1,&RAM[bankaddress]);
@@ -715,18 +717,18 @@ void system8_backgroundrefresh(struct osd_bitmap *bitmap, int trasp)
 	unsigned char * scrx = ((system8_bank&0x80)?(system8_videoram + 0x7F6):(system8_videoram + 0x7c0));
 	unsigned char * scry = ((system8_bank&0x80)?(system8_videoram + 0x784):(system8_videoram + 0x7ba));
 
-	int scrollx = (scrx[0] >> 1) + ((scrx[1] & 1) << 7)-256-2;
-	int scrolly = -*scry;
+	int xscroll = (scrx[0] >> 1) + ((scrx[1] & 1) << 7)-256-2;
+	int yscroll = -*scry;
 
-	if (scrollx < 0) scrollx = 512 - (-scrollx) % 512; else scrollx = scrollx % 512;
-	if (scrolly < 0) scrolly = 512 - (-scrolly) % 512; else scrolly = scrolly % 512;
+	if (xscroll < 0) xscroll = 512 - (-xscroll) % 512; else xscroll = xscroll % 512;
+	if (yscroll < 0) yscroll = 512 - (-yscroll) % 512; else yscroll = yscroll % 512;
 
 	for (page=0; page < 4; page++)
 	{
 		const unsigned char *source = bg_ram + (system8_bg_pagesel[ page*2 ] & 0x07)*0x800;
 
-		int startx = (page&1)*256+scrollx;
-		int starty = (page>>1)*256+scrolly;
+		int startx = (page&1)*256+xscroll;
+		int starty = (page>>1)*256+yscroll;
 
 		int row,col;
 

@@ -827,6 +827,7 @@ static unsigned char oddtab[] =
 static void mooncrst_decode(void)
 {
 	int A;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	for (A = 0;A < 0x10000;A++)
@@ -839,6 +840,7 @@ static void mooncrst_decode(void)
 static void moonqsr_decode(void)
 {
 	int A;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	for (A = 0;A < 0x10000;A++)
@@ -887,6 +889,8 @@ Pin layout is such that links can replace the PAL if encryption is not used.
 */
 	int A;
 	int data_xor=0;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	for (A = 0;A < 0x2800;A++)
 	{
@@ -909,6 +913,9 @@ Pin layout is such that links can replace the PAL if encryption is not used.
 
 static int mooncrst_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x8042],"\x00\x50\x00",3) == 0 &&
 			memcmp(&RAM[0x804e],"\x00\x50\x00",3) == 0)
@@ -930,6 +937,7 @@ static int mooncrst_hiload(void)
 static void mooncrst_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -941,6 +949,9 @@ static void mooncrst_hisave(void)
 
 static int mooncrsg_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x8045],"\x00\x50\x00",3) == 0 &&
 			memcmp(&RAM[0x8051],"\x00\x50\x00",3) == 0)
@@ -962,6 +973,7 @@ static int mooncrsg_hiload(void)
 static void mooncrsg_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -973,6 +985,9 @@ static void mooncrsg_hisave(void)
 
 static int moonqsr_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x804e],"\x00\x50\x00",3) == 0 &&
 			memcmp(&RAM[0x805a],"\x00\x50\x00",3) == 0)
@@ -994,6 +1009,7 @@ static int moonqsr_hiload(void)
 static void moonqsr_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1005,9 +1021,7 @@ static void moonqsr_hisave(void)
 
 static int checkman_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -1031,9 +1045,7 @@ static int checkman_hiload(void)
 static void checkman_hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1047,9 +1059,14 @@ static void checkman_hisave(void)
 
 struct GameDriver mooncrst_driver =
 {
-	"Moon Cresta (Nichibutsu)",
+	__FILE__,
+	0,
 	"mooncrst",
+	"Moon Cresta (Nichibutsu)",
+	"????",
+	"?????",
 	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS\nANDREW SCOTT",
+	0,
 	&mooncrst_machine_driver,
 
 	mooncrst_rom,
@@ -1067,9 +1084,14 @@ struct GameDriver mooncrst_driver =
 
 struct GameDriver mooncrsg_driver =
 {
-	"Moon Cresta (Gremlin)",
+	__FILE__,
+	0,
 	"mooncrsg",
+	"Moon Cresta (Gremlin)",
+	"????",
+	"?????",
 	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS\nANDREW SCOTT",
+	0,
 	&mooncrst_machine_driver,
 
 	mooncrsg_rom,
@@ -1087,9 +1109,14 @@ struct GameDriver mooncrsg_driver =
 
 struct GameDriver mooncrsb_driver =
 {
-	"Moon Cresta (bootleg)",
+	__FILE__,
+	0,
 	"mooncrsb",
+	"Moon Cresta (bootleg)",
+	"????",
+	"?????",
 	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS\nANDREW SCOTT",
+	0,
 	&mooncrst_machine_driver,
 
 	mooncrsb_rom,
@@ -1107,9 +1134,14 @@ struct GameDriver mooncrsb_driver =
 
 struct GameDriver fantazia_driver =
 {
-	"Fantazia",
+	__FILE__,
+	0,
 	"fantazia",
+	"Fantazia",
+	"????",
+	"?????",
 	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS\nANDREW SCOTT",
+	0,
 	&mooncrst_machine_driver,
 
 	fantazia_rom,
@@ -1127,9 +1159,14 @@ struct GameDriver fantazia_driver =
 
 struct GameDriver eagle_driver =
 {
-	"Eagle",
+	__FILE__,
+	0,
 	"eagle",
+	"Eagle",
+	"????",
+	"?????",
 	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS\nANDREW SCOTT",
+	0,
 	&mooncrst_machine_driver,
 
 	eagle_rom,
@@ -1147,9 +1184,14 @@ struct GameDriver eagle_driver =
 
 struct GameDriver moonqsr_driver =
 {
-	"Moon Quasar",
+	__FILE__,
+	0,
 	"moonqsr",
+	"Moon Quasar",
+	"????",
+	"?????",
 	"Robert Anschuetz (Arcade emulator)\nMike Coates (decryption info)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott\nMarco Cassili",
+	0,
 	&moonqsr_machine_driver,
 
 	moonqsr_rom,
@@ -1167,9 +1209,14 @@ struct GameDriver moonqsr_driver =
 
 struct GameDriver checkman_driver =
 {
-	"Checkman",
+	__FILE__,
+	0,
 	"checkman",
+	"Checkman",
+	"????",
+	"?????",
 	"Brad Oliver (MAME driver)\nMalcolm Lear (hardware & encryption info)",
+	0,
 	&checkman_machine_driver,
 
 	checkman_rom,
@@ -1187,9 +1234,14 @@ struct GameDriver checkman_driver =
 
 struct GameDriver moonal2_driver =
 {
-	"Moon Alien Part 2",
+	__FILE__,
+	0,
 	"moonal2",
+	"Moon Alien Part 2",
+	"????",
+	"?????",
 	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS\nANDREW SCOTT",
+	0,
 	&moonal2_machine_driver,
 
 	moonal2_rom,
@@ -1207,9 +1259,14 @@ struct GameDriver moonal2_driver =
 
 struct GameDriver moonal2b_driver =
 {
-	"Moon Alien Part 2 (alternate)",
+	__FILE__,
+	0,
 	"moonal2b",
+	"Moon Alien Part 2 (alternate)",
+	"????",
+	"?????",
 	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS\nANDREW SCOTT",
+	0,
 	&moonal2_machine_driver,
 
 	moonal2b_rom,

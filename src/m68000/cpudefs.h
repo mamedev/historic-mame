@@ -13,17 +13,6 @@
 #define INLINE static inline
 #endif
 
-#ifndef __WATCOMC__
-#ifdef WIN32
-#define __inline__ __inline
-#else
-#define __inline__  INLINE
-#endif
-#endif
-#ifdef __WATCOMC__
-#define __inline__
-#endif
-
 
 #ifdef __MWERKS__
 #pragma require_prototypes off
@@ -171,7 +160,7 @@ extern ULONG aslmask_ulong[];
 #define VFLG (regflags.flags.v)
 
 #ifdef ASM_MEMORY
-__inline__ UWORD nextiword_opcode(void)
+INLINE UWORD nextiword_opcode(void)
 {
         asm(" \
                 movzwl  _regs+88,%ecx \
@@ -184,32 +173,32 @@ __inline__ UWORD nextiword_opcode(void)
 }
 #endif
 
-__inline__ UWORD nextiword(void)
+INLINE UWORD nextiword(void)
 {
     unsigned int i=regs.pc&0xffffff;
     regs.pc+=2;
     return (cpu_readop16(i));
 }
 
-__inline__ ULONG nextilong(void)
+INLINE ULONG nextilong(void)
 {
     unsigned int i=regs.pc&0xffffff;
     regs.pc+=4;
     return ((cpu_readop16(i)<<16) | cpu_readop16(i+2));
 }
 
-__inline__ void m68k_setpc(CPTR newpc)
+INLINE void m68k_setpc(CPTR newpc)
 {
     regs.pc = newpc;
     change_pc24(regs.pc&0xffffff);
 }
 
-__inline__ CPTR m68k_getpc(void)
+INLINE CPTR m68k_getpc(void)
 {
     return regs.pc;
 }
 
-__inline__ ULONG get_disp_ea (ULONG base)
+INLINE ULONG get_disp_ea (ULONG base)
 {
    UWORD dp = nextiword();
         int reg = (dp >> 12) & 7;
@@ -219,7 +208,7 @@ __inline__ ULONG get_disp_ea (ULONG base)
         return base + (BYTE)(dp) + regd;
 }
 
-__inline__ int cctrue(const int cc)
+INLINE int cctrue(const int cc)
 {
             switch(cc){
               case 0: return 1;                       /* T */
@@ -243,7 +232,7 @@ __inline__ int cctrue(const int cc)
              return 0;
 }
 
-__inline__ void MakeSR(void)
+INLINE void MakeSR(void)
 {
     regs.sr = ((regs.t1 << 15) | (regs.t0 << 14)
       | (regs.s << 13) | (regs.m << 12) | (regs.intmask << 8)
@@ -251,7 +240,7 @@ __inline__ void MakeSR(void)
       |  CFLG);
 }
 
-__inline__ void MakeFromSR(void)
+INLINE void MakeFromSR(void)
 {
   /*  int oldm = regs.m; */
     int olds = regs.s;

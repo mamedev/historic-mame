@@ -240,11 +240,11 @@ int gottlieb_laserdisc_status_r(int offset)
 			if (lasermpx == 1)
 				/* bits 0-2 frame number MSN */
 				/* bit 3 audio buffer ready */
-				/* bit 4 ready to send new laserdisc command */
+				/* bit 4 ready to send new laserdisc command? */
 				/* bit 5 disc ready */
 				/* bit 6 break in audio trasmission */
 				/* bit 7 missing audio clock */
-				return ((current_frame >> 16) & 0x07) | 0x18 | (rand() & 0x20);
+				return ((current_frame >> 16) & 0x07) | 0x10 | (rand() & 0x28);
 			else	/* read audio buffer */
 				return rand();
 			break;
@@ -1527,9 +1527,7 @@ static const char *qbert_sample_names[] =
 /* Reactor is the only game which doesn't have non volatile RAM */
 static int reactor_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -1557,9 +1555,7 @@ static int reactor_hiload(void)
 static void reactor_hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1574,9 +1570,7 @@ static void reactor_hisave(void)
 int gottlieb_nvram_load(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* Try loading static RAM */
@@ -1595,9 +1589,7 @@ int gottlieb_nvram_load(void)
 void gottlieb_nvram_save(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1610,9 +1602,14 @@ void gottlieb_nvram_save(void)
 
 struct GameDriver reactor_driver =
 {
-	"Reactor",
+	__FILE__,
+	0,
 	"reactor",
+	"Reactor",
+	"????",
+	"?????",
 	"Fabrice Frances",
+	0,
 	&reactor_machine_driver,
 
 	reactor_rom,
@@ -1630,9 +1627,14 @@ struct GameDriver reactor_driver =
 
 struct GameDriver mplanets_driver =
 {
-	"Mad Planets",
+	__FILE__,
+	0,
 	"mplanets",
+	"Mad Planets",
+	"????",
+	"?????",
 	"Fabrice Frances",
+	0,
 	&gottlieb_machine_driver,
 
 	mplanets_rom,
@@ -1650,9 +1652,14 @@ struct GameDriver mplanets_driver =
 
 struct GameDriver qbert_driver =
 {
-	"Q*Bert (US version)",
+	__FILE__,
+	0,
 	"qbert",
+	"Q*Bert (US version)",
+	"????",
+	"?????",
 	"Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\nDedicated to:\nWarren Davis\nJeff Lee\nDavid Thiel",
+	0,
 	&gottlieb_machine_driver,
 
 	qbert_rom,
@@ -1670,9 +1677,14 @@ struct GameDriver qbert_driver =
 
 struct GameDriver qbertjp_driver =
 {
-	"Q*Bert (Japanese version)",
+	__FILE__,
+	0,
 	"qbertjp",
+	"Q*Bert (Japanese version)",
+	"????",
+	"?????",
 	"Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\nDedicated to:\nWarren Davis\nJeff Lee\nDavid Thiel",
+	0,
 	&gottlieb_machine_driver,
 
 	qbertjp_rom,
@@ -1690,9 +1702,14 @@ struct GameDriver qbertjp_driver =
 
 struct GameDriver sqbert_driver =
 {
-	"FHMC Q*Bert",
+	__FILE__,
+	0,
 	"sqbert",
+	"FHMC Q*Bert",
+	"????",
+	"?????",
 	"Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\n Special thanks to:\nFred Sookiasian\n\nDedicated to:\nWarren Davis\nJeff Lee\nDavid Thiel",
+	0,
 	&gottlieb_machine_driver,
 
 	sqbert_rom,
@@ -1710,9 +1727,14 @@ struct GameDriver sqbert_driver =
 
 struct GameDriver qbertqub_driver =
 {
-	"Q*Bert Qubes",
+	__FILE__,
+	0,
 	"qbertqub",
+	"Q*Bert Qubes",
+	"????",
+	"?????",
 	"Fabrice Frances & Rodimus Prime (MAME driver)\nMarco Cassili",
+	0,
 	&qbertqub_machine_driver,
 
 	qbertqub_rom,
@@ -1730,9 +1752,14 @@ struct GameDriver qbertqub_driver =
 
 struct GameDriver krull_driver =
 {
-	"Krull",
+	__FILE__,
+	0,
 	"krull",
+	"Krull",
+	"????",
+	"?????",
 	"Fabrice Frances (MAME driver)\nMarco Cassili",
+	0,
 	&krull_machine_driver,
 
 	krull_rom,
@@ -1750,10 +1777,15 @@ struct GameDriver krull_driver =
 
 struct GameDriver mach3_driver =
 {
-	"M.A.C.H. 3",
+	__FILE__,
+	0,
 	"mach3",
+	"M.A.C.H. 3",
+	"????",
+	"?????",
 	"Fabrice Frances (MAME driver)\n\n"
 	"This is a LASER DISC game, so it doesn't work.",
+	0,
 	&mach3_machine_driver,
 
 	mach3_rom,
@@ -1771,10 +1803,15 @@ struct GameDriver mach3_driver =
 
 struct GameDriver usvsthem_driver =
 {
-	"Us vs. Them",
+	__FILE__,
+	0,
 	"usvsthem",
+	"Us vs. Them",
+	"????",
+	"?????",
 	"Fabrice Frances (MAME driver)\n\n"
 	"This is a LASER DISC game, so it doesn't work.",
+	0,
 	&usvsthem_machine_driver,
 
 	usvsthem_rom,
@@ -1792,9 +1829,14 @@ struct GameDriver usvsthem_driver =
 
 struct GameDriver stooges_driver =
 {
-	"Three Stooges",
+	__FILE__,
+	0,
 	"3stooges",
+	"Three Stooges",
+	"????",
+	"?????",
 	"Fabrice Frances (MAME driver)\nJohn Butler\nMarco Cassili",
+	0,
 	&stooges_machine_driver,
 
 	stooges_rom,
@@ -1812,9 +1854,14 @@ struct GameDriver stooges_driver =
 
 struct GameDriver curvebal_driver =
 {
-	"Curve Ball",
+	__FILE__,
+	0,
 	"curvebal",
+	"Curve Ball",
+	"????",
+	"?????",
 	"Fabrice Frances (MAME driver)",
+	0,
 	&gottlieb_machine_driver,
 
 	curvebal_rom,

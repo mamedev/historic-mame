@@ -74,10 +74,8 @@ void spiders_vh_update(struct osd_bitmap *bitmap)
 	int crtc6845_mem_size;
 	int video_addr,increment;
 
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-
 	unsigned char *RAM = Machine->memory_region[0];
+
 
         crtc6845_mem_size=crtc6845_horiz_disp*crtc6845_vert_disp*8;
 

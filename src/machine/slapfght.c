@@ -77,9 +77,9 @@ int slapfight_dpram_r(int offset)
 
 int slapfight_bankrom_r(int offset)
 {
-    /* get RAM pointer (this game is multiCPU, we can't assume the global */
-    /* RAM pointer is pointing to the right place) */
-    unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
     return RAM[bankaddress+offset];
 }
 

@@ -232,9 +232,14 @@ ROM_END
 
 struct GameDriver nitedrvr_driver =
 {
-	"Night Driver",
+	__FILE__,
+	0,
 	"nitedrvr",
+	"Night Driver",
+	"????",
+	"?????",
 	"Mike Balfour",
+	0,
 	&machine_driver,
 
 	nitedrvr_rom,

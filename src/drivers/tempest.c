@@ -180,6 +180,8 @@ High Scores:
 
 static int tempest_catch_busyloop (int offset)
 {
+	extern unsigned char *RAM;
+
 	if (cpu_getpreviouspc()==0xc7a7)
 		cpu_spinuntil_int();
 	return RAM[0x0053];
@@ -515,12 +517,14 @@ ROM_END
 
 struct GameDriver tempest_driver =
 {
-	"Tempest",
+	__FILE__,
+	0,
 	"tempest",
-	"Brad Oliver (Mame Driver)\n"
-	VECTOR_TEAM
-	"Keith Gerdes (Pokey protection)",
-
+	"Tempest",
+	"????",
+	"?????",
+	"Brad Oliver (MAME driver)\nVECTOR_TEAMKeith Gerdes (Pokey protection)",
+	0,
 	&machine_driver,
 
 	tempest_rom,
@@ -538,12 +542,14 @@ struct GameDriver tempest_driver =
 
 struct GameDriver temptube_driver =
 {
-	"Tempest Tubes",
+	__FILE__,
+	0,
 	"temptube",
-	"Brad Oliver (Mame driver)\n"
-	VECTOR_TEAM
-	"Keith Gerdes (Pokey protection)",
-
+	"Tempest Tubes",
+	"????",
+	"?????",
+	"Brad Oliver (MAME driver)\nVECTOR_TEAMKeith Gerdes (Pokey protection)",
+	0,
 	&machine_driver,
 
 	temptube_rom,

@@ -17,7 +17,6 @@ int VolumePTR = 0;
 int CurrentVolume = 100;
 
 
-unsigned char *RAM;
 unsigned char *ROM;
 
 FILE *errorlog;
@@ -138,15 +137,18 @@ int init_machine(void)
 	}
 
 
-	if (readroms (gamedrv->rom, gamedrv->name) != 0)
+	if (readroms() != 0)
 	{
 		free(Machine->input_ports);
 		return 1;
 	}
 
 
-	RAM = Machine->memory_region[drv->cpu[0].memory_region];
-	ROM = RAM;
+	{
+		extern unsigned char *RAM;
+		RAM = Machine->memory_region[drv->cpu[0].memory_region];
+		ROM = RAM;
+	}
 
 	/* decrypt the ROMs if necessary */
 	if (gamedrv->rom_decode) (*gamedrv->rom_decode)();
@@ -357,7 +359,7 @@ int updatescreen(void)
 	/* if the user pressed F3, reset the emulation */
 	if (osd_key_pressed(OSD_KEY_F3))
 	{
-		while (osd_key_pressed(OSD_KEY_F3));
+		while (osd_key_pressed(OSD_KEY_F3)) ;
 		machine_reset();
 	}
 
@@ -516,8 +518,6 @@ int updatescreen(void)
 		}
 #endif
 
-		osd_poll_joystick();
-
 		osd_update_display();
 	}
 
@@ -547,11 +547,11 @@ int run_machine(void)
 		{
 			if (sound_start() == 0) /* start the audio hardware */
 			{
+#ifndef macintosh /* LBO - This text is displayed in a dialog box. */
 				int i;
 				struct DisplayText dt[2];
 
 
-#ifndef macintosh /* LBO - This text is displayed in a dialog box. */
 				dt[0].text = "PLEASE DO NOT DISTRIBUTE THE SOURCE CODE AND/OR THE EXECUTABLE "
 						"APPLICATION WITH ANY ROM IMAGES.\n"
 						"DOING AS SUCH WILL HARM ANY FURTHER DEVELOPMENT OF MAME AND COULD "

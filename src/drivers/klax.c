@@ -285,7 +285,7 @@ static struct MachineDriver klax_machine_driver =
 	/* video hardware */
 	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
 	klax_gfxdecodeinfo,
-	256, 512,
+	512, 512,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_SUPPORTS_DIRTY,
@@ -363,9 +363,14 @@ ROM_END
 
 struct GameDriver klax_driver =
 {
-	"Klax",
+	__FILE__,
+	0,
 	"klax",
+	"Klax",
+	"????",
+	"?????",
 	"Aaron Giles (MAME driver)\nMike Cuddy (additional information)",
+	0,
 	&klax_machine_driver,
 
 	klax_rom,
@@ -384,9 +389,14 @@ struct GameDriver klax_driver =
 
 struct GameDriver klaxalt_driver =
 {
-	"Klax (Alternate)",
+	__FILE__,
+	0,
 	"klaxalt",
+	"Klax (Alternate)",
+	"????",
+	"?????",
 	"Aaron Giles (MAME driver)\nMike Cuddy (additional information)",
+	0,
 	&klax_machine_driver,
 
 	klaxalt_rom,

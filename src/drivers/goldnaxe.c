@@ -187,9 +187,11 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-void goldnaxe_init_machine(void);
 void goldnaxe_init_machine(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/*	Initialize Objects Bank vector */
 
 	static int bank[16] = { 0,2,8,10,16,18,0,0,4,6,12,14,20,22,0,0 };
@@ -284,9 +286,14 @@ ROM_END
 
 struct GameDriver goldnaxe_driver =
 {
-	"Golden Axe",
+	__FILE__,
+	0,
 	"goldnaxe",
+	"Golden Axe",
+	"????",
+	"?????",
 	"Mirko Buffoni         (Mame Driver)\nThierry Lescot & Nao  (Hardware Info)",
+	0,
 	&machine_driver,
 
 	goldnaxe_rom,

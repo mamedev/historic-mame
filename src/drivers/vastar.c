@@ -416,9 +416,14 @@ ROM_END
 
 struct GameDriver vastar_driver =
 {
-	"Vastar",
+	__FILE__,
+	0,
 	"vastar",
+	"Vastar",
+	"????",
+	"?????",
 	"Allard van der Bas\nNicola Salmoria",
+	0,
 	&machine_driver,
 
 	vastar_rom,

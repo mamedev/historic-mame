@@ -16,6 +16,9 @@ static int speedcheat = 0;	/* a well known hack allows to make Pac Man run at fo
 
 void pacman_init_machine(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the loaded set of ROMs allows the Pac Man speed hack */
 	if ((RAM[0x180b] == 0xbe && RAM[0x1ffd] == 0x00) ||
 			(RAM[0x180b] == 0x01 && RAM[0x1ffd] == 0xbd))
@@ -26,6 +29,9 @@ void pacman_init_machine(void)
 
 int pacman_interrupt(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* speed up cheat */
 	if (speedcheat)
 	{

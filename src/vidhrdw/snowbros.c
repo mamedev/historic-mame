@@ -58,6 +58,10 @@ void snowbros_vh_screenrefresh(struct osd_bitmap *bitmap)
     int x=0,y=0,offs;
 
 
+	/* recalc the palette if necessary */
+	palette_recalc ();
+
+
     /*
      * Sprite Tile Format
      * ------------------

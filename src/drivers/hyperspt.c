@@ -636,9 +636,11 @@ ROM_START( roadf_rom )
 ROM_END
 
 
+
 static void hyperspt_decode(void)
 {
 	int A;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	for (A = 0x4000;A < 0x10000;A++)
@@ -658,10 +660,8 @@ static int we_flipped_the_switch;
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
@@ -701,10 +701,8 @@ static int hiload(void)
 
 static void hisave(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -743,9 +741,14 @@ static void hisave(void)
 
 struct GameDriver hyperspt_driver =
 {
-	"HyperSports",
+	__FILE__,
+	0,
 	"hyperspt",
+	"HyperSports",
+	"????",
+	"?????",
 	"Chris Hardy (MAME driver)\nPaul Swan (color info)\nTatsuyuki Satoh(speech sound)",
+	0,
 	&hyperspt_machine_driver,
 
 	hyperspt_rom,
@@ -763,9 +766,14 @@ struct GameDriver hyperspt_driver =
 
 struct GameDriver roadf_driver =
 {
-	"Road Fighter",
+	__FILE__,
+	0,
 	"roadf",
+	"Road Fighter",
+	"????",
+	"?????",
 	"Chris Hardy (Hyper Sports driver)\nNicola Salmoria",
+	0,
 	&roadf_machine_driver,
 
 	roadf_rom,

@@ -242,6 +242,9 @@ ROM_END
 
 static void atetris_rom_move (void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
     // Move the lower 16k to 0x10000
     memcpy(&RAM[0x10000], &RAM[0x00000], 0x4000);
     memset(&RAM[0x00000], 0, 0x4000);
@@ -251,6 +254,8 @@ static void atetris_rom_move (void)
 static int hiload (void)
 {
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
    f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
    if (f)
@@ -272,6 +277,8 @@ static int hiload (void)
 static void hisave (void)
 {
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
    f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
    if (f)
@@ -284,9 +291,14 @@ static void hisave (void)
 
 struct GameDriver atetris_driver =
 {
-        "Tetris (Atari)",
+	__FILE__,
+	0,
         "atetris",
+        "Tetris (Atari)",
+	"????",
+	"?????",
         "Zsolt Vasvari",
+	0,
         &machine_driver,
 
         atetris_rom,
@@ -304,9 +316,14 @@ struct GameDriver atetris_driver =
 
 struct GameDriver atetrisa_driver =
 {
-        "Tetris (Atari) (alternate)",
+	__FILE__,
+	0,
         "atetrisa",
+        "Tetris (Atari) (alternate)",
+	"????",
+	"?????",
         "Zsolt Vasvari",
+	0,
         &machine_driver,
 
         atetrisa_rom,
@@ -324,9 +341,14 @@ struct GameDriver atetrisa_driver =
 
 struct GameDriver atetrisb_driver =
 {
-        "Tetris (Atari) (bootleg)",
+	__FILE__,
+	0,
         "atetrisb",
+        "Tetris (Atari) (bootleg)",
+	"????",
+	"?????",
         "Zsolt Vasvari",
+	0,
         &machine_driver,
 
         atetrisb_rom,
@@ -344,9 +366,14 @@ struct GameDriver atetrisb_driver =
 
 struct GameDriver atetcktl_driver =
 {
-        "Tetris (Atari) (Cocktail version)",
+	__FILE__,
+	0,
         "atetcktl",
+        "Tetris (Atari) (Cocktail version)",
+	"????",
+	"?????",
         "Zsolt Vasvari",
+	0,
         &machine_driver,
 
         atetcktl_rom,

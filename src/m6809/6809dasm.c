@@ -432,7 +432,7 @@ int Dasm6809 (char *buffer, int pc)
 printoperands:
 	pc += p;
 {
-   int i, rel, pb, offset=0, reg, pb2;
+   int rel, pb, offset=0, reg, pb2;
    int comma;
    int printdollar;                  /* print a leading $? before address */
 

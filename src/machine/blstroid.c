@@ -91,7 +91,7 @@ int blstroid_io_r (int offset)
 
 		if (atarigen_cpu_to_sound_ready) temp ^= 0x40;
 		temp ^= hblank ^= 0x10;
-		
+
 		return temp | 0xff00;
 	}
 	else
@@ -107,7 +107,7 @@ int blstroid_6502_switch_r (int offset)
 	if (atarigen_cpu_to_sound_ready) temp ^= 0x40;
 	if (atarigen_sound_to_cpu_ready) temp ^= 0x20;
 	if (tms5220_ready_r ()) temp ^= 0x10;
-	
+
 	return temp;
 }
 
@@ -127,6 +127,9 @@ void blstroid_tms5220_w (int offset, int data)
 
 void blstroid_6502_ctl_w (int offset, int data)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+
+
 	if (((data ^ last_ctl) & 0x02) && (data & 0x02))
 		tms5220_data_w (0, speech_val);
 	last_ctl = data;

@@ -39,7 +39,10 @@ void bosco_init_machine(void)
 
 int bosco_reset_r(int offset)
 {
-        bosco_hiscoreloaded = 0;
+	extern unsigned char *RAM;
+
+
+	bosco_hiscoreloaded = 0;
 
 	return RAM[offset];
 }

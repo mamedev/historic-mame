@@ -1510,9 +1510,14 @@ ROM_END
 
 struct GameDriver tapper_driver =
 {
-"Tapper (Budweiser)",
+	__FILE__,
+	0,
 	"tapper",
+	"Tapper (Budweiser)",
+	"????",
+	"?????",
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria",
+	0,
 	&tapper_machine_driver,
 
 	tapper_rom,
@@ -1557,22 +1562,27 @@ ROM_END
 
 struct GameDriver sutapper_driver =
 {
-"Tapper (Suntory)",
-"sutapper",
-"Christopher Kirmse\nAaron Giles\nNicola Salmoria",
-&tapper_machine_driver,
+	__FILE__,
+	0,
+	"sutapper",
+	"Tapper (Suntory)",
+	"????",
+	"?????",
+	"Christopher Kirmse\nAaron Giles\nNicola Salmoria",
+	0,
+	&tapper_machine_driver,
 
-sutapper_rom,
-0, 0,
-0,
-0,	/* sound_prom */
+	sutapper_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
 
-tapper_input_ports,
+	tapper_input_ports,
 
-0, 0,0,
-ORIENTATION_DEFAULT,
+	0, 0,0,
+	ORIENTATION_DEFAULT,
 
-tapper_hiload, tapper_hisave
+	tapper_hiload, tapper_hisave
 };
 
 
@@ -1604,9 +1614,14 @@ ROM_END
 
 struct GameDriver rbtapper_driver =
 {
-"Tapper (Root Beer)",
+	__FILE__,
+	0,
 	"rbtapper",
+	"Tapper (Root Beer)",
+	"????",
+	"?????",
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria",
+	0,
 	&tapper_machine_driver,
 
 	rbtapper_rom,
@@ -1656,9 +1671,14 @@ ROM_END
 
 struct GameDriver dotron_driver =
 {
-	"Discs of Tron",
+	__FILE__,
+	0,
 	"dotron",
+	"Discs of Tron",
+	"????",
+	"?????",
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nAlan J. McCormick (speech info)",
+	0,
 	&dotron_machine_driver,
 
 	dotron_rom,
@@ -1700,9 +1720,14 @@ ROM_END
 
 struct GameDriver destderb_driver =
 {
-	"Demolition Derby",
+	__FILE__,
+	0,
 	"destderb",
+	"Demolition Derby",
+	"????",
+	"?????",
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
+	0,
 	&destderb_machine_driver,
 
 	destderb_rom,
@@ -1746,9 +1771,14 @@ ROM_END
 
 struct GameDriver timber_driver =
 {
-	"Timber",
+	__FILE__,
+	0,
 	"timber",
+	"Timber",
+	"????",
+	"?????",
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
+	0,
 	&timber_machine_driver,
 
 	timber_rom,
@@ -1787,9 +1817,14 @@ ROM_END
 
 struct GameDriver rampage_driver =
 {
-	"Rampage",
+	__FILE__,
+	0,
 	"rampage",
+	"Rampage",
+	"????",
+	"?????",
 	"Aaron Giles\nChristopher Kirmse\nNicola Salmoria\nBrad Oliver",
+	0,
 	&rampage_machine_driver,
 
 	rampage_rom,
@@ -1826,9 +1861,14 @@ ROM_END
 
 struct GameDriver sarge_driver =
 {
-	"Sarge",
+	__FILE__,
+	0,
 	"sarge",
+	"Sarge",
+	"????",
+	"?????",
 	"Aaron Giles\nChristopher Kirmse\nNicola Salmoria\nBrad Oliver",
+	0,
 	&sarge_machine_driver,
 
 	sarge_rom,
@@ -1883,9 +1923,14 @@ ROM_END
 
 struct GameDriver spyhunt_driver =
 {
-	"Spy Hunter",
+	__FILE__,
+	0,
 	"spyhunt",
+	"Spy Hunter",
+	"????",
+	"?????",
 	"Aaron Giles\nChristopher Kirmse\nNicola Salmoria\nBrad Oliver\nLawnmower Man",
+	0,
 	&spyhunt_machine_driver,
 
 	spyhunt_rom,
@@ -1935,9 +1980,14 @@ ROM_END
 
 struct GameDriver crater_driver =
 {
-	"Crater Raider",
+	__FILE__,
+	0,
 	"crater",
+	"Crater Raider",
+	"????",
+	"?????",
 	"Aaron Giles\nChristopher Kirmse\nNicola Salmoria\nBrad Oliver\nLawnmower Man",
+	0,
 	&crater_machine_driver,
 
 	crater_rom,

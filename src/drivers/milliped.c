@@ -327,9 +327,14 @@ ROM_END
 
 struct GameDriver milliped_driver =
 {
-	"Millipede",
+	__FILE__,
+	0,
 	"milliped",
+	"Millipede",
+	"????",
+	"?????",
 	"Ivan Mackintosh\nNicola Salmoria\nJohn Butler\nAaron Giles\nBernd Wiebelt\nBrad Oliver",
+	0,
 	&machine_driver,
 
 	milliped_rom,

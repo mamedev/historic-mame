@@ -14,7 +14,9 @@ unsigned char jedi_soundlatch;
 unsigned char jedi_soundacklatch;
 unsigned char jedi_com_stat;
 
-void jedi_rom_banksel( int offset, int data) {
+void jedi_rom_banksel( int offset, int data)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
     if (data & 0x01) cpu_setbank (1, &RAM[0x10000]);
     if (data & 0x02) cpu_setbank (1, &RAM[0x14000]);

@@ -155,9 +155,6 @@ void spiders_vrif_w(int address,int data)
 int spiders_vrom_r(int address)
 {
 	int retval;
-
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
 	unsigned char *RAM = Machine->memory_region[3];
 
 	if(vrom_ctrl_mode)

@@ -546,10 +546,14 @@ void hisave(void)
 
 struct GameDriver mhavoc_driver =
 {
-	"Major Havoc",
+	__FILE__,
+	0,
 	"mhavoc",
+	"Major Havoc",
+	"????",
+	"?????",
 	CREDITS,
-
+	0,
 	&machine_driver,
 
 	mhavoc_rom,
@@ -567,10 +571,14 @@ struct GameDriver mhavoc_driver =
 
 struct GameDriver mhavoc2_driver =
 {
-	"Major Havoc (alternate version)",
+	__FILE__,
+	0,
 	"mhavoc2",
+	"Major Havoc (alternate version)",
+	"????",
+	"?????",
 	CREDITS,
-
+	0,
 	&machine_driver,
 
 	mhavoc2_rom,
@@ -588,10 +596,14 @@ struct GameDriver mhavoc2_driver =
 
 struct GameDriver mhavocrv_driver =
 {
-	"Major Havoc (Return to Vax)",
+	__FILE__,
+	0,
 	"mhavocrv",
+	"Major Havoc (Return to Vax)",
+	"????",
+	"?????",
 	CREDITS,
-
+	0,
 	&machine_driver,
 
 	mhavoc_rv_rom,

@@ -13,7 +13,7 @@
 ** 'rate'     is sampling rate and 'bufsiz' is the size of the
 ** buffer that should be updated at each interval
 */
-int NESInit(int num, int clock, int rate, int bitsize, int bufsiz, void **buffer );
+int NESInit(int num, int clk, int rate, int bitsize, int bufsiz, void **buffer );
 
 /*
 ** shutdown the NESPSG emulators .. make sure that no sound system stuff
@@ -48,7 +48,7 @@ unsigned char NESReadReg(int n, int r);
 /*
 ** set clockrate for one
 */
-void NESSetClock(int n,int clock,int rate);
+void NESSetClock(int n,int clk,int rate);
 
 /*
 ** set output gain

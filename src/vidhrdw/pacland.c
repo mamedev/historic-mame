@@ -76,6 +76,13 @@ void pacland_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 	{
 		COLOR(1,i) = *(color_prom++);
 	}
+
+	/* Intialize transparency */
+	if (palette_used_colors)
+	{
+		memset (palette_used_colors, PALETTE_COLOR_USED, Machine->drv->total_colors * sizeof (unsigned char));
+		palette_used_colors[0xff] = PALETTE_COLOR_TRANSPARENT;
+	}
 }
 
 
@@ -129,6 +136,7 @@ void pacland_scroll1_w(int offset,int data)
 void pacland_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	bankaddress = 0x10000 + ((data & 0x07) << 13);
@@ -257,6 +265,11 @@ void pacland_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	int offs;
 	int sx,sy, code, flipx, flipy, color;
+
+
+	/* recalc the palette if necessary */
+	if (palette_recalc ())
+		memset (dirtybuffer, 1, videoram_size);
 
 
 	/* for every character in the Video RAM, check if it has been modified */

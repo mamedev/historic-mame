@@ -112,10 +112,12 @@ extern unsigned char *eprom_playfieldpalram;
 extern int eprom_playfieldpalram_size;
 
 
+int eprom_paletteram_r (int offset);
 int eprom_playfieldram_r (int offset);
 int eprom_playfieldpalram_r (int offset);
 
 void eprom_latch_w (int offset, int data);
+void eprom_paletteram_w (int offset, int data);
 void eprom_playfieldram_w (int offset, int data);
 void eprom_playfieldpalram_w (int offset, int data);
 
@@ -153,7 +155,7 @@ void eprom_init_machine (void)
 int eprom_input_r (int offset)
 {
 	int result;
-	
+
 	if (offset & 0x10)
 	{
 		result = input_port_2_r (offset) + (input_port_1_r (offset) << 8);
@@ -226,7 +228,7 @@ int eprom_6502_switch_r (int offset)
 	if (atarigen_cpu_to_sound_ready) temp ^= 0x40;
 	if (atarigen_sound_to_cpu_ready) temp ^= 0x20;
 	if (tms5220_ready_r ()) temp ^= 0x10;
-	
+
 	return temp;
 }
 
@@ -243,6 +245,9 @@ static int last_ctl;
 
 void eprom_6502_ctl_w (int offset, int data)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+
+
 	if (((data ^ last_ctl) & 0x02) && (data & 0x02))
 		tms5220_data_w (0, speech_val);
 	last_ctl = data;
@@ -290,7 +295,7 @@ static struct MemoryReadAddress eprom_readmem[] =
 	{ 0x260000, 0x26001f, eprom_input_r },
 	{ 0x260020, 0x26002f, eprom_adc_r },
 	{ 0x260030, 0x260033, atarigen_sound_r },
-	{ 0x3e0000, 0x3e0fff, MRA_BANK2, &atarigen_paletteram, &atarigen_paletteram_size },
+	{ 0x3e0000, 0x3e0fff, eprom_paletteram_r, &atarigen_paletteram, &atarigen_paletteram_size },
 	{ 0x3f0000, 0x3f1fff, eprom_playfieldram_r, &atarigen_playfieldram, &atarigen_playfieldram_size },
 	{ 0x3f2000, 0x3f3fff, MRA_BANK3, &atarigen_spriteram, &atarigen_spriteram_size },
 	{ 0x3f4000, 0x3f4fff, MRA_BANK4, &atarigen_alpharam, &atarigen_alpharam_size },
@@ -313,7 +318,7 @@ static struct MemoryWriteAddress eprom_writemem[] =
 	{ 0x360010, 0x360013, eprom_latch_w },
 	{ 0x360020, 0x360023, eprom_sound_reset_w },
 	{ 0x360030, 0x360033, atarigen_sound_w },
-	{ 0x3e0000, 0x3e0fff, MWA_BANK2 },
+	{ 0x3e0000, 0x3e0fff, eprom_paletteram_w },
 	{ 0x3f0000, 0x3f1fff, eprom_playfieldram_w },
 	{ 0x3f2000, 0x3f3fff, MWA_BANK3 },
 	{ 0x3f4000, 0x3f4fff, MWA_BANK4 },
@@ -552,7 +557,7 @@ static struct MachineDriver eprom_machine_driver =
 	/* video hardware */
 	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	256, 2048,
+	2048, 2048,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
@@ -651,9 +656,14 @@ ROM_END
 
 struct GameDriver eprom_driver =
 {
-	"Escape from the Planet of the Robot Monsters",
+	__FILE__,
+	0,
 	"eprom",
+	"Escape from the Planet of the Robot Monsters",
+	"????",
+	"?????",
 	"Aaron Giles (MAME driver)\nTim Lindquist (hardware information)",
+	0,
 	&eprom_machine_driver,
 
 	eprom_rom,

@@ -158,6 +158,11 @@ void bublbobl_vh_screenrefresh(struct osd_bitmap *bitmap)
 	int gfx_num,gfx_code,gfx_offs;
 
 
+	/* recalc the palette if necessary */
+	if (palette_recalc ())
+		memset (dirtybuffer,1,videoram_size / 2);
+
+
 	/* Bubble Bobble doesn't have a real video RAM. All graphics (characters */
 	/* and sprites) are stored in the same memory region, and information on */
 	/* the background character columns is stored inthe area dd00-dd3f */

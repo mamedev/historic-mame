@@ -406,9 +406,7 @@ ROM_END
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -434,9 +432,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -450,9 +446,14 @@ static void hisave(void)
 
 struct GameDriver docastle_driver =
 {
-	"Mr. Do's Castle",
+	__FILE__,
+	0,
 	"docastle",
+	"Mr. Do's Castle",
+	"????",
+	"?????",
 	"MIRKO BUFFONI\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS",
+	0,
 	&machine_driver,
 
 	docastle_rom,
@@ -470,9 +471,14 @@ struct GameDriver docastle_driver =
 
 struct GameDriver docastl2_driver =
 {
-	"Mr. Do's Castle (alternate version)",
+	__FILE__,
+	0,
 	"docastl2",
+	"Mr. Do's Castle (alternate version)",
+	"????",
+	"?????",
 	"MIRKO BUFFONI\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS",
+	0,
 	&machine_driver,
 
 	docastl2_rom,
@@ -490,9 +496,14 @@ struct GameDriver docastl2_driver =
 
 struct GameDriver dounicorn_driver =
 {
-	"Mr. Do VS The Unicorns",
+	__FILE__,
+	0,
 	"douni",
+	"Mr. Do VS The Unicorns",
+	"????",
+	"?????",
 	"MIRKO BUFFONI\nNICOLA SALMORIA\nGARY WALTON\nSIMON WALLS\nLEE TAYLOR",
+	0,
 	&machine_driver,
 
 	dounicorn_rom,

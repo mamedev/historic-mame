@@ -251,9 +251,14 @@ ROM_END
 
 struct GameDriver aeroboto_driver =
 {
-	"Aeroboto",
+	__FILE__,
+	0,
 	"aeroboto",
+	"Aeroboto",
+	"????",
+	"?????",
 	"Carlos A. Lozano",
+	0,
 	&machine_driver,
 
 	aeroboto_rom,

@@ -44,6 +44,8 @@ int  starwars_interrupt (void);
 
 void starwars_out_w (int offset, int data)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 	switch (offset)
 	{
 		case 0:		/* Coin counter 1 */
@@ -393,11 +395,10 @@ ROM_END
 #if(EMPIRE==0)
 static int novram_load(void)
 {
-/* get RAM pointer (if game is multiCPU, we can't assume the global */
-/* RAM pointer is pointing to the right place) */
-unsigned char *RAM = Machine->memory_region[0];
-
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 	{
 		osd_fread(f,&RAM[0x4500],256);
@@ -409,9 +410,8 @@ unsigned char *RAM = Machine->memory_region[0];
 static void novram_save(void)
 {
 	void *f;
-	/* get RAM pointer (if game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -434,13 +434,14 @@ static void novram_save(const char *name)
 
 struct GameDriver starwars_driver =
 {
-	"Star Wars",
+	__FILE__,
+	0,
 	"starwars",
-	"Steve Baines (Mame driver)\n"
-	"Brad Oliver (Mame driver)\n"
-	"Frank Palazzolo (Mame driver)\n"
-	VECTOR_TEAM,
-
+	"Star Wars",
+	"????",
+	"?????",
+	"Steve Baines (MAME driver)\nBrad Oliver (MAME driver)\nFrank Palazzolo (MAME driver)\n"VECTOR_TEAM,
+	0,
 	&machine_driver,
 
 	starwars_rom,

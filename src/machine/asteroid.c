@@ -101,6 +101,8 @@ void asteroid_bank_switch_w (int offset,int data)
 {
 	static int asteroid_bank = 0;
 	int asteroid_newbank;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	asteroid_newbank = (data >> 2) & 1;
 	if (asteroid_bank != asteroid_newbank) {
@@ -123,6 +125,8 @@ void astdelux_bank_switch_w (int offset,int data)
 {
 	static int astdelux_bank = 0;
 	int astdelux_newbank;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	astdelux_newbank = (data >> 7) & 1;
 	if (astdelux_bank != astdelux_newbank) {
@@ -197,10 +201,14 @@ void llander_led_w (int offset,int data)
 
 int llander_zeropage_r(int offset)
 {
+	extern unsigned char *RAM;
+
 	return RAM[0x0100+offset];
 }
 
 void llander_zeropage_w(int offset,int data)
 {
+	extern unsigned char *RAM;
+
 	RAM[0x0100+offset]=data;
 }

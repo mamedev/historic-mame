@@ -36,6 +36,7 @@ void hexa_vh_convert_color_prom(unsigned char *palette, unsigned short *colortab
 void hexa_d008_w(int offset,int data)
 {
 	int bankaddress;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* bit 0 = flipx (or y?) */

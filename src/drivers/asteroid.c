@@ -463,6 +463,9 @@ static unsigned char astdelux_color_prom[] = { VEC_PAL_MONO_AQUA };
 
 static int asteroid1_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x001c],"\x00\x00",2) == 0 &&
 			memcmp(&RAM[0x0050],"\x00\x00",2) == 0 &&
@@ -484,6 +487,9 @@ static int asteroid1_hiload(void)
 
 static int asteroid2_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x001d],"\x00\x00",2) == 0 &&
 			memcmp(&RAM[0x0050],"\x00\x00",2) == 0 &&
@@ -508,6 +514,7 @@ static int asteroid2_hiload(void)
 static void asteroid1_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -520,6 +527,7 @@ static void asteroid1_hisave(void)
 static void asteroid2_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -743,11 +751,14 @@ ROM_END
 
 struct GameDriver asteroid_driver =
 {
-	"Asteroids (rev 1)",
+	__FILE__,
+	0,
 	"asteroid",
-	"Brad Oliver (Mame Driver)\n"
-	VECTOR_TEAM,
-
+	"Asteroids (rev 1)",
+	"????",
+	"?????",
+	"Brad Oliver (Mame Driver)\n"VECTOR_TEAM,
+	0,
 	&asteroid_machine_driver,
 
 	asteroid_rom,
@@ -765,11 +776,14 @@ struct GameDriver asteroid_driver =
 
 struct GameDriver asteroi2_driver =
 {
-	"Asteroids (rev 2)",
+	__FILE__,
+	0,
 	"asteroi2",
-	"Brad Oliver (Mame Driver)\n"
-	VECTOR_TEAM,
-
+	"Asteroids (rev 2)",
+	"????",
+	"?????",
+	"Brad Oliver (Mame Driver)\n"VECTOR_TEAM,
+	0,
 	&asteroid_machine_driver,
 
 	asteroi2_rom,
@@ -824,11 +838,14 @@ static const char *astdelux_sample_names[] =
 
 struct GameDriver astdelux_driver =
 {
-	"Asteroids Deluxe",
+	__FILE__,
+	0,
 	"astdelux",
-	"Brad Oliver (Mame Driver)\n"
-	VECTOR_TEAM,
-
+	"Asteroids Deluxe",
+	"????",
+	"?????",
+	"Brad Oliver (Mame Driver)\n"VECTOR_TEAM,
+	0,
 	&astdelux_machine_driver,
 
 	astdelux_rom,
@@ -847,11 +864,14 @@ struct GameDriver astdelux_driver =
 #if 0 /* the romset floating around is probably broken */
 struct GameDriver astdelu1_driver =
 {
-	"Asteroids Deluxe (alternate version)",
+	__FILE__,
+	0,
 	"astdelu1",
-	"Brad Oliver (Mame Driver)\n"
-	VECTOR_TEAM,
-
+	"Asteroids Deluxe (alternate version)",
+	"????",
+	"?????",
+	"Brad Oliver (Mame Driver)\n"VECTOR_TEAM,
+	0,
 	&astdelux_machine_driver,
 
 	astdelu1_rom,
@@ -883,12 +903,14 @@ ROM_END
 
 struct GameDriver llander_driver =
 {
-	"Lunar Lander",
+	__FILE__,
+	0,
 	"llander",
-	"Brad Oliver (Mame Driver)\n"
-	"Keith Wilkins (Sound)\n"
-	VECTOR_TEAM,
-
+	"Lunar Lander",
+	"????",
+	"?????",
+	"Brad Oliver (Mame Driver)\nKeith Wilkins (Sound)\n"VECTOR_TEAM,
+	0,
 	&llander_machine_driver,
 
 	llander_rom,

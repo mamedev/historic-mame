@@ -196,9 +196,6 @@ struct osd_bitmap
 
 #define X_AXIS          1
 #define Y_AXIS          2
-#define NO_TRAK         1000000
-#define NO_ANALOGJOY    1000000
-
 
 extern int video_sync;
 
@@ -254,8 +251,8 @@ int osd_joy_pressed(int joycode);
 
 void osd_trak_read(int *deltax,int *deltay);
 
-/* return a value in the range -128 .. 128 (yes, 128, not 127) */
-int osd_analogjoy_read(int axis);
+/* return values in the range -128 .. 128 (yes, 128, not 127) */
+void osd_analogjoy_read(int *analog_x, int *analog_y);
 
 /* file handling routines */
 #define OSD_FILETYPE_ROM 1

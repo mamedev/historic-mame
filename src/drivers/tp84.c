@@ -561,9 +561,14 @@ static void hisave(void)
 
 struct GameDriver tp84_driver =
 {
-	"Time Pilot 84",
+	__FILE__,
+	0,
 	"tp84",
+	"Time Pilot 84",
+	"????",
+	"?????",
 	"Marc Lafontaine (MAME driver)\nJuan Carlos Lorente (high score)\nMarco Cassili",
+	0,
 	&machine_driver,		/* MachineDriver * */
 
 	tp84_rom,			/* RomModule * */

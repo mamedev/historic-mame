@@ -316,8 +316,6 @@ if (palette_recalc())
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-		int sx,sy;
-
 		sy = offs / 64;
 		sx = offs % 64 - 8;
 

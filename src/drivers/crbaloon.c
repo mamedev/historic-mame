@@ -355,9 +355,14 @@ ROM_END
 
 struct GameDriver crbaloon_driver =
 {
-	"Crazy Balloon",
+	__FILE__,
+	0,
 	"crbaloon",
+	"Crazy Balloon",
+	"????",
+	"?????",
 	"Nicola Salmoria",
+	0,
 	&machine_driver,
 
 	crbaloon_rom,
@@ -375,9 +380,14 @@ struct GameDriver crbaloon_driver =
 
 struct GameDriver crbalon2_driver =
 {
-	"Crazy Balloon (alternate)",
+	__FILE__,
+	0,
 	"crbalon2",
+	"Crazy Balloon (alternate)",
+	"????",
+	"?????",
 	"Nicola Salmoria",
+	0,
 	&machine_driver,
 
 	crbalon2_rom,

@@ -493,9 +493,14 @@ ROM_END
 
 struct GameDriver gaiden_driver =
 {
-	"Ninja Gaiden",
+	__FILE__,
+	0,
 	"gaiden",
+	"Ninja Gaiden",
+	"????",
+	"?????",
 	"Alex Pasadyn",
+	0,
 	&machine_driver,
 
 	gaiden_rom,
@@ -512,9 +517,14 @@ struct GameDriver gaiden_driver =
 
 struct GameDriver shadoww_driver =
 {
-	"Shadow Warriors",
+	__FILE__,
+	0,
 	"shadoww",
+	"Shadow Warriors",
+	"????",
+	"?????",
 	"Alex Pasadyn",
+	0,
 	&machine_driver,
 
 	shadoww_rom,

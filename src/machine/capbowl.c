@@ -19,13 +19,15 @@ void capbowl_init_machine(void)
 {
 	/* Initialize the ticket dispenser to 100 milliseconds */
 	/* (I'm not sure what the correct value really is) */
-	ticket_dispenser_init(100, TICKET_ACTIVE_HIGH);
+	ticket_dispenser_init(100, TICKET_MOTOR_ACTIVE_HIGH, TICKET_STATUS_ACTIVE_LOW);
 }
 
 
 void capbowl_rom_select_w(int offset,int data)
 {
 	int bankaddress = 0x10000 + ((data & 0x0c) << 13) + ((data & 0x01) << 14);
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	cpu_setbank(1,&RAM[bankaddress]);
 }

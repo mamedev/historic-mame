@@ -340,7 +340,7 @@ void lottofun_init_machine (void)
 
 	/* Initialize the ticket dispenser to 70 milliseconds */
 	/* (I'm not sure what the correct value really is) */
-	ticket_dispenser_init(70, TICKET_ACTIVE_LOW);
+	ticket_dispenser_init(70, TICKET_MOTOR_ACTIVE_LOW, TICKET_STATUS_ACTIVE_HIGH);
 }
 
 
@@ -539,6 +539,8 @@ int stargate_catch_loop_r (int offset)
 void defender_bank_select_w (int offset,int data)
 {
 	static int bank[8] = { 0x0c000, 0x10000, 0x11000, 0x12000, 0x0c000, 0x0c000, 0x0c000, 0x13000 };
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* set bank address */
 	cpu_setbank (1, &RAM[bank[data & 7]]);
@@ -651,6 +653,7 @@ int defender_catch_loop_r(int offset)
 void colony7_bank_select_w (int offset,int data)
 {
 	static int bank[8] = { 0x0c000, 0x10000, 0x11000, 0x12000, 0x0c000, 0x0c000, 0x0c000, 0xc000 };
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 	/* set bank address */
 	cpu_setbank (1, &RAM[bank[data & 7]]);
@@ -803,6 +806,9 @@ static int bank[16] = { 0x00000, 0x10000, 0x14000, 0x18000, 0x1c000, 0x20000, 0x
 
 void blaster_vram_select_w (int offset, int data)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	vram_bank = data;
 	if (vram_bank)
 	{
@@ -819,6 +825,9 @@ void blaster_vram_select_w (int offset, int data)
 
 void blaster_bank_select_w (int offset, int data)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	blaster_bank = data & 15;
 	if (vram_bank)
 	{

@@ -4,7 +4,7 @@
 **
 ** Copyright (C) 1998 Tatsuyuki Satoh , MultiArcadeMachineEmurator development
 **
-** Version 0.33b
+** Version 0.33c
 **
 */
 
@@ -49,11 +49,11 @@
 /* ------------------------------------------------------------------ */
 #define MAME_TIMER 			/* use Aaron's timer system      */
 /* -------------------- speed up optimize switch -------------------- */
-//#define SEG_SUPPORT		/* OPN SSG type envelope support */
+/*#define SEG_SUPPORT		   OPN SSG type envelope support   */
 #define S3_SUPPORT			/* OPN 3SLOT mode support        */
 #define CSM_SUPPORT			/* CSM mode support              */
 #define TL_SAVE_MEM			/* save some memories for total level */
-//#define LFO_SUPPORT			/* LFO support               */
+/*#define LFO_SUPPORT			   LFO support                 */
 
 /* -------------------- preliminary define section --------------------- */
 /* attack/decay rate time rate */
@@ -195,7 +195,7 @@ typedef struct fm_state {
 	void *timer_b_timer;		/* timer for b         */
 	/* speedup customize */
 	/* time tables */
-	unsigned int DT_TABLE[8][32];/* detune tables       */
+	signed int DT_TABLE[8][32];     /* detune tables       */
 	signed int AR_TABLE[94];	/* atttack rate tables */
 	signed int DR_TABLE[94];	/* decay rate tables   */
 }FM_ST;
@@ -205,7 +205,7 @@ typedef struct ym2203_f {
 	FMSAMPLE *Buf;				/* sound buffer */
 	FM_ST ST;					/* general state     */
 	FM_CH CH[3];				/* channel state     */
-//	unsigned char PR;			/* freqency priscaler*/
+/*	unsigned char PR;			   freqency priscaler  */
 	/* 3 slot mode state */
 	unsigned int  fc3[3];		/* fnum3,blk3  :calcrated */
 	unsigned char fn3_h[3];		/* freq3 latch       */
@@ -374,7 +374,7 @@ static int carrier;			/* connect for carrier    */
 
 /* --------------------- subroutines  --------------------- */
 /* ----- key on  ----- */
-static inline void FM_KEYON(FM_CH *CH , int s )
+INLINE void FM_KEYON(FM_CH *CH , int s )
 {
 	if( CH->evm[s]<= ENV_MOD_RR){
 		/* sin wave restart */
@@ -391,18 +391,18 @@ static inline void FM_KEYON(FM_CH *CH , int s )
 	}
 }
 /* ----- key off ----- */
-static inline void FM_KEYOFF(FM_CH *CH , int s )
+INLINE void FM_KEYOFF(FM_CH *CH , int s )
 {
 	if( CH->evm[s] > ENV_MOD_RR){
 		CH->evm[s] = ENV_MOD_RR;
-		//if( CH->evsr[s] == 0 ) CH->evm[s] &= 0xfe;
+		/*if( CH->evsr[s] == 0 ) CH->evm[s] &= 0xfe;*/
 	}
 }
 
 /* ---------- calcrate Envelope Generator & Phase Generator ---------- */
 /* return == -1:envelope silent */
 /*        >=  0:envelope output */
-static inline signed int FM_CALC_SLOT( FM_CH *CH  , int s )
+INLINE signed int FM_CALC_SLOT( FM_CH *CH  , int s )
 {
 	signed int env_out;
 
@@ -427,7 +427,7 @@ static inline signed int FM_CALC_SLOT( FM_CH *CH  , int s )
 			/* next DR */
 			CH->evm[s] = ENV_MOD_DR;
 /* MB 980409  commented out the following line to fix Bubble Bobble */
-			//if( CH->evsd[s] == 0 ) CH->evm[s] &= 0xfe; /* stop */
+			/*if( CH->evsd[s] == 0 ) CH->evm[s] &= 0xfe;    stop   */
 
 			CH->evc[s] = 0;
 #ifdef SEG_SUPPORT
@@ -454,7 +454,7 @@ static inline signed int FM_CALC_SLOT( FM_CH *CH  , int s )
 		/* next SR */
 		CH->evm[s] = ENV_MOD_SR;
 /* MB 980409  commented out the following line to fix Bubble Bobble */
-		//if( CH->evss[s] == 0 ) CH->evm[s] &= 0xfe; /* stop */
+		/*if( CH->evss[s] == 0 ) CH->evm[s] &= 0xfe;    stop   */
 		CH->evc[s] = CH->SL[s];
 		break;
 	case ENV_MOD_SR:
@@ -463,7 +463,7 @@ static inline signed int FM_CALC_SLOT( FM_CH *CH  , int s )
 			break;
 		}
 		/* wait for key off */
-		//CH->evm[s]&= 0xf0;		/* off */
+		/*CH->evm[s]&= 0xf0;		   off   */
 		CH->evc[s] = ENV_OFF;
 		break;
 	case ENV_MOD_RR:
@@ -598,7 +598,7 @@ static void set_algorythm( FM_CH *CH , int algo_fb )
 /* operator output calcrator */
 #define OP_OUT(SLOT,CON)   SIN_TABLE[((CH->Cnt[SLOT]+CON)/(0x1000000/SIN_ENT))&(SIN_ENT-1)][env_out]
 /* ---------- calcrate one of channel ---------- */
-static inline int FM_CALC_CH( FM_CH *CH )
+INLINE int FM_CALC_CH( FM_CH *CH )
 {
 	int op_out;
 	int env_out;
@@ -643,7 +643,7 @@ static inline int FM_CALC_CH( FM_CH *CH )
 	return carrier;
 }
 /* ---------- frequency counter for operater update ---------- */
-static inline void CALC_FCSLOT(FM_CH *CH , int s , int fc , int kc )
+INLINE void CALC_FCSLOT(FM_CH *CH , int s , int fc , int kc )
 {
 	int ksr;
 
@@ -663,7 +663,7 @@ static inline void CALC_FCSLOT(FM_CH *CH , int s , int fc , int kc )
 }
 
 /* ---------- frequency counter  ---------- */
-static inline void CALC_FCOUNT(FM_CH *CH )
+INLINE void CALC_FCOUNT(FM_CH *CH )
 {
 	if( CH->Incr[SLOT1]==-1){
 		int fc = CH->fc;
@@ -676,7 +676,7 @@ static inline void CALC_FCOUNT(FM_CH *CH )
 }
 
 /* ---------- frequency counter  ---------- */
-static inline void OPM_CALC_FCOUNT(YM2151 *OPM , FM_CH *CH )
+INLINE void OPM_CALC_FCOUNT(YM2151 *OPM , FM_CH *CH )
 {
 	if( CH->Incr[SLOT1]==-1)
 	{
@@ -793,7 +793,7 @@ static void timer_callback_B_OPN(int param)
 #else /* MAME_TIMER */
 
 /* ---------- calcrate timer A ---------- */
-static inline void CALC_TIMER_A(FM_ST *ST , FM_CH *CSM_CH )
+INLINE void CALC_TIMER_A(FM_ST *ST , FM_CH *CSM_CH )
 {
 	if( ST->TAC )
 	{
@@ -824,7 +824,7 @@ static inline void CALC_TIMER_A(FM_ST *ST , FM_CH *CSM_CH )
 	}
 }
 /* ---------- calcrate timer B ---------- */
-static inline void CALC_TIMER_B(FM_ST *ST,int step)
+INLINE void CALC_TIMER_B(FM_ST *ST,int step)
 {
 	if( ST->TBC ){
 		if( (ST->TBC -= ST->freqbase*step) <= 0 )
@@ -932,7 +932,7 @@ static int FMInitTable( void )
 		rate = ((1<<TL_BITS)-1)/pow(10,EG_STEP*t/20);	/* dB -> voltage */
 		TL_TABLE[       t] =  (int)rate;
 		TL_TABLE[TL_MAX+t] = -TL_TABLE[t];
-//		if(errorlog) fprintf(errorlog,"TotalLevel(%3d) = %x\n",t,TL_TABLE[t]);
+/*		if(errorlog) fprintf(errorlog,"TotalLevel(%3d) = %x\n",t,TL_TABLE[t]);*/
 	}
 	/* fill volume off area */
 	for ( t = EG_ENT-1; t < TL_MAX ;t++){
@@ -951,7 +951,7 @@ static int FMInitTable( void )
 		SIN_TABLE[          s] = SIN_TABLE[SIN_ENT/2-s] = &TL_TABLE[j];
         /* degree 180 - 270    , degree 360 - 270 : minus section */
 		SIN_TABLE[SIN_ENT/2+s] = SIN_TABLE[SIN_ENT  -s] = &TL_TABLE[TL_MAX+j];
-//		if(errorlog) fprintf(errorlog,"sin(%3d) = %f:%f db\n",s,pom,(float)j * EG_STEP);
+/*		if(errorlog) fprintf(errorlog,"sin(%3d) = %f:%f db\n",s,pom,(float)j * EG_STEP);*/
 	}
 
 	/* attack count -> envelope count */
@@ -963,7 +963,7 @@ static int FMInitTable( void )
 		if( j > ENV_OFF ) j = ENV_OFF;
 
 		AR_CURVE[i]=j;
-//		if (errorlog) fprintf(errorlog,"arc->env %04i = %x\n",i,j>>ENV_BITS);
+/*		if (errorlog) fprintf(errorlog,"arc->env %04i = %x\n",i,j>>ENV_BITS);*/
 	}
 
 	return 1;
@@ -997,7 +997,7 @@ void OPNSetPris(int num , int pris , int SSGpris)
 		/* opn freq counter = 20bit */
 		OPN->FN_TABLE[fn] = (float)fn * OPN->ST.freqbase / 4096  * FREQ_RATE * (1<<7) / 2;
 	}
-//	if(errorlog) fprintf(errorlog,"OPN %d set priscaler %d\n",num,pris);
+/*	if(errorlog) fprintf(errorlog,"OPN %d set priscaler %d\n",num,pris);*/
 }
 
 /* ---------- reset one of chip ---------- */
@@ -1006,7 +1006,7 @@ void OPNResetChip(int num)
     int i;
     YM2203 *OPN = &(FMOPN[num]);
 
-//	OPNSetPris( num , 6 , 4); /* 1/6 , 1/4 */
+/*	OPNSetPris( num , 6 , 4);    1/6 , 1/4   */
 	OPNSetPris( num , 3 , 2); /* 1/3 , 1/2 */
 	reset_channel( &OPN->ST , &OPN->CH[0] , 3 );
 	/* status clear */
@@ -1137,7 +1137,7 @@ void OPNWriteReg(int n, int r, int v)
 				if (OPN->ST.timer_b_timer == 0)
 				{
 					OPN->ST.TBC = ( 256-OPN->ST.TB)<<(4+12);
-					//if (OPN->ST.handler)
+					/*if (OPN->ST.handler)*/
 						OPN->ST.timer_b_timer = timer_set ((double)OPN->ST.TBC / ((double)OPN->ST.freqbase * (double)OPN->ST.rate), n, timer_callback_B_OPN);
 				}
 			}
@@ -1146,7 +1146,7 @@ void OPNWriteReg(int n, int r, int v)
 				if (OPN->ST.timer_a_timer == 0)
 				{
 					OPN->ST.TAC = (1024-OPN->ST.TA)<<12;
-					//if (OPN->ST.handler)
+					/*if (OPN->ST.handler)*/
 						OPN->ST.timer_a_timer = timer_set ((double)OPN->ST.TAC / ((double)OPN->ST.freqbase * (double)OPN->ST.rate), n, timer_callback_A_OPN);
 				}
 			}
@@ -1184,7 +1184,7 @@ void OPNWriteReg(int n, int r, int v)
 			if(v&0x20) FM_KEYON(CH,SLOT2); else FM_KEYOFF(CH,SLOT2);
 			if(v&0x40) FM_KEYON(CH,SLOT3); else FM_KEYOFF(CH,SLOT3);
 			if(v&0x80) FM_KEYON(CH,SLOT4); else FM_KEYOFF(CH,SLOT4);
-//			if(errorlog) fprintf(errorlog,"OPN %d:%d : KEY %02X\n",n,c,v&0xf0);
+/*			if(errorlog) fprintf(errorlog,"OPN %d:%d : KEY %02X\n",n,c,v&0xf0);*/
 			break;
 		case 0x2a:	/* DAC data (YM2612) */
 			break;
@@ -1223,25 +1223,25 @@ void OPNWriteReg(int n, int r, int v)
 		CH->TLL[s] = CH->TL[s] + KSL[CH->kcode];
 		break;
 	case 0x50:	/* KS, AR */
-//		if(errorlog) fprintf(errorlog,"OPN %d,%d,%d : AR %d\n",n,c,s,v&0x1f);
+/*		if(errorlog) fprintf(errorlog,"OPN %d,%d,%d : AR %d\n",n,c,s,v&0x1f);*/
 		CH->KSR[s]  = 3-(v>>6);
 		CH->AR[s]   = (v&=0x1f) ? &OPN->ST.AR_TABLE[v<<1] : RATE_0;
 		CH->evsa[s] = CH->AR[s][CH->ksr[s]];
 		CH->Incr[SLOT1]=-1;
 		break;
 	case 0x60:	/*     DR */
-//		if(errorlog) fprintf(errorlog,"OPN %d,%d,%d : DR %d\n",n,c,s,v&0x1f);
+/*		if(errorlog) fprintf(errorlog,"OPN %d,%d,%d : DR %d\n",n,c,s,v&0x1f);*/
 		/* bit7 = AMS ENABLE(YM2612) */
 		CH->DR[s] = (v&=0x1f) ? &OPN->ST.DR_TABLE[v<<1] : RATE_0;
 		CH->evsd[s] = CH->DR[s][CH->ksr[s]];
 		break;
 	case 0x70:	/*     SR */
-//		if(errorlog) fprintf(errorlog,"OPN %d,%d,%d : SR %d\n",n,c,s,v&0x1f);
+/*		if(errorlog) fprintf(errorlog,"OPN %d,%d,%d : SR %d\n",n,c,s,v&0x1f);*/
 		CH->SR[s] = (v&=0x1f) ? &OPN->ST.DR_TABLE[v<<1] : RATE_0;
 		CH->evss[s] = CH->SR[s][CH->ksr[s]];
 		break;
 	case 0x80:	/* SL, RR */
-//		if(errorlog) fprintf(errorlog,"OPN %d,%d,%d : SL %d RR %d \n",n,c,s,v>>4,v&0x0f);
+/*		if(errorlog) fprintf(errorlog,"OPN %d,%d,%d : SL %d RR %d \n",n,c,s,v>>4,v&0x0f);*/
 		CH->SL[s] = SL_TABLE[(v>>4)];
 		CH->RR[s] = (v&=0x0f) ? &OPN->ST.DR_TABLE[(v<<2)|2] : RATE_0;
 		CH->evsr[s] = CH->RR[s][CH->ksr[s]];
@@ -1288,7 +1288,7 @@ void OPNWriteReg(int n, int r, int v)
 		switch(s){
 		case 0:		/* 0xb0-0xb2 : FB,ALGO */
 			set_algorythm( CH , v );
-//			if(errorlog) fprintf(errorlog,"OPN %d,%d : AL %d FB %d\n",n,c,v&7,(v>>3)&7);
+/*			if(errorlog) fprintf(errorlog,"OPN %d,%d : AL %d FB %d\n",n,c,v&7,(v>>3)&7);*/
 			break;
 		}
 		break;
@@ -1410,20 +1410,18 @@ void OPMInitTable( int num )
 {
     YM2151 *OPM = &(FMOPM[num]);
 	int i;
-	long int mult;
 	float pom;
-	float rate = 3579545.0 / FMOPM[num].ST.clock * FMOPM[num].ST.rate;
+	float rate = (float)(1<<FREQ_BITS) / (3579545.0 / FMOPM[num].ST.clock * FMOPM[num].ST.rate);
 
-	mult = 1<<(FREQ_BITS-1);
-	for (i=0; i<8*13*64; i++)
+	for (i=0; i<8*12*64+950; i++)
 	{
 		/* This calculation type was used from the Jarek's YM2151 emulator */
-		pom = 6.875 * pow (2, ((i+4*64)*1.5625/1200.0) ); //13.75Hz is note A 12semitones below A-0, so D#0 is 4 semitones above then
-		//calculate phase increment for above precounted Hertz value
-		OPM->KC_TABLE[i] = (pom/rate)*mult; /*fixed point*/
-
-//		if(errorlog) fprintf(errorlog,"OPM KC %d = %x\n",i,OPM->KC_TABLE[i]);
+		pom = 6.875 * pow (2, ((i+4*64)*1.5625/1200.0) ); /*13.75Hz is note A 12semitones below A-0, so D#0 is 4 semitones above then*/
+		/*calculate phase increment for above precounted Hertz value*/
+		OPM->KC_TABLE[i] = (unsigned int)(pom * rate);
+		/*if(errorlog) fprintf(errorlog,"OPM KC %d = %x\n",i,OPM->KC_TABLE[i]);*/
 	}
+
 	/* make time tables */
 	init_timetables( &OPM->ST , OPM_DTTABLE , OPM_ARRATE , OPM_DRRATE );
 }
@@ -1588,7 +1586,7 @@ void OPMWriteReg(int n, int r, int v)
 				if (OPM->ST.timer_b_timer == 0)
 				{
 					OPM->ST.TBC = ( 256-OPM->ST.TB)<<(4+12);
-					//if (OPM->ST.handler)
+					/*if (OPM->ST.handler)*/
 						OPM->ST.timer_b_timer = timer_set ((double)OPM->ST.TBC / ((double)OPM->ST.freqbase * (double)OPM->ST.rate), n, timer_callback_B_OPM);
 				}
 			}
@@ -1597,7 +1595,7 @@ void OPMWriteReg(int n, int r, int v)
 				if (OPM->ST.timer_a_timer == 0)
 				{
 					OPM->ST.TAC = (1024-OPM->ST.TA)<<12;
-					//if (OPM->ST.handler)
+					/*if (OPM->ST.handler)*/
 						OPM->ST.timer_a_timer = timer_set ((double)OPM->ST.TAC / ((double)OPM->ST.freqbase * (double)OPM->ST.rate), n, timer_callback_A_OPM);
 				}
 			}

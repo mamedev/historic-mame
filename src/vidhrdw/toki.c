@@ -477,7 +477,6 @@ void toki_draw_foreground(struct osd_bitmap *bitmap)
 
 void toki_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-
 	title_on = (READ_WORD(&toki_foreground_videoram[0x710])==0x44) ? 1:0;
 
  	toki_draw_foreground(bitmap_frg);
@@ -486,12 +485,12 @@ void toki_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	if (title_on)
 	{
-	        copyscrollbitmap(bitmap,bitmap_bg1,1,&bg1_scrollx,1,&bg1_scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-        	copyscrollbitmap(bitmap,bitmap_bg2,1,&bg2_scrollx,1,&bg2_scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+		copyscrollbitmap(bitmap,bitmap_bg1,1,&bg1_scrollx,1,&bg1_scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,bitmap_bg2,1,&bg2_scrollx,1,&bg2_scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
 	} else
 	{
-	        copyscrollbitmap(bitmap,bitmap_bg2,1,&bg2_scrollx,1,&bg2_scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-        	copyscrollbitmap(bitmap,bitmap_bg1,1,&bg1_scrollx,1,&bg1_scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+		copyscrollbitmap(bitmap,bitmap_bg2,1,&bg2_scrollx,1,&bg2_scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,bitmap_bg1,1,&bg1_scrollx,1,&bg1_scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
 	}
 
 	toki_render_sprites(bitmap);

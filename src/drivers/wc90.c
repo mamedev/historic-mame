@@ -82,15 +82,21 @@ void wc90_palette_w( int offset, int v );
 void wc90_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
-static void wc90_bankswitch_w( int offset,int data ) {
+static void wc90_bankswitch_w( int offset,int data )
+{
 	int bankaddress;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	bankaddress = 0x10000 + ( ( data & 0xf8 ) << 8 );
 	cpu_setbank( 1,&RAM[bankaddress] );
 }
 
-static void wc90_bankswitch1_w( int offset,int data ) {
+static void wc90_bankswitch1_w( int offset,int data )
+{
 	int bankaddress;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+
 
 	bankaddress = 0x10000 + ( ( data & 0xf8 ) << 8 );
 	cpu_setbank( 2,&RAM[bankaddress] );
@@ -430,9 +436,7 @@ static struct MachineDriver wc90_machine_driver =
 
 static int wc90_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
         /* the color RAM is initialized when the startup reset is finished */
@@ -457,10 +461,8 @@ static int wc90_hiload(void)
 static void wc90_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 
         /* for avoiding problems when we reset the game by pressing the F3 key */
         RAM[0xc200] = 0x00;
@@ -503,9 +505,14 @@ ROM_END
 
 struct GameDriver wc90_driver =
 {
-	"World Cup 90",
+	__FILE__,
+	0,
 	"wc90",
+	"World Cup 90",
+	"????",
+	"?????",
         "Ernesto Corvi",
+	0,
 	&wc90_machine_driver,
 
 	wc90_rom,

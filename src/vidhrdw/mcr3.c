@@ -45,7 +45,7 @@ void mcr3_vh_convert_color_prom(unsigned char *palette, unsigned short *colortab
    /* now check our sprites and mark which ones have color 8 ('draw under') */
    {
       struct GfxElement *gfx;
-      int i,x,y;
+      int x,y;
       unsigned char *dp;
 
       gfx = Machine->gfx[1];
@@ -134,7 +134,7 @@ void mcr3_vh_screenrefresh(struct osd_bitmap *bitmap)
    /* Draw the sprites. */
    for (offs = 0;offs < spriteram_size;offs += 4)
    {
-      int code,color,flipx,flipy,sx,sy,flags;
+      int code,flipx,flipy,sx,sy,flags;
 
       if (spriteram[offs] == 0)
 			continue;
@@ -224,7 +224,7 @@ void rampage_vh_screenrefresh(struct osd_bitmap *bitmap)
    /* Draw the sprites. */
    for (offs = 0;offs < spriteram_size;offs += 4)
    {
-      int code,color,flipx,flipy,sx,sy,flags;
+      int code,flipx,flipy,sx,sy,flags;
 
       if (spriteram[offs] == 0)
 			 continue;
@@ -409,14 +409,14 @@ void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap)
 			at least one pixel of color 8, so we only need to worry about these few. */
       if (sprite_transparency[code])
       {
-			struct rectangle clip;
+			struct rectangle sclip;
 
-			clip.min_x = sx;
-			clip.max_x = sx+31;
-			clip.min_y = sy;
-			clip.max_y = sy+31;
+			sclip.min_x = sx;
+			sclip.max_x = sx+31;
+			sclip.min_y = sy;
+			sclip.max_y = sy+31;
 
-			copybitmap(bitmap,tmpbitmap,0,0,0,0,&clip,TRANSPARENCY_THROUGH,Machine->pens[8+16]);
+			copybitmap(bitmap,tmpbitmap,0,0,0,0,&sclip,TRANSPARENCY_THROUGH,Machine->pens[8+16]);
       }
    }
 

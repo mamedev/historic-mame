@@ -37,6 +37,9 @@ static int slapstic_last75xx = 0;
 
 int atetris_slapstic_r(int offset)
 {
+	extern unsigned char *RAM;
+
+
     if (slapstic_nextbank != -1)
     {
         slapstic_bank = slapstic_nextbank;
@@ -178,6 +181,11 @@ void atetris_palette_w(int offset,int data)
 void atetris_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	int offs;
+
+
+	/* recalc the palette if necessary */
+	if (palette_recalc ())
+		memset (dirtybuffer,1,videoram_size);
 
 
 	/* for every character in the backround RAM, check if it has been modified */

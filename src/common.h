@@ -10,7 +10,7 @@
 #define COMMON_H
 
 #include "osdepend.h"
-
+#include "driver.h"
 
 struct RomModule
 {
@@ -135,7 +135,7 @@ void showdisclaimer(void);
 #define COIN_COUNTERS	4	/* total # of coin counters */
 void coin_counter_w (int offset, int data);
 
-int readroms(const struct RomModule *romp,const char *basename);
+int readroms(void);
 void printromlist(const struct RomModule *romp,const char *basename);
 struct GameSamples *readsamples(const char **samplenames,const char *basename);
 void freesamples(struct GameSamples *samples);

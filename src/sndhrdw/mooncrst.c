@@ -10,8 +10,6 @@
 
 #define SOUND_CLOCK (18432000/6/2) /* 1.536 Mhz */
 
-#define TONE_LENGTH 2000
-#define TONE_PERIOD 4
 #define NOISE_LENGTH 8000
 #define NOISE_RATE 1000
 #define TOOTHSAW_LENGTH 16
@@ -22,8 +20,7 @@
 
 #define STEP 1
 
-static char *tone;
-static char *noise;
+static signed char *noise;
 
 static int shootsampleloaded = 0;
 static int deathsampleloaded = 0;
@@ -38,15 +35,15 @@ static int lforate1=0;
 static int lforate2=0;
 static int lforate3=0;
 
-static unsigned char waveform1[4][TOOTHSAW_LENGTH];
+static signed char waveform1[4][TOOTHSAW_LENGTH];
 static int pitch,vol;
 
-static unsigned char waveform2[32] =
+static signed char waveform2[32] =
 {
-   0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44,
-   0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44,
-   0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc,
-   0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc
+   0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40,
+   0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40,
+  -0x40,-0x40,-0x40,-0x40,-0x40,-0x40,-0x40,-0x40,
+  -0x40,-0x40,-0x40,-0x40,-0x40,-0x40,-0x40,-0x40,
 };
 
 static int channel;
@@ -135,18 +132,13 @@ int mooncrst_sh_start(void)
 	else
 	  deathsampleloaded = 0;
 
-	if ((tone = malloc(TONE_LENGTH)) == 0)
-		return 1;
 	if ((noise = malloc(NOISE_LENGTH)) == 0)
 	{
-		free(tone);
 		return 1;
 	}
 
 	for (i = 0;i < NOISE_LENGTH;i++)
 		noise[i] = (rand() % (2*WAVE_AMPLITUDE)) - WAVE_AMPLITUDE;
-	for (i = 0;i < TONE_LENGTH;i++)
-		tone[i] = WAVE_AMPLITUDE * sin(2*PI*i/TONE_PERIOD);
 	for (i = 0;i < TOOTHSAW_LENGTH;i++)
 	{
 		int bit0,bit2,bit3;
@@ -182,7 +174,6 @@ int mooncrst_sh_start(void)
 void mooncrst_sh_stop(void)
 {
 	free(noise);
-	free(tone);
 	osd_stop_sample(channel+0);
 	osd_stop_sample(channel+1);
 	osd_stop_sample(channel+2);

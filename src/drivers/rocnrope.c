@@ -26,6 +26,9 @@ void rocnrope_init_machine(void)
 /* Roc'n'Rope has the IRQ vectors in RAM. The rom contains $FFFF at this address! */
 void rocnrope_interrupt_vector_w(int offset, int data)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	RAM[0xFFF2+offset] = data;
 }
 
@@ -449,9 +452,12 @@ ROM_START( ropeman_rom )
 	ROM_LOAD( "a08_rm13.bin", 0x1000, 0x1000, 0x172f0eab )
 ROM_END
 
+
+
 static void rocnrope_decode(void)
 {
 	int A;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	for (A = 0x6000;A < 0x10000;A++)
@@ -464,9 +470,8 @@ static void rocnrope_decode(void)
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if (memcmp(&RAM[0x5160],"\x01\x00\x00",3) == 0 &&
 		memcmp(&RAM[0x50A6],"\x01\x00\x00",3) == 0)
@@ -490,10 +495,9 @@ static int hiload(void)
 
 static void hisave(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -506,9 +510,14 @@ static void hisave(void)
 
 struct GameDriver rocnrope_driver =
 {
-	"Rock'n'Rope",
+	__FILE__,
+	0,
 	"rocnrope",
+	"Rock'n'Rope",
+	"????",
+	"?????",
 	"Chris Hardy (MAME driver)\nPaul Swan (color info)\nValerio Verrando (high score save)",
+	0,
 	&machine_driver,
 
 	rocnrope_rom,
@@ -526,9 +535,14 @@ struct GameDriver rocnrope_driver =
 
 struct GameDriver ropeman_driver =
 {
-	"Rope Man",
+	__FILE__,
+	0,
 	"ropeman",
+	"Rope Man",
+	"????",
+	"?????",
 	"Chris Hardy (MAME driver)\nPaul Swan (color info)\nValerio Verrando (high score save)",
+	0,
 	&machine_driver,
 
 	ropeman_rom,

@@ -60,6 +60,7 @@ static int blktiger_protection_r(int offset)
 static void blktiger_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	bankaddress = 0x10000 + (data & 0x0f) * 0x4000 ;
@@ -342,62 +343,56 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( blktiger_rom )
-	ROM_REGION(0x50000)     /* 64k for code + banked ROMs images */
-	ROM_LOAD( "blktiger.5e",  0x00000, 0x08000, 0xfd01f39b )  /* CODE */
-	ROM_LOAD( "blktiger.6e",  0x10000, 0x10000, 0xabf76cc7 )  /* 0+1 */
-	ROM_LOAD( "blktiger.8e",  0x20000, 0x10000, 0x3f25d1f7 )  /* 2+3 */
-	ROM_LOAD( "blktiger.9e",  0x30000, 0x10000, 0xdfb8f0f8 )  /* 4+5 */
-	ROM_LOAD( "blktiger.10e", 0x40000, 0x10000, 0x4a2a8eaa )  /* 6+7 */
+	ROM_REGION(0x50000)	/* 64k for code + banked ROMs images */
+	ROM_LOAD( "blktiger.5e",  0x00000, 0x08000, 0xfd01f39b )	/* CODE */
+	ROM_LOAD( "blktiger.6e",  0x10000, 0x10000, 0xabf76cc7 )	/* 0+1 */
+	ROM_LOAD( "blktiger.8e",  0x20000, 0x10000, 0x3f25d1f7 )	/* 2+3 */
+	ROM_LOAD( "blktiger.9e",  0x30000, 0x10000, 0xdfb8f0f8 )	/* 4+5 */
+	ROM_LOAD( "blktiger.10e", 0x40000, 0x10000, 0x4a2a8eaa )	/* 6+7 */
 
-	ROM_REGION(0x90000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "blktiger.2n", 0x00000, 0x8000, 0x94039dc5 )  /* characters */
+	ROM_REGION(0x90000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "blktiger.2n", 0x00000, 0x08000, 0x94039dc5 )	/* characters */
+	ROM_LOAD( "blktiger.5b", 0x10000, 0x10000, 0x18e0c452 )	/* tiles */
+	ROM_LOAD( "blktiger.4b", 0x20000, 0x10000, 0xfa2939e9 )
+	ROM_LOAD( "blktiger.9b", 0x30000, 0x10000, 0x7ae80858 )
+	ROM_LOAD( "blktiger.8b", 0x40000, 0x10000, 0x1d500c92 )
+	ROM_LOAD( "blktiger.5a", 0x50000, 0x10000, 0xdc33c175 )	/* sprites */
+	ROM_LOAD( "blktiger.4a", 0x60000, 0x10000, 0x51f829e4 )
+	ROM_LOAD( "blktiger.9a", 0x70000, 0x10000, 0x057f831b )
+	ROM_LOAD( "blktiger.8a", 0x80000, 0x10000, 0x03585086 )
 
-	ROM_LOAD( "blktiger.5b", 0x10000, 0x10000, 0x18e0c452 ) /* tiles */
-	ROM_LOAD( "blktiger.4b", 0x20000, 0x10000, 0xfa2939e9 ) /* tiles */
-	ROM_LOAD( "blktiger.9b", 0x30000, 0x10000, 0x7ae80858 ) /* tiles */
-	ROM_LOAD( "blktiger.8b", 0x40000, 0x10000, 0x1d500c92 ) /* tiles */
-
-	ROM_LOAD( "blktiger.5a", 0x50000, 0x10000, 0xdc33c175 ) /* sprites */
-	ROM_LOAD( "blktiger.4a", 0x60000, 0x10000, 0x51f829e4 ) /* sprites */
-	ROM_LOAD( "blktiger.9a", 0x70000, 0x10000, 0x057f831b ) /* sprites */
-	ROM_LOAD( "blktiger.8a", 0x80000, 0x10000, 0x03585086 ) /* sprites */
-
-	ROM_REGION(0x10000) /* 64k for the audio CPU */
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "blktiger.1l", 0x0000, 0x8000, 0xdc92e1f4 )
 ROM_END
 
 ROM_START( blkdrgon_rom )
-	ROM_REGION(0x50000)     /* 64k for code + banked ROMs images */
-	ROM_LOAD( "blkdrgon.5e",  0x00000, 0x08000, 0x706cb178 )  /* CODE */
-	ROM_LOAD( "blkdrgon.6e",  0x10000, 0x10000, 0xe1cf308b )  /* 0+1 */
-	ROM_LOAD( "blkdrgon.8e",  0x20000, 0x10000, 0x6f50ba9e )  /* 2+3 */
-	ROM_LOAD( "blkdrgon.9e",  0x30000, 0x10000, 0xc0501050 )  /* 4+5 */
-	ROM_LOAD( "blkdrgon.10e", 0x40000, 0x10000, 0x42c29ca2 )  /* 6+7 */
+	ROM_REGION(0x50000)	/* 64k for code + banked ROMs images */
+	ROM_LOAD( "blkdrgon.5e",  0x00000, 0x08000, 0x706cb178 )	/* CODE */
+	ROM_LOAD( "blkdrgon.6e",  0x10000, 0x10000, 0xe1cf308b )	/* 0+1 */
+	ROM_LOAD( "blkdrgon.8e",  0x20000, 0x10000, 0x6f50ba9e )	/* 2+3 */
+	ROM_LOAD( "blkdrgon.9e",  0x30000, 0x10000, 0xc0501050 )	/* 4+5 */
+	ROM_LOAD( "blkdrgon.10e", 0x40000, 0x10000, 0x42c29ca2 )	/* 6+7 */
 
-	ROM_REGION(0x90000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "blkdrgon.2n", 0x00000, 0x8000, 0x09175e49 )  /* characters */
+	ROM_REGION(0x90000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "blkdrgon.2n", 0x00000, 0x08000, 0x09175e49 )	/* characters */
+	ROM_LOAD( "blkdrgon.5b", 0x10000, 0x10000, 0x0122a656 )	/* tiles */
+	ROM_LOAD( "blkdrgon.4b", 0x20000, 0x10000, 0xfa0e4e9c )
+	ROM_LOAD( "blkdrgon.9b", 0x30000, 0x10000, 0xeb156837 )
+	ROM_LOAD( "blkdrgon.8b", 0x40000, 0x10000, 0x83c8acf8 )
+	ROM_LOAD( "blktiger.5a", 0x50000, 0x10000, 0xdc33c175 )	/* sprites */
+	ROM_LOAD( "blktiger.4a", 0x60000, 0x10000, 0x51f829e4 )
+	ROM_LOAD( "blktiger.9a", 0x70000, 0x10000, 0x057f831b )
+	ROM_LOAD( "blktiger.8a", 0x80000, 0x10000, 0x03585086 )
 
-	ROM_LOAD( "blkdrgon.5b", 0x10000, 0x10000, 0x0122a656 ) /* tiles */
-	ROM_LOAD( "blkdrgon.4b", 0x20000, 0x10000, 0xfa0e4e9c ) /* tiles */
-	ROM_LOAD( "blkdrgon.9b", 0x30000, 0x10000, 0xeb156837 ) /* tiles */
-	ROM_LOAD( "blkdrgon.8b", 0x40000, 0x10000, 0x83c8acf8 ) /* tiles */
-
-	ROM_LOAD( "blkdrgon.5a", 0x50000, 0x10000, 0xdc33c175 ) /* sprites */
-	ROM_LOAD( "blkdrgon.4a", 0x60000, 0x10000, 0x51f829e4 ) /* sprites */
-	ROM_LOAD( "blkdrgon.9a", 0x70000, 0x10000, 0x057f831b ) /* sprites */
-	ROM_LOAD( "blkdrgon.8a", 0x80000, 0x10000, 0x03585086 ) /* sprites */
-
-	ROM_REGION(0x10000) /* 64k for the audio CPU */
-	ROM_LOAD( "blkdrgon.1l", 0x0000, 0x8000, 0xdc92e1f4 )
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "blktiger.1l", 0x0000, 0x8000, 0xdc92e1f4 )
 ROM_END
 
 
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -422,9 +417,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -438,9 +431,14 @@ static void hisave(void)
 
 struct GameDriver blktiger_driver =
 {
-	"Black Tiger",
+	__FILE__,
+	0,
 	"blktiger",
+	"Black Tiger",
+	"1987",
+	"Capcom",
 	"Paul Leaman (MAME driver)\nIshmair\nJuan Carlos Lorente (high score save)\nDani Portillo (protection)",
+	0,
 	&machine_driver,
 
 	blktiger_rom,
@@ -458,9 +456,14 @@ struct GameDriver blktiger_driver =
 
 struct GameDriver blkdrgon_driver =
 {
-	"Black Dragon",
+	__FILE__,
+	&blktiger_driver,
 	"blkdrgon",
+	"Black Dragon",
+	"1987",
+	"Capcom",
 	"Paul Leaman (MAME driver)\nIshmair\nJuan Carlos Lorente (high score save)\nDani Portillo (protection)",
+	0,
 	&machine_driver,
 
 	blkdrgon_rom,

@@ -285,9 +285,14 @@ ROM_END
 
 struct GameDriver gundealr_driver =
 {
-	"Gun Dealer",
+	__FILE__,
+	0,
 	"gundealr",
+	"Gun Dealer",
+	"????",
+	"?????",
 	"Nicola Salmoria",
+	0,
 	&machine_driver,
 
 	gundealr_rom,

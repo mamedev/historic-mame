@@ -87,9 +87,6 @@ int klax_vh_start(void)
 		return 1;
 	}
 
-	/* initialize the palette remapping */
-	atarigen_init_remap (COLOR_PALETTE_555, 1);
-	
 	/* initialize the displaylist system */
 	return atarigen_init_display_list (&klax_modesc);
 }
@@ -145,7 +142,7 @@ void klax_playfieldram_w (int offset, int data)
 {
 	int oldword = READ_WORD (&atarigen_playfieldram[offset]);
 	int newword = COMBINE_WORD (oldword, data);
-	
+
 	if (oldword != newword)
 	{
 		WRITE_WORD (&atarigen_playfieldram[offset], newword);
@@ -176,7 +173,22 @@ int klax_paletteram_r (int offset)
 void klax_paletteram_w (int offset, int data)
 {
 	if (!(data & 0xff000000))
+	{
 		atarigen_paletteram[(offset / 2) ^ BYTE_XOR] = data >> 8;
+
+		{
+			int newword = READ_WORD (&atarigen_paletteram[(offset / 4) * 2]);
+			int red =   (((newword >> 10) & 31) * 224) >> 5;
+			int green = (((newword >>  5) & 31) * 224) >> 5;
+			int blue =  (((newword      ) & 31) * 224) >> 5;
+
+			if (red) red += 38;
+			if (green) green += 38;
+			if (blue) blue += 38;
+
+			palette_change_color ((offset / 4) & 0x1ff, red, green, blue);
+		}
+	}
 }
 
 
@@ -223,12 +235,18 @@ void klax_update_display_list (int scanline)
  *
  *---------------------------------------------------------------------------------
  */
- 
+
+void klax_calc_mo_colors (struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
+{
+	unsigned char *colors = param;
+	int color = data[2] & 15;
+	colors[color] = 1;
+}
+
 void klax_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
 {
-	int *sprite_map = param;
 	int xadv, x, y, sx, sy;
-	
+
 	/* extract data from the various words */
 	int pict = data[1] & 0x0fff;
 	int hsize = ((data[3] >> 4) & 7) + 1;
@@ -269,14 +287,6 @@ void klax_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, unsigned
 			if (sx <= -8 || sx >= XDIM)
 				continue;
 
-			/* if this sprite's color has not been used yet this frame, grab it */
-			/* note that by doing it here, we don't map sprites that aren't visible */
-			if (!sprite_map[color])
-			{
-				atarigen_alloc_dynamic_colors (0x000 + 16 * color + 1, 15);
-				sprite_map[color] = 1;
-			}
-
 			/* draw the sprite */
 			drawgfx (bitmap, Machine->gfx[1], pict, color, hflip, 0,
 						sx, sy, clip, TRANSPARENCY_PEN, 0);
@@ -296,14 +306,50 @@ void klax_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, unsigned
 
 void klax_vh_screenrefresh (struct osd_bitmap *bitmap)
 {
-	int playfield_count[16], sprite_map[16];
+	unsigned char mo_map[16], pf_map[16];
 	int x, y, offs, i;
+
 
 	klax_debug ();
 
+
 	/* reset color tracking */
+	memset (mo_map, 0, sizeof (mo_map));
+	memset (pf_map, 0, sizeof (pf_map));
+	memset (palette_used_colors, PALETTE_COLOR_UNUSED, Machine->drv->total_colors * sizeof(unsigned char));
+
+	/* update color usage for the playfield */
+	for (x = 0; x < XCHARS; x++)
+	{
+		offs = x * 32;
+
+		for (y = 0; y < YCHARS; y++, offs++)
+		{
+			int data2 = READ_WORD (&atarigen_playfieldram[offs * 2 + 0x1000]);
+			int color = (data2 >> 8) & 15;
+			pf_map[color] = 1;
+		}
+	}
+
+	/* update color usage for the mo's */
+	atarigen_render_display_list (bitmap, klax_calc_mo_colors, mo_map);
+
+	/* rebuild the palette */
 	for (i = 0; i < 16; i++)
-		sprite_map[i] = playfield_count[i] = 0;
+	{
+		if (pf_map[i])
+			memset (&palette_used_colors[256 + i * 16], PALETTE_COLOR_USED, 16);
+		if (mo_map[i])
+		{
+			palette_used_colors[0 + i * 16] = PALETTE_COLOR_TRANSPARENT;
+			memset (&palette_used_colors[0 + i * 16 + 1], PALETTE_COLOR_USED, 15);
+		}
+	}
+
+	/* remap if necessary */
+	if (palette_recalc ())
+		memset (playfielddirty, 1, atarigen_playfieldram_size / 2);
+
 
 	/*
 	 *---------------------------------------------------------------------------------
@@ -326,17 +372,12 @@ void klax_vh_screenrefresh (struct osd_bitmap *bitmap)
 		/* loop over the visible Y region */
 		for (y = 0; y < YCHARS; y++, offs++)
 		{
-			/* read the data word */
-			int data2 = READ_WORD (&atarigen_playfieldram[offs * 2 + 0x1000]);
-			int color = (data2 >> 8) & 15;
-
-			/* update color statistics */
-			playfield_count[color] = 1;
-
 			/* rerender if dirty */
 			if (playfielddirty[offs])
 			{
 				int data1 = READ_WORD (&atarigen_playfieldram[offs * 2]);
+				int data2 = READ_WORD (&atarigen_playfieldram[offs * 2 + 0x1000]);
+				int color = (data2 >> 8) & 15;
 				int hflip = data1 & 0x8000;
 
 				drawgfx (playfieldbitmap, Machine->gfx[0], data1 & 0x1fff, color, hflip, 0,
@@ -346,17 +387,11 @@ void klax_vh_screenrefresh (struct osd_bitmap *bitmap)
 		}
 	}
 
-	/* allocate playfield colors */
-	atarigen_alloc_fixed_colors (playfield_count, 0x100, 16, 16);
-
 	/* copy to the destination */
 	copybitmap (bitmap, playfieldbitmap, 0, 0, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
 
 	/* render the motion objects */
-	atarigen_render_display_list (bitmap, klax_render_mo, sprite_map);
-
-	/* final color update */
-	atarigen_update_colors (-1);
+	atarigen_render_display_list (bitmap, klax_render_mo, NULL);
 }
 
 
@@ -420,7 +455,7 @@ static void klax_debug (void)
 			int color = data[2] & 15;
 			int hflip = data[3] & 0x0008;
 			fprintf (f, "   Object %03X: L=%03X P=%04X C=%X X=%03X Y=%03X W=%d H=%d F=%d LEFT=(%04X %04X %04X %04X)\n",
-					i, data[0] & 0x3ff, pict, color, xpos & 0x1ff, ypos & 0x1ff, hsize, vsize, hflip, 
+					i, data[0] & 0x3ff, pict, color, xpos & 0x1ff, ypos & 0x1ff, hsize, vsize, hflip,
 					data[0] & 0xfc00, data[1] & 0x0000, data[2] & 0x0070, data[3] & 0x0000);
 		}
 

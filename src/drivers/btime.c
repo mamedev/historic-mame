@@ -80,6 +80,8 @@ static void sound_command_w(int offset,int data);
 static void btime_decrypt(void)
 {
 	int A,A1;
+	extern unsigned char *RAM;
+
 
 	/* the encryption is a simple bit rotation: 76543210 -> 65342710, but */
 	/* with a catch: it is only applied if the previous instruction did a */
@@ -106,6 +108,9 @@ static void btime_decrypt(void)
 
 static void btime_ram_w(int offset,int data)
 {
+	extern unsigned char *RAM;
+
+
 	if (offset <= 0x07ff)
 		RAM[offset] = data;
 	else if (offset >= 0x0c00 && offset <= 0x0c0f)
@@ -129,6 +134,8 @@ static void btime_ram_w(int offset,int data)
 static void zoar_ram_w(int offset,int data)
 {
 	int good = 0;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if (offset <= 0x07ff)
 		{ RAM[offset] = data; good = 1; }
@@ -1220,6 +1227,9 @@ ROM_END
 
 static void btime_decode(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* For now, just copy the RAM array over to ROM. Decryption will happen */
 	/* at run time, since the CPU applies the decryption only if the previous */
 	/* instruction did a memory write. */
@@ -1228,6 +1238,9 @@ static void btime_decode(void)
 
 static void zoar_decode(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	// At location 0xD50A is what looks like an undocumented opcode. I tried
 	// implemting it given what opcode 0x23 should do, but it still didn't
 	// work in demo mode. So this could be another protection or a bad ROM read.
@@ -1246,6 +1259,8 @@ static void lnc_decode (void)
 								  0x80, 0x90, 0xc0, 0xd0, 0xa0, 0xb0, 0xe0, 0xf0};
 
 	int A;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	for (A = 0;A < 0x10000;A++)
 	{
@@ -1261,9 +1276,8 @@ static void lnc_decode (void)
 
 static int btime_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x0036],"\x00\x80\x02",3) == 0 &&
@@ -1288,9 +1302,8 @@ static int btime_hiload(void)
 static void btime_hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -1302,6 +1315,9 @@ static void btime_hisave(void)
 
 static int eggs_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if ((memcmp(&RAM[0x0400],"\x17\x25\x19",3)==0) &&
 		(memcmp(&RAM[0x041B],"\x00\x47\x00",3) == 0))
@@ -1324,6 +1340,8 @@ static int eggs_hiload(void)
 static void eggs_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -1334,11 +1352,8 @@ static void eggs_hisave(void)
 
 static int lnc_hiload(void)
 {
-	/*
-	 *   Get the RAM pointer (this game is multiCPU so we can't assume the
-	 *   global RAM pointer is pointing to the right place)
-	 */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/*   Check if the hi score table has already been initialized.
 	 */
@@ -1393,12 +1408,8 @@ static int lnc_hiload(void)
 static void lnc_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-	/*
-	 *   Get the RAM pointer (this game is multiCPU so we can't assume the
-	 *   global RAM pointer is pointing to the right place)
-	 */
-	unsigned char *RAM = Machine->memory_region[0];
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -1411,11 +1422,8 @@ static void lnc_hisave(void)
 
 static int bnj_hiload(void)
 {
-	/*
-	 *   Get the RAM pointer (this game is multiCPU so we can't assume the
-	 *   global RAM pointer is pointing to the right place)
-	 */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/*   Check if the hi score table has already been initialized.
 	 */
@@ -1441,12 +1449,8 @@ static int bnj_hiload(void)
 static void bnj_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-	/*
-	 *   Get the RAM pointer (this game is multiCPU so we can't assume the
-	 *   global RAM pointer is pointing to the right place)
-	 */
-	unsigned char *RAM = Machine->memory_region[0];
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -1458,9 +1462,8 @@ static void bnj_hisave(void)
 
 static int zoar_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x034b],"\x20",1) == 0)
@@ -1487,9 +1490,8 @@ static int zoar_hiload(void)
 static void zoar_hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -1508,9 +1510,14 @@ static void zoar_hisave(void)
 #define GAMEDRIVER(GAMENAME, BASENAME, DECODE, PROM, DESC, CREDITS) \
 struct GameDriver GAMENAME##_driver =          \
 {                                              \
-	DESC,	                                   \
+	__FILE__,                                  \
+	0,                                         \
 	#GAMENAME,                             	   \
+	DESC,	                                   \
+	"????",                                    \
+	"?????",                                   \
 	CREDITS,                               	   \
+	0,                                         \
 	&BASENAME##_machine_driver,            	   \
 											   \
 	GAMENAME##_rom,                        	   \

@@ -10,7 +10,7 @@
 extern char mameversion[];
 extern FILE *errorlog;
 
-#define MAX_GFX_ELEMENTS 20
+#define MAX_GFX_ELEMENTS 24
 #define MAX_MEMORY_REGIONS 10
 
 #define MAX_LAYERS 4	/* MAX_LAYERS is the maximum number of gfx layers */

@@ -205,6 +205,9 @@ ROM_END
 
 static int hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x0000],"\x0c",1) == 0)
 	{
@@ -224,6 +227,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -237,9 +241,14 @@ static void hisave(void)
 
 struct GameDriver astrof_driver =
 {
-	"Astro Fighter",
+	__FILE__,
+	0,
 	"astrof",
+	"Astro Fighter",
+	"????",
+	"?????",
 	"Lee Taylor\nLucy Anne Taylor(Who`s birth 27/11/1997 made this driver possible)\nSanteri Saarimaa (high score save)",
+	0,
 	&machine_driver,
 
 	astrof_rom,
@@ -257,9 +266,14 @@ struct GameDriver astrof_driver =
 
 struct GameDriver astrof2_driver =
 {
-	"Astro Fighter (alternate)",
+	__FILE__,
+	0,
 	"astrof2",
+	"Astro Fighter (alternate)",
+	"????",
+	"?????",
 	"Lee Taylor\nLucy Anne Taylor(Who`s birth 27/11/1997 made this driver possible)\nSanteri Saarimaa (high score save)",
+	0,
 	&machine_driver,
 
 	astrof2_rom,

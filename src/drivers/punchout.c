@@ -1013,9 +1013,7 @@ static void punchout_decode(void)
 static int hiload(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* Try loading static RAM */
@@ -1031,9 +1029,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1047,10 +1043,14 @@ static void hisave(void)
 
 struct GameDriver punchout_driver =
 {
-	"Punch Out",
+	__FILE__,
+	0,
 	"punchout",
+	"Punch Out",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)\nBryan Smith (hardware info)\nTatsuyuki Satoh(speech sound)",
-
+	0,
 	&machine_driver,
 
 	punchout_rom,
@@ -1068,9 +1068,14 @@ struct GameDriver punchout_driver =
 
 struct GameDriver spnchout_driver =
 {
-	"Super Punch Out",
+	__FILE__,
+	0,
 	"spnchout",
+	"Super Punch Out",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)\nBryan Smith (hardware info)",
+	0,
 	&machine_driver,
 
 	spnchout_rom,

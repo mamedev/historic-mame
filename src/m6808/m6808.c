@@ -205,11 +205,15 @@ static int rd_slow_wd( int addr )
 
 static int rd_fast( int addr )
 {
+	extern unsigned char *RAM;
+
 	return RAM[addr];
 }
 
 static int rd_fast_wd( int addr )
 {
+	extern unsigned char *RAM;
+
 	return( (RAM[addr]<<8) | (RAM[(addr+1)&0xffff]) );
 }
 
@@ -226,11 +230,15 @@ static void wr_slow_wd( int addr, int v )
 
 static void wr_fast( int addr, int v )
 {
+	extern unsigned char *RAM;
+
 	RAM[addr] = v;
 }
 
 static void wr_fast_wd( int addr, int v )
 {
+	extern unsigned char *RAM;
+
 	RAM[addr] = v>>8;
 	RAM[(addr+1)&0xffff] = v&255;
 }

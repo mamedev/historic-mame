@@ -362,6 +362,8 @@ ROM_END
 
 static int hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* wait for "HIGH SCORE" to be on screen */
         if (memcmp(&RAM[0x6257],"\x00\x89\x01",3) == 0)
@@ -386,11 +388,10 @@ static int hiload(void)
 	else return 0;	/* we can't load the hi scores yet */
 }
 
-
-
 static void hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -405,9 +406,14 @@ static void hisave(void)
 
 struct GameDriver bagman_driver =
 {
-	"Bagman",
+	__FILE__,
+	0,
 	"bagman",
+	"Bagman",
+	"????",
+	"?????",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nJarek Burczynski (additional code)\nTim Lindquist (color info)\nJuan Carlos Lorente (high score save)\nAndrew Deschenes (protection info)",
+	0,
 	&machine_driver,
 
 	bagman_rom,
@@ -425,9 +431,14 @@ struct GameDriver bagman_driver =
 
 struct GameDriver sbagman_driver =
 {
-	"Super Bagman",
+	__FILE__,
+	0,
 	"sbagman",
+	"Super Bagman",
+	"????",
+	"?????",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (Bagman driver)\nJarek Burczynski (MAME driver)\nTim Lindquist (color info)\nJuan Carlos Lorente (high score save)\nAndrew Deschenes (protection info)",
+	0,
 	&machine_driver,
 
 	sbagman_rom,

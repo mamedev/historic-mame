@@ -254,9 +254,14 @@ ROM_END
 
 struct GameDriver hexa_driver =
 {
-	"Hexa",
+	__FILE__,
+	0,
 	"hexa",
+	"Hexa",
+	"????",
+	"?????",
 	"Howie Cohen (driver)\nThierry Lescot (Technical Info) ",
+	0,
 	&machine_driver,
 
 	hexa_rom,

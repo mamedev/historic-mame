@@ -322,7 +322,7 @@ static int sample_16bit;
 ** 'rate'     is sampling rate and 'bufsiz' is the size of the
 ** buffer that should be updated at each interval
 */
-int NESInit(int num, int clock, int rate, int bitsize, int bufsiz, void **buffer )
+int NESInit(int num, int clk, int rate, int bitsize, int bufsiz, void **buffer )
 {
 	int i;
 
@@ -338,7 +338,7 @@ int NESInit(int num, int clock, int rate, int bitsize, int bufsiz, void **buffer
 	for ( i = 0 ; i < NESNumChips; i++ )
 	{
 		memset(&NESPSG[i],0,sizeof(struct NESPSG));
-		NESSetClock(i,clock,rate);
+		NESSetClock(i,clk,rate);
 		NESPSG[i].Buf = buffer[i];
 		NESSetGain(i,0x00);
 		NESResetChip(i);
@@ -580,9 +580,9 @@ void NESUpdate(void)
 
 
 
-void NESSetClock(int n,int clock,int rate)
+void NESSetClock(int n,int clk,int rate)
 {
-	NESPSG[n].UpdateStep = ((double)STEP * rate * 128) / clock;
+	NESPSG[n].UpdateStep = ((double)STEP * rate * 128) / clk;
 }
 
 

@@ -503,9 +503,14 @@ static void hisave(void)
 
 struct GameDriver congo_driver =
 {
-	"Congo Bongo",
+	__FILE__,
+	0,
 	"congo",
+	"Congo Bongo",
+	"????",
+	"?????",
 	"Ville Laitinen (MAME driver)\nNicola Salmoria (Zaxxon driver)\nTim Lindquist (color & sound info)",
+	0,
 	&machine_driver,
 
 	congo_rom,
@@ -523,9 +528,14 @@ struct GameDriver congo_driver =
 
 struct GameDriver tiptop_driver =
 {
-	"Tip Top",
+	__FILE__,
+	0,
 	"tiptop",
+	"Tip Top",
+	"????",
+	"?????",
 	"Ville Laitinen (MAME driver)\nNicola Salmoria (Zaxxon driver)\nTim Lindquist (color & sound info)",
+	0,
 	&machine_driver,
 
 	tiptop_rom,

@@ -16,8 +16,8 @@ unsigned char *exedexes_bg_scroll;
 unsigned char *exedexes_nbg_yscroll;
 unsigned char *exedexes_nbg_xscroll;
 
-#define TileMap(offs) (Machine->memory_region[3][offs])
-#define BackTileMap(offs) (Machine->memory_region[3][offs+0x4000])
+#define TileMap(offs) (Machine->memory_region[4][offs])
+#define BackTileMap(offs) (Machine->memory_region[4][offs+0x4000])
 
 
 /***************************************************************************
@@ -166,9 +166,6 @@ void exedexes_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-		int sx,sy;
-
-
 		sx = 8 * (offs / 32);
 		sy = 8 * (31 - offs % 32);
 

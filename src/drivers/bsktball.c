@@ -417,9 +417,14 @@ ROM_END
 
 struct GameDriver bsktball_driver =
 {
-	"Basketball",
+	__FILE__,
+	0,
 	"bsktball",
+	"Basketball",
+	"????",
+	"?????",
 	"Mike Balfour",
+	0,
 	&machine_driver,
 
 	bsktball_rom,

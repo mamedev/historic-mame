@@ -838,9 +838,14 @@ ROM_END
 
 struct GameDriver shinobi_driver =
 {
-	"Shinobi",
+	__FILE__,
+	0,
 	"shinobi",
+	"Shinobi",
+	"????",
+	"?????",
 	"Mirko Buffoni         (Mame Driver)\nThierry Lescot & Nao  (Hardware Info)",
+	0,
 	&machine_driver,
 
 	shinobi_rom,
@@ -858,9 +863,14 @@ struct GameDriver shinobi_driver =
 
 struct GameDriver aliensyn_driver =
 {
-	"Alien Syndrome",
+	__FILE__,
+	0,
 	"aliensyn",
+	"Alien Syndrome",
+	"????",
+	"?????",
 	"Mirko Buffoni         (Mame Driver)\nThierry Lescot & Nao  (Hardware Info)",
+	0,
 	&machine_driver,
 
 	aliensyn_rom,
@@ -877,9 +887,14 @@ struct GameDriver aliensyn_driver =
 
 struct GameDriver tetrisbl_driver =
 {
-	"Tetris (Sega, bootleg)",
+	__FILE__,
+	0,
 	"tetrisbl",
+	"Tetris (Sega, bootleg)",
+	"????",
+	"?????",
 	"Mirko Buffoni         (Mame Driver)\nThierry Lescot & Nao  (Hardware Info)",
+	0,
 	&tetris_machine_driver,
 
 	tetrisbl_rom,
@@ -897,9 +912,14 @@ struct GameDriver tetrisbl_driver =
 
 struct GameDriver passshtb_driver =
 {
-	"Passing Shot (bootleg)",
+	__FILE__,
+	0,
 	"passshtb",
+	"Passing Shot (bootleg)",
+	"????",
+	"?????",
 	"Mirko Buffoni         (Mame Driver)\nThierry Lescot & Nao  (Hardware Info)",
+	0,
 	&passshot_machine_driver,
 
 	passshtb_rom,

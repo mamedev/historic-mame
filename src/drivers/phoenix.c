@@ -509,10 +509,8 @@ ROM_END
 static int hiload(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x438a],"\x00\x00\x0f",3) == 0)
@@ -551,10 +549,8 @@ static void hisave(void)
 {
    unsigned long score1,score2,hiscore;
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
 
    score1 = get_score(&RAM[0x4380]);
    score2 = get_score(&RAM[0x4384]);
@@ -575,9 +571,14 @@ static void hisave(void)
 
 struct GameDriver phoenix_driver =
 {
-	"Phoenix (Amstar)",
+	__FILE__,
+	0,
 	"phoenix",
+	"Phoenix (Amstar)",
+	"????",
+	"?????",
 	"Richard Davies\nBrad Oliver\nMirko Buffoni\nNicola Salmoria\nShaun Stephenson\nAndrew Scott\nTim Lindquist (color info)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	phoenix_rom,
@@ -595,9 +596,14 @@ struct GameDriver phoenix_driver =
 
 struct GameDriver phoenixt_driver =
 {
-	"Phoenix (Taito)",
+	__FILE__,
+	0,
 	"phoenixt",
+	"Phoenix (Taito)",
+	"????",
+	"?????",
 	"Richard Davies\nBrad Oliver\nMirko Buffoni\nNicola Salmoria\nShaun Stephenson\nAndrew Scott\nTim Lindquist (color info)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	phoenixt_rom,
@@ -615,9 +621,14 @@ struct GameDriver phoenixt_driver =
 
 struct GameDriver phoenix3_driver =
 {
-	"Phoenix (T.P.N.)",
+	__FILE__,
+	0,
 	"phoenix3",
+	"Phoenix (T.P.N.)",
+	"????",
+	"?????",
 	"Richard Davies\nBrad Oliver\nMirko Buffoni\nNicola Salmoria\nShaun Stephenson\nAndrew Scott\nTim Lindquist (color info)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	phoenix3_rom,
@@ -635,9 +646,14 @@ struct GameDriver phoenix3_driver =
 
 struct GameDriver pleiads_driver =
 {
-	"Pleiads (Centuri)",
+	__FILE__,
+	0,
 	"pleiads",
+	"Pleiads (Centuri)",
+	"????",
+	"?????",
 	"Richard Davies\nBrad Oliver\nMirko Buffoni\nNicola Salmoria\nShaun Stephenson\nAndrew Scott\nMarco Cassili",
+	0,
 	&pleiads_machine_driver,
 
 	pleiads_rom,
@@ -655,9 +671,14 @@ struct GameDriver pleiads_driver =
 
 struct GameDriver pleitek_driver =
 {
-	"Pleiads (Tehkan)",
+	__FILE__,
+	0,
 	"pleitek",
+	"Pleiads (Tehkan)",
+	"????",
+	"?????",
 	"Richard Davies\nBrad Oliver\nMirko Buffoni\nNicola Salmoria\nShaun Stephenson\nAndrew Scott\nMarco Cassili",
+	0,
 	&pleiads_machine_driver,
 
 	pleitek_rom,

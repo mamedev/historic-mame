@@ -629,9 +629,7 @@ static void slapfigh_decode(void)
 {
 #ifdef FASTSLAPBOOT
 
-        /* get RAM pointer (this game is multiCPU, we can't assume the global */
-        /* RAM pointer is pointing to the right place) */
-        unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
         /* Remove delay after self test */
         RAM[0x575d]=0;
@@ -653,9 +651,7 @@ static void slapboot_decode(void)
 {
 #ifdef FASTSLAPBOOT
 
-        /* get RAM pointer (this game is multiCPU, we can't assume the global */
-        /* RAM pointer is pointing to the right place) */
-        unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
         /* Remove delay after self test */
         RAM[0x575d]=0;
@@ -675,9 +671,7 @@ static void slapboot_decode(void)
 
 static void slpboota_decode(void)
 {
-        /* get RAM pointer (this game is multiCPU, we can't assume the global */
-        /* RAM pointer is pointing to the right place) */
-        unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
         /* Remove delay after self test */
         RAM[0x575d]=0;
@@ -696,9 +690,14 @@ static void slpboota_decode(void)
 
 struct GameDriver slapfigh_driver =
 {
-        "Slap Fight",
+	__FILE__,
+	0,
         "slapfigh",
+        "Slap Fight",
+	"????",
+	"?????",
         "Keith Wilkins\nCarlos Baides(Sprites)\n\n(This is a preliminary driver)\n",
+	0,
         &machine_driver,
 
         slapfigh_rom,
@@ -716,9 +715,14 @@ struct GameDriver slapfigh_driver =
 
 struct GameDriver slapboot_driver =
 {
-        "Slap Fight (Japanese Bootleg)",
+	__FILE__,
+	0,
         "slapboot",
+        "Slap Fight (Japanese Bootleg)",
+	"????",
+	"?????",
         "Keith Wilkins\nCarlos Baides(Sprites)\n\n(This is a preliminary driver)\n",
+	0,
         &machine_driver,
 
         slapboot_rom,
@@ -736,9 +740,14 @@ struct GameDriver slapboot_driver =
 
 struct GameDriver slpboota_driver =
 {
-        "Slap Fight (English Bootleg)",
+	__FILE__,
+	0,
         "slpboota",
+        "Slap Fight (English Bootleg)",
+	"????",
+	"?????",
         "Keith Wilkins\nCarlos Baides(Sprites)\n\n(This is a preliminary driver)\n",
+	0,
         &machine_driver,
 
         slpboota_rom,

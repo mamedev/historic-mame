@@ -368,9 +368,14 @@ static void novram_save(void)
 
 struct GameDriver irobot_driver =
 {
-    "I, Robot",
+	__FILE__,
+	0,
     "irobot",
+    "I, Robot",
+	"????",
+	"?????",
     "Dan Boris\nMike Balfour\nFrank Palazzolo\nBryan Smith (Tech info)",
+	0,
 	&machine_driver,
 
     irobot_rom,

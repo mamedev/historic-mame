@@ -119,10 +119,12 @@ void prot2_w(int offset, int data)
 void dec8_bank_w(int offset, int data)
 {
  	int bankaddress;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	bankaddress = 0x10000 + (data & 0x0f) * 0x4000;
 	cpu_setbank(1,&RAM[bankaddress]);
-  if (errorlog) fprintf(errorlog,"PC %06x - Bank switch %02x (%02x)\n",cpu_getpc(),data&0xf,data);
+if (errorlog) fprintf(errorlog,"PC %06x - Bank switch %02x (%02x)\n",cpu_getpc(),data&0xf,data);
 }
 
 
@@ -1727,9 +1729,14 @@ ROM_END
 
 struct GameDriver ghostb_driver =
 {
-	"Ghostbusters",
+	__FILE__,
+	0,
 	"ghostb",
+	"Ghostbusters",
+	"????",
+	"?????",
 	"bm",
+	0,
 	&ghostb_machine_driver,
 
 	ghostb_rom,
@@ -1747,9 +1754,14 @@ struct GameDriver ghostb_driver =
 
 struct GameDriver srdarwin_driver =
 {
-	"Super Real Darwin",
+	__FILE__,
+	0,
 	"srdarwin",
+	"Super Real Darwin",
+	"????",
+	"?????",
 	"bm",
+	0,
 	&ghostb_machine_driver,
 
 	srdarwin_rom,
@@ -1767,9 +1779,14 @@ struct GameDriver srdarwin_driver =
 
 struct GameDriver cobracom_driver =
 {
-	"Cobra Command",
+	__FILE__,
+	0,
 	"cobracom",
+	"Cobra Command",
+	"????",
+	"?????",
 	"Bryan McPhail",
+	0,
 	&cobra_machine_driver,
 
 	cobracom_rom,
@@ -1787,9 +1804,14 @@ struct GameDriver cobracom_driver =
 
 struct GameDriver gondo_driver =
 {
-	"Gondomania",
+	__FILE__,
+	0,
 	"gondo",
+	"Gondomania",
+	"????",
+	"?????",
 	"Bm",
+	0,
 	&gondo_machine_driver,
 
 	gondo_rom,
@@ -1807,9 +1829,14 @@ struct GameDriver gondo_driver =
 
 struct GameDriver oscar_driver =
 {
-	"Oscar",
+	__FILE__,
+	0,
 	"oscar",
+	"Oscar",
+	"????",
+	"?????",
 	"Bm",
+	0,
 	&oscar_machine_driver,
 
 	oscar_rom,
@@ -1827,9 +1854,14 @@ struct GameDriver oscar_driver =
 
 struct GameDriver lastmiss_driver =
 {
+	__FILE__,
+	0,
 	"lastmiss",
 	"lastmiss",
+	"????",
+	"?????",
 	"Bm",
+	0,
 	&lastmiss_machine_driver,
 
 	lastmiss_rom,
@@ -1847,9 +1879,14 @@ struct GameDriver lastmiss_driver =
 
 struct GameDriver shackled_driver =
 {
+	__FILE__,
+	0,
 	"shackled",
 	"shackled",
+	"????",
+	"?????",
 	"Bm",
+	0,
 	&lastmiss_machine_driver,
 
 	shackled_rom,
@@ -1867,9 +1904,14 @@ struct GameDriver shackled_driver =
 
 struct GameDriver mazeh_driver =
 {
+	__FILE__,
+	0,
 	"mazeh",
 	"mazeh",
+	"????",
+	"?????",
 	"Bm",
+	0,
 	&ghostb_machine_driver,
 
 	mazeh_rom,

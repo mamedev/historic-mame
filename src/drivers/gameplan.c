@@ -755,9 +755,8 @@ ROM_END
 
 static int kaos_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x03c8], "\x84\x00\x00", 3) == 0 &&
@@ -781,6 +780,8 @@ static int kaos_hiload(void)
 static void kaos_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -791,9 +792,8 @@ static void kaos_hisave(void)
 
 static int killcom_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
     if (memcmp(&RAM[0x88], "\x47\x00", 2) == 0)
@@ -825,9 +825,8 @@ static void killcom_hisave(void)
 
 static int megatack_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
     if (memcmp(&RAM[0xd0], "\x1f\x20\x1a", 3) == 0)
@@ -859,9 +858,8 @@ static void megatack_hisave(void)
 
 static int challeng_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
     if (memcmp(&RAM[0xd8], "\x1f\x1f\x1f", 3) == 0)
@@ -894,10 +892,14 @@ static void challeng_hisave(void)
 
 struct GameDriver kaos_driver =
 {
-	"Kaos",
+	__FILE__,
+	0,
 	"kaos",
-    "Chris Moore      (MAME driver)\n"
-	"Santeri Saarimaa (not a sausage)",
+	"Kaos",
+	"????",
+	"?????",
+    "Chris Moore      (MAME driver)\nSanteri Saarimaa (not a sausage)",
+	0,
 	&machine_driver,
 
 	kaos_rom,
@@ -914,10 +916,14 @@ struct GameDriver kaos_driver =
 
 struct GameDriver killcom_driver =
 {
-	"Killer Comet",
+	__FILE__,
+	0,
 	"killcom",
-    "Chris Moore      (MAME driver)\n"
-    "Santeri Saarimaa (cleaning up, hi-scores)",
+	"Killer Comet",
+	"????",
+	"?????",
+    "Chris Moore      (MAME driver)\nSanteri Saarimaa (cleaning up, hi-scores)",
+	0,
     &machine_driver,
 
 	killcom_rom,
@@ -934,10 +940,14 @@ struct GameDriver killcom_driver =
 
 struct GameDriver megatack_driver =
 {
-	"MegaTack",
+	__FILE__,
+	0,
 	"megatack",
-    "Chris Moore      (MAME driver)\n"
-    "Santeri Saarimaa (cleaning up, hi-scores)",
+	"MegaTack",
+	"????",
+	"?????",
+    "Chris Moore      (MAME driver)\nSanteri Saarimaa (cleaning up, hi-scores)",
+	0,
 	&machine_driver,
 
 	megatack_rom,
@@ -953,10 +963,14 @@ struct GameDriver megatack_driver =
 
 struct GameDriver challeng_driver =
 {
-    "Challenger",
+	__FILE__,
+	0,
     "challeng",
-    "Chris Moore      (MAME driver)\n"
-    "Santeri Saarimaa (cleaning up, hi-scores)",
+    "Challenger",
+	"????",
+	"?????",
+    "Chris Moore      (MAME driver)\nSanteri Saarimaa (cleaning up, hi-scores)",
+	0,
     &machine_driver,
 
     challeng_rom,

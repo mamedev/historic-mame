@@ -555,9 +555,7 @@ ROM_END
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -586,9 +584,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -602,9 +598,14 @@ static void hisave(void)
 
 struct GameDriver lwings_driver =
 {
-	"Legendary Wings",
+	__FILE__,
+	0,
 	"lwings",
+	"Legendary Wings (US)",
+	"1986",
+	"Capcom",
 	"Paul Leaman\nMarco Cassili (dip switches)",
+	0,
 	&machine_driver,
 
 	lwings_rom,
@@ -621,9 +622,14 @@ struct GameDriver lwings_driver =
 
 struct GameDriver lwingsjp_driver =
 {
-	"Legendary Wings (Japanese)",
+	__FILE__,
+	&lwings_driver,
 	"lwingsjp",
+	"Legendary Wings (Japan)",
+	"1986",
+	"Capcom",
 	"Paul Leaman\nMarco Cassili (dip switches)",
+	0,
 	&machine_driver,
 
 	lwingsjp_rom,
@@ -676,9 +682,14 @@ ROM_END
 
 struct GameDriver sectionz_driver =
 {
-	"Section Z",
+	__FILE__,
+	0,
 	"sectionz",
+	"Section Z",
+	"1985",
+	"Capcom",
 	"Paul Leaman\nMarco Cassili (dip switches)",
+	0,
 	&machine_driver,
 
 	sectionz_rom,
@@ -752,7 +763,7 @@ table is lifted from the code.
 Sample 5 doesn't play properly.
 */
 
-ADPCM_SAMPLES_START(trojan_samples) /* Trojan J samples are the same */
+ADPCM_SAMPLES_START(trojan_samples)
 	ADPCM_SAMPLE(0x00, 0x00a7, (0x0aa9-0x00a7)*2 )
 	ADPCM_SAMPLE(0x01, 0x0aa9, (0x12ab-0x0aa9)*2 )
 	ADPCM_SAMPLE(0x02, 0x12ab, (0x17ad-0x12ab)*2 )
@@ -856,7 +867,7 @@ ROM_START( trojan_rom )
 	ROM_LOAD( "TB02.bin", 0x0000, 0x8000, 0x04af8521 )
 
 	ROM_REGION(0x08000)	/* 64k for ADPCM CPU (CPU not emulated) */
-	ROM_LOAD( "TB01.bin", 0x0000, 0x8000, 0xbc22d83e )
+	ROM_LOAD( "TB01.bin", 0x0000, 0x4000, 0xdc22d83e )
 
 	ROM_REGION(0x08000)
 	ROM_LOAD( "TB23.bin", 0x00000, 0x08000, 0x4e586e86 )  /* Tile Map */
@@ -866,46 +877,44 @@ ROM_START( trojanj_rom )
 	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "Troj-04.rom", 0x00000, 0x8000, 0xa3d48798 )
 	ROM_LOAD( "Troj-06.rom", 0x10000, 0x8000, 0x3d7a2112 )
-	ROM_LOAD( "Troj-05.rom", 0x18000, 0x8000, 0x8c67a865 )
+	ROM_LOAD( "TB05.bin", 0x18000, 0x8000, 0x8c67a865 )
 
 	ROM_REGION(0xa0000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "Troj-03.rom", 0x00000, 0x4000, 0x6f676329 )	/* characters */
-	ROM_LOAD( "Troj-13.rom", 0x10000, 0x8000, 0x488526a9 )	/* tiles */
-	ROM_LOAD( "Troj-09.rom", 0x18000, 0x8000, 0x941934f9 )
-	ROM_LOAD( "Troj-12.rom", 0x20000, 0x8000, 0xca0be2e1 )
-	ROM_LOAD( "Troj-08.rom", 0x28000, 0x8000, 0x67b20808 )
-	ROM_LOAD( "Troj-11.rom", 0x30000, 0x8000, 0x689f2af9 )
-	ROM_LOAD( "Troj-07.rom", 0x38000, 0x8000, 0x167327d9 )
-	ROM_LOAD( "Troj-14.rom", 0x40000, 0x8000, 0x343d4711 )
-	ROM_LOAD( "Troj-10.rom", 0x48000, 0x8000, 0x7ebd6a7d )
-	ROM_LOAD( "Troj-18.rom", 0x50000, 0x8000, 0xcbeaef2c )	/* sprites */
-	ROM_LOAD( "Troj-16.rom", 0x58000, 0x8000, 0xb276f758 )
-	ROM_LOAD( "Troj-17.rom", 0x60000, 0x8000, 0xc7ad3a3d )
-	ROM_LOAD( "Troj-15.rom", 0x68000, 0x8000, 0x9db50319 )
-	ROM_LOAD( "Troj-22.rom", 0x70000, 0x8000, 0xa28832a2 )
-	ROM_LOAD( "Troj-20.rom", 0x78000, 0x8000, 0x0156ce22 )
-	ROM_LOAD( "Troj-21.rom", 0x80000, 0x8000, 0x3c8ece14 )
-	ROM_LOAD( "Troj-19.rom", 0x88000, 0x8000, 0x5034e812 )
-	ROM_LOAD( "Troj-25.rom", 0x90000, 0x8000, 0x6592283e )	/* Bk Tiles */
-	ROM_LOAD( "Troj-24.rom", 0x98000, 0x8000, 0x24efb007 )
+	ROM_LOAD( "TB03.bin", 0x00000, 0x4000, 0x6f676329 )	/* characters */
+	ROM_LOAD( "TB13.bin", 0x10000, 0x8000, 0x488526a9 )	/* tiles */
+	ROM_LOAD( "TB09.bin", 0x18000, 0x8000, 0x941934f9 )
+	ROM_LOAD( "TB12.bin", 0x20000, 0x8000, 0xca0be2e1 )
+	ROM_LOAD( "TB08.bin", 0x28000, 0x8000, 0x67b20808 )
+	ROM_LOAD( "TB11.bin", 0x30000, 0x8000, 0x689f2af9 )
+	ROM_LOAD( "TB07.bin", 0x38000, 0x8000, 0x167327d9 )
+	ROM_LOAD( "TB14.bin", 0x40000, 0x8000, 0x343d4711 )
+	ROM_LOAD( "TB10.bin", 0x48000, 0x8000, 0x7ebd6a7d )
+	ROM_LOAD( "TB18.bin", 0x50000, 0x8000, 0xcbeaef2c )	/* sprites */
+	ROM_LOAD( "TB16.bin", 0x58000, 0x8000, 0xb276f758 )
+	ROM_LOAD( "TB17.bin", 0x60000, 0x8000, 0xc7ad3a3d )
+	ROM_LOAD( "TB15.bin", 0x68000, 0x8000, 0x9db50319 )
+	ROM_LOAD( "TB22.bin", 0x70000, 0x8000, 0xa28832a2 )
+	ROM_LOAD( "TB20.bin", 0x78000, 0x8000, 0x0156ce22 )
+	ROM_LOAD( "TB21.bin", 0x80000, 0x8000, 0x3c8ece14 )
+	ROM_LOAD( "TB19.bin", 0x88000, 0x8000, 0x5034e812 )
+	ROM_LOAD( "TB25.bin", 0x90000, 0x8000, 0x6592283e )	/* Bk Tiles */
+	ROM_LOAD( "TB24.bin", 0x98000, 0x8000, 0x24efb007 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "Troj-02.rom", 0x0000, 0x8000, 0x04af8521 )
+	ROM_LOAD( "TB02.bin", 0x0000, 0x8000, 0x04af8521 )
 
 	ROM_REGION(0x08000)	/* 64k for ADPCM CPU (CPU not emulated) */
-	ROM_LOAD( "Troj-01.rom", 0x0000, 0x4000, 0xdc22d83e )
+	ROM_LOAD( "TB01.bin", 0x0000, 0x4000, 0xdc22d83e )
 
 	ROM_REGION(0x08000)
-	ROM_LOAD( "Troj-23.rom", 0x00000, 0x08000, 0x4e586e86 )  /* Tile Map */
+	ROM_LOAD( "TB23.bin", 0x00000, 0x08000, 0x4e586e86 )  /* Tile Map */
 ROM_END
 
 
 
 static int trojan_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -931,9 +940,7 @@ static int trojan_hiload(void)
 static void trojan_hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -947,9 +954,14 @@ static void trojan_hisave(void)
 
 struct GameDriver trojan_driver =
 {
-	"Trojan",
+	__FILE__,
+	0,
 	"trojan",
+	"Trojan (US)",
+	"1986",
+	"Capcom (Romstar license)",
 	"Paul Leaman\nPhil Stroffolino\nMarco Cassili (dip switches)",
+	0,
 	&trojan_machine_driver,
 
 	trojan_rom,
@@ -966,9 +978,14 @@ struct GameDriver trojan_driver =
 
 struct GameDriver trojanj_driver =
 {
-	"Trojan (Japanese)",
+	__FILE__,
+	&trojan_driver,
 	"trojanj",
+	"Trojan (Japan)",
+	"1986",
+	"Capcom",
 	"Paul Leaman\nPhil Stroffolino\nMarco Cassili (dip switches)",
+	0,
 	&trojan_machine_driver,
 
 	trojanj_rom,

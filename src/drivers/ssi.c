@@ -237,9 +237,14 @@ ROM_END
 
 struct GameDriver ssi_driver =
 {
-	"Super Space Invaders '91",
+	__FILE__,
+	0,
 	"ssi",
+	"Super Space Invaders '91",
+	"????",
+	"?????",
 	"Howie Cohen \nAlex Pasadyn \nBill Boyle (graphics info) \nRichard Bush (technical information)",
+	0,
 	&machine_driver,
 
 	ssi_rom,

@@ -784,9 +784,14 @@ ROM_END
 
 struct GameDriver pacland_driver =
 {
-	"Pac-Land (Midway)",
+	__FILE__,
+	0,
 	"pacland",
+	"Pac-Land (Midway)",
+	"????",
+	"?????",
 	"Ernesto Corvi\nMirko Buffoni\nNicola Salmoria",
+	0,
 	&machine_driver,
 
 	pacland_rom,
@@ -804,9 +809,14 @@ struct GameDriver pacland_driver =
 
 struct GameDriver paclandn_driver =
 {
-	"Pac-Land (Namco)",
+	__FILE__,
+	0,
 	"paclandn",
+	"Pac-Land (Namco)",
+	"????",
+	"?????",
 	"Ernesto Corvi\nMirko Buffoni\nNicola Salmoria",
+	0,
 	&machine_driver,
 
 	paclandn_rom,
@@ -824,9 +834,14 @@ struct GameDriver paclandn_driver =
 
 struct GameDriver paclanda_driver =
 {
-	"Pac-Land (Namco alternate)",
+	__FILE__,
+	0,
 	"paclanda",
+	"Pac-Land (Namco alternate)",
+	"????",
+	"?????",
 	"Ernesto Corvi\nMirko Buffoni\nNicola Salmoria",
+	0,
 	&machine_driver,
 
 	paclanda_rom,

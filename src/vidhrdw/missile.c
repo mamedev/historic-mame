@@ -58,6 +58,7 @@ void
 missile_video_w(int address,int data)
 {
 	int wbyte, wbit;
+	extern unsigned char *RAM;
 
 
   if(address < 0xF800)
@@ -99,6 +100,7 @@ void
 missile_video_3rd_bit_w(int address, int data)
 {
 	int i;
+	extern unsigned char *RAM;
 
 	RAM[address] = data;
 
@@ -120,6 +122,8 @@ void missile_vh_update(struct osd_bitmap *bitmap)
 	int x, y, tmp;
 	int address;
 	int bottom;
+	/* TODO: get rid of this */
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* RG - 4/11/98 - added flips and rotates... */

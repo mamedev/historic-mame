@@ -76,7 +76,6 @@ void starforc_paletteram_w(int offset,int data);
 int starforc_vh_start(void);
 void starforc_vh_stop(void);
 
-void starforc_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void starforc_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 int starforc_sh_start(void);
@@ -318,12 +317,12 @@ static struct GfxLayout spritelayout2 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout1,      0, 8 },	/* characters */
-	{ 1, 0x03000, &charlayout2,   16*8, 8 },	/* background #1 */
-	{ 1, 0x09000, &charlayout2,    8*8, 8 },	/* background #2 */
-	{ 1, 0x0f000, &charlayout3,   24*8, 8 },	/* star background */
-	{ 1, 0x12000, &spritelayout1, 40*8, 8 },	/* normal sprites */
-	{ 1, 0x14000, &spritelayout2, 40*8, 8 },	/* large sprites */
+	{ 1, 0x00000, &charlayout1,     0, 8 },	/*   0- 63 characters */
+	{ 1, 0x03000, &charlayout2,   128, 8 },	/* 128-191 background #1 */
+	{ 1, 0x09000, &charlayout2,    64, 8 },	/*  64-127 background #2 */
+	{ 1, 0x0f000, &charlayout3,   192, 8 },	/* 192-255 star background */
+	{ 1, 0x12000, &spritelayout1, 320, 8 },	/* 320-383 normal sprites */
+	{ 1, 0x14000, &spritelayout2, 320, 8 },	/* 320-383 large sprites */
 	{ -1 } /* end of array */
 };
 
@@ -356,10 +355,10 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0, 32*8-1 },
 	gfxdecodeinfo,
-	256, 48*8,
-	starforc_vh_convert_color_prom,
+	384, 384,
+	0,
 
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	starforc_vh_start,
 	starforc_vh_stop,
@@ -436,9 +435,8 @@ ROM_END
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if (memcmp(&RAM[0x8348],"\x00\x08\x05\x00",4) == 0 &&
 	memcmp(&RAM[0x9181],"\x18",1) == 0 &&
@@ -522,10 +520,8 @@ static void hisave(void)
 {
 	void *f;
 	int i;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 
 	/* Bug to solve the problem about resetting in the hi-score screen */
 	for (i = 0x8039; i < 0x80a0; i+=0x0b)
@@ -543,9 +539,14 @@ static void hisave(void)
 
 struct GameDriver starforc_driver =
 {
-	"Star Force",
+	__FILE__,
+	0,
 	"starforc",
+	"Star Force",
+	"????",
+	"?????",
 	"Mirko Buffoni\nNicola Salmoria\nTatsuyuki Satoh\nJuan Carlos Lorente\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	starforc_rom,
@@ -563,9 +564,14 @@ struct GameDriver starforc_driver =
 
 struct GameDriver megaforc_driver =
 {
-	"Mega Force",
+	__FILE__,
+	0,
 	"megaforc",
+	"Mega Force",
+	"????",
+	"?????",
 	"Mirko Buffoni\nNicola Salmoria\nTatsuyuki Satoh\nJuan Carlos Lorente\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	megaforc_rom,

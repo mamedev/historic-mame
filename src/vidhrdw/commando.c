@@ -38,7 +38,7 @@ void commando_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 	int i;
 
 
-	for (i = 0;i < 256;i++)
+	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
 		int bit0,bit1,bit2,bit3;
 
@@ -48,29 +48,17 @@ void commando_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 		bit2 = (color_prom[i] >> 2) & 0x01;
 		bit3 = (color_prom[i] >> 3) & 0x01;
 		palette[3*i] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		bit0 = (color_prom[i+256] >> 0) & 0x01;
-		bit1 = (color_prom[i+256] >> 1) & 0x01;
-		bit2 = (color_prom[i+256] >> 2) & 0x01;
-		bit3 = (color_prom[i+256] >> 3) & 0x01;
+		bit0 = (color_prom[i+512] >> 0) & 0x01;
+		bit1 = (color_prom[i+512] >> 1) & 0x01;
+		bit2 = (color_prom[i+512] >> 2) & 0x01;
+		bit3 = (color_prom[i+512] >> 3) & 0x01;
 		palette[3*i + 1] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		bit0 = (color_prom[i+256*2] >> 0) & 0x01;
-		bit1 = (color_prom[i+256*2] >> 1) & 0x01;
-		bit2 = (color_prom[i+256*2] >> 2) & 0x01;
-		bit3 = (color_prom[i+256*2] >> 3) & 0x01;
+		bit0 = (color_prom[i+2*512] >> 0) & 0x01;
+		bit1 = (color_prom[i+2*512] >> 1) & 0x01;
+		bit2 = (color_prom[i+2*512] >> 2) & 0x01;
+		bit3 = (color_prom[i+2*512] >> 3) & 0x01;
 		palette[3*i + 2] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 	}
-
-	/* characters use colors 192-255 */
-	for (i = 0;i < 16*4;i++)
-		colortable[i] = i + 192;
-
-	/* sprites use colors 128-191 */
-	for (i = 16*4;i < 16*4+4*16;i++)
-		colortable[i] = i - 16*4 + 128;
-
-	/* background tiles use colors 0-127 */
-	for (i = 16*4+4*16;i < 16*4+4*16+16*8;i++)
-		colortable[i] = i - (16*4+4*16);
 }
 
 

@@ -264,12 +264,14 @@ ROM_END
 
 struct GameDriver quantum_driver =
 {
-	"Quantum",
+	__FILE__,
+	0,
 	"quantum",
-	"Paul Forgey (Mame driver)\n"
-	"Aaron Giles (Mame driver)\n"
-	VECTOR_TEAM,
-
+	"Quantum",
+	"????",
+	"?????",
+	"Paul Forgey (MAME driver)\nAaron Giles (MAME driver)\n"VECTOR_TEAM,
+	0,
 	&machine_driver,
 
 	quantum_rom,
@@ -288,12 +290,14 @@ struct GameDriver quantum_driver =
 
 struct GameDriver quantum2_driver =
 {
-	"Quantum (version 2)",
+	__FILE__,
+	0,
 	"quantum2",
-	"Paul Forgey (Mame driver)\n"
-	"Aaron Giles (Mame driver)\n"
-	VECTOR_TEAM,
-
+	"Quantum (version 2)",
+	"????",
+	"?????",
+	"Paul Forgey (MAME driver)\nAaron Giles (MAME driver)\n"VECTOR_TEAM,
+	0,
 	&machine_driver,
 
 	quantum2_rom,

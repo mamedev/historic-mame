@@ -494,9 +494,14 @@ ROM_END
 
 struct GameDriver tigeroad_driver =
 {
-	"Tiger Road",
+	__FILE__,
+	0,
 	"tigeroad",
+	"Tiger Road",
+	"1987",
+	"Capcom (Romstar license)",
 	"Phil Stroffolino (MAME driver)\nTim Lindquist",
+	0,
 	&machine_driver,
 
 	tigeroad_rom,
@@ -512,9 +517,14 @@ struct GameDriver tigeroad_driver =
 /* F1 Dream has an Intel 8751 microcontroller for protection */
 struct GameDriver f1dream_driver =
 {
-	"F1 Dream",
+	__FILE__,
+	0,
 	"f1dream",
+	"F1 Dream",
+	"1988",
+	"Capcom (Romstar license)",
 	"Paul Leaman\nPhil Stroffolino (MAME driver)\nTim Lindquist",
+	0,
 	&machine_driver,
 
 	f1dream_rom,

@@ -270,6 +270,9 @@ ROM_END
 
 static void jumpbug_decode(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* this is not a "decryption", it is just a protection removal */
 	RAM[0x265a] = 0xc9;
 	RAM[0x8a16] = 0xc9;
@@ -284,47 +287,55 @@ static void jumpbug_decode(void)
 
 static int hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-        if (memcmp(&RAM[0x4208],"\x00\x00\x00\x05",4) == 0 &&
-            memcmp(&RAM[0x4233],"\x97\x97\x97\x97",4) ==0)
 
-        {
+	if (memcmp(&RAM[0x4208],"\x00\x00\x00\x05",4) == 0 &&
+		memcmp(&RAM[0x4233],"\x97\x97\x97\x97",4) ==0)
 
-                void *f;
+	{
 
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        osd_fread(f,&RAM[0x4208],6);
-                        osd_fread(f,&RAM[0x4222],3*7);
-                        osd_fclose(f);
-                }
-                return 1;
-        }
+			void *f;
 
-        else return 0;  /* we can't load the hi scores yet */
+			if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+			{
+					osd_fread(f,&RAM[0x4208],6);
+					osd_fread(f,&RAM[0x4222],3*7);
+					osd_fclose(f);
+			}
+			return 1;
+	}
 
+	else return 0;  /* we can't load the hi scores yet */
 }
 
 
 static void hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite(f,&RAM[0x4208],6);
-                osd_fwrite(f,&RAM[0x4222],3*7);
-                osd_fclose(f);
-        }
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+			osd_fwrite(f,&RAM[0x4208],6);
+			osd_fwrite(f,&RAM[0x4222],3*7);
+			osd_fclose(f);
+	}
 }
 
 
 
 struct GameDriver jumpbug_driver =
 {
-	"Jump Bug",
+	__FILE__,
+	0,
 	"jumpbug",
+	"Jump Bug",
+	"????",
+	"?????",
 	"Richard Davies\nBrad Oliver\nNicola Salmoria\nJuan Carlos Lorente\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	jumpbug_rom,
@@ -342,9 +353,14 @@ struct GameDriver jumpbug_driver =
 
 struct GameDriver jbugsega_driver =
 {
-	"Jump Bug (bootleg)",
+	__FILE__,
+	0,
 	"jbugsega",
+	"Jump Bug (bootleg)",
+	"????",
+	"?????",
 	"Richard Davies\nBrad Oliver\nNicola Salmoria\nJuan Carlos Lorente\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	jbugsega_rom,

@@ -144,15 +144,16 @@ void t11_SetBank(int offset, unsigned char *base)
 void t11_reset(void)
 {
 	int i;
-	
+	extern unsigned char *RAM;
+
 	memset (&state, 0, sizeof (state));
 	SP = 0x0400;
 	PC = 0x8000;
 	PSW = 0xe0;
-	
+
 	for (i = 0; i < 8; i++)
 		state.bank[i] = &RAM[i * 0x2000];
-	
+
 	t11_Clear_Pending_Interrupts();
 }
 
@@ -177,7 +178,7 @@ void t11_Clear_Pending_Interrupts(void)
 static void Interrupt(void)
 {
 	int level = (PSW >> 5) & 3;
-	
+
 	if (state.pending_interrupts & T11_IRQ3_BIT)
 	{
 		state.pending_interrupts &= ~T11_IRQ3_BIT;
@@ -211,7 +212,7 @@ static void Interrupt(void)
 		PSW = RWORD (0x3a);
 	}
 }
-		
+
 
 
 /* execute instructions on this CPU until icount expires */
@@ -230,7 +231,7 @@ change_pc (0xffff);
 	{
 		if (state.pending_interrupts != 0)
 			Interrupt();
-			
+
 #if 0
 /* use this code to nail a bogus jump or opcode */
 		{
@@ -239,29 +240,29 @@ change_pc (0xffff);
 			static unsigned char inst[256][8];
 			static int pcindex = 0;
 			int i;
-			
+
 			pclist[pcindex] = PCD;
 			for (i = 0; i < 8; i++)
 				inst[pcindex][i] = state.bank[(PCD + i) >> 13][(PCD + i) & 0x1fff];
 			pcindex = (pcindex + 1) & 255;
-			
+
 			if (PCD < 0x4000)
 			{
 				char buffer[200];
 				int i;
-				
+
 				#undef printf
 				printf ("Error!\n");
 				for (i = 255; i >= 0; i--)
 				{
 					unsigned char *temp;
 					int index = (pcindex - i) & 255;
-					
+
 					temp = OP_ROM;
 					OP_ROM = &inst[index][0] - pclist[index];
 					DasmT11 (&inst[index][0], buffer, pclist[index]);
 					OP_ROM = temp;
-					
+
 					printf ("%04X: %s\n", pclist[index], buffer);
 				}
 				printf ("$38 = %04X\n", RAM[0x38] + (RAM[0x39] << 8));
@@ -272,7 +273,7 @@ change_pc (0xffff);
 			}
 		}
 #endif
-		
+
 
 #ifdef	MAME_DEBUG
 {

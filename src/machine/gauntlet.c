@@ -84,7 +84,7 @@ void gauntlet2_init_machine (void)
 void gauntlet_update (int param)
 {
 	int yscroll;
-	
+
 	/* update the display list */
 	yscroll = gauntlet_update_display_list (param);
 
@@ -102,7 +102,7 @@ void gauntlet_update (int param)
 int gauntlet_interrupt(void)
 {
 	timer_set (TIME_IN_USEC (Machine->drv->vblank_duration), 0, gauntlet_update);
-	
+
 	return 4;       /* Interrupt vector 4, used by VBlank */
 }
 
@@ -277,6 +277,7 @@ void gauntlet_68010_speedup_w (int offset, int data)
 
 int gauntlet_6502_speedup_r (int offset)
 {
+	extern unsigned char *RAM;
 	int result = RAM[0x0211];
 	if (cpu_getpreviouspc() == 0x412a && RAM[0x0211] == RAM[0x0210] && RAM[0x0225] == RAM[0x0224])
 		cpu_spin ();

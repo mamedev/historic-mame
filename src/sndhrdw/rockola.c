@@ -35,8 +35,8 @@ int rockola_sh_start(void)
    Sound1Base=Sound1Offset;
    oldSound1Base=Sound1Base;
 
-      osd_play_sample(0, waveform, 32, 1000, 0, 1);
-      osd_play_sample(1, waveform, 32, 1000, 0, 1);
+      osd_play_sample(0, (signed char*)waveform, 32, 1000, 0, 1);
+      osd_play_sample(1, (signed char*)waveform, 32, 1000, 0, 1);
 
         return 0;
 }
@@ -65,7 +65,7 @@ void rockola_sh_update(void)
         osd_adjust_sample(1, 1000, 0);
      Sound1Offset++;
 
-      // check for overflow
+      /* check for overflow*/
       if (Sound0Offset > Sound0Base + 255)
          Sound0Offset = Sound0Base;
 

@@ -579,9 +579,14 @@ static const char *blockade_sample_name[] =
 
 struct GameDriver blockade_driver =
 {
-    "Blockade",
+	__FILE__,
+	0,
     "blockade",
+    "Blockade",
+	"????",
+	"?????",
     "Frank Palazzolo",
+	0,
     &blockade_machine_driver,
 
     blockade_rom,
@@ -600,9 +605,14 @@ struct GameDriver blockade_driver =
 
 struct GameDriver comotion_driver =
 {
-    "Comotion",
+	__FILE__,
+	0,
     "comotion",
+    "Comotion",
+	"????",
+	"?????",
     "Frank Palazzolo",
+	0,
     &comotion_machine_driver,
 
     comotion_rom,
@@ -621,9 +631,14 @@ struct GameDriver comotion_driver =
 
 struct GameDriver blasto_driver =
 {
-    "Blasto",
+	__FILE__,
+	0,
     "blasto",
+    "Blasto",
+	"????",
+	"?????",
     "Frank Palazzolo\n\nNote: This driver is preliminary",
+	0,
     &blasto_machine_driver,
 
     blasto_rom,

@@ -467,6 +467,7 @@ static void pengo_decode(void)
 		{ 0x08,0x08,0xa8,0xa8 }		/* ...1...1...1...1 */
 	};
 	int A;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	for (A = 0x0000;A < 0x8000;A++)
@@ -536,6 +537,7 @@ static void penta_decode(void)
 		{ 0x88,0x0a,0x82,0x00,0xa0,0x22,0xaa,0x28 }		/* ...1...1...1.... */
 	};
 	int A;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	for (A = 0x0000;A < 0x8000;A++)
@@ -568,6 +570,9 @@ static void penta_decode(void)
 
 static int hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x8840],"\xd0\x07",2) == 0 &&
 			memcmp(&RAM[0x8858],"\xd0\x07",2) == 0 &&
@@ -591,6 +596,9 @@ static int hiload(void)
 
 static int pengoa_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x8840],"\x00\x00\x01\x55\x55\x55",6) == 0 &&
 			memcmp(&RAM[0x8858],"\x00\x00",2) == 0 &&
@@ -615,6 +623,7 @@ static int pengoa_hiload(void)
 static void hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -628,9 +637,14 @@ static void hisave(void)
 
 struct GameDriver pengo_driver =
 {
-	"Pengo",
+	__FILE__,
+	0,
 	"pengo",
+	"Pengo",
+	"????",
+	"?????",
 	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nSergio Munoz (color and sound info)",
+	0,
 	&machine_driver,
 
 	pengo_rom,
@@ -648,9 +662,14 @@ struct GameDriver pengo_driver =
 
 struct GameDriver pengoa_driver =
 {
-	"Pengo (alternate)",
+	__FILE__,
+	0,
 	"pengoa",
+	"Pengo (alternate)",
+	"????",
+	"?????",
 	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nSergio Munoz (color and sound info)\nGerrit Van Goethem (high score fix)",
+	0,
 	&machine_driver,
 
 	pengoa_rom,
@@ -668,9 +687,14 @@ struct GameDriver pengoa_driver =
 
 struct GameDriver penta_driver =
 {
-	"Penta",
+	__FILE__,
+	0,
 	"penta",
+	"Penta",
+	"????",
+	"?????",
 	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nSergio Munoz (color and sound info)",
+	0,
 	&machine_driver,
 
 	penta_rom,

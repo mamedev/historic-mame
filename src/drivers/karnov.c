@@ -722,16 +722,25 @@ ROM_END
 
 static void karnov_patch(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	WRITE_WORD (&RAM[0x05E4],0x600A);
 }
 
 static void karnovj_patch(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	WRITE_WORD (&RAM[0x05E4],0x600A);
 }
 
 static void chelnov_patch(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	WRITE_WORD (&RAM[0x0A26],0x4E71);  /* removes a protection lookup table */
 
   /* Pulls out corrupt writes to protection location */
@@ -763,18 +772,26 @@ static void chelnov_patch(void)
 
 static void chelnovj_patch(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	WRITE_WORD (&RAM[0x0A2E],0x4E71);  /* removes a protection lookup table */
 
-  /* Static checks, as for usa version */
-  WRITE_WORD (&RAM[0x09FC],0x4E75);
-  WRITE_WORD (&RAM[0x09A6],0x4E75);
+	/* Static checks, as for usa version */
+	WRITE_WORD (&RAM[0x09FC],0x4E75);
+	WRITE_WORD (&RAM[0x09A6],0x4E75);
 }
 
 struct GameDriver karnov_driver =
 {
-	"Karnov",
+	__FILE__,
+	0,
 	"karnov",
+	"Karnov",
+	"????",
+	"?????",
 	"Bryan McPhail",
+	0,
 	&karnov_machine_driver,
 
 	karnov_rom,
@@ -792,9 +809,14 @@ struct GameDriver karnov_driver =
 
 struct GameDriver karnovj_driver =
 {
-	"Karnov (Japan)",
+	__FILE__,
+	0,
 	"karnovj",
+	"Karnov (Japan)",
+	"????",
+	"?????",
 	"Bryan McPhail",
+	0,
 	&karnov_machine_driver,
 
 	karnovj_rom,
@@ -812,9 +834,14 @@ struct GameDriver karnovj_driver =
 
 struct GameDriver chelnov_driver =
 {
-	"Chelnov - Atomic Runner",
+	__FILE__,
+	0,
 	"chelnov",
+	"Chelnov - Atomic Runner",
+	"????",
+	"?????",
 	"Bryan McPhail",
+	0,
 	&chelnov_machine_driver,
 
 	chelnov_rom,
@@ -832,9 +859,14 @@ struct GameDriver chelnov_driver =
 
 struct GameDriver chelnovj_driver =
 {
-	"Chelnov - Atomic Runner (Japan)",
+	__FILE__,
+	0,
 	"chelnovj",
+	"Chelnov - Atomic Runner (Japan)",
+	"????",
+	"?????",
 	"Bryan McPhail",
+	0,
 	&chelnov_machine_driver,
 
 	chelnovj_rom,

@@ -1125,10 +1125,8 @@ static int mappy_hiload(void)
 {
    int writing = 0;
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
 
    /* check if the hi score table has already been initialized */
    if (memcmp(&RAM[0x1465],"BEH",3) == 0 &&          /* check for high score initials */
@@ -1171,10 +1169,8 @@ static int mappy_hiload(void)
 static void mappy_hisave(void)
 {
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
 
    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
    {
@@ -1189,10 +1185,8 @@ static int digdug2_hiload(void)
 {
    int writing = 0;
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
 
    /* check if the hi score table has already been initialized */
    if (memcmp(&RAM[0x11b6]," KAZU ",6) == 0 &&         /* check for high score initials */
@@ -1235,10 +1229,8 @@ static int digdug2_hiload(void)
 static void digdug2_hisave(void)
 {
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
 
    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
    {
@@ -1252,10 +1244,8 @@ static void digdug2_hisave(void)
 static int motos_hiload(void)  /* preliminary, does not copy top high score */
 {
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
 
    /* check if the hi score table has already been initialized */
    if (memcmp(&RAM[0x2412],"\x4d\x4f\x52",3) == 0)
@@ -1276,10 +1266,8 @@ static int motos_hiload(void)  /* preliminary, does not copy top high score */
 static void motos_hisave(void)
 {
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
 
    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
    {
@@ -1291,10 +1279,8 @@ static void motos_hisave(void)
 static int todruaga_hiload(void)
 {
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
 
    /* check if the hi score table has already been initialized */
    if (memcmp(&RAM[0x1031],"END",3) == 0)
@@ -1319,10 +1305,8 @@ static int todruaga_hiload(void)
 static void todruaga_hisave(void)
 {
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
 
    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
    {
@@ -1335,9 +1319,14 @@ static void todruaga_hisave(void)
 /* the core game driver */
 struct GameDriver mappy_driver =
 {
-	"Mappy (US version)",
+	__FILE__,
+	0,
 	"mappy",
+	"Mappy (US version)",
+	"????",
+	"?????",
 	"Aaron Giles\nMirko Buffoni\nJROK",
+	0,
 	&mappy_machine_driver,
 
 	mappy_rom,
@@ -1355,9 +1344,14 @@ struct GameDriver mappy_driver =
 
 struct GameDriver mappyjp_driver =
 {
-	"Mappy (Japanese version)",
+	__FILE__,
+	0,
 	"mappyjp",
+	"Mappy (Japanese version)",
+	"????",
+	"?????",
 	"Aaron Giles\nMirko Buffoni\nJROK",
+	0,
 	&mappy_machine_driver,
 
 	mappyjp_rom,
@@ -1375,9 +1369,14 @@ struct GameDriver mappyjp_driver =
 
 struct GameDriver digdug2_driver =
 {
-	"Dig Dug 2",
+	__FILE__,
+	0,
 	"digdug2",
+	"Dig Dug 2",
+	"????",
+	"?????",
 	"Aaron Giles\nMirko Buffoni\nJROK",
+	0,
 	&digdug2_machine_driver,
 
 	digdug2_rom,
@@ -1395,9 +1394,14 @@ struct GameDriver digdug2_driver =
 
 struct GameDriver motos_driver =
 {
-	"Motos",
+	__FILE__,
+	0,
 	"motos",
+	"Motos",
+	"????",
+	"?????",
 	"Aaron Giles\nMirko Buffoni\nJROK\nValerio Verrando",
+	0,
 	&motos_machine_driver,
 
 	motos_rom,
@@ -1415,9 +1419,14 @@ struct GameDriver motos_driver =
 
 struct GameDriver todruaga_driver =
 {
-	"Tower of Druaga",
+	__FILE__,
+	0,
 	"todruaga",
+	"Tower of Druaga",
+	"????",
+	"?????",
 	"Aaron Giles\nMirko Buffoni\nJROK\nValerio Verrando",
+	0,
 	&todruaga_machine_driver,
 
 	todruaga_rom,

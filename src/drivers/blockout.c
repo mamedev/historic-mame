@@ -291,9 +291,14 @@ ROM_END
 
 struct GameDriver blockout_driver =
 {
-	"Block Out",
+	__FILE__,
+	0,
 	"blockout",
+	"Block Out",
+	"????",
+	"?????",
 	"Nicola Salmoria\nAaron Giles (ADPCM sound)",
+	0,
 	&machine_driver,
 
 	blockout_rom,

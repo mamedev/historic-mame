@@ -462,7 +462,7 @@ int showcharset(void)
 		}
 	} while (key != OSD_KEY_F4 && key != OSD_KEY_ESC);
 
-	while (osd_key_pressed(key));	/* wait for key release */
+	while (osd_key_pressed(key)) ;	/* wait for key release */
 
 	/* clear the screen before returning */
 	osd_clearbitmap(Machine->scrbitmap);
@@ -605,7 +605,7 @@ static int setdipswitches(void)
 		}
 	} while (done == 0);
 
-	while (osd_key_pressed(key));	/* wait for key release */
+	while (osd_key_pressed(key)) ;	/* wait for key release */
 
 
 	/* clear the screen before returning */
@@ -728,7 +728,7 @@ static int setkeysettings(void)
 		}
 	} while (done == 0);
 
-	while (osd_key_pressed(key));	/* wait for key release */
+	while (osd_key_pressed(key)) ;	/* wait for key release */
 
 	/* clear the screen before returning */
 	osd_clearbitmap(Machine->scrbitmap);
@@ -871,7 +871,7 @@ static int setjoysettings(void)
 		}
 	} while (done == 0);
 
-	while (osd_key_pressed(key));	/* wait for key release */
+	while (osd_key_pressed(key)) ;	/* wait for key release */
 
 	/* clear the screen before returning */
 	osd_clearbitmap(Machine->scrbitmap);
@@ -1204,7 +1204,7 @@ static int settraksettings(void)
 		}
 	} while (done == 0);
 
-	while (osd_key_pressed(pkey));	/* wait for key release */
+	while (osd_key_pressed(pkey)) ;	/* wait for key release */
 
 	/* clear the screen before returning */
 	osd_clearbitmap(Machine->scrbitmap);
@@ -1264,7 +1264,7 @@ void mame_stats (void)
 	displaytext(dt,1);
 
 	key = osd_read_key();
-	while (osd_key_pressed(key));	/* wait for key release */
+	while (osd_key_pressed(key)) ;	/* wait for key release */
 }
 
 int showcredits(void)
@@ -1284,7 +1284,7 @@ int showcredits(void)
 	displaytext(dt,1);
 
 	key = osd_read_key();
-	while (osd_key_pressed(key));	/* wait for key release */
+	while (osd_key_pressed(key)) ;	/* wait for key release */
 
 	return 0;
 }
@@ -1307,7 +1307,8 @@ int showgameinfo(void)
 		"6805",
 		"6809",
 		"68000",
-		"T-11"
+		"T-11",
+		"S2650"
 	};
 	static char *soundnames[] =
 	{
@@ -1332,7 +1333,7 @@ int showgameinfo(void)
 	};
 
 
-	sprintf(buf,"%s\n\nCPU:\n",Machine->gamedrv->description);
+	sprintf(buf,"%s\n%s %s\n\nCPU:\n",Machine->gamedrv->description,Machine->gamedrv->year,Machine->gamedrv->manufacturer);
 	i = 0;
 	while (i < MAX_CPU && Machine->drv->cpu[i].cpu_type)
 	{
@@ -1386,15 +1387,12 @@ int showgameinfo(void)
 					Machine->drv->visible_area.max_x - Machine->drv->visible_area.min_x + 1,
 					Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y + 1,
 					Machine->drv->frames_per_second);
+		sprintf(&buf[strlen(buf)],"%d colors ",Machine->drv->total_colors);
 		if (Machine->drv->video_attributes & VIDEO_SUPPORTS_16BIT)
-			sprintf(&buf[strlen(buf)],">256 colors (16-bit required)\n");
-		else
-		{
-			sprintf(&buf[strlen(buf)],"%d colors",Machine->drv->total_colors);
-			if (Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE)
-				strcat(buf," (dynamic)\n");
-			else strcat(buf," (static)\n");
-		}
+			strcat(buf,"(16-bit required)\n");
+		else if (Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE)
+			strcat(buf,"(dynamic)\n");
+		else strcat(buf,"(static)\n");
 	}
 
 	dt[0].text = buf;
@@ -1405,7 +1403,7 @@ int showgameinfo(void)
 	displaytext(dt,1);
 
 	key = osd_read_key();
-	while (osd_key_pressed(key));	/* wait for key release */
+	while (osd_key_pressed(key)) ;	/* wait for key release */
 
 	return 0;
 }
@@ -1537,7 +1535,7 @@ int setup_menu (void)
 		}
 	} while (done == 0);
 
-	while (osd_key_pressed(key));	/* wait for key release */
+	while (osd_key_pressed(key)) ;	/* wait for key release */
 
 	/* clear the screen before returning */
 	osd_clearbitmap(Machine->scrbitmap);

@@ -405,9 +405,8 @@ ROM_END
 
 static int route16_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x4028],"\x01",1) == 0)
@@ -428,9 +427,8 @@ static int route16_hiload(void)
 static void route16_hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -442,9 +440,8 @@ static void route16_hisave(void)
 
 static int stratvox_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x410f],"\x0f",1) == 0)
@@ -465,9 +462,8 @@ static int stratvox_hiload(void)
 static void stratvox_hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -481,9 +477,14 @@ static void stratvox_hisave(void)
 											\
 struct GameDriver GAMENAME##_driver =		\
 {											\
-	DESC,									\
+	__FILE__,                               \
+	0,                                      \
 	#GAMENAME,								\
+	DESC,									\
+	"????",                                 \
+	"?????",                                \
 	CREDITS,								\
+	0,                                      \
 	&GAMENAME##_machine_driver,				\
 											\
 	GAMENAME##_rom,							\

@@ -120,6 +120,7 @@ void gunsmoke_vh_stop(void)
 void gunsmoke_c804_w(int offset,int data)
 {
 	int bankaddress;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* bits 0 and 1 are for coin counters? - we ignore them */
@@ -168,7 +169,7 @@ void gunsmoke_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	int offs,sx,sy;
 	int bg_scrolly, bg_scrollx;
-	unsigned char *p=Machine->memory_region[3];
+	unsigned char *p=Machine->memory_region[4];
 	int top,left,xscroll,yscroll;
 
 
@@ -269,9 +270,6 @@ void gunsmoke_vh_screenrefresh(struct osd_bitmap *bitmap)
 		/* draw the frontmost playfield. They are characters, but draw them as sprites */
 		for (offs = videoram_size - 1;offs >= 0;offs--)
 		{
-			int sx,sy;
-
-
 			sx = offs / 32;
 			sy = 31 - offs % 32;
 			if (flipscreen)

@@ -5,16 +5,18 @@ CC = gcc
 LD = gcc
 
 # add -DMAME_DEBUG to include the debugger
-DEFS   = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES -DBETA_VERSION
-#DEFS   = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES -DMAME_DEBUG
+DEFS   = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES -Dinline=__inline__ -Dasm=__asm__ \
+	-DBETA_VERSION
+#DEFS   = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES -Dinline=__inline__ -Dasm=__asm__ \
+	-DMAME_DEBUG
 CFLAGS = -Isrc -Isrc/msdos -fomit-frame-pointer -O3 -mpentium -Werror -Wall \
 	-W -Wno-sign-compare -Wno-unused \
 	-Wpointer-arith -Wbad-function-cast -Wcast-align -Waggregate-return \
+	-pedantic \
+	-Wshadow \
 	-Wstrict-prototypes
-#	-pedantic \
 #	-Wredundant-decls \
 #	-Wlarger-than-27648 \
-#	-Wshadow \
 #	-Wcast-qual \
 #	-Wwrite-strings \
 #	-Wconversion \
@@ -48,6 +50,7 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/vidhrdw/mrdo.o obj/drivers/mrdo.o \
          obj/machine/docastle.o obj/vidhrdw/docastle.o obj/drivers/docastle.o \
          obj/drivers/dowild.o \
+         obj/vidhrdw/nova2001.o obj/drivers/nova2001.o \
          obj/vidhrdw/cclimber.o obj/sndhrdw/cclimber.o obj/drivers/cclimber.o \
          obj/drivers/ckongs.o \
          obj/vidhrdw/seicross.o obj/drivers/seicross.o \
@@ -71,6 +74,7 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/sndhrdw/pleiads.o \
          obj/vidhrdw/vicdual.o obj/sndhrdw/vicdual.o obj/drivers/vicdual.o \
          obj/machine/8080bw.o obj/vidhrdw/8080bw.o obj/sndhrdw/8080bw.o obj/drivers/8080bw.o \
+         obj/machine/z80bw.o obj/vidhrdw/z80bw.o obj/sndhrdw/z80bw.o obj/drivers/z80bw.o \
          obj/vidhrdw/mario.o obj/sndhrdw/mario.o obj/drivers/mario.o \
          obj/vidhrdw/zaxxon.o obj/sndhrdw/zaxxon.o obj/drivers/zaxxon.o \
          obj/vidhrdw/congo.o obj/sndhrdw/congo.o obj/drivers/congo.o \
@@ -84,16 +88,17 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/vidhrdw/btime.o obj/drivers/btime.o \
          obj/vidhrdw/jumpbug.o obj/drivers/jumpbug.o \
          obj/vidhrdw/gberet.o obj/drivers/gberet.o \
-         obj/vidhrdw/exidy.o obj/drivers/exidy.o \
+         obj/machine/exidy.o obj/vidhrdw/exidy.o obj/drivers/exidy.o \
 		 obj/sndhrdw/targ.o \
          obj/vidhrdw/gottlieb.o obj/sndhrdw/gottlieb.o obj/drivers/gottlieb.o \
+         obj/vidhrdw/bking2.o obj/drivers/bking2.o \
          obj/machine/taito.o obj/vidhrdw/taito.o obj/drivers/taito.o \
          obj/machine/panic.o obj/vidhrdw/panic.o obj/drivers/panic.o \
          obj/machine/arabian.o obj/vidhrdw/arabian.o obj/drivers/arabian.o \
          obj/vidhrdw/1942.o obj/drivers/1942.o \
-         obj/machine/vulgus.o obj/vidhrdw/vulgus.o obj/drivers/vulgus.o \
+         obj/vidhrdw/vulgus.o obj/drivers/vulgus.o \
          obj/vidhrdw/commando.o obj/drivers/commando.o \
-         obj/machine/gng.o obj/vidhrdw/gng.o obj/drivers/gng.o \
+         obj/vidhrdw/gng.o obj/drivers/gng.o \
          obj/vidhrdw/sonson.o obj/drivers/sonson.o \
          obj/vidhrdw/exedexes.o obj/drivers/exedexes.o \
          obj/sndhrdw/gyruss.o obj/vidhrdw/gyruss.o obj/drivers/gyruss.o \
@@ -241,16 +246,20 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/vidhrdw/cosmica.o obj/drivers/cosmica.o \
          obj/machine/spiders.o obj/vidhrdw/crtc6845.o obj/vidhrdw/spiders.o obj/drivers/spiders.o \
          obj/vidhrdw/lastduel.o obj/drivers/lastduel.o \
+         obj/machine/avalnche.o obj/vidhrdw/avalnche.o obj/drivers/avalnche.o \
+         obj/machine/gladiatr.o obj/vidhrdw/gladiatr.o obj/drivers/gladiatr.o \
+         obj/drivers/lazercmd.o obj/vidhrdw/lazercmd.o \
+         obj/drivers/meadows.o obj/sndhrdw/meadows.o obj/vidhrdw/meadows.o \
          obj/Z80/Z80.o obj/M6502/M6502.o obj/I86/I86.o obj/I8039/I8039.o obj/I8085/I8085.o \
 		 obj/M6809/m6809.o obj/M6808/m6808.o obj/M6805/m6805.o \
-         obj/T11/t11.o \
+         obj/S2650/s2650.o obj/T11/t11.o \
          obj/M68000/opcode0.o obj/M68000/opcode1.o obj/M68000/opcode2.o obj/M68000/opcode3.o obj/M68000/opcode4.o obj/M68000/opcode5.o \
          obj/M68000/opcode6.o obj/M68000/opcode7.o obj/M68000/opcode8.o obj/M68000/opcode9.o obj/M68000/opcodeb.o \
          obj/M68000/opcodec.o obj/M68000/opcoded.o obj/M68000/opcodee.o obj/M68000/mc68kmem.o \
          obj/M68000/cpufunc.o \
          obj/mamedbg.o obj/asg.o obj/M6502/6502dasm.o obj/I8085/8085dasm.o \
          obj/M6809/6809dasm.o obj/M6808/6808dasm.o obj/M6805/6805dasm.o \
-         obj/T11/t11dasm.o obj/M68000/m68kdasm.o \
+         obj/S2650/2650dasm.o obj/T11/t11dasm.o obj/M68000/m68kdasm.o \
          obj/msdos/msdos.o obj/msdos/video.o obj/msdos/vector.o obj/msdos/sound.o \
          obj/msdos/input.o obj/msdos/fileio.o obj/msdos/config.o obj/msdos/fronthlp.o
 
@@ -283,6 +292,7 @@ makedir:
 	mkdir obj\M6808
 	mkdir obj\M6805
 	mkdir obj\M68000
+	mkdir obj\S2650
 	mkdir obj\T11
 	mkdir obj\drivers
 	mkdir obj\machine
@@ -301,6 +311,7 @@ clean:
 	del obj\M6808\*.o
 	del obj\M6805\*.o
 	del obj\M68000\*.o
+	del obj\S2650\*.o
 	del obj\T11\*.o
 	del obj\drivers\*.o
 	del obj\machine\*.o
@@ -318,5 +329,6 @@ cleandebug:
 	del obj\M6808\*.o
 	del obj\M6805\*.o
 	del obj\M68000\*.o
+	del obj\S2650\*.o
 	del obj\T11\*.o
 	del mame.exe

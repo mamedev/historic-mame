@@ -554,6 +554,9 @@ ROM_END
 
 static int ladybug_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x6073],"\x01\x00\x00",3) == 0 &&
 			memcmp(&RAM[0x608b],"\x01\x00\x00",3) == 0)
@@ -578,6 +581,7 @@ static int ladybug_hiload(void)
 static void ladybug_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -592,6 +596,9 @@ static void ladybug_hisave(void)
 
 static int cavenger_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
         if ((memcmp(&RAM[0x6025],"\x01\x00\x00",3) == 0) &&
 		(memcmp(&RAM[0x6063],"\x0A\x15\x28",3) == 0))
@@ -615,6 +622,7 @@ static int cavenger_hiload(void)
 static void cavenger_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -627,6 +635,9 @@ static void cavenger_hisave(void)
 
 static int snapjack_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
         if ((memcmp(&RAM[0x6A94],"\x01\x00\x00",3) == 0) &&
 		(memcmp(&RAM[0x6AA0],"\x01\x00\x00\x1E",4) == 0) &&
@@ -651,6 +662,7 @@ static int snapjack_hiload(void)
 static void snapjack_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -665,9 +677,14 @@ static void snapjack_hisave(void)
 
 struct GameDriver ladybug_driver =
 {
-	"Lady Bug",
+	__FILE__,
+	0,
 	"ladybug",
+	"Lady Bug",
+	"????",
+	"?????",
 	"Nicola Salmoria",
+	0,
 	&machine_driver,
 
 	ladybug_rom,
@@ -685,9 +702,14 @@ struct GameDriver ladybug_driver =
 
 struct GameDriver snapjack_driver =
 {
-	"Snap Jack",
+	__FILE__,
+	0,
 	"snapjack",
+	"Snap Jack",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
+	0,
 	&machine_driver,
 
 	snapjack_rom,
@@ -705,9 +727,14 @@ struct GameDriver snapjack_driver =
 
 struct GameDriver cavenger_driver =
 {
-	"Cosmic Avenger",
+	__FILE__,
+	0,
 	"cavenger",
+	"Cosmic Avenger",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
+	0,
 	&machine_driver,
 
 	cavenger_rom,

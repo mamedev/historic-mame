@@ -40,6 +40,7 @@
 	#define SHIFT3 0
 #endif
 
+unsigned char *RAM;
 unsigned char *OP_RAM;
 unsigned char *OP_ROM;
 MHELE ophw;				/* op-code hardware number */
@@ -111,7 +112,7 @@ MHELE *cur_mwhard;
 ***************************************************************************/
 
 #ifdef ACORN
-/* 
+/*
  * Previously READ_WORD and WRITE_WORDS were implemented as macros.
  * However they assumed that unaligned loads are legal, which is not
  * true on most non-x86 hardware.  Even on a Pentium, unaligned loads are
@@ -429,8 +430,8 @@ int initmemoryhandlers(void)
 
 	for( cpu = 0 ; cpu < cpu_gettotalcpu() ; cpu++ )
 	{
-		const struct MemoryReadAddress *mra;
-		const struct MemoryWriteAddress *mwa;
+		const struct MemoryReadAddress *_mra;
+		const struct MemoryWriteAddress *_mwa;
 
 
 		ramptr[cpu] = Machine->memory_region[Machine->drv->cpu[cpu].memory_region];
@@ -441,19 +442,19 @@ int initmemoryhandlers(void)
 
 
 		/* initialize the memory base pointers for memory hooks */
-		mra = Machine->drv->cpu[cpu].memory_read;
-		while (mra->start != -1)
+		_mra = Machine->drv->cpu[cpu].memory_read;
+		while (_mra->start != -1)
 		{
-			if (mra->base) *mra->base = memory_find_base (cpu, mra->start);
-			if (mra->size) *mra->size = mra->end - mra->start + 1;
-			mra++;
+			if (_mra->base) *_mra->base = memory_find_base (cpu, _mra->start);
+			if (_mra->size) *_mra->size = _mra->end - _mra->start + 1;
+			_mra++;
 		}
-		mwa = Machine->drv->cpu[cpu].memory_write;
-		while (mwa->start != -1)
+		_mwa = Machine->drv->cpu[cpu].memory_write;
+		while (_mwa->start != -1)
 		{
-			if (mwa->base) *mwa->base = memory_find_base (cpu, mwa->start);
-			if (mwa->size) *mwa->size = mwa->end - mwa->start + 1;
-			mwa++;
+			if (_mwa->base) *_mwa->base = memory_find_base (cpu, _mwa->start);
+			if (_mwa->size) *_mwa->size = _mwa->end - _mwa->start + 1;
+			_mwa++;
 		}
 	}
 
@@ -794,7 +795,7 @@ int cpu_readmem16 (int address)
 
 int cpu_readmem16lew (int address)
 {
-	int shift, word;
+	int shift, data;
 	MHELE hw;
 
 	/* 1st element link */
@@ -810,8 +811,8 @@ int cpu_readmem16lew (int address)
 	/* fallback to handler */
 	shift = (address & 1) << 3;
 	address &= ~1;
-	word = memoryreadhandler[hw](address - memoryreadoffset[hw]);
-	return (word >> shift) & 0xff;
+	data = memoryreadhandler[hw](address - memoryreadoffset[hw]);
+	return (data >> shift) & 0xff;
 }
 
 
@@ -859,7 +860,7 @@ int cpu_readmem20 (int address)
 
 int cpu_readmem24 (int address)
 {
-	int shift, word;
+	int shift, data;
 	MHELE hw;
 
 	/* 1st element link */
@@ -875,8 +876,8 @@ int cpu_readmem24 (int address)
 	/* fallback to handler */
 	shift = ((address ^ 1) & 1) << 3;
 	address &= ~1;
-	word = memoryreadhandler[hw](address - memoryreadoffset[hw]);
-	return (word >> shift) & 0xff;
+	data = memoryreadhandler[hw](address - memoryreadoffset[hw]);
+	return (data >> shift) & 0xff;
 }
 
 

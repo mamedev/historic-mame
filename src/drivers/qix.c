@@ -727,9 +727,14 @@ static void hisave(void)
 
 struct GameDriver qix_driver =
 {
-	"Qix",
+	__FILE__,
+	0,
 	"qix",
+	"Qix",
+	"????",
+	"?????",
 	"John Butler\nEd Mueller\nAaron Giles\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	qix_rom,
@@ -747,9 +752,14 @@ struct GameDriver qix_driver =
 
 struct GameDriver qix2_driver =
 {
-	"Qix II (Tournament)",
+	__FILE__,
+	0,
 	"qix2",
+	"Qix II (Tournament)",
+	"????",
+	"?????",
 	"John Butler\nEd Mueller\nAaron Giles\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	qix2_rom,
@@ -767,9 +777,14 @@ struct GameDriver qix2_driver =
 
 struct GameDriver zookeep_driver =
 {
-	"Zoo Keeper",
+	__FILE__,
+	0,
 	"zookeep",
+	"Zoo Keeper",
+	"????",
+	"?????",
 	"John Butler\nEd. Mueller\nAaron Giles",
+	0,
 	&zoo_machine_driver,
 
     zookeeper_rom,
@@ -787,9 +802,14 @@ struct GameDriver zookeep_driver =
 
 struct GameDriver sdungeon_driver =
 {
-    "Space Dungeon",
+	__FILE__,
+	0,
     "sdungeon",
+    "Space Dungeon",
+	"????",
+	"?????",
     "John Butler\nEd Mueller\nAaron Giles\nMarco Cassili\nDan Boris",
+	0,
 	&machine_driver,
 
     sdungeon_rom,

@@ -29,8 +29,10 @@ XYBOTS 6502 MEMORY MAP
 #include "sndhrdw/2151intf.h"
 
 
+int xybots_paletteram_r (int offset);
 int xybots_playfieldram_r (int offset);
 
+void xybots_paletteram_w (int offset, int data);
 void xybots_playfieldram_w (int offset, int data);
 void xybots_update_display_list (int scanline);
 
@@ -124,6 +126,9 @@ void xybots_tms5220_w (int offset, int data)
 
 void xybots_6502_ctl_w (int offset, int data)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+
+
 	if (((data ^ last_ctl) & 0x02) && (data & 0x02))
 		tms5220_data_w (0, speech_val);
 	last_ctl = data;
@@ -147,7 +152,7 @@ static struct MemoryReadAddress xybots_readmem[] =
 	{ 0xff9000, 0xffadff, MRA_BANK2 },
 	{ 0xffae00, 0xffafff, MRA_BANK4, &atarigen_spriteram, &atarigen_spriteram_size },
 	{ 0xffb000, 0xffbfff, xybots_playfieldram_r, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0xffc000, 0xffc7ff, MRA_BANK1, &atarigen_paletteram, &atarigen_paletteram_size },
+	{ 0xffc000, 0xffc7ff, xybots_paletteram_r, &atarigen_paletteram, &atarigen_paletteram_size },
 	{ 0xffd000, 0xffdfff, atarigen_eeprom_r, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0xffe000, 0xffe0ff, atarigen_sound_r },
 	{ 0xffe100, 0xffe1ff, xybots_sw_r },
@@ -164,7 +169,7 @@ static struct MemoryWriteAddress xybots_writemem[] =
 	{ 0xff9000, 0xffadff, MWA_BANK2 },
 	{ 0xffae00, 0xffafff, MWA_BANK4 },
 	{ 0xffb000, 0xffbfff, xybots_playfieldram_w },
-	{ 0xffc000, 0xffc7ff, MWA_BANK1 },
+	{ 0xffc000, 0xffc7ff, xybots_paletteram_w },
 	{ 0xffd000, 0xffdfff, atarigen_eeprom_w },
 	{ 0xffe800, 0xffe8ff, atarigen_eeprom_enable_w },
 	{ 0xffe900, 0xffe9ff, atarigen_sound_w },
@@ -392,7 +397,7 @@ static struct MachineDriver xybots_machine_driver =
 	/* video hardware */
 	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	256,1024,
+	1024,1024,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_DIRTY | VIDEO_UPDATE_BEFORE_VBLANK,
@@ -463,9 +468,14 @@ ROM_END
 
 struct GameDriver xybots_driver =
 {
-	"Xybots",
+	__FILE__,
+	0,
 	"xybots",
+	"Xybots",
+	"????",
+	"?????",
 	"Aaron Giles (MAME driver)\nAlan J. McCormick (hardware info)\nFrank Palazzolo (Slapstic decoding)",
+	0,
 	&xybots_machine_driver,
 
 	xybots_rom,

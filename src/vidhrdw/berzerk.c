@@ -80,16 +80,16 @@ void berzerk_colorram_w(int offset,int data)
 
   for (i = 0; i < 4; i++, y++)
   {
-    int data = videoram[((y + 16) << 5) | (x >> 3)];
+    int dat = videoram[((y + 16) << 5) | (x >> 3)];
 
-    if (data & 0x80) tmpbitmap->line[y][x    ] = pen1; else tmpbitmap->line[y][x    ] = black;
-    if (data & 0x40) tmpbitmap->line[y][x + 1] = pen1; else tmpbitmap->line[y][x + 1] = black;
-    if (data & 0x20) tmpbitmap->line[y][x + 2] = pen1; else tmpbitmap->line[y][x + 2] = black;
-    if (data & 0x10) tmpbitmap->line[y][x + 3] = pen1; else tmpbitmap->line[y][x + 3] = black;
-    if (data & 0x08) tmpbitmap->line[y][x + 4] = pen2; else tmpbitmap->line[y][x + 4] = black;
-    if (data & 0x04) tmpbitmap->line[y][x + 5] = pen2; else tmpbitmap->line[y][x + 5] = black;
-    if (data & 0x02) tmpbitmap->line[y][x + 6] = pen2; else tmpbitmap->line[y][x + 6] = black;
-    if (data & 0x01) tmpbitmap->line[y][x + 7] = pen2; else tmpbitmap->line[y][x + 7] = black;
+    if (dat & 0x80) tmpbitmap->line[y][x    ] = pen1; else tmpbitmap->line[y][x    ] = black;
+    if (dat & 0x40) tmpbitmap->line[y][x + 1] = pen1; else tmpbitmap->line[y][x + 1] = black;
+    if (dat & 0x20) tmpbitmap->line[y][x + 2] = pen1; else tmpbitmap->line[y][x + 2] = black;
+    if (dat & 0x10) tmpbitmap->line[y][x + 3] = pen1; else tmpbitmap->line[y][x + 3] = black;
+    if (dat & 0x08) tmpbitmap->line[y][x + 4] = pen2; else tmpbitmap->line[y][x + 4] = black;
+    if (dat & 0x04) tmpbitmap->line[y][x + 5] = pen2; else tmpbitmap->line[y][x + 5] = black;
+    if (dat & 0x02) tmpbitmap->line[y][x + 6] = pen2; else tmpbitmap->line[y][x + 6] = black;
+    if (dat & 0x01) tmpbitmap->line[y][x + 7] = pen2; else tmpbitmap->line[y][x + 7] = black;
   }
 }
 

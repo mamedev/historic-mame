@@ -26,7 +26,7 @@
 #include "M6809.h"
 #include "driver.h"
 
-INLINE void fetch_effective_address( void );
+INLINE byte fetch_effective_address( void );
 
 /* 6809 registers */
 static byte cc,dpreg;
@@ -271,11 +271,15 @@ static int rd_slow_wd( int addr )
 
 static int rd_fast( int addr )
 {
+	extern unsigned char *RAM;
+
 	return RAM[addr];
 }
 
 static int rd_fast_wd( int addr )
 {
+	extern unsigned char *RAM;
+
 	return( (RAM[addr]<<8) | (RAM[(addr+1)&0xffff]) );
 }
 
@@ -292,11 +296,15 @@ static void wr_slow_wd( int addr, int v )
 
 static void wr_fast( int addr, int v )
 {
+	extern unsigned char *RAM;
+
 	RAM[addr] = v;
 }
 
 static void wr_fast_wd( int addr, int v )
 {
+	extern unsigned char *RAM;
+
 	RAM[addr] = v>>8;
 	RAM[(addr+1)&0xffff] = v&255;
 }
@@ -504,7 +512,7 @@ int m6809_execute(int cycles)	/* NS 970908 */
 		ireg=M_RDOP(pcreg++);
 
 		if( (op_count = cycles1[ireg])!=0xff ){
-			if( op_count &0x80 ) fetch_effective_address();
+			if( op_count &0x80 ) op_count += fetch_effective_address();
 
 			switch( ireg )
 			{
@@ -842,278 +850,279 @@ getout:
 	return cycles - m6809_ICount;	/* NS 970908 */
 }
 
-INLINE void fetch_effective_address( void )
+INLINE byte fetch_effective_address( void )
 {
-	byte postbyte;
+	byte postbyte, ec=0;
 
 
 	postbyte=M_RDOP_ARG(pcreg++);
 
 	switch(postbyte)
 	{
-	    case 0x00: eaddr=xreg;break;
-	    case 0x01: eaddr=xreg+1;break;
-	    case 0x02: eaddr=xreg+2;break;
-	    case 0x03: eaddr=xreg+3;break;
-	    case 0x04: eaddr=xreg+4;break;
-	    case 0x05: eaddr=xreg+5;break;
-	    case 0x06: eaddr=xreg+6;break;
-	    case 0x07: eaddr=xreg+7;break;
-	    case 0x08: eaddr=xreg+8;break;
-	    case 0x09: eaddr=xreg+9;break;
-	    case 0x0A: eaddr=xreg+10;break;
-	    case 0x0B: eaddr=xreg+11;break;
-	    case 0x0C: eaddr=xreg+12;break;
-	    case 0x0D: eaddr=xreg+13;break;
-	    case 0x0E: eaddr=xreg+14;break;
-	    case 0x0F: eaddr=xreg+15;break;
-	    case 0x10: eaddr=xreg-16;break;
-	    case 0x11: eaddr=xreg-15;break;
-	    case 0x12: eaddr=xreg-14;break;
-	    case 0x13: eaddr=xreg-13;break;
-	    case 0x14: eaddr=xreg-12;break;
-	    case 0x15: eaddr=xreg-11;break;
-	    case 0x16: eaddr=xreg-10;break;
-	    case 0x17: eaddr=xreg-9;break;
-	    case 0x18: eaddr=xreg-8;break;
-	    case 0x19: eaddr=xreg-7;break;
-	    case 0x1A: eaddr=xreg-6;break;
-	    case 0x1B: eaddr=xreg-5;break;
-	    case 0x1C: eaddr=xreg-4;break;
-	    case 0x1D: eaddr=xreg-3;break;
-	    case 0x1E: eaddr=xreg-2;break;
-	    case 0x1F: eaddr=xreg-1;break;
-	    case 0x20: eaddr=yreg;break;
-	    case 0x21: eaddr=yreg+1;break;
-	    case 0x22: eaddr=yreg+2;break;
-	    case 0x23: eaddr=yreg+3;break;
-	    case 0x24: eaddr=yreg+4;break;
-	    case 0x25: eaddr=yreg+5;break;
-	    case 0x26: eaddr=yreg+6;break;
-	    case 0x27: eaddr=yreg+7;break;
-	    case 0x28: eaddr=yreg+8;break;
-	    case 0x29: eaddr=yreg+9;break;
-	    case 0x2A: eaddr=yreg+10;break;
-	    case 0x2B: eaddr=yreg+11;break;
-	    case 0x2C: eaddr=yreg+12;break;
-	    case 0x2D: eaddr=yreg+13;break;
-	    case 0x2E: eaddr=yreg+14;break;
-	    case 0x2F: eaddr=yreg+15;break;
-	    case 0x30: eaddr=yreg-16;break;
-	    case 0x31: eaddr=yreg-15;break;
-	    case 0x32: eaddr=yreg-14;break;
-	    case 0x33: eaddr=yreg-13;break;
-	    case 0x34: eaddr=yreg-12;break;
-	    case 0x35: eaddr=yreg-11;break;
-	    case 0x36: eaddr=yreg-10;break;
-	    case 0x37: eaddr=yreg-9;break;
-	    case 0x38: eaddr=yreg-8;break;
-	    case 0x39: eaddr=yreg-7;break;
-	    case 0x3A: eaddr=yreg-6;break;
-	    case 0x3B: eaddr=yreg-5;break;
-	    case 0x3C: eaddr=yreg-4;break;
-	    case 0x3D: eaddr=yreg-3;break;
-	    case 0x3E: eaddr=yreg-2;break;
-	    case 0x3F: eaddr=yreg-1;break;
-	    case 0x40: eaddr=ureg;break;
-	    case 0x41: eaddr=ureg+1;break;
-	    case 0x42: eaddr=ureg+2;break;
-	    case 0x43: eaddr=ureg+3;break;
-	    case 0x44: eaddr=ureg+4;break;
-	    case 0x45: eaddr=ureg+5;break;
-	    case 0x46: eaddr=ureg+6;break;
-	    case 0x47: eaddr=ureg+7;break;
-	    case 0x48: eaddr=ureg+8;break;
-	    case 0x49: eaddr=ureg+9;break;
-	    case 0x4A: eaddr=ureg+10;break;
-	    case 0x4B: eaddr=ureg+11;break;
-	    case 0x4C: eaddr=ureg+12;break;
-	    case 0x4D: eaddr=ureg+13;break;
-	    case 0x4E: eaddr=ureg+14;break;
-	    case 0x4F: eaddr=ureg+15;break;
-	    case 0x50: eaddr=ureg-16;break;
-	    case 0x51: eaddr=ureg-15;break;
-	    case 0x52: eaddr=ureg-14;break;
-	    case 0x53: eaddr=ureg-13;break;
-	    case 0x54: eaddr=ureg-12;break;
-	    case 0x55: eaddr=ureg-11;break;
-	    case 0x56: eaddr=ureg-10;break;
-	    case 0x57: eaddr=ureg-9;break;
-	    case 0x58: eaddr=ureg-8;break;
-	    case 0x59: eaddr=ureg-7;break;
-	    case 0x5A: eaddr=ureg-6;break;
-	    case 0x5B: eaddr=ureg-5;break;
-	    case 0x5C: eaddr=ureg-4;break;
-	    case 0x5D: eaddr=ureg-3;break;
-	    case 0x5E: eaddr=ureg-2;break;
-	    case 0x5F: eaddr=ureg-1;break;
-	    case 0x60: eaddr=sreg;break;
-	    case 0x61: eaddr=sreg+1;break;
-	    case 0x62: eaddr=sreg+2;break;
-	    case 0x63: eaddr=sreg+3;break;
-	    case 0x64: eaddr=sreg+4;break;
-	    case 0x65: eaddr=sreg+5;break;
-	    case 0x66: eaddr=sreg+6;break;
-	    case 0x67: eaddr=sreg+7;break;
-	    case 0x68: eaddr=sreg+8;break;
-	    case 0x69: eaddr=sreg+9;break;
-	    case 0x6A: eaddr=sreg+10;break;
-	    case 0x6B: eaddr=sreg+11;break;
-	    case 0x6C: eaddr=sreg+12;break;
-	    case 0x6D: eaddr=sreg+13;break;
-	    case 0x6E: eaddr=sreg+14;break;
-	    case 0x6F: eaddr=sreg+15;break;
-	    case 0x70: eaddr=sreg-16;break;
-	    case 0x71: eaddr=sreg-15;break;
-	    case 0x72: eaddr=sreg-14;break;
-	    case 0x73: eaddr=sreg-13;break;
-	    case 0x74: eaddr=sreg-12;break;
-	    case 0x75: eaddr=sreg-11;break;
-	    case 0x76: eaddr=sreg-10;break;
-	    case 0x77: eaddr=sreg-9;break;
-	    case 0x78: eaddr=sreg-8;break;
-	    case 0x79: eaddr=sreg-7;break;
-	    case 0x7A: eaddr=sreg-6;break;
-	    case 0x7B: eaddr=sreg-5;break;
-	    case 0x7C: eaddr=sreg-4;break;
-	    case 0x7D: eaddr=sreg-3;break;
-	    case 0x7E: eaddr=sreg-2;break;
-	    case 0x7F: eaddr=sreg-1;break;
-	    case 0x80: eaddr=xreg;xreg++;break;
-	    case 0x81: eaddr=xreg;xreg+=2;break;
-	    case 0x82: xreg--;eaddr=xreg;break;
-	    case 0x83: xreg-=2;eaddr=xreg;break;
+	    case 0x00: eaddr=xreg;ec=1;break;
+	    case 0x01: eaddr=xreg+1;ec=1;break;
+	    case 0x02: eaddr=xreg+2;ec=1;break;
+	    case 0x03: eaddr=xreg+3;ec=1;break;
+	    case 0x04: eaddr=xreg+4;ec=1;break;
+	    case 0x05: eaddr=xreg+5;ec=1;break;
+	    case 0x06: eaddr=xreg+6;ec=1;break;
+	    case 0x07: eaddr=xreg+7;ec=1;break;
+	    case 0x08: eaddr=xreg+8;ec=1;break;
+	    case 0x09: eaddr=xreg+9;ec=1;break;
+	    case 0x0A: eaddr=xreg+10;ec=1;break;
+	    case 0x0B: eaddr=xreg+11;ec=1;break;
+	    case 0x0C: eaddr=xreg+12;ec=1;break;
+	    case 0x0D: eaddr=xreg+13;ec=1;break;
+	    case 0x0E: eaddr=xreg+14;ec=1;break;
+	    case 0x0F: eaddr=xreg+15;ec=1;break;
+	    case 0x10: eaddr=xreg-16;ec=1;break;
+	    case 0x11: eaddr=xreg-15;ec=1;break;
+	    case 0x12: eaddr=xreg-14;ec=1;break;
+	    case 0x13: eaddr=xreg-13;ec=1;break;
+	    case 0x14: eaddr=xreg-12;ec=1;break;
+	    case 0x15: eaddr=xreg-11;ec=1;break;
+	    case 0x16: eaddr=xreg-10;ec=1;break;
+	    case 0x17: eaddr=xreg-9;ec=1;break;
+	    case 0x18: eaddr=xreg-8;ec=1;break;
+	    case 0x19: eaddr=xreg-7;ec=1;break;
+	    case 0x1A: eaddr=xreg-6;ec=1;break;
+	    case 0x1B: eaddr=xreg-5;ec=1;break;
+	    case 0x1C: eaddr=xreg-4;ec=1;break;
+	    case 0x1D: eaddr=xreg-3;ec=1;break;
+	    case 0x1E: eaddr=xreg-2;ec=1;break;
+	    case 0x1F: eaddr=xreg-1;ec=1;break;
+	    case 0x20: eaddr=yreg;ec=1;break;
+	    case 0x21: eaddr=yreg+1;ec=1;break;
+	    case 0x22: eaddr=yreg+2;ec=1;break;
+	    case 0x23: eaddr=yreg+3;ec=1;break;
+	    case 0x24: eaddr=yreg+4;ec=1;break;
+	    case 0x25: eaddr=yreg+5;ec=1;break;
+	    case 0x26: eaddr=yreg+6;ec=1;break;
+	    case 0x27: eaddr=yreg+7;ec=1;break;
+	    case 0x28: eaddr=yreg+8;ec=1;break;
+	    case 0x29: eaddr=yreg+9;ec=1;break;
+	    case 0x2A: eaddr=yreg+10;ec=1;break;
+	    case 0x2B: eaddr=yreg+11;ec=1;break;
+	    case 0x2C: eaddr=yreg+12;ec=1;break;
+	    case 0x2D: eaddr=yreg+13;ec=1;break;
+	    case 0x2E: eaddr=yreg+14;ec=1;break;
+	    case 0x2F: eaddr=yreg+15;ec=1;break;
+	    case 0x30: eaddr=yreg-16;ec=1;break;
+	    case 0x31: eaddr=yreg-15;ec=1;break;
+	    case 0x32: eaddr=yreg-14;ec=1;break;
+	    case 0x33: eaddr=yreg-13;ec=1;break;
+	    case 0x34: eaddr=yreg-12;ec=1;break;
+	    case 0x35: eaddr=yreg-11;ec=1;break;
+	    case 0x36: eaddr=yreg-10;ec=1;break;
+	    case 0x37: eaddr=yreg-9;ec=1;break;
+	    case 0x38: eaddr=yreg-8;ec=1;break;
+	    case 0x39: eaddr=yreg-7;ec=1;break;
+	    case 0x3A: eaddr=yreg-6;ec=1;break;
+	    case 0x3B: eaddr=yreg-5;ec=1;break;
+	    case 0x3C: eaddr=yreg-4;ec=1;break;
+	    case 0x3D: eaddr=yreg-3;ec=1;break;
+	    case 0x3E: eaddr=yreg-2;ec=1;break;
+	    case 0x3F: eaddr=yreg-1;ec=1;break;
+	    case 0x40: eaddr=ureg;ec=1;break;
+	    case 0x41: eaddr=ureg+1;ec=1;break;
+	    case 0x42: eaddr=ureg+2;ec=1;break;
+	    case 0x43: eaddr=ureg+3;ec=1;break;
+	    case 0x44: eaddr=ureg+4;ec=1;break;
+	    case 0x45: eaddr=ureg+5;ec=1;break;
+	    case 0x46: eaddr=ureg+6;ec=1;break;
+	    case 0x47: eaddr=ureg+7;ec=1;break;
+	    case 0x48: eaddr=ureg+8;ec=1;break;
+	    case 0x49: eaddr=ureg+9;ec=1;break;
+	    case 0x4A: eaddr=ureg+10;ec=1;break;
+	    case 0x4B: eaddr=ureg+11;ec=1;break;
+	    case 0x4C: eaddr=ureg+12;ec=1;break;
+	    case 0x4D: eaddr=ureg+13;ec=1;break;
+	    case 0x4E: eaddr=ureg+14;ec=1;break;
+	    case 0x4F: eaddr=ureg+15;ec=1;break;
+	    case 0x50: eaddr=ureg-16;ec=1;break;
+	    case 0x51: eaddr=ureg-15;ec=1;break;
+	    case 0x52: eaddr=ureg-14;ec=1;break;
+	    case 0x53: eaddr=ureg-13;ec=1;break;
+	    case 0x54: eaddr=ureg-12;ec=1;break;
+	    case 0x55: eaddr=ureg-11;ec=1;break;
+	    case 0x56: eaddr=ureg-10;ec=1;break;
+	    case 0x57: eaddr=ureg-9;ec=1;break;
+	    case 0x58: eaddr=ureg-8;ec=1;break;
+	    case 0x59: eaddr=ureg-7;ec=1;break;
+	    case 0x5A: eaddr=ureg-6;ec=1;break;
+	    case 0x5B: eaddr=ureg-5;ec=1;break;
+	    case 0x5C: eaddr=ureg-4;ec=1;break;
+	    case 0x5D: eaddr=ureg-3;ec=1;break;
+	    case 0x5E: eaddr=ureg-2;ec=1;break;
+	    case 0x5F: eaddr=ureg-1;ec=1;break;
+	    case 0x60: eaddr=sreg;ec=1;break;
+	    case 0x61: eaddr=sreg+1;ec=1;break;
+	    case 0x62: eaddr=sreg+2;ec=1;break;
+	    case 0x63: eaddr=sreg+3;ec=1;break;
+	    case 0x64: eaddr=sreg+4;ec=1;break;
+	    case 0x65: eaddr=sreg+5;ec=1;break;
+	    case 0x66: eaddr=sreg+6;ec=1;break;
+	    case 0x67: eaddr=sreg+7;ec=1;break;
+	    case 0x68: eaddr=sreg+8;ec=1;break;
+	    case 0x69: eaddr=sreg+9;ec=1;break;
+	    case 0x6A: eaddr=sreg+10;ec=1;break;
+	    case 0x6B: eaddr=sreg+11;ec=1;break;
+	    case 0x6C: eaddr=sreg+12;ec=1;break;
+	    case 0x6D: eaddr=sreg+13;ec=1;break;
+	    case 0x6E: eaddr=sreg+14;ec=1;break;
+	    case 0x6F: eaddr=sreg+15;ec=1;break;
+	    case 0x70: eaddr=sreg-16;ec=1;break;
+	    case 0x71: eaddr=sreg-15;ec=1;break;
+	    case 0x72: eaddr=sreg-14;ec=1;break;
+	    case 0x73: eaddr=sreg-13;ec=1;break;
+	    case 0x74: eaddr=sreg-12;ec=1;break;
+	    case 0x75: eaddr=sreg-11;ec=1;break;
+	    case 0x76: eaddr=sreg-10;ec=1;break;
+	    case 0x77: eaddr=sreg-9;ec=1;break;
+	    case 0x78: eaddr=sreg-8;ec=1;break;
+	    case 0x79: eaddr=sreg-7;ec=1;break;
+	    case 0x7A: eaddr=sreg-6;ec=1;break;
+	    case 0x7B: eaddr=sreg-5;ec=1;break;
+	    case 0x7C: eaddr=sreg-4;ec=1;break;
+	    case 0x7D: eaddr=sreg-3;ec=1;break;
+	    case 0x7E: eaddr=sreg-2;ec=1;break;
+	    case 0x7F: eaddr=sreg-1;ec=1;break;
+	    case 0x80: eaddr=xreg;xreg++;ec=2;break;
+	    case 0x81: eaddr=xreg;xreg+=2;ec=3;break;
+	    case 0x82: xreg--;eaddr=xreg;ec=2;break;
+	    case 0x83: xreg-=2;eaddr=xreg;ec=3;break;
 	    case 0x84: eaddr=xreg;break;
-	    case 0x85: eaddr=xreg+SIGNED(breg);break;
-	    case 0x86: eaddr=xreg+SIGNED(areg);break;
+	    case 0x85: eaddr=xreg+SIGNED(breg);ec=1;break;
+	    case 0x86: eaddr=xreg+SIGNED(areg);ec=1;break;
 	    case 0x87: eaddr=0;break; /*ILLEGAL*/
-	    case 0x88: IMMBYTE(eaddr);eaddr=xreg+SIGNED(eaddr);break;
-	    case 0x89: IMMWORD(eaddr);eaddr+=xreg;break;
+	    case 0x88: IMMBYTE(eaddr);eaddr=xreg+SIGNED(eaddr);ec=1;break; /* this is a hack to make Vectrex work. It should be ec=1. Dunno where the cycle was lost :( */
+	    case 0x89: IMMWORD(eaddr);eaddr+=xreg;ec=4;break;
 	    case 0x8A: eaddr=0;break; /*ILLEGAL*/
-	    case 0x8B: eaddr=xreg+GETDREG;break;
-	    case 0x8C: IMMBYTE(eaddr);eaddr=pcreg+SIGNED(eaddr);break;
-	    case 0x8D: IMMWORD(eaddr);eaddr+=pcreg;break;
+	    case 0x8B: eaddr=xreg+GETDREG;ec=4;break;
+	    case 0x8C: IMMBYTE(eaddr);eaddr=pcreg+SIGNED(eaddr);ec=1;break;
+	    case 0x8D: IMMWORD(eaddr);eaddr+=pcreg;ec=5;break;
 	    case 0x8E: eaddr=0;break; /*ILLEGAL*/
-	    case 0x8F: IMMWORD(eaddr);break;
-	    case 0x90: eaddr=xreg;xreg++;eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0x91: eaddr=xreg;xreg+=2;eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0x92: xreg--;eaddr=xreg;eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0x93: xreg-=2;eaddr=xreg;eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0x94: eaddr=xreg;eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0x95: eaddr=xreg+SIGNED(breg);eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0x96: eaddr=xreg+SIGNED(areg);eaddr=M_RDMEM_WORD(eaddr);break;
+	    case 0x8F: IMMWORD(eaddr);ec=5;break;
+	    case 0x90: eaddr=xreg;xreg++;eaddr=M_RDMEM_WORD(eaddr);ec=5;break; /* Indirect ,R+ not in my specs */
+	    case 0x91: eaddr=xreg;xreg+=2;eaddr=M_RDMEM_WORD(eaddr);ec=6;break;
+	    case 0x92: xreg--;eaddr=xreg;eaddr=M_RDMEM_WORD(eaddr);ec=5;break;
+	    case 0x93: xreg-=2;eaddr=xreg;eaddr=M_RDMEM_WORD(eaddr);ec=6;break;
+	    case 0x94: eaddr=xreg;eaddr=M_RDMEM_WORD(eaddr);ec=3;break;
+	    case 0x95: eaddr=xreg+SIGNED(breg);eaddr=M_RDMEM_WORD(eaddr);ec=4;break;
+	    case 0x96: eaddr=xreg+SIGNED(areg);eaddr=M_RDMEM_WORD(eaddr);ec=4;break;
 	    case 0x97: eaddr=0;break; /*ILLEGAL*/
 	    case 0x98: IMMBYTE(eaddr);eaddr=xreg+SIGNED(eaddr);
-	               eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0x99: IMMWORD(eaddr);eaddr+=xreg;eaddr=M_RDMEM_WORD(eaddr);break;
+	               eaddr=M_RDMEM_WORD(eaddr);ec=4;break;
+	    case 0x99: IMMWORD(eaddr);eaddr+=xreg;eaddr=M_RDMEM_WORD(eaddr);ec=7;break;
 	    case 0x9A: eaddr=0;break; /*ILLEGAL*/
-	    case 0x9B: eaddr=xreg+GETDREG;eaddr=M_RDMEM_WORD(eaddr);break;
+	    case 0x9B: eaddr=xreg+GETDREG;eaddr=M_RDMEM_WORD(eaddr);ec=7;break;
 	    case 0x9C: IMMBYTE(eaddr);eaddr=pcreg+SIGNED(eaddr);
-	               eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0x9D: IMMWORD(eaddr);eaddr+=pcreg;eaddr=M_RDMEM_WORD(eaddr);break;
+	               eaddr=M_RDMEM_WORD(eaddr);ec=4;break;
+	    case 0x9D: IMMWORD(eaddr);eaddr+=pcreg;eaddr=M_RDMEM_WORD(eaddr);ec=8;break;
 	    case 0x9E: eaddr=0;break; /*ILLEGAL*/
-	    case 0x9F: IMMWORD(eaddr);eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0xA0: eaddr=yreg;yreg++;break;
-	    case 0xA1: eaddr=yreg;yreg+=2;break;
-	    case 0xA2: yreg--;eaddr=yreg;break;
-	    case 0xA3: yreg-=2;eaddr=yreg;break;
+	    case 0x9F: IMMWORD(eaddr);eaddr=M_RDMEM_WORD(eaddr);ec=8;break;
+	    case 0xA0: eaddr=yreg;yreg++;ec=2;break;
+	    case 0xA1: eaddr=yreg;yreg+=2;ec=3;break;
+	    case 0xA2: yreg--;eaddr=yreg;ec=2;break;
+	    case 0xA3: yreg-=2;eaddr=yreg;ec=3;break;
 	    case 0xA4: eaddr=yreg;break;
-	    case 0xA5: eaddr=yreg+SIGNED(breg);break;
-	    case 0xA6: eaddr=yreg+SIGNED(areg);break;
+	    case 0xA5: eaddr=yreg+SIGNED(breg);ec=1;break;
+	    case 0xA6: eaddr=yreg+SIGNED(areg);ec=1;break;
 	    case 0xA7: eaddr=0;break; /*ILLEGAL*/
-	    case 0xA8: IMMBYTE(eaddr);eaddr=yreg+SIGNED(eaddr);break;
-	    case 0xA9: IMMWORD(eaddr);eaddr+=yreg;break;
+	    case 0xA8: IMMBYTE(eaddr);eaddr=yreg+SIGNED(eaddr);ec=1;break;
+	    case 0xA9: IMMWORD(eaddr);eaddr+=yreg;ec=4;break;
 	    case 0xAA: eaddr=0;break; /*ILLEGAL*/
-	    case 0xAB: eaddr=yreg+GETDREG;break;
-	    case 0xAC: IMMBYTE(eaddr);eaddr=pcreg+SIGNED(eaddr);break;
-	    case 0xAD: IMMWORD(eaddr);eaddr+=pcreg;break;
+	    case 0xAB: eaddr=yreg+GETDREG;ec=4;break;
+	    case 0xAC: IMMBYTE(eaddr);eaddr=pcreg+SIGNED(eaddr);ec=1;break;
+	    case 0xAD: IMMWORD(eaddr);eaddr+=pcreg;ec=5;break;
 	    case 0xAE: eaddr=0;break; /*ILLEGAL*/
-	    case 0xAF: IMMWORD(eaddr);break;
-	    case 0xB0: eaddr=yreg;yreg++;eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0xB1: eaddr=yreg;yreg+=2;eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0xB2: yreg--;eaddr=yreg;eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0xB3: yreg-=2;eaddr=yreg;eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0xB4: eaddr=yreg;eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0xB5: eaddr=yreg+SIGNED(breg);eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0xB6: eaddr=yreg+SIGNED(areg);eaddr=M_RDMEM_WORD(eaddr);break;
+	    case 0xAF: IMMWORD(eaddr);ec=5;break;
+	    case 0xB0: eaddr=yreg;yreg++;eaddr=M_RDMEM_WORD(eaddr);ec=5;break;
+	    case 0xB1: eaddr=yreg;yreg+=2;eaddr=M_RDMEM_WORD(eaddr);ec=6;break;
+	    case 0xB2: yreg--;eaddr=yreg;eaddr=M_RDMEM_WORD(eaddr);ec=5;break;
+	    case 0xB3: yreg-=2;eaddr=yreg;eaddr=M_RDMEM_WORD(eaddr);ec=5;break;
+	    case 0xB4: eaddr=yreg;eaddr=M_RDMEM_WORD(eaddr);ec=3;break;
+	    case 0xB5: eaddr=yreg+SIGNED(breg);eaddr=M_RDMEM_WORD(eaddr);ec=4;break;
+	    case 0xB6: eaddr=yreg+SIGNED(areg);eaddr=M_RDMEM_WORD(eaddr);ec=4;break;
 	    case 0xB7: eaddr=0;break; /*ILLEGAL*/
 	    case 0xB8: IMMBYTE(eaddr);eaddr=yreg+SIGNED(eaddr);
-	               eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0xB9: IMMWORD(eaddr);eaddr+=yreg;eaddr=M_RDMEM_WORD(eaddr);break;
+	               eaddr=M_RDMEM_WORD(eaddr);ec=4;break;
+	    case 0xB9: IMMWORD(eaddr);eaddr+=yreg;eaddr=M_RDMEM_WORD(eaddr);ec=7;break;
 	    case 0xBA: eaddr=0;break; /*ILLEGAL*/
-	    case 0xBB: eaddr=yreg+GETDREG;eaddr=M_RDMEM_WORD(eaddr);break;
+	    case 0xBB: eaddr=yreg+GETDREG;eaddr=M_RDMEM_WORD(eaddr);ec=7;break;
 	    case 0xBC: IMMBYTE(eaddr);eaddr=pcreg+SIGNED(eaddr);
-	               eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0xBD: IMMWORD(eaddr);eaddr+=pcreg;eaddr=M_RDMEM_WORD(eaddr);break;
+	               eaddr=M_RDMEM_WORD(eaddr);ec=4;break;
+	    case 0xBD: IMMWORD(eaddr);eaddr+=pcreg;eaddr=M_RDMEM_WORD(eaddr);ec=8;break;
 	    case 0xBE: eaddr=0;break; /*ILLEGAL*/
-	    case 0xBF: IMMWORD(eaddr);eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0xC0: eaddr=ureg;ureg++;break;
-	    case 0xC1: eaddr=ureg;ureg+=2;break;
-	    case 0xC2: ureg--;eaddr=ureg;break;
-	    case 0xC3: ureg-=2;eaddr=ureg;break;
+	    case 0xBF: IMMWORD(eaddr);eaddr=M_RDMEM_WORD(eaddr);ec=8;break;
+	    case 0xC0: eaddr=ureg;ureg++;ec=2;break;
+	    case 0xC1: eaddr=ureg;ureg+=2;ec=3;break;
+	    case 0xC2: ureg--;eaddr=ureg;ec=2;break;
+	    case 0xC3: ureg-=2;eaddr=ureg;ec=3;break;
 	    case 0xC4: eaddr=ureg;break;
-	    case 0xC5: eaddr=ureg+SIGNED(breg);break;
-	    case 0xC6: eaddr=ureg+SIGNED(areg);break;
+	    case 0xC5: eaddr=ureg+SIGNED(breg);ec=1;break;
+	    case 0xC6: eaddr=ureg+SIGNED(areg);ec=1;break;
 	    case 0xC7: eaddr=0;break; /*ILLEGAL*/
-	    case 0xC8: IMMBYTE(eaddr);eaddr=ureg+SIGNED(eaddr);break;
-	    case 0xC9: IMMWORD(eaddr);eaddr+=ureg;break;
+	    case 0xC8: IMMBYTE(eaddr);eaddr=ureg+SIGNED(eaddr);ec=1;break;
+	    case 0xC9: IMMWORD(eaddr);eaddr+=ureg;ec=4;break;
 	    case 0xCA: eaddr=0;break; /*ILLEGAL*/
-	    case 0xCB: eaddr=ureg+GETDREG;break;
-	    case 0xCC: IMMBYTE(eaddr);eaddr=pcreg+SIGNED(eaddr);break;
-	    case 0xCD: IMMWORD(eaddr);eaddr+=pcreg;break;
+	    case 0xCB: eaddr=ureg+GETDREG;ec=4;break;
+	    case 0xCC: IMMBYTE(eaddr);eaddr=pcreg+SIGNED(eaddr);ec=1;break;
+	    case 0xCD: IMMWORD(eaddr);eaddr+=pcreg;ec=5;break;
 	    case 0xCE: eaddr=0;break; /*ILLEGAL*/
-	    case 0xCF: IMMWORD(eaddr);break;
-	    case 0xD0: eaddr=ureg;ureg++;eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0xD1: eaddr=ureg;ureg+=2;eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0xD2: ureg--;eaddr=ureg;eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0xD3: ureg-=2;eaddr=ureg;eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0xD4: eaddr=ureg;eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0xD5: eaddr=ureg+SIGNED(breg);eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0xD6: eaddr=ureg+SIGNED(areg);eaddr=M_RDMEM_WORD(eaddr);break;
+	    case 0xCF: IMMWORD(eaddr);ec=5;break;
+	    case 0xD0: eaddr=ureg;ureg++;eaddr=M_RDMEM_WORD(eaddr);ec=5;break;
+	    case 0xD1: eaddr=ureg;ureg+=2;eaddr=M_RDMEM_WORD(eaddr);ec=6;break;
+	    case 0xD2: ureg--;eaddr=ureg;eaddr=M_RDMEM_WORD(eaddr);ec=5;break;
+	    case 0xD3: ureg-=2;eaddr=ureg;eaddr=M_RDMEM_WORD(eaddr);ec=6;break;
+	    case 0xD4: eaddr=ureg;eaddr=M_RDMEM_WORD(eaddr);ec=3;break;
+	    case 0xD5: eaddr=ureg+SIGNED(breg);eaddr=M_RDMEM_WORD(eaddr);ec=4;break;
+	    case 0xD6: eaddr=ureg+SIGNED(areg);eaddr=M_RDMEM_WORD(eaddr);ec=4;break;
 	    case 0xD7: eaddr=0;break; /*ILLEGAL*/
 	    case 0xD8: IMMBYTE(eaddr);eaddr=ureg+SIGNED(eaddr);
-	               eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0xD9: IMMWORD(eaddr);eaddr+=ureg;eaddr=M_RDMEM_WORD(eaddr);break;
+	               eaddr=M_RDMEM_WORD(eaddr);ec=4;break;
+	    case 0xD9: IMMWORD(eaddr);eaddr+=ureg;eaddr=M_RDMEM_WORD(eaddr);ec=7;break;
 	    case 0xDA: eaddr=0;break; /*ILLEGAL*/
-	    case 0xDB: eaddr=ureg+GETDREG;eaddr=M_RDMEM_WORD(eaddr);break;
+	    case 0xDB: eaddr=ureg+GETDREG;eaddr=M_RDMEM_WORD(eaddr);ec=7;break;
 	    case 0xDC: IMMBYTE(eaddr);eaddr=pcreg+SIGNED(eaddr);
-	               eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0xDD: IMMWORD(eaddr);eaddr+=pcreg;eaddr=M_RDMEM_WORD(eaddr);break;
+	               eaddr=M_RDMEM_WORD(eaddr);ec=4;break;
+	    case 0xDD: IMMWORD(eaddr);eaddr+=pcreg;eaddr=M_RDMEM_WORD(eaddr);ec=8;break;
 	    case 0xDE: eaddr=0;break; /*ILLEGAL*/
-	    case 0xDF: IMMWORD(eaddr);eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0xE0: eaddr=sreg;sreg++;break;
-	    case 0xE1: eaddr=sreg;sreg+=2;break;
-	    case 0xE2: sreg--;eaddr=sreg;break;
-	    case 0xE3: sreg-=2;eaddr=sreg;break;
+	    case 0xDF: IMMWORD(eaddr);eaddr=M_RDMEM_WORD(eaddr);ec=8;break;
+	    case 0xE0: eaddr=sreg;sreg++;ec=2;break;
+	    case 0xE1: eaddr=sreg;sreg+=2;ec=3;break;
+	    case 0xE2: sreg--;eaddr=sreg;ec=2;break;
+	    case 0xE3: sreg-=2;eaddr=sreg;ec=3;break;
 	    case 0xE4: eaddr=sreg;break;
-	    case 0xE5: eaddr=sreg+SIGNED(breg);break;
-	    case 0xE6: eaddr=sreg+SIGNED(areg);break;
+	    case 0xE5: eaddr=sreg+SIGNED(breg);ec=1;break;
+	    case 0xE6: eaddr=sreg+SIGNED(areg);ec=1;break;
 	    case 0xE7: eaddr=0;break; /*ILLEGAL*/
-	    case 0xE8: IMMBYTE(eaddr);eaddr=sreg+SIGNED(eaddr);break;
-	    case 0xE9: IMMWORD(eaddr);eaddr+=sreg;break;
+	    case 0xE8: IMMBYTE(eaddr);eaddr=sreg+SIGNED(eaddr);ec=1;break;
+	    case 0xE9: IMMWORD(eaddr);eaddr+=sreg;ec=4;break;
 	    case 0xEA: eaddr=0;break; /*ILLEGAL*/
-	    case 0xEB: eaddr=sreg+GETDREG;break;
-	    case 0xEC: IMMBYTE(eaddr);eaddr=pcreg+SIGNED(eaddr);break;
-	    case 0xED: IMMWORD(eaddr);eaddr+=pcreg;break;
+	    case 0xEB: eaddr=sreg+GETDREG;ec=4;break;
+	    case 0xEC: IMMBYTE(eaddr);eaddr=pcreg+SIGNED(eaddr);ec=1;break;
+	    case 0xED: IMMWORD(eaddr);eaddr+=pcreg;ec=5;break;
 	    case 0xEE: eaddr=0;break; /*ILLEGAL*/
-	    case 0xEF: IMMWORD(eaddr);break;
-	    case 0xF0: eaddr=sreg;sreg++;eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0xF1: eaddr=sreg;sreg+=2;eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0xF2: sreg--;eaddr=sreg;eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0xF3: sreg-=2;eaddr=sreg;eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0xF4: eaddr=sreg;eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0xF5: eaddr=sreg+SIGNED(breg);eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0xF6: eaddr=sreg+SIGNED(areg);eaddr=M_RDMEM_WORD(eaddr);break;
+	    case 0xEF: IMMWORD(eaddr);ec=5;break;
+	    case 0xF0: eaddr=sreg;sreg++;eaddr=M_RDMEM_WORD(eaddr);ec=5;break;
+	    case 0xF1: eaddr=sreg;sreg+=2;eaddr=M_RDMEM_WORD(eaddr);ec=6;break;
+	    case 0xF2: sreg--;eaddr=sreg;eaddr=M_RDMEM_WORD(eaddr);ec=5;break;
+	    case 0xF3: sreg-=2;eaddr=sreg;eaddr=M_RDMEM_WORD(eaddr);ec=6;break;
+	    case 0xF4: eaddr=sreg;eaddr=M_RDMEM_WORD(eaddr);ec=3;break;
+	    case 0xF5: eaddr=sreg+SIGNED(breg);eaddr=M_RDMEM_WORD(eaddr);ec=4;break;
+	    case 0xF6: eaddr=sreg+SIGNED(areg);eaddr=M_RDMEM_WORD(eaddr);ec=4;break;
 	    case 0xF7: eaddr=0;break; /*ILLEGAL*/
 	    case 0xF8: IMMBYTE(eaddr);eaddr=sreg+SIGNED(eaddr);
-	               eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0xF9: IMMWORD(eaddr);eaddr+=sreg;eaddr=M_RDMEM_WORD(eaddr);break;
+	               eaddr=M_RDMEM_WORD(eaddr);ec=4;break;
+	    case 0xF9: IMMWORD(eaddr);eaddr+=sreg;eaddr=M_RDMEM_WORD(eaddr);ec=7;break;
 	    case 0xFA: eaddr=0;break; /*ILLEGAL*/
-	    case 0xFB: eaddr=sreg+GETDREG;eaddr=M_RDMEM_WORD(eaddr);break;
+	    case 0xFB: eaddr=sreg+GETDREG;eaddr=M_RDMEM_WORD(eaddr);ec=7;break;
 	    case 0xFC: IMMBYTE(eaddr);eaddr=pcreg+SIGNED(eaddr);
-	               eaddr=M_RDMEM_WORD(eaddr);break;
-	    case 0xFD: IMMWORD(eaddr);eaddr+=pcreg;eaddr=M_RDMEM_WORD(eaddr);break;
+	               eaddr=M_RDMEM_WORD(eaddr);ec=4;break;
+	    case 0xFD: IMMWORD(eaddr);eaddr+=pcreg;eaddr=M_RDMEM_WORD(eaddr);ec=8;break;
 	    case 0xFE: eaddr=0;break; /*ILLEGAL*/
-	    case 0xFF: IMMWORD(eaddr);eaddr=M_RDMEM_WORD(eaddr);break;
+	    case 0xFF: IMMWORD(eaddr);eaddr=M_RDMEM_WORD(eaddr);ec=8;break;
 	}
+	return (ec);
 }

@@ -247,34 +247,35 @@ ROM_END
 
 static int hiload(void)
 {
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-        void *f;
 
-        if (memcmp(&RAM[0x8358],"\x00\x30\x00",3) == 0 &&
-                memcmp(&RAM[0x8373],"\x18\x18\x18",3) == 0)
-
-        {
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        osd_fread(f,&RAM[0x8358],3*10);
-                        RAM[0x831d] = RAM[0x8364];
-                        RAM[0x831e] = RAM[0x8365];
-                        RAM[0x831f] = RAM[0x8366];
-                        osd_fclose(f);
-                }
-                return 1;
-        }
-        else
-                return 0;
+	if (memcmp(&RAM[0x8358],"\x00\x30\x00",3) == 0 &&
+			memcmp(&RAM[0x8373],"\x18\x18\x18",3) == 0)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x8358],3*10);
+			RAM[0x831d] = RAM[0x8364];
+			RAM[0x831e] = RAM[0x8365];
+			RAM[0x831f] = RAM[0x8366];
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
 }
 
 static void hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-                osd_fwrite(f,&RAM[0x8358],3*10);
+		osd_fwrite(f,&RAM[0x8358],3*10);
 		osd_fclose(f);
 	}
 }
@@ -283,9 +284,14 @@ static void hisave(void)
 
 struct GameDriver warpwarp_driver =
 {
-	"Warp Warp",
+	__FILE__,
+	0,
 	"warpwarp",
+	"Warp Warp",
+	"????",
+	"?????",
 	"Chris Hardy (MAME driver)\nJuan Carlos Lorente (high score)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	warpwarp_rom,
@@ -300,4 +306,3 @@ struct GameDriver warpwarp_driver =
 
 	hiload, hisave
 };
-

@@ -101,7 +101,7 @@ void mooncrst_sh_update(void);
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x3fff, MRA_ROM },	/* not all games use all the space */
-	{ 0x4000, 0x43ff, MRA_RAM },
+	{ 0x4000, 0x47ff, MRA_RAM },
 	{ 0x5000, 0x5fff, MRA_RAM },	/* video RAM, screen attributes, sprites, bullets */
 	{ 0x6000, 0x6000, input_port_0_r },	/* IN0 */
 	{ 0x6800, 0x6800, input_port_1_r },	/* IN1 */
@@ -113,8 +113,8 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress galaxian_writemem[] =
 {
-	{ 0x0000, 0x27ff, MWA_ROM },
-	{ 0x4000, 0x43ff, MWA_RAM },
+	{ 0x0000, 0x3fff, MWA_ROM },	/* not all games use all the space */
+	{ 0x4000, 0x47ff, MWA_RAM },
 	{ 0x5000, 0x53ff, videoram_w, &videoram, &videoram_size },
 	{ 0x5800, 0x583f, galaxian_attributes_w, &galaxian_attributesram },
 	{ 0x5840, 0x585f, MWA_RAM, &spriteram, &spriteram_size },
@@ -135,6 +135,8 @@ static struct MemoryWriteAddress galaxian_writemem[] =
 
 static struct MemoryWriteAddress pisces_writemem[] =
 {
+	{ 0x0000, 0x3fff, MWA_ROM },	/* not all games use all the space */
+	{ 0x4000, 0x47ff, MWA_RAM },
 	{ 0x5000, 0x53ff, videoram_w, &videoram, &videoram_size },
 	{ 0x5800, 0x583f, galaxian_attributes_w, &galaxian_attributesram },
 	{ 0x5840, 0x585f, MWA_RAM, &spriteram, &spriteram_size },
@@ -151,7 +153,6 @@ static struct MemoryWriteAddress pisces_writemem[] =
 	{ 0x7004, 0x7004, galaxian_stars_w },
 	{ 0x7006, 0x7006, galaxian_flipx_w },
 	{ 0x7007, 0x7007, galaxian_flipy_w },
-	{ 0x0000, 0x3fff, MWA_ROM },	/* not all games use all the space */
 	{ -1 }	/* end of table */
 };
 
@@ -540,6 +541,12 @@ static unsigned char pacmanbl_color_prom[] =
 	0x00,0xC0,0xA0,0x0C,0x00,0x00,0x00,0x07,0x00,0xF6,0x07,0xF0,0x00,0x76,0x07,0xC6
 };
 
+static unsigned char digger_color_prom[] =
+{
+	0x00,0xC7,0xF0,0x3F,0x00,0xDB,0xC6,0x38,0x00,0xF0,0x15,0x1F,0x00,0xF6,0x06,0x07,
+	0x00,0x91,0x07,0xF6,0x00,0xF0,0xFE,0x07,0x00,0x38,0x07,0xFE,0x00,0x07,0x3F,0xFE,
+};
+
 
 
 static struct CustomSound_interface custom_interface =
@@ -867,10 +874,37 @@ ROM_START( pacmanbl_rom )
 	ROM_LOAD( "blpac9b",  0x1800, 0x0800, 0x9df6dba6 )
 ROM_END
 
+ROM_START( digger_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "z1", 0x0000, 0x1000, 0xcaa36573 )
+	ROM_LOAD( "z2", 0x1000, 0x1000, 0x3f51b4a7 )
+	ROM_LOAD( "z3", 0x2000, 0x1000, 0x1f56e5bc )
+	ROM_LOAD( "z4", 0x3000, 0x1000, 0x14641a92 )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "z5", 0x0000, 0x1000, 0xb9732537 )
+	ROM_LOAD( "z6", 0x1000, 0x1000, 0x24b20f8e )
+ROM_END
+
+ROM_START( zigzag_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "zz1", 0x0000, 0x1000, 0xb3a75d89 )
+	ROM_LOAD( "zz2", 0x1000, 0x1000, 0x3f51b4a7 )
+	ROM_LOAD( "zz3", 0x2000, 0x1000, 0x1f56e5bc )
+	ROM_LOAD( "zz4", 0x3000, 0x1000, 0x14641a92 )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "zz5", 0x0000, 0x1000, 0xb9732537 )
+	ROM_LOAD( "zz6", 0x1000, 0x1000, 0x24b20f8e )
+ROM_END
+
 
 
 static int galaxian_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* wait for the checkerboard pattern to be on screen */
 	if (memcmp(&RAM[0x5000],"\x30\x32",2) == 0)
 	{
@@ -893,6 +927,7 @@ static int galaxian_hiload(void)
 static void galaxian_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -906,6 +941,9 @@ static void galaxian_hisave(void)
 
 static int pisces_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* wait for the screen to initialize */
 	if (memcmp(&RAM[0x5000],"\x10\x10\x10",3) == 0)
 	{
@@ -928,6 +966,7 @@ static int pisces_hiload(void)
 static void pisces_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -939,6 +978,9 @@ static void pisces_hisave(void)
 
 static int warofbug_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* wait for memory to be set */
 	if (memcmp(&RAM[0x4045],"\x1F\x1F",2) == 0)
 	{
@@ -959,6 +1001,7 @@ static int warofbug_hiload(void)
 static void warofbug_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -972,6 +1015,9 @@ static void warofbug_hisave(void)
 
 static int pacmanbl_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* wait for "HIGH" to be on screen */
 	if (memcmp(&RAM[0x5240],"\x48\x40",2) == 0)
 	{
@@ -1012,6 +1058,7 @@ static int pacmanbl_hiload(void)
 static void pacmanbl_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1025,9 +1072,14 @@ static void pacmanbl_hisave(void)
 
 struct GameDriver galaxian_driver =
 {
-	"Galaxian (Namco)",
+	__FILE__,
+	0,
 	"galaxian",
+	"Galaxian (Namco)",
+	"????",
+	"?????",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
+	0,
 	&galaxian_machine_driver,
 
 	galaxian_rom,
@@ -1045,9 +1097,14 @@ struct GameDriver galaxian_driver =
 
 struct GameDriver galmidw_driver =
 {
-	"Galaxian (Midway)",
+	__FILE__,
+	0,
 	"galmidw",
+	"Galaxian (Midway)",
+	"????",
+	"?????",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
+	0,
 	&galaxian_machine_driver,
 
 	galmidw_rom,
@@ -1065,9 +1122,14 @@ struct GameDriver galmidw_driver =
 
 struct GameDriver galnamco_driver =
 {
-	"Galaxian (Namco, modified)",
+	__FILE__,
+	0,
 	"galnamco",
+	"Galaxian (Namco, modified)",
+	"????",
+	"?????",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
+	0,
 	&galaxian_machine_driver,
 
 	galnamco_rom,
@@ -1085,9 +1147,14 @@ struct GameDriver galnamco_driver =
 
 struct GameDriver superg_driver =
 {
-	"Super Galaxians",
+	__FILE__,
+	0,
 	"superg",
+	"Super Galaxians",
+	"????",
+	"?????",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
+	0,
 	&galaxian_machine_driver,
 
 	superg_rom,
@@ -1105,9 +1172,14 @@ struct GameDriver superg_driver =
 
 struct GameDriver galapx_driver =
 {
-	"Galaxian Part X",
+	__FILE__,
+	0,
 	"galapx",
+	"Galaxian Part X",
+	"????",
+	"?????",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
+	0,
 	&galaxian_machine_driver,
 
 	galapx_rom,
@@ -1125,9 +1197,14 @@ struct GameDriver galapx_driver =
 
 struct GameDriver galap1_driver =
 {
-	"Space Invaders Galactica",
+	__FILE__,
+	0,
 	"galap1",
+	"Space Invaders Galactica",
+	"????",
+	"?????",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
+	0,
 	&galaxian_machine_driver,
 
 	galap1_rom,
@@ -1145,9 +1222,14 @@ struct GameDriver galap1_driver =
 
 struct GameDriver galap4_driver =
 {
-	"Galaxian Part 4",
+	__FILE__,
+	0,
 	"galap4",
+	"Galaxian Part 4",
+	"????",
+	"?????",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
+	0,
 	&galaxian_machine_driver,
 
 	galap4_rom,
@@ -1165,9 +1247,14 @@ struct GameDriver galap4_driver =
 
 struct GameDriver galturbo_driver =
 {
-	"Galaxian Turbo",
+	__FILE__,
+	0,
 	"galturbo",
+	"Galaxian Turbo",
+	"????",
+	"?????",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
+	0,
 	&galaxian_machine_driver,
 
 	galturbo_rom,
@@ -1185,9 +1272,14 @@ struct GameDriver galturbo_driver =
 
 struct GameDriver pisces_driver =
 {
-	"Pisces",
+	__FILE__,
+	0,
 	"pisces",
+	"Pisces",
+	"????",
+	"?????",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMike Balfour\nMarco Cassili",
+	0,
 	&pisces_machine_driver,
 
 	pisces_rom,
@@ -1205,9 +1297,14 @@ struct GameDriver pisces_driver =
 
 struct GameDriver japirem_driver =
 {
-	"Gingateikoku No Gyakushu",
+	__FILE__,
+	0,
 	"japirem",
+	"Gingateikoku No Gyakushu",
+	"????",
+	"?????",
 	"Nicola Salmoria\nLionel Theunissen\nRobert Anschuetz\nAndrew Scott\nMarco Cassili",
+	0,
 	&pisces_machine_driver,
 
 	japirem_rom,
@@ -1225,9 +1322,14 @@ struct GameDriver japirem_driver =
 
 struct GameDriver uniwars_driver =
 {
-	"Uniwars",
+	__FILE__,
+	0,
 	"uniwars",
+	"Uniwars",
+	"????",
+	"?????",
 	"Nicola Salmoria\nGary Walton\nRobert Anschuetz\nAndrew Scott\nMarco Cassili",
+	0,
 	&pisces_machine_driver,
 
 	uniwars_rom,
@@ -1245,9 +1347,14 @@ struct GameDriver uniwars_driver =
 
 struct GameDriver warofbug_driver =
 {
-	"War of the Bugs",
+	__FILE__,
+	0,
 	"warofbug",
+	"War of the Bugs",
+	"????",
+	"?????",
 	"Robert Aanchuetz\nNicola Salmoria\nAndrew Scott\nMike Balfour\nTim Lindquist (color info)\nMarco Cassili",
+	0,
 	&galaxian_machine_driver,
 
 	warofbug_rom,
@@ -1265,9 +1372,14 @@ struct GameDriver warofbug_driver =
 
 struct GameDriver redufo_driver =
 {
-	"Defend the Terra Attack on the Red UFO",
+	__FILE__,
+	0,
 	"redufo",
+	"Defend the Terra Attack on the Red UFO",
+	"????",
+	"?????",
 	"Robert Aanchuetz\nNicola Salmoria\nAndrew Scott\nValerio Verrando (high score save)\nMarco Cassili",
+	0,
 	&galaxian_machine_driver,
 
 	redufo_rom,
@@ -1285,9 +1397,14 @@ struct GameDriver redufo_driver =
 
 struct GameDriver pacmanbl_driver =
 {
-	"Pac Man (bootleg on Galaxian hardware)",
+	__FILE__,
+	0,
 	"pacmanbl",
+	"Pac Man (bootleg on Galaxian hardware)",
+	"????",
+	"?????",
 	"Robert Aanchuetz\nNicola Salmoria\nAndrew Scott\nValerio Verrando (high score save)\nMarco Cassili",
+	0,
 	&pacmanbl_machine_driver,
 
 	pacmanbl_rom,
@@ -1301,4 +1418,54 @@ struct GameDriver pacmanbl_driver =
 	ORIENTATION_ROTATE_270,
 
 	pacmanbl_hiload, pacmanbl_hisave
+};
+
+struct GameDriver digger_driver =
+{
+	__FILE__,
+	0,
+	"digger",
+	"Digger",
+	"????",
+	"?????",
+	"Robert Aanchuetz\nNicola Salmoria\nAndrew Scott",
+	0,
+	&pisces_machine_driver,
+
+	digger_rom,
+	0, 0,
+	mooncrst_sample_names,
+	0,      /* sound_prom */
+
+	pisces_input_ports,
+
+	digger_color_prom, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
+};
+
+struct GameDriver zigzag_driver =
+{
+	__FILE__,
+	0,
+	"zigzag",
+	"Zig Zag",
+	"????",
+	"?????",
+	"Robert Aanchuetz\nNicola Salmoria\nAndrew Scott",
+	0,
+	&pisces_machine_driver,
+
+	zigzag_rom,
+	0, 0,
+	mooncrst_sample_names,
+	0,      /* sound_prom */
+
+	pisces_input_ports,
+
+	digger_color_prom, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
 };

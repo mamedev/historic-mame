@@ -176,6 +176,11 @@ void foodf_vh_screenrefresh (struct osd_bitmap *bitmap)
 {
 	int offs;
 
+	/* recalc the palette if necessary */
+	if (palette_recalc ())
+		memset (playfielddirty,1,foodf_playfieldram_size / 2);
+
+
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
 	for (offs = foodf_playfieldram_size - 2; offs >= 0; offs -= 2)

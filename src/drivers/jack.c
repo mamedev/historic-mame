@@ -481,9 +481,7 @@ ROM_END
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -507,9 +505,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -521,9 +517,7 @@ static void hisave(void)
 
 static int zzyzzyxx_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -548,9 +542,7 @@ static int zzyzzyxx_hiload(void)
 static void zzyzzyxx_hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -565,9 +557,14 @@ static void zzyzzyxx_hisave(void)
 
 struct GameDriver jack_driver =
 {
-	"Jack the Giant Killer",
+	__FILE__,
+	0,
 	"jack",
+	"Jack the Giant Killer",
+	"????",
+	"?????",
 	"Brad Oliver",
+	0,
 	&machine_driver,
 
 	jack_rom,
@@ -585,9 +582,14 @@ struct GameDriver jack_driver =
 
 struct GameDriver zzyzzyxx_driver =
 {
-	"Zzyzzyxx",
+	__FILE__,
+	0,
 	"zzyzzyxx",
+	"Zzyzzyxx",
+	"????",
+	"?????",
 	"Brad Oliver",
+	0,
 	&zzyzzyxx_machine_driver,
 
 	zzyzzyxx_rom,

@@ -376,9 +376,14 @@ ROM_END
 
 struct GameDriver redalert_driver =
 {
-	"Red Alert",
+	__FILE__,
+	0,
 	"redalert",
+	"Red Alert",
+	"????",
+	"?????",
 	"Mike Balfour\nDick Milliken (Information)",
+	0,
 	&machine_driver,
 
 	redalert_rom,

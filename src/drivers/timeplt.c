@@ -434,9 +434,7 @@ ROM_END
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -465,9 +463,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -481,9 +477,14 @@ static void hisave(void)
 
 struct GameDriver timeplt_driver =
 {
-	"Time Pilot",
+	__FILE__,
+	0,
 	"timeplt",
+	"Time Pilot",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)\nAlan J McCormick (color info)\nPaul Swan (color info)\nMike Cuddy (clouds info)\nEdward Massey (clouds info)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	timeplt_rom,
@@ -501,9 +502,14 @@ struct GameDriver timeplt_driver =
 
 struct GameDriver spaceplt_driver =
 {
-	"Space Pilot (bootleg Time Pilot)",
+	__FILE__,
+	0,
 	"spaceplt",
+	"Space Pilot (bootleg Time Pilot)",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)\nAlan J McCormick (color info)\nPaul Swan (color info)\nMike Cuddy (clouds info)\nEdward Massey (clouds info)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	spaceplt_rom,

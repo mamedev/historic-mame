@@ -155,6 +155,8 @@ int gorf_interrupt(void)
 int gorf_timer_r(int offset)
 {
 	static int Skip=0;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((RAM[0x5A93]==160) || (RAM[0x5A93]==4)) 	/* INVADERS AND    */
 	{												/* GALAXIAN SCREEN */

@@ -137,6 +137,7 @@ void superqix_bitmapram2_w(int offset,int data)
 void superqix_0410_w(int offset,int data)
 {
 	int bankaddress;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* bits 0-1 select the tile bank */

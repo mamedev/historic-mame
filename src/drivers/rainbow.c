@@ -370,9 +370,14 @@ ROM_END
 
 struct GameDriver rainbow_driver =
 {
-	"Rainbow Islands",
+	__FILE__,
+	0,
 	"rainbow",
+	"Rainbow Islands",
+	"????",
+	"?????",
 	"Richard Bush (Raine & Info)\nMike Coates (MAME driver)",
+	0,
 	&machine_driver,
 
 	rainbow_rom,
@@ -389,9 +394,14 @@ struct GameDriver rainbow_driver =
 
 struct GameDriver rainbowe_driver =
 {
-	"Rainbow Islands (Extra)",
+	__FILE__,
+	0,
 	"rainbowe",
+	"Rainbow Islands (Extra)",
+	"????",
+	"?????",
 	"Richard Bush (Raine & Info)\nMike Coates (MAME driver)",
+	0,
 	&machine_driver,
 
 	rainbowe_rom,

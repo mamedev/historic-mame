@@ -1953,7 +1953,7 @@ void rotate_shift_Word(unsigned ModRM, unsigned count)
       case 0x10:  /* RCL ew,1 */
         dst=(src<<1)+CF;
         PutbackRMWord(ModRM,dst);
-        SetCFB(dst);
+        SetCFW(dst);
         OverVal = (src^dst)&0x8000;
 	break;
       case 0x18:  /* RCR ew,1 */
@@ -1966,7 +1966,7 @@ void rotate_shift_Word(unsigned ModRM, unsigned count)
       case 0x30:
         dst = src << 1;
         PutbackRMWord(ModRM,dst);
-        SetCFB(dst);
+        SetCFW(dst);
         OverVal = (src^dst)&0x8000;
 	AuxVal = 1;
         SetSZPF_Word(dst);

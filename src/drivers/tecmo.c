@@ -74,6 +74,7 @@ int tecmo_bankedrom_r(int offset);
 void tecmo_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	bankaddress = 0x10000 + ((data & 0xf8) << 8);
@@ -1001,156 +1002,147 @@ ADPCM_SAMPLES_END
 
 static int rygar_hiload(void)
 {
-        /* get RAM pointer (this game is multiCPU, we can't assume the global */
-        /* RAM pointer is pointing to the right place) */
-        unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
-        /* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0xc023],"\x00\x00\x03",3) == 0)
-        {
-                void *f;
-                int p;
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0xc023],"\x00\x00\x03",3) == 0)
+	{
+		void *f;
+		int p;
 
 
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        osd_fread(f,&RAM[0xc023],4);
-                        osd_fread(f,&RAM[0xc984],8*50);
-                        osd_fclose(f);
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0xc023],4);
+			osd_fread(f,&RAM[0xc984],8*50);
+			osd_fclose(f);
 
-                        /* update the screen hi score (now or never) */
+			/* update the screen hi score (now or never) */
 
-                        for (p=0;p<4;p++)
-                        {
-                        RAM[0xd06c+(p*2)]=0x60+(RAM[0xc984+p]/16);
-                        RAM[0xd06d+(p*2)]=0x60+(RAM[0xc984+p]%16);
-                        }
-                        for (p=0;p<6;p++ )
-                        {
-                           if (RAM[0xd06c+p]==0x60)
-                             { RAM[0xd06c+p]=0x01; }
-                             else break;
-                        }
-                }
+			for (p=0;p<4;p++)
+			{
+				RAM[0xd06c+(p*2)]=0x60+(RAM[0xc984+p]/16);
+				RAM[0xd06d+(p*2)]=0x60+(RAM[0xc984+p]%16);
+			}
+			for (p=0;p<6;p++ )
+			{
+				if (RAM[0xd06c+p]==0x60)
+					RAM[0xd06c+p]=0x01;
+				else break;
+			}
+		}
 
-                return 1;
-        }
-        else return 0;  /* we can't load the hi scores yet */
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
 }
 
 static void rygar_hisave(void)
 {
-        void *f;
-        /* get RAM pointer (this game is multiCPU, we can't assume the global */
-        /* RAM pointer is pointing to the right place) */
-        unsigned char *RAM = Machine->memory_region[0];
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite(f,&RAM[0xc023],4);
-                osd_fwrite(f,&RAM[0xc984],8*50);
-                osd_fclose(f);
-        }
-
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0xc023],4);
+		osd_fwrite(f,&RAM[0xc984],8*50);
+		osd_fclose(f);
+	}
 }
 
 
 static int silkworm_hiload(void)
 {
-        /* get RAM pointer (this game is multiCPU, we can't assume the global */
-        /* RAM pointer is pointing to the right place) */
-        unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
-        /* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0xd262],"\x00\x00\x03",3) == 0)
-        {
-                void *f;
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0xd262],"\x00\x00\x03",3) == 0)
+	{
+		void *f;
 
 
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        osd_fread(f,&RAM[0xd262],10*10);
-                        osd_fread(f,&RAM[0xd54e],4);
-                        osd_fread(f,&RAM[0xd572],4);
-                        osd_fclose(f);
-                }
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0xd262],10*10);
+			osd_fread(f,&RAM[0xd54e],4);
+			osd_fread(f,&RAM[0xd572],4);
+			osd_fclose(f);
+		}
 
-                return 1;
-        }
-        else return 0;  /* we can't load the hi scores yet */
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
 }
 
 static void silkworm_hisave(void)
 {
-        void *f;
-        /* get RAM pointer (this game is multiCPU, we can't assume the global */
-        /* RAM pointer is pointing to the right place) */
-        unsigned char *RAM = Machine->memory_region[0];
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite(f,&RAM[0xd262],10*10);
-                osd_fwrite(f,&RAM[0xd54e],4);
-                osd_fwrite(f,&RAM[0xd572],4);
-                osd_fclose(f);
-        }
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0xd262],10*10);
+		osd_fwrite(f,&RAM[0xd54e],4);
+		osd_fwrite(f,&RAM[0xd572],4);
+		osd_fclose(f);
+	}
 
 }
 
 
 static int gemini_hiload(void)
 {
-        /* get RAM pointer (this game is multiCPU, we can't assume the global */
-        /* RAM pointer is pointing to the right place) */
-        unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
-        /* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0xc026],"\x00\x50\x00",3) == 0)
-        {
-                void *f;
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0xc026],"\x00\x50\x00",3) == 0)
+	{
+		void *f;
 
 
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        osd_fread(f,&RAM[0xc026],3);
-                        osd_fread(f,&RAM[0xcf41],3*10+4*10);
-                        osd_fclose(f);
-                }
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0xc026],3);
+			osd_fread(f,&RAM[0xcf41],3*10+4*10);
+			osd_fclose(f);
+		}
 
-                return 1;
-        }
-        else return 0;  /* we can't load the hi scores yet */
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
 }
 
 static void gemini_hisave(void)
 {
-        void *f;
-        /* get RAM pointer (this game is multiCPU, we can't assume the global */
-        /* RAM pointer is pointing to the right place) */
-        unsigned char *RAM = Machine->memory_region[0];
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite(f,&RAM[0xc026],3);
-                osd_fwrite(f,&RAM[0xcf41],3*10+4*10);
-                osd_fclose(f);
-        }
-
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0xc026],3);
+		osd_fwrite(f,&RAM[0xcf41],3*10+4*10);
+		osd_fclose(f);
+	}
 }
 
 
 
 struct GameDriver rygar_driver =
 {
-	"Rygar",
+	__FILE__,
+	0,
 	"rygar",
+	"Rygar",
+	"????",
+	"?????",
 	"Nicola Salmoria\nErnesto Corvi (ADPCM sound)",
+	0,
 	&rygar_machine_driver,
 
 	rygar_rom,
@@ -1168,9 +1160,14 @@ struct GameDriver rygar_driver =
 
 struct GameDriver rygarj_driver =
 {
-	"Rygar (Japanese)",
+	__FILE__,
+	0,
 	"rygarj",
+	"Rygar (Japan)",
+	"????",
+	"?????",
 	"Nicola Salmoria\nErnesto Corvi (ADPCM sound)",
+	0,
 	&rygar_machine_driver,
 
 	rygarj_rom,
@@ -1188,9 +1185,14 @@ struct GameDriver rygarj_driver =
 
 struct GameDriver silkworm_driver =
 {
-	"Silkworm",
+	__FILE__,
+	0,
 	"silkworm",
+	"Silkworm",
+	"????",
+	"?????",
 	"Nicola Salmoria",
+	0,
 	&silkworm_machine_driver,
 
 	silkworm_rom,
@@ -1208,9 +1210,14 @@ struct GameDriver silkworm_driver =
 
 struct GameDriver gemini_driver =
 {
-	"Gemini Wing",
+	__FILE__,
+	0,
 	"gemini",
+	"Gemini Wing",
+	"????",
+	"?????",
     "Nicola Salmoria (MAME driver)\nMirko Buffoni (additional code)\nMartin Binder (dip switches)",
+	0,
 	&gemini_machine_driver,
 
 	gemini_rom,

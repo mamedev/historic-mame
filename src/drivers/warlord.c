@@ -322,9 +322,14 @@ ROM_END
 
 struct GameDriver warlord_driver =
 {
-	"Warlords",
+	__FILE__,
+	0,
 	"warlord",
+	"Warlords",
+	"????",
+	"?????",
 	"Lee Taylor\nJohn Clegg\nBrad Oliver (additional code)",
+	0,
 	&machine_driver,
 
 	warlord_rom,

@@ -46,14 +46,8 @@ int atarigen_init_display_list (struct atarigen_modesc *_modesc);
 void atarigen_update_display_list (unsigned char *base, int start, int scanline);
 void atarigen_render_display_list (struct osd_bitmap *bitmap, atarigen_morender morender, void *param);
 
-void atarigen_init_remap (int _colortype, int reuse);
-void atarigen_alloc_fixed_colors (int *usage, int base, int colors, int palettes);
-void atarigen_alloc_dynamic_colors (int base, int number);
-void atarigen_update_colors (int intensity);
-
 extern int atarigen_cpu_to_sound, atarigen_cpu_to_sound_ready;
 extern int atarigen_sound_to_cpu, atarigen_sound_to_cpu_ready;
-extern int atarigen_special_color;
 
 extern unsigned char *atarigen_paletteram;
 extern unsigned char *atarigen_playfieldram;

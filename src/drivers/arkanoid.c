@@ -506,10 +506,7 @@ ROM_END
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
-
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -536,10 +533,8 @@ static int hiload(void)
 
 static void hisave(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -553,9 +548,14 @@ static void hisave(void)
 
 struct GameDriver arkanoid_driver =
 {
-	"Arkanoid",
+	__FILE__,
+	0,
 	"arkanoid",
+	"Arkanoid",
+	"????",
+	"?????",
 	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)\nAaron Giles (68705 emulation)\nChris Moore (high score save)",
+	0,
 	&machine_driver,
 
 	arkanoid_rom,
@@ -573,9 +573,14 @@ struct GameDriver arkanoid_driver =
 
 struct GameDriver arknoidu_driver =
 {
-	"Arkanoid (U.S. Romstar)",
+	__FILE__,
+	0,
 	"arknoidu",
+	"Arkanoid (U.S. Romstar)",
+	"????",
+	"?????",
 	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)\nAaron Giles (68705 emulation)\nChris Moore (high score save)",
+	0,
 	&machine_driver,
 
 	arknoidu_rom,
@@ -593,9 +598,14 @@ struct GameDriver arknoidu_driver =
 
 struct GameDriver arkbl2_driver =
 {
-	"Arkanoid (Bootleg)",
+	__FILE__,
+	0,
 	"arkbl2",
+	"Arkanoid (Bootleg)",
+	"????",
+	"?????",
 	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)\nAaron Giles (68705 emulation)\nChris Moore (high score save)",
+	0,
 	&machine_driver,
 
 	arkbl2_rom,
@@ -613,9 +623,14 @@ struct GameDriver arkbl2_driver =
 
 struct GameDriver arkabeta_driver =
 {
-	"Arkanoid (BETA bootleg)",
+	__FILE__,
+	0,
 	"arkabeta",
+	"Arkanoid (BETA bootleg)",
+	"????",
+	"?????",
 	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)\nChris Moore (high score save)",
+	0,
 	&machine_driver,
 
 	arkabeta_rom,
@@ -633,9 +648,14 @@ struct GameDriver arkabeta_driver =
 
 struct GameDriver arkatayt_driver =
 {
-	"Arkanoid (Tayto bootleg)",
+	__FILE__,
+	0,
 	"arkatayt",
+	"Arkanoid (Tayto bootleg)",
+	"????",
+	"?????",
 	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)\nChris Moore (high score save)",
+	0,
 	&bootleg_machine_driver,
 
 	arkatayt_rom,

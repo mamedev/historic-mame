@@ -104,15 +104,21 @@ void wc90b_palette_w( int offset, int v );
 void wc90b_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
-static void wc90b_bankswitch_w(int offset,int data) {
+static void wc90b_bankswitch_w(int offset,int data)
+{
 	int bankaddress;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	bankaddress = 0x10000 + ((data & 0xf8) << 8);
 	cpu_setbank(1,&RAM[bankaddress]);
 }
 
-static void wc90b_bankswitch1_w(int offset,int data) {
+static void wc90b_bankswitch1_w(int offset,int data)
+{
 	int bankaddress;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+
 
 	bankaddress = 0x10000 + ((data & 0xf8) << 8);
 	cpu_setbank(2,&RAM[bankaddress]);
@@ -471,9 +477,14 @@ ROM_END
 
 struct GameDriver wc90b_driver =
 {
-	"World Cup 90 (bootleg)",
+	__FILE__,
+	0,
 	"wc90b",
+	"World Cup 90 (bootleg)",
+	"????",
+	"?????",
     "Ernesto Corvi",
+	0,
 	&wc90b_machine_driver,
 
 	wc90b_rom,

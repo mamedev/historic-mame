@@ -264,8 +264,6 @@ memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * siz
 			/* 0 = 8x8 1 = 16x16 2 = 32x32 */
 			int which = spriteram[offs+1];
 
-			int code;
-			int color;
 
 			if( video_type != 0 )
 				code = (which) + ((bank&0xf8)<<5); /* silkworm */

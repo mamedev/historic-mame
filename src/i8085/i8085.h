@@ -36,6 +36,7 @@ typedef struct {
         int             IM;     /* interrupt mask */
         int             IREQ;   /* requested interrupts */
         int             ISRV;   /* serviced interrupt */
+        int             INTR;   /* vector for INTR */
         int             IRQ2;   /* scheduled interrupt address */
         int             IRQ1;   /* executed interrupt address */
         void (*SOD_callback)(int state);
@@ -65,4 +66,4 @@ void    I8085_Clear_Pending_Interrupts(void);
 int     Dasm8085(char * dst, int PC);
 #endif
 
-#endif 
+#endif

@@ -1185,6 +1185,9 @@ ROM_END
 
 static void radarscp_unprotect(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* Radarscope does some checks with bit 6 of 7d00 which prevent it from working. */
 	/* It's probably a copy protection. We comment it out. */
 	RAM[0x1e9c] = 0xc3;
@@ -1368,9 +1371,7 @@ static const char *dkongjr_sample_names[] =
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -1405,10 +1406,8 @@ static int hiload(void)
 
 static void hisave(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1420,9 +1419,7 @@ static void hisave(void)
 
 static int dkong3_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -1450,10 +1447,8 @@ static int dkong3_hiload(void)
 
 static void dkong3_hisave(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1469,9 +1464,14 @@ static void dkong3_hisave(void)
 
 struct GameDriver dkong_driver =
 {
-	"Donkey Kong (US version)",
+	__FILE__,
+	0,
 	"dkong",
+	"Donkey Kong (US version)",
+	"????",
+	"?????",
 	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nEdward Massey (MageX emulator)\nNicola Salmoria (MAME driver)\nRon Fries (sound)\nGary Walton (color info)\nSimon Walls (color info)\nMarco Cassili",
+	0,
 	&dkong_machine_driver,
 
 	dkong_rom,
@@ -1489,9 +1489,14 @@ struct GameDriver dkong_driver =
 
 struct GameDriver dkongjp_driver =
 {
-	"Donkey Kong (Japanese version)",
+	__FILE__,
+	0,
 	"dkongjp",
+	"Donkey Kong (Japanese version)",
+	"????",
+	"?????",
 	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nEdward Massey (MageX emulator)\nNicola Salmoria (MAME driver)\nRon Fries (sound)\nGary Walton (color info)\nSimon Walls (color info)\nMarco Cassili",
+	0,
 	&dkong_machine_driver,
 
 	dkongjp_rom,
@@ -1509,9 +1514,14 @@ struct GameDriver dkongjp_driver =
 
 struct GameDriver radarscp_driver =
 {
-	"Radarscope",
+	__FILE__,
+	0,
 	"radarscp",
+	"Radarscope",
+	"????",
+	"?????",
 	"Andy White (protection workaround)\nGary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nEdward Massey (MageX emulator)\nNicola Salmoria (MAME driver)\nMarco Cassili\nAndy White (color info)\nTim Lindquist (color info)",
+	0,
 	&dkong_machine_driver,
 
 	radarscp_rom,
@@ -1529,9 +1539,14 @@ struct GameDriver radarscp_driver =
 
 struct GameDriver dkongjr_driver =
 {
-	"Donkey Kong Jr. (US)",
+	__FILE__,
+	0,
 	"dkongjr",
+	"Donkey Kong Jr. (US)",
+	"????",
+	"?????",
 	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
+	0,
 	&dkongjr_machine_driver,
 
 	dkongjr_rom,
@@ -1549,9 +1564,14 @@ struct GameDriver dkongjr_driver =
 
 struct GameDriver dkngjrjp_driver =
 {
-	"Donkey Kong Jr. (Original Japanese)",
+	__FILE__,
+	0,
 	"dkngjrjp",
+	"Donkey Kong Jr. (Original Japanese)",
+	"????",
+	"?????",
 	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
+	0,
 	&dkongjr_machine_driver,
 
 	dkngjrjp_rom,
@@ -1569,9 +1589,14 @@ struct GameDriver dkngjrjp_driver =
 
 struct GameDriver dkjrjp_driver =
 {
-	"Donkey Kong Jr. (Japanese)",
+	__FILE__,
+	0,
 	"dkjrjp",
+	"Donkey Kong Jr. (Japan)",
+	"????",
+	"?????",
 	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
+	0,
 	&dkongjr_machine_driver,
 
 	dkjrjp_rom,
@@ -1589,9 +1614,14 @@ struct GameDriver dkjrjp_driver =
 
 struct GameDriver dkjrbl_driver =
 {
-	"Donkey Kong Jr. (bootleg)",
+	__FILE__,
+	0,
 	"dkjrbl",
+	"Donkey Kong Jr. (bootleg)",
+	"????",
+	"?????",
 	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
+	0,
 	&dkongjr_machine_driver,
 
 	dkjrbl_rom,
@@ -1609,9 +1639,14 @@ struct GameDriver dkjrbl_driver =
 
 struct GameDriver dkong3_driver =
 {
-	"Donkey Kong 3",
+	__FILE__,
+	0,
 	"dkong3",
+	"Donkey Kong 3",
+	"????",
+	"?????",
 	"Mirko Buffoni (MAME driver)\nNicola Salmoria (additional code)\nTim Lindquist (color info)\nMarco Cassili",
+	0,
 	&dkong3_machine_driver,
 
 	dkong3_rom,
@@ -1632,9 +1667,14 @@ struct GameDriver dkong3_driver =
  have not been tested */
 struct GameDriver hunchy_driver =
 {
-	"Hunchback",
+	__FILE__,
+	0,
 	"hunchy",
+	"Hunchback",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)",
+	0,
 	&dkongjr_machine_driver,
 
 	hunchy_rom,

@@ -629,9 +629,14 @@ static void hisave(void)
 
 struct GameDriver mpatrol_driver =
 {
-	"Moon Patrol",
+	__FILE__,
+	0,
 	"mpatrol",
+	"Moon Patrol",
+	"????",
+	"?????",
 	"Nicola Salmoria\nChris Hardy\nValerio Verrando\nTim Lindquist (color info)\nAaron Giles (sound)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	mpatrol_rom,
@@ -649,9 +654,14 @@ struct GameDriver mpatrol_driver =
 
 struct GameDriver mpatrolw_driver =
 {
-	"Moon Patrol (Williams)",
+	__FILE__,
+	0,
 	"mpatrolw",
+	"Moon Patrol (Williams)",
+	"????",
+	"?????",
 	"Nicola Salmoria\nChris Hardy\nValerio Verrando\nTim Lindquist (color info)\nAaron Giles (sound)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	mpatrolw_rom,
@@ -669,9 +679,14 @@ struct GameDriver mpatrolw_driver =
 
 struct GameDriver mranger_driver =
 {
-	"Moon Ranger (bootleg Moon Patrol)",
+	__FILE__,
+	0,
 	"mranger",
+	"Moon Ranger (bootleg Moon Patrol)",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)\nChris Hardy (hardware info)\nTim Lindquist (color info)\nAaron Giles (sound)\nValerio Verrando (high score save)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	mranger_rom,

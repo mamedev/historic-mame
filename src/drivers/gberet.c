@@ -363,6 +363,9 @@ ROM_END
 
 static int hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0xd900],"\x03\x30\x00",3) == 0 &&
 			memcmp(&RAM[0xd91b],"\x01\x00\x00",3) == 0)
@@ -389,6 +392,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -402,9 +406,14 @@ static void hisave(void)
 
 struct GameDriver gberet_driver =
 {
-	"Green Beret",
+	__FILE__,
+	0,
 	"gberet",
+	"Green Beret",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)\nChris Hardy (hardware info)\nPaul Swan (color info)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	gberet_rom,
@@ -422,9 +431,14 @@ struct GameDriver gberet_driver =
 
 struct GameDriver rushatck_driver =
 {
-	"Rush'n Attack",
+	__FILE__,
+	0,
 	"rushatck",
+	"Rush'n Attack",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)\nChris Hardy (hardware info)\nPaul Swan (color info)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	rushatck_rom,

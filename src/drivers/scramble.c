@@ -776,9 +776,8 @@ static void froggers_decode(void)
 
 static int scramble_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
         if ((memcmp(&RAM[0x4200],"\x00\x00\x01",3) == 0) &&
@@ -805,10 +804,7 @@ static int scramble_hiload(void)
 static void scramble_hisave(void)
 {
 	void *f;
-
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -822,9 +818,8 @@ static void scramble_hisave(void)
 
 static int atlantis_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0x403D],"\x00\x00\x00",3) == 0)
@@ -848,10 +843,7 @@ static int atlantis_hiload(void)
 static void atlantis_hisave(void)
 {
 	void *f;
-
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -865,11 +857,8 @@ static void atlantis_hisave(void)
 static int theend_hiload(void)
 {
 	static int loop = 0;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 
 	/* check if the hi score table has already been initialized */
 	/* the high score table is intialized to all 0, so first of all */
@@ -909,10 +898,7 @@ static int theend_hiload(void)
 static void theend_hisave(void)
 {
 	void *f;
-
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -929,9 +915,7 @@ static void theend_hisave(void)
 
 static int froggers_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -959,9 +943,7 @@ static int froggers_hiload(void)
 static void froggers_hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -975,9 +957,14 @@ static void froggers_hisave(void)
 
 struct GameDriver scramble_driver =
 {
-	"Scramble",
+	__FILE__,
+	0,
 	"scramble",
+	"Scramble",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
+	0,
 	&scramble_machine_driver,
 
 	scramble_rom,
@@ -995,9 +982,14 @@ struct GameDriver scramble_driver =
 
 struct GameDriver atlantis_driver =
 {
-	"Battle of Atlantis",
+	__FILE__,
+	0,
 	"atlantis",
+	"Battle of Atlantis",
+	"????",
+	"?????",
 	"NICOLA SALMORIA\nMIKE BALFOUR",
+	0,
 	&scramble_machine_driver,
 
 	atlantis_rom,
@@ -1015,9 +1007,14 @@ struct GameDriver atlantis_driver =
 
 struct GameDriver theend_driver =
 {
-	"The End",
+	__FILE__,
+	0,
 	"theend",
+	"The End",
+	"????",
+	"?????",
 	"NICOLA SALMORIA\nVILLE LAITINEN\nMIKE BALFOUR",
+	0,
 	&theend_machine_driver,
 
 	theend_rom,
@@ -1035,9 +1032,14 @@ struct GameDriver theend_driver =
 
 struct GameDriver froggers_driver =
 {
-	"Frog",
+	__FILE__,
+	0,
 	"froggers",
+	"Frog",
+	"????",
+	"?????",
 	"NICOLA SALMORIA",
+	0,
 	&froggers_machine_driver,
 
 	froggers_rom,
@@ -1055,9 +1057,14 @@ struct GameDriver froggers_driver =
 
 struct GameDriver amidars_driver =
 {
-	"Amidars",
+	__FILE__,
+	0,
 	"amidars",
+	"Amidars",
+	"????",
+	"?????",
 	"Nicola Salmoria\nMike Coates",
+	0,
 	&scramble_machine_driver,
 
 	amidars_rom,
@@ -1262,9 +1269,14 @@ ROM_END
 
 struct GameDriver triplep_driver =
 {
-	"Triple Punch",
+	__FILE__,
+	0,
 	"triplep",
+	"Triple Punch",
+	"????",
+	"?????",
 	"NICOLA SALMORIA",
+	0,
 	&triplep_machine_driver,
 
 	triplep_rom,

@@ -285,9 +285,14 @@ ROM_END
 
 struct GameDriver pbaction_driver =
 {
-	"Pinball Action",
+	__FILE__,
+	0,
 	"pbaction",
+	"Pinball Action",
+	"????",
+	"?????",
 	"Nicola Salmoria",
+	0,
 	&machine_driver,
 
 	pbaction_rom,

@@ -196,6 +196,7 @@ struct MachineCPU
 #define CPU_M6309  CPU_M6809	/* actually it's not 100% compatible */
 #define CPU_M68000 9
 #define CPU_T11    10	/* ASG 030598 */
+#define CPU_S2650  11	/* HJB 070598 */
 
 /* set this if the CPU is used as a slave for audio. It will not be emulated if */
 /* sound is disabled, therefore speeding up a lot the emulation. */
@@ -329,9 +330,15 @@ struct MachineDriver
 
 struct GameDriver
 {
-	const char *description;
+	const char *source_file;	/* set this to __FILE__ */
+	const struct GameDriver *clone_of;	/* if this is a clone, point to */
+										/* the main version of the game */
 	const char *name;
+	const char *description;
+	const char *year;
+	const char *manufacturer;
 	const char *credits;
+	int flags;
 	const struct MachineDriver *drv;
 
 	const struct RomModule *rom;

@@ -447,8 +447,11 @@ int dec8_vh_start (void)
 
   memset(pf_dirty,1,0x800);
 
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
   /* Should really go in a machine start but hey.. */
   cpu_setbank(1,&RAM[0x10000]);
+}
 
   return 0;
 }

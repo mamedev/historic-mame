@@ -264,7 +264,7 @@ memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * siz
 }
 for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 {
-	int sx,sy,colour,code,x;
+	int colour,code,x;
 
 
 	sy = spriteram[offs + 2];
@@ -359,8 +359,6 @@ if (palette_recalc())
 
 			/* copy the background graphics */
 			{
-				int scrollx,scrolly;
-
 				scrollx = -(blktiger_scrollx[0] + 256 * blktiger_scrollx[1]);
 				scrolly = -(blktiger_scrolly[0] + 256 * blktiger_scrolly[1]);
 				copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
@@ -406,8 +404,6 @@ if (palette_recalc())
 
 			/* copy the background graphics */
 			{
-			int scrollx,scrolly;
-
 			scrollx = -(blktiger_scrollx[0] + 256 * blktiger_scrollx[1]);
 			scrolly = -(blktiger_scrolly[0] + 256 * blktiger_scrolly[1]);
 			copyscrollbitmap(bitmap,tmpbitmap3,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
@@ -435,7 +431,7 @@ if (palette_recalc())
 				0x01 Colour
 			*/
 
-			int code,colour,sx,sy;
+			int code,colour;
 
 			code = spriteram[offs];
 			code += ( ((int)(spriteram[offs+1]&0xe0)) << 3 );
@@ -458,8 +454,6 @@ if (palette_recalc())
 		/* draw the frontmost playfield. They are characters, but draw them as sprites */
 		for (offs = videoram_size - 1;offs >= 0;offs--)
 		{
-			int sx,sy;
-
 			sx = offs % 32;
 			sy = offs / 32;
 

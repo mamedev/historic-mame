@@ -423,9 +423,12 @@ ROM_START( hyprolym_rom )
 	ROM_LOAD( "c9_d15.bin", 0x0000, 0x2000, 0xbaaab302 )
 ROM_END
 
+
+
 static void trackfld_decode(void)
 {
 	int A;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	for (A = 0x6000;A < 0x10000;A++)
@@ -444,10 +447,8 @@ static int we_flipped_the_switch;
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
@@ -487,10 +488,8 @@ static int hiload(void)
 
 static void hisave(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -529,9 +528,14 @@ static void hisave(void)
 
 struct GameDriver trackfld_driver =
 {
-	"Track'n'Field",
+	__FILE__,
+	0,
 	"trackfld",
+	"Track'n'Field",
+	"????",
+	"?????",
 	"Chris Hardy (MAME driver)\nTim Lindquist (color info)\nTatsuyuki Satoh(speech sound)",
+	0,
 	&machine_driver,
 
 	trackfld_rom,
@@ -550,9 +554,14 @@ struct GameDriver trackfld_driver =
 
 struct GameDriver hyprolym_driver =
 {
-	"Hyper Olympics",
+	__FILE__,
+	0,
 	"hyprolym",
+	"Hyper Olympics",
+	"????",
+	"?????",
 	"Chris Hardy (MAME driver)\nTim Lindquist (color info)\nTatsuyuki Satoh(speech sound)",
+	0,
 	&machine_driver,
 
 	hyprolym_rom,

@@ -16,95 +16,64 @@ unsigned char *dd_scrolly_lo;
 unsigned char *dd_spriteram;
 int dd2_video;
 
-unsigned char *dd_palette_entry_dirty;
-unsigned char dd_palette_dirty;
-unsigned char *dd_bg_pal_dirty;
 
-int dd_vh_start( void );
-int dd_vh_start( void ){
-	dd_bg_pal_dirty = malloc( 8 );
-	if( dd_bg_pal_dirty ){
- 		memset(dd_bg_pal_dirty,1,8);
 
-		dirtybuffer = malloc( 0x400 );
-		if( dirtybuffer ){
-	 		memset(dirtybuffer,1, 0x400);
+void dd_palette_w(int offset,int data)
+{
+	int r,g,b;
 
-	 		dd_palette_entry_dirty = malloc(0x200);
-	 		if( dd_palette_entry_dirty ){
-	 			memset(dd_palette_entry_dirty,1,0x200);
-	 			dd_palette_dirty = 1;
 
-				tmpbitmap = osd_new_bitmap(
-					Machine->drv->screen_width*2,
-					Machine->drv->screen_height*2,
-					Machine->scrbitmap->depth );
+	dd_palette_ram[offset] = data;
 
-				if( tmpbitmap ) return 0;
+	r = 0x11 * ((dd_palette_ram[offset & ~0x200] >> 0) & 0x0f);
+	g = 0x11 * ((dd_palette_ram[offset & ~0x200] >> 4) & 0x0f);
+	b = 0x11 * ((dd_palette_ram[offset | 0x200] >> 0) & 0x0f);
 
-				free( dd_palette_entry_dirty );
-			}
-			free( dirtybuffer );
-		}
-		free( dd_bg_pal_dirty );
+	palette_change_color(offset & ~0x200,r,g,b);
+}
+
+
+
+int dd_vh_start( void )
+{
+	dirtybuffer = malloc( 0x400 );
+	if( dirtybuffer )
+	{
+		memset(dirtybuffer,1, 0x400);
+
+		tmpbitmap = osd_new_bitmap(
+				Machine->drv->screen_width*2,
+				Machine->drv->screen_height*2,
+				Machine->scrbitmap->depth );
+
+		if( tmpbitmap ) return 0;
+
+		free( dirtybuffer );
 	}
+
 	return 1;
 }
 
-void dd_vh_stop( void );
-void dd_vh_stop( void ){
+
+
+void dd_vh_stop( void )
+{
 	osd_free_bitmap( tmpbitmap );
-	free( dd_palette_entry_dirty );
 	free( dirtybuffer );
-	free( dd_bg_pal_dirty );
 }
 
-void dd_background_w( int offset, int val );
-void dd_background_w( int offset, int val ){
+
+void dd_background_w( int offset, int val )
+{
 	if( dd_videoram[offset] != val ){
 		dd_videoram[offset] = val;
 		dirtybuffer[offset/2] = 1;
 	}
 }
 
-void dd_palette_w( int offset, int val );
-void dd_palette_w( int offset, int val ){
-	if ( dd_palette_ram[offset] != val ) {
-		dd_palette_ram[offset] = val;
-		dd_palette_entry_dirty[ offset%0x200 ] = 1;
-		dd_palette_dirty = 1;
-	}
-}
 
-static void dd_update_palette( void );
-static void dd_update_palette( void ){
-	if( dd_palette_dirty ){ /* at least one palette entry is dirty */
-		int index;
-		for( index=0; index<128*3; index++ ){
-			if( dd_palette_entry_dirty[index] ){
-				int byte0 = dd_palette_ram[ index ];
-				int byte1 = dd_palette_ram[ index+0x200 ];
-
-				int red =  byte0 & 0xf;
-				int green = byte0 >> 4;
-				int blue = byte1 & 0xf;
-
-				red		= ( red << 4 ) + red;
-				green	= ( green << 4 ) + green;
-				blue	= ( blue << 4 ) + blue;
-
-				setgfxcolorentry( Machine->gfx[index/128], index%128, red, green, blue );
-				if( index>=256 ) dd_bg_pal_dirty[(index-256)/16] = 1;
-
-				dd_palette_entry_dirty[index] = 0;
-			}
-		}
-
-		dd_palette_dirty = 0;
-	}
-}
-
-static void dd_draw_background( struct osd_bitmap *bitmap ){
+static void dd_draw_background( struct osd_bitmap *bitmap )
+{
 	const struct GfxElement *gfx = Machine->gfx[2];
 
 	int scrollx = -dd_scrollx_hi - ( dd_scrollx_lo[0] );
@@ -115,7 +84,7 @@ static void dd_draw_background( struct osd_bitmap *bitmap ){
 	for( offset = 0; offset<0x400; offset++ ){
 		int attributes = dd_videoram[offset*2];
 		int color = ( attributes >> 3 ) & 0x7;
-		if( dd_bg_pal_dirty[color] || dirtybuffer[offset] ){
+		if( dirtybuffer[offset] ){
 			int tile_number = dd_videoram[offset*2+1] + ((attributes&7)<<8);
 			int xflip = attributes & 0x40;
 			int yflip = attributes & 0x80;
@@ -136,8 +105,6 @@ static void dd_draw_background( struct osd_bitmap *bitmap ){
 		}
 	}
 
-	for( offset=0; offset<8; offset++ ) dd_bg_pal_dirty[offset] = 0;
-
 	copyscrollbitmap(bitmap,tmpbitmap,
 			1,&scrollx,1,&scrolly,
 			&Machine->drv->visible_area,
@@ -148,7 +115,8 @@ static void dd_draw_background( struct osd_bitmap *bitmap ){
 					(which+order),color,flipx,flipy,sx,sy, \
 					clip,TRANSPARENCY_PEN,0);
 
-static void dd_draw_sprites( struct osd_bitmap *bitmap ) {
+static void dd_draw_sprites( struct osd_bitmap *bitmap )
+{
 	const struct rectangle *clip = &Machine->drv->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[1];
 
@@ -203,7 +171,8 @@ static void dd_draw_sprites( struct osd_bitmap *bitmap ) {
 
 #undef DRAW_SPRITE
 
-static void dd_draw_foreground( struct osd_bitmap *bitmap ) {
+static void dd_draw_foreground( struct osd_bitmap *bitmap )
+{
 	const struct GfxElement *gfx = Machine->gfx[0];
 	unsigned char *source = videoram;
 
@@ -228,9 +197,13 @@ static void dd_draw_foreground( struct osd_bitmap *bitmap ) {
 	}
 }
 
-void dd_vh_screenrefresh( struct osd_bitmap *bitmap );
-void dd_vh_screenrefresh( struct osd_bitmap *bitmap ){
-	dd_update_palette();
+
+
+void dd_vh_screenrefresh( struct osd_bitmap *bitmap )
+{
+	if (palette_recalc())
+ 		memset(dirtybuffer,1, 0x400);
+
 	dd_draw_background( bitmap );
 	dd_draw_sprites( bitmap );
 	dd_draw_foreground( bitmap );

@@ -12,7 +12,7 @@
 #include "stdlib.h"
 #include "osd_dbg.h"
 #include "I8039.h"
-#include "mame.h"
+#include "driver.h"
 
 
 #define M_RDMEM(A)      I8039_RDMEM(A)

@@ -403,6 +403,110 @@ INPUT_PORTS_START( tmnt_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( tmnt2p_input_ports )
+	PORT_START      /* COINS */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN4 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_SERVICE )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_SERVICE )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_SERVICE )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SERVICE )
+
+	PORT_START      /* PLAYER 1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 - unused */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START      /* PLAYER 2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 - unused */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START      /* PLAYER 3 */
+//	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER3 | IPF_8WAY )
+//	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER3 | IPF_8WAY )
+//	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER3 | IPF_8WAY )
+//	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER3 | IPF_8WAY )
+//	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
+//	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
+//	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 - unused */
+//	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START3 )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x0f, 0x0f, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "5 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x02, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x04, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x03, "3 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x07, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x06, "2 Coins/5 Credits" )
+	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )
+
+	PORT_START	/* DSW2 */
+	PORT_DIPNAME( 0x03, 0x02, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "1" )
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x60, 0x40, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x60, "Easy" )
+	PORT_DIPSETTING(    0x40, "Normal" )
+	PORT_DIPSETTING(    0x20, "Difficult" )
+	PORT_DIPSETTING(    0x00, "Very Difficult" )
+	PORT_DIPNAME( 0x80, 0x80, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_UNUSED)
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_UNUSED)
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_UNUSED)
+
+	PORT_START      /* PLAYER 4 */
+//	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER4 | IPF_8WAY )
+//	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER4 | IPF_8WAY )
+//	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER4 | IPF_8WAY )
+//	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER4 | IPF_8WAY )
+//	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )
+//	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )
+//	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 - unused */
+//	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START4 )
+
+	PORT_START	/* DSW3 */
+	PORT_DIPNAME( 0x01, 0x01, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x02, 0x02, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
 INPUT_PORTS_START( punkshot_input_ports )
 	PORT_START	/* DSW 1 */
 	PORT_DIPNAME( 0x0f, 0x0f, "Coinage", IP_KEY_NONE )
@@ -728,6 +832,90 @@ ROM_START( tmnt_rom )
 	ROM_LOAD( "tmnt.d05", 0x20000, 0x80000, 0x5d8ee020 ) /* samples */
 ROM_END
 
+ROM_START( tmntj_rom )
+	ROM_REGION(0x60000)	/* 2*128k and 2*64k for 68000 code */
+	ROM_LOAD_EVEN( "963-x23", 0x00000, 0x20000, 0xc9912b5f )
+	ROM_LOAD_ODD ( "963-x24", 0x00000, 0x20000, 0x922ca238 )
+	ROM_LOAD_EVEN( "963-x21", 0x40000, 0x10000, 0x087ca14c )
+	ROM_LOAD_ODD ( "963-x22", 0x40000, 0x10000, 0x0af12787 )
+
+	ROM_REGION(0x1000)
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x300000)	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "963-a28", 0x000000, 0x80000, 0xc4e80fc8 )        /* 8x8 tiles */
+	ROM_LOAD( "963-a29", 0x080000, 0x80000, 0x3e996127 )        /* 8x8 tiles */
+	ROM_LOAD( "963-a17", 0x100000, 0x80000, 0x87547ae2 )        /* sprites */
+	ROM_LOAD( "963-a18", 0x180000, 0x80000, 0x8216ed80 )        /* sprites */
+	ROM_LOAD( "963-a15", 0x200000, 0x80000, 0x54034e53 )        /* sprites */
+	ROM_LOAD( "963-a16", 0x280000, 0x80000, 0x89662258 )        /* sprites */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "963-e20", 0x00000, 0x08000, 0x9120fcdc )
+
+	ROM_REGION(0x0a0000)	/* 64k+64k+512k for the samples */
+	ROM_LOAD( "963-a26", 0x00000, 0x10000, 0x40ec95d4 ) /* samples */
+	ROM_LOAD( "963-a27", 0x10000, 0x10000, 0xc01b3f71 ) /* samples */
+	ROM_LOAD( "963-a25", 0x20000, 0x80000, 0x5d8ee020 ) /* samples */
+ROM_END
+
+ROM_START( tmnt2p_rom )
+	ROM_REGION(0x60000)	/* 2*128k and 2*64k for 68000 code */
+	ROM_LOAD_EVEN( "963-u23", 0x00000, 0x20000, 0x2f4f59a1 )
+	ROM_LOAD_ODD ( "963-u24", 0x00000, 0x20000, 0x337f4fc1 )
+	ROM_LOAD_EVEN( "963-u21", 0x40000, 0x10000, 0x84939371 )
+	ROM_LOAD_ODD ( "963-u22", 0x40000, 0x10000, 0xe59729c5 )
+
+	ROM_REGION(0x1000)
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x300000)	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "963-a28", 0x000000, 0x80000, 0xc4e80fc8 )        /* 8x8 tiles */
+	ROM_LOAD( "963-a29", 0x080000, 0x80000, 0x3e996127 )        /* 8x8 tiles */
+	ROM_LOAD( "963-a17", 0x100000, 0x80000, 0x87547ae2 )        /* sprites */
+	ROM_LOAD( "963-a18", 0x180000, 0x80000, 0x8216ed80 )        /* sprites */
+	ROM_LOAD( "963-a15", 0x200000, 0x80000, 0x54034e53 )        /* sprites */
+	ROM_LOAD( "963-a16", 0x280000, 0x80000, 0x89662258 )        /* sprites */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "963-e20", 0x00000, 0x08000, 0x9120fcdc )
+
+	ROM_REGION(0x0a0000)	/* 64k+64k+512k for the samples */
+	ROM_LOAD( "963-a26", 0x00000, 0x10000, 0x40ec95d4 ) /* samples */
+	ROM_LOAD( "963-a27", 0x10000, 0x10000, 0xc01b3f71 ) /* samples */
+	ROM_LOAD( "963-a25", 0x20000, 0x80000, 0x5d8ee020 ) /* samples */
+ROM_END
+
+ROM_START( tmnt2pj_rom )
+	ROM_REGION(0x60000)	/* 2*128k and 2*64k for 68000 code */
+	ROM_LOAD_EVEN( "963-123", 0x00000, 0x20000, 0x464f1b3b )
+	ROM_LOAD_ODD ( "963-124", 0x00000, 0x20000, 0x2fb48d9e )
+	ROM_LOAD_EVEN( "963-121", 0x40000, 0x10000, 0x3f760ff0 )
+	ROM_LOAD_ODD ( "963-122", 0x40000, 0x10000, 0x938c6808 )
+
+	ROM_REGION(0x1000)
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x300000)	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "963-a28", 0x000000, 0x80000, 0xc4e80fc8 )        /* 8x8 tiles */
+	ROM_LOAD( "963-a29", 0x080000, 0x80000, 0x3e996127 )        /* 8x8 tiles */
+	ROM_LOAD( "963-a17", 0x100000, 0x80000, 0x87547ae2 )        /* sprites */
+	ROM_LOAD( "963-a18", 0x180000, 0x80000, 0x8216ed80 )        /* sprites */
+	ROM_LOAD( "963-a15", 0x200000, 0x80000, 0x54034e53 )        /* sprites */
+	ROM_LOAD( "963-a16", 0x280000, 0x80000, 0x89662258 )        /* sprites */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "963-e20", 0x00000, 0x08000, 0x9120fcdc )
+
+	ROM_REGION(0x0a0000)	/* 64k+64k+512k for the samples */
+	ROM_LOAD( "963-a26", 0x00000, 0x10000, 0x40ec95d4 ) /* samples */
+	ROM_LOAD( "963-a27", 0x10000, 0x10000, 0xc01b3f71 ) /* samples */
+	ROM_LOAD( "963-a25", 0x20000, 0x80000, 0x5d8ee020 ) /* samples */
+ROM_END
+
 ROM_START( punkshot_rom )
 	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "907m02.i7",  0x00000, 0x20000, 0xf9623894 )
@@ -756,9 +944,14 @@ ROM_END
 
 struct GameDriver tmnt_driver =
 {
-	"TMNT",
+	__FILE__,
+	0,
 	"tmnt",
+	"TMNT (4 Player USA)",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)\nDan Boris (hardware info)",
+	0,
 	&tmnt_machine_driver,
 
 	tmnt_rom,
@@ -774,11 +967,91 @@ struct GameDriver tmnt_driver =
 	0, 0
 };
 
+struct GameDriver tmntj_driver =
+{
+	__FILE__,
+	0,
+	"tmntj",
+	"TMNT (4 Player Japanese)",
+	"????",
+	"?????",
+	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)\nDan Boris (hardware info)",
+	0,
+	&tmnt_machine_driver,
+
+	tmntj_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	tmnt_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};
+
+struct GameDriver tmnt2p_driver =
+{
+	__FILE__,
+	0,
+	"tmnt2p",
+	"TMNT (2 Player USA)",
+	"????",
+	"?????",
+	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)\nDan Boris (hardware info)\nAlex Simmons (2 player version)",
+	0,
+	&tmnt_machine_driver,
+
+	tmnt2p_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	tmnt2p_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};
+
+struct GameDriver tmnt2pj_driver =
+{
+	__FILE__,
+	0,
+	"tmnt2pj",
+	"TMNT (2 Player Japanese)",
+	"????",
+	"?????",
+	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)\nDan Boris (hardware info)\nAlex Simmons (2 player version)",
+	0,
+	&tmnt_machine_driver,
+
+	tmnt2pj_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	tmnt2p_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};
+
 struct GameDriver punkshot_driver =
 {
-	"Punk Shot",
+	__FILE__,
+	0,
 	"punkshot",
+	"Punk Shot",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)\nDan Boris (hardware info)",
+	0,
 	&punkshot_machine_driver,
 
 	punkshot_rom,

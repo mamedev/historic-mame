@@ -653,10 +653,8 @@ static int superpac_hiload(void)
 {
    int writing = 0;
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
 
    /* check if the hi score table has already been initialized */
    if (memcmp(&RAM[0x113c],"N@N",3) == 0 &&        /* check for high score initials */
@@ -699,10 +697,8 @@ static int superpac_hiload(void)
 static void superpac_hisave(void)
 {
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
 
    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
    {
@@ -717,10 +713,8 @@ static int pacnpal_hiload(void)
 {
    int writing = 0;
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
 
    /* check if the hi score table has already been initialized */
    if (memcmp(&RAM[0x1051],"\x1a\x25\x1a",3) == 0 &&        /* check for high score initials */
@@ -763,10 +757,8 @@ static int pacnpal_hiload(void)
 static void pacnpal_hisave(void)
 {
    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-   /* get RAM pointer (this game is multiCPU, we can't assume the global */
-   /* RAM pointer is pointing to the right place) */
-   unsigned char *RAM = Machine->memory_region[0];
 
    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
    {
@@ -778,9 +770,14 @@ static void pacnpal_hisave(void)
 
 struct GameDriver superpac_driver =
 {
-	"Super Pac-Man (Midway)",
+	__FILE__,
+	0,
 	"superpac",
+	"Super Pac-Man (Midway)",
+	"????",
+	"?????",
 	"Aaron Giles (MAME driver)\nKevin Brisley (hardware info)\nLawnmower Man (hardware info)",
+	0,
 	&superpac_machine_driver, /* MachineDriver * */
 
 	superpac_rom,             /* RomModule * */
@@ -800,9 +797,14 @@ struct GameDriver superpac_driver =
 
 struct GameDriver superpcn_driver =
 {
-	"Super Pac-Man (Namco)",
+	__FILE__,
+	0,
 	"superpcn",
+	"Super Pac-Man (Namco)",
+	"????",
+	"?????",
 	"Aaron Giles (MAME driver)\nKevin Brisley (Replay emulator)\nLawnmower Man (hardware info)",
+	0,
 	&superpac_machine_driver, /* MachineDriver * */
 
 	superpcn_rom,             /* RomModule * */
@@ -822,9 +824,14 @@ struct GameDriver superpcn_driver =
 
 struct GameDriver pacnpal_driver =
 {
-	"Pac & Pal",
+	__FILE__,
+	0,
 	"pacnpal",
+	"Pac & Pal",
+	"????",
+	"?????",
 	"Aaron Giles\nKevin Brisley\nLawnmower Man",
+	0,
 	&pacnpal_machine_driver,  /* MachineDriver * */
 
 	pacnpal_rom,              /* RomModule * */

@@ -4,7 +4,7 @@
  *
  *      Written by Juergen Buchmueller for use with MAME
  *
- *      Partially based on Z80Em bye Marcel De Kogel
+ *      Partially based on Z80Em by Marcel De Kogel
  *
  *******************************************************/
 
@@ -12,14 +12,14 @@
 
 #ifdef  VERBOSE
 #include <stdio.h>
-#include "mame.h"
+#include "driver.h"
 #endif
 
 #include "memory.h"
 #include "osd_dbg.h"
-#include "I8085/I8085.h"
-#include "I8085/I8085cpu.h"
-#include "I8085/I8085daa.h"
+#include "i8085/i8085.h"
+#include "i8085/i8085cpu.h"
+#include "i8085/i8085daa.h"
 
 #ifndef INLINE
 #define INLINE static inline
@@ -907,7 +907,7 @@ INLINE void ExecOne(int opcode)
                         if (!(I.IM & IM_INTR) && (I.IREQ & IM_INTR))
                         {
                                 I.ISRV = IM_INTR;
-                                I.IRQ2 = ADDR_INTR;
+                                I.IRQ2 = I.INTR;
                         }
                         break;
                 case 0xfc: I8085_ICount -= 10;  /* CM   nnnn */
@@ -934,6 +934,7 @@ static  void    Interrupt(void)
                 I.PC.W.l++;     /* skip HALT instr */
                 I.HALT = 0;
         }
+        I.IM &= ~IM_IEN;        /* remove general interrupt enable bit */
         switch (I.IRQ1 & 0xff0000)
         {
                 case 0xcd0000:  /* CALL nnnn */
@@ -970,12 +971,12 @@ int     I8085_Execute(int cycles)
         {
 #ifdef  MAME_DEBUG
 {
-extern int mame_debug;
-        if (mame_debug) MAME_Debug();
+        extern int mame_debug;
+                if (mame_debug) MAME_Debug();
 }
 #endif
                 /* interrupts enabled or TRAP pending ? */
-                if ( (I.IM & IM_IEN) || (I.IRQ2 == ADDR_TRAP) )
+                if ( (I.IM & IM_IEN) || (I.IREQ & IM_TRAP) )
                 {
                         /* copy scheduled to executed interrupt request */
                         I.IRQ1 = I.IRQ2;
@@ -1084,8 +1085,8 @@ void    I8085_SetTRAP(int state)
                 if (I.ISRV & IM_TRAP)
                         return;
                 /* schedule TRAP */
-                I.IRQ2 = ADDR_TRAP;
                 I.ISRV = IM_TRAP;
+                I.IRQ2 = ADDR_TRAP;
         }
         else
         {
@@ -1160,7 +1161,7 @@ void    I8085_SetRST55(int state)
                 if (!I.ISRV)
                 {
                         /* schedule RST5.5 */
-                        I.IREQ = IM_RST55;
+                        I.ISRV = IM_RST55;
                         I.IRQ2 = ADDR_RST55;
                 }
         }
@@ -1180,6 +1181,7 @@ void    I8085_SetINTR(int type)
         {
                 /* request INTR */
                 I.IREQ |= IM_INTR;
+                I.INTR = type;
                 /* if masked, ignore it for now */
                 if (I.IM & IM_INTR)
                         return;
@@ -1188,7 +1190,7 @@ void    I8085_SetINTR(int type)
                 {
                         /* schedule INTR */
                         I.ISRV = IM_INTR;
-                        I.IRQ2 = type;
+                        I.IRQ2 = I.INTR;
                 }
         }
         else
@@ -1246,18 +1248,16 @@ void    I8085_Cause_Interrupt(int type)
 
 void    I8085_Clear_Pending_Interrupts(void)
 {
-        if (I.IREQ & I8085_SID)
-                I8085_SetSID(0);
-        if (I.IREQ & I8085_TRAP)
-                I8085_SetTRAP(0);
-        if (I.IREQ & I8085_RST75)
-                I8085_SetRST75(0);
-        if (I.IREQ & I8085_RST65)
-                I8085_SetRST65(0);
-        if (I.IREQ & I8085_RST55)
-                I8085_SetRST55(0);
-        if (I.IREQ & I8085_INTR)
-                I8085_SetINTR(0);
+        if (I.IREQ & IM_TRAP)
+                I8085_SetTRAP(I8085_NONE);
+        if (I.IREQ & IM_RST75)
+                I8085_SetRST75(I8085_NONE);
+        if (I.IREQ & IM_RST65)
+                I8085_SetRST65(I8085_NONE);
+        if (I.IREQ & IM_RST55)
+                I8085_SetRST55(I8085_NONE);
+        if (I.IREQ & IM_INTR)
+                I8085_SetINTR(I8085_NONE);
 }
 
 

@@ -146,6 +146,7 @@ void c1943_vh_stop(void)
 void c1943_c804_w(int offset,int data)
 {
 	int bankaddress;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* bits 0 and 1 are coin counters */
@@ -202,7 +203,7 @@ void c1943_vh_screenrefresh(struct osd_bitmap *bitmap)
 /* TODO: support flipscreen */
 	if (sc2on)
 	{
-		p=Machine->memory_region[3]+0x8000;
+		p=Machine->memory_region[4]+0x8000;
 		bg_scrolly = c1943_bgscrolly[0] + 256 * c1943_bgscrolly[1];
 		offs = 16 * ((bg_scrolly>>5)+8);
 
@@ -286,7 +287,7 @@ void c1943_vh_screenrefresh(struct osd_bitmap *bitmap)
 /* TODO: support flipscreen */
 	if (sc1on)
 	{
-		p=Machine->memory_region[3];
+		p=Machine->memory_region[4];
 
 		bg_scrolly = c1943_scrolly[0] + 256 * c1943_scrolly[1];
 		bg_scrollx = c1943_scrollx[0];
@@ -377,9 +378,6 @@ void c1943_vh_screenrefresh(struct osd_bitmap *bitmap)
 		/* draw the frontmost playfield. They are characters, but draw them as sprites */
 		for (offs = videoram_size - 1;offs >= 0;offs--)
 		{
-			int sx,sy;
-
-
 			sx = offs / 32;
 			sy = 31 - offs % 32;
 			if (flipscreen)

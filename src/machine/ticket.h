@@ -5,8 +5,11 @@
 ***************************************************************************/
 
 
-#define TICKET_ACTIVE_LOW   0    /* Ticket motor is triggered by D7=0 */
-#define TICKET_ACTIVE_HIGH  1    /* Ticket motor is triggered by D7=1 */
+#define TICKET_MOTOR_ACTIVE_LOW    0    /* Ticket motor is triggered by D7=0 */
+#define TICKET_MOTOR_ACTIVE_HIGH   1    /* Ticket motor is triggered by D7=1 */
+
+#define TICKET_STATUS_ACTIVE_LOW   0    /* Ticket is done dispensing when D7=0 */
+#define TICKET_STATUS_ACTIVE_HIGH  1    /* Ticket is done dispensing when D7=1 */
 
 /***************************************************************************
   ticket_dispenser_init
@@ -15,7 +18,7 @@
   activehigh = see constants above
 
 ***************************************************************************/
-void ticket_dispenser_init(int msec, int activehigh);
+void ticket_dispenser_init(int msec, int motoractivehigh, int statusactivehigh);
 
 
 /***************************************************************************

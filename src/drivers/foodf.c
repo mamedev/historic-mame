@@ -340,9 +340,14 @@ ROM_END
 
 struct GameDriver foodf_driver =
 {
-	"Food Fight",
+	__FILE__,
+	0,
 	"foodf",
+	"Food Fight",
+	"????",
+	"?????",
 	"Aaron Giles (MAME driver)\nMike Balfour (Hardware info)\nAlan J. McCormick (Sound info)",
+	0,
 	&machine_driver,
 
 	foodf_rom,

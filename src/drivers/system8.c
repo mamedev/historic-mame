@@ -1075,6 +1075,7 @@ ROM_END
 static void wbml_decode(void)
 {
 	int A;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 	for (A = 0x0000;A < 0x8000;A++)
 	{
@@ -1086,9 +1087,8 @@ static void wbml_decode(void)
 static int wbdeluxe_hiload(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0xC100],"\x20\x11\x20\x20",4) == 0)
@@ -1118,9 +1118,8 @@ static int wbdeluxe_hiload(void)
 static void wbdeluxe_hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -1261,9 +1260,14 @@ static void choplift_hisave(void)
 
 struct GameDriver wbdeluxe_driver =
 {
-	"Wonder Boy Deluxe",
+	__FILE__,
+	0,
 	"wbdeluxe",
+	"Wonder Boy Deluxe",
+	"????",
+	"?????",
 	"Jarek Parchanski (MAME driver)\nRoberto Ventura  (hardware info)\nJarek Burczynski (sound)\nMirko Buffoni (additional code)",
+	0,
 	&wbdeluxe_machine_driver,
 
 	wbdeluxe_rom,
@@ -1280,9 +1284,14 @@ struct GameDriver wbdeluxe_driver =
 
 struct GameDriver upndown_driver =
 {
-	"Up'n Down",
+	__FILE__,
+	0,
 	"upndown",
+	"Up'n Down",
+	"????",
+	"?????",
 	"Jarek Parchanski (MAME driver)\nRoberto Ventura  (hardware info)\nJarek Burczynski (sound)\nMirko Buffoni (additional code)",
+	0,
 	&wbdeluxe_machine_driver,
 
 	upndown_rom,
@@ -1299,9 +1308,14 @@ struct GameDriver upndown_driver =
 
 struct GameDriver wbml_driver =
 {
-	"Wonder Boy in Monster Land",
+	__FILE__,
+	0,
 	"wbml",
+	"Wonder Boy in Monster Land",
+	"????",
+	"?????",
 	"Mirko Buffoni",
+	0,
 	&wbml_machine_driver,
 
 	wbml_rom,
@@ -1319,9 +1333,14 @@ struct GameDriver wbml_driver =
 
 struct GameDriver pitfall2_driver =
 {
-	"Pitfall II",
+	__FILE__,
+	0,
 	"pitfall2",
+	"Pitfall II",
+	"????",
+	"?????",
 	"Jarek Parchanski (MAME driver)\nRoberto Ventura  (hardware info)\nJarek Burczynski (sound)\nMirko Buffoni (additional code)",
+	0,
 	&pitfall2_machine_driver,
 
 	pitfall2_rom,
@@ -1338,9 +1357,14 @@ struct GameDriver pitfall2_driver =
 
 struct GameDriver chplft_driver =
 {
-	"Choplifter",
+	__FILE__,
+	0,
 	"chplft",
+	"Choplifter",
+	"????",
+	"?????",
 	"Jarek Parchanski (MAME driver)\nRoberto Ventura  (hardware info)",
+	0,
 	&choplift_machine_driver,
 
 	chplft_rom,
@@ -1357,9 +1381,14 @@ struct GameDriver chplft_driver =
 
 struct GameDriver chplftb_driver =
 {
-	"Choplifter (alternate)",
+	__FILE__,
+	0,
 	"chplftb",
+	"Choplifter (alternate)",
+	"????",
+	"?????",
 	"Jarek Parchanski (MAME driver)\nRoberto Ventura  (hardware info)",
+	0,
 	&choplift_machine_driver,
 
 	chplftb_rom,
@@ -1376,9 +1405,14 @@ struct GameDriver chplftb_driver =
 
 struct GameDriver chplftbl_driver =
 {
-	"Choplifter (bootleg)",
+	__FILE__,
+	0,
 	"chplftbl",
+	"Choplifter (bootleg)",
+	"????",
+	"?????",
 	"Jarek Parchanski (MAME driver)\nRoberto Ventura  (hardware info)",
+	0,
 	&choplift_machine_driver,
 
 	chplftbl_rom,

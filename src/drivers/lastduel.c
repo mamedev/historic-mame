@@ -657,9 +657,14 @@ INPUT_PORTS_END
 
 struct GameDriver lastduel_driver =
 {
-	"Last Duel",
+	__FILE__,
+	0,
 	"lastduel",
+	"Last Duel",
+	"1988",
+	"Capcom",
 	"Bryan McPhail\n\nDriver Notes: \n  One set of tile roms missing!\n",
+	0,
 	&lastduel_machine_driver,
 
 	lastduel_rom,
@@ -675,9 +680,14 @@ struct GameDriver lastduel_driver =
 
 struct GameDriver madgear_driver =
 {
-	"Mad Gear",
+	__FILE__,
+	0,
 	"madgear",
+	"Mad Gear",
+	"1989",
+	"Capcom",
 	"Bryan McPhail\n\nDriver Notes: \n  Tile roms missing!\n",
+	0,
 	&madgear_machine_driver,
 
 	madgear_rom,

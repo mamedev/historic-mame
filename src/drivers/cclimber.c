@@ -544,6 +544,7 @@ static void cclimber_decode(void)
 		}
 	};
 	int A;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	for (A = 0x0000;A < 0x10000;A++)
@@ -666,6 +667,7 @@ static void ccjap_decode(void)
 		}
 	};
 	int A;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	for (A = 0x0000;A < 0x10000;A++)
@@ -801,6 +803,9 @@ ROM_END
 
 static int cclimber_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x8083],"\x02\x00\x00",3) == 0 &&
 			memcmp(&RAM[0x808f],"\x02\x00\x00",3) == 0)
@@ -819,11 +824,10 @@ static int cclimber_hiload(void)
 	else return 0;  /* we can't load the hi scores yet */
 }
 
-
-
 static void cclimber_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -834,9 +838,11 @@ static void cclimber_hisave(void)
 }
 
 
-
 static int ckong_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x611d],"\x50\x76\x00",3) == 0 &&
 			memcmp(&RAM[0x61a5],"\x00\x43\x00",3) == 0)
@@ -858,11 +864,10 @@ static int ckong_hiload(void)
 	else return 0;  /* we can't load the hi scores yet */
 }
 
-
-
 static void ckong_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -873,60 +878,18 @@ static void ckong_hisave(void)
 }
 
 
-static int guzzler_hiload(void)
-{
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x8584],"\x00\x03\x00",3) == 0 &&
-			memcmp(&RAM[0x858c],"\x48\x4b\x41",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x8584],16*5);
-			RAM[0x8007]=RAM[0x8584];
-			RAM[0x8008]=RAM[0x8585];
-			RAM[0x8009]=RAM[0x8586];
-			RAM[0x800A]=RAM[0x8587];
-			RAM[0x800B]=RAM[0x8588];
-			RAM[0x800C]=RAM[0x8589];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-
-
-static void guzzler_hisave(void)
-{
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
-
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x8584],16*5);
-		osd_fclose(f);
-	}
-}
-
 
 
 struct GameDriver cclimber_driver =
 {
-	"Crazy Climber (US version)",
+	__FILE__,
+	0,
 	"cclimber",
+	"Crazy Climber (US version)",
+	"????",
+	"?????",
 	"Lionel Theunissen (hardware info and ROM decryption)\nNicola Salmoria (MAME driver)",
+	0,
 	&machine_driver,
 
 	cclimber_rom,
@@ -944,9 +907,14 @@ struct GameDriver cclimber_driver =
 
 struct GameDriver ccjap_driver =
 {
-	"Crazy Climber (Japanese version)",
+	__FILE__,
+	0,
 	"ccjap",
+	"Crazy Climber (Japanese version)",
+	"????",
+	"?????",
 	"Lionel Theunissen (hardware info and ROM decryption)\nNicola Salmoria (MAME driver)",
+	0,
 	&machine_driver,
 
 	ccjap_rom,
@@ -964,9 +932,14 @@ struct GameDriver ccjap_driver =
 
 struct GameDriver ccboot_driver =
 {
-	"Crazy Climber (bootleg)",
+	__FILE__,
+	0,
 	"ccboot",
+	"Crazy Climber (bootleg)",
+	"????",
+	"?????",
 	"Lionel Theunissen (hardware info and ROM decryption)\nNicola Salmoria (MAME driver)",
+	0,
 	&machine_driver,
 
 	ccboot_rom,
@@ -986,9 +959,14 @@ struct GameDriver ccboot_driver =
 
 struct GameDriver ckong_driver =
 {
-	"Crazy Kong (Crazy Climber hardware)",
+	__FILE__,
+	0,
 	"ckong",
+	"Crazy Kong (Crazy Climber hardware)",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)\nVille Laitinen (adaptation from Crazy Climber)\nDoug Jefferys (color info)\nTim Lindquist (color info)",
+	0,
 	&machine_driver,
 
 	ckong_rom,
@@ -1006,9 +984,14 @@ struct GameDriver ckong_driver =
 
 struct GameDriver ckonga_driver =
 {
-	"Crazy Kong (alternate version)",
+	__FILE__,
+	0,
 	"ckonga",
+	"Crazy Kong (alternate version)",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)\nVille Laitinen (adaptation from Crazy Climber)\nDoug Jefferys (color info)\nTim Lindquist (color info)",
+	0,
 	&machine_driver,
 
 	ckonga_rom,
@@ -1026,9 +1009,14 @@ struct GameDriver ckonga_driver =
 
 struct GameDriver ckongjeu_driver =
 {
-	"Crazy Kong (Jeutel bootleg)",
+	__FILE__,
+	0,
 	"ckongjeu",
+	"Crazy Kong (Jeutel bootleg)",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)\nVille Laitinen (adaptation from Crazy Climber)\nDoug Jefferys (color info)\nTim Lindquist (color info)",
+	0,
 	&machine_driver,
 
 	ckongjeu_rom,
@@ -1046,9 +1034,14 @@ struct GameDriver ckongjeu_driver =
 
 struct GameDriver ckongalc_driver =
 {
-	"Crazy Kong (Alca bootleg)",
+	__FILE__,
+	0,
 	"ckongalc",
+	"Crazy Kong (Alca bootleg)",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)\nVille Laitinen (adaptation from Crazy Climber)\nDoug Jefferys (color info)\nTim Lindquist (color info)\nLee Taylor",
+	0,
 	&machine_driver,
 
 	ckongalc_rom,
@@ -1066,9 +1059,14 @@ struct GameDriver ckongalc_driver =
 
 struct GameDriver monkeyd_driver =
 {
-	"Monkey Donkey",
+	__FILE__,
+	0,
 	"monkeyd",
+	"Monkey Donkey",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)\nVille Laitinen (adaptation from Crazy Climber)\nDoug Jefferys (color info)\nTim Lindquist (color info)\nLee Taylor",
+	0,
 	&machine_driver,
 
 	monkeyd_rom,
@@ -1479,7 +1477,7 @@ static struct MachineDriver swimmer_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	swimmer_gfxdecodeinfo,
-	256,64*8+4*8,
+	96,64*8+4*8,	/* TODO: use palette shrinking */
 	swimmer_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
@@ -1576,9 +1574,8 @@ ROM_END
 
 static int swimmer_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
 	/* Look for "TEK" in the 1st and 5th positions */
@@ -1606,15 +1603,11 @@ static int swimmer_hiload(void)
 	else return 0;  /* we can't load the hi scores yet */
 }
 
-
-
 static void swimmer_hisave(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
-
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -1624,12 +1617,62 @@ static void swimmer_hisave(void)
 }
 
 
+static int guzzler_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x8584],"\x00\x03\x00",3) == 0 &&
+			memcmp(&RAM[0x858c],"\x48\x4b\x41",3) == 0)
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x8584],16*5);
+			RAM[0x8007]=RAM[0x8584];
+			RAM[0x8008]=RAM[0x8585];
+			RAM[0x8009]=RAM[0x8586];
+			RAM[0x800A]=RAM[0x8587];
+			RAM[0x800B]=RAM[0x8588];
+			RAM[0x800C]=RAM[0x8589];
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+
+
+static void guzzler_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x8584],16*5);
+		osd_fclose(f);
+	}
+}
+
+
 
 struct GameDriver swimmer_driver =
 {
-	"Swimmer",
+	__FILE__,
+	0,
 	"swimmer",
+	"Swimmer",
+	"????",
+	"?????",
 	"Brad Oliver",
+	0,
 	&swimmer_machine_driver,
 
 	swimmer_rom,
@@ -1647,9 +1690,14 @@ struct GameDriver swimmer_driver =
 
 struct GameDriver swimmera_driver =
 {
-	"Swimmer (alternate)",
+	__FILE__,
+	0,
 	"swimmera",
+	"Swimmer (alternate)",
+	"????",
+	"?????",
 	"Brad Oliver",
+	0,
 	&swimmer_machine_driver,
 
 	swimmera_rom,
@@ -1667,9 +1715,14 @@ struct GameDriver swimmera_driver =
 
 struct GameDriver guzzler_driver =
 {
-	"Guzzler",
+	__FILE__,
+	0,
 	"guzzler",
+	"Guzzler",
+	"????",
+	"?????",
 	"Mirko Buffoni (MAME driver)\nGerald Vanderick (color info)\nAUC-L (SM) Valerio Verrando\n(high score save)",
+	0,
 	&swimmer_machine_driver,
 
 	guzzler_rom,

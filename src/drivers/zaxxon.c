@@ -563,6 +563,7 @@ static void szaxxon_decode(void)
 		{ 0x88,0xA0,0xA0,0x88 }		/* ...1...1...1...1 */
 	};
 	int A;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	for (A = 0x0000;A < 0x5000;A++)
@@ -594,6 +595,9 @@ static void szaxxon_decode(void)
 
 static int hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x6110],"\x00\x89\x00",3) == 0 &&
 			memcmp(&RAM[0x6179],"\x00\x37\x00",3) == 0)
@@ -619,6 +623,9 @@ static int hiload(void)
 
 static void hisave(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* make sure that the high score table is still valid (entering the */
 	/* test mode corrupts it) */
 	if (memcmp(&RAM[0x6110],"\x00\x00\x00",3) != 0)
@@ -638,10 +645,14 @@ static void hisave(void)
 
 struct GameDriver zaxxon_driver =
 {
-	"Zaxxon",
+	__FILE__,
+	0,
 	"zaxxon",
-	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nAlex Judd (sound)\n" \
-		"Gerald Vanderick (color info)\nFrank Palazzolo (sound info)\nRiek Gladys (sound info)",
+	"Zaxxon",
+	"????",
+	"?????",
+	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nAlex Judd (sound)\nGerald Vanderick (color info)\nFrank Palazzolo (sound info)\nRiek Gladys (sound info)",
+	0,
 	&machine_driver,
 
 	zaxxon_rom,
@@ -659,10 +670,14 @@ struct GameDriver zaxxon_driver =
 
 struct GameDriver szaxxon_driver =
 {
-	"Super Zaxxon",
+	__FILE__,
+	0,
 	"szaxxon",
-	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nAlex Judd (sound)\n" \
-		"Tim Lindquist (encryption and color info)\nFrank Palazzolo (sound info)\nRiek Gladys (sound info)",
+	"Super Zaxxon",
+	"????",
+	"?????",
+	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nAlex Judd (sound)\nTim Lindquist (encryption and color info)\nFrank Palazzolo (sound info)\nRiek Gladys (sound info)",
+	0,
 	&machine_driver,
 
 	szaxxon_rom,
@@ -682,9 +697,14 @@ struct GameDriver szaxxon_driver =
 /* so it isn't working. */
 struct GameDriver futspy_driver =
 {
-	"Future Spy",
+	__FILE__,
+	0,
 	"futspy",
+	"Future Spy",
+	"????",
+	"?????",
 	"Nicola Salmoria",
+	0,
 	&machine_driver,
 
 	futspy_rom,

@@ -16,8 +16,8 @@ struct cpu_interface
 {
 	void (*reset)(void);
 	int (*execute)(int cycles);
-	void (*set_regs)(void *regs);
-	void (*get_regs)(void *regs);
+	void (*set_regs)(void *reg);
+	void (*get_regs)(void *reg);
 	unsigned int (*get_pc)(void);
 	void (*cause_interrupt)(int type);
 	void (*clear_pending_interrupts)(void);

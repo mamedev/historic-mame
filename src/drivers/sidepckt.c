@@ -310,9 +310,14 @@ ROM_END
 
 struct GameDriver sidepckt_driver =
 {
-    "Side Pocket",
+	__FILE__,
+	0,
     "sidepckt",
+    "Side Pocket",
+	"????",
+	"?????",
     "Ernesto Corvi\nMarc Vergoossen (hardware info)",
+	0,
     &machine_driver,
 
     sidepocket_rom,

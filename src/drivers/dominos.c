@@ -208,9 +208,14 @@ ROM_END
 
 struct GameDriver dominos_driver =
 {
-	"Dominos",
+	__FILE__,
+	0,
 	"dominos",
+	"Dominos",
+	"????",
+	"?????",
 	"Mike Balfour",
+	0,
 	&machine_driver,
 
 	dominos_rom,

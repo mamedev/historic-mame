@@ -325,9 +325,12 @@ ROM_START( shootout_rom )
 	ROM_LOAD( "cu09.j1",	0x0c000, 0x4000, 0x32f96449 ) /* Sound CPU */
 ROM_END
 
+
+
 static int hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x0290],"\x31\x30\x47\x47\x47\x00\x25\x60",8) == 0)
@@ -348,6 +351,8 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -373,9 +378,14 @@ static void shootout_decode (void)
 
 struct GameDriver shootout_driver =
 {
-	"Shoot Out",
+	__FILE__,
+	0,
 	"shootout",
+	"Shoot Out",
+	"????",
+	"?????",
 	"Ernesto Corvi\nPhil Stroffolino\nZsolt Vasvari\nKevin Brisley\n",
+	0,
 	&machine_driver,
 
 	shootout_rom,

@@ -39,7 +39,8 @@
 #include "M6805/m6805.h"
 #include "M6809/m6809.h"
 #include "M68000/M68000.h"
-#include "t11/t11.h"	/* ASG 030598 */
+#include "S2650/s2650.h" /* HJB 110698 */
+#include "t11/t11.h"    /* ASG 030598 */
 
 
 int Dasm6502 (char *buf, int pc);
@@ -50,9 +51,10 @@ int Dasm68000 (unsigned char *pBase, char *buffer, int pc);
 int DasmT11 (unsigned char *pBase, char *buffer, int pc);	/* ASG 030598 */
 
 /* JB 980214 */
+void asg_2650Trace(unsigned char *RAM, int PC);
 void asg_TraceInit(int count, char *filename);
 void asg_TraceKill(void);
-void asg_TraceSelect(int index);
+void asg_TraceSelect(int indx);
 void asg_Z80Trace(unsigned char *RAM, int PC);
 void asg_6809Trace(unsigned char *RAM, int PC);
 void asg_6808Trace(unsigned char *RAM, int PC);
@@ -102,6 +104,7 @@ int TempDasm68000 (char *buffer, int pc){ return (Dasm68000 (&ROM[pc], buffer, p
 int TempDasm8085 (char *buffer, int pc)  { return (Dasm8085 (buffer, pc)); }
 int TempDasmT11 (char *buffer, int pc){ return (DasmT11 (&ROM[pc], buffer, pc));}	/* ASG 030598 */
 int TempDasmZ80 (char *buffer, int pc)  { return (DasmZ80 (buffer, pc)); }
+int TempDasm2650 (char *buffer, int pc) { return (Dasm2650 (buffer, pc)); }
 
 /* JB 980214 */
 void TempZ80Trace (int PC) { asg_Z80Trace (ROM, PC); }
@@ -111,7 +114,8 @@ void Temp6805Trace (int PC) { asg_6805Trace (ROM, PC); }
 void Temp6502Trace (int PC) { asg_6502Trace (ROM, PC); }
 void Temp68000Trace (int PC) { asg_68000Trace (ROM, PC); }
 void Temp8085Trace (int PC) { asg_8085Trace (ROM, PC); }
-void TempT11Trace (int PC) { asg_T11Trace (ROM, PC); }	/* ASG 030598 */
+void Temp2650Trace (int PC) { asg_2650Trace (ROM, PC); } /* HJB 110698 */
+void TempT11Trace (int PC) { asg_T11Trace (ROM, PC); }  /* ASG 030598 */
 
 /* Commands functions */
 static int ModifyRegisters(char *param);
@@ -373,6 +377,24 @@ static tBackupReg BackupRegisters[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
+	/* #define CPU_2650   11 */
+	{
+		{
+			{ "R0", (int *)&((S2650_Regs *)bckrgs)->reg[0], 1, 2, 1 },
+			{ "R1", (int *)&((S2650_Regs *)bckrgs)->reg[1], 1, 8, 1 },
+			{ "R2", (int *)&((S2650_Regs *)bckrgs)->reg[2], 1, 14, 1 },
+			{ "R3", (int *)&((S2650_Regs *)bckrgs)->reg[3], 1, 20, 1 },
+			{ "IAR", (int *)&((S2650_Regs *)bckrgs)->iar, 2, 26, 1 },
+			{ " ", (int *)&((S2650_Regs *)bckrgs)->ir, 1, 34, 1 },
+			{ "PSL", (int *)&((S2650_Regs *)bckrgs)->psl, 1, 39, 1 },
+			{ "PSU", (int *)&((S2650_Regs *)bckrgs)->psu, 1, 46, 1 },
+			{ "EA", (int *)&((S2650_Regs *)bckrgs)->ea, 2, 53, 1 },
+			{ "r1", (int *)&((S2650_Regs *)bckrgs)->reg[4], 1, 61, 1 },
+			{ "r2", (int *)&((S2650_Regs *)bckrgs)->reg[5], 1, 67, 1 },
+			{ "r3", (int *)&((S2650_Regs *)bckrgs)->reg[6], 1, 73, 1 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+	},
 };
 
 
@@ -615,6 +637,32 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "R5", (int *)&((t11_Regs *)rgs)->reg[5].w.l, 2, 42, 1 },
 			{ "SP", (int *)&((t11_Regs *)rgs)->reg[6].w.l, 2, 50, 1 },
 			{ "PC", (int *)&((t11_Regs *)rgs)->reg[7].w.l, 2, 58, 1 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+	},
+	/* #define CPU_2660   11 */
+	{
+		"2650", 14,
+		DrawDebugScreen8,
+		TempDasm2650, Temp2650Trace, 15, 8, /* JB 980103 */
+		"MPHRWV?C", (int *)&((S2650_Regs *)rgs)->psl, 8,
+		"%04X:", 0x7fff,
+		25, 31, 77, 16,
+		6, 2,					/* CM 980428 */
+		(int *)&((S2650_Regs *)rgs)->psu, 1,
+		{
+			{ "R0", (int *)&((S2650_Regs *)rgs)->reg[0], 1, 2, 1 },
+			{ "R1", (int *)&((S2650_Regs *)rgs)->reg[1], 1, 8, 1 },
+			{ "R2", (int *)&((S2650_Regs *)rgs)->reg[2], 1, 14, 1 },
+			{ "R3", (int *)&((S2650_Regs *)rgs)->reg[3], 1, 20, 1 },
+			{ "IAR", (int *)&((S2650_Regs *)rgs)->iar, 2, 26, 1 },
+			{ " ", (int *)&((S2650_Regs *)rgs)->ir, 1, 34, 1 },
+			{ "PSL", (int *)&((S2650_Regs *)rgs)->psl, 1, 39, 1 },
+			{ "PSU", (int *)&((S2650_Regs *)rgs)->psu, 1, 46, 1 },
+			{ "EA", (int *)&((S2650_Regs *)rgs)->ea, 2, 53, 1 },
+			{ "r1", (int *)&((S2650_Regs *)rgs)->reg[4], 1, 61, 1 },
+			{ "r2", (int *)&((S2650_Regs *)rgs)->reg[5], 1, 67, 1 },
+			{ "r3", (int *)&((S2650_Regs *)rgs)->reg[6], 1, 73, 1 },
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},

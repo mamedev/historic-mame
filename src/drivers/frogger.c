@@ -502,9 +502,7 @@ static void frogger2_decode(void)
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -530,9 +528,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -546,9 +542,14 @@ static void hisave(void)
 
 struct GameDriver frogger_driver =
 {
-	"Frogger",
+	__FILE__,
+	0,
 	"frogger",
+	"Frogger",
+	"????",
+	"?????",
 	"Robert Anschuetz\nNicola Salmoria\nMirko Buffoni\nGerald Vanderick (color info)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	frogger_rom,
@@ -566,9 +567,14 @@ struct GameDriver frogger_driver =
 
 struct GameDriver frogsega_driver =
 {
-	"Frogger (alternate version)",
+	__FILE__,
+	0,
 	"frogsega",
+	"Frogger (alternate version)",
+	"????",
+	"?????",
 	"Robert Anschuetz\nNicola Salmoria\nMirko Buffoni\nGerald Vanderick (color info)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	frogsega_rom,
@@ -586,9 +592,14 @@ struct GameDriver frogsega_driver =
 
 struct GameDriver frogger2_driver =
 {
-	"Frogger (alternate version #2)",
+	__FILE__,
+	0,
 	"frogger2",
+	"Frogger (alternate version #2)",
+	"????",
+	"?????",
 	"Robert Anschuetz\nNicola Salmoria\nMirko Buffoni\nGerald Vanderick (color info)\nMarco Cassili",
+	0,
 	&frogger2_machine_driver,
 
 	frogger2_rom,

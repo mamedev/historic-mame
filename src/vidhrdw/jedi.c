@@ -21,32 +21,6 @@ static unsigned int jedi_alpha_bank;
 static unsigned char *dirtybuffer2;
 static struct osd_bitmap *tmpbitmap2;
 
-void jedi_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-{
-	int i;
-	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
-	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
-
-
-	/* the palette will be initialized by the game. We just set it to some */
-	/* pre-cooked values so the startup copyright notice can be displayed. */
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		*(palette++) = ((i & 0x01) >> 0) * 0xff;
-		*(palette++) = ((i & 0x06) >> 1) * 0x55;
-		*(palette++) = ((i & 0x08) >> 3) * 0xff;
-	}
-
-	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = 252+i;
-
-	for (i = 0;i < TOTAL_COLORS(1);i++)
-		COLOR(1,i) = i;
-
-	for (i = 0;i < TOTAL_COLORS(2);i++)
-		COLOR(2,i) = 16 * i;
-}
-
 void jedi_vscroll_w(int offset,int data) {
     jedi_vscroll = data | (offset << 8);
 }
@@ -100,10 +74,12 @@ void jedi_paletteram_w(int offset,int data)
 	b = 5 * bits * intensity;
 
 	offset &= 0x3ff;
-	if (offset < 252)
-		osd_modify_pen(Machine->pens[offset],r,g,b);
-	else if ((offset & 0xff) == 0)
-		osd_modify_pen(Machine->pens[252 + offset/256],r,g,b);
+	if ((offset & 0x3f0) == 0)
+		palette_change_color (4 + (offset & 0x00f), r, g, b);
+	else if ((offset & 0x30f) == 0)
+		palette_change_color (4+16 + ((offset >> 4) & 0x0f), r, g, b);
+	else if ((offset & 0x0ff) == 0)
+		palette_change_color (0 + ((offset >> 8) & 0x03), r, g, b);
 }
 
 

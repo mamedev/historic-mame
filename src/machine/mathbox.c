@@ -81,9 +81,9 @@ void mb_go (int addr, int data)
 
     case 0x0b:
 
-      REG5 = (REG5 & 0x00ff) | (data << 8); 
+      REG5 = (REG5 & 0x00ff) | (data << 8);
 
-      REGf = 0xffff;
+      REGf = (s16)0xffff;
       REG4 -= REG2;
       REG5 -= REG3;
 
@@ -155,7 +155,7 @@ void mb_go (int addr, int data)
       mb_q = REG8;
       goto step_0bf;
 
-    case 0x14: 
+    case 0x14:
       REGc = REGa;
       mb_q = REGb;
 
@@ -203,14 +203,14 @@ void mb_go (int addr, int data)
       break;
 
     case 0x11:
-      REG5 = (REG5 & 0x00ff) | (data << 8); 
+      REG5 = (REG5 & 0x00ff) | (data << 8);
       REGf = 0x0000;  /* do everything in one step */
       goto step_048;
       break;
 
     case 0x1c:
       /* window test? */
-      REG5 = (REG5 & 0x00ff) | (data << 8); 
+      REG5 = (REG5 & 0x00ff) | (data << 8);
       do
 	{
 	  REGe = (REG4 + REG7) >> 1;

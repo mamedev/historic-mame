@@ -178,6 +178,9 @@ void toobin_sound_reset_w (int offset, int data)
 
 void toobin_6502_bank_w (int offset, int data)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+
+
 	cpu_setbank (8, &RAM[0x10000 + 0x1000 * ((data >> 6) & 3)]);
 }
 

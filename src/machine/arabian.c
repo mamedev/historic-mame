@@ -42,6 +42,8 @@ void arabian_portB_w(int offset,int data)
 int arabian_input_port(int offset)
 {
   int pom;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
   if (port0f & 0x10)  /* if 1 read the switches */
   {

@@ -384,7 +384,7 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3000000,	/* 3 Mhz (?) */
-			2,	/* memory region #2 */
+			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
 		}
@@ -448,6 +448,16 @@ ROM_START( gunsmoke_rom )
 	ROM_LOAD( "03l_gs16.bin", 0x74000, 0x8000, 0xbb944980 ) /* Sprites planes 0-1 */
 	ROM_LOAD( "01l_gs15.bin", 0x7c000, 0x8000, 0x58c970b5 ) /* Sprites planes 0-1 */
 
+	ROM_REGION(0x0800)	/* color PROMs */
+	ROM_LOAD( "03b_g-01.bin", 0x0000, 0x0100, 0xccbb0301 )	/* red component */
+	ROM_LOAD( "04b_g-02.bin", 0x0100, 0x0100, 0xae700500 )	/* green component */
+	ROM_LOAD( "05b_g-03.bin", 0x0200, 0x0100, 0x0cc6080e )	/* blue component */
+	ROM_LOAD( "09d_g-04.bin", 0x0300, 0x0100, 0x22060f0a )	/* char lookup table */
+	ROM_LOAD( "14a_g-06.bin", 0x0400, 0x0100, 0xdf8a0c08 )	/* tile lookup table */
+	ROM_LOAD( "15a_g-07.bin", 0x0500, 0x0100, 0x545d0001 )	/* tile palette bank */
+	ROM_LOAD( "09f_g-09.bin", 0x0600, 0x0100, 0xdef70507 )	/* sprite lookup table */
+	ROM_LOAD( "08f_g-08.bin", 0x0700, 0x0100, 0xe76b0207 )	/* sprite palette bank */
+
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "14h_gs02.bin", 0x00000, 0x8000, 0xe9b79a81 )
 
@@ -457,28 +467,38 @@ ROM_END
 
 ROM_START( gunsmrom_rom )
 	ROM_REGION(0x20000)     /* 2*64k for code */
-	ROM_LOAD(  "9n_gs03.bin", 0x00000, 0x8000, 0x59cd20dd ) /* Code 0000-7fff */
+	ROM_LOAD( "9n_gs03.bin",  0x00000, 0x8000, 0x59cd20dd ) /* Code 0000-7fff */
 	ROM_LOAD( "10n_gs04.bin", 0x10000, 0x8000, 0x36fec338 ) /* Paged code */
 	ROM_LOAD( "12n_gs05.bin", 0x18000, 0x8000, 0xfb8bcb4b ) /* Paged code */
 
 	ROM_REGION(0x84000)     /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "11f_gs01.bin", 0x00000, 0x4000, 0xf5980000 ) /* Characters */
-	ROM_LOAD( "6c_gs13.bin",  0x04000, 0x8000, 0xb9a10141 ) /* 32x32 tiles planes 2-3 */
-	ROM_LOAD( "5c_gs12.bin",  0x0c000, 0x8000, 0x6ba1f1cf )
-	ROM_LOAD( "4c_gs11.bin",  0x14000, 0x8000, 0x3083c58f )
-	ROM_LOAD( "2c_gs10.bin",  0x1c000, 0x8000, 0x65aa0244 )
-	ROM_LOAD( "6a_gs09.bin",  0x24000, 0x8000, 0xdf196979 ) /* 32x32 tiles planes 0-1 */
-	ROM_LOAD( "5a_gs08.bin",  0x2c000, 0x8000, 0x6a5f513f )
-	ROM_LOAD( "4a_gs07.bin",  0x34000, 0x8000, 0x80eb6933 )
-	ROM_LOAD( "2a_gs06.bin",  0x3c000, 0x8000, 0x6c8ef650 )
-	ROM_LOAD( "6n_gs22.bin",  0x44000, 0x8000, 0x6df46970 ) /* Sprites planes 2-3 */
-	ROM_LOAD( "4n_gs21.bin",  0x4c000, 0x8000, 0x237981a3 ) /* Sprites planes 2-3 */
-	ROM_LOAD( "3n_gs20.bin",  0x54000, 0x8000, 0x3d2be527 ) /* Sprites planes 2-3 */
-	ROM_LOAD( "1n_gs19.bin",  0x5c000, 0x8000, 0x4b78e0a2 ) /* Sprites planes 2-3 */
-	ROM_LOAD( "6l_gs18.bin",  0x64000, 0x8000, 0x9009aa59 ) /* Sprites planes 0-1 */
-	ROM_LOAD( "4l_gs17.bin",  0x6c000, 0x8000, 0x8d5bb65f ) /* Sprites planes 0-1 */
-	ROM_LOAD( "3l_gs16.bin",  0x74000, 0x8000, 0xbb944980 ) /* Sprites planes 0-1 */
-	ROM_LOAD( "1l_gs15.bin",  0x7c000, 0x8000, 0x58c970b5 ) /* Sprites planes 0-1 */
+	ROM_LOAD( "06c_gs13.bin", 0x04000, 0x8000, 0xb9a10141 ) /* 32x32 tiles planes 2-3 */
+	ROM_LOAD( "05c_gs12.bin", 0x0c000, 0x8000, 0x6ba1f1cf )
+	ROM_LOAD( "04c_gs11.bin", 0x14000, 0x8000, 0x3083c58f )
+	ROM_LOAD( "02c_gs10.bin", 0x1c000, 0x8000, 0x65aa0244 )
+	ROM_LOAD( "06a_gs09.bin", 0x24000, 0x8000, 0xdf196979 ) /* 32x32 tiles planes 0-1 */
+	ROM_LOAD( "05a_gs08.bin", 0x2c000, 0x8000, 0x6a5f513f )
+	ROM_LOAD( "04a_gs07.bin", 0x34000, 0x8000, 0x80eb6933 )
+	ROM_LOAD( "02a_gs06.bin", 0x3c000, 0x8000, 0x6c8ef650 )
+	ROM_LOAD( "06n_gs22.bin", 0x44000, 0x8000, 0x6df46970 ) /* Sprites planes 2-3 */
+	ROM_LOAD( "04n_gs21.bin", 0x4c000, 0x8000, 0x237981a3 ) /* Sprites planes 2-3 */
+	ROM_LOAD( "03n_gs20.bin", 0x54000, 0x8000, 0x3d2be527 ) /* Sprites planes 2-3 */
+	ROM_LOAD( "01n_gs19.bin", 0x5c000, 0x8000, 0x4b78e0a2 ) /* Sprites planes 2-3 */
+	ROM_LOAD( "06l_gs18.bin", 0x64000, 0x8000, 0x9009aa59 ) /* Sprites planes 0-1 */
+	ROM_LOAD( "04l_gs17.bin", 0x6c000, 0x8000, 0x8d5bb65f ) /* Sprites planes 0-1 */
+	ROM_LOAD( "03l_gs16.bin", 0x74000, 0x8000, 0xbb944980 ) /* Sprites planes 0-1 */
+	ROM_LOAD( "01l_gs15.bin", 0x7c000, 0x8000, 0x58c970b5 ) /* Sprites planes 0-1 */
+
+	ROM_REGION(0x0800)	/* color PROMs */
+	ROM_LOAD( "03b_g-01.bin", 0x0000, 0x0100, 0xccbb0301 )	/* red component */
+	ROM_LOAD( "04b_g-02.bin", 0x0100, 0x0100, 0xae700500 )	/* green component */
+	ROM_LOAD( "05b_g-03.bin", 0x0200, 0x0100, 0x0cc6080e )	/* blue component */
+	ROM_LOAD( "09d_g-04.bin", 0x0300, 0x0100, 0x22060f0a )	/* char lookup table */
+	ROM_LOAD( "14a_g-06.bin", 0x0400, 0x0100, 0xdf8a0c08 )	/* tile lookup table */
+	ROM_LOAD( "15a_g-07.bin", 0x0500, 0x0100, 0x545d0001 )	/* tile palette bank */
+	ROM_LOAD( "09f_g-09.bin", 0x0600, 0x0100, 0xdef70507 )	/* sprite lookup table */
+	ROM_LOAD( "08f_g-08.bin", 0x0700, 0x0100, 0xe76b0207 )	/* sprite palette bank */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "14h_gs02.bin", 0x00000, 0x8000, 0xe9b79a81 )
@@ -489,43 +509,51 @@ ROM_END
 
 ROM_START( gunsmokj_rom )
 	ROM_REGION(0x20000)     /* 2*64k for code */
-	ROM_LOAD(  "gs03_9n.rom", 0x00000, 0x8000, 0x10c537c5 ) /* Code 0000-7fff */
-	ROM_LOAD( "gs04_10n.rom", 0x10000, 0x8000, 0x36fec338 ) /* Paged code */
-	ROM_LOAD( "gs05_12n.rom", 0x18000, 0x8000, 0xfb8bcb4b ) /* Paged code */
+	ROM_LOAD( "gs03_9n.rom",  0x00000, 0x8000, 0x10c537c5 ) /* Code 0000-7fff */
+	ROM_LOAD( "10n_gs04.bin", 0x10000, 0x8000, 0x36fec338 ) /* Paged code */
+	ROM_LOAD( "12n_gs05.bin", 0x18000, 0x8000, 0xfb8bcb4b ) /* Paged code */
 
 	ROM_REGION(0x84000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gs01_11e.rom", 0x00000, 0x4000, 0xf5980000 ) /* Characters */
-	ROM_LOAD( "gs13_6c.rom",  0x04000, 0x8000, 0xb9a10141 ) /* 32x32 tiles planes 2-3 */
-	ROM_LOAD( "gs12_5c.rom",  0x0c000, 0x8000, 0x6ba1f1cf )
-	ROM_LOAD( "gs11_4c.rom",  0x14000, 0x8000, 0x3083c58f )
-	ROM_LOAD( "gs10_2c.rom",  0x1c000, 0x8000, 0x65aa0244 )
-	ROM_LOAD( "gs09_6a.rom",  0x24000, 0x8000, 0xdf196979 ) /* 32x32 tiles planes 0-1 */
-	ROM_LOAD( "gs08_5a.rom",  0x2c000, 0x8000, 0x6a5f513f )
-	ROM_LOAD( "gs07_4a.rom",  0x34000, 0x8000, 0x80eb6933 )
-	ROM_LOAD( "gs06_2a.rom",  0x3c000, 0x8000, 0x6c8ef650 )
-	ROM_LOAD( "gs22_6n.rom",  0x44000, 0x8000, 0x6df46970 ) /* Sprites planes 2-3 */
-	ROM_LOAD( "gs21_4n.rom",  0x4c000, 0x8000, 0x237981a3 ) /* Sprites planes 2-3 */
-	ROM_LOAD( "gs20_3n.rom",  0x54000, 0x8000, 0x3d2be527 ) /* Sprites planes 2-3 */
-	ROM_LOAD( "gs19_1n.rom",  0x5c000, 0x8000, 0x4b78e0a2 ) /* Sprites planes 2-3 */
-	ROM_LOAD( "gs18_6l.rom",  0x64000, 0x8000, 0x9009aa59 ) /* Sprites planes 0-1 */
-	ROM_LOAD( "gs17_4l.rom",  0x6c000, 0x8000, 0x8d5bb65f ) /* Sprites planes 0-1 */
-	ROM_LOAD( "gs16_3l.rom",  0x74000, 0x8000, 0xbb944980 ) /* Sprites planes 0-1 */
-	ROM_LOAD( "gs15_1l.rom",  0x7c000, 0x8000, 0x58c970b5 ) /* Sprites planes 0-1 */
+	ROM_LOAD( "11f_gs01.bin", 0x00000, 0x4000, 0xf5980000 ) /* Characters */
+	ROM_LOAD( "06c_gs13.bin", 0x04000, 0x8000, 0xb9a10141 ) /* 32x32 tiles planes 2-3 */
+	ROM_LOAD( "05c_gs12.bin", 0x0c000, 0x8000, 0x6ba1f1cf )
+	ROM_LOAD( "04c_gs11.bin", 0x14000, 0x8000, 0x3083c58f )
+	ROM_LOAD( "02c_gs10.bin", 0x1c000, 0x8000, 0x65aa0244 )
+	ROM_LOAD( "06a_gs09.bin", 0x24000, 0x8000, 0xdf196979 ) /* 32x32 tiles planes 0-1 */
+	ROM_LOAD( "05a_gs08.bin", 0x2c000, 0x8000, 0x6a5f513f )
+	ROM_LOAD( "04a_gs07.bin", 0x34000, 0x8000, 0x80eb6933 )
+	ROM_LOAD( "02a_gs06.bin", 0x3c000, 0x8000, 0x6c8ef650 )
+	ROM_LOAD( "06n_gs22.bin", 0x44000, 0x8000, 0x6df46970 ) /* Sprites planes 2-3 */
+	ROM_LOAD( "04n_gs21.bin", 0x4c000, 0x8000, 0x237981a3 ) /* Sprites planes 2-3 */
+	ROM_LOAD( "03n_gs20.bin", 0x54000, 0x8000, 0x3d2be527 ) /* Sprites planes 2-3 */
+	ROM_LOAD( "01n_gs19.bin", 0x5c000, 0x8000, 0x4b78e0a2 ) /* Sprites planes 2-3 */
+	ROM_LOAD( "06l_gs18.bin", 0x64000, 0x8000, 0x9009aa59 ) /* Sprites planes 0-1 */
+	ROM_LOAD( "04l_gs17.bin", 0x6c000, 0x8000, 0x8d5bb65f ) /* Sprites planes 0-1 */
+	ROM_LOAD( "03l_gs16.bin", 0x74000, 0x8000, 0xbb944980 ) /* Sprites planes 0-1 */
+	ROM_LOAD( "01l_gs15.bin", 0x7c000, 0x8000, 0x58c970b5 ) /* Sprites planes 0-1 */
+
+	ROM_REGION(0x0800)	/* color PROMs */
+	ROM_LOAD( "03b_g-01.bin", 0x0000, 0x0100, 0xccbb0301 )	/* red component */
+	ROM_LOAD( "04b_g-02.bin", 0x0100, 0x0100, 0xae700500 )	/* green component */
+	ROM_LOAD( "05b_g-03.bin", 0x0200, 0x0100, 0x0cc6080e )	/* blue component */
+	ROM_LOAD( "09d_g-04.bin", 0x0300, 0x0100, 0x22060f0a )	/* char lookup table */
+	ROM_LOAD( "14a_g-06.bin", 0x0400, 0x0100, 0xdf8a0c08 )	/* tile lookup table */
+	ROM_LOAD( "15a_g-07.bin", 0x0500, 0x0100, 0x545d0001 )	/* tile palette bank */
+	ROM_LOAD( "09f_g-09.bin", 0x0600, 0x0100, 0xdef70507 )	/* sprite lookup table */
+	ROM_LOAD( "08f_g-08.bin", 0x0700, 0x0100, 0xe76b0207 )	/* sprite palette bank */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "gs02_14h.rom", 0x00000, 0x8000, 0xe9b79a81 )
+	ROM_LOAD( "14h_gs02.bin", 0x00000, 0x8000, 0xe9b79a81 )
 
 	ROM_REGION(0x8000)
-	ROM_LOAD( "gs14_11c.rom", 0x00000, 0x8000, 0xda12ae90 ) /* Background tile map */
+	ROM_LOAD( "11c_gs14.bin", 0x00000, 0x8000, 0xda12ae90 ) /* Background tile map */
 ROM_END
 
 
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -553,9 +581,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -568,9 +594,14 @@ static void hisave(void)
 
 struct GameDriver gunsmoke_driver =
 {
-	"Gunsmoke (Capcom)",
+	__FILE__,
+	0,
 	"gunsmoke",
+	"Gunsmoke (World)",
+	"1985",
+	"Capcom",
 	"Paul Leaman (MAME driver)\nRichard Davies\nAnders Nilsson\nMirko Buffoni\nNicola Salmoria\nPaul Swan (color info)\nJuan Carlos Lorente (high score save)",
+	0,
 	&machine_driver,
 
 	gunsmoke_rom,
@@ -580,7 +611,7 @@ struct GameDriver gunsmoke_driver =
 
 	input_ports,
 
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
@@ -588,9 +619,14 @@ struct GameDriver gunsmoke_driver =
 
 struct GameDriver gunsmrom_driver =
 {
-	"Gunsmoke (Romstar)",
+	__FILE__,
+	&gunsmoke_driver,
 	"gunsmrom",
+	"Gunsmoke (US)",
+	"1985",
+	"Capcom (Romstar license)",
 	"Paul Leaman (MAME driver)\nRichard Davies\nAnders Nilsson\nMirko Buffoni\nNicola Salmoria\nPaul Swan (color info)\nJuan Carlos Lorente (high score save)",
+	0,
 	&machine_driver,
 
 	gunsmrom_rom,
@@ -600,7 +636,7 @@ struct GameDriver gunsmrom_driver =
 
 	input_ports,
 
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
@@ -608,9 +644,14 @@ struct GameDriver gunsmrom_driver =
 
 struct GameDriver gunsmokj_driver =
 {
-	"Gunsmoke (Japanese)",
+	__FILE__,
+	&gunsmoke_driver,
 	"gunsmokj",
+	"Gunsmoke (Japan)",
+	"1985",
+	"Capcom",
 	"Paul Leaman (MAME driver)\nRichard Davies\nAnders Nilsson\nMirko Buffoni\nNicola Salmoria\nPaul Swan (color info)\nJuan Carlos Lorente (high score save)",
+	0,
 	&machine_driver,
 
 	gunsmokj_rom,
@@ -620,7 +661,7 @@ struct GameDriver gunsmokj_driver =
 
 	input_ports,
 
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave

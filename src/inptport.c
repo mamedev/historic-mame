@@ -4,7 +4,10 @@
 
   Input ports handling
 
-TODO: remove the 1 analog device per port limitation
+TODO:	remove the 1 analog device per port limitation
+		support more than 1 "real" analog device
+		support for inputports producing interrupts
+		support for extra "real" hardware (PC throttle's, spinners etc)
 
 ***************************************************************************/
 
@@ -33,6 +36,8 @@ static char input_analog_init[MAX_INPUT_PORTS];
 static int mouse_last_x,mouse_last_y;
 static int mouse_current_x,mouse_current_y;
 static int mouse_previous_x,mouse_previous_y;
+static int analog_current_x, analog_current_y;
+static int analog_previous_x, analog_previous_y;
 
 #ifdef MAME_DEBUG
 int debug_key_pressed;	/* JB 980505 */
@@ -414,7 +419,7 @@ void update_analog_port(int port)
 {
 	struct InputPort *in;
 	int current, delta, type, sensitivity, clip, min, max, default_value;
-	int axis, is_stick, check_bounds, anajoy;
+	int axis, is_stick, check_bounds;
 	int inckey, deckey, keydelta, incjoy, decjoy, joydelta;
 	int key,joy;
 
@@ -465,9 +470,10 @@ void update_analog_port(int port)
 	/* extremes can be either signed or unsigned */
 	if (min > max) min = min - 256;
 
-	/* if IPF_CENTER go back to the default position, but without throwing away */
-	/* sub-precision movements which might have been done. */
-	if (((in->type & IPF_CENTER) && (!is_stick)))
+	/* if IPF_CENTER go back to the default position, but without */
+	/* throwing away sub-precision movements which might have been done. */
+	/* sticks are handled later... */
+	if ((in->type & IPF_CENTER) && (!is_stick))
 		input_analog_value[port] -=
 				(input_analog_value[port] * sensitivity / 100 - in->default_value) * 100 / sensitivity;
 
@@ -507,6 +513,9 @@ void update_analog_port(int port)
 
 	if (is_stick)
 	{
+		int new, prev;
+
+		/* center stick */
 		if ((delta == 0) && (in->type & IPF_CENTER))
 		{
 			if (current > default_value)
@@ -515,29 +524,48 @@ void update_analog_port(int port)
 				delta =  100 / sensitivity;
 		}
 
-		/* perhaps there's a real analog joystick present? */
-		/* osd_analog_joyread() returns values from -128 to 128 (yes, 128, not 127) */
-		anajoy=osd_analogjoy_read(axis);
+		/* An analog joystick which is not at zero position (or has just */
+		/* moved there) takes precedence over all other computations */
+		/* analog_x/y holds values from -128 to 128 (yes, 128, not 127) */
 
-		if (anajoy != NO_ANALOGJOY)
+		if (axis == X_AXIS)
 		{
-			if (in->type & IPF_REVERSE) anajoy=-anajoy;
+			new  = analog_current_x;
+			prev = analog_previous_x;
+		}
+		else
+		{
+			new  = analog_current_y;
+			prev = analog_previous_y;
+		}
+
+		if ((new != 0) || (new-prev != 0))
+		{
 			delta=0;
 
-#if 1 /* why use logarithmic scaling? BW */
-			if (anajoy > 0)
+			if (in->type & IPF_REVERSE)
 			{
-				current = (pow(anajoy / 128.0, 100.0 / sensitivity) * (max-in->default_value)
+				new  = -new;
+				prev = -prev;
+			}
+
+			/* scale by time */
+
+			new = cpu_scalebyfcount(new - prev) + prev;
+
+#if 1 /* logarithmic scale */
+			if (new > 0)
+			{
+				current = (pow(new / 128.0, 100.0 / sensitivity) * (max-in->default_value)
 						+ in->default_value) * 100 / sensitivity;
 			}
 			else
 			{
-				current = (pow(-anajoy / 128.0, 100.0 / sensitivity) * (min-in->default_value)
+				current = (pow(-new / 128.0, 100.0 / sensitivity) * (min-in->default_value)
 						+ in->default_value) * 100 / sensitivity;
 			}
-#else /* use linear scaling BW */
-
-			current = default_value + (anajoy * (max-min) * 100) / (256 * sensitivity);
+#else
+			current = default_value + (new * (max-min) * 100) / (256 * sensitivity);
 #endif
 
 		}
@@ -774,6 +802,12 @@ void inputport_vblank_end(void)
 			input_vblank[port] = 0;
 		}
 	}
+
+	/* update joysticks */
+	analog_previous_x = analog_current_x;
+	analog_previous_y = analog_current_y;
+	osd_poll_joystick();
+	osd_analogjoy_read(&analog_current_x, &analog_current_y);
 
 	/* update mouse position */
 	mouse_previous_x = mouse_current_x;

@@ -143,7 +143,7 @@ extern MHELE *cur_mrhard;
 extern MHELE *cur_mwhard;
 extern MHELE curhw;
 
-extern unsigned char *RAM;	/* pointer to the memory region of the active CPU */
+//extern unsigned char *RAM;	/* pointer to the memory region of the active CPU */
 extern unsigned char *ROM;
 extern unsigned char *OP_RAM;	/* op_code used */
 extern unsigned char *OP_ROM;	/* op_code used */

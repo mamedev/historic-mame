@@ -113,6 +113,9 @@ static void ccastles_led_w(int offset,int data)
 
 static void ccastles_bankswitch_w(int offset, int data)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	if (data) { cpu_setbank(1,&RAM[0x10000]); }
 	else { cpu_setbank(1,&RAM[0xa000]); }
 }
@@ -311,6 +314,7 @@ static int hiload(void)
 	/* Read the NVRAM contents from disk */
 	/* No check necessary */
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
@@ -326,6 +330,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -339,13 +344,14 @@ static void hisave(void)
 
 struct GameDriver ccastles_driver =
 {
-	"Crystal Castles",
+	__FILE__,
+	0,
 	"ccastles",
-	"Pat Lawrence\n"
-	"Chris Hardy\n"
-	"Steve Clynes\n"
-	"Nicola Salmoria\n"
-	"Brad Oliver",
+	"Crystal Castles",
+	"????",
+	"?????",
+	"Pat Lawrence\nChris Hardy\nSteve Clynes\nNicola Salmoria\nBrad Oliver",
+	0,
 	&ccastles_machine,
 
 	ccastles_rom,

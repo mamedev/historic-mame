@@ -447,9 +447,7 @@ ROM_END
 
 static int hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -486,9 +484,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -504,9 +500,14 @@ static void hisave(void)
 
 struct GameDriver pooyan_driver =
 {
-	"Pooyan",
+	__FILE__,
+	0,
 	"pooyan",
+	"Pooyan",
+	"????",
+	"?????",
 	"Mike Cuddy (hardware info)\nAllard Van Der Bas (Pooyan emulator)\nNicola Salmoria (MAME driver)\nMartin Binder (color info)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	pooyan_rom,
@@ -524,9 +525,14 @@ struct GameDriver pooyan_driver =
 
 struct GameDriver pootan_driver =
 {
-	"Pootan",
+	__FILE__,
+	0,
 	"pootan",
+	"Pootan",
+	"????",
+	"?????",
 	"Mike Cuddy (hardware info)\nAllard Van Der Bas (Pooyan emulator)\nNicola Salmoria (MAME driver)\nMartin Binder (color info)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	pootan_rom,

@@ -620,7 +620,11 @@ void irobot_statwr_w(int offset, int data) {
 
 }
 
-void irobot_out0_w(int offset, int data) {
+void irobot_out0_w(int offset, int data)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
     irobot_out0 = data;
     switch (data & 0x60) {
         case 0:
@@ -638,7 +642,9 @@ void irobot_out0_w(int offset, int data) {
     irobot_alphamap = (data & 0x80);
 }
 
-void irobot_rom_banksel( int offset, int data) {
+void irobot_rom_banksel( int offset, int data)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
     switch ((data & 0x0E) >> 1) {
         case 0:

@@ -500,6 +500,9 @@ static unsigned char redbaron_color_prom[] = { VEC_PAL_MONO_AQUA };
 
 static int bzone_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x0300],"\x05\x00\x00",3) == 0 &&
 			memcmp(&RAM[0x0339],"\x22\x28\x38",3) == 0)
@@ -523,6 +526,7 @@ static int bzone_hiload(void)
 static void bzone_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -654,12 +658,14 @@ ROM_END
 
 struct GameDriver bzone_driver =
 {
-	"Battle Zone",
+	__FILE__,
+	0,
 	"bzone",
-	"Brad Oliver (Mame driver)\n"
-	VECTOR_TEAM
-	"Mauro Minenna (one-stick mode)",
-
+	"Battle Zone",
+	"????",
+	"?????",
+	"Brad Oliver (MAME driver)\n"VECTOR_TEAM"Mauro Minenna (one-stick mode)",
+	0,
 	&bzone_machine_driver,
 
 	bzone_rom,
@@ -677,14 +683,16 @@ struct GameDriver bzone_driver =
 
 struct GameDriver bzone2_driver =
 {
-	"Battle Zone (alternate version)",
+	__FILE__,
+	0,
 	"bzone2",
-
-	"Brad Oliver (Mame driver)\n"
-	VECTOR_TEAM
-	"Mauro Minenna (one-stick mode)",
-
+	"Battle Zone (alternate version)",
+	"????",
+	"?????",
+	"Brad Oliver (MAME driver)\n"VECTOR_TEAM"Mauro Minenna (one-stick mode)",
+	0,
 	&bzone_machine_driver,
+
 	bzone2_rom,
 	0, 0,
 	bzone_sample_names,
@@ -800,12 +808,14 @@ ROM_END
 
 struct GameDriver redbaron_driver =
 {
-	"Red Baron",
+	__FILE__,
+	0,
 	"redbaron",
-	"Brad Oliver (Mame driver)\n"
-	VECTOR_TEAM
-	"Baloo (stick support)",
-
+	"Red Baron",
+	"????",
+	"?????",
+	"Brad Oliver (MAME driver)\n"VECTOR_TEAM"Baloo (stick support)",
+	0,
 	&redbaron_machine_driver,
 
 	redbaron_rom,

@@ -1,6 +1,6 @@
 /******************************************************************************
 
-  palette.h
+  palette.c
 
   Palette handling functions.
 
@@ -75,17 +75,21 @@
      The difference with case 2) above is that the driver must do some
      additional work to allow for palette reduction without loss of quality.
      The function palette_recalc() must be called every frame before doing any
-     rendering. The argument to the function is an array telling which of the
-     game colors are used, and how. This way the core can pick only the needed
-     colors, and make the palette fit into 256 colors. The return code of
-     palette_recalc() tells the driver whether the lookup table has changed,
-	 and therefore whether a screen refresh is needed.
+     rendering. The palette_used_colors array can be changed to precisely
+     indicate to the function which of the game colors are used, so it can pick
+     only the needed colors, and make the palette fit into 256 colors. Colors
+     can also be marked as "transparent".
+     The return code of palette_recalc() tells the driver whether the lookup
+     table has changed, and therefore whether a screen refresh is needed. Note
+     that his only applies to colors which were used in the previous frame:
+     that's why palette_recalc() must be called before ANY rendering takes
+     place.
   4) 16-bit color. This should only be used for games which use more than 256
      colors at a time. It is slower and more awkward to use than the other
      modes, so it should be avoided whenever possible.
-	 When this mode is used, the driver must manually modify the lookup table
-	 to match changes in the palette. But video can be downgraded to 8-bit, but
-	 with a noticeable decrease in quality.
+     When this mode is used, the driver must manually modify the lookup table
+     to match changes in the palette. But video can be downgraded to 8-bit, but
+     with a noticeable decrease in quality.
      MachineDriver->video_attributes must contain the flag
      VIDEO_SUPPPORTS_16BIT.
 
@@ -107,8 +111,12 @@
 #ifndef PALETTE_H
 #define PALETTE_H
 
+#ifndef macintosh
 #define MAX_PENS 256	/* unless 16-bit mode is used, can't handle more */
 						/* than 256 colors on screen */
+#else
+#define MAX_PENS 254
+#endif
 
 int palette_start(void);
 void palette_stop(void);
@@ -121,7 +129,7 @@ void palette_change_color(int color,unsigned char red,unsigned char green,unsign
 /* PALETTE_COLOR_USED for all colors; this is enough in some cases. */
 extern unsigned char *palette_used_colors;
 
-int palette_recalc(void);
+const unsigned char *palette_recalc(void);
 
 #define PALETTE_COLOR_UNUSED 0		/* This color is not needed for this frame */
 #define PALETTE_COLOR_USED 1		/* This color is currenly used, either in the */
@@ -140,13 +148,15 @@ extern unsigned short palette_transparent_pen;
 
 /* The transparent color can also be used as a background color, to avoid doing */
 /* a fillbitmap() + copybitmap() when there is nothing between the background and */
-/* the transparent layer. Use this function to set the background color. */
+/* the transparent layer. By default, the background color is black; use this */
+/* function to change it. */
 void palette_change_transparent_color(unsigned char red,unsigned char green,unsigned char blue);
 
 
 /* helper macros for 16-bit support: */
+extern unsigned short *shrinked_pens;
 #define rgbpenindex(r,g,b) ((Machine->scrbitmap->depth==16) ? ((((r)>>3)<<10)+(((g)>>3)<<5)+((b)>>3)) : ((((r)>>5)<<5)+(((g)>>5)<<2)+((b)>>6)))
-#define rgbpen(r,g,b) (Machine->pens[rgbpenindex(r,g,b)])
-#define setgfxcolorentry(gfx,i,r,g,b) ((gfx)->colortable[i] = rgbpen (r,g,b))
+#define rgbpen(r,g,b) (shrinked_pens[rgbpenindex(r,g,b)])
+#define setgfxcolorentry(gfx,i,r,g,b) ((gfx)->colortable[i] = rgbpen(r,g,b))
 
 #endif

@@ -342,9 +342,14 @@ ROM_END
 
 struct GameDriver ckongs_driver =
 {
-	"Crazy Kong (Scramble Hardware)",
+	__FILE__,
+	0,
 	"ckongs",
+	"Crazy Kong (Scramble Hardware)",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)",
+	0,
 	&machine_driver,
 
 	ckongs_rom,

@@ -19,7 +19,6 @@
 
 struct blstroid_mo_data
 {
-	int *sprite_map;
 	int *redraw_list, *redraw;
 };
 
@@ -59,9 +58,9 @@ void blstroid_vh_stop (void);
 void blstroid_sound_reset (void);
 void blstroid_update_display_list (int scanline);
 
-#if 0
+//#if 0
 static int blstroid_debug (void);
-#endif
+//#endif
 
 
 /*************************************
@@ -103,9 +102,6 @@ int blstroid_vh_start(void)
 
 	/* reset the timers */
 	memset (int1_timer, 0, sizeof (int1_timer));
-
-	/* initialize the palette remapping */
-	atarigen_init_remap (COLOR_PALETTE_555, 0);
 
 	/* initialize the displaylist system */
 	return atarigen_init_display_list (&blstroid_modesc);
@@ -201,6 +197,39 @@ void blstroid_playfieldram_w (int offset, int data)
 
 /*************************************
  *
+ *		Palette RAM read/write handlers
+ *
+ *************************************/
+
+int blstroid_paletteram_r (int offset)
+{
+	return READ_WORD (&atarigen_paletteram[offset]);
+}
+
+
+void blstroid_paletteram_w (int offset, int data)
+{
+	int oldword = READ_WORD (&atarigen_paletteram[offset]);
+	int newword = COMBINE_WORD (oldword, data);
+	WRITE_WORD (&atarigen_paletteram[offset], newword);
+
+	{
+		int red =   (((newword >> 10) & 31) * 224) >> 5;
+		int green = (((newword >>  5) & 31) * 224) >> 5;
+		int blue =  (((newword      ) & 31) * 224) >> 5;
+
+		if (red) red += 38;
+		if (green) green += 38;
+		if (blue) blue += 38;
+
+		palette_change_color ((offset / 2) & 0x1ff, red, green, blue);
+	}
+}
+
+
+
+/*************************************
+ *
  *		Priority RAM write handler
  *
  *************************************/
@@ -263,6 +292,13 @@ void blstroid_update_display_list (int scanline)
  *---------------------------------------------------------------------------------
  */
 
+void blstroid_calc_mo_colors (struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
+{
+	unsigned char *colors = param;
+	int color = data[3] & 15;
+	colors[color] = 1;
+}
+
 void blstroid_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
 {
 	struct blstroid_mo_data *modata = param;
@@ -318,14 +354,6 @@ void blstroid_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, unsi
 		else if (sy > clip->max_y)
 			break;
 
-		/* if this sprite's color has not been used yet this frame, grab it */
-		/* note that by doing it here, we don't map sprites that aren't visible */
-		if (!modata->sprite_map[color])
-		{
-			atarigen_alloc_dynamic_colors (0x000 + 16 * color + 1, 15);
-			modata->sprite_map[color] = 1;
-		}
-
 		/* draw the sprite */
 		drawgfx (bitmap, Machine->gfx[1], pict, color, hflip, vflip,
 					xpos, sy, clip, TRANSPARENCY_PEN, 0);
@@ -344,18 +372,51 @@ void blstroid_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, unsi
 
 void blstroid_vh_screenrefresh (struct osd_bitmap *bitmap)
 {
+	unsigned char mo_map[16], pf_map[16];
 	struct blstroid_mo_data modata;
-	int sprite_map[16], pf_map[16];
 	int redraw_list[1024], *r;
 	int x, y, offs, i;
 
 
-/*	int hidebank = blstroid_debug ();*/
+	int hidebank = blstroid_debug ();
 
 
 	/* reset color tracking */
+	memset (mo_map, 0, sizeof (mo_map));
+	memset (pf_map, 0, sizeof (pf_map));
+	memset (palette_used_colors, PALETTE_COLOR_UNUSED, Machine->drv->total_colors * sizeof(unsigned char));
+
+	/* update color usage for the playfield */
+	for (y = 0; y < YCHARS; y++)
+	{
+		offs = y * 64;
+
+		for (x = 0; x < XCHARS; x++, offs++)
+		{
+			int data = READ_WORD (&atarigen_playfieldram[offs * 2]);
+			int color = data >> 13;
+			pf_map[color] = 1;
+		}
+	}
+
+	/* update color usage for the mo's */
+	atarigen_render_display_list (bitmap, blstroid_calc_mo_colors, mo_map);
+
+	/* rebuild the palette */
 	for (i = 0; i < 16; i++)
-		sprite_map[i] = pf_map[i] = 0;
+	{
+		if (pf_map[i])
+			memset (&palette_used_colors[256 + i * 16], PALETTE_COLOR_USED, 16);
+		if (mo_map[i])
+		{
+			palette_used_colors[0 + i * 16] = PALETTE_COLOR_TRANSPARENT;
+			memset (&palette_used_colors[0 + i * 16 + 1], PALETTE_COLOR_USED, 15);
+		}
+	}
+
+	/* remap if necessary */
+	if (palette_recalc ())
+		memset (playfielddirty, 1, atarigen_playfieldram_size / 2);
 
 
 	/*
@@ -379,15 +440,12 @@ void blstroid_vh_screenrefresh (struct osd_bitmap *bitmap)
 		/* loop over the visible X portion */
 		for (x = 0; x < XCHARS; x++, offs++)
 		{
-			int data = READ_WORD (&atarigen_playfieldram[offs * 2]);
-			int color = data >> 13;
-
-			/* update color statistics */
-			pf_map[color] = 1;
-
 			/* rerender if dirty */
 			if (playfielddirty[offs])
 			{
+				int data = READ_WORD (&atarigen_playfieldram[offs * 2]);
+				int color = data >> 13;
+
 				drawgfx (playfieldbitmap, Machine->gfx[0], data & 0x1fff, color, 0, 0,
 						8 * x, 8 * y, 0, TRANSPARENCY_NONE, 0);
 				playfielddirty[offs] = 0;
@@ -395,14 +453,10 @@ void blstroid_vh_screenrefresh (struct osd_bitmap *bitmap)
 		}
 	}
 
-	/* allocate playfield colors */
-	atarigen_alloc_fixed_colors (pf_map, 0x100, 16, 16);
-
 	/* copy the playfield to the destination */
 	copybitmap (bitmap, playfieldbitmap, 0, 0, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
 
 	/* prepare the motion object data structure */
-	modata.sprite_map = sprite_map;
 	modata.redraw_list = modata.redraw = redraw_list;
 
 	/* render the motion objects */
@@ -416,7 +470,7 @@ void blstroid_vh_screenrefresh (struct osd_bitmap *bitmap)
 		int ypos = (val >> 14) & 0x1ff;
 		int h = val & 15;
 		struct rectangle clip;
-		int y, sx;
+		int sx;
 
 		/* wrap */
 		if (xpos > XDIM) xpos -= 0x200;
@@ -442,7 +496,7 @@ void blstroid_vh_screenrefresh (struct osd_bitmap *bitmap)
 			/* loop over the rows */
 			for (y = ypos + h; y >= ypos; y--)
 			{
-				int sy, offs, data, color;
+				int sy, data, color;
 
 				/* compute the scroll-adjusted y position */
 				sy = (y * 8) & 0x1ff;
@@ -460,9 +514,6 @@ void blstroid_vh_screenrefresh (struct osd_bitmap *bitmap)
 			}
 		}
 	}
-
-	/* update the active colors */
-	atarigen_update_colors (-1);
 }
 
 
@@ -473,7 +524,7 @@ void blstroid_vh_screenrefresh (struct osd_bitmap *bitmap)
  *
  *************************************/
 
-#if 0
+//#if 0
 static int blstroid_debug (void)
 {
 	static unsigned long oldpri[8];
@@ -558,4 +609,4 @@ static int blstroid_debug (void)
 
 	return hidebank;
 }
-#endif
+//#endif

@@ -20,8 +20,6 @@
 struct atarisys1_mo_data
 {
 	int pcolor;
-	int transmap;
-	int *sprite_map;
 	int *redraw_list, *redraw;
 };
 
@@ -78,8 +76,6 @@ unsigned char *atarisys1_prioritycolor;
  *
  *************************************/
 
-static unsigned char *colordirty;
-
 static unsigned int *scrolllist;
 static int scrolllist_end;
 
@@ -88,7 +84,7 @@ static int *pflookup, *molookup;
 static int *pfmapped;
 static int pfbank;
 
-static int sprite_map_shift, pf_map_shift;
+static int mo_map_shift, pf_map_shift;
 
 static struct osd_bitmap *playfieldbitmap;
 static struct osd_bitmap *tempbitmap;
@@ -98,6 +94,8 @@ static void *int3off_timer;
 static int int3_state;
 
 static int xscroll, yscroll;
+
+static unsigned short *roadblst_pen_usage;
 
 
 
@@ -140,15 +138,13 @@ int atarisys1_vh_start(void)
 	/* allocate dirty buffers */
 	if (!pfmapped)
 		pfmapped = calloc (atarigen_playfieldram_size / 2 * sizeof (int) +
-		                   YDIM * sizeof (int) +
-		                   atarigen_paletteram_size / 2, 1);
+		                   YDIM * sizeof (int), 1);
 	if (!pfmapped)
 	{
 		atarisys1_vh_stop ();
 		return 1;
 	}
 	scrolllist = (unsigned int *)(pfmapped + atarigen_playfieldram_size / 2);
-	colordirty = (unsigned char *)(scrolllist + YDIM);
 
 	/* allocate bitmaps */
 	if (!playfieldbitmap)
@@ -177,9 +173,6 @@ int atarisys1_vh_start(void)
 	/* initialize the pre-mapped playfield */
 	for (i = atarigen_playfieldram_size / 2; i >= 0; i--)
 		pfmapped[i] = pflookup[0] | LDIRTYFLAG;
-
-	/* initialize the palette remapping */
-	atarigen_init_remap (COLOR_PALETTE_4444, 0);
 
 	/* initialize the displaylist system */
 	return atarigen_init_display_list (&atarisys1_modesc);
@@ -241,7 +234,7 @@ int marble_vh_start(void)
 
 	pflookup = marble_pflookup;
 	molookup = marble_molookup;
-	sprite_map_shift = 1;
+	mo_map_shift = 1;
 	pf_map_shift = 1;
 	return atarisys1_vh_start ();
 }
@@ -291,7 +284,7 @@ int peterpak_vh_start(void)
 
 	pflookup = peterpak_pflookup;
 	molookup = peterpak_molookup;
-	sprite_map_shift = 0;
+	mo_map_shift = 0;
 	pf_map_shift = 0;
 	return atarisys1_vh_start ();
 }
@@ -351,7 +344,7 @@ int indytemp_vh_start(void)
 
 	pflookup = indytemp_pflookup;
 	molookup = indytemp_molookup;
-	sprite_map_shift = 0;
+	mo_map_shift = 0;
 	pf_map_shift = 0;
 	return atarisys1_vh_start ();
 }
@@ -423,7 +416,7 @@ int roadrunn_vh_start(void)
 
 	pflookup = roadrunn_pflookup;
 	molookup = roadrunn_molookup;
-	sprite_map_shift = 0;
+	mo_map_shift = 0;
 	pf_map_shift = 0;
 	return atarisys1_vh_start ();
 }
@@ -485,8 +478,37 @@ int roadblst_vh_start(void)
 	#undef SEVEN
 	#undef SEVEN6
 
+	/* allocate our own pen usage table for the 6-bit background tiles */
+	{
+		struct GfxElement *gfx;
+		unsigned short *entry;
+		unsigned char *dp;
+		int x, y, i;
+
+		gfx = Machine->gfx[1];
+		roadblst_pen_usage = malloc (gfx->total_elements * 4 * sizeof (short));
+		if (!roadblst_pen_usage)
+			return 1;
+		memset (roadblst_pen_usage, 0, gfx->total_elements * 4 * sizeof (short));
+
+		for (i = 0, entry = roadblst_pen_usage; i < gfx->total_elements; i++, entry += 4)
+		{
+			for (y = 0; y < gfx->height; y++)
+			{
+				dp = gfx->gfxdata->line[i * gfx->height + y];
+				for (x = 0; x < gfx->width; x++)
+				{
+					int color = dp[x];
+					entry[(color >> 4) & 3] |= 1 << (color & 15);
+				}
+			}
+		}
+	}
+
 	pflookup = roadblst_pflookup;
 	molookup = roadblst_molookup;
+	pf_map_shift = 0;
+	mo_map_shift = 0;
 	return atarisys1_vh_start ();
 }
 
@@ -513,6 +535,11 @@ void atarisys1_vh_stop (void)
 		free (pfmapped);
 	pfmapped = 0;
 	scrolllist = 0;
+
+	/* free the RoadBlasters pen usage */
+	if (roadblst_pen_usage)
+		free (roadblst_pen_usage);
+	roadblst_pen_usage = 0;
 }
 
 
@@ -707,11 +734,17 @@ void atarisys1_paletteram_w (int offset, int data)
 {
 	int oldword = READ_WORD (&atarigen_paletteram[offset]);
 	int newword = COMBINE_WORD (oldword, data);
+	WRITE_WORD (&atarigen_paletteram[offset], newword);
 
-	if (oldword != newword)
 	{
-		WRITE_WORD (&atarigen_paletteram[offset], newword);
-		colordirty[offset / 2] = 1;
+		static const int ztable[16] =
+			{ 0x0, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x10, 0x11 };
+		int inten = ztable[(newword >> 12) & 15];
+		int red =   ((newword >> 8) & 15) * inten;
+		int green = ((newword >> 4) & 15) * inten;
+		int blue =  ((newword     ) & 15) * inten;
+
+		palette_change_color ((offset / 2) & 0x3ff, red, green, blue);
 	}
 }
 
@@ -853,6 +886,14 @@ void atarisys1_update_display_list (int scanline)
  *---------------------------------------------------------------------------------
  */
 
+void atarisys1_calc_mo_colors (struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
+{
+	unsigned char *colors = param;
+	int lookup = molookup[data[1] >> 8];
+	int color = LCOLOR (lookup);
+	colors[color] = 1;
+}
+
 void atarisys1_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
 {
 	struct atarisys1_mo_data *modata = param;
@@ -916,14 +957,6 @@ void atarisys1_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, uns
 			else if (sy > clip->max_y)
 				break;
 
-			/* if this sprite's color has not been used yet this frame, grab it */
-			/* note that by doing it here, we don't map sprites that aren't visible */
-			if (modata->sprite_map && !modata->sprite_map[color])
-			{
-				atarigen_alloc_dynamic_colors (0x100 + (16 >> sprite_map_shift) * color + 1, (16 >> sprite_map_shift) - 1);
-				modata->sprite_map[color] = 1;
-			}
-
 			/* draw the sprite */
 			drawgfx (bitmap, Machine->gfx[bank],
 					LPICT (lookup) | (pict & 0xff), color,
@@ -941,13 +974,6 @@ void atarisys1_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, uns
 	{
 		struct rectangle tclip;
 
-		/* remap the translucent colors */
-		if (!modata->transmap)
-		{
-			atarigen_alloc_dynamic_colors (0x300, 0x10 >> sprite_map_shift);
-			modata->transmap = 1;
-		}
-
 		/* loop over the height */
 		for (y = 0, sy = ypos; y < vsize; y++, sy += 8, pict++)
 		{
@@ -959,12 +985,12 @@ void atarisys1_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, uns
 
 			/* draw the sprite in bright pink on the real bitmap */
 			drawgfx (bitmap, Machine->gfx[bank],
-					LPICT (lookup) | (pict & 0xff), 0x30 << sprite_map_shift,
+					LPICT (lookup) | (pict & 0xff), 0x30 << mo_map_shift,
 					hflip, 0, xpos, sy, clip, TRANSPARENCY_PEN, 0);
 
 			/* also draw the sprite normally on the temp bitmap */
 			drawgfx (tempbitmap, Machine->gfx[bank],
-					LPICT (lookup) | (pict & 0xff), 0x20 << sprite_map_shift,
+					LPICT (lookup) | (pict & 0xff), 0x20 << mo_map_shift,
 					hflip, 0, xpos, sy, clip, TRANSPARENCY_NONE, 0);
 		}
 
@@ -978,7 +1004,7 @@ void atarisys1_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, uns
 		tclip.max_y = ypos + vsize * 8 - 1;
 		if (tclip.min_y < clip->min_y) tclip.min_y = clip->min_y;
 		if (tclip.max_y > clip->max_y) tclip.max_y = clip->max_y;
-		copybitmap (bitmap, tempbitmap, 0, 0, 0, 0, &tclip, TRANSPARENCY_THROUGH, Machine->pens[atarigen_special_color]);
+		copybitmap (bitmap, tempbitmap, 0, 0, 0, 0, &tclip, TRANSPARENCY_THROUGH, palette_transparent_pen);
 	}
 }
 
@@ -1060,13 +1086,70 @@ static void redraw_playfield_chunk (struct osd_bitmap *bitmap, int xpos, int ypo
 
 void atarisys1_vh_screenrefresh (struct osd_bitmap *bitmap)
 {
-	int sprite_map[32], alpha_map[32], playfield_count[32];
+	unsigned char mo_map[32], al_map[8], pf_map[32];
 	int x, y, sx, sy, xoffs, yoffs, offs, i, *r;
 	struct atarisys1_mo_data modata;
 	int redraw_list[1024];
 
 
 /*	int hidebank = atarisys1_debug ();*/
+
+
+	/* reset color tracking */
+	memset (mo_map, 0, sizeof (mo_map));
+	memset (pf_map, 0, sizeof (pf_map));
+	memset (al_map, 0, sizeof (al_map));
+	memset (palette_used_colors, PALETTE_COLOR_UNUSED, Machine->drv->total_colors * sizeof(unsigned char));
+
+	/* assign our special pen here */
+	memset (&palette_used_colors[1024], PALETTE_COLOR_TRANSPARENT, 16);
+
+	/* update color usage for the playfield */
+	for (offs = 0; offs < 64*64; offs++)
+	{
+		int data = pfmapped[offs];
+		int color = LCOLOR (data);
+		pf_map[color] = 1;
+	}
+
+	/* update color usage for the mo's */
+	atarigen_render_display_list (bitmap, atarisys1_calc_mo_colors, mo_map);
+
+	/* update color usage for the alphanumerics */
+	for (sy = 0; sy < YCHARS; sy++)
+	{
+		for (sx = 0, offs = sy * 64; sx < XCHARS; sx++, offs++)
+		{
+			int data = READ_WORD (&atarigen_alpharam[offs * 2]);
+			int color = (data >> 10) & 7;
+			al_map[color] = 1;
+		}
+	}
+
+	/* rebuild the palette */
+	for (i = 0; i < 32; i++)
+	{
+		if (pf_map[i])
+			memset (&palette_used_colors[256 + i * (16 << pf_map_shift)], PALETTE_COLOR_USED, 16 << pf_map_shift);
+		if (mo_map[i])
+		{
+			palette_used_colors[256 + i * (16 >> mo_map_shift)] = PALETTE_COLOR_TRANSPARENT;
+			memset (&palette_used_colors[256 + i * (16 >> mo_map_shift) + 1], PALETTE_COLOR_USED, (16 >> mo_map_shift) - 1);
+		}
+	}
+	for (i = 0; i < 8; i++)
+		if (al_map[i])
+			memset (&palette_used_colors[0 + i * 4], PALETTE_COLOR_USED, 4);
+
+	/* always remap the transluscent colors */
+	memset (&palette_used_colors[768], PALETTE_COLOR_USED, 16 >> mo_map_shift);
+
+	if (palette_recalc ())
+	{
+		for (i = atarigen_playfieldram_size / 2 - 1; i >= 0; i--)
+			pfmapped[i] |= LDIRTYFLAG;
+	}
+
 
 
 	/* load the scroll values from the start of the previous frame */
@@ -1082,10 +1165,6 @@ void atarisys1_vh_screenrefresh (struct osd_bitmap *bitmap)
 	}
 	xscroll = -(xscroll & 0x1ff);
 	yscroll = -(yscroll & 0x1ff);
-
-	/* reset color tracking */
-	for (i = 0; i < 32; i++)
-		sprite_map[i] = alpha_map[i] = playfield_count[i] = 0;
 
 
 	/*
@@ -1123,9 +1202,6 @@ void atarisys1_vh_screenrefresh (struct osd_bitmap *bitmap)
 			offs = sy * 64 + sx;
 			data = pfmapped[offs];
 
-			/* update color statistics */
-			playfield_count[LCOLOR (data)] = 1;
-
 			/* rerender if dirty */
 			if (LDIRTY (data))
 			{
@@ -1138,20 +1214,11 @@ void atarisys1_vh_screenrefresh (struct osd_bitmap *bitmap)
 		}
 	}
 
-	/* allocate playfield colors */
-	atarigen_alloc_fixed_colors (playfield_count + (16 >> pf_map_shift), 0x200, 16 << pf_map_shift, 16 >> pf_map_shift);
-
 	/* copy the playfield to the destination */
 	copyscrollbitmap (bitmap, playfieldbitmap, 1, &xscroll, 1, &yscroll, &Machine->drv->visible_area,
 			TRANSPARENCY_NONE, 0);
 
-	/* make the last entry in the colortable all special color */
-	for (i = 0; i < 16; i++)
-		Machine->colortable[0x400 + i] = Machine->pens[atarigen_special_color];
-
 	/* prepare the motion object data structure */
-	modata.sprite_map = sprite_map;
-	modata.transmap = 0;
 	modata.pcolor = READ_WORD (&atarisys1_prioritycolor[0]) & 0xff;
 	modata.redraw_list = modata.redraw = redraw_list;
 
@@ -1195,14 +1262,6 @@ void atarisys1_vh_screenrefresh (struct osd_bitmap *bitmap)
 			{
 				int color = ((data >> 10) & 7);
 
-				/* if this character's color has not been used yet this frame, grab it */
-				/* note that by doing it here, we don't map characters that aren't visible */
-				if (!alpha_map[color])
-				{
-					atarigen_alloc_dynamic_colors (4 * color, 4);
-					alpha_map[color] = 1;
-				}
-
 				drawgfx (bitmap, Machine->gfx[0],
 						pict, color,
 						0, 0,
@@ -1212,9 +1271,6 @@ void atarisys1_vh_screenrefresh (struct osd_bitmap *bitmap)
 			}
 		}
 	}
-
-	/* final color update */
-	atarigen_update_colors (-1);
 }
 
 
@@ -1227,44 +1283,83 @@ void atarisys1_vh_screenrefresh (struct osd_bitmap *bitmap)
 
 void roadblst_vh_screenrefresh (struct osd_bitmap *bitmap)
 {
-	int y, sx, sy, offs, shift, lasty, *scroll;
+	unsigned char mo_map[32], al_map[8];
+	unsigned short pf_map[32];
+	int i, y, sx, sy, offs, shift, lasty, *scroll;
 	struct atarisys1_mo_data modata;
-	unsigned char smalldirty[32];
 
 
 /*	int hidebank = atarisys1_debug ();*/
 
 
-	/* loop over colors */
-	memset (smalldirty, 0, sizeof (smalldirty));
-	for (offs = atarigen_paletteram_size - 2; offs >= 0; offs -= 2)
+	/* reset color tracking */
+	memset (mo_map, 0, sizeof (mo_map));
+	memset (pf_map, 0, sizeof (pf_map));
+	memset (al_map, 0, sizeof (al_map));
+	memset (palette_used_colors, PALETTE_COLOR_UNUSED, Machine->drv->total_colors * sizeof(unsigned char));
+
+	/* assign our special pen here */
+	memset (&palette_used_colors[1024], PALETTE_COLOR_TRANSPARENT, 16);
+
+	/* update color usage for the playfield */
+	for (offs = 0; offs < 64*64; offs++)
 	{
-		/* update the colortable entry if it's dirty */
-		if (colordirty[offs / 2])
+		int data = pfmapped[offs];
+		int color = LCOLOR (data);
+		int bank = LBANK (data);
+		int pict = LPICT (data);
+		if (bank == 1)
 		{
-			static const int intensity_table[16] =
-				{ 0x00, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80, 0x90, 0xa0, 0xb0, 0xc0, 0xd0, 0xe0, 0xf0, 0x100, 0x110 };
+			pf_map[color * 4 + 0] |= roadblst_pen_usage[pict * 4 + 0];
+			pf_map[color * 4 + 1] |= roadblst_pen_usage[pict * 4 + 1];
+			pf_map[color * 4 + 2] |= roadblst_pen_usage[pict * 4 + 2];
+			pf_map[color * 4 + 3] |= roadblst_pen_usage[pict * 4 + 3];
+		}
+		else
+			pf_map[color] |= Machine->gfx[bank]->pen_usage[pict];
+	}
 
-			int palette = READ_WORD (&atarigen_paletteram[offs]);
-			int inten = intensity_table[(palette >> 12) & 15];
-			int red = (((palette >> 8) & 15) * inten) >> 4;
-			int green = (((palette >> 4) & 15) * inten) >> 4;
-			int blue = ((palette & 15) * inten) >> 4;
+	/* update color usage for the mo's */
+	atarigen_render_display_list (bitmap, atarisys1_calc_mo_colors, mo_map);
 
-			int index = offs / 2;
-			int penindex;
-
-			/* if the color is important, mark it dirty */
-			if (index >= 256 && index < 768)
-				smalldirty[(index - 256) >> 4] = 1;
-
-			/* compute the pen index */
-			penindex = rgbpenindex (red, green, blue);
-			Machine->colortable[index] = Machine->pens[penindex];
-
-			colordirty[offs / 2] = 0;
+	/* update color usage for the alphanumerics */
+	for (sy = 0; sy < YCHARS; sy++)
+	{
+		for (sx = 0, offs = sy * 64; sx < XCHARS; sx++, offs++)
+		{
+			int data = READ_WORD (&atarigen_alpharam[offs * 2]);
+			int color = (data >> 10) & 7;
+			al_map[color] = 1;
 		}
 	}
+
+	/* rebuild the palette */
+	for (i = 0; i < 32; i++)
+	{
+		if (pf_map[i])
+		{
+			int j;
+			for (j = 0; j < 16; j++)
+				if (pf_map[i] & (1 << j))
+					palette_used_colors[256 + i * 16 + j] = PALETTE_COLOR_USED;
+		}
+		if (mo_map[i])
+		{
+			palette_used_colors[256 + i * (16 >> mo_map_shift)] = PALETTE_COLOR_TRANSPARENT;
+			memset (&palette_used_colors[256 + i * 16 + 1], PALETTE_COLOR_USED, 15);
+		}
+	}
+	for (i = 0; i < 8; i++)
+		if (al_map[i])
+			memset (&palette_used_colors[0 + i * 4], PALETTE_COLOR_USED, 4);
+
+	if (palette_recalc ())
+	{
+		for (i = atarigen_playfieldram_size / 2 - 1; i >= 0; i--)
+			pfmapped[i] |= LDIRTYFLAG;
+	}
+
+
 
 
 	/*
@@ -1290,32 +1385,18 @@ void roadblst_vh_screenrefresh (struct osd_bitmap *bitmap)
 		for (sx = 0; sx < 64; sx++, offs++)
 		{
 			int data = pfmapped[offs];
-			int color = LCOLOR (data);
-			int gfxbank = LBANK (data);
 
 			/* things only get tricky if we're not already dirty */
-			if (!LDIRTY (data))
+			if (LDIRTY (data))
 			{
-				/* handle the non-6-bit graphics case */
-				if (gfxbank != 1)
-				{
-					if (!smalldirty[color])
-						continue;
-				}
+				int color = LCOLOR (data);
+				int gfxbank = LBANK (data);
 
-				/* handle the 6-bit graphics case */
-				else
-				{
-					int temp = color * 4;
-					if (!smalldirty[temp] && !smalldirty[temp+1] && !smalldirty[temp+2] && !smalldirty[temp+3])
-						continue;
-				}
+				/* draw this character */
+				drawgfx (playfieldbitmap, Machine->gfx[gfxbank], LPICT (data), color, LFLIP (data), 0,
+						8 * sx, 8 * sy, 0, TRANSPARENCY_NONE, 0);
+				pfmapped[offs] = data & ~LDIRTYFLAG;
 			}
-
-			/* draw this character */
-			drawgfx (playfieldbitmap, Machine->gfx[gfxbank], LPICT (data), color, LFLIP (data), 0,
-					8 * sx, 8 * sy, 0, TRANSPARENCY_NONE, 0);
-			pfmapped[offs] = data & ~LDIRTYFLAG;
 		}
 	}
 
@@ -1335,32 +1416,30 @@ void roadblst_vh_screenrefresh (struct osd_bitmap *bitmap)
 	/* loop over and copy the data row by row */
 	for (y = 0; y < YDIM; y++)
 	{
-		int xscroll = (*scroll >> 12) & 0x1ff;
-		int yscroll = *scroll++ & 0x1ff;
+		int scrollx = (*scroll >> 12) & 0x1ff;
+		int scrolly = *scroll++ & 0x1ff;
 		int dy;
 
 		/* when a write to the scroll register occurs, the counter is reset */
-		if (yscroll != lasty)
+		if (scrolly != lasty)
 		{
 			offs = y;
-			lasty = yscroll;
+			lasty = scrolly;
 		}
-		dy = (yscroll + y - offs) & 0x1ff;
+		dy = (scrolly + y - offs) & 0x1ff;
 
 		/* handle the wrap around case */
-		if (xscroll + XDIM > 0x200)
+		if (scrollx + XDIM > 0x200)
 		{
-			int chunk = 0x200 - xscroll;
-			memcpy (&bitmap->line[y][0], &playfieldbitmap->line[dy][xscroll << shift], chunk << shift);
+			int chunk = 0x200 - scrollx;
+			memcpy (&bitmap->line[y][0], &playfieldbitmap->line[dy][scrollx << shift], chunk << shift);
 			memcpy (&bitmap->line[y][chunk << shift], &playfieldbitmap->line[dy][0], (XDIM - chunk) << shift);
 		}
 		else
-			memcpy (&bitmap->line[y][0], &playfieldbitmap->line[dy][xscroll << shift], XDIM << shift);
+			memcpy (&bitmap->line[y][0], &playfieldbitmap->line[dy][scrollx << shift], XDIM << shift);
 	}
 
 	/* prepare the motion object data structure */
-	modata.sprite_map = 0;
-	modata.transmap = 1;
 	modata.pcolor = 0;
 	modata.redraw_list = modata.redraw = 0;
 

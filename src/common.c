@@ -108,7 +108,7 @@ void showdisclaimer(void)   /* MAURY_BEGIN: dichiarazione */
                          stored.
 
 ***************************************************************************/
-int readroms(const struct RomModule *rommodule,const char *basename)
+int readroms(void)
 {
 	int region;
 	const struct RomModule *romp;
@@ -116,7 +116,7 @@ int readroms(const struct RomModule *rommodule,const char *basename)
 
 
 	checksumwarning = 0;
-	romp = rommodule;
+	romp = Machine->gamedrv->rom;
 
 	for (region = 0;region < MAX_MEMORY_REGIONS;region++)
 		Machine->memory_region[region] = 0;
@@ -165,7 +165,14 @@ int readroms(const struct RomModule *rommodule,const char *basename)
 			}
 
 			name = romp->name;
-			if ((f = osd_fopen(basename,name,OSD_FILETYPE_ROM,0)) == 0)
+			f = osd_fopen(Machine->gamedrv->name,name,OSD_FILETYPE_ROM,0);
+			if (f == 0 && Machine->gamedrv->clone_of)
+			{
+				/* if the game is a clone, try loading the ROM from the main version */
+				f = osd_fopen(Machine->gamedrv->clone_of->name,name,OSD_FILETYPE_ROM,0);
+			}
+
+			if (f == 0)
 			{
 				#ifdef macintosh	/* JB 971005 */
 					printf ("Unable to open ROM %s\n", name);
@@ -329,7 +336,7 @@ printromlist:
 	printf("Press return to continue\n"); /* MAURY_END: dichiarazione */
 	getchar();
 
-	printromlist(rommodule,basename);
+	printromlist(Machine->gamedrv->rom,Machine->gamedrv->name);
 	#endif
 
 

@@ -421,6 +421,57 @@ INPUT_PORTS_START( eyes_input_ports )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( lizwiz_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BITX(0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(0x10, "Off" )
+	PORT_DIPSETTING(0x00, "On" )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+
+	PORT_START	/* DSW 1 */
+ 	PORT_DIPNAME( 0x03, 0x03, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	PORT_DIPNAME( 0x0c, 0x08, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x0c, "2" )
+	PORT_DIPSETTING(    0x08, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x30, 0x30, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x30, "75000" )
+	PORT_DIPSETTING(    0x20, "100000" )
+	PORT_DIPSETTING(    0x10, "125000" )
+	PORT_DIPSETTING(    0x00, "150000" )
+	PORT_DIPNAME( 0x40, 0x40, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Normal" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+
+	PORT_START	/* DSW 2 */
+ 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
+
 
 static struct GfxLayout spritelayout =
 {
@@ -709,6 +760,20 @@ ROM_START( eyes_rom )
 	ROM_LOAD( "E5", 0x1000, 0x1000, 0x73ec4d68 )
 ROM_END
 
+ROM_START( lizwiz_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "6e.cpu", 0x0000, 0x1000, 0x658b3c05 )
+	ROM_LOAD( "6f.cpu", 0x1000, 0x1000, 0xf912af24 )
+	ROM_LOAD( "6h.cpu", 0x2000, 0x1000, 0x4934df4c )
+	ROM_LOAD( "6j.cpu", 0x3000, 0x1000, 0xc357a8ed )
+	ROM_LOAD( "wiza",   0x8000, 0x1000, 0x9b295f93 )
+	ROM_LOAD( "wizb",   0x9000, 0x1000, 0x25d07606 )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5e.cpu", 0x0000, 0x1000, 0xa0d0ddaa )
+	ROM_LOAD( "5f.cpu", 0x1000, 0x1000, 0x61defb68 )
+ROM_END
+
 
 
 static void ponpoko_decode(void)
@@ -856,11 +921,29 @@ static unsigned char crush_color_prom[] =
 	0x00,0x0b,0x0c,0x0f,0x00,0x0b,0x07,0x09,0x00,0x02,0x0b,0x00,0x00,0x02,0x0b,0x07
 };
 
+static unsigned char lizwiz_color_prom[] =
+{
+	/* palette */
+	0x00,0x62,0x85,0x2F,0x07,0x1D,0x28,0x8C,0xC7,0x3F,0xF8,0xC9,0xAC,0x18,0x38,0xF6,
+	/* color lookup table */
+	0x00,0x00,0x00,0x00,0x00,0x01,0x0c,0x0f,0x00,0x05,0x03,0x09,0x00,0x07,0x02,0x08,
+	0x00,0x0d,0x06,0x0e,0x00,0x0b,0x01,0x0a,0x00,0x04,0x03,0x09,0x00,0x06,0x04,0x09,
+	0x00,0x0b,0x09,0x04,0x00,0x0a,0x04,0x09,0x00,0x0d,0x01,0x06,0x00,0x05,0x03,0x00,
+	0x00,0x05,0x01,0x02,0x00,0x05,0x07,0x02,0x00,0x05,0x03,0x0d,0x00,0x03,0x05,0x01,
+	0x00,0x05,0x07,0x01,0x00,0x00,0x04,0x09,0x00,0x05,0x04,0x09,0x01,0x05,0x04,0x09,
+	0x00,0x01,0x04,0x09,0x0d,0x0d,0x04,0x09,0x02,0x02,0x04,0x09,0x01,0x0a,0x04,0x09,
+	0x00,0x02,0x08,0x0f,0x00,0x0b,0x0a,0x0f,0x00,0x05,0x04,0x03,0x00,0x0a,0x0a,0x0a,
+	0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f
+};
+
+
 
 static void copytoscreen(int mem, int len, int screen, int direction)
 {
 	char buf[10];
 	int hi;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	hi =      (RAM[mem + direction*3] & 0x0f) +
 		      (RAM[mem + direction*3] >> 4)   * 10 +
@@ -890,6 +973,7 @@ static void copytoscreen(int mem, int len, int screen, int direction)
 static int pacman_hiload(void)
 {
 	static int resetcount;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* during a reset, leave time to the game to clear the screen */
@@ -924,6 +1008,7 @@ static int pacman_hiload(void)
 static void pacman_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -938,6 +1023,7 @@ static void pacman_hisave(void)
 static int crush_hiload(void)
 {
 	static int resetcount;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* during a reset, leave time to the game to clear the screen */
@@ -972,6 +1058,7 @@ static int crush_hiload(void)
 static void crush_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -985,6 +1072,9 @@ static void crush_hisave(void)
 
 static int eyes_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	if (memcmp(&RAM[0x4d30],"\x90\x52\x00",3) == 0)
 	{
 		void *f;
@@ -1009,6 +1099,8 @@ static int eyes_hiload(void)
 static void eyes_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -1020,6 +1112,9 @@ static void eyes_hisave(void)
 
 static int ponpoko_hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	if (memcmp(&RAM[0x406c],"\x0f\x0f\x0f\x0f\x0f\x00",6) == 0)
 	{
 		void *f;
@@ -1045,6 +1140,8 @@ static int ponpoko_hiload(void)
 static void ponpoko_hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -1058,9 +1155,14 @@ static void ponpoko_hisave(void)
 																		 \
 struct GameDriver NAME##_driver =										 \
 {																		 \
-	DESC,																 \
+	__FILE__,                                                            \
+	0,                                                                   \
 	#NAME,																 \
+	DESC,																 \
+	"????",                                                              \
+	"?????",                                                             \
 	CREDITS,															 \
+	0,                                                                   \
 	&machine_driver,													 \
 																		 \
 	NAME##_rom,															 \
@@ -1079,8 +1181,10 @@ struct GameDriver NAME##_driver =										 \
 
 #define mspacman_hiload      pacman_hiload
 #define pacplus_hiload       pacman_hiload
+#define lizwiz_hiload        pacman_hiload
 #define mspacman_hisave      pacman_hisave
 #define pacplus_hisave       pacman_hisave
+#define lizwiz_hisave        pacman_hisave
 
 #define pacplus_input_ports  pacman_input_ports
 
@@ -1118,3 +1222,4 @@ GAMEDRIVER(ponpoko,  ponpoko,  ORIENTATION_DEFAULT,   ponpoko_decode, "Ponpoko",
 
 GAMEDRIVER(eyes,     eyes,     ORIENTATION_ROTATE_90, eyes_decode, "Eyes", "Zsolt Vasvari\n"BASE_CREDITS)
 
+GAMEDRIVER(lizwiz,   lizwiz,   ORIENTATION_ROTATE_90, 0, "Lizard Wizard", BASE_CREDITS)

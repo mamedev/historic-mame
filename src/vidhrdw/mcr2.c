@@ -195,7 +195,7 @@ void journey_vh_screenrefresh(struct osd_bitmap *bitmap)
    /* Draw the sprites. */
    for (offs = 0;offs < spriteram_size;offs += 4)
    {
-      int code,color,flipx,flipy,sx,sy,flags;
+      int code,flipx,flipy,sx,sy,flags;
 
       if (spriteram[offs] == 0)
 			continue;

@@ -12,7 +12,7 @@
 ** 'rate' is sampling rate and 'bufsiz' is the size of the
 ** buffer that should be updated at each interval
 */
-int AYInit(int num, int clock, int rate, int bitsize, int bufsiz, void **buffer );
+int AYInit(int num, int clk, int rate, int bitsize, int bufsiz, void **buffer );
 
 /*
 ** shutdown the AY8910 emulators .. make sure that no sound system stuff
@@ -47,7 +47,7 @@ unsigned char AYReadReg(int n, int r);
 /*
 ** set clockrate for one
 */
-void AYSetClock(int n,int clock,int rate);
+void AYSetClock(int n,int clk,int rate);
 
 /*
 ** set output gain

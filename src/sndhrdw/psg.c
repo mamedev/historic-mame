@@ -79,7 +79,7 @@ static int sample_16bit;
 ** 'rate'     is sampling rate and 'bufsiz' is the size of the
 ** buffer that should be updated at each interval
 */
-int AYInit(int num, int clock, int rate, int bitsize, int bufsiz, void **buffer )
+int AYInit(int num, int clk, int rate, int bitsize, int bufsiz, void **buffer )
 {
 	int i;
 
@@ -95,7 +95,7 @@ int AYInit(int num, int clock, int rate, int bitsize, int bufsiz, void **buffer 
 	for ( i = 0 ; i < AYNumChips; i++ )
 	{
 		memset(&AYPSG[i],0,sizeof(struct AY8910));
-		AYSetClock(i,clock,rate);
+		AYSetClock(i,clk,rate);
 		AYPSG[i].Buf = buffer[i];
 		AYSetGain(i,0x00);
 		AYResetChip(i);
@@ -601,7 +601,7 @@ void AYUpdate(void)
 
 
 
-void AYSetClock(int n,int clock,int rate)
+void AYSetClock(int n,int clk,int rate)
 {
 	/* the step clock for the tone and noise generators is the chip clock */
 	/* divided by 8; for the envelope generator of the AY-3-8910, it is half */
@@ -611,7 +611,7 @@ void AYSetClock(int n,int clock,int rate)
 	/* at the given sample rate. No. of events = sample rate / (clock/8). */
 	/* STEP is a multiplier used to turn the fraction into a fixed point */
 	/* number. */
-	AYPSG[n].UpdateStep = ((double)STEP * rate * 8) / clock;
+	AYPSG[n].UpdateStep = ((double)STEP * rate * 8) / clk;
 }
 
 

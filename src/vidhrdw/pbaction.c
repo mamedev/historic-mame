@@ -177,6 +177,14 @@ void pbaction_vh_screenrefresh(struct osd_bitmap *bitmap)
 	int offs;
 
 
+	/* recalc the palette if necessary */
+	if (palette_recalc ())
+	{
+		memset (dirtybuffer,1,videoram_size);
+		memset (dirtybuffer2,1,videoram_size);
+	}
+
+
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
 	for (offs = videoram_size - 1;offs >= 0;offs--)

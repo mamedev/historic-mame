@@ -18,6 +18,7 @@ void taito_init_machine(void)
 {
 	int i,j;
 	int weight[8],totweight;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* set the default ROM bank (many games only have one bank and */
@@ -70,6 +71,9 @@ void taito_init_machine(void)
 
 void taito_bankswitch_w(int offset,int data)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	if (data & 0x80) { cpu_setbank(1,&RAM[0x10000]); }
 	else cpu_setbank(1,&RAM[0x6000]);
 }
@@ -96,6 +100,7 @@ int elevator_protection_r(int offset)
 	data = data - 0x3b;
 	/*********************************************************************/
 	if (errorlog) fprintf(errorlog,"Protection entry:%02x , return:%02x\n" , *elevator_protection , data );
+return 0;
 	return data;
 }
 

@@ -120,7 +120,7 @@ void atarisys2_32v_interrupt (int param)
 		cpu_cause_interrupt (0, 2);
 		irq_hold2 = 1;
 	}
-	
+
 	/* update the display list for the current scanline */
 	timer_set (cpu_getscanlineperiod (), param, atarisys2_update_display_list);
 
@@ -134,13 +134,13 @@ void atarisys2_32v_interrupt (int param)
 int atarisys2_interrupt (void)
 {
     int i;
-	
+
 	/* set the 32V timer */
 	timer_set (TIME_IN_USEC (Machine->drv->vblank_duration), 0, atarisys2_32v_interrupt);
-	
+
 	/* set a timer to reset the video parameters just before the end of VBLANK */
 	timer_set (TIME_IN_USEC (Machine->drv->vblank_duration - 10), 0, atarisys2_update_display_list);
-	
+
 	/* update the pedals once per frame */
     for (i = 0; i < pedal_count; i++)
 	{
@@ -155,7 +155,7 @@ int atarisys2_interrupt (void)
 			if (pedal_value[i] < 0) pedal_value[i] = 0;
 		}
 	}
-	
+
 	/* VBLANK is 3 */
 	if (!irq_hold3 && (READ_WORD (&atarisys2_interrupt_enable[0]) & 8))
 	{
@@ -172,7 +172,7 @@ void atarisys2_interrupt_ack_w (int offset, int data)
 	/* reset sound IRQ */
 	if (offset == 0x00)
 		irq_hold0 = 0;
-		
+
 	/* reset sound CPU */
 	else if (offset == 0x20)
 	{
@@ -180,7 +180,7 @@ void atarisys2_interrupt_ack_w (int offset, int data)
 			atarigen_sound_reset ();
 		last_sound_reset = data & 1;
 	}
-	
+
 	/* reset 32V IRQ */
 	else if (offset == 0x40)
 		irq_hold2 = 0;
@@ -231,12 +231,13 @@ void atarisys2_bankselect_w (int offset, int data)
 		0x8c000, 0x84000, 0x7c000, 0x74000,
 		0x8e000, 0x86000, 0x7e000, 0x76000
 	};
-	
+
 	int oldword = READ_WORD (&atarisys2_bankselect[offset]);
 	int newword = COMBINE_WORD (oldword, data);
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	unsigned char *base = &RAM[bankoffset[(newword >> 10) & 0x3f]];
 
-	WRITE_WORD (&atarisys2_bankselect[offset], newword);	
+	WRITE_WORD (&atarisys2_bankselect[offset], newword);
 	if (offset == 0)
 	{
 		cpu_setbank (1, base);

@@ -182,6 +182,8 @@ The list doesn't include variants of the same game.
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Atari Basketball     |  Yes   |  b/w   |Partial |   No   |   No   | bsktball |
 |----------------------|--------|--------|--------|--------|--------|----------|
+| Avalanche            |  Yes   |  b/w   |  Yes   |  Yes   |  n/a   | avalnche |
+|----------------------|--------|--------|--------|--------|--------|----------|
 | Bad Dudes            |  Yes   |  Yes   | Yes(3) |   No   |   No   | baddudes |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Bagman               |  Yes   |  Yes   | Music  |  Yes   |  Yes   | bagman   |
@@ -195,6 +197,8 @@ The list doesn't include variants of the same game.
 | Battle Zone          |  Yes   |Overlay | Yes(1) |  Yes   |   No   | bzone    |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Berzerk              |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | berzerk  |
+|----------------------|--------|--------|--------|--------|--------|----------|
+| Birdie King 2        |   No   |   No   |   No   |   No   |   No   | bking2   |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Black Tiger          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | blktiger |
 |----------------------|--------|--------|--------|--------|--------|----------|
@@ -294,6 +298,8 @@ The list doesn't include variants of the same game.
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Darwin 4078          |  Yes   |   No   |  Yes   |  Yes   |  Yes   | darwin   |
 |----------------------|--------|--------|--------|--------|--------|----------|
+| Dead Eye             |  Yes   |Overlay |  Yes   |   No   |  Yes   | deadeye  |
+|----------------------|--------|--------|--------|--------|--------|----------|
 | Defend the Terra Atta|  Yes   |  Yes?  |  Yes   |  Yes   |  Yes   | redufo   |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Defender             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | defender |
@@ -348,6 +354,8 @@ The list doesn't include variants of the same game.
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Fast Freddie         |  Yes   |   No   |  Yes   |  Yes   |  Yes   | fastfred |
 |----------------------|--------|--------|--------|--------|--------|----------|
+| Fax                  |  Yes   |  Yes   |   No   |   No   |   No   | fax      |
+|----------------------|--------|--------|--------|--------|--------|----------|
 | Final Fight          |  Yes   |  Yes   |  Yes   |   No   |   No   | ffight   |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Fire Trap            |  Yes   |  Yes   | Yes(3) |  Yes   |  Yes   | firetrap |
@@ -378,6 +386,8 @@ The list doesn't include variants of the same game.
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Ghouls'n Ghosts      |  Yes   |  Yes   |  Yes   |   No   |   No   | ghouls   |
 |----------------------|--------|--------|--------|--------|--------|----------|
+| Gladiator            |  Yes   |  Yes   |   No   |  Yes   |   No   | gladiatr |
+|----------------------|--------|--------|--------|--------|--------|----------|
 | Golden Axe           |  Yes   |  Yes   |   No   |   No   |   No   | goldnaxe |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Gorf                 |  Yes   |   No   | Yes(1) |  Yes   |  Yes   | gorf     |
@@ -391,6 +401,8 @@ The list doesn't include variants of the same game.
 | Gunsmoke             |  Yes   |  Yes   | Yes(2) |  Yes   |   No   | gunsmoke |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Guzzler              |  Yes   |  Yes   |  Yes   |   No   |  Yes   | guzzler  |
+|----------------------|--------|--------|--------|--------|--------|----------|
+| Gypsy Juggler        |   No   |Overlay |   No   |   No   |   No   | gypsyjug |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Gyruss               |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | gyruss   |
 |----------------------|--------|--------|--------|--------|--------|----------|
@@ -468,11 +480,15 @@ The list doesn't include variants of the same game.
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Last Duel            |Partial |  Yes   |  Yes   |   No   |   No   | lastduel |
 |----------------------|--------|--------|--------|--------|--------|----------|
+| Lazer Command        |  Yes   |Overlay |  Yes   |   No   |   No   | lazercom |
+|----------------------|--------|--------|--------|--------|--------|----------|
 | Legendary Wings      |  Yes   |  Yes   | Yes(2) |  Yes   |   No   | lwings   |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Leprechaun           |  Yes   |  Yes?? |  Yes   |  Yes   |  Yes   | leprechn |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Liberator            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | liberatr |
+|----------------------|--------|--------|--------|--------|--------|----------|
+| Lizard Wizard        |  Yes   |  Yes   |  Yes   |   No   |   No   | lizwiz   |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Lock'n'Chase         |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | lnc      |
 |----------------------|--------|--------|--------|--------|--------|----------|
@@ -556,13 +572,15 @@ The list doesn't include variants of the same game.
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Nemo                 |  Yes   |  Yes   |  Yes   |   No   |   No   | nemo     |
 |----------------------|--------|--------|--------|--------|--------|----------|
-| New Zealand Story    |Partial |   No   |  Yes   |   No   |   No   | tnzs     |
+| New Zealand Story    |  Yes   |  Yes   |  Yes   |  Yes   |   No   | tnzs     |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Nibbler              |  Yes   |  Yes   |Partial |  Yes   |  Yes   | nibbler  |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Night Driver         |  Yes   |  b/w   |   No   |   No   |   No   | nitedrvr |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Ninja Gai Den        |  Yes   |  Yes   |Partial |   No   |   No   | gaiden   |
+|----------------------|--------|--------|--------|--------|--------|----------|
+| Nova 2001            |  Yes   |  Yes?  |  Yes   |  Yes   |  Yes   | nova2001 |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Omega Race           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | omegrace |
 |----------------------|--------|--------|--------|--------|--------|----------|
@@ -756,6 +774,8 @@ The list doesn't include variants of the same game.
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Super Basketball     |  Yes   |  Yes   |No Speech   No   |   No   | sbasketb |
 |----------------------|--------|--------|--------|--------|--------|----------|
+| Super Bond           |  Yes   |   No   |  Yes   |   No   |  Yes   | superbon |
+|----------------------|--------|--------|--------|--------|--------|----------|
 | Super Breakout       |  Yes   |Overlay | Wrong  |  Yes   |  n/a   | sbrkout  |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Super Cobra          |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | scobra   |
@@ -909,6 +929,25 @@ Clones supported:
 Known issues:
 - Vs. mode runs only in cocktail mode (second player controls inverted).
   That's probably how the game is designed.
+
+
+
+1941 ("1941")
+=============
+Clones supported:
+  Japanese version ("1941j")
+
+
+
+1942 ("1942")
+=============
+Clones supported:
+  alternate version ("1942a")
+
+Known issues:
+- Sometimes "1942a" ends in an endless loop over the sea, and the end of level
+  boss doesn't appear. It hasn't been verified whether "1942" does the same;
+  that version might be a later release which fixes this bug.
 
 
 
@@ -1610,6 +1649,13 @@ Known issues:
 
 
 
+Ghouls'n Ghosts ("ghouls")
+==========================
+Clones supported:
+  Japanese version ("ghoulsj")
+
+
+
 Gorf ("gorf")
 =============
 Clones supported:
@@ -1669,6 +1715,9 @@ Known issues:
 
 Hippodrome ("hippodrm")
 =======================
+Clones supported:
+  Fighting Fantasy ("ffantasy")
+
 Known issues:
 - Sometimes the game crashes after you beat the first enemy.
 
@@ -1891,7 +1940,15 @@ Known issues:
 
 MACH 3 ("mach3")
 ================
-This is a laser disc game; it doesn't work.
+This is a laser disc game; since the disc contains data needed for gameplay,
+it is not playable.
+
+
+
+Magic Sword ("msword")
+======================
+Clones supported:
+  Japanese version ("mswordj")
 
 
 
@@ -1935,6 +1992,9 @@ F2      Test (keep it pressed)
 
 Clones supported:
   bootleg called Masao, which uses a Z80 instead of 8039 for sound ("masao")
+
+Known issues:
+- Masao locks up at level 16?
 
 
 
@@ -2109,6 +2169,13 @@ Nemeis ("nemesis")
 ==================
 Clones supported:
   UK version ("nemesuk")
+
+
+
+Nemo ("nemo")
+=============
+Clones supported:
+  Japanese version ("nemoj")
 
 
 
@@ -2776,6 +2843,15 @@ Clones supported:
 
 
 
+T.M.N.T. ("tmnt")
+=================
+Clones supported:
+  Japanese version ("tmntj")
+  2 Players USA version ("tmnt2p")
+  2 Players Japanese version ("tmnt2pj")
+
+
+
 Tempest ("tempest")
 ===================
 Mouse emulates spinner.
@@ -2878,7 +2954,7 @@ Tutankham ("tutankhm")
 Konami copyright.
 
 Clones supported:
-  Stern copyeight ("tutankst")
+  Stern copyright ("tutankst")
 
 
 
@@ -3194,18 +3270,23 @@ options:
               16 will increase quality with certain games, but decrease speed.
               This is a software setting, not hardware. The sound card will
               always be used in 16 bit mode, if possible.
--joy n/-nojoy (default: -nojoy) allow joystick input, n can be:
-              0 - normal 2 button joystick
-              1 - CH Flightstick Pro
-              2 - Stick/Pad with 4 buttons
-              3 - Stick/Pad with 6 buttons
-              4 - dual joysticks
-              5 - Wingman Extreme (or Wingman Warrior without spinner)
-              Press F7 to calibrate the joystick. Calibration data will be
-              saved in mame.cfg. If you're using different joytypes for
-              different games, you may need to recalibrate your joystick
-              every time. When calibrating two analog joysticks, move
-              both at the same time!
+-joy n/-nojoy (default: -nojoy) allows joystick input, n can be:
+              0 - no joystick
+              1 - normal 2 button joystick
+              2 - dual joysticks
+              3 - Stick/Pad with 4 buttons
+              4 - Stick/Pad with 6 buttons
+              5 - Stick/Pad with 8 buttons
+              6 - CH Flightstick Pro
+              7 - Wingman Extreme (or Wingman Warrior without spinner)
+              8 - Microsoft Sidewinder (up to 4)
+              9 - Gravis GamePad Pro
+
+              Press F7 to calibrate analog joysticks. Calibration data
+              will be saved in mame.cfg. If you're using different joytypes
+              for different games, you may need to recalibrate your joystick
+              every time.
+
 -fm/-nofm (default: -nofm) use the SoundBlaster OPL chip for music emulation
               in some games. This is faster, but emulation is less faithful.
 -log          create a log of illegal memory accesses in ERROR.LOG

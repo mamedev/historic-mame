@@ -682,7 +682,7 @@ static struct MachineDriver marble_machine_driver =
 	/* video hardware */
 	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
 	marble_gfxdecodeinfo,
-	256,1024+64,
+	1024+64,1024+64,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
@@ -732,7 +732,7 @@ static struct MachineDriver peterpak_machine_driver =
 	/* video hardware */
 	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
 	peterpak_gfxdecodeinfo,
-	256,1024+64,
+	1024+64,1024+64,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
@@ -782,7 +782,7 @@ static struct MachineDriver indytemp_machine_driver =
 	/* video hardware */
 	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
 	indytemp_gfxdecodeinfo,
-	256,1024+64,
+	1024+64,1024+64,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
@@ -836,7 +836,7 @@ static struct MachineDriver roadrunn_machine_driver =
 	/* video hardware */
 	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
 	roadrunn_gfxdecodeinfo,
-	256,1024+64,
+	1024+64,1024+64,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
@@ -890,10 +890,10 @@ static struct MachineDriver roadblst_machine_driver =
 	/* video hardware */
 	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
 	roadblst_gfxdecodeinfo,
-	256,1024+64,
+	1024+64,1024+64,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	roadblst_vh_start,
 	atarisys1_vh_stop,
@@ -1271,9 +1271,14 @@ ROM_END
 
 struct GameDriver marble_driver =
 {
-	"Marble Madness",
+	__FILE__,
+	0,
 	"marble",
+	"Marble Madness",
+	"????",
+	"?????",
 	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
+	0,
 	&marble_machine_driver,
 
 	marble_rom,
@@ -1292,9 +1297,14 @@ struct GameDriver marble_driver =
 
 struct GameDriver marble2_driver =
 {
-	"Marble Madness (version 2)",
+	__FILE__,
+	0,
 	"marble2",
+	"Marble Madness (version 2)",
+	"????",
+	"?????",
 	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
+	0,
 	&marble_machine_driver,
 
 	marble2_rom,
@@ -1313,9 +1323,14 @@ struct GameDriver marble2_driver =
 
 struct GameDriver marblea_driver =
 {
-	"Marble Madness (alternate version)",
+	__FILE__,
+	0,
 	"marblea",
+	"Marble Madness (alternate version)",
+	"????",
+	"?????",
 	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
+	0,
 	&marble_machine_driver,
 
 	marblea_rom,
@@ -1334,9 +1349,14 @@ struct GameDriver marblea_driver =
 
 struct GameDriver peterpak_driver =
 {
-	"Peter Pack-Rat",
+	__FILE__,
+	0,
 	"peterpak",
+	"Peter Pack-Rat",
+	"????",
+	"?????",
 	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
+	0,
 	&peterpak_machine_driver,
 
 	peterpak_rom,
@@ -1355,9 +1375,14 @@ struct GameDriver peterpak_driver =
 
 struct GameDriver indytemp_driver =
 {
-	"Indiana Jones and the Temple of Doom",
+	__FILE__,
+	0,
 	"indytemp",
+	"Indiana Jones and the Temple of Doom",
+	"????",
+	"?????",
 	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
+	0,
 	&indytemp_machine_driver,
 
 	indytemp_rom,
@@ -1376,9 +1401,14 @@ struct GameDriver indytemp_driver =
 
 struct GameDriver roadrunn_driver =
 {
-	"Road Runner",
+	__FILE__,
+	0,
 	"roadrunn",
+	"Road Runner",
+	"????",
+	"?????",
 	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
+	0,
 	&roadrunn_machine_driver,
 
 	roadrunn_rom,
@@ -1397,9 +1427,14 @@ struct GameDriver roadrunn_driver =
 
 struct GameDriver roadblst_driver =
 {
-	"Road Blasters",
+	__FILE__,
+	0,
 	"roadblst",
+	"Road Blasters",
+	"????",
+	"?????",
 	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
+	0,
 	&roadblst_machine_driver,
 
 	roadblst_rom,

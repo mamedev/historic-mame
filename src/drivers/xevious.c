@@ -987,9 +987,8 @@ static const char *xevious_sample_names[] =
 
 static int hiload(void) /* V.V */
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x8024],"\x00\x40\x00",3) == 0 &&
@@ -1014,10 +1013,9 @@ static int hiload(void) /* V.V */
 
 static void hisave(void) /* V.V */
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -1031,9 +1029,14 @@ static void hisave(void) /* V.V */
 
 struct GameDriver xevious_driver =
 {
-	"Xevious (Atari/Namco copyright)",
+	__FILE__,
+	0,
 	"xevious",
+	"Xevious (Atari/Namco copyright)",
+	"????",
+	"?????",
 	"Mirko Buffoni\nTatsuyuki Satoh\nNicola Salmoria\nValerio Verrando (high score save)",
+	0,
 	&machine_driver,
 
 	xevious_rom,
@@ -1051,9 +1054,14 @@ struct GameDriver xevious_driver =
 
 struct GameDriver xeviousn_driver =
 {
-	"Xevious (Namco copyright)",
+	__FILE__,
+	0,
 	"xeviousn",
+	"Xevious (Namco copyright)",
+	"????",
+	"?????",
 	"Mirko Buffoni\nTatsuyuki Satoh\nNicola Salmoria\nValerio Verrando (high score save)",
+	0,
 	&machine_driver,
 
 	xeviousn_rom,
@@ -1071,9 +1079,14 @@ struct GameDriver xeviousn_driver =
 
 struct GameDriver sxevious_driver =
 {
-	"Super Xevious",
+	__FILE__,
+	0,
 	"sxevious",
+	"Super Xevious",
+	"????",
+	"?????",
 	"Mirko Buffoni\nTatsuyuki Satoh\nNicola Salmoria\nValerio Verrando (high score save)",
+	0,
 	&machine_driver,
 
 	sxevious_rom,

@@ -34,6 +34,9 @@ void liberator_init_machine(void)
 /********************************************************************************************/
 void liberator_w(int address, int data)
 {
+	/* TODO: get rid of this */
+	extern unsigned char *RAM;
+
 	RAM[address] = data;
 
 	if( address == 0x0002 || (address == 0x0341) )
@@ -87,6 +90,9 @@ int liberator_r(int address)
 	}
 	else
 	{
+		/* TODO: get rid of this */
+		extern unsigned char *RAM;
+
 		return( RAM[address] );
 	}
 }
@@ -96,6 +102,9 @@ int liberator_port_r(int offset)
 {
 	int	res ;
 	int xdelta, ydelta;
+	/* TODO: get rid of this */
+	extern unsigned char *RAM;
+
 
 	if( offset == 0x00 )
 	{

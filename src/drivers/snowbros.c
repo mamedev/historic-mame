@@ -21,46 +21,13 @@ void snowbros_spriteram_w(int offset,int data);
 int  snowbros_spriteram_r(int offset);
 
 
-/* Interrupt System
- *
- * Each interrupt enables the next interrupt
- *
- * This way we can ensure that the interrupts never get out of sync
- * if we just generate them in order, the odd one can be overridden
- * by the next one with a higher priority, and the interrupt pattern
- * tends to end up as 4,3,4,2 instead of 4,3,2
- *
- */
-
-int NextInterrupt = MC68000_INT_NONE;
-
-void snowbros_interrupt_enable_w(int offset, int data)
-{
-    NextInterrupt = MC68000_IRQ_4;
-}
-
-void snowbros_interrupt_2_w(int offset, int data)
-{
-    NextInterrupt = MC68000_IRQ_4;
-}
-
-void snowbros_interrupt_3_w(int offset, int data)
-{
-    NextInterrupt = MC68000_IRQ_2;
-}
-
-void snowbros_interrupt_4_w(int offset, int data)
-{
-    NextInterrupt = MC68000_IRQ_3;
-}
 
 int snowbros_interrupt(void)
 {
-    return NextInterrupt;
+	return cpu_getiloops() + 2;	/* IRQs 4, 3, and 2 */
 }
 
 
-/* Map out keys to the correct inputs - note the pairings! */
 
 int snowbros_input_r (int offset)
 {
@@ -97,12 +64,14 @@ void snowbros_68000_sound_w(int offset, int data)
 	cpu_cause_interrupt(1,Z80_NMI_INT);
 }
 
+
+
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x100000, 0x103fff, MRA_BANK1, &ram },
-    { 0x300000, 0x300003, snowbros_68000_sound_r },
-    { 0x500000, 0x50000f, snowbros_input_r },
+	{ 0x300000, 0x300001, snowbros_68000_sound_r },
+	{ 0x500000, 0x500005, snowbros_input_r },
 	{ 0x600000, 0x6001ff, snowbros_paletteram_r, &snowbros_paletteram },
 	{ 0x700000, 0x701dff, snowbros_spriteram_r, &snowbros_spriteram, &videoram_size },
 	{ -1 }  /* end of table */
@@ -112,14 +81,14 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0x100000, 0x103fff, MWA_BANK1 },
-    { 0x200000, 0x200003, MWA_NOP },						/* Watchdog ? */
-    { 0x300000, 0x300003, snowbros_68000_sound_w },
-    { 0x400000, 0x400003, snowbros_interrupt_enable_w },
+	{ 0x200000, 0x200001, watchdog_reset_w },
+	{ 0x300000, 0x300001, snowbros_68000_sound_w },
+//	{ 0x400000, 0x400001, snowbros_interrupt_enable_w },
 	{ 0x600000, 0x6001ff, snowbros_paletteram_w },
 	{ 0x700000, 0x701dff, snowbros_spriteram_w },
-    { 0x800000, 0x800003, snowbros_interrupt_4_w },			/* Int 4 */
-    { 0x900000, 0x900003, snowbros_interrupt_3_w },			/* Int 3 */
-    { 0xA00000, 0xA00003, snowbros_interrupt_2_w },			/* Int 2 */
+	{ 0x800000, 0x800001, MWA_NOP },	/* IRQ 4 acknowledge? */
+	{ 0x900000, 0x900001, MWA_NOP },	/* IRQ 3 acknowledge? */
+	{ 0xA00000, 0xA00001, MWA_NOP },	/* IRQ 2 acknowledge? */
 	{ -1 }  /* end of table */
 };
 
@@ -153,6 +122,7 @@ static struct IOWritePort sound_writeport[] =
 };
 
 
+
 INPUT_PORTS_START( snowbros_input_ports )
 	PORT_START	/* 500001 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
@@ -163,6 +133,7 @@ INPUT_PORTS_START( snowbros_input_ports )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
     PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
     PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Must be low or game stops! */
+													/* probably VBlank */
 
 	PORT_START	/* 500003 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
@@ -181,9 +152,7 @@ INPUT_PORTS_START( snowbros_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
     PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BITX(0x40,  0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING( 0x40, "Off" )
-	PORT_DIPSETTING( 0x00, "On" )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 )
     PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
     PORT_START /* DSW 1 */
@@ -197,16 +166,16 @@ INPUT_PORTS_START( snowbros_input_ports )
 	PORT_DIPSETTING(    0x04, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x08, 0x08, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x08, "On" )
 	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x08, "On" )
 	PORT_DIPNAME( 0x30, 0x30, "Coin A", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x10, "2 Cn 1 Crd / 3 Cn 1 Crd" )
-	PORT_DIPSETTING(    0x30, "1 Coin 1 Credit" )
+	PORT_DIPSETTING(    0x30, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x00, "2 Cn 3 Crd / 4 Cn 1 Crd" )
 	PORT_DIPSETTING(    0x20, "1 Cn 2 Crd / 2 Cn 1 Crd" )
 	PORT_DIPNAME( 0xc0, 0xc0, "Coin B", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x40, "2 Cn 1 Crd / 1 Cn 4 Crd" )
-	PORT_DIPSETTING(    0xc0, "1 Coin 1 Credit" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x00, "2 Cn 3 Crd / 1 Cn 6 Crd" )
 	PORT_DIPSETTING(    0x80, "1 Cn 2 Crd / 1 Cn 3 Crd" )
 
@@ -230,40 +199,11 @@ INPUT_PORTS_START( snowbros_input_ports )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x80, 0x80, "Allow Continue", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "On" )
-	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x00, "No" )
+	PORT_DIPSETTING(    0x80, "Yes" )
 INPUT_PORTS_END
 
-static int hiload(void)
-{
-	void *f;
 
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&ram[0x208]) == 0x4f)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&ram[0x01C8],64);
-            osd_fread(f,&ram[0x14a2],80);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&ram[0x01C8],64);
-        osd_fwrite(f,&ram[0x14a2],80);
-		osd_fclose(f);
-	}
-}
 
 static struct GfxLayout tilelayout =
 {
@@ -289,12 +229,15 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
+
 static struct YM3812interface ym3812_interface =
 {
 	1,			/* 1 chip (no more supported) */
 	3000000,	/* 3 MHz ? (not supported) */
 	{ 255 }		/* (not supported) */
 };
+
+
 
 static struct MachineDriver machine_driver =
 {
@@ -366,11 +309,49 @@ ROM_END
 
 
 
+static int hiload(void)
+{
+	void *f;
+
+	/* check if the hi score table has already been initialized */
+
+    if (READ_WORD(&ram[0x208]) == 0x4f)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&ram[0x01C8],64);
+            osd_fread(f,&ram[0x14a2],80);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&ram[0x01C8],64);
+        osd_fwrite(f,&ram[0x14a2],80);
+		osd_fclose(f);
+	}
+}
+
+
+
 struct GameDriver snowbros_driver =
 {
-	"Snow Bros",
+	__FILE__,
+	0,
 	"snowbros",
+	"Snow Bros",
+	"1990",
+	"Toaplan (Romstar license)",
 	"Richard Bush (Raine & Info)\nMike Coates (MAME Driver)",
+	0,
 	&machine_driver,
 
 	snowbros_rom,

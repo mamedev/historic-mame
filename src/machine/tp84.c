@@ -51,6 +51,8 @@ int tp84_interrupt(void)
 */
 void tp84_catchloop_w(int offset,int data)
 {
+	extern unsigned char *RAM;
+
 	if( cpu_getpc()==0xe0f2 ) cpu_seticount (0);
 	RAM[0x4000] = data;
 }

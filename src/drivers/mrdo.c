@@ -52,6 +52,7 @@ void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap);
 int mrdo_SECRE_r(int offset)
 {
 	Z80_Regs regs;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	Z80_GetRegs(&regs);
@@ -322,23 +323,26 @@ ROM_END
 
 ROM_START( mrdu_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-        ROM_LOAD( "DU1.BIN",  0x0000, 0x2000, 0xb738fe88 )
-        ROM_LOAD( "DU2.BIN",  0x2000, 0x2000, 0xa21679bc )
-        ROM_LOAD( "DU3.BIN",  0x4000, 0x2000, 0xa36ea250 )
-        ROM_LOAD( "DU4.BIN",  0x6000, 0x2000, 0xdf60933e)
+	ROM_LOAD( "DU1.BIN",  0x0000, 0x2000, 0xb738fe88 )
+	ROM_LOAD( "DU2.BIN",  0x2000, 0x2000, 0xa21679bc )
+	ROM_LOAD( "DU3.BIN",  0x4000, 0x2000, 0xa36ea250 )
+	ROM_LOAD( "DU4.BIN",  0x6000, 0x2000, 0xdf60933e)
 
 	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
-        ROM_LOAD( "DU9.BIN",  0x0000, 0x1000, 0xe717f699 )
-        ROM_LOAD( "DU10.BIN", 0x1000, 0x1000, 0xd0b2db78 )
-        ROM_LOAD( "DU8.BIN",  0x2000, 0x1000, 0x005b757b )
-        ROM_LOAD( "DU7.BIN",  0x3000, 0x1000, 0x5d25fe31 )
-        ROM_LOAD( "DU5.BIN",  0x4000, 0x1000, 0x7f8e8642 )
-        ROM_LOAD( "DU6.BIN",  0x5000, 0x1000, 0xb456cce4 )
+	ROM_LOAD( "DU9.BIN",  0x0000, 0x1000, 0xe717f699 )
+	ROM_LOAD( "DU10.BIN", 0x1000, 0x1000, 0xd0b2db78 )
+	ROM_LOAD( "DU8.BIN",  0x2000, 0x1000, 0x005b757b )
+	ROM_LOAD( "DU7.BIN",  0x3000, 0x1000, 0x5d25fe31 )
+	ROM_LOAD( "DU5.BIN",  0x4000, 0x1000, 0x7f8e8642 )
+	ROM_LOAD( "DU6.BIN",  0x5000, 0x1000, 0xb456cce4 )
 ROM_END
 
 
 static int hiload(void)
 {
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0xe017],"\x01\x00\x00",3) == 0 &&
 			memcmp(&RAM[0xe071],"\x01\x00\x00",3) == 0)
@@ -360,6 +364,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -373,9 +378,14 @@ static void hisave(void)
 
 struct GameDriver mrdo_driver =
 {
-	"Mr. Do! (Universal)",
+	__FILE__,
+	0,
 	"mrdo",
+	"Mr. Do! (Universal)",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	mrdo_rom,
@@ -393,9 +403,14 @@ struct GameDriver mrdo_driver =
 
 struct GameDriver mrdot_driver =
 {
-	"Mr. Do! (Taito)",
+	__FILE__,
+	0,
 	"mrdot",
+	"Mr. Do! (Taito)",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	mrdot_rom,
@@ -413,9 +428,14 @@ struct GameDriver mrdot_driver =
 
 struct GameDriver mrlo_driver =
 {
-	"Mr. Lo!",
+	__FILE__,
+	0,
 	"mrlo",
+	"Mr. Lo!",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	mrlo_rom,
@@ -433,9 +453,14 @@ struct GameDriver mrlo_driver =
 
 struct GameDriver mrdu_driver =
 {
-	"Mr. Du!",
+	__FILE__,
+	0,
 	"mrdu",
+	"Mr. Du!",
+	"????",
+	"?????",
 	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili\nLee Taylor",
+	0,
 	&machine_driver,
 
 	mrdu_rom,

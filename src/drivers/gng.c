@@ -164,6 +164,7 @@ OUTPUT:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "M6809/M6809.h"
 
 
 
@@ -182,6 +183,27 @@ void gng_flipscreen_w(int offset,int data);
 int gng_vh_start(void);
 void gng_vh_stop(void);
 void gng_vh_screenrefresh(struct osd_bitmap *bitmap);
+
+
+
+void gng_bankswitch_w(int offset,int data)
+{
+/* ASG 091197 -- old code looked like this:
+	bankaddress = 0x10000 + data * 0x2000;*/
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	static int bank[] = { 0x10000, 0x12000, 0x14000, 0x16000, 0x04000, 0x18000 };
+	cpu_setbank (1, &RAM[bank[data]]);
+}
+
+
+
+void gng_init_machine(void)
+{
+	/* Set optimization flags for M6809 */
+	m6809_Flags = M6809_FAST_NONE;
+}
 
 
 
@@ -582,7 +604,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256, 256,
+	192, 192,
 	0,
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
@@ -641,19 +663,19 @@ ROM_START( gngcross_rom )
 	ROM_LOAD( "gg5.bin", 0x10000, 0x8000, 0xd39c9516 )	/* page 1, 2, 3 e 4 */
 
 	ROM_REGION(0x34000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gg1.bin",  0x00000, 0x4000, 0x0d95960b )	/* characters */
-	ROM_LOAD( "gg11.bin", 0x04000, 0x4000, 0x8425662b )	/* tiles 0-1 Plane 1*/
-	ROM_LOAD( "gg10.bin", 0x08000, 0x4000, 0x332b9d85 )	/* tiles 2-3 Plane 1*/
-	ROM_LOAD( "gg9.bin",  0x0c000, 0x4000, 0xf6433b0f )	/* tiles 0-1 Plane 2*/
-	ROM_LOAD( "gg8.bin",  0x10000, 0x4000, 0x24a66776 )	/* tiles 2-3 Plane 2*/
-	ROM_LOAD( "gg7.bin",  0x14000, 0x4000, 0x6e6e3ec0 )	/* tiles 0-1 Plane 3*/
-	ROM_LOAD( "gg6.bin",  0x18000, 0x4000, 0x248ddf8b )	/* tiles 2-3 Plane 3*/
-	ROM_LOAD( "gg17.bin", 0x1c000, 0x4000, 0xb59f663d )	/* sprites 0 Plane 1-2 */
-	ROM_LOAD( "gg16.bin", 0x20000, 0x4000, 0xc29702c5 )	/* sprites 1 Plane 1-2 */
-	ROM_LOAD( "gg15.bin", 0x24000, 0x4000, 0x0309f6a7 )	/* sprites 2 Plane 1-2 */
-	ROM_LOAD( "gg14.bin", 0x28000, 0x4000, 0xce3dc76f )	/* sprites 0 Plane 3-4 */
-	ROM_LOAD( "gg13.bin", 0x2c000, 0x4000, 0x3e603938 )	/* sprites 1 Plane 3-4 */
-	ROM_LOAD( "gg12.bin", 0x30000, 0x4000, 0x8ec77b4f )	/* sprites 2 Plane 3-4 */
+	ROM_LOAD( "gg1.bin",     0x00000, 0x4000, 0x0d95960b )	/* characters */
+	ROM_LOAD( "gg11.bin",    0x04000, 0x4000, 0x8425662b )	/* tiles 0-1 Plane 1*/
+	ROM_LOAD( "gg10.bin",    0x08000, 0x4000, 0x332b9d85 )	/* tiles 2-3 Plane 1*/
+	ROM_LOAD( "gg9.bin",     0x0c000, 0x4000, 0xf6433b0f )	/* tiles 0-1 Plane 2*/
+	ROM_LOAD( "gg8.bin",     0x10000, 0x4000, 0x24a66776 )	/* tiles 2-3 Plane 2*/
+	ROM_LOAD( "gg7.bin",     0x14000, 0x4000, 0x6e6e3ec0 )	/* tiles 0-1 Plane 3*/
+	ROM_LOAD( "gg6.bin",     0x18000, 0x4000, 0x248ddf8b )	/* tiles 2-3 Plane 3*/
+	ROM_LOAD( "cross17.bin", 0x1c000, 0x4000, 0xb59f663d )	/* sprites 0 Plane 1-2 */
+	ROM_LOAD( "gg16.bin",    0x20000, 0x4000, 0xc29702c5 )	/* sprites 1 Plane 1-2 */
+	ROM_LOAD( "gg15.bin",    0x24000, 0x4000, 0x0309f6a7 )	/* sprites 2 Plane 1-2 */
+	ROM_LOAD( "cross14.bin", 0x28000, 0x4000, 0xce3dc76f )	/* sprites 0 Plane 3-4 */
+	ROM_LOAD( "gg13.bin",    0x2c000, 0x4000, 0x3e603938 )	/* sprites 1 Plane 3-4 */
+	ROM_LOAD( "gg12.bin",    0x30000, 0x4000, 0x8ec77b4f )	/* sprites 2 Plane 3-4 */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "gg2.bin", 0x0000, 0x8000, 0x0b7edfd2 )   /* Audio CPU is a Z80 */
@@ -666,22 +688,22 @@ ROM_START( gngjap_rom )
 	ROM_LOAD( "12n.rom", 0x10000, 0x8000, 0x0d9a17cc )	/* page 1, 2, 3 e 4 */
 
 	ROM_REGION(0x34000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "11e.rom", 0x00000, 0x4000, 0xfc6a97b2 )	/* characters */
-	ROM_LOAD( "3e.rom",  0x04000, 0x4000, 0x8425662b )	/* tiles 0-1 Plane 1*/
-	ROM_LOAD( "1e.rom",  0x08000, 0x4000, 0x332b9d85 )	/* tiles 2-3 Plane 1*/
-	ROM_LOAD( "3c.rom",  0x0c000, 0x4000, 0xf6433b0f )	/* tiles 0-1 Plane 2*/
-	ROM_LOAD( "1c.rom",  0x10000, 0x4000, 0x24a66776 )	/* tiles 2-3 Plane 2*/
-	ROM_LOAD( "3b.rom",  0x14000, 0x4000, 0x6e6e3ec0 )	/* tiles 0-1 Plane 3*/
-	ROM_LOAD( "1b.rom",  0x18000, 0x4000, 0x248ddf8b )	/* tiles 2-3 Plane 3*/
-	ROM_LOAD( "4n.rom",  0x1c000, 0x4000, 0x1b48124e )	/* sprites 0 Plane 1-2 */
-	ROM_LOAD( "3n.rom",  0x20000, 0x4000, 0xc29702c5 )	/* sprites 1 Plane 1-2 */
-	ROM_LOAD( "1n.rom",  0x24000, 0x4000, 0x0309f6a7 )	/* sprites 2 Plane 1-2 */
-	ROM_LOAD( "4l.rom",  0x28000, 0x4000, 0x0553b263 )	/* sprites 0 Plane 3-4 */
-	ROM_LOAD( "3l.rom",  0x2c000, 0x4000, 0x3e603938 )	/* sprites 1 Plane 3-4 */
-	ROM_LOAD( "1l.rom",  0x30000, 0x4000, 0x8ec77b4f )	/* sprites 2 Plane 3-4 */
+	ROM_LOAD( "gg1.bin",  0x00000, 0x4000, 0x0d95960b )	/* characters */
+	ROM_LOAD( "gg11.bin", 0x04000, 0x4000, 0x8425662b )	/* tiles 0-1 Plane 1*/
+	ROM_LOAD( "gg10.bin", 0x08000, 0x4000, 0x332b9d85 )	/* tiles 2-3 Plane 1*/
+	ROM_LOAD( "gg9.bin",  0x0c000, 0x4000, 0xf6433b0f )	/* tiles 0-1 Plane 2*/
+	ROM_LOAD( "gg8.bin",  0x10000, 0x4000, 0x24a66776 )	/* tiles 2-3 Plane 2*/
+	ROM_LOAD( "gg7.bin",  0x14000, 0x4000, 0x6e6e3ec0 )	/* tiles 0-1 Plane 3*/
+	ROM_LOAD( "gg6.bin",  0x18000, 0x4000, 0x248ddf8b )	/* tiles 2-3 Plane 3*/
+	ROM_LOAD( "gg17.bin", 0x1c000, 0x4000, 0x1b48124e )	/* sprites 0 Plane 1-2 */
+	ROM_LOAD( "gg16.bin", 0x20000, 0x4000, 0xc29702c5 )	/* sprites 1 Plane 1-2 */
+	ROM_LOAD( "gg15.bin", 0x24000, 0x4000, 0x0309f6a7 )	/* sprites 2 Plane 1-2 */
+	ROM_LOAD( "gg14.bin", 0x28000, 0x4000, 0x0553b263 )	/* sprites 0 Plane 3-4 */
+	ROM_LOAD( "gg13.bin", 0x2c000, 0x4000, 0x3e603938 )	/* sprites 1 Plane 3-4 */
+	ROM_LOAD( "gg12.bin", 0x30000, 0x4000, 0x8ec77b4f )	/* sprites 2 Plane 3-4 */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "14h.rom", 0x0000, 0x8000, 0x0b7edfd2 )   /* Audio CPU is a Z80 */
+	ROM_LOAD( "gg2.bin", 0x0000, 0x8000, 0x0b7edfd2 )   /* Audio CPU is a Z80 */
 ROM_END
 
 ROM_START( diamond_rom )
@@ -715,9 +737,7 @@ ROM_END
 
 static int gng_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
@@ -750,10 +770,8 @@ static int gng_hiload(void)
 
 static void gng_hisave(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
 	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -767,9 +785,8 @@ static void gng_hisave(void)
 
 static int diamond_hiload(void)
 {
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 
 	/* We're just going to blast the hi score table into ROM and be done with it */
         if (memcmp(&RAM[0xC10E],"KLE",3) == 0)
@@ -793,10 +810,7 @@ static int diamond_hiload(void)
 static void diamond_hisave(void)
 {
 	void *f;
-
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -812,9 +826,14 @@ static void diamond_hisave(void)
 
 struct GameDriver gng_driver =
 {
-	"Ghosts'n Goblins",
+	__FILE__,
+	0,
 	"gng",
+	"Ghosts'n Goblins (US)",
+	"1985",
+	"Capcom",
 	"Roberto Ventura\nMirko Buffoni\nNicola Salmoria\nGabrio Secco\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	gng_rom,
@@ -832,9 +851,14 @@ struct GameDriver gng_driver =
 
 struct GameDriver gngcross_driver =
 {
-	"Ghosts'n Goblins (Cross)",
+	__FILE__,
+	&gng_driver,
 	"gngcross",
+	"Ghosts'n Goblins (Cross)",
+	"1985",
+	"Capcom",
 	"Roberto Ventura\nMirko Buffoni\nNicola Salmoria\nGabrio Secco\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	gngcross_rom,
@@ -852,9 +876,14 @@ struct GameDriver gngcross_driver =
 
 struct GameDriver gngjap_driver =
 {
-	"Ghosts'n Goblins (Japanese)",
+	__FILE__,
+	&gng_driver,
 	"gngjap",
+	"Ghosts'n Goblins (Japan)",
+	"1985",
+	"Capcom",
 	"Roberto Ventura\nMirko Buffoni\nNicola Salmoria\nGabrio Secco\nMarco Cassili",
+	0,
 	&machine_driver,
 
 	gngjap_rom,
@@ -872,9 +901,14 @@ struct GameDriver gngjap_driver =
 
 struct GameDriver diamond_driver =
 {
-	"Diamond Run",
+	__FILE__,
+	0,
 	"diamond",
+	"Diamond Run",
+	"1989",
+	"KH Video",
 	"Roberto Ventura\nMirko Buffoni\nNicola Salmoria\nMike Balfour",
+	0,
 	&machine_driver,
 
 	diamond_rom,
