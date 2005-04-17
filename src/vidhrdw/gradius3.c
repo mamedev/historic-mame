@@ -86,6 +86,8 @@ VIDEO_START( gradius3 )
 	if (K051960_vh_start(REGION_GFX2,REVERSE_PLANE_ORDER,gradius3_sprite_callback))
 		return 1;
 
+	K052109_set_layer_offsets(2, -2, 0);
+
 	/* re-decode the sprites because the ROMs are connected to the custom IC differently
 	   from how they are connected to the CPU. */
 	for (i = 0;i < TOTAL_SPRITES;i++)

@@ -123,12 +123,25 @@ static WRITE8_HANDLER(speedspn_banked_rom_change)
 	cpu_setbank(1,&rom[addr + 0x8000]);
 }
 
+static WRITE8_HANDLER(mstworld_banked_rom_change)
+{
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int addr = 0x10000 + ((data >> 2) & 0x1f) * 0x4000;
+
+	cpu_setbank(1,&rom[addr]);
+}
+
 /*** SOUND RELATED ***********************************************************/
 
 static WRITE8_HANDLER(speedspn_sound_w)
 {
 	soundlatch_w(1,data);
 	cpunum_set_input_line(1,0,HOLD_LINE);
+}
+
+static WRITE8_HANDLER( oki_banking_w )
+{
+	OKIM6295_set_bank_base(0, 0x40000 * (data & 3));
 }
 
 /*** MEMORY MAPS *************************************************************/
@@ -150,10 +163,10 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0x8000, 0x87ff) AM_WRITE(paletteram_xxxxRRRRGGGGBBBB_w) AM_BASE(&paletteram)	/* RAM COLOUR */
 	AM_RANGE(0x8800, 0x8fff) AM_WRITE(speedspn_attram_w) AM_BASE(&speedspn_attram)
-	AM_RANGE(0x9000, 0x9fff) AM_WRITE(speedspn_vidram_w)	/* RAM FIX / RAM OBJECTS (selected by bit 0 of port 17)*/
+	AM_RANGE(0x9000, 0x9fff) AM_WRITE(speedspn_vidram_w)	/* RAM FIX / RAM OBJECTS (selected by bit 0 of port 17) */
 	AM_RANGE(0xa000, 0xa7ff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0xa800, 0xafff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xb000, 0xbfff) AM_WRITE(MWA8_RAM)	/* RAM PROGRAM */
+	AM_RANGE(0xb000, 0xbfff) AM_WRITE(MWA8_RAM) /* RAM PROGRAM */
 	AM_RANGE(0xc000, 0xffff) AM_WRITE(MWA8_ROM)	/* banked ROM */
 ADDRESS_MAP_END
 
@@ -173,6 +186,21 @@ static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x16, 0x16) AM_READ(speedspn_irq_ack_r) // @@@ could be watchdog, value is discarded
 ADDRESS_MAP_END
 
+
+static ADDRESS_MAP_START( mstworld_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0xbfff) AM_ROMBANK(1)
+
+	AM_RANGE(0xc000, 0xc7ff) AM_RAM //AM_WRITE(paletteram_xxxxRRRRGGGGBBBB_w) AM_BASE(&paletteram)
+
+	AM_RANGE(0xf000, 0xffff) AM_RAM
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( mstworld_io_map, ADDRESS_SPACE_IO, 8 )
+ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
+	AM_RANGE(0x00, 0x00) AM_WRITE(mstworld_banked_rom_change) // ?
+ADDRESS_MAP_END
+
 /* sound cpu */
 
 static ADDRESS_MAP_START( readmem2, ADDRESS_SPACE_PROGRAM, 8 )
@@ -185,7 +213,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( writemem2, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x9000, 0x9000) AM_WRITE(MWA8_NOP) // ??
+	AM_RANGE(0x9000, 0x9000) AM_WRITE(oki_banking_w)
 	AM_RANGE(0x9800, 0x9800) AM_WRITE(OKIM6295_data_0_w)
 ADDRESS_MAP_END
 
@@ -321,7 +349,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static MACHINE_DRIVER_START( speedspn )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80,6000000)		 /* 6 MHz */
+	MDRV_CPU_ADD_TAG("main",Z80,6000000)		 /* 6 MHz */
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_IO_MAP(readport, writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_pulse,1)
@@ -334,7 +362,7 @@ static MACHINE_DRIVER_START( speedspn )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER )
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(64*8, 32*8)
 	MDRV_VISIBLE_AREA(8*8, 56*8-1, 1*8, 31*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
@@ -351,6 +379,27 @@ static MACHINE_DRIVER_START( speedspn )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
+VIDEO_START( mstworld )
+{
+	return 0;
+}
+
+VIDEO_UPDATE( mstworld )
+{
+	
+}
+static MACHINE_DRIVER_START( mstworld )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(speedspn)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(mstworld_map,0)
+	MDRV_CPU_IO_MAP(mstworld_io_map,0)
+
+	MDRV_VIDEO_START(mstworld)
+	MDRV_VIDEO_UPDATE(mstworld)
+MACHINE_DRIVER_END
+
 /*** ROM LOADING *************************************************************/
 
 ROM_START( speedspn )
@@ -362,8 +411,20 @@ ROM_START( speedspn )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* CPU2 code */
 	ROM_LOAD( "tch-ss2.u96", 0x00000, 0x10000, CRC(4611fd0c) SHA1(b49ad6a8be6ccfef0b2ed187fb3b008fb7eeb2b5) ) // FIRST AND SECOND HALF IDENTICAL
 
-	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_REGION( 0x080000, REGION_USER1, 0 )	/* Samples */
 	ROM_LOAD( "tch-ss3.u95", 0x00000, 0x080000, CRC(1c9deb5e) SHA1(89f01a8e8bdb0eee47e9195b312d2e65d41d3548) )
+
+	/* $00000-$20000 stays the same in all sound banks, */
+	/* the second half of the bank is what gets switched */
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_COPY( REGION_USER1, 0x000000, 0x000000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x000000, 0x020000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x000000, 0x040000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x020000, 0x060000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x000000, 0x080000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x040000, 0x0a0000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x000000, 0x0c0000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x060000, 0x0e0000, 0x020000)
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )	/* GFX */
 	ROM_LOAD( "tch-ss4.u70", 0x00000, 0x020000, CRC(41517859) SHA1(3c5102e41c5a70e02ed88ea43ca63edf13f4c1b9) )
@@ -381,13 +442,25 @@ ROM_START( mstworld )
 	ROM_REGION( 0x090000, REGION_CPU1, 0 )	/* CPU1 code */
 	/* mostly banked */
 	ROM_LOAD( "mw-1.rom", 0x00000, 0x008000, CRC(c4e51fb4) SHA1(60ad4ff2cec3a4d13b4aa0319dfcdab941404b1a) ) /* fixed code */
-	ROM_CONTINUE(            0x10000, 0x078000 ) /* banked data */
+	ROM_CONTINUE(         0x10000, 0x078000 ) /* banked data */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* CPU2 code */
 	ROM_LOAD( "mw-2.rom", 0x00000, 0x08000, CRC(12c4fea9) SHA1(4616f2d70022abcf89f244f3f365b39b96973368) )
 
-	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_REGION( 0x080000, REGION_USER1, 0 )	/* Samples */
 	ROM_LOAD( "mw-3.rom", 0x00000, 0x080000, CRC(110c6a68) SHA1(915758cd467fbcdfa18ca99df036dca40dfc4649) )
+
+	/* $00000-$20000 stays the same in all sound banks, */
+	/* the second half of the bank is what gets switched */
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_COPY( REGION_USER1, 0x000000, 0x000000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x000000, 0x020000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x000000, 0x040000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x020000, 0x060000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x000000, 0x080000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x040000, 0x0a0000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x000000, 0x0c0000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x060000, 0x0e0000, 0x020000)
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )	/* GFX */
 	ROM_LOAD( "mw-4.rom", 0x00000, 0x020000, CRC(28a3af15) SHA1(99547966b2b5e06e097c55bbbb86a1c2809fa98c) )
@@ -404,4 +477,4 @@ ROM_END
 /*** GAME DRIVERS ************************************************************/
 
 GAMEX( 1994, speedspn, 0, speedspn, speedspn, 0, ROT180, "TCH", "Speed Spin", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 199?, mstworld, 0, speedspn, speedspn, 0, ROT180, "TCH", "Monster World", GAME_NOT_WORKING )
+GAMEX( 199?, mstworld, 0, mstworld, speedspn, 0, ROT180, "TCH", "Monster World", GAME_NOT_WORKING )

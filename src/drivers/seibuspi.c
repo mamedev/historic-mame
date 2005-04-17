@@ -1441,8 +1441,8 @@ static NVRAM_HANDLER( spi )
 		}
 	}
 
-	nvram_handler_intelflash_0(file, read_or_write);
-	nvram_handler_intelflash_1(file, read_or_write);
+	nvram_handler_intelflash(0, file, read_or_write);
+	nvram_handler_intelflash(1, file, read_or_write);
 }
 
 static NVRAM_HANDLER( sxx2f )

@@ -122,7 +122,7 @@ DISCRETE_SOUND_START(bsktball_discrete_interface)
 	/* When there is no music, the game sets the    */
 	/* oscillator to 0Hz.  (OUT30 = FF)             */
 	/************************************************/
-	DISCRETE_NOTE(NODE_30, 1, BSKTBALL_32H, BSKTBALL_NOTE_DATA, 255, 1, DISC_CLK_IS_FREQ)
+	DISCRETE_NOTE(NODE_30, 1, BSKTBALL_32H, BSKTBALL_NOTE_DATA, 255, 1, DISC_CLK_IS_FREQ | DISC_OUT_IS_ENERGY)
 	DISCRETE_GAIN(BSKTBALL_NOTE_SND, NODE_30, DEFAULT_TTL_V_LOGIC_1)
 
 

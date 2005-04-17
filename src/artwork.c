@@ -737,6 +737,60 @@ static int artwork_system_active(void)
 
 
 /*-------------------------------------------------
+	artwork_update_visible_area - resize artwork
+	when the game changes resolution
+-------------------------------------------------*/
+
+void artwork_update_visible_area(struct mame_display *display)
+{
+	double min_x, min_y, max_x, max_y;
+	int width, height;
+	int original_width = ( display->game_visible_area.max_x - display->game_visible_area.min_x ) + 1;
+	int original_height = ( display->game_visible_area.max_y - display->game_visible_area.min_y ) + 1;
+
+	struct artwork_piece *piece;
+	/* compute the extent of all the artwork */
+	min_x = min_y = 0.0;
+	max_x = max_y = 1.0;
+	if (!options.artwork_crop)
+		for (piece = artwork_list; piece; piece = piece->next)
+		{
+			/* compute the outermost bounds */
+			if (piece->left < min_x) min_x = piece->left;
+			if (piece->right > max_x) max_x = piece->right;
+			if (piece->top < min_y) min_y = piece->top;
+			if (piece->bottom > max_y) max_y = piece->bottom;
+		}
+
+	width = (int)((max_x - min_x) * (double)(original_width * gamescale) + 0.5);
+	height = (int)((max_y - min_y) * (double)(original_height * gamescale) + 0.5);
+	
+	/* compute the screen rect */
+	screenrect.min_x = screenrect.min_y = 0;
+	screenrect.max_x = width - 1;
+	screenrect.max_y = height - 1;
+
+	/* compute the game rect */
+	gamerect.min_x = (int)(-min_x * (double)(original_width * gamescale) + 0.5);
+	gamerect.min_y = (int)(-min_y * (double)(original_height * gamescale) + 0.5);
+	gamerect.max_x = gamerect.min_x + original_width * gamescale - 1;
+	gamerect.max_y = gamerect.min_y + original_height * gamescale - 1;
+
+	/* now compute all the artwork pieces' coordinates */
+	for (piece = artwork_list; piece; piece = piece->next)
+	{
+		piece->bounds.min_x = (int)((piece->left - min_x) * (double)(original_width * gamescale) + 0.5);
+		piece->bounds.min_y = (int)((piece->top - min_y) * (double)(original_height * gamescale) + 0.5);
+		piece->bounds.max_x = (int)((piece->right - min_x) * (double)(original_width * gamescale) + 0.5) - 1;
+		piece->bounds.max_y = (int)((piece->bottom - min_y) * (double)(original_height * gamescale) + 0.5) - 1;
+	}
+
+	artwork_prep();
+}
+
+
+
+/*-------------------------------------------------
 	artwork_update_video_and_audio - update the
 	screen, adjusting for artwork
 -------------------------------------------------*/
@@ -755,6 +809,10 @@ void artwork_update_video_and_audio(struct mame_display *display)
 	}
 
 	profiler_mark(PROFILER_ARTWORK);
+
+	/* if the visible area has changed, update it */
+	if (display->changed_flags & GAME_VISIBLE_AREA_CHANGED)
+		artwork_update_visible_area(display);
 
 	/* update the palette */
 	if (display->changed_flags & GAME_PALETTE_CHANGED)

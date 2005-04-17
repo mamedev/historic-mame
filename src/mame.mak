@@ -1290,6 +1290,7 @@ OBJS += \
 	$(OBJ)/machine/idectrl.o \
 	$(OBJ)/machine/ticket.o \
 	$(OBJ)/machine/random.o \
+	$(OBJ)/machine/adc083x.o \
 	$(OBJ)/vidhrdw/crtc6845.o \
 	$(OBJ)/vidhrdw/avgdvg.o \
 	$(OBJ)/vidhrdw/poly.o \

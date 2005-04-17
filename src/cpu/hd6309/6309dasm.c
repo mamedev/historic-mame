@@ -644,6 +644,7 @@ static char *hexstring (int address)
 	return labtemp;
 }
 
+
 unsigned Dasm6309 (char *buffer, unsigned pc)
 {
 	int i, j, k, page=0, opcode, numoperands, mode, size, access;
@@ -756,6 +757,13 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 		{
 			pb = operandarray[0];
 		}
+
+		if( pb == 0x92 || pb == 0xb2 || pb == 0xbf || pb == 0xd2 || pb == 0xdf || pb == 0xf2 || pb == 0xff )
+		{
+			buffer += sprintf (buffer, "illegal postbyte (JMP [$FFF0])" );
+			break;
+		}
+
 		reg = (pb >> 5) & 3;
 		pb2 = pb & 0x8f;
 		if( pb2 == 0x88 || pb2 == 0x8c )
@@ -764,49 +772,19 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 			/* KW 11/05/98 Fix of indirect opcodes		*/
 			offset = (INT8)cpu_readop_arg(pc);
 			p++;
-			if( pb == 0x8c ) reg = 4;
+			if( pb == 0x8c || pb == 0xac || pb == 0xcc || pb == 0xec || pb == 0x9c || pb == 0xbc || pb == 0xdc || pb == 0xfc  ) reg = 4;
 			if( (pb & 0x90) == 0x90 ) buffer += sprintf (buffer, "[");
-			if( pb == 0x8c )
+			if( pb == 0x8c || pb == 0xac || pb == 0xcc || pb == 0xec || pb == 0x9c || pb == 0xbc || pb == 0xdc || pb == 0xfc)
 			{
 				sym1 = set_ea_info(1, pc, (INT8)offset, EA_REL_PC);
 				ea = (pc + (INT8)offset + activecpu_get_reg(regid_6309[reg])) & 0xffff;
-				buffer += sprintf (buffer, "%s,%s", sym1, regs_6309[reg]);
+				buffer += sprintf (buffer, "%d,%s", offset, regs_6309[reg]);
 			}
 			else
 			{
 				sym1 = set_ea_info(1, offset, EA_INT8, EA_VALUE);
 				ea = (activecpu_get_reg(regid_6309[reg]) + offset) & 0xffff;
-				buffer += sprintf (buffer, "%s,%s", sym1, regs_6309[reg]);
-			}
-		}
-		else
-		if( pb2 == 0x89 || pb2 == 0x8d || pb2 == 0x8f )
-		{	/* 16-bit */
-
-			/* KW 11/05/98 Fix of indirect opcodes		*/
-
-			offset = (INT16)( (cpu_readop_arg(pc) << 8) + cpu_readop_arg(pc+1) );
-			p += 2;
-
-			if( pb == 0x8d )
-				reg = 4;
-			if( (pb&0x90) == 0x90 )
-				buffer += sprintf(buffer, "[");
-			if( pb == 0x8d )
-			{
-				sym1 = set_ea_info(1, pc, (INT16)offset, EA_REL_PC);
-				buffer += sprintf (buffer, "%s,%s", sym1, regs_6309[reg]);
-			}
-			else if ( pb == 0x9f || pb == 0xbf || pb == 0xdf || pb == 0xff )
-			{
-				sym1 = set_ea_info(1, offset, EA_UINT16, EA_VALUE);
-                buffer += sprintf (buffer, "%s", sym1);
-			}
-			else
-			{
-				sym1 = set_ea_info(1, offset, EA_INT16, EA_VALUE);
-				ea = (activecpu_get_reg(regid_6309[reg]) + offset) & 0xffff;
-				buffer += sprintf (buffer, "%s,%s", sym1, regs_6309[reg]);
+				buffer += sprintf (buffer, "%d,%s", offset, regs_6309[reg]);
 			}
 		}
 		else
@@ -817,10 +795,33 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 			buffer += sprintf (buffer, ",W");
 		}
 		else
+		if( pb2 == 0x89 || pb2 == 0x8d || pb2 == 0x8f || pb == 0xb0 || pb == 0xd0 || pb == 0xf0 )
+		{	/* 16-bit */
+
+			/* KW 11/05/98 Fix of indirect opcodes		*/
+
+			if( !((pb == 0xcf) || (pb == 0xd0) || (pb == 0xef) || (pb == 0xf0) ) )
+			{
+			offset = (INT16)( (cpu_readop_arg(pc) << 8) + cpu_readop_arg(pc+1) );
+			}
+
+			if( pb == 0x8d || pb == 0xad || pb == 0xcd || pb == 0xed || pb == 0x9d || pb == 0xbd || pb == 0xdd || pb == 0xfd )
+				reg = 4;
+			if( (pb&0x90) == 0x90 )
+				buffer += sprintf(buffer, "[");
+			if( pb == 0x8d || pb == 0xad || pb == 0xcd || pb == 0xed || pb == 0x9d || pb == 0xbd || pb == 0xdd || pb == 0xfd )
+			{
+				sym1 = set_ea_info(1, pc, (INT16)offset, EA_REL_PC);
+				buffer += sprintf (buffer, "%d,%s", offset, regs_6309[reg]);
+			}
+			else if ( pb == 0x9f || pb == 0xbf || pb == 0xdf || pb == 0xff ) /* hmm, bf, df, and ff are marked as illegal on the 6309 */
+			{
+				sym1 = set_ea_info(1, offset, EA_UINT16, EA_VALUE);
+                buffer += sprintf (buffer, "%s", sym1);
+			}
+			else
 		if ( pb == 0xaf || pb == 0xb0 )
 		{
-			if( (pb & 0x90) == 0x90 ) buffer += sprintf (buffer, "[");
-
 			offset = (INT16)( (cpu_readop_arg(pc) << 8) + cpu_readop_arg(pc+1) );
 			p += 2;
 
@@ -831,22 +832,28 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 		else
 		if ( pb == 0xcf || pb == 0xd0 )
 		{
-			if( (pb & 0x90) == 0x90 ) buffer += sprintf (buffer, "[");
 			ea = (activecpu_get_reg(HD6309_E) << 8) + activecpu_get_reg(HD6309_F);
 			buffer += sprintf (buffer, ",W++");
 		}
 		else
 		if ( pb == 0xef || pb == 0xf0 )
 		{
-			if( (pb & 0x90) == 0x90 ) buffer += sprintf (buffer, "[");
 			ea = (activecpu_get_reg(HD6309_E) << 8) + activecpu_get_reg(HD6309_F);
 			buffer += sprintf (buffer, ",--W");
+		}
+		else
+			{
+				sym1 = set_ea_info(1, offset, EA_INT16, EA_VALUE);
+				ea = (activecpu_get_reg(regid_6309[reg]) + offset) & 0xffff;
+				buffer += sprintf (buffer, "%s,%s", sym1, regs_6309[reg]);
+			}
 		}
 		else
 		if( (pb & 0x80) )
 		{
 			if( (pb & 0x90) == 0x90 )
 				buffer += sprintf (buffer, "[");
+			
 			switch( pb & 0x8f )
 			{
 			case 0x80:
@@ -900,7 +907,7 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 			offset = pb & 0x1f;
 			if (offset > 15)
 				offset = offset - 32;
-			buffer += sprintf (buffer, "%s,%s", hexstring (offset), regs_6309[reg]);
+			buffer += sprintf (buffer, "%d,%s", offset, regs_6309[reg]);
 		}
 		/* indirect */
 		if( (pb & 0x90) == 0x90 )

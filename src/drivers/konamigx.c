@@ -107,6 +107,7 @@
 #include "machine/eeprom.h"
 #include "sound/k054539.h"
 #include "machine/konamigx.h"
+#include "machine/adc083x.h"
 
 VIDEO_START(konamigx_5bpp);
 VIDEO_START(konamigx_6bpp);
@@ -838,70 +839,31 @@ static WRITE32_HANDLER( sound020_w )
 /* input handlers */
 
 /* National Semiconductor ADC0834 4-channel serial ADC emulation */
-static int analog_prevclk;
-static int analog_val = 0;
-static int analog_latch;
-static int analog_state = 0;
-static int analog_cmd = 0;
 
 static READ32_HANDLER( adc0834_r )
 {
-	return analog_val;
+	return adc083x_do_read( 0 ) << 24;
 }
 
 static WRITE32_HANDLER( adc0834_w )
 {
-	int clk, cs, di;
+	adc083x_clk_write( 0, ( data >> 24 ) & 1 );
+	adc083x_di_write( 0, ( data >> 25 ) & 1 );
+	adc083x_cs_write( 0, ( data >> 26 ) & 1 );
+}
 
-	clk = (data >> 24)&1;		// clock
-	di = (data >> 25)&1;		// data in
-	cs = ((data >> 26)^1)&1;	// chip select
-
-	// resync states if CS drops
-	if (!cs)
+double adc0834_callback( int input )
+{
+	switch( input )
 	{
-		analog_state = 0;
-		analog_prevclk = 0;
-		return;
+	case ADC083X_CH0:
+		return ( (double)5 * readinputport( 9 ) ) / 255; // steer
+	case ADC083X_CH1:
+		return ( (double)5 * readinputport( 10 ) ) / 255; // gas
+	case ADC083X_VREF:
+		return 5;
 	}
-
-	// CS is up, we act on the rising edge of CLK
-	if ((clk) && (!analog_prevclk))
-	{
-		switch (analog_state)
-		{
-			case 0:	  // wait for addr
-			case 1:
-			case 2:
-			case 3:
-			case 4:
-			  	analog_cmd <<= 1;
-				analog_cmd |= di;
-			      	analog_state++;
-				break;
-
-			case 5:	// got command, latch in the proper analog read
-				if (analog_cmd & 4)
-				{
-					analog_latch = readinputport(10);	// gas
-				}
-				else
-				{
-					analog_latch = readinputport(9);	// steer
-				}
-				analog_val = (analog_latch & 0x80)<<17;
-				analog_latch <<= 1;
-				analog_state++;
-				break;
-
-			case 6:	// clock out the data
-				analog_val = (analog_latch & 0x80)<<17;
-				analog_latch <<= 1;
-				break;
-		}
-	}
-
-	analog_prevclk = clk;
+	return 0;
 }
 
 static READ32_HANDLER( le2_gun_H_r )
@@ -3270,6 +3232,8 @@ static DRIVER_INIT(konamigx)
 
 //	int i;
 	int readback = 0;
+
+	adc083x_init( 0, ADC0834, adc0834_callback );
 
 	konamigx_cfgport = -1;
 	last_prot_op = -1;

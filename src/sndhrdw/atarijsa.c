@@ -792,12 +792,12 @@ static struct YM2151interface ym2151_interface =
 
 /* Used by Blasteroids */
 MACHINE_DRIVER_START( jsa_i_stereo )
-	
+
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("jsa", M6502, ATARI_CLOCK_3MHz/2)
 	MDRV_CPU_PROGRAM_MAP(atarijsa1_readmem,atarijsa1_writemem)
 	MDRV_CPU_PERIODIC_INT(atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_3MHz/4/16/16/14)))
-	
+
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
@@ -813,7 +813,7 @@ MACHINE_DRIVER_START( jsa_i_stereo_swapped )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(jsa_i_stereo)
-	
+
 	/* sound hardware */
 	MDRV_SOUND_REPLACE("ym", YM2151, ATARI_CLOCK_3MHz)
 	MDRV_SOUND_CONFIG(ym2151_interface)
@@ -827,7 +827,7 @@ MACHINE_DRIVER_START( jsa_i_stereo_pokey )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(jsa_i_stereo)
-	
+
 	/* sound hardware */
 	MDRV_SOUND_ADD(POKEY, ATARI_CLOCK_3MHz/2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.40)
@@ -837,12 +837,12 @@ MACHINE_DRIVER_END
 
 /* Used by Escape from the Planet of the Robot Monsters */
 MACHINE_DRIVER_START( jsa_i_mono_speech )
-	
+
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("jsa", M6502, ATARI_CLOCK_3MHz/2)
 	MDRV_CPU_PROGRAM_MAP(atarijsa1_readmem,atarijsa1_writemem)
 	MDRV_CPU_PERIODIC_INT(atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_3MHz/4/16/16/14)))
-	
+
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
@@ -858,12 +858,12 @@ MACHINE_DRIVER_END
 
 /* Used by Cyberball 2072, STUN Runner, Skull & Crossbones, ThunderJaws, Hydra, Pit Fighter */
 MACHINE_DRIVER_START( jsa_ii_mono )
-	
+
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("jsa", M6502, ATARI_CLOCK_3MHz/2)
 	MDRV_CPU_PROGRAM_MAP(atarijsa2_readmem,atarijsa2_writemem)
 	MDRV_CPU_PERIODIC_INT(atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_3MHz/4/16/16/14)))
-	
+
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
@@ -872,7 +872,7 @@ MACHINE_DRIVER_START( jsa_ii_mono )
 	MDRV_SOUND_ROUTE(0, "mono", 0.60)
 	MDRV_SOUND_ROUTE(1, "mono", 0.60)
 
-	MDRV_SOUND_ADD(OKIM6295, ATARI_CLOCK_3MHz/3/132)
+	MDRV_SOUND_ADD_TAG("adpcm", OKIM6295, ATARI_CLOCK_3MHz/3/132)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
 MACHINE_DRIVER_END
@@ -880,7 +880,7 @@ MACHINE_DRIVER_END
 
 /* Used by Batman, Guardians of the 'Hood, Road Riot 4WD */
 MACHINE_DRIVER_START( jsa_iii_mono )
-	
+
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(jsa_ii_mono)
 	MDRV_CPU_MODIFY("jsa")
@@ -890,7 +890,7 @@ MACHINE_DRIVER_END
 
 /* Used by Off the Wall */
 MACHINE_DRIVER_START( jsa_iii_mono_noadpcm )
-	
+
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(jsa_iii_mono)
 
@@ -901,12 +901,12 @@ MACHINE_DRIVER_END
 
 /* Used by Space Lords, Moto Frenzy, Steel Talons, Road Riot's Revenge Rally */
 MACHINE_DRIVER_START( jsa_iiis_stereo )
-	
+
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("jsa", M6502, ATARI_CLOCK_3MHz/2)
 	MDRV_CPU_PROGRAM_MAP(atarijsa3s_readmem,atarijsa3s_writemem)
 	MDRV_CPU_PERIODIC_INT(atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_3MHz/4/16/16/14)))
-	
+
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 

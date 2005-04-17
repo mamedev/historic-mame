@@ -387,11 +387,11 @@ static MACHINE_DRIVER_START( crimfght )
 	MDRV_CPU_PROGRAM_MAP(crimfght_readmem,crimfght_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 4000000)	/* compared with a real PCB, guessed but accurate */
+	MDRV_CPU_ADD(Z80, 3579545)	/* verified with PCB */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(crimfght_readmem_sound,crimfght_writemem_sound)
 
-	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_FRAMES_PER_SECOND(54)	/* adjusted - compared with PCB speed */
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_INIT(crimfght)
@@ -408,7 +408,7 @@ static MACHINE_DRIVER_START( crimfght )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
-	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_ADD(YM2151, 3579545)	/* verified with PCB */
 	MDRV_SOUND_CONFIG(ym2151_interface)
 	MDRV_SOUND_ROUTE(0, "left", 1.0)
 	MDRV_SOUND_ROUTE(1, "right", 1.0)

@@ -606,6 +606,35 @@ ROM_START( mcatadvj )
 	ROM_LOAD( "mca-u53.bin", 0x00000, 0x80000, CRC(64c76e05) SHA1(379cef5e0cba78d0e886c9cede41985850a3afb7) )
 ROM_END
 
+ROM_START( catt )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* M68000 */
+	ROM_LOAD16_BYTE( "u30.bin",  0x00000, 0x80000, CRC(8c921e1e) SHA1(2fdaa9b743e1731f3cfe9d8334f1b759cf46855d) )
+	ROM_LOAD16_BYTE( "u29.bin",  0x00001, 0x80000, CRC(e725af6d) SHA1(78c08fa5744a6a953e13c0ff39736ccd4875fb72) )
+
+	ROM_REGION( 0x030000, REGION_CPU2, 0 ) /* Z80-A */
+	ROM_LOAD( "u9.bin", 0x00000, 0x20000, CRC(fda05171) SHA1(2c69292573ec35034572fa824c0cae2839d23919) )
+	ROM_RELOAD( 0x10000, 0x20000 )
+
+	ROM_REGION( 0x500000, REGION_GFX1, 0 ) /* Sprites */
+	ROM_LOAD16_BYTE( "mca-u82.bin", 0x000000, 0x100000, CRC(5f01d746) SHA1(11b241456e15299912ee365eedb8f9d5e5ca875d) )
+	ROM_LOAD16_BYTE( "mca-u83.bin", 0x000001, 0x100000, CRC(4e1be5a6) SHA1(cb19aad42dba54d6a4a33859f27254c2a3271e8c) )
+	ROM_LOAD( "u84.bin",            0x200000, 0x100000, CRC(843fd624) SHA1(2e16d8a909fe9447da37a87428bff0734af59a00) )
+	ROM_LOAD( "u85.bin",            0x200001, 0x100000, CRC(5ee7b628) SHA1(feedc212ed4893d784dc6b3361930b9199c6876d) )
+	ROM_LOAD16_BYTE( "mca-u86e",    0x400000, 0x080000, CRC(017bf1da) SHA1(f6446a7219275c0eff62129f59fdfa3a6a3e06c8) )
+	ROM_LOAD16_BYTE( "mca-u87e",    0x400001, 0x080000, CRC(bc9dc9b9) SHA1(f525c9f994d5107752aa4d3a499ee376ec75f42b) )
+
+	ROM_REGION( 0x100000, REGION_GFX2, 0 ) /* BG0 */
+	ROM_LOAD( "u58.bin",     0x00000, 0x100000, CRC(73c9343a) SHA1(9efdddbad6244c1ed267bd954563ab43a1017c96) )
+
+	ROM_REGION( 0x280000, REGION_GFX3, 0 ) /* BG1 */
+	ROM_LOAD( "mca-u60.bin", 0x000000, 0x100000, CRC(c8942614) SHA1(244fccb9abbb04e33839dd2cd0e2de430819a18c) )
+	ROM_LOAD( "mca-u61.bin", 0x100000, 0x100000, CRC(51af66c9) SHA1(1055cf78ea286f02003b0d1bf08c2d7829b36f90) )
+	ROM_LOAD( "mca-u100",    0x200000, 0x080000, CRC(b273f1b0) SHA1(39318fe2aaf2792b85426ec6791b3360ac964de3) )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_LOAD( "u53.bin",     0x00000, 0x100000, CRC(99f2a624) SHA1(799e8e40e8bdcc8fa4cd763a366cc32473038a49) )
+ROM_END
+
 ROM_START( nost )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* M68000 */
 	ROM_LOAD16_BYTE( "nos-pe-u.bin", 0x00000, 0x80000, CRC(4b080149) SHA1(e1dbbe5bf554c7c5731cc3079850f257417e3caa) )
@@ -695,6 +724,7 @@ ROM_END
 
 GAMEX( 1993, mcatadv,  0,       mcatadv, mcatadv, mcatadv, ROT0,   "Wintechno", "Magical Cat Adventure", GAME_NO_COCKTAIL )
 GAMEX( 1993, mcatadvj, mcatadv, mcatadv, mcatadv, mcatadv, ROT0,   "Wintechno", "Magical Cat Adventure (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1993, catt,     mcatadv, mcatadv, mcatadv, mcatadv, ROT0,   "Wintechno", "Catt (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1993, nost,     0,       nost,    nost,    mcatadv, ROT270, "Face",      "Nostradamus", GAME_NO_COCKTAIL )
 GAMEX( 1993, nostj,    nost,    nost,    nost,    mcatadv, ROT270, "Face",      "Nostradamus (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1993, nostk,    nost,    nost,    nost,    mcatadv, ROT270, "Face",      "Nostradamus (Korea)", GAME_NO_COCKTAIL )

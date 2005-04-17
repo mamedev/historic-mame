@@ -646,6 +646,161 @@ VIDEO_UPDATE( macross )
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
 }
 
+extern data16_t *mcu_shared_ram;
+extern data16_t *work_ram;
+
+/*coin setting MCU simulation*/
+static void mcu_run(UINT8 dsw_setting)
+{
+	static UINT8 read_coin;
+	static UINT8 old_value;
+	static UINT8 coina,coinb;
+	UINT8 dsw_a,dsw_b;
+	/*needed because of the uncompatibility of the dsw settings.*/
+	if(dsw_setting)
+	{
+		dsw_a = (readinputport(2+dsw_setting) & 0x7);
+		dsw_b = (readinputport(2+dsw_setting) & 0x38) >> 3;
+	}
+	else
+	{
+		dsw_a = (readinputport(2) & 0x0700) >> 8;
+		dsw_b = (readinputport(2) & 0x3800) >> 11;
+	}
+
+	read_coin = old_value;
+	old_value = readinputport(0);
+
+	if(dsw_a == 0 || dsw_b == 0)
+		work_ram[0x000/2]|=0x4000; //free_play
+
+	if(read_coin != old_value)
+	{
+		if(!(readinputport(0) & 0x01))//COIN1
+		{
+			switch(dsw_a & 7)
+			{
+				case 1: mcu_shared_ram[0xf00/2]+=4; break;
+				case 2: mcu_shared_ram[0xf00/2]+=3; break;
+				case 3: mcu_shared_ram[0xf00/2]+=2; break;
+				case 4:
+				coina++;
+				if(coina >= 4)
+				{
+					coina = 0;
+					mcu_shared_ram[0xf00/2]++;
+				}
+				break;
+				case 5:
+				coina++;
+				if(coina >= 3)
+				{
+					coina = 0;
+					mcu_shared_ram[0xf00/2]++;
+				}
+				break;
+				case 6:
+				coina++;
+				if(coina >= 2)
+				{
+					coina = 0;
+					mcu_shared_ram[0xf00/2]++;
+				}
+				break;
+				case 7: mcu_shared_ram[0xf00/2]++; break;
+			}
+		}
+
+		if(!(readinputport(0) & 0x02))//COIN2
+		{
+			switch(dsw_b & 7)
+			{
+				case 1: mcu_shared_ram[0xf00/2]+=4; break;
+				case 2: mcu_shared_ram[0xf00/2]+=3; break;
+				case 3: mcu_shared_ram[0xf00/2]+=2; break;
+				case 4:
+				coinb++;
+				if(coinb >= 4)
+				{
+					coinb = 0;
+					mcu_shared_ram[0xf00/2]++;
+				}
+				break;
+				case 5:
+				coinb++;
+				if(coinb >= 3)
+				{
+					coinb = 0;
+					mcu_shared_ram[0xf00/2]++;
+				}
+				break;
+				case 6:
+				coinb++;
+				if(coinb >= 2)
+				{
+					coinb = 0;
+					mcu_shared_ram[0xf00/2]++;
+				}
+				break;
+				case 7: mcu_shared_ram[0xf00/2]++; break;
+			}
+		}
+
+		if(!(readinputport(0) & 0x04))//SERVICE_COIN
+			mcu_shared_ram[0xf00/2]++;
+
+		if(mcu_shared_ram[0xf00/2] >= 1 && (work_ram[0x000/2] & 0x8000))/*enable start button*/
+		{
+			/*Start a 1-player game,but don't decrement if the player 1 is already playing*/
+			if((!(readinputport(0) & 0x08)) /*START1*/
+			&& (!(work_ram[0x000/2] & 0x0200)) /*PLAYER-1 playing*/
+			)
+				mcu_shared_ram[0xf00/2]--;
+
+			/*Start a 2-players game,but don't decrement if the player 2 is already playing*/
+			if((!(readinputport(0) & 0x10))
+			&& (!(work_ram[0x000/2] & 0x0100))
+			)
+			{
+				if(!(work_ram[0x000/2] & 0x0200) && mcu_shared_ram[0xf00/2] >= 2)
+					mcu_shared_ram[0xf00/2]-=2;
+				else
+					mcu_shared_ram[0xf00/2]--;
+			}
+		}
+
+		if(mcu_shared_ram[0xf00/2] > 99) mcu_shared_ram[0xf00/2] = 99;
+	}
+}
+
+VIDEO_UPDATE( tdragon )
+{
+	mcu_run(1);
+
+	tilemap_set_scrollx(tx_tilemap,0,-videoshift);
+
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	draw_sprites(bitmap,cliprect,3);
+	draw_sprites(bitmap,cliprect,2);
+	draw_sprites(bitmap,cliprect,1);
+	draw_sprites(bitmap,cliprect,0);
+	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+}
+
+VIDEO_UPDATE( hachamf )
+{
+	mcu_run(0);
+
+	tilemap_set_scrollx(tx_tilemap,0,-videoshift);
+
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	draw_sprites(bitmap,cliprect,3);
+	draw_sprites(bitmap,cliprect,2);
+	draw_sprites(bitmap,cliprect,1);
+	draw_sprites(bitmap,cliprect,0);
+	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+}
+
 VIDEO_UPDATE( manybloc )
 {
 	tilemap_set_scrollx(tx_tilemap,0,-videoshift);

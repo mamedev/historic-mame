@@ -10,7 +10,7 @@
 #include "state.h"
 #include "machine/timekpr.h"
 
-struct timekeeper_chip 
+struct timekeeper_chip
 {
 	void *timer;
 	data8_t control;
@@ -354,7 +354,7 @@ static data8_t timekeeper_read( data32_t chip, offs_t offset )
 	c = &timekeeper[ chip ];
 
 	data = c->data[ offset ];
-	logerror( "%08x: timekeeper_read( %d, %04x ) %02x\n", activecpu_get_pc(), chip, offset, data );
+//	logerror( "%08x: timekeeper_read( %d, %04x ) %02x\n", activecpu_get_pc(), chip, offset, data );
 	return data;
 }
 
@@ -396,7 +396,7 @@ static void timekeeper_write( data32_t chip, offs_t offset, data8_t data )
 		data &= ~FLAGS_BL;
 	}
 
-	logerror( "%08x: timekeeper_write( %d, %04x, %02x )\n", activecpu_get_pc(), chip, offset, data );
+//	logerror( "%08x: timekeeper_write( %d, %04x, %02x )\n", activecpu_get_pc(), chip, offset, data );
 	c->data[ offset ] = data;
 }
 

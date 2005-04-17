@@ -1893,6 +1893,7 @@ static int has_extra_video_ram;
 static int K052109_RMRD_line;
 static int K052109_tileflip_enable;
 static int K052109_irq_enabled;
+static int K052109_dx[3], K052109_dy[3];
 static unsigned char K052109_romsubbank,K052109_scrollctrl;
 struct tilemap *K052109_tilemap[3];
 
@@ -1962,7 +1963,7 @@ static void K052109_tileflip_reset(void)
 int K052109_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int plane3,
 		void (*callback)(int tilemap,int bank,int *code,int *color))
 {
-	int gfx_index;
+	int gfx_index, i;
 	static struct GfxLayout charlayout =
 	{
 		8,8,
@@ -2039,12 +2040,19 @@ int K052109_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 	tilemap_set_transparent_pen(K052109_tilemap[1],0);
 	tilemap_set_transparent_pen(K052109_tilemap[2],0);
 
+	for (i = 0; i < 3; i++)
+	{
+		K052109_dx[i] = K052109_dy[i] = 0;
+	}
+
 	state_save_register_UINT8("k052109", 0, "ram",        K052109_ram, 0x6000);
 	state_save_register_int  ("k052109", 0, "rmrd",       &K052109_RMRD_line);
 	state_save_register_UINT8("k052109", 0, "romsubbank", &K052109_romsubbank, 1);
 	state_save_register_UINT8("k052109", 0, "scrollctrl", &K052109_scrollctrl, 1);
 	state_save_register_int  ("k052109", 0, "irqen",      &K052109_irq_enabled);
 	state_save_register_UINT8("k052109", 0, "charbank",   K052109_charrombank, 4);
+	state_save_register_INT32("k052109", 0, "dx",         &K052109_dx[0], 3);
+	state_save_register_INT32("k052109", 0, "dy",         &K052109_dy[0], 3);
 	state_save_register_int  ("k052109", 0, "extra",      &has_extra_video_ram);
 
 	state_save_register_func_postload(K052109_tileflip_reset);
@@ -2253,12 +2261,12 @@ usrintf_showmessage("%x %x %x %x",
 		tilemap_set_scroll_rows(K052109_tilemap[1],256);
 		tilemap_set_scroll_cols(K052109_tilemap[1],1);
 		yscroll = K052109_ram[0x180c];
-		tilemap_set_scrolly(K052109_tilemap[1],0,yscroll);
+		tilemap_set_scrolly(K052109_tilemap[1],0,yscroll+K052109_dy[1]);
 		for (offs = 0;offs < 256;offs++)
 		{
 			xscroll = scrollram[2*(offs&0xfff8)+0] + 256 * scrollram[2*(offs&0xfff8)+1];
 			xscroll -= 6;
-			tilemap_set_scrollx(K052109_tilemap[1],(offs+yscroll)&0xff,xscroll);
+			tilemap_set_scrollx(K052109_tilemap[1],(offs+yscroll)&0xff,xscroll+K052109_dx[1]);
 		}
 	}
 	else if ((K052109_scrollctrl & 0x03) == 0x03)
@@ -2270,12 +2278,12 @@ usrintf_showmessage("%x %x %x %x",
 		tilemap_set_scroll_rows(K052109_tilemap[1],256);
 		tilemap_set_scroll_cols(K052109_tilemap[1],1);
 		yscroll = K052109_ram[0x180c];
-		tilemap_set_scrolly(K052109_tilemap[1],0,yscroll);
+		tilemap_set_scrolly(K052109_tilemap[1],0,yscroll+K052109_dy[1]);
 		for (offs = 0;offs < 256;offs++)
 		{
 			xscroll = scrollram[2*offs+0] + 256 * scrollram[2*offs+1];
 			xscroll -= 6;
-			tilemap_set_scrollx(K052109_tilemap[1],(offs+yscroll)&0xff,xscroll);
+			tilemap_set_scrollx(K052109_tilemap[1],(offs+yscroll)&0xff,xscroll+K052109_dx[1]);
 		}
 	}
 	else if ((K052109_scrollctrl & 0x04) == 0x04)
@@ -2288,11 +2296,11 @@ usrintf_showmessage("%x %x %x %x",
 		tilemap_set_scroll_cols(K052109_tilemap[1],512);
 		xscroll = K052109_ram[0x1a00] + 256 * K052109_ram[0x1a01];
 		xscroll -= 6;
-		tilemap_set_scrollx(K052109_tilemap[1],0,xscroll);
+		tilemap_set_scrollx(K052109_tilemap[1],0,xscroll+K052109_dx[1]);
 		for (offs = 0;offs < 512;offs++)
 		{
 			yscroll = scrollram[offs/8];
-			tilemap_set_scrolly(K052109_tilemap[1],(offs+xscroll)&0x1ff,yscroll);
+			tilemap_set_scrolly(K052109_tilemap[1],(offs+xscroll)&0x1ff,yscroll+K052109_dy[1]);
 		}
 	}
 	else
@@ -2306,8 +2314,8 @@ usrintf_showmessage("%x %x %x %x",
 		xscroll = scrollram[0] + 256 * scrollram[1];
 		xscroll -= 6;
 		yscroll = K052109_ram[0x180c];
-		tilemap_set_scrollx(K052109_tilemap[1],0,xscroll);
-		tilemap_set_scrolly(K052109_tilemap[1],0,yscroll);
+		tilemap_set_scrollx(K052109_tilemap[1],0,xscroll+K052109_dx[1]);
+		tilemap_set_scrolly(K052109_tilemap[1],0,yscroll+K052109_dy[1]);
 	}
 
 	if ((K052109_scrollctrl & 0x18) == 0x10)
@@ -2319,12 +2327,12 @@ usrintf_showmessage("%x %x %x %x",
 		tilemap_set_scroll_rows(K052109_tilemap[2],256);
 		tilemap_set_scroll_cols(K052109_tilemap[2],1);
 		yscroll = K052109_ram[0x380c];
-		tilemap_set_scrolly(K052109_tilemap[2],0,yscroll);
+		tilemap_set_scrolly(K052109_tilemap[2],0,yscroll+K052109_dy[2]);
 		for (offs = 0;offs < 256;offs++)
 		{
 			xscroll = scrollram[2*(offs&0xfff8)+0] + 256 * scrollram[2*(offs&0xfff8)+1];
 			xscroll -= 6;
-			tilemap_set_scrollx(K052109_tilemap[2],(offs+yscroll)&0xff,xscroll);
+			tilemap_set_scrollx(K052109_tilemap[2],(offs+yscroll)&0xff,xscroll+K052109_dx[2]);
 		}
 	}
 	else if ((K052109_scrollctrl & 0x18) == 0x18)
@@ -2336,12 +2344,12 @@ usrintf_showmessage("%x %x %x %x",
 		tilemap_set_scroll_rows(K052109_tilemap[2],256);
 		tilemap_set_scroll_cols(K052109_tilemap[2],1);
 		yscroll = K052109_ram[0x380c];
-		tilemap_set_scrolly(K052109_tilemap[2],0,yscroll);
+		tilemap_set_scrolly(K052109_tilemap[2],0,yscroll+K052109_dy[2]);
 		for (offs = 0;offs < 256;offs++)
 		{
 			xscroll = scrollram[2*offs+0] + 256 * scrollram[2*offs+1];
 			xscroll -= 6;
-			tilemap_set_scrollx(K052109_tilemap[2],(offs+yscroll)&0xff,xscroll);
+			tilemap_set_scrollx(K052109_tilemap[2],(offs+yscroll)&0xff,xscroll+K052109_dx[2]);
 		}
 	}
 	else if ((K052109_scrollctrl & 0x20) == 0x20)
@@ -2354,11 +2362,11 @@ usrintf_showmessage("%x %x %x %x",
 		tilemap_set_scroll_cols(K052109_tilemap[2],512);
 		xscroll = K052109_ram[0x3a00] + 256 * K052109_ram[0x3a01];
 		xscroll -= 6;
-		tilemap_set_scrollx(K052109_tilemap[2],0,xscroll);
+		tilemap_set_scrollx(K052109_tilemap[2],0,xscroll+K052109_dx[2]);
 		for (offs = 0;offs < 512;offs++)
 		{
 			yscroll = scrollram[offs/8];
-			tilemap_set_scrolly(K052109_tilemap[2],(offs+xscroll)&0x1ff,yscroll);
+			tilemap_set_scrolly(K052109_tilemap[2],(offs+xscroll)&0x1ff,yscroll+K052109_dy[2]);
 		}
 	}
 	else
@@ -2372,8 +2380,8 @@ usrintf_showmessage("%x %x %x %x",
 		xscroll = scrollram[0] + 256 * scrollram[1];
 		xscroll -= 6;
 		yscroll = K052109_ram[0x380c];
-		tilemap_set_scrollx(K052109_tilemap[2],0,xscroll);
-		tilemap_set_scrolly(K052109_tilemap[2],0,yscroll);
+		tilemap_set_scrollx(K052109_tilemap[2],0,xscroll+K052109_dx[2]);
+		tilemap_set_scrolly(K052109_tilemap[2],0,yscroll+K052109_dy[2]);
 	}
 
 #if 0
@@ -2403,6 +2411,11 @@ int K052109_is_IRQ_enabled(void)
 	return K052109_irq_enabled;
 }
 
+void K052109_set_layer_offsets(int layer, int dx, int dy)
+{
+	K052109_dx[layer] = dx;
+	K052109_dy[layer] = dy;
+}
 
 
 /***************************************************************************/

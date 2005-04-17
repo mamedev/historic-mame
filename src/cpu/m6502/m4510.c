@@ -168,6 +168,8 @@ typedef struct {
 	UINT16  low, high;
 	UINT32	mem[8];
 	int 	(*irq_callback)(int irqline);	/* IRQ callback */
+	read8_handler rdmem_id;					/* readmem callback for indexed instructions */
+	write8_handler wrmem_id;				/* readmem callback for indexed instructions */
 }	m4510_Regs;
 
 static int m4510_ICount = 0;
@@ -195,6 +197,8 @@ INLINE int m4510_cpu_readop_arg(void)
 
 static void m4510_init(void)
 {
+	m4510.rdmem_id = program_read_byte_8;
+	m4510.wrmem_id = program_write_byte_8;
 }
 
 static void m4510_reset (void *param)
@@ -379,6 +383,8 @@ static void m4510_set_info(UINT32 state, union cpuinfo *info)
 		
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					m4510.irq_callback = info->irqcallback;	break;
+		case CPUINFO_PTR_M6502_READINDEXED_CALLBACK:	m4510.rdmem_id = (read8_handler) info->f;	break;
+		case CPUINFO_PTR_M6502_WRITEINDEXED_CALLBACK:	m4510.wrmem_id = (write8_handler) info->f;	break;
 	}
 }
 
@@ -448,6 +454,8 @@ void m4510_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m4510_reg_layout;				break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = m4510_win_layout;				break;
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP:			info->p = NULL;							break;
+		case CPUINFO_PTR_M6502_READINDEXED_CALLBACK:	info->f = (genf *) m4510.rdmem_id;		break;
+		case CPUINFO_PTR_M6502_WRITEINDEXED_CALLBACK:	info->f = (genf *) m4510.wrmem_id;		break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M4510"); break;

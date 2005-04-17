@@ -11,11 +11,17 @@
 	Known bugs:
 		* flip screen not supported
 
-Note:	Police Trainer v1.3B is on the same revision PCB as Sharpshooter - Rev 0.5B
-		If you set the dip to serivce mode and reset the game, all program
-		roms fail the checksum.  However, each checksum listed matches the
-		checksum printed on the ROM label.
- 
+Note:	Police Trainer v1.3B runs on the same revision PCB as Sharpshooter - Rev 0.5B
+		If you hold the test button down and boot the game, all program roms
+		fail the checksum.  However, each checksum listed matches the checksum
+		printed on the ROM label.  This has been verified on an original PCB.
+
+To ID the version of your SharpShooter, check the 2nd printed line on each type of ROM.
+
+Program Roms:  C121012 - Code version 1.2, Graphics v1.0 & Sound v1.2
+Graphic Roms:  G10     - Graphics rom v1.0 (in diagnostics mode it's called "Art")
+  Sound Roms:  S12     - Sound rom v1.2
+
 
 The ATTILA Video System PCB (by EXIT Entertainment):
 
@@ -340,7 +346,7 @@ INPUT_PORTS_START( policetr )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_SERVICE( 0x0020, IP_ACTIVE_LOW )
+	PORT_SERVICE( 0x0020, IP_ACTIVE_LOW )		/* Not actually a dipswitch */
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
@@ -348,7 +354,7 @@ INPUT_PORTS_START( policetr )
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
 	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_SPECIAL )		// EEPROM read
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_SPECIAL )		/* EEPROM read */
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
@@ -494,7 +500,7 @@ ROM_START( policetr )
 ROM_END
 
 
-ROM_START( policeto )
+ROM_START( polict11 )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )		/* dummy region for R3000 */
 
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_ERASE00 )
@@ -528,10 +534,11 @@ ROM_START( plctr13b )
 
 	ROM_REGION32_BE( 0x80000, REGION_USER1, 0 )	/* 2MB for R3000 code */
 /*
-Note: If you sent the dipswitch to service mode and reset the game within
-Mame.  All 4 program ROMs fail the checksum code... IE: they show in red
-instead of green.  But, the listed checksums on the screen match the
-checksums printed on the ROM labels... this seems wierd to me.
+Note: If you set the dipswitch to service mode and reset the game within Mame.
+      All 4 program ROMs fail the checksum code... IE: they show in red
+      instead of green.  But, the listed checksums on the screen match the
+      checksums printed on the ROM labels... this seems wierd to me.
+      This is has been be verified to happen on a real PCB
 */
 	ROM_LOAD32_BYTE( "ptb-u113.v13", 0x00000, 0x20000, CRC(d636c00d) SHA1(ef989eb85b51a64ca640297c1286514c8d7f8f76) )
 	ROM_LOAD32_BYTE( "ptb-u112.v13", 0x00001, 0x20000, CRC(86f0497e) SHA1(d177023f7cb2e01de60ef072212836dc94759c1a) )
@@ -548,7 +555,7 @@ ROM_END
 ROM_START( sshooter )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )		/* dummy region for R3000 */
 
-	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_ERASE00 )
+	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_ERASE00 ) /* Graphics v1.0 */
 	ROM_LOAD16_BYTE( "ss-u121.bin", 0x000000, 0x100000, CRC(22e27dd6) SHA1(cb9e8c450352bb116a9c0407cc8ce6d8ae9d9881) ) // 1:1
 	ROM_LOAD16_BYTE( "ss-u120.bin", 0x000001, 0x100000, CRC(30173b1b) SHA1(366464444ce208391ca350f1639403f0c2217330) ) // 1:2
 	ROM_LOAD16_BYTE( "ss-u125.bin", 0x200000, 0x100000, CRC(79e8520a) SHA1(682e5c7954f96db65a137f05cde67c310b85b526) ) // 2:1
@@ -559,12 +566,38 @@ ROM_START( sshooter )
 	ROM_LOAD16_BYTE( "ss-u126.bin", 0x600001, 0x100000, CRC(ab1b9d60) SHA1(ff51a71443f7774d3abf96c2eb8ef6a54d73dd8e) ) // 4:2
 
 	ROM_REGION32_BE( 0x100000, REGION_USER1, 0 )	/* 2MB for R3000 code */
-	ROM_LOAD32_BYTE( "ss-u113.v17", 0x00000, 0x40000, CRC(a8c96af5) SHA1(a62458156603b74e0d84ce6928f7bb868bf5a219) )
-	ROM_LOAD32_BYTE( "ss-u112.v17", 0x00001, 0x40000, CRC(c732d5fa) SHA1(2bcc26c8bbf55394173ca65b4b0df01bc6b719bb) )
-	ROM_LOAD32_BYTE( "ss-u111.v17", 0x00002, 0x40000, CRC(4240fa2f) SHA1(54223207c1e228d6b836918601c0f65c2692e5bc) )
-	ROM_LOAD32_BYTE( "ss-u110.v17", 0x00003, 0x40000, CRC(8ae744ce) SHA1(659cd27865cf5507aae6b064c5bc24b927cf5f5a) )
+	ROM_LOAD32_BYTE( "ss-u113.v17", 0x00000, 0x40000, CRC(a8c96af5) SHA1(a62458156603b74e0d84ce6928f7bb868bf5a219) ) // 1:1
+	ROM_LOAD32_BYTE( "ss-u112.v17", 0x00001, 0x40000, CRC(c732d5fa) SHA1(2bcc26c8bbf55394173ca65b4b0df01bc6b719bb) ) // 1:2
+	ROM_LOAD32_BYTE( "ss-u111.v17", 0x00002, 0x40000, CRC(4240fa2f) SHA1(54223207c1e228d6b836918601c0f65c2692e5bc) ) // 1:3
+	ROM_LOAD32_BYTE( "ss-u110.v17", 0x00003, 0x40000, CRC(8ae744ce) SHA1(659cd27865cf5507aae6b064c5bc24b927cf5f5a) ) // 1:4
 
-	ROM_REGION( 0x600000, REGION_SOUND1, 0 )
+	ROM_REGION( 0x600000, REGION_SOUND1, 0 ) /* Sound v1.2 */
+	ROM_LOAD( "ss-u160.bin", 0x000000, 0x100000, CRC(1c603d42) SHA1(880992871be52129684052d542946de0cc32ba9a) ) // 1:1
+	ROM_RELOAD(              0x3f8000, 0x100000 )
+	ROM_LOAD( "ss-u162.bin", 0x100000, 0x100000, CRC(40ef448a) SHA1(c96f7b169be2576e9f3783af84c07259efefb812) ) // 2:1
+	ROM_RELOAD(              0x4f8000, 0x100000 )
+ROM_END
+
+ROM_START( sshoot12 )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )		/* dummy region for R3000 */
+
+	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_ERASE00 ) /* Graphics v1.0 */
+	ROM_LOAD16_BYTE( "ss-u121.bin", 0x000000, 0x100000, CRC(22e27dd6) SHA1(cb9e8c450352bb116a9c0407cc8ce6d8ae9d9881) ) // 1:1
+	ROM_LOAD16_BYTE( "ss-u120.bin", 0x000001, 0x100000, CRC(30173b1b) SHA1(366464444ce208391ca350f1639403f0c2217330) ) // 1:2
+	ROM_LOAD16_BYTE( "ss-u125.bin", 0x200000, 0x100000, CRC(79e8520a) SHA1(682e5c7954f96db65a137f05cde67c310b85b526) ) // 2:1
+	ROM_LOAD16_BYTE( "ss-u124.bin", 0x200001, 0x100000, CRC(8e805970) SHA1(bfc9940ed6425f136d768170275279c590da7003) ) // 2:2
+	ROM_LOAD16_BYTE( "ss-u123.bin", 0x400000, 0x100000, CRC(d045bb62) SHA1(839209ff6a8e5db63a51a3494a6c973e0068a3c6) ) // 3:1
+	ROM_LOAD16_BYTE( "ss-u122.bin", 0x400001, 0x100000, CRC(163cc133) SHA1(a5e84b5060fd32362aa097d0194ce72e8a90357c) ) // 3:2
+	ROM_LOAD16_BYTE( "ss-u127.bin", 0x600000, 0x100000, CRC(76a7a591) SHA1(9fd7cce21b01f388966a3e8388ba95820ac10bfd) ) // 4:1
+	ROM_LOAD16_BYTE( "ss-u126.bin", 0x600001, 0x100000, CRC(ab1b9d60) SHA1(ff51a71443f7774d3abf96c2eb8ef6a54d73dd8e) ) // 4:2
+
+	ROM_REGION32_BE( 0x100000, REGION_USER1, 0 )	/* 2MB for R3000 code */
+	ROM_LOAD32_BYTE( "ss-u113.v12", 0x00000, 0x40000, CRC(73dbaf4b) SHA1(a85fad95d63333f4fe5647f31258b3a22c5c2c0d) ) // 1:1
+	ROM_LOAD32_BYTE( "ss-u112.v12", 0x00001, 0x40000, CRC(06fbc2de) SHA1(8bdfcbc33b5fc010464dcd7691f9ecd6ba2168ba) ) // 1:2
+	ROM_LOAD32_BYTE( "ss-u111.v12", 0x00002, 0x40000, CRC(0b291731) SHA1(bd04f0b1b52198344df625fcddfc6c6ccb0bd923) ) // 1:3
+	ROM_LOAD32_BYTE( "ss-u110.v12", 0x00003, 0x40000, CRC(76841008) SHA1(ccbb88c8d63bf929814144a9d8757c9c7048fdef) ) // 1:4
+
+	ROM_REGION( 0x600000, REGION_SOUND1, 0 ) /* Sound v1.2 */
 	ROM_LOAD( "ss-u160.bin", 0x000000, 0x100000, CRC(1c603d42) SHA1(880992871be52129684052d542946de0cc32ba9a) ) // 1:1
 	ROM_RELOAD(              0x3f8000, 0x100000 )
 	ROM_LOAD( "ss-u162.bin", 0x100000, 0x100000, CRC(40ef448a) SHA1(c96f7b169be2576e9f3783af84c07259efefb812) ) // 2:1
@@ -605,6 +638,7 @@ static DRIVER_INIT( sshooter )
  *************************************/
 
 GAME( 1996, policetr, 0,        policetr, policetr, policetr, ROT0, "P&P Marketing", "Police Trainer (Rev 1.3)" )
-GAME( 1996, policeto, policetr, policetr, policetr, policetr, ROT0, "P&P Marketing", "Police Trainer (Rev 1.1)" )
+GAME( 1996, polict11, policetr, policetr, policetr, policetr, ROT0, "P&P Marketing", "Police Trainer (Rev 1.1)" )
 GAME( 1996, plctr13b, policetr, sshooter, policetr, policetr, ROT0, "P&P Marketing", "Police Trainer (Rev 1.3B)" )
 GAME( 1998, sshooter, 0,        sshooter, policetr, sshooter, ROT0, "P&P Marketing", "Sharpshooter (Rev 1.7)" )
+GAME( 1998, sshoot12, sshooter, sshooter, policetr, sshooter, ROT0, "P&P Marketing", "Sharpshooter (Rev 1.2)" )

@@ -131,9 +131,14 @@ static m6502_Regs m6502;
  *
  *****************************************************************************/
 
-static void m6502_state_register(const char *type)
+static void m6502_common_init(UINT8 subtype, void (**insn)(void), const char *type)
 {
 	int cpu = cpu_getactivecpu();
+
+	m6502.subtype = subtype;
+	m6502.insn = insn;
+	m6502.rdmem_id = program_read_byte_8;
+	m6502.wrmem_id = program_write_byte_8;
 
 	state_save_register_UINT16(type, cpu, "PC", &m6502.pc.w.l, 2);
 	state_save_register_UINT16(type, cpu, "SP", &m6502.sp.w.l, 2);
@@ -150,11 +155,7 @@ static void m6502_state_register(const char *type)
 
 static void m6502_init(void)
 {
-	m6502.subtype = SUBTYPE_6502;
-	m6502.insn = insn6502;
-	m6502.rdmem_id = program_read_byte_8;
-	m6502.wrmem_id = program_write_byte_8;
-	m6502_state_register("m6502");
+	m6502_common_init(SUBTYPE_6502, insn6502, "m6502");
 }
 
 static void m6502_reset(void *param)
@@ -340,9 +341,7 @@ static UINT8 n2a03_reg_layout[] = {
 
 static void n2a03_init(void)
 {
-	m6502.subtype = SUBTYPE_2A03;
-	m6502.insn = insn2a03;
-	m6502_state_register("n2a03");
+	m6502_common_init(SUBTYPE_2A03, insn2a03, "n2a03");
 }
 
 /* The N2A03 is integrally tied to its PSG (they're on the same die).
@@ -368,9 +367,7 @@ static UINT8 m6510_reg_layout[] = {
 
 static void m6510_init (void)
 {
-	m6502.subtype = SUBTYPE_6510;
-	m6502.insn = insn6510;
-	m6502_state_register("m6510");
+	m6502_common_init(SUBTYPE_6510, insn6510, "m6510");
 }
 
 static offs_t m6510_dasm(char *buffer, offs_t pc)
@@ -398,9 +395,7 @@ static UINT8 m65c02_reg_layout[] = {
 
 static void m65c02_init(void)
 {
-	m6502.subtype = SUBTYPE_65C02;
-	m6502.insn = insn65c02;
-	m6502_state_register("m65c02");
+	m6502_common_init(SUBTYPE_65C02, insn65c02, "m65c02");
 }
 
 static void m65c02_reset (void *param)
@@ -506,9 +501,7 @@ static void m65c02_set_irq_line(int irqline, int state)
 #if (HAS_M65SC02)
 static void m65sc02_init(void)
 {
-	m6502.subtype = SUBTYPE_65SC02;
-	m6502.insn = insn65sc02;
-	m6502_state_register("m65sc02");
+	m6502_common_init(SUBTYPE_65SC02, insn65sc02, "m65sc02");
 }
 #endif
 
@@ -524,9 +517,7 @@ static UINT8 deco16_reg_layout[] = {
 
 static void deco16_init(void)
 {
-	m6502.subtype = SUBTYPE_DECO16;
-	m6502.insn = insndeco16;
-	m6502_state_register("deco16");
+	m6502_common_init(SUBTYPE_DECO16, insndeco16, "deco16");
 }
 
 

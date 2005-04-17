@@ -31,6 +31,7 @@ struct dss_adsr_context
 struct dss_counter_context
 {
 	int		clock_type;
+	int		out_type;
 	int		is_7492;
 	int		last;		// Last clock state
 	int		count;		// current count
@@ -59,12 +60,15 @@ struct dss_noise_context
 struct dss_note_context
 {
 	int		clock_type;
+	int		out_type;
 	int		last;		// Last clock state
 	double	t_sample;	// discrete clock rate in seconds
 	double	t_clock;	// fixed counter clock in seconds
 	double	t_left;		// time unused during last sample in seconds
 	int		max1;		// Max 1 Count stored as int for easy use.
-	int		count;		// current count
+	int		max2;		// Max 2 Count stored as int for easy use.
+	int		count1;		// current count1
+	int		count2;		// current count2
 };
 
 struct dss_op_amp_osc_context
@@ -155,61 +159,65 @@ void dss_counter_step(struct node_description *node)
 {
 	struct dss_counter_context *context = node->context;
 	double cycles;
-	int clock, count = 0;
+	int clock = 0, last_count, inc = 0;
 	int max = DSS_COUNTER__MAX;
-
-	if (max < 0)
-	{
-		/* So we don't loop infinitely */
-		max = 0;
-	}
+	double xTime = 0;
 
 	if (context->clock_type == DISC_CLK_IS_FREQ)
 	{
 		/* We need to keep clocking the internal clock even if disabled. */
 		cycles = (context->t_left + context->t_sample) / context->t_clock;
-		count = (int)cycles;
-		context->t_left = (cycles - count) * context->t_clock;
+		inc = (int)cycles;
+		context->t_left = (cycles - inc) * context->t_clock;
+		if (inc) xTime = context->t_left / context->t_sample;
+	}
+	else
+	{
+		clock = (int)DSS_COUNTER__CLOCK;
+		xTime = DSS_COUNTER__CLOCK - clock;
 	}
 
-	/* If reset enabled then set output to the reset value. */
+
+	/* If reset enabled then set output to the reset value.  No xTime in reset. */
 	if (DSS_COUNTER__RESET)
 	{
 		context->count = DSS_COUNTER__INIT;
-		node->output = context->is_7492 ? disc_7492_count[context->count] : context->count;
+		node->output = context->is_7492 ? 0 : context->count;
 		return;
 	}
 
 	/*
-	 * We don't count if module is not enabled.
+	 * Only count if module is enabled.
 	 * This has the effect of holding the output at it's current value.
 	 */
 	if (DSS_COUNTER__ENABLE)
 	{
+		last_count = context->count;
+
 		switch (context->clock_type)
 		{
 			case DISC_CLK_ON_F_EDGE:
 			case DISC_CLK_ON_R_EDGE:
 				/* See if the clock has toggled to the proper edge */
-				clock = (DSS_COUNTER__CLOCK != 0);
+				clock = (clock != 0);
 				if (context->last != clock)
 				{
 					context->last = clock;
 					if (context->clock_type == clock)
 					{
 						/* Toggled */
-						count = 1;
+						inc = 1;
 					}
 				}
 				break;
 
-			case DISC_CLK_BY_COUNT:
+		case DISC_CLK_BY_COUNT:
 				/* Clock number of times specified. */
-				count = (int)DSS_COUNTER__CLOCK;
+				inc = clock;
 				break;
 		}
 
-		for (clock=0; clock<count; clock++)
+		for (clock = 0; clock < inc; clock++)
 		{
 			context->count += DSS_COUNTER__DIR ? 1 : -1; // up/down
 			if (context->count < 0) context->count = max;
@@ -217,7 +225,24 @@ void dss_counter_step(struct node_description *node)
 		}
 
 		node->output = context->is_7492 ? disc_7492_count[context->count] : context->count;
+
+		if (context->count != last_count)
+		{
+			/* the xTime is only output if the output changed. */
+			switch (context->out_type)
+			{
+				case DISC_OUT_IS_ENERGY:
+					if (xTime != 0)
+						node->output = (context->count > last_count) ? (last_count + xTime) : (last_count - xTime);
+					break;
+				case DISC_OUT_HAS_XTIME:
+					node->output += xTime;
+					break;
+			}
+		}
 	}
+	else
+		node->output = context->count;
 }
 
 void dss_counter_reset(struct node_description *node)
@@ -326,15 +351,15 @@ void dss_lfsr_step(struct node_description *node)
 	const struct discrete_lfsr_desc *lfsr_desc = node->custom;
 	struct dss_lfsr_context *context = node->context;
 	double cycles;
-	int clock, count = 0;
+	int clock, inc = 0;
 	int fb0,fb1,fbresult;
 
 	if (lfsr_desc->clock_type == DISC_CLK_IS_FREQ)
 	{
 		/* We need to keep clocking the internal clock even if disabled. */
 		cycles = (context->t_left + context->t_sample) / context->t_clock;
-		count = (int)cycles;
-		context->t_left = (cycles - count) * context->t_clock;
+		inc = (int)cycles;
+		context->t_left = (cycles - inc) * context->t_clock;
 	}
 
 	/* Reset everything if necessary */
@@ -356,18 +381,18 @@ void dss_lfsr_step(struct node_description *node)
 				if (lfsr_desc->clock_type == clock)
 				{
 					/* Toggled */
-					count = 1;
+					inc = 1;
 				}
 			}
 			break;
 
 		case DISC_CLK_BY_COUNT:
 			/* Clock number of times specified. */
-			count = (int)DSS_LFSR_NOISE__CLOCK;
+			inc = (int)DSS_LFSR_NOISE__CLOCK;
 			break;
 	}
 
-	for (clock=0; clock<count; clock++)
+	for (clock = 0; clock < inc; clock++)
 	{
 		/* Fetch the last feedback result */
 		fbresult=((context->lfsr_reg)>>(lfsr_desc->bitlength))&0x01;
@@ -524,54 +549,80 @@ void dss_note_step(struct node_description *node)
 	struct dss_note_context *context = node->context;
 
 	double cycles;
-	int clock, count = 0;
+	int clock = 0, last_count2, inc = 0;
+	double xTime = 0;
 
 	if (context->clock_type == DISC_CLK_IS_FREQ)
 	{
 		/* We need to keep clocking the internal clock even if disabled. */
 		cycles = (context->t_left + context->t_sample) / context->t_clock;
-		count = (int)cycles;
-		context->t_left = (cycles - count) * context->t_clock;
+		inc = (int)cycles;
+		context->t_left = (cycles - inc) * context->t_clock;
+		if (inc) xTime = context->t_left / context->t_sample;
+	}
+	else
+	{
+		/* Seperate clock info from xTime info. */
+		clock = (int)DSS_NOTE__CLOCK;
+		xTime = DSS_NOTE__CLOCK - clock;
 	}
 
 	if (DSS_NOTE__ENABLE)
 	{
+		last_count2 = context->count2;
+
 		switch (context->clock_type)
 		{
 			case DISC_CLK_ON_F_EDGE:
 			case DISC_CLK_ON_R_EDGE:
 				/* See if the clock has toggled to the proper edge */
-				clock = (DSS_NOTE__CLOCK != 0);
+				clock = (clock != 0);
 				if (context->last != clock)
 				{
 					context->last = clock;
 					if (context->clock_type == clock)
 					{
 						/* Toggled */
-						count = 1;
+						inc = 1;
 					}
 				}
 				break;
 
 			case DISC_CLK_BY_COUNT:
 				/* Clock number of times specified. */
-				count = (int)DSS_NOTE__CLOCK;
+				inc = clock;
 				break;
 		}
 
-		for (clock=0; clock<count; clock++)
+		/* Count output as long as the data loaded is not already equal to max 1 count. */
+		if (DSS_NOTE__DATA != DSS_NOTE__MAX1)
 		{
-			context->count++;
-			if (context->count >= context->max1)
+			for (clock = 0; clock < inc; clock++)
 			{
-				/* Max 1 count reached.  Load Data into counter. */
-				context->count = (int)DSS_NOTE__DATA;
-				if (DSS_NOTE__DATA != DSS_NOTE__MAX1)
+				context->count1++;
+				if (context->count1 >= context->max1)
 				{
-					/* Count output as long as the data loaded is not already equal to max 1 count. */
-					node->output += 1;
-					if (node->output > DSS_NOTE__MAX2) node->output = 0;
+					/* Max 1 count reached.  Load Data into counter. */
+					context->count1 = (int)DSS_NOTE__DATA;
+					context->count2 += 1;
+					if (context->count2 > context->max2) context->count2 = 0;
 				}
+			}
+		}
+
+		node->output = context->count2;
+		if (context->count2 != last_count2)
+		{
+			/* the xTime is only output if the output changed. */
+			switch (context->out_type)
+			{
+				case DISC_OUT_IS_ENERGY:
+					if (xTime != 0)
+						node->output = (context->count2 > last_count2) ? (last_count2 + xTime) : (last_count2 - xTime);
+					break;
+				case DISC_OUT_HAS_XTIME:
+					node->output += xTime;
+					break;
 			}
 		}
 	}
@@ -583,16 +634,17 @@ void dss_note_reset(struct node_description *node)
 {
 	struct dss_note_context *context = node->context;
 
-	context->clock_type = (int)DSS_NOTE__CLOCK_TYPE;
-	if ((context->clock_type < DISC_CLK_ON_F_EDGE) || (context->clock_type > DISC_CLK_IS_FREQ))
-		discrete_log("Invalid clock type passed in NODE_%d\n", node->node - NODE_START);
-	context->last = (DSS_COUNTER__CLOCK != 0);
+	context->clock_type = (int)DSS_NOTE__CLOCK_TYPE & DISC_CLK_MASK;
+	context->out_type =  (int)DSS_NOTE__CLOCK_TYPE & DISC_OUT_MASK;
+	context->last = (DSS_NOTE__CLOCK != 0);
 	context->t_sample = 1.0 / Machine->sample_rate;
 	if (context->clock_type == DISC_CLK_IS_FREQ) context->t_clock = 1.0 / DSS_NOTE__CLOCK;
 	context->t_left = 0;
 
-	context->count = (int)DSS_NOTE__DATA;
+	context->count1 = (int)DSS_NOTE__DATA;
+	context->count2 = 0;
 	context->max1 = (int)DSS_NOTE__MAX1;
+	context->max2 = (int)DSS_NOTE__MAX2;
 	node->output = 0;
 }
 

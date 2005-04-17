@@ -7,6 +7,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "phoenix.h"
 
 
 /* in sndhrdw/pleiads.c */

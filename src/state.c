@@ -31,7 +31,7 @@ enum {
 #define TRACE(x)
 #endif
 
-enum {MAX_INSTANCES = 25};
+enum {MAX_INSTANCES = 56};
 
 enum {
 	SS_INT8,

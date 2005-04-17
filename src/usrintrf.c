@@ -2499,16 +2499,17 @@ static int displaygameinfo(struct mame_bitmap *bitmap,int selected)
 	while (i < MAX_SOUND && Machine->drv->sound[i].sound_type)
 	{
 		const char *name;
-		int clock,count;
+		int type,clock,count;
 
 		name = sndnum_name(i);
+		type = Machine->drv->sound[i].sound_type;
 		clock = sndnum_clock(i);
 		count = 1;
 
 		i++;
 
 		while (i < MAX_SOUND
-				&& sndnum_name(i) == name
+				&& Machine->drv->sound[i].sound_type == type
 				&& sndnum_clock(i) == clock)
 		{
 			count++;

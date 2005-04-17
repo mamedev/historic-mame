@@ -5,7 +5,11 @@ Phoenix hardware games
 driver by Richard Davies
 
 Note:
-   pleiads is using another sound driver, sndhrdw\pleiads.c
+	The discrete sound part of Phoenix requires a sample rate of at least 44100.
+	This is because the frequencies are so high, that some sounds will be
+	missed at a lower sample rate.
+
+	pleiads is using another sound driver, sndhrdw\pleiads.c
  Andrew Scott (ascott@utkux.utcc.utk.edu)
 
 
@@ -37,7 +41,7 @@ Pleiads:
 #include "sound/tms36xx.h"
 #include "sound/ay8910.h"
 #include "sound/custom.h"
-
+#include "phoenix.h"
 
 
 READ8_HANDLER( phoenix_videoram_r );
@@ -54,8 +58,6 @@ PALETTE_INIT( pleiads );
 VIDEO_START( phoenix );
 VIDEO_UPDATE( phoenix );
 
-WRITE8_HANDLER( phoenix_sound_control_a_w );
-WRITE8_HANDLER( phoenix_sound_control_b_w );
 void *phoenix_sh_start(int clock, const struct CustomSound_interface *config);
 
 WRITE8_HANDLER( pleiads_sound_control_a_w );
@@ -627,14 +629,18 @@ static MACHINE_DRIVER_START( phoenix )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD_TAG("tms",  TMS36XX, 372)
 	MDRV_SOUND_CONFIG(phoenix_tms36xx_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
-	
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.5)
+
 	MDRV_SOUND_ADD_TAG("cust", CUSTOM, 0)
 	MDRV_SOUND_CONFIG(phoenix_custom_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.4)
+
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
+	MDRV_SOUND_CONFIG(phoenix_discrete_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.6)
 MACHINE_DRIVER_END
 
 
@@ -655,10 +661,12 @@ static MACHINE_DRIVER_START( pleiads )
 	MDRV_SOUND_REPLACE("tms", TMS36XX, 247)
 	MDRV_SOUND_CONFIG(pleiads_tms36xx_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
-	
+
 	MDRV_SOUND_REPLACE("cust", CUSTOM, 0)
 	MDRV_SOUND_CONFIG(pleiads_custom_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+
+	MDRV_SOUND_REMOVE("discrete")
 MACHINE_DRIVER_END
 
 
@@ -919,7 +927,7 @@ ROM_START( griffon )
 	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "griffon.d7",   0x0000, 0x0800, CRC(53c52eb0) SHA1(19624ca359996b77d3c65ef78a7af90eeb092377) )
 	ROM_LOAD( "griffon.d8",   0x0800, 0x0800, CRC(eba42f0f) SHA1(378282cb2c4e10c23179ae3c605ae7bf691150f6) )
-	
+
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	ROM_LOAD( "ic40_b.bin",   0x0000, 0x0100, CRC(79350b25) SHA1(57411be4c1d89677f7919ae295446da90612c8a8) )  /* palette low bits */
 	ROM_LOAD( "ic41_a.bin",   0x0100, 0x0100, CRC(e176b768) SHA1(e2184dd495ed579f10b6da0b78379e02d7a6229f) )  /* palette high bits */
@@ -1007,7 +1015,7 @@ ROM_START( capitol )
 	ROM_LOAD( "cp6.50",       0x2800, 0x0800, CRC(aaf798eb) SHA1(660774db4195aaa499569804a2304e969f168cdf) )
 	ROM_LOAD( "cp7.51",       0x3000, 0x0800, CRC(eaadf14c) SHA1(753a46317e98b1ae63f88f5c3e70ff1c7ec04286) )
 	ROM_LOAD( "cp8.52",       0x3800, 0x0800, CRC(d3fe2af4) SHA1(f0c9bfc17ba6f55fbe95136da40a3de775aa46d2) )
-	
+
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "cp11.23",      0x0000, 0x0800, CRC(9b0bbb8d) SHA1(cde7c0140e773fe28e97e36486d4e048710f6004) )
 	ROM_LOAD( "cp12.24",      0x0800, 0x0800, CRC(39949e66) SHA1(21a204f22f04c5808538b21d49ebc6b7cb7625e8) )

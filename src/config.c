@@ -762,6 +762,10 @@ static int config_save_xml(void)
 		}
 	}
 	
+#ifdef MESS
+	mess_config_save_xml(curfile.filetype, curfile.file);
+#endif
+
 	mame_fprintf(curfile.file, "\t</system>\n");
 	mame_fprintf(curfile.file, "</mameconfig>\n");
 	return 1;

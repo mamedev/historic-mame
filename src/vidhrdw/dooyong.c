@@ -482,6 +482,15 @@ VIDEO_UPDATE( pollux )
 	draw_tx(bitmap,0);
 }
 
+VIDEO_UPDATE( flytiger )
+{
+	draw_layer(bitmap,2,lastday_bgscroll,memory_region(REGION_GFX3)+0x78000,TRANSPARENCY_NONE);
+	draw_layer(bitmap,3,lastday_fgscroll,memory_region(REGION_GFX4)+0x78000,TRANSPARENCY_PEN);
+	draw_sprites(bitmap,2);
+	draw_tx(bitmap,0);
+}
+
+
 VIDEO_UPDATE( bluehawk )
 {
 	bluehawk_draw_layer(bitmap,2,lastday_bgscroll,memory_region(REGION_GFX3)+0x78000,TRANSPARENCY_NONE);

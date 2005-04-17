@@ -1449,6 +1449,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( chaknpop )	/* A04 (c) 1983 Taito Corporation */
 	DRIVER( josvolly )	/* ??? (c) 1983 Taito Corporation */
 	DRIVER( gsword )	/* ??? (c) 1984 Taito Corporation */
+	DRIVER( gsword2 )	/* ??? (c) 1984 Taito Corporation */
 	DRIVER( pitnrun )	/* ??? (c) 1984 Taito Corporation */
 	DRIVER( pitnruna )	/* ??? (c) 1984 Taito Corporation */
 	DRIVER( lkage )		/* A54 (c) 1984 Taito Corporation */
@@ -1523,7 +1524,8 @@ const struct GameDriver *drivers[] =
 	DRIVER( topspeed )	/* B14 (c) 1987 Taito Corporation Japan (World) */
 	DRIVER( topspedu )	/* B14 (c) 1987 Taito America Corporation (US) */
 	DRIVER( fullthrl )	/* B14 (c) 1987 Taito Corporation (Japan) */
-	DRIVER( opwolf )	/* B20 (c) 1987 Taito America Corporation (US) */
+	DRIVER( opwolf )	/* B20 (c) 1987 Taito Corporation Japan (World) */
+	DRIVER( opwolfu )	/* B20 (c) 1987 Taito America Corporation (US) */
 	DRIVER( opwolfb )	/* bootleg */
 	DRIVER( othunder )	/* B67 (c) 1988 Taito Corporation Japan (World) */
 	DRIVER( othundu )	/* B67 (c) 1988 Taito America Corporation (US) */
@@ -4274,6 +4276,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( tourtabl )	/* 030170			1978/03 [6507] */
 	DRIVER( tourtab2 )	/* 030170			1978/03 [6507] */
 	DRIVER( avalnche )	/* 030574			1978/04 [6502] */
+	DRIVER( cascade )	/* bootleg                         */
 	DRIVER( firetrk )	/* 030926			1978/06 [6808] */
 	DRIVER( skydiver )	/* 009787			1978/06 [6800] */
 	/* Smokey Joe */	/* 030926			1978/07 [6502] */
@@ -5561,6 +5564,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( pspikes )	/* (c) 1991 Video System Co. (World) */
 	DRIVER( pspikesk )	/* (c) 1991 Video System Co. (Korea) */
 	DRIVER( svolly91 )	/* (c) 1991 Video System Co. (Japan) */
+	DRIVER( pspikesb )	/* bootleg */
 	DRIVER( karatblz )	/* (c) 1991 Video System Co. */
 	DRIVER( karatblu )	/* (c) 1991 Video System Co. (US) */
 	DRIVER( karatblj )	/* (c) 1991 Video System / Tecmo (Japan) */
@@ -5569,6 +5573,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( aerofgtb )	/* (c) 1992 Video System Co. */
 	DRIVER( aerofgtc )	/* (c) 1992 Video System Co. */
 	DRIVER( sonicwi )	/* (c) 1992 Video System Co. (Japan) */
+	DRIVER( aerfboot )	/* bootleg */
+	DRIVER( wbbc97 )	/* (c) 1997 Comad */
 	DRIVER( welltris )	/* (c) 1991 Video System Co. (Japan) */
 	DRIVER( quiz18k )	/* (c) 1992 EIM (Welltris hardware) */
 	DRIVER( f1gp )		/* (c) 1991 Video System Co. */
@@ -5938,6 +5944,7 @@ Other Sun games
 	DRIVER( gulfstr2 )	/* (c) 1991 Dooyong + distributed by Media Shoji */
 	DRIVER( pollux )	/* (c) 1991 Dooyong */
 	DRIVER( polluxa )	/* (c) 1991 Dooyong */
+	DRIVER( flytiger )	/* (c) 1992 Dooyong */
 	DRIVER( bluehawk )	/* (c) 1993 Dooyong */
 	DRIVER( bluehawn )	/* (c) 1993 NTC */
 	DRIVER( sadari )	/* (c) 1993 NTC */
@@ -6197,6 +6204,7 @@ Other Sun games
 	DRIVER( mstworld )	/* (c) 199? */
 
 	DRIVER( kickgoal )	/* (c) 1995 */
+	DRIVER( holywact )	/* (c) 1995 */
 
 	/* U.S. Games games */
 	DRIVER( usg32 )
@@ -6368,9 +6376,10 @@ Other Sun games
 	DRIVER( vmetal )	/* (c) 1995 Excellent System? */
 	DRIVER( aquarium )	/* (c) 1996 Excellent System */
 	DRIVER( policetr )	/* (c) 1996 P&P Marketing */
-	DRIVER( policeto )	/* (c) 1996 P&P Marketing */
+	DRIVER( polict11 )	/* (c) 1996 P&P Marketing */
 	DRIVER( plctr13b )  /* (c) 1996 P&P Marketing */
 	DRIVER( sshooter )	/* (c) 1998 P&P Marketing */
+	DRIVER( sshoot12 )	/* (c) 1998 P&P Marketing */
 	DRIVER( pass )		/* (c) 1992 Oksan */
 	DRIVER( news )		/* "Virus"??? ((c) 1993 Poby in ROM VIRUS.4) */
 	DRIVER( taxidrvr )	/* [1984 Graphic Techno] */
@@ -6408,6 +6417,7 @@ Other Sun games
 	DRIVER( beaminv )	/* Tekunon Kougyou */
 	DRIVER( mcatadv )	/* (c) 1993 Wintechno */
 	DRIVER( mcatadvj )	/* (c) 1993 Wintechno */
+	DRIVER( catt )		/* (c) 1993 Wintechno */
 	DRIVER( nost )		/* (c) 1993 Face */
 	DRIVER( nostj )		/* (c) 1993 Face */
 	DRIVER( nostk )		/* (c) 1993 Face */

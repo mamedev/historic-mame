@@ -68,6 +68,7 @@ struct SN76496
 static void SN76496Write(int chip,int data)
 {
 	struct SN76496 *R = sndti_token(SOUND_SN76496, chip);
+	int n;
 
 
 	/* update the output buffer before changing the registers */
@@ -145,7 +146,7 @@ static void SN76496Write(int chip,int data)
 			case 6:	/* noise  : frequency, mode */
 				{
 					R->Register[r] = (R->Register[r] & 0x3f0) | (data & 0x0f);
-					int n = R->Register[6];
+					n = R->Register[6];
 					R->NoiseFB = (n & 4) ? FB_WNOISE : FB_PNOISE;
 					n &= 3;
 					/* N/512,N/1024,N/2048,Tone #3 output */

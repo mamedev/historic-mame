@@ -432,10 +432,10 @@ INPUT_PORTS_END
 static NVRAM_HANDLER( simpbowl )
 {
 	nvram_handler_konamigv_93C46( file, read_or_write );
-	nvram_handler_intelflash_0( file, read_or_write );
-	nvram_handler_intelflash_1( file, read_or_write );
-	nvram_handler_intelflash_2( file, read_or_write );
-	nvram_handler_intelflash_3( file, read_or_write );
+	nvram_handler_intelflash( 0, file, read_or_write );
+	nvram_handler_intelflash( 1, file, read_or_write );
+	nvram_handler_intelflash( 2, file, read_or_write );
+	nvram_handler_intelflash( 3, file, read_or_write );
 }
 
 static int flash_address;
@@ -679,7 +679,7 @@ static WRITE32_HANDLER( btc_trackball_w )
 static NVRAM_HANDLER( btchamp )
 {
 	nvram_handler_konamigv_93C46( file, read_or_write );
-	nvram_handler_intelflash_16le_0( file, read_or_write );
+	nvram_handler_intelflash( 0, file, read_or_write );
 }
 
 static DRIVER_INIT( btchamp )

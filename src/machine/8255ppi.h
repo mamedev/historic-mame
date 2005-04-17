@@ -52,4 +52,27 @@ WRITE8_HANDLER( ppi8255_4_w );
 WRITE8_HANDLER( ppi8255_5_w );
 WRITE8_HANDLER( ppi8255_6_w );
 WRITE8_HANDLER( ppi8255_7_w );
-#endif
+
+/**************************************************************************/
+/* Added by Kev Thacker */
+/* mode 2 (used by Sord M5 to communicate with FD-5 disc interface */
+
+/* interface for mode 2 */
+typedef struct 
+{
+	write8_handler	obfa_write[MAX_8255];
+	write8_handler	intra_write[MAX_8255];
+	write8_handler	ibfa_write[MAX_8255];
+} ppi8255_mode2_interface;
+
+/* set interface to use for mode 2 */
+/* call AFTER setting interface with other function */
+void ppi8255_set_mode2_interface( ppi8255_mode2_interface *intfce);
+
+/* set acka input */
+void ppi8255_set_input_acka(int which, int data);
+
+/* set stba input */
+void ppi8255_set_input_stba(int which, int data);
+
+#endif /* MESS */

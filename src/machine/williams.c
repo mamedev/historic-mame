@@ -1,9 +1,6 @@
 /***************************************************************************
 
-  machine.c
-
-  Functions to emulate general aspects of the machine (RAM, ROM, interrupts,
-  I/O ports)
+	Williams 6809 system
 
 ***************************************************************************/
 
@@ -20,19 +17,11 @@
 
 
 /* banking addresses set by the drivers */
-UINT8 *williams_bank_base;
-UINT8 *defender_bank_base;
-const UINT32 *defender_bank_list;
 UINT8 *mayday_protection;
 
 /* internal bank switching tracking */
 static UINT8 blaster_bank;
 static UINT8 vram_bank;
-UINT8 williams2_bank;
-
-/* switches controlled by $c900 */
-UINT16 sinistar_clip;
-UINT8 williams_cocktail;
 
 /* other stuff */
 static UINT16 joust2_current_sound_data;
@@ -54,10 +43,6 @@ static READ8_HANDLER( williams_49way_port_0_r );
 
 /* newer-Williams routines */
 static WRITE8_HANDLER( williams2_snd_cmd_w );
-
-/* Defender-specific code */
-static READ8_HANDLER( defender_io_r );
-static WRITE8_HANDLER( defender_io_w );
 
 /* Lotto Fun-specific code */
 static READ8_HANDLER( lottofun_input_port_0_r );
@@ -337,7 +322,73 @@ MACHINE_INIT( williams )
 
 /*************************************
  *
- *	Older Williams VRAM/ROM banking
+ *	Newer Williams interrupts
+ *
+ *************************************/
+
+static void williams2_va11_callback(int scanline)
+{
+	/* the IRQ signal comes into CB1, and is set to VA11 */
+	pia_0_cb1_w(0, scanline & 0x20);
+	pia_1_ca1_w(0, scanline & 0x20);
+
+	/* update the screen while we're here */
+	force_partial_update(scanline);
+
+	/* set a timer for the next update */
+	scanline += 8;
+	if (scanline >= 256) scanline = 0;
+	timer_set(cpu_getscanlinetime(scanline), scanline, williams2_va11_callback);
+}
+
+
+static void williams2_endscreen_off_callback(int param)
+{
+	/* the /ENDSCREEN signal comes into CA1 */
+	pia_0_ca1_w(0, 1);
+}
+
+
+static void williams2_endscreen_callback(int param)
+{
+	/* the /ENDSCREEN signal comes into CA1 */
+	pia_0_ca1_w(0, 0);
+
+	/* set a timer to turn it off once the scanline counter resets */
+	timer_set(cpu_getscanlinetime(8), 0, williams2_endscreen_off_callback);
+
+	/* set a timer for next frame */
+	timer_set(cpu_getscanlinetime(254), 0, williams2_endscreen_callback);
+}
+
+
+
+/*************************************
+ *
+ *	Newer Williams initialization
+ *
+ *************************************/
+
+MACHINE_INIT( williams2 )
+{
+	/* reset the PIAs */
+	pia_reset();
+
+	/* make sure our banking is reset */
+	williams2_bank_select_w(0, 0);
+
+	/* set a timer to go off every 16 scanlines, to toggle the VA11 line and update the screen */
+	timer_set(cpu_getscanlinetime(0), 0, williams2_va11_callback);
+
+	/* also set a timer to go off on scanline 254 */
+	timer_set(cpu_getscanlinetime(254), 0, williams2_endscreen_callback);
+}
+
+
+
+/*************************************
+ *
+ *	VRAM/ROM banking
  *
  *************************************/
 
@@ -345,21 +396,39 @@ WRITE8_HANDLER( williams_vram_select_w )
 {
 	/* VRAM/ROM banking from bit 0 */
 	vram_bank = data & 0x01;
+	cpu_setbank(1, memory_region(REGION_CPU1) + 0x10000 * vram_bank);
 
 	/* cocktail flip from bit 1 */
 	williams_cocktail = data & 0x02;
+}
 
-	/* sinistar clipping enable from bit 2 */
-	sinistar_clip = (data & 0x04) ? 0x7400 : 0xffff;
 
-	/* set the bank */
-	if (vram_bank)
+WRITE8_HANDLER( williams2_bank_select_w )
+{
+	/* the low two bits control the paging */
+	switch (data & 0x03)
 	{
-		cpu_setbank(1, williams_bank_base);
-	}
-	else
-	{
-		cpu_setbank(1, williams_videoram);
+		/* page 0 is video ram */
+		case 0:
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x8fff, 0, 0, MRA8_BANK1);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x87ff, 0, 0, MWA8_RAM);
+			cpu_setbank(1, williams_videoram);
+			break;
+		
+		/* pages 1 and 2 are ROM */
+		case 1:
+		case 2:
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x8fff, 0, 0, MRA8_BANK1);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x87ff, 0, 0, MWA8_RAM);
+			cpu_setbank(1, memory_region(REGION_CPU1) + 0x10000 + 0x10000 * ((data & 6) >> 1));
+			break;
+		
+		/* page 3 accesses palette RAM; the remaining areas are as if page 1 ROM was selected */
+		case 3:
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x87ff, 0, 0, williams2_paletteram_r);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x87ff, 0, 0, williams2_paletteram_w);
+			cpu_setbank(1, memory_region(REGION_CPU1) + 0x10000 + 0x10000 * ((data & 4) >> 1));
+			break;
 	}
 }
 
@@ -367,7 +436,7 @@ WRITE8_HANDLER( williams_vram_select_w )
 
 /*************************************
  *
- *	Older Williams sound commands
+ *	Sound commands
  *
  *************************************/
 
@@ -386,6 +455,17 @@ WRITE8_HANDLER( williams_snd_cmd_w )
 WRITE8_HANDLER( playball_snd_cmd_w )
 {
 	timer_set(TIME_NOW, data, williams_deferred_snd_cmd_w);
+}
+
+
+static void williams2_deferred_snd_cmd_w(int param)
+{
+	pia_2_porta_w(0, param);
+}
+
+static WRITE8_HANDLER( williams2_snd_cmd_w )
+{
+	timer_set(TIME_NOW, data, williams2_deferred_snd_cmd_w);
 }
 
 
@@ -458,135 +538,51 @@ READ8_HANDLER( williams_input_port_49way_0_5_r )
 
 /*************************************
  *
- *	Newer Williams interrupts
+ *	CMOS access
  *
  *************************************/
 
-static void williams2_va11_callback(int scanline)
+WRITE8_HANDLER( williams_cmos_w )
 {
-	/* the IRQ signal comes into CB1, and is set to VA11 */
-	pia_0_cb1_w(0, scanline & 0x20);
-	pia_1_ca1_w(0, scanline & 0x20);
-
-	/* update the screen while we're here */
-	force_partial_update(scanline);
-
-	/* set a timer for the next update */
-	scanline += 8;
-	if (scanline >= 256) scanline = 0;
-	timer_set(cpu_getscanlinetime(scanline), scanline, williams2_va11_callback);
+	/* only 4 bits are valid */
+	generic_nvram[offset] = data | 0xf0;
 }
 
 
-static void williams2_endscreen_off_callback(int param)
+WRITE8_HANDLER( bubbles_cmos_w )
 {
-	/* the /ENDSCREEN signal comes into CA1 */
-	pia_0_ca1_w(0, 1);
-}
-
-
-static void williams2_endscreen_callback(int param)
-{
-	/* the /ENDSCREEN signal comes into CA1 */
-	pia_0_ca1_w(0, 0);
-
-	/* set a timer to turn it off once the scanline counter resets */
-	timer_set(cpu_getscanlinetime(8), 0, williams2_endscreen_off_callback);
-
-	/* set a timer for next frame */
-	timer_set(cpu_getscanlinetime(254), 0, williams2_endscreen_callback);
+	/* bubbles has additional CMOS for a full 8 bits */
+	generic_nvram[offset] = data;
 }
 
 
 
 /*************************************
  *
- *	Newer Williams initialization
+ *	Watchdog
  *
  *************************************/
 
-MACHINE_INIT( williams2 )
+WRITE8_HANDLER( williams_watchdog_reset_w )
 {
-	/* reset the PIAs */
-	pia_reset();
+	/* yes, the data bits are checked for this specific value */
+	if (data == 0x39)
+		watchdog_reset_w(0,0);
+}
 
-	/* make sure our banking is reset */
-	williams2_bank_select_w(0, 0);
 
-	/* set a timer to go off every 16 scanlines, to toggle the VA11 line and update the screen */
-	timer_set(cpu_getscanlinetime(0), 0, williams2_va11_callback);
-
-	/* also set a timer to go off on scanline 254 */
-	timer_set(cpu_getscanlinetime(254), 0, williams2_endscreen_callback);
+WRITE8_HANDLER( williams2_watchdog_reset_w )
+{
+	/* yes, the data bits are checked for this specific value */
+	if ((data & 0x3f) == 0x14)
+		watchdog_reset_w(0,0);
 }
 
 
 
 /*************************************
  *
- *	Newer Williams ROM banking
- *
- *************************************/
-
-WRITE8_HANDLER( williams2_bank_select_w )
-{
-	static const UINT32 bank[8] = { 0, 0x10000, 0x20000, 0x10000, 0, 0x30000, 0x40000, 0x30000 };
-
-	/* select bank index (only lower 3 bits used by IC56) */
-	williams2_bank = data & 0x07;
-
-	/* bank 0 references videoram */
-	if (williams2_bank == 0)
-	{
-		cpu_setbank(1, williams_videoram);
-		cpu_setbank(2, williams_videoram + 0x8000);
-	}
-
-	/* other banks reference ROM plus either palette RAM or the top of videoram */
-	else
-	{
-		unsigned char *RAM = memory_region(REGION_CPU1);
-
-		cpu_setbank(1, &RAM[bank[williams2_bank]]);
-
-		if ((williams2_bank & 0x03) == 0x03)
-		{
-			cpu_setbank(2, williams2_paletteram);
-		}
-		else
-		{
-			cpu_setbank(2, williams_videoram + 0x8000);
-		}
-	}
-
-	/* regardless, the top 2k references videoram */
-	cpu_setbank(3, williams_videoram + 0x8800);
-}
-
-
-
-/*************************************
- *
- *	Newer Williams sound commands
- *
- *************************************/
-
-static void williams2_deferred_snd_cmd_w(int param)
-{
-	pia_2_porta_w(0, param);
-}
-
-
-static WRITE8_HANDLER( williams2_snd_cmd_w )
-{
-	timer_set(TIME_NOW, data, williams2_deferred_snd_cmd_w);
-}
-
-
-
-/*************************************
- *
- *	Newer Williams other stuff
+ *	Diagnostic controls
  *
  *************************************/
 
@@ -638,94 +634,48 @@ MACHINE_INIT( defender )
 
 	/* make sure the banking is reset to 0 */
 	defender_bank_select_w(0, 0);
-	cpu_setbank(1, williams_videoram);
 }
 
+
+WRITE8_HANDLER( defender_video_control_w )
+{
+	williams_cocktail = data & 0x01;
+}
 
 
 WRITE8_HANDLER( defender_bank_select_w )
 {
-	UINT32 bank_offset = defender_bank_list[data & 7];
+	data &= 0x0f;
 
 	/* set bank address */
-	cpu_setbank(2, &memory_region(REGION_CPU1)[bank_offset]);
-
-	/* if the bank maps into normal RAM, it represents I/O space */
-	if (bank_offset < 0x10000)
+	switch (data)
 	{
-		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xcfff, 0, 0, defender_io_r);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xcfff, 0, 0, defender_io_w);
+		/* page 0 is I/O space */
+		case 0:
+			defender_install_io_space();
+			break;
+		
+		/* pages 1-9 map to ROM banks */
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+		case 6:
+		case 7:
+		case 8:
+		case 9:
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xcfff, 0, 0, MRA8_BANK1);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xcfff, 0, 0, MWA8_ROM);
+			cpu_setbank(1, &memory_region(REGION_CPU1)[0x10000 + (data - 1) * 0x1000]);
+			break;
+		
+		/* pages A-F are not connected */
+		default:
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xcfff, 0, 0, MRA8_NOP);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xcfff, 0, 0, MWA8_NOP);
+			break;
 	}
-
-	/* otherwise, it's ROM space */
-	else
-	{
-		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xcfff, 0, 0, MRA8_BANK2);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xcfff, 0, 0, MWA8_ROM);
-	}
-}
-
-
-READ8_HANDLER( defender_input_port_0_r )
-{
-	int keys, altkeys;
-
-	/* read the standard keys and the cheat keys */
-	keys = readinputport(0);
-	altkeys = readinputport(3);
-
-	/* modify the standard keys with the cheat keys */
-	if (altkeys)
-	{
-		keys |= altkeys;
-		if (memory_region(REGION_CPU1)[0xa0bb] == 0xfd)
-		{
-			if (keys & 0x02)
-				keys = (keys & 0xfd) | 0x40;
-			else if (keys & 0x40)
-				keys = (keys & 0xbf) | 0x02;
-		}
-	}
-
-	return keys;
-}
-
-
-READ8_HANDLER( defender_io_r )
-{
-	/* PIAs */
-	if (offset >= 0x0c00 && offset < 0x0c04)
-		return pia_1_r(offset & 3);
-	else if (offset >= 0x0c04 && offset < 0x0c08)
-		return pia_0_r(offset & 3);
-
-	/* video counter */
-	else if (offset == 0x800)
-		return williams_video_counter_r(offset);
-
-	/* If not bank 0 then return banked RAM */
-	return defender_bank_base[offset];
-}
-
-
-WRITE8_HANDLER( defender_io_w )
-{
-	/* write the data through */
-	defender_bank_base[offset] = data;
-
-	/* watchdog */
-	if (offset == 0x03fc)
-		watchdog_reset_w(offset, data);
-
-	/* palette */
-	else if (offset < 0x10)
-		paletteram_BBGGGRRR_w(offset, data);
-
-	/* PIAs */
-	else if (offset >= 0x0c00 && offset < 0x0c04)
-		pia_1_w(offset & 3, data);
-	else if (offset >= 0x0c04 && offset < 0x0c08)
-		pia_0_w(offset & 3, data);
 }
 
 
@@ -750,50 +700,65 @@ READ8_HANDLER( mayday_protection_r )
 
 /*************************************
  *
+ *	Sinistar-specific routines
+ *
+ *************************************/
+
+WRITE8_HANDLER( sinistar_vram_select_w )
+{
+	/* low two bits are standard */
+	williams_vram_select_w(offset, data);
+	
+	/* window enable from bit 2 (clips to 0x7400) */
+	williams_blitter_window_enable = data & 0x04;
+}
+
+
+
+/*************************************
+ *
  *	Blaster-specific routines
  *
  *************************************/
 
-static const UINT32 blaster_bank_offset[16] =
+INLINE void update_blaster_banking(void)
 {
-	0x00000, 0x10000, 0x14000, 0x18000, 0x1c000, 0x20000, 0x24000, 0x28000,
-	0x2c000, 0x30000, 0x34000, 0x38000, 0x2c000, 0x30000, 0x34000, 0x38000
-};
+	UINT8 *base = memory_region(REGION_CPU1);
+	
+	/* if vram_bank is 1, we map in ROM areas based on the current bank select */
+	if (vram_bank)
+	{
+		cpu_setbank(1, base + 0x18000 + 0x4000 * blaster_bank);
+		cpu_setbank(2, base + 0x10000);
+	}
+	
+	/* otherwise, we map standard video RAM */
+	else
+	{
+		cpu_setbank(1, base + 0x00000);
+		cpu_setbank(2, base + 0x04000);
+	}
+}
 
 
 WRITE8_HANDLER( blaster_vram_select_w )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	/* VRAM/ROM banking from bit 0 */
+	vram_bank = data & 0x01;
+	update_blaster_banking();
 
-	vram_bank = data;
-
-	/* non-zero banks map to RAM and the currently-selected bank */
-	if (vram_bank)
-	{
-		cpu_setbank(1, &RAM[blaster_bank_offset[blaster_bank]]);
-		cpu_setbank(2, williams_bank_base + 0x4000);
-	}
-
-	/* bank 0 maps to videoram */
-	else
-	{
-		cpu_setbank(1, williams_videoram);
-		cpu_setbank(2, williams_videoram + 0x4000);
-	}
+	/* cocktail flip from bit 1 */
+	williams_cocktail = data & 0x02;
+	
+	/* window enable from bit 2 (clips to 0x9700) */
+	williams_blitter_window_enable = data & 0x04;
 }
 
 
 WRITE8_HANDLER( blaster_bank_select_w )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
 	blaster_bank = data & 15;
-
-	/* only need to change anything if we're not pointing to VRAM */
-	if (vram_bank)
-	{
-		cpu_setbank(1, &RAM[blaster_bank_offset[blaster_bank]]);
-	}
+	update_blaster_banking();
 }
 
 

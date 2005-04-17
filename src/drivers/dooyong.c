@@ -9,6 +9,7 @@ Gulf Storm     Z80     Z80 2xYM2203
 Pollux         Z80     Z80 2xYM2203
 Blue Hawk      Z80     Z80 YM2151 OKI6295
 Sadari         Z80     Z80 YM2151 OKI6295
+Flying Tiger   Z80     Z80 YM2151 OKI6295
 Gun Dealer '94 Z80     Z80 YM2151 OKI6295
 Super-X        68000   Z80 YM2151 OKI6295
 R-Shark        68000   Z80 YM2151 OKI6295
@@ -65,6 +66,7 @@ VIDEO_UPDATE( lastday );
 VIDEO_UPDATE( gulfstrm );
 VIDEO_UPDATE( pollux );
 VIDEO_UPDATE( bluehawk );
+VIDEO_UPDATE( flytiger );
 VIDEO_UPDATE( primella );
 VIDEO_UPDATE( rshark );
 VIDEO_UPDATE( popbingo );
@@ -163,6 +165,34 @@ static ADDRESS_MAP_START( bluehawk_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xd000, 0xdfff) AM_WRITE(MWA8_RAM) AM_BASE(&lastday_txvideoram)
 	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
 	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( flytiger_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xc000, 0xcfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_READ(input_port_0_r)
+	AM_RANGE(0xe002, 0xe002) AM_READ(input_port_1_r)
+	AM_RANGE(0xe004, 0xe004) AM_READ(input_port_2_r)
+	AM_RANGE(0xe006, 0xe006) AM_READ(input_port_3_r)
+	AM_RANGE(0xe008, 0xe008) AM_READ(input_port_4_r)
+	AM_RANGE(0xe800, 0xefff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf000, 0xf7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( flytiger_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xd000, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(lastday_bankswitch_w)
+	AM_RANGE(0xe010, 0xe010) AM_WRITE(pollux_ctrl_w)	/* coin counter, flip screen */
+	AM_RANGE(0xe020, 0xe020) AM_WRITE(soundlatch_w)
+	AM_RANGE(0xe030, 0xe034) AM_WRITE(MWA8_RAM) AM_BASE(&lastday_fgscroll)
+	AM_RANGE(0xe040, 0xe044) AM_WRITE(MWA8_RAM) AM_BASE(&lastday_bgscroll)
+	AM_RANGE(0xe800, 0xefff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_w) AM_BASE(&paletteram)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_RAM) AM_BASE(&lastday_txvideoram)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( primella_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -641,6 +671,91 @@ INPUT_PORTS_START( bluehawk )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
+
+INPUT_PORTS_START( flytiger )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* 8bit */
+	PORT_DIPNAME( 0x01, 0x01, "3" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* 8bit */
+	PORT_DIPNAME( 0x01, 0x01, "4" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
 
 INPUT_PORTS_START( primella )
 	PORT_START
@@ -1193,6 +1308,43 @@ static MACHINE_DRIVER_START( bluehawk )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( flytiger )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 8000000)	/* ??? */
+	MDRV_CPU_PROGRAM_MAP(flytiger_readmem,flytiger_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ??? */
+	MDRV_CPU_PROGRAM_MAP(bluehawk_sound_readmem,bluehawk_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 1*8, 31*8-1 )
+	MDRV_GFXDECODE(lastday_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
+
+	MDRV_VIDEO_EOF(dooyong)
+	MDRV_VIDEO_UPDATE(flytiger)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 3579545)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
+
+	MDRV_SOUND_ADD(OKIM6295, 1000000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
+MACHINE_DRIVER_END
+
 static MACHINE_DRIVER_START( primella )
 
 	/* basic machine hardware */
@@ -1617,6 +1769,103 @@ ROM_START( bluehawn )
 	ROM_LOAD( "rom4",         0x00000, 0x20000, CRC(f7318919) SHA1(8b7e2ffe77603142cf1b9440585f8dfa9199ed05) )
 ROM_END
 
+/*
+
+Flying Tiger
+Dooyong, 1992
+
+PCB Layout
+----------
+
+Bottom Board
+
+
+|----------------------------------------|
+|   TL084 YM3012 Z80B  3.579545MHz       |
+|                     1MHz M6295         |
+|   VOL   YM2151  3       4              |
+|        PAL   6116   |-------|          |
+|                     |DY001-A|  DY-FT-M1|
+|                     |       |          |
+|   DSW1  PAL 6264    |       |          |
+|J      |----|        |       |          |
+|A      |DY-2|  2     |-------|          |
+|M      |----|                           |
+|M  DSW2                                 |
+|A                    |-------|          |
+|                     |DY002-A|          |
+|                     |       |  DY-FT-M2|
+|                     |       |          |
+|                     |       |          |
+|         6264  PAL   |-------|          |
+|         1          PAL                 |
+|16MHz    Z80H       6116  6116          |
+|----------------------------------------|
+Notes:
+      DY-2        : Unknown PLCC44 IC (FPGA/CPLD?) stamped 'DY-2'
+      DY001/DY002 : Hyundai DOOYONG PLCC84 ICs (FPGA)
+      Z80H clock  : 8.000MHz [16/2]
+      Z80B clock  : 4.000MHz [16/4]
+      M6295 clock : 1.000MHz. Sample Rate = 1000000 / 132
+      YM2151 clock: 3.579545MHz
+      VSync       : 60Hz
+      HSync       : 15.68kHz
+
+
+Top Board
+
+|--------------------------|
+|                          |
+|    6116  PAL  PAL        |
+|                          |
+|                          |
+|                  6116    |
+|                          |
+|                  6116    |
+|     16    14             |
+|                          |
+|     15    13             |
+|                          |
+|                          |
+|  PAL                     |
+|                          |
+|                          |
+|          6116            |
+|                          |
+|                          |
+|          6116            |
+|--------------------------|
+
+*/
+
+ROM_START( flytiger )
+	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 64k for code + 128k for banks */
+	ROM_LOAD( "1.3c",         0x00000, 0x20000, CRC(2d634c8e) SHA1(012ad31c0edc67d727d216e2ede321c1d1f27226) )
+	ROM_RELOAD(               0x10000, 0x20000 )				/* banked at 0x8000-0xbfff */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* sound */
+	ROM_LOAD( "3.6p",         0x00000, 0x10000, CRC(d238df5e) SHA1(428fd7abd78238089c0c0fd73de57102f4f65a74))
+
+	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
+	ROM_LOAD( "2.4h",         0x08000, 0x08000, CRC(2fb72912) SHA1(34453e2b49cf3a6bc9e87a8400428d95f626b97a) )
+	ROM_CONTINUE( 0x0000,0x8000)
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
+	ROM_LOAD16_BYTE( "13.4h", 0x00000, 0x20000, CRC(8a158b95) SHA1(ed09d9c40b76a27e06601381e463a00b16555f1e) )
+	ROM_LOAD16_BYTE( "15.2h", 0x00001, 0x20000, CRC(399f6043) SHA1(ea0debd6d0f8c61f0078809c2828734fc15e891d) )
+	ROM_LOAD16_BYTE( "14.4k", 0x40000, 0x20000, CRC(df66b6f3) SHA1(3a29ae69a09306c5a2a2786acbf227832b408152) )
+	ROM_LOAD16_BYTE( "16.2k", 0x40001, 0x20000, CRC(f24a5099) SHA1(408559057989a40ca298baa85d5fe7cbde72d2b8) )
+
+	ROM_REGION( 0x80000, REGION_GFX4,0 )	/* tiles + tilemaps */
+	ROM_LOAD16_WORD_SWAP( "dy-ft-m1.11n",   0x00000, 0x80000, CRC(f06589c2) SHA1(fb4aa12257e2e0162f2219ebea5177e8bb15e3f0) )
+
+	ROM_REGION( 0x80000, REGION_GFX3,0 )	/* tiles + tilemaps */
+	ROM_LOAD16_WORD_SWAP("dy-ft-m2.11g",   0x00000, 0x80000, CRC(7545f9c9) SHA1(dcab4d64a8fada5afd4a352f5a30c868676d2b57) )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* OKI6295 samples */
+	ROM_LOAD( "4.9n",         0x00000, 0x20000, CRC(cd95cf9a) SHA1(d79e3aeda6a13d7b87369453bcf668778135b7fe) )
+ROM_END
+
 ROM_START( sadari )
 	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 64k for code + 128k for banks */
 	ROM_LOAD( "1.3d",         0x00000, 0x20000, CRC(bd953217) SHA1(6e230103ea01744761ab8a194d0dde6921bee92e) )
@@ -1948,6 +2197,7 @@ GAMEX(1991, gulfstrm, 0,        gulfstrm, gulfstrm, 0, ROT270, "Dooyong", "Gulf 
 GAMEX(1991, gulfstr2, gulfstrm, gulfstrm, gulfstrm, 0, ROT270, "Dooyong (Media Shoji license)", "Gulf Storm (Media Shoji)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1991, pollux,   0,        pollux,   pollux,   0, ROT270, "Dooyong", "Pollux (set 1)" )
 GAME( 1991, polluxa,  pollux,   pollux,   pollux,   0, ROT270, "Dooyong", "Pollux (set 2)" )
+GAMEX(1992, flytiger, 0,        flytiger, flytiger, 0, ROT270, "Dooyong", "Flying Tiger", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1993, bluehawk, 0,        bluehawk, bluehawk, 0, ROT270, "Dooyong", "Blue Hawk", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1993, bluehawn, bluehawk, bluehawk, bluehawk, 0, ROT270, "[Dooyong] (NTC license)", "Blue Hawk (NTC)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1993, sadari,   0,        primella, primella, 0, ROT0,   "[Dooyong] (NTC license)", "Sadari" )

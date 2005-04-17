@@ -51,16 +51,20 @@ register 08 could be screen height / 2 (vblank start?)
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "sound/2610intf.h"
+#include "sound/3812intf.h"
+#include "sound/okim6295.h"
 
 
 extern data16_t *aerofgt_rasterram;
 extern data16_t *aerofgt_bg1videoram,*aerofgt_bg2videoram;
 extern data16_t *aerofgt_spriteram1,*aerofgt_spriteram2,*aerofgt_spriteram3;
+extern data16_t *wbbc97_bitmapram;
 extern size_t aerofgt_spriteram1_size,aerofgt_spriteram2_size,aerofgt_spriteram3_size;
 
 WRITE16_HANDLER( aerofgt_bg1videoram_w );
 WRITE16_HANDLER( aerofgt_bg2videoram_w );
 WRITE16_HANDLER( pspikes_gfxbank_w );
+WRITE16_HANDLER( pspikesb_gfxbank_w );
 WRITE16_HANDLER( karatblz_gfxbank_w );
 WRITE16_HANDLER( spinlbrk_gfxbank_w );
 WRITE16_HANDLER( turbofrc_gfxbank_w );
@@ -70,17 +74,20 @@ WRITE16_HANDLER( aerofgt_bg1scrolly_w );
 WRITE16_HANDLER( aerofgt_bg2scrollx_w );
 WRITE16_HANDLER( aerofgt_bg2scrolly_w );
 WRITE16_HANDLER( pspikes_palette_bank_w );
+WRITE16_HANDLER( wbbc97_bitmap_enable_w );
 VIDEO_START( pspikes );
 VIDEO_START( karatblz );
 VIDEO_START( spinlbrk );
 VIDEO_START( turbofrc );
 VIDEO_UPDATE( pspikes );
+VIDEO_UPDATE( pspikesb );
 VIDEO_UPDATE( karatblz );
 VIDEO_UPDATE( spinlbrk );
 VIDEO_UPDATE( turbofrc );
 VIDEO_UPDATE( aerofgt );
-
-
+VIDEO_UPDATE( aerfboot );
+VIDEO_START( wbbc97 );
+VIDEO_UPDATE( wbbc97 );
 
 
 static int pending_command;
@@ -101,6 +108,15 @@ static WRITE16_HANDLER( turbofrc_sound_command_w )
 	{
 		pending_command = 1;
 		soundlatch_w(offset,(data >> 8) & 0xff);
+		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
+	}
+}
+
+static WRITE16_HANDLER( aerfboot_soundlatch_w )
+{
+	if(data & 0x8000)
+	{
+		soundlatch_w(0,data & 0xff);
 		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 	}
 }
@@ -128,6 +144,11 @@ static MACHINE_INIT( aerofgt )
 }
 
 
+static WRITE16_HANDLER( pspikesb_oki_banking_w )
+{
+	OKIM6295_set_bank_base(0, 0x40000 * (data & 3));
+}
+
 
 static ADDRESS_MAP_START( pspikes_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
@@ -154,6 +175,24 @@ static ADDRESS_MAP_START( pspikes_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xfff002, 0xfff003) AM_WRITE(pspikes_gfxbank_w)
 	AM_RANGE(0xfff004, 0xfff005) AM_WRITE(aerofgt_bg1scrolly_w)
 	AM_RANGE(0xfff006, 0xfff007) AM_WRITE(sound_command_w)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( pspikesb_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_ROM
+	AM_RANGE(0x100000, 0x10ffff) AM_RAM	/* work RAM */
+	AM_RANGE(0x200000, 0x203fff) AM_RAM AM_BASE(&aerofgt_spriteram1) AM_SIZE(&aerofgt_spriteram1_size)
+	AM_RANGE(0xff8000, 0xff8fff) AM_RAM AM_WRITE(aerofgt_bg1videoram_w) AM_BASE(&aerofgt_bg1videoram)
+	AM_RANGE(0xffc000, 0xffcbff) AM_RAM AM_BASE(&aerofgt_spriteram3) AM_SIZE(&aerofgt_spriteram3_size)
+	AM_RANGE(0xffd200, 0xffd201) AM_WRITE(pspikesb_gfxbank_w)
+	AM_RANGE(0xffd000, 0xffdfff) AM_RAM AM_BASE(&aerofgt_rasterram)	/* bg1 scroll registers */
+	AM_RANGE(0xffe000, 0xffefff) AM_RAM AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0xfff000, 0xfff001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0xfff002, 0xfff003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0xfff004, 0xfff005) AM_READ(input_port_2_word_r)
+	AM_RANGE(0xfff004, 0xfff005) AM_WRITE(aerofgt_bg1scrolly_w)
+	AM_RANGE(0xfff008, 0xfff009) AM_WRITE(pspikesb_oki_banking_w)
+	AM_RANGE(0xc04000, 0xc04001) AM_WRITENOP
+	AM_RANGE(0xfff006, 0xfff007) AM_READWRITE(OKIM6295_status_0_lsb_r, OKIM6295_data_0_lsb_w)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( karatblz_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -335,7 +374,61 @@ static ADDRESS_MAP_START( aerofgt_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xffffc0, 0xffffc1) AM_WRITE(sound_command_w)
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( aerfboot_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_ROM
+	AM_RANGE(0x0c0000, 0x0cffff) AM_RAM	/* work RAM */
+	AM_RANGE(0x0d0000, 0x0d1fff) AM_RAM AM_WRITE(aerofgt_bg1videoram_w) AM_BASE(&aerofgt_bg1videoram)
+	AM_RANGE(0x0d2000, 0x0d3fff) AM_RAM AM_WRITE(aerofgt_bg2videoram_w) AM_BASE(&aerofgt_bg2videoram)
+	AM_RANGE(0x0e0000, 0x0e3fff) AM_RAM AM_BASE(&aerofgt_spriteram1) AM_SIZE(&aerofgt_spriteram1_size)
+	AM_RANGE(0x0e4000, 0x0e7fff) AM_RAM AM_BASE(&aerofgt_spriteram2) AM_SIZE(&aerofgt_spriteram2_size)
+	AM_RANGE(0x0f8000, 0x0fbfff) AM_RAM	/* work RAM */
+	AM_RANGE(0x0fc000, 0x0fc7ff) AM_RAM //AM_BASE(&aerofgt_spriteram3) AM_SIZE(&aerofgt_spriteram3_size)
+	AM_RANGE(0x0fd000, 0x0fd7ff) AM_RAM AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x0fe000, 0x0fe001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x0fe002, 0x0fe003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x0fe004, 0x0fe005) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x0fe008, 0x0fe009) AM_READ(input_port_3_word_r)
+	AM_RANGE(0x0fe002, 0x0fe003) AM_WRITE(aerofgt_bg1scrolly_w)
+	AM_RANGE(0x0fe004, 0x0fe005) AM_WRITE(aerofgt_bg2scrollx_w)
+	AM_RANGE(0x0fe006, 0x0fe007) AM_WRITE(aerofgt_bg2scrolly_w)
+	AM_RANGE(0x0fe008, 0x0fe00b) AM_WRITE(turbofrc_gfxbank_w)
+	AM_RANGE(0x0fe010, 0x0fe011) AM_WRITENOP
+	AM_RANGE(0x0fe012, 0x0fe013) AM_WRITE(aerfboot_soundlatch_w)
+	AM_RANGE(0x0fe400, 0x0fe401) AM_WRITENOP
+	AM_RANGE(0x0fe402, 0x0fe403) AM_WRITENOP
+	AM_RANGE(0x0ff000, 0x0fffff) AM_RAM AM_BASE(&aerofgt_rasterram)	/* used only for the scroll registers */
+	AM_RANGE(0x10b800, 0x10bfff) AM_RAM AM_BASE(&aerofgt_spriteram3) AM_SIZE(&aerofgt_spriteram3_size)
+ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( wbbc97_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x3fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x500000, 0x50ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x600000, 0x605fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xa00000, 0xa3ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xff8000, 0xff8fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xffd000, 0xffdfff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xffe000, 0xffefff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xfff000, 0xfff001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0xfff002, 0xfff003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0xfff004, 0xfff005) AM_READ(input_port_2_word_r)
+	AM_RANGE(0xfff006, 0xfff007) AM_READNOP
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( wbbc97_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x3fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x500000, 0x50ffff) AM_WRITE(MWA16_RAM)	/* work RAM */
+	AM_RANGE(0x600000, 0x605fff) AM_WRITE(MWA16_RAM) AM_BASE(&aerofgt_spriteram1) AM_SIZE(&aerofgt_spriteram1_size)
+	AM_RANGE(0xa00000, 0xa3ffff) AM_WRITE(MWA16_RAM) AM_BASE(&wbbc97_bitmapram)
+	AM_RANGE(0xff8000, 0xff8fff) AM_WRITE(aerofgt_bg1videoram_w) AM_BASE(&aerofgt_bg1videoram)
+	AM_RANGE(0xffc000, 0xffc3ff) AM_WRITE(MWA16_RAM) AM_BASE(&aerofgt_spriteram3) AM_SIZE(&aerofgt_spriteram3_size)
+	AM_RANGE(0xffd000, 0xffdfff) AM_WRITE(MWA16_RAM) AM_BASE(&aerofgt_rasterram)	/* bg1 scroll registers */
+	AM_RANGE(0xffe000, 0xffefff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0xfff000, 0xfff001) AM_WRITE(pspikes_palette_bank_w)
+	AM_RANGE(0xfff002, 0xfff003) AM_WRITE(pspikes_gfxbank_w)
+	AM_RANGE(0xfff004, 0xfff005) AM_WRITE(aerofgt_bg1scrolly_w)
+	AM_RANGE(0xfff006, 0xfff007) AM_WRITE(sound_command_w)
+	AM_RANGE(0xfff00e, 0xfff00f) AM_WRITE(wbbc97_bitmap_enable_w)
+ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x77ff) AM_READ(MRA8_ROM)
@@ -379,7 +472,21 @@ static ADDRESS_MAP_START( aerofgt_sound_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x08, 0x08) AM_WRITE(pending_command_clear_w)
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( aerfboot_snd_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0x87ff) AM_RAM
+	AM_RANGE(0xa000, 0xa000) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( wbbc97_sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_ROM
+	AM_RANGE(0xf000, 0xf7ff) AM_RAM
+	AM_RANGE(0xf800, 0xf800) AM_READWRITE(OKIM6295_status_0_r, OKIM6295_data_0_w)
+	AM_RANGE(0xf810, 0xf810) AM_WRITE(YM3812_control_port_0_w)
+	AM_RANGE(0xf811, 0xf811) AM_WRITE(YM3812_write_port_0_w)
+	AM_RANGE(0xfc00, 0xfc00) AM_NOP
+	AM_RANGE(0xfc20, 0xfc20) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( pspikes )
 	PORT_START_TAG("IN0")
@@ -910,7 +1017,11 @@ INPUT_PORTS_START( aerofgt )
 	PORT_DIPSETTING(      0x000b, "Taiwan" )
 INPUT_PORTS_END
 
-
+INPUT_PORTS_START( wbbc97 )
+	PORT_INCLUDE(pspikes)
+	PORT_MODIFY("IN0")
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_SERVICE1 )
+INPUT_PORTS_END
 
 static struct GfxLayout pspikes_charlayout =
 {
@@ -934,6 +1045,28 @@ static struct GfxLayout aerofgt_charlayout =
 	32*8
 };
 
+static struct GfxLayout pspikesb_charlayout =
+{
+	8,8,
+	RGN_FRAC(1,4),
+	4,
+	{ RGN_FRAC(0,4), RGN_FRAC(1,4), RGN_FRAC(2,4), RGN_FRAC(3,4) },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8
+};
+
+static struct GfxLayout aerfboot_charlayout =
+{
+	8,8,
+	RGN_FRAC(1,8),
+	4,
+	{ RGN_FRAC(3,4), RGN_FRAC(2,4), RGN_FRAC(1,4), RGN_FRAC(0,4) },
+	{ 7, 6, 5, 4, 3, 2, 1, 0 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8
+};
+
 static struct GfxLayout pspikes_spritelayout =
 {
 	16,16,
@@ -945,6 +1078,18 @@ static struct GfxLayout pspikes_spritelayout =
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
 			8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32 },
 	64*8
+};
+
+static struct GfxLayout pspikesb_spritelayout =
+{
+	16,16,
+	RGN_FRAC(1,4),
+	4,
+	{ RGN_FRAC(0,4), RGN_FRAC(1,4), RGN_FRAC(2,4), RGN_FRAC(3,4) },
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
+		16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
+	32*8
 };
 
 static struct GfxLayout aerofgtb_spritelayout =
@@ -973,10 +1118,46 @@ static struct GfxLayout aerofgt_spritelayout =
 	128*8
 };
 
+static struct GfxLayout aerfboot_spritelayout =
+{
+	16,16,
+	RGN_FRAC(1,2),
+	4,
+	{ 0, 1, 2, 3 },
+	{ 2*4, 3*4, RGN_FRAC(1,2)+2*4, RGN_FRAC(1,2)+3*4, 0*4, 1*4, RGN_FRAC(1,2)+0*4, RGN_FRAC(1,2)+1*4,
+			6*4, 7*4, RGN_FRAC(1,2)+6*4, RGN_FRAC(1,2)+7*4, 4*4, 5*4, RGN_FRAC(1,2)+4*4, RGN_FRAC(1,2)+5*4 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
+			8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32 },
+	64*8
+};
+
+static struct GfxLayout wbbc97_spritelayout =
+{
+	16,16,
+	RGN_FRAC(1,4),
+	4,
+	{ 0,1,2,3 },
+	{
+		RGN_FRAC(3,4)+4,  RGN_FRAC(3,4)+0, RGN_FRAC(2,4)+4, RGN_FRAC(2,4)+0,
+		RGN_FRAC(1,4)+4,  RGN_FRAC(1,4)+0, RGN_FRAC(0,4)+4, RGN_FRAC(0,4)+0,
+		RGN_FRAC(3,4)+12, RGN_FRAC(3,4)+8, RGN_FRAC(2,4)+12, RGN_FRAC(2,4)+8,
+		RGN_FRAC(1,4)+12, RGN_FRAC(1,4)+8, RGN_FRAC(0,4)+12, RGN_FRAC(0,4)+8
+	},
+	{ 0*8,2*8,4*8,6*8,8*8,10*8,12*8,14*8,16*8,18*8,20*8,22*8,24*8,26*8,28*8,30*8 },
+	8*32
+};
+
 static struct GfxDecodeInfo pspikes_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &pspikes_charlayout,      0, 64 },	/* colors    0-1023 in 8 banks */
 	{ REGION_GFX2, 0, &pspikes_spritelayout, 1024, 64 },	/* colors 1024-2047 in 4 banks */
+	{ -1 } /* end of array */
+};
+
+static struct GfxDecodeInfo pspikesb_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &pspikesb_charlayout,      0, 64 },	/* colors    0-1023 in 8 banks */
+	{ REGION_GFX2, 0, &pspikesb_spritelayout, 1024, 64 },	/* colors 1024-2047 in 4 banks */
 	{ -1 } /* end of array */
 };
 
@@ -1007,7 +1188,21 @@ static struct GfxDecodeInfo aerofgt_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+static struct GfxDecodeInfo aerfboot_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0,       &aerfboot_charlayout,     0, 16 },
+	{ REGION_GFX1, 0x20000, &aerfboot_charlayout,   256, 16 },
+	{ REGION_GFX2, 0,       &aerfboot_spritelayout, 512, 16 },
+	{ REGION_GFX3, 0,       &aerfboot_spritelayout, 768, 16 },
+	{ -1 } /* end of array */
+};
 
+static struct GfxDecodeInfo wbbc97_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &pspikes_charlayout,      0, 64 },	/* colors    0-1023 in 8 banks */
+	{ REGION_GFX2, 0, &wbbc97_spritelayout, 1024, 64 },	/* colors 1024-2047 in 4 banks */
+	{ -1 } /* end of array */
+};
 
 static void irqhandler(int irq)
 {
@@ -1021,6 +1216,10 @@ static struct YM2610interface ym2610_interface =
 	REGION_SOUND2
 };
 
+static struct YM3812interface ym3812_interface =
+{
+	irqhandler	/* IRQ Line */
+};
 
 
 static MACHINE_DRIVER_START( pspikes )
@@ -1059,6 +1258,34 @@ static MACHINE_DRIVER_START( pspikes )
 	MDRV_SOUND_ROUTE(0, "right", 0.25)
 	MDRV_SOUND_ROUTE(1, "left",  1.0)
 	MDRV_SOUND_ROUTE(2, "right", 1.0)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( pspikesb )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,20000000/2)	/* 10 MHz (?) */
+	MDRV_CPU_PROGRAM_MAP(pspikesb_map,0)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)/* all irq vectors are the same */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8+4, 44*8+4-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(pspikesb_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
+
+	MDRV_VIDEO_START(pspikes)
+	MDRV_VIDEO_UPDATE(pspikesb)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( karatblz )
@@ -1253,6 +1480,74 @@ static MACHINE_DRIVER_START( aerofgt )
 	MDRV_SOUND_ROUTE(2, "right", 1.0)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( aerfboot )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,20000000/2)	/* 10 MHz (?) */
+	MDRV_CPU_PROGRAM_MAP(aerfboot_map,0)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,8000000/2) /* 4 MHz ??? */
+	MDRV_CPU_PROGRAM_MAP(aerfboot_snd_map,0)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(500)
+				/* wrong but improves sprite-background synchronization */
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8+12, 40*8-1+12, 0*8, 28*8-1)
+	MDRV_GFXDECODE(aerfboot_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
+
+	MDRV_VIDEO_START(turbofrc)
+	MDRV_VIDEO_UPDATE(aerfboot)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( wbbc97 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,20000000/2)	/* 10 MHz (?) */
+	MDRV_CPU_PROGRAM_MAP(wbbc97_readmem,wbbc97_writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)/* all irq vectors are the same */
+
+	MDRV_CPU_ADD(Z80,8000000/2) /* 4 MHz ??? */
+	MDRV_CPU_PROGRAM_MAP(wbbc97_sound_map,0)
+								/* IRQs are triggered by the YM3812 */
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_RGB_DIRECT)
+	MDRV_SCREEN_SIZE(64*8, 64*8)
+	MDRV_VISIBLE_AREA(0*8+14, 44*8-1+4, 0*8, 30*8-1)
+
+	MDRV_GFXDECODE(wbbc97_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
+
+	MDRV_VIDEO_START(wbbc97)
+	MDRV_VIDEO_UPDATE(wbbc97)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 3579545)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+MACHINE_DRIVER_END
+
 
 
 /***************************************************************************
@@ -1262,7 +1557,7 @@ MACHINE_DRIVER_END
 ***************************************************************************/
 
 ROM_START( pspikes )
-	ROM_REGION( 0xc0000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 68000 code */
 	ROM_LOAD16_WORD_SWAP( "pspikes2.bin", 0x00000, 0x40000, CRC(ec0c070e) SHA1(4ddcc184e835a2f9d15f01aaa03734fd75fe797e) )
 
 	ROM_REGION( 0x30000, REGION_CPU2, 0 )	/* 64k for the audio CPU + banks */
@@ -1284,7 +1579,7 @@ ROM_START( pspikes )
 ROM_END
 
 ROM_START( pspikesk )
-	ROM_REGION( 0xc0000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 68000 code */
 	ROM_LOAD16_WORD_SWAP( "20",           0x00000, 0x40000, CRC(75cdcee2) SHA1(272a08c46c1d0989f9fbb156e28e6a7ffa9c0a53) )
 
 	ROM_REGION( 0x30000, REGION_CPU2, 0 )	/* 64k for the audio CPU + banks */
@@ -1306,7 +1601,7 @@ ROM_START( pspikesk )
 ROM_END
 
 ROM_START( svolly91 )
-	ROM_REGION( 0xc0000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 68000 code */
 	ROM_LOAD16_WORD_SWAP( "u11.jpn",      0x00000, 0x40000, CRC(ea2e4c82) SHA1(f9cf9122499d9b1e54221fb8b6ef9c12004ca85e) )
 
 	ROM_REGION( 0x30000, REGION_CPU2, 0 )	/* 64k for the audio CPU + banks */
@@ -1325,6 +1620,39 @@ ROM_START( svolly91 )
 
 	ROM_REGION( 0x100000, REGION_SOUND2, 0 ) /* sound samples */
 	ROM_LOAD( "o5b",          0x000000, 0x100000, CRC(07d6cbac) SHA1(d3d5778dbaca7b6cdceae959d0847d56df7b5cc1) )
+ROM_END
+
+ROM_START( pspikesb )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_LOAD16_BYTE( "2ic63.bin",    0x00000, 0x20000, CRC(d25e184c) SHA1(89ad275b03d909a7d16d2927df3ddf12301e4c60) )
+	ROM_LOAD16_BYTE( "3ic62.bin",    0x00001, 0x20000, CRC(5add1a34) SHA1(e166d5c76f2f087254f2af442f49251a9885f5bc) )
+
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
+	ROM_LOAD( "4ic122.bin",   0x00000, 0x20000, CRC(ea1c05a7) SHA1(adfdfeac80df287ffa6f469dc38ea94698817cf4) )
+	ROM_LOAD( "5ic120.bin",   0x20000, 0x20000, CRC(bfdc60f4) SHA1(2b1893fac2651ac82f5a05b8f891b20c928ced7e) )
+	ROM_LOAD( "6ic118.bin",   0x40000, 0x20000, CRC(96a5c235) SHA1(dad4ef9069d3130f719a402737909bb48225b73c) )
+	ROM_LOAD( "7ic116.bin",   0x60000, 0x20000, CRC(a7e00b36) SHA1(2b5e85ec02e8893d7d730aad4d690883b1d236cc) )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
+	ROM_LOAD( "8ic121.bin",   0x00000, 0x40000, CRC(fc096cfc) SHA1(75af810c97361b6f08767949b90c394a7a03f60b) )
+	ROM_LOAD( "9ic119.bin",   0x40000, 0x40000, CRC(a45ec985) SHA1(16357f5df7841e11889ac6fced1e2a9288585a29) )
+	ROM_LOAD( "10ic117.bin",  0x80000, 0x40000, CRC(3976b372) SHA1(72feec5a6fe7995f39d4b431dbbf25435359b04d) )
+	ROM_LOAD( "11ic115.bin",  0xc0000, 0x40000, CRC(f9249937) SHA1(5993e5ab7295ca2fa5c8f4c05ce23731741f4e97) )
+
+	ROM_REGION( 0x080000, REGION_USER1, 0 ) /* Samples */
+	ROM_LOAD( "1ic21.bin",    0x000000, 0x80000, CRC(1b78ed0b) SHA1(886bfd78709c295839dd51c7f5a13f5c452c0ab3) )
+
+	/* $00000-$20000 stays the same in all sound banks, */
+	/* the second half of the bank is what gets switched */
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_COPY( REGION_USER1, 0x000000, 0x000000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x000000, 0x020000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x000000, 0x040000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x020000, 0x060000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x000000, 0x080000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x040000, 0x0a0000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x000000, 0x0c0000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x060000, 0x0e0000, 0x020000)
 ROM_END
 
 ROM_START( spinlbrk )
@@ -1701,6 +2029,65 @@ ROM_START( sonicwi )
 	ROM_LOAD( "it-19-06",     0x000000, 0x100000, CRC(cdbbdb1d) SHA1(067c816545f246ff1fd4c821d70df1e7eb47938c) )
 ROM_END
 
+ROM_START( aerfboot )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_LOAD16_BYTE( "afb_ep2.u3",  0x00000, 0x40000, CRC(2bb9edf7) SHA1(cf0a62070fc0803dd8c473c375f6a2d1884ba2bf) )
+	ROM_LOAD16_BYTE( "afb_ep3.u2",  0x00001, 0x40000, CRC(475d3df3) SHA1(58bde24e9dea2fb0d7ae4f2a574b06bc1a33a13d) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "afb_ep1.u17",  0x0000, 0x8000, CRC(d41b5ab2) SHA1(17d9b999c9af1f332d67e7ce1a2f71fd08178303) )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "afb_ep9.hh",   0x000000, 0x40000, CRC(41233923) SHA1(20f2849407ac7bd851d2617ad72fd413775da410) )
+	ROM_LOAD( "afb_ep8.hi",   0x040000, 0x40000, CRC(97607ad3) SHA1(fb72e7ef0c6f7a736e12a9ff71017460f866195e) )
+	ROM_LOAD( "afb_ep7.hj",   0x080000, 0x40000, CRC(01dc793e) SHA1(dbd9d22d75f5bcef9102667722cebb75574badd3) )
+	ROM_LOAD( "afb_ep6.hk",   0x0c0000, 0x40000, CRC(cad7862a) SHA1(bfd729b19ff740ad3dc3b645c4f07f71126c0f3e) )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "afb_ep12.tc",  0x000000, 0x80000, CRC(1e692065) SHA1(a67da59cd65ec492d6e6ab14b1800fd35480a52d) )
+	ROM_LOAD( "afb_ep10.ta",  0x080000, 0x80000, CRC(e50db1a7) SHA1(952676879fb6a260c56a120b849abfae75f4cf2b) )
+
+	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "afb_ep13.td",  0x000000, 0x40000, CRC(1830f70c) SHA1(1759de9b56e4999defc08b2423eff38ec98c4f17) )
+	ROM_LOAD( "afb_ep11.tb",  0x040000, 0x40000, CRC(6298c0eb) SHA1(ede63849973742c67637eac0ec9cda95ea2ecebc) )
+
+	ROM_REGION( 0x140000, REGION_SOUND1, ROMREGION_ERASEFF ) /* sound samples */
+	ROM_LOAD( "afb_ep5.u29",  0x000000, 0x20000, CRC(3559609a) SHA1(6f0b633bf74f41487fc98dcdc43a83eb67f3d14c) )
+	ROM_LOAD( "afb_ep4.u30",  0x040000, 0x20000, CRC(f9652163) SHA1(d8c1fcf44b350cc65378869e4eb188ea232b4948) )
+	ROM_CONTINUE(			  0x080000, 0x20000 )
+	ROM_CONTINUE(			  0x0c0000, 0x20000 )
+	ROM_CONTINUE(			  0x100000, 0x20000 )
+ROM_END
+
+ROM_START( wbbc97 )
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_LOAD16_BYTE( "03.27c040.ur4.rom",  0x000001, 0x80000, CRC(fb4e48fc) SHA1(cffc75766a9b867ab73597156142aa7c70bf6f20) )
+	ROM_LOAD16_BYTE( "07.27c040.uo4.rom",  0x000000, 0x80000, CRC(87605dcc) SHA1(c5d05e7c581e02f88fd42c65768f5c8632e571a1) )
+	ROM_LOAD16_BYTE( "04.27c4000.ur4a.rom",0x100001, 0x80000, CRC(2dd6ff07) SHA1(54724f49d4ca1db16a799704a9e023f6ee407fee) )
+	ROM_LOAD16_BYTE( "08.27c4000.uo4a.rom",0x100000, 0x80000, CRC(1b96ef5b) SHA1(10bfecfc18c65735ddecf830dd72dd855ecf5ee7) )
+	ROM_LOAD16_BYTE( "05.27c4000.ur4b.rom",0x200001, 0x80000, CRC(84104886) SHA1(807d4441bde6535b780c0c680773804b1268a024) )
+	ROM_LOAD16_BYTE( "09.27c4000.uo4b.rom",0x200000, 0x80000, CRC(0367043c) SHA1(a5b77730e17b6223a8b465fe36d9447b60eb51ab) )
+	ROM_LOAD16_BYTE( "06.27c4000.ur4c.rom",0x300001, 0x80000, CRC(b22d11c4) SHA1(15d2ba97704bbcf9d851b650a9c56a6a668cfe63) )
+	ROM_LOAD16_BYTE( "10.27c040.uo4c.rom", 0x300000, 0x80000, CRC(fe403e8b) SHA1(5f8202792d9ec3e0404637614277c0375c747f7e) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* z80 code */
+	ROM_LOAD( "02.27c512.su11.rom",  0x000000, 0x10000, CRC(f03178e9) SHA1(5b0abee03059109a3cdb08a9341091255d5cb6ae) )
+
+	ROM_REGION( 0x40000, REGION_GFX1, ROMREGION_DISPOSE )	/* GFX */
+	ROM_LOAD( "15.27c020.uu10.rom",  0x000000, 0x40000, CRC(965bc99e) SHA1(db72121cfbcd6916f46ac5bd3592681eafa4e5da) )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* GFX */
+	ROM_LOAD( "11.27c020.ue12.rom", 0x000000, 0x40000, CRC(a0b23c8a) SHA1(85ccc5dcc891a352b90f0f3d89f6115bc52face6) )
+	ROM_LOAD( "12.27c020.ue11.rom", 0x040000, 0x40000, CRC(4e529623) SHA1(b3e1e1ba5e05f7e095c0409f199c89b81297cf40) )
+	ROM_LOAD( "13.27c020.ue10.rom", 0x080000, 0x40000, CRC(3745f892) SHA1(085986dff9639dedaee3bcecca17a6ea7e4a45f4) )
+	ROM_LOAD( "14.27c020.ue9.rom",  0x0c0000, 0x40000, CRC(2814f4d2) SHA1(bf459b9ff160d0f18d74224d5e0729b8120261e6) )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "01.27c020.su10.rom",  0x000000, 0x40000, CRC(c024e48c) SHA1(d3caedd22044c1645d96301a93f794db3ff77047) )
+
+	ROM_REGION( 0x200, REGION_USER1, 0 ) /* ??? */
+	ROM_LOAD( "82s147a.rom",  0x000000, 0x200, CRC(72cec9d2) SHA1(1c6fe6b47fe24bdbebb51d6bef56bf71c9029e72) )
+ROM_END
 
 
 GAMEX( 1990, spinlbrk, 0,        spinlbrk, spinlbrk, 0, ROT0,   "V-System Co.", "Spinal Breakers (World)", GAME_NO_COCKTAIL )
@@ -1709,6 +2096,7 @@ GAMEX( 1990, spinlbrj, spinlbrk, spinlbrk, spinlbrk, 0, ROT0,   "V-System Co.", 
 GAMEX( 1991, pspikes,  0,        pspikes,  pspikes,  0, ROT0,   "Video System Co.", "Power Spikes (World)", GAME_NO_COCKTAIL )
 GAMEX( 1991, pspikesk, pspikes,  pspikes,  pspikes,  0, ROT0,   "Video System Co.", "Power Spikes (Korea)", GAME_NO_COCKTAIL )
 GAMEX( 1991, svolly91, pspikes,  pspikes,  pspikes,  0, ROT0,   "Video System Co.", "Super Volley '91 (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1991, pspikesb, pspikes,  pspikesb, pspikes,  0, ROT0,   "bootleg",          "Power Spikes (bootleg)", GAME_NO_COCKTAIL | GAME_NOT_WORKING)
 GAMEX( 1991, karatblz, 0,        karatblz, karatblz, 0, ROT0,   "Video System Co.", "Karate Blazers (World?)", GAME_NO_COCKTAIL )
 GAMEX( 1991, karatblu, karatblz, karatblz, karatblz, 0, ROT0,   "Video System Co.", "Karate Blazers (US)", GAME_NO_COCKTAIL )
 GAMEX( 1991, karatblj, karatblz, karatblz, karatblz, 0, ROT0,   "Video System Co.", "Karate Blazers (Japan)", GAME_NO_COCKTAIL )
@@ -1717,3 +2105,5 @@ GAMEX( 1992, aerofgt,  0,        aerofgt,  aerofgt,  0, ROT270, "Video System Co
 GAMEX( 1992, aerofgtb, aerofgt,  aerofgtb, aerofgtb, 0, ROT270, "Video System Co.", "Aero Fighters (Turbo Force hardware set 1)", GAME_NO_COCKTAIL )
 GAMEX( 1992, aerofgtc, aerofgt,  aerofgtb, aerofgtb, 0, ROT270, "Video System Co.", "Aero Fighters (Turbo Force hardware set 2)", GAME_NO_COCKTAIL )
 GAMEX( 1992, sonicwi,  aerofgt,  aerofgtb, aerofgtb, 0, ROT270, "Video System Co.", "Sonic Wings (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1992, aerfboot, aerofgt,  aerfboot, aerofgtb, 0, ROT270, "bootleg",          "Aero Fighters (bootleg)", GAME_NO_COCKTAIL | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1997, wbbc97,   0,        wbbc97,   wbbc97,   0, ROT0,   "Comad",            "Beach Festival World Championship 1997", GAME_NO_COCKTAIL )

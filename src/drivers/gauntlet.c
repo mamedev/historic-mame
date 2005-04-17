@@ -191,44 +191,6 @@ static MACHINE_INIT( gauntlet )
  *
  *************************************/
 
-static int fake_inputs(int real_port, int fake_port)
-{
-	int result = readinputport(real_port);
-	int fake = readinputport(fake_port);
-
-	if (fake & 0x01)			/* up */
-	{
-		if (fake & 0x04)		/* up and left */
-			result &= ~0x20;
-		else if (fake & 0x08)	/* up and right */
-			result &= ~0x10;
-		else					/* up only */
-			result &= ~0x30;
-	}
-	else if (fake & 0x02)		/* down */
-	{
-		if (fake & 0x04)		/* down and left */
-			result &= ~0x80;
-		else if (fake & 0x08)	/* down and right */
-			result &= ~0x40;
-		else					/* down only */
-			result &= ~0xc0;
-	}
-	else if (fake & 0x04)		/* left only */
-		result &= ~0x60;
-	else if (fake & 0x08)		/* right only */
-		result &= ~0x90;
-
-	return result;
-}
-
-
-static READ16_HANDLER( vindctr2_port01_r )
-{
-	return fake_inputs(0 + offset, 6 + offset);
-}
-
-
 static READ16_HANDLER( port4_r )
 {
 	int temp = readinputport(4);
@@ -509,18 +471,6 @@ INPUT_PORTS_START( vindctr2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START_TAG("IN6")	/* single joystick */
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_NAME("P1 Up (1 Joy Cheat)") PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_NAME("P1 Down (1 Joy Cheat)") PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_NAME("P1 Left (1 Joy Cheat)") PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_NAME("P1 Right (1 Joy Cheat)") PORT_8WAY PORT_PLAYER(1)
-
-	PORT_START	/* single joystick */
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_NAME("P2 Up (1 Joy Cheat)") PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_NAME("P2 Down (1 Joy Cheat)") PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_NAME("P2 Left (1 Joy Cheat)") PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_NAME("P2 Right (1 Joy Cheat)") PORT_8WAY PORT_PLAYER(2)
 INPUT_PORTS_END
 
 
@@ -1578,9 +1528,6 @@ static DRIVER_INIT( vindctr2 )
 	int i;
 
 	common_init(118, 1);
-
-	/* install our special ports */
-	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x803000, 0x803003, 0, 0, vindctr2_port01_r);
 
 	/* highly strange -- the address bits on the chip at 2J (and only that
 	   chip) are scrambled -- this is verified on the schematics! */

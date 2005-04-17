@@ -40,8 +40,6 @@ READ8_HANDLER(discrete_sound_r)
 
 	if (!Machine->sample_rate) return 0;
 
-	stream_update(info->discrete_stream, 0);
-
 	/* Read the node input value if allowed */
 	if (node)
 	{
@@ -53,7 +51,7 @@ READ8_HANDLER(discrete_sound_r)
 		}
 	}
 	else
-		discrete_log("discrete_sound_r read from non-existent NODE_%02d\n",offset-NODE_00);
+		discrete_log("discrete_sound_r read from non-existent NODE_%02d\n", offset-NODE_00);
 
     return data;
 }
@@ -65,13 +63,11 @@ WRITE8_HANDLER(discrete_sound_w)
 
 	if (!Machine->sample_rate) return;
 
-	/* Bring the system up to now */
-	stream_update(info->discrete_stream, 0);
-
 	/* Update the node input value if it's a proper input node */
 	if (node)
 	{
 		data8_t *node_data = node->context;
+		data8_t last_data = *node_data;
 
 		switch (node->module.type)
 		{
@@ -86,9 +82,15 @@ WRITE8_HANDLER(discrete_sound_w)
 				*node_data = data ? 0 : 1;
 				break;
 		}
+
+		/* Bring the system up to now */
+		if (last_data != *node_data)
+			stream_update(info->discrete_stream, 0);
 	}
 	else
-		discrete_log("discrete_sound_w write to non-existent NODE_%02d\n",offset-NODE_00);
+	{
+		discrete_log("discrete_sound_w write to non-existent NODE_%02d\n", offset-NODE_00);
+	}
 }
 
 

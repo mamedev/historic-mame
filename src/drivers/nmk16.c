@@ -56,6 +56,12 @@ TODO:
   On startup, hachamf does a RAM test, then copies some stuff and jumps to
   RAM at 0xfef00, where it sits in a loop. We patch around that by replacing the
   reset vector with the "real" one.
+  update: simulated this,see hachamf_mcu_shared_w() & tdragon_mcu_shared_w() for
+  more info about it.
+- Hacha Mecha Fighter bg graphics are completely wrong except at the title screen &
+  the level 7.Likely to be a rom issue,the game activates the bgbank
+  when it is on the above two cases.Also the bomb graphics are wrong when the game
+  is in japanese mode...
 - Cocktail mode is supported, but tilemap.c has problems with asymmetrical
   visible areas.
 - Music timing in nouryoku is a little off.
@@ -64,7 +70,7 @@ TODO:
   100% fixed.
 - Input ports in Bio-ship Paladin, Strahl
 - Macross2 dip switches (the ones currently listed match macross)
-- DSW's in Tdragon2
+- DSW's in Tdragon2,Hachamf
 - Sound communication in Mustang might be incorrectly implemented
 
 ----
@@ -75,7 +81,7 @@ IRQ2 points to RTE (not used).
 
 ----
 
-mustang and hachamf test mode:
+tdragon,mustang and hachamf test mode:
 
 1)  Press player 2 buttons 1+2 during reset.  "Ready?" will appear
 2)	Press player 1 button 2 14 (!) times
@@ -167,6 +173,8 @@ VIDEO_UPDATE( macross );
 VIDEO_UPDATE( gunnail );
 VIDEO_UPDATE( bjtwin );
 VIDEO_UPDATE( tharrier );
+VIDEO_UPDATE( hachamf );
+VIDEO_UPDATE( tdragon );
 VIDEO_EOF( nmk );
 
 
@@ -324,14 +332,6 @@ static WRITE8_HANDLER( tharrier_oki6295_bankswitch_1_w )
 	data &= 3;
 	if (data != 3)
 		memcpy(rom + 0x20000,rom + 0x40000 + data * 0x20000,0x20000);
-}
-
-static READ16_HANDLER( hachamf_protection_hack_r )
-{
-	/* adresses for the input ports */
-	static int pap[] = { 0x0008, 0x0000, 0x0008, 0x0002, 0x0008, 0x0008 };
-
-	return pap[offset];
 }
 
 /***************************************************************************/
@@ -537,35 +537,6 @@ static ADDRESS_MAP_START( acrobatm_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xd4000, 0xd47ff) AM_WRITE(nmk_txvideoram_w) AM_BASE(&nmk_txvideoram)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( hachamf_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x080000, 0x080001) AM_READ(input_port_0_word_r)
-	AM_RANGE(0x080002, 0x080003) AM_READ(input_port_1_word_r)
-	AM_RANGE(0x080008, 0x080009) AM_READ(input_port_2_word_r)
-	AM_RANGE(0x08000e, 0x08000f) AM_READ(NMK004_r)
-	AM_RANGE(0x088000, 0x0887ff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x090000, 0x093fff) AM_READ(nmk_bgvideoram_r)
-	AM_RANGE(0x09c000, 0x09c7ff) AM_READ(nmk_txvideoram_r)
-	AM_RANGE(0x0f0000, 0x0f7fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x0f8000, 0x0f8fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x0fe000, 0x0fe00b) AM_READ(hachamf_protection_hack_r)
-	AM_RANGE(0x0f9000, 0x0fffff) AM_READ(MRA16_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( hachamf_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x080014, 0x080015) AM_WRITE(nmk_flipscreen_w)
-	AM_RANGE(0x080018, 0x080019) AM_WRITE(nmk_tilebank_w)
-	AM_RANGE(0x08001e, 0x08001f) AM_WRITE(NMK004_w)
-	AM_RANGE(0x088000, 0x0887ff) AM_WRITE(paletteram16_RRRRGGGGBBBBRGBx_word_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x08c000, 0x08c007) AM_WRITE(nmk_scroll_w)
-	AM_RANGE(0x090000, 0x093fff) AM_WRITE(nmk_bgvideoram_w) AM_BASE(&nmk_bgvideoram)
-	AM_RANGE(0x09c000, 0x09c7ff) AM_WRITE(nmk_txvideoram_w) AM_BASE(&nmk_txvideoram)
-	AM_RANGE(0x0f0000, 0x0f7fff) AM_WRITE(MWA16_RAM)	/* Work RAM */
-	AM_RANGE(0x0f8000, 0x0f8fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x0f9000, 0x0fffff) AM_WRITE(MWA16_RAM)	/* Work RAM again (fe000-fefff is shared with the sound CPU) */
-ADDRESS_MAP_END
-
 static ADDRESS_MAP_START( bioship_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
 	AM_RANGE(0x080000, 0x080001) AM_READ(input_port_0_word_r)
@@ -596,17 +567,268 @@ static ADDRESS_MAP_START( bioship_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x0f9000, 0x0fffff) AM_WRITE(MWA16_RAM)	/* Work RAM again (fe000-fefff is shared with the sound CPU) */
 ADDRESS_MAP_END
 
+/******************************************************************************************
+
+Thunder Dragon & Hacha Mecha Fighter shares some ram with the MCU,the job of the latter
+is to provide some jsr vectors used by the game for gameplay calculations.Also it has
+the job to give the vectors of where the inputs are to be read & to calculate the coin
+settings,the latter is in the vidhrdw file to avoid sync problems.
+To make a long story short,this MCU is an alternative version of the same protection
+used by the MJ-8956 games (there are even the same kind of error codes!(i.e the number
+printed on the up-left corner of the screen)...
+
+Note: I'm 100% sure of the Thunder Dragon vectors because I've compared it with the
+bootleg sets,I'm *not* 100% sure of the Hacha Mecha Fighter vectors because I don't have
+anything to compare,infact
+
+******************************************************************************************/
+
+data16_t *mcu_shared_ram;
+data16_t *work_ram;
+
+#define PROT_JSR(_offs_,_protvalue_,_pc_) \
+	if(mcu_shared_ram[(_offs_)/2] == _protvalue_) \
+	{ \
+		mcu_shared_ram[(_offs_)/2] = 0xffff;  /*(MCU job done)*/ \
+		mcu_shared_ram[(_offs_+2-0x10)/2] = 0x4ef9;/*JMP*/\
+		mcu_shared_ram[(_offs_+4-0x10)/2] = 0x0000;/*HI-DWORD*/\
+		mcu_shared_ram[(_offs_+6-0x10)/2] = _pc_;  /*LO-DWORD*/\
+	} \
+
+#define PROT_INPUT(_offs_,_protvalue_,_protinput_,_input_) \
+	if(mcu_shared_ram[_offs_] == _protvalue_) \
+	{\
+		mcu_shared_ram[_protinput_] = ((_input_ & 0xffff0000)>>16);\
+		mcu_shared_ram[_protinput_+1] = (_input_ & 0x0000ffff);\
+	}
+
+static READ16_HANDLER( mcu_shared_r )
+{
+	return mcu_shared_ram[offset];
+}
+
+//td     - hmf
+//008D9E - 00796e
+/*
+007B9E: bra     7b9c
+007BA0: move.w  #$10, $f907a.l
+007BA8: bsr     8106
+007BAC: bsr     dfc4
+007BB0: bsr     c44e
+007BB4: bcs     7cfa
+007BB8: bsr     d9c6
+007BBC: bsr     9400
+007BC0: bsr     7a54
+007BC4: bsr     da06
+007BC8: cmpi.w  #$3, $f907a.l
+007BD0: bcc     7be2
+007BD2: move.w  #$a, $f530e.l
+007BDA: move.w  #$a, $f670e.l
+007BE2: bsr     81aa
+007BE6: bsr     8994
+007BEA: bsr     8c36
+007BEE: bsr     8d0c
+007BF2: bsr     870a
+007BF6: bsr     9d66
+007BFA: bsr     b3f2
+007BFE: bsr     b59e
+007C02: bsr     9ac2
+007C06: bsr     c366
+
+thunder dragon algorithm (level 1):
+90 - spriteram update
+a0 - tilemap update
+b0 - player inputs
+c0 - controls sprite animation
+d0 - player shoots
+e0 - controls power-ups
+f0 - player bombs
+00 - controls player shoots
+10 - ?
+20 - level logic
+30 - enemy appearence
+40 - enemy energy
+50 - enemy energy 2
+60 - enemy shoots
+
+hacha mecha fighter algorithm (level 1):
+90 - spriteram update (d9c6)
+a0 - tilemap update (d1f8?)
+b0 - player inputs (da06)
+c0 - controls sprite animation (81aa)
+d0 - player shoots (8994)
+e0 - controls power-ups & options (8d0c)
+f0 - player bombs (8c36)
+00 - controls player shoots (870a)
+10 - ?
+20 - level logic (9642)
+30 - enemy appearence (9d66)
+40 - enemy energy (b3f2)
+50 - enemy energy 2 (b59e)
+60 - enemy shoots (9ac2)
+70 - ?
+80 - <unused>
+
+*/
+
+static WRITE16_HANDLER( hachamf_mcu_shared_w )
+{
+	COMBINE_DATA(&mcu_shared_ram[offset]);
+
+	switch(offset)
+	{
+		case 0x058/2: PROT_INPUT(0x058/2,0xc71f,0x000/2,0x00080000); break;
+		case 0x182/2: PROT_INPUT(0x182/2,0x865d,0x004/2,0x00080002); break;
+		case 0x51e/2: PROT_INPUT(0x51e/2,0x0f82,0x008/2,0x00080008); break;
+		case 0x6b4/2: PROT_INPUT(0x6b4/2,0x79be,0x00c/2,0x0008000a); break;
+		case 0x10e/2: PROT_JSR(0x10e,0x8007,0x870a);//870a not 9d66
+					  PROT_JSR(0x10e,0x8000,0xd9c6); break;
+		case 0x11e/2: PROT_JSR(0x11e,0x8038,0x972a);//972a
+					  PROT_JSR(0x11e,0x8031,0xd1f8); break;
+		case 0x12e/2: PROT_JSR(0x12e,0x8019,0x9642);//OK-9642
+					  PROT_JSR(0x12e,0x8022,0xda06); break;
+		case 0x13e/2: PROT_JSR(0x13e,0x802a,0x9d66);//9d66 not 9400 - OK
+					  PROT_JSR(0x13e,0x8013,0x81aa); break;
+		case 0x14e/2: PROT_JSR(0x14e,0x800b,0xb3f2);//b3f2 - OK
+					  PROT_JSR(0x14e,0x8004,0x8994); break;
+		case 0x15e/2: PROT_JSR(0x15e,0x803c,0xb59e);//b59e - OK
+					  PROT_JSR(0x15e,0x8035,0x8d0c); break;
+		case 0x16e/2: PROT_JSR(0x16e,0x801d,0x9ac2);//9ac2 - OK
+				 	  PROT_JSR(0x16e,0x8026,0x8c36); break;
+		case 0x17e/2: PROT_JSR(0x17e,0x802e,0xc366);//c366 - OK
+					  PROT_JSR(0x17e,0x8017,0x870a); break;
+		case 0x18e/2: PROT_JSR(0x18e,0x8004,0xd620);        //unused
+					  PROT_JSR(0x18e,0x8008,0x972a); break; //unused
+		case 0x19e/2: PROT_JSR(0x19e,0x8030,0xd9c6);//OK-d9c6
+					  PROT_JSR(0x19e,0x8039,0x9642); break;
+		case 0x1ae/2: PROT_JSR(0x1ae,0x8011,0xd1f8);//d1f8 not c67e
+					  PROT_JSR(0x1ae,0x802a,0x9d66); break;
+		case 0x1be/2: PROT_JSR(0x1be,0x8022,0xda06);//da06
+					  PROT_JSR(0x1be,0x801b,0xb3f2); break;
+		case 0x1ce/2: PROT_JSR(0x1ce,0x8003,0x81aa);//81aa
+					  PROT_JSR(0x1ce,0x800c,0xb59e); break;
+		case 0x1de/2: PROT_JSR(0x1de,0x8034,0x8994);//8994 - OK
+					  PROT_JSR(0x1de,0x803d,0x9ac2); break;
+		case 0x1ee/2: PROT_JSR(0x1ee,0x8015,0x8d0c);//8d0c not 82f6
+					  PROT_JSR(0x1ee,0x802e,0xc366); break;
+		case 0x1fe/2: PROT_JSR(0x1fe,0x8026,0x8c36);//8c36
+					  PROT_JSR(0x1fe,0x8016,0xd620); break;  //unused
+		case 0xf00/2:
+			if(mcu_shared_ram[0xf00/2] == 0x60fe)
+			{
+				mcu_shared_ram[0xf00/2] = 0x0000; //this is the coin counter
+				mcu_shared_ram[0xf02/2] = 0x0000;
+				mcu_shared_ram[0xf04/2] = 0x4ef9;
+				mcu_shared_ram[0xf06/2] = 0x0000;
+				mcu_shared_ram[0xf08/2] = 0x7dc2;
+			}
+			break;
+	}
+}
+
+static ADDRESS_MAP_START( hachamf_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x080000, 0x080001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x080002, 0x080003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x080008, 0x080009) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x08000a, 0x08000b) AM_READ(input_port_3_word_r)
+	AM_RANGE(0x08000e, 0x08000f) AM_READ(NMK004_r)
+	AM_RANGE(0x088000, 0x0887ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x090000, 0x093fff) AM_READ(nmk_bgvideoram_r)
+	AM_RANGE(0x09c000, 0x09c7ff) AM_READ(nmk_txvideoram_r)
+	AM_RANGE(0x0f0000, 0x0f7fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x0f8000, 0x0f8fff) AM_READ(MRA16_RAM)
+	//AM_RANGE(0x0fe000, 0x0fe00b) AM_READ(hachamf_protection_hack_r)
+	AM_RANGE(0x0f9000, 0x0fdfff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x0fe000, 0x0fefff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x0ff000, 0x0fffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( hachamf_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x080014, 0x080015) AM_WRITE(nmk_flipscreen_w)
+	AM_RANGE(0x080018, 0x080019) AM_WRITE(nmk_tilebank_w)
+	AM_RANGE(0x08001e, 0x08001f) AM_WRITE(NMK004_w)
+	AM_RANGE(0x088000, 0x0887ff) AM_WRITE(paletteram16_RRRRGGGGBBBBRGBx_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x08c000, 0x08c007) AM_WRITE(nmk_scroll_w)
+	AM_RANGE(0x090000, 0x093fff) AM_WRITE(nmk_bgvideoram_w) AM_BASE(&nmk_bgvideoram)
+	AM_RANGE(0x09c000, 0x09c7ff) AM_WRITE(nmk_txvideoram_w) AM_BASE(&nmk_txvideoram)
+	AM_RANGE(0x0f0000, 0x0f7fff) AM_WRITE(MWA16_RAM)	/* Work RAM */
+	AM_RANGE(0x0f8000, 0x0f8fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x0f9000, 0x0fdfff) AM_WRITE(MWA16_RAM) AM_BASE(&work_ram) /* Work RAM */
+	AM_RANGE(0x0fe000, 0x0fefff) AM_RAM AM_READWRITE(mcu_shared_r,hachamf_mcu_shared_w) AM_BASE(&mcu_shared_ram)	/* Work RAM */
+	AM_RANGE(0x0ff000, 0x0fffff) AM_WRITE(MWA16_RAM) /* Work RAM */
+ADDRESS_MAP_END
+
+static WRITE16_HANDLER( tdragon_mcu_shared_w )
+{
+	COMBINE_DATA(&mcu_shared_ram[offset]);
+
+	switch(offset)
+	{
+		case 0x066/2: PROT_INPUT(0x066/2,0xe23e,0x000/2,0x000c0000); break;
+		case 0x144/2: PROT_INPUT(0x144/2,0xf54d,0x004/2,0x000c0002); break;
+		case 0x60e/2: PROT_INPUT(0x60e/2,0x067c,0x008/2,0x000c0008); break;
+		case 0x714/2: PROT_INPUT(0x714/2,0x198b,0x00c/2,0x000c000a); break;
+		case 0x70e/2: PROT_JSR(0x70e,0x8007,0x9e22);
+					  PROT_JSR(0x70e,0x8000,0xd518); break;
+		case 0x71e/2: PROT_JSR(0x71e,0x8038,0xaa0a);
+					  PROT_JSR(0x71e,0x8031,0x8e7c); break;
+		case 0x72e/2: PROT_JSR(0x72e,0x8019,0xac48);
+					  PROT_JSR(0x72e,0x8022,0xd558); break;
+		case 0x73e/2: PROT_JSR(0x73e,0x802a,0xb110);
+					  PROT_JSR(0x73e,0x8013,0x96da); break;
+		case 0x74e/2: PROT_JSR(0x74e,0x800b,0xb9b2);
+					  PROT_JSR(0x74e,0x8004,0xa062); break;
+		case 0x75e/2: PROT_JSR(0x75e,0x803c,0xbb4c);
+					  PROT_JSR(0x75e,0x8035,0xa154); break;
+		case 0x76e/2: PROT_JSR(0x76e,0x801d,0xafa6);
+				 	  PROT_JSR(0x76e,0x8026,0xa57a); break;
+		case 0x77e/2: PROT_JSR(0x77e,0x802e,0xc6a4);
+					  PROT_JSR(0x77e,0x8017,0x9e22); break;
+		case 0x78e/2: PROT_JSR(0x78e,0x8004,0xaa0a);
+					  PROT_JSR(0x78e,0x8008,0xaa0a); break;
+		case 0x79e/2: PROT_JSR(0x79e,0x8030,0xd518);
+					  PROT_JSR(0x79e,0x8039,0xac48); break;
+		case 0x7ae/2: PROT_JSR(0x7ae,0x8011,0x8e7c);
+					  PROT_JSR(0x7ae,0x802a,0xb110); break;
+		case 0x7be/2: PROT_JSR(0x7be,0x8022,0xd558);
+					  PROT_JSR(0x7be,0x801b,0xb9b2); break;
+		case 0x7ce/2: PROT_JSR(0x7ce,0x8003,0x96da);
+					  PROT_JSR(0x7ce,0x800c,0xbb4c); break;
+		case 0x7de/2: PROT_JSR(0x7de,0x8034,0xa062);
+					  PROT_JSR(0x7de,0x803d,0xafa6); break;
+		case 0x7ee/2: PROT_JSR(0x7ee,0x8015,0xa154);
+					  PROT_JSR(0x7ee,0x802e,0xc6a4); break;
+		case 0x7fe/2: PROT_JSR(0x7fe,0x8026,0xa57a);
+					  PROT_JSR(0x7fe,0x8016,0xa57a); break;
+		case 0xf00/2:
+			if(mcu_shared_ram[0xf00/2] == 0x60fe)
+			{
+				mcu_shared_ram[0xf00/2] = 0x0000; //this is the coin counter
+				mcu_shared_ram[0xf02/2] = 0x0000;
+				mcu_shared_ram[0xf04/2] = 0x4ef9;
+				mcu_shared_ram[0xf06/2] = 0x0000;
+				mcu_shared_ram[0xf08/2] = 0x92f4;
+			}
+			break;
+	}
+}
+
 static ADDRESS_MAP_START( tdragon_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
 	AM_RANGE(0x044022, 0x044023) AM_READ(MRA16_NOP)  /* No Idea */
 	AM_RANGE(0x0b0000, 0x0b7fff) AM_READ(MRA16_RAM)	/* Work RAM */
 	AM_RANGE(0x0b8000, 0x0b8fff) AM_READ(MRA16_RAM)	/* Sprite RAM */
-	AM_RANGE(0x0b9000, 0x0bffff) AM_READ(MRA16_RAM)	/* Work RAM */
+	AM_RANGE(0x0b9000, 0x0bdfff) AM_READ(MRA16_RAM)	/* Work RAM */
+	AM_RANGE(0x0be000, 0x0befff) AM_READ(MRA16_RAM) /* Work RAM */
+	AM_RANGE(0x0bf000, 0x0bffff) AM_READ(MRA16_RAM)	/* Work RAM */
 	AM_RANGE(0x0c8000, 0x0c87ff) AM_READ(MRA16_RAM)  /* Palette RAM */
 	AM_RANGE(0x0c0000, 0x0c0001) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x0c0002, 0x0c0003) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x0c0008, 0x0c0009) AM_READ(input_port_2_word_r)
 	AM_RANGE(0x0c000a, 0x0c000b) AM_READ(input_port_3_word_r)
+	AM_RANGE(0x0c000e, 0x0c000f) AM_READ(NMK004_r)
 	AM_RANGE(0x0cc000, 0x0cffff) AM_READ(nmk_bgvideoram_r)
 	AM_RANGE(0x0d0000, 0x0d07ff) AM_READ(nmk_txvideoram_r)
 ADDRESS_MAP_END
@@ -615,7 +837,9 @@ static ADDRESS_MAP_START( tdragon_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x0b0000, 0x0b7fff) AM_WRITE(MWA16_RAM)	/* Work RAM */
 	AM_RANGE(0x0b8000, 0x0b8fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)	/* Sprite RAM */
-	AM_RANGE(0x0b9000, 0x0bffff) AM_WRITE(MWA16_RAM)	/* Work RAM */
+	AM_RANGE(0x0b9000, 0x0bdfff) AM_WRITE(MWA16_RAM) AM_BASE(&work_ram)	/* Work RAM */
+	AM_RANGE(0x0be000, 0x0befff) AM_RAM AM_READWRITE(mcu_shared_r,tdragon_mcu_shared_w) AM_BASE(&mcu_shared_ram)	/* Work RAM */
+	AM_RANGE(0x0bf000, 0x0bffff) AM_WRITE(MWA16_RAM)	/* Work RAM */
 	AM_RANGE(0x0c0014, 0x0c0015) AM_WRITE(nmk_flipscreen_w) /* Maybe */
 	AM_RANGE(0x0c0018, 0x0c0019) AM_WRITE(nmk_tilebank_w) /* Tile Bank ? */
 	AM_RANGE(0x0c001e, 0x0c001f) AM_WRITE(NMK004_w)
@@ -1313,32 +1537,31 @@ INPUT_PORTS_START( hachamf )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START  /* DSW A */
-	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
-	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x18, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-	PORT_START  /* DSW B */
+	PORT_DIPNAME( 0x0700, 0x0700, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x0100, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x0200, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x0300, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0700, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x0600, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x0500, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0400, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0000, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x3800, 0x3800, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x0800, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x1000, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x1800, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x3800, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x3000, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x2800, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x2000, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0000, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x4000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x0000, DEF_STR( On ) )
+  /* DSW B */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x02, "2" )
@@ -2689,7 +2912,6 @@ static MACHINE_DRIVER_START( bioship )
 	MDRV_VIDEO_UPDATE(bioship)
 
 	/* sound hardware */
-	/* there's also a YM2203 */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
 	MDRV_SOUND_ADD(YM2203, 1500000)
@@ -2774,7 +2996,6 @@ static MACHINE_DRIVER_START( acrobatm )
 	MDRV_VIDEO_UPDATE(macross)
 
 	/* sound hardware */
-	/* there's also a YM2203? */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
 	MDRV_SOUND_ADD(YM2203, 1500000)
@@ -2834,7 +3055,7 @@ static MACHINE_DRIVER_START( tdragon )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(nmk16)
+	MDRV_MACHINE_INIT(NMK004)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -2845,12 +3066,12 @@ static MACHINE_DRIVER_START( tdragon )
 
 	MDRV_VIDEO_START(macross)
 	MDRV_VIDEO_EOF(nmk)
-	MDRV_VIDEO_UPDATE(macross)
+	MDRV_VIDEO_UPDATE(tdragon)
 
 	/* sound hardware */
-	/* there's also a YM2203 */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
+	MDRV_SOUND_ADD(YM2203, 1500000)
 	MDRV_SOUND_CONFIG(ym2203_nmk004_interface)
 	MDRV_SOUND_ROUTE(0, "mono", 0.50)
 	MDRV_SOUND_ROUTE(1, "mono", 0.50)
@@ -2926,7 +3147,6 @@ static MACHINE_DRIVER_START( strahl )
 	MDRV_VIDEO_UPDATE(strahl)
 
 	/* sound hardware */
-	/* there's also a YM2203 */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
 	MDRV_SOUND_ADD(YM2203, 1500000)
@@ -2967,10 +3187,9 @@ static MACHINE_DRIVER_START( hachamf )
 
 	MDRV_VIDEO_START(macross)
 	MDRV_VIDEO_EOF(nmk)
-	MDRV_VIDEO_UPDATE(macross)
+	MDRV_VIDEO_UPDATE(hachamf)
 
 	/* sound hardware */
-	/* there's also a YM2203 */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
 	MDRV_SOUND_ADD(YM2203, 1500000)
@@ -3014,7 +3233,6 @@ static MACHINE_DRIVER_START( macross )
 	MDRV_VIDEO_UPDATE(macross)
 
 	/* sound hardware */
-	/* there's also a YM2203 */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
 	MDRV_SOUND_ADD(YM2203, 1500000)
@@ -3610,11 +3828,11 @@ ROM_START( tdragon )
 	ROM_LOAD( "thund.1",      0x00000, 0x10000, CRC(bf493d74) SHA1(6f8f5eff4b71fb6cabda10075cfa88a3f607859e) )
 
 	ROM_REGION( 0x0a0000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "thund.2",     0x00000, 0x20000, CRC(ecfea43e) SHA1(d664dfa6698fec8e602523bdae16068f1ff6547b) )
+	ROM_LOAD( "thund.3",     0x00000, 0x20000, CRC(ae6875a8) SHA1(bfdb350b3d3fce2bead1ac60875beafe427765ed) )
 	ROM_CONTINUE(            0x40000, 0x60000 )	/* banked */
 
 	ROM_REGION( 0x0a0000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "thund.3",     0x00000, 0x20000, CRC(ae6875a8) SHA1(bfdb350b3d3fce2bead1ac60875beafe427765ed) )
+	ROM_LOAD( "thund.2",     0x00000, 0x20000, CRC(ecfea43e) SHA1(d664dfa6698fec8e602523bdae16068f1ff6547b) )
 	ROM_CONTINUE(            0x40000, 0x60000 )	/* banked */
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
@@ -3749,8 +3967,9 @@ ROM_START( hachamf )
 	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "hmf_05.rom",  0x000000, 0x020000, CRC(29fb04a2) SHA1(9654b90a66d0e2a0f9cd369cab29cdd0c6f77869) )	/* 8x8 tiles */
 
-	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "hmf_04.rom",  0x000000, 0x080000, CRC(05a624e3) SHA1(e1b686b36c0adedfddf70eeb6411671bbcd897d8) )	/* 16x16 tiles */
+	//ROM_COPY( REGION_GFX2,   0x0c8000, 0x000000, 0x038000)
 
 	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD16_WORD_SWAP( "hmf_08.rom",  0x000000, 0x100000, CRC(7fd0f556) SHA1(d1b4bec0946869d3d7bcb870d9ae3bd17395a231) )	/* Sprites */
@@ -4298,7 +4517,7 @@ static DRIVER_INIT( hachamf )
 {
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 
-	rom[0x0006/2] = 0x7dc2;	/* replace reset vector with the "real" one */
+	//rom[0x0006/2] = 0x7dc2;	/* replace reset vector with the "real" one */
 
 	// kludge the sound communication to let commands go through.
 	rom[0x048a/2] = 0x4e71;
@@ -4320,8 +4539,12 @@ static DRIVER_INIT( tdragon )
 {
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 
-	rom[0x94b0/2] = 0; /* Patch out JMP to shared memory (protection) */
-	rom[0x94b2/2] = 0x92f4;
+	//rom[0x94b0/2] = 0; /* Patch out JMP to shared memory (protection) */
+	//rom[0x94b2/2] = 0x92f4;
+
+	// kludge the sound communication to let commands go through.
+	rom[0x048a/2] = 0x4e71;
+	rom[0x04aa/2] = 0x4e71;
 }
 
 static DRIVER_INIT( ssmissin )
@@ -4433,10 +4656,10 @@ GAMEX( 1991, blkhearj, blkheart,macross,  blkheart, blkheart, ROT0,   "UPL",				
 GAMEX( 1991, acrobatm, 0,       acrobatm, acrobatm, 0,        ROT270, "UPL (Taito license)",			"Acrobat Mission", GAME_IMPERFECT_SOUND )
 GAMEX( 1992, strahl,   0,       strahl,   strahl,   0,        ROT0,   "UPL",							"Koutetsu Yousai Strahl (Japan set 1)", GAME_IMPERFECT_SOUND )
 GAMEX( 1992, strahla,  strahl,  strahl,   strahl,   0,        ROT0,   "UPL",							"Koutetsu Yousai Strahl (Japan set 2)", GAME_IMPERFECT_SOUND )
-GAMEX( 1991, tdragon,  0,       tdragon,  tdragon,  tdragon,  ROT270, "NMK / Tecmo",					"Thunder Dragon", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
+GAMEX( 1991, tdragon,  0,       tdragon,  tdragon,  tdragon,  ROT270, "NMK (Tecmo license)",			"Thunder Dragon", GAME_IMPERFECT_SOUND )
 GAME(  1991, tdragonb, tdragon, tdragonb, tdragon,  tdragonb, ROT270, "NMK / Tecmo",					"Thunder Dragon (Bootleg)" )
 GAMEX( 1992, ssmissin, 0,       ssmissin, ssmissin, ssmissin, ROT270, "Comad",				            "S.S. Mission", GAME_NO_COCKTAIL )
-GAMEX( 1991, hachamf,  0,       hachamf,  hachamf,  hachamf,  ROT0,   "NMK",							"Hacha Mecha Fighter", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEX( 1991, hachamf,  0,       hachamf,  hachamf,  hachamf,  ROT0,   "NMK",							"Hacha Mecha Fighter", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1992, macross,  0,       macross,  macross,  nmk,      ROT270, "Banpresto",						"Super Spacefortress Macross / Chou-Jikuu Yousai Macross", GAME_IMPERFECT_SOUND )
 GAMEX( 1993, gunnail,  0,       gunnail,  gunnail,  nmk,      ROT270, "NMK / Tecmo",					"GunNail", GAME_IMPERFECT_SOUND )
 GAMEX( 1993, macross2, 0,       macross2, macross2, 0,        ROT0,   "Banpresto",						"Super Spacefortress Macross II / Chou-Jikuu Yousai Macross II", GAME_NO_COCKTAIL )

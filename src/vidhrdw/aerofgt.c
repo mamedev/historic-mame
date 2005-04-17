@@ -4,10 +4,11 @@
 data16_t *aerofgt_rasterram;
 data16_t *aerofgt_bg1videoram,*aerofgt_bg2videoram;
 data16_t *aerofgt_spriteram1,*aerofgt_spriteram2,*aerofgt_spriteram3;
+data16_t *wbbc97_bitmapram;
 size_t aerofgt_spriteram1_size,aerofgt_spriteram2_size,aerofgt_spriteram3_size;
 
 static unsigned char gfxbank[8];
-static data16_t bg1scrollx,bg1scrolly,bg2scrollx,bg2scrolly;
+static data16_t bg1scrollx,bg1scrolly,bg2scrollx,bg2scrolly,wbbc97_bitmap_enable;
 
 static int charpalettebank,spritepalettebank;
 
@@ -105,6 +106,7 @@ VIDEO_START( pspikes )
 	return 0;
 }
 
+
 VIDEO_START( karatblz )
 {
 	bg1_tilemap = tilemap_create(karatblz_bg1_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     8,8,64,64);
@@ -171,7 +173,20 @@ VIDEO_START( turbofrc )
 	return 0;
 }
 
+VIDEO_START( wbbc97 )
+{
+	bg1_tilemap = tilemap_create(get_pspikes_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
+	/* no bg2 in this game */
 
+	if (!bg1_tilemap)
+		return 1;
+
+	tilemap_set_transparent_pen(bg1_tilemap,15);
+
+	sprite_gfx = 1;
+
+	return 0;
+}
 
 /***************************************************************************
 
@@ -212,6 +227,14 @@ WRITE16_HANDLER( pspikes_gfxbank_w )
 		setbank(bg1_tilemap,0,(data & 0xf0) >> 4);
 		setbank(bg1_tilemap,1,data & 0x0f);
 	}
+}
+
+WRITE16_HANDLER( pspikesb_gfxbank_w )
+{
+	COMBINE_DATA(&aerofgt_rasterram[0x200/2]);
+
+	setbank(bg1_tilemap,0,(data & 0xf000) >> 12);
+	setbank(bg1_tilemap,1,(data & 0x0f00) >> 8);
 }
 
 WRITE16_HANDLER( karatblz_gfxbank_w )
@@ -289,7 +312,10 @@ WRITE16_HANDLER( pspikes_palette_bank_w )
 	}
 }
 
-
+WRITE16_HANDLER( wbbc97_bitmap_enable_w )
+{
+	COMBINE_DATA(&wbbc97_bitmap_enable);
+}
 
 /***************************************************************************
 
@@ -443,6 +469,129 @@ static void turbofrc_drawsprites(struct mame_bitmap *bitmap,const struct rectang
 	}
 }
 
+static void pspikesb_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+{
+	int i;
+
+	for (i = 4;i < aerofgt_spriteram3_size/2;i += 4)
+	{
+		int xpos,ypos,color,flipx,flipy,code;
+
+		if (aerofgt_spriteram3[i + 3 - 4] & 0x8000) break;
+
+		xpos = aerofgt_spriteram3[i + 2] & 0x01ff;
+		ypos = aerofgt_spriteram3[i + 3 - 4] & 0x1ff;
+		code = aerofgt_spriteram3[i + 0] & 0x1fff;
+
+		color = flipy = 0;
+
+		flipx = aerofgt_spriteram3[i + 1] & 0x0800;
+
+		color = aerofgt_spriteram3[i + 1] & 0x000f;
+
+		ypos = 256 - ypos;
+
+		drawgfx(bitmap,Machine->gfx[sprite_gfx],
+				code,
+				color,
+				flipx,flipy,
+				xpos,ypos,
+				cliprect,TRANSPARENCY_PEN,15);
+	}
+}
+
+static void aerfboot_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+{
+	int attr_start;//,base,first;
+
+
+//	base = chip * 0x0200;
+//	first = 4 * aerofgt_spriteram3[0x1fe + base];
+
+	for (attr_start = aerofgt_spriteram3_size/2 - 4;attr_start >= 0;attr_start -= 4)
+	{
+		int code;
+		int ox,oy,x,y,xsize,ysize,zoomx,zoomy,flipx,flipy,color,pri;
+// some other drivers still use this wrong table, they have to be upgraded
+//		int zoomtable[16] = { 0,7,14,20,25,30,34,38,42,46,49,52,54,57,59,61 };
+
+		ox = aerofgt_spriteram3[attr_start + 1] & 0x01ff;
+		oy = aerofgt_spriteram3[attr_start + 0] & 0x01ff;
+		flipx = aerofgt_spriteram3[attr_start + 2] & 0x0800;
+		flipy = aerofgt_spriteram3[attr_start + 2] & 0x8000;
+		color = aerofgt_spriteram3[attr_start + 2] & 0x000f;
+
+//		xsize = (aerofgt_spriteram3[attr_start + 2] & 0x0700) >> 8;
+		xsize = (aerofgt_spriteram3[attr_start + 1] & 0x0e00) >> 9;
+		zoomx = (aerofgt_spriteram3[attr_start + 1] & 0xf000) >> 12;
+//		ysize = (aerofgt_spriteram3[attr_start + 2] & 0x7000) >> 12;
+		ysize = (aerofgt_spriteram3[attr_start + 0] & 0x0e00) >> 9;
+		zoomy = (aerofgt_spriteram3[attr_start + 0] & 0xf000) >> 12;
+
+		pri = aerofgt_spriteram3[attr_start + 2] & 0x0010;
+		code = aerofgt_spriteram3[attr_start + 3] & 0x3fff;
+
+
+// aerofgt has this adjustment, but doing it here would break turbo force title screen
+//		ox += (xsize*zoomx+2)/4;
+//		oy += (ysize*zoomy+2)/4;
+
+		zoomx = 32 - zoomx;
+		zoomy = 32 - zoomy;
+
+		for (y = 0;y <= ysize;y++)
+		{
+			int sx,sy;
+
+			if (flipy) sy = ((oy + zoomy * (ysize - y)/2 + 16) & 0x1ff) - 16;
+			else sy = ((oy + zoomy * y / 2 + 16) & 0x1ff) - 16;
+
+			for (x = 0;x <= xsize;x++)
+			{
+				if (flipx) sx = ((ox + zoomx * (xsize - x) / 2 + 16) & 0x1ff) - 16;
+				else sx = ((ox + zoomx * x / 2 + 16) & 0x1ff) - 16;
+
+				pdrawgfxzoom(bitmap,Machine->gfx[sprite_gfx + (code >= 0x1000 ? 0 : 1)],
+						code,
+						color,
+						flipx,flipy,
+						sx,sy,
+						cliprect,TRANSPARENCY_PEN,15,
+						zoomx << 11,zoomy << 11,
+						pri ? 0 : 0x2);
+				code++;
+			}
+
+//			if (xsize == 2) code += 1;
+//			if (xsize == 4) code += 3;
+//			if (xsize == 5) code += 2;
+//			if (xsize == 6) code += 1;
+		}
+	}
+}
+
+static void wbbc97_draw_bitmap(struct mame_bitmap *bitmap)
+{
+	int x,y,count;
+	int color;
+
+	count = 16; // weird, the bitmap doesn't start at 0?
+	for (y=0;y<256;y++)
+	{
+		for (x=0;x<512;x++)
+		{
+			color = wbbc97_bitmapram[count] >> 1;
+
+			/* data is GRB; convert to RGB */
+			color = (color & 0x1f) | ((color & 0x3e0) << 5) | ((color & 0x7c00) >> 5);
+			((UINT16 *)bitmap->line[y])[(10+x-aerofgt_rasterram[(y & 0x7f)])&0x1ff] = color;
+
+			count++;
+			count &= 0x1ffff;
+		}
+	}
+}
+
 
 VIDEO_UPDATE( pspikes )
 {
@@ -458,6 +607,23 @@ VIDEO_UPDATE( pspikes )
 
 	tilemap_draw(bitmap,cliprect,bg1_tilemap,0,0);
 	turbofrc_drawsprites(bitmap,cliprect,0);
+}
+
+VIDEO_UPDATE( pspikesb )
+{
+	int i,scrolly;
+
+	tilemap_set_scroll_rows(bg1_tilemap,256);
+	scrolly = bg1scrolly;
+	for (i = 0;i < 256;i++)
+		tilemap_set_scrollx(bg1_tilemap,(i + scrolly) & 0xff,aerofgt_rasterram[i]+22);
+	tilemap_set_scrolly(bg1_tilemap,0,scrolly);
+
+	fillbitmap(priority_bitmap,0,cliprect);
+
+	tilemap_draw(bitmap,cliprect,bg1_tilemap,0,0);
+
+	pspikesb_drawsprites(bitmap,cliprect);
 }
 
 VIDEO_UPDATE( karatblz )
@@ -540,4 +706,51 @@ VIDEO_UPDATE( aerofgt )
 
 	aerofgt_drawsprites(bitmap,cliprect,2);
 	aerofgt_drawsprites(bitmap,cliprect,3);
+}
+
+
+VIDEO_UPDATE( aerfboot )
+{
+	int i,scrolly;
+
+	tilemap_set_scroll_rows(bg1_tilemap,512);
+	scrolly = bg1scrolly+2;
+	for (i = 0;i < 256;i++)
+		tilemap_set_scrollx(bg1_tilemap,(i + scrolly) & 0x1ff,aerofgt_rasterram[7]+174);
+	tilemap_set_scrolly(bg1_tilemap,0,scrolly);
+	tilemap_set_scrollx(bg2_tilemap,0,bg2scrollx+172);
+	tilemap_set_scrolly(bg2_tilemap,0,bg2scrolly+2);
+
+	fillbitmap(priority_bitmap,0,cliprect);
+
+	tilemap_draw(bitmap,cliprect,bg1_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg2_tilemap,0,1);
+
+	/* we use the priority buffer so sprites are drawn front to back */
+	aerfboot_drawsprites(bitmap,cliprect);
+}
+
+VIDEO_UPDATE( wbbc97 )
+{
+	int i,scrolly;
+
+	tilemap_set_scroll_rows(bg1_tilemap,256);
+	scrolly = bg1scrolly;
+	for (i = 0;i < 256;i++)
+		tilemap_set_scrollx(bg1_tilemap,(i + scrolly) & 0xff,aerofgt_rasterram[i]);
+	tilemap_set_scrolly(bg1_tilemap,0,scrolly);
+
+	fillbitmap(priority_bitmap,0,cliprect);
+
+	if(wbbc97_bitmap_enable)
+	{
+		wbbc97_draw_bitmap(bitmap);
+		tilemap_draw(bitmap,cliprect,bg1_tilemap,0,0);
+	}
+	else
+	{
+		tilemap_draw(bitmap,cliprect,bg1_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
+	}
+
+	turbofrc_drawsprites(bitmap,cliprect,0);
 }

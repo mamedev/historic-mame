@@ -12,6 +12,7 @@
 #include "driver.h"
 #include "sound/custom.h"
 #include "sound/tms36xx.h"
+#include "phoenix.h"
 
 /****************************************************************************
  * 4006
@@ -47,363 +48,10 @@
 #define VMAX	32767
 
 static int sound_latch_a;
-static int sound_latch_b;
 
 static sound_stream * channel;
 
-static int tone1_vco1_cap;
-static int tone1_level;
-static int tone2_level;
-
 static UINT32 *poly18 = NULL;
-
-INLINE int tone1_vco1(int samplerate)
-{
-    static int output, counter, level;
-	/*
-	 * L447 (NE555): Ra=47k, Rb=100k, C = 0.01uF, 0.48uF, 1.01uF or 1.48uF
-     * charge times = 0.639*(Ra+Rb)*C = 0.0092s, 0.0451s, 0.0949s, 0.1390s
-     * discharge times = 0.639*Rb*C = 0.0064s, 0.0307s, 0.0645s, 0.0946s
-     */
-    #define C18a    0.01e-6
-	#define C18b	0.48e-6
-	#define C18c	1.01e-6
-	#define C18d	1.48e-6
-	#define R40 	47000
-	#define R41 	100000
-    static int rate[2][4] = {
-		{
-			VMAX*2/3/(0.693*(R40+R41)*C18a),
-			VMAX*2/3/(0.693*(R40+R41)*C18b),
-			VMAX*2/3/(0.693*(R40+R41)*C18c),
-			VMAX*2/3/(0.693*(R40+R41)*C18d)
-		},
-		{
-			VMAX*2/3/(0.693*R41*C18a),
-			VMAX*2/3/(0.693*R41*C18b),
-			VMAX*2/3/(0.693*R41*C18c),
-			VMAX*2/3/(0.693*R41*C18d)
-        }
-	};
-	if( output )
-	{
-		if (level > VMAX*1/3)
-		{
-			counter -= rate[1][tone1_vco1_cap];
-			if( counter <= 0 )
-			{
-				int steps = -counter / samplerate + 1;
-				counter += steps * samplerate;
-				if( (level -= steps) <= VMAX*1/3 )
-				{
-					level = VMAX*1/3;
-                    output = 0;
-				}
-			}
-		}
-	}
-	else
-	{
-		if (level < VMAX*2/3)
-		{
-			counter -= rate[0][tone1_vco1_cap];
-			if( counter <= 0 )
-			{
-                int steps = -counter / samplerate + 1;
-				counter += steps * samplerate;
-				if( (level += steps) >= VMAX*2/3 )
-				{
-					level = VMAX*2/3;
-					output = 1;
-				}
-			}
-		}
-	}
-	return output;
-}
-
-INLINE int tone1_vco2(int samplerate)
-{
-	static int output, counter, level;
-
-	/*
-	 * L517 (NE555): Ra=570k, Rb=570k, C=10uF
-	 * charge time = 0.639*(Ra+Rb)*C = 7.9002s
-	 * discharge time = 0.639*Rb*C = 3.9501s
-	 */
-	#define C20 10.0e-6
-	#define R43 570000
-	#define R44 570000
-
-	if( output )
-	{
-		if (level > VMIN)
-		{
-			counter -= (int)(VMAX*2/3 / (0.693 * R44 * C20));
-			if( counter <= 0 )
-			{
-				int steps = -counter / samplerate + 1;
-				counter += steps * samplerate;
-				if( (level -= steps) <= VMAX*1/3 )
-				{
-					level = VMAX*1/3;
-					output = 0;
-				}
-			}
-		}
-	}
-	else
-	{
-		if (level < VMAX)
-		{
-			counter -= (int)(VMAX*2/3 / (0.693 * (R43 + R44) * C20));
-			if( counter <= 0 )
-			{
-				int steps = -counter / samplerate + 1;
-				counter += steps * samplerate;
-				if( (level += steps) >= VMAX*2/3 )
-				{
-					level = VMAX*2/3;
-					output = 1;
-				}
-			}
-		}
-	}
-
-	return output;
-}
-
-INLINE int tone1_vco(int samplerate, int vco1, int vco2)
-{
-	static int counter, level, rate, charge;
-	int voltage;
-
-	if (level != charge)
-    {
-        /* charge or discharge C22 */
-        counter -= rate;
-        while( counter <= 0 )
-        {
-            counter += samplerate;
-            if( level < charge )
-            {
-				if( ++level == charge )
-                    break;
-            }
-            else
-            {
-				if( --level == charge )
-                    break;
-            }
-        }
-    }
-
-    if( vco2 )
-	{
-		#define C22 100.0e-6
-		#define R42 10000
-		#define R45 51000
-		#define R46 51000
-		#define RP	27777	/* R42+R46 parallel with R45 */
-		if( vco1 )
-		{
-			/*		R42 10k
-			 * +5V -/\/\/------------+
-			 *			   5V		 |
-			 * +5V -/\/\/--+--/\/\/--+--> V/C
-			 *	   R45 51k | R46 51k
-			 *			  ---
-			 *			  --- 100u
-			 *			   |
-			 *			  0V
-			 */
-			charge = VMAX;
-			rate = (int)((charge - level) / (RP * C22));
-			voltage = level + (VMAX-level) * R46 / (R46 + R42);
-		}
-		else
-		{
-			/*		R42 10k
-			 *	0V -/\/\/------------+
-			 *			  2.7V		 |
-			 * +5V -/\/\/--+--/\/\/--+--> V/C
-			 *	   R45 51k | R46 51k
-			 *			  ---
-			 *			  --- 100u
-			 *			   |
-			 *			  0V
-             */
-			/* simplification: charge = (R42 + R46) / (R42 + R45 + R46); */
-            charge = VMAX * 27 / 50;
-			if (charge >= level)
-				rate = (int)((charge - level) / (R45 * C22));
-			else
-				rate = (int)((level - charge) / ((R46+R42) * C22));
-			voltage = level * R42 / (R46 + R42);
-		}
-	}
-	else
-	{
-		if( vco1 )
-		{
-			/*		R42 10k
-			 * +5V -/\/\/------------+
-			 *			  2.3V		 |
-			 *	0V -/\/\/--+--/\/\/--+--> V/C
-			 *	   R45 51k | R46 51k
-			 *			  ---
-			 *			  --- 100u
-			 *			   |
-			 *			  0V
-			 */
-			/* simplification: charge = VMAX * R45 / (R42 + R45 + R46); */
-            charge = VMAX * 23 / 50;
-			if (charge >= level)
-				rate = (int)((charge - level) / ((R42 + R46) * C22));
-			else
-				rate = (int)((level - charge) / (R45 * C22));
-			voltage = level + (VMAX - level) * R46 / (R42 + R46);
-		}
-		else
-		{
-			/*		R42 10k
-			 *	0V -/\/\/------------+
-			 *			   0V		 |
-			 *	0V -/\/\/--+--/\/\/--+--> V/C
-			 *	   R45 51k | R46 51k
-			 *			  ---
-			 *			  --- 100u
-			 *			   |
-			 *			  0V
-			 */
-			charge = VMIN;
-			rate = (int)((level - charge) / (RP * C22));
-			voltage = level * R42 / (R46 + R42);
-		}
-	}
-
-	/* L507 (NE555): Ra=20k, Rb=20k, C=0.001uF
-	 * frequency 1.44/((Ra+2*Rb)*C) = 24kHz
-	 */
-	return 24000*1/3 + 24000*2/3 * voltage / 32768;
-}
-
-INLINE int tone1(int samplerate)
-{
-	static int counter, divisor, output;
-	int vco1 = tone1_vco1(samplerate);
-	int vco2 = tone1_vco2(samplerate);
-	int frequency = tone1_vco(samplerate, vco1, vco2);
-
-	if( (sound_latch_a & 15) != 15 )
-	{
-		counter -= frequency;
-		while( counter <= 0 )
-		{
-			counter += samplerate;
-			if( ++divisor == 16 )
-			{
-				divisor = sound_latch_a & 15;
-				output ^= 1;
-			}
-		}
-	}
-
-	return output ? tone1_level : -tone1_level;
-}
-
-INLINE int tone2_vco(int samplerate)
-{
-	static int counter, level;
-
-	/*
-	 * This is how the tone2 part of the circuit looks like.
-	 * I was having a hard time to guesstimate the results
-	 * and they might still be wrong :(
-	 *
-	 *							+12V
-	 *							 |
-	 *							 / R23
-	 *							 \ 100k
-	 *							 /
-	 * !bit4	| /|	R22 	 |
-	 * 0V/5V >--|< |---/\/\/-----+-------+---> V C7
-	 *			| \|	47k 	 |		 |
-	 *			D4				 |		_|_
-	 *					   6.8u --- 	\ / D5
-	 *					   C7	--- 	---
-	 *							 |		 |
-	 *							 |		 |
-	 *	  0V >-------------------+-/\/\/-+
-	 *							 R24 33k
-	 *
-	 * V C7 min:
-	 * 0.7V + (12V - 0.7V) * 19388 / (100000 + 19388) = 2.54V
-	 * V C7 max:
-	 * 0.7V + (12V - 0.7V) * 33000 / (100000 + 33000) +
-	 *		  (12V - 5.7V) * 47000 / (100000 + 47000) = 5.51V
-     */
-
-    #define C7  6.8e-6
-    #define R23 100000
-	#define R22 47000
-	#define R24 33000
-	#define R22pR24 19388
-
-	#define C7_MIN (VMAX * 254 / 500)
-	#define C7_MAX (VMAX * 551 / 500)
-	#define C7_DIFF (C7_MAX - C7_MIN)
-
-	if( (sound_latch_b & 0x10) == 0 )
-	{
-		counter -= (C7_MAX - level) * 12 / (R23 * C7) / 5;
-		if( counter <= 0 )
-		{
-			int n = (-counter / samplerate) + 1;
-			counter += n * samplerate;
-			if( (level += n) > C7_MAX)
-				level = C7_MAX;
-		}
-	}
-	else
-	{
-		counter -= (level - C7_MIN) * 12 / (R22pR24 * C7) / 5;
-		if( counter <= 0 )
-		{
-			int n = (-counter / samplerate) + 1;
-			counter += n * samplerate;
-			if( (level -= n) < C7_MIN)
-				level = C7_MIN;
-		}
-	}
-	/*
-	 * L487 (NE555):
-	 * Ra = R25 (47k), Rb = R26 (47k), C = C8 (0.001uF)
-	 * frequency 1.44/((Ra+2*Rb)*C) = 10212 Hz
-	 */
-	return 10212 * level / 32768;
-}
-
-INLINE int tone2(int samplerate)
-{
-	static int counter, divisor, output;
-	int frequency = tone2_vco(samplerate);
-
-	if( (sound_latch_b & 15) != 15 )
-	{
-		counter -= frequency;
-		while( counter <= 0 )
-		{
-			counter += samplerate;
-			if( ++divisor == 16 )
-			{
-				divisor = sound_latch_b & 15;
-				output ^= 1;
-			}
-		}
-	}
-	return output ? tone2_level : -tone2_level;
-}
 
 INLINE int update_c24(int samplerate)
 {
@@ -551,41 +199,161 @@ static void phoenix_sound_update(void *param, stream_sample_t **inputs, stream_s
 	while( length-- > 0 )
 	{
 		int sum = 0;
-		sum = (tone1(samplerate) + tone2(samplerate) + noise(samplerate)) / 4;
+		sum = noise(samplerate) / 2;
 		*buffer++ = sum < 32768 ? sum > -32768 ? sum : -32768 : 32767;
 	}
 }
+
+
+/************************************************************************/
+/* phoenix Sound System Analog emulation                                */
+/*                                                                      */
+/* NOTE: Sample Rate must be at least 44100 for proper emulation.       */
+/*                                                                      */
+/* April 2005, DR.                                                      */
+/************************************************************************/
+
+const struct discrete_555_desc phoenix_effect1_555 =
+{
+	DISC_555_OUT_COUNT_F_X,
+	5,		// B+ voltage of 555
+	DEFAULT_555_VALUES
+};
+
+const struct discrete_555_desc phoenix_effect2_555 =
+{
+	DISC_555_OUT_ENERGY,
+	5,		// B+ voltage of 555
+	DEFAULT_555_VALUES
+};
+
+const struct discrete_comp_adder_table phoenix_effect2_cap_sel =
+{
+	DISC_COMP_P_CAPACITOR,
+	CAP_U(0.01),	// C18
+	2,
+	{CAP_U(0.47), CAP_U(1)}	// C16, C17
+};
+
+const struct discrete_mixer_desc phoenix_effect2_mixer =
+{
+	DISC_MIXER_IS_RESISTOR,
+	{RES_K(10), RES_K(5.1+5.1), RES_K(5)},	// R42, R45+R46, internal 555 R
+	{0},			// No variable resistor nodes
+	{0},			// No caps
+	0,				// No rI
+	RES_K(10),		// internal 555
+	0,0,			// No Filter
+	0,				// not used in resistor network
+	1	// final gain
+};
+
+const struct discrete_mixer_desc phoenix_mixer =
+{
+	DISC_MIXER_IS_RESISTOR,
+	{RES_K(10+47), RES_K(10+20), RES_K(20), RES_K(20)},	// R19+R21, R38+R47, R67, R68
+	{0},			// No variable resistor nodes
+	{CAP_U(10), CAP_U(10), CAP_U(.1), CAP_U(10)},		// C6, C31, C29, C30
+	0,				// No rI
+	RES_K(10),		// VR1
+	0,				// No Filter
+	CAP_U(10),		// C32
+	0,				// not used in resistor network
+	40000	// final gain
+};
+
+/* Nodes - Inputs */
+#define PHOENIX_EFFECT_1_DATA		NODE_01
+#define PHOENIX_EFFECT_1_FREQ  		NODE_02
+#define PHOENIX_EFFECT_1_FILT		NODE_03
+#define PHOENIX_EFFECT_2_DATA		NODE_04
+#define PHOENIX_EFFECT_2_FREQ		NODE_05
+#define PHOENIX_EFFECT_3_EN  		NODE_06
+#define PHOENIX_EFFECT_4_EN  		NODE_07
+/* Nodes - Sounds */
+#define PHOENIX_EFFECT_1_SND		NODE_10
+#define PHOENIX_EFFECT_2_SND		NODE_11
+#define PHOENIX_EFFECT_3_SND		0
+#define PHOENIX_EFFECT_4_SND		0
+
+
+DISCRETE_SOUND_START(phoenix_discrete_interface)
+	/************************************************/
+	/* Input register mapping for phoenix           */
+	/************************************************/
+	DISCRETE_INPUT_DATA (PHOENIX_EFFECT_1_DATA)
+	DISCRETE_INPUT_LOGIC(PHOENIX_EFFECT_1_FREQ)
+	DISCRETE_INPUT_LOGIC(PHOENIX_EFFECT_1_FILT)
+	DISCRETE_INPUT_DATA (PHOENIX_EFFECT_2_DATA)
+	DISCRETE_INPUT_DATA (PHOENIX_EFFECT_2_FREQ)
+	DISCRETE_INPUT_LOGIC(PHOENIX_EFFECT_3_EN)
+	DISCRETE_INPUT_LOGIC(PHOENIX_EFFECT_4_EN)
+
+	/************************************************/
+	/* Effect 1                                     */
+	/* - shield, bird explode, level 3&4 siren,     */
+	/* - level 5 spaceship                          */
+	/************************************************/
+	DISCRETE_RCDISC4(NODE_20, 1, PHOENIX_EFFECT_1_FREQ, RES_K(47), RES_K(100), RES_K(33), CAP_U(6.8), 12, 1)	// R22, R23, R24, C7
+	DISCRETE_555_ASTABLE_CV(NODE_21, 1, RES_K(47), RES_K(47), CAP_U(.001), NODE_20, &phoenix_effect1_555)		// R25, R26, C8
+	/* LS163 counts rising edge, but the LS14 inverts that */
+	DISCRETE_NOTE(NODE_22, 1, NODE_21, PHOENIX_EFFECT_1_DATA, 0x0f, 1, DISC_CLK_BY_COUNT | DISC_OUT_IS_ENERGY)
+	/* When FILT is enabled, the effect is filtered.
+	 * While the R20 does decrease the amplitude a little, its main purpose
+	 * is to discharge C5 when the filter is disabled. */
+	DISCRETE_SWITCH(NODE_23, 1, PHOENIX_EFFECT_1_FILT, DEFAULT_TTL_V_LOGIC_1, DEFAULT_TTL_V_LOGIC_1 * RES_K(100) / (RES_K(10) + RES_K(100)))	// R20, R19
+	DISCRETE_MULTIPLY(NODE_24, 1, NODE_22, NODE_23)
+	DISCRETE_RCFILTER(NODE_25, 1, NODE_24, 1.0/(1.0/RES_K(10) + 1.0/RES_K(100)), CAP_U(.047))	// R19, R20, C5
+	DISCRETE_SWITCH(PHOENIX_EFFECT_1_SND, 1, PHOENIX_EFFECT_1_FILT, NODE_24, NODE_25)
+
+	/************************************************/
+	/* Effect 2                                     */
+	/* - bird flying, bird/phoenix/spaceship hit    */
+	/* - phoenix wing hit                           */
+	/************************************************/
+	DISCRETE_COMP_ADDER(NODE_30, 1, PHOENIX_EFFECT_2_FREQ, &phoenix_effect2_cap_sel)
+	/* Part of the frequency select also effects the gain */
+	DISCRETE_DIVIDE(NODE_31, 1, PHOENIX_EFFECT_2_FREQ, 2)
+	DISCRETE_SWITCH(NODE_32, 1, NODE_31, DEFAULT_TTL_V_LOGIC_1, DEFAULT_TTL_V_LOGIC_1/2)
+	DISCRETE_555_ASTABLE(NODE_33, 1, RES_K(47), RES_K(100), NODE_30, &phoenix_effect2_555)		// R40, R41
+	DISCRETE_555_ASTABLE(NODE_34, 1, RES_K(510), RES_K(510), CAP_U(1), &phoenix_effect2_555)	// R23, R24, C20
+	/* C22 charging is R45 in parallel with R46, R42 and the 555 CV internal resistance */
+	DISCRETE_RCFILTER(NODE_35, 1, NODE_34, 1.0/ (1.0/RES_K(5.1) + (1.0/(RES_K(5.1) + 1.0/(1.0/RES_K(10) + 1.0/RES_K(5) + 1.0/RES_K(10)) ))), CAP_U(100))	// R45, R46, R42, internal 555 Rs, C22
+	DISCRETE_MIXER3(NODE_36, 1, NODE_33, NODE_35, 5, &phoenix_effect2_mixer)
+	DISCRETE_555_ASTABLE_CV(NODE_37, 1, RES_K(20), RES_K(20), CAP_U(0.001), NODE_36, &phoenix_effect1_555)	// R47, R48, C23
+	DISCRETE_NOTE(NODE_38, 1, NODE_37, PHOENIX_EFFECT_2_DATA, 0x0f, 1, DISC_CLK_BY_COUNT | DISC_OUT_IS_ENERGY)
+	DISCRETE_MULTIPLY(PHOENIX_EFFECT_2_SND, 1, NODE_38, NODE_32)
+
+	/************************************************/
+	/* Combine all sound sources.                   */
+	/************************************************/
+	DISCRETE_MIXER4(NODE_90, 1, PHOENIX_EFFECT_1_SND, PHOENIX_EFFECT_2_SND, PHOENIX_EFFECT_3_SND, PHOENIX_EFFECT_4_SND,&phoenix_mixer)
+
+	DISCRETE_OUTPUT(NODE_90, 100)
+DISCRETE_SOUND_END
 
 WRITE8_HANDLER( phoenix_sound_control_a_w )
 {
 	if( data == sound_latch_a )
 		return;
 
+	discrete_sound_w(PHOENIX_EFFECT_2_DATA, data & 0x0f);
+	discrete_sound_w(PHOENIX_EFFECT_2_FREQ, (data & 0x20) >> 4);
+//	discrete_sound_w(PHOENIX_EFFECT_3_EN  , data & 0x40);
+//	discrete_sound_w(PHOENIX_EFFECT_4_EN  , data & 0x80);
+
 	stream_update(channel,0);
 	sound_latch_a = data;
-
-	tone1_vco1_cap = (sound_latch_a >> 4) & 3;
-	if( sound_latch_a & 0x20 )
-		tone1_level = VMAX * 10000 / (10000+10000);
-	else
-		tone1_level = VMAX;
 }
 
 WRITE8_HANDLER( phoenix_sound_control_b_w )
 {
-	if( data == sound_latch_b )
-		return;
+	discrete_sound_w(PHOENIX_EFFECT_1_DATA, data & 0x0f);
+	discrete_sound_w(PHOENIX_EFFECT_1_FILT, data & 0x20);
+	discrete_sound_w(PHOENIX_EFFECT_1_FREQ, data & 0x10);
 
-	stream_update(channel,0);
-	sound_latch_b = data;
-
-	if( sound_latch_b & 0x20 )
-		tone2_level = VMAX * 10 / 11;
-	else
-		tone2_level = VMAX;
-
-	/* eventually change the tune that the MM6221AA is playing */
-	mm6221aa_tune_w(0, sound_latch_b >> 6);
+	/* update the tune that the MM6221AA is playing */
+	mm6221aa_tune_w(0, data >> 6);
 }
 
 void *phoenix_sh_start(const struct CustomSound_interface *config)

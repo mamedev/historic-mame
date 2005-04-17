@@ -900,7 +900,7 @@ static const struct InputPortDefinition inputport_list_defaults[] =
 static struct InputPortDefinition inputport_list[sizeof(inputport_list_defaults) / sizeof(inputport_list_defaults[0])];
 static struct InputPortDefinition inputport_list_backup[sizeof(inputport_list_defaults) / sizeof(inputport_list_defaults[0])];
 static const int inputport_count = sizeof(inputport_list_defaults) / sizeof(inputport_list_defaults[0]);
-
+static struct InputPortDefinition *inputport_list_lookup[__ipt_max][MAX_PLAYERS];
 
 
 /*************************************
@@ -924,7 +924,7 @@ static void interpolate_analog_port(int port);
 
 int load_input_port_settings(void)
 {
-	int loaded;
+	int loaded, ipnum;
 
 	/* start with the raw defaults and ask the OSD to customize them in the backup array */
 	memcpy(inputport_list_backup, inputport_list_defaults, sizeof(inputport_list_backup));
@@ -949,6 +949,11 @@ int load_input_port_settings(void)
 
 	/* initialize the various port states */
 	inputport_init();
+
+	/* fill lookup table */
+	memset(inputport_list_lookup, 0, sizeof(inputport_list_lookup));
+	for (ipnum = 0; inputport_list[ipnum].type != IPT_END; ipnum++)
+		inputport_list_lookup[inputport_list[ipnum].type][inputport_list[ipnum].player] = &inputport_list[ipnum];
 
 	/* if we didn't find a saved config, return 0 so the main core knows that it */
 	/* is the first time the game is run and it should diplay the disclaimer. */
@@ -1274,13 +1279,11 @@ struct InputPortDefinition *get_input_port_list_backup(void)
 const char *port_type_to_token(int type, int player)
 {
 	static char tempbuf[32];
-	int ipnum;
-
-	/* scan the token list to find the one we want */
-	for (ipnum = 0; ipnum < inputport_count; ipnum++)
-		if (inputport_list[ipnum].type == type && inputport_list[ipnum].player == player)
-			return inputport_list[ipnum].token;
-
+	
+	/* look up the port and return the token */
+	if (inputport_list_lookup[type][player])
+		return inputport_list_lookup[type][player]->token;
+		
 	/* if that fails, carry on */
 	sprintf(tempbuf, "TYPE_OTHER(%d,%d)", type, player);
 	return tempbuf;
@@ -1340,10 +1343,8 @@ int port_type_in_use(int type)
 
 int port_type_to_group(int type, int player)
 {
-	int ipnum;
-	for (ipnum = 0; ipnum < inputport_count; ipnum++)
-		if (inputport_list[ipnum].type == type && inputport_list[ipnum].player == player)
-			return inputport_list[ipnum].group;
+	if (inputport_list_lookup[type][player])
+		return inputport_list_lookup[type][player]->group;
 	return IPG_INVALID;
 }
 
@@ -1383,16 +1384,13 @@ read32_handler port_tag_to_handler32(const char *tag)
 
 const char *input_port_name(const struct InputPort *port)
 {
-	int listnum;
-
 	/* if we have a non-default name, use that */
 	if (port->name != IP_NAME_DEFAULT)
 		return port->name;
 
-	/* search the defaults for the type */
-	for (listnum = 0; listnum < inputport_count; listnum++)
-		if (inputport_list[listnum].type == port->type && inputport_list[listnum].player == port->player)
-			return inputport_list[listnum].name;
+	/* if the port exists, return the default name */
+	if (inputport_list_lookup[port->type][port->player]) 
+		return inputport_list_lookup[port->type][port->player]->name;
 
 	/* should never get here */
 	return NULL;
@@ -1443,23 +1441,19 @@ input_seq_t *input_port_seq(struct InputPort *port, int seqtype)
 input_seq_t *input_port_default_seq(int type, int player, int seqtype)
 {
 	static input_seq_t ip_none = SEQ_DEF_1(CODE_NONE);
-	int ipnum;
 
 	/* find the default setting */
-	for (ipnum = 0; inputport_list[ipnum].type != IPT_END; ipnum++)
-		if (inputport_list[ipnum].type == type && inputport_list[ipnum].player == player)
+	struct InputPortDefinition *const ip = inputport_list_lookup[type][player];
+	if (ip) 
+		switch (seqtype)
 		{
-			switch (seqtype)
-			{
-				case SEQ_TYPE_STANDARD:
-					return &inputport_list[ipnum].defaultseq;
-				case SEQ_TYPE_INCREMENT:
-					return &inputport_list[ipnum].defaultincseq;
-				case SEQ_TYPE_DECREMENT:
-					return &inputport_list[ipnum].defaultdecseq;
-			}
+			case SEQ_TYPE_STANDARD:
+				return &ip->defaultseq;
+			case SEQ_TYPE_INCREMENT:
+				return &ip->defaultincseq;
+			case SEQ_TYPE_DECREMENT:
+				return &ip->defaultdecseq;
 		}
-
 	return &ip_none;
 }
 
@@ -1486,12 +1480,8 @@ int input_port_condition(const struct InputPort *in)
 
 int input_port_type_pressed(int type, int player)
 {
-	int listnum;
-
-	/* search the defaults for the type */
-	for (listnum = 0; inputport_list[listnum].type != IPT_END; listnum++)
-		if (inputport_list[listnum].type == type && inputport_list[listnum].player == player)
-			return seq_pressed(&inputport_list[listnum].defaultseq);
+	if (inputport_list_lookup[type][player])
+		return seq_pressed(&inputport_list_lookup[type][player]->defaultseq);
 
 	return 0;
 }

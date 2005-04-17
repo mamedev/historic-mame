@@ -221,8 +221,8 @@ Driver by Takahiro Nogi (nogi@kt.rim.or.jp) 1999/11/06
 #include "vidhrdw/generic.h"
 #include "cpu/i8x41/i8x41.h"
 #include "sound/2203intf.h"
+#include "sound/dac.h"
 #include "sound/samples.h"
-
 
 /* prototypes for functions in ../machine/tnzs.c */
 unsigned char *tnzs_objram, *tnzs_sharedram;
@@ -358,12 +358,28 @@ static WRITE8_HANDLER( kageki_csport_w )
 	}
 }
 
+static WRITE8_HANDLER( kabukiz_sound_bank_w )
+{
+	// to avoid the write when the sound chip is initialized
+	if(data != 0xff)
+	{
+		data8_t *ROM = memory_region(REGION_CPU3);
+		cpu_setbank(3, &ROM[0x10000 + 0x4000 * (data & 0x07)]);
+	}
+}
+
+static WRITE8_HANDLER( kabukiz_sample_w )
+{
+	// to avoid the write when the sound chip is initialized
+	if(data != 0xff)
+		DAC_0_data_w(0, data );
+}
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1) /* ROM + RAM */
 	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe000, 0xefff) AM_READ(tnzs_sharedram_r)	/* WORK RAM (shared by the 2 z80's */
+	AM_RANGE(0xe000, 0xefff) AM_READ(tnzs_sharedram_r)	/* WORK RAM (shared by the 2 z80's) */
 	AM_RANGE(0xf000, 0xf1ff) AM_READ(MRA8_RAM)	/* VDC RAM */
 	AM_RANGE(0xf600, 0xf600) AM_READ(MRA8_NOP)	/* ? */
 	AM_RANGE(0xf800, 0xfbff) AM_READ(MRA8_RAM)	/* not in extrmatn and arknoid2 (PROMs instead) */
@@ -383,6 +399,20 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	/* drtoppel writes here anyway! (maybe leftover from tests during development) */
 	/* so the handler is patched out in init_drtopple() */
 	AM_RANGE(0xf800, 0xfbff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_w) AM_BASE(&paletteram)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( cpu0_type2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0xbfff) AM_RAMBANK(1)	/* ROM + RAM */
+	AM_RANGE(0xc000, 0xdfff) AM_RAM AM_BASE(&tnzs_objram)
+	AM_RANGE(0xe000, 0xefff) AM_READWRITE(tnzs_sharedram_r, tnzs_sharedram_w) AM_BASE(&tnzs_sharedram) /* WORK RAM (shared by the 2 z80's) */
+	AM_RANGE(0xf000, 0xf1ff) AM_RAM AM_BASE(&tnzs_vdcram)
+	AM_RANGE(0xf200, 0xf2ff) AM_WRITE(MWA8_RAM) AM_BASE(&tnzs_scrollram) /* scrolling info */
+	AM_RANGE(0xf300, 0xf303) AM_MIRROR(0xfc) AM_WRITE(MWA8_RAM) AM_BASE(&tnzs_objctrl) /* control registers (0x80 mirror used by Arkanoid 2) */
+	AM_RANGE(0xf400, 0xf400) AM_WRITENOP	/* ? */
+	AM_RANGE(0xf600, 0xf600) AM_WRITE(tnzs_bankswitch_w)
+	/* kabukiz still writes here but it's not used (it's paletteram in type1 map) */
+	AM_RANGE(0xf800, 0xfbff) AM_WRITENOP
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -476,6 +506,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( kabukiz_cpu2_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0xbfff) AM_ROMBANK(3)
 	AM_RANGE(0xe000, 0xffff) AM_RAM
 ADDRESS_MAP_END
 
@@ -1274,13 +1305,18 @@ static struct YM2203interface ym2203b_interface =
 	irqhandler
 };
 
+static struct YM2203interface kabukiz_ym2203_interface =
+{
+	0,0,kabukiz_sound_bank_w,kabukiz_sample_w,
+	irqhandler
+};
+
 static struct Samplesinterface samples_interface =
 {
 	1,
 	NULL,
 	kageki_init_samples
 };
-
 
 static MACHINE_DRIVER_START( arknoid2 )
 
@@ -1480,7 +1516,7 @@ static MACHINE_DRIVER_START( tnzsb )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("cpu0", Z80, 6000000)		/* 6 MHz */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(cpu0_type2,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD_TAG("cpu1", Z80, 6000000)		/* 6 MHz */
@@ -1510,7 +1546,7 @@ static MACHINE_DRIVER_START( tnzsb )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_ADD_TAG("ym2203", YM2203, 3000000)
 	MDRV_SOUND_CONFIG(ym2203b_interface)
 	MDRV_SOUND_ROUTE(0, "mono", 1.0)
 	MDRV_SOUND_ROUTE(1, "mono", 1.0)
@@ -1529,6 +1565,16 @@ static MACHINE_DRIVER_START( kabukiz )
 
 	MDRV_CPU_MODIFY("cpu2")
 	MDRV_CPU_PROGRAM_MAP(kabukiz_cpu2_map,0)
+
+	MDRV_SOUND_MODIFY("ym2203")
+	MDRV_SOUND_CONFIG(kabukiz_ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 1.0)
+	MDRV_SOUND_ROUTE(1, "mono", 1.0)
+	MDRV_SOUND_ROUTE(2, "mono", 1.0)
+	MDRV_SOUND_ROUTE(3, "mono", 2.0)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1999,8 +2045,9 @@ ROM_START( kabukiz )
 	ROM_LOAD( "b50-08.1e",  0x00000, 0x08000, CRC(cb92d34c) SHA1(3a666f0e3ff9d3daa599123edee228d94eeae754) )
 	ROM_CONTINUE(           0x10000, 0x08000 )		/* banked at 8000-9fff */
 
-	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the third CPU */
-	ROM_LOAD( "b50_07.u34", 0x00000, 0x10000, CRC(fdc300c9) SHA1(1b576662b7b824c8f20a45aad6f88b90c82c5553) )
+	ROM_REGION( 0x30000, REGION_CPU3, 0 )	/* 64k + bankswitch areas for the third CPU */
+	ROM_LOAD( "b50_07.u34", 0x00000, 0x08000, CRC(bf7fc2ed) SHA1(77008d12d9bdbfa100dcd87cd6ca7de3748408c5) )
+	ROM_CONTINUE(           0x18000, 0x18000 )		/* banked at 8000-bfff */
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "b50-04.u35", 0x000000, 0x80000, CRC(04829aa9) SHA1(a501ec7c802478fc41ec8ef4270b1a6872bcbf34) )
@@ -2018,8 +2065,9 @@ ROM_START( kabukizj )
 	ROM_LOAD( "b50_06.u3",  0x00000, 0x08000, CRC(45650aab) SHA1(00d1fc6044a6ad1e82476ccbe730907b4d780cb9) )
 	ROM_CONTINUE(           0x10000, 0x08000 )		/* banked at 8000-9fff */
 
-	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the third CPU */
-	ROM_LOAD( "b50_07.u34", 0x00000, 0x10000, CRC(fdc300c9) SHA1(1b576662b7b824c8f20a45aad6f88b90c82c5553) )
+	ROM_REGION( 0x30000, REGION_CPU3, 0 )	/* 64k + bankswitch areas for the third CPU */
+	ROM_LOAD( "b50_07.u34", 0x00000, 0x08000, CRC(bf7fc2ed) SHA1(77008d12d9bdbfa100dcd87cd6ca7de3748408c5) )
+	ROM_CONTINUE(           0x18000, 0x18000 )		/* banked at 8000-bfff */
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "b50-04.u35", 0x000000, 0x80000, CRC(04829aa9) SHA1(a501ec7c802478fc41ec8ef4270b1a6872bcbf34) )

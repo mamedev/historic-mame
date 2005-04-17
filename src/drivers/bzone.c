@@ -254,26 +254,6 @@ READ8_HANDLER( bzone_IN0_r )
 }
 
 
-/* Translation table for one-joystick emulation */
-static UINT8 one_joy_trans[] =
-{
-	0x00,0x0A,0x05,0x00,0x06,0x02,0x01,0x00,
-	0x09,0x08,0x04,0x00,0x00,0x00,0x00,0x00
-};
-
-static READ8_HANDLER( bzone_IN3_r )
-{
-	int res,res1;
-
-	res=readinputportbytag("IN3");
-	res1=readinputportbytag("FAKE");
-
-	res |= one_joy_trans[res1 & 0x0f];
-
-	return (res);
-}
-
-
 static WRITE8_HANDLER( bzone_coin_counter_w )
 {
 	coin_counter_w(offset,data);
@@ -440,14 +420,6 @@ BZONEDSW1
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
-
-	PORT_START_TAG("FAKE")	/* fake port for single joystick control */
-  	/* This fake port is handled via bzone_IN3_r */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_NAME ("Up (1 Joy Cheat)")
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_NAME ("Down (1 Joy Cheat)")
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_NAME ("Left (1 Joy Cheat)")
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )PORT_8WAY PORT_NAME ("Right (1 Joy Cheat)")
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_NAME ("Button 1 (1 Joy Cheat)")
 INPUT_PORTS_END
 
 
@@ -553,13 +525,6 @@ INPUT_PORTS_END
 static struct POKEYinterface bzone_pokey_interface =
 {
 	{ 0 },
-	bzone_IN3_r
-};
-
-
-static struct POKEYinterface bradley_pokey_interface =
-{
-	{ 0 },
 	input_port_3_r
 };
 
@@ -629,7 +594,7 @@ static MACHINE_DRIVER_START( bradley )
 
 	/* sound hardware */
 	MDRV_SOUND_REPLACE("pokey", POKEY, 1500000)
-	MDRV_SOUND_CONFIG(bradley_pokey_interface)
+	MDRV_SOUND_CONFIG(bzone_pokey_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 

@@ -839,11 +839,11 @@ void sys24_sprite_draw(struct mame_bitmap *bitmap, const struct rectangle *clipr
 			int xpos1 = x;
 			int ypos1 = y, ymod1 = ymod;
 			for(px=0; px<sx; px++) {
+				int xmod2 = xmod1, xpos2 = xpos1;
+				int zy;
 				addoffset = 0x10*(flipx ? sx-px-1 : px) + 0x10*sx*(flipy ? sy-py-1 : py) + (flipy ? 7*2 : 0);
 				newoffset = offset + addoffset;
 
-				int xmod2 = xmod1, xpos2 = xpos1;
-				int zy;
 				ymod1 = ymod;
 				ypos1 = y;
 				for(zy=0; zy<8; zy++) {

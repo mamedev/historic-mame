@@ -13,10 +13,6 @@ my way in.
 There's also something wrong in the way tile banks are implemented in
 konamiic.c. They don't seem to be used by this game.
 
-The visible area is dubious. It looks like it is supposed to be asymmetrical,
-I've set it that way however this will break cocktail flip (since it expects
-a symmetrical visible area).
-
 ***************************************************************************/
 
 #include "driver.h"
@@ -402,7 +398,7 @@ static MACHINE_DRIVER_START( gradius3 )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
 	MDRV_SCREEN_SIZE(64*8, 32*8)
-	MDRV_VISIBLE_AREA(12*8, (64-14)*8-1, 2*8, 30*8-1 )	/* asymmetrical! */
+	MDRV_VISIBLE_AREA(12*8, (64-12)*8-1, 2*8, 30*8-1 )
 	MDRV_PALETTE_LENGTH(2048)
 
 	MDRV_VIDEO_START(gradius3)
