@@ -1241,7 +1241,7 @@ static MACHINE_DRIVER_START( nonraster )
 	MDRV_CPU_VBLANK_INT(m92_interrupt,1)
 
 	MDRV_CPU_ADD(V30, 14318180/2)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 14.31818 MHz */
+	/* audio CPU */	/* 14.31818 MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1280,7 +1280,7 @@ static MACHINE_DRIVER_START( lethalth )
 	MDRV_CPU_VBLANK_INT(m92_interrupt,1)
 
 	MDRV_CPU_ADD(V30, 14318180/2)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 14.31818 MHz */
+	/* audio CPU */	/* 14.31818 MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1319,7 +1319,7 @@ static MACHINE_DRIVER_START( psoldier )
 	MDRV_CPU_VBLANK_INT(m92_interrupt,1)
 
 	MDRV_CPU_ADD(V30, 14318180/2)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 14.31818 MHz */
+	/* audio CPU */	/* 14.31818 MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)

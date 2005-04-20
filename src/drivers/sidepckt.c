@@ -300,7 +300,7 @@ static MACHINE_DRIVER_START( sidepckt )
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(M6502, 1500000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 1.5 MHz */
+	/* audio CPU */        /* 1.5 MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 								/* NMIs are triggered by the main cpu */
 	MDRV_FRAMES_PER_SECOND(58)
@@ -337,7 +337,7 @@ static MACHINE_DRIVER_START( sidepctj )
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(M6502, 1500000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 1.5 MHz */
+	/* audio CPU */        /* 1.5 MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 								/* NMIs are triggered by the main cpu */
 	MDRV_FRAMES_PER_SECOND(58)

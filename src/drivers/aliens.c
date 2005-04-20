@@ -266,7 +266,7 @@ static MACHINE_DRIVER_START( aliens )
 	MDRV_CPU_VBLANK_INT(aliens_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* ? */
+	/* audio CPU */		/* ? */
 	MDRV_CPU_PROGRAM_MAP(aliens_readmem_sound,aliens_writemem_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)

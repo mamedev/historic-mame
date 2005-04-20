@@ -141,6 +141,7 @@ static WRITE8_HANDLER( sound_msm_w ) {
 }
 
 static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r) /* Player 1 controls - ACTIVE LOW */
 	AM_RANGE(0x40, 0x40) AM_READ(input_port_1_r) /* Player 2 controls - ACTIVE LOW */
 	AM_RANGE(0x80, 0x80) AM_READ(input_port_2_r) /* Coins & Start - ACTIVE LOW */
@@ -148,6 +149,7 @@ static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(kchamp_flipscreen_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(control_w)
 	AM_RANGE(0x02, 0x02) AM_WRITE(sound_reset_w)
@@ -155,10 +157,12 @@ static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x01, 0x01) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_write_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x02, 0x02) AM_WRITE(AY8910_write_port_1_w)
@@ -212,6 +216,7 @@ static WRITE8_HANDLER( kc_sound_control_w ) {
 }
 
 static ADDRESS_MAP_START( kc_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x90, 0x90) AM_READ(input_port_0_r) /* Player 1 controls - ACTIVE LOW */
 	AM_RANGE(0x98, 0x98) AM_READ(input_port_1_r) /* Player 2 controls - ACTIVE LOW */
 	AM_RANGE(0xa0, 0xa0) AM_READ(input_port_2_r) /* Coins & Start - ACTIVE LOW */
@@ -220,16 +225,19 @@ static ADDRESS_MAP_START( kc_readport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( kc_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x80, 0x80) AM_WRITE(kchamp_flipscreen_w)
 	AM_RANGE(0x81, 0x81) AM_WRITE(control_w)
 	AM_RANGE(0xa8, 0xa8) AM_WRITE(sound_command_w)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( kc_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x06, 0x06) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( kc_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_write_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x02, 0x02) AM_WRITE(AY8910_write_port_1_w)
@@ -441,7 +449,7 @@ static MACHINE_DRIVER_START( kchampvs )
 	MDRV_CPU_VBLANK_INT(kc_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 3000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 12MHz / 4 = 3.0 MHz */
+	/* audio CPU */	/* 12MHz / 4 = 3.0 MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 			/* irq's triggered from main cpu */
@@ -488,7 +496,7 @@ static MACHINE_DRIVER_START( kchamp )
 	MDRV_CPU_VBLANK_INT(kc_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 3000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 12MHz / 4 = 3.0 MHz */
+	/* audio CPU */	/* 12MHz / 4 = 3.0 MHz */
 	MDRV_CPU_PROGRAM_MAP(kc_sound_readmem,kc_sound_writemem)
 	MDRV_CPU_IO_MAP(kc_sound_readport,kc_sound_writeport)
 	MDRV_CPU_PERIODIC_INT(sound_int, 125) /* Hz */

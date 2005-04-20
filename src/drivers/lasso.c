@@ -254,12 +254,14 @@ static ADDRESS_MAP_START( pinbo_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( pinbo_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x02, 0x02) AM_READ(AY8910_read_port_0_r)
 	AM_RANGE(0x06, 0x06) AM_READ(AY8910_read_port_1_r)
 	AM_RANGE(0x08, 0x08) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( pinbo_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(AY8910_write_port_0_w)
 	AM_RANGE(0x04, 0x04) AM_WRITE(AY8910_control_port_1_w)
@@ -621,7 +623,7 @@ static MACHINE_DRIVER_START( lasso )
 	MDRV_CPU_VBLANK_INT(lasso_interrupt,2)		/* IRQ = VBlank, NMI = Coin Insertion */
 
 	MDRV_CPU_ADD_TAG("audio", M6502, 600000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* ?? (controls music tempo) */
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(lasso_sound_readmem,lasso_sound_writemem)
 
 	MDRV_CPU_ADD_TAG("blitter", M6502, 2000000)	/* 2 MHz (?) */

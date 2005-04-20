@@ -352,7 +352,7 @@ static MACHINE_DRIVER_START( enigma2 )
 	MDRV_CPU_VBLANK_INT(enigma2_interrupt,2)
 	
 	MDRV_CPU_ADD(Z80, 2500000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	
+	/* audio CPU */	
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,8)
 	MDRV_CPU_PROGRAM_MAP(sound_cpu,0)
 
@@ -383,7 +383,7 @@ static MACHINE_DRIVER_START( enigma2a )
 	MDRV_CPU_VBLANK_INT(enigma2_interrupt,2)
 	
 	MDRV_CPU_ADD(Z80, 2500000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	
+	/* audio CPU */	
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,8)
 	MDRV_CPU_PROGRAM_MAP(sound_cpu,0)
 

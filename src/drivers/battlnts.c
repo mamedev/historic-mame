@@ -338,7 +338,7 @@ static MACHINE_DRIVER_START( battlnts )
 	MDRV_CPU_VBLANK_INT(battlnts_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* ? */
+	/* audio CPU */		/* ? */
 	MDRV_CPU_PROGRAM_MAP(battlnts_readmem_sound,battlnts_writemem_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)

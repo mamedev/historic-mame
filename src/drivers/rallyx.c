@@ -315,6 +315,7 @@ static ADDRESS_MAP_START( rallyx_map, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0, 0) AM_WRITE(interrupt_vector_w)
 ADDRESS_MAP_END
 
@@ -873,7 +874,7 @@ static MACHINE_DRIVER_START( tactcian )
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(Z80, 14318180/8)	/* 1.789772727 MHz */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(locomotn_sound_readmem,locomotn_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)

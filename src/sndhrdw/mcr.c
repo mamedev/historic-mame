@@ -279,7 +279,7 @@ ADDRESS_MAP_END
 /********* machine driver ***********/
 MACHINE_DRIVER_START(mcr_ssio)
 	MDRV_CPU_ADD_TAG("ssio", Z80, 2000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(ssio_readmem,ssio_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,26)
 	
@@ -367,7 +367,7 @@ struct pia6821_interface csdeluxe_pia_intf =
 /********* machine driver ***********/
 MACHINE_DRIVER_START(chip_squeak_deluxe)
 	MDRV_CPU_ADD_TAG("csd", M68000, 15000000/2)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(csdeluxe_readmem,csdeluxe_writemem)
 	
 	MDRV_SPEAKER_STANDARD_MONO("mono")
@@ -457,7 +457,7 @@ struct pia6821_interface soundsgood_pia_intf =
 /********* machine driver ***********/
 MACHINE_DRIVER_START(sounds_good)
 	MDRV_CPU_ADD_TAG("sg", M68000, 16000000/2)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(soundsgood_readmem,soundsgood_writemem)
 	
 	MDRV_SPEAKER_STANDARD_MONO("mono")
@@ -546,7 +546,7 @@ struct pia6821_interface turbocs_pia_intf =
 /********* machine driver ***********/
 MACHINE_DRIVER_START(turbo_chip_squeak)
 	MDRV_CPU_ADD_TAG("tcs", M6809, 9000000/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(turbocs_readmem,turbocs_writemem)
 	
 	MDRV_SPEAKER_STANDARD_MONO("mono")
@@ -676,7 +676,7 @@ struct pia6821_interface squawkntalk_pia1_intf =
 /********* machine driver ***********/
 MACHINE_DRIVER_START(squawk_n_talk)
 	MDRV_CPU_ADD_TAG("snt", M6802, 3580000/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(squawkntalk_readmem,squawkntalk_writemem)
 	
 	MDRV_SPEAKER_STANDARD_MONO("mono")

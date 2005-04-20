@@ -334,7 +334,7 @@ static MACHINE_DRIVER_START( bionicc )
 	MDRV_CPU_VBLANK_INT(bionicc_interrupt,8)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)  /* 4 MHz ??? TODO: find real FRQ */
+	/* audio CPU */  /* 4 MHz ??? TODO: find real FRQ */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,4)	/* ??? */
 

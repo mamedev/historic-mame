@@ -363,10 +363,11 @@ static READ8_HANDLER( soundlatch_clear_r )
 }
 
 static ADDRESS_MAP_START( soundport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x0, 0x0) AM_WRITE(YM3812_control_port_0_w)
 	AM_RANGE(0x1, 0x1) AM_WRITE(YM3812_write_port_0_w)
-  AM_RANGE(0x2, 0x2) AM_WRITE(DAC_0_signed_data_w)
-  AM_RANGE(0x3, 0x3) AM_WRITE(DAC_1_signed_data_w)
+	AM_RANGE(0x2, 0x2) AM_WRITE(DAC_0_signed_data_w)
+	AM_RANGE(0x3, 0x3) AM_WRITE(DAC_1_signed_data_w)
 	AM_RANGE(0x4, 0x4) AM_READ(soundlatch_clear_r)
 	AM_RANGE(0x6, 0x6) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
@@ -426,7 +427,7 @@ static MACHINE_DRIVER_START( bigfghtr )
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3072000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.072 MHz???? */
+	/* audio CPU */	/* 3.072 MHz???? */
 	MDRV_CPU_PROGRAM_MAP(soundmem,0)
 	MDRV_CPU_IO_MAP(soundport,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,128)

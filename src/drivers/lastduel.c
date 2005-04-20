@@ -264,7 +264,7 @@ static MACHINE_DRIVER_START( lastduel )
 	MDRV_CPU_VBLANK_INT(lastduel_interrupt,3)	/* 1 for vbl, 2 for control reads?? */
 
 	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* Accurate */
+	/* audio CPU */ /* Accurate */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -301,7 +301,7 @@ static MACHINE_DRIVER_START( madgear )
 	MDRV_CPU_VBLANK_INT(madgear_interrupt,3)	/* 1 for vbl, 2 for control reads?? */
 
 	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* Accurate */
+	/* audio CPU */ /* Accurate */
 	MDRV_CPU_PROGRAM_MAP(mg_sound_readmem,mg_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -400,6 +400,7 @@ static ADDRESS_MAP_START( ppking_cpu3_map, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( ppking_cpu1_io, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(gladiatr_spritebuffer_w)
 	AM_RANGE(0x04, 0x04) AM_NOP	// WRITE(ppking_irq_patch_w)
 	AM_RANGE(0x9e, 0x9f) AM_READ(qx0_r) AM_WRITE(qx0_w)
@@ -407,6 +408,7 @@ static ADDRESS_MAP_START( ppking_cpu1_io, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( ppking_cpu2_io, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(YM2203_status_port_0_r) AM_WRITE(YM2203_control_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_READ(YM2203_read_port_0_r) AM_WRITE(YM2203_write_port_0_w)
 	AM_RANGE(0x20, 0x21) AM_READ(qx1_r) AM_WRITE(qx1_w)
@@ -443,6 +445,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( gladiatr_cpu1_io, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(gladiatr_spritebuffer_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(gladiatr_spritebank_w)
 	AM_RANGE(0x02, 0x02) AM_WRITE(gladiatr_bankswitch_w)
@@ -453,6 +456,7 @@ static ADDRESS_MAP_START( gladiatr_cpu1_io, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( gladiatr_cpu2_io, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READWRITE(YM2203_status_port_0_r, YM2203_control_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_READWRITE(YM2203_read_port_0_r, YM2203_write_port_0_w)
 	AM_RANGE(0x20, 0x21) AM_READWRITE(TAITO8741_1_r, TAITO8741_1_w)
@@ -691,7 +695,7 @@ static MACHINE_DRIVER_START( ppking )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(M6809, 12000000/16) /* 750 kHz */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(ppking_cpu3_map,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -738,7 +742,7 @@ static MACHINE_DRIVER_START( gladiatr )
 	MDRV_CPU_IO_MAP(gladiatr_cpu2_io,0)
 
 	MDRV_CPU_ADD(M6809, 12000000/16) /* 750 kHz */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(gladiatr_cpu3_map,0)
 
 	MDRV_FRAMES_PER_SECOND(60)

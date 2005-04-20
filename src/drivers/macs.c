@@ -152,6 +152,7 @@ static READ8_HANDLER(macs_rand_r)
 }
 
 static ADDRESS_MAP_START( st0016_io, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0xbf) AM_READ(st0016_vregs_r) AM_WRITE(st0016_vregs_w) /* video/crt regs ? */
 	AM_RANGE(0xc0, 0xc0) AM_READ(macs_dips) AM_WRITE(rambank2_w) //AM_WRITENOP
 	AM_RANGE(0xc1, 0xc1)	AM_READ(macs_dips) AM_WRITENOP

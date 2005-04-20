@@ -434,7 +434,7 @@ static MACHINE_DRIVER_START( mugsmash )
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* Guess */
+	/* audio CPU */	/* Guess */
 	MDRV_CPU_PROGRAM_MAP(snd_readmem,snd_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)

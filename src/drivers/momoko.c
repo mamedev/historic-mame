@@ -259,7 +259,7 @@ static MACHINE_DRIVER_START( momoko )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 2500000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 2.5MHz */
+	/* audio CPU */	/* 2.5MHz */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)

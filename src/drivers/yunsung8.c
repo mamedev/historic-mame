@@ -112,6 +112,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( yunsung8_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r		)	// Coins
 	AM_RANGE(0x01, 0x01) AM_READ(input_port_1_r		)	// P1
 	AM_RANGE(0x02, 0x02) AM_READ(input_port_2_r		)	// P2
@@ -120,6 +121,7 @@ static ADDRESS_MAP_START( yunsung8_readport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( yunsung8_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(yunsung8_videobank_w	)	// Video RAM Bank
 	AM_RANGE(0x01, 0x01) AM_WRITE(yunsung8_bankswitch_w	)	// ROM Bank + Layers Enable
 	AM_RANGE(0x02, 0x02) AM_WRITE(soundlatch_w			)	// To Sound CPU
@@ -446,7 +448,7 @@ static MACHINE_DRIVER_START( yunsung8 )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* No nmi routine */
 
 	MDRV_CPU_ADD(Z80, 4000000)			/* ? */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(yunsung8_sound_readmem,yunsung8_sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* NMI caused by the MSM5205? */
 

@@ -581,7 +581,7 @@ static MACHINE_DRIVER_START( firetrap )
 	MDRV_CPU_VBLANK_INT(firetrap,2)
 
 	MDRV_CPU_ADD(M6502,3072000/2)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.536 MHz? */
+	/* audio CPU */	/* 1.536 MHz? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 							/* IRQs are caused by the ADPCM chip */
 							/* NMIs are caused by the main CPU */
@@ -619,7 +619,7 @@ static MACHINE_DRIVER_START( firetpbl )
 	MDRV_CPU_VBLANK_INT(bootleg,1)
 
 	MDRV_CPU_ADD(M6502,3072000/2)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.536 MHz? */
+	/* audio CPU */	/* 1.536 MHz? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 							/* IRQs are caused by the ADPCM chip */
 							/* NMIs are caused by the main CPU */

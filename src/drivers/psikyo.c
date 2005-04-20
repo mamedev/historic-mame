@@ -388,12 +388,14 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( sngkace_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(YM2610_status_port_0_A_r		)
 	AM_RANGE(0x02, 0x02) AM_READ(YM2610_status_port_0_B_r		)
 	AM_RANGE(0x08, 0x08) AM_READ(soundlatch_r					)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sngkace_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(YM2610_control_port_0_A_w		)
 	AM_RANGE(0x01, 0x01) AM_WRITE(YM2610_data_port_0_A_w		)
 	AM_RANGE(0x02, 0x02) AM_WRITE(YM2610_control_port_0_B_w		)
@@ -432,12 +434,14 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( gunbird_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x04, 0x04) AM_READ(YM2610_status_port_0_A_r		)
 	AM_RANGE(0x06, 0x06) AM_READ(YM2610_status_port_0_B_r		)
 	AM_RANGE(0x08, 0x08) AM_READ(soundlatch_r					)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( gunbird_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(gunbird_sound_bankswitch_w	)
 	AM_RANGE(0x04, 0x04) AM_WRITE(YM2610_control_port_0_A_w		)
 	AM_RANGE(0x05, 0x05) AM_WRITE(YM2610_data_port_0_A_w		)
@@ -453,11 +457,13 @@ ADDRESS_MAP_END
 ***************************************************************************/
 
 static ADDRESS_MAP_START( s1945_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x08, 0x08) AM_READ(YMF278B_status_port_0_r		)
 	AM_RANGE(0x10, 0x10) AM_READ(soundlatch_r					)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( s1945_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(gunbird_sound_bankswitch_w	)
 	AM_RANGE(0x02, 0x03) AM_WRITE(MWA8_NOP						)
 	AM_RANGE(0x08, 0x08) AM_WRITE(YMF278B_control_port_0_A_w	)
@@ -1542,7 +1548,7 @@ static MACHINE_DRIVER_START( sngkace )
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	/* audio CPU */	/* ? */
 	MDRV_CPU_PROGRAM_MAP(sngkace_sound_readmem,sngkace_sound_writemem)
 	MDRV_CPU_IO_MAP(sngkace_sound_readport,sngkace_sound_writeport)
 
@@ -1593,7 +1599,7 @@ static MACHINE_DRIVER_START( gunbird )
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)	/* ! LZ8420M (Z80 core) ! */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(gunbird_sound_readmem,gunbird_sound_writemem)
 	MDRV_CPU_IO_MAP(gunbird_sound_readport,gunbird_sound_writeport)
 
@@ -1652,7 +1658,7 @@ static MACHINE_DRIVER_START( s1945 )
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)	/* ! LZ8420M (Z80 core) ! */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(gunbird_sound_readmem,gunbird_sound_writemem)
 	MDRV_CPU_IO_MAP(s1945_sound_readport,s1945_sound_writeport)
 

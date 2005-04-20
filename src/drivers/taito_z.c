@@ -3209,7 +3209,7 @@ static MACHINE_DRIVER_START( contcirc )
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,16000000/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	/* audio CPU */	/* 4 MHz ??? */
 	MDRV_CPU_PROGRAM_MAP(z80_sound_readmem,z80_sound_writemem)
 
 	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
@@ -3251,7 +3251,7 @@ static MACHINE_DRIVER_START( chasehq )
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,16000000/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	/* audio CPU */	/* 4 MHz ??? */
 	MDRV_CPU_PROGRAM_MAP(z80_sound_readmem,z80_sound_writemem)
 
 	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
@@ -3291,7 +3291,7 @@ static MACHINE_DRIVER_START( enforce )
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,16000000/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	/* audio CPU */	/* 4 MHz ??? */
 	MDRV_CPU_PROGRAM_MAP(z80_sound_readmem,z80_sound_writemem)
 
 	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
@@ -3371,7 +3371,7 @@ static MACHINE_DRIVER_START( sci )
 	MDRV_CPU_VBLANK_INT(sci_interrupt,1)
 
 	MDRV_CPU_ADD(Z80,16000000/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	/* audio CPU */	/* 4 MHz ??? */
 	MDRV_CPU_PROGRAM_MAP(z80_sound_readmem,z80_sound_writemem)
 
 	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
@@ -3412,7 +3412,7 @@ static MACHINE_DRIVER_START( nightstr )
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,16000000/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	/* audio CPU */	/* 4 MHz ??? */
 	MDRV_CPU_PROGRAM_MAP(z80_sound_readmem,z80_sound_writemem)
 
 	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
@@ -3453,7 +3453,7 @@ static MACHINE_DRIVER_START( aquajack )
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,16000000/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	/* audio CPU */	/* 4 MHz ??? */
 	MDRV_CPU_PROGRAM_MAP(z80_sound_readmem,z80_sound_writemem)
 
 	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
@@ -3532,7 +3532,7 @@ static MACHINE_DRIVER_START( dblaxle )
 	MDRV_CPU_VBLANK_INT(dblaxle_interrupt,1)
 
 	MDRV_CPU_ADD(Z80,16000000/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	/* audio CPU */	/* 4 MHz ??? */
 	MDRV_CPU_PROGRAM_MAP(z80_sound_readmem,z80_sound_writemem)
 
 	MDRV_CPU_ADD(M68000, 16000000)	/* 16 MHz ??? */
@@ -3573,7 +3573,7 @@ static MACHINE_DRIVER_START( racingb )
 	MDRV_CPU_VBLANK_INT(dblaxle_interrupt,1)
 
 	MDRV_CPU_ADD(Z80,16000000/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	/* audio CPU */	/* 4 MHz ??? */
 	MDRV_CPU_PROGRAM_MAP(z80_sound_readmem,z80_sound_writemem)
 
 	MDRV_CPU_ADD(M68000, 16000000)	/* 16 MHz ??? */

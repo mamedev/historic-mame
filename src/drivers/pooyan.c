@@ -225,7 +225,7 @@ static MACHINE_DRIVER_START( pooyan )
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(Z80,14318180/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.789772727 MHz */
+	/* audio CPU */	/* 1.789772727 MHz */
 	MDRV_CPU_PROGRAM_MAP(timeplt_sound_readmem,timeplt_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)

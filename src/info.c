@@ -509,10 +509,7 @@ static void print_game_micro(FILE* out, const struct GameDriver* game)
 		if (cpu[j].cpu_type!=0)
 		{
 			fprintf(out, "\t\t<chip");
-			if (cpu[j].cpu_flags & CPU_AUDIO_CPU)
-				fprintf(out, " type=\"cpu\" soundonly=\"yes\"");
-			else
-				fprintf(out, " type=\"cpu\"");
+			fprintf(out, " type=\"cpu\"");
 
 			fprintf(out, " name=\"%s\"", normalize_string(cputype_name(cpu[j].cpu_type)));
 
@@ -617,13 +614,6 @@ static void print_game_sound(FILE* out, const struct GameDriver* game)
 	while (i < MAX_SOUND && !has_sound)
 	{
 		if (sound[i].sound_type)
-			has_sound = 1;
-		++i;
-	}
-	i = 0;
-	while (i < MAX_CPU && !has_sound)
-	{
-		if  ((cpu[i].cpu_flags & CPU_AUDIO_CPU)!=0)
 			has_sound = 1;
 		++i;
 	}

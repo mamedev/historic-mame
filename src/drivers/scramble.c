@@ -318,10 +318,12 @@ static ADDRESS_MAP_START( sfx_sample_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sfx_sample_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x04, 0x07) AM_READ(ppi8255_2_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sfx_sample_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x04, 0x07) AM_WRITE(ppi8255_2_w)
 	AM_RANGE(0x10, 0x10) AM_WRITE(DAC_0_signed_data_w)
 ADDRESS_MAP_END
@@ -358,23 +360,27 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( triplep_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x01, 0x01) AM_READ(AY8910_read_port_0_r)
 	AM_RANGE(0x02, 0x02) AM_READ(triplep_pip_r)
 	AM_RANGE(0x03, 0x03) AM_READ(triplep_pap_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( triplep_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_write_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(AY8910_control_port_0_w)
 ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( hotshock_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x20, 0x20) AM_READ(AY8910_read_port_0_r)
 	AM_RANGE(0x40, 0x40) AM_READ(AY8910_read_port_1_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( hotshock_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x10, 0x10) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x20, 0x20) AM_WRITE(AY8910_write_port_0_w)
 	AM_RANGE(0x40, 0x40) AM_WRITE(AY8910_write_port_1_w)
@@ -397,6 +403,7 @@ static WRITE8_HANDLER( scorpion_sound_cmd_w )
 }
 
 static ADDRESS_MAP_START( scorpion_sound_io, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x04, 0x04) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x08, 0x08) AM_READWRITE(AY8910_read_port_0_r, AY8910_write_port_0_w)
 	AM_RANGE(0x10, 0x10) AM_WRITE(AY8910_control_port_1_w)
@@ -1507,7 +1514,7 @@ static MACHINE_DRIVER_START( scramble )
 	MDRV_CPU_PROGRAM_MAP(scramble_readmem,scramble_writemem)
 
 	MDRV_CPU_ADD_TAG("audio", Z80, 14318000/8)	/* 1.78975 MHz */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(scobra_sound_readmem,scobra_sound_writemem)
 	MDRV_CPU_IO_MAP(scobra_sound_readport,scobra_sound_writeport)
 
@@ -1691,7 +1698,7 @@ static MACHINE_DRIVER_START( sfx )
 	MDRV_CPU_PROGRAM_MAP(sfx_readmem,sfx_writemem)
 
 	MDRV_CPU_ADD(Z80, 14318000/8)	/* 1.78975 MHz */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sfx_sample_readmem,sfx_sample_writemem)
 	MDRV_CPU_IO_MAP(sfx_sample_readport,sfx_sample_writeport)
 

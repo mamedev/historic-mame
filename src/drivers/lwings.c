@@ -371,14 +371,17 @@ static ADDRESS_MAP_START( adpcm_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( avengers_adpcm_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(avengers_adpcm_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( adpcm_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( adpcm_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x01, 0x01) AM_WRITE(msm5205_w)
 ADDRESS_MAP_END
 
@@ -860,7 +863,7 @@ static MACHINE_DRIVER_START( lwings )
 	MDRV_CPU_VBLANK_INT(lwings_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 3 MHz (?) */
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
 
@@ -903,12 +906,12 @@ static MACHINE_DRIVER_START( trojan )
 	MDRV_CPU_VBLANK_INT(lwings_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 3 MHz (?) */
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
 
 	MDRV_CPU_ADD(Z80, 4000000) // 3.579545 Mhz (?)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	/* audio CPU */	/* ? */
 	MDRV_CPU_PROGRAM_MAP(adpcm_readmem,adpcm_writemem)
 	MDRV_CPU_IO_MAP(adpcm_readport,adpcm_writeport)
 	MDRV_CPU_PERIODIC_INT(irq0_line_hold,4000)
@@ -956,12 +959,12 @@ static MACHINE_DRIVER_START( avengers )
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1) // RST 38h triggered by software
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 3 MHz (?) */
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
 
 	MDRV_CPU_ADD(Z80, 4000000) // 3.579545 Mhz (?)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	/* audio CPU */	/* ? */
 	MDRV_CPU_PROGRAM_MAP(adpcm_readmem,adpcm_writemem)
 	MDRV_CPU_IO_MAP(avengers_adpcm_readport,adpcm_writeport)
 	MDRV_CPU_PERIODIC_INT(irq0_line_hold,4000)

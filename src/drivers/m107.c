@@ -516,7 +516,7 @@ static MACHINE_DRIVER_START( firebarr )
 	MDRV_CPU_VBLANK_INT(m107_raster_interrupt,256) /* 8 prelines, 240 visible lines, 8 for vblank? */
 
 	MDRV_CPU_ADD(V30, 14318000/2)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 14.318 MHz */
+	/* audio CPU */	/* 14.318 MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -556,7 +556,7 @@ static MACHINE_DRIVER_START( dsoccr94 )
 	MDRV_CPU_VBLANK_INT(m107_interrupt,1)
 
 	MDRV_CPU_ADD(V30, 14318000/2)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 14.318 MHz */
+	/* audio CPU */	/* 14.318 MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)

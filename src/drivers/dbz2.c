@@ -216,9 +216,11 @@ static ADDRESS_MAP_START( dbz2sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( dbz2sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( dbz2sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(MWA8_NOP)
 ADDRESS_MAP_END
 
@@ -450,7 +452,7 @@ static MACHINE_DRIVER_START( dbz2 )
 	MDRV_CPU_VBLANK_INT(dbz2_interrupt,2)
 
 	MDRV_CPU_ADD_TAG("sound", Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(dbz2sound_readmem, dbz2sound_writemem)
 	MDRV_CPU_IO_MAP(dbz2sound_readport,dbz2sound_writeport)
 

@@ -103,22 +103,22 @@ static struct YM2203interface ym2203_interface =					\
 
 #define SEIBU_SOUND_SYSTEM_CPU(freq)								\
 	MDRV_CPU_ADD(Z80, freq)											\
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)									\
+	/* audio CPU */									\
 	MDRV_CPU_PROGRAM_MAP(seibu_sound_readmem,seibu_sound_writemem)		\
 
 #define SEIBU2_SOUND_SYSTEM_CPU(freq)								\
 	MDRV_CPU_ADD(Z80, freq)											\
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)									\
+	/* audio CPU */									\
 	MDRV_CPU_PROGRAM_MAP(seibu2_sound_readmem,seibu2_sound_writemem)		\
 
 #define SEIBU3_SOUND_SYSTEM_CPU(freq)								\
 	MDRV_CPU_ADD(Z80, freq)											\
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)									\
+	/* audio CPU */									\
 	MDRV_CPU_PROGRAM_MAP(seibu3_sound_readmem,seibu3_sound_writemem)		\
 
 #define SEIBU3A_SOUND_SYSTEM_CPU(freq)								\
 	MDRV_CPU_ADD(Z80, freq)											\
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)									\
+	/* audio CPU */									\
 	MDRV_CPU_PROGRAM_MAP(seibu3_sound_readmem,seibu3_adpcm_sound_writemem)		\
 
 #define SEIBU_SOUND_SYSTEM_YM3812_INTERFACE(freq1,freq2,region)		\

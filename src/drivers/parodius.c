@@ -316,7 +316,7 @@ static MACHINE_DRIVER_START( parodius )
 	MDRV_CPU_VBLANK_INT(parodius_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(parodius_readmem_sound,parodius_writemem_sound)
 								/* NMIs are triggered by the 053260 */
 	MDRV_FRAMES_PER_SECOND(60)

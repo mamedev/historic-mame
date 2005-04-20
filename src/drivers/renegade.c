@@ -738,7 +738,7 @@ static MACHINE_DRIVER_START( renegade )
 	MDRV_CPU_VBLANK_INT(renegade_interrupt,2)
 
 	MDRV_CPU_ADD(M6809, 12000000/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.5 MHz (measured) */
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 								/* IRQs are caused by the main CPU */
 	MDRV_FRAMES_PER_SECOND(60)

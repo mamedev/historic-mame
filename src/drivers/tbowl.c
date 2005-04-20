@@ -554,7 +554,7 @@ static MACHINE_DRIVER_START( tbowl )
 
 	/* CPU on Board '6206A' */
 	MDRV_CPU_ADD(Z80, 4000000) /* Actual Z80 */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(readmem_6206A,writemem_6206A)
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -1064,36 +1064,44 @@ ADDRESS_MAP_END
  *************************************/
 
 static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(interrupt_vector_w)	/* Pac-Man only */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( vanvan_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x01, 0x01) AM_WRITE(SN76496_0_w)
 	AM_RANGE(0x02, 0x02) AM_WRITE(SN76496_1_w)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( dremshpr_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x06, 0x06) AM_WRITE(AY8910_write_port_0_w)
 	AM_RANGE(0x07, 0x07) AM_WRITE(AY8910_control_port_0_w)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( piranha_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(piranha_interrupt_vector_w)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( nmouse_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(nmouse_interrupt_vector_w)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( theglobp_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0xff) AM_READ(theglobp_decrypt_rom)	/* Switch protection logic */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( acitya_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0xff) AM_READ(acitya_decrypt_rom) /* Switch protection logic */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( mschamp_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(mschamp_kludge_r)
 ADDRESS_MAP_END
 
@@ -2926,7 +2934,6 @@ static MACHINE_DRIVER_START( bigbucks )
 	MDRV_IMPORT_FROM(pacman)
 
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_PROGRAM_MAP(bigbucks_map,0)
 	MDRV_CPU_IO_MAP(bigbucks_readport,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,20)

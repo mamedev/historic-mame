@@ -477,7 +477,7 @@ static MACHINE_DRIVER_START( cabal )
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz */
+	/* audio CPU */	/* 4 MHz */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -517,7 +517,7 @@ static MACHINE_DRIVER_START( cabalbl )
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz */
+	/* audio CPU */	/* 4 MHz */
 	MDRV_CPU_PROGRAM_MAP(cabalbl_readmem_sound,cabalbl_writemem_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -4743,7 +4743,7 @@ static MACHINE_DRIVER_START( taito_f2 )
 	MDRV_CPU_VBLANK_INT(taitof2_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 16000000/4)	/* 4 MHz */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -5194,7 +5194,7 @@ static MACHINE_DRIVER_START( camltrua )
 	MDRV_CPU_VBLANK_INT(taitof2_interrupt,1)
 
 	MDRV_CPU_ADD(Z80,16000000/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	/* audio CPU */	/* 4 MHz ??? */
 	MDRV_CPU_PROGRAM_MAP(camltrua_sound_readmem,camltrua_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -5231,7 +5231,7 @@ static MACHINE_DRIVER_START( driveout )
 	MDRV_CPU_VBLANK_INT(taitof2_interrupt,1)
 
 	MDRV_CPU_ADD(Z80,16000000/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz */
+	/* audio CPU */	/* 4 MHz */
 	MDRV_CPU_PROGRAM_MAP(driveout_sound_readmem,driveout_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)

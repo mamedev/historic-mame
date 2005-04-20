@@ -694,7 +694,7 @@ static MACHINE_DRIVER_START( karnov )
 	MDRV_CPU_VBLANK_INT(karnov_interrupt,1)
 
 	MDRV_CPU_ADD(M6502, 1500000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* Accurate */
+	/* audio CPU */	/* Accurate */
 	MDRV_CPU_PROGRAM_MAP(karnov_s_readmem,karnov_s_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -733,7 +733,7 @@ static MACHINE_DRIVER_START( wndrplnt )
 	MDRV_CPU_VBLANK_INT(karnov_interrupt,1)
 
 	MDRV_CPU_ADD(M6502, 1500000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* Accurate */
+	/* audio CPU */	/* Accurate */
 	MDRV_CPU_PROGRAM_MAP(karnov_s_readmem,karnov_s_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)

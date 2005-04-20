@@ -2,12 +2,12 @@
 
 	Irem M90/M97 system games:
 
-	Hasamu													1991 M90
-	Bomberman / Atomic Punk / Dynablaster					1992 M90
-	Bomberman World / New Atomic Punk / New Dyna Blaster	1992 M99 A
-	Quiz F-1 1,2finish										1992 M97
-	Risky Challenge / Gussun Oyoyo							1993 M97
-	Shisensho II / Match It II								1993 M97
+	Hasamu                                                  1991 M90
+	Bomberman / Atomic Punk / Dynablaster                   1992 M90
+	Bomberman World / New Atomic Punk / New Dyna Blaster    1992 M99 A
+	Quiz F-1 1,2finish                                      1992 M97
+	Risky Challenge / Gussun Oyoyo                          1993 M97
+	Shisensho II / Match It II                              1993 M97
 
 
 	Uses M72 sound hardware.
@@ -146,12 +146,14 @@ static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x01, 0x01) AM_READ(YM2151_status_port_0_r)
 	AM_RANGE(0x80, 0x80) AM_READ(soundlatch_r)
 	AM_RANGE(0x84, 0x84) AM_READ(m72_sample_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(YM2151_register_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(YM2151_data_port_0_w)
 	AM_RANGE(0x80, 0x81) AM_WRITE(rtype2_sample_addr_w)
@@ -160,12 +162,14 @@ static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( bbmanw_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x41, 0x41) AM_READ(YM2151_status_port_0_r)
 	AM_RANGE(0x42, 0x42) AM_READ(soundlatch_r)
 //	AM_RANGE(0x41, 0x41) AM_READ(m72_sample_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( bbmanw_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x40, 0x40) AM_WRITE(YM2151_register_port_0_w)
 	AM_RANGE(0x41, 0x41) AM_WRITE(YM2151_data_port_0_w)
 	AM_RANGE(0x42, 0x42) AM_WRITE(m72_sound_irq_ack_w)
@@ -288,9 +292,9 @@ INPUT_PORTS_START( bombrman ) /* Does not appear to support 4 players or cocktai
 	PORT_DIPSETTING(    0x0c, DEF_STR( Medium ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Hard ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
-	PORT_DIPNAME( 0x10, 0x10, "Game Title" )	/* Manual says "NOT USE" */
-	PORT_DIPSETTING(    0x10, "Dynablaster" )
-	PORT_DIPSETTING(    0x00, "Bomber Man" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )	/* Manual says "NOT USE" */
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Yes ) )
@@ -653,7 +657,7 @@ static MACHINE_DRIVER_START( m90 )
 	MDRV_CPU_VBLANK_INT(m90_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
+	/* audio CPU */	/* 3.579545 MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,128)	/* clocked by V1? (Vigilante) */
@@ -702,7 +706,7 @@ static MACHINE_DRIVER_START( bombrman )
 	MDRV_CPU_VBLANK_INT(m90_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
+	/* audio CPU */	/* 3.579545 MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,128)	/* clocked by V1? (Vigilante) */
@@ -743,7 +747,7 @@ static MACHINE_DRIVER_START( bbmanw )
 	MDRV_CPU_VBLANK_INT(m90_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
+	/* audio CPU */	/* 3.579545 MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(bbmanw_sound_readport,bbmanw_sound_writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,128)	/* clocked by V1? (Vigilante) */
@@ -784,7 +788,7 @@ static MACHINE_DRIVER_START( bootleg )
 	MDRV_CPU_VBLANK_INT(m90_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
+	/* audio CPU */	/* 3.579545 MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,128)	/* clocked by V1? (Vigilante) */
@@ -1123,7 +1127,7 @@ GAMEX(1991, hasamu,   0,        m90,      hasamu,   hasamu,   ROT0, "Irem", "Has
 GAMEX(1991, dynablst, 0,        bombrman, dynablst, bombrman, ROT0, "Irem (licensed from Hudson Soft)", "Dynablaster / Bomber Mam", GAME_NO_COCKTAIL )
 GAMEX(1991, bombrman, dynablst, bombrman, bombrman, bombrman, ROT0, "Irem (licensed from Hudson Soft)", "Bomber Man (Japan)", GAME_NO_COCKTAIL )
 GAMEX(1991, dynablsb, dynablst, bootleg,  bombrman, 0,        ROT0, "bootleg", "Dynablaster (bootleg)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAMEX(1992, bbmanw,   0,        bbmanw,   bbmanw,   bbmanw,   ROT0, "Irem", "Bomber Man World / New Dyna Blaster _ Global Quest", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
+GAMEX(1992, bbmanw,   0,        bbmanw,   bbmanw,   bbmanw,   ROT0, "Irem", "Bomber Man World / New Dyna Blaster - Global Quest", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
 GAMEX(1992, bbmanwj,  bbmanw,   bombrman, bbmanwj,  bbmanw,   ROT0, "Irem", "Bomber Man World (Japan)", GAME_NO_COCKTAIL )
 GAMEX(1992, atompunk, bbmanw,   bbmanw,   bbmanwj,  bbmanw,   ROT0, "Irem America", "New Atomic Punk - Global Quest (US)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
 GAMEX(1992, bomblord, bbmanw,   bombrman, bbmanw,   bomblord, ROT0, "bootleg", "Bomber Lord (bootleg)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL | GAME_NOT_WORKING )

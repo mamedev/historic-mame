@@ -302,7 +302,7 @@ static MACHINE_DRIVER_START( amidar )
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 
 	MDRV_CPU_ADD(Z80,14318000/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.78975 MHz */
+	/* audio CPU */	/* 1.78975 MHz */
 	MDRV_CPU_PROGRAM_MAP(scobra_sound_readmem,scobra_sound_writemem)
 	MDRV_CPU_IO_MAP(scobra_sound_readport,scobra_sound_writeport)
 

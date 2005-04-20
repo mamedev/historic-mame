@@ -196,6 +196,7 @@ static ADDRESS_MAP_START( tubep_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( tubep_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x80, 0x80) AM_READ(input_port_3_r)
 	AM_RANGE(0x90, 0x90) AM_READ(input_port_4_r)
 	AM_RANGE(0xa0, 0xa0) AM_READ(input_port_5_r)
@@ -220,6 +221,7 @@ static WRITE8_HANDLER( tubep_soundlatch_w )
 }
 
 static ADDRESS_MAP_START( tubep_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x80, 0x80) AM_WRITE(main_cpu_irq_line_clear_w)
 	AM_RANGE(0xb0, 0xb7) AM_WRITE(tubep_LS259_w)
 	AM_RANGE(0xd0, 0xd0) AM_WRITE(tubep_soundlatch_w)
@@ -284,10 +286,12 @@ static ADDRESS_MAP_START( tubep_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( tubep_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x06, 0x06) AM_READ(tubep_soundlatch_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( tubep_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(AY8910_write_port_0_w)
 	AM_RANGE(0x02, 0x02) AM_WRITE(AY8910_control_port_1_w)
@@ -350,6 +354,7 @@ static WRITE8_HANDLER( rjammer_soundlatch_w )
 }
 
 static ADDRESS_MAP_START( rjammer_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(input_port_2_r)	/* a bug in game code (during attract mode) */
 	AM_RANGE(0x80, 0x80) AM_READ(input_port_2_r)
 	AM_RANGE(0x90, 0x90) AM_READ(input_port_3_r)
@@ -359,6 +364,7 @@ static ADDRESS_MAP_START( rjammer_readport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( rjammer_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0xd0, 0xd7) AM_WRITE(rjammer_LS259_w)
 	AM_RANGE(0xe0, 0xe0) AM_WRITE(main_cpu_irq_line_clear_w)	/* clear IRQ interrupt */
 	AM_RANGE(0xf0, 0xf0) AM_WRITE(rjammer_soundlatch_w)
@@ -381,6 +387,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( rjammer_slave_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0xb0, 0xb0) AM_WRITE(rjammer_background_page_w)
 	AM_RANGE(0xd0, 0xd0) AM_WRITE(rjammer_background_LS377_w)
 ADDRESS_MAP_END
@@ -505,10 +512,12 @@ static ADDRESS_MAP_START( rjammer_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( rjammer_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(rjammer_soundlatch_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( rjammer_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x10, 0x10) AM_WRITE(rjammer_voice_startstop_w)
 	AM_RANGE(0x18, 0x18) AM_WRITE(rjammer_voice_frequency_select_w)
 	AM_RANGE(0x80, 0x80) AM_WRITE(rjammer_voice_input_w)
@@ -807,7 +816,7 @@ static MACHINE_DRIVER_START( tubep )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,19968000 / 8)	/* X2 19968000 Hz divided by LS669 (on Qc output) (signal RH0) */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(tubep_sound_readmem,tubep_sound_writemem)
 	MDRV_CPU_IO_MAP(tubep_sound_readport,tubep_sound_writeport)
 
@@ -864,7 +873,7 @@ static MACHINE_DRIVER_START( rjammer )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,19968000 / 8)	/* Xtal3 divided by LS669 (on Qc output) (signal RH0) */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(rjammer_sound_readmem,rjammer_sound_writemem)
 	MDRV_CPU_IO_MAP(rjammer_sound_readport,rjammer_sound_writeport)
 

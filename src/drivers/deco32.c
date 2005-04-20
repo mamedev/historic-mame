@@ -1072,12 +1072,11 @@ INPUT_PORTS_START( captaven )
 	PORT_DIPSETTING(      0x0000, "2 Start/1 Continue" )
 
 	/* Dip switch bank 2 */
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0100, "1" )
+	PORT_DIPSETTING(      0x0000, "2" )
+	PORT_DIPSETTING(      0x0300, "3" )
+	PORT_DIPSETTING(      0x0200, "4" )
 	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(      0x0800, DEF_STR( Easy ) )
 	PORT_DIPSETTING(      0x0c00, DEF_STR( Normal ) )
@@ -1585,7 +1584,7 @@ static MACHINE_DRIVER_START( captaven )
 	MDRV_CPU_VBLANK_INT(deco32_vbl_interrupt,1)
 
 	MDRV_CPU_ADD(H6280, 32220000/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_MACHINE_INIT(deco32)
@@ -1630,7 +1629,7 @@ static MACHINE_DRIVER_START( fghthist )
 	MDRV_CPU_VBLANK_INT(deco32_vbl_interrupt,1)
 
 	MDRV_CPU_ADD(H6280, 32220000/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1674,7 +1673,7 @@ static MACHINE_DRIVER_START( fghthsta )
 	MDRV_CPU_VBLANK_INT(deco32_vbl_interrupt,1)
 
 	MDRV_CPU_ADD(H6280, 32220000/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1718,7 +1717,7 @@ static MACHINE_DRIVER_START( dragngun )
 	MDRV_CPU_VBLANK_INT(deco32_vbl_interrupt,1)
 
 	MDRV_CPU_ADD(H6280, 32220000/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_MACHINE_INIT(deco32)
@@ -1769,7 +1768,7 @@ static MACHINE_DRIVER_START( lockload )
 	MDRV_CPU_VBLANK_INT(deco32_vbl_interrupt,2) // From 2
 
 	MDRV_CPU_ADD(H6280, 32220000/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_MACHINE_INIT(deco32)
@@ -1820,7 +1819,7 @@ static MACHINE_DRIVER_START( tattass )
 	MDRV_CPU_VBLANK_INT(deco32_vbl_interrupt,1)
 
 	MDRV_CPU_ADD(M6809, 2000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem_tattass,sound_writemem_tattass)
 	MDRV_CPU_PERIODIC_INT(tattass_snd_interrupt,489) /* Fixed FIRQ of 489Hz as measured on real (pinball) machine */
 

@@ -677,7 +677,7 @@ static MACHINE_DRIVER_START( stagger1 )
 	MDRV_CPU_VBLANK_INT(interrupt_afega,2)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	/* audio CPU */	/* ? */
 	MDRV_CPU_PROGRAM_MAP(afega_sound_cpu,0)
 
 	MDRV_FRAMES_PER_SECOND(56)
@@ -745,7 +745,7 @@ static MACHINE_DRIVER_START( firehawk )
 	MDRV_CPU_VBLANK_INT(interrupt_afega,2)
 
 	MDRV_CPU_ADD(Z80,4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(firehawk_sound_cpu,0)
 
 	MDRV_FRAMES_PER_SECOND(56)

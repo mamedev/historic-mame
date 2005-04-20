@@ -382,7 +382,7 @@ static MACHINE_DRIVER_START( missb2 )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1)
 
 	MDRV_CPU_ADD(Z80, MAIN_XTAL/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	// 3 MHz
+	/* audio CPU */	// 3 MHz
 	MDRV_CPU_PROGRAM_MAP(sound_map, 0)
 //	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1)
 	MDRV_CPU_VBLANK_INT(missb2_interrupt, 1)

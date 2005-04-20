@@ -1064,11 +1064,11 @@ static MACHINE_DRIVER_START( ds4 )
 	MDRV_CPU_DATA_MAP(ds3_data_map,0)
 
 //	MDRV_CPU_ADD_TAG("sound", ADSP2105, 10000000)
-//	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+//	/* audio CPU */
 //	MDRV_CPU_PROGRAM_MAP(ds3snd_program_map,0)
 
 //	MDRV_CPU_ADD_TAG("sounddsp", ADSP2105, 10000000)
-//	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+//	/* audio CPU */
 //	MDRV_CPU_PROGRAM_MAP(ds3snd_program_map,0)
 
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
@@ -1119,11 +1119,11 @@ static MACHINE_DRIVER_START( driversnd )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("sound", M68000, 16000000/2)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(driversnd_68k_map,0)
 
 	MDRV_CPU_ADD_TAG("sounddsp", TMS32010, 20000000/TMS32010_CLOCK_DIVIDER)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(driversnd_dsp_program_map,0)
 	/* Data Map is internal to the CPU */
 	MDRV_CPU_IO_MAP(driversnd_dsp_io_map,0)

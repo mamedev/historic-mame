@@ -1,15 +1,18 @@
 # set this to mame, mess or the destination you want to build
 # TARGET = mame
 # TARGET = mess
-# TARGET = mmsnd
 # example for a tiny compile
 # TARGET = tiny
 ifeq ($(TARGET),)
 TARGET = mame
 endif
 
-# uncomment next line to include the debugger
-# DEBUG = 1
+# uncomment one of the next lines to build a target-optimized build
+# ATHLON = 1
+# K6 = 1
+# I686 = 1
+# P4 = 1
+# PM = 1
 
 # uncomment next line to include the symbols for symify
 # SYMBOLS = 1
@@ -17,11 +20,14 @@ endif
 # uncomment next line to generate a link map for exception handling in windows
 # MAP = 1
 
-# uncomment next line to use DRC MIPS3 engine
-X86_MIPS3_DRC = 1
+# uncomment next line to include the debugger
+# DEBUG = 1
 
 # uncomment next line to use the new multiwindow debugger
 NEW_DEBUGGER = 1
+
+# uncomment next line to use DRC MIPS3 engine
+X86_MIPS3_DRC = 1
 
 # uncomment next line to use cygwin compiler
 # COMPILESYSTEM_CYGWIN	= 1
@@ -54,7 +60,6 @@ ASM = @nasm
 ASMFLAGS = -f coff
 MD = -mkdir.exe
 RM = @rm -f
-#PERL = @perl -w
 
 
 ifeq ($(MAMEOS),msdos)
@@ -63,32 +68,41 @@ else
 PREFIX =
 endif
 
-ifdef DEBUG
-NAME = $(PREFIX)$(TARGET)$(SUFFIX)d
-else
+# by default, compile for Pentium target and add no suffix
+NAME = $(PREFIX)$(TARGET)$(SUFFIX)
+ARCH = -march=pentium
+
+# architecture-specific builds get extra options and a suffix
 ifdef ATHLON
 NAME = $(PREFIX)$(TARGET)$(SUFFIX)at
 ARCH = -march=athlon
-else
+endif
+
 ifdef K6
 NAME = $(PREFIX)$(TARGET)$(SUFFIX)k6
 ARCH = -march=k6
-else
+endif
+
 ifdef I686
 NAME = $(PREFIX)$(TARGET)$(SUFFIX)pp
 ARCH = -march=pentiumpro
-else
+endif
+
 ifdef P4
 NAME = $(PREFIX)$(TARGET)$(SUFFIX)p4
 ARCH = -march=pentium4
-else
-NAME = $(PREFIX)$(TARGET)$(SUFFIX)
-ARCH = -march=pentium
 endif
+
+ifdef PM
+NAME = $(PREFIX)$(TARGET)$(SUFFIX)pm
+ARCH = -march=pentium3 -msse2
 endif
+
+# debug builds just get the 'd' suffix and nothing more
+ifdef DEBUG
+NAME = $(PREFIX)$(TARGET)$(SUFFIX)d
 endif
-endif
-endif
+
 
 # build the targets in different object dirs, since mess changes
 # some structures and thus they can't be linked against each other.
@@ -119,7 +133,6 @@ CFLAGS += -DNDEBUG \
 #	-W had to remove because of the "missing initializer" warning
 #	-Wlarger-than-262144  \
 #	-Wcast-qual \
-#	-Wwrite-strings \
 #	-Wconversion \
 #	-Wmissing-prototypes \
 #	-Wmissing-declarations
@@ -151,10 +164,6 @@ OBJDIRS += $(OBJ)/mess $(OBJ)/mess/systems $(OBJ)/mess/machine \
 	$(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw $(OBJ)/mess/tools
 endif
 
-ifeq ($(TARGET),mmsnd)
-OBJDIRS	+= $(OBJ)/mmsnd $(OBJ)/mmsnd/machine $(OBJ)/mmsnd/drivers $(OBJ)/mmsnd/sndhrdw
-endif
-
 # start with an empty set of libs
 LIBS = 
 
@@ -176,7 +185,7 @@ LIBS += -lz
 ZLIB =
 endif
 
-all:	maketree $(EMULATOR) extra
+all:	maketree emulator extra
 
 # include the various .mak files
 include src/core.mak
@@ -195,6 +204,8 @@ ifdef COMPILESYSTEM_CYGWIN
 CFLAGS	+= -mno-cygwin
 LDFLAGS	+= -mno-cygwin
 endif
+
+emulator: maketree $(EMULATOR)
 
 extra:	$(TOOLS) $(TEXTS)
 
@@ -227,13 +238,6 @@ $(OBJ)/libz.a: $(OBJ)/zlib/adler32.o $(OBJ)/zlib/compress.o $(OBJ)/zlib/crc32.o 
 				$(OBJ)/zlib/gzio.o $(OBJ)/zlib/inffast.o $(OBJ)/zlib/inflate.o $(OBJ)/zlib/infback.o \
 				$(OBJ)/zlib/inftrees.o $(OBJ)/zlib/trees.o $(OBJ)/zlib/uncompr.o $(OBJ)/zlib/zutil.o
 
-ifdef PERL
-$(OBJ)/cpuintrf.o: src/cpuintrf.c rules.mak
-	$(PERL) src/makelist.pl
-	@echo Compiling $<...
-	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -c $< -o $@
-endif
-
 $(OBJ)/$(MAMEOS)/%.o: src/$(MAMEOS)/%.c
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGSOSDEPEND) -c $< -o $@
@@ -257,28 +261,6 @@ $(OBJ)/cpu/m68000/m68kmake$(EXE): src/cpu/m68000/m68kmake.c
 	@echo Generating M68K source files...
 	$(OBJ)/cpu/m68000/m68kmake$(EXE) $(OBJ)/cpu/m68000 src/cpu/m68000/m68k_in.c
 
-# generate asm source files for the 68000/68020 emulators
-$(OBJ)/cpu/m68000/68000.asm:  src/cpu/m68000/make68k.c
-	@echo Compiling $<...
-	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -O0 -DDOS -o $(OBJ)/cpu/m68000/make68k$(EXE) $<
-	@echo Generating $@...
-	@$(OBJ)/cpu/m68000/make68k$(EXE) $@ $(OBJ)/cpu/m68000/68000tab.asm 00
-
-$(OBJ)/cpu/m68000/68020.asm:  src/cpu/m68000/make68k.c
-	@echo Compiling $<...
-	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -O0 -DDOS -o $(OBJ)/cpu/m68000/make68k$(EXE) $<
-	@echo Generating $@...
-	@$(OBJ)/cpu/m68000/make68k$(EXE) $@ $(OBJ)/cpu/m68000/68020tab.asm 20
-
-# generated asm files for the 68000 emulator
-$(OBJ)/cpu/m68000/68000.o:  $(OBJ)/cpu/m68000/68000.asm
-	@echo Assembling $<...
-	$(ASM) -o $@ $(ASMFLAGS) $(subst -D,-d,$(ASMDEFS)) $<
-
-$(OBJ)/cpu/m68000/68020.o:  $(OBJ)/cpu/m68000/68020.asm
-	@echo Assembling $<...
-	$(ASM) -o $@ $(ASMFLAGS) $(subst -D,-d,$(ASMDEFS)) $<
-
 $(OBJ)/%.a:
 	@echo Archiving $@...
 	$(RM) $@
@@ -294,12 +276,6 @@ clean:
 	$(RM) -r $(OBJ)
 	@echo Deleting $(EMULATOR)...
 	$(RM) $(EMULATOR)
-
-clean68k:
-	@echo Deleting 68k files...
-	$(RM) -r $(OBJ)/cpuintrf.o
-	$(RM) -r $(OBJ)/drivers/cps2.o
-	$(RM) -r $(OBJ)/cpu/m68000
 
 check: $(EMULATOR) xml2info$(EXE)
 	./$(EMULATOR) -listxml > $(NAME).xml

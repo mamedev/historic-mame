@@ -1508,77 +1508,79 @@ void debug_write_qword(int spacenum, offs_t address, data64_t data)
 UINT64 debug_read_opcode(UINT32 offset, int size)
 {
 	const struct debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
-	int xorval;
+	static const UINT64 dummy_data = ~0;
+	const void *ptr;
 	
-	/* assume a byte address coming in */
-	
-	/* if we're not mapped, just return all F's */
-	if (memory_get_op_ptr(cpu_getactivecpu(), offset) == NULL)
-	{
-		switch (size)
-		{
-			case 1:	return 0xff;
-			case 2:	return 0xffff;
-			case 4:	return 0xffffffff;
-			case 8:	return ~(UINT64)0;
-		}
-		return ~(UINT64)0;
-	}
-	
-	/* make sure the base pointer is set correctly */
+	/* adjust the offset */
 	memory_set_opbase(offset);
 	switch (info->space[ADDRESS_SPACE_PROGRAM].databytes * 10 + size)
 	{
 		/* dump opcodes in bytes from a byte-sized bus */
 		case 11:
-			return cpu_readop(offset);
+			break;
 		
 		/* dump opcodes in bytes from a word-sized bus */
 		case 21:
-			xorval = (info->endianness == CPU_IS_LE) ? BYTE_XOR_LE(0) : BYTE_XOR_BE(0);
-			return cpu_readop(offset ^ xorval);
+			offset ^= (info->endianness == CPU_IS_LE) ? BYTE_XOR_LE(0) : BYTE_XOR_BE(0);
+			break;
 		
 		/* dump opcodes in words from a word-sized bus */
 		case 22:
-			return cpu_readop16(offset);
+			break;
 		
 		/* dump opcodes in bytes from a dword-sized bus */
 		case 41:
-			xorval = (info->endianness == CPU_IS_LE) ? BYTE4_XOR_LE(0) : BYTE4_XOR_BE(0);
-			return cpu_readop(offset ^ xorval);
+			offset ^= (info->endianness == CPU_IS_LE) ? BYTE4_XOR_LE(0) : BYTE4_XOR_BE(0);
+			break;
 		
 		/* dump opcodes in words from a dword-sized bus */
 		case 42:
-			xorval = (info->endianness == CPU_IS_LE) ? WORD_XOR_LE(0) : WORD_XOR_BE(0);
-			return cpu_readop16(offset ^ xorval);
+			offset ^= (info->endianness == CPU_IS_LE) ? WORD_XOR_LE(0) : WORD_XOR_BE(0);
+			break;
 		
 		/* dump opcodes in dwords from a dword-sized bus */
 		case 44:
-			return cpu_readop32(offset);
+			break;
 		
 		/* dump opcodes in bytes from a qword-sized bus */
 		case 81:
-			xorval = (info->endianness == CPU_IS_LE) ? BYTE8_XOR_LE(0) : BYTE8_XOR_BE(0);
-			return cpu_readop(offset ^ xorval);
+			offset ^= (info->endianness == CPU_IS_LE) ? BYTE8_XOR_LE(0) : BYTE8_XOR_BE(0);
+			break;
 		
 		/* dump opcodes in words from a qword-sized bus */
 		case 82:
-			xorval = (info->endianness == CPU_IS_LE) ? WORD2_XOR_LE(0) : WORD2_XOR_BE(0);
-			return cpu_readop16(offset ^ xorval);
+			offset ^= (info->endianness == CPU_IS_LE) ? WORD2_XOR_LE(0) : WORD2_XOR_BE(0);
+			break;
 		
 		/* dump opcodes in dwords from a qword-sized bus */
 		case 84:
-			xorval = (info->endianness == CPU_IS_LE) ? DWORD_XOR_LE(0) : DWORD_XOR_BE(0);
-			return cpu_readop32(offset ^ xorval);
+			offset ^= (info->endianness == CPU_IS_LE) ? DWORD_XOR_LE(0) : DWORD_XOR_BE(0);
+			break;
 		
 		/* dump opcodes in qwords from a qword-sized bus */
 		case 88:
-			return cpu_readop64(offset);
+			break;
 		
 		default:
 			osd_die("debug_read_opcode: unknown type = %d\n", info->space[ADDRESS_SPACE_PROGRAM].databytes * 10 + size);
 			break;
 	}
+
+	/* get pointer to data */
+	ptr = memory_get_op_ptr(cpu_getactivecpu(), offset);
+	if (!ptr)
+		ptr = &dummy_data;	/* if we're not mapped, just return all F's */
+	else if (osd_is_bad_read_ptr(ptr, size))
+		osd_die("debug_read_opcode: offset %x mapped to invalid memory %p\n", offset, ptr);
+
+	switch(size)
+	{
+		case 1:	return *((data8_t *) ptr);
+		case 2:	return *((data16_t *) ptr);
+		case 4:	return *((data32_t *) ptr);
+		case 8:	return *((data64_t *) ptr);
+	}
+	
 	return 0;	/* appease compiler */
 }
 

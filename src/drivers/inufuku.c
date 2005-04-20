@@ -244,6 +244,7 @@ static ADDRESS_MAP_START( inufuku_writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( inufuku_readport_sound, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x04, 0x04) AM_READ(soundlatch_r)
 	AM_RANGE(0x08, 0x08) AM_READ(YM2610_status_port_0_A_r)
 	AM_RANGE(0x09, 0x09) AM_READ(YM2610_read_port_0_r)
@@ -251,6 +252,7 @@ static ADDRESS_MAP_START( inufuku_readport_sound, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( inufuku_writeport_sound, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(inufuku_soundrombank_w)
 	AM_RANGE(0x04, 0x04) AM_WRITE(pending_command_clear_w)
 	AM_RANGE(0x08, 0x08) AM_WRITE(YM2610_control_port_0_A_w)
@@ -403,7 +405,7 @@ static MACHINE_DRIVER_START( inufuku )
 	MDRV_CPU_VBLANK_INT(irq1_line_hold, 1)
 
 	MDRV_CPU_ADD(Z80, 32000000/4)		/* 8.00 MHz */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(inufuku_readmem_sound, inufuku_writemem_sound)
 	MDRV_CPU_IO_MAP(inufuku_readport_sound, inufuku_writeport_sound)
 								/* IRQs are triggered by the YM2610 */

@@ -352,10 +352,11 @@ static ADDRESS_MAP_START( snd_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( snd_writeport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x0000, 0x0000) AM_WRITE(YM2203_control_port_0_w)
-	AM_RANGE(0x0001, 0x0001) AM_WRITE(YM2203_write_port_0_w)
-	AM_RANGE(0x0080, 0x0080) AM_WRITE(YM2203_control_port_1_w)
-	AM_RANGE(0x0081, 0x0081) AM_WRITE(YM2203_write_port_1_w)
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE(0x00, 0x00) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0x80, 0x80) AM_WRITE(YM2203_control_port_1_w)
+	AM_RANGE(0x81, 0x81) AM_WRITE(YM2203_write_port_1_w)
 ADDRESS_MAP_END
 
 
@@ -501,7 +502,7 @@ static MACHINE_DRIVER_START( ninjakd2 )
 	MDRV_CPU_VBLANK_INT(ninjakd2_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 5000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* 5mhz crystal ??? */
+	/* audio CPU */		/* 5mhz crystal ??? */
 	MDRV_CPU_PROGRAM_MAP(snd_readmem,snd_writemem)
 	MDRV_CPU_IO_MAP(0,snd_writeport)
 

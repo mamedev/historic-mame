@@ -562,7 +562,7 @@ static MACHINE_DRIVER_START( lethalen )
 	MDRV_CPU_VBLANK_INT(lethalen_interrupt, 1)
 
 	MDRV_CPU_ADD_TAG("sound", Z80, 8000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(le_sound, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)

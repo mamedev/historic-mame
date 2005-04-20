@@ -220,6 +220,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( main_iomap, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x03) AM_READ(input_port_0_r)
 	AM_RANGE(0x04, 0x07) AM_READ(input_port_1_r)
 	AM_RANGE(0x08, 0x08) AM_READ(input_port_2_r)
@@ -330,7 +331,7 @@ static MACHINE_DRIVER_START( victory )
 	MDRV_CPU_VBLANK_INT(victory_vblank_interrupt,1)
 
 	MDRV_CPU_ADD(M6502,3579545/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 
 	MDRV_FRAMES_PER_SECOND(60)

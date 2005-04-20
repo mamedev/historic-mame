@@ -400,7 +400,7 @@ static MACHINE_DRIVER_START( actfancr )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1) /* VBL */
 
 	MDRV_CPU_ADD(M6502, 1500000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* Should be accurate */
+	/* audio CPU */ /* Should be accurate */
 	MDRV_CPU_PROGRAM_MAP(dec0_s_readmem,dec0_s_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -442,7 +442,7 @@ static MACHINE_DRIVER_START( triothep )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1) /* VBL */
 
 	MDRV_CPU_ADD(M6502, 1500000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* Should be accurate */
+	/* audio CPU */ /* Should be accurate */
 	MDRV_CPU_PROGRAM_MAP(dec0_s_readmem,dec0_s_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)

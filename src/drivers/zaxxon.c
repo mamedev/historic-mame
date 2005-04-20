@@ -1228,7 +1228,7 @@ static MACHINE_DRIVER_START( congo )
 	MDRV_CPU_PROGRAM_MAP(congo_readmem, congo_writemem)
 
 	MDRV_CPU_ADD(Z80, 2000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(congo_snd_readmem, congo_snd_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold, 4)
 

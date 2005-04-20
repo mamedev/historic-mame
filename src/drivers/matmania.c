@@ -347,7 +347,7 @@ static MACHINE_DRIVER_START( matmania )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(M6502, 1200000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.2 MHz ???? */
+	/* audio CPU */	/* 1.2 MHz ???? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,15)	/* ???? */
 								/* IRQs are caused by the main CPU */
@@ -402,7 +402,7 @@ static MACHINE_DRIVER_START( maniach )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(M6809, 1500000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.5 MHz ???? */
+	/* audio CPU */	/* 1.5 MHz ???? */
 	MDRV_CPU_PROGRAM_MAP(maniach_sound_readmem,maniach_sound_writemem)
 								/* IRQs are caused by the main CPU */
 	MDRV_CPU_ADD(M68705, 500000)	/* .5 MHz (don't know really how fast, but it doesn't need to even be this fast) */

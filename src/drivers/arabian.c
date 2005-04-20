@@ -352,7 +352,6 @@ static MACHINE_DRIVER_START( arabian )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, MAIN_OSC/4)
-	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_IO_MAP(main_io_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)

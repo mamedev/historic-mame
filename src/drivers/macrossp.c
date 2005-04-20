@@ -771,7 +771,7 @@ static MACHINE_DRIVER_START( macrossp )
 	MDRV_CPU_VBLANK_INT(irq3_line_hold,1) // there are others ...
 
 	MDRV_CPU_ADD(M68000, 32000000/2)	/* 16 MHz */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)

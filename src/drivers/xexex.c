@@ -482,7 +482,7 @@ static MACHINE_DRIVER_START( xexex )
 	// more likely 32MHz since 18.432MHz yields 4.608MHz(too slow) or 9.216MHz(too fast) with integer divisors
 	MDRV_CPU_ADD(Z80, 8000000)
 
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_INTERLEAVE(32);

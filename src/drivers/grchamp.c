@@ -272,6 +272,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(input_port_3_r)		/* accel */
 	AM_RANGE(0x01, 0x01) AM_READ(PC3259_0_r)
 	AM_RANGE(0x02, 0x02) AM_READ(grchamp_port_0_r)	/* comm */
@@ -286,6 +287,7 @@ static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(grchamp_control0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(PC3259_control_w) // ?
 	AM_RANGE(0x02, 0x02) AM_WRITE(grchamp_player_xpos_w)
@@ -324,10 +326,12 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( readport2, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x03) AM_READ(grchamp_port_1_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport2, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x0f) AM_WRITE(grchamp_port_1_w)
 ADDRESS_MAP_END
 
@@ -380,7 +384,7 @@ static MACHINE_DRIVER_START( grchamp )
 	MDRV_CPU_VBLANK_INT(grchamp_interrupt,1)	/* irq's are triggered from the main cpu */
 
 	MDRV_CPU_ADD(Z80, 3000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* 3 MHz (confirmed) */
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 	MDRV_CPU_PERIODIC_INT(irq0_line_hold,75)		/* irq's are triggered every 75 Hz */
 

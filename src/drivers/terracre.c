@@ -260,11 +260,13 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x04, 0x04) AM_READ(soundlatch_clear_r)
 	AM_RANGE(0x06, 0x06) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_writeport_3526, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(YM3526_control_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(YM3526_write_port_0_w)
 	AM_RANGE(0x02, 0x02) AM_WRITE(DAC_0_signed_data_w)
@@ -272,6 +274,7 @@ static ADDRESS_MAP_START( sound_writeport_3526, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_writeport_2203, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(YM2203_control_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(YM2203_write_port_0_w)
 	AM_RANGE(0x02, 0x02) AM_WRITE(DAC_0_signed_data_w)
@@ -571,7 +574,7 @@ static MACHINE_DRIVER_START( amazon )
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz???? */
+	/* audio CPU */	/* 4 MHz???? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(sound_readport,sound_writeport_3526)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,128)	/* ??? */
@@ -608,7 +611,7 @@ static MACHINE_DRIVER_START( ym3526 )
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz???? */
+	/* audio CPU */	/* 4 MHz???? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(sound_readport,sound_writeport_3526)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,128)	/* ??? */
@@ -645,7 +648,7 @@ static MACHINE_DRIVER_START( ym2203 )
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz???? */
+	/* audio CPU */	/* 4 MHz???? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(sound_readport,sound_writeport_2203)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,128)	/* ??? */

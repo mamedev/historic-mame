@@ -260,7 +260,6 @@ static MACHINE_DRIVER_START( amspdwy )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,3000000)
-	MDRV_CPU_FLAGS(CPU_16BIT_PORT)	/* ? */
 	MDRV_CPU_PROGRAM_MAP(amspdwy_readmem,amspdwy_writemem)
 	MDRV_CPU_IO_MAP(amspdwy_readport,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* IRQ: 60Hz, NMI: retn */

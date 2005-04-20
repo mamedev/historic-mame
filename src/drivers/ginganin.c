@@ -356,7 +356,7 @@ static MACHINE_DRIVER_START( ginganin )
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1) /* ? (vectors 1-7 cointain the same address) */
 
 	MDRV_CPU_ADD(M6809, 1000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */ /* Takahiro Nogi. 1999/09/27 (3579545 -> 1000000) */
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(ginganin_sound_interrupt,60)	/* Takahiro Nogi. 1999/09/27 (1 -> 60) */
 

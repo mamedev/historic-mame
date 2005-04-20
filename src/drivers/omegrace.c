@@ -362,6 +362,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x08, 0x08) AM_READ(omegrace_vg_go_r)
 	AM_RANGE(0x09, 0x09) AM_READ(watchdog_reset_r)
 	AM_RANGE(0x0b, 0x0b) AM_READ(omegrace_vg_status_r) /* vg_halt */
@@ -375,6 +376,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x0a, 0x0a) AM_WRITE(avgdvg_reset_w)
 	AM_RANGE(0x13, 0x13) AM_WRITE(omegrace_leds_w) /* coin counters, leds, flip screen */
 	AM_RANGE(0x14, 0x14) AM_WRITE(omegrace_soundlatch_w) /* Sound command */
@@ -401,11 +403,13 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(AY8910_write_port_0_w)
 	AM_RANGE(0x02, 0x02) AM_WRITE(AY8910_control_port_1_w)
@@ -514,7 +518,7 @@ static MACHINE_DRIVER_START( omegrace )
 	MDRV_CPU_PERIODIC_INT(irq0_line_hold,250)
 
 	MDRV_CPU_ADD(Z80, 1500000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 	MDRV_CPU_PERIODIC_INT(nmi_line_pulse,250)

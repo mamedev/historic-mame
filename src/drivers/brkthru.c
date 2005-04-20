@@ -423,7 +423,7 @@ static MACHINE_DRIVER_START( brkthru )
 	MDRV_CPU_VBLANK_INT(brkthru_interrupt,2)
 
 	MDRV_CPU_ADD(M6809, 1250000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 1.25 MHz ? */
+	/* audio CPU */        /* 1.25 MHz ? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(58)
@@ -462,7 +462,7 @@ static MACHINE_DRIVER_START( darwin )
 	MDRV_CPU_VBLANK_INT(brkthru_interrupt,2)
 
 	MDRV_CPU_ADD(M6809, 1500000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 1.25 MHz ? */
+	/* audio CPU */        /* 1.25 MHz ? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(15625.0/272)

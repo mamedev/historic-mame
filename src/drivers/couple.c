@@ -177,7 +177,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static MACHINE_DRIVER_START( couple )
 	MDRV_CPU_ADD(Z80,18432000/3)		 /* ?? */
-	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_PROGRAM_MAP(mem,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 

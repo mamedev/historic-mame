@@ -874,10 +874,12 @@ static ADDRESS_MAP_START( tnexspce_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(soundlatch_clear_w)
 	AM_RANGE(0x08, 0x08) AM_WRITE(DAC_0_signed_data_w)
 	AM_RANGE(0x0a, 0x0a) AM_WRITE(YM2413_register_port_0_w)
@@ -888,6 +890,7 @@ static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( kyros_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x10, 0x10) AM_WRITE(YM2203_control_port_0_w)
 	AM_RANGE(0x11, 0x11) AM_WRITE(YM2203_write_port_0_w)
 	AM_RANGE(0x80, 0x80) AM_WRITE(YM2203_write_port_1_w)
@@ -897,6 +900,7 @@ static ADDRESS_MAP_START( kyros_sound_writeport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( jongbou_sound_io_map, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_READWRITE(AY8910_read_port_0_r, AY8910_write_port_0_w)
 	AM_RANGE(0x02, 0x02) AM_WRITE(soundlatch_clear_w)
@@ -904,6 +908,7 @@ static ADDRESS_MAP_START( jongbou_sound_io_map, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( tnexspce_sound_readport, ADDRESS_SPACE_IO, 8 ) //AT
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(YM3812_status_port_0_r)
 	AM_RANGE(0x3b, 0x3b) AM_READ(MRA8_NOP) // unknown read port
 	AM_RANGE(0x3d, 0x3d) AM_READ(MRA8_NOP) // unknown read port
@@ -911,6 +916,7 @@ static ADDRESS_MAP_START( tnexspce_sound_readport, ADDRESS_SPACE_IO, 8 ) //AT
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( tnexspce_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(YM3812_control_port_0_w)
 	AM_RANGE(0x20, 0x20) AM_WRITE(YM3812_write_port_0_w)
 ADDRESS_MAP_END
@@ -1998,7 +2004,7 @@ static MACHINE_DRIVER_START( sstingry )
 	MDRV_CPU_VBLANK_INT(alpha68k_interrupt,2)
 
 	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* ? */
+	/* audio CPU */ /* ? */
 	MDRV_CPU_PROGRAM_MAP(sstingry_sound_readmem,sstingry_sound_writemem)
 	MDRV_CPU_IO_MAP(0,kyros_sound_writeport)
 //AT
@@ -2048,7 +2054,7 @@ static MACHINE_DRIVER_START( kyros )
 	MDRV_CPU_VBLANK_INT(alpha68k_interrupt,2)
 
 	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* ? */
+	/* audio CPU */ /* ? */
 	MDRV_CPU_PROGRAM_MAP(kyros_sound_readmem,kyros_sound_writemem)
 	MDRV_CPU_IO_MAP(0,kyros_sound_writeport)
 //AT
@@ -2097,7 +2103,7 @@ static MACHINE_DRIVER_START( jongbou )
 	MDRV_CPU_VBLANK_INT(alpha68k_interrupt,2)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(jongbou_sound_map,0)
 	MDRV_CPU_IO_MAP(jongbou_sound_io_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,32)
@@ -2134,7 +2140,7 @@ static MACHINE_DRIVER_START( alpha68k_I )
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)/* VBL */
 
 	MDRV_CPU_ADD(Z80, 4000000) // 4Mhz seems to yield the correct tone
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(alpha68k_I_s_readmem, alpha68k_I_s_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -2168,7 +2174,7 @@ static MACHINE_DRIVER_START( alpha68k_II )
 	MDRV_CPU_VBLANK_INT(irq3_line_hold,1)/* VBL */
 
 	MDRV_CPU_ADD(Z80, /*3579545*/3579545*2) /* Unlikely but needed to stop nested NMI's */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* Correct?? */
+	/* audio CPU */ /* Correct?? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 	MDRV_CPU_PERIODIC_INT(nmi_line_pulse, 7500) //AT
@@ -2211,7 +2217,7 @@ static MACHINE_DRIVER_START( alpha68k_II_gm )
 	MDRV_CPU_VBLANK_INT(alpha68k_interrupt, 4)
 
 	MDRV_CPU_ADD(Z80, 4000000*2)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem, sound_writemem)
 	MDRV_CPU_IO_MAP(sound_readport, sound_writeport)
 	MDRV_CPU_PERIODIC_INT(nmi_line_pulse, 7500)
@@ -2254,7 +2260,7 @@ static MACHINE_DRIVER_START( alpha68k_V )
 	MDRV_CPU_VBLANK_INT(irq3_line_hold,1)/* VBL */
 
 	MDRV_CPU_ADD(Z80, /*3579545*/3579545*2) /* Unlikely but needed to stop nested NMI's */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 	MDRV_CPU_PERIODIC_INT(nmi_line_pulse, 8500) //AT
@@ -2296,7 +2302,7 @@ static MACHINE_DRIVER_START( alpha68k_V_sb )
 	MDRV_CPU_VBLANK_INT(irq3_line_hold,1)/* VBL */
 
 	MDRV_CPU_ADD(Z80, /*3579545*/3579545*2) /* Unlikely but needed to stop nested NMI's */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 	MDRV_CPU_PERIODIC_INT(nmi_line_pulse, 8500) //AT
@@ -2338,7 +2344,7 @@ static MACHINE_DRIVER_START( tnexspce )
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)/* VBL */
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(tnexspce_sound_readmem, tnexspce_sound_writemem)
 	MDRV_CPU_IO_MAP(tnexspce_sound_readport,tnexspce_sound_writeport)
 

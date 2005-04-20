@@ -112,6 +112,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x10, 0x1f) AM_WRITE(mpatrol_scroll_w)
 	AM_RANGE(0x40, 0x40) AM_WRITE(mpatrol_bg1xpos_w)
 	AM_RANGE(0x60, 0x60) AM_WRITE(mpatrol_bg1ypos_w)

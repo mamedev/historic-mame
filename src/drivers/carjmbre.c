@@ -92,11 +92,13 @@ static ADDRESS_MAP_START( carjmbre_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( carjmbre_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(soundlatch_r)
 	AM_RANGE(0x24, 0x24) AM_READ(MRA8_NOP)				//??
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( carjmbre_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x10, 0x10) AM_WRITE(MWA8_NOP)				//?? written on init/0xff sound command reset
 	AM_RANGE(0x20, 0x20) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x21, 0x21) AM_WRITE(AY8910_write_port_0_w)
@@ -189,7 +191,7 @@ static MACHINE_DRIVER_START( carjmbre )
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(Z80, 1500000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(carjmbre_sound_readmem,carjmbre_sound_writemem)
 	MDRV_CPU_IO_MAP(carjmbre_sound_readport,carjmbre_sound_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)

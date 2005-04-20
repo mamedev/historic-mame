@@ -511,7 +511,7 @@ static MACHINE_DRIVER_START( ddragon3 )
 	MDRV_CPU_VBLANK_INT(ddragon3_cpu_interrupt, 2)
 
 	MDRV_CPU_ADD_TAG("audio", Z80, 3579545) // Guess
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound, writemem_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -555,7 +555,7 @@ static MACHINE_DRIVER_START( ctribe )
 	MDRV_CPU_VBLANK_INT(ddragon3_cpu_interrupt,2)
 
 	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* Guess */
+	/* audio CPU */	/* Guess */
 	MDRV_CPU_PROGRAM_MAP(ctribe_readmem_sound,ctribe_writemem_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)

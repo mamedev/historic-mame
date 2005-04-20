@@ -1965,7 +1965,7 @@ static MACHINE_DRIVER_START( halleys )
 	MDRV_CPU_VBLANK_INT(halleys_interrupt, 4)
 
 	MDRV_CPU_ADD(Z80, 6000000/2) // 3MHz(6MHz XTAL)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem, sound_writemem)
 	MDRV_CPU_PERIODIC_INT(irq0_line_hold, 27306667) // 6000000/(4*16*16*10*16) = 36.621Hz(27306667ns period)
 

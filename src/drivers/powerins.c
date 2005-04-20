@@ -165,6 +165,7 @@ static ADDRESS_MAP_START( writemem_snd, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( readport_snd, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 /*	AM_RANGE(0x00, 0x00) AM_READ(YM2203_status_port_0_r)	Not fitted on this board */
 /*	AM_RANGE(0x01, 0x01) AM_READ(YM2203_read_port_0_r)		Not fitted on this board */
 	AM_RANGE(0x00, 0x00) AM_READ(powerina_fake_ym2203_r)
@@ -174,6 +175,7 @@ static ADDRESS_MAP_START( readport_snd, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport_snd, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 /*	AM_RANGE(0x00, 0x00) AM_WRITE(YM2203_control_port_0_w)	Not fitted on this board */
 /*	AM_RANGE(0x01, 0x01) AM_WRITE(YM2203_write_port_0_w)	Not fitted on this board */
 	AM_RANGE(0x00, 0x00) AM_WRITE(MWA8_NOP)
@@ -412,7 +414,7 @@ static MACHINE_DRIVER_START( powerina )
 	MDRV_IMPORT_FROM(powerins)
 
 	MDRV_CPU_ADD(Z80, 6000000) /* 6 MHz */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(readmem_snd,writemem_snd)
 	MDRV_CPU_IO_MAP(readport_snd,writeport_snd)
 	MDRV_CPU_PERIODIC_INT(irq0_line_hold, 120)	// YM2203 rate is at 150??

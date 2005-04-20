@@ -216,6 +216,7 @@ static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x7f, 0x7f) AM_WRITE(soundlatch2_w)
 ADDRESS_MAP_END
 
@@ -229,10 +230,12 @@ static ADDRESS_MAP_START( sample_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sample_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(soundlatch2_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sample_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x01, 0x01) AM_WRITE(msm5205_w)
 ADDRESS_MAP_END
 
@@ -551,7 +554,7 @@ static MACHINE_DRIVER_START( tigeroad )
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)    /* 4 MHz ??? */
+	/* audio CPU */    /* 4 MHz ??? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(0,sound_writeport)
 								/* IRQs are triggered by the YM2203 */
@@ -588,7 +591,7 @@ static MACHINE_DRIVER_START( toramich )
 	MDRV_IMPORT_FROM(tigeroad)
 
 	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	/* audio CPU */	/* ? */
 	MDRV_CPU_PROGRAM_MAP(sample_readmem,sample_writemem)
 	MDRV_CPU_IO_MAP(sample_readport,sample_writeport)
 	MDRV_CPU_PERIODIC_INT(irq0_line_hold,4000)	/* ? */

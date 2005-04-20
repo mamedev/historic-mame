@@ -444,11 +444,13 @@ static READ8_HANDLER( soundlatch_clear_r )
 }
 
 static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x4, 0x4) AM_READ(soundlatch_clear_r)
 	AM_RANGE(0x6, 0x6) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x0, 0x0) AM_WRITE(YM3812_control_port_0_w)
 	AM_RANGE(0x1, 0x1) AM_WRITE(YM3812_write_port_0_w)
   	AM_RANGE(0x2, 0x2) AM_WRITE(DAC_0_signed_data_w)
@@ -852,7 +854,7 @@ static MACHINE_DRIVER_START( terraf )
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3072000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.072 MHz???? */
+	/* audio CPU */	/* 3.072 MHz???? */
 	MDRV_CPU_PROGRAM_MAP(soundreadmem,soundwritemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,128)
@@ -892,7 +894,7 @@ static MACHINE_DRIVER_START( kodure )
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3072000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.072 MHz???? */
+	/* audio CPU */	/* 3.072 MHz???? */
 	MDRV_CPU_PROGRAM_MAP(soundreadmem,soundwritemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,128)
@@ -932,7 +934,7 @@ static MACHINE_DRIVER_START( armedf )
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3072000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.072 MHz???? */
+	/* audio CPU */	/* 3.072 MHz???? */
 	MDRV_CPU_PROGRAM_MAP(soundreadmem,soundwritemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,128)
@@ -972,7 +974,7 @@ static MACHINE_DRIVER_START( cclimbr2 )
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3072000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.072 MHz???? */
+	/* audio CPU */	/* 3.072 MHz???? */
 	MDRV_CPU_PROGRAM_MAP(cclimbr2_soundreadmem,cclimbr2_soundwritemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,128)
@@ -1012,7 +1014,7 @@ static MACHINE_DRIVER_START( legion )
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3072000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.072 MHz???? */
+	/* audio CPU */	/* 3.072 MHz???? */
 	MDRV_CPU_PROGRAM_MAP(cclimbr2_soundreadmem,cclimbr2_soundwritemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,128)
@@ -1052,7 +1054,7 @@ static MACHINE_DRIVER_START( legiono )
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3072000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.072 MHz???? */
+	/* audio CPU */	/* 3.072 MHz???? */
 	MDRV_CPU_PROGRAM_MAP(cclimbr2_soundreadmem,cclimbr2_soundwritemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,128)

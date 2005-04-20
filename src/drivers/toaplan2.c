@@ -2089,6 +2089,7 @@ static ADDRESS_MAP_START( batrider_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( batrider_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x48, 0x48) AM_READ(raizing_command_r)
 	AM_RANGE(0x4a, 0x4a) AM_READ(raizing_request_r)
 	AM_RANGE(0x81, 0x81) AM_READ(YM2151_status_port_0_r)
@@ -2097,6 +2098,7 @@ static ADDRESS_MAP_START( batrider_sound_readport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( batrider_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x40, 0x40) AM_WRITE(raizing_command_ack_w)		/* Tune control */
 	AM_RANGE(0x42, 0x42) AM_WRITE(raizing_request_ack_w)		/* Tune to play */
 	AM_RANGE(0x46, 0x46) AM_WRITE(raizing_clear_nmi_w)		/* Clear the NMI state */
@@ -2123,12 +2125,14 @@ static ADDRESS_MAP_START( bbakraid_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( bbakraid_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x48, 0x48) AM_READ(raizing_command_r)
 	AM_RANGE(0x4a, 0x4a) AM_READ(raizing_request_r)
 	AM_RANGE(0x81, 0x81) AM_READ(YMZ280B_status_0_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( bbakraid_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x40, 0x40) AM_WRITE(raizing_command_ack_w)	/* Tune control */
 	AM_RANGE(0x42, 0x42) AM_WRITE(raizing_request_ack_w)	/* Tune to play */
 	AM_RANGE(0x46, 0x46) AM_WRITE(raizing_clear_nmi_w)		/* Clear the NMI state */

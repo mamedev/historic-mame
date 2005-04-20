@@ -528,7 +528,7 @@ VIDEO_START(gstriker)
 	return 0;
 }
 
-VIDEO_START(worldc94)
+VIDEO_START(twrldc94)
 {
 	// Palette bases are hardcoded, but should be probably extracted from the mixer registers
 

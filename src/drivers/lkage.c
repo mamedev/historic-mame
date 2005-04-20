@@ -355,13 +355,12 @@ static MACHINE_DRIVER_START( lkage )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,6000000)
-	MDRV_CPU_FLAGS(CPU_16BIT_PORT)	/* ??? */
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_IO_MAP(readport,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 6000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ??? */
+	/* audio CPU */	/* ??? */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 								/* IRQs are triggered by the YM2203 */
 	MDRV_CPU_ADD(M68705,4000000/2)	/* ??? */
@@ -406,13 +405,12 @@ static MACHINE_DRIVER_START( lkageb )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,6000000)
-	MDRV_CPU_FLAGS(CPU_16BIT_PORT)	/* ??? */
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_IO_MAP(readport,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 6000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ??? */
+	/* audio CPU */	/* ??? */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 								/* IRQs are triggered by the YM2203 */
 	MDRV_FRAMES_PER_SECOND(60)

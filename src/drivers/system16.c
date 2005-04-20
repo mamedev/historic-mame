@@ -327,11 +327,13 @@ static ADDRESS_MAP_START(tturfbl_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( tturfbl_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x01, 0x01) AM_READ(YM2151_status_port_0_r)
 	AM_RANGE(0x80, 0x80) AM_READ(MRA8_NOP)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( tturfbl_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(YM2151_register_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(YM2151_data_port_0_w)
 	AM_RANGE(0x40, 0x40) AM_WRITE(MWA8_NOP)
@@ -352,11 +354,13 @@ static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x01, 0x01) AM_READ(YM2151_status_port_0_r)
 	AM_RANGE(0xc0, 0xc0) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(YM2151_register_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(YM2151_data_port_0_w)
 ADDRESS_MAP_END
@@ -369,12 +373,14 @@ static ADDRESS_MAP_START( sound_readmem_7751, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_readport_7751, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x01, 0x01) AM_READ(YM2151_status_port_0_r)
 //    AM_RANGE(0x0e, 0x0e) AM_READ(sys16_7751_audio_8255_r)
 	AM_RANGE(0xc0, 0xc0) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_writeport_7751, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(YM2151_register_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(YM2151_data_port_0_w)
 	AM_RANGE(0x80, 0x80) AM_WRITE(sys16_7751_audio_8255_w)
@@ -423,6 +429,7 @@ static WRITE8_HANDLER( upd7759_bank_w ) //*
 
 
 static ADDRESS_MAP_START( sound_writeport_7759, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(YM2151_register_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(YM2151_data_port_0_w)
 	AM_RANGE(0x40, 0x40) AM_WRITE(upd7759_bank_w)
@@ -476,7 +483,7 @@ static MACHINE_DRIVER_START( system16 )
 	MDRV_CPU_VBLANK_INT(sys16_interrupt,1)
 
 	MDRV_CPU_ADD_TAG("sound", Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 
@@ -529,7 +536,7 @@ static MACHINE_DRIVER_START( system16_7751 )
 	MDRV_CPU_IO_MAP(sound_readport_7751,sound_writeport_7751)
 
 	MDRV_CPU_ADD(N7751, 6000000/15)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(readmem_7751,writemem_7751)
 	MDRV_CPU_IO_MAP(readport_7751,writeport_7751)
 
@@ -2155,7 +2162,7 @@ static MACHINE_DRIVER_START( tturfbl )
 	MDRV_CPU_PROGRAM_MAP(tturfbl_readmem,tturfbl_writemem)
 
 	MDRV_CPU_MODIFY("sound")
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(tturfbl_sound_readmem,tturfbl_sound_writemem)
 	MDRV_CPU_IO_MAP(tturfbl_sound_readport,tturfbl_sound_writeport)
 

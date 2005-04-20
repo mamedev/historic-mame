@@ -381,7 +381,7 @@ static MACHINE_DRIVER_START( cvs )
 	MDRV_CPU_VBLANK_INT(cvs_interrupt,1)
 
 	MDRV_CPU_ADD(S2650,894886.25)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(cvs_cpu2_program,0)
 	MDRV_CPU_IO_MAP(cvs_cpu2_io,0)
 

@@ -950,10 +950,12 @@ static ADDRESS_MAP_START( hardhead_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( hardhead_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(MRA8_NOP	)	// ? IRQ Ack
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( hardhead_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 ADDRESS_MAP_END
 
 
@@ -1026,10 +1028,12 @@ static ADDRESS_MAP_START( rranger_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( rranger_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(MRA8_NOP	)	// ? IRQ Ack
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( rranger_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 ADDRESS_MAP_END
 
 
@@ -1118,9 +1122,11 @@ static ADDRESS_MAP_START( brickzn_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( brickzn_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( brickzn_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 ADDRESS_MAP_END
 
 
@@ -1294,9 +1300,11 @@ static ADDRESS_MAP_START( starfigh_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( starfigh_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( starfigh_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 ADDRESS_MAP_END
 
 
@@ -1421,10 +1429,12 @@ static ADDRESS_MAP_START( hardhead_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( hardhead_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x01, 0x01) AM_READ(MRA8_NOP	)	// ? IRQ Ack
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( hardhead_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 ADDRESS_MAP_END
 
 
@@ -1450,9 +1460,11 @@ static ADDRESS_MAP_START( rranger_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( rranger_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( rranger_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 ADDRESS_MAP_END
 
 
@@ -1477,9 +1489,11 @@ static ADDRESS_MAP_START( brickzn_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( brickzn_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( brickzn_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 ADDRESS_MAP_END
 
 
@@ -1499,9 +1513,11 @@ static WRITE8_HANDLER( brickzn_pcm_w )
 }
 
 static ADDRESS_MAP_START( brickzn_pcm_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(soundlatch2_r		)	// From Sound CPU
 ADDRESS_MAP_END
 static ADDRESS_MAP_START( brickzn_pcm_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x03) AM_WRITE(brickzn_pcm_w			)	// 4 x DAC
 ADDRESS_MAP_END
 
@@ -1949,7 +1965,7 @@ static MACHINE_DRIVER_START( hardhead )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* No NMI */
 
 	MDRV_CPU_ADD(Z80, 24000000 / 4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)					/* ? */
+	/* audio CPU */					/* ? */
 	MDRV_CPU_PROGRAM_MAP(hardhead_sound_readmem,hardhead_sound_writemem)
 	MDRV_CPU_IO_MAP(hardhead_sound_readport,hardhead_sound_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)	/* No NMI */
@@ -2003,7 +2019,7 @@ static MACHINE_DRIVER_START( rranger )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* IRQ & NMI ! */
 
 	MDRV_CPU_ADD(Z80, 24000000 / 4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)					/* ? */
+	/* audio CPU */					/* ? */
 	MDRV_CPU_PROGRAM_MAP(rranger_sound_readmem,rranger_sound_writemem)
 	MDRV_CPU_IO_MAP(rranger_sound_readport,rranger_sound_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)	/* NMI = retn */
@@ -2061,12 +2077,12 @@ static MACHINE_DRIVER_START( brickzn )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	// nmi breaks ramtest but is needed!
 
 	MDRV_CPU_ADD_TAG("sound", Z80, 24000000 / 4)	/* Z0840006PSC */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(brickzn_sound_readmem,brickzn_sound_writemem)
 	MDRV_CPU_IO_MAP(brickzn_sound_readport,brickzn_sound_writeport)
 
 	MDRV_CPU_ADD_TAG("pcm", Z80, 24000000 / 4)	/* Z0840006PSC */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(brickzn_pcm_readmem,brickzn_pcm_writemem)
 	MDRV_CPU_IO_MAP(brickzn_pcm_readport,brickzn_pcm_writeport)
 
@@ -2163,7 +2179,7 @@ static MACHINE_DRIVER_START( starfigh )
 
 	/* The sound section is identical to that of hardhead */
 	MDRV_CPU_ADD(Z80, 24000000 / 4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)					/* ? */
+	/* audio CPU */					/* ? */
 	MDRV_CPU_PROGRAM_MAP(hardhead_sound_readmem,hardhead_sound_writemem)
 	MDRV_CPU_IO_MAP(hardhead_sound_readport,hardhead_sound_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)	/* No NMI */
@@ -2221,7 +2237,7 @@ static MACHINE_DRIVER_START( sparkman )
 	MDRV_CPU_VBLANK_INT(sparkman_interrupt,2)	/* IRQ & NMI */
 
 	MDRV_CPU_ADD(Z80, 24000000 / 4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)					/* ? */
+	/* audio CPU */					/* ? */
 	MDRV_CPU_PROGRAM_MAP(hardhead_sound_readmem,hardhead_sound_writemem)
 	MDRV_CPU_IO_MAP(hardhead_sound_readport,hardhead_sound_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)	/* No NMI */

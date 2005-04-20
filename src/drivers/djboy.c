@@ -377,6 +377,7 @@ static ADDRESS_MAP_START( cpu1_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( cpu1_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(cpu1_bankswitch_w)
 ADDRESS_MAP_END
 
@@ -402,11 +403,13 @@ static ADDRESS_MAP_START( cpu2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( readport2, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x04, 0x04) AM_READ(cpu2_data_r)
 	AM_RANGE(0x0c, 0x0c) AM_READ(cpu2_status_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport2, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(cpu2_bankswitch_w)
 	AM_RANGE(0x02, 0x02) AM_WRITE(cpu3_nmi_soundcommand_w)
 	AM_RANGE(0x04, 0x04) AM_WRITE(cpu2_data_w)
@@ -430,6 +433,7 @@ static ADDRESS_MAP_START( cpu3_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( cpu3_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x02, 0x02) AM_READ(YM2203_status_port_0_r)
 	AM_RANGE(0x03, 0x03) AM_READ(YM2203_read_port_0_r)
 	AM_RANGE(0x04, 0x04) AM_READ(soundlatch_r)
@@ -438,6 +442,7 @@ static ADDRESS_MAP_START( cpu3_readport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( cpu3_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(cpu3_bankswitch_w)
 	AM_RANGE(0x02, 0x02) AM_WRITE(YM2203_control_port_0_w)
 	AM_RANGE(0x03, 0x03) AM_WRITE(YM2203_write_port_0_w)
@@ -496,7 +501,7 @@ static MACHINE_DRIVER_START( djboy )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 6000000) /* ? */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(cpu3_readmem,cpu3_writemem)
 	MDRV_CPU_IO_MAP(cpu3_readport,cpu3_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)

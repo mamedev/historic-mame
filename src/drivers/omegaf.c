@@ -496,17 +496,19 @@ static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x0000, 0x0000) AM_READ(YM2203_status_port_0_r)
-	AM_RANGE(0x0001, 0x0001) AM_READ(YM2203_read_port_0_r)
-	AM_RANGE(0x0080, 0x0080) AM_READ(YM2203_status_port_1_r)
-	AM_RANGE(0x0081, 0x0081) AM_READ(YM2203_read_port_1_r)
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE(0x00, 0x00) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0x01, 0x01) AM_READ(YM2203_read_port_0_r)
+	AM_RANGE(0x80, 0x80) AM_READ(YM2203_status_port_1_r)
+	AM_RANGE(0x81, 0x81) AM_READ(YM2203_read_port_1_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x0000, 0x0000) AM_WRITE(YM2203_control_port_0_w)
-	AM_RANGE(0x0001, 0x0001) AM_WRITE(YM2203_write_port_0_w)
-	AM_RANGE(0x0080, 0x0080) AM_WRITE(YM2203_control_port_1_w)
-	AM_RANGE(0x0081, 0x0081) AM_WRITE(YM2203_write_port_1_w)
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE(0x00, 0x00) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0x80, 0x80) AM_WRITE(YM2203_control_port_1_w)
+	AM_RANGE(0x81, 0x81) AM_WRITE(YM2203_write_port_1_w)
 ADDRESS_MAP_END
 
 
@@ -633,7 +635,7 @@ static MACHINE_DRIVER_START( omegaf )
 	MDRV_CPU_VBLANK_INT(omegaf_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 5000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* 5 mhz crystal ??? */
+	/* audio CPU */		/* 5 mhz crystal ??? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)

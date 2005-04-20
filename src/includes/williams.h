@@ -75,21 +75,21 @@ READ8_HANDLER( mayday_protection_r );
 #define WILLIAMS_TILEMAP_JOUST2		2		/* IC79 is a 74LS157 selector jumpered to be disabled */
 
 /* RAM globals */
-UINT8 *williams_videoram;
-UINT8 *williams2_tileram;
-UINT8 *blaster_palette_0;
-UINT8 *blaster_scanline_control;
+extern UINT8 *williams_videoram;
+extern UINT8 *williams2_tileram;
+extern UINT8 *blaster_palette_0;
+extern UINT8 *blaster_scanline_control;
 
 /* blitter globals */
-UINT8 williams_blitter_config;
-UINT16 williams_blitter_clip_address;
-UINT8 williams_blitter_window_enable;
+extern UINT8 williams_blitter_config;
+extern UINT16 williams_blitter_clip_address;
+extern UINT8 williams_blitter_window_enable;
 
 /* tilemap globals */
-UINT8 williams2_tilemap_config;
+extern UINT8 williams2_tilemap_config;
 
 /* rendering globals */
-UINT8 williams_cocktail;
+extern UINT8 williams_cocktail;
 
 
 WRITE8_HANDLER( defender_video_control_w );

@@ -93,9 +93,11 @@ static ADDRESS_MAP_START( writemem2, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( readport2, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport2, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_write_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x80, 0x80) AM_WRITE(AY8910_write_port_1_w)
@@ -207,7 +209,7 @@ static MACHINE_DRIVER_START( mouser )
 	MDRV_CPU_ADD(Z80, 4000000)	/* ??? */
 	MDRV_CPU_PROGRAM_MAP(readmem2,writemem2)
 	MDRV_CPU_IO_MAP(readport2,writeport2)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,4) /* ??? This controls the sound tempo */
 
 	MDRV_FRAMES_PER_SECOND(60)

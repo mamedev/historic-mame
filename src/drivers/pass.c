@@ -153,12 +153,14 @@ static ADDRESS_MAP_START( pass_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( pass_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(soundlatch_r)
 	AM_RANGE(0x70, 0x70) AM_READ(YM2203_status_port_0_r)
 	AM_RANGE(0x71, 0x71) AM_READ(YM2203_read_port_0_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( pass_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x70, 0x70) AM_WRITE(YM2203_control_port_0_w)
 	AM_RANGE(0x71, 0x71) AM_WRITE(YM2203_write_port_0_w)
 	AM_RANGE(0x80, 0x80) AM_WRITE(OKIM6295_data_0_w)
@@ -276,7 +278,7 @@ static MACHINE_DRIVER_START( pass )
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1) /* all the same */
 
 	MDRV_CPU_ADD(Z80, 14318180/4 )
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(pass_sound_readmem,pass_sound_writemem)
 	MDRV_CPU_IO_MAP(pass_sound_readport,pass_sound_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_pulse,1)

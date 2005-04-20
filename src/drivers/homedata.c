@@ -1264,7 +1264,7 @@ static MACHINE_DRIVER_START( mrokumei )
 	MDRV_CPU_VBLANK_INT(homedata_irq,1)	/* also triggered by the blitter */
 
 	MDRV_CPU_ADD(Z80, 16000000/4)	/* 4MHz ? */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU | CPU_16BIT_PORT)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(mrokumei_sound_readmem,mrokumei_sound_writemem)
 	MDRV_CPU_IO_MAP(mrokumei_sound_readport,mrokumei_sound_writeport)
 

@@ -1231,6 +1231,7 @@ static ADDRESS_MAP_START( quizchq_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( quizchq_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x03, 0x03) AM_READ(rongrong_gfxrom_r			)	// Video Chip
 //	{ 0x1b, 0x1b,	// bit 5 = busy flag?
 	AM_RANGE(0x1c, 0x1c) AM_READ(rongrong_input_r		)	//
@@ -1241,6 +1242,7 @@ static ADDRESS_MAP_START( quizchq_readport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( quizchq_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x01) AM_WRITE(rongrong_blitter_w	)
 	AM_RANGE(0x1e, 0x1e) AM_WRITE(rongrong_select_w		)	//
 	AM_RANGE(0x20, 0x20) AM_WRITE(rongrong_select2_w	)	//
@@ -1274,6 +1276,7 @@ static ADDRESS_MAP_START( rongrong_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( rongrong_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x03, 0x03) AM_READ(rongrong_gfxrom_r			)	// Video Chip
 //	{ 0x1b, 0x1b,	// bit 5 = busy flag?
 	AM_RANGE(0x1c, 0x1c) AM_READ(rongrong_input_r		)	//
@@ -1284,6 +1287,7 @@ static ADDRESS_MAP_START( rongrong_readport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( rongrong_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x01) AM_WRITE(rongrong_blitter_w	)
 	AM_RANGE(0x1e, 0x1e) AM_WRITE(rongrong_select_w		)	//
 	AM_RANGE(0xa0, 0xa0) AM_WRITE(rongrong_select2_w	)	//
@@ -1396,6 +1400,7 @@ static ADDRESS_MAP_START( mmpanic_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( mmpanic_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x0f) AM_READ(rtc_r					)	// 6242RTC
 	AM_RANGE(0x38, 0x38) AM_READ(unk_r					)	// ? must be 78 on startup
 	AM_RANGE(0x58, 0x58) AM_READ(unk_r					)	// ? must be 78 on startup
@@ -1410,6 +1415,7 @@ static ADDRESS_MAP_START( mmpanic_readport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( mmpanic_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x0f) AM_WRITE(MWA8_NOP					)	// 6242RTC
 	// Layers 0-3:
 	AM_RANGE(0x20, 0x23) AM_WRITE(rongrong_palette_base_w	)
@@ -1452,12 +1458,14 @@ static ADDRESS_MAP_START( mmpanic_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( mmpanic_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(soundlatch_r		)
 	AM_RANGE(0x02, 0x02) AM_READ(MRA8_NOP			)	// read just before port 00
 	AM_RANGE(0x04, 0x04) AM_READ(MRA8_NOP			)	// read only once at the start
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( mmpanic_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x04, 0x04) AM_WRITE(MWA8_NOP					)	// 0, during NMI
 	AM_RANGE(0x06, 0x06) AM_WRITE(MWA8_NOP					)	// almost always 1, sometimes 0
 	AM_RANGE(0x08, 0x08) AM_WRITE(YM2413_register_port_0_w	)

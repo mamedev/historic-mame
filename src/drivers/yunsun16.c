@@ -146,12 +146,14 @@ static ADDRESS_MAP_START( yunsun16_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( yunsun16_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x10, 0x10) AM_READ(YM3812_status_port_0_r	)	// YM3812
 	AM_RANGE(0x18, 0x18) AM_READ(soundlatch_r				)	// From Main CPU
 	AM_RANGE(0x1c, 0x1c) AM_READ(OKIM6295_status_0_r		)	// M6295
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( yunsun16_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x10, 0x10) AM_WRITE(YM3812_control_port_0_w	)	// YM3812
 	AM_RANGE(0x11, 0x11) AM_WRITE(YM3812_write_port_0_w		)
 	AM_RANGE(0x1c, 0x1c) AM_WRITE(OKIM6295_data_0_w			)	// M6295
@@ -414,7 +416,7 @@ static MACHINE_DRIVER_START( magicbub )
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	/* audio CPU */	/* ? */
 	MDRV_CPU_PROGRAM_MAP(yunsun16_sound_readmem,yunsun16_sound_writemem)
 	MDRV_CPU_IO_MAP(yunsun16_sound_readport,yunsun16_sound_writeport)
 

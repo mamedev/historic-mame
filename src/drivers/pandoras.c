@@ -409,11 +409,11 @@ static MACHINE_DRIVER_START( pandoras )
 	MDRV_CPU_VBLANK_INT(pandoras_interrupt_b,1)
 
 	MDRV_CPU_ADD(Z80,14318000/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(pandoras_readmem_snd,pandoras_writemem_snd)
 
 	MDRV_CPU_ADD(I8039,(14318000/2)/I8039_CLOCK_DIVIDER)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(i8039_readmem,i8039_writemem)
 	MDRV_CPU_IO_MAP(i8039_readport,i8039_writeport)
 

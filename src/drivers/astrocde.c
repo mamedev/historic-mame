@@ -750,7 +750,6 @@ static MACHINE_DRIVER_START( seawolf2 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 1789773)	/* 1.789 MHz */
-	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_PROGRAM_MAP(seawolf2_readmem,seawolf2_writemem)
 	MDRV_CPU_IO_MAP(readport,seawolf2_writeport)
 	MDRV_CPU_VBLANK_INT(wow_interrupt,256)
@@ -780,7 +779,6 @@ static MACHINE_DRIVER_START( spacezap )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 1789773)	/* 1.789 MHz */
-	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_PROGRAM_MAP(wow_readmem,wow_writemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(wow_interrupt,256)
@@ -809,7 +807,6 @@ static MACHINE_DRIVER_START( ebases )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 1789773)	/* 1.789 MHz */
-	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(wow_interrupt,256)
@@ -838,7 +835,6 @@ static MACHINE_DRIVER_START( wow )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 1789773)	/* 1.789 MHz */
-	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_PROGRAM_MAP(wow_readmem,wow_writemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(wow_interrupt,256)
@@ -881,7 +877,6 @@ static MACHINE_DRIVER_START( gorf )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 1789773)	/* 1.789 MHz */
-	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_PROGRAM_MAP(wow_readmem,wow_writemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(gorf_interrupt,256)
@@ -923,7 +918,6 @@ static MACHINE_DRIVER_START( robby )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 1789773)	/* 1.789 MHz */
-	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_PROGRAM_MAP(robby_readmem,robby_writemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(wow_interrupt,256)
@@ -957,7 +951,6 @@ static MACHINE_DRIVER_START( demndrgn )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 1789773)	/* 1.789 MHz */
-	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_PROGRAM_MAP(demndrgn_readmem,demndrgn_writemem)
 	MDRV_CPU_IO_MAP(demndrgn_readport,writeport)
 	MDRV_CPU_VBLANK_INT(wow_interrupt,256)
@@ -982,7 +975,6 @@ static MACHINE_DRIVER_START( profpac )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 1789773)	/* 1.789 MHz */
-	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_PROGRAM_MAP(profpac_readmem,profpac_writemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(wow_interrupt,256)

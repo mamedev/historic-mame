@@ -240,7 +240,7 @@ static MACHINE_DRIVER_START( ssozumo )
 	MDRV_CPU_VBLANK_INT(ssozumo_interrupt,1)
 
 	MDRV_CPU_ADD(M6502, 975000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) 		/* 975 kHz ?? */
+	/* audio CPU */ 		/* 975 kHz ?? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,16)	/* IRQs are triggered by the main CPU */
 

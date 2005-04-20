@@ -444,7 +444,7 @@ static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_portmap, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) | AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_MIRROR(0x3e) AM_WRITE(YM2151_register_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_MIRROR(0x3e) AM_READWRITE(YM2151_status_port_0_r, YM2151_data_port_0_w)
 	AM_RANGE(0x40, 0x40) AM_MIRROR(0x3f) AM_READ(soundlatch_r)
@@ -823,7 +823,7 @@ static MACHINE_DRIVER_START( yboard )
 	MDRV_CPU_PROGRAM_MAP(suby_map,0)
 
 	MDRV_CPU_ADD_TAG("sound", Z80, SOUND_CLOCK/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 	MDRV_CPU_IO_MAP(sound_portmap,0)
 
@@ -1034,11 +1034,8 @@ ROM_START( gloc )
 	ROM_LOAD16_BYTE( "13029",  0x000001, 0x20000, CRC(f3638efb) SHA1(f82a46fc8616cbe0235746161c587e54adecfe50) )
 
 	ROM_REGION16_BE( 0x200000, REGION_GFX2, 0)
-	/* some gfx roms are missing .. */
-	ROM_LOAD16_BYTE( "13039",  0x000000, 0x80000, NO_DUMP )
-	ROM_LOAD16_BYTE( "13037",  0x000001, 0x80000, NO_DUMP )
-	ROM_FILL(0, 0x100000, 0xff)
-	/* these were taken from strkfgtr; based on the ROM number, they should be correct */
+	ROM_LOAD16_BYTE( "13039",  0x000000, 0x80000, CRC(d7e1266d) SHA1(b0fc4cc60a7e876ae2af343bba6da3fb926ea9c5) )
+	ROM_LOAD16_BYTE( "13037",  0x000001, 0x80000, CRC(b801a250) SHA1(7d1f6a1f2022a4f302f22d11fa79057cf8134ad2) )
 	ROM_LOAD16_BYTE( "13040",  0x100000, 0x80000, CRC(4aeb3a85) SHA1(5521fd2d3956839bdbe7b70a9e60cd9fb72a42f1) )
 	ROM_LOAD16_BYTE( "13038",  0x100001, 0x80000, CRC(0b2edb6d) SHA1(04944d6e6f020cd6d33641110847706516630227) )
 
@@ -1406,7 +1403,7 @@ static DRIVER_INIT( generic_yboard )
 
 GAME( 1988, gforce2,  0,       yboard, gforce2,  generic_yboard, ROT0, "Sega", "Galaxy Force 2"  )
 GAME( 1988, gforce2j, gforce2, yboard, gforce2,  generic_yboard, ROT0, "Sega", "Galaxy Force 2 (Japan)"  )
-GAMEX(1990, gloc,     0,       yboard, gloc,     generic_yboard, ROT0, "Sega", "G-LOC Air Battle (US)",GAME_IMPERFECT_GRAPHICS  )
+GAME( 1990, gloc,     0,       yboard, gloc,     generic_yboard, ROT0, "Sega", "G-LOC Air Battle (US)"  )
 GAME( 1988, pdrift,   0,       yboard, pdrift,   generic_yboard, ROT0, "Sega", "Power Drift"  )
 GAME( 1988, pdriftj,  pdrift,  yboard, pdrift,   generic_yboard, ROT0, "Sega", "Power Drift (Japan)" )
 GAME( 1991, rchase,   0,       rchase, rchase,   generic_yboard, ROT0, "Sega", "Rail Chase (Japan)" )

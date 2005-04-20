@@ -246,7 +246,7 @@ static MACHINE_DRIVER_START( commando )
 	MDRV_CPU_VBLANK_INT(commando_interrupt, 1)
 
 	MDRV_CPU_ADD(Z80, PHI_B)	// 3 MHz
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_map, 0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold, 4)
 

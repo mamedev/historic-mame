@@ -262,7 +262,7 @@ static MACHINE_DRIVER_START( skyfox )
 	MDRV_CPU_VBLANK_INT(skyfox_interrupt,1)		/* NMI caused by coin insertion */
 
 	MDRV_CPU_ADD(Z80, 1748000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(skyfox_sound_readmem,skyfox_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)

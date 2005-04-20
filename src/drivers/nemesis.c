@@ -2141,7 +2141,7 @@ static MACHINE_DRIVER_START( nemesis )
 	MDRV_CPU_VBLANK_INT(nemesis_interrupt,1)
 
 	MDRV_CPU_ADD(Z80,14318180/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* From schematics, should be accurate */
+	/* audio CPU */ /* From schematics, should be accurate */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,nemesis_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND((18432000.0/4)/(288*264))		/* ??? */
@@ -2187,7 +2187,7 @@ static MACHINE_DRIVER_START( konamigt )
 	MDRV_CPU_VBLANK_INT(konamigt_interrupt,2)
 
 	MDRV_CPU_ADD(Z80,14318180/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 3.579545 MHz */
+	/* audio CPU */        /* 3.579545 MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND((18432000.0/4)/(288*264))		/* 60.606060 Hz */
@@ -2230,7 +2230,7 @@ static MACHINE_DRIVER_START( salamand )
 	MDRV_CPU_VBLANK_INT(salamand_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 3.579545 MHz */
+	/* audio CPU */        /* 3.579545 MHz */
 	MDRV_CPU_PROGRAM_MAP(sal_sound_readmem,sal_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND((18432000.0/4)/(288*264))		/* 60.606060 Hz */
@@ -2278,7 +2278,7 @@ static MACHINE_DRIVER_START( blkpnthr )
 	MDRV_CPU_VBLANK_INT(blkpnthr_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 3.579545 MHz */
+	/* audio CPU */        /* 3.579545 MHz */
 	MDRV_CPU_PROGRAM_MAP(sal_sound_readmem,sal_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND((18432000.0/4)/(288*264))		/* 60.606060 Hz */
@@ -2321,7 +2321,7 @@ static MACHINE_DRIVER_START( citybomb )
 	MDRV_CPU_VBLANK_INT(salamand_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 3.579545 MHz */
+	/* audio CPU */        /* 3.579545 MHz */
 	MDRV_CPU_PROGRAM_MAP(city_sound_readmem,city_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND((18432000.0/4)/(288*264))		/* 60.606060 Hz */
@@ -2368,7 +2368,7 @@ static MACHINE_DRIVER_START( nyanpani )
 	MDRV_CPU_VBLANK_INT(salamand_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 3.579545 MHz */
+	/* audio CPU */        /* 3.579545 MHz */
 	MDRV_CPU_PROGRAM_MAP(city_sound_readmem,city_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND((18432000.0/4)/(288*264))		/* 60.606060 Hz */
@@ -2462,7 +2462,7 @@ static MACHINE_DRIVER_START( rf2_gx400 )
 	MDRV_CPU_VBLANK_INT(gx400_interrupt,3)
 
 	MDRV_CPU_ADD(Z80,14318180/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 3.579545 MHz */
+	/* audio CPU */        /* 3.579545 MHz */
 	MDRV_CPU_PROGRAM_MAP(gx400_sound_readmem,gx400_sound_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)	/* interrupts are triggered by the main CPU */
 
@@ -2582,7 +2582,7 @@ static MACHINE_DRIVER_START( hcrash )
 //	MDRV_CPU_VBLANK_INT(konamigt_interrupt,2)
 
 	MDRV_CPU_ADD(Z80,14318180/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 3.579545 MHz */
+	/* audio CPU */        /* 3.579545 MHz */
 	MDRV_CPU_PROGRAM_MAP(sal_sound_readmem,sal_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND((18432000.0/4)/(288*264))		/* 60.606060 Hz */

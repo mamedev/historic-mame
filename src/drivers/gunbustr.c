@@ -441,7 +441,7 @@ static MACHINE_DRIVER_START( gunbustr )
 	MDRV_CPU_VBLANK_INT(gunbustr_interrupt,1) /* VBL */
 
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 16 MHz */
+	/* audio CPU */	/* 16 MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)

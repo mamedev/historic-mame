@@ -684,7 +684,7 @@ static MACHINE_DRIVER_START( qix )
 	MDRV_CPU_PROGRAM_MAP(readmem_video,writemem_video)
 
 	MDRV_CPU_ADD_TAG("sound", M6802, SOUND_CLOCK_OSC/2/4)	/* 0.92 MHz */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)

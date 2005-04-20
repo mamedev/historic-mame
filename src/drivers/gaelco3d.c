@@ -923,7 +923,7 @@ MACHINE_DRIVER_START( gaelco3d )
 	MDRV_CPU_CONFIG(tms_config)
 
 	MDRV_CPU_ADD_TAG("adsp", ADSP2115, 16000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(adsp_program_map,0)
 	MDRV_CPU_DATA_MAP(adsp_data_map, 0)
 	

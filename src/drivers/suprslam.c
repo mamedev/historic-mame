@@ -177,12 +177,14 @@ static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( suprslam_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x04, 0x04) AM_READ(soundlatch_r)
 	AM_RANGE(0x08, 0x08) AM_READ(YM2610_status_port_0_A_r)
 	AM_RANGE(0x0a, 0x0a) AM_READ(YM2610_status_port_0_B_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( suprslam_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(suprslam_sh_bankswitch_w)
 	AM_RANGE(0x04, 0x04) AM_WRITE(pending_command_clear_w)
 	AM_RANGE(0x08, 0x08) AM_WRITE(YM2610_control_port_0_A_w)
@@ -331,7 +333,7 @@ static MACHINE_DRIVER_START( suprslam )
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,8000000/2)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	/* audio CPU */	/* 4 MHz ??? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(suprslam_sound_readport,suprslam_sound_writeport)
 

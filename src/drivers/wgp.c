@@ -1179,7 +1179,7 @@ static MACHINE_DRIVER_START( wgp )
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 16000000/4)	/* 4 MHz ??? */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(z80_sound_readmem,z80_sound_writemem)
 
 	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
@@ -1220,7 +1220,7 @@ static MACHINE_DRIVER_START( wgp2 )
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 16000000/4)	/* 4 MHz ??? */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(z80_sound_readmem,z80_sound_writemem)
 
 	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */

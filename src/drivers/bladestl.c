@@ -439,7 +439,7 @@ static MACHINE_DRIVER_START( bladestl )
 	MDRV_CPU_VBLANK_INT(bladestl_interrupt,2) /* (1 IRQ + 1 NMI) */
 
 	MDRV_CPU_ADD(M6809, 2000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* ? */
+	/* audio CPU */		/* ? */
 	MDRV_CPU_PROGRAM_MAP(bladestl_readmem_sound,bladestl_writemem_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)

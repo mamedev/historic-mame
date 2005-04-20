@@ -184,6 +184,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( main_portmap, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(watchdog_reset_r)
 ADDRESS_MAP_END
 
@@ -202,6 +203,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( sound_portmap, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(sound_irq_ack_w)
 	AM_RANGE(0x8c, 0x8c) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x8d, 0x8d) AM_READWRITE(AY8910_read_port_0_r, AY8910_write_port_0_w)
@@ -330,7 +332,7 @@ static MACHINE_DRIVER_START( suprridr )
 	MDRV_CPU_VBLANK_INT(main_nmi_gen,1)
 	
 	MDRV_CPU_ADD(Z80, 10000000/4)		/* just a guess */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 	MDRV_CPU_IO_MAP(sound_portmap,0)
 	

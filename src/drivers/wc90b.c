@@ -371,7 +371,7 @@ static MACHINE_DRIVER_START( wc90b )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 2510000) // based on goal92 speed measured by guru (although maybe it should be 10mhz / 4 which is close)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 2.51 MHz */
+	/* audio CPU */	/* 2.51 MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 								/* IRQs are triggered by the main CPU */
 	MDRV_FRAMES_PER_SECOND(60)

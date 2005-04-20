@@ -637,10 +637,12 @@ static ADDRESS_MAP_START( hal21_writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( hal21_readport_sound, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x0000, 0x0000) AM_READ(MRA8_NOP) // external sound ROM detection?
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( hal21_writeport_sound, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x0000, 0x0000) AM_WRITE(MWA8_NOP) // external sound ROM switch?
 ADDRESS_MAP_END
 
@@ -770,7 +772,7 @@ static MACHINE_DRIVER_START( aso )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(aso_readmem_sound,aso_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
@@ -810,7 +812,7 @@ static MACHINE_DRIVER_START( hal21 )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(hal21_readmem_sound,hal21_writemem_sound)
 	MDRV_CPU_IO_MAP(hal21_readport_sound,hal21_writeport_sound)
 	MDRV_CPU_VBLANK_INT(hal21_sound_interrupt,1)

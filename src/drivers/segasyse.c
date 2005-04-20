@@ -225,6 +225,7 @@ ADDRESS_MAP_END
 /*-- Ports --*/
 
 static ADDRESS_MAP_START( segae_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x7e, 0x7f) AM_READ(segae_port_7e_7f_r)			/* Vertical / Horizontal Beam Position Read */
 	AM_RANGE(0xba, 0xbb) AM_READ(segae_port_ba_bb_r)			/* Back Layer VDP */
 	AM_RANGE(0xbe, 0xbf) AM_READ(segae_port_be_bf_r)			/* Front Layer VDP */
@@ -235,6 +236,7 @@ static ADDRESS_MAP_START( segae_readport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( segae_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x7b, 0x7b) AM_WRITE(SN76496_0_w) /* Not sure which chip each is on */
 	AM_RANGE(0x7f, 0x7f) AM_WRITE(SN76496_1_w) /* Not sure which chip each is on */
 	AM_RANGE(0xba, 0xbb) AM_WRITE(segae_port_ba_bb_w)			/* Back Layer VDP */

@@ -401,7 +401,7 @@ static MACHINE_DRIVER_START( starwars )
 	MDRV_CPU_VBLANK_INT(irq0_line_assert,6)		/* 183Hz ? */
 
 	MDRV_CPU_ADD(M6809,1500000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(30)

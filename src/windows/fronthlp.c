@@ -270,7 +270,7 @@ void identify_file(const char* name)
 {
 	FILE *f;
 	int length;
-	char* data;
+	unsigned char* data;
 	char hash[HASH_BUF_SIZE];
 
 	f = fopen(name,"rb");
@@ -297,7 +297,7 @@ void identify_file(const char* name)
 	}
 
 	/* allocate space for entire file */
-	data = (char*)malloc(length);
+	data = (unsigned char*)malloc(length);
 	if (!data) {
 		fclose(f);
 		return;
@@ -752,12 +752,7 @@ int frontend_help (const char *gamename)
 					/* Then, cpus */
 
 					for(j=0;j<MAX_CPU;j++)
-					{
-						if (x_cpu[j].cpu_flags & CPU_AUDIO_CPU)
-							printf("[%-6s] ",cputype_name(x_cpu[j].cpu_type));
-						else
-							printf("%-8s ",cputype_name(x_cpu[j].cpu_type));
-					}
+						printf("%-8s ",cputype_name(x_cpu[j].cpu_type));
 
 					/* Then, sound chips */
 

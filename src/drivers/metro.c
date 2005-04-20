@@ -1923,12 +1923,14 @@ static ADDRESS_MAP_START( blzntrnd_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( blzntrnd_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x40, 0x40) AM_READ(soundlatch_r)
 	AM_RANGE(0x80, 0x80) AM_READ(YM2610_status_port_0_A_r)
 	AM_RANGE(0x82, 0x82) AM_READ(YM2610_status_port_0_B_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( blzntrnd_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(blzntrnd_sh_bankswitch_w)
 	AM_RANGE(0x40, 0x40) AM_WRITE(MWA8_NOP)
 	AM_RANGE(0x80, 0x80) AM_WRITE(YM2610_control_port_0_A_w)
@@ -3568,7 +3570,7 @@ static MACHINE_DRIVER_START( daitorid )
 	MDRV_CPU_VBLANK_INT(metro_interrupt,10)	/* ? */
 
 	MDRV_CPU_ADD(UPD7810, 12000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_CONFIG(metro_cpu_config)
 	MDRV_CPU_PROGRAM_MAP(daitorid_snd_readmem,daitorid_snd_writemem)
 	MDRV_CPU_IO_MAP(daitorid_snd_readport,daitorid_snd_writeport)
@@ -3611,7 +3613,7 @@ static MACHINE_DRIVER_START( dharma )
 	MDRV_CPU_VBLANK_INT(metro_interrupt,10)	/* ? */
 
 	MDRV_CPU_ADD(UPD7810, 12000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_CONFIG(metro_cpu_config)
 	MDRV_CPU_PROGRAM_MAP(metro_snd_readmem,metro_snd_writemem)
 	MDRV_CPU_IO_MAP(metro_snd_readport,metro_snd_writeport)
@@ -3653,7 +3655,7 @@ static MACHINE_DRIVER_START( karatour )
 	MDRV_CPU_VBLANK_INT(karatour_interrupt,10)	/* ? */
 
 	MDRV_CPU_ADD(UPD7810, 12000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_CONFIG(metro_cpu_config)
 	MDRV_CPU_PROGRAM_MAP(metro_snd_readmem,metro_snd_writemem)
 	MDRV_CPU_IO_MAP(metro_snd_readport,metro_snd_writeport)
@@ -3695,7 +3697,7 @@ static MACHINE_DRIVER_START( 3kokushi )
 	MDRV_CPU_VBLANK_INT(karatour_interrupt,10)	/* ? */
 
 	MDRV_CPU_ADD(UPD7810, 12000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_CONFIG(metro_cpu_config)
 	MDRV_CPU_PROGRAM_MAP(metro_snd_readmem,metro_snd_writemem)
 	MDRV_CPU_IO_MAP(metro_snd_readport,metro_snd_writeport)
@@ -3737,7 +3739,7 @@ static MACHINE_DRIVER_START( lastfort )
 	MDRV_CPU_VBLANK_INT(metro_interrupt,10)	/* ? */
 
 	MDRV_CPU_ADD(UPD7810, 12000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_CONFIG(metro_cpu_config)
 	MDRV_CPU_PROGRAM_MAP(metro_snd_readmem,metro_snd_writemem)
 	MDRV_CPU_IO_MAP(metro_snd_readport,metro_snd_writeport)
@@ -3778,7 +3780,7 @@ static MACHINE_DRIVER_START( lastforg )
 	MDRV_CPU_VBLANK_INT(karatour_interrupt,10)	/* ? */
 
 	MDRV_CPU_ADD(UPD7810, 12000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_CONFIG(metro_cpu_config)
 	MDRV_CPU_PROGRAM_MAP(metro_snd_readmem,metro_snd_writemem)
 	MDRV_CPU_IO_MAP(metro_snd_readport,metro_snd_writeport)
@@ -3979,7 +3981,7 @@ static MACHINE_DRIVER_START( pangpoms )
 	MDRV_CPU_VBLANK_INT(metro_interrupt,10)	/* ? */
 
 	MDRV_CPU_ADD(UPD7810, 12000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_CONFIG(metro_cpu_config)
 	MDRV_CPU_PROGRAM_MAP(metro_snd_readmem,metro_snd_writemem)
 	MDRV_CPU_IO_MAP(metro_snd_readport,metro_snd_writeport)
@@ -4021,7 +4023,7 @@ static MACHINE_DRIVER_START( poitto )
 	MDRV_CPU_VBLANK_INT(metro_interrupt,10)	/* ? */
 
 	MDRV_CPU_ADD(UPD7810, 12000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_CONFIG(metro_cpu_config)
 	MDRV_CPU_PROGRAM_MAP(metro_snd_readmem,metro_snd_writemem)
 	MDRV_CPU_IO_MAP(metro_snd_readport,metro_snd_writeport)
@@ -4063,7 +4065,7 @@ static MACHINE_DRIVER_START( pururun )
 	MDRV_CPU_VBLANK_INT(metro_interrupt,10)	/* ? */
 
 	MDRV_CPU_ADD(UPD7810, 12000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_CONFIG(metro_cpu_config)
 	MDRV_CPU_PROGRAM_MAP(daitorid_snd_readmem,daitorid_snd_writemem)
 	MDRV_CPU_IO_MAP(daitorid_snd_readport,daitorid_snd_writeport)
@@ -4106,7 +4108,7 @@ static MACHINE_DRIVER_START( skyalert )
 	MDRV_CPU_VBLANK_INT(metro_interrupt,10)	/* ? */
 
 	MDRV_CPU_ADD(UPD7810, 12000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_CONFIG(metro_cpu_config)
 	MDRV_CPU_PROGRAM_MAP(metro_snd_readmem,metro_snd_writemem)
 	MDRV_CPU_IO_MAP(metro_snd_readport,metro_snd_writeport)
@@ -4148,7 +4150,7 @@ static MACHINE_DRIVER_START( toride2g )
 	MDRV_CPU_VBLANK_INT(metro_interrupt,10)	/* ? */
 
 	MDRV_CPU_ADD(UPD7810, 12000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_CONFIG(metro_cpu_config)
 	MDRV_CPU_PROGRAM_MAP(metro_snd_readmem,metro_snd_writemem)
 	MDRV_CPU_IO_MAP(metro_snd_readport,metro_snd_writeport)
@@ -4225,7 +4227,7 @@ static MACHINE_DRIVER_START( blzntrnd )
 	MDRV_CPU_VBLANK_INT(karatour_interrupt,10)	/* ? */
 
 	MDRV_CPU_ADD(Z80, 8000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(blzntrnd_sound_readmem, blzntrnd_sound_writemem)
 	MDRV_CPU_IO_MAP(blzntrnd_sound_readport, blzntrnd_sound_writeport)
 
@@ -4264,7 +4266,7 @@ static MACHINE_DRIVER_START( gstrik2 )
 	MDRV_CPU_VBLANK_INT(karatour_interrupt,10)	/* ? */
 
 	MDRV_CPU_ADD(Z80, 8000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(blzntrnd_sound_readmem, blzntrnd_sound_writemem)
 	MDRV_CPU_IO_MAP(blzntrnd_sound_readport, blzntrnd_sound_writeport)
 

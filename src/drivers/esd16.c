@@ -232,12 +232,14 @@ READ8_HANDLER( esd16_sound_command_r )
 }
 
 static ADDRESS_MAP_START( multchmp_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x02, 0x02) AM_READ(OKIM6295_status_0_r		)	// M6295
 	AM_RANGE(0x03, 0x03) AM_READ(esd16_sound_command_r		)	// From Main CPU
 	AM_RANGE(0x06, 0x06) AM_READ(MRA8_NOP					)	// ? At the start
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( multchmp_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(YM3812_control_port_0_w	)	// YM3812
 	AM_RANGE(0x01, 0x01) AM_WRITE(YM3812_write_port_0_w		)
 	AM_RANGE(0x02, 0x02) AM_WRITE(OKIM6295_data_0_w			)	// M6295
@@ -470,7 +472,7 @@ static MACHINE_DRIVER_START( multchmp )
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	/* audio CPU */	/* ? */
 	MDRV_CPU_PROGRAM_MAP(multchmp_sound_readmem,multchmp_sound_writemem)
 	MDRV_CPU_IO_MAP(multchmp_sound_readport,multchmp_sound_writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,32)	/* IRQ By Main CPU */

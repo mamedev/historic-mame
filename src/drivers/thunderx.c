@@ -698,7 +698,7 @@ static MACHINE_DRIVER_START( scontra )
 	MDRV_CPU_VBLANK_INT(scontra_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* ? */
+	/* audio CPU */		/* ? */
 	MDRV_CPU_PROGRAM_MAP(scontra_readmem_sound,scontra_writemem_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -737,7 +737,7 @@ static MACHINE_DRIVER_START( thunderx )
 	MDRV_CPU_VBLANK_INT(scontra_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* ? */
+	/* audio CPU */		/* ? */
 	MDRV_CPU_PROGRAM_MAP(thunderx_readmem_sound,thunderx_writemem_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)

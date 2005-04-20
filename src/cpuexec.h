@@ -51,13 +51,7 @@ enum
 {
 	/* set this flag to disable execution of a CPU (if one is there for documentation */
 	/* purposes only, for example */
-	CPU_DISABLE = 0x0004,
-	
-	/* this is an obsolete flag */
-	CPU_AUDIO_CPU = 0x0000,
-
-	/* the Z80 can be wired to use 16 bit addressing for I/O ports */
-	CPU_16BIT_PORT = 0x0001
+	CPU_DISABLE = 0x0001
 };
 
 

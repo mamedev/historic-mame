@@ -354,7 +354,7 @@ static MACHINE_DRIVER_START( wwfsstar )
 	MDRV_CPU_VBLANK_INT(wwfsstar_interrupt,262)
 
 	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* unknown */
+	/* audio CPU */	/* unknown */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)

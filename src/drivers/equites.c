@@ -145,7 +145,7 @@ SNK/Eastern  1985 (ACT) Gekisoh          Œƒ‘–
 // Common Hardware Start
 #define EQUITES_ADD_SOUNDBOARD7 \
 	MDRV_CPU_ADD(8085A, 5000000) \
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) \
+	/* audio CPU */ \
 	MDRV_CPU_PROGRAM_MAP(equites_s_readmem, equites_s_writemem) \
 	MDRV_CPU_IO_MAP(0, equites_s_writeport) \
 	MDRV_CPU_PERIODIC_INT(nmi_line_pulse, 4000) \

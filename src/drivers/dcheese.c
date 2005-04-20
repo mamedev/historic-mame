@@ -146,7 +146,7 @@ static MACHINE_DRIVER_START( dcheese )
 	/* no irq ? */
 
 	MDRV_CPU_ADD(M6809, 1250000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_cpu_map,0)
 
 	MDRV_FRAMES_PER_SECOND(60)

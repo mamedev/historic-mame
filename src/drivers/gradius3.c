@@ -386,7 +386,7 @@ static MACHINE_DRIVER_START( gradius3 )
 								/* 4 is triggered by cpu A, the others are unknown but */
 								/* required for the game to run. */
 	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
+	/* audio CPU */	/* 3.579545 MHz */
 	MDRV_CPU_PROGRAM_MAP(gradius3_s_readmem,gradius3_s_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)

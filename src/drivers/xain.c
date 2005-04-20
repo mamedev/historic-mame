@@ -480,7 +480,7 @@ static MACHINE_DRIVER_START( xsleena )
 	MDRV_CPU_PROGRAM_MAP(readmemB,writememB)
 
 	MDRV_CPU_ADD(M6809, 1500000)	/* Confirmed 1.5MHz */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 //	MDRV_CPU_ADD(M68705, 300000)	/* Confirmed 3MHz */

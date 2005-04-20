@@ -682,7 +682,7 @@ static MACHINE_DRIVER_START( ninjaw )
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,16000000/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 16/4 MHz ? */
+	/* audio CPU */	/* 16/4 MHz ? */
 	MDRV_CPU_PROGRAM_MAP(z80_sound_readmem,z80_sound_writemem)
 
 	MDRV_CPU_ADD(M68000,16000000/2)	/* 8 MHz ? */
@@ -739,7 +739,7 @@ static MACHINE_DRIVER_START( darius2 )
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,16000000/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ? */
+	/* audio CPU */	/* 4 MHz ? */
 	MDRV_CPU_PROGRAM_MAP(z80_sound_readmem,z80_sound_writemem)
 
 	MDRV_CPU_ADD(M68000,16000000/2)	/* 8 MHz ? */

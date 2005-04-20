@@ -860,7 +860,6 @@ static MACHINE_DRIVER_START( pbillian )
 	MDRV_CPU_ADD(Z80,12000000/2)		 /* 6 MHz */
 	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_IO_MAP(pbillian_port_map,0)
-	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -892,7 +891,6 @@ static MACHINE_DRIVER_START( sqix )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 12000000/2)	/* 6 MHz */
-	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_IO_MAP(sqix_port_map,0)
 	MDRV_CPU_VBLANK_INT(sqix_interrupt,6)	/* ??? */
@@ -932,7 +930,6 @@ static MACHINE_DRIVER_START( sqixbl )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 12000000/2)	/* 6 MHz */
-	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_IO_MAP(bootleg_port_map,0)
 	MDRV_CPU_VBLANK_INT(bootleg_interrupt,6)	/* ??? */

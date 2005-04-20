@@ -924,7 +924,7 @@ static MACHINE_DRIVER_START( tnk3 )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(YM3526_readmem_sound,YM3526_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 
@@ -964,7 +964,7 @@ static MACHINE_DRIVER_START( athena )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(YM3526_YM3526_readmem_sound,YM3526_YM3526_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 
@@ -1008,7 +1008,7 @@ static MACHINE_DRIVER_START( ikari )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(YM3526_YM3526_readmem_sound,YM3526_YM3526_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
@@ -1052,7 +1052,7 @@ static MACHINE_DRIVER_START( victroad )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
@@ -1096,7 +1096,7 @@ static MACHINE_DRIVER_START( gwar )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
@@ -1141,7 +1141,7 @@ static MACHINE_DRIVER_START( bermudat )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
@@ -1185,7 +1185,7 @@ static MACHINE_DRIVER_START( psychos )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 
@@ -1229,7 +1229,7 @@ static MACHINE_DRIVER_START( chopper1 )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(YM3812_Y8950_readmem_sound,YM3812_Y8950_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
@@ -1273,7 +1273,7 @@ static MACHINE_DRIVER_START( tdfever )
 //	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
@@ -1317,7 +1317,7 @@ static MACHINE_DRIVER_START( tdfever2 )
 //	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
@@ -1361,7 +1361,7 @@ static MACHINE_DRIVER_START( ftsoccer )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(Y8950_readmem_sound,Y8950_writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 

@@ -59,6 +59,7 @@ ADDRESS_MAP_END
  *************************************/
 
 static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 ADDRESS_MAP_END
 
 

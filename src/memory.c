@@ -900,8 +900,6 @@ static int init_cpudata(void)
 	/* loop over CPUs */
 	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
 	{
-		int cputype = Machine->drv->cpu[cpunum].cpu_type;
-
 		/* set the RAM/ROM base */
 		cpudata[cpunum].rambase = cpudata[cpunum].op_ram = cpudata[cpunum].op_rom = memory_region(REGION_CPU1 + cpunum);
 		cpudata[cpunum].op_mem_max = cpudata[cpunum].ramlength = memory_region_length(REGION_CPU1 + cpunum);
@@ -915,11 +913,6 @@ static int init_cpudata(void)
 			if (!init_addrspace(cpunum, spacenum))
 				return 0;
 		cpudata[cpunum].op_mask = cpudata[cpunum].space[ADDRESS_SPACE_PROGRAM].mask;
-
-		/* Z80 port mask kludge */
-		if (cputype == CPU_Z80 || cputype == CPU_Z180)
-			if (!(Machine->drv->cpu[cpunum].cpu_flags & CPU_16BIT_PORT))
-				cpudata[cpunum].space[ADDRESS_SPACE_IO].mask = 0xff;
 	}
 	return 1;
 }

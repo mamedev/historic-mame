@@ -769,10 +769,12 @@ static WRITE8_HANDLER( sys32_soundbank_w )
 }
 
 static ADDRESS_MAP_START( multi32_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x80, 0x80) AM_READ(YM3438_status_port_0_A_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( multi32_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x80, 0x80) AM_WRITE(YM3438_control_port_0_A_w)
 	AM_RANGE(0x81, 0x81) AM_WRITE(YM3438_data_port_0_A_w)
 	AM_RANGE(0x82, 0x82) AM_WRITE(YM3438_control_port_0_B_w)

@@ -712,7 +712,7 @@ static MACHINE_DRIVER_START( mainevt )
 	MDRV_CPU_VBLANK_INT(mainevt_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
+	/* audio CPU */	/* 3.579545 MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,8)	/* ??? */
 
@@ -750,7 +750,7 @@ static MACHINE_DRIVER_START( devstors )
 	MDRV_CPU_VBLANK_INT(dv_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
+	/* audio CPU */	/* 3.579545 MHz */
 	MDRV_CPU_PROGRAM_MAP(dv_sound_readmem,dv_sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
 

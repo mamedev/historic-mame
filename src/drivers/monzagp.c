@@ -110,6 +110,7 @@ static READ8_HANDLER ( send_data ) { cpunum_set_input_line(1, INPUT_LINE_NMI, PU
 static READ8_HANDLER( read_data ){ return mDataBuffer[offset]; }
 
 static ADDRESS_MAP_START( readport_master, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(send_data)
 ADDRESS_MAP_END
 
@@ -126,6 +127,7 @@ static ADDRESS_MAP_START( monzagp_master, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( readport_slave, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x05, 0x06) AM_READ(MRA8_NOP) // ?
 ADDRESS_MAP_END
 

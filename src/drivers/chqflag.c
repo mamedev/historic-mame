@@ -371,7 +371,7 @@ static MACHINE_DRIVER_START( chqflag )
 	MDRV_CPU_VBLANK_INT(chqflag_interrupt,16)	/* ? */
 
 	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	/* audio CPU */	/* ? */
 	MDRV_CPU_PROGRAM_MAP(chqflag_readmem_sound,chqflag_writemem_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)

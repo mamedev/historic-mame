@@ -202,6 +202,7 @@ static ADDRESS_MAP_START( roldf_sound_map, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( roldf_sound_io_map, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x12, 0x12) AM_WRITE(YM2203_control_port_0_w)
 	AM_RANGE(0x13, 0x13) AM_WRITE(YM2203_write_port_0_w)
 	AM_RANGE(0x40, 0x40) AM_NOP	/* NMI ack */
@@ -428,7 +429,7 @@ static MACHINE_DRIVER_START( splash )
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,30000000/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)			/* 3.75 MHz (30/8) */
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(splash_readmem_sound,splash_writemem_sound)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,64)	/* needed for the msm5205 to play the samples */
 
@@ -474,7 +475,7 @@ static MACHINE_DRIVER_START( roldfrog )
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,30000000)			/* 3 MHz - verified */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(roldf_sound_map,0)
 	MDRV_CPU_IO_MAP(roldf_sound_io_map,0)
 //	MDRV_CPU_VBLANK_INT(nmi_line_pulse,64)	/* needed for the msm5205 to play the samples */
@@ -512,7 +513,7 @@ static MACHINE_DRIVER_START( funystrp )
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
 //	MDRV_CPU_ADD(Z80,30000000/8)
-//	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)			/* 3.75 MHz (30/8) */
+//	/* audio CPU */
 //	MDRV_CPU_PROGRAM_MAP(splash_readmem_sound,splash_writemem_sound)
 //	MDRV_CPU_VBLANK_INT(nmi_line_pulse,64)	/* needed for the msm5205 to play the samples */
 

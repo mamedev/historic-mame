@@ -141,12 +141,14 @@ static ADDRESS_MAP_START( fuuki16_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( fuuki16_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x11, 0x11) AM_READ(soundlatch_r				)	// From Main CPU
 	AM_RANGE(0x50, 0x50) AM_READ(YM3812_status_port_0_r	)	// YM3812
 	AM_RANGE(0x60, 0x60) AM_READ(OKIM6295_status_0_r		)	// M6295
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( fuuki16_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(fuuki16_sound_rombank_w 	)	// ROM Bank
 	AM_RANGE(0x11, 0x11) AM_WRITE(MWA8_NOP					)	// ? To Main CPU
 	AM_RANGE(0x20, 0x20) AM_WRITE(MWA8_NOP					)	// ? 0x10, 0x32, 0x54: 2 volumes ?
@@ -540,7 +542,7 @@ static MACHINE_DRIVER_START( fuuki16 )
 	MDRV_CPU_VBLANK_INT(fuuki16_interrupt,INTERRUPTS_NUM)
 
 	MDRV_CPU_ADD(Z80, 3000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	/* audio CPU */	/* ? */
 	MDRV_CPU_PROGRAM_MAP(fuuki16_sound_readmem,fuuki16_sound_writemem)
 	MDRV_CPU_IO_MAP(fuuki16_sound_readport,fuuki16_sound_writeport)
 

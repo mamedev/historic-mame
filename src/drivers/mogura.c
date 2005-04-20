@@ -87,6 +87,7 @@ WRITE8_HANDLER( mogura_tileram_w )
 
 
 static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x08, 0x08) AM_READ(input_port_0_r)
 	AM_RANGE(0x0c, 0x0c) AM_READ(input_port_1_r)
 	AM_RANGE(0x0d, 0x0d) AM_READ(input_port_2_r)
@@ -104,6 +105,7 @@ static WRITE8_HANDLER(dac_w)
 
 
 static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(MWA8_NOP) // ??
 	AM_RANGE(0x14, 0x14) AM_WRITE(dac_w)	/* 4 bit DAC x 2. MSB = left, LSB = right */
 ADDRESS_MAP_END

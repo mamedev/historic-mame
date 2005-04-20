@@ -443,7 +443,7 @@ static MACHINE_DRIVER_START( fstarfrc )
 	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,8000000/2)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)			/* 4MHz */
+	/* audio CPU */			/* 4MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 								/* NMIs are triggered by the main CPU */
 	MDRV_FRAMES_PER_SECOND(60)
@@ -482,7 +482,7 @@ static MACHINE_DRIVER_START( ginkun )
 	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,8000000/2)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)			/* 4MHz */
+	/* audio CPU */			/* 4MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 								/* NMIs are triggered by the main CPU */
 	MDRV_FRAMES_PER_SECOND(60)

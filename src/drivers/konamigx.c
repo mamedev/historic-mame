@@ -1310,7 +1310,7 @@ static MACHINE_DRIVER_START( konamigx )
 	   twinbee yahhoo will not pass POST if the 68000 isn't
 	   running at least this fast.  so the higher speed is probably a HACK... */
 	MDRV_CPU_ADD_TAG("sound", M68000, 9200000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(gxsndmap, 0)
 	MDRV_CPU_PERIODIC_INT(irq2_line_hold, 480)
 

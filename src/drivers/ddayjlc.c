@@ -457,7 +457,7 @@ static MACHINE_DRIVER_START( ddayjlc )
 	MDRV_CPU_VBLANK_INT(ddayjlc_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 12000000/3)     /* ? MHz */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_cpu,0)
 	MDRV_CPU_VBLANK_INT(ddayjlc_snd_interrupt,1)
 

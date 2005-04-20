@@ -73,7 +73,7 @@ To Do:
 - mslider   :   V60 issues?  the correct tiles don't always vanish, depending on
                 the layout of the 3 tiles you put together sometimes only 2 vanish
                 and a blank are off the bottom of the game board flashes instead
-                of the correct 3rd tile
+                of the correct 3rd tile *fixed* (Needed RAM mirror)
 
 - srmp4		:	Backgrounds are offset by $60 pixels, so they're kludged to work
 
@@ -123,6 +123,7 @@ To Do:
 static UINT8 requested_int;
 static data16_t *ssv_irq_vectors;
 static data16_t irq_enable;
+static data16_t *ssv_mainram;
 
 /* Update the IRQ state based on all possible causes */
 static void update_irq_state(void)
@@ -333,18 +334,18 @@ static WRITE16_HANDLER( dsp_w )
 	AM_RANGE(_ROM, 0xffffff) AM_READ(MRA16_BANK1			)	/*	ROM		*/	    \
 	/*{ 0x990000, 0x99007f, fake_r	)*/
 
-#define SSV_WRITEMEM														\
-	AM_RANGE(0x000000, 0x00ffff) AM_WRITE(MWA16_RAM						)	/*	RAM			*/	\
-	AM_RANGE(0x100000, 0x13ffff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16		)	/*	Sprites		*/	\
-	AM_RANGE(0x140000, 0x15ffff) AM_WRITE(paletteram16_xrgb_swap_word_w) AM_BASE(&paletteram16	)		\
-	AM_RANGE(0x160000, 0x17ffff) AM_WRITE(MWA16_RAM						)	/*				*/	\
-	AM_RANGE(0x1c0000, 0x1c007f) AM_WRITE(ssv_scroll_w) AM_BASE(&ssv_scroll		)	/*	Scroll		*/	\
-	AM_RANGE(0x21000e, 0x21000f) AM_WRITE(ssv_lockout_w					)	/*	Lockout		*/	\
-	AM_RANGE(0x210010, 0x210011) AM_WRITE(MWA16_NOP						)	/*				*/	\
-	AM_RANGE(0x230000, 0x230071) AM_WRITE(MWA16_RAM) AM_BASE(&ssv_irq_vectors	)	/*	IRQ Vectors	*/	\
-	AM_RANGE(0x240000, 0x240071) AM_WRITE(ssv_irq_ack_w					)	/*	IRQ Ack.	*/	\
-	AM_RANGE(0x260000, 0x260001) AM_WRITE(ssv_irq_enable_w				)	/*	IRQ Enable	*/	\
-	AM_RANGE(0x300000, 0x30007f) AM_WRITE(ES5506_data_0_word_w			)	/*	Sound		*/\
+#define SSV_WRITEMEM														                                \
+	AM_RANGE(0x000000, 0x00ffff) AM_WRITE(MWA16_RAM) AM_BASE(&ssv_mainram)                    /* RAM */     \
+	AM_RANGE(0x100000, 0x13ffff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16)                    /* Sprites */ \
+	AM_RANGE(0x140000, 0x15ffff) AM_WRITE(paletteram16_xrgb_swap_word_w) AM_BASE(&paletteram16)             \
+	AM_RANGE(0x160000, 0x17ffff) AM_WRITE(MWA16_RAM)                                                        \
+	AM_RANGE(0x1c0000, 0x1c007f) AM_WRITE(ssv_scroll_w) AM_BASE(&ssv_scroll )                 /*Scroll */   \
+	AM_RANGE(0x21000e, 0x21000f) AM_WRITE(ssv_lockout_w)                                      /*Lockout */  \
+	AM_RANGE(0x210010, 0x210011) AM_WRITE(MWA16_NOP)                                                        \
+	AM_RANGE(0x230000, 0x230071) AM_WRITE(MWA16_RAM) AM_BASE(&ssv_irq_vectors)	          /* IRQ Vectors */ \
+	AM_RANGE(0x240000, 0x240071) AM_WRITE(ssv_irq_ack_w )                                 /* IRQ Ack */     \
+	AM_RANGE(0x260000, 0x260001) AM_WRITE(ssv_irq_enable_w)                               /* IRQ Enable */  \
+	AM_RANGE(0x300000, 0x30007f) AM_WRITE(ES5506_data_0_word_w)                           /* Sound */       \
 	/*AM_RANGE(0x990000, 0x99007f) AM_WRITE(ssv_scroll_w	)*/
 
 
@@ -494,12 +495,24 @@ ADDRESS_MAP_END
 								Monster Slider
 ***************************************************************************/
 
+/* Monster Slider needs the RAM mirrored for the gameplay logic to work correctly */
+
+static READ16_HANDLER( ssv_mainram_r )
+{
+	return ssv_mainram[offset];
+}
+
+static WRITE16_HANDLER( ssv_mainram_w )
+{
+	COMBINE_DATA(&ssv_mainram[offset]);
+}
+
 static ADDRESS_MAP_START( mslider_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x010000, 0x01ffff) AM_READ(MRA16_RAM			)	// More RAM
+	AM_RANGE(0x010000, 0x01ffff) AM_READ(ssv_mainram_r ) // RAM Mirror
 	SSV_READMEM( 0xf00000 )
 ADDRESS_MAP_END
 static ADDRESS_MAP_START( mslider_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x010000, 0x01ffff) AM_WRITE(MWA16_RAM			)	// More RAM
+	AM_RANGE(0x010000, 0x01ffff) AM_WRITE(ssv_mainram_w) // RAM Mirror
 //	AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP			)	// ? 1 at the start
 	AM_RANGE(0x400000, 0x47ffff) AM_WRITE(MWA16_RAM			)	// ?
 //	AM_RANGE(0x500000, 0x500001) AM_WRITE(MWA16_NOP			)	// ? ff at the start
@@ -683,6 +696,8 @@ ADDRESS_MAP_END
 								Twin Eagle II
 ***************************************************************************/
 
+/* standalone board based on SSV hardware */
+
 static ADDRESS_MAP_START( twineag2_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x010000, 0x03ffff) AM_READ(MRA16_RAM				)	// More RAM
 	AM_RANGE(0x210000, 0x210001) AM_READ(watchdog_reset16_r	)	// Watchdog (also value is cmp.b with mem 8)
@@ -697,6 +712,8 @@ ADDRESS_MAP_END
 /***************************************************************************
 									Ultra X
 ***************************************************************************/
+
+/* standalone board based on SSV hardware */
 
 static ADDRESS_MAP_START( ultrax_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x010000, 0x03ffff) AM_READ(MRA16_RAM				)	// More RAM
@@ -2082,11 +2099,10 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( survarts )
 	PORT_START	// IN0 - $210002
-	PORT_DIPNAME( 0x000f, 0x000f, DEF_STR( Coin_A ) ) // Verified Default is 2 coins 1 Credit
+	PORT_DIPNAME( 0x000f, 0x0009, DEF_STR( Coin_A ) ) // Verified Default is 2 coins 1 Credit
 	PORT_DIPSETTING(      0x0007, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(      0x0008, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(      0x0009, DEF_STR( 2C_1C ) )
-//	PORT_DIPSETTING(      0x0000, DEF_STR( 2C_1C ) ) // 2 Credits Start, 1 to continue
 	PORT_DIPSETTING(      0x000f, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x0006, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(      0x000e, DEF_STR( 1C_2C ) )
@@ -2094,6 +2110,7 @@ INPUT_PORTS_START( survarts )
 	PORT_DIPSETTING(      0x000c, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(      0x000b, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(      0x000a, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(      0x0000, "2 Credits Start, 1 to continue" )
 // "** ADDED MULTIPLE COIN FEATURE **"
 	PORT_DIPSETTING(      0x0005, "Multiple Coin Feature A" )
 // 2c-1c, 4c-2c, 5c-3c & 6c-4c
@@ -2103,11 +2120,10 @@ INPUT_PORTS_START( survarts )
 // 1c-1c, 2c-2c, 3c-3c, 4c-4c, 5c-6c
 	PORT_DIPSETTING(      0x0002, "Multiple Coin Feature D" )
 // 1c-1c, 2c-2c, 3c-3c & 4c-5c
-	PORT_DIPNAME( 0x00f0, 0x00f0, DEF_STR( Coin_B ) ) // Verified Defualt is 2 coins 1 Credit
+	PORT_DIPNAME( 0x00f0, 0x0090, DEF_STR( Coin_B ) ) // Verified Defualt is 2 coins 1 Credit
 	PORT_DIPSETTING(      0x0070, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(      0x0090, DEF_STR( 2C_1C ) )
-//	PORT_DIPSETTING(      0x0000, DEF_STR( 2C_1C ) ) // 2 Credits Start, 1 to continue
 	PORT_DIPSETTING(      0x00f0, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x0060, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(      0x00e0, DEF_STR( 1C_2C ) )
@@ -2115,6 +2131,7 @@ INPUT_PORTS_START( survarts )
 	PORT_DIPSETTING(      0x00c0, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(      0x00b0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(      0x00a0, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(      0x0000, "2 Credits Start, 1 to continue" )
 // "** ADDED MULTIPLE COIN FEATURE **"
 	PORT_DIPSETTING(      0x0050, "Multiple Coin Feature A" )
 // 2c-1c, 4c-2c, 5c-3c & 6c-4c
@@ -2192,105 +2209,73 @@ INPUT_PORTS_END
 ***************************************************************************/
 
 INPUT_PORTS_START( dynagear )
-	PORT_START
-	PORT_DIPNAME( 0x0001, 0x0001, "0" )
-	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_START	// IN0 - $210002
+	PORT_DIPNAME( 0x000f, 0x000f, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0007, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0009, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x000f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0006, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x000e, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x000d, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x000c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x000b, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x000a, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(      0x0000, "2 Credits Start, 1 to continue" ) 
+// "** ADDED MULTIPLE COIN FEATURE **"
+	PORT_DIPSETTING(      0x0005, "Multiple Coin Feature A" )
+// 2c-1c, 4c-2c, 5c-3c & 6c-4c
+	PORT_DIPSETTING(      0x0004, "Multiple Coin Feature B" )
+// 2c-1c, 4c-3c
+	PORT_DIPSETTING(      0x0003, "Multiple Coin Feature C" )
+// 1c-1c, 2c-2c, 3c-3c, 4c-4c, 5c-6c
+	PORT_DIPSETTING(      0x0002, "Multiple Coin Feature D" )
+// 1c-1c, 2c-2c, 3c-3c & 4c-5c
+	PORT_DIPNAME( 0x00f0, 0x00f0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0070, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0090, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x00f0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0060, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x00e0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x00d0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x00c0, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x00b0, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x00a0, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(      0x0000, "2 Credits Start, 1 to continue" )
+// "** ADDED MULTIPLE COIN FEATURE **"
+	PORT_DIPSETTING(      0x0050, "Multiple Coin Feature A" )
+// 2c-1c, 4c-2c, 5c-3c & 6c-4c
+	PORT_DIPSETTING(      0x0040, "Multiple Coin Feature B" )
+// 2c-1c, 4c-3c
+	PORT_DIPSETTING(      0x0030, "Multiple Coin Feature C" )
+// 1c-1c, 2c-2c, 3c-3c, 4c-4c, 5c-6c
+	PORT_DIPSETTING(      0x0020, "Multiple Coin Feature D" )
+// 1c-1c, 2c-2c, 3c-3c & 4c-5c
 
-	PORT_START
-	PORT_DIPNAME( 0x0001, 0x0001, "1" )
+	PORT_START	// IN0 - $210004
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0002, 0x0000, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x000c, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0x0030, 0x0030, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0010, "1" )
+	PORT_DIPSETTING(      0x0030, "2" )
+	PORT_DIPSETTING(      0x0020, "3" )
+	PORT_DIPSETTING(      0x0000, "4" )
 	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, "Health" )
+	PORT_DIPSETTING(      0x0000, "3 Hearts" )
+	PORT_DIPSETTING(      0x0080, "4 Hearts" )
 
 	PORT_START	// IN2 - $210008
 	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_START1 )
@@ -4460,6 +4445,7 @@ GAMEX( 1996,  stmblade, 0,        stmblade, stmblade, stmblade, ROT270, "Visco",
 GAMEX( 1997,  hypreac2, 0,        hypreac2, hypreac2, hypreac2, ROT0,   "Sammy",              "Mahjong Hyper Reaction 2 (Japan)",                 GAME_NO_COCKTAIL )
 GAMEX( 1997,  koikois2, 0,        janjans1, koikois2, janjans1, ROT0,   "Visco",              "Koi Koi Shimasyo 2 - Super Real Hanafuda (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1997,  srmp7,    0,        srmp7,    srmp7,    srmp7,    ROT0,   "Seta",               "Super Real Mahjong P7 (Japan)",                    GAME_NO_COCKTAIL | GAME_IMPERFECT_SOUND )
+GAMEX( 1997,  mslider,  0,        mslider,  mslider,  mslider,  ROT0,   "Visco / Datt Japan", "Monster Slider (Japan)",                           GAME_NO_COCKTAIL )
 GAMEX( 1998,  ryorioh,  0,        ryorioh,  ryorioh,  ryorioh,  ROT0,   "Visco",              "Gourmet Battle Quiz Ryohrioh CooKing (Japan)",     GAME_NO_COCKTAIL )
 GAMEX( 1998,  sxyreact, 0,        sxyreact, sxyreact, sxyreact, ROT0,   "Sammy",              "Pachinko Sexy Reaction (Japan)",                   GAME_NO_COCKTAIL )
 GAMEX( 1999,  cairblad, 0,        sxyreact, cairblad, sxyreact, ROT270, "Sammy",              "Change Air Blade (Japan)",                         GAME_NO_COCKTAIL )
@@ -4469,7 +4455,6 @@ GAMEX( 2001,  vasara2a, vasara2,  ryorioh,  vasara2,  vasara,   ROT270, "Visco",
 
 // Games not working properly:
 
-GAMEX( 1997,  mslider,  0,        mslider,  mslider,  mslider,  ROT0,   "Visco / Datt Japan", "Monster Slider (Japan)",                           GAME_NO_COCKTAIL ) // game logic?
 GAMEX( 1995,  ultrax,   0,        ultrax,   ultrax,   ultrax,   ROT270,	"Banpresto + Tsuburaya Prod.", "Ultra X Weapons / Ultra Keibitai",        GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
 //	Games not working at all:
 

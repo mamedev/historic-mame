@@ -40,7 +40,7 @@ static void setstat(void)
 */
 static void getstat(void)
 {
-#if TMS99XX_MODEL <= TMS9985_ID
+#if (USE_ST_MASK)
 	I.STATUS &= ST_MASK;  /* unused bits are forced to 0 */
 #endif
 
@@ -48,6 +48,10 @@ static void getstat(void)
 		lastparity = 1;
 	else
 		lastparity = 0;
+
+#if HAS_MAPPING
+	I.cur_map = (I.STATUS & ST_MF) ? 1 : 0;
+#endif
 }
 
 /*
@@ -189,10 +193,7 @@ INLINE void setst_c_lae(UINT16 to, UINT16 val)
 	}
 }
 
-#define wadd(addr,expr) { int lval = setst_add_laeco(readword(addr), (expr)); writeword((addr),lval); }
-#define wsub(addr,expr) { int lval = setst_sub_laeco(readword(addr), (expr)); writeword((addr),lval); }
-
-#if defined(__POWERPC__) && !defined(__GNUC__)
+#if defined(__POWERPC__) && defined(__MWERKS__)
 
 // setst_add_32_laeco :
 // - computes a+b
@@ -203,7 +204,7 @@ INLINE void setst_c_lae(UINT16 to, UINT16 val)
 
 static INT32 asm setst_add_32_laeco(register INT32 a, register INT32 b, register INT16 st)
 {
-#if (TMS99XX_MODEL == TMS9940_ID)
+#if (TMS99XX_MODEL == TMS9940_ID) || (TMS99XX_MODEL == TMS9985_ID)
   mr r6,a           // save operand
 #endif
   addco. r3, b, a   // add, set CR0, and set CA and OV
@@ -223,7 +224,7 @@ positive_result:
   ori st, st, ST_LGT | ST_AGT   // if result > 0, set ST_LGT and ST_AGT
 
 next:
-#if (TMS99XX_MODEL == TMS9940_ID)
+#if (TMS99XX_MODEL == TMS9940_ID) || (TMS99XX_MODEL == TMS9985_ID)
   andi. st, st, (~ ST_DC) & 0xFFFF
 
   or r7,r6,b
@@ -253,7 +254,7 @@ nocarry:
 
 static INT32 asm setst_sub_32_laeco(register INT32 a, register INT32 b, register INT16 st)
 {
-#if (TMS99XX_MODEL == TMS9940_ID)
+#if (TMS99XX_MODEL == TMS9940_ID) || (TMS99XX_MODEL == TMS9985_ID)
   mr r6,a           // save operand
 #endif
   subco. r3, a, b   // sub, set CR0, and set CA and OV
@@ -273,7 +274,7 @@ positive_result:
   ori st, st, ST_LGT | ST_AGT   // if result > 0, set ST_LGT and ST_AGT
 
 next:
-#if (TMS99XX_MODEL == TMS9940_ID)
+#if (TMS99XX_MODEL == TMS9940_ID) || (TMS99XX_MODEL == TMS9985_ID)
   andi. st, st, (~ ST_DC) & 0xFFFF
 
   orc r7,r6,b
@@ -299,8 +300,7 @@ nocarry:
 //
 static INT16 asm setst_add_laeco(register INT16 a, register INT16 b)
 { // a -> r3, b -> r4
-//  lwz r6, I(RTOC)   // load pointer to I
-  _asm_get_global(r6,I)
+  lwz r6, I(RTOC)   // load pointer to I
 
   slwi a, a, 16     // shift a
   slwi b, b, 16     // shift b
@@ -322,8 +322,7 @@ static INT16 asm setst_add_laeco(register INT16 a, register INT16 b)
 //
 static INT16 asm setst_sub_laeco(register INT16 a, register INT16 b)
 {
-//  lwz r6, I(RTOC)
-  _asm_get_global(r6,I)
+  lwz r6, I(RTOC)
 
   slwi a, a, 16
   slwi b, b, 16
@@ -345,8 +344,7 @@ static INT16 asm setst_sub_laeco(register INT16 a, register INT16 b)
 //
 static INT8 asm setst_addbyte_laecop(register INT8 a, register INT8 b)
 { // a -> r3, b -> r4
-//  lwz r6, I(RTOC)
-  _asm_get_global(r6,I)
+  lwz r6, I(RTOC)   // load pointer to I
 
   slwi a, a, 24     // shift a
   slwi b, b, 24     // shift b
@@ -360,8 +358,7 @@ static INT8 asm setst_addbyte_laecop(register INT8 a, register INT8 b)
   srwi r3, r3, 24   // shift back result
   mtlr r12  // restore LR
   sth r5, 4(r6)     // save new ST
-//  stb r3, lastparity(RTOC)  // copy result to lastparity
-  _asm_set_global_b(r3,lastparity)  // copy result to lastparity
+  stb r3, lastparity(RTOC)  // copy result to lastparity
   blr       // and return
 }
 
@@ -370,8 +367,7 @@ static INT8 asm setst_addbyte_laecop(register INT8 a, register INT8 b)
 //
 static INT8 asm setst_subbyte_laecop(register INT8 a, register INT8 b)
 { // a -> r3, b -> r4
-//  lwz r6, I(RTOC)
-  _asm_get_global(r6,I)
+  lwz r6, I(RTOC)
 
   slwi a, a, 24
   slwi b, b, 24
@@ -385,8 +381,7 @@ static INT8 asm setst_subbyte_laecop(register INT8 a, register INT8 b)
   srwi r3, r3, 24
   mtlr r12
   sth r5, 4(r6)
-//  stb r3, lastparity(RTOC)
-  _asm_set_global_b(r3,lastparity)  // copy result to lastparity
+  stb r3, lastparity(RTOC)
   blr
 }
 
@@ -412,7 +407,7 @@ INLINE INT16 setst_add_laeco(int a, int b)
 	if ((res ^ b) & (res ^ a) & 0x8000)
 		I.STATUS |= ST_OV;
 
-#if (TMS99XX_MODEL == TMS9940_ID)
+#if (TMS99XX_MODEL == TMS9940_ID) || (TMS99XX_MODEL == TMS9985_ID)
 	if (((a & b) | ((a | b) & ~ res)) & 0x0800)
 		I.STATUS |= ST_DC;
 #endif
@@ -448,7 +443,7 @@ INLINE INT16 setst_sub_laeco(int a, int b)
 	if ((a ^ b) & (a ^ res) & 0x8000)
 		I.STATUS |= ST_OV;
 
-#if (TMS99XX_MODEL == TMS9940_ID)
+#if (TMS99XX_MODEL == TMS9940_ID) || (TMS99XX_MODEL == TMS9985_ID)
 	if (((a & ~ b) | ((a | ~ b) & ~ res)) & 0x0800)
 		I.STATUS |= ST_DC;
 #endif
@@ -484,7 +479,7 @@ INLINE INT8 setst_addbyte_laecop(int a, int b)
 	if ((res ^ b) & (res ^ a) & 0x80)
 		I.STATUS |= ST_OV;
 
-#if (TMS99XX_MODEL == TMS9940_ID)
+#if (TMS99XX_MODEL == TMS9940_ID) || (TMS99XX_MODEL == TMS9985_ID)
 	if (((a & b) | ((a | b) & ~ res)) & 0x08)
 		I.STATUS |= ST_DC;
 #endif
@@ -522,7 +517,7 @@ INLINE INT8 setst_subbyte_laecop(int a, int b)
 	if ((a ^ b) & (a ^ res) & 0x80)
 		I.STATUS |= ST_OV;
 
-#if (TMS99XX_MODEL == TMS9940_ID)
+#if (TMS99XX_MODEL == TMS9940_ID) || (TMS99XX_MODEL == TMS9985_ID)
 	if (((a & ~ b) | ((a | ~ b) & ~ res)) & 0x08)
 		I.STATUS |= ST_DC;
 #endif

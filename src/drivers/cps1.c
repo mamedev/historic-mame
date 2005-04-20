@@ -165,13 +165,6 @@ static unsigned char *qsound_sharedram1,*qsound_sharedram2;
 
 INTERRUPT_GEN( cps1_qsound_interrupt )
 {
-#if 0
-I have removed CPU_AUDIO_CPU from the Z(0 so this is no longer necessary
-	/* kludge to pass the sound board test with sound disabled */
-	if (Machine->sample_rate == 0)
-		qsound_sharedram1[0xfff] = 0x77;
-#endif
-
 	cpunum_set_input_line(cpu_getactivecpu(), 2, HOLD_LINE);
 }
 
@@ -3669,7 +3662,7 @@ static MACHINE_DRIVER_START( cps1 )
 	MDRV_CPU_VBLANK_INT(cps1_interrupt,1)
 
 	MDRV_CPU_ADD_TAG("sound", Z80, 4000000)	/* 4 MHz ??? TODO: find real FRQ */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -3736,7 +3729,6 @@ static MACHINE_DRIVER_START( qsound )
 	MDRV_CPU_VBLANK_INT(cps1_qsound_interrupt,1)  /* ??? interrupts per frame */
 
 	MDRV_CPU_REPLACE("sound", Z80, 6000000)
-	MDRV_CPU_FLAGS(0)	/* can't use CPU_AUDIO_CPU, slammast requires the Z80 for protection */
 	MDRV_CPU_PROGRAM_MAP(qsound_readmem,qsound_writemem)
 	MDRV_CPU_PERIODIC_INT(irq0_line_hold,250)	/* ?? */
 

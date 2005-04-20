@@ -900,7 +900,7 @@ static MACHINE_DRIVER_START( ddragon )
 	MDRV_CPU_PROGRAM_MAP(sub_readmem,sub_writemem)
 
  	MDRV_CPU_ADD(HD6309, 3579545)
- 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+ 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(((12000000.0 / 256.0) / 3.0) / 272.0)
@@ -947,7 +947,7 @@ static MACHINE_DRIVER_START( darktowr )
 	MDRV_CPU_PROGRAM_MAP(sub_readmem,sub_writemem)
 
  	MDRV_CPU_ADD(HD6309, 3579545)
- 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+ 	/* audio CPU */	/* ? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_CPU_ADD(M68705,8000000/2)  /* ? MHz */
@@ -997,7 +997,7 @@ static MACHINE_DRIVER_START( ddragonb )
 	MDRV_CPU_PROGRAM_MAP(sub_readmem,sub_writemem)
 
  	MDRV_CPU_ADD(HD6309, 3579545)
- 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+ 	/* audio CPU */	/* ? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(((12000000.0 / 256.0) / 3.0) / 272.0)
@@ -1044,7 +1044,7 @@ static MACHINE_DRIVER_START( ddragon2 )
 	MDRV_CPU_PROGRAM_MAP(dd2_sub_readmem,dd2_sub_writemem)
 
 	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
+	/* audio CPU */	/* 3.579545 MHz */
 	MDRV_CPU_PROGRAM_MAP(dd2_sound_readmem,dd2_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(((12000000.0 / 256.0) / 3.0) / 272.0)
@@ -1084,7 +1084,7 @@ static MACHINE_DRIVER_START( toffy )
 	MDRV_CPU_VBLANK_INT(ddragon_interrupt,272)
 
 	MDRV_CPU_ADD(M6809, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(((12000000.0 / 256.0) / 3.0) / 272.0)

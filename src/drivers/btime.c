@@ -1298,7 +1298,7 @@ static MACHINE_DRIVER_START( btime )
 	MDRV_CPU_VBLANK_INT(btime_irq_interrupt,1)
 
 	MDRV_CPU_ADD_TAG("sound", M6502, 500000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,16)
 

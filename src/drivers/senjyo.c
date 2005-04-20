@@ -203,11 +203,13 @@ static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x03) AM_READ(z80pio_0_r)
 	AM_RANGE(0x08, 0x0b) AM_READ(z80ctc_0_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x03) AM_WRITE(z80pio_0_w)
 	AM_RANGE(0x08, 0x0b) AM_WRITE(z80ctc_0_w)
 ADDRESS_MAP_END
@@ -565,7 +567,7 @@ static MACHINE_DRIVER_START( senjyo )
 
 	MDRV_CPU_ADD(Z80, 2000000)
 	MDRV_CPU_CONFIG(daisy_chain)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 2 MHz? */
+	/* audio CPU */	/* 2 MHz? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 

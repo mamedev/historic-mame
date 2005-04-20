@@ -2082,7 +2082,7 @@ static MACHINE_DRIVER_START( cobracom )
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(M6502, 1500000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(dec8_s_readmem,dec8_s_writemem)
 								/* NMIs are caused by the main CPU */
 	MDRV_FRAMES_PER_SECOND(58)
@@ -2120,7 +2120,7 @@ static MACHINE_DRIVER_START( ghostb )
 	MDRV_CPU_VBLANK_INT(ghostb_interrupt,1)
 
 	MDRV_CPU_ADD(M6502, 1500000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(dec8_s_readmem,dec8_s_writemem)
 								/* NMIs are caused by the main CPU */
 	MDRV_FRAMES_PER_SECOND(58)
@@ -2160,7 +2160,7 @@ static MACHINE_DRIVER_START( srdarwin )
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(M6502, 1500000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(dec8_s_readmem,dec8_s_writemem)
 								/* NMIs are caused by the main CPU */
 	MDRV_FRAMES_PER_SECOND(58)
@@ -2198,7 +2198,7 @@ static MACHINE_DRIVER_START( gondo )
 	MDRV_CPU_VBLANK_INT(gondo_interrupt,1)
 
 	MDRV_CPU_ADD(M6502, 1500000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(dec8_s_readmem,oscar_s_writemem)
 								/* NMIs are caused by the main CPU */
 	MDRV_FRAMES_PER_SECOND(58)
@@ -2240,7 +2240,7 @@ static MACHINE_DRIVER_START( oscar )
 	MDRV_CPU_PROGRAM_MAP(oscar_sub_readmem,oscar_sub_writemem)
 
 	MDRV_CPU_ADD(M6502, 1500000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(dec8_s_readmem,oscar_s_writemem)
 								/* NMIs are caused by the main CPU */
 	MDRV_FRAMES_PER_SECOND(58)
@@ -2281,7 +2281,7 @@ static MACHINE_DRIVER_START( lastmiss )
 	MDRV_CPU_PROGRAM_MAP(lastmiss_sub_readmem,lastmiss_sub_writemem)
 
 	MDRV_CPU_ADD(M6502, 1500000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(ym3526_s_readmem,ym3526_s_writemem)
 								/* NMIs are caused by the main CPU */
 	MDRV_FRAMES_PER_SECOND(58)
@@ -2322,7 +2322,7 @@ static MACHINE_DRIVER_START( shackled )
 	MDRV_CPU_PROGRAM_MAP(shackled_sub_readmem,shackled_sub_writemem)
 
 	MDRV_CPU_ADD(M6502, 1500000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(ym3526_s_readmem,ym3526_s_writemem)
 								/* NMIs are caused by the main CPU */
 	MDRV_FRAMES_PER_SECOND(58)
@@ -2364,7 +2364,7 @@ static MACHINE_DRIVER_START( csilver )
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(M6502, 1500000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(csilver_s_readmem,csilver_s_writemem)
 								/* NMIs are caused by the main CPU */
 	MDRV_FRAMES_PER_SECOND(58)
@@ -2407,7 +2407,7 @@ static MACHINE_DRIVER_START( garyoret )
 	MDRV_CPU_VBLANK_INT(gondo_interrupt,1)
 
 	MDRV_CPU_ADD(M6502, 1500000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(dec8_s_readmem,oscar_s_writemem)
 								/* NMIs are caused by the main CPU */
 	MDRV_FRAMES_PER_SECOND(58)

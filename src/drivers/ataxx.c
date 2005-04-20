@@ -52,6 +52,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( master_map_io, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
     AM_RANGE(0x04, 0x04) AM_READ(leland_i86_response_r)
     AM_RANGE(0x05, 0x05) AM_WRITE(leland_i86_command_hi_w)
     AM_RANGE(0x06, 0x06) AM_WRITE(leland_i86_command_lo_w)
@@ -82,6 +83,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( slave_map_io, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x60, 0x7f) AM_READWRITE(ataxx_svram_port_r, ataxx_svram_port_w)
 ADDRESS_MAP_END
 
@@ -336,7 +338,7 @@ static MACHINE_DRIVER_START( ataxx )
 	MDRV_CPU_IO_MAP(slave_map_io,0)
 
 	MDRV_CPU_ADD_TAG("sound", I186, 16000000/2)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(leland_i86_map_program,0)
 	MDRV_CPU_IO_MAP(ataxx_i86_map_io,0)
 

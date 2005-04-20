@@ -245,7 +245,7 @@ static MACHINE_DRIVER_START( rollrace )
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(Z80,14318000/6)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)			/* ?? */
+	/* audio CPU */			/* ?? */
 	MDRV_CPU_PROGRAM_MAP(readmem_snd,writemem_snd)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,3)
 

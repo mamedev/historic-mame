@@ -332,7 +332,7 @@ static MACHINE_DRIVER_START( lsasquad )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz? */
+	/* audio CPU */	/* 4 MHz? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 								/* IRQs are triggered by the YM2203 */
 	MDRV_CPU_ADD(M68705,4000000/2)	/* ? */

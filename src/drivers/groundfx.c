@@ -463,7 +463,7 @@ static MACHINE_DRIVER_START( groundfx )
 	MDRV_CPU_VBLANK_INT(groundfx_interrupt,1)
 
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)

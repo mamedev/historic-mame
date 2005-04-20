@@ -436,7 +436,7 @@ static MACHINE_DRIVER_START( spdodgeb )
 	MDRV_CPU_VBLANK_INT(spdodgeb_interrupt,33)	/* 1 IRQ every 8 visible scanlines, plus NMI for vblank */
 
 	MDRV_CPU_ADD(M6809,12000000/6)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 2MHz ? */
+	/* audio CPU */	/* 2MHz ? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)

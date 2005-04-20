@@ -404,7 +404,6 @@ static MACHINE_DRIVER_START( route16 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("cpu1", Z80, 2500000)	/* 10MHz / 4 = 2.5MHz */
-	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_PROGRAM_MAP(cpu1_readmem,cpu1_writemem)
 	MDRV_CPU_IO_MAP(0,cpu1_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)

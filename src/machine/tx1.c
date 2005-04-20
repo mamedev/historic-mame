@@ -464,7 +464,7 @@ INT8 value = 0;
         case 0xb:
         case 0xc:
         case 0xd:
-        case 0xe:    MMI_74S516(offset>>1, AU_PTR);   /* Typically Instruction 7 - read result(s) */
+        case 0xe:    MMI_74S516(offset>>1, (UINT16*)AU_PTR);   /* Typically Instruction 7 - read result(s) */
                      value = *AU_PTR;
                      break;
 
@@ -500,49 +500,49 @@ WRITE8_HANDLER(BB_AU_W)
         case 0x0:    *AU_PTR = (data & 0xff);
                      break;
         case 0x1:    *AU_PTR |= data<<8;
-                     MMI_74S516(offset>>1, AU_PTR); /* Load values */
+                     MMI_74S516(offset>>1, (UINT16*)AU_PTR); /* Load values */
                      break;
 
         case 0x2:    *AU_PTR = (data & 0xff);
                      break;
         case 0x3:    *AU_PTR |= data<<8;
-                     MMI_74S516(offset>>1, AU_PTR);
+                     MMI_74S516(offset>>1, (UINT16*)AU_PTR);
                      break;
 
         case 0x4:    *AU_PTR = (data & 0xff);
                      break;
         case 0x5:    *AU_PTR |= data<<8;
-                     MMI_74S516(offset>>1, AU_PTR);
+                     MMI_74S516(offset>>1, (UINT16*)AU_PTR);
                      break;
 
         case 0x6:    *AU_PTR = (data & 0xff);
                      break;
         case 0x7:    *AU_PTR |= data<<8;
-                     MMI_74S516(offset>>1, AU_PTR);
+                     MMI_74S516(offset>>1, (UINT16*)AU_PTR);
                      break;
 
         case 0x8:    *AU_PTR = (data & 0xff);
                      break;
         case 0x9:    *AU_PTR |= data<<8;
-                     MMI_74S516(offset>>1, AU_PTR);
+                     MMI_74S516(offset>>1, (UINT16*)AU_PTR);
                      break;
 
         case 0xa:    *AU_PTR = (data & 0xff);
                      break;
         case 0xb:    *AU_PTR |= data<<8;
-                     MMI_74S516(offset>>1, AU_PTR);
+                     MMI_74S516(offset>>1, (UINT16*)AU_PTR);
                      break;
 
         case 0xc:    *AU_PTR = (data & 0xff);
                      break;
         case 0xd:    *AU_PTR |= data<<8;
-                     MMI_74S516(offset>>1, AU_PTR);
+                     MMI_74S516(offset>>1, (UINT16*)AU_PTR);
                      break;
 
         case 0xe:    *AU_PTR = (data & 0xff);
                      break;
         case 0xf:    *AU_PTR |= data<<8;
-                     MMI_74S516(offset>>1, AU_PTR);
+                     MMI_74S516(offset>>1, (UINT16*)AU_PTR);
                      break;
 
        /* Accessing FN ROMs */

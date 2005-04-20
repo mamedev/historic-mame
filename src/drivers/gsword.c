@@ -340,14 +340,17 @@ static ADDRESS_MAP_START( writemem_cpu3, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x7e, 0x7f) AM_READ(TAITO8741_0_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x7e, 0x7f) AM_WRITE(TAITO8741_0_w)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( readport_cpu2, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x01) AM_READ(TAITO8741_2_r)
 	AM_RANGE(0x20, 0x21) AM_READ(TAITO8741_3_r)
 	AM_RANGE(0x40, 0x41) AM_READ(TAITO8741_1_r)
@@ -359,6 +362,7 @@ static ADDRESS_MAP_START( readport_cpu2, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport_cpu2, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x01) AM_WRITE(TAITO8741_2_w)
 	AM_RANGE(0x20, 0x21) AM_WRITE(TAITO8741_3_w)
 	AM_RANGE(0x40, 0x41) AM_WRITE(TAITO8741_1_w)
@@ -388,11 +392,13 @@ static ADDRESS_MAP_START( josvolly_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( josvolly_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(AY8910_read_port_0_r)
 	AM_RANGE(0x40, 0x40) AM_READ(AY8910_read_port_1_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( josvolly_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(AY8910_write_port_0_w)
 	AM_RANGE(0x40, 0x40) AM_WRITE(AY8910_control_port_1_w)
@@ -588,7 +594,7 @@ static MACHINE_DRIVER_START( josvolly )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(josvolly_sound_readmem,josvolly_sound_writemem)
 	MDRV_CPU_IO_MAP(josvolly_sound_readport,josvolly_sound_writeport)
 
@@ -638,7 +644,7 @@ static MACHINE_DRIVER_START( gsword )
 	MDRV_CPU_VBLANK_INT(gsword_snd_interrupt,4)
 
 	MDRV_CPU_ADD(Z80, 3000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(readmem_cpu3,writemem_cpu3)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -735,6 +741,15 @@ ROM_START( gsword )
 	ROM_LOAD( "ac10-14.3d",   0x4000, 0x2000, CRC(819db933) SHA1(5e8b10d94ca6ba608a074bd5f30f14b95122fe85) )
 	ROM_LOAD( "ac10-17.4d",   0x6000, 0x2000, CRC(87817985) SHA1(370399a4622958829ca6d1545e614b121f09c2c0) )
 
+	ROM_REGION( 0x10000, REGION_CPU4, 0 )	/* 8741 */
+	ROM_LOAD( "aa-013.5a",    0x0000, 0x0800, NO_DUMP )
+
+	ROM_REGION( 0x10000, REGION_CPU5, 0 )	/* 8741 */
+	ROM_LOAD( "aa-016.9c",    0x0000, 0x0800, NO_DUMP )
+
+	ROM_REGION( 0x10000, REGION_CPU6, 0 )	/* 8741 */
+	ROM_LOAD( "aa-017.9g",    0x0000, 0x0800, NO_DUMP )
+
 	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "ac1-10.9n",    0x0000, 0x2000, CRC(517c571b) SHA1(05572a8ea416922da50143936fda9ba038f0b91e) )	/* tiles */
 	ROM_LOAD( "ac1-11.9p",    0x2000, 0x2000, CRC(7a1d8a3a) SHA1(3f90be9ddba3cf7a879fd69ac67c2b67fd63b9ee) )
@@ -755,24 +770,32 @@ ROM_START( gsword )
 	ROM_LOAD( "005.3h",       0x0340, 0x0020, CRC(e8d6dec0) SHA1(d15cba9a4b24255d41046b15c2409391ab13ce95) )	/* address decoder? not used */
 ROM_END
 
-// part number for "ac--" files is not known - could be ac0- or ac1-
 ROM_START( gsword2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64K for main CPU */
-	ROM_LOAD( "ac--1.2c",     0x0000, 0x2000, CRC(565c4d9e) SHA1(17b86e86ab95aeb458b8368c8c04666a1ccd9eee) )
+	ROM_LOAD( "ac1-1.2c",     0x0000, 0x2000, CRC(565c4d9e) SHA1(17b86e86ab95aeb458b8368c8c04666a1ccd9eee) )
 	ROM_LOAD( "ac1-2.2d",     0x2000, 0x2000, CRC(d772accf) SHA1(08028c6f026c118cc375ecff5c24dcb549475633) )
-	ROM_LOAD( "ac--3.2e",     0x4000, 0x2000, CRC(2cee1871) SHA1(df099209c56f2807e4fdb83c625368f5e7e583e5) )
+	ROM_LOAD( "ac1-3.2e",     0x4000, 0x2000, CRC(2cee1871) SHA1(df099209c56f2807e4fdb83c625368f5e7e583e5) )
 	ROM_LOAD( "ac1-4.2f",     0x6000, 0x2000, CRC(ca9d206d) SHA1(887eedc4e10218bf149c84399edd5d1e32c85051) )
 	ROM_LOAD( "ac1-5.2h",     0x8000, 0x1000, CRC(2a892326) SHA1(a2cd91263714480c2569d3bbc73d62d222175e89) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64K for 2nd CPU */
-	ROM_LOAD( "ac--15.5h",    0x0000, 0x2000, CRC(1aa4690e) SHA1(7b0dbc38f3e6af2c9efa44b6759a3cdd9adc992d) )
+	ROM_LOAD( "ac0-15.5h",    0x0000, 0x2000, CRC(1aa4690e) SHA1(7b0dbc38f3e6af2c9efa44b6759a3cdd9adc992d) )
 	ROM_LOAD( "ac0-16.7h",    0x2000, 0x2000, CRC(10accc10) SHA1(311961bfe852582a9c66aaecf9bc4c8f0ac7fccf) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64K for 3nd z80 */
-	ROM_LOAD( "ac--12.3a",    0x0000, 0x2000, CRC(a6589068) SHA1(9385abe2449c5c5bac8f49d2afd140acea1791c3) )
-	ROM_LOAD( "ac--13.4a",    0x2000, 0x2000, CRC(4ee79796) SHA1(3353625903f63910a18fae0a9568a96d75592328) )
-	ROM_LOAD( "ac--14.3d",    0x4000, 0x2000, CRC(455364b6) SHA1(ebabf077d1ba113c13e7620d61720ed141acb5ad) )
+	ROM_LOAD( "ac0-12.3a",    0x0000, 0x2000, CRC(a6589068) SHA1(9385abe2449c5c5bac8f49d2afd140acea1791c3) )
+	ROM_LOAD( "ac0-13.4a",    0x2000, 0x2000, CRC(4ee79796) SHA1(3353625903f63910a18fae0a9568a96d75592328) )
+	ROM_LOAD( "ac0-14.3d",    0x4000, 0x2000, CRC(455364b6) SHA1(ebabf077d1ba113c13e7620d61720ed141acb5ad) )
 	/* 6000-7fff empty */
+
+	ROM_REGION( 0x10000, REGION_CPU4, 0 )	/* 8741 */
+	ROM_LOAD( "aa-013.5a",    0x0000, 0x0800, NO_DUMP )
+
+	ROM_REGION( 0x10000, REGION_CPU5, 0 )	/* 8741 */
+	ROM_LOAD( "aa-016.9c",    0x0000, 0x0800, NO_DUMP )
+
+	ROM_REGION( 0x10000, REGION_CPU6, 0 )	/* 8741 */
+	ROM_LOAD( "aa-017.9g",    0x0000, 0x0800, NO_DUMP )
 
 	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "ac1-10.9n",    0x0000, 0x2000, CRC(517c571b) SHA1(05572a8ea416922da50143936fda9ba038f0b91e) )	/* tiles */
@@ -793,11 +816,6 @@ ROM_START( gsword2 )
 	ROM_LOAD( "004.4d",       0x0320, 0x0020, CRC(43a548b8) SHA1(d01529d7f8f5101232cdf3490fdb2c61bf179181) )	/* address decoder? not used */
 	ROM_LOAD( "005.3h",       0x0340, 0x0020, CRC(e8d6dec0) SHA1(d15cba9a4b24255d41046b15c2409391ab13ce95) )	/* address decoder? not used */
 ROM_END
-
-// 8741:
-// aa-013
-// aa-016
-// aa-017
 
 
 static DRIVER_INIT( gsword )
@@ -819,5 +837,5 @@ static DRIVER_INIT( gsword2 )
 }
 
 GAMEX(1983, josvolly, 0,      josvolly, gsword, 0,       ROT90, "Taito Corporation", "Joshi Volleyball", GAME_NOT_WORKING )
-GAME( 1984, gsword,   0,      gsword,   gsword, gsword,  ROT0,  "Taito Corporation", "Great Swordsman (Japan?)" )
-GAME( 1984, gsword2,  gsword, gsword,   gsword, gsword2, ROT0,  "Taito Corporation", "Great Swordsman (World?)" )
+GAME( 1984, gsword,   0,      gsword,   gsword, gsword,  ROT0,  "Taito Corporation", "Great Swordsman (World?)" )
+GAME( 1984, gsword2,  gsword, gsword,   gsword, gsword2, ROT0,  "Taito Corporation", "Great Swordsman (Japan?)" )

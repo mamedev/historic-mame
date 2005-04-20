@@ -956,7 +956,7 @@ static INTERRUPT_GEN( CPUB_interrupt )
 static MACHINE_DRIVER_START( twin16 )
 	// basic machine hardware
 	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 
 	MDRV_CPU_ADD(M68000, 10000000)
@@ -1010,7 +1010,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( fround )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 
 	MDRV_CPU_ADD(M68000, 10000000)

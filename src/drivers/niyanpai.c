@@ -510,6 +510,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x10, 0x13) AM_READ(z80ctc_0_r)
 	AM_RANGE(0x50, 0x50) AM_READ(tmpz84c011_0_pa_r)
 	AM_RANGE(0x51, 0x51) AM_READ(tmpz84c011_0_pb_r)
@@ -524,6 +525,7 @@ static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x10, 0x13) AM_WRITE(z80ctc_0_w)
 	AM_RANGE(0x50, 0x50) AM_WRITE(tmpz84c011_0_pa_w)
 	AM_RANGE(0x51, 0x51) AM_WRITE(tmpz84c011_0_pb_w)
@@ -860,7 +862,7 @@ static MACHINE_DRIVER_START( niyanpai )
 
 	MDRV_CPU_ADD(Z80, 8000000/1)					/* TMPZ84C011, 8.00 MHz */
 	MDRV_CPU_CONFIG(daisy_chain_sound)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem, sound_writemem)
 	MDRV_CPU_IO_MAP(sound_readport, sound_writeport)
 

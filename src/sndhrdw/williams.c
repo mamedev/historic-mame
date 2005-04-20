@@ -206,7 +206,7 @@ static struct YM2151interface adpcm_ym2151_interface =
 
 MACHINE_DRIVER_START( williams_cvsd_sound )
 	MDRV_CPU_ADD_TAG("cvsd", M6809, 8000000/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(williams_cvsd_readmem,williams_cvsd_writemem)
 
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
@@ -228,7 +228,7 @@ MACHINE_DRIVER_END
 
 MACHINE_DRIVER_START( williams_adpcm_sound )
 	MDRV_CPU_ADD_TAG("adpcm", M6809, 8000000/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(williams_adpcm_readmem,williams_adpcm_writemem)
 
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
@@ -251,11 +251,11 @@ MACHINE_DRIVER_END
 
 MACHINE_DRIVER_START( williams_narc_sound )
 	MDRV_CPU_ADD_TAG("narc1", M6809, 8000000/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(williams_narc_master_readmem,williams_narc_master_writemem)
 
 	MDRV_CPU_ADD_TAG("narc2", M6809, 8000000/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(williams_narc_slave_readmem,williams_narc_slave_writemem)
 
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")

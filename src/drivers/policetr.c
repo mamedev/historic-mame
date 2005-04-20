@@ -22,6 +22,8 @@ Program Roms:  C121012 - Code version 1.2, Graphics v1.0 & Sound v1.2
 Graphic Roms:  G10     - Graphics rom v1.0 (in diagnostics mode it's called "Art")
   Sound Roms:  S12     - Sound rom v1.2
 
+Note: For SharpShooter v1.7, in Circus of Mystery, the ballon challenge has been rewritten
+      and in Alien Encounter, the first saucer challenge has been modified compared to v1.2
 
 The ATTILA Video System PCB (by EXIT Entertainment):
 

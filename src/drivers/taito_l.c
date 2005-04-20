@@ -2249,7 +2249,7 @@ static MACHINE_DRIVER_START( fhawk )
 	MDRV_CPU_VBLANK_INT(vbl_interrupt,3)
 
 	MDRV_CPU_ADD_TAG("sound", Z80, 4000000)	/* ? xtal is 13.33056 */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(fhawk_3_readmem,fhawk_3_writemem)
 
 	MDRV_CPU_ADD_TAG("cpu2", Z80, 6000000)	/* ? xtal is 13.33056 */

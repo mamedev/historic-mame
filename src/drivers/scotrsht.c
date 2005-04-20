@@ -78,6 +78,7 @@ static ADDRESS_MAP_START( scotrsht_sound_map, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( scotrsht_sound_port, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READWRITE(YM2203_status_port_0_r, YM2203_control_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(YM2203_write_port_0_w)
 ADDRESS_MAP_END
@@ -236,7 +237,7 @@ static MACHINE_DRIVER_START( scotrsht )
 	MDRV_CPU_VBLANK_INT(scotrsht_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 18432000/6)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 3.072 MHz */
+	/* audio CPU */        /* 3.072 MHz */
 	MDRV_CPU_PROGRAM_MAP(scotrsht_sound_map,0)
 	MDRV_CPU_IO_MAP(scotrsht_sound_port,0)
 

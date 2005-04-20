@@ -5,7 +5,7 @@ driver by Farfetch and David Haywood
 
 Grand Striker (c)199?  Human
 V Goal Soccer (c)199?  Tecmo (2 sets)
-World Cup '94 (c)1994? Tecmo
+Tecmo World Cup '94 (c) 1994 Tecmo
 
 ******************************************************************************
 
@@ -142,9 +142,9 @@ X3: 14.31818
 
 Note: Same hardware as Tecmo World Cup '94, minus one VS9209 chip.
 
-*** ROMSET: worldc94
+*** ROMSET: twrldc94
 
-World Cup 94
+Tecmo World Cup 94
 Tecmo 1994
 
 VSIS-20V3
@@ -183,7 +183,7 @@ data16_t *gs_mixer_regs;
 WRITE16_HANDLER( gsx_videoram3_w );
 VIDEO_UPDATE( gstriker );
 VIDEO_START( gstriker );
-VIDEO_START( worldc94 );
+VIDEO_START( twrldc94 );
 
 
 /*** MISC READ / WRITE HANDLERS **********************************************/
@@ -310,7 +310,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x100000, 0x101fff) AM_WRITE(MB60553_0_vram_w) AM_BASE(&MB60553_0_vram)
-	AM_RANGE(0x102000, 0x103fff) AM_WRITE(gsx_videoram3_w) AM_BASE(&gs_videoram3)/*used in worldc94 (right field)*/
+	AM_RANGE(0x102000, 0x103fff) AM_WRITE(gsx_videoram3_w) AM_BASE(&gs_videoram3)/*used in twrldc94 (right field)*/
 	AM_RANGE(0x140000, 0x141fff) AM_WRITE(MWA16_RAM) AM_BASE(&CG10103_0_vram)
 	AM_RANGE(0x180000, 0x181fff) AM_WRITE(VS920A_0_vram_w) AM_BASE(&VS920A_0_vram)
 	AM_RANGE(0x1c0000, 0x1c0fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
@@ -333,12 +333,14 @@ static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(YM2610_status_port_0_A_r)
 	AM_RANGE(0x02, 0x02) AM_READ(YM2610_status_port_0_B_r)
 	AM_RANGE(0x0c, 0x0c) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(YM2610_control_port_0_A_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(YM2610_data_port_0_A_w)
 	AM_RANGE(0x02, 0x02) AM_WRITE(YM2610_control_port_0_B_w)
@@ -440,7 +442,7 @@ static MACHINE_DRIVER_START( gstriker )
 	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,8000000/2)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	/* audio CPU */	/* 4 MHz ??? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 
@@ -466,9 +468,9 @@ static MACHINE_DRIVER_START( gstriker )
 	MDRV_SOUND_ROUTE(2, "right", 1.0)
 MACHINE_DRIVER_END
 
-static MACHINE_DRIVER_START( worldc94 )
+static MACHINE_DRIVER_START( twrldc94 )
 	MDRV_IMPORT_FROM( gstriker )
-	MDRV_VIDEO_START( worldc94 )
+	MDRV_VIDEO_START( twrldc94 )
 MACHINE_DRIVER_END
 
 /*** ROM LOADING *************************************************************/
@@ -552,15 +554,42 @@ ROM_START( vgoalsca )
 	ROM_LOAD( "vgoalc16.104", 0x000000, 0x100000, CRC(6fb06e1b) SHA1(c4584b480fe1165f8e2f887acaa578690514d35d) )
 ROM_END
 
-ROM_START( worldc94 )
+ROM_START( twrldc94 )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )
-	ROM_LOAD16_WORD_SWAP( "13",           0x00000, 0x80000, CRC(42adb463) SHA1(ec7bcb684489b56f81ab851a9d8f42d54679363b) )
+	ROM_LOAD16_WORD_SWAP( "13.u37",           0x00000, 0x80000, CRC(42adb463) SHA1(ec7bcb684489b56f81ab851a9d8f42d54679363b) )
 
 	ROM_REGION( 0x40000, REGION_CPU2, 0 )
-	ROM_LOAD( "12",           0x000000, 0x040000, CRC(f316e7fc) SHA1(a2215605518e7293774735371c65abcead99bd88) )
+	ROM_LOAD( "12.u65",           0x000000, 0x040000, CRC(f316e7fc) SHA1(a2215605518e7293774735371c65abcead99bd88) )
 
 	ROM_REGION( 0x20000, REGION_GFX1, 0 ) // fixed tile
-	ROM_LOAD( "11",           0x000000, 0x020000, CRC(37d6dcb6) SHA1(679dd8b615497fff23c4638d413b5d4a724d3f2a) )
+	ROM_LOAD( "11.u48",           0x000000, 0x020000, CRC(37d6dcb6) SHA1(679dd8b615497fff23c4638d413b5d4a724d3f2a) )
+
+	ROM_REGION( 0x200000, REGION_GFX2, 0 ) // scroll tile
+	ROM_LOAD( "u17",          0x000000, 0x200000, CRC(a5e40a61) SHA1(a2cb452fb069862570870653b29b045d12caf062) )
+	ROM_LOAD( "u20",          0x000000, 0x200000, CRC(a5e40a61) SHA1(a2cb452fb069862570870653b29b045d12caf062) )
+
+	ROM_REGION( 0x800000, REGION_GFX3, 0 )
+	ROM_LOAD( "u11",          0x000000, 0x200000, CRC(dd93fd45) SHA1(26491815b5443fe6d8b1ef4d795c5151fd75c101) )
+	ROM_LOAD( "u12",          0x200000, 0x200000, CRC(8e3c9bd2) SHA1(bfd23157c836148a3860ccea5191f656fdd98ef4) )
+	ROM_LOAD( "u13",          0x400000, 0x200000, CRC(8db6b3a9) SHA1(9422cd5d6fb57a7eaa7a13bdf4ccee1f8b57f773) )
+	ROM_LOAD( "u14",          0x600000, 0x200000, CRC(89739c31) SHA1(29cd779bfe93448fb6cbfe6f8e3661dd659c0d21) )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )
+	ROM_LOAD( "u86",          0x000000, 0x040000, CRC(775f45dc) SHA1(1a740dd880d9f873e93dfc096fbcae1784b4f522) )
+
+	ROM_REGION( 0x100000, REGION_SOUND2, 0 )
+	ROM_LOAD( "u104",         0x000000, 0x100000, CRC(df07d0af) SHA1(356560e164ff222bc9004fe202f829c93244a6c9) )
+ROM_END
+
+ROM_START( twrdc94a )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "twrdc94a_13.u37",           0x00000, 0x80000, CRC(08f314ee) SHA1(3fca5050f5bcd60533d3bd9dea81ba631a98bfd6) )
+
+	ROM_REGION( 0x40000, REGION_CPU2, 0 )
+	ROM_LOAD( "twrdc94a_12.u65",           0x000000, 0x040000, CRC(c131f5a4) SHA1(d8cc7c463ad628f6f052489a73b97f998532738d) )
+
+	ROM_REGION( 0x20000, REGION_GFX1, 0 ) // fixed tile
+	ROM_LOAD( "twrdc94a_11.u48",           0x000000, 0x020000, CRC(37d6dcb6) SHA1(679dd8b615497fff23c4638d413b5d4a724d3f2a) )
 
 	ROM_REGION( 0x200000, REGION_GFX2, 0 ) // scroll tile
 	ROM_LOAD( "u17",          0x000000, 0x200000, CRC(a5e40a61) SHA1(a2cb452fb069862570870653b29b045d12caf062) )
@@ -597,7 +626,7 @@ or to advance into the tests.
 work_ram[0x000/2] = (_num_ & 0xffff0000) >> 16;\
 work_ram[0x002/2] = (_num_ & 0x0000ffff) >> 0;
 
-static WRITE16_HANDLER( worldc94_mcu_w )
+static WRITE16_HANDLER( twrldc94_mcu_w )
 {
 	switch(data)
 	{
@@ -615,9 +644,9 @@ static WRITE16_HANDLER( worldc94_mcu_w )
 	}
 }
 
-static DRIVER_INIT( worldc94 )
+static DRIVER_INIT( twrldc94 )
 {
-	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x20008a, 0x20008b, 0, 0, worldc94_mcu_w);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x20008a, 0x20008b, 0, 0, twrldc94_mcu_w);
 }
 
 /*** GAME DRIVERS ************************************************************/
@@ -627,4 +656,7 @@ GAMEX(1993, gstriker, 0,        gstriker, gstriker, 0,        ROT0, "Human", "Gr
 /* Similar, but not identical hardware, appear to be protected by an MCU :-( */
 GAMEX(199?, vgoalsoc, 0,        gstriker, gstriker, 0,        ROT0, "Tecmo", "V Goal Soccer", GAME_NOT_WORKING )
 GAMEX(199?, vgoalsca, vgoalsoc, gstriker, gstriker, 0,        ROT0, "Tecmo", "V Goal Soccer (alt)", GAME_NOT_WORKING )
-GAMEX(199?, worldc94, 0,        worldc94, gstriker, worldc94,        ROT0, "Tecmo", "World Cup '94", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS )
+GAMEX(1994, twrldc94, 0,        twrldc94, gstriker, twrldc94,        ROT0, "Tecmo", "Tecmo World Cup '94", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS )
+GAMEX(1994, twrdc94a, twrldc94,        twrldc94, gstriker, twrldc94,        ROT0, "Tecmo", "Tecmo World Cup '94 (set 2)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS )
+
+

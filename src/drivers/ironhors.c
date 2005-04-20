@@ -92,6 +92,7 @@ static ADDRESS_MAP_START( slave_map, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( slave_io_map, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READWRITE(YM2203_status_port_0_r, YM2203_control_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(YM2203_write_port_0_w)
 ADDRESS_MAP_END
@@ -403,7 +404,7 @@ static MACHINE_DRIVER_START( ironhors )
 	MDRV_CPU_VBLANK_INT(ironhors_interrupt,8)
 
 	MDRV_CPU_ADD_TAG("sound",Z80,18432000/6)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 3.072 MHz */
+	/* audio CPU */        /* 3.072 MHz */
 	MDRV_CPU_PROGRAM_MAP(slave_map, 0)
 	MDRV_CPU_IO_MAP(slave_io_map, 0)
 

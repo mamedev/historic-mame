@@ -327,6 +327,9 @@ int osd_display_loading_rom_message(const char *name,struct rom_load_data *romda
 /* interface is still active while the game is paused. */
 void osd_pause(int paused);
 
+/* checks to see if a pointer is bad */
+int osd_is_bad_read_ptr(const void *ptr, size_t size);
+
 /* aborts the program in some unexpected fatal way */
 #ifdef __GNUC__
 void CLIB_DECL osd_die(const char *text,...)

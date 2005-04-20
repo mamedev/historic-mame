@@ -571,10 +571,12 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(YM2203_status_port_0_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(YM2203_control_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(YM2203_write_port_0_w)
 ADDRESS_MAP_END
@@ -654,7 +656,7 @@ static MACHINE_DRIVER_START( system_A )
 	MDRV_CPU_VBLANK_INT(interrupt_A,INTERRUPT_NUM_A)
 
 	MDRV_CPU_ADD_TAG("sound", M68000, 7000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem_A,sound_writemem_A)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -807,7 +809,7 @@ static MACHINE_DRIVER_START( system_Z )
 	MDRV_CPU_VBLANK_INT(interrupt_A,INTERRUPT_NUM_A)
 
 	MDRV_CPU_ADD(Z80, 3000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* ??? */
+	/* audio CPU */ /* ??? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem_z80,sound_writemem_z80)
 	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 

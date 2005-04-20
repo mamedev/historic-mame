@@ -293,10 +293,12 @@ static ADDRESS_MAP_START( mshuttle_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( mshuttle_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x0c, 0x0c) AM_READ(AY8910_read_port_0_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( mshuttle_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x08, 0x08) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x09, 0x09) AM_WRITE(AY8910_write_port_0_w)
 ADDRESS_MAP_END
@@ -430,6 +432,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( checkman_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0, 0) AM_WRITE(checkman_sound_command_w)
 ADDRESS_MAP_END
 
@@ -446,11 +449,13 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( checkman_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x03, 0x03) AM_READ(soundlatch_r)
 	AM_RANGE(0x06, 0x06) AM_READ(AY8910_read_port_0_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( checkman_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x04, 0x04) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x05, 0x05) AM_WRITE(AY8910_write_port_0_w)
 ADDRESS_MAP_END
@@ -505,10 +510,12 @@ static ADDRESS_MAP_START( kingball_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( kingball_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( kingball_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(DAC_0_data_w)
 ADDRESS_MAP_END
 
@@ -727,6 +734,7 @@ static ADDRESS_MAP_START( ozon1_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( ozon1_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_write_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(AY8910_control_port_0_w)
 ADDRESS_MAP_END
@@ -778,6 +786,7 @@ static ADDRESS_MAP_START( bongo, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( bongo_io, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(AY8910_write_port_0_w)
 	AM_RANGE(0x02, 0x02) AM_READ(AY8910_read_port_0_r)
@@ -835,6 +844,7 @@ static ADDRESS_MAP_START( harem_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( harem_cpu2_io, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x04, 0x04) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x08, 0x08) AM_WRITE(AY8910_write_port_0_w)
 	AM_RANGE(0x10, 0x10) AM_WRITE(AY8910_control_port_1_w)
@@ -3822,7 +3832,7 @@ static MACHINE_DRIVER_START( checkman )
 	MDRV_CPU_IO_MAP(0,checkman_writeport)
 
 	MDRV_CPU_ADD(Z80, 1620000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.62 MHz */
+	/* audio CPU */	/* 1.62 MHz */
 	MDRV_CPU_PROGRAM_MAP(checkman_sound_readmem,checkman_sound_writemem)
 	MDRV_CPU_IO_MAP(checkman_sound_readport,checkman_sound_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* NMIs are triggered by the main CPU */
@@ -3850,7 +3860,7 @@ static MACHINE_DRIVER_START( checkmaj )
 	MDRV_CPU_PROGRAM_MAP(galaxian_readmem,checkmaj_writemem)
 
 	MDRV_CPU_ADD(Z80, 1620000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.62 MHz? (used the same as Moon Cresta) */
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(checkmaj_sound_readmem,checkmaj_sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,32)	/* NMIs are triggered by the main CPU */
 
@@ -3873,7 +3883,7 @@ static MACHINE_DRIVER_START( dingoe )
 	MDRV_CPU_IO_MAP(0,checkman_writeport)
 
 	MDRV_CPU_ADD(Z80, 1620000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.62 MHz */
+	/* audio CPU */	/* 1.62 MHz */
 	MDRV_CPU_PROGRAM_MAP(checkman_sound_readmem,checkman_sound_writemem)
 	MDRV_CPU_IO_MAP(checkman_sound_readport,checkman_sound_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* NMIs are triggered by the main CPU */
@@ -3894,7 +3904,7 @@ static MACHINE_DRIVER_START( kingball )
 	MDRV_CPU_PROGRAM_MAP(mooncrst_readmem,kingball_writemem)
 
 	MDRV_CPU_ADD(Z80,5000000/2)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 2.5 MHz */
+	/* audio CPU */	/* 2.5 MHz */
 	MDRV_CPU_PROGRAM_MAP(kingball_sound_readmem,kingball_sound_writemem)
 	MDRV_CPU_IO_MAP(kingball_sound_readport,kingball_sound_writeport)
 
@@ -3970,7 +3980,7 @@ static MACHINE_DRIVER_START( froggrmc )
 	MDRV_CPU_PROGRAM_MAP(mooncrst_readmem,froggrmc_writemem)
 
 	MDRV_CPU_ADD(Z80,14318000/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* 1.78975 MHz */
+	/* audio CPU */ /* 1.78975 MHz */
 	MDRV_CPU_PROGRAM_MAP(frogger_sound_readmem,frogger_sound_writemem)
 	MDRV_CPU_IO_MAP(frogger_sound_readport,frogger_sound_writeport)
 
@@ -4105,7 +4115,7 @@ static MACHINE_DRIVER_START( harem )
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(Z80, 1620000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(harem_cpu2,0)
 	MDRV_CPU_IO_MAP(harem_cpu2_io,0)
 

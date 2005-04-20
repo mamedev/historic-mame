@@ -926,7 +926,7 @@ static MACHINE_DRIVER_START( mystwarr )
 	MDRV_CPU_VBLANK_INT(mystwarr_interrupt, 3)
 
 	MDRV_CPU_ADD_TAG("sound", Z80, 8000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_PERIODIC_INT(nmi_line_pulse, 480)
 

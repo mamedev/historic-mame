@@ -479,11 +479,13 @@ static WRITE8_HANDLER(zpu_coin_counter_w)
 }
 
 static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x4c, 0x4f) AM_READ(ls670_1_r)
 	AM_RANGE(0x62, 0x62) AM_READ(zpu_inputs_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x4c, 0x4f) AM_WRITE(ls670_0_w)
 	AM_RANGE(0x60, 0x60) AM_WRITE(zpu_bcd_decoder_w)
 	AM_RANGE(0x68, 0x68) AM_WRITE(zpu_coin_counter_w)
@@ -519,10 +521,12 @@ static WRITE8_HANDLER( vsb_ls273_audio_control_w )
 
 
 static ADDRESS_MAP_START( readport_cpu2, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x80, 0x83) AM_READ(ls670_0_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport_cpu2, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(vsb_ls273_audio_control_w)
 	AM_RANGE(0x80, 0x83) AM_WRITE(ls670_1_w)
 ADDRESS_MAP_END
@@ -628,10 +632,12 @@ static READ8_HANDLER( cfb_port_02_r )
 }
 
 static ADDRESS_MAP_START( readport_cpu3, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x02, 0x02) AM_READ(cfb_port_02_r)	/* VCU status ? */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport_cpu3_mb, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x01, 0x01) AM_WRITE(cfb_backgnd_color_w)
 	AM_RANGE(0x02, 0x02) AM_WRITE(cfb_led_w)
 	AM_RANGE(0x03, 0x03) AM_WRITE(cfb_zpu_int_req_set_w)
@@ -641,6 +647,7 @@ ADDRESS_MAP_END
 
 /* Great Guns has a little different banking layout */
 static ADDRESS_MAP_START( writeport_cpu3_gg, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(MWA8_NOP)
 	AM_RANGE(0x01, 0x01) AM_WRITE(cfb_backgnd_color_w)
 	AM_RANGE(0x02, 0x02) AM_WRITE(cfb_led_w)
@@ -1091,9 +1098,11 @@ static WRITE8_HANDLER( main_sound_w )
 
 
 static ADDRESS_MAP_START( gg_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x62, 0x62) AM_READ(zpu_inputs_r)
 ADDRESS_MAP_END
 static ADDRESS_MAP_START( gg_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x4c, 0x4c) AM_WRITE(main_sound_w)
 	AM_RANGE(0x60, 0x60) AM_WRITE(zpu_bcd_decoder_w)
 	AM_RANGE(0x66, 0x66) AM_WRITE(MWA8_NOP)

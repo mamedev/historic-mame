@@ -235,6 +235,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( cvsd_iomap, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0xff) AM_READWRITE(mtrap_voiceio_r, mtrap_voiceio_w)
 ADDRESS_MAP_END
 
@@ -779,7 +780,7 @@ static MACHINE_DRIVER_START( venture )
 	MDRV_CPU_PROGRAM_MAP(common_map,venture_map)
 
 	MDRV_CPU_ADD(M6502, 3579545/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 
 	MDRV_INTERLEAVE(10)
@@ -799,7 +800,7 @@ static MACHINE_DRIVER_START( mtrap )
 	MDRV_IMPORT_FROM(venture)
 
 	MDRV_CPU_ADD(Z80, 3579545/2)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(cvsd_map,0)
 	MDRV_CPU_IO_MAP(cvsd_iomap,0)
 

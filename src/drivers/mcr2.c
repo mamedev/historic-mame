@@ -220,6 +220,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
 	AM_RANGE(0x01, 0x01) AM_READ(input_port_1_r)
 	AM_RANGE(0x02, 0x02) AM_READ(input_port_2_r)
@@ -232,6 +233,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(mcr_control_port_w)
 	AM_RANGE(0x1c, 0x1f) AM_WRITE(ssio_data_w)
 	AM_RANGE(0xe0, 0xe0) AM_WRITE(watchdog_reset_w)

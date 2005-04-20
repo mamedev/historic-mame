@@ -1041,7 +1041,6 @@ $(OBJ)/comad.a: \
 	$(OBJ)/vidhrdw/pushman.o $(OBJ)/drivers/pushman.o \
 	$(OBJ)/vidhrdw/zerozone.o $(OBJ)/drivers/zerozone.o \
 	$(OBJ)/vidhrdw/galspnbl.o $(OBJ)/drivers/galspnbl.o \
-	$(OBJ)/drivers/cwbbc97.o \
 
 
 
@@ -1273,6 +1272,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/drivers/laserbas.o \
 	$(OBJ)/drivers/turbosub.o \
 	$(OBJ)/drivers/penocup.o \
+	$(OBJ)/drivers/dreamwld.o \
 
 
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o

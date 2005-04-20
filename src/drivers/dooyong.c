@@ -1171,7 +1171,7 @@ static MACHINE_DRIVER_START( lastday )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ??? */
+	/* audio CPU */	/* ??? */
 	MDRV_CPU_PROGRAM_MAP(lastday_sound_readmem,lastday_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1207,7 +1207,7 @@ static MACHINE_DRIVER_START( gulfstrm )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ??? */
+	/* audio CPU */	/* ??? */
 	MDRV_CPU_PROGRAM_MAP(lastday_sound_readmem,lastday_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1243,7 +1243,7 @@ static MACHINE_DRIVER_START( pollux )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ??? */
+	/* audio CPU */	/* ??? */
 	MDRV_CPU_PROGRAM_MAP(pollux_sound_readmem,pollux_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1279,7 +1279,7 @@ static MACHINE_DRIVER_START( bluehawk )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ??? */
+	/* audio CPU */	/* ??? */
 	MDRV_CPU_PROGRAM_MAP(bluehawk_sound_readmem,bluehawk_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1316,7 +1316,7 @@ static MACHINE_DRIVER_START( flytiger )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ??? */
+	/* audio CPU */	/* ??? */
 	MDRV_CPU_PROGRAM_MAP(bluehawk_sound_readmem,bluehawk_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1353,7 +1353,7 @@ static MACHINE_DRIVER_START( primella )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ??? */
+	/* audio CPU */	/* ??? */
 	MDRV_CPU_PROGRAM_MAP(bluehawk_sound_readmem,bluehawk_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1398,7 +1398,7 @@ static MACHINE_DRIVER_START( rshark )
 	MDRV_CPU_VBLANK_INT(rshark_interrupt,2)	/* 5 and 6 */
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* measured on super-x */
+	/* audio CPU */	/* measured on super-x */
 	MDRV_CPU_PROGRAM_MAP(bluehawk_sound_readmem,bluehawk_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1435,7 +1435,7 @@ static MACHINE_DRIVER_START( superx ) // dif mem map
 	MDRV_CPU_VBLANK_INT(rshark_interrupt,2)	/* 5 and 6 */
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* measured on super-x */
+	/* audio CPU */	/* measured on super-x */
 	MDRV_CPU_PROGRAM_MAP(bluehawk_sound_readmem,bluehawk_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1472,7 +1472,7 @@ static MACHINE_DRIVER_START( popbingo )
 	MDRV_CPU_VBLANK_INT(rshark_interrupt,2)	/* 5 and 6 */
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* measured on super-x */
+	/* audio CPU */	/* measured on super-x */
 	MDRV_CPU_PROGRAM_MAP(bluehawk_sound_readmem,bluehawk_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)

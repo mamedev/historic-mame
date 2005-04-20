@@ -177,6 +177,7 @@ static ADDRESS_MAP_START( yamato_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( yamato_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(p0_w)	/* ??? */
 	AM_RANGE(0x01, 0x01) AM_WRITE(p1_w)	/* ??? */
 ADDRESS_MAP_END
@@ -192,11 +193,13 @@ static ADDRESS_MAP_START( yamato_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( yamato_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x04, 0x04) AM_READ(p0_r)	/* ??? */
 	AM_RANGE(0x08, 0x08) AM_READ(p1_r)	/* ??? */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( yamato_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(AY8910_write_port_0_w)
 	AM_RANGE(0x02, 0x02) AM_WRITE(AY8910_control_port_1_w)
@@ -329,7 +332,7 @@ static MACHINE_DRIVER_START( yamato )
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(Z80, 3072000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.072 MHz ? */
+	/* audio CPU */	/* 3.072 MHz ? */
 	MDRV_CPU_PROGRAM_MAP(yamato_sound_readmem,yamato_sound_writemem)
 	MDRV_CPU_IO_MAP(yamato_sound_readport,yamato_sound_writeport)
 

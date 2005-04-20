@@ -169,6 +169,7 @@ static READ8_HANDLER( sega_sh_r )
 }
 
 static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x3f, 0x3f) AM_READ(sega_sh_r)
 	AM_RANGE(0xbe, 0xbe) AM_READ(sega_mult_r)
 	AM_RANGE(0xf8, 0xfb) AM_READ(sega_ports_r)
@@ -176,6 +177,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0xbd, 0xbd) AM_WRITE(sega_mult1_w)
 	AM_RANGE(0xbe, 0xbe) AM_WRITE(sega_mult2_w)
 	AM_RANGE(0xf8, 0xf8) AM_WRITE(sega_switch_w)
@@ -849,7 +851,7 @@ static MACHINE_DRIVER_START( zektor )
 	MDRV_IMPORT_FROM(elim2)
 
 	MDRV_CPU_ADD(I8035, 3120000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sega_speechboard_readmem, sega_speechboard_writemem)
 	MDRV_CPU_IO_MAP (sega_speechboard_readport,sega_speechboard_writeport)
 
@@ -891,7 +893,7 @@ static MACHINE_DRIVER_START( spacfury )
 	MDRV_IMPORT_FROM(elim2)
 
 	MDRV_CPU_ADD(I8035, 3120000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sega_speechboard_readmem, sega_speechboard_writemem)
 	MDRV_CPU_IO_MAP (sega_speechboard_readport,sega_speechboard_writeport)
 
@@ -915,7 +917,7 @@ static MACHINE_DRIVER_START( startrek )
 	MDRV_IMPORT_FROM(elim2)
 
 	MDRV_CPU_ADD(I8035, 3120000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sega_speechboard_readmem, sega_speechboard_writemem)
 	MDRV_CPU_IO_MAP (sega_speechboard_readport,sega_speechboard_writeport)
 

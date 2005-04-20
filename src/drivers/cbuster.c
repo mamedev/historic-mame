@@ -364,7 +364,7 @@ static MACHINE_DRIVER_START( twocrude )
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)/* VBL */
 
 	MDRV_CPU_ADD(H6280,32220000/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* Accurate */
+	/* audio CPU */	/* Accurate */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(58)

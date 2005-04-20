@@ -947,7 +947,7 @@ static MACHINE_DRIVER_START( gameplan )
 	MDRV_CPU_VBLANK_INT(gameplan_interrupt,1)
 
 	MDRV_CPU_ADD(M6502,3579000 / 4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* 894.750 kHz */
+	/* audio CPU */		/* 894.750 kHz */
 	MDRV_CPU_PROGRAM_MAP(readmem_snd,writemem_snd)
 
 	MDRV_FRAMES_PER_SECOND(57)

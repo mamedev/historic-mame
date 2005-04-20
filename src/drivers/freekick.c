@@ -164,11 +164,13 @@ static ADDRESS_MAP_START( gigas_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( gigas_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(gigas_spinner_r)
 	AM_RANGE(0x01, 0x01) AM_READ(MRA8_NOP) //unused dip 3
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( gigas_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(spinner_select_w)
 ADDRESS_MAP_END
 
@@ -226,6 +228,7 @@ static READ8_HANDLER(oigas_2_r)
 }
 
 static ADDRESS_MAP_START( oigas_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(gigas_spinner_r)
 	AM_RANGE(0x01, 0x01) AM_READ(MRA8_NOP) //unused dip 3
 	AM_RANGE(0x02, 0x02) AM_READ(oigas_2_r)
@@ -233,6 +236,7 @@ static ADDRESS_MAP_START( oigas_readport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( oigas_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(spinner_select_w)
 	AM_RANGE(0x05, 0x05) AM_WRITE(oigas_5_w)
 ADDRESS_MAP_END
@@ -310,10 +314,12 @@ static WRITE8_HANDLER (freekick_ff_w)
 }
 
 static ADDRESS_MAP_START( freekckb_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0xff, 0xff) AM_READ(freekick_ff_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( freekckb_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0xff, 0xff) AM_WRITE(freekick_ff_w)
 ADDRESS_MAP_END
 

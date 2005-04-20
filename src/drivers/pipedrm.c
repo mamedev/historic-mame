@@ -244,6 +244,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x20, 0x20) AM_READ(input_port_0_r)
 	AM_RANGE(0x21, 0x21) AM_READ(input_port_1_r)
 	AM_RANGE(0x22, 0x22) AM_READ(input_port_2_r)
@@ -254,6 +255,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x20, 0x20) AM_WRITE(sound_command_w)
 	AM_RANGE(0x21, 0x21) AM_WRITE(pipedrm_bankswitch_w)
 	AM_RANGE(0x22, 0x25) AM_WRITE(fromance_scroll_w)
@@ -282,6 +284,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x16, 0x16) AM_READ(sound_command_r)
 	AM_RANGE(0x18, 0x18) AM_READ(YM2610_status_port_0_A_r)
 	AM_RANGE(0x1a, 0x1a) AM_READ(YM2610_status_port_0_B_r)
@@ -289,6 +292,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x04, 0x04) AM_WRITE(sound_bankswitch_w)
 	AM_RANGE(0x17, 0x17) AM_WRITE(pending_command_clear_w)
 	AM_RANGE(0x18, 0x18) AM_WRITE(YM2610_control_port_0_A_w)
@@ -299,6 +303,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( hatris_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x04, 0x04) AM_READ(sound_command_r)
 	AM_RANGE(0x05, 0x05) AM_READ(pending_command_r)
 	AM_RANGE(0x08, 0x08) AM_READ(YM2608_status_port_0_A_r)
@@ -307,6 +312,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( hatris_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x02, 0x02) AM_WRITE(YM2608_control_port_0_B_w)
 	AM_RANGE(0x03, 0x03) AM_WRITE(YM2608_data_port_0_B_w)
 	AM_RANGE(0x05, 0x05) AM_WRITE(pending_command_clear_w)
@@ -597,7 +603,7 @@ static MACHINE_DRIVER_START( pipedrm )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,14318000/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 
@@ -636,7 +642,7 @@ static MACHINE_DRIVER_START( hatris )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,14318000/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(hatris_sound_readport,hatris_sound_writeport)
 

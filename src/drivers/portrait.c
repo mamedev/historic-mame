@@ -257,7 +257,7 @@ static MACHINE_DRIVER_START( portrait )
 	MDRV_CPU_VBLANK_INT(irq0_line_pulse,1)
 
 	MDRV_CPU_ADD(I8039, 3120000)  /* ? */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(portrait_sound_map,0)
 
 	MDRV_FRAMES_PER_SECOND(50)

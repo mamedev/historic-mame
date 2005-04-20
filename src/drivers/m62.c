@@ -249,6 +249,7 @@ static ADDRESS_MAP_START( kungfum_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( kungfum_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)   /* coin */
 	AM_RANGE(0x01, 0x01) AM_READ(input_port_1_r)   /* player 1 control */
 	AM_RANGE(0x02, 0x02) AM_READ(input_port_2_r)   /* player 2 control */
@@ -257,6 +258,7 @@ static ADDRESS_MAP_START( kungfum_readport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( kungfum_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(irem_sound_cmd_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(m62_flipscreen_w)	/* + coin counters */
 ADDRESS_MAP_END
@@ -277,6 +279,7 @@ static ADDRESS_MAP_START( battroad_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( battroad_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(irem_sound_cmd_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(m62_flipscreen_w)	/* + coin counters */
 	AM_RANGE(0x80, 0x80) AM_WRITE(m62_vscroll_low_w)
@@ -313,6 +316,7 @@ static ADDRESS_MAP_START( ldrun2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( ldrun2_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)   /* coin */
 	AM_RANGE(0x01, 0x01) AM_READ(input_port_1_r)   /* player 1 control */
 	AM_RANGE(0x02, 0x02) AM_READ(input_port_2_r)   /* player 2 control */
@@ -322,6 +326,7 @@ static ADDRESS_MAP_START( ldrun2_readport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( ldrun2_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(irem_sound_cmd_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(m62_flipscreen_w)	/* + coin counters */
 	AM_RANGE(0x80, 0x81) AM_WRITE(ldrun2_bankswitch_w)
@@ -344,6 +349,7 @@ static ADDRESS_MAP_START( ldrun3_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( ldrun3_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(irem_sound_cmd_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(m62_flipscreen_w)	/* + coin counters */
 	AM_RANGE(0x80, 0x80) AM_WRITE(m62_vscroll_low_w)
@@ -366,6 +372,7 @@ static ADDRESS_MAP_START( ldrun4_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( ldrun4_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(irem_sound_cmd_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(m62_flipscreen_w)	/* + coin counters */
 	AM_RANGE(0x82, 0x82) AM_WRITE(m62_hscroll_high_w)
@@ -404,6 +411,7 @@ static ADDRESS_MAP_START( kidniki_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( kidniki_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(irem_sound_cmd_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(m62_flipscreen_w)	/* + coin counters */
 	AM_RANGE(0x80, 0x80) AM_WRITE(m62_hscroll_low_w)
@@ -477,6 +485,7 @@ static ADDRESS_MAP_START( youjyudn_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( youjyudn_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(irem_sound_cmd_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(m62_flipscreen_w)	/* + coin counters */
 	AM_RANGE(0x80, 0x80) AM_WRITE(m62_hscroll_high_w)

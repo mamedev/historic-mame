@@ -388,7 +388,7 @@ static MACHINE_DRIVER_START( crimfght )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3579545)	/* verified with PCB */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(crimfght_readmem_sound,crimfght_writemem_sound)
 
 	MDRV_FRAMES_PER_SECOND(54)	/* adjusted - compared with PCB speed */

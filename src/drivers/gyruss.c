@@ -146,6 +146,7 @@ static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x01, 0x01) AM_READ(AY8910_read_port_0_r)
   	AM_RANGE(0x05, 0x05) AM_READ(AY8910_read_port_1_r)
 	AM_RANGE(0x09, 0x09) AM_READ(AY8910_read_port_2_r)
@@ -154,6 +155,7 @@ static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x02, 0x02) AM_WRITE(AY8910_write_port_0_w)
 	AM_RANGE(0x04, 0x04) AM_WRITE(AY8910_control_port_1_w)
@@ -388,12 +390,12 @@ static MACHINE_DRIVER_START( gyruss )
 	MDRV_CPU_VBLANK_INT(gyruss_6809_interrupt,256)
 
 	MDRV_CPU_ADD(Z80,14318180/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
+	/* audio CPU */	/* 3.579545 MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 
 	MDRV_CPU_ADD(I8039,8000000/15)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 8MHz crystal */
+	/* audio CPU */	/* 8MHz crystal */
 	MDRV_CPU_PROGRAM_MAP(i8039_readmem,i8039_writemem)
 	MDRV_CPU_IO_MAP(i8039_readport,i8039_writeport)
 

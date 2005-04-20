@@ -573,7 +573,7 @@ static MACHINE_DRIVER_START( rygar )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD_TAG("sound", Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(rygar_sound_readmem,rygar_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)

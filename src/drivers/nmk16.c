@@ -422,11 +422,13 @@ static ADDRESS_MAP_START( tharrier_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( tharrier_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(YM2203_status_port_0_r)
 	AM_RANGE(0x01, 0x01) AM_READ(YM2203_read_port_0_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( tharrier_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(YM2203_control_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(YM2203_write_port_0_w)
 ADDRESS_MAP_END
@@ -1069,6 +1071,7 @@ static ADDRESS_MAP_START( macross2_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( macross2_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(YM2203_status_port_0_r)
 	AM_RANGE(0x01, 0x01) AM_READ(YM2203_read_port_0_r)
 	AM_RANGE(0x80, 0x80) AM_READ(OKIM6295_status_0_r)
@@ -1076,6 +1079,7 @@ static ADDRESS_MAP_START( macross2_sound_readport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( macross2_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(YM2203_control_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(YM2203_write_port_0_w)
 	AM_RANGE(0x80, 0x80) AM_WRITE(OKIM6295_data_0_w)
@@ -2727,7 +2731,7 @@ static MACHINE_DRIVER_START( tharrier )
 	MDRV_CPU_PERIODIC_INT(irq1_line_hold,112)/* ???????? */
 
 	MDRV_CPU_ADD(Z80, 3000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(tharrier_sound_readmem,tharrier_sound_writemem)
 	MDRV_CPU_IO_MAP(tharrier_sound_readport,tharrier_sound_writeport)
 
@@ -2774,7 +2778,7 @@ static MACHINE_DRIVER_START( manybloc )
 	MDRV_CPU_PERIODIC_INT(irq1_line_hold,60)/* is this is too high it breaks the game on this one, too low sprites flicker */
 
 	MDRV_CPU_ADD(Z80, 3000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(tharrier_sound_readmem,tharrier_sound_writemem)
 	MDRV_CPU_IO_MAP(tharrier_sound_readport,tharrier_sound_writeport)
 
@@ -3096,7 +3100,7 @@ static MACHINE_DRIVER_START( ssmissin )
 	MDRV_CPU_PERIODIC_INT(irq1_line_hold,112) /* input related */
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* 4 MHz ? */
+	/* audio CPU */ /* 4 MHz ? */
 	MDRV_CPU_PROGRAM_MAP(ssmissin_sound_readmem,ssmissin_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -3304,7 +3308,7 @@ static MACHINE_DRIVER_START( macross2 )
 	MDRV_CPU_PERIODIC_INT(irq1_line_hold,112)/* ???????? */
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* 4 MHz ? */
+	/* audio CPU */ /* 4 MHz ? */
 	MDRV_CPU_PROGRAM_MAP(macross2_sound_readmem,macross2_sound_writemem)
 	MDRV_CPU_IO_MAP(macross2_sound_readport,macross2_sound_writeport)
 
@@ -3348,7 +3352,7 @@ static MACHINE_DRIVER_START( tdragon2 )
 	MDRV_CPU_PERIODIC_INT(irq1_line_hold,112)/* ???????? */
 
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* 4 MHz ? */
+	/* audio CPU */ /* 4 MHz ? */
 	MDRV_CPU_PROGRAM_MAP(macross2_sound_readmem,macross2_sound_writemem)
 	MDRV_CPU_IO_MAP(macross2_sound_readport,macross2_sound_writeport)
 
@@ -3394,7 +3398,7 @@ static MACHINE_DRIVER_START( raphero )
 //	MDRV_CPU_ADD(Z80, 4000000) // tmp90c841 ?
 //<ianpatt> looks like the tmp90c841 is a microcontroller from toshiba compatible with the z80 instruction set
 //<ianpatt> and luckily it isn't one of the versions with embedded ROM
-//	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* 4 MHz ? */
+//	/* audio CPU */ /* 4 MHz ? */
 //	MDRV_CPU_PROGRAM_MAP(macross2_sound_readmem,macross2_sound_writemem)
 //	MDRV_CPU_IO_MAP(macross2_sound_readport,macross2_sound_writeport)
 

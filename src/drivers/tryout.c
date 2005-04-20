@@ -196,7 +196,7 @@ static MACHINE_DRIVER_START( tryout )
 	MDRV_CPU_VBLANK_INT(tryout_interrupt,1)
 
 	MDRV_CPU_ADD(M6502, 1500000)		/* ? */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_cpu,0)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,16) /* ? */
 

@@ -720,7 +720,7 @@ static MACHINE_DRIVER_START( tokio )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1)
 
 	MDRV_CPU_ADD(Z80, MAIN_XTAL/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	// 3 MHz
+	/* audio CPU */	// 3 MHz
 	MDRV_CPU_PROGRAM_MAP(tokio_sound_map, 0) // NMIs are triggered by the main CPU, IRQs are triggered by the YM2203
 
 	MDRV_FRAMES_PER_SECOND(VSYNC)	// 59.185606 Hz
@@ -758,7 +758,7 @@ static MACHINE_DRIVER_START( bublbobl )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1)
 
 	MDRV_CPU_ADD(Z80, MAIN_XTAL/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	// 3 MHz
+	/* audio CPU */	// 3 MHz
 	MDRV_CPU_PROGRAM_MAP(sound_map, 0) // IRQs are triggered by the YM2203
 
 #if 0

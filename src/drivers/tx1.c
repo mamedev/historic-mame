@@ -521,6 +521,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( tx1_sound_io, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x40, 0x40) AM_WRITE(AY8910_write_port_0_w)
 	AM_RANGE(0x41, 0x41) AM_WRITE(AY8910_control_port_0_w)
 ADDRESS_MAP_END
@@ -671,6 +672,7 @@ ADDRESS_MAP_END
 
 /* Common to both versions*/
 static ADDRESS_MAP_START( buggyboy_sound_io, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x40, 0x40) AM_READWRITE(AY8910_read_port_0_r, AY8910_write_port_0_w)
        	AM_RANGE(0x41, 0x41) AM_WRITE(AY8910_control_port_0_w)
 
@@ -917,7 +919,7 @@ static MACHINE_DRIVER_START( tx1 )
 	MDRV_CPU_PROGRAM_MAP(tx1_slave,0)
 
 	MDRV_CPU_ADD(Z80,3750000 )                  /* Guess */
-        MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+        /* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(tx1_sound_prg,0)
 	MDRV_CPU_IO_MAP(tx1_sound_io,0)
         MDRV_CPU_PERIODIC_INT(irq0_line_hold, 915.52734375/2 )         /* Guess */
@@ -956,7 +958,7 @@ static MACHINE_DRIVER_START( buggyboy )
 	MDRV_CPU_PROGRAM_MAP(buggyboy_slave,0)
 
 	MDRV_CPU_ADD(Z80,3750000 )
-        MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+        /* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(buggyboy_sound_prg,0)
         MDRV_CPU_PERIODIC_INT(z80_irq, 915.52734375/2 )  /* To do: verify against real PCB */
 	MDRV_CPU_IO_MAP(buggyboy_sound_io,0)
@@ -1003,7 +1005,7 @@ static MACHINE_DRIVER_START( buggyb1 )
 	MDRV_CPU_PROGRAM_MAP(buggyboy_slave,0)
 
 	MDRV_CPU_ADD(Z80,3750000 )
-        MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+        /* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(buggyb1_sound_prg,0)
         MDRV_CPU_PERIODIC_INT(z80_irq, 915.52734375/2 )  /* To do: verify against real PCB*/
 	MDRV_CPU_IO_MAP(buggyboy_sound_io,0)

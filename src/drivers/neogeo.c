@@ -1428,7 +1428,7 @@ static MACHINE_DRIVER_START( neogeo )
 	MDRV_CPU_VBLANK_INT(neogeo_interrupt,RASTER_LINES)
 
 	MDRV_CPU_ADD(Z80, 4000000) /* verified */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU | CPU_16BIT_PORT)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(neo_readio,neo_writeio)
 

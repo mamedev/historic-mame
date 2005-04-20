@@ -153,7 +153,7 @@ MACHINE_DRIVER_START( irem_audio )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6803, 3579545/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(irem_sound_readmem,irem_sound_writemem)
 	MDRV_CPU_IO_MAP(irem_sound_readport,irem_sound_writeport)
 

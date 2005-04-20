@@ -591,6 +591,7 @@ static ADDRESS_MAP_START( readport_hunchbkd_sound, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( epos_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0xff) AM_READ(epos_decrypt_rom) 	/* Switch protection logic */
 ADDRESS_MAP_END
 
@@ -684,6 +685,7 @@ static ADDRESS_MAP_START( dkong3_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( dkong3_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(MWA8_NOP)	/* ??? */
 ADDRESS_MAP_END
 
@@ -1557,7 +1559,7 @@ static MACHINE_DRIVER_START( radarscp )
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(I8035,6000000/15)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 6MHz crystal */
+	/* audio CPU */	/* 6MHz crystal */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 	MDRV_CPU_IO_MAP(readport_sound,writeport_sound)
 
@@ -1594,7 +1596,7 @@ static MACHINE_DRIVER_START( dkong )
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(I8035,6000000/15)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 6MHz crystal */
+	/* audio CPU */	/* 6MHz crystal */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 	MDRV_CPU_IO_MAP(readport_sound,writeport_sound)
 
@@ -1637,7 +1639,7 @@ static MACHINE_DRIVER_START( hunchbkd )
 	MDRV_CPU_VBLANK_INT(hunchbkd_interrupt,1)
 
 	MDRV_CPU_ADD_TAG("sound", I8035,6000000/15)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 6MHz crystal */
+	/* audio CPU */	/* 6MHz crystal */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 	MDRV_CPU_IO_MAP(readport_hunchbkd_sound,writeport_sound)
 
@@ -1711,7 +1713,7 @@ static MACHINE_DRIVER_START( dkongjr )
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(I8035,6000000/15)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 6MHz crystal */
+	/* audio CPU */	/* 6MHz crystal */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 	MDRV_CPU_IO_MAP(readport_sound,writeport_sound)
 
@@ -1748,7 +1750,7 @@ static MACHINE_DRIVER_START( pestplce )
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(I8035,6000000/15)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 6MHz crystal */
+	/* audio CPU */	/* 6MHz crystal */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 	MDRV_CPU_IO_MAP(readport_sound,writeport_sound)
 
@@ -1784,7 +1786,7 @@ static MACHINE_DRIVER_START( epos )
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(I8035,6000000/15)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 6MHz crystal */
+	/* audio CPU */	/* 6MHz crystal */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 	MDRV_CPU_IO_MAP(readport_sound,writeport_sound)
 
@@ -1834,12 +1836,12 @@ static MACHINE_DRIVER_START( dkong3 )
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(N2A03,N2A03_DEFAULTCLOCK)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(dkong3_sound1_readmem,dkong3_sound1_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(N2A03,N2A03_DEFAULTCLOCK)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(dkong3_sound2_readmem,dkong3_sound2_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 

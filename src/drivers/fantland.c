@@ -354,7 +354,7 @@ static MACHINE_DRIVER_START( fantland )
 	MDRV_CPU_VBLANK_INT(fantland_irq,1)
 
 	MDRV_CPU_ADD(I86, 8000000)        // ?
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(fantland_sound_readmem, fantland_sound_writemem)
 	MDRV_CPU_IO_MAP(fantland_sound_readport,fantland_sound_writeport)
 	MDRV_CPU_PERIODIC_INT(fantland_sound_irq,8000)
@@ -405,7 +405,7 @@ static MACHINE_DRIVER_START( galaxygn )
 	MDRV_CPU_VBLANK_INT(fantland_irq,1)
 
 	MDRV_CPU_ADD(I86, 8000000)        // ?
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(fantland_sound_readmem, fantland_sound_writemem)
 	MDRV_CPU_IO_MAP(fantland_sound_readport,fantland_sound_writeport)
 	// IRQ by YM2151, NMI when soundlatch is written

@@ -665,12 +665,12 @@ static MACHINE_DRIVER_START( zaccaria )
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(M6802,3580000/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 895 kHz */
+	/* audio CPU */	/* 895 kHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem1,sound_writemem1)
 	MDRV_CPU_PERIODIC_INT(zaccaria_cb1_toggle,3580000/4096)
 
 	MDRV_CPU_ADD(M6802,3580000/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 895 kHz */
+	/* audio CPU */	/* 895 kHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem2,sound_writemem2)
 
 	MDRV_FRAMES_PER_SECOND(60)

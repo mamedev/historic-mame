@@ -146,6 +146,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( bombjack_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(AY8910_write_port_0_w)
 	AM_RANGE(0x10, 0x10) AM_WRITE(AY8910_control_port_1_w)
@@ -307,7 +308,7 @@ static MACHINE_DRIVER_START( bombjack )
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(Z80, 3072000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.072 MHz????? */
+	/* audio CPU */	/* 3.072 MHz????? */
 	MDRV_CPU_PROGRAM_MAP(bombjack_sound_readmem,bombjack_sound_writemem)
 	MDRV_CPU_IO_MAP(0,bombjack_sound_writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)

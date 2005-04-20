@@ -224,7 +224,7 @@ static MACHINE_DRIVER_START( snes )
 	MDRV_CPU_VBLANK_INT(snes_scanline_interrupt, SNES_MAX_LINES_NTSC)
 
 	MDRV_CPU_ADD_TAG("sound", SPC700, 2048000)	/* 2.048 Mhz */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(spc_readmem, spc_writemem)
 	MDRV_CPU_VBLANK_INT(NULL, 0)
 

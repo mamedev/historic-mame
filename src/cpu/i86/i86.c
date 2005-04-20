@@ -557,7 +557,7 @@ void i86_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + I86_IP:				info->i = I.pc - I.base[CS];			break;
 		case CPUINFO_INT_SP:							info->i = I.base[SS] + I.regs.w[SP];	break;
 		case CPUINFO_INT_REGISTER + I86_SP:				info->i = I.regs.w[SP];					break;
-		case CPUINFO_INT_REGISTER + I86_FLAGS: 			CompressFlags(); info->i = I.flags;		break;
+		case CPUINFO_INT_REGISTER + I86_FLAGS: 			I.flags = CompressFlags(); info->i = I.flags;		break;
 		case CPUINFO_INT_REGISTER + I86_AX:				info->i = I.regs.w[AX];					break;
 		case CPUINFO_INT_REGISTER + I86_CX:				info->i = I.regs.w[CX];					break;
 		case CPUINFO_INT_REGISTER + I86_DX:				info->i = I.regs.w[DX];					break;

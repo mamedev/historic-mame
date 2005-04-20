@@ -471,7 +471,7 @@ static MACHINE_DRIVER_START( superchs )
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)/* VBL */
 
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 16 MHz */
+	/* audio CPU */	/* 16 MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_CPU_ADD(M68000, 16000000)	/* 16 MHz */

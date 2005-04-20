@@ -303,7 +303,7 @@ static MACHINE_DRIVER_START( goal92 )
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1) /* VBL */
 
 	MDRV_CPU_ADD(Z80, 2500000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_cpu,0)
 								/* IRQs are triggered by the main CPU */
 
@@ -343,7 +343,7 @@ static MACHINE_DRIVER_START( cupsocbl )
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1) /* VBL */
 
 	MDRV_CPU_ADD(Z80, 2510000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_cpu,0)
 								/* IRQs are triggered by the main CPU */
 

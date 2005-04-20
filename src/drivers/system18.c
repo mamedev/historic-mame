@@ -266,10 +266,12 @@ static ADDRESS_MAP_START(shdancbl_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( shdancbl_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0xc0, 0xdf) AM_READ(MRA8_NOP)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( shdancbl_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0xa0, 0xbf) AM_WRITE(MWA8_NOP)
 ADDRESS_MAP_END
 
@@ -314,6 +316,7 @@ static WRITE8_HANDLER( sys18_soundbank_w )
 
 
 static ADDRESS_MAP_START( sound_readport_18, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x80, 0x80) AM_READ(YM3438_status_port_0_A_r)
 //	AM_RANGE(0x82, 0x82) AM_READ(YM3438_status_port_0_B_r)
 //	AM_RANGE(0x90, 0x90) AM_READ(YM3438_status_port_1_A_r)
@@ -322,6 +325,7 @@ static ADDRESS_MAP_START( sound_readport_18, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_writeport_18, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x80, 0x80) AM_WRITE(YM3438_control_port_0_A_w)
 	AM_RANGE(0x81, 0x81) AM_WRITE(YM3438_data_port_0_A_w)
 	AM_RANGE(0x82, 0x82) AM_WRITE(YM3438_control_port_0_B_w)
@@ -1118,7 +1122,7 @@ static MACHINE_DRIVER_START( system18 )
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_CPU_ADD_TAG("sound", Z80, 8000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem_18,sound_writemem_18)
 	MDRV_CPU_IO_MAP(sound_readport_18,sound_writeport_18)
 
@@ -1191,7 +1195,7 @@ static MACHINE_DRIVER_START( shdancbl )
 	MDRV_CPU_PROGRAM_MAP(shdancbl_readmem,shdancbl_writemem)
 
 	MDRV_CPU_MODIFY("sound")
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(shdancbl_sound_readmem,shdancbl_sound_writemem)
 	MDRV_CPU_IO_MAP(shdancbl_sound_readport,shdancbl_sound_writeport)
 	MDRV_SOUND_REMOVE("5c68")

@@ -541,7 +541,7 @@ static MACHINE_DRIVER_START( spy )
 	MDRV_CPU_VBLANK_INT(spy_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(spy_sound_readmem,spy_sound_writemem)
 								/* nmi by the sound chip */
 	MDRV_FRAMES_PER_SECOND(60)

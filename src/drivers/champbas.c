@@ -218,7 +218,7 @@ static MACHINE_DRIVER_START( champbas )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3072000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.072 MHz ? */
+	/* audio CPU */	/* 3.072 MHz ? */
 	MDRV_CPU_PROGRAM_MAP(readmem2,writemem2)
 
 	MDRV_FRAMES_PER_SECOND(60)

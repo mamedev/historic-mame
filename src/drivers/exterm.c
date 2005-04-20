@@ -452,11 +452,11 @@ static MACHINE_DRIVER_START( exterm )
 	MDRV_CPU_PROGRAM_MAP(slave_readmem,slave_writemem)
 
 	MDRV_CPU_ADD(M6502, 2000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_dac_readmem,sound_dac_writemem)
 
 	MDRV_CPU_ADD(M6502, 2000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_ym2151_readmem,sound_ym2151_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)

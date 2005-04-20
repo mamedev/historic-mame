@@ -487,7 +487,7 @@ static MACHINE_DRIVER_START( tokib )
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)/* VBL (could be level1, same vector) */
 
 	MDRV_CPU_ADD(Z80, 3579545)	/* correct, accurate */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz (?) */
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(tokib_sound_readmem,tokib_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)

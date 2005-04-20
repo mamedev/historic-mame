@@ -220,7 +220,7 @@ static MACHINE_DRIVER_START( bigkarnk )
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
 	MDRV_CPU_ADD(M6809, 8867000/4)	/* 68B09, 2.21675 MHz? */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(bigkarnk_readmem_snd,bigkarnk_writemem_snd)
 
 	MDRV_FRAMES_PER_SECOND(60)

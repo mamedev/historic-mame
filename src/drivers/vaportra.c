@@ -311,7 +311,7 @@ static MACHINE_DRIVER_START( vaportra )
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)/* VBL */
 
 	MDRV_CPU_ADD(H6280, 32220000/8) /* Custom chip 45; Audio section crystal is 32.220 MHz */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(58)

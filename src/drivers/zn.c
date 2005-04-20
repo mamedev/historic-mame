@@ -624,6 +624,7 @@ static ADDRESS_MAP_START( qsound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( qsound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
 
@@ -639,7 +640,7 @@ static MACHINE_DRIVER_START( coh1000c )
 	MDRV_CPU_VBLANK_INT( psx_vblank, 1 )
 
 	MDRV_CPU_ADD( Z80, 8000000 )
-	MDRV_CPU_FLAGS( CPU_AUDIO_CPU )  /* 8MHz ?? */
+	/* audio CPU */  /* 8MHz ?? */
 	MDRV_CPU_PROGRAM_MAP( qsound_readmem, qsound_writemem )
 	MDRV_CPU_IO_MAP( qsound_readport, 0 )
 	MDRV_CPU_VBLANK_INT( qsound_interrupt, 4 ) /* 4 interrupts per frame ?? */
@@ -682,7 +683,7 @@ static MACHINE_DRIVER_START( coh1002c )
 	MDRV_CPU_VBLANK_INT( psx_vblank, 1 )
 
 	MDRV_CPU_ADD( Z80, 8000000 )
-	MDRV_CPU_FLAGS( CPU_AUDIO_CPU )  /* 8MHz ?? */
+	/* audio CPU */  /* 8MHz ?? */
 	MDRV_CPU_PROGRAM_MAP( qsound_readmem, qsound_writemem )
 	MDRV_CPU_IO_MAP( qsound_readport, 0 )
 	MDRV_CPU_VBLANK_INT( qsound_interrupt, 4 ) /* 4 interrupts per frame ?? */
@@ -891,7 +892,7 @@ static MACHINE_DRIVER_START( coh3002c )
 	MDRV_CPU_VBLANK_INT( psx_vblank, 1 )
 
 	MDRV_CPU_ADD( Z80, 8000000 )
-	MDRV_CPU_FLAGS( CPU_AUDIO_CPU )  /* 8MHz ?? */
+	/* audio CPU */  /* 8MHz ?? */
 	MDRV_CPU_PROGRAM_MAP( qsound_readmem, qsound_writemem )
 	MDRV_CPU_IO_MAP( qsound_readport, 0 )
 	MDRV_CPU_VBLANK_INT( qsound_interrupt, 4 ) /* 4 interrupts per frame ?? */
@@ -1325,7 +1326,7 @@ static MACHINE_DRIVER_START( coh1000ta )
 	MDRV_CPU_VBLANK_INT( coh1000t_vblank, 1 )
 
 	MDRV_CPU_ADD( Z80, 16000000 / 4 )
-	MDRV_CPU_FLAGS( CPU_AUDIO_CPU )	/* 4 MHz */
+	/* audio CPU */	/* 4 MHz */
 	MDRV_CPU_PROGRAM_MAP( fx1a_sound_readmem, fx1a_sound_writemem )
 
 	MDRV_FRAMES_PER_SECOND( 60 )
@@ -2078,7 +2079,7 @@ static MACHINE_DRIVER_START( coh1002e )
 	MDRV_CPU_VBLANK_INT( psx_vblank, 1 )
 
 	MDRV_CPU_ADD( M68000, 12000000 )
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP( psarc_snd_map, 0 )
 
 	MDRV_FRAMES_PER_SECOND( 60 )
@@ -2590,7 +2591,7 @@ static MACHINE_DRIVER_START( coh1001l )
 	MDRV_CPU_VBLANK_INT( psx_vblank, 1 )
 
 //	MDRV_CPU_ADD( M68000, 10000000 )
-//	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+//	/* audio CPU */
 //	MDRV_CPU_PROGRAM_MAP( atlus_snd_map, 0 )
 
 	MDRV_FRAMES_PER_SECOND( 60 )
@@ -2928,6 +2929,7 @@ ADDRESS_MAP_START( cbaj_z80_map, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 ADDRESS_MAP_START( cbaj_z80_port_map, ADDRESS_SPACE_IO, 8)
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE( 0x84, 0x84 ) AM_READWRITE( YMZ280B_status_0_r, YMZ280B_register_0_w )
 	AM_RANGE( 0x85, 0x85 ) AM_READWRITE( YMZ280B_status_0_r, YMZ280B_data_0_w )
 	AM_RANGE( 0x90, 0x90 ) AM_READWRITE( cbaj_z80_latch_r, cbaj_z80_latch_w )
@@ -2979,7 +2981,7 @@ static MACHINE_DRIVER_START( coh1002msnd )
 	MDRV_CPU_VBLANK_INT( psx_vblank, 1 )
 
 	MDRV_CPU_ADD( Z80, 32000000/8 )
-	MDRV_CPU_FLAGS( CPU_AUDIO_CPU )
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP( cbaj_z80_map, 0 )
 	MDRV_CPU_IO_MAP( cbaj_z80_port_map, 0 )
 

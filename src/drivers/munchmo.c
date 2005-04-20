@@ -291,7 +291,7 @@ static MACHINE_DRIVER_START( munchmo )
 	MDRV_CPU_VBLANK_INT(mnchmobl_interrupt,2)
 
 	MDRV_CPU_ADD(Z80, 3750000) /* ? */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 	MDRV_CPU_VBLANK_INT(nmi_line_assert,1)
 

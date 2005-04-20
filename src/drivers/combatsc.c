@@ -670,7 +670,7 @@ static MACHINE_DRIVER_START( combasc )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,3579545)	/* 3.579545 MHz */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(combasc_readmem_sound,combasc_writemem_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -712,7 +712,7 @@ static MACHINE_DRIVER_START( combascb )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,3579545)	/* 3.579545 MHz */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(combasc_readmem_sound,combasc_writemem_sound) /* FAKE */
 
 	MDRV_FRAMES_PER_SECOND(60)

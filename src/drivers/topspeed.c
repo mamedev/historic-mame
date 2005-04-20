@@ -828,7 +828,7 @@ static MACHINE_DRIVER_START( topspeed )
 	MDRV_CPU_VBLANK_INT(topspeed_interrupt,1)
 
 	MDRV_CPU_ADD(Z80,16000000/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	/* audio CPU */	/* 4 MHz ??? */
 	MDRV_CPU_PROGRAM_MAP(z80_readmem,z80_writemem)
 
 	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */

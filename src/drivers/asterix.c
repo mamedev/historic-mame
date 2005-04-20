@@ -289,7 +289,7 @@ static MACHINE_DRIVER_START( asterix )
 	MDRV_CPU_VBLANK_INT(asterix_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 8000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)

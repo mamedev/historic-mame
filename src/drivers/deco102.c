@@ -26,12 +26,11 @@
 
 */
 
-#define DE102CPU M68000
 
 #include "driver.h"
 #include "decocrpt.h"
 
-data16_t* paletteram16_2;
+extern data16_t* paletteram16_2;
 data16_t* pcktgaldb_fgram;
 data16_t* pcktgaldb_sprites;
 
@@ -227,7 +226,7 @@ INPUT_PORTS_START( pktgaldb )
 	PORT_DIPSETTING(      0x0020, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(      0x0010, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )	// Maybe Flip Screen
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0080, 0x0080, "2 Coins to Start, 1 to Continue" )
@@ -238,7 +237,7 @@ INPUT_PORTS_START( pktgaldb )
 	PORT_DIPSETTING(      0x0100, "3" )
 	PORT_DIPSETTING(      0x0300, "4" )
 	PORT_DIPSETTING(      0x0200, "5" )
-	PORT_DIPNAME( 0x0c00, 0x0c00, "Time"  )
+	PORT_DIPNAME( 0x0c00, 0x0c00, "Time"  ) /* Listed as "Difficulty" */
 	PORT_DIPSETTING(      0x0000, "60" )
 	PORT_DIPSETTING(      0x0400, "80" )
 	PORT_DIPSETTING(      0x0c00, "100" )
@@ -252,7 +251,7 @@ INPUT_PORTS_START( pktgaldb )
 	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x8000, 0x0000, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 
@@ -276,7 +275,12 @@ INPUT_PORTS_START( pktgaldb )
 INPUT_PORTS_END
 
 
-static ADDRESS_MAP_START( deco102_map, ADDRESS_SPACE_PROGRAM, 16 )
+static ADDRESS_MAP_START( deco102_1_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( deco102_2_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
 ADDRESS_MAP_END
 
 
@@ -385,8 +389,8 @@ ADDRESS_MAP_END
 static MACHINE_INIT (deco102)
 {
 	/* code isn't decrypted so we don't want the cpu going anywhere */
-	cpunum_set_input_line(0, INPUT_LINE_HALT, ASSERT_LINE);
-	cpunum_set_input_line(0, INPUT_LINE_RESET, ASSERT_LINE);
+//	cpunum_set_input_line(0, INPUT_LINE_HALT, ASSERT_LINE);
+//	cpunum_set_input_line(0, INPUT_LINE_RESET, ASSERT_LINE);
 }
 
 
@@ -448,8 +452,8 @@ static struct GfxDecodeInfo gfxdecodeinfo_2[] =
 
 static MACHINE_DRIVER_START( deco102_1 )
 	/* basic machine hardware */
-	MDRV_CPU_ADD(DE102CPU, 14000000)	/* DE102 */
-	MDRV_CPU_PROGRAM_MAP(deco102_map,0)
+	MDRV_CPU_ADD(M68000, 14000000)	/* DE102 */
+	MDRV_CPU_PROGRAM_MAP(deco102_1_map,0)
 
 	MDRV_FRAMES_PER_SECOND(58)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -470,8 +474,8 @@ MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( deco102_2 )
 	/* basic machine hardware */
-	MDRV_CPU_ADD(DE102CPU, 14000000)	/* DE102 */
-	MDRV_CPU_PROGRAM_MAP(deco102_map,0)
+	MDRV_CPU_ADD(M68000, 14000000)	/* DE102 */
+	MDRV_CPU_PROGRAM_MAP(deco102_2_map,0)
 
 	MDRV_FRAMES_PER_SECOND(58)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -556,7 +560,7 @@ Notes:
 
 ROM_START( pktgaldx )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* DE102 code (encrypted) */
-	ROM_LOAD( "kg00-2.12a",    0x00000, 0x80000, CRC(62dc4137) SHA1(23887dc3f6e7c4cdcb1bf4f4c87fe3cbe8cdbe69) )
+	ROM_LOAD16_WORD_SWAP( "ke00-2.12a",    0x00000, 0x80000, CRC(b04baf3a) SHA1(680d1b4ab4b6edef36cd96a60539fb7c2dac9637) )
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "maz-02.2h",    0x00000, 0x100000, CRC(c9d35a59) SHA1(07b44c7d7d76b668b4d6ca5672bd1c2910228e68) )
@@ -566,7 +570,25 @@ ROM_START( pktgaldx )
 	ROM_LOAD16_BYTE( "maz-01.3b",    0x000001, 0x080000, CRC(4934fe21) SHA1(b852249f59906d69d32160ebaf9b4781193227e4) )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* Oki samples */
-	ROM_LOAD( "kg01.14f",    0x00000, 0x20000, CRC(8a106263) SHA1(229ab17403c2b8f4e89a90a8cda2f3c3a4b55d9e) )
+	ROM_LOAD( "ke01.14f",    0x00000, 0x20000, CRC(8a106263) SHA1(229ab17403c2b8f4e89a90a8cda2f3c3a4b55d9e) )
+
+	ROM_REGION( 0x100000, REGION_SOUND2, 0 ) /* Oki samples (banked?) */
+	ROM_LOAD( "maz-03.13f",    0x00000, 0x100000, CRC(a313c964) SHA1(4a3664c4e2c44a017a0ab6a6d4361799cbda57b5) )
+ROM_END
+
+ROM_START( pktgaldj )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* DE102 code (encrypted) */
+	ROM_LOAD16_WORD_SWAP( "kg00-2.12a",    0x00000, 0x80000, CRC(62dc4137) SHA1(23887dc3f6e7c4cdcb1bf4f4c87fe3cbe8cdbe69) )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "maz-02.2h",    0x00000, 0x100000, CRC(c9d35a59) SHA1(07b44c7d7d76b668b4d6ca5672bd1c2910228e68) )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "maz-00.1b",    0x000000, 0x080000, CRC(fa3071f4) SHA1(72e7d920e9ca94f8cb166007a9e9e5426a201af8) )
+	ROM_LOAD16_BYTE( "maz-01.3b",    0x000001, 0x080000, CRC(4934fe21) SHA1(b852249f59906d69d32160ebaf9b4781193227e4) )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* Oki samples */
+	ROM_LOAD( "ke01.14f",    0x00000, 0x20000, CRC(8a106263) SHA1(229ab17403c2b8f4e89a90a8cda2f3c3a4b55d9e) )
 
 	ROM_REGION( 0x100000, REGION_SOUND2, 0 ) /* Oki samples (banked?) */
 	ROM_LOAD( "maz-03.13f",    0x00000, 0x100000, CRC(a313c964) SHA1(4a3664c4e2c44a017a0ab6a6d4361799cbda57b5) )
@@ -750,10 +772,83 @@ ROM_START( dblewing )
 	ROM_LOAD( "kp_03-.16h",    0x00000, 0x20000, CRC(5d7f930d) SHA1(ad23aa804ea3ccbd7630ade9b53fc3ea2718a6ec) )
 ROM_END
 
+
+static void deco102_decrypt(int region)
+{
+	static UINT16 xors[16] =
+	{
+		0xb52c,0x2458,0x139a,0xc998,0xce8e,0x5144,0x0429,0xaad4,0xa331,0x3645,0x69a3,0xac64,0x1a53,0x5083,0x4dea,0xd237
+	};
+	static UINT8 bitswaps[16][16] =
+	{
+		{ 12,8,13,11,14,10,15,9, 3,2,1,0,4,5,6,7 }, { 10,11,14,12,15,13,8,9, 6,7,5,3,0,4,2,1 },
+		{ 14,13,15,9,8,12,11,10, 7,4,1,5,6,0,3,2 }, { 15,14,8,9,10,11,13,12, 1,2,7,3,4,6,0,5 },
+		{ 10,9,13,14,15,8,12,11, 5,2,1,0,3,4,7,6 }, { 8,9,15,14,10,11,13,12, 0,6,5,4,1,2,3,7 },
+		{ 14,8,15,9,10,11,13,12, 4,5,3,0,2,7,6,1 }, { 13,11,12,10,15,9,14,8, 6,0,7,5,1,4,3,2 },
+		{ 12,11,13,10,9,8,14,15, 0,2,4,6,7,5,3,1 }, { 15,13,9,8,10,11,12,14, 2,1,0,7,6,5,4,3 },
+		{ 13,8,9,10,11,12,15,14, 6,0,1,2,3,7,4,5 }, { 12,11,10,8,9,13,14,15, 6,5,4,0,7,1,2,3 },
+		{ 12,15,8,13,9,11,14,10, 6,5,4,3,2,1,0,7 }, { 11,12,13,14,15,8,9,10, 4,5,7,1,6,3,2,0 },
+		{ 13,8,12,14,11,15,10,9, 7,6,5,4,3,2,1,0 }, { 15,14,13,12,11,10,9,8, 0,6,7,4,3,2,1,5 }
+	};
+	int i;
+	UINT16 *rom = (UINT16 *)memory_region(region);
+	int size = memory_region_length(region);
+	UINT16 *buf = malloc(size);
+
+	if (buf)
+	{
+		memcpy(buf,rom,size);
+
+		for (i = 0;i < size/2;i++)
+		{
+			int src, j;
+			UINT8 *bs;
+
+			// calculate address of encrypted word in ROM
+			src = i & 0xf0000;
+			if (i & 0x0001) src ^= 0xbe0b;
+			if (i & 0x0002) src ^= 0x5699;
+			if (i & 0x0004) src ^= 0x1322;
+			if (i & 0x0008) src ^= 0x0004;
+			if (i & 0x0010) src ^= 0x08a0;
+			if (i & 0x0020) src ^= 0x0089;
+			if (i & 0x0040) src ^= 0x0408;
+			if (i & 0x0080) src ^= 0x1212;
+			if (i & 0x0100) src ^= 0x08e0;
+			if (i & 0x0200) src ^= 0x5499;
+			if (i & 0x0400) src ^= 0x9a8b;
+			if (i & 0x0800) src ^= 0x1222;
+			if (i & 0x1000) src ^= 0x1200;
+			if (i & 0x2000) src ^= 0x0008;
+			if (i & 0x4000) src ^= 0x1210;
+			if (i & 0x8000) src ^= 0x00e0;
+			src ^= 0x42ba;
+
+			// calculate bitswap to use
+			j = (i & 0xf0) >> 4;
+			if (i & 0x20000) j ^= 4;
+
+			bs = bitswaps[j];
+
+			// decrypt
+			rom[i] = xors[i & 0xf] ^ BITSWAP16(buf[src],
+						bs[0],bs[1],bs[2],bs[3],bs[4],bs[5],bs[6],bs[7],
+						bs[8],bs[9],bs[10],bs[11],bs[12],bs[13],bs[14],bs[15]);
+		}
+
+		free(buf);
+	}
+}
+
 DRIVER_INIT(deco102_1)
 {
 	deco56_decrypt(REGION_GFX1);
-	//deco102_decrypt(REGION_CPU1);
+	deco102_decrypt(REGION_CPU1);
+}
+
+DRIVER_INIT(pktgaldb)
+{
+	deco56_decrypt(REGION_GFX1);
 }
 
 /*
@@ -814,8 +909,8 @@ so for now I dump them as 16M. If necessary, just chop them in half to make them
 ROM_START( boogwing )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* DE102 code (encrypted) */
 	ROM_LOAD16_BYTE( "kn00-2.2b",    0x000000, 0x040000, CRC(e38892b9) SHA1(49b5637965a43e0378e1258c5f0a780926f1f283) )
-	ROM_LOAD16_BYTE( "kn01-2.4b",    0x000001, 0x040000, CRC(3ad4b54c) SHA1(5141001768266995078407851b445378b21453de) )
-	ROM_LOAD16_BYTE( "kn02-2.2e",    0x080000, 0x040000, CRC(8426efef) SHA1(2ea33cbd58b638053d75668a484648dbf67dabb8) )
+	ROM_LOAD16_BYTE( "kn02-2.2e",    0x000001, 0x040000, CRC(8426efef) SHA1(2ea33cbd58b638053d75668a484648dbf67dabb8) )
+	ROM_LOAD16_BYTE( "kn01-2.4b",    0x080000, 0x040000, CRC(3ad4b54c) SHA1(5141001768266995078407851b445378b21453de) )
 	ROM_LOAD16_BYTE( "kn03-2.4e",    0x080001, 0x040000, CRC(10b61f4a) SHA1(41d7f670defbd7dae89afafac9839a9e237814d5) )
 
 	ROM_REGION( 0x80000, REGION_USER1, 0 ) /* unknown 1 (more program code?) */
@@ -858,18 +953,19 @@ DRIVER_INIT(deco102_2)
 {
 	deco56_decrypt(REGION_GFX1);
 	deco56_decrypt(REGION_GFX2);
-	//deco102_decrypt(REGION_CPU1);
+	deco102_decrypt(REGION_CPU1);
 }
 
 /* no sound cpu? */
-GAMEX(1993, pktgaldx, 0,        deco102_1,      deco102, deco102_1,      ROT0, "Nihon System", "Pocket Gal Deluxe", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
-GAMEX(1993, pktgaldb, pktgaldx, pktgaldb,       pktgaldb,deco102_1,      ROT0, "bootleg", "Pocket Gal Deluxe (bootleg)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX(1992, pktgaldx, 0,        deco102_1, deco102,  deco102_1, ROT0, "Nihon System", "Pocket Gal Deluxe (Euro v3.00)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
+GAMEX(1992, pktgaldj, pktgaldx, deco102_1, deco102,  deco102_1, ROT0, "Data East",    "Pocket Gal Deluxe (Japan?)",GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
+GAMEX(1992, pktgaldb, pktgaldx, pktgaldb,  pktgaldb, pktgaldb,  ROT0, "bootleg",      "Pocket Gal Deluxe (bootleg)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 
 /* these have a sound cpu */
-GAMEX(199?, dietgo,   0,        deco102_1,      deco102, deco102_1,      ROT0, "Data East", "Diet Go Go", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
-GAMEX(199?, dietgoe,  dietgo,   deco102_1,      deco102, deco102_1,      ROT0, "Data East", "Diet Go Go (Euro v1.1)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
-GAMEX(199?, dietgoa,  dietgo,   deco102_1,      deco102, deco102_1,      ROT0, "Data East", "Diet Go Go (alt)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
-GAMEX(1993, dblewing, 0,        deco102_1,      deco102, deco102_1,      ROT90,"Mitchell", "Double Wings", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
+GAMEX(199?, dietgo,   0,        deco102_1, deco102, deco102_1, ROT0, "Data East", "Diet Go Go", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
+GAMEX(199?, dietgoe,  dietgo,   deco102_1, deco102, deco102_1, ROT0, "Data East", "Diet Go Go (Euro v1.1)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
+GAMEX(199?, dietgoa,  dietgo,   deco102_1, deco102, deco102_1, ROT0, "Data East", "Diet Go Go (alt)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
+GAMEX(1993, dblewing, 0,        deco102_1, deco102, deco102_1, ROT90,"Mitchell", "Double Wings", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
 
 /* this is clearly different hardware (more of everything) */
-GAMEX(1992, boogwing, 0,        deco102_2,      deco102, deco102_2,      ROT0, "Data East", "Boogie Wings", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
+GAMEX(1992, boogwing, 0,        deco102_2,      deco102, deco102_2, ROT0, "Data East", "Boogie Wings", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)

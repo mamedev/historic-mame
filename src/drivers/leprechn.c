@@ -239,7 +239,7 @@ static MACHINE_DRIVER_START( leprechn )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(M6502, 1500000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)    /* 1.5 MHz ??? */
+	/* audio CPU */    /* 1.5 MHz ??? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(57)

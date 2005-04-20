@@ -261,7 +261,7 @@ static MACHINE_DRIVER_START( formatz )
 	MDRV_CPU_VBLANK_INT(aeroboto_interrupt,1)
 
 	MDRV_CPU_ADD(M6809, 640000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 

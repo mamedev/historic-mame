@@ -560,6 +560,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( hanamai_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x60, 0x60) AM_READ(hanamai_keyboard_0_r	)	// P1
 	AM_RANGE(0x61, 0x61) AM_READ(hanamai_keyboard_1_r	)	// P2
 	AM_RANGE(0x62, 0x62) AM_READ(input_port_2_r			)	// Coins
@@ -568,6 +569,7 @@ static ADDRESS_MAP_START( hanamai_readport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x79, 0x79) AM_READ(YM2203_read_port_0_r	)	// 2 x DSW
 ADDRESS_MAP_END
 static ADDRESS_MAP_START( hanamai_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(dynax_extra_scrollx_w		)	// screen scroll X
 	AM_RANGE(0x20, 0x20) AM_WRITE(dynax_extra_scrolly_w		)	// screen scroll Y
 	AM_RANGE(0x41, 0x47) AM_WRITE(dynax_blitter_rev2_w		)	// Blitter
@@ -600,6 +602,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( hnoridur_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x21, 0x21) AM_READ(input_port_2_r			)	// Coins
 	AM_RANGE(0x22, 0x22) AM_READ(hanamai_keyboard_1_r	)	// P2
 	AM_RANGE(0x23, 0x23) AM_READ(hanamai_keyboard_0_r	)	// P1
@@ -610,6 +613,7 @@ static ADDRESS_MAP_START( hnoridur_readport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x57, 0x57) AM_READ(ret_ff					)	// ?
 ADDRESS_MAP_END
 static ADDRESS_MAP_START( hnoridur_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x01, 0x07) AM_WRITE(dynax_blitter_rev2_w		)	// Blitter
 	AM_RANGE(0x20, 0x20) AM_WRITE(hanamai_keyboard_w			)	// keyboard row select
 	AM_RANGE(0x30, 0x30) AM_WRITE(adpcm_reset_w				)	// MSM5205 reset
@@ -644,6 +648,7 @@ ADDRESS_MAP_END
 
 // Almost identical to hnoridur
 static ADDRESS_MAP_START( mcnpshnt_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x21, 0x21) AM_READ(input_port_2_r			)	// Coins
 	AM_RANGE(0x22, 0x22) AM_READ(hanamai_keyboard_1_r	)	// P2
 	AM_RANGE(0x23, 0x23) AM_READ(hanamai_keyboard_0_r	)	// P1
@@ -652,6 +657,7 @@ static ADDRESS_MAP_START( mcnpshnt_readport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x57, 0x57) AM_READ(ret_ff					)	// ?
 ADDRESS_MAP_END
 static ADDRESS_MAP_START( mcnpshnt_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x01, 0x07) AM_WRITE(dynax_blitter_rev2_w		)	// Blitter
 //	AM_RANGE(0x10, 0x10) AM_WRITE(MWA8_NOP					)	// CRT Controller
 //	AM_RANGE(0x11, 0x11) AM_WRITE(MWA8_NOP					)	// CRT Controller
@@ -683,6 +689,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( sprtmtch_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x10, 0x10) AM_READ(YM2203_status_port_0_r	)	// YM2203
 	AM_RANGE(0x11, 0x11) AM_READ(YM2203_read_port_0_r	)	// 2 x DSW
 	AM_RANGE(0x20, 0x20) AM_READ(input_port_0_r			)	// P1
@@ -691,6 +698,7 @@ static ADDRESS_MAP_START( sprtmtch_readport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x23, 0x23) AM_READ(ret_ff					)	// ?
 ADDRESS_MAP_END
 static ADDRESS_MAP_START( sprtmtch_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x01, 0x07) AM_WRITE(dynax_blitter_rev2_w		)	// Blitter
 	AM_RANGE(0x10, 0x10) AM_WRITE(YM2203_control_port_0_w	)	// YM2203
 	AM_RANGE(0x11, 0x11) AM_WRITE(YM2203_write_port_0_w		)	//
@@ -715,6 +723,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( mjfriday_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x63, 0x63) AM_READ(hanamai_keyboard_0_r	)	// P1
 	AM_RANGE(0x62, 0x62) AM_READ(hanamai_keyboard_1_r	)	// P2
 	AM_RANGE(0x61, 0x61) AM_READ(input_port_2_r			)	// Coins
@@ -722,6 +731,7 @@ static ADDRESS_MAP_START( mjfriday_readport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x67, 0x67) AM_READ(input_port_1_r			)	// DSW
 ADDRESS_MAP_END
 static ADDRESS_MAP_START( mjfriday_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x41, 0x47) AM_WRITE(dynax_blitter_rev2_w		)	// Blitter
 //	AM_RANGE(0x50, 0x50) AM_WRITE(MWA8_NOP					)	// CRT Controller
 //	AM_RANGE(0x51, 0x51) AM_WRITE(MWA8_NOP					)	// CRT Controller
@@ -743,6 +753,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( nanajign_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x11, 0x11) AM_READ(input_port_2_r			)	// Coins
 	AM_RANGE(0x12, 0x12) AM_READ(hanamai_keyboard_1_r	)	// P2
 	AM_RANGE(0x13, 0x13) AM_READ(hanamai_keyboard_0_r	)	// P1
@@ -751,6 +762,7 @@ static ADDRESS_MAP_START( nanajign_readport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x16, 0x16) AM_READ(input_port_8_r			)	// DSW3
 ADDRESS_MAP_END
 static ADDRESS_MAP_START( nanajign_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(adpcm_reset_w				)	// MSM5205 reset
 	AM_RANGE(0x02, 0x02) AM_WRITE(adpcm_data_w				)	// MSM5205 data
 	AM_RANGE(0x04, 0x04) AM_WRITE(YM2413_register_port_0_w	)	// YM2413
@@ -855,12 +867,14 @@ WRITE8_HANDLER( yarunara_flipscreen_w )
 }
 
 static ADDRESS_MAP_START( yarunara_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x02, 0x03) AM_READ(yarunara_input_r	)	// Controls
 	AM_RANGE(0x4c, 0x4c) AM_READ(input_port_0_r		)	// DSW 1
 	AM_RANGE(0x4f, 0x4f) AM_READ(input_port_1_r		)	// DSW 2
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( yarunara_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x01) AM_WRITE(yarunara_input_w			)	// Controls
 	AM_RANGE(0x11, 0x17) AM_WRITE(dynax_blitter_rev2_w		)	// Blitter
 	AM_RANGE(0x20, 0x20) AM_WRITE(adpcm_reset_w				)	// MSM5205 reset
@@ -925,6 +939,7 @@ static WRITE8_HANDLER( jantouki_rombank_w )
 }
 
 static ADDRESS_MAP_START( jantouki_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x4a, 0x4a) AM_READ(jantouki_soundlatch_ack_r	)	// Soundlatch status
 	AM_RANGE(0x52, 0x52) AM_READ(hanamai_keyboard_0_r		)	// P1
 	AM_RANGE(0x54, 0x54) AM_READ(input_port_2_r				)	// Coins
@@ -933,6 +948,7 @@ static ADDRESS_MAP_START( jantouki_readport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x67, 0x67) AM_READ(jantouki_blitter_busy_r		)	//
 ADDRESS_MAP_END
 static ADDRESS_MAP_START( jantouki_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 //	AM_RANGE(0x40, 0x41) AM_WRITE(MWA8_NOP					)	// CRT Controller
 	AM_RANGE(0x48, 0x48) AM_WRITE(jantouki_rombank_w			)	// BANK ROM Select
 	AM_RANGE(0x49, 0x49) AM_WRITE(jantouki_soundlatch_w		)	// To Sound CPU
@@ -981,6 +997,7 @@ READ8_HANDLER( jantouki_soundlatch_status_r )
 }
 
 static ADDRESS_MAP_START( jantouki_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x21, 0x21) AM_READ(AY8910_read_port_0_r			)	// AY8910
 	AM_RANGE(0x28, 0x28) AM_READ(YM2203_status_port_0_r			)	// YM2203
 	AM_RANGE(0x29, 0x29) AM_READ(YM2203_read_port_0_r			)	//
@@ -988,6 +1005,7 @@ static ADDRESS_MAP_START( jantouki_sound_readport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x70, 0x70) AM_READ(jantouki_soundlatch_r			)	// From Main CPU
 ADDRESS_MAP_END
 static ADDRESS_MAP_START( jantouki_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(jantouki_sound_rombank_w		)	// BANK ROM Select
 	AM_RANGE(0x10, 0x10) AM_WRITE(jantouki_sound_vblank_ack_w	)	// VBlank IRQ Ack
 	AM_RANGE(0x22, 0x22) AM_WRITE(AY8910_write_port_0_w			)	// AY8910
@@ -1023,6 +1041,7 @@ static WRITE8_HANDLER( mjelctrn_blitter_ack_w )
 }
 
 static ADDRESS_MAP_START( mjelctrn_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x81, 0x81) AM_READ(input_port_2_r			)	// Coins
 	AM_RANGE(0x82, 0x82) AM_READ(mjelctrn_keyboard_1_r	)	// P2
 	AM_RANGE(0x83, 0x83) AM_READ(hanamai_keyboard_0_r	)	// P1
@@ -1030,6 +1049,7 @@ static ADDRESS_MAP_START( mjelctrn_readport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x85, 0x85) AM_READ(ret_ff					)	// ?
 ADDRESS_MAP_END
 static ADDRESS_MAP_START( mjelctrn_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x04, 0x04) AM_WRITE(YM2413_register_port_0_w	)	// YM2413
 	AM_RANGE(0x05, 0x05) AM_WRITE(YM2413_data_port_0_w		)	//
 	AM_RANGE(0x08, 0x08) AM_WRITE(AY8910_write_port_0_w		)	// AY8910

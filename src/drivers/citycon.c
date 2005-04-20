@@ -215,7 +215,7 @@ static MACHINE_DRIVER_START( citycon )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(M6809, 640000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 0.640 MHz ??? */
+	/* audio CPU */        /* 0.640 MHz ??? */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 

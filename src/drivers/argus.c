@@ -395,23 +395,27 @@ static ADDRESS_MAP_START( sound_writemem_b, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_readport_1, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x0000, 0x0000) AM_READ(YM2203_status_port_0_r)
-	AM_RANGE(0x0001, 0x0001) AM_READ(YM2203_read_port_0_r)
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE(0x00, 0x00) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0x01, 0x01) AM_READ(YM2203_read_port_0_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_writeport_1, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(YM2203_control_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(YM2203_write_port_0_w)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_readport_2, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x0000, 0x0000) AM_READ(YM2203_status_port_0_r)
-	AM_RANGE(0x0001, 0x0001) AM_READ(YM2203_read_port_0_r)
-	AM_RANGE(0x0080, 0x0080) AM_READ(YM2203_status_port_1_r)
-	AM_RANGE(0x0081, 0x0081) AM_READ(YM2203_read_port_1_r)
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE(0x00, 0x00) AM_READ(YM2203_status_port_0_r)
+	AM_RANGE(0x01, 0x01) AM_READ(YM2203_read_port_0_r)
+	AM_RANGE(0x80, 0x80) AM_READ(YM2203_status_port_1_r)
+	AM_RANGE(0x81, 0x81) AM_READ(YM2203_read_port_1_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_writeport_2, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(YM2203_control_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(YM2203_write_port_0_w)
 	AM_RANGE(0x80, 0x80) AM_WRITE(YM2203_control_port_1_w)
@@ -739,7 +743,7 @@ static MACHINE_DRIVER_START( argus )
 	MDRV_CPU_VBLANK_INT(argus_interrupt,2)
 
 	MDRV_CPU_ADD(Z80, 5000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)			/* 4 MHz */
+	/* audio CPU */			/* 4 MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem_a,sound_writemem_a)
 	MDRV_CPU_IO_MAP(sound_readport_1,sound_writeport_1)
 
@@ -776,7 +780,7 @@ static MACHINE_DRIVER_START( valtric )
 	MDRV_CPU_VBLANK_INT(argus_interrupt,2)
 
 	MDRV_CPU_ADD(Z80, 5000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)			/* 5 MHz */
+	/* audio CPU */			/* 5 MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem_a,sound_writemem_a)
 	MDRV_CPU_IO_MAP(sound_readport_2,sound_writeport_2)
 
@@ -819,7 +823,7 @@ static MACHINE_DRIVER_START( butasan )
 	MDRV_CPU_VBLANK_INT(argus_interrupt,2)
 
 	MDRV_CPU_ADD(Z80, 5000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)			/* 5 MHz */
+	/* audio CPU */			/* 5 MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem_b,sound_writemem_b)
 	MDRV_CPU_IO_MAP(sound_readport_2,sound_writeport_2)
 

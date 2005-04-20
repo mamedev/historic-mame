@@ -230,7 +230,7 @@ static MACHINE_DRIVER_START( exedexes )
 	MDRV_CPU_VBLANK_INT(exedexes_interrupt,2)
 
 	MDRV_CPU_ADD(Z80, 3000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3 MHz ??? */
+	/* audio CPU */	/* 3 MHz ??? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
 

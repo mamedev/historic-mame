@@ -549,7 +549,7 @@ static MACHINE_DRIVER_START( slapshot )
 	MDRV_CPU_VBLANK_INT(slapshot_interrupt,1)
 
 	MDRV_CPU_ADD(Z80,32000000/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz */
+	/* audio CPU */	/* 4 MHz */
 	MDRV_CPU_PROGRAM_MAP(z80_sound_readmem,z80_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -588,7 +588,7 @@ static MACHINE_DRIVER_START( opwolf3 )
 	MDRV_CPU_VBLANK_INT(slapshot_interrupt,1)
 
 	MDRV_CPU_ADD(Z80,32000000/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz */
+	/* audio CPU */	/* 4 MHz */
 	MDRV_CPU_PROGRAM_MAP(z80_sound_readmem,z80_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)

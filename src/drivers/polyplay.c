@@ -187,11 +187,13 @@ ADDRESS_MAP_END
 
 /* port mapping */
 static ADDRESS_MAP_START( readport_polyplay, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x84, 0x84) AM_READ(input_port_0_r)
 	AM_RANGE(0x83, 0x83) AM_READ(polyplay_random_read)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport_polyplay, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x80, 0x81) AM_WRITE(polyplay_sound_channel)
 	AM_RANGE(0x82, 0x82) AM_WRITE(polyplay_start_timer2)
 ADDRESS_MAP_END

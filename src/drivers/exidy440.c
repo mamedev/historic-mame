@@ -1093,7 +1093,7 @@ static MACHINE_DRIVER_START( exidy440 )
 	MDRV_CPU_VBLANK_INT(main_interrupt,1)
 
 	MDRV_CPU_ADD(M6809,12979200/4/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(readmem_cpu2,writemem_cpu2)
 	MDRV_CPU_VBLANK_INT(irq0_line_assert,1)
 

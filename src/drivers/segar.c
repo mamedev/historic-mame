@@ -289,6 +289,7 @@ ADDRESS_MAP_END
  *************************************/
 
 static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 //AM_RANGE(0x3f, 0x3f) AM_READ(MRA8_NOP) /* Pig Newton - read from 1D87 */
 	AM_RANGE(0x0e, 0x0e) AM_READ(monsterb_audio_8255_r)
 	AM_RANGE(0x81, 0x81) AM_READ(input_port_8_r)     /* only used by Sindbad Mystery */
@@ -297,16 +298,19 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( spaceod_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0xf8, 0xfc) AM_READ(spaceod_ports_r)
 ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0xbf, 0xbf) AM_WRITE(segar_video_port_w)
 ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( sindbadm_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 //      AM_RANGE(0x00, 0x00) AM_WRITE(???_w) /* toggles on and off immediately (0x01, 0x00) */
 	AM_RANGE(0x41, 0x41) AM_WRITE(sindbadm_back_port_w)
 	AM_RANGE(0x43, 0x43) AM_WRITE(segar_video_port_w) /* bit0=cocktail flip, bit1=write to color RAM, bit2=always on? */
@@ -1075,7 +1079,7 @@ static MACHINE_DRIVER_START( astrob )
 	MDRV_IMPORT_FROM(segar)
 
 	MDRV_CPU_ADD(I8035, 3120000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sega_speechboard_readmem, sega_speechboard_writemem)
 	MDRV_CPU_IO_MAP (sega_speechboard_readport,sega_speechboard_writeport)
 
@@ -1130,7 +1134,7 @@ static MACHINE_DRIVER_START( monsterb )
 	MDRV_IMPORT_FROM(segar)
 
 	MDRV_CPU_ADD(N7751, 6000000/15)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(monsterb_7751_readmem,monsterb_7751_writemem)
 	MDRV_CPU_IO_MAP(monsterb_7751_readport,monsterb_7751_writeport)
 
@@ -1180,7 +1184,7 @@ static MACHINE_DRIVER_START( sindbadm )
 	MDRV_CPU_VBLANK_INT(segar_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz ? - see system1.c */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sindbadm_sound_readmem,sindbadm_sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
 

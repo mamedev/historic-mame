@@ -365,13 +365,13 @@ static MACHINE_DRIVER_START( redalert )
 	MDRV_CPU_VBLANK_INT(redalert_interrupt,1)
 
 	MDRV_CPU_ADD(M6502, 1000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	   /* 1 MHz */
+	/* audio CPU */	   /* 1 MHz */
 	MDRV_CPU_PROGRAM_MAP(redalert_sound_readmem,redalert_sound_writemem)
 			/* IRQ is hooked to a 555 timer, whose freq is 1150 Hz */
 	MDRV_CPU_PERIODIC_INT(irq0_line_hold,1150)
 
 	MDRV_CPU_ADD(8085A, 1000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	   /* 1 MHz? */
+	/* audio CPU */	   /* 1 MHz? */
 	MDRV_CPU_PROGRAM_MAP(redalert_voice_readmem,redalert_voice_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -420,7 +420,7 @@ static MACHINE_DRIVER_START( demoneye )
 	MDRV_CPU_VBLANK_INT(redalert_interrupt,1)
 
 	MDRV_CPU_ADD(M6802, 3579545)	/* 3.579545 MHz */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(demoneye_sound_readmem,demoneye_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)

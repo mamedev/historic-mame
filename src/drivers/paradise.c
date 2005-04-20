@@ -363,7 +363,6 @@ static MACHINE_DRIVER_START( paradise )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 12000000/2)			/* Z8400B - 6mhz Verified*/
-	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_PROGRAM_MAP(paradise_readmem,paradise_writemem)
 	MDRV_CPU_IO_MAP(paradise_readport,paradise_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)	/* No nmi routine */

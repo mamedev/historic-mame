@@ -1154,7 +1154,7 @@ static MACHINE_DRIVER_START( wecleman )
 
 	/* Schems: can be reset, no nmi, soundlatch, 3.58MHz */
 	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(wecleman_sound_readmem,wecleman_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1208,7 +1208,7 @@ static MACHINE_DRIVER_START( hotchase )
 	MDRV_CPU_PROGRAM_MAP(hotchase_sub_readmem,hotchase_sub_writemem)
 
 	MDRV_CPU_ADD(M6809, 3579545 / 2)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579/2 MHz - PCB is drawn in one set's readme */
+	/* audio CPU */	/* 3.579/2 MHz - PCB is drawn in one set's readme */
 	MDRV_CPU_PROGRAM_MAP(hotchase_sound_readmem,hotchase_sound_writemem)
 	MDRV_CPU_PERIODIC_INT( hotchase_sound_timer, 496 )
 

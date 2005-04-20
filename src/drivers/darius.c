@@ -591,12 +591,14 @@ static WRITE8_HANDLER( adpcm_data_w )
 }
 
 static ADDRESS_MAP_START( darius_sound2_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(adpcm_command_read)
 	AM_RANGE(0x02, 0x02) AM_READ(readport2)	/* ??? */
 	AM_RANGE(0x03, 0x03) AM_READ(readport3)	/* ??? */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( darius_sound2_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(adpcm_nmi_disable)
 	AM_RANGE(0x01, 0x01) AM_WRITE(adpcm_nmi_enable)
 	AM_RANGE(0x02, 0x02) AM_WRITE(adpcm_data_w)
@@ -865,7 +867,7 @@ static MACHINE_DRIVER_START( darius )
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,8000000/2)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ? */
+	/* audio CPU */	/* 4 MHz ? */
 	MDRV_CPU_PROGRAM_MAP(darius_sound_readmem,darius_sound_writemem)
 
 	MDRV_CPU_ADD(M68000,16000000/2)	/* 8 MHz ? */
@@ -873,7 +875,7 @@ static MACHINE_DRIVER_START( darius )
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,8000000/2) /* 4 MHz ? */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ADPCM player using MSM5205 */
+	/* audio CPU */	/* ADPCM player using MSM5205 */
 	MDRV_CPU_PROGRAM_MAP(darius_sound2_readmem,darius_sound2_writemem)
 	MDRV_CPU_IO_MAP(darius_sound2_readport,darius_sound2_writeport)
 

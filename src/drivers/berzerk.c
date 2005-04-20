@@ -48,6 +48,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x44, 0x44) AM_READ(berzerk_voiceboard_r)
 	AM_RANGE(0x48, 0x48) AM_READ(input_port_0_r)
 	AM_RANGE(0x49, 0x49) AM_READ(input_port_1_r)
@@ -66,6 +67,7 @@ static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x40, 0x46) AM_WRITE(berzerk_sound_control_a_w) /* First sound board */
 	AM_RANGE(0x47, 0x47) AM_WRITE(MWA8_NOP) /* not used sound stuff */
 	AM_RANGE(0x4b, 0x4b) AM_WRITE(berzerk_magicram_control_w)

@@ -1611,7 +1611,7 @@ static MACHINE_DRIVER_START( gottlieb )
 	MDRV_CPU_VBLANK_INT(gottlieb_interrupt,1)
 
 	MDRV_CPU_ADD_TAG("sound", M6502, 3579545/4)	/* the board can be set to /2 as well */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(gottlieb_sound_readmem,gottlieb_sound_writemem)
 								/* NMIs are triggered by the Votrax SC-01 */
 	MDRV_FRAMES_PER_SECOND(61)
@@ -1687,11 +1687,11 @@ static MACHINE_DRIVER_START( gottlieb2 )
 	MDRV_CPU_VBLANK_INT(gottlieb_interrupt,1)
 
 	MDRV_CPU_ADD_TAG("sound", M6502, 1000000)	/* 1 MHz */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(stooges_sound_readmem,stooges_sound_writemem)
 
 	MDRV_CPU_ADD_TAG("sound2", M6502, 1000000)	/* 1 MHz */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(stooges_sound2_readmem,stooges_sound2_writemem)
 								/* NMIs are triggered by the Votrax SC-01 */
 	MDRV_FRAMES_PER_SECOND(61)

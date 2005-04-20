@@ -569,7 +569,7 @@ static MACHINE_DRIVER_START( liblrabl )
 	MDRV_CPU_VBLANK_INT(toypop_main_interrupt,1)
 
 	MDRV_CPU_ADD(M6809, 1536000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.536 MHz (measured on Libble Rabble board) */
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(readmem_soundCPU,writemem_soundCPU)
 	MDRV_CPU_VBLANK_INT(irq0_line_assert,1)
 

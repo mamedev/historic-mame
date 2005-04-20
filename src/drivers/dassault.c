@@ -595,7 +595,7 @@ static MACHINE_DRIVER_START( dassault )
 	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
 
 	MDRV_CPU_ADD(H6280,32220000/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* Accurate */
+	/* audio CPU */	/* Accurate */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)

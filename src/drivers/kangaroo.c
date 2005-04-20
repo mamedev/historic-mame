@@ -399,7 +399,7 @@ static MACHINE_DRIVER_START( kangaroo )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 10000000/4)	/* 2.5 MHz */
-	MDRV_CPU_FLAGS(CPU_16BIT_PORT | CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(0,sound_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)

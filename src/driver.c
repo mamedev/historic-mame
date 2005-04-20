@@ -1057,6 +1057,7 @@ const struct GameDriver *drivers[] =
 	/* 870 - Space Invaders Deluxe cocktail */
 	DRIVER( searthin )
 	DRIVER( searthia )
+	DRIVER( invadrmr )
 	DRIVER( spaceatt )
 	DRIVER( spaceat2 )
 	DRIVER( sinvzen )
@@ -3717,6 +3718,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( fncywld )	/* (c) 1996 Unico */
 	DRIVER( htchctch )	/* (c) 1995 SemiCom */
 	DRIVER( cookbib )	/* (c) 1995 SemiCom */
+	DRIVER( chokchok )	/* (c) 1995 SemiCom */
 	DRIVER( bcstry )	/* (c) 199? SemiCom */
 	DRIVER( bcstrya )	/* (c) 199? SemiCom */
 	DRIVER( suprtrio )	/* (c) 1994 GameAce */
@@ -3734,7 +3736,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( dietgo )	/* MAY (c) 1993 */
 	DRIVER( dietgoe )	/* MAY (c) 1993 */
 	DRIVER( dietgoa )	/* MAY (c) 1993 */
-	DRIVER( pktgaldx )	/* MAZ (c) 1993 */
+	DRIVER( pktgaldx )	/* MAZ (c) 1993 Data East (Euro v3.00) */
+	DRIVER( pktgaldj )	/* MAZ (c) 1993 */
 	DRIVER( pktgaldb )	/* bootleg */
 	/* MBA ?? */
 	/* MBB ?? */
@@ -5586,7 +5589,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( gstriker )	/* (c) [1993] Human */
 	DRIVER( vgoalsoc )
 	DRIVER( vgoalsca )
-	DRIVER( worldc94 )
+	DRIVER( twrldc94 )      /* (c) 1994 Tecmo */
+	DRIVER( twrdc94a )      /* (c) 1994 Tecmo */
 	DRIVER( suprslam )	/* (c) 1995 Banpresto */
 	DRIVER( fromanc2 )	/* (c) 1995 Video System Co. (Japan) */
 	DRIVER( fromancr )	/* (c) 1995 Video System Co. (Japan) */
@@ -6528,6 +6532,6 @@ Other Sun games
 	DRIVER( turbosub )
 	DRIVER( pipeline )
 	DRIVER( penocup )
-	DRIVER( cwbbc97 )
+	DRIVER( dreamwld )	/* (c) 2000 SemiCom */
 
 #endif	/* DRIVER_RECURSIVE */

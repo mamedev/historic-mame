@@ -359,11 +359,11 @@ static MACHINE_DRIVER_START( junofrst )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,14318000/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.78975 MHz */
+	/* audio CPU */	/* 1.78975 MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_CPU_ADD(I8039,8000000/I8039_CLOCK_DIVIDER)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 8MHz crystal */
+	/* audio CPU */	/* 8MHz crystal */
 	MDRV_CPU_PROGRAM_MAP(i8039_readmem,i8039_writemem)
 	MDRV_CPU_IO_MAP(i8039_readport,i8039_writeport)
 

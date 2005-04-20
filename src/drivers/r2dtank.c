@@ -340,7 +340,7 @@ static MACHINE_DRIVER_START( r2dtank )
 
 	/* Sound CPU */
 	MDRV_CPU_ADD(M6802,3000000/4)			/* ?? */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)

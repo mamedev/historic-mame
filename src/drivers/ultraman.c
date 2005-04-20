@@ -162,6 +162,7 @@ static ADDRESS_MAP_START( ultraman_writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( ultraman_writeport_sound, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 //	AM_RANGE(0x00, 0x00) AM_WRITE(MWA8_NOP)						/* ??? */
 ADDRESS_MAP_END
 
@@ -269,7 +270,7 @@ static MACHINE_DRIVER_START( ultraman )
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,24000000/6)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* 4 MHz? */
+	/* audio CPU */		/* 4 MHz? */
 	MDRV_CPU_PROGRAM_MAP(ultraman_readmem_sound,ultraman_writemem_sound)
 	MDRV_CPU_IO_MAP(0,ultraman_writeport_sound)
 

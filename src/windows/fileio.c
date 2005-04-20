@@ -497,7 +497,7 @@ osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const cha
 {
 	DWORD disposition = 0, access = 0, sharemode = 0, flags = 0;
 	TCHAR fullpath[1024];
-	LONG upperPos = 0;
+	DWORD upperPos = 0;
 	osd_file *file;
 	int i;
 	const TCHAR *s;

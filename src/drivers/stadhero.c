@@ -287,7 +287,7 @@ static MACHINE_DRIVER_START( stadhero )
 	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)/* VBL */
 
 	MDRV_CPU_ADD(M6502, 1500000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(stadhero_s_readmem,stadhero_s_writemem)
 
 	MDRV_FRAMES_PER_SECOND(58)

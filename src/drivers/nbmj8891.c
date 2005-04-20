@@ -560,6 +560,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( readport_gionbana, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x7f) AM_READ(nb1413m3_sndrom_r)
 	AM_RANGE(0x90, 0x90) AM_READ(nb1413m3_inputport0_r)
 	AM_RANGE(0xa0, 0xa0) AM_READ(nb1413m3_inputport1_r)
@@ -570,6 +571,7 @@ static ADDRESS_MAP_START( readport_gionbana, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport_gionbana, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(nb1413m3_nmi_clock_w)
 	AM_RANGE(0x20, 0x27) AM_WRITE(nbmj8891_blitter_w)
 	AM_RANGE(0x40, 0x40) AM_WRITE(nbmj8891_clutsel_w)
@@ -586,6 +588,7 @@ static ADDRESS_MAP_START( writeport_gionbana, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport_mgion, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(nb1413m3_nmi_clock_w)
 	AM_RANGE(0x30, 0x37) AM_WRITE(nbmj8891_blitter_w)
 	AM_RANGE(0x40, 0x40) AM_WRITE(nbmj8891_clutsel_w)
@@ -602,6 +605,7 @@ static ADDRESS_MAP_START( writeport_mgion, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( readport_omotesnd, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x7f) AM_READ(nb1413m3_sndrom_r)
 	AM_RANGE(0x81, 0x81) AM_READ(AY8910_read_port_0_r)
 	AM_RANGE(0x90, 0x90) AM_READ(nb1413m3_inputport0_r)
@@ -614,6 +618,7 @@ static ADDRESS_MAP_START( readport_omotesnd, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport_omotesnd, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x07) AM_WRITE(nbmj8891_blitter_w)
 	AM_RANGE(0x30, 0x30) AM_WRITE(nbmj8891_vramsel_w)
 	AM_RANGE(0x10, 0x10) AM_WRITE(nbmj8891_romsel_w)
@@ -632,6 +637,7 @@ AM_RANGE(0xc0, 0xc0) AM_WRITE(MWA8_NOP)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport_hanamomo, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(nb1413m3_nmi_clock_w)
 	AM_RANGE(0x30, 0x37) AM_WRITE(nbmj8891_blitter_w)
 	AM_RANGE(0x40, 0x40) AM_WRITE(nbmj8891_clutsel_w)
@@ -648,6 +654,7 @@ static ADDRESS_MAP_START( writeport_hanamomo, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport_msjiken, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(nb1413m3_nmi_clock_w)
 	AM_RANGE(0x40, 0x40) AM_WRITE(nbmj8891_clutsel_w)
 	AM_RANGE(0x50, 0x57) AM_WRITE(nbmj8891_blitter_w)
@@ -664,6 +671,7 @@ static ADDRESS_MAP_START( writeport_msjiken, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport_scandal, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x40, 0x4f) AM_WRITE(nbmj8891_clut_w)
 	AM_RANGE(0x00, 0x07) AM_WRITE(nbmj8891_blitter_w)
 	AM_RANGE(0x10, 0x10) AM_WRITE(nbmj8891_romsel_w)
@@ -680,6 +688,7 @@ static ADDRESS_MAP_START( writeport_scandal, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( readport_scandalm, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x7f) AM_READ(nb1413m3_sndrom_r)
 	AM_RANGE(0x81, 0x81) AM_READ(AY8910_read_port_0_r)
 	AM_RANGE(0x90, 0x90) AM_READ(nb1413m3_inputport0_r)
@@ -691,6 +700,7 @@ static ADDRESS_MAP_START( readport_scandalm, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport_scandalm, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x40, 0x4f) AM_WRITE(nbmj8891_clut_w)
 	AM_RANGE(0x00, 0x07) AM_WRITE(nbmj8891_blitter_w)
 	AM_RANGE(0x10, 0x10) AM_WRITE(nbmj8891_romsel_w)
@@ -707,6 +717,7 @@ static ADDRESS_MAP_START( writeport_scandalm, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport_bananadr, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x40, 0x4f) AM_WRITE(nbmj8891_clut_w)
 	AM_RANGE(0x00, 0x07) AM_WRITE(nbmj8891_blitter_w)
 	AM_RANGE(0x10, 0x10) AM_WRITE(nbmj8891_romsel_w)
@@ -724,6 +735,7 @@ static ADDRESS_MAP_START( writeport_bananadr, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( readport_lovehous, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x7f) AM_READ(nb1413m3_sndrom_r)
 	AM_RANGE(0x90, 0x90) AM_READ(nb1413m3_inputport0_r)
 	AM_RANGE(0xa0, 0xa0) AM_READ(nb1413m3_inputport1_r)
@@ -734,6 +746,7 @@ static ADDRESS_MAP_START( readport_lovehous, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport_lovehous, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(nb1413m3_nmi_clock_w)
 	AM_RANGE(0x40, 0x40) AM_WRITE(nbmj8891_clutsel_w)
 	AM_RANGE(0x50, 0x57) AM_WRITE(nbmj8891_blitter_w)
@@ -750,6 +763,7 @@ static ADDRESS_MAP_START( writeport_lovehous, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( readport_maiko, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x7f) AM_READ(nb1413m3_sndrom_r)
 	AM_RANGE(0x90, 0x90) AM_READ(nb1413m3_inputport0_r)
 	AM_RANGE(0xa0, 0xa0) AM_READ(nb1413m3_inputport1_r)
@@ -760,6 +774,7 @@ static ADDRESS_MAP_START( readport_maiko, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport_maiko, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(nb1413m3_nmi_clock_w)
 	AM_RANGE(0x40, 0x40) AM_WRITE(nbmj8891_clutsel_w)
 	AM_RANGE(0x50, 0x57) AM_WRITE(nbmj8891_blitter_w)
@@ -776,6 +791,7 @@ static ADDRESS_MAP_START( writeport_maiko, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( readport_taiwanmb, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x7f) AM_READ(nb1413m3_sndrom_r)
 	AM_RANGE(0x81, 0x81) AM_READ(AY8910_read_port_0_r)
 	AM_RANGE(0x90, 0x90) AM_READ(nb1413m3_inputport0_r)
@@ -789,6 +805,7 @@ static ADDRESS_MAP_START( readport_taiwanmb, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport_taiwanmb, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x82, 0x82) AM_WRITE(AY8910_write_port_0_w)
 	AM_RANGE(0x83, 0x83) AM_WRITE(AY8910_control_port_0_w)
 //	AM_RANGE(0x90, 0x90) AM_WRITE(MWA8_NOP)						// ?

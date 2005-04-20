@@ -386,7 +386,7 @@ MACHINE_DRIVER_START( plygonet )
 	MDRV_CPU_VBLANK_INT(polygonet_interrupt, 2)
 
 	MDRV_CPU_ADD(Z80, 8000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_PERIODIC_INT(audio_interrupt, 480)
 

@@ -3231,6 +3231,19 @@ ROM_START( searthia )
 ROM_END
 
 
+ROM_START( invadrmr )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	/* yes, this rom is really on the PCB twice?! */
+	ROM_LOAD( "11.1s",       0x0000, 0x0400, CRC(389d44b6) SHA1(5d2581b8bc0da918ce57cf319e06b5b31989c681) )
+	ROM_LOAD( "11.1t",       0x0000, 0x0400, CRC(389d44b6) SHA1(5d2581b8bc0da918ce57cf319e06b5b31989c681) )
+
+	ROM_LOAD( "sv02.1p",     0x0400, 0x0400, CRC(0e159534) SHA1(94b2015a9d38ca738705b8d024a79fd2f9855b98) )
+	ROM_LOAD( "20.1n",       0x0800, 0x0400, CRC(805b04f0) SHA1(209f42dfde1593699ccf3755e9267d425416d910) )
+	ROM_LOAD( "sv04.1j",     0x1400, 0x0400, CRC(1293b826) SHA1(165cd5d08a19eadbe954145b12807f10df9e691a) )
+	ROM_LOAD( "13.1h",       0x1800, 0x0400, CRC(76b4a6ea) SHA1(076f8d12ba7ebe66b83a40d9a848075627776554) )
+	ROM_LOAD( "sv06.1g",     0x1c00, 0x0400, CRC(2c68e0b4) SHA1(a5e5357120102ad32792bf3ef6362f45b7ba7070) )
+ROM_END
+
 ROM_START( spaceatt )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "h",            0x0000, 0x0400, CRC(d0c32d72) SHA1(b3bd950b1ba940fbeb5d95e55113ed8f4c311434) )
@@ -4057,6 +4070,7 @@ ROM_END
 
 	  GAME( 1980, searthin, invaders, invaders, earthinv, invaders, ROT270, "bootleg", "Super Earth Invasion (set 1)" )
 	  GAME( 1980, searthia, invaders, invaders, earthinv, invaders, ROT270, "bootleg", "Super Earth Invasion (set 2)" )
+	  GAME( 1978, invadrmr, invaders, invaders, invaders, invaders, ROT270, "Model Racing", "Space Invaders (Model Racing)" )
 	  GAME( 1978, spaceatt, invaders, invaders, invaders, invaders, ROT270, "Video Games GMBH", "Space Attack" )
 	  GAME( 1980, spaceat2, invaders, invaders, spaceatt, invaders, ROT270, "Zenitone-Microsec Ltd", "Space Attack II" )
 	  GAME( 19??, sinvzen,  invaders, invaders, spaceatt, invaders, ROT270, "Zenitone-Microsec Ltd", "Super Invaders (Zenitone-Microsec)" )

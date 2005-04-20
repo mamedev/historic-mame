@@ -556,7 +556,7 @@ static MACHINE_DRIVER_START( vendetta )
 	MDRV_CPU_VBLANK_INT(vendetta_irq,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)	/* verified with M1, guessed but accurate */
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
                             /* interrupts are triggered by the main CPU */
 	MDRV_FRAMES_PER_SECOND(60)

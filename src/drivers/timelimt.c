@@ -79,6 +79,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(watchdog_reset_r)
 ADDRESS_MAP_END
 
@@ -93,11 +94,13 @@ static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( readport_sound, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x8c, 0x8d) AM_READ(AY8910_read_port_0_r)
 	AM_RANGE(0x8e, 0x8f) AM_READ(AY8910_read_port_1_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport_sound, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(soundlatch_clear_w)
 	AM_RANGE(0x8c, 0x8c) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x8d, 0x8d) AM_WRITE(AY8910_write_port_0_w)
@@ -262,7 +265,7 @@ static MACHINE_DRIVER_START( timelimt )
 	MDRV_CPU_VBLANK_INT(timelimt_irq,1)
 
 	MDRV_CPU_ADD(Z80,18432000/6)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.072 MHz */
+	/* audio CPU */	/* 3.072 MHz */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 	MDRV_CPU_IO_MAP(readport_sound,writeport_sound)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1) /* ? */

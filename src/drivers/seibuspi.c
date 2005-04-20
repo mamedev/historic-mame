@@ -1495,7 +1495,7 @@ static MACHINE_DRIVER_START( spi )
 	MDRV_CPU_VBLANK_INT(spi_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 28636360/4)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(spisound_readmem, spisound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(54)

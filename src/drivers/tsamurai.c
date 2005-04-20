@@ -226,14 +226,17 @@ static ADDRESS_MAP_START( writemem_m660, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( z80_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( z80_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(AY8910_write_port_0_w)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( z80_writeport_m660, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(MWA8_NOP)		       /* ? */
 	AM_RANGE(0x01, 0x01) AM_WRITE(MWA8_NOP)               /* Written continuously. Increments with level. */
 	AM_RANGE(0x02, 0x02) AM_WRITE(MWA8_NOP)               /* Always follows above with 0x01 data */
@@ -324,9 +327,11 @@ ADDRESS_MAP_END
 /*******************************************************************************/
 
 static ADDRESS_MAP_START( readport_sound3_m660, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport_sound3_m660, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(AY8910_write_port_0_w)
 ADDRESS_MAP_END
@@ -752,11 +757,11 @@ static MACHINE_DRIVER_START( tsamurai )
 	MDRV_CPU_VBLANK_INT(samurai_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 2000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound1,writemem_sound1)
 
 	MDRV_CPU_ADD(Z80, 2000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound2,writemem_sound2)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -796,15 +801,15 @@ static MACHINE_DRIVER_START( m660 )
 	MDRV_CPU_VBLANK_INT(samurai_interrupt,1)
 
 	MDRV_CPU_ADD(Z80, 2000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound1_m660,writemem_sound1_m660)
 
 	MDRV_CPU_ADD(Z80, 2000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound2_m660,writemem_sound2_m660)
 
 	MDRV_CPU_ADD(Z80, 2000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound3_m660,writemem_sound3_m660)
 	MDRV_CPU_IO_MAP(readport_sound3_m660,writeport_sound3_m660)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)

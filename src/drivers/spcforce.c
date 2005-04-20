@@ -259,7 +259,7 @@ static MACHINE_DRIVER_START( spcforce )
 	MDRV_CPU_VBLANK_INT(irq3_line_hold,1)
 
 	MDRV_CPU_ADD(I8035,6144000/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* divisor ??? */
+	/* audio CPU */		/* divisor ??? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 

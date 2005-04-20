@@ -754,7 +754,7 @@ static MACHINE_DRIVER_START( fitfight )
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 	
 	MDRV_CPU_ADD(UPD7810, 12000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_CONFIG(sound_cpu_config)
 	MDRV_CPU_PROGRAM_MAP(snd_mem, 0)
 	MDRV_CPU_IO_MAP(snd_io, 0)

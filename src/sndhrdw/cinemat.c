@@ -1525,6 +1525,7 @@ ADDRESS_MAP_END
 
 
 ADDRESS_MAP_START( demon_sound_ports, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x03) AM_WRITE(z80ctc_0_w)
 	AM_RANGE(0x1c, 0x1f) AM_WRITE(z80ctc_0_w)
 ADDRESS_MAP_END
@@ -1541,7 +1542,7 @@ MACHINE_DRIVER_START( demon_sound )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3579545)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	/* audio CPU */
 	MDRV_CPU_CONFIG(daisy_chain)
 	MDRV_CPU_PROGRAM_MAP(demon_sound_map,0)
 	MDRV_CPU_IO_MAP(demon_sound_ports,0)

@@ -147,10 +147,12 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x40, 0x40) AM_READ(AY8910_read_port_0_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x80, 0x80) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x40, 0x40) AM_WRITE(AY8910_write_port_0_w)
 ADDRESS_MAP_END
@@ -686,7 +688,7 @@ static MACHINE_DRIVER_START( jack )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1) /* jack needs 1 or its too fast */
 
 	MDRV_CPU_ADD(Z80,18000000/12)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.5 MHz */
+	/* audio CPU */	/* 1.5 MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 
