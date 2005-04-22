@@ -1437,7 +1437,7 @@ static void init_keycodes(void)
 				// compute the code, which encodes DirectInput, virtual, and ASCII codes
 				code = KEYCODE(key, 0, 0);
 				standardcode = CODE_OTHER_DIGITAL;
-				if (entry < win_key_trans_table[entry][0] && win_key_trans_table[entry][0] >= 0)
+				if (win_key_trans_table[entry][0] >= 0)
 				{
 					code = KEYCODE(key, win_key_trans_table[entry][VIRTUAL_KEY], win_key_trans_table[entry][ASCII_KEY]);
 					standardcode = win_key_trans_table[entry][MAME_KEY];

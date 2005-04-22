@@ -300,7 +300,8 @@ nocarry:
 //
 static INT16 asm setst_add_laeco(register INT16 a, register INT16 b)
 { // a -> r3, b -> r4
-  lwz r6, I(RTOC)   // load pointer to I
+//  lwz r6, I(RTOC)   // load pointer to I
+  _asm_get_global(r6,I)
 
   slwi a, a, 16     // shift a
   slwi b, b, 16     // shift b
@@ -322,7 +323,8 @@ static INT16 asm setst_add_laeco(register INT16 a, register INT16 b)
 //
 static INT16 asm setst_sub_laeco(register INT16 a, register INT16 b)
 {
-  lwz r6, I(RTOC)
+//  lwz r6, I(RTOC)
+  _asm_get_global(r6,I)
 
   slwi a, a, 16
   slwi b, b, 16
@@ -344,7 +346,8 @@ static INT16 asm setst_sub_laeco(register INT16 a, register INT16 b)
 //
 static INT8 asm setst_addbyte_laecop(register INT8 a, register INT8 b)
 { // a -> r3, b -> r4
-  lwz r6, I(RTOC)   // load pointer to I
+//  lwz r6, I(RTOC)
+  _asm_get_global(r6,I)
 
   slwi a, a, 24     // shift a
   slwi b, b, 24     // shift b
@@ -358,7 +361,8 @@ static INT8 asm setst_addbyte_laecop(register INT8 a, register INT8 b)
   srwi r3, r3, 24   // shift back result
   mtlr r12  // restore LR
   sth r5, 4(r6)     // save new ST
-  stb r3, lastparity(RTOC)  // copy result to lastparity
+//  stb r3, lastparity(RTOC)  // copy result to lastparity
+  _asm_set_global_b(r3,lastparity)  // copy result to lastparity
   blr       // and return
 }
 
@@ -367,7 +371,8 @@ static INT8 asm setst_addbyte_laecop(register INT8 a, register INT8 b)
 //
 static INT8 asm setst_subbyte_laecop(register INT8 a, register INT8 b)
 { // a -> r3, b -> r4
-  lwz r6, I(RTOC)
+//  lwz r6, I(RTOC)
+  _asm_get_global(r6,I)
 
   slwi a, a, 24
   slwi b, b, 24
@@ -381,7 +386,8 @@ static INT8 asm setst_subbyte_laecop(register INT8 a, register INT8 b)
   srwi r3, r3, 24
   mtlr r12
   sth r5, 4(r6)
-  stb r3, lastparity(RTOC)
+//  stb r3, lastparity(RTOC)
+  _asm_set_global_b(r3,lastparity)  // copy result to lastparity
   blr
 }
 
