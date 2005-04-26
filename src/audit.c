@@ -241,6 +241,28 @@ int AuditRomSet (int game, tAuditRecord **audit)
 					{
 						/* not found */
 						aud->status = AUD_ROM_NOT_FOUND;
+						
+						drv = gamedrv->clone_of;
+						
+						/* If missing ROM is also present in a parent set, indicate that */
+						while (drv)
+						{
+							if (RomInSet (drv, aud->exphash))
+							{
+								if (drv->flags & NOT_A_DRIVER)
+								{
+									aud->status = AUD_ROM_NOT_FOUND_BIOS;
+									break;
+								}
+								else
+									aud->status = AUD_ROM_NOT_FOUND_PARENT;
+							}
+							
+							// Walk up the inheritance list. If this ROM is a clone of a set which
+							// contains a BIOS that is missing, we can correctly mark it as
+							// such.
+							drv = drv->clone_of;
+						}
 					}
 				}
 				/* all cases below assume the ROM was at least found */
@@ -412,6 +434,16 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf)
 					drivers[game]->name, aud->rom, aud->explength);
 				VerifyDumpHashData(aud->exphash, NULL, verify_printf);
 				break;
+			case AUD_ROM_NOT_FOUND_PARENT:
+				verify_printf ("%-8s: %-12s %7d bytes NOT FOUND (shared with parent)\n",
+					drivers[game]->name, aud->rom, aud->explength);
+				VerifyDumpHashData(aud->exphash, NULL, verify_printf);
+				break;
+			case AUD_ROM_NOT_FOUND_BIOS:
+				verify_printf ("%-8s: %-12s %7d bytes NOT FOUND (BIOS)\n",
+					drivers[game]->name, aud->rom, aud->explength);
+				VerifyDumpHashData(aud->exphash, NULL, verify_printf);
+				break;
 			case AUD_OPTIONAL_ROM_NOT_FOUND:
 				verify_printf ("%-8s: %-12s %7d bytes NOT FOUND BUT OPTIONAL\n",
 					drivers[game]->name, aud->rom, aud->explength);
@@ -481,7 +513,7 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf)
 		aud++;
 	}
 
-	if (archive_status & (AUD_ROM_NOT_FOUND|AUD_BAD_CHECKSUM|AUD_MEM_ERROR|AUD_LENGTH_MISMATCH|AUD_DISK_NOT_FOUND|AUD_DISK_BAD_MD5))
+	if (archive_status & (AUD_ROM_NOT_FOUND|AUD_ROM_NOT_FOUND_PARENT|AUD_ROM_NOT_FOUND_BIOS|AUD_BAD_CHECKSUM|AUD_MEM_ERROR|AUD_LENGTH_MISMATCH|AUD_DISK_NOT_FOUND|AUD_DISK_BAD_MD5))
 		return INCORRECT;
 	if (archive_status & (AUD_ROM_NEED_DUMP|AUD_ROM_NEED_REDUMP|AUD_NOT_AVAILABLE|AUD_DISK_NOT_AVAILABLE|AUD_DISK_NEED_DUMP))
 		return BEST_AVAILABLE;

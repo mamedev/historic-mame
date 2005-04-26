@@ -3171,6 +3171,7 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( sspirtfc )
 
 	DRIVER( qsww )
+	DRIVER( roughrac )
 	DRIVER( crkdown )
 
 	/* Sega System 32 games */
@@ -3735,15 +3736,16 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	/* MAX ?? */
 	DRIVER( dietgo )	/* MAY (c) 1993 */
 	DRIVER( dietgoe )	/* MAY (c) 1993 */
-	DRIVER( dietgoa )	/* MAY (c) 1993 */
+	DRIVER( dietgou )	/* MAY (c) 1993 */
+	DRIVER( dietgoj )	/* MAY (c) 1993 */
 	DRIVER( pktgaldx )	/* MAZ (c) 1993 Data East (Euro v3.00) */
 	DRIVER( pktgaldj )	/* MAZ (c) 1993 */
 	DRIVER( pktgaldb )	/* bootleg */
 	/* MBA ?? */
 	/* MBB ?? */
 	/* MBC ?? */
-	DRIVER( boogwing )	/* MBD (c) 1993 */
-	DRIVER( dblewing )	/* MBE (c) 1993 Mitchell */
+//	DRIVER( boogwing )	/* MBD (c) 1993 */
+//	DRIVER( dblewing )	/* MBE (c) 1993 Mitchell */
 	DRIVER( fghthist )	/* MBF (c) 1993 Data East Corporation (US) */
 	DRIVER( fghthstw )	/* MBF (c) 1993 Data East Corporation (World) */
 	DRIVER( fghthsta )	/* MBF (c) 1993 Data East Corporation (US) */
@@ -3792,6 +3794,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( stadhr96 )	/* MCM (c) 1996 Data East */
 	DRIVER( stadh96a )	/* MCM (c) 1996 Data East */
 	DRIVER( skullfng )	/* MCH (c) 1996 Data East Corporation (Japan) */
+	DRIVER( hoops96 )	/* MC? (c) 1996 Data East Corporation */
+	DRIVER( ddream95 )	/* MC? (c) 1996 Data East Corporation */
 
 	/* Tehkan / Tecmo games (Tehkan became Tecmo in 1986) */
 	DRIVER( senjyo )	/* (c) 1983 Tehkan */
@@ -5298,6 +5302,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( starcasp )
 	DRIVER( starcase )
 	DRIVER( stellcas )
+	DRIVER( spaceftr )
 	DRIVER( tailg )
 	DRIVER( ripoff )
 	DRIVER( armora )
@@ -6355,6 +6360,7 @@ Other Sun games
 	DRIVER( ringkinw )	/* (c) 1985 Woodplace Inc. */
 	DRIVER( ambush )	/* (c) 1983 Nippon Amuse Co-Ltd */
 	DRIVER( ambusht )	/* (c) 1983 Tecfri */
+	DRIVER( ambushv )	/* (c) 1983 Volt Elec co-ltd */
 	DRIVER( homo )		/* bootleg */
 	DRIVER( dlair )
 	DRIVER( aztarac )	/* (c) 1983 Centuri (vector game) */

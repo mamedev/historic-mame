@@ -429,6 +429,12 @@ static void execute_tracelog(int ref, int params, const char *param[])
 
 static void execute_quit(int ref, int params, const char *param[])
 {
+	int cpunum;
+
+	/* turn off all traces */
+	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
+		debug_cpu_trace(cpunum, NULL, 0, NULL);
+
 	osd_die("Exited via the debugger\n");
 }
 

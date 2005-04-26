@@ -245,7 +245,7 @@ INPUT_PORTS_START( lkage )
 
 	PORT_START_TAG("DSW3")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x03, "Easiest" ) /* unconfirmed */
+	PORT_DIPSETTING(    0x03, DEF_STR( Easiest ) )  /* unconfirmed */
 	PORT_DIPSETTING(    0x02, DEF_STR( Easy ) )    /* unconfirmed */
 	PORT_DIPSETTING(    0x01, DEF_STR( Normal ) )  /* unconfirmed */
 	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )    /* unconfirmed */

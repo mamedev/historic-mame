@@ -349,6 +349,8 @@ const char *inptport_default_strings[] =
 	"Italian",
 	"Spanish",
 	"Very Easy",
+	"Easiest",
+	"Easier",
 	"Easy",
 	"Normal",
 	"Medium",

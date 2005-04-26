@@ -2203,7 +2203,7 @@ INPUT_PORTS_START( blzntrnd )
 	PORT_START_TAG("IN0")
 	PORT_DIPNAME( 0x0007, 0x0004, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(      0x0007, "Beginner" )
-	PORT_DIPSETTING(      0x0006, "Easiest" )
+	PORT_DIPSETTING(      0x0006, DEF_STR( Easiest ) )
 	PORT_DIPSETTING(      0x0005, DEF_STR( Easy ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( Normal ) )
 	PORT_DIPSETTING(      0x0003, DEF_STR( Hard ) )
@@ -2341,7 +2341,7 @@ INPUT_PORTS_START( gstrik2 )
 	PORT_DIPSETTING(      0x0000, "Full" )
 	PORT_DIPNAME( 0x0700, 0x0400, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(      0x0700, DEF_STR( Very_Easy) )
-	PORT_DIPSETTING(      0x0600, "Easier" )
+	PORT_DIPSETTING(      0x0600, DEF_STR( Easier ) )
 	PORT_DIPSETTING(      0x0500, DEF_STR( Easy ) )
 	PORT_DIPSETTING(      0x0400, DEF_STR( Normal ) )
 	PORT_DIPSETTING(      0x0300, DEF_STR( Medium ) )
@@ -2735,9 +2735,9 @@ INPUT_PORTS_START( lastfort )
 	
 	PORT_START_TAG("IN4")// $c0000c
 	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Difficulty ) )		// Timer speed
-	PORT_DIPSETTING(      0x0000, "Easiest" )				//   Slowest
+	PORT_DIPSETTING(      0x0000, DEF_STR( Easiest ) )			//   Slowest
 	PORT_DIPSETTING(      0x0001, DEF_STR( Easy ) )				//   Slow
-	PORT_DIPSETTING(      0x0003, DEF_STR( Normal ) )				//   Normal
+	PORT_DIPSETTING(      0x0003, DEF_STR( Normal ) )			//   Normal
 	PORT_DIPSETTING(      0x0002, DEF_STR( Hard ) )				//   Fast
 	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
@@ -2773,9 +2773,9 @@ INPUT_PORTS_START( lastfero )
 
 	PORT_START	// IN4 - $c0000c
 	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Difficulty ) )		// Timer speed
-	PORT_DIPSETTING(      0x0000, "Easiest" )				//   Slowest
+	PORT_DIPSETTING(      0x0000, DEF_STR( Easiest ) )			//   Slowest
 	PORT_DIPSETTING(      0x0001, DEF_STR( Easy ) )				//   Slow
-	PORT_DIPSETTING(      0x0003, DEF_STR( Normal ) )				//   Normal
+	PORT_DIPSETTING(      0x0003, DEF_STR( Normal ) )			//   Normal
 	PORT_DIPSETTING(      0x0002, DEF_STR( Hard ) )				//   Fast
 	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
@@ -3224,7 +3224,7 @@ INPUT_PORTS_START( pururun )
 	COINAGE_DSW
 
 	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Difficulty ) )		// Distance to goal
-	PORT_DIPSETTING(      0x0200, "Easiest" )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Easiest ) )
 	PORT_DIPSETTING(      0x0100, DEF_STR( Easy ) )
 	PORT_DIPSETTING(      0x0300, DEF_STR( Normal ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Hard ) )

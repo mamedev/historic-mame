@@ -1187,9 +1187,9 @@ INPUT_PORTS_START( kirarast )	// player 1 inputs done? others?
 
 	PORT_START_TAG("DSW2")
 	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR (Difficulty) )
-	PORT_DIPSETTING(    0x00, "Easiest" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Easiest ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Very_Easy) )
-	PORT_DIPSETTING(    0x40, "Easier" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Easier ) )
 	PORT_DIPSETTING(    0xc0, DEF_STR( Easy ) )
 	PORT_DIPSETTING(    0xe0, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x60, DEF_STR( Hard ) )

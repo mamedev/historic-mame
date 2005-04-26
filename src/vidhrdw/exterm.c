@@ -1,14 +1,13 @@
 /***************************************************************************
 
-  vidhrdw.c
-
-  Functions to emulate the video hardware of the machine.
+	Gottlieb Exterminator hardware
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/tms34010/tms34010.h"
+#include "exterm.h"
 
 
 data16_t *exterm_master_videoram, *exterm_slave_videoram;
@@ -50,37 +49,27 @@ PALETTE_INIT( exterm )
  *
  *************************************/
 
-void exterm_to_shiftreg_master(unsigned int address, UINT16* shiftreg)
+void exterm_to_shiftreg_master(unsigned int address, UINT16 *shiftreg)
 {
 	memcpy(shiftreg, &exterm_master_videoram[TOWORD(address)], 256 * sizeof(UINT16));
 }
 
-void exterm_from_shiftreg_master(unsigned int address, UINT16* shiftreg)
+
+void exterm_from_shiftreg_master(unsigned int address, UINT16 *shiftreg)
 {
 	memcpy(&exterm_master_videoram[TOWORD(address)], shiftreg, 256 * sizeof(UINT16));
 }
 
-void exterm_to_shiftreg_slave(unsigned int address, UINT16* shiftreg)
+
+void exterm_to_shiftreg_slave(unsigned int address, UINT16 *shiftreg)
 {
 	memcpy(shiftreg, &exterm_slave_videoram[TOWORD(address)], 256 * 2 * sizeof(UINT8));
 }
 
-void exterm_from_shiftreg_slave(unsigned int address, UINT16* shiftreg)
+
+void exterm_from_shiftreg_slave(unsigned int address, UINT16 *shiftreg)
 {
 	memcpy(&exterm_slave_videoram[TOWORD(address)], shiftreg, 256 * 2 * sizeof(UINT8));
-}
-
-
-
-/*************************************
- *
- *	Video startup/shutdown
- *
- *************************************/
-
-VIDEO_START( exterm )
-{
-	return 0;
 }
 
 
@@ -98,7 +87,7 @@ VIDEO_UPDATE( exterm )
 	/* if the display is blanked, fill with black */
 	if (tms34010_io_display_blanked(0))
 	{
-		fillbitmap(bitmap, Machine->pens[0], cliprect);
+		fillbitmap(bitmap, get_black_pen(), cliprect);
 		return;
 	}
 
@@ -106,14 +95,14 @@ VIDEO_UPDATE( exterm )
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
 		data16_t *bgsrc = &exterm_master_videoram[256 * y];
-		UINT16 scanline[256];
+		UINT16 *dest = bitmap->line[y];
 
 		/* on the top/bottom of the screen, it's all background */
 		if (y < 40 || y > 238)
 			for (x = 0; x < 256; x++)
 			{
 				UINT16 bgdata = *bgsrc++;
-				scanline[x] = (bgdata & 0x8000) ? (bgdata & 0xfff) : (bgdata + 0x1000);
+				dest[x] = (bgdata & 0x8000) ? (bgdata & 0xfff) : (bgdata + 0x1000);
 			}
 
 		/* elsewhere, we have to blend foreground and background */
@@ -127,26 +116,23 @@ VIDEO_UPDATE( exterm )
 				UINT16 bgdata;
 
 				if (fgdata & 0x00ff)
-					scanline[x] = fgdata & 0x00ff;
+					dest[x] = fgdata & 0x00ff;
 				else
 				{
 					bgdata = bgsrc[0];
-					scanline[x] = (bgdata & 0x8000) ? (bgdata & 0xfff) : (bgdata + 0x1000);
+					dest[x] = (bgdata & 0x8000) ? (bgdata & 0xfff) : (bgdata + 0x1000);
 				}
 
 				if (fgdata & 0xff00)
-					scanline[x+1] = fgdata >> 8;
+					dest[x+1] = fgdata >> 8;
 				else
 				{
 					bgdata = bgsrc[1];
-					scanline[x+1] = (bgdata & 0x8000) ? (bgdata & 0xfff) : (bgdata + 0x1000);
+					dest[x+1] = (bgdata & 0x8000) ? (bgdata & 0xfff) : (bgdata + 0x1000);
 				}
 
 				bgsrc += 2;
 			}
 		}
-
-		/* draw the scanline */
-		draw_scanline16(bitmap, cliprect->min_x, y, cliprect->max_x - cliprect->min_x, &scanline[cliprect->min_x], Machine->pens, -1);
 	}
 }

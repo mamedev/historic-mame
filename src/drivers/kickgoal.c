@@ -1,12 +1,24 @@
 /* Driver Info
 
+
 Kick Goal (c)1995 TCH
+Hollywood Action (c)1995 TCH
+
  prelim driver by David Haywood
 
 
 todo:
 
 Sound - Not possible without PIC dump?
+  the PIC is protected, sound will have to be simulated
+  the kickgoal sound rom is also bad.
+
+Should the screen size really be doubled in kickgoal or should the fg tiles be 8bpp instead
+because otherwise these don't seem much like the same hardware..
+
+you get 64 credits in hwaction (eeprom bug?)
+
+sprite disable needed (hw action leaves sprites on screen after some levels..)
 
 */
 
@@ -38,6 +50,8 @@ WRITE16_HANDLER( kickgoal_bg2ram_w );
 VIDEO_START( kickgoal );
 VIDEO_UPDATE( kickgoal );
 
+VIDEO_START( hwaction );
+VIDEO_UPDATE( hwaction );
 
 
 
@@ -96,20 +110,23 @@ it doesn't seem able to read from fg/bg/spr/pal ram
 */
 
 static ADDRESS_MAP_START( kickgoal_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
 	AM_RANGE(0x800000, 0x800001) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x800002, 0x800003) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x900006, 0x900007) AM_READ(kickgoal_eeprom_r)
+	AM_RANGE(0xa00000, 0xa0ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xc00000, 0xc007ff) AM_READ(MRA16_RAM) // hwaction needs this
 	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( kickgoal_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x800004, 0x800005) AM_WRITE(soundlatch_word_w)
 	AM_RANGE(0x900000, 0x900005) AM_WRITE(kickgoal_eeprom_w)
 	AM_RANGE(0xa00000, 0xa03fff) AM_WRITE(kickgoal_fgram_w) AM_BASE(&kickgoal_fgram) /* FG Layer */
 	AM_RANGE(0xa04000, 0xa07fff) AM_WRITE(kickgoal_bgram_w) AM_BASE(&kickgoal_bgram) /* Higher BG Layer */
 	AM_RANGE(0xa08000, 0xa0bfff) AM_WRITE(kickgoal_bg2ram_w) AM_BASE(&kickgoal_bg2ram) /* Lower BG Layer */
+	AM_RANGE(0xa0c000, 0xa0ffff) AM_WRITE(MWA16_RAM) // more tilemap?
 	AM_RANGE(0xa10000, 0xa1000f) AM_WRITE(MWA16_RAM) AM_BASE(&kickgoal_scrram) /* Scroll Registers */
 	AM_RANGE(0xb00000, 0xb007ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size) /* Sprites */
 	AM_RANGE(0xc00000, 0xc007ff) AM_WRITE(paletteram16_xxxxBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16) /* Palette */
@@ -208,7 +225,42 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+static struct GfxLayout hwaction_fg88_alt_charlayout =
+{
+	8,8,
+	RGN_FRAC(1,4),
+	4,
+	{ RGN_FRAC(3,4), RGN_FRAC(2,4), RGN_FRAC(1,4), RGN_FRAC(0,4) },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8,  2*8,  3*8,  4*8, 5*8, 6*8,  7*8, },
+	8*8
+};
+
+
+static struct GfxLayout hwaction_bg1616_charlayout =
+{
+	16,16,
+	RGN_FRAC(1,4),
+	4,
+	{ RGN_FRAC(3,4), RGN_FRAC(2,4), RGN_FRAC(1,4), RGN_FRAC(0,4) },
+	{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 },
+	{ 0*16,  1*16,  2*16,  3*16,   4*16,   5*16,   6*16,   7*16,
+	  8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16, },
+	16*16
+};
+
+
+
+static struct GfxDecodeInfo hwaction_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &hwaction_fg88_alt_charlayout,   0x000, 0x40 },
+	{ REGION_GFX1, 0, &hwaction_bg1616_charlayout,  0x000, 0x40 },
+	{ -1 } /* end of array */
+};
+
 /* MACHINE drivers ***********************************************************/
+
+
 
 static MACHINE_DRIVER_START( kickgoal )
 
@@ -238,6 +290,37 @@ static MACHINE_DRIVER_START( kickgoal )
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 //	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
 MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( hwaction )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz */
+	MDRV_CPU_PROGRAM_MAP(kickgoal_readmem,kickgoal_writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
+
+	/* pic16c57? */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_NVRAM_HANDLER(kickgoal)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 64*8)
+	MDRV_VISIBLE_AREA(10*8+2, 54*8-1+2, 2*8, 30*8-1)
+	MDRV_GFXDECODE(hwaction_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
+
+	MDRV_VIDEO_START(hwaction)
+	MDRV_VIDEO_UPDATE(hwaction)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+//	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
+
+
 
 /* Rom Loading ***************************************************************/
 
@@ -293,4 +376,4 @@ DRIVER_INIT( kickgoal )
 
 
 GAMEX( 1995, kickgoal,0, kickgoal, kickgoal, kickgoal, ROT0, "TCH", "Kick Goal", GAME_NO_SOUND )
-GAMEX( 1995, holywact,0, kickgoal, kickgoal, kickgoal, ROT0, "TCH", "Hollywood Action", GAME_NO_SOUND|GAME_NOT_WORKING )
+GAMEX( 1995, holywact,0, hwaction, kickgoal, 0, ROT0, "TCH", "Hollywood Action", GAME_NO_SOUND )

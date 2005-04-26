@@ -201,7 +201,6 @@ WRITE8_HANDLER( gottlieb_riot_w )
 static int psg_latch;
 static void *nmi_timer;
 static int nmi_rate;
-static int ym2151_port;
 
 static void nmi_callback(int param);
 void gottlieb_sound_init(void)
@@ -288,14 +287,6 @@ WRITE8_HANDLER( stooges_sound_control_w )
 	last = data & 0x44;
 }
 
-WRITE8_HANDLER( exterm_sound_control_w )
-{
-	common_sound_control_w(offset, data);
-
-	/* Bit 7 selects YM2151 register or data port */
-	ym2151_port = data & 0x80;
-}
-
 WRITE8_HANDLER( gottlieb_nmi_rate_w )
 {
 	nmi_rate = data;
@@ -305,44 +296,3 @@ WRITE8_HANDLER( gottlieb_cause_dac_nmi_w )
 {
 	cpunum_set_input_line(cpu_gettotalcpu()-2, INPUT_LINE_NMI, PULSE_LINE);
 }
-
-READ8_HANDLER( gottlieb_cause_dac_nmi_r )
-{
-    gottlieb_cause_dac_nmi_w(offset, 0);
-	return 0;
-}
-
-WRITE8_HANDLER( exterm_ym2151_w )
-{
-	if (ym2151_port)
-	{
-		YM2151_data_port_0_w(offset, data);
-	}
-	else
-	{
-		YM2151_register_port_0_w(offset, data);
-	}
-}
-
-static UINT8 exterm_dac_volume;
-static UINT8 exterm_dac_data;
-
-WRITE8_HANDLER( exterm_dac_vol_w )
-{
-	exterm_dac_volume = data ^ 0xff;
-	DAC_data_16_w(0, exterm_dac_volume * exterm_dac_data);
-}
-
-WRITE8_HANDLER( exterm_dac_data_w )
-{
-	exterm_dac_data = data;
-	DAC_data_16_w(0, exterm_dac_volume * exterm_dac_data);
-}
-
-
-WRITE16_HANDLER( gottlieb_sh_word_w )
-{
-	if (ACCESSING_LSB)
-		gottlieb_sh_w(offset, data);
-}
-

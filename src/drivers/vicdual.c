@@ -1313,10 +1313,10 @@ static MACHINE_DRIVER_START( carnival )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, PSG_CLOCK_CARNIVAL)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.35)
-	
+
 	MDRV_SOUND_ADD(SAMPLES, 0)
 	MDRV_SOUND_CONFIG(samples_interface_carnival)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
@@ -1413,6 +1413,56 @@ ROM_START( frogs )
 	ROM_LOAD( "114a.u43",     0x1400, 0x0400, CRC(04a21853) SHA1(1e84eb84d5770f54925055b748ab9ca2aa72c1cc) )
 	ROM_LOAD( "113a.u42",     0x1800, 0x0400, CRC(02786692) SHA1(8a8937fd92beecf1119fe3f6b41a700725412aa1) )
 	ROM_LOAD( "112a.u41",     0x1c00, 0x0400, CRC(0be2a058) SHA1(271f3b60cba422fff7e782fda198c3897c275b46) )
+ROM_END
+
+/*
+
+N-Sub by SEGA 1979
+
+97399-P-16 N-SUB UPRIGHT
+
+Label says : U41(U20) ~ U48(U27)
+		EPR	  EPR
+		268	  275
+
+and also : PR69
+
+Despite what the label says, here is correct name and position from a real pcb !
+
+Epr-268.u48
+Epr-269.u47
+Epr-270.u46
+Epr-271.u45
+Epr-272.u44
+Epr-273.u43
+Epr-274.u42
+Epr-275.u41
+Pr-69.u11
+
+Two other proms (PR33.u82, PR34.u83 probably common to other games) are on this PCB, but can't be read because aluminium cooler on it
+
+This game use a separate "daughter" board for input ??? ref: 97269-P-B
+with a prom on it : PR-02 type MMI 6336-1j which is soldered.
+
+*/
+
+ROM_START( nsub )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "epr268.48",     0x0000, 0x0800, CRC(485b4704) SHA1(d3989cfe5f8d723bc1a6be185614d138666912d2) )
+	ROM_LOAD( "epr269.47",     0x0800, 0x0800, CRC(32774ac9) SHA1(0a2c209f627a8d703c02e75c361c363272d1f435) )
+	ROM_LOAD( "epr270.46",     0x1000, 0x0800, CRC(af7ca40a) SHA1(c0f5732079a51979758f3a159084b84be8b2ad3b) )
+	ROM_LOAD( "epr271.45",     0x1800, 0x0800, CRC(3f9c180b) SHA1(7438454a348b36d1f5ea59f179f715b827244142) )
+	ROM_LOAD( "epr272.44",     0x2000, 0x0800, CRC(d818aa51) SHA1(1d3ca550f597c4924b9a805fa955a4a8ff557769) )
+	ROM_LOAD( "epr273.43",     0x2800, 0x0800, CRC(03a6f12a) SHA1(1eefd4607a718c291b29f1b0a6adf0367840b242) )
+	ROM_LOAD( "epr274.42",     0x3000, 0x0800, CRC(d69eb098) SHA1(fd3e67d18b5891aa65aab5967d49810c5d88dcee) )
+	ROM_LOAD( "epr275.41",     0x3800, 0x0800, CRC(1c7d90cc) SHA1(8483825d9811c925407328836ae10f98b011c3dd) )
+
+	ROM_REGION( 0x0040, REGION_USER1, 0 )	/* misc PROMs */
+	ROM_LOAD( "pr69.11", 0x0000, 0x0020, CRC(c94dd091) SHA1(f88cfb033ff83adb7375652be1fa32ba489d8418) )
+
+/*
+Two other proms (PR33.u82, PR34.u83 probably common to other games) are on this PCB, but can't be read because aluminium cooler on it
+*/
 ROM_END
 
 ROM_START( sspaceat )
@@ -2022,6 +2072,7 @@ GAMEX(1979, headon,   0,        2ports,   headon,   headon,    ROT0,   "Gremlin"
 GAMEX(1979, headonb,  headon,   2ports,   headon,   headon,    ROT0,   "Gremlin", "Head On (1 player)", GAME_NO_SOUND )
 GAMEX(1979, headon2,  0,        3ports,   headon2,  headon2,   ROT0,   "Sega", "Head On 2", GAME_NO_SOUND )
 GAMEX(1979, invho2,   0,        invinco4, invho2,   invho2,    ROT270, "Sega", "Invinco / Head On 2", GAME_IMPERFECT_SOUND )
+GAMEX(1980, nsub,     0,        safari,   safari,   sspaceat,  ROT270, "Sega", "N-Sub",GAME_NOT_WORKING|GAME_NO_SOUND )
 GAMEX(1980, samurai,  0,        4ports,   samurai,  samurai,   ROT270, "Sega", "Samurai", GAME_NO_SOUND )
 GAME( 1979, invinco,  0,        invinco3, invinco,  invinco,   ROT270, "Sega", "Invinco" )
 GAMEX(1979, invds,    0,        invinco4, invds,    invds,     ROT270, "Sega", "Invinco / Deep Scan", GAME_IMPERFECT_SOUND )

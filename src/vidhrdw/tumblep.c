@@ -222,6 +222,15 @@ WRITE16_HANDLER( bcstory_tilebank_w )
 	tilemap_mark_all_tiles_dirty(pf2_tilemap);
 }
 
+WRITE16_HANDLER( chokchok_tilebank_w )
+{
+	bcstory_tilebank = data<<1;
+	tilemap_mark_all_tiles_dirty(pf1_tilemap);
+	tilemap_mark_all_tiles_dirty(pf1_alt_tilemap);
+	tilemap_mark_all_tiles_dirty(pf2_tilemap);
+}
+
+
 WRITE16_HANDLER( suprtrio_tilebank_w )
 {
 	bcstory_tilebank = data<<14; // shift it here, makes using bcstory_tilebank easier

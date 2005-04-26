@@ -345,6 +345,8 @@ enum
 	STR_Italian,
 	STR_Spanish,
 	STR_Very_Easy,
+	STR_Easiest,
+	STR_Easier,
 	STR_Easy,
 	STR_Normal,
 	STR_Medium,

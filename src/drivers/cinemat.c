@@ -1362,6 +1362,16 @@ ROM_START( stellcas )
 	CCPU_PROMS
 ROM_END
 
+ROM_START( spaceftr )
+	ROM_REGION( 0x2000, REGION_CPU1, 0 )	/* 8k for code */
+	ROM_LOAD16_BYTE( "2716.t7",      0x0000, 0x0800, CRC(65d0a225) SHA1(e1fbee5ff42dd040ab2e90bbe2189fcb76d6167e) )
+	ROM_LOAD16_BYTE( "2716.p7",      0x0001, 0x0800, CRC(1a32aed6) SHA1(89c16a33288265e06e6fbd8426ba4ee9d81c221f) )
+	ROM_LOAD16_BYTE( "2716.u7",      0x1000, 0x0800, CRC(13b0287c) SHA1(366a23fd10684975bd5ee190e5227e47a0298ad5) )
+	ROM_LOAD16_BYTE( "2716.r7",      0x1001, 0x0800, CRC(a2c1ed52) SHA1(ed9743f44ee98c9e7c2a6819ec681af7c7a97fc9) )
+
+	CCPU_PROMS
+ROM_END
+
 
 ROM_START( solarq )
 	ROM_REGION( 0x4000, REGION_CPU1, 0 )	/* 16k for code */
@@ -1516,6 +1526,7 @@ GAME( 1980, starcas1, starcas, starcas,  starcas,  starcas,  ORIENTATION_FLIP_Y,
 GAME( 1980, starcasp, starcas, starcas,  starcas,  starcas,  ORIENTATION_FLIP_Y,   "Cinematronics", "Star Castle (prototype)" )
 GAME( 1980, starcase, starcas, starcas,  starcas,  starcas,  ORIENTATION_FLIP_Y,   "Cinematronics (Mottoeis license)", "Star Castle (Mottoeis)" )
 GAME( 1980, stellcas, starcas, starcas,  starcas,  starcas,  ORIENTATION_FLIP_Y,   "bootleg", "Stellar Castle (Elettronolo)" )
+GAME( 1981, spaceftr, starcas, starcas,  starcas,  starcas,  ORIENTATION_FLIP_Y,   "Zaccaria", "Space Fortress (Zaccaria)" )
 GAME( 1981, solarq,   0,       solarq,   solarq,   solarq,   ORIENTATION_FLIP_Y ^ ORIENTATION_FLIP_X, "Cinematronics", "Solar Quest" )
 GAME( 1981, boxingb,  0,       boxingb,  boxingb,  boxingb,  ORIENTATION_FLIP_Y,   "Cinematronics", "Boxing Bugs" )
 GAME( 1981, wotw,     0,       wotw,     wotw,     0,        ORIENTATION_FLIP_Y,   "Cinematronics", "War of the Worlds" )

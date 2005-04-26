@@ -1,101 +1,112 @@
 /****************************************************************************
 
-	Exterminator memory map
+	Gottlieb Exterminator hardware
 
-driver by Zsolt Vasvari and Alex Pasadyn
+	driver by Zsolt Vasvari and Alex Pasadyn
 
+*****************************************************************************
 
- Master CPU (TMS34010, all addresses are in bits)
+	Master CPU (TMS34010, all addresses are in bits)
 
- 00000000-000fffff RW Video RAM (256x256x15)
- 00c00000-00ffffff RW RAM
- 01000000-010fffff  W Host Control Interface (HSTADRL)
- 01100000-011fffff  W Host Control Interface (HSTADRH)
- 01200000-012fffff RW Host Control Interface (HSTDATA)
- 01300000-013fffff  W Host Control Interface (HSTCTLH)
- 01400000-01400007 R  Input Port 0
- 01400008-0140000f R  Input Port 1
- 01440000-01440007 R  Input Port 2
- 01440008-0144000f R  Input Port 3
- 01480000-01480007 R  Input Port 4
- 01500000-0150000f  W Output Port 0 (See machine/exterm.c)
- 01580000-0158000f  W Sound Command
- 015c0000-015c000f  W Watchdog
- 01800000-01807fff RW Palette RAM
- 02800000-02807fff RW EEPROM
- 03000000-03ffffff R  ROM
- 3f000000-3fffffff R  ROM Mirror
- c0000000-c00001ff RW TMS34010 I/O Registers
- ff000000-ffffffff R  ROM Mirror
+	------00 0---xxxx xxxxxxxx xxxxxxxx = Background VRAM
+	------00 1-xxxxxx xxxxxxxx xxxxxxxx = Master GSP DRAM
+	------01 000000-- -------- ----xxxx = Slave HSTADRL
+	------01 000100-- -------- ----xxxx = Slave HSTADRH
+	------01 001000-- -------- ----xxxx = Slave HSTDATA
+	------01 001100-- -------- ----xxxx = Slave HSTCTL
+	------01 010000-- -------- ----xxxx = IP0S
+	------01 010001-- -------- ----xxxx = IP1S
+	------01 010010-- -------- ----xxxx = IP2S
+	------01 010100-- -------- ----xxxx = OP0S
+	------01 010110-- -------- ----xxxx = SOUND
+	------01 010111-- -------- ----xxxx = WDOG
+	------01 1------- -xxxxxxx xxxxxxxx = CLUT
+	------10 1------- -xxxxxxx xxxxxxxx = EEPROM
+	------11 xxxxxxxx xxxxxxxx xxxxxxxx = EPROM
 
+	--------------------------------------------------------------------
 
- Slave CPU (TMS34010, all addresses are in bits)
+	Slave CPU (TMS34010, all addresses are in bits)
+	-----0-- ----xxxx xxxxxxxx xxxxxxxx = Foreground VRAM
+	-----1-- -0xxxxxx xxxxxxxx xxxxxxxx = Slave DRAM bank 1
+	-----1-- -1xxxxxx xxxxxxxx xxxxxxxx = Slave DRAM bank 0
 
- 00000000-000fffff RW Video RAM (2 banks of 256x256x8)
- c0000000-c00001ff RW TMS34010 I/O Registers
- ff800000-ffffffff RW RAM
+	--------------------------------------------------------------------
 
+	Master sound CPU (6502)
+	
+	000--xxx xxxxxxxx = RAM
+	010----- -------- = YM2151 data write
+	01100--- -------- = set NMI down counter
+	01101--- -------- = read input latch and clear IRQ
+	01110--- -------- = send NMI to slave sound CPU
+	01111--- -------- = connected to S4-13 (unknown)
+	101----- -------- = sound control register
+					  		D7 = to S4-15
+					  		D6 = to S4-12
+					  		D5 = to S4-11
+					  		D1 = to LED
+					  		D0 = enable NMI timer
+	1xxxxxxx xxxxxxxx = ROM
 
- DAC Controller CPU (6502)
+	--------------------------------------------------------------------
 
- 0000-07ff RW RAM
- 4000      R  Sound Command
- 8000-8001  W 2 Channels of DAC output
- 8000-ffff R  ROM
-
-
- YM2151 Controller CPU (6502)
-
- 0000-07ff RW RAM
- 4000       W YM2151 Command/Data Register (Controlled by a bit A000)
- 6000  		W NMI occurence rate (fed into a binary counter)
- 6800      R  Sound Command
- 7000      R  Causes NMI on DAC CPU
- 8000-ffff R  ROM
- a000       W Control register (see sndhrdw/gottlieb.c)
+	Slave sound CPU (6502)
+	
+	00---xxx xxxxxxxx = RAM
+	01------ -------- = read input latch and clear IRQ
+	10------ -------x = DAC write
+	1xxxxxxx xxxxxxxx = ROM
 
 ****************************************************************************/
 
 #include "driver.h"
 #include "cpu/tms34010/tms34010.h"
+#include "cpu/m6502/m6502.h"
 #include "sound/dac.h"
 #include "sound/2151intf.h"
+#include "exterm.h"
 
-static size_t code_rom_size;
-static data16_t *exterm_code_rom;
-static data16_t *exterm_master_speedup, *exterm_slave_speedup;
 
-extern data16_t *exterm_master_videoram, *exterm_slave_videoram;
+
+/*************************************
+ *
+ *	Globals
+ *
+ *************************************/
 
 static data8_t aimpos[2];
 static data8_t trackball_old[2];
 
+static mame_timer *sound_nmi_timer;
+static UINT8 master_sound_latch;
+static UINT8 slave_sound_latch;
+static UINT8 sound_control;
+static UINT8 dac_value[2];
 
-/* Functions in vidhrdw/exterm.c */
-PALETTE_INIT( exterm );
-VIDEO_START( exterm );
 
-VIDEO_UPDATE( exterm );
-void exterm_to_shiftreg_master(unsigned int address, unsigned short* shiftreg);
-void exterm_from_shiftreg_master(unsigned int address, unsigned short* shiftreg);
-void exterm_to_shiftreg_slave(unsigned int address, unsigned short* shiftreg);
-void exterm_from_shiftreg_slave(unsigned int address, unsigned short* shiftreg);
 
-/* Functions in sndhrdw/gottlieb.c */
-void gottlieb_sound_init(void);
-WRITE16_HANDLER( gottlieb_sh_word_w );
-READ8_HANDLER( gottlieb_cause_dac_nmi_r );
-WRITE8_HANDLER( gottlieb_nmi_rate_w );
-WRITE8_HANDLER( exterm_sound_control_w );
-WRITE8_HANDLER( exterm_ym2151_w );
-WRITE8_HANDLER( exterm_dac_vol_w );
-WRITE8_HANDLER( exterm_dac_data_w );
+/*************************************
+ *
+ *	Prototypes
+ *
+ *************************************/
 
+static void master_sound_nmi_callback(int param);
+
+
+
+/*************************************
+ *
+ *	System init
+ *
+ *************************************/
 
 static MACHINE_INIT( exterm )
 {
-	gottlieb_sound_init();
+	sound_nmi_timer = timer_alloc(master_sound_nmi_callback);
 }
+
 
 
 /*************************************
@@ -112,7 +123,7 @@ WRITE16_HANDLER( exterm_host_data_w )
 
 READ16_HANDLER( exterm_host_data_r )
 {
-	return tms34010_host_r(1, TMS34010_HOST_DATA);
+	return tms34010_host_r(1, offset / TOWORD(0x00100000));
 }
 
 
@@ -150,10 +161,12 @@ static data16_t exterm_trackball_port_r(int which, data16_t mem_mask)
 	return (port & 0xc0ff) | (aimpos[which] << 8);
 }
 
+
 READ16_HANDLER( exterm_input_port_0_r )
 {
 	return exterm_trackball_port_r(0, mem_mask);
 }
+
 
 READ16_HANDLER( exterm_input_port_1_r )
 {
@@ -171,7 +184,6 @@ READ16_HANDLER( exterm_input_port_1_r )
 WRITE16_HANDLER( exterm_output_port_0_w )
 {
 	/* All the outputs are activated on the rising edge */
-
 	static data16_t last = 0;
 
 	if (ACCESSING_LSB)
@@ -179,7 +191,6 @@ WRITE16_HANDLER( exterm_output_port_0_w )
 		/* Bit 0-1= Resets analog controls */
 		if ((data & 0x0001) && !(last & 0x0001))
 			aimpos[0] = 0;
-
 		if ((data & 0x0002) && !(last & 0x0002))
 			aimpos[1] = 0;
 	}
@@ -199,58 +210,100 @@ WRITE16_HANDLER( exterm_output_port_0_w )
 }
 
 
+static void sound_delayed_w(int data)
+{
+	/* data is latched independently for both sound CPUs */
+	master_sound_latch = slave_sound_latch = data;
+	cpunum_set_input_line(2, M6502_IRQ_LINE, ASSERT_LINE);
+	cpunum_set_input_line(3, M6502_IRQ_LINE, ASSERT_LINE);
+}
+
+
+WRITE16_HANDLER( sound_latch_w )
+{
+	if (ACCESSING_LSB)
+		timer_set(TIME_NOW, data & 0xff, sound_delayed_w);
+}
+
+
 
 /*************************************
  *
- *	Speedup handlers
+ *	Sound handlers
  *
  *************************************/
 
-READ16_HANDLER( exterm_master_speedup_r )
+static void master_sound_nmi_callback(int param)
 {
-	int value = exterm_master_speedup[offset];
-
-	/* Suspend cpu if it's waiting for an interrupt */
-	if (activecpu_get_pc() == 0xfff4d9b0 && !value)
-		cpu_spinuntil_int();
-
-	return value;
+	/* bit 0 of the sound control determines if the NMI is actually delivered */
+	if (sound_control & 0x01)
+		cpunum_set_input_line(2, INPUT_LINE_NMI, PULSE_LINE);
 }
 
-WRITE16_HANDLER( exterm_slave_speedup_w )
-{
-	/* Suspend cpu if it's waiting for an interrupt */
-	if (activecpu_get_pc() == 0xfffff050)
-		cpu_spinuntil_int();
 
-	COMBINE_DATA(&exterm_slave_speedup[offset]);
+static WRITE8_HANDLER( ym2151_data_latch_w )
+{
+	/* bit 7 of the sound control selects which port */
+	if (sound_control & 0x80)
+		YM2151_data_port_0_w(offset, data);
+	else
+		YM2151_register_port_0_w(offset, data);
 }
 
-READ8_HANDLER( exterm_sound_dac_speedup_r )
+
+static WRITE8_HANDLER( sound_nmi_rate_w )
 {
-	UINT8 *RAM = memory_region(REGION_CPU3);
-	int value = RAM[0x0007];
-
-	/* Suspend cpu if it's waiting for an interrupt */
-	if (activecpu_get_pc() == 0x8e79 && !value)
-		cpu_spinuntil_int();
-
-	return value;
+	/* rate is controlled by the value written here */
+	/* this value is latched into up-counters, which are clocked at the */
+	/* input clock / 256 */
+	double input_clock = TIME_IN_HZ(4000000/16);
+	double nmi_rate = input_clock * 256 * (256 - data);
+	timer_adjust(sound_nmi_timer, nmi_rate, 0, nmi_rate);
 }
 
-READ8_HANDLER( exterm_sound_ym2151_speedup_r )
+
+static READ8_HANDLER( sound_master_latch_r )
 {
-	/* Doing this won't flash the LED, but we're not emulating that anyhow, so
-	   it doesn't matter */
-	UINT8 *RAM = memory_region(REGION_CPU4);
-	int value = RAM[0x02b6];
+	/* read latch and clear interrupt */
+	cpunum_set_input_line(2, M6502_IRQ_LINE, CLEAR_LINE);
+	return master_sound_latch;
+}
 
-	/* Suspend cpu if it's waiting for an interrupt */
-	if (activecpu_get_pc() == 0x8179 && !(value & 0x80) &&  RAM[0x00bc] == RAM[0x00bb] &&
-		RAM[0x0092] == 0x00 &&  RAM[0x0093] == 0x00 && !(RAM[0x0004] & 0x80))
-		cpu_spinuntil_int();
 
-	return value;
+static READ8_HANDLER( sound_slave_latch_r )
+{
+	/* read latch and clear interrupt */
+	cpunum_set_input_line(3, M6502_IRQ_LINE, CLEAR_LINE);
+	return slave_sound_latch;
+}
+
+
+static WRITE8_HANDLER( sound_slave_dac_w )
+{
+	/* DAC A is used to modulate DAC B */
+	dac_value[offset & 1] = data;
+	DAC_data_16_w(0, (dac_value[0] ^ 0xff) * dac_value[1]);
+}
+
+
+static READ8_HANDLER( sound_nmi_to_slave_r )
+{
+	/* a read from here triggers an NMI pulse to the slave */
+	cpunum_set_input_line(3, INPUT_LINE_NMI, PULSE_LINE);
+	return 0xff;
+}
+
+
+static WRITE8_HANDLER( sound_control_w )
+{
+/*
+	D7 = to S4-15
+	D6 = to S4-12
+	D5 = to S4-11
+	D1 = to LED
+	D0 = enable NMI timer
+*/
+	sound_control = data;
 }
 
 
@@ -261,45 +314,27 @@ READ8_HANDLER( exterm_sound_ym2151_speedup_r )
  *
  *************************************/
 
-static ADDRESS_MAP_START( master_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x00000000, 0x000fffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x00c00000, 0x00ffffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x01200000, 0x012fffff) AM_READ(exterm_host_data_r)
-	AM_RANGE(0x01400000, 0x0140000f) AM_READ(exterm_input_port_0_r)
-	AM_RANGE(0x01440000, 0x0144000f) AM_READ(exterm_input_port_1_r)
-	AM_RANGE(0x01480000, 0x0148000f) AM_READ(input_port_2_word_r)
-	AM_RANGE(0x01800000, 0x01807fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x02800000, 0x02807fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x03000000, 0x03ffffff) AM_READ(MRA16_BANK1)
-	AM_RANGE(0x3f000000, 0x3fffffff) AM_READ(MRA16_BANK2)
-	AM_RANGE(0xc0000000, 0xc00001ff) AM_READ(tms34010_io_register_r)
-	AM_RANGE(0xff000000, 0xffffffff) AM_READ(MRA16_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( master_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x00000000, 0x000fffff) AM_WRITE(MWA16_RAM) AM_BASE(&exterm_master_videoram)
-	AM_RANGE(0x00c00000, 0x00ffffff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x01000000, 0x013fffff) AM_WRITE(exterm_host_data_w)
-	AM_RANGE(0x01500000, 0x0150000f) AM_WRITE(exterm_output_port_0_w)
-	AM_RANGE(0x01580000, 0x0158000f) AM_WRITE(gottlieb_sh_word_w)
-	AM_RANGE(0x015c0000, 0x015c000f) AM_WRITE(watchdog_reset16_w)
-	AM_RANGE(0x01800000, 0x01807fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x02800000, 0x02807fff) AM_WRITE(MWA16_RAM) AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size) /* EEPROM */
-	AM_RANGE(0xc0000000, 0xc00001ff) AM_WRITE(tms34010_io_register_w)
-	AM_RANGE(0xff000000, 0xffffffff) AM_WRITE(MWA16_ROM) AM_BASE(&exterm_code_rom) AM_SIZE(&code_rom_size)
+static ADDRESS_MAP_START( master_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_READWRITE(tms34010_io_register_r, tms34010_io_register_w)
+	AM_RANGE(0x00000000, 0x000fffff) AM_MIRROR(0xfc700000) AM_RAM AM_BASE(&exterm_master_videoram)
+	AM_RANGE(0x00800000, 0x00bfffff) AM_MIRROR(0xfc400000) AM_RAM
+	AM_RANGE(0x01000000, 0x013fffff) AM_MIRROR(0xfc000000) AM_READWRITE(exterm_host_data_r, exterm_host_data_w)
+	AM_RANGE(0x01400000, 0x0143ffff) AM_MIRROR(0xfc000000) AM_READ(exterm_input_port_0_r)
+	AM_RANGE(0x01440000, 0x0147ffff) AM_MIRROR(0xfc000000) AM_READ(exterm_input_port_1_r)
+	AM_RANGE(0x01480000, 0x014bffff) AM_MIRROR(0xfc000000) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x01500000, 0x0153ffff) AM_MIRROR(0xfc000000) AM_WRITE(exterm_output_port_0_w)
+	AM_RANGE(0x01580000, 0x015bffff) AM_MIRROR(0xfc000000) AM_WRITE(sound_latch_w)
+	AM_RANGE(0x015c0000, 0x015fffff) AM_MIRROR(0xfc000000) AM_WRITE(watchdog_reset16_w)
+	AM_RANGE(0x01800000, 0x01807fff) AM_MIRROR(0xfc7f8000) AM_READWRITE(MRA16_RAM, paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x02800000, 0x02807fff) AM_MIRROR(0xfc7f8000) AM_RAM AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x03000000, 0x03ffffff) AM_MIRROR(0xfc000000) AM_ROM AM_REGION(REGION_USER1, 0)
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( slave_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x00000000, 0x000fffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0xc0000000, 0xc00001ff) AM_READ(tms34010_io_register_r)
-	AM_RANGE(0xff800000, 0xffffffff) AM_READ(MRA16_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( slave_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x00000000, 0x000fffff) AM_WRITE(MWA16_RAM) AM_BASE(&exterm_slave_videoram)
-	AM_RANGE(0xc0000000, 0xc00001ff) AM_WRITE(tms34010_io_register_w)
-	AM_RANGE(0xff800000, 0xffffffff) AM_WRITE(MWA16_RAM)
+static ADDRESS_MAP_START( slave_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_READWRITE(tms34010_io_register_r, tms34010_io_register_w)
+	AM_RANGE(0x00000000, 0x000fffff) AM_MIRROR(0xfbf00000) AM_RAM AM_BASE(&exterm_slave_videoram)
+	AM_RANGE(0x04000000, 0x047fffff) AM_MIRROR(0xfb800000) AM_RAM
 ADDRESS_MAP_END
 
 
@@ -310,31 +345,23 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( sound_dac_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x4000, 0x4000) AM_READ(soundlatch_r)
-	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
+static ADDRESS_MAP_START( sound_master_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_MIRROR(0x1800) AM_RAM
+	AM_RANGE(0x4000, 0x5fff) AM_WRITE(ym2151_data_latch_w)
+	AM_RANGE(0x6000, 0x67ff) AM_WRITE(sound_nmi_rate_w)
+	AM_RANGE(0x6800, 0x6fff) AM_READ(sound_master_latch_r)
+	AM_RANGE(0x7000, 0x77ff) AM_READ(sound_nmi_to_slave_r)
+/*	AM_RANGE(0x7800, 0x7fff) unknown - to S4-13 */
+	AM_RANGE(0xa000, 0xbfff) AM_WRITE(sound_control_w)
+	AM_RANGE(0x8000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( sound_dac_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x8000, 0x8000) AM_WRITE(exterm_dac_vol_w)
-	AM_RANGE(0x8001, 0x8001) AM_WRITE(exterm_dac_data_w)
-ADDRESS_MAP_END
 
-
-static ADDRESS_MAP_START( sound_ym2151_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x6800, 0x6800) AM_READ(soundlatch_r)
-	AM_RANGE(0x7000, 0x7000) AM_READ(gottlieb_cause_dac_nmi_r)
-	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sound_ym2151_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x4000, 0x4000) AM_WRITE(exterm_ym2151_w)
-	AM_RANGE(0x6000, 0x6000) AM_WRITE(gottlieb_nmi_rate_w)
-	AM_RANGE(0xa000, 0xa000) AM_WRITE(exterm_sound_control_w)
+static ADDRESS_MAP_START( sound_slave_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_MIRROR(0x3800) AM_RAM
+	AM_RANGE(0x4000, 0x5fff) AM_READ(sound_slave_latch_r)
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE(sound_slave_dac_w)
+	AM_RANGE(0x8000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
 
@@ -405,7 +432,6 @@ INPUT_PORTS_START( exterm )
 
 	PORT_START /* IN4, fake trackball input port. */
 	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_REVERSE PORT_PLAYER(2) PORT_CODE_DEC(KEYCODE_N) PORT_CODE_INC(KEYCODE_M)
-
 INPUT_PORTS_END
 
 
@@ -443,25 +469,23 @@ static struct tms34010_config slave_config =
 static MACHINE_DRIVER_START( exterm )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(TMS34010,40000000/TMS34010_CLOCK_DIVIDER)
+	MDRV_CPU_ADD(TMS34010, 40000000/TMS34010_CLOCK_DIVIDER)
 	MDRV_CPU_CONFIG(master_config)
-	MDRV_CPU_PROGRAM_MAP(master_readmem,master_writemem)
+	MDRV_CPU_PROGRAM_MAP(master_map,0)
 
-	MDRV_CPU_ADD(TMS34010,40000000/TMS34010_CLOCK_DIVIDER)
+	MDRV_CPU_ADD(TMS34010, 40000000/TMS34010_CLOCK_DIVIDER)
 	MDRV_CPU_CONFIG(slave_config)
-	MDRV_CPU_PROGRAM_MAP(slave_readmem,slave_writemem)
+	MDRV_CPU_PROGRAM_MAP(slave_map,0)
 
 	MDRV_CPU_ADD(M6502, 2000000)
-	/* audio CPU */
-	MDRV_CPU_PROGRAM_MAP(sound_dac_readmem,sound_dac_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_master_map,0)
 
 	MDRV_CPU_ADD(M6502, 2000000)
-	/* audio CPU */
-	MDRV_CPU_PROGRAM_MAP(sound_ym2151_readmem,sound_ym2151_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_slave_map,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION((1000000 * (263 - 240)) / (60 * 263))
-	MDRV_INTERLEAVE(1675)	// anything lower will have drop outs on the drums
+	MDRV_INTERLEAVE(100)
 
 	MDRV_MACHINE_INIT(exterm)
 	MDRV_NVRAM_HANDLER(generic_0fill)
@@ -473,23 +497,16 @@ static MACHINE_DRIVER_START( exterm )
 	MDRV_PALETTE_LENGTH(4096+32768)
 
 	MDRV_PALETTE_INIT(exterm)
-	MDRV_VIDEO_START(exterm)
 	MDRV_VIDEO_UPDATE(exterm)
 
 	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+	MDRV_SPEAKER_STANDARD_MONO("mono")
 
 	MDRV_SOUND_ADD(DAC, 0)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.40)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.40)
-
-	MDRV_SOUND_ADD(DAC, 0)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.40)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.40)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 
 	MDRV_SOUND_ADD(YM2151, 4000000)
-	MDRV_SOUND_ROUTE(0, "left", 1.0)
-	MDRV_SOUND_ROUTE(1, "right", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -501,15 +518,11 @@ MACHINE_DRIVER_END
  *************************************/
 
 ROM_START( exterm )
-	ROM_REGION( 0x20000, REGION_CPU1, 0 )		/* dummy region for TMS34010 #1 */
-
-	ROM_REGION( 0x20000, REGION_CPU2, 0 )		/* dummy region for TMS34010 #2 */
-
-	ROM_REGION( 0x10000, REGION_CPU3, 0 )		/* 64k for DAC code */
-	ROM_LOAD( "v101d1", 0x8000, 0x8000, CRC(83268b7d) SHA1(a9139e80e2382122e9919c0555937e120d4414cf) )
-
-	ROM_REGION( 0x10000, REGION_CPU4, 0 )		/* 64k for YM2151 code */
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )		/* 64k for YM2151 code */
 	ROM_LOAD( "v101y1", 0x8000, 0x8000, CRC(cbeaa837) SHA1(87d8a258f059512dbf9bc0e7cfff728ef9e616f1) )
+
+	ROM_REGION( 0x10000, REGION_CPU4, 0 )		/* 64k for DAC code */
+	ROM_LOAD( "v101d1", 0x8000, 0x8000, CRC(83268b7d) SHA1(a9139e80e2382122e9919c0555937e120d4414cf) )
 
 	ROM_REGION16_LE( 0x200000, REGION_USER1, 0 )	/* 2MB for 34010 code */
 	ROM_LOAD16_BYTE( "v101bg0",  0x000000, 0x10000, CRC(8c8e72cf) SHA1(5e0fa805334f54f7e0293ea400bacb0e3e79ed56) )
@@ -538,31 +551,8 @@ ROM_END
 
 /*************************************
  *
- *	Driver initialization
- *
- *************************************/
-
-DRIVER_INIT( exterm )
-{
-	memcpy(exterm_code_rom, memory_region(REGION_USER1), code_rom_size);
-
-	/* install speedups */
-	exterm_master_speedup = memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x00c800e0, 0x00c800ef, 0, 0, exterm_master_speedup_r);
-	exterm_slave_speedup = memory_install_write16_handler(1, ADDRESS_SPACE_PROGRAM, 0xfffffb90, 0xfffffb9f, 0, 0, exterm_slave_speedup_w);
-	memory_install_read8_handler(2, ADDRESS_SPACE_PROGRAM, 0x0007, 0x0007, 0, 0, exterm_sound_dac_speedup_r);
-	memory_install_read8_handler(3, ADDRESS_SPACE_PROGRAM, 0x02b6, 0x02b6, 0, 0, exterm_sound_ym2151_speedup_r);
-
-	/* set up mirrored ROM access */
-	cpu_setbank(1, exterm_code_rom);
-	cpu_setbank(2, exterm_code_rom);
-}
-
-
-
-/*************************************
- *
  *	Game drivers
  *
  *************************************/
 
-GAME( 1989, exterm, 0, exterm, exterm, exterm, ROT0, "Gottlieb / Premier Technology", "Exterminator" )
+GAME( 1989, exterm, 0, exterm, exterm, 0, ROT0, "Gottlieb / Premier Technology", "Exterminator" )

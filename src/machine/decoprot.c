@@ -1810,3 +1810,31 @@ CONTROL PC 07819e: warning - write protection memory address 01c0 0061
 	logerror("Protection PC %06x: warning - read unmapped memory address %04x\n",activecpu_get_pc(),offset<<1);
 	return 0;
 }
+
+/**********************************************************************************/
+
+READ16_HANDLER( dietgo_104_prot_r )
+{
+	switch (offset * 2)
+	{
+	case 0x298: return input_port_0_word_r(0, 0);
+	case 0x342: return input_port_1_word_r(0, 0);
+	case 0x506: return input_port_2_word_r(0, 0);
+	}
+
+	logerror("Protection PC %06x: warning - read unmapped memory address %04x\n",activecpu_get_pc(),offset<<1);
+
+	return 0;
+}
+
+WRITE16_HANDLER( dietgo_104_prot_w )
+{
+	if (offset==(0x380/2)) {
+		soundlatch_w(0,data&0xff);
+		cpunum_set_input_line(1,0,HOLD_LINE);
+		return;
+	}
+	logerror("Protection PC %06x: warning - write unmapped memory address %04x %04x\n",activecpu_get_pc(),offset<<1,data);
+}
+
+/**********************************************************************************/

@@ -1169,7 +1169,7 @@ static UINT8 h8disasm_7(UINT32 address, UINT32 opcode, char *output)
 			}
 			else
 			{
-				sprintf(output, "%4.4x mov.w @(%x, %s), %s", opcode, data32, reg_names32[opcode & 7], reg_names16[(data16 & 0xf)]);
+				sprintf(output, "%4.4x mov.w @(%x, %s), %s", opcode, data32, reg_names32[(opcode>>4) & 7], reg_names16[(data16 & 0xf)]);
 			}
 		}
 		size = 8;

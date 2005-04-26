@@ -1766,6 +1766,16 @@ static void h8_group7(UINT16 opcode)
 			H8_BYTE_TIMING(1, udata32);
 			H8_IFETCH_TIMING(4);
 		}
+		else if (((udata16>>8) & 0xff) == 0x6b) // mov.w @(24-bit direct, rN), rM
+		{
+			udata32 += h8_getreg32((opcode >> 4) & 7);
+			udata8 = h8_mem_read8(udata32);
+			h8_mov8(udata8); // update flags !
+			h8_setreg8(udata16 & 0xf, udata8);
+
+			H8_BYTE_TIMING(1, udata32);
+			H8_IFETCH_TIMING(4);
+		}
 		else
 		{
 			logerror("H8/3002: Unk. group 7 8 %x\n", opcode);

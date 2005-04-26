@@ -169,9 +169,9 @@ INPUT_PORTS_START( shisen )
 	PORT_DIPNAME( 0x20, 0x20, "Stop Mode (Cheat)")
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, "Max Players" )
-	PORT_DIPSETTING(    0x00, "1" )
-	PORT_DIPSETTING(    0x40, "2" )
+	PORT_DIPNAME( 0x40, 0x40, "Play Mode" )
+	PORT_DIPSETTING(    0x00, "1 Player" )
+	PORT_DIPSETTING(    0x40, "2 Player" )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	/* Fake port to support the two different coin modes */

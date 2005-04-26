@@ -1721,7 +1721,7 @@ INPUT_PORTS_START( halleys )
 
 	PORT_START_TAG("DSW2") // 0xff96
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x02, "Easiest" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Easiest ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( Easy ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )

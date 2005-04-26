@@ -154,6 +154,7 @@ void st0016_get_info(void *token, UINT32 state, union sndinfo *info);
 void c352_get_info(void *token, UINT32 state, union sndinfo *info);
 void vrender0_get_info(void *token, UINT32 state, union sndinfo *info);
 void votrax_get_info(void *token, UINT32 state, union sndinfo *info);
+void es8712_get_info(void *token, UINT32 state, union sndinfo *info);
 
 #ifdef MESS
 void beep_get_info(void *token, UINT32 state, union sndinfo *info);
@@ -399,6 +400,9 @@ const struct
 #endif
 #if (HAS_VOTRAX)
 	{ SOUND_VORTRAX, votrax_get_info },
+#endif
+#if (HAS_ES8712)
+	{ SOUND_ES8712, es8712_get_info },
 #endif
 
 #ifdef MESS

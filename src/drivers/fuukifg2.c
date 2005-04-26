@@ -375,7 +375,7 @@ INPUT_PORTS_START( pbancho )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
 	PORT_DIPNAME( 0x001c, 0x001c, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0008, "Easiest" )	// 1
+	PORT_DIPSETTING(      0x0008, DEF_STR( Easiest ) )	// 1
 	PORT_DIPSETTING(      0x0010, DEF_STR( Easy )    )	// 2
 	PORT_DIPSETTING(      0x001c, DEF_STR( Normal )  )	// 3
 	PORT_DIPSETTING(      0x0018, DEF_STR( Hard )    )	// 4

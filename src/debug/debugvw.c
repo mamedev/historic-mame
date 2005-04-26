@@ -1701,7 +1701,7 @@ static void memory_update(struct debug_view *view)
 	const struct debug_cpu_info *cpuinfo = debug_get_cpu_info(view->cpunum);
 	struct debug_view_memory *memdata = view->extra_data;
 	struct debug_view_char *dest = view->viewdata;
-	char addrformat[10];
+	char addrformat[16];
 	EXPRERR exprerr;
 	UINT32 row;
 

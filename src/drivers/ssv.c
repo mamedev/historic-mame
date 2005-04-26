@@ -53,7 +53,6 @@ STA-0001B	SSV_SUB		01  Vasara 2								Visco
 
 Games not yet dumped:
 						?	Kidou Senshi Gundam Final Shooting		Visco / Banpresto
-						?	Pachinko Sexy Reaction 2				Sammy
 
 
 STA-0001 & STA-0001B should be fully interchangable, its reported that STA-0001 runs at
@@ -676,6 +675,7 @@ static WRITE16_HANDLER( sxyreact_motor_w )
 }
 
 static ADDRESS_MAP_START( sxyreact_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+//	AM_RANGE(0x020000, 0x03ffff) AM_READ(ssv_mainram_r ) // sxyreac2 reads / writes here, why?
 	AM_RANGE(0x210000, 0x210001) AM_READ(watchdog_reset16_r	)	// Watchdog
 	AM_RANGE(0x500002, 0x500003) AM_READ(sxyreact_ballswitch_r	)	// ?
 	AM_RANGE(0x500004, 0x500005) AM_READ(sxyreact_dial_r		)	// Dial Value (serial)
@@ -683,6 +683,7 @@ static ADDRESS_MAP_START( sxyreact_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	SSV_READMEM( 0xe00000 )
 ADDRESS_MAP_END
 static ADDRESS_MAP_START( sxyreact_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+//	AM_RANGE(0x020000, 0x03ffff) AM_WRITE(ssv_mainram_w ) // sxyreac2 reads / writes here, why?
 //	AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP				)	// ? 1 at the start
 	AM_RANGE(0x21000e, 0x21000f) AM_WRITE(ssv_lockout_inv_w		)	// Inverted lockout lines
 	AM_RANGE(0x520000, 0x520001) AM_WRITE(sxyreact_dial_w		)	// Dial Value (advance 1 bit)
@@ -1823,8 +1824,8 @@ INPUT_PORTS_START( srmp4 )
 
 	PORT_START	// IN1 - $210004
 	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0006, "Easiest" )
-	PORT_DIPSETTING(      0x0005, "Easier" )
+	PORT_DIPSETTING(      0x0006, DEF_STR( Easiest ) )
+	PORT_DIPSETTING(      0x0005, DEF_STR( Easier ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( Easy ) )
 	PORT_DIPSETTING(      0x0007, DEF_STR( Normal ) )
 	PORT_DIPSETTING(      0x0003, DEF_STR( Medium ) )
@@ -1933,8 +1934,8 @@ INPUT_PORTS_START( srmp7 )
 
 	PORT_START	// IN1 - $210004
 	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0006, "Easiest" )
-	PORT_DIPSETTING(      0x0005, "Easier" )
+	PORT_DIPSETTING(      0x0006, DEF_STR( Easiest ) )
+	PORT_DIPSETTING(      0x0005, DEF_STR( Easier ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( Easy ) )
 	PORT_DIPSETTING(      0x0007, DEF_STR( Normal ) )
 	PORT_DIPSETTING(      0x0003, DEF_STR( Medium ) )
@@ -2442,8 +2443,8 @@ INPUT_PORTS_START( twineag2 )
 
 	PORT_START	// IN1 - $210004
 	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0006, "Easiest" )
-	PORT_DIPSETTING(      0x0005, "Easier" )
+	PORT_DIPSETTING(      0x0006, DEF_STR( Easiest ) )
+	PORT_DIPSETTING(      0x0005, DEF_STR( Easier ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( Easy ) )
 	PORT_DIPSETTING(      0x0007, DEF_STR( Normal ) )
 	PORT_DIPSETTING(      0x0003, DEF_STR( Medium ) )
@@ -2456,7 +2457,7 @@ INPUT_PORTS_START( twineag2 )
 	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Lives ) )
 	PORT_DIPSETTING(      0x0000, "2" )
 	PORT_DIPSETTING(      0x0010, "3" )
-	PORT_DIPNAME( 0x0020, 0x0020, "Freeze" )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Pause ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Flip_Screen ) )
@@ -2913,6 +2914,10 @@ DRIVER_INIT( dynagear )		{	init_ssv(); ssv_special = 3;
 DRIVER_INIT( sxyreact )		{	hypreac2_init();	// different
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xe8;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xef;	}
+DRIVER_INIT( sxyreac2 )		{	hypreac2_init();	
+								ssv_special=4;
+								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xe8;
+								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xef;	}
 DRIVER_INIT( twineag2 )		{	init_ssv();interrupt_ultrax=1;
 								ssv_sprites_offsx = -6; ssv_sprites_offsy = -7;
 								ssv_tilemap_offsx = -10;ssv_tilemap_offsy = -8; }
@@ -3243,6 +3248,33 @@ ROM_START( cairblad )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD16_WORD_SWAP( "ac1410m0.u41", 0x000000, 0x400000, CRC(ecf1f255) SHA1(984b1529b8f0c7d94ea713c85d71df00f54eba79) ) // AC1807M01.U41   32M Mask
+ROM_END
+
+ROM_START( sxyreac2 )
+	ROM_REGION16_LE( 0x200000, REGION_USER1, 0 )		/* V60 Code */
+	ROM_LOAD16_WORD( "ac1714e00.u32",  0x000000, 0x200000, CRC(78075d70) SHA1(05c84bb32c6f97fceb5436d192c14cac79d9ab07) )
+
+	ROM_REGION( 0x2000000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD( "ac1701t00.u6",  0x0000000, 0x400000, CRC(e14611c2) SHA1(0eaf28b27b879b6ce99bea03b286717a2d6f60f4) )
+	ROM_LOAD( "ac1702t00.u9",  0x0400000, 0x400000, CRC(2c8b07f8) SHA1(e4128075c207d03206085f58b5aa8ebd28d3c2a9) )
+
+	ROM_LOAD( "ac1703t00.u7",  0x0800000, 0x400000, CRC(d6c7e861) SHA1(b4c17829222f5b9430e96183f77fa49ec040061e) )
+	ROM_LOAD( "ac1704t00.u10", 0x0c00000, 0x400000, CRC(5fa7ccf0) SHA1(9972e3e689024505739eeaefcc12670918e2cbd8) )
+
+	ROM_LOAD( "ac1705t00.u8",  0x1000000, 0x400000, CRC(2dff0652) SHA1(3c68ec3b233f248208ea80e4799a9504318b4e7c) )
+	ROM_LOAD( "ac1706t00.u11", 0x1400000, 0x400000, CRC(e7a168e0) SHA1(b4e19cc3a1fd0f18db7476ebe7cbb397c60e01b3) )
+
+	ROM_FILL(                 0x1800000, 0x800000, 0         )
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD16_WORD_SWAP( "ac1707t00.u41", 0x000000, 0x400000, CRC(28999bc4) SHA1(4cddaa4a155cc03d456e6edb20dd207f7ff3d9c4) )
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND2, ROMREGION_SOUNDONLY ) /* Samples */
+	ROM_LOAD16_WORD_SWAP( "ac1708t00.u42", 0x200000, 0x200000, CRC(7001eec0) SHA1(cc568ef90ec7201a73e9dc217d72cfbc3860e6b8) )
+	ROM_CONTINUE( 0x000000, 0x200000 )
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_COPY( REGION_SOUND2, 0x000000,    0x200000, 0x200000 )
 ROM_END
 
 
@@ -4431,11 +4463,11 @@ ROM_END
 
 //     year   rom       clone     machine   inputs    init      monitor manufacturer          title                                               flags
 
+GAMEX( 1993,  dynagear, 0,        dynagear, dynagear, dynagear, ROT0,   "Sammy"         ,     "Dyna Gears",                                       GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1993,  keithlcy, 0,        keithlcy, keithlcy, keithlcy, ROT0,   "Visco",              "Dramatic Adventure Quiz Keith & Lucy (Japan)",     GAME_NO_COCKTAIL )
 GAMEX( 1993,  srmp4,    0,        srmp4,    srmp4,    srmp4,    ROT0,   "Seta",               "Super Real Mahjong PIV (Japan)",                   GAME_NO_COCKTAIL )
 GAMEX( 1993,  srmp4o,   srmp4,    srmp4,    srmp4,    srmp4,    ROT0,   "Seta",               "Super Real Mahjong PIV (Japan, older set)",        GAME_NO_COCKTAIL ) // by the numbering of the program roms this should be older
 GAMEX( 1993,  survarts, 0,        survarts, survarts, survarts, ROT0,   "American Sammy",     "Survival Arts (USA)",                              GAME_NO_COCKTAIL )
-GAMEX( 1994,  dynagear, 0,        dynagear, dynagear, dynagear, ROT0,   "Sammy"         ,     "Dyna Gears",                                       GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1994,  drifto94, 0,        drifto94, drifto94, drifto94, ROT0,   "Visco",              "Drift Out '94 - The Hard Order (Japan)",           GAME_NO_COCKTAIL )
 GAMEX( 1995,  hypreact, 0,        hypreact, hypreact, hypreact, ROT0,   "Sammy",              "Mahjong Hyper Reaction (Japan)",                   GAME_NO_COCKTAIL | GAME_NOT_WORKING )
 GAMEX( 1994,  twineag2, 0,        twineag2, twineag2, twineag2, ROT270, "Seta",               "Twin Eagle II - The Rescue Mission",               GAME_NO_COCKTAIL )
@@ -4448,6 +4480,7 @@ GAMEX( 1997,  srmp7,    0,        srmp7,    srmp7,    srmp7,    ROT0,   "Seta", 
 GAMEX( 1997,  mslider,  0,        mslider,  mslider,  mslider,  ROT0,   "Visco / Datt Japan", "Monster Slider (Japan)",                           GAME_NO_COCKTAIL )
 GAMEX( 1998,  ryorioh,  0,        ryorioh,  ryorioh,  ryorioh,  ROT0,   "Visco",              "Gourmet Battle Quiz Ryohrioh CooKing (Japan)",     GAME_NO_COCKTAIL )
 GAMEX( 1998,  sxyreact, 0,        sxyreact, sxyreact, sxyreact, ROT0,   "Sammy",              "Pachinko Sexy Reaction (Japan)",                   GAME_NO_COCKTAIL )
+GAMEX( 1999,  sxyreac2, 0,        sxyreact, sxyreact, sxyreac2, ROT0,   "Sammy",              "Pachinko Sexy Reaction 2 (Japan)",                 GAME_NO_COCKTAIL )
 GAMEX( 1999,  cairblad, 0,        sxyreact, cairblad, sxyreact, ROT270, "Sammy",              "Change Air Blade (Japan)",                         GAME_NO_COCKTAIL )
 GAMEX( 2000,  vasara,   0,        ryorioh,  vasara,   vasara,   ROT270, "Visco",              "Vasara",                                 GAME_NO_COCKTAIL )
 GAMEX( 2001,  vasara2,  0,        ryorioh,  vasara2,  vasara,   ROT270, "Visco",              "Vasara 2 (set 1)",                                 GAME_NO_COCKTAIL )

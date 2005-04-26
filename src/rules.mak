@@ -2049,4 +2049,11 @@ else
 SOUNDDEFS += -DHAS_VOTRAX=0
 endif
 
+SOUND=$(strip $(findstring ES8712@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_ES8712=1
+SOUNDOBJS += $(OBJ)/sound/es8712.o
+else
+SOUNDDEFS += -DHAS_ES8712=0
+endif
 

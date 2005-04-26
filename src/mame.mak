@@ -199,6 +199,7 @@ SOUNDS+=ST0016@
 SOUNDS+=C352@
 SOUNDS+=VRENDER0@
 #SOUNDS+=VOTRAX@
+SOUNDS+=ES8712@
 
 DRVLIBS = \
 	$(OBJ)/pacman.a $(OBJ)/epos.a $(OBJ)/nichibut.a \
@@ -582,7 +583,9 @@ $(OBJ)/dataeast.a: \
 	$(OBJ)/vidhrdw/lemmings.o $(OBJ)/drivers/lemmings.o \
 	$(OBJ)/vidhrdw/funkyjet.o $(OBJ)/drivers/funkyjet.o \
 	$(OBJ)/vidhrdw/deco32.o $(OBJ)/drivers/deco32.o \
-	$(OBJ)/drivers/deco102.o \
+	$(OBJ)/machine/deco102.o \
+	$(OBJ)/drivers/pktgaldx.o \
+	$(OBJ)/drivers/dietgo.o $(OBJ)/vidhrdw/dietgo.o \
 	$(OBJ)/drivers/deco156.o \
 	$(OBJ)/vidhrdw/deco_mlc.o $(OBJ)/drivers/deco_mlc.o \
 	$(OBJ)/vidhrdw/sshangha.o $(OBJ)/drivers/sshangha.o \

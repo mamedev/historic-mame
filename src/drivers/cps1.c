@@ -1235,19 +1235,19 @@ INPUT_PORTS_START( ffight )
 
 	PORT_START_TAG("DSWB")
 	PORT_DIPNAME( 0x07, 0x04, "Difficulty Level 1" )
-	PORT_DIPSETTING(    0x07, "Easiest" )				// "01"
-	PORT_DIPSETTING(    0x06, "Easier" )				// "02"
-	PORT_DIPSETTING(    0x05, DEF_STR( Easy ) )				// "03"
-	PORT_DIPSETTING(    0x04, DEF_STR( Normal ) )				// "04"
-	PORT_DIPSETTING(    0x03, DEF_STR( Medium ) )				// "05"
-	PORT_DIPSETTING(    0x02, DEF_STR( Hard ) )				// "06"
-	PORT_DIPSETTING(    0x01, DEF_STR( Harder ) )				// "07"
-	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )				// "08"
+	PORT_DIPSETTING(    0x07, DEF_STR( Easiest ) )		// "01"
+	PORT_DIPSETTING(    0x06, DEF_STR( Easier ) )		// "02"
+	PORT_DIPSETTING(    0x05, DEF_STR( Easy ) )			// "03"
+	PORT_DIPSETTING(    0x04, DEF_STR( Normal ) )		// "04"
+	PORT_DIPSETTING(    0x03, DEF_STR( Medium ) )		// "05"
+	PORT_DIPSETTING(    0x02, DEF_STR( Hard ) )			// "06"
+	PORT_DIPSETTING(    0x01, DEF_STR( Harder ) )		// "07"
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )		// "08"
 	PORT_DIPNAME( 0x18, 0x10, "Difficulty Level 2" )
-	PORT_DIPSETTING(    0x18, DEF_STR( Easy ) )				// "01"
-	PORT_DIPSETTING(    0x10, DEF_STR( Normal ) )				// "02"
-	PORT_DIPSETTING(    0x08, DEF_STR( Hard ) )				// "03"
-	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )				// "04"
+	PORT_DIPSETTING(    0x18, DEF_STR( Easy ) )			// "01"
+	PORT_DIPSETTING(    0x10, DEF_STR( Normal ) )		// "02"
+	PORT_DIPSETTING(    0x08, DEF_STR( Hard ) )			// "03"
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )		// "04"
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x60, "100k" )
 	PORT_DIPSETTING(    0x40, "200k" )
@@ -1416,9 +1416,9 @@ INPUT_PORTS_START( mercs )
 	PORT_DIPNAME( 0x08, 0x08, "Coin Slots" )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x08, "3" )
-	PORT_DIPNAME( 0x10, 0x10, "Max Players" )
-	PORT_DIPSETTING(    0x00, "2" )
-	PORT_DIPSETTING(    0x10, "3" )
+	PORT_DIPNAME( 0x10, 0x10, "Play Mode" )
+	PORT_DIPSETTING(    0x00, "2 Players" )
+	PORT_DIPSETTING(    0x10, "3 Players" )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2134,9 +2134,9 @@ INPUT_PORTS_START( kod )
 	PORT_DIPNAME( 0x08, 0x08, "Coin Slots" )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x08, "3" )
-	PORT_DIPNAME( 0x10, 0x10, "Max Players" )
-	PORT_DIPSETTING(    0x00, "2" )
-	PORT_DIPSETTING(    0x10, "3" )
+	PORT_DIPNAME( 0x10, 0x10, "Play Mode" )
+	PORT_DIPSETTING(    0x00, "2 Players" )
+	PORT_DIPSETTING(    0x10, "3 Players" )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2237,9 +2237,9 @@ INPUT_PORTS_START( kodj )
 	PORT_DIPNAME( 0x08, 0x08, "Coin Slots" )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x08, "3" )
-	PORT_DIPNAME( 0x10, 0x10, "Max Players" )
-	PORT_DIPSETTING(    0x00, "2" )
-	PORT_DIPSETTING(    0x10, "3" )
+	PORT_DIPNAME( 0x10, 0x10, "Play Mode" )
+	PORT_DIPSETTING(    0x00, "2 Players" )
+	PORT_DIPSETTING(    0x10, "3 Players" )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2370,11 +2370,11 @@ INPUT_PORTS_START( captcomm )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0xc0, 0xc0, "Max Players" )
-	PORT_DIPSETTING(    0x40, "1" )
-	PORT_DIPSETTING(    0xc0, "2" )
-	PORT_DIPSETTING(    0x80, "3" )
-	PORT_DIPSETTING(    0x00, "4" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Play Mode" )
+	PORT_DIPSETTING(    0x40, "1 Players" ) // Actual setting is 4 players
+	PORT_DIPSETTING(    0xc0, "2 Players" )
+	PORT_DIPSETTING(    0x80, "3 Players" )
+	PORT_DIPSETTING(    0x00, "4 Players" )
 
 	PORT_START_TAG("DSWC")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
@@ -2491,9 +2491,9 @@ INPUT_PORTS_START( knights )
 	PORT_DIPNAME( 0x40, 0x40, "Coin Slots" )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x40, "3" )
-	PORT_DIPNAME( 0x80, 0x80, "Max Players" )
-	PORT_DIPSETTING(    0x00, "2" )
-	PORT_DIPSETTING(    0x80, "3" )
+	PORT_DIPNAME( 0x80, 0x80, "Play Mode" )
+	PORT_DIPSETTING(    0x00, "2 Players" )
+	PORT_DIPSETTING(    0x80, "3 Players" )
 
 	PORT_START_TAG("DSWC")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
@@ -3059,8 +3059,8 @@ INPUT_PORTS_START( qad )
 
 	PORT_START_TAG("DSWB")
 	PORT_DIPNAME( 0x07, 0x04, DEF_STR( Difficulty ) )
-//	PORT_DIPSETTING(    0x07, "Easiest" )
-	PORT_DIPSETTING(    0x06, "Easiest" )
+//	PORT_DIPSETTING(    0x07, DEF_STR( Easiest ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( Easiest ) )
 	PORT_DIPSETTING(    0x05, DEF_STR( Easy ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( Hard ) )

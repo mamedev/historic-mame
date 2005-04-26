@@ -646,6 +646,7 @@ static void ssv_draw_sprites(struct mame_bitmap *bitmap)
 			xnum = local_xnum;
 			ynum = local_ynum;
 
+		
 			if (global_depth && global_depth != local_depth)
 			{
 				if (global_xnum || global_ynum)
@@ -656,8 +657,13 @@ static void ssv_draw_sprites(struct mame_bitmap *bitmap)
 				else
 					depth = local_depth;
 			}
-
-			if ( xnum == 0 && ynum == 0x0c00 )
+		
+			
+			
+					
+			
+			
+if (( (ssv_special !=4 ) && ( xnum == 0 && ynum == 0x0c00 )) || (ssv_special == 4 && ( global_xnum == 0 && global_ynum == 0x0c00 )))
 			{
 				int scroll;
 
@@ -665,6 +671,9 @@ static void ssv_draw_sprites(struct mame_bitmap *bitmap)
 //								s2[ 1 ];	// always 0
 //								s2[ 2 ];	// ignore x offset?
 //								s2[ 3 ];	// ignore y offset?
+
+			
+
 
 				// Kludge for srmp4
 				if (ssv_scroll[0x7a/2] == 0x4940)	sy+=0x60;

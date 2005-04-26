@@ -154,3 +154,110 @@ VIDEO_UPDATE( kickgoal )
 	kickgoal_scrram[7]);
 	*/
 }
+
+/* Holywood Action */
+
+/* FG */
+static void get_hwaction_fg_tile_info(int tile_index)
+{
+	int tileno = kickgoal_fgram[tile_index*2] & 0x0fff;
+	int color = kickgoal_fgram[tile_index*2+1] & 0x000f;
+
+	SET_TILE_INFO(0,tileno + 0x7000*2,color + 0x00,0)
+}
+
+/* BG */
+static void get_hwaction_bg_tile_info(int tile_index)
+{
+	int tileno = kickgoal_bgram[tile_index*2] & 0x1fff;
+	int color = kickgoal_bgram[tile_index*2+1] & 0x000f;
+
+	SET_TILE_INFO(1,tileno + 0x0000,color + 0x10,0)
+}
+
+/* BG 2 */
+static void get_hwaction_bg2_tile_info(int tile_index)
+{
+	int tileno = kickgoal_bg2ram[tile_index*2] & 0x1fff;
+	int color = kickgoal_bg2ram[tile_index*2+1] & 0x000f;
+	int flipx = kickgoal_bg2ram[tile_index*2+1] & 0x0020;
+
+	SET_TILE_INFO(1,tileno + 0x2000,color + 0x20,flipx ? TILE_FLIPX : 0);
+}
+
+
+static UINT32 tilemap_scan_hwactionbg2( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+{
+	/* logical (col,row) -> memory offset */
+	return col*16 + (row & 0xf) + ((row & 0x70) >> 4) * 0x400;
+}
+
+static UINT32 tilemap_scan_hwactionbg( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+{
+	/* logical (col,row) -> memory offset */
+	return col*16 + (row & 0xf) + ((row & 0x70) >> 4) * 0x400;
+}
+
+static UINT32 tilemap_scan_hwactionfg( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+{
+	/* logical (col,row) -> memory offset */
+	return col*32 + (row & 0x1f) + ((row & 0x20) >> 5) * 0x800;
+}
+
+
+VIDEO_START( hwaction )
+{
+	kickgoal_fgtm = tilemap_create(get_hwaction_fg_tile_info,tilemap_scan_hwactionfg,TILEMAP_TRANSPARENT, 8, 8,64,64);
+		tilemap_set_transparent_pen(kickgoal_fgtm,15);
+	kickgoal_bgtm = tilemap_create(get_hwaction_bg_tile_info,tilemap_scan_hwactionbg,TILEMAP_TRANSPARENT, 16, 16,64,64);
+		tilemap_set_transparent_pen(kickgoal_bgtm,15);
+	kickgoal_bg2tm = tilemap_create(get_hwaction_bg2_tile_info,tilemap_scan_hwactionbg2,TILEMAP_OPAQUE, 16, 16,64,64);
+	return 0;
+}
+
+
+static void hwaction_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+{
+	const struct GfxElement *gfx = Machine->gfx[1];
+	int offs;
+
+	for (offs = 0;offs < spriteram_size/2;offs += 4)
+	{
+		int xpos = spriteram16[offs+3];
+		int ypos = spriteram16[offs+0] & 0x00ff;
+		int tileno = spriteram16[offs+2] & 0x3fff;
+		int flipx = spriteram16[offs+1] & 0x0020;
+		int color = spriteram16[offs+1] & 0x000f;
+
+		if (spriteram16[offs+0] == 0x0100) break;
+
+		ypos = 0x110-ypos;
+
+		drawgfx(bitmap,gfx,
+				tileno+0x4000,
+				0x30 + color,
+				flipx,0,
+				xpos-16+4,ypos-32,
+				cliprect,TRANSPARENCY_PEN,15);
+	}
+}
+
+
+VIDEO_UPDATE( hwaction )
+{
+	/* set scroll */
+	tilemap_set_scrollx( kickgoal_fgtm, 0, kickgoal_scrram[0]  );
+	tilemap_set_scrolly( kickgoal_fgtm, 0, kickgoal_scrram[1]  );
+	tilemap_set_scrollx( kickgoal_bgtm, 0, kickgoal_scrram[2]  );
+	tilemap_set_scrolly( kickgoal_bgtm, 0, kickgoal_scrram[3]  );
+	tilemap_set_scrollx( kickgoal_bg2tm, 0, kickgoal_scrram[4]  );
+	tilemap_set_scrolly( kickgoal_bg2tm, 0, kickgoal_scrram[5]  );
+
+	/* draw */
+	tilemap_draw(bitmap,cliprect,kickgoal_bg2tm,0,0);
+	tilemap_draw(bitmap,cliprect,kickgoal_bgtm,0,0);
+
+	hwaction_draw_sprites(bitmap,cliprect);
+
+	tilemap_draw(bitmap,cliprect,kickgoal_fgtm,0,0);
+}
